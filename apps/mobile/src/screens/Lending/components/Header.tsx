@@ -1,4 +1,4 @@
-import React, { useCallback, useState, useEffect } from 'react';
+import React, { useCallback, useState, useEffect, useRef } from 'react';
 import { TouchableOpacity, View } from 'react-native';
 // import { RcIconSwapHistory } from '@/assets/icons/swap';
 import RcIconSwapHistory from '@/assets2024/icons/common/IconHistoryCC.svg';
@@ -17,7 +17,9 @@ import {
 import { findChain } from '@/utils/chain';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { CUSTOM_HISTORY_ACTION } from '@/screens/Transaction/components/type';
-import { useRefreshHistoryId } from '../hooks';
+import { apisLending, useRefreshHistoryId, useSelectedMarket } from '../hooks';
+import useProtocols from '@/store/protocols';
+import { marketKeyToProtocolId } from '../config/protocol';
 import {
   useTransactionHistoryServiceReady,
   withTransactionHistoryService,
@@ -44,14 +46,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
 }));
 
-let preCount = 0;
-
-interface LendingHistoryHeaderProps {
-  onPendingClear?: () => void;
-}
-const LendingHistoryHeaderContent = ({
-  onPendingClear,
-}: LendingHistoryHeaderProps) => {
+const LendingHistoryHeaderContent = () => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
 
   const [pendingCount, setPendingCount] = useState(0);
@@ -61,6 +56,33 @@ const LendingHistoryHeaderContent = ({
   const { finalSceneCurrentAccount } = useSceneAccountInfo({
     forScene: 'Lending',
   });
+  const { chainInfo, marketKey } = useSelectedMarket();
+  const previousPending = useRef<{ address: string; count: number } | null>(
+    null,
+  );
+  const handlePendingClear = useCallback(() => {
+    const accountAddress = finalSceneCurrentAccount?.address;
+    setTimeout(() => {
+      apisLending.fetchLendingData({
+        accountAddress,
+        marketKey,
+        ignoreLoading: true,
+      });
+
+      // Refresh both sources for the account and market that completed.
+      const protocolId = marketKeyToProtocolId(marketKey);
+      if (protocolId && accountAddress && chainInfo?.serverId) {
+        useProtocols
+          .getState()
+          .updateSpecificProtocol(
+            accountAddress,
+            protocolId,
+            chainInfo.serverId,
+          );
+      }
+    }, 200);
+  }, [chainInfo?.serverId, finalSceneCurrentAccount?.address, marketKey]);
+
   const fetchLocalTx = useCallback(async () => {
     if (!transactionHistoryReady) {
       return [];
@@ -83,7 +105,23 @@ const LendingHistoryHeaderContent = ({
     const lendingSuccessHistoryListCount = lendingSuccessHistoryList.length;
     setShowGreenDot(lendingSuccessHistoryListCount > 0);
     setPendingCount(pending.length);
-  }, [finalSceneCurrentAccount?.address, transactionHistoryReady]);
+
+    // Compare real snapshots, not a previous account's rendered count. Each
+    // mounted header owns its history; another route must not consume it.
+    const previous = previousPending.current;
+    previousPending.current = { address, count: pending.length };
+    if (
+      previous?.address === address &&
+      previous.count > 0 &&
+      pending.length === 0
+    ) {
+      handlePendingClear();
+    }
+  }, [
+    finalSceneCurrentAccount?.address,
+    handlePendingClear,
+    transactionHistoryReady,
+  ]);
 
   useInterval(() => fetchLocalTx(), pendingCount > 0 ? 5000 : 60 * 1000);
 
@@ -93,13 +131,6 @@ const LendingHistoryHeaderContent = ({
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [fetchLocalTx, refreshHistoryId]),
   );
-
-  useEffect(() => {
-    if (pendingCount === 0 && preCount > 0) {
-      onPendingClear?.();
-    }
-    preCount = pendingCount;
-  }, [pendingCount, onPendingClear]);
 
   useEffect(() => {
     eventBus.addListener(EVENTS.RELOAD_TX, fetchLocalTx);

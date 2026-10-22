@@ -9,7 +9,7 @@ import { coerceNumber } from '@/utils/coerce';
 import { zustandByMMKV } from '@/core/storage/mmkv';
 import { APP_MMKV_WEAK_KEYS } from '@/core/storage/mmkvConstants';
 import { useRefState } from '@/hooks/common/useRefState';
-import { IS_ANDROID } from '@/core/native/utils';
+import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import { isNonPublicProductionEnv } from '@/constant';
 import { getScreenshotFeedbackExtra } from './utils';
 import { getGlobalScreenCapturable } from '@/hooks/native/security';
@@ -455,12 +455,33 @@ export function debugShowSubmitFeedbackByScreenshotModal() {
   );
 }
 
+type ScreenshotFeedbackConsumer = { acceptingFeedback: boolean };
+const screenshotFeedbackConsumers = new Set<ScreenshotFeedbackConsumer>();
+
+function ownsScreenshotFeedback(consumer: ScreenshotFeedbackConsumer) {
+  let owner: ScreenshotFeedbackConsumer | undefined;
+  for (const candidate of screenshotFeedbackConsumers) {
+    // A replacement may subscribe while an old native stop is pending. Only
+    // one listener may copy/delete the broadcast file. Prefer the latest live
+    // owner, otherwise retain one stopped owner's cleanup listener until ACK.
+    if (candidate.acceptingFeedback || !owner?.acceptingFeedback) {
+      owner = candidate;
+    }
+  }
+  return owner === consumer;
+}
+
 export async function startSubscribeUserDidTakeScreenshot() {
   await appScreenshotFS.initializeBeforeCapture();
 
+  const consumer: ScreenshotFeedbackConsumer = { acceptingFeedback: true };
   const subscription = RNScreenshotPrevent.onUserDidTakeScreenshot(
     async params => {
+      if (IS_IOS && !ownsScreenshotFeedback(consumer)) {
+        return;
+      }
       const eventAccepted =
+        consumer.acceptingFeedback &&
         getShowFeedbackOnScreenshotCapture() &&
         !!params?.captured &&
         shouldToastFeedbackByScreenshot();
@@ -490,6 +511,14 @@ export async function startSubscribeUserDidTakeScreenshot() {
             imageType: params?.imageType,
           },
         );
+        if (!consumer.acceptingFeedback) {
+          if (inAppPath) {
+            await RNFS.unlink(
+              AppScreenshotFS.normalizeLocalFilePath(inAppPath),
+            ).catch(() => undefined);
+          }
+          return;
+        }
         const screenshotUri = inAppPath
           ? AppScreenshotFS.normalizeImageUri(
               inAppPath,
@@ -514,6 +543,12 @@ export async function startSubscribeUserDidTakeScreenshot() {
           cleanupSource: true,
         });
         if (!inAppPath) return;
+        if (!consumer.acceptingFeedback) {
+          await RNFS.unlink(
+            AppScreenshotFS.normalizeLocalFilePath(inAppPath),
+          ).catch(() => undefined);
+          return;
+        }
 
         setLastScreenshot(
           Image.resolveAssetSource({
@@ -530,16 +565,41 @@ export async function startSubscribeUserDidTakeScreenshot() {
     },
   );
 
-  if (IS_ANDROID && !FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT) {
+  if (IS_IOS) {
+    screenshotFeedbackConsumers.add(consumer);
+  }
+  if ((IS_ANDROID || IS_IOS) && !FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT) {
     try {
       await RNScreenshotPrevent.startScreenCaptureDetection();
       console.debug(
-        '[info] RNScreenshotPrevent started screen capture detection on Android',
+        '[info] RNScreenshotPrevent started screen capture detection',
       );
     } catch (error) {
+      consumer.acceptingFeedback = false;
+      screenshotFeedbackConsumers.delete(consumer);
       subscription.remove();
       throw error;
     }
+  }
+
+  if (IS_IOS) {
+    let removalPromise: Promise<void> | undefined;
+    return {
+      remove: () => {
+        consumer.acceptingFeedback = false;
+        // Keep a cleanup consumer attached until native file capture has
+        // stopped. Late events are cleaned above without opening feedback.
+        // A repeated remove must not consume a newer subscription's demand.
+        if (!removalPromise) {
+          removalPromise =
+            RNScreenshotPrevent.stopScreenCaptureDetection().then(() => {
+              screenshotFeedbackConsumers.delete(consumer);
+              subscription.remove();
+            });
+        }
+        return removalPromise;
+      },
+    };
   }
 
   return subscription;

@@ -47,9 +47,6 @@ const useChainSelectorList = ({
   const [search, setSearch] = useState('');
 
   useEffect(() => {
-    if (netTabKey !== 'testnet') {
-      return;
-    }
     try {
       ensureCustomTestnetStoreHydrated();
     } catch (error) {
@@ -58,7 +55,7 @@ const useChainSelectorList = ({
         error,
       );
     }
-  }, [netTabKey]);
+  }, []);
 
   const {
     testnetMatteredChainBalances,
@@ -130,6 +127,7 @@ const useChainSelectorList = ({
     matteredList,
     unmatteredList: search?.trim() ? allSearched : unmatteredList,
     allSearched,
+    testnetList,
     // handleStarChange,
     // handleSort,
     search,
@@ -181,6 +179,7 @@ export default function SelectChainWithSummary({
     setSearch,
     matteredList: _matteredList,
     unmatteredList: _unmatteredList,
+    testnetList,
   } = useChainSelectorList({
     // set undefined to allow all main chains
     supportChains: supportChains,
@@ -188,6 +187,8 @@ export default function SelectChainWithSummary({
     netTabKey: !hideMainnetTab ? selectedTab : 'testnet',
     account,
   });
+  // Do not offer a Custom Network tab when the runtime has no custom networks.
+  const showTestnetTab = isShowTestnet && testnetList.length > 0;
 
   const [matteredList, unmatteredList] = useMemo(() => {
     const filterChain = (chain: Chain) => {
@@ -281,7 +282,7 @@ export default function SelectChainWithSummary({
             />
           </View>
         )}
-        {isShowTestnet && !hideMainnetTab ? (
+        {showTestnetTab && !hideMainnetTab ? (
           <NetSwitchTabs
             value={selectedTab}
             onTabChange={onTabChange}

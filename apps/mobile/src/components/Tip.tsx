@@ -1,12 +1,13 @@
 import React, { useCallback, useEffect, useMemo } from 'react';
 import {
   StyleSheet,
+  findNodeHandle,
   View,
   PressableProps,
   type StyleProp,
   type TextStyle,
 } from 'react-native';
-import { Platform, StatusBar, Pressable } from 'react-native';
+import { Pressable } from 'react-native';
 import Tooltip, { TooltipProps } from 'react-native-walkthrough-tooltip';
 import { colord } from 'colord';
 import { useThemeStyles } from '@/hooks/theme';
@@ -16,6 +17,19 @@ import { RNGHPressable, RNGHPressableProps } from './customized/reexports';
 import { Text } from '@/components/Typography';
 import { TrackedModal } from './Modal/TrackedModal';
 import type { ModalGateId } from '@/utils/modalGate';
+import RNHelpers from '@/core/native/RNHelpers';
+
+const measureAnchor: NonNullable<TooltipProps['measureAnchor']> = (
+  anchor,
+  viewport,
+) => {
+  const anchorTag = findNodeHandle(anchor);
+  const viewportTag = findNodeHandle(viewport);
+  if (anchorTag === null || viewportTag === null) {
+    return Promise.reject(new Error('Tooltip views are not mounted'));
+  }
+  return RNHelpers.measureViewRelativeTo(anchorTag, viewportTag);
+};
 
 type PressableComponent = 'RNPressable' | 'RNGHPressable';
 type PressableComProps<T extends PressableComponent> = T extends 'RNPressable'
@@ -174,11 +188,8 @@ const TipBase = <T extends PressableComponent = 'RNPressable'>({
       isVisible={on}
       placement="top"
       backgroundColor={'transparent'}
-      topAdjustment={
-        Platform.OS === 'android' && StatusBar
-          ? -(StatusBar.currentHeight || 0)
-          : 0
-      }
+      measureAnchor={measureAnchor}
+      topAdjustment={0}
       onClose={turnOff}
       content={_content}
       showChildInTooltip={false}

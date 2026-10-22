@@ -464,7 +464,10 @@ export const ExternalTokenRow = memo(
                 <View style={styles.priceInfo}>
                   {bottomRightText &&
                     (rightInfoMode === 'balance' ? (
-                      <Text style={styles.searchAmountStr}>
+                      <Text
+                        style={styles.searchAmountStr}
+                        numberOfLines={1}
+                        ellipsizeMode="tail">
                         {bottomRightText}
                       </Text>
                     ) : isNumber(data.price_24h_change) ? (

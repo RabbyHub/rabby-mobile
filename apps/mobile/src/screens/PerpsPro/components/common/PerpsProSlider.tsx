@@ -6,6 +6,22 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { PerpsGestureSlider as Slider } from '@/components/perps/PerpsGestureSlider';
 import React, { useMemo } from 'react';
 import { View } from 'react-native';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+} from 'react-native-reanimated';
+
+/**
+ * Rail geometry for the neutral (thumbs-artwork) appearance. `left`/`right`
+ * are the insets of the thumb rail inside the slider container; the rail is
+ * also the touch track of the native slider underneath, so both the artwork
+ * and the native thumb centre travel `containerWidth - left - right`.
+ */
+export const PERPS_PRO_NEUTRAL_RAIL = {
+  default: { left: 0, right: 16 },
+  leverage: { left: 3, right: 23 },
+  order: { left: -6, right: 14 },
+} as const;
 
 export const PerpsProSlider: React.FC<{
   disabled?: boolean;
@@ -44,6 +60,50 @@ export const PerpsProSlider: React.FC<{
       tone === 'neutral' && appearance === 'leverage-dialog';
     const isOrderDialog = tone === 'neutral' && appearance === 'order-dialog';
     const showDisabledAppearance = disabled && dimWhenDisabled;
+    const isThumbArtwork = isLeverageDialog || isOrderDialog;
+    // Neutral rails are inset by the thumb artwork so that the artwork's centre
+    // travels the same track as the native thumb underneath.
+    const neutralRail = isLeverageDialog
+      ? PERPS_PRO_NEUTRAL_RAIL.leverage
+      : isOrderDialog
+      ? PERPS_PRO_NEUTRAL_RAIL.order
+      : PERPS_PRO_NEUTRAL_RAIL.default;
+    const neutralRailLeft = neutralRail.left;
+    const neutralRailRight = neutralRail.right;
+    const neutralRange = maximumValue - minimumValue;
+    // Raw slider value (not a 0..1 fraction), seeded with the controlled value.
+    // Afterwards the gesture owns it on the UI thread, so the artwork never
+    // waits for a JS render mid-drag.
+    const neutralProgressValue = useSharedValue(
+      Number.isFinite(value) ? value : minimumValue,
+    );
+    const neutralWidthValue = useSharedValue(0);
+    const getNeutralFraction = () => {
+      'worklet';
+      if (!Number.isFinite(neutralRange) || neutralRange <= 0) {
+        return 0;
+      }
+      const raw = (neutralProgressValue.value - minimumValue) / neutralRange;
+      return Math.max(0, Math.min(1, Number.isFinite(raw) ? raw : 0));
+    };
+    const neutralProgressStyle = useAnimatedStyle(() => ({
+      width:
+        Math.max(
+          0,
+          neutralWidthValue.value - neutralRailLeft - neutralRailRight,
+        ) * getNeutralFraction(),
+    }));
+    const neutralThumbStyle = useAnimatedStyle(() => ({
+      transform: [
+        {
+          translateX:
+            Math.max(
+              0,
+              neutralWidthValue.value - neutralRailLeft - neutralRailRight,
+            ) * getNeutralFraction(),
+        },
+      ],
+    }));
     const points = useMemo(
       () =>
         Array.from({ length: Math.max(2, pointCount) }, (_, index) => index),
@@ -57,6 +117,10 @@ export const PerpsProSlider: React.FC<{
 
     return (
       <View
+        onLayout={event => {
+          const { width } = event.nativeEvent.layout;
+          neutralWidthValue.value = width;
+        }}
         style={[
           styles.container,
           tone === 'neutral' && styles.neutralContainer,
@@ -81,6 +145,7 @@ export const PerpsProSlider: React.FC<{
           onSlidingComplete={onSlidingComplete}
           onSlidingStart={onSlidingStart}
           onValueChange={onValueChange}
+          progressValue={tone === 'neutral' ? neutralProgressValue : undefined}
           step={step}
           style={[
             styles.slider,
@@ -134,13 +199,13 @@ export const PerpsProSlider: React.FC<{
                 isOrderDialog && styles.orderProgressRail,
               ]}
               testID="perps-pro-slider-neutral-track-progress-rail">
-              <View
+              <Animated.View
                 style={[
                   styles.neutralTrackProgress,
                   isLeverageDialog && styles.leverageProgress,
                   isOrderDialog && styles.orderProgress,
                   showDisabledAppearance && styles.neutralTrackProgressDisabled,
-                  { width: `${neutralProgress * 100}%` },
+                  neutralProgressStyle,
                 ]}
                 testID="perps-pro-slider-neutral-track-progress"
               />
@@ -153,15 +218,15 @@ export const PerpsProSlider: React.FC<{
                 isOrderDialog && styles.orderThumbRail,
               ]}
               testID="perps-pro-slider-neutral-thumb-rail">
-              <View
+              <Animated.View
                 style={[
                   styles.neutralThumb,
-                  (isLeverageDialog || isOrderDialog) && styles.leverageThumb,
+                  isThumbArtwork && styles.leverageThumb,
                   showDisabledAppearance && styles.neutralThumbDisabled,
-                  { left: `${neutralProgress * 100}%` },
+                  neutralThumbStyle,
                 ]}
                 testID="perps-pro-slider-neutral-thumb">
-                {isLeverageDialog || isOrderDialog ? (
+                {isThumbArtwork ? (
                   <LeverageThumb
                     width={20}
                     height={20}
@@ -173,7 +238,7 @@ export const PerpsProSlider: React.FC<{
                     }
                   />
                 ) : null}
-              </View>
+              </Animated.View>
             </View>
           </>
         ) : null}

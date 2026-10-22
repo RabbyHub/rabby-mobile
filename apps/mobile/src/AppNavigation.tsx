@@ -1,3 +1,4 @@
+import { RoundedFontStyles } from '@/core/utils/fonts';
 import { createCustomNativeStackNavigator as createNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
 import {
   DarkTheme,
@@ -576,8 +577,10 @@ export default function AppNavigation() {
                   component={HomeScreenNavigator}
                   options={{
                     ...RootAnimOptions,
-                    // Hidden Home state updates should not compete with the pushed screen.
-                    freezeOnBlur: true,
+                    // Home keeps animated pagers mounted across nested add-wallet
+                    // routes. Fabric freezing detaches their animated views, so
+                    // returning from a second pushed screen can leave Home blank.
+                    freezeOnBlur: false,
                   }}
                 />
                 <RootStack.Screen
@@ -794,8 +797,7 @@ export default function AppNavigation() {
                       headerTintColor: colors['neutral-title-2'],
                       headerTitleStyle: {
                         color: colors['neutral-title-2'],
-                        fontWeight: '900',
-                        fontFamily: 'SF Pro Rounded',
+                        ...RoundedFontStyles.heavy,
                       },
                     })}
                   />

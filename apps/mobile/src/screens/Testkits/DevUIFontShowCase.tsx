@@ -14,34 +14,34 @@ import {
 } from '@/utils/styles';
 import TouchableText from '@/components/Touchable/TouchableText';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
-import { FontNames } from '@/core/utils/fonts';
+import { RoundedFontStyles } from '@/core/utils/fonts';
 import { ThemeColors, ThemeColors2024 } from '@/constant/theme';
 import { Text } from '@/components/Typography';
 
 const FONTS_CONFIG = [
   {
     label: 'System',
-    fontFamily: 'System',
+    fontStyle: { fontFamily: 'System' },
     fontSizes: [24, 22, 20, 18, 16, 14].reverse(),
   },
   {
     label: 'SF Pro Rounded Regular',
-    fontFamily: FontNames.sf_pro_rounded_regular,
+    fontStyle: RoundedFontStyles.regular,
     fontSizes: [24, 22, 20, 18, 16, 14].reverse(),
   },
   {
     label: 'SF Pro Rounded Medium',
-    fontFamily: FontNames.sf_pro_rounded_medium,
+    fontStyle: RoundedFontStyles.medium,
     fontSizes: [24, 22, 20, 18, 16, 14].reverse(),
   },
   {
     label: 'SF Pro Rounded Bold',
-    fontFamily: FontNames.sf_pro_rounded_bold,
+    fontStyle: RoundedFontStyles.bold,
     fontSizes: [24, 22, 20, 18, 16, 14].reverse(),
   },
   {
     label: 'SF Pro Rounded Heavy',
-    fontFamily: FontNames.sf_pro_rounded_heavy,
+    fontStyle: RoundedFontStyles.heavy,
     fontSizes: [24, 22, 20, 18, 16, 14].reverse(),
   },
 ];
@@ -88,7 +88,7 @@ function DevUIFontShowCase(): JSX.Element {
           contentContainerStyle={styles.showCaseRowsContainer}>
           {FONTS_CONFIG.map((fontConfig, index) => {
             const key = `fontConfig-${index}-${fontConfig.label}`;
-            const ffStyle = { fontFamily: fontConfig.fontFamily };
+            const ffStyle = fontConfig.fontStyle;
             const fontSizes = fontConfig.fontSizes;
 
             return (

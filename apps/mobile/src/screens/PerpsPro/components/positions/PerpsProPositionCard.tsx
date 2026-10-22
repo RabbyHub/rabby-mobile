@@ -13,6 +13,7 @@ import {
   type TextLayoutEvent,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { Pressable as GesturePressable } from 'react-native-gesture-handler';
 
 import {
   calculateSignedLiquidationDistance,
@@ -76,6 +77,14 @@ const useResponsiveMetricLayout = (measurementKey: string) => {
     expanded: false,
     key: measurementKey,
   });
+  // The expanded layout changes the column width, so re-measuring text while
+  // expanded feeds a different geometry back into the same collision check.
+  // On Fabric that oscillates between the compact and expanded layouts (the
+  // label/underline visibly flicker left-right). Keep the text measurements
+  // that produced the decision and only re-evaluate on layout/row changes.
+  const expandedRef = React.useRef(layoutState.expanded);
+  expandedRef.current =
+    layoutState.key === measurementKey ? layoutState.expanded : false;
 
   if (measurementsRef.current.key !== measurementKey) {
     measurementsRef.current = {
@@ -88,6 +97,14 @@ const useResponsiveMetricLayout = (measurementKey: string) => {
     (key: string, row: MetricRow, patch: MetricMeasurements) => {
       const currentMeasurements = measurementsRef.current;
       if (currentMeasurements.key !== key) {
+        return;
+      }
+      const isTextMeasurement =
+        'middleFirstLineWidth' in patch ||
+        'middleFirstLineX' in patch ||
+        'rightNaturalWidth' in patch ||
+        'rightWrapped' in patch;
+      if (expandedRef.current && isTextMeasurement) {
         return;
       }
 
@@ -178,7 +195,7 @@ const PositionAction: React.FC<{
   const { styles } = useTheme2024({ getStyle });
   const disabled = !onPress;
   return (
-    <Pressable
+    <GesturePressable
       accessibilityRole="button"
       accessibilityState={{ disabled }}
       disabled={disabled}
@@ -191,7 +208,7 @@ const PositionAction: React.FC<{
       <Text style={disabled ? styles.disabledActionText : styles.actionText}>
         {label}
       </Text>
-    </Pressable>
+    </GesturePressable>
   );
 };
 
@@ -635,7 +652,7 @@ export const PerpsProPositionCard: React.FC<{
           </View>
 
           {tpSlSummary.mode !== 'none' ? (
-            <Pressable
+            <GesturePressable
               accessibilityLabel={t('page.perps.pro.positions.tpsl')}
               accessibilityRole="button"
               accessibilityState={{ disabled: !onEditTpSl }}
@@ -684,7 +701,7 @@ export const PerpsProPositionCard: React.FC<{
                   />
                 </View>
               </View>
-            </Pressable>
+            </GesturePressable>
           ) : null}
         </View>
 

@@ -8,6 +8,7 @@ import React from 'react';
 import { Animated, Pressable, StyleSheet } from 'react-native';
 
 import { ThemeColors2024 } from '@/constant/theme';
+import { RoundedFontStyles } from '@/core/utils/fonts';
 
 jest.mock('@/components/Typography', () => ({
   Text: require('react-native').Text,
@@ -175,9 +176,8 @@ describe('PerpsProHistoryRowView Trade, Transaction and Funding', () => {
     const sideText = screen.getByLabelText('page.perps.pro.history.sell');
     expect(StyleSheet.flatten(sideText.props.style)).toMatchObject({
       color: 'neutral-InvertHighlight',
-      fontFamily: 'SF Pro Rounded',
+      ...RoundedFontStyles.bold,
       fontSize: 12,
-      fontWeight: '700',
       lineHeight: 16,
     });
     const sideTag = screen.getByTestId(
@@ -473,9 +473,8 @@ describe('PerpsProHistoryRowView Orders', () => {
       ),
     ).toMatchObject({
       color: 'neutral-InvertHighlight',
-      fontFamily: 'SF Pro Rounded',
+      ...RoundedFontStyles.bold,
       fontSize: 12,
-      fontWeight: '700',
       lineHeight: 16,
     });
   });
@@ -636,9 +635,8 @@ describe('PerpsProHistoryRowView Orders', () => {
       StyleSheet.flatten(screen.getByText('xyz').props.style),
     ).toMatchObject({
       color: 'neutral-foot',
-      fontFamily: 'SF Pro Rounded',
+      ...RoundedFontStyles.medium,
       fontSize: 12,
-      fontWeight: '500',
       lineHeight: 16,
     });
     expect(screen.queryByText('Perp')).toBeNull();

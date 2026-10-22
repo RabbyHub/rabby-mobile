@@ -1,3 +1,4 @@
+import { RoundedFontStyles } from '@/core/utils/fonts';
 /* eslint-disable react-native/no-inline-styles */
 import RcIconInfoCC from '@/assets2024/icons/perps/IconInfoCC.svg';
 import { AssetAvatar } from '@/components';
@@ -824,8 +825,7 @@ export const PerpsOpenPositionPopup: React.FC<{
                           style={{
                             color: '#50D2C1',
                             fontSize: 13,
-                            fontWeight: '700',
-                            fontFamily: 'SF Pro Rounded',
+                            ...RoundedFontStyles.bold,
                           }}>
                           {quoteAsset === 'USDC'
                             ? t('page.perps.PerpsSpotSwap.toDepositEntry')

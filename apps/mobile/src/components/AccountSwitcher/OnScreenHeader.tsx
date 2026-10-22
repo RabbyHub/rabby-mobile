@@ -6,7 +6,7 @@ import { Dimensions, View } from 'react-native';
 // caret-down-cc.svg
 import { default as RcCaretDownCircleCC } from './icons/caret-down-circle.svg';
 import { default as RcCaretDownCircleDarkCC } from './icons/caret-down-circle-dark.svg';
-import TouchableView from '../Touchable/TouchableView';
+import { CustomTouchableOpacity } from '../CustomTouchableOpacity';
 import { AccountSwitcherAopProps, useAccountSceneVisible } from './hooks';
 import {
   useSceneAccountInfo,
@@ -76,9 +76,12 @@ export function ScreenHeaderAccountSwitcher({
   const IconCom = isLight ? RcCaretDownCircleCC : RcCaretDownCircleDarkCC;
 
   return (
-    <TouchableView
+    <CustomTouchableOpacity
+      as="RNGHTouchableOpacity"
       style={styles.container}
       disabled={disableSwitch}
+      activeOpacity={1}
+      hitSlop={8}
       onPress={() => {
         const nextOpen = !isOpen;
         toggleSceneVisible(forScene, nextOpen);
@@ -141,7 +144,7 @@ export function ScreenHeaderAccountSwitcher({
           </>
         )}
       </View>
-    </TouchableView>
+    </CustomTouchableOpacity>
   );
 }
 
@@ -161,6 +164,11 @@ const getStyle = createGetStyles2024(ctx => {
       fontWeight: '900',
       lineHeight: 24,
       fontSize: 20,
+      // Fabric/Android keeps the platform font padding on the title, which
+      // pushed the account row below it; normalize the text box so the alias
+      // sits right under the title on both architectures (QA 1141).
+      includeFontPadding: false,
+      textAlignVertical: 'center',
       color: ctx.colors2024['neutral-title-1'],
     },
     wrapperAddressRow: {
@@ -168,6 +176,7 @@ const getStyle = createGetStyles2024(ctx => {
       alignItems: 'center',
       justifyContent: 'center',
       width: SCREEN_WIDTH - 140,
+      marginTop: -2,
     },
     addressRow: {
       flexDirection: 'row',
@@ -189,7 +198,7 @@ const getStyle = createGetStyles2024(ctx => {
     nameBox: {
       flexShrink: 1,
       minWidth: 0,
-      margin: 4,
+      marginHorizontal: 4,
     },
     address: {
       fontFamily: 'SF Pro Rounded',
@@ -197,6 +206,8 @@ const getStyle = createGetStyles2024(ctx => {
       lineHeight: 20,
       fontSize: 16,
       width: '100%',
+      includeFontPadding: false,
+      textAlignVertical: 'center',
       color: ctx.colors2024['neutral-foot'],
     },
     multipleAddress: {
@@ -206,6 +217,8 @@ const getStyle = createGetStyles2024(ctx => {
       fontWeight: '500',
       lineHeight: 20,
       fontSize: 16,
+      includeFontPadding: false,
+      textAlignVertical: 'center',
       color: ctx.colors2024['neutral-foot'],
     },
     addressCaretIcon: {

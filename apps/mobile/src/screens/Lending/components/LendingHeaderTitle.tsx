@@ -1,11 +1,10 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import React, { useEffect } from 'react';
+import React from 'react';
 import { View } from 'react-native';
 
-import type { Account } from '@/core/startupServices/preference';
 import { Text } from '@/components/Typography';
-import { HeaderBackPressable, useRabbyAppNavigation } from '@/hooks/navigation';
+import { HeaderBackPressable } from '@/hooks/navigation';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import RcIconAAVE from '@/assets2024/icons/lending/IconAAVE.svg';
 import { LendingHistoryHeader } from './Header';
@@ -13,9 +12,7 @@ import { HeaderAccountSwitcher } from '@/components/AccountSwitcher/HeaderAccoun
 
 const HEADER_HEIGHT = 58;
 
-const LendingHeaderContent: React.FC<{
-  onPendingClear?: () => void;
-}> = ({ onPendingClear }) => {
+const LendingHeaderContent = () => {
   const { styles } = useTheme2024({ getStyle });
   const { top } = useSafeAreaInsets();
 
@@ -33,32 +30,16 @@ const LendingHeaderContent: React.FC<{
             forScene="Lending"
             style={styles.headerAccountSwitcher}
           />
-          <LendingHistoryHeader onPendingClear={onPendingClear} />
+          <LendingHistoryHeader />
         </View>
       </View>
     </View>
   );
 };
 
-export const LendingNativeHeader: React.FC<{
-  account?: Account | null;
-  onPendingClear?: () => void;
-}> = ({ onPendingClear }) => {
-  const { colors2024 } = useTheme2024({ getStyle });
-  const navigation = useRabbyAppNavigation();
-
-  useEffect(() => {
-    navigation.setOptions({
-      // eslint-disable-next-line react/no-unstable-nested-components
-      header: () => <LendingHeaderContent onPendingClear={onPendingClear} />,
-      headerStyle: {
-        backgroundColor: colors2024['neutral-bg-1'],
-      },
-    });
-  }, [navigation, colors2024, onPendingClear]);
-
-  return null;
-};
+export function renderLendingHeader() {
+  return <LendingHeaderContent />;
+}
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   headerOuter: {

@@ -1,8 +1,14 @@
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
+import { RoundedFontStyles } from '@/core/utils/fonts';
 import { StyleSheet, View } from 'react-native';
 
 const mockOpenFieldExplanation = jest.fn();
+// The component contract exercises dispatch and disabled state, not native
+// gesture delivery. The latter still needs the iOS pager/scroll scenario.
+jest.mock('react-native-gesture-handler', () => ({
+  Pressable: require('react-native').Pressable,
+}));
 type MockPositionMarket = {
   displayBase: string;
   displayPair: string;
@@ -327,9 +333,8 @@ describe('PerpsProPositionCard', () => {
     expect(StyleSheet.flatten(screen.getByText('B').props.style)).toMatchObject(
       {
         color: 'neutral-InvertHighlight',
-        fontFamily: 'SF Pro Rounded',
+        ...RoundedFontStyles.bold,
         fontSize: 12,
-        fontWeight: '700',
         lineHeight: 16,
       },
     );
@@ -363,9 +368,8 @@ describe('PerpsProPositionCard', () => {
         StyleSheet.flatten(screen.getByText(label).props.style),
       ).toMatchObject({
         color: 'neutral-foot',
-        fontFamily: 'SF Pro Rounded',
+        ...RoundedFontStyles.medium,
         fontSize: 12,
-        fontWeight: '500',
         lineHeight: 16,
       });
     }
@@ -373,9 +377,8 @@ describe('PerpsProPositionCard', () => {
       StyleSheet.flatten(screen.getByText('Long 20x').props.style),
     ).toMatchObject({
       color: 'green-default',
-      fontFamily: 'SF Pro Rounded',
+      ...RoundedFontStyles.medium,
       fontSize: 12,
-      fontWeight: '500',
       lineHeight: 16,
     });
     expect(
@@ -901,6 +904,88 @@ describe('PerpsProPositionCard', () => {
     ).toBeTruthy();
   });
 
+  it('keeps the expanded metric layout stable when the column re-measures it', () => {
+    // A wrapped label proves the compact column cannot hold it. The expanded
+    // column then re-measures the same label, so those later text callbacks
+    // must not be able to flip the row back (QA 1163: the label and its dotted
+    // underline flickered between the two layouts).
+    render(
+      <PerpsProPositionCard
+        accountIdentity="account-a"
+        position={createPosition({ marginMode: 'cross' })}
+      />,
+    );
+
+    const measureRow = (rightLines: Array<{ width: number; x: number }>) => {
+      fireEvent(
+        screen.getByTestId('perps-pro-position-metrics-BTC'),
+        'layout',
+        {
+          nativeEvent: { layout: { height: 34, width: 345, x: 0, y: 0 } },
+        },
+      );
+      fireEvent(
+        screen.getByTestId('perps-pro-position-middle-metric-BTC'),
+        'layout',
+        {
+          nativeEvent: { layout: { height: 34, width: 116, x: 136, y: 0 } },
+        },
+      );
+      fireEvent(screen.getByText('Margin (USDC)'), 'textLayout', {
+        nativeEvent: { lines: [{ width: 72, x: 0 }] },
+      });
+      fireEvent(screen.getByText('Margin Ratio'), 'textLayout', {
+        nativeEvent: { lines: rightLines },
+      });
+    };
+
+    // The price row keeps reporting a clean, fitting geometry so the shared
+    // decision can actually resolve to compact again if it is re-evaluated.
+    const measurePriceRow = () => {
+      fireEvent(
+        screen.getByTestId('perps-pro-position-price-metrics-BTC'),
+        'layout',
+        {
+          nativeEvent: { layout: { height: 34, width: 345, x: 0, y: 0 } },
+        },
+      );
+      fireEvent(
+        screen.getByTestId('perps-pro-position-middle-price-BTC'),
+        'layout',
+        {
+          nativeEvent: { layout: { height: 34, width: 116, x: 136, y: 0 } },
+        },
+      );
+      fireEvent(screen.getByText('Mark Price (USDC)'), 'textLayout', {
+        nativeEvent: { lines: [{ width: 72, x: 0 }] },
+      });
+      fireEvent(screen.getByText('Liq. Price (USDC)'), 'textLayout', {
+        nativeEvent: { lines: [{ width: 88, x: 0 }] },
+      });
+    };
+    measurePriceRow();
+
+    measureRow([
+      { width: 60, x: 0 },
+      { width: 40, x: 0 },
+    ]);
+    const expandedLabelStyle = () =>
+      StyleSheet.flatten(screen.getByLabelText('Margin Ratio').props.style);
+    expect(expandedLabelStyle()).toMatchObject({
+      alignItems: 'stretch',
+      alignSelf: 'stretch',
+    });
+
+    // The expanded column reports a single line that would fit the compact
+    // geometry. The decision must stay stable instead of oscillating.
+    measurePriceRow();
+    measureRow([{ width: 88, x: 0 }]);
+    expect(expandedLabelStyle()).toMatchObject({
+      alignItems: 'stretch',
+      alignSelf: 'stretch',
+    });
+  });
+
   it('ignores native layout callbacks from an obsolete measurement key', () => {
     const position = createPosition({ marginMode: 'cross' });
     const view = render(
@@ -1064,6 +1149,35 @@ describe('PerpsProPositionCard', () => {
     expect(screen.queryByTestId('perps-pro-position-tpsl-edit-BTC')).toBeNull();
     fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-action-BTC'));
     expect(onEditTpSl).toHaveBeenCalledWith(value, 'partial');
+  });
+
+  it('keeps both TP/SL gesture entries disabled until their editor handler is available', () => {
+    const onEditTpSl = jest.fn();
+    const value = createPosition({
+      tpslOrders: [triggerOrder('takeProfit', 1, '120', 'position')],
+    });
+    const view = render(
+      <PerpsProPositionCard accountIdentity="account-a" position={value} />,
+    );
+    const editId = 'perps-pro-position-tpsl-edit-BTC';
+    const actionId = 'perps-pro-position-tpsl-action-BTC';
+    expect(screen.getByTestId(editId)).toBeDisabled();
+    expect(screen.getByTestId(actionId)).toBeDisabled();
+    fireEvent.press(screen.getByTestId(editId));
+    fireEvent.press(screen.getByTestId(actionId));
+    expect(onEditTpSl).not.toHaveBeenCalled();
+    view.rerender(
+      <PerpsProPositionCard
+        accountIdentity="account-a"
+        onEditTpSl={onEditTpSl}
+        position={value}
+      />,
+    );
+    fireEvent.press(screen.getByTestId(editId));
+    expect(onEditTpSl).toHaveBeenLastCalledWith(value, 'position');
+    fireEvent.press(screen.getByTestId(actionId));
+    expect(onEditTpSl).toHaveBeenLastCalledWith(value, 'partial');
+    expect(onEditTpSl).toHaveBeenCalledTimes(2);
   });
 
   it('shows Position TP/SL prices and only the partial count for mixed orders', () => {

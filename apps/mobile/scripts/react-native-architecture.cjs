@@ -9,6 +9,8 @@ const BOOLEAN_ENV_VALUES = new Map([
   ['off', false],
 ]);
 
+const DEFAULT_NEW_ARCH_ENABLED = true;
+
 const parseArchitectureFlag = (name, value) => {
   if (value === undefined || value === '') {
     return undefined;
@@ -26,7 +28,10 @@ const parseArchitectureFlag = (name, value) => {
   return parsedValue;
 };
 
-const resolveReactNativeArchitecture = (environment = process.env) => {
+const resolveArchitecture = ({
+  environment = process.env,
+  projectProperty,
+} = {}) => {
   const candidates = [
     [
       'RCT_NEW_ARCH_ENABLED',
@@ -42,9 +47,13 @@ const resolveReactNativeArchitecture = (environment = process.env) => {
         environment.ORG_GRADLE_PROJECT_newArchEnabled,
       ),
     ],
+    [
+      'newArchEnabled',
+      parseArchitectureFlag('newArchEnabled', projectProperty),
+    ],
   ].filter(([, value]) => value !== undefined);
 
-  const architectureEnabled = candidates[0]?.[1] ?? false;
+  const architectureEnabled = candidates[0]?.[1] ?? DEFAULT_NEW_ARCH_ENABLED;
   const mismatch = candidates.find(
     ([, value]) => value !== architectureEnabled,
   );
@@ -62,27 +71,13 @@ const resolveReactNativeArchitecture = (environment = process.env) => {
   return architectureEnabled ? 'new' : 'legacy';
 };
 
+const resolveReactNativeArchitecture = (environment = process.env) =>
+  resolveArchitecture({ environment });
+
 const resolveGradleReactNativeArchitecture = ({
   environment = process.env,
   projectProperty,
-} = {}) => {
-  const architecture = resolveReactNativeArchitecture(environment);
-  const projectPropertyEnabled = parseArchitectureFlag(
-    'newArchEnabled',
-    projectProperty,
-  );
-
-  if (
-    projectPropertyEnabled !== undefined &&
-    projectPropertyEnabled !== (architecture === 'new')
-  ) {
-    throw new Error(
-      `[react-native-architecture] newArchEnabled=${projectPropertyEnabled} does not match the architecture selected for JavaScript tooling (${architecture}). Use RCT_NEW_ARCH_ENABLED or ORG_GRADLE_PROJECT_newArchEnabled consistently; a Gradle project property cannot select the architecture by itself.`,
-    );
-  }
-
-  return architecture;
-};
+} = {}) => resolveArchitecture({ environment, projectProperty });
 
 const resolveStartupProfilerWorkerDeferral = (environment = process.env) =>
   parseArchitectureFlag(

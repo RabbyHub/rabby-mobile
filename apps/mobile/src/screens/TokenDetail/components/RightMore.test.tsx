@@ -7,6 +7,27 @@ import {
   waitFor,
 } from '@testing-library/react-native';
 import { Platform } from 'react-native';
+import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
+import { RightMore } from './RightMore';
+
+jest.mock(
+  'react-native-gesture-handler/lib/commonjs/RNGestureHandlerModule',
+  () => require('react-native-gesture-handler/lib/commonjs/mocks/mocks'),
+);
+jest.mock(
+  'react-native-gesture-handler/lib/commonjs/specs/RNGestureHandlerButtonNativeComponent',
+  () => ({
+    __esModule: true,
+    default: require('react-native').requireNativeComponent(
+      'RNGestureHandlerButton',
+    ),
+  }),
+);
+jest.mock('react-native-gesture-handler', () => ({
+  TouchableOpacity: jest.requireActual(
+    'react-native-gesture-handler/lib/commonjs/components/touchables/TouchableOpacity',
+  ).default,
+}));
 
 const mockTogglePinned = jest.fn();
 const mockRemoveToken = jest.fn();
@@ -64,33 +85,34 @@ jest.mock('@/utils/modalGate', () => ({
   MODAL_GATE_IDS: { tokenDetailHeaderMenu: 'token-detail-header-menu' },
 }));
 
-const { RightMore } = require('./RightMore') as typeof import('./RightMore');
-
 const token = {
   id: 'eth',
   chain: 'eth',
 } as never;
 
-const originalOS = Platform.OS;
+describe('RightMore native header trigger', () => {
+  beforeEach(() => jest.clearAllMocks());
 
-beforeAll(() => {
-  Object.defineProperty(Platform, 'OS', {
-    configurable: true,
-    value: 'ios',
+  beforeAll(() => {
+    Object.defineProperty(Platform, 'OS', {
+      configurable: true,
+      value: 'ios',
+    });
   });
-});
 
-afterAll(() => {
-  Object.defineProperty(Platform, 'OS', {
-    configurable: true,
-    value: originalOS,
+  it('uses the RNGH host so the Fabric native-stack header receives presses', () => {
+    render(<RightMore token={token} refreshTags={jest.fn()} />);
+
+    expect(screen.UNSAFE_getByType(CustomTouchableOpacity).props.as).toBe(
+      'RNGHTouchableOpacity',
+    );
+    expect(screen.queryByTestId('token-header-menu')).toBeNull();
+
+    fireEvent.press(screen.getByTestId('token-header-more'));
+    expect(screen.getByTestId('token-header-menu')).toBeOnTheScreen();
   });
-});
 
-beforeEach(() => jest.clearAllMocks());
-
-describe('RightMore header actions', () => {
-  it('keeps favorite and remove actions wired', async () => {
+  it('keeps the favorite and remove actions wired', async () => {
     const refreshTags = jest.fn();
     render(<RightMore token={token} refreshTags={refreshTags} />);
 
@@ -118,6 +140,7 @@ describe('RightMore header actions', () => {
     expect(mockRemoveToken).toHaveBeenCalledTimes(1);
     expect(mockRemoveToken).toHaveBeenCalledWith(token);
 
+    // A late duplicate dismiss must not open the confirmation twice.
     act(() => mockTipProps.onModalDismiss());
     expect(mockRemoveToken).toHaveBeenCalledTimes(1);
   });

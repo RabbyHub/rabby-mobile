@@ -8,6 +8,7 @@ import React, {
 import type { ListRenderItem, ViewStyle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 import { RefreshControl } from 'react-native-gesture-handler';
+import { CollapsibleRefreshControl } from '@/components/customized/ScrollViewLike/CollapsibleRefreshControl';
 
 import { navigateDeprecated } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -413,7 +414,8 @@ const NFTListInner = ({ onForeground, onRefresh }: Props) => {
         showsHorizontalScrollIndicator={false}
         style={[styles.bgContainer, styles.list]}
         refreshControl={
-          <RefreshControl
+          <CollapsibleRefreshControl
+            as={RefreshControl}
             style={styles.bgContainer}
             onRefresh={async () => {
               setIsManualRefreshing(true);

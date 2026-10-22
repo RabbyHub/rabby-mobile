@@ -17,12 +17,13 @@ import {
   useSingleHomeAccount,
   useSingleHomeIsDecrease,
   useSingleHomeLoading,
+  useSingleHomeNavigationCleanup,
 } from './hooks/singleHome';
-import { useUnmount } from 'ahooks';
 import { HomeTopArea } from './components/HomeTopArea';
 import { BackupReminderCard } from '@/components2024/BackupReminderCard';
 import { useBackupReminder } from '@/hooks/account';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useRoute } from '@react-navigation/native';
+import type { GetNestedScreenRouteProp } from '@/navigation-type';
 import { apisAddressBalance } from '@/hooks/useCurrentBalance';
 import {
   BOTTOM_BUTTON_DOUBLE_HEIGHT,
@@ -65,6 +66,14 @@ function SingleAddressActivationProbe({
 }
 
 function SingleAddressHomeContent(): JSX.Element {
+  const route =
+    useRoute<
+      GetNestedScreenRouteProp<
+        'SingleAddressNavigatorParamList',
+        'SingleAddressHome'
+      >
+    >();
+  useSingleHomeNavigationCleanup(route.params?.navigationId);
   const activationCycleId = ensureFeatureActivation(
     'single-address',
     'single_address_content_render_fallback',
@@ -106,10 +115,6 @@ function SingleAddressHomeContent(): JSX.Element {
   const handleTouchEnd = () => {
     apisSingleHome.setFoldChart(true);
   };
-
-  useUnmount(() => {
-    apisSingleHome.clearCurrentAccount();
-  });
 
   return (
     <HomeBackgroundOpacityProvider value={backgroundOpacity}>
