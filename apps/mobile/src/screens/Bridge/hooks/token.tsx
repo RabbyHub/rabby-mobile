@@ -1,5 +1,4 @@
 import { CHAINS, CHAINS_ENUM } from '@debank/common';
-import { ETH_USDT_CONTRACT } from '@/constant/swap';
 import { formatTokenAmountInput, formatUsdValue } from '@/utils/number';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { findChain, findChainByEnum, findChainByServerID } from '@/utils/chain';
@@ -29,7 +28,6 @@ import { useBridgeSlippage } from './slippage';
 import { isNaN } from 'lodash';
 import { useLoadMatteredChainBalances } from '@/hooks/accountChainBalance';
 import { useAggregatorsList, useBridgeSupportedChains } from './atom';
-import { getERC20Allowance } from '@/core/apis/provider';
 import { apiProvider } from '@/core/apis';
 import { getGasTokenBalance } from '@/core/apis/transactions';
 import { useFocusEffect, useRoute } from '@react-navigation/native';
@@ -47,11 +45,8 @@ import { getQuoteList as getBridgeQuoteList } from '@rabby-wallet/rabby-bridge';
 import { convert18RawToTokenRaw, isTempoChain } from '@/utils/tempo';
 import type { SelectedBridgeQuote } from '../types';
 import { createBridgeInitializationController } from '../bridgeInitialization';
-import {
-  getBridgeAllowanceRequestKey,
-  getOrCreateBridgeAllowanceRequest,
-  mergeBridgeQuoteBatch,
-} from '../utils/quoteResultBatch';
+import { getBridgeQuoteApproval } from '../utils/bridgeApproval';
+import { mergeBridgeQuoteBatch } from '../utils/quoteResultBatch';
 import { useSceneActiveAsync } from '@/screens/SwapBridge/hooks/useSceneActiveAsync';
 import { getRabbyFeeInfo } from '@/screens/Swap/hooks/fee';
 
@@ -856,53 +851,18 @@ export const useBridge = (
             return;
           }
 
-          let tokenApproved = false;
-          let allowance = '0';
-          const fromFindChain = findChain({ serverId: fromToken?.chain });
-          if (fromToken?.id === fromFindChain?.nativeTokenAddress) {
-            tokenApproved = true;
-          } else if (!quote.approve_contract_id) {
-            tokenApproved = true;
-          } else {
-            const allowanceKey = getBridgeAllowanceRequestKey({
-              chainId: fromToken.chain,
-              tokenId: fromToken.id,
-              spender: quote.approve_contract_id,
-              account: currentAccount.address,
-            });
-            const allowanceRequest = getOrCreateBridgeAllowanceRequest(
-              allowanceRequestCache,
-              allowanceKey,
-              () =>
-                getERC20Allowance(
-                  fromToken.chain,
-                  fromToken.id,
-                  quote.approve_contract_id!,
-                  currentAccount.address,
-                  currentAccount,
-                ),
-            );
-            allowance = await allowanceRequest;
-            tokenApproved = new BigNumber(allowance).gte(
-              new BigNumber(amount).times(10 ** fromToken.decimals),
-            );
-          }
-
-          let shouldTwoStepApprove = false;
-          if (
-            fromFindChain?.enum === CHAINS_ENUM.ETH &&
-            isSameAddress(fromToken.id, ETH_USDT_CONTRACT) &&
-            Number(allowance) !== 0 &&
-            !tokenApproved
-          ) {
-            shouldTwoStepApprove = true;
-          }
+          const approval = await getBridgeQuoteApproval({
+            fromToken,
+            approveContractId: quote.approve_contract_id,
+            amount,
+            account: currentAccount,
+            allowanceCache: allowanceRequestCache,
+          });
 
           return {
             ...quote,
             loading: false,
-            shouldTwoStepApprove,
-            shouldApproveToken: !tokenApproved,
+            ...approval,
           };
         };
 
