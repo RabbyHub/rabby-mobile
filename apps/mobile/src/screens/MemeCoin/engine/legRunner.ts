@@ -141,15 +141,20 @@ export const createLegRunner = (deps: LegRunnerDeps): LegRunner => {
       }
 
       const payUsd = payAmount.times(payToken.price || 0);
-      if (payUsd.gt(0) && receiveToken.price) {
-        const impactPct = quote.receiveAmount
-          .times(receiveToken.price)
-          .minus(payUsd)
-          .div(payUsd)
-          .times(100);
-        if (impactPct.lte(-slippagePct)) {
-          return fail('priceImpact');
-        }
+      if (
+        !payUsd.gt(0) ||
+        !receiveToken.price ||
+        !quote.receiveAmount.isFinite()
+      ) {
+        return fail('failed');
+      }
+      const impactPct = quote.receiveAmount
+        .times(receiveToken.price)
+        .minus(payUsd)
+        .div(payUsd)
+        .times(100);
+      if (impactPct.lte(-slippagePct)) {
+        return fail('priceImpact');
       }
 
       await gate.wait();

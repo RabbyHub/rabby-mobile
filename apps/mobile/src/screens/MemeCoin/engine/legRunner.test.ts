@@ -136,6 +136,34 @@ describe('createLegRunner.prepareAndBroadcast', () => {
     expect(t.route.quote).not.toHaveBeenCalled();
   });
 
+  it('fails without building when the receive token price is unknown', async () => {
+    const t = setup();
+    const getToken = t.deps.getToken;
+    t.deps.getToken = async (chain, id) =>
+      id === 'pepe' ? token('pepe', 'eth', 0, 0) : getToken(chain, id);
+    const runner = createLegRunner(t.deps);
+    await expect(
+      runner.prepareAndBroadcast(leg(), createPauseGate()),
+    ).resolves.toEqual({ ok: false, reason: 'failed' });
+    expect(t.build).not.toHaveBeenCalled();
+  });
+
+  it('fails without building when the quote amount is not a number', async () => {
+    const t = setup(
+      {},
+      {
+        quote: async () => ({
+          receiveAmount: new BigNumber(NaN),
+          build: async () => TXS,
+        }),
+      },
+    );
+    await expect(
+      t.runner.prepareAndBroadcast(leg(), createPauseGate()),
+    ).resolves.toEqual({ ok: false, reason: 'failed' });
+    expect(t.signer.openDirect).not.toHaveBeenCalled();
+  });
+
   it('fails with noQuote when the route has no quote', async () => {
     const t = setup({}, { quote: async () => null });
     await expect(
