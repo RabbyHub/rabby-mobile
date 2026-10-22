@@ -22,6 +22,7 @@ const LogoOdos = require('@/assets/icons/swap/odos.png');
 const LogoMagpie = require('@/assets/icons/swap/magpie.jpg');
 const LogoUni = require('@/assets/icons/swap/uniswap.png');
 const LogoSushi = require('@/assets/icons/swap/sushi.png');
+const LogoPancakeSwap = require('@/assets/icons/swap/pancakeswap.png');
 
 const LogoTokenDefault = require('@/assets/icons/swap/token-default.svg');
 
@@ -95,6 +96,12 @@ export const DEX = {
     logo: LogoSushi,
     name: 'Sushi',
     chains: DEX_SUPPORT_CHAINS[DEX_ENUM.SUSHI],
+  },
+  [DEX_ENUM.PANCAKESWAP]: {
+    id: DEX_ENUM.PANCAKESWAP,
+    logo: LogoPancakeSwap,
+    name: 'PancakeSwap',
+    chains: DEX_SUPPORT_CHAINS[DEX_ENUM.PANCAKESWAP],
   },
 };
 
