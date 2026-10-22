@@ -1,10 +1,9 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Platform, Pressable, View } from 'react-native';
+import { Image, Platform, Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import RcMore from '@/assets/icons/home/more-cc.svg';
 import RcFavorite from '@/assets2024/icons/browser/favorite-cc.svg';
-import RcRemoveArrow from '@/assets2024/icons/common/token-header-remove-arrow.svg';
 import { Tip } from '@/components/Tip';
 import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
@@ -22,7 +21,7 @@ export const RightMore: React.FC<{
   token: ITokenItem;
   refreshTags: () => void;
 }> = ({ token, refreshTags }) => {
-  const { styles, colors2024 } = useTheme2024({ getStyle });
+  const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const isPinned = useIsUserTokenPinned(token);
   const [visible, setVisible] = useState(false);
@@ -100,17 +99,17 @@ export const RightMore: React.FC<{
               pendingRemoveTokenRef.current = token;
               setVisible(false);
             }}>
-            {({ pressed }) => (
-              <>
-                <Text
-                  style={[styles.removeText, pressed && styles.pressedText]}>
-                  {t('page.singleHome.tokenActions.remove')}
-                </Text>
-                <RcRemoveArrow
-                  color={colors2024[pressed ? 'brand-default' : 'neutral-foot']}
-                />
-              </>
-            )}
+            <Text style={styles.removeText}>
+              {t('page.singleHome.tokenActions.remove')}
+            </Text>
+            <Image
+              source={
+                isLight
+                  ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_remove.png')
+                  : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_remove_dark.png')
+              }
+              style={styles.removeIcon}
+            />
           </Pressable>
         </View>
       }>
@@ -171,11 +170,15 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     lineHeight: 20,
   },
   removeText: {
-    color: colors2024['neutral-title-1'],
+    color: colors2024['red-default'],
     fontFamily: 'SF Pro Rounded',
     fontWeight: '700',
     fontSize: 16,
     lineHeight: 20,
   },
   pressedText: { color: colors2024['brand-default'] },
+  removeIcon: {
+    width: 22,
+    height: 22,
+  },
 }));

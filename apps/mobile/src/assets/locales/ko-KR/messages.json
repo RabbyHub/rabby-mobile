@@ -2735,6 +2735,18 @@
       }
     },
     "perpsDetail": {
+      "simpleAccount": {
+        "margin": "마진",
+        "averageEntry": "평균 진입가",
+        "estimatedLiquidationPrice": "예상 청산가",
+        "estimatedLiquidationDistance": "예상 청산 거리",
+        "tpSl": "익절/손절",
+        "takeProfitPrice": "익절 가격",
+        "stopLossPrice": "손절 가격",
+        "estimatedPnl": "예상 PNL",
+        "closePositionTitle": "{{coin}} 포지션 종료",
+        "estimatedRealizedPnl": "예상 실현 PNL"
+      },
       "simpleChart": {
         "openInterest": "미결제 약정",
         "volume24h": "24시간 거래량",

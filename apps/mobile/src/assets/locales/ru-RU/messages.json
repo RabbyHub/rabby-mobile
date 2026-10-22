@@ -2854,6 +2854,18 @@
       }
     },
     "perpsDetail": {
+      "simpleAccount": {
+        "margin": "Маржа",
+        "averageEntry": "Средняя цена входа",
+        "estimatedLiquidationPrice": "Расч. цена ликв.",
+        "estimatedLiquidationDistance": "Расч. расстояние до ликв.",
+        "tpSl": "TP/SL",
+        "takeProfitPrice": "Цена тейк-профита",
+        "stopLossPrice": "Цена стоп-лосса",
+        "estimatedPnl": "Расч. PnL",
+        "closePositionTitle": "Закрыть позицию {{coin}}",
+        "estimatedRealizedPnl": "Расч. реализованный PnL"
+      },
       "simpleChart": {
         "openInterest": "Открытый интерес",
         "volume24h": "Объём за 24 ч",

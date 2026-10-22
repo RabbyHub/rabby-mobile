@@ -21,7 +21,13 @@ import type {
   MenuSubContentProps,
   ContextMenuAuxliliaryProps,
 } from '../types'
-import React, { Children, ReactElement, cloneElement, useRef } from 'react'
+import React, {
+  Children,
+  ReactElement,
+  cloneElement,
+  useImperativeHandle,
+  useRef,
+} from 'react'
 import {
   flattenChildren,
   pickChildren,
@@ -548,6 +554,16 @@ If you want to use a custom component as your <Content />, you can use the creat
 
     // @ts-expect-error - useRef requires initial value in strict mode
     const menuRef = useRef<ContextMenuButton>()
+
+    useImperativeHandle(
+      props.iosMenuViewRef,
+      () => ({
+        async dismissMenu() {
+          await menuRef.current?.dismissMenu()
+        },
+      }),
+      []
+    )
 
     return (
       <Component

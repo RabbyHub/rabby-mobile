@@ -363,7 +363,7 @@ describe.each(['light', 'dark'] as const)(
       ).toMatchObject({ paddingTop: 24, paddingBottom: 36 });
     });
 
-    it('blurs the leverage input before the slider handles a touch', () => {
+    it('blurs the leverage input when native sliding starts without a JS responder capture', () => {
       render(
         <PerpsProLeverageSheet
           currentLeverage={20}
@@ -375,15 +375,11 @@ describe.each(['light', 'dark'] as const)(
         />,
       );
 
-      expect(
-        screen
-          .getByTestId('perps-pro-leverage-slider-section')
-          .props.onStartShouldSetResponderCapture({ nativeEvent: {} }),
-      ).toBe(false);
+      fireEvent(screen.getByTestId('leverage-slider'), 'slidingStart', 20);
 
       expect(mockBottomSheetInputBlur).toHaveBeenCalledTimes(1);
       expect(mockKeyboardDismiss).toHaveBeenCalledTimes(1);
-      expect(mockSliderHapticStart).not.toHaveBeenCalled();
+      expect(mockSliderHapticStart).toHaveBeenCalledWith(20);
       expect(mockSliderHapticValueChange).not.toHaveBeenCalled();
     });
 

@@ -67,6 +67,7 @@ export const TokenRowContextMenu = memo(
               : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_remove.png'),
             key: 'remove',
             androidIconName: 'ic_rabby_menu_token_remove',
+            destructive: true,
             action() {
               onRemoveToken(token);
             },
