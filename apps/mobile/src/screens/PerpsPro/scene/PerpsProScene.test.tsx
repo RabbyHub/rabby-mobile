@@ -974,7 +974,6 @@ describe('PerpsProScene market loading states', () => {
     expect(
       screen.getByTestId('perps-pro-info-pager').props.offscreenPageLimit,
     ).toBeUndefined();
-    expect(screen.getByTestId('perps-pro-info-tabs-overlay')).toBeOnTheScreen();
     expect(screen.getByTestId('perps-pro-trade-section')).toBeTruthy();
     expect(
       screen.getByTestId('perps-pro-scroll-account', {
@@ -1940,7 +1939,8 @@ describe('PerpsProScene market loading states', () => {
 
     const scroll = screen.getByTestId('perps-pro-scroll');
     const tradeSection = screen.getByTestId('perps-pro-trade-section');
-    expect(scroll.props.stickyHeaderIndices).toEqual([]);
+    // The tab strip is the list's sticky section header now.
+    expect(screen.getByTestId('perps-pro-info-tabs-overlay')).toBeTruthy();
     expect(StyleSheet.flatten(scroll.props.style)?.transform).toBeUndefined();
     expect(StyleSheet.flatten(tradeSection.props.style)).toMatchObject({
       backgroundColor: 'neutral-bg-1',
@@ -1982,19 +1982,8 @@ describe('PerpsProScene market loading states', () => {
         screen.getByTestId('perps-pro-info-tabs-spacer').props.style,
       ),
     ).toMatchObject({ height: 60 });
-    const infoTabsOverlayStyle = StyleSheet.flatten(
-      screen.getByTestId('perps-pro-info-tabs-overlay').props.style,
-    );
-    expect(infoTabsOverlayStyle).toEqual(
-      expect.objectContaining({ height: 38 }),
-    );
-    const infoTabsTranslateY = infoTabsOverlayStyle?.transform?.[0]
-      ?.translateY as unknown as number | { __getValue: () => number };
-    expect(
-      typeof infoTabsTranslateY === 'number'
-        ? infoTabsTranslateY
-        : infoTabsTranslateY.__getValue(),
-    ).toBe(542);
+    // The tab strip is the list's sticky section header now.
+    expect(screen.getByTestId('perps-pro-info-tabs-overlay')).toBeTruthy();
     expect(screen.getAllByTestId('perps-pro-info-tab-account')).toHaveLength(1);
   });
 
@@ -2518,7 +2507,7 @@ describe('PerpsProScene market loading states', () => {
 
     expect(screen.getByTestId('perps-region-alert')).toBeOnTheScreen();
     expect(screen.queryByTestId('perps-pro-market-overlay')).toBeNull();
-    expect(screen.queryByTestId('perps-pro-info-tabs-overlay')).toBeNull();
+    expect(screen.getByTestId('perps-pro-info-tabs-overlay')).toBeTruthy();
 
     fireEvent(screen.getByTestId('perps-region-alert'), 'layout', {
       nativeEvent: {

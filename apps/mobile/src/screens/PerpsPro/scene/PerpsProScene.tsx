@@ -1422,6 +1422,26 @@ export const PerpsProScene: React.FC<{
                 ref={infoPagerRef}
                 renderItem={renderItem}
                 renderListHeader={renderScrollLeadIn}
+                renderStickyHeader={(_tab, active) =>
+                  active && displayedInfoTab ? (
+                    <View
+                      style={styles.stickyTabsWrap}
+                      testID="perps-pro-info-tabs-overlay">
+                      <PerpsProInfoTabs
+                        activeTab={displayedInfoTab}
+                        historyEnabled={
+                          historyEnabled && info.accountState !== 'noAccount'
+                        }
+                        indicatorPosition={infoTabIndicatorPosition}
+                        onChange={requestInfoTab}
+                        onHistoryPress={openHistory}
+                        openOrdersCount={info.allOpenOrdersCount}
+                        pendingFundingCount={info.pendingFundingCount}
+                        positionsCount={info.allPositionsCount}
+                      />
+                    </View>
+                  ) : null
+                }
                 requestedTab={requestedInfoTab}
                 scrollBridge={infoScrollBridge}
                 stickyOffset={infoStickyOffset}
@@ -1469,25 +1489,6 @@ export const PerpsProScene: React.FC<{
                     style={styles.marketOverlay}
                     testID="perps-pro-market-overlay">
                     {marketBarContent}
-                  </CollapsiblePinnedLayer>
-                ) : null}
-                {settledInfoTab && displayedInfoTab ? (
-                  <CollapsiblePinnedLayer
-                    baseTop={infoTabsNaturalAnchor}
-                    style={styles.infoTabsOverlay}
-                    testID="perps-pro-info-tabs-overlay">
-                    <PerpsProInfoTabs
-                      activeTab={displayedInfoTab}
-                      historyEnabled={
-                        historyEnabled && info.accountState !== 'noAccount'
-                      }
-                      indicatorPosition={infoTabIndicatorPosition}
-                      onChange={requestInfoTab}
-                      onHistoryPress={openHistory}
-                      openOrdersCount={info.allOpenOrdersCount}
-                      pendingFundingCount={info.pendingFundingCount}
-                      positionsCount={info.allPositionsCount}
-                    />
                   </CollapsiblePinnedLayer>
                 ) : null}
               </>
@@ -1726,6 +1727,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     right: 0,
     top: 0,
     zIndex: 3,
+  },
+  stickyTabsWrap: {
+    backgroundColor: colors2024['neutral-bg-1'],
   },
   infoTabsOverlay: {
     height: PERPS_PRO_INFO_TABS_HEIGHT,

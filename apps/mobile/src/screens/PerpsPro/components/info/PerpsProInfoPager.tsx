@@ -11,6 +11,7 @@ import React, {
 } from 'react';
 import {
   FlatList,
+  SectionList,
   View,
   type LayoutChangeEvent,
   type ListRenderItem,
@@ -136,6 +137,10 @@ type PerpsProInfoPagerProps<Row> = {
   onPageSelected: (tab: PerpsProInfoTab, requestId: number) => void;
   renderItem: ListRenderItem<Row>;
   renderListHeader: (tab: PerpsProInfoTab, active: boolean) => ReactElement;
+  renderStickyHeader?: (
+    tab: PerpsProInfoTab,
+    active: boolean,
+  ) => ReactElement | null;
   requestedTab: PerpsProInfoTab | null;
   scrollBridge?: PerpsProInfoScrollBridgeController;
   stickyOffset: number;
@@ -182,6 +187,7 @@ const PerpsProInfoPagerInner = <Row,>(
     onPageSelected,
     renderItem,
     renderListHeader,
+    renderStickyHeader,
     requestedTab,
     scrollBridge,
     stickyOffset,
@@ -410,7 +416,7 @@ const PerpsProInfoPagerInner = <Row,>(
         return;
       }
       recordDesiredOffset(tab, offset);
-      listRefs.current[tab]?.scrollToOffset({ animated: false, offset });
+      scrollListToOffset(listRefs.current[tab], offset, false);
     },
     [correctAndroidPageOffset, prepareOffsetsOnUI, recordDesiredOffset],
   );
@@ -435,7 +441,7 @@ const PerpsProInfoPagerInner = <Row,>(
       // layers are shared, so switching must not scroll them back into view.
       const offset = activeOffset;
       recordDesiredOffset(tab, offset);
-      listRefs.current[tab]?.scrollToOffset({ animated: false, offset });
+      scrollListToOffset(listRefs.current[tab], offset, false);
     }
   }, [getActiveScrollOffset, recordDesiredOffset, scrollBridge]);
 
@@ -791,7 +797,7 @@ const PerpsProInfoPagerInner = <Row,>(
       } else {
         recordDesiredOffset(tab, offset);
       }
-      listRefs.current[tab]?.scrollToOffset({ animated, offset });
+      scrollListToOffset(listRefs.current[tab], offset, animated);
       onActivateOffset(offset);
     },
     [
@@ -1214,15 +1220,21 @@ const PerpsProInfoPagerInner = <Row,>(
             style={styles.page}
             testID={`perps-pro-info-page-${tab}`}>
             {preparedTabs.has(tab) ? (
-              <FlatList
+              <SectionList
                 ListHeaderComponent={renderListHeader(tab, active)}
                 contentContainerStyle={contentContainerStyle[tab]}
-                data={data[tab] as never}
                 initialNumToRender={6}
                 keyboardShouldPersistTaps="handled"
                 keyExtractor={(item, index) =>
                   String((item as { key?: string }).key ?? index)
                 }
+                renderSectionHeader={() =>
+                  active && renderStickyHeader
+                    ? renderStickyHeader(tab, active)
+                    : null
+                }
+                sections={[{ data: data[tab] as never[], key: tab }]}
+                stickySectionHeadersEnabled
                 onContentSizeChange={(_width, height) =>
                   recordContentHeight(tab, height)
                 }
@@ -1259,6 +1271,38 @@ const PerpsProInfoPagerInner = <Row,>(
       })}
     </ReanimatedPagerView>
   );
+};
+
+const scrollListToOffset = (
+  list: PerpsProInfoListHandle | undefined,
+  offset: number,
+  animated: boolean,
+) => {
+  if (!list) {
+    return;
+  }
+  const target = list as unknown as {
+    scrollToOffset?: (params: { animated?: boolean; offset: number }) => void;
+    scrollToLocation?: (params: {
+      animated?: boolean;
+      itemIndex: number;
+      sectionIndex: number;
+      viewOffset: number;
+      viewPosition: number;
+    }) => void;
+  };
+  if (typeof target.scrollToOffset === 'function') {
+    target.scrollToOffset({ animated, offset });
+    return;
+  }
+  // SectionList: scroll so the first item lands at `offset`.
+  target.scrollToLocation?.({
+    animated,
+    itemIndex: 0,
+    sectionIndex: 0,
+    viewOffset: -offset,
+    viewPosition: 0,
+  });
 };
 
 export const PerpsProInfoPager = forwardRef(PerpsProInfoPagerInner) as <Row>(
