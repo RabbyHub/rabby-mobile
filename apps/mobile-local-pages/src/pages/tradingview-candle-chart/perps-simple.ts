@@ -13,7 +13,8 @@ import {
 import { attachSimplePriceAxis } from './perps-simple-axis';
 import { createSimpleNativePriceAxis } from './perps-simple-native-axis';
 import { formatTime, formatYTime } from './chart-logic';
-import { PERPS_PRO_FONT_FAMILY } from './perps-pro-font';
+import { resolvePerpsProFontFamily } from './perps-pro-font';
+import { getRuntimeInfo } from '../../utils/webview-runtime';
 import {
   avoidSimpleLabelOverlap,
   layoutSimplePriceLabels,
@@ -38,6 +39,7 @@ export function createSimpleChart(
   container: HTMLElement,
   publish: (event: SimpleChartEvent) => void,
 ) {
+  const fontFamily = resolvePerpsProFontFamily(getRuntimeInfo());
   const host = document.createElement('div');
   Object.assign(host.style, {
     position: 'absolute',
@@ -48,7 +50,7 @@ export function createSimpleChart(
   const chart = createChart(host, {
     autoSize: true,
     layout: {
-      fontFamily: PERPS_PRO_FONT_FAMILY,
+      fontFamily,
       fontSize: 11,
       attributionLogo: false,
     },
@@ -106,7 +108,7 @@ export function createSimpleChart(
     pointerEvents: 'none',
     overflow: 'hidden',
     zIndex: '3',
-    fontFamily: PERPS_PRO_FONT_FAMILY,
+    fontFamily,
   });
   host.appendChild(overlay);
   let identity = '';
@@ -933,7 +935,9 @@ export function createSimpleChart(
       return true;
     },
     refreshFonts() {
-      chart.applyOptions({ layout: { fontFamily: PERPS_PRO_FONT_FAMILY } });
+      const fontFamily = resolvePerpsProFontFamily(getRuntimeInfo());
+      chart.applyOptions({ layout: { fontFamily } });
+      overlay.style.fontFamily = fontFamily;
       schedule();
     },
     destroy() {

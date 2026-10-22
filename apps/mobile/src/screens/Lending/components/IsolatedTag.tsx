@@ -1,4 +1,5 @@
 import React from 'react';
+import { RoundedFontStyles } from '@/core/utils/fonts';
 import { useTranslation } from 'react-i18next';
 
 import { useTheme2024 } from '@/hooks/theme';
@@ -28,7 +29,7 @@ const IsolatedTag = ({
       title: isGlobal ? undefined : t('page.Lending.modalDesc.isolatedTitle'),
       titleStyle: {
         marginTop: 12,
-        fontWeight: '900',
+        ...RoundedFontStyles.heavy,
       },
       sectionStyle: {
         marginTop: 8,

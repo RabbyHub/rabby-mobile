@@ -1,3 +1,4 @@
+import { RoundedFontStyles } from '@/core/utils/fonts';
 import { createCustomNativeStackNavigator as createNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
 import {
   DarkTheme,
@@ -796,8 +797,7 @@ export default function AppNavigation() {
                       headerTintColor: colors['neutral-title-2'],
                       headerTitleStyle: {
                         color: colors['neutral-title-2'],
-                        fontWeight: '900',
-                        fontFamily: 'SF Pro Rounded',
+                        ...RoundedFontStyles.heavy,
                       },
                     })}
                   />

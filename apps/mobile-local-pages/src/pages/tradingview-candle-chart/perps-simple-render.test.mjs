@@ -21,6 +21,9 @@ const { appendSimplePriceGuide } = await import(
 const logic = await import(
   pathToFileURL(path.join(base, 'perps-simple-logic.ts'))
 );
+const { resolvePerpsProFontFamily } = await import(
+  pathToFileURL(path.join(base, 'perps-pro-font.ts'))
+);
 const source = fs.readFileSync(path.join(base, 'perps-simple.ts'), 'utf8');
 const ast = ts.createSourceFile(
   'chart.ts',
@@ -39,6 +42,128 @@ assert.ok(render);
 const js = ts.transpileModule(render, {
   compilerOptions: { target: ts.ScriptTarget.ES2022 },
 }).outputText;
+
+// Font component contract: run the production factory with DOM/chart boundaries
+// stubbed. Rendering helpers and geometry have separate coverage below.
+function fontScene(platform) {
+  const factory = ast.statements.find(
+    node =>
+      ts.isFunctionDeclaration(node) && node.name?.text === 'createSimpleChart',
+  );
+  const factoryJs = ts.transpileModule(
+    factory.getText(ast).replace(/^export /, ''),
+    { compilerOptions: { target: ts.ScriptTarget.ES2022 } },
+  ).outputText;
+  function element() {
+    return {
+      style: {},
+      children: [],
+      appendChild(child) {
+        this.children.push(child);
+      },
+      addEventListener() {},
+    };
+  }
+  const container = element();
+  const appliedOptions = [];
+  let initialOptions;
+  const context = {
+    platform,
+    container,
+    getRuntimeInfo: () => ({ platform: context.platform }),
+    resolvePerpsProFontFamily,
+    document: { createElement: element },
+    window: { addEventListener() {} },
+    createChart(_host, options) {
+      initialOptions = options;
+      return {
+        addSeries: () => ({}),
+        timeScale: () => ({ subscribeVisibleLogicalRangeChange() {} }),
+        subscribeCrosshairMove() {},
+        applyOptions: options => appliedOptions.push(options),
+      };
+    },
+    CandlestickSeries: 'candle',
+    AreaSeries: 'area',
+    LineStyle: { Dashed: 'dashed' },
+    LineType: { Simple: 'simple' },
+    CrosshairMode: { Magnet: 'magnet' },
+    TrackingModeExitMode: { OnTouchEnd: 'onTouchEnd' },
+    attachSimplePriceAxis: () => ({}),
+    createSimpleNativePriceAxis: () => ({}),
+    requestAnimationFrame: () => 1,
+    ResizeObserver: class {
+      observe() {}
+    },
+  };
+  const chart = vm.runInNewContext(
+    factoryJs + '\ncreateSimpleChart(container, () => {});',
+    context,
+  );
+  return {
+    chart,
+    context,
+    initialOptions,
+    appliedOptions,
+    overlay: container.children[0].children[0],
+  };
+}
+
+test('Simple chart starts with the platform family in both canvas and overlay', () => {
+  for (const platform of ['ios', 'android']) {
+    const { initialOptions, overlay } = fontScene(platform);
+    const expected = resolvePerpsProFontFamily({ platform });
+    assert.equal(initialOptions.layout.fontFamily, expected);
+    assert.equal(overlay.style.fontFamily, expected);
+  }
+});
+
+test('Simple runtime info refreshes fonts without waiting for iOS assets and after Android assets load', async () => {
+  const entryAst = ts.createSourceFile(
+    'index.tsx',
+    fs.readFileSync(path.join(base, 'index.tsx'), 'utf8'),
+    ts.ScriptTarget.Latest,
+    true,
+  );
+  const handler = entryAst.statements.find(
+    node =>
+      ts.isFunctionDeclaration(node) && node.name?.text === 'handleMessage',
+  );
+  const handlerJs = ts.transpileModule(handler.getText(entryAst), {
+    compilerOptions: { target: ts.ScriptTarget.ES2022 },
+  }).outputText;
+  for (const platform of ['ios', 'android']) {
+    const scene = fontScene(platform === 'ios' ? 'android' : 'ios');
+    scene.context.platform = platform;
+    let finishFontLoad;
+    const handlerContext = {
+      simpleChart: scene.chart,
+      perpsProFontLoadPromise: null,
+      ensurePerpsProFontsLoaded() {
+        if (platform === 'android') {
+          handlerContext.perpsProFontLoadPromise = new Promise(resolve => {
+            finishFontLoad = resolve;
+          });
+        }
+      },
+    };
+    vm.runInNewContext(
+      handlerJs + '\nhandleMessage({ detail: { type: "GOT_RUNTIME_INFO" } });',
+      handlerContext,
+    );
+    const expected = resolvePerpsProFontFamily({ platform });
+    assert.equal(scene.appliedOptions.length, 1);
+    assert.equal(scene.appliedOptions[0].layout.fontFamily, expected);
+    assert.equal(scene.overlay.style.fontFamily, expected);
+    if (finishFontLoad) {
+      finishFontLoad();
+      await handlerContext.perpsProFontLoadPromise;
+      assert.equal(scene.appliedOptions.length, 2);
+      assert.equal(scene.appliedOptions[1].layout.fontFamily, expected);
+    }
+  }
+});
+
 // Execute production render/helpers; only DOM and chart coordinates are faked.
 function scene(
   style,

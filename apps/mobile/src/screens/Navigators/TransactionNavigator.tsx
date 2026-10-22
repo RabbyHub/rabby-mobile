@@ -1,3 +1,4 @@
+import { RoundedFontStyles } from '@/core/utils/fonts';
 import 'react-native-gesture-handler';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -144,8 +145,7 @@ export default function TransactionNavigator() {
           title: 'Send',
           headerTitleStyle: {
             color: colors2024['neutral-title-1'],
-            fontWeight: '900',
-            fontFamily: 'SF Pro Rounded',
+            ...RoundedFontStyles.heavy,
             fontSize: 20,
           },
           headerLeft: renderSendHeaderLeft,
@@ -158,8 +158,7 @@ export default function TransactionNavigator() {
           title: 'Send',
           headerTitleStyle: {
             color: colors2024['neutral-title-1'],
-            fontWeight: '900',
-            fontFamily: 'SF Pro Rounded',
+            ...RoundedFontStyles.heavy,
             fontSize: 20,
           },
           headerLeft: renderSendHeaderLeft,
@@ -172,8 +171,7 @@ export default function TransactionNavigator() {
           title: 'Send',
           headerTitleStyle: {
             color: colors2024['neutral-title-1'],
-            fontWeight: '900',
-            fontFamily: 'SF Pro Rounded',
+            ...RoundedFontStyles.heavy,
             fontSize: 20,
           },
         })}
@@ -185,8 +183,7 @@ export default function TransactionNavigator() {
           title: 'Receive',
           headerTitleStyle: {
             color: colors2024['neutral-title-1'],
-            fontWeight: '900',
-            fontFamily: 'SF Pro Rounded',
+            ...RoundedFontStyles.heavy,
             fontSize: 20,
           },
         })}
@@ -220,8 +217,7 @@ export default function TransactionNavigator() {
           headerTintColor: colors['neutral-title-1'],
           headerTitleStyle: {
             fontSize: 20,
-            fontWeight: '900',
-            fontFamily: 'SF Pro Rounded',
+            ...RoundedFontStyles.heavy,
             color: colors['neutral-title-1'],
           },
           headerStyle: {
@@ -262,8 +258,7 @@ export default function TransactionNavigator() {
           headerTintColor: colors['neutral-title-1'],
           headerTitleStyle: {
             fontSize: 20,
-            fontWeight: '900',
-            fontFamily: 'SF Pro Rounded',
+            ...RoundedFontStyles.heavy,
             color: colors['neutral-title-1'],
           },
           headerStyle: {
@@ -281,8 +276,7 @@ export default function TransactionNavigator() {
           headerTintColor: colors['neutral-title-1'],
           headerTitleStyle: {
             fontSize: 20,
-            fontWeight: '900',
-            fontFamily: 'SF Pro Rounded',
+            ...RoundedFontStyles.heavy,
             color: colors['neutral-title-1'],
           },
           headerStyle: {
@@ -370,8 +364,7 @@ export default function TransactionNavigator() {
           headerTintColor: colors['neutral-title-1'],
           headerTitleStyle: {
             fontSize: 20,
-            fontWeight: '900',
-            fontFamily: 'SF Pro Rounded',
+            ...RoundedFontStyles.heavy,
             color: colors['neutral-title-1'],
           },
           headerStyle: {
@@ -393,8 +386,7 @@ export default function TransactionNavigator() {
           headerTintColor: colors['neutral-title-1'],
           headerTitleStyle: {
             fontSize: 20,
-            fontWeight: '900',
-            fontFamily: 'SF Pro Rounded',
+            ...RoundedFontStyles.heavy,
             color: colors['neutral-title-1'],
           },
         })}
@@ -413,8 +405,7 @@ export default function TransactionNavigator() {
             headerTintColor: colors['neutral-title-1'],
             headerTitleStyle: {
               fontSize: 20,
-              fontWeight: '900',
-              fontFamily: 'SF Pro Rounded',
+              ...RoundedFontStyles.heavy,
               color: colors['neutral-title-1'],
             },
           })
@@ -430,8 +421,7 @@ export default function TransactionNavigator() {
           headerTintColor: colors['neutral-title-1'],
           headerTitleStyle: {
             fontSize: 20,
-            fontWeight: '900',
-            fontFamily: 'SF Pro Rounded',
+            ...RoundedFontStyles.heavy,
             color: colors['neutral-title-1'],
           },
           headerStyle: {
@@ -474,8 +464,7 @@ export default function TransactionNavigator() {
           },
           headerTitleStyle: {
             fontSize: 12,
-            fontWeight: '900',
-            fontFamily: 'SF Pro Rounded',
+            ...RoundedFontStyles.heavy,
             color: colors['neutral-title-1'],
           },
         })}

@@ -48,8 +48,12 @@ export const MODAL_GATE_IDS = {
   devUpgradePromptPreview: 'dev-upgrade-prompt-preview',
   convertDustEntryGuide: 'convert-dust-entry-guide',
   convertDustStopSheet: 'convert-dust-stop-sheet',
-  nativeMenu: 'native-menu',
   feedbackHistoryMediaPreview: 'feedback-history-media-preview',
+  nativeMenu: 'native-menu',
+  perpsProBasicOrderEdit: 'perps-pro-basic-order-edit',
+  perpsProConditionalOrderEdit: 'perps-pro-conditional-order-edit',
+  perpsProOpenOrderEditConfirmation: 'perps-pro-open-order-edit-confirmation',
+  perpsProPositionTpSlConfirmation: 'perps-pro-position-tpsl-confirmation',
 } as const;
 
 export type ModalGateId = (typeof MODAL_GATE_IDS)[keyof typeof MODAL_GATE_IDS];

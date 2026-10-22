@@ -10,6 +10,11 @@ const mockLongPressGesture = {
   onStart: jest.fn().mockReturnThis(),
 };
 
+// modalGate pulls the shared reexports, which touch the haptics native module.
+jest.mock('react-native-haptic-feedback', () => ({
+  trigger: jest.fn(),
+}));
+
 jest.mock('react-native-gesture-handler', () => ({
   Gesture: { LongPress: () => mockLongPressGesture },
   GestureDetector: ({ children }: React.PropsWithChildren) => children,
