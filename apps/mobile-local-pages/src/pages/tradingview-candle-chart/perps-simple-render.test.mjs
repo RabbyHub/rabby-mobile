@@ -210,39 +210,42 @@ function scene(
   return { labels, guides };
 }
 
-test('liquidation uses the shared position text while keeping the raw line coordinate and other labels', () => {
-  const raw = 110.4565;
-  const baseline = scene('candle', 120, null, false, undefined, {
-    liquidationPrice: raw,
-  });
-  for (const text of ['110', '110.45', '110.457', '1,000']) {
-    const { labels, guides } = scene('candle', 120, null, false, undefined, {
-      liquidationPrice: raw,
-      liquidationPriceText: text,
+for (const [kind, priceKey, textKey] of [
+  ['liquidation', 'liquidationPrice', 'liquidationPriceText'],
+  ['entry', 'entryPrice', 'entryPriceText'],
+])
+  test(`${kind} uses the shared position text while keeping the raw line coordinate and other labels`, () => {
+    const raw = 110.4565;
+    const baseline = scene('candle', 120, null, false, undefined, {
+      [priceKey]: raw,
     });
+    for (const text of ['110', '110.45', '110.457', '1,000']) {
+      const { labels, guides } = scene('candle', 120, null, false, undefined, {
+        [priceKey]: raw,
+        [textKey]: text,
+      });
+      assert.equal(
+        labels.find(n => n.dataset.priceKind === kind).textContent,
+        text,
+      );
+      assert.deepEqual(
+        guides.map(n => n.children[0].attributes.d),
+        baseline.guides.map(n => n.children[0].attributes.d),
+      );
+      assert.deepEqual(
+        labels
+          .filter(n => n.dataset.priceKind !== kind)
+          .map(n => n.textContent),
+        baseline.labels
+          .filter(n => n.dataset.priceKind !== kind)
+          .map(n => n.textContent),
+      );
+    }
     assert.equal(
-      labels.find(n => n.dataset.priceKind === 'liquidation').textContent,
-      text,
+      baseline.labels.find(n => n.dataset.priceKind === kind).textContent,
+      String(raw),
     );
-    assert.deepEqual(
-      guides.map(n => n.children[0].attributes.d),
-      baseline.guides.map(n => n.children[0].attributes.d),
-    );
-    assert.deepEqual(
-      labels
-        .filter(n => n.dataset.priceKind !== 'liquidation')
-        .map(n => n.textContent),
-      baseline.labels
-        .filter(n => n.dataset.priceKind !== 'liquidation')
-        .map(n => n.textContent),
-    );
-  }
-  assert.equal(
-    baseline.labels.find(n => n.dataset.priceKind === 'liquidation')
-      .textContent,
-    String(raw),
-  );
-});
+  });
 
 test('latest stays horizontal and held prices overlay ordinary labels without shifting them', () => {
   for (const style of ['candle', 'area'])

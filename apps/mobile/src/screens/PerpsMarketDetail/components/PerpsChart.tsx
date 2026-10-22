@@ -53,6 +53,7 @@ export const PerpsChart = React.memo(function PerpsChart({
     liquidationPrice: number;
     liquidationPriceText?: string;
     entryPrice: number;
+    entryPriceText?: string;
   };
   accountKey: string;
   history: readonly { time: number; side: string }[];

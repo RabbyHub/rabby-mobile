@@ -18,7 +18,7 @@ import type {
   SimpleChartMessage,
 } from '@/components2024/TradingViewCandleChart/type';
 import { usePerpsSimpleChart } from './usePerpsSimpleChart';
-import { simpleLiquidationPriceText } from '../account/model';
+import { simplePositionPriceText } from '../account/model';
 
 jest.mock('react-native-localize', () => ({
   getLocales: () => [{ languageCode: 'en', countryCode: 'US', isRTL: false }],
@@ -102,7 +102,7 @@ const config: Omit<SimpleChartConfig, 'range' | 'style' | 'interval'> = {
 const fills: SimpleChartFill[] = [];
 const prices = {
   liquidationPrice: 23.45,
-  liquidationPriceText: simpleLiquidationPriceText('23.4500', 3),
+  liquidationPriceText: simplePositionPriceText('23.4500', 3),
 };
 const raw = (close = '105'): Candle => ({
   t: 1700000000000,
