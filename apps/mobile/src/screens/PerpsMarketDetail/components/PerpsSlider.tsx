@@ -11,6 +11,7 @@ import { Platform, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
+  type SharedValue,
 } from 'react-native-reanimated';
 import { useWindowDimensions } from 'react-native';
 import { trigger } from 'react-native-haptic-feedback';
@@ -19,6 +20,7 @@ import { triggerImpact } from '@/utils/common';
 
 const isAndroid = Platform.OS === 'android';
 const sliderHapticTriggerNumbers = [0, 50, 100];
+const CLOSE_POINTS = [0, 25, 50, 75, 100];
 // Matches Perps Pro: one light pulse per step change, throttled for flings.
 const CLOSE_HAPTIC_MIN_INTERVAL_MS = 80;
 
@@ -40,6 +42,48 @@ const getCloseStepIndex = (
   }
   const clamped = Math.max(minimum, Math.min(maximum, value));
   return Math.round((clamped - minimum) / step);
+};
+
+// Close track and points read the slider's UI-thread position, so they move in
+// the same frame as the thumb instead of waiting for the parent re-render.
+const ClosePoint: React.FC<{
+  point: number;
+  position: SharedValue<number>;
+  selectedFill: string;
+  selectedStroke: string;
+  unselectedFill: string;
+  unselectedStroke: string;
+}> = ({
+  point,
+  position,
+  selectedFill,
+  selectedStroke,
+  unselectedFill,
+  unselectedStroke,
+}) => {
+  const { styles } = useTheme2024({ getStyle });
+  const selectedStyle = useAnimatedStyle(
+    () => ({ opacity: point <= position.value ? 1 : 0 }),
+    [point],
+  );
+  const unselectedStyle = useAnimatedStyle(
+    () => ({ opacity: point <= position.value ? 0 : 1 }),
+    [point],
+  );
+  return (
+    <View style={styles.closePoint}>
+      <Animated.View
+        style={[styles.closePointLayer, unselectedStyle]}
+        testID={`perps-close-point-${point}-unselected`}>
+        <UnselectedPoint fill={unselectedFill} stroke={unselectedStroke} />
+      </Animated.View>
+      <Animated.View
+        style={[styles.closePointLayer, selectedStyle]}
+        testID={`perps-close-point-${point}-selected`}>
+        <SelectedPoint fill={selectedFill} stroke={selectedStroke} />
+      </Animated.View>
+    </View>
+  );
 };
 
 interface PerpsSliderProps {
@@ -77,6 +121,17 @@ export const PerpsSlider: React.FC<PerpsSliderProps> = ({
   });
 
   const showBubbleValue = useSharedValue(false);
+  const closePosition = useSharedValue(value);
+  const closeMinimum = minValue || 0;
+  const closeMaximum = maxValue || 100;
+  const closeProgressStyle = useAnimatedStyle(() => {
+    const range = closeMaximum - closeMinimum;
+    const ratio =
+      range > 0
+        ? Math.max(0, Math.min(1, (closePosition.value - closeMinimum) / range))
+        : 0;
+    return { width: `${ratio * 100}%` };
+  }, [closeMinimum, closeMaximum]);
   const { width } = useWindowDimensions();
   const previousValue = useRef<number>(0);
   const controlledValue = useRef(value);
@@ -218,34 +273,29 @@ export const PerpsSlider: React.FC<PerpsSliderProps> = ({
               styles.closeTrack,
               { backgroundColor: colors2024['neutral-line'] },
             ]}>
-            <View
+            <Animated.View
               style={[
                 styles.closeProgress,
-                {
-                  width: `${value}%`,
-                  backgroundColor: colors2024['neutral-title-1'],
-                },
+                { backgroundColor: colors2024['neutral-title-1'] },
+                closeProgressStyle,
               ]}
+              testID="perps-close-progress"
             />
           </View>
         )}
         {variant === 'close' && (
           <View pointerEvents="none" style={styles.points}>
-            {[0, 25, 50, 75, 100].map(point =>
-              point <= value ? (
-                <SelectedPoint
-                  key={point}
-                  fill={colors2024['neutral-bg-1']}
-                  stroke={colors2024['neutral-title-1']}
-                />
-              ) : (
-                <UnselectedPoint
-                  key={point}
-                  fill={colors2024['neutral-bg-1']}
-                  stroke={colors2024['neutral-info']}
-                />
-              ),
-            )}
+            {CLOSE_POINTS.map(point => (
+              <ClosePoint
+                key={point}
+                point={point}
+                position={closePosition}
+                selectedFill={colors2024['neutral-bg-1']}
+                selectedStroke={colors2024['neutral-title-1']}
+                unselectedFill={colors2024['neutral-bg-1']}
+                unselectedStroke={colors2024['neutral-info']}
+              />
+            ))}
           </View>
         )}
         <Slider
@@ -256,6 +306,7 @@ export const PerpsSlider: React.FC<PerpsSliderProps> = ({
           onValueChange={handleValueChange}
           onSlidingStart={handleSlidingStart}
           onSlidingComplete={handleSlidingComplete}
+          {...(variant === 'close' ? { positionValue: closePosition } : {})}
           minimumValue={minValue || 0}
           maximumValue={maxValue || 100}
           step={step}
@@ -292,6 +343,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     borderRadius: 2,
   },
   closeProgress: { height: 4, borderRadius: 2 },
+  closePoint: { width: 8, height: 8 },
+  closePointLayer: { position: 'absolute', left: 0, top: 0 },
   closeSlider: { height: 20, zIndex: 2 },
   closeThumb: { width: 20, height: 20 },
   points: {
