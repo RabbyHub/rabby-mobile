@@ -93,7 +93,6 @@ import {
   getPerpsProInfoTabsNaturalAnchor,
   PERPS_PRO_INFO_TABS_HEIGHT,
   PERPS_PRO_INFO_SECTION_DIVIDER_HEIGHT,
-  PERPS_PRO_INFO_TABS_PLACEHOLDER_HEIGHT,
   PERPS_PRO_INFO_SECTION_TOP_GAP,
 } from '../components/info/perpsProInfoTabsSticky';
 import {
@@ -758,8 +757,19 @@ export const PerpsProScene: React.FC<{
   // the pager, driven by one UI-thread offset.
   const marketLayerTop = PERPS_PRO_HEADER_HEIGHT + regionAlertExtent;
   const tradeLayerTop = marketLayerTop + PERPS_PRO_MARKET_BAR_HEIGHT;
-  const sceneTabsTop = tradeLayerTop + tradeRowHeight;
-  const contentInsetTop = sceneTabsTop + PERPS_PRO_INFO_TABS_PLACEHOLDER_HEIGHT;
+  // The tab strip is the list's sticky section header now. Its block starts
+  // inside the trade region with a transparent top pad, so when it pins at the
+  // top of the list the bar itself rests exactly below the market bar.
+  const listHeaderHeight =
+    PERPS_PRO_HEADER_HEIGHT +
+    tradeRowHeight +
+    PERPS_PRO_INFO_SECTION_TOP_GAP +
+    PERPS_PRO_INFO_SECTION_DIVIDER_HEIGHT;
+  const tabBlockPaddingTop =
+    regionAlertExtent +
+    PERPS_PRO_MARKET_BAR_HEIGHT -
+    PERPS_PRO_INFO_SECTION_TOP_GAP -
+    PERPS_PRO_INFO_SECTION_DIVIDER_HEIGHT;
   const scrollContentMinimumHeightStyle = useMemo<ViewStyle | null>(
     () =>
       scrollViewportHeight > 0
@@ -1268,14 +1278,6 @@ export const PerpsProScene: React.FC<{
       onPress={openMarketSelector}
     />
   );
-  // The tab strip pins right below the (also pinned) market bar. The 16px gap
-  // and 6px divider scroll away with the strip, so the pin point is measured
-  // from the bar itself.
-  const infoTabsPinTop =
-    regionAlertExtent +
-    PERPS_PRO_MARKET_BAR_HEIGHT -
-    PERPS_PRO_INFO_SECTION_TOP_GAP -
-    PERPS_PRO_INFO_SECTION_DIVIDER_HEIGHT;
   const tradeSectionLayer = (
     <CollapsibleScrollingLayer
       baseTop={tradeLayerTop}
@@ -1299,11 +1301,11 @@ export const PerpsProScene: React.FC<{
                 activeTab={settledInfoTab}
                 authorizeNativePageGestures={Platform.OS === 'android'}
                 contentContainerStyle={scrollContentStyles}
-                contentInsetTop={contentInsetTop}
                 data={rowsByTab}
                 initialRequestId={infoTabRequestIdRef.current}
                 keepAllTabsMounted={keepAllInfoTabListsMounted}
                 indicatorPosition={infoTabIndicatorPosition}
+                listHeaderHeight={listHeaderHeight}
                 nativeVerticalScrollEnabled={Platform.OS !== 'android'}
                 offscreenPageLimit={infoPagerOffscreenPageLimit}
                 onLayout={updateScrollViewportHeight}
@@ -1313,6 +1315,47 @@ export const PerpsProScene: React.FC<{
                 onPageSelected={commitInfoTab}
                 ref={infoPagerRef}
                 renderItem={renderItem}
+                renderStickyHeader={(tab, active) => {
+                  if (!displayedInfoTab) {
+                    return null;
+                  }
+                  return (
+                    <View
+                      style={{ paddingTop: tabBlockPaddingTop }}
+                      testID={
+                        active
+                          ? 'perps-pro-info-tabs-overlay'
+                          : `perps-pro-info-tabs-overlay-${tab}`
+                      }>
+                      <View
+                        style={styles.infoTabsSpacer}
+                        testID={
+                          active
+                            ? 'perps-pro-info-tabs-spacer'
+                            : `perps-pro-info-tabs-spacer-${tab}`
+                        }>
+                        <View
+                          pointerEvents="none"
+                          style={styles.infoSectionDivider}
+                        />
+                      </View>
+                      <View style={styles.infoTabsBar}>
+                        <PerpsProInfoTabs
+                          activeTab={displayedInfoTab}
+                          historyEnabled={
+                            historyEnabled && info.accountState !== 'noAccount'
+                          }
+                          indicatorPosition={infoTabIndicatorPosition}
+                          onChange={requestInfoTab}
+                          onHistoryPress={openHistory}
+                          openOrdersCount={info.allOpenOrdersCount}
+                          pendingFundingCount={info.pendingFundingCount}
+                          positionsCount={info.allPositionsCount}
+                        />
+                      </View>
+                    </View>
+                  );
+                }}
                 requestedTab={requestedInfoTab}
                 scrollBridge={infoScrollBridge}
                 scrollToTab={sceneController.scrollToTab}
@@ -1327,36 +1370,6 @@ export const PerpsProScene: React.FC<{
               ) : (
                 tradeSectionLayer
               )
-            ) : null}
-            {displayedInfoTab ? (
-              <CollapsiblePinnedLayer
-                baseTop={sceneTabsTop}
-                pinTop={infoTabsPinTop}
-                style={styles.infoTabsLayer}
-                testID="perps-pro-info-tabs-overlay">
-                <View
-                  style={styles.infoTabsSpacer}
-                  testID="perps-pro-info-tabs-spacer">
-                  <View
-                    pointerEvents="none"
-                    style={styles.infoSectionDivider}
-                  />
-                </View>
-                <View style={styles.infoTabsBar}>
-                  <PerpsProInfoTabs
-                    activeTab={displayedInfoTab}
-                    historyEnabled={
-                      historyEnabled && info.accountState !== 'noAccount'
-                    }
-                    indicatorPosition={infoTabIndicatorPosition}
-                    onChange={requestInfoTab}
-                    onHistoryPress={openHistory}
-                    openOrdersCount={info.allOpenOrdersCount}
-                    pendingFundingCount={info.pendingFundingCount}
-                    positionsCount={info.allPositionsCount}
-                  />
-                </View>
-              </CollapsiblePinnedLayer>
             ) : null}
             {positionedOverlaysReady ? (
               <CollapsiblePinnedLayer
@@ -1622,13 +1635,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     right: 0,
     top: 0,
     zIndex: 3,
-  },
-  infoTabsLayer: {
-    left: 0,
-    position: 'absolute',
-    right: 0,
-    top: 0,
-    zIndex: 2,
   },
   infoTabsBar: {
     backgroundColor: colors2024['neutral-bg-1'],

@@ -1910,7 +1910,8 @@ describe('PerpsProScene market loading states', () => {
 
     const scroll = screen.getByTestId('perps-pro-scroll');
     const tradeSection = screen.getByTestId('perps-pro-trade-section');
-    // The header, market, trade and tab strip are siblings of the pager now.
+    // The tab strip is the list's sticky header; the header, market and trade
+    // panel remain shared siblings of the pager.
     expect(screen.getByTestId('perps-pro-info-tabs-overlay')).toBeTruthy();
     expect(StyleSheet.flatten(scroll.props.style)?.transform).toBeUndefined();
     expect(StyleSheet.flatten(tradeSection.props.style)).toMatchObject({
@@ -1935,7 +1936,12 @@ describe('PerpsProScene market loading states', () => {
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-scroll').props.contentContainerStyle,
       ),
-    ).toMatchObject({ minHeight: 1202, paddingTop: 580 });
+    ).toMatchObject({ minHeight: 1202, paddingTop: 0 });
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-list-leading-space').props.style,
+      ),
+    ).toMatchObject({ height: 502 });
     const marketOverlayStyle = StyleSheet.flatten(
       screen.getByTestId('perps-pro-market-overlay').props.style,
     );
@@ -1952,7 +1958,8 @@ describe('PerpsProScene market loading states', () => {
         screen.getByTestId('perps-pro-info-tabs-spacer').props.style,
       ),
     ).toMatchObject({ height: 22 });
-    // The tab strip is a pinned layer below the market bar.
+    // The sticky block keeps a transparent top pad so its bar rests below the
+    // market bar when pinned.
     expect(screen.getByTestId('perps-pro-info-tabs-overlay')).toBeTruthy();
     expect(screen.getAllByTestId('perps-pro-info-tab-account')).toHaveLength(1);
   });

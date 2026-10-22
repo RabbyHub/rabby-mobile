@@ -16,6 +16,7 @@ screen), and then adds what that library cannot express:
 | **content that scrolls away but stays above the pinned layers** | no                   | yes (`ScrollingLayer`)       |
 | shared scene offset on switch                                   | no                   | yes                          |
 | **virtualized list surface**                                    | yes                  | yes (`SceneList`)            |
+| **sticky header inside the list**                               | yes                  | yes (`SceneSectionList`)     |
 | horizontal paging                                               | library pager        | caller-owned pager (or none) |
 
 ## Model
@@ -30,11 +31,14 @@ offset.
   <HeaderLayer />       translateY = -min(scrollY, H)        (collapses)
   <PinnedLayer baseTop={H} />   translateY = clamp(H - scrollY, 0, H)  (pins)
   <ScrollingLayer baseTop={H + marketH} />                     (scrolls away)
-  <PinnedLayer baseTop={tabsTop} pinTop={marketH} />           (pins below)
   <Pager>
-    <SceneList tabKey="positions" contentInsetTop={H + marketH + tradeH}>
+    <SceneSectionList
+      tabKey="positions"
+      ListHeaderComponent={<View style={{ height: H + tradeH }} />}
+      renderSectionHeader={TabBar}  // transparent pad + bar
+    >
       …rows…
-    </SceneList>
+    </SceneSectionList>
   </Pager>
 </CollapsibleSceneProvider>
 ```
@@ -47,6 +51,12 @@ below another pinned layer instead of at absolute zero.
 thread. A page that becomes active is aligned to the current scene offset
 (`syncOffsetOnActivate` defaults to `true`), so switching tabs cannot move the
 shared header/market/trade layers.
+
+`SceneSectionList` is the same surface for a section list with a sticky header.
+When a pinned bar must sit below a fixed overlay (for example a market bar),
+give the section header a transparent top pad and render the visible bar at the
+bottom of that pad. The bar then belongs to the native scroll view, so it can
+never drift away from its rows.
 
 For a caller-owned pager, create the controller above the provider and share it
 with the pager:
@@ -68,6 +78,7 @@ const controller = useCollapsibleSceneController();
 
 - v0: provider, shared scroll value, per-tab handles, the three layer
   primitives, `SceneScrollView`.
-- v1: `SceneList`, `pinTop` for stacked pinned layers, shared-offset activation.
+- v1: `SceneList`, `SceneSectionList`, `pinTop` for stacked pinned layers,
+  shared-offset activation.
 - next: horizontal pager integration helper, `onTabChange` preview support,
   keyboard inset handling.
