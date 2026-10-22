@@ -73,8 +73,6 @@ export const useDeleteAccountModal = () => {
 
       AuthenticationModal.show({
         confirmText: i18n.t('page.manageAddress.confirm'),
-        // Deleting an account is destructive: keep the confirm action red.
-        confirmButtonType: 'danger',
         cancelText: i18n.t('page.manageAddress.cancel'),
         title,
         description: needAuth
