@@ -10,7 +10,7 @@ import React, {
   type ReactElement,
 } from 'react';
 import {
-  Animated,
+  FlatList,
   View,
   type LayoutChangeEvent,
   type ListRenderItem,
@@ -1217,7 +1217,7 @@ const PerpsProInfoPagerInner = <Row,>(
             style={styles.page}
             testID={`perps-pro-info-page-${tab}`}>
             {preparedTabs.has(tab) ? (
-              <Animated.FlatList
+              <FlatList
                 ListHeaderComponent={renderListHeader(tab, active)}
                 contentContainerStyle={contentContainerStyle[tab]}
                 data={data[tab] as never}
