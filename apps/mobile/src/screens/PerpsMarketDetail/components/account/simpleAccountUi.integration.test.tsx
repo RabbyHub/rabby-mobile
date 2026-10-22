@@ -409,6 +409,11 @@ it('swaps only a set position tag X for the shared spinner while cancelling', ()
 });
 
 it('draws the close progress and points from the thumb UI-thread position', () => {
+  // Keep this legacy-default assertion valid when the Fabric migration is merged.
+  Object.defineProperty(globalThis, 'nativeFabricUIManager', {
+    configurable: true,
+    value: undefined,
+  });
   const props = {
     variant: 'close' as const,
     onValueChange: jest.fn(),
@@ -460,6 +465,10 @@ afterEach(() => {
 });
 
 it('keeps default slider haptics isolated and gives close a haptic per step', () => {
+  Object.defineProperty(globalThis, 'nativeFabricUIManager', {
+    configurable: true,
+    value: undefined,
+  });
   startHapticClock();
   const trigger = require('react-native-haptic-feedback').trigger;
   trigger.mockClear();
