@@ -11,7 +11,7 @@ import {
   createAccountHeaderPresentation,
   type AccountHeaderHandle,
 } from './model';
-import { View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { PerpsGestureSlider } from '@/components/perps/PerpsGestureSlider';
 import { Text } from '@/components/Typography';
 import { CircleSpinnerCC } from '@/components2024/CircleSpinner/CircleSpinnerCC';
@@ -404,6 +404,43 @@ it('swaps only a set position tag X for the shared spinner while cancelling', ()
   ui.rerender(safe(<PerpEditTpSlPriceTag {...props} cancelPending />));
   expect(ui.UNSAFE_queryByType(CircleSpinnerCC)).toBeNull();
   expect(xIcons()).toHaveLength(1);
+});
+
+it('draws the close progress and points from the thumb UI-thread position', () => {
+  const props = {
+    variant: 'close' as const,
+    onValueChange: jest.fn(),
+    step: 1,
+  };
+  const ui = render(safe(<PerpsSlider {...props} value={30} />));
+  const position = ui.UNSAFE_getByType(PerpsGestureSlider).props.positionValue;
+  // The thumb and the custom track share one value: no React round trip.
+  expect(position).toBeDefined();
+  const width = () =>
+    StyleSheet.flatten(ui.getByTestId('perps-close-progress').props.style)
+      .width;
+  const opacity = (id: string) =>
+    StyleSheet.flatten(ui.getByTestId(id).props.style).opacity;
+  expect(position.value).toBe(30);
+  expect(width()).toBe('30%');
+  expect(opacity('perps-close-point-25-selected')).toBe(1);
+  expect(opacity('perps-close-point-50-selected')).toBe(0);
+  expect(opacity('perps-close-point-50-unselected')).toBe(1);
+
+  // A drag moves the shared value ahead of the controlled prop.
+  position.value = 60;
+  ui.rerender(safe(<PerpsSlider {...props} value={30} />));
+  expect(width()).toBe('60%');
+  expect(opacity('perps-close-point-50-selected')).toBe(1);
+  expect(opacity('perps-close-point-50-unselected')).toBe(0);
+  expect(opacity('perps-close-point-75-selected')).toBe(0);
+
+  // Default sliders keep their own position and built-in track.
+  ui.rerender(safe(<PerpsSlider value={30} onValueChange={jest.fn()} />));
+  expect(
+    ui.UNSAFE_getByType(PerpsGestureSlider).props.positionValue,
+  ).toBeUndefined();
+  expect(ui.queryByTestId('perps-close-progress')).toBeNull();
 });
 
 // Close haptics are throttled like Perps Pro; drive a clock so each case
