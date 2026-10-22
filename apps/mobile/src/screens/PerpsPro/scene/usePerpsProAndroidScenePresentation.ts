@@ -1,17 +1,9 @@
 import {
-  Easing,
-  useAnimatedReaction,
   useAnimatedStyle,
   useDerivedValue,
-  useSharedValue,
-  withTiming,
   type SharedValue,
 } from 'react-native-reanimated';
 
-import {
-  getNextPerpsProHeaderScrollState,
-  PERPS_PRO_HEADER_ANIMATION_MS,
-} from '../components/header/usePerpsProHeaderCollapse';
 import { getPerpsProAndroidScenePresentationGeometry } from './perpsProAndroidScenePresentation';
 
 export const usePerpsProAndroidScenePresentation = ({
@@ -33,54 +25,19 @@ export const usePerpsProAndroidScenePresentation = ({
   sceneLeadInHeight: number;
   scrollOffset: SharedValue<number>;
 }) => {
-  const accumulatedDelta = useSharedValue(0);
-  const headerVisible = useSharedValue(true);
-  const lastOffset = useSharedValue(0);
-  const visibilityProgress = useSharedValue(1);
-
-  useAnimatedReaction(
-    () => ({ enabled, offset: scrollOffset.value }),
-    state => {
-      if (!state.enabled) {
-        accumulatedDelta.value = 0;
-        headerVisible.value = true;
-        lastOffset.value = 0;
-        visibilityProgress.value = 1;
-        return;
-      }
-
-      const current = {
-        accumulatedDelta: accumulatedDelta.value,
-        lastOffset: lastOffset.value,
-        visible: headerVisible.value,
-      };
-      const next = getNextPerpsProHeaderScrollState(current, state.offset);
-      accumulatedDelta.value = next.accumulatedDelta;
-      lastOffset.value = next.lastOffset;
-      if (next.visible !== current.visible) {
-        headerVisible.value = next.visible;
-        visibilityProgress.value = withTiming(next.visible ? 1 : 0, {
-          duration: PERPS_PRO_HEADER_ANIMATION_MS,
-          easing: Easing.out(Easing.cubic),
-        });
-      }
-    },
-    [enabled],
-  );
-
   const geometry = useDerivedValue(
     () =>
       getPerpsProAndroidScenePresentationGeometry({
         infoTabsAnchorY,
         marketBarHeight,
         marketNaturalAnchorY,
-        rawOffset: scrollOffset.value,
+        rawOffset: enabled ? scrollOffset.value : 0,
         regionAlertExtent,
         restricted,
         sceneLeadInHeight,
-        visibilityProgress: visibilityProgress.value,
       }),
     [
+      enabled,
       infoTabsAnchorY,
       marketBarHeight,
       marketNaturalAnchorY,

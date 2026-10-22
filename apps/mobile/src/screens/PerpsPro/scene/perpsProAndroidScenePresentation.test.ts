@@ -15,7 +15,6 @@ describe('getPerpsProAndroidScenePresentationGeometry', () => {
       getPerpsProAndroidScenePresentationGeometry({
         ...base,
         rawOffset: 0,
-        visibilityProgress: 1,
       }),
     ).toEqual({
       headerOpacity: 1,
@@ -32,7 +31,6 @@ describe('getPerpsProAndroidScenePresentationGeometry', () => {
       getPerpsProAndroidScenePresentationGeometry({
         ...base,
         rawOffset: 500,
-        visibilityProgress: 0,
       }),
     ).toEqual({
       headerOpacity: 0,
@@ -53,7 +51,6 @@ describe('getPerpsProAndroidScenePresentationGeometry', () => {
         regionAlertExtent: 64,
         restricted: true,
         sceneLeadInHeight: 160,
-        visibilityProgress: 0,
       }),
     ).toEqual({
       headerOpacity: 0,
