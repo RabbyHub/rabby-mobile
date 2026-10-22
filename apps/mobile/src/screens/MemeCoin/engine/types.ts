@@ -74,6 +74,7 @@ export type FailReason =
   | 'noQuote'
   | 'priceImpact'
   | 'gasNotEnough'
+  | 'gasTooHigh'
   | 'simulationFailed'
   | 'insufficientBalance'
   | 'failed';

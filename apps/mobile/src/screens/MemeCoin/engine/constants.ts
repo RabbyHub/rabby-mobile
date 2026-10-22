@@ -21,6 +21,7 @@ export const FAIL_REASON_I18N_KEY: Record<FailReason, string> = {
   noQuote: 'page.swap.no-quote-found',
   priceImpact: 'page.convertDust.failReason.priceImpactTooHigh',
   gasNotEnough: 'page.convertDust.failReason.gasNotEnough',
+  gasTooHigh: 'page.convertDust.failReason.gasCostTooHigh',
   simulationFailed: 'page.signTx.swap.simulationFailed',
   insufficientBalance: 'page.swap.insufficient-balance',
   failed: 'global.failed',

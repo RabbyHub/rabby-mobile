@@ -21,6 +21,7 @@ export type HeadlessDirectSigner = {
 /**
  * Not added to the MiniSign registry on purpose: no portal UI and no direct-mode
  * transparent overlay, so several chains can sign concurrently (spec §5.1).
+ * Reuses MiniSign's gas-fee threshold via checkGasFeeTooHigh.
  * Requires isHideErrorUI, otherwise a failure would wait for an error UI that never renders.
  */
 export const createHeadlessDirectSigner = ({
@@ -30,7 +31,11 @@ export const createHeadlessDirectSigner = ({
 }): HeadlessDirectSigner => {
   assertMemeTradeAccount(account);
   const instance = new SignatureManager();
-  const config: SignerConfig = { account, autoUseGasFree: true };
+  const config: SignerConfig = {
+    account,
+    autoUseGasFree: true,
+    checkGasFeeTooHigh: true,
+  };
 
   const gasSelectionOf = (tx: Tx): GasSelectionOptions => {
     const { isSwap, isBridge, isSend, isSpeedUp, isCancel } =

@@ -4,6 +4,7 @@ const codes = {
   GAS_NOT_ENOUGH: 'Gas not enough',
   CANT_PROCESS: 'Can not process',
   PREFETCH_FAILURE: 'prepare failure',
+  GAS_FEE_TOO_HIGH: 'selectedGasCost too high',
 };
 
 describe('classifySignError', () => {
@@ -19,6 +20,15 @@ describe('classifySignError', () => {
     expect(classifySignError(new Error('prepare failure'), codes)).toBe(
       'simulationFailed',
     );
+  });
+
+  it('maps gas fee over the MiniSign limit', () => {
+    expect(classifySignError('selectedGasCost too high', codes)).toBe(
+      'gasTooHigh',
+    );
+    expect(
+      classifySignError(new Error('selectedGasCost too high'), codes),
+    ).toBe('gasTooHigh');
   });
 
   it('falls back to failed', () => {
