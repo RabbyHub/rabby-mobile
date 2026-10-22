@@ -23,6 +23,8 @@ import ApprovalsScreen from '../Approvals';
 import ReceiveScreen from '../Receive/Receive';
 import SwapBridgeScreen from '../SwapBridge';
 import { ConvertDustScreen } from '../ConvertDust';
+import { MemeCoinHeader } from '../MemeCoin/components/MemeCoinHeader';
+import { MemeCoinHomeScreen } from '../MemeCoin/home/MemeCoinHomeScreen';
 import { GasAccountScreen } from '../GasAccount';
 import { ScreenHeaderAccountSwitcher } from '@/components/AccountSwitcher/OnScreenHeader';
 import { HeaderAccountSwitcher } from '@/components/AccountSwitcher/HeaderAccountSwitcher';
@@ -356,6 +358,17 @@ export default function TransactionNavigator() {
             },
           ])
         }
+      />
+
+      <TransactionStack.Screen
+        name={RootNames.MemeCoin}
+        component={MemeCoinHomeScreen}
+        options={mergeScreenOptions2024([
+          {
+            title: t('page.home.services.meme'),
+            header: () => <MemeCoinHeader />,
+          },
+        ])}
       />
 
       <TransactionStack.Screen

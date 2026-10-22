@@ -1,0 +1,372 @@
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  FlatList,
+  Keyboard,
+  KeyboardAvoidingView,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
+import { Skeleton } from '@rneui/themed';
+import { useTranslation } from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Text } from '@/components/Typography';
+import { toast } from '@/components2024/Toast';
+import { IS_IOS } from '@/core/native/utils';
+import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
+import { useTheme2024 } from '@/hooks/theme';
+import { formatUsdValueKMB } from '@/screens/Home/utils/price';
+import useTokenList from '@/store/tokens';
+import { isAccountSupportDirectSign } from '@/utils/account';
+import { formatUsdValue } from '@/utils/number';
+import { createGetStyles2024 } from '@/utils/styles';
+import { BalanceCard } from '../components/BalanceCard';
+import { HoldingsPill } from '../components/HoldingsPill';
+import { MEMECOIN_HEADER_HEIGHT } from '../components/MemeCoinHeader';
+import { MemeEmptyState } from '../components/MemeEmptyState';
+import { MEME_ROW_HEIGHT, MemeTokenRow } from '../components/MemeTokenRow';
+import { filterBySymbol } from '../data/market';
+import { refreshMemeMarket, useMemeMarketStore } from '../data/memeMarketStore';
+import type { MemeMarketItem } from '../data/types';
+import { useMemeHoldings } from '../data/useMemeHoldings';
+import { toSellExecLegs } from '../engine/execLegs';
+import { tokenKey } from '../engine/keys';
+import {
+  consumeMemeCoinHomeReset,
+  pushMemeCoinBuy,
+  pushMemeCoinExecute,
+} from '../navigation';
+import {
+  DEFAULT_MAX_PRICE_IMPACT_PCT,
+  type MaxPriceImpactPct,
+  toSellHoldings,
+} from '../ui/helpers';
+import { getChainNativeToken } from '../ui/nativeToken';
+import { MemeCoinHomeBottomBar } from './MemeCoinHomeBottomBar';
+
+type HomeMode = 'market' | 'holdings';
+
+/** valueUsd is null in market mode (the row shows market cap instead) */
+type HomeRow = { key: string; meme: MemeMarketItem; valueUsd: number | null };
+
+const SKELETON_ROWS = 6;
+
+const keyExtractor = (row: HomeRow) => row.key;
+
+export const MemeCoinHomeScreen = () => {
+  const { t } = useTranslation();
+  const { styles } = useTheme2024({ getStyle });
+  const { top } = useSafeAreaInsets();
+  const { finalSceneCurrentAccount: account } = useSceneAccountInfo({
+    forScene: 'MakeTransactionAbout',
+  });
+  const address = account?.address;
+
+  const market = useMemeMarketStore(s => s.list);
+  const marketLoading = useMemeMarketStore(s => s.loading);
+  const marketError = useMemeMarketStore(s => s.error);
+  const { holdings, totalUsd } = useMemeHoldings(address);
+
+  const [mode, setMode] = useState<HomeMode>('market');
+  const [keyword, setKeyword] = useState('');
+  const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
+  const [maxPriceImpactPct, setMaxPriceImpactPct] = useState<MaxPriceImpactPct>(
+    DEFAULT_MAX_PRICE_IMPACT_PCT,
+  );
+
+  useEffect(() => {
+    refreshMemeMarket();
+  }, []);
+
+  useEffect(() => {
+    setSelectedKeys([]);
+    if (address) {
+      useTokenList.getState().getTokenList(address, true);
+    }
+  }, [address]);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (!consumeMemeCoinHomeReset()) {
+        return;
+      }
+      Keyboard.dismiss();
+      setMode('market');
+      setKeyword('');
+      setSelectedKeys([]);
+      if (address) {
+        useTokenList.getState().getTokenList(address, true);
+      }
+    }, [address]),
+  );
+
+  const selectedSet = useMemo(() => new Set(selectedKeys), [selectedKeys]);
+
+  const rows = useMemo<HomeRow[]>(
+    () =>
+      mode === 'market'
+        ? filterBySymbol(market, keyword, m => m.symbol).map(meme => ({
+            key: tokenKey(meme),
+            meme,
+            valueUsd: null,
+          }))
+        : filterBySymbol(holdings, keyword, h => h.meme.symbol).map(h => ({
+            key: tokenKey(h.meme),
+            meme: h.meme,
+            valueUsd: h.valueUsd,
+          })),
+    [mode, market, holdings, keyword],
+  );
+
+  const selectedMemes = useMemo(
+    () => market.filter(m => selectedSet.has(tokenKey(m))),
+    [market, selectedSet],
+  );
+  const selectedHoldings = useMemo(
+    () => holdings.filter(h => selectedSet.has(tokenKey(h.meme))),
+    [holdings, selectedSet],
+  );
+  const selectedCount =
+    mode === 'market' ? selectedMemes.length : selectedHoldings.length;
+
+  const holdingAvatars = useMemo(
+    () =>
+      holdings.map(h => ({ key: tokenKey(h.meme), logoUrl: h.meme.logoUrl })),
+    [holdings],
+  );
+
+  const toggle = useCallback((key: string) => {
+    setSelectedKeys(prev =>
+      prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key],
+    );
+  }, []);
+
+  const switchMode = useCallback(() => {
+    setMode(prev => (prev === 'market' ? 'holdings' : 'market'));
+    setKeyword('');
+    setSelectedKeys([]);
+  }, []);
+
+  const clearSelection = useCallback(() => setSelectedKeys([]), []);
+
+  const isSupportedAccount = useCallback(() => {
+    if (!account) {
+      return false;
+    }
+    if (!isAccountSupportDirectSign(account.type)) {
+      toast.error(t('page.memeCoin.unsupportedAccount'));
+      return false;
+    }
+    return true;
+  }, [account, t]);
+
+  const handleBuy = useCallback(() => {
+    if (!account || !isSupportedAccount()) {
+      return;
+    }
+    pushMemeCoinBuy({
+      accountAddress: account.address,
+      memes: selectedMemes.map(m => ({
+        id: m.id,
+        chain: m.chain,
+        symbol: m.symbol,
+        marketCap: m.marketCap,
+        logoUrl: m.logoUrl,
+      })),
+    });
+  }, [account, isSupportedAccount, selectedMemes]);
+
+  const handleSell = useCallback(() => {
+    if (!account || !isSupportedAccount()) {
+      return;
+    }
+    const legs = toSellExecLegs(
+      toSellHoldings(selectedHoldings, getChainNativeToken),
+    );
+    if (!legs.length) {
+      return;
+    }
+    const tokenLogos: Record<string, string> = {};
+    selectedHoldings.forEach(({ meme }) => {
+      tokenLogos[tokenKey(meme)] = meme.logoUrl;
+      const native = getChainNativeToken(meme.chain);
+      if (native) {
+        tokenLogos[tokenKey(native)] = native.logoUrl;
+      }
+    });
+    pushMemeCoinExecute({
+      accountAddress: account.address,
+      mode: 'sell',
+      legs,
+      maxPriceImpactPct,
+      tokenLogos,
+    });
+  }, [account, isSupportedAccount, maxPriceImpactPct, selectedHoldings]);
+
+  const renderItem = useCallback(
+    ({ item }: { item: HomeRow }) => (
+      <MemeTokenRow
+        itemKey={item.key}
+        logoUrl={item.meme.logoUrl}
+        chain={item.meme.chain}
+        symbol={item.meme.symbol}
+        address={item.meme.id}
+        valueText={
+          item.valueUsd === null
+            ? formatUsdValueKMB(item.meme.marketCap)
+            : formatUsdValue(item.valueUsd)
+        }
+        change24h={item.meme.change24h}
+        selected={selectedSet.has(item.key)}
+        onPress={toggle}
+      />
+    ),
+    [selectedSet, toggle],
+  );
+
+  const hasKeyword = !!keyword.trim();
+  const rightLabel =
+    selectedCount > 0
+      ? t('page.memeCoin.clear')
+      : mode === 'holdings'
+      ? t('page.memeCoin.value')
+      : hasKeyword
+      ? t('page.memeCoin.matchCount', { count: rows.length })
+      : t('page.memeCoin.marketCap');
+
+  const listHeader = (
+    <View style={styles.listHeader}>
+      <BalanceCard totalUsd={totalUsd} />
+      <HoldingsPill mode={mode} avatars={holdingAvatars} onPress={switchMode} />
+      <View style={styles.sectionHeader}>
+        <Text style={styles.sectionTitle}>
+          {mode === 'market'
+            ? t('page.memeCoin.marketTitle')
+            : t('page.memeCoin.holdingsTitle')}
+        </Text>
+        <TouchableOpacity
+          disabled={selectedCount === 0}
+          onPress={clearSelection}
+          hitSlop={8}>
+          <Text
+            style={
+              selectedCount > 0 ? styles.sectionAction : styles.sectionLabel
+            }>
+            {rightLabel}
+          </Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+
+  let listEmpty: React.ReactElement;
+  if (market.length === 0 && marketLoading) {
+    listEmpty = (
+      <View>
+        {Array.from({ length: SKELETON_ROWS }).map((_, index) => (
+          <Skeleton
+            key={index}
+            height={MEME_ROW_HEIGHT}
+            style={styles.skeletonRow}
+          />
+        ))}
+      </View>
+    );
+  } else if (market.length === 0 && marketError) {
+    listEmpty = (
+      <MemeEmptyState
+        text={t('page.memeCoin.loadFailed')}
+        onPress={refreshMemeMarket}
+      />
+    );
+  } else {
+    listEmpty = (
+      <MemeEmptyState
+        text={
+          mode === 'holdings' && !hasKeyword
+            ? t('page.memeCoin.noHoldings')
+            : t('page.memeCoin.noMatch')
+        }
+      />
+    );
+  }
+
+  return (
+    <KeyboardAvoidingView
+      style={styles.screen}
+      behavior={IS_IOS ? 'padding' : undefined}
+      keyboardVerticalOffset={MEMECOIN_HEADER_HEIGHT + top}>
+      <FlatList
+        data={rows}
+        keyExtractor={keyExtractor}
+        renderItem={renderItem}
+        extraData={selectedSet}
+        ListHeaderComponent={listHeader}
+        ListEmptyComponent={listEmpty}
+        contentContainerStyle={styles.listContent}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        initialNumToRender={10}
+      />
+      <MemeCoinHomeBottomBar
+        mode={mode}
+        selectedCount={selectedCount}
+        keyword={keyword}
+        onKeywordChange={setKeyword}
+        maxPriceImpactPct={maxPriceImpactPct}
+        onMaxPriceImpactChange={setMaxPriceImpactPct}
+        onBuy={handleBuy}
+        onSell={handleSell}
+      />
+    </KeyboardAvoidingView>
+  );
+};
+
+const getStyle = createGetStyles2024(({ colors2024 }) => ({
+  screen: {
+    flex: 1,
+    backgroundColor: colors2024['neutral-bg-0'],
+  },
+  listContent: {
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+  },
+  listHeader: {
+    paddingTop: 12,
+  },
+  sectionHeader: {
+    marginTop: 20,
+    marginBottom: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  sectionTitle: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '900',
+    color: colors2024['neutral-title-1'],
+  },
+  sectionLabel: {
+    paddingRight: 8,
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '400',
+    color: colors2024['neutral-body'],
+  },
+  sectionAction: {
+    paddingRight: 8,
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '400',
+    color: colors2024['neutral-body'],
+  },
+  skeletonRow: {
+    width: '100%',
+    marginBottom: 8,
+    borderRadius: 14,
+  },
+}));
