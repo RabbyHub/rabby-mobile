@@ -6,7 +6,7 @@ import {
   within,
 } from '@testing-library/react-native';
 import React from 'react';
-import { FlatList, StyleSheet, View } from 'react-native';
+import { FlatList, type ListRenderItem, StyleSheet, View } from 'react-native';
 
 const mockGesture = { handlers: {} as Record<string, jest.Mock> };
 const mockAnimations: Array<{
@@ -136,12 +136,19 @@ const fixtureHeader = (
     <View testID="fixture-trade" />
   </View>
 );
+const renderFixtureRow: ListRenderItem<{ key: string }> = ({ item }) => (
+  <View testID={`fixture-row-${item.key}`} />
+);
 const ControlledPager = ({
   activeKey = 'b',
+  listHeader = fixtureHeader,
   onIndexChange,
+  renderItem = renderFixtureRow,
 }: {
   activeKey?: string;
+  listHeader?: React.ComponentType | React.ReactElement;
   onIndexChange: (key: string) => void;
+  renderItem?: ListRenderItem<{ key: string }>;
 }) => {
   const controller = useCollapsibleSceneController();
   return (
@@ -152,13 +159,13 @@ const ControlledPager = ({
       syncOffsetOnActivate={false}
       tabs={keys}>
       <ScenePagerList
-        ListHeaderComponent={fixtureHeader}
+        ListHeaderComponent={listHeader}
         contentInsetTop={0}
         dataByKey={fixtureRows}
         keys={keys}
         keyExtractor={item => item.key}
         onIndexChange={onIndexChange}
-        renderItem={({ item }) => <View testID={`fixture-row-${item.key}`} />}
+        renderItem={renderItem}
         rowStartOffset={100}
         scrollOffset={controller.scrollY}
         tabKey={activeKey}
@@ -255,6 +262,55 @@ describe('Swipable SubScreen harness', () => {
 });
 
 describe('ScenePagerList native-boundary component contracts', () => {
+  it.each(['component', 'element'])(
+    'prepares, reverses and clears previews without rerendering active rows or the %s header',
+    headerKind => {
+      const Header = jest.fn(() => fixtureHeader);
+      const renderItem = jest.fn(renderFixtureRow);
+      render(
+        <ControlledPager
+          listHeader={headerKind === 'component' ? Header : <Header />}
+          onIndexChange={jest.fn()}
+          renderItem={renderItem}
+        />,
+      );
+      layoutPager();
+      const list = screen.UNSAFE_getByType(FlatList);
+      const initialRenderItem = list.props.renderItem;
+      const initialGestureHandlers = mockGesture.handlers;
+      const headerRenders = Header.mock.calls.length;
+      renderItem.mockClear();
+
+      beginDrag();
+      moveDrag(80);
+      expect(renderItem.mock.calls.map(([{ item }]) => item.key)).toEqual(
+        Array.from({ length: 10 }, (_, index) => `a-${index}`),
+      );
+      expect(Header).toHaveBeenCalledTimes(headerRenders);
+      expect(list.props.renderItem).toBe(initialRenderItem);
+      expect(mockGesture.handlers).toBe(initialGestureHandlers);
+      renderItem.mockClear();
+
+      moveDrag(-80);
+      expect(renderItem.mock.calls.map(([{ item }]) => item.key)).toEqual(
+        Array.from({ length: 10 }, (_, index) => `c-${index}`),
+      );
+      expect(Header).toHaveBeenCalledTimes(headerRenders);
+      expect(list.props.renderItem).toBe(initialRenderItem);
+      expect(mockGesture.handlers).toBe(initialGestureHandlers);
+      renderItem.mockClear();
+
+      releaseDrag(-80, false);
+      completeAnimation();
+      expect(queryPreview()).toBeNull();
+      expect(renderItem).not.toHaveBeenCalled();
+      expect(Header).toHaveBeenCalledTimes(headerRenders);
+      expect(screen.UNSAFE_getAllByType(FlatList)).toEqual([list]);
+      expect(list.props.renderItem).toBe(initialRenderItem);
+      expect(mockGesture.handlers).toBe(initialGestureHandlers);
+    },
+  );
+
   it('mounts only ten non-interactive neighbour rows during a drag and leaves the header stationary', () => {
     render(<ControlledPager onIndexChange={jest.fn()} />);
     const list = screen.UNSAFE_getByType(FlatList);

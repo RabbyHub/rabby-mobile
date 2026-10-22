@@ -6,6 +6,7 @@ import { SceneList, type SceneListProps } from './SceneList';
 import { ScenePager, ScenePagerItem, type ScenePagerTrack } from './ScenePager';
 
 const PREVIEW_ROW_LIMIT = 10;
+const PreviewKeyContext = React.createContext<string | null>(null);
 const previewSeparators = {
   highlight: () => undefined,
   unhighlight: () => undefined,
@@ -23,23 +24,29 @@ export type ScenePagerListProps<Row> = Omit<SceneListProps<Row>, 'data'> & {
 
 /** One persistent VirtualizedList; neighbours are bounded, non-scrolling views. */
 export function ScenePagerList<Row>(props: ScenePagerListProps<Row>) {
+  const { rowStartOffset, scrollOffset } = props;
+  const rowRegion = useMemo(
+    () => ({ startOffset: rowStartOffset, scrollOffset }),
+    [rowStartOffset, scrollOffset],
+  );
   return (
     <ScenePager
       activeKey={props.tabKey}
       keys={props.keys}
       onBoundary={props.onBoundary}
       onIndexChange={props.onIndexChange}
-      rowRegion={{
-        startOffset: props.rowStartOffset,
-        scrollOffset: props.scrollOffset,
-      }}
+      rowRegion={rowRegion}
       testID={props.testID ? `${props.testID}-pager` : undefined}>
-      {track => <PagerListContent {...props} track={track} />}
+      {(track, previewKey) => (
+        <PreviewKeyContext.Provider value={previewKey}>
+          <PagerListContent {...props} track={track} />
+        </PreviewKeyContext.Provider>
+      )}
     </ScenePager>
   );
 }
 
-function PagerListContent<Row>({
+function PagerListContentComponent<Row>({
   dataByKey,
   keys: _keys,
   onBoundary: _onBoundary,
@@ -53,33 +60,25 @@ function PagerListContent<Row>({
   track,
   ...listProps
 }: ScenePagerListProps<Row> & { track: ScenePagerTrack }) {
-  const header = useMemo(() => {
-    const previewKey = track.previewKey;
-    const Header = ListHeaderComponent;
-    return (
+  const Header = ListHeaderComponent;
+  const headerContent = useMemo(
+    () => (React.isValidElement(Header) ? Header : Header ? <Header /> : null),
+    [Header],
+  );
+  const header = useMemo(
+    () => (
       <View>
-        {React.isValidElement(Header) ? Header : Header ? <Header /> : null}
-        {previewKey ? (
-          <View
-            accessibilityElementsHidden
-            importantForAccessibility="no-hide-descendants"
-            pointerEvents="none"
-            style={styles.preview}
-            testID="scene-pager-preview">
-            <ScenePagerItem pageKey={previewKey} track={track}>
-              {(dataByKey[previewKey] ?? [])
-                .slice(0, PREVIEW_ROW_LIMIT)
-                .map((item, index) => (
-                  <React.Fragment key={keyExtractor?.(item, index) ?? index}>
-                    {renderItem({ item, index, separators: previewSeparators })}
-                  </React.Fragment>
-                ))}
-            </ScenePagerItem>
-          </View>
-        ) : null}
+        {headerContent}
+        <PagerListPreview
+          dataByKey={dataByKey}
+          keyExtractor={keyExtractor}
+          renderItem={renderItem}
+          track={track}
+        />
       </View>
-    );
-  }, [ListHeaderComponent, dataByKey, keyExtractor, renderItem, track]);
+    ),
+    [dataByKey, headerContent, keyExtractor, renderItem, track],
+  );
   const renderRow = useCallback<ListRenderItem<Row>>(
     item => (
       <ScenePagerItem pageKey={tabKey} track={track}>
@@ -100,6 +99,47 @@ function PagerListContent<Row>({
       renderItem={renderRow}
       tabKey={tabKey}
     />
+  );
+}
+
+// Preview updates must not rerender FlatList: its internal renderItem wrapper
+// changes on each render and would otherwise invalidate all mounted cells.
+const PagerListContent = React.memo(
+  PagerListContentComponent,
+) as typeof PagerListContentComponent;
+
+function PagerListPreview<Row>({
+  dataByKey,
+  keyExtractor,
+  renderItem,
+  track,
+}: Pick<
+  ScenePagerListProps<Row>,
+  'dataByKey' | 'keyExtractor' | 'renderItem'
+> & {
+  track: ScenePagerTrack;
+}) {
+  const previewKey = React.useContext(PreviewKeyContext);
+  if (!previewKey) {
+    return null;
+  }
+  return (
+    <View
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+      pointerEvents="none"
+      style={styles.preview}
+      testID="scene-pager-preview">
+      <ScenePagerItem pageKey={previewKey} track={track}>
+        {(dataByKey[previewKey] ?? [])
+          .slice(0, PREVIEW_ROW_LIMIT)
+          .map((item, index) => (
+            <React.Fragment key={keyExtractor?.(item, index) ?? index}>
+              {renderItem({ item, index, separators: previewSeparators })}
+            </React.Fragment>
+          ))}
+      </ScenePagerItem>
+    </View>
   );
 }
 

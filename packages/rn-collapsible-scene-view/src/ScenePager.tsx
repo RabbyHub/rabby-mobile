@@ -26,13 +26,15 @@ import {
 export type ScenePagerTrack = {
   keys: readonly string[];
   position: SharedValue<number>;
-  previewKey: string | null;
   width: SharedValue<number>;
 };
 
 export type ScenePagerProps = {
   activeKey: string;
-  children: (track: ScenePagerTrack) => React.ReactNode;
+  children: (
+    track: ScenePagerTrack,
+    previewKey: string | null,
+  ) => React.ReactNode;
   keys: readonly string[];
   onBoundary?: (direction: 'next' | 'prev') => void;
   /** Publish the controlled key synchronously (including optimistic state). */
@@ -289,14 +291,14 @@ export function ScenePager({
     ],
   );
   const track = useMemo(
-    () => ({ keys, position, previewKey, width }),
-    [keys, position, previewKey, width],
+    () => ({ keys, position, width }),
+    [keys, position, width],
   );
 
   return (
     <GestureDetector gesture={gesture}>
       <View onLayout={onLayout} style={styles.viewport} testID={testID}>
-        {children(track)}
+        {children(track, previewKey)}
       </View>
     </GestureDetector>
   );
