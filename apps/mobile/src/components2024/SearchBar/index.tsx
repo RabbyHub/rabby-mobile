@@ -8,6 +8,7 @@ import React, {
 import {
   LayoutChangeEvent,
   Platform,
+  Pressable,
   StyleProp,
   StyleSheet,
   TextInputProps,
@@ -161,6 +162,15 @@ export const NextSearchBar = ({
   return (
     <View style={[styles.container, style]}>
       <View style={[styles.inputContainer, inputContainerStyle]}>
+        {/* The input only occupies its text area, so taps on the container's
+            empty sides never reached it (QA 1176). Catch them behind the
+            content; the input, icon and clear button stay on top. */}
+        <Pressable
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+          onPress={() => inputRef.current?.focus()}
+          style={StyleSheet.absoluteFill}
+        />
         <TouchableWithoutFeedback
           hitSlop={8}
           onPress={() => {
