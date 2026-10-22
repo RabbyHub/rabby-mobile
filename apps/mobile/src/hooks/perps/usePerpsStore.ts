@@ -382,6 +382,11 @@ const isSamePerpsAccountIdentity = (
   return isSameAddress(prev.address, next.address) && prev.type === next.type;
 };
 
+const isSamePerpsOrdersOwner = (
+  prev: Account | null,
+  next: Account | null,
+): boolean => !!prev && !!next && isSameAddress(prev.address, next.address);
+
 export const perpsStore = zCreate<PerpsState>(() => ({ ...initialState }));
 
 export type PerpsAccountRuntimeContext = Readonly<{
@@ -403,7 +408,16 @@ perpsStore.subscribe((state, previousState) => {
     )
   ) {
     perpsAccountRuntimeGeneration += 1;
-    resetOpenOrdersCache();
+    // Orders belong to the Hyperliquid user, not the signer type: a
+    // same-address switch keeps the reused stream's orders valid.
+    if (
+      !isSamePerpsOrdersOwner(
+        previousState.currentPerpsAccount,
+        state.currentPerpsAccount,
+      )
+    ) {
+      resetOpenOrdersCache();
+    }
   }
 });
 
@@ -803,8 +817,12 @@ const isCurrentPerpsAccountAddress = (address: string) => {
 };
 
 const setCurrentPerpsAccount = (payload: Account) => {
+  // A live stream for this address only pushes on change, so its orders must
+  // survive a signer-type switch instead of waiting for the next change.
+  const keepsLiveOrders = canReuseUserDataSubscription(payload.address);
   setPerpsState(prev => {
     const sameAccount = isSamePerpsAccount(prev.currentPerpsAccount, payload);
+    const keepsOrders = sameAccount || keepsLiveOrders;
     const cachedClearinghouseState = sameAccount
       ? prev.currentClearinghouseState
       : prev.clearinghouseStateMap[payload.address.toLowerCase()] ?? null;
@@ -827,8 +845,8 @@ const setCurrentPerpsAccount = (payload: Account) => {
         ? prev.userAbstractionOwnerAddress
         : null,
       spotState: sameAccount ? prev.spotState : initialState.spotState,
-      openOrders: sameAccount ? prev.openOrders : [],
-      isOpenOrdersReady: sameAccount ? prev.isOpenOrdersReady : false,
+      openOrders: keepsOrders ? prev.openOrders : [],
+      isOpenOrdersReady: keepsOrders ? prev.isOpenOrdersReady : false,
       userAbstraction: sameAccount
         ? prev.userAbstraction
         : UserAbstractionResp.default,
@@ -2341,20 +2359,19 @@ export const fetchStakingSummaryHttp = (
   return task;
 };
 
+// Scoped to the Hyperliquid user: address changes, resets and stream
+// teardown bump the epoch; a same-address signer-type switch does not.
 type OpenOrdersContext = {
   address: string;
-  generation: number;
   epoch: number;
 };
 
 const captureOpenOrdersContext = (address: string): OpenOrdersContext => ({
   address,
-  generation: perpsAccountRuntimeGeneration,
   epoch: openOrdersEpoch,
 });
 
 const isOpenOrdersContextCurrent = (context: OpenOrdersContext) =>
-  context.generation === perpsAccountRuntimeGeneration &&
   context.epoch === openOrdersEpoch &&
   isCurrentPerpsAccountAddress(context.address);
 
@@ -2858,6 +2875,8 @@ export const usePerpsStore = () => {
     apisPerps.setPerpsCurrentAccount(account);
     setPerpsState(prev => {
       const sameAccount = isSamePerpsAccount(prev.currentPerpsAccount, account);
+      // A reused stream pushes orders only on change; keep its snapshot.
+      const keepsOrders = sameAccount || canReuseSubscription;
       const previousClearinghouseState = sameAccount
         ? prev.currentClearinghouseState
         : null;
@@ -2883,8 +2902,8 @@ export const usePerpsStore = () => {
         stakingSummary: sameAccount ? prev.stakingSummary : null,
         stakingStatus: sameAccount ? prev.stakingStatus : 'idle',
         spotState: sameAccount ? prev.spotState : initialState.spotState,
-        openOrders: sameAccount ? prev.openOrders : [],
-        isOpenOrdersReady: sameAccount ? prev.isOpenOrdersReady : false,
+        openOrders: keepsOrders ? prev.openOrders : [],
+        isOpenOrdersReady: keepsOrders ? prev.isOpenOrdersReady : false,
         userAbstraction: sameAccount
           ? prev.userAbstraction
           : UserAbstractionResp.default,

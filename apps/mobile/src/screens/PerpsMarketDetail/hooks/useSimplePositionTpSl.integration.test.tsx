@@ -47,6 +47,12 @@ jest.mock('@rabby-wallet/hyperliquid-sdk', () => {
       info = {
         getFrontendOpenOrders: jest.fn(),
         getDelegatorSummary: jest.fn(async () => ({})),
+        // Side reads of the real loginPerpsAccount path.
+        getUserHistoricalOrders: jest.fn(async () => []),
+        getUserNonFundingLedgerUpdates: jest.fn(async () => []),
+        getUserAbstraction: jest.fn(
+          async () => actual.UserAbstractionResp.default,
+        ),
       };
       exchange = { bindTpslByOrderId: jest.fn(), cancelOrder: jest.fn() };
       ws = {
@@ -260,7 +266,7 @@ it('keeps the newer same-dex HTTP result while multi-dex refresh preserves other
   expect(read().isOpenOrdersReady).toBe(false);
 });
 
-it.each(['account ABA', 'identity type', 'same-account reset'] as const)(
+it.each(['account ABA', 'same-account reset'] as const)(
   'rejects old HTTP and WS across %s, and installs a valid replacement subscription',
   async kind => {
     const oldWs = subscribe();
@@ -270,12 +276,7 @@ it.each(['account ABA', 'identity type', 'same-account reset'] as const)(
     if (kind === 'same-account reset') {
       storeModule.switchPerpsAccountBeforeNavigate(account);
     } else {
-      write({
-        currentPerpsAccount:
-          kind === 'identity type'
-            ? { ...account, type: KEYRING_CLASS.MNEMONIC }
-            : accountB,
-      });
+      write({ currentPerpsAccount: accountB });
       write({ currentPerpsAccount: account });
     }
     const ws = subscribe();
@@ -287,6 +288,51 @@ it.each(['account ABA', 'identity type', 'same-account reset'] as const)(
     expect(storeModule.subscribeToUserData(account)).toBe(false);
   },
 );
+
+it('keeps the reused stream and its orders across a same-address signer-type switch', async () => {
+  const ws = subscribe();
+  const ui = mount();
+  act(() => ws({ user: account.address, orders: [order(1)] }));
+  expect(ui.result.current.tpPrice).toBe('110');
+  const old = deferred<OpenOrder[]>();
+  ordersHttp().mockReturnValueOnce(old.promise);
+  const refresh = storeModule.fetchPositionOpenOrdersHttp('');
+  const store = renderHook(() => storeModule.usePerpsStore());
+  const sameAddressB = { ...account, type: KEYRING_CLASS.MNEMONIC } as Account;
+  const subscriptions = jest.mocked(sdk.ws.subscribeToOpenOrders).mock.calls
+    .length;
+  await act(async () => {
+    await store.result.current.loginPerpsAccount(sameAddressB);
+  });
+  // The live change-only stream is reused: no resubscribe, orders retained.
+  expect(read().currentPerpsAccount).toBe(sameAddressB);
+  expect(jest.mocked(sdk.ws.subscribeToOpenOrders)).toHaveBeenCalledTimes(
+    subscriptions,
+  );
+  expect(read().openOrders.map(item => item.oid)).toEqual([1]);
+  expect(read().isOpenOrdersReady).toBe(true);
+  expect(ui.result.current.tpPrice).toBe('110');
+  // Same Hyperliquid user, so an older read-back is still that user's data.
+  old.resolve([order(2)]);
+  await act(() => refresh);
+  expect(read().openOrders.map(item => item.oid)).toEqual([2]);
+  act(() => ws({ user: account.address, orders: [order(3, 'sl')] }));
+  expect(read().openOrders.map(item => item.oid)).toEqual([3]);
+  expect(ui.result.current.tpPrice).toBeUndefined();
+  expect(ui.result.current.slPrice).toBe('90');
+  expect(storeModule.subscribeToUserData(sameAddressB)).toBe(false);
+});
+
+it('still drops the reused stream after switching to another address', async () => {
+  const ws = subscribe();
+  ws({ user: account.address, orders: [order(1)] });
+  write({ currentPerpsAccount: accountB });
+  ws({ user: account.address, orders: [order(2)] });
+  write({ currentPerpsAccount: account });
+  ws({ user: account.address, orders: [order(3)] });
+  expect(read().openOrders.map(item => item.oid)).toEqual([1]);
+  expect(storeModule.subscribeToUserData(account)).not.toBe(false);
+});
 
 it('keeps orders on transport failure and only marks initial readiness after a complete successful refresh', async () => {
   ordersHttp().mockResolvedValueOnce([order(1)]);
