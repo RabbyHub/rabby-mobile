@@ -38,6 +38,9 @@ jest.mock('react-native-reanimated', () => {
   const nativeMock = require('react-native-reanimated/mock');
   return {
     ...nativeMock,
+    // Mirror reactions synchronously on render; frames are not modelled here.
+    useAnimatedReaction: (prepare: () => unknown, react: Function) =>
+      react(prepare(), null),
     useSharedValue: (value: unknown) => {
       const ref = require('react').useRef(null);
       if (!ref.current) {
@@ -485,39 +488,78 @@ it('swaps only a set position tag X for the shared spinner while cancelling', ()
   expect(xIcons()).toHaveLength(1);
 });
 
-it('draws the close progress and points from the thumb UI-thread position', () => {
+it('draws the close progress and points from the thumb UI-thread mirror', () => {
   const props = {
     variant: 'close' as const,
     onValueChange: jest.fn(),
     step: 1,
   };
   const ui = render(safe(<PerpsSlider {...props} value={30} />));
-  const position = ui.UNSAFE_getByType(PerpsGestureSlider).props.positionValue;
-  // The thumb and the custom track share one value: no React round trip.
-  expect(position).toBeDefined();
+  const slider = ui.UNSAFE_getByType(PerpsGestureSlider);
+  const progress = slider.props.progressValue;
+  // The custom track reads the slider's UI-thread mirror: no React round trip.
+  expect(progress).toBeDefined();
   const width = () =>
     StyleSheet.flatten(ui.getByTestId('perps-close-progress').props.style)
       .width;
   const opacity = (id: string) =>
     StyleSheet.flatten(ui.getByTestId(id).props.style).opacity;
-  expect(position.value).toBe(30);
+  expect(progress.value).toBe(30);
   expect(width()).toBe('30%');
   expect(opacity('perps-close-point-25-selected')).toBe(1);
   expect(opacity('perps-close-point-50-selected')).toBe(0);
   expect(opacity('perps-close-point-50-unselected')).toBe(1);
 
-  // A drag moves the shared value ahead of the controlled prop.
-  position.value = 60;
+  // A real drag moves the slider's own position; the controlled prop stays 30.
+  const host = slider.findAllByType(View).find(node => node.props.onLayout)!;
+  act(() =>
+    host.props.onLayout({
+      nativeEvent: { layout: { width: 220, height: 40 } },
+    }),
+  );
+  const gesture = ui.UNSAFE_getByType(GestureDetector).props.gesture;
+  const stateEvent = {
+    handlerTag: 0,
+    state: State.ACTIVE,
+    oldState: State.BEGAN,
+    numberOfPointers: 1,
+    pointerType: PointerType.TOUCH,
+  };
+  const manager = {
+    handlerTag: 0,
+    begin: () => undefined,
+    activate: () => gesture.handlers.onStart(stateEvent),
+    end: () => gesture.handlers.onFinalize(stateEvent, true),
+    fail: () => gesture.handlers.onFinalize(stateEvent, false),
+  };
+  const touch = (x: number) => {
+    const point = { id: 1, x, y: 20, absoluteX: x + 50, absoluteY: 100 };
+    return {
+      handlerTag: 0,
+      state: State.ACTIVE,
+      eventType: 1,
+      numberOfTouches: 1,
+      pointerType: PointerType.TOUCH,
+      changedTouches: [point],
+      allTouches: [point],
+    };
+  };
+  act(() => gesture.handlers.onTouchesDown(touch(110), manager));
+  act(() => gesture.handlers.onTouchesMove(touch(500), manager));
   ui.rerender(safe(<PerpsSlider {...props} value={30} />));
-  expect(width()).toBe('60%');
+  expect(progress.value).toBe(100);
+  // The render-time mock reacts in the child after the parent's style ran.
+  ui.rerender(safe(<PerpsSlider {...props} value={30} />));
+  expect(width()).toBe('100%');
   expect(opacity('perps-close-point-50-selected')).toBe(1);
   expect(opacity('perps-close-point-50-unselected')).toBe(0);
-  expect(opacity('perps-close-point-75-selected')).toBe(0);
+  expect(opacity('perps-close-point-100-selected')).toBe(1);
+  act(() => gesture.handlers.onTouchesUp(touch(500), manager));
 
-  // Default sliders keep their own position and built-in track.
+  // Default sliders keep their own built-in track and no mirror.
   ui.rerender(safe(<PerpsSlider value={30} onValueChange={jest.fn()} />));
   expect(
-    ui.UNSAFE_getByType(PerpsGestureSlider).props.positionValue,
+    ui.UNSAFE_getByType(PerpsGestureSlider).props.progressValue,
   ).toBeUndefined();
   expect(ui.queryByTestId('perps-close-progress')).toBeNull();
 });

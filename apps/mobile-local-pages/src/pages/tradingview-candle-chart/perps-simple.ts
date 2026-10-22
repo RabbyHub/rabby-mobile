@@ -428,6 +428,8 @@ export function createSimpleChart(
       label.textContent =
         tag.id === 'liquidation'
           ? prices.liquidationPriceText ?? priceText(tag.price)
+          : tag.id === 'entry'
+          ? prices.entryPriceText ?? priceText(tag.price)
           : priceText(tag.price);
       label.dataset.simplePriceLabel = '';
       label.dataset.priceKind = tag.id;

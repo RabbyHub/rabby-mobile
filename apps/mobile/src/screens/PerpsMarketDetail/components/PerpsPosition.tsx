@@ -61,6 +61,7 @@ export const PerpsPosition: React.FC<{
   markPrice: number;
   rawLiquidationPrice?: string | number | null;
   liquidationPriceText: string;
+  entryPriceText: string;
   rawMarkPrice?: string | number | null;
   activeAssetCtx: WsActiveAssetCtx['ctx'] | null;
   currentAssetCtx: MarketData | null;
@@ -94,6 +95,7 @@ export const PerpsPosition: React.FC<{
   markPrice,
   rawLiquidationPrice,
   liquidationPriceText,
+  entryPriceText,
   rawMarkPrice,
   availableBalance,
   pxDecimals,
@@ -304,8 +306,7 @@ export const PerpsPosition: React.FC<{
                 {t('page.perpsDetail.simpleAccount.averageEntry')}
               </Text>
               <Text style={styles.value}>
-                $
-                {splitNumberByStep(positionData.entryPrice.toFixed(pxDecimals))}
+                {entryPriceText === '--' ? '--' : `$${entryPriceText}`}
               </Text>
             </View>
             <View style={styles.detailRow}>

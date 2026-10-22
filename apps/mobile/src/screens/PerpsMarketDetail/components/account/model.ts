@@ -30,11 +30,11 @@ export function hasPositivePrice(value: PriceInput) {
 }
 
 /** Shared display text for the position card and chart; never a trading input. */
-export function simpleLiquidationPriceText(
-  liquidation: PriceInput,
+export function simplePositionPriceText(
+  value: PriceInput,
   decimals: number | null | undefined,
 ) {
-  const price = finiteDecimal(liquidation);
+  const price = finiteDecimal(value);
   if (!price?.gt(0)) {
     return '--';
   }
