@@ -8,6 +8,7 @@ import type {
 import { SignatureManager } from '@/components2024/MiniSignV2/state/SignatureManager';
 import type { Account } from '@/core/startupServices/preference';
 import { ensureWalletUnlockedForAction } from '@/utils/walletUnlock';
+import { assertMemeTradeAccount } from './accountGuard';
 
 const USER_CANCELLED = 'User cancelled';
 
@@ -27,6 +28,7 @@ export const createHeadlessDirectSigner = ({
 }: {
   account: Account;
 }): HeadlessDirectSigner => {
+  assertMemeTradeAccount(account);
   const instance = new SignatureManager();
   const config: SignerConfig = { account, autoUseGasFree: true };
 

@@ -17,6 +17,7 @@ import { createBridgeRoute } from './routes/bridgeRoute';
 import type { GetDexQuote } from './routes/dexQuotes';
 import { createSwapRoute } from './routes/swapRoute';
 import { classifySignError } from './signErrors';
+import { assertMemeTradeAccount } from './accountGuard';
 import {
   createHeadlessDirectSigner,
   type HeadlessDirectSigner,
@@ -33,6 +34,7 @@ export const createProductionLegRunnerDeps = ({
   supportedDexList: string[];
   maxPriceImpactPct: number;
 }): { deps: LegRunnerDeps; dispose(): void } => {
+  assertMemeTradeAccount(account);
   const signers = new Map<string, HeadlessDirectSigner>();
   const bridge = createBridgeRoute({ account });
 
