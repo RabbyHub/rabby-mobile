@@ -16,14 +16,16 @@ export const CircleSpinnerCC: React.FC<{
   });
 
   React.useEffect(() => {
-    Animated.loop(
+    const animation = Animated.loop(
       Animated.timing(spinValue, {
         toValue: 1,
         duration: 2000,
         easing: Easing.linear,
         useNativeDriver: true,
       }),
-    ).start();
+    );
+    animation.start();
+    return () => animation.stop();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -34,7 +36,11 @@ export const CircleSpinnerCC: React.FC<{
         width: size,
         height: size,
       }}>
+      {/* The asset declares 24x24, and SVG props win over style: size it via
+          props too, or a smaller spinner orbits its rotation centre. */}
       <RcPending
+        width={size}
+        height={size}
         style={[
           {
             width: size,
