@@ -340,18 +340,23 @@ export const PerpsProScene: React.FC<{
       }),
     [infoScrollBridge],
   );
+  // Native vertical scrolling is the target for both platforms: one scroll
+  // owner, no synthetic `scrollTo` frame loop, and no separate clock for the
+  // shared chrome. This flag keeps the old Android coordinator as the rollback
+  // path while the pager is migrated.
+  const nativeVerticalScroll = true;
   const androidScrollCoordinator = usePerpsProAndroidSceneScrollCoordinator({
     controller: infoScrollBridge,
-    enabled: Platform.OS === 'android' && info.activeInfoTab != null,
+    enabled:
+      !nativeVerticalScroll &&
+      Platform.OS === 'android' &&
+      info.activeInfoTab != null,
   });
-  // iOS scrolls the active SceneList natively, which means a drag that starts
-  // on the trade layer (a sibling overlay) would not reach it. Give that layer
-  // its own vertical owner so dragging the order book / form still collapses
-  // and scrolls the scene, exactly like it did when the trade panel was list
-  // content. Android already owns the whole scene through the coordinator.
+  // The trade panel is still an overlay until it moves into the list header.
+  // It needs its own vertical owner on both platforms for now.
   const tradeScrollCoordinator = usePerpsProAndroidSceneScrollCoordinator({
     controller: infoScrollBridge,
-    enabled: Platform.OS === 'ios' && info.activeInfoTab != null,
+    enabled: nativeVerticalScroll && info.activeInfoTab != null,
   });
   // Android's pager owns the vertical gesture, but the scene layers must follow
   // the list's real native offset, not the coordinator's requested offset.
@@ -384,7 +389,7 @@ export const PerpsProScene: React.FC<{
     [infoScrollBridge],
   );
   const sceneScrollGesture =
-    Platform.OS === 'android'
+    Platform.OS === 'android' && !nativeVerticalScroll
       ? androidScrollCoordinator.gesture
       : infoScrollInterruptionGesture;
   const marketSelectorRef = useRef<PerpsProMarketSelectorHandle>(null);
@@ -1297,14 +1302,16 @@ export const PerpsProScene: React.FC<{
             {settledInfoTab ? (
               <PerpsProInfoPager
                 activeTab={settledInfoTab}
-                authorizeNativePageGestures={Platform.OS === 'android'}
+                authorizeNativePageGestures={
+                  Platform.OS === 'android' && !nativeVerticalScroll
+                }
                 contentContainerStyle={scrollContentStyles}
                 contentInsetTop={contentInsetTop}
                 data={rowsByTab}
                 initialRequestId={infoTabRequestIdRef.current}
                 keepAllTabsMounted={keepAllInfoTabListsMounted}
                 indicatorPosition={infoTabIndicatorPosition}
-                nativeVerticalScrollEnabled={Platform.OS !== 'android'}
+                nativeVerticalScrollEnabled
                 offscreenPageLimit={infoPagerOffscreenPageLimit}
                 onLayout={updateScrollViewportHeight}
                 onPageDragStart={beginInfoPageDrag}
@@ -1320,7 +1327,7 @@ export const PerpsProScene: React.FC<{
               />
             ) : null}
             {settledInfoTab ? (
-              Platform.OS === 'ios' ? (
+              nativeVerticalScroll ? (
                 <GestureDetector gesture={tradeScrollCoordinator.gesture}>
                   {tradeSectionLayer}
                 </GestureDetector>

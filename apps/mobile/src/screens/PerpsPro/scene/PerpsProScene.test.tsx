@@ -1984,7 +1984,7 @@ describe('PerpsProScene market loading states', () => {
     },
   );
 
-  it('uses one Android scene gesture owner and a shared Trade offset', () => {
+  it('scrolls the Android list natively and keeps the shared Trade offset', () => {
     Object.defineProperty(Platform, 'OS', {
       configurable: true,
       value: 'android',
@@ -1996,7 +1996,9 @@ describe('PerpsProScene market loading states', () => {
     );
 
     const scroll = screen.getByTestId('perps-pro-scroll');
-    expect(scroll.props.scrollEnabled).toBe(false);
+    // The native list now owns vertical scrolling on Android too; the scene no
+    // longer synthesises it with per-frame scrollTo calls.
+    expect(scroll.props.scrollEnabled).toBe(true);
     expect(
       screen.getByTestId('perps-pro-scroll-positions', {
         includeHiddenElements: true,
