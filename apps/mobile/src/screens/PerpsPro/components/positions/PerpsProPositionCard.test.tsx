@@ -1,5 +1,6 @@
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
+import { RoundedFontStyles } from '@/core/utils/fonts';
 import { StyleSheet, View } from 'react-native';
 
 const mockOpenFieldExplanation = jest.fn();
@@ -332,9 +333,8 @@ describe('PerpsProPositionCard', () => {
     expect(StyleSheet.flatten(screen.getByText('B').props.style)).toMatchObject(
       {
         color: 'neutral-InvertHighlight',
-        fontFamily: 'SF Pro Rounded',
+        ...RoundedFontStyles.bold,
         fontSize: 12,
-        fontWeight: '700',
         lineHeight: 16,
       },
     );
@@ -368,9 +368,8 @@ describe('PerpsProPositionCard', () => {
         StyleSheet.flatten(screen.getByText(label).props.style),
       ).toMatchObject({
         color: 'neutral-foot',
-        fontFamily: 'SF Pro Rounded',
+        ...RoundedFontStyles.medium,
         fontSize: 12,
-        fontWeight: '500',
         lineHeight: 16,
       });
     }
@@ -378,9 +377,8 @@ describe('PerpsProPositionCard', () => {
       StyleSheet.flatten(screen.getByText('Long 20x').props.style),
     ).toMatchObject({
       color: 'green-default',
-      fontFamily: 'SF Pro Rounded',
+      ...RoundedFontStyles.medium,
       fontSize: 12,
-      fontWeight: '500',
       lineHeight: 16,
     });
     expect(

@@ -1,3 +1,4 @@
+import { RoundedFontStyles } from '@/core/utils/fonts';
 import { NativeStackNavigationOptions } from '@react-navigation/native-stack';
 import {
   AppColors2024Variants,
@@ -587,8 +588,7 @@ export function makeHeadersPresets({
       },
       headerTitleStyle: {
         color: colors?.['neutral-title-1'],
-        fontWeight: '700' as const,
-        fontFamily: 'SF Pro Rounded',
+        ...RoundedFontStyles.bold,
         fontSize: DEFAULT_NAVBAR_FONT_SIZE,
       },
       headerTintColor: colors?.['neutral-title-1'],
@@ -599,8 +599,7 @@ export function makeHeadersPresets({
       },
       headerTitleStyle: {
         color: colors?.['neutral-title-1'],
-        fontWeight: '700' as const,
-        fontFamily: 'SF Pro Rounded',
+        ...RoundedFontStyles.bold,
         fontSize: DEFAULT_NAVBAR_FONT_SIZE,
       },
       headerTintColor: colors?.['neutral-title-1'],
@@ -611,16 +610,14 @@ export function makeHeadersPresets({
       },
       headerTitleStyle: {
         color: colors?.['neutral-title-1'],
-        fontWeight: '700' as const,
-        fontFamily: 'SF Pro Rounded',
+        ...RoundedFontStyles.bold,
         fontSize: DEFAULT_NAVBAR_FONT_SIZE,
       },
       headerTintColor: colors?.['neutral-title-1'],
     },
     titleFont_2024: {
       color: colors2024?.['neutral-title-1'],
-      fontWeight: '700' as const,
-      fontFamily: 'SF Pro Rounded',
+      ...RoundedFontStyles.bold,
       fontSize: 20,
     },
   };

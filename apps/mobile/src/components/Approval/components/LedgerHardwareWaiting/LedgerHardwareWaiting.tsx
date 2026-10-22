@@ -1,3 +1,4 @@
+import { RoundedFontStyles } from '@/core/utils/fonts';
 import * as Sentry from '@sentry/react-native';
 import { toast } from '@/components2024/Toast';
 import { notificationServiceApi } from '@/core/serviceApi/notification';
@@ -78,9 +79,8 @@ const getStyles = (colors: AppColorsVariants) =>
     },
     content: {
       fontSize: 20,
-      fontWeight: '900',
       lineHeight: 24,
-      fontFamily: 'SF Pro Rounded',
+      ...RoundedFontStyles.heavy,
     },
     contentWrapper: {
       flexDirection: 'row',
