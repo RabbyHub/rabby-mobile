@@ -1,7 +1,8 @@
 import type { PerpsProInfoTab } from '@/core/services/perpsService';
-import { useMemo } from 'react';
+import { useLayoutEffect, useMemo } from 'react';
 import type { FlatList } from 'react-native';
 import {
+  runOnUI,
   scrollTo,
   useAnimatedRef,
   useScrollViewOffset,
@@ -85,7 +86,7 @@ export const interruptPerpsProInfoScrollBridge = (
 };
 
 export const usePerpsProInfoScrollBridge = (
-  initialTab: PerpsProInfoTab = 'positions',
+  activeTab: PerpsProInfoTab = 'positions',
 ) => {
   const positionsRef = useAnimatedRef<FlatList<unknown>>();
   const openOrdersRef = useAnimatedRef<FlatList<unknown>>();
@@ -94,18 +95,29 @@ export const usePerpsProInfoScrollBridge = (
   const openOrdersOffset = useSharedValue(0);
   const accountOffset = useSharedValue(0);
 
-  // Reanimated observes the native scroll tag and supports FlatList at runtime,
-  // while this hook's public type is narrowed to Animated.ScrollView.
-  useScrollViewOffset(positionsRef as never, positionsOffset);
-  useScrollViewOffset(openOrdersRef as never, openOrdersOffset);
-  useScrollViewOffset(accountRef as never, accountOffset);
+  // The single native list moves between these refs without unmounting.
+  // Animated refs retain their old native tag when detached, so explicitly
+  // stop observing inactive refs instead of letting all visited tabs follow
+  // the same list. Keep each provided offset fixed: useScrollViewOffset retains
+  // the first shared value passed to that hook instance.
+  useScrollViewOffset(
+    activeTab === 'positions' ? (positionsRef as never) : null,
+    positionsOffset,
+  );
+  useScrollViewOffset(
+    activeTab === 'openOrders' ? (openOrdersRef as never) : null,
+    openOrdersOffset,
+  );
+  useScrollViewOffset(
+    activeTab === 'account' ? (accountRef as never) : null,
+    accountOffset,
+  );
 
   const positionsMaxOffset = useSharedValue(0);
   const openOrdersMaxOffset = useSharedValue(0);
   const accountMaxOffset = useSharedValue(0);
-  const activeIndex = useSharedValue(
-    Math.max(PERPS_PRO_INFO_TABS.indexOf(initialTab), 0),
-  );
+  const nextActiveIndex = Math.max(PERPS_PRO_INFO_TABS.indexOf(activeTab), 0);
+  const activeIndex = useSharedValue(nextActiveIndex);
   const epoch = useSharedValue(0);
   const horizontalTouchSessionId = useSharedValue(0);
   const pageGestureActive = useSharedValue(false);
@@ -114,7 +126,7 @@ export const usePerpsProInfoScrollBridge = (
   );
   const touchSessionId = useSharedValue(0);
 
-  return useMemo<PerpsProInfoScrollBridgeController>(
+  const controller = useMemo<PerpsProInfoScrollBridgeController>(
     () => ({
       activeIndex,
       epoch,
@@ -158,4 +170,24 @@ export const usePerpsProInfoScrollBridge = (
       touchSessionId,
     ],
   );
+
+  useLayoutEffect(() => {
+    runOnUI((nextIndex: number) => {
+      'worklet';
+      const previousIndex = controller.activeIndex.value;
+      if (previousIndex === nextIndex) {
+        return;
+      }
+      const previous = controller.targets[previousIndex];
+      const next = controller.targets[nextIndex];
+      // Tab changes preserve the one list's current native offset. Seed it
+      // before selecting the new target, even when an unchanged native offset
+      // emits no new scroll event. Its maxOffset belongs to its own new layout.
+      const offset = previous?.offset.value ?? 0;
+      next.offset.value = Number.isFinite(offset) ? Math.max(0, offset) : 0;
+      controller.activeIndex.value = nextIndex;
+    })(nextActiveIndex);
+  }, [controller, nextActiveIndex]);
+
+  return controller;
 };

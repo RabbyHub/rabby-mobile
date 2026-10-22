@@ -10,12 +10,14 @@ import {
   Animated,
   Easing,
   Platform,
-  Pressable,
   View,
   type LayoutChangeEvent,
   type StyleProp,
   type TextStyle,
 } from 'react-native';
+// The strip moves via NativeAnimated; native hit testing follows its actual
+// transform without writing delayed JS scroll positions back into Fabric.
+import { Pressable } from 'react-native-gesture-handler';
 import { useTranslation } from 'react-i18next';
 import Reanimated, {
   useAnimatedStyle,

@@ -2,7 +2,6 @@ import {
   CollapsibleHeaderLayer,
   CollapsiblePinnedLayer,
   CollapsibleSceneProvider,
-  CollapsibleScrollingLayer,
   useCollapsibleSceneController,
 } from '@rabby-wallet/rn-collapsible-scene-view';
 import { Text } from '@/components/Typography';
@@ -36,8 +35,8 @@ import React, {
 import {
   AppState,
   Keyboard,
-  Platform,
   Pressable,
+  useAnimatedValue,
   useWindowDimensions,
   View,
   type AppStateStatus,
@@ -46,13 +45,7 @@ import {
   type ViewStyle,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import {
-  runOnUI,
-  useAnimatedReaction,
-  useDerivedValue,
-  useSharedValue,
-} from 'react-native-reanimated';
+import { runOnJS, runOnUI, useSharedValue } from 'react-native-reanimated';
 
 import { PerpsProAccountAssetRow } from '../components/account/PerpsProAccountAssetRow';
 import { PerpsProAccountState } from '../components/account/PerpsProAccountState';
@@ -77,15 +70,13 @@ import { PerpsProAccountSelectorLayer } from '../components/header/PerpsProAccou
 import { PERPS_PRO_HEADER_HEIGHT } from '../components/header/constants';
 import { PerpsProInfoTabs } from '../components/info/PerpsProInfoTabs';
 import { snapPerpsProTabIndicator } from '../components/common/PerpsProTabIndicator';
+import { PERPS_PRO_INFO_TABS } from '../components/info/perpsProInfoTabOrder';
 import {
-  PERPS_PRO_INFO_TABS,
-  PerpsProInfoPager,
-  type PerpsProInfoPagerHandle,
-} from '../components/info/PerpsProInfoPager';
+  PerpsProInfoSingleList,
+  type PerpsProInfoSingleListHandle,
+} from '../components/info/PerpsProInfoSingleList';
 import {
   getPerpsProInfoBridgeOffset,
-  interruptPerpsProInfoScrollBridge,
-  scrollPerpsProInfoBridgeTarget,
   usePerpsProInfoScrollBridge,
 } from '../components/info/usePerpsProInfoScrollBridge';
 import {
@@ -150,7 +141,6 @@ import { usePerpsProLeverageUpdate } from './usePerpsProLeverageUpdate';
 import { usePerpsProManageMargin } from './usePerpsProManageMargin';
 import { usePerpsProTrade } from './usePerpsProTrade';
 import { usePerpsProTransfer } from './usePerpsProTransfer';
-import { usePerpsProAndroidSceneScrollCoordinator } from './usePerpsProAndroidSceneScrollCoordinator';
 import { usePerpsFundingHistoryJournal } from '@/hooks/perps/funding/usePerpsFundingHistoryJournal';
 
 type PerpsProSceneRow =
@@ -256,41 +246,15 @@ export const PerpsProScene: React.FC<{
     refreshActiveAssetData: activeAsset.refreshActiveAssetData,
     updateLeverageRequest: leverageUpdate.update,
   });
-  const [requestedInfoTab, setRequestedInfoTab] =
-    useState<PerpsProInfoTab | null>(null);
-  const [previewInfoTab, setPreviewInfoTab] = useState<PerpsProInfoTab | null>(
-    null,
-  );
-  const [committedInfoTab, setCommittedInfoTab] =
-    useState<PerpsProInfoTab | null>(null);
-  const infoTabRequestIdRef = useRef(0);
   const info = usePerpsProInfoPanel(
     scene.currentMarket?.canonicalCoin ?? '',
-    requestedInfoTab,
+    null,
     scene.fundingHistoryEnabled,
   );
+  const settledInfoTab = info.activeInfoTab;
   const infoTabIndicatorPosition = useSharedValue(
     Math.max(0, PERPS_PRO_INFO_TABS.indexOf(info.activeInfoTab ?? 'positions')),
   );
-  const lastNativeInfoTabRef = useRef<PerpsProInfoTab | null>(
-    info.activeInfoTab,
-  );
-  const infoTabWriteGenerationRef = useRef(0);
-  const latestInfoTabWriteRef = useRef<{
-    generation: number;
-    settled: boolean;
-    tab: PerpsProInfoTab;
-  } | null>(null);
-  const infoTabWriteMountedRef = useRef(true);
-  const [infoTabWriteResolutionRevision, setInfoTabWriteResolutionRevision] =
-    useState(0);
-  useEffect(() => {
-    infoTabWriteMountedRef.current = true;
-    return () => {
-      infoTabWriteMountedRef.current = false;
-      latestInfoTabWriteRef.current = null;
-    };
-  }, []);
   usePerpsFundingHistoryJournal({ enabled: scene.fundingHistoryEnabled });
   const positionActions = usePerpsProPositionActions({
     accountIdentity: info.accountIdentity,
@@ -317,9 +281,16 @@ export const PerpsProScene: React.FC<{
     setHideOtherPositionSymbols,
   } = info;
   const sceneController = useCollapsibleSceneController();
+  // Native scrolling and vertical chrome use the same native event chain.
+  // Reanimated's shared offset remains available for gestures and commands.
+  const nativeScrollY = useAnimatedValue(0);
   const infoScrollBridge = usePerpsProInfoScrollBridge(
-    info.activeInfoTab ?? 'account',
+    settledInfoTab ?? 'positions',
   );
+  const infoListRef = useRef<PerpsProInfoSingleListHandle>(null);
+  const scrollInfoToOffset = useCallback((offset: number) => {
+    infoListRef.current?.scrollToOffset(offset, false);
+  }, []);
   useEffect(
     () =>
       registerPerpsProKeyboardTradeScroll(distance => {
@@ -335,66 +306,12 @@ export const PerpsProScene: React.FC<{
             offset: target.offset.value,
             delta,
           });
-          interruptPerpsProInfoScrollBridge(infoScrollBridge);
-          scrollPerpsProInfoBridgeTarget(infoScrollBridge, index, offset);
+          runOnJS(scrollInfoToOffset)(offset);
         })(distance);
       }),
-    [infoScrollBridge],
+    [infoScrollBridge, scrollInfoToOffset],
   );
-  // Native vertical scrolling is the target for both platforms: one scroll
-  // owner, no synthetic `scrollTo` frame loop, and no separate clock for the
-  // shared chrome. This flag keeps the old Android coordinator as the rollback
-  // path while the pager is migrated.
-  const nativeVerticalScroll = true;
-  const androidScrollCoordinator = usePerpsProAndroidSceneScrollCoordinator({
-    controller: infoScrollBridge,
-    enabled:
-      !nativeVerticalScroll &&
-      Platform.OS === 'android' &&
-      info.activeInfoTab != null,
-  });
-  // The trade panel is still an overlay until it moves into the list header.
-  // It needs its own vertical owner on both platforms for now.
-  const tradeScrollCoordinator = usePerpsProAndroidSceneScrollCoordinator({
-    controller: infoScrollBridge,
-    enabled: nativeVerticalScroll && info.activeInfoTab != null,
-  });
-  // Android's pager owns the vertical gesture, but the scene layers must follow
-  // the list's real native offset, not the coordinator's requested offset.
-  // `scrollTo` reaches the native view one frame after the layer transform, so
-  // following the requested value makes the pinned tab strip lead the content
-  // and exposes a gap while scrolling. Following the observed offset keeps the
-  // content ahead of the bar (it simply passes underneath).
-  const activeInfoScrollOffset = useDerivedValue(() => {
-    const target = infoScrollBridge.targets[infoScrollBridge.activeIndex.value];
-    return target && Number.isFinite(target.offset.value)
-      ? Math.max(0, target.offset.value)
-      : 0;
-  });
-  useAnimatedReaction(
-    () => activeInfoScrollOffset.value,
-    next => {
-      if (Platform.OS === 'android') {
-        sceneController.scrollY.value = next;
-      }
-    },
-    [activeInfoScrollOffset, sceneController],
-  );
-  const infoScrollInterruptionGesture = useMemo(
-    () =>
-      Gesture.Manual().onTouchesDown((_event, stateManager) => {
-        'worklet';
-        interruptPerpsProInfoScrollBridge(infoScrollBridge);
-        stateManager.fail();
-      }),
-    [infoScrollBridge],
-  );
-  const sceneScrollGesture =
-    Platform.OS === 'android' && !nativeVerticalScroll
-      ? androidScrollCoordinator.gesture
-      : infoScrollInterruptionGesture;
   const marketSelectorRef = useRef<PerpsProMarketSelectorHandle>(null);
-  const infoPagerRef = useRef<PerpsProInfoPagerHandle>(null);
   const [klineOpen, setKlineOpen] = useState(false);
   const [klineActivated, setKlineActivated] = useState(false);
   const [appState, setAppState] = useState<AppStateStatus>(
@@ -661,7 +578,7 @@ export const PerpsProScene: React.FC<{
     async (coin: string) => {
       const selected = await selectMarketByCoin(coin);
       if (selected) {
-        infoPagerRef.current?.scrollActiveToOffset(0);
+        infoListRef.current?.scrollToOffset(0);
       }
       return selected;
     },
@@ -759,9 +676,8 @@ export const PerpsProScene: React.FC<{
     leadInHeight: sceneLeadInHeight,
     tradeRowHeight,
   });
-  // The list reserves exactly the space of the shared layers. The header,
-  // region alert, market bar, trade panel and tab strip are now siblings of
-  // the pager, driven by one UI-thread offset.
+  // Header/market/tabs remain overlays, but trade is real list content. Their
+  // placeholders and the trade panel share the native list's layout and clock.
   const marketLayerTop = PERPS_PRO_HEADER_HEIGHT + regionAlertExtent;
   const tradeLayerTop = marketLayerTop + PERPS_PRO_MARKET_BAR_HEIGHT;
   const sceneTabsTop = tradeLayerTop + tradeRowHeight;
@@ -1143,9 +1059,6 @@ export const PerpsProScene: React.FC<{
     ],
   );
 
-  const settledInfoTab =
-    info.activeInfoTab == null ? null : committedInfoTab ?? info.activeInfoTab;
-  const displayedInfoTab = requestedInfoTab ?? previewInfoTab ?? settledInfoTab;
   useEffect(() => {
     if (!settledInfoTab) {
       return;
@@ -1155,125 +1068,51 @@ export const PerpsProScene: React.FC<{
       Math.max(PERPS_PRO_INFO_TABS.indexOf(settledInfoTab), 0),
     );
   }, [infoTabIndicatorPosition, settledInfoTab]);
-  // Both native pagers can select or reattach a page before a conditionally
-  // prepared FlatList is ready. Keep all three list refs stable so preparePages
-  // can apply the shared offset before the page becomes active.
-  const keepAllInfoTabListsMounted = true;
-  // Android ViewPager2 otherwise uses its device-dependent RecyclerView cache.
-  // Retain this fixed three-page set to prevent a page from being rebound with
-  // native scrollY=0 while the shared scene offset still points at its lead-in.
-  const infoPagerOffscreenPageLimit =
-    Platform.OS === 'android' ? PERPS_PRO_INFO_TABS.length - 1 : undefined;
-  const requestInfoTab = useCallback(
-    (tab: PerpsProInfoTab) => {
-      if (tab === displayedInfoTab) {
-        return;
-      }
-      const requestId = ++infoTabRequestIdRef.current;
-      if (tab === settledInfoTab) {
-        setRequestedInfoTab(null);
-        infoPagerRef.current?.returnToPage(tab, requestId);
-        return;
-      }
-      setRequestedInfoTab(tab);
-      // All three lists are retained. Send the intent now so a delayed native
-      // callback cannot cancel a newer press while it waits for a JS frame.
-      infoPagerRef.current?.setPage(tab, requestId);
-    },
-    [displayedInfoTab, settledInfoTab],
-  );
-  const finishInfoTabRequest = useCallback((requestId: number) => {
-    if (requestId !== infoTabRequestIdRef.current) {
-      return;
-    }
-    setRequestedInfoTab(null);
-    setPreviewInfoTab(null);
-  }, []);
   const commitInfoTab = useCallback(
-    (tab: PerpsProInfoTab, requestId: number) => {
-      if (requestId !== infoTabRequestIdRef.current) {
+    (tab: PerpsProInfoTab) => {
+      if (tab === settledInfoTab) {
         return;
       }
-      setRequestedInfoTab(null);
-      setPreviewInfoTab(null);
-      setCommittedInfoTab(tab);
-      lastNativeInfoTabRef.current = tab;
-      const generation = infoTabWriteGenerationRef.current + 1;
-      infoTabWriteGenerationRef.current = generation;
-      const write = { generation, settled: false, tab };
-      latestInfoTabWriteRef.current = write;
-      const settleWrite = () => {
-        if (
-          !infoTabWriteMountedRef.current ||
-          latestInfoTabWriteRef.current?.generation !== generation
-        ) {
-          return;
-        }
-        write.settled = true;
-        setInfoTabWriteResolutionRevision(revision => revision + 1);
-      };
-      let persistence: unknown;
-      try {
-        persistence = setActiveInfoTab(tab);
-      } catch {
-        settleWrite();
-        return;
-      }
-      if (
-        persistence &&
-        (typeof persistence === 'object' ||
-          typeof persistence === 'function') &&
-        typeof (persistence as PromiseLike<unknown>).then === 'function'
-      ) {
-        Promise.resolve(persistence).then(settleWrite, settleWrite);
-        return;
-      }
-      settleWrite();
+      // The preference controller publishes optimistically and owns write
+      // ordering/rollback. No native-page acknowledgement competes with it.
+      setActiveInfoTab(tab);
     },
-    [setActiveInfoTab],
+    [setActiveInfoTab, settledInfoTab],
   );
-  useEffect(() => {
-    const rawActiveInfoTab = info.activeInfoTab;
-    if (rawActiveInfoTab == null) {
-      latestInfoTabWriteRef.current = null;
-      lastNativeInfoTabRef.current = null;
-      infoTabRequestIdRef.current += 1;
-      setRequestedInfoTab(null);
-      setPreviewInfoTab(null);
-      setCommittedInfoTab(null);
-      return;
-    }
-    const latestWrite = latestInfoTabWriteRef.current;
-    if (latestWrite && !latestWrite.settled) {
-      return;
-    }
-    if (latestWrite) {
-      latestInfoTabWriteRef.current = null;
-      if (rawActiveInfoTab === lastNativeInfoTabRef.current) {
-        setCommittedInfoTab(null);
+  const swipeInfoTab = useCallback(
+    (direction: 'next' | 'prev') => {
+      if (!settledInfoTab) {
         return;
       }
-    } else if (rawActiveInfoTab === lastNativeInfoTabRef.current) {
-      if (committedInfoTab === rawActiveInfoTab) {
-        setCommittedInfoTab(null);
+      const index = PERPS_PRO_INFO_TABS.indexOf(settledInfoTab);
+      const tab = PERPS_PRO_INFO_TABS[index + (direction === 'next' ? 1 : -1)];
+      if (tab) {
+        commitInfoTab(tab);
       }
-      return;
-    }
-    lastNativeInfoTabRef.current = rawActiveInfoTab;
-    const requestId = ++infoTabRequestIdRef.current;
-    setRequestedInfoTab(null);
-    setPreviewInfoTab(null);
-    setCommittedInfoTab(null);
-    infoPagerRef.current?.syncPageWithoutAnimation?.(
-      rawActiveInfoTab,
-      requestId,
+    },
+    [commitInfoTab, settledInfoTab],
+  );
+  const listContentHeightRef = useRef(0);
+  const activeInfoTarget =
+    infoScrollBridge.targets[
+      PERPS_PRO_INFO_TABS.indexOf(settledInfoTab ?? 'positions')
+    ];
+  useEffect(() => {
+    activeInfoTarget.maxOffset.value = Math.max(
+      0,
+      listContentHeightRef.current - scrollViewportHeight,
     );
-  }, [committedInfoTab, info.activeInfoTab, infoTabWriteResolutionRevision]);
-  const beginInfoPageDrag = useCallback((requestId: number) => {
-    if (requestId === infoTabRequestIdRef.current) {
-      setRequestedInfoTab(null);
-    }
-  }, []);
+  }, [activeInfoTarget, scrollViewportHeight]);
+  const updateListContentSize = useCallback(
+    (_width: number, height: number) => {
+      listContentHeightRef.current = height;
+      activeInfoTarget.maxOffset.value = Math.max(
+        0,
+        height - scrollViewportHeight,
+      );
+    },
+    [activeInfoTarget, scrollViewportHeight],
+  );
   const marketBarContent = isMarketLoading ? (
     <PerpsProMarketBarSkeleton />
   ) : (
@@ -1291,123 +1130,116 @@ export const PerpsProScene: React.FC<{
     PERPS_PRO_MARKET_BAR_HEIGHT -
     PERPS_PRO_INFO_SECTION_TOP_GAP -
     PERPS_PRO_INFO_SECTION_DIVIDER_HEIGHT;
-  const tradeSectionLayer = (
-    <CollapsibleScrollingLayer
-      baseTop={tradeLayerTop}
-      style={styles.tradeSection}
-      testID="perps-pro-trade-section">
-      {renderTrade()}
-    </CollapsibleScrollingLayer>
+  const listHeader = useMemo(
+    () => (
+      <View>
+        <View
+          style={{ height: tradeLayerTop }}
+          testID="perps-pro-list-lead-in"
+        />
+        <View style={styles.tradeSection} testID="perps-pro-trade-section">
+          {renderTrade()}
+        </View>
+        <View
+          style={{ height: PERPS_PRO_INFO_TABS_PLACEHOLDER_HEIGHT }}
+          testID="perps-pro-list-tabs-placeholder"
+        />
+      </View>
+    ),
+    [renderTrade, styles.tradeSection, tradeLayerTop],
   );
 
   return (
     <PerpsProFieldExplanationProvider>
-      <GestureDetector gesture={sceneScrollGesture}>
-        <CollapsibleSceneProvider
-          activeTab={settledInfoTab ?? 'positions'}
-          controller={sceneController}
-          headerHeight={PERPS_PRO_HEADER_HEIGHT}
-          tabs={PERPS_PRO_INFO_TABS}>
-          <View collapsable={false} style={styles.container}>
-            {settledInfoTab ? (
-              <PerpsProInfoPager
-                activeTab={settledInfoTab}
-                authorizeNativePageGestures={
-                  Platform.OS === 'android' && !nativeVerticalScroll
-                }
-                contentContainerStyle={scrollContentStyles}
-                contentInsetTop={contentInsetTop}
-                data={rowsByTab}
-                initialRequestId={infoTabRequestIdRef.current}
-                keepAllTabsMounted={keepAllInfoTabListsMounted}
-                indicatorPosition={infoTabIndicatorPosition}
-                nativeVerticalScrollEnabled
-                offscreenPageLimit={infoPagerOffscreenPageLimit}
-                onLayout={updateScrollViewportHeight}
-                onPageDragStart={beginInfoPageDrag}
-                onPagePreview={setPreviewInfoTab}
-                onPageRequestFinished={finishInfoTabRequest}
-                onPageSelected={commitInfoTab}
-                ref={infoPagerRef}
-                renderItem={renderItem}
-                requestedTab={requestedInfoTab}
-                scrollBridge={infoScrollBridge}
-                scrollToTab={sceneController.scrollToTab}
-                style={styles.scroll}
-              />
-            ) : null}
-            {settledInfoTab ? (
-              nativeVerticalScroll ? (
-                <GestureDetector gesture={tradeScrollCoordinator.gesture}>
-                  {tradeSectionLayer}
-                </GestureDetector>
-              ) : (
-                tradeSectionLayer
-              )
-            ) : null}
-            {displayedInfoTab ? (
-              <CollapsiblePinnedLayer
-                baseTop={sceneTabsTop}
-                pinTop={infoTabsPinTop}
-                style={styles.infoTabsLayer}
-                testID="perps-pro-info-tabs-overlay">
-                <View
-                  style={styles.infoTabsSpacer}
-                  testID="perps-pro-info-tabs-spacer">
-                  <View
-                    pointerEvents="none"
-                    style={styles.infoSectionDivider}
-                  />
-                </View>
-                <View style={styles.infoTabsBar}>
-                  <PerpsProInfoTabs
-                    activeTab={displayedInfoTab}
-                    historyEnabled={
-                      historyEnabled && info.accountState !== 'noAccount'
-                    }
-                    indicatorPosition={infoTabIndicatorPosition}
-                    onChange={requestInfoTab}
-                    onHistoryPress={openHistory}
-                    openOrdersCount={info.allOpenOrdersCount}
-                    pendingFundingCount={info.pendingFundingCount}
-                    positionsCount={info.allPositionsCount}
-                  />
-                </View>
-              </CollapsiblePinnedLayer>
-            ) : null}
-            {positionedOverlaysReady ? (
-              <CollapsiblePinnedLayer
-                baseTop={marketLayerTop}
-                pinTop={regionAlertExtent}
-                style={styles.marketOverlay}
-                testID="perps-pro-market-overlay">
-                {marketBarContent}
-              </CollapsiblePinnedLayer>
-            ) : null}
-            {showRegionAlert ? (
-              <CollapsiblePinnedLayer
-                baseTop={PERPS_PRO_HEADER_HEIGHT}
-                pinTop={0}
-                style={styles.regionAlertOverlay}
-                testID="perps-pro-region-alert-overlay">
-                <PerpsRegionAlert
-                  bottomSpacing={PERPS_PRO_REGION_ALERT_BOTTOM_SPACING}
-                  onLayout={updateRegionAlertLayout}
-                  topSpacing={PERPS_REGION_ALERT_HEADER_SPACING}
+      <CollapsibleSceneProvider
+        activeTab={settledInfoTab ?? 'positions'}
+        controller={sceneController}
+        headerHeight={PERPS_PRO_HEADER_HEIGHT}
+        syncOffsetOnActivate={false}
+        tabs={PERPS_PRO_INFO_TABS}>
+        <View collapsable={false} style={styles.container}>
+          {settledInfoTab ? (
+            <PerpsProInfoSingleList
+              activeTab={settledInfoTab}
+              contentContainerStyle={scrollContentStyles[settledInfoTab]}
+              data={rowsByTab[settledInfoTab]}
+              listHeader={listHeader}
+              nativeRef={activeInfoTarget.ref}
+              nativeScrollY={nativeScrollY}
+              onContentSizeChange={updateListContentSize}
+              onLayout={updateScrollViewportHeight}
+              onSwipe={swipeInfoTab}
+              ref={infoListRef}
+              renderItem={renderItem}
+              rowStartOffset={contentInsetTop}
+              scrollOffset={sceneController.scrollY}
+              style={styles.scroll}
+              testID="perps-pro-info-list"
+            />
+          ) : null}
+          {settledInfoTab ? (
+            <CollapsiblePinnedLayer
+              baseTop={sceneTabsTop}
+              nativeScrollY={nativeScrollY}
+              pinTop={infoTabsPinTop}
+              style={styles.infoTabsLayer}
+              testID="perps-pro-info-tabs-overlay">
+              <View
+                style={styles.infoTabsSpacer}
+                testID="perps-pro-info-tabs-spacer">
+                <View pointerEvents="none" style={styles.infoSectionDivider} />
+              </View>
+              <View style={styles.infoTabsBar}>
+                <PerpsProInfoTabs
+                  activeTab={settledInfoTab}
+                  historyEnabled={
+                    historyEnabled && info.accountState !== 'noAccount'
+                  }
+                  indicatorPosition={infoTabIndicatorPosition}
+                  onChange={commitInfoTab}
+                  onHistoryPress={openHistory}
+                  openOrdersCount={info.allOpenOrdersCount}
+                  pendingFundingCount={info.pendingFundingCount}
+                  positionsCount={info.allPositionsCount}
                 />
-              </CollapsiblePinnedLayer>
-            ) : null}
-            <CollapsibleHeaderLayer
-              style={styles.headerClip}
-              testID="perps-pro-header-overlay">
-              <PerpsProHeader
-                isModeSwitching={isModeSwitching}
-                onSwitchToSimple={onSwitchToSimple}
+              </View>
+            </CollapsiblePinnedLayer>
+          ) : null}
+          {positionedOverlaysReady ? (
+            <CollapsiblePinnedLayer
+              baseTop={marketLayerTop}
+              nativeScrollY={nativeScrollY}
+              pinTop={regionAlertExtent}
+              style={styles.marketOverlay}
+              testID="perps-pro-market-overlay">
+              {marketBarContent}
+            </CollapsiblePinnedLayer>
+          ) : null}
+          {showRegionAlert ? (
+            <CollapsiblePinnedLayer
+              baseTop={PERPS_PRO_HEADER_HEIGHT}
+              nativeScrollY={nativeScrollY}
+              pinTop={0}
+              style={styles.regionAlertOverlay}
+              testID="perps-pro-region-alert-overlay">
+              <PerpsRegionAlert
+                bottomSpacing={PERPS_PRO_REGION_ALERT_BOTTOM_SPACING}
+                onLayout={updateRegionAlertLayout}
+                topSpacing={PERPS_REGION_ALERT_HEADER_SPACING}
               />
-            </CollapsibleHeaderLayer>
-          </View>
-        </CollapsibleSceneProvider>
-      </GestureDetector>
+            </CollapsiblePinnedLayer>
+          ) : null}
+          <CollapsibleHeaderLayer
+            nativeScrollY={nativeScrollY}
+            style={styles.headerClip}
+            testID="perps-pro-header-overlay">
+            <PerpsProHeader
+              isModeSwitching={isModeSwitching}
+              onSwitchToSimple={onSwitchToSimple}
+            />
+          </CollapsibleHeaderLayer>
+        </View>
+      </CollapsibleSceneProvider>
       <PerpsProMarketSelector
         currentMarketKey={scene.currentMarket?.marketKey ?? null}
         onClose={scene.cancelPendingMarketSelection}
@@ -1653,11 +1485,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   tradeSection: {
     backgroundColor: colors2024['neutral-bg-1'],
-    left: 0,
-    position: 'absolute',
-    right: 0,
-    top: 0,
-    zIndex: 1,
   },
   infoTabsSpacer: {
     height:

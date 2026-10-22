@@ -5,6 +5,11 @@ import { StyleSheet } from 'react-native';
 import type { PerpsProMarket } from '../../model/market';
 import { PerpsProMarketBar } from './PerpsProMarketBar';
 
+// Keep callback and disabled semantics real; native hit testing is device-only.
+jest.mock('react-native-gesture-handler', () => ({
+  Pressable: require('react-native').Pressable,
+}));
+
 jest.mock('@/assets2024/icons/perps/PerpsProCandlestick.svg', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
@@ -101,17 +106,20 @@ describe('PerpsProMarketBar', () => {
     });
   });
 
-  it('disables the K-line action when no market is resolved', () => {
+  it('disables the market and K-line actions when no market is resolved', () => {
     const onOpenKline = jest.fn();
+    const onPress = jest.fn();
     render(
       <PerpsProMarketBar
         market={null}
         onOpenKline={onOpenKline}
-        onPress={jest.fn()}
+        onPress={onPress}
       />,
     );
 
+    fireEvent.press(screen.getByTestId('perps-pro-market-selector-trigger'));
     fireEvent.press(screen.getByTestId('perps-pro-kline-trigger'));
+    expect(onPress).not.toHaveBeenCalled();
     expect(onOpenKline).not.toHaveBeenCalled();
     expect(
       screen.getByTestId('perps-pro-kline-trigger').props.accessibilityState,
