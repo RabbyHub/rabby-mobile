@@ -65,6 +65,7 @@
     "metro-source-map": "0.83.1",
     "metro-symbolicate": "0.83.1",
     "metro-runtime": "0.83.1",
+    "@rabby-wallet/hyperliquid-sdk@1.1.19": "patch:@rabby-wallet/hyperliquid-sdk@npm%3A1.1.19#./.yarn/patches/@rabby-wallet-hyperliquid-sdk-npm-1.1.19-f1a24de441.patch",
     "@keystonehq/bc-ur-registry@^0.6.0": "patch:@keystonehq/bc-ur-registry@npm%3A0.6.4#./.yarn/patches/@keystonehq-bc-ur-registry-npm-0.6.4-7922ce4e4c.patch",
     "@ledgerhq/domain-service@^1.8.2": "patch:@ledgerhq/domain-service@npm%3A1.8.2#./.yarn/patches/@ledgerhq-domain-service-npm-1.8.2-rabby.patch",
     "@ledgerhq/hw-app-eth@7.8.2": "patch:@ledgerhq/hw-app-eth@npm%3A7.8.2#./.yarn/patches/@ledgerhq-hw-app-eth-npm-7.8.2-rabby.patch",

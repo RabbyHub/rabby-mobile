@@ -195,6 +195,9 @@ export const RootNames = {
   PerpsHistory: 'PerpsHistory',
   PerpsProHistory: 'PerpsProHistory',
   PerpsSearch: 'PerpsSearch',
+  PerpsSpot: 'PerpsSpot',
+  PerpsSpotTrade: 'PerpsSpotTrade',
+  PerpsSpotOrders: 'PerpsSpotOrders',
   AccountTransaction: 'AccountTransaction',
   /** @deprecated */
   MyBundle: 'MyBundle',
@@ -431,6 +434,9 @@ function makeScreenSpecConfig() {
       [RootNames.PerpsHistory]: bg1Default2024Conf,
       [RootNames.PerpsProHistory]: bg1Default2024Conf,
       [RootNames.PerpsSearch]: bg1Default2024Conf,
+      [RootNames.PerpsSpot]: bg1Default2024Conf,
+      [RootNames.PerpsSpotTrade]: bg1Default2024Conf,
+      [RootNames.PerpsSpotOrders]: bg1Default2024Conf,
       [RootNames.AccountTransaction]: bg1Default2024Conf,
       [RootNames.MyBundle]: bg1Default2024Conf,
 
