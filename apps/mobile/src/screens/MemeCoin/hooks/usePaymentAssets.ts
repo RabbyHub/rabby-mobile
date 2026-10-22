@@ -11,6 +11,7 @@ import { useGasAccountInfo } from '@/screens/GasAccount/hooks';
 import { getSwapGasReserveGasLimit } from '@/screens/Swap/utils';
 import useTokenList from '@/store/tokens';
 import { findChainByEnum, findChainByServerID } from '@/utils/chain';
+import { defaultTokenFilter } from '@/utils/lpToken';
 import { pickDefaultPaymentAsset } from '../engine/defaultSelection';
 import { toChainGasInfo } from '../engine/gas';
 import { tokenKey } from '../engine/keys';
@@ -28,6 +29,13 @@ const toServerIds = (enums: string[]) =>
       .filter((id): id is string => !!id),
   );
 
+type ChainNetInfo = { gasPriceWei: number; nativePrice: number };
+
+/**
+ * `memes`, `memeTokenKeys` and `account` must be referentially stable
+ * (memoized) across renders, otherwise the default-selection effect re-runs
+ * on every render.
+ */
 export const usePaymentAssets = ({
   account,
   memes,
@@ -60,7 +68,7 @@ export const usePaymentAssets = ({
 
   const walletTokens = useMemo<WalletToken[]>(
     () =>
-      (tokens || []).map(t => ({
+      (tokens || []).filter(defaultTokenFilter).map(t => ({
         id: t.id,
         chain: t.chain,
         symbol: t.symbol,
@@ -93,8 +101,17 @@ export const usePaymentAssets = ({
         .join(','),
     [assets],
   );
-  const [chainGas, setChainGas] = useState<Record<string, ChainGasInfo>>({});
-  const [chainGasReady, setChainGasReady] = useState(false);
+  const walletTokensRef = useRef(walletTokens);
+  walletTokensRef.current = walletTokens;
+  const accountRef = useRef(account);
+  accountRef.current = account;
+
+  const accountAddress = account.address;
+  const gasKey = `${accountAddress.toLowerCase()}|${chainsKey}`;
+  const [gasCache, setGasCache] = useState<{
+    key: string;
+    byChain: Record<string, ChainNetInfo>;
+  } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -102,17 +119,17 @@ export const usePaymentAssets = ({
     Promise.all(
       chains.map(async chainServerId => {
         const chain = findChainByServerID(chainServerId);
-        const native = walletTokens.find(
+        const native = walletTokensRef.current.find(
           t => t.chain === chainServerId && t.isNative,
         );
         const [levels, nativePrice] = await Promise.all([
-          gasMarketV2({ chainId: chainServerId }, account).catch(
+          gasMarketV2({ chainId: chainServerId }, accountRef.current).catch(
             (): GasLevel[] => [],
           ),
           native?.price ??
             openapi
               .getToken(
-                account.address,
+                accountAddress,
                 chainServerId,
                 chain?.nativeTokenAddress || '',
               )
@@ -121,28 +138,43 @@ export const usePaymentAssets = ({
         ]);
         return [
           chainServerId,
-          toChainGasInfo({
-            gasLimit: getSwapGasReserveGasLimit(chain?.enum || ''),
+          {
             gasPriceWei: levels.find(l => l.level === 'normal')?.price || 0,
-            nativeDecimals: chain?.nativeTokenDecimals || 18,
             nativePrice,
-            nativeBalanceUsd: native?.usdValue ?? 0,
-            bridgeSupported: bridgeChains.has(chainServerId),
-          }),
+          },
         ] as const;
       }),
     ).then(entries => {
       if (!cancelled) {
-        setChainGas(Object.fromEntries(entries));
-        setChainGasReady(true);
+        setGasCache({ key: gasKey, byChain: Object.fromEntries(entries) });
       }
     });
     return () => {
       cancelled = true;
     };
-    // walletTokens / bridgeChains changes are reflected through chainsKey refetch on the next list update
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [chainsKey, account]);
+  }, [chainsKey, accountAddress, gasKey]);
+
+  const chainGas = useMemo(() => {
+    const result: Record<string, ChainGasInfo> = {};
+    for (const [chainServerId, net] of Object.entries(
+      gasCache?.byChain ?? {},
+    )) {
+      const chain = findChainByServerID(chainServerId);
+      const native = walletTokens.find(
+        t => t.chain === chainServerId && t.isNative,
+      );
+      result[chainServerId] = toChainGasInfo({
+        gasLimit: getSwapGasReserveGasLimit(chain?.enum || ''),
+        gasPriceWei: net.gasPriceWei,
+        nativeDecimals: chain?.nativeTokenDecimals || 18,
+        nativePrice: net.nativePrice,
+        nativeBalanceUsd: native?.usdValue ?? 0,
+        bridgeSupported: bridgeChains.has(chainServerId),
+      });
+    }
+    return result;
+  }, [gasCache, walletTokens, bridgeChains]);
+  const chainGasReady = tokens !== undefined && gasCache?.key === gasKey;
 
   const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
   const touchedRef = useRef(false);
@@ -158,7 +190,12 @@ export const usePaymentAssets = ({
       chainGas,
       gasAccountBalanceUsd,
     });
-    setSelectedKeys(picked ? [tokenKey(picked)] : []);
+    const next = picked ? [tokenKey(picked)] : [];
+    setSelectedKeys(prev =>
+      prev.length === next.length && prev.every((k, i) => k === next[i])
+        ? prev
+        : next,
+    );
   }, [assets, memes, amountUsd, chainGas, gasAccountBalanceUsd, chainGasReady]);
 
   const toggle = useMemoizedFn((key: string) => {
@@ -185,6 +222,6 @@ export const usePaymentAssets = ({
     selectedKeys,
     toggle,
     plan,
-    ready: tokens !== undefined && chainGasReady,
+    ready: chainGasReady,
   };
 };
