@@ -1,4 +1,5 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
+import RNFS from '@rabby-wallet/react-native-fs';
 import {
   Alert,
   Linking,
@@ -426,6 +427,7 @@ function ClearAppCacheSettingItem() {
     try {
       abortAllSyncTasks('clear-app-cache-ios');
       resetUpdateHistoryTime();
+      await RNFS.clearSafeSvgCache();
       await clearAppDataSource();
       Alert.alert(
         t('page.settingModal.clearAppCache.iOSToastTitle'),
@@ -453,6 +455,7 @@ function ClearAppCacheSettingItem() {
       await sleep(50);
       abortAllSyncTasks('clear-app-cache-android');
       resetUpdateHistoryTime();
+      await RNFS.clearSafeSvgCache();
       await dropAppDataSourceAndQuitApp({
         exitDelayMs: CLEAR_APP_CACHE_EXIT_DELAY_MS,
       });
