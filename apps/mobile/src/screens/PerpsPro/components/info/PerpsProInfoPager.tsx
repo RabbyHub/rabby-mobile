@@ -303,9 +303,10 @@ const PerpsProInfoPagerInner = <Row,>(
     offsets[currentTab] = activeOffset;
     for (const tab of PERPS_PRO_INFO_TABS) {
       if (tab !== currentTab) {
-        // The trade panel is list content now; open each page at the top so it
-        // is visible instead of starting at a stale prepared offset.
-        offsets[tab] = 0;
+        // Keep the scene where it is when the tab changes: the header, market
+        // bar and trade panel are shared layers, so a page switch must not
+        // reset the scroll position and pop them back into view.
+        offsets[tab] = activeOffset;
       }
     }
     androidDesiredOffsets.value = offsets;
@@ -430,9 +431,9 @@ const PerpsProInfoPagerInner = <Row,>(
       if (tab === currentTab) {
         continue;
       }
-      // The trade panel is list content now; a page opened at a stale offset
-      // would hide it. Start every page at the top.
-      const offset = 0;
+      // Keep the shared scene offset across tabs; the header/market/trade
+      // layers are shared, so switching must not scroll them back into view.
+      const offset = activeOffset;
       recordDesiredOffset(tab, offset);
       listRefs.current[tab]?.scrollToOffset({ animated: false, offset });
     }

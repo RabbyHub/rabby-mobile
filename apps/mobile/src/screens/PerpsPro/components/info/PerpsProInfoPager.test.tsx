@@ -604,11 +604,11 @@ describe('PerpsProInfoPager', () => {
     fireEvent(pager, 'pageScroll', {
       nativeEvent: { position: 0, offset: 0.8 },
     });
-    // The trade panel is list content now, so every non-active page is opened
-    // at the top instead of at a prepared offset.
+    // The shared scene offset is carried into the other pages so switching a
+    // tab does not scroll the shared header/market/trade layers back into view.
     expect(mockScrollTo.mock.calls).toEqual([
-      [scrollBridge.targets[1].ref, 0, 0, false],
-      [scrollBridge.targets[2].ref, 0, 0, false],
+      [scrollBridge.targets[1].ref, 0, 300, false],
+      [scrollBridge.targets[2].ref, 0, 300, false],
     ]);
     // This native stub deliberately sends no scroll event.
     expect(scrollBridge.targets.map(target => target.offset.value)).toEqual([
