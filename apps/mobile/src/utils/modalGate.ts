@@ -52,8 +52,7 @@ export const MODAL_GATE_IDS = {
   nativeMenu: 'native-menu',
   perpsProBasicOrderEdit: 'perps-pro-basic-order-edit',
   perpsProConditionalOrderEdit: 'perps-pro-conditional-order-edit',
-  perpsProOpenOrderEditConfirmation:
-    'perps-pro-open-order-edit-confirmation',
+  perpsProOpenOrderEditConfirmation: 'perps-pro-open-order-edit-confirmation',
   perpsProPositionTpSlConfirmation: 'perps-pro-position-tpsl-confirmation',
 } as const;
 

@@ -2,10 +2,7 @@ import React, { useEffect, useId, useRef, useState } from 'react';
 import { Animated, BackHandler, Platform, StyleSheet } from 'react-native';
 import { useBottomSheetModalInternal } from '@gorhom/bottom-sheet';
 import { Portal } from '@gorhom/portal';
-import {
-  useRegisterBlockingModal,
-  type ModalGateId,
-} from '@/utils/modalGate';
+import { useRegisterBlockingModal, type ModalGateId } from '@/utils/modalGate';
 
 type Props = React.PropsWithChildren<{
   modalId: ModalGateId;
