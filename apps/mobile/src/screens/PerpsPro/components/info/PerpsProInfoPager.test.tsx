@@ -64,6 +64,21 @@ jest.mock('react-native-pager-view', () => {
   );
 });
 
+jest.mock('react-native-gesture-handler', () => ({
+  Gesture: {
+    Pan: () => ({
+      activeOffsetX: () => undefined,
+      failOffsetY: () => undefined,
+      onBegin: () => undefined,
+      onEnd: () => undefined,
+      onFinalize: () => undefined,
+      onUpdate: () => undefined,
+    }),
+  },
+  GestureDetector: ({ children }: { children: React.ReactNode }) =>
+    require('react').createElement(require('react').Fragment, null, children),
+}));
+
 jest.mock('react-native-reanimated', () => {
   const ReactModule = require('react');
   return {

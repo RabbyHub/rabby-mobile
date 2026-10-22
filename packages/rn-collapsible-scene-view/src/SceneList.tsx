@@ -28,6 +28,7 @@ export type SceneListHandle<ItemT> = SceneScrollSurfaceHandle & {
 };
 
 export type SceneListProps<ItemT> = {
+  ListHeaderComponent?: React.ComponentType | React.ReactElement | null;
   contentContainerStyle?: StyleProp<ViewStyle>;
   contentInsetTop: number;
   data: readonly ItemT[];
@@ -58,6 +59,7 @@ export type SceneListProps<ItemT> = {
  * thread exactly like the plain scroll surface.
  */
 export const SceneList = <ItemT,>({
+  ListHeaderComponent,
   contentContainerStyle,
   contentInsetTop,
   data,
@@ -92,6 +94,7 @@ export const SceneList = <ItemT,>({
 
   return (
     <AnimatedFlatList
+      ListHeaderComponent={ListHeaderComponent}
       contentContainerStyle={[
         contentContainerStyle,
         { paddingTop: contentInsetTop },
