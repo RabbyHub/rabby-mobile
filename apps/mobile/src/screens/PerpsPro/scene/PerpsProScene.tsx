@@ -50,6 +50,7 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import {
   runOnUI,
   useAnimatedReaction,
+  useDerivedValue,
   useSharedValue,
 } from 'react-native-reanimated';
 
@@ -352,17 +353,26 @@ export const PerpsProScene: React.FC<{
     controller: infoScrollBridge,
     enabled: Platform.OS === 'ios' && info.activeInfoTab != null,
   });
-  // Android's pager owns the vertical gesture, so the coordinator's visual
-  // offset is the authoritative scene offset there. iOS publishes from the
-  // active SceneList on the UI thread.
+  // Android's pager owns the vertical gesture, but the scene layers must follow
+  // the list's real native offset, not the coordinator's requested offset.
+  // `scrollTo` reaches the native view one frame after the layer transform, so
+  // following the requested value makes the pinned tab strip lead the content
+  // and exposes a gap while scrolling. Following the observed offset keeps the
+  // content ahead of the bar (it simply passes underneath).
+  const activeInfoScrollOffset = useDerivedValue(() => {
+    const target = infoScrollBridge.targets[infoScrollBridge.activeIndex.value];
+    return target && Number.isFinite(target.offset.value)
+      ? Math.max(0, target.offset.value)
+      : 0;
+  });
   useAnimatedReaction(
-    () => androidScrollCoordinator.visualOffset.value,
+    () => activeInfoScrollOffset.value,
     next => {
       if (Platform.OS === 'android') {
         sceneController.scrollY.value = next;
       }
     },
-    [sceneController],
+    [activeInfoScrollOffset, sceneController],
   );
   const infoScrollInterruptionGesture = useMemo(
     () =>
@@ -1307,7 +1317,6 @@ export const PerpsProScene: React.FC<{
                 scrollBridge={infoScrollBridge}
                 scrollToTab={sceneController.scrollToTab}
                 style={styles.scroll}
-                syncTabToSceneOffset={sceneController.syncTabToSceneOffset}
               />
             ) : null}
             {settledInfoTab ? (

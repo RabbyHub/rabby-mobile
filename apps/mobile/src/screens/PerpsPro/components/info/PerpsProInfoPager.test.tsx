@@ -207,7 +207,6 @@ const renderPager = ({
   ref,
   requestedTab = null,
   scrollBridge,
-  syncTabToSceneOffset,
 }: {
   activeTab?: PerpsProInfoTab;
   authorizeNativePageGestures?: boolean;
@@ -223,7 +222,6 @@ const renderPager = ({
   ref?: React.Ref<PerpsProInfoPagerHandle>;
   requestedTab?: PerpsProInfoTab | null;
   scrollBridge?: PerpsProInfoScrollBridgeController;
-  syncTabToSceneOffset?: (tab: PerpsProInfoTab) => void;
 } = {}) => {
   const PagerHarness = () => {
     const controller = useCollapsibleSceneController();
@@ -257,9 +255,6 @@ const renderPager = ({
           requestedTab={requestedTab}
           scrollBridge={scrollBridge}
           scrollToTab={controller.scrollToTab}
-          syncTabToSceneOffset={
-            syncTabToSceneOffset ?? controller.syncTabToSceneOffset
-          }
         />
       </CollapsibleSceneProvider>
     );
@@ -592,18 +587,20 @@ describe('PerpsProInfoPager', () => {
       'openOrders',
       expect.any(Number),
     );
-    expect(mockScrollTo).not.toHaveBeenCalled();
+    // The reachable page was aligned once when the drag was authorized; the
+    // business tab still commits only on selection.
+    expect(mockScrollTo.mock.calls).toEqual([
+      [scrollBridge.targets[1].ref, 0, 500, false],
+    ]);
   });
 
   it('aligns the two adjacent pages once after horizontal authorization', () => {
     const scrollBridge = createScrollBridge([300, 125, 0]);
     scrollBridge.touchSessionId.value = 1;
     scrollBridge.touchIntent.value = PERPS_PRO_INFO_TOUCH_INTENT.pending;
-    const syncTabToSceneOffset = jest.fn();
     renderPager({
       authorizeNativePageGestures: true,
       scrollBridge,
-      syncTabToSceneOffset,
     });
     const pager = screen.getByTestId('perps-pro-info-pager');
     fireEvent(pager, 'pageScrollStateChanged', {
@@ -612,7 +609,7 @@ describe('PerpsProInfoPager', () => {
     fireEvent(pager, 'pageScroll', {
       nativeEvent: { position: 0, offset: 0.2 },
     });
-    expect(syncTabToSceneOffset).not.toHaveBeenCalled();
+    expect(mockScrollTo).not.toHaveBeenCalled();
     scrollBridge.touchIntent.value = PERPS_PRO_INFO_TOUCH_INTENT.horizontal;
     scrollBridge.horizontalTouchSessionId.value = 1;
     mockQueueRunOnJS = true;
@@ -623,12 +620,14 @@ describe('PerpsProInfoPager', () => {
       nativeEvent: { position: 0, offset: 0.8 },
     });
     act(flushMockRunOnJSQueue);
-    // Only the two neighbours are aligned, and only once per drag. Native
-    // offsets remain the source of truth.
-    expect(syncTabToSceneOffset.mock.calls).toEqual([['openOrders']]);
+    // Only the reachable neighbour is aligned, once, using the active page's
+    // real native offset. Native offsets remain the source of truth.
+    expect(mockScrollTo.mock.calls).toEqual([
+      [scrollBridge.targets[1].ref, 0, 300, false],
+    ]);
     fireEvent(pager, 'pageSelected', { nativeEvent: { position: 1 } });
     act(flushMockRunOnJSQueue);
-    expect(syncTabToSceneOffset).toHaveBeenCalledTimes(1);
+    expect(mockScrollTo).toHaveBeenCalledTimes(1);
   });
 
   it('keeps unauthorized Android selections from preparing any vertical list', () => {
@@ -650,21 +649,30 @@ describe('PerpsProInfoPager', () => {
   it('aligns an Android programmatic destination before issuing the pager command', () => {
     const scrollBridge = createScrollBridge([300, 125, 0]);
     const ref = React.createRef<PerpsProInfoPagerHandle>();
-    const syncTabToSceneOffset = jest.fn();
     renderPager({
       authorizeNativePageGestures: true,
       ref,
       scrollBridge,
-      syncTabToSceneOffset,
     });
     mockQueueRunOnUI = true;
     mockSetPage.mockImplementation(() => {
-      expect(syncTabToSceneOffset).toHaveBeenCalledWith('openOrders');
+      expect(mockScrollTo).toHaveBeenCalledWith(
+        scrollBridge.targets[1].ref,
+        0,
+        300,
+        false,
+      );
     });
     act(() => ref.current?.setPage('openOrders'));
-    expect(syncTabToSceneOffset).toHaveBeenCalledWith('openOrders');
+    expect(mockScrollTo).not.toHaveBeenCalled();
     expect(mockSetPage).not.toHaveBeenCalled();
     act(flushMockRunOnUIQueue);
+    expect(mockScrollTo).toHaveBeenCalledWith(
+      scrollBridge.targets[1].ref,
+      0,
+      300,
+      false,
+    );
     expect(mockSetPage).toHaveBeenCalledWith(1);
   });
 

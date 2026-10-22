@@ -41,6 +41,7 @@ import {
   getPerpsProInfoScrollTarget,
   interruptPerpsProInfoScrollBridge,
   PERPS_PRO_INFO_TOUCH_INTENT,
+  scrollPerpsProInfoBridgeTarget,
   type PerpsProInfoScrollBridgeController,
 } from './usePerpsProInfoScrollBridge';
 
@@ -113,7 +114,6 @@ type PerpsProInfoPagerProps<Row> = {
     animated?: boolean,
   ) => void;
   style?: StyleProp<ViewStyle>;
-  syncTabToSceneOffset?: (tab: PerpsProInfoTab) => void;
 };
 
 const isPerpsProInfoHorizontalTouchAuthorized = (
@@ -153,7 +153,6 @@ const PerpsProInfoPagerInner = <Row,>(
     scrollBridge,
     scrollToTab,
     style,
-    syncTabToSceneOffset,
   }: PerpsProInfoPagerProps<Row>,
   ref: React.ForwardedRef<PerpsProInfoPagerHandle>,
 ) => {
@@ -294,6 +293,15 @@ const PerpsProInfoPagerInner = <Row,>(
       previewPagePosition.value = position;
       selectedTransitionEpoch.value = transitionEpoch;
       if (scrollBridge) {
+        // Hand the current scene offset to the destination before activeIndex
+        // changes. The scene layers follow the observed native offset, so a
+        // not-yet-observed scrollTo on the incoming page must not flash 0.
+        const previousIndex = scrollBridge.activeIndex.value;
+        const previous = scrollBridge.targets[previousIndex];
+        const destination = scrollBridge.targets[position];
+        if (previous && destination) {
+          destination.offset.value = Math.max(0, previous.offset.value);
+        }
         scrollBridge.activeIndex.value = position;
         scrollBridge.epoch.value += 1;
         scrollBridge.pageGestureActive.value = false;
@@ -440,6 +448,20 @@ const PerpsProInfoPagerInner = <Row,>(
         return;
       }
       latestRequestId.value = request.id;
+      // Align the destination with the active page's real native offset on
+      // the UI thread. A JS-thread read of the shared offset can be one frame
+      // stale, and the scene coordinator adopts the destination's offset as
+      // soon as activeIndex changes.
+      if (scrollBridge) {
+        const current = scrollBridge.targets[scrollBridge.activeIndex.value];
+        if (current) {
+          scrollPerpsProInfoBridgeTarget(
+            scrollBridge,
+            request.position,
+            Math.max(0, current.offset.value),
+          );
+        }
+      }
       pendingPageRequest.value = request;
       if (
         isPagerLaidOut.value &&
@@ -453,6 +475,7 @@ const PerpsProInfoPagerInner = <Row,>(
       latestRequestId,
       pendingPageRequest,
       programmaticSelectionTargetPosition,
+      scrollBridge,
       startProgrammaticPage,
     ],
   );
@@ -515,10 +538,6 @@ const PerpsProInfoPagerInner = <Row,>(
         return;
       }
       latestRequestIdRef.current = id;
-      // The destination page must already sit at the shared scene offset
-      // before it becomes visible, otherwise its rows would appear at a
-      // different vertical position than the shared layers.
-      syncTabToSceneOffset?.(tab);
       runOnUI(requestProgrammaticPage)({
         animated,
         id,
@@ -526,7 +545,7 @@ const PerpsProInfoPagerInner = <Row,>(
         position,
       });
     },
-    [requestProgrammaticPage, syncTabToSceneOffset],
+    [requestProgrammaticPage],
   );
 
   const scrollActiveToOffset = useCallback(
@@ -640,18 +659,6 @@ const PerpsProInfoPagerInner = <Row,>(
         return;
       }
       beginPreviewSession(sessionId);
-      // Align both neighbours once, on the JS thread, before the page starts
-      // moving. This replaces the old per-page offset preparation: only the
-      // destination of this drag is touched, and it is touched once.
-      const index = PERPS_PRO_INFO_TABS.indexOf(activeTabRef.current);
-      const previousTab = PERPS_PRO_INFO_TABS[index - 1];
-      const nextTab = PERPS_PRO_INFO_TABS[index + 1];
-      if (previousTab) {
-        syncTabToSceneOffset?.(previousTab);
-      }
-      if (nextTab) {
-        syncTabToSceneOffset?.(nextTab);
-      }
       onPageDragStart(requestId);
     },
     [
@@ -659,7 +666,6 @@ const PerpsProInfoPagerInner = <Row,>(
       isPreviewGestureActive,
       onPageDragStart,
       previewGestureSessionId,
-      syncTabToSceneOffset,
     ],
   );
 
@@ -680,6 +686,21 @@ const PerpsProInfoPagerInner = <Row,>(
     'worklet';
     if (isPreviewGestureActive.value) {
       return;
+    }
+    if (scrollBridge) {
+      const currentIndex = scrollBridge.activeIndex.value;
+      const current = scrollBridge.targets[currentIndex];
+      if (current) {
+        const offset = Math.max(0, current.offset.value);
+        const previousIndex = currentIndex - 1;
+        const nextIndex = currentIndex + 1;
+        if (previousIndex >= 0) {
+          scrollPerpsProInfoBridgeTarget(scrollBridge, previousIndex, offset);
+        }
+        if (nextIndex < PERPS_PRO_INFO_TABS.length) {
+          scrollPerpsProInfoBridgeTarget(scrollBridge, nextIndex, offset);
+        }
+      }
     }
     const sessionId = previewGestureSessionId.value + 1;
     previewGestureSessionId.value = sessionId;
