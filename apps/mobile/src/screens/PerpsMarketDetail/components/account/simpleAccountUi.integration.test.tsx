@@ -68,12 +68,49 @@ jest.mock('@rneui/themed', () => ({
 }));
 jest.mock('@gorhom/bottom-sheet', () => {
   const actual = jest.requireActual('@gorhom/bottom-sheet');
+  const mock = require('@gorhom/bottom-sheet/mock');
+  class ModalWithFooter extends mock.BottomSheetModal {
+    render() {
+      const Footer = this.props.footerComponent;
+      return require('react').createElement(
+        require('react-native').View,
+        null,
+        super.render(),
+        Footer &&
+          require('react').createElement(Footer, {
+            animatedFooterPosition: { value: 0 },
+          }),
+      );
+    }
+  }
   return {
-    ...require('@gorhom/bottom-sheet/mock'),
+    ...mock,
+    BottomSheetModal: ModalWithFooter,
+    BottomSheetFooter: ({ children }: { children: React.ReactNode }) =>
+      children,
     BottomSheetModalProvider: actual.BottomSheetModalProvider,
     useBottomSheetModalInternal: actual.useBottomSheetModalInternal,
   };
 });
+
+// The SDK websocket is the network boundary; popup, slippage calculation,
+// slider, publication handshake, quantity formatting and button remain real.
+jest.mock('@rabby-wallet/hyperliquid-sdk', () => ({
+  ...jest.requireActual('@rabby-wallet/hyperliquid-sdk'),
+  HyperliquidSDK: class {
+    ws = {
+      on: jest.fn(),
+      disconnect: jest.fn(),
+      subscribeToL2Book: (_params: unknown, listener: Function) => {
+        listener({
+          coin: 'ETH',
+          levels: [[{ px: '100', sz: '10' }], [{ px: '100', sz: '10' }]],
+        });
+        return { unsubscribe: jest.fn() };
+      },
+    };
+  },
+}));
 
 jest.mock('@react-native-firebase/analytics', () => ({
   __esModule: true,
@@ -125,6 +162,10 @@ const { PerpEditTpSlPriceTag } =
   require('../PerpEditTpSlPriceTag') as typeof import('../PerpEditTpSlPriceTag');
 const { PerpsSlider } =
   require('../PerpsSlider') as typeof import('../PerpsSlider');
+const { PerpsClosePositionPopup } =
+  require('../PerpsClosePositionPopup') as typeof import('../PerpsClosePositionPopup');
+const { Button } =
+  require('@/components2024/Button') as typeof import('@/components2024/Button');
 const { getVisibleBlockingModalIds, MODAL_GATE_IDS } =
   require('@/utils/modalGate') as typeof import('@/utils/modalGate');
 const { TrackedModal } =
@@ -153,6 +194,114 @@ afterEach(async () => {
   }
   await cleanupAsync();
   jest.clearAllTimers();
+  jest.restoreAllMocks();
+});
+
+const sliderGesture = (ui: ReturnType<typeof render>) => {
+  const input = ui.UNSAFE_getByType(PerpsGestureSlider);
+  const host = input.findAllByType(View).find(node => node.props.onLayout)!;
+  act(() =>
+    host.props.onLayout({
+      nativeEvent: { layout: { width: 220, height: 20 } },
+    }),
+  );
+  const gesture = ui.UNSAFE_getByType(GestureDetector).props.gesture;
+  const stateEvent = {
+    handlerTag: 0,
+    state: State.ACTIVE,
+    oldState: State.BEGAN,
+    numberOfPointers: 1,
+    pointerType: PointerType.TOUCH,
+  };
+  const manager = {
+    handlerTag: 0,
+    begin: () => undefined,
+    activate: () => gesture.handlers.onStart(stateEvent),
+    end: () => gesture.handlers.onFinalize(stateEvent, true),
+    fail: () => gesture.handlers.onFinalize(stateEvent, false),
+  };
+  const touch = (x: number) => {
+    const point = { id: 1, x, y: 20, absoluteX: x + 50, absoluteY: 100 };
+    return {
+      ...stateEvent,
+      eventType: 1,
+      numberOfTouches: 1,
+      changedTouches: [point],
+      allTouches: [point],
+    };
+  };
+  return { gesture, manager, touch };
+};
+
+it('converges the real close popup before immediate Confirm and clears a hidden drag on reopen', async () => {
+  // Drive only the slider's frame boundary, not unrelated import-time native
+  // initialization timers (Ledger, startup tasks, etc.).
+  const pendingFrames: FrameRequestCallback[] = [];
+  jest.spyOn(global, 'requestAnimationFrame').mockImplementation(callback => {
+    pendingFrames.push(callback);
+    return pendingFrames.length;
+  });
+  jest.spyOn(global, 'cancelAnimationFrame').mockImplementation(() => {});
+  const submit = jest.fn(async () => {});
+  const props: React.ComponentProps<typeof PerpsClosePositionPopup> = {
+    visible: true,
+    coin: 'ETH',
+    direction: 'Long',
+    positionSize: '1.23456',
+    marginUsed: 20,
+    markPrice: 100,
+    entryPrice: 90,
+    szDecimals: 3,
+    providerFee: 0,
+    pnl: 10,
+    onCancel: jest.fn(),
+    onConfirm: jest.fn(),
+    handleClosePosition: submit,
+  };
+  const ui = render(safe(<PerpsClosePositionPopup {...props} />));
+  const { gesture, manager, touch } = sliderGesture(ui);
+  const confirm = () => ui.UNSAFE_getByType(Button).props.onPress();
+  await act(async () => {
+    gesture.handlers.onTouchesDown(touch(70), manager);
+    gesture.handlers.onTouchesMove(touch(126), manager); // 53%, no JS frame yet
+    gesture.handlers.onTouchesUp(touch(126), manager);
+    // Same JS turn: React has not rendered the final percentage yet.
+    await confirm();
+  });
+  expect(submit).toHaveBeenCalledWith({
+    closePercent: 53,
+    orderType: 'market',
+    limitPx: undefined,
+  });
+  expect(ui.getByText('53%')).toBeTruthy();
+  expect(ui.getByText('65.4 USDC = 0.654 ETH')).toBeTruthy();
+  expect(ui.getByText('+$5.3')).toBeTruthy();
+
+  submit.mockClear();
+  await act(async () => {
+    gesture.handlers.onTouchesDown(touch(20), manager);
+    gesture.handlers.onTouchesUp(touch(20), manager);
+    await confirm(); // The previous render was enabled; latest 0% must be rejected.
+  });
+  expect(submit).not.toHaveBeenCalled();
+
+  act(() => gesture.handlers.onTouchesDown(touch(70), manager));
+  ui.rerender(safe(<PerpsClosePositionPopup {...props} visible={false} />));
+  // Deliberately deliver even cancelled frame callbacks after closing.
+  act(() => pendingFrames.splice(0).forEach(callback => callback(0)));
+  ui.rerender(safe(<PerpsClosePositionPopup {...props} />));
+  expect(ui.getByText('100%')).toBeTruthy();
+  expect(
+    ui.UNSAFE_getByType(PerpsGestureSlider).props.positionValue.value,
+  ).toBe(100);
+  await act(async () => {
+    await confirm();
+  });
+  expect(submit).toHaveBeenCalledWith({
+    closePercent: 100,
+    orderType: 'market',
+    limitPx: undefined,
+  });
 });
 
 it.each(['Paper', 'Fabric'])(
@@ -222,9 +371,12 @@ it.each(['Paper', 'Fabric'])(
     act(() =>
       gesture.handlers.onTouchesMove(touch(20 + (travel * 3) / 4), manager),
     );
+    expect(changes).toEqual([]);
+    act(() => jest.advanceTimersByTime(20));
+    expect(changes).toEqual([75]);
     act(() => gesture.handlers.onTouchesMove(touch(500), manager));
     act(() => gesture.handlers.onTouchesUp(touch(500), manager));
-    expect(changes).toEqual([25, 75, 100]);
+    expect(changes).toEqual([75, 100]);
     expect(ui.getByTestId('gesture-result').props.children).toBe('100');
   },
 );
@@ -421,15 +573,27 @@ it('draws the close progress and points from the thumb UI-thread position', () =
   };
   const ui = render(safe(<PerpsSlider {...props} value={30} />));
   const position = ui.UNSAFE_getByType(PerpsGestureSlider).props.positionValue;
+  expect(ui.UNSAFE_getByType(PerpsGestureSlider).props.showTrack).toBe(false);
+  expect(ui.UNSAFE_getByType(PerpsGestureSlider).props.valueChangeMode).toBe(
+    'latest',
+  );
   // The thumb and the custom track share one value: no React round trip.
   expect(position).toBeDefined();
-  const width = () =>
+  const offset = () =>
     StyleSheet.flatten(ui.getByTestId('perps-close-progress').props.style)
-      .width;
+      .transform[0].translateX;
   const opacity = (id: string) =>
     StyleSheet.flatten(ui.getByTestId(id).props.style).opacity;
   expect(position.value).toBe(30);
-  expect(width()).toBe('30%');
+  fireEvent(ui.getByTestId('perps-close-track'), 'layout', {
+    nativeEvent: { layout: { width: 200, height: 4 } },
+  });
+  ui.rerender(safe(<PerpsSlider {...props} value={30} />));
+  expect(offset()).toBe(-140);
+  expect(
+    StyleSheet.flatten(ui.getByTestId('perps-close-progress').props.style)
+      .width,
+  ).toBe('100%');
   expect(opacity('perps-close-point-25-selected')).toBe(1);
   expect(opacity('perps-close-point-50-selected')).toBe(0);
   expect(opacity('perps-close-point-50-unselected')).toBe(1);
@@ -437,7 +601,7 @@ it('draws the close progress and points from the thumb UI-thread position', () =
   // A drag moves the shared value ahead of the controlled prop.
   position.value = 60;
   ui.rerender(safe(<PerpsSlider {...props} value={30} />));
-  expect(width()).toBe('60%');
+  expect(offset()).toBe(-80);
   expect(opacity('perps-close-point-50-selected')).toBe(1);
   expect(opacity('perps-close-point-50-unselected')).toBe(0);
   expect(opacity('perps-close-point-75-selected')).toBe(0);

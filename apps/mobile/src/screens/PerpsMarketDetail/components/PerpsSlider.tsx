@@ -122,6 +122,7 @@ export const PerpsSlider: React.FC<PerpsSliderProps> = ({
 
   const showBubbleValue = useSharedValue(false);
   const closePosition = useSharedValue(value);
+  const closeTrackWidth = useSharedValue(0);
   const closeMinimum = minValue || 0;
   const closeMaximum = maxValue || 100;
   const closeProgressStyle = useAnimatedStyle(() => {
@@ -130,7 +131,7 @@ export const PerpsSlider: React.FC<PerpsSliderProps> = ({
       range > 0
         ? Math.max(0, Math.min(1, (closePosition.value - closeMinimum) / range))
         : 0;
-    return { width: `${ratio * 100}%` };
+    return { transform: [{ translateX: (ratio - 1) * closeTrackWidth.value }] };
   }, [closeMinimum, closeMaximum]);
   const { width } = useWindowDimensions();
   const previousValue = useRef<number>(0);
@@ -269,6 +270,10 @@ export const PerpsSlider: React.FC<PerpsSliderProps> = ({
         {variant === 'close' && (
           <View
             pointerEvents="none"
+            testID="perps-close-track"
+            onLayout={event => {
+              closeTrackWidth.value = event.nativeEvent.layout.width;
+            }}
             style={[
               styles.closeTrack,
               { backgroundColor: colors2024['neutral-line'] },
@@ -306,7 +311,13 @@ export const PerpsSlider: React.FC<PerpsSliderProps> = ({
           onValueChange={handleValueChange}
           onSlidingStart={handleSlidingStart}
           onSlidingComplete={handleSlidingComplete}
-          {...(variant === 'close' ? { positionValue: closePosition } : {})}
+          {...(variant === 'close'
+            ? {
+                positionValue: closePosition,
+                showTrack: false,
+                valueChangeMode: 'latest' as const,
+              }
+            : {})}
           minimumValue={minValue || 0}
           maximumValue={maxValue || 100}
           step={step}
@@ -341,8 +352,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     top: 8,
     height: 4,
     borderRadius: 2,
+    overflow: 'hidden',
   },
-  closeProgress: { height: 4, borderRadius: 2 },
+  closeProgress: { width: '100%', height: 4, borderRadius: 2 },
   closePoint: { width: 8, height: 8 },
   closePointLayer: { position: 'absolute', left: 0, top: 0 },
   closeSlider: { height: 20, zIndex: 2 },

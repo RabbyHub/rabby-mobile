@@ -105,6 +105,11 @@ export const PerpsClosePositionPopup: React.FC<{
 
   const [loading, setLoading] = useState<boolean>(false);
   const [closePercent, setClosePercent] = useState<number>(100);
+  const closePercentRef = useRef(100);
+  const updateClosePercent = useCallback((next: number) => {
+    closePercentRef.current = next;
+    setClosePercent(next);
+  }, []);
   const [orderType, setOrderType] = useState<PerpsOpenOrderType>('market');
   const [limitPx, setLimitPx] = useState<string>('');
 
@@ -112,7 +117,7 @@ export const PerpsClosePositionPopup: React.FC<{
     setLoading(true);
     try {
       await handleClosePosition({
-        closePercent,
+        closePercent: closePercentRef.current,
         orderType,
         limitPx: orderType === 'limit' ? limitPx : undefined,
       });
@@ -158,11 +163,11 @@ export const PerpsClosePositionPopup: React.FC<{
   useEffect(() => {
     if (!visible) {
       setLoading(false);
-      setClosePercent(100);
+      updateClosePercent(100);
       setOrderType('market');
       setLimitPx('');
     }
-  }, [visible]);
+  }, [visible, updateClosePercent]);
 
   const closedPnl = useMemo(() => {
     if (orderType === 'limit') {
@@ -265,7 +270,15 @@ export const PerpsClosePositionPopup: React.FC<{
     );
   });
   const confirmClose = useMemoizedFn(() => {
-    if (!disabled && !loading) return closePosition();
+    // A final slider delivery can precede React's next render. Validate and
+    // submit that same selection rather than a captured preview percentage.
+    if (
+      !loading &&
+      closePercentRef.current >= minClosePercent &&
+      (orderType !== 'limit' || Number(limitPx) > 0)
+    ) {
+      return closePosition();
+    }
   });
   // The component type must stay stable even when the button changes state.
   const renderFooter = useCallback(
@@ -338,7 +351,8 @@ export const PerpsClosePositionPopup: React.FC<{
                     variant="close"
                     step={1}
                     value={closePercent}
-                    onValueChange={setClosePercent}
+                    onValueChange={updateClosePercent}
+                    disabled={!visible}
                     showPercentage={false}
                   />
                 </View>

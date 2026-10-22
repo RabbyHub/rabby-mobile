@@ -14,6 +14,10 @@ import { PerpsGestureSlider, perpsSliderValueAt } from './PerpsGestureSlider';
 
 let mockQueueJS = false;
 let mockJSQueue: Array<() => void> = [];
+let mockQueueUI = false;
+let mockUIQueue: Array<() => void> = [];
+let frameId = 0;
+let frames = new Map<number, FrameRequestCallback>();
 
 jest.mock('react-native-reanimated', () => {
   const { View: NativeView, Animated } = require('react-native');
@@ -32,7 +36,15 @@ jest.mock('react-native-reanimated', () => {
           fn(...args);
         }
       },
-    runOnUI: (fn: Function) => fn,
+    runOnUI:
+      (fn: Function) =>
+      (...args: unknown[]) => {
+        if (mockQueueUI) {
+          mockUIQueue.push(() => fn(...args));
+        } else {
+          fn(...args);
+        }
+      },
     useAnimatedStyle: (fn: Function) => fn(),
     useEvent: () => jest.fn(),
     // Preserve UI shared values across controlled React renders.
@@ -44,7 +56,27 @@ jest.mock('react-native-reanimated', () => {
 beforeEach(() => {
   mockQueueJS = false;
   mockJSQueue = [];
+  mockQueueUI = false;
+  mockUIQueue = [];
+  frames = new Map();
+  jest.spyOn(global, 'requestAnimationFrame').mockImplementation(callback => {
+    frames.set(++frameId, callback);
+    return frameId;
+  });
+  jest.spyOn(global, 'cancelAnimationFrame').mockImplementation(id => {
+    frames.delete(id);
+  });
 });
+afterEach(() => jest.restoreAllMocks());
+
+const flushJS = () =>
+  act(() => mockJSQueue.splice(0).forEach(deliver => deliver()));
+const flushFrame = () =>
+  act(() => {
+    const callbacks = [...frames.values()];
+    frames.clear();
+    callbacks.forEach(callback => callback(0));
+  });
 
 type SliderProps = React.ComponentProps<typeof PerpsGestureSlider>;
 const stateEvent = {
@@ -306,4 +338,209 @@ it('retains minimum-relative rounding and clamps at both endpoints', () => {
   expect(perpsSliderValueAt(-20, 200, 10.13, 20.135, 0.01)).toBe(10.13);
   expect(perpsSliderValueAt(250, 200, 10.13, 20.135, 0.01)).toBe(20.135);
   expect(perpsSliderValueAt(30, 200, 0, 100, 1)).toBe(15);
+});
+
+const mountLatest = (overrides: Partial<SliderProps> = {}) => {
+  const positionValue = { value: overrides.value ?? 0 } as NonNullable<
+    SliderProps['positionValue']
+  >;
+  const slider = mountSlider({
+    valueChangeMode: 'latest',
+    showTrack: false,
+    positionValue,
+    ...overrides,
+  });
+  return { ...slider, positionValue };
+};
+
+it('bounds the notification queue and samples the latest position after a busy JS frame', () => {
+  const slider = mountLatest();
+  mockQueueJS = true;
+  const stream = slider.stream();
+  stream.down(20);
+  for (let x = 22; x <= 180; x += 2) {
+    stream.move(x);
+  }
+  expect(slider.positionValue.value).toBe(80);
+  expect(mockJSQueue).toHaveLength(1);
+  expect(slider.props.onValueChange).not.toHaveBeenCalled();
+  flushJS();
+  expect(frames.size).toBe(1);
+  stream.move(140);
+  flushFrame();
+  expect(mockJSQueue).toHaveLength(1);
+  flushJS();
+  expect(slider.props.onValueChange).toHaveBeenCalledTimes(1);
+  expect(slider.props.onValueChange).toHaveBeenLastCalledWith(60);
+  expect(slider.positionValue.value).toBe(60);
+});
+
+it('keeps a pending read bounded and catches up once when UI advances during delivery', () => {
+  const slider = mountLatest();
+  mockQueueJS = true;
+  const stream = slider.stream();
+  stream.down(70);
+  flushJS();
+  flushFrame(); // sample 25, waiting on JS
+  stream.move(160); // UI is now 70
+  expect(mockJSQueue).toHaveLength(1);
+  flushJS(); // ack schedules exactly one read of the newer position
+  flushJS();
+  expect(frames.size).toBe(1);
+  flushFrame();
+  flushJS();
+  expect(slider.props.onValueChange).toHaveBeenLastCalledWith(70);
+  expect(slider.props.onValueChange).toHaveBeenCalledTimes(2);
+  expect(mockJSQueue).toHaveLength(0);
+});
+
+it('delivers the final UI value without replaying a queued drag after release', () => {
+  const slider = mountLatest();
+  mockQueueJS = true;
+  const stream = slider.stream();
+  stream.down(70);
+  stream.move(180);
+  stream.move(140);
+  stream.up(140);
+  expect(slider.positionValue.value).toBe(60);
+  flushJS();
+  expect(frames.size).toBe(0);
+  expect(slider.props.onValueChange).toHaveBeenCalledTimes(1);
+  expect(slider.props.onValueChange).toHaveBeenCalledWith(60);
+  expect(slider.props.onSlidingStart).toHaveBeenCalledWith(0);
+  expect(slider.props.onSlidingComplete).toHaveBeenCalledWith(60);
+  slider.rerender({ value: 25 });
+  expect(slider.positionValue.value).toBe(60);
+  slider.rerender({ value: 60 });
+  slider.rerender({ value: 100 }); // a real controlled reset after final commit
+  expect(slider.positionValue.value).toBe(100);
+});
+
+it('rejects old UI echo commands even if they execute after the final commit', () => {
+  const slider = mountLatest();
+  const stream = slider.stream();
+  stream.down(70);
+  flushFrame(); // publish 25
+  mockQueueUI = true;
+  slider.rerender({ value: 25 });
+  const oldEcho = mockUIQueue.splice(0);
+  mockQueueUI = false;
+  stream.move(160);
+  stream.up(160);
+  slider.rerender({ value: 70 });
+  expect(slider.positionValue.value).toBe(70);
+  act(() => oldEcho.forEach(deliver => deliver()));
+  expect(slider.positionValue.value).toBe(70);
+});
+
+it('ignores an already sampled intermediate packet delivered after the final packet', () => {
+  const slider = mountLatest();
+  mockQueueJS = true;
+  const stream = slider.stream();
+  stream.down(70);
+  flushJS();
+  flushFrame();
+  const oldSample = mockJSQueue.splice(0);
+  stream.move(160);
+  stream.up(160);
+  flushJS();
+  act(() => oldSample.forEach(deliver => deliver()));
+  expect(slider.props.onValueChange).toHaveBeenCalledTimes(1);
+  expect(slider.props.onValueChange).toHaveBeenLastCalledWith(70);
+  expect(slider.props.onSlidingComplete).toHaveBeenCalledTimes(1);
+});
+
+it('acknowledges an unchanged final value without waiting for another React render', () => {
+  const slider = mountLatest({ value: 100 });
+  const stream = slider.stream();
+  stream.down(220);
+  stream.up(220);
+  slider.rerender({ value: 80 });
+  expect(slider.positionValue.value).toBe(80);
+});
+
+it('does not let an old final packet cancel the next gesture frame before it is sampled', () => {
+  const slider = mountLatest();
+  mockQueueJS = true;
+  const stream = slider.stream();
+  stream.down(70);
+  stream.up(70);
+  const oldPackets = mockJSQueue.splice(0);
+  stream.down(160);
+  flushJS(); // New session has requested a frame but has not been sampled.
+  expect(frames.size).toBe(1);
+  act(() => oldPackets.forEach(deliver => deliver()));
+  expect(frames.size).toBe(1);
+  flushFrame();
+  flushJS();
+  expect(slider.props.onValueChange).toHaveBeenCalledTimes(1);
+  expect(slider.props.onValueChange).toHaveBeenLastCalledWith(70);
+});
+
+it('finishes cancellation once with the final position and does not rewind the next gesture', () => {
+  const slider = mountLatest();
+  mockQueueJS = true;
+  const stream = slider.stream();
+  stream.down(70);
+  stream.move(160);
+  stream.cancel();
+  const oldPackets = mockJSQueue.splice(0);
+  stream.down(120);
+  stream.move(100);
+  flushJS();
+  flushFrame();
+  flushJS();
+  act(() => oldPackets.forEach(deliver => deliver()));
+  expect(slider.positionValue.value).toBe(40);
+  expect(slider.props.onValueChange).toHaveBeenLastCalledWith(40);
+  stream.cancel();
+  flushJS();
+  expect(slider.props.onSlidingComplete).toHaveBeenCalledTimes(1);
+  expect(slider.props.onSlidingComplete).toHaveBeenCalledWith(40);
+});
+
+it.each([{ disabled: true }, { maximumValue: 40 }])(
+  'invalidates delayed reads on configuration changes: %j',
+  next => {
+    const slider = mountLatest();
+    mockQueueJS = true;
+    slider.stream().down(70);
+    flushJS();
+    flushFrame();
+    slider.rerender(next);
+    flushJS();
+    expect(slider.props.onValueChange).not.toHaveBeenCalled();
+    expect(slider.props.onSlidingStart).not.toHaveBeenCalled();
+  },
+);
+
+it('releases a started owner and drops pending packets after unmount', () => {
+  const slider = mountLatest();
+  const stream = slider.stream();
+  stream.down(70);
+  flushFrame();
+  expect(slider.props.onValueChange).toHaveBeenCalledWith(25);
+  mockQueueJS = true;
+  stream.move(160);
+  slider.ui.unmount();
+  flushJS();
+  flushFrame();
+  expect(slider.props.onValueChange).toHaveBeenCalledTimes(1);
+  expect(slider.props.onSlidingComplete).toHaveBeenCalledTimes(1);
+});
+
+it('omits both built-in tracks when custom artwork is used', () => {
+  const slider = mountLatest({
+    minimumTrackTintColor: 'red',
+    maximumTrackTintColor: 'blue',
+  });
+  const colors = slider.ui
+    .UNSAFE_getAllByType(View)
+    .map(
+      node =>
+        require('react-native').StyleSheet.flatten(node.props.style)
+          ?.backgroundColor,
+    );
+  expect(colors).not.toContain('red');
+  expect(colors).not.toContain('blue');
 });

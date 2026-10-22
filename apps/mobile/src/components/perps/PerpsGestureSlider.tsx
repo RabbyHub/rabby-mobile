@@ -14,6 +14,7 @@ import Animated, {
   useSharedValue,
   type SharedValue,
 } from 'react-native-reanimated';
+import { useLatestSliderValue } from './useLatestSliderValue';
 
 type Props = {
   allowTouchTrack?: boolean;
@@ -30,6 +31,10 @@ type Props = {
    * can draw custom tracks in the same frame as the thumb. Fixed per mount.
    */
   positionValue?: SharedValue<number>;
+  /** Custom artwork callers can omit the built-in layout-driven tracks. */
+  showTrack?: boolean;
+  /** Coalesce form updates while retaining every UI-thread gesture position. */
+  valueChangeMode?: 'all' | 'latest';
   step?: number;
   style?: StyleProp<ViewStyle>;
   thumbStyle?: StyleProp<ViewStyle>;
@@ -72,6 +77,8 @@ export const PerpsGestureSlider = ({
   onSlidingComplete,
   onValueChange,
   positionValue,
+  showTrack = true,
+  valueChangeMode = 'all',
   step = 0,
   style,
   thumbStyle,
@@ -101,6 +108,7 @@ export const PerpsGestureSlider = ({
   const session = useSharedValue(0);
   const startX = useSharedValue(0);
   const startLeft = useSharedValue(0);
+  const startValue = useSharedValue(boundedValue);
   const configuration = useMemo(
     () => ({
       enabled,
@@ -110,6 +118,7 @@ export const PerpsGestureSlider = ({
       travel,
       thumbWidth,
       allowTouchTrack,
+      valueChangeMode,
     }),
     [
       enabled,
@@ -119,6 +128,7 @@ export const PerpsGestureSlider = ({
       travel,
       thumbWidth,
       allowTouchTrack,
+      valueChangeMode,
     ],
   );
   const current = useRef<
@@ -132,6 +142,15 @@ export const PerpsGestureSlider = ({
     onValueChange,
   });
   const jsSession = useRef<{ id: number; value: number } | null>(null);
+  const publishLatest = useLatestSliderValue({
+    enabled: valueChangeMode === 'latest',
+    configuration,
+    position,
+    value: boundedValue,
+    onSlidingStart,
+    onValueChange,
+    onSlidingComplete,
+  });
 
   useLayoutEffect(() => {
     current.current = {
@@ -161,13 +180,16 @@ export const PerpsGestureSlider = ({
   }, [configuration, active, pointer]);
   useLayoutEffect(() => {
     // A controlled echo must not rewind a gesture that has advanced on the UI thread.
+    if (valueChangeMode === 'latest') {
+      return;
+    }
     runOnUI((next: number) => {
       'worklet';
       if (!active.value) {
         position.value = next;
       }
     })(boundedValue);
-  }, [boundedValue, configuration, active, position]);
+  }, [boundedValue, configuration, active, position, valueChangeMode]);
 
   const begin = useCallback(
     (id: number, initial: number, next: number) => {
@@ -243,6 +265,7 @@ export const PerpsGestureSlider = ({
         .onStart(() => {
           'worklet';
           const initial = position.value;
+          startValue.value = initial;
           active.value = true;
           session.value += 1;
           position.value = perpsSliderValueAt(
@@ -255,7 +278,11 @@ export const PerpsGestureSlider = ({
           startLeft.value =
             ((position.value - minimumValue) / (maximumValue - minimumValue)) *
             travel;
-          runOnJS(begin)(session.value, initial, position.value);
+          if (valueChangeMode === 'latest') {
+            publishLatest(session.value, initial, position.value, false);
+          } else {
+            runOnJS(begin)(session.value, initial, position.value);
+          }
         })
         .onTouchesMove((event, manager) => {
           'worklet';
@@ -284,7 +311,11 @@ export const PerpsGestureSlider = ({
             return;
           }
           position.value = next;
-          runOnJS(change)(session.value, next);
+          if (valueChangeMode === 'latest') {
+            publishLatest(session.value, startValue.value, next, false);
+          } else {
+            runOnJS(change)(session.value, next);
+          }
         })
         .onTouchesUp((event, manager) => {
           'worklet';
@@ -313,7 +344,16 @@ export const PerpsGestureSlider = ({
             return;
           }
           active.value = false;
-          runOnJS(finish)(session.value);
+          if (valueChangeMode === 'latest') {
+            publishLatest(
+              session.value,
+              startValue.value,
+              position.value,
+              true,
+            );
+          } else {
+            runOnJS(finish)(session.value);
+          }
         }),
     [
       enabled,
@@ -333,6 +373,9 @@ export const PerpsGestureSlider = ({
       begin,
       change,
       finish,
+      startValue,
+      valueChangeMode,
+      publishLatest,
     ],
   );
 
@@ -345,13 +388,6 @@ export const PerpsGestureSlider = ({
           : 0,
       },
     ],
-  }));
-  const trackAnimation = useAnimatedStyle(() => ({
-    width: validRange
-      ? ((position.value - minimumValue) / (maximumValue - minimumValue)) *
-          Math.max(0, travel) +
-        thumbWidth / 2
-      : 0,
   }));
 
   return (
@@ -372,24 +408,19 @@ export const PerpsGestureSlider = ({
         );
       }}
       style={[styles.container, style]}>
-      <View
-        pointerEvents="none"
-        style={[
-          styles.track,
-          trackStyle,
-          { backgroundColor: maximumTrackTintColor },
-        ]}
-      />
-      <Animated.View
-        pointerEvents="none"
-        style={[
-          styles.track,
-          styles.absolute,
-          trackStyle,
-          { backgroundColor: minimumTrackTintColor },
-          trackAnimation,
-        ]}
-      />
+      {showTrack && (
+        <SliderTrack
+          position={position}
+          minimumValue={minimumValue}
+          maximumValue={maximumValue}
+          validRange={validRange}
+          travel={travel}
+          thumbWidth={thumbWidth}
+          trackStyle={trackStyle}
+          maximumTrackTintColor={maximumTrackTintColor}
+          minimumTrackTintColor={minimumTrackTintColor}
+        />
+      )}
       <Animated.View
         pointerEvents="none"
         style={[styles.thumb, thumbStyle, thumbAnimation]}>
@@ -410,6 +441,60 @@ export const PerpsGestureSlider = ({
         />
       </GestureDetector>
     </View>
+  );
+};
+
+// Keep the default track behavior in a child so custom artwork does not even
+// register a width mapper for an invisible built-in track.
+const SliderTrack = ({
+  position,
+  minimumValue,
+  maximumValue,
+  validRange,
+  travel,
+  thumbWidth,
+  trackStyle,
+  maximumTrackTintColor,
+  minimumTrackTintColor,
+}: {
+  position: SharedValue<number>;
+  minimumValue: number;
+  maximumValue: number;
+  validRange: boolean;
+  travel: number;
+  thumbWidth: number;
+  trackStyle?: Props['trackStyle'];
+  maximumTrackTintColor?: string;
+  minimumTrackTintColor?: string;
+}) => {
+  const trackAnimation = useAnimatedStyle(() => ({
+    width: validRange
+      ? ((position.value - minimumValue) / (maximumValue - minimumValue)) *
+          Math.max(0, travel) +
+        thumbWidth / 2
+      : 0,
+  }));
+  return (
+    <>
+      <View
+        pointerEvents="none"
+        style={[
+          styles.track,
+          trackStyle,
+          { backgroundColor: maximumTrackTintColor },
+        ]}
+      />
+      <Animated.View
+        pointerEvents="none"
+        style={[
+          styles.track,
+          styles.absolute,
+          trackStyle,
+          { backgroundColor: minimumTrackTintColor },
+          trackAnimation,
+        ]}
+      />
+    </>
   );
 };
 
