@@ -301,25 +301,18 @@ const PerpsProInfoPagerInner = <Row,>(
       : 0;
     const offsets = { ...androidDesiredOffsets.value };
     offsets[currentTab] = activeOffset;
-    // Only a page a horizontal swipe can actually reveal needs preparing.
-    // Writing the remaining pages let a scroll on one tab move the others
-    // (QA 1156); a collapsed-tab-view would make this unnecessary.
     for (const tab of PERPS_PRO_INFO_TABS) {
-      if (tab === currentTab) {
-        continue;
+      if (tab !== currentTab) {
+        offsets[tab] = getPerpsProInfoPagePreparedOffset({
+          activeOffset,
+          stickyOffset,
+          storedOffset: offsets[tab],
+        });
       }
-      if (Math.abs(PERPS_PRO_INFO_TABS.indexOf(tab) - currentIndex) > 1) {
-        continue;
-      }
-      offsets[tab] = getPerpsProInfoPagePreparedOffset({
-        activeOffset,
-        stickyOffset,
-        storedOffset: offsets[tab],
-      });
     }
     androidDesiredOffsets.value = offsets;
     PERPS_PRO_INFO_TABS.forEach((tab, index) => {
-      if (index !== currentIndex && Math.abs(index - currentIndex) <= 1) {
+      if (index !== currentIndex) {
         scrollPerpsProInfoBridgeTarget(scrollBridge, index, offsets[tab]);
       }
     });
@@ -437,12 +430,6 @@ const PerpsProInfoPagerInner = <Row,>(
 
     for (const tab of PERPS_PRO_INFO_TABS) {
       if (tab === currentTab) {
-        continue;
-      }
-      // Preparing every non-active page let a vertical scroll on one tab move
-      // the other tabs (QA 1156); only the adjacent pages can be revealed by a
-      // horizontal swipe, so only they are prepared.
-      if (Math.abs(PERPS_PRO_INFO_TABS.indexOf(tab) - currentIndex) > 1) {
         continue;
       }
       const offset = getPerpsProInfoPagePreparedOffset({

@@ -604,10 +604,9 @@ describe('PerpsProInfoPager', () => {
     fireEvent(pager, 'pageScroll', {
       nativeEvent: { position: 0, offset: 0.8 },
     });
-    // Only the adjacent page (index 1) can be revealed by the swipe; the far
-    // page keeps its own offset instead of being dragged along (QA 1156).
     expect(mockScrollTo.mock.calls).toEqual([
       [scrollBridge.targets[1].ref, 0, 300, false],
+      [scrollBridge.targets[2].ref, 0, 300, false],
     ]);
     // This native stub deliberately sends no scroll event.
     expect(scrollBridge.targets.map(target => target.offset.value)).toEqual([
@@ -616,7 +615,7 @@ describe('PerpsProInfoPager', () => {
     fireEvent(pager, 'pageSelected', { nativeEvent: { position: 1 } });
     act(flushMockRunOnJSQueue);
     expect(onActivateOffset).toHaveBeenCalledWith(125);
-    expect(mockScrollTo).toHaveBeenCalledTimes(1);
+    expect(mockScrollTo).toHaveBeenCalledTimes(2);
   });
 
   it('keeps unauthorized Android selections from preparing any vertical list', () => {
@@ -641,8 +640,7 @@ describe('PerpsProInfoPager', () => {
     renderPager({ authorizeNativePageGestures: true, ref, scrollBridge });
     mockQueueRunOnUI = true;
     mockSetPage.mockImplementation(() => {
-      // Only the adjacent page is prepared now (QA 1156).
-      expect(mockScrollTo).toHaveBeenCalledTimes(1);
+      expect(mockScrollTo).toHaveBeenCalledTimes(2);
     });
     act(() => ref.current?.setPage('openOrders'));
     expect(mockScrollTo).not.toHaveBeenCalled();

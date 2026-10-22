@@ -43,7 +43,7 @@ import { useTranslation } from 'react-i18next';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Reanimated, {
   runOnUI,
-  useAnimatedReaction,
+  useDerivedValue,
   useSharedValue,
 } from 'react-native-reanimated';
 
@@ -149,6 +149,7 @@ import { usePerpsProManageMargin } from './usePerpsProManageMargin';
 import { usePerpsProTrade } from './usePerpsProTrade';
 import { usePerpsProTransfer } from './usePerpsProTransfer';
 import { usePerpsProAndroidSceneScrollCoordinator } from './usePerpsProAndroidSceneScrollCoordinator';
+import { PerpsProTradeScrollBridge } from '../components/trade/PerpsProTradeScrollBridge';
 import { usePerpsProAndroidScenePresentation } from './usePerpsProAndroidScenePresentation';
 import { usePerpsFundingHistoryJournal } from '@/hooks/perps/funding/usePerpsFundingHistoryJournal';
 
@@ -666,12 +667,8 @@ export const PerpsProScene: React.FC<{
     if (measured <= 0) {
       return;
     }
-    // `tradeRowHeight` anchors the info-tabs overlay and the lead-in spacers.
-    // The live order book and amount fields re-layout by a pixel or two while
-    // scrolling, which used to move that anchor and read as the tab strip
-    // jumping up and down (QA 1156). Only accept real layout changes.
     setTradeRowHeight(current =>
-      Math.abs(current - measured) > 8 ? measured : current,
+      Math.abs(current - measured) > 1 ? measured : current,
     );
   }, []);
   const updateRegionAlertLayout = useCallback((event: LayoutChangeEvent) => {
@@ -735,37 +732,17 @@ export const PerpsProScene: React.FC<{
   // so every scroll frame crossed into JS (and the overlays chased the native
   // scroll offset one frame late). Android already renders this presentation
   // from a UI-thread offset; use the same path on both platforms.
-  // The sticky band follows the active tab's offset. Mirror it into a
-  // scene-owned shared value so a tab switch can publish the new offset in the
-  // same frame instead of waiting for that page's first scroll event; otherwise
-  // the band stays pinned over an unscrolled list for a frame (QA 1156).
-  const bandScrollOffset = useSharedValue(0);
-  useAnimatedReaction(
-    () => {
-      const index = infoScrollBridge.activeIndex.value;
-      const target = infoScrollBridge.targets[index];
-      return target && Number.isFinite(target.offset.value)
-        ? Math.max(0, target.offset.value)
-        : 0;
-    },
-    next => {
-      bandScrollOffset.value = next;
-    },
-    [infoScrollBridge],
-  );
-  const activateInfoScrollOffset = useCallback(
-    (offset: number) => {
-      headerCollapse.syncScrollOffset(offset);
-      bandScrollOffset.value = Number.isFinite(offset)
-        ? Math.max(0, offset)
-        : 0;
-    },
-    [bandScrollOffset, headerCollapse],
-  );
+  const activeInfoScrollOffset = useDerivedValue(() => {
+    const index = infoScrollBridge.activeIndex.value;
+    const target = infoScrollBridge.targets[index];
+    return target && Number.isFinite(target.offset.value)
+      ? Math.max(0, target.offset.value)
+      : 0;
+  });
   const sceneScrollOffset =
     Platform.OS === 'android'
       ? androidScrollCoordinator.visualOffset
-      : bandScrollOffset;
+      : activeInfoScrollOffset;
   const scenePresentation = usePerpsProAndroidScenePresentation({
     enabled: info.activeInfoTab != null,
     infoTabsAnchorY: infoTabsNaturalAnchor,
@@ -1211,18 +1188,13 @@ export const PerpsProScene: React.FC<{
           }
         />
         <View
-          style={styles.tradeSection}
+          style={tradeLeadInSpacerStyle}
           testID={
             active
-              ? 'perps-pro-trade-section'
-              : `perps-pro-trade-section-${tab}`
-          }>
-          {active || tab === previewInfoTab ? (
-            renderTrade()
-          ) : (
-            <View pointerEvents="none" style={tradeLeadInSpacerStyle} />
-          )}
-        </View>
+              ? 'perps-pro-trade-lead-in-spacer'
+              : `perps-pro-trade-lead-in-spacer-${tab}`
+          }
+        />
         <View
           style={styles.infoTabsSpacer}
           testID={
@@ -1241,9 +1213,6 @@ export const PerpsProScene: React.FC<{
       styles.infoTabsSpacer,
       styles.infoSectionDivider,
       styles.marketLeadInSpacer,
-      previewInfoTab,
-      renderTrade,
-      styles.tradeSection,
       tradeLeadInSpacerStyle,
     ],
   );
@@ -1383,8 +1352,17 @@ export const PerpsProScene: React.FC<{
       onPress={openMarketSelector}
     />
   );
+  const tradeOverlayContent = (
+    <PerpsProTradeScrollBridge
+      controller={infoScrollBridge}
+      enabled={info.activeInfoTab != null}
+      height={tradeRowHeight}>
+      {renderTrade()}
+    </PerpsProTradeScrollBridge>
+  );
   // Both platforms render the same UI-thread presentation now.
   const SceneOverlayView = Reanimated.View;
+  const tradeOverlayMotionStyle = scenePresentation.tradeAnimatedStyle;
   const headerOverlayMotionStyle = scenePresentation.headerAnimatedStyle;
   const regionAlertMotionStyle = scenePresentation.regionAlertAnimatedStyle;
   const marketOverlayMotionStyle = scenePresentation.marketAnimatedStyle;
@@ -1406,7 +1384,7 @@ export const PerpsProScene: React.FC<{
               indicatorPosition={infoTabIndicatorPosition}
               nativeVerticalScrollEnabled={Platform.OS !== 'android'}
               offscreenPageLimit={infoPagerOffscreenPageLimit}
-              onActivateOffset={activateInfoScrollOffset}
+              onActivateOffset={headerCollapse.syncScrollOffset}
               onLayout={updateScrollViewportHeight}
               onPageDragStart={beginInfoPageDrag}
               onPagePreview={setPreviewInfoTab}
@@ -1421,6 +1399,11 @@ export const PerpsProScene: React.FC<{
               style={styles.scroll}
             />
           ) : null}
+          <SceneOverlayView
+            style={[styles.tradeOverlay, tradeOverlayMotionStyle]}
+            testID="perps-pro-trade-overlay">
+            {tradeOverlayContent}
+          </SceneOverlayView>
           <SceneOverlayView
             style={[styles.headerClip, headerOverlayMotionStyle]}
             testID="perps-pro-header-overlay">
@@ -1722,8 +1705,13 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     top: 0,
     zIndex: 2,
   },
-  tradeSection: {
+  tradeOverlay: {
     backgroundColor: colors2024['neutral-bg-1'],
+    left: 0,
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    zIndex: 1,
   },
   infoTabsSpacer: { height: PERPS_PRO_INFO_TABS_PLACEHOLDER_HEIGHT },
   infoSectionDivider: {
