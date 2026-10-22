@@ -43,7 +43,7 @@ import { useTranslation } from 'react-i18next';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Reanimated, {
   runOnUI,
-  useDerivedValue,
+  useAnimatedReaction,
   useSharedValue,
 } from 'react-native-reanimated';
 
@@ -666,8 +666,12 @@ export const PerpsProScene: React.FC<{
     if (measured <= 0) {
       return;
     }
+    // `tradeRowHeight` anchors the info-tabs overlay and the lead-in spacers.
+    // The live order book and amount fields re-layout by a pixel or two while
+    // scrolling, which used to move that anchor and read as the tab strip
+    // jumping up and down (QA 1156). Only accept real layout changes.
     setTradeRowHeight(current =>
-      Math.abs(current - measured) > 1 ? measured : current,
+      Math.abs(current - measured) > 8 ? measured : current,
     );
   }, []);
   const updateRegionAlertLayout = useCallback((event: LayoutChangeEvent) => {
@@ -731,17 +735,37 @@ export const PerpsProScene: React.FC<{
   // so every scroll frame crossed into JS (and the overlays chased the native
   // scroll offset one frame late). Android already renders this presentation
   // from a UI-thread offset; use the same path on both platforms.
-  const activeInfoScrollOffset = useDerivedValue(() => {
-    const index = infoScrollBridge.activeIndex.value;
-    const target = infoScrollBridge.targets[index];
-    return target && Number.isFinite(target.offset.value)
-      ? Math.max(0, target.offset.value)
-      : 0;
-  });
+  // The sticky band follows the active tab's offset. Mirror it into a
+  // scene-owned shared value so a tab switch can publish the new offset in the
+  // same frame instead of waiting for that page's first scroll event; otherwise
+  // the band stays pinned over an unscrolled list for a frame (QA 1156).
+  const bandScrollOffset = useSharedValue(0);
+  useAnimatedReaction(
+    () => {
+      const index = infoScrollBridge.activeIndex.value;
+      const target = infoScrollBridge.targets[index];
+      return target && Number.isFinite(target.offset.value)
+        ? Math.max(0, target.offset.value)
+        : 0;
+    },
+    next => {
+      bandScrollOffset.value = next;
+    },
+    [infoScrollBridge],
+  );
+  const activateInfoScrollOffset = useCallback(
+    (offset: number) => {
+      headerCollapse.syncScrollOffset(offset);
+      bandScrollOffset.value = Number.isFinite(offset)
+        ? Math.max(0, offset)
+        : 0;
+    },
+    [bandScrollOffset, headerCollapse],
+  );
   const sceneScrollOffset =
     Platform.OS === 'android'
       ? androidScrollCoordinator.visualOffset
-      : activeInfoScrollOffset;
+      : bandScrollOffset;
   const scenePresentation = usePerpsProAndroidScenePresentation({
     enabled: info.activeInfoTab != null,
     infoTabsAnchorY: infoTabsNaturalAnchor,
@@ -1382,7 +1406,7 @@ export const PerpsProScene: React.FC<{
               indicatorPosition={infoTabIndicatorPosition}
               nativeVerticalScrollEnabled={Platform.OS !== 'android'}
               offscreenPageLimit={infoPagerOffscreenPageLimit}
-              onActivateOffset={headerCollapse.syncScrollOffset}
+              onActivateOffset={activateInfoScrollOffset}
               onLayout={updateScrollViewportHeight}
               onPageDragStart={beginInfoPageDrag}
               onPagePreview={setPreviewInfoTab}
