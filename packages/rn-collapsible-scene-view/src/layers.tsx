@@ -1,5 +1,9 @@
 import React, { type ReactNode } from 'react';
-import { type StyleProp, type ViewStyle } from 'react-native';
+import {
+  Animated as NativeAnimated,
+  type StyleProp,
+  type ViewStyle,
+} from 'react-native';
 import Animated, {
   Extrapolation,
   interpolate,
@@ -20,11 +24,101 @@ type LayerProps = {
   pointerEvents?: 'auto' | 'none' | 'box-none';
 };
 
+type NativeClockLayerProps = LayerProps & {
+  /**
+   * Drive presentation from the scroll host's NativeAnimated event clock.
+   * Interactive children must use native hit testing (e.g. RNGH Pressable),
+   * since Fabric's JS measurement can lag behind the native transform.
+   */
+  nativeScrollY?: NativeAnimated.Value;
+};
+
+const NativeLayerContentContext = React.createContext<ReactNode>(null);
+const NativeLayerContent = () => React.useContext(NativeLayerContentContext);
+const nativeLayerContent = <NativeLayerContent />;
+
+// Business content updates through the context slot without rerendering the
+// NativeAnimated host or replacing its graph. Never mirror scroll positions
+// back as explicit JS styles: those events can lag the native presentation.
+const NativeLayerView = React.memo(
+  ({
+    animatedStyle,
+    pointerEvents,
+    style,
+    testID,
+  }: Omit<LayerProps, 'children'> & {
+    animatedStyle: React.ComponentProps<typeof NativeAnimated.View>['style'];
+  }) => (
+    <NativeAnimated.View
+      pointerEvents={pointerEvents}
+      style={[style, animatedStyle]}
+      testID={testID}>
+      {nativeLayerContent}
+    </NativeAnimated.View>
+  ),
+);
+NativeLayerView.displayName = 'NativeLayerView';
+
 /**
  * Collapses with the header: `translateY = -min(scrollY, headerHeight)` and
  * fades out over the same distance.
  */
 export const CollapsibleHeaderLayer = ({
+  nativeScrollY,
+  ...props
+}: NativeClockLayerProps) =>
+  nativeScrollY ? (
+    <NativeCollapsibleHeaderLayer {...props} nativeScrollY={nativeScrollY} />
+  ) : (
+    <WorkletCollapsibleHeaderLayer {...props} />
+  );
+
+const NativeCollapsibleHeaderLayer = ({
+  children,
+  nativeScrollY,
+  pointerEvents,
+  style,
+  testID,
+}: LayerProps & { nativeScrollY: NativeAnimated.Value }) => {
+  const { headerHeight } = useCollapsibleScene();
+  const animatedStyle = React.useMemo(
+    () => ({
+      opacity:
+        headerHeight > 0
+          ? nativeScrollY.interpolate({
+              inputRange: [0, headerHeight],
+              outputRange: [1, 0],
+              extrapolate: 'clamp',
+            })
+          : 1,
+      transform: [
+        {
+          translateY:
+            headerHeight > 0
+              ? nativeScrollY.interpolate({
+                  inputRange: [0, headerHeight],
+                  outputRange: [0, -headerHeight],
+                  extrapolate: 'clamp',
+                })
+              : 0,
+        },
+      ],
+    }),
+    [headerHeight, nativeScrollY],
+  );
+  return (
+    <NativeLayerContentContext.Provider value={children}>
+      <NativeLayerView
+        animatedStyle={animatedStyle}
+        pointerEvents={pointerEvents}
+        style={style}
+        testID={testID}
+      />
+    </NativeLayerContentContext.Provider>
+  );
+};
+
+const WorkletCollapsibleHeaderLayer = ({
   children,
   pointerEvents,
   style,
@@ -57,6 +151,56 @@ export const CollapsibleHeaderLayer = ({
  * pinned layer passes that layer's bottom edge instead.
  */
 export const CollapsiblePinnedLayer = ({
+  nativeScrollY,
+  ...props
+}: NativeClockLayerProps & { baseTop: number; pinTop?: number }) =>
+  nativeScrollY ? (
+    <NativeCollapsiblePinnedLayer {...props} nativeScrollY={nativeScrollY} />
+  ) : (
+    <WorkletCollapsiblePinnedLayer {...props} />
+  );
+
+const NativeCollapsiblePinnedLayer = ({
+  baseTop,
+  children,
+  nativeScrollY,
+  pinTop = 0,
+  pointerEvents,
+  style,
+  testID,
+}: LayerProps & { baseTop: number; pinTop?: number } & {
+  nativeScrollY: NativeAnimated.Value;
+}) => {
+  const animatedStyle = React.useMemo(
+    () => ({
+      transform: [
+        {
+          translateY:
+            baseTop > pinTop
+              ? nativeScrollY.interpolate({
+                  inputRange: [0, baseTop - pinTop],
+                  outputRange: [baseTop, pinTop],
+                  extrapolate: 'clamp',
+                })
+              : pinTop,
+        },
+      ],
+    }),
+    [baseTop, nativeScrollY, pinTop],
+  );
+  return (
+    <NativeLayerContentContext.Provider value={children}>
+      <NativeLayerView
+        animatedStyle={animatedStyle}
+        pointerEvents={pointerEvents}
+        style={style}
+        testID={testID}
+      />
+    </NativeLayerContentContext.Provider>
+  );
+};
+
+const WorkletCollapsiblePinnedLayer = ({
   baseTop,
   children,
   pinTop = 0,
