@@ -16,6 +16,7 @@ import {
   StyleSheet,
   type AppStateStatus,
 } from 'react-native';
+import type { L2Book } from '@rabby-wallet/hyperliquid-sdk';
 
 let mockIsLight = true;
 const mockUsePerpsProScene = jest.fn();
@@ -24,6 +25,26 @@ const mockMarketSelectorPresent = jest.fn();
 const mockOrderBookRender = jest.fn();
 const mockOrderBookProps = jest.fn();
 const mockTradeFormProps = jest.fn();
+const mockTradeHookProps = jest.fn();
+const mockOrderConfirmationProps = jest.fn();
+const mockRefreshActiveAssetData = jest.fn(async () => null);
+const mockUpdateLeverage = jest.fn(async () => true);
+const mockBboSubscriptions: {
+  callback: (book: L2Book) => void;
+  coin: string;
+  unsubscribe: jest.Mock;
+}[] = [];
+const mockBboWs = {
+  on: jest.fn(),
+  off: jest.fn(),
+  subscribeToL2Book: jest.fn(
+    ({ coin }: { coin: string }, callback: (book: L2Book) => void) => {
+      const unsubscribe = jest.fn();
+      mockBboSubscriptions.push({ callback, coin, unsubscribe });
+      return { unsubscribe };
+    },
+  ),
+};
 const mockFundingOverlayProps = jest.fn();
 const mockEnableUnifiedProps = jest.fn();
 const mockExecuteEnableUnified = jest.fn(async () => undefined);
@@ -68,7 +89,8 @@ let mockRowSwipeUpdate:
   | null = null;
 let mockRowSwipeFinalize: (() => void) | null = null;
 const mockPendingTimingCallbacks: ((finished: boolean) => void)[] = [];
-let mockTradeHasPermission = true;
+let mockTradeAmountUnit: 'base' | 'quote' = 'quote';
+let mockLeveragePending = false;
 let mockTradeFocusedLeg: 'sl' | 'tp' | null = null;
 let mockOrderBookPriceIntent:
   | { type: 'attachedTpSlPrice'; leg: 'sl' | 'tp' }
@@ -162,8 +184,20 @@ jest.mock('@/screens/Perps/components/PerpsRegionAlert', () => {
 jest.mock('@/hooks/perps/subscriptions/useActiveAssetSubscription', () => ({
   useActiveAssetSubscription: () => ({
     activeAssetData: null,
-    refreshActiveAssetData: jest.fn(async () => null),
+    refreshActiveAssetData: mockRefreshActiveAssetData,
   }),
+}));
+
+jest.mock('@/hooks/perps/usePerpsStore', () => ({
+  perpsStore: require('zustand').create(() => ({ hasPermission: true })),
+}));
+
+jest.mock('@/core/apis/perps', () => ({
+  apisPerps: { getPerpsSDK: () => ({ ws: mockBboWs }) },
+}));
+
+jest.mock('./usePerpsProTradePreferences', () => ({
+  usePerpsProTradeAmountUnit: () => mockTradeAmountUnit,
 }));
 
 jest.mock('@/hooks/perps/funding/usePerpsFundingHistoryJournal', () => ({
@@ -616,7 +650,10 @@ jest.mock('../components/trade/PerpsProTradeForm', () => {
 });
 
 jest.mock('../components/trade/PerpsProOrderConfirmationSheet', () => ({
-  PerpsProOrderConfirmationSheet: () => null,
+  PerpsProOrderConfirmationSheet: (props: object) => {
+    mockOrderConfirmationProps(props);
+    return null;
+  },
 }));
 
 jest.mock('./PerpsProRealtimeOrderBook', () => {
@@ -637,41 +674,34 @@ jest.mock('./usePerpsProScene', () => ({
   usePerpsProScene: mockUsePerpsProScene,
 }));
 
-jest.mock('./usePerpsProBboBook', () => ({
-  usePerpsProBboBook: () => ({
-    book: null,
-    prices: { asks1: null, asks5: null, bids1: null, bids5: null },
-    sessionKey: null,
-    status: 'loading',
-  }),
-}));
-
 jest.mock('./usePerpsProTrade', () => ({
-  usePerpsProTrade: ({ market }: { market: unknown }) => ({
-    amountUnit: 'quote',
-    closeReview: jest.fn(),
-    confirmReview: jest.fn(),
-    form: mockTradeForm,
-    getOrderBookPriceIntent: () => mockGetOrderBookPriceIntent(),
-    hasPermission: mockTradeHasPermission,
-    leverage: 1,
-    marginMode: 'isolated',
-    market,
-    pending: false,
-    review: null,
-    selectOrderBookPrice: (...args: unknown[]) =>
-      mockSelectOrderBookPrice(...args),
-    setPrice: jest.fn(),
-    setSkipConfirmation: jest.fn(),
-    skipConfirmation: false,
-    tpSl: { focusedLeg: mockTradeFocusedLeg },
-  }),
+  usePerpsProTrade: (props: { market: unknown }) => {
+    mockTradeHookProps(props);
+    return {
+      amountUnit: mockTradeAmountUnit,
+      closeReview: jest.fn(),
+      confirmReview: jest.fn(),
+      form: mockTradeForm,
+      getOrderBookPriceIntent: () => mockGetOrderBookPriceIntent(),
+      leverage: 1,
+      marginMode: 'isolated',
+      market: props.market,
+      pending: false,
+      review: null,
+      selectOrderBookPrice: (...args: unknown[]) =>
+        mockSelectOrderBookPrice(...args),
+      setPrice: jest.fn(),
+      setSkipConfirmation: jest.fn(),
+      skipConfirmation: false,
+      tpSl: { focusedLeg: mockTradeFocusedLeg },
+    };
+  },
 }));
 
 jest.mock('./usePerpsProLeverageUpdate', () => ({
   usePerpsProLeverageUpdate: () => ({
-    pending: false,
-    update: jest.fn(async () => true),
+    pending: mockLeveragePending,
+    update: mockUpdateLeverage,
   }),
 }));
 
@@ -741,6 +771,8 @@ jest.mock('./usePerpsProTransfer', () => ({
 
 const { PerpsProScene } =
   require('./PerpsProScene') as typeof import('./PerpsProScene');
+const { perpsStore: mockPerpsStore } =
+  require('@/hooks/perps/usePerpsStore') as typeof import('@/hooks/perps/usePerpsStore');
 const { PerpsProTabIndicator } =
   require('../components/common/PerpsProTabIndicator') as typeof import('../components/common/PerpsProTabIndicator');
 const { PerpsProInfoSingleList } =
@@ -898,7 +930,10 @@ describe('PerpsProScene market loading states', () => {
     mockSelectOrderBookPrice.mockImplementation(
       () => mockOrderBookSelectionOutcome,
     );
-    mockTradeHasPermission = true;
+    mockPerpsStore.setState({ hasPermission: true });
+    mockTradeAmountUnit = 'quote';
+    mockLeveragePending = false;
+    mockBboSubscriptions.length = 0;
     mockTradeFocusedLeg = null;
     mockOrderBookPriceIntent = { type: 'tradePrice' };
     mockOrderBookSelectionOutcome = 'accepted';
@@ -955,6 +990,116 @@ describe('PerpsProScene market loading states', () => {
       configurable: true,
       value: initialPlatform,
     });
+  });
+
+  it('contains real BBO publications in the trade owner without rerendering Scene or its list', () => {
+    mockUsePerpsProScene.mockReturnValue(
+      createSceneState({
+        currentMarket: {
+          canonicalCoin: 'BTC',
+          marketKey: 'hyperliquid::BTC',
+          marketData: { maxLeverage: 40, onlyIsolated: false },
+          quoteAsset: 'USDC',
+        },
+        executionActive: true,
+        realtimeEnabled: true,
+        tradeConfigurationReady: true,
+      }),
+    );
+    render(
+      <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+    );
+    const list = screen.UNSAFE_getByType(FlatList);
+    const originalListProps = list.props;
+    const originalHeader = screen.getByTestId('perps-pro-list-lead-in').props;
+    const sceneRenders = mockUsePerpsProScene.mock.calls.length;
+    const tradeRenders = mockTradeHookProps.mock.calls.length;
+    expect(mockBboSubscriptions).toHaveLength(1);
+
+    const book: L2Book = {
+      coin: 'BTC',
+      levels: [[{ n: 1, px: '99', sz: '1' }], [{ n: 1, px: '101', sz: '1' }]],
+      time: 1,
+    };
+    act(() => mockBboSubscriptions[0].callback(book));
+
+    expect(mockTradeHookProps.mock.calls.length).toBeGreaterThan(tradeRenders);
+    expect(mockTradeHookProps.mock.lastCall?.[0]).toMatchObject({
+      bboBook: book,
+      bboPrices: { asks1: '101', bids1: '99' },
+      bboStatus: 'ready',
+    });
+    expect(mockUsePerpsProScene).toHaveBeenCalledTimes(sceneRenders);
+    expect(screen.UNSAFE_getByType(FlatList)).toBe(list);
+    expect(list.props).toBe(originalListProps);
+    expect(screen.getByTestId('perps-pro-list-lead-in').props).toBe(
+      originalHeader,
+    );
+  });
+
+  it('keeps the trade owner alive before preference hydration and across tab switches', () => {
+    mockUsePerpsProScene.mockReturnValue(
+      createSceneState({
+        currentMarket: {
+          canonicalCoin: 'BTC',
+          marketKey: 'hyperliquid::BTC',
+          marketData: { maxLeverage: 40, onlyIsolated: false },
+          quoteAsset: 'USDC',
+        },
+        realtimeEnabled: true,
+        tradeConfigurationReady: true,
+      }),
+    );
+    mockUsePerpsProInfoPanel.mockReturnValue(
+      createInfoState({ activeInfoTab: null }),
+    );
+    const props = { isModeSwitching: false, onSwitchToSimple: jest.fn() };
+    const view = render(<PerpsProScene {...props} />);
+    expect(screen.queryByTestId('perps-pro-info-list')).toBeNull();
+    expect(mockBboSubscriptions).toHaveLength(1);
+    expect(mockTradeHookProps).toHaveBeenCalled();
+    expect(mockOrderConfirmationProps).toHaveBeenCalled();
+
+    for (const activeInfoTab of ['positions', 'account', 'openOrders']) {
+      mockUsePerpsProInfoPanel.mockReturnValue(
+        createInfoState({ activeInfoTab }),
+      );
+      view.rerender(<PerpsProScene {...props} />);
+      expect(screen.UNSAFE_getAllByType(FlatList)).toHaveLength(1);
+    }
+    expect(mockBboSubscriptions).toHaveLength(1);
+    expect(mockBboSubscriptions[0].unsubscribe).not.toHaveBeenCalled();
+  });
+
+  it('shares the same leverage request lock with the trade and position owners', () => {
+    mockUsePerpsProScene.mockReturnValue(createSceneState());
+    const props = { isModeSwitching: false, onSwitchToSimple: jest.fn() };
+    const view = render(<PerpsProScene {...props} />);
+    for (const pending of [false, true, false]) {
+      mockLeveragePending = pending;
+      view.rerender(<PerpsProScene {...props} />);
+      expect(mockUsePerpsProPositionActions.mock.lastCall?.[0]).toMatchObject({
+        leveragePending: pending,
+        updateLeverageRequest: mockUpdateLeverage,
+      });
+      expect(mockTradeHookProps.mock.lastCall?.[0]).toMatchObject({
+        leveragePending: pending,
+        refreshActiveAssetData: mockRefreshActiveAssetData,
+        updateLeverageRequest: mockUpdateLeverage,
+      });
+    }
+  });
+
+  it('observes permission changes directly without waiting for a trade publication', () => {
+    mockUsePerpsProScene.mockReturnValue(createSceneState());
+    render(
+      <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+    );
+    expect(screen.queryByTestId('perps-region-alert')).toBeNull();
+    act(() => mockPerpsStore.setState({ hasPermission: false }));
+    expect(screen.getByTestId('perps-region-alert')).toBeOnTheScreen();
+    act(() => mockPerpsStore.setState({ hasPermission: true }));
+    expect(screen.queryByTestId('perps-region-alert')).toBeNull();
   });
 
   it('keeps row rendering stable for unrelated scene and info-wrapper updates', () => {
@@ -2007,7 +2152,7 @@ describe('PerpsProScene market loading states', () => {
 
   it('shares one stable native scroll value between the list and every floating layer', () => {
     installOptimisticInfoPanelMock();
-    mockTradeHasPermission = false;
+    mockPerpsStore.setState({ hasPermission: false });
     mockUsePerpsProScene.mockReturnValue(createSceneState());
     render(
       <PerpsProScene
@@ -2507,7 +2652,7 @@ describe('PerpsProScene market loading states', () => {
   });
 
   it('places the measured region alert above the Market and outside Trade', () => {
-    mockTradeHasPermission = false;
+    mockPerpsStore.setState({ hasPermission: false });
     mockUsePerpsProScene.mockReturnValue(
       createSceneState({
         currentMarket: {
@@ -2586,7 +2731,7 @@ describe('PerpsProScene market loading states', () => {
   });
 
   it('uses the account restriction before the current market resolves', () => {
-    mockTradeHasPermission = false;
+    mockPerpsStore.setState({ hasPermission: false });
     mockUsePerpsProScene.mockReturnValue(
       createSceneState({ isResolvingMarket: true }),
     );
@@ -2622,7 +2767,7 @@ describe('PerpsProScene market loading states', () => {
   });
 
   it('waits for the restricted alert measurement before painting positioned overlays', () => {
-    mockTradeHasPermission = false;
+    mockPerpsStore.setState({ hasPermission: false });
     mockUsePerpsProScene.mockReturnValue(createSceneState());
 
     render(
@@ -2659,7 +2804,7 @@ describe('PerpsProScene market loading states', () => {
   });
 
   it('rejects a cached restricted alert measurement from another width', () => {
-    mockTradeHasPermission = false;
+    mockPerpsStore.setState({ hasPermission: false });
     mockUsePerpsProScene.mockReturnValue(createSceneState());
 
     render(
