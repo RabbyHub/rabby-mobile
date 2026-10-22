@@ -19,10 +19,6 @@ export type SceneScrollSurfaceHandle = {
  * Wiring shared by `SceneScrollView` and `SceneList`: publish this tab's offset
  * to the scene on the UI thread, register the surface so a pager can align it
  * before a page switch, and align the page when it becomes active.
- * @param options0
- * @param options0.nativeRef
- * @param options0.syncOnActivate
- * @param options0.tabKey
  */
 export const useSceneScrollSurface = ({
   nativeRef,
@@ -74,13 +70,6 @@ export const useSceneScrollSurface = ({
       if (typeof target?.scrollToOffset === 'function') {
         target.scrollToOffset({ animated, offset: next });
         return;
-      }
-      if (typeof target?.getScrollResponder === 'function') {
-        const responder = target.getScrollResponder();
-        if (responder && typeof responder.scrollTo === 'function') {
-          responder.scrollTo({ animated, x: 0, y: next });
-          return;
-        }
       }
       if (typeof target?.scrollTo === 'function') {
         target.scrollTo({ animated, x: 0, y: next });

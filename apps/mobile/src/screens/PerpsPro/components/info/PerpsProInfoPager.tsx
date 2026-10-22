@@ -1,5 +1,5 @@
 import type { PerpsProInfoTab } from '@/core/services/perpsService';
-import { SceneSectionList } from '@rabby-wallet/rn-collapsible-scene-view';
+import { SceneList } from '@rabby-wallet/rn-collapsible-scene-view';
 import React, {
   forwardRef,
   useCallback,
@@ -93,11 +93,11 @@ type PerpsProInfoPagerProps<Row> = {
   activeTab: PerpsProInfoTab;
   authorizeNativePageGestures?: boolean;
   contentContainerStyle: Record<PerpsProInfoTab, StyleProp<ViewStyle>>;
+  contentInsetTop: number;
   data: Record<PerpsProInfoTab, readonly Row[]>;
   initialRequestId?: number;
   keepAllTabsMounted?: boolean;
   indicatorPosition: SharedValue<number>;
-  listHeaderHeight: number;
   nativeVerticalScrollEnabled?: boolean;
   offscreenPageLimit?: number;
   onLayout: (event: LayoutChangeEvent) => void;
@@ -106,10 +106,6 @@ type PerpsProInfoPagerProps<Row> = {
   onPageRequestFinished?: (requestId: number) => void;
   onPageSelected: (tab: PerpsProInfoTab, requestId: number) => void;
   renderItem: ListRenderItem<Row>;
-  renderStickyHeader?: (
-    tab: PerpsProInfoTab,
-    active: boolean,
-  ) => ReactElement | null;
   requestedTab: PerpsProInfoTab | null;
   scrollBridge?: PerpsProInfoScrollBridgeController;
   scrollToTab?: (
@@ -140,11 +136,11 @@ const PerpsProInfoPagerInner = <Row,>(
     activeTab,
     authorizeNativePageGestures = false,
     contentContainerStyle,
+    contentInsetTop,
     data,
     initialRequestId = 0,
     keepAllTabsMounted = false,
     indicatorPosition,
-    listHeaderHeight,
     nativeVerticalScrollEnabled = true,
     offscreenPageLimit,
     onLayout,
@@ -153,7 +149,6 @@ const PerpsProInfoPagerInner = <Row,>(
     onPageRequestFinished,
     onPageSelected,
     renderItem,
-    renderStickyHeader,
     requestedTab,
     scrollBridge,
     scrollToTab,
@@ -943,14 +938,10 @@ const PerpsProInfoPagerInner = <Row,>(
             style={styles.page}
             testID={`perps-pro-info-page-${tab}`}>
             {preparedTabs.has(tab) ? (
-              <SceneSectionList
-                ListHeaderComponent={
-                  <View
-                    style={{ height: listHeaderHeight }}
-                    testID="perps-pro-list-leading-space"
-                  />
-                }
+              <SceneList
                 contentContainerStyle={contentContainerStyle[tab]}
+                contentInsetTop={contentInsetTop}
+                data={data[tab]}
                 initialNumToRender={6}
                 keyboardShouldPersistTaps="handled"
                 keyExtractor={(item, index) =>
@@ -972,13 +963,8 @@ const PerpsProInfoPagerInner = <Row,>(
                     : undefined
                 }
                 renderItem={renderItem}
-                renderSectionHeader={() =>
-                  renderStickyHeader ? renderStickyHeader(tab, active) : null
-                }
                 scrollEnabled={active && nativeVerticalScrollEnabled}
                 scrollsToTop={active}
-                sections={[{ key: tab, data: data[tab] }]}
-                stickySectionHeadersEnabled
                 style={styles.list}
                 tabKey={tab}
                 testID={active ? 'perps-pro-scroll' : `perps-pro-scroll-${tab}`}

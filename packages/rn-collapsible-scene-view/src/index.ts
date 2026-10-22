@@ -19,12 +19,6 @@ export {
   type SceneListProps,
 } from './SceneList';
 export {
-  SceneSectionList,
-  type SceneSection,
-  type SceneSectionListHandle,
-  type SceneSectionListProps,
-} from './SceneSectionList';
-export {
   SceneScrollView,
   type SceneScrollViewHandle,
   type SceneScrollViewProps,

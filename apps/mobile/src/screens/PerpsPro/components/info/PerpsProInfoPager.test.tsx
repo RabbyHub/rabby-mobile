@@ -239,10 +239,10 @@ const renderPager = ({
             positions: {},
             openOrders: {},
           }}
+          contentInsetTop={160}
           data={data}
           keepAllTabsMounted={keepAllTabsMounted}
           indicatorPosition={indicatorPosition}
-          listHeaderHeight={160}
           nativeVerticalScrollEnabled={nativeVerticalScrollEnabled}
           offscreenPageLimit={offscreenPageLimit}
           onLayout={jest.fn()}
