@@ -29,7 +29,7 @@ jest.mock('@/utils/number', () => ({
 import React from 'react';
 import { act, fireEvent, render } from '@testing-library/react-native';
 import { PerpsPosition } from './PerpsPosition';
-import { simpleLiquidationPriceText } from './account/model';
+import { simplePositionPriceText } from './account/model';
 
 const mockTips = jest.fn();
 jest.mock('@/hooks/useTipsPopup', () => ({
@@ -96,6 +96,7 @@ const props: React.ComponentProps<typeof PerpsPosition> = {
   },
   rawLiquidationPrice: '-20',
   liquidationPriceText: '--',
+  entryPriceText: '100',
   rawMarkPrice: '110',
   coin: 'ETH',
   coinLogo: '',
@@ -123,13 +124,34 @@ it.each([
       <PerpsPosition
         {...props}
         rawLiquidationPrice={raw}
-        liquidationPriceText={simpleLiquidationPriceText(raw, decimals)}
+        liquidationPriceText={simplePositionPriceText(raw, decimals)}
         positionData={{ ...props.positionData!, liquidationPrice: legacyPrice }}
       />,
     );
     expect(ui.getByText(`$${expected}`)).toBeTruthy();
     for (const tag of ui.getAllByTestId('tp-sl-tag')) {
       expect(tag.props.liqPrice).toBe(Number(legacyPrice));
+    }
+  },
+);
+
+it.each([
+  ['921.3000', 2, '921.3'],
+  ['54321.6789', 0, '54,322'],
+  ['23.4565', 3, '23.457'],
+] as const)(
+  'displays the shared entry text for %s without changing editor inputs',
+  (raw, decimals, expected) => {
+    const ui = render(
+      <PerpsPosition
+        {...props}
+        entryPriceText={simplePositionPriceText(raw, decimals)}
+        positionData={{ ...props.positionData!, entryPrice: Number(raw) }}
+      />,
+    );
+    expect(ui.getByText(`$${expected}`)).toBeTruthy();
+    for (const tag of ui.getAllByTestId('tp-sl-tag')) {
+      expect(tag.props.entryPrice).toBe(Number(raw));
     }
   },
 );

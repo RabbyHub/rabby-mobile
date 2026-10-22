@@ -3,7 +3,7 @@ import {
   closeQuantitySummary,
   createAccountHeaderPresentation,
   simpleLiquidationGap,
-  simpleLiquidationPriceText,
+  simplePositionPriceText,
 } from './model';
 
 describe('Simple account display contracts', () => {
@@ -29,7 +29,7 @@ describe('Simple account display contracts', () => {
   ] as const)(
     'formats liquidation %s at precision %s as %s',
     (raw, decimals, expected) => {
-      expect(simpleLiquidationPriceText(raw, decimals)).toBe(expected);
+      expect(simplePositionPriceText(raw, decimals)).toBe(expected);
     },
   );
 
