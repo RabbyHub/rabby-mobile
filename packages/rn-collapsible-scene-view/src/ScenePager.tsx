@@ -1,211 +1,325 @@
 import React, {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
 } from 'react';
-import {
-  type LayoutChangeEvent,
-  type StyleProp,
-  View,
-  type ViewStyle,
-} from 'react-native';
+import { type LayoutChangeEvent, StyleSheet, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
+  cancelAnimation,
   runOnJS,
+  type SharedValue,
   useAnimatedStyle,
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
 
+import {
+  getPagerDragPosition,
+  resolvePagerBoundary,
+  resolvePagerTarget,
+} from './pagerMath';
+
+export type ScenePagerTrack = {
+  keys: readonly string[];
+  position: SharedValue<number>;
+  previewKey: string | null;
+  width: SharedValue<number>;
+};
+
 export type ScenePagerProps = {
   activeKey: string;
+  children: (track: ScenePagerTrack) => React.ReactNode;
   keys: readonly string[];
   onBoundary?: (direction: 'next' | 'prev') => void;
+  /** Publish the controlled key synchronously (including optimistic state). */
   onIndexChange: (key: string) => void;
-  onPreview?: (key: string | null) => void;
-  renderPage: (key: string, active: boolean) => React.ReactNode;
-  style?: StyleProp<ViewStyle>;
+  /** Coordinates in the one native list, not a JS scroll-position mirror. */
+  rowRegion: { startOffset: number; scrollOffset: SharedValue<number> };
   testID?: string;
 };
 
-const SETTLE_MS = 180;
-
 /**
- * A caller-controlled horizontal track. It is not a native pager: it only
- * translates the page track on the UI thread and reports an index change when
- * the gesture settles. Nesting and cross-level boundary handoff are owned by a
- * caller-level gesture arbiter.
+ * Headless row track: the caller keeps one native list and wraps only its rows
+ * in ScenePagerItem. Header/chrome never inherit a horizontal transform.
+ * The bounded neighbour preview remains until the settled data is committed.
  */
-export const ScenePager = ({
+export function ScenePager({
   activeKey,
+  children,
   keys,
   onBoundary,
   onIndexChange,
-  onPreview,
-  renderPage,
-  style,
+  rowRegion,
   testID,
-}: ScenePagerProps) => {
-  const activeIndex = Math.max(keys.indexOf(activeKey), 0);
-  const [width, setWidth] = useState(0);
-  const widthValue = useSharedValue(0);
-  const trackX = useSharedValue(0);
-  const startX = useSharedValue(0);
-  const dragging = useSharedValue(false);
-  const reportedIndex = useSharedValue(activeIndex);
+}: ScenePagerProps) {
+  const activeIndex = Math.max(0, keys.indexOf(activeKey));
+  const position = useSharedValue(activeIndex);
+  const width = useSharedValue(0);
+  const committedIndex = useSharedValue(activeIndex);
+  const startIndex = useSharedValue(activeIndex);
+  const settling = useSharedValue(false);
+  const ended = useSharedValue(false);
+  const gestureActive = useSharedValue(false);
   const lastPreview = useSharedValue(-1);
+  const [previewKey, setPreviewKey] = useState<string | null>(null);
+  const [commitAttempt, setCommitAttempt] = useState<number | null>(null);
+  const currentKey = useRef(activeKey);
   const mounted = useRef(true);
+  const generation = useRef(0);
+  const generationValue = useSharedValue(0);
+  const startGeneration = useSharedValue(0);
+  const measuredWidth = useRef(0);
 
   useEffect(() => {
     mounted.current = true;
     return () => {
       mounted.current = false;
+      cancelAnimation(position);
     };
-  }, []);
+  }, [position]);
 
-  useEffect(() => {
-    widthValue.value = width;
-    if (!dragging.value) {
-      trackX.value = -activeIndex * width;
-      reportedIndex.value = activeIndex;
+  useLayoutEffect(() => {
+    currentKey.current = activeKey;
+    generationValue.value = ++generation.current;
+    cancelAnimation(position);
+    committedIndex.value = activeIndex;
+    position.value = activeIndex;
+    settling.value = false;
+    setPreviewKey(null);
+  }, [
+    activeKey,
+    activeIndex,
+    committedIndex,
+    generationValue,
+    position,
+    settling,
+  ]);
+
+  useLayoutEffect(() => {
+    if (commitAttempt == null) {
+      return;
     }
-  }, [activeIndex, trackX, width, widthValue, dragging, reportedIndex]);
-
-  const handleLayout = useCallback((event: LayoutChangeEvent) => {
-    const next = Math.round(event.nativeEvent.layout.width);
-    if (next > 0) {
-      setWidth(next);
+    // If the controlled owner rejected the request (or batched a rollback to
+    // the same key), there is no key-change effect to release the gesture.
+    if (commitAttempt === generation.current) {
+      cancelAnimation(position);
+      position.value = activeIndex;
+      settling.value = false;
+      setPreviewKey(null);
     }
-  }, []);
+    setCommitAttempt(null);
+  }, [activeIndex, commitAttempt, position, settling]);
 
-  const changeIndex = useCallback(
-    (index: number) => {
-      if (!mounted.current) {
-        return;
+  const publishPreview = useCallback(
+    (key: string | null, fromKey: string, token: number) => {
+      if (
+        mounted.current &&
+        currentKey.current === fromKey &&
+        generation.current === token
+      ) {
+        setPreviewKey(key);
       }
-      const key = keys[index];
-      if (key) {
+    },
+    [],
+  );
+  const commit = useCallback(
+    (key: string, fromKey: string, token: number) => {
+      if (
+        mounted.current &&
+        currentKey.current === fromKey &&
+        generation.current === token
+      ) {
+        setCommitAttempt(token);
         onIndexChange(key);
       }
     },
-    [keys, onIndexChange],
+    [onIndexChange],
   );
-
-  const publishPreview = useCallback(
-    (index: number | null) => {
-      if (!mounted.current) {
-        return;
+  const reportBoundary = useCallback(
+    (direction: 'next' | 'prev', token: number) => {
+      if (mounted.current && generation.current === token) {
+        onBoundary?.(direction);
       }
-      onPreview?.(index == null ? null : keys[index] ?? null);
     },
-    [keys, onPreview],
+    [onBoundary],
   );
-
+  const onLayout = useCallback(
+    (event: LayoutChangeEvent) => {
+      const nextWidth = Math.max(0, event.nativeEvent.layout.width);
+      if (measuredWidth.current !== nextWidth) {
+        measuredWidth.current = nextWidth;
+        generationValue.value = ++generation.current;
+        cancelAnimation(position);
+        position.value = activeIndex;
+        settling.value = false;
+        setPreviewKey(null);
+        width.value = nextWidth;
+      }
+    },
+    [activeIndex, generationValue, position, settling, width],
+  );
+  const { startOffset, scrollOffset } = rowRegion;
   const gesture = useMemo(
     () =>
       Gesture.Pan()
-        .activeOffsetX([-12, 12])
+        .withTestId('scene-pager-pan')
+        .maxPointers(1)
+        .onTouchesDown((event, manager) => {
+          'worklet';
+          const touch = event.allTouches[0];
+          if (
+            settling.value ||
+            event.numberOfTouches !== 1 ||
+            !touch ||
+            touch.y + Math.max(0, scrollOffset.value) < startOffset
+          ) {
+            manager.fail();
+          }
+        })
+        .activeOffsetX([-20, 20])
         .failOffsetY([-12, 12])
         .onBegin(() => {
           'worklet';
-          dragging.value = true;
-          startX.value = trackX.value;
+          gestureActive.value = false;
+        })
+        .onStart(() => {
+          'worklet';
+          gestureActive.value = true;
+          cancelAnimation(position);
+          startIndex.value = committedIndex.value;
+          startGeneration.value = generationValue.value;
+          ended.value = false;
           lastPreview.value = -1;
         })
         .onUpdate(event => {
           'worklet';
-          if (!dragging.value || widthValue.value <= 0) {
+          if (startGeneration.value !== generationValue.value) {
             return;
           }
-          const min = -(keys.length - 1) * widthValue.value;
-          const next = Math.min(
-            0,
-            Math.max(min, startX.value + event.translationX),
-          );
-          trackX.value = next;
-          const position = -next / widthValue.value;
-          const nearest = Math.max(
-            0,
-            Math.min(keys.length - 1, Math.round(position)),
-          );
-          if (nearest !== lastPreview.value) {
-            lastPreview.value = nearest;
-            runOnJS(publishPreview)(nearest);
+          position.value = getPagerDragPosition({
+            startIndex: startIndex.value,
+            translationX: event.translationX,
+            width: width.value,
+            pageCount: keys.length,
+          });
+          const neighbour =
+            startIndex.value + (event.translationX < 0 ? 1 : -1);
+          if (neighbour !== lastPreview.value) {
+            lastPreview.value = neighbour;
+            runOnJS(publishPreview)(
+              keys[neighbour] ?? null,
+              keys[startIndex.value],
+              startGeneration.value,
+            );
           }
         })
-        .onEnd(event => {
+        .onEnd((event, success) => {
           'worklet';
-          if (!dragging.value || widthValue.value <= 0) {
-            dragging.value = false;
+          if (!success || startGeneration.value !== generationValue.value) {
             return;
           }
-          dragging.value = false;
-          const position = -trackX.value / widthValue.value;
-          const velocityBias = event.velocityX / widthValue.value / 6;
-          const target = Math.max(
-            0,
-            Math.min(keys.length - 1, Math.round(position + velocityBias)),
-          );
-          const atStart = target <= 0 && position < -0.05;
-          const atEnd =
-            target >= keys.length - 1 && position > keys.length - 0.95;
-          if (atStart || atEnd) {
-            runOnJS(onBoundary ?? (() => undefined))(atStart ? 'prev' : 'next');
-          }
-          trackX.value = withTiming(-target * widthValue.value, {
-            duration: SETTLE_MS,
+          ended.value = true;
+          settling.value = true;
+          const from = startIndex.value;
+          const token = startGeneration.value;
+          const target = resolvePagerTarget({
+            startIndex: from,
+            translationX: event.translationX,
+            velocityX: event.velocityX,
+            width: width.value,
+            pageCount: keys.length,
           });
-          if (target !== reportedIndex.value) {
-            reportedIndex.value = target;
-            runOnJS(changeIndex)(target);
+          const boundary = resolvePagerBoundary({
+            startIndex: from,
+            translationX: event.translationX,
+            pageCount: keys.length,
+          });
+          if (target !== from) {
+            runOnJS(publishPreview)(keys[target], keys[from], token);
           }
-          runOnJS(publishPreview)(null);
+          position.value = withTiming(target, { duration: 180 }, finished => {
+            if (!finished) {
+              return;
+            }
+            if (target !== from) {
+              runOnJS(commit)(keys[target], keys[from], token);
+            } else {
+              settling.value = false;
+              runOnJS(publishPreview)(null, keys[from], token);
+              if (boundary) {
+                runOnJS(reportBoundary)(boundary, token);
+              }
+            }
+          });
         })
         .onFinalize(() => {
           'worklet';
-          dragging.value = false;
+          if (gestureActive.value && !ended.value) {
+            const from = committedIndex.value;
+            const token = generationValue.value;
+            position.value = withTiming(from, { duration: 180 }, finished => {
+              if (finished) {
+                runOnJS(publishPreview)(null, keys[from], token);
+              }
+            });
+          }
+          gestureActive.value = false;
         }),
     [
-      changeIndex,
-      dragging,
-      keys.length,
+      commit,
+      committedIndex,
+      ended,
+      generationValue,
+      gestureActive,
+      keys,
       lastPreview,
-      onBoundary,
+      position,
       publishPreview,
-      reportedIndex,
-      startX,
-      trackX,
-      widthValue,
+      reportBoundary,
+      scrollOffset,
+      settling,
+      startIndex,
+      startOffset,
+      startGeneration,
+      width,
     ],
   );
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: trackX.value }],
-  }));
+  const track = useMemo(
+    () => ({ keys, position, previewKey, width }),
+    [keys, position, previewKey, width],
+  );
 
   return (
-    <View
-      onLayout={handleLayout}
-      style={[{ flex: 1, overflow: 'hidden' }, style]}
-      testID={testID}>
-      <GestureDetector gesture={gesture}>
-        <Animated.View
-          style={[
-            { flexDirection: 'row', height: '100%' },
-            width > 0 ? { width: width * keys.length } : null,
-            animatedStyle,
-          ]}>
-          {keys.map(key => (
-            <View
-              key={key}
-              style={{ height: '100%', width: width || undefined }}>
-              {renderPage(key, key === activeKey)}
-            </View>
-          ))}
-        </Animated.View>
-      </GestureDetector>
-    </View>
+    <GestureDetector gesture={gesture}>
+      <View onLayout={onLayout} style={styles.viewport} testID={testID}>
+        {children(track)}
+      </View>
+    </GestureDetector>
   );
-};
+}
+
+/** Also used for each active list row, so the list header stays stationary. */
+export function ScenePagerItem({
+  children,
+  pageKey,
+  track,
+}: {
+  children: React.ReactNode;
+  pageKey: string;
+  track: ScenePagerTrack;
+}) {
+  const index = track.keys.indexOf(pageKey);
+  const { position, width } = track;
+  const style = useAnimatedStyle(() => ({
+    transform: [{ translateX: (index - position.value) * width.value }],
+  }));
+  return <Animated.View style={style}>{children}</Animated.View>;
+}
+
+const styles = StyleSheet.create({
+  viewport: { flex: 1, overflow: 'hidden' },
+});

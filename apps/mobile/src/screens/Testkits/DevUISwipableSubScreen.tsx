@@ -1,10 +1,12 @@
 import {
   CollapsibleSceneProvider,
-  SceneList,
+  ScenePagerList,
   useCollapsibleSceneController,
 } from '@rabby-wallet/rn-collapsible-scene-view';
 import React, { useMemo, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { Pressable } from 'react-native-gesture-handler';
+import { Text } from '@/components/Typography';
 
 type PlaygroundTab = 'a' | 'b' | 'c';
 
@@ -26,12 +28,11 @@ const ROWS: Record<PlaygroundTab, { key: string; label: string }[]> = {
 };
 
 /**
- * Isolated harness for the single-list + header tab swap. It intentionally
- * has no app state, persistence or pager: tapping a tab only changes the
- * SceneList `data` prop, so a mismatch here is a component-level bug.
+ * Isolated one-list row pager, without business state or persistence.
  */
 export default function DevUISwipableSubScreen() {
   const [tab, setTab] = useState<PlaygroundTab>('a');
+  const [boundary, setBoundary] = useState<string>('none');
   const controller = useCollapsibleSceneController();
   const rows = ROWS[tab];
 
@@ -43,6 +44,7 @@ export default function DevUISwipableSubScreen() {
           <Text testID="dev-perps-pager-active">
             active={tab} rows={rows.length}
           </Text>
+          <Text testID="dev-perps-pager-boundary">boundary={boundary}</Text>
         </View>
         <View style={styles.tradeBlock}>
           <Text style={styles.title}>Trade block (list header)</Text>
@@ -61,7 +63,7 @@ export default function DevUISwipableSubScreen() {
         </View>
       </View>
     ),
-    [rows.length, tab],
+    [boundary, rows.length, tab],
   );
 
   return (
@@ -70,11 +72,17 @@ export default function DevUISwipableSubScreen() {
         activeTab={tab}
         controller={controller}
         headerHeight={0}
+        syncOffsetOnActivate={false}
         tabs={TABS}>
-        <SceneList
+        <ScenePagerList
           ListHeaderComponent={listHeader}
           contentInsetTop={0}
-          data={rows}
+          dataByKey={ROWS}
+          keys={TABS}
+          onBoundary={setBoundary}
+          onIndexChange={key => setTab(key as PlaygroundTab)}
+          rowStartOffset={368}
+          scrollOffset={controller.scrollY}
           keyExtractor={item => item.key}
           renderItem={({ item }) => (
             <View style={styles.row} testID={`dev-perps-pager-row-${item.key}`}>

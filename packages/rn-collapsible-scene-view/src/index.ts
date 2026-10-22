@@ -23,4 +23,10 @@ export {
   type SceneScrollViewHandle,
   type SceneScrollViewProps,
 } from './SceneScrollView';
-export { ScenePager, type ScenePagerProps } from './ScenePager';
+export {
+  ScenePager,
+  ScenePagerItem,
+  type ScenePagerProps,
+  type ScenePagerTrack,
+} from './ScenePager';
+export { ScenePagerList, type ScenePagerListProps } from './ScenePagerList';

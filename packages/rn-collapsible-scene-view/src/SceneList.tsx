@@ -57,6 +57,7 @@ export type SceneListProps<ItemT> = {
   onScrollBeginDrag?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
   onScrollEndDrag?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
   ref?: React.Ref<SceneListHandle<ItemT>>;
+  removeClippedSubviews?: boolean;
   renderItem: ListRenderItem<ItemT>;
   scrollEnabled?: boolean;
   scrollsToTop?: boolean;
@@ -87,6 +88,7 @@ export const SceneList = <ItemT,>({
   onScrollBeginDrag,
   onScrollEndDrag,
   ref,
+  removeClippedSubviews,
   renderItem,
   scrollEnabled = true,
   scrollsToTop,
@@ -185,6 +187,7 @@ export const SceneList = <ItemT,>({
       onScrollBeginDrag={onScrollBeginDrag}
       onScrollEndDrag={onScrollEndDrag}
       ref={setNativeListRef as never}
+      removeClippedSubviews={removeClippedSubviews}
       renderItem={renderItem}
       scrollEnabled={scrollEnabled}
       scrollEventThrottle={16}
