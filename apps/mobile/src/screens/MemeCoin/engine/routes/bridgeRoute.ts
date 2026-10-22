@@ -77,7 +77,7 @@ export const createBridgeRoute = ({ account }: { account: Account }) => {
       }
 
       const allowanceCache = new Map<string, Promise<string>>();
-      const withApproval: SelectedBridgeQuote[] = await Promise.all(
+      const approvals = await Promise.allSettled(
         quotes.map(async quote => ({
           ...quote,
           loading: false,
@@ -89,6 +89,9 @@ export const createBridgeRoute = ({ account }: { account: Account }) => {
             allowanceCache,
           })),
         })),
+      );
+      const withApproval: SelectedBridgeQuote[] = approvals.flatMap(r =>
+        r.status === 'fulfilled' ? [r.value] : [],
       );
       const best = getBestBridgeQuote(withApproval, receiveToken)?.quote;
       if (!best) {
@@ -190,11 +193,15 @@ export const createBridgeRoute = ({ account }: { account: Account }) => {
         .getBridgeHistoryList({
           user_addr: account.address,
           start: 0,
-          limit: 10,
+          limit: Math.max(10, submittedAt.size + 10),
           is_all: true,
         })
         .catch(() => null);
-      const resolution = resolveBridgeArrival(res?.history_list || [], {
+      if (!res) {
+        await sleep(BRIDGE_ARRIVAL_POLL_INTERVAL_MS);
+        continue;
+      }
+      const resolution = resolveBridgeArrival(res.history_list || [], {
         hash: txHash,
         createdAt,
         now: Date.now(),
