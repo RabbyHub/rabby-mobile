@@ -49,6 +49,7 @@ import { useTranslation } from 'react-i18next';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Reanimated, {
   runOnUI,
+  useAnimatedReaction,
   useDerivedValue,
   useSharedValue,
 } from 'react-native-reanimated';
@@ -744,10 +745,26 @@ export const PerpsProScene: React.FC<{
       ? Math.max(0, target.offset.value)
       : 0;
   });
+  // One scene offset drives every shared layer. While a page switch is in
+  // flight the incoming page is still being scrolled into place, so publishing
+  // its intermediate offset would visibly drag the header/market/trade layers.
+  // Freeze the scene offset until the switch settles.
+  const sceneOffset = useSharedValue(0);
+  const pageSwitching = useSharedValue(false);
+  useAnimatedReaction(
+    () => activeInfoScrollOffset.value,
+    next => {
+      if (pageSwitching.value) {
+        return;
+      }
+      sceneOffset.value = next;
+    },
+    [activeInfoScrollOffset],
+  );
   const sceneScrollOffset =
     Platform.OS === 'android'
       ? androidScrollCoordinator.visualOffset
-      : activeInfoScrollOffset;
+      : sceneOffset;
   const scenePresentation = usePerpsProAndroidScenePresentation({
     enabled: info.activeInfoTab != null,
     infoTabsAnchorY: infoTabsNaturalAnchor,
@@ -1274,6 +1291,11 @@ export const PerpsProScene: React.FC<{
       setPreviewInfoTab(null);
       setCommittedInfoTab(tab);
       lastNativeInfoTabRef.current = tab;
+      // Let the incoming page finish its offset correction, then hand control
+      // back to the shared scene offset.
+      requestAnimationFrame(() => {
+        pageSwitching.value = false;
+      });
       const generation = infoTabWriteGenerationRef.current + 1;
       infoTabWriteGenerationRef.current = generation;
       const write = { generation, settled: false, tab };
@@ -1306,7 +1328,7 @@ export const PerpsProScene: React.FC<{
       }
       settleWrite();
     },
-    [setActiveInfoTab],
+    [pageSwitching, setActiveInfoTab],
   );
   useEffect(() => {
     const rawActiveInfoTab = info.activeInfoTab;
@@ -1345,11 +1367,15 @@ export const PerpsProScene: React.FC<{
       requestId,
     );
   }, [committedInfoTab, info.activeInfoTab, infoTabWriteResolutionRevision]);
-  const beginInfoPageDrag = useCallback((requestId: number) => {
-    if (requestId === infoTabRequestIdRef.current) {
-      setRequestedInfoTab(null);
-    }
-  }, []);
+  const beginInfoPageDrag = useCallback(
+    (requestId: number) => {
+      pageSwitching.value = true;
+      if (requestId === infoTabRequestIdRef.current) {
+        setRequestedInfoTab(null);
+      }
+    },
+    [pageSwitching],
+  );
   const marketBarContent = isMarketLoading ? (
     <PerpsProMarketBarSkeleton />
   ) : (
@@ -1372,7 +1398,7 @@ export const PerpsProScene: React.FC<{
         <CollapsibleSceneProvider
           activeTab={settledInfoTab ?? 'positions'}
           headerHeight={PERPS_PRO_HEADER_HEIGHT}
-          scrollOffset={activeInfoScrollOffset}
+          scrollOffset={sceneScrollOffset}
           tabs={PERPS_PRO_INFO_TABS}>
           <View collapsable={false} style={styles.container}>
             {settledInfoTab ? (
