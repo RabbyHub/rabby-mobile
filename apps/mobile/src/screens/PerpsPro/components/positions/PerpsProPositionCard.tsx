@@ -77,6 +77,14 @@ const useResponsiveMetricLayout = (measurementKey: string) => {
     expanded: false,
     key: measurementKey,
   });
+  // The expanded layout changes the column width, so re-measuring text while
+  // expanded feeds a different geometry back into the same collision check.
+  // On Fabric that oscillates between the compact and expanded layouts (the
+  // label/underline visibly flicker left-right). Keep the text measurements
+  // that produced the decision and only re-evaluate on layout/row changes.
+  const expandedRef = React.useRef(layoutState.expanded);
+  expandedRef.current =
+    layoutState.key === measurementKey ? layoutState.expanded : false;
 
   if (measurementsRef.current.key !== measurementKey) {
     measurementsRef.current = {
@@ -89,6 +97,14 @@ const useResponsiveMetricLayout = (measurementKey: string) => {
     (key: string, row: MetricRow, patch: MetricMeasurements) => {
       const currentMeasurements = measurementsRef.current;
       if (currentMeasurements.key !== key) {
+        return;
+      }
+      const isTextMeasurement =
+        'middleFirstLineWidth' in patch ||
+        'middleFirstLineX' in patch ||
+        'rightNaturalWidth' in patch ||
+        'rightWrapped' in patch;
+      if (expandedRef.current && isTextMeasurement) {
         return;
       }
 

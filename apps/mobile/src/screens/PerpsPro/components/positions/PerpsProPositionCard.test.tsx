@@ -906,6 +906,88 @@ describe('PerpsProPositionCard', () => {
     ).toBeTruthy();
   });
 
+  it('keeps the expanded metric layout stable when the column re-measures it', () => {
+    // A wrapped label proves the compact column cannot hold it. The expanded
+    // column then re-measures the same label, so those later text callbacks
+    // must not be able to flip the row back (QA 1163: the label and its dotted
+    // underline flickered between the two layouts).
+    render(
+      <PerpsProPositionCard
+        accountIdentity="account-a"
+        position={createPosition({ marginMode: 'cross' })}
+      />,
+    );
+
+    const measureRow = (rightLines: Array<{ width: number; x: number }>) => {
+      fireEvent(
+        screen.getByTestId('perps-pro-position-metrics-BTC'),
+        'layout',
+        {
+          nativeEvent: { layout: { height: 34, width: 345, x: 0, y: 0 } },
+        },
+      );
+      fireEvent(
+        screen.getByTestId('perps-pro-position-middle-metric-BTC'),
+        'layout',
+        {
+          nativeEvent: { layout: { height: 34, width: 116, x: 136, y: 0 } },
+        },
+      );
+      fireEvent(screen.getByText('Margin (USDC)'), 'textLayout', {
+        nativeEvent: { lines: [{ width: 72, x: 0 }] },
+      });
+      fireEvent(screen.getByText('Margin Ratio'), 'textLayout', {
+        nativeEvent: { lines: rightLines },
+      });
+    };
+
+    // The price row keeps reporting a clean, fitting geometry so the shared
+    // decision can actually resolve to compact again if it is re-evaluated.
+    const measurePriceRow = () => {
+      fireEvent(
+        screen.getByTestId('perps-pro-position-price-metrics-BTC'),
+        'layout',
+        {
+          nativeEvent: { layout: { height: 34, width: 345, x: 0, y: 0 } },
+        },
+      );
+      fireEvent(
+        screen.getByTestId('perps-pro-position-middle-price-BTC'),
+        'layout',
+        {
+          nativeEvent: { layout: { height: 34, width: 116, x: 136, y: 0 } },
+        },
+      );
+      fireEvent(screen.getByText('Mark Price (USDC)'), 'textLayout', {
+        nativeEvent: { lines: [{ width: 72, x: 0 }] },
+      });
+      fireEvent(screen.getByText('Liq. Price (USDC)'), 'textLayout', {
+        nativeEvent: { lines: [{ width: 88, x: 0 }] },
+      });
+    };
+    measurePriceRow();
+
+    measureRow([
+      { width: 60, x: 0 },
+      { width: 40, x: 0 },
+    ]);
+    const expandedLabelStyle = () =>
+      StyleSheet.flatten(screen.getByLabelText('Margin Ratio').props.style);
+    expect(expandedLabelStyle()).toMatchObject({
+      alignItems: 'stretch',
+      alignSelf: 'stretch',
+    });
+
+    // The expanded column reports a single line that would fit the compact
+    // geometry. The decision must stay stable instead of oscillating.
+    measurePriceRow();
+    measureRow([{ width: 88, x: 0 }]);
+    expect(expandedLabelStyle()).toMatchObject({
+      alignItems: 'stretch',
+      alignSelf: 'stretch',
+    });
+  });
+
   it('ignores native layout callbacks from an obsolete measurement key', () => {
     const position = createPosition({ marginMode: 'cross' });
     const view = render(
