@@ -43,6 +43,36 @@ const refreshTpSlOrders = async (coin: string) => {
   }
 };
 
+// Hyperliquid acknowledges trigger orders with bare "waitingForTrigger" /
+// "waitingForFill" strings, which the SDK's OrderResponseStatus type omits.
+const isAcceptedOrderStatus = (status: unknown) => {
+  if (status === 'waitingForTrigger' || status === 'waitingForFill') {
+    return true;
+  }
+  if (!status || typeof status !== 'object') return false;
+  const value = status as {
+    error?: unknown;
+    filled?: { oid?: unknown };
+    resting?: { oid?: unknown };
+  };
+  return (
+    !value.error &&
+    (typeof value.resting?.oid === 'number' ||
+      typeof value.filled?.oid === 'number')
+  );
+};
+
+const getOrderStatusError = (statuses: readonly unknown[] | undefined) => {
+  for (const status of statuses ?? []) {
+    const error =
+      status && typeof status === 'object'
+        ? (status as { error?: unknown }).error
+        : undefined;
+    if (typeof error === 'string' && error) return error;
+  }
+  return undefined;
+};
+
 export const usePerpsPosition = () => {
   const currentPerpsAccount = perpsStore(s => s.currentPerpsAccount);
   const { t } = useTranslation();
@@ -55,14 +85,15 @@ export const usePerpsPosition = () => {
 
   const handleCancelOrder = useMemoizedFn(
     async (
-      oid: number,
+      oids: readonly number[],
       coin: string,
       actionType: 'tp' | 'sl',
       isSceneCurrent?: () => boolean,
     ) => {
       const actionText = actionType === 'tp' ? 'Take profit' : 'Stop loss';
       const context = getPerpsAccountRuntimeContext();
-      if (!context.account || isSceneCurrent?.() === false) return false;
+      if (!oids.length || !context.account || isSceneCurrent?.() === false)
+        return false;
       const isCurrent = () =>
         getPerpsAccountRuntimeContext().generation === context.generation;
       return runPerpsAction(
@@ -72,22 +103,30 @@ export const usePerpsPosition = () => {
           getToastMessage: () => actionText + ' cancel error',
         },
         async () => {
+          let responded = false;
           try {
             const exchange = apisPerps.getPerpsSDK().exchange;
             if (!exchange)
               throw new Error('Hyperliquid exchange client unavailable');
-            const res = await exchange.cancelOrder([{ oid, coin }]);
+            // One batch removes duplicate same-side legs, so the X never
+            // reveals another hidden order with the same trigger.
+            const res = await exchange.cancelOrder(
+              oids.map(oid => ({ oid, coin })),
+            );
+            responded = true;
             if (!isCurrent()) return false;
             const statuses = res?.response?.data?.statuses;
             if (
               res?.status !== 'ok' ||
-              statuses?.length !== 1 ||
+              statuses?.length !== oids.length ||
               !statuses.every(item => (item as unknown) === 'success')
             ) {
               throw new Error(actionText + ' cancel error');
             }
           } catch (error) {
             if (!isCurrent() || isSceneCurrent?.() === false) return false;
+            // Some legs of an answered batch may be gone; show what remains.
+            if (responded) await refreshTpSlOrders(coin);
             throw error;
           }
           // An accepted mutation stays successful if its read-back fails; WS
@@ -220,6 +259,7 @@ export const usePerpsPosition = () => {
       return runPerpsAction(
         { fallback: false, label: autoCloseText + ' set', context: params },
         async () => {
+          let responded = false;
           try {
             const exchange = apisPerps.getPerpsSDK().exchange;
             if (!exchange)
@@ -232,24 +272,27 @@ export const usePerpsPosition = () => {
               slTriggerPx: formatTriggerPx(slTriggerPx),
               builder: PERPS_BUILDER_INFO,
             });
+            responded = true;
             if (!isCurrent()) return false;
-            const statuses = res?.response?.data?.statuses;
+            const statuses = res?.response?.data?.statuses as
+              | readonly unknown[]
+              | undefined;
             if (
               res?.status !== 'ok' ||
               statuses?.length !==
                 Number(!!tpTriggerPx) + Number(!!slTriggerPx) ||
               !statuses?.length ||
-              !statuses.every(
-                status => !status.error && (status.resting || status.filled),
-              )
+              !statuses.every(isAcceptedOrderStatus)
             ) {
               throw new Error(
-                statuses?.find(status => status.error)?.error ||
-                  autoCloseText + ' set error',
+                getOrderStatusError(statuses) || autoCloseText + ' set error',
               );
             }
           } catch (error) {
             if (!isCurrent() || isSceneCurrent?.() === false) return false;
+            // The exchange answered, so some legs may still rest; show the
+            // confirmed orders instead of inviting a duplicate retry.
+            if (responded) await refreshTpSlOrders(params.coin);
             throw error;
           }
           await refreshTpSlOrders(params.coin);

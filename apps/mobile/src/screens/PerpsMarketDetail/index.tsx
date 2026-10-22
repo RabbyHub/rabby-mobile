@@ -159,6 +159,8 @@ export const PerpsMarketDetailScreen = () => {
     slPrice,
     tpPending,
     slPending,
+    tpCancelling,
+    slCancelling,
     contextKey: tpSlContextKey,
     handleSetAutoClose,
     handleCancelAutoClose,
@@ -491,6 +493,8 @@ export const PerpsMarketDetailScreen = () => {
               tpSlContextKey={tpSlContextKey}
               tpPending={tpPending}
               slPending={slPending}
+              tpCancelling={tpCancelling}
+              slCancelling={slCancelling}
               pxDecimals={currentAssetCtx?.pxDecimals || 2}
               szDecimals={currentAssetCtx?.szDecimals || 0}
               handleActionApproveStatus={handleActionApproveStatus}

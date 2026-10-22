@@ -324,6 +324,8 @@ it('waits for confirmed orders after setting, deduplicates one leg and keeps bot
     tpPrice: '110',
     slPrice: undefined,
     slPending: true,
+    // Setting never shows the cancel spinner.
+    slCancelling: false,
   });
   await act(async () => {
     expect(await ui.result.current.handleSetAutoClose(setParams)).toBe(false);
@@ -368,7 +370,9 @@ it('keeps a cancelled leg visible until confirmation and never restores it on a 
   expect(ui.result.current).toMatchObject({
     tpPrice: '110',
     tpPending: true,
+    tpCancelling: true,
     slPrice: '90',
+    slCancelling: false,
   });
   await act(async () => {
     accepted.resolve(response(['success']));
@@ -386,14 +390,96 @@ it('keeps a cancelled leg visible until confirmation and never restores it on a 
     tpPrice: undefined,
     slPrice: '90',
     tpPending: false,
+    tpCancelling: false,
   });
   expect(sdk.exchange!.cancelOrder).toHaveBeenCalledWith([
     { oid: 1, coin: 'BTC' },
   ]);
 });
 
-it('reports rejected/missing SDK results as failure, retains existing tags and never refreshes a failed mutation', async () => {
+it('accepts Hyperliquid trigger acknowledgements and rejects unknown statuses', async () => {
+  const ui = mount();
+  const log = jest.spyOn(console, 'error').mockImplementation(() => {});
+  try {
+    for (const status of ['waitingForTrigger', 'waitingForFill']) {
+      jest
+        .mocked(sdk.exchange!.bindTpslByOrderId)
+        .mockResolvedValueOnce(response([status]) as never);
+      await act(async () =>
+        expect(await ui.result.current.handleSetAutoClose(setParams)).toBe(
+          true,
+        ),
+      );
+    }
+    for (const statuses of [['unexpected'], [{ resting: {} }], []]) {
+      jest
+        .mocked(sdk.exchange!.bindTpslByOrderId)
+        .mockResolvedValueOnce(response(statuses) as never);
+      await act(async () =>
+        expect(await ui.result.current.handleSetAutoClose(setParams)).toBe(
+          false,
+        ),
+      );
+    }
+    // Every answered request reads back confirmed orders, accepted or not.
+    expect(ordersHttp()).toHaveBeenCalledTimes(5);
+  } finally {
+    log.mockRestore();
+  }
+});
+
+it('cancels every duplicate same-side leg in one batch and keeps the other side', async () => {
+  const duplicate = { ...order(3), timestamp: 3 };
+  const ws = subscribe();
+  ws({
+    user: account.address,
+    orders: [order(1), duplicate, order(2, 'sl')],
+  });
+  const ui = mount();
+  ordersHttp().mockResolvedValueOnce([order(2, 'sl')]);
+  jest
+    .mocked(sdk.exchange!.cancelOrder)
+    .mockResolvedValueOnce(response(['success', 'success']) as never);
+  await act(async () => ui.result.current.handleCancelAutoClose('tp'));
+  expect(sdk.exchange!.cancelOrder).toHaveBeenCalledTimes(1);
+  expect(sdk.exchange!.cancelOrder).toHaveBeenCalledWith([
+    { oid: 1, coin: 'BTC' },
+    { oid: 3, coin: 'BTC' },
+  ]);
+  expect(ui.result.current).toMatchObject({
+    tpPrice: undefined,
+    slPrice: '90',
+  });
+});
+
+it('reports a partially rejected batch as failure and shows the remaining confirmed leg', async () => {
+  const ws = subscribe();
+  ws({ user: account.address, orders: [order(1), order(3)] });
+  const ui = mount();
+  ordersHttp().mockResolvedValueOnce([order(3)]);
+  jest
+    .mocked(sdk.exchange!.cancelOrder)
+    .mockResolvedValueOnce(
+      response(['success', { error: 'already canceled' }]) as never,
+    );
+  const log = jest.spyOn(console, 'error').mockImplementation(() => {});
+  try {
+    await act(async () => ui.result.current.handleCancelAutoClose('tp'));
+    expect(ordersHttp()).toHaveBeenCalledTimes(1);
+    expect(read().openOrders.map(item => item.oid)).toEqual([3]);
+    expect(ui.result.current).toMatchObject({
+      tpPrice: '110',
+      tpPending: false,
+      tpCancelling: false,
+    });
+  } finally {
+    log.mockRestore();
+  }
+});
+
+it('reports rejected/missing SDK results as failure, retains existing tags and only reads back answered requests', async () => {
   write({ openOrders: [order(1)] });
+  ordersHttp().mockResolvedValue([order(1)]);
   const ui = mount();
   const log = jest.spyOn(console, 'error').mockImplementation(() => {});
   const exchange = sdk.exchange;
@@ -413,7 +499,9 @@ it('reports rejected/missing SDK results as failure, retains existing tags and n
       expect(await ui.result.current.handleSetAutoClose(setParams)).toBe(false),
     );
     expect(ui.result.current.tpPrice).toBe('110');
-    expect(ordersHttp()).not.toHaveBeenCalled();
+    // Answered-but-rejected set/cancel requests read back once each; the
+    // missing exchange path never refreshes.
+    expect(ordersHttp()).toHaveBeenCalledTimes(2);
   } finally {
     sdk.exchange = exchange;
     log.mockRestore();
