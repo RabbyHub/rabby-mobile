@@ -10,6 +10,7 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   runOnJS,
   runOnUI,
+  useAnimatedReaction,
   useAnimatedStyle,
   useSharedValue,
   type SharedValue,
@@ -30,6 +31,13 @@ type Props = {
    * can draw custom tracks in the same frame as the thumb. Fixed per mount.
    */
   positionValue?: SharedValue<number>;
+  /**
+   * Optional UI-thread mirror of the thumb position. Wrappers that draw their
+   * own visual thumb/progress (instead of the native one) can bind animated
+   * styles to this value so the geometry follows the finger on the UI thread
+   * instead of waiting for a JS re-render.
+   */
+  progressValue?: SharedValue<number>;
   step?: number;
   style?: StyleProp<ViewStyle>;
   thumbStyle?: StyleProp<ViewStyle>;
@@ -72,6 +80,7 @@ export const PerpsGestureSlider = ({
   onSlidingComplete,
   onValueChange,
   positionValue,
+  progressValue,
   step = 0,
   style,
   thumbStyle,
@@ -132,6 +141,16 @@ export const PerpsGestureSlider = ({
     onValueChange,
   });
   const jsSession = useRef<{ id: number; value: number } | null>(null);
+
+  useAnimatedReaction(
+    () => position.value,
+    next => {
+      if (progressValue) {
+        progressValue.value = next;
+      }
+    },
+    [position, progressValue],
+  );
 
   useLayoutEffect(() => {
     current.current = {

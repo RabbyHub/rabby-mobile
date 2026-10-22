@@ -31,11 +31,21 @@ jest.mock('@/hooks/theme', () => ({
   },
 }));
 
+jest.mock('react-native-reanimated', () => {
+  const { View } = require('react-native');
+  return {
+    __esModule: true,
+    default: { View },
+    useSharedValue: (initial: number) => ({ value: initial }),
+    useAnimatedStyle: (factory: () => object) => factory(),
+  };
+});
+
 jest.mock('@/utils/styles', () => ({
   createGetStyles2024: (getStyle: unknown) => getStyle,
 }));
 
-import { PerpsProSlider } from './PerpsProSlider';
+import { PERPS_PRO_NEUTRAL_RAIL, PerpsProSlider } from './PerpsProSlider';
 
 describe('PerpsProSlider neutral design', () => {
   it.each([1, 40])(
@@ -75,8 +85,10 @@ describe('PerpsProSlider neutral design', () => {
       ).toMatchObject({
         width: 20,
         height: 20,
-        left: value === 1 ? '0%' : '100%',
       });
+      // The artwork follows the native gesture on the UI thread, so its
+      // position must not be a function of the controlled `value` prop.
+      expect(input.props.progressValue).toBeTruthy();
       expect(
         StyleSheet.flatten(
           screen.getByTestId('perps-pro-slider-neutral-track-progress-rail')
@@ -120,7 +132,9 @@ describe('PerpsProSlider neutral design', () => {
     ).toMatchObject({
       backgroundColor: 'neutral-title-1',
       height: 2,
-      width: `${(19 / 39) * 100}%`,
+      // Progress is driven on the UI thread from the gesture's shared value;
+      // it is no longer derived from the controlled `value` prop.
+      width: 0,
     });
     expect(
       StyleSheet.flatten(
@@ -314,10 +328,11 @@ describe('order dialog slider coordinates', () => {
           ((width - 2 * inputStyle.marginHorizontal - nativeThumb.width) *
             value) /
             100;
+        // The artwork is positioned by the gesture's UI-thread shared value,
+        // so its centre travels the same rail the native thumb uses.
+        const visualTravel = width - rail.left - rail.right;
         const visualCenter =
-          rail.left +
-          thumb.width / 2 +
-          ((width - rail.left - rail.right) * parseFloat(thumb.left)) / 100;
+          rail.left + thumb.width / 2 + (visualTravel * value) / 100;
         const pointCenter =
           pointRail.left +
           4 +
@@ -327,6 +342,8 @@ describe('order dialog slider coordinates', () => {
         expect(nativeCenter).toBeCloseTo(4 + ((width - 8) * value) / 100);
         expect(visualCenter).toBeCloseTo(nativeCenter);
         expect(pointCenter).toBeCloseTo(nativeCenter);
+        expect(rail.left).toBe(PERPS_PRO_NEUTRAL_RAIL.order.left);
+        expect(rail.right).toBe(PERPS_PRO_NEUTRAL_RAIL.order.right);
       }
       expect(inputStyle.height).toBe(40);
       expect(rail.top + thumb.height / 2).toBe(20);

@@ -34,6 +34,9 @@ jest.mock('react-native-reanimated', () => {
       },
     runOnUI: (fn: Function) => fn,
     useAnimatedStyle: (fn: Function) => fn(),
+    // The progress mirror is a UI-thread subscription; tests drive
+    // `position` through the gesture handlers instead.
+    useAnimatedReaction: () => undefined,
     useEvent: () => jest.fn(),
     // Preserve UI shared values across controlled React renders.
     useSharedValue: (value: unknown) =>
