@@ -391,14 +391,15 @@ export const usePerpsProInfoPanel = (
     runtime.status,
   ]);
 
+  const { status: runtimeStatus, retry: retryRuntime } = runtime;
   const retryAccount = useCallback(() => {
-    if (runtime.status === 'error') {
-      runtime.retry();
+    if (runtimeStatus === 'error') {
+      retryRuntime();
     }
     fetchMarketData();
     fetchSpotMeta(true);
     fetchStakingSummaryHttp();
-  }, [fetchMarketData, fetchSpotMeta, runtime]);
+  }, [fetchMarketData, fetchSpotMeta, retryRuntime, runtimeStatus]);
 
   return {
     account,

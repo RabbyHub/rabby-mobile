@@ -34,6 +34,10 @@ const mockDismissKeyboardThen = jest.fn((action: () => void) => action());
 const mockConfirmCancelAll = jest.fn();
 const mockConfirmCancelOrder = jest.fn();
 const mockRequestCloseAll = jest.fn();
+const mockIsOrderPending = () => false;
+const mockManageMarginOpen = jest.fn();
+const mockTransferOpen = jest.fn();
+const mockTranslate = (key: string) => key;
 const mockKlineProps = jest.fn();
 const mockUsePerpsProPositionActions = jest.fn();
 const mockUsePerpsProPositionTpSl = jest.fn();
@@ -355,7 +359,7 @@ jest.mock('@/utils/styles', () => ({
 
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (key: string) => key,
+    t: mockTranslate,
   }),
 }));
 
@@ -683,7 +687,7 @@ jest.mock('./usePerpsProCancelOrders', () => ({
     confirmCancelOrder: mockConfirmCancelOrder,
     dismissConfirmation: jest.fn(),
     isCancelAllPending: false,
-    isOrderPending: () => false,
+    isOrderPending: mockIsOrderPending,
   }),
 }));
 
@@ -714,7 +718,7 @@ jest.mock('./usePerpsProManageMargin', () => ({
     dirty: false,
     draft: '',
     editor: null,
-    open: jest.fn(),
+    open: mockManageMarginOpen,
     pending: false,
     selectTarget: jest.fn(),
     view: null,
@@ -730,7 +734,7 @@ jest.mock('./usePerpsProTransfer', () => ({
     close: jest.fn(),
     confirm: jest.fn(),
     editor: null,
-    open: jest.fn(),
+    open: mockTransferOpen,
     pending: false,
   }),
 }));
@@ -951,6 +955,36 @@ describe('PerpsProScene market loading states', () => {
       configurable: true,
       value: initialPlatform,
     });
+  });
+
+  it('keeps row rendering stable for unrelated scene and info-wrapper updates', () => {
+    mockUsePerpsProScene.mockReturnValue(createSceneState());
+    const info = createInfoState({ activeInfoTab: 'positions' });
+    mockUsePerpsProInfoPanel.mockReturnValue(info);
+    const props = { isModeSwitching: false, onSwitchToSimple: jest.fn() };
+    const view = render(<PerpsProScene {...props} />);
+    const firstRenderer = screen.UNSAFE_getByType(PerpsProInfoSingleList).props
+      .renderItem;
+
+    // Hooks can return a new wrapper while all row-relevant facts stay equal.
+    mockUsePerpsProInfoPanel.mockReturnValue({
+      ...info,
+      pendingFundingCount: 1,
+    });
+    view.rerender(<PerpsProScene {...props} />);
+    expect(
+      screen.UNSAFE_getByType(PerpsProInfoSingleList).props.renderItem,
+    ).toBe(firstRenderer);
+
+    mockUsePerpsProInfoPanel.mockReturnValue({
+      ...info,
+      hideOtherPositionSymbols: true,
+    });
+    view.rerender(<PerpsProScene {...props} />);
+    expect(
+      screen.UNSAFE_getByType(PerpsProInfoSingleList).props.renderItem,
+    ).not.toBe(firstRenderer);
+    expect(screen.UNSAFE_getAllByType(FlatList)).toHaveLength(1);
   });
 
   it('keeps the full skeleton while a ready catalogue resolves its market', () => {

@@ -222,7 +222,9 @@ export const PerpsProScene: React.FC<{
   const scene = usePerpsProScene();
   const activeAsset = useActiveAssetSubscription(
     scene.currentMarket?.canonicalCoin ?? '',
-    { enabled: scene.klineEnabled },
+    // Market context already has its own scene/leaf owners. This owner needs
+    // only account-scoped leverage/available data, not every price-context tick.
+    { contextEnabled: false, enabled: scene.klineEnabled },
   );
   const leverageUpdate = usePerpsProLeverageUpdate({
     refreshActiveAssetData: activeAsset.refreshActiveAssetData,
@@ -932,6 +934,12 @@ export const PerpsProScene: React.FC<{
     updateTradeRowHeight,
   ]);
 
+  const {
+    confirmCancelAll,
+    confirmCancelOrder,
+    isCancelAllPending,
+    isOrderPending,
+  } = cancelOrders;
   const renderItem = useCallback<ListRenderItem<PerpsProSceneRow>>(
     ({ item }) => {
       switch (item.type) {
@@ -994,9 +1002,9 @@ export const PerpsProScene: React.FC<{
               category={info.openOrderCategory}
               conditionalCount={info.openOrderCounts.conditional}
               hideOtherSymbols={info.hideOtherOpenOrderSymbols}
-              isCancelAllPending={cancelOrders.isCancelAllPending}
+              isCancelAllPending={isCancelAllPending}
               onCancelAll={() =>
-                cancelOrders.confirmCancelAll(
+                confirmCancelAll(
                   info.openOrderCommandCandidates,
                   info.openOrderCategory,
                 )
@@ -1023,11 +1031,11 @@ export const PerpsProScene: React.FC<{
           return (
             <PerpsProOpenOrderCard
               amountUnit={trade.amountUnit}
-              cancelPending={cancelOrders.isOrderPending(item.order.oid)}
+              cancelPending={isOrderPending(item.order.oid)}
               editEnabled={
                 !!item.order.editKind && !isOpenOrderEditUnavailable(item.order)
               }
-              onCancel={cancelOrders.confirmCancelOrder}
+              onCancel={confirmCancelOrder}
               onEdit={order => openOpenOrderEdit(order, editPosition)}
               onPressMarket={selectCardMarket}
               order={item.order}
@@ -1037,10 +1045,24 @@ export const PerpsProScene: React.FC<{
       }
     },
     [
-      cancelOrders,
+      confirmCancelAll,
+      confirmCancelOrder,
+      isCancelAllPending,
+      isOrderPending,
       closeAll.pending,
       closeAll.requestCloseAll,
-      info,
+      info.account,
+      info.accountIdentity,
+      info.allPositionsByCoin,
+      info.allPositionsCount,
+      info.hideOtherOpenOrderSymbols,
+      info.hideOtherPositionSymbols,
+      info.openOrderCategory,
+      info.openOrderCommandCandidates,
+      info.openOrderCounts.basic,
+      info.openOrderCounts.conditional,
+      info.retryAccount,
+      info.setOpenOrderCategory,
       manageMargin.open,
       isOpenOrderEditUnavailable,
       openDeposit,
