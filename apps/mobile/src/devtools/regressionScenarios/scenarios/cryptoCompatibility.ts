@@ -5,6 +5,12 @@ import {
   importKey,
 } from '@metamask/browser-passworder';
 
+import {
+  createVaultStrengthEncryptor,
+  derivePbkdf2KeyHex,
+  derivePbkdf2KeyHexWithAes,
+} from '@/core/serviceApi/appEncryptor';
+
 import type { RegressionScenarioExecutionContext } from '../scenarioTypes';
 
 // Public, synthetic test material only. Never read the wallet or accept secrets
@@ -27,6 +33,50 @@ const NODE_WEBCRYPTO_VECTOR = {
   iv: 'ICEiIyQlJicoKSorLC0uLw==',
   salt: 'AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8=',
 };
+
+// Vault key derivation (PBKDF2-HMAC-SHA256 over the UTF-8 bytes of the
+// password and salt strings). Keys produced by the native Aes.pbkdf2 on an
+// Android device; any platform and implementation must reproduce them.
+const VAULT_KDF_VECTOR = {
+  password: 'Rabby 测试 password',
+  salt: 'AAECAwQFBgcICQoLDA0ODw==',
+  keys: {
+    5000: '18c735ebae001a53ff727c972364f66d1f7e48f404f70d9d0c1b1fe5d88c7043',
+    600000: 'c92a4705efec5643c52fbc71c4b57855f2af6e3443e1793f6d9a91a1c3fe41b4',
+  },
+} as const;
+const VAULT_KDF_ITERATIONS = [5000, 600000] as const;
+
+function nowMs() {
+  return global.performance?.now?.() ?? Date.now();
+}
+
+function randomHex(byteCount: number) {
+  const bytes = new Uint8Array(byteCount);
+  global.crypto.getRandomValues(bytes);
+  return Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('');
+}
+
+async function timedDerive(
+  context: RegressionScenarioExecutionContext,
+  implementation: 'quick-crypto' | 'aes',
+  password: string,
+  salt: string,
+  iterations: number,
+) {
+  const derive =
+    implementation === 'aes' ? derivePbkdf2KeyHexWithAes : derivePbkdf2KeyHex;
+  const startedAt = nowMs();
+  const key = await derive(password, salt, iterations);
+  // Timing only; never the key.
+  context.report('perf-mark', {
+    label: 'vault-kdf',
+    implementation,
+    iterations,
+    durationMs: Math.round(nowMs() - startedAt),
+  });
+  return key;
+}
 
 async function assertCompatibility(
   context: RegressionScenarioExecutionContext,
@@ -150,6 +200,71 @@ export async function executeRegressionScenario(
       }
     },
   );
+
+  for (const iterations of VAULT_KDF_ITERATIONS) {
+    await assertCompatibility(
+      context,
+      `vault-kdf-device-vector-${iterations}`,
+      async () => {
+        const [quickCryptoKey, aesKey] = [
+          await timedDerive(
+            context,
+            'quick-crypto',
+            VAULT_KDF_VECTOR.password,
+            VAULT_KDF_VECTOR.salt,
+            iterations,
+          ),
+          await timedDerive(
+            context,
+            'aes',
+            VAULT_KDF_VECTOR.password,
+            VAULT_KDF_VECTOR.salt,
+            iterations,
+          ),
+        ];
+        const expected = VAULT_KDF_VECTOR.keys[iterations];
+        return quickCryptoKey === expected && aesKey === expected;
+      },
+    );
+
+    await assertCompatibility(
+      context,
+      `vault-kdf-implementations-match-${iterations}`,
+      async () => {
+        // Fresh synthetic input shaped like real vault payloads: a base64 salt
+        // string and a password with multi-byte UTF-8 (CJK + emoji).
+        const password = `${TEST_PASSWORD} 密码 😀 ${randomHex(8)}`;
+        const salt = btoa(randomHex(16));
+        const quickCryptoKey = await timedDerive(
+          context,
+          'quick-crypto',
+          password,
+          salt,
+          iterations,
+        );
+        const aesKey = await timedDerive(
+          context,
+          'aes',
+          password,
+          salt,
+          iterations,
+        );
+        return (
+          /^[0-9a-f]{64}$/.test(quickCryptoKey) && quickCryptoKey === aesKey
+        );
+      },
+    );
+  }
+
+  await assertCompatibility(context, 'vault-encryptor-roundtrip', async () => {
+    const encryptor = createVaultStrengthEncryptor();
+    const encrypted = await encryptor.encrypt(TEST_PASSWORD, TEST_VALUE);
+    const decrypted = await encryptor.decrypt(TEST_PASSWORD, encrypted);
+    return (
+      encryptor.isVaultUpdated(encrypted) &&
+      JSON.stringify(decrypted) === TEST_VALUE_JSON
+    );
+  });
 
   context.report('postcondition-ready', { cryptoCompatibilityPassed: true });
 }

@@ -45,7 +45,13 @@ import {
   onSetAddressAliases,
 } from './keyringParams';
 import { callCoreService, registerCoreServices } from './serviceRegistry';
-import RNEncryptor from './encryptor';
+import RNEncryptor, { DERIVATION_OPTIONS_OWASP2023 } from './encryptor';
+
+/**
+ * Wait after unlock before re-encrypting a legacy vault, so the extra PBKDF2
+ * work does not compete with unlock and the first Home render.
+ */
+const VAULT_KDF_UPGRADE_DELAY_MS = 3_000;
 
 function captureStartupCoreException(error: Error) {
   void import('@sentry/react-native')
@@ -189,7 +195,12 @@ export function loadStartupCoreServices() {
   migrateService(APP_STORE_NAMES.contactBook, contactService);
 
   const keyringService = new KeyringService({
-    encryptor: new RNEncryptor(),
+    // New vault/booted payloads use 600k PBKDF2 iterations; older payloads
+    // are still read and get re-encrypted after a successful unlock.
+    encryptor: new RNEncryptor({
+      keyDerivationOptions: DERIVATION_OPTIONS_OWASP2023,
+    }),
+    vaultKeyDerivationUpgradeDelayMs: VAULT_KDF_UPGRADE_DELAY_MS,
     keyringClasses,
     onSetAddressAlias,
     onSetAddressAliases,

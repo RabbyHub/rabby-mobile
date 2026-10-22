@@ -17,6 +17,12 @@ export type EncryptorAdapter = {
     encryptedVault: string,
     exportedKeyString: string,
   ) => Promise<any>;
+  /**
+   * Optional. Whether a payload already meets the encryptor's KDF target.
+   * When provided, KeyringService re-encrypts older `booted`/`vault` payloads
+   * after a successful unlock.
+   */
+  isVaultUpdated?: (encryptedString: string) => boolean;
 };
 
 export const nodeEncryptor = {

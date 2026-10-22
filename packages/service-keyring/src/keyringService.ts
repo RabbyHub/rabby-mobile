@@ -163,7 +163,29 @@ export type KeyringServiceOptions = {
   onSetAddressAliases?: OnSetAddressAliases;
   onCreateKeyring?: OnCreateKeyring;
   perfLogger?: KeyringPerfLogger;
+  /**
+   * Delay between a successful unlock and the background re-encryption of
+   * payloads that do not meet the encryptor's KDF target. Defaults to 0.
+   */
+  vaultKeyDerivationUpgradeDelayMs?: number;
 };
+
+export type VaultKeyDerivationUpgradeResult =
+  /** The encryptor cannot report KDF parameters. */
+  | 'unsupported'
+  | 'up-to-date'
+  | 'upgraded'
+  /** The wallet was locked, so there was no password to re-encrypt with. */
+  | 'skipped-locked'
+  /** `booted`, `vault` or the password changed meanwhile; nothing written. */
+  | 'skipped-changed'
+  /** Re-encryption or read-back verification failed; nothing written. */
+  | 'failed';
+
+export type VaultKeyDerivationUpgradeOptions = Pick<
+  SubmitPasswordOptions,
+  'onTrustedVaultKeyString'
+>;
 
 export type KeyringPerfLogger = {
   instant?: (event: string, data?: Record<string, unknown>) => void;
@@ -276,6 +298,15 @@ export class KeyringService extends RNEventEmitter {
     null;
   private keyringRuntimeRestorePromise: Promise<any[]> | null = null;
   private keyringRuntimeRestoreId = 0;
+
+  private readonly vaultKeyDerivationUpgradeDelayMs: number;
+
+  private vaultKeyDerivationUpgradeTimer: ReturnType<typeof setTimeout> | null =
+    null;
+
+  private vaultKeyDerivationUpgradePromise: Promise<VaultKeyDerivationUpgradeResult> | null =
+    null;
+
   constructor(
     options?: KeyringServiceOptions & {
       contactService?: ContactBookService;
@@ -291,7 +322,10 @@ export class KeyringService extends RNEventEmitter {
       onCreateKeyring,
       perfLogger,
       contactService,
+      vaultKeyDerivationUpgradeDelayMs = 0,
     } = options || {};
+
+    this.vaultKeyDerivationUpgradeDelayMs = vaultKeyDerivationUpgradeDelayMs;
 
     this.contactService = contactService;
 
@@ -684,6 +718,7 @@ export class KeyringService extends RNEventEmitter {
    */
   async setLocked(): Promise<MemStoreState> {
     // set locked
+    this.cancelScheduledVaultKeyDerivationUpgrade();
     this.#password = null;
     this.resetKeyringRuntimeState();
     this.memStore.updateState({ isUnlocked: false });
@@ -817,6 +852,11 @@ export class KeyringService extends RNEventEmitter {
         elapsedMs: nowMs() - startedAt,
         keyringCount: this.keyrings.length,
       });
+      if (hasVault) {
+        this.scheduleVaultKeyDerivationUpgrade({
+          onTrustedVaultKeyString: options.onTrustedVaultKeyString,
+        });
+      }
       return state;
     } catch (error) {
       this.traceKeyringPerf('submit_password.error', {
@@ -828,6 +868,159 @@ export class KeyringService extends RNEventEmitter {
       this._isSubmittingPassword = false;
     }
   }
+
+  private scheduleVaultKeyDerivationUpgrade(
+    options: VaultKeyDerivationUpgradeOptions,
+  ) {
+    if (!this.encryptor.isVaultUpdated) {
+      return;
+    }
+
+    this.cancelScheduledVaultKeyDerivationUpgrade();
+    this.vaultKeyDerivationUpgradeTimer = setTimeout(() => {
+      this.vaultKeyDerivationUpgradeTimer = null;
+      this.upgradeVaultKeyDerivationIfNeeded(options).catch(() => {
+        // The upgrade reports its own failures and retries on the next unlock.
+      });
+    }, this.vaultKeyDerivationUpgradeDelayMs);
+  }
+
+  private cancelScheduledVaultKeyDerivationUpgrade() {
+    if (this.vaultKeyDerivationUpgradeTimer) {
+      clearTimeout(this.vaultKeyDerivationUpgradeTimer);
+      this.vaultKeyDerivationUpgradeTimer = null;
+    }
+  }
+
+  /**
+   * Re-encrypts `booted` and `vault` with the encryptor's current KDF target
+   * when either is older (e.g. a 5,000-iteration payload).
+   *
+   * Data safety rules:
+   * - The new payload is built from the decrypted stored payload, never from
+   * runtime keyrings, which may still be partially restored.
+   * - Each new payload is decrypted again with the password and compared with
+   * the original plaintext before anything is written.
+   * - Both fields are written in one store update, and only if neither field
+   * nor the password changed while the work ran.
+   * Any failure leaves the stored payloads untouched; the next unlock retries.
+   *
+   * @param options - Optional callbacks.
+   * @param options.onTrustedVaultKeyString - Receives the exported key of the
+   * re-encrypted vault, to refresh the biometric fast-path cache.
+   * @returns What the run did.
+   */
+  upgradeVaultKeyDerivationIfNeeded(
+    options: VaultKeyDerivationUpgradeOptions = {},
+  ): Promise<VaultKeyDerivationUpgradeResult> {
+    if (!this.vaultKeyDerivationUpgradePromise) {
+      const promise = this.runVaultKeyDerivationUpgrade(options).finally(() => {
+        if (this.vaultKeyDerivationUpgradePromise === promise) {
+          this.vaultKeyDerivationUpgradePromise = null;
+        }
+      });
+      this.vaultKeyDerivationUpgradePromise = promise;
+    }
+
+    return this.vaultKeyDerivationUpgradePromise;
+  }
+
+  private async runVaultKeyDerivationUpgrade(
+    options: VaultKeyDerivationUpgradeOptions,
+  ): Promise<VaultKeyDerivationUpgradeResult> {
+    if (!this.encryptor.isVaultUpdated) {
+      return 'unsupported';
+    }
+
+    const password = this.#password;
+    if (!password || !this.isUnlocked()) {
+      return 'skipped-locked';
+    }
+
+    const { booted, vault } = this.store.getState();
+    const shouldUpgradeBooted =
+      typeof booted === 'string' && !this.encryptor.isVaultUpdated(booted);
+    const shouldUpgradeVault =
+      typeof vault === 'string' && !this.encryptor.isVaultUpdated(vault);
+    if (!shouldUpgradeBooted && !shouldUpgradeVault) {
+      return 'up-to-date';
+    }
+
+    const startedAt = nowMs();
+    this.traceKeyringPerf('vault_kdf_upgrade.start', {
+      booted: shouldUpgradeBooted,
+      vault: shouldUpgradeVault,
+    });
+
+    try {
+      const nextState: Pick<KeyringState, 'booted' | 'vault'> = {};
+      let nextVaultKeyString: string | undefined;
+
+      if (shouldUpgradeBooted) {
+        nextState.booted = (
+          await this.reencryptPayloadWithPassword(password, booted)
+        ).encrypted;
+      }
+      if (shouldUpgradeVault) {
+        const result = await this.reencryptPayloadWithPassword(password, vault);
+        nextState.vault = result.encrypted;
+        nextVaultKeyString = result.exportedKeyString;
+      }
+
+      const current = this.store.getState();
+      if (
+        current.booted !== booted ||
+        current.vault !== vault ||
+        this.#password !== password
+      ) {
+        this.traceKeyringPerf('vault_kdf_upgrade.skipped_changed', {
+          elapsedMs: nowMs() - startedAt,
+        });
+        return 'skipped-changed';
+      }
+
+      this.store.updateState(nextState);
+      this.traceKeyringPerf('vault_kdf_upgrade.end', {
+        elapsedMs: nowMs() - startedAt,
+      });
+
+      if (nextVaultKeyString && options.onTrustedVaultKeyString) {
+        // The new vault has a new salt, so refresh the biometric fast-path key.
+        Promise.resolve()
+          .then(() => options.onTrustedVaultKeyString?.(nextVaultKeyString!))
+          .catch(() => {
+            // The cache is only a fast path for future unlocks.
+          });
+      }
+
+      return 'upgraded';
+    } catch (error) {
+      this.traceKeyringPerf('vault_kdf_upgrade.error', {
+        elapsedMs: nowMs() - startedAt,
+        error: getErrorText(error),
+      });
+      return 'failed';
+    }
+  }
+
+  private async reencryptPayloadWithPassword(
+    password: string,
+    encrypted: string,
+  ) {
+    const plaintext = await this.encryptor.decrypt(password, encrypted);
+    const next = await this.encryptor.encrypt(password, plaintext);
+    // Read back through the same password path the next unlock will use.
+    const readBack = await this.encryptor.decryptWithDetail(password, next);
+    if (JSON.stringify(readBack.vault) !== JSON.stringify(plaintext)) {
+      throw new Error('Re-encrypted payload does not match the original');
+    }
+
+    return {
+      encrypted: next,
+      exportedKeyString: readBack.exportedKeyString,
+    };
+  }
+
   /**
    * Verify Password
    *
