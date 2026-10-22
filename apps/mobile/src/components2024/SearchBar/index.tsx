@@ -77,7 +77,13 @@ export const NextSearchBar = ({
   });
 
   const inputRef = useRef<any>(null);
-  const isEmpty = !value;
+  // Callers may leave the field uncontrolled (e.g. the token selector sheet
+  // keeps the query in its own state and only forwards onChangeText). Track the
+  // text locally in that case so the managed iOS placeholder and the clear
+  // affordance follow what the user typed instead of the absent prop.
+  const [uncontrolledValue, setUncontrolledValue] = useState('');
+  const effectiveValue = value ?? uncontrolledValue;
+  const isEmpty = !effectiveValue;
   const [inputLayout, setInputLayout] = useState<{
     x: number;
     y: number;
@@ -127,6 +133,12 @@ export const NextSearchBar = ({
     setIsFocus(true);
     onFocus?.(e);
   });
+  const handleChangeText = useMemoizedFn((text: string) => {
+    if (value === undefined) {
+      setUncontrolledValue(text);
+    }
+    onChangeText?.(text);
+  });
 
   const InputComponent =
     inputComponent || (as === 'TextInput' ? TextInput : BottomSheetTextInput);
@@ -140,6 +152,7 @@ export const NextSearchBar = ({
         return inputRef.current?.blur();
       },
       clear() {
+        setUncontrolledValue('');
         return inputRef.current?.clear();
       },
     };
@@ -173,8 +186,8 @@ export const NextSearchBar = ({
           placeholderTextColor={
             showManagedPlaceholder ? 'transparent' : effectivePlaceholderColor
           }
-          value={value}
-          onChangeText={onChangeText}
+          value={effectiveValue}
+          onChangeText={handleChangeText}
           onChange={onChange}
           onBlur={handleBlur}
           onFocus={handleFocus}
@@ -226,7 +239,7 @@ export const NextSearchBar = ({
           <TouchableWithoutFeedback
             hitSlop={8}
             onPress={() => {
-              onChangeText?.('');
+              handleChangeText('');
             }}>
             {isLight ? (
               <RcNextCloseCircle

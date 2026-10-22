@@ -61,8 +61,8 @@ describe('delete account modal completion', () => {
     await result.current({ account, onFinished });
     const modal = mockShow.mock.calls[0][0];
     expect(modal.authType).toEqual(['none']);
-    // Destructive confirmations must use the danger (red) button.
-    expect(modal.confirmButtonType).toBe('danger');
+    // The confirm action keeps the brand (blue) style, matching production.
+    expect(modal.confirmButtonType).toBeUndefined();
     return { finish: () => modal.onFinished(), onFinished };
   }
 

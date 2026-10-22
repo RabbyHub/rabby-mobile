@@ -154,4 +154,27 @@ describe('NextSearchBar managed iOS placeholder', () => {
     expect(input.props.placeholderTextColor).not.toBe('transparent');
     expect(screen.queryByText('搜索链')).toBeNull();
   });
+
+  it('drops the managed placeholder when an uncontrolled field receives text', () => {
+    setPlatform('ios');
+    render(
+      <NextSearchBar
+        testID="search"
+        placeholder="搜索链"
+        onChangeText={jest.fn()}
+      />,
+      { wrapper },
+    );
+
+    const input = screen.getByTestId('search');
+    fireEvent(input, 'layout', inputLayoutEvent);
+    expect(
+      screen.getByText('搜索链', { includeHiddenElements: true }),
+    ).toBeTruthy();
+
+    fireEvent.changeText(input, 'WETH');
+
+    expect(screen.queryByText('搜索链')).toBeNull();
+    expect(input.props.value).toBe('WETH');
+  });
 });
