@@ -179,3 +179,12 @@ it.each([
   await act(async () => tags[0].props.handleCancelAutoClose());
   expect(cancel).toHaveBeenCalledWith('tp');
 });
+
+it('spans the divider across the card content with symmetric insets', () => {
+  const ui = render(<PerpsPosition {...props} />);
+  const divider = ui.getByTestId('perps-position-divider');
+  expect(divider).toHaveStyle({ marginVertical: 12 });
+  expect(divider.props.style).not.toHaveProperty('marginRight');
+  expect(divider.props.style).not.toHaveProperty('marginLeft');
+  expect(divider.props.style).not.toHaveProperty('marginHorizontal');
+});

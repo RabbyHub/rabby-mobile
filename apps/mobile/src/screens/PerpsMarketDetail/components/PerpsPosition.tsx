@@ -34,6 +34,8 @@ export const PerpsPosition: React.FC<{
   tpSlContextKey?: string;
   tpPending?: boolean;
   slPending?: boolean;
+  tpCancelling?: boolean;
+  slCancelling?: boolean;
   positionData?: {
     pnl: number;
     positionValue: number;
@@ -80,6 +82,8 @@ export const PerpsPosition: React.FC<{
   tpSlContextKey,
   tpPending,
   slPending,
+  tpCancelling,
+  slCancelling,
   positionData,
   coin,
   coinLogo,
@@ -264,7 +268,7 @@ export const PerpsPosition: React.FC<{
               </View>
             </View>
           </View>
-          <View style={styles.divider}>
+          <View style={styles.divider} testID="perps-position-divider">
             <View style={styles.dividerLine} />
           </View>
           <View style={styles.details}>
@@ -341,6 +345,7 @@ export const PerpsPosition: React.FC<{
                 variant="position"
                 key={`${tpSlContextKey}:tp`}
                 actionPending={tpPending}
+                cancelPending={tpCancelling}
                 estimatedPnl={takeProfitExpectedPnl}
                 handleActionApproveStatus={handleActionApproveStatus}
                 coin={displayName}
@@ -404,6 +409,7 @@ export const PerpsPosition: React.FC<{
                 variant="position"
                 key={`${tpSlContextKey}:sl`}
                 actionPending={slPending}
+                cancelPending={slCancelling}
                 estimatedPnl={stopLossExpectedPnl}
                 leverage={positionData?.leverage}
                 coin={displayName}
@@ -568,7 +574,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     marginValueRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
     roiRow: { flexDirection: 'row', alignItems: 'center', gap: 2 },
     roi: { ...text, fontSize: 12, lineHeight: 16, fontWeight: '700' },
-    divider: { height: 0, marginVertical: 12, marginRight: 8 },
+    divider: { height: 0, marginVertical: 12 },
     dividerLine: {
       position: 'absolute',
       left: 0,

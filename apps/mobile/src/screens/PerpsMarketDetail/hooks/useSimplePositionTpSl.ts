@@ -25,20 +25,20 @@ export function useSimplePositionTpSl({
     isSceneCurrent: () => boolean,
   ) => Promise<boolean>;
   cancelOrder: (
-    oid: number,
+    oids: readonly number[],
     coin: string,
     side: Side,
     isSceneCurrent: () => boolean,
   ) => Promise<boolean>;
 }) {
   const projection = useMemo(() => {
-    let tp: OpenOrder | undefined;
-    let sl: OpenOrder | undefined;
+    const tp: OpenOrder[] = [];
+    const sl: OpenOrder[] = [];
     for (const order of orders ?? []) {
       if (!order.isTrigger || !order.isPositionTpsl || !order.reduceOnly)
         continue;
-      if (order.orderType === 'Take Profit Market') tp ??= order;
-      if (order.orderType === 'Stop Market') sl ??= order;
+      if (order.orderType === 'Take Profit Market') tp.push(order);
+      if (order.orderType === 'Stop Market') sl.push(order);
     }
     return { tp, sl };
   }, [orders]);
@@ -49,8 +49,9 @@ export function useSimplePositionTpSl({
     scene.current = { coin, generation };
   }
   type Scene = typeof scene.current;
+  type Pending = { scene: Scene; kind: 'set' | 'cancel' };
   const inFlight = useRef<Partial<Record<Side, Scene>>>({});
-  const [pending, setPending] = useState<Partial<Record<Side, Scene>>>({});
+  const [pending, setPending] = useState<Partial<Record<Side, Pending>>>({});
   const mounted = useRef(true);
   useEffect(() => {
     mounted.current = true;
@@ -62,6 +63,7 @@ export function useSimplePositionTpSl({
   const run = useMemoizedFn(
     async (
       side: Side,
+      kind: Pending['kind'],
       action: (isSceneCurrent: () => boolean) => Promise<boolean>,
     ) => {
       const context = scene.current;
@@ -71,7 +73,10 @@ export function useSimplePositionTpSl({
         getPerpsAccountRuntimeContext().generation === context.generation;
       if (!isCurrent() || inFlight.current[side] === context) return false;
       inFlight.current[side] = context;
-      setPending(previous => ({ ...previous, [side]: context }));
+      setPending(previous => ({
+        ...previous,
+        [side]: { scene: context, kind },
+      }));
       try {
         const success = await action(isCurrent);
         return isCurrent() && success;
@@ -88,22 +93,30 @@ export function useSimplePositionTpSl({
 
   const handleSetAutoClose = useMemoizedFn((params: SetParams) => {
     if (params.coin !== coin) return Promise.resolve(false);
-    return run(params.tpTriggerPx ? 'tp' : 'sl', isCurrent =>
+    return run(params.tpTriggerPx ? 'tp' : 'sl', 'set', isCurrent =>
       setOrder(params, isCurrent),
     );
   });
   const handleCancelAutoClose = useMemoizedFn(async (side: Side) => {
-    const order = projection[side];
-    if (!order) return;
-    await run(side, isCurrent => cancelOrder(order.oid, coin, side, isCurrent));
+    // Cancel every confirmed same-side leg; the tag shows only the first.
+    const oids = projection[side].map(order => order.oid);
+    if (!oids.length) return;
+    await run(side, 'cancel', isCurrent =>
+      cancelOrder(oids, coin, side, isCurrent),
+    );
   });
 
   return {
     contextKey: `${coin}:${generation}`,
-    tpPrice: projection.tp?.triggerPx,
-    slPrice: projection.sl?.triggerPx,
-    tpPending: pending.tp === scene.current,
-    slPending: pending.sl === scene.current,
+    tpPrice: projection.tp[0]?.triggerPx,
+    slPrice: projection.sl[0]?.triggerPx,
+    tpPending: pending.tp?.scene === scene.current,
+    slPending: pending.sl?.scene === scene.current,
+    // Starts with the cancel request itself, after approval preflight.
+    tpCancelling:
+      pending.tp?.scene === scene.current && pending.tp.kind === 'cancel',
+    slCancelling:
+      pending.sl?.scene === scene.current && pending.sl.kind === 'cancel',
     handleSetAutoClose,
     handleCancelAutoClose,
   };
