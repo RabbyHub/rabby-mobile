@@ -11,9 +11,21 @@ import {
   createAccountHeaderPresentation,
   type AccountHeaderHandle,
 } from './model';
-import { View } from 'react-native';
+import {
+  Animated,
+  BackHandler,
+  Platform,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import {
+  BottomSheetModalProvider,
+  useBottomSheetModalInternal,
+} from '@gorhom/bottom-sheet';
+import { Portal } from '@gorhom/portal';
 import { PerpsGestureSlider } from '@/components/perps/PerpsGestureSlider';
-import { Text } from '@/components/Typography';
+import { Text, TextInput } from '@/components/Typography';
 import { CircleSpinnerCC } from '@/components2024/CircleSpinner/CircleSpinnerCC';
 import PositionCancel from '@/assets2024/icons/perps/PerpsSimpleAccount/tpsl-cancel.svg';
 import {
@@ -54,7 +66,14 @@ jest.mock('@rneui/themed', () => ({
       testID: 'native-slider',
     }),
 }));
-jest.mock('@gorhom/bottom-sheet', () => require('@gorhom/bottom-sheet/mock'));
+jest.mock('@gorhom/bottom-sheet', () => {
+  const actual = jest.requireActual('@gorhom/bottom-sheet');
+  return {
+    ...require('@gorhom/bottom-sheet/mock'),
+    BottomSheetModalProvider: actual.BottomSheetModalProvider,
+    useBottomSheetModalInternal: actual.useBottomSheetModalInternal,
+  };
+});
 
 jest.mock('@react-native-firebase/analytics', () => ({
   __esModule: true,
@@ -114,6 +133,10 @@ const { PerpsProManageMarginSlider } =
   require('@/screens/PerpsPro/components/positions/PerpsProManageMarginSlider') as typeof import('@/screens/PerpsPro/components/positions/PerpsProManageMarginSlider');
 const { getVisibleBlockingModalIds, MODAL_GATE_IDS } =
   require('@/utils/modalGate') as typeof import('@/utils/modalGate');
+const { TrackedModal } =
+  require('@/components/Modal/TrackedModal') as typeof import('@/components/Modal/TrackedModal');
+const { SimplePositionTpSlModal } =
+  require('../SimplePositionTpSlModal') as typeof import('../SimplePositionTpSlModal');
 
 const safe = (child: React.ReactNode) => (
   <SafeAreaProvider
@@ -121,7 +144,7 @@ const safe = (child: React.ReactNode) => (
       frame: { x: 0, y: 0, width: 393, height: 852 },
       insets: { top: 0, bottom: 0, left: 0, right: 0 },
     }}>
-    {child}
+    <BottomSheetModalProvider>{child}</BottomSheetModalProvider>
   </SafeAreaProvider>
 );
 afterEach(async () => {
@@ -403,12 +426,23 @@ it('swaps only a set position tag X for the shared spinner while cancelling', ()
   const ui = render(
     safe(<PerpEditTpSlPriceTag {...props} variant="position" />),
   );
-  // Every SVG shares one mock type here; the X is the 16pt icon passed
-  // width/height directly, while the spinner's icon is sized via style.
-  const xIcons = () =>
-    ui
+  // Every SVG shares one mock type here; the X is the 16pt icon outside the
+  // spinner.
+  const xIcons = () => {
+    const spinnerIcons = new Set(
+      ui
+        .UNSAFE_queryAllByType(CircleSpinnerCC)
+        .flatMap(spinner => spinner.findAllByType(PositionCancel)),
+    );
+    return ui
       .UNSAFE_queryAllByType(PositionCancel)
-      .filter(node => node.props.width === 16 && node.props.height === 16);
+      .filter(
+        node =>
+          node.props.width === 16 &&
+          node.props.height === 16 &&
+          !spinnerIcons.has(node),
+      );
+  };
   expect(xIcons()).toHaveLength(1);
   const cancelColor = xIcons()[0].props.color;
   expect(ui.UNSAFE_queryByType(CircleSpinnerCC)).toBeNull();
@@ -426,6 +460,11 @@ it('swaps only a set position tag X for the shared spinner while cancelling', ()
   const spinner = ui.UNSAFE_getByType(CircleSpinnerCC);
   // Same 16pt slot and colour as the X, so the tag geometry never shifts.
   expect(spinner.props).toMatchObject({ size: 16, color: cancelColor });
+  // The 24pt asset must render at 16pt, or it orbits the 16pt rotating box.
+  expect(spinner.findByType(PositionCancel).props).toMatchObject({
+    width: 16,
+    height: 16,
+  });
   expect(xIcons()).toHaveLength(0);
   expect(ui.getByText('120 USDC')).toBeTruthy();
   expect(ui.getByRole('button').props.accessibilityState).toEqual({
@@ -444,6 +483,43 @@ it('swaps only a set position tag X for the shared spinner while cancelling', ()
   ui.rerender(safe(<PerpEditTpSlPriceTag {...props} cancelPending />));
   expect(ui.UNSAFE_queryByType(CircleSpinnerCC)).toBeNull();
   expect(xIcons()).toHaveLength(1);
+});
+
+it('draws the close progress and points from the thumb UI-thread position', () => {
+  const props = {
+    variant: 'close' as const,
+    onValueChange: jest.fn(),
+    step: 1,
+  };
+  const ui = render(safe(<PerpsSlider {...props} value={30} />));
+  const position = ui.UNSAFE_getByType(PerpsGestureSlider).props.positionValue;
+  // The thumb and the custom track share one value: no React round trip.
+  expect(position).toBeDefined();
+  const width = () =>
+    StyleSheet.flatten(ui.getByTestId('perps-close-progress').props.style)
+      .width;
+  const opacity = (id: string) =>
+    StyleSheet.flatten(ui.getByTestId(id).props.style).opacity;
+  expect(position.value).toBe(30);
+  expect(width()).toBe('30%');
+  expect(opacity('perps-close-point-25-selected')).toBe(1);
+  expect(opacity('perps-close-point-50-selected')).toBe(0);
+  expect(opacity('perps-close-point-50-unselected')).toBe(1);
+
+  // A drag moves the shared value ahead of the controlled prop.
+  position.value = 60;
+  ui.rerender(safe(<PerpsSlider {...props} value={30} />));
+  expect(width()).toBe('60%');
+  expect(opacity('perps-close-point-50-selected')).toBe(1);
+  expect(opacity('perps-close-point-50-unselected')).toBe(0);
+  expect(opacity('perps-close-point-75-selected')).toBe(0);
+
+  // Default sliders keep their own position and built-in track.
+  ui.rerender(safe(<PerpsSlider value={30} onValueChange={jest.fn()} />));
+  expect(
+    ui.UNSAFE_getByType(PerpsGestureSlider).props.positionValue,
+  ).toBeUndefined();
+  expect(ui.queryByTestId('perps-close-progress')).toBeNull();
 });
 
 // Close haptics are throttled like Perps Pro; drive a clock so each case
@@ -618,17 +694,21 @@ it('handles track-tap ordering, controlled resets, and disabled close sliders', 
   expect(change).toHaveBeenCalledTimes(before);
 });
 
-it.each([false, true, undefined])(
-  'keeps the editor open only for a rejected result (%s), preserving draft-mode void callbacks',
-  async result => {
+it.each(
+  [false, true, undefined].flatMap(result =>
+    (['position', undefined] as const).map(variant => ({ result, variant })),
+  ),
+)(
+  'keeps the $variant editor open only for a rejected result ($result)',
+  async ({ result, variant }) => {
     const submit = jest.fn(async () => result);
     const ui = render(
       safe(
         <PerpEditTpSlPriceTag
           coin="ETH"
-          variant="position"
+          variant={variant}
           actionType="tp"
-          type="hasPosition"
+          type={variant === 'position' ? 'hasPosition' : 'openPosition'}
           entryPrice={100}
           markPrice={110}
           initTpOrSlPrice=""
@@ -649,8 +729,271 @@ it.each([false, true, undefined])(
     fireEvent.changeText(ui.getByPlaceholderText('$0'), '120');
     await act(async () => fireEvent.press(ui.getByText('global.confirm')));
     expect(submit).toHaveBeenCalledWith('120');
-    expect(
-      getVisibleBlockingModalIds().includes(MODAL_GATE_IDS.perpsEditTpSlPrice),
-    ).toBe(result === false);
+    // Assert the editor itself: when the modal gate is released (on hide, or
+    // only after the iOS dismiss animation) is TrackedModal's concern.
+    const editorOpen = result === false;
+    const EditorModal = variant ? SimplePositionTpSlModal : TrackedModal;
+    expect(ui.UNSAFE_getByType(EditorModal).props.visible).toBe(editorOpen);
+    act(() => jest.advanceTimersByTime(350));
+    expect(ui.queryByPlaceholderText('$0') !== null).toBe(editorOpen);
+    if (editorOpen) {
+      expect(getVisibleBlockingModalIds()).toContain(
+        MODAL_GATE_IDS.perpsEditTpSlPrice,
+      );
+    } else {
+      // The Jest Modal mock never finishes a dismiss animation; finish it on
+      // the native Modal that TrackedModal renders.
+      if (!variant) {
+        const [nativeModal] = ui.UNSAFE_getByType(TrackedModal).children;
+        act(() =>
+          typeof nativeModal === 'string'
+            ? undefined
+            : nativeModal.props.onDismiss?.(),
+        );
+      }
+      expect(getVisibleBlockingModalIds()).not.toContain(
+        MODAL_GATE_IDS.perpsEditTpSlPrice,
+      );
+    }
   },
 );
+
+it('keeps a later password surface above the position draft through quote updates and cancellation', async () => {
+  const originalOS = Platform.OS;
+  Platform.OS = 'android';
+  const backListeners = new Set<() => boolean | null | undefined>();
+  const back = jest
+    .spyOn(BackHandler, 'addEventListener')
+    .mockImplementation((_event, listener) => {
+      backListeners.add(listener);
+      return { remove: () => backListeners.delete(listener) };
+    });
+  const dispatchBack = () =>
+    [...backListeners].reverse().some(listener => listener());
+  const approve = jest.fn(async () => {});
+  const accepted = jest.fn();
+  let requestPassword: () => Promise<boolean>;
+  const submit = jest.fn(async () => {
+    const unlocked = await requestPassword();
+    if (unlocked) {
+      accepted();
+    }
+    return unlocked;
+  });
+
+  // Only the password surface/response is a fixture. The editor, dynamic
+  // BottomSheet host, Portal ordering, request lifecycle and modal gate are real.
+  // This is not password-verification or native touch/keyboard coverage.
+  function PasswordSurface({ complete }: { complete: (ok: boolean) => void }) {
+    const { hostName } = useBottomSheetModalInternal();
+    const [password, setPassword] = React.useState('');
+    React.useEffect(() => {
+      const subscription = BackHandler.addEventListener(
+        'hardwareBackPress',
+        () => {
+          complete(false);
+          return true;
+        },
+      );
+      return () => subscription.remove();
+    }, [complete]);
+    return (
+      <Portal hostName={hostName} name="test-password-surface">
+        <View key="test-password-surface">
+          <TextInput
+            placeholder="Password"
+            value={password}
+            onChangeText={setPassword}
+          />
+          <TouchableOpacity onPress={() => complete(true)}>
+            <Text>Unlock fixture</Text>
+          </TouchableOpacity>
+        </View>
+      </Portal>
+    );
+  }
+  function EditorWithPassword({ markPrice }: { markPrice: number }) {
+    const [pending, setPending] = React.useState<{
+      resolve: (ok: boolean) => void;
+    }>();
+    requestPassword = () => new Promise(resolve => setPending({ resolve }));
+    const complete = React.useCallback(
+      (ok: boolean) => {
+        pending?.resolve(ok);
+        setPending(undefined);
+      },
+      [pending],
+    );
+    return (
+      <>
+        <PerpEditTpSlPriceTag
+          coin="ETH"
+          variant="position"
+          actionType="tp"
+          type="hasPosition"
+          entryPrice={100}
+          markPrice={markPrice}
+          initTpOrSlPrice=""
+          direction="Long"
+          size={1}
+          margin={20}
+          leverage={5}
+          liqPrice={80}
+          pxDecimals={2}
+          szDecimals={3}
+          quoteAsset="USDC"
+          handleActionApproveStatus={approve}
+          handleSetAutoClose={submit}
+          handleCancelAutoClose={async () => {}}
+        />
+        {pending && <PasswordSurface complete={complete} />}
+      </>
+    );
+  }
+  try {
+    const ui = render(safe(<EditorWithPassword markPrice={110} />));
+    expect(getVisibleBlockingModalIds()).not.toContain(
+      MODAL_GATE_IDS.perpsEditTpSlPrice,
+    );
+    expect(backListeners.size).toBe(0);
+    await act(async () => fireEvent.press(ui.getByText('-')));
+    expect(approve).toHaveBeenCalledTimes(1);
+    expect(submit).not.toHaveBeenCalled();
+    expect(ui.UNSAFE_queryAllByType(TrackedModal)).toHaveLength(0);
+    const draft = ui.getByPlaceholderText('$0');
+    fireEvent.changeText(draft, '120');
+    const confirm = ui.getByRole('button', { name: 'global.confirm' });
+    await act(async () => {
+      fireEvent.press(confirm);
+    });
+    const password = ui.getByPlaceholderText('Password');
+    expect(
+      ui.UNSAFE_getAllByType(TextInput).map(node => node.props.placeholder),
+    ).toEqual(['$0', 'Password']);
+    expect(backListeners.size).toBe(2);
+    expect(submit).toHaveBeenCalledWith('120');
+    expect(accepted).not.toHaveBeenCalled();
+    expect(getVisibleBlockingModalIds()).toContain(
+      MODAL_GATE_IDS.perpsEditTpSlPrice,
+    );
+
+    ui.rerender(safe(<EditorWithPassword markPrice={111} />));
+    expect(ui.getByPlaceholderText('$0')).toBe(draft);
+    expect(draft.props.value).toBe('$120');
+    expect(ui.getByPlaceholderText('Password')).toBe(password);
+    expect(
+      ui.UNSAFE_getAllByType(TextInput).map(node => node.props.placeholder),
+    ).toEqual(['$0', 'Password']);
+    fireEvent.changeText(password, 'fixture-password');
+    expect(password.props.value).toBe('fixture-password');
+    fireEvent.press(confirm);
+    expect(submit).toHaveBeenCalledTimes(1);
+    expect(approve).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      expect(dispatchBack()).toBe(true);
+    });
+    expect(ui.queryByPlaceholderText('Password')).toBeNull();
+    expect(ui.getByPlaceholderText('$0')).toBe(draft);
+    expect(draft.props.value).toBe('$120');
+    expect(accepted).not.toHaveBeenCalled();
+    expect(backListeners.size).toBe(1);
+
+    await act(async () => {
+      fireEvent.press(confirm);
+    });
+    expect(ui.getByPlaceholderText('Password')).toBeTruthy();
+    await act(async () => {
+      fireEvent.press(ui.getByText('Unlock fixture'));
+    });
+    act(() => jest.advanceTimersByTime(350));
+    expect(submit).toHaveBeenCalledTimes(2);
+    expect(accepted).toHaveBeenCalledTimes(1);
+    expect(approve).toHaveBeenCalledTimes(1);
+    expect(ui.queryByPlaceholderText('$0')).toBeNull();
+    expect(getVisibleBlockingModalIds()).not.toContain(
+      MODAL_GATE_IDS.perpsEditTpSlPrice,
+    );
+    expect(backListeners.size).toBe(0);
+    expect(dispatchBack()).toBe(false);
+
+    await act(async () => fireEvent.press(ui.getByText('-')));
+    expect(ui.getByPlaceholderText('$0')).toBeTruthy();
+    act(() => {
+      expect(dispatchBack()).toBe(true);
+    });
+    expect(getVisibleBlockingModalIds()).toContain(
+      MODAL_GATE_IDS.perpsEditTpSlPrice,
+    );
+    act(() => jest.advanceTimersByTime(350));
+    expect(ui.queryByPlaceholderText('$0')).toBeNull();
+    expect(getVisibleBlockingModalIds()).not.toContain(
+      MODAL_GATE_IDS.perpsEditTpSlPrice,
+    );
+    expect(backListeners.size).toBe(0);
+  } finally {
+    await cleanupAsync();
+    back.mockRestore();
+    Platform.OS = originalOS;
+  }
+});
+
+it('retains the position portal and gate through fade-out, reopening and unmount', async () => {
+  const animations: {
+    finish: (result: { finished: boolean }) => void;
+    stop: jest.Mock;
+  }[] = [];
+  const timing = jest.spyOn(Animated, 'timing').mockImplementation(() => {
+    const transition = {
+      finish: (_result: { finished: boolean }) => {},
+      stop: jest.fn(),
+    };
+    animations.push(transition);
+    return {
+      start: callback => {
+        transition.finish = callback || (() => {});
+      },
+      stop: transition.stop,
+      reset: jest.fn(),
+    };
+  });
+  const modalId = MODAL_GATE_IDS.perpsEditTpSlPrice;
+  const surface = (visible: boolean) =>
+    safe(
+      <SimplePositionTpSlModal visible={visible} modalId={modalId}>
+        <TextInput placeholder="Retained draft" defaultValue="120" />
+      </SimplePositionTpSlModal>,
+    );
+  try {
+    const ui = render(surface(true));
+    const draft = ui.getByPlaceholderText('Retained draft');
+    act(() => animations[0].finish({ finished: true }));
+    ui.rerender(surface(false));
+    const interruptedExit = animations[animations.length - 1];
+    expect(getVisibleBlockingModalIds()).toContain(modalId);
+    expect(ui.getByPlaceholderText('Retained draft')).toBe(draft);
+
+    ui.rerender(surface(true));
+    expect(interruptedExit.stop).toHaveBeenCalledTimes(1);
+    act(() => interruptedExit.finish({ finished: true }));
+    expect(ui.getByPlaceholderText('Retained draft')).toBe(draft);
+    expect(getVisibleBlockingModalIds()).toContain(modalId);
+
+    ui.rerender(surface(false));
+    act(() => animations[animations.length - 1].finish({ finished: true }));
+    expect(ui.queryByPlaceholderText('Retained draft')).toBeNull();
+    expect(getVisibleBlockingModalIds()).not.toContain(modalId);
+
+    ui.rerender(surface(true));
+    expect(ui.getByPlaceholderText('Retained draft')).toBeTruthy();
+    ui.rerender(surface(false));
+    const unmountedExit = animations[animations.length - 1];
+    await cleanupAsync();
+    expect(unmountedExit.stop).toHaveBeenCalledTimes(1);
+    act(() => unmountedExit.finish({ finished: true }));
+    expect(getVisibleBlockingModalIds()).not.toContain(modalId);
+  } finally {
+    await cleanupAsync();
+    timing.mockRestore();
+  }
+});

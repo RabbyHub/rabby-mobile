@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 
 import { TrackedModal } from '@/components/Modal/TrackedModal';
+import { SimplePositionTpSlModal } from './SimplePositionTpSlModal';
 import { Button } from '@/components2024/Button';
 import { useTheme2024 } from '@/hooks/theme';
 import { MODAL_GATE_IDS } from '@/utils/modalGate';
@@ -328,6 +329,8 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
 
   const EditIcon = variant === 'position' ? PositionEdit : IconPerpEdit;
   const CancelIcon = variant === 'position' ? PositionCancel : IconPerpDelete;
+  const EditorModal =
+    variant === 'position' ? SimplePositionTpSlModal : TrackedModal;
   const showCancelSpinner =
     variant === 'position' && cancelPending && !!initTpOrSlPrice;
 
@@ -424,7 +427,7 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
           />
         )}
       </TouchableOpacity>
-      <TrackedModal
+      <EditorModal
         modalId={MODAL_GATE_IDS.perpsEditTpSlPrice}
         transparent={true}
         visible={modalVisible}
@@ -654,7 +657,7 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
             </TouchableOpacity>
           </TouchableOpacity>
         </KeyboardAvoidingView>
-      </TrackedModal>
+      </EditorModal>
     </>
   );
 };
