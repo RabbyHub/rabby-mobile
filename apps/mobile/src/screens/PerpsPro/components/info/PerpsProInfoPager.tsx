@@ -303,11 +303,9 @@ const PerpsProInfoPagerInner = <Row,>(
     offsets[currentTab] = activeOffset;
     for (const tab of PERPS_PRO_INFO_TABS) {
       if (tab !== currentTab) {
-        offsets[tab] = getPerpsProInfoPagePreparedOffset({
-          activeOffset,
-          stickyOffset,
-          storedOffset: offsets[tab],
-        });
+        // The trade panel is list content now; open each page at the top so it
+        // is visible instead of starting at a stale prepared offset.
+        offsets[tab] = 0;
       }
     }
     androidDesiredOffsets.value = offsets;
@@ -316,7 +314,7 @@ const PerpsProInfoPagerInner = <Row,>(
         scrollPerpsProInfoBridgeTarget(scrollBridge, index, offsets[tab]);
       }
     });
-  }, [androidDesiredOffsets, prepareOffsetsOnUI, scrollBridge, stickyOffset]);
+  }, [androidDesiredOffsets, prepareOffsetsOnUI, scrollBridge]);
 
   const prepareAndroidGesturePages = () => {
     'worklet';
@@ -432,15 +430,13 @@ const PerpsProInfoPagerInner = <Row,>(
       if (tab === currentTab) {
         continue;
       }
-      const offset = getPerpsProInfoPagePreparedOffset({
-        activeOffset,
-        stickyOffset,
-        storedOffset: desiredOffsetsRef.current[tab],
-      });
+      // The trade panel is list content now; a page opened at a stale offset
+      // would hide it. Start every page at the top.
+      const offset = 0;
       recordDesiredOffset(tab, offset);
       listRefs.current[tab]?.scrollToOffset({ animated: false, offset });
     }
-  }, [getActiveScrollOffset, recordDesiredOffset, scrollBridge, stickyOffset]);
+  }, [getActiveScrollOffset, recordDesiredOffset, scrollBridge]);
 
   const publishPagePreview = useCallback(
     (position: number | null) => {

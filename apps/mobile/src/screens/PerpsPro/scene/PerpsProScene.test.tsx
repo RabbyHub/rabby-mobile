@@ -959,9 +959,7 @@ describe('PerpsProScene market loading states', () => {
 
     expect(screen.queryByTestId('perps-pro-info-pager')).toBeNull();
     expect(screen.queryByTestId('perps-pro-info-tabs-overlay')).toBeNull();
-    expect(
-      screen.getByTestId('perps-pro-trade-scroll-bridge').props.scrollEnabled,
-    ).toBe(false);
+    expect(screen.queryByTestId('perps-pro-trade-section')).toBeNull();
 
     mockUsePerpsProInfoPanel.mockReturnValue(
       createInfoState({ activeInfoTab: 'positions' }),
@@ -977,9 +975,7 @@ describe('PerpsProScene market loading states', () => {
       screen.getByTestId('perps-pro-info-pager').props.offscreenPageLimit,
     ).toBeUndefined();
     expect(screen.getByTestId('perps-pro-info-tabs-overlay')).toBeOnTheScreen();
-    expect(
-      screen.getByTestId('perps-pro-trade-scroll-bridge').props.scrollEnabled,
-    ).toBe(true);
+    expect(screen.getByTestId('perps-pro-trade-section')).toBeTruthy();
     expect(
       screen.getByTestId('perps-pro-scroll-account', {
         includeHiddenElements: true,
@@ -1943,20 +1939,12 @@ describe('PerpsProScene market loading states', () => {
     );
 
     const scroll = screen.getByTestId('perps-pro-scroll');
-    const tradeScrollBridge = screen.getByTestId(
-      'perps-pro-trade-scroll-bridge',
-    );
+    const tradeSection = screen.getByTestId('perps-pro-trade-section');
     expect(scroll.props.stickyHeaderIndices).toEqual([]);
     expect(StyleSheet.flatten(scroll.props.style)?.transform).toBeUndefined();
-    expect(tradeScrollBridge.props.keyboardShouldPersistTaps).toBe('handled');
-    expect(
-      StyleSheet.flatten(
-        screen.getByTestId('perps-pro-trade-overlay').props.style,
-      ),
-    ).toMatchObject({ backgroundColor: 'neutral-bg-1', zIndex: 1 });
-    expect(screen.getAllByTestId('perps-pro-trade-scroll-bridge')).toHaveLength(
-      1,
-    );
+    expect(StyleSheet.flatten(tradeSection.props.style)).toMatchObject({
+      backgroundColor: 'neutral-bg-1',
+    });
     expect(screen.getByTestId('pro-header').props).not.toHaveProperty(
       'showBottomDivider',
     );
@@ -2058,14 +2046,12 @@ describe('PerpsProScene market loading states', () => {
     expect(
       screen.getByTestId('perps-pro-info-pager').props.offscreenPageLimit,
     ).toBe(2);
-    expect(
-      screen.getByTestId('perps-pro-trade-scroll-bridge').props.scrollEnabled,
-    ).toBe(false);
+    // The trade panel is list content now; it carries no overlay transform.
     expect(
       StyleSheet.flatten(
-        screen.getByTestId('perps-pro-trade-overlay').props.style,
+        screen.getByTestId('perps-pro-trade-section').props.style,
       )?.transform,
-    ).toEqual([{ translateY: 96 }]);
+    ).toBeUndefined();
 
     view.unmount();
   });

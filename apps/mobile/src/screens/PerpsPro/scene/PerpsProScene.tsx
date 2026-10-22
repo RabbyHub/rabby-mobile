@@ -149,7 +149,6 @@ import { usePerpsProManageMargin } from './usePerpsProManageMargin';
 import { usePerpsProTrade } from './usePerpsProTrade';
 import { usePerpsProTransfer } from './usePerpsProTransfer';
 import { usePerpsProAndroidSceneScrollCoordinator } from './usePerpsProAndroidSceneScrollCoordinator';
-import { PerpsProTradeScrollBridge } from '../components/trade/PerpsProTradeScrollBridge';
 import { usePerpsProAndroidScenePresentation } from './usePerpsProAndroidScenePresentation';
 import { usePerpsFundingHistoryJournal } from '@/hooks/perps/funding/usePerpsFundingHistoryJournal';
 
@@ -1188,13 +1187,14 @@ export const PerpsProScene: React.FC<{
           }
         />
         <View
-          style={tradeLeadInSpacerStyle}
+          style={styles.tradeSection}
           testID={
             active
-              ? 'perps-pro-trade-lead-in-spacer'
-              : `perps-pro-trade-lead-in-spacer-${tab}`
-          }
-        />
+              ? 'perps-pro-trade-section'
+              : `perps-pro-trade-section-${tab}`
+          }>
+          {renderTrade()}
+        </View>
         <View
           style={styles.infoTabsSpacer}
           testID={
@@ -1213,7 +1213,8 @@ export const PerpsProScene: React.FC<{
       styles.infoTabsSpacer,
       styles.infoSectionDivider,
       styles.marketLeadInSpacer,
-      tradeLeadInSpacerStyle,
+      renderTrade,
+      styles.tradeSection,
     ],
   );
 
@@ -1352,17 +1353,8 @@ export const PerpsProScene: React.FC<{
       onPress={openMarketSelector}
     />
   );
-  const tradeOverlayContent = (
-    <PerpsProTradeScrollBridge
-      controller={infoScrollBridge}
-      enabled={info.activeInfoTab != null}
-      height={tradeRowHeight}>
-      {renderTrade()}
-    </PerpsProTradeScrollBridge>
-  );
   // Both platforms render the same UI-thread presentation now.
   const SceneOverlayView = Reanimated.View;
-  const tradeOverlayMotionStyle = scenePresentation.tradeAnimatedStyle;
   const headerOverlayMotionStyle = scenePresentation.headerAnimatedStyle;
   const regionAlertMotionStyle = scenePresentation.regionAlertAnimatedStyle;
   const marketOverlayMotionStyle = scenePresentation.marketAnimatedStyle;
@@ -1399,11 +1391,6 @@ export const PerpsProScene: React.FC<{
               style={styles.scroll}
             />
           ) : null}
-          <SceneOverlayView
-            style={[styles.tradeOverlay, tradeOverlayMotionStyle]}
-            testID="perps-pro-trade-overlay">
-            {tradeOverlayContent}
-          </SceneOverlayView>
           <SceneOverlayView
             style={[styles.headerClip, headerOverlayMotionStyle]}
             testID="perps-pro-header-overlay">
@@ -1705,13 +1692,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     top: 0,
     zIndex: 2,
   },
-  tradeOverlay: {
+  tradeSection: {
     backgroundColor: colors2024['neutral-bg-1'],
-    left: 0,
-    position: 'absolute',
-    right: 0,
-    top: 0,
-    zIndex: 1,
   },
   infoTabsSpacer: { height: PERPS_PRO_INFO_TABS_PLACEHOLDER_HEIGHT },
   infoSectionDivider: {
