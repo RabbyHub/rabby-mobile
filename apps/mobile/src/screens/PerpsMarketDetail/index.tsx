@@ -1,5 +1,6 @@
 import {
   createAccountHeaderPresentation,
+  simpleLiquidationPriceText,
   type AccountHeaderHandle,
 } from './components/account/model';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
@@ -181,11 +182,16 @@ export const PerpsMarketDetailScreen = () => {
       tpPrice: Number(tpPrice || 0),
       slPrice: Number(slPrice || 0),
       liquidationPrice: Number(currentPosition?.position.liquidationPx || 0),
+      liquidationPriceText: simpleLiquidationPriceText(
+        currentPosition?.position.liquidationPx,
+        currentAssetCtx?.pxDecimals,
+      ),
       entryPrice: Number(currentPosition?.position.entryPx || 0),
     };
   }, [
     currentPosition?.position.entryPx,
     currentPosition?.position.liquidationPx,
+    currentAssetCtx?.pxDecimals,
     slPrice,
     tpPrice,
   ]);
@@ -497,6 +503,7 @@ export const PerpsMarketDetailScreen = () => {
               currentAssetCtx={currentAssetCtx || null}
               positionData={positionData}
               rawLiquidationPrice={currentPosition?.position.liquidationPx}
+              liquidationPriceText={lineTagInfo.liquidationPriceText}
               rawMarkPrice={activeAssetCtx?.markPx || currentAssetCtx?.markPx}
               coin={coin}
               coinLogo={currentAssetCtx?.logoUrl || ''}

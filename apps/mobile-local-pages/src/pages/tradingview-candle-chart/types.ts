@@ -174,6 +174,8 @@ export type SimpleChartMessage = {
       prices: {
         entryPrice?: number;
         liquidationPrice?: number;
+        /** Display-only text shared with the Simple position card. */
+        liquidationPriceText?: string;
         tpPrice?: number;
         slPrice?: number;
       };

@@ -18,6 +18,7 @@ import type {
   SimpleChartMessage,
 } from '@/components2024/TradingViewCandleChart/type';
 import { usePerpsSimpleChart } from './usePerpsSimpleChart';
+import { simpleLiquidationPriceText } from '../account/model';
 
 jest.mock('react-native-localize', () => ({
   getLocales: () => [{ languageCode: 'en', countryCode: 'US', isRTL: false }],
@@ -71,7 +72,7 @@ jest.mock('react-native-webview', () => {
 });
 
 const config: Omit<SimpleChartConfig, 'range' | 'style' | 'interval'> = {
-  priceDecimals: 2,
+  priceDecimals: 3,
   colors: {
     background: '#fff',
     text: '#000',
@@ -99,7 +100,10 @@ const config: Omit<SimpleChartConfig, 'range' | 'style' | 'interval'> = {
   },
 };
 const fills: SimpleChartFill[] = [];
-const prices = {};
+const prices = {
+  liquidationPrice: 23.45,
+  liquidationPriceText: simpleLiquidationPriceText('23.4500', 3),
+};
 const raw = (close = '105'): Candle => ({
   t: 1700000000000,
   T: 1700001799999,
@@ -270,6 +274,11 @@ describe('Simple chart native load and ready ordering', () => {
       expect(latest.hasAppliedData).toBe(false);
       expect(latest.loading).toBe(true);
       await applyReplacement();
+      expect(
+        mockCommands.filter(m => m.action === 'overlays').at(-1),
+      ).toMatchObject({
+        prices: { liquidationPrice: 23.45, liquidationPriceText: '23.45' },
+      });
       expect(latest.loading).toBe(false);
       await start();
       await act(async () => candleCallback(raw('115')));
