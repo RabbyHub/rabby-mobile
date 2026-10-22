@@ -167,24 +167,6 @@ it('claims native ownership on DOWN and keeps a continuous drag across controlle
   ]);
 });
 
-it('drives an injected position on the UI thread ahead of the controlled value', () => {
-  const positionValue = { value: 0 } as NonNullable<
-    SliderProps['positionValue']
-  >;
-  const slider = mountSlider({ positionValue });
-  const stream = slider.stream();
-  stream.down(70);
-  expect(positionValue.value).toBe(25);
-  // The prop has not caught up yet; the injected value already has.
-  stream.move(120);
-  expect(positionValue.value).toBe(50);
-  expect(slider.props.value).toBe(0);
-  stream.up(120);
-  // A controlled update outside a gesture still writes through.
-  slider.rerender({ value: 80 });
-  expect(positionValue.value).toBe(80);
-});
-
 it.each([
   { minimumValue: 1, maximumValue: 40, step: 1, value: 1, expected: 21 },
   {

@@ -27,11 +27,6 @@ type Props = {
   onSlidingComplete?: (value: number) => void;
   onValueChange?: (value: number) => void;
   /**
-   * Optional UI-thread value the slider drives instead of its own, so callers
-   * can draw custom tracks in the same frame as the thumb. Fixed per mount.
-   */
-  positionValue?: SharedValue<number>;
-  /**
    * Optional UI-thread mirror of the thumb position, in the slider's own value
    * domain (not normalised). Wrappers that draw their own visual thumb/progress
    * (instead of the native one) can bind animated styles to this value so the
@@ -80,7 +75,6 @@ export const PerpsGestureSlider = ({
   onSlidingStart,
   onSlidingComplete,
   onValueChange,
-  positionValue,
   progressValue,
   step = 0,
   style,
@@ -104,8 +98,7 @@ export const PerpsGestureSlider = ({
       : minimumValue;
   const horizontalOverflow = Math.max(0, 40 - thumbWidth) / 2;
   const verticalOverflow = Math.max(0, 40 - size.height) / 2;
-  const ownPosition = useSharedValue(boundedValue);
-  const position = positionValue ?? ownPosition;
+  const position = useSharedValue(boundedValue);
   const active = useSharedValue(false);
   const pointer = useSharedValue(-1);
   const session = useSharedValue(0);
