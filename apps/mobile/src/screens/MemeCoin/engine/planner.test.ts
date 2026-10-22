@@ -180,6 +180,26 @@ describe('planBuy', () => {
     expect(payerByChain).toEqual({ base: 'gasAccount', eth: 'risk' });
   });
 
+  it('reserves gas for a chain that is only used in the second pass', () => {
+    const plan = planBuy(
+      input({
+        amountUsd: 85,
+        memes: [meme('PEPE', 'eth', 100), meme('WOJAK', 'eth', 100)],
+        sources: [
+          asset('ETH', 'eth', 100, { isNative: true, isMainstream: true }),
+          asset('USDC', 'base', 100),
+        ],
+        chainGas: {
+          eth: gas({ perLegGasUsd: 10, nativeBalanceUsd: 100 }),
+          base: gas({ perLegGasUsd: 5, nativeBalanceUsd: 0 }),
+        },
+        gasAccountBalanceUsd: 0,
+      }),
+    );
+    const bridgeLeg = plan.legs.find(l => l.kind === 'bridge');
+    expect(bridgeLeg).toMatchObject({ gasPayer: 'risk' });
+  });
+
   it('reports shortfall when the selected sources are not enough', () => {
     const plan = planBuy(
       input({

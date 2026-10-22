@@ -225,7 +225,13 @@ export const planBuy = (input: PlanInput): PlanResult => {
   });
   const firstPass = allocate(input, resolveSources(input, firstPassLegs));
 
-  const sources = resolveSources(input, countLegsPerChain(firstPass));
+  const secondPassLegs = { ...firstPassLegs };
+  Object.entries(countLegsPerChain(firstPass)).forEach(([chain, count]) => {
+    secondPassLegs[chain] = Math.max(count, 1);
+  });
+  // Pass 2 may still place more legs on a chain than gas was reserved for;
+  // execution-time balance capping is the fallback for that case.
+  const sources = resolveSources(input, secondPassLegs);
   const spendableTotalUsd = sources.reduce((sum, s) => sum + s.remaining, 0);
 
   const legs = allocate(input, sources)
