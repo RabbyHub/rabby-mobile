@@ -2138,18 +2138,15 @@ class ProviderController extends BaseController {
 
   personalEcRecover = ({
     data: {
-      params: [data, sig, extra = {}],
+      params: [data, signature],
     },
   }: {
     data: {
-      params: [string, string, any];
+      params: [string, string];
     };
   }) => {
-    return recoverPersonalSignature({
-      ...extra,
-      data,
-      sig,
-    });
+    // @metamask/eth-sig-util >= 4 reads `signature`; the legacy `sig` key throws
+    return recoverPersonalSignature({ data, signature });
   };
 
   @Reflect.metadata('SAFE', true)

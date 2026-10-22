@@ -12,6 +12,7 @@ import { memo, useCallback, useMemo, useRef } from 'react';
 import { MenuComponentRef } from '@rabby-wallet/react-native-menu';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { runOnJS } from 'react-native-reanimated';
+import { useNativeMenuModalGate } from '@/utils/modalGate';
 // import { touchedFeedback } from '@/utils/touch';
 
 const IS_IOS_27_OR_ABOVE =
@@ -90,6 +91,7 @@ const ContextMenuViewInner = ({
   androidLongPressDuration = 350,
 }: Props) => {
   const androidMenuViewRef = useRef<MenuComponentRef>(null);
+  const nativeMenuGateProps = useNativeMenuModalGate();
 
   const androidShowMenu = useCallback(() => {
     // touchedFeedback();
@@ -137,7 +139,8 @@ const ContextMenuViewInner = ({
   return (
     <ContextMenu.Root
       __unsafeIosProps={iosProps}
-      androidMenuViewRef={androidMenuViewRef}>
+      androidMenuViewRef={androidMenuViewRef}
+      {...nativeMenuGateProps}>
       <ContextMenu.Trigger
         action="longPress"
         {...triggerProps}

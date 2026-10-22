@@ -2735,6 +2735,18 @@
       }
     },
     "perpsDetail": {
+      "simpleAccount": {
+        "margin": "Margin",
+        "averageEntry": "Harga masuk rata-rata",
+        "estimatedLiquidationPrice": "Estimasi harga likuidasi",
+        "estimatedLiquidationDistance": "Estimasi jarak likuidasi",
+        "tpSl": "TP/SL",
+        "takeProfitPrice": "Harga ambil untung",
+        "stopLossPrice": "Harga hentikan rugi",
+        "estimatedPnl": "Estimasi PNL",
+        "closePositionTitle": "Tutup Posisi {{coin}}",
+        "estimatedRealizedPnl": "Estimasi PNL Terealisasi"
+      },
       "simpleChart": {
         "openInterest": "Open interest",
         "volume24h": "Volume 24 jam",

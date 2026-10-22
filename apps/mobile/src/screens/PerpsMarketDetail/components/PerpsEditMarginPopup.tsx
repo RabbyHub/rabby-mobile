@@ -106,6 +106,11 @@ export const PerpsEditMarginPopup: React.FC<{
   });
 
   const { t } = useTranslation();
+  const bottomSheetProps = useMemo(
+    () =>
+      makeBottomSheetProps({ colors: colors2024, linearGradientType: 'bg1' }),
+    [colors2024],
+  );
 
   const {
     value: margin,
@@ -289,10 +294,7 @@ export const PerpsEditMarginPopup: React.FC<{
     <>
       <AppBottomSheetModal
         ref={modalRef}
-        {...makeBottomSheetProps({
-          colors: colors2024,
-          linearGradientType: 'bg1',
-        })}
+        {...bottomSheetProps}
         onDismiss={onCancel}
         snapPoints={[maxHeight]}
         keyboardBehavior="interactive"
@@ -608,8 +610,18 @@ const getStyle = createGetStyles2024(ctx => {
       // fontFamily: 'SF Pro Rounded',
       fontSize: 36,
       paddingVertical: 0,
-      lineHeight: 42,
+      // Android applies lineHeight as a text span narrower than the 36/900
+      // glyph box, so each controlled slider update re-centers the digits.
+      // Keep natural metrics in a fixed 42 box there, as Perps Pro does.
+      ...(isAndroid
+        ? {
+            height: 42,
+            includeFontPadding: false,
+            textAlignVertical: 'center',
+          }
+        : { lineHeight: 42 }),
       fontWeight: '900',
+      fontVariant: ['tabular-nums'],
       color: colors2024['neutral-title-1'],
       flex: 1,
       textAlign: 'center',

@@ -131,9 +131,22 @@ const toCachedMarketData = (item: MarketData): MarketData => ({
 // Key '' === hyper native dex.
 const dexClearinghouseStatesCache = new Map<string, ClearinghouseState>();
 
-// Per-dex openOrders. openOrders has no server-side time, so HTTP simply
-// overwrites the matching bucket; WS pushes overwrite all buckets.
+// Open orders have no server snapshot time. Accept HTTP only within the same
+// account/cache session, with no intervening WS frame or newer same-dex request.
 const dexOpenOrdersCache = new Map<string, OpenOrder[]>();
+let openOrdersEpoch = 0;
+let openOrdersWsRevision = 0;
+const openOrdersRequestSequences = new Map<string, number>();
+
+function invalidateOpenOrdersRequests() {
+  openOrdersEpoch += 1;
+  openOrdersRequestSequences.clear();
+}
+
+function resetOpenOrdersCache() {
+  invalidateOpenOrdersRequests();
+  dexOpenOrdersCache.clear();
+}
 
 // HIP-3 dex roster, populated lazily by fetchMarketData.
 let perpDexsCache: PerpDexsResponse | null = null;
@@ -369,6 +382,11 @@ const isSamePerpsAccountIdentity = (
   return isSameAddress(prev.address, next.address) && prev.type === next.type;
 };
 
+const isSamePerpsOrdersOwner = (
+  prev: Account | null,
+  next: Account | null,
+): boolean => !!prev && !!next && isSameAddress(prev.address, next.address);
+
 export const perpsStore = zCreate<PerpsState>(() => ({ ...initialState }));
 
 export type PerpsAccountRuntimeContext = Readonly<{
@@ -390,6 +408,16 @@ perpsStore.subscribe((state, previousState) => {
     )
   ) {
     perpsAccountRuntimeGeneration += 1;
+    // Orders belong to the Hyperliquid user, not the signer type: a
+    // same-address switch keeps the reused stream's orders valid.
+    if (
+      !isSamePerpsOrdersOwner(
+        previousState.currentPerpsAccount,
+        state.currentPerpsAccount,
+      )
+    ) {
+      resetOpenOrdersCache();
+    }
   }
 });
 
@@ -404,6 +432,7 @@ export const getPerpsAccountRuntimeContext = (): PerpsAccountRuntimeContext => {
 
 type ActiveUserDataSubscription = {
   address: string;
+  ordersContext: OpenOrdersContext;
 };
 
 let activeUserDataSubscription: ActiveUserDataSubscription | null = null;
@@ -417,7 +446,8 @@ let fastMarketSubscriptionGeneration = 0;
 
 const canReuseUserDataSubscription = (address: string) =>
   !!activeUserDataSubscription &&
-  isSameAddress(activeUserDataSubscription.address, address);
+  isSameAddress(activeUserDataSubscription.address, address) &&
+  isOpenOrdersContextCurrent(activeUserDataSubscription.ordersContext);
 
 function setPerpsState(valOrFunc: UpdaterOrPartials<PerpsState>) {
   perpsStore.setState(prev => {
@@ -649,6 +679,7 @@ function stopHomeSpotSubscription() {
 }
 
 function stopAccountSubscriptions() {
+  invalidateOpenOrdersRequests();
   activeUserDataSubscription = null;
   clearAccountReadinessFallback();
   stopHomeSpotSubscription();
@@ -786,8 +817,12 @@ const isCurrentPerpsAccountAddress = (address: string) => {
 };
 
 const setCurrentPerpsAccount = (payload: Account) => {
+  // A live stream for this address only pushes on change, so its orders must
+  // survive a signer-type switch instead of waiting for the next change.
+  const keepsLiveOrders = canReuseUserDataSubscription(payload.address);
   setPerpsState(prev => {
     const sameAccount = isSamePerpsAccount(prev.currentPerpsAccount, payload);
+    const keepsOrders = sameAccount || keepsLiveOrders;
     const cachedClearinghouseState = sameAccount
       ? prev.currentClearinghouseState
       : prev.clearinghouseStateMap[payload.address.toLowerCase()] ?? null;
@@ -810,8 +845,8 @@ const setCurrentPerpsAccount = (payload: Account) => {
         ? prev.userAbstractionOwnerAddress
         : null,
       spotState: sameAccount ? prev.spotState : initialState.spotState,
-      openOrders: sameAccount ? prev.openOrders : [],
-      isOpenOrdersReady: sameAccount ? prev.isOpenOrdersReady : false,
+      openOrders: keepsOrders ? prev.openOrders : [],
+      isOpenOrdersReady: keepsOrders ? prev.isOpenOrdersReady : false,
       userAbstraction: sameAccount
         ? prev.userAbstraction
         : UserAbstractionResp.default,
@@ -842,7 +877,7 @@ export const switchPerpsAccountBeforeNavigate = (payload: Account) => {
   // Otherwise the next HTTP refresh rebuilds the aggregate with the
   // previous account's sub-dex data still in the cache.
   dexClearinghouseStatesCache.clear();
-  dexOpenOrdersCache.clear();
+  resetOpenOrdersCache();
   // Tear down only the old account's streams. Global market feeds have their
   // own lifecycle and remain warm while the Perps screen initializes.
   stopAccountSubscriptions();
@@ -1300,7 +1335,7 @@ const prepareHomePerpsAccount = async (account: Account) => {
     // Otherwise the Home HTTP fallback would rebuild the aggregate with the
     // previous account's sub-dex data still in the cache.
     dexClearinghouseStatesCache.clear();
-    dexOpenOrdersCache.clear();
+    resetOpenOrdersCache();
   }
 
   const cachedClearinghouseState =
@@ -1948,6 +1983,7 @@ export const subscribeToUserData = (account: Account) => {
   const sdk = apisPerps.getPerpsSDK();
   const address = account.address;
   stopAccountSubscriptions();
+  const ordersContext = captureOpenOrdersContext(address);
   // Staking has no WS feed: one REST snapshot per fresh subscription. The
   // Simple card's poll and Pro's Account page refresh it afterwards.
   fetchStakingSummaryHttp(address);
@@ -2019,7 +2055,7 @@ export const subscribeToUserData = (account: Account) => {
       const { orders, user } = data;
       if (
         !isSameAddress(user, address) ||
-        !isCurrentPerpsAccountAddress(address) ||
+        !isOpenOrdersContextCurrent(ordersContext) ||
         !orders
       ) {
         return;
@@ -2037,6 +2073,7 @@ export const subscribeToUserData = (account: Account) => {
           buckets.set(dexName, [order]);
         }
       }
+      openOrdersWsRevision += 1;
       dexOpenOrdersCache.clear();
       for (const [dexName, list] of buckets) {
         dexOpenOrdersCache.set(dexName, list);
@@ -2114,6 +2151,7 @@ export const subscribeToUserData = (account: Account) => {
   });
   activeUserDataSubscription = {
     address,
+    ordersContext,
   };
   scheduleAccountReadinessFallback(address);
   traceStartupDiagnostic('perps', 'user_subscription_registered', {
@@ -2321,22 +2359,46 @@ export const fetchStakingSummaryHttp = (
   return task;
 };
 
+// Scoped to the Hyperliquid user: address changes, resets and stream
+// teardown bump the epoch; a same-address signer-type switch does not.
+type OpenOrdersContext = {
+  address: string;
+  epoch: number;
+};
+
+const captureOpenOrdersContext = (address: string): OpenOrdersContext => ({
+  address,
+  epoch: openOrdersEpoch,
+});
+
+const isOpenOrdersContextCurrent = (context: OpenOrdersContext) =>
+  context.epoch === openOrdersEpoch &&
+  isCurrentPerpsAccountAddress(context.address);
+
 const fetchAndCacheOpenOrdersForDex = async (
   dex: string,
-  expectedAddress: string,
+  context: OpenOrdersContext,
 ): Promise<boolean> => {
+  if (!isOpenOrdersContextCurrent(context)) return false;
+  const sequence = (openOrdersRequestSequences.get(dex) ?? 0) + 1;
+  openOrdersRequestSequences.set(dex, sequence);
+  const wsRevision = openOrdersWsRevision;
   const sdk = apisPerps.getPerpsSDK();
   let orders: OpenOrder[];
   try {
     orders = await sdk.info.getFrontendOpenOrders(
-      expectedAddress,
+      context.address,
       dex || undefined,
     );
   } catch (e) {
     console.error('[fetchPositionOpenOrdersHttp] failed', dex, e);
     return false;
   }
-  if (!isCurrentPerpsAccountAddress(expectedAddress)) {
+  if (
+    !isOpenOrdersContextCurrent(context) ||
+    sequence !== openOrdersRequestSequences.get(dex) ||
+    wsRevision !== openOrdersWsRevision
+  ) {
     return false;
   }
   dexOpenOrdersCache.set(dex, orders);
@@ -2344,16 +2406,13 @@ const fetchAndCacheOpenOrdersForDex = async (
 };
 
 const flushAggregatedOpenOrders = (
-  expectedAddress: string,
+  context: OpenOrdersContext,
   markReady = false,
 ) => {
-  if (!isCurrentPerpsAccountAddress(expectedAddress)) {
-    return;
-  }
+  if (!isOpenOrdersContextCurrent(context)) return;
   const flattened = Array.from(dexOpenOrdersCache.values()).flat();
   setPerpsState(prev =>
-    prev.currentPerpsAccount &&
-    isSameAddress(prev.currentPerpsAccount.address, expectedAddress)
+    isOpenOrdersContextCurrent(context)
       ? {
           ...prev,
           isOpenOrdersReady: prev.isOpenOrdersReady || markReady,
@@ -2363,36 +2422,25 @@ const flushAggregatedOpenOrders = (
   );
 };
 
-// No server-side time guard for openOrders: callers fire this after the
-// SDK has confirmed the mutating action, and WS reconciles any drift quickly.
 export const fetchPositionOpenOrdersHttp = async (dex: string) => {
   const account = perpsStore.getState().currentPerpsAccount;
-  if (!account?.address) {
-    return;
-  }
-  const touched = await fetchAndCacheOpenOrdersForDex(dex, account.address);
-  if (touched) {
-    flushAggregatedOpenOrders(account.address);
-  }
+  if (!account?.address) return;
+  const context = captureOpenOrdersContext(account.address);
+  const touched = await fetchAndCacheOpenOrdersForDex(dex, context);
+  if (touched) flushAggregatedOpenOrders(context);
 };
 
 // For multi-dex callers (cancel-all on Home): one flush, not N renders.
 export const fetchPositionOpenOrdersHttpForDexes = async (dexes: string[]) => {
   const account = perpsStore.getState().currentPerpsAccount;
-  if (!account?.address) {
-    return;
-  }
+  if (!account?.address) return;
   const unique = Array.from(new Set(dexes));
-  if (unique.length === 0) {
-    return;
-  }
-  const address = account.address;
+  if (unique.length === 0) return;
+  const context = captureOpenOrdersContext(account.address);
   const results = await Promise.all(
-    unique.map(dex => fetchAndCacheOpenOrdersForDex(dex, address)),
+    unique.map(dex => fetchAndCacheOpenOrdersForDex(dex, context)),
   );
-  if (results.some(Boolean)) {
-    flushAggregatedOpenOrders(address);
-  }
+  if (results.some(Boolean)) flushAggregatedOpenOrders(context);
 };
 
 const collectAllDexes = (): string[] => {
@@ -2556,12 +2604,12 @@ export const fetchAllDexsPositionOpenOrdersHttp = async () => {
   if (!account?.address) {
     return;
   }
-  const address = account.address;
+  const context = captureOpenOrdersContext(account.address);
   const results = await Promise.all(
-    collectAllDexes().map(dex => fetchAndCacheOpenOrdersForDex(dex, address)),
+    collectAllDexes().map(dex => fetchAndCacheOpenOrdersForDex(dex, context)),
   );
   if (results.some(Boolean)) {
-    flushAggregatedOpenOrders(address, results.every(Boolean));
+    flushAggregatedOpenOrders(context, results.every(Boolean));
   }
 };
 
@@ -2822,11 +2870,13 @@ export const usePerpsStore = () => {
     // the previous account's sub-dex data still in the cache.
     if (!canReuseSubscription) {
       dexClearinghouseStatesCache.clear();
-      dexOpenOrdersCache.clear();
+      resetOpenOrdersCache();
     }
     apisPerps.setPerpsCurrentAccount(account);
     setPerpsState(prev => {
       const sameAccount = isSamePerpsAccount(prev.currentPerpsAccount, account);
+      // A reused stream pushes orders only on change; keep its snapshot.
+      const keepsOrders = sameAccount || canReuseSubscription;
       const previousClearinghouseState = sameAccount
         ? prev.currentClearinghouseState
         : null;
@@ -2852,8 +2902,8 @@ export const usePerpsStore = () => {
         stakingSummary: sameAccount ? prev.stakingSummary : null,
         stakingStatus: sameAccount ? prev.stakingStatus : 'idle',
         spotState: sameAccount ? prev.spotState : initialState.spotState,
-        openOrders: sameAccount ? prev.openOrders : [],
-        isOpenOrdersReady: sameAccount ? prev.isOpenOrdersReady : false,
+        openOrders: keepsOrders ? prev.openOrders : [],
+        isOpenOrdersReady: keepsOrders ? prev.isOpenOrdersReady : false,
         userAbstraction: sameAccount
           ? prev.userAbstraction
           : UserAbstractionResp.default,

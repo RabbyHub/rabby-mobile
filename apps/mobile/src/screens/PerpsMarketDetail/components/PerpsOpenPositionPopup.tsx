@@ -95,7 +95,6 @@ export const PerpsOpenPositionPopup: React.FC<{
   szDecimals: number;
   maxNtlValue: number;
   availableBalance: number;
-  setCurrentTpOrSl: (params: { tpPrice?: string; slPrice?: string }) => void;
   onCancel: () => void;
   onConfirm: () => void;
   marketDataItem?: MarketData;
@@ -139,7 +138,6 @@ export const PerpsOpenPositionPopup: React.FC<{
   onCancel,
   onConfirm,
   handleOpenPosition,
-  setCurrentTpOrSl,
   maxNtlValue,
   marketDataItem,
   activeAssetCtx,
@@ -567,11 +565,6 @@ export const PerpsOpenPositionPopup: React.FC<{
       orderType,
       limitPx: orderType === 'limit' ? limitPx : undefined,
     });
-    orderType === 'market' &&
-      setCurrentTpOrSl({
-        tpPrice: tpTriggerPx ? Number(tpTriggerPx).toString() : undefined,
-        slPrice: slTriggerPx ? Number(slTriggerPx).toString() : undefined,
-      });
     if (res) {
       const isLimit = orderType === 'limit';
       const { avgPx, totalSz } = res;

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { PerpsSimpleOhlc } from './PerpsSimpleOhlc';
 import { Pressable, View } from 'react-native';
 import { Skeleton } from '@rneui/themed';
@@ -18,6 +18,7 @@ import { simplePriceChange, simplePriceText } from './model';
 export const PerpsSimpleChartHeader = React.memo(
   function PerpsSimpleChartHeader({
     active,
+    onPriceLayout,
     markPrice,
     decimals,
     prevDayPx,
@@ -33,6 +34,7 @@ export const PerpsSimpleChartHeader = React.memo(
     ohlcMeasureText = '',
     style,
   }: {
+    onPriceLayout?: (node: View) => void;
     active: boolean;
     markPrice: number | null;
     decimals: number;
@@ -49,6 +51,7 @@ export const PerpsSimpleChartHeader = React.memo(
     ohlcMeasureText?: string;
     style: 'candle' | 'area';
   }) {
+    const priceRef = useRef<View>(null);
     const { t } = useTranslation();
     const { styles, colors2024 } = useTheme2024({ getStyle });
     const candidate = selection?.close ?? markPrice;
@@ -113,25 +116,33 @@ export const PerpsSimpleChartHeader = React.memo(
         ) : (
           <>
             <View style={styles.priceColumn}>
-              {priceLoading ? (
-                <View style={styles.pricePlaceholder}>
-                  <Skeleton
-                    width={160}
-                    height={28}
-                    style={styles.skeleton}
-                    LinearGradientComponent={LoadingLinear}
-                  />
-                </View>
-              ) : (
-                <Text
-                  style={styles.price}
-                  numberOfLines={1}
-                  adjustsFontSizeToFit>
-                  {price === null
-                    ? '—'
-                    : `$${simplePriceText(price, decimals)}`}
-                </Text>
-              )}
+              <View
+                ref={priceRef}
+                collapsable={false}
+                onLayout={() => {
+                  if (!selection && priceRef.current)
+                    onPriceLayout?.(priceRef.current);
+                }}>
+                {priceLoading ? (
+                  <View style={styles.pricePlaceholder}>
+                    <Skeleton
+                      width={160}
+                      height={28}
+                      style={styles.skeleton}
+                      LinearGradientComponent={LoadingLinear}
+                    />
+                  </View>
+                ) : (
+                  <Text
+                    style={styles.price}
+                    numberOfLines={1}
+                    adjustsFontSizeToFit>
+                    {price === null
+                      ? '—'
+                      : `$${simplePriceText(price, decimals)}`}
+                  </Text>
+                )}
+              </View>
               <View
                 style={[styles.changeRow, selection && styles.areaChangeRow]}>
                 {changeLoading ? (
