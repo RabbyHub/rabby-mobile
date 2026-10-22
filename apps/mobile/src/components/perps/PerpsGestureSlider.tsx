@@ -12,6 +12,7 @@ import Animated, {
   runOnUI,
   useAnimatedStyle,
   useSharedValue,
+  type SharedValue,
 } from 'react-native-reanimated';
 
 type Props = {
@@ -24,6 +25,11 @@ type Props = {
   onSlidingStart?: (value: number) => void;
   onSlidingComplete?: (value: number) => void;
   onValueChange?: (value: number) => void;
+  /**
+   * Optional UI-thread value the slider drives instead of its own, so callers
+   * can draw custom tracks in the same frame as the thumb. Fixed per mount.
+   */
+  positionValue?: SharedValue<number>;
   step?: number;
   style?: StyleProp<ViewStyle>;
   thumbStyle?: StyleProp<ViewStyle>;
@@ -65,6 +71,7 @@ export const PerpsGestureSlider = ({
   onSlidingStart,
   onSlidingComplete,
   onValueChange,
+  positionValue,
   step = 0,
   style,
   thumbStyle,
@@ -87,7 +94,8 @@ export const PerpsGestureSlider = ({
       : minimumValue;
   const horizontalOverflow = Math.max(0, 40 - thumbWidth) / 2;
   const verticalOverflow = Math.max(0, 40 - size.height) / 2;
-  const position = useSharedValue(boundedValue);
+  const ownPosition = useSharedValue(boundedValue);
+  const position = positionValue ?? ownPosition;
   const active = useSharedValue(false);
   const pointer = useSharedValue(-1);
   const session = useSharedValue(0);

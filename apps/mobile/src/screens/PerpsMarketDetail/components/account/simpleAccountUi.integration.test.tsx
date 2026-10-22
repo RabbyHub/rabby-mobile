@@ -11,7 +11,7 @@ import {
   createAccountHeaderPresentation,
   type AccountHeaderHandle,
 } from './model';
-import { View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { PerpsGestureSlider } from '@/components/perps/PerpsGestureSlider';
 import { Text } from '@/components/Typography';
 import { CircleSpinnerCC } from '@/components2024/CircleSpinner/CircleSpinnerCC';
@@ -403,12 +403,23 @@ it('swaps only a set position tag X for the shared spinner while cancelling', ()
   const ui = render(
     safe(<PerpEditTpSlPriceTag {...props} variant="position" />),
   );
-  // Every SVG shares one mock type here; the X is the 16pt icon passed
-  // width/height directly, while the spinner's icon is sized via style.
-  const xIcons = () =>
-    ui
+  // Every SVG shares one mock type here; the X is the 16pt icon outside the
+  // spinner.
+  const xIcons = () => {
+    const spinnerIcons = new Set(
+      ui
+        .UNSAFE_queryAllByType(CircleSpinnerCC)
+        .flatMap(spinner => spinner.findAllByType(PositionCancel)),
+    );
+    return ui
       .UNSAFE_queryAllByType(PositionCancel)
-      .filter(node => node.props.width === 16 && node.props.height === 16);
+      .filter(
+        node =>
+          node.props.width === 16 &&
+          node.props.height === 16 &&
+          !spinnerIcons.has(node),
+      );
+  };
   expect(xIcons()).toHaveLength(1);
   const cancelColor = xIcons()[0].props.color;
   expect(ui.UNSAFE_queryByType(CircleSpinnerCC)).toBeNull();
@@ -426,6 +437,11 @@ it('swaps only a set position tag X for the shared spinner while cancelling', ()
   const spinner = ui.UNSAFE_getByType(CircleSpinnerCC);
   // Same 16pt slot and colour as the X, so the tag geometry never shifts.
   expect(spinner.props).toMatchObject({ size: 16, color: cancelColor });
+  // The 24pt asset must render at 16pt, or it orbits the 16pt rotating box.
+  expect(spinner.findByType(PositionCancel).props).toMatchObject({
+    width: 16,
+    height: 16,
+  });
   expect(xIcons()).toHaveLength(0);
   expect(ui.getByText('120 USDC')).toBeTruthy();
   expect(ui.getByRole('button').props.accessibilityState).toEqual({
@@ -444,6 +460,43 @@ it('swaps only a set position tag X for the shared spinner while cancelling', ()
   ui.rerender(safe(<PerpEditTpSlPriceTag {...props} cancelPending />));
   expect(ui.UNSAFE_queryByType(CircleSpinnerCC)).toBeNull();
   expect(xIcons()).toHaveLength(1);
+});
+
+it('draws the close progress and points from the thumb UI-thread position', () => {
+  const props = {
+    variant: 'close' as const,
+    onValueChange: jest.fn(),
+    step: 1,
+  };
+  const ui = render(safe(<PerpsSlider {...props} value={30} />));
+  const position = ui.UNSAFE_getByType(PerpsGestureSlider).props.positionValue;
+  // The thumb and the custom track share one value: no React round trip.
+  expect(position).toBeDefined();
+  const width = () =>
+    StyleSheet.flatten(ui.getByTestId('perps-close-progress').props.style)
+      .width;
+  const opacity = (id: string) =>
+    StyleSheet.flatten(ui.getByTestId(id).props.style).opacity;
+  expect(position.value).toBe(30);
+  expect(width()).toBe('30%');
+  expect(opacity('perps-close-point-25-selected')).toBe(1);
+  expect(opacity('perps-close-point-50-selected')).toBe(0);
+  expect(opacity('perps-close-point-50-unselected')).toBe(1);
+
+  // A drag moves the shared value ahead of the controlled prop.
+  position.value = 60;
+  ui.rerender(safe(<PerpsSlider {...props} value={30} />));
+  expect(width()).toBe('60%');
+  expect(opacity('perps-close-point-50-selected')).toBe(1);
+  expect(opacity('perps-close-point-50-unselected')).toBe(0);
+  expect(opacity('perps-close-point-75-selected')).toBe(0);
+
+  // Default sliders keep their own position and built-in track.
+  ui.rerender(safe(<PerpsSlider value={30} onValueChange={jest.fn()} />));
+  expect(
+    ui.UNSAFE_getByType(PerpsGestureSlider).props.positionValue,
+  ).toBeUndefined();
+  expect(ui.queryByTestId('perps-close-progress')).toBeNull();
 });
 
 // Close haptics are throttled like Perps Pro; drive a clock so each case
