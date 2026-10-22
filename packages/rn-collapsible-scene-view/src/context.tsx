@@ -43,14 +43,18 @@ export const CollapsibleSceneProvider = ({
   activeTab,
   children,
   headerHeight,
+  scrollOffset,
   tabs,
 }: {
   activeTab: SceneTabKey;
   children: React.ReactNode;
   headerHeight: number;
+  /** Optional externally owned offset (e.g. a pager's active-tab scroll). */
+  scrollOffset?: SharedValue<number>;
   tabs: readonly SceneTabKey[];
 }) => {
-  const scrollY = useSharedValue(0);
+  const ownScrollY = useSharedValue(0);
+  const scrollY = scrollOffset ?? ownScrollY;
   const activeTabIndex = useSharedValue(
     Math.max(tabs.indexOf(activeTab), 0),
   );

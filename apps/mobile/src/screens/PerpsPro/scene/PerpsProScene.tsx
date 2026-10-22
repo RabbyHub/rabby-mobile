@@ -1,3 +1,9 @@
+import {
+  CollapsibleHeaderLayer,
+  CollapsiblePinnedLayer,
+  CollapsibleSceneProvider,
+  CollapsibleScrollingLayer,
+} from '@rabby-wallet/rn-collapsible-scene-view';
 import { Text } from '@/components/Typography';
 import type { PerpsQuoteAsset } from '@/constant/perps';
 import type { PerpsProInfoTab } from '@/core/services/perpsService';
@@ -1363,94 +1369,105 @@ export const PerpsProScene: React.FC<{
   return (
     <PerpsProFieldExplanationProvider>
       <GestureDetector gesture={sceneScrollGesture}>
-        <View collapsable={false} style={styles.container}>
-          {settledInfoTab ? (
-            <PerpsProInfoPager
-              activeTab={settledInfoTab}
-              authorizeNativePageGestures={Platform.OS === 'android'}
-              contentContainerStyle={scrollContentStyles}
-              data={rowsByTab}
-              getActiveScrollOffset={headerCollapse.getScrollOffset}
-              initialRequestId={infoTabRequestIdRef.current}
-              keepAllTabsMounted={keepAllInfoTabListsMounted}
-              indicatorPosition={infoTabIndicatorPosition}
-              nativeVerticalScrollEnabled={Platform.OS !== 'android'}
-              offscreenPageLimit={infoPagerOffscreenPageLimit}
-              onActivateOffset={headerCollapse.syncScrollOffset}
-              onLayout={updateScrollViewportHeight}
-              onPageDragStart={beginInfoPageDrag}
-              onPagePreview={setPreviewInfoTab}
-              onPageRequestFinished={finishInfoTabRequest}
-              onPageSelected={commitInfoTab}
-              ref={infoPagerRef}
-              renderItem={renderItem}
-              renderListHeader={renderScrollLeadIn}
-              requestedTab={requestedInfoTab}
-              scrollBridge={infoScrollBridge}
-              stickyOffset={infoStickyOffset}
-              style={styles.scroll}
-            />
-          ) : null}
-          <SceneOverlayView
-            style={[styles.headerClip, headerOverlayMotionStyle]}
-            testID="perps-pro-header-overlay">
-            <PerpsProHeader
-              isModeSwitching={isModeSwitching}
-              onSwitchToSimple={onSwitchToSimple}
-            />
-          </SceneOverlayView>
-          {showRegionAlert ? (
-            <SceneOverlayView
-              style={[
-                styles.regionAlertOverlay,
-                restrictedSurfaceCoverageStyle,
-                regionAlertMotionStyle,
-              ]}
-              testID="perps-pro-region-alert-overlay">
-              <PerpsRegionAlert
-                bottomSpacing={PERPS_PRO_REGION_ALERT_BOTTOM_SPACING}
-                onLayout={updateRegionAlertLayout}
-                topSpacing={PERPS_REGION_ALERT_HEADER_SPACING}
+        <CollapsibleSceneProvider
+          activeTab={settledInfoTab ?? 'positions'}
+          headerHeight={PERPS_PRO_HEADER_HEIGHT}
+          scrollOffset={activeInfoScrollOffset}
+          tabs={PERPS_PRO_INFO_TABS}>
+          <View collapsable={false} style={styles.container}>
+            {settledInfoTab ? (
+              <PerpsProInfoPager
+                activeTab={settledInfoTab}
+                authorizeNativePageGestures={Platform.OS === 'android'}
+                contentContainerStyle={scrollContentStyles}
+                data={rowsByTab}
+                getActiveScrollOffset={headerCollapse.getScrollOffset}
+                initialRequestId={infoTabRequestIdRef.current}
+                keepAllTabsMounted={keepAllInfoTabListsMounted}
+                indicatorPosition={infoTabIndicatorPosition}
+                nativeVerticalScrollEnabled={Platform.OS !== 'android'}
+                offscreenPageLimit={infoPagerOffscreenPageLimit}
+                onActivateOffset={headerCollapse.syncScrollOffset}
+                onLayout={updateScrollViewportHeight}
+                onPageDragStart={beginInfoPageDrag}
+                onPagePreview={setPreviewInfoTab}
+                onPageRequestFinished={finishInfoTabRequest}
+                onPageSelected={commitInfoTab}
+                ref={infoPagerRef}
+                renderItem={renderItem}
+                renderListHeader={renderScrollLeadIn}
+                requestedTab={requestedInfoTab}
+                scrollBridge={infoScrollBridge}
+                stickyOffset={infoStickyOffset}
+                style={styles.scroll}
               />
-              {positionedOverlaysReady ? (
-                <View
-                  style={[styles.marketOverlay, restrictedMarketPositionStyle]}
-                  testID="perps-pro-market-overlay">
-                  {marketBarContent}
-                </View>
-              ) : null}
-            </SceneOverlayView>
-          ) : null}
-          {positionedOverlaysReady ? (
-            <>
-              {!showRegionAlert ? (
-                <SceneOverlayView
-                  style={[styles.marketOverlay, marketOverlayMotionStyle]}
-                  testID="perps-pro-market-overlay">
-                  {marketBarContent}
-                </SceneOverlayView>
-              ) : null}
-              {settledInfoTab && displayedInfoTab ? (
-                <SceneOverlayView
-                  style={[styles.infoTabsOverlay, infoTabsOverlayMotionStyle]}
-                  testID="perps-pro-info-tabs-overlay">
-                  <PerpsProInfoTabs
-                    activeTab={displayedInfoTab}
-                    historyEnabled={
-                      historyEnabled && info.accountState !== 'noAccount'
-                    }
-                    indicatorPosition={infoTabIndicatorPosition}
-                    onChange={requestInfoTab}
-                    onHistoryPress={openHistory}
-                    openOrdersCount={info.allOpenOrdersCount}
-                    pendingFundingCount={info.pendingFundingCount}
-                    positionsCount={info.allPositionsCount}
-                  />
-                </SceneOverlayView>
-              ) : null}
-            </>
-          ) : null}
-        </View>
+            ) : null}
+            <CollapsibleHeaderLayer
+              style={styles.headerClip}
+              testID="perps-pro-header-overlay">
+              <PerpsProHeader
+                isModeSwitching={isModeSwitching}
+                onSwitchToSimple={onSwitchToSimple}
+              />
+            </CollapsibleHeaderLayer>
+            {showRegionAlert ? (
+              <SceneOverlayView
+                style={[
+                  styles.regionAlertOverlay,
+                  restrictedSurfaceCoverageStyle,
+                  regionAlertMotionStyle,
+                ]}
+                testID="perps-pro-region-alert-overlay">
+                <PerpsRegionAlert
+                  bottomSpacing={PERPS_PRO_REGION_ALERT_BOTTOM_SPACING}
+                  onLayout={updateRegionAlertLayout}
+                  topSpacing={PERPS_REGION_ALERT_HEADER_SPACING}
+                />
+                {positionedOverlaysReady ? (
+                  <View
+                    style={[
+                      styles.marketOverlay,
+                      restrictedMarketPositionStyle,
+                    ]}
+                    testID="perps-pro-market-overlay">
+                    {marketBarContent}
+                  </View>
+                ) : null}
+              </SceneOverlayView>
+            ) : null}
+            {positionedOverlaysReady ? (
+              <>
+                {!showRegionAlert ? (
+                  <CollapsiblePinnedLayer
+                    baseTop={PERPS_PRO_HEADER_HEIGHT}
+                    style={styles.marketOverlay}
+                    testID="perps-pro-market-overlay">
+                    {marketBarContent}
+                  </CollapsiblePinnedLayer>
+                ) : null}
+                {settledInfoTab && displayedInfoTab ? (
+                  <CollapsiblePinnedLayer
+                    baseTop={infoTabsNaturalAnchor}
+                    style={styles.infoTabsOverlay}
+                    testID="perps-pro-info-tabs-overlay">
+                    <PerpsProInfoTabs
+                      activeTab={displayedInfoTab}
+                      historyEnabled={
+                        historyEnabled && info.accountState !== 'noAccount'
+                      }
+                      indicatorPosition={infoTabIndicatorPosition}
+                      onChange={requestInfoTab}
+                      onHistoryPress={openHistory}
+                      openOrdersCount={info.allOpenOrdersCount}
+                      pendingFundingCount={info.pendingFundingCount}
+                      positionsCount={info.allPositionsCount}
+                    />
+                  </CollapsiblePinnedLayer>
+                ) : null}
+              </>
+            ) : null}
+          </View>
+        </CollapsibleSceneProvider>
       </GestureDetector>
       <PerpsProMarketSelector
         currentMarketKey={scene.currentMarket?.marketKey ?? null}
