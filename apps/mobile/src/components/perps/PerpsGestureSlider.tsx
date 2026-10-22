@@ -10,6 +10,7 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   runOnJS,
   runOnUI,
+  useAnimatedReaction,
   useAnimatedStyle,
   useSharedValue,
   type SharedValue,
@@ -26,10 +27,13 @@ type Props = {
   onSlidingComplete?: (value: number) => void;
   onValueChange?: (value: number) => void;
   /**
-   * Optional UI-thread value the slider drives instead of its own, so callers
-   * can draw custom tracks in the same frame as the thumb. Fixed per mount.
+   * Optional UI-thread mirror of the thumb position, in the slider's own value
+   * domain (not normalised). Wrappers that draw their own visual thumb/progress
+   * (instead of the native one) can bind animated styles to this value so the
+   * geometry follows the finger on the UI thread instead of waiting for a JS
+   * re-render.
    */
-  positionValue?: SharedValue<number>;
+  progressValue?: SharedValue<number>;
   step?: number;
   style?: StyleProp<ViewStyle>;
   thumbStyle?: StyleProp<ViewStyle>;
@@ -71,7 +75,7 @@ export const PerpsGestureSlider = ({
   onSlidingStart,
   onSlidingComplete,
   onValueChange,
-  positionValue,
+  progressValue,
   step = 0,
   style,
   thumbStyle,
@@ -94,8 +98,7 @@ export const PerpsGestureSlider = ({
       : minimumValue;
   const horizontalOverflow = Math.max(0, 40 - thumbWidth) / 2;
   const verticalOverflow = Math.max(0, 40 - size.height) / 2;
-  const ownPosition = useSharedValue(boundedValue);
-  const position = positionValue ?? ownPosition;
+  const position = useSharedValue(boundedValue);
   const active = useSharedValue(false);
   const pointer = useSharedValue(-1);
   const session = useSharedValue(0);
@@ -132,6 +135,16 @@ export const PerpsGestureSlider = ({
     onValueChange,
   });
   const jsSession = useRef<{ id: number; value: number } | null>(null);
+
+  useAnimatedReaction(
+    () => position.value,
+    next => {
+      if (progressValue) {
+        progressValue.value = next;
+      }
+    },
+    [position, progressValue],
+  );
 
   useLayoutEffect(() => {
     current.current = {

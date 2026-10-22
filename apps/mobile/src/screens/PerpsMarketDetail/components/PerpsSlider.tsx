@@ -304,7 +304,7 @@ export const PerpsSlider: React.FC<PerpsSliderProps> = ({
           onValueChange={handleValueChange}
           onSlidingStart={handleSlidingStart}
           onSlidingComplete={handleSlidingComplete}
-          positionValue={variant === 'close' ? closePosition : undefined}
+          progressValue={variant === 'close' ? closePosition : undefined}
           minimumValue={minValue || 0}
           maximumValue={maxValue || 100}
           step={step}
