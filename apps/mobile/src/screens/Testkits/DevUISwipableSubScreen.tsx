@@ -30,7 +30,7 @@ const ROWS: Record<PlaygroundTab, { key: string; label: string }[]> = {
  * has no app state, persistence or pager: tapping a tab only changes the
  * SceneList `data` prop, so a mismatch here is a component-level bug.
  */
-export default function DevUIPerpsProPager() {
+export default function DevUISwipableSubScreen() {
   const [tab, setTab] = useState<PlaygroundTab>('a');
   const controller = useCollapsibleSceneController();
   const rows = ROWS[tab];

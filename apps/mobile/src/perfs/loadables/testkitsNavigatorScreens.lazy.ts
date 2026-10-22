@@ -36,11 +36,11 @@ export const DevUIComponents2024ShowCase = registerAppScreen<
   name: TESTKITS_PRELOAD_SCREENS.DevUIComponents2024ShowCase,
 });
 
-export const DevUIPerpsProPager = registerAppScreen<
-  typeof import('@/screens/Testkits/DevUIPerpsProPager').default
+export const DevUISwipableSubScreen = registerAppScreen<
+  typeof import('@/screens/Testkits/DevUISwipableSubScreen').default
 >({
-  loader: () => import('@/screens/Testkits/DevUIPerpsProPager'),
-  name: TESTKITS_PRELOAD_SCREENS.DevUIPerpsProPager,
+  loader: () => import('@/screens/Testkits/DevUISwipableSubScreen'),
+  name: TESTKITS_PRELOAD_SCREENS.DevUISwipableSubScreen,
 });
 
 export const DevUIToast = registerAppScreen<

@@ -124,7 +124,7 @@ export default function DevUIPlaygroundModal({
         onPress: () => {
           navigation.dispatch(
             StackActions.push(RootNames.StackTestkits, {
-              screen: RootNames.DevUIPerpsProPager,
+              screen: RootNames.DevUISwipableSubScreen,
             }),
           );
         },

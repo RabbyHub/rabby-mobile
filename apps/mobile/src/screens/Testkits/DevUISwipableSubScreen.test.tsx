@@ -47,11 +47,11 @@ jest.mock('react-native-reanimated', () => {
   };
 });
 
-import DevUIPerpsProPager from './DevUIPerpsProPager';
+import DevUISwipableSubScreen from './DevUISwipableSubScreen';
 
 describe('Swipable SubScreen harness', () => {
   it('swaps the single list data when a tab is pressed', () => {
-    render(<DevUIPerpsProPager />);
+    render(<DevUISwipableSubScreen />);
 
     expect(screen.getByTestId('dev-perps-pager-row-a-0')).toBeTruthy();
     expect(screen.getByTestId('dev-perps-pager-active')).toHaveTextContent(
