@@ -141,77 +141,93 @@ const safe = (child: React.ReactNode) => (
     <BottomSheetModalProvider>{child}</BottomSheetModalProvider>
   </SafeAreaProvider>
 );
+const originalFabric = Object.getOwnPropertyDescriptor(
+  globalThis,
+  'nativeFabricUIManager',
+);
 afterEach(async () => {
+  if (originalFabric) {
+    Object.defineProperty(globalThis, 'nativeFabricUIManager', originalFabric);
+  } else {
+    Reflect.deleteProperty(globalThis, 'nativeFabricUIManager');
+  }
   await cleanupAsync();
   jest.clearAllTimers();
 });
 
-it('connects close touch events through the real wrapper and controlled state', () => {
-  const changes: number[] = [];
-  function ControlledSlider() {
-    const [value, setValue] = React.useState(0);
-    const onChange = (next: number) => {
-      changes.push(next);
-      setValue(next);
-    };
-    return (
-      <View>
-        <Text testID="gesture-result">{String(value)}</Text>
-        <PerpsSlider
-          value={value}
-          onValueChange={onChange}
-          step={1}
-          variant="close"
-        />
-      </View>
+it.each(['Paper', 'Fabric'])(
+  'connects close touch events through the real wrapper on %s',
+  architecture => {
+    Object.defineProperty(globalThis, 'nativeFabricUIManager', {
+      configurable: true,
+      value: architecture === 'Fabric' ? {} : undefined,
+    });
+    const changes: number[] = [];
+    function ControlledSlider() {
+      const [value, setValue] = React.useState(0);
+      const onChange = (next: number) => {
+        changes.push(next);
+        setValue(next);
+      };
+      return (
+        <View>
+          <Text testID="gesture-result">{String(value)}</Text>
+          <PerpsSlider
+            value={value}
+            onValueChange={onChange}
+            step={1}
+            variant="close"
+          />
+        </View>
+      );
+    }
+    const ui = render(safe(<ControlledSlider />));
+    const input = ui.UNSAFE_getByType(PerpsGestureSlider);
+    const host = input.findAllByType(View).find(node => node.props.onLayout)!;
+    act(() =>
+      host.props.onLayout({
+        nativeEvent: { layout: { width: 220, height: 40 } },
+      }),
     );
-  }
-  const ui = render(safe(<ControlledSlider />));
-  const input = ui.UNSAFE_getByType(PerpsGestureSlider);
-  const host = input.findAllByType(View).find(node => node.props.onLayout)!;
-  act(() =>
-    host.props.onLayout({
-      nativeEvent: { layout: { width: 220, height: 40 } },
-    }),
-  );
-  const gesture = ui.UNSAFE_getByType(GestureDetector).props.gesture;
-  const stateEvent = {
-    handlerTag: 0,
-    state: State.ACTIVE,
-    oldState: State.BEGAN,
-    numberOfPointers: 1,
-    pointerType: PointerType.TOUCH,
-  };
-  const manager = {
-    handlerTag: 0,
-    begin: () => undefined,
-    activate: () => gesture.handlers.onStart(stateEvent),
-    end: () => gesture.handlers.onFinalize(stateEvent, true),
-    fail: () => gesture.handlers.onFinalize(stateEvent, false),
-  };
-  const touch = (x: number) => {
-    const point = { id: 1, x, y: 20, absoluteX: x + 50, absoluteY: 100 };
-    return {
+    const gesture = ui.UNSAFE_getByType(GestureDetector).props.gesture;
+    const stateEvent = {
       handlerTag: 0,
       state: State.ACTIVE,
-      eventType: 1,
-      numberOfTouches: 1,
+      oldState: State.BEGAN,
+      numberOfPointers: 1,
       pointerType: PointerType.TOUCH,
-      changedTouches: [point],
-      allTouches: [point],
     };
-  };
-  const thumbWidth = 20;
-  const travel = 220 - thumbWidth;
-  act(() => gesture.handlers.onTouchesDown(touch(20 + travel / 4), manager));
-  act(() =>
-    gesture.handlers.onTouchesMove(touch(20 + (travel * 3) / 4), manager),
-  );
-  act(() => gesture.handlers.onTouchesMove(touch(500), manager));
-  act(() => gesture.handlers.onTouchesUp(touch(500), manager));
-  expect(changes).toEqual([25, 75, 100]);
-  expect(ui.getByTestId('gesture-result').props.children).toBe('100');
-});
+    const manager = {
+      handlerTag: 0,
+      begin: () => undefined,
+      activate: () => gesture.handlers.onStart(stateEvent),
+      end: () => gesture.handlers.onFinalize(stateEvent, true),
+      fail: () => gesture.handlers.onFinalize(stateEvent, false),
+    };
+    const touch = (x: number) => {
+      const point = { id: 1, x, y: 20, absoluteX: x + 50, absoluteY: 100 };
+      return {
+        handlerTag: 0,
+        state: State.ACTIVE,
+        eventType: 1,
+        numberOfTouches: 1,
+        pointerType: PointerType.TOUCH,
+        changedTouches: [point],
+        allTouches: [point],
+      };
+    };
+    const thumbWidth = 20;
+    const travel = 220 - thumbWidth;
+    act(() => gesture.handlers.onTouchesDown(touch(20 + travel / 4), manager));
+    act(() =>
+      gesture.handlers.onTouchesMove(touch(20 + (travel * 3) / 4), manager),
+    );
+    act(() => gesture.handlers.onTouchesMove(touch(500), manager));
+    act(() => gesture.handlers.onTouchesUp(touch(500), manager));
+    expect(changes).toEqual([25, 75, 100]);
+    expect(ui.getByTestId('gesture-result').props.children).toBe('100');
+  },
+);
 
 it('connects the real header to the page presenter and preserves coin selection/favorite restoration', async () => {
   const ref = React.createRef<AccountHeaderHandle>();

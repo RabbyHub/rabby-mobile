@@ -5,7 +5,7 @@ import { Portal } from '@gorhom/portal';
 import { useRegisterBlockingModal } from '@/utils/modalGate';
 
 type Props = React.PropsWithChildren<{
-  modalId: string;
+  modalId: Parameters<typeof useRegisterBlockingModal>[0];
   visible?: boolean;
   onRequestClose?: () => void;
 }>;
