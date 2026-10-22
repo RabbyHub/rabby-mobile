@@ -31,6 +31,7 @@ import { ellipsisAddress } from '@/utils/address';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { TrackedModal } from '@/components/Modal/TrackedModal';
 import { Button } from '@/components2024/Button';
+import { MODAL_GATE_IDS } from '@/utils/modalGate';
 import { BOTTOM_BUTTON_DOUBLE_HEIGHT } from '@/constant/layout';
 
 const screenWidth = Dimensions.get('window').width;
@@ -140,7 +141,7 @@ export const TokenDetailHeaderArea: React.FC<Props> = ({
       </View>
       {displayCopy && (
         <CopyConfirmModal
-          modalId="token-contract-copy-confirm"
+          modalId={MODAL_GATE_IDS.tokenContractCopyConfirm}
           visible={copyConfirmVisible}
           transparent
           animationType="fade"
