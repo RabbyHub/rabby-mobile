@@ -343,6 +343,15 @@ export const PerpsProScene: React.FC<{
     controller: infoScrollBridge,
     enabled: Platform.OS === 'android' && info.activeInfoTab != null,
   });
+  // iOS scrolls the active SceneList natively, which means a drag that starts
+  // on the trade layer (a sibling overlay) would not reach it. Give that layer
+  // its own vertical owner so dragging the order book / form still collapses
+  // and scrolls the scene, exactly like it did when the trade panel was list
+  // content. Android already owns the whole scene through the coordinator.
+  const tradeScrollCoordinator = usePerpsProAndroidSceneScrollCoordinator({
+    controller: infoScrollBridge,
+    enabled: Platform.OS === 'ios' && info.activeInfoTab != null,
+  });
   // Android's pager owns the vertical gesture, so the coordinator's visual
   // offset is the authoritative scene offset there. iOS publishes from the
   // active SceneList on the UI thread.
@@ -1257,6 +1266,14 @@ export const PerpsProScene: React.FC<{
     PERPS_PRO_MARKET_BAR_HEIGHT -
     PERPS_PRO_INFO_SECTION_TOP_GAP -
     PERPS_PRO_INFO_SECTION_DIVIDER_HEIGHT;
+  const tradeSectionLayer = (
+    <CollapsibleScrollingLayer
+      baseTop={tradeLayerTop}
+      style={styles.tradeSection}
+      testID="perps-pro-trade-section">
+      {renderTrade()}
+    </CollapsibleScrollingLayer>
+  );
 
   return (
     <PerpsProFieldExplanationProvider>
@@ -1294,12 +1311,13 @@ export const PerpsProScene: React.FC<{
               />
             ) : null}
             {settledInfoTab ? (
-              <CollapsibleScrollingLayer
-                baseTop={tradeLayerTop}
-                style={styles.tradeSection}
-                testID="perps-pro-trade-section">
-                {renderTrade()}
-              </CollapsibleScrollingLayer>
+              Platform.OS === 'ios' ? (
+                <GestureDetector gesture={tradeScrollCoordinator.gesture}>
+                  {tradeSectionLayer}
+                </GestureDetector>
+              ) : (
+                tradeSectionLayer
+              )
             ) : null}
             {displayedInfoTab ? (
               <CollapsiblePinnedLayer
