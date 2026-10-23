@@ -1139,6 +1139,9 @@ export const PerpsProScene: React.FC<{
               market={scene.currentMarket}
               onClose={closeKline}
               preloadEnabled={scene.klineEnabled && appState === 'active'}
+              publicationEnabled={
+                klineOpen && scene.klineEnabled && appState === 'active'
+              }
               visible={klineOpen}
             />
           </PerpsProSheetNavigationBoundary>

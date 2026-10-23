@@ -71,31 +71,45 @@ const getPriceDecimals = (decimals: number) => {
     : 2;
 };
 
+type KlineChartMarket = Pick<
+  PerpsProMarket,
+  'canonicalCoin' | 'displayBase' | 'quoteAsset'
+> & { priceDecimals: number };
+
 const PerpsProKlineChart: React.FC<{
   chartRef: React.RefObject<TradingViewChartRef | null>;
   feed: PerpsCandleFeedSnapshot;
   interval: PerpsCandleInterval;
-  market: PerpsProMarket;
+  liveFeedEnabled: boolean;
+  market: KlineChartMarket;
   onLoadOlder: () => Promise<PerpsCandleHistoryLoadResult>;
   onPriceScaleAutoScaleChange: (autoScale: boolean) => void;
+  publicationEnabled: boolean;
   visible: boolean;
-}> = ({
+}> = React.memo(function PerpsProKlineChart({
   chartRef,
   feed,
   interval,
+  liveFeedEnabled,
   market,
   onLoadOlder,
   onPriceScaleAutoScaleChange,
+  publicationEnabled,
   visible,
-}) => {
+}) {
   const { colors2024 } = useTheme2024();
   const lastSentRef = useRef<{
     identity: string;
+    publicationEpoch: number;
     readyVersion: number;
     revision: number;
   } | null>(null);
   const revisionRef = useRef(0);
   const lastClearedIdentityRef = useRef<string | null>(null);
+  const pausedPublicationRef = useRef<{
+    epoch: number;
+    identity: string;
+  } | null>(null);
   const [readyVersion, setReadyVersion] = useState(0);
   const [displayedSnapshot, setDisplayedSnapshot] = useState<{
     identity: string;
@@ -107,7 +121,7 @@ const PerpsProKlineChart: React.FC<{
     () => feed.candles.map(toChartCandle),
     [feed.candles],
   );
-  const priceDecimals = getPriceDecimals(market.marketData.pxDecimals);
+  const priceDecimals = market.priceDecimals;
   const chartData = useMemo<CandleData>(
     () => ({
       candles,
@@ -159,6 +173,25 @@ const PerpsProKlineChart: React.FC<{
   }, []);
 
   useEffect(() => {
+    const publicationEpoch = feed.publicationEpoch ?? 0;
+    if (!publicationEnabled) {
+      pausedPublicationRef.current = {
+        epoch: publicationEpoch,
+        identity: feed.identity,
+      };
+      return;
+    }
+    const paused = pausedPublicationRef.current;
+    if (
+      liveFeedEnabled &&
+      paused?.identity === feed.identity &&
+      paused.epoch === publicationEpoch
+    ) {
+      // Visibility reaches the host before the feed's resume effect. Do not
+      // resend the retained snapshot in that intermediate render.
+      return;
+    }
+    pausedPublicationRef.current = null;
     if (
       readyVersion === 0 ||
       chartFailed ||
@@ -168,10 +201,15 @@ const PerpsProKlineChart: React.FC<{
       return;
     }
     const previous = lastSentRef.current;
+    const resumedSameChart =
+      previous?.identity === feed.identity &&
+      previous.readyVersion === readyVersion &&
+      previous.publicationEpoch !== publicationEpoch;
     const canUpdateRealtime =
       feed.updateType === 'realtime' &&
       previous?.identity === feed.identity &&
-      previous.readyVersion === readyVersion;
+      previous.readyVersion === readyVersion &&
+      !resumedSameChart;
     const latestCandle = candles[candles.length - 1];
     if (canUpdateRealtime && latestCandle) {
       chartRef.current?.updateCandleData(latestCandle);
@@ -184,13 +222,14 @@ const PerpsProKlineChart: React.FC<{
       revisionRef.current = revision;
       lastSentRef.current = {
         identity: feed.identity,
+        publicationEpoch,
         readyVersion,
         revision,
       };
       chart.setData({
         ...chartData,
         identity: feed.identity,
-        ...(feed.updateType === 'history'
+        ...(feed.updateType === 'history' || resumedSameChart
           ? { preserveVisibleRange: true }
           : {}),
         revision,
@@ -199,6 +238,7 @@ const PerpsProKlineChart: React.FC<{
     }
     lastSentRef.current = {
       identity: feed.identity,
+      publicationEpoch,
       readyVersion,
       revision: previous?.revision ?? revisionRef.current,
     };
@@ -208,8 +248,11 @@ const PerpsProKlineChart: React.FC<{
     chartFailed,
     chartRef,
     feed.identity,
+    feed.publicationEpoch,
     feed.status,
     feed.updateType,
+    liveFeedEnabled,
+    publicationEnabled,
     readyVersion,
   ]);
 
@@ -297,21 +340,24 @@ const PerpsProKlineChart: React.FC<{
       {showSkeleton ? <PerpsProKlineSkeleton overlay /> : null}
     </View>
   );
-};
+});
 
 export const PerpsProKlineSheet: React.FC<{
   enabled: boolean;
   market: PerpsProMarket;
   onClose: () => void;
   preloadEnabled?: boolean;
+  publicationEnabled?: boolean;
   visible?: boolean;
 }> = ({
   enabled,
   market,
   onClose,
   preloadEnabled = enabled,
+  publicationEnabled = true,
   visible = true,
 }) => {
+  const sheetRef = useRef<BottomSheet>(null);
   const chartRef = useRef<TradingViewChartRef>(null);
   const [priceScaleState, setPriceScaleState] = useState({
     autoScale: true,
@@ -324,7 +370,24 @@ export const PerpsProKlineSheet: React.FC<{
     coin: market.canonicalCoin,
     enabled,
     preloadEnabled,
+    publicationEnabled,
   });
+  // Price ticks change the broad scene market object, not chart metadata.
+  // Keep the chart leaf independent without ignoring any lifecycle props.
+  const chartMarket = useMemo<KlineChartMarket>(
+    () => ({
+      canonicalCoin: market.canonicalCoin,
+      displayBase: market.displayBase,
+      priceDecimals: getPriceDecimals(market.marketData.pxDecimals),
+      quoteAsset: market.quoteAsset,
+    }),
+    [
+      market.canonicalCoin,
+      market.displayBase,
+      market.marketData.pxDecimals,
+      market.quoteAsset,
+    ],
+  );
   const bottomSheetProps = useMemo(
     () =>
       makeBottomSheetProps({
@@ -377,6 +440,14 @@ export const PerpsProKlineSheet: React.FC<{
 
   useEffect(() => {
     if (!visible) {
+      // Keep the retained chart mounted, but explicitly close the native sheet.
+      // Its index=-1 prop handles initial placement, not a reliable close command.
+      sheetRef.current?.close();
+    }
+  }, [visible]);
+
+  useEffect(() => {
+    if (!visible) {
       return;
     }
     const subscription = BackHandler.addEventListener(
@@ -396,6 +467,7 @@ export const PerpsProKlineSheet: React.FC<{
       testID="perps-pro-kline-retained-host">
       <BottomSheet
         {...bottomSheetProps}
+        ref={sheetRef}
         animateOnMount={false}
         backdropComponent={renderBackdrop}
         backgroundStyle={themedStyles.background}
@@ -422,9 +494,13 @@ export const PerpsProKlineSheet: React.FC<{
             chartRef={chartRef}
             feed={kline.feed}
             interval={kline.interval}
-            market={market}
+            liveFeedEnabled={enabled}
+            market={chartMarket}
             onLoadOlder={kline.loadOlder}
             onPriceScaleAutoScaleChange={handlePriceScaleAutoScaleChange}
+            publicationEnabled={
+              publicationEnabled || (!enabled && preloadEnabled)
+            }
             visible={visible}
           />
           <View style={themedStyles.footer} testID="perps-pro-kline-footer" />

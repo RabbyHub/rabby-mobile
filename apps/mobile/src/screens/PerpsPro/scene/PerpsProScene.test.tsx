@@ -2860,12 +2860,14 @@ describe('PerpsProScene market loading states', () => {
     expect(mockKlineProps.mock.lastCall?.[0]).toMatchObject({
       enabled: false,
       preloadEnabled: true,
+      publicationEnabled: false,
       visible: false,
     });
 
     fireEvent.press(screen.getByTestId('kline-trigger'));
     expect(mockKlineProps.mock.lastCall?.[0]).toMatchObject({
       enabled: true,
+      publicationEnabled: true,
       visible: true,
     });
 
@@ -2873,11 +2875,15 @@ describe('PerpsProScene market loading states', () => {
     expect(screen.getByTestId('kline-sheet')).toBeTruthy();
     expect(mockKlineProps.mock.lastCall?.[0]).toMatchObject({
       enabled: true,
+      publicationEnabled: false,
       visible: false,
     });
 
     fireEvent.press(screen.getByTestId('kline-trigger'));
-    expect(mockKlineProps.mock.lastCall?.[0]).toMatchObject({ visible: true });
+    expect(mockKlineProps.mock.lastCall?.[0]).toMatchObject({
+      publicationEnabled: true,
+      visible: true,
+    });
   });
 
   it('stops the retained Candle Feed while the app is in background', () => {
@@ -2908,12 +2914,14 @@ describe('PerpsProScene market loading states', () => {
     expect(mockKlineProps.mock.lastCall?.[0]).toMatchObject({
       enabled: false,
       preloadEnabled: false,
+      publicationEnabled: false,
     });
 
     act(() => onAppStateChange?.('active'));
     expect(mockKlineProps.mock.lastCall?.[0]).toMatchObject({
       enabled: true,
       preloadEnabled: true,
+      publicationEnabled: true,
     });
   });
 
