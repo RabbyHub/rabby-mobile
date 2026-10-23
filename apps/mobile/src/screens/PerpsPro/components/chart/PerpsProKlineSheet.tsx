@@ -14,6 +14,7 @@ import type {
   PerpsCandleHistoryLoadResult,
 } from '@/hooks/perps/candles/usePerpsCandleFeed';
 import { useTheme2024 } from '@/hooks/theme';
+import { perpsStore } from '@/hooks/perps/usePerpsStore';
 import { createGetStyles2024 } from '@/utils/styles';
 import BottomSheet, {
   BottomSheetBackdrop,
@@ -29,8 +30,9 @@ import React, {
 } from 'react';
 import { BackHandler, View } from 'react-native';
 
-import type { PerpsProMarket } from '../../model/market';
+import type { PerpsProMarketDescriptor } from '../../model/market';
 import { usePerpsProKline } from '../../scene/usePerpsProKline';
+import { selectPerpsProMarketData } from '../../scene/usePerpsProLiveMarket';
 import { getPerpsProBottomSheetChromeStyles } from '../common/perpsProVisual';
 import {
   PERPS_PRO_KLINE_CHART_HEIGHT,
@@ -72,7 +74,7 @@ const getPriceDecimals = (decimals: number) => {
 };
 
 type KlineChartMarket = Pick<
-  PerpsProMarket,
+  PerpsProMarketDescriptor,
   'canonicalCoin' | 'displayBase' | 'quoteAsset'
 > & { priceDecimals: number };
 
@@ -342,21 +344,23 @@ const PerpsProKlineChart: React.FC<{
   );
 });
 
-export const PerpsProKlineSheet: React.FC<{
+type PerpsProKlineSheetProps = {
   enabled: boolean;
-  market: PerpsProMarket;
+  market: PerpsProMarketDescriptor;
   onClose: () => void;
   preloadEnabled?: boolean;
   publicationEnabled?: boolean;
   visible?: boolean;
-}> = ({
+};
+
+export const PerpsProKlineSheet = React.memo(function PerpsProKlineSheet({
   enabled,
   market,
   onClose,
   preloadEnabled = enabled,
   publicationEnabled = true,
   visible = true,
-}) => {
+}: PerpsProKlineSheetProps) {
   const sheetRef = useRef<BottomSheet>(null);
   const chartRef = useRef<TradingViewChartRef>(null);
   const [priceScaleState, setPriceScaleState] = useState({
@@ -372,19 +376,23 @@ export const PerpsProKlineSheet: React.FC<{
     preloadEnabled,
     publicationEnabled,
   });
-  // Price ticks change the broad scene market object, not chart metadata.
-  // Keep the chart leaf independent without ignoring any lifecycle props.
+  const priceDecimals = perpsStore(state =>
+    getPriceDecimals(
+      selectPerpsProMarketData(state, market.canonicalCoin)?.pxDecimals ?? 2,
+    ),
+  );
+  // Chart precision follows metadata, not every market price tick.
   const chartMarket = useMemo<KlineChartMarket>(
     () => ({
       canonicalCoin: market.canonicalCoin,
       displayBase: market.displayBase,
-      priceDecimals: getPriceDecimals(market.marketData.pxDecimals),
+      priceDecimals,
       quoteAsset: market.quoteAsset,
     }),
     [
       market.canonicalCoin,
       market.displayBase,
-      market.marketData.pxDecimals,
+      priceDecimals,
       market.quoteAsset,
     ],
   );
@@ -508,7 +516,7 @@ export const PerpsProKlineSheet: React.FC<{
       </BottomSheet>
     </View>
   );
-};
+});
 
 const styles = {
   chartContainer: {

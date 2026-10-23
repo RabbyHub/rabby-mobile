@@ -10,7 +10,8 @@ import { BackHandler } from 'react-native';
 
 import { ThemeColors2024 } from '@/constant/theme';
 
-import type { PerpsProMarket } from '../../model/market';
+import { perpsStore, type MarketData } from '@/hooks/perps/usePerpsStore';
+import type { PerpsProMarketDescriptor } from '../../model/market';
 
 const mockModalProps = jest.fn();
 const mockSheetClose = jest.fn();
@@ -27,6 +28,13 @@ const mockUsePerpsProKline = jest.fn();
 
 let mockKlineState: Record<string, unknown>;
 let mockLastDataDelivery: { identity: string; revision: number } | null;
+
+jest.mock('@/hooks/perps/usePerpsStore', () => ({
+  perpsStore: require('zustand').create(() => ({
+    marketData: [],
+    marketDataMap: {},
+  })),
+}));
 
 jest.mock('@/components2024/GlobalBottomSheetModal/utils-help', () => ({
   makeBottomSheetProps: () => ({ testSharedBottomSheetProp: true }),
@@ -209,12 +217,14 @@ const { PERPS_PRO_KLINE_TOOLBAR_HEIGHT } =
 const market = {
   canonicalCoin: 'BTC',
   displayBase: 'BTC',
+  displayPair: 'BTCUSDC',
+  fullName: null,
   marketKey: 'hyperliquid::BTC',
-  marketData: {
-    pxDecimals: 0,
-  },
   quoteAsset: 'USDC',
-} as unknown as PerpsProMarket;
+  sourceTag: null,
+} satisfies PerpsProMarketDescriptor;
+
+const marketData = { name: 'BTC', markPx: '100', pxDecimals: 0 } as MarketData;
 
 const createKlineState = (
   status: 'idle' | 'loading' | 'ready' | 'empty' | 'stale' | 'error',
@@ -256,6 +266,10 @@ const readyKlineState = () => ({
 describe('PerpsProKlineSheet', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    perpsStore.setState({
+      marketData: [marketData],
+      marketDataMap: { BTC: marketData },
+    });
     mockLastDataDelivery = null;
     mockKlineState = createKlineState('loading');
     mockUsePerpsProKline.mockImplementation(() => mockKlineState);
@@ -506,7 +520,7 @@ describe('PerpsProKlineSheet', () => {
     expect(mockChartMount).toHaveBeenCalledTimes(1);
   });
 
-  it('keeps the chart leaf stable through price-only parent updates while hidden', () => {
+  it('keeps the sheet and chart stable through price-only store updates while hidden', () => {
     mockKlineState = readyKlineState();
     const onClose = jest.fn();
     const view = render(
@@ -519,21 +533,29 @@ describe('PerpsProKlineSheet', () => {
       />,
     );
     const renders = mockTradingViewProps.mock.calls.length;
+    const sheetRenders = mockModalProps.mock.calls.length;
+    act(() =>
+      perpsStore.setState({
+        marketDataMap: { BTC: { ...marketData, markPx: '123' } },
+      }),
+    );
+    expect(mockTradingViewProps).toHaveBeenCalledTimes(renders);
+    expect(mockModalProps).toHaveBeenCalledTimes(sheetRenders);
+    expect(mockChartMount).toHaveBeenCalledTimes(1);
+    expect(mockSetData).not.toHaveBeenCalled();
+
+    // An unrelated parent commit must not rerender the retained native host;
+    // normal memo still observes all control-plane prop changes below.
     view.rerender(
       <PerpsProKlineSheet
         enabled
-        market={{
-          ...market,
-          marketData: { ...market.marketData, markPx: '123' },
-        }}
+        market={market}
         onClose={onClose}
         publicationEnabled={false}
         visible={false}
       />,
     );
-    expect(mockTradingViewProps).toHaveBeenCalledTimes(renders);
-    expect(mockChartMount).toHaveBeenCalledTimes(1);
-    expect(mockSetData).not.toHaveBeenCalled();
+    expect(mockModalProps).toHaveBeenCalledTimes(sheetRenders);
 
     view.rerender(
       <PerpsProKlineSheet
@@ -545,6 +567,31 @@ describe('PerpsProKlineSheet', () => {
       />,
     );
     expect(mockTradingViewProps.mock.calls.length).toBeGreaterThan(renders);
+  });
+
+  it('updates live precision and its array fallback without remounting or keeping missing metadata', () => {
+    mockKlineState = readyKlineState();
+    render(<PerpsProKlineSheet enabled market={market} onClose={jest.fn()} />);
+    fireEvent.press(screen.getByTestId('trading-view-chart'));
+    expect(mockSetData.mock.lastCall?.[0].proConfig.priceDecimals).toBe(0);
+
+    act(() =>
+      perpsStore.setState({
+        marketDataMap: { BTC: { ...marketData, pxDecimals: 4 } },
+      }),
+    );
+    expect(mockSetData.mock.lastCall?.[0].proConfig.priceDecimals).toBe(4);
+    act(() =>
+      perpsStore.setState({
+        marketDataMap: {},
+        marketData: [{ ...marketData, pxDecimals: 3 }],
+      }),
+    );
+    expect(mockSetData.mock.lastCall?.[0].proConfig.priceDecimals).toBe(3);
+    act(() => perpsStore.setState({ marketDataMap: {}, marketData: [] }));
+    expect(mockSetData.mock.lastCall?.[0].proConfig.priceDecimals).toBe(2);
+    expect(mockChartMount).toHaveBeenCalledTimes(1);
+    expect(mockChartUnmount).not.toHaveBeenCalled();
   });
 
   it('preserves the warm preload before the live feed has been activated', () => {
@@ -594,6 +641,15 @@ describe('PerpsProKlineSheet', () => {
 
   it('fully catches up across hidden bars even when resume is batched with a realtime tick', () => {
     mockKlineState = readyKlineState();
+    // Feed publication is a hook-owned notification, not a parent prop change.
+    const listeners = new Set<() => void>();
+    const subscribe = (listener: () => void) => {
+      listeners.add(listener);
+      return () => listeners.delete(listener);
+    };
+    mockUsePerpsProKline.mockImplementation(() =>
+      React.useSyncExternalStore(subscribe, () => mockKlineState),
+    );
     const onClose = jest.fn();
     const element = (publicationEnabled: boolean) => (
       <PerpsProKlineSheet
@@ -624,7 +680,7 @@ describe('PerpsProKlineSheet', () => {
         updateType: 'realtime',
       },
     };
-    view.rerender(element(true));
+    act(() => listeners.forEach(listener => listener()));
     expect(mockSetData).toHaveBeenCalledTimes(2);
     expect(mockSetData.mock.calls[1][0]).toMatchObject({
       candles: [1800, 2700, 3600, 4500].map(time => ({ time })),
@@ -642,7 +698,7 @@ describe('PerpsProKlineSheet', () => {
         ),
       },
     };
-    view.rerender(element(true));
+    act(() => listeners.forEach(listener => listener()));
     expect(mockSetData).toHaveBeenCalledTimes(2);
     expect(mockUpdateCandleData).toHaveBeenLastCalledWith(
       expect.objectContaining({ time: 5400 }),

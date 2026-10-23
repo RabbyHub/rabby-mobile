@@ -674,6 +674,16 @@ jest.mock('./usePerpsProScene', () => ({
   usePerpsProScene: mockUsePerpsProScene,
 }));
 
+// This suite owns scene/list wiring; live market subscription contracts are
+// covered with the real hook in its own and TradePanelOwner's tests.
+jest.mock('./usePerpsProLiveMarket', () => ({
+  usePerpsProLiveMarket: (coin: string) => {
+    const market =
+      mockUsePerpsProScene.mock.results.at(-1)?.value?.currentMarket;
+    return coin && market?.canonicalCoin === coin ? market : null;
+  },
+}));
+
 jest.mock('./usePerpsProTrade', () => ({
   usePerpsProTrade: (props: { market: unknown }) => {
     mockTradeHookProps(props);

@@ -4,12 +4,18 @@ import RcMarketCaret from '@/assets2024/icons/perps/PerpsProMarketCaret.svg';
 import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View } from 'react-native';
 import { Pressable } from 'react-native-gesture-handler';
 import { useTranslation } from 'react-i18next';
 
-import type { PerpsProMarket } from '../../model/market';
+import { perpsStore } from '@/hooks/perps/usePerpsStore';
+import { useShallow } from 'zustand/react/shallow';
+import {
+  calculatePerpsProChange24h,
+  type PerpsProMarketDescriptor,
+} from '../../model/market';
+import { selectPerpsProMarketData } from '../../scene/usePerpsProLiveMarket';
 import { formatPerpsProPercent } from '../../utils/format';
 import {
   getPerpsProMetadataTagContainerStyle,
@@ -19,18 +25,24 @@ import {
 export const PERPS_PRO_MARKET_BAR_HEIGHT = 40;
 
 export const PerpsProMarketBar: React.FC<{
-  market: PerpsProMarket | null;
+  market: PerpsProMarketDescriptor | null;
   onOpenKline: () => void;
   onPress: () => void;
 }> = React.memo(({ market, onOpenKline, onPress }) => {
   const { colors2024, styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
+  const [markPx, prevDayPx] = perpsStore(
+    useShallow(state => {
+      const data = selectPerpsProMarketData(state, market?.canonicalCoin ?? '');
+      return [data?.markPx ?? '', data?.prevDayPx ?? ''] as const;
+    }),
+  );
+  const change24h = useMemo(
+    () => calculatePerpsProChange24h({ markPx, prevDayPx }),
+    [markPx, prevDayPx],
+  );
   const changeStyle =
-    market?.change24h == null
-      ? styles.muted
-      : market.change24h >= 0
-      ? styles.up
-      : styles.down;
+    change24h == null ? styles.muted : change24h >= 0 ? styles.up : styles.down;
 
   return (
     <View style={styles.container} testID="perps-pro-market-bar">
@@ -51,9 +63,7 @@ export const PerpsProMarketBar: React.FC<{
             </Text>
           </View>
         ) : null}
-        <Text style={changeStyle}>
-          {formatPerpsProPercent(market?.change24h)}
-        </Text>
+        <Text style={changeStyle}>{formatPerpsProPercent(change24h)}</Text>
         <RcMarketCaret
           color={colors2024['neutral-title-1']}
           height={18}

@@ -28,12 +28,13 @@ import {
   PERPS_PRO_MAIN_COLUMN_HEIGHT,
 } from '../model/layout';
 import type { PerpsProLeverageConfiguration } from '../model/leverage';
-import type { PerpsProMarket } from '../model/market';
+import type { PerpsProMarketDescriptor } from '../model/market';
 import type { PerpsTickOption } from '../model/orderBook';
 import { PerpsProRealtimeOrderBook } from './PerpsProRealtimeOrderBook';
 import { usePerpsProBboBook } from './usePerpsProBboBook';
 import type { PerpsProLeverageUpdateRequest } from './usePerpsProLeverageUpdate';
 import { usePerpsProTrade } from './usePerpsProTrade';
+import { usePerpsProLiveMarket } from './usePerpsProLiveMarket';
 
 // Only these two leaf slots consume high-frequency trade output. The owner
 // stays mounted before the tab preference hydrates; neither Scene nor its
@@ -60,7 +61,7 @@ type PerpsProTradePanelOwnerProps = React.PropsWithChildren<{
   executionActive: boolean;
   isMarketLoading: boolean;
   leveragePending: boolean;
-  market: PerpsProMarket | null;
+  market: PerpsProMarketDescriptor | null;
   marketDataFailed: boolean;
   onAddFunds: () => void;
   onLayout: (event: LayoutChangeEvent) => void;
@@ -89,7 +90,7 @@ export const PerpsProTradePanelOwner = React.memo(
     executionActive,
     isMarketLoading,
     leveragePending,
-    market,
+    market: marketDescriptor,
     marketDataFailed,
     onAddFunds,
     onLayout,
@@ -108,6 +109,7 @@ export const PerpsProTradePanelOwner = React.memo(
   }: PerpsProTradePanelOwnerProps) {
     const { styles } = useTheme2024({ getStyle });
     const { t } = useTranslation();
+    const market = usePerpsProLiveMarket(marketDescriptor?.canonicalCoin ?? '');
     const bboBook = usePerpsProBboBook({
       coin: market?.canonicalCoin ?? '',
       enabled: realtimeEnabled && tradeConfigurationReady,

@@ -7,7 +7,8 @@ import type {
   PerpsProTradeController,
   usePerpsProTrade,
 } from './usePerpsProTrade';
-import type { PerpsProMarket } from '../model/market';
+import { buildPerpsProMarketDescriptor } from '../model/market';
+import { perpsStore, type MarketData } from '@/hooks/perps/usePerpsStore';
 
 const mockTradeInputs = jest.fn();
 const mockTradeMount = jest.fn();
@@ -16,6 +17,7 @@ const mockFormProps = jest.fn();
 const mockConfirmationProps = jest.fn();
 const mockOrderBookProps = jest.fn();
 const mockPlacementContext = React.createContext('scene');
+const mockSceneChildrenRender = jest.fn();
 const mockSubscriptions: {
   callback: (book: L2Book) => void;
   coin: string;
@@ -35,6 +37,13 @@ const mockWs = {
 
 jest.mock('@/core/apis/perps', () => ({
   apisPerps: { getPerpsSDK: () => ({ ws: mockWs }) },
+}));
+
+jest.mock('@/hooks/perps/usePerpsStore', () => ({
+  perpsStore: require('zustand').create(() => ({
+    marketData: [],
+    marketDataMap: {},
+  })),
 }));
 
 jest.mock('@/components/Typography', () => ({
@@ -133,13 +142,39 @@ import {
   PerpsProTradePanelSlot,
 } from './PerpsProTradePanelOwner';
 
+const createMarketData = (coin = 'BTC'): MarketData => ({
+  name: coin,
+  displayName: coin,
+  dexId: '',
+  index: 0,
+  logoUrl: '',
+  markPx: '100',
+  midPx: '101',
+  prevDayPx: '90',
+  dayBaseVlm: '100',
+  dayNtlVlm: '10000',
+  funding: '0',
+  openInterest: '10',
+  oraclePx: '100',
+  premium: '0',
+  maxLeverage: 40,
+  minLeverage: 1,
+  maxUsdValueSize: '1000000',
+  maintenanceMarginTiers: [],
+  pxDecimals: 2,
+  szDecimals: 3,
+  onlyIsolated: false,
+  quoteAsset: 'USDC',
+});
+
 const market = (coin = 'BTC') =>
-  ({
-    canonicalCoin: coin,
-    marketKey: `hyperliquid::${coin}`,
-    marketData: { maxLeverage: 40, onlyIsolated: false },
-    quoteAsset: 'USDC',
-  } as PerpsProMarket);
+  buildPerpsProMarketDescriptor(createMarketData(coin));
+
+const publishMarkets = (items: MarketData[]) =>
+  perpsStore.setState({
+    marketData: items,
+    marketDataMap: Object.fromEntries(items.map(item => [item.name, item])),
+  });
 
 const createProps = (): React.ComponentProps<
   typeof PerpsProTradePanelOwner
@@ -181,6 +216,73 @@ describe('PerpsProTradePanelOwner component boundary', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockSubscriptions.length = 0;
+    publishMarkets([createMarketData(), createMarketData('ETH')]);
+  });
+
+  it('publishes current prices and risk metadata inside the owner without rendering scene children', () => {
+    function SceneChildren() {
+      mockSceneChildrenRender();
+      return panelAndConfirmation;
+    }
+    render(
+      <PerpsProTradePanelOwner {...createProps()}>
+        <SceneChildren />
+      </PerpsProTradePanelOwner>,
+    );
+    const originalChildRenders = mockSceneChildrenRender.mock.calls.length;
+    const updated: MarketData = {
+      ...createMarketData(),
+      displayName: 'Bitcoin',
+      markPx: '123',
+      midPx: '124',
+      maxLeverage: 5,
+      maxUsdValueSize: '500',
+      onlyIsolated: true,
+      marginMode: 'noCross',
+      maintenanceMarginTiers: [
+        {
+          lowerBound: '0',
+          maxLeverage: 5,
+          maintenanceDeduction: '0',
+          maintenanceMarginRate: '0.1',
+        },
+      ],
+    };
+    act(() => publishMarkets([updated, createMarketData('ETH')]));
+
+    expect(mockTradeInputs.mock.lastCall?.[0].market.marketData).toBe(updated);
+    expect(mockTradeInputs.mock.lastCall?.[0].market).toMatchObject({
+      canonicalCoin: 'BTC',
+      displayBase: 'Bitcoin',
+      price: 123,
+    });
+    expect(mockOrderBookProps.mock.lastCall?.[0].market.marketData).toBe(
+      updated,
+    );
+    expect(mockSceneChildrenRender).toHaveBeenCalledTimes(originalChildRenders);
+    expect(mockTradeMount).toHaveBeenCalledTimes(1);
+    expect(mockSubscriptions).toHaveLength(1);
+  });
+
+  it('uses array metadata while the map converges and clears a disappeared market', () => {
+    const props = createProps();
+    render(
+      <PerpsProTradePanelOwner {...props}>
+        {panelAndConfirmation}
+      </PerpsProTradePanelOwner>,
+    );
+    const fallback = { ...createMarketData(), markPx: '110' };
+    act(() =>
+      perpsStore.setState({ marketData: [fallback], marketDataMap: {} }),
+    );
+    expect(mockTradeInputs.mock.lastCall?.[0].market.marketData).toBe(fallback);
+    act(() => publishMarkets([]));
+    expect(mockTradeInputs.mock.lastCall?.[0].market).toBeNull();
+    expect(screen.queryByTestId('trade-form')).toBeNull();
+    act(() => publishMarkets([fallback]));
+    expect(mockTradeInputs.mock.lastCall?.[0].market.marketData).toBe(fallback);
+    expect(screen.getByTestId('trade-form')).toBeOnTheScreen();
+    expect(mockTradeMount).toHaveBeenCalledTimes(1);
   });
 
   it('keeps controller state alive without a panel slot and renders the confirmation at its original boundary', () => {
