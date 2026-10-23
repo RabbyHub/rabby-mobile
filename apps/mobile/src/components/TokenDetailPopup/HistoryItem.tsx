@@ -88,11 +88,7 @@ export const HistoryItem = React.memo(
         </View>
         <View style={styles.cardBody}>
           <TxInterAddressExplain
-            style={[
-              styles.txInterAddressExplain,
-              data?.cate_id === 'approve' &&
-                styles.txInterAddressExplainApprove,
-            ]}
+            style={styles.txInterAddressExplain}
             data={data}
             projectDict={projectDict}
             tokenDict={tokenDict}
@@ -170,8 +166,7 @@ const getStyles = (colors: AppColorsVariants) =>
       alignItems: 'center',
       gap: 12,
     },
-    txInterAddressExplain: { flexShrink: 1, width: '60%' },
-    txInterAddressExplainApprove: { width: '100%' },
+    txInterAddressExplain: { flexShrink: 1 },
     txInterAddressExplainActionTitleStyle: { marginBottom: 4 },
     txChange: { flexShrink: 0, maxWidth: '70%' },
     cardFooter: {
