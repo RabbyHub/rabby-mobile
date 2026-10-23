@@ -1,9 +1,10 @@
 import { act, renderHook, waitFor } from '@testing-library/react-native';
 
 import { waitPurchaseUpdated } from '@/utils/iap';
-import { useIAPListener } from './useIAPListener';
+import { reconnectIAP, useIAPListener } from './useIAPListener';
 
 const mockInitConnection = jest.fn();
+const mockEndConnection = jest.fn();
 const mockFetchProducts = jest.fn();
 const mockPurchaseUpdatedListener = jest.fn();
 const mockPurchaseErrorListener = jest.fn();
@@ -68,6 +69,7 @@ jest.mock('@sentry/react-native', () => ({
 }));
 
 jest.mock('react-native-iap', () => ({
+  endConnection: (...args: unknown[]) => mockEndConnection(...args),
   fetchProducts: (...args: unknown[]) => mockFetchProducts(...args),
   finishTransaction: jest.fn(),
   initConnection: (...args: unknown[]) => mockInitConnection(...args),
@@ -82,6 +84,8 @@ describe('useIAPListener', () => {
     jest.clearAllMocks();
     mockPurchaseEventListener = undefined;
     mockInitConnection.mockResolvedValue(undefined);
+    mockEndConnection.mockResolvedValue(true);
+    mockFetchProducts.mockResolvedValue([]);
     mockPurchaseUpdatedListener.mockReturnValue({ remove: jest.fn() });
     mockPurchaseErrorListener.mockReturnValue({ remove: jest.fn() });
   });
@@ -90,7 +94,7 @@ describe('useIAPListener', () => {
     const { unmount } = renderHook(() => useIAPListener());
 
     await waitFor(() => {
-      expect(mockPurchaseErrorListener).toHaveBeenCalledTimes(1);
+      expect(mockInitConnection).toHaveBeenCalled();
     });
 
     const pending = waitPurchaseUpdated();
@@ -112,5 +116,47 @@ describe('useIAPListener', () => {
     });
 
     unmount();
+  });
+  it('keeps purchase listeners registered when initConnection fails', async () => {
+    const initError = Object.assign(
+      new Error('Failed to initialize connection'),
+      {
+        code: 'init-connection',
+        debugMessage: 'Failed to initialize billing connection',
+      },
+    );
+    mockInitConnection.mockRejectedValueOnce(initError);
+
+    const { unmount } = renderHook(() => useIAPListener());
+
+    await waitFor(() => {
+      expect(mockCaptureException).toHaveBeenCalledWith(initError, {
+        extra: {
+          code: 'init-connection',
+          responseCode: undefined,
+          debugMessage: 'Failed to initialize billing connection',
+        },
+      });
+    });
+    expect(mockPurchaseUpdatedListener).toHaveBeenCalled();
+    expect(mockPurchaseErrorListener).toHaveBeenCalled();
+
+    unmount();
+  });
+
+  it('re-registers listeners after rebuilding the connection', async () => {
+    await reconnectIAP();
+
+    expect(mockEndConnection).toHaveBeenCalledTimes(1);
+    expect(mockInitConnection).toHaveBeenCalledTimes(1);
+    expect(mockEndConnection.mock.invocationCallOrder[0]).toBeLessThan(
+      mockInitConnection.mock.invocationCallOrder[0],
+    );
+    expect(
+      mockPurchaseUpdatedListener.mock.invocationCallOrder.at(-1),
+    ).toBeGreaterThan(mockEndConnection.mock.invocationCallOrder[0]);
+    expect(
+      mockPurchaseErrorListener.mock.invocationCallOrder.at(-1),
+    ).toBeGreaterThan(mockEndConnection.mock.invocationCallOrder[0]);
   });
 });
