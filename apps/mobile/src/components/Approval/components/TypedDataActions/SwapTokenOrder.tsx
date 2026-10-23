@@ -105,6 +105,7 @@ const SwapTokenOrder = ({
           <Row>
             <LogoWithText
               logo={payToken.logo_url}
+              logoRadius={16}
               text={
                 <View
                   style={StyleSheet.flatten({
@@ -135,6 +136,7 @@ const SwapTokenOrder = ({
             <View>
               <LogoWithText
                 logo={receiveToken.logo_url}
+                logoRadius={16}
                 text={
                   <View
                     style={StyleSheet.flatten({

@@ -43,6 +43,7 @@ export const TokenAmountItem: React.FC<Props> = ({
       })}>
       <LogoWithText
         logo={logoUrl}
+        logoRadius={16}
         text={
           <View
             style={StyleSheet.flatten({
