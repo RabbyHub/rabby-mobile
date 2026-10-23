@@ -5,7 +5,7 @@ import type { PerpsLatestTrade } from '@/hooks/perps/subscriptions/usePerpsLates
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { Pressable, View, type ViewStyle } from 'react-native';
 import Animated, { useAnimatedStyle } from 'react-native-reanimated';
 import { useTranslation } from 'react-i18next';
 
@@ -65,6 +65,75 @@ type PendingPriceSelection = Readonly<{
   price: string | null;
   source: PerpsProOrderBookPriceSelectionSource;
 }>;
+
+// Trade/clock/market updates share these unchanged sides. Keep the existing
+// price-keyed depth animations and slot-keyed touch targets inside the boundary.
+const PerpsProOrderBookSide = React.memo(function PerpsProOrderBookSide({
+  amountDecimals,
+  amountUnit,
+  animationIdentity,
+  depthLayerStyle,
+  maxVisibleTotal,
+  onSelectPrice,
+  onSelectPriceIntentStart,
+  priceDecimals,
+  rowCount,
+  rows,
+  side,
+  style,
+}: {
+  amountDecimals: number;
+  amountUnit: PerpsProTradeAmountUnit;
+  animationIdentity: string;
+  depthLayerStyle: ViewStyle;
+  maxVisibleTotal: number;
+  onSelectPrice?: (price: string | null) => void;
+  onSelectPriceIntentStart?: (price: string | null) => void;
+  priceDecimals: number;
+  rowCount: number;
+  rows: PerpsOrderBookDisplayRow[];
+  side: 'ask' | 'bid';
+  style: ViewStyle;
+}) {
+  const displayRows = Array.from(
+    { length: rowCount },
+    (_, index) => rows[index] ?? null,
+  );
+  return (
+    <View style={style}>
+      <View pointerEvents="none" style={depthLayerStyle}>
+        {displayRows.map((level, index) =>
+          level ? (
+            <PerpsProOrderBookDepth
+              animationIdentity={animationIdentity}
+              key={getPerpsProOrderBookDepthKey(side, level)}
+              price={level.price}
+              targetPercent={getPerpsOrderBookDepthPercent(
+                level,
+                maxVisibleTotal,
+              )}
+              rowIndex={index}
+              side={side}
+            />
+          ) : null,
+        )}
+      </View>
+      {displayRows.map((level, index) => (
+        <PerpsProOrderBookRow
+          amountDecimals={amountDecimals}
+          amount={(amountUnit === 'base' ? level?.size : level?.usdSize) ?? 0}
+          key={getPerpsProOrderBookRowKey(side, index)}
+          price={level?.price ?? null}
+          priceNumber={level?.priceNumber ?? 0}
+          onSelectPrice={onSelectPrice}
+          onSelectPriceIntentStart={onSelectPriceIntentStart}
+          priceDecimals={priceDecimals}
+          side={side}
+        />
+      ))}
+    </View>
+  );
+});
 
 export const PerpsProOrderBook: React.FC<{
   amountUnit?: PerpsProTradeAmountUnit;
@@ -235,50 +304,24 @@ export const PerpsProOrderBook: React.FC<{
   const renderRows = (
     side: 'ask' | 'bid',
     rows: PerpsOrderBookDisplayRow[],
-  ) => {
-    const displayRows = Array.from(
-      { length: rowCount },
-      (_, index) => rows[index] ?? null,
-    );
-    return (
-      <View style={styles.bookSide}>
-        <View pointerEvents="none" style={styles.bookDepthLayer}>
-          {displayRows.map((level, index) =>
-            level ? (
-              <PerpsProOrderBookDepth
-                animationIdentity={animationIdentity}
-                key={getPerpsProOrderBookDepthKey(side, level)}
-                price={level.price}
-                targetPercent={getPerpsOrderBookDepthPercent(
-                  level,
-                  maxVisibleTotal,
-                )}
-                rowIndex={index}
-                side={side}
-              />
-            ) : null,
-          )}
-        </View>
-        {displayRows.map((level, index) => (
-          <PerpsProOrderBookRow
-            amountDecimals={amountDecimals}
-            amount={(amountUnit === 'base' ? level?.size : level?.usdSize) ?? 0}
-            key={getPerpsProOrderBookRowKey(side, index)}
-            price={level?.price ?? null}
-            priceNumber={level?.priceNumber ?? 0}
-            onSelectPrice={
-              onSelectBookPrice ? finishBookPriceSelection : undefined
-            }
-            onSelectPriceIntentStart={
-              onSelectBookPrice ? startBookPriceSelection : undefined
-            }
-            priceDecimals={orderBookPriceDecimals}
-            side={side}
-          />
-        ))}
-      </View>
-    );
-  };
+  ) => (
+    <PerpsProOrderBookSide
+      amountDecimals={amountDecimals}
+      amountUnit={amountUnit}
+      animationIdentity={animationIdentity}
+      depthLayerStyle={styles.bookDepthLayer}
+      maxVisibleTotal={maxVisibleTotal}
+      onSelectPrice={onSelectBookPrice ? finishBookPriceSelection : undefined}
+      onSelectPriceIntentStart={
+        onSelectBookPrice ? startBookPriceSelection : undefined
+      }
+      priceDecimals={orderBookPriceDecimals}
+      rowCount={rowCount}
+      rows={rows}
+      side={side}
+      style={styles.bookSide}
+    />
+  );
 
   const latestTradePressable = (
     <Pressable
