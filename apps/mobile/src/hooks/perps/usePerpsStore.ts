@@ -891,6 +891,8 @@ const applyAssetCtxsToList = (
   list: MarketData[],
   ctxsByDex: Record<string, AssetCtx[]>,
 ): MarketData[] => {
+  // @TODO: Re-measure before adding equal-coin reuse; short Pixel runs showed no
+  // stable gain. Preserve all ticker/risk fields, ctx overwrites and precision.
   return list.map(item => {
     const dexName = item.dexId ? item.dexId : 'hyperliquid';
     const ctx = ctxsByDex[dexName]?.[item.index];
@@ -913,6 +915,9 @@ const setMarketData = (
   const base = payload || [];
   // Merge any WS ticker data that arrived during the fetch window.
   const list = lastCtxsByDex ? applyAssetCtxsToList(base, lastCtxsByDex) : base;
+  // @TODO: Re-measure before adding equal-coin reuse to HTTP/meta refreshes;
+  // short Pixel runs showed no stable gain. Preserve all ticker/metadata/risk
+  // fields, missing values, removals and ordering.
   setPerpsState(prev => ({
     ...prev,
     categories,

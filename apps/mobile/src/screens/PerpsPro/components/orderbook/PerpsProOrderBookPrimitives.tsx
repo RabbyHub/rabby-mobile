@@ -3,8 +3,7 @@ import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
-import { Pressable, View } from 'react-native';
-import Animated, { useAnimatedStyle } from 'react-native-reanimated';
+import { Animated, Pressable, View } from 'react-native';
 
 import {
   getPerpsOrderBookModeIconState,
@@ -14,7 +13,7 @@ import {
   formatPerpsProOrderBookAmount,
   formatPerpsProPrice,
 } from '../../utils/format';
-import { usePerpsProOrderBookPercentAnimation } from './usePerpsProOrderBookPercentAnimation';
+import { usePerpsProOrderBookDepthAnimation } from './usePerpsProOrderBookDepthAnimation';
 
 export const PERPS_PRO_ORDER_BOOK_ROW_HEIGHT = 20;
 
@@ -127,15 +126,11 @@ export const PerpsProOrderBookDepth: React.FC<{
   side,
 }) {
   const { styles } = useTheme2024({ getStyle });
-  const animatedDepth = usePerpsProOrderBookPercentAnimation({
+  const depthScale = usePerpsProOrderBookDepthAnimation({
     animationIdentity,
-    hasValue: true,
+    price,
     targetPercent,
-    valueIdentity: price,
   });
-  const depthStyle = useAnimatedStyle(() => ({
-    width: `${animatedDepth.value}%` as `${number}%`,
-  }));
 
   return (
     <Animated.View
@@ -144,7 +139,7 @@ export const PerpsProOrderBookDepth: React.FC<{
         styles.depth,
         side === 'bid' ? styles.bidDepth : styles.askDepth,
         { top: rowIndex * PERPS_PRO_ORDER_BOOK_ROW_HEIGHT },
-        depthStyle,
+        { transform: [{ scaleX: depthScale }] },
       ]}
       testID="perps-pro-order-book-depth"
     />
@@ -205,6 +200,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     height: PERPS_PRO_ORDER_BOOK_ROW_HEIGHT,
     position: 'absolute',
     right: 0,
+    transformOrigin: 'right center',
+    width: '100%',
   },
   askDepth: {
     backgroundColor: colors2024['red-light-1'],

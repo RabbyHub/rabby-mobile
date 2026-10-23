@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
-import { StyleSheet, View as NativeView } from 'react-native';
+import { Animated, StyleSheet, View as NativeView } from 'react-native';
 
 const mockOpenFieldExplanation = jest.fn();
 const mockCancelAnimation = jest.fn();
@@ -32,6 +32,7 @@ jest.mock('react-native-reanimated', () => {
     cancelAnimation: (...args: unknown[]) => mockCancelAnimation(...args),
     useAnimatedStyle: (updater: () => object) => updater(),
     useSharedValue: (value: number) => ReactModule.useRef({ value }).current,
+    useReducedMotion: () => false,
     withTiming: (...args: [number, object]) => mockWithTiming(...args),
   };
 });
@@ -165,8 +166,15 @@ const marketData: MarketData = {
 const btcMarket = buildPerpsProMarket(marketData);
 
 describe('PerpsProOrderBook display shell', () => {
+  let nativeTiming: jest.SpyInstance;
+
   beforeEach(() => {
     jest.clearAllMocks();
+    nativeTiming = jest.spyOn(Animated, 'timing').mockReturnValue({
+      start: jest.fn(),
+      stop: jest.fn(),
+      reset: jest.fn(),
+    });
   });
   afterEach(() => {
     jest.restoreAllMocks();
@@ -287,10 +295,12 @@ describe('PerpsProOrderBook display shell', () => {
     view.rerender(<PerpsProOrderBook {...props} />);
     expect(depthPercent).toHaveBeenCalledTimes(8);
     expect(screen.getByText('4')).toBeTruthy();
-    expect(mockWithTiming).toHaveBeenCalledWith(75, {
+    expect(nativeTiming).toHaveBeenCalledWith(expect.any(Animated.Value), {
+      toValue: 0.75,
       duration: 250,
-      easing: 'desktop-ease-out',
-      reduceMotion: 'system',
+      easing: expect.any(Function),
+      useNativeDriver: true,
+      isInteraction: false,
     });
 
     const onSelectBookPrice = jest.fn();
@@ -393,11 +403,13 @@ describe('PerpsProOrderBook display shell', () => {
     expect(formatAmount).toHaveBeenCalledTimes(4);
     formatAmount.mockClear();
     mockWithTiming.mockClear();
+    nativeTiming.mockClear();
 
     // A new snapshot creates fresh level objects, not new displayed values.
     view.rerender(<PerpsProOrderBook {...props} book={createBook('1', 200)} />);
     expect(formatAmount).not.toHaveBeenCalled();
     expect(mockWithTiming).not.toHaveBeenCalled();
+    expect(nativeTiming).not.toHaveBeenCalled();
     view.rerender(
       <PerpsProOrderBook
         {...props}
@@ -407,6 +419,7 @@ describe('PerpsProOrderBook display shell', () => {
     );
     expect(formatAmount).not.toHaveBeenCalled();
     expect(mockWithTiming).not.toHaveBeenCalled();
+    expect(nativeTiming).not.toHaveBeenCalled();
 
     // Changing one size affects other rows' cumulative totals, not their text.
     const nextBook = createBook('2', 400);
@@ -414,14 +427,17 @@ describe('PerpsProOrderBook display shell', () => {
     expect(formatAmount).toHaveBeenCalledTimes(1);
     expect(formatAmount).toHaveBeenLastCalledWith(200, 2);
     expect(screen.getByText('200')).toBeTruthy();
-    expect(mockWithTiming).toHaveBeenCalledWith((2 / 3) * 100, {
+    expect(nativeTiming).toHaveBeenCalledWith(expect.any(Animated.Value), {
+      toValue: ((2 / 3) * 100) / 100,
       duration: 250,
-      easing: 'desktop-ease-out',
-      reduceMotion: 'system',
+      easing: expect.any(Function),
+      useNativeDriver: true,
+      isInteraction: false,
     });
 
     formatAmount.mockClear();
     mockWithTiming.mockClear();
+    nativeTiming.mockClear();
     view.rerender(
       <PerpsProOrderBook {...props} amountUnit="base" book={nextBook} />,
     );
@@ -429,6 +445,7 @@ describe('PerpsProOrderBook display shell', () => {
     expect(formatAmount).toHaveBeenCalledWith(2, 4);
     expect(formatAmount).toHaveBeenCalledWith(1, 4);
     expect(mockWithTiming).not.toHaveBeenCalled();
+    expect(nativeTiming).not.toHaveBeenCalled();
     fireEvent.press(screen.getByText('101.00'));
     expect(onSelectBookPrice).toHaveBeenCalledWith(
       '101',
@@ -571,9 +588,12 @@ describe('PerpsProOrderBook display shell', () => {
     const depths = screen.getAllByTestId('perps-pro-order-book-depth');
     expect(depths).toHaveLength(2);
     expect(
-      parseFloat(StyleSheet.flatten(depths[0].props.style).width),
-    ).toBeCloseTo(100 / 3);
-    expect(StyleSheet.flatten(depths[1].props.style).width).toBe('100%');
+      StyleSheet.flatten(depths[0].props.style).transform[0].scaleX,
+    ).toBeCloseTo(1 / 3);
+    expect(StyleSheet.flatten(depths[1].props.style)).toMatchObject({
+      width: '100%',
+      transform: [{ scaleX: 1 }],
+    });
   });
 
   it('recalculates visible depth for mode and row-count changes without recalculating the full-book ratio', () => {
@@ -635,7 +655,10 @@ describe('PerpsProOrderBook display shell', () => {
     expect(screen.getByText('54.98%')).toBeTruthy();
     const depths = screen.getAllByTestId('perps-pro-order-book-depth');
     expect(depths).toHaveLength(16);
-    expect(StyleSheet.flatten(depths[15].props.style).width).toBe('100%');
+    expect(StyleSheet.flatten(depths[15].props.style)).toMatchObject({
+      width: '100%',
+      transform: [{ scaleX: 1 }],
+    });
   });
 
   it('keeps the fixed body mounted while display state changes', () => {
@@ -1300,10 +1323,12 @@ describe('PerpsProOrderBook display shell', () => {
     expect(getPerpsProOrderBookDepthKey('ask', { price: '101' })).toBe(
       'ask:101',
     );
-    expect(mockWithTiming).toHaveBeenCalledWith(100, {
+    expect(nativeTiming).toHaveBeenCalledWith(expect.any(Animated.Value), {
+      toValue: 1,
       duration: 250,
-      easing: 'desktop-ease-out',
-      reduceMotion: 'system',
+      easing: expect.any(Function),
+      useNativeDriver: true,
+      isInteraction: false,
     });
   });
 

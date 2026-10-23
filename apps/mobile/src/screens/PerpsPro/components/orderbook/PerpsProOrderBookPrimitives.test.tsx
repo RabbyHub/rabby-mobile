@@ -1,25 +1,12 @@
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
-import { StyleSheet } from 'react-native';
+import { Animated, StyleSheet } from 'react-native';
 
-const mockCancelAnimation = jest.fn();
-const mockWithTiming = jest.fn((value: number) => value);
 const mockThemeRender = jest.fn();
 
-jest.mock('react-native-reanimated', () => {
-  const ReactModule = require('react');
-  const { View } = require('react-native');
-  return {
-    __esModule: true,
-    default: { View },
-    Easing: { bezier: () => 'desktop-ease-out' },
-    ReduceMotion: { System: 'system' },
-    cancelAnimation: (...args: unknown[]) => mockCancelAnimation(...args),
-    useAnimatedStyle: (updater: () => object) => updater(),
-    useSharedValue: (value: number) => ReactModule.useRef({ value }).current,
-    withTiming: (...args: [number, object]) => mockWithTiming(...args),
-  };
-});
+jest.mock('react-native-reanimated', () => ({
+  useReducedMotion: () => false,
+}));
 
 jest.mock('@/components/Typography', () => ({
   Text: require('react-native').Text,
@@ -87,10 +74,23 @@ describe('PerpsProOrderBookModeIcon', () => {
 });
 
 describe('PerpsProOrderBookRow', () => {
+  let nativeTiming: jest.SpyInstance;
+  let setValue: jest.SpyInstance;
+  let stopAnimation: jest.SpyInstance;
+
   beforeEach(() => {
-    mockCancelAnimation.mockClear();
-    mockWithTiming.mockClear();
     mockThemeRender.mockClear();
+    nativeTiming = jest.spyOn(Animated, 'timing').mockReturnValue({
+      start: jest.fn(),
+      stop: jest.fn(),
+      reset: jest.fn(),
+    });
+    setValue = jest.spyOn(Animated.Value.prototype, 'setValue');
+    stopAnimation = jest.spyOn(Animated.Value.prototype, 'stopAnimation');
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
   });
 
   it('skips unchanged row props without retaining an obsolete press handler', () => {
@@ -252,32 +252,44 @@ describe('PerpsProOrderBookRow', () => {
     };
     const view = render(<PerpsProOrderBookDepth {...props} />);
     expect(mockThemeRender).toHaveBeenCalledTimes(1);
-    mockCancelAnimation.mockClear();
+    setValue.mockClear();
 
     view.rerender(<PerpsProOrderBookDepth {...props} />);
     expect(mockThemeRender).toHaveBeenCalledTimes(1);
-    expect(mockCancelAnimation).not.toHaveBeenCalled();
-    expect(mockWithTiming).not.toHaveBeenCalled();
+    expect(setValue).not.toHaveBeenCalled();
+    expect(nativeTiming).not.toHaveBeenCalled();
 
     view.rerender(<PerpsProOrderBookDepth {...props} rowIndex={2} />);
     expect(mockThemeRender).toHaveBeenCalledTimes(2);
-    expect(mockWithTiming).not.toHaveBeenCalled();
-    expect(mockCancelAnimation).not.toHaveBeenCalled();
+    expect(nativeTiming).not.toHaveBeenCalled();
+    expect(setValue).not.toHaveBeenCalled();
     expect(
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-order-book-depth').props.style,
       ),
-    ).toMatchObject({ top: 40, width: '50%' });
+    ).toMatchObject({
+      top: 40,
+      width: '100%',
+      right: 0,
+      transformOrigin: 'right center',
+      transform: [{ scaleX: 0.5 }],
+    });
+    expect(
+      screen.getByTestId('perps-pro-order-book-depth').props.pointerEvents,
+    ).toBe('none');
     view.rerender(
       <PerpsProOrderBookDepth {...props} targetPercent={25} rowIndex={2} />,
     );
     expect(mockThemeRender).toHaveBeenCalledTimes(3);
-    expect(mockWithTiming).toHaveBeenCalledWith(25, expect.any(Object));
+    expect(nativeTiming).toHaveBeenCalledWith(
+      expect.any(Animated.Value),
+      expect.objectContaining({ toValue: 0.25 }),
+    );
     view.rerender(
       <PerpsProOrderBookDepth {...props} targetPercent={25} rowIndex={2} />,
     );
     expect(mockThemeRender).toHaveBeenCalledTimes(3);
-    expect(mockWithTiming).toHaveBeenCalledTimes(1);
+    expect(nativeTiming).toHaveBeenCalledTimes(1);
     view.rerender(
       <PerpsProOrderBookDepth
         {...props}
@@ -287,7 +299,7 @@ describe('PerpsProOrderBookRow', () => {
       />,
     );
     expect(mockThemeRender).toHaveBeenCalledTimes(4);
-    expect(mockWithTiming).toHaveBeenCalledTimes(1);
+    expect(nativeTiming).toHaveBeenCalledTimes(1);
     expect(
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-order-book-depth').props.style,
@@ -401,8 +413,8 @@ describe('PerpsProOrderBookRow', () => {
       />,
     );
 
-    expect(mockWithTiming).not.toHaveBeenCalled();
-    mockCancelAnimation.mockClear();
+    expect(nativeTiming).not.toHaveBeenCalled();
+    setValue.mockClear();
 
     view.rerender(
       <PerpsProOrderBookDepth
@@ -414,12 +426,14 @@ describe('PerpsProOrderBookRow', () => {
       />,
     );
 
-    expect(mockWithTiming).toHaveBeenCalledWith(75, {
+    expect(nativeTiming).toHaveBeenCalledWith(expect.any(Animated.Value), {
+      toValue: 0.75,
       duration: 250,
-      easing: 'desktop-ease-out',
-      reduceMotion: 'system',
+      easing: expect.any(Function),
+      useNativeDriver: true,
+      isInteraction: false,
     });
-    expect(mockCancelAnimation).not.toHaveBeenCalled();
+    expect(setValue).not.toHaveBeenCalled();
 
     view.rerender(
       <PerpsProOrderBookDepth
@@ -431,8 +445,9 @@ describe('PerpsProOrderBookRow', () => {
       />,
     );
 
-    expect(mockWithTiming).toHaveBeenCalledTimes(1);
-    expect(mockCancelAnimation).toHaveBeenCalledTimes(1);
+    expect(nativeTiming).toHaveBeenCalledTimes(1);
+    expect(setValue).toHaveBeenCalledTimes(1);
+    expect(setValue).toHaveBeenLastCalledWith(0.25);
 
     view.rerender(
       <PerpsProOrderBookDepth
@@ -444,17 +459,19 @@ describe('PerpsProOrderBookRow', () => {
       />,
     );
 
-    expect(mockWithTiming).toHaveBeenCalledTimes(1);
-    expect(mockCancelAnimation).toHaveBeenCalledTimes(2);
+    expect(nativeTiming).toHaveBeenCalledTimes(1);
+    expect(setValue).toHaveBeenCalledTimes(2);
+    expect(setValue).toHaveBeenLastCalledWith(0.5);
 
     expect(
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-order-book-depth').props.style,
       ),
     ).toMatchObject({ height: 20, top: 20 });
+    stopAnimation.mockClear();
     view.unmount();
 
-    expect(mockWithTiming).toHaveBeenCalledTimes(1);
-    expect(mockCancelAnimation).toHaveBeenCalledTimes(3);
+    expect(nativeTiming).toHaveBeenCalledTimes(1);
+    expect(stopAnimation).toHaveBeenCalled();
   });
 });
