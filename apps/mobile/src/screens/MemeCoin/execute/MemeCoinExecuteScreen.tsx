@@ -1,6 +1,10 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ScrollView, View } from 'react-native';
-import { usePreventRemove, useRoute } from '@react-navigation/native';
+import {
+  useNavigation,
+  usePreventRemove,
+  useRoute,
+} from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { Text } from '@/components/Typography';
 import { Button } from '@/components2024/Button';
@@ -43,22 +47,41 @@ const MemeCoinExecuteContent = ({
   const status = store(s => s.status);
   const exitDialogOpen = store(s => s.exitDialogOpen);
   const done = store(s => countFinishedLegs(s.states));
+  const navigation = useNavigation();
   const [leaving, setLeaving] = useState(false);
+  const pendingActionRef = useRef<
+    Parameters<typeof navigation.dispatch>[0] | null
+  >(null);
 
-  usePreventRemove(status !== 'idle' && !leaving, () => {
+  // Only user back (back button / Android back / iOS swipe) is taken over. Other
+  // navigation, e.g. the auto-lock reset to Unlock, waits while running (signing
+  // asks to unlock) and goes through once finished.
+  usePreventRemove(status !== 'idle' && !leaving, ({ data }) => {
+    const isUserBack =
+      data.action.type === 'GO_BACK' || data.action.type === 'POP';
     if (store.getState().status === 'running') {
-      openExitDialog();
+      if (isUserBack) {
+        openExitDialog();
+      }
       return;
     }
+    pendingActionRef.current = isUserBack ? null : data.action;
     setLeaving(true);
   });
 
-  // Runs after the render that turned preventRemove off, so the pop is not intercepted.
+  // Runs after the render that turned preventRemove off, so the dispatch is not intercepted.
   useEffect(() => {
-    if (leaving) {
+    if (!leaving) {
+      return;
+    }
+    const pendingAction = pendingActionRef.current;
+    pendingActionRef.current = null;
+    if (pendingAction) {
+      navigation.dispatch(pendingAction);
+    } else {
       returnToMemeCoinHome(mode);
     }
-  }, [leaving, mode]);
+  }, [leaving, mode, navigation]);
 
   const handleStop = useCallback(() => {
     stopAndExit();
