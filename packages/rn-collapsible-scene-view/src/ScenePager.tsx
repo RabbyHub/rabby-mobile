@@ -6,7 +6,13 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { type LayoutChangeEvent, StyleSheet, View } from 'react-native';
+import {
+  type LayoutChangeEvent,
+  type StyleProp,
+  StyleSheet,
+  View,
+  type ViewStyle,
+} from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   cancelAnimation,
@@ -317,10 +323,12 @@ export function ScenePager({
 export function ScenePagerItem({
   children,
   pageKey,
+  style: containerStyle,
   track,
 }: {
   children: React.ReactNode;
   pageKey: string;
+  style?: StyleProp<ViewStyle>;
   track: ScenePagerTrack;
 }) {
   const index = track.keys.indexOf(pageKey);
@@ -328,7 +336,9 @@ export function ScenePagerItem({
   const style = useAnimatedStyle(() => ({
     transform: [{ translateX: (index - position.value) * width.value }],
   }));
-  return <Animated.View style={style}>{children}</Animated.View>;
+  return (
+    <Animated.View style={[containerStyle, style]}>{children}</Animated.View>
+  );
 }
 
 const styles = StyleSheet.create({

@@ -30,3 +30,11 @@ export {
   type ScenePagerTrack,
 } from './ScenePager';
 export { ScenePagerList, type ScenePagerListProps } from './ScenePagerList';
+export {
+  ScenePagerGroup,
+  ScenePagerGroupRow,
+  useScenePagerGroupTrack,
+  useScenePagerGroupPreview,
+} from './ScenePagerGroup';
+export type { LinkedPagerTrack } from './linkedPagerMath';
+export { calculateScenePagerPreviewWindow } from './previewWindow';

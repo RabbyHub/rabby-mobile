@@ -7,6 +7,7 @@ import React, { useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Pressable } from 'react-native-gesture-handler';
 import { Text } from '@/components/Typography';
+import DevUILinkedSubScreen from './DevUILinkedSubScreen';
 
 type PlaygroundTab = 'a' | 'b' | 'c';
 
@@ -45,6 +46,7 @@ const PREVIEW_GEOMETRY = Object.fromEntries(
 export default function DevUISwipableSubScreen() {
   const [tab, setTab] = useState<PlaygroundTab>('a');
   const [boundary, setBoundary] = useState<string>('none');
+  const [linked, setLinked] = useState(false);
   const controller = useCollapsibleSceneController();
   const rows = ROWS[tab];
 
@@ -57,6 +59,11 @@ export default function DevUISwipableSubScreen() {
             active={tab} rows={rows.length}
           </Text>
           <Text testID="dev-perps-pager-boundary">boundary={boundary}</Text>
+          <Pressable
+            onPress={() => setLinked(true)}
+            testID="dev-perps-pager-linked">
+            <Text>Root / Tabs / Pills</Text>
+          </Pressable>
         </View>
         <View style={styles.tradeBlock}>
           <Text style={styles.title}>Trade block (list header)</Text>
@@ -78,6 +85,9 @@ export default function DevUISwipableSubScreen() {
     [boundary, rows.length, tab],
   );
 
+  if (linked) {
+    return <DevUILinkedSubScreen onBack={() => setLinked(false)} />;
+  }
   return (
     <View style={styles.container}>
       <CollapsibleSceneProvider
