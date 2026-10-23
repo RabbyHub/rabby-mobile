@@ -34,6 +34,7 @@ export type ActivityBoundStore<State> = ReadonlyStoreApi<State> & {
 export type StoreActivityScope = {
   getActive: () => boolean;
   setActive: (active: boolean) => void;
+  subscribe: (listener: ActivityListener) => () => void;
   bindStore: <State>(
     store: ReadonlyStoreApi<State>,
     label?: string,

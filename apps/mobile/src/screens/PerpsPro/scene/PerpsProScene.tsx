@@ -124,6 +124,8 @@ import {
   usePerpsProInfoPanel,
 } from './usePerpsProInfoPanel';
 import { usePerpsProScene } from './usePerpsProScene';
+import { usePerpsProTradeDisplayVisibility } from './usePerpsProTradeDisplayVisibility';
+import { PerpsProAccountPresentationReset } from './PerpsProAccountPresentationReset';
 import { usePerpsProCancelOrders } from './usePerpsProCancelOrders';
 import { usePerpsProOpenOrderEdit } from './usePerpsProOpenOrderEdit';
 import { usePerpsProCloseAll } from './usePerpsProCloseAll';
@@ -301,6 +303,7 @@ export const PerpsProScene: React.FC<{
   const [tradeRowHeight, setTradeRowHeight] = useState(
     PERPS_PRO_MAIN_COLUMN_HEIGHT + 8,
   );
+  const [tradeMeasuredWidth, setTradeMeasuredWidth] = useState(0);
   const [measuredRegionAlertLayout, setMeasuredRegionAlertLayout] =
     useState<PerpsRegionAlertLayout | null>(null);
   const [scrollViewportHeight, setScrollViewportHeight] = useState(0);
@@ -566,6 +569,10 @@ export const PerpsProScene: React.FC<{
     setTradeRowHeight(current =>
       Math.abs(current - measured) > 1 ? measured : current,
     );
+    const measuredWidth = event.nativeEvent.layout.width;
+    if (Number.isFinite(measuredWidth) && measuredWidth > 0) {
+      setTradeMeasuredWidth(measuredWidth);
+    }
   }, []);
   const updateRegionAlertLayout = useCallback((event: LayoutChangeEvent) => {
     const height = Math.ceil(event.nativeEvent.layout.height);
@@ -625,6 +632,19 @@ export const PerpsProScene: React.FC<{
   const marketLayerTop = PERPS_PRO_HEADER_HEIGHT + regionAlertExtent;
   const tradeLayerTop = marketLayerTop + PERPS_PRO_MARKET_BAR_HEIGHT;
   const sceneTabsTop = tradeLayerTop + tradeRowHeight;
+  // Do not gate from the estimated initial height or an old orientation.
+  // Only the display feed is paused; trade/BBO and account facts stay live.
+  const tradeGeometryReady =
+    positionedOverlaysReady &&
+    tradeMeasuredWidth > 0 &&
+    Math.abs(tradeMeasuredWidth - width) <= 1;
+  const orderBookViewportVisible = usePerpsProTradeDisplayVisibility({
+    accountIdentity: info.accountIdentity,
+    scrollY: sceneController.scrollY,
+    tradeTop: tradeGeometryReady ? tradeLayerTop : null,
+    tradeBottom: tradeGeometryReady ? sceneTabsTop : null,
+    viewportHeight: scrollViewportHeight,
+  });
   const contentInsetTop = sceneTabsTop + PERPS_PRO_INFO_TABS_PLACEHOLDER_HEIGHT;
   const scrollContentMinimumHeightStyle = useMemo<ViewStyle | null>(
     () =>
@@ -683,11 +703,14 @@ export const PerpsProScene: React.FC<{
       ),
     [makeScrollContentStyle, info.openOrderCollectionPresentation],
   );
-  const scrollContentStyles = {
-    account: accountContentStyle,
-    positions: positionContentStyle,
-    openOrders: openOrderContentStyle,
-  };
+  const scrollContentStyles = useMemo(
+    () => ({
+      account: accountContentStyle,
+      positions: positionContentStyle,
+      openOrders: openOrderContentStyle,
+    }),
+    [accountContentStyle, positionContentStyle, openOrderContentStyle],
+  );
   const openHistory = useCallback(
     () => onOpenHistory(info.pendingFundingCount > 0),
     [info.pendingFundingCount, onOpenHistory],
@@ -988,12 +1011,15 @@ export const PerpsProScene: React.FC<{
       if (tab === settledInfoTab) {
         return;
       }
-      // The preference controller publishes optimistically and owns write
-      // ordering/rollback. No native-page acknowledgement competes with it.
+      // Only a settled native page publishes the preference. The preference
+      // controller still owns persistence ordering and external rollback.
       setActiveInfoTab(tab);
     },
     [setActiveInfoTab, settledInfoTab],
   );
+  const selectInfoTab = useCallback((tab: PerpsProInfoTab) => {
+    infoListRef.current?.selectTab(tab);
+  }, []);
   const listContentHeightRef = useRef(0);
   const activeInfoTarget =
     infoScrollBridge.targets[
@@ -1068,6 +1094,7 @@ export const PerpsProScene: React.FC<{
         onRetryMarketData={scene.retryMarketData}
         onSelectTickOption={scene.selectTickOption}
         orderBookSubscriptionEnabled={scene.orderBookSubscriptionEnabled}
+        orderBookViewportVisible={orderBookViewportVisible}
         precision={scene.precision}
         realtimeEnabled={scene.realtimeEnabled}
         selectedTickOption={scene.selectedTickOption}
@@ -1083,10 +1110,30 @@ export const PerpsProScene: React.FC<{
           syncOffsetOnActivate={false}
           tabs={PERPS_PRO_INFO_TABS}>
           <View collapsable={false} style={styles.container}>
+            <PerpsProAccountPresentationReset
+              accountIdentity={info.accountIdentity ?? 'no-account'}
+              activeTab={settledInfoTab}
+              bridge={infoScrollBridge}
+              indicatorPosition={infoTabIndicatorPosition}
+              listContentHeight={listContentHeightRef}
+              nativeScrollY={nativeScrollY}
+            />
             {settledInfoTab ? (
               <PerpsProInfoSingleList
+                key={info.accountIdentity ?? 'no-account'}
                 activeTab={settledInfoTab}
-                contentContainerStyle={scrollContentStyles[settledInfoTab]}
+                contentStyleByTab={scrollContentStyles}
+                activityEnabled={
+                  scene.fundingHistoryEnabled && !isModeSwitching
+                }
+                identityKey={info.accountIdentity ?? 'no-account'}
+                pinnedHeight={
+                  regionAlertExtent +
+                  PERPS_PRO_MARKET_BAR_HEIGHT +
+                  PERPS_PRO_INFO_TABS_HEIGHT
+                }
+                indicatorPosition={infoTabIndicatorPosition}
+                gestureActive={infoScrollBridge.pageGestureActive}
                 rowsByTab={rowsByTab}
                 listHeader={listHeader}
                 nativeRef={activeInfoTarget.ref}
@@ -1095,7 +1142,6 @@ export const PerpsProScene: React.FC<{
                 onLayout={updateScrollViewportHeight}
                 onTabChange={commitInfoTab}
                 ref={infoListRef}
-                renderItem={renderItemByTab[settledInfoTab]}
                 renderItemByTab={renderItemByTab}
                 rowStartOffset={contentInsetTop}
                 scrollOffset={sceneController.scrollY}
@@ -1125,7 +1171,7 @@ export const PerpsProScene: React.FC<{
                       historyEnabled && info.accountState !== 'noAccount'
                     }
                     indicatorPosition={infoTabIndicatorPosition}
-                    onChange={commitInfoTab}
+                    onChange={selectInfoTab}
                     onHistoryPress={openHistory}
                     openOrdersCount={info.allOpenOrdersCount}
                     pendingFundingCount={info.pendingFundingCount}

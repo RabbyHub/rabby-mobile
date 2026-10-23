@@ -547,6 +547,47 @@ describe('PerpsProTradePanelOwner component boundary', () => {
     expect(mockTradeUnmount).not.toHaveBeenCalled();
   });
 
+  it('keeps trade and BBO live while only the order book viewport is hidden', () => {
+    const props = createProps();
+    const view = render(
+      <PerpsProTradePanelOwner {...props}>
+        {panelAndConfirmation}
+      </PerpsProTradePanelOwner>,
+    );
+    const subscription = mockSubscriptions[0];
+    view.rerender(
+      <PerpsProTradePanelOwner {...props} orderBookViewportVisible={false}>
+        {panelAndConfirmation}
+      </PerpsProTradePanelOwner>,
+    );
+    expect(mockOrderBookProps.mock.lastCall?.[0]).toMatchObject({
+      enabled: true,
+      publicationEnabled: true,
+      viewportVisible: false,
+    });
+    const book: L2Book = {
+      coin: 'BTC',
+      levels: [[{ n: 1, px: '100', sz: '1' }], [{ n: 1, px: '101', sz: '1' }]],
+      time: 4,
+    };
+    act(() => subscription.callback(book));
+    expect(mockTradeInputs.mock.lastCall?.[0]).toMatchObject({
+      bboBook: book,
+      bboStatus: 'ready',
+      executionActive: true,
+    });
+    view.rerender(
+      <PerpsProTradePanelOwner {...props}>
+        {panelAndConfirmation}
+      </PerpsProTradePanelOwner>,
+    );
+    expect(mockOrderBookProps.mock.lastCall?.[0].viewportVisible).toBe(true);
+    expect(mockSubscriptions).toHaveLength(1);
+    expect(subscription.unsubscribe).not.toHaveBeenCalled();
+    expect(mockTradeMount).toHaveBeenCalledTimes(1);
+    expect(mockTradeUnmount).not.toHaveBeenCalled();
+  });
+
   it('passes execution and publication gates independently without delaying either', () => {
     const props = createProps();
     const view = render(

@@ -1,9 +1,10 @@
 import type { PerpsProInfoTab } from '@/core/services/perpsService';
 import {
-  ScenePagerList,
-  type SceneListHandle,
-} from '@rabby-wallet/rn-collapsible-scene-view';
-import React, { useCallback } from 'react';
+  RetainedScenePagerList,
+  type RetainedScenePagerListHandle,
+} from '@/components/RetainedScenePagerList/RetainedScenePagerList';
+import React, { useCallback, useMemo } from 'react';
+import { StyleSheet } from 'react-native';
 import type {
   Animated,
   FlatList,
@@ -15,13 +16,32 @@ import type {
 import type { AnimatedRef, SharedValue } from 'react-native-reanimated';
 import { PERPS_PRO_INFO_TABS } from './perpsProInfoTabOrder';
 
-const rowKey = (item: { key: string }) => item.key;
+const getPageContentStyle = (
+  style: StyleProp<ViewStyle>,
+  rowStartOffset: number,
+): ViewStyle => {
+  const wholeContent = StyleSheet.flatten(style);
+  return {
+    ...wholeContent,
+    minHeight: Math.max(
+      0,
+      (typeof wholeContent?.minHeight === 'number'
+        ? wholeContent.minHeight
+        : 0) - rowStartOffset,
+    ),
+  };
+};
 
-export type PerpsProInfoSingleListHandle = SceneListHandle<unknown>;
+export type PerpsProInfoSingleListHandle = RetainedScenePagerListHandle;
 
 type Props<Row extends { key: string }> = {
   activeTab: PerpsProInfoTab;
-  contentContainerStyle?: StyleProp<ViewStyle>;
+  contentStyleByTab: Record<PerpsProInfoTab, StyleProp<ViewStyle>>;
+  activityEnabled: boolean;
+  identityKey: string;
+  pinnedHeight: number;
+  indicatorPosition: SharedValue<number>;
+  gestureActive: SharedValue<boolean>;
   rowsByTab: Record<PerpsProInfoTab, readonly Row[]>;
   listHeader: React.ReactElement;
   nativeRef: AnimatedRef<FlatList<unknown>>;
@@ -30,7 +50,6 @@ type Props<Row extends { key: string }> = {
   onLayout: (event: LayoutChangeEvent) => void;
   onTabChange: (tab: PerpsProInfoTab) => void;
   ref?: React.Ref<PerpsProInfoSingleListHandle>;
-  renderItem: ListRenderItem<Row>;
   renderItemByTab: Record<PerpsProInfoTab, ListRenderItem<Row>>;
   rowStartOffset: number;
   scrollOffset: SharedValue<number>;
@@ -38,13 +57,17 @@ type Props<Row extends { key: string }> = {
   testID?: string;
 };
 
-/** One persistent native list. Only a gesture starting in its rows may change
- * tabs; trade/header vertical drags belong to the same native scroll surface.
- * Only rows move horizontally; the same native owner scrolls the bounded preview.
+/** One persistent native vertical owner, with retained virtualized row pages.
+ * Header/trade stay outside the native horizontal pager.
  */
 export const PerpsProInfoSingleList = <Row extends { key: string }>({
   activeTab,
-  contentContainerStyle,
+  contentStyleByTab,
+  activityEnabled,
+  identityKey,
+  pinnedHeight,
+  indicatorPosition,
+  gestureActive,
   rowsByTab,
   listHeader,
   nativeRef,
@@ -53,7 +76,6 @@ export const PerpsProInfoSingleList = <Row extends { key: string }>({
   onLayout,
   onTabChange,
   ref,
-  renderItem,
   renderItemByTab,
   rowStartOffset,
   scrollOffset,
@@ -64,30 +86,49 @@ export const PerpsProInfoSingleList = <Row extends { key: string }>({
     (key: string) => onTabChange(key as PerpsProInfoTab),
     [onTabChange],
   );
+  const positionsStyle = useMemo(
+    () => getPageContentStyle(contentStyleByTab.positions, rowStartOffset),
+    [contentStyleByTab.positions, rowStartOffset],
+  );
+  const ordersStyle = useMemo(
+    () => getPageContentStyle(contentStyleByTab.openOrders, rowStartOffset),
+    [contentStyleByTab.openOrders, rowStartOffset],
+  );
+  const accountStyle = useMemo(
+    () => getPageContentStyle(contentStyleByTab.account, rowStartOffset),
+    [contentStyleByTab.account, rowStartOffset],
+  );
+  const pageStyleByKey = useMemo(
+    () => ({
+      positions: positionsStyle,
+      openOrders: ordersStyle,
+      account: accountStyle,
+    }),
+    [positionsStyle, ordersStyle, accountStyle],
+  );
 
   return (
-    <ScenePagerList
-      ListHeaderComponent={listHeader}
-      contentContainerStyle={contentContainerStyle}
-      contentInsetTop={0}
+    <RetainedScenePagerList
+      listHeader={listHeader}
+      activeKey={activeTab}
+      activityEnabled={activityEnabled}
+      identityKey={identityKey}
+      pageStyleByKey={pageStyleByKey}
+      pinnedHeight={pinnedHeight}
+      indicatorPosition={indicatorPosition}
+      gestureActive={gestureActive}
       dataByKey={rowsByTab}
       keys={PERPS_PRO_INFO_TABS}
-      onIndexChange={changeTab}
+      onTabChange={changeTab}
       rowStartOffset={rowStartOffset}
       scrollOffset={scrollOffset}
-      keyExtractor={rowKey}
-      keyboardShouldPersistTaps="handled"
       nativeRef={nativeRef}
       nativeScrollY={nativeScrollY}
       onContentSizeChange={onContentSizeChange}
       onLayout={onLayout}
       ref={ref}
-      renderItem={renderItem}
       renderItemByKey={renderItemByTab}
-      scrollEnabled
-      scrollsToTop
       style={style}
-      tabKey={activeTab}
       testID={testID}
     />
   );

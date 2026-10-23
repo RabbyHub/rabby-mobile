@@ -48,6 +48,7 @@ export const PerpsProRealtimeOrderBook: React.FC<{
   publicationEnabled?: boolean;
   selectedTickOption: PerpsTickOption | null;
   tickOptions: PerpsTickOption[];
+  viewportVisible?: boolean;
 }> = React.memo(function PerpsProRealtimeOrderBook({
   amountUnit = 'quote',
   enabled,
@@ -60,8 +61,13 @@ export const PerpsProRealtimeOrderBook: React.FC<{
   publicationEnabled = enabled,
   selectedTickOption,
   tickOptions,
+  viewportVisible = true,
 }) {
   const [fundingDetailOpen, setFundingDetailOpen] = useState(false);
+  // A visible funding sheet still needs feed clock samples, but cannot reopen
+  // publication while the owning scene is inactive or backgrounded.
+  const displayPublicationEnabled =
+    publicationEnabled && (viewportVisible || fundingDetailOpen);
   const precisionIntentGenerationRef = useRef(0);
   const marketIdentityRef = useRef(market.marketKey);
   if (marketIdentityRef.current !== market.marketKey) {
@@ -72,12 +78,12 @@ export const PerpsProRealtimeOrderBook: React.FC<{
     coin: market.canonicalCoin,
     enabled,
     precision,
-    publicationEnabled,
+    publicationEnabled: displayPublicationEnabled,
   });
   const latestTrade = usePerpsLatestTrade({
     coin: market.canonicalCoin,
     enabled,
-    publicationEnabled,
+    publicationEnabled: displayPublicationEnabled,
   });
   const priceSelectionStateRef = useRef({
     bookIdentity: fastL2.identity,

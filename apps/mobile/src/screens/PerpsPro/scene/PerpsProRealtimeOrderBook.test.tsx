@@ -25,6 +25,8 @@ let mockLatestTradeState: LatestTradeState;
 let mockRenderedOrderBookProps: Record<string, any> | null;
 let mockRenderedFundingProps: Record<string, any> | null;
 const mockOrderBookRender = jest.fn();
+const mockFastL2Arguments = jest.fn();
+const mockLatestTradeArguments = jest.fn();
 const mockPrewarmHttpSnapshot = jest.fn(() => Promise.resolve(true));
 const mockWaitForHttpSnapshot = jest.fn(() => Promise.resolve(true));
 
@@ -32,13 +34,19 @@ jest.mock('@/hooks/perps/subscriptions/usePerpsFastL2', () => ({
   PERPS_FAST_L2_DISPLAY_CACHE_MS: 3000,
   prewarmPerpsFastL2HttpSnapshot: (...args: unknown[]) =>
     mockPrewarmHttpSnapshot(...args),
-  usePerpsFastL2: () => mockFastL2State,
+  usePerpsFastL2: (options: unknown) => {
+    mockFastL2Arguments(options);
+    return mockFastL2State;
+  },
   waitForPerpsFastL2HttpSnapshot: (...args: unknown[]) =>
     mockWaitForHttpSnapshot(...args),
 }));
 
 jest.mock('@/hooks/perps/subscriptions/usePerpsLatestTrade', () => ({
-  usePerpsLatestTrade: () => mockLatestTradeState,
+  usePerpsLatestTrade: (options: unknown) => {
+    mockLatestTradeArguments(options);
+    return mockLatestTradeState;
+  },
 }));
 
 jest.mock('../components/orderbook/PerpsProOrderBook', () => ({
@@ -94,6 +102,23 @@ const orderBook = (
   />
 );
 
+const expectPublication = (
+  publicationEnabled: boolean,
+  { coin = 'BTC', enabled = true } = {},
+) => {
+  expect(mockFastL2Arguments).toHaveBeenLastCalledWith({
+    coin,
+    enabled,
+    precision: { mantissa: null, nSigFigs: 5 },
+    publicationEnabled,
+  });
+  expect(mockLatestTradeArguments).toHaveBeenLastCalledWith({
+    coin,
+    enabled,
+    publicationEnabled,
+  });
+};
+
 describe('PerpsProRealtimeOrderBook reconnect display cache', () => {
   beforeEach(() => {
     mockFastL2State = {
@@ -109,12 +134,147 @@ describe('PerpsProRealtimeOrderBook reconnect display cache', () => {
     mockRenderedOrderBookProps = null;
     mockRenderedFundingProps = null;
     mockOrderBookRender.mockClear();
+    mockFastL2Arguments.mockClear();
+    mockLatestTradeArguments.mockClear();
     mockPrewarmHttpSnapshot.mockReset().mockResolvedValue(true);
     mockWaitForHttpSnapshot.mockReset().mockResolvedValue(true);
   });
 
   afterEach(() => {
     jest.restoreAllMocks();
+  });
+
+  it.each([true, false])(
+    'defaults viewport publication to the source enabled=%s contract',
+    enabled => {
+      render(orderBook({ enabled }));
+      expectPublication(enabled, { enabled });
+    },
+  );
+
+  it('pauses and resumes only display publication as the book leaves and reenters the viewport', () => {
+    const view = render(orderBook({ publicationEnabled: true }));
+    expectPublication(true);
+
+    view.rerender(
+      orderBook({ publicationEnabled: true, viewportVisible: false }),
+    );
+    expectPublication(false);
+
+    view.rerender(
+      orderBook({ publicationEnabled: true, viewportVisible: true }),
+    );
+    expectPublication(true);
+    expect(view.queryByTestId('order-book')).not.toBeNull();
+  });
+
+  it('keeps offscreen funding details current and pauses again when they close', () => {
+    const now = jest.spyOn(Date, 'now').mockReturnValue(1000);
+    const view = render(orderBook({ publicationEnabled: true }));
+    act(() => mockRenderedOrderBookProps?.onOpenFunding());
+    view.rerender(
+      orderBook({ publicationEnabled: true, viewportVisible: false }),
+    );
+    expectPublication(true);
+    expect(view.queryByTestId('funding-detail-sheet')).not.toBeNull();
+
+    now.mockReturnValue(2000);
+    mockFastL2State = {
+      ...mockFastL2State,
+      book: { ...liveBook, time: 102 },
+    };
+    mockOrderBookRender.mockClear();
+    view.rerender(
+      orderBook({ publicationEnabled: true, viewportVisible: false }),
+    );
+    expectPublication(true);
+    expect(mockOrderBookRender).toHaveBeenCalledTimes(1);
+    expect(mockRenderedFundingProps?.serverClock).toEqual({
+      marketKey: market.marketKey,
+      receivedAt: 2000,
+      serverTime: 102,
+    });
+    expect(mockRenderedFundingProps?.serverClock).toBe(
+      mockRenderedOrderBookProps?.serverClock,
+    );
+
+    now.mockReturnValue(3000);
+    mockLatestTradeState = {
+      ...mockLatestTradeState,
+      trade: { ...liveTrade, time: 103 },
+    };
+    view.rerender(
+      orderBook({ publicationEnabled: true, viewportVisible: false }),
+    );
+    expect(mockRenderedFundingProps?.serverClock).toEqual({
+      marketKey: market.marketKey,
+      receivedAt: 3000,
+      serverTime: 103,
+    });
+    expect(mockRenderedFundingProps?.serverClock).toBe(
+      mockRenderedOrderBookProps?.serverClock,
+    );
+
+    act(() => mockRenderedFundingProps?.onClose());
+    expectPublication(false);
+    expect(view.queryByTestId('funding-detail-sheet')).toBeNull();
+  });
+
+  it.each([true, false])(
+    'never lets funding details bypass outer publication=false with viewportVisible=%s',
+    viewportVisible => {
+      const view = render(
+        orderBook({ publicationEnabled: false, viewportVisible }),
+      );
+      expectPublication(false);
+      act(() => mockRenderedOrderBookProps?.onOpenFunding());
+      expectPublication(false);
+      expect(view.queryByTestId('funding-detail-sheet')).not.toBeNull();
+
+      view.rerender(orderBook({ publicationEnabled: true, viewportVisible }));
+      expectPublication(true);
+      view.rerender(orderBook({ publicationEnabled: false, viewportVisible }));
+      expectPublication(false);
+
+      act(() => mockRenderedFundingProps?.onClose());
+      expectPublication(false);
+      expect(view.queryByTestId('funding-detail-sheet')).toBeNull();
+    },
+  );
+
+  it('closes funding details on market change and restores the offscreen publication gate', () => {
+    const view = render(
+      orderBook({ publicationEnabled: true, viewportVisible: false }),
+    );
+    expectPublication(false);
+    act(() => mockRenderedOrderBookProps?.onOpenFunding());
+    expectPublication(true);
+
+    const nextMarket = {
+      ...market,
+      canonicalCoin: 'ETH',
+      marketKey: 'perp:ETH',
+    };
+    mockFastL2State = {
+      ...mockFastL2State,
+      book: { ...liveBook, coin: 'ETH' },
+      identity: 'ETH:5:null',
+    };
+    mockLatestTradeState = {
+      ...mockLatestTradeState,
+      identity: 'ETH',
+      trade: { ...liveTrade, coin: 'ETH' },
+    };
+    view.rerender(
+      orderBook({
+        market: nextMarket,
+        publicationEnabled: true,
+        viewportVisible: false,
+      }),
+    );
+
+    expect(view.queryByTestId('funding-detail-sheet')).toBeNull();
+    expectPublication(false, { coin: 'ETH' });
   });
 
   it('publishes the new server clock in the snapshot render without a second commit', () => {

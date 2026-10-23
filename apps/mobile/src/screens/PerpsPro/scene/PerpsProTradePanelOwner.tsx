@@ -69,6 +69,7 @@ type PerpsProTradePanelOwnerProps = React.PropsWithChildren<{
   onRetryMarketData: () => void;
   onSelectTickOption: (option: PerpsTickOption) => void;
   orderBookSubscriptionEnabled: boolean;
+  orderBookViewportVisible?: boolean;
   precision: PerpsBookPrecision | null;
   realtimeEnabled: boolean;
   ref?: React.Ref<PerpsProTradePanelHandle>;
@@ -104,6 +105,7 @@ export const PerpsProTradePanelOwner = React.memo(
     onRetryMarketData,
     onSelectTickOption,
     orderBookSubscriptionEnabled,
+    orderBookViewportVisible = true,
     precision,
     realtimeEnabled,
     ref,
@@ -215,6 +217,7 @@ export const PerpsProTradePanelOwner = React.memo(
               onSelectPriceIntentStart={startOrderBookPriceIntent}
               precision={precision}
               publicationEnabled={realtimeEnabled}
+              viewportVisible={orderBookViewportVisible}
               selectedTickOption={selectedTickOption}
               tickOptions={tickOptions}
             />
