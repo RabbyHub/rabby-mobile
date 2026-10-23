@@ -240,9 +240,10 @@ jest.mock('../model/marketLiquidationProjection', () => {
 
 jest.mock('@sentry/react-native', () => ({ captureException: jest.fn() }));
 
-jest.mock('react-i18next', () => ({
-  useTranslation: () => ({ t: (key: string) => key }),
-}));
+jest.mock('react-i18next', () => {
+  const t = (key: string) => key;
+  return { useTranslation: () => ({ t }) };
+});
 
 jest.mock('zustand/react/shallow', () => ({
   useShallow: (selector: unknown) => selector,
@@ -431,6 +432,74 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
       expect.objectContaining({ currentIsCross: true, isCross: false }),
     );
     expect(hook.result.current.marginMode).toBe('cross');
+  });
+
+  it('keeps configuration actions stable across prices but uses current limits and readiness', async () => {
+    const updateLeverageRequest = jest.fn(async (_params: unknown) => true);
+    const refreshActiveAssetData = jest.fn(async () => undefined);
+    const initialProps = {
+      currentMarket: market as PerpsProMarket | null,
+      pending: false,
+      ready: true,
+    };
+    const hook = renderHook(
+      ({ currentMarket, pending, ready }) =>
+        usePerpsProTrade({
+          activeAssetData,
+          bboBook: book,
+          bboPrices: { asks1: '101', asks5: null, bids1: '99', bids5: null },
+          bboSessionKey: 'BTC:1',
+          bboStatus: 'ready',
+          executionActive: true,
+          leveragePending: pending,
+          market: currentMarket,
+          tradeConfigurationReady: ready,
+          refreshActiveAssetData,
+          updateLeverageRequest,
+        }),
+      { initialProps },
+    );
+    const confirm = hook.result.current.confirmLeverage;
+    const setMargin = hook.result.current.setMarginMode;
+    hook.rerender({
+      ...initialProps,
+      currentMarket: {
+        ...market,
+        marketData: { ...market.marketData, midPx: '102', markPx: '102' },
+      },
+    });
+    expect(hook.result.current.confirmLeverage).toBe(confirm);
+    expect(hook.result.current.setMarginMode).toBe(setMargin);
+
+    hook.rerender({
+      ...initialProps,
+      currentMarket: {
+        ...market,
+        marketData: { ...market.marketData, maxLeverage: 15 },
+      },
+    });
+    expect(hook.result.current.confirmLeverage).not.toBe(confirm);
+    expect(hook.result.current.setMarginMode).not.toBe(setMargin);
+    await act(async () => {
+      expect(await hook.result.current.confirmLeverage(100)).toBe(true);
+    });
+    expect(updateLeverageRequest).toHaveBeenLastCalledWith(
+      expect.objectContaining({ coin: 'BTC', leverage: 15, maxLeverage: 15 }),
+    );
+    updateLeverageRequest.mockClear();
+
+    for (const blockedProps of [
+      { ...initialProps, pending: true },
+      { ...initialProps, ready: false },
+      { ...initialProps, currentMarket: null },
+    ]) {
+      hook.rerender(blockedProps);
+      await act(async () => {
+        expect(await hook.result.current.confirmLeverage(12)).toBe(false);
+        expect(await hook.result.current.setMarginMode('cross')).toBe(false);
+      });
+    }
+    expect(updateLeverageRequest).not.toHaveBeenCalled();
   });
 
   it('uses the latest trade for a new Limit session and replaces manual price after BBO', () => {
