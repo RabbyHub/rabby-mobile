@@ -646,46 +646,48 @@ export const PerpsProScene: React.FC<{
           viewportHeight: scrollViewportHeight,
         })
       : null;
-  const scrollContentStyles = useMemo<
-    Record<PerpsProInfoTab, ViewStyle[]>
-  >(() => {
-    const trailingStyle = (populated: boolean): ViewStyle => ({
-      paddingBottom:
-        populated && populatedInfoBottomPadding != null
-          ? populatedInfoBottomPadding
-          : 32,
-    });
-    return {
-      account: [
-        styles.scrollContent,
-        ...(scrollContentMinimumHeightStyle
-          ? [scrollContentMinimumHeightStyle]
-          : []),
-        trailingStyle(info.accountState === 'ready'),
-      ],
-      positions: [
-        styles.scrollContent,
-        ...(scrollContentMinimumHeightStyle
-          ? [scrollContentMinimumHeightStyle]
-          : []),
-        trailingStyle(info.positionCollectionPresentation === 'populated'),
-      ],
-      openOrders: [
-        styles.scrollContent,
-        ...(scrollContentMinimumHeightStyle
-          ? [scrollContentMinimumHeightStyle]
-          : []),
-        trailingStyle(info.openOrderCollectionPresentation === 'populated'),
-      ],
-    };
-  }, [
-    info.accountState,
-    info.openOrderCollectionPresentation,
-    info.positionCollectionPresentation,
-    populatedInfoBottomPadding,
-    scrollContentMinimumHeightStyle,
-    styles.scrollContent,
-  ]);
+  const makeScrollContentStyle = useCallback(
+    (populated: boolean): ViewStyle[] => [
+      styles.scrollContent,
+      ...(scrollContentMinimumHeightStyle
+        ? [scrollContentMinimumHeightStyle]
+        : []),
+      {
+        paddingBottom:
+          populated && populatedInfoBottomPadding != null
+            ? populatedInfoBottomPadding
+            : 32,
+      },
+    ],
+    [
+      styles.scrollContent,
+      scrollContentMinimumHeightStyle,
+      populatedInfoBottomPadding,
+    ],
+  );
+  const accountContentStyle = useMemo(
+    () => makeScrollContentStyle(info.accountState === 'ready'),
+    [makeScrollContentStyle, info.accountState],
+  );
+  const positionContentStyle = useMemo(
+    () =>
+      makeScrollContentStyle(
+        info.positionCollectionPresentation === 'populated',
+      ),
+    [makeScrollContentStyle, info.positionCollectionPresentation],
+  );
+  const openOrderContentStyle = useMemo(
+    () =>
+      makeScrollContentStyle(
+        info.openOrderCollectionPresentation === 'populated',
+      ),
+    [makeScrollContentStyle, info.openOrderCollectionPresentation],
+  );
+  const scrollContentStyles = {
+    account: accountContentStyle,
+    positions: positionContentStyle,
+    openOrders: openOrderContentStyle,
+  };
   const openHistory = useCallback(
     () => onOpenHistory(info.pendingFundingCount > 0),
     [info.pendingFundingCount, onOpenHistory],
@@ -695,11 +697,11 @@ export const PerpsProScene: React.FC<{
     (scene.marketDataStatus === 'idle' ||
       scene.marketDataStatus === 'loading' ||
       scene.isResolvingMarket);
-  const rowsByTab = useMemo<Record<PerpsProInfoTab, PerpsProSceneRow[]>>(() => {
-    const accountRows: PerpsProSceneRow[] = [];
+  const accountRows = useMemo<PerpsProSceneRow[]>(() => {
+    const rows: PerpsProSceneRow[] = [];
     if (info.accountState === 'ready') {
-      accountRows.push({ key: 'account-summary', type: 'account-summary' });
-      accountRows.push(
+      rows.push({ key: 'account-summary', type: 'account-summary' });
+      rows.push(
         ...info.account.assets.map(asset => ({
           asset,
           key: `account-asset:${asset.key}`,
@@ -707,21 +709,30 @@ export const PerpsProScene: React.FC<{
         })),
       );
     } else {
-      accountRows.push({
+      rows.push({
         key: 'account-state',
         state: info.accountState,
         type: 'account-state',
       });
     }
 
-    const positionDataRows: PerpsProSceneRow[] = info.positions.map(
+    return rows;
+  }, [info.account.assets, info.accountState]);
+
+  // Empty/loading rows depend on presentation, not each fresh polling array.
+  // Populated rows still consume every position/order update without equality
+  // shortcuts that could conceal changed risk or command data.
+  const visiblePositions =
+    info.positionCollectionPresentation === 'populated' ? info.positions : null;
+  const positionRows = useMemo<PerpsProSceneRow[]>(() => {
+    const positionDataRows: PerpsProSceneRow[] = (visiblePositions ?? []).map(
       position => ({
         key: `position:${info.accountIdentity}:${position.key}`,
         position,
         type: 'position',
       }),
     );
-    const positionRows: PerpsProSceneRow[] =
+    const rows: PerpsProSceneRow[] =
       info.positionCollectionPresentation === 'authoritativeEmpty'
         ? [{ key: 'positions-empty', type: 'positions-empty' }]
         : info.positionCollectionPresentation === 'filteredEmpty'
@@ -736,14 +747,26 @@ export const PerpsProScene: React.FC<{
           ]
         : [{ key: 'positions-controls', type: 'positions-controls' }];
 
-    const openOrderDataRows: PerpsProSceneRow[] = info.openOrders.map(
+    return rows;
+  }, [
+    info.accountIdentity,
+    info.positionCollectionPresentation,
+    visiblePositions,
+  ]);
+
+  const visibleOpenOrders =
+    info.openOrderCollectionPresentation === 'populated'
+      ? info.openOrders
+      : null;
+  const openOrderRows = useMemo<PerpsProSceneRow[]>(() => {
+    const openOrderDataRows: PerpsProSceneRow[] = (visibleOpenOrders ?? []).map(
       order => ({
         key: `open-order:${info.accountIdentity}:${order.key}`,
         order,
         type: 'open-order',
       }),
     );
-    const openOrderRows: PerpsProSceneRow[] =
+    const rows: PerpsProSceneRow[] =
       info.openOrderCollectionPresentation === 'authoritativeEmpty'
         ? [{ key: 'open-orders-empty', type: 'open-orders-empty' }]
         : info.openOrderCollectionPresentation === 'filteredEmpty'
@@ -758,27 +781,27 @@ export const PerpsProScene: React.FC<{
           ]
         : [{ key: 'open-orders-controls', type: 'open-orders-controls' }];
 
-    return {
+    return rows;
+  }, [
+    info.accountIdentity,
+    info.openOrderCollectionPresentation,
+    visibleOpenOrders,
+  ]);
+  const rowsByTab = useMemo(
+    () => ({
       account: accountRows,
       positions: positionRows,
       openOrders: openOrderRows,
-    };
-  }, [
-    info.account,
-    info.accountIdentity,
-    info.accountState,
-    info.openOrderCollectionPresentation,
-    info.openOrders,
-    info.positionCollectionPresentation,
-    info.positions,
-  ]);
+    }),
+    [accountRows, positionRows, openOrderRows],
+  );
   const {
     confirmCancelAll,
     confirmCancelOrder,
     isCancelAllPending,
     isOrderPending,
   } = cancelOrders;
-  const renderItem = useCallback<ListRenderItem<PerpsProSceneRow>>(
+  const renderAccountRow = useCallback<ListRenderItem<PerpsProSceneRow>>(
     ({ item }) => {
       switch (item.type) {
         case 'account-state':
@@ -804,6 +827,22 @@ export const PerpsProScene: React.FC<{
               onTransfer={transfer.open}
             />
           );
+        default:
+          return null;
+      }
+    },
+    [
+      info.account,
+      info.retryAccount,
+      openDeposit,
+      openWithdraw,
+      openSwap,
+      transfer.open,
+    ],
+  );
+  const renderPositionRow = useCallback<ListRenderItem<PerpsProSceneRow>>(
+    ({ item }) => {
+      switch (item.type) {
         case 'positions-controls':
           return (
             <PerpsProPositionsControls
@@ -833,6 +872,28 @@ export const PerpsProScene: React.FC<{
               position={item.position}
             />
           );
+        default:
+          return null;
+      }
+    },
+    [
+      closeAll.pending,
+      closeAll.requestCloseAll,
+      info.accountIdentity,
+      info.allPositionsCount,
+      info.hideOtherPositionSymbols,
+      manageMargin.open,
+      positionActions.openLeverageEditor,
+      positionActions.openCloseEditor,
+      positionTpSl.open,
+      selectCardMarket,
+      t,
+      toggleHideOtherPositionSymbols,
+    ],
+  );
+  const renderOpenOrderRow = useCallback<ListRenderItem<PerpsProSceneRow>>(
+    ({ item }) => {
+      switch (item.type) {
         case 'open-orders-controls':
           return (
             <PerpsProOpenOrdersControls
@@ -880,6 +941,8 @@ export const PerpsProScene: React.FC<{
             />
           );
         }
+        default:
+          return null;
       }
     },
     [
@@ -887,36 +950,28 @@ export const PerpsProScene: React.FC<{
       confirmCancelOrder,
       isCancelAllPending,
       isOrderPending,
-      closeAll.pending,
-      closeAll.requestCloseAll,
-      info.account,
-      info.accountIdentity,
       info.allPositionsByCoin,
-      info.allPositionsCount,
       info.hideOtherOpenOrderSymbols,
-      info.hideOtherPositionSymbols,
       info.openOrderCategory,
       info.openOrderCommandCandidates,
       info.openOrderCounts.basic,
       info.openOrderCounts.conditional,
-      info.retryAccount,
       info.setOpenOrderCategory,
-      manageMargin.open,
       isOpenOrderEditUnavailable,
-      openDeposit,
-      openSwap,
-      openWithdraw,
-      positionActions.openLeverageEditor,
-      positionActions.openCloseEditor,
-      positionTpSl.open,
       openOpenOrderEdit,
       selectCardMarket,
       t,
       toggleHideOtherOpenOrderSymbols,
-      toggleHideOtherPositionSymbols,
       amountUnit,
-      transfer.open,
     ],
+  );
+  const renderItemByTab = useMemo(
+    () => ({
+      account: renderAccountRow,
+      positions: renderPositionRow,
+      openOrders: renderOpenOrderRow,
+    }),
+    [renderAccountRow, renderPositionRow, renderOpenOrderRow],
   );
 
   useEffect(() => {
@@ -1040,7 +1095,8 @@ export const PerpsProScene: React.FC<{
                 onLayout={updateScrollViewportHeight}
                 onTabChange={commitInfoTab}
                 ref={infoListRef}
-                renderItem={renderItem}
+                renderItem={renderItemByTab[settledInfoTab]}
+                renderItemByTab={renderItemByTab}
                 rowStartOffset={contentInsetTop}
                 scrollOffset={sceneController.scrollY}
                 style={styles.scroll}

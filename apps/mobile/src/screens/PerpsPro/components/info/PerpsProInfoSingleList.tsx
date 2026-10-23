@@ -31,6 +31,7 @@ type Props<Row extends { key: string }> = {
   onTabChange: (tab: PerpsProInfoTab) => void;
   ref?: React.Ref<PerpsProInfoSingleListHandle>;
   renderItem: ListRenderItem<Row>;
+  renderItemByTab: Record<PerpsProInfoTab, ListRenderItem<Row>>;
   rowStartOffset: number;
   scrollOffset: SharedValue<number>;
   style?: StyleProp<ViewStyle>;
@@ -53,6 +54,7 @@ export const PerpsProInfoSingleList = <Row extends { key: string }>({
   onTabChange,
   ref,
   renderItem,
+  renderItemByTab,
   rowStartOffset,
   scrollOffset,
   style,
@@ -81,6 +83,7 @@ export const PerpsProInfoSingleList = <Row extends { key: string }>({
       onLayout={onLayout}
       ref={ref}
       renderItem={renderItem}
+      renderItemByKey={renderItemByTab}
       scrollEnabled
       scrollsToTop
       style={style}

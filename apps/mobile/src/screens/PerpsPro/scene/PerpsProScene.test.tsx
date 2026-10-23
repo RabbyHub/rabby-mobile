@@ -148,15 +148,16 @@ jest.mock('react-native-reanimated', () => {
     ReduceMotion: { System: 'system' },
     runOnJS: (callback: (...args: unknown[]) => unknown) => callback,
     scrollTo: jest.fn(),
-    useAnimatedRef: () => {
-      const ref = (component?: unknown) => {
-        ref.current = component ?? null;
-        return 0;
-      };
-      ref.current = null;
-      ref.observe = jest.fn(() => jest.fn());
-      return ref;
-    },
+    useAnimatedRef: () =>
+      ReactModule.useMemo(() => {
+        const ref = (component?: unknown) => {
+          ref.current = component ?? null;
+          return 0;
+        };
+        ref.current = null;
+        ref.observe = jest.fn(() => jest.fn());
+        return ref;
+      }, []),
     useAnimatedReaction: jest.fn(),
     useAnimatedScrollHandler: () => jest.fn(),
     useDerivedValue: (factory: () => unknown) => ({
@@ -391,21 +392,26 @@ jest.mock(
   }),
 );
 
-jest.mock('@/hooks/theme', () => ({
-  useTheme2024: ({ getStyle }: { getStyle: (input: object) => object }) => {
-    const colors2024 = new Proxy(
-      {},
-      {
-        get: (_target, key) => String(key),
-      },
-    );
-    return {
-      colors2024,
-      isLight: mockIsLight,
-      styles: getStyle({ colors2024, isLight: mockIsLight }),
-    };
-  },
-}));
+jest.mock('@/hooks/theme', () => {
+  const ReactModule = jest.requireActual('react');
+  const colors2024 = new Proxy(
+    {},
+    {
+      get: (_target, key) => String(key),
+    },
+  );
+  return {
+    useTheme2024: ({ getStyle }: { getStyle: (input: object) => object }) => {
+      const isLight = mockIsLight;
+      // Match the real hook's stable styles until the theme inputs change.
+      const styles = ReactModule.useMemo(
+        () => getStyle({ colors2024, isLight }),
+        [getStyle, isLight],
+      );
+      return { colors2024, isLight, styles };
+    },
+  };
+});
 
 jest.mock('@/utils/styles', () => ({
   createGetStyles2024: (getStyle: unknown) => getStyle,
@@ -1287,6 +1293,141 @@ describe('PerpsProScene market loading states', () => {
     ).not.toBe(firstRenderer);
     expect(screen.UNSAFE_getAllByType(FlatList)).toHaveLength(1);
   });
+
+  it.each(['positions', 'openOrders'] as const)(
+    'keeps the active %s list unchanged by Account valuation and catches up when selected',
+    activeInfoTab => {
+      mockUsePerpsProScene.mockReturnValue(createSceneState());
+      const info = createInfoState({
+        activeInfoTab,
+        accountState: 'ready',
+        account: {
+          assets: [],
+          diagnostics: {
+            complete: true,
+            unresolvedDexes: [],
+            unpricedNonZeroAssets: [],
+          },
+          metrics: [],
+          mode: 'standard',
+          primaryKey: 'balance',
+          primaryValue: '100',
+          titleKey: 'perpsAccountSummary',
+          unrealizedPnl: '0',
+        },
+      });
+      mockUsePerpsProInfoPanel.mockReturnValue(info);
+      const props = { isModeSwitching: false, onSwitchToSimple: jest.fn() };
+      const view = render(<PerpsProScene {...props} />);
+      const list = screen.UNSAFE_getByType(FlatList);
+      const originalListProps = list.props;
+      const originalPage = screen.UNSAFE_getByType(
+        PerpsProInfoSingleList,
+      ).props;
+      const updated = {
+        ...info,
+        account: {
+          ...info.account,
+          assets: [...info.account.assets],
+          primaryValue: '123',
+        },
+      };
+      mockUsePerpsProInfoPanel.mockReturnValue(updated);
+      view.rerender(<PerpsProScene {...props} />);
+      const page = screen.UNSAFE_getByType(PerpsProInfoSingleList).props;
+      expect(page.rowsByTab[activeInfoTab]).toBe(
+        originalPage.rowsByTab[activeInfoTab],
+      );
+      expect(page.renderItem).toBe(originalPage.renderItem);
+      expect(page.renderItemByTab.account).not.toBe(
+        originalPage.renderItemByTab.account,
+      );
+      expect(screen.UNSAFE_getByType(FlatList)).toBe(list);
+      expect(Object.is(list.props, originalListProps)).toBe(true);
+
+      mockUsePerpsProInfoPanel.mockReturnValue({
+        ...updated,
+        activeInfoTab: 'account',
+      });
+      view.rerender(<PerpsProScene {...props} />);
+      expect(screen.UNSAFE_getByType(FlatList)).toBe(list);
+      expect(
+        screen.getByTestId('perps-pro-account-portfolio-value').props.children,
+      ).toBe('$123.00');
+    },
+  );
+
+  it('keeps the active Account list unchanged by position-only data while preserving the latest tab rows', () => {
+    mockUsePerpsProScene.mockReturnValue(createSceneState());
+    const info = createInfoState({ activeInfoTab: 'account' });
+    mockUsePerpsProInfoPanel.mockReturnValue(info);
+    const props = { isModeSwitching: false, onSwitchToSimple: jest.fn() };
+    const view = render(<PerpsProScene {...props} />);
+    const list = screen.UNSAFE_getByType(FlatList);
+    const originalProps = list.props;
+    const updated = {
+      ...info,
+      positions: [{ key: 'BTC', coin: 'BTC' }],
+      allPositionsCount: 1,
+      positionCollectionPresentation: 'populated',
+    };
+    mockUsePerpsProInfoPanel.mockReturnValue(updated);
+    view.rerender(<PerpsProScene {...props} />);
+    // A collection becoming populated also changes the other tab's content
+    // padding. Its current-tab style must remain independent.
+    expect(list.props.data).toBe(originalProps.data);
+    expect(list.props.renderItem).toBe(originalProps.renderItem);
+    expect(Object.is(list.props, originalProps)).toBe(true);
+    mockUsePerpsProInfoPanel.mockReturnValue({
+      ...updated,
+      activeInfoTab: 'positions',
+    });
+    view.rerender(<PerpsProScene {...props} />);
+    expect(screen.getByTestId('position-card')).toBeTruthy();
+    expect(screen.UNSAFE_getByType(FlatList)).toBe(list);
+  });
+
+  it.each(['positions', 'openOrders'] as const)(
+    'keeps %s placeholder data stable across fresh empty poll responses',
+    activeInfoTab => {
+      mockUsePerpsProScene.mockReturnValue(createSceneState());
+      const info = createInfoState({
+        activeInfoTab,
+        positions: [],
+        openOrders: [],
+        positionCollectionPresentation: 'authoritativeEmpty',
+        openOrderCollectionPresentation: 'authoritativeEmpty',
+      });
+      mockUsePerpsProInfoPanel.mockReturnValue(info);
+      const props = { isModeSwitching: false, onSwitchToSimple: jest.fn() };
+      const view = render(<PerpsProScene {...props} />);
+      const list = screen.UNSAFE_getByType(FlatList);
+      const originalData = list.props.data;
+      mockUsePerpsProInfoPanel.mockReturnValue({
+        ...info,
+        positions: [],
+        openOrders: [],
+      });
+      view.rerender(<PerpsProScene {...props} />);
+      expect(list.props.data).toBe(originalData);
+
+      mockUsePerpsProInfoPanel.mockReturnValue({
+        ...info,
+        positionCollectionPresentation: 'populated',
+        openOrderCollectionPresentation: 'populated',
+        positions: [{ key: 'BTC', coin: 'BTC' }],
+        openOrders: [{ key: 'order-1', coin: 'BTC' }],
+      });
+      view.rerender(<PerpsProScene {...props} />);
+      expect(list.props.data).not.toBe(originalData);
+      expect(
+        screen.getByTestId(
+          activeInfoTab === 'positions' ? 'position-card' : 'open-order-card',
+        ),
+      ).toBeTruthy();
+      expect(screen.UNSAFE_getByType(FlatList)).toBe(list);
+    },
+  );
 
   it('keeps the full skeleton while a ready catalogue resolves its market', () => {
     mockUsePerpsProScene.mockReturnValue(

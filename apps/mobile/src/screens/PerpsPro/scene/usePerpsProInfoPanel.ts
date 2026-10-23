@@ -227,14 +227,21 @@ export const usePerpsProInfoPanel = (
     () => buildPerpsOpenOrderTopology(facts.openOrders),
     [facts.openOrders],
   );
+  // Spot valuation can change the Account view without changing position risk.
+  // Keep the actual risk input reactive, not the whole Account presentation.
+  const accountMarginRatio = getPerpsAccountMarginRatio(account);
   const allPositions = useMemo(
     () =>
       buildPerpsPositionsFromTopology(
         facts.clearinghouseState?.assetPositions || [],
         openOrderTopology,
-        getPerpsAccountMarginRatio(account),
+        accountMarginRatio,
       ),
-    [account, facts.clearinghouseState?.assetPositions, openOrderTopology],
+    [
+      accountMarginRatio,
+      facts.clearinghouseState?.assetPositions,
+      openOrderTopology,
+    ],
   );
   const allPositionsByCoin = useMemo<
     ReadonlyMap<string, PerpsPositionViewModel>

@@ -9,9 +9,14 @@ import {
 } from '@testing-library/react-native';
 import { PixelRatio, Platform, StyleSheet } from 'react-native';
 import { UserAbstractionResp } from '@rabby-wallet/hyperliquid-sdk';
-import type { SpotMeta } from '@rabby-wallet/hyperliquid-sdk';
+import type {
+  AssetPosition,
+  OpenOrder,
+  SpotMeta,
+} from '@rabby-wallet/hyperliquid-sdk';
 import type { StorageAdapater } from '@rabby-wallet/persist-store';
 import type { PerpsProInfoTab } from '@/core/services/perpsService';
+import type { AggregatedClearinghouseState } from '@/utils/perps';
 // Integration fixtures instantiate the real service at its storage boundary.
 /* eslint-disable no-runtime-service-imports */
 import { PerpsService } from '@/core/services/perpsService';
@@ -76,6 +81,58 @@ const account = {
   type: 'Watch Address',
   brandName: 'Watch Address',
 };
+const positionFixture = (): AssetPosition => ({
+  type: 'oneWay',
+  position: {
+    coin: 'BTC',
+    cumFunding: { allTime: '0', sinceChange: '0', sinceOpen: '0' },
+    entryPx: '50000',
+    leverage: { type: 'cross', value: 10 },
+    liquidationPx: '40000',
+    marginUsed: '50',
+    maxLeverage: 50,
+    positionValue: '510',
+    returnOnEquity: '0.2',
+    szi: '0.01',
+    unrealizedPnl: '10',
+  },
+});
+const clearinghouseFixture = (): AggregatedClearinghouseState => ({
+  assetPositions: [positionFixture()],
+  crossMaintenanceMarginUsed: '10',
+  crossMaintByDex: { '': '10' },
+  crossMarginSummary: {
+    accountValue: '100',
+    totalMarginUsed: '50',
+    totalNtlPos: '510',
+    totalRawUsd: '90',
+  },
+  marginSummary: {
+    accountValue: '100',
+    totalMarginUsed: '50',
+    totalNtlPos: '510',
+    totalRawUsd: '90',
+  },
+  perDexSummaries: {},
+  time: 1,
+  withdrawable: '50',
+});
+const protectionOrderFixture = (): OpenOrder => ({
+  coin: 'BTC',
+  isPositionTpsl: true,
+  isTrigger: true,
+  limitPx: '0',
+  oid: 1,
+  orderType: 'Take Profit Market',
+  origSz: '0.01',
+  reduceOnly: true,
+  side: 'A',
+  sz: '0.01',
+  tif: null,
+  timestamp: 1,
+  triggerCondition: 'Price above 60000',
+  triggerPx: '60000',
+});
 let latest: ReturnType<typeof usePerpsProInfoPanel>;
 let renderedValues: string[];
 function AccountHarness({
@@ -234,6 +291,157 @@ describe('Perps Pro account price publication integration', () => {
     unregisterService();
     jest.clearAllTimers();
     jest.useRealTimers();
+  });
+
+  describe('position projection publication', () => {
+    let clearinghouse: AggregatedClearinghouseState;
+    beforeEach(() => {
+      clearinghouse = clearinghouseFixture();
+      perpsStore.setState({
+        currentClearinghouseState: clearinghouse,
+        spotState: spotState('100', '4'),
+      });
+    });
+
+    it('updates spot valuation without replacing unchanged positions or the modal lookup map', async () => {
+      render(<AccountHarness active={false} />);
+      await selectTab('positions');
+      const before = latest;
+      expect(before.account.primaryValue).toBe('220');
+      expect(before.positions).toHaveLength(1);
+      expect(before.positions[0].marginRatio).toBe('0.1');
+
+      updatePrice('31');
+
+      expect(latest.account).not.toBe(before.account);
+      expect(latest.account.primaryValue).toBe('224');
+      expect(latest.positions).toBe(before.positions);
+      expect(latest.positions[0]).toBe(before.positions[0]);
+      expect(latest.allPositionsByCoin).toBe(before.allPositionsByCoin);
+      expect(latest.allPositionsByCoin.get('BTC')).toBe(before.positions[0]);
+      expect(perpsStore.getState().currentClearinghouseState).toBe(
+        clearinghouse,
+      );
+    });
+
+    it('publishes changed or unresolved risk even when raw positions and orders are unchanged', async () => {
+      render(<AccountHarness active={false} />);
+      await selectTab('account');
+      const before = latest;
+      expect(before.positions[0].marginRatio).toBe('0.1');
+      act(() =>
+        perpsStore.setState({
+          currentClearinghouseState: {
+            ...clearinghouse,
+            crossMaintenanceMarginUsed: '20',
+            crossMaintByDex: { '': '20' },
+          },
+        }),
+      );
+      expect(latest.account.primaryValue).toBe(before.account.primaryValue);
+      expect(latest.positions).not.toBe(before.positions);
+      expect(latest.positions[0].marginRatio).toBe('0.2');
+      expect(latest.allPositionsByCoin).not.toBe(before.allPositionsByCoin);
+      expect(latest.allPositionsByCoin.get('BTC')).toBe(latest.positions[0]);
+      expect(
+        perpsStore.getState().currentClearinghouseState?.assetPositions,
+      ).toBe(clearinghouse.assetPositions);
+
+      act(() =>
+        perpsStore.setState({
+          currentClearinghouseState: {
+            ...clearinghouse,
+            crossMaintByDex: { 'unknown-dex': '20' },
+          },
+        }),
+      );
+      expect(latest.positions[0].marginRatio).toBeNull();
+      expect(latest.allPositionsByCoin.get('BTC')?.marginRatio).toBeNull();
+      expect(latest.accountState).toBe('error');
+
+      act(() =>
+        perpsStore.setState({ currentClearinghouseState: clearinghouse }),
+      );
+      expect(latest.positions[0].marginRatio).toBe('0.1');
+      expect(latest.accountState).toBe('ready');
+    });
+
+    it('publishes raw position changes and removals even when the account risk is unchanged', async () => {
+      render(<AccountHarness active={false} />);
+      await selectTab('positions');
+      const before = latest;
+      const asset = clearinghouse.assetPositions[0];
+      act(() =>
+        perpsStore.setState({
+          currentClearinghouseState: {
+            ...clearinghouse,
+            assetPositions: [
+              {
+                ...asset,
+                position: {
+                  ...asset.position,
+                  szi: '0.02',
+                  positionValue: '1020',
+                  unrealizedPnl: '20',
+                },
+              },
+            ],
+          },
+        }),
+      );
+      expect(latest.positions).not.toBe(before.positions);
+      expect(latest.positions[0]).toMatchObject({
+        baseSize: '0.02',
+        quoteSize: '1020',
+        pnl: '20',
+        marginRatio: '0.1',
+      });
+      expect(latest.allPositionsByCoin.get('BTC')).toBe(latest.positions[0]);
+      expect(latest.account.unrealizedPnl).toBe('20');
+
+      act(() =>
+        perpsStore.setState({
+          currentClearinghouseState: { ...clearinghouse, assetPositions: [] },
+        }),
+      );
+      expect(latest.positions).toEqual([]);
+      expect(latest.allPositionsByCoin.size).toBe(0);
+      expect(latest.allPositionsCount).toBe(0);
+      expect(latest.positionCollectionPresentation).toBe('authoritativeEmpty');
+      expect(latest.activeInfoTab).toBe('positions');
+    });
+
+    it('publishes active protection-order additions, changes and removals without new position facts', async () => {
+      render(<AccountHarness active={false} />);
+      await selectTab('account');
+      const before = latest;
+      const order = protectionOrderFixture();
+      act(() => perpsStore.setState({ openOrders: [order] }));
+      expect(latest.account).toBe(before.account);
+      expect(latest.positions).not.toBe(before.positions);
+      expect(latest.positions[0].tpslOrders).toEqual([
+        expect.objectContaining({ oid: 1, triggerPrice: '60000' }),
+      ]);
+      expect(latest.allPositionsByCoin.get('BTC')).toBe(latest.positions[0]);
+      expect(latest.openOrderCounts.conditional).toBe(1);
+
+      act(() =>
+        perpsStore.setState({ openOrders: [{ ...order, triggerPx: '61000' }] }),
+      );
+      expect(latest.positions[0].tpslOrders[0].triggerPrice).toBe('61000');
+      expect(
+        latest.allPositionsByCoin.get('BTC')?.tpslOrders[0].triggerPrice,
+      ).toBe('61000');
+
+      act(() => perpsStore.setState({ openOrders: [] }));
+      expect(latest.positions[0].tpslOrders).toEqual([]);
+      expect(latest.allPositionsByCoin.get('BTC')?.tpslOrders).toEqual([]);
+      expect(latest.positions[0].marginRatio).toBe('0.1');
+      expect(latest.openOrderCounts.conditional).toBe(0);
+      expect(perpsStore.getState().currentClearinghouseState).toBe(
+        clearinghouse,
+      );
+    });
   });
 
   it.each(['ios', 'android'] as const)(
