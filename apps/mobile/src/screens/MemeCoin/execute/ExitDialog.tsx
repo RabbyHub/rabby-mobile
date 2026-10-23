@@ -8,6 +8,7 @@ import { Button } from '@/components2024/Button';
 import {
   BOTTOM_BUTTON_DOUBLE_HEIGHT,
   BOTTOM_BUTTON_GAP,
+  BOTTOM_BUTTON_TITLE_STYLE,
 } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 import { MODAL_GATE_IDS } from '@/utils/modalGate';
@@ -55,6 +56,7 @@ export const ExitDialog = ({
               type="plain"
               title={t('page.memeCoin.execute.stopAndExit')}
               height={BOTTOM_BUTTON_DOUBLE_HEIGHT}
+              titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
               containerStyle={styles.buttonContainer}
               onPress={onStop}
             />
@@ -62,6 +64,7 @@ export const ExitDialog = ({
               type="primary"
               title={t('page.memeCoin.execute.continue')}
               height={BOTTOM_BUTTON_DOUBLE_HEIGHT}
+              titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
               containerStyle={styles.buttonContainer}
               onPress={onContinue}
             />

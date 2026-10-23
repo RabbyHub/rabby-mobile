@@ -83,8 +83,6 @@ export const MemeCoinHomeBottomBar = ({
             title={t('page.memeCoin.buyN', { count: selectedCount })}
             height={BOTTOM_BUTTON_SINGLE_HEIGHT}
             titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
-            containerStyle={styles.ctaContainer}
-            buttonStyle={styles.ctaButton}
             onPress={onBuy}
             noShadow
             type="primary"
@@ -103,8 +101,6 @@ export const MemeCoinHomeBottomBar = ({
             title={t('page.memeCoin.sellN', { count: selectedCount })}
             height={BOTTOM_BUTTON_SINGLE_HEIGHT}
             titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
-            containerStyle={styles.ctaContainer}
-            buttonStyle={styles.ctaButton}
             onPress={onSell}
             noShadow
             type="primary"
@@ -118,20 +114,13 @@ export const MemeCoinHomeBottomBar = ({
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   bar: {
     flexShrink: 0,
-    paddingTop: 16,
+    paddingTop: BOTTOM_BUTTON_TOP_OFFSET,
     paddingHorizontal: 16,
     backgroundColor: colors2024['neutral-bg-1'],
     shadowColor: '#4B4E62',
     shadowOpacity: 0.1,
     shadowRadius: 15,
     shadowOffset: { width: 0, height: 0 },
-  },
-  ctaContainer: {
-    height: BOTTOM_BUTTON_SINGLE_HEIGHT,
-  },
-  ctaButton: {
-    height: BOTTOM_BUTTON_SINGLE_HEIGHT,
-    borderRadius: 12,
   },
   caption: {
     marginTop: 4,

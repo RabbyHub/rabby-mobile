@@ -6,6 +6,7 @@ import { Button } from '@/components2024/Button';
 import {
   BOTTOM_BUTTON_SINGLE_HEIGHT,
   BOTTOM_BUTTON_TITLE_STYLE,
+  BOTTOM_BUTTON_TOP_OFFSET,
   getBottomButtonBottomOffset,
 } from '@/constant/layout';
 import { useSafeSizes } from '@/hooks/useAppLayout';
@@ -77,8 +78,6 @@ export const BuySummaryBar = ({
         title={t('page.memeCoin.buy.confirm')}
         height={BOTTOM_BUTTON_SINGLE_HEIGHT}
         titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
-        containerStyle={styles.ctaContainer}
-        buttonStyle={styles.ctaButton}
         disabled={confirmDisabled}
         onPress={onConfirm}
         noShadow
@@ -91,7 +90,7 @@ export const BuySummaryBar = ({
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   bar: {
     flexShrink: 0,
-    paddingTop: 16,
+    paddingTop: BOTTOM_BUTTON_TOP_OFFSET,
     paddingHorizontal: 16,
     gap: 16,
     backgroundColor: colors2024['neutral-bg-1'],
@@ -137,12 +136,5 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 16,
     fontWeight: '400',
     color: colors2024['red-default'],
-  },
-  ctaContainer: {
-    height: BOTTOM_BUTTON_SINGLE_HEIGHT,
-  },
-  ctaButton: {
-    height: BOTTOM_BUTTON_SINGLE_HEIGHT,
-    borderRadius: 12,
   },
 }));

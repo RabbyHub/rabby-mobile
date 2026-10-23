@@ -59,7 +59,7 @@ const MemeCoinBuyContent = ({
     s => s.tokenListMap[account.address.toLowerCase()],
   );
 
-  // Strip logoUrl so planned legs (and the execute params) carry plain TokenRefs.
+  // The engine hook takes MemeTarget[]; memoized so its input stays stable.
   const memeTargets = useMemo(
     () =>
       memes.map(({ id, chain, symbol, marketCap }) => ({

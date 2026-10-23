@@ -10,7 +10,7 @@ type MemeMarketState = {
 
 export const useMemeMarketStore = zCreate<MemeMarketState>(() => ({
   list: [],
-  loading: false,
+  loading: true,
   error: false,
 }));
 

@@ -11,6 +11,7 @@ import { Button } from '@/components2024/Button';
 import {
   BOTTOM_BUTTON_SINGLE_HEIGHT,
   BOTTOM_BUTTON_TITLE_STYLE,
+  BOTTOM_BUTTON_TOP_OFFSET,
   getBottomButtonBottomOffset,
 } from '@/constant/layout';
 import type { Account } from '@/core/startupServices/preference';
@@ -53,9 +54,9 @@ const MemeCoinExecuteContent = ({
     Parameters<typeof navigation.dispatch>[0] | null
   >(null);
 
-  // Only user back (back button / Android back / iOS swipe) is taken over. Other
-  // navigation, e.g. the auto-lock reset to Unlock, waits while running (signing
-  // asks to unlock) and goes through once finished.
+  // Only user back (back button / Android back / iOS swipe) is taken over. While
+  // running, other navigation (e.g. the auto-lock reset to Unlock) is ignored and
+  // the next signing asks to unlock; once finished, it goes through.
   usePreventRemove(status !== 'idle' && !leaving, ({ data }) => {
     const isUserBack =
       data.action.type === 'GO_BACK' || data.action.type === 'POP';
@@ -136,7 +137,6 @@ const MemeCoinExecuteContent = ({
               })}
               height={BOTTOM_BUTTON_SINGLE_HEIGHT}
               titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
-              containerStyle={styles.ctaContainer}
               buttonStyle={styles.executingButton}
               noShadow
             />
@@ -151,8 +151,6 @@ const MemeCoinExecuteContent = ({
             }
             height={BOTTOM_BUTTON_SINGLE_HEIGHT}
             titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
-            containerStyle={styles.ctaContainer}
-            buttonStyle={styles.ctaButton}
             onPress={buttonState.kind === 'start' ? start : handleDone}
             noShadow
           />
@@ -235,20 +233,11 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   bottomBar: {
     flexShrink: 0,
-    paddingTop: 16,
+    paddingTop: BOTTOM_BUTTON_TOP_OFFSET,
     paddingHorizontal: 16,
     backgroundColor: colors2024['neutral-bg-1'],
   },
-  ctaContainer: {
-    height: BOTTOM_BUTTON_SINGLE_HEIGHT,
-  },
-  ctaButton: {
-    height: BOTTOM_BUTTON_SINGLE_HEIGHT,
-    borderRadius: 12,
-  },
   executingButton: {
-    height: BOTTOM_BUTTON_SINGLE_HEIGHT,
-    borderRadius: 12,
     backgroundColor: colors2024['brand-light-1'],
   },
 }));
