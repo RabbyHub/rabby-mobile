@@ -1,6 +1,5 @@
 import { APPROVAL_MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
-import { Dimensions } from 'react-native';
 import type { ApprovalComponentType } from '.';
 
 export const WaitingSignComponent: Record<string, ApprovalComponentType> = {
@@ -18,8 +17,7 @@ export const APPROVAL_SNAP_POINTS: Record<
   APPROVAL_MODAL_NAMES,
   (string | number)[]
 > = {
-  // 120 from the top of the screen
-  [APPROVAL_MODAL_NAMES.Connect]: [Dimensions.get('window').height - 120],
+  [APPROVAL_MODAL_NAMES.Connect]: ['100%'],
   [APPROVAL_MODAL_NAMES.SignText]: ['100%'],
   [APPROVAL_MODAL_NAMES.SignTypedData]: ['100%'],
   [APPROVAL_MODAL_NAMES.SignTx]: ['100%'],
@@ -33,4 +31,12 @@ export const APPROVAL_SNAP_POINTS: Record<
   [APPROVAL_MODAL_NAMES.Unknown]: [300],
   [APPROVAL_MODAL_NAMES.AddChain]: ['90%'],
   [APPROVAL_MODAL_NAMES.AddAsset]: ['90%'],
+};
+
+// Percentage snap points are re-measured on rotation, so '100%' + topInset
+// keeps the sheet a fixed distance from the top of the screen.
+export const APPROVAL_TOP_INSETS: Partial<
+  Record<APPROVAL_MODAL_NAMES, number>
+> = {
+  [APPROVAL_MODAL_NAMES.Connect]: 120,
 };
