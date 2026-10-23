@@ -829,8 +829,36 @@ const createSceneState = (overrides: Record<string, unknown> = {}) => ({
 const createInfoState = (overrides: Record<string, unknown> = {}) => {
   const openOrders = (overrides.openOrders ?? []) as unknown[];
   const positions = (overrides.positions ?? []) as unknown[];
+  // This suite isolates Scene composition. The real selector/store/activity
+  // contract is exercised in usePerpsProInfoPanel.integration.test.tsx.
+  const account = (overrides.account ?? {
+    assets: [],
+    mode: 'standard',
+  }) as {
+    assets: { coin: string; key: string }[];
+    mode: string;
+    primaryValue?: string;
+    unrealizedPnl?: string;
+  };
+  const accountControl = {
+    mode: account.mode,
+    marginRatio: null,
+    hasUnresolvedDexes: false,
+    hasUnpricedNonZeroAssets: false,
+  };
+  const accountAssetKeys = account.assets.map(asset => asset.key);
+  const summary = {
+    primaryValue: account.primaryValue ?? '0',
+    unrealizedPnl: account.unrealizedPnl ?? '0',
+  };
+  const accountSelectors = {
+    control: () => accountControl,
+    assetKeys: () => accountAssetKeys,
+    valuation: () => account,
+    summary: () => summary,
+  };
   return {
-    account: { assets: [], mode: 'standard' },
+    account,
     accountIdentity: 'test-account',
     accountState: 'loading',
     activeInfoTab: 'account',
@@ -862,6 +890,9 @@ const createInfoState = (overrides: Record<string, unknown> = {}) => {
     userAbstraction: 'default',
     userAbstractionReady: false,
     ...overrides,
+    accountControl,
+    accountAssetKeys,
+    accountSelectors,
   };
 };
 
@@ -1312,14 +1343,14 @@ describe('PerpsProScene market loading states', () => {
       const originalPage = screen.UNSAFE_getByType(
         PerpsProInfoSingleList,
       ).props;
-      const updated = {
+      const updated = createInfoState({
         ...info,
         account: {
           ...info.account,
           assets: [...info.account.assets],
           primaryValue: '123',
         },
-      };
+      });
       mockUsePerpsProInfoPanel.mockReturnValue(updated);
       view.rerender(<PerpsProScene {...props} />);
       const page = screen.UNSAFE_getByType(PerpsProInfoSingleList).props;

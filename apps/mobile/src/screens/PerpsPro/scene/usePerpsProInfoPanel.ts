@@ -4,13 +4,9 @@ import {
   useLayoutEffect,
   useMemo,
   useState,
-  useSyncExternalStore,
 } from 'react';
 import { useShallow } from 'zustand/react/shallow';
-import {
-  USDC_TOKEN_ID,
-  type WsFastAssetCtxs,
-} from '@rabby-wallet/hyperliquid-sdk';
+import { USDC_TOKEN_ID } from '@rabby-wallet/hyperliquid-sdk';
 
 import type { PerpsProInfoTab } from '@/core/services/perpsService';
 import { usePerpsRuntimeStatus } from '@/hooks/perps/runtime/usePerpsRuntimeStatus';
@@ -19,18 +15,10 @@ import {
   fetchStakingSummaryHttp,
   isPerpsUserAbstractionReadyForAccount,
   perpsStore,
-  type PerpsState,
   usePerpsStore,
 } from '@/hooks/perps/usePerpsStore';
 import { getPerpsPendingFundingCount } from '@/hooks/perps/funding/fundingJournal';
 
-import {
-  buildPerpsAccountViewModel,
-  getPerpsAccountMarginRatio,
-  getSpotPriceDependencyKeys,
-  getStakedHypeAmount,
-  STAKING_TOKEN_NAME,
-} from '../model/account';
 import {
   buildPerpsOpenOrdersFromTopology,
   filterPerpsOpenOrders,
@@ -49,18 +37,13 @@ import {
   type PerpsPositionViewModel,
 } from '../model/position';
 import { usePerpsProInfoPreferences } from './usePerpsProInfoPreferences';
+import { createPerpsProAccountSelectors } from './perpsProAccountSelectors';
 
 export type PerpsProAccountPanelState =
   | 'noAccount'
   | 'loading'
   | 'error'
   | 'ready';
-
-const marketFactSignature = (market: {
-  dexId: string;
-  name: string;
-  quoteAsset: string;
-}) => `${market.name}\u0000${market.dexId}\u0000${market.quoteAsset}`;
 
 export const usePerpsProInfoPanel = (
   canonicalCoin: string,
@@ -90,7 +73,6 @@ export const usePerpsProInfoPanel = (
       spotMeta: state.spotMeta,
       spotMetaStatus: state.spotMetaStatus,
       spotState: state.spotState,
-      stakingSummary: state.stakingSummary,
       stakingStatus: state.stakingStatus,
       userAbstraction: state.userAbstraction,
       userAbstractionReady: isPerpsUserAbstractionReadyForAccount(state),
@@ -99,93 +81,15 @@ export const usePerpsProInfoPanel = (
   const pendingFundingCount = perpsStore(state =>
     getPerpsPendingFundingCount(state.localLoadingHistory),
   );
-  const marketFactSignatures = perpsStore(
-    useShallow(state => state.marketData.map(marketFactSignature)),
-  );
-
-  const marketDataMap = useMemo(() => {
-    const result: Record<
-      string,
-      {
-        coin: string;
-        dexId: string;
-        quoteAsset: 'USDC' | 'USDT' | 'USDH' | 'USDE';
-      }
-    > = {};
-    for (const signature of marketFactSignatures) {
-      const [coin, dexId, quoteAsset] = signature.split('\u0000');
-      if (
-        coin &&
-        (quoteAsset === 'USDC' ||
-          quoteAsset === 'USDT' ||
-          quoteAsset === 'USDH' ||
-          quoteAsset === 'USDE')
-      ) {
-        result[coin] = { coin, dexId: dexId || '', quoteAsset };
-      }
-    }
-    return result;
-  }, [marketFactSignatures]);
+  const accountSelectors = useMemo(createPerpsProAccountSelectors, []);
+  // Keep readiness/risk live at the scene. Numeric valuation belongs only to
+  // retained Account leaves, under their existing activity boundary.
+  const accountControl = perpsStore(useShallow(accountSelectors.control));
+  const accountAssetKeys = perpsStore(useShallow(accountSelectors.assetKeys));
 
   const accountPagePrepared =
     preferences.activeInfoTab !== 'openOrders' ||
     requestedInfoTab === 'account';
-  const stakingHype = useMemo(
-    () => getStakedHypeAmount(facts.stakingSummary),
-    [facts.stakingSummary],
-  );
-  const priceDependencyKeys = useMemo(
-    () =>
-      getSpotPriceDependencyKeys(
-        [
-          ...facts.spotState.rawBalances
-            .filter(balance => Number(balance.total) !== 0)
-            .map(balance => balance.coin),
-          // Staked HYPE is priced off the same spot pair even when the spot
-          // balance holds none.
-          ...(Number(stakingHype) > 0 ? [STAKING_TOKEN_NAME] : []),
-        ],
-        facts.spotMeta,
-      ),
-    [facts.spotMeta, facts.spotState.rawBalances, stakingHype],
-  );
-  const selectSpotPriceValues = useShallow((state: PerpsState) =>
-    priceDependencyKeys.map(
-      key => `${key}\u0000${state.spotAssetCtxs[key]?.markPx ?? ''}`,
-    ),
-  );
-  // The retained Account page can be revealed before a swipe commits its tab.
-  // Pause price notifications, never erase the inputs to its portfolio value.
-  const subscribeSpotPrices = useCallback(
-    (listener: () => void) =>
-      accountPagePrepared ? perpsStore.subscribe(listener) : () => {},
-    [accountPagePrepared],
-  );
-  const getSpotPriceSnapshot = useCallback(
-    () => selectSpotPriceValues(perpsStore.getState()),
-    [selectSpotPriceValues],
-  );
-  // Read the current source on every render, including unrelated updates while
-  // paused and the first reactivation render, without an effect-time catch-up.
-  const spotPriceValues = useSyncExternalStore(
-    subscribeSpotPrices,
-    getSpotPriceSnapshot,
-    getSpotPriceSnapshot,
-  );
-  const spotAssetCtxs = useMemo(
-    () =>
-      spotPriceValues.reduce((result, value) => {
-        const [key, markPx] = value.split('\u0000');
-        if (!key) {
-          return result;
-        }
-        result[key] = {
-          markPx: markPx || undefined,
-        };
-        return result;
-      }, {} as WsFastAssetCtxs),
-    [spotPriceValues],
-  );
 
   useEffect(() => {
     if (
@@ -202,34 +106,13 @@ export const usePerpsProInfoPanel = (
     fetchSpotMeta,
   ]);
 
-  const account = useMemo(
-    () =>
-      buildPerpsAccountViewModel({
-        clearinghouseState: facts.clearinghouseState,
-        marketDataMap,
-        spotAssetCtxs,
-        spotMeta: facts.spotMeta,
-        spotState: facts.spotState,
-        stakingHype,
-        userAbstraction: facts.userAbstraction,
-      }),
-    [
-      facts.clearinghouseState,
-      facts.spotMeta,
-      facts.spotState,
-      facts.userAbstraction,
-      marketDataMap,
-      spotAssetCtxs,
-      stakingHype,
-    ],
-  );
   const openOrderTopology = useMemo(
     () => buildPerpsOpenOrderTopology(facts.openOrders),
     [facts.openOrders],
   );
   // Spot valuation can change the Account view without changing position risk.
   // Keep the actual risk input reactive, not the whole Account presentation.
-  const accountMarginRatio = getPerpsAccountMarginRatio(account);
+  const accountMarginRatio = accountControl.marginRatio;
   const allPositions = useMemo(
     () =>
       buildPerpsPositionsFromTopology(
@@ -258,11 +141,11 @@ export const usePerpsProInfoPanel = (
     ? getPerpsRuntimeIdentity(facts.currentAccount)
     : null;
   const fundingAccountValue =
-    account.mode === 'portfolioMargin'
+    accountControl.mode === 'portfolioMargin'
       ? facts.spotState.tokenToAvailableAfterMaintenance?.find(
           ([tokenId]) => tokenId === USDC_TOKEN_ID,
         )?.[1] ?? null
-      : account.mode === 'unified'
+      : accountControl.mode === 'unified'
       ? facts.spotState.accountValue ?? null
       : facts.clearinghouseState?.marginSummary?.accountValue ?? null;
   const fundingAccountValueReady =
@@ -270,7 +153,7 @@ export const usePerpsProInfoPanel = (
     runtime.status === 'ready' &&
     runtime.identity === runtimeAccountIdentity &&
     facts.userAbstractionReady &&
-    (account.mode === 'standard'
+    (accountControl.mode === 'standard'
       ? facts.isUserDataReady
       : facts.isSpotStateReady);
   const accountFactsReady =
@@ -379,15 +262,15 @@ export const usePerpsProInfoPanel = (
     ) {
       return 'loading';
     }
-    if (account.diagnostics.unresolvedDexes.length > 0) {
+    if (accountControl.hasUnresolvedDexes) {
       return 'error';
     }
-    if (account.diagnostics.unpricedNonZeroAssets.length > 0) {
+    if (accountControl.hasUnpricedNonZeroAssets) {
       return 'loading';
     }
     return 'ready';
   }, [
-    account,
+    accountControl,
     facts.currentAccount,
     facts.isSpotStateReady,
     facts.isUserDataReady,
@@ -409,7 +292,9 @@ export const usePerpsProInfoPanel = (
   }, [fetchMarketData, fetchSpotMeta, retryRuntime, runtimeStatus]);
 
   return {
-    account,
+    accountControl,
+    accountAssetKeys,
+    accountSelectors,
     currentAccount: facts.currentAccount,
     accountIdentity: facts.currentAccount
       ? `${facts.currentAccount.address.toLowerCase()}:${

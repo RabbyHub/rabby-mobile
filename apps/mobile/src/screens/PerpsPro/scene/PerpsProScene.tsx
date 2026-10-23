@@ -44,9 +44,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { runOnJS, runOnUI, useSharedValue } from 'react-native-reanimated';
 
-import { PerpsProAccountAssetRow } from '../components/account/PerpsProAccountAssetRow';
 import { PerpsProAccountState } from '../components/account/PerpsProAccountState';
-import { PerpsProAccountSummary } from '../components/account/PerpsProAccountSummary';
 import { PerpsProTransferSheet } from '../components/account/PerpsProTransferSheet';
 import {
   PerpsProFundingOverlay,
@@ -108,7 +106,6 @@ import { PerpsProManageMarginSheet } from '../components/positions/PerpsProManag
 import { PerpsProPositionTpSlSheets } from '../components/positions/PerpsProPositionTpSlSheets';
 import { PerpsProPositionsControls } from '../components/positions/PerpsProPositionsControls';
 import { resolvePerpsProTradeAddFundsAction } from '../model/addFunds';
-import type { PerpsAccountAssetRow } from '../model/account';
 import { PERPS_PRO_MAIN_COLUMN_HEIGHT } from '../model/layout';
 import type { PerpsOpenOrderViewModel } from '../model/openOrder';
 import { isRelevantOpenOrderEditPosition } from '../model/openOrderEdit';
@@ -126,6 +123,10 @@ import {
 import { usePerpsProScene } from './usePerpsProScene';
 import { usePerpsProTradeDisplayVisibility } from './usePerpsProTradeDisplayVisibility';
 import { PerpsProAccountPresentationReset } from './PerpsProAccountPresentationReset';
+import {
+  PerpsProAccountAssetDataRow,
+  PerpsProAccountSummaryRow,
+} from './PerpsProAccountPresentation';
 import { usePerpsProCancelOrders } from './usePerpsProCancelOrders';
 import { usePerpsProOpenOrderEdit } from './usePerpsProOpenOrderEdit';
 import { usePerpsProCloseAll } from './usePerpsProCloseAll';
@@ -144,7 +145,7 @@ type PerpsProSceneRow =
       type: 'account-state';
     }
   | { key: 'account-summary'; type: 'account-summary' }
-  | { asset: PerpsAccountAssetRow; key: string; type: 'account-asset' }
+  | { assetKey: string; key: string; type: 'account-asset' }
   | { key: 'positions-controls'; type: 'positions-controls' }
   | { key: 'positions-empty'; type: 'positions-empty' }
   | { key: string; position: PerpsPositionViewModel; type: 'position' }
@@ -725,9 +726,9 @@ export const PerpsProScene: React.FC<{
     if (info.accountState === 'ready') {
       rows.push({ key: 'account-summary', type: 'account-summary' });
       rows.push(
-        ...info.account.assets.map(asset => ({
-          asset,
-          key: `account-asset:${asset.key}`,
+        ...info.accountAssetKeys.map(assetKey => ({
+          assetKey,
+          key: `account-asset:${assetKey}`,
           type: 'account-asset' as const,
         })),
       );
@@ -740,7 +741,7 @@ export const PerpsProScene: React.FC<{
     }
 
     return rows;
-  }, [info.account.assets, info.accountState]);
+  }, [info.accountAssetKeys, info.accountState]);
 
   // Empty/loading rows depend on presentation, not each fresh polling array.
   // Populated rows still consume every position/order update without equality
@@ -836,16 +837,17 @@ export const PerpsProScene: React.FC<{
           );
         case 'account-summary':
           return (
-            <PerpsProAccountSummary
-              account={info.account}
+            <PerpsProAccountSummaryRow
+              selectors={info.accountSelectors}
               onDeposit={openDeposit}
               onWithdraw={openWithdraw}
             />
           );
         case 'account-asset':
           return (
-            <PerpsProAccountAssetRow
-              asset={item.asset}
+            <PerpsProAccountAssetDataRow
+              selectors={info.accountSelectors}
+              assetKey={item.assetKey}
               onSwap={openSwap}
               onTransfer={transfer.open}
             />
@@ -855,7 +857,7 @@ export const PerpsProScene: React.FC<{
       }
     },
     [
-      info.account,
+      info.accountSelectors,
       info.retryAccount,
       openDeposit,
       openWithdraw,

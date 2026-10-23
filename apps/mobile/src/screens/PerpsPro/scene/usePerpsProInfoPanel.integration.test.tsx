@@ -8,6 +8,7 @@ import {
   screen,
 } from '@testing-library/react-native';
 import { PixelRatio, Platform, StyleSheet } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { UserAbstractionResp } from '@rabby-wallet/hyperliquid-sdk';
 import type {
   AssetPosition,
@@ -17,6 +18,7 @@ import type {
 import type { StorageAdapater } from '@rabby-wallet/persist-store';
 import type { PerpsProInfoTab } from '@/core/services/perpsService';
 import type { AggregatedClearinghouseState } from '@/utils/perps';
+import type { MarketData } from '@/hooks/perps/usePerpsStore';
 // Integration fixtures instantiate the real service at its storage boundary.
 /* eslint-disable no-runtime-service-imports */
 import { PerpsService } from '@/core/services/perpsService';
@@ -28,9 +30,13 @@ import {
   resetPerpsRuntimeStateForTests,
 } from '@/hooks/perps/runtime/perpsRuntimeState';
 import { PerpsProAccountValue } from '../components/account/PerpsProAccountValue';
+import { StoreActivityBoundary } from '@/hooks/storeActivity/StoreActivityBoundary';
+import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
+import type { PerpsAccountViewModel } from '../model/account';
 import { formatPerpsProUsdValue } from '../utils/format';
 
 jest.mock('@ledgerhq/react-native-hw-transport-ble', () => ({}));
+jest.mock('@react-navigation/native', () => ({ useIsFocused: () => true }));
 
 // Keep import-time startup tasks dormant; only native/process boundaries are
 // replaced. The source Store, preference service/controller, Hook, account
@@ -42,6 +48,10 @@ const { usePerpsProInfoPanel } =
   require('./usePerpsProInfoPanel') as typeof import('./usePerpsProInfoPanel');
 const { usePerpsPortfolioLiveValue } =
   require('@/hooks/perps/usePerpsPortfolioLiveValue') as typeof import('@/hooks/perps/usePerpsPortfolioLiveValue');
+const { PerpsProAccountSummaryRow, PerpsProAccountAssetDataRow } =
+  require('./PerpsProAccountPresentation') as typeof import('./PerpsProAccountPresentation');
+const { createPerpsProAccountSelectors } =
+  require('./perpsProAccountSelectors') as typeof import('./perpsProAccountSelectors');
 
 const initialState = perpsStore.getState();
 const spotMeta: SpotMeta = {
@@ -117,6 +127,30 @@ const clearinghouseFixture = (): AggregatedClearinghouseState => ({
   time: 1,
   withdrawable: '50',
 });
+const marketFixture = (): MarketData => ({
+  name: 'other:BTC',
+  displayName: 'BTC',
+  dexId: 'other',
+  index: 0,
+  logoUrl: '',
+  markPx: '100',
+  midPx: '101',
+  prevDayPx: '90',
+  dayBaseVlm: '100',
+  dayNtlVlm: '10000',
+  funding: '0',
+  openInterest: '10',
+  oraclePx: '100',
+  premium: '0',
+  maxLeverage: 40,
+  minLeverage: 1,
+  maxUsdValueSize: '1000000',
+  maintenanceMarginTiers: [],
+  pxDecimals: 2,
+  szDecimals: 3,
+  onlyIsolated: false,
+  quoteAsset: 'USDC',
+});
 const protectionOrderFixture = (): OpenOrder => ({
   coin: 'BTC',
   isPositionTpsl: true,
@@ -134,26 +168,53 @@ const protectionOrderFixture = (): OpenOrder => ({
   triggerPx: '60000',
 });
 let latest: ReturnType<typeof usePerpsProInfoPanel>;
+let latestValuation: PerpsAccountViewModel;
 let renderedValues: string[];
-function AccountHarness({
-  requested = null,
-  active = true,
+let rootRenders: number;
+const AccountValuation = React.memo(function AccountValuation({
+  selectors,
 }: {
-  requested?: PerpsProInfoTab | null;
-  active?: boolean;
+  selectors: ReturnType<typeof usePerpsProInfoPanel>['accountSelectors'];
   revision?: number;
 }) {
-  const info = usePerpsProInfoPanel('BTC', requested, active);
-  renderedValues.push(info.account.primaryValue);
+  const accountValue = useActivityStore(perpsStore, selectors.valuation);
+  renderedValues.push(accountValue.primaryValue);
   useLayoutEffect(() => {
-    latest = info;
+    latestValuation = accountValue;
   });
   return (
     <PerpsProAccountValue
       testID="amount"
       style={amountStyle}
-      value={formatPerpsProUsdValue(info.account.primaryValue)}
+      value={formatPerpsProUsdValue(accountValue.primaryValue)}
     />
+  );
+});
+function AccountHarness({
+  requested = null,
+  active = true,
+  preview = false,
+  revision = 0,
+}: {
+  requested?: PerpsProInfoTab | null;
+  active?: boolean;
+  preview?: boolean;
+  revision?: number;
+}) {
+  const info = usePerpsProInfoPanel('BTC', requested, active);
+  rootRenders++;
+  useLayoutEffect(() => {
+    latest = info;
+  });
+  return (
+    <StoreActivityBoundary
+      key={info.accountIdentity}
+      label="perps-account-test"
+      active={
+        active && (preview || (requested ?? info.activeInfoTab) === 'account')
+      }>
+      <AccountValuation selectors={info.accountSelectors} revision={revision} />
+    </StoreActivityBoundary>
   );
 }
 const measureAmount = (width = 75) => {
@@ -258,6 +319,7 @@ describe('Perps Pro account price publication integration', () => {
         } as Response;
       });
     renderedValues = [];
+    rootRenders = 0;
     perpsStore.setState({
       ...initialState,
       currentPerpsAccount: account,
@@ -293,6 +355,258 @@ describe('Perps Pro account price publication integration', () => {
     jest.useRealTimers();
   });
 
+  it('keeps default selection based on authoritative positions, not valuation publications', async () => {
+    const empty = render(<AccountHarness active={false} />);
+    await act(async () => {});
+    expect(latest.activeInfoTab).toBe('account');
+    await empty.unmountAsync();
+
+    const clearinghouse = clearinghouseFixture();
+    perpsStore.setState({ currentClearinghouseState: clearinghouse });
+    render(<AccountHarness active={false} />);
+    expect(latest.activeInfoTab).toBe('positions');
+    updatePrice('31');
+    expect(latest.activeInfoTab).toBe('positions');
+    act(() =>
+      perpsStore.setState({
+        currentClearinghouseState: { ...clearinghouse, assetPositions: [] },
+      }),
+    );
+    expect(latest.activeInfoTab).toBe('positions');
+
+    const nextAccount = {
+      ...account,
+      address: '0x0000000000000000000000000000000000000002',
+    };
+    act(() => {
+      perpsStore.setState({
+        currentPerpsAccount: nextAccount,
+        userAbstractionOwnerAddress: nextAccount.address,
+      });
+      adoptExternalPerpsRuntime(getPerpsRuntimeIdentity(nextAccount));
+    });
+    expect(latest.activeInfoTab).toBe('account');
+  });
+
+  it('updates the production summary and asset leaves without publishing numeric prices to their root', async () => {
+    const onDeposit = jest.fn();
+    const onWithdraw = jest.fn();
+    const onSwap = jest.fn();
+    const onTransfer = jest.fn();
+    function PresentationHarness() {
+      const info = usePerpsProInfoPanel('BTC', null, false);
+      rootRenders++;
+      return (
+        <StoreActivityBoundary active label="account-production-leaves">
+          <PerpsProAccountSummaryRow
+            selectors={info.accountSelectors}
+            onDeposit={onDeposit}
+            onWithdraw={onWithdraw}
+          />
+          {info.accountAssetKeys.map(assetKey => (
+            <PerpsProAccountAssetDataRow
+              key={assetKey}
+              assetKey={assetKey}
+              selectors={info.accountSelectors}
+              onSwap={onSwap}
+              onTransfer={onTransfer}
+            />
+          ))}
+        </StoreActivityBoundary>
+      );
+    }
+    render(
+      <SafeAreaProvider
+        initialMetrics={{
+          frame: { x: 0, y: 0, width: 393, height: 852 },
+          insets: { top: 0, bottom: 0, left: 0, right: 0 },
+        }}>
+        <PresentationHarness />
+      </SafeAreaProvider>,
+    );
+    await act(async () => {});
+    const before = rootRenders;
+    expect(
+      screen.getByTestId('perps-pro-account-portfolio-value').props.children,
+    ).toBe('$173.25');
+    expect(screen.getByTestId('perps-pro-asset-unified:0')).toBeOnTheScreen();
+
+    updatePrice('31');
+    expect(rootRenders).toBe(before);
+    expect(
+      screen.getByTestId('perps-pro-account-portfolio-value').props.children,
+    ).toBe('$177.25');
+    act(() => perpsStore.setState({ spotState: spotState('60.25', '5') }));
+    expect(rootRenders).toBeGreaterThan(before);
+    expect(screen.getByText('$60.25')).toBeOnTheScreen();
+    expect(
+      screen.getByTestId('perps-pro-account-portfolio-value').props.children,
+    ).toBe('$215.25');
+  });
+
+  it('refreshes a zero-balance collateral row when its price becomes available without changing root readiness', () => {
+    const rawBalances = [balance('USDT', 268, '0')];
+    perpsStore.setState({
+      spotState: {
+        ...initialState.spotState,
+        rawBalances,
+        rawBalancesByToken: { 268: rawBalances[0] },
+      },
+      spotMeta: {
+        tokens: [
+          { index: 0, name: 'USDC' },
+          { index: 268, name: 'USDT' },
+        ],
+        universe: [{ index: 166, name: 'USDT/USDC', tokens: [268, 0] }],
+      },
+      spotAssetCtxs: {},
+    });
+    const selectors = createPerpsProAccountSelectors();
+    const source = perpsStore.getState();
+    const control = selectors.control(source);
+    const keys = selectors.assetKeys(source);
+    expect(selectors.valuation(source).assets[0].usdValue).toBeNull();
+    const priced = { ...source, spotAssetCtxs: { '@166': { markPx: '1' } } };
+    expect(selectors.control(priced)).toBe(control);
+    expect(selectors.assetKeys(priced)).toBe(keys);
+    expect(selectors.valuation(priced).assets[0].usdValue).toBe('0');
+    expect(selectors.valuation(source).assets[0].usdValue).toBeNull();
+  });
+
+  it('shares cached valuation across consumers and ignores unrelated ticker and market display changes', () => {
+    const selectors = createPerpsProAccountSelectors();
+    const market = marketFixture();
+    const source = { ...perpsStore.getState(), marketData: [market] };
+    const valuation = selectors.valuation(source);
+    const summary = selectors.summary(source);
+    const control = selectors.control(source);
+    const keys = selectors.assetKeys(source);
+    expect(selectors.valuation(source)).toBe(valuation);
+    expect(summary.primaryValue).toBe(valuation.primaryValue);
+
+    const unrelated = {
+      ...source,
+      marketData: [{ ...market, markPx: '999', displayName: 'Bitcoin' }],
+      spotAssetCtxs: { ...source.spotAssetCtxs, '@999': { markPx: '1000' } },
+      isOpenOrdersReady: false,
+    };
+    expect(selectors.valuation(unrelated)).toBe(valuation);
+    expect(selectors.summary(unrelated)).toBe(summary);
+    expect(selectors.control(unrelated)).toBe(control);
+    expect(selectors.assetKeys(unrelated)).toBe(keys);
+
+    const priced = {
+      ...unrelated,
+      spotAssetCtxs: { ...unrelated.spotAssetCtxs, '@10': { markPx: '31' } },
+    };
+    const nextValuation = selectors.valuation(priced);
+    expect(nextValuation).not.toBe(valuation);
+    expect(nextValuation.primaryValue).toBe('177.25');
+    expect(selectors.control(priced)).toBe(control);
+    expect(selectors.assetKeys(priced)).toBe(keys);
+    expect(selectors.summary(priced)).toEqual({
+      primaryValue: '177.25',
+      unrealizedPnl: '0',
+    });
+    expect(selectors.valuation(priced)).toBe(nextValuation);
+
+    const nextAccount = {
+      ...priced,
+      currentPerpsAccount: {
+        ...account,
+        address: '0x0000000000000000000000000000000000000002',
+      },
+      spotState: spotState('60.25', '5'),
+    };
+    expect(selectors.valuation(nextAccount).primaryValue).toBe('215.25');
+    expect(selectors.summary(nextAccount).primaryValue).toBe('215.25');
+    expect(selectors.valuation(source).primaryValue).toBe('173.25');
+  });
+
+  it('invalidates risk and valuation for market quote topology changes even when held spot prices stay unchanged', () => {
+    const selectors = createPerpsProAccountSelectors();
+    const source = {
+      ...perpsStore.getState(),
+      spotState: spotState('100', '4'),
+      currentClearinghouseState: {
+        ...clearinghouseFixture(),
+        crossMaintByDex: { other: '10' },
+      },
+    };
+    const unresolved = selectors.valuation(source);
+    const summary = selectors.summary(source);
+    expect(selectors.control(source)).toMatchObject({
+      marginRatio: null,
+      hasUnresolvedDexes: true,
+    });
+    const known = { ...source, marketData: [marketFixture()] };
+    expect(selectors.control(known)).toMatchObject({
+      marginRatio: '0.1',
+      hasUnresolvedDexes: false,
+    });
+    const resolved = selectors.valuation(known);
+    expect(resolved).not.toBe(unresolved);
+    expect(resolved.diagnostics.unresolvedDexes).toEqual([]);
+    expect(resolved.primaryValue).toBe(unresolved.primaryValue);
+    expect(selectors.summary(known)).toBe(summary);
+
+    const changedQuote = {
+      ...known,
+      marketData: [{ ...marketFixture(), quoteAsset: 'USDT' as const }],
+    };
+    expect(selectors.control(changedQuote).marginRatio).toBeNull();
+    expect(selectors.valuation(changedQuote)).not.toBe(resolved);
+    expect(selectors.control(known).marginRatio).toBe('0.1');
+  });
+
+  it('publishes missing and restored held prices to root readiness even while the Account leaf is inactive', async () => {
+    render(<AccountHarness active={false} />);
+    await selectTab('openOrders');
+    expect(latest.accountState).toBe('ready');
+    const before = rootRenders;
+    act(() => perpsStore.setState({ spotAssetCtxs: {} }));
+    expect(rootRenders).toBeGreaterThan(before);
+    expect(latest.accountControl.hasUnpricedNonZeroAssets).toBe(true);
+    expect(latest.accountState).toBe('loading');
+    updatePrice('0');
+    expect(latest.accountState).toBe('loading');
+    updatePrice('32');
+    expect(latest.accountControl.hasUnpricedNonZeroAssets).toBe(false);
+    expect(latest.accountState).toBe('ready');
+    const restored = rootRenders;
+    updatePrice('33');
+    expect(rootRenders).toBe(restored);
+  });
+
+  it('keeps funding value, readiness and pending count live outside the valuation activity boundary', async () => {
+    render(<AccountHarness active={false} />);
+    await selectTab('openOrders');
+    act(() =>
+      perpsStore.setState(state => ({
+        spotState: { ...state.spotState, accountValue: '456' },
+        localLoadingHistory: [
+          {
+            hash: 'pending-deposit',
+            status: 'pending',
+            time: 1,
+            type: 'deposit',
+            usdValue: '10',
+          },
+        ],
+      })),
+    );
+    expect(latest.fundingAccountValue).toBe('456');
+    expect(latest.fundingAccountValueReady).toBe(true);
+    expect(latest.pendingFundingCount).toBe(1);
+    act(() => perpsStore.setState({ isSpotStateReady: false }));
+    expect(latest.fundingAccountValueReady).toBe(false);
+    act(() =>
+      perpsStore.setState({ isSpotStateReady: true, localLoadingHistory: [] }),
+    );
+    expect(latest.fundingAccountValueReady).toBe(true);
+    expect(latest.pendingFundingCount).toBe(0);
+  });
+
   describe('position projection publication', () => {
     let clearinghouse: AggregatedClearinghouseState;
     beforeEach(() => {
@@ -303,18 +617,35 @@ describe('Perps Pro account price publication integration', () => {
       });
     });
 
-    it('updates spot valuation without replacing unchanged positions or the modal lookup map', async () => {
+    it('does not notify the root InfoPanel consumer for held-asset numeric price ticks', async () => {
       render(<AccountHarness active={false} />);
       await selectTab('positions');
       const before = latest;
-      expect(before.account.primaryValue).toBe('220');
+      const rendersBefore = rootRenders;
+
+      updatePrice('31');
+      updatePrice('32');
+      updatePrice('33');
+
+      expect(rootRenders).toBe(rendersBefore);
+      expect(latest).toBe(before);
+      expect(perpsStore.getState().spotAssetCtxs['@10'].markPx).toBe('33');
+    });
+
+    it('keeps root and position identities stable while a preview catches up to spot valuation', async () => {
+      const view = render(<AccountHarness active={false} />);
+      await selectTab('positions');
+      const before = latest;
+      expect(latestValuation.primaryValue).toBe('220');
       expect(before.positions).toHaveLength(1);
       expect(before.positions[0].marginRatio).toBe('0.1');
 
       updatePrice('31');
 
-      expect(latest.account).not.toBe(before.account);
-      expect(latest.account.primaryValue).toBe('224');
+      expect(latest).toBe(before);
+      expect(latestValuation.primaryValue).toBe('220');
+      view.rerender(<AccountHarness preview />);
+      expect(latestValuation.primaryValue).toBe('224');
       expect(latest.positions).toBe(before.positions);
       expect(latest.positions[0]).toBe(before.positions[0]);
       expect(latest.allPositionsByCoin).toBe(before.allPositionsByCoin);
@@ -338,7 +669,7 @@ describe('Perps Pro account price publication integration', () => {
           },
         }),
       );
-      expect(latest.account.primaryValue).toBe(before.account.primaryValue);
+      expect(latestValuation.primaryValue).toBe('220');
       expect(latest.positions).not.toBe(before.positions);
       expect(latest.positions[0].marginRatio).toBe('0.2');
       expect(latest.allPositionsByCoin).not.toBe(before.allPositionsByCoin);
@@ -397,7 +728,9 @@ describe('Perps Pro account price publication integration', () => {
         marginRatio: '0.1',
       });
       expect(latest.allPositionsByCoin.get('BTC')).toBe(latest.positions[0]);
-      expect(latest.account.unrealizedPnl).toBe('20');
+      expect(
+        latest.accountSelectors.valuation(perpsStore.getState()).unrealizedPnl,
+      ).toBe('20');
 
       act(() =>
         perpsStore.setState({
@@ -417,7 +750,7 @@ describe('Perps Pro account price publication integration', () => {
       const before = latest;
       const order = protectionOrderFixture();
       act(() => perpsStore.setState({ openOrders: [order] }));
-      expect(latest.account).toBe(before.account);
+      expect(latest.accountControl).toBe(before.accountControl);
       expect(latest.positions).not.toBe(before.positions);
       expect(latest.positions[0].tpslOrders).toEqual([
         expect.objectContaining({ oid: 1, triggerPrice: '60000' }),
@@ -445,7 +778,7 @@ describe('Perps Pro account price publication integration', () => {
   });
 
   it.each(['ios', 'android'] as const)(
-    'keeps the full value through swipe previews, cancellation and taps on %s',
+    'keeps the full value through retained tab snapshots and requested activation on %s',
     async os => {
       jest.replaceProperty(Platform, 'OS', os);
       const view = render(<AccountHarness />);
@@ -455,10 +788,10 @@ describe('Perps Pro account price publication integration', () => {
       for (let revision = 1; revision <= 3; revision++) {
         await selectTab('openOrders');
         expectAmount('$173.25');
-        // The native preview does not commit a preference or a requested tab.
+        // An unrelated retained-page render does not commit a tab preference.
         view.rerender(<AccountHarness revision={revision} />);
         expectAmount('$173.25');
-        expect(latest.account.diagnostics.unpricedNonZeroAssets).toEqual([]);
+        expect(latest.accountControl.hasUnpricedNonZeroAssets).toBe(false);
         await selectTab('account');
         expectAmount('$173.25');
       }
@@ -474,7 +807,7 @@ describe('Perps Pro account price publication integration', () => {
     },
   );
 
-  it('pauses price-only renders and catches up on the first reactivation render', async () => {
+  it('pauses price-only renders and catches up once on the activation commit', async () => {
     render(<AccountHarness />);
     await selectTab('account');
     measureAmount();
@@ -494,7 +827,34 @@ describe('Perps Pro account price publication integration', () => {
     expectAmount('$189.25');
   });
 
-  it('reads full current prices during an unrelated render while notifications are paused', async () => {
+  it('catches up when Account is previewed and pauses again when that preview is cancelled', async () => {
+    const view = render(<AccountHarness />);
+    await selectTab('openOrders');
+    measureAmount();
+    const before = renderedValues.length;
+    const rootsBefore = rootRenders;
+    updatePrice('31');
+    updatePrice('32');
+    expect(renderedValues).toHaveLength(before);
+    expect(rootRenders).toBe(rootsBefore);
+    expect(perpsStore.getState().spotAssetCtxs['@10'].markPx).toBe('32');
+
+    view.rerender(<AccountHarness preview />);
+    expect(renderedValues.slice(before)).toEqual(['181.25']);
+    expectAmount('$181.25');
+    expect(latest.activeInfoTab).toBe('openOrders');
+    view.rerender(<AccountHarness />);
+    const afterCancel = renderedValues.length;
+    updatePrice('33');
+    expect(renderedValues).toHaveLength(afterCancel);
+    expectAmount('$181.25');
+    expect(perpsStore.getState().spotAssetCtxs['@10'].markPx).toBe('33');
+    view.rerender(<AccountHarness preview />);
+    expect(renderedValues.slice(afterCancel)).toEqual(['185.25']);
+    expectAmount('$185.25');
+  });
+
+  it('retains a complete inactive snapshot through unrelated renders and catches up on preview', async () => {
     const view = render(<AccountHarness />);
     await selectTab('account');
     measureAmount();
@@ -502,11 +862,13 @@ describe('Perps Pro account price publication integration', () => {
     updatePrice('32');
     const before = renderedValues.length;
     view.rerender(<AccountHarness revision={1} />);
-    expect(renderedValues.slice(before)).toEqual(['181.25']);
-    expectAmount('$181.25');
+    expect(renderedValues.slice(before)).toEqual(['173.25']);
+    expectAmount('$173.25');
     act(() => perpsStore.setState({ spotState: spotState('60.25', '5') }));
+    expectAmount('$173.25');
+    view.rerender(<AccountHarness preview revision={1} />);
     expectAmount('$220.25');
-    expect(latest.account.diagnostics.unpricedNonZeroAssets).toEqual([]);
+    expect(latest.accountControl.hasUnpricedNonZeroAssets).toBe(false);
   });
 
   it('reads the latest complete value on a paused remount and a requested-tab activation', async () => {
@@ -556,9 +918,11 @@ describe('Perps Pro account price publication integration', () => {
       adoptExternalPerpsRuntime(getPerpsRuntimeIdentity(nextAccount));
     });
     expect(renderedValues.slice(before)).toEqual(['205.25']);
+    // Account identity replaces the retained page, including its text measure.
+    measureAmount();
     expectAmount('$205.25');
     expect(latest.accountState).toBe('ready');
-    expect(latest.account.diagnostics.unpricedNonZeroAssets).toEqual([]);
+    expect(latest.accountControl.hasUnpricedNonZeroAssets).toBe(false);
     await selectTab('account');
     const afterActivation = renderedValues.length;
     updatePrice('999');
@@ -598,7 +962,7 @@ describe('Perps Pro account price publication integration', () => {
     delegated = '2';
     await selectTab('account');
     expect(latest.accountState).toBe('ready');
-    expect(latest.account.primaryValue).toBe('233.25');
+    expect(latestValuation.primaryValue).toBe('233.25');
   });
 
   it('refreshes on Positions -> Account, pauses offscreen, and resumes on foreground', async () => {
@@ -608,12 +972,12 @@ describe('Perps Pro account price publication integration', () => {
     expect(stakingRequests()).toHaveLength(0);
     delegated = '2';
     await selectTab('account');
-    expect(latest.account.primaryValue).toBe('233.25');
+    expect(latestValuation.primaryValue).toBe('233.25');
     expect(stakingRequests()).toHaveLength(1);
 
     delegated = '3';
     await act(async () => jest.advanceTimersByTimeAsync(60_000));
-    expect(latest.account.primaryValue).toBe('263.25');
+    expect(latestValuation.primaryValue).toBe('263.25');
     await selectTab('positions');
     const callsBeforePause = stakingRequests().length;
     await act(async () => jest.advanceTimersByTimeAsync(60_000));
@@ -626,7 +990,7 @@ describe('Perps Pro account price publication integration', () => {
     await act(async () => jest.advanceTimersByTimeAsync(60_000));
     expect(stakingRequests()).toHaveLength(callsBeforeBackground);
     await act(async () => view.rerender(<AccountHarness />));
-    expect(latest.account.primaryValue).toBe('293.25');
+    expect(latestValuation.primaryValue).toBe('293.25');
     expect(stakingRequests()).toHaveLength(callsBeforeBackground + 1);
     await view.unmountAsync();
     await act(async () => jest.advanceTimersByTimeAsync(60_000));

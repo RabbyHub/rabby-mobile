@@ -90,6 +90,13 @@ jest.mock('@/hooks/perps/funding/fundingJournal', () => ({
 }));
 
 jest.mock('../model/account', () => ({
+  buildPerpsAccountControlState: () => ({
+    mode: mockAccount.mode,
+    marginRatio: null,
+    hasUnresolvedDexes: false,
+    hasUnpricedNonZeroAssets: false,
+  }),
+  buildPerpsAccountAssetKeys: () => [],
   buildPerpsAccountViewModel: () => mockAccount,
   getPerpsAccountMarginRatio: () => null,
   getSpotPriceDependencyKeys: () => [],
