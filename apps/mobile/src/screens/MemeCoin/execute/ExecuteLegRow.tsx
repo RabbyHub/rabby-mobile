@@ -1,6 +1,14 @@
-import React, { useEffect, useRef } from 'react';
-import { Animated, Easing, type TextStyle, View } from 'react-native';
+import React, { useEffect } from 'react';
+import { type TextStyle, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import Animated, {
+  cancelAnimation,
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withTiming,
+} from 'react-native-reanimated';
 import RcIconArrowCC from '@/assets2024/memecoin/arrow-cc.svg';
 import RcIconStatusExecuting from '@/assets2024/memecoin/status-executing.svg';
 import RcIconStatusFailed from '@/assets2024/memecoin/status-failed.svg';
@@ -20,25 +28,20 @@ import type { DisplayStatus, ExecLeg, FailReason } from '../engine/types';
 import type { MemeTradeTaskStore } from '../hooks/useMemeTradeTask';
 
 const SpinningIcon = () => {
-  const spin = useRef(new Animated.Value(0)).current;
+  const rotation = useSharedValue(0);
   useEffect(() => {
-    const animation = Animated.loop(
-      Animated.timing(spin, {
-        toValue: 1,
-        duration: 1000,
-        easing: Easing.linear,
-        useNativeDriver: true,
-      }),
+    rotation.value = withRepeat(
+      withTiming(360, { duration: 1000, easing: Easing.linear }),
+      -1,
+      false,
     );
-    animation.start();
-    return () => animation.stop();
-  }, [spin]);
-  const rotate = spin.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '360deg'],
-  });
+    return () => cancelAnimation(rotation);
+  }, [rotation]);
+  const spinStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${rotation.value}deg` }],
+  }));
   return (
-    <Animated.View style={{ transform: [{ rotate }] }}>
+    <Animated.View style={spinStyle}>
       <RcIconStatusExecuting width={18} height={18} />
     </Animated.View>
   );

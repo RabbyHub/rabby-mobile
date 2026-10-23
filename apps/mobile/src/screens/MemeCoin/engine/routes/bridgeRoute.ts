@@ -14,12 +14,11 @@ import { getBridgeQuoteApproval } from '@/screens/Bridge/utils/bridgeApproval';
 import { resolveBridgeArrival } from '@/screens/Bridge/utils/bridgeArrival';
 import { getBestBridgeQuote } from '@/screens/Bridge/utils/bridgeQuote';
 import { getRabbyFeeInfo } from '@/screens/Swap/hooks/fee';
+import { sleep } from '@/utils/async';
 import { findChainByServerID } from '@/utils/chain';
 import { BRIDGE_ARRIVAL_POLL_INTERVAL_MS } from '../constants';
 import type { LegRunnerDeps, RouteAdapter } from '../legRunner';
 import { ExecutionStoppedError } from '../pauseGate';
-
-const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 export const createBridgeRoute = ({ account }: { account: Account }) => {
   let aggregatorsTask: Promise<BridgeAggregator[]> | undefined;
