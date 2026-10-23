@@ -45,6 +45,7 @@ export const MODAL_GATE_IDS = {
   devServerSettings: 'dev-server-settings',
   convertDustEntryGuide: 'convert-dust-entry-guide',
   convertDustStopSheet: 'convert-dust-stop-sheet',
+  memeCoinExitDialog: 'memecoin-exit-dialog',
 } as const;
 
 const modalGateStore = zCreate<ModalGateState>(() => ({
