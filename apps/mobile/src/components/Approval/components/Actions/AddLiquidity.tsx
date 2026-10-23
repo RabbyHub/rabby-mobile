@@ -91,6 +91,7 @@ const AddLiquidity = ({
           <Row>
             <LogoWithText
               logo={token0.logo_url}
+              logoRadius={16}
               text={
                 <View style={commonStyle.row}>
                   <Text style={commonStyle.primaryText}>
@@ -111,6 +112,7 @@ const AddLiquidity = ({
           <Row>
             <LogoWithText
               logo={token1.logo_url}
+              logoRadius={16}
               text={
                 <View style={commonStyle.row}>
                   <Text style={commonStyle.primaryText}>
