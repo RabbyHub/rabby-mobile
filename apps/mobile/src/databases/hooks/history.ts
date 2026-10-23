@@ -4,6 +4,7 @@ import { HistoryItemEntity } from '../entities/historyItem';
 import { openapi } from '@/core/request';
 import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
 import {
+  historySyncCoverageMetaStore,
   historySyncCoverageStore,
   historyTimeStore,
   historyTxCountCheckStore,
@@ -156,6 +157,36 @@ const getCompleteHistoryCoverage = async (address: string) => {
     return null;
   }
   return coverage;
+};
+
+let legacyCoverageSeeding: Promise<void> | null = null;
+
+/**
+ * History synced before coverage records existed is trusted as is: once per
+ * install, before any sync writes, every address with rows gets a record. From
+ * then on, rows without a record mean a backfill that did not finish.
+ */
+const seedLegacyHistoryCoverage = () => {
+  if (historySyncCoverageMetaStore.getState().legacySeeded) {
+    return Promise.resolve();
+  }
+  if (!legacyCoverageSeeding) {
+    legacyCoverageSeeding = (async () => {
+      const latestTimes = await HistoryItemEntity.getLatestTimeByOwner();
+      const from = nowSec() - HISTORY_WINDOW_SEC;
+      historySyncCoverageStore.setState(prev => {
+        const next = { ...prev };
+        Object.entries(latestTimes).forEach(([address, latestTime]) => {
+          next[address] ??= { from, to: Math.max(from, latestTime) };
+        });
+        return next;
+      }, true);
+      historySyncCoverageMetaStore.setState({ legacySeeded: true });
+    })().finally(() => {
+      legacyCoverageSeeding = null;
+    });
+  }
+  return legacyCoverageSeeding;
 };
 
 /**
@@ -347,9 +378,11 @@ const runAddressHistorySync = async (
     setHistoryLoading(prev => ({ ...prev, [address]: true }));
   };
   try {
+    await seedLegacyHistoryCoverage();
     const coverage = await getCompleteHistoryCoverage(address);
     if (!coverage) {
-      // also the first sync of an address, and the repair after a gap
+      // the first sync of an address, an empty or reset DB, or a backfill
+      // that did not finish
       startLoading();
       await backfillHistoryWindow(address);
       updateHistoryTimeSingleAddress(address, startedAt);

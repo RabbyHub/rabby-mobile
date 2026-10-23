@@ -62,6 +62,15 @@ export const setHistorySyncCoverage = (
   }, true);
 };
 
+// set once the history synced before coverage records existed got its records
+export const historySyncCoverageMetaStore = zustandByMMKV<{
+  legacySeeded: boolean;
+}>(
+  '@HistorySyncCoverageMeta',
+  { legacySeeded: false },
+  { storage: MMKVStorageStrategy.compatJson },
+);
+
 export const resetUpdateHistoryTime = () => {
   historyTimeStore.setState({}, true);
   historyTxCountCheckStore.setState({}, true);

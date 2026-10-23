@@ -14,6 +14,7 @@ jest.mock('@/core/serviceApi/transactionHistory', () => ({
 jest.mock('../entities/historyItem', () => ({
   HistoryItemEntity: {
     getLatestTime: jest.fn(),
+    getLatestTimeByOwner: jest.fn(),
     countInTimeRange: jest.fn(),
     clear: jest.fn(),
   },
@@ -38,6 +39,7 @@ import { renderHook, waitFor } from '@testing-library/react-native';
 
 import { openapi } from '@/core/request';
 import {
+  historySyncCoverageMetaStore,
   historySyncCoverageStore,
   historyTimeStore,
   historyTxCountCheckStore,
@@ -112,6 +114,9 @@ describe('transaction history sync', () => {
     resetUpdateHistoryTime();
     latestTime = nowSec() - 60 * 60;
     mockedHistoryItemEntity.getLatestTime.mockResolvedValue(latestTime);
+    // history from before coverage records is handled by its own tests
+    historySyncCoverageMetaStore.setState({ legacySeeded: true });
+    mockedHistoryItemEntity.getLatestTimeByOwner.mockResolvedValue({});
     seedCoverage(latestTime);
     mockedSyncRemoteHistory.mockResolvedValue(true);
     mockedOpenapi.hasNewTxFrom.mockResolvedValue({ has_new_tx: true } as never);
@@ -282,7 +287,8 @@ describe('transaction history sync', () => {
   });
 
   describe('90-day completeness check', () => {
-    it('backfills the whole window for an address that was never fully synced', async () => {
+    it('backfills the whole window for rows whose backfill did not finish', async () => {
+      // local rows without a record after the one-time legacy seed
       setHistorySyncCoverage(ADDRESS, null);
       const now = nowSec();
       mockedOpenapi.getAllTxHistory.mockResolvedValueOnce(
@@ -316,6 +322,7 @@ describe('transaction history sync', () => {
 
     it('backfills an empty DB in full even when the address synced recently', async () => {
       // the sync time survived, the rows did not: this used to fetch only 30 days
+      historySyncCoverageMetaStore.setState({ legacySeeded: false });
       setHistorySyncCoverage(ADDRESS, null);
       mockedHistoryItemEntity.getLatestTime.mockResolvedValue(0);
       updateHistoryTimeSingleAddress(ADDRESS, Date.now() - 60 * 60 * 1000);
@@ -446,6 +453,96 @@ describe('transaction history sync', () => {
       const coverage = readCoverage();
       expect(coverage?.from).toBeGreaterThan(oldTo);
       expect(coverage?.to).toBe(coverage?.from);
+    });
+  });
+
+  describe('history from before coverage records', () => {
+    beforeEach(() => {
+      historySyncCoverageMetaStore.setState({ legacySeeded: false });
+      setHistorySyncCoverage(ADDRESS, null);
+    });
+
+    it('is trusted as complete instead of backfilled', async () => {
+      mockedHistoryItemEntity.getLatestTimeByOwner.mockResolvedValue({
+        [ADDRESS]: latestTime,
+      });
+
+      await syncTop10History([ADDRESS], true);
+
+      // a regular incremental sync from the newest local row, no backfill
+      expect(mockedOpenapi.getAllTxHistory).toHaveBeenCalledTimes(1);
+      expect(mockedOpenapi.getAllTxHistory).toHaveBeenCalledWith({
+        id: ADDRESS,
+        start_time: 0,
+        page_count: 500,
+      });
+      expect(readCoverage()?.from).toBeLessThanOrEqual(nowSec() - WINDOW_SEC);
+      expect(readCoverage()?.to).toBe(latestTime);
+      expect(historySyncCoverageMetaStore.getState().legacySeeded).toBe(true);
+    });
+
+    it('starts the range of an address idle for longer than the window at the window', async () => {
+      const staleTime = nowSec() - 100 * DAY_SEC;
+      mockedHistoryItemEntity.getLatestTime.mockResolvedValue(staleTime);
+      mockedHistoryItemEntity.getLatestTimeByOwner.mockResolvedValue({
+        [ADDRESS]: staleTime,
+      });
+      markHistoryTxCountChecked(ADDRESS);
+
+      await syncSingleAddress(ADDRESS);
+
+      expect(mockedOpenapi.getAllTxHistory).toHaveBeenCalledWith({
+        id: ADDRESS,
+        start_time: 0,
+        page_count: 2000,
+      });
+      const coverage = readCoverage();
+      expect(coverage?.from).toBeGreaterThan(staleTime);
+      expect(coverage?.to).toBe(coverage?.from);
+    });
+
+    it('is read once, before any sync writes', async () => {
+      const latestTimes = createDeferred<Record<string, number>>();
+      mockedHistoryItemEntity.getLatestTimeByOwner.mockReturnValueOnce(
+        latestTimes.promise,
+      );
+      const OTHER_ADDRESS = '0xabcdef0000000000000000000000000000000002';
+
+      const single = syncSingleAddress(ADDRESS);
+      const imported = syncMultiAddressesHistory([OTHER_ADDRESS]);
+      await new Promise(resolve => setTimeout(resolve, 0));
+      expect(mockedSyncRemoteHistory).not.toHaveBeenCalled();
+
+      latestTimes.resolve({ [ADDRESS]: latestTime });
+      await Promise.all([single, imported]);
+      await syncSingleAddress(ADDRESS);
+
+      expect(
+        mockedHistoryItemEntity.getLatestTimeByOwner,
+      ).toHaveBeenCalledTimes(1);
+      // the address with rows keeps them, the other one has none and backfills
+      expect(readCoverage()?.to).toBe(latestTime);
+      expect(mockedOpenapi.getAllTxHistory).toHaveBeenCalledWith({
+        id: OTHER_ADDRESS,
+        start_time: 0,
+        page_count: 2000,
+      });
+    });
+
+    it('retries the seed on the next sync when reading the DB fails', async () => {
+      mockedHistoryItemEntity.getLatestTimeByOwner
+        .mockRejectedValueOnce(new Error('db'))
+        .mockResolvedValueOnce({ [ADDRESS]: latestTime });
+
+      await syncSingleAddress(ADDRESS);
+
+      expect(mockedOpenapi.getAllTxHistory).not.toHaveBeenCalled();
+      expect(historySyncCoverageMetaStore.getState().legacySeeded).toBe(false);
+
+      await syncSingleAddress(ADDRESS);
+
+      expect(historySyncCoverageMetaStore.getState().legacySeeded).toBe(true);
+      expect(readCoverage()?.to).toBe(latestTime);
     });
   });
 
