@@ -36,9 +36,36 @@ export const markHistoryTxCountChecked = (add: string) => {
   }));
 };
 
+/**
+ * Time range (seconds) of local history known to be complete per address:
+ * every tx with `from <= time_at <= to` has been written to the DB. `to` is the
+ * newest synced tx, or `from` when the address had none.
+ */
+export type HistorySyncCoverage = { from: number; to: number };
+
+export const historySyncCoverageStore = zustandByMMKV<
+  Record<string, HistorySyncCoverage>
+>('@HistorySyncCoverage', {}, { storage: MMKVStorageStrategy.compatJson });
+
+export const setHistorySyncCoverage = (
+  add: string,
+  coverage: HistorySyncCoverage | null,
+) => {
+  historySyncCoverageStore.setState(prev => {
+    const next = { ...prev };
+    if (coverage) {
+      next[add.toLowerCase()] = coverage;
+    } else {
+      delete next[add.toLowerCase()];
+    }
+    return next;
+  }, true);
+};
+
 export const resetUpdateHistoryTime = () => {
   historyTimeStore.setState({}, true);
   historyTxCountCheckStore.setState({}, true);
+  historySyncCoverageStore.setState({}, true);
 };
 
 export const setHistoryLoading = (

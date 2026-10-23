@@ -1,23 +1,43 @@
+import { last } from 'lodash';
 import { syncRemoteHistory } from '../sync/assets';
 import { HistoryItemEntity } from '../entities/historyItem';
 import { openapi } from '@/core/request';
 import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
 import {
+  historySyncCoverageStore,
   historyTimeStore,
   historyTxCountCheckStore,
   markHistoryTxCountChecked,
   setHistoryLoading,
+  setHistorySyncCoverage,
   updateHistoryTimeSingleAddress,
+  type HistorySyncCoverage,
 } from '@/hooks/historyTokenDict';
 import PQueue from 'p-queue';
 import { prepareAppDataSource } from '../imports';
-import type { TxHistoryResult } from '@rabby-wallet/rabby-api/dist/types';
+import type {
+  TxAllHistoryResult,
+  TxHistoryResult,
+} from '@rabby-wallet/rabby-api/dist/types';
 
 const USE_REALTIME_API_DURATION = 24 * 5 * 60 * 60 * 1000; // use async history api if user not opened app in 5 days
+
+const HISTORY_WINDOW_SEC = 90 * 24 * 60 * 60; // the local DB keeps 90 days of history
+const ALL_HISTORY_PAGE_COUNT = 2000;
+// a gap of up to two weeks fits smaller all-history pages
+const ALL_HISTORY_SHORT_RANGE_SEC = 15 * 24 * 60 * 60;
+const ALL_HISTORY_SHORT_RANGE_PAGE_COUNT = 500;
+const ALL_HISTORY_MAX_PAGES = 5; // bounds a 90-day sync to ~10000 txs
+const REALTIME_PAGE_COUNT = 20;
+const REALTIME_MAX_PAGES = 25; // past ~500 new txs, finish with the all-history API
 
 type SyncTop10HistoryOptions = {
   forceAllHistoryApi?: boolean;
 };
+
+type HistoryPage = TxAllHistoryResult | TxHistoryResult;
+
+const nowSec = () => Math.floor(Date.now() / 1000);
 
 const isSyncingRef = {
   current: false,
@@ -53,194 +73,172 @@ const getIsNeedSyncData = async (address: string) => {
   return gap > expireTime;
 };
 
-const synHistoryInRealTimeApi = async (
-  address: string,
-  latest_time: number,
-  start_time?: number,
-) => {
-  try {
-    const notNeedUpdateTime = new Date().getTime() / 1000 - 30 * 24 * 60 * 60; // 30 days ago
-    const latestTime = latest_time || notNeedUpdateTime;
-    const startTime = start_time || 0;
+const isRecentlySynced = (address: string) => {
+  const latestUpdateTime = historyTimeStore.getState()?.[address] || 0;
+  return latestUpdateTime > Date.now() - USE_REALTIME_API_DURATION;
+};
 
-    console.log(
-      'synHistoryInRealTimeApi CUSTOM_LOGGER:=>: start',
-      address,
-      'latestTime:',
-      latestTime,
-      'startTime:',
-      startTime,
-    );
-    let hasNewTx = true;
-    if (latest_time !== 0) {
-      try {
-        const { has_new_tx } = await openapi.hasNewTxFrom({
-          address,
-          startTime: Math.floor(latest_time),
-        });
-        hasNewTx = has_new_tx;
-      } catch (e) {
-        // NOTHING
-      }
-    }
-    let res = {
-      cate_dict: {},
-      history_list: [] as TxHistoryResult['history_list'],
-      project_dict: {},
-      token_dict: {},
-    };
-    if (hasNewTx) {
-      res = await openapi.listTxHistory({
-        id: address,
-        start_time: startTime,
-        page_count: 20,
-      });
-    }
-
-    const ninetyDaysAgo = new Date().getTime() / 1000 - 90 * 24 * 60 * 60; // 90 days ago
-    res.history_list = res.history_list.filter(i => i.time_at > ninetyDaysAgo);
-
-    if (res.history_list.length) {
-      const lastItemTime =
-        res.history_list[res.history_list.length - 1].time_at;
-      if (lastItemTime < latestTime) {
-        // update done or not all update  to  interup loop
-        console.debug(
-          'synHistoryInRealTimeApi CUSTOM_LOGGER:=>: update',
-          address,
-          'update length:',
-          res.history_list.length,
-        );
-        await syncRemoteHistory(address, res);
-        console.debug(
-          'synHistoryInRealTimeApi CUSTOM_LOGGER:=>: No more history',
-          address,
-        );
-      } else {
-        // need more history, exec loop
-        console.debug(
-          'synHistoryInRealTimeApi CUSTOM_LOGGER:=>: fetch more history',
-          address,
-          'lastItemTime:',
-          lastItemTime,
-        );
-        console.debug(
-          'synHistoryInRealTimeApi CUSTOM_LOGGER:=>: loop update',
-          address,
-          'add length:',
-          res.history_list.length,
-        );
-        await syncRemoteHistory(address, res);
-        await synHistoryInRealTimeApi(address, latestTime, lastItemTime);
-      }
-    }
-    !start_time &&
-      !res.history_list.length &&
-      setHistoryLoading(prev => ({ ...prev, [address]: false }));
-  } catch (error) {
-    // set time for next resend fetch
-    updateHistoryTimeSingleAddress(address, 0);
-    setHistoryLoading(prev => ({ ...prev, [address]: false }));
-    console.error('synHistoryInRealTimeApi Error fetching data:', error);
-  }
-  if (!address) {
-    return [];
+const writeHistoryPage = async (address: string, res: HistoryPage) => {
+  if (!(await syncRemoteHistory(address, res))) {
+    // an unwritten page must not count as synced, or later syncs skip over it
+    throw new Error(`history write for ${address.slice(-4)} did not complete`);
   }
 };
 
-const syncUserAllHistory = async (
+/**
+ * Walk history pages from the newest tx back to `until` (seconds), writing each
+ * page before fetching the next.
+ *
+ * @returns the newest written `time_at` (0 when none), and whether `until` was
+ * reached before `maxPages` ran out
+ */
+const syncPagesUntil = async (
   address: string,
-  start_time?: number,
-  latest_time?: number,
-  forceUseRealTime?: boolean,
+  until: number,
+  {
+    pageCount,
+    maxPages,
+    fetchPage,
+  }: {
+    pageCount: number;
+    maxPages: number;
+    fetchPage: (startTime: number, pageCount: number) => Promise<HistoryPage>;
+  },
 ) => {
-  try {
-    setHistoryLoading(prev => ({ ...prev, [address]: true }));
-    const latestTime =
-      latest_time || (await HistoryItemEntity.getLatestTime(address));
-    const isExpiredTimeAgo = new Date().getTime() - 15 * 24 * 60 * 60 * 1000; // 15 days ago
-    const isAddUpdate = latestTime > isExpiredTimeAgo / 1000;
-
-    if (forceUseRealTime) {
-      // use other fetch api
-      await synHistoryInRealTimeApi(address, latestTime, start_time);
-      return;
+  let startTime = 0;
+  let newest = 0;
+  for (let page = 0; page < maxPages; page++) {
+    const res = await fetchPage(startTime, pageCount);
+    const inRange = res.history_list.filter(i => i.time_at >= until);
+    if (inRange.length) {
+      await writeHistoryPage(address, { ...res, history_list: inRange });
+      newest = Math.max(newest, ...inRange.map(i => i.time_at));
     }
+    const lastItem = last(res.history_list);
+    if (!lastItem || lastItem.time_at < until) {
+      return { newest, reached: true };
+    }
+    startTime = lastItem.time_at;
+  }
+  return { newest, reached: false };
+};
 
-    console.log(
-      '🔍syncUserAllHistory CUSTOM_LOGGER:=>: start',
-      address,
-      'end_time:',
-      latestTime,
-      'isAddUpdate:',
-      isAddUpdate,
-    );
-    // init time gap
-
-    const res = await openapi.getAllTxHistory({
+const fetchAllHistoryPage =
+  (address: string) => (startTime: number, pageCount: number) =>
+    openapi.getAllTxHistory({
       id: address,
-      start_time: start_time || 0,
-      page_count: isAddUpdate ? 500 : 2000,
+      start_time: startTime,
+      page_count: pageCount,
     });
 
-    const ninetyDaysAgo = new Date().getTime() / 1000 - 90 * 24 * 60 * 60; // 90 days ago
-    res.history_list = res.history_list.filter(i => i.time_at > ninetyDaysAgo);
-    console.debug('getAllTxHistory length:', res.history_list.length);
-    if (res.history_list.length) {
-      const lastItemTime =
-        res.history_list[res.history_list.length - 1].time_at;
-      if (lastItemTime < latestTime || !isAddUpdate) {
-        // update done or not all update  to  interup loop
-        res.history_list = res.history_list.filter(i => i.time_at > latestTime);
+const fetchRealTimeHistoryPage =
+  (address: string) => (startTime: number, pageCount: number) =>
+    openapi.listTxHistory({
+      id: address,
+      start_time: startTime,
+      page_count: pageCount,
+    });
 
-        console.debug(
-          '🔍syncUserAllHistory CUSTOM_LOGGER:=>: update',
-          address,
-          'add length:',
-          res.history_list.length,
-        );
-        if (res.history_list.length) {
-          await syncRemoteHistory(address, res);
-        }
-        console.debug(
-          '🔍syncUserAllHistory CUSTOM_LOGGER:=>: No more history',
-          address,
-        );
-      } else {
-        // need more history, exec loop
-        console.debug(
-          '🔍syncUserAllHistory CUSTOM_LOGGER:=>: fetch more history',
-          address,
-          'lastItemTime:',
-          lastItemTime,
-        );
-        console.debug(
-          '🔍syncUserAllHistory CUSTOM_LOGGER:=>: loop update',
-          address,
-          'add length:',
-          res.history_list.length,
-        );
-        await syncRemoteHistory(address, res);
-        await syncUserAllHistory(
-          address,
-          lastItemTime,
-          latestTime,
-          forceUseRealTime,
-        );
-      }
+/**
+ * The 90-day completeness check: local history counts as complete only once a
+ * sync has written the whole window, and only while the rows it wrote are
+ * still there (the DB can be reset or cleared outside the sync).
+ */
+const getCompleteHistoryCoverage = async (address: string) => {
+  const coverage = historySyncCoverageStore.getState()[address];
+  if (!coverage) {
+    return null;
+  }
+  if (
+    coverage.to > coverage.from &&
+    (await HistoryItemEntity.getLatestTime(address)) < coverage.to
+  ) {
+    return null;
+  }
+  return coverage;
+};
+
+/**
+ * Fetch and store the whole 90-day window, then record it as complete. Past
+ * ALL_HISTORY_MAX_PAGES the oldest txs are left out on purpose.
+ */
+const backfillHistoryWindow = async (address: string) => {
+  const from = nowSec() - HISTORY_WINDOW_SEC;
+  const { newest, reached } = await syncPagesUntil(address, from, {
+    pageCount: ALL_HISTORY_PAGE_COUNT,
+    maxPages: ALL_HISTORY_MAX_PAGES,
+    fetchPage: fetchAllHistoryPage(address),
+  });
+  if (!reached) {
+    console.warn(
+      `backfillHistoryWindow stopped after ${ALL_HISTORY_MAX_PAGES} pages for ${address.slice(
+        -4,
+      )}`,
+    );
+  }
+  setHistorySyncCoverage(address, { from, to: Math.max(from, newest) });
+};
+
+const syncSinceWithRealTimeApi = async (address: string, since: number) => {
+  try {
+    const { has_new_tx } = await openapi.hasNewTxFrom({
+      address,
+      startTime: Math.floor(since),
+    });
+    if (!has_new_tx) {
+      return { newest: 0, reached: true };
     }
-    !start_time &&
-      !res.history_list.length &&
-      setHistoryLoading(prev => ({ ...prev, [address]: false }));
-  } catch (error) {
-    // set time for next resend fetch
-    updateHistoryTimeSingleAddress(address, 0);
-    setHistoryLoading(prev => ({ ...prev, [address]: false }));
-    console.error('syncUserAllHistory Error fetching data:', error);
+  } catch (e) {
+    // NOTHING, list the history to find out
   }
-  if (!address) {
-    return [];
+  return syncPagesUntil(address, since, {
+    pageCount: REALTIME_PAGE_COUNT,
+    maxPages: REALTIME_MAX_PAGES,
+    fetchPage: fetchRealTimeHistoryPage(address),
+  });
+};
+
+/**
+ * Store the txs newer than the complete range and extend the range over them.
+ * The range is anchored at its own end rather than at the newest local row:
+ * after an interrupted write the newest rows may exist while older ones do not.
+ */
+const syncNewHistory = async (
+  address: string,
+  coverage: HistorySyncCoverage,
+  useRealTimeApi: boolean,
+) => {
+  const since = Math.max(coverage.to, nowSec() - HISTORY_WINDOW_SEC);
+  let { newest, reached } = useRealTimeApi
+    ? await syncSinceWithRealTimeApi(address, since)
+    : { newest: 0, reached: false };
+  if (!reached) {
+    const allHistory = await syncPagesUntil(address, since, {
+      pageCount:
+        nowSec() - since > ALL_HISTORY_SHORT_RANGE_SEC
+          ? ALL_HISTORY_PAGE_COUNT
+          : ALL_HISTORY_SHORT_RANGE_PAGE_COUNT,
+      maxPages: ALL_HISTORY_MAX_PAGES,
+      fetchPage: fetchAllHistoryPage(address),
+    });
+    newest = Math.max(newest, allHistory.newest);
+    reached = allHistory.reached;
   }
+  if (!reached) {
+    // the rows between `since` and the oldest fetched one are missing, so the
+    // next sync backfills the window instead
+    console.warn(
+      `syncNewHistory did not reach the synced range for ${address.slice(-4)}`,
+    );
+    setHistorySyncCoverage(address, null);
+    return;
+  }
+  // the window moved past the old range, so only the window is complete
+  const from = since > coverage.to ? since : coverage.from;
+  setHistorySyncCoverage(address, {
+    from,
+    to: Math.max(from, coverage.to, newest),
+  });
 };
 
 const TX_COUNT_CHECK_INTERVAL = 24 * 60 * 60 * 1000; // compare with the server once a day
@@ -254,28 +252,19 @@ const isTxCountCheckDue = (address: string) => {
 };
 
 const refetchHistorySince = async (address: string, fromTs: number) => {
-  let startTime = 0;
-  for (let page = 0; page < REFETCH_MAX_PAGES; page++) {
-    const res = await openapi.listTxHistory({
-      id: address,
-      start_time: startTime,
-      page_count: REFETCH_PAGE_COUNT,
-    });
-    const inWindow = res.history_list.filter(i => i.time_at >= fromTs);
-    if (inWindow.length) {
-      await syncRemoteHistory(address, { ...res, history_list: inWindow });
-    }
-    const lastItem = res.history_list[res.history_list.length - 1];
-    if (!lastItem || lastItem.time_at < fromTs) {
-      return;
-    }
-    startTime = lastItem.time_at;
+  const { reached } = await syncPagesUntil(address, fromTs, {
+    pageCount: REFETCH_PAGE_COUNT,
+    maxPages: REFETCH_MAX_PAGES,
+    fetchPage: fetchRealTimeHistoryPage(address),
+  });
+  if (!reached) {
+    console.warn(
+      `refetchHistorySince stopped after ${REFETCH_MAX_PAGES} pages for ${address.slice(
+        -4,
+      )}`,
+    );
   }
-  console.warn(
-    `refetchHistorySince stopped after ${REFETCH_MAX_PAGES} pages for ${address.slice(
-      -4,
-    )}`,
-  );
+  return reached;
 };
 
 const txCountCheckInFlight = new Map<string, Promise<boolean>>();
@@ -288,8 +277,8 @@ const txCountCheckInFlight = new Map<string, Promise<boolean>>();
  * incremental sync's job, so a mismatch here means a gap in data we already
  * consider synced.
  *
- * @returns true when the window was re-fetched (which also covers everything
- * newer than the local rows)
+ * @returns true when the whole window was re-fetched (which also covers
+ * everything newer than the local rows)
  */
 export const refetchRecentHistoryIfIncomplete = (address: string) => {
   // Home and single-address syncs may check the same address at once
@@ -327,14 +316,81 @@ const checkRecentTxCountAndRefetch = async (address: string) => {
       return false;
     }
 
-    await refetchHistorySince(address, fromTs);
+    const refetched = await refetchHistorySince(address, fromTs);
     markHistoryTxCountChecked(address);
-    return true;
+    return refetched;
   } catch (error) {
     // not marked as checked, so the next sync retries
     console.error('refetchRecentHistoryIfIncomplete error', error);
     return false;
   }
+};
+
+type AddressHistorySyncTask = {
+  /** the regular sync is due: fetch the txs newer than the local history */
+  fetchNew: boolean;
+  /** compare the recent tx count with the server first */
+  checkTxCount: boolean;
+  useRealTimeApi: boolean;
+};
+
+const runAddressHistorySync = async (
+  address: string,
+  { fetchNew, checkTxCount, useRealTimeApi }: AddressHistorySyncTask,
+) => {
+  // recorded only once the data is written, so an interrupted sync is not
+  // taken for a finished one
+  const startedAt = Date.now();
+  let isLoading = false;
+  const startLoading = () => {
+    isLoading = true;
+    setHistoryLoading(prev => ({ ...prev, [address]: true }));
+  };
+  try {
+    const coverage = await getCompleteHistoryCoverage(address);
+    if (!coverage) {
+      // also the first sync of an address, and the repair after a gap
+      startLoading();
+      await backfillHistoryWindow(address);
+      updateHistoryTimeSingleAddress(address, startedAt);
+      return;
+    }
+
+    // check before the regular sync so its writes cannot look like a gap
+    const refetched =
+      checkTxCount && (await refetchRecentHistoryIfIncomplete(address));
+    if (!fetchNew) {
+      return;
+    }
+    if (!refetched) {
+      startLoading();
+      await syncNewHistory(address, coverage, useRealTimeApi);
+    }
+    updateHistoryTimeSingleAddress(address, startedAt);
+  } catch (error) {
+    // reset so the next sync is not throttled
+    updateHistoryTimeSingleAddress(address, 0);
+    console.error(`syncAddressHistory error for ${address.slice(-4)}:`, error);
+  } finally {
+    if (isLoading) {
+      setHistoryLoading(prev => ({ ...prev, [address]: false }));
+    }
+  }
+};
+
+const addressHistorySyncInFlight = new Map<string, Promise<void>>();
+
+/** Home, single-address and import syncs of one address share a run */
+const syncAddressHistory = (address: string, task: AddressHistorySyncTask) => {
+  const inFlight = addressHistorySyncInFlight.get(address);
+  if (inFlight) {
+    return inFlight;
+  }
+  const run = runAddressHistorySync(address, task).finally(() => {
+    addressHistorySyncInFlight.delete(address);
+  });
+  addressHistorySyncInFlight.set(address, run);
+  return run;
 };
 
 export const syncTop10History = async (
@@ -361,6 +417,7 @@ export const syncTop10History = async (
     await prepareAppDataSource();
     if (resetEntity) {
       await HistoryItemEntity.clear();
+      historySyncCoverageStore.setState({}, true);
     }
     const queue = new PQueue({
       interval: 2000,
@@ -373,33 +430,20 @@ export const syncTop10History = async (
       if (!isForceFetchFromApi && !shouldCheckTxCount) {
         continue;
       }
-      let isUseRealTimeApi = false;
       if (isForceFetchFromApi) {
-        const latestUpdateTime = historyTimeStore.getState()?.[address] || 0;
-        isUseRealTimeApi = options?.forceAllHistoryApi
-          ? false
-          : latestUpdateTime > Date.now() - USE_REALTIME_API_DURATION;
-        updateHistoryTimeSingleAddress(address);
         console.debug(
           '🔍syncTop10History CUSTOM_LOGGER:=>: update sync address:',
           address,
         );
       }
+      const useRealTimeApi =
+        !options?.forceAllHistoryApi && isRecentlySynced(address);
       queue.add(async () => {
-        try {
-          // check before the regular sync so its pending writes cannot look like a gap
-          const refetched =
-            shouldCheckTxCount &&
-            (await refetchRecentHistoryIfIncomplete(address));
-          if (isForceFetchFromApi && !refetched) {
-            await syncUserAllHistory(address, 0, 0, isUseRealTimeApi);
-          }
-        } catch (error) {
-          console.error(
-            `syncTop10History Error fetching data for ${address.slice(-4)}:`,
-            error,
-          );
-        }
+        await syncAddressHistory(address, {
+          fetchNew: isForceFetchFromApi,
+          checkTxCount: shouldCheckTxCount,
+          useRealTimeApi,
+        });
         await new Promise(resolve => setTimeout(resolve, 0));
       });
     }
@@ -432,21 +476,13 @@ export const syncMultiAddressesHistory = async (addresses: string[]) => {
   });
   for (const item of addresses) {
     const address = item.toLowerCase();
-    const latestUpdateTime = historyTimeStore.getState()?.[address] || 0;
-    const isUserRealTimeApi =
-      latestUpdateTime > Date.now() - USE_REALTIME_API_DURATION;
-    updateHistoryTimeSingleAddress(address);
+    const useRealTimeApi = isRecentlySynced(address);
     queue.add(async () => {
-      try {
-        await syncUserAllHistory(address, 0, 0, isUserRealTimeApi);
-      } catch (error) {
-        console.error(
-          `syncMultiAccountsHistory Error fetching data for ${address.slice(
-            -4,
-          )}:`,
-          error,
-        );
-      }
+      await syncAddressHistory(address, {
+        fetchNew: true,
+        checkTxCount: false,
+        useRealTimeApi,
+      });
       await new Promise(resolve => setTimeout(resolve, 0));
     });
   }
@@ -455,16 +491,11 @@ export const syncMultiAddressesHistory = async (addresses: string[]) => {
 
 export const syncSingleAddress = async (_address: string) => {
   const address = _address.toLowerCase();
-  const latestUpdateTime = historyTimeStore.getState()?.[address] || 0;
-  const isUseRealTimeApi =
-    latestUpdateTime > Date.now() - USE_REALTIME_API_DURATION;
-  updateHistoryTimeSingleAddress(address);
-  const refetched =
-    isTxCountCheckDue(address) &&
-    (await refetchRecentHistoryIfIncomplete(address));
-  if (!refetched) {
-    await syncUserAllHistory(address, 0, 0, isUseRealTimeApi);
-  }
+  await syncAddressHistory(address, {
+    fetchNew: true,
+    checkTxCount: isTxCountCheckDue(address),
+    useRealTimeApi: isRecentlySynced(address),
+  });
 };
 
 export const useHistoryTime = () => {
