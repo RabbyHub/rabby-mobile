@@ -12,6 +12,7 @@ import { buildPerpsProMarket } from '../../model/market';
 import { getPerpsProColumnLayout } from '../../model/layout';
 import { PerpsProOrderBookRatioSkeleton } from './PerpsProOrderBookSkeleton';
 import { processPerpsOrderBook } from '../../model/orderBook';
+import * as orderBookModel from '../../model/orderBook';
 import {
   getPerpsProOrderBookDepthKey,
   getPerpsProOrderBookRowKey,
@@ -160,6 +161,158 @@ describe('PerpsProOrderBook display shell', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('reuses book-derived calculations for trade and clock updates but immediately displays a new book', () => {
+    const maxVisibleTotal = jest.spyOn(
+      orderBookModel,
+      'getVisiblePerpsOrderBookMaxTotal',
+    );
+    const buyRatio = jest.spyOn(orderBookModel, 'calculatePerpsBuyRatio');
+    const book = processPerpsOrderBook({
+      coin: 'BTC',
+      levels: [[{ n: 1, px: '100', sz: '1' }], [{ n: 1, px: '100', sz: '1' }]],
+      time: 100,
+    });
+    const props: React.ComponentProps<typeof PerpsProOrderBook> = {
+      ...defaultProps,
+      book,
+      bookIdentity: 'BTC:5:null',
+      bookStatus: 'ready',
+      hasBookSnapshot: true,
+      latestTrade: {
+        coin: 'BTC',
+        price: '102.50',
+        side: 'buy',
+        size: '1',
+        tid: 1,
+        time: 100,
+      },
+      market: btcMarket,
+      serverClock: { receivedAt: 100, serverTime: 100 },
+    };
+    const view = render(<PerpsProOrderBook {...props} />);
+    expect(maxVisibleTotal).toHaveBeenCalledTimes(1);
+    expect(maxVisibleTotal).toHaveLastReturnedWith(1);
+    expect(buyRatio).toHaveBeenCalledTimes(1);
+    expect(screen.getAllByText('50.00%')).toHaveLength(2);
+
+    const latestTrade = {
+      ...props.latestTrade!,
+      price: '103.50',
+      tid: 2,
+      time: 200,
+    };
+    view.rerender(<PerpsProOrderBook {...props} latestTrade={latestTrade} />);
+    expect(screen.getByText('103.50')).toBeTruthy();
+    expect(screen.queryByText('102.50')).toBeNull();
+    expect(maxVisibleTotal).toHaveBeenCalledTimes(1);
+    expect(buyRatio).toHaveBeenCalledTimes(1);
+
+    const serverClock = { receivedAt: 200, serverTime: 200 };
+    view.rerender(
+      <PerpsProOrderBook
+        {...props}
+        latestTrade={latestTrade}
+        serverClock={serverClock}
+      />,
+    );
+    expect(maxVisibleTotal).toHaveBeenCalledTimes(1);
+    expect(buyRatio).toHaveBeenCalledTimes(1);
+
+    const nextBook = processPerpsOrderBook({
+      coin: 'BTC',
+      levels: [[{ n: 1, px: '200', sz: '3' }], [{ n: 1, px: '200', sz: '1' }]],
+      time: 300,
+    });
+    view.rerender(
+      <PerpsProOrderBook
+        {...props}
+        book={nextBook}
+        latestTrade={latestTrade}
+        serverClock={serverClock}
+      />,
+    );
+    expect(maxVisibleTotal).toHaveBeenCalledTimes(2);
+    expect(maxVisibleTotal).toHaveLastReturnedWith(3);
+    expect(buyRatio).toHaveBeenCalledTimes(2);
+    expect(buyRatio).toHaveBeenLastCalledWith(nextBook);
+    expect(screen.getByText('75.00%')).toBeTruthy();
+    expect(screen.getByText('25.00%')).toBeTruthy();
+    expect(screen.getAllByText('200.00')).toHaveLength(2);
+    expect(screen.queryByText('100.00')).toBeNull();
+    const depths = screen.getAllByTestId('perps-pro-order-book-depth');
+    expect(depths).toHaveLength(2);
+    expect(
+      parseFloat(StyleSheet.flatten(depths[0].props.style).width),
+    ).toBeCloseTo(100 / 3);
+    expect(StyleSheet.flatten(depths[1].props.style).width).toBe('100%');
+  });
+
+  it('recalculates visible depth for mode and row-count changes without recalculating the full-book ratio', () => {
+    const maxVisibleTotal = jest.spyOn(
+      orderBookModel,
+      'getVisiblePerpsOrderBookMaxTotal',
+    );
+    const buyRatio = jest.spyOn(orderBookModel, 'calculatePerpsBuyRatio');
+    const book = processPerpsOrderBook({
+      coin: 'BTC',
+      levels: [
+        Array.from({ length: 20 }, (_, index) => ({
+          n: 1,
+          px: String(100 - index),
+          sz: '1',
+        })),
+        Array.from({ length: 20 }, (_, index) => ({
+          n: 1,
+          px: String(101 + index),
+          sz: '1',
+        })),
+      ],
+      time: 100,
+    });
+    const props: React.ComponentProps<typeof PerpsProOrderBook> = {
+      ...defaultProps,
+      book,
+      bookIdentity: 'BTC:5:null',
+      bookStatus: 'ready',
+      hasBookSnapshot: true,
+      height: 416,
+      market: btcMarket,
+    };
+    const view = render(<PerpsProOrderBook {...props} />);
+    expect(screen.getAllByTestId('perps-pro-order-book-row')).toHaveLength(12);
+    expect(maxVisibleTotal).toHaveBeenCalledTimes(1);
+    expect(maxVisibleTotal).toHaveLastReturnedWith(6);
+    expect(buyRatio).toHaveBeenCalledTimes(1);
+    expect(screen.getByText('45.02%')).toBeTruthy();
+    expect(screen.getByText('54.98%')).toBeTruthy();
+
+    fireEvent.press(screen.getByLabelText('page.perps.pro.orderBook.viewBoth'));
+    expect(
+      screen.getByLabelText('page.perps.pro.orderBook.viewBids'),
+    ).toBeTruthy();
+    expect(screen.getAllByTestId('perps-pro-order-book-row')).toHaveLength(13);
+    expect(maxVisibleTotal).toHaveBeenCalledTimes(2);
+    expect(maxVisibleTotal).toHaveLastReturnedWith(13);
+    expect(buyRatio).toHaveBeenCalledTimes(1);
+    expect(screen.getByText('45.02%')).toBeTruthy();
+    expect(screen.getByText('54.98%')).toBeTruthy();
+
+    view.rerender(<PerpsProOrderBook {...props} height={476} />);
+    expect(screen.getAllByTestId('perps-pro-order-book-row')).toHaveLength(16);
+    expect(maxVisibleTotal).toHaveBeenCalledTimes(3);
+    expect(maxVisibleTotal).toHaveLastReturnedWith(16);
+    expect(buyRatio).toHaveBeenCalledTimes(1);
+    expect(screen.getByText('45.02%')).toBeTruthy();
+    expect(screen.getByText('54.98%')).toBeTruthy();
+    const depths = screen.getAllByTestId('perps-pro-order-book-depth');
+    expect(depths).toHaveLength(16);
+    expect(StyleSheet.flatten(depths[15].props.style).width).toBe('100%');
+  });
+
   it('keeps the fixed body mounted while display state changes', () => {
     const view = render(<PerpsProOrderBook {...defaultProps} />);
 

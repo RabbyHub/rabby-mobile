@@ -131,8 +131,11 @@ export const PerpsProOrderBook: React.FC<{
       }),
     [book, mode, rowCount],
   );
-  const maxVisibleTotal = getVisiblePerpsOrderBookMaxTotal(visible);
-  const buyRatio = calculatePerpsBuyRatio(book);
+  const maxVisibleTotal = useMemo(
+    () => getVisiblePerpsOrderBookMaxTotal(visible),
+    [visible],
+  );
+  const buyRatio = useMemo(() => calculatePerpsBuyRatio(book), [book]);
   const hasRatio = buyRatio.buy + buyRatio.sell > 0;
   const orderBookPriceDecimals =
     selectedTickOption?.priceDecimals ?? market?.marketData.pxDecimals ?? 2;
