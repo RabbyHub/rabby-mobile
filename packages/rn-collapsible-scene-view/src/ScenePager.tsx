@@ -34,6 +34,7 @@ export type ScenePagerProps = {
   children: (
     track: ScenePagerTrack,
     previewKey: string | null,
+    previewScrollOffset: number,
   ) => React.ReactNode;
   keys: readonly string[];
   onBoundary?: (direction: 'next' | 'prev') => void;
@@ -68,6 +69,7 @@ export function ScenePager({
   const gestureActive = useSharedValue(false);
   const lastPreview = useSharedValue(-1);
   const [previewKey, setPreviewKey] = useState<string | null>(null);
+  const [previewScrollOffset, setPreviewScrollOffset] = useState(0);
   const [commitAttempt, setCommitAttempt] = useState<number | null>(null);
   const currentKey = useRef(activeKey);
   const mounted = useRef(true);
@@ -117,13 +119,14 @@ export function ScenePager({
   }, [activeIndex, commitAttempt, position, settling]);
 
   const publishPreview = useCallback(
-    (key: string | null, fromKey: string, token: number) => {
+    (key: string | null, fromKey: string, token: number, offset: number) => {
       if (
         mounted.current &&
         currentKey.current === fromKey &&
         generation.current === token
       ) {
         setPreviewKey(key);
+        setPreviewScrollOffset(offset);
       }
     },
     [],
@@ -216,6 +219,7 @@ export function ScenePager({
               keys[neighbour] ?? null,
               keys[startIndex.value],
               startGeneration.value,
+              scrollOffset.value,
             );
           }
         })
@@ -241,7 +245,12 @@ export function ScenePager({
             pageCount: keys.length,
           });
           if (target !== from) {
-            runOnJS(publishPreview)(keys[target], keys[from], token);
+            runOnJS(publishPreview)(
+              keys[target],
+              keys[from],
+              token,
+              scrollOffset.value,
+            );
           }
           position.value = withTiming(target, { duration: 180 }, finished => {
             if (!finished) {
@@ -251,7 +260,7 @@ export function ScenePager({
               runOnJS(commit)(keys[target], keys[from], token);
             } else {
               settling.value = false;
-              runOnJS(publishPreview)(null, keys[from], token);
+              runOnJS(publishPreview)(null, keys[from], token, 0);
               if (boundary) {
                 runOnJS(reportBoundary)(boundary, token);
               }
@@ -265,7 +274,7 @@ export function ScenePager({
             const token = generationValue.value;
             position.value = withTiming(from, { duration: 180 }, finished => {
               if (finished) {
-                runOnJS(publishPreview)(null, keys[from], token);
+                runOnJS(publishPreview)(null, keys[from], token, 0);
               }
             });
           }
@@ -298,7 +307,7 @@ export function ScenePager({
   return (
     <GestureDetector gesture={gesture}>
       <View onLayout={onLayout} style={styles.viewport} testID={testID}>
-        {children(track, previewKey)}
+        {children(track, previewKey, previewScrollOffset)}
       </View>
     </GestureDetector>
   );

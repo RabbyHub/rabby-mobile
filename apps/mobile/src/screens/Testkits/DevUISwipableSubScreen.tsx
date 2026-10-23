@@ -12,20 +12,32 @@ type PlaygroundTab = 'a' | 'b' | 'c';
 
 const TABS: PlaygroundTab[] = ['a', 'b', 'c'];
 
-const ROWS: Record<PlaygroundTab, { key: string; label: string }[]> = {
-  a: Array.from({ length: 12 }, (_, i) => ({
+const ROWS: Record<
+  PlaygroundTab,
+  { key: string; label: string; height: number }[]
+> = {
+  a: Array.from({ length: 40 }, (_, i) => ({
     key: `a-${i}`,
     label: `A row ${i + 1}`,
+    height: 64 + (i % 3) * 24,
   })),
-  b: Array.from({ length: 8 }, (_, i) => ({
+  b: Array.from({ length: 24 }, (_, i) => ({
     key: `b-${i}`,
     label: `B row ${i + 1}`,
+    height: 80 + (i % 2) * 32,
   })),
   c: Array.from({ length: 5 }, (_, i) => ({
     key: `c-${i}`,
     label: `C row ${i + 1}`,
+    height: 64,
   })),
 };
+
+// This fixture owns exact heights; business cards must supply measured extents
+// before opting into the same window contract.
+const PREVIEW_GEOMETRY = Object.fromEntries(
+  TABS.map(key => [key, { rowHeights: ROWS[key].map(row => row.height) }]),
+);
 
 /**
  * Isolated one-list row pager, without business state or persistence.
@@ -78,6 +90,7 @@ export default function DevUISwipableSubScreen() {
           ListHeaderComponent={listHeader}
           contentInsetTop={0}
           dataByKey={ROWS}
+          previewGeometryByKey={PREVIEW_GEOMETRY}
           keys={TABS}
           onBoundary={setBoundary}
           onIndexChange={key => setTab(key as PlaygroundTab)}
@@ -85,7 +98,9 @@ export default function DevUISwipableSubScreen() {
           scrollOffset={controller.scrollY}
           keyExtractor={item => item.key}
           renderItem={({ item }) => (
-            <View style={styles.row} testID={`dev-perps-pager-row-${item.key}`}>
+            <View
+              style={[styles.row, { height: item.height }]}
+              testID={`dev-perps-pager-row-${item.key}`}>
               <Text>{item.label}</Text>
             </View>
           )}
@@ -108,7 +123,6 @@ const styles = StyleSheet.create({
   row: {
     borderBottomColor: '#eee',
     borderBottomWidth: StyleSheet.hairlineWidth,
-    height: 64,
     justifyContent: 'center',
     paddingHorizontal: 16,
   },

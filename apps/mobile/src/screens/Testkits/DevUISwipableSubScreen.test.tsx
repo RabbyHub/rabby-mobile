@@ -120,6 +120,7 @@ jest.mock('react-native-reanimated', () => {
 import {
   CollapsibleSceneProvider,
   ScenePagerList,
+  type ScenePagerListProps,
   useCollapsibleSceneController,
 } from '@rabby-wallet/rn-collapsible-scene-view';
 import DevUISwipableSubScreen from './DevUISwipableSubScreen';
@@ -144,13 +145,20 @@ const ControlledPager = ({
   listHeader = fixtureHeader,
   onIndexChange,
   renderItem = renderFixtureRow,
+  previewGeometryByKey,
+  scrollOffset = 0,
 }: {
   activeKey?: string;
   listHeader?: React.ComponentType | React.ReactElement;
   onIndexChange: (key: string) => void;
   renderItem?: ListRenderItem<{ key: string }>;
+  previewGeometryByKey?: ScenePagerListProps<{
+    key: string;
+  }>['previewGeometryByKey'];
+  scrollOffset?: number;
 }) => {
   const controller = useCollapsibleSceneController();
+  controller.scrollY.value = scrollOffset;
   return (
     <CollapsibleSceneProvider
       activeTab={activeKey}
@@ -162,6 +170,7 @@ const ControlledPager = ({
         ListHeaderComponent={listHeader}
         contentInsetTop={0}
         dataByKey={fixtureRows}
+        previewGeometryByKey={previewGeometryByKey}
         keys={keys}
         keyExtractor={item => item.key}
         onIndexChange={onIndexChange}
@@ -223,7 +232,7 @@ describe('Swipable SubScreen harness', () => {
 
     expect(screen.getByTestId('dev-perps-pager-row-a-0')).toBeTruthy();
     expect(screen.getByTestId('dev-perps-pager-active')).toHaveTextContent(
-      'active=a rows=12',
+      'active=a rows=40',
     );
 
     fireEvent.press(screen.getByTestId('dev-perps-pager-tab-b'));
@@ -231,11 +240,11 @@ describe('Swipable SubScreen harness', () => {
     expect(screen.getByTestId('dev-perps-pager-row-b-0')).toBeTruthy();
     expect(screen.queryByTestId('dev-perps-pager-row-a-0')).toBeNull();
     expect(screen.getByTestId('dev-perps-pager-active')).toHaveTextContent(
-      'active=b rows=8',
+      'active=b rows=24',
     );
     expect(screen.UNSAFE_getAllByType(FlatList)).toEqual([list]);
     expect(list.props.data.map((row: { key: string }) => row.key)).toEqual(
-      Array.from({ length: 8 }, (_, index) => `b-${index}`),
+      Array.from({ length: 24 }, (_, index) => `b-${index}`),
     );
   });
 
@@ -262,6 +271,81 @@ describe('Swipable SubScreen harness', () => {
 });
 
 describe('ScenePagerList native-boundary component contracts', () => {
+  it('previews the measured deep window without recreating the list or moving its header', () => {
+    render(
+      <ControlledPager
+        onIndexChange={jest.fn()}
+        scrollOffset={1200}
+        previewGeometryByKey={{ a: { rowHeights: Array(15).fill(100) } }}
+      />,
+    );
+    const list = screen.UNSAFE_getByType(FlatList);
+    layoutPager();
+    fireEvent(list, 'layout', {
+      nativeEvent: { layout: { height: 400, width: 400, x: 0, y: 0 } },
+    });
+    const header = list.props.ListHeaderComponent;
+    beginDrag();
+    moveDrag(80);
+    expect(StyleSheet.flatten(preview().props.style).marginTop).toBe(1100);
+    expect(
+      within(preview())
+        .getAllByTestId(/^fixture-row-a-/, { includeHiddenElements: true })
+        .map(row => row.props.testID),
+    ).toEqual([
+      'fixture-row-a-11',
+      'fixture-row-a-12',
+      'fixture-row-a-13',
+      'fixture-row-a-14',
+    ]);
+    expect(list.props.ListHeaderComponent).toBe(header);
+    expect(screen.UNSAFE_getAllByType(FlatList)).toEqual([list]);
+  });
+
+  it('places a short target at its clamped settled offset using that target padding', () => {
+    render(
+      <ControlledPager
+        onIndexChange={jest.fn()}
+        scrollOffset={1200}
+        previewGeometryByKey={{
+          c: { rowHeights: Array(15).fill(20), paddingBottom: 200 },
+        }}
+      />,
+    );
+    layoutPager();
+    fireEvent(screen.UNSAFE_getByType(FlatList), 'layout', {
+      nativeEvent: { layout: { height: 400, width: 400, x: 0, y: 0 } },
+    });
+    beginDrag();
+    moveDrag(-80);
+    expect(StyleSheet.flatten(preview().props.style).marginTop).toBe(1100);
+    expect(
+      within(preview())
+        .getAllByTestId(/^fixture-row-c-/, { includeHiddenElements: true })
+        .map(row => row.props.testID),
+    ).toEqual(
+      Array.from({ length: 10 }, (_, index) => `fixture-row-c-${index + 5}`),
+    );
+  });
+
+  it('does not substitute first rows for an explicitly unmeasured deep prefix', () => {
+    render(
+      <ControlledPager
+        onIndexChange={jest.fn()}
+        scrollOffset={1200}
+        previewGeometryByKey={{ a: { rowHeights: Array(15).fill(null) } }}
+      />,
+    );
+    layoutPager();
+    fireEvent(screen.UNSAFE_getByType(FlatList), 'layout', {
+      nativeEvent: { layout: { height: 400, width: 400, x: 0, y: 0 } },
+    });
+    beginDrag();
+    moveDrag(80);
+    expect(queryPreview()).toBeNull();
+    expect(screen.UNSAFE_getAllByType(FlatList)).toHaveLength(1);
+  });
+
   it.each(['component', 'element'])(
     'prepares, reverses and clears previews without rerendering active rows or the %s header',
     headerKind => {
