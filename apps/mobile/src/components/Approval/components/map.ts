@@ -1,5 +1,6 @@
 import { APPROVAL_MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
+import { Dimensions } from 'react-native';
 import type { ApprovalComponentType } from '.';
 
 export const WaitingSignComponent: Record<string, ApprovalComponentType> = {
@@ -17,7 +18,8 @@ export const APPROVAL_SNAP_POINTS: Record<
   APPROVAL_MODAL_NAMES,
   (string | number)[]
 > = {
-  [APPROVAL_MODAL_NAMES.Connect]: ['80%'],
+  // 120 from the top of the screen
+  [APPROVAL_MODAL_NAMES.Connect]: [Dimensions.get('window').height - 120],
   [APPROVAL_MODAL_NAMES.SignText]: ['100%'],
   [APPROVAL_MODAL_NAMES.SignTypedData]: ['100%'],
   [APPROVAL_MODAL_NAMES.SignTx]: ['100%'],
