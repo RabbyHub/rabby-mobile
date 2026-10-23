@@ -54,16 +54,14 @@ const MemeCoinExecuteContent = ({
     Parameters<typeof navigation.dispatch>[0] | null
   >(null);
 
-  // Only user back (back button / Android back / iOS swipe) is taken over. While
-  // running, other navigation (e.g. the auto-lock reset to Unlock) is ignored and
-  // the next signing asks to unlock; once finished, it goes through.
+  // Only user back (back button / Android back / iOS swipe) is taken over; any
+  // other navigation, e.g. the auto-lock reset to Unlock, goes through as on
+  // every other screen (unmounting stops the executor).
   usePreventRemove(status !== 'idle' && !leaving, ({ data }) => {
     const isUserBack =
       data.action.type === 'GO_BACK' || data.action.type === 'POP';
-    if (store.getState().status === 'running') {
-      if (isUserBack) {
-        openExitDialog();
-      }
+    if (isUserBack && store.getState().status === 'running') {
+      openExitDialog();
       return;
     }
     pendingActionRef.current = isUserBack ? null : data.action;
