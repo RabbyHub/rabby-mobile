@@ -12,10 +12,10 @@ import { ScenePager, ScenePagerItem, type ScenePagerTrack } from './ScenePager';
 import { calculateScenePagerPreviewWindow } from './previewWindow';
 
 const PREVIEW_ROW_LIMIT = 10;
-const PreviewKeyContext = React.createContext({
-  key: null as string | null,
-  offset: 0,
-});
+const EMPTY_ROWS: readonly never[] = [];
+// The header's preview slot consumes neighbour updates without invalidating
+// the active list's data, renderer or ListHeaderComponent identity.
+const PreviewContext = React.createContext<React.ReactNode>(null);
 const previewSeparators = {
   highlight: () => undefined,
   unhighlight: () => undefined,
@@ -24,6 +24,8 @@ const previewSeparators = {
 
 export type ScenePagerListProps<Row> = Omit<SceneListProps<Row>, 'data'> & {
   dataByKey: Readonly<Record<string, readonly Row[]>>;
+  /** Optional per-page renderers; renderItem remains the default for any key. */
+  renderItemByKey?: Readonly<Record<string, ListRenderItem<Row>>>;
   keys: readonly string[];
   onBoundary?: (direction: 'next' | 'prev') => void;
   onIndexChange: (key: string) => void;
@@ -46,7 +48,30 @@ export type ScenePagerListProps<Row> = Omit<SceneListProps<Row>, 'data'> & {
 
 /** One persistent VirtualizedList; neighbours are bounded, non-scrolling views. */
 export function ScenePagerList<Row>(props: ScenePagerListProps<Row>) {
-  const { rowStartOffset, scrollOffset } = props;
+  const {
+    dataByKey,
+    keys,
+    onBoundary,
+    onIndexChange,
+    onLayout,
+    previewGeometryByKey,
+    renderItem,
+    renderItemByKey,
+    rowStartOffset,
+    scrollOffset,
+    ...listProps
+  } = props;
+  const [viewportHeight, setViewportHeight] = useState(0);
+  const requiresGeometry = !!previewGeometryByKey;
+  const handleLayout = useCallback(
+    (event: LayoutChangeEvent) => {
+      if (requiresGeometry) {
+        setViewportHeight(event.nativeEvent.layout.height);
+      }
+      onLayout?.(event);
+    },
+    [onLayout, requiresGeometry],
+  );
   const rowRegion = useMemo(
     () => ({ startOffset: rowStartOffset, scrollOffset }),
     [rowStartOffset, scrollOffset],
@@ -54,67 +79,111 @@ export function ScenePagerList<Row>(props: ScenePagerListProps<Row>) {
   return (
     <ScenePager
       activeKey={props.tabKey}
-      keys={props.keys}
-      onBoundary={props.onBoundary}
-      onIndexChange={props.onIndexChange}
+      keys={keys}
+      onBoundary={onBoundary}
+      onIndexChange={onIndexChange}
       rowRegion={rowRegion}
       testID={props.testID ? `${props.testID}-pager` : undefined}>
       {(track, previewKey, previewScrollOffset) => (
         <PagerListPreviewProvider
+          data={previewKey ? dataByKey[previewKey] ?? EMPTY_ROWS : EMPTY_ROWS}
+          geometry={previewKey ? previewGeometryByKey?.[previewKey] : undefined}
+          keyExtractor={listProps.keyExtractor}
           previewKey={previewKey}
-          offset={previewScrollOffset}>
-          <PagerListContent {...props} track={track} />
+          offset={previewScrollOffset}
+          renderItem={
+            (previewKey && renderItemByKey?.[previewKey]) || renderItem
+          }
+          requiresGeometry={requiresGeometry}
+          rowStartOffset={rowStartOffset}
+          track={track}
+          viewportHeight={viewportHeight}>
+          <PagerListContent
+            {...listProps}
+            data={dataByKey[props.tabKey] ?? EMPTY_ROWS}
+            onLayout={handleLayout}
+            renderItem={renderItemByKey?.[props.tabKey] ?? renderItem}
+            track={track}
+          />
         </PagerListPreviewProvider>
       )}
     </ScenePager>
   );
 }
 
-function PagerListPreviewProvider({
+type PagerListPreviewProps<Row> = Pick<
+  SceneListProps<Row>,
+  'data' | 'keyExtractor' | 'renderItem'
+> & {
+  geometry?: NonNullable<
+    ScenePagerListProps<Row>['previewGeometryByKey']
+  >[string];
+  offset: number;
+  previewKey: string | null;
+  requiresGeometry: boolean;
+  rowStartOffset: number;
+  track: ScenePagerTrack;
+  viewportHeight: number;
+};
+
+function PagerListPreviewProvider<Row>({
   children,
+  data,
+  geometry,
+  keyExtractor,
   previewKey,
   offset,
-}: React.PropsWithChildren<{
-  previewKey: string | null;
-  offset: number;
-}>) {
+  renderItem,
+  requiresGeometry,
+  rowStartOffset,
+  track,
+  viewportHeight,
+}: React.PropsWithChildren<PagerListPreviewProps<Row>>) {
   const value = useMemo(
-    () => ({ key: previewKey, offset }),
-    [previewKey, offset],
+    () =>
+      previewKey ? (
+        <PagerListPreview
+          data={data}
+          geometry={geometry}
+          keyExtractor={keyExtractor}
+          offset={offset}
+          previewKey={previewKey}
+          renderItem={renderItem}
+          requiresGeometry={requiresGeometry}
+          rowStartOffset={rowStartOffset}
+          track={track}
+          viewportHeight={viewportHeight}
+        />
+      ) : null,
+    [
+      data,
+      geometry,
+      keyExtractor,
+      offset,
+      previewKey,
+      renderItem,
+      requiresGeometry,
+      rowStartOffset,
+      track,
+      viewportHeight,
+    ],
   );
   return (
-    <PreviewKeyContext.Provider value={value}>
-      {children}
-    </PreviewKeyContext.Provider>
+    <PreviewContext.Provider value={value}>{children}</PreviewContext.Provider>
   );
 }
 
+function PagerListPreviewSlot() {
+  return React.useContext(PreviewContext);
+}
+
 function PagerListContentComponent<Row>({
-  dataByKey,
-  keys: _keys,
-  onBoundary: _onBoundary,
-  onIndexChange: _onIndexChange,
-  rowStartOffset,
-  scrollOffset: _scrollOffset,
   ListHeaderComponent,
-  onLayout,
-  previewGeometryByKey,
-  keyExtractor,
   renderItem,
   tabKey,
   track,
   ...listProps
-}: ScenePagerListProps<Row> & { track: ScenePagerTrack }) {
-  const [viewportHeight, setViewportHeight] = useState(0);
-  const handleLayout = useCallback(
-    (event: LayoutChangeEvent) => {
-      if (previewGeometryByKey) {
-        setViewportHeight(event.nativeEvent.layout.height);
-      }
-      onLayout?.(event);
-    },
-    [onLayout, previewGeometryByKey],
-  );
+}: SceneListProps<Row> & { track: ScenePagerTrack }) {
   const Header = ListHeaderComponent;
   const headerContent = useMemo(
     () => (React.isValidElement(Header) ? Header : Header ? <Header /> : null),
@@ -124,27 +193,10 @@ function PagerListContentComponent<Row>({
     () => (
       <View>
         {headerContent}
-        <PagerListPreview
-          dataByKey={dataByKey}
-          keyExtractor={keyExtractor}
-          renderItem={renderItem}
-          track={track}
-          previewGeometryByKey={previewGeometryByKey}
-          rowStartOffset={rowStartOffset}
-          viewportHeight={viewportHeight}
-        />
+        <PagerListPreviewSlot />
       </View>
     ),
-    [
-      dataByKey,
-      headerContent,
-      keyExtractor,
-      renderItem,
-      track,
-      previewGeometryByKey,
-      rowStartOffset,
-      viewportHeight,
-    ],
+    [headerContent],
   );
   const renderRow = useCallback<ListRenderItem<Row>>(
     item => (
@@ -158,9 +210,6 @@ function PagerListContentComponent<Row>({
     <SceneList
       {...listProps}
       ListHeaderComponent={header}
-      onLayout={handleLayout}
-      data={dataByKey[tabKey] ?? []}
-      keyExtractor={keyExtractor}
       // The header owns overflow previews below its measured bottom. Keep its
       // native view attached even when offscreen; row virtualization stays on.
       removeClippedSubviews={false}
@@ -177,30 +226,20 @@ const PagerListContent = React.memo(
 ) as typeof PagerListContentComponent;
 
 function PagerListPreview<Row>({
-  dataByKey,
+  data: rows,
+  geometry,
   keyExtractor,
+  offset,
+  previewKey,
   renderItem,
+  requiresGeometry,
   track,
-  previewGeometryByKey,
   rowStartOffset,
   viewportHeight,
-}: Pick<
-  ScenePagerListProps<Row>,
-  | 'dataByKey'
-  | 'keyExtractor'
-  | 'renderItem'
-  | 'previewGeometryByKey'
-  | 'rowStartOffset'
-> & {
-  track: ScenePagerTrack;
-  viewportHeight: number;
-}) {
-  const { key: previewKey, offset } = React.useContext(PreviewKeyContext);
+}: PagerListPreviewProps<Row>) {
   if (!previewKey) {
     return null;
   }
-  const rows = dataByKey[previewKey] ?? [];
-  const geometry = previewGeometryByKey?.[previewKey];
   const window =
     geometry && geometry.rowHeights.length === rows.length
       ? calculateScenePagerPreviewWindow({
@@ -212,7 +251,7 @@ function PagerListPreview<Row>({
         })
       : null;
   // Opted-in callers must not present an unknown prefix as an exact window.
-  if (previewGeometryByKey && (!window || window.status !== 'resolved')) {
+  if (requiresGeometry && (!window || window.status !== 'resolved')) {
     return null;
   }
   const startIndex = window?.status === 'resolved' ? window.startIndex : 0;

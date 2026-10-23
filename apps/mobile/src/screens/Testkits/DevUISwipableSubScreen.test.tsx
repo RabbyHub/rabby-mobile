@@ -140,18 +140,23 @@ const fixtureHeader = (
 const renderFixtureRow: ListRenderItem<{ key: string }> = ({ item }) => (
   <View testID={`fixture-row-${item.key}`} />
 );
+const fixtureKeyExtractor = (item: { key: string }) => item.key;
 const ControlledPager = ({
   activeKey = 'b',
+  dataByKey = fixtureRows,
   listHeader = fixtureHeader,
   onIndexChange,
   renderItem = renderFixtureRow,
+  renderItemByKey,
   previewGeometryByKey,
   scrollOffset = 0,
 }: {
   activeKey?: string;
+  dataByKey?: ScenePagerListProps<{ key: string }>['dataByKey'];
   listHeader?: React.ComponentType | React.ReactElement;
   onIndexChange: (key: string) => void;
   renderItem?: ListRenderItem<{ key: string }>;
+  renderItemByKey?: ScenePagerListProps<{ key: string }>['renderItemByKey'];
   previewGeometryByKey?: ScenePagerListProps<{
     key: string;
   }>['previewGeometryByKey'];
@@ -169,12 +174,13 @@ const ControlledPager = ({
       <ScenePagerList
         ListHeaderComponent={listHeader}
         contentInsetTop={0}
-        dataByKey={fixtureRows}
+        dataByKey={dataByKey}
         previewGeometryByKey={previewGeometryByKey}
         keys={keys}
-        keyExtractor={item => item.key}
+        keyExtractor={fixtureKeyExtractor}
         onIndexChange={onIndexChange}
         renderItem={renderItem}
+        renderItemByKey={renderItemByKey}
         rowStartOffset={100}
         scrollOffset={controller.scrollY}
         tabKey={activeKey}
@@ -271,6 +277,221 @@ describe('Swipable SubScreen harness', () => {
 });
 
 describe('ScenePagerList native-boundary component contracts', () => {
+  it.each(['component', 'element'])(
+    'isolates inactive data and renderer changes from active rows and the %s header',
+    headerKind => {
+      const Header = jest.fn(() => fixtureHeader);
+      const activeRenderer = jest.fn(renderFixtureRow);
+      const inactiveRenderer = jest.fn(renderFixtureRow);
+      const props = {
+        listHeader: headerKind === 'component' ? Header : <Header />,
+        onIndexChange: jest.fn(),
+      };
+      const view = render(
+        <ControlledPager
+          {...props}
+          renderItemByKey={{ a: inactiveRenderer, b: activeRenderer }}
+        />,
+      );
+      layoutPager();
+      const list = screen.UNSAFE_getByType(FlatList);
+      const listProps = list.props;
+      const headerRenders = Header.mock.calls.length;
+      const activeRenders = activeRenderer.mock.calls.length;
+      expect(activeRenders).toBeGreaterThan(0);
+
+      view.rerender(
+        <ControlledPager
+          {...props}
+          dataByKey={{
+            ...fixtureRows,
+            a: [{ key: 'a-new' }],
+          }}
+          renderItem={jest.fn(renderFixtureRow)}
+          renderItemByKey={{ a: jest.fn(renderFixtureRow), b: activeRenderer }}
+        />,
+      );
+
+      expect(activeRenderer).toHaveBeenCalledTimes(activeRenders);
+      expect(inactiveRenderer).not.toHaveBeenCalled();
+      expect(Header).toHaveBeenCalledTimes(headerRenders);
+      expect(screen.UNSAFE_getAllByType(FlatList)).toEqual([list]);
+      expect(list.props).toBe(listProps);
+      expect(list.props.data).toBe(fixtureRows.b);
+      expect(queryPreview()).toBeNull();
+    },
+  );
+
+  it('publishes current neighbour rows, renderer and measured geometry only to an open preview', () => {
+    const Header = jest.fn(() => fixtureHeader);
+    const activeRenderer = jest.fn(renderFixtureRow);
+    const initialPreviewRenderer = jest.fn(renderFixtureRow);
+    const nextPreviewRenderer = jest.fn(
+      ({ item }: { item: { key: string } }) => (
+        <View testID={`updated-${item.key}`} />
+      ),
+    );
+    const props = {
+      listHeader: Header,
+      onIndexChange: jest.fn(),
+      scrollOffset: 300,
+    };
+    const view = render(
+      <ControlledPager
+        {...props}
+        previewGeometryByKey={{ a: { rowHeights: Array(15).fill(100) } }}
+        renderItemByKey={{ a: initialPreviewRenderer, b: activeRenderer }}
+      />,
+    );
+    layoutPager();
+    const list = screen.UNSAFE_getByType(FlatList);
+    fireEvent(list, 'layout', {
+      nativeEvent: { layout: { height: 200, width: 400, x: 0, y: 0 } },
+    });
+    const listProps = list.props;
+    const headerRenders = Header.mock.calls.length;
+    const activeRenders = activeRenderer.mock.calls.length;
+    beginDrag();
+    moveDrag(80);
+    expect(
+      within(preview()).getByTestId('fixture-row-a-2', {
+        includeHiddenElements: true,
+      }),
+    ).toBeTruthy();
+    const nextRows = Array.from({ length: 12 }, (_, index) => ({
+      key: `next-a-${index}`,
+    }));
+    view.rerender(
+      <ControlledPager
+        {...props}
+        dataByKey={{ ...fixtureRows, a: nextRows }}
+        previewGeometryByKey={{ a: { rowHeights: Array(12).fill(60) } }}
+        renderItemByKey={{ a: nextPreviewRenderer, b: activeRenderer }}
+      />,
+    );
+
+    expect(
+      within(preview())
+        .getAllByTestId(/^updated-next-a-/, { includeHiddenElements: true })
+        .map(row => row.props.testID),
+    ).toEqual([
+      'updated-next-a-3',
+      'updated-next-a-4',
+      'updated-next-a-5',
+      'updated-next-a-6',
+    ]);
+    expect(StyleSheet.flatten(preview().props.style).marginTop).toBe(180);
+    expect(activeRenderer).toHaveBeenCalledTimes(activeRenders);
+    expect(Header).toHaveBeenCalledTimes(headerRenders);
+    expect(screen.UNSAFE_getAllByType(FlatList)).toEqual([list]);
+    expect(list.props).toBe(listProps);
+    expect(list.props.data).toBe(fixtureRows.b);
+  });
+
+  it('commits current data and the selected renderer without remounting the list', () => {
+    const activeRenderer = jest.fn(renderFixtureRow);
+    const nextRenderer = jest.fn(({ item }: { item: { key: string } }) => (
+      <View testID={`selected-${item.key}`} />
+    ));
+    const onIndexChange = jest.fn();
+    const SynchronousOwner = ({
+      dataByKey,
+      renderItemByKey,
+    }: Pick<
+      ScenePagerListProps<{ key: string }>,
+      'dataByKey' | 'renderItemByKey'
+    >) => {
+      const [activeKey, setActiveKey] = React.useState('b');
+      return (
+        <ControlledPager
+          activeKey={activeKey}
+          dataByKey={dataByKey}
+          renderItemByKey={renderItemByKey}
+          onIndexChange={key => {
+            onIndexChange(key);
+            setActiveKey(key);
+          }}
+        />
+      );
+    };
+    const view = render(
+      <SynchronousOwner
+        dataByKey={fixtureRows}
+        renderItemByKey={{ b: activeRenderer }}
+      />,
+    );
+    const list = screen.UNSAFE_getByType(FlatList);
+    layoutPager();
+    beginDrag();
+    moveDrag(140);
+    expect(
+      within(preview()).getByTestId('fixture-row-a-0', {
+        includeHiddenElements: true,
+      }),
+    ).toBeTruthy();
+    releaseDrag(140);
+    const nextRows = [{ key: 'new-a-0' }, { key: 'new-a-1' }];
+    view.rerender(
+      <SynchronousOwner
+        dataByKey={{ ...fixtureRows, a: nextRows }}
+        renderItemByKey={{ a: nextRenderer, b: activeRenderer }}
+      />,
+    );
+    expect(list.props.data).toBe(fixtureRows.b);
+    expect(onIndexChange).not.toHaveBeenCalled();
+    expect(
+      within(preview()).getByTestId('selected-new-a-0', {
+        includeHiddenElements: true,
+      }),
+    ).toBeTruthy();
+    completeAnimation();
+
+    expect(onIndexChange).toHaveBeenCalledWith('a');
+    expect(queryPreview()).toBeNull();
+    expect(screen.getByTestId('selected-new-a-0')).toBeTruthy();
+    expect(screen.getByTestId('selected-new-a-1')).toBeTruthy();
+    expect(screen.UNSAFE_getAllByType(FlatList)).toEqual([list]);
+    expect(list.props.data).toBe(nextRows);
+  });
+
+  it('uses the default renderer for unmapped active and preview keys', () => {
+    const defaultRenderer = jest.fn(renderFixtureRow);
+    const overrideRenderer = jest.fn(({ item }: { item: { key: string } }) => (
+      <View testID={`override-${item.key}`} />
+    ));
+    render(
+      <ControlledPager
+        onIndexChange={jest.fn()}
+        renderItem={defaultRenderer}
+        renderItemByKey={{ a: overrideRenderer }}
+      />,
+    );
+    layoutPager();
+    expect(screen.getByTestId('fixture-row-b-0')).toBeTruthy();
+    expect(defaultRenderer).toHaveBeenCalled();
+    expect(overrideRenderer).not.toHaveBeenCalled();
+    defaultRenderer.mockClear();
+    beginDrag();
+    moveDrag(80);
+    expect(
+      within(preview()).getByTestId('override-a-0', {
+        includeHiddenElements: true,
+      }),
+    ).toBeTruthy();
+    expect(defaultRenderer).not.toHaveBeenCalled();
+    overrideRenderer.mockClear();
+    moveDrag(-80);
+    expect(
+      within(preview()).getByTestId('fixture-row-c-0', {
+        includeHiddenElements: true,
+      }),
+    ).toBeTruthy();
+    expect(defaultRenderer.mock.calls.map(([{ item }]) => item.key)).toEqual(
+      Array.from({ length: 10 }, (_, index) => `c-${index}`),
+    );
+    expect(overrideRenderer).not.toHaveBeenCalled();
+  });
+
   it('previews the measured deep window without recreating the list or moving its header', () => {
     render(
       <ControlledPager
