@@ -8,7 +8,6 @@ import type { PerpsQuoteAsset } from '@/constant/perps';
 import type { PerpsProInfoTab } from '@/core/services/perpsService';
 import type { Account } from '@/core/startupServices/preference';
 import { useTheme2024 } from '@/hooks/theme';
-import { useActiveAssetSubscription } from '@/hooks/perps/subscriptions/useActiveAssetSubscription';
 import { isPerpsActionUserCancelled } from '@/hooks/perps/actions/actionError';
 import { ensurePerpsActionApproval } from '@/hooks/perps/actions/perpsActionApproval';
 import {
@@ -118,6 +117,7 @@ import {
   PerpsProTradeConfirmationSlot,
   PerpsProTradePanelOwner,
   PerpsProTradePanelSlot,
+  type PerpsProTradePanelHandle,
 } from './PerpsProTradePanelOwner';
 import {
   type PerpsProAccountPanelState,
@@ -212,14 +212,14 @@ export const PerpsProScene: React.FC<{
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const scene = usePerpsProScene();
-  const activeAsset = useActiveAssetSubscription(
-    scene.currentMarket?.canonicalCoin ?? '',
-    // Market context already has its own scene/leaf owners. This owner needs
-    // only account-scoped leverage/available data, not every price-context tick.
-    { contextEnabled: false, enabled: scene.klineEnabled },
+  const tradePanelRef = useRef<PerpsProTradePanelHandle>(null);
+  const refreshActiveAssetData = useCallback(
+    () =>
+      tradePanelRef.current?.refreshActiveAssetData() ?? Promise.resolve(null),
+    [],
   );
   const leverageUpdate = usePerpsProLeverageUpdate({
-    refreshActiveAssetData: activeAsset.refreshActiveAssetData,
+    refreshActiveAssetData,
   });
   const amountUnit = usePerpsProTradeAmountUnit();
   const hasPermission = perpsStore(state => state.hasPermission);
@@ -999,8 +999,9 @@ export const PerpsProScene: React.FC<{
   return (
     <PerpsProFieldExplanationProvider>
       <PerpsProTradePanelOwner
+        ref={tradePanelRef}
         accountLeverageConfiguration={scene.accountLeverageConfiguration}
-        activeAssetData={activeAsset.activeAssetData}
+        activeAssetSubscriptionEnabled={scene.klineEnabled}
         addFundsMode={tradeAddFundsAction.mode}
         executionActive={scene.executionActive && !isModeSwitching}
         isMarketLoading={isMarketLoading}
@@ -1014,7 +1015,6 @@ export const PerpsProScene: React.FC<{
         orderBookSubscriptionEnabled={scene.orderBookSubscriptionEnabled}
         precision={scene.precision}
         realtimeEnabled={scene.realtimeEnabled}
-        refreshActiveAssetData={activeAsset.refreshActiveAssetData}
         selectedTickOption={scene.selectedTickOption}
         tickOptions={scene.tickOptions}
         tradeConfigurationReady={scene.tradeConfigurationReady}

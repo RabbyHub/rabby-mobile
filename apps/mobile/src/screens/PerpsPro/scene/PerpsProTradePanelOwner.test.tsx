@@ -1,5 +1,5 @@
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
-import type { L2Book } from '@rabby-wallet/hyperliquid-sdk';
+import type { L2Book, WsActiveAssetData } from '@rabby-wallet/hyperliquid-sdk';
 import React from 'react';
 import { View } from 'react-native';
 
@@ -18,6 +18,13 @@ const mockConfirmationProps = jest.fn();
 const mockOrderBookProps = jest.fn();
 const mockPlacementContext = React.createContext('scene');
 const mockSceneChildrenRender = jest.fn();
+const mockGetActiveAssetData = jest.fn();
+const mockAssetSubscriptions: {
+  callback: (data: WsActiveAssetData) => void;
+  coin: string;
+  address: string;
+  unsubscribe: jest.Mock;
+}[] = [];
 const mockSubscriptions: {
   callback: (book: L2Book) => void;
   coin: string;
@@ -26,6 +33,18 @@ const mockSubscriptions: {
 const mockWs = {
   on: jest.fn(),
   off: jest.fn(),
+  subscribeToActiveAssetCtx: jest.fn(),
+  subscribeToActiveAssetData: jest.fn(
+    (
+      coin: string,
+      address: string,
+      callback: (data: WsActiveAssetData) => void,
+    ) => {
+      const unsubscribe = jest.fn();
+      mockAssetSubscriptions.push({ callback, coin, address, unsubscribe });
+      return { unsubscribe };
+    },
+  ),
   subscribeToL2Book: jest.fn(
     ({ coin }: { coin: string }, callback: (book: L2Book) => void) => {
       const unsubscribe = jest.fn();
@@ -36,11 +55,17 @@ const mockWs = {
 };
 
 jest.mock('@/core/apis/perps', () => ({
-  apisPerps: { getPerpsSDK: () => ({ ws: mockWs }) },
+  apisPerps: {
+    getPerpsSDK: () => ({
+      ws: mockWs,
+      info: { getActiveAssetData: mockGetActiveAssetData },
+    }),
+  },
 }));
 
 jest.mock('@/hooks/perps/usePerpsStore', () => ({
   perpsStore: require('zustand').create(() => ({
+    currentPerpsAccount: null,
     marketData: [],
     marketDataMap: {},
   })),
@@ -137,10 +162,25 @@ jest.mock('./PerpsProRealtimeOrderBook', () => ({
 }));
 
 import {
+  type PerpsProTradePanelHandle,
   PerpsProTradeConfirmationSlot,
   PerpsProTradePanelOwner,
   PerpsProTradePanelSlot,
 } from './PerpsProTradePanelOwner';
+
+let fixtureId = 0;
+let accountAddress: string;
+const activeAssetData = (
+  coin = 'BTC',
+  user = accountAddress,
+): WsActiveAssetData => ({
+  availableToTrade: ['100', '100'],
+  coin,
+  leverage: { type: 'cross', value: 10 },
+  markPx: '100',
+  maxTradeSzs: ['100', '100'],
+  user,
+});
 
 const createMarketData = (coin = 'BTC'): MarketData => ({
   name: coin,
@@ -180,7 +220,7 @@ const createProps = (): React.ComponentProps<
   typeof PerpsProTradePanelOwner
 > => ({
   accountLeverageConfiguration: null,
-  activeAssetData: null,
+  activeAssetSubscriptionEnabled: true,
   addFundsMode: 'deposit',
   executionActive: true,
   isMarketLoading: false,
@@ -194,7 +234,6 @@ const createProps = (): React.ComponentProps<
   orderBookSubscriptionEnabled: true,
   precision: null,
   realtimeEnabled: true,
-  refreshActiveAssetData: jest.fn(async () => null),
   selectedTickOption: null,
   tickOptions: [],
   tradeConfigurationReady: true,
@@ -216,7 +255,150 @@ describe('PerpsProTradePanelOwner component boundary', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockSubscriptions.length = 0;
+    mockAssetSubscriptions.length = 0;
+    mockGetActiveAssetData.mockReset();
+    mockGetActiveAssetData.mockImplementation(async (coin, address) =>
+      activeAssetData(coin, address),
+    );
+    accountAddress = `0x${String(++fixtureId).padStart(40, '0')}`;
+    perpsStore.setState({
+      currentPerpsAccount: { address: accountAddress } as never,
+    });
     publishMarkets([createMarketData(), createMarketData('ETH')]);
+  });
+
+  it('keeps real active-asset publications and refreshes inside one persistent owner', async () => {
+    function SceneChildren() {
+      mockSceneChildrenRender();
+      return panelAndConfirmation;
+    }
+    const ref = React.createRef<PerpsProTradePanelHandle>();
+    const view = render(
+      <PerpsProTradePanelOwner {...createProps()} ref={ref}>
+        <SceneChildren />
+      </PerpsProTradePanelOwner>,
+    );
+    const childRenders = mockSceneChildrenRender.mock.calls.length;
+    const refresh = ref.current!.refreshActiveAssetData;
+    expect(mockAssetSubscriptions).toHaveLength(1);
+    expect(mockAssetSubscriptions[0]).toMatchObject({
+      coin: 'BTC',
+      address: accountAddress,
+    });
+    expect(mockWs.subscribeToActiveAssetCtx).not.toHaveBeenCalled();
+    expect(mockTradeInputs.mock.lastCall?.[0].refreshActiveAssetData).toBe(
+      refresh,
+    );
+
+    const update: WsActiveAssetData = {
+      ...activeAssetData(),
+      availableToTrade: ['25', '30'],
+    };
+    act(() => mockAssetSubscriptions[0].callback(update));
+    expect(mockTradeInputs.mock.lastCall?.[0].activeAssetData).toBe(update);
+    expect(mockSceneChildrenRender).toHaveBeenCalledTimes(childRenders);
+    expect(mockAssetSubscriptions).toHaveLength(1);
+    expect(ref.current!.refreshActiveAssetData).toBe(refresh);
+
+    const refreshed: WsActiveAssetData = {
+      ...activeAssetData(),
+      maxTradeSzs: ['3', '4'],
+    };
+    mockGetActiveAssetData.mockResolvedValueOnce(refreshed);
+    await act(async () => {
+      await expect(refresh()).resolves.toBe(refreshed);
+    });
+    expect(mockGetActiveAssetData).toHaveBeenCalledWith('BTC', accountAddress);
+    expect(mockTradeInputs.mock.lastCall?.[0].activeAssetData).toBe(refreshed);
+    expect(mockSceneChildrenRender).toHaveBeenCalledTimes(childRenders);
+    expect(mockTradeMount).toHaveBeenCalledTimes(1);
+    view.unmount();
+    expect(ref.current).toBeNull();
+    expect(mockAssetSubscriptions[0].unsubscribe).toHaveBeenCalledTimes(1);
+  });
+
+  it('refreshes the current coin and account through the same handle and rejects old-scope frames', async () => {
+    const props = createProps();
+    const ref = React.createRef<PerpsProTradePanelHandle>();
+    const view = render(
+      <PerpsProTradePanelOwner {...props} ref={ref}>
+        {panelAndConfirmation}
+      </PerpsProTradePanelOwner>,
+    );
+    const refresh = ref.current!.refreshActiveAssetData;
+    const btcSubscription = mockAssetSubscriptions[0];
+    view.rerender(
+      <PerpsProTradePanelOwner {...props} market={market('ETH')} ref={ref}>
+        {panelAndConfirmation}
+      </PerpsProTradePanelOwner>,
+    );
+    expect(btcSubscription.unsubscribe).toHaveBeenCalledTimes(1);
+    expect(mockAssetSubscriptions).toHaveLength(2);
+    const ethSubscription = mockAssetSubscriptions[1];
+    const ethData = activeAssetData('ETH');
+    act(() => ethSubscription.callback(ethData));
+    act(() => btcSubscription.callback(activeAssetData()));
+    expect(mockTradeInputs.mock.lastCall?.[0].activeAssetData).toBe(ethData);
+
+    const nextAddress = `0x${String(++fixtureId).padStart(40, '0')}`;
+    act(() => {
+      perpsStore.setState({
+        currentPerpsAccount: { address: nextAddress } as never,
+      });
+    });
+    expect(ethSubscription.unsubscribe).toHaveBeenCalledTimes(1);
+    expect(mockAssetSubscriptions).toHaveLength(3);
+    expect(mockAssetSubscriptions[2]).toMatchObject({
+      coin: 'ETH',
+      address: nextAddress,
+    });
+    const nextAccountData = activeAssetData('ETH', nextAddress);
+    act(() => mockAssetSubscriptions[2].callback(nextAccountData));
+    act(() => ethSubscription.callback(ethData));
+    expect(mockTradeInputs.mock.lastCall?.[0].activeAssetData).toBe(
+      nextAccountData,
+    );
+    expect(ref.current!.refreshActiveAssetData).toBe(refresh);
+    await act(async () => {
+      await expect(refresh()).resolves.toEqual(nextAccountData);
+    });
+    expect(mockGetActiveAssetData).toHaveBeenLastCalledWith('ETH', nextAddress);
+    expect(mockTradeMount).toHaveBeenCalledTimes(1);
+    expect(mockWs.subscribeToActiveAssetCtx).not.toHaveBeenCalled();
+    view.unmount();
+    expect(mockAssetSubscriptions[2].unsubscribe).toHaveBeenCalledTimes(1);
+  });
+
+  it('gates the account feed independently of trade readiness and live-market availability', () => {
+    publishMarkets([]);
+    const props = createProps();
+    const view = render(
+      <PerpsProTradePanelOwner
+        {...props}
+        activeAssetSubscriptionEnabled={false}
+        executionActive={false}
+        realtimeEnabled={false}
+        tradeConfigurationReady={false}>
+        {panelAndConfirmation}
+      </PerpsProTradePanelOwner>,
+    );
+    expect(mockAssetSubscriptions).toHaveLength(0);
+    view.rerender(
+      <PerpsProTradePanelOwner
+        {...props}
+        activeAssetSubscriptionEnabled
+        executionActive={false}
+        realtimeEnabled={false}
+        tradeConfigurationReady={false}>
+        {panelAndConfirmation}
+      </PerpsProTradePanelOwner>,
+    );
+    expect(mockAssetSubscriptions).toHaveLength(1);
+    expect(mockAssetSubscriptions[0].coin).toBe('BTC');
+    expect(mockTradeInputs.mock.lastCall?.[0].market).toBeNull();
+    expect(mockTradeMount).toHaveBeenCalledTimes(1);
+    view.unmount();
+    expect(mockAssetSubscriptions[0].unsubscribe).toHaveBeenCalledTimes(1);
   });
 
   it('publishes current prices and risk metadata inside the owner without rendering scene children', () => {

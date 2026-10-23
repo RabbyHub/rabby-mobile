@@ -1,12 +1,13 @@
-import type { WsActiveAssetData } from '@rabby-wallet/hyperliquid-sdk';
 import { Text } from '@/components/Typography';
 import type { PerpsBookPrecision } from '@/hooks/perps/subscriptions/perpsBookTypes';
+import { useActiveAssetSubscription } from '@/hooks/perps/subscriptions/useActiveAssetSubscription';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, {
   createContext,
   useCallback,
   useContext,
+  useImperativeHandle,
   useMemo,
   useState,
 } from 'react';
@@ -56,7 +57,7 @@ export const PerpsProTradeConfirmationSlot = React.memo(
 
 type PerpsProTradePanelOwnerProps = React.PropsWithChildren<{
   accountLeverageConfiguration: PerpsProLeverageConfiguration | null;
-  activeAssetData: WsActiveAssetData | null;
+  activeAssetSubscriptionEnabled: boolean;
   addFundsMode: 'deposit' | 'swap';
   executionActive: boolean;
   isMarketLoading: boolean;
@@ -70,7 +71,7 @@ type PerpsProTradePanelOwnerProps = React.PropsWithChildren<{
   orderBookSubscriptionEnabled: boolean;
   precision: PerpsBookPrecision | null;
   realtimeEnabled: boolean;
-  refreshActiveAssetData: () => Promise<unknown>;
+  ref?: React.Ref<PerpsProTradePanelHandle>;
   selectedTickOption: PerpsTickOption | null;
   tickOptions: PerpsTickOption[];
   tradeConfigurationReady: boolean;
@@ -81,10 +82,16 @@ type PerpsProTradePanelOwnerProps = React.PropsWithChildren<{
   zeroAddressLeverageBaseline: PerpsProLeverageConfiguration | null;
 }>;
 
+// The scene shares one leverage request lock with position actions. It only
+// needs the refresh command, not the account feed's high-frequency snapshots.
+export type PerpsProTradePanelHandle = {
+  refreshActiveAssetData: () => Promise<unknown>;
+};
+
 export const PerpsProTradePanelOwner = React.memo(
   function PerpsProTradePanelOwner({
     accountLeverageConfiguration,
-    activeAssetData,
+    activeAssetSubscriptionEnabled,
     addFundsMode,
     children,
     executionActive,
@@ -99,7 +106,7 @@ export const PerpsProTradePanelOwner = React.memo(
     orderBookSubscriptionEnabled,
     precision,
     realtimeEnabled,
-    refreshActiveAssetData,
+    ref,
     selectedTickOption,
     tickOptions,
     tradeConfigurationReady,
@@ -110,6 +117,14 @@ export const PerpsProTradePanelOwner = React.memo(
     const { styles } = useTheme2024({ getStyle });
     const { t } = useTranslation();
     const market = usePerpsProLiveMarket(marketDescriptor?.canonicalCoin ?? '');
+    const { activeAssetData, refreshActiveAssetData } =
+      useActiveAssetSubscription(marketDescriptor?.canonicalCoin ?? '', {
+        contextEnabled: false,
+        enabled: activeAssetSubscriptionEnabled,
+      });
+    useImperativeHandle(ref, () => ({ refreshActiveAssetData }), [
+      refreshActiveAssetData,
+    ]);
     const bboBook = usePerpsProBboBook({
       coin: market?.canonicalCoin ?? '',
       enabled: realtimeEnabled && tradeConfigurationReady,

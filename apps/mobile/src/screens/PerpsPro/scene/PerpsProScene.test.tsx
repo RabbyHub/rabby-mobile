@@ -16,7 +16,7 @@ import {
   StyleSheet,
   type AppStateStatus,
 } from 'react-native';
-import type { L2Book } from '@rabby-wallet/hyperliquid-sdk';
+import type { L2Book, WsActiveAssetData } from '@rabby-wallet/hyperliquid-sdk';
 
 let mockIsLight = true;
 const mockUsePerpsProScene = jest.fn();
@@ -27,7 +27,14 @@ const mockOrderBookProps = jest.fn();
 const mockTradeFormProps = jest.fn();
 const mockTradeHookProps = jest.fn();
 const mockOrderConfirmationProps = jest.fn();
-const mockRefreshActiveAssetData = jest.fn(async () => null);
+const mockGetActiveAssetData = jest.fn();
+const mockLeverageUpdateProps = jest.fn();
+const mockAssetSubscriptions: {
+  callback: (data: WsActiveAssetData) => void;
+  coin: string;
+  address: string;
+  unsubscribe: jest.Mock;
+}[] = [];
 const mockUpdateLeverage = jest.fn(async () => true);
 const mockBboSubscriptions: {
   callback: (book: L2Book) => void;
@@ -37,6 +44,18 @@ const mockBboSubscriptions: {
 const mockBboWs = {
   on: jest.fn(),
   off: jest.fn(),
+  subscribeToActiveAssetCtx: jest.fn(),
+  subscribeToActiveAssetData: jest.fn(
+    (
+      coin: string,
+      address: string,
+      callback: (data: WsActiveAssetData) => void,
+    ) => {
+      const unsubscribe = jest.fn();
+      mockAssetSubscriptions.push({ callback, coin, address, unsubscribe });
+      return { unsubscribe };
+    },
+  ),
   subscribeToL2Book: jest.fn(
     ({ coin }: { coin: string }, callback: (book: L2Book) => void) => {
       const unsubscribe = jest.fn();
@@ -181,19 +200,20 @@ jest.mock('@/screens/Perps/components/PerpsRegionAlert', () => {
   };
 });
 
-jest.mock('@/hooks/perps/subscriptions/useActiveAssetSubscription', () => ({
-  useActiveAssetSubscription: () => ({
-    activeAssetData: null,
-    refreshActiveAssetData: mockRefreshActiveAssetData,
-  }),
-}));
-
 jest.mock('@/hooks/perps/usePerpsStore', () => ({
-  perpsStore: require('zustand').create(() => ({ hasPermission: true })),
+  perpsStore: require('zustand').create(() => ({
+    currentPerpsAccount: null,
+    hasPermission: true,
+  })),
 }));
 
 jest.mock('@/core/apis/perps', () => ({
-  apisPerps: { getPerpsSDK: () => ({ ws: mockBboWs }) },
+  apisPerps: {
+    getPerpsSDK: () => ({
+      ws: mockBboWs,
+      info: { getActiveAssetData: mockGetActiveAssetData },
+    }),
+  },
 }));
 
 jest.mock('./usePerpsProTradePreferences', () => ({
@@ -709,10 +729,13 @@ jest.mock('./usePerpsProTrade', () => ({
 }));
 
 jest.mock('./usePerpsProLeverageUpdate', () => ({
-  usePerpsProLeverageUpdate: () => ({
-    pending: mockLeveragePending,
-    update: mockUpdateLeverage,
-  }),
+  usePerpsProLeverageUpdate: (props: object) => {
+    mockLeverageUpdateProps(props);
+    return {
+      pending: mockLeveragePending,
+      update: mockUpdateLeverage,
+    };
+  },
 }));
 
 jest.mock('./usePerpsProInfoPanel', () => ({
@@ -927,6 +950,19 @@ const createPositionActionsState = (
   ...overrides,
 });
 
+let assetFixtureId = 0;
+const createActiveAssetData = (
+  coin: string,
+  user: string,
+): WsActiveAssetData => ({
+  availableToTrade: ['100', '100'],
+  coin,
+  leverage: { type: 'cross', value: 10 },
+  markPx: '100',
+  maxTradeSzs: ['100', '100'],
+  user,
+});
+
 describe('PerpsProScene market loading states', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -940,7 +976,12 @@ describe('PerpsProScene market loading states', () => {
     mockSelectOrderBookPrice.mockImplementation(
       () => mockOrderBookSelectionOutcome,
     );
-    mockPerpsStore.setState({ hasPermission: true });
+    mockPerpsStore.setState({ currentPerpsAccount: null, hasPermission: true });
+    mockAssetSubscriptions.length = 0;
+    mockGetActiveAssetData.mockReset();
+    mockGetActiveAssetData.mockImplementation(async (coin, address) =>
+      createActiveAssetData(coin, address),
+    );
     mockTradeAmountUnit = 'quote';
     mockLeveragePending = false;
     mockBboSubscriptions.length = 0;
@@ -1047,6 +1088,108 @@ describe('PerpsProScene market loading states', () => {
     );
   });
 
+  it('contains one real active-asset feed in the trade owner without rerendering Scene or its list', () => {
+    const address = `0x${String(++assetFixtureId).padStart(40, '0')}`;
+    mockPerpsStore.setState({
+      currentPerpsAccount: { address } as never,
+    });
+    mockUsePerpsProScene.mockReturnValue(
+      createSceneState({
+        currentMarket: {
+          canonicalCoin: 'BTC',
+          marketKey: 'hyperliquid::BTC',
+          marketData: { maxLeverage: 40, onlyIsolated: false },
+          quoteAsset: 'USDC',
+        },
+        klineEnabled: true,
+      }),
+    );
+    const view = render(
+      <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+    );
+    const list = screen.UNSAFE_getByType(FlatList);
+    const listProps = list.props;
+    const headerProps = screen.getByTestId('perps-pro-list-lead-in').props;
+    const sceneRenders = mockUsePerpsProScene.mock.calls.length;
+    const leverageRenders = mockLeverageUpdateProps.mock.calls.length;
+    const tradeRenders = mockTradeHookProps.mock.calls.length;
+    expect(mockAssetSubscriptions).toHaveLength(1);
+    expect(mockBboWs.subscribeToActiveAssetCtx).not.toHaveBeenCalled();
+    expect(leverageRenders).toBe(sceneRenders);
+
+    const data = createActiveAssetData('BTC', address);
+    act(() => mockAssetSubscriptions[0].callback(data));
+    expect(mockTradeHookProps.mock.calls.length).toBeGreaterThan(tradeRenders);
+    expect(mockTradeHookProps.mock.lastCall?.[0].activeAssetData).toBe(data);
+    expect(mockUsePerpsProScene).toHaveBeenCalledTimes(sceneRenders);
+    expect(mockLeverageUpdateProps).toHaveBeenCalledTimes(leverageRenders);
+    expect(screen.UNSAFE_getByType(FlatList)).toBe(list);
+    expect(list.props).toBe(listProps);
+    expect(screen.getByTestId('perps-pro-list-lead-in').props).toBe(
+      headerProps,
+    );
+    expect(mockAssetSubscriptions).toHaveLength(1);
+    view.unmount();
+    expect(mockAssetSubscriptions[0].unsubscribe).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps the shared leverage refresh stable while reading the current owner handle and scope', async () => {
+    const address = `0x${String(++assetFixtureId).padStart(40, '0')}`;
+    mockPerpsStore.setState({ currentPerpsAccount: { address } as never });
+    const sceneForCoin = (coin: string) =>
+      createSceneState({
+        currentMarket: {
+          canonicalCoin: coin,
+          marketKey: `hyperliquid::${coin}`,
+          marketData: { maxLeverage: 40, onlyIsolated: false },
+          quoteAsset: 'USDC',
+        },
+        klineEnabled: true,
+      });
+    mockUsePerpsProScene.mockReturnValue(sceneForCoin('BTC'));
+    const props = { isModeSwitching: false, onSwitchToSimple: jest.fn() };
+    const view = render(<PerpsProScene {...props} />);
+    const refresh: () => Promise<unknown> =
+      mockLeverageUpdateProps.mock.lastCall?.[0].refreshActiveAssetData;
+    const localRefresh =
+      mockTradeHookProps.mock.lastCall?.[0].refreshActiveAssetData;
+    expect(refresh).not.toBe(localRefresh);
+    await act(async () => {
+      await expect(refresh()).resolves.toEqual(
+        createActiveAssetData('BTC', address),
+      );
+    });
+    expect(mockGetActiveAssetData).toHaveBeenLastCalledWith('BTC', address);
+
+    mockUsePerpsProScene.mockReturnValue(sceneForCoin('ETH'));
+    view.rerender(<PerpsProScene {...props} />);
+    expect(
+      mockLeverageUpdateProps.mock.lastCall?.[0].refreshActiveAssetData,
+    ).toBe(refresh);
+    expect(mockTradeHookProps.mock.lastCall?.[0].refreshActiveAssetData).toBe(
+      localRefresh,
+    );
+    const sceneRenders = mockUsePerpsProScene.mock.calls.length;
+    const nextAddress = `0x${String(++assetFixtureId).padStart(40, '0')}`;
+    act(() => {
+      mockPerpsStore.setState({
+        currentPerpsAccount: { address: nextAddress } as never,
+      });
+    });
+    expect(mockUsePerpsProScene).toHaveBeenCalledTimes(sceneRenders);
+    await act(async () => {
+      await expect(refresh()).resolves.toEqual(
+        createActiveAssetData('ETH', nextAddress),
+      );
+    });
+    expect(mockGetActiveAssetData).toHaveBeenLastCalledWith('ETH', nextAddress);
+    expect(mockAssetSubscriptions).toHaveLength(3);
+    expect(mockLeverageUpdateProps).toHaveBeenCalledTimes(sceneRenders);
+    view.unmount();
+    await expect(refresh()).resolves.toBeNull();
+    expect(mockGetActiveAssetData).toHaveBeenCalledTimes(2);
+  });
+
   it('keeps the trade owner alive before preference hydration and across tab switches', () => {
     mockUsePerpsProScene.mockReturnValue(
       createSceneState({
@@ -1094,9 +1237,12 @@ describe('PerpsProScene market loading states', () => {
       });
       expect(mockTradeHookProps.mock.lastCall?.[0]).toMatchObject({
         leveragePending: pending,
-        refreshActiveAssetData: mockRefreshActiveAssetData,
+        refreshActiveAssetData: expect.any(Function),
         updateLeverageRequest: mockUpdateLeverage,
       });
+      expect(mockLeverageUpdateProps).toHaveBeenCalledTimes(
+        mockUsePerpsProScene.mock.calls.length,
+      );
     }
   });
 
