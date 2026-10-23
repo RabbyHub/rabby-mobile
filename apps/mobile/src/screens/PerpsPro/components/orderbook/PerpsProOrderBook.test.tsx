@@ -538,6 +538,9 @@ describe('PerpsProOrderBook display shell', () => {
       screen.getByLabelText('page.perps.pro.fieldExplanations.markPrice.title'),
     );
     expect(mockOpenFieldExplanation).toHaveBeenCalledWith('markPrice');
+    const markPricePress = screen.getByLabelText(
+      'page.perps.pro.fieldExplanations.markPrice.title',
+    ).props.onPress;
 
     view.rerender(
       <PerpsProOrderBook
@@ -574,6 +577,12 @@ describe('PerpsProOrderBook display shell', () => {
     expect(screen.getByText('31.56')).toBeTruthy();
     expect(screen.getByText('31.33')).toBeTruthy();
     expect(screen.getByText('31.34')).toBeTruthy();
+    const markPrice = screen.getByLabelText(
+      'page.perps.pro.fieldExplanations.markPrice.title',
+    );
+    expect(markPrice.props.onPress).toBe(markPricePress);
+    fireEvent.press(markPrice);
+    expect(mockOpenFieldExplanation).toHaveBeenCalledTimes(2);
   });
 
   it('forwards the raw latest trade price only when explicit selection is enabled', () => {

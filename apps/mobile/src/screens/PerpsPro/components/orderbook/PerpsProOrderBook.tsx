@@ -116,6 +116,10 @@ export const PerpsProOrderBook: React.FC<{
   const { colors2024, styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const openFieldExplanation = usePerpsProFieldExplanation();
+  const openMarkPriceExplanation = useCallback(
+    () => openFieldExplanation('markPrice'),
+    [openFieldExplanation],
+  );
   const [mode, setMode] = useState<PerpsOrderBookMode>('both');
   const [precisionOpen, setPrecisionOpen] = useState(false);
   const layout = getPerpsOrderBookLayout({
@@ -347,7 +351,7 @@ export const PerpsProOrderBook: React.FC<{
                       'page.perps.pro.fieldExplanations.markPrice.title',
                     )}
                     containerStyle={styles.markPriceUnderline}
-                    onPress={() => openFieldExplanation('markPrice')}
+                    onPress={openMarkPriceExplanation}
                     style={styles.markPrice}>
                     {formatPerpsProPrice(
                       market?.marketData.markPx,
@@ -367,7 +371,7 @@ export const PerpsProOrderBook: React.FC<{
                       'page.perps.pro.fieldExplanations.markPrice.title',
                     )}
                     containerStyle={styles.markPriceUnderline}
-                    onPress={() => openFieldExplanation('markPrice')}
+                    onPress={openMarkPriceExplanation}
                     style={styles.markPrice}>
                     {formatPerpsProPrice(
                       market?.marketData.markPx,
