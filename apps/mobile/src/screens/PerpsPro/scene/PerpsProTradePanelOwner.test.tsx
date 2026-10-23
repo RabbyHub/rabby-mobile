@@ -8,6 +8,7 @@ import type {
   usePerpsProTrade,
 } from './usePerpsProTrade';
 import { buildPerpsProMarketDescriptor } from '../model/market';
+import { triggerPerpsProLightHaptic } from '../components/common/triggerPerpsProLightHaptic';
 import { perpsStore, type MarketData } from '@/hooks/perps/usePerpsStore';
 
 const mockTradeInputs = jest.fn();
@@ -19,6 +20,25 @@ const mockOrderBookProps = jest.fn();
 const mockPlacementContext = React.createContext('scene');
 const mockSceneChildrenRender = jest.fn();
 const mockGetActiveAssetData = jest.fn();
+const mockSelectOrderBookPrice = jest.fn<
+  ReturnType<PerpsProTradeController['selectOrderBookPrice']>,
+  Parameters<PerpsProTradeController['selectOrderBookPrice']>
+>();
+const mockGetOrderBookPriceIntent = jest.fn<
+  ReturnType<PerpsProTradeController['getOrderBookPriceIntent']>,
+  Parameters<PerpsProTradeController['getOrderBookPriceIntent']>
+>();
+const mockTradeInteraction: {
+  orderType: PerpsProTradeController['form']['orderType'];
+  bboEnabled: boolean;
+  focusedLeg: PerpsProTradeController['tpSl']['focusedLeg'];
+  selectOrderBookPrice: PerpsProTradeController['selectOrderBookPrice'];
+} = {
+  orderType: 'market',
+  bboEnabled: false,
+  focusedLeg: null,
+  selectOrderBookPrice: mockSelectOrderBookPrice,
+};
 const mockAssetSubscriptions: {
   callback: (data: WsActiveAssetData) => void;
   coin: string;
@@ -118,16 +138,21 @@ jest.mock('./usePerpsProTrade', () => ({
       closeReview: () => setReview(null),
       confirmReview: jest.fn(),
       estimatedLiquidation: null,
-      form: { amount, bboEnabled: false, orderType: 'market' },
-      getOrderBookPriceIntent: () => ({ type: 'tradePrice' }),
+      form: {
+        amount,
+        bboEnabled: mockTradeInteraction.bboEnabled,
+        orderType: mockTradeInteraction.orderType,
+      },
+      getOrderBookPriceIntent: mockGetOrderBookPriceIntent,
       market: props.market,
       pending: false,
       requestReview: () => setReview({ marketKey: props.market?.marketKey }),
       review,
+      selectOrderBookPrice: mockTradeInteraction.selectOrderBookPrice,
       setAmount,
       setSkipConfirmation,
       skipConfirmation,
-      tpSl: { focusedLeg: null },
+      tpSl: { focusedLeg: mockTradeInteraction.focusedLeg },
     };
   },
 }));
@@ -254,6 +279,14 @@ const panelAndConfirmation = (
 describe('PerpsProTradePanelOwner component boundary', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockSelectOrderBookPrice.mockReset().mockReturnValue('accepted');
+    mockGetOrderBookPriceIntent
+      .mockReset()
+      .mockReturnValue({ type: 'tradePrice' });
+    mockTradeInteraction.orderType = 'market';
+    mockTradeInteraction.bboEnabled = false;
+    mockTradeInteraction.focusedLeg = null;
+    mockTradeInteraction.selectOrderBookPrice = mockSelectOrderBookPrice;
     mockSubscriptions.length = 0;
     mockAssetSubscriptions.length = 0;
     mockGetActiveAssetData.mockReset();
@@ -445,6 +478,166 @@ describe('PerpsProTradePanelOwner component boundary', () => {
     expect(mockTradeMount).toHaveBeenCalledTimes(1);
     expect(mockSubscriptions).toHaveLength(1);
   });
+
+  // These component tests inspect the real owner's prop boundary, not native
+  // render timing or the order book's separate press-in/source validation.
+  it.each(['limit', 'conditional', 'market'] as const)(
+    'keeps the %s price callback stable through mark, BBO and form publications',
+    orderType => {
+      mockTradeInteraction.orderType = orderType;
+      mockTradeInteraction.focusedLeg = orderType === 'market' ? 'tp' : null;
+      render(
+        <PerpsProTradePanelOwner {...createProps()}>
+          {panelAndConfirmation}
+        </PerpsProTradePanelOwner>,
+      );
+      const originalProps = mockOrderBookProps.mock.lastCall![0];
+      const originalController = mockFormProps.mock.lastCall![0].controller;
+      const originalRenders = mockOrderBookProps.mock.calls.length;
+      expect(originalProps.onSelectPrice).toEqual(expect.any(Function));
+
+      const updated = { ...createMarketData(), markPx: '123', midPx: '124' };
+      act(() => publishMarkets([updated, createMarketData('ETH')]));
+      expect(mockOrderBookProps.mock.calls.length).toBeGreaterThan(
+        originalRenders,
+      );
+      expect(mockOrderBookProps.mock.lastCall![0].market.marketData).toBe(
+        updated,
+      );
+      expect(mockOrderBookProps.mock.lastCall![0].onSelectPrice).toBe(
+        originalProps.onSelectPrice,
+      );
+
+      const book: L2Book = {
+        coin: 'BTC',
+        levels: [
+          [{ n: 1, px: '122', sz: '1' }],
+          [{ n: 1, px: '125', sz: '1' }],
+        ],
+        time: 8,
+      };
+      act(() => mockSubscriptions[0].callback(book));
+      expect(mockTradeInputs.mock.lastCall![0].bboBook).toBe(book);
+      expect(mockOrderBookProps.mock.lastCall![0].onSelectPrice).toBe(
+        originalProps.onSelectPrice,
+      );
+
+      act(() => originalController.setAmount('123'));
+      expect(mockFormProps.mock.lastCall![0].controller).not.toBe(
+        originalController,
+      );
+      expect(mockFormProps.mock.lastCall![0].controller.form.amount).toBe(
+        '123',
+      );
+      expect(mockOrderBookProps.mock.lastCall![0].onSelectPrice).toBe(
+        originalProps.onSelectPrice,
+      );
+      expect(
+        mockOrderBookProps.mock.lastCall![0].onSelectPriceIntentStart,
+      ).toBe(originalProps.onSelectPriceIntentStart);
+    },
+  );
+
+  it('rebinds the price callback to changed market keys and controller handlers without redirecting saved callbacks', () => {
+    mockTradeInteraction.orderType = 'limit';
+    const props = createProps();
+    const view = render(
+      <PerpsProTradePanelOwner {...props}>
+        {panelAndConfirmation}
+      </PerpsProTradePanelOwner>,
+    );
+    const selectBtcPrice = mockOrderBookProps.mock.lastCall![0].onSelectPrice;
+    view.rerender(
+      <PerpsProTradePanelOwner {...props} market={market('ETH')}>
+        {panelAndConfirmation}
+      </PerpsProTradePanelOwner>,
+    );
+    const selectEthPrice = mockOrderBookProps.mock.lastCall![0].onSelectPrice;
+    expect(selectEthPrice).not.toBe(selectBtcPrice);
+    const intent = { type: 'tradePrice' } as const;
+    selectBtcPrice('101', intent);
+    expect(mockSelectOrderBookPrice).toHaveBeenLastCalledWith(
+      '101',
+      'hyperliquid::BTC',
+      intent,
+    );
+    selectEthPrice('102', intent);
+    expect(mockSelectOrderBookPrice).toHaveBeenLastCalledWith(
+      '102',
+      'hyperliquid::ETH',
+      intent,
+    );
+
+    const replacement = jest.fn<
+      ReturnType<PerpsProTradeController['selectOrderBookPrice']>,
+      Parameters<PerpsProTradeController['selectOrderBookPrice']>
+    >(() => 'rejected');
+    mockTradeInteraction.selectOrderBookPrice = replacement;
+    act(() => mockFormProps.mock.lastCall![0].controller.setAmount('1'));
+    const selectCurrentPrice =
+      mockOrderBookProps.mock.lastCall![0].onSelectPrice;
+    expect(selectCurrentPrice).not.toBe(selectEthPrice);
+    mockSelectOrderBookPrice.mockClear();
+    selectCurrentPrice('103', intent);
+    expect(replacement).toHaveBeenCalledWith('103', 'hyperliquid::ETH', intent);
+    expect(mockSelectOrderBookPrice).not.toHaveBeenCalled();
+    selectEthPrice('104', intent);
+    expect(mockSelectOrderBookPrice).toHaveBeenCalledWith(
+      '104',
+      'hyperliquid::ETH',
+      intent,
+    );
+    expect(replacement).toHaveBeenCalledTimes(1);
+    expect(mockSelectOrderBookPrice.mock.lastCall![2]).toBe(intent);
+    expect(mockGetOrderBookPriceIntent).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    { orderType: 'market', bboEnabled: false, ready: true },
+    { orderType: 'limit', bboEnabled: true, ready: true },
+    { orderType: 'limit', bboEnabled: false, ready: false },
+  ] as const)(
+    'keeps price selection disabled for $orderType / BBO $bboEnabled / ready $ready',
+    ({ orderType, bboEnabled, ready }) => {
+      mockTradeInteraction.orderType = orderType;
+      mockTradeInteraction.bboEnabled = bboEnabled;
+      render(
+        <PerpsProTradePanelOwner
+          {...createProps()}
+          tradeConfigurationReady={ready}>
+          {panelAndConfirmation}
+        </PerpsProTradePanelOwner>,
+      );
+      expect(
+        mockOrderBookProps.mock.lastCall![0].onSelectPrice,
+      ).toBeUndefined();
+    },
+  );
+
+  it.each(['accepted', 'invalidPrice', 'rejected'] as const)(
+    'preserves the %s selection outcome haptic contract',
+    outcome => {
+      mockTradeInteraction.orderType = 'limit';
+      mockSelectOrderBookPrice.mockReturnValue(outcome);
+      render(
+        <PerpsProTradePanelOwner {...createProps()}>
+          {panelAndConfirmation}
+        </PerpsProTradePanelOwner>,
+      );
+      const intent = { type: 'attachedTpSlPrice', leg: 'tp' } as const;
+      mockOrderBookProps.mock.lastCall![0].onSelectPrice(null, intent);
+      expect(mockSelectOrderBookPrice).toHaveBeenCalledWith(
+        null,
+        'hyperliquid::BTC',
+        intent,
+      );
+      expect(mockSelectOrderBookPrice.mock.lastCall![2]).toBe(intent);
+      expect(mockGetOrderBookPriceIntent).not.toHaveBeenCalled();
+      expect(triggerPerpsProLightHaptic).toHaveBeenCalledTimes(
+        outcome === 'rejected' ? 0 : 1,
+      );
+    },
+  );
 
   it('uses array metadata while the map converges and clears a disappeared market', () => {
     const props = createProps();

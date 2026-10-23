@@ -31,6 +31,7 @@ import {
 import type { PerpsProLeverageConfiguration } from '../model/leverage';
 import type { PerpsProMarketDescriptor } from '../model/market';
 import type { PerpsTickOption } from '../model/orderBook';
+import type { PerpsProOrderBookPriceIntent } from '../model/orderBookPriceIntent';
 import { PerpsProRealtimeOrderBook } from './PerpsProRealtimeOrderBook';
 import { usePerpsProBboBook } from './usePerpsProBboBook';
 import type { PerpsProLeverageUpdateRequest } from './usePerpsProLeverageUpdate';
@@ -179,6 +180,20 @@ export const PerpsProTradePanelOwner = React.memo(
       }
       return intent;
     }, [getOrderBookPriceIntent]);
+    const selectOrderBookPrice = trade.selectOrderBookPrice;
+    const marketKey = market?.marketKey;
+    const selectCurrentMarketPrice = useCallback(
+      (price: string | null, intent: PerpsProOrderBookPriceIntent) => {
+        if (marketKey == null) {
+          return;
+        }
+        const outcome = selectOrderBookPrice(price, marketKey, intent);
+        if (outcome === 'accepted' || outcome === 'invalidPrice') {
+          triggerPerpsProLightHaptic();
+        }
+      },
+      [marketKey, selectOrderBookPrice],
+    );
     const supportsTradePriceSelection =
       (trade.form.orderType === 'limit' && !trade.form.bboEnabled) ||
       trade.form.orderType === 'conditional';
@@ -199,19 +214,7 @@ export const PerpsProTradePanelOwner = React.memo(
               onSelectTickOption={onSelectTickOption}
               onSelectPrice={
                 orderBookPriceInteractionEnabled
-                  ? (price, intent) => {
-                      const outcome = trade.selectOrderBookPrice(
-                        price,
-                        market.marketKey,
-                        intent,
-                      );
-                      if (
-                        outcome === 'accepted' ||
-                        outcome === 'invalidPrice'
-                      ) {
-                        triggerPerpsProLightHaptic();
-                      }
-                    }
+                  ? selectCurrentMarketPrice
                   : undefined
               }
               onSelectPriceIntentStart={startOrderBookPriceIntent}
