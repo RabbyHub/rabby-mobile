@@ -361,6 +361,65 @@ describe('PerpsProRealtimeOrderBook reconnect display cache', () => {
     ).toBeUndefined();
   });
 
+  it.each([
+    ['book', 'stale'],
+    ['book', 'error'],
+    ['latestTrade', 'stale'],
+    ['latestTrade', 'error'],
+  ] as const)(
+    'rejects a retained %s selection handler after its feed becomes %s',
+    (sourceType, status) => {
+      const onSelectPrice = jest.fn();
+      const view = render(orderBook({ onSelectPrice }));
+      const retainedBookSelection =
+        mockRenderedOrderBookProps?.onSelectBookPrice;
+      const retainedLatestSelection =
+        mockRenderedOrderBookProps?.onSelectLatestTradePrice;
+      const bookSource = {
+        feedIdentity: 'BTC:5:null',
+        marketKey: market.marketKey,
+        type: 'book',
+      };
+      const latestSource = {
+        feedIdentity: 'BTC',
+        marketKey: market.marketKey,
+        type: 'latestTrade',
+      };
+      const intent = { type: 'tradePrice' };
+
+      retainedBookSelection('100', intent, bookSource);
+      retainedLatestSelection('100.5', intent, latestSource);
+      expect(onSelectPrice).toHaveBeenCalledTimes(2);
+      onSelectPrice.mockClear();
+
+      if (sourceType === 'book') {
+        mockFastL2State = { ...mockFastL2State, status };
+      } else {
+        mockLatestTradeState = { ...mockLatestTradeState, status };
+      }
+      view.rerender(orderBook({ onSelectPrice }));
+
+      if (sourceType === 'book') {
+        expect(mockRenderedOrderBookProps?.onSelectBookPrice).toBeUndefined();
+        retainedBookSelection('100', intent, bookSource);
+        expect(onSelectPrice).not.toHaveBeenCalled();
+
+        retainedLatestSelection('100.5', intent, latestSource);
+        expect(onSelectPrice).toHaveBeenCalledWith('100.5', intent);
+      } else {
+        expect(
+          mockRenderedOrderBookProps?.onSelectLatestTradePrice,
+        ).toBeUndefined();
+        retainedLatestSelection('100.5', intent, latestSource);
+        expect(onSelectPrice).not.toHaveBeenCalled();
+
+        retainedBookSelection('100', intent, bookSource);
+        expect(onSelectPrice).toHaveBeenCalledWith('100', intent);
+      }
+      expect(onSelectPrice).toHaveBeenCalledTimes(1);
+    },
+  );
+
   it('rejects a frozen press when its market or feed identity changes before release', () => {
     const onSelectPrice = jest.fn();
     const view = render(

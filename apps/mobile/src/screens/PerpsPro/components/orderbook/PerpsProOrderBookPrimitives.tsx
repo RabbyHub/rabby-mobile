@@ -7,16 +7,13 @@ import { Pressable, View } from 'react-native';
 import Animated, { useAnimatedStyle } from 'react-native-reanimated';
 
 import {
-  getPerpsOrderBookDepthPercent,
   getPerpsOrderBookModeIconState,
-  type PerpsOrderBookLevel,
   type PerpsOrderBookMode,
 } from '../../model/orderBook';
 import {
   formatPerpsProOrderBookAmount,
   formatPerpsProPrice,
 } from '../../utils/format';
-import type { PerpsProTradeAmountUnit } from '../../model/trade';
 import { usePerpsProOrderBookPercentAnimation } from './usePerpsProOrderBookPercentAnimation';
 
 export const PERPS_PRO_ORDER_BOOK_ROW_HEIGHT = 20;
@@ -56,52 +53,60 @@ export const PerpsProOrderBookModeIcon: React.FC<{
 });
 
 export const PerpsProOrderBookRow: React.FC<{
-  amountUnit?: PerpsProTradeAmountUnit;
+  amount: number;
   amountDecimals?: number;
-  level?: PerpsOrderBookLevel;
-  onSelectPrice?: () => void;
-  onSelectPriceIntentStart?: () => void;
+  price: string | null;
+  priceNumber: number;
+  onSelectPrice?: (price: string | null) => void;
+  onSelectPriceIntentStart?: (price: string | null) => void;
   priceDecimals: number;
   side: 'ask' | 'bid';
 }> = React.memo(function PerpsProOrderBookRow({
-  amountUnit = 'quote',
+  amount,
   amountDecimals = 2,
-  level,
+  price,
+  priceNumber,
   onSelectPrice,
   onSelectPriceIntentStart,
   priceDecimals,
   side,
 }) {
   const { styles } = useTheme2024({ getStyle });
+  const handlePressIn = React.useCallback(
+    () => onSelectPriceIntentStart?.(price),
+    [onSelectPriceIntentStart, price],
+  );
+  const handlePress = React.useCallback(
+    () => onSelectPrice?.(price),
+    [onSelectPrice, price],
+  );
+  const hasPrice = price !== null;
 
   return (
     <Pressable
       accessibilityRole={onSelectPrice ? 'button' : undefined}
       disabled={!onSelectPrice}
-      onPressIn={onSelectPriceIntentStart}
-      onPress={onSelectPrice}
+      onPressIn={onSelectPriceIntentStart ? handlePressIn : undefined}
+      onPress={onSelectPrice ? handlePress : undefined}
       style={styles.bookRow}
       testID="perps-pro-order-book-row">
       <Text
         numberOfLines={1}
         style={[
           styles.bookPrice,
-          level
+          hasPrice
             ? side === 'bid'
               ? styles.bidPrice
               : styles.askPrice
             : styles.placeholder,
         ]}>
-        {level ? formatPerpsProPrice(level.priceNumber, priceDecimals) : '--'}
+        {hasPrice ? formatPerpsProPrice(priceNumber, priceDecimals) : '--'}
       </Text>
       <Text
         numberOfLines={1}
-        style={[styles.bookAmount, level ? null : styles.placeholder]}>
-        {level
-          ? formatPerpsProOrderBookAmount(
-              amountUnit === 'base' ? level.size : level.usdSize,
-              amountDecimals,
-            )
+        style={[styles.bookAmount, hasPrice ? null : styles.placeholder]}>
+        {hasPrice
+          ? formatPerpsProOrderBookAmount(amount, amountDecimals)
           : '--'}
       </Text>
     </Pressable>
@@ -110,14 +115,14 @@ export const PerpsProOrderBookRow: React.FC<{
 
 export const PerpsProOrderBookDepth: React.FC<{
   animationIdentity: string;
-  level: PerpsOrderBookLevel;
-  maxTotal: number;
+  price: string;
+  targetPercent: number;
   rowIndex: number;
   side: 'ask' | 'bid';
 }> = React.memo(function PerpsProOrderBookDepth({
   animationIdentity,
-  level,
-  maxTotal,
+  price,
+  targetPercent,
   rowIndex,
   side,
 }) {
@@ -125,8 +130,8 @@ export const PerpsProOrderBookDepth: React.FC<{
   const animatedDepth = usePerpsProOrderBookPercentAnimation({
     animationIdentity,
     hasValue: true,
-    targetPercent: getPerpsOrderBookDepthPercent(level, maxTotal),
-    valueIdentity: level.price,
+    targetPercent,
+    valueIdentity: price,
   });
   const depthStyle = useAnimatedStyle(() => ({
     width: `${animatedDepth.value}%` as `${number}%`,

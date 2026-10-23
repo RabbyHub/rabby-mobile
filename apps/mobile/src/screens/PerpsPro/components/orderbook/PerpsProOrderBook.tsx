@@ -17,6 +17,7 @@ import type { PerpsProTradeAmountUnit } from '../../model/trade';
 import {
   calculatePerpsBuyRatio,
   getNextPerpsOrderBookMode,
+  getPerpsOrderBookDepthPercent,
   getPerpsOrderBookDisplayState,
   getPerpsOrderBookLayout,
   getVisiblePerpsOrderBookMaxTotal,
@@ -218,6 +219,15 @@ export const PerpsProOrderBook: React.FC<{
     ],
   );
 
+  const startBookPriceSelection = useCallback(
+    (price: string | null) => startPriceSelection('book', price),
+    [startPriceSelection],
+  );
+  const finishBookPriceSelection = useCallback(
+    (price: string | null) => finishPriceSelection('book', price),
+    [finishPriceSelection],
+  );
+
   const renderRows = (
     side: 'ask' | 'bid',
     rows: PerpsOrderBookDisplayRow[],
@@ -234,8 +244,11 @@ export const PerpsProOrderBook: React.FC<{
               <PerpsProOrderBookDepth
                 animationIdentity={animationIdentity}
                 key={getPerpsProOrderBookDepthKey(side, level)}
-                level={level}
-                maxTotal={maxVisibleTotal}
+                price={level.price}
+                targetPercent={getPerpsOrderBookDepthPercent(
+                  level,
+                  maxVisibleTotal,
+                )}
                 rowIndex={index}
                 side={side}
               />
@@ -245,18 +258,15 @@ export const PerpsProOrderBook: React.FC<{
         {displayRows.map((level, index) => (
           <PerpsProOrderBookRow
             amountDecimals={amountDecimals}
-            amountUnit={amountUnit}
+            amount={(amountUnit === 'base' ? level?.size : level?.usdSize) ?? 0}
             key={getPerpsProOrderBookRowKey(side, index)}
-            level={level ?? undefined}
+            price={level?.price ?? null}
+            priceNumber={level?.priceNumber ?? 0}
             onSelectPrice={
-              onSelectBookPrice
-                ? () => finishPriceSelection('book', level?.price ?? null)
-                : undefined
+              onSelectBookPrice ? finishBookPriceSelection : undefined
             }
             onSelectPriceIntentStart={
-              onSelectBookPrice
-                ? () => startPriceSelection('book', level?.price ?? null)
-                : undefined
+              onSelectBookPrice ? startBookPriceSelection : undefined
             }
             priceDecimals={orderBookPriceDecimals}
             side={side}
