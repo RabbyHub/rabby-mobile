@@ -1,29 +1,41 @@
 # rn-collapsible-scene-view
 
-A small local package for "collapsed scene" layouts: one scroll surface per
-tab, a scroll-away header region, and **multiple pinned layers** stacked on top
-of each other.
+A small local package for "collapsed scene" layouts: a scroll-away header,
+multiple stacked pinned layers, and optional retained two-level horizontal
+paging. It supports two distinct vertical integrations:
+
+- **Basic per-tab surfaces:** each tab owns a `SceneScrollView` or `SceneList`;
+  the provider tracks the active offset and can align surfaces on activation.
+- **Retained single-owner integration:** one outer `SceneList` owns native
+  vertical scrolling; `LinkedScenePager` and retained child lists live inside
+  its real list cell. Horizontal navigation does not coordinate multiple
+  vertical scrollers.
+
+This README documents the reusable contracts. The app-specific layout,
+business rules, and validation boundaries are in the
+[Perps Pro linked-pager design](../../apps/mobile/src/devdocs/perps-pro-linked-pager.md).
 
 It starts as a simplified re-implementation of
 `react-native-collapsible-tab-view` (the repo patches that library for the Home
-screen), and then adds what that library cannot express:
+screen), and extends the available layout and paging primitives:
 
-| capability                                                      | collapsible-tab-view | this package                 |
-| --------------------------------------------------------------- | -------------------- | ---------------------------- |
-| scroll-away header                                              | yes                  | yes                          |
-| single pinned tab bar                                           | yes                  | yes                          |
-| **several pinned layers stacked**                               | no                   | yes (`PinnedLayer`)          |
-| **content that scrolls away but stays above the pinned layers** | no                   | yes (`ScrollingLayer`)       |
-| shared scene offset on switch                                   | no                   | yes                          |
-| **virtualized list surface**                                    | yes                  | yes (`SceneList`)            |
-| horizontal paging                                               | library pager        | caller-owned pager (or none) |
+| capability                                                      | collapsible-tab-view | this package                             |
+| --------------------------------------------------------------- | -------------------- | ---------------------------------------- |
+| scroll-away header                                              | yes                  | yes                                      |
+| single pinned tab bar                                           | yes                  | yes                                      |
+| **several pinned layers stacked**                               | no                   | yes (`PinnedLayer`)                      |
+| **content that scrolls away but stays above the pinned layers** | no                   | yes (`ScrollingLayer`)                   |
+| shared scene offset on switch                                   | no                   | yes                                      |
+| **virtualized list surface**                                    | yes                  | yes (`SceneList`)                        |
+| horizontal paging                                               | library pager        | `LinkedScenePager` or caller-owned pager |
 
-## Model
+## Basic per-tab surfaces
 
-All layers share one `scrollY` value that comes from the active tab's
-`SceneScrollView` on the UI thread, so every layer moves in the same frame as
-the list. There is no per-frame JS work and no overlay "chasing" the native
-offset.
+The original integration uses separate vertical surfaces. The active tab's
+`SceneScrollView` or `SceneList` publishes its non-negative offset to the
+provider's Reanimated `scrollY` shared value on the UI thread. Worklet-based
+layers derive their transforms from that value, without a per-frame React
+state update.
 
 ```
 <CollapsibleSceneProvider headerHeight={H} activeTab={tab}>
@@ -44,9 +56,9 @@ below another pinned layer instead of at absolute zero.
 
 `SceneList` is the virtualized equivalent of `SceneScrollView`: both reserve
 `contentInsetTop` and publish the active tab's offset to the scene on the UI
-thread. A page that becomes active is aligned to the current scene offset
-(`syncOffsetOnActivate` defaults to `true`), so switching tabs cannot move the
-shared header/market/trade layers.
+thread. A page that becomes active can be aligned to the current scene offset
+(`syncOffsetOnActivate` defaults to `true`). This is offset coordination
+between separate surfaces, not the retained single-owner model below.
 
 For a caller-owned pager, create the controller above the provider and share it
 with the pager:
@@ -64,9 +76,43 @@ const controller = useCollapsibleSceneController();
 />
 ```
 
-## Status
+Do not use this synchronization pattern for retained pages inside one outer
+list. Set `syncOffsetOnActivate={false}` on their provider: changing the
+logical page must not issue vertical alignment commands to the same native
+owner.
 
-### Retained linked pages
+## Native vertical clock and worklet geometry
+
+`SceneList` optionally accepts `nativeScrollY`, an RN `Animated.Value`. Pass
+the same value to `CollapsibleHeaderLayer` and `CollapsiblePinnedLayer` to use
+their native-clock path. The list attaches `contentOffset.y` directly from its
+native scroll host through RN `Animated.attachNativeEvent`; it does not copy
+Reanimated progress or JS scroll callbacks into that value. Attachments are
+detached when their host/value changes or the list unmounts.
+
+Those layers use RN NativeAnimated interpolation for vertical transforms
+(and header opacity). Their memoized native host keeps the animation graph
+separate from business-content updates. Interactive content must use native
+hit testing, such as RNGH Pressable, rather than rely on JS measurements of
+the transformed view. The interpolation clamps at the configured collapse
+and pin limits; pinned layers need not follow the list's overscroll bounce.
+
+Reanimated still receives the same scroll host's events and publishes the
+non-negative scene `scrollY` for geometry, gesture decisions, and explicit
+commands. `LinkedScenePager` uses its own UI-thread horizontal progress for
+parent/child transforms and the indicator; this never drives vertical
+scrolling. JS remains responsible for layout measurements, business inputs,
+and transition/settlement publication, not per-frame horizontal motion.
+
+Without `nativeScrollY`, the header and pinned layers use the provider's
+Reanimated value instead. `CollapsibleScrollingLayer` currently uses that
+worklet path only. These are presentation mechanisms, not a synchronization
+barrier: neither path guarantees zero latency or same-frame presentation
+across arbitrary native and Fabric views. Validate motion and hit testing on
+physical devices, and prefer a shared moving ancestor when related content
+must move together.
+
+## Retained linked pages
 
 `LinkedScenePager` supports one shared, two-level page tree with two
 mount-time gesture-routing modes:
@@ -107,10 +153,13 @@ remembered child without animating through intermediate siblings. A drag can
 interrupt settlement at the current fractional position; rapid tab commands keep the latest pending
 selection. Horizontal motion is UI-thread gesture/transform animation, not
 system-native paging physics, so physical-device feel needs separate validation.
-Keep trade/header content outside this horizontal component.
+Keep scene-wide trade/header content outside this horizontal component.
 
-The caller owns the **only native vertical list**. Render the pager inside its
-real list cell so same-orientation child VirtualizedLists inherit that context.
+The caller owns the **only native vertical scroll surface**, not the only
+VirtualizedList instance. Render the pager inside its real list cell so
+same-orientation child VirtualizedLists inherit that context. The retained
+leaves keep their own virtualization and measurement; React Native renders
+their scroll container as a plain View under the shared outer list context.
 The app's `LinkedScenePagerList` demonstrates this integration and supplies
 activity boundaries. Leaf `active` includes visible previews; `interactive`
 is restricted to the settled page. Pause inactive subscriptions using these
@@ -131,6 +180,8 @@ explicit remount. Neither path issues vertical `scrollTo` commands.
 An established viewport-width change cancels and remounts the horizontal
 owner at the last committed path, retaining group memory and the external
 vertical list; in-flight pixel coordinates are never replayed at the new width.
+
+## Status
 
 - v0: provider, shared scroll value, per-tab handles, the three layer
   primitives, `SceneScrollView`.
