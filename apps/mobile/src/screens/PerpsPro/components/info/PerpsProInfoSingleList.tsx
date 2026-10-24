@@ -108,8 +108,8 @@ export const PerpsProInfoSingleList = <Row extends { key: string }>({
       scrollToOffset: (offset, animated) =>
         pagerRef.current?.scrollToOffset(offset, animated),
       selectPath: path => pagerRef.current?.selectPath(path),
-      // Clicking the parent restores the remembered category. Swiping continues
-      // to use adjacency on the physical track, not this remembered preference.
+      // Parent navigation preserves the category. The pager also remembers it
+      // for gesture entry; an explicit tab command uses the business selection.
       selectTab: key =>
         pagerRef.current?.selectPath({
           key,

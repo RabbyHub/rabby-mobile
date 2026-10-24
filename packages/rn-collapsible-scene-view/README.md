@@ -69,7 +69,7 @@ const controller = useCollapsibleSceneController();
 ### Retained linked pages
 
 `LinkedScenePager` supports one shared, two-level page tree with two
-mount-time presentation modes:
+mount-time gesture-routing modes:
 
 ```tsx
 const pages = [
@@ -82,33 +82,31 @@ const pages = [
 ] satisfies readonly LinkedScenePage[];
 ```
 
-- `pagingMode="flat"` (default): one native horizontal track with four
-  stops, including the blank area below short content. Main indicator progress
-  maps to `0 → 1 → 1 → 2`; changing an Orders child does not select another
-  main tab.
-- `pagingMode="nested"`: native parent and child pagers. The child owns its
-  content bounds. This mode does not promise automatic parent-boundary handoff.
+- `pagingMode="flat"` (default): the whole lower region, including blank space,
+  routes a swipe to an adjacent child first, then to an adjacent parent at a
+  child boundary. Entering a parent restores its remembered child (or its first
+  child when unvisited), regardless of entry direction. Changing an Orders
+  child does not select another main tab.
+- `pagingMode="nested"`: a gesture starting inside child content selects a
+  sibling child; a gesture in the group header or outside child content selects
+  a parent tab. The child boundary clamps rather than handing off automatically.
 
 Both modes use `activePath: {key, childKey?}`, `onPathChange`,
 `renderLeaf(path, context)`, and optional
-`renderGroupHeader(key, context)`. One group header is shared by its children;
-flat mode places that header beside the horizontal scroller, inside the same
-outer vertical cell. It stays at zero horizontal translation across its child
-pages, and only moves when entering or leaving the group. This avoids trying
-to cancel native scroll movement with a separately committed transform.
-Boundary translation uses a native Animated graph attached directly to the
-track's native `contentOffset.x`, not Reanimated or JS settlement positions.
-Keep that horizontal clock separate from Reanimated's vertical inset and
-indicator work. A memoized native host and context content slot let live
-controls update without rewriting the transform graph. The gesture belongs
-to that translated host; its positioning wrapper is `box-none` so an offscreen
-header cannot intercept the adjacent page's controls.
-A header-only horizontal gesture drives the same native track; vertical drags
-still belong to the outer list. Header buttons remain independently tappable.
-New header drags start only when the track is idle, checked at touch-down and
-activation. Native row/blank-area gestures can still grab an in-flight native
-animation. This deliberately avoids competing with Android's programmatic
-scroll animator, which a non-animated `scrollTo` does not cancel.
+`renderGroupHeader(key, context)`. Both policies use the same nested view tree:
+the group header and child viewport share one parent page. A single UI-thread
+pan/animation owner chooses either a parent transition or a child transition.
+Crossing a parent boundary moves the entire parent, including its header;
+switching siblings moves only the child track. There is no floating header
+following a separate native horizontal scroller. Vertical drags still belong
+to the outer native list, and header buttons remain independently tappable.
+
+Each transition captures its two paths and the children's presentation
+positions. Both parent-tab clicks and parent-boundary swipes restore the
+remembered child without animating through intermediate siblings. A drag can
+interrupt settlement at the current fractional position; rapid tab commands keep the latest pending
+selection. Horizontal motion is UI-thread gesture/transform animation, not
+system-native paging physics, so physical-device feel needs separate validation.
 Keep trade/header content outside this horizontal component.
 
 The caller owns the **only native vertical list**. Render the pager inside its
@@ -119,8 +117,10 @@ is restricted to the settled page. Pause inactive subscriptions using these
 contexts without freezing native layout measurement.
 
 `ref.selectPath(path)` selects an explicit child, while `selectTab(key)`
-restores that group's remembered child. Gestures always follow physical
-adjacency in flat mode. Page existence comes only from `pages`, never row
+restores that group's remembered child. Flat gestures use child adjacency
+inside the current group; parent entry never selects a child by direction.
+For example, Basic → click Account → swipe back returns to Basic, not
+Conditional. Page existence comes only from `pages`, never row
 counts; keep zero-row children when their tabs remain visible.
 
 Keys must be non-empty and unique within their level. Internal physical keys
@@ -135,5 +135,5 @@ vertical list; in-flight pixel coordinates are never replayed at the new width.
 - v0: provider, shared scroll value, per-tab handles, the three layer
   primitives, `SceneScrollView`.
 - v1: `SceneList`, `pinTop` for stacked pinned layers, shared-offset activation.
-- v2: retained two-level `LinkedScenePager` with flat/nested presentation,
-  native horizontal paging and shared group chrome.
+- v2: retained two-level `LinkedScenePager` with flat/nested gesture routing,
+  nested presentation and one shared group header.

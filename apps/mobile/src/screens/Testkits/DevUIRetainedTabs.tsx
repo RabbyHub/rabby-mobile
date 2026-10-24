@@ -279,7 +279,7 @@ export default function DevUIRetainedTabs({ onBack }: { onBack: () => void }) {
           <Text>Reset account</Text>
         </Pressable>
       </View>
-      <Text testID="retained-selection">Retained native tabs: {activeKey}</Text>
+      <Text testID="retained-selection">Retained linked tabs: {activeKey}</Text>
       <Text numberOfLines={4} style={styles.report} testID="retained-report">
         {report}
       </Text>

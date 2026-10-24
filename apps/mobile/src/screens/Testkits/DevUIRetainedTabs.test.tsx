@@ -14,9 +14,31 @@ import {
   ScrollView,
   StyleSheet,
 } from 'react-native';
+import {
+  nativeBoundary,
+  type PanBoundary,
+  type PanEvent,
+} from '@/testUtils/linkedPagerNativeBoundary';
 
-const mockSetPage = jest.fn();
-const mockNativeScrollTo = jest.fn();
+// Keep the real fixture, linked model/renderer, SceneList and activity scopes.
+// Only native input/animation execution is replaced; UIKit arbitration, frames
+// and touch hit testing still require the physical-device acceptance scenario.
+jest.mock('react-native-gesture-handler', () =>
+  require('@/testUtils/linkedPagerNativeBoundary').createGestureBoundary(),
+);
+jest.mock('react-native-reanimated', () =>
+  require('@/testUtils/linkedPagerNativeBoundary').createReanimatedBoundary(),
+);
+jest.mock('react-native-pager-view', () => ({
+  __esModule: true,
+  default: require('react-native').View,
+}));
+jest.mock('react-native-animateable-text', () => require('react-native').Text);
+jest.mock('@rneui/base', () => ({ Text: require('react-native').Text }));
+
+import DevUIRetainedTabs from './DevUIRetainedTabs';
+// Include the package's real pure contract in the normal mobile unit lane.
+import '../../../../../packages/rn-collapsible-scene-view/src/linkedPresentationModel.test';
 
 type NativeScrollMapping = {
   nativeEvent: {
@@ -25,7 +47,6 @@ type NativeScrollMapping = {
 };
 type NativeScrollAttachment = {
   target: unknown;
-  eventName: string;
   mapping: NativeScrollMapping[];
   detach: jest.Mock;
 };
@@ -38,222 +59,90 @@ const nativeAnimated = NativeAnimated as typeof NativeAnimated & {
   ) => { detach: () => void };
 };
 
-type HeaderPanEvent = { translationX: number; velocityX: number };
-type HeaderPanManager = { fail: () => void };
-type HeaderPanBoundary = {
-  config: Record<string, unknown>;
-  handlers: Record<string, (event: HeaderPanEvent, success?: boolean) => void>;
-  touchesDown?: (event: unknown, manager: HeaderPanManager) => void;
-};
-
-// Keep the real fixture, linked model/renderer, SceneList and activity scopes.
-// These native callback boundaries do not prove UIKit gesture arbitration.
-jest.mock('react-native-pager-view', () => {
-  const ReactModule = require('react') as typeof React;
-  const NativeView = require('react-native').View;
-  return {
-    __esModule: true,
-    default: ReactModule.forwardRef(function NativePagerBoundary(
-      props: React.PropsWithChildren<Record<string, unknown>>,
-      ref: React.Ref<unknown>,
-    ) {
-      ReactModule.useImperativeHandle(
-        ref,
-        () => ({ setPage: mockSetPage }),
-        [],
-      );
-      return <NativeView {...props} />;
-    }),
-  };
-});
-jest.mock('react-native-gesture-handler', () => {
-  const ReactModule = require('react') as typeof React;
-  const native = require('react-native');
-  const pan = () => {
-    const boundary: HeaderPanBoundary & Record<string, unknown> = {
-      config: {},
-      handlers: {},
-    };
-    for (const name of [
-      'enabled',
-      'activeOffsetX',
-      'failOffsetY',
-      'maxPointers',
-      'runOnJS',
-    ]) {
-      boundary[name] = (value: unknown) => {
-        boundary.config[name] = value;
-        return boundary;
-      };
-    }
-    for (const name of [
-      'onBegin',
-      'onStart',
-      'onUpdate',
-      'onEnd',
-      'onFinalize',
-    ]) {
-      boundary[name] = (handler: HeaderPanBoundary['handlers'][string]) => {
-        boundary.handlers[name] = handler;
-        return boundary;
-      };
-    }
-    boundary.onTouchesDown = (
-      handler: NonNullable<HeaderPanBoundary['touchesDown']>,
-    ) => {
-      boundary.touchesDown = handler;
-      return boundary;
-    };
-    return boundary;
-  };
-  return {
-    Pressable: native.Pressable,
-    Text: native.Text,
-    TextInput: native.TextInput,
-    Gesture: { Pan: pan },
-    GestureDetector: ({
-      children,
-      gesture,
-    }: React.PropsWithChildren<{ gesture: HeaderPanBoundary }>) =>
-      ReactModule.createElement(
-        native.View,
-        { testID: 'native-header-pan-boundary', gesture },
-        children,
-      ),
-  };
-});
-jest.mock('react-native-animateable-text', () => require('react-native').Text);
-jest.mock('@rneui/base', () => ({ Text: require('react-native').Text }));
-jest.mock('react-native-reanimated', () => {
-  const ReactModule = require('react') as typeof React;
-  const native = require('react-native');
-  return {
-    __esModule: true,
-    default: {
-      createAnimatedComponent: (component: unknown) => component,
-      View: native.View,
-      ScrollView: native.ScrollView,
-    },
-    useSharedValue: (value: unknown) => ReactModule.useRef({ value }).current,
-    useAnimatedStyle: (style: () => unknown) => style(),
-    useAnimatedRef: () =>
-      ReactModule.useMemo(() => {
-        const callback = (instance: unknown) => {
-          callback.current = instance;
-        };
-        callback.current = null as unknown;
-        return callback;
-      }, []),
-    useAnimatedReaction: (
-      prepare: () => unknown,
-      react: (current: unknown, previous: unknown) => void,
-      dependencies: React.DependencyList = [],
-    ) => {
-      const previous = ReactModule.useRef<unknown>(null);
-      ReactModule.useEffect(() => {
-        const current = prepare();
-        react(current, previous.current);
-        previous.current = current;
-      }, dependencies);
-    },
-    // Reanimated multiplexes native scroll lifecycle events through onScroll.
-    useAnimatedScrollHandler:
-      (handlers: Record<string, (event: unknown) => void>) =>
-      (event: { nativeEvent: unknown; eventName?: string }) =>
-        handlers[event.eventName ?? 'onScroll']?.(event.nativeEvent),
-    useEvent: (handler: unknown) => handler,
-    runOnUI: (callback: unknown) => callback,
-    runOnJS: (callback: unknown) => callback,
-    // Jest hoists the module factory before this file's spy initialization.
-    // Resolve the spy only when the production worklet invokes the boundary.
-    scrollTo: (...args: unknown[]) => mockNativeScrollTo(...args),
-  };
-});
-
-import DevUIRetainedTabs from './DevUIRetainedTabs';
-
 const hidden = { includeHiddenElements: true };
 const WIDTH = 320;
 const leafKeys = ['Positions', 'Orders-Basic', 'Orders-Conditional', 'Account'];
-const track = () =>
-  screen.queryByTestId('retained-track', hidden) ??
-  screen.getByTestId('retained-pager', hidden);
-const isFlat = () => track().props.testID === 'retained-track';
+const viewport = () => screen.getByTestId('retained-viewport', hidden);
+const rootTrack = () => screen.getByTestId('retained-root-track', hidden);
+const childTrack = () =>
+  screen.getByTestId('retained-group-Orders-track', hidden);
 const list = (key: string) =>
   screen.getByTestId(`retained-rows-${key}`, hidden);
+const group = () => screen.getByTestId('retained-group-Orders', hidden);
 const select = (index: number) =>
   fireEvent.press(screen.getByTestId(`retained-tab-${index}`));
-const nativeScroll = (
-  eventName: 'onScroll' | 'onBeginDrag' | 'onEndDrag' | 'onMomentumEnd',
-  progress: number,
-) =>
-  fireEvent(track(), 'scroll', {
-    eventName,
-    nativeEvent: { contentOffset: { x: progress * WIDTH, y: 0 } },
-  });
-const settleRoot = (index: number) => {
-  if (isFlat()) {
-    nativeScroll('onMomentumEnd', index);
-  } else {
-    fireEvent(track(), 'pageSelected', { position: index });
+const finish = () => act(() => nativeBoundary.finishAnimations());
+const layout = (width = WIDTH) => {
+  const event = { nativeEvent: { layout: { x: 0, y: 0, width, height: 600 } } };
+  const outer = screen
+    .UNSAFE_getAllByType(ScrollView)
+    .find(view => !view.props.horizontal)!;
+  if (outer.props.onLayout) {
+    fireEvent(outer, 'layout', event);
   }
-};
-const settleConditional = () => {
-  if (isFlat()) {
-    nativeScroll('onMomentumEnd', 2);
-  } else {
-    fireEvent(
-      screen.getByTestId('retained-group-Orders-pager', hidden),
-      'pageSelected',
-      { position: 1 },
-    );
+  const owner = screen.queryByTestId('retained-layout', hidden);
+  if (owner?.props.onLayout) {
+    fireEvent(owner, 'layout', event);
   }
-};
-const layoutTrack = () => {
-  if (isFlat()) {
-    fireEvent(track(), 'layout', {
-      nativeEvent: { layout: { x: 0, y: 0, width: WIDTH, height: 600 } },
-    });
-    fireEvent(track(), 'contentSizeChange', WIDTH * leafKeys.length, 600);
+  if (viewport().props.onLayout) {
+    fireEvent(viewport(), 'layout', event);
   }
 };
 const switchMode = () => {
   fireEvent.press(screen.getByTestId('retained-toggle-mode'));
-  layoutTrack();
+  layout();
 };
-const headerPan = () =>
-  screen.getByTestId('native-header-pan-boundary', hidden).props
-    .gesture as HeaderPanBoundary;
-const headerPanEvent = (translationX = 0, velocityX = 0): HeaderPanEvent => ({
+const pan = () =>
+  screen.getByTestId('retained-pan', hidden).props.gesture as PanBoundary;
+const panEvent = (translationX = 0, y = 150, velocityX = 0): PanEvent => ({
   translationX,
+  translationY: 0,
   velocityX,
+  x: WIDTH / 2,
+  y,
+  absoluteX: WIDTH / 2,
+  absoluteY: y,
 });
-const headerTouchDown = (gesture: HeaderPanBoundary) => {
-  const manager = { fail: jest.fn() };
-  expect(gesture.touchesDown).toEqual(expect.any(Function));
-  act(() => gesture.touchesDown?.({}, manager));
+const touchDown = (gesture = pan(), y = 150) => {
+  const manager = { fail: jest.fn(), activate: jest.fn(), end: jest.fn() };
+  act(() => {
+    gesture.touchesDown?.(
+      { allTouches: [{ x: WIDTH / 2, y }], numberOfTouches: 1 },
+      manager,
+    );
+  });
   return manager;
 };
-const lastNativeScroll = () =>
-  mockNativeScrollTo.mock.calls[mockNativeScrollTo.mock.calls.length - 1];
-const activeNativeAttachments = (axis: 'x' | 'y') =>
-  nativeAttachments.filter(
-    attachment =>
-      attachment.detach.mock.calls.length === 0 &&
-      attachment.mapping.some(
-        entry => entry.nativeEvent.contentOffset[axis] !== undefined,
-      ),
-  );
-const groupHeaderX = () => {
-  const header = screen
-    .UNSAFE_getAllByType(NativeAnimated.View)
-    .find(view => view.props.testID === 'retained-group-Orders-gesture')!;
-  const transform = StyleSheet.flatten(header.props.style).transform as Array<{
-    translateX?: number | { __getValue: () => number };
-  }>;
-  const translateX = transform.find(value => value.translateX !== undefined)!
-    .translateX!;
-  return typeof translateX === 'number' ? translateX : translateX.__getValue();
+const begin = (direction: 'left' | 'right' = 'left', y = 150) => {
+  const gesture = pan();
+  touchDown(gesture, y);
+  act(() => {
+    gesture.handlers.onBegin?.(panEvent(0, y));
+    gesture.handlers.onStart(panEvent(direction === 'left' ? -24 : 24, y));
+  });
+  return gesture;
+};
+const move = (gesture: PanBoundary, fraction: number, y = 150) =>
+  act(() => gesture.handlers.onUpdate(panEvent(-fraction * WIDTH, y)));
+const release = (gesture: PanBoundary, fraction: number, y = 150) => {
+  act(() => {
+    gesture.handlers.onUpdate(panEvent(-fraction * WIDTH, y));
+    gesture.handlers.onEnd(panEvent(-fraction * WIDTH, y), true);
+    gesture.handlers.onFinalize(panEvent(-fraction * WIDTH, y), true);
+  });
+};
+const cancel = (gesture: PanBoundary, fraction: number) =>
+  act(() => gesture.handlers.onFinalize(panEvent(-fraction * WIDTH), false));
+const swipe = (fraction: number, y = 150) => {
+  const gesture = begin(fraction >= 0 ? 'left' : 'right', y);
+  move(gesture, fraction, y);
+  release(gesture, fraction, y);
+  finish();
+};
+const translateX = (element: ReturnType<typeof rootTrack>) => {
+  const style = StyleSheet.flatten(element.props.style);
+  const values = style.transform as Array<{ translateX?: number }> | undefined;
+  return values?.find(value => value.translateX !== undefined)?.translateX ?? 0;
 };
 const tick = () => act(() => jest.advanceTimersByTime(100));
 const expectRevision = (index: number, revision: number) =>
@@ -279,30 +168,47 @@ const inspect = () => {
     }>;
   };
 };
+const measurePage = (path: string[], height: number) =>
+  fireEvent(
+    screen.getByTestId(`retained-content-${JSON.stringify(path)}`, hidden),
+    'layout',
+    {
+      nativeEvent: { layout: { x: 0, y: 0, width: WIDTH, height } },
+    },
+  );
+const measureHeader = (height = 60) => {
+  const header = group();
+  let owner = header;
+  while (!owner.props.onLayout && owner.parent) {
+    owner = owner.parent;
+  }
+  fireEvent(owner, 'layout', {
+    nativeEvent: { layout: { x: 0, y: 0, width: WIDTH, height } },
+  });
+};
 
 describe.each(['flat', 'nested'] as const)(
-  'DevUIRetainedTabs shared linked component (%s)',
+  'DevUIRetainedTabs logical-flat / visual-nested component (%s)',
   mode => {
-    const accountIndex = mode === 'flat' ? 3 : 2;
     const setup = (onBack = jest.fn()) => {
       const fixture = render(<DevUIRetainedTabs onBack={onBack} />);
       if (mode === 'nested') {
         switchMode();
       } else {
-        layoutTrack();
+        layout();
       }
-      mockSetPage.mockClear();
-      mockNativeScrollTo.mockClear();
+      measureHeader();
+      measurePage(['Positions'], 1800);
+      measurePage(['Orders', 'Basic'], 1300);
+      measurePage(['Orders', 'Conditional'], 400);
+      measurePage(['Account'], 1800);
       return fixture;
     };
-
     beforeEach(() => {
       jest.useFakeTimers();
       jest.replaceProperty(Platform, 'OS', 'ios');
-      mockSetPage.mockClear();
+      nativeBoundary.reset();
       nativeAttachments.length = 0;
-      // RN's Jest ScrollView returns undefined here. Model only the external
-      // stable native host identity so real repository ref lifecycles execute.
       jest
         .spyOn(ScrollView.prototype, 'getNativeScrollRef')
         .mockImplementation(function (this: ScrollView) {
@@ -310,48 +216,40 @@ describe.each(['flat', 'nested'] as const)(
         });
       jest
         .spyOn(nativeAnimated, 'attachNativeEvent')
-        .mockImplementation((target, eventName, mapping) => {
-          const attachment = {
-            target,
-            eventName,
-            mapping,
-            detach: jest.fn(),
-          };
+        .mockImplementation((target, _eventName, mapping) => {
+          const attachment = { target, mapping, detach: jest.fn() };
           nativeAttachments.push(attachment);
           return attachment;
         });
     });
     afterEach(() => {
       cleanup();
+      nativeBoundary.reset();
       jest.clearAllTimers();
       jest.useRealTimers();
       jest.restoreAllMocks();
     });
 
-    it('keeps all four leaves with one native vertical owner and separate header/trade', () => {
+    it('retains four leaves under one Pan, one vertical owner and separate trade chrome', () => {
       setup();
       const leaves = leafKeys.map(list);
       const header = screen.getByTestId('retained-header');
       expect(inspect().pagingMode).toBe(mode);
       expect(screen.UNSAFE_getAllByType(FlatList)).toHaveLength(5);
+      expect(screen.UNSAFE_getAllByType(ScrollView)).toHaveLength(1);
       expect(
-        screen
-          .UNSAFE_getAllByType(ScrollView)
-          .filter(view => !view.props.horizontal),
-      ).toHaveLength(1);
+        screen.UNSAFE_getAllByType(ScrollView)[0].props.horizontal,
+      ).toBeFalsy();
+      expect(screen.getAllByTestId('retained-pan', hidden)).toHaveLength(1);
       expect(
-        within(track()).queryByTestId('retained-header', hidden),
+        within(viewport()).queryByTestId('retained-header', hidden),
       ).toBeNull();
       expect(
         screen.getAllByTestId('retained-pill-controls', hidden),
       ).toHaveLength(1);
-      for (const [logical, physical] of [
-        [1, 1],
-        [2, accountIndex],
-        [0, 0],
-      ]) {
-        select(logical);
-        settleRoot(physical);
+      for (const index of [1, 2, 0]) {
+        select(index);
+        finish();
       }
       leafKeys.forEach((key, index) => expect(list(key)).toBe(leaves[index]));
       expect(screen.getByTestId('retained-header')).toBe(header);
@@ -359,75 +257,179 @@ describe.each(['flat', 'nested'] as const)(
       expect(screen.getByText('Trade button: 1')).toBeTruthy();
     });
 
-    it('commits child selection without changing the logical tab, then remembers it on return', () => {
+    it('uses the Orders ancestor for header and rows, never an independent horizontal follower', () => {
+      setup();
+      const ordersRoot = screen.getByTestId('retained-root-Orders', hidden);
+      const controls = screen.getByTestId('retained-pill-controls', hidden);
+      expect(
+        within(rootTrack()).getByTestId('retained-root-Orders', hidden),
+      ).toBe(ordersRoot);
+      expect(
+        within(ordersRoot).getByTestId('retained-pill-controls', hidden),
+      ).toBe(controls);
+      expect(
+        within(ordersRoot).getByTestId('retained-rows-Orders-Basic', hidden),
+      ).toBe(list('Orders-Basic'));
+      expect(
+        within(ordersRoot).getByTestId(
+          'retained-rows-Orders-Conditional',
+          hidden,
+        ),
+      ).toBe(list('Orders-Conditional'));
+      expect(
+        within(childTrack()).queryByTestId('retained-pill-controls', hidden),
+      ).toBeNull();
+      expect(
+        nativeAttachments
+          .flatMap(item => item.mapping)
+          .some(item => item.nativeEvent.contentOffset.x !== undefined),
+      ).toBe(false);
+      expect(
+        nativeAttachments
+          .flatMap(item => item.mapping)
+          .some(item => item.nativeEvent.contentOffset.y !== undefined),
+      ).toBe(true);
+      select(1);
+      finish();
+      fireEvent.press(screen.getByTestId('retained-pill-Conditional'));
+      finish();
+      select(2);
+      finish();
+      expect(screen.getByTestId('retained-pill-controls', hidden)).toBe(
+        controls,
+      );
+    });
+
+    it('commits only completed child selection and remembers it when returning to Orders', () => {
       setup();
       select(1);
-      settleRoot(1);
+      expect(inspect().selected).toBe('Positions');
+      finish();
       fireEvent.press(screen.getByTestId('retained-pill-Conditional'));
       expect(
         screen.getByTestId('retained-pill-selection', hidden),
       ).toHaveTextContent('Orders: Basic');
-      settleConditional();
+      finish();
       expect(screen.getByTestId('retained-pill-selection')).toHaveTextContent(
         'Orders: Conditional',
       );
       expect(screen.getByTestId('retained-selection')).toHaveTextContent(
-        'Retained native tabs: Orders',
+        'Retained linked tabs: Orders',
       );
       select(2);
-      settleRoot(accountIndex);
+      finish();
       select(1);
-      settleRoot(mode === 'flat' ? 2 : 1);
-      expect(screen.getByTestId('retained-pill-selection')).toHaveTextContent(
-        'Orders: Conditional',
-      );
-      expect(inspect().pill).toBe('Conditional');
+      finish();
+      expect(inspect()).toMatchObject({
+        selected: 'Orders',
+        pill: 'Conditional',
+      });
     });
 
-    it('preserves Android completion ordering at the selected native boundary', () => {
+    describe.each([
+      { child: 'Basic', childIndex: 0, away: 'Account', awayIndex: 2 },
+      {
+        child: 'Conditional',
+        childIndex: 1,
+        away: 'Positions',
+        awayIndex: 0,
+      },
+    ] as const)('restoring remembered $child from $away', scenario => {
+      it.each(['swipe', 'click'] as const)(
+        'keeps header and child preview on the remembered leaf during a root %s',
+        trigger => {
+          setup();
+          select(1);
+          finish();
+          if (scenario.child === 'Conditional') {
+            fireEvent.press(screen.getByTestId('retained-pill-Conditional'));
+            finish();
+          }
+          select(scenario.awayIndex);
+          finish();
+
+          const expectRememberedPreview = () => {
+            expect(translateX(childTrack())).toBeCloseTo(
+              -scenario.childIndex * WIDTH,
+            );
+            expect(
+              screen.getByTestId('retained-pill-selection', hidden),
+            ).toHaveTextContent(`Orders: ${scenario.child}`);
+            expect(inspect()).toMatchObject({
+              selected: scenario.away,
+              pill: scenario.child,
+            });
+          };
+          expectRememberedPreview();
+
+          if (trigger === 'swipe') {
+            const direction = scenario.awayIndex === 2 ? -1 : 1;
+            const gesture = begin(direction < 0 ? 'right' : 'left');
+            // Catch a wrong child at the very first revealed frame, not merely
+            // a final selection corrected after the root animation finishes.
+            expectRememberedPreview();
+            move(gesture, direction * 0.4);
+            expectRememberedPreview();
+            expect(translateX(rootTrack())).toBeCloseTo(
+              -(scenario.awayIndex + direction * 0.4) * WIDTH,
+            );
+            release(gesture, direction * 0.7);
+          } else {
+            select(1);
+            expectRememberedPreview();
+          }
+          act(() => nativeBoundary.advanceAnimations(0.5));
+          expectRememberedPreview();
+          finish();
+          expect(inspect()).toMatchObject({
+            selected: 'Orders',
+            pill: scenario.child,
+          });
+          expect(translateX(rootTrack())).toBeCloseTo(-WIDTH);
+          expect(translateX(childTrack())).toBeCloseTo(
+            -scenario.childIndex * WIDTH,
+          );
+          expect(
+            screen.getByTestId('retained-pill-selection'),
+          ).toHaveTextContent(`Orders: ${scenario.child}`);
+        },
+      );
+    });
+
+    it('uses the same completed-animation contract on Android', () => {
       jest.replaceProperty(Platform, 'OS', 'android');
       setup();
       select(1);
-      settleRoot(1);
-      if (mode === 'nested') {
-        expect(screen.getByTestId('retained-selection')).toHaveTextContent(
-          'Retained native tabs: Positions',
-        );
-        fireEvent(track(), 'pageScrollStateChanged', {
-          pageScrollState: 'idle',
-        });
-      }
-      expect(screen.getByTestId('retained-selection')).toHaveTextContent(
-        'Retained native tabs: Orders',
-      );
+      expect(inspect().selected).toBe('Positions');
+      finish();
+      expect(inspect().selected).toBe('Orders');
     });
 
-    it('explicitly remounts the mode and account owners while retaining the current leaf', () => {
+    it('explicitly remounts mode/account ownership and preserves the selected leaf', () => {
       setup();
       select(1);
-      settleRoot(1);
+      finish();
       fireEvent.press(screen.getByTestId('retained-pill-Conditional'));
-      settleConditional();
-      const oldTrack = track();
+      finish();
+      const before = rootTrack();
       switchMode();
-      expect(track()).not.toBe(oldTrack);
-      expect(inspect().pagingMode).toBe(mode === 'flat' ? 'nested' : 'flat');
-      expect(screen.getByTestId('retained-pill-selection')).toHaveTextContent(
-        'Orders: Conditional',
-      );
-      const switched = track();
+      expect(rootTrack()).not.toBe(before);
+      expect(inspect()).toMatchObject({
+        pagingMode: mode === 'flat' ? 'nested' : 'flat',
+        selected: 'Orders',
+        pill: 'Conditional',
+      });
+      const switched = rootTrack();
       fireEvent.press(screen.getByTestId('retained-reset-account'));
-      layoutTrack();
-      expect(track()).not.toBe(switched);
-      expect(screen.getByTestId('retained-pill-selection')).toHaveTextContent(
-        'Orders: Conditional',
-      );
-      expect(screen.getByTestId('retained-selection')).toHaveTextContent(
-        'Retained native tabs: Orders',
-      );
+      layout();
+      expect(rootTrack()).not.toBe(switched);
+      expect(inspect()).toMatchObject({
+        selected: 'Orders',
+        pill: 'Conditional',
+      });
     });
 
-    it('uses measured rows and retains long/short/append fixture controls', () => {
+    it('retains measured rows and the long/short/append fixture controls', () => {
       setup();
       leafKeys.forEach(key =>
         expect(
@@ -439,16 +441,16 @@ describe.each(['flat', 'nested'] as const)(
       ]);
       fireEvent.press(screen.getByText('Long C'));
       fireEvent.press(screen.getByText('+3 B'));
-      const next = inspect();
-      expect(next.pages.map(page => page.fixtureRows)).toEqual([120, 83, 4]);
-      expect(next.pages[0].rowMounts).toBeGreaterThan(0);
+      expect(inspect().pages.map(page => page.fixtureRows)).toEqual([
+        120, 83, 4,
+      ]);
       select(2);
-      settleRoot(accountIndex);
+      finish();
       expect(screen.queryByTestId('retained-row-2-5', hidden)).toBeNull();
       expect(screen.getByTestId('retained-row-2-4', hidden)).toBeTruthy();
     });
 
-    it('catches up only the revealed neighbour and re-pauses it after cancellation', () => {
+    it('catches up only the preview neighbour then re-pauses it after cancellation', () => {
       setup();
       fireEvent.press(screen.getByText('Feed'));
       tick();
@@ -456,28 +458,13 @@ describe.each(['flat', 'nested'] as const)(
       expectRevision(1, 0);
       expectRevision(2, 0);
       expectRevision(3, 0);
-      if (mode === 'flat') {
-        nativeScroll('onBeginDrag', 0);
-        nativeScroll('onScroll', 0.4);
-      } else {
-        fireEvent(track(), 'pageScrollStateChanged', {
-          pageScrollState: 'dragging',
-        });
-        fireEvent(track(), 'pageScroll', { position: 0, offset: 0.4 });
-      }
+      const gesture = begin();
+      move(gesture, 0.4);
       expectRevision(1, 1);
       tick();
       expectRevision(1, 2);
-      if (mode === 'flat') {
-        nativeScroll('onScroll', 0);
-        nativeScroll('onEndDrag', 0);
-        nativeScroll('onMomentumEnd', 0);
-      } else {
-        fireEvent(track(), 'pageScroll', { position: 0, offset: 0 });
-        fireEvent(track(), 'pageScrollStateChanged', {
-          pageScrollState: 'idle',
-        });
-      }
+      cancel(gesture, 0.4);
+      finish();
       tick();
       expectRevision(0, 3);
       expectRevision(1, 2);
@@ -488,7 +475,7 @@ describe.each(['flat', 'nested'] as const)(
       expect(inspect().source).toBe(3);
     });
 
-    it('routes Deep/Top through the public vertical handle without replay on tab changes', () => {
+    it('routes Deep/Top only to the native vertical handle, never during horizontal transitions', () => {
       const scrollToOffset = jest
         .spyOn(FlatList.prototype, 'scrollToOffset')
         .mockImplementation(() => undefined);
@@ -502,480 +489,334 @@ describe.each(['flat', 'nested'] as const)(
         [{ offset: 0, animated: false }],
       ]);
       select(1);
-      settleRoot(1);
+      finish();
+      swipe(0.7);
       expect(scrollToOffset).toHaveBeenCalledTimes(2);
+      expect(nativeBoundary.scrollTo).not.toHaveBeenCalled();
       fireEvent.press(screen.getByText('Back'));
       expect(onBack).toHaveBeenCalledTimes(1);
     });
 
-    it('serializes rapid root requests through the real linked renderer', () => {
-      const scrollTo = jest
-        .spyOn(ScrollView.prototype, 'scrollTo')
-        .mockImplementation(() => undefined);
+    it('serializes rapid commands and coalesces queued requests to the latest destination', () => {
       setup();
-      scrollTo.mockClear();
       select(1);
       select(0);
       select(2);
-      expect(
-        mode === 'flat' ? scrollTo.mock.calls : mockSetPage.mock.calls,
-      ).toEqual(mode === 'flat' ? [[{ x: WIDTH, animated: true }]] : [[1]]);
-      settleRoot(1);
-      expect(
-        mode === 'flat' ? scrollTo.mock.calls : mockSetPage.mock.calls,
-      ).toEqual(
-        mode === 'flat'
-          ? [
-              [{ x: WIDTH, animated: true }],
-              [{ x: accountIndex * WIDTH, animated: true }],
-            ]
-          : [[1], [accountIndex]],
+      expect(nativeBoundary.animations()).toHaveLength(1);
+      act(() => nativeBoundary.finishNextAnimation());
+      expect(inspect().selected).toBe('Orders');
+      expect(nativeBoundary.animations()).toHaveLength(1);
+      finish();
+      expect(inspect().selected).toBe('Account');
+    });
+
+    it('moves one visual hierarchy at a time while keeping shared controls with the root', () => {
+      setup();
+      measureHeader();
+      const rootGesture = begin();
+      move(rootGesture, 0.4);
+      expect(translateX(rootTrack())).toBeCloseTo(-WIDTH * 0.4);
+      expect(translateX(childTrack())).toBeCloseTo(0);
+      release(rootGesture, 0.7);
+      finish();
+      expect(inspect().selected).toBe('Orders');
+      const childGesture = begin('left', 150);
+      move(childGesture, 0.4);
+      expect(translateX(rootTrack())).toBeCloseTo(-WIDTH);
+      expect(translateX(childTrack())).toBeCloseTo(-WIDTH * 0.4);
+      release(childGesture, 0.7);
+      finish();
+      expect(inspect().pill).toBe('Conditional');
+    });
+
+    it('allows swiping the retained blank area, not only populated row children', () => {
+      setup();
+      measureHeader();
+      select(1);
+      finish();
+      const before = list('Orders-Conditional');
+      swipe(0.7, 520);
+      expect(inspect()).toMatchObject({
+        selected: 'Orders',
+        pill: 'Conditional',
+      });
+      expect(list('Orders-Conditional')).toBe(before);
+    });
+
+    it('ignores a vertical/tap failure before activation and recovers a cancelled active drag', () => {
+      setup();
+      act(() => pan().handlers.onFinalize(panEvent(), false));
+      expect(nativeBoundary.animations()).toHaveLength(0);
+      const gesture = begin();
+      move(gesture, 0.4);
+      cancel(gesture, 0.4);
+      expect(inspect().selected).toBe('Positions');
+      finish();
+      expect(translateX(rootTrack())).toBeCloseTo(0);
+      select(1);
+      finish();
+      expect(inspect().selected).toBe('Orders');
+    });
+
+    it.each(['end', 'cancel'] as const)(
+      'restores interaction when a preview reverses beyond the outer boundary then %ss',
+      completion => {
+        setup();
+        const gesture = begin();
+        move(gesture, 0.4);
+        move(gesture, -0.4);
+        if (completion === 'end') {
+          release(gesture, -0.4);
+        } else {
+          cancel(gesture, -0.4);
+        }
+        finish();
+        expect(inspect().selected).toBe('Positions');
+        expect(
+          screen.getByTestId('retained-page-["Positions"]', hidden).props
+            .pointerEvents,
+        ).toBe('auto');
+        expect(nativeBoundary.animations()).toHaveLength(0);
+        select(2);
+        finish();
+        expect(inspect().selected).toBe('Account');
+      },
+    );
+
+    it('chooses the first actual movement after an iOS zero-translation activation', () => {
+      setup();
+      const gesture = pan();
+      const manager = { fail: jest.fn(), activate: jest.fn(), end: jest.fn() };
+      act(() => {
+        gesture.touchesDown?.(
+          { allTouches: [{ x: WIDTH / 2, y: 150 }], numberOfTouches: 1 },
+          manager,
+        );
+        gesture.handlers.onStart(panEvent(0));
+      });
+      expect(manager.fail).not.toHaveBeenCalled();
+      move(gesture, 0.4);
+      expect(translateX(rootTrack())).toBeCloseTo(-WIDTH * 0.4);
+      release(gesture, 0.7);
+      finish();
+      expect(inspect().selected).toBe('Orders');
+    });
+
+    it('takes over a pending settle without rounding or allowing its stale completion to commit', () => {
+      setup();
+      const first = begin();
+      move(first, 0.7);
+      release(first, 0.7);
+      act(() => nativeBoundary.advanceAnimations(0.5));
+      const before = translateX(rootTrack());
+      const old = nativeBoundary.animations()[0];
+      const second = begin('right');
+      expect(old.cancelled).toBe(true);
+      expect(translateX(rootTrack())).toBeCloseTo(before);
+      act(() => old.callback?.(true, old.target));
+      expect(inspect().selected).toBe('Positions');
+      move(second, -0.8);
+      release(second, -0.8);
+      finish();
+      expect(inspect().selected).toBe('Positions');
+      expect(translateX(rootTrack())).toBeCloseTo(0);
+    });
+
+    describe.each([0, 1] as const)(
+      'interrupting a snap toward endpoint %i',
+      endpoint => {
+        const pendingSnap = () => {
+          setup();
+          const gesture = begin();
+          const distance = endpoint === 0 ? 0.2 : 0.7;
+          move(gesture, distance);
+          release(gesture, distance);
+          expect(nativeBoundary.animations()).toHaveLength(1);
+          const task = nativeBoundary.animations()[0];
+          expect(task.target).toBe(endpoint);
+          act(() => nativeBoundary.advanceAnimations(0.5));
+          return task;
+        };
+
+        it('pauses on DOWN and cannot complete before the replacement gesture becomes ACTIVE', () => {
+          const old = pendingSnap();
+          const before = translateX(rootTrack());
+          const oldCallback = jest.fn(old.callback);
+          old.callback = oldCallback;
+          const gesture = pan();
+          expect(touchDown(gesture).fail).not.toHaveBeenCalled();
+          expect(old.cancelled).toBe(true);
+          expect(oldCallback).toHaveBeenCalledWith(false, expect.any(Number));
+          expect(nativeBoundary.animations()).toHaveLength(0);
+          // Defensive injection, not a claim that Reanimated emits success after
+          // cancellation: the old transaction must not own the new DOWN epoch.
+          act(() => old.callback?.(true, old.target));
+          finish();
+          expect(inspect().selected).toBe('Positions');
+          expect(translateX(rootTrack())).toBeCloseTo(before);
+          act(() => gesture.handlers.onStart(panEvent(-24)));
+          expect(translateX(rootTrack())).toBeCloseTo(before);
+          move(gesture, 0.7);
+          release(gesture, 0.7);
+          finish();
+          expect(inspect().selected).toBe('Orders');
+        });
+
+        it('resumes the saved endpoint when DOWN ends as a tap or vertical failure before ACTIVE', () => {
+          const old = pendingSnap();
+          const before = translateX(rootTrack());
+          const gesture = pan();
+          touchDown(gesture);
+          expect(old.cancelled).toBe(true);
+          expect(translateX(rootTrack())).toBeCloseTo(before);
+          act(() => gesture.handlers.onFinalize(panEvent(), false));
+          expect(nativeBoundary.animations()).toHaveLength(1);
+          expect(nativeBoundary.animations()[0].target).toBe(endpoint);
+          // Deliberately replay the old completion to verify ownership fencing.
+          act(() => old.callback?.(true, old.target));
+          expect(inspect().selected).toBe('Positions');
+          expect(translateX(rootTrack())).toBeCloseTo(before);
+          finish();
+          expect(inspect().selected).toBe(
+            endpoint === 1 ? 'Orders' : 'Positions',
+          );
+          expect(translateX(rootTrack())).toBeCloseTo(-endpoint * WIDTH);
+          expect(nativeBoundary.animations()).toHaveLength(0);
+        });
+
+        it('restores the interrupted snap target after an ACTIVE takeover is system-cancelled', () => {
+          const old = pendingSnap();
+          const gesture = begin('right');
+          expect(old.cancelled).toBe(true);
+          move(gesture, -0.15);
+          cancel(gesture, -0.15);
+          expect(nativeBoundary.animations()).toHaveLength(1);
+          expect(nativeBoundary.animations()[0].target).toBe(endpoint);
+          finish();
+          expect(inspect().selected).toBe(
+            endpoint === 1 ? 'Orders' : 'Positions',
+          );
+          expect(translateX(rootTrack())).toBeCloseTo(-endpoint * WIDTH);
+          const selectedPath =
+            endpoint === 1 ? '["Orders","Basic"]' : '["Positions"]';
+          expect(
+            screen.getByTestId(`retained-page-${selectedPath}`, hidden).props
+              .pointerEvents,
+          ).toBe('auto');
+        });
+      },
+    );
+
+    it('holds measured source height during a swipe and applies the destination height only at completion', () => {
+      setup();
+      measurePage(['Positions'], 1800);
+      measurePage(['Account'], 100);
+      expect(StyleSheet.flatten(viewport().props.style).height).toBe(1800);
+      select(2);
+      act(() => nativeBoundary.advanceAnimations(0.5));
+      expect(StyleSheet.flatten(viewport().props.style).height).toBe(1800);
+      finish();
+      expect(StyleSheet.flatten(viewport().props.style).height).toBeLessThan(
+        1800,
       );
-      settleRoot(accountIndex);
-      expect(screen.getByTestId('retained-selection')).toHaveTextContent(
-        'Retained native tabs: Account',
-      );
+      select(0);
+      finish();
+      expect(StyleSheet.flatten(viewport().props.style).height).toBe(1800);
+    });
+
+    it('cancels resize-invalidated motion while retaining the outer vertical owner', () => {
+      setup();
+      const outer = screen.UNSAFE_getAllByType(ScrollView)[0];
+      select(2);
+      const old = nativeBoundary.animations()[0];
+      layout(WIDTH + 100);
+      expect(inspect().selected).toBe('Positions');
+      expect(screen.UNSAFE_getAllByType(ScrollView)[0]).toBe(outer);
+      act(() => old.callback?.(true, old.target));
+      expect(inspect().selected).toBe('Positions');
+      select(1);
+      finish();
+      expect(inspect().selected).toBe('Orders');
     });
 
     if (mode === 'flat') {
-      it('attaches shared header X to the horizontal native owner and detaches each replaced owner once', () => {
-        const fixture = setup();
-        fireEvent(screen.getByTestId('retained-layout', hidden), 'layout', {
-          nativeEvent: { layout: { x: 0, y: 0, width: WIDTH, height: 600 } },
-        });
-        expect(activeNativeAttachments('x')).toHaveLength(1);
-        expect(activeNativeAttachments('y')).toHaveLength(1);
-        const attachment = activeNativeAttachments('x')[0];
-        const horizontal = screen
-          .UNSAFE_getAllByType(ScrollView)
-          .find(view => view.props.horizontal)!;
-        expect(attachment.target).toBe(
-          horizontal.instance.getNativeScrollRef(),
-        );
-        expect(attachment.eventName).toBe('onScroll');
-        expect(attachment.mapping).toHaveLength(1);
-        expect(
-          attachment.mapping[0].nativeEvent.contentOffset.y,
-        ).toBeUndefined();
-        const vertical = activeNativeAttachments('y')[0];
-        expect(vertical.target).not.toBe(attachment.target);
-        const count = nativeAttachments.length;
-
-        select(1);
-        settleRoot(1);
-        fireEvent.press(screen.getByTestId('retained-pill-Conditional'));
-        settleConditional();
-        expect(nativeAttachments).toHaveLength(count);
-        expect(attachment.detach).not.toHaveBeenCalled();
-
-        fireEvent(screen.getByTestId('retained-layout', hidden), 'layout', {
-          nativeEvent: {
-            layout: { x: 0, y: 0, width: WIDTH + 100, height: 600 },
-          },
-        });
-        expect(attachment.detach).toHaveBeenCalledTimes(1);
-        expect(vertical.detach).not.toHaveBeenCalled();
-        expect(activeNativeAttachments('x')).toHaveLength(1);
-        const replacement = activeNativeAttachments('x')[0];
-        expect(replacement.target).not.toBe(attachment.target);
-        fixture.unmount();
-        expect(attachment.detach).toHaveBeenCalledTimes(1);
-        expect(replacement.detach).toHaveBeenCalledTimes(1);
-        expect(vertical.detach).toHaveBeenCalledTimes(1);
-        expect(activeNativeAttachments('x')).toHaveLength(0);
-        expect(activeNativeAttachments('y')).toHaveLength(0);
-      });
-
-      it('keeps header X on its native clock when JS selection and worklet progress catch up', () => {
+      it('can reverse across the Basic origin without moving root and child together', () => {
         setup();
-        const attachment = activeNativeAttachments('x')[0];
-        const nativeX = attachment.mapping[0].nativeEvent.contentOffset.x!;
-        const setValue = jest.spyOn(nativeX, 'setValue');
-        expect(groupHeaderX()).toBe(WIDTH);
-
-        // Simulate only the external native Animated event mapping. Deliberately
-        // withhold the JS/Reanimated scroll event to expose a second X writer.
-        act(() => nativeX.setValue(WIDTH * 0.6));
-        expect(groupHeaderX()).toBeCloseTo(WIDTH * 0.4);
-        setValue.mockClear();
+        measureHeader();
         select(1);
-        settleRoot(1);
-        expect(inspect().selected).toBe('Orders');
-        expect(setValue).not.toHaveBeenCalled();
-        expect(groupHeaderX()).toBeCloseTo(WIDTH * 0.4);
-
-        act(() => nativeX.setValue(WIDTH * 1.5));
-        expect(groupHeaderX()).toBe(0);
-        setValue.mockClear();
-        nativeScroll('onBeginDrag', 1);
-        nativeScroll('onScroll', 0.75);
-        expect(setValue).not.toHaveBeenCalled();
-        expect(groupHeaderX()).toBe(0);
-
-        act(() => nativeX.setValue(WIDTH * 2.25));
-        expect(groupHeaderX()).toBeCloseTo(-WIDTH * 0.25);
-        setValue.mockClear();
-        nativeScroll('onEndDrag', 0.75);
-        settleRoot(0);
+        finish();
+        const gesture = begin();
+        move(gesture, 0.4);
+        expect(translateX(rootTrack())).toBe(-WIDTH);
+        expect(translateX(childTrack())).toBeCloseTo(-WIDTH * 0.4);
+        move(gesture, -0.4);
+        expect(translateX(rootTrack())).toBeCloseTo(-WIDTH * 0.6);
+        expect(translateX(childTrack())).toBeCloseTo(0);
+        release(gesture, -0.7);
+        finish();
         expect(inspect().selected).toBe('Positions');
-        expect(setValue).not.toHaveBeenCalled();
-        expect(groupHeaderX()).toBeCloseTo(-WIDTH * 0.25);
       });
 
-      it.each(['before DOWN', 'between DOWN and START'] as const)(
-        'does not steal a native tab command started %s',
-        commandTiming => {
-          setup();
-          select(1);
-          settleRoot(1);
-          nativeScroll('onScroll', 1);
-          const gesture = headerPan();
-          if (commandTiming === 'before DOWN') {
-            select(2);
-          }
-          const manager = headerTouchDown(gesture);
-          if (commandTiming === 'before DOWN') {
-            expect(manager.fail).toHaveBeenCalledTimes(1);
-          } else {
-            expect(manager.fail).not.toHaveBeenCalled();
-            select(2);
-          }
-
-          // START must independently recheck readiness after a successful
-          // DOWN, and rejected input must never cancel the existing command.
-          act(() => gesture.handlers.onStart(headerPanEvent()));
-          act(() => gesture.handlers.onUpdate(headerPanEvent(-WIDTH * 0.65)));
-          act(() =>
-            gesture.handlers.onEnd(headerPanEvent(-WIDTH * 0.65), true),
-          );
-          act(() =>
-            gesture.handlers.onFinalize(headerPanEvent(-WIDTH * 0.65), false),
-          );
-          expect(mockNativeScrollTo).not.toHaveBeenCalled();
-          expect(inspect()).toMatchObject({
-            selected: 'Orders',
-            pill: 'Basic',
-          });
-          nativeScroll('onScroll', 3);
-          settleRoot(3);
-          expect(inspect().selected).toBe('Account');
-        },
-      );
-
-      it('rejects new header DOWN while its prior snap is pending and accepts the next idle gesture', () => {
+      it('keeps Conditional visible at its boundary, then moves its entire Orders root toward Account', () => {
         setup();
         select(1);
-        settleRoot(1);
-        nativeScroll('onScroll', 1);
-        const gesture = headerPan();
-        expect(headerTouchDown(gesture).fail).not.toHaveBeenCalled();
-        act(() => gesture.handlers.onStart(headerPanEvent()));
-        act(() => gesture.handlers.onUpdate(headerPanEvent(-WIDTH * 0.65)));
-        nativeScroll('onScroll', 1.65);
-        act(() => gesture.handlers.onEnd(headerPanEvent(-WIDTH * 0.65), true));
-        const scrollCommands = mockNativeScrollTo.mock.calls.length;
-        const nextGesture = headerPan();
-        expect(nextGesture.config.enabled).toBe(true);
-        expect(headerTouchDown(nextGesture).fail).toHaveBeenCalledTimes(1);
-        act(() => nextGesture.handlers.onStart(headerPanEvent()));
-        act(() => nextGesture.handlers.onUpdate(headerPanEvent(WIDTH * 0.4)));
-        act(() => nextGesture.handlers.onFinalize(headerPanEvent(), false));
-        expect(mockNativeScrollTo).toHaveBeenCalledTimes(scrollCommands);
-
-        nativeScroll('onScroll', 2);
-        expect(inspect().pill).toBe('Conditional');
-        const idleGesture = headerPan();
-        expect(headerTouchDown(idleGesture).fail).not.toHaveBeenCalled();
-        act(() => idleGesture.handlers.onStart(headerPanEvent()));
-        act(() => idleGesture.handlers.onUpdate(headerPanEvent(WIDTH * 0.65)));
-        nativeScroll('onScroll', 1.35);
-        act(() =>
-          idleGesture.handlers.onEnd(headerPanEvent(WIDTH * 0.65), true),
-        );
-        nativeScroll('onScroll', 1);
-        expect(inspect().pill).toBe('Basic');
-      });
-
-      it.each(['onMomentumEnd', 'onScroll'] as const)(
-        'drives header drags through the existing horizontal owner and settles from native %s',
-        completion => {
-          setup();
-          select(1);
-          settleRoot(1);
-          nativeScroll('onScroll', 1);
-          const group = screen.getByTestId('retained-group-Orders', hidden);
-          const gesture = headerPan();
-          expect(gesture.config).toMatchObject({
-            enabled: true,
-            activeOffsetX: [-20, 20],
-            failOffsetY: [-12, 12],
-            maxPointers: 1,
-          });
-          const controls = screen.getByTestId('retained-pill-controls', hidden);
-          expect(
-            within(
-              screen.getByTestId('native-header-pan-boundary', hidden),
-            ).getByTestId('retained-pill-controls', hidden),
-          ).toBe(controls);
-          expect(
-            within(
-              screen.getByTestId('native-header-pan-boundary', hidden),
-            ).queryByTestId('retained-rows-Orders-Basic', hidden),
-          ).toBeNull();
-
-          act(() => gesture.handlers.onStart(headerPanEvent()));
-          expect(group.props.pointerEvents).toBe('none');
-          expect(headerPan().config.enabled).toBe(true);
-          act(() => gesture.handlers.onUpdate(headerPanEvent(-WIDTH * 0.65)));
-          const nativeOwner = lastNativeScroll()?.[0];
-          expect(nativeOwner?.current).toBeTruthy();
-          expect(nativeOwner?.current).toBe(
-            screen
-              .UNSAFE_getAllByType(ScrollView)
-              .find(view => view.props.horizontal)?.instance,
-          );
-          expect(mockNativeScrollTo).toHaveBeenLastCalledWith(
-            nativeOwner,
-            WIDTH * 1.65,
-            0,
-            false,
-          );
-          nativeScroll('onScroll', 1.65);
-          act(() =>
-            gesture.handlers.onEnd(headerPanEvent(-WIDTH * 0.65), true),
-          );
-          expect(mockNativeScrollTo).toHaveBeenLastCalledWith(
-            nativeOwner,
-            WIDTH * 2,
-            0,
-            true,
-          );
-          expect(inspect().pill).toBe('Basic');
-          const scrollCommands = mockNativeScrollTo.mock.calls.length;
-          act(() =>
-            gesture.handlers.onFinalize(headerPanEvent(-WIDTH * 0.65), true),
-          );
-          expect(mockNativeScrollTo).toHaveBeenCalledTimes(scrollCommands);
-          nativeScroll(completion, 2);
-          expect(inspect()).toMatchObject({
-            selected: 'Orders',
-            pill: 'Conditional',
-          });
-          expect(group.props.pointerEvents).toBe('auto');
-        },
-      );
-
-      it('ignores an unactivated header gesture and recovers a cancelled active drag', () => {
-        setup();
-        select(1);
-        settleRoot(1);
-        nativeScroll('onScroll', 1);
-        const gesture = headerPan();
-        // The native axis gate can fail before START (tap or vertical drag).
-        // This simulates its callback contract, not recognizer arbitration.
-        act(() => gesture.handlers.onFinalize(headerPanEvent(), false));
-        expect(mockNativeScrollTo).not.toHaveBeenCalled();
-        expect(inspect()).toMatchObject({ selected: 'Orders', pill: 'Basic' });
-
-        act(() => gesture.handlers.onStart(headerPanEvent()));
-        act(() => gesture.handlers.onUpdate(headerPanEvent(-WIDTH * 0.3)));
-        nativeScroll('onScroll', 1.3);
-        act(() =>
-          gesture.handlers.onFinalize(headerPanEvent(-WIDTH * 0.3), false),
-        );
-        expect(lastNativeScroll()?.slice(1)).toEqual([WIDTH, 0, true]);
-        nativeScroll('onMomentumEnd', 1);
-        expect(inspect()).toMatchObject({ selected: 'Orders', pill: 'Basic' });
-        fireEvent.press(screen.getByTestId('retained-pill-Conditional'));
-        settleConditional();
-        expect(inspect().pill).toBe('Conditional');
-      });
-
-      it('corrects the native offset on cancellation even before the last drag scroll event arrives', () => {
-        setup();
-        select(1);
-        settleRoot(1);
-        nativeScroll('onScroll', 1);
-        const gesture = headerPan();
-        act(() => gesture.handlers.onStart(headerPanEvent()));
-        act(() => gesture.handlers.onUpdate(headerPanEvent(-WIDTH * 0.3)));
-        // The native command is dispatched, but its onScroll is still queued.
-        // The earlier observed source offset cannot prove zero displacement.
-        act(() =>
-          gesture.handlers.onFinalize(headerPanEvent(-WIDTH * 0.3), false),
-        );
-        expect(lastNativeScroll()?.slice(1)).toEqual([WIDTH, 0, true]);
-        expect(
-          screen.getByTestId('retained-group-Orders', hidden).props
-            .pointerEvents,
-        ).toBe('none');
-        nativeScroll('onScroll', 1.3);
-        expect(inspect()).toMatchObject({ selected: 'Orders', pill: 'Basic' });
-        nativeScroll('onScroll', 1);
-        expect(
-          screen.getByTestId('retained-group-Orders', hidden).props
-            .pointerEvents,
-        ).toBe('auto');
-        fireEvent.press(screen.getByTestId('retained-pill-Conditional'));
-        settleConditional();
-        expect(inspect().pill).toBe('Conditional');
-      });
-
-      it('keeps the shared group header outside horizontal native content but inside the retained vertical owner', () => {
-        setup();
-        const outer = screen
-          .UNSAFE_getAllByType(ScrollView)
-          .find(view => !view.props.horizontal)!;
-        const controls = screen.getByTestId('retained-pill-controls', hidden);
-        const group = screen.getByTestId('retained-group-Orders', hidden);
-        expect(
-          within(track()).queryByTestId('retained-group-Orders', hidden),
-        ).toBeNull();
-        expect(within(outer).getByTestId('retained-group-Orders', hidden)).toBe(
-          group,
-        );
-        expect(group.props.pointerEvents).toBe('none');
-
-        select(1);
-        settleRoot(1);
-        expect(group.props.pointerEvents).toBe('auto');
-        nativeScroll('onBeginDrag', 1);
-        nativeScroll('onScroll', 1.5);
-        expect(group.props.pointerEvents).toBe('none');
-        nativeScroll('onEndDrag', 1.5);
-        settleRoot(2);
-        expect(group.props.pointerEvents).toBe('auto');
-        select(2);
-        settleRoot(3);
-        expect(group.props.pointerEvents).toBe('none');
-        select(1);
-        settleRoot(2);
-
-        expect(screen.getByTestId('retained-group-Orders', hidden)).toBe(group);
-        expect(screen.getByTestId('retained-pill-controls', hidden)).toBe(
-          controls,
-        );
-        expect(
-          screen.getAllByTestId('retained-pill-controls', hidden),
-        ).toHaveLength(1);
-        expect(
-          screen
-            .UNSAFE_getAllByType(ScrollView)
-            .find(view => !view.props.horizontal),
-        ).toBe(outer);
-      });
-
-      it('cancels an in-flight horizontal command on viewport resize without replacing the vertical owner', () => {
-        setup();
-        const owner = screen
-          .UNSAFE_getAllByType(ScrollView)
-          .find(view => !view.props.horizontal);
-        const layout = screen.getByTestId('retained-layout', hidden);
-        fireEvent(layout, 'layout', {
-          nativeEvent: { layout: { x: 0, y: 0, width: WIDTH, height: 600 } },
-        });
-        select(2);
-        const oldTrack = track();
-        fireEvent(layout, 'layout', {
-          nativeEvent: {
-            layout: { x: 0, y: 0, width: WIDTH + 100, height: 600 },
-          },
-        });
-        expect(track()).not.toBe(oldTrack);
-        expect(
-          screen
-            .UNSAFE_getAllByType(ScrollView)
-            .find(view => !view.props.horizontal),
-        ).toBe(owner);
-        expect(inspect().selected).toBe('Positions');
-        layoutTrack();
-        select(1);
-        settleRoot(1);
-        expect(inspect().selected).toBe('Orders');
-      });
-
-      it('settles an already-observed aligned native target without waiting for a zero-distance animation', () => {
-        const scrollTo = jest
-          .spyOn(ScrollView.prototype, 'scrollTo')
-          .mockImplementation(() => undefined);
-        setup();
-        // Native positioning can become observable before its JS selection
-        // event; requesting that exact resting endpoint must not deadlock.
-        nativeScroll('onScroll', 1);
-        scrollTo.mockClear();
-        select(1);
-        expect(inspect().selected).toBe('Orders');
-        expect(scrollTo).not.toHaveBeenCalled();
-        select(2);
-        settleRoot(accountIndex);
+        finish();
+        swipe(0.7);
+        const gesture = begin();
+        move(gesture, 0.4);
+        expect(translateX(rootTrack())).toBeCloseTo(-WIDTH * 1.4);
+        expect(translateX(childTrack())).toBe(-WIDTH);
+        release(gesture, 0.7);
+        finish();
         expect(inspect().selected).toBe('Account');
-      });
-
-      it('bounds horizontal content height independently of retained long leaves', () => {
-        setup();
-        const measure = (key: string, height: number) =>
-          fireEvent(
-            screen.getByTestId(
-              `retained-content-${JSON.stringify([key])}`,
-              hidden,
-            ),
-            'layout',
-            { nativeEvent: { layout: { x: 0, y: 0, width: WIDTH, height } } },
-          );
-        measure('Positions', 1800);
-        measure('Account', 100);
-        select(2);
-        settleRoot(accountIndex);
-        const height = StyleSheet.flatten(track().props.style).height;
-        expect(height).toBeLessThan(1800);
-        expect(
-          StyleSheet.flatten(track().props.contentContainerStyle).height,
-        ).toBe(height);
-        for (const path of [
-          ['Positions'],
-          ['Orders', 'Basic'],
-          ['Orders', 'Conditional'],
-          ['Account'],
-        ]) {
-          expect(
-            StyleSheet.flatten(
-              screen.getByTestId(
-                `retained-page-${JSON.stringify(path)}`,
-                hidden,
-              ).props.style,
-            ).height,
-          ).toBe(height);
-        }
-        select(0);
-        settleRoot(0);
-        expect(StyleSheet.flatten(track().props.style).height).toBe(1800);
-      });
-
-      it('ignores animator cancellation while a replacement finger drag owns the track', () => {
-        jest.replaceProperty(Platform, 'OS', 'android');
-        setup();
-        select(2);
-        nativeScroll('onScroll', 1.4);
-        // Android begins the new drag before cancelling its old animator.
-        nativeScroll('onBeginDrag', 1.4);
-        nativeScroll('onMomentumEnd', 1.4);
-        expect(inspect().selected).toBe('Positions');
-        nativeScroll('onScroll', 1.6);
-        nativeScroll('onEndDrag', 1.6);
-        // Even after the finger lifts, an interrupted fractional endpoint is
-        // not authoritative evidence for a logical page selection.
-        nativeScroll('onMomentumEnd', 1.6);
-        expect(inspect().selected).toBe('Positions');
-        nativeScroll('onScroll', 2);
-        nativeScroll('onMomentumEnd', 2);
+        swipe(-0.7);
         expect(inspect()).toMatchObject({
           selected: 'Orders',
           pill: 'Conditional',
         });
       });
+    } else {
+      it('clears a child preview after reversing beyond Basic and cancelling', () => {
+        setup();
+        select(1);
+        finish();
+        const gesture = begin();
+        move(gesture, 0.4);
+        move(gesture, -0.4);
+        cancel(gesture, -0.4);
+        finish();
+        expect(inspect()).toMatchObject({ selected: 'Orders', pill: 'Basic' });
+        expect(
+          screen.getByTestId('retained-page-["Orders","Basic"]', hidden).props
+            .pointerEvents,
+        ).toBe('auto');
+        expect(translateX(childTrack())).toBeCloseTo(0);
+        fireEvent.press(screen.getByTestId('retained-pill-Conditional'));
+        finish();
+        expect(inspect().pill).toBe('Conditional');
+      });
+
+      it('uses precise child hit testing without handing a child edge to its parent', () => {
+        setup();
+        measureHeader();
+        select(1);
+        finish();
+        swipe(-0.7, 150);
+        expect(inspect()).toMatchObject({ selected: 'Orders', pill: 'Basic' });
+        swipe(0.7, 150);
+        expect(inspect().pill).toBe('Conditional');
+        swipe(0.7, 150);
+        expect(inspect()).toMatchObject({
+          selected: 'Orders',
+          pill: 'Conditional',
+        });
+        // The group controls belong to the root surface, not child rows.
+        swipe(0.7, 20);
+        expect(inspect().selected).toBe('Account');
+      });
     }
 
-    it('cleans its Feed timer on unmount', () => {
+    it('cleans Feed timers, native Y attachment and pending animation on unmount', () => {
       const intervals = jest.spyOn(global, 'setInterval');
       const clearInterval = jest.spyOn(global, 'clearInterval');
       const fixture = setup();
@@ -984,10 +825,17 @@ describe.each(['flat', 'nested'] as const)(
       const feedCall = intervals.mock.calls.findIndex(
         ([, delay]) => delay === 100,
       );
-      expect(feedCall).toBeGreaterThanOrEqual(0);
       const feedTimer = intervals.mock.results[feedCall].value;
+      select(1);
+      const old = nativeBoundary.animations()[0];
       fixture.unmount();
       expect(clearInterval).toHaveBeenCalledWith(feedTimer);
+      expect(
+        nativeAttachments.every(item => item.detach.mock.calls.length === 1),
+      ).toBe(true);
+      expect(old.cancelled).toBe(true);
+      act(() => old.callback?.(true, old.target));
+      expect(nativeBoundary.animations()).toHaveLength(0);
     });
   },
 );

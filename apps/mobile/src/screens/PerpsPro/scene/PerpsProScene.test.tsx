@@ -17,6 +17,11 @@ import {
   type AppStateStatus,
 } from 'react-native';
 import type { L2Book, WsActiveAssetData } from '@rabby-wallet/hyperliquid-sdk';
+import {
+  nativeBoundary,
+  type PanBoundary,
+  type PanEvent,
+} from '@/testUtils/linkedPagerNativeBoundary';
 
 let mockIsLight = true;
 const mockUsePerpsProScene = jest.fn();
@@ -92,7 +97,6 @@ const mockGetOrderBookPriceIntent = jest.fn();
 const mockTriggerImpact = jest.fn();
 const mockSetPage = jest.fn();
 const mockPageCommands = jest.fn();
-const mockHorizontalScrollCommands = jest.fn();
 let mockTradeAmountUnit: 'base' | 'quote' = 'quote';
 let mockLeveragePending = false;
 let mockTradeFocusedLeg: 'sl' | 'tp' | null = null;
@@ -109,85 +113,24 @@ let mockTradeForm: {
 } = { bboEnabled: false, orderType: 'market' };
 
 jest.mock('react-native-reanimated', () => {
-  const ReactModule = require('react');
   const ReactNative = require('react-native');
-  const useSharedValue = (value: unknown) =>
-    ReactModule.useRef({ value }).current;
+  const boundary =
+    require('@/testUtils/linkedPagerNativeBoundary').createReanimatedBoundary();
   return {
-    __esModule: true,
-    default: {
-      createAnimatedComponent: (Component: React.ComponentType) => Component,
-      // Keep the real horizontal ScrollView and list context; only the native
-      // scroll command is recorded. Tests deliver native completion separately.
-      ScrollView: ReactModule.forwardRef(
-        (props: { testID?: string }, ref: React.Ref<unknown>) => {
-          const nativeRef = ReactModule.useRef(null);
-          ReactModule.useImperativeHandle(
-            ref,
-            () => ({
-              // Preserve the native host boundary required by Animated's
-              // scroll-event attachment; this ref stays stable across renders.
-              getNativeScrollRef: () => nativeRef.current,
-              scrollTo: (options: { x: number; animated: boolean }) =>
-                mockHorizontalScrollCommands(props.testID, options),
-            }),
-            [props.testID],
-          );
-          return ReactModule.createElement(ReactNative.ScrollView, {
-            ...props,
-            ref: nativeRef,
-          });
-        },
-      ),
-      Text: ReactNative.Text,
-      useSharedValue,
-      View: ReactNative.View,
-    },
-    cancelAnimation: jest.fn(),
+    ...boundary,
+    default: { ...boundary.default, Text: ReactNative.Text },
+    Easing: { ...boundary.Easing, bezier: jest.fn(() => 'ease-out') },
     dispatchCommand: (
       ref: { current: Record<string, (...args: unknown[]) => void> },
       name: string,
       args: unknown[],
     ) => ref.current[name](...args),
-    runOnUI: (callback: (...args: unknown[]) => unknown) => callback,
-    Easing: { bezier: jest.fn(() => 'ease-out') },
     ReduceMotion: { System: 'system' },
-    runOnJS: (callback: (...args: unknown[]) => unknown) => callback,
-    scrollTo: jest.fn(),
-    useAnimatedRef: () =>
-      ReactModule.useMemo(() => {
-        const ref = (component?: unknown) => {
-          ref.current = component ?? null;
-          return 0;
-        };
-        ref.current = null;
-        ref.observe = jest.fn(() => jest.fn());
-        return ref;
-      }, []),
-    useAnimatedReaction: jest.fn(),
-    useAnimatedScrollHandler:
-      (handlers: Record<string, (event: object) => void>) =>
-      (event: { nativeEvent?: { testEvent?: string } }) => {
-        const nativeEvent = event.nativeEvent ?? event;
-        const type =
-          'testEvent' in nativeEvent ? nativeEvent.testEvent : undefined;
-        handlers[type ?? 'onScroll']?.(nativeEvent);
-      },
     useDerivedValue: (factory: () => unknown) => ({
       value: factory(),
     }),
-    useAnimatedStyle: (factory: () => object) => factory(),
-    useEvent:
-      (handler: (event: object) => void, eventNames?: string[]) =>
-      (event: { nativeEvent?: object }) =>
-        handler({
-          ...(event.nativeEvent ?? event),
-          eventName: eventNames?.[0] ?? 'onPageScroll',
-        }),
     useScrollViewOffset: (_ref: unknown, offset: unknown) => offset,
-    useSharedValue,
     withDecay: jest.fn(({ velocity }: { velocity: number }) => velocity),
-    withTiming: (target: number) => target,
   };
 });
 
@@ -303,40 +246,13 @@ jest.mock('react-native-screens', () => ({
 }));
 
 jest.mock('react-native-gesture-handler', () => {
-  const createPan = () => {
-    const panGesture: Record<string, jest.Mock> = {};
-    [
-      'activeOffsetX',
-      'enabled',
-      'failOffsetY',
-      'manualActivation',
-      'maxPointers',
-      'runOnJS',
-      'shouldCancelWhenOutside',
-      'withTestId',
-    ].forEach(method => {
-      panGesture[method] = jest.fn(() => panGesture);
-    });
-    [
-      'onBegin',
-      'onEnd',
-      'onFinalize',
-      'onStart',
-      'onTouchesDown',
-      'onTouchesMove',
-      'onUpdate',
-    ].forEach(method => {
-      panGesture[method] = jest.fn(callback => {
-        panGesture[`__${method}`] = callback;
-        return panGesture;
-      });
-    });
-    return panGesture;
-  };
+  const ReactModule = require('react');
+  const boundary =
+    require('@/testUtils/linkedPagerNativeBoundary').createGestureBoundary();
   return {
     Pressable: require('react-native').Pressable,
     Gesture: {
-      Pan: createPan,
+      Pan: boundary.Gesture.Pan,
       Tap: () => {
         const tap: Record<string, jest.Mock> = {};
         for (const method of [
@@ -352,11 +268,12 @@ jest.mock('react-native-gesture-handler', () => {
       },
       Exclusive: (...gestures: unknown[]) => gestures,
     },
-    GestureDetector: ({
-      children,
-    }: {
-      children: React.ReactElement<{ testID?: string }>;
-    }) => children,
+    GestureDetector: (
+      props: React.PropsWithChildren<{ gesture: PanBoundary }>,
+    ) =>
+      props.gesture.config
+        ? ReactModule.createElement(boundary.GestureDetector, props)
+        : props.children,
   };
 });
 
@@ -1008,7 +925,7 @@ const getInfoList = (tab?: InfoTab) => {
   return list;
 };
 const INFO_TRACK_WIDTH = 400;
-const getInfoTrack = () => screen.getByTestId('perps-pro-info-list-track');
+const getInfoTrack = () => screen.getByTestId('perps-pro-info-list-root-track');
 const getInfoModel = () =>
   buildLinkedSceneModel(screen.UNSAFE_getByType(LinkedScenePager).props.pages);
 const getInfoLeaf = (tab: InfoTab, category?: 'basic' | 'conditional') => {
@@ -1031,20 +948,15 @@ const getInfoPage = (tab: InfoTab, category?: 'basic' | 'conditional') =>
     },
   );
 const layoutInfoTrack = () => {
-  if (!screen.queryByTestId('perps-pro-info-list-track')) {
+  const layout = screen.queryByTestId('perps-pro-info-list-layout');
+  if (!layout) {
     return;
   }
-  fireEvent(getInfoTrack(), 'layout', {
+  fireEvent(layout, 'layout', {
     nativeEvent: {
       layout: { width: INFO_TRACK_WIDTH, height: 600, x: 0, y: 0 },
     },
   });
-  fireEvent(
-    getInfoTrack(),
-    'contentSizeChange',
-    INFO_TRACK_WIDTH * getInfoModel().leaves.length,
-    600,
-  );
 };
 const render = (element: React.ReactElement) => {
   const result = renderNative(element);
@@ -1057,25 +969,59 @@ const render = (element: React.ReactElement) => {
     },
   };
 };
-let lastPhysicalProgress = 0;
-const physicalScrollEvent = (
-  testEvent: string,
-  progress = lastPhysicalProgress,
-  velocity = 0,
-) => {
-  lastPhysicalProgress = progress;
-  fireEvent(getInfoTrack(), 'scroll', {
-    nativeEvent: {
-      testEvent,
-      contentOffset: { x: progress * INFO_TRACK_WIDTH, y: 0 },
-      velocity: { x: velocity, y: 0 },
-    },
+const infoPan = () =>
+  screen.getByTestId('perps-pro-info-list-pan').props.gesture as PanBoundary;
+const panEvent = (translationX = 0): PanEvent => ({
+  translationX,
+  translationY: 0,
+  velocityX: 0,
+  x: 200,
+  y: 200,
+  absoluteX: 200,
+  absoluteY: 200,
+});
+let swipe: { pan: PanBoundary; start: number; progress: number } | undefined;
+const beginSwipe = () => {
+  const path = screen.UNSAFE_getByType(LinkedScenePager).props.activePath;
+  const start = getInfoModel().leaves.find(
+    leaf => leaf.path.key === path.key && leaf.path.childKey === path.childKey,
+  )!.index;
+  const pan = infoPan();
+  swipe = { pan, start, progress: start };
+  act(() => {
+    pan.touchesDown?.(
+      { numberOfTouches: 1, allTouches: [{ x: 200, y: 200 }] },
+      { fail: jest.fn(), activate: jest.fn(), end: jest.fn() },
+    );
+    pan.handlers.onStart?.(panEvent());
   });
 };
-const physicalPageScroll = (progress: number) =>
-  physicalScrollEvent('onScroll', progress);
-const finishPhysicalPage = (progress: number) =>
-  physicalScrollEvent('onMomentumEnd', progress);
+const physicalPageScroll = (progress: number) => {
+  if (swipe) {
+    swipe.progress = progress;
+    const { pan, start } = swipe;
+    act(() =>
+      pan.handlers.onUpdate(panEvent((start - progress) * INFO_TRACK_WIDTH)),
+    );
+  } else if (nativeBoundary.animations().length) {
+    // Advance the actual UI animation without invoking its completion.
+    act(() => nativeBoundary.advanceAnimations(0.8));
+  }
+};
+const finishPhysicalPage = (_progress?: number) => {
+  if (swipe) {
+    const { pan, start, progress } = swipe;
+    swipe = undefined;
+    act(() => {
+      const event = panEvent((start - progress) * INFO_TRACK_WIDTH);
+      pan.handlers.onEnd(event, true);
+      pan.handlers.onFinalize?.(event, true);
+    });
+  }
+  if (nativeBoundary.animations().length) {
+    act(() => nativeBoundary.finishNextAnimation());
+  }
+};
 // Legacy outer-tab assertions use logical positions. Map only their event
 // coordinates onto the declared leaves; no production state is assigned.
 const logicalProgressToPhysical = (progress: number) => {
@@ -1088,19 +1034,13 @@ const logicalProgressToPhysical = (progress: number) => {
 };
 const pageState = (state: 'dragging' | 'settling' | 'idle') => {
   if (state === 'dragging') {
-    physicalScrollEvent('onBeginDrag');
+    beginSwipe();
   } else if (state === 'idle') {
-    finishPhysicalPage(lastPhysicalProgress);
-  } else {
-    physicalScrollEvent('onEndDrag', lastPhysicalProgress, 1);
+    finishPhysicalPage();
   }
 };
 const pageScroll = (position: number, offset: number) =>
   physicalPageScroll(logicalProgressToPhysical(position + offset));
-const animatedPageCommands = () =>
-  mockHorizontalScrollCommands.mock.calls
-    .filter(([, options]) => options.animated)
-    .map(([, options]) => [options.x / INFO_TRACK_WIDTH]);
 const settleInfoPage = (tab: InfoTab) => {
   const position = getInfoLeaf(tab).index;
   physicalPageScroll(position);
@@ -1144,6 +1084,8 @@ const createActiveAssetData = (
 describe('PerpsProScene market loading states', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    nativeBoundary.reset();
+    swipe = undefined;
     mockIsLight = true;
     mockDismissKeyboardThen.mockReset();
     mockDismissKeyboardThen.mockImplementation(action => action());
@@ -1668,12 +1610,12 @@ describe('PerpsProScene market loading states', () => {
     ).toEqual({ selected: true });
   });
 
-  it('keeps trade and header outside the native horizontal pager', () => {
+  it('keeps trade and header outside the UI horizontal track', () => {
     mockUsePerpsProScene.mockReturnValue(createSceneState());
     render(
       <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
     );
-    const pager = screen.getByTestId('perps-pro-info-list-track');
+    const pager = getInfoTrack();
     expect(within(pager).queryByTestId('perps-pro-trade-section')).toBeNull();
     expect(within(pager).queryByTestId('perps-pro-list-lead-in')).toBeNull();
     expect(
@@ -1681,8 +1623,8 @@ describe('PerpsProScene market loading states', () => {
         'perps-pro-trade-section',
       ),
     ).toBeOnTheScreen();
-    expect(pager.props.bounces).toBe(false);
-    expect(pager.props.pagingEnabled).toBe(true);
+    expect(screen.getByTestId('perps-pro-info-list-pan')).toBeOnTheScreen();
+    expect(pager.props.horizontal).toBeUndefined();
   });
 
   it('renders the order-book and static trade frame before account trade configuration is ready', () => {
@@ -2946,7 +2888,7 @@ describe('PerpsProScene market loading states', () => {
     // longer synthesises it with per-frame scrollTo calls.
     expect(scroll.props.scrollEnabled).toBe(true);
     expect(screen.UNSAFE_getAllByType(FlatList)).toHaveLength(5);
-    expect(screen.getByTestId('perps-pro-info-list-track')).toBeOnTheScreen();
+    expect(getInfoTrack()).toBeOnTheScreen();
     expect(screen.UNSAFE_getAllByType(SceneList)).toHaveLength(1);
     expect(infoTabs.map(tab => getInfoList(tab).props.data)).toHaveLength(3);
     expect(
@@ -2962,7 +2904,7 @@ describe('PerpsProScene market loading states', () => {
   });
 
   it.each(['android', 'ios'] as const)(
-    'commits a tab press only after %s native completion',
+    'commits a tab press only after %s UI-animation completion',
     platform => {
       Object.defineProperty(Platform, 'OS', {
         configurable: true,
@@ -2976,7 +2918,7 @@ describe('PerpsProScene market loading states', () => {
       const list = getInfoList();
       const accountRows = getInfoList('account');
       fireEvent.press(screen.getByTestId('perps-pro-info-tab-openOrders'));
-      expect(animatedPageCommands()).toEqual([[1]]);
+      expect(nativeBoundary.animations()).toHaveLength(1);
       expect(persist).not.toHaveBeenCalled();
       expect(
         screen.getByTestId('perps-pro-info-tab-account').props
@@ -3016,10 +2958,11 @@ describe('PerpsProScene market loading states', () => {
     fireEvent.press(screen.getByTestId('perps-pro-info-tab-openOrders'));
     fireEvent.press(screen.getByTestId('perps-pro-info-tab-account'));
     fireEvent.press(screen.getByTestId('perps-pro-info-tab-positions'));
-    expect(animatedPageCommands()).toEqual([[1]]);
+    expect(nativeBoundary.animations()).toHaveLength(1);
     expect(persist).not.toHaveBeenCalled();
     settleInfoPage('openOrders');
-    expect(animatedPageCommands()).toEqual([[1], [0]]);
+    expect(nativeBoundary.animations()).toHaveLength(1);
+    expect(nativeBoundary.animationHistory()).toHaveLength(2);
     settleInfoPage('positions');
     expect(getInfoList()).toBe(list);
     expect(infoTabs.map(tab => getInfoList(tab))).toEqual(retainedLists);
@@ -3093,11 +3036,20 @@ describe('PerpsProScene market loading states', () => {
     expect(
       screen.UNSAFE_getByType(PerpsProTabIndicator).props.position.value,
     ).toBe(1);
+    // Enter the group's remembered/default child, not its directional edge.
+    expect(
+      screen.getByTestId('perps-pro-open-orders-tab-basic').props
+        .accessibilityState.selected,
+    ).toBe(true);
+    expect(screen.getByTestId('perps-pro-open-orders-empty')).toBeOnTheScreen();
+    pageState('dragging');
+    physicalPageScroll(1.6);
+    finishPhysicalPage();
     expect(
       screen.getByTestId('perps-pro-open-orders-tab-conditional').props
         .accessibilityState.selected,
     ).toBe(true);
-    // The sibling remains a real stop even when it currently has no rows.
+    // The empty sibling remains a real stop in the reverse direction too.
     pageState('dragging');
     physicalPageScroll(1.4);
     expect(
@@ -3126,7 +3078,7 @@ describe('PerpsProScene market loading states', () => {
     pageState('idle');
     expect(persist.mock.calls).toEqual([['openOrders'], ['positions']]);
     expect(getInfoList()).toBe(list);
-    expect(animatedPageCommands()).toEqual([]);
+    expect(nativeBoundary.animations()).toHaveLength(0);
     expect(
       screen.getByTestId('perps-pro-info-tab-positions').props
         .accessibilityState,
@@ -3167,11 +3119,8 @@ describe('PerpsProScene market loading states', () => {
       };
       const view = render(<PerpsProScene {...props} />);
       const list = getInfoList();
-      const pager = screen.getByTestId('perps-pro-info-list-track');
-      expect(mockHorizontalScrollCommands).toHaveBeenCalledWith(
-        'perps-pro-info-list-track',
-        { x: 0, animated: false },
-      );
+      const pager = getInfoTrack();
+      expect(nativeBoundary.animations()).toHaveLength(0);
 
       pageState('dragging');
       pageScroll(0, 0.6);
@@ -3198,11 +3147,11 @@ describe('PerpsProScene market loading states', () => {
         ).toBeNull();
         expect(getInfoPage('openOrders').props.pointerEvents).toBe('auto');
         expect(getInfoList()).toBe(list);
-        expect(screen.getByTestId('perps-pro-info-list-track')).toBe(pager);
+        expect(getInfoTrack()).toBe(pager);
         expect(
           screen.UNSAFE_getByType(PerpsProTabIndicator).props.position.value,
         ).toBe(1);
-        expect(animatedPageCommands()).toEqual([]);
+        expect(nativeBoundary.animations()).toHaveLength(0);
       };
       expectOrdersSelected();
 
@@ -3236,8 +3185,8 @@ describe('PerpsProScene market loading states', () => {
       ).toBe(true);
       expect(getInfoPage('account').props.pointerEvents).toBe('auto');
       expect(getInfoList()).toBe(list);
-      expect(screen.getByTestId('perps-pro-info-list-track')).toBe(pager);
-      expect(animatedPageCommands()).toEqual([]);
+      expect(getInfoTrack()).toBe(pager);
+      expect(nativeBoundary.animations()).toHaveLength(0);
     },
   );
 
@@ -3276,6 +3225,53 @@ describe('PerpsProScene market loading states', () => {
     },
   );
 
+  it.each([
+    ['basic', 'account', 2.5],
+    ['conditional', 'positions', 0.5],
+  ] as const)(
+    'preserves Orders %s after clicking %s and swiping back',
+    (category, awayTab, returnProgress) => {
+      installOptimisticInfoPanelMock(jest.fn(), {
+        openOrderCategory: category,
+      });
+      mockUsePerpsProScene.mockReturnValue(createSceneState());
+      render(
+        <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+      );
+      fireEvent.press(screen.getByTestId('perps-pro-info-tab-openOrders'));
+      settleInfoPage('openOrders');
+      const list = getInfoList();
+      const childList = getInfoList('openOrders');
+      fireEvent.press(screen.getByTestId(`perps-pro-info-tab-${awayTab}`));
+      settleInfoPage(awayTab);
+
+      pageState('dragging');
+      physicalPageScroll(returnProgress);
+      expect(
+        screen.getByTestId(`perps-pro-open-orders-tab-${category}`, {
+          includeHiddenElements: true,
+        }).props.accessibilityState.selected,
+      ).toBe(true);
+      finishPhysicalPage();
+
+      expect(
+        screen.getByTestId('perps-pro-info-tab-openOrders').props
+          .accessibilityState.selected,
+      ).toBe(true);
+      expect(
+        screen.getByTestId(`perps-pro-open-orders-tab-${category}`).props
+          .accessibilityState.selected,
+      ).toBe(true);
+      expect(getInfoPage('openOrders', category).props.pointerEvents).toBe(
+        'auto',
+      );
+      expect(getInfoList()).toBe(list);
+      expect(getInfoList('openOrders')).toBe(childList);
+      expect(mockConfirmCancelAll).not.toHaveBeenCalled();
+      expect(mockConfirmCancelOrder).not.toHaveBeenCalled();
+    },
+  );
+
   it('retains non-interactive neighbouring pages without committing or invoking trade actions', () => {
     const persist = installOptimisticInfoPanelMock();
     const switchToSimple = jest.fn();
@@ -3309,11 +3305,16 @@ describe('PerpsProScene market loading states', () => {
         includeHiddenElements: true,
       }),
     ).toBeNull();
-    expect(
-      screen.getByTestId('perps-pro-info-list-group-openOrders', {
+    let groupOwner = screen.getByTestId(
+      'perps-pro-info-list-group-openOrders',
+      {
         includeHiddenElements: true,
-      }).props.pointerEvents,
-    ).toBe('none');
+      },
+    ).parent;
+    while (groupOwner && groupOwner.props.pointerEvents === undefined) {
+      groupOwner = groupOwner.parent;
+    }
+    expect(groupOwner?.props.pointerEvents).toBe('none');
     expect(getInfoList()).toBe(list);
     expect(infoTabs.map(tab => getInfoList(tab))).toEqual(retainedLists);
     expect(list.props.data).toBe(data);
@@ -3426,7 +3427,7 @@ describe('PerpsProScene market loading states', () => {
     view.rerender(
       <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
     );
-    expect(animatedPageCommands().at(-1)).toEqual([0]);
+    expect(nativeBoundary.animations()).toHaveLength(1);
     settleInfoPage('positions');
     expect(getInfoList()).toBe(list);
     expect(
@@ -4016,7 +4017,7 @@ describe('PerpsProScene market loading states', () => {
       fireEvent.press(
         screen.getByTestId('perps-pro-open-orders-tab-conditional'),
       );
-      expect(animatedPageCommands()).toEqual([[2]]);
+      expect(nativeBoundary.animations()).toHaveLength(1);
       expect(committed).not.toHaveBeenCalled();
       expect(
         screen.getByTestId('perps-pro-open-orders-tab-basic', {
@@ -4152,7 +4153,7 @@ describe('PerpsProScene market loading states', () => {
     expect(mockConfirmCancelOrder).toHaveBeenCalledWith(conditional);
   });
 
-  it('remounts the flat track on account change while preserving the committed pill and rejecting old native callbacks', () => {
+  it('remounts the UI track on account change while preserving the committed pill and rejecting old gesture callbacks', () => {
     jest.replaceProperty(Platform, 'OS', 'ios');
     const committed = jest.fn();
     const info = createInfoState({
@@ -4166,30 +4167,20 @@ describe('PerpsProScene market loading states', () => {
     const props = { isModeSwitching: false, onSwitchToSimple: jest.fn() };
     const view = render(<PerpsProScene {...props} />);
     const outer = getInfoTrack();
-    const staleScroll = outer.props.onScroll;
+    const stalePan = infoPan();
     mockUsePerpsProInfoPanel.mockReturnValue({
       ...info,
       accountIdentity: 'account-b',
     });
     view.rerender(<PerpsProScene {...props} />);
-    expect(screen.getByTestId('perps-pro-info-list-track')).not.toBe(outer);
-    expect(mockHorizontalScrollCommands).toHaveBeenLastCalledWith(
-      'perps-pro-info-list-track',
-      { x: 2 * INFO_TRACK_WIDTH, animated: false },
-    );
+    expect(getInfoTrack()).not.toBe(outer);
+    expect(nativeBoundary.animations()).toHaveLength(0);
     act(() => {
-      staleScroll({
-        nativeEvent: {
-          testEvent: 'onBeginDrag',
-          contentOffset: { x: INFO_TRACK_WIDTH, y: 0 },
-        },
-      });
-      staleScroll({
-        nativeEvent: {
-          testEvent: 'onMomentumEnd',
-          contentOffset: { x: INFO_TRACK_WIDTH, y: 0 },
-        },
-      });
+      stalePan.handlers.onStart(panEvent());
+      stalePan.handlers.onUpdate(panEvent(300));
+      stalePan.handlers.onEnd(panEvent(300), true);
+      stalePan.handlers.onFinalize?.(panEvent(300), true);
+      nativeBoundary.finishAnimations();
     });
     expect(committed).not.toHaveBeenCalled();
     expect(

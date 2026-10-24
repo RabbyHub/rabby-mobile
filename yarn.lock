@@ -9861,7 +9861,6 @@ __metadata:
     react: ">=18"
     react-native: ">=0.76"
     react-native-gesture-handler: ">=2"
-    react-native-pager-view: ">=6.7"
     react-native-reanimated: ">=3"
   languageName: unknown
   linkType: soft

@@ -69,7 +69,7 @@ export default function DevUISwipableSubScreen() {
           <Pressable
             onPress={() => setRetained(true)}
             testID="dev-perps-pager-retained">
-            <Text>Retained native tabs</Text>
+            <Text>Retained linked tabs</Text>
           </Pressable>
         </View>
         <View style={styles.tradeBlock}>
