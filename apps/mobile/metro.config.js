@@ -455,6 +455,27 @@ const config = {
         };
       }
 
+      if (
+        /^(react-native-reanimated|react-native-gesture-handler)(\/|$)/.test(
+          moduleName,
+        )
+      ) {
+        // Source-linked workspaces must share the app's native peer instance.
+        // Restrict lookup, but let Metro keep its platform extensions and
+        // react-native/mainFields selection instead of using Node's main entry.
+        return context.resolveRequest(
+          {
+            ...context,
+            allowHaste: false,
+            disableHierarchicalLookup: true,
+            nodeModulesPaths: [path.resolve(projectRoot, 'node_modules')],
+            extraNodeModules: {},
+          },
+          moduleName,
+          platform,
+        );
+      }
+
       if (moduleName === '@walletconnect/keyvaluestorage') {
         return {
           filePath: walletConnectKeyValueStorageShim,
