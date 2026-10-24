@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
-import { Animated, StyleSheet, View as NativeView } from 'react-native';
+import { Animated, Easing, StyleSheet, View as NativeView } from 'react-native';
 
 const mockOpenFieldExplanation = jest.fn();
 const mockCancelAnimation = jest.fn();
@@ -1102,8 +1102,14 @@ describe('PerpsProOrderBook display shell', () => {
     );
 
     expect(screen.getAllByText('50.00%')).toHaveLength(2);
-    expect(mockWithTiming).not.toHaveBeenCalled();
-    mockCancelAnimation.mockClear();
+    fireEvent(
+      screen.getByTestId('perps-pro-order-book-ratio-track'),
+      'layout',
+      {
+        nativeEvent: { layout: { width: 50, height: 4, x: 0, y: 0 } },
+      },
+    );
+    expect(nativeTiming).not.toHaveBeenCalled();
 
     view.rerender(
       <PerpsProOrderBook
@@ -1118,14 +1124,28 @@ describe('PerpsProOrderBook display shell', () => {
 
     expect(screen.getByText('75.00%')).toBeTruthy();
     expect(screen.getByText('25.00%')).toBeTruthy();
-    expect(mockWithTiming).toHaveBeenCalledWith(25, {
+    // Depth bars also use native timing, but use a normalized 0..1 scale.
+    // Bind this assertion to the ratio's own 0..100 Animated.Value.
+    const [ratioValue, ratioConfig] = nativeTiming.mock.calls.find(
+      ([, config]) => config.toValue === 25,
+    )!;
+    expect(ratioValue).toBeInstanceOf(Animated.Value);
+    expect(ratioConfig).toMatchObject({
+      toValue: 25,
       duration: 250,
-      easing: 'desktop-ease-out',
-      reduceMotion: 'system',
+      easing: expect.any(Function),
+      useNativeDriver: true,
+      isInteraction: false,
+    });
+    const expectedEasing = Easing.bezier(0, 0, 0.2, 1);
+    [0, 0.25, 0.5, 0.75, 1].forEach(progress => {
+      expect(ratioConfig.easing(progress)).toBeCloseTo(
+        expectedEasing(progress),
+      );
     });
 
-    mockWithTiming.mockClear();
-    mockCancelAnimation.mockClear();
+    nativeTiming.mockClear();
+    const snapRatio = jest.spyOn(ratioValue, 'setValue');
     view.rerender(
       <PerpsProOrderBook
         {...defaultProps}
@@ -1139,8 +1159,10 @@ describe('PerpsProOrderBook display shell', () => {
 
     expect(screen.getByText('80.00%')).toBeTruthy();
     expect(screen.getByText('20.00%')).toBeTruthy();
-    expect(mockWithTiming).not.toHaveBeenCalled();
-    expect(mockCancelAnimation).toHaveBeenCalled();
+    expect(
+      nativeTiming.mock.calls.filter(([value]) => value === ratioValue),
+    ).toHaveLength(0);
+    expect(snapRatio).toHaveBeenCalledWith(20);
   });
 
   it.each([0, 3.89, 12.45, 44.77, 50, 99.99, 100])(

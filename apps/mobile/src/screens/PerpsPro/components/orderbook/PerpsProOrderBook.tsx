@@ -6,7 +6,6 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { Pressable, View, type ViewStyle } from 'react-native';
-import Animated, { useAnimatedStyle } from 'react-native-reanimated';
 import { useTranslation } from 'react-i18next';
 
 import type { PerpsServerClockSample } from '../../model/funding';
@@ -42,7 +41,7 @@ import {
   PerpsProOrderBookRatioSkeleton,
 } from './PerpsProOrderBookSkeleton';
 import { PerpsProPrecisionSheet } from './PerpsProPrecisionSheet';
-import { usePerpsProOrderBookPercentAnimation } from './usePerpsProOrderBookPercentAnimation';
+import { PerpsProOrderBookRatioTrack } from './PerpsProOrderBookRatioTrack';
 
 export const getPerpsProOrderBookRowKey = (
   side: 'ask' | 'bid',
@@ -227,18 +226,6 @@ export const PerpsProOrderBook: React.FC<{
     status: bookStatus,
   });
   const animationIdentity = `${bookIdentity}|${mode}|${rowCount}|${displayState}`;
-  const animatedBuyRatio = usePerpsProOrderBookPercentAnimation({
-    animationIdentity,
-    hasValue: hasRatio,
-    targetPercent: buyRatio.buy,
-    valueIdentity: 'buy-ratio',
-  });
-  const buyRatioTrackStyle = useAnimatedStyle(() => ({
-    flexGrow: animatedBuyRatio.value,
-  }));
-  const sellRatioTrackStyle = useAnimatedStyle(() => ({
-    flexGrow: 100 - animatedBuyRatio.value,
-  }));
   const pendingPriceSelectionRef = useRef<PendingPriceSelection | null>(null);
   const getPriceSelectionSource = useCallback(
     (
@@ -442,22 +429,11 @@ export const PerpsProOrderBook: React.FC<{
                 style={[styles.ratioLabel, styles.buyRatio]}>
                 {buyRatio.buy.toFixed(2)}%
               </Text>
-              <View style={styles.ratioTrack}>
-                {hasRatio ? (
-                  <>
-                    <Animated.View
-                      style={[styles.buyRatioTrack, buyRatioTrackStyle]}
-                      testID="perps-pro-order-book-buy-ratio-track"
-                    />
-                    <Animated.View
-                      style={[styles.sellRatioTrack, sellRatioTrackStyle]}
-                      testID="perps-pro-order-book-sell-ratio-track"
-                    />
-                  </>
-                ) : (
-                  <View style={styles.emptyRatioTrack} />
-                )}
-              </View>
+              <PerpsProOrderBookRatioTrack
+                animationIdentity={animationIdentity}
+                buyPercent={buyRatio.buy}
+                hasValue={hasRatio}
+              />
               <Text
                 numberOfLines={1}
                 style={[styles.ratioLabel, styles.sellRatio]}>
@@ -645,28 +621,5 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   sellRatio: {
     color: colors2024['red-default'],
     textAlign: 'right',
-  },
-  ratioTrack: {
-    flexDirection: 'row',
-    flex: 1,
-    gap: 2,
-    height: 4,
-  },
-  buyRatioTrack: {
-    backgroundColor: colors2024['green-default'],
-    borderBottomLeftRadius: 2,
-    borderTopLeftRadius: 2,
-    flexBasis: 0,
-  },
-  sellRatioTrack: {
-    backgroundColor: colors2024['red-default'],
-    borderBottomRightRadius: 2,
-    borderTopRightRadius: 2,
-    flexBasis: 0,
-  },
-  emptyRatioTrack: {
-    backgroundColor: colors2024['neutral-line'],
-    borderRadius: 2,
-    flex: 1,
   },
 }));
