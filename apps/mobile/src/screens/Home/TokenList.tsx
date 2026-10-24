@@ -140,6 +140,7 @@ const TokenResourceRowContent = React.memo(
     return (
       <TokenRowV2
         data={token}
+        hasContextMenu
         style={tokenStyle}
         onTokenPress={onTokenPress}
         scene="portfolio"

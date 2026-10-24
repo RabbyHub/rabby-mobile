@@ -337,7 +337,6 @@ const getStyle = createGetStyles2024(
     symbol: {
       ...PERPS_PRO_DIALOG_HEAVY_TEXT_STYLE,
       color: colors2024['neutral-title-1'],
-      fontFamily: 'SF Pro Rounded',
       fontSize: 20,
       lineHeight: 24,
       maxWidth: 160,

@@ -1,3 +1,5 @@
+import { simplePositionPriceText } from './components/account/model';
+import { createPerpsMarketDetailHeaderSource } from './components/account/marketDetailHeaderPresentation';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { apisPerps } from '@/core/apis';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
@@ -6,11 +8,11 @@ import { useTheme2024 } from '@/hooks/theme';
 import { GetNestedScreenRouteProp } from '@/navigation-type';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useRoute } from '@react-navigation/native';
-import { useMemoizedFn } from 'ahooks';
 import { sortBy } from 'lodash';
 import React, {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -30,19 +32,17 @@ import { PerpsSimpleChartSource } from './components/chart/PerpsSimpleChartSourc
 import { PerpsClosePositionPopup } from './components/PerpsClosePositionPopup';
 import { PerpsDepositCard } from './components/PerpsDepositCard';
 import { PerpsFooter } from './components/PerpsFooter';
-import { PerpsInfo } from './components/PerpsInfo';
 import { PerpsAbout } from './components/PerpsAbout';
 import { PerpsOpenPositionPopup } from './components/PerpsOpenPositionPopup';
 import { PerpsPosition } from './components/PerpsPosition';
 import { usePerpsPosition } from './hooks/usePerpsPosition';
+import { useSimplePositionTpSl } from './hooks/useSimplePositionTpSl';
 import { useActiveAssetSubscription } from './hooks/useActiveAssetSubscription';
-import { toast } from '@/components2024/Toast';
 import { PERPS_MAX_NTL_VALUE } from '@/constant/perps';
 import { PerpsRegionAlert } from '../Perps/components/PerpsRegionAlert';
 
 import { usePerpsPopupState } from '../Perps/hooks/usePerpsPopupState';
 
-import Toast from 'react-native-root-toast';
 import { getBottomButtonBottomOffset } from '@/constant/layout';
 import { PerpsAddPositionPopup } from './components/PerpsAddPositionPopup';
 import { PerpsLimitOrdersForCoin } from './components/PerpsLimitOrdersForCoin';
@@ -142,77 +142,31 @@ export const PerpsMarketDetailScreen = () => {
 
   const providerFee = perpFee;
 
-  const { tpPrice, slPrice, tpOid, slOid } = useMemo(() => {
-    if (
-      !currentPosition ||
-      !currentPosition.openOrders ||
-      !currentPosition.openOrders.length
-    ) {
-      return {
-        tpPrice: undefined,
-        slPrice: undefined,
-        tpOid: undefined,
-        slOid: undefined,
-      };
-    }
-
-    const tpItem = currentPosition.openOrders.find(
-      order =>
-        order.orderType === 'Take Profit Market' &&
-        order.isTrigger &&
-        order.isPositionTpsl &&
-        order.reduceOnly,
-    );
-
-    const slItem = currentPosition.openOrders.find(
-      order =>
-        order.orderType === 'Stop Market' &&
-        order.isTrigger &&
-        order.isPositionTpsl &&
-        order.reduceOnly,
-    );
-
-    return {
-      tpPrice: tpItem?.triggerPx,
-      slPrice: slItem?.triggerPx,
-      tpOid: tpItem?.oid,
-      slOid: slItem?.oid,
-    };
-  }, [currentPosition]);
-
-  const [currentTpOrSl, _setCurrentTpOrSl] = useState<{
-    tpPrice?: string;
-    slPrice?: string;
-  }>({
-    tpPrice: tpPrice,
-    slPrice: slPrice,
-  });
-  const setCurrentTpOrSl = useMemoizedFn(
-    (params: { tpPrice?: string; slPrice?: string }) => {
-      _setCurrentTpOrSl(prev => ({
-        ...prev,
-        ...params,
-      }));
-    },
-  );
-
-  useEffect(() => {
-    if (currentPosition) {
-      _setCurrentTpOrSl({
-        tpPrice: tpPrice,
-        slPrice: slPrice,
-      });
-    }
-  }, [currentPosition, tpPrice, slPrice]);
-
   const {
     handleOpenPosition,
     handleClosePosition,
-    handleSetAutoClose,
+    handleSetAutoClose: setTpSlOrder,
     handleCancelOrder,
     handleUpdateMargin,
     handleStableCoinOrder,
   } = usePerpsPosition();
+
+  const {
+    tpPrice,
+    slPrice,
+    tpPending,
+    slPending,
+    tpCancelling,
+    slCancelling,
+    contextKey: tpSlContextKey,
+    handleSetAutoClose,
+    handleCancelAutoClose,
+  } = useSimplePositionTpSl({
+    coin,
+    orders: currentPosition?.openOrders,
+    setOrder: setTpSlOrder,
+    cancelOrder: handleCancelOrder,
+  });
 
   const { handleDeposit } = usePerpsDeposit({
     currentPerpsAccount,
@@ -223,11 +177,20 @@ export const PerpsMarketDetailScreen = () => {
       tpPrice: Number(tpPrice || 0),
       slPrice: Number(slPrice || 0),
       liquidationPrice: Number(currentPosition?.position.liquidationPx || 0),
+      liquidationPriceText: simplePositionPriceText(
+        currentPosition?.position.liquidationPx,
+        currentAssetCtx?.pxDecimals,
+      ),
       entryPrice: Number(currentPosition?.position.entryPx || 0),
+      entryPriceText: simplePositionPriceText(
+        currentPosition?.position.entryPx,
+        currentAssetCtx?.pxDecimals,
+      ),
     };
   }, [
     currentPosition?.position.entryPx,
     currentPosition?.position.liquidationPx,
+    currentAssetCtx?.pxDecimals,
     slPrice,
     tpPrice,
   ]);
@@ -384,34 +347,53 @@ export const PerpsMarketDetailScreen = () => {
     [currentPosition, currentAssetCtx?.pxDecimals],
   );
 
-  const handleCancelAutoClose = useMemoizedFn(
-    async (actionType: 'tp' | 'sl') => {
-      if (actionType === 'tp') {
-        if (tpOid) {
-          setCurrentTpOrSl({
-            tpPrice: undefined,
-          });
-          await handleCancelOrder(tpOid, coin, 'tp');
-        } else {
-          toast.error('Take profit not found', {
-            position: Toast.positions.CENTER,
-          });
-        }
-      } else if (actionType === 'sl') {
-        if (slOid) {
-          setCurrentTpOrSl({
-            slPrice: undefined,
-          });
-          await handleCancelOrder(slOid, coin, 'sl');
-        } else {
-          toast.error('Stop loss not found', {
-            position: Toast.positions.CENTER,
-          });
-        }
-      }
-    },
+  const headerSource = useMemo(
+    () => createPerpsMarketDetailHeaderSource(route.key, coin),
+    [route.key, coin],
   );
-
+  const headerPresentation = headerSource.presentation;
+  const chartContainerRef = useRef<View>(null);
+  const chartContainerY = useRef(0);
+  const priceNodeRef = useRef<View | null>(null);
+  const priceMeasureId = useRef(0);
+  const onPriceLayout = useCallback(
+    (node: View) => {
+      priceNodeRef.current = node;
+      const measureId = ++priceMeasureId.current;
+      const container = chartContainerRef.current;
+      if (container)
+        node.measureLayout(
+          container,
+          (_x, y, _width, height) => {
+            if (
+              measureId !== priceMeasureId.current ||
+              node !== priceNodeRef.current
+            )
+              return;
+            headerPresentation.layout(chartContainerY.current + y + height);
+          },
+          () => {},
+        );
+    },
+    [headerPresentation],
+  );
+  const onAccountScroll = useCallback(
+    (
+      event: import('react-native').NativeSyntheticEvent<
+        import('react-native').NativeScrollEvent
+      >,
+    ) => {
+      headerPresentation.scroll(event.nativeEvent.contentOffset.y);
+    },
+    [headerPresentation],
+  );
+  useLayoutEffect(() => {
+    const deactivate = headerSource.activate();
+    headerPresentation.reset();
+    priceNodeRef.current = null;
+    priceMeasureId.current += 1;
+    return deactivate;
+  }, [headerPresentation, headerSource]);
   // if (!market) {
   //   navigation.goBack();
   //   toast.error('Market not found');
@@ -425,11 +407,22 @@ export const PerpsMarketDetailScreen = () => {
         {!hasPermission ? <PerpsRegionAlert /> : null}
         <PerpsSimpleChartScrollView
           scrollGesture={scrollGesture}
+          onScroll={onAccountScroll}
+          scrollEventThrottle={16}
           style={styles.container}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scrollContent}>
-          <View style={styles.header}>
+          <View
+            ref={chartContainerRef}
+            collapsable={false}
+            style={styles.header}
+            onLayout={event => {
+              chartContainerY.current = event.nativeEvent.layout.y;
+              if (priceNodeRef.current) onPriceLayout(priceNodeRef.current);
+            }}>
             <PerpsChart
+              onPriceLayout={onPriceLayout}
+              onHeaderQuote={headerPresentation.quote}
               scrollGesture={scrollGesture}
               marketName={coin}
               activeAssetCtx={displayAssetCtx}
@@ -469,24 +462,24 @@ export const PerpsMarketDetailScreen = () => {
               activeAssetCtx={activeAssetCtx}
               currentAssetCtx={currentAssetCtx || null}
               positionData={positionData}
+              rawLiquidationPrice={currentPosition?.position.liquidationPx}
+              liquidationPriceText={lineTagInfo.liquidationPriceText}
+              entryPriceText={lineTagInfo.entryPriceText}
+              rawMarkPrice={activeAssetCtx?.markPx || currentAssetCtx?.markPx}
               coin={coin}
               coinLogo={currentAssetCtx?.logoUrl || ''}
               markPrice={markPrice}
-              slPrice={
-                currentTpOrSl.slPrice
-                  ? Number(currentTpOrSl.slPrice).toString()
-                  : undefined
-              }
-              tpPrice={
-                currentTpOrSl.tpPrice
-                  ? Number(currentTpOrSl.tpPrice).toString()
-                  : undefined
-              }
+              slPrice={slPrice ? Number(slPrice).toString() : undefined}
+              tpPrice={tpPrice ? Number(tpPrice).toString() : undefined}
+              tpSlContextKey={tpSlContextKey}
+              tpPending={tpPending}
+              slPending={slPending}
+              tpCancelling={tpCancelling}
+              slCancelling={slCancelling}
               pxDecimals={currentAssetCtx?.pxDecimals || 2}
               szDecimals={currentAssetCtx?.szDecimals || 0}
               handleActionApproveStatus={handleActionApproveStatus}
               handleSetAutoClose={handleSetAutoClose}
-              setCurrentTpOrSl={setCurrentTpOrSl}
               availableBalance={availableBalance}
               leverageMax={currentAssetCtx?.maxLeverage || 5}
               handleCancelAutoClose={handleCancelAutoClose}
@@ -501,7 +494,6 @@ export const PerpsMarketDetailScreen = () => {
             />
           )}
           {!hasPosition && !hasLimitOrders && <PerpsAbout coin={coin} />}
-          <PerpsInfo market={currentAssetCtx} activeAssetCtx={activeAssetCtx} />
 
           <PerpsHistorySection
             coin={coin}
@@ -608,7 +600,6 @@ export const PerpsMarketDetailScreen = () => {
         markPrice={markPrice}
         availableBalance={Number(availableBalance || 0)}
         onCancel={() => setOpenPositionVisible(false)}
-        setCurrentTpOrSl={setCurrentTpOrSl}
         handleOpenPosition={handleOpenPosition}
         quoteAsset={currentAssetCtx?.quoteAsset}
         onDepositPress={() => {
@@ -628,6 +619,7 @@ export const PerpsMarketDetailScreen = () => {
       />
       {positionData ? (
         <PerpsClosePositionPopup
+          displayName={displayName}
           visible={closePositionVisible}
           coin={coin}
           marginUsed={positionData?.marginUsed || 0}
@@ -659,15 +651,6 @@ export const PerpsMarketDetailScreen = () => {
               orderType,
               limitPx,
             });
-            // A resting limit close leaves the position open, so existing
-            // TP/SL orders stay attached — clear only on market close or a
-            // marketable limit close that filled immediately.
-            if (orderType === 'market' || (res && !res.resting)) {
-              setCurrentTpOrSl({
-                tpPrice: undefined,
-                slPrice: undefined,
-              });
-            }
             if (res) {
               const { avgPx, totalSz } = res;
               const isBuy = positionData?.direction === 'Long';

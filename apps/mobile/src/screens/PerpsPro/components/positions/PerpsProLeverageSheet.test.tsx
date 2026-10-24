@@ -1,4 +1,5 @@
 import { ThemeColors2024 } from '@/constant/theme';
+import { RoundedFontStyles } from '@/core/utils/fonts';
 import { colord } from 'colord';
 import { PERPS_PRO_DIALOG_TOKENS } from '../common/perpsProDialogVisual';
 jest.mock('@/assets2024/icons/perps/PerpsProLeveragePlus.svg', () => {
@@ -292,9 +293,8 @@ describe.each(['light', 'dark'] as const)(
       expect(
         StyleSheet.flatten(screen.getByText('Adjust Leverage').props.style),
       ).toMatchObject({
-        fontFamily: 'SF Pro Rounded',
+        ...RoundedFontStyles.heavy,
         fontSize: 20,
-        fontWeight: '900',
         lineHeight: 24,
       });
       expect(
@@ -689,8 +689,7 @@ it.each(['android', 'ios'] as const)(
       }).props.style,
     );
     expect(inputStyle).toMatchObject({
-      fontFamily:
-        platform === 'android' ? 'SF-Pro-Rounded-Bold' : 'SF Pro Rounded',
+      fontFamily: platform === 'android' ? 'SF-Pro-Rounded-Bold' : 'ui-rounded',
       fontSize: 36,
       fontVariant: ['tabular-nums'],
       height: platform === 'android' ? 54 : 42,

@@ -1,12 +1,11 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import React, { useMemo } from 'react';
+import React, { useImperativeHandle, useState } from 'react';
 import { TouchableOpacity, View } from 'react-native';
 
-import { AssetAvatar } from '@/components';
+import { AssetAvatar } from '@/components/AssetAvatar';
 import { default as RcCaretDownCircleCC } from '@/components/AccountSwitcher/icons/caret-down-circle.svg';
 import { default as RcCaretDownCircleDarkCC } from '@/components/AccountSwitcher/icons/caret-down-circle-dark.svg';
-import { apiContact } from '@/core/apis';
 import type { Account } from '@/core/startupServices/preference';
 import { formatPerpsCoin } from '@/utils/perps';
 import { Text } from '@/components/Typography';
@@ -14,134 +13,142 @@ import { HeaderBackPressable } from '@/hooks/navigation';
 import { PerpsHeaderRight } from './PerpsHeaderRight';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-export const PerpsHeaderTitle: React.FC<{
-  account?: Account | null;
-  onSelectCoin: () => void;
-  popupIsOpen: boolean;
-  coin: string;
-  displayName: string;
-  quoteCoin?: string;
-  logoUrl?: string;
-}> = ({
-  logoUrl,
-  coin,
-  displayName,
-  quoteCoin = 'USDC',
-  account,
-  onSelectCoin,
-  popupIsOpen,
-}) => {
-  const { styles, colors2024, isLight } = useTheme2024({ getStyle });
+import {
+  EMPTY_ACCOUNT_QUOTE,
+  sameAccountHeader,
+  type AccountHeaderHandle,
+  type AccountHeaderSnapshot,
+} from './account/model';
 
-  const { top } = useSafeAreaInsets();
-  const IconCom = isLight ? RcCaretDownCircleCC : RcCaretDownCircleDarkCC;
-
-  const alias = useMemo(() => {
-    if (!account?.address) {
-      return;
+export const PerpsHeaderTitle = React.memo(
+  React.forwardRef<
+    AccountHeaderHandle,
+    {
+      account?: Account | null;
+      snapshotRef?: React.RefObject<AccountHeaderSnapshot>;
+      onSelectCoin: () => void;
+      popupIsOpen: boolean;
+      coin: string;
+      displayName: string;
+      quoteCoin?: string;
+      logoUrl?: string;
     }
-    return apiContact.getAliasName(account?.address);
-  }, [account?.address]);
+  >(function PerpsHeaderTitle(
+    {
+      logoUrl,
+      coin,
+      displayName,
+      quoteCoin = 'USDC',
+      snapshotRef,
+      onSelectCoin,
+      popupIsOpen,
+    },
+    ref,
+  ) {
+    const { styles, colors2024, isLight } = useTheme2024({ getStyle });
 
-  return (
-    <View style={[styles.headerOuter, { marginTop: top }]}>
-      <View style={styles.headerInner}>
-        <View style={styles.headerLeft}>
-          <HeaderBackPressable />
-          <AssetAvatar logo={logoUrl} logoStyle={styles.icon} size={24} />
-          <TouchableOpacity onPress={onSelectCoin} style={styles.touchable}>
-            <Text style={styles.text}>{formatPerpsCoin(displayName)}</Text>
-            <Text style={styles.quote}>/{quoteCoin}</Text>
-            <IconCom
-              width={20}
-              height={20}
-              style={[
-                styles.addressCaretIcon,
-                popupIsOpen && styles.reverseCaret,
-              ]}
-              color={colors2024['neutral-bg-4']}
-            />
-          </TouchableOpacity>
+    const { top } = useSafeAreaInsets();
+    const IconCom = isLight ? RcCaretDownCircleCC : RcCaretDownCircleDarkCC;
+
+    const [snapshot, setSnapshot] = useState<AccountHeaderSnapshot>(
+      () =>
+        snapshotRef?.current ?? { compact: false, quote: EMPTY_ACCOUNT_QUOTE },
+    );
+    useImperativeHandle(
+      ref,
+      () => ({
+        update: next =>
+          setSnapshot(previous =>
+            sameAccountHeader(previous, next) ? previous : next,
+          ),
+      }),
+      [],
+    );
+    const { compact, quote } = snapshot;
+
+    return (
+      <View style={[styles.headerOuter, { marginTop: top }]}>
+        <View style={styles.headerInner}>
+          <View style={styles.headerLeft}>
+            <HeaderBackPressable tintColor={colors2024['neutral-title-1']} />
+            <AssetAvatar logo={logoUrl} logoStyle={styles.icon} size={26} />
+            <TouchableOpacity onPress={onSelectCoin} style={styles.touchable}>
+              <Text style={styles.text} numberOfLines={1}>
+                {formatPerpsCoin(displayName)}/{quoteCoin}
+              </Text>
+              <IconCom
+                width={18}
+                height={18}
+                style={[
+                  styles.addressCaretIcon,
+                  popupIsOpen && styles.reverseCaret,
+                ]}
+                color={colors2024['neutral-bg-4']}
+              />
+            </TouchableOpacity>
+          </View>
+          {compact ? (
+            <View style={styles.quoteColumn}>
+              <Text style={styles.price} numberOfLines={1}>
+                {quote.price}
+              </Text>
+            </View>
+          ) : (
+            <PerpsHeaderRight marketName={coin} />
+          )}
         </View>
-        <PerpsHeaderRight marketName={coin} />
       </View>
-    </View>
-  );
-};
+    );
+  }),
+);
 
-const HEADER_HEIGHT = 58;
+const HEADER_HEIGHT = 56;
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
-  touchable: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    // gap: 4,
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
+  headerOuter: {
+    height: HEADER_HEIGHT,
+    paddingLeft: 12,
+    paddingRight: 16,
     justifyContent: 'center',
-  },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
+    backgroundColor: colors2024[isLight ? 'neutral-bg-0' : 'neutral-bg-1'],
   },
   headerInner: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    gap: 8,
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 6,
+    flexShrink: 1,
+    minWidth: 0,
   },
-  headerOuter: {
-    height: HEADER_HEIGHT,
-    paddingHorizontal: 12,
-    paddingRight: 16,
-    paddingVertical: 10,
-  },
-  addressContainer: {
-    display: 'flex',
+  touchable: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-  },
-  walletIcon: {},
-  address: {
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    fontWeight: '500',
-    lineHeight: 20,
-    color: colors2024['neutral-foot'],
-  },
-  addressCaretIcon: {
-    // marginLeft: 4,
-  },
-  icon: {
-    width: 24,
-    height: 24,
-    borderRadius: 1000,
-    backgroundColor: 'white',
-  },
-  container: {
-    display: 'flex',
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 6,
-    justifyContent: 'center',
+    flexShrink: 1,
+    minWidth: 0,
   },
   text: {
-    marginLeft: 4,
     fontFamily: 'SF Pro Rounded',
-    fontSize: 18,
-    lineHeight: 22,
     fontWeight: '700',
+    fontSize: 17,
+    lineHeight: 22,
     color: colors2024['neutral-title-1'],
+    flexShrink: 1,
   },
-  quote: {
+  icon: { width: 26, height: 26, borderRadius: 1000, backgroundColor: 'white' },
+  addressCaretIcon: { flexShrink: 0 },
+  reverseCaret: { transform: [{ rotate: '180deg' }] },
+  quoteColumn: { alignItems: 'flex-end', flexShrink: 0 },
+  price: {
     fontFamily: 'SF Pro Rounded',
+    fontWeight: '700',
     fontSize: 18,
     lineHeight: 22,
-    fontWeight: '700',
-    color: colors2024['neutral-info'],
-    marginRight: 4,
-  },
-  reverseCaret: {
-    transform: [{ rotate: '180deg' }],
+    color: colors2024['neutral-title-1'],
   },
 }));

@@ -1,5 +1,6 @@
 import { PerpsProCheckboxIcon } from '../common/PerpsProCheckboxIcon';
 import { ThemeColors2024 } from '@/constant/theme';
+import { RoundedFontStyles } from '@/core/utils/fonts';
 let mockThemeMode: 'light' | 'dark' | undefined;
 beforeEach(() => {
   mockThemeMode = undefined;
@@ -607,9 +608,8 @@ describe('Perps Pro open order edit sheets', () => {
     const sourceTextStyle = StyleSheet.flatten(source.props.style);
     expect(sourceTextStyle).toEqual({
       color: 'neutral-foot',
-      fontFamily: 'SF Pro Rounded',
+      ...RoundedFontStyles.medium,
       fontSize: 12,
-      fontWeight: '500',
       lineHeight: 16,
     });
     expect(sourceTextStyle.fontVariant).toBeUndefined();

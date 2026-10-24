@@ -1,6 +1,7 @@
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
 import { StyleSheet } from 'react-native';
+import { RoundedFontStyles } from '@/core/utils/fonts';
 
 import { perpsStore, type MarketData } from '@/hooks/perps/usePerpsStore';
 import type { PerpsProMarketDescriptor } from '../../model/market';
@@ -254,9 +255,8 @@ describe('PerpsProMarketBar', () => {
     });
     expect(StyleSheet.flatten(screen.getByText('xyz').props.style)).toEqual({
       color: 'neutral-foot',
-      fontFamily: 'SF Pro Rounded',
+      ...RoundedFontStyles.medium,
       fontSize: 12,
-      fontWeight: '500',
       lineHeight: 16,
     });
     expect(sourceStyle.borderColor).toBeUndefined();
