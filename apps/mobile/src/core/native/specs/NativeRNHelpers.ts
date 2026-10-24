@@ -20,6 +20,7 @@ export type NativeBuildInfo = {
 export interface Spec extends TurboModule {
   getConstants(): { buildInfo?: NativeBuildInfo };
   forceExitApp(): void;
+  androidStopHermesSamplingProfiler(): boolean;
   measureViewRelativeTo(
     anchorTag: number,
     viewportTag: number,
