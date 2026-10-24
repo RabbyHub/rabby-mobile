@@ -119,6 +119,17 @@ export default function DevUIPlaygroundModal({
         },
       },
       {
+        label: 'Swipable SubScreen',
+        icon: <RcCode style={styles.labelIcon} />,
+        onPress: () => {
+          navigation.dispatch(
+            StackActions.push(RootNames.StackTestkits, {
+              screen: RootNames.DevUISwipableSubScreen,
+            }),
+          );
+        },
+      },
+      {
         label: 'Form',
         icon: <RcCode style={styles.labelIcon} />,
         onPress: () => {
@@ -239,8 +250,9 @@ export default function DevUIPlaygroundModal({
                 key={itemKey}
                 itemIndex={idx}
                 afterPress={async result => {
-                  if (!result?.keepModalVisible)
+                  if (!result?.keepModalVisible) {
                     setDevUIPlaygroundModalVisible(false);
+                  }
                 }}>
                 <View style={styles.leftCol}>
                   <View style={styles.iconWrapper}>{item.icon}</View>

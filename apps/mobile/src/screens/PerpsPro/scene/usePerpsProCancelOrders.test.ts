@@ -90,6 +90,14 @@ const order = (oid: number): PerpsOpenOrderViewModel => ({
 });
 
 describe('usePerpsProCancelOrders', () => {
+  it('keeps the pending reader stable when its pending set has not changed', () => {
+    const hook = renderHook(() => usePerpsProCancelOrders());
+    const reader = hook.result.current.isOrderPending;
+    hook.rerender({});
+    expect(hook.result.current.isOrderPending).toBe(reader);
+    expect(reader(1)).toBe(false);
+  });
+
   beforeEach(() => {
     jest.clearAllMocks();
     mockCurrentAccount = { address: '0xabc', type: 'PrivateKey' };

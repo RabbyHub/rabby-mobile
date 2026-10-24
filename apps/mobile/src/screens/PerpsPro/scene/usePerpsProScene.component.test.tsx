@@ -93,6 +93,8 @@ const { getPerpsProMarketSession, resetPerpsProMarketSessionForTests } =
   require('../session/perpsProMarketSession') as typeof import('../session/perpsProMarketSession');
 const { usePerpsProScene } =
   require('./usePerpsProScene') as typeof import('./usePerpsProScene');
+const { usePerpsProLiveMarket } =
+  require('./usePerpsProLiveMarket') as typeof import('./usePerpsProLiveMarket');
 
 const createMarketData = (
   name: string,
@@ -181,7 +183,11 @@ describe('usePerpsProScene component', () => {
       expect(hook.result.current.currentMarket?.canonicalCoin).toBe('xyz:AAPL');
     });
     expect(getPerpsProMarketSession().marketKey).toBe('xyz::xyz:AAPL');
-    expect(hook.result.current.currentMarket?.price).toBe(200);
+    const descriptor = hook.result.current.currentMarket;
+    const liveHook = renderHook(({ coin }) => usePerpsProLiveMarket(coin), {
+      initialProps: { coin: 'xyz:AAPL' },
+    });
+    expect(liveHook.result.current?.price).toBe(200);
     expect(hook.result.current.klineEnabled).toBe(true);
     expect(hook.result.current.realtimeEnabled).toBe(true);
 
@@ -196,8 +202,9 @@ describe('usePerpsProScene component', () => {
     });
 
     await waitFor(() => {
-      expect(hook.result.current.currentMarket?.price).toBe(225);
+      expect(liveHook.result.current?.price).toBe(225);
     });
+    expect(hook.result.current.currentMarket).toBe(descriptor);
     expect(hook.result.current.currentMarket?.marketKey).toBe('xyz::xyz:AAPL');
 
     await act(async () => {
@@ -212,6 +219,8 @@ describe('usePerpsProScene component', () => {
     expect(mockCancelRealtimeIntent).not.toHaveBeenCalled();
     expect(hook.result.current.currentMarket?.canonicalCoin).toBe('BTC');
     expect(getPerpsProMarketSession().marketKey).toBe('hyperliquid::BTC');
+    liveHook.rerender({ coin: 'BTC' });
+    expect(liveHook.result.current?.marketData).toBe(btc);
 
     mockRuntimeStatus = 'initializing';
     hook.rerender({});
@@ -219,6 +228,7 @@ describe('usePerpsProScene component', () => {
     expect(hook.result.current.klineEnabled).toBe(false);
     expect(hook.result.current.realtimeEnabled).toBe(false);
     hook.unmount();
+    liveHook.unmount();
   });
 
   it('does not enable realtime subscriptions while the scene is unfocused', async () => {

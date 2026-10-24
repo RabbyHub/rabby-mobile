@@ -99,6 +99,11 @@ public class RNHelpersModule extends SimplePackageSpec {
     android.os.Process.killProcess(android.os.Process.myPid());
   }
 
+  @ReactMethod(isBlockingSynchronousMethod = true)
+  public boolean androidStopHermesSamplingProfiler() {
+    return RabbyHermesProfiler.stopSampling();
+  }
+
   @ReactMethod
   public void measureViewRelativeTo(double anchorTag, double viewportTag, Promise promise) {
     NativeViewGeometry.measureRelativeTo(reactContext, (int) anchorTag, (int) viewportTag, promise);

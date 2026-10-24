@@ -4,6 +4,12 @@ import type { StoreApi, UseBoundStore } from 'zustand';
 import { perpsStore } from '@/hooks/perps/usePerpsStore';
 import { naviReplace } from '@/utils/navigation';
 import { PerpsMarketDetailHeader } from './PerpsMarketDetailHeader';
+import { createPerpsMarketDetailHeaderSource } from './account/marketDetailHeaderPresentation';
+
+let mockRouteKey = 'detail';
+jest.mock('@react-navigation/native', () => ({
+  useRoute: () => ({ key: mockRouteKey }),
+}));
 
 jest.mock('@/constant/layout', () => ({
   RootNames: {
@@ -19,15 +25,21 @@ jest.mock('@/hooks/perps/usePerpsStore', () => ({
 jest.mock('@/utils/navigation', () => ({ naviReplace: jest.fn() }));
 
 const mockHeaderRender = jest.fn();
-jest.mock('./PerpsHeaderTitle', () => ({
-  PerpsHeaderTitle: (props: object) => {
-    mockHeaderRender(props);
-    return require('react').createElement(require('react-native').View, {
-      ...props,
-      testID: 'market-header',
-    });
-  },
-}));
+jest.mock('./PerpsHeaderTitle', () => {
+  const ReactModule = require('react');
+  return {
+    PerpsHeaderTitle: ReactModule.forwardRef((props: object, ref: unknown) => {
+      const [snapshot, update] = ReactModule.useState(null);
+      ReactModule.useImperativeHandle(ref, () => ({ update }), []);
+      mockHeaderRender(props);
+      return ReactModule.createElement(require('react-native').View, {
+        ...props,
+        snapshot,
+        testID: 'market-header',
+      });
+    }),
+  };
+});
 
 type HeaderMetadata = {
   displayName?: string;
@@ -41,6 +53,7 @@ const headerStore = perpsStore as unknown as UseBoundStore<
 
 describe('PerpsMarketDetailHeader', () => {
   beforeEach(() => {
+    mockRouteKey = 'detail';
     headerStore.setState({ marketDataMap: {} });
     jest.clearAllMocks();
   });
@@ -114,5 +127,74 @@ describe('PerpsMarketDetailHeader', () => {
       screen: 'PerpsSearch',
       params: { openFromSource: 'marketDetail', initialTab: 'topVolume' },
     });
+  });
+
+  it('connects a stable first-render header to the screen presentation without rerendering its parent', () => {
+    const source = createPerpsMarketDetailHeaderSource('detail', 'HYPE');
+    const release = source.activate();
+    const parentRender = jest.fn();
+    const HeaderOwner = () => {
+      parentRender();
+      return <PerpsMarketDetailHeader market="HYPE" />;
+    };
+    const screen = render(<HeaderOwner />);
+    try {
+      const parentCount = parentRender.mock.calls.length;
+      act(() => {
+        source.presentation.layout(80);
+        source.presentation.quote({ price: '$82' }, true);
+        source.presentation.scroll(80);
+      });
+      expect(screen.getByTestId('market-header').props.snapshot).toEqual({
+        compact: true,
+        quote: { price: '$82' },
+      });
+      expect(parentRender).toHaveBeenCalledTimes(parentCount);
+      act(() => source.presentation.quote({ price: '$83' }, true));
+      expect(
+        screen.getByTestId('market-header').props.snapshot.quote.price,
+      ).toBe('$83');
+      expect(parentRender).toHaveBeenCalledTimes(parentCount);
+    } finally {
+      screen.unmount();
+      release();
+    }
+  });
+
+  it('recovers an already-published snapshot and switches route subscriptions without leaking old quotes', () => {
+    const first = createPerpsMarketDetailHeaderSource('detail', 'HYPE');
+    const releaseFirst = first.activate();
+    const second = createPerpsMarketDetailHeaderSource('next-detail', 'HYPE');
+    const releaseSecond = second.activate();
+    first.presentation.layout(80);
+    first.presentation.quote({ price: '$82' }, true);
+    first.presentation.scroll(80);
+    const screen = render(<PerpsMarketDetailHeader market="HYPE" />);
+    try {
+      expect(
+        screen.getByTestId('market-header').props.snapshot.quote.price,
+      ).toBe('$82');
+      mockRouteKey = 'next-detail';
+      screen.rerender(<PerpsMarketDetailHeader market="HYPE" />);
+      expect(screen.getByTestId('market-header').props.snapshot.compact).toBe(
+        false,
+      );
+      act(() => first.presentation.quote({ price: '$999' }, true));
+      expect(screen.getByTestId('market-header').props.snapshot.compact).toBe(
+        false,
+      );
+      act(() => {
+        second.presentation.layout(80);
+        second.presentation.quote({ price: '$90' }, true);
+        second.presentation.scroll(80);
+      });
+      expect(
+        screen.getByTestId('market-header').props.snapshot.quote.price,
+      ).toBe('$90');
+    } finally {
+      screen.unmount();
+      releaseFirst();
+      releaseSecond();
+    }
   });
 });

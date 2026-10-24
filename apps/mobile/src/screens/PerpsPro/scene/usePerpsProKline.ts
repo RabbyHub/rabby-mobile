@@ -23,10 +23,12 @@ export const usePerpsProKline = ({
   coin,
   enabled,
   preloadEnabled = enabled,
+  publicationEnabled = true,
 }: {
   coin: string;
   enabled: boolean;
   preloadEnabled?: boolean;
+  publicationEnabled?: boolean;
 }) => {
   const [preference, setPreference] = useState<KlinePreferenceState>({
     hydrated: false,
@@ -165,6 +167,7 @@ export const usePerpsProKline = ({
     enabled: enabled && preference.hydrated,
     initialSourceCandles: matchingPreload?.candles,
     interval: preference.interval,
+    publicationEnabled,
   });
   const preloadedFeed = useMemo(() => {
     const candles = matchingPreload

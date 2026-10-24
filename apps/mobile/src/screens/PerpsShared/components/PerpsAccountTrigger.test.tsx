@@ -4,6 +4,11 @@ import { StyleSheet } from 'react-native';
 
 import { FontNames } from '@/core/utils/fonts';
 
+// Keep callback and disabled semantics real; native hit testing is device-only.
+jest.mock('react-native-gesture-handler', () => ({
+  Pressable: require('react-native').Pressable,
+}));
+
 jest.mock('@/assets2024/icons/perps/PerpsHeaderAccountCaret.svg', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');

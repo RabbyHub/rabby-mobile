@@ -21,10 +21,10 @@ import {
   accountDecimal as decimal,
   computeLtvAdjustedPortfolioValue,
   computePerpsPortfolioValue,
-  computeSpotPortfolioValue,
   computeTotalCollateralBalance,
   resolveSpotUsdcPrice,
   SETTLEMENT_TOKEN_IDS,
+  STAKING_TOKEN_NAME,
 } from './accountPricing';
 
 export {
@@ -84,6 +84,13 @@ export interface PerpsAccountDiagnostics {
   complete: boolean;
   unresolvedDexes: string[];
   unpricedNonZeroAssets: string[];
+}
+
+export interface PerpsAccountControlState {
+  mode: PerpsAccountMode;
+  marginRatio: string | null;
+  hasUnresolvedDexes: boolean;
+  hasUnpricedNonZeroAssets: boolean;
 }
 
 export interface PerpsAccountViewModel {
@@ -277,6 +284,87 @@ export const computeBorrowCapUsed = (
   return BigNumber.min(BigNumber.max(value, 0), 1).toString();
 };
 
+const buildAccountRiskState = (input: BuildPerpsAccountViewModelInput) => {
+  const mode = resolvePerpsAccountMode(input.userAbstraction);
+  if (mode === 'portfolioMargin') {
+    return {
+      mode,
+      marginRatio: normalizeFiniteDecimal(input.spotState.portfolioMarginRatio),
+      unresolvedDexes: [],
+    };
+  }
+  if (mode === 'unified') {
+    const { ratio, unresolvedDexes } = computeUnifiedAccountRatio({
+      clearinghouseState: input.clearinghouseState,
+      marketDataMap: input.marketDataMap,
+      spotBalancesByToken: input.spotState.rawBalancesByToken,
+    });
+    return { mode, marginRatio: ratio, unresolvedDexes };
+  }
+  return {
+    mode,
+    marginRatio: computeCrossMarginRatio(input.clearinghouseState),
+    unresolvedDexes: getUnresolvedStandardDexes(
+      input.clearinghouseState,
+      input.marketDataMap,
+    ),
+  };
+};
+
+/** Live readiness/risk facts, without constructing numerical display values. */
+export const buildPerpsAccountControlState = (
+  input: BuildPerpsAccountViewModelInput,
+): PerpsAccountControlState => {
+  const { mode, marginRatio, unresolvedDexes } = buildAccountRiskState(input);
+  // Portfolio diagnostics include every nonzero balance in all three modes.
+  // Collateral/LTV diagnostics can only be subsets of those same assets.
+  const hasUnpricedSpot = input.spotState.rawBalances.some(
+    balance =>
+      !decimal(balance.total).isZero() &&
+      !resolveSpotUsdcPrice(balance.coin, input.spotAssetCtxs, input.spotMeta),
+  );
+  const hasUnpricedNonZeroAssets =
+    hasUnpricedSpot ||
+    (decimal(input.stakingHype).gt(0) &&
+      !resolveSpotUsdcPrice(
+        STAKING_TOKEN_NAME,
+        input.spotAssetCtxs,
+        input.spotMeta,
+      ));
+  return {
+    mode,
+    marginRatio,
+    hasUnresolvedDexes: unresolvedDexes.length > 0,
+    hasUnpricedNonZeroAssets,
+  };
+};
+
+const getAccountAssetCoin = (
+  balance: RawSpotBalance,
+): PerpsQuoteAsset | null => {
+  if (!SETTLEMENT_TOKEN_IDS.has(balance.token)) {
+    return null;
+  }
+  const coin = COLLATERAL_TOKEN_TO_QUOTE[balance.token];
+  return coin && coin !== 'USDH' ? coin : null;
+};
+
+/** Row topology does not depend on current marks or numerical valuations. */
+export const buildPerpsAccountAssetKeys = ({
+  spotState,
+  userAbstraction,
+}: Pick<
+  BuildPerpsAccountViewModelInput,
+  'userAbstraction' | 'spotState'
+>): string[] => {
+  if (resolvePerpsAccountMode(userAbstraction) === 'standard') {
+    return ['spot:USDC', 'perps:USDC'];
+  }
+  return spotState.rawBalances
+    .filter(balance => getAccountAssetCoin(balance) != null)
+    .map(balance => `unified:${balance.token}`);
+};
+
 const buildAccountAssets = ({
   clearinghouseState,
   mode,
@@ -290,11 +378,8 @@ const buildAccountAssets = ({
   if (mode !== 'standard') {
     const rows: PerpsAccountAssetRow[] = [];
     for (const balance of spotState.rawBalances) {
-      if (!SETTLEMENT_TOKEN_IDS.has(balance.token)) {
-        continue;
-      }
-      const coin = COLLATERAL_TOKEN_TO_QUOTE[balance.token];
-      if (!coin || coin === 'USDH') {
+      const coin = getAccountAssetCoin(balance);
+      if (!coin) {
         continue;
       }
       const price = resolveSpotUsdcPrice(balance.coin, spotAssetCtxs, spotMeta);
@@ -358,7 +443,7 @@ const buildAccountAssets = ({
 export const buildPerpsAccountViewModel = (
   input: BuildPerpsAccountViewModelInput,
 ): PerpsAccountViewModel => {
-  const mode = resolvePerpsAccountMode(input.userAbstraction);
+  const { mode, marginRatio, unresolvedDexes } = buildAccountRiskState(input);
   const clearinghouse = input.clearinghouseState;
   const unrealizedPnl = (clearinghouse?.assetPositions || [])
     .reduce(
@@ -403,7 +488,7 @@ export const buildPerpsAccountViewModel = (
         {
           key: 'portfolioMarginRatio',
           kind: 'ratio',
-          value: normalizeFiniteDecimal(input.spotState.portfolioMarginRatio),
+          value: marginRatio,
         },
         { key: 'maintenanceMargin', kind: 'usd', value: maintenanceMargin },
         {
@@ -428,11 +513,6 @@ export const buildPerpsAccountViewModel = (
   }
 
   if (mode === 'unified') {
-    const unifiedRatio = computeUnifiedAccountRatio({
-      clearinghouseState: clearinghouse,
-      marketDataMap: input.marketDataMap,
-      spotBalancesByToken: input.spotState.rawBalancesByToken,
-    });
     const collateral = computeTotalCollateralBalance(
       input.spotState.rawBalances,
       input.spotAssetCtxs,
@@ -442,10 +522,10 @@ export const buildPerpsAccountViewModel = (
       assets,
       diagnostics: {
         complete:
-          unifiedRatio.ratio != null &&
+          marginRatio != null &&
           portfolio.unpricedNonZeroAssets.length === 0 &&
           collateral.unpricedNonZeroAssets.length === 0,
-        unresolvedDexes: unifiedRatio.unresolvedDexes,
+        unresolvedDexes,
         unpricedNonZeroAssets: [
           ...new Set([
             ...portfolio.unpricedNonZeroAssets,
@@ -457,7 +537,7 @@ export const buildPerpsAccountViewModel = (
         {
           key: 'unifiedAccountRatio',
           kind: 'ratio',
-          value: unifiedRatio.ratio,
+          value: marginRatio,
         },
         { key: 'maintenanceMargin', kind: 'usd', value: maintenanceMargin },
         {
@@ -474,10 +554,6 @@ export const buildPerpsAccountViewModel = (
     };
   }
 
-  const unresolvedDexes = getUnresolvedStandardDexes(
-    clearinghouse,
-    input.marketDataMap,
-  );
   return {
     assets,
     diagnostics: {
@@ -491,7 +567,7 @@ export const buildPerpsAccountViewModel = (
       {
         key: 'crossMarginRatio',
         kind: 'ratio',
-        value: computeCrossMarginRatio(clearinghouse),
+        value: marginRatio,
       },
       { key: 'maintenanceMargin', kind: 'usd', value: maintenanceMargin },
       {

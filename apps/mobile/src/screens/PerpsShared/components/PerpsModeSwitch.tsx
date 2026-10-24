@@ -3,7 +3,8 @@ import type { PerpsViewMode } from '@/core/services/perpsService';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
-import { Pressable, View } from 'react-native';
+import { View } from 'react-native';
+import { Pressable } from 'react-native-gesture-handler';
 import { useTranslation } from 'react-i18next';
 
 export type PerpsModeSwitchProps = {
