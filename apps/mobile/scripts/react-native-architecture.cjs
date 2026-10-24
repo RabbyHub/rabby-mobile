@@ -9,7 +9,7 @@ const BOOLEAN_ENV_VALUES = new Map([
   ['off', false],
 ]);
 
-const DEFAULT_NEW_ARCH_ENABLED = true;
+const DEFAULT_NEW_ARCH_ENABLED = false;
 
 const parseArchitectureFlag = (name, value) => {
   if (value === undefined || value === '') {

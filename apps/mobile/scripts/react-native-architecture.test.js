@@ -5,8 +5,8 @@ const {
 } = require('./react-native-architecture.cjs');
 
 describe('resolveReactNativeArchitecture', () => {
-  it('enables the new architecture by default', () => {
-    expect(resolveReactNativeArchitecture({})).toBe('new');
+  it('uses the legacy architecture by default', () => {
+    expect(resolveReactNativeArchitecture({})).toBe('legacy');
   });
 
   it.each(['1', 'true', 'yes', 'on'])(

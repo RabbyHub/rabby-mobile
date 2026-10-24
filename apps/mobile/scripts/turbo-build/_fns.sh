@@ -627,7 +627,7 @@ turbo_compute_cocoapods_cache_key() {
 
   printf '%s\n' \
     "platform=$(turbo_platform_fingerprint)" \
-    "react_native_arch=${RCT_NEW_ARCH_ENABLED:-1}" \
+    "react_native_arch=${RCT_NEW_ARCH_ENABLED:-0}" \
     "xcode=$(xcodebuild -version 2>/dev/null | tr '\n' '|')" \
     "ruby=$(ruby -v 2>/dev/null)" \
     "cocoapods=$(turbo_bundle_pod --version 2>/dev/null || pod --version 2>/dev/null)" \
@@ -860,6 +860,7 @@ turbo_dir_has_files() {
 
 turbo_compute_android_build_artifacts_key() {
   repo_root="$RABBY_MOBILE_REPO_ROOT"
+  react_native_arch=$(build_cache_resolve_react_native_architecture) || return $?
   files_hash=$(
     turbo_hash_git_files "$repo_root" \
       package.json \
@@ -869,6 +870,7 @@ turbo_compute_android_build_artifacts_key() {
       apps/mobile/babel.config.js \
       apps/mobile/metro.config.js \
       apps/mobile/react-native.config.js \
+      apps/mobile/scripts/react-native-architecture.cjs \
       apps/mobile/tsconfig.worker.json \
       apps/mobile/scripts/fns.sh \
       apps/mobile/android/link-assets-manifest.json \
@@ -882,6 +884,7 @@ turbo_compute_android_build_artifacts_key() {
   printf '%s\n' \
     "platform=$(turbo_platform_fingerprint)" \
     "node=$(node -v 2>/dev/null)" \
+    "react_native_arch=$react_native_arch" \
     "files=$files_hash" \
     | turbo_sha256 | awk '{print $1}'
 }
@@ -915,6 +918,7 @@ turbo_mark_android_build_artifacts_ready() {
 
 turbo_compute_ios_build_artifacts_key() {
   repo_root="$RABBY_MOBILE_REPO_ROOT"
+  react_native_arch=$(build_cache_resolve_react_native_architecture) || return $?
   files_hash=$(
     turbo_hash_git_files "$repo_root" \
       package.json \
@@ -924,6 +928,7 @@ turbo_compute_ios_build_artifacts_key() {
       apps/mobile/babel.config.js \
       apps/mobile/metro.config.js \
       apps/mobile/react-native.config.js \
+      apps/mobile/scripts/react-native-architecture.cjs \
       apps/mobile/tsconfig.worker.json \
       apps/mobile/scripts/fns.sh \
       apps/mobile/ios/link-assets-manifest.json \
@@ -937,6 +942,7 @@ turbo_compute_ios_build_artifacts_key() {
   printf '%s\n' \
     "platform=$(turbo_platform_fingerprint)" \
     "node=$(node -v 2>/dev/null)" \
+    "react_native_arch=$react_native_arch" \
     "files=$files_hash" \
     | turbo_sha256 | awk '{print $1}'
 }
@@ -966,7 +972,7 @@ turbo_cocoapods_ready() {
   pods_manifest_lock="$project_dir/ios/Pods/Manifest.lock"
   xcworkspace_data="$project_dir/ios/RabbyMobile.xcworkspace/contents.xcworkspacedata"
   architecture_stamp="$project_dir/ios/Pods/.rabby-react-native-architecture"
-  expected_architecture="${RCT_NEW_ARCH_ENABLED:-1}"
+  expected_architecture="${RCT_NEW_ARCH_ENABLED:-0}"
 
   [ -d "$project_dir/ios/Pods" ] || return 1
   [ -f "$podfile_lock" ] || return 1
@@ -978,7 +984,7 @@ turbo_cocoapods_ready() {
 }
 
 turbo_mark_cocoapods_architecture() {
-  printf '%s' "${RCT_NEW_ARCH_ENABLED:-1}" >"$project_dir/ios/Pods/.rabby-react-native-architecture"
+  printf '%s' "${RCT_NEW_ARCH_ENABLED:-0}" >"$project_dir/ios/Pods/.rabby-react-native-architecture"
 }
 
 turbo_gradle_wrapper_version() {
@@ -1037,7 +1043,7 @@ turbo_compute_ios_derived_data_key() {
   printf '%s\n' \
     "platform=$(turbo_platform_fingerprint)" \
     "xcode=$(xcodebuild -version 2>/dev/null | tr '\n' '|')" \
-    "react_native_arch=${RCT_NEW_ARCH_ENABLED:-1}" \
+    "react_native_arch=${RCT_NEW_ARCH_ENABLED:-0}" \
     "files=$files_hash" \
     | turbo_sha256 | awk '{print $1}'
 }
