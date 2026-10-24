@@ -116,12 +116,6 @@ public class RNHelpersModule extends NativeRNHelpersSpec {
 
   @ReactMethod
   @Override
-  public void measureViewRelativeTo(double anchorTag, double viewportTag, Promise promise) {
-    NativeViewGeometry.measureRelativeTo(reactContext, (int) anchorTag, (int) viewportTag, promise);
-  }
-
-  @ReactMethod
-  @Override
   public void androidTraceInstant(String name) {
     RabbyStartupTrace.instant(name);
   }
