@@ -38,3 +38,22 @@ export {
 } from './ScenePagerGroup';
 export type { LinkedPagerTrack } from './linkedPagerMath';
 export { calculateScenePagerPreviewWindow } from './previewWindow';
+export {
+  LinkedScenePager,
+  type LinkedScenePagerProps,
+  type LinkedScenePagerHandle,
+  type LinkedScenePageContext,
+  type LinkedSceneGroupContext,
+} from './LinkedScenePager';
+export {
+  buildLinkedSceneModel,
+  linkedScenePhysicalKey,
+  physicalKeyForPath,
+  pathForPhysicalKey,
+  resolveLinkedScenePath,
+  projectLinkedSceneProgress,
+  projectLinkedSceneChildProgress,
+  type LinkedScenePage,
+  type LinkedScenePath,
+  type LinkedScenePagingMode,
+} from './linkedSceneModel';

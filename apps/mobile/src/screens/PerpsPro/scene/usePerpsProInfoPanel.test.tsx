@@ -11,11 +11,12 @@ const mockPositions = [
   { coin: 'BTC', key: 'BTC' },
   { coin: 'ETH', key: 'ETH' },
 ];
-const mockOpenOrders = [
+const defaultMockOpenOrders = [
   { category: 'basic', coin: 'BTC', key: 'basic-btc' },
   { category: 'basic', coin: 'ETH', key: 'basic-eth' },
   { category: 'conditional', coin: 'ETH', key: 'conditional-eth' },
 ];
+let mockOpenOrders = defaultMockOpenOrders;
 const mockAccount = {
   assets: [],
   diagnostics: {
@@ -43,7 +44,7 @@ const mockPerpsState = {
   localLoadingHistory: [],
   marketData: [],
   marketDataStatus: 'ready',
-  openOrders: [],
+  openOrders: [] as { oid: number }[],
   spotAssetCtxs: {},
   spotMeta: null,
   spotMetaStatus: 'ready',
@@ -122,47 +123,16 @@ jest.mock('../model/position', () => ({
 }));
 
 jest.mock('../model/openOrder', () => ({
+  ...jest.requireActual<typeof import('../model/openOrder')>(
+    '../model/openOrder',
+  ),
   buildPerpsOpenOrdersFromTopology: () => mockOpenOrders,
-  filterPerpsOpenOrders: ({
-    canonicalCoin,
-    category,
-    hideOtherSymbols,
-    orders,
-  }: {
-    canonicalCoin: string;
-    category: string;
-    hideOtherSymbols: boolean;
-    orders: typeof mockOpenOrders;
-  }) =>
-    orders.filter(
-      order =>
-        order.category === category &&
-        (!hideOtherSymbols || order.coin === canonicalCoin),
-    ),
-  getPerpsOpenOrderCounts: () => ({
-    basic: 2,
-    conditional: 1,
-    unsupported: 0,
-  }),
 }));
 
 jest.mock('../model/infoPanelPresentation', () => ({
-  resolvePerpsProCollectionPresentation: ({
-    sourceReady,
-    totalCount,
-    visibleCount,
-  }: {
-    sourceReady: boolean;
-    totalCount: number;
-    visibleCount: number;
-  }) =>
-    visibleCount > 0
-      ? 'populated'
-      : !sourceReady
-      ? 'unresolved'
-      : totalCount === 0
-      ? 'authoritativeEmpty'
-      : 'filteredEmpty',
+  ...jest.requireActual<typeof import('../model/infoPanelPresentation')>(
+    '../model/infoPanelPresentation',
+  ),
   resolvePerpsProInfoTabPresentation: () => ({
     activeInfoTab: 'positions',
     automaticSelection: null,
@@ -192,6 +162,9 @@ describe('usePerpsProInfoPanel', () => {
       address: '0xABC',
       type: 'watch',
     };
+    mockOpenOrders = defaultMockOpenOrders;
+    mockPerpsState.openOrders = [{ oid: 1 }, { oid: 2 }, { oid: 3 }];
+    mockPerpsState.isOpenOrdersReady = true;
     mockPerpsState.isSpotStateReady = true;
     mockPerpsState.isUserDataReady = true;
     mockPerpsState.spotState.accountValue = '202';
@@ -337,6 +310,289 @@ describe('usePerpsProInfoPanel', () => {
 
     expect(mockFetchMarketData).toHaveBeenCalledTimes(1);
     expect(mockFetchSpotMeta).toHaveBeenCalledWith(true);
+  });
+
+  it('projects both categories once and aliases the selected entry without cloning order models', () => {
+    const hook = renderHook(() => usePerpsProInfoPanel('BTC'));
+    const ordersByCategory = hook.result.current.openOrdersByCategory;
+    const presentationByCategory =
+      hook.result.current.openOrderCollectionPresentationByCategory;
+
+    expect(ordersByCategory.basic.map(order => order.key)).toEqual([
+      'basic-btc',
+      'basic-eth',
+    ]);
+    expect(ordersByCategory.conditional.map(order => order.key)).toEqual([
+      'conditional-eth',
+    ]);
+    expect(ordersByCategory.basic[0]).toBe(mockOpenOrders[0]);
+    expect(ordersByCategory.basic[1]).toBe(mockOpenOrders[1]);
+    expect(ordersByCategory.conditional[0]).toBe(mockOpenOrders[2]);
+    expect(hook.result.current.openOrders).toBe(ordersByCategory.basic);
+    expect(presentationByCategory).toEqual({
+      basic: 'populated',
+      conditional: 'populated',
+    });
+    expect(hook.result.current.openOrderCollectionPresentation).toBe(
+      presentationByCategory.basic,
+    );
+
+    act(() => hook.result.current.setOpenOrderCategory('conditional'));
+    act(() => hook.result.current.setHideOtherPositionSymbols(true));
+    hook.rerender({});
+
+    expect(hook.result.current.openOrdersByCategory).toBe(ordersByCategory);
+    expect(hook.result.current.openOrderCollectionPresentationByCategory).toBe(
+      presentationByCategory,
+    );
+    expect(hook.result.current.openOrders).toBe(ordersByCategory.conditional);
+    expect(hook.result.current.openOrderCollectionPresentation).toBe(
+      presentationByCategory.conditional,
+    );
+  });
+
+  it('filters both categories by market without filtering counts or category command candidates', () => {
+    const hook = renderHook(
+      ({ canonicalCoin }) => usePerpsProInfoPanel(canonicalCoin),
+      { initialProps: { canonicalCoin: 'BTC' } },
+    );
+
+    act(() => hook.result.current.setHideOtherOpenOrderSymbols(true));
+
+    const btcOrdersByCategory = hook.result.current.openOrdersByCategory;
+    const btcPresentationByCategory =
+      hook.result.current.openOrderCollectionPresentationByCategory;
+    expect(btcOrdersByCategory.basic.map(order => order.key)).toEqual([
+      'basic-btc',
+    ]);
+    expect(btcOrdersByCategory.conditional).toEqual([]);
+    expect(btcPresentationByCategory).toEqual({
+      basic: 'populated',
+      conditional: 'filteredEmpty',
+    });
+    expect(
+      hook.result.current.openOrderCommandCandidates.map(order => order.key),
+    ).toEqual(['basic-btc', 'basic-eth']);
+    expect(hook.result.current.openOrderCounts).toEqual({
+      basic: 2,
+      conditional: 1,
+      unsupported: 0,
+    });
+    expect(hook.result.current.allOpenOrdersCount).toBe(3);
+
+    act(() => hook.result.current.setOpenOrderCategory('conditional'));
+    hook.rerender({ canonicalCoin: 'BTC' });
+
+    expect(hook.result.current.openOrdersByCategory).toBe(btcOrdersByCategory);
+    expect(hook.result.current.openOrderCollectionPresentationByCategory).toBe(
+      btcPresentationByCategory,
+    );
+    expect(hook.result.current.openOrders).toBe(
+      btcOrdersByCategory.conditional,
+    );
+    expect(hook.result.current.openOrderCollectionPresentation).toBe(
+      'filteredEmpty',
+    );
+    expect(
+      hook.result.current.openOrderCommandCandidates.map(order => order.key),
+    ).toEqual(['conditional-eth']);
+
+    hook.rerender({ canonicalCoin: 'ETH' });
+
+    expect(
+      hook.result.current.openOrdersByCategory.basic.map(order => order.key),
+    ).toEqual(['basic-eth']);
+    expect(
+      hook.result.current.openOrdersByCategory.conditional.map(
+        order => order.key,
+      ),
+    ).toEqual(['conditional-eth']);
+    expect(
+      hook.result.current.openOrderCollectionPresentationByCategory,
+    ).toEqual({ basic: 'populated', conditional: 'populated' });
+    expect(hook.result.current.openOrders).toBe(
+      hook.result.current.openOrdersByCategory.conditional,
+    );
+  });
+
+  it('refreshes the unselected category when the shared order source changes', () => {
+    const hook = renderHook(() => usePerpsProInfoPanel('BTC'));
+    const previousOrders = hook.result.current.openOrdersByCategory;
+    const nextConditionalOrder = {
+      category: 'conditional',
+      coin: 'BTC',
+      key: 'conditional-btc',
+    };
+
+    mockOpenOrders = [...defaultMockOpenOrders, nextConditionalOrder];
+    mockPerpsState.openOrders = [...mockPerpsState.openOrders, { oid: 4 }];
+    hook.rerender({});
+
+    expect(hook.result.current.openOrderCategory).toBe('basic');
+    expect(hook.result.current.openOrdersByCategory).not.toBe(previousOrders);
+    expect(
+      hook.result.current.openOrdersByCategory.conditional.map(
+        order => order.key,
+      ),
+    ).toEqual(['conditional-eth', 'conditional-btc']);
+    expect(hook.result.current.openOrdersByCategory.conditional[1]).toBe(
+      nextConditionalOrder,
+    );
+    expect(hook.result.current.openOrders).toBe(
+      hook.result.current.openOrdersByCategory.basic,
+    );
+    expect(hook.result.current.openOrderCounts.conditional).toBe(2);
+  });
+
+  it.each([
+    ['without an account', () => (mockPerpsState.currentPerpsAccount = null)],
+    ['while runtime waits', () => (mockRuntimeStatus = 'waitingForAccount')],
+    ['after runtime failure', () => (mockRuntimeStatus = 'error')],
+    [
+      'before an empty order baseline arrives',
+      () => {
+        mockOpenOrders = [];
+        mockPerpsState.openOrders = [];
+        mockPerpsState.isOpenOrdersReady = false;
+      },
+    ],
+  ] as const)(
+    'keeps both category presentations unresolved %s',
+    (_label, arrange) => {
+      arrange();
+
+      const hook = renderHook(() => usePerpsProInfoPanel('BTC'));
+
+      expect(
+        hook.result.current.openOrderCollectionPresentationByCategory,
+      ).toEqual({ basic: 'unresolved', conditional: 'unresolved' });
+      expect(hook.result.current.openOrderCollectionPresentation).toBe(
+        hook.result.current.openOrderCollectionPresentationByCategory.basic,
+      );
+    },
+  );
+
+  it('keeps populated category projections available before source readiness', () => {
+    mockPerpsState.isOpenOrdersReady = false;
+
+    const hook = renderHook(() => usePerpsProInfoPanel('BTC'));
+
+    expect(
+      hook.result.current.openOrderCollectionPresentationByCategory,
+    ).toEqual({ basic: 'populated', conditional: 'populated' });
+
+    act(() => hook.result.current.setHideOtherOpenOrderSymbols(true));
+
+    expect(
+      hook.result.current.openOrderCollectionPresentationByCategory,
+    ).toEqual({ basic: 'populated', conditional: 'unresolved' });
+    mockPerpsState.isOpenOrdersReady = true;
+    hook.rerender({});
+    expect(
+      hook.result.current.openOrderCollectionPresentationByCategory,
+    ).toEqual({ basic: 'populated', conditional: 'filteredEmpty' });
+  });
+
+  it('does not classify unsupported-only raw orders as an authoritative empty account', () => {
+    mockOpenOrders = [
+      { category: 'unsupported', coin: 'BTC', key: 'unsupported-btc' },
+    ];
+    mockPerpsState.openOrders = [{ oid: 4 }];
+
+    const hook = renderHook(() => usePerpsProInfoPanel('BTC'));
+
+    expect(hook.result.current.openOrdersByCategory).toEqual({
+      basic: [],
+      conditional: [],
+    });
+    expect(
+      hook.result.current.openOrderCollectionPresentationByCategory,
+    ).toEqual({ basic: 'filteredEmpty', conditional: 'filteredEmpty' });
+    expect(hook.result.current.openOrderCounts).toEqual({
+      basic: 0,
+      conditional: 0,
+      unsupported: 1,
+    });
+    expect(hook.result.current.allOpenOrdersCount).toBe(0);
+    expect(hook.result.current.openOrderCommandCandidates).toEqual([]);
+  });
+
+  it('uses the raw order total when topology yields no visible models', () => {
+    mockOpenOrders = [];
+    mockPerpsState.openOrders = [{ oid: 4 }];
+
+    const hook = renderHook(() => usePerpsProInfoPanel('BTC'));
+
+    expect(
+      hook.result.current.openOrderCollectionPresentationByCategory,
+    ).toEqual({ basic: 'filteredEmpty', conditional: 'filteredEmpty' });
+
+    mockPerpsState.openOrders = [];
+    hook.rerender({});
+
+    expect(
+      hook.result.current.openOrderCollectionPresentationByCategory,
+    ).toEqual({
+      basic: 'authoritativeEmpty',
+      conditional: 'authoritativeEmpty',
+    });
+    expect(hook.result.current.openOrderCollectionPresentation).toBe(
+      'authoritativeEmpty',
+    );
+  });
+
+  it('preserves category and independent filters across market and account changes', () => {
+    const hook = renderHook(
+      ({ canonicalCoin }) => usePerpsProInfoPanel(canonicalCoin),
+      { initialProps: { canonicalCoin: 'BTC' } },
+    );
+
+    act(() => {
+      hook.result.current.setOpenOrderCategory('conditional');
+      hook.result.current.setHideOtherOpenOrderSymbols(true);
+      hook.result.current.setHideOtherPositionSymbols(true);
+    });
+    hook.rerender({ canonicalCoin: 'ETH' });
+
+    mockPerpsState.currentPerpsAccount = null;
+    mockRuntimeStatus = 'waitingForAccount';
+    hook.rerender({ canonicalCoin: 'ETH' });
+
+    expect(hook.result.current.openOrderCategory).toBe('conditional');
+    expect(hook.result.current.hideOtherOpenOrderSymbols).toBe(true);
+    expect(hook.result.current.hideOtherPositionSymbols).toBe(true);
+    expect(
+      hook.result.current.openOrderCollectionPresentationByCategory,
+    ).toEqual({ basic: 'unresolved', conditional: 'unresolved' });
+
+    const nextConditionalOrder = {
+      category: 'conditional',
+      coin: 'ETH',
+      key: 'next-account-conditional-eth',
+    };
+    mockPerpsState.currentPerpsAccount = { address: '0xDEF', type: 'watch' };
+    mockOpenOrders = [nextConditionalOrder];
+    mockPerpsState.openOrders = [{ oid: 5 }];
+    mockRuntimeStatus = 'ready';
+    hook.rerender({ canonicalCoin: 'ETH' });
+
+    expect(hook.result.current.accountIdentity).toBe('0xdef:watch');
+    expect(hook.result.current.openOrderCategory).toBe('conditional');
+    expect(hook.result.current.hideOtherOpenOrderSymbols).toBe(true);
+    expect(hook.result.current.hideOtherPositionSymbols).toBe(true);
+    expect(hook.result.current.openOrdersByCategory.basic).toEqual([]);
+    expect(hook.result.current.openOrdersByCategory.conditional).toEqual([
+      nextConditionalOrder,
+    ]);
+    expect(hook.result.current.openOrders).toBe(
+      hook.result.current.openOrdersByCategory.conditional,
+    );
+    expect(
+      hook.result.current.openOrderCollectionPresentationByCategory,
+    ).toEqual({ basic: 'filteredEmpty', conditional: 'populated' });
+    expect(hook.result.current.openOrderCommandCandidates).toEqual([
+      nextConditionalOrder,
+    ]);
   });
 
   it('owns independent Position and Open Orders filters without narrowing shared facts', () => {

@@ -9,6 +9,6 @@ module.exports = {
     '<rootDir>/scripts/.*\\.test\\.cjs$',
   ],
   transformIgnorePatterns: [
-    'node_modules/(?!((jest-)?react-native|@react-native(-community)?|react-native-root-toast|react-native-root-siblings|react-native-walkthrough-tooltip|@rabby-wallet/rabby-security-engine|p-queue|p-timeout|eventemitter3)/)',
+    'node_modules/(?!((jest-)?react-native|@react-native(-community)?|@rneui/base|react-native-size-matters|react-native-root-toast|react-native-root-siblings|react-native-walkthrough-tooltip|@rabby-wallet/rabby-security-engine|p-queue|p-timeout|eventemitter3)/)',
   ],
 };

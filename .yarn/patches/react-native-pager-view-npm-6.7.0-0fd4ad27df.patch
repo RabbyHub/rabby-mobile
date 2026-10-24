@@ -20,25 +20,327 @@ index aad38b2bf38cec3bc9fd90301b49b368c483f673..a1de30f7aef174ec61bbd2c5657b318e
  
      public override fun createViewInstance(reactContext: ThemedReactContext): NestedScrollableHost {
 diff --git a/ios/Fabric/RNCPagerViewComponentView.mm b/ios/Fabric/RNCPagerViewComponentView.mm
+index 652a5c1..04af483 100644
 --- a/ios/Fabric/RNCPagerViewComponentView.mm
 +++ b/ios/Fabric/RNCPagerViewComponentView.mm
-@@ -307,3 +307,12 @@
+@@ -14,9 +14,28 @@
+ 
+ using namespace facebook::react;
+ 
+-@interface RNCPagerViewComponentView () <RCTRNCViewPagerViewProtocol, UIPageViewControllerDataSource, UIPageViewControllerDelegate, UIScrollViewDelegate, UIGestureRecognizerDelegate>
++#if DEBUG
++// Temporary native-only probe. No observer or output without explicit launch opt-in.
++static BOOL RabbyPagerTraceEnabled() {
++    static BOOL enabled;
++    static dispatch_once_t onceToken;
++    dispatch_once(&onceToken, ^{
++        enabled = [[[NSProcessInfo processInfo] environment][@"RABBY_PAGER_TRACE"] isEqualToString:@"1"];
++    });
++    return enabled;
++}
++#define RABBY_PAGER_TRACE(view, event, eventIndex) [(view) rabbyTraceEvent:(event) index:(eventIndex)]
++#else
++#define RABBY_PAGER_TRACE(view, event, eventIndex) do {} while (0)
++#endif
++
++@interface RNCPagerViewComponentView () <RCTRNCViewPagerViewProtocol, UIPageViewControllerDataSource, UIPageViewControllerDelegate, UIScrollViewDelegate>
+ 
+-@property(nonatomic, assign) UIPanGestureRecognizer* panGestureRecognizer;
++#if DEBUG
++- (void)rabbyTraceEvent:(NSString *)event index:(NSInteger)index;
++- (void)rabbyAttachTraceObserver;
++- (void)rabbyDetachTraceObserver;
++#endif
+ 
+ @end
+ 
+@@ -25,7 +44,68 @@ @implementation RNCPagerViewComponentView {
+     LayoutMetrics _oldLayoutMetrics;
+     UIScrollView *scrollView;
+     BOOL transitioning;
++#if DEBUG
++    __weak UIPanGestureRecognizer *_rabbyObservedPan;
++    UIGestureRecognizerState _rabbyLastPanState;
++    unsigned long long _rabbyGestureGeneration;
++#endif
++}
++
++#if DEBUG
++- (void)rabbyTraceEvent:(NSString *)event index:(NSInteger)index {
++    if (!RabbyPagerTraceEnabled()) {
++        return;
++    }
++    // UIKit calls these hooks on the main thread. Bound output for the whole process.
++    static unsigned long long sequence = 0;
++    if (sequence >= 2048) {
++        return;
++    }
++    UIGestureRecognizerState state = scrollView.panGestureRecognizer.state;
++    if (state == UIGestureRecognizerStateBegan && _rabbyLastPanState != state) {
++        _rabbyGestureGeneration++;
++    }
++    _rabbyLastPanState = state;
++    UIView *parentPager = self.superview;
++    while (parentPager != nil && ![parentPager isKindOfClass:RNCPagerViewComponentView.class]) {
++        parentPager = parentPager.superview;
++    }
++    sequence++;
++    NSLog(@"[RabbyPagerTrace] seq=%llu t=%.6f tag=%ld parent=%ld gesture=%llu event=%@ pan=%ld enabled=%d uiEnabled=%d index=%ld destination=%ld eventIndex=%ld x=%.3f y=%.3f width=%.3f height=%.3f",
++          sequence, NSProcessInfo.processInfo.systemUptime, (long)self.tag, (long)parentPager.tag,
++          _rabbyGestureGeneration, sequence == 2048 ? @"traceLimit" : event, (long)state,
++          scrollView.scrollEnabled, self.nativePageViewController.view.userInteractionEnabled,
++          (long)_currentIndex, (long)_destinationIndex, (long)index,
++          scrollView.contentOffset.x, scrollView.contentOffset.y,
++          scrollView.bounds.size.width, scrollView.bounds.size.height);
++}
++
++- (void)rabbyTracePanState:(UIPanGestureRecognizer *)recognizer {
++    if (recognizer.state != _rabbyLastPanState) {
++        [self rabbyTraceEvent:@"panState" index:-1];
++    }
++}
++
++- (void)rabbyAttachTraceObserver {
++    [self rabbyDetachTraceObserver];
++    if (!RabbyPagerTraceEnabled()) {
++        return;
++    }
++    _rabbyObservedPan = scrollView.panGestureRecognizer;
++    _rabbyLastPanState = _rabbyObservedPan.state;
++    [_rabbyObservedPan addTarget:self action:@selector(rabbyTracePanState:)];
++    [self rabbyTraceEvent:@"attach" index:-1];
++}
++
++- (void)rabbyDetachTraceObserver {
++    [_rabbyObservedPan removeTarget:self action:@selector(rabbyTracePanState:)];
++    _rabbyObservedPan = nil;
++}
++
++- (void)dealloc {
++    [self rabbyDetachTraceObserver];
+ }
++#endif
+ 
+ // Needed because of this: https://github.com/facebook/react-native/pull/37274
+ + (void)load
+@@ -34,6 +114,9 @@ + (void)load
+ }
+ 
+ - (void)initializeNativePageViewController {
++#if DEBUG
++    [self rabbyDetachTraceObserver];
++#endif
+     const auto &viewProps = *std::static_pointer_cast<const RNCViewPagerProps>(_props);
+     NSDictionary *options = @{ UIPageViewControllerOptionInterPageSpacingKey: @(viewProps.pageMargin) };
+     UIPageViewControllerNavigationOrientation orientation = UIPageViewControllerNavigationOrientationHorizontal;
+@@ -61,6 +144,9 @@ - (void)initializeNativePageViewController {
+             scrollView = (UIScrollView *)subview;
+         }
+     }
++#if DEBUG
++    [self rabbyAttachTraceObserver];
++#endif
+ }
+ 
+ - (instancetype)initWithFrame:(CGRect)frame
+@@ -73,17 +159,18 @@ - (instancetype)initWithFrame:(CGRect)frame
+         _destinationIndex = -1;
+         _layoutDirection = @"ltr";
+         _overdrag = NO;
+-        UIPanGestureRecognizer* panGestureRecognizer = [UIPanGestureRecognizer new];
+-        self.panGestureRecognizer = panGestureRecognizer;
+-        panGestureRecognizer.delegate = self;
+-        [self addGestureRecognizer: panGestureRecognizer];
+-
+     }
+     
+     return self;
+ }
+ 
+ - (void)willMoveToSuperview:(UIView *)newSuperview {
++#if DEBUG
++    if (newSuperview == nil) {
++        [self rabbyTraceEvent:@"detach" index:-1];
++        [self rabbyDetachTraceObserver];
++    }
++#endif
+     if (newSuperview != nil) {
+         [self initializeNativePageViewController];
+         [self goTo:_currentIndex animated:NO];
+@@ -125,6 +212,10 @@ -(void)updateLayoutMetrics:(const facebook::react::LayoutMetrics &)layoutMetrics
+ 
+ 
+ -(void)prepareForRecycle {
++#if DEBUG
++    [self rabbyTraceEvent:@"recycle" index:-1];
++    [self rabbyDetachTraceObserver];
++#endif
+     [super prepareForRecycle];
+     _nativePageViewController = nil;
+     _currentIndex = -1;
+@@ -169,6 +260,7 @@ - (void)updateProps:(const facebook::react::Props::Shared &)props oldProps:(cons
+     
+     if (newScreenProps.scrollEnabled != scrollView.scrollEnabled) {
+         scrollView.scrollEnabled = newScreenProps.scrollEnabled;
++        RABBY_PAGER_TRACE(self, @"scrollEnabled", -1);
+     }
+     
+     if (newScreenProps.overdrag != _overdrag) {
+@@ -185,19 +277,23 @@ - (void)handleCommand:(const NSString *)commandName args:(const NSArray *)args {
+ #pragma mark - Internal methods
+ 
+ - (void)setPage:(NSInteger)index {
++    RABBY_PAGER_TRACE(self, @"commandAnimated", index);
+     [self goTo:index animated:YES];
+ }
+ 
+ - (void)setPageWithoutAnimation:(NSInteger)index {
++    RABBY_PAGER_TRACE(self, @"commandImmediate", index);
+     [self goTo:index animated:NO];
+ }
+ 
+ - (void)disableSwipe {
+     self.nativePageViewController.view.userInteractionEnabled = NO;
++    RABBY_PAGER_TRACE(self, @"disableSwipe", -1);
+ }
+ 
+ - (void)enableSwipe {
+     self.nativePageViewController.view.userInteractionEnabled = YES;
++    RABBY_PAGER_TRACE(self, @"enableSwipe", -1);
+ }
+ 
+ - (void)goTo:(NSInteger)index animated:(BOOL)animated {
+@@ -206,6 +302,7 @@ - (void)goTo:(NSInteger)index animated:(BOOL)animated {
+     [self disableSwipe];
+     
+     _destinationIndex = index;
++    RABBY_PAGER_TRACE(self, animated ? @"goToAnimated" : @"goToImmediate", index);
+     
+     
+     if (numberOfPages == 0 || index < 0 || index > numberOfPages - 1) {
+@@ -244,6 +341,7 @@ - (void)setPagerViewControllers:(NSInteger)index
+         if (strongSelf->_eventEmitter != nullptr ) {
+             const auto strongEventEmitter = *std::dynamic_pointer_cast<const RNCViewPagerEventEmitter>(strongSelf->_eventEmitter);
+             int position = (int) index;
++            RABBY_PAGER_TRACE(strongSelf, @"selectedCommand", position);
+             strongEventEmitter.onPageSelected(RNCViewPagerEventEmitter::OnPageSelected{.position =  static_cast<double>(position)});
+             strongSelf->_currentIndex = index;
+         }
+@@ -277,11 +375,13 @@ - (UIViewController *)currentlyDisplayed {
+ #pragma mark - UIScrollViewDelegate
+ 
+ - (void)scrollViewWillBeginDragging:(UIScrollView *)scrollView {
++    RABBY_PAGER_TRACE(self, @"dragging", -1);
+     const auto strongEventEmitter = *std::dynamic_pointer_cast<const RNCViewPagerEventEmitter>(_eventEmitter);
+     strongEventEmitter.onPageScrollStateChanged(RNCViewPagerEventEmitter::OnPageScrollStateChanged{.pageScrollState =  RNCViewPagerEventEmitter::OnPageScrollStateChangedPageScrollState::Dragging });
+ }
+ 
+ - (void)scrollViewWillEndDragging:(UIScrollView *)scrollView withVelocity:(CGPoint)velocity targetContentOffset:(inout CGPoint *)targetContentOffset {
++    RABBY_PAGER_TRACE(self, @"settling", -1);
+     
+     const auto strongEventEmitter = *std::dynamic_pointer_cast<const RNCViewPagerEventEmitter>(_eventEmitter);
+     strongEventEmitter.onPageScrollStateChanged(RNCViewPagerEventEmitter::OnPageScrollStateChanged{.pageScrollState =  RNCViewPagerEventEmitter::OnPageScrollStateChangedPageScrollState::Settling });
+@@ -296,6 +396,7 @@ - (void)scrollViewWillEndDragging:(UIScrollView *)scrollView withVelocity:(CGPoi
+         if ((isFirstPage && contentOffset <= topBound) || (isLastPage && contentOffset >= topBound)) {
+             CGPoint croppedOffset = [self isHorizontal] ? CGPointMake(topBound, 0) : CGPointMake(0, topBound);
+             *targetContentOffset = croppedOffset;
++            RABBY_PAGER_TRACE(self, @"idleBoundary", -1);
+             
+             strongEventEmitter.onPageScrollStateChanged(RNCViewPagerEventEmitter::OnPageScrollStateChanged{.pageScrollState =  RNCViewPagerEventEmitter::OnPageScrollStateChangedPageScrollState::Idle });
+         }
+@@ -304,7 +405,18 @@ - (void)scrollViewWillEndDragging:(UIScrollView *)scrollView withVelocity:(CGPoi
+    
+ }
+ 
 +- (void)scrollViewDidEndDragging:(UIScrollView *)scrollView willDecelerate:(BOOL)decelerate {
 +    // UIKit does not call didEndDecelerating when a drag stops at touch-up.
 +    // Complete the state transition here so consumers can accept taps again.
 +    if (!decelerate) {
++        RABBY_PAGER_TRACE(self, @"idleNoDeceleration", -1);
 +        const auto strongEventEmitter = *std::dynamic_pointer_cast<const RNCViewPagerEventEmitter>(_eventEmitter);
 +        strongEventEmitter.onPageScrollStateChanged(RNCViewPagerEventEmitter::OnPageScrollStateChanged{.pageScrollState = RNCViewPagerEventEmitter::OnPageScrollStateChangedPageScrollState::Idle });
 +    }
 +}
 +
  - (void)scrollViewDidEndDecelerating:(UIScrollView *)scrollView {
++    RABBY_PAGER_TRACE(self, @"idleDeceleration", -1);
      const auto strongEventEmitter = *std::dynamic_pointer_cast<const RNCViewPagerEventEmitter>(_eventEmitter);
      strongEventEmitter.onPageScrollStateChanged(RNCViewPagerEventEmitter::OnPageScrollStateChanged{.pageScrollState =  RNCViewPagerEventEmitter::OnPageScrollStateChangedPageScrollState::Idle });
+ }
+@@ -387,11 +499,13 @@ - (void)pageViewController:(UIPageViewController *)pageViewController
+         didFinishAnimating:(BOOL)finished
+    previousViewControllers:(nonnull NSArray<UIViewController *> *)previousViewControllers
+        transitionCompleted:(BOOL)completed {
++    RABBY_PAGER_TRACE(self, completed ? @"transitionCompleted" : @"transitionCancelled", -1);
+     if (completed) {
+         UIViewController* currentVC = [self currentlyDisplayed];
+         NSUInteger currentIndex = [_nativeChildrenViewControllers indexOfObject:currentVC];
+         _currentIndex = currentIndex;
+         int position = (int) currentIndex;
++        RABBY_PAGER_TRACE(self, @"selectedGesture", position);
+         const auto strongEventEmitter = *std::dynamic_pointer_cast<const RNCViewPagerEventEmitter>(_eventEmitter);
+         strongEventEmitter.onPageSelected(RNCViewPagerEventEmitter::OnPageSelected{.position =  static_cast<double>(position)});
+         strongEventEmitter.onPageScroll(RNCViewPagerEventEmitter::OnPageScroll{.position =  static_cast<double>(position), .offset =  0.0});
+@@ -421,29 +535,6 @@ + (ComponentDescriptorProvider)componentDescriptorProvider
+ }
+ 
+ 
+-- (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldRecognizeSimultaneouslyWithGestureRecognizer:(UIGestureRecognizer *)otherGestureRecognizer {
+-
+-    // Recognize simultaneously only if the other gesture is RN Screen's pan gesture (one that is used to perform fullScreenGestureEnabled)
+-    if (gestureRecognizer == self.panGestureRecognizer && [NSStringFromClass([otherGestureRecognizer class]) isEqual: @"RNSPanGestureRecognizer"]) {
+-        UIPanGestureRecognizer* panGestureRecognizer = (UIPanGestureRecognizer*) gestureRecognizer;
+-        CGPoint velocity = [panGestureRecognizer velocityInView:self];
+-        BOOL isLTR = [self isLtrLayout];
+-        BOOL isBackGesture = (isLTR && velocity.x > 0) || (!isLTR && velocity.x < 0);
+-        
+-        if (self.currentIndex == 0 && isBackGesture) {
+-            scrollView.panGestureRecognizer.enabled = false;
+-        } else {
+-            const auto &viewProps = *std::static_pointer_cast<const RNCViewPagerProps>(_props);
+-            scrollView.panGestureRecognizer.enabled = viewProps.scrollEnabled;
+-        }
+-        
+-        return YES;
+-    }
+-    const auto &viewProps = *std::static_pointer_cast<const RNCViewPagerProps>(_props);
+-    scrollView.panGestureRecognizer.enabled = viewProps.scrollEnabled;
+-    return NO;
+-}
+-
+ @end
+ 
+ Class<RCTComponentViewProtocol> RNCViewPagerCls(void)
 diff --git a/ios/RNCPagerView.m b/ios/RNCPagerView.m
+index 507b45d..5043099 100644
 --- a/ios/RNCPagerView.m
 +++ b/ios/RNCPagerView.m
-@@ -397,3 +397,11 @@
+@@ -8,9 +8,7 @@
+ #import "RCTOnPageSelected.h"
+ #import <math.h>
+ 
+-@interface RNCPagerView () <UIPageViewControllerDataSource, UIPageViewControllerDelegate, UIScrollViewDelegate, UIGestureRecognizerDelegate>
+-
+-@property(nonatomic, assign) UIPanGestureRecognizer* panGestureRecognizer;
++@interface RNCPagerView () <UIPageViewControllerDataSource, UIPageViewControllerDelegate, UIScrollViewDelegate>
+ 
+ @property(nonatomic, strong) UIPageViewController *reactPageViewController;
+ @property(nonatomic, strong) RCTEventDispatcher *eventDispatcher;
+@@ -48,10 +46,6 @@ - (instancetype)initWithEventDispatcher:(RCTEventDispatcher *)eventDispatcher {
+         _cachedControllers = [NSHashTable hashTableWithOptions:NSHashTableStrongMemory];
+         _overdrag = NO;
+         _layoutDirection = @"ltr";
+-        UIPanGestureRecognizer* panGestureRecognizer = [UIPanGestureRecognizer new];
+-        self.panGestureRecognizer = panGestureRecognizer;
+-        panGestureRecognizer.delegate = self;
+-        [self addGestureRecognizer: panGestureRecognizer];
+     }
+     return self;
+ }
+@@ -394,6 +388,14 @@ - (void)scrollViewWillEndDragging:(UIScrollView *)scrollView withVelocity:(CGPoi
+     }
+ }
+ 
 +- (void)scrollViewDidEndDragging:(UIScrollView *)scrollView willDecelerate:(BOOL)decelerate {
 +    // UIKit does not call didEndDecelerating when a drag stops at touch-up.
 +    // Complete the state transition here so consumers can accept taps again.
@@ -49,4 +351,33 @@ diff --git a/ios/RNCPagerView.m b/ios/RNCPagerView.m
 +
  - (void)scrollViewDidEndDecelerating:(UIScrollView *)scrollView {
      [self.eventDispatcher sendEvent:[[RCTOnPageScrollStateChanged alloc] initWithReactTag:self.reactTag state:@"idle" coalescingKey:_coalescingKey++]];
+ }
+@@ -474,28 +476,6 @@ - (NSString *)determineScrollDirection:(UIScrollView *)scrollView {
+     return scrollDirection;
+ }
+ 
+-- (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldRecognizeSimultaneouslyWithGestureRecognizer:(UIGestureRecognizer *)otherGestureRecognizer {
+-
+-    // Recognize simultaneously only if the other gesture is RN Screen's pan gesture (one that is used to perform fullScreenGestureEnabled)
+-    if (gestureRecognizer == self.panGestureRecognizer && [NSStringFromClass([otherGestureRecognizer class]) isEqual: @"RNSPanGestureRecognizer"]) {
+-        UIPanGestureRecognizer* panGestureRecognizer = (UIPanGestureRecognizer*) gestureRecognizer;
+-        CGPoint velocity = [panGestureRecognizer velocityInView:self];
+-        BOOL isLTR = [self isLtrLayout];
+-        BOOL isBackGesture = (isLTR && velocity.x > 0) || (!isLTR && velocity.x < 0);
+-        
+-        if (self.currentIndex == 0 && isBackGesture) {
+-            self.scrollView.panGestureRecognizer.enabled = false;
+-        } else {
+-            self.scrollView.panGestureRecognizer.enabled = self.scrollEnabled;
+-        }
+-        
+-        return YES;
+-    }
+-    
+-    self.scrollView.panGestureRecognizer.enabled = self.scrollEnabled;
+-    return NO;
+-}
+-
+ - (BOOL)isLtrLayout {
+     return [_layoutDirection isEqualToString:@"ltr"];
  }

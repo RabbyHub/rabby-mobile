@@ -14,19 +14,33 @@ import {
 } from 'react-native';
 import { Pressable } from 'react-native-gesture-handler';
 import { useSharedValue } from 'react-native-reanimated';
-import { CollapsibleSceneProvider } from '@rabby-wallet/rn-collapsible-scene-view';
+import {
+  CollapsibleSceneProvider,
+  type LinkedSceneGroupContext,
+  type LinkedScenePage,
+  type LinkedScenePageContext,
+  type LinkedScenePagingMode,
+  type LinkedScenePath,
+} from '@rabby-wallet/rn-collapsible-scene-view';
 import { createStore, type StoreApi } from 'zustand/vanilla';
 import { Text } from '@/components/Typography';
 import {
-  RetainedScenePagerList,
-  type RetainedScenePagerListHandle,
-} from '@/components/RetainedScenePagerList/RetainedScenePagerList';
+  LinkedScenePagerList,
+  type LinkedScenePagerListHandle,
+} from '@/components/RetainedScenePagerList/LinkedScenePagerList';
+import { RetainedRows } from '@/components/RetainedScenePagerList/RetainedScenePagerBody';
 import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 
 const KEYS = ['Positions', 'Orders', 'Account'];
 const HEADER_HEIGHT = 368;
 const TAB_HEIGHT = 48;
-const PAGE_STYLES = Object.fromEntries(KEYS.map(key => [key, {}]));
+const PILL_KEYS = ['Basic', 'Conditional'];
+const PAGES: readonly LinkedScenePage[] = [
+  { key: 'Positions' },
+  { key: 'Orders', children: PILL_KEYS.map(key => ({ key })) },
+  { key: 'Account' },
+];
+const ignoreHeight = () => undefined;
 type Quote = { revision: number };
 type Row = { key: string; height: number };
 type PageEvidence = {
@@ -47,13 +61,20 @@ function makeRows(count: number, page: number): Row[] {
  * Native layout measures rows; no alternate pager protocol or fixed heights.
  */
 export default function DevUIRetainedTabs({ onBack }: { onBack: () => void }) {
-  const [activeKey, setActiveKey] = useState(KEYS[0]);
+  const [activePath, setActivePath] = useState<LinkedScenePath>({
+    key: KEYS[0],
+  });
+  const activeKey = activePath.key;
   const [short, setShort] = useState(false);
   const [extra, setExtra] = useState(0);
   const [running, setRunning] = useState(false);
   const [report, setReport] = useState('');
   const [tradeCount, setTradeCount] = useState(0);
-  const listRef = useRef<RetainedScenePagerListHandle>(null);
+  const [pagingMode, setPagingMode] = useState<LinkedScenePagingMode>('flat');
+  const [pill, setPill] = useState(PILL_KEYS[0]);
+  const [shortConditional, setShortConditional] = useState(true);
+  const [accountEpoch, setAccountEpoch] = useState(0);
+  const listRef = useRef<LinkedScenePagerListHandle>(null);
   const nativeY = useRef(new NativeAnimated.Value(0)).current;
   const scrollOffset = useSharedValue(0);
   const indicatorPosition = useSharedValue(0);
@@ -63,6 +84,14 @@ export default function DevUIRetainedTabs({ onBack }: { onBack: () => void }) {
     () => KEYS.map(() => ({ rowMounts: 0, rowUnmounts: 0, rowRenders: 0 })),
     [],
   );
+  const conditionalEvidence = useMemo<PageEvidence>(
+    () => ({ rowMounts: 0, rowUnmounts: 0, rowRenders: 0 }),
+    [],
+  );
+  const conditionalRows = useMemo(
+    () => makeRows(shortConditional ? 4 : 100, 3),
+    [shortConditional],
+  );
   const rows = useMemo(
     () => [
       makeRows(120, 0),
@@ -70,10 +99,6 @@ export default function DevUIRetainedTabs({ onBack }: { onBack: () => void }) {
       makeRows(short ? 4 : 100, 2),
     ],
     [extra, short],
-  );
-  const dataByKey = useMemo(
-    () => Object.fromEntries(KEYS.map((key, index) => [key, rows[index]])),
-    [rows],
   );
   const renderItemByKey = useMemo(
     () =>
@@ -92,6 +117,54 @@ export default function DevUIRetainedTabs({ onBack }: { onBack: () => void }) {
       ),
     [evidence, store],
   );
+  const renderConditional = useCallback<ListRenderItem<Row>>(
+    ({ item }) => (
+      <FixtureRow
+        row={item}
+        index={1}
+        store={store}
+        evidence={conditionalEvidence}
+        title="Orders / Conditional"
+      />
+    ),
+    [conditionalEvidence, store],
+  );
+  const identityKey = `retained-fixture-${accountEpoch}`;
+  const renderLeaf = useCallback(
+    (path: LinkedScenePath, context: LinkedScenePageContext) => {
+      const index = KEYS.indexOf(path.key);
+      const conditional = path.childKey === 'Conditional';
+      return (
+        <RetainedRows
+          data={conditional ? conditionalRows : rows[index]}
+          renderItem={
+            conditional ? renderConditional : renderItemByKey[path.key]
+          }
+          active={context.active}
+          identityKey={identityKey}
+          pageStyle={{ minHeight: context.minimumPageHeight }}
+          top={0}
+          index={index}
+          measure={ignoreHeight}
+          testID={`retained-rows-${path.key}${
+            path.childKey ? `-${path.childKey}` : ''
+          }`}
+        />
+      );
+    },
+    [conditionalRows, identityKey, renderConditional, renderItemByKey, rows],
+  );
+  const renderGroupHeader = useCallback(
+    (key: string, context: LinkedSceneGroupContext) =>
+      key === 'Orders' ? <OrdersPills context={context} /> : null,
+    [],
+  );
+  const resetOwnerMetrics = () => {
+    nativeY.setValue(0);
+    scrollOffset.value = 0;
+    indicatorPosition.value = KEYS.indexOf(activeKey);
+    gestureActive.value = false;
+  };
 
   useEffect(() => {
     if (!running) {
@@ -105,24 +178,39 @@ export default function DevUIRetainedTabs({ onBack }: { onBack: () => void }) {
   }, [running, store]);
 
   const chooseTab = useCallback(
-    (key: string) => listRef.current?.selectTab(key),
-    [],
-  );
-  const commitTab = useCallback(
     (key: string) =>
-      setActiveKey(previous => (previous === key ? previous : key)),
-    [],
+      listRef.current?.selectPath(
+        key === 'Orders' ? { key, childKey: pill } : { key },
+      ),
+    [pill],
   );
+  const commitPath = useCallback((path: LinkedScenePath) => {
+    setActivePath(previous =>
+      previous.key === path.key && previous.childKey === path.childKey
+        ? previous
+        : path,
+    );
+    if (path.childKey) {
+      setPill(path.childKey);
+    }
+  }, []);
   const snapshot = () =>
     setReport(
       JSON.stringify({
         selected: activeKey,
+        pagingMode,
+        pill,
+        accountEpoch,
         source: store.getState().revision,
         pages: KEYS.map((key, index) => ({
           key,
           fixtureRows: rows[index].length,
           ...evidence[index],
         })),
+        conditional: {
+          fixtureRows: conditionalRows.length,
+          ...conditionalEvidence,
+        },
       }),
     );
   const header = useMemo(
@@ -170,6 +258,27 @@ export default function DevUIRetainedTabs({ onBack }: { onBack: () => void }) {
           <Text>Inspect</Text>
         </Pressable>
       </View>
+      <View style={styles.controls}>
+        <Pressable
+          testID="retained-toggle-mode"
+          onPress={() => {
+            resetOwnerMetrics();
+            setPagingMode(mode => (mode === 'flat' ? 'nested' : 'flat'));
+          }}>
+          <Text>Mode: {pagingMode === 'flat' ? 'Flat' : 'Nested'}</Text>
+        </Pressable>
+        <Pressable onPress={() => setShortConditional(value => !value)}>
+          <Text>{shortConditional ? 'Short pill' : 'Long pill'}</Text>
+        </Pressable>
+        <Pressable
+          testID="retained-reset-account"
+          onPress={() => {
+            resetOwnerMetrics();
+            setAccountEpoch(value => value + 1);
+          }}>
+          <Text>Reset account</Text>
+        </Pressable>
+      </View>
       <Text testID="retained-selection">Retained native tabs: {activeKey}</Text>
       <Text numberOfLines={4} style={styles.report} testID="retained-report">
         {report}
@@ -181,22 +290,22 @@ export default function DevUIRetainedTabs({ onBack }: { onBack: () => void }) {
           headerHeight={HEADER_HEIGHT - TAB_HEIGHT}
           scrollOffset={scrollOffset}
           syncOffsetOnActivate={false}>
-          <RetainedScenePagerList
+          <LinkedScenePagerList
+            key={`${identityKey}:${pagingMode}`}
             ref={listRef}
-            activeKey={activeKey}
-            keys={KEYS}
-            identityKey="retained-fixture"
+            pages={PAGES}
+            activePath={activePath}
+            pagingMode={pagingMode}
             activityEnabled
-            dataByKey={dataByKey}
-            renderItemByKey={renderItemByKey}
-            pageStyleByKey={PAGE_STYLES}
+            renderLeaf={renderLeaf}
+            renderGroupHeader={renderGroupHeader}
             listHeader={header}
-            rowStartOffset={HEADER_HEIGHT}
+            contentTop={HEADER_HEIGHT}
             pinnedHeight={TAB_HEIGHT}
             scrollOffset={scrollOffset}
             indicatorPosition={indicatorPosition}
             gestureActive={gestureActive}
-            onTabChange={commitTab}
+            onPathChange={commitPath}
             nativeScrollY={nativeY}
             style={styles.body}
             testID="retained"
@@ -232,16 +341,44 @@ export default function DevUIRetainedTabs({ onBack }: { onBack: () => void }) {
   );
 }
 
+/** One shared controls block; the package owns both horizontal layouts. */
+function OrdersPills({ context }: { context: LinkedSceneGroupContext }) {
+  const activeKey = context.childKey ?? PILL_KEYS[0];
+  return (
+    <View
+      testID="retained-orders-pills"
+      pointerEvents={context.interactive ? 'auto' : 'none'}>
+      <View style={styles.pillControls} testID="retained-pill-controls">
+        <Text testID="retained-pill-selection">Orders: {activeKey}</Text>
+        <View style={styles.pillButtons}>
+          {PILL_KEYS.map(key => (
+            <Pressable
+              key={key}
+              testID={`retained-pill-${key}`}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: key === activeKey }}
+              onPress={() => context.selectChild(key)}>
+              <Text>{key}</Text>
+            </Pressable>
+          ))}
+        </View>
+      </View>
+    </View>
+  );
+}
+
 const FixtureRow = memo(function FixtureRow({
   row,
   index,
   store,
   evidence,
+  title,
 }: {
   row: Row;
   index: number;
   store: StoreApi<Quote>;
   evidence: PageEvidence;
+  title?: string;
 }) {
   const revision = useActivityStore(store, selectRevision);
   evidence.rowRenders++;
@@ -262,7 +399,7 @@ const FixtureRow = memo(function FixtureRow({
       ]}
       testID={`retained-row-${row.key}`}>
       <Text>
-        {KEYS[index]} / {row.key} — tick {revision}
+        {title ?? KEYS[index]} / {row.key} — tick {revision}
       </Text>
     </View>
   );
@@ -301,6 +438,8 @@ const styles = StyleSheet.create({
   },
   tab: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   selected: { backgroundColor: '#a8ceff' },
+  pillControls: { padding: 16, gap: 12, backgroundColor: '#e9f9ef' },
+  pillButtons: { flexDirection: 'row', justifyContent: 'space-around' },
   row: {
     justifyContent: 'center',
     paddingHorizontal: 16,

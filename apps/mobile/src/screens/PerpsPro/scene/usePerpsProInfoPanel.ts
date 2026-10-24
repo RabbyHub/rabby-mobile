@@ -24,12 +24,14 @@ import {
   filterPerpsOpenOrders,
   getPerpsOpenOrderCounts,
   type PerpsOpenOrderCategory,
+  type PerpsOpenOrderViewModel,
 } from '../model/openOrder';
 import { buildPerpsOpenOrderTopology } from '../model/openOrderTopology';
 import {
   resolvePerpsProCollectionPresentation,
   resolvePerpsProInfoTabPresentation,
   type PerpsProAutomaticInfoTabSelection,
+  type PerpsProCollectionPresentation,
 } from '../model/infoPanelPresentation';
 import {
   buildPerpsPositionsFromTopology,
@@ -219,21 +221,53 @@ export const usePerpsProInfoPanel = (
       ),
     [allPositions, canonicalCoin, hideOtherPositionSymbols],
   );
-  const openOrders = useMemo(
-    () =>
-      filterPerpsOpenOrders({
+  const openOrdersByCategory = useMemo<
+    Record<'basic' | 'conditional', PerpsOpenOrderViewModel[]>
+  >(
+    () => ({
+      basic: filterPerpsOpenOrders({
         canonicalCoin,
-        category: openOrderCategory,
+        category: 'basic',
         hideOtherSymbols: hideOtherOpenOrderSymbols,
         orders: allOpenOrders,
       }),
-    [
-      allOpenOrders,
-      canonicalCoin,
-      hideOtherOpenOrderSymbols,
-      openOrderCategory,
-    ],
+      conditional: filterPerpsOpenOrders({
+        canonicalCoin,
+        category: 'conditional',
+        hideOtherSymbols: hideOtherOpenOrderSymbols,
+        orders: allOpenOrders,
+      }),
+    }),
+    [allOpenOrders, canonicalCoin, hideOtherOpenOrderSymbols],
   );
+  const openOrders = openOrdersByCategory[openOrderCategory];
+  const hasAccount = !!facts.currentAccount;
+  const openOrderCollectionPresentationByCategory = useMemo<
+    Record<'basic' | 'conditional', PerpsProCollectionPresentation>
+  >(() => {
+    const collectionFacts = {
+      hasAccount,
+      runtimeReady: runtime.status === 'ready',
+      sourceReady: facts.isOpenOrdersReady,
+      totalCount: facts.openOrders.length,
+    };
+    return {
+      basic: resolvePerpsProCollectionPresentation({
+        ...collectionFacts,
+        visibleCount: openOrdersByCategory.basic.length,
+      }),
+      conditional: resolvePerpsProCollectionPresentation({
+        ...collectionFacts,
+        visibleCount: openOrdersByCategory.conditional.length,
+      }),
+    };
+  }, [
+    facts.isOpenOrdersReady,
+    facts.openOrders.length,
+    hasAccount,
+    openOrdersByCategory,
+    runtime.status,
+  ]);
   const openOrderCommandCandidates = useMemo(
     () => allOpenOrders.filter(order => order.category === openOrderCategory),
     [allOpenOrders, openOrderCategory],
@@ -306,13 +340,9 @@ export const usePerpsProInfoPanel = (
     allOpenOrdersCount: openOrderCounts.basic + openOrderCounts.conditional,
     allPositionsCount: allPositions.length,
     allPositionsByCoin,
-    openOrderCollectionPresentation: resolvePerpsProCollectionPresentation({
-      hasAccount: !!facts.currentAccount,
-      runtimeReady: runtime.status === 'ready',
-      sourceReady: facts.isOpenOrdersReady,
-      totalCount: facts.openOrders.length,
-      visibleCount: openOrders.length,
-    }),
+    openOrderCollectionPresentation:
+      openOrderCollectionPresentationByCategory[openOrderCategory],
+    openOrderCollectionPresentationByCategory,
     positionCollectionPresentation: resolvePerpsProCollectionPresentation({
       hasAccount: !!facts.currentAccount,
       runtimeReady: runtime.status === 'ready',
@@ -329,6 +359,7 @@ export const usePerpsProInfoPanel = (
     openOrderCommandCandidates,
     openOrderCounts,
     openOrders,
+    openOrdersByCategory,
     pendingFundingCount,
     positions,
     retryAccount,

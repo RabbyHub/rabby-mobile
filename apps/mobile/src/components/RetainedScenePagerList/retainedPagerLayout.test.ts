@@ -252,6 +252,94 @@ describe('resolveRetainedPagerLayout (measured geometry)', () => {
     expect(layout({ pageHeights: [0], viewportHeight: 0 }).pagerHeight).toBe(0);
   });
 
+  it('deducts measured controls once from a nested body minimum and global offset', () => {
+    const controlsHeight = 96;
+    const nestedInput: RetainedPagerLayoutInput = {
+      ...input,
+      pageHeights: [2000, 200],
+      headerHeight: input.headerHeight + controlsHeight,
+      minimumPageHeight: 752 - controlsHeight,
+      transitionScrollY: 1200,
+      transitionPagerHeight: 2000,
+    };
+    expect(resolveRetainedPagerLayout(nestedInput)).toEqual({
+      pagerHeight: 2000,
+      pageTopInsets: [0, 832],
+    });
+    expect(
+      clampRetainedPagerScrollY({
+        ...nestedInput,
+        pageHeight: 200,
+        scrollY: 1200,
+      }),
+    ).toBe(368);
+    const settled = resolveRetainedPagerLayout({
+      ...nestedInput,
+      settledIndex: 1,
+      transitionScrollY: null,
+    });
+    expect(settled).toEqual({ pagerHeight: 656, pageTopInsets: [0, 0] });
+    expect(controlsHeight + settled.pagerHeight).toBe(752);
+    expect(nestedInput.headerHeight + 832 + 100 - 1200).toBe(
+      nestedInput.headerHeight + 100 - 368,
+    );
+  });
+
+  it.each([0, 96, 96.25, 300, 752, 900])(
+    'keeps one global clamp when controls occupy %s points of the parent minimum',
+    controlsHeight => {
+      const minimumPageHeight = Math.max(0, 752 - controlsHeight);
+      const nested = {
+        ...input,
+        pageHeights: [0],
+        headerHeight: input.headerHeight + controlsHeight,
+        minimumPageHeight,
+      };
+      expect(resolveRetainedPagerLayout(nested).pagerHeight).toBe(
+        minimumPageHeight,
+      );
+      expect(
+        clampRetainedPagerScrollY({
+          ...nested,
+          pageHeight: 0,
+          scrollY: 1200,
+        }),
+      ).toBe(Math.max(368, controlsHeight - 384));
+    },
+  );
+
+  it('honors an explicit zero minimum instead of restoring the outer viewport minimum', () => {
+    expect(layout({ pageHeights: [0], minimumPageHeight: 0 }).pagerHeight).toBe(
+      0,
+    );
+    expect(
+      clampRetainedPagerScrollY({
+        ...input,
+        minimumPageHeight: 0,
+        pageHeight: 200,
+        scrollY: 1200,
+      }),
+    ).toBe(0);
+    expect(layout({ pageHeights: [0] }).pagerHeight).toBe(752);
+  });
+
+  it.each([-1, Number.NaN, Number.POSITIVE_INFINITY])(
+    'normalizes invalid nested minimum %s consistently for layout and clamp',
+    minimumPageHeight => {
+      expect(layout({ pageHeights: [0], minimumPageHeight }).pagerHeight).toBe(
+        0,
+      );
+      expect(
+        clampRetainedPagerScrollY({
+          ...input,
+          minimumPageHeight,
+          pageHeight: 200,
+          scrollY: 1200,
+        }),
+      ).toBe(0);
+    },
+  );
+
   it('does not mutate frozen input or depend on prior calculations', () => {
     const frozen = Object.freeze({
       ...input,

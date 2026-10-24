@@ -68,6 +68,7 @@ import { PERPS_PRO_INFO_TABS } from '../components/info/perpsProInfoTabOrder';
 import {
   PerpsProInfoSingleList,
   type PerpsProInfoSingleListHandle,
+  type PerpsProLinkedOrders,
 } from '../components/info/PerpsProInfoSingleList';
 import {
   getPerpsProInfoBridgeOffset,
@@ -96,7 +97,6 @@ import { PerpsProBasicOrderEditSheet } from '../components/open-orders/PerpsProB
 import { PerpsProConditionalOrderEditSheet } from '../components/open-orders/PerpsProConditionalOrderEditSheet';
 import { PerpsProOpenOrderEditConfirmationSheet } from '../components/open-orders/PerpsProOpenOrderEditConfirmationSheet';
 import { PerpsProCancelConfirmationModal } from '../components/open-orders/PerpsProCancelConfirmationModal';
-import { PerpsProOpenOrdersControls } from '../components/open-orders/PerpsProOpenOrdersControls';
 import { PerpsProPositionCard } from '../components/positions/PerpsProPositionCard';
 import { PerpsProCloseAllConfirmationModal } from '../components/positions/PerpsProCloseAllConfirmationModal';
 import { PerpsProCloseConfirmationSheet } from '../components/positions/PerpsProCloseConfirmationSheet';
@@ -108,6 +108,7 @@ import { PerpsProPositionsControls } from '../components/positions/PerpsProPosit
 import { resolvePerpsProTradeAddFundsAction } from '../model/addFunds';
 import { PERPS_PRO_MAIN_COLUMN_HEIGHT } from '../model/layout';
 import type { PerpsOpenOrderViewModel } from '../model/openOrder';
+import type { PerpsProCollectionPresentation } from '../model/infoPanelPresentation';
 import { isRelevantOpenOrderEditPosition } from '../model/openOrderEdit';
 import type { PerpsPositionViewModel } from '../model/position';
 import {
@@ -149,9 +150,23 @@ type PerpsProSceneRow =
   | { key: 'positions-controls'; type: 'positions-controls' }
   | { key: 'positions-empty'; type: 'positions-empty' }
   | { key: string; position: PerpsPositionViewModel; type: 'position' }
-  | { key: 'open-orders-controls'; type: 'open-orders-controls' }
   | { key: 'open-orders-empty'; type: 'open-orders-empty' }
   | { key: string; order: PerpsOpenOrderViewModel; type: 'open-order' };
+
+const buildOpenOrderRows = (
+  orders: readonly PerpsOpenOrderViewModel[] | null,
+  presentation: PerpsProCollectionPresentation,
+  accountIdentity: string,
+): PerpsProSceneRow[] =>
+  presentation === 'populated'
+    ? (orders ?? []).map(order => ({
+        key: `open-order:${accountIdentity}:${order.key}`,
+        order,
+        type: 'open-order',
+      }))
+    : presentation === 'authoritativeEmpty' || presentation === 'filteredEmpty'
+    ? [{ key: 'open-orders-empty', type: 'open-orders-empty' }]
+    : [];
 
 type FundingOverlayState =
   | {
@@ -697,13 +712,27 @@ export const PerpsProScene: React.FC<{
       ),
     [makeScrollContentStyle, info.positionCollectionPresentation],
   );
-  const openOrderContentStyle = useMemo(
-    () =>
-      makeScrollContentStyle(
-        info.openOrderCollectionPresentation === 'populated',
-      ),
-    [makeScrollContentStyle, info.openOrderCollectionPresentation],
+  const basicOrderPresentation =
+    info.openOrderCollectionPresentationByCategory.basic;
+  const conditionalOrderPresentation =
+    info.openOrderCollectionPresentationByCategory.conditional;
+  const basicOrderContentStyle = useMemo(
+    () => makeScrollContentStyle(basicOrderPresentation === 'populated'),
+    [makeScrollContentStyle, basicOrderPresentation],
   );
+  const conditionalOrderContentStyle = useMemo(
+    () => makeScrollContentStyle(conditionalOrderPresentation === 'populated'),
+    [makeScrollContentStyle, conditionalOrderPresentation],
+  );
+  const openOrderContentStyleByCategory = useMemo(
+    () => ({
+      basic: basicOrderContentStyle,
+      conditional: conditionalOrderContentStyle,
+    }),
+    [basicOrderContentStyle, conditionalOrderContentStyle],
+  );
+  const openOrderContentStyle =
+    openOrderContentStyleByCategory[info.openOrderCategory];
   const scrollContentStyles = useMemo(
     () => ({
       account: accountContentStyle,
@@ -778,39 +807,41 @@ export const PerpsProScene: React.FC<{
     visiblePositions,
   ]);
 
-  const visibleOpenOrders =
-    info.openOrderCollectionPresentation === 'populated'
-      ? info.openOrders
+  const visibleBasicOrders =
+    basicOrderPresentation === 'populated'
+      ? info.openOrdersByCategory.basic
       : null;
-  const openOrderRows = useMemo<PerpsProSceneRow[]>(() => {
-    const openOrderDataRows: PerpsProSceneRow[] = (visibleOpenOrders ?? []).map(
-      order => ({
-        key: `open-order:${info.accountIdentity}:${order.key}`,
-        order,
-        type: 'open-order',
-      }),
-    );
-    const rows: PerpsProSceneRow[] =
-      info.openOrderCollectionPresentation === 'authoritativeEmpty'
-        ? [{ key: 'open-orders-empty', type: 'open-orders-empty' }]
-        : info.openOrderCollectionPresentation === 'filteredEmpty'
-        ? [
-            { key: 'open-orders-controls', type: 'open-orders-controls' },
-            { key: 'open-orders-empty', type: 'open-orders-empty' },
-          ]
-        : info.openOrderCollectionPresentation === 'populated'
-        ? [
-            { key: 'open-orders-controls', type: 'open-orders-controls' },
-            ...openOrderDataRows,
-          ]
-        : [{ key: 'open-orders-controls', type: 'open-orders-controls' }];
-
-    return rows;
-  }, [
-    info.accountIdentity,
-    info.openOrderCollectionPresentation,
-    visibleOpenOrders,
-  ]);
+  const visibleConditionalOrders =
+    conditionalOrderPresentation === 'populated'
+      ? info.openOrdersByCategory.conditional
+      : null;
+  const basicOrderRows = useMemo(
+    () =>
+      buildOpenOrderRows(
+        visibleBasicOrders,
+        basicOrderPresentation,
+        info.accountIdentity,
+      ),
+    [info.accountIdentity, basicOrderPresentation, visibleBasicOrders],
+  );
+  const conditionalOrderRows = useMemo(
+    () =>
+      buildOpenOrderRows(
+        visibleConditionalOrders,
+        conditionalOrderPresentation,
+        info.accountIdentity,
+      ),
+    [
+      info.accountIdentity,
+      conditionalOrderPresentation,
+      visibleConditionalOrders,
+    ],
+  );
+  const openOrderRowsByCategory = useMemo(
+    () => ({ basic: basicOrderRows, conditional: conditionalOrderRows }),
+    [basicOrderRows, conditionalOrderRows],
+  );
+  const openOrderRows = openOrderRowsByCategory[info.openOrderCategory];
   const rowsByTab = useMemo(
     () => ({
       account: accountRows,
@@ -919,24 +950,6 @@ export const PerpsProScene: React.FC<{
   const renderOpenOrderRow = useCallback<ListRenderItem<PerpsProSceneRow>>(
     ({ item }) => {
       switch (item.type) {
-        case 'open-orders-controls':
-          return (
-            <PerpsProOpenOrdersControls
-              basicCount={info.openOrderCounts.basic}
-              category={info.openOrderCategory}
-              conditionalCount={info.openOrderCounts.conditional}
-              hideOtherSymbols={info.hideOtherOpenOrderSymbols}
-              isCancelAllPending={isCancelAllPending}
-              onCancelAll={() =>
-                confirmCancelAll(
-                  info.openOrderCommandCandidates,
-                  info.openOrderCategory,
-                )
-              }
-              onSetCategory={info.setOpenOrderCategory}
-              onToggleHideOtherSymbols={toggleHideOtherOpenOrderSymbols}
-            />
-          );
         case 'open-orders-empty':
           return (
             <PerpsProEmptyState
@@ -971,22 +984,13 @@ export const PerpsProScene: React.FC<{
       }
     },
     [
-      confirmCancelAll,
       confirmCancelOrder,
-      isCancelAllPending,
       isOrderPending,
       info.allPositionsByCoin,
-      info.hideOtherOpenOrderSymbols,
-      info.openOrderCategory,
-      info.openOrderCommandCandidates,
-      info.openOrderCounts.basic,
-      info.openOrderCounts.conditional,
-      info.setOpenOrderCategory,
       isOpenOrderEditUnavailable,
       openOpenOrderEdit,
       selectCardMarket,
       t,
-      toggleHideOtherOpenOrderSymbols,
       amountUnit,
     ],
   );
@@ -997,6 +1001,45 @@ export const PerpsProScene: React.FC<{
       openOrders: renderOpenOrderRow,
     }),
     [renderAccountRow, renderPositionRow, renderOpenOrderRow],
+  );
+  const infoPinnedHeight =
+    regionAlertExtent +
+    PERPS_PRO_MARKET_BAR_HEIGHT +
+    PERPS_PRO_INFO_TABS_HEIGHT;
+  const linkedOrders = useMemo<PerpsProLinkedOrders<PerpsProSceneRow>>(
+    () => ({
+      controls: {
+        basicCount: info.openOrderCounts.basic,
+        category: info.openOrderCategory,
+        conditionalCount: info.openOrderCounts.conditional,
+        hideOtherSymbols: info.hideOtherOpenOrderSymbols,
+        isCancelAllPending,
+        onCancelAll: () =>
+          confirmCancelAll(
+            info.openOrderCommandCandidates,
+            info.openOrderCategory,
+          ),
+        onToggleHideOtherSymbols: toggleHideOtherOpenOrderSymbols,
+      },
+      onCategoryChange: info.setOpenOrderCategory,
+      rowsByCategory: openOrderRowsByCategory,
+      presentationByCategory: info.openOrderCollectionPresentationByCategory,
+      contentStyleByCategory: openOrderContentStyleByCategory,
+    }),
+    [
+      confirmCancelAll,
+      info.hideOtherOpenOrderSymbols,
+      info.openOrderCategory,
+      info.openOrderCollectionPresentationByCategory,
+      info.openOrderCommandCandidates,
+      info.openOrderCounts.basic,
+      info.openOrderCounts.conditional,
+      info.setOpenOrderCategory,
+      isCancelAllPending,
+      openOrderContentStyleByCategory,
+      openOrderRowsByCategory,
+      toggleHideOtherOpenOrderSymbols,
+    ],
   );
 
   useEffect(() => {
@@ -1129,11 +1172,7 @@ export const PerpsProScene: React.FC<{
                   scene.fundingHistoryEnabled && !isModeSwitching
                 }
                 identityKey={info.accountIdentity ?? 'no-account'}
-                pinnedHeight={
-                  regionAlertExtent +
-                  PERPS_PRO_MARKET_BAR_HEIGHT +
-                  PERPS_PRO_INFO_TABS_HEIGHT
-                }
+                pinnedHeight={infoPinnedHeight}
                 indicatorPosition={infoTabIndicatorPosition}
                 gestureActive={infoScrollBridge.pageGestureActive}
                 rowsByTab={rowsByTab}
@@ -1145,6 +1184,7 @@ export const PerpsProScene: React.FC<{
                 onTabChange={commitInfoTab}
                 ref={infoListRef}
                 renderItemByTab={renderItemByTab}
+                openOrders={linkedOrders}
                 rowStartOffset={contentInsetTop}
                 scrollOffset={sceneController.scrollY}
                 style={styles.scroll}

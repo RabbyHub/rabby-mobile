@@ -1,7 +1,7 @@
 import {
   act,
   fireEvent,
-  render,
+  render as renderNative,
   screen,
   within,
 } from '@testing-library/react-native';
@@ -74,7 +74,8 @@ const mockDismissKeyboardThen = jest.fn((action: () => void) => action());
 const mockConfirmCancelAll = jest.fn();
 const mockConfirmCancelOrder = jest.fn();
 const mockRequestCloseAll = jest.fn();
-const mockIsOrderPending = () => false;
+let mockOrderPending = false;
+const mockIsOrderPending = () => mockOrderPending;
 const mockManageMarginOpen = jest.fn();
 const mockTransferOpen = jest.fn();
 const mockTranslate = (key: string) => key;
@@ -90,6 +91,8 @@ const mockSelectOrderBookPrice = jest.fn();
 const mockGetOrderBookPriceIntent = jest.fn();
 const mockTriggerImpact = jest.fn();
 const mockSetPage = jest.fn();
+const mockPageCommands = jest.fn();
+const mockHorizontalScrollCommands = jest.fn();
 let mockTradeAmountUnit: 'base' | 'quote' = 'quote';
 let mockLeveragePending = false;
 let mockTradeFocusedLeg: 'sl' | 'tp' | null = null;
@@ -114,7 +117,28 @@ jest.mock('react-native-reanimated', () => {
     __esModule: true,
     default: {
       createAnimatedComponent: (Component: React.ComponentType) => Component,
-      ScrollView: ReactNative.ScrollView,
+      // Keep the real horizontal ScrollView and list context; only the native
+      // scroll command is recorded. Tests deliver native completion separately.
+      ScrollView: ReactModule.forwardRef(
+        (props: { testID?: string }, ref: React.Ref<unknown>) => {
+          const nativeRef = ReactModule.useRef(null);
+          ReactModule.useImperativeHandle(
+            ref,
+            () => ({
+              // Preserve the native host boundary required by Animated's
+              // scroll-event attachment; this ref stays stable across renders.
+              getNativeScrollRef: () => nativeRef.current,
+              scrollTo: (options: { x: number; animated: boolean }) =>
+                mockHorizontalScrollCommands(props.testID, options),
+            }),
+            [props.testID],
+          );
+          return ReactModule.createElement(ReactNative.ScrollView, {
+            ...props,
+            ref: nativeRef,
+          });
+        },
+      ),
       Text: ReactNative.Text,
       useSharedValue,
       View: ReactNative.View,
@@ -141,7 +165,14 @@ jest.mock('react-native-reanimated', () => {
         return ref;
       }, []),
     useAnimatedReaction: jest.fn(),
-    useAnimatedScrollHandler: () => jest.fn(),
+    useAnimatedScrollHandler:
+      (handlers: Record<string, (event: object) => void>) =>
+      (event: { nativeEvent?: { testEvent?: string } }) => {
+        const nativeEvent = event.nativeEvent ?? event;
+        const type =
+          'testEvent' in nativeEvent ? nativeEvent.testEvent : undefined;
+        handlers[type ?? 'onScroll']?.(nativeEvent);
+      },
     useDerivedValue: (factory: () => unknown) => ({
       value: factory(),
     }),
@@ -166,11 +197,16 @@ jest.mock('react-native-pager-view', () => {
   return {
     __esModule: true,
     default: ReactModule.forwardRef(
-      (props: object, ref: React.Ref<unknown>) => {
+      (props: { testID?: string }, ref: React.Ref<unknown>) => {
         ReactModule.useImperativeHandle(
           ref,
-          () => ({ setPage: mockSetPage }),
-          [],
+          () => ({
+            setPage: (index: number) => {
+              mockSetPage(index);
+              mockPageCommands(props.testID, index);
+            },
+          }),
+          [props.testID],
         );
         return ReactModule.createElement(View, props);
       },
@@ -271,6 +307,7 @@ jest.mock('react-native-gesture-handler', () => {
     const panGesture: Record<string, jest.Mock> = {};
     [
       'activeOffsetX',
+      'enabled',
       'failOffsetY',
       'manualActivation',
       'maxPointers',
@@ -795,6 +832,10 @@ const { PerpsProTabIndicator } =
   require('../components/common/PerpsProTabIndicator') as typeof import('../components/common/PerpsProTabIndicator');
 const { PerpsProInfoSingleList } =
   require('../components/info/PerpsProInfoSingleList') as typeof import('../components/info/PerpsProInfoSingleList');
+const { LinkedScenePager } =
+  require('@rabby-wallet/rn-collapsible-scene-view/src/LinkedScenePager') as typeof import('@rabby-wallet/rn-collapsible-scene-view/src/LinkedScenePager');
+const { buildLinkedSceneModel } =
+  require('@rabby-wallet/rn-collapsible-scene-view/src/linkedSceneModel') as typeof import('@rabby-wallet/rn-collapsible-scene-view/src/linkedSceneModel');
 const { CollapsibleHeaderLayer, CollapsiblePinnedLayer, SceneList } =
   require('@rabby-wallet/rn-collapsible-scene-view') as typeof import('@rabby-wallet/rn-collapsible-scene-view');
 const { scrollPerpsProTradeAboveKeyboard } =
@@ -828,6 +869,31 @@ const createSceneState = (overrides: Record<string, unknown> = {}) => ({
 
 const createInfoState = (overrides: Record<string, unknown> = {}) => {
   const openOrders = (overrides.openOrders ?? []) as unknown[];
+  const openOrderCategory = (overrides.openOrderCategory ?? 'basic') as
+    | 'basic'
+    | 'conditional';
+  const openOrderCollectionPresentation =
+    overrides.openOrderCollectionPresentation ??
+    (openOrders.length > 0 ? 'populated' : 'unresolved');
+  const otherPresentation =
+    openOrderCollectionPresentation === 'populated'
+      ? 'filteredEmpty'
+      : openOrderCollectionPresentation;
+  const openOrdersByCategory = overrides.openOrdersByCategory ?? {
+    basic: openOrderCategory === 'basic' ? openOrders : [],
+    conditional: openOrderCategory === 'conditional' ? openOrders : [],
+  };
+  const openOrderCollectionPresentationByCategory =
+    overrides.openOrderCollectionPresentationByCategory ?? {
+      basic:
+        openOrderCategory === 'basic'
+          ? openOrderCollectionPresentation
+          : otherPresentation,
+      conditional:
+        openOrderCategory === 'conditional'
+          ? openOrderCollectionPresentation
+          : otherPresentation,
+    };
   const positions = (overrides.positions ?? []) as unknown[];
   // This suite isolates Scene composition. The real selector/store/activity
   // contract is exercised in usePerpsProInfoPanel.integration.test.tsx.
@@ -870,10 +936,10 @@ const createInfoState = (overrides: Record<string, unknown> = {}) => {
     fundingAccountValueReady: false,
     hideOtherOpenOrderSymbols: false,
     hideOtherPositionSymbols: false,
-    openOrderCategory: 'basic',
-    openOrderCollectionPresentation:
-      overrides.openOrderCollectionPresentation ??
-      (openOrders.length > 0 ? 'populated' : 'unresolved'),
+    openOrderCategory,
+    openOrderCollectionPresentation,
+    openOrderCollectionPresentationByCategory,
+    openOrdersByCategory,
     openOrderCommandCandidates: [],
     openOrderCounts: { basic: 0, conditional: 0, unsupported: 0 },
     openOrders,
@@ -904,9 +970,14 @@ const installOptimisticInfoPanelMock = (
     const [activeInfoTab, setActiveInfoTab] = React.useState<
       'positions' | 'openOrders' | 'account'
     >('account');
+    const [openOrderCategory, setOpenOrderCategory] = React.useState<
+      'basic' | 'conditional'
+    >(overrides.openOrderCategory === 'conditional' ? 'conditional' : 'basic');
     return createInfoState({
       ...overrides,
       activeInfoTab,
+      openOrderCategory,
+      setOpenOrderCategory,
       setActiveInfoTab: (tab: typeof activeInfoTab) => {
         setActiveInfoTab(tab);
         persist(tab);
@@ -919,9 +990,15 @@ const installOptimisticInfoPanelMock = (
 type InfoTab = 'positions' | 'openOrders' | 'account';
 const infoTabs: readonly InfoTab[] = ['positions', 'openOrders', 'account'];
 const getInfoList = (tab?: InfoTab) => {
-  const testID = tab
-    ? `perps-pro-info-list-rows-${tab}`
-    : 'perps-pro-info-list';
+  const testID =
+    tab === 'openOrders'
+      ? `perps-pro-open-orders-rows-${
+          screen.UNSAFE_getByType(PerpsProInfoSingleList).props.openOrders
+            .controls.category
+        }`
+      : tab
+      ? `perps-pro-info-list-rows-${tab}`
+      : 'perps-pro-info-list';
   const list = screen
     .UNSAFE_getAllByType(FlatList)
     .find(node => node.props.testID === testID);
@@ -930,32 +1007,104 @@ const getInfoList = (tab?: InfoTab) => {
   }
   return list;
 };
-const getInfoPage = (tab: InfoTab) =>
-  screen.getByTestId(`perps-pro-info-list-page-${tab}`, {
-    includeHiddenElements: true,
-  });
-const pageState = (pageScrollState: 'dragging' | 'settling' | 'idle') =>
-  fireEvent(
-    screen.getByTestId('perps-pro-info-list-pager'),
-    'pageScrollStateChanged',
-    { pageScrollState },
+const INFO_TRACK_WIDTH = 400;
+const getInfoTrack = () => screen.getByTestId('perps-pro-info-list-track');
+const getInfoModel = () =>
+  buildLinkedSceneModel(screen.UNSAFE_getByType(LinkedScenePager).props.pages);
+const getInfoLeaf = (tab: InfoTab, category?: 'basic' | 'conditional') => {
+  const model = getInfoModel();
+  const categoryKey =
+    category ??
+    screen.UNSAFE_getByType(PerpsProInfoSingleList).props.openOrders.controls
+      .category;
+  return model.leaves.find(
+    leaf =>
+      leaf.path.key === tab &&
+      (leaf.path.childKey === undefined || leaf.path.childKey === categoryKey),
+  )!;
+};
+const getInfoPage = (tab: InfoTab, category?: 'basic' | 'conditional') =>
+  screen.getByTestId(
+    `perps-pro-info-list-page-${getInfoLeaf(tab, category).physicalKey}`,
+    {
+      includeHiddenElements: true,
+    },
   );
-const pageScroll = (position: number, offset: number) =>
-  fireEvent(screen.getByTestId('perps-pro-info-list-pager'), 'pageScroll', {
-    position,
-    offset,
-  });
-const pageSelected = (position: number) =>
-  fireEvent(screen.getByTestId('perps-pro-info-list-pager'), 'pageSelected', {
-    position,
-  });
-const settleInfoPage = (tab: InfoTab) => {
-  const position = infoTabs.indexOf(tab);
-  pageScroll(position, 0);
-  pageSelected(position);
-  if (Platform.OS === 'android') {
-    pageState('idle');
+const layoutInfoTrack = () => {
+  if (!screen.queryByTestId('perps-pro-info-list-track')) {
+    return;
   }
+  fireEvent(getInfoTrack(), 'layout', {
+    nativeEvent: {
+      layout: { width: INFO_TRACK_WIDTH, height: 600, x: 0, y: 0 },
+    },
+  });
+  fireEvent(
+    getInfoTrack(),
+    'contentSizeChange',
+    INFO_TRACK_WIDTH * getInfoModel().leaves.length,
+    600,
+  );
+};
+const render = (element: React.ReactElement) => {
+  const result = renderNative(element);
+  layoutInfoTrack();
+  return {
+    ...result,
+    rerender: (next: React.ReactElement) => {
+      result.rerender(next);
+      layoutInfoTrack();
+    },
+  };
+};
+let lastPhysicalProgress = 0;
+const physicalScrollEvent = (
+  testEvent: string,
+  progress = lastPhysicalProgress,
+  velocity = 0,
+) => {
+  lastPhysicalProgress = progress;
+  fireEvent(getInfoTrack(), 'scroll', {
+    nativeEvent: {
+      testEvent,
+      contentOffset: { x: progress * INFO_TRACK_WIDTH, y: 0 },
+      velocity: { x: velocity, y: 0 },
+    },
+  });
+};
+const physicalPageScroll = (progress: number) =>
+  physicalScrollEvent('onScroll', progress);
+const finishPhysicalPage = (progress: number) =>
+  physicalScrollEvent('onMomentumEnd', progress);
+// Legacy outer-tab assertions use logical positions. Map only their event
+// coordinates onto the declared leaves; no production state is assigned.
+const logicalProgressToPhysical = (progress: number) => {
+  const model = getInfoModel();
+  const lower = Math.max(0, Math.min(2, Math.floor(progress)));
+  const upper = Math.min(2, lower + 1);
+  const from = model.roots[lower].lastLeafIndex;
+  const to = model.roots[upper].firstLeafIndex;
+  return from + (to - from) * (progress - lower);
+};
+const pageState = (state: 'dragging' | 'settling' | 'idle') => {
+  if (state === 'dragging') {
+    physicalScrollEvent('onBeginDrag');
+  } else if (state === 'idle') {
+    finishPhysicalPage(lastPhysicalProgress);
+  } else {
+    physicalScrollEvent('onEndDrag', lastPhysicalProgress, 1);
+  }
+};
+const pageScroll = (position: number, offset: number) =>
+  physicalPageScroll(logicalProgressToPhysical(position + offset));
+const animatedPageCommands = () =>
+  mockHorizontalScrollCommands.mock.calls
+    .filter(([, options]) => options.animated)
+    .map(([, options]) => [options.x / INFO_TRACK_WIDTH]);
+const settleInfoPage = (tab: InfoTab) => {
+  const position = getInfoLeaf(tab).index;
+  physicalPageScroll(position);
+  finishPhysicalPage(position);
 };
 
 const createPositionActionsState = (
@@ -1012,6 +1161,7 @@ describe('PerpsProScene market loading states', () => {
       createActiveAssetData(coin, address),
     );
     mockTradeAmountUnit = 'quote';
+    mockOrderPending = false;
     mockLeveragePending = false;
     mockBboSubscriptions.length = 0;
     mockTradeFocusedLeg = null;
@@ -1241,7 +1391,7 @@ describe('PerpsProScene market loading states', () => {
       );
       view.rerender(<PerpsProScene {...props} />);
       settleInfoPage(activeInfoTab as InfoTab);
-      expect(screen.UNSAFE_getAllByType(FlatList)).toHaveLength(4);
+      expect(screen.UNSAFE_getAllByType(FlatList)).toHaveLength(5);
     }
     expect(mockBboSubscriptions).toHaveLength(1);
     expect(mockBboSubscriptions[0].unsubscribe).not.toHaveBeenCalled();
@@ -1310,7 +1460,7 @@ describe('PerpsProScene market loading states', () => {
       screen.UNSAFE_getByType(PerpsProInfoSingleList).props.renderItemByTab
         .positions,
     ).not.toBe(firstRenderer);
-    expect(screen.UNSAFE_getAllByType(FlatList)).toHaveLength(4);
+    expect(screen.UNSAFE_getAllByType(FlatList)).toHaveLength(5);
   });
 
   it.each(['positions', 'openOrders'] as const)(
@@ -1425,6 +1575,7 @@ describe('PerpsProScene market loading states', () => {
       const props = { isModeSwitching: false, onSwitchToSimple: jest.fn() };
       const view = render(<PerpsProScene {...props} />);
       const list = getInfoList(activeInfoTab);
+      const verticalOwner = getInfoList();
       const originalData = list.props.data;
       mockUsePerpsProInfoPanel.mockReturnValue({
         ...info,
@@ -1438,17 +1589,27 @@ describe('PerpsProScene market loading states', () => {
         ...info,
         positionCollectionPresentation: 'populated',
         openOrderCollectionPresentation: 'populated',
+        openOrderCollectionPresentationByCategory: {
+          basic: 'populated',
+          conditional: 'filteredEmpty',
+        },
         positions: [{ key: 'BTC', coin: 'BTC' }],
         openOrders: [{ key: 'order-1', coin: 'BTC' }],
+        openOrdersByCategory: {
+          basic: [{ key: 'order-1', coin: 'BTC' }],
+          conditional: [],
+        },
       });
       view.rerender(<PerpsProScene {...props} />);
-      expect(list.props.data).not.toBe(originalData);
+      expect(getInfoList(activeInfoTab).props.data).not.toBe(originalData);
       expect(
         screen.getByTestId(
           activeInfoTab === 'positions' ? 'position-card' : 'open-order-card',
         ),
       ).toBeTruthy();
-      expect(getInfoList(activeInfoTab)).toBe(list);
+      // Adding the two category leaves replaces the horizontal topology, but
+      // must never replace the only native vertical owner.
+      expect(getInfoList()).toBe(verticalOwner);
     },
   );
 
@@ -1497,7 +1658,7 @@ describe('PerpsProScene market loading states', () => {
     );
 
     expect(screen.getByTestId('perps-pro-info-list')).toBeOnTheScreen();
-    expect(screen.UNSAFE_getAllByType(FlatList)).toHaveLength(4);
+    expect(screen.UNSAFE_getAllByType(FlatList)).toHaveLength(5);
     expect(screen.getByTestId('perps-pro-trade-section')).toBeTruthy();
     expect(screen.getByTestId('perps-pro-positions-controls')).toBeTruthy();
     expect(screen.queryByTestId('account-skeleton')).toBeNull();
@@ -1512,7 +1673,7 @@ describe('PerpsProScene market loading states', () => {
     render(
       <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
     );
-    const pager = screen.getByTestId('perps-pro-info-list-pager');
+    const pager = screen.getByTestId('perps-pro-info-list-track');
     expect(within(pager).queryByTestId('perps-pro-trade-section')).toBeNull();
     expect(within(pager).queryByTestId('perps-pro-list-lead-in')).toBeNull();
     expect(
@@ -1520,7 +1681,8 @@ describe('PerpsProScene market loading states', () => {
         'perps-pro-trade-section',
       ),
     ).toBeOnTheScreen();
-    expect(pager.props.overdrag).toBe(false);
+    expect(pager.props.bounces).toBe(false);
+    expect(pager.props.pagingEnabled).toBe(true);
   });
 
   it('renders the order-book and static trade frame before account trade configuration is ready', () => {
@@ -2783,8 +2945,8 @@ describe('PerpsProScene market loading states', () => {
     // The native list now owns vertical scrolling on Android too; the scene no
     // longer synthesises it with per-frame scrollTo calls.
     expect(scroll.props.scrollEnabled).toBe(true);
-    expect(screen.UNSAFE_getAllByType(FlatList)).toHaveLength(4);
-    expect(screen.getByTestId('perps-pro-info-list-pager')).toBeOnTheScreen();
+    expect(screen.UNSAFE_getAllByType(FlatList)).toHaveLength(5);
+    expect(screen.getByTestId('perps-pro-info-list-track')).toBeOnTheScreen();
     expect(screen.UNSAFE_getAllByType(SceneList)).toHaveLength(1);
     expect(infoTabs.map(tab => getInfoList(tab).props.data)).toHaveLength(3);
     expect(
@@ -2814,18 +2976,15 @@ describe('PerpsProScene market loading states', () => {
       const list = getInfoList();
       const accountRows = getInfoList('account');
       fireEvent.press(screen.getByTestId('perps-pro-info-tab-openOrders'));
-      expect(mockSetPage.mock.calls).toEqual([[1]]);
+      expect(animatedPageCommands()).toEqual([[1]]);
       expect(persist).not.toHaveBeenCalled();
       expect(
         screen.getByTestId('perps-pro-info-tab-account').props
           .accessibilityState,
       ).toEqual({ selected: true });
-      pageScroll(1, 0);
-      pageSelected(1);
-      if (platform === 'android') {
-        expect(persist).not.toHaveBeenCalled();
-        pageState('idle');
-      }
+      physicalPageScroll(getInfoLeaf('openOrders').index);
+      expect(persist).not.toHaveBeenCalled();
+      pageState('idle');
       expect(persist.mock.calls).toEqual([['openOrders']]);
       expect(getInfoList()).toBe(list);
       expect(getInfoList('account')).toBe(accountRows);
@@ -2857,10 +3016,10 @@ describe('PerpsProScene market loading states', () => {
     fireEvent.press(screen.getByTestId('perps-pro-info-tab-openOrders'));
     fireEvent.press(screen.getByTestId('perps-pro-info-tab-account'));
     fireEvent.press(screen.getByTestId('perps-pro-info-tab-positions'));
-    expect(mockSetPage.mock.calls).toEqual([[1]]);
+    expect(animatedPageCommands()).toEqual([[1]]);
     expect(persist).not.toHaveBeenCalled();
     settleInfoPage('openOrders');
-    expect(mockSetPage.mock.calls).toEqual([[1], [0]]);
+    expect(animatedPageCommands()).toEqual([[1], [0]]);
     settleInfoPage('positions');
     expect(getInfoList()).toBe(list);
     expect(infoTabs.map(tab => getInfoList(tab))).toEqual(retainedLists);
@@ -2894,23 +3053,34 @@ describe('PerpsProScene market loading states', () => {
       configurable: true,
       value: 'android',
     });
-    const persist = installOptimisticInfoPanelMock();
+    const persist = installOptimisticInfoPanelMock(jest.fn(), {
+      openOrdersByCategory: {
+        basic: [],
+        conditional: [{ key: 'conditional:BTC:1', coin: 'BTC' }],
+      },
+      openOrderCollectionPresentationByCategory: {
+        basic: 'filteredEmpty',
+        conditional: 'populated',
+      },
+      openOrderCounts: { basic: 0, conditional: 1, unsupported: 0 },
+      allOpenOrdersCount: 1,
+    });
     mockUsePerpsProScene.mockReturnValue(createSceneState());
     render(
       <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
     );
     const list = getInfoList();
     // Mount notifications and repeated boundary notifications are not intent.
-    pageSelected(2);
+    pageScroll(2, 0);
     pageState('idle');
     expect(persist).not.toHaveBeenCalled();
     pageState('dragging');
     pageScroll(1, 0.7);
     expect(
       screen.UNSAFE_getByType(PerpsProTabIndicator).props.position.value,
-    ).toBe(1.7);
+    ).toBeCloseTo(1.7);
     pageState('settling');
-    pageSelected(1);
+    pageScroll(1, 0);
     expect(persist).not.toHaveBeenCalled();
     expect(
       screen.getByTestId('perps-pro-info-tab-account').props.accessibilityState,
@@ -2923,20 +3093,40 @@ describe('PerpsProScene market loading states', () => {
     expect(
       screen.UNSAFE_getByType(PerpsProTabIndicator).props.position.value,
     ).toBe(1);
+    expect(
+      screen.getByTestId('perps-pro-open-orders-tab-conditional').props
+        .accessibilityState.selected,
+    ).toBe(true);
+    // The sibling remains a real stop even when it currently has no rows.
+    pageState('dragging');
+    physicalPageScroll(1.4);
+    expect(
+      screen.UNSAFE_getByType(PerpsProTabIndicator).props.position.value,
+    ).toBe(1);
+    pageState('settling');
+    physicalPageScroll(1);
+    finishPhysicalPage(1);
+    expect(
+      screen.getByTestId('perps-pro-open-orders-tab-basic').props
+        .accessibilityState.selected,
+    ).toBe(true);
+    expect(screen.getByTestId('perps-pro-open-orders-empty')).toBeOnTheScreen();
+    expect(persist.mock.calls).toEqual([['openOrders']]);
     pageState('dragging');
     pageScroll(0, 0.3);
-    pageSelected(0);
+    pageState('settling');
+    pageScroll(0, 0);
     expect(persist.mock.calls).toEqual([['openOrders']]);
     pageScroll(0, 0);
     pageState('idle');
     expect(
       screen.getByTestId('perps-pro-positions-controls'),
     ).toBeOnTheScreen();
-    pageSelected(0);
+    pageScroll(0, 0);
     pageState('idle');
     expect(persist.mock.calls).toEqual([['openOrders'], ['positions']]);
     expect(getInfoList()).toBe(list);
-    expect(mockSetPage).not.toHaveBeenCalled();
+    expect(animatedPageCommands()).toEqual([]);
     expect(
       screen.getByTestId('perps-pro-info-tab-positions').props
         .accessibilityState,
@@ -2945,6 +3135,111 @@ describe('PerpsProScene market loading states', () => {
       screen.UNSAFE_getByType(PerpsProTabIndicator).props.position.value,
     ).toBe(0);
   });
+
+  it.each(['android', 'ios'] as const)(
+    'keeps authoritative-empty Orders selected until a second native swipe on %s',
+    platform => {
+      jest.replaceProperty(Platform, 'OS', platform);
+      const persist = jest.fn();
+      let emptyOrderState = {
+        openOrders: [],
+        openOrdersByCategory: { basic: [], conditional: [] },
+      };
+      // Component coverage with the existing InfoPanel seam: native events
+      // are supplied, so this cannot prove physical hit-testing or gestures.
+      mockUsePerpsProInfoPanel.mockImplementation(function useInfoPanel() {
+        const [activeInfoTab, setActiveInfoTab] =
+          React.useState<InfoTab>('positions');
+        return createInfoState({
+          ...emptyOrderState,
+          activeInfoTab,
+          openOrderCollectionPresentation: 'authoritativeEmpty',
+          setActiveInfoTab: (tab: InfoTab) => {
+            setActiveInfoTab(tab);
+            persist(tab);
+          },
+        });
+      });
+      mockUsePerpsProScene.mockReturnValue(createSceneState());
+      const props = {
+        isModeSwitching: false,
+        onSwitchToSimple: jest.fn(),
+      };
+      const view = render(<PerpsProScene {...props} />);
+      const list = getInfoList();
+      const pager = screen.getByTestId('perps-pro-info-list-track');
+      expect(mockHorizontalScrollCommands).toHaveBeenCalledWith(
+        'perps-pro-info-list-track',
+        { x: 0, animated: false },
+      );
+
+      pageState('dragging');
+      pageScroll(0, 0.6);
+      expect(persist).not.toHaveBeenCalled();
+      pageState('settling');
+      pageScroll(1, 0);
+      pageScroll(1, 0);
+      expect(persist).not.toHaveBeenCalled();
+      pageState('idle');
+
+      const expectOrdersSelected = () => {
+        expect(persist.mock.calls).toEqual([['openOrders']]);
+        for (const tab of infoTabs) {
+          expect(
+            screen.getByTestId(`perps-pro-info-tab-${tab}`).props
+              .accessibilityState.selected,
+          ).toBe(tab === 'openOrders');
+        }
+        expect(
+          screen.getByTestId('perps-pro-open-orders-empty-illustration'),
+        ).toBeOnTheScreen();
+        expect(
+          screen.queryByTestId('perps-pro-open-orders-controls'),
+        ).toBeNull();
+        expect(getInfoPage('openOrders').props.pointerEvents).toBe('auto');
+        expect(getInfoList()).toBe(list);
+        expect(screen.getByTestId('perps-pro-info-list-track')).toBe(pager);
+        expect(
+          screen.UNSAFE_getByType(PerpsProTabIndicator).props.position.value,
+        ).toBe(1);
+        expect(animatedPageCommands()).toEqual([]);
+      };
+      expectOrdersSelected();
+
+      pageScroll(1, 0);
+      pageState('idle');
+      pageScroll(1, 0);
+      expectOrdersSelected();
+
+      view.rerender(<PerpsProScene {...props} />);
+      expectOrdersSelected();
+      emptyOrderState = {
+        openOrders: [],
+        openOrdersByCategory: { basic: [], conditional: [] },
+      };
+      view.rerender(<PerpsProScene {...props} />);
+      pageScroll(1, 0);
+      pageState('idle');
+      expectOrdersSelected();
+
+      pageState('dragging');
+      pageScroll(1, 0.6);
+      expect(persist.mock.calls).toEqual([['openOrders']]);
+      pageState('settling');
+      pageScroll(2, 0);
+      pageScroll(2, 0);
+      pageState('idle');
+      expect(persist.mock.calls).toEqual([['openOrders'], ['account']]);
+      expect(
+        screen.getByTestId('perps-pro-info-tab-account').props
+          .accessibilityState.selected,
+      ).toBe(true);
+      expect(getInfoPage('account').props.pointerEvents).toBe('auto');
+      expect(getInfoList()).toBe(list);
+      expect(screen.getByTestId('perps-pro-info-list-track')).toBe(pager);
+      expect(animatedPageCommands()).toEqual([]);
+    },
+  );
 
   it.each(['android', 'ios'] as const)(
     'does not commit a cancelled native row swipe on %s',
@@ -2963,6 +3258,7 @@ describe('PerpsProScene market loading states', () => {
 
       pageState('dragging');
       pageScroll(1, 0.4);
+      pageState('settling');
       pageScroll(2, 0);
       pageState('idle');
 
@@ -2992,22 +3288,32 @@ describe('PerpsProScene market loading states', () => {
     );
     const list = getInfoList();
     const data = list.props.data;
-    const neighbour = getInfoPage('openOrders');
+    const neighbour = getInfoPage('openOrders', 'conditional');
     const retainedLists = infoTabs.map(tab => getInfoList(tab));
     pageState('dragging');
     pageScroll(1, 0.7);
 
-    expect(getInfoPage('openOrders')).toBe(neighbour);
+    expect(getInfoPage('openOrders', 'conditional')).toBe(neighbour);
     expect(neighbour.props).toMatchObject({
       accessibilityElementsHidden: true,
       importantForAccessibility: 'no-hide-descendants',
       pointerEvents: 'none',
     });
     expect(
-      within(neighbour).getByTestId('perps-pro-open-orders-controls', {
+      screen.getByTestId('perps-pro-open-orders-controls', {
         includeHiddenElements: true,
       }),
     ).toBeTruthy();
+    expect(
+      within(neighbour).queryByTestId('perps-pro-open-orders-controls', {
+        includeHiddenElements: true,
+      }),
+    ).toBeNull();
+    expect(
+      screen.getByTestId('perps-pro-info-list-group-openOrders', {
+        includeHiddenElements: true,
+      }).props.pointerEvents,
+    ).toBe('none');
     expect(getInfoList()).toBe(list);
     expect(infoTabs.map(tab => getInfoList(tab))).toEqual(retainedLists);
     expect(list.props.data).toBe(data);
@@ -3021,9 +3327,10 @@ describe('PerpsProScene market loading states', () => {
     expect(mockExecuteEnableUnified).not.toHaveBeenCalled();
     expect(switchToSimple).not.toHaveBeenCalled();
 
+    pageState('settling');
     pageScroll(2, 0);
     pageState('idle');
-    expect(getInfoPage('openOrders')).toBe(neighbour);
+    expect(getInfoPage('openOrders', 'conditional')).toBe(neighbour);
     expect(screen.queryByTestId('perps-pro-open-orders-controls')).toBeNull();
     expect(persist).not.toHaveBeenCalled();
   });
@@ -3119,7 +3426,7 @@ describe('PerpsProScene market loading states', () => {
     view.rerender(
       <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
     );
-    expect(mockSetPage).toHaveBeenLastCalledWith(0);
+    expect(animatedPageCommands().at(-1)).toEqual([0]);
     settleInfoPage('positions');
     expect(getInfoList()).toBe(list);
     expect(
@@ -3631,6 +3938,264 @@ describe('PerpsProScene market loading states', () => {
     ).toBeTruthy();
     expect(screen.getByText('page.perps.pro.openOrders.empty')).toBeTruthy();
     expect(screen.queryByTestId('perps-pro-open-orders-controls')).toBeNull();
+  });
+
+  it.each(['ios', 'android'] as const)(
+    'settles only the requested Orders pill and keeps Cancel All on all coins of the committed category on %s',
+    platform => {
+      jest.replaceProperty(Platform, 'OS', platform);
+      const basic = {
+        key: 'basic:BTC:1',
+        coin: 'BTC',
+        oid: 1,
+        category: 'basic',
+      };
+      const conditional = {
+        key: 'conditional:BTC:2',
+        coin: 'BTC',
+        oid: 2,
+        category: 'conditional',
+      };
+      const allBasic = [
+        basic,
+        { ...basic, key: 'basic:ETH:3', coin: 'ETH', oid: 3 },
+      ];
+      const allConditional = [
+        conditional,
+        { ...conditional, key: 'conditional:ETH:4', coin: 'ETH', oid: 4 },
+      ];
+      const byCategory = { basic: [basic], conditional: [conditional] };
+      const committed = jest.fn();
+      mockUsePerpsProScene.mockReturnValue(createSceneState());
+      mockUsePerpsProInfoPanel.mockImplementation(function useInfo() {
+        const [category, setCategory] = React.useState<'basic' | 'conditional'>(
+          'basic',
+        );
+        return createInfoState({
+          activeInfoTab: 'openOrders',
+          openOrderCategory: category,
+          openOrders: byCategory[category],
+          openOrdersByCategory: byCategory,
+          openOrderCollectionPresentationByCategory: {
+            basic: 'populated',
+            conditional: 'populated',
+          },
+          openOrderCounts: { basic: 2, conditional: 2, unsupported: 1 },
+          allOpenOrdersCount: 4,
+          hideOtherOpenOrderSymbols: true,
+          openOrderCommandCandidates:
+            category === 'basic' ? allBasic : allConditional,
+          setOpenOrderCategory: (next: typeof category) => {
+            committed(next);
+            setCategory(next);
+          },
+        });
+      });
+      render(
+        <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+      );
+      const track = getInfoTrack();
+      const basicList = getInfoList('openOrders');
+      expect(screen.UNSAFE_getAllByType(SceneList)).toHaveLength(1);
+      expect(screen.UNSAFE_getAllByType(FlatList)).toHaveLength(5);
+      expect(
+        screen.getAllByTestId('perps-pro-open-orders-controls'),
+      ).toHaveLength(1);
+      expect(
+        within(getInfoPage('openOrders', 'basic')).queryByTestId(
+          'perps-pro-open-orders-controls',
+        ),
+      ).toBeNull();
+      fireEvent.press(
+        within(screen.getByTestId('perps-pro-open-orders-controls')).getByRole(
+          'button',
+        ),
+      );
+      expect(mockConfirmCancelAll).toHaveBeenLastCalledWith(allBasic, 'basic');
+      mockConfirmCancelAll.mockClear();
+      fireEvent.press(
+        screen.getByTestId('perps-pro-open-orders-tab-conditional'),
+      );
+      expect(animatedPageCommands()).toEqual([[2]]);
+      expect(committed).not.toHaveBeenCalled();
+      expect(
+        screen.getByTestId('perps-pro-open-orders-tab-basic', {
+          includeHiddenElements: true,
+        }).props.accessibilityState.selected,
+      ).toBe(true);
+      fireEvent.press(
+        within(
+          screen.getByTestId('perps-pro-open-orders-controls', {
+            includeHiddenElements: true,
+          }),
+        ).getByRole('button', { includeHiddenElements: true }),
+      );
+      expect(mockConfirmCancelAll).not.toHaveBeenCalled();
+      expect(getInfoPage('openOrders', 'conditional').props.pointerEvents).toBe(
+        'none',
+      );
+      physicalPageScroll(2);
+      expect(committed).not.toHaveBeenCalled();
+      finishPhysicalPage(2);
+      expect(committed).toHaveBeenCalledTimes(1);
+      expect(committed).toHaveBeenCalledWith('conditional');
+      expect(
+        screen.getByTestId('perps-pro-open-orders-tab-conditional').props
+          .accessibilityState.selected,
+      ).toBe(true);
+      fireEvent.press(
+        within(screen.getByTestId('perps-pro-open-orders-controls')).getByRole(
+          'button',
+        ),
+      );
+      expect(mockConfirmCancelAll).toHaveBeenLastCalledWith(
+        allConditional,
+        'conditional',
+      );
+      expect(screen.UNSAFE_getAllByType(FlatList)).toContain(basicList);
+      expect(getInfoPage('openOrders', 'conditional').props.pointerEvents).toBe(
+        'auto',
+      );
+      expect(getInfoTrack()).toBe(track);
+    },
+  );
+
+  it('catches up retained Orders callbacks, pending state, units and unfiltered edit position without replacing the data array', () => {
+    jest.replaceProperty(Platform, 'OS', 'ios');
+    const basic = {
+      key: 'basic:BTC:1',
+      coin: 'BTC',
+      oid: 1,
+      category: 'basic',
+    };
+    const conditional = {
+      key: 'conditional:ETH:2',
+      coin: 'ETH',
+      oid: 2,
+      category: 'conditional',
+      side: 'sell',
+      reduceOnly: true,
+      editKind: 'triggerMarket',
+    };
+    const byCategory = { basic: [basic], conditional: [conditional] };
+    const firstPosition = { coin: 'ETH', direction: 'long', baseSize: '1' };
+    const nextPosition = { ...firstPosition, baseSize: '2' };
+    const firstOpen = jest.fn();
+    const latestOpen = jest.fn();
+    const info = createInfoState({
+      activeInfoTab: 'openOrders',
+      openOrderCategory: 'basic',
+      openOrders: byCategory.basic,
+      openOrdersByCategory: byCategory,
+      openOrderCollectionPresentationByCategory: {
+        basic: 'populated',
+        conditional: 'populated',
+      },
+      allPositionsByCoin: new Map([['ETH', firstPosition]]),
+      positions: [],
+      hideOtherPositionSymbols: true,
+      openOrderCounts: { basic: 1, conditional: 1, unsupported: 0 },
+    });
+    mockUsePerpsProScene.mockReturnValue(createSceneState());
+    mockUsePerpsProInfoPanel.mockReturnValue(info);
+    const editor = mockUsePerpsProOpenOrderEdit();
+    mockUsePerpsProOpenOrderEdit.mockReturnValue({
+      ...editor,
+      open: firstOpen,
+    });
+    const props = { isModeSwitching: false, onSwitchToSimple: jest.fn() };
+    const view = render(<PerpsProScene {...props} />);
+    const conditionalList = screen
+      .UNSAFE_getAllByType(FlatList)
+      .find(
+        node => node.props.testID === 'perps-pro-open-orders-rows-conditional',
+      )!;
+    const data = conditionalList.props.data;
+    mockOpenOrderCardProps.mockClear();
+    mockOrderPending = true;
+    mockTradeAmountUnit = 'base';
+    mockUsePerpsProInfoPanel.mockReturnValue({
+      ...info,
+      allPositionsByCoin: new Map([['ETH', nextPosition]]),
+    });
+    mockUsePerpsProOpenOrderEdit.mockReturnValue({
+      ...editor,
+      open: latestOpen,
+    });
+    view.rerender(<PerpsProScene {...props} />);
+    expect(
+      mockOpenOrderCardProps.mock.calls.some(
+        ([value]) => value.order === conditional,
+      ),
+    ).toBe(false);
+    expect(conditionalList.props.data).toBe(data);
+    fireEvent.press(
+      screen.getByTestId('perps-pro-open-orders-tab-conditional'),
+    );
+    const latest = mockOpenOrderCardProps.mock.calls
+      .map(([value]) => value)
+      .findLast(value => value.order === conditional);
+    expect(latest).toMatchObject({
+      amountUnit: 'base',
+      cancelPending: true,
+      editEnabled: true,
+    });
+    expect(conditionalList.props.data).toBe(data);
+    expect(firstOpen).not.toHaveBeenCalled();
+    expect(latestOpen).not.toHaveBeenCalled();
+    expect(mockConfirmCancelOrder).not.toHaveBeenCalled();
+    physicalPageScroll(2);
+    finishPhysicalPage(2);
+    act(() => latest.onEdit(conditional));
+    expect(latestOpen).toHaveBeenCalledWith(conditional, nextPosition);
+    act(() => latest.onCancel(conditional));
+    expect(mockConfirmCancelOrder).toHaveBeenCalledWith(conditional);
+  });
+
+  it('remounts the flat track on account change while preserving the committed pill and rejecting old native callbacks', () => {
+    jest.replaceProperty(Platform, 'OS', 'ios');
+    const committed = jest.fn();
+    const info = createInfoState({
+      activeInfoTab: 'openOrders',
+      openOrderCategory: 'conditional',
+      accountIdentity: 'account-a',
+      setOpenOrderCategory: committed,
+    });
+    mockUsePerpsProScene.mockReturnValue(createSceneState());
+    mockUsePerpsProInfoPanel.mockReturnValue(info);
+    const props = { isModeSwitching: false, onSwitchToSimple: jest.fn() };
+    const view = render(<PerpsProScene {...props} />);
+    const outer = getInfoTrack();
+    const staleScroll = outer.props.onScroll;
+    mockUsePerpsProInfoPanel.mockReturnValue({
+      ...info,
+      accountIdentity: 'account-b',
+    });
+    view.rerender(<PerpsProScene {...props} />);
+    expect(screen.getByTestId('perps-pro-info-list-track')).not.toBe(outer);
+    expect(mockHorizontalScrollCommands).toHaveBeenLastCalledWith(
+      'perps-pro-info-list-track',
+      { x: 2 * INFO_TRACK_WIDTH, animated: false },
+    );
+    act(() => {
+      staleScroll({
+        nativeEvent: {
+          testEvent: 'onBeginDrag',
+          contentOffset: { x: INFO_TRACK_WIDTH, y: 0 },
+        },
+      });
+      staleScroll({
+        nativeEvent: {
+          testEvent: 'onMomentumEnd',
+          contentOffset: { x: INFO_TRACK_WIDTH, y: 0 },
+        },
+      });
+    });
+    expect(committed).not.toHaveBeenCalled();
+    expect(
+      screen.getByTestId('perps-pro-open-orders-tab-conditional').props
+        .accessibilityState.selected,
+    ).toBe(true);
   });
 
   it('keeps controls when a filter has no visible rows but the source is not empty', () => {

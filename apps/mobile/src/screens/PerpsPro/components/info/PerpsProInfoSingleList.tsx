@@ -1,9 +1,17 @@
 import type { PerpsProInfoTab } from '@/core/services/perpsService';
 import {
-  RetainedScenePagerList,
-  type RetainedScenePagerListHandle,
-} from '@/components/RetainedScenePagerList/RetainedScenePagerList';
-import React, { useCallback, useMemo } from 'react';
+  LinkedScenePagerList,
+  type LinkedScenePagerListHandle,
+} from '@/components/RetainedScenePagerList/LinkedScenePagerList';
+import { RetainedRows } from '@/components/RetainedScenePagerList/RetainedScenePagerBody';
+import type {
+  LinkedScenePage,
+  LinkedScenePath,
+  LinkedScenePageContext,
+  LinkedSceneGroupContext,
+  LinkedScenePagingMode,
+} from '@rabby-wallet/rn-collapsible-scene-view';
+import React, { memo, useCallback, useMemo, useRef } from 'react';
 import { StyleSheet } from 'react-native';
 import type {
   Animated,
@@ -14,25 +22,32 @@ import type {
   ViewStyle,
 } from 'react-native';
 import type { AnimatedRef, SharedValue } from 'react-native-reanimated';
-import { PERPS_PRO_INFO_TABS } from './perpsProInfoTabOrder';
+import type { PerpsProCollectionPresentation } from '../../model/infoPanelPresentation';
+import { PerpsProOpenOrdersControls } from '../open-orders/PerpsProOpenOrdersControls';
 
-const getPageContentStyle = (
-  style: StyleProp<ViewStyle>,
-  rowStartOffset: number,
-): ViewStyle => {
-  const wholeContent = StyleSheet.flatten(style);
-  return {
-    ...wholeContent,
-    minHeight: Math.max(
-      0,
-      (typeof wholeContent?.minHeight === 'number'
-        ? wholeContent.minHeight
-        : 0) - rowStartOffset,
-    ),
-  };
+type Category = 'basic' | 'conditional';
+type ControlsProps = React.ComponentProps<typeof PerpsProOpenOrdersControls>;
+export type PerpsProLinkedOrders<Row extends { key: string }> = {
+  controls: Omit<ControlsProps, 'onSetCategory'>;
+  onCategoryChange: (category: Category) => void;
+  rowsByCategory: Record<Category, readonly Row[]>;
+  presentationByCategory: Record<Category, PerpsProCollectionPresentation>;
+  contentStyleByCategory: Record<Category, StyleProp<ViewStyle>>;
 };
 
-export type PerpsProInfoSingleListHandle = RetainedScenePagerListHandle;
+const SIMPLE_PAGES: readonly LinkedScenePage[] = [
+  { key: 'positions' },
+  { key: 'openOrders' },
+  { key: 'account' },
+];
+const GROUPED_PAGES: readonly LinkedScenePage[] = [
+  { key: 'positions' },
+  { key: 'openOrders', children: [{ key: 'basic' }, { key: 'conditional' }] },
+  { key: 'account' },
+];
+const ignoreMeasure = () => {};
+
+export type PerpsProInfoSingleListHandle = LinkedScenePagerListHandle;
 
 type Props<Row extends { key: string }> = {
   activeTab: PerpsProInfoTab;
@@ -51,15 +66,15 @@ type Props<Row extends { key: string }> = {
   onTabChange: (tab: PerpsProInfoTab) => void;
   ref?: React.Ref<PerpsProInfoSingleListHandle>;
   renderItemByTab: Record<PerpsProInfoTab, ListRenderItem<Row>>;
+  openOrders: PerpsProLinkedOrders<Row>;
+  pagingMode?: LinkedScenePagingMode;
   rowStartOffset: number;
   scrollOffset: SharedValue<number>;
   style?: StyleProp<ViewStyle>;
   testID?: string;
 };
 
-/** One persistent native vertical owner, with retained virtualized row pages.
- * Header/trade stay outside the native horizontal pager.
- */
+/** One vertical owner and one business page tree, independent of presentation. */
 export const PerpsProInfoSingleList = <Row extends { key: string }>({
   activeTab,
   contentStyleByTab,
@@ -77,59 +92,180 @@ export const PerpsProInfoSingleList = <Row extends { key: string }>({
   onTabChange,
   ref,
   renderItemByTab,
+  openOrders,
+  pagingMode = 'flat',
   rowStartOffset,
   scrollOffset,
   style,
-  testID,
+  testID = 'perps-pro-info-list',
 }: Props<Row>) => {
-  const changeTab = useCallback(
-    (key: string) => onTabChange(key as PerpsProInfoTab),
-    [onTabChange],
-  );
-  const positionsStyle = useMemo(
-    () => getPageContentStyle(contentStyleByTab.positions, rowStartOffset),
-    [contentStyleByTab.positions, rowStartOffset],
-  );
-  const ordersStyle = useMemo(
-    () => getPageContentStyle(contentStyleByTab.openOrders, rowStartOffset),
-    [contentStyleByTab.openOrders, rowStartOffset],
-  );
-  const accountStyle = useMemo(
-    () => getPageContentStyle(contentStyleByTab.account, rowStartOffset),
-    [contentStyleByTab.account, rowStartOffset],
-  );
-  const pageStyleByKey = useMemo(
+  const pagerRef = useRef<LinkedScenePagerListHandle>(null);
+  React.useImperativeHandle(
+    ref,
     () => ({
-      positions: positionsStyle,
-      openOrders: ordersStyle,
-      account: accountStyle,
+      scrollTo: (offset, animated) =>
+        pagerRef.current?.scrollTo(offset, animated),
+      scrollToOffset: (offset, animated) =>
+        pagerRef.current?.scrollToOffset(offset, animated),
+      selectPath: path => pagerRef.current?.selectPath(path),
+      // Clicking the parent restores the remembered category. Swiping continues
+      // to use adjacency on the physical track, not this remembered preference.
+      selectTab: key =>
+        pagerRef.current?.selectPath({
+          key,
+          ...(key === 'openOrders'
+            ? { childKey: openOrders.controls.category }
+            : {}),
+        }),
     }),
-    [positionsStyle, ordersStyle, accountStyle],
+    [openOrders.controls.category],
+  );
+  // Only authoritative emptiness of the whole collection removes the category
+  // UI. A zero-count category or a symbol filter never removes a physical leaf.
+  const grouped =
+    openOrders.presentationByCategory.basic !== 'authoritativeEmpty' ||
+    openOrders.presentationByCategory.conditional !== 'authoritativeEmpty';
+  const activePath = useMemo(
+    () => ({
+      key: activeTab,
+      ...(activeTab === 'openOrders' && grouped
+        ? { childKey: openOrders.controls.category }
+        : {}),
+    }),
+    [activeTab, grouped, openOrders.controls.category],
+  );
+  const { onCategoryChange } = openOrders;
+  const changePath = useCallback(
+    (path: LinkedScenePath) => {
+      if (
+        path.key === 'openOrders' &&
+        (path.childKey === 'basic' || path.childKey === 'conditional')
+      ) {
+        onCategoryChange(path.childKey);
+      }
+      onTabChange(path.key as PerpsProInfoTab);
+    },
+    [onTabChange, onCategoryChange],
+  );
+  const renderLeaf = useCallback(
+    (path: LinkedScenePath, context: LinkedScenePageContext) => {
+      const tab = path.key as PerpsProInfoTab;
+      const category =
+        path.childKey === 'conditional' ? 'conditional' : 'basic';
+      const isOrderChild = tab === 'openOrders' && path.childKey !== undefined;
+      return (
+        <LinkedPerpsRows
+          data={
+            isOrderChild ? openOrders.rowsByCategory[category] : rowsByTab[tab]
+          }
+          renderItem={renderItemByTab[tab]}
+          active={context.active}
+          identityKey={identityKey}
+          contentStyle={
+            isOrderChild
+              ? openOrders.contentStyleByCategory[category]
+              : contentStyleByTab[tab]
+          }
+          contentTop={context.contentTop}
+          minimumPageHeight={context.minimumPageHeight}
+          testID={
+            tab === 'openOrders'
+              ? `perps-pro-open-orders-rows-${
+                  isOrderChild ? category : openOrders.controls.category
+                }`
+              : `${testID}-rows-${tab}`
+          }
+        />
+      );
+    },
+    [
+      contentStyleByTab,
+      identityKey,
+      openOrders.contentStyleByCategory,
+      openOrders.controls.category,
+      openOrders.rowsByCategory,
+      renderItemByTab,
+      rowsByTab,
+      testID,
+    ],
+  );
+  const renderGroupHeader = useCallback(
+    (key: string, context: LinkedSceneGroupContext) =>
+      key === 'openOrders' ? (
+        <PerpsProOpenOrdersControls
+          {...openOrders.controls}
+          category={
+            context.childKey === 'conditional' ? 'conditional' : 'basic'
+          }
+          onSetCategory={context.selectChild}
+        />
+      ) : null,
+    [openOrders.controls],
   );
 
   return (
-    <RetainedScenePagerList
+    <LinkedScenePagerList
       listHeader={listHeader}
-      activeKey={activeTab}
+      pages={grouped ? GROUPED_PAGES : SIMPLE_PAGES}
+      activePath={activePath}
+      pagingMode={pagingMode}
       activityEnabled={activityEnabled}
-      identityKey={identityKey}
-      pageStyleByKey={pageStyleByKey}
       pinnedHeight={pinnedHeight}
       indicatorPosition={indicatorPosition}
       gestureActive={gestureActive}
-      dataByKey={rowsByTab}
-      keys={PERPS_PRO_INFO_TABS}
-      onTabChange={changeTab}
-      rowStartOffset={rowStartOffset}
+      onPathChange={changePath}
+      contentTop={rowStartOffset}
       scrollOffset={scrollOffset}
       nativeRef={nativeRef}
       nativeScrollY={nativeScrollY}
       onContentSizeChange={onContentSizeChange}
       onLayout={onLayout}
-      ref={ref}
-      renderItemByKey={renderItemByTab}
+      ref={pagerRef}
+      renderLeaf={renderLeaf}
+      renderGroupHeader={renderGroupHeader}
       style={style}
       testID={testID}
     />
   );
 };
+
+function LinkedPerpsRowsContent<Row extends { key: string }>({
+  contentStyle,
+  contentTop,
+  minimumPageHeight,
+  ...props
+}: {
+  data: readonly Row[];
+  renderItem: ListRenderItem<Row>;
+  active: boolean;
+  identityKey: string;
+  contentStyle: StyleProp<ViewStyle>;
+  contentTop: number;
+  minimumPageHeight: number;
+  testID: string;
+}) {
+  const pageStyle = useMemo(() => {
+    const whole = StyleSheet.flatten(contentStyle);
+    return {
+      ...whole,
+      minHeight: Math.max(
+        minimumPageHeight,
+        (typeof whole?.minHeight === 'number' ? whole.minHeight : 0) -
+          contentTop,
+      ),
+    };
+  }, [contentStyle, contentTop, minimumPageHeight]);
+  return (
+    <RetainedRows
+      {...props}
+      pageStyle={pageStyle}
+      top={0}
+      index={0}
+      measure={ignoreMeasure}
+    />
+  );
+}
+
+const LinkedPerpsRows = memo(
+  LinkedPerpsRowsContent,
+) as typeof LinkedPerpsRowsContent;
