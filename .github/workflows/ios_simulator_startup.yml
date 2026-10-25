@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - 'publish/*'
+      # Temporary: validate this workflow on CI before merging it into develop.
+      - 'feat/ios-simulator-startup-ci'
   workflow_dispatch:
     inputs:
       macos_machine_location:
