@@ -59,6 +59,7 @@ jobs:
     runs-on: ${{ needs.matrix.outputs.build_runner }}
     timeout-minutes: 120
     env:
+      NODE_OPTIONS: '--max_old_space_size=8192'
       REALLY_UPLOAD: 'false'
       SKIP_NOTIFY_LARK: 'true'
       SENTRY_DISABLE_AUTO_UPLOAD: 'true'
