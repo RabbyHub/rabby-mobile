@@ -43,6 +43,13 @@ export const DevUISwipableSubScreen = registerAppScreen<
   name: TESTKITS_PRELOAD_SCREENS.DevUISwipableSubScreen,
 });
 
+export const DevUIRootSubScreen = registerAppScreen<
+  typeof import('@/screens/Testkits/DevUIRootSubScreen').default
+>({
+  loader: () => import('@/screens/Testkits/DevUIRootSubScreen'),
+  name: TESTKITS_PRELOAD_SCREENS.DevUIRootSubScreen,
+});
+
 export const DevUIToast = registerAppScreen<
   typeof import('@/screens/Testkits/DevUIToast').default
 >({

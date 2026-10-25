@@ -37,6 +37,12 @@ export {
   useScenePagerGroupPreview,
 } from './ScenePagerGroup';
 export type { LinkedPagerTrack } from './linkedPagerMath';
+export {
+  RootScenePager,
+  RootScenePagerGestureBlock,
+  type RootScenePagerProps,
+  type RootScenePageContext,
+} from './RootScenePager';
 export { calculateScenePagerPreviewWindow } from './previewWindow';
 export {
   LinkedScenePager,

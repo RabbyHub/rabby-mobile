@@ -181,6 +181,38 @@ An established viewport-width change cancels and remounts the horizontal
 owner at the last committed path, retaining group memory and the external
 vertical list; in-flight pixel coordinates are never replayed at the new width.
 
+## Root full-screen pages
+
+`RootScenePager` is a separate full-viewport horizontal track for independent
+screens such as Swap and Bridge. It does not use the collapsible provider,
+add a vertical scroller, align offsets, or join an inner linked-page sequence.
+Each retained keyed child keeps its own native vertical surface and form state.
+
+- `requestedKey` is a changed-value command; `onSettled(key)` publishes only
+  the completed selection. Echoing that selection does not restart motion.
+- `renderPage(key, {selected, visible, interactive})` separates business activity
+  from preview visibility. The source remains selected during a drag; a cancelled
+  preview does not activate the target. Only the settled page is interactive.
+- Motion and snapping stay on the UI thread. JS receives transition boundaries,
+  not frame-by-frame position updates. A new drag can grab fractional motion,
+  and a command received during a touch is applied after that touch finishes.
+- Width changes cancel old pixel geometry without changing child keys. Keep keys
+  stable and unique. The host is responsible for deciding when expensive child
+  content mounts; retention alone does not pause subscriptions or effects.
+- `enabled` gates horizontal gestures, not route commands. The host must gate
+  gestures for focus, keyboard, and blocking presentation as appropriate.
+
+Wrap sliders, text-selection surfaces, charts, or an inner pager in
+`RootScenePagerGestureBlock`. The root checks the selected page's native bounds
+at DOWN, before a competing JS responder can lose arbitration. Unmeasured
+selected-page exclusions fail closed. Outside a root it is an ordinary View,
+with the same style/layout props. This is gesture isolation, not business-state
+or subscription management.
+
+The app's Root SubScreen playground exercises independent scrolling, retained
+inputs, slider exclusion and preview motion. Jest covers motion/state contracts;
+native gesture arbitration and frame time require device validation.
+
 ## Status
 
 - v0: provider, shared scroll value, per-tab handles, the three layer
@@ -188,3 +220,4 @@ vertical list; in-flight pixel coordinates are never replayed at the new width.
 - v1: `SceneList`, `pinTop` for stacked pinned layers, shared-offset activation.
 - v2: retained two-level `LinkedScenePager` with flat/nested gesture routing,
   nested presentation and one shared group header.
+- v3 prototype: independent `RootScenePager` and native-measured child exclusions.

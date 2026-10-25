@@ -25,6 +25,7 @@ import TokenSelect from '@/screens/Swap/components/TokenSelect';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { Skeleton, Slider } from '@rneui/themed';
+import { RootScenePagerGestureBlock } from '@rabby-wallet/rn-collapsible-scene-view';
 import LinearGradient from 'react-native-linear-gradient';
 import RcIconWalletCC from '@/assets2024/icons/swap/wallet-cc.svg';
 import type { Account } from '@/core/startupServices/preference';
@@ -202,7 +203,7 @@ const BridgeTokenInner = ({
           // supportChains={supportedChains}
         />
         {isFromToken && !hiddenSlider && (
-          <View style={styles.sliderContainer}>
+          <RootScenePagerGestureBlock style={styles.sliderContainer}>
             <Slider
               key={`${token?.id}-${token?.chain}`}
               allowTouchTrack={!disabled}
@@ -234,7 +235,7 @@ const BridgeTokenInner = ({
               visible={isSliderBubbleVisible}
             />
             <Text style={styles.sliderValue}>{slider}%</Text>
-          </View>
+          </RootScenePagerGestureBlock>
         )}
       </View>
 

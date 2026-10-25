@@ -16,6 +16,7 @@ import {
 } from '@/utils/number';
 import BigNumber from 'bignumber.js';
 import { Slider } from '@rneui/themed';
+import { RootScenePagerGestureBlock } from '@rabby-wallet/rn-collapsible-scene-view';
 
 import type { TokenSelectInst } from './TokenSelect';
 import TokenSelect from './TokenSelect';
@@ -175,7 +176,7 @@ const SwapTokenItemInner = (props: SwapTokenItemProps) => {
           {isFrom ? t('page.swap.from') : t('page.swap.to')}
         </Text>
         {isFrom && (
-          <View style={styles.sliderContainer}>
+          <RootScenePagerGestureBlock style={styles.sliderContainer}>
             <Slider
               key={`${token?.id}-${token?.chain}`}
               allowTouchTrack={!disabled}
@@ -207,7 +208,7 @@ const SwapTokenItemInner = (props: SwapTokenItemProps) => {
               visible={isSliderBubbleVisible}
             />
             <Text style={styles.sliderValue}>{slider}%</Text>
-          </View>
+          </RootScenePagerGestureBlock>
         )}
       </View>
 

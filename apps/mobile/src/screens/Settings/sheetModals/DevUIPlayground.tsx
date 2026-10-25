@@ -130,6 +130,17 @@ export default function DevUIPlaygroundModal({
         },
       },
       {
+        label: 'Root SubScreen',
+        icon: <RcCode style={styles.labelIcon} />,
+        onPress: () => {
+          navigation.dispatch(
+            StackActions.push(RootNames.StackTestkits, {
+              screen: RootNames.DevUIRootSubScreen,
+            }),
+          );
+        },
+      },
+      {
         label: 'Form',
         icon: <RcCode style={styles.labelIcon} />,
         onPress: () => {
