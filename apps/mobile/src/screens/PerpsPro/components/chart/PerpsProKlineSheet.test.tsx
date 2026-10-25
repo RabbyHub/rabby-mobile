@@ -506,6 +506,64 @@ describe('PerpsProKlineSheet', () => {
     expect(mockChartUnmount).not.toHaveBeenCalled();
   });
 
+  it('retains the native host with all Root-inactive gates off and releases Back handling', () => {
+    const remove = jest.fn();
+    const backHandler = jest
+      .spyOn(BackHandler, 'addEventListener')
+      .mockReturnValue({ remove });
+    const onClose = jest.fn();
+    const element = (active: boolean, currentMarket = market) => (
+      <PerpsProKlineSheet
+        enabled={active}
+        market={currentMarket}
+        onClose={onClose}
+        preloadEnabled={active}
+        publicationEnabled={active}
+        visible={active}
+      />
+    );
+    try {
+      const view = render(element(true));
+      const host = screen.getByTestId('bottom-sheet');
+      expect(backHandler).toHaveBeenCalledTimes(1);
+      view.rerender(element(false));
+      expect(screen.getByTestId('bottom-sheet')).toBe(host);
+      expect(mockUsePerpsProKline).toHaveBeenLastCalledWith({
+        coin: 'BTC',
+        enabled: false,
+        preloadEnabled: false,
+        publicationEnabled: false,
+      });
+      expect(mockSheetClose).toHaveBeenCalledTimes(1);
+      expect(remove).toHaveBeenCalledTimes(1);
+      act(() => mockModalProps.mock.lastCall?.[0].onChange(-1));
+      expect(onClose).not.toHaveBeenCalled();
+      expect(mockChartMount).toHaveBeenCalledTimes(1);
+      expect(mockChartUnmount).not.toHaveBeenCalled();
+
+      const nextMarket = {
+        ...market,
+        canonicalCoin: 'ETH',
+        marketKey: 'hyperliquid::ETH',
+      };
+      view.rerender(element(false, nextMarket));
+      // The shell survives, but the existing market-key boundary must still
+      // replace the chart; retention must not pin an old market identity.
+      expect(screen.getByTestId('bottom-sheet')).toBe(host);
+      expect(mockChartMount).toHaveBeenCalledTimes(2);
+      expect(mockChartUnmount).toHaveBeenCalledTimes(1);
+      expect(backHandler).toHaveBeenCalledTimes(1);
+      view.rerender(element(true, nextMarket));
+      expect(backHandler).toHaveBeenCalledTimes(2);
+      expect(mockChartMount).toHaveBeenCalledTimes(2);
+      view.unmount();
+      expect(remove).toHaveBeenCalledTimes(2);
+      expect(mockChartUnmount).toHaveBeenCalledTimes(2);
+    } finally {
+      backHandler.mockRestore();
+    }
+  });
+
   it('preserves an initially hidden index and closes without remounting the chart', () => {
     render(
       <PerpsProKlineSheet

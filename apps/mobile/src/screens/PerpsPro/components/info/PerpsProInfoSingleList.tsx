@@ -208,6 +208,7 @@ export const PerpsProInfoSingleList = <Row extends { key: string }>({
       listHeader={listHeader}
       pages={grouped ? GROUPED_PAGES : SIMPLE_PAGES}
       activePath={activePath}
+      protectRootGesture
       pagingMode={pagingMode}
       activityEnabled={activityEnabled}
       pinnedHeight={pinnedHeight}

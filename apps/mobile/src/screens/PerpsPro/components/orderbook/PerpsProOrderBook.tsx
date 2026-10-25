@@ -4,7 +4,13 @@ import type { PerpsRealtimeStatus } from '@/hooks/perps/subscriptions/usePerpsFa
 import type { PerpsLatestTrade } from '@/hooks/perps/subscriptions/usePerpsLatestTrade';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { Pressable, View, type ViewStyle } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
@@ -135,6 +141,7 @@ const PerpsProOrderBookSide = React.memo(function PerpsProOrderBookSide({
 });
 
 export const PerpsProOrderBook: React.FC<{
+  sceneActive?: boolean;
   amountUnit?: PerpsProTradeAmountUnit;
   bookIdentity: string;
   book: ProcessedPerpsOrderBook;
@@ -162,6 +169,7 @@ export const PerpsProOrderBook: React.FC<{
   serverClock: PerpsServerClockSample | null;
   tickOptions: PerpsTickOption[];
 }> = React.memo(function PerpsProOrderBook({
+  sceneActive = true,
   amountUnit = 'quote',
   bookIdentity,
   book,
@@ -190,6 +198,13 @@ export const PerpsProOrderBook: React.FC<{
   );
   const [mode, setMode] = useState<PerpsOrderBookMode>('both');
   const [precisionOpen, setPrecisionOpen] = useState(false);
+  const sceneActiveRef = useRef(sceneActive);
+  sceneActiveRef.current = sceneActive;
+  useLayoutEffect(() => {
+    if (!sceneActive) {
+      setPrecisionOpen(false);
+    }
+  }, [sceneActive]);
   const layout = getPerpsOrderBookLayout({
     containerHeight: height,
     mode,
@@ -446,8 +461,14 @@ export const PerpsProOrderBook: React.FC<{
           <Pressable
             accessibilityLabel={t('page.perps.pro.orderBook.priceAggregation')}
             accessibilityRole="button"
-            disabled={!selectedTickOption || tickOptions.length === 0}
-            onPress={() => setPrecisionOpen(true)}
+            disabled={
+              !sceneActive || !selectedTickOption || tickOptions.length === 0
+            }
+            onPress={() => {
+              if (sceneActiveRef.current) {
+                setPrecisionOpen(true);
+              }
+            }}
             style={styles.precisionTrigger}>
             <Text numberOfLines={1} style={styles.precisionTriggerText}>
               {selectedTickOption
@@ -468,7 +489,7 @@ export const PerpsProOrderBook: React.FC<{
           </Pressable>
         </View>
       </View>
-      {precisionOpen ? (
+      {sceneActive && precisionOpen ? (
         <PerpsProPrecisionSheet
           onClose={() => setPrecisionOpen(false)}
           onIntentStart={onPrecisionIntentStart}

@@ -144,6 +144,152 @@ describe('PerpsProRealtimeOrderBook reconnect display cache', () => {
     jest.restoreAllMocks();
   });
 
+  it('retains only the inactive exact-market presentation, never live price readiness', () => {
+    jest.spyOn(Date, 'now').mockReturnValue(1000);
+    const onSelectPrice = jest.fn();
+    const view = render(orderBook({ onSelectPrice }));
+    const first = mockRenderedOrderBookProps!;
+    const oldPriceHandler = first.onSelectBookPrice;
+    mockFastL2State = { book: null, identity: 'disabled', status: 'idle' };
+    mockLatestTradeState = {
+      trade: null,
+      identity: 'disabled',
+      status: 'idle',
+    };
+    view.rerender(
+      orderBook({ sceneActive: false, enabled: false, onSelectPrice }),
+    );
+
+    expectPublication(false, { enabled: false });
+    expect(mockRenderedOrderBookProps?.book).toBe(first.book);
+    expect(mockRenderedOrderBookProps?.latestTrade).toBe(liveTrade);
+    expect(mockRenderedOrderBookProps?.serverClock).toBe(first.serverClock);
+    expect(mockRenderedOrderBookProps?.hasBookSnapshot).toBe(true);
+    expect(mockRenderedOrderBookProps?.bookStatus).toBe('idle');
+    expect(mockRenderedOrderBookProps?.bookIdentity).toBe('disabled');
+    expect(mockRenderedOrderBookProps?.onSelectBookPrice).toBeUndefined();
+    expect(
+      mockRenderedOrderBookProps?.onSelectLatestTradePrice,
+    ).toBeUndefined();
+    oldPriceHandler(
+      '100',
+      { type: 'tradePrice' },
+      {
+        type: 'book',
+        marketKey: market.marketKey,
+        feedIdentity: 'BTC:5:null',
+      },
+    );
+    expect(onSelectPrice).not.toHaveBeenCalled();
+
+    mockFastL2State = { book: null, identity: 'BTC:5:null', status: 'loading' };
+    mockLatestTradeState = { trade: null, identity: 'BTC', status: 'loading' };
+    view.rerender(orderBook({ onSelectPrice }));
+    expect(mockRenderedOrderBookProps?.hasBookSnapshot).toBe(false);
+    expect(mockRenderedOrderBookProps?.latestTrade).toBeNull();
+    expect(mockRenderedOrderBookProps?.serverClock).toBeNull();
+    expect(mockRenderedOrderBookProps?.onSelectBookPrice).toBeUndefined();
+  });
+
+  it('keeps first-visit inactive previews empty until an actual successful feed', () => {
+    mockFastL2State = { book: null, identity: 'disabled', status: 'idle' };
+    mockLatestTradeState = {
+      trade: null,
+      identity: 'disabled',
+      status: 'idle',
+    };
+    const view = render(orderBook({ sceneActive: false, enabled: false }));
+    expect(mockRenderedOrderBookProps?.hasBookSnapshot).toBe(false);
+    expect(mockRenderedOrderBookProps?.serverClock).toBeNull();
+    mockFastL2State = {
+      book: liveBook,
+      identity: 'BTC:5:null',
+      status: 'stale',
+    };
+    view.rerender(orderBook());
+    mockFastL2State = { book: null, identity: 'disabled', status: 'idle' };
+    view.rerender(orderBook({ sceneActive: false, enabled: false }));
+    expect(mockRenderedOrderBookProps?.hasBookSnapshot).toBe(false);
+  });
+
+  it.each(['market', 'precision'] as const)(
+    'discards retained presentation across a %s identity change, including a return to the old key',
+    identity => {
+      const view = render(orderBook());
+      mockFastL2State = { book: null, identity: 'disabled', status: 'idle' };
+      mockLatestTradeState = {
+        trade: null,
+        identity: 'disabled',
+        status: 'idle',
+      };
+      const inactive = { sceneActive: false, enabled: false };
+      view.rerender(orderBook(inactive));
+      expect(mockRenderedOrderBookProps?.hasBookSnapshot).toBe(true);
+      view.rerender(
+        orderBook({
+          ...inactive,
+          ...(identity === 'market'
+            ? {
+                market: {
+                  ...market,
+                  marketKey: 'perp:ETH',
+                  canonicalCoin: 'ETH',
+                },
+              }
+            : { precision: { nSigFigs: 4, mantissa: null } }),
+        }),
+      );
+      expect(mockRenderedOrderBookProps?.hasBookSnapshot).toBe(false);
+      expect(mockRenderedOrderBookProps?.latestTrade).toBeNull();
+      expect(mockRenderedOrderBookProps?.serverClock).toBeNull();
+      view.rerender(orderBook(inactive));
+      expect(mockRenderedOrderBookProps?.hasBookSnapshot).toBe(false);
+      expect(mockRenderedOrderBookProps?.serverClock).toBeNull();
+    },
+  );
+
+  it('releases funding sheet ownership while inactive and ignores its retained opener', () => {
+    const view = render(orderBook());
+    const open = mockRenderedOrderBookProps?.onOpenFunding;
+    act(() => open());
+    expect(view.queryByTestId('funding-detail-sheet')).not.toBeNull();
+    view.rerender(orderBook({ sceneActive: false, enabled: false }));
+    expect(view.queryByTestId('funding-detail-sheet')).toBeNull();
+    act(() => open());
+    view.rerender(orderBook());
+    expect(view.queryByTestId('funding-detail-sheet')).toBeNull();
+  });
+
+  it('does not commit a late precision intent after an inactive/active round trip', async () => {
+    const onSelectTickOption = jest.fn();
+    const target = {
+      displayPrice: 10,
+      mantissa: null,
+      nSigFigs: 4,
+      priceDecimals: 0,
+    } as const;
+    let resolveWait!: (value: boolean) => void;
+    mockWaitForHttpSnapshot.mockImplementationOnce(
+      () =>
+        new Promise<boolean>(resolve => {
+          resolveWait = resolve;
+        }),
+    );
+    const view = render(orderBook({ onSelectTickOption }));
+    act(() => mockRenderedOrderBookProps?.onSelectTickOption(target));
+    view.rerender(
+      orderBook({ sceneActive: false, enabled: false, onSelectTickOption }),
+    );
+    act(() => mockRenderedOrderBookProps?.onSelectTickOption(target));
+    expect(mockWaitForHttpSnapshot).toHaveBeenCalledTimes(1);
+    view.rerender(orderBook({ onSelectTickOption }));
+    await act(async () => {
+      resolveWait(true);
+      await Promise.resolve();
+    });
+    expect(onSelectTickOption).not.toHaveBeenCalled();
+  });
+
   it.each([true, false])(
     'defaults viewport publication to the source enabled=%s contract',
     enabled => {

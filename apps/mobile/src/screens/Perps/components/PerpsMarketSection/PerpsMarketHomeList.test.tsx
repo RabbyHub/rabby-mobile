@@ -4,6 +4,8 @@ import type { StoreApi, UseBoundStore } from 'zustand';
 import type { MarketData } from '@/hooks/perps/usePerpsStore';
 import { perpsStore } from '@/hooks/perps/usePerpsStore';
 import { PerpsMarketHomeList } from './PerpsMarketHomeList';
+import { createStoreActivityScope } from '@/core/state/storeActivity';
+import { StoreActivityProvider } from '@/hooks/storeActivity/StoreActivityProvider';
 
 const mockNavigationListeners = {
   focus: new Set<() => void>(),
@@ -18,9 +20,19 @@ const mockNavigation = {
   },
 };
 const mockTranslate = (key: string) => key;
+const mockRenderMarketItem = jest.fn();
 
 jest.mock('@react-navigation/native', () => ({
   useNavigation: () => mockNavigation,
+  useIsFocused: () =>
+    require('react').useSyncExternalStore((listener: () => void) => {
+      const focus = mockNavigation.addListener('focus', listener);
+      const blur = mockNavigation.addListener('blur', listener);
+      return () => {
+        focus();
+        blur();
+      };
+    }, mockNavigation.isFocused),
 }));
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: mockTranslate }),
@@ -45,8 +57,9 @@ jest.mock('./PerpsMarketItem', () => {
   const ReactModule = require('react');
   const { Pressable, Text } = require('react-native');
   return {
-    PerpsMarketItem: ({ item, rank, onPress }) =>
-      ReactModule.createElement(
+    PerpsMarketItem: ({ item, rank, onPress }) => {
+      mockRenderMarketItem(item);
+      return ReactModule.createElement(
         Pressable,
         { onPress, testID: `market-${rank ?? 'unranked'}-${item.name}` },
         ReactModule.createElement(
@@ -54,7 +67,8 @@ jest.mock('./PerpsMarketItem', () => {
           null,
           `${item.name}:${item.markPx}:${rank ?? 'unranked'}`,
         ),
-      ),
+      );
+    },
   };
 });
 jest.mock('./PerpsCategorySectionHeader', () => {
@@ -101,6 +115,7 @@ describe('PerpsMarketHomeList activity', () => {
     mockNavigation.focused = true;
     mockNavigationListeners.focus.clear();
     mockNavigationListeners.blur.clear();
+    mockRenderMarketItem.mockClear();
     mockStore.setState({
       marketData: [market('BTC', '100', '20'), market('ETH', '10', '10')],
       favoriteMarkets: [],
@@ -143,8 +158,11 @@ describe('PerpsMarketHomeList activity', () => {
     expect(onRender).toHaveBeenCalledTimes(beforeHiddenUpdates);
     expect(screen.getByText('BTC:101:1')).toBeTruthy();
 
+    const beforeCatchUp = mockRenderMarketItem.mock.calls.length;
     setFocused(true);
-    expect(onRender).toHaveBeenCalledTimes(beforeHiddenUpdates + 1);
+    // The route/parent activity wrapper itself re-renders, but each market
+    // row consumes exactly one fresh snapshot, not the hidden price history.
+    expect(mockRenderMarketItem).toHaveBeenCalledTimes(beforeCatchUp + 2);
     expect(screen.getByText('ETH:23:1')).toBeTruthy();
     expect(screen.getByText('BTC:113:2')).toBeTruthy();
     fireEvent.press(screen.getByTestId('market-1-ETH'));
@@ -224,5 +242,35 @@ describe('PerpsMarketHomeList activity', () => {
       screen?.unmount();
       subscribeSpy.mockRestore();
     }
+  });
+
+  it('honors the enclosing retained page as well as standalone route focus', () => {
+    const parentScope = createStoreActivityScope({
+      active: false,
+      label: 'simple-page',
+    });
+    const screen = render(
+      <StoreActivityProvider scope={parentScope}>
+        <PerpsMarketHomeList onItemPress={jest.fn()} />
+      </StoreActivityProvider>,
+    );
+    expect(screen.getByText('BTC:100:1')).toBeTruthy();
+    act(() => mockStore.setState({ marketData: [market('BTC', '200', '20')] }));
+    expect(screen.getByText('BTC:100:1')).toBeTruthy();
+    // A focused route cannot wake a retained, hidden Simple page.
+    setFocused(false);
+    setFocused(true);
+    expect(screen.getByText('BTC:100:1')).toBeTruthy();
+    act(() => parentScope.setActive(true));
+    expect(screen.getByText('BTC:200:1')).toBeTruthy();
+    setFocused(false);
+    act(() => mockStore.setState({ marketData: [market('BTC', '300', '20')] }));
+    act(() => parentScope.setActive(false));
+    act(() => parentScope.setActive(true));
+    expect(screen.getByText('BTC:200:1')).toBeTruthy();
+    setFocused(true);
+    expect(screen.getByText('BTC:300:1')).toBeTruthy();
+    screen.unmount();
+    parentScope.dispose();
   });
 });

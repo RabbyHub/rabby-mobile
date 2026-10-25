@@ -1,6 +1,7 @@
 import { fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
 import { StyleSheet } from 'react-native';
+import type { RootScenePagerUI } from '@rabby-wallet/rn-collapsible-scene-view';
 import { navBack } from '@/hooks/navigation';
 
 import { PERPS_HEADER_HEIGHT } from '../constants';
@@ -65,6 +66,7 @@ jest.mock('./PerpsAccountTrigger', () => {
 });
 
 describe('PerpsHeader', () => {
+  beforeEach(() => jest.clearAllMocks());
   it('owns the single Figma geometry used by both modes', () => {
     const onPressAccount = jest.fn();
     const onPressInMode = jest.fn();
@@ -129,6 +131,7 @@ describe('PerpsHeader', () => {
       label: 'Hongbo',
       onPress: onPressAccount,
     });
+    expect(screen.queryByTestId('perps-header-account-controls')).toBeNull();
     fireEvent.press(screen.getByTestId('perps-header-back'));
     expect(navBack).toHaveBeenCalledTimes(1);
   });
@@ -167,5 +170,85 @@ describe('PerpsHeader', () => {
       position: 'absolute',
       right: 0,
     });
+  });
+
+  it('lets the Root own the Pro background without changing header controls or decoration', () => {
+    const onSelectMode = jest.fn();
+    const onPressAccount = jest.fn();
+    const screen = render(
+      <PerpsHeader
+        activeMode="pro"
+        accountLabel="Hongbo"
+        isModeSwitching={false}
+        onPressAccount={onPressAccount}
+        onSelectMode={onSelectMode}
+        showBottomDivider={false}
+        transparentBackground
+      />,
+    );
+
+    expect(screen.getByTestId('perps-header')).toHaveStyle({
+      backgroundColor: 'transparent',
+      height: PERPS_HEADER_HEIGHT,
+    });
+    expect(
+      screen.getByTestId('perps-header-background-mark').props,
+    ).toMatchObject({ height: 48, width: 61, pointerEvents: 'none' });
+    expect(screen.getByTestId('mode-switch').props).toMatchObject({
+      activeMode: 'pro',
+      disabled: false,
+      onSelectMode,
+    });
+    expect(screen.getByTestId('account-trigger').props).toMatchObject({
+      label: 'Hongbo',
+      onPress: onPressAccount,
+    });
+  });
+
+  it('separates Root navigation from business interaction and late mode-switch state', () => {
+    const pagerUI = {
+      position: { value: 1 },
+      selectedIndex: { value: 1 },
+      select: jest.fn(),
+    } as unknown as RootScenePagerUI;
+    const screen = render(
+      <PerpsHeader
+        activeMode="simple"
+        accountLabel="Wallet"
+        onPressAccount={jest.fn()}
+        onSelectMode={jest.fn()}
+        isModeSwitching
+        businessControlsEnabled={false}
+        navigationEnabled
+        pagerUI={pagerUI}
+        showBottomDivider={false}
+      />,
+    );
+    expect(screen.getByTestId('mode-switch').props).toMatchObject({
+      pagerUI,
+      disabled: false,
+    });
+    expect(
+      screen.getByTestId('perps-header-account-controls', {
+        includeHiddenElements: true,
+      }).props,
+    ).toMatchObject({
+      collapsable: false,
+      pointerEvents: 'none',
+      accessibilityElementsHidden: true,
+    });
+    fireEvent.press(screen.getByTestId('perps-header-back'));
+    expect(navBack).not.toHaveBeenCalled();
+    screen.rerender(
+      <PerpsHeader
+        activeMode="simple"
+        onSelectMode={jest.fn()}
+        isModeSwitching={false}
+        navigationEnabled={false}
+        pagerUI={pagerUI}
+        showBottomDivider={false}
+      />,
+    );
+    expect(screen.getByTestId('mode-switch').props.disabled).toBe(true);
   });
 });

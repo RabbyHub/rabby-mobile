@@ -16,6 +16,7 @@ import {
   type SceneListProps,
 } from '@rabby-wallet/rn-collapsible-scene-view/src/SceneList';
 import { linkedScenePhysicalKey } from '@rabby-wallet/rn-collapsible-scene-view/src/linkedSceneModel';
+import { RootScenePagerGestureBlock } from '@rabby-wallet/rn-collapsible-scene-view/src/RootScenePager';
 import { StoreActivityBoundary } from '@/hooks/storeActivity/StoreActivityBoundary';
 import { useStoreActivityScope } from '@/hooks/storeActivity/StoreActivityProvider';
 
@@ -36,6 +37,8 @@ export type LinkedScenePagerListProps = Pick<
 > &
   Omit<LinkedScenePagerProps, 'viewportHeight' | 'ref'> & {
     listHeader: React.ReactElement;
+    /** Exclude only the linked cell, never its outer vertical list/header. */
+    protectRootGesture?: boolean;
     ref?: React.Ref<LinkedScenePagerListHandle>;
   };
 
@@ -45,6 +48,7 @@ export type LinkedScenePagerListProps = Pick<
  */
 export function LinkedScenePagerList({
   listHeader,
+  protectRootGesture = false,
   ref,
   nativeRef,
   nativeScrollY,
@@ -109,19 +113,28 @@ export function LinkedScenePagerList({
     ),
     [renderGroupHeader, testID],
   );
-  const renderPager = () => (
-    <LinkedScenePager
-      {...pagerProps}
-      ref={pagerRef}
-      activityEnabled={activityEnabled && parentActive}
-      renderLeaf={renderScopedLeaf}
-      renderGroupHeader={
-        renderGroupHeader ? renderScopedGroupHeader : undefined
-      }
-      viewportHeight={viewportHeight}
-      testID={testID}
-    />
-  );
+  const renderPager = () => {
+    const pager = (
+      <LinkedScenePager
+        {...pagerProps}
+        ref={pagerRef}
+        activityEnabled={activityEnabled && parentActive}
+        renderLeaf={renderScopedLeaf}
+        renderGroupHeader={
+          renderGroupHeader ? renderScopedGroupHeader : undefined
+        }
+        viewportHeight={viewportHeight}
+        testID={testID}
+      />
+    );
+    return protectRootGesture ? (
+      <RootScenePagerGestureBlock testID={`${testID}-root-gesture-block`}>
+        {pager}
+      </RootScenePagerGestureBlock>
+    ) : (
+      pager
+    );
+  };
 
   return (
     <SceneList

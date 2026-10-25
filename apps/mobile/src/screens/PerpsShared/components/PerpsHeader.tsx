@@ -7,6 +7,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
 import { View } from 'react-native';
+import type { RootScenePagerUI } from '@rabby-wallet/rn-collapsible-scene-view';
 
 import { PERPS_HEADER_HEIGHT } from '../constants';
 import { PerpsAccountTrigger } from './PerpsAccountTrigger';
@@ -19,14 +20,18 @@ export type PerpsHeaderProps = {
   accountLabel?: string | null;
   accountTriggerVariant?: 'compact' | 'wallet' | 'wallet-icon';
   activeMode: PerpsViewMode;
+  businessControlsEnabled?: boolean;
   extendProHitAreaRight?: boolean;
   isModeSwitching: boolean;
+  navigationEnabled?: boolean;
+  pagerUI?: RootScenePagerUI;
   onPressAccount?: () => void;
   onPressInMode?: (viewMode: PerpsViewMode) => void;
   onPressOutMode?: (viewMode: PerpsViewMode) => void;
   onSelectMode: (viewMode: PerpsViewMode) => void;
   showBottomDivider: boolean;
   showProNewBadge?: boolean;
+  transparentBackground?: boolean;
 };
 
 /**
@@ -41,22 +46,39 @@ export const PerpsHeader: React.FC<PerpsHeaderProps> = React.memo(
     accountLabel,
     accountTriggerVariant = 'compact',
     activeMode,
+    businessControlsEnabled,
     extendProHitAreaRight = false,
     isModeSwitching,
+    navigationEnabled,
+    pagerUI,
     onPressAccount,
     onPressInMode,
     onPressOutMode,
     onSelectMode,
     showBottomDivider,
     showProNewBadge = false,
+    transparentBackground = false,
   }) => {
     const { colors2024, styles } = useTheme2024({ getStyle });
+    const accountControl =
+      accountLabel && onPressAccount ? (
+        <PerpsAccountTrigger
+          address={accountAddress}
+          brandName={accountBrandName}
+          expanded={accountExpanded}
+          label={accountLabel}
+          onPress={onPressAccount}
+          variant={accountTriggerVariant}
+        />
+      ) : null;
 
     return (
       <View
         style={[
           styles.header,
-          activeMode === 'simple' ? styles.simpleHeader : null,
+          activeMode === 'simple' || transparentBackground
+            ? styles.transparentHeader
+            : null,
         ]}
         testID="perps-header">
         <RcHeaderBackground
@@ -70,6 +92,7 @@ export const PerpsHeader: React.FC<PerpsHeaderProps> = React.memo(
           <CustomTouchableOpacity
             as="RNGHTouchableOpacity"
             accessibilityRole="button"
+            disabled={businessControlsEnabled === false}
             onPress={navBack}
             style={styles.backButton}
             testID="perps-header-back">
@@ -83,7 +106,8 @@ export const PerpsHeader: React.FC<PerpsHeaderProps> = React.memo(
           <View style={styles.identity} testID="perps-header-identity">
             <PerpsModeSwitch
               activeMode={activeMode}
-              disabled={isModeSwitching}
+              disabled={pagerUI ? navigationEnabled === false : isModeSwitching}
+              pagerUI={pagerUI}
               extendProHitAreaRight={extendProHitAreaRight}
               onPressInMode={onPressInMode}
               onPressOutMode={onPressOutMode}
@@ -92,16 +116,20 @@ export const PerpsHeader: React.FC<PerpsHeaderProps> = React.memo(
             />
           </View>
         </View>
-        {accountLabel && onPressAccount ? (
-          <PerpsAccountTrigger
-            address={accountAddress}
-            brandName={accountBrandName}
-            expanded={accountExpanded}
-            label={accountLabel}
-            onPress={onPressAccount}
-            variant={accountTriggerVariant}
-          />
-        ) : null}
+        {accountControl && businessControlsEnabled !== undefined ? (
+          <View
+            collapsable={false}
+            pointerEvents={businessControlsEnabled ? 'auto' : 'none'}
+            accessibilityElementsHidden={!businessControlsEnabled}
+            importantForAccessibility={
+              businessControlsEnabled ? 'auto' : 'no-hide-descendants'
+            }
+            testID="perps-header-account-controls">
+            {accountControl}
+          </View>
+        ) : (
+          accountControl
+        )}
         {showBottomDivider ? (
           <View
             pointerEvents="none"
@@ -127,7 +155,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     paddingRight: 16,
     position: 'relative',
   },
-  simpleHeader: {
+  transparentHeader: {
     backgroundColor: 'transparent',
   },
   backgroundMark: {

@@ -2,6 +2,7 @@ import { RootNames } from '@/constant/layout';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { perpsStore, PositionAndOpenOrder } from '@/hooks/perps/usePerpsStore';
 import { useTheme2024 } from '@/hooks/theme';
+import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 import { createGetStyles2024 } from '@/utils/styles';
 import { sortBy } from 'lodash';
 import React, { useMemo, useState } from 'react';
@@ -26,7 +27,7 @@ export const PerpsPositionSection: React.FC<{
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const navigation = useRabbyAppNavigation();
-  const marketDataMap = perpsStore(s => s.marketDataMap);
+  const marketDataMap = useActivityStore(perpsStore, s => s.marketDataMap);
   const list = useMemo(() => {
     return sortBy(
       positionAndOpenOrders || [],

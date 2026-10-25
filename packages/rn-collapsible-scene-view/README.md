@@ -199,8 +199,30 @@ Each retained keyed child keeps its own native vertical surface and form state.
 - Width changes cancel old pixel geometry without changing child keys. Keep keys
   stable and unique. The host is responsible for deciding when expensive child
   content mounts; retention alone does not pause subscriptions or effects.
-- `enabled` gates horizontal gestures, not route commands. The host must gate
+- `enabled` gates horizontal gestures and UI selections, not route commands. The host must gate
   gestures for focus, keyboard, and blocking presentation as appropriate.
+
+`renderOverlay({selectedKey, interactive, ui})` optionally renders one shared chrome
+layer inside that same gesture viewport but outside the translated page track.
+The absolute-fill wrapper uses `pointerEvents="box-none"`; the host positions
+its content and applies business authorization to interactive controls. The
+selected key remains the source during previews and changes only on settlement.
+This context publishes transition boundaries, not animation frames. Vertical
+collapse and page placeholders stay caller-owned; the overlay does not introduce
+another scroll owner or a second horizontal gesture recognizer.
+
+The stable `ui: RootScenePagerUI` handle is for presentation worklets. Read
+`ui.position` to follow the exact fractional track position or
+`ui.selectedIndex` for its last UI-settled index; do not read either value during
+React render or write to them from the host. `ui.select(index)` is a worklet that
+uses the same motion/epoch owner directly, without a JS `requestedKey` round
+trip. It accepts only a valid integer index while mounted, laid out and enabled.
+It deliberately allows reversing an in-flight snap: React's `interactive` flag
+is not a UI-navigation gate. The host must still gate business interactions and
+disable the pager for focus, keyboard and blocking surfaces. The existing JS
+`requestedKey` API remains available; its command fence and settlement-echo
+handling are unchanged. UI selections publish business selection through the
+same `onSettled` path, not through animation-frame updates.
 
 Wrap sliders, text-selection surfaces, charts, or an inner pager in
 `RootScenePagerGestureBlock`. The root checks the selected page's native bounds

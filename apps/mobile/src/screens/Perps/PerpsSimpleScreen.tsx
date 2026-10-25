@@ -4,8 +4,6 @@ import { createGetStyles2024 } from '@/utils/styles';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  AppState,
-  type AppStateStatus,
   RefreshControl,
   ScrollView,
   TouchableOpacity,
@@ -50,10 +48,12 @@ import { APP_VERSIONS } from '@/constant';
 import BigNumber from 'bignumber.js';
 import { perpsStore } from '@/hooks/perps/usePerpsStore';
 import { traceStartupDiagnostic } from '@/core/utils/startupDiagnostics';
-import { usePerpsFundingHistoryJournal } from '@/hooks/perps/funding/usePerpsFundingHistoryJournal';
-import { usePerpsRuntimeStatus } from '@/hooks/perps/runtime/usePerpsRuntimeStatus';
+import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
+import { PERPS_HEADER_HEIGHT } from '../PerpsShared/constants';
 
 export type PerpsSimpleScreenProps = {
+  sceneActive?: boolean;
+  sharedHeader?: boolean;
   isModeSwitching: boolean;
   onPressInPro?: () => void;
   onPressOutPro?: () => void;
@@ -63,6 +63,8 @@ export type PerpsSimpleScreenProps = {
 };
 
 export const PerpsSimpleScreen: React.FC<PerpsSimpleScreenProps> = ({
+  sceneActive = true,
+  sharedHeader = false,
   isModeSwitching,
   onPressInPro,
   onPressOutPro,
@@ -77,6 +79,8 @@ export const PerpsSimpleScreen: React.FC<PerpsSimpleScreenProps> = ({
   const { bottom } = useSafeAreaInsets();
 
   const navigation = useRabbyAppNavigation();
+  const isFocused = useIsFocused();
+  const active = sceneActive && isFocused;
 
   const {
     positionAndOpenOrders,
@@ -96,24 +100,9 @@ export const PerpsSimpleScreen: React.FC<PerpsSimpleScreenProps> = ({
     handleActionApproveStatus,
     handleSafeSetReference,
     setInitialized,
-  } = usePerpsState();
-
-  // Settles the pending deposit/withdraw pill on the account card: marks items
-  // failed once their source tx fails, and polls the ledger until they clear.
-  // Gated exactly like Pro (usePerpsProScene's `fundingHistoryEnabled`) — the
-  // ledger poll has no AppState guard of its own, so without this it would keep
-  // firing in the background and while the screen is covered.
-  const isFocused = useIsFocused();
-  const runtime = usePerpsRuntimeStatus();
-  const [appState, setAppState] = useState<AppStateStatus>(
-    AppState.currentState,
-  );
-  useEffect(() => {
-    const subscription = AppState.addEventListener('change', setAppState);
-    return () => subscription.remove();
-  }, []);
-  usePerpsFundingHistoryJournal({
-    enabled: runtime.status === 'ready' && isFocused && appState === 'active',
+  } = usePerpsState({
+    legacyRuntimeContinuationEnabled: active,
+    pauseInactivePublication: true,
   });
 
   useEffect(() => {
@@ -205,20 +194,24 @@ export const PerpsSimpleScreen: React.FC<PerpsSimpleScreenProps> = ({
     setSelectedCoin(null);
   });
 
-  const { data: isShowInvite, mutate: setIsShowInvite } = useRequest(
-    async () => {
+  const {
+    data: isShowInvite,
+    mutate: setIsShowInvite,
+    run: checkInvite,
+    cancel: cancelInvite,
+  } = useRequest(
+    async (account: Account) => {
       return checkPerpsReference({
-        account: currentPerpsAccount,
+        account,
         scene: 'invite',
       });
     },
     {
-      refreshDeps: [currentPerpsAccount],
-      ready: !!currentPerpsAccount?.address,
-      onSuccess: shouldShow => {
-        if (shouldShow) {
+      manual: true,
+      onSuccess: (shouldShow, [account]) => {
+        if (shouldShow && active) {
           void perpsServiceApi
-            .setInviteConfig(currentPerpsAccount?.address || '', {
+            .setInviteConfig(account.address, {
               lastInvitedAt: Date.now(),
             })
             .catch(error => {
@@ -229,7 +222,19 @@ export const PerpsSimpleScreen: React.FC<PerpsSimpleScreenProps> = ({
     },
   );
 
-  const selectedCoinMarketData = perpsStore(s =>
+  // A retained preview must not consume the invitation or persist its seen
+  // timestamp. Cancellation also ignores a late result after mode/account
+  // changes, without interrupting the shared Perps runtime.
+  useEffect(() => {
+    if (active && currentPerpsAccount?.address) {
+      checkInvite(currentPerpsAccount);
+    } else {
+      setIsShowInvite(false);
+    }
+    return cancelInvite;
+  }, [active, currentPerpsAccount, checkInvite, cancelInvite, setIsShowInvite]);
+
+  const selectedCoinMarketData = useActivityStore(perpsStore, s =>
     selectedCoin ? s.marketDataMap[selectedCoin] : undefined,
   );
 
@@ -270,14 +275,22 @@ export const PerpsSimpleScreen: React.FC<PerpsSimpleScreenProps> = ({
   return (
     <>
       <NormalScreenContainer2024 noHeader type={isLight ? 'bg0' : 'bg1'}>
-        <PerpsSimpleHeader
-          account={currentPerpsAccount}
-          isModeSwitching={isModeSwitching}
-          onPressInPro={onPressInPro}
-          onPressOutPro={onPressOutPro}
-          onSwitchToPro={onSwitchToPro}
-          showProNewBadge={showProNewBadge}
-        />
+        {sharedHeader ? (
+          <View
+            pointerEvents="none"
+            style={{ height: PERPS_HEADER_HEIGHT }}
+            testID="perps-simple-shared-header-placeholder"
+          />
+        ) : (
+          <PerpsSimpleHeader
+            account={currentPerpsAccount}
+            isModeSwitching={isModeSwitching}
+            onPressInPro={onPressInPro}
+            onPressOutPro={onPressOutPro}
+            onSwitchToPro={onSwitchToPro}
+            showProNewBadge={showProNewBadge}
+          />
+        )}
         {!hasPermission ? (
           <PerpsRegionAlert
             onLayout={onRegionAlertLayout}
@@ -298,7 +311,7 @@ export const PerpsSimpleScreen: React.FC<PerpsSimpleScreenProps> = ({
               refreshControl={
                 <RefreshControl refreshing={false} onRefresh={onRefresh} />
               }>
-              <PerpsAccountCard />
+              <PerpsAccountCard sceneActive={sceneActive} />
               <PerpsPositionSection
                 handleShowRiskPopup={handleShowRiskPopup}
                 handleCloseRiskPopup={handleCloseRiskPopup}
@@ -343,6 +356,7 @@ export const PerpsSimpleScreen: React.FC<PerpsSimpleScreenProps> = ({
               />
               <PerpsLimitOrdersSection
                 isHome={true}
+                sceneActive={active}
                 positionAndOpenOrders={positionAndOpenOrders}
                 handleActionApproveStatus={handleActionApproveStatus}
               />
@@ -400,21 +414,23 @@ export const PerpsSimpleScreen: React.FC<PerpsSimpleScreenProps> = ({
           </View>
         )}
       </NormalScreenContainer2024>
-      <PerpsPopupGroup
-        currentPerpsAccount={currentPerpsAccount}
-        onLogin={handleLogin}
-        onLogout={handleLogout}
-        onDeleteAgent={handleDeleteAgent}
-        onDeposit={handleDeposit}
-        onWithdraw={handleWithdraw}
-        onSpotOrder={handleStableCoinOrder}
-        onApproveStatus={handleActionApproveStatus}
-        onSafeSetReference={handleSafeSetReference}
-        riskPopupData={riskPopupData}
-        onCloseRiskPopup={handleCloseRiskPopup}
-        isShowInvite={isShowInvite}
-        setIsShowInvite={setIsShowInvite}
-      />
+      {active && (
+        <PerpsPopupGroup
+          currentPerpsAccount={currentPerpsAccount}
+          onLogin={handleLogin}
+          onLogout={handleLogout}
+          onDeleteAgent={handleDeleteAgent}
+          onDeposit={handleDeposit}
+          onWithdraw={handleWithdraw}
+          onSpotOrder={handleStableCoinOrder}
+          onApproveStatus={handleActionApproveStatus}
+          onSafeSetReference={handleSafeSetReference}
+          riskPopupData={riskPopupData}
+          onCloseRiskPopup={handleCloseRiskPopup}
+          isShowInvite={isShowInvite}
+          setIsShowInvite={setIsShowInvite}
+        />
+      )}
     </>
   );
 };

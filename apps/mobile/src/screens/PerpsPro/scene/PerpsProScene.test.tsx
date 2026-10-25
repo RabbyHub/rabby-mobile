@@ -27,6 +27,8 @@ let mockIsLight = true;
 const mockUsePerpsProScene = jest.fn();
 const mockUsePerpsProInfoPanel = jest.fn();
 const mockMarketSelectorPresent = jest.fn();
+const mockMarketSelectorMount = jest.fn();
+const mockMarketSelectorUnmount = jest.fn();
 const mockOrderBookRender = jest.fn();
 const mockOrderBookProps = jest.fn();
 const mockTradeFormProps = jest.fn();
@@ -85,6 +87,8 @@ const mockManageMarginOpen = jest.fn();
 const mockTransferOpen = jest.fn();
 const mockTranslate = (key: string) => key;
 const mockKlineProps = jest.fn();
+const mockKlineMount = jest.fn();
+const mockKlineUnmount = jest.fn();
 const mockUsePerpsProPositionActions = jest.fn();
 const mockUsePerpsProPositionTpSl = jest.fn();
 const mockUsePerpsProOpenOrderEdit = jest.fn();
@@ -498,6 +502,10 @@ jest.mock('../components/chart/PerpsProKlineSheet', () => {
       preloadEnabled: boolean;
       visible: boolean;
     }) => {
+      ReactModule.useEffect(() => {
+        mockKlineMount();
+        return mockKlineUnmount;
+      }, []);
       mockKlineProps(props);
       return ReactModule.createElement(Pressable, {
         onPress: props.onClose,
@@ -587,11 +595,18 @@ jest.mock('../components/market/PerpsProMarketSelector', () => {
   const { View } = require('react-native');
   return {
     PerpsProMarketSelector: ReactModule.forwardRef(
-      (_props: object, ref: React.Ref<unknown>) => {
+      (props: { onClose?: () => void }, ref: React.Ref<unknown>) => {
+        ReactModule.useEffect(() => {
+          mockMarketSelectorMount();
+          return mockMarketSelectorUnmount;
+        }, []);
         ReactModule.useImperativeHandle(ref, () => ({
           present: mockMarketSelectorPresent,
         }));
-        return ReactModule.createElement(View, { testID: 'market-selector' });
+        return ReactModule.createElement(View, {
+          onDismiss: props.onClose,
+          testID: 'market-selector',
+        });
       },
     ),
   };
@@ -743,6 +758,8 @@ jest.mock('./usePerpsProTransfer', () => ({
 
 const { PerpsProScene } =
   require('./PerpsProScene') as typeof import('./PerpsProScene');
+const { PerpsProAccountPresentationReset } =
+  require('./PerpsProAccountPresentationReset') as typeof import('./PerpsProAccountPresentationReset');
 const { perpsStore: mockPerpsStore } =
   require('@/hooks/perps/usePerpsStore') as typeof import('@/hooks/perps/usePerpsStore');
 const { PerpsProTabIndicator } =
@@ -1155,6 +1172,54 @@ describe('PerpsProScene market loading states', () => {
       configurable: true,
       value: initialPlatform,
     });
+  });
+
+  it('protects only the linked cell and pinned tabs, leaving the trade header outside', () => {
+    mockUsePerpsProScene.mockReturnValue(createSceneState());
+    render(
+      <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+    );
+    const lower = screen.getByTestId('perps-pro-info-list-root-gesture-block');
+    expect(
+      lower.findAllByProps({ testID: 'perps-pro-list-lead-in' }),
+    ).toHaveLength(0);
+    expect(
+      lower.findAllByProps({ testID: 'perps-pro-trade-section' }),
+    ).toHaveLength(0);
+    expect(
+      lower.findAllByProps({ testID: 'perps-pro-info-list-viewport' }).length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen
+        .getByTestId('perps-pro-info-tabs-overlay')
+        .findAllByProps({ testID: 'perps-pro-tabs-root-gesture-block' }).length,
+    ).toBeGreaterThan(0);
+  });
+
+  it('keeps the list mounted but releases scene sheet hosts when a sibling root is active', () => {
+    mockUsePerpsProScene.mockReturnValue(
+      createSceneState({
+        currentMarket: {
+          canonicalCoin: 'BTC',
+          marketKey: 'hyperliquid::BTC',
+          marketData: { maxLeverage: 40, onlyIsolated: false },
+          quoteAsset: 'USDC',
+        },
+        tradeConfigurationReady: true,
+      }),
+    );
+    const props = { isModeSwitching: false, onSwitchToSimple: jest.fn() };
+    const view = render(<PerpsProScene {...props} />);
+    const list = getInfoList();
+    expect(view.queryByTestId('market-selector')).toBeNull();
+    fireEvent.press(view.getByTestId('market-bar'));
+    expect(view.getByTestId('market-selector')).toBeTruthy();
+    view.rerender(<PerpsProScene {...props} sceneActive={false} />);
+    expect(mockUsePerpsProScene).toHaveBeenLastCalledWith(false);
+    expect(getInfoList()).toBe(list);
+    expect(view.queryByTestId('market-selector')).toBeNull();
+    expect(view.queryByTestId('trade-form')).toBeTruthy();
+    expect(mockTradeFormProps.mock.lastCall?.[0].sceneActive).toBe(false);
   });
 
   it('contains real BBO publications in the trade owner without rerendering Scene or its list', () => {
@@ -2563,56 +2628,78 @@ describe('PerpsProScene market loading states', () => {
     });
   });
 
-  it('shares one stable native scroll value between the list and every floating layer', () => {
-    installOptimisticInfoPanelMock();
-    mockPerpsStore.setState({ hasPermission: false });
-    mockUsePerpsProScene.mockReturnValue(createSceneState());
-    render(
-      <PerpsProScene
-        initialRegionAlertLayout={{
-          height: 52,
-          width: Dimensions.get('window').width - 32,
-        }}
-        isModeSwitching={false}
-        onSwitchToSimple={jest.fn()}
-      />,
-    );
+  it.each([false, true])(
+    'shares one stable native clock across list, pins, and reset (Root-owned: %s)',
+    sharedHeader => {
+      installOptimisticInfoPanelMock();
+      mockPerpsStore.setState({ hasPermission: false });
+      mockUsePerpsProScene.mockReturnValue(createSceneState());
+      const sharedHeaderNativeScrollY = sharedHeader
+        ? new NativeAnimated.Value(0)
+        : undefined;
+      render(
+        <PerpsProScene
+          sharedHeaderNativeScrollY={sharedHeaderNativeScrollY}
+          initialRegionAlertLayout={{
+            height: 52,
+            width: Dimensions.get('window').width - 32,
+          }}
+          isModeSwitching={false}
+          onSwitchToSimple={jest.fn()}
+        />,
+      );
 
-    const nativeScrollY = screen.UNSAFE_getByType(PerpsProInfoSingleList).props
-      .nativeScrollY;
-    expect(nativeScrollY).toBeInstanceOf(NativeAnimated.Value);
-    expect(screen.UNSAFE_getByType(SceneList).props.nativeScrollY).toBe(
-      nativeScrollY,
-    );
-    const pinnedLayers = screen.UNSAFE_getAllByType(CollapsiblePinnedLayer);
-    expect(pinnedLayers.map(layer => layer.props.testID).sort()).toEqual([
-      'perps-pro-info-tabs-overlay',
-      'perps-pro-market-overlay',
-      'perps-pro-region-alert-overlay',
-    ]);
-    for (const layer of [
-      screen.UNSAFE_getByType(CollapsibleHeaderLayer),
-      ...pinnedLayers,
-    ]) {
-      expect(layer.props.nativeScrollY).toBe(nativeScrollY);
-    }
+      const nativeScrollY = screen.UNSAFE_getByType(PerpsProInfoSingleList)
+        .props.nativeScrollY;
+      expect(nativeScrollY).toBeInstanceOf(NativeAnimated.Value);
+      if (sharedHeader) {
+        expect(nativeScrollY).toBe(sharedHeaderNativeScrollY);
+        expect(screen.queryByTestId('perps-pro-header-overlay')).toBeNull();
+        expect(
+          screen.UNSAFE_queryAllByType(CollapsibleHeaderLayer),
+        ).toHaveLength(0);
+      } else {
+        expect(
+          screen.getByTestId('perps-pro-header-overlay'),
+        ).toBeOnTheScreen();
+      }
+      expect(
+        screen.UNSAFE_getByType(PerpsProAccountPresentationReset).props
+          .nativeScrollY,
+      ).toBe(nativeScrollY);
+      expect(screen.UNSAFE_getByType(SceneList).props.nativeScrollY).toBe(
+        nativeScrollY,
+      );
+      const pinnedLayers = screen.UNSAFE_getAllByType(CollapsiblePinnedLayer);
+      expect(pinnedLayers.map(layer => layer.props.testID).sort()).toEqual([
+        'perps-pro-info-tabs-overlay',
+        'perps-pro-market-overlay',
+        'perps-pro-region-alert-overlay',
+      ]);
+      for (const layer of [
+        ...screen.UNSAFE_queryAllByType(CollapsibleHeaderLayer),
+        ...pinnedLayers,
+      ]) {
+        expect(layer.props.nativeScrollY).toBe(nativeScrollY);
+      }
 
-    fireEvent.press(screen.getByTestId('perps-pro-info-tab-positions'));
-    settleInfoPage('positions');
+      fireEvent.press(screen.getByTestId('perps-pro-info-tab-positions'));
+      settleInfoPage('positions');
 
-    expect(screen.UNSAFE_getByType(SceneList).props.nativeScrollY).toBe(
-      nativeScrollY,
-    );
-    expect(
-      screen.UNSAFE_getByType(PerpsProInfoSingleList).props.nativeScrollY,
-    ).toBe(nativeScrollY);
-    for (const layer of [
-      screen.UNSAFE_getByType(CollapsibleHeaderLayer),
-      ...screen.UNSAFE_getAllByType(CollapsiblePinnedLayer),
-    ]) {
-      expect(layer.props.nativeScrollY).toBe(nativeScrollY);
-    }
-  });
+      expect(screen.UNSAFE_getByType(SceneList).props.nativeScrollY).toBe(
+        nativeScrollY,
+      );
+      expect(
+        screen.UNSAFE_getByType(PerpsProInfoSingleList).props.nativeScrollY,
+      ).toBe(nativeScrollY);
+      for (const layer of [
+        ...screen.UNSAFE_queryAllByType(CollapsibleHeaderLayer),
+        ...screen.UNSAFE_getAllByType(CollapsiblePinnedLayer),
+      ]) {
+        expect(layer.props.nativeScrollY).toBe(nativeScrollY);
+      }
+    },
+  );
 
   // Component wiring only: apply the real geometry predicate at a fixed deep
   // offset. This does not exercise native measurement or the UI-thread mapper.
@@ -3443,7 +3530,7 @@ describe('PerpsProScene market loading states', () => {
     ).toBe(0);
   });
 
-  it('presents the prewarmed selector without rerendering the scene content', () => {
+  it('mounts the selector on demand without rerendering Scene and keeps it through dismiss/reopen', () => {
     mockUsePerpsProScene.mockReturnValue(
       createSceneState({
         currentMarket: {
@@ -3455,21 +3542,55 @@ describe('PerpsProScene market loading states', () => {
       }),
     );
 
-    render(
+    const view = render(
       <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
     );
 
-    expect(screen.getByTestId('market-selector')).toBeTruthy();
+    expect(screen.queryByTestId('market-selector')).toBeNull();
     expect(screen.getByTestId('realtime-order-book')).toBeTruthy();
     expect(mockMarketSelectorPresent).not.toHaveBeenCalled();
     const orderBookRendersBeforeOpen = mockOrderBookRender.mock.calls.length;
+    const sceneRendersBeforeOpen = mockUsePerpsProScene.mock.calls.length;
 
     fireEvent.press(screen.getByTestId('market-bar'));
 
     expect(mockMarketSelectorPresent).toHaveBeenCalledTimes(1);
+    expect(mockMarketSelectorMount).toHaveBeenCalledTimes(1);
+    const selector = screen.getByTestId('market-selector');
+    // Native onDismiss completes the existing close path, but the visit keeps
+    // the same instance for an immediate reopen instead of rebuilding it.
+    fireEvent(selector, 'dismiss');
+    expect(
+      mockUsePerpsProScene.mock.results.at(-1)?.value
+        .cancelPendingMarketSelection,
+    ).toHaveBeenCalledTimes(1);
+    expect(screen.getByTestId('market-selector')).toBe(selector);
+    expect(mockMarketSelectorUnmount).not.toHaveBeenCalled();
+    fireEvent.press(screen.getByTestId('market-bar'));
+    expect(mockMarketSelectorPresent).toHaveBeenCalledTimes(2);
+    expect(mockMarketSelectorMount).toHaveBeenCalledTimes(1);
+    expect(mockUsePerpsProScene).toHaveBeenCalledTimes(sceneRendersBeforeOpen);
     expect(mockOrderBookRender).toHaveBeenCalledTimes(
       orderBookRendersBeforeOpen,
     );
+    view.rerender(
+      <PerpsProScene
+        isModeSwitching={false}
+        onSwitchToSimple={jest.fn()}
+        sceneActive={false}
+      />,
+    );
+    expect(screen.queryByTestId('market-selector')).toBeNull();
+    expect(mockMarketSelectorUnmount).toHaveBeenCalledTimes(1);
+    view.rerender(
+      <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+    );
+    expect(screen.queryByTestId('market-selector')).toBeNull();
+    fireEvent.press(screen.getByTestId('market-bar'));
+    expect(mockMarketSelectorMount).toHaveBeenCalledTimes(2);
+    expect(mockMarketSelectorPresent).toHaveBeenCalledTimes(3);
+    view.unmount();
+    expect(mockMarketSelectorUnmount).toHaveBeenCalledTimes(2);
   });
 
   it('places the measured region alert above the Market and outside Trade', () => {
@@ -3659,6 +3780,103 @@ describe('PerpsProScene market loading states', () => {
     fireEvent.press(screen.getByTestId('kline-trigger'));
     expect(screen.getByTestId('kline-sheet')).toBeTruthy();
     expect(screen.getByTestId('realtime-order-book')).toBeTruthy();
+  });
+
+  it('prewarms K-line only after an active visit and retains one host across Root roundtrips', () => {
+    const market = {
+      canonicalCoin: 'BTC',
+      marketKey: 'hyperliquid::BTC',
+      marketData: { maxLeverage: 40, onlyIsolated: false },
+      quoteAsset: 'USDC',
+    };
+    mockUsePerpsProScene.mockReturnValue(
+      createSceneState({ currentMarket: market, klineEnabled: true }),
+    );
+    const props = { isModeSwitching: false, onSwitchToSimple: jest.fn() };
+    const view = render(<PerpsProScene {...props} sceneActive={false} />);
+    expect(screen.queryByTestId('kline-sheet')).toBeNull();
+    expect(mockKlineMount).not.toHaveBeenCalled();
+    expect(mockMarketSelectorMount).not.toHaveBeenCalled();
+
+    view.rerender(<PerpsProScene {...props} sceneActive />);
+    const kline = screen.getByTestId('kline-sheet');
+    expect(mockKlineMount).toHaveBeenCalledTimes(1);
+    expect(mockKlineProps.mock.lastCall?.[0]).toMatchObject({
+      enabled: false,
+      preloadEnabled: true,
+      publicationEnabled: false,
+      visible: false,
+    });
+    for (let roundtrip = 0; roundtrip < 2; roundtrip++) {
+      view.rerender(<PerpsProScene {...props} sceneActive={false} />);
+      expect(screen.getByTestId('kline-sheet')).toBe(kline);
+      expect(mockKlineProps.mock.lastCall?.[0]).toMatchObject({
+        enabled: false,
+        preloadEnabled: false,
+        publicationEnabled: false,
+        visible: false,
+      });
+      view.rerender(<PerpsProScene {...props} sceneActive />);
+      expect(screen.getByTestId('kline-sheet')).toBe(kline);
+    }
+    expect(mockKlineMount).toHaveBeenCalledTimes(1);
+    expect(mockKlineUnmount).not.toHaveBeenCalled();
+    expect(mockMarketSelectorMount).not.toHaveBeenCalled();
+    view.unmount();
+    expect(mockKlineUnmount).toHaveBeenCalledTimes(1);
+  });
+
+  it('suspends retained K-line visibility/navigation on blur without replacing its market or open intent', () => {
+    const registry =
+      require('../components/common/perpsProSheetNavigationRegistry') as typeof import('../components/common/perpsProSheetNavigationRegistry');
+    const market = {
+      canonicalCoin: 'BTC',
+      marketKey: 'hyperliquid::BTC',
+      marketData: { maxLeverage: 40, onlyIsolated: false },
+      quoteAsset: 'USDC',
+    };
+    mockUsePerpsProScene.mockReturnValue(
+      createSceneState({ currentMarket: market, klineEnabled: true }),
+    );
+    const props = { isModeSwitching: false, onSwitchToSimple: jest.fn() };
+    const view = render(<PerpsProScene {...props} />);
+    const kline = screen.getByTestId('kline-sheet');
+    fireEvent.press(screen.getByTestId('kline-trigger'));
+    expect(registry.getTopPerpsProSheetNavigationRegistration()).not.toBeNull();
+
+    view.rerender(<PerpsProScene {...props} sceneActive={false} />);
+    expect(registry.getTopPerpsProSheetNavigationRegistration()).toBeNull();
+    expect(mockKlineProps.mock.lastCall?.[0]).toMatchObject({
+      enabled: false,
+      preloadEnabled: false,
+      publicationEnabled: false,
+      visible: false,
+    });
+
+    const nextMarket = {
+      ...market,
+      canonicalCoin: 'ETH',
+      marketKey: 'hyperliquid::ETH',
+    };
+    mockUsePerpsProScene.mockReturnValue(
+      createSceneState({ currentMarket: nextMarket, klineEnabled: true }),
+    );
+    view.rerender(<PerpsProScene {...props} sceneActive={false} />);
+    expect(screen.getByTestId('kline-sheet')).toBe(kline);
+    expect(mockKlineProps.mock.lastCall?.[0].market).toBe(nextMarket);
+    view.rerender(<PerpsProScene {...props} sceneActive />);
+    expect(mockKlineProps.mock.lastCall?.[0]).toMatchObject({
+      enabled: true,
+      preloadEnabled: true,
+      publicationEnabled: true,
+      visible: true,
+    });
+    expect(registry.getTopPerpsProSheetNavigationRegistration()).not.toBeNull();
+    expect(mockKlineMount).toHaveBeenCalledTimes(1);
+    expect(mockKlineUnmount).not.toHaveBeenCalled();
+    view.unmount();
+    expect(registry.getTopPerpsProSheetNavigationRegistration()).toBeNull();
+    expect(mockKlineUnmount).toHaveBeenCalledTimes(1);
   });
 
   it('prewarms K-line without WS and keeps the same host after close', () => {

@@ -21,9 +21,12 @@ import Animated, {
   runOnUI,
   useAnimatedRef,
   useAnimatedStyle,
+  useDerivedValue,
   useSharedValue,
   withTiming,
   type AnimatedRef,
+  type DerivedValue,
+  type SharedValue,
 } from 'react-native-reanimated';
 import {
   beginRootSceneTouch,
@@ -45,6 +48,24 @@ export type RootScenePageContext = {
   visible: boolean;
 };
 
+export type RootScenePagerUI = {
+  /** The moving track's exact fractional index; read only inside worklets. */
+  readonly position: SharedValue<number>;
+  /** The last UI-settled index, without waiting for its JS publication. */
+  readonly selectedIndex: DerivedValue<number>;
+  /** UI worklet: select a page, including while an earlier snap is moving. */
+  readonly select: (index: number) => void;
+};
+
+export type RootSceneOverlayContext = {
+  /** Remains the source page until settlement, including during previews. */
+  selectedKey: string;
+  /** Motion has settled; the host must still apply business authorization. */
+  interactive: boolean;
+  /** Stable UI presentation handle; business callbacks still use onSettled. */
+  ui: RootScenePagerUI;
+};
+
 export type RootScenePagerProps = {
   keys: readonly string[];
   /** A changed value is a command. Echoing onSettled does not animate again. */
@@ -54,7 +75,11 @@ export type RootScenePagerProps = {
     key: string,
     context: RootScenePageContext,
   ) => React.ReactElement | null;
-  /** Enables horizontal gestures, not child controls or programmatic commands. */
+  /** Shared chrome inside the gesture viewport, but outside the moving track. */
+  renderOverlay?: (
+    context: RootSceneOverlayContext,
+  ) => React.ReactElement | null;
+  /** Enables gestures/UI selections, not child controls or requestedKey commands. */
   enabled?: boolean;
   testID?: string;
   panGestureRef?: React.MutableRefObject<GestureType | undefined>;
@@ -133,6 +158,12 @@ const RootPageHost = memo(function RootPageHost({
 
 /** Fixed viewport / retained full screens. Owns no vertical scroll surface. */
 export function RootScenePager(props: RootScenePagerProps) {
+  const {
+    enabled = true,
+    shouldStartGesture,
+    panGestureRef,
+    testID = 'root-scene',
+  } = props;
   const topology = validateRootSceneKeys(props.keys);
   const keys = useMemo<readonly [string, ...string[]]>(
     () => JSON.parse(topology),
@@ -164,10 +195,16 @@ export function RootScenePager(props: RootScenePagerProps) {
   const widthValue = useSharedValue(0);
   const position = useSharedValue(initial);
   const motion = useSharedValue(createRootSceneMotion(initial));
+  const selectedIndex = useDerivedValue(() => motion.value.selected);
+  const uiEnabled = useSharedValue(enabled);
   const uiRequestId = useSharedValue(0);
   const uiMounted = useSharedValue(true);
   const touchEpoch = useSharedValue(-1);
   const visibleRange = useSharedValue('');
+
+  useLayoutEffect(() => {
+    uiEnabled.value = enabled;
+  }, [enabled, uiEnabled]);
 
   const publish = useCallback(
     (epoch: number, command: number, next: Presentation, settled: boolean) => {
@@ -376,6 +413,49 @@ export function RootScenePager(props: RootScenePagerProps) {
     widthValue,
   ]);
 
+  const ui = useMemo<RootScenePagerUI>(
+    () => ({
+      position,
+      selectedIndex,
+      select: (index: number) => {
+        'worklet';
+        if (
+          !uiMounted.value ||
+          !uiEnabled.value ||
+          widthValue.value <= 0 ||
+          !Number.isInteger(index) ||
+          index < 0 ||
+          index >= keys.length
+        ) {
+          return;
+        }
+        // This is another UI-owned navigation intent, not a new JS command.
+        // Keep the JS request fence while command() advances the motion epoch,
+        // so interrupted snaps cannot commit and onSettled still echoes once.
+        // In particular, never mirror position through requestedKey/React.
+        transport.command(index, uiRequestId.value);
+      },
+    }),
+    [
+      keys,
+      position,
+      selectedIndex,
+      transport,
+      uiEnabled,
+      uiMounted,
+      uiRequestId,
+      widthValue,
+    ],
+  );
+  const overlayContext = useMemo<RootSceneOverlayContext>(
+    () => ({
+      selectedKey: presentation.key,
+      interactive: presentation.interactive,
+      ui,
+    }),
+    [presentation.key, presentation.interactive, ui],
+  );
+
   useLayoutEffect(() => {
     mounted.current = true;
     runOnUI(() => {
@@ -461,12 +541,6 @@ export function RootScenePager(props: RootScenePagerProps) {
     runOnUI(transport.command)(index, id);
   }, [keys, props.requestedKey, transport]);
 
-  const {
-    enabled = true,
-    shouldStartGesture,
-    panGestureRef,
-    testID = 'root-scene',
-  } = props;
   const gesture = useMemo(() => {
     const pan = Gesture.Pan()
       .withTestId(testID + '-pan')
@@ -576,6 +650,14 @@ export function RootScenePager(props: RootScenePagerProps) {
               />
             ))}
           </Animated.View>
+          {props.renderOverlay ? (
+            <View
+              pointerEvents="box-none"
+              style={StyleSheet.absoluteFill}
+              testID={`${testID}-overlay`}>
+              {props.renderOverlay(overlayContext)}
+            </View>
+          ) : null}
         </View>
       </GestureDetector>
     </GestureBlocksContext.Provider>

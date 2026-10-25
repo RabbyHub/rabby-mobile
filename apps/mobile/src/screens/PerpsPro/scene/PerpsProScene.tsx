@@ -2,6 +2,7 @@ import {
   CollapsibleHeaderLayer,
   CollapsiblePinnedLayer,
   CollapsibleSceneProvider,
+  RootScenePagerGestureBlock,
   useCollapsibleSceneController,
 } from '@rabby-wallet/rn-collapsible-scene-view';
 import type { PerpsQuoteAsset } from '@/constant/perps';
@@ -25,8 +26,10 @@ import {
 import { EnableUnifiedAccountPopup } from '@/screens/Perps/components/EnableUnifiedAccountPopup';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, {
+  forwardRef,
   useCallback,
   useEffect,
+  useImperativeHandle,
   useMemo,
   useRef,
   useState,
@@ -36,6 +39,7 @@ import {
   useAnimatedValue,
   useWindowDimensions,
   View,
+  type Animated as NativeAnimated,
   type AppStateStatus,
   type LayoutChangeEvent,
   type ListRenderItem,
@@ -137,7 +141,6 @@ import { usePerpsProLeverageUpdate } from './usePerpsProLeverageUpdate';
 import { usePerpsProManageMargin } from './usePerpsProManageMargin';
 import { usePerpsProTradeAmountUnit } from './usePerpsProTradePreferences';
 import { usePerpsProTransfer } from './usePerpsProTransfer';
-import { usePerpsFundingHistoryJournal } from '@/hooks/perps/funding/usePerpsFundingHistoryJournal';
 
 type PerpsProSceneRow =
   | {
@@ -213,13 +216,50 @@ const isReusableRegionAlertLayout = ({
   return Math.abs(layout.width - expectedWidth) <= 1;
 };
 
+// Keep Root selection free of the closed selector's market projection/list work.
+// The lightweight ref host owns opening state so a tap does not rerender Scene.
+const PerpsProLazyMarketSelector = forwardRef<
+  PerpsProMarketSelectorHandle,
+  Omit<React.ComponentProps<typeof PerpsProMarketSelector>, 'ref'>
+>(function PerpsProLazyMarketSelector(props, ref) {
+  const selectorRef = useRef<PerpsProMarketSelectorHandle>(null);
+  const [mounted, setMounted] = useState(false);
+  useImperativeHandle(
+    ref,
+    () => ({
+      present: () => {
+        if (selectorRef.current) {
+          selectorRef.current.present();
+        } else {
+          setMounted(true);
+        }
+      },
+    }),
+    [],
+  );
+  useEffect(() => {
+    if (mounted) {
+      selectorRef.current?.present();
+    }
+  }, [mounted]);
+  // Once opened, preserve the existing dismiss animation and fast reopen for
+  // this active visit. Scene deactivation releases this host and its content.
+  return mounted ? (
+    <PerpsProMarketSelector {...props} ref={selectorRef} />
+  ) : null;
+});
+
 export const PerpsProScene: React.FC<{
+  sceneActive?: boolean;
+  sharedHeaderNativeScrollY?: NativeAnimated.Value;
   historyEnabled?: boolean;
   initialRegionAlertLayout?: PerpsRegionAlertLayout | null;
   isModeSwitching: boolean;
   onOpenHistory?: (hasPendingFunding: boolean) => void;
   onSwitchToSimple: () => void;
 }> = ({
+  sceneActive = true,
+  sharedHeaderNativeScrollY,
   historyEnabled = false,
   initialRegionAlertLayout = null,
   isModeSwitching,
@@ -229,7 +269,7 @@ export const PerpsProScene: React.FC<{
   const { width } = useWindowDimensions();
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
-  const scene = usePerpsProScene();
+  const scene = usePerpsProScene(sceneActive);
   const tradePanelRef = useRef<PerpsProTradePanelHandle>(null);
   const refreshActiveAssetData = useCallback(
     () =>
@@ -250,7 +290,6 @@ export const PerpsProScene: React.FC<{
   const infoTabIndicatorPosition = useSharedValue(
     Math.max(0, PERPS_PRO_INFO_TABS.indexOf(info.activeInfoTab ?? 'positions')),
   );
-  usePerpsFundingHistoryJournal({ enabled: scene.fundingHistoryEnabled });
   const positionActions = usePerpsProPositionActions({
     accountIdentity: info.accountIdentity,
     leveragePending: leverageUpdate.pending,
@@ -278,7 +317,8 @@ export const PerpsProScene: React.FC<{
   const sceneController = useCollapsibleSceneController();
   // Native scrolling and vertical chrome use the same native event chain.
   // Reanimated's shared offset remains available for gestures and commands.
-  const nativeScrollY = useAnimatedValue(0);
+  const localNativeScrollY = useAnimatedValue(0);
+  const nativeScrollY = sharedHeaderNativeScrollY ?? localNativeScrollY;
   const infoScrollBridge = usePerpsProInfoScrollBridge(
     settledInfoTab ?? 'positions',
   );
@@ -286,29 +326,36 @@ export const PerpsProScene: React.FC<{
   const scrollInfoToOffset = useCallback((offset: number) => {
     infoListRef.current?.scrollToOffset(offset, false);
   }, []);
-  useEffect(
-    () =>
-      registerPerpsProKeyboardTradeScroll(distance => {
-        runOnUI((delta: number) => {
-          'worklet';
-          const index = infoScrollBridge.activeIndex.value;
-          const target = infoScrollBridge.targets[index];
-          if (!target || infoScrollBridge.pageGestureActive.value) {
-            return;
-          }
-          const offset = getPerpsProInfoBridgeOffset({
-            maxOffset: target.maxOffset.value,
-            offset: target.offset.value,
-            delta,
-          });
-          runOnJS(scrollInfoToOffset)(offset);
-        })(distance);
-      }),
-    [infoScrollBridge, scrollInfoToOffset],
-  );
+  useEffect(() => {
+    if (!sceneActive) {
+      return;
+    }
+    return registerPerpsProKeyboardTradeScroll(distance => {
+      runOnUI((delta: number) => {
+        'worklet';
+        const index = infoScrollBridge.activeIndex.value;
+        const target = infoScrollBridge.targets[index];
+        if (!target || infoScrollBridge.pageGestureActive.value) {
+          return;
+        }
+        const offset = getPerpsProInfoBridgeOffset({
+          maxOffset: target.maxOffset.value,
+          offset: target.offset.value,
+          delta,
+        });
+        runOnJS(scrollInfoToOffset)(offset);
+      })(distance);
+    });
+  }, [infoScrollBridge, sceneActive, scrollInfoToOffset]);
   const marketSelectorRef = useRef<PerpsProMarketSelectorHandle>(null);
   const [klineOpen, setKlineOpen] = useState(false);
   const [klineActivated, setKlineActivated] = useState(false);
+  const [klineMounted, setKlineMounted] = useState(
+    sceneActive && !!scene.currentMarket,
+  );
+  if (!klineMounted && sceneActive && scene.currentMarket) {
+    setKlineMounted(true);
+  }
   const [appState, setAppState] = useState<AppStateStatus>(
     AppState.currentState,
   );
@@ -345,7 +392,7 @@ export const PerpsProScene: React.FC<{
     setFundingOverlay(null);
     setUnifiedEnableIntent(null);
   }, [info.accountIdentity]);
-  const dismissKeyboardThen = usePerpsProDismissKeyboard();
+  const dismissKeyboardThen = usePerpsProDismissKeyboard(sceneActive);
   useEffect(() => {
     const subscription = AppState.addEventListener('change', setAppState);
     return () => subscription.remove();
@@ -1123,8 +1170,9 @@ export const PerpsProScene: React.FC<{
   );
 
   return (
-    <PerpsProFieldExplanationProvider>
+    <PerpsProFieldExplanationProvider sceneActive={sceneActive}>
       <PerpsProTradePanelOwner
+        sceneActive={sceneActive}
         ref={tradePanelRef}
         accountLeverageConfiguration={scene.accountLeverageConfiguration}
         activeAssetSubscriptionEnabled={scene.klineEnabled}
@@ -1198,28 +1246,30 @@ export const PerpsProScene: React.FC<{
                 pinTop={infoTabsPinTop}
                 style={styles.infoTabsLayer}
                 testID="perps-pro-info-tabs-overlay">
-                <View
-                  style={styles.infoTabsSpacer}
-                  testID="perps-pro-info-tabs-spacer">
+                <RootScenePagerGestureBlock testID="perps-pro-tabs-root-gesture-block">
                   <View
-                    pointerEvents="none"
-                    style={styles.infoSectionDivider}
-                  />
-                </View>
-                <View style={styles.infoTabsBar}>
-                  <PerpsProInfoTabs
-                    activeTab={settledInfoTab}
-                    historyEnabled={
-                      historyEnabled && info.accountState !== 'noAccount'
-                    }
-                    indicatorPosition={infoTabIndicatorPosition}
-                    onChange={selectInfoTab}
-                    onHistoryPress={openHistory}
-                    openOrdersCount={info.allOpenOrdersCount}
-                    pendingFundingCount={info.pendingFundingCount}
-                    positionsCount={info.allPositionsCount}
-                  />
-                </View>
+                    style={styles.infoTabsSpacer}
+                    testID="perps-pro-info-tabs-spacer">
+                    <View
+                      pointerEvents="none"
+                      style={styles.infoSectionDivider}
+                    />
+                  </View>
+                  <View style={styles.infoTabsBar}>
+                    <PerpsProInfoTabs
+                      activeTab={settledInfoTab}
+                      historyEnabled={
+                        historyEnabled && info.accountState !== 'noAccount'
+                      }
+                      indicatorPosition={infoTabIndicatorPosition}
+                      onChange={selectInfoTab}
+                      onHistoryPress={openHistory}
+                      openOrdersCount={info.allOpenOrdersCount}
+                      pendingFundingCount={info.pendingFundingCount}
+                      positionsCount={info.allPositionsCount}
+                    />
+                  </View>
+                </RootScenePagerGestureBlock>
               </CollapsiblePinnedLayer>
             ) : null}
             {positionedOverlaysReady ? (
@@ -1246,215 +1296,235 @@ export const PerpsProScene: React.FC<{
                 />
               </CollapsiblePinnedLayer>
             ) : null}
-            <CollapsibleHeaderLayer
-              nativeScrollY={nativeScrollY}
-              style={styles.headerClip}
-              testID="perps-pro-header-overlay">
-              <PerpsProHeader
-                isModeSwitching={isModeSwitching}
-                onSwitchToSimple={onSwitchToSimple}
-              />
-            </CollapsibleHeaderLayer>
+            {!sharedHeaderNativeScrollY ? (
+              <CollapsibleHeaderLayer
+                nativeScrollY={nativeScrollY}
+                style={styles.headerClip}
+                testID="perps-pro-header-overlay">
+                <PerpsProHeader
+                  isModeSwitching={isModeSwitching}
+                  onSwitchToSimple={onSwitchToSimple}
+                />
+              </CollapsibleHeaderLayer>
+            ) : null}
           </View>
         </CollapsibleSceneProvider>
-        <PerpsProMarketSelector
-          currentMarketKey={scene.currentMarket?.marketKey ?? null}
-          onClose={scene.cancelPendingMarketSelection}
-          onPrefetch={scene.prefetchMarket}
-          onRealtimeIntentCancel={scene.cancelMarketRealtimeIntent}
-          onRealtimeIntentStart={scene.startMarketRealtimeIntent}
-          onSelect={scene.selectMarket}
-          ref={marketSelectorRef}
-        />
-        <PerpsProAccountSelectorLayer />
-        <EnableUnifiedAccountPopup
-          visible={!!unifiedEnableIntent}
-          onClose={closeUnifiedEnable}
-          onConfirm={confirmUnifiedEnable}
-        />
-        {scene.currentMarket ? (
+        {/* Prewarm on the first active Pro visit, then retain the closed chart
+            across Root selection. Visibility/control cleanup stay live. */}
+        {klineMounted && scene.currentMarket ? (
           <PerpsProSheetNavigationBoundary
-            active={klineOpen}
+            active={sceneActive && klineOpen}
             dismiss={closeKline}>
             <PerpsProKlineSheet
               enabled={
-                klineActivated && scene.klineEnabled && appState === 'active'
+                sceneActive &&
+                klineActivated &&
+                scene.klineEnabled &&
+                appState === 'active'
               }
               market={scene.currentMarket}
               onClose={closeKline}
-              preloadEnabled={scene.klineEnabled && appState === 'active'}
+              preloadEnabled={
+                sceneActive && scene.klineEnabled && appState === 'active'
+              }
               publicationEnabled={
-                klineOpen && scene.klineEnabled && appState === 'active'
+                sceneActive &&
+                klineOpen &&
+                scene.klineEnabled &&
+                appState === 'active'
               }
-              visible={klineOpen}
+              visible={sceneActive && klineOpen}
             />
           </PerpsProSheetNavigationBoundary>
         ) : null}
-        {fundingOverlay ? (
-          <PerpsProSheetNavigationBoundary
-            active
-            dismiss={closeFundingOverlay}
-            edgeDismissible={false}>
-            <PerpsProFundingOverlay
-              depositFromSwapVisible={
-                fundingOverlay.mode === 'swap' && fundingOverlay.depositVisible
-              }
-              mode={fundingOverlay.mode}
-              onClose={closeFundingOverlay}
-              onCloseDeposit={closeDepositFromFunding}
-              onOpenDeposit={openDepositFromFunding}
-              sourceAsset={
-                fundingOverlay.mode === 'swap'
-                  ? fundingOverlay.sourceAsset
-                  : undefined
-              }
-              targetAsset={fundingOverlay.targetAsset}
+        {sceneActive ? (
+          <>
+            <PerpsProLazyMarketSelector
+              currentMarketKey={scene.currentMarket?.marketKey ?? null}
+              onClose={scene.cancelPendingMarketSelection}
+              onPrefetch={scene.prefetchMarket}
+              onRealtimeIntentCancel={scene.cancelMarketRealtimeIntent}
+              onRealtimeIntentStart={scene.startMarketRealtimeIntent}
+              onSelect={scene.selectMarket}
+              ref={marketSelectorRef}
             />
-          </PerpsProSheetNavigationBoundary>
+            <PerpsProAccountSelectorLayer />
+            <EnableUnifiedAccountPopup
+              visible={!!unifiedEnableIntent}
+              onClose={closeUnifiedEnable}
+              onConfirm={confirmUnifiedEnable}
+            />
+            {fundingOverlay ? (
+              <PerpsProSheetNavigationBoundary
+                active
+                dismiss={closeFundingOverlay}
+                edgeDismissible={false}>
+                <PerpsProFundingOverlay
+                  depositFromSwapVisible={
+                    fundingOverlay.mode === 'swap' &&
+                    fundingOverlay.depositVisible
+                  }
+                  mode={fundingOverlay.mode}
+                  onClose={closeFundingOverlay}
+                  onCloseDeposit={closeDepositFromFunding}
+                  onOpenDeposit={openDepositFromFunding}
+                  sourceAsset={
+                    fundingOverlay.mode === 'swap'
+                      ? fundingOverlay.sourceAsset
+                      : undefined
+                  }
+                  targetAsset={fundingOverlay.targetAsset}
+                />
+              </PerpsProSheetNavigationBoundary>
+            ) : null}
+            {fundingOverlay?.mode === 'swap' &&
+            fundingOverlay.depositVisible ? (
+              <PerpsProSheetNavigationBoundary
+                active
+                dismiss={closeDepositFromFunding}
+                edgeDismissible={false}>
+                {null}
+              </PerpsProSheetNavigationBoundary>
+            ) : null}
+            <PerpsProTransferSheet
+              available={transfer.editor?.available ?? '0'}
+              onClose={transfer.close}
+              onConfirm={transfer.confirm}
+              pending={transfer.pending}
+              visible={!!transfer.editor}
+            />
+            <PerpsProCancelConfirmationModal
+              confirmation={cancelOrders.confirmation}
+              onCancel={cancelOrders.dismissConfirmation}
+              onConfirm={cancelOrders.confirmCancellation}
+            />
+            {openOrderEdit.editor?.category === 'basic' ? (
+              <PerpsProBasicOrderEditSheet
+                coveredByReview={!!openOrderEdit.review}
+                editor={openOrderEdit.editor}
+                onClose={openOrderEdit.close}
+                onReview={openOrderEdit.requestBasicReview}
+                reviewRequesting={openOrderEdit.reviewRequesting}
+                visible
+              />
+            ) : null}
+            {openOrderEdit.editor?.category === 'conditional' ? (
+              <PerpsProConditionalOrderEditSheet
+                coveredByReview={!!openOrderEdit.review}
+                editor={openOrderEdit.editor}
+                onClose={openOrderEdit.close}
+                onReview={openOrderEdit.requestConditionalReview}
+                position={
+                  info.allPositionsByCoin.get(
+                    openOrderEdit.editor.order.coin,
+                  ) ?? openOrderEdit.editor.position
+                }
+                reviewRequesting={openOrderEdit.reviewRequesting}
+                visible
+              />
+            ) : null}
+            {openOrderEdit.editor ? (
+              <PerpsProOpenOrderEditConfirmationSheet
+                editor={openOrderEdit.editor}
+                onClose={openOrderEdit.closeReview}
+                onConfirm={openOrderEdit.confirm}
+                onToggleSkipConfirmation={openOrderEdit.toggleSkipConfirmation}
+                pending={openOrderEdit.pending}
+                review={openOrderEdit.review}
+                skipConfirmation={openOrderEdit.skipConfirmation}
+              />
+            ) : null}
+            <PerpsProCloseAllConfirmationModal
+              confirmation={closeAll.confirmation}
+              onCancel={closeAll.dismissConfirmation}
+              onConfirm={closeAll.confirmCloseAll}
+              pending={closeAll.pending}
+            />
+            <PerpsProLeverageSheet
+              currentLeverage={
+                positionActions.leverageEditor?.position.leverage ?? 1
+              }
+              maxLeverage={
+                positionActions.leverageEditor?.position.maxLeverage ?? 1
+              }
+              onClose={positionActions.closeLeverageEditor}
+              onConfirm={positionActions.updateLeverage}
+              pending={leverageUpdate.pending}
+              visible={!!positionActions.leverageEditor}
+            />
+            {manageMargin.editor && manageMargin.view ? (
+              <PerpsProManageMarginSheet
+                dirty={manageMargin.dirty}
+                draft={manageMargin.draft}
+                onBeginEditing={manageMargin.beginEditing}
+                onChangeDraft={manageMargin.changeDraft}
+                onClose={manageMargin.close}
+                onConfirm={manageMargin.confirm}
+                onSelectTarget={manageMargin.selectTarget}
+                pending={manageMargin.pending}
+                view={manageMargin.view}
+                visible
+              />
+            ) : null}
+            {positionTpSl.editor ? (
+              <PerpsProPositionTpSlSheets
+                amountUnit={positionTpSl.editor.amountUnit}
+                cancelingOids={positionTpSl.cancelingOids}
+                confirmedCancelledOids={positionTpSl.confirmedCancelledOids}
+                defaultTab={positionTpSl.editor.defaultTab}
+                market={positionTpSl.editor.market}
+                onCancelOrder={positionTpSl.cancelOrder}
+                onClose={positionTpSl.close}
+                onReview={positionTpSl.requestReview}
+                pending={positionTpSl.pending}
+                position={
+                  info.positions.find(
+                    position =>
+                      position.key === positionTpSl.editor?.position.key,
+                  ) ?? positionTpSl.editor.position
+                }
+                review={positionTpSl.review}
+                onCloseReview={positionTpSl.closeReview}
+                onConfirm={positionTpSl.confirm}
+                onToggleSkipConfirmation={positionTpSl.toggleSkipConfirmation}
+                skipConfirmation={positionTpSl.skipConfirmation}
+                reviewRequesting={positionTpSl.reviewRequesting}
+                settlement={positionTpSl.settlement}
+                submissionPending={positionTpSl.submissionPending}
+                visible
+              />
+            ) : null}
+            {positionActions.closeEditor ? (
+              <PerpsProClosePositionSheet
+                amountUnit={amountUnit}
+                market={positionActions.closeEditor.market}
+                onClose={positionActions.closeCloseEditor}
+                onReview={positionActions.reviewClose}
+                position={positionActions.closeEditor.position}
+                coveredByReview={!!positionActions.closeReview}
+                visible
+              />
+            ) : null}
+            {positionActions.closeEditor && positionActions.closeReview ? (
+              <PerpsProCloseConfirmationSheet
+                amountUnit={amountUnit}
+                draft={positionActions.closeReview}
+                market={positionActions.closeEditor.market}
+                onClose={positionActions.cancelCloseReview}
+                onConfirm={positionActions.confirmClose}
+                onToggleSkipConfirmation={
+                  positionActions.toggleSkipCloseConfirmation
+                }
+                pending={positionActions.closePending}
+                position={positionActions.closeEditor.position}
+                skipConfirmation={positionActions.skipCloseConfirmation}
+                visible
+              />
+            ) : null}
+            <PerpsProTradeConfirmationSlot />
+            <PerpsProSheetGlobalEdgeTarget />
+          </>
         ) : null}
-        {fundingOverlay?.mode === 'swap' && fundingOverlay.depositVisible ? (
-          <PerpsProSheetNavigationBoundary
-            active
-            dismiss={closeDepositFromFunding}
-            edgeDismissible={false}>
-            {null}
-          </PerpsProSheetNavigationBoundary>
-        ) : null}
-        <PerpsProTransferSheet
-          available={transfer.editor?.available ?? '0'}
-          onClose={transfer.close}
-          onConfirm={transfer.confirm}
-          pending={transfer.pending}
-          visible={!!transfer.editor}
-        />
-        <PerpsProCancelConfirmationModal
-          confirmation={cancelOrders.confirmation}
-          onCancel={cancelOrders.dismissConfirmation}
-          onConfirm={cancelOrders.confirmCancellation}
-        />
-        {openOrderEdit.editor?.category === 'basic' ? (
-          <PerpsProBasicOrderEditSheet
-            coveredByReview={!!openOrderEdit.review}
-            editor={openOrderEdit.editor}
-            onClose={openOrderEdit.close}
-            onReview={openOrderEdit.requestBasicReview}
-            reviewRequesting={openOrderEdit.reviewRequesting}
-            visible
-          />
-        ) : null}
-        {openOrderEdit.editor?.category === 'conditional' ? (
-          <PerpsProConditionalOrderEditSheet
-            coveredByReview={!!openOrderEdit.review}
-            editor={openOrderEdit.editor}
-            onClose={openOrderEdit.close}
-            onReview={openOrderEdit.requestConditionalReview}
-            position={
-              info.allPositionsByCoin.get(openOrderEdit.editor.order.coin) ??
-              openOrderEdit.editor.position
-            }
-            reviewRequesting={openOrderEdit.reviewRequesting}
-            visible
-          />
-        ) : null}
-        {openOrderEdit.editor ? (
-          <PerpsProOpenOrderEditConfirmationSheet
-            editor={openOrderEdit.editor}
-            onClose={openOrderEdit.closeReview}
-            onConfirm={openOrderEdit.confirm}
-            onToggleSkipConfirmation={openOrderEdit.toggleSkipConfirmation}
-            pending={openOrderEdit.pending}
-            review={openOrderEdit.review}
-            skipConfirmation={openOrderEdit.skipConfirmation}
-          />
-        ) : null}
-        <PerpsProCloseAllConfirmationModal
-          confirmation={closeAll.confirmation}
-          onCancel={closeAll.dismissConfirmation}
-          onConfirm={closeAll.confirmCloseAll}
-          pending={closeAll.pending}
-        />
-        <PerpsProLeverageSheet
-          currentLeverage={
-            positionActions.leverageEditor?.position.leverage ?? 1
-          }
-          maxLeverage={
-            positionActions.leverageEditor?.position.maxLeverage ?? 1
-          }
-          onClose={positionActions.closeLeverageEditor}
-          onConfirm={positionActions.updateLeverage}
-          pending={leverageUpdate.pending}
-          visible={!!positionActions.leverageEditor}
-        />
-        {manageMargin.editor && manageMargin.view ? (
-          <PerpsProManageMarginSheet
-            dirty={manageMargin.dirty}
-            draft={manageMargin.draft}
-            onBeginEditing={manageMargin.beginEditing}
-            onChangeDraft={manageMargin.changeDraft}
-            onClose={manageMargin.close}
-            onConfirm={manageMargin.confirm}
-            onSelectTarget={manageMargin.selectTarget}
-            pending={manageMargin.pending}
-            view={manageMargin.view}
-            visible
-          />
-        ) : null}
-        {positionTpSl.editor ? (
-          <PerpsProPositionTpSlSheets
-            amountUnit={positionTpSl.editor.amountUnit}
-            cancelingOids={positionTpSl.cancelingOids}
-            confirmedCancelledOids={positionTpSl.confirmedCancelledOids}
-            defaultTab={positionTpSl.editor.defaultTab}
-            market={positionTpSl.editor.market}
-            onCancelOrder={positionTpSl.cancelOrder}
-            onClose={positionTpSl.close}
-            onReview={positionTpSl.requestReview}
-            pending={positionTpSl.pending}
-            position={
-              info.positions.find(
-                position => position.key === positionTpSl.editor?.position.key,
-              ) ?? positionTpSl.editor.position
-            }
-            review={positionTpSl.review}
-            onCloseReview={positionTpSl.closeReview}
-            onConfirm={positionTpSl.confirm}
-            onToggleSkipConfirmation={positionTpSl.toggleSkipConfirmation}
-            skipConfirmation={positionTpSl.skipConfirmation}
-            reviewRequesting={positionTpSl.reviewRequesting}
-            settlement={positionTpSl.settlement}
-            submissionPending={positionTpSl.submissionPending}
-            visible
-          />
-        ) : null}
-        {positionActions.closeEditor ? (
-          <PerpsProClosePositionSheet
-            amountUnit={amountUnit}
-            market={positionActions.closeEditor.market}
-            onClose={positionActions.closeCloseEditor}
-            onReview={positionActions.reviewClose}
-            position={positionActions.closeEditor.position}
-            coveredByReview={!!positionActions.closeReview}
-            visible
-          />
-        ) : null}
-        {positionActions.closeEditor && positionActions.closeReview ? (
-          <PerpsProCloseConfirmationSheet
-            amountUnit={amountUnit}
-            draft={positionActions.closeReview}
-            market={positionActions.closeEditor.market}
-            onClose={positionActions.cancelCloseReview}
-            onConfirm={positionActions.confirmClose}
-            onToggleSkipConfirmation={
-              positionActions.toggleSkipCloseConfirmation
-            }
-            pending={positionActions.closePending}
-            position={positionActions.closeEditor.position}
-            skipConfirmation={positionActions.skipCloseConfirmation}
-            visible
-          />
-        ) : null}
-        <PerpsProTradeConfirmationSlot />
-        <PerpsProSheetGlobalEdgeTarget />
       </PerpsProTradePanelOwner>
     </PerpsProFieldExplanationProvider>
   );

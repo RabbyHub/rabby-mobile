@@ -264,6 +264,23 @@ describe('PerpsProKeyboardAccessory', () => {
     expect(screen.getByText('Min 15.35 USDC')).toBeTruthy();
   });
 
+  it('retains the Paper host but releases focus when the Pro root becomes inactive', () => {
+    const view = render(<PerpsProKeyboardAccessory />, {
+      wrapper: BottomSheetModalProvider,
+    });
+    const host = screen.UNSAFE_getByType(InputAccessoryView);
+    focus();
+    expect(perpsProKeyboardSession.getSnapshot()).not.toBeNull();
+    view.rerender(<PerpsProKeyboardAccessory sceneActive={false} />);
+    expect(screen.UNSAFE_getByType(InputAccessoryView)).toBe(host);
+    expect(input.blur).toHaveBeenCalledTimes(1);
+    expect(perpsProKeyboardSession.getSnapshot()).toBeNull();
+    expect(removeKeyboardListener).toHaveBeenCalled();
+    view.rerender(<PerpsProKeyboardAccessory sceneActive />);
+    expect(screen.UNSAFE_getByType(InputAccessoryView)).toBe(host);
+    expect(perpsProKeyboardSession.getSnapshot()).toBeNull();
+  });
+
   it('uses the current Android keyboard frame when show preceded subscription', () => {
     Platform.OS = 'android';
     jest.mocked(Keyboard.metrics).mockReturnValue({

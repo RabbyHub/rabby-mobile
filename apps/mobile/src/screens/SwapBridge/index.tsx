@@ -43,7 +43,7 @@ import Swap from './Swap';
 import { TokenInfoPopup } from '../Swap/components/TokenInfoPopup';
 import { withSwapService } from '../Swap/swapServiceDependencies';
 import { getSwapBridgeActiveTab } from './navigationParams';
-import { useRootPagerEnabled } from './useRootPagerEnabled';
+import { useRootPagerEnabled } from '@/hooks/useRootPagerEnabled';
 
 const ROOT_SCENES: readonly SwapBridgeTab[] = ['swap', 'bridge'];
 

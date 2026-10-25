@@ -10,7 +10,8 @@ import { Pressable } from 'react-native-gesture-handler';
 import { useTranslation } from 'react-i18next';
 
 import { perpsStore } from '@/hooks/perps/usePerpsStore';
-import { useShallow } from 'zustand/react/shallow';
+import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
+import { shallow } from 'zustand/shallow';
 import {
   calculatePerpsProChange24h,
   type PerpsProMarketDescriptor,
@@ -31,11 +32,13 @@ export const PerpsProMarketBar: React.FC<{
 }> = React.memo(({ market, onOpenKline, onPress }) => {
   const { colors2024, styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
-  const [markPx, prevDayPx] = perpsStore(
-    useShallow(state => {
+  const [markPx, prevDayPx] = useActivityStore(
+    perpsStore,
+    state => {
       const data = selectPerpsProMarketData(state, market?.canonicalCoin ?? '');
       return [data?.markPx ?? '', data?.prevDayPx ?? ''] as const;
-    }),
+    },
+    shallow,
   );
   const change24h = useMemo(
     () => calculatePerpsProChange24h({ markPx, prevDayPx }),

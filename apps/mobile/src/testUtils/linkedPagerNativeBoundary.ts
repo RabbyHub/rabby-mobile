@@ -59,6 +59,8 @@ const cells = new Set<SharedCell>();
 const tasks: PendingAnimation[] = [];
 const reactions = new Set<Reaction>();
 const pans: PanBoundary[] = [];
+const jsNotifications: Array<() => void> = [];
+let deferJSNotifications = false;
 const activeAnimation = (cell: SharedCell) =>
   tasks.find(task => task.cell === cell && !task.cancelled && !task.finished);
 const isAnimation = (value: unknown): value is Animation =>
@@ -118,6 +120,29 @@ export const nativeBoundary = {
   animations: () => tasks.filter(task => !task.cancelled && !task.finished),
   animationHistory: () => [...tasks],
   sharedValues: () => [...cells],
+  // A deterministic notification-ordering model, not a second JS runtime.
+  // Existing tests keep synchronous delivery; latency-sensitive contracts
+  // explicitly defer runOnJS and observe UI state before flushing this FIFO.
+  setJSNotificationsDeferred: (deferred: boolean) => {
+    deferJSNotifications = deferred;
+  },
+  pendingJSCount: () => jsNotifications.length,
+  flushNextJS: () => {
+    const next = jsNotifications.shift();
+    if (!next) {
+      throw new Error('No pending UI-to-JS notification');
+    }
+    next();
+  },
+  flushJS: () => {
+    let count = 0;
+    while (jsNotifications.length > 0) {
+      if (++count > 1000) {
+        throw new Error('UI-to-JS notification boundary did not converge');
+      }
+      jsNotifications.shift()?.();
+    }
+  },
   advanceAnimations: (fraction: number) => {
     for (const task of nativeBoundary.animations()) {
       task.cell.write(task.from + (task.target - task.from) * fraction);
@@ -143,6 +168,8 @@ export const nativeBoundary = {
     }
   },
   reset: () => {
+    jsNotifications.length = 0;
+    deferJSNotifications = false;
     tasks.length = 0;
     pans.length = 0;
     for (const cell of cells) {
@@ -230,6 +257,20 @@ export function createReanimatedBoundary() {
       }
       return ref.current;
     },
+    // Keep the public read-only derived value live without making React own
+    // animation frames. Reads still collect the backing shared-cell dependency.
+    useDerivedValue: <Value>(updater: () => Value) => {
+      const current = React.useRef(updater);
+      current.current = updater;
+      return React.useMemo(
+        () => ({
+          get value() {
+            return current.current();
+          },
+        }),
+        [],
+      );
+    },
     useAnimatedStyle: (style: () => Record<string, unknown>) =>
       new Proxy(
         {},
@@ -300,7 +341,15 @@ export function createReanimatedBoundary() {
         handlers[event.eventName ?? 'onScroll']?.(event.nativeEvent),
     useEvent: (handler: unknown) => handler,
     runOnUI: (callback: unknown) => callback,
-    runOnJS: (callback: unknown) => callback,
+    runOnJS:
+      <Args extends unknown[]>(callback: (...args: Args) => unknown) =>
+      (...args: Args) => {
+        if (deferJSNotifications) {
+          jsNotifications.push(() => callback(...args));
+        } else {
+          callback(...args);
+        }
+      },
     cancelAnimation: (cell: SharedCell) => cancel(cell),
     withTiming: (
       target: number,

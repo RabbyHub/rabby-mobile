@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react-native';
+import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
 import { Animated, Easing, StyleSheet, View as NativeView } from 'react-native';
 
@@ -123,7 +123,12 @@ jest.mock('../loading/PerpsProSkeletonBlock', () => {
 });
 
 jest.mock('./PerpsProPrecisionSheet', () => ({
-  PerpsProPrecisionSheet: () => null,
+  PerpsProPrecisionSheet: () => {
+    const ReactModule = require('react');
+    return ReactModule.createElement(require('react-native').View, {
+      testID: 'precision-sheet',
+    });
+  },
 }));
 
 const defaultProps: React.ComponentProps<typeof PerpsProOrderBook> = {
@@ -166,6 +171,39 @@ const marketData: MarketData = {
 const btcMarket = buildPerpsProMarket(marketData);
 
 describe('PerpsProOrderBook display shell', () => {
+  it('releases the precision sheet while retained inactive and ignores a stale opener', () => {
+    const option = {
+      displayPrice: 1,
+      mantissa: null,
+      nSigFigs: 5,
+      priceDecimals: 0,
+    } as const;
+    const props = {
+      ...defaultProps,
+      selectedTickOption: option,
+      tickOptions: [option],
+    };
+    const view = render(<PerpsProOrderBook {...props} />);
+    const trigger = view.getByLabelText(
+      'page.perps.pro.orderBook.priceAggregation',
+    );
+    let pressOwner = trigger;
+    while (
+      typeof pressOwner.props.onPress !== 'function' &&
+      pressOwner.parent
+    ) {
+      pressOwner = pressOwner.parent;
+    }
+    const retainedOpen = pressOwner.props.onPress;
+    fireEvent.press(trigger);
+    expect(view.queryByTestId('precision-sheet')).not.toBeNull();
+    view.rerender(<PerpsProOrderBook {...props} sceneActive={false} />);
+    expect(view.queryByTestId('precision-sheet')).toBeNull();
+    act(() => retainedOpen());
+    view.rerender(<PerpsProOrderBook {...props} />);
+    expect(view.queryByTestId('precision-sheet')).toBeNull();
+  });
+
   let nativeTiming: jest.SpyInstance;
 
   beforeEach(() => {

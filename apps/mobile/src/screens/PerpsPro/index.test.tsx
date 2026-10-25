@@ -1,5 +1,6 @@
 import { fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
+import { Animated } from 'react-native';
 
 import {
   getTopPerpsProSheetNavigationRegistration,
@@ -88,12 +89,16 @@ jest.mock('./scene/PerpsProScene', () => {
       isModeSwitching,
       onOpenHistory,
       onSwitchToSimple,
+      sceneActive,
+      sharedHeaderNativeScrollY,
     }: {
       historyEnabled: boolean;
       initialRegionAlertLayout?: { height: number; width: number } | null;
       isModeSwitching: boolean;
       onOpenHistory: (hasPendingFunding: boolean) => void;
       onSwitchToSimple: () => void;
+      sceneActive: boolean;
+      sharedHeaderNativeScrollY?: Animated.Value;
     }) => {
       mockSceneRenderCount += 1;
       return ReactModule.createElement(
@@ -103,6 +108,8 @@ jest.mock('./scene/PerpsProScene', () => {
             ? `${initialRegionAlertLayout.width}:${initialRegionAlertLayout.height}`
             : 'no-alert-layout',
           testID: 'perps-pro-scene-wrapper',
+          sceneActive,
+          sharedHeaderNativeScrollY,
         },
         ReactModule.createElement(Pressable, {
           accessibilityLabel: 'pro',
@@ -178,6 +185,22 @@ describe('PerpsProScreen', () => {
     ).toEqual({ disabled: true });
   });
 
+  it('forwards the Root-owned native clock without creating another value', () => {
+    const sharedHeaderNativeScrollY = new Animated.Value(0);
+    const screen = render(
+      <PerpsProScreen
+        sharedHeaderNativeScrollY={sharedHeaderNativeScrollY}
+        isModeSwitching={false}
+        onSwitchToSimple={jest.fn()}
+      />,
+    );
+
+    expect(
+      screen.getByTestId('perps-pro-scene-wrapper').props
+        .sharedHeaderNativeScrollY,
+    ).toBe(sharedHeaderNativeScrollY);
+  });
+
   it('opens Transaction history when a funding operation is pending', () => {
     const screen = render(
       <PerpsProScreen isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
@@ -197,5 +220,28 @@ describe('PerpsProScreen', () => {
     expect(registration).not.toBeNull();
     requestDismissPerpsProSheet(registration!, 'edge');
     expect(mockHidePortfolioBreakdown).toHaveBeenCalledTimes(1);
+  });
+
+  it('retains the scene but releases global presentation owners while inactive', () => {
+    mockPortfolioBreakdownVisible = true;
+    const props = { isModeSwitching: false, onSwitchToSimple: jest.fn() };
+    const view = render(<PerpsProScreen {...props} />);
+    fireEvent.press(view.getByTestId('perps-pro-history'));
+    expect(getTopPerpsProSheetNavigationRegistration()).not.toBeNull();
+
+    view.rerender(<PerpsProScreen {...props} sceneActive={false} />);
+    expect(view.getByTestId('perps-pro-scene-wrapper').props.sceneActive).toBe(
+      false,
+    );
+    expect(view.queryByTestId('perps-pro-history-sheet-host')).toBeNull();
+    expect(getTopPerpsProSheetNavigationRegistration()).toBeNull();
+    fireEvent.press(view.getByTestId('perps-pro-history'));
+    expect(mockPresentHistory).toHaveBeenCalledTimes(1);
+
+    view.rerender(<PerpsProScreen {...props} sceneActive />);
+    expect(
+      view.getByTestId('perps-pro-history-sheet-host').props.accessibilityLabel,
+    ).toBe('false');
+    expect(getTopPerpsProSheetNavigationRegistration()).not.toBeNull();
   });
 });

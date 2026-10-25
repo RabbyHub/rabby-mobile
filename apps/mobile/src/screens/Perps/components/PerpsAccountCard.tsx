@@ -73,7 +73,9 @@ const PERPS_BTN_BG = 'rgba(80, 210, 193, 0.10)';
 // chart 120 + tab row (16 + 4 margin) + top margin 16
 const EXPANDED_BLOCK_HEIGHT = 156;
 
-export const PerpsAccountCard: React.FC = () => {
+export const PerpsAccountCard: React.FC<{ sceneActive?: boolean }> = ({
+  sceneActive = true,
+}) => {
   const { styles, isLight, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const portfolioValueLabel = t('page.perps.PerpsCard.portfolioValue');
@@ -88,12 +90,9 @@ export const PerpsAccountCard: React.FC = () => {
   } = usePerpsAccount();
   const { showPortfolioBreakdown } = useShowPerpsPortfolioBreakdown();
 
-  const currentAddress = useActivityStore(
-    perpsStore,
-    s => s.currentPerpsAccount?.address,
-    Object.is,
-    { storeLabel: 'perps-account-card' },
-  );
+  // Keep identity live for account-scoped fetches; only display publications
+  // pause with the retained page's activity boundary.
+  const currentAddress = perpsStore(s => s.currentPerpsAccount?.address);
 
   // Deposits/withdrawals still in flight. Same signal the released header pill
   // and the Pro info panel read, so the entries never disagree on the count.
@@ -106,6 +105,7 @@ export const PerpsAccountCard: React.FC = () => {
 
   const portfolioEntry = usePerpsPortfolio(currentAddress);
   const isFocused = useIsFocused();
+  const active = sceneActive && isFocused;
 
   // Poll while the Perps screen is focused. The big PV number is WS-driven
   // now — this poll feeds what only the portfolio API has: the 24H change
@@ -113,7 +113,7 @@ export const PerpsAccountCard: React.FC = () => {
   // used until the WS slices are ready. The store dedupes and keeps a short
   // TTL, so focus flaps do not cause request bursts.
   useEffect(() => {
-    if (!currentAddress || !isFocused) {
+    if (!currentAddress || !active) {
       return;
     }
     fetchPerpsPortfolio(currentAddress);
@@ -130,7 +130,7 @@ export const PerpsAccountCard: React.FC = () => {
       }
     }, 60_000);
     return () => clearInterval(timer);
-  }, [currentAddress, isFocused]);
+  }, [currentAddress, active]);
 
   // Refresh shortly after a deposit/withdraw/swap popup closes so the
   // portfolio value catches the funding change. (Balance-driven triggers are
@@ -146,14 +146,14 @@ export const PerpsAccountCard: React.FC = () => {
   useEffect(() => {
     const wasOpen = prevFundingPopupOpenRef.current;
     prevFundingPopupOpenRef.current = anyFundingPopupOpen;
-    if (!wasOpen || anyFundingPopupOpen || !currentAddress) {
+    if (!active || !wasOpen || anyFundingPopupOpen || !currentAddress) {
       return;
     }
     const timer = setTimeout(() => {
       fetchPerpsPortfolio(currentAddress, { force: true });
     }, 3_000);
     return () => clearTimeout(timer);
-  }, [anyFundingPopupOpen, currentAddress]);
+  }, [active, anyFundingPopupOpen, currentAddress]);
 
   const portfolioData = portfolioEntry?.data ?? null;
   const isPortfolioEmpty = useMemo(

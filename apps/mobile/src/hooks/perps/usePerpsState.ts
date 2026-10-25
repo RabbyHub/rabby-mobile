@@ -37,6 +37,8 @@ import { usePerpsPopupState } from '@/screens/Perps/hooks/usePerpsPopupState';
 import { useTranslation } from 'react-i18next';
 import { sleep } from '@/utils/async';
 import { useShallow } from 'zustand/react/shallow';
+import { useStoreWithEqualityFn } from 'zustand/traditional';
+import { useStoreActivityScope } from '@/hooks/storeActivity/StoreActivityProvider';
 import { usePerpsAccount } from './usePerpsAccount';
 import { ensureWalletUnlockedForAction } from '@/utils/walletUnlock';
 import { isUserCancelledSignature } from './perpsActionError';
@@ -57,11 +59,16 @@ interface SignAction {
 }
 
 export const usePerpsState = (
-  options: { legacyRuntimeContinuationEnabled?: boolean } = {},
+  options: {
+    legacyRuntimeContinuationEnabled?: boolean;
+    /** Opt-in publication gating for retained pages, not business runtime work. */
+    pauseInactivePublication?: boolean;
+  } = {},
 ) => {
   const [popupSate, setPopupState] = usePerpsPopupState();
   const { t } = useTranslation();
   const isFocused = useIsFocused();
+  const activityScope = useStoreActivityScope();
   const deleteAgentCbRef = useRef<(() => Promise<void>) | null>(null);
   const {
     setApproveSignatures,
@@ -83,11 +90,11 @@ export const usePerpsState = (
     fetchPerpFee,
   } = usePerpsStore();
 
-  const perpsState = perpsStore(
+  const perpsState = useStoreWithEqualityFn(
+    options.pauseInactivePublication
+      ? activityScope.bindStore(perpsStore, 'perps-simple-state')
+      : perpsStore,
     useShallow(s => ({
-      currentPerpsAccount: s.currentPerpsAccount,
-      accountNeedApproveAgent: s.accountNeedApproveAgent,
-      accountNeedApproveBuilderFee: s.accountNeedApproveBuilderFee,
       isInitialized: s.isInitialized,
       isLogin: s.isLogin,
       hasPermission: s.hasPermission,
@@ -104,7 +111,15 @@ export const usePerpsState = (
     currentPerpsAccount,
     accountNeedApproveAgent,
     accountNeedApproveBuilderFee,
-  } = perpsState;
+  } = perpsStore(
+    useShallow(s => ({
+      // Identity and approval control must keep converging even when a
+      // retained page pauses publication of its presentation snapshot.
+      currentPerpsAccount: s.currentPerpsAccount,
+      accountNeedApproveAgent: s.accountNeedApproveAgent,
+      accountNeedApproveBuilderFee: s.accountNeedApproveBuilderFee,
+    })),
+  );
 
   const handleDeleteAgent = useMemoizedFn(async () => {
     if (deleteAgentCbRef.current) {
@@ -828,7 +843,7 @@ export const usePerpsState = (
   return {
     // State
     positionAndOpenOrders,
-    currentPerpsAccount: perpsState.currentPerpsAccount,
+    currentPerpsAccount,
     isLogin: perpsState.isLogin,
     isInitialized: perpsState.isInitialized,
     userFills: perpsState.userFills,
@@ -836,8 +851,8 @@ export const usePerpsState = (
     perpFee: perpsState.perpFee,
     userAccountHistory: perpsState.userAccountHistory,
     localLoadingHistory: perpsState.localLoadingHistory,
-    accountNeedApproveAgent: perpsState.accountNeedApproveAgent,
-    accountNeedApproveBuilderFee: perpsState.accountNeedApproveBuilderFee,
+    accountNeedApproveAgent,
+    accountNeedApproveBuilderFee,
     favoriteMarkets: perpsState.favoriteMarkets,
     // Actions
     login,

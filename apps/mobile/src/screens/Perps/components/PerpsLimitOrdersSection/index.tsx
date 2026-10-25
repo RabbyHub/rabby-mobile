@@ -9,18 +9,21 @@ type Props = {
   positionAndOpenOrders?: PositionAndOpenOrder[];
   handleActionApproveStatus: () => Promise<void>;
   isHome?: boolean;
+  sceneActive?: boolean;
 };
 
 export const PerpsLimitOrdersSection: React.FC<Props> = ({
   positionAndOpenOrders,
   handleActionApproveStatus,
   isHome,
+  sceneActive,
 }) => {
   const rows = useHomeLimitOrders(positionAndOpenOrders);
   return (
     <PerpsLimitOrdersSectionView
       rows={rows}
       isHome={isHome}
+      sceneActive={sceneActive}
       handleActionApproveStatus={handleActionApproveStatus}
     />
   );

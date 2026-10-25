@@ -18,7 +18,7 @@ jest.mock('react-native-reanimated', () => ({
   measure: jest.fn(),
 }));
 jest.mock('react-native-animateable-text', () => require('react-native').Text);
-jest.mock('./useRootPagerEnabled', () => ({
+jest.mock('@/hooks/useRootPagerEnabled', () => ({
   useRootPagerEnabled: (focused: boolean) => focused,
 }));
 

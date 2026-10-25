@@ -21,7 +21,7 @@ const subscribeKeyboard = (onChange: () => void) => {
 };
 
 /**
- * Presentation-only gate: route commands and signing keep their existing owners.
+ * Shared presentation-only gate: route commands and signing keep their owners.
  * The modal registry covers registered blocking surfaces, not every global
  * sheet or native authentication session. Those retain their own touch hosts.
  */

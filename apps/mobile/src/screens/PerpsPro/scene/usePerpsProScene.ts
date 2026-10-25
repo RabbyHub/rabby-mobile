@@ -65,7 +65,9 @@ type PreparedMarketSelection = {
   zeroAddressLeverageBaseline: PerpsProLeverageConfiguration | null;
 };
 
-export const usePerpsProScene = () => {
+export const usePerpsProScene = (sceneActive = true) => {
+  const sceneActiveRef = useRef(sceneActive);
+  sceneActiveRef.current = sceneActive;
   const route =
     useRoute<
       RouteProp<TransactionNavigatorParamList, typeof RootNames.Perps>
@@ -196,6 +198,9 @@ export const usePerpsProScene = () => {
 
   const startMarketRealtimeIntent = useCallback(
     (market: PerpsProMarket) => {
+      if (!sceneActiveRef.current) {
+        return;
+      }
       if (marketSelectionRef.current?.marketKey === market.marketKey) {
         releasePressedRealtimeIntent();
         return;
@@ -218,6 +223,9 @@ export const usePerpsProScene = () => {
 
   const prepareMarketSelection = useCallback(
     async (market: PerpsProMarket, prewarmRealtime: boolean) => {
+      if (!sceneActiveRef.current) {
+        return false;
+      }
       const selectedAccount = perpsStore.getState().currentPerpsAccount;
       const selectedAccountIdentity = selectedAccount
         ? getPerpsRuntimeIdentity(selectedAccount)
@@ -298,7 +306,10 @@ export const usePerpsProScene = () => {
           );
         }
       }
-      if (sequence !== marketSelectionSequenceRef.current) {
+      if (
+        !sceneActiveRef.current ||
+        sequence !== marketSelectionSequenceRef.current
+      ) {
         releasePendingRealtimeIntent(sequence);
         return false;
       }
@@ -364,11 +375,20 @@ export const usePerpsProScene = () => {
   }, [releasePendingRealtimeIntent, releasePressedRealtimeIntent]);
 
   const prefetchMarket = useCallback((coin: string) => {
-    prefetchPerpsProZeroAddressLeverageBaseline(coin);
+    if (sceneActiveRef.current) {
+      prefetchPerpsProZeroAddressLeverageBaseline(coin);
+    }
   }, []);
 
   useEffect(() => {
+    if (!sceneActive) {
+      cancelPendingMarketSelection();
+    }
+  }, [cancelPendingMarketSelection, sceneActive]);
+
+  useEffect(() => {
     if (
+      !sceneActive ||
       marketSelection?.accountIdentity === accountIdentity ||
       !synchronousMarketSelection
     ) {
@@ -377,9 +397,17 @@ export const usePerpsProScene = () => {
     marketSelectionRef.current = synchronousMarketSelection;
     setMarketSelection(synchronousMarketSelection);
     setPerpsProSessionMarket(synchronousMarketSelection.marketKey);
-  }, [accountIdentity, marketSelection, synchronousMarketSelection]);
+  }, [
+    accountIdentity,
+    marketSelection,
+    sceneActive,
+    synchronousMarketSelection,
+  ]);
 
   useEffect(() => {
+    if (!sceneActive) {
+      return;
+    }
     if (catalogue.length === 0) {
       cancelPendingMarketSelection();
       marketSelectionRef.current = null;
@@ -414,6 +442,7 @@ export const usePerpsProScene = () => {
     cancelPendingMarketSelection,
     catalogue,
     prepareMarketSelection,
+    sceneActive,
   ]);
 
   useEffect(
@@ -510,10 +539,14 @@ export const usePerpsProScene = () => {
     });
 
   const fundingHistoryEnabled =
-    runtime.status === 'ready' && isFocused && appState === 'active';
+    sceneActive &&
+    runtime.status === 'ready' &&
+    isFocused &&
+    appState === 'active';
   const klineEnabled = fundingHistoryEnabled && !!currentMarket;
   const subscriptionsEnabled = klineEnabled && !!selectedTickOption;
   const orderBookSubscriptionEnabled =
+    sceneActive &&
     runtime.status === 'ready' &&
     isFocused &&
     !!currentMarket &&

@@ -16,11 +16,19 @@ const mockFocusTextInput = jest.fn();
 const mockCancelAnimation = jest.fn();
 const mockWithTiming = jest.fn((value: number) => value);
 
+jest.mock('react-native-gesture-handler', () => ({
+  GestureDetector: require('react-native').View,
+}));
+
 jest.mock('react-native-reanimated', () => {
   const ReactModule = require('react');
   return {
     __esModule: true,
-    default: { createAnimatedComponent: (component: unknown) => component },
+    default: {
+      View: require('react-native').View,
+      createAnimatedComponent: (component: unknown) => component,
+    },
+    useAnimatedRef: () => ReactModule.useRef(null),
     Easing: {
       cubic: (value: number) => value,
       out: (easing: (value: number) => number) => easing,
@@ -307,6 +315,49 @@ describe('PerpsProTradeForm order matrix', () => {
       'leverage',
       expect.objectContaining({ visible: true, pending: true }),
     );
+  });
+
+  it('keeps the input and slider surface while releasing inactive configuration sheets', () => {
+    const trade = controller();
+    const onAddFunds = jest.fn();
+    const view = render(
+      <PerpsProTradeForm controller={trade} onAddFunds={onAddFunds} />,
+    );
+    const block = view.getByTestId('perps-pro-trade-inputs-root-gesture-block');
+    expect(
+      block.findAllByProps({ testID: 'perps-pro-trade-amount-slider' }).length,
+    ).toBeGreaterThan(0);
+    expect(
+      block.findAllByProps({ testID: 'perps-pro-trade-amount-field' }).length,
+    ).toBeGreaterThan(0);
+    fireEvent.press(view.getByText('25x'));
+    expect(mockConfigurationSheetProps).toHaveBeenLastCalledWith(
+      'leverage',
+      expect.objectContaining({ visible: true }),
+    );
+    view.rerender(
+      <PerpsProTradeForm
+        controller={trade}
+        onAddFunds={onAddFunds}
+        sceneActive={false}
+      />,
+    );
+    expect(view.getByTestId('perps-pro-trade-inputs-root-gesture-block')).toBe(
+      block,
+    );
+    expect(view.queryByTestId('bbo-sheet')).toBeNull();
+    view.rerender(
+      <PerpsProTradeForm
+        controller={trade}
+        onAddFunds={onAddFunds}
+        sceneActive
+      />,
+    );
+    expect(
+      mockConfigurationSheetProps.mock.calls
+        .filter(([name]) => name === 'leverage')
+        .at(-1)?.[1].visible,
+    ).toBe(false);
   });
 
   it('uses the current leverage callback and only closes after a successful update', async () => {

@@ -57,6 +57,7 @@ export const PerpsProTradeConfirmationSlot = React.memo(
 );
 
 type PerpsProTradePanelOwnerProps = React.PropsWithChildren<{
+  sceneActive?: boolean;
   accountLeverageConfiguration: PerpsProLeverageConfiguration | null;
   activeAssetSubscriptionEnabled: boolean;
   addFundsMode: 'deposit' | 'swap';
@@ -92,6 +93,7 @@ export type PerpsProTradePanelHandle = {
 
 export const PerpsProTradePanelOwner = React.memo(
   function PerpsProTradePanelOwner({
+    sceneActive = true,
     accountLeverageConfiguration,
     activeAssetSubscriptionEnabled,
     addFundsMode,
@@ -207,6 +209,7 @@ export const PerpsProTradePanelOwner = React.memo(
         <View style={[styles.columns, columnsStyle]}>
           <View style={orderBookColumnStyle}>
             <PerpsProRealtimeOrderBook
+              sceneActive={sceneActive}
               amountUnit={trade.amountUnit}
               enabled={orderBookSubscriptionEnabled}
               height={mainColumnHeight}
@@ -227,6 +230,7 @@ export const PerpsProTradePanelOwner = React.memo(
           </View>
           <View onLayout={updateMainColumnHeight} style={tradeColumnStyle}>
             <PerpsProTradeForm
+              sceneActive={sceneActive}
               addFundsMode={addFundsMode}
               configurationReady={tradeConfigurationReady}
               controller={trade}

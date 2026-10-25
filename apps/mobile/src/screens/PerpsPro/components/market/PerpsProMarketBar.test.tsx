@@ -6,6 +6,8 @@ import { RoundedFontStyles } from '@/core/utils/fonts';
 import { perpsStore, type MarketData } from '@/hooks/perps/usePerpsStore';
 import type { PerpsProMarketDescriptor } from '../../model/market';
 import { PerpsProMarketBar } from './PerpsProMarketBar';
+import { createStoreActivityScope } from '@/core/state/storeActivity';
+import { StoreActivityProvider } from '@/hooks/storeActivity/StoreActivityProvider';
 
 jest.mock('@/hooks/perps/usePerpsStore', () => ({
   perpsStore: require('zustand').create(() => ({
@@ -87,6 +89,41 @@ describe('PerpsProMarketBar', () => {
       marketData: [marketData],
       marketDataMap: { BTC: marketData },
     });
+  });
+
+  it('detaches hidden-root ticks and catches up to the current quote on preview', () => {
+    const scope = createStoreActivityScope({ active: true, label: 'pro-root' });
+    const view = render(
+      <StoreActivityProvider scope={scope}>
+        <PerpsProMarketBar
+          market={market}
+          onOpenKline={jest.fn()}
+          onPress={jest.fn()}
+        />
+      </StoreActivityProvider>,
+    );
+    expect(view.getByText('+2.30%')).toBeTruthy();
+    act(() => scope.setActive(false));
+    expect(scope.getDiagnostics().stores[0].sourceSubscribed).toBe(false);
+    const published =
+      scope.getDiagnostics().stores[0].publishedNotificationCount;
+    act(() => {
+      for (let price = 103; price <= 120; price += 1) {
+        perpsStore.setState({
+          marketDataMap: { BTC: { ...marketData, markPx: String(price) } },
+        });
+      }
+    });
+    expect(view.getByText('+2.30%')).toBeTruthy();
+    expect(scope.getDiagnostics().stores[0].publishedNotificationCount).toBe(
+      published,
+    );
+    act(() => scope.setActive(true));
+    expect(view.getByText('+20.00%')).toBeTruthy();
+    expect(scope.getDiagnostics().stores[0].sourceSubscribed).toBe(true);
+    expect(scope.getDiagnostics().stores[0].catchUpCount).toBe(1);
+    view.unmount();
+    scope.dispose();
   });
 
   it('updates its percentage from the live store while retaining the descriptor and parent', () => {

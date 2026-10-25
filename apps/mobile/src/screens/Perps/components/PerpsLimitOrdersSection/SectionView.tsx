@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Alert, TouchableOpacity, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useMemoizedFn } from 'ahooks';
@@ -22,12 +22,14 @@ type Props = {
   handleActionApproveStatus: () => Promise<void>;
   isHome?: boolean;
   disableCoinNavigation?: boolean;
+  sceneActive?: boolean;
 };
 
 export const PerpsLimitOrdersSectionView: React.FC<Props> = ({
   rows,
   isHome,
   disableCoinNavigation,
+  sceneActive = true,
   handleActionApproveStatus,
 }) => {
   const { styles } = useTheme2024({ getStyle });
@@ -35,6 +37,12 @@ export const PerpsLimitOrdersSectionView: React.FC<Props> = ({
   const currentPerpsAccount = perpsStore(s => s.currentPerpsAccount);
   const { handleCancelLimitOrders } = usePerpsPosition();
   const [activeRow, setActiveRow] = useState<LimitOrderRow | null>(null);
+  // Display activity includes previews; only the selected scene owns portals
+  // and may continue an interaction after an asynchronous approval.
+  const canInteract = useMemoizedFn(() => sceneActive);
+  useEffect(() => {
+    setActiveRow(null);
+  }, [currentPerpsAccount?.address, currentPerpsAccount?.type]);
 
   const reportCancelled = useMemoizedFn((cancelledRows: LimitOrderRow[]) => {
     cancelledRows.forEach(row => {
@@ -61,7 +69,13 @@ export const PerpsLimitOrdersSectionView: React.FC<Props> = ({
   });
 
   const handleCancelAll = useMemoizedFn(async () => {
+    if (!canInteract()) {
+      return;
+    }
     await handleActionApproveStatus();
+    if (!canInteract()) {
+      return;
+    }
     Alert.alert(
       t('page.perps.cancelAllOrdersConfirmTitle'),
       t('page.perps.cancelAllOrdersConfirmMessage'),
@@ -71,6 +85,9 @@ export const PerpsLimitOrdersSectionView: React.FC<Props> = ({
           text: t('global.confirm'),
           style: 'default',
           onPress: async () => {
+            if (!canInteract()) {
+              return;
+            }
             const cancelledOids = await handleCancelLimitOrders(
               rows.map(r => r.order),
             );
@@ -83,10 +100,13 @@ export const PerpsLimitOrdersSectionView: React.FC<Props> = ({
   });
 
   const handleConfirmSingleCancel = useMemoizedFn(async () => {
-    if (!activeRow) {
+    if (!activeRow || !canInteract()) {
       return;
     }
     await handleActionApproveStatus();
+    if (!canInteract()) {
+      return;
+    }
     const cancelledOids = await handleCancelLimitOrders([activeRow.order]);
     if (cancelledOids.length > 0) {
       reportCancelled([activeRow]);
@@ -118,13 +138,17 @@ export const PerpsLimitOrdersSectionView: React.FC<Props> = ({
             order={row.order}
             leverage={row.leverage}
             marginUsage={row.marginUsage}
-            onPress={() => setActiveRow(row)}
+            onPress={() => {
+              if (canInteract()) {
+                setActiveRow(row);
+              }
+            }}
           />
         ))}
       </View>
 
       <PerpsLimitOrderDetailPopup
-        visible={!!activeRow}
+        visible={sceneActive && !!activeRow}
         order={activeRow?.order}
         leverage={activeRow?.leverage}
         marginUsage={activeRow?.marginUsage}

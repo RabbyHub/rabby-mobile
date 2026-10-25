@@ -42,6 +42,8 @@ export {
   RootScenePagerGestureBlock,
   type RootScenePagerProps,
   type RootScenePageContext,
+  type RootSceneOverlayContext,
+  type RootScenePagerUI,
 } from './RootScenePager';
 export { calculateScenePagerPreviewWindow } from './previewWindow';
 export {
