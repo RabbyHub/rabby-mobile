@@ -12,6 +12,110 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 export const requiredMajors = [16, 17, 18, 26, 27];
 const bundleId = 'com.debank.rabby-mobile-regression';
 const versionParts = version => version.split('.').map(Number);
+const commitPattern = /^[a-f0-9]{40}$/;
+const sha256Pattern = /^[a-f0-9]{64}$/;
+
+function validateSourceMetadata(metadata) {
+  const provenance = metadata?.sourceProvenance;
+  if (
+    metadata?.schemaVersion !== 2 ||
+    !commitPattern.test(metadata.sourceCommit) ||
+    typeof metadata.xcode !== 'string' ||
+    !metadata.xcode.trim() ||
+    !['clean', 'modified'].includes(provenance?.status) ||
+    !commitPattern.test(provenance.headCommit) ||
+    !Array.isArray(provenance.changedFiles) ||
+    provenance.changedFiles.some(file => typeof file !== 'string' || !file)
+  ) {
+    throw new Error('Expected schema 2 build metadata with source provenance');
+  }
+  const clean =
+    provenance.headCommit === metadata.sourceCommit &&
+    provenance.changedFiles.length === 0;
+  if ((provenance.status === 'clean') !== clean)
+    throw new Error('Build source provenance status contradicts its changes');
+}
+
+export function createSourceBinding({
+  harnessCommit,
+  metadata,
+  metadataSha256,
+  probe = false,
+}) {
+  if (!commitPattern.test(harnessCommit))
+    throw new Error('Invalid harness checkout commit');
+  if (probe && !metadata) throw new Error('--probe requires --build-metadata');
+  if (metadata) {
+    validateSourceMetadata(metadata);
+    if (!sha256Pattern.test(metadataSha256))
+      throw new Error('Build metadata receipt SHA-256 is required');
+    if (!probe && metadata.sourceCommit !== harnessCommit)
+      throw new Error('Build metadata does not match this checkout');
+    if (!probe && metadata.sourceProvenance.status !== 'clean')
+      throw new Error('Qualification requires clean build source provenance');
+  }
+  return {
+    mode: probe ? 'probe' : 'qualification',
+    sourceCommit: metadata?.sourceCommit || harnessCommit,
+    harnessCommit,
+    buildMetadataSha256: metadata ? metadataSha256 : null,
+    evidenceScope: probe ? 'diagnostic-only' : 'source-qualification',
+  };
+}
+
+export function validateTestBinding({
+  selected,
+  harnessCommit,
+  metadata,
+  metadataSha256,
+  probe = false,
+}) {
+  if (selected.mode !== (probe ? 'probe' : 'qualification'))
+    throw new Error('--probe must match the runtime plan mode');
+  if (selected.harnessCommit !== harnessCommit)
+    throw new Error('Harness checkout changed since preflight');
+  if (!metadata)
+    throw new Error('Build metadata receipt is required for testing');
+  const binding = createSourceBinding({
+    harnessCommit,
+    metadata,
+    metadataSha256,
+    probe,
+  });
+  if (
+    selected.sourceCommit !== binding.sourceCommit ||
+    selected.commit !== binding.sourceCommit ||
+    selected.evidenceScope !== binding.evidenceScope ||
+    (probe && !selected.buildMetadataSha256) ||
+    (selected.buildMetadataSha256 !== null &&
+      selected.buildMetadataSha256 !== metadataSha256)
+  ) {
+    throw new Error('Build receipt does not match the runtime plan binding');
+  }
+  return binding;
+}
+
+export function validateBuildReceipt({
+  metadata,
+  sourceCommit,
+  appHash,
+  jsHash,
+}) {
+  if (
+    metadata.sourceCommit !== sourceCommit ||
+    metadata.platform !== 'iphonesimulator' ||
+    metadata.configuration !== 'Regression' ||
+    !sha256Pattern.test(appHash) ||
+    !sha256Pattern.test(jsHash) ||
+    metadata.executableSha256 !== appHash ||
+    metadata.jsBundleSha256 !== jsHash
+  ) {
+    throw new Error(
+      'Build receipt does not match the selected source/app/JS bundle',
+    );
+  }
+}
+
 export function compareVersions(a, b) {
   const left = versionParts(a);
   const right = versionParts(b);
@@ -132,14 +236,21 @@ async function plan(options) {
   await fs.mkdir(output, { recursive: false });
   try {
     const majors = parseMajors(options.majors || requiredMajors.join(','));
-    const commit = read('git', ['rev-parse', 'HEAD']);
+    const harnessCommit = read('git', ['rev-parse', 'HEAD']);
     // A hosted test job consumes the app receipt, not the build machine's
     // absolute Xcode path. Only its own UI-test toolchain must be installed.
-    const metadata = options['build-metadata']
-      ? JSON.parse(await fs.readFile(options['build-metadata'], 'utf8'))
+    const metadataBytes = options['build-metadata']
+      ? await fs.readFile(options['build-metadata'])
       : undefined;
-    if (metadata && (metadata.sourceCommit !== commit || !metadata.xcode))
-      throw new Error('Build metadata does not match this checkout');
+    const metadata = metadataBytes ? JSON.parse(metadataBytes) : undefined;
+    const binding = createSourceBinding({
+      harnessCommit,
+      metadata,
+      metadataSha256: metadataBytes
+        ? createHash('sha256').update(metadataBytes).digest('hex')
+        : undefined,
+      probe: options.probe,
+    });
     const build = metadata
       ? { description: metadata.xcode }
       : await findXcode(options['build-xcode'] || '26.3');
@@ -161,7 +272,9 @@ async function plan(options) {
     }
     const result = {
       schemaVersion: 1,
-      commit,
+      ...binding,
+      commit: binding.sourceCommit,
+      qualificationPassed: false,
       requestedMajors: majors,
       fullCoverage: majors.join(',') === requiredMajors.join(','),
       buildXcode: build,
@@ -252,8 +365,19 @@ async function test(options) {
   const selected = JSON.parse(await fs.readFile(options.plan, 'utf8'));
   if (selected.schemaVersion !== 1 || !selected.runtimes?.length)
     throw new Error('Invalid runtime plan');
-  if (selected.commit !== read('git', ['rev-parse', 'HEAD']))
-    throw new Error('Checkout changed since preflight');
+  const metadataBytes = await fs.readFile(options.metadata);
+  const metadata = JSON.parse(metadataBytes);
+  const binding = validateTestBinding({
+    selected,
+    harnessCommit: read('git', ['rev-parse', 'HEAD']),
+    metadata,
+    metadataSha256: createHash('sha256').update(metadataBytes).digest('hex'),
+    probe: options.probe,
+  });
+  if (binding.mode === 'probe')
+    console.log(
+      'Diagnostic-only artifact probe: qualificationPassed=false; this does not validate the current checkout source.',
+    );
   const app = await fs.realpath(options.app);
   if (
     read('/usr/libexec/PlistBuddy', [
@@ -273,21 +397,15 @@ async function test(options) {
     throw new Error('Invalid executable name');
   const binary = path.join(app, binaryName);
   const appHash = read('/usr/bin/shasum', ['-a', '256', binary]).split(' ')[0];
-  const metadata = JSON.parse(await fs.readFile(options.metadata, 'utf8'));
   const jsHash = createHash('sha256')
     .update(await fs.readFile(path.join(app, 'main.jsbundle')))
     .digest('hex');
-  if (
-    metadata.sourceCommit !== selected.commit ||
-    metadata.platform !== 'iphonesimulator' ||
-    metadata.configuration !== 'Regression' ||
-    metadata.executableSha256 !== appHash ||
-    metadata.jsBundleSha256 !== jsHash
-  ) {
-    throw new Error(
-      'Build receipt does not match the selected source/app/JS bundle',
-    );
-  }
+  validateBuildReceipt({
+    metadata,
+    sourceCommit: binding.sourceCommit,
+    appHash,
+    jsHash,
+  });
   const buildEnv = {
     ...process.env,
     DEVELOPER_DIR: selected.runtimes[0].testXcode.developerDir,
@@ -309,7 +427,12 @@ async function test(options) {
       ...process.env,
       DEVELOPER_DIR: runtime.testXcode.developerDir,
     };
-    const result = { ...runtime, status: 'infrastructure-failed' };
+    const result = {
+      ...runtime,
+      ...binding,
+      status: 'infrastructure-failed',
+      qualificationPassed: false,
+    };
     let udid;
     let testStarted = false;
     try {
@@ -501,6 +624,8 @@ async function test(options) {
           result.status = 'infrastructure-failed';
         }
       }
+      result.qualificationPassed =
+        binding.mode === 'qualification' && result.status === 'passed';
       results.push(result);
       await writeJSON(path.join(evidence, 'result.json'), result);
       console.log(`iOS ${runtime.version}: ${result.status}`);
@@ -511,18 +636,26 @@ async function test(options) {
     results.length === selected.runtimes.length &&
     results.every(result => result.status === 'passed');
   await writeJSON(path.join(output, 'results.json'), {
+    ...binding,
     commit: selected.commit,
     appHash,
     jsHash,
     buildMetadata: metadata,
     fullCoverage: selected.fullCoverage,
     passed,
+    qualificationPassed: binding.mode === 'qualification' && passed,
     results,
   });
   const markdown = [
     '# iOS Simulator startup',
     '',
-    `Commit: ${selected.commit}; app SHA-256: ${appHash}`,
+    binding.mode === 'probe'
+      ? '**Diagnostic-only artifact probe: qualificationPassed=false. This does not validate the current checkout source.**'
+      : 'Source qualification (for the selected runtime matrix).',
+    '',
+    `App source commit: ${binding.sourceCommit}; harness commit: ${binding.harnessCommit}`,
+    '',
+    `App SHA-256: ${appHash}; source provenance: ${metadata.sourceProvenance.status}`,
     '',
     `App compiler: ${selected.buildXcode.description.replaceAll('\n', ', ')}`,
     '',
@@ -562,6 +695,7 @@ export async function main(args) {
       plan: { type: 'string' },
       app: { type: 'string' },
       metadata: { type: 'string' },
+      probe: { type: 'boolean', default: false },
     },
   });
   if (!values.output) throw new Error('--output must be a new directory');
@@ -569,7 +703,7 @@ export async function main(args) {
   if (positionals[0] === 'test' && values.plan && values.app && values.metadata)
     return test(values);
   throw new Error(
-    'Use plan --output DIR [--majors 16,17,18,26,27] [--build-xcode 26.3], or test --plan FILE --app APP --metadata FILE --output DIR',
+    'Use plan --output DIR [--majors 16,17,18,26,27] [--build-xcode 26.3] [--build-metadata FILE] [--probe], or test --plan FILE --app APP --metadata FILE --output DIR [--probe]',
   );
 }
 

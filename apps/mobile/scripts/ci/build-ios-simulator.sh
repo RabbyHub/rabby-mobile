@@ -134,13 +134,20 @@ xcodebuild build \
   CODE_SIGN_IDENTITY= PROVISIONING_PROFILE_SPECIFIER= \
   SENTRY_DISABLE_AUTO_UPLOAD=true FORCE_BUNDLING=1
 
-# No output from an earlier/failed run may masquerade as this build's result.
-# The new output directory gets its success metadata last, only after all
-# checks and the archive creation have succeeded.
+# A failed xcodebuild exits above, before any previous DerivedData output can
+# be exported. Preserve this successful build before later validation so a
+# provenance failure still has an explicitly non-qualified diagnostic app.
 sim_app="$sim_derived_data/Build/Products/Regression-iphonesimulator/RabbyMobile.app"
 [ -d "$sim_app" ] && [ -s "$sim_app/main.jsbundle" ] || {
   echo '[ios-simulator] missing app or embedded JS bundle' >&2; exit 1;
 }
+sim_zip="$sim_output_dir/RabbyMobile-simulator.zip"
+ditto "$sim_app" "$sim_output_dir/RabbyMobile.app"
+sim_app="$sim_output_dir/RabbyMobile.app"
+ditto -c -k --sequesterRsrc --keepParent "$sim_app" "$sim_zip"
+
+# Structural validation always examines the preserved copy. An archive alone
+# is not qualification evidence; consumers must require its matching receipt.
 sim_executable="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$sim_app/Info.plist")"
 case "$sim_executable" in
   ''|*/*|.|..) echo '[ios-simulator] invalid executable name' >&2; exit 1 ;;
@@ -152,18 +159,6 @@ xcrun vtool -show-build "$sim_app/$sim_executable" > "$sim_output_dir/macho-buil
 grep -Eq 'platform[[:space:]]+IOSSIMULATOR' "$sim_output_dir/macho-build.txt" || {
   echo '[ios-simulator] executable was not built for iOS Simulator' >&2; exit 1;
 }
-git -C "$sim_repo_root" diff --quiet HEAD -- || {
-  echo '[ios-simulator] build changed tracked source; refuse inaccurate commit provenance' >&2
-  exit 1
-}
-[ "$(git -C "$sim_repo_root" rev-parse HEAD)" = "$sim_commit" ] || {
-  echo '[ios-simulator] source commit changed during build' >&2; exit 1;
-}
-
-sim_zip="$sim_output_dir/RabbyMobile-simulator.zip"
-ditto "$sim_app" "$sim_output_dir/RabbyMobile.app"
-sim_app="$sim_output_dir/RabbyMobile.app"
-ditto -c -k --sequesterRsrc --keepParent "$sim_app" "$sim_zip"
 SIM_BUILD_COMMIT="$sim_commit" SIM_BUILD_ARCHITECTURE="$sim_architecture" \
 SIM_BUILD_STARTED_AT="$sim_started_at" SIM_BUILD_SDK="$sim_sdk_version" \
 SIM_BUILD_SDK_BUILD="$sim_sdk_build" SIM_BUILD_XCODE="$sim_xcode_version" \
@@ -173,8 +168,54 @@ const path = require('node:path');
 const crypto = require('node:crypto');
 const { execFileSync } = require('node:child_process');
 const [appPath, zipPath, repoRoot] = process.argv.slice(2);
+const outputDir = path.dirname(zipPath);
+const sourceCommit = process.env.SIM_BUILD_COMMIT;
+const git = args => execFileSync('git', ['-C', repoRoot, ...args], {
+  encoding: 'utf8', maxBuffer: 16 * 1024 * 1024,
+});
+const digest = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+// Compare with the original commit, not only the final HEAD: a commit made
+// during the build must not erase the evidence of changed source. NUL fields
+// preserve spaces/newlines in paths without ever emitting a raw source diff.
+const changes = git(['diff', '--name-status', '-z', '--no-renames', sourceCommit, '--']).split('\0');
+if (changes.pop() !== '' || changes.length % 2 !== 0) throw new Error('Invalid source change report');
+const files = [];
+for (let index = 0; index < changes.length; index += 2) {
+  const status = changes[index];
+  const file = changes[index + 1];
+  const absolute = path.resolve(repoRoot, file);
+  if (!/^[ACDMTUXB]$/.test(status) || !file || !absolute.startsWith(`${repoRoot}${path.sep}`)) {
+    throw new Error('Invalid source change entry');
+  }
+  let type = 'missing';
+  let sha256 = null;
+  try {
+    const stat = fs.lstatSync(absolute);
+    if (stat.isSymbolicLink()) {
+      type = 'symlink';
+      sha256 = digest(fs.readlinkSync(absolute));
+    } else if (stat.isFile()) {
+      type = 'file';
+      sha256 = digest(fs.readFileSync(absolute));
+    } else {
+      type = 'directory';
+    }
+  } catch (error) {
+    if (error.code !== 'ENOENT') throw error;
+  }
+  files.push({ path: file, status, type, sha256 });
+}
+const headCommit = git(['rev-parse', 'HEAD']).trim();
+const sourceProvenance = {
+  status: files.length === 0 && headCommit === sourceCommit ? 'clean' : 'modified',
+  headCommit,
+  changedFiles: files.map(file => file.path),
+};
+fs.writeFileSync(path.join(outputDir, 'source-changes.json'), `${JSON.stringify({
+  schemaVersion: 1, sourceCommit, ...sourceProvenance, files,
+}, null, 2)}\n`, { flag: 'wx' });
 const plist = JSON.parse(execFileSync('plutil', ['-convert', 'json', '-o', '-', path.join(appPath, 'Info.plist')], { encoding: 'utf8' }));
-const pkg = JSON.parse(fs.readFileSync(path.join(repoRoot, 'apps/mobile/package.json'), 'utf8'));
+const pkg = JSON.parse(git(['show', `${sourceCommit}:apps/mobile/package.json`]));
 if (plist.CFBundleShortVersionString !== pkg.version || !plist.CFBundleVersion) {
   throw new Error('Built app version does not match committed package metadata');
 }
@@ -184,10 +225,16 @@ const js = fs.readFileSync(path.join(appPath, 'main.jsbundle'));
 if (js.subarray(0, 8).toString('hex') !== 'c61fbc03c103191f') {
   throw new Error('Embedded main.jsbundle is not Hermes bytecode');
 }
-const hash = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+const hash = file => digest(fs.readFileSync(file));
 const metadata = {
-  schemaVersion: 1,
-  sourceCommit: process.env.SIM_BUILD_COMMIT,
+  schemaVersion: 2,
+  sourceCommit,
+  sourceProvenance,
+  producer: {
+    repository: process.env.GITHUB_REPOSITORY || null,
+    runId: process.env.GITHUB_RUN_ID || null,
+    runAttempt: process.env.GITHUB_RUN_ATTEMPT || null,
+  },
   configuration: 'Regression',
   platform: 'iphonesimulator',
   architectures: ['arm64'],
@@ -206,6 +253,14 @@ const metadata = {
   executableSha256: hash(path.join(appPath, plist.CFBundleExecutable)),
   jsBundleSha256: hash(path.join(appPath, 'main.jsbundle')),
 };
-fs.writeFileSync(path.join(path.dirname(zipPath), 'metadata.json'), `${JSON.stringify(metadata, null, 2)}\n`, { flag: 'wx' });
+// A receipt proves artifact structure and records provenance; a modified
+// receipt is retained for an explicit diagnostic probe, never normal coverage.
+fs.writeFileSync(path.join(outputDir, 'metadata.json'), `${JSON.stringify(metadata, null, 2)}\n`, { flag: 'wx' });
+if (sourceProvenance.status !== 'clean') {
+  console.error(headCommit !== sourceCommit
+    ? '[ios-simulator] source commit changed during build; diagnostic archive retained, qualification failed'
+    : '[ios-simulator] build changed tracked source; diagnostic archive retained, qualification failed');
+  process.exitCode = 1;
+}
 NODE
 echo "[ios-simulator] build and artifact verification succeeded: $sim_output_dir"

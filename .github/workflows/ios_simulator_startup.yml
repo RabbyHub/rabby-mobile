@@ -56,6 +56,8 @@ jobs:
 
   build:
     needs: matrix
+    outputs:
+      artifact_id: ${{ steps.app_artifact.outputs.artifact-id }}
     runs-on: ${{ needs.matrix.outputs.build_runner }}
     timeout-minutes: 120
     env:
@@ -114,12 +116,12 @@ jobs:
           RABBY_MOBILE_FE_SERVICE_URL: ${{ vars.RABBY_MOBILE_FE_SERVICE_URL || vars.RABBY_MOBILE_PUSH_TEST_SERVER_URL }}
         run: bash apps/mobile/scripts/ci/build-ios-simulator.sh --output-dir "$EVIDENCE_ROOT/build"
       - name: Preserve the app receipt and archive, including build failures
+        id: app_artifact
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: ios-startup-app-${{ github.sha }}
-          overwrite: true
-          retention-days: 7
+          name: ios-startup-app-${{ github.sha }}-${{ github.run_attempt }}
+          retention-days: 30
           if-no-files-found: warn
           compression-level: 0
           path: |
@@ -168,7 +170,8 @@ jobs:
             --runtime "$IOS_RUNTIME" --output "$EVIDENCE_ROOT/provision"
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
-          name: ios-startup-app-${{ github.sha }}
+          artifact-ids: ${{ needs.build.outputs.artifact_id }}
+          merge-multiple: true
           path: ${{ env.EVIDENCE_ROOT }}/app
       - name: Verify and extract the single shared app
         run: |
@@ -216,9 +219,17 @@ jobs:
           node-version: '22'
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
-          pattern: ios-startup-*
+          pattern: ios-startup-test-*
           path: ${{ runner.temp }}/startup-results
+      - name: Download only this build's immutable app receipt
+        if: always() && needs.build.outputs.artifact_id != ''
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          artifact-ids: ${{ needs.build.outputs.artifact_id }}
+          merge-multiple: true
+          path: ${{ runner.temp }}/startup-results/ios-startup-app-receipt
       - name: Require complete requested coverage of the same app
+        if: always()
         env:
           REQUESTED_MAJORS: ${{ inputs.ios_majors || '16,17,18,26,27' }}
           BUILD_RESULT: ${{ needs.build.result }}

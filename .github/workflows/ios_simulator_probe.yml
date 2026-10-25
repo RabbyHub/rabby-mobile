@@ -1,0 +1,165 @@
+name: iOS Simulator Artifact Probe
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_run_id:
+        description: Completed iOS Simulator Startup build run ID
+        required: true
+        type: string
+      source_artifact_id:
+        description: Exact retained ios-startup-app artifact ID from that run
+        required: true
+        type: string
+      ios_majors:
+        description: iOS majors to probe (no app rebuild)
+        default: '16,17,18,26,27'
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+
+defaults:
+  run:
+    shell: bash --noprofile --norc -eo pipefail {0}
+
+jobs:
+  resolve:
+    if: github.repository == 'RabbyHub/rabby-mobile'
+    runs-on: ubuntu-latest
+    outputs:
+      source: ${{ steps.select.outputs.source }}
+      matrix: ${{ steps.select.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+      - run: node --test scripts/ios-startup-smoke/*.test.mjs
+      - id: select
+        name: Resolve one immutable same-repository build artifact
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          SOURCE_RUN_ID: ${{ inputs.source_run_id }}
+          SOURCE_ARTIFACT_ID: ${{ inputs.source_artifact_id }}
+          REQUESTED_MAJORS: ${{ inputs.ios_majors }}
+        run: node scripts/ios-startup-smoke/probe.mjs resolve
+
+  startup:
+    needs: resolve
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.resolve.outputs.matrix) }}
+    name: Probe iOS ${{ matrix.runtime }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 60
+    env:
+      PROBE_SOURCE: ${{ needs.resolve.outputs.source }}
+    steps:
+      - name: Set run-local evidence path
+        run: |
+          printf 'EVIDENCE_ROOT=%s/ios-startup-probe\n' "$RUNNER_TEMP" >> "$GITHUB_ENV"
+      # Keep the current test harness, not the old app's checkout.
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: maxim-lobanov/setup-xcode@ed7a3b1fda3918c0306d1b724322adc0b8cc0a90 # v1
+        with:
+          xcode-version: ${{ matrix.xcode }}
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+      - name: Download the selected app, not a newer or latest artifact
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          artifact-ids: ${{ fromJSON(needs.resolve.outputs.source).artifactId }}
+          run-id: ${{ fromJSON(needs.resolve.outputs.source).runId }}
+          github-token: ${{ github.token }}
+          merge-multiple: true
+          path: ${{ env.EVIDENCE_ROOT }}/app
+      - name: Verify receipt, producer and archive before provisioning
+        run: |
+          node scripts/ios-startup-smoke/probe.mjs verify "$EVIDENCE_ROOT/app"
+          ditto -x -k "$EVIDENCE_ROOT/app/RabbyMobile-simulator.zip" "$EVIDENCE_ROOT/app"
+      - name: Install and verify this exact Simulator runtime
+        env:
+          IOS_RUNTIME: ${{ matrix.runtime }}
+        run: |
+          export DEVELOPER_DIR="$(xcode-select -p)"
+          printf 'DEVELOPER_DIR=%s\n' "$DEVELOPER_DIR" >> "$GITHUB_ENV"
+          node scripts/ios-startup-smoke/provision.mjs \
+            --runtime "$IOS_RUNTIME" --output "$EVIDENCE_ROOT/provision"
+      - name: Probe two cold starts without compiling Rabby Mobile
+        env:
+          IOS_MAJOR: ${{ matrix.major }}
+          IOS_RUNTIME: ${{ matrix.runtime }}
+        run: |
+          node scripts/ios-startup-smoke/run.mjs plan --probe \
+            --output "$EVIDENCE_ROOT/plan" --majors "$IOS_MAJOR" \
+            --runtime-version "$IOS_RUNTIME" --build-metadata "$EVIDENCE_ROOT/app/metadata.json"
+          node scripts/ios-startup-smoke/run.mjs test --probe \
+            --plan "$EVIDENCE_ROOT/plan/plan.json" \
+            --app "$EVIDENCE_ROOT/app/RabbyMobile.app" \
+            --metadata "$EVIDENCE_ROOT/app/metadata.json" --output "$EVIDENCE_ROOT/tests"
+      - name: Preserve probe evidence without duplicating the app
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: ios-startup-probe-test-${{ matrix.major }}
+          overwrite: true
+          retention-days: 7
+          if-no-files-found: warn
+          path: |
+            ${{ env.EVIDENCE_ROOT }}/app/metadata.json
+            ${{ env.EVIDENCE_ROOT }}/app/probe-source.json
+            ${{ env.EVIDENCE_ROOT }}/provision
+            ${{ env.EVIDENCE_ROOT }}/plan
+            ${{ env.EVIDENCE_ROOT }}/tests
+
+  summary:
+    needs: [resolve, startup]
+    if: always() && needs.resolve.result == 'success'
+    runs-on: ubuntu-latest
+    env:
+      PROBE_SOURCE: ${{ needs.resolve.outputs.source }}
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          pattern: ios-startup-probe-test-*
+          path: ${{ runner.temp }}/probe-results
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        if: always()
+        with:
+          artifact-ids: ${{ fromJSON(needs.resolve.outputs.source).artifactId }}
+          run-id: ${{ fromJSON(needs.resolve.outputs.source).runId }}
+          github-token: ${{ github.token }}
+          merge-multiple: true
+          path: ${{ runner.temp }}/probe-results/ios-startup-app-receipt
+      - name: Report artifact-only coverage, never current-source qualification
+        if: always()
+        env:
+          REQUESTED_MAJORS: ${{ inputs.ios_majors }}
+          STARTUP_RESULT: ${{ needs.startup.result }}
+        run: |
+          node scripts/ios-startup-smoke/probe.mjs summary \
+            "$RUNNER_TEMP/probe-results" "$REQUESTED_MAJORS" "$GITHUB_SHA"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
+        with:
+          name: ios-startup-probe-summary-${{ github.run_attempt }}
+          retention-days: 7
+          path: |
+            ${{ runner.temp }}/probe-results/summary.json
+            ${{ runner.temp }}/probe-results/summary.md

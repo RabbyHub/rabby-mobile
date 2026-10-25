@@ -35,8 +35,11 @@ A launch PID, skipped test or empty XCTest run cannot pass. Each shard verifies
 the source commit and executable/JS hashes; the aggregate requires all requested
 versions against the same build receipt. Missing evidence fails closed. Manual
 subsets are labelled partial coverage, not a complete compatibility pass.
-Rerunning failed jobs reuses the same run's build artifact; rebuilding replaces
-that run's artifact. Aggregate success also requires successful build/test jobs,
+Rerunning failed test jobs reuses the same run's build artifact. Each build
+attempt publishes a separate immutable artifact, named
+`ios-startup-app-<source commit>-<run attempt>`; it does not overwrite an earlier
+attempt. Test jobs select the build output's artifact ID, never a latest-name
+match. Aggregate success also requires successful build/test jobs,
 so old retained evidence cannot mask a current job failure.
 
 This is packaged-app startup E2E on Simulator, not physical-device, signing,
@@ -98,17 +101,69 @@ queues publish pushes per branch, independently of Feature Test/release.
 Only UUIDs created by the test driver are shut down/deleted; no `shutdown all`
 or deletion of pre-existing simulators/runtimes is used.
 
-Seven-day GitHub artifacts preserve:
+The shared app artifact is retained for **30 days** and includes:
 
 - `RabbyMobile-simulator.zip`, with executable permissions, and its build receipt:
-  full commit, version, RN architecture, SDK/Xcode, executable/JS/archive hashes;
+  full commit, producer run/attempt, version, RN architecture, SDK/Xcode,
+  executable/JS/archive hashes and source provenance;
+- build logs and `source-changes.json` when tracked sources changed. This report
+  contains paths, change types and content hashes, never raw source diffs.
+
+Separate seven-day evidence artifacts preserve:
+
 - platform/runtime provisioning logs and exact inventory;
 - per-runtime `.xcresult`, screenshots, logs and summaries, including failures.
+
+After native compilation succeeds, the app is archived **before** post-build
+validation. A later source-provenance failure therefore retains the app plus a
+schema-2 receipt marked `modified`, but keeps the build failed. Such an app can
+only be used by the explicit diagnostic probe, not normal qualification.
+Structural validation failure retains available evidence but does not produce
+a usable receipt. Native build failure never exports a stale DerivedData app.
 
 The last-screen image may show SpringBoard after XCTest teardown; use XCTest
 attachments for first-screen proof. Evidence upload uses `always()`; no
 `continue-on-error` hides failures. The earlier device-IPA probe secret is
 unused; an arm64 device IPA is not retagged or re-signed into a simulator app.
+
+## Probe a retained artifact without rebuilding Rabby Mobile
+
+Manually run **iOS Simulator Artifact Probe** (`ios_simulator_probe.yml`) with:
+
+- `source_run_id`: the completed **iOS Simulator Startup** producer run ID;
+- `source_artifact_id`: its exact retained `ios-startup-app-...` artifact ID;
+- `ios_majors`: the desired declared majors (default `16,17,18,26,27`).
+
+The probe downloads that same-repository artifact with read-only Actions access,
+checks the run, commit, producer attempt and archive hashes, and installs the
+same app on the requested runtimes. It does **not** install Rabby Mobile's
+JS/Pod dependencies or compile the app. Runtime provisioning and compilation of
+the small XCTest harness are still needed on fresh hosted VMs.
+
+Select a workflow ref containing the desired **test harness**. Its commit is
+recorded separately from the artifact's **app source** commit, allowing fixes to
+the detector to be tried against the original app. All probe results are labelled
+diagnostic-only (`qualificationPassed: false`), including clean-source artifacts;
+they do not qualify the current checkout or turn an earlier failed build green.
+Normal publish builds retain strict same-commit, clean-source qualification.
+
+Missing, expired, foreign or old-schema artifacts fail explicitly: there is no
+fallback to a newer app or an automatic expensive rebuild. A source run that
+failed after archiving can be probed if it has a structurally valid schema-2
+receipt. Logs-only artifacts cannot be used. In particular, run `40194208595`
+predates early capture and contains no app; it needs one new build to seed a
+reusable artifact.
+
+For a locally downloaded and verified artifact, the same split is available with
+`run.mjs plan --probe --build-metadata <metadata.json>` followed by
+`run.mjs test --probe --plan <plan.json> --app <RabbyMobile.app>
+--metadata <metadata.json> --output <new-output-dir>`. Both invocations must
+explicitly select probe mode. The plan binds the receipt's exact bytes, and test
+rechecks the executable and JS hashes before launch.
+
+As with the build workflow, GitHub manual dispatch requires this new workflow to
+be registered on the default branch first. Adding it to an unmerged feature
+branch alone is not proof that its dispatch endpoint is available.
 
 ## Local contract checks
 

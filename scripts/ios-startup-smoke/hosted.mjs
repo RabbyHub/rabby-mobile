@@ -1,6 +1,8 @@
 import fs from 'node:fs/promises';
+import { createReadStream } from 'node:fs';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
+import { isDeepStrictEqual } from 'node:util';
 import { pathToFileURL } from 'node:url';
 import { parseMajors, requiredMajors } from './run.mjs';
 
@@ -22,28 +24,85 @@ export function matrix(majors, compiler) {
   };
 }
 
-export async function verifyArchive(directory, commit) {
+export function validateReceipt(
+  metadata,
+  commit,
+  { probe = false, producer } = {},
+) {
+  const provenance = metadata?.sourceProvenance;
+  if (
+    metadata?.schemaVersion !== 2 ||
+    !/^[a-f0-9]{40}$/.test(commit) ||
+    metadata.sourceCommit !== commit ||
+    metadata.archive?.file !== 'RabbyMobile-simulator.zip' ||
+    !Number.isSafeInteger(metadata.archive.bytes) ||
+    metadata.archive.bytes <= 0 ||
+    !/^[a-f0-9]{64}$/.test(metadata.archive.sha256) ||
+    !/^[a-f0-9]{64}$/.test(metadata.executableSha256) ||
+    !/^[a-f0-9]{64}$/.test(metadata.jsBundleSha256) ||
+    metadata.platform !== 'iphonesimulator' ||
+    metadata.configuration !== 'Regression' ||
+    JSON.stringify(metadata.architectures) !== '["arm64"]' ||
+    !['clean', 'modified'].includes(provenance?.status) ||
+    !/^[a-f0-9]{40}$/.test(provenance?.headCommit) ||
+    !Array.isArray(provenance?.changedFiles) ||
+    !provenance.changedFiles.every(
+      file => typeof file === 'string' && file.length > 0,
+    )
+  )
+    throw new Error('Unexpected simulator build receipt');
+  const clean =
+    provenance.headCommit === commit && provenance.changedFiles.length === 0;
+  if ((provenance.status === 'clean') !== clean)
+    throw new Error('Inconsistent source provenance');
+  if (!probe && provenance.status !== 'clean')
+    throw new Error(
+      'Modified source artifact is diagnostic-only; use the explicit probe',
+    );
+  if (
+    producer &&
+    ['repository', 'runId', 'runAttempt'].some(
+      key => metadata.producer?.[key] !== producer[key],
+    )
+  )
+    throw new Error(
+      'Artifact producer does not match the selected workflow run',
+    );
+  return metadata;
+}
+
+export async function verifyArchive(directory, commit, options) {
   const metadata = JSON.parse(
     await fs.readFile(path.join(directory, 'metadata.json'), 'utf8'),
   );
+  validateReceipt(metadata, commit, options);
+  const archive = path.join(directory, metadata.archive.file);
+  const stat = await fs.lstat(archive);
+  if (!stat.isFile()) throw new Error('Expected a regular simulator archive');
+  const digest = createHash('sha256');
+  for await (const chunk of createReadStream(archive)) digest.update(chunk);
   if (
-    metadata.sourceCommit !== commit ||
-    metadata.archive?.file !== 'RabbyMobile-simulator.zip' ||
-    metadata.platform !== 'iphonesimulator' ||
-    metadata.configuration !== 'Regression'
-  )
-    throw new Error('Unexpected simulator build receipt');
-  const zip = await fs.readFile(path.join(directory, metadata.archive.file));
-  if (
-    zip.length !== metadata.archive.bytes ||
-    createHash('sha256').update(zip).digest('hex') !== metadata.archive.sha256
+    stat.size !== metadata.archive.bytes ||
+    digest.digest('hex') !== metadata.archive.sha256
   )
     throw new Error('Simulator archive does not match its build receipt');
   return metadata;
 }
 
-export function summarize(majors, commit, metadata, reports) {
+export function summarize(
+  majors,
+  commit,
+  metadata,
+  reports,
+  { probe = false, harnessCommit = commit } = {},
+) {
   const targets = matrix(majors, '26.3').include;
+  let receiptValid = true;
+  try {
+    validateReceipt(metadata, commit, { probe });
+  } catch {
+    receiptValid = false;
+  }
   const rows = targets.map(target => {
     const matches = reports.filter(report =>
       report.results?.some(result => result.major === target.major),
@@ -52,7 +111,13 @@ export function summarize(majors, commit, metadata, reports) {
     const result = report?.results?.[0];
     const valid =
       matches.length === 1 &&
+      receiptValid &&
+      report.mode === (probe ? 'probe' : 'qualification') &&
+      report.harnessCommit === harnessCommit &&
       report.commit === commit &&
+      report.sourceCommit === commit &&
+      isDeepStrictEqual(report.buildMetadata, metadata) &&
+      (!probe || report.qualificationPassed === false) &&
       metadata?.sourceCommit === commit &&
       report.appHash === metadata.executableSha256 &&
       report.jsHash === metadata.jsBundleSha256 &&
@@ -69,8 +134,15 @@ export function summarize(majors, commit, metadata, reports) {
   });
   return {
     commit,
+    harnessCommit,
+    mode: probe ? 'probe' : 'qualification',
+    sourceProvenance: metadata?.sourceProvenance,
     fullCoverage: targets.length === requiredMajors.length,
     passed: rows.every(row => row.status === 'passed'),
+    qualificationPassed:
+      !probe &&
+      targets.length === requiredMajors.length &&
+      rows.every(row => row.status === 'passed'),
     rows,
   };
 }

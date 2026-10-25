@@ -5,6 +5,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
+const crypto = require('node:crypto');
 const { spawnSync, execFileSync } = require('node:child_process');
 
 const script = path.join(__dirname, 'build-ios-simulator.sh');
@@ -14,8 +15,8 @@ const architectureScript = path.join(
 );
 
 function fixture(t, overrides = {}) {
-  const root = fs.mkdtempSync(
-    path.join(os.tmpdir(), 'rabby-simulator-contract-'),
+  const root = fs.realpathSync(
+    fs.mkdtempSync(path.join(os.tmpdir(), 'rabby-simulator-contract-')),
   );
   t.after(() => fs.rmSync(root, { recursive: true, force: true }));
   const repo = path.join(root, 'repo');
@@ -39,6 +40,7 @@ function fixture(t, overrides = {}) {
     path.join(mobile, 'package.json'),
     JSON.stringify({ version: '0.6.94' }),
   );
+  write(path.join(repo, 'source-marker.txt'), 'original tracked source\n');
   write(
     path.join(mobile, 'scripts/libs/node-runtime.sh'),
     'ensure_mobile_node_runtime() { :; }\n',
@@ -101,6 +103,7 @@ esac
     `#!${process.execPath}
 const fs = require('node:fs');
 const path = require('node:path');
+const { execFileSync } = require('node:child_process');
 const args = process.argv.slice(2);
 if (args[0] === '-version') { process.stdout.write('Xcode 27.1\\nBuild version 18B1\\n'); process.exit(0); }
 fs.appendFileSync(process.env.TEST_TRACE, JSON.stringify({args, env: {
@@ -118,6 +121,8 @@ fs.mkdirSync(app, {recursive:true});
 fs.writeFileSync(path.join(app, 'RabbyMobile'), 'native-test-binary');
 fs.writeFileSync(path.join(app, 'main.jsbundle'), process.env.TEST_PLAIN_JS ? Buffer.from('plain JS') : Buffer.from('c61fbc03c103191f0001', 'hex'));
 fs.writeFileSync(path.join(app, 'Info.plist'), '<?xml version="1.0"?><plist version="1.0"><dict>' + Object.entries({CFBundleExecutable:'RabbyMobile', CFBundleIdentifier:'com.debank.rabby-mobile-regression', CFBundleVersion:'1', CFBundleShortVersionString:'0.6.94', DTPlatformName:'iphonesimulator', MinimumOSVersion:'15.1'}).map(([key,value]) => '<key>'+key+'</key><string>'+value+'</string>').join('') + '</dict></plist>');
+if (process.env.TEST_TRACKED_CHANGE) fs.writeFileSync(path.join(process.env.TEST_REPO, 'source-marker.txt'), process.env.TEST_TRACKED_CHANGE);
+if (process.env.TEST_HEAD_DRIFT) execFileSync('git', ['-C', process.env.TEST_REPO, '-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid', 'commit', '--allow-empty', '-qm', 'unexpected concurrent commit']);
 `,
     true,
   );
@@ -141,6 +146,7 @@ fs.writeFileSync(path.join(app, 'Info.plist'), '<?xml version="1.0"?><plist vers
     HOME: os.homedir(),
     TEST_TRACE: trace,
     TEST_CACHE: path.join(root, 'cache'),
+    TEST_REPO: repo,
     DEVELOPER_DIR: execFileSync('xcode-select', ['-p'], {
       encoding: 'utf8',
     }).trim(),
@@ -167,6 +173,9 @@ fs.writeFileSync(path.join(app, 'Info.plist'), '<?xml version="1.0"?><plist vers
     output,
     trace,
     run,
+    originalCommit: execFileSync('git', ['-C', repo, 'rev-parse', 'HEAD'], {
+      encoding: 'utf8',
+    }).trim(),
     developerDir: env.DEVELOPER_DIR,
   };
 }
@@ -206,6 +215,7 @@ macTest(
       fs.readFileSync(path.join(f.output, 'metadata.json')),
     );
     assert.equal(metadata.reactNativeArchitecture, 'new');
+    assert.equal(metadata.schemaVersion, 2);
     assert.equal(
       metadata.sourceCommit,
       execFileSync('git', ['-C', f.repo, 'rev-parse', 'HEAD'], {
@@ -213,6 +223,16 @@ macTest(
       }).trim(),
     );
     assert.match(metadata.archive.sha256, /^[a-f0-9]{64}$/);
+    assert.deepEqual(metadata.sourceProvenance, {
+      status: 'clean',
+      headCommit: f.originalCommit,
+      changedFiles: [],
+    });
+    assert.deepEqual(metadata.producer, {
+      repository: null,
+      runId: null,
+      runAttempt: null,
+    });
     assert.equal(metadata.platform, 'iphonesimulator');
     assert.equal(metadata.appVersion, '0.6.94');
     assert.equal(metadata.buildVersion, '1');
@@ -261,6 +281,11 @@ for (const [name, env, status, message] of [
     if (message) assert.match(result.stdout + result.stderr, message);
     assert.equal(fs.existsSync(path.join(f.output, 'metadata.json')), false);
     assert.equal(
+      fs.existsSync(path.join(f.output, 'RabbyMobile-simulator.zip')),
+      !env.TEST_POD_STATUS && !env.TEST_BUILD_STATUS,
+      'only a successful native build may preserve a diagnostic archive',
+    );
+    assert.equal(
       fs.existsSync(
         path.join(f.mobile, '.turbo-build/ios-simulator-build.lock'),
       ),
@@ -268,6 +293,148 @@ for (const [name, env, status, message] of [
     );
   });
 }
+
+macTest(
+  'retains a diagnostic archive and modified receipt after tracked source changes',
+  t => {
+    const privateGeneratedContent = 'fixture-generated-secret-not-for-logs';
+    const f = fixture(t, {
+      TEST_TRACKED_CHANGE: privateGeneratedContent,
+      GITHUB_REPOSITORY: 'RabbyHub/rabby-mobile',
+      GITHUB_RUN_ID: '40194208595',
+      GITHUB_RUN_ATTEMPT: '2',
+    });
+    const result = f.run();
+    assert.equal(result.status, 1, result.stdout + result.stderr);
+    assert.match(
+      result.stdout + result.stderr,
+      /tracked source; diagnostic archive retained/,
+    );
+    assert.doesNotMatch(
+      result.stdout + result.stderr,
+      /build and artifact verification succeeded/,
+    );
+    const metadataText = fs.readFileSync(
+      path.join(f.output, 'metadata.json'),
+      'utf8',
+    );
+    const metadata = JSON.parse(metadataText);
+    assert.equal(metadata.schemaVersion, 2);
+    assert.equal(metadata.sourceCommit, f.originalCommit);
+    assert.deepEqual(metadata.sourceProvenance, {
+      status: 'modified',
+      headCommit: f.originalCommit,
+      changedFiles: ['source-marker.txt'],
+    });
+    assert.deepEqual(metadata.producer, {
+      repository: 'RabbyHub/rabby-mobile',
+      runId: '40194208595',
+      runAttempt: '2',
+    });
+    const changesText = fs.readFileSync(
+      path.join(f.output, 'source-changes.json'),
+      'utf8',
+    );
+    assert.deepEqual(JSON.parse(changesText).files, [
+      {
+        path: 'source-marker.txt',
+        status: 'M',
+        type: 'file',
+        sha256: crypto
+          .createHash('sha256')
+          .update(privateGeneratedContent)
+          .digest('hex'),
+      },
+    ]);
+    assert(
+      !(result.stdout + result.stderr + metadataText + changesText).includes(
+        privateGeneratedContent,
+      ),
+    );
+    const archive = fs.readFileSync(path.join(f.output, metadata.archive.file));
+    assert.equal(metadata.archive.bytes, archive.length);
+    assert.equal(
+      metadata.archive.sha256,
+      crypto.createHash('sha256').update(archive).digest('hex'),
+    );
+  },
+);
+
+macTest(
+  'records HEAD drift and fails qualification even when the worktree is clean',
+  t => {
+    const f = fixture(t, { TEST_HEAD_DRIFT: '1' });
+    const result = f.run();
+    assert.equal(result.status, 1, result.stdout + result.stderr);
+    assert.match(
+      result.stdout + result.stderr,
+      /source commit changed during build/,
+    );
+    const metadata = JSON.parse(
+      fs.readFileSync(path.join(f.output, 'metadata.json')),
+    );
+    const headCommit = execFileSync(
+      'git',
+      ['-C', f.repo, 'rev-parse', 'HEAD'],
+      { encoding: 'utf8' },
+    ).trim();
+    assert.equal(metadata.sourceCommit, f.originalCommit);
+    assert.notEqual(headCommit, f.originalCommit);
+    assert.deepEqual(metadata.sourceProvenance, {
+      status: 'modified',
+      headCommit,
+      changedFiles: [],
+    });
+    assert(fs.existsSync(path.join(f.output, metadata.archive.file)));
+  },
+);
+
+macTest(
+  'never exports a stale DerivedData app after native build failure',
+  t => {
+    const f = fixture(t, { TEST_BUILD_STATUS: '65' });
+    const key = crypto
+      .createHash('sha256')
+      .update(
+        [
+          'device-base-key',
+          f.repo,
+          'iphonesimulator/Regression/arm64',
+          '27.1',
+          '24B1',
+          '',
+        ].join('\n'),
+      )
+      .digest('hex');
+    const staleApp = path.join(
+      f.root,
+      'cache/ios-derived-data',
+      key,
+      'Build/Products/Regression-iphonesimulator/RabbyMobile.app',
+    );
+    fs.mkdirSync(staleApp, { recursive: true });
+    fs.writeFileSync(
+      path.join(staleApp, 'main.jsbundle'),
+      Buffer.from('c61fbc03c103191f0001', 'hex'),
+    );
+    const result = f.run();
+    assert.equal(result.status, 65, result.stdout + result.stderr);
+    const native = JSON.parse(
+      fs.readFileSync(f.trace, 'utf8').trim().split('\n').at(-1),
+    );
+    assert.equal(
+      native.args[native.args.indexOf('-derivedDataPath') + 1],
+      path.join(f.root, 'cache/ios-derived-data', key),
+      'the seeded stale app belongs to the exact DerivedData variant used by this build',
+    );
+    assert.equal(fs.existsSync(path.join(f.output, 'metadata.json')), false);
+    assert.equal(
+      fs.existsSync(path.join(f.output, 'RabbyMobile-simulator.zip')),
+      false,
+    );
+    assert.equal(fs.existsSync(path.join(f.output, 'RabbyMobile.app')), false);
+  },
+);
 
 macTest('rejects dirty committed source before dependency preparation', t => {
   const f = fixture(t);
