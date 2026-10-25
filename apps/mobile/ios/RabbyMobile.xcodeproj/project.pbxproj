@@ -8,7 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		00E356F31AD99517003FC87E /* RabbyMobileTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 00E356F21AD99517003FC87E /* RabbyMobileTests.m */; };
-		B10601001015202600000002 /* RCTPullToRefreshViewComponentViewTests.mm in Sources */ = {isa = PBXBuildFile; fileRef = B10601001015202600000001 /* RCTPullToRefreshViewComponentViewTests.mm */; };
 		0120B2102D082C0000FCB1B1 /* RNHelpers.mm in Sources */ = {isa = PBXBuildFile; fileRef = 0120B20F2D082C0000FCB1B1 /* RNHelpers.mm */; };
 		013A0B0D309BD7C5006B91AA /* RNFileHelpers.mm in Sources */ = {isa = PBXBuildFile; fileRef = 013A0B0C309BD7C5006B91AA /* RNFileHelpers.mm */; };
 		014102622BF348FE00629679 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 014102612BF348FE00629679 /* PrivacyInfo.xcprivacy */; };
@@ -36,8 +35,10 @@
 		A9D2208BFEB74DE8946F4B97 /* vconsole.min.js in Resources */ = {isa = PBXBuildFile; fileRef = 370EA128F5694C408EE79381 /* vconsole.min.js */; };
 		ACB2DE2D2B72015F00A5516C /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = ACB2DE2C2B72015F00A5516C /* GoogleService-Info.plist */; };
 		AFC5B63787113E4A1E28D98C /* Pods_RabbyMobile.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B5BE4C088335CB76F76458F0 /* Pods_RabbyMobile.framework */; };
+		B10601001015202600000002 /* RCTPullToRefreshViewComponentViewTests.mm in Sources */ = {isa = PBXBuildFile; fileRef = B10601001015202600000001 /* RCTPullToRefreshViewComponentViewTests.mm */; };
 		B6E3F2DD1DBD303284297FA5 /* Pods_RabbyMobileTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 99E6F3B24AAA53120B05F8B9 /* Pods_RabbyMobileTests.framework */; };
 		BA11A04DCA0A4A64A8355C12 /* e1789a3f58159a0b7c06ac86c1596058.min.js in Resources */ = {isa = PBXBuildFile; fileRef = 86186D0BE58742E092BA1BF3 /* e1789a3f58159a0b7c06ac86c1596058.min.js */; };
+		C02710240000000000000003 /* SceneDelegate.mm in Sources */ = {isa = PBXBuildFile; fileRef = C02710240000000000000002 /* SceneDelegate.mm */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -54,7 +55,6 @@
 		00E356EE1AD99517003FC87E /* RabbyMobileTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RabbyMobileTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		00E356F11AD99517003FC87E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		00E356F21AD99517003FC87E /* RabbyMobileTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = RabbyMobileTests.m; sourceTree = "<group>"; };
-		B10601001015202600000001 /* RCTPullToRefreshViewComponentViewTests.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = RCTPullToRefreshViewComponentViewTests.mm; sourceTree = "<group>"; };
 		0120B20E2D082C0000FCB1B1 /* RNHelpers.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RNHelpers.h; path = RabbyMobile/RNHelpers.h; sourceTree = "<group>"; };
 		0120B20F2D082C0000FCB1B1 /* RNHelpers.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = RNHelpers.mm; path = RabbyMobile/RNHelpers.mm; sourceTree = "<group>"; };
 		0125AF792F2A3CFE0016DDB5 /* RabbyMobileNotificationRelease.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = RabbyMobileNotificationRelease.entitlements; sourceTree = "<group>"; };
@@ -114,8 +114,11 @@
 		99E6F3B24AAA53120B05F8B9 /* Pods_RabbyMobileTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_RabbyMobileTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		A8D4D12C2C7EFDA1002B827D /* RabbyMobile.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = RabbyMobile.entitlements; path = RabbyMobile/RabbyMobile.entitlements; sourceTree = "<group>"; };
 		ACB2DE2C2B72015F00A5516C /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
+		B10601001015202600000001 /* RCTPullToRefreshViewComponentViewTests.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = RCTPullToRefreshViewComponentViewTests.mm; sourceTree = "<group>"; };
 		B5BE4C088335CB76F76458F0 /* Pods_RabbyMobile.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_RabbyMobile.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		BAFD393C4242423F964A2D62 /* InpageBridgeWeb3.js */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = InpageBridgeWeb3.js; path = ../assets/custom/InpageBridgeWeb3.js; sourceTree = "<group>"; };
+		C02710240000000000000001 /* SceneDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SceneDelegate.h; path = RabbyMobile/SceneDelegate.h; sourceTree = "<group>"; };
+		C02710240000000000000002 /* SceneDelegate.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = SceneDelegate.mm; path = RabbyMobile/SceneDelegate.mm; sourceTree = "<group>"; };
 		CBA19ED576619EC2E95EACB8 /* Pods-RabbyMobileTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RabbyMobileTests.release.xcconfig"; path = "Target Support Files/Pods-RabbyMobileTests/Pods-RabbyMobileTests.release.xcconfig"; sourceTree = "<group>"; };
 		DE2ED77CA6BCCFCA3B356774 /* Pods-RabbyMobileNotification.regression.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RabbyMobileNotification.regression.xcconfig"; path = "Target Support Files/Pods-RabbyMobileNotification/Pods-RabbyMobileNotification.regression.xcconfig"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
@@ -217,6 +220,8 @@
 				01EF41A92C36CB00009D8053 /* ReactNativeSecurity.mm */,
 				13B07FAF1A68108700A75B9A /* AppDelegate.h */,
 				13B07FB01A68108700A75B9A /* AppDelegate.mm */,
+				C02710240000000000000001 /* SceneDelegate.h */,
+				C02710240000000000000002 /* SceneDelegate.mm */,
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */,
@@ -425,22 +430,6 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
-		BA59C3C998E24C15AD289C72 /* Check bundled system fonts */ = {
-			isa = PBXShellScriptBuildPhase;
-			alwaysOutOfDate = 1;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-			);
-			name = "Check bundled system fonts";
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "/bin/bash \"$SRCROOT/patches/phase-check-system-fonts.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
 		00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -523,6 +512,22 @@
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
+		BA59C3C998E24C15AD289C72 /* Check bundled system fonts */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Check bundled system fonts";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "/bin/bash \"$SRCROOT/patches/phase-check-system-fonts.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
 		C38B50BA6285516D6DCD4F65 /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -601,6 +606,7 @@
 				018EF41F2EFBCDE8001A2361 /* ThreadSelfModule.m in Sources */,
 				01BBE0162C3879380033D12B /* UIImage+ImageEffects.m in Sources */,
 				13B07FBC1A68108700A75B9A /* AppDelegate.mm in Sources */,
+				C02710240000000000000003 /* SceneDelegate.mm in Sources */,
 				01EF41AA2C36CB00009D8053 /* ReactNativeSecurity.mm in Sources */,
 				01BBE0212C3889BB0033D12B /* ScreenShield.swift in Sources */,
 				13B07FC11A68108700A75B9A /* main.m in Sources */,
