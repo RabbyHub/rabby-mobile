@@ -4,15 +4,10 @@ on:
   push:
     branches:
       - 'publish/*'
-      # Temporary: validate this workflow on CI before merging it into develop.
+      # Temporary: qualify hosted CI before merging this workflow into develop.
       - 'feat/ios-simulator-startup-ci'
   workflow_dispatch:
     inputs:
-      macos_machine_location:
-        description: Apple Silicon runner with the required Xcodes and runtimes
-        type: choice
-        options: [mobile, mobile-local]
-        default: mobile
       build_xcode:
         description: App compiler (26.3 matches release; 27.1 tests the newer SDK)
         type: choice
@@ -26,26 +21,43 @@ on:
 permissions:
   contents: read
 
-# Independent of Feature Test/release concurrency and status. Queue pushes
-# instead of cancelling an older publish branch's pending check.
+# Independent of Feature Test/release; never cancel their builds or delivery.
 concurrency:
-  group: ios-simulator-startup-${{ inputs.macos_machine_location || 'mobile' }}
+  group: ios-simulator-startup-${{ github.ref }}
   cancel-in-progress: false
   queue: max
 
+defaults:
+  run:
+    shell: bash --noprofile --norc -eo pipefail {0}
+
 jobs:
-  startup:
+  matrix:
     if: github.repository == 'RabbyHub/rabby-mobile' && (github.event_name != 'push' || github.event.deleted != true)
-    runs-on:
-      - self-hosted
-      - macOS
-      - ARM64
-      - ${{ inputs.macos_machine_location || 'mobile' }}
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
+      build_runner: ${{ steps.matrix.outputs.build_runner }}
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+      - id: matrix
+        env:
+          REQUESTED_MAJORS: ${{ inputs.ios_majors || '16,17,18,26,27' }}
+          BUILD_XCODE: ${{ inputs.build_xcode || '26.3' }}
+        run: |
+          node --test scripts/ios-startup-smoke/*.test.mjs
+          node scripts/ios-startup-smoke/hosted.mjs matrix "$REQUESTED_MAJORS" "$BUILD_XCODE"
+
+  build:
+    needs: matrix
+    runs-on: ${{ needs.matrix.outputs.build_runner }}
     timeout-minutes: 120
-    defaults:
-      run:
-        shell: bash --noprofile --norc -eo pipefail {0}
-        working-directory: ios-startup-source
     env:
       REALLY_UPLOAD: 'false'
       SKIP_NOTIFY_LARK: 'true'
@@ -57,61 +69,160 @@ jobs:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           ref: ${{ github.sha }}
-          path: ios-startup-source
           persist-credentials: false
-
+      # The hosted image supplies Xcode; explicitly select/verify the version.
+      # This action does not download Xcode or depend on a self-hosted setup.
+      - uses: maxim-lobanov/setup-xcode@ed7a3b1fda3918c0306d1b724322adc0b8cc0a90 # v1
+        with:
+          xcode-version: ${{ inputs.build_xcode || '26.3' }}
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '22'
-
-      - name: Check the startup harness contracts
+      - uses: ruby/setup-ruby@7f797815d8adceb1c412e7abefdd1ab4abc47a5f # v1
+        with:
+          ruby-version: '2.7.4'
+          bundler: '2.4.22'
+          bundler-cache: false
+          working-directory: apps/mobile
+      - name: Verify toolchains and build contracts
         run: |
-          node --test scripts/ios-startup-smoke/run.test.mjs \
-            apps/mobile/scripts/ci/build-ios-simulator.test.cjs
-
-      - name: Validate tooling and complete runtime coverage before building
-        env:
-          REQUESTED_MAJORS: ${{ inputs.ios_majors || '16,17,18,26,27' }}
-          BUILD_XCODE: ${{ inputs.build_xcode || '26.3' }}
-        run: |
-          EVIDENCE_ROOT="$RUNNER_TEMP/rabby-ios-startup-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
-          mkdir "$EVIDENCE_ROOT"
+          EVIDENCE_ROOT="$RUNNER_TEMP/ios-startup-build"
           printf 'EVIDENCE_ROOT=%s\n' "$EVIDENCE_ROOT" >> "$GITHUB_ENV"
-          node scripts/ios-startup-smoke/run.mjs plan \
-            --output "$EVIDENCE_ROOT/plan" \
-            --majors "$REQUESTED_MAJORS" --build-xcode "$BUILD_XCODE"
-
+          printf 'RABBY_MOBILE_TURBO_LOCAL_CACHE_ROOT=%s/rabby-simulator-cache\n' "$RUNNER_TEMP" >> "$GITHUB_ENV"
+          printf 'DEVELOPER_DIR=%s\n' "$(xcode-select -p)" >> "$GITHUB_ENV"
+          mkdir -p "$EVIDENCE_ROOT"
+          uname -m
+          xcodebuild -version
+          xcrun --sdk iphonesimulator --show-sdk-version
+          ruby -v
+          bundle -v
+          node --version
+          corepack enable
+          df -h "$RUNNER_TEMP"
+          node --test apps/mobile/scripts/ci/build-ios-simulator.test.cjs
+      - name: Prepare the compiler's iOS platform components
+        run: |
+          SDK_VERSION="$(xcrun --sdk iphonesimulator --show-sdk-version)"
+          xcodebuild -downloadPlatform iOS -buildVersion "$SDK_VERSION" -architectureVariant arm64 \
+            2>&1 | tee "$EVIDENCE_ROOT/platform-install.log"
       - name: Build one unsigned Regression Simulator app
         env:
           RABBY_MOBILE_KR_PWD: ${{ secrets.RABBY_MOBILE_KR_PWD }}
           RABBY_MOBILE_CODE: ${{ secrets.RABBY_MOBILE_CODE2 }}
           RABBY_MOBILE_SAFE_API_KEY: ${{ secrets.MOBILE_SAFE_API_KEY }}
           RABBY_MOBILE_FE_SERVICE_URL: ${{ vars.RABBY_MOBILE_FE_SERVICE_URL || vars.RABBY_MOBILE_PUSH_TEST_SERVER_URL }}
-        run: |
-          corepack enable
-          bash apps/mobile/scripts/ci/build-ios-simulator.sh --output-dir "$EVIDENCE_ROOT/build"
-
-      - name: Test the same app on every required runtime
-        run: |
-          node scripts/ios-startup-smoke/run.mjs test \
-            --plan "$EVIDENCE_ROOT/plan/plan.json" \
-            --app "$EVIDENCE_ROOT/build/RabbyMobile.app" \
-            --metadata "$EVIDENCE_ROOT/build/metadata.json" \
-            --output "$EVIDENCE_ROOT/tests"
-
-      - name: Preserve app archive and startup evidence, including failures
+        run: bash apps/mobile/scripts/ci/build-ios-simulator.sh --output-dir "$EVIDENCE_ROOT/build"
+      - name: Preserve the app receipt and archive, including build failures
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: ios-startup-${{ github.sha }}-${{ github.run_attempt }}
+          name: ios-startup-app-${{ github.sha }}
+          overwrite: true
           retention-days: 7
           if-no-files-found: warn
+          compression-level: 0
           path: |
-            ${{ env.EVIDENCE_ROOT }}/plan
             ${{ env.EVIDENCE_ROOT }}/build/*.json
             ${{ env.EVIDENCE_ROOT }}/build/*.zip
             ${{ env.EVIDENCE_ROOT }}/build/*.txt
             ${{ env.EVIDENCE_ROOT }}/build/*.log
+      - name: Preserve platform provisioning evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: ios-startup-build-environment-${{ github.run_attempt }}
+          retention-days: 7
+          path: ${{ env.EVIDENCE_ROOT }}/platform-install.log
+
+  startup:
+    needs: [matrix, build]
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.matrix.outputs.matrix) }}
+    name: Startup iOS ${{ matrix.runtime }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: maxim-lobanov/setup-xcode@ed7a3b1fda3918c0306d1b724322adc0b8cc0a90 # v1
+        with:
+          xcode-version: ${{ matrix.xcode }}
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+      - name: Install and verify this job's exact Simulator runtime
+        env:
+          IOS_RUNTIME: ${{ matrix.runtime }}
+        run: |
+          EVIDENCE_ROOT="$RUNNER_TEMP/ios-startup-test"
+          export DEVELOPER_DIR="$(xcode-select -p)"
+          printf 'EVIDENCE_ROOT=%s\n' "$EVIDENCE_ROOT" >> "$GITHUB_ENV"
+          printf 'DEVELOPER_DIR=%s\n' "$DEVELOPER_DIR" >> "$GITHUB_ENV"
+          mkdir -p "$EVIDENCE_ROOT"
+          df -h "$RUNNER_TEMP"
+          node scripts/ios-startup-smoke/provision.mjs \
+            --runtime "$IOS_RUNTIME" --output "$EVIDENCE_ROOT/provision"
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: ios-startup-app-${{ github.sha }}
+          path: ${{ env.EVIDENCE_ROOT }}/app
+      - name: Verify and extract the single shared app
+        run: |
+          node scripts/ios-startup-smoke/hosted.mjs verify-archive "$EVIDENCE_ROOT/app" "$GITHUB_SHA"
+          ditto -x -k "$EVIDENCE_ROOT/app/RabbyMobile-simulator.zip" "$EVIDENCE_ROOT/app"
+      - name: Plan and check two cold starts
+        env:
+          IOS_MAJOR: ${{ matrix.major }}
+          IOS_RUNTIME: ${{ matrix.runtime }}
+        run: |
+          node scripts/ios-startup-smoke/run.mjs plan \
+            --output "$EVIDENCE_ROOT/plan" --majors "$IOS_MAJOR" \
+            --runtime-version "$IOS_RUNTIME" --build-metadata "$EVIDENCE_ROOT/app/metadata.json"
+          node scripts/ios-startup-smoke/run.mjs test \
+            --plan "$EVIDENCE_ROOT/plan/plan.json" \
+            --app "$EVIDENCE_ROOT/app/RabbyMobile.app" \
+            --metadata "$EVIDENCE_ROOT/app/metadata.json" \
+            --output "$EVIDENCE_ROOT/tests"
+      - name: Preserve startup and provisioning evidence, including failures
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: ios-startup-test-${{ matrix.major }}
+          overwrite: true
+          retention-days: 7
+          if-no-files-found: warn
+          path: |
+            ${{ env.EVIDENCE_ROOT }}/provision
+            ${{ env.EVIDENCE_ROOT }}/plan
             ${{ env.EVIDENCE_ROOT }}/tests/results.json
             ${{ env.EVIDENCE_ROOT }}/tests/summary.md
             ${{ env.EVIDENCE_ROOT }}/tests/ios-*
+
+  summary:
+    needs: [matrix, build, startup]
+    if: always() && needs.matrix.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          pattern: ios-startup-*
+          path: ${{ runner.temp }}/startup-results
+      - name: Require complete requested coverage of the same app
+        env:
+          REQUESTED_MAJORS: ${{ inputs.ios_majors || '16,17,18,26,27' }}
+          BUILD_RESULT: ${{ needs.build.result }}
+          STARTUP_RESULT: ${{ needs.startup.result }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/startup-results"
+          node scripts/ios-startup-smoke/hosted.mjs summary \
+            "$RUNNER_TEMP/startup-results" "$REQUESTED_MAJORS" "$GITHUB_SHA"

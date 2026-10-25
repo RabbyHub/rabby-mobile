@@ -37,7 +37,7 @@ export function parseMajors(value) {
   return majors.sort((a, b) => a - b);
 }
 
-export function selectRuntimes(runtimes, majors) {
+export function selectRuntimes(runtimes, majors, exactVersion) {
   return majors.map(major => {
     const candidates = runtimes
       .filter(
@@ -47,6 +47,7 @@ export function selectRuntimes(runtimes, majors) {
             'com.apple.CoreSimulator.SimRuntime.iOS-',
           ) &&
           /^\d+(\.\d+)*$/.test(runtime.version) &&
+          (!exactVersion || runtime.version === exactVersion) &&
           Number(runtime.version.split('.')[0]) === major,
       )
       .sort((a, b) => compareVersions(b.version, a.version));
@@ -130,21 +131,37 @@ async function plan(options) {
   const output = path.resolve(options.output);
   await fs.mkdir(output, { recursive: false });
   try {
-    const build = await findXcode(options['build-xcode'] || '26.3');
-    const discovery = await findXcode('26.3');
-    const inventory = JSON.parse(
-      read('/usr/bin/xcrun', ['simctl', 'list', 'runtimes', '--json'], {
-        ...process.env,
-        DEVELOPER_DIR: discovery.developerDir,
-      }),
-    );
     const majors = parseMajors(options.majors || requiredMajors.join(','));
-    const runtimes = selectRuntimes(inventory.runtimes, majors);
-    for (const runtime of runtimes)
-      runtime.testXcode = await findXcode(runtime.testXcodeVersion);
+    const commit = read('git', ['rev-parse', 'HEAD']);
+    // A hosted test job consumes the app receipt, not the build machine's
+    // absolute Xcode path. Only its own UI-test toolchain must be installed.
+    const metadata = options['build-metadata']
+      ? JSON.parse(await fs.readFile(options['build-metadata'], 'utf8'))
+      : undefined;
+    if (metadata && (metadata.sourceCommit !== commit || !metadata.xcode))
+      throw new Error('Build metadata does not match this checkout');
+    const build = metadata
+      ? { description: metadata.xcode }
+      : await findXcode(options['build-xcode'] || '26.3');
+    const runtimes = [];
+    for (const major of majors) {
+      const testXcode = await findXcode(major >= 27 ? '27.1' : '26.3');
+      const inventory = JSON.parse(
+        read('/usr/bin/xcrun', ['simctl', 'list', 'runtimes', '--json'], {
+          ...process.env,
+          DEVELOPER_DIR: testXcode.developerDir,
+        }),
+      );
+      const [runtime] = selectRuntimes(
+        inventory.runtimes,
+        [major],
+        options['runtime-version'],
+      );
+      runtimes.push({ ...runtime, testXcode });
+    }
     const result = {
       schemaVersion: 1,
-      commit: read('git', ['rev-parse', 'HEAD']),
+      commit,
       requestedMajors: majors,
       fullCoverage: majors.join(',') === requiredMajors.join(','),
       buildXcode: build,
@@ -152,7 +169,7 @@ async function plan(options) {
     };
     await writeJSON(path.join(output, 'plan.json'), result);
     console.log(JSON.stringify(result, null, 2));
-    if (process.env.GITHUB_ENV) {
+    if (process.env.GITHUB_ENV && build.developerDir) {
       await fs.appendFile(
         process.env.GITHUB_ENV,
         `DEVELOPER_DIR=${build.developerDir}\n`,
@@ -273,7 +290,7 @@ async function test(options) {
   }
   const buildEnv = {
     ...process.env,
-    DEVELOPER_DIR: selected.buildXcode.developerDir,
+    DEVELOPER_DIR: selected.runtimes[0].testXcode.developerDir,
   };
   if (
     !/platform IOSSIMULATOR\b/.test(
@@ -511,7 +528,7 @@ async function test(options) {
     '',
     selected.fullCoverage
       ? 'Full declared major-version matrix.'
-      : '**Manual subset: NOT full declared coverage.**',
+      : '**Partial matrix shard/subset: NOT full declared coverage on its own.**',
     '',
     '| Runtime | Test Xcode | Result |',
     '| --- | --- | --- |',
@@ -540,6 +557,8 @@ export async function main(args) {
       output: { type: 'string' },
       majors: { type: 'string' },
       'build-xcode': { type: 'string' },
+      'build-metadata': { type: 'string' },
+      'runtime-version': { type: 'string' },
       plan: { type: 'string' },
       app: { type: 'string' },
       metadata: { type: 'string' },

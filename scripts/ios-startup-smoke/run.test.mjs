@@ -64,6 +64,19 @@ test('a missing required OS version is an infrastructure failure, not a skipped 
   );
 });
 
+test('hosted shards use the provisioned exact runtime, not a newer preinstalled minor', () => {
+  const selected = selectRuntimes(
+    [runtime('17.5'), runtime('17.6')],
+    [17],
+    '17.5',
+  );
+  assert.equal(selected[0].version, '17.5');
+  assert.throws(
+    () => selectRuntimes([runtime('17.6')], [17], '17.5'),
+    /missing/,
+  );
+});
+
 test('device type follows runtime support, including iPhone Duo-only runtimes', () => {
   const duo = {
     identifier: 'com.apple.CoreSimulator.SimDeviceType.iPhone-Duo',
