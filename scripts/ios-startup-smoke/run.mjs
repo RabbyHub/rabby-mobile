@@ -191,6 +191,19 @@ function read(command, args, env = process.env) {
   }).trim();
 }
 
+export function readRuntimeInventory(env, execute = execFileSync) {
+  // Use the same independent inventory budget as provision.mjs. This does
+  // not extend simulator boot, App launch or XCTest execution deadlines.
+  return JSON.parse(
+    execute('/usr/bin/xcrun', ['simctl', 'list', 'runtimes', '--json'], {
+      encoding: 'utf8',
+      env,
+      timeout: 120000,
+      maxBuffer: 8 * 1024 * 1024,
+    }),
+  );
+}
+
 async function findXcode(version) {
   if (!/^\d+\.\d+(\.\d+)?$/.test(version))
     throw new Error('Invalid Xcode version');
@@ -257,12 +270,10 @@ async function plan(options) {
     const runtimes = [];
     for (const major of majors) {
       const testXcode = await findXcode(major >= 27 ? '27.1' : '26.3');
-      const inventory = JSON.parse(
-        read('/usr/bin/xcrun', ['simctl', 'list', 'runtimes', '--json'], {
-          ...process.env,
-          DEVELOPER_DIR: testXcode.developerDir,
-        }),
-      );
+      const inventory = readRuntimeInventory({
+        ...process.env,
+        DEVELOPER_DIR: testXcode.developerDir,
+      });
       const [runtime] = selectRuntimes(
         inventory.runtimes,
         [major],

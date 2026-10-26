@@ -38,6 +38,7 @@ async function fixture(t, inventories, installError) {
       if (args[0] === '-version') return 'Xcode fixture';
       if (executable === '/usr/bin/xcrun') {
         assert.deepEqual(args, ['simctl', 'list', 'runtimes', '--json']);
+        assert.equal(options.timeoutMs, 120000);
         return JSON.stringify({ runtimes: inventories[reads++] });
       }
       assert.equal(executable, '/usr/bin/xcodebuild');

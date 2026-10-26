@@ -67,6 +67,10 @@ No `self-hosted`, `mobile` or `mobile-local` runner is used.
 - Provisioning is non-interactive and bounded; it records host/Xcode versions,
   before/after inventories and download logs. It does not clean global caches
   or delete other runtimes.
+- Runtime inventory calls in provisioning and preflight have a separate
+  two-minute deadline: fresh hosted runners have exceeded 30 seconds in both
+  stages. This does not increase App launch or XCTest execution deadlines;
+  inventory timeouts still fail explicitly, without retries or skips.
 
 Xcode26.3 remains the test toolchain for iOS16 even when the **app** is compiled
 by27.1. Apple's iOS16.4 catalog caps both host macOS and Xcode below27, so the

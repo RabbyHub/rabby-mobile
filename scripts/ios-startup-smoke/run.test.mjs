@@ -4,10 +4,44 @@ import {
   compareVersions,
   createSourceBinding,
   parseMajors,
+  readRuntimeInventory,
   selectRuntimes,
   validateBuildReceipt,
   validateTestBinding,
 } from './run.mjs';
+
+test('preflight runtime inventory has its own bounded two-minute budget', () => {
+  const env = { DEVELOPER_DIR: '/Applications/Xcode.app/Contents/Developer' };
+  const inventory = { runtimes: [] };
+  let calls = 0;
+  assert.deepEqual(
+    readRuntimeInventory(env, (executable, args, options) => {
+      calls++;
+      assert.equal(executable, '/usr/bin/xcrun');
+      assert.deepEqual(args, ['simctl', 'list', 'runtimes', '--json']);
+      assert.deepEqual(options, {
+        encoding: 'utf8',
+        env,
+        timeout: 120000,
+        maxBuffer: 8 * 1024 * 1024,
+      });
+      return JSON.stringify(inventory);
+    }),
+    inventory,
+  );
+  assert.equal(calls, 1);
+  const timeout = Object.assign(new Error('inventory timeout'), {
+    code: 'ETIMEDOUT',
+  });
+  assert.throws(
+    () =>
+      readRuntimeInventory(env, () => {
+        throw timeout;
+      }),
+    error => error === timeout,
+  );
+  assert.throws(() => readRuntimeInventory(env, () => 'invalid JSON'));
+});
 
 const sourceCommit = 'a'.repeat(40);
 const harnessCommit = 'b'.repeat(40);

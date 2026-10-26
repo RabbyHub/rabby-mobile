@@ -162,7 +162,12 @@ export async function provisionRuntime(
   const call = (command, commandArgs, options = {}) =>
     execute(command, commandArgs, { env, logfile, ...options });
   const inventory = async name => {
-    const result = JSON.parse(await call('/usr/bin/xcrun', inventoryArgs));
+    // Fresh hosted CoreSimulator inventories can exceed the general 30s tool
+    // budget, including immediately after installing a runtime. Keep this
+    // separate from download and application startup deadlines.
+    const result = JSON.parse(
+      await call('/usr/bin/xcrun', inventoryArgs, { timeoutMs: 120000 }),
+    );
     await writeJSON(path.join(output, `${name}.json`), result);
     // Validate even when no matching version is expected yet.
     findRuntime(result, runtime);
