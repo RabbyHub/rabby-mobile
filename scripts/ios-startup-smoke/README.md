@@ -165,6 +165,13 @@ As with the build workflow, GitHub manual dispatch requires this new workflow to
 be registered on the default branch first. Adding it to an unmerged feature
 branch alone is not proof that its dispatch endpoint is available.
 
+For pre-merge CI verification, a temporary exact push trigger on
+`feat/ios-simulator-startup-ci` invokes only the probe, using producer run
+`40200867375` and artifact `12603038211`. The app-build workflow no longer runs
+on that feature branch. Push-mode inputs are fixed explicitly; manual dispatch
+still requires its supplied IDs. Remove the temporary probe push trigger and
+fixed input selectors before merging; publish builds remain unchanged.
+
 ## Local contract checks
 
 ```bash
@@ -182,4 +189,5 @@ See [uitests/README.md](uitests/README.md) for real XCTest commands.
 The workflow must exist on the pushed publish branch to react to its pushes.
 Existing publish branches do not acquire it automatically. Manual dispatch
 requires registration on the default branch first. The temporary exact feature
-branch push trigger is only for qualification and must be removed before merge.
+branch push trigger in the probe is only for qualification and must be removed
+before merge.

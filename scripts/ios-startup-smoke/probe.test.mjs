@@ -251,4 +251,6 @@ test('probe workflow has no Rabby build and consumes only an explicitly selected
     producer,
     /name: ios-startup-app-\$\{\{ github.sha \}\}-\$\{\{ github.run_attempt \}\}\s+retention-days: 30/,
   );
+  assert.doesNotMatch(producer, /feat\/ios-simulator-startup-ci/);
+  assert.match(producer, /'publish\/\*'/);
 });

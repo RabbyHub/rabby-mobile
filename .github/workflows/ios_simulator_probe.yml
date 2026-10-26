@@ -1,6 +1,11 @@
 name: iOS Simulator Artifact Probe
 
 on:
+  # Temporary pre-merge qualification: reuse the retained app, never rebuild it.
+  # Remove this exact push trigger and its fixed input selectors before merge.
+  push:
+    branches:
+      - 'feat/ios-simulator-startup-ci'
   workflow_dispatch:
     inputs:
       source_run_id:
@@ -20,13 +25,16 @@ permissions:
   contents: read
   actions: read
 
+env:
+  REQUESTED_MAJORS: ${{ github.event_name == 'push' && '16,17,18,26,27' || inputs.ios_majors }}
+
 defaults:
   run:
     shell: bash --noprofile --norc -eo pipefail {0}
 
 jobs:
   resolve:
-    if: github.repository == 'RabbyHub/rabby-mobile'
+    if: github.repository == 'RabbyHub/rabby-mobile' && (github.event_name != 'push' || github.event.deleted != true)
     runs-on: ubuntu-latest
     outputs:
       source: ${{ steps.select.outputs.source }}
@@ -44,9 +52,8 @@ jobs:
         name: Resolve one immutable same-repository build artifact
         env:
           GITHUB_TOKEN: ${{ github.token }}
-          SOURCE_RUN_ID: ${{ inputs.source_run_id }}
-          SOURCE_ARTIFACT_ID: ${{ inputs.source_artifact_id }}
-          REQUESTED_MAJORS: ${{ inputs.ios_majors }}
+          SOURCE_RUN_ID: ${{ github.event_name == 'push' && '40200867375' || inputs.source_run_id }}
+          SOURCE_ARTIFACT_ID: ${{ github.event_name == 'push' && '12603038211' || inputs.source_artifact_id }}
         run: node scripts/ios-startup-smoke/probe.mjs resolve
 
   startup:
@@ -150,7 +157,6 @@ jobs:
       - name: Report artifact-only coverage, never current-source qualification
         if: always()
         env:
-          REQUESTED_MAJORS: ${{ inputs.ios_majors }}
           STARTUP_RESULT: ${{ needs.startup.result }}
         run: |
           node scripts/ios-startup-smoke/probe.mjs summary \

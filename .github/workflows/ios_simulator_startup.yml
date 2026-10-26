@@ -4,8 +4,6 @@ on:
   push:
     branches:
       - 'publish/*'
-      # Temporary: qualify hosted CI before merging this workflow into develop.
-      - 'feat/ios-simulator-startup-ci'
   workflow_dispatch:
     inputs:
       build_xcode:
