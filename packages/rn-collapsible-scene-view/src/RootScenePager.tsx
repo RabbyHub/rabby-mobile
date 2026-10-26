@@ -146,7 +146,10 @@ const RootPageHost = memo(function RootPageHost({
       collapsable={false}
       testID={testID}
       style={[styles.page, { width }]}
-      pointerEvents={interactive ? 'auto' : 'none'}
+      // Touch gating follows the *settled* page only. Previously every page was
+      // 'none' for the whole transition (until the JS publication), which made
+      // the app ignore taps/swipes for as long as the JS thread was busy.
+      pointerEvents={selected ? 'auto' : 'none'}
       accessibilityElementsHidden={!interactive}
       importantForAccessibility={interactive ? 'auto' : 'no-hide-descendants'}>
       <PageKeyContext.Provider value={pageKey}>
@@ -193,6 +196,9 @@ export function RootScenePager(props: RootScenePagerProps) {
   const lastPublishedEpoch = useRef(-1);
   const requestId = useRef(0);
   const widthValue = useSharedValue(0);
+  const touchStartX = useSharedValue(0);
+  const touchStartY = useSharedValue(0);
+  const slopeDecided = useSharedValue(false);
   const position = useSharedValue(initial);
   const motion = useSharedValue(createRootSceneMotion(initial));
   const selectedIndex = useDerivedValue(() => motion.value.selected);
@@ -546,8 +552,34 @@ export function RootScenePager(props: RootScenePagerProps) {
       .withTestId(testID + '-pan')
       .enabled(enabled)
       .maxPointers(1)
-      .activeOffsetX([-20, 20])
-      .failOffsetY([-12, 12])
+      // Direction arbitration is manual: the pager only takes the gesture when
+      // the finger clearly moves horizontally. Fixed active/fail offsets let the
+      // vertical list win most real swipes, which made Simple -> Pro show almost
+      // no finger-following frames.
+      .manualActivation(true)
+      .onTouchesMove((event, manager) => {
+        'worklet';
+        if (slopeDecided.value) {
+          return;
+        }
+        const touch = event.allTouches[0];
+        if (!touch) {
+          return;
+        }
+        const dx = touch.absoluteX - touchStartX.value;
+        const dy = touch.absoluteY - touchStartY.value;
+        const absX = Math.abs(dx);
+        const absY = Math.abs(dy);
+        if (absX < 8 && absY < 8) {
+          return;
+        }
+        slopeDecided.value = true;
+        if (absX >= absY * 1.15) {
+          manager.activate();
+        } else {
+          manager.fail();
+        }
+      })
       .onTouchesDown((event, manager) => {
         'worklet';
         const touch = event.allTouches[0];
@@ -561,6 +593,9 @@ export function RootScenePager(props: RootScenePagerProps) {
           manager.fail();
           return;
         }
+        touchStartX.value = touch.absoluteX;
+        touchStartY.value = touch.absoluteY;
+        slopeDecided.value = false;
         for (const block of blocks) {
           if (
             block.pageKey !== null &&
