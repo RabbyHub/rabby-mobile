@@ -24,7 +24,6 @@ import { QuoteList } from './BridgeQuotes';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { openapi } from '@/core/request';
 import pRetry from 'p-retry';
-import { stats } from '@/utils/stats';
 import { bridgeToken, buildBridgeToken } from '../hooks/bridge';
 import { toast } from '@/components2024/Toast';
 import { useMemoizedFn, useRequest } from 'ahooks';
@@ -57,8 +56,6 @@ import { BridgePendingTxItem } from './PendingTxItem';
 import { last } from 'lodash';
 import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
 import type { BridgeTxHistoryItem } from '@/core/services/transactionHistory';
-import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
-import { matomoRequestEvent } from '@/utils/analytics';
 import type { DirectSignBtnMethods } from '@/components2024/DirectSignBtn';
 import { DirectSignBtn } from '@/components2024/DirectSignBtn';
 import { useMiniSigner } from '@/hooks/useSigner';
@@ -633,14 +630,6 @@ export const BridgeContent = ({
   } = useExternalSwapBridgeDapps(chains, 'bridge', sceneActive);
   const openTab = useMemoizedFn((url: string) => {
     _openTab(url);
-    const origin = safeGetOrigin(url);
-    if (origin) {
-      matomoRequestEvent({
-        category: 'Websites Usage',
-        action: 'Website_Visit_Other',
-        label: origin,
-      });
-    }
   });
   const [externalDappOpen, setExternalDappOpen] = useState(false);
 
@@ -687,16 +676,6 @@ export const BridgeContent = ({
             ),
           { retries: 1 },
         );
-        stats.report('bridgeQuoteResult', {
-          aggregatorIds: selectedBridgeQuote.aggregator.id,
-          bridgeId: selectedBridgeQuote.bridge_id,
-          fromChainId: fromToken.chain,
-          fromTokenId: fromToken.id,
-          toTokenId: toToken.id,
-          toChainId: toToken.chain,
-          status: tx ? 'success' : 'fail',
-          payAmount: amount,
-        });
         const addBridgeTxHistoryObj = {
           address: currentAccount?.address!,
           fromChainId: findChainByServerID(fromToken?.chain || '')?.id || 0,
@@ -772,16 +751,6 @@ export const BridgeContent = ({
               ),
           ),
         );
-        stats.report('bridgeQuoteResult', {
-          aggregatorIds: selectedBridgeQuote.aggregator.id,
-          bridgeId: selectedBridgeQuote.bridge_id,
-          fromChainId: fromToken.chain,
-          fromTokenId: fromToken.id,
-          toTokenId: toToken.id,
-          toChainId: toToken.chain,
-          status: 'fail',
-          payAmount: amount,
-        });
         console.log(error);
       } finally {
         setReloadTxRefreshPaused(false);
@@ -885,16 +854,6 @@ export const BridgeContent = ({
           },
           openapi,
         );
-        stats.report('bridgeQuoteResult', {
-          aggregatorIds: selectedBridgeQuote.aggregator.id,
-          bridgeId: selectedBridgeQuote.bridge_id,
-          fromChainId: fromToken.chain,
-          fromTokenId: fromToken.id,
-          toTokenId: toToken.id,
-          toChainId: toToken.chain,
-          status: tx ? 'success' : 'fail',
-          payAmount: amount,
-        });
 
         if (
           expectedBuildKey &&
@@ -966,16 +925,6 @@ export const BridgeContent = ({
               ),
           ),
         );
-        stats.report('bridgeQuoteResult', {
-          aggregatorIds: selectedBridgeQuote.aggregator.id,
-          bridgeId: selectedBridgeQuote.bridge_id,
-          fromChainId: fromToken.chain,
-          fromTokenId: fromToken.id,
-          toTokenId: toToken.id,
-          toChainId: toToken.chain,
-          status: 'fail',
-          payAmount: amount,
-        });
         console.debug(error);
       }
     }

@@ -715,8 +715,6 @@ export const formatSpotState = (spotState: SpotClearinghouseState) => {
   };
 };
 
-export { getStatsReportSide } from './perpsStats';
-
 export const handleDisplayFundingPayments = (fundingPayments: string) => {
   const bn = new BigNumber(fundingPayments || 0);
   if (bn.isZero()) {

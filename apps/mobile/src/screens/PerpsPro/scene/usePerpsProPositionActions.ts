@@ -19,7 +19,6 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { PerpsPositionViewModel } from '../model/position';
-import { reportPerpsProClosePositionHistory } from '../analytics/manualTradeHistory';
 import {
   buildPerpsProMarketDescriptor,
   buildPerpsProMarketKey,
@@ -277,13 +276,6 @@ export const usePerpsProPositionActions = ({
           Sentry.captureException(
             new Error(`Perps Pro close refresh failed: ${result.refreshError}`),
           );
-        }
-        try {
-          reportPerpsProClosePositionHistory(command, result.confirmed);
-        } catch (reportError) {
-          Sentry.captureException(reportError, {
-            extra: { scene: 'Perps Pro close position history' },
-          });
         }
         showToast(t('page.perps.pro.positions.closeSubmitted'), 'success');
         setCloseEditor(null);

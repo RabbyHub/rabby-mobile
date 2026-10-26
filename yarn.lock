@@ -3489,13 +3489,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@debank/festats@npm:1.0.4":
-  version: 1.0.4
-  resolution: "@debank/festats@npm:1.0.4"
-  checksum: 10/6125f6200edee8e6480b77d57c06382b3351cf2f102708eb9ac629d2c6b842cda4b2cc7078efbccfcc6c9b80808e4ce5730481433db6465a5fca66b84ff9125d
-  languageName: node
-  linkType: hard
-
 "@dependents/detective-less@npm:^5.0.1":
   version: 5.0.1
   resolution: "@dependents/detective-less@npm:5.0.1"
@@ -37399,7 +37392,6 @@ __metadata:
     "@babel/runtime": "npm:^7.25.0"
     "@craftzdog/react-native-buffer": "npm:^6.0.5"
     "@debank/common": "npm:0.3.60"
-    "@debank/festats": "npm:1.0.4"
     "@eth-optimism/contracts-ts": "npm:^0.17.0"
     "@ethereumjs/common": "npm:4.4.0"
     "@ethereumjs/tx": "npm:5.4.0"

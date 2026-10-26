@@ -16,7 +16,6 @@ const mockExecuteClose = jest.fn(async () => ({
   confirmed: mockConfirmedClose,
   kind: 'filled' as const,
 }));
-const mockReportClosePositionHistory = jest.fn();
 
 jest.mock('@/core/apis/perps', () => ({ apisPerps: {} }));
 jest.mock('@/core/serviceApi/perps', () => ({
@@ -67,10 +66,6 @@ jest.mock('../model/market', () => ({
     displayPair: 'BTCUSDC',
     sourceTag: null,
   }),
-}));
-jest.mock('../analytics/manualTradeHistory', () => ({
-  reportPerpsProClosePositionHistory: (...args: unknown[]) =>
-    mockReportClosePositionHistory(...args),
 }));
 
 import type { PerpsPositionViewModel } from '../model/position';
@@ -245,13 +240,6 @@ describe('usePerpsProPositionActions close validation', () => {
     expect(mockSetSkipMarketConfirmation).toHaveBeenCalledWith(true);
     expect(mockSetSkipLimitConfirmation).not.toHaveBeenCalled();
     expect(mockExecuteClose).toHaveBeenCalledTimes(1);
-    expect(mockReportClosePositionHistory).toHaveBeenCalledWith(
-      expect.objectContaining({
-        orderType: 'market',
-        reportingFacts: { leverage: 5, marginMode: 'cross' },
-      }),
-      mockConfirmedClose,
-    );
   });
 
   it('shows the authoritative server close rejection instead of a generic failure', async () => {
@@ -283,7 +271,6 @@ describe('usePerpsProPositionActions close validation', () => {
       'Order price too far from oracle',
       'error',
     );
-    expect(mockReportClosePositionHistory).not.toHaveBeenCalled();
   });
 
   it('shows the unknown-outcome guidance after a transport failure', async () => {
@@ -312,40 +299,6 @@ describe('usePerpsProPositionActions close validation', () => {
 
     expect(mockShowToast).toHaveBeenCalledWith(
       'page.perps.pro.trade.unknownOutcome',
-      'error',
-    );
-    expect(mockReportClosePositionHistory).not.toHaveBeenCalled();
-  });
-
-  it('keeps an accepted close successful if history reporting throws', async () => {
-    mockGetSkipMarketConfirmation.mockResolvedValue(true);
-    mockReportClosePositionHistory.mockImplementationOnce(() => {
-      throw new Error('history unavailable');
-    });
-    const hook = renderHook(() =>
-      usePerpsProPositionActions({
-        accountIdentity: 'account-a',
-        leveragePending: false,
-        updateLeverageRequest: jest.fn(),
-      }),
-    );
-
-    await act(async () => {
-      hook.result.current.openCloseEditor(position);
-      await Promise.resolve();
-      await Promise.resolve();
-    });
-    await act(async () => {
-      hook.result.current.reviewClose(draft('0.1'));
-      await Promise.resolve();
-    });
-
-    expect(mockShowToast).toHaveBeenCalledWith(
-      'page.perps.pro.positions.closeSubmitted',
-      'success',
-    );
-    expect(mockShowToast).not.toHaveBeenCalledWith(
-      'page.perps.pro.positions.closeFailed',
       'error',
     );
   });

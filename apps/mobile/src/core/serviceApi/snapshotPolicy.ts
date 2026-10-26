@@ -50,14 +50,12 @@ const dapp = {
 
 const gasAccount = {
   getGasAccountAccountsWithBalanceSnapshot: 'reactive',
-  getGasAccountCurrentBalanceStateSnapshot: 'reactive',
   getGasAccountCurrentEligibleAddressSnapshot: 'reactive',
   getGasAccountDataSnapshot: 'reactive',
   getGasAccountHasClaimedGiftSnapshot: 'reactive',
   getGasAccountPendingHardwareAccountSnapshot: 'reactive',
   getGasAccountServiceGenerationSnapshot: 'startup-critical',
   getGasAccountSigSnapshot: 'command-input',
-  hasGasAccountTrackedGa4ActiveTodaySnapshot: 'reactive',
 } satisfies SnapshotPolicies<typeof import('./gasAccount')>;
 
 const keyring = {
@@ -79,7 +77,6 @@ const keyring = {
 const notification = {
   getCurrentMiniApprovalSnapshot: 'reactive',
   getNotificationApprovalCountSnapshot: 'reactive',
-  getNotificationStatsDataSnapshot: 'command-input',
   getNotificationWindowIdSnapshot: 'reactive',
   getShouldDisplayBlockedRequestApprovalSnapshot: 'command-input',
   getShouldDisplayCancelAllApprovalSnapshot: 'command-input',

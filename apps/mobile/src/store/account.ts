@@ -32,7 +32,6 @@ import { EVENT_SWITCH_ACCOUNT, eventBus } from '@/utils/events';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import type { KeyringAccount } from '@rabby-wallet/keyring-utils';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
-import { matomoRequestEvent } from '@/utils/analytics';
 import { updateHistoryTimeSingleAddress } from '@/hooks/historyTokenDict';
 import { checkAddedAccountsGasAccountIfNeeded } from '@/utils/autoLoginGasAccount';
 import { runAfterHomePostStartupReady } from '@/core/utils/homeStartupReady';
@@ -212,10 +211,6 @@ class AccountStore extends BaseStore<AccountStoreState> {
 
     if (nextPinned) {
       await updatePinnedAddresses(nextAddresses);
-      matomoRequestEvent({
-        category: 'Pin Address',
-        action: 'PinAddress_Finish',
-      });
     } else {
       await updatePinnedAddresses(nextAddresses);
     }

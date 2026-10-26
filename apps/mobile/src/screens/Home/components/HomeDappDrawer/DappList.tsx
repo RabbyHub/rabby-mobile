@@ -4,7 +4,6 @@ import type { DappInfo } from '@/core/services/dappService';
 import { useTheme2024 } from '@/hooks/theme';
 import { useDapps } from '@/hooks/useDapps';
 import { DappIcon } from '@/screens/Dapps/components/DappIcon';
-import { matomoRequestEvent } from '@/utils/analytics';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -176,11 +175,6 @@ export const DappList: React.FC<{
                     }
 
                     onDappPress?.(item);
-                    matomoRequestEvent({
-                      category: 'Websites Usage',
-                      action: 'Website_Visit_Other',
-                      label: item.origin,
-                    });
                   }}>
                   <View style={styles.dappCard}>
                     <DappIcon

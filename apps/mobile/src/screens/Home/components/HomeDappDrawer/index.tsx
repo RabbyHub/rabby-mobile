@@ -50,7 +50,6 @@ import { Button } from '@/components2024/Button';
 import type { WorkletFunction } from 'react-native-reanimated/lib/typescript/commonTypes';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { HOME_TOP_HEADER_SIZES } from '@/constant/home';
-import { matomoRequestEvent } from '@/utils/analytics';
 import { Text } from '@/components/Typography';
 import MarketScreen from '@/screens/Market';
 import { HomeDappDrawerContent } from './HomeDappDrawerContent';
@@ -427,11 +426,6 @@ export const HomeDappDrawer: React.FC<{
                                   return;
                                 }
                                 openTab(item.url || item.origin);
-                                matomoRequestEvent({
-                                  category: 'Websites Usage',
-                                  action: 'Website_Visit_Website Favorite List',
-                                  label: item.origin,
-                                });
                               }}
                             />
                           </View>

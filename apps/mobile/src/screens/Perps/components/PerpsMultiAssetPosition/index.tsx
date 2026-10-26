@@ -29,7 +29,6 @@ import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { navigateToPreferredPerps } from '@/hooks/perps/navigation/navigateToPreferredPerps';
 import { formatPerpsCoin, getFallbackCoinLogoUrl } from '@/utils/perps';
 import { SvgUri } from 'react-native-svg';
-import { matomoRequestEvent } from '@/utils/analytics';
 import { Text } from '@/components/Typography';
 import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 import {
@@ -108,10 +107,6 @@ const AssetPositionItemInner = ({
   const pnlText = `${isUp ? '+' : '-'}${formatUsdValue(absPnlUsd)}`;
 
   const handleHyperliquidPress = useCallback(() => {
-    matomoRequestEvent({
-      category: 'Rabby Perps',
-      action: 'Perps_CardToPerps',
-    });
     void navigateToPreferredPerps({
       account: item.account,
       canonicalMarket: coin,
@@ -465,10 +460,6 @@ export const PerpsMultiAssetPosition: React.FC = () => {
 
   useEffect(() => {
     if (hasPosition && !hasLoggedEvent.current) {
-      matomoRequestEvent({
-        category: 'Rabby Perps',
-        action: 'Perps_ExistPosition',
-      });
       hasLoggedEvent.current = true;
     }
   }, [hasPosition]);

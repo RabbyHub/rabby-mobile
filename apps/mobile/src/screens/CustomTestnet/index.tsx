@@ -9,7 +9,6 @@ import type {
   TestnetChainBase,
 } from '@/core/services/customTestnetService';
 import { useThemeColors } from '@/hooks/theme';
-import { matomoRequestEvent } from '@/utils/analytics';
 import { useEventEmitter, useMemoizedFn, useSetState } from 'ahooks';
 import type { EventEmitter } from 'ahooks/lib/useEventEmitter';
 import { sortBy } from 'lodash';
@@ -126,11 +125,6 @@ export function CustomTestnetScreen(): JSX.Element {
     };
     setState(next);
     close$.emit();
-
-    matomoRequestEvent({
-      category: 'Custom Network',
-      action: 'Click Add Network',
-    });
   });
 
   const handleConfirm = useMemoizedFn(async () => {

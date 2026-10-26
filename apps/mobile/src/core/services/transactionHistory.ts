@@ -24,7 +24,6 @@ import {
   ParsedActionData,
 } from '@rabby-wallet/rabby-action';
 import { DappInfo } from './dappService';
-import { stats } from '@/utils/stats';
 import { findChain } from '@/utils/chain';
 import { KeyringTypeName } from '@rabby-wallet/keyring-utils';
 import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
@@ -34,7 +33,6 @@ import {
   loadTxSaveFromLocalStore,
   txDonePatchTokenAmountInDb,
 } from '@/databases/sync/history';
-import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/utils/reportTimeoutAction';
 import { updateExpiredTime } from '@/databases/sync/utils';
 import {
   CUSTOM_HISTORY_ACTION,
@@ -956,29 +954,6 @@ export class TransactionHistoryService extends StoreServiceBase<
 
     if (chain) {
       // TODO $ctx
-      stats.report('completeTransaction', {
-        chainId: chain.serverId,
-        success,
-        preExecSuccess: chain.isTestnet
-          ? true
-          : target.maxGasTx.explain
-          ? Boolean(
-              target.maxGasTx?.explain?.pre_exec?.success &&
-                target.maxGasTx?.explain?.calcSuccess,
-            )
-          : true,
-        source: target?.$ctx?.ga?.source || '',
-        trigger: target?.$ctx?.ga?.trigger || '',
-        networkType: chain?.isTestnet ? 'Custom Network' : 'Integrated Network',
-      });
-
-      target?.$ctx?.ga?.category === 'Swap' &&
-        this.preferenceService?.setReportActionTs(
-          REPORT_TIMEOUT_ACTION_KEY.SWAP_ACTION_HAVE_DONE,
-          {
-            chain: chain.serverId,
-          },
-        );
     }
     this.clearBefore({ address, chainId, nonce });
   }

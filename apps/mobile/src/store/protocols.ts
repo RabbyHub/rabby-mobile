@@ -11,7 +11,6 @@ import {
   syncRemoteProtocolsForAddresses,
 } from '@/databases/sync/assets';
 import { formatAppChain } from '@/utils/appchain';
-import { reportLendingUserStatusOnce } from '@/utils/lendingUserStatus';
 import { complexProtocol2ProtocolItem } from '@/utils/protocol';
 import type { ICacheProtocolItem, IProtocolItem } from '@/types/assets';
 import { markStartupPerf } from '@/core/utils/startupPerfMarks';
@@ -890,10 +889,6 @@ export const useProtocolListStore = zCreate<ProtocolListState>((set, get) => ({
                   0,
                 ),
               });
-              reportLendingUserStatusOnce({
-                addresses: lowerAddresses,
-                protocolMap,
-              });
               trace.finish({ path: 'local-db' });
               return;
             }
@@ -1009,10 +1004,6 @@ export const useProtocolListStore = zCreate<ProtocolListState>((set, get) => ({
             addressCount: currentAddresses.length,
           });
           void syncRemoteProtocolsForAddresses(applicableRemoteProtocolMap);
-          reportLendingUserStatusOnce({
-            addresses: currentAddresses,
-            protocolMap: applicableProtocolMap,
-          });
           trace.finish({ path: 'local-then-remote' });
         } catch (error) {
           trace.fail({ phase: 'load' });

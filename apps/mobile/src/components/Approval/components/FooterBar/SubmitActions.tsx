@@ -13,8 +13,6 @@ import type { PropsWithAuthSession } from './ActionsContainer';
 import { ActionsContainer } from './ActionsContainer';
 import { GasLessAnimatedWrapper } from './GasLessComponents';
 import { useSubmitAction } from './useSubmitAction';
-import { setReportActionTs } from '@/core/serviceApi/preference';
-import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/utils/reportTimeoutAction';
 import { Text } from '@/components/Typography';
 import { BOTTOM_BUTTON_DOUBLE_HEIGHT } from '@/constant/layout';
 
@@ -44,12 +42,7 @@ export const SubmitActions: React.FC<PropsWithAuthSession> = ({
   const handleClickSign = React.useCallback(() => {
     if (disabledProcess) return;
     setIsSign(true);
-
-    isSwap &&
-      void setReportActionTs(REPORT_TIMEOUT_ACTION_KEY.CLICK_SWAP_TO_SIGN, {
-        chain: chain?.serverId as string,
-      });
-  }, [chain, isSwap, disabledProcess]);
+  }, [disabledProcess]);
   const colors = useThemeColors();
   const { styles } = useTheme2024({ getStyle: getStyles2024 });
   const [pressedConfirm, setPressedConfirm] = React.useState(false);
