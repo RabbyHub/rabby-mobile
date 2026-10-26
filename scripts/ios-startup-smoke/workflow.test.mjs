@@ -21,6 +21,33 @@ function job(source, name) {
   return match[1];
 }
 
+function jobCondition(block) {
+  const expression = block.match(/^    if: \$\{\{ (.+) \}\}$/m)?.[1];
+  assert.ok(expression, 'Missing explicit job condition');
+  return expression;
+}
+
+// Interpret only this lane's reviewed conjunction/equality grammar, not general
+// GitHub expressions. These fixtures guard the source policy, not scheduling.
+function evaluateStartupCondition(expression, { cancelled = false, needs }) {
+  return expression
+    .split(' && ')
+    .map(term => {
+      if (term === '!cancelled()') return !cancelled;
+      const match = term.match(
+        /^needs\.([a-z_]+(?:\.[a-z_]+)*) (==|!=) '([^']*)'$/,
+      );
+      assert.ok(match, `Unsupported condition term: ${term}`);
+      const [, selector, operator, expected] = match;
+      const value = selector
+        .split('.')
+        .reduce((node, key) => node?.[key], needs);
+      const actual = value ?? '';
+      return operator === '==' ? actual === expected : actual !== expected;
+    })
+    .every(Boolean);
+}
+
 const localTransferLabels = [
   'self-hosted',
   'macOS',
@@ -30,6 +57,112 @@ const localTransferLabels = [
 ];
 const localTransferRunner =
   /runs-on:\s*\[\s*self-hosted,\s*macOS,\s*ARM64,\s*mobile-local,\s*mobile-ios-simulator,?\s*\]/;
+
+test('manual startup exposes nine inputs with only iOS 27 selected by default', async () => {
+  const source = await workflow('startup');
+  const dispatch = source.match(
+    /^  workflow_dispatch:\n([\s\S]*?)(?=^\S)/m,
+  )?.[1];
+  assert.ok(dispatch, 'Missing manual startup trigger');
+  const inputs = Object.fromEntries(
+    [
+      ...dispatch.matchAll(
+        /^      (\w+):\n([\s\S]*?)(?=^      \w+:|$(?![\s\S]))/gm,
+      ),
+    ].map(([, name, declaration]) => [name, declaration]),
+  );
+  assert.deepEqual(Object.keys(inputs), [
+    'execution_environment',
+    'build_xcode',
+    'ios_16',
+    'ios_17',
+    'ios_18',
+    'ios_26',
+    'ios_27',
+    'build_only',
+    'SKIP_NOTIFY_LARK',
+  ]);
+  for (const name of [
+    'ios_16',
+    'ios_17',
+    'ios_18',
+    'ios_26',
+    'ios_27',
+    'build_only',
+    'SKIP_NOTIFY_LARK',
+  ]) {
+    assert.match(inputs[name], /^        type: boolean$/m);
+    assert.equal(
+      inputs[name].match(/^        default: (.+)$/m)?.[1],
+      name === 'ios_27' ? 'true' : 'false',
+    );
+  }
+  assert.match(
+    inputs.execution_environment,
+    /^        default: 'mobile-local'$/m,
+  );
+  assert.match(inputs.build_xcode, /^        default: '27.1'$/m);
+  assert.doesNotMatch(
+    source,
+    /inputs\.ios_majors|inputs\.build_only|inputs\.ios_(?:16|17|18|26|27)/,
+  );
+  assert.match(source, /^  push:\n    branches:\n      - 'publish\/\*'$/m);
+});
+
+test('one effective selection policy supplies the matrix and every downstream consumer', async () => {
+  const source = await workflow('startup');
+  const matrix = job(source, 'matrix');
+  assert.match(
+    matrix,
+    /id: selection\n[\s\S]*?SIMULATOR_INPUTS: \$\{\{ toJSON\(inputs\) \}\}[\s\S]*?run: node scripts\/ios-startup-smoke\/selection\.mjs/,
+  );
+  assert.ok(matrix.indexOf('selection.mjs') < matrix.indexOf('- id: matrix'));
+  assert.match(
+    matrix,
+    /^      requested_majors: \$\{\{ steps.selection.outputs.requested_majors \}\}$/m,
+  );
+  assert.match(
+    matrix,
+    /^      build_only: \$\{\{ steps.selection.outputs.build_only \}\}$/m,
+  );
+  assert.match(
+    matrix,
+    /^          REQUESTED_MAJORS: \$\{\{ steps.selection.outputs.requested_majors \}\}$/m,
+  );
+  for (const name of ['archive', 'startup'])
+    assert.match(
+      job(source, name),
+      /needs.matrix.outputs.build_only == 'false'/,
+    );
+  const startup = job(source, 'startup');
+  assert.match(
+    startup,
+    /^      matrix: \$\{\{ fromJSON\(needs.matrix.outputs.matrix\) \}\}$/m,
+  );
+  const summary = job(source, 'summary');
+  assert.match(
+    summary,
+    /^          REQUESTED_MAJORS: \$\{\{ needs.matrix.outputs.requested_majors \}\}$/m,
+  );
+  assert.equal(
+    [...summary.matchAll(/needs.matrix.outputs.build_only == 'false'/g)].length,
+    3,
+  );
+  assert.match(
+    summary,
+    /^        if: needs.matrix.outputs.build_only == 'true'$/m,
+  );
+  const notify = job(source, 'notify');
+  assert.match(
+    notify,
+    /^      requested_majors: \$\{\{ needs.matrix.outputs.requested_majors \|\| 'invalid' \}\}$/m,
+  );
+  assert.match(
+    notify,
+    /^      build_only: \$\{\{ needs.matrix.outputs.build_only == 'true' \}\}$/m,
+  );
+  assert.doesNotMatch(source, /16,17,18,26,27/);
+});
 
 test('simulator build pins UTF-8 locale before Ruby and CocoaPods preparation', async () => {
   const build = job(await workflow('startup'), 'build');
@@ -79,10 +212,228 @@ test('build-only creates reusable output without archive or startup qualificatio
     job(source, 'build'),
     /artifact_id:.*app_artifact.outputs.artifact-id/,
   );
-  assert.match(job(source, 'startup'), /if:.*!inputs.build_only/);
-  assert.match(job(source, 'archive'), /if:.*!inputs.build_only/);
+  assert.match(
+    job(source, 'startup'),
+    /if:.*needs.matrix.outputs.build_only == 'false'/,
+  );
+  assert.match(
+    job(source, 'archive'),
+    /if:.*needs.matrix.outputs.build_only == 'false'/,
+  );
   assert.match(job(source, 'summary'), /Build only — no startup qualification/);
-  assert.match(job(source, 'summary'), /if: always\(\) && !inputs.build_only/);
+  assert.match(
+    job(source, 'summary'),
+    /if: always\(\) && needs.matrix.outputs.build_only == 'false'/,
+  );
+});
+
+test('startup readiness depends on native verification and required App transport, not auxiliary job results', async () => {
+  const source = await workflow('startup');
+  const build = job(source, 'build');
+  for (const [name, value] of [
+    ['native_result', 'steps.native_build.outcome'],
+    ['public_app_allowed', 'steps.public_app.outputs.allowed'],
+    ['artifact_result', 'steps.app_artifact.outcome'],
+    ['artifact_id', 'steps.app_artifact.outputs.artifact-id'],
+  ])
+    assert.ok(build.includes(`      ${name}: \$\{\{ ${value} \}\}`));
+  const nativeStep = build.match(
+    /      - name: Build one unsigned Regression Simulator app\n([\s\S]*?)(?=^      - )/m,
+  )?.[1];
+  assert.ok(nativeStep, 'Missing native build step');
+  assert.match(nativeStep, /^        id: native_build$/m);
+  assert.match(
+    nativeStep,
+    /run: bash apps\/mobile\/scripts\/ci\/build-ios-simulator\.sh --output-dir "\$EVIDENCE_ROOT\/build"/,
+  );
+  assert.doesNotMatch(build, /continue-on-error/);
+
+  const expression = jobCondition(job(source, 'startup'));
+  assert.equal(
+    expression,
+    [
+      '!cancelled()',
+      "needs.matrix.result == 'success'",
+      "needs.matrix.outputs.build_only == 'false'",
+      "needs.build.outputs.native_result == 'success'",
+      "needs.build.outputs.public_app_allowed == 'true'",
+      "needs.build.outputs.artifact_result == 'success'",
+      "needs.build.outputs.artifact_id != ''",
+    ].join(' && '),
+  );
+  const ready = {
+    cancelled: false,
+    needs: {
+      matrix: { result: 'success', outputs: { build_only: 'false' } },
+      build: {
+        result: 'success',
+        outputs: {
+          native_result: 'success',
+          public_app_allowed: 'true',
+          artifact_result: 'success',
+          artifact_id: '12345',
+        },
+      },
+      archive: { result: 'success' },
+    },
+  };
+  for (const [label, modify, expected] of [
+    ['all required inputs ready', () => {}, true],
+    [
+      'sibling S3 archive failure',
+      value => {
+        value.needs.archive.result = 'failure';
+      },
+      true,
+    ],
+    [
+      'failed auxiliary build evidence upload',
+      value => {
+        value.needs.build.result = 'failure';
+      },
+      true,
+    ],
+    [
+      'both auxiliary failures',
+      value => {
+        value.needs.build.result = 'failure';
+        value.needs.archive.result = 'failure';
+      },
+      true,
+    ],
+    [
+      'failed native build',
+      value => {
+        value.needs.build.outputs.native_result = 'failure';
+        value.needs.build.outputs.artifact_id = '';
+      },
+      false,
+    ],
+    // A provenance failure may retain a public diagnostic artifact. It is not
+    // a successful clean-source build and must not enter qualification.
+    [
+      'modified source with a retained public App',
+      value => {
+        value.needs.build.outputs.native_result = 'failure';
+      },
+      false,
+    ],
+    [
+      'skipped native build',
+      value => {
+        value.needs.build.outputs.native_result = 'skipped';
+      },
+      false,
+    ],
+    [
+      'invalid public gate',
+      value => {
+        value.needs.build.outputs.public_app_allowed = 'false';
+      },
+      false,
+    ],
+    [
+      'missing public gate',
+      value => {
+        delete value.needs.build.outputs.public_app_allowed;
+      },
+      false,
+    ],
+    [
+      'missing artifact ID',
+      value => {
+        delete value.needs.build.outputs.artifact_id;
+      },
+      false,
+    ],
+    [
+      'empty artifact ID',
+      value => {
+        value.needs.build.outputs.artifact_id = '';
+      },
+      false,
+    ],
+    [
+      'failed required transport despite an ID',
+      value => {
+        value.needs.build.outputs.artifact_result = 'failure';
+      },
+      false,
+    ],
+    [
+      'skipped required transport',
+      value => {
+        value.needs.build.outputs.artifact_result = 'skipped';
+      },
+      false,
+    ],
+    [
+      'cancelled workflow',
+      value => {
+        value.cancelled = true;
+      },
+      false,
+    ],
+    [
+      'failed matrix',
+      value => {
+        value.needs.matrix.result = 'failure';
+      },
+      false,
+    ],
+    [
+      'skipped matrix',
+      value => {
+        value.needs.matrix.result = 'skipped';
+      },
+      false,
+    ],
+    [
+      'effective build-only request',
+      value => {
+        value.needs.matrix.outputs.build_only = 'true';
+      },
+      false,
+    ],
+    [
+      'missing effective policy',
+      value => {
+        delete value.needs.matrix.outputs.build_only;
+      },
+      false,
+    ],
+  ]) {
+    const fixture = structuredClone(ready);
+    modify(fixture);
+    assert.equal(
+      evaluateStartupCondition(expression, fixture),
+      expected,
+      label,
+    );
+  }
+  // Only execution is unblocked: the aggregate summary retains genuine failures.
+  assert.match(
+    job(source, 'summary'),
+    /^          BUILD_RESULT: \$\{\{ needs.build.result \}\}$/m,
+  );
+  assert.match(
+    job(source, 'summary'),
+    /^          STARTUP_RESULT: \$\{\{ needs.startup.result \}\}$/m,
+  );
+});
+
+test('one runtime failure cannot cancel the other requested runtime jobs', async () => {
+  for (const name of ['startup', 'probe']) {
+    const startup = job(await workflow(name), 'startup');
+    assert.match(startup, /^      fail-fast: false$/m);
+    assert.match(
+      startup,
+      /^      max-parallel: \$\{\{ inputs.execution_environment != 'hosted' && 1 \|\| 5 \}\}$/m,
+    );
+    assert.match(startup, /^      cancel-in-progress: false$/m);
+    assert.match(startup, /^      queue: max$/m);
+    assert.doesNotMatch(startup, /continue-on-error/);
+  }
 });
 
 test('public app publication excludes release secrets and raw build logs and requires a verified profile', async () => {
@@ -139,7 +490,7 @@ test('S3 public relay verifies the original archive profile before upload and ca
 test('local S3 archive is independent of startup and keeps the original build attempt on retry', async () => {
   const source = await workflow('startup');
   const archive = job(source, 'archive');
-  assert.match(archive, /needs: build\n/);
+  assert.match(archive, /needs: \[matrix, build\]\n/);
   assert.match(archive, localTransferRunner);
   assert.match(archive, /!cancelled\(\).*artifact_id != ''/);
   assert.match(archive, /artifact-ids:.*needs.build.outputs.artifact_id/);

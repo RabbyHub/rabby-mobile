@@ -16,12 +16,28 @@ on:
         type: choice
         options: ['26.3', '27.1']
         default: '27.1'
-      ios_majors:
-        description: Required iOS majors; a manual subset is reported as partial coverage
-        type: string
-        default: '16,17,18,26,27'
+      ios_16:
+        description: Validate iOS 16 (publish branches always validate every version)
+        type: boolean
+        default: false
+      ios_17:
+        description: Validate iOS 17
+        type: boolean
+        default: false
+      ios_18:
+        description: Validate iOS 18
+        type: boolean
+        default: false
+      ios_26:
+        description: Validate iOS 26
+        type: boolean
+        default: false
+      ios_27:
+        description: Validate iOS 27 (latest supported version)
+        type: boolean
+        default: true
       build_only:
-        description: Only compile and retain the app; upload and startup can be probed separately
+        description: Only compile and retain the app (ignored on publish branches)
         type: boolean
         default: false
       SKIP_NOTIFY_LARK:
@@ -52,6 +68,8 @@ jobs:
     outputs:
       matrix: ${{ steps.matrix.outputs.matrix }}
       build_runner: ${{ steps.matrix.outputs.build_runner }}
+      requested_majors: ${{ steps.selection.outputs.requested_majors }}
+      build_only: ${{ steps.selection.outputs.build_only }}
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
@@ -60,19 +78,28 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '22'
+      - name: Verify workflow contracts
+        run: node --test scripts/ios-startup-smoke/*.test.mjs
+      - name: Resolve manual selection or mandatory publish coverage
+        id: selection
+        env:
+          SIMULATOR_INPUTS: ${{ toJSON(inputs) }}
+        run: node scripts/ios-startup-smoke/selection.mjs
       - id: matrix
         env:
-          REQUESTED_MAJORS: ${{ inputs.ios_majors || '16,17,18,26,27' }}
+          REQUESTED_MAJORS: ${{ steps.selection.outputs.requested_majors }}
           BUILD_XCODE: ${{ inputs.build_xcode || '27.1' }}
         run: |
-          node --test scripts/ios-startup-smoke/*.test.mjs
           node scripts/ios-startup-smoke/hosted.mjs matrix "$REQUESTED_MAJORS" "$BUILD_XCODE" "$EXECUTION_ENVIRONMENT"
 
   build:
     needs: matrix
     outputs:
       artifact_id: ${{ steps.app_artifact.outputs.artifact-id }}
+      artifact_result: ${{ steps.app_artifact.outcome }}
       source_run_attempt: ${{ steps.build_context.outputs.source_run_attempt }}
+      native_result: ${{ steps.native_build.outcome }}
+      public_app_allowed: ${{ steps.public_app.outputs.allowed }}
     runs-on: ${{ fromJSON(needs.matrix.outputs.build_runner) }}
     timeout-minutes: 120
     # Shared with both workflows' test jobs; never cancel a running local build.
@@ -160,6 +187,7 @@ jobs:
           BUILD_XCODE: ${{ inputs.build_xcode || '27.1' }}
         run: node scripts/ios-startup-smoke/toolchain.mjs "$BUILD_XCODE" --build | tee "$EVIDENCE_ROOT/build-platform.json"
       - name: Build one unsigned Regression Simulator app
+        id: native_build
         env:
           RABBY_MOBILE_FE_SERVICE_URL: ${{ vars.RABBY_MOBILE_FE_SERVICE_URL || vars.RABBY_MOBILE_PUSH_TEST_SERVER_URL }}
         run: bash apps/mobile/scripts/ci/build-ios-simulator.sh --output-dir "$EVIDENCE_ROOT/build"
@@ -194,10 +222,10 @@ jobs:
   archive:
     # An archived diagnostic app can survive a post-build provenance failure.
     # The uploader still rejects logs-only artifacts and invalid receipts.
-    needs: build
+    needs: [matrix, build]
     outputs:
       archive_key: ${{ steps.publish.outputs.archive_key }}
-    if: ${{ !cancelled() && !inputs.build_only && needs.build.outputs.artifact_id != '' }}
+    if: ${{ !cancelled() && needs.matrix.result == 'success' && needs.matrix.outputs.build_only == 'false' && needs.build.outputs.artifact_id != '' }}
     runs-on: [self-hosted, macOS, ARM64, mobile-local, mobile-ios-simulator]
     timeout-minutes: 30
     env:
@@ -242,7 +270,9 @@ jobs:
 
   startup:
     needs: [matrix, build]
-    if: ${{ !inputs.build_only }}
+    # Auxiliary evidence/S3/notification failures must not suppress runnable tests.
+    # A successful fresh native build and its verified transport remain required.
+    if: ${{ !cancelled() && needs.matrix.result == 'success' && needs.matrix.outputs.build_only == 'false' && needs.build.outputs.native_result == 'success' && needs.build.outputs.public_app_allowed == 'true' && needs.build.outputs.artifact_result == 'success' && needs.build.outputs.artifact_id != '' }}
     strategy:
       fail-fast: false
       max-parallel: ${{ inputs.execution_environment != 'hosted' && 1 || 5 }}
@@ -350,12 +380,12 @@ jobs:
         with:
           node-version: '22'
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
-        if: ${{ !inputs.build_only }}
+        if: ${{ needs.matrix.outputs.build_only == 'false' }}
         with:
           pattern: ios-startup-test-*
           path: ${{ runner.temp }}/startup-results
       - name: Download only this build's immutable app receipt
-        if: always() && !inputs.build_only && needs.build.outputs.artifact_id != ''
+        if: always() && needs.matrix.outputs.build_only == 'false' && needs.build.outputs.artifact_id != ''
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           artifact-ids: ${{ needs.build.outputs.artifact_id }}
@@ -363,9 +393,9 @@ jobs:
           path: ${{ runner.temp }}/startup-results/ios-startup-app-receipt
       - name: Require complete requested coverage of the same app
         id: report
-        if: always() && !inputs.build_only
+        if: always() && needs.matrix.outputs.build_only == 'false'
         env:
-          REQUESTED_MAJORS: ${{ inputs.ios_majors || '16,17,18,26,27' }}
+          REQUESTED_MAJORS: ${{ needs.matrix.outputs.requested_majors }}
           BUILD_RESULT: ${{ needs.build.result }}
           STARTUP_RESULT: ${{ needs.startup.result }}
         run: |
@@ -373,7 +403,7 @@ jobs:
           node scripts/ios-startup-smoke/hosted.mjs summary \
             "$RUNNER_TEMP/startup-results" "$REQUESTED_MAJORS" "$GITHUB_SHA"
       - name: Report build-only output without claiming startup qualification
-        if: inputs.build_only
+        if: needs.matrix.outputs.build_only == 'true'
         env:
           BUILD_RESULT: ${{ needs.build.result }}
           APP_ARTIFACT_ID: ${{ needs.build.outputs.artifact_id }}
@@ -393,9 +423,9 @@ jobs:
       mode: startup
       needs_json: ${{ toJSON(needs) }}
       notification_report: ${{ needs.summary.outputs.notification_report }}
-      requested_majors: ${{ inputs.ios_majors || '16,17,18,26,27' }}
+      requested_majors: ${{ needs.matrix.outputs.requested_majors || 'invalid' }}
       execution_environment: ${{ inputs.execution_environment || 'mobile-local' }}
-      build_only: ${{ inputs.build_only == true }}
+      build_only: ${{ needs.matrix.outputs.build_only == 'true' }}
       build_xcode: ${{ inputs.build_xcode || '27.1' }}
     secrets:
       RABBY_MOBILE_LARK_CHAT_URL: ${{ secrets.RABBY_MOBILE_LARK_CHAT_URL || secrets.LARK_CHAT_URL }}

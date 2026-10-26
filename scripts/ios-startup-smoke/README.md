@@ -10,7 +10,8 @@ provisioning, native compilation and the complete matrix have been qualified.
 
 One unsigned, arm64 **iOS Simulator** Regression app is built from the triggering
 full commit. The same executable and embedded Hermes bundle are distributed
-through a hash-verified archive to five test jobs. **Both app compilation and
+through a hash-verified archive to the selected test jobs (all five on publish
+branches). **Both app compilation and
 validation default to `[self-hosted, macOS, ARM64, mobile-local, mobile-ios-simulator]`**.
 The App compiler stays Xcode 27.1. Local iOS 16.4 builds and runs only its
 XCTest harness with Xcode 26.3; local iOS 17+ uses Xcode 27.1 for the harness.
@@ -49,6 +50,32 @@ so old retained evidence cannot mask a current job failure.
 
 This is packaged-app startup E2E on Simulator, not physical-device, signing,
 existing-wallet, upgrade, Home-data, transaction or performance validation.
+
+## Manual fresh builds and mandatory publish coverage
+
+Run **iOS Simulator Startup** with `workflow_dispatch` to compile the selected
+source ref and then verify it. GitHub's
+[`choice` input is single-select](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#onworkflow_dispatchinputs),
+so runtime selection uses independent boolean checkboxes: `ios_16`, `ios_17`,
+`ios_18`, `ios_26` and `ios_27`. Only `ios_27` is checked by default. Uncheck it
+when selecting only older versions. Selecting none fails before native
+preparation; a subset is always reported as partial coverage.
+
+Every new Startup run invokes the native build script; it does not resolve or
+reuse a previously archived App as its input. Normal dependency and compilation
+caches remain enabled: a new build does not mean deleting caches or forcing a
+clean build. Use the separate Artifact Probe workflow below when deliberately
+reusing an existing App. Its inputs and defaults are unchanged.
+
+For any `publish/*` source branch, **both push and manual dispatch force all
+five majors and `build_only=false`**, regardless of checkbox values. The one
+resolved policy feeds the test matrix, archive, summary and notification, so
+none can silently report a different selection. On non-publish manual runs,
+`build_only=true` remains available for independently testing compilation.
+
+This declares dispatch support; GitHub still requires the workflow to be
+registered on the default branch before manual dispatch is available. A push
+to this feature branch does not itself start a Simulator build.
 
 ## Persistent runner preflight and explicit hosted alternative
 
@@ -203,6 +230,24 @@ only be used by the explicit diagnostic probe, not normal qualification.
 Structural validation failure retains available evidence but does not produce
 a usable receipt. Native build failure never exports a stale DerivedData app.
 
+Startup eligibility checks the native build step, publication gate and exact
+App artifact upload independently of the aggregate build-job status. Thus a
+failed auxiliary platform-evidence upload does not suppress tests when the
+fresh native build and verified App transport succeeded. S3 archival is a
+sibling job, never a startup dependency, and final notification runs afterwards.
+An S3 or notification failure cannot skip the Simulator matrix. Actual native
+build/provenance failure, an invalid publication receipt, missing/failed App
+transport, invalid selection or cancellation still prevents startup: there is
+either a missing required input or an explicit stop, not an auxiliary failure.
+One OS failure does not cancel the other selected OS jobs.
+
+Auxiliary failures remain visible rather than being hidden with
+`continue-on-error`. In particular, a failed build job still makes the aggregate
+qualification fail even if its App was usable and individual startup checks
+passed. S3 and notification failures are reported separately and do not change
+the runtime coverage conclusion. Sharing the local runner can delay a job in
+the queue; failure independence does not imply simultaneous execution.
+
 The last-screen image may show SpringBoard after XCTest teardown; use XCTest
 attachments for first-screen proof. Evidence upload uses `always()`; no
 `continue-on-error` hides failures. The earlier device-IPA probe secret is
@@ -289,7 +334,7 @@ The jobs have three independent entry points:
 
 | Entry                                          | Input                                 | Runner / work                                                                             |
 | ---------------------------------------------- | ------------------------------------- | ----------------------------------------------------------------------------------------- |
-| `ios_simulator_startup.yml`, `build_only=true` | Source ref and compiler               | Mac mini builds once and retains a GitHub artifact; no S3 upload or startup qualification |
+| `ios_simulator_startup.yml`, `build_only=true` | Non-publish source ref and compiler   | Mac mini builds once and retains a GitHub artifact; no S3 upload or startup qualification |
 | `ios_simulator_archive.yml`                    | Original build run ID and artifact ID | Mac mini uploads/verifies that exact existing archive; no app build or Simulator          |
 | `ios_simulator_probe.yml`                      | Artifact IDs or exact S3 index key    | Probes the existing app; no Rabby Mobile rebuild                                          |
 

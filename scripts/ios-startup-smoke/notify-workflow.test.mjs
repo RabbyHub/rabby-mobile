@@ -89,7 +89,7 @@ test('notification preserves original startup, probe and archive dependency boun
   const startup = await workflow('startup');
   for (const [name, expected] of [
     ['build', ['matrix']],
-    ['archive', ['build']],
+    ['archive', ['matrix', 'build']],
     ['startup', ['matrix', 'build']],
     ['summary', ['matrix', 'build', 'startup']],
   ])
@@ -256,7 +256,12 @@ test('callers bind current results and probe source to the common sender inputs'
     for (const [key, expression] of [
       ['needs_json', 'toJSON(needs)'],
       ['notification_report', 'needs.summary.outputs.notification_report'],
-      ['requested_majors', "inputs.ios_majors || '16,17,18,26,27'"],
+      [
+        'requested_majors',
+        name === 'startup'
+          ? "needs.matrix.outputs.requested_majors || 'invalid'"
+          : "inputs.ios_majors || '16,17,18,26,27'",
+      ],
       [
         'execution_environment',
         "inputs.execution_environment || 'mobile-local'",
@@ -264,7 +269,11 @@ test('callers bind current results and probe source to the common sender inputs'
     ])
       binding(notify, key, expression);
     if (name === 'startup') {
-      binding(notify, 'build_only', 'inputs.build_only == true');
+      binding(
+        notify,
+        'build_only',
+        "needs.matrix.outputs.build_only == 'true'",
+      );
       binding(notify, 'build_xcode', "inputs.build_xcode || '27.1'");
       assert.doesNotMatch(notify, /^      source_json:/m);
     } else {
@@ -305,7 +314,7 @@ test('both summary owners expose their compact report even on a failed result', 
     assert.match(
       report,
       name === 'startup'
-        ? /if: always\(\) && !inputs\.build_only/
+        ? /if: always\(\) && needs.matrix.outputs.build_only == 'false'/
         : /if: always\(\)/,
     );
   }
