@@ -226,7 +226,10 @@ export const PerpsProInfoTabs: React.FC<PerpsProInfoTabsProps> = React.memo(
     };
 
     return (
-      <View accessibilityRole="tablist" style={styles.container}>
+      <View
+        accessibilityRole="tablist"
+        pointerEvents="box-none"
+        style={styles.container}>
         {PERPS_PRO_INFO_TABS.map((tab, index) => {
           const selected = tab === activeTab;
           return (

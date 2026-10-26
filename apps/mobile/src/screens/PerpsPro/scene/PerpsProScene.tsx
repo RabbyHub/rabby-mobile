@@ -1244,10 +1244,14 @@ export const PerpsProScene: React.FC<{
                 baseTop={sceneTabsTop}
                 nativeScrollY={nativeScrollY}
                 pinTop={infoTabsPinTop}
+                pointerEvents="box-none"
                 style={styles.infoTabsLayer}
                 testID="perps-pro-info-tabs-overlay">
-                <RootScenePagerGestureBlock testID="perps-pro-tabs-root-gesture-block">
+                <RootScenePagerGestureBlock
+                  pointerEvents="box-none"
+                  testID="perps-pro-tabs-root-gesture-block">
                   <View
+                    pointerEvents="none"
                     style={styles.infoTabsSpacer}
                     testID="perps-pro-info-tabs-spacer">
                     <View
@@ -1255,7 +1259,7 @@ export const PerpsProScene: React.FC<{
                       style={styles.infoSectionDivider}
                     />
                   </View>
-                  <View style={styles.infoTabsBar}>
+                  <View pointerEvents="box-none" style={styles.infoTabsBar}>
                     <PerpsProInfoTabs
                       activeTab={settledInfoTab}
                       historyEnabled={

@@ -3,8 +3,9 @@ import type { RootScenePagerUI } from '@rabby-wallet/rn-collapsible-scene-view';
 import type { PerpsViewMode } from '@/core/services/perpsService';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { View } from 'react-native';
+import type { LayoutChangeEvent } from 'react-native';
 import {
   Gesture,
   GestureDetector,
@@ -14,6 +15,7 @@ import Animated, {
   runOnUI,
   useAnimatedProps,
   useAnimatedStyle,
+  useDerivedValue,
 } from 'react-native-reanimated';
 import { useTranslation } from 'react-i18next';
 
@@ -61,6 +63,7 @@ export const PerpsModeSwitch: React.FC<PerpsModeSwitchProps> = ({
           return (
             <RootModeOption
               key={option.value}
+              isActive={option.value === activeMode}
               option={option}
               index={index}
               pagerUI={pagerUI}
@@ -126,6 +129,7 @@ const RootModeOption = React.memo(function RootModeOption({
   styles,
   showNewBadge,
   newLabel,
+  isActive,
 }: {
   option: (typeof MODE_OPTIONS)[number];
   index: number;
@@ -135,16 +139,40 @@ const RootModeOption = React.memo(function RootModeOption({
   styles: ReturnType<typeof getStyle.getStyles>;
   showNewBadge: boolean;
   newLabel: string;
+  isActive: boolean;
 }) {
   const { position, selectedIndex, select } = pagerUI;
+  // UI-thread progress for the label cross-fade. Quantized so the two overlay
+  // styles only recompute on visible steps instead of every raw drag frame.
+  const fadeProgress = useDerivedValue(
+    () => Math.round(Math.min(1, Math.max(0, position.value)) * 10) / 10,
+  );
   const activeStyle = useAnimatedStyle(() => {
-    const progress = Math.min(1, Math.max(0, position.value));
+    const progress = fadeProgress.value;
     return { opacity: index === 0 ? 1 - progress : progress };
   });
   const inactiveStyle = useAnimatedStyle(() => {
-    const progress = Math.min(1, Math.max(0, position.value));
+    const progress = fadeProgress.value;
     return { opacity: index === 0 ? progress : 1 - progress };
   });
+  // Pin the label box to the width measured while the *active* text is in flow.
+  // The cross-fade keeps re-creating the text nodes; without a pinned width a
+  // transient re-measure can resize the header row and jitter the tab strip.
+  const [pinnedLabelWidth, setPinnedLabelWidth] = useState<number | null>(null);
+  const handleLabelLayout = useCallback(
+    (event: LayoutChangeEvent) => {
+      if (pinnedLabelWidth != null) {
+        return;
+      }
+      const { width, height } = event.nativeEvent.layout;
+      // Ignore a wrapped or not-yet-measured box: pinning that would make the
+      // label stay wrapped. Only single-line measurements are trusted.
+      if (width > 0 && height > 0 && height <= 30) {
+        setPinnedLabelWidth(Math.ceil(width) + 2);
+      }
+    },
+    [pinnedLabelWidth],
+  );
   const accessibilityProps = useAnimatedProps(() => ({
     accessibilityState: {
       disabled,
@@ -200,13 +228,20 @@ const RootModeOption = React.memo(function RootModeOption({
           importantForAccessibility="no-hide-descendants"
           pointerEvents="none"
           style={styles.optionContent}>
-          <View style={styles.labelStack}>
+          <View
+            style={[
+              styles.labelStack,
+              pinnedLabelWidth != null ? { minWidth: pinnedLabelWidth } : null,
+            ]}
+            onLayout={handleLabelLayout}>
             <AnimatedText
+              numberOfLines={1}
               style={[styles.activeText, activeStyle]}
               testID={`perps-mode-${option.value}-active-label`}>
               {option.label}
             </AnimatedText>
             <AnimatedText
+              numberOfLines={1}
               style={[
                 styles.inactiveText,
                 styles.inactiveOverlay,
@@ -254,6 +289,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   labelStack: {
     position: 'relative',
+    flexShrink: 0,
   },
   inactiveOverlay: {
     position: 'absolute',
