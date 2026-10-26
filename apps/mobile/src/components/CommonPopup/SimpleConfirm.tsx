@@ -29,7 +29,7 @@ const getStyles = createGetStyles(colors => {
       textAlign: 'center',
       fontSize: 24,
       fontStyle: 'normal',
-      fontWeight: '600',
+      fontWeight: '500',
     },
   };
 });

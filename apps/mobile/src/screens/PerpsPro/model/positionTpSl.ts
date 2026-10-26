@@ -72,6 +72,16 @@ const finiteDecimal = (value: unknown): BigNumber | null => {
   return result.isFinite() ? result : null;
 };
 
+export const getPositionTpSlValueTone = (
+  value: string | null,
+): 'negative' | 'neutral' | 'positive' => {
+  const decimal = finiteDecimal(value);
+  if (!decimal || decimal.isZero()) {
+    return 'neutral';
+  }
+  return decimal.gt(0) ? 'positive' : 'negative';
+};
+
 const positiveDecimal = (value: unknown): string | null => {
   const result = finiteDecimal(value);
   return result?.gt(0) ? result.toString() : null;

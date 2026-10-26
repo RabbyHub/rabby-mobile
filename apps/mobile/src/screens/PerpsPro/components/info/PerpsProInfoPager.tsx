@@ -43,6 +43,7 @@ import {
   getPerpsProInfoScrollTarget,
   interruptPerpsProInfoScrollBridge,
   PERPS_PRO_INFO_TOUCH_INTENT,
+  scrollPerpsProInfoBridgeTarget,
   type PerpsProInfoScrollBridgeController,
 } from './usePerpsProInfoScrollBridge';
 
@@ -84,6 +85,7 @@ export const getPerpsProInfoPagePreparedOffset = ({
   storedOffset: number;
   stickyOffset: number;
 }) => {
+  'worklet';
   const safeActiveOffset = Number.isFinite(activeOffset)
     ? Math.max(0, activeOffset)
     : 0;
@@ -196,6 +198,13 @@ const PerpsProInfoPagerInner = <Row,>(
     positions: 0,
     openOrders: 0,
   });
+  // Android owns preparation on UI, alongside native page selection. These
+  // are desired positions only; native scroll events remain the actual source.
+  const prepareOffsetsOnUI = authorizeNativePageGestures && !!scrollBridge;
+  const androidDesiredOffsets = useSharedValue<Record<PerpsProInfoTab, number>>(
+    { account: 0, positions: 0, openOrders: 0 },
+  );
+  const androidPreparedGestureEpoch = useSharedValue(-1);
   const contentHeightsRef = useRef<Record<PerpsProInfoTab, number>>({
     account: 0,
     positions: 0,
@@ -211,13 +220,17 @@ const PerpsProInfoPagerInner = <Row,>(
   const latestRequestIdRef = useRef(initialRequestId);
   const mountedRef = useRef(true);
   const pendingActiveCorrectionRef = useRef<{
+    bridgeEpoch?: number;
     offset: number;
+    requestId: number;
     tab: PerpsProInfoTab;
+    transitionEpoch: number;
   } | null>(null);
   const settledPagePosition = useSharedValue(selectedIndexRef.current);
   // Native selected is an acknowledgement, not necessarily a business commit
   // or the physical end of an animation.
   const nativeSelectedPosition = useSharedValue(selectedIndexRef.current);
+  const isPagerLaidOut = useSharedValue(false);
   const latestRequestId = useSharedValue(initialRequestId);
   const pendingPageRequest = useSharedValue<PerpsProInfoPageRequest | null>(
     null,
@@ -262,6 +275,94 @@ const PerpsProInfoPagerInner = <Row,>(
     [],
   );
 
+  const recordAndroidDesiredOffset = useCallback(
+    (tab: PerpsProInfoTab, offset: number) => {
+      'worklet';
+      if (Number.isFinite(offset)) {
+        androidDesiredOffsets.value = {
+          ...androidDesiredOffsets.value,
+          [tab]: Math.max(0, offset),
+        };
+      }
+    },
+    [androidDesiredOffsets],
+  );
+
+  const prepareAndroidPages = useCallback(() => {
+    'worklet';
+    if (!prepareOffsetsOnUI || !scrollBridge) {
+      return;
+    }
+    const currentIndex = scrollBridge.activeIndex.value;
+    const currentTab = PERPS_PRO_INFO_TABS[currentIndex];
+    const rawOffset = scrollBridge.targets[currentIndex]?.offset.value ?? 0;
+    const activeOffset = Number.isFinite(rawOffset)
+      ? Math.max(0, rawOffset)
+      : 0;
+    const offsets = { ...androidDesiredOffsets.value };
+    offsets[currentTab] = activeOffset;
+    for (const tab of PERPS_PRO_INFO_TABS) {
+      if (tab !== currentTab) {
+        offsets[tab] = getPerpsProInfoPagePreparedOffset({
+          activeOffset,
+          stickyOffset,
+          storedOffset: offsets[tab],
+        });
+      }
+    }
+    androidDesiredOffsets.value = offsets;
+    PERPS_PRO_INFO_TABS.forEach((tab, index) => {
+      if (index !== currentIndex) {
+        scrollPerpsProInfoBridgeTarget(scrollBridge, index, offsets[tab]);
+      }
+    });
+  }, [androidDesiredOffsets, prepareOffsetsOnUI, scrollBridge, stickyOffset]);
+
+  const prepareAndroidGesturePages = () => {
+    'worklet';
+    if (
+      prepareOffsetsOnUI &&
+      androidPreparedGestureEpoch.value !== pageTransitionEpoch.value
+    ) {
+      androidPreparedGestureEpoch.value = pageTransitionEpoch.value;
+      prepareAndroidPages();
+    }
+  };
+
+  const correctAndroidPageOffset = useCallback(
+    (
+      tab: PerpsProInfoTab,
+      desiredOffset: number,
+      transitionEpoch: number,
+      requestId: number,
+      bridgeEpoch: number | undefined,
+    ) => {
+      'worklet';
+      const index = PERPS_PRO_INFO_TABS.indexOf(tab);
+      if (
+        !scrollBridge ||
+        scrollBridge.activeIndex.value !== index ||
+        scrollBridge.epoch.value !== bridgeEpoch ||
+        pageTransitionEpoch.value !== transitionEpoch ||
+        latestRequestId.value !== requestId
+      ) {
+        return;
+      }
+      const offset = Math.min(
+        desiredOffset,
+        Math.max(0, scrollBridge.targets[index].maxOffset.value),
+      );
+      recordAndroidDesiredOffset(tab, offset);
+      scrollPerpsProInfoBridgeTarget(scrollBridge, index, offset);
+    },
+    [
+      latestRequestId,
+      pageTransitionEpoch,
+      recordAndroidDesiredOffset,
+      scrollBridge,
+    ],
+  );
+
   const updateBridgeMaxOffset = useCallback(
     (tab: PerpsProInfoTab) => {
       if (!scrollBridge) {
@@ -299,10 +400,20 @@ const PerpsProInfoPagerInner = <Row,>(
       );
       const offset = Math.min(Math.max(pending.offset, 0), maxOffset);
       pendingActiveCorrectionRef.current = null;
+      if (prepareOffsetsOnUI) {
+        runOnUI(correctAndroidPageOffset)(
+          tab,
+          offset,
+          pending.transitionEpoch,
+          pending.requestId,
+          pending.bridgeEpoch,
+        );
+        return;
+      }
       recordDesiredOffset(tab, offset);
       listRefs.current[tab]?.scrollToOffset({ animated: false, offset });
     },
-    [recordDesiredOffset],
+    [correctAndroidPageOffset, prepareOffsetsOnUI, recordDesiredOffset],
   );
 
   const preparePages = useCallback(() => {
@@ -359,6 +470,8 @@ const PerpsProInfoPagerInner = <Row,>(
       changed: boolean,
       shouldNotifySelection: boolean,
       requestId: number,
+      androidDesiredOffset?: number,
+      bridgeEpoch?: number,
     ) => {
       const tab = PERPS_PRO_INFO_TABS[position];
       if (
@@ -380,10 +493,17 @@ const PerpsProInfoPagerInner = <Row,>(
       const actualOffset = Number.isFinite(rawActualOffset)
         ? Math.max(0, rawActualOffset)
         : 0;
-      const desiredOffset = desiredOffsetsRef.current[tab];
+      const desiredOffset =
+        androidDesiredOffset ?? desiredOffsetsRef.current[tab];
       pendingActiveCorrectionRef.current =
         Math.abs(desiredOffset - actualOffset) > 0.5
-          ? { offset: desiredOffset, tab }
+          ? {
+              bridgeEpoch,
+              offset: desiredOffset,
+              requestId,
+              tab,
+              transitionEpoch,
+            }
           : null;
       onActivateOffset(actualOffset);
       if (shouldCommit) {
@@ -450,10 +570,15 @@ const PerpsProInfoPagerInner = <Row,>(
         changed,
         notifySelection,
         requestId,
+        prepareOffsetsOnUI
+          ? androidDesiredOffsets.value[PERPS_PRO_INFO_TABS[position]]
+          : undefined,
+        prepareOffsetsOnUI ? scrollBridge?.epoch.value : undefined,
       );
     },
     [
       authorizeNativePageGestures,
+      androidDesiredOffsets,
       closeNativeGestureVisual,
       commitNativePageSelection,
       idleTransitionEpoch,
@@ -463,6 +588,7 @@ const PerpsProInfoPagerInner = <Row,>(
       pageTransitionEpoch,
       previewGestureSessionId,
       previewPagePosition,
+      prepareOffsetsOnUI,
       scrollBridge,
       selectedTransitionEpoch,
       settledPagePosition,
@@ -564,15 +690,65 @@ const PerpsProInfoPagerInner = <Row,>(
         return;
       }
       latestRequestId.value = request.id;
+      prepareAndroidPages();
       pendingPageRequest.value = request;
-      if (programmaticSelectionTargetPosition.value < 0) {
+      if (
+        isPagerLaidOut.value &&
+        programmaticSelectionTargetPosition.value < 0
+      ) {
         startProgrammaticPage(request);
       }
     },
     [
+      isPagerLaidOut,
       latestRequestId,
       pendingPageRequest,
+      prepareAndroidPages,
       programmaticSelectionTargetPosition,
+      startProgrammaticPage,
+    ],
+  );
+
+  const handlePagerLayout = useCallback(
+    (event: LayoutChangeEvent) => {
+      const { width, height } = event.nativeEvent.layout;
+      if (width <= 0 || height <= 0) {
+        return;
+      }
+      runOnUI(() => {
+        'worklet';
+        if (isPagerLaidOut.value) {
+          return;
+        }
+        isPagerLaidOut.value = true;
+        // Fabric may drop commands issued during the initial mount. Keep only
+        // the latest intent until this fixed set of pages has laid out. Use the
+        // ordinary JS layout event: Reanimated can miss mount-time selected
+        // events before its native event handler has been registered.
+        const request =
+          pendingPageRequest.value ??
+          (nativeSelectedPosition.value !== settledPagePosition.value
+            ? {
+                animated: false,
+                id: latestRequestId.value,
+                notifySelection: false,
+                position: settledPagePosition.value,
+              }
+            : null);
+        if (request) {
+          pendingPageRequest.value = request;
+          prepareAndroidPages();
+          startProgrammaticPage(request);
+        }
+      })();
+    },
+    [
+      isPagerLaidOut,
+      latestRequestId,
+      nativeSelectedPosition,
+      pendingPageRequest,
+      prepareAndroidPages,
+      settledPagePosition,
       startProgrammaticPage,
     ],
   );
@@ -593,7 +769,9 @@ const PerpsProInfoPagerInner = <Row,>(
         return;
       }
       latestRequestIdRef.current = id;
-      preparePages();
+      if (!prepareOffsetsOnUI) {
+        preparePages();
+      }
       runOnUI(requestProgrammaticPage)({
         animated,
         id,
@@ -601,7 +779,7 @@ const PerpsProInfoPagerInner = <Row,>(
         position,
       });
     },
-    [preparePages, requestProgrammaticPage],
+    [prepareOffsetsOnUI, preparePages, requestProgrammaticPage],
   );
 
   const scrollActiveToOffset = useCallback(
@@ -611,11 +789,21 @@ const PerpsProInfoPagerInner = <Row,>(
       if (scrollBridge) {
         scrollBridge.epoch.value += 1;
       }
-      recordDesiredOffset(tab, offset);
+      if (prepareOffsetsOnUI) {
+        runOnUI(recordAndroidDesiredOffset)(tab, offset);
+      } else {
+        recordDesiredOffset(tab, offset);
+      }
       listRefs.current[tab]?.scrollToOffset({ animated, offset });
       onActivateOffset(offset);
     },
-    [onActivateOffset, recordDesiredOffset, scrollBridge],
+    [
+      onActivateOffset,
+      prepareOffsetsOnUI,
+      recordAndroidDesiredOffset,
+      recordDesiredOffset,
+      scrollBridge,
+    ],
   );
 
   useImperativeHandle(
@@ -638,6 +826,12 @@ const PerpsProInfoPagerInner = <Row,>(
         return;
       }
       nativeSelectedPosition.value = position;
+      // Initial attachment (or a native drag while JS layout is queued) is
+      // not a completed request. Retain the native position for reconciliation
+      // without consuming the pending intent or changing the business tab.
+      if (!isPagerLaidOut.value) {
+        return;
+      }
       const issuedTarget = programmaticSelectionTargetPosition.value;
       if (issuedTarget >= 0) {
         if (position !== issuedTarget) {
@@ -694,6 +888,17 @@ const PerpsProInfoPagerInner = <Row,>(
         startProgrammaticPage(correction);
         return;
       }
+      // selected can precede the first authorized progress event on Android.
+      // Complete this gesture's preparation before transferring offset ownership.
+      if (
+        isNativeGestureVisualActive.value &&
+        isPerpsProInfoHorizontalTouchAuthorized(
+          scrollBridge,
+          nativeGestureVisualTouchSessionId.value,
+        )
+      ) {
+        prepareAndroidGesturePages();
+      }
       acceptNativePageSelection(position, latestRequestId.value, true);
     },
     ['onPageSelected'],
@@ -711,13 +916,16 @@ const PerpsProInfoPagerInner = <Row,>(
         return;
       }
       beginPreviewSession(sessionId);
-      preparePages();
+      if (!prepareOffsetsOnUI) {
+        preparePages();
+      }
       onPageDragStart(requestId);
     },
     [
       beginPreviewSession,
       isPreviewGestureActive,
       onPageDragStart,
+      prepareOffsetsOnUI,
       preparePages,
       previewGestureSessionId,
     ],
@@ -741,6 +949,7 @@ const PerpsProInfoPagerInner = <Row,>(
     if (isPreviewGestureActive.value) {
       return;
     }
+    prepareAndroidGesturePages();
     const sessionId = previewGestureSessionId.value + 1;
     previewGestureSessionId.value = sessionId;
     isPreviewGestureActive.value = true;
@@ -755,6 +964,9 @@ const PerpsProInfoPagerInner = <Row,>(
     useEvent<PageScrollStateChangedNativeEvent>(
       event => {
         'worklet';
+        if (!isPagerLaidOut.value) {
+          return;
+        }
         if (event.pageScrollState === 'dragging') {
           if (programmaticSelectionTargetPosition.value >= 0) {
             return;
@@ -826,6 +1038,9 @@ const PerpsProInfoPagerInner = <Row,>(
   const handlePageScroll = useEvent<PagerViewOnPageScrollEvent>(
     event => {
       'worklet';
+      if (!isPagerLaidOut.value) {
+        return;
+      }
       const pagePosition = Math.max(
         0,
         Math.min(PERPS_PRO_INFO_TABS.length - 1, event.position + event.offset),
@@ -927,9 +1142,32 @@ const PerpsProInfoPagerInner = <Row,>(
   );
 
   const recordScrollEnd = useCallback(
-    (tab: PerpsProInfoTab, event: NativeSyntheticEvent<NativeScrollEvent>) =>
-      recordDesiredOffset(tab, event.nativeEvent.contentOffset.y),
-    [recordDesiredOffset],
+    (tab: PerpsProInfoTab, event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      if (prepareOffsetsOnUI && scrollBridge) {
+        runOnUI(() => {
+          'worklet';
+          const index = PERPS_PRO_INFO_TABS.indexOf(tab);
+          if (
+            scrollBridge.activeIndex.value === index &&
+            !scrollBridge.pageGestureActive.value
+          ) {
+            // A delayed JS end event must not replace a newer UI preparation.
+            recordAndroidDesiredOffset(
+              tab,
+              scrollBridge.targets[index].offset.value,
+            );
+          }
+        })();
+      } else {
+        recordDesiredOffset(tab, event.nativeEvent.contentOffset.y);
+      }
+    },
+    [
+      prepareOffsetsOnUI,
+      recordAndroidDesiredOffset,
+      recordDesiredOffset,
+      scrollBridge,
+    ],
   );
 
   const recordContentHeight = useCallback(
@@ -959,6 +1197,7 @@ const PerpsProInfoPagerInner = <Row,>(
   return (
     <ReanimatedPagerView
       initialPage={selectedIndexRef.current}
+      onLayout={handlePagerLayout}
       offscreenPageLimit={offscreenPageLimit}
       onPageScroll={handlePageScroll}
       onPageScrollStateChanged={handlePageScrollStateChanged}

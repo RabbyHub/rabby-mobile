@@ -36,7 +36,6 @@ import {
 } from '@/databases/sync/history';
 import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/utils/reportTimeoutAction';
 import { updateExpiredTime } from '@/databases/sync/utils';
-import { matomoRequestEvent } from '@/utils/analytics';
 import {
   CUSTOM_HISTORY_ACTION,
   CUSTOM_HISTORY_TITLE_TYPE,
@@ -136,10 +135,6 @@ export interface SwapTxHistoryItem {
   hash: string;
   createdAt: number;
   completedAt?: number;
-  isFromCopyTrading?: boolean;
-  copyTradingExtra?: {
-    type: 'Buy' | 'Sell';
-  };
 }
 
 export interface SendTxHistoryItem {
@@ -359,8 +354,11 @@ export class TransactionHistoryService extends StoreServiceBase<
   }
 
   getSucceedCount(address?: string) {
+    const normalizedAddress = address?.toLowerCase();
     return this.store.successList.filter(item =>
-      address ? item.startsWith(address) : true,
+      normalizedAddress
+        ? item.toLowerCase().startsWith(normalizedAddress)
+        : true,
     ).length;
   }
   getSucceedList() {
@@ -380,8 +378,11 @@ export class TransactionHistoryService extends StoreServiceBase<
   }
 
   getFailedCount(address?: string) {
+    const normalizedAddress = address?.toLowerCase();
     return this.store.failList.filter(item =>
-      address ? item.startsWith(address) : true,
+      normalizedAddress
+        ? item.toLowerCase().startsWith(normalizedAddress)
+        : true,
     ).length;
   }
 
@@ -517,7 +518,6 @@ export class TransactionHistoryService extends StoreServiceBase<
       chainId,
     });
 
-    const copyTradingActions: Array<'Buy' | 'Sell'> = [];
     this.mutateStore(draft => {
       const histories = [
         draft.swapTxHistory,
@@ -545,22 +545,6 @@ export class TransactionHistoryService extends StoreServiceBase<
           item.status = status;
           item.completedAt = Date.now();
         }
-
-        if ('isFromCopyTrading' in item && item.isFromCopyTrading) {
-          copyTradingActions.push(
-            item.copyTradingExtra?.type === 'Sell' ? 'Sell' : 'Buy',
-          );
-        }
-      });
-    });
-
-    copyTradingActions.forEach(copyTradingAction => {
-      matomoRequestEvent({
-        category: 'CopyTrading',
-        action:
-          copyTradingAction === 'Sell'
-            ? 'CopyTrading_SellFinishSwap'
-            : 'CopyTrading_BuyFinishSwap',
       });
     });
   }
@@ -594,15 +578,16 @@ export class TransactionHistoryService extends StoreServiceBase<
   }
 
   clearSuccessAndFailList(address?: string) {
+    const normalizedAddress = address?.toLowerCase();
     this.mutateStore(draft => {
-      if (address) {
+      if (normalizedAddress) {
         draft.successList = draft.successList.filter(
-          item => !item.startsWith(address),
+          item => !item.toLowerCase().startsWith(normalizedAddress),
         );
         draft.failList = draft.failList.filter(
-          item => !item.startsWith(address),
+          item => !item.toLowerCase().startsWith(normalizedAddress),
         );
-        draft.clearSuccessAndFailListTsObj[address.toLowerCase()] = Date.now();
+        draft.clearSuccessAndFailListTsObj[normalizedAddress] = Date.now();
         return;
       }
 
@@ -658,7 +643,7 @@ export class TransactionHistoryService extends StoreServiceBase<
       }
       const group = groups.find(
         g =>
-          g.address === tx.address &&
+          isSameAddress(g.address, tx.address) &&
           g.nonce === tx.nonce &&
           g.chainId === tx.chainId,
       );

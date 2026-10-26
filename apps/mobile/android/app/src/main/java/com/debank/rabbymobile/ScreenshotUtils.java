@@ -1,8 +1,13 @@
 package com.debank.rabbymobile;
 
+import android.app.Activity;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.os.Handler;
+import android.view.PixelCopy;
 import android.view.View;
+import android.view.Window;
+import androidx.annotation.Nullable;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -27,6 +32,10 @@ public class ScreenshotUtils {
             this.width = width;
             this.height = height;
         }
+    }
+
+    public interface ScreenshotCaptureCallback {
+        void onCaptured(@Nullable ScreenshotCaptureResult result);
     }
 
     /**
@@ -103,6 +112,58 @@ public class ScreenshotUtils {
             return null;
         }
 
+        Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+        try {
+            view.draw(new Canvas(bitmap));
+            return writeBitmapToPngFile(bitmap, baseDir);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        } finally {
+            bitmap.recycle();
+        }
+    }
+
+    /**
+     * Captures the activity window as composited on screen and writes it to a sandbox file.
+     * Unlike View.draw() on a software Canvas, PixelCopy includes GPU-backed content such as
+     * WebView canvases (e.g. K-line charts), video and TextureViews.
+     * Falls back to captureViewToPngFile() when the copy fails. The callback runs on handler's thread.
+     */
+    public static void captureWindowToPngFile(
+        Activity activity,
+        File baseDir,
+        Handler handler,
+        ScreenshotCaptureCallback callback
+    ) {
+        Window window = activity.getWindow();
+        View decorView = window.getDecorView();
+        int width = decorView.getWidth();
+        int height = decorView.getHeight();
+
+        if (baseDir == null || width <= 0 || height <= 0) {
+            callback.onCaptured(captureViewToPngFile(decorView, baseDir));
+            return;
+        }
+
+        Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+        try {
+            PixelCopy.request(window, bitmap, copyResult -> {
+                ScreenshotCaptureResult result = copyResult == PixelCopy.SUCCESS
+                    ? writeBitmapToPngFile(bitmap, baseDir)
+                    : null;
+                bitmap.recycle();
+                callback.onCaptured(result != null ? result : captureViewToPngFile(decorView, baseDir));
+            }, handler);
+        } catch (IllegalArgumentException e) {
+            // The window has no valid surface to copy from.
+            e.printStackTrace();
+            bitmap.recycle();
+            callback.onCaptured(captureViewToPngFile(decorView, baseDir));
+        }
+    }
+
+    private static ScreenshotCaptureResult writeBitmapToPngFile(Bitmap bitmap, File baseDir) {
         File outputDir = new File(baseDir, "rabby-screen-capture");
         if (!outputDir.exists() && !outputDir.mkdirs()) {
             return null;
@@ -110,24 +171,24 @@ public class ScreenshotUtils {
 
         String fileName = "rabby-screen-capture-" + System.currentTimeMillis() + ".png";
         File outputFile = new File(outputDir, fileName);
-        Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-        Canvas canvas = new Canvas(bitmap);
 
         try (FileOutputStream outputStream = new FileOutputStream(outputFile)) {
-            view.draw(canvas);
             boolean success = bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream);
             outputStream.flush();
             if (!success) {
                 outputFile.delete();
                 return null;
             }
-            return new ScreenshotCaptureResult(outputFile.getAbsolutePath(), fileName, width, height);
+            return new ScreenshotCaptureResult(
+                outputFile.getAbsolutePath(),
+                fileName,
+                bitmap.getWidth(),
+                bitmap.getHeight()
+            );
         } catch (Exception e) {
             e.printStackTrace();
             outputFile.delete();
             return null;
-        } finally {
-            bitmap.recycle();
         }
     }
 

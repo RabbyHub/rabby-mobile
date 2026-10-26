@@ -379,7 +379,9 @@ export const HomeGuidanceMultipleTabs = ({
     <Animated.View
       pointerEvents={'none'}
       entering={guidanceVisible ? FadeIn.duration(250) : undefined}
-      exiting={FadeOut.duration(250)}
+      // FadeOut starts at opacity 1 even when this Android mask is hidden.
+      // Do not reveal it again when navigation removes the old Home tree.
+      exiting={guidanceVisible ? FadeOut.duration(250) : undefined}
       style={[
         styles.container,
         styles.containerMask,

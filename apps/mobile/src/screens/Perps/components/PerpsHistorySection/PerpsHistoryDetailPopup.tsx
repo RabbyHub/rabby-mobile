@@ -213,7 +213,11 @@ export const PerpsHistoryDetailPopup: React.FC<{
                       </Text>
                     </View>
                     <View style={styles.coinContainer}>
-                      <AssetAvatar size={24} logo={logoUrl} />
+                      <AssetAvatar
+                        size={24}
+                        logo={logoUrl}
+                        logoStyle={styles.coinIcon}
+                      />
                       <Text style={styles.value}>
                         {formatPerpsCoin(coin || '')} - {quoteAsset}
                       </Text>
@@ -305,7 +309,9 @@ export const PerpsHistoryDetailPopup: React.FC<{
                   {fee ? (
                     <View style={styles.listItem}>
                       <TouchableOpacity
-                        onPress={() => showTradeFeeExplanation(isLiquidation)}>
+                        onPress={() =>
+                          showTradeFeeExplanation(isLiquidation, fill)
+                        }>
                         <View style={styles.listItemMain}>
                           <Text style={styles.label}>
                             {t('page.perps.historyDetail.fee')}
@@ -446,6 +452,9 @@ const getStyle = createGetStyles2024(ctx => {
       flexDirection: 'row',
       alignItems: 'center',
       gap: 6,
+    },
+    coinIcon: {
+      backgroundColor: 'white',
     },
     green: {
       color: colors2024['green-default'],

@@ -67,7 +67,7 @@ const getRuleDrawerWrapperStyles = (colors: AppColorsVariants) =>
       lineHeight: 15,
       color: colors['neutral-body'],
       marginRight: 6,
-      fontWeight: 'normal',
+      fontWeight: '400',
       marginTop: 1,
     },
     threshold: {
@@ -282,7 +282,7 @@ const getStyles = (colors: AppColorsVariants) =>
       lineHeight: 14,
       textAlign: 'right',
       color: colors['neutral-body'],
-      fontWeight: 'normal',
+      fontWeight: '400',
       alignItems: 'center',
       flexDirection: 'row',
     },

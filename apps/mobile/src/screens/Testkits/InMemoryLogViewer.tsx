@@ -185,12 +185,12 @@ const getStyles = createGetStyles2024(ctx => {
     },
     headerBtnTitle: {
       fontSize: 13,
-      fontWeight: '600',
+      fontWeight: '500',
       color: ctx.colors2024['brand-default'],
     },
     headerCount: {
       fontSize: 14,
-      fontWeight: '600',
+      fontWeight: '500',
       color: ctx.colors2024['neutral-title-1'],
     },
     list: {

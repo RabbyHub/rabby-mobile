@@ -13,6 +13,7 @@ import {
   Platform,
   StyleSheet,
   type AppStateStatus,
+  type LayoutChangeEvent,
 } from 'react-native';
 
 let mockIsLight = true;
@@ -69,14 +70,26 @@ jest.mock('react-native-pager-view', () => {
   const { View } = require('react-native');
   return ReactModule.forwardRef(
     (
-      { children, ...props }: { children: React.ReactNode },
+      {
+        children,
+        onLayout,
+        ...props
+      }: {
+        children: React.ReactNode;
+        onLayout?: (event: LayoutChangeEvent) => void;
+      },
       ref: React.Ref<unknown>,
     ) => {
       ReactModule.useImperativeHandle(ref, () => ({
         setPage: mockInfoPagerSetPage,
         setPageWithoutAnimation: mockInfoPagerSetPageWithoutAnimation,
       }));
-      return ReactModule.createElement(View, props, children);
+      ReactModule.useEffect(() => {
+        onLayout?.({
+          nativeEvent: { layout: { width: 393, height: 600, x: 0, y: 0 } },
+        } as LayoutChangeEvent);
+      }, []);
+      return ReactModule.createElement(View, { ...props, onLayout }, children);
     },
   );
 });
@@ -272,7 +285,24 @@ jest.mock('react-native-gesture-handler', () => {
     return manualGesture;
   });
   return {
-    Gesture: { Manual: () => manualGesture, Pan: () => panGesture },
+    Gesture: {
+      Manual: () => manualGesture,
+      Pan: () => panGesture,
+      Tap: () => {
+        const tap: Record<string, jest.Mock> = {};
+        for (const method of [
+          'maxDistance',
+          'runOnJS',
+          'onBegin',
+          'onEnd',
+          'onFinalize',
+        ]) {
+          tap[method] = jest.fn(() => tap);
+        }
+        return tap;
+      },
+      Exclusive: (...gestures: unknown[]) => gestures,
+    },
     GestureDetector: ({ children }: { children: React.ReactNode }) => children,
   };
 });
@@ -320,7 +350,6 @@ jest.mock(
   '@/screens/PerpsShared/components/PerpsPortfolioBreakdownExplanation',
   () => ({
     useShowPerpsPortfolioBreakdown: () => ({
-      hasNonPerpsAssets: false,
       showPortfolioBreakdown: jest.fn(),
     }),
   }),

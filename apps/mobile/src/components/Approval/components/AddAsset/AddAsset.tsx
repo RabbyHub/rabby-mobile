@@ -266,7 +266,7 @@ export const AddAsset = ({
     if (!currentAccount) {
       return;
     }
-    const history = await openapi.listTxHisotry({
+    const history = await openapi.listTxHistory({
       id: currentAccount.address,
       chain_id: token.chain,
       page_count: 10,

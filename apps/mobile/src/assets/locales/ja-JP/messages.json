@@ -1264,7 +1264,8 @@
         },
         "scan": {
           "title": "Keystoneをスキャンして接続",
-          "description": "KeystoneウォレットのQRコードをスキャンしてください。"
+          "description": "KeystoneウォレットのQRコードをスキャンしてください。",
+          "invalidQRCode": "無効なQRコードです。ハードウェアウォレットの同期用QRコードをスキャンしてください。"
         }
       },
       "ledger": {
@@ -1527,6 +1528,10 @@
       "title": "承認"
     },
     "singleHome": {
+      "tokenActions": {
+        "remove": "削除",
+        "removeFailed": "トークンの削除に失敗しました"
+      },
       "sectionHeader": {
         "Nft": "NFT",
         "Defi": "DeFi",
@@ -1622,6 +1627,13 @@
     },
     "tokenDetail": {
       "excludeBalanceTipsButton": "了解しました",
+      "removed": {
+        "restore": "削除したトークンを復元",
+        "restoreFailed": "トークンの復元に失敗しました",
+        "more": "その他",
+        "confirmTitle": "このトークンを削除しますか？",
+        "confirmDescription": "· 削除すると、このトークンはポートフォリオに表示されなくなります。\n· 設定 >> 削除済みトークンからいつでも復元できます。"
+      },
       "action": {
         "Buy": "購入する",
         "less": "少なく表示",
@@ -1722,6 +1734,7 @@
       "headerTokenValueText": "トークン評価額",
       "headerBalanceText": "残高",
       "copyCA": "トークンコントラクトアドレスがコピーされました",
+      "copyCAWarning": "これはトークンコントラクトアドレスです。\n資産の受け取りには使用できません。",
       "wallet": "ウォレット",
       "customTestnetNotSupported": "このチェーン上のトークンはサポートされていません"
     },
@@ -1828,6 +1841,10 @@
       "ConfirmPassword": "パスワードを確認"
     },
     "setting": {
+      "removedToken": {
+        "title": "削除済みトークン",
+        "description": "削除したトークンは、すべてのアドレスのポートフォリオで非表示になりますが、残高の計算には引き続き含まれます。"
+      },
       "screenTitle": "設定",
       "touchId": "Touch ID",
       "fingerPrint": "指紋",
@@ -2427,12 +2444,14 @@
           "positionAmount": "ポジション数量",
           "estimatedPnl": "推定PnL",
           "skipLimitConfirmation": "今後、指値注文の二重確認を表示しない",
+          "skipMarketCloseConfirmation": "今後、この成行決済の確認を表示しない",
           "closeSubmitted": "決済注文を送信しました",
           "closeFailed": "ポジションの決済に失敗しました",
           "minimumCloseAmount": "最小決済額は$10です",
           "closeContextChanged": "ポジションまたはアカウントが変更されました。もう一度確認してください。"
         },
         "positionTpsl": {
+          "skipConfirmation": "今後、このTP/SLの確認を表示しない",
           "addButton": "TP/SLを追加",
           "addTitle": "TP/SLを追加",
           "cancelFailed": "TP/SL注文のキャンセルに失敗しました",
@@ -2443,6 +2462,7 @@
           "duplicatePositionOrders": "この側に複数のポジションTP/SL注文があります。変更する前に個別にキャンセルするか、更新してください。",
           "estimatedLiquidation": "推定清算価格",
           "estimatedPnl": "推定PnL",
+          "estimatedPnlDescription": "推定PnL <2>{{pnl}} {{quoteAsset}}(ROI: {{roi}}%)</2>",
           "estimatedPnlShort": "推定PnL",
           "invalidOrder": "TP/SLの価格と数量を確認してください",
           "invalidTrigger": "最新のマーク価格に対してトリガー価格が無効です",
@@ -2626,7 +2646,6 @@
         "feeTitle": "手数料",
         "feeHyperliquid": "Hyperliquid",
         "feeRabby": "Rabby Wallet",
-        "feeRabbyDiscount": "期間限定の取引手数料割引",
         "feeDesc": "取引を行う際は、\n<1>取引手数料</1>と<2>ビルダー手数料</2>が適用されます。",
         "amount": "金額",
         "asset": "資産",
@@ -2691,7 +2710,7 @@
         "desc": "現在の無期限先物アカウントからログアウトします。このアドレスで再度ログインすれば、いつでも復元できます。"
       },
       "PerpsDepositCard": {
-        "availableToTrade": "取引可能:",
+        "availableToTrade": "利用可能:",
         "deposit": "入金",
         "swap": "スワップ"
       },
@@ -2766,6 +2785,48 @@
       }
     },
     "perpsDetail": {
+      "simpleAccount": {
+        "margin": "証拠金",
+        "averageEntry": "平均建値",
+        "estimatedLiquidationPrice": "予想清算価格",
+        "estimatedLiquidationDistance": "予想清算乖離率",
+        "tpSl": "利確/損切り",
+        "takeProfitPrice": "利確価格",
+        "stopLossPrice": "損切り価格",
+        "estimatedPnl": "予想損益",
+        "closePositionTitle": "{{coin}} ポジションを決済",
+        "estimatedRealizedPnl": "予想実現損益"
+      },
+      "simpleChart": {
+        "openInterest": "未決済建玉",
+        "volume24h": "24時間取引量",
+        "intervalTitle": "ローソク足の期間",
+        "intervalDescription": "各ローソク足は選択した時間間隔を表します。",
+        "minutes": "分",
+        "hours": "時間",
+        "days": "日",
+        "open": "始値",
+        "low": "安値",
+        "high": "高値",
+        "close": "終値",
+        "time": "日時",
+        "change": "変動額",
+        "changePercent": "変動率 (%)",
+        "averageEntry": "平均建値",
+        "takeProfit": "利確",
+        "stopLoss": "損切り",
+        "liquidation": "強制決済価格",
+        "all": "全期間",
+        "source": "Hyperliquid がサービスを提供し、<tradingview>TradingView</tradingview> が価格チャートを提供しています。",
+        "resetChart": "チャートをリセット",
+        "backToLatest": "最新の時点に戻る",
+        "switchToArea": "エリアチャートに切り替え",
+        "switchToCandle": "ローソク足チャートに切り替え",
+        "showVolume": "24時間取引量を表示",
+        "showOpenInterest": "未決済建玉を表示",
+        "buy": "買い",
+        "sell": "売り"
+      },
       "PerpEditLimitPriceTag": {
         "setLimitBuyPrice": "指値買い価格を設定",
         "setLimitSellPrice": "指値売り価格を設定",
@@ -3341,7 +3402,8 @@
     "time": {
       "mins": "{{t}} 分",
       "hours": "{{t}} 時間",
-      "hour": "{{t}} 時間"
+      "hour": "{{t}} 時間",
+      "ago": "{{time}}前"
     },
     "Nonce": "ノンス",
     "Cancel": "キャンセル",
@@ -3411,7 +3473,8 @@
     "SavedSeedPhrase": "シードフレーズを保存しました",
     "from": "送信元",
     "to": "送信先",
-    "copiedSuccessfully": "コピーしました"
+    "copiedSuccessfully": "コピーしました",
+    "failed": "失敗しました"
   },
   "bluetooth": {
     "powered_off_alert": {

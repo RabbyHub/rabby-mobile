@@ -325,7 +325,7 @@ const getStyles = createGetStyles2024(ctx => ({
   title: {
     marginTop: 20,
     fontSize: 20,
-    fontWeight: '800',
+    fontWeight: '900',
     lineHeight: 24,
     textAlign: 'center',
     fontFamily: 'SF Pro Rounded',

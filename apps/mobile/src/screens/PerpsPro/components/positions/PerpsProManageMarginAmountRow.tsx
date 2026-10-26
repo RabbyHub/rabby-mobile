@@ -19,12 +19,17 @@ import React, {
 import { LayoutChangeEvent, Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
-import type { PositionMarginRange } from '../../model/positionMargin';
+import {
+  formatPositionMarginTarget,
+  type PositionMarginRange,
+} from '../../model/positionMargin';
 import { PerpsProDecimalTextInput } from '../trade/PerpsProDecimalTextInput';
 
 const MIN_BUTTON_WIDTH = 32;
 const MAX_BUTTON_WIDTH = 40;
 const AMOUNT_COLUMN_GAP = 4;
+const canonicalizeMarginInput = (value: string) =>
+  formatPositionMarginTarget(value) ?? value;
 export const PERPS_PRO_MARGIN_AMOUNT_INSETS = {
   left: MIN_BUTTON_WIDTH + AMOUNT_COLUMN_GAP,
   right: MAX_BUTTON_WIDTH + AMOUNT_COLUMN_GAP,
@@ -125,6 +130,7 @@ export const PerpsProManageMarginAmountRow = React.memo(
             style={styles.amountEditor}
             testID="perps-pro-manage-margin-amount-editor">
             <PerpsProDecimalTextInput
+              canonicalizeValueOnBlur={canonicalizeMarginInput}
               accessibilityLabel={t('page.perps.pro.positions.configureMargin')}
               editable={!pending}
               inputComponent={PerpsProManageMarginBottomSheetTextInput}

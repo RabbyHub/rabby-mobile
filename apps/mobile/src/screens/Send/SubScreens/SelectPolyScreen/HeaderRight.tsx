@@ -1,13 +1,8 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import {
-  View,
-  StyleProp,
-  ViewStyle,
-  TouchableOpacity,
-  Keyboard,
-} from 'react-native';
+import { View, StyleProp, ViewStyle, Keyboard } from 'react-native';
+import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 import { IS_IOS } from '@/core/native/utils';
 import RcIconSwapHistory from '@/assets2024/icons/common/IconHistoryCC.svg';
 import { SendHistory } from './SendHistory';
@@ -57,11 +52,14 @@ export const SendHeaderRight = ({
   return (
     <>
       <View style={[styles.container, styles.headerIconOffset, style]}>
-        <TouchableOpacity onPress={openHistory} style={styles.iconContainer}>
+        <CustomTouchableOpacity
+          as="RNGHTouchableOpacity"
+          onPress={openHistory}
+          style={styles.iconContainer}>
           <RcIconSwapHistory color={colors2024['neutral-body']} />
           {/* not very accurate */}
           {/* {Boolean(isShowDot) && <View style={styles.greenDot} />} */}
-        </TouchableOpacity>
+        </CustomTouchableOpacity>
       </View>
 
       <SendHistory

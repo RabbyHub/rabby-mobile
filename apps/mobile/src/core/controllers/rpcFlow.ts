@@ -32,7 +32,6 @@ import { waitSignComponentAmounted } from '../utils/signEvent';
 import { findChain } from '@/utils/chain';
 import { gnosisController } from './gnosisController';
 import { underline2Camelcase } from '../utils/common';
-import { find, reject } from 'lodash';
 import { getRetryTxRecommendNonce, getRetryTxType } from '@/utils/errorTxRetry';
 import { hexToNumber, isHex } from 'viem';
 import { intToHex } from '@/utils/number';
@@ -235,6 +234,24 @@ const flowContext = flow
     const [approvalType, condition, options = {}] =
       Reflect.getMetadata('APPROVAL', providerController, mapMethod) || [];
 
+    // Keep admission, analysis and signing on the same chain while approval waits.
+    if (
+      approvalType === 'SignTypedData' &&
+      ctx.request.requestContext?.source === 'dapp' &&
+      ctx.request.requestContext.chainId == null
+    ) {
+      const chain = findChain({
+        enum: getConnectedDappSnapshot(origin)?.chainId,
+      });
+      if (!chain) {
+        throw ethErrors.rpc.invalidParams('Unsupported chainId for typed data');
+      }
+      ctx.request.requestContext = {
+        ...ctx.request.requestContext,
+        chainId: chain.id,
+      };
+    }
+
     let windowHeight = 800;
     // TODO: remove this
     if ('height' in options) {
@@ -380,22 +397,18 @@ const flowContext = flow
         msgParams: ctx.request.data.params,
       });
 
+    // With an approval UI, the dapp gets its answer from that UI (which also
+    // owns retries); otherwise the caller awaits requestDefer directly and must
+    // see the error instead of a request that never settles.
+    const callerAwaitsRequestDefer = isAutoPersonalSign || !uiRequestComponent;
+
     const createRequestDeferFn =
       (originApprovalRes: typeof approvalRes) =>
       async (isRetry = false) =>
-        new Promise(async resolve => {
-          let waitSignComponentPromise = Promise.resolve();
-          if (
-            !isAutoPersonalSign &&
-            isSignApproval(approvalType) &&
-            uiRequestComponent
-          ) {
-            waitSignComponentPromise = waitSignComponentAmounted();
-          }
-
+        new Promise(async (resolve, reject) => {
           if (originApprovalRes?.isGnosis) return resolve(undefined);
 
-          return waitSignComponentPromise.then(() => {
+          return Promise.resolve().then(() => {
             let _approvalRes = originApprovalRes;
 
             if (isRetry && mapMethod === 'ethSendTransaction') {
@@ -434,12 +447,14 @@ const flowContext = flow
               }
             }
 
-            return Promise.resolve(
-              providerController[mapMethod]({
-                ...request,
-                approvalRes: _approvalRes,
-              }),
-            )
+            // .then() so a synchronous throw lands in .catch below
+            return Promise.resolve()
+              .then(() =>
+                providerController[mapMethod]({
+                  ...request,
+                  approvalRes: _approvalRes,
+                }),
+              )
               .then(result => {
                 if (isSignApproval(approvalType)) {
                   eventBus.emit(EVENTS.SIGN_FINISHED, {
@@ -469,14 +484,28 @@ const flowContext = flow
                 } else if (__DEV__) {
                   console.error(e);
                 }
-                reject(e);
+                if (callerAwaitsRequestDefer) {
+                  reject(e);
+                }
               });
           });
         });
     const requestDeferFn = createRequestDeferFn(approvalRes);
 
-    setCurrentRequestDeferFnSync(requestDeferFn);
-    const requestDefer = requestDeferFn();
+    // Safe owner signing registers its own retry fn
+    // (apisKeyring.signTypedDataWithUI); ours would only resolve undefined.
+    if (!approvalRes?.isGnosis) {
+      setCurrentRequestDeferFnSync(requestDeferFn);
+    }
+    // Only the first attempt waits for the waiting UI to mount. Retries are
+    // started from that mounted UI, which emits no further mount event.
+    const requestDefer =
+      !approvalRes?.isGnosis &&
+      !isAutoPersonalSign &&
+      isSignApproval(approvalType) &&
+      uiRequestComponent
+        ? waitSignComponentAmounted().then(() => requestDeferFn())
+        : requestDeferFn();
     async function requestApprovalLoop({
       uiRequestComponent,
       $account,

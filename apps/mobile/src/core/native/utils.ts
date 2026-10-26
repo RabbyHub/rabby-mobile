@@ -50,6 +50,10 @@ interface NativeModulesStatic {
       METRO_CACHE_ENABLED?: boolean;
     };
     forceExitApp(): void;
+    measureViewRelativeTo(
+      anchorTag: number,
+      viewportTag: number,
+    ): Promise<{ x: number; y: number; width: number; height: number }>;
     androidTraceInstant?(name: string): void;
     androidTraceBeginSection?(name: string): void;
     androidTraceEndSection?(): void;
@@ -57,6 +61,7 @@ interface NativeModulesStatic {
     androidTraceEndAsyncSection?(name: string, cookie: number): void;
     androidTraceCounter?(name: string, value: number): void;
     moveTaskToBack?(): Promise<boolean>;
+    setSensitiveClipboard(text: string): Promise<void>;
     shareFile?(options: {
       filePath: string;
       mimeType?: string;

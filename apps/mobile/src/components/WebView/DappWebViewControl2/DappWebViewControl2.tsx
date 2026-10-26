@@ -35,7 +35,6 @@ import { APP_UA_PARIALS } from '@/constant';
 import { createGetStyles2024 } from '@/utils/styles';
 import AutoLockView from '@/components/AutoLockView';
 import { checkShouldStartLoadingWithRequestForDappWebView } from '../utils';
-import { FontNames } from '@/core/utils/fonts';
 import { DappWebViewHideContext } from '@/screens/Dapps/hooks/useDappView';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import { useMemoizedFn } from 'ahooks';
@@ -482,8 +481,8 @@ const getStyles = createGetStyles2024(ctx =>
     },
     HeadTitleOrigin: {
       fontSize: 20,
-      fontFamily: FontNames.sf_pro_rounded_bold,
-      fontWeight: '800',
+      fontFamily: 'SF Pro Rounded',
+      fontWeight: '900',
       textAlign: 'center',
       color: ctx.colors['neutral-title-1'],
       lineHeight: 24,

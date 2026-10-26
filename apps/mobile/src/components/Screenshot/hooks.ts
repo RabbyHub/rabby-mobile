@@ -9,7 +9,7 @@ import { coerceNumber } from '@/utils/coerce';
 import { zustandByMMKV } from '@/core/storage/mmkv';
 import { APP_MMKV_WEAK_KEYS } from '@/core/storage/mmkvConstants';
 import { useRefState } from '@/hooks/common/useRefState';
-import { IS_ANDROID } from '@/core/native/utils';
+import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import { isNonPublicProductionEnv } from '@/constant';
 import { getScreenshotFeedbackExtra } from './utils';
 import { getGlobalScreenCapturable } from '@/hooks/native/security';
@@ -20,6 +20,7 @@ import { zCreate } from '@/core/utils/reexports';
 import DeviceUtils from '@/core/utils/device';
 import { perfEvents } from '@/core/utils/perf';
 import {
+  dismissOpenNativeMenus,
   getVisibleBlockingModalIds,
   MODAL_GATE_IDS,
   subscribeModalGateDebugSnapshot,
@@ -430,6 +431,12 @@ const setLastScreenshot = (
         blockingModalIds,
       );
 
+    // Close an open native menu instead of waiting for the user to: the
+    // pending feedback opens once the menu has fully hidden.
+    if (blockingModalIds.includes(MODAL_GATE_IDS.nativeMenu)) {
+      dismissOpenNativeMenus();
+    }
+
     schedulePendingScreenshotFeedbackFlush();
     return;
   }
@@ -448,21 +455,45 @@ export function debugShowSubmitFeedbackByScreenshotModal() {
   );
 }
 
-if (IS_ANDROID && !FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT) {
-  RNScreenshotPrevent.startScreenCaptureDetection().then(() => {
-    console.debug(
-      '[info] RNScreenshotPrevent started screen capture detection on Android',
-    );
-  });
+type ScreenshotFeedbackConsumer = { acceptingFeedback: boolean };
+const screenshotFeedbackConsumers = new Set<ScreenshotFeedbackConsumer>();
+
+function ownsScreenshotFeedback(consumer: ScreenshotFeedbackConsumer) {
+  let owner: ScreenshotFeedbackConsumer | undefined;
+  for (const candidate of screenshotFeedbackConsumers) {
+    // A replacement may subscribe while an old native stop is pending. Only
+    // one listener may copy/delete the broadcast file. Prefer the latest live
+    // owner, otherwise retain one stopped owner's cleanup listener until ACK.
+    if (candidate.acceptingFeedback || !owner?.acceptingFeedback) {
+      owner = candidate;
+    }
+  }
+  return owner === consumer;
 }
 
-export function startSubscribeUserDidTakeScreenshot() {
+export async function startSubscribeUserDidTakeScreenshot() {
+  await appScreenshotFS.initializeBeforeCapture();
+
+  const consumer: ScreenshotFeedbackConsumer = { acceptingFeedback: true };
   const subscription = RNScreenshotPrevent.onUserDidTakeScreenshot(
     async params => {
-      if (!getShowFeedbackOnScreenshotCapture()) return;
-      if (!params?.captured) return;
+      if (IS_IOS && !ownsScreenshotFeedback(consumer)) {
+        return;
+      }
+      const eventAccepted =
+        consumer.acceptingFeedback &&
+        getShowFeedbackOnScreenshotCapture() &&
+        !!params?.captured &&
+        shouldToastFeedbackByScreenshot();
 
-      if (!shouldToastFeedbackByScreenshot()) return;
+      if (!eventAccepted) {
+        if (params?.path) {
+          await AppScreenshotFS.cleanupNativeScreenshotCaptureSource(
+            params.path,
+          );
+        }
+        return;
+      }
 
       const sizes = {
         height: coerceNumber(params?.height, 100),
@@ -480,6 +511,14 @@ export function startSubscribeUserDidTakeScreenshot() {
             imageType: params?.imageType,
           },
         );
+        if (!consumer.acceptingFeedback) {
+          if (inAppPath) {
+            await RNFS.unlink(
+              AppScreenshotFS.normalizeLocalFilePath(inAppPath),
+            ).catch(() => undefined);
+          }
+          return;
+        }
         const screenshotUri = inAppPath
           ? AppScreenshotFS.normalizeImageUri(
               inAppPath,
@@ -504,6 +543,12 @@ export function startSubscribeUserDidTakeScreenshot() {
           cleanupSource: true,
         });
         if (!inAppPath) return;
+        if (!consumer.acceptingFeedback) {
+          await RNFS.unlink(
+            AppScreenshotFS.normalizeLocalFilePath(inAppPath),
+          ).catch(() => undefined);
+          return;
+        }
 
         setLastScreenshot(
           Image.resolveAssetSource({
@@ -519,6 +564,43 @@ export function startSubscribeUserDidTakeScreenshot() {
       }
     },
   );
+
+  if (IS_IOS) {
+    screenshotFeedbackConsumers.add(consumer);
+  }
+  if ((IS_ANDROID || IS_IOS) && !FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT) {
+    try {
+      await RNScreenshotPrevent.startScreenCaptureDetection();
+      console.debug(
+        '[info] RNScreenshotPrevent started screen capture detection',
+      );
+    } catch (error) {
+      consumer.acceptingFeedback = false;
+      screenshotFeedbackConsumers.delete(consumer);
+      subscription.remove();
+      throw error;
+    }
+  }
+
+  if (IS_IOS) {
+    let removalPromise: Promise<void> | undefined;
+    return {
+      remove: () => {
+        consumer.acceptingFeedback = false;
+        // Keep a cleanup consumer attached until native file capture has
+        // stopped. Late events are cleaned above without opening feedback.
+        // A repeated remove must not consume a newer subscription's demand.
+        if (!removalPromise) {
+          removalPromise =
+            RNScreenshotPrevent.stopScreenCaptureDetection().then(() => {
+              screenshotFeedbackConsumers.delete(consumer);
+              subscription.remove();
+            });
+        }
+        return removalPromise;
+      },
+    };
+  }
 
   return subscription;
 }

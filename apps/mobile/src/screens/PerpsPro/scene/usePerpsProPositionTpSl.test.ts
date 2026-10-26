@@ -459,4 +459,153 @@ describe('usePerpsProPositionTpSl', () => {
       'error',
     );
   });
+  it.each([
+    {
+      name: 'cancel failure',
+      cancel: 'failed',
+      create: 'skipped',
+      kind: 'failed',
+      mutated: false,
+      userCancelled: false,
+    },
+    {
+      name: 'create failure after cancel',
+      cancel: 'success',
+      create: 'failed',
+      kind: 'partial',
+      mutated: true,
+      userCancelled: false,
+    },
+    {
+      name: 'user cancellation before mutation',
+      cancel: 'failed',
+      create: 'skipped',
+      kind: 'failed',
+      mutated: false,
+      userCancelled: true,
+    },
+    {
+      name: 'user cancellation after mutation',
+      cancel: 'success',
+      create: 'failed',
+      kind: 'partial',
+      mutated: true,
+      userCancelled: true,
+    },
+  ])('preserves Full Modify settlement for $name', async result => {
+    const command = {
+      account,
+      coin: 'BTC',
+      direction: 'long',
+      expectedPositionSize: '1',
+      legs: [
+        { kind: 'takeProfit', replaceOid: 7, size: null, triggerPrice: '115' },
+      ],
+      markPrice: '100',
+      scope: 'position',
+      type: 'positionTpSl',
+    };
+    mockBuildPositionTpSl.mockReturnValue(command);
+    mockExecutePositionTpSl.mockResolvedValue({
+      kind: result.kind,
+      failureReason: result.userCancelled ? 'userCancelled' : 'requestFailed',
+      legs: [
+        {
+          kind: 'takeProfit',
+          cancel: result.cancel,
+          create: result.create,
+          replacedOid: 7,
+        },
+      ],
+    });
+    const hook = renderHook(() => usePerpsProPositionTpSl('account-a', 'base'));
+    act(() => hook.result.current.open(position, 'position'));
+    await act(async () => {
+      await hook.result.current.requestReview({
+        legs: [
+          {
+            kind: 'takeProfit',
+            replaceOid: 7,
+            size: null,
+            triggerPrice: '115',
+          },
+        ],
+        mode: 'position',
+        scope: 'position',
+      });
+    });
+    await act(async () => {
+      await hook.result.current.confirm();
+    });
+    expect(hook.result.current.editor === null).toBe(result.mutated);
+    expect(hook.result.current.pending).toBe(false);
+    expect(hook.result.current.settlement).toBeNull();
+    if (result.mutated)
+      expect(mockShowToast).toHaveBeenCalledWith(
+        'page.perps.pro.positionTpsl.replaceFailedAfterCancel',
+        'error',
+      );
+    if (result.userCancelled && !result.mutated) {
+      expect(hook.result.current.review).not.toBeNull();
+      expect(mockShowToast).not.toHaveBeenCalled();
+    }
+  });
+
+  it('submits a Full Modify confirmation once while its executor is pending', async () => {
+    mockBuildPositionTpSl.mockReturnValue({
+      account,
+      coin: 'BTC',
+      direction: 'long',
+      expectedPositionSize: '1',
+      legs: [{ kind: 'takeProfit', replaceOid: 7, triggerPrice: '115' }],
+      markPrice: '100',
+      scope: 'position',
+      type: 'positionTpSl',
+    });
+    let finish: (result: unknown) => void = () => {};
+    mockExecutePositionTpSl.mockImplementation(
+      () =>
+        new Promise(resolve => {
+          finish = resolve;
+        }),
+    );
+    const hook = renderHook(() => usePerpsProPositionTpSl('account-a', 'base'));
+    act(() => hook.result.current.open(position, 'position'));
+    await act(async () => {
+      await hook.result.current.requestReview({
+        legs: [
+          {
+            kind: 'takeProfit',
+            replaceOid: 7,
+            size: null,
+            triggerPrice: '115',
+          },
+        ],
+        mode: 'position',
+        scope: 'position',
+      });
+    });
+    let first: Promise<void>;
+    await act(async () => {
+      first = hook.result.current.confirm();
+      await hook.result.current.confirm();
+    });
+    expect(mockExecutePositionTpSl).toHaveBeenCalledTimes(1);
+    await act(async () => {
+      finish({
+        kind: 'success',
+        legs: [
+          {
+            kind: 'takeProfit',
+            cancel: 'success',
+            create: 'success',
+            replacedOid: 7,
+            oid: 100,
+          },
+        ],
+      });
+      await first!;
+    });
+    expect(hook.result.current.editor).toBeNull();
+  });
 });

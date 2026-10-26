@@ -1364,6 +1364,10 @@
       "title": "승인"
     },
     "singleHome": {
+      "tokenActions": {
+        "remove": "제거",
+        "removeFailed": "토큰 제거에 실패했습니다"
+      },
       "sectionHeader": {
         "Token": "토큰",
         "Nft": "NFT",
@@ -1415,7 +1419,8 @@
       "keystone": {
         "scan": {
           "title": "Keystone를 스캔하여 연결하기",
-          "description": "Keystone 지갑에서 QR 코드를 스캔하세요."
+          "description": "Keystone 지갑에서 QR 코드를 스캔하세요.",
+          "invalidQRCode": "유효하지 않은 QR 코드입니다. 하드웨어 월렛의 동기화 QR 코드를 스캔하세요."
         },
         "camera": {
           "title": "Keystone 연결",
@@ -1674,6 +1679,13 @@
     },
     "tokenDetail": {
       "excludeBalanceTipsButton": "이해했어요",
+      "removed": {
+        "restore": "제거된 토큰 복원",
+        "restoreFailed": "토큰 복원에 실패했습니다",
+        "more": "더 보기",
+        "confirmTitle": "이 토큰을 제거하시겠습니까?",
+        "confirmDescription": "· 제거하면 이 토큰은 포트폴리오에 더 이상 표시되지 않습니다.\n· 설정 >> 제거된 토큰에서 언제든지 복원할 수 있습니다."
+      },
       "excludeBalanceTips": "정확한 계산을 위해 이 자산은 총 잔액에서 제외됩니다. 탭하여 세부 정보를 확인하고 원하면 잔액에 포함할 수 있습니다.",
       "action": {
         "Buy": "구매하기",
@@ -1774,10 +1786,15 @@
       "headerTokenValueText": "토큰 가치",
       "headerBalanceText": "잔액",
       "copyCA": "토큰 계약 주소가 복사되었습니다.",
+      "copyCAWarning": "이것은 토큰 계약 주소입니다.\n자산을 받는 데 사용할 수 없습니다.",
       "wallet": "지갑",
       "customTestnetNotSupported": "이 체인의 토큰은 지원되지 않습니다"
     },
     "setting": {
+      "removedToken": {
+        "title": "제거된 토큰",
+        "description": "제거된 토큰은 모든 주소의 포트폴리오에서 숨겨지지만 잔액 계산에는 계속 포함됩니다."
+      },
       "screenTitle": "설정",
       "faceId": "Face ID",
       "autoLockTime": "자동 잠금 시간",
@@ -2377,12 +2394,14 @@
           "positionAmount": "포지션 수량",
           "estimatedPnl": "예상 PnL",
           "skipLimitConfirmation": "지정가 주문에 대한 이중 확인을 다시 표시하지 않기",
+          "skipMarketCloseConfirmation": "이 시장가 포지션 종료 확인을 다시 표시하지 않기",
           "closeSubmitted": "종료 주문을 제출했습니다",
           "closeFailed": "포지션 종료에 실패했습니다",
           "minimumCloseAmount": "최소 종료 금액은 $10입니다",
           "closeContextChanged": "포지션 또는 계정이 변경되었습니다. 다시 검토하세요."
         },
         "positionTpsl": {
+          "skipConfirmation": "이 TP/SL 확인을 다시 표시하지 않기",
           "addButton": "TP/SL 추가",
           "addTitle": "TP/SL 추가",
           "cancelFailed": "TP/SL 주문 취소에 실패했습니다",
@@ -2393,6 +2412,7 @@
           "duplicatePositionOrders": "이 방향에 포지션 TP/SL 주문이 여러 개 있습니다. 변경하기 전에 개별적으로 취소하거나 새로고침하세요.",
           "estimatedLiquidation": "예상 청산 가격",
           "estimatedPnl": "예상 PnL",
+          "estimatedPnlDescription": "예상 PnL <2>{{pnl}} {{quoteAsset}}(ROI: {{roi}}%)</2>",
           "estimatedPnlShort": "예상 PnL",
           "invalidOrder": "TP/SL 가격과 수량을 확인하세요",
           "invalidTrigger": "최신 마크 가격을 기준으로 트리거 가격이 유효하지 않습니다",
@@ -2575,7 +2595,6 @@
         "sizeTips": "거래의 총 가치 또는 수량으로, 마진과 레버리지에 의해 설정됩니다.",
         "feeTitle": "수수료",
         "feeRabby": "래비 월렛",
-        "feeRabbyDiscount": "기간 한정 거래 수수료 할인",
         "feeHyperliquid": "하이퍼리퀴드",
         "feeDesc": "사용자가 거래를 할 때, <1>거래 수수료</1>와 <2>빌더 수수료</2>가 모두 적용됩니다.",
         "amount": "금액",
@@ -2641,7 +2660,7 @@
         "desc": "현재 무기한 선물 계정에서 로그아웃합니다. 이 주소로 다시 로그인하면 언제든지 복원할 수 있습니다."
       },
       "PerpsDepositCard": {
-        "availableToTrade": "거래 가능:",
+        "availableToTrade": "사용 가능:",
         "deposit": "입금",
         "swap": "스왑"
       },
@@ -2716,6 +2735,48 @@
       }
     },
     "perpsDetail": {
+      "simpleAccount": {
+        "margin": "마진",
+        "averageEntry": "평균 진입가",
+        "estimatedLiquidationPrice": "예상 청산가",
+        "estimatedLiquidationDistance": "예상 청산 거리",
+        "tpSl": "익절/손절",
+        "takeProfitPrice": "익절 가격",
+        "stopLossPrice": "손절 가격",
+        "estimatedPnl": "예상 PNL",
+        "closePositionTitle": "{{coin}} 포지션 종료",
+        "estimatedRealizedPnl": "예상 실현 PNL"
+      },
+      "simpleChart": {
+        "openInterest": "미결제 약정",
+        "volume24h": "24시간 거래량",
+        "intervalTitle": "캔들 주기",
+        "intervalDescription": "각 캔들은 선택한 시간 간격을 나타냅니다.",
+        "minutes": "분",
+        "hours": "시간",
+        "days": "일",
+        "open": "시가",
+        "low": "저가",
+        "high": "고가",
+        "close": "종가",
+        "time": "시간",
+        "change": "변동액",
+        "changePercent": "변동률 (%)",
+        "averageEntry": "평균 진입가",
+        "takeProfit": "익절",
+        "stopLoss": "손절",
+        "liquidation": "청산가",
+        "all": "전체",
+        "source": "Hyperliquid에서 제공하며, 가격 차트는 <tradingview>TradingView</tradingview>에서 제공합니다.",
+        "resetChart": "차트 초기화",
+        "backToLatest": "최신 시점으로 이동",
+        "switchToArea": "영역 차트로 전환",
+        "switchToCandle": "캔들 차트로 전환",
+        "showVolume": "24시간 거래량 표시",
+        "showOpenInterest": "미결제 약정 표시",
+        "buy": "매수",
+        "sell": "매도"
+      },
       "PerpEditLimitPriceTag": {
         "setLimitBuyPrice": "지정가 매수가 설정",
         "setLimitSellPrice": "지정가 매도가 설정",
@@ -3287,7 +3348,8 @@
     "time": {
       "hour": "{{t}} 시간",
       "hours": "{{t}} 시간",
-      "mins": "{{t}}분"
+      "mins": "{{t}}분",
+      "ago": "{{time}} 전"
     },
     "appDescription": "Ethereum과 EVM을 위한 필수 지갑",
     "folded": "접힘",
@@ -3361,7 +3423,8 @@
     "SavedSeedPhrase": "시드 구문을 저장했습니다",
     "from": "보내는 주소",
     "to": "받는 주소",
-    "copiedSuccessfully": "복사되었습니다"
+    "copiedSuccessfully": "복사되었습니다",
+    "failed": "실패했습니다"
   },
   "native": {
     "biometrics": {

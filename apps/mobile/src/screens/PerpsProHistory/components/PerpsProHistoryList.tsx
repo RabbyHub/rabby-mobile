@@ -17,6 +17,7 @@ import type { PerpsProTradeAmountUnit } from '@/core/services/perpsService';
 import { useTheme2024 } from '@/hooks/theme';
 import { useShowPerpsTradeFeeExplanation } from '@/screens/PerpsShared/components/PerpsTradeFeeExplanation';
 import { createGetStyles2024 } from '@/utils/styles';
+import type { PerpsFillFeeSnapshot } from '@/utils/perpsFillFee';
 import { PERPS_PRO_FONT_FAMILY } from '@/screens/PerpsPro/components/common/perpsProVisual';
 
 import type {
@@ -82,9 +83,9 @@ export const PerpsProHistoryList: React.FC<{
       [],
     );
     const handleShowTradeFeeExplanation = useCallback(
-      (isLiquidation: boolean) => {
+      (isLiquidation: boolean, fill: PerpsFillFeeSnapshot) => {
         if (activeRef.current) {
-          showTradeFeeExplanation(isLiquidation);
+          showTradeFeeExplanation(isLiquidation, fill);
         }
       },
       [showTradeFeeExplanation],
@@ -265,7 +266,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     color: colors2024['blue-default'],
     fontFamily: PERPS_PRO_FONT_FAMILY,
     fontSize: 13,
-    fontWeight: '600',
+    fontWeight: '700',
     lineHeight: 18,
   },
 }));

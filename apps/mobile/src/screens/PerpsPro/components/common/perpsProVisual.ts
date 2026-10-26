@@ -1,6 +1,6 @@
 import type { AppColors2024Variants } from '@/constant/theme';
 import { BOTTOM_BUTTON_COMPACT_TITLE_STYLE } from '@/constant/layout';
-import { FontWeightEnum, getFontWeightType } from '@/core/utils/fonts';
+import { getRoundedFontStyle } from '@/core/utils/fonts';
 import { Platform, type TextStyle, type ViewStyle } from 'react-native';
 
 export const PERPS_PRO_FONT_FAMILY = 'SF Pro Rounded';
@@ -17,19 +17,6 @@ export const resolvePerpsProFieldBackground = ({
   isLight?: boolean;
 }) => (isLight !== false ? PERPS_PRO_LIGHT_FIELD_BACKGROUND : darkBackground);
 
-const getPerpsProAndroidFontFamily = (fontWeight?: TextStyle['fontWeight']) => {
-  switch (getFontWeightType(fontWeight).supertype) {
-    case FontWeightEnum.heavy:
-      return 'SF-Pro-Rounded-Heavy';
-    case FontWeightEnum.bold:
-      return 'SF-Pro-Rounded-Bold';
-    case FontWeightEnum.medium:
-      return 'SF-Pro-Rounded-Medium';
-    default:
-      return 'SF-Pro-Rounded-Regular';
-  }
-};
-
 /**
  * Use for styles that bypass createGetStyles2024/mutateStyles, such as
  * third-party TextInput and Button titleStyle props.
@@ -38,15 +25,7 @@ export const getPerpsProFontStyle = (
   platform: typeof Platform.OS,
   fontWeight: TextStyle['fontWeight'] = '400',
 ): TextStyle =>
-  platform === 'android'
-    ? {
-        fontFamily: getPerpsProAndroidFontFamily(fontWeight),
-        fontWeight: undefined,
-      }
-    : {
-        fontFamily: PERPS_PRO_FONT_FAMILY,
-        fontWeight,
-      };
+  getRoundedFontStyle(fontWeight, platform === 'android' ? 'android' : 'ios');
 
 export const PERPS_PRO_REGULAR_TEXT_STYLE = getPerpsProFontStyle(Platform.OS);
 

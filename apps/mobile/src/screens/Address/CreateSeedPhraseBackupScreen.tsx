@@ -59,6 +59,7 @@ export const CreateSeedPhraseBackupScreen = () => {
         onPress={() => copyAddressRef.current?.doCopy()}>
         <View style={styles.copy}>
           <CopyAddressIcon
+            sensitive
             ref={copyAddressRef}
             address={seedPhrase || ''}
             onToastSuccess={() => toast.success('Copied')}

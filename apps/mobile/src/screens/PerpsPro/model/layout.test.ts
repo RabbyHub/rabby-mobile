@@ -90,21 +90,21 @@ describe('Perps Pro layout model', () => {
     ).toBe(716);
   });
 
-  it('uses the Figma list and form top offsets for Position TP/SL', () => {
+  it('keeps both main TP/SL tabs at the same safe capped height', () => {
     expect(
       getPerpsProPositionTpSlSnapPoint({
         page: 'list',
         topInset: 47,
         windowHeight: 852,
       }),
-    ).toBe(732);
+    ).toBe(758);
     expect(
       getPerpsProPositionTpSlSnapPoint({
         page: 'form',
         topInset: 47,
         windowHeight: 852,
       }),
-    ).toBe(718);
+    ).toBe(758);
     expect(
       getPerpsProPositionTpSlSnapPoint({
         page: 'form',
@@ -114,24 +114,113 @@ describe('Perps Pro layout model', () => {
     ).toBe(686);
   });
 
-  it('reserves the exact remaining 718px sheet height for every TP/SL form presentation', () => {
+  it('reserves the exact remaining 758px sheet height for every TP/SL form presentation', () => {
     expect(
       getPerpsProPositionTpSlFormMinimumHeight({
         presentation: 'subpage',
-        snapPoint: 718,
+        snapPoint: 758,
       }),
-    ).toBe(508);
+    ).toBe(532);
     expect(
       getPerpsProPositionTpSlFormMinimumHeight({
         presentation: 'tab',
-        snapPoint: 718,
+        snapPoint: 758,
       }),
     ).toBe(486);
     expect(
       getPerpsProPositionTpSlFormMinimumHeight({
         presentation: 'inline-empty',
-        snapPoint: 718,
+        snapPoint: 758,
       }),
-    ).toBe(482);
+    ).toBe(486);
+  });
+  it.each([
+    ['add', 704],
+    ['modify', 604],
+    ['position-modify', 598],
+  ] as const)('sizes the %s page to its approved content', (page, height) => {
+    expect(
+      getPerpsProPositionTpSlSnapPoint({
+        page,
+        topInset: 47,
+        windowHeight: 852,
+      }),
+    ).toBe(height);
+    expect(
+      getPerpsProPositionTpSlSnapPoint({
+        page,
+        topInset: 47,
+        windowHeight: 500,
+      }),
+    ).toBe(437);
+  });
+  it.each([
+    ['subpage', 704, 478],
+    ['subpage', 604, 378],
+    ['position-modify', 598, 372],
+  ] as const)(
+    'preserves the %s form budget at height %s after moving the header outside scrolling',
+    (presentation, snapPoint, minimumHeight) => {
+      expect(
+        getPerpsProPositionTpSlFormMinimumHeight({ presentation, snapPoint }),
+      ).toBe(minimumHeight);
+      expect(
+        getPerpsProPositionTpSlFormMinimumHeight({
+          presentation,
+          snapPoint: snapPoint + 34,
+        }),
+      ).toBe(minimumHeight + 34);
+      expect(
+        getPerpsProPositionTpSlFormMinimumHeight({
+          presentation,
+          snapPoint: 437,
+        }),
+      ).toBe(211);
+    },
+  );
+  it('budgets both normal PnL hints and only the actual form bottom-padding increment', () => {
+    for (const [page, base] of [
+      ['form', 758],
+      ['add', 704],
+      ['modify', 604],
+      ['position-modify', 598],
+    ] as const) {
+      expect(
+        getPerpsProPositionTpSlSnapPoint({
+          page,
+          formBottomPaddingExtra: 24,
+          topInset: 24,
+          windowHeight: 900,
+        }),
+      ).toBe(base + 24);
+      expect(
+        getPerpsProPositionTpSlSnapPoint({
+          page,
+          formBottomPaddingExtra: 34,
+          topInset: 47,
+          windowHeight: 680,
+        }),
+      ).toBe(617);
+    }
+    for (const [page, height] of [['list', 758]] as const) {
+      expect(
+        getPerpsProPositionTpSlSnapPoint({
+          page,
+          formBottomPaddingExtra: 34,
+          topInset: 24,
+          windowHeight: 900,
+        }),
+      ).toBe(height);
+    }
+    for (const extra of [-10, Number.NaN, Number.POSITIVE_INFINITY]) {
+      expect(
+        getPerpsProPositionTpSlSnapPoint({
+          page: 'add',
+          formBottomPaddingExtra: extra,
+          topInset: 24,
+          windowHeight: 900,
+        }),
+      ).toBe(704);
+    }
   });
 });

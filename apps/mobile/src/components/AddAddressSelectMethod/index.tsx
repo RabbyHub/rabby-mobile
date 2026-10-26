@@ -28,6 +28,7 @@ import { setAccountNeedsBackupReminder } from '@/hooks/account';
 import { E2E_ID } from '@/constant/e2e';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
 import { ensureWalletUnlockedForAction } from '@/utils/walletUnlock';
+import * as SecretVault from '@/core/utils/secretVault';
 interface Props {
   onDone: (isNoMnemonic?: boolean) => void;
   shouldRedirectToSetPasswordBefore2024: ReturnType<
@@ -86,8 +87,10 @@ export const AddAddressSelectMethod: React.FC<Props> = ({
           brandName: KEYRING_CLASS.MNEMONIC,
           isFirstCreate: true,
           address: [address],
-          mnemonics: seedPhrase,
-          passphrase: '',
+          mnemonicsVaultId: SecretVault.storeMnemonicsPayload({
+            mnemonics: seedPhrase,
+            passphrase: '',
+          }),
           isExistedKR: false,
           alias: ellipsisAddress(address),
           showBackup: true,
@@ -193,7 +196,7 @@ const getStyles = createGetStyles2024(ctx => ({
   title: {
     fontSize: 20,
     lineHeight: 24,
-    fontWeight: '800',
+    fontWeight: '900',
     color: ctx.colors2024['neutral-title-1'],
     textAlign: 'center',
     marginBottom: 0,

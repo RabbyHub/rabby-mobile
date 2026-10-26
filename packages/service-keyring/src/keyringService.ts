@@ -638,9 +638,27 @@ export class KeyringService extends RNEventEmitter {
    * @param opts
    * @deprecated use addKeyring as possible, it's only meanful for `Private Key & HD Keyring`
    */
-  addNewKeyring(type: KeyringTypeName, opts?: any): Promise<any> {
+  async addNewKeyring(type: KeyringTypeName, opts?: any): Promise<any> {
     const Keyring = this.getKeyringClassForType(type);
-    const keyring = new Keyring(opts);
+    const keyring =
+      type === KEYRING_TYPE.SimpleKeyring ? new Keyring() : new Keyring(opts);
+    if (type === KEYRING_TYPE.SimpleKeyring) {
+      // Its constructor does not await deserialize, so import failures must be
+      // observed before the instance can enter the runtime or vault.
+      await keyring.deserialize(opts);
+      if (Array.isArray(opts) && opts.length > 0) {
+        const accounts = await keyring.getAccounts();
+        if (
+          accounts.length === 0 ||
+          accounts.some(
+            address =>
+              typeof address !== 'string' || !ethUtil.isValidAddress(address),
+          )
+        ) {
+          throw new Error('Failed to derive a valid address from private key');
+        }
+      }
+    }
     // this._updateIndexIfHdKeyring(keyring);
     return this.addKeyring(keyring);
   }
@@ -2852,6 +2870,25 @@ export class KeyringService extends RNEventEmitter {
           },
         };
       }
+      // extension vault may carry repeated addresses; keep the first of each.
+      // WalletConnect keyring stores account objects, leave those untouched.
+      if (Array.isArray(item.data?.accounts)) {
+        return {
+          ...item,
+          data: {
+            ...item.data,
+            accounts: item.data.accounts.filter(
+              (account: unknown, idx: number, arr: unknown[]) =>
+                typeof account !== 'string' ||
+                arr.findIndex(
+                  e =>
+                    typeof e === 'string' &&
+                    addressUtils.isSameAddress(e, account),
+                ) === idx,
+            ),
+          },
+        };
+      }
       return item;
     });
 
@@ -2883,11 +2920,15 @@ export class KeyringService extends RNEventEmitter {
           const newAccounts = newDisplayKeyring.accounts;
 
           newAccounts?.forEach(newAccount => {
-            const newAccountExist = allAccounts?.some(
+            const newAccountExist = [
+              ...(allAccounts ?? []),
+              ...addedAccounts,
+            ].some(
               existAddr =>
-                newAccount?.address?.toLowerCase() ===
-                  existAddr?.address?.toLowerCase() &&
-                keyring.type === (existAddr.type || existAddr.brandName),
+                addressUtils.isSameAddress(
+                  newAccount?.address,
+                  existAddr?.address,
+                ) && keyring.type === (existAddr.type || existAddr.brandName),
             );
 
             if (!newAccountExist && newAccounts.length) {

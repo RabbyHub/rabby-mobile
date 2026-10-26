@@ -1,17 +1,15 @@
+import { RoundedFontStyles } from '@/core/utils/fonts';
 import type { AppColors2024Variants } from '@/constant/theme';
 import { colord } from 'colord';
 import {
   BOTTOM_BUTTON_TITLE_STYLE,
   getBottomButtonBottomOffset,
 } from '@/constant/layout';
-import { IS_ANDROID } from '@/core/native/utils';
 import { getPerpsProBottomSheetChromeStyles } from './perpsProVisual';
 
-// mutateStyles selects the bundled Android Heavy face with 900; iOS uses
-// SF Pro Rounded's native Heavy weight (800). Keep the family unprocessed here.
+// The complete platform-specific face works in raw and theme-generated styles.
 export const PERPS_PRO_DIALOG_HEAVY_TEXT_STYLE = {
-  fontFamily: 'SF Pro Rounded',
-  fontWeight: IS_ANDROID ? ('900' as const) : ('800' as const),
+  ...RoundedFontStyles.heavy,
 };
 
 /** Exact Figma paints approved for Pro only (cNPc4bz8P8QBjkPk2huEml).
@@ -104,16 +102,14 @@ export const getPerpsProDialogStyles = (
     copy: { alignSelf: 'stretch', gap: 8, minWidth: 0 },
     label: {
       color: colors['neutral-title-1'],
-      fontFamily: 'SF Pro Rounded',
+      ...RoundedFontStyles.bold,
       fontSize: 16,
-      fontWeight: '700',
       lineHeight: 20,
     },
     description: {
       color: colors['neutral-foot'],
-      fontFamily: 'SF Pro Rounded',
+      ...RoundedFontStyles.regular,
       fontSize: 14,
-      fontWeight: '400',
       lineHeight: 18,
     },
     ...getPerpsProDialogActionStyles(colors),
@@ -135,7 +131,7 @@ export const getPerpsProDialogActionStyles = (_colors: AppColors2024Variants) =>
     buttonDisabledTitle: { color: PERPS_PRO_DIALOG_TOKENS.actionForeground },
     buttonTitle: {
       ...BOTTOM_BUTTON_TITLE_STYLE,
-      fontFamily: 'SF Pro Rounded',
+      ...RoundedFontStyles.bold,
       color: PERPS_PRO_DIALOG_TOKENS.actionForeground,
     },
   } as const);
@@ -161,9 +157,8 @@ export const getPerpsProDialogCheckboxStyles = (
     checkboxText: {
       color: colors['neutral-foot'],
       flexShrink: 1,
-      fontFamily: 'SF Pro Rounded',
+      ...RoundedFontStyles.regular,
       fontSize: 12,
-      fontWeight: '400',
       lineHeight: 16,
     },
   } as const);

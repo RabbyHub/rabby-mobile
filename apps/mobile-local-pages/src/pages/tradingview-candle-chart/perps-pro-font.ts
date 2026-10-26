@@ -1,8 +1,11 @@
 export const PERPS_PRO_FONT_FACE_FAMILY = 'Rabby SF Pro Rounded';
 
-export const PERPS_PRO_FONT_FAMILY =
+const PERPS_PRO_ANDROID_FONT_FAMILY =
   `"${PERPS_PRO_FONT_FACE_FAMILY}", "SF Pro Rounded", ` +
   '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+
+const PERPS_PRO_IOS_FONT_FAMILY =
+  'ui-rounded, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
 
 export const LIGHTWEIGHT_CHARTS_DEFAULT_FONT_FAMILY =
   "-apple-system, BlinkMacSystemFont, 'Trebuchet MS', Roboto, Ubuntu, sans-serif";
@@ -17,6 +20,14 @@ const PERPS_PRO_FONT_FILES = {
 
 type PerpsProFontRuntimeInfo = Pick<RuntimeInfo, 'platform' | 'runtimeBaseUrl'>;
 
+export function resolvePerpsProFontFamily(
+  runtimeInfo: Pick<RuntimeInfo, 'platform'>,
+): string {
+  return runtimeInfo.platform === 'ios'
+    ? PERPS_PRO_IOS_FONT_FAMILY
+    : PERPS_PRO_ANDROID_FONT_FAMILY;
+}
+
 export type PerpsProFontAssetUrls = {
   regular: string;
   medium: string;
@@ -26,6 +37,11 @@ export type PerpsProFontAssetUrls = {
 export function resolvePerpsProFontAssetUrls(
   runtimeInfo: PerpsProFontRuntimeInfo,
 ): PerpsProFontAssetUrls | null {
+  // iOS uses the system rounded design; Apple font files must not be bundled.
+  if (runtimeInfo.platform !== 'android') {
+    return null;
+  }
+
   const runtimeBaseUrl = runtimeInfo.runtimeBaseUrl.trim();
   if (!runtimeBaseUrl) {
     return null;
@@ -45,9 +61,8 @@ export function resolvePerpsProFontAssetUrls(
     }
 
     // Android keeps local pages below android_asset/custom while linked fonts
-    // live in the sibling android_asset/fonts directory. iOS links the same
-    // font files directly into the MainBundle root exposed by runtimeBaseUrl.
-    const fontDirectory = runtimeInfo.platform === 'android' ? '../fonts/' : '';
+    // live in the sibling android_asset/fonts directory.
+    const fontDirectory = '../fonts/';
 
     return {
       regular: new URL(

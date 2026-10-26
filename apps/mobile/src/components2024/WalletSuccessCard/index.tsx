@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React from 'react';
 import { View, StyleProp, ViewStyle, ScrollView } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -9,7 +9,6 @@ import Animated, {
   interpolate,
   cancelAnimation,
 } from 'react-native-reanimated';
-import { useFocusEffect } from '@react-navigation/native';
 import Lottie, { AnimationObject } from 'lottie-react-native';
 import { Text } from '@/components';
 import { useTheme2024 } from '@/hooks/theme';
@@ -19,6 +18,9 @@ import DefaultAnimation from '@/assets2024/animations/animation-create-success.m
 
 export const customEase = Easing.bezier(0.42, 0, 0.58, 1);
 
+/** A double-mounted success screen must not replay the same entrance. */
+const SUCCESS_ANIMATION_DEDUPE_MS = 10_000;
+const recentlyAnimatedSuccessAt = new Map<string, number>();
 export const DEFAULT_ANIMATION_CONFIG = {
   INITIAL_DELAY: 100,
   DURATION: 500,
@@ -51,9 +53,71 @@ export const WalletSuccessCard: React.FC<WalletSuccessCardProps> = ({
   animationConfig = DEFAULT_ANIMATION_CONFIG,
 }) => {
   const { styles } = useTheme2024({ getStyle });
+  const animationKey = React.useMemo(
+    () => `${title}|${addresses.map(item => item.address).join(',')}`,
+    [addresses, title],
+  );
+  const shouldAnimateRef = React.useRef<boolean | null>(null);
+  if (shouldAnimateRef.current === null) {
+    const now = Date.now();
+    const lastAnimatedAt = recentlyAnimatedSuccessAt.get(animationKey) || 0;
+    const shouldAnimate =
+      autoPlay && now - lastAnimatedAt > SUCCESS_ANIMATION_DEDUPE_MS;
+    if (shouldAnimate) {
+      recentlyAnimatedSuccessAt.set(animationKey, now);
+    }
+    shouldAnimateRef.current = shouldAnimate;
+  }
+  const shouldAnimate = shouldAnimateRef.current ?? false;
+  const hasPlayedRef = React.useRef(false);
+  /**
+   * A unique, still frame-zero progress value per mounted card.
+   *
+   * On Fabric, iOS reuses native Lottie views between screens. A recycled view
+   * can still show the previous run's settled (last) frame, and
+   * lottie-react-native only forwards `progress` when the value actually
+   * changes, so a plain `progress={0}` is skipped on the recycled instance and
+   * that stale frame stays on screen until playback starts. Always sending a
+   * different ~0 value forces `setProgress` to reset the native view to the
+   * first frame before anything is painted, without depending on JS timing.
+   */
+  const frameZeroProgressRef = React.useRef(Math.random() * 1e-6);
+  const lottieRef = React.useRef<Lottie>(null);
+  const lottieStartedRef = React.useRef(false);
+  const lottieEndFrame = React.useMemo(() => {
+    if (
+      lottieSource &&
+      typeof lottieSource === 'object' &&
+      typeof (lottieSource as AnimationObject).op === 'number'
+    ) {
+      return (lottieSource as AnimationObject).op;
+    }
+    return undefined;
+  }, [lottieSource]);
 
-  const textProgress = useSharedValue(0);
-  const addressProgress = useSharedValue(0);
+  // The native player starts exactly once, from the first frame, on layout.
+  // `autoPlay` is not used on purpose: lottie-react-native's iOS prop handling
+  // starts playback by itself on recycled native views.
+  const startLottie = React.useCallback(() => {
+    if (!shouldAnimate || lottieStartedRef.current) {
+      return;
+    }
+    const view = lottieRef.current;
+    if (!view) {
+      return;
+    }
+    lottieStartedRef.current = true;
+    view.reset();
+    if (lottieEndFrame != null) {
+      view.play(0, lottieEndFrame);
+    } else {
+      view.play();
+    }
+  }, [lottieEndFrame, shouldAnimate]);
+
+  // Follow-up imports already have a result to show on their first frame.
+  const textProgress = useSharedValue(shouldAnimate ? 0 : 1);
+  const addressProgress = useSharedValue(shouldAnimate ? 0 : 1);
 
   const TEXT_START = animationConfig.INITIAL_DELAY;
   const ADDRESS_START =
@@ -61,36 +125,37 @@ export const WalletSuccessCard: React.FC<WalletSuccessCardProps> = ({
     animationConfig.DURATION +
     animationConfig.DELAY_AFTER_TEXT;
 
-  useFocusEffect(
-    useCallback(() => {
-      if (!autoPlay) return;
+  React.useEffect(() => {
+    if (!shouldAnimate || hasPlayedRef.current) {
+      return;
+    }
+    hasPlayedRef.current = true;
 
-      textProgress.value = 0;
-      addressProgress.value = 0;
+    textProgress.value = 0;
+    addressProgress.value = 0;
 
-      textProgress.value = withDelay(
-        TEXT_START,
-        withTiming(1, {
-          duration: animationConfig.DURATION,
-          easing: customEase,
-        }),
-      );
+    textProgress.value = withDelay(
+      TEXT_START,
+      withTiming(1, {
+        duration: animationConfig.DURATION,
+        easing: customEase,
+      }),
+    );
 
-      addressProgress.value = withDelay(
-        ADDRESS_START,
-        withTiming(1, {
-          duration: animationConfig.DURATION,
-          easing: customEase,
-        }),
-      );
+    addressProgress.value = withDelay(
+      ADDRESS_START,
+      withTiming(1, {
+        duration: animationConfig.DURATION,
+        easing: customEase,
+      }),
+    );
 
-      return () => {
-        cancelAnimation(textProgress);
-        cancelAnimation(addressProgress);
-      };
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [autoPlay]),
-  );
+    return () => {
+      cancelAnimation(textProgress);
+      cancelAnimation(addressProgress);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shouldAnimate]);
 
   const textAnimatedStyle = useAnimatedStyle(() => {
     'worklet';
@@ -115,10 +180,17 @@ export const WalletSuccessCard: React.FC<WalletSuccessCardProps> = ({
     <View style={[styles.container, style]}>
       <View style={styles.lottieContainer}>
         <Lottie
+          ref={lottieRef}
           source={lottieSource}
           style={styles.lottie}
           loop={false}
-          autoPlay
+          autoPlay={false}
+          // A skipped animation must stay on its settled frame; speed 0 also
+          // keeps lottie-react-native's iOS `setSpeed` from starting playback
+          // while props are applied to a recycled native view.
+          speed={shouldAnimate ? 1 : 0}
+          progress={shouldAnimate ? frameZeroProgressRef.current : 1}
+          onLayout={shouldAnimate ? startLottie : undefined}
         />
       </View>
 
@@ -176,7 +248,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   titleText: {
     fontFamily: 'SF Pro Rounded',
     fontSize: 20,
-    fontWeight: '800',
+    fontWeight: '900',
     color: colors2024['neutral-title-1'],
     textAlign: 'center',
   },

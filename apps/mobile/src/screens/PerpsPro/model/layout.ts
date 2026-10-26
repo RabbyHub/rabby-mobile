@@ -18,15 +18,24 @@ const PERPS_PRO_SHEET_MIN_TOP_OFFSET = 24;
 const PERPS_PRO_SHEET_TOP_SAFE_GAP = 16;
 const PERPS_PRO_MARKET_SELECTOR_DESIGN_TOP = 104;
 const PERPS_PRO_MARKET_SELECTOR_MIN_HEIGHT = 320;
-const PERPS_PRO_POSITION_TPSL_LIST_DESIGN_TOP = 120;
-const PERPS_PRO_POSITION_TPSL_FORM_DESIGN_TOP = 134;
-const PERPS_PRO_POSITION_TPSL_MIN_HEIGHT = 320;
-const PERPS_PRO_POSITION_TPSL_SUBPAGE_CHROME_HEIGHT = 170;
-const PERPS_PRO_POSITION_TPSL_TAB_CHROME_HEIGHT = 192;
-const PERPS_PRO_POSITION_TPSL_INLINE_EMPTY_CHROME_HEIGHT = 196;
+export const PERPS_PRO_POSITION_TPSL_PAGE_HEADER_HEIGHT = 56;
+const PERPS_PRO_POSITION_TPSL_DESIGN_HEIGHTS = {
+  form: 758,
+  list: 758,
+  // Include both normal 26px PnL hints before the keyboard ever opens.
+  add: 704,
+  modify: 604,
+  'position-modify': 598,
+} as const;
+const PERPS_PRO_POSITION_TPSL_SUBPAGE_CHROME_HEIGHT =
+  PERPS_PRO_POSITION_TPSL_PAGE_HEADER_HEIGHT + 130;
+const PERPS_PRO_POSITION_TPSL_TAB_CHROME_HEIGHT = 232;
+export type PerpsProPositionTpSlPage =
+  keyof typeof PERPS_PRO_POSITION_TPSL_DESIGN_HEIGHTS;
 
 export type PerpsProPositionTpSlFormPresentation =
   | 'inline-empty'
+  | 'position-modify'
   | 'subpage'
   | 'tab';
 
@@ -157,32 +166,30 @@ export const getPerpsProMarketSelectorSnapPoint = ({
 };
 
 export const getPerpsProPositionTpSlSnapPoint = ({
+  formBottomPaddingExtra = 0,
   page,
   topInset,
   windowHeight,
 }: {
-  page: 'form' | 'list';
+  formBottomPaddingExtra?: number;
+  page: PerpsProPositionTpSlPage;
   topInset: number;
   windowHeight: number;
 }) => {
   const safeTopInset = Number.isFinite(topInset) && topInset > 0 ? topInset : 0;
   const safeWindowHeight =
     Number.isFinite(windowHeight) && windowHeight > 0 ? windowHeight : 0;
-  const designTop =
-    page === 'list'
-      ? PERPS_PRO_POSITION_TPSL_LIST_DESIGN_TOP
-      : PERPS_PRO_POSITION_TPSL_FORM_DESIGN_TOP;
-  const topOffset = Math.max(
-    designTop,
-    safeTopInset + PERPS_PRO_SHEET_TOP_SAFE_GAP,
+  const availableHeight = Math.max(
+    0,
+    safeWindowHeight - safeTopInset - PERPS_PRO_SHEET_TOP_SAFE_GAP,
   );
-
+  const extraBottomPadding =
+    page !== 'list' && Number.isFinite(formBottomPaddingExtra)
+      ? Math.max(0, formBottomPaddingExtra)
+      : 0;
   return Math.min(
-    safeWindowHeight,
-    Math.max(
-      Math.min(PERPS_PRO_POSITION_TPSL_MIN_HEIGHT, safeWindowHeight),
-      safeWindowHeight - topOffset,
-    ),
+    availableHeight,
+    PERPS_PRO_POSITION_TPSL_DESIGN_HEIGHTS[page] + extraBottomPadding,
   );
 };
 
@@ -196,10 +203,8 @@ export const getPerpsProPositionTpSlFormMinimumHeight = ({
   const safeSnapPoint =
     Number.isFinite(snapPoint) && snapPoint > 0 ? snapPoint : 0;
   const chromeHeight =
-    presentation === 'subpage'
+    presentation === 'subpage' || presentation === 'position-modify'
       ? PERPS_PRO_POSITION_TPSL_SUBPAGE_CHROME_HEIGHT
-      : presentation === 'inline-empty'
-      ? PERPS_PRO_POSITION_TPSL_INLINE_EMPTY_CHROME_HEIGHT
       : PERPS_PRO_POSITION_TPSL_TAB_CHROME_HEIGHT;
 
   return Math.max(

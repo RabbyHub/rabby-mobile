@@ -3,7 +3,6 @@ import React from 'react';
 import { StyleSheet } from 'react-native';
 
 const mockShowPortfolioBreakdown = jest.fn();
-let mockHasNonPerpsAssets = true;
 let mockIsLight = true;
 
 jest.mock('@/assets2024/icons/perps/IconUSDC.svg', () => {
@@ -45,7 +44,6 @@ jest.mock(
   '@/screens/PerpsShared/components/PerpsPortfolioBreakdownExplanation',
   () => ({
     useShowPerpsPortfolioBreakdown: () => ({
-      hasNonPerpsAssets: mockHasNonPerpsAssets,
       showPortfolioBreakdown: mockShowPortfolioBreakdown,
     }),
   }),
@@ -104,7 +102,6 @@ const spotUsdc = {
 describe('Perps Pro account visual contract', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockHasNonPerpsAssets = true;
     mockIsLight = true;
   });
 
@@ -282,11 +279,10 @@ describe('Perps Pro account visual contract', () => {
     },
   );
 
-  it('hides the breakdown trigger when the account has no non-Perps assets', () => {
-    mockHasNonPerpsAssets = false;
+  it('hides the breakdown trigger only when every asset is zero', () => {
     render(
       <PerpsProAccountSummary
-        account={account}
+        account={{ ...account, primaryValue: '0' }}
         onDeposit={jest.fn()}
         onWithdraw={jest.fn()}
       />,

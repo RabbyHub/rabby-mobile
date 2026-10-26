@@ -1,3 +1,4 @@
+import { RoundedFontStyles } from '@/core/utils/fonts';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Platform,
@@ -10,6 +11,7 @@ import {
 import RcCloseIconLight from '@/assets/icons/feedback/close.svg';
 import { TrackedModal } from '@/components/Modal/TrackedModal';
 import { Text } from '@/components/Typography';
+import { MODAL_GATE_IDS } from '@/utils/modalGate';
 import { Slider } from '@rneui/themed';
 import FastImage from 'react-native-fast-image';
 import {
@@ -399,7 +401,7 @@ export function FeedbackMediaPreview({
 
   return (
     <TrackedModal
-      modalId="feedback-history-media-preview"
+      modalId={MODAL_GATE_IDS.feedbackHistoryMediaPreview}
       visible
       transparent
       animationType="fade"
@@ -571,10 +573,9 @@ const styles = StyleSheet.create({
   },
   videoTimeText: {
     minWidth: 38,
-    fontFamily: 'SF Pro Rounded',
+    ...RoundedFontStyles.medium,
     fontSize: 12,
     lineHeight: 14,
-    fontWeight: '500',
     color: '#fff',
     textAlign: 'center',
   },

@@ -1,3 +1,4 @@
+import { RoundedFontStyles } from '@/core/utils/fonts';
 import * as Sentry from '@sentry/react-native';
 import { toast } from '@/components2024/Toast';
 import { notificationServiceApi } from '@/core/serviceApi/notification';
@@ -35,6 +36,7 @@ import {
 import useAsync from 'react-use/lib/useAsync';
 import { useUnmount } from 'ahooks';
 import { Text } from '@/components/Typography';
+import { useRetryMinPending } from '@/components/Approval/hooks/useRetryMinPending';
 
 interface ApprovalParams {
   address: string;
@@ -75,9 +77,8 @@ const getStyles = (colors: AppColorsVariants) =>
     },
     content: {
       fontSize: 20,
-      fontWeight: '900',
       lineHeight: 24,
-      fontFamily: 'SF Pro Rounded',
+      ...RoundedFontStyles.heavy,
     },
     contentWrapper: {
       flexDirection: 'row',
@@ -136,6 +137,8 @@ export const OneKeyHardwareWaiting = ({
 
   const [isRetrying, setIsRetrying] = React.useState(false);
 
+  const { markRetryStarted, afterMinPending } = useRetryMinPending();
+
   const handleRetry = async (showToast = true) => {
     if (isRetrying) {
       return;
@@ -147,6 +150,7 @@ export const OneKeyHardwareWaiting = ({
     setIsRetrying(true);
 
     setConnectStatus(APPROVAL_STATUS_MAP.WAITING);
+    markRetryStarted();
 
     retryTxReset();
     if (params.nonce && params.chainId && params.from && account) {
@@ -163,11 +167,14 @@ export const OneKeyHardwareWaiting = ({
       }
     }
 
-    await notificationServiceApi.callCurrentRequestDeferFn(true);
+    // Fire and forget: this resolves only when signing ends, and a failed
+    // attempt is reported through SIGN_FINISHED instead.
+    void notificationServiceApi
+      .callCurrentRequestDeferFn(true)
+      .catch(console.error);
     if (showToast) {
       toast.success(t('page.signFooterBar.ledger.resent'));
     }
-    emitSignComponentAmounted();
     setIsRetrying(false);
   };
 
@@ -267,8 +274,10 @@ export const OneKeyHardwareWaiting = ({
         Sentry.captureException(
           new Error('OneKey sign error: ' + JSON.stringify(data)),
         );
-        setConnectStatus(APPROVAL_STATUS_MAP.FAILED);
-        setErrorMessage(data.errorMsg);
+        afterMinPending(() => {
+          setConnectStatus(APPROVAL_STATUS_MAP.FAILED);
+          setErrorMessage(data.errorMsg);
+        });
       }
     });
 

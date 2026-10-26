@@ -69,6 +69,9 @@ export const AccountSelectPopup = ({
 
   React.useEffect(() => {
     if (!visible) {
+      // Start every opening from "nothing selected" so the list cells and the
+      // proceed button can never show a stale selection.
+      setCheckedAccount(null);
       modalRef.current?.close();
     } else {
       modalRef.current?.present();
@@ -89,6 +92,7 @@ export const AccountSelectPopup = ({
         <Text style={styles.title}>{title}</Text>
         <BottomSheetFlatList
           data={accounts}
+          extraData={checkedAccount}
           keyExtractor={item =>
             `${item.address}-${item.type}-${item.brandName}`
           }
@@ -124,6 +128,7 @@ export const AccountSelectPopup = ({
             containerStyle={styles.buttonContainer}
           />
           <Button
+            key={checkedAccount ? 'proceed-enabled' : 'proceed-disabled'}
             type="primary"
             onPress={() => checkedAccount && onChange(checkedAccount)}
             disabled={!checkedAccount}

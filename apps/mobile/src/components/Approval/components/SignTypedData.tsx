@@ -30,10 +30,9 @@ import {
   type PreparedSecurityActions,
 } from '../hooks/useActionSecurity';
 import { SecurityEngineError } from './SecurityEngine/SecurityEngineError';
-import type { ContextActionData } from '@rabby-wallet/rabby-security-engine/dist/rules';
 import { apiKeyring, apiProvider, apiSecurityEngine } from '@/core/apis';
 import { parseSignTypedDataMessage } from './SignTypedDataExplain/parseSignTypedDataMessage';
-import { dappServiceApi, getDappSnapshot } from '@/core/serviceApi/dapp';
+import { getDappSnapshot } from '@/core/serviceApi/dapp';
 import { keyringServiceApi } from '@/core/serviceApi/keyring';
 import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
 import { whitelistServiceApi } from '@/core/serviceApi/whitelist';
@@ -77,7 +76,6 @@ import {
   type SignMessageHighlightToken,
 } from './signMessageTokenizer';
 import { useSignMessageAddressData } from './useSignMessageAddressData';
-import { addSignMessageOriginFallback } from './signMessageOrigin';
 import { SignMessageTagProvider } from './SignMessageHighlighter';
 
 interface SignTypedDataProps {
@@ -218,11 +216,7 @@ export const SignTypedData = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, isSignTypedDataV1, signTypedData, requestChainId]);
 
-  const currentChainId =
-    requestChainId ||
-    (params.session.origin !== INTERNAL_REQUEST_ORIGIN
-      ? findChain({ enum: site?.chainId })?.id
-      : params.$ctx?.chainId || chain?.id);
+  const currentChainId = requestChainId || chain?.id;
 
   const messageTokens = useMemo<SignMessageHighlightToken[]>(() => {
     if (!parsedMessage) return [];
@@ -352,7 +346,6 @@ export const SignTypedData = ({
     setPreparationError(false);
     retryParse();
   };
-  const isUnparsedAction = typedDataActionData?.action === null;
 
   if (error) {
     console.error('error', error);
@@ -541,15 +534,8 @@ export const SignTypedData = ({
   const init = async () => {};
 
   const getRequireData = async (data: ParsedTypedDataActionData) => {
-    if (requestChainId) {
-      data.chainId = requestChainId.toString();
-    } else if (params.session.origin !== INTERNAL_REQUEST_ORIGIN) {
-      const site = await dappServiceApi.getDapp(params.session.origin);
-      if (site) {
-        data.chainId = findChain({
-          enum: site.chainId,
-        })?.id?.toString();
-      }
+    if (currentChainId) {
+      data.chainId = currentChainId.toString();
     }
     if (!currentAccount) throw new Error('No current account found');
     let chainServerId: string | undefined;
@@ -583,14 +569,6 @@ export const SignTypedData = ({
     return requireData;
   };
 
-  const withOriginFallback = (ctx: ContextActionData) =>
-    addSignMessageOriginFallback(ctx, {
-      isUnparsedAction,
-      isInternalOrigin: params.session.origin === INTERNAL_REQUEST_ORIGIN,
-      message: parsedMessage,
-      origin: params.session.origin,
-    });
-
   const getSecurityEngineContext = async ({
     data,
     requireData,
@@ -604,7 +582,7 @@ export const SignTypedData = ({
         id: Number(data.chainId),
       })?.serverId;
     }
-    const baseCtx = await formatSecurityEngineContext({
+    return formatSecurityEngineContext({
       type: 'typed_data',
       actionData: data,
       requireData,
@@ -616,7 +594,6 @@ export const SignTypedData = ({
       },
       origin: params.session.origin,
     });
-    return withOriginFallback(baseCtx);
   };
 
   const handleIgnoreAllRules = () => {

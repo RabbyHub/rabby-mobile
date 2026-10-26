@@ -14,6 +14,9 @@ const REQUIRED_CHART_CAPABILITIES = [
   'PERPS_PRO_PRICE_SCALE_AUTO_SCALE_CHANGED',
   'candleDataAppliedAck',
   'perpsProKlineProtocolVersion',
+  'perpsSimpleKlineProtocolVersion',
+  'PERPS_SIMPLE_CHART',
+  'PERPS_SIMPLE_EVENT',
 ];
 
 function invariant(condition, message) {
@@ -22,14 +25,15 @@ function invariant(condition, message) {
   }
 }
 
-function readProtocolVersion(source, label) {
+function readProtocolVersion(
+  source,
+  label,
+  name = 'PERPS_PRO_KLINE_PROTOCOL_VERSION',
+) {
   const match = source.match(
-    /const\s+PERPS_PRO_KLINE_PROTOCOL_VERSION\s*=\s*(\d+)\s*;/u,
+    new RegExp(`const\\s+${name}\\s*=\\s*(\\d+)\\s*;`, 'u'),
   );
-  invariant(
-    match,
-    `${label} does not declare PERPS_PRO_KLINE_PROTOCOL_VERSION`,
-  );
+  invariant(match, `${label} does not declare ${name}`);
   return Number.parseInt(match[1], 10);
 }
 
@@ -196,6 +200,21 @@ function verifyLocalPageAssets(repoDir = REPO_DIR) {
     `Perps Pro K-line protocol mismatch: native v${nativeProtocolVersion}, local page v${localPageProtocolVersion}`,
   );
 
+  const simpleProtocolVersion = readProtocolVersion(
+    nativeProtocolSource,
+    'Native Simple chart bridge',
+    'PERPS_SIMPLE_KLINE_PROTOCOL_VERSION',
+  );
+  const localSimpleVersion = readProtocolVersion(
+    localPageProtocolSource,
+    'Local Simple chart page',
+    'PERPS_SIMPLE_KLINE_PROTOCOL_VERSION',
+  );
+  invariant(
+    simpleProtocolVersion === localSimpleVersion,
+    `Perps Simple K-line protocol mismatch: native v${simpleProtocolVersion}, local page v${localSimpleVersion}`,
+  );
+
   const androidRoot = path.join(
     repoDir,
     'apps/mobile/assets/android/builtin-pages',
@@ -211,14 +230,14 @@ function verifyLocalPageAssets(repoDir = REPO_DIR) {
   validateChartAssets({ platform: 'android', root: linkedAndroidRoot });
   assertDirectoriesEqual(androidRoot, linkedAndroidRoot);
 
-  return { protocolVersion: nativeProtocolVersion };
+  return { protocolVersion: nativeProtocolVersion, simpleProtocolVersion };
 }
 
 if (require.main === module) {
   try {
     const result = verifyLocalPageAssets();
     console.log(
-      `[verify:local-pages] Android/iOS chart resources and Perps Pro protocol v${result.protocolVersion} are current`,
+      `[verify:local-pages] Android/iOS chart resources and chart protocols Pro v${result.protocolVersion} / Simple v${result.simpleProtocolVersion} are current`,
     );
   } catch (error) {
     console.error(`[verify:local-pages] ${error.message}`);

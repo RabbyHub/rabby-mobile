@@ -213,10 +213,7 @@ export type AddressNavigatorParamList = {
   // [RootNames.MultiAddressHome]?: {};
   [RootNames.CreateNewAddress]?: {
     noSetupPassword?: boolean;
-    useCurrentSeed?: boolean;
-    mnemonics?: string;
     title?: string;
-    accounts?: string[];
     isFirstCreate?: boolean;
   };
   [RootNames.SetPassword2024]?: {
@@ -254,8 +251,7 @@ export type AddressNavigatorParamList = {
     isFirstCreate?: boolean;
     type: KEYRING_TYPE;
     supportChainList?: Chain[];
-    mnemonics?: string;
-    passphrase?: string;
+    mnemonicsVaultId?: string;
     keyringId?: number;
     alias?: string;
     isExistedKR?: boolean;
@@ -269,12 +265,13 @@ export type AddressNavigatorParamList = {
     isFirstCreate?: boolean;
     type: KEYRING_TYPE;
     supportChainList?: Chain[];
-    mnemonics?: string;
-    passphrase?: string;
+    mnemonicsVaultId?: string;
     keyringId?: number;
     alias?: string;
     isExistedKR?: boolean;
     showBackup?: boolean;
+    /** Follow-up imports can show their result without replaying the entrance. */
+    skipSuccessAnimation?: boolean;
   };
   [RootNames.ImportWatchAddress]?: {};
   [RootNames.ImportSafeAddress]?: {};
@@ -287,8 +284,7 @@ export type AddressNavigatorParamList = {
   [RootNames.ImportMoreAddress]?: {
     type: KEYRING_TYPE;
     brand?: string;
-    mnemonics?: string;
-    passphrase?: string;
+    mnemonicsVaultId?: string;
     keyringId?: number;
     isExistedKR?: boolean;
   };
@@ -303,7 +299,7 @@ export type AddressNavigatorParamList = {
   [RootNames.CreateMnemonicBackup]?: {};
   [RootNames.CreateMnemonicVerify]?: {};
   [RootNames.BackupPrivateKey]?: {
-    data: string;
+    privateKeyVaultId: string;
   };
   [RootNames.RestoreFromCloud]?: {};
   [RootNames.WatchAddressList]?: {};
@@ -322,7 +318,8 @@ export type AccountNavigatorParamList = {
 
 export type SingleAddressNavigatorParamList = {
   [RootNames.SingleAddressHome]: {
-    // account: Account;
+    account?: Account;
+    navigationId?: number;
   };
 };
 

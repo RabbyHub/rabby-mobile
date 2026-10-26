@@ -7,7 +7,10 @@ import React, {
 } from 'react';
 
 import { makeTxPageBackgroundColors } from '@/constant/layout';
-import { HistoryItemEntity } from '@/databases/entities/historyItem';
+import {
+  HistoryItemEntity,
+  type HistoryPageCursor,
+} from '@/databases/entities/historyItem';
 import { openapi } from '@/core/request';
 import {
   getTransactionHistoryListSnapshot,
@@ -94,7 +97,7 @@ function HistoryContent({
   const { t } = useTranslation();
   const isReady = useRef(false);
   const lastMap = useRef<Record<string, number>>({});
-  const dbLastCursorRef = useRef<number>(0);
+  const dbLastCursorRef = useRef<HistoryPageCursor | null>(null);
   const dbFetchLoadingRef = useRef<boolean>(false);
   const hasMoreMap = useRef<Record<string, boolean>>({});
   const [isShowAll, setIsShowAll] = useState(false);
@@ -165,7 +168,7 @@ function HistoryContent({
         nextCursor,
       } = await HistoryItemEntity.getHistoryItemsPaginated(addresses, {
         pageSize: 20,
-        lastTimeAt: dbLastCursorRef.current,
+        cursor: dbLastCursorRef.current,
         filterScamAndSmallTx: isFilter,
       });
 
@@ -180,12 +183,12 @@ function HistoryContent({
         } as HistoryDisplayItem;
       });
 
-      if (dbLastCursorRef.current === 0) {
+      if (dbLastCursorRef.current === null) {
         setDbData(list);
       } else {
         setDbData(prev => mergeDataWithDeduplication(prev, list, 'back'));
       }
-      dbLastCursorRef.current = nextCursor || 0;
+      dbLastCursorRef.current = nextCursor ?? null;
       dbFetchLoadingRef.current = false;
       setFirstFetchDone(true);
       return { list, hasMore };
@@ -276,7 +279,7 @@ function HistoryContent({
 
     try {
       const [res, transactions] = await Promise.all([
-        openapi.listTxHisotry({
+        openapi.listTxHistory({
           id: address,
           start_time: startTime,
           page_count: HISTORY_API_PAGE_COUNT,
@@ -420,7 +423,7 @@ function HistoryContent({
     if (isNeedFetchFromApi) {
       reloadAsync();
     } else {
-      dbLastCursorRef.current = 0;
+      dbLastCursorRef.current = null;
       isSceneUsingAllAccounts
         ? syncTop10History(myTop10Addresses, true)
         : syncSingleAddress(finalSceneCurrentAccount?.address.toLowerCase()!);
@@ -474,7 +477,7 @@ function HistoryContent({
     if (isReady.current) {
       if (!isNeedFetchFromApi) {
         setFirstFetchDone(false);
-        dbLastCursorRef.current = 0;
+        dbLastCursorRef.current = null;
         reloadAsync();
         runFetchLocalTx();
       } else {
@@ -487,7 +490,7 @@ function HistoryContent({
   }, [sceneCurrentAccountDepKey, isSceneUsingAllAccounts]);
 
   const batchFetchDataFromDbUpsert = useMemoizedFn(async () => {
-    dbLastCursorRef.current = 0;
+    dbLastCursorRef.current = null;
     reloadAsync();
   });
 
@@ -593,7 +596,7 @@ function HistoryContent({
         handleSwitchShowAll={value => {
           historyListRef.current?.scrollToTop();
           if (!isNeedFetchFromApi) {
-            dbLastCursorRef.current = 0;
+            dbLastCursorRef.current = null;
             batchFetchDataFromDb(value);
           }
         }}
@@ -846,7 +849,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     marginLeft: 4,
     fontFamily: 'SF Pro Rounded',
     fontSize: 20,
-    fontWeight: '800',
+    fontWeight: '900',
     lineHeight: 24,
     color: colors2024['neutral-title-1'],
   },

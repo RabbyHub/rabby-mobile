@@ -286,7 +286,7 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
   input: {
     paddingRight: 10,
     fontSize: 20,
-    fontWeight: '600',
+    fontWeight: '500',
     position: 'relative',
     flex: 1,
     color: colors['neutral-title-1'],

@@ -8,6 +8,7 @@ import React from 'react';
 import { Animated, Pressable, StyleSheet } from 'react-native';
 
 import { ThemeColors2024 } from '@/constant/theme';
+import { RoundedFontStyles } from '@/core/utils/fonts';
 
 jest.mock('@/components/Typography', () => ({
   Text: require('react-native').Text,
@@ -103,6 +104,30 @@ describe('PerpsProHistoryRowView Trade, Transaction and Funding', () => {
     onShowFeeExplanation.mockClear();
   });
 
+  it.each([
+    ['12.5', '0.5', '12.00', 'green-default'],
+    ['0.1', '0.5', '-0.40', 'red-default'],
+    ['0', '0.5', '-0.50', 'red-default'],
+    ['0', '-0.5', '0.50', 'green-default'],
+    ['0.5', '0.5', '0.00', 'neutral-title-1'],
+  ])(
+    'colors net realized PnL after fees (%s minus %s)',
+    (closedPnl, fee, value, color) => {
+      render(
+        <PerpsProHistoryRowView
+          amountUnit="base"
+          onShowFeeExplanation={onShowFeeExplanation}
+          row={mapPerpsProTradeHistoryFact({ ...fill, closedPnl, fee }, {})}
+        />,
+      );
+      // Realized PnL follows Fee, which can have the same formatted value.
+      const values = screen.getAllByText(value);
+      expect(
+        StyleSheet.flatten(values[values.length - 1]!.props.style).color,
+      ).toBe(color);
+    },
+  );
+
   it('keeps history cards distinct from the page surface in both themes', () => {
     expect(ThemeColors2024.light['neutral-card-1']).not.toBe(
       ThemeColors2024.light['neutral-bg-0'],
@@ -144,16 +169,15 @@ describe('PerpsProHistoryRowView Trade, Transaction and Funding', () => {
     ).toBeUndefined();
 
     fireEvent.press(screen.getByLabelText('page.perps.historyDetail.feeTitle'));
-    expect(onShowFeeExplanation).toHaveBeenCalledWith(false);
+    expect(onShowFeeExplanation).toHaveBeenCalledWith(false, row.feeSnapshot);
     expect(screen.queryByText('Perp')).toBeNull();
     expect(screen.getByText('S')).toBeTruthy();
     expect(screen.queryByText('page.perps.pro.history.sell')).toBeNull();
     const sideText = screen.getByLabelText('page.perps.pro.history.sell');
     expect(StyleSheet.flatten(sideText.props.style)).toMatchObject({
       color: 'neutral-InvertHighlight',
-      fontFamily: 'SF Pro Rounded',
+      ...RoundedFontStyles.bold,
       fontSize: 12,
-      fontWeight: '700',
       lineHeight: 16,
     });
     const sideTag = screen.getByTestId(
@@ -200,7 +224,7 @@ describe('PerpsProHistoryRowView Trade, Transaction and Funding', () => {
     );
     fireEvent.press(screen.getByLabelText('page.perps.historyDetail.feeTitle'));
 
-    expect(onShowFeeExplanation).toHaveBeenCalledWith(true);
+    expect(onShowFeeExplanation).toHaveBeenCalledWith(true, row.feeSnapshot);
   });
 
   it('renders Transaction Type and signed Amount without a navigation arrow', () => {
@@ -449,9 +473,8 @@ describe('PerpsProHistoryRowView Orders', () => {
       ),
     ).toMatchObject({
       color: 'neutral-InvertHighlight',
-      fontFamily: 'SF Pro Rounded',
+      ...RoundedFontStyles.bold,
       fontSize: 12,
-      fontWeight: '700',
       lineHeight: 16,
     });
   });
@@ -612,9 +635,8 @@ describe('PerpsProHistoryRowView Orders', () => {
       StyleSheet.flatten(screen.getByText('xyz').props.style),
     ).toMatchObject({
       color: 'neutral-foot',
-      fontFamily: 'SF Pro Rounded',
+      ...RoundedFontStyles.medium,
       fontSize: 12,
-      fontWeight: '500',
       lineHeight: 16,
     });
     expect(screen.queryByText('Perp')).toBeNull();

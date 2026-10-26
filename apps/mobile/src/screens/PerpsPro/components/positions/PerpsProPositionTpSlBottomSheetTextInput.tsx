@@ -1,18 +1,2 @@
-import { TextInput } from '@/components/Typography';
-import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
-import React from 'react';
-
-export const PerpsProPositionTpSlBottomSheetTextInput = React.forwardRef<
-  TextInput,
-  React.ComponentProps<typeof TextInput>
->((props, forwardedRef) => (
-  <BottomSheetTextInput
-    {...props}
-    ref={
-      forwardedRef as React.Ref<React.ElementRef<typeof BottomSheetTextInput>>
-    }
-  />
-));
-
-PerpsProPositionTpSlBottomSheetTextInput.displayName =
-  'PerpsProPositionTpSlBottomSheetTextInput';
+// Keep existing TP/SL callers on the same Pro-private native adapter.
+export { PerpsProBottomSheetTextInput as PerpsProPositionTpSlBottomSheetTextInput } from '../common/PerpsProBottomSheetTextInput';

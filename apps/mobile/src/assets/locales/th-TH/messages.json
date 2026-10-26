@@ -1411,7 +1411,8 @@
       "keystone": {
         "scan": {
           "title": "สแกน Keystone เพื่อเชื่อมต่อ",
-          "description": "สแกนคิวอาร์โค้ดบนกระเป๋า Keystone ของคุณ"
+          "description": "สแกนคิวอาร์โค้ดบนกระเป๋า Keystone ของคุณ",
+          "invalidQRCode": "คิวอาร์โค้ดไม่ถูกต้อง โปรดสแกนคิวอาร์โค้ดสำหรับซิงค์ของฮาร์ดแวร์วอลเล็ต"
         },
         "camera": {
           "title": "เชื่อมต่อ Keystone",
@@ -1691,6 +1692,10 @@
       "fixedModeTag": "โหมดคงที่"
     },
     "singleHome": {
+      "tokenActions": {
+        "remove": "ลบ",
+        "removeFailed": "ลบโทเค็นไม่สำเร็จ"
+      },
       "sectionHeader": {
         "Defi": "DeFi",
         "Token": "Token",
@@ -1849,6 +1854,13 @@
     },
     "tokenDetail": {
       "excludeBalanceTipsButton": "เข้าใจแล้ว",
+      "removed": {
+        "restore": "กู้คืนโทเค็นที่ถูกลบ",
+        "restoreFailed": "กู้คืนโทเค็นไม่สำเร็จ",
+        "more": "เพิ่มเติม",
+        "confirmTitle": "ลบโทเค็นนี้หรือไม่?",
+        "confirmDescription": "· โทเค็นนี้จะไม่แสดงในพอร์ตของคุณอีกหลังจากลบ\n· คุณสามารถกู้คืนได้ทุกเมื่อใน การตั้งค่า >> โทเค็นที่ถูกลบ"
+      },
       "excludeBalanceTips": "สินทรัพย์นี้ถูกแยกออกจากยอดรวมของคุณเพื่อความแม่นยำ คุณสามารถแตะเพื่อดูรายละเอียดและเพิ่มเข้าไปได้หากต้องการ",
       "action": {
         "Sell": "ขาย",
@@ -1949,10 +1961,15 @@
       "headerBalanceText": "ยอดเงิน",
       "headerTokenValueText": "ค่าโทเค็น",
       "copyCA": "ที่อยู่สัญญาโทเค็นได้ถูกคัดลอกแล้ว",
+      "copyCAWarning": "นี่คือที่อยู่สัญญาโทเค็น\nไม่สามารถใช้รับสินทรัพย์ได้",
       "wallet": "กระเป๋าสตางค์",
       "customTestnetNotSupported": "ไม่รองรับโทเค็นบนเชนนี้"
     },
     "setting": {
+      "removedToken": {
+        "title": "โทเค็นที่ถูกลบ",
+        "description": "โทเค็นที่ถูกลบจะถูกซ่อนจากพอร์ตของคุณในทุกที่อยู่ แต่ยังคงรวมอยู่ในการคำนวณยอดคงเหลือ"
+      },
       "aboutUs": "เกี่ยวกับเรา",
       "modifyRPCURL": "แก้ไข RPC URL",
       "screenTitle": "การตั้งค่า",
@@ -2552,12 +2569,14 @@
           "positionAmount": "ขนาดโพซิชัน",
           "estimatedPnl": "PnL โดยประมาณ",
           "skipLimitConfirmation": "ไม่ต้องแสดงการยืนยันสองครั้งสำหรับคำสั่ง Limit อีก",
+          "skipMarketCloseConfirmation": "ไม่ต้องแสดงการยืนยันการปิดสถานะด้วยคำสั่ง Market นี้อีก",
           "closeSubmitted": "ส่งคำสั่งปิดแล้ว",
           "closeFailed": "ปิดโพซิชันไม่สำเร็จ",
           "minimumCloseAmount": "จำนวนขั้นต่ำในการปิดคือ $10",
           "closeContextChanged": "โพซิชันหรือบัญชีเปลี่ยนไปแล้ว โปรดตรวจสอบอีกครั้ง"
         },
         "positionTpsl": {
+          "skipConfirmation": "ไม่ต้องแสดงการยืนยัน TP/SL นี้อีก",
           "addButton": "เพิ่ม TP/SL",
           "addTitle": "เพิ่ม TP/SL",
           "cancelFailed": "ยกเลิกคำสั่ง TP/SL ไม่สำเร็จ",
@@ -2568,6 +2587,7 @@
           "duplicatePositionOrders": "มีคำสั่ง TP/SL ของโพซิชันหลายรายการในฝั่งนี้ โปรดยกเลิกทีละรายการหรือรีเฟรชก่อนแก้ไข",
           "estimatedLiquidation": "ราคาชำระบัญชีโดยประมาณ",
           "estimatedPnl": "PnL โดยประมาณ",
+          "estimatedPnlDescription": "PnL โดยประมาณ <2>{{pnl}} {{quoteAsset}}(ROI: {{roi}}%)</2>",
           "estimatedPnlShort": "PnL โดยประมาณ",
           "invalidOrder": "ตรวจสอบราคาและจำนวน TP/SL",
           "invalidTrigger": "ราคาทริกเกอร์ไม่ถูกต้องสำหรับราคา Mark ล่าสุด",
@@ -2750,7 +2770,6 @@
         "sizeTips": "มูลค่าหรือปริมาณรวมของการเทรดของคุณ ซึ่งกำหนดโดยมาร์จิ้นและเลเวอเรจ.",
         "feeTitle": "ค่าธรรมเนียม",
         "feeRabby": "Rabby Wallet",
-        "feeRabbyDiscount": "ส่วนลดค่าธรรมเนียมการเทรดแบบจำกัดเวลา",
         "feeHyperliquid": "Hyperliquid",
         "feeDesc": "เมื่อผู้ใช้ทำการซื้อขาย จะมีทั้ง <1>ค่าธรรมเนียมการซื้อขาย</1> และ <2>ค่าธรรมเนียม Builder</2>",
         "amount": "จำนวน",
@@ -2817,7 +2836,7 @@
       },
       "PerpsDepositCard": {
         "deposit": "ฝากเงิน",
-        "availableToTrade": "พร้อมให้เทรด:",
+        "availableToTrade": "พร้อมใช้งาน:",
         "swap": "สวอป"
       },
       "PerpsAccountSelectorPopup": {
@@ -2891,6 +2910,48 @@
       }
     },
     "perpsDetail": {
+      "simpleAccount": {
+        "margin": "มาร์จิ้น",
+        "averageEntry": "ราคาเข้าเฉลี่ย",
+        "estimatedLiquidationPrice": "ราคาล้างพอร์ตโดยประมาณ",
+        "estimatedLiquidationDistance": "ระยะห่างจากการล้างพอร์ตโดยประมาณ",
+        "tpSl": "TP/SL",
+        "takeProfitPrice": "ราคาทำกำไร",
+        "stopLossPrice": "ราคาหยุดขาดทุน",
+        "estimatedPnl": "PNL โดยประมาณ",
+        "closePositionTitle": "ปิดโพซิชัน {{coin}}",
+        "estimatedRealizedPnl": "PNL ที่เกิดขึ้นจริงโดยประมาณ"
+      },
+      "simpleChart": {
+        "openInterest": "มูลค่าสัญญาคงค้าง",
+        "volume24h": "ปริมาณซื้อขาย 24 ชม.",
+        "intervalTitle": "ช่วงเวลาแท่งเทียน",
+        "intervalDescription": "แท่งเทียนแต่ละแท่งแสดงช่วงเวลาที่เลือก",
+        "minutes": "นาที",
+        "hours": "ชั่วโมง",
+        "days": "วัน",
+        "open": "ราคาเปิด",
+        "low": "ราคาต่ำสุด",
+        "high": "ราคาสูงสุด",
+        "close": "ราคาปิด",
+        "time": "เวลา",
+        "change": "การเปลี่ยนแปลง",
+        "changePercent": "การเปลี่ยนแปลง (%)",
+        "averageEntry": "ราคาเข้าเฉลี่ย",
+        "takeProfit": "ทำกำไร",
+        "stopLoss": "ตัดขาดทุน",
+        "liquidation": "ราคาบังคับปิดสถานะ",
+        "all": "ทั้งหมด",
+        "source": "ให้บริการโดย Hyperliquid กราฟราคาให้บริการโดย <tradingview>TradingView</tradingview>",
+        "resetChart": "รีเซ็ตกราฟ",
+        "backToLatest": "กลับไปยังข้อมูลล่าสุด",
+        "switchToArea": "เปลี่ยนเป็นกราฟพื้นที่",
+        "switchToCandle": "เปลี่ยนเป็นกราฟแท่งเทียน",
+        "showVolume": "แสดงปริมาณซื้อขาย 24 ชั่วโมง",
+        "showOpenInterest": "แสดงมูลค่าสัญญาคงค้าง",
+        "buy": "ซื้อ",
+        "sell": "ขาย"
+      },
       "PerpEditLimitPriceTag": {
         "setLimitBuyPrice": "ตั้งราคา Limit สำหรับซื้อ",
         "setLimitSellPrice": "ตั้งราคา Limit สำหรับขาย",
@@ -3470,7 +3531,8 @@
     "time": {
       "hours": "{{t}} ชั่วโมง",
       "mins": "{{t}} นาที",
-      "hour": "{{t}} ชั่วโมง"
+      "hour": "{{t}} ชั่วโมง",
+      "ago": "{{time}}ที่แล้ว"
     },
     "Cancel": "ยกเลิก",
     "appName": "Rabby Wallet",
@@ -3551,7 +3613,8 @@
     "SavedSeedPhrase": "ฉันได้บันทึก seed phrase เรียบร้อยแล้ว",
     "from": "จาก",
     "to": "ถึง",
-    "copiedSuccessfully": "คัดลอกสำเร็จ"
+    "copiedSuccessfully": "คัดลอกสำเร็จ",
+    "failed": "ล้มเหลว"
   },
   "background": {
     "transactionWatcher": {

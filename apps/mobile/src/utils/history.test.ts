@@ -9,7 +9,7 @@ jest.mock('./chain', () => ({
 
 jest.mock('@/constant/gas-account', () => ({
   GAS_ACCOUNT_RECEIVED_ADDRESS: '0xreceived',
-  GAS_ACCOUNT_WITHDRAWED_ADDRESS: '0xwithdrawn',
+  GAS_ACCOUNT_WITHDRAWED_ADDRESSES: ['0xwithdrawn'],
   L2_DEPOSIT_ADDRESS_MAP: {},
 }));
 

@@ -327,7 +327,7 @@ export const usePerpsProManageMargin = () => {
   const selectTarget = useCallback((value: string) => {
     setUserOwned(true);
     setDirty(true);
-    setDraft(value);
+    setDraft(formatPositionMarginTarget(value) ?? value);
   }, []);
 
   const confirm = useCallback(async () => {

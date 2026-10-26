@@ -44,6 +44,7 @@ import {
 } from '@/utils/clipboard';
 import { Text } from '@/components/Typography';
 import { ensureWalletUnlockedForAction } from '@/utils/walletUnlock';
+import * as SecretVault from '@/core/utils/secretVault';
 
 const getStyles = createGetStyles2024(ctx => ({
   screen: {
@@ -176,8 +177,10 @@ export const ImportSeedPhraseScreen2024 = () => {
                 brandName: KEYRING_CLASS.MNEMONIC,
                 isFirstImport: true,
                 address: [firstAddress?.[0].address],
-                mnemonics: formatMnemonics,
-                passphrase: '',
+                mnemonicsVaultId: SecretVault.storeMnemonicsPayload({
+                  mnemonics: formatMnemonics,
+                  passphrase: '',
+                }),
                 keyringId: keyringId || undefined,
                 isExistedKR,
               },
@@ -189,8 +192,10 @@ export const ImportSeedPhraseScreen2024 = () => {
         showImportMorePopup({
           type: KEYRING_TYPE.HdKeyring,
           brandName: KEYRING_CLASS.MNEMONIC,
-          mnemonics: formatMnemonics,
-          passphrase: '',
+          mnemonicsVaultId: SecretVault.storeMnemonicsPayload({
+            mnemonics: formatMnemonics,
+            passphrase: '',
+          }),
           keyringId: keyringId || undefined,
         });
       })

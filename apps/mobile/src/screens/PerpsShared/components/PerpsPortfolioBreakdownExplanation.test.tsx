@@ -29,7 +29,6 @@ jest.mock('@/hooks/perps/usePerpsPortfolioBreakdown', () => ({
   usePerpsPortfolioBreakdown: () => ({
     breakdownMode: 'unified',
     getBreakdownValues: mockGetBreakdownValues,
-    hasNonPerpsAssets: true,
   }),
 }));
 
@@ -49,14 +48,12 @@ jest.mock('@/utils/styles', () => ({
 }));
 
 const PortfolioBreakdownTrigger = () => {
-  const { hasNonPerpsAssets, showPortfolioBreakdown } =
-    useShowPerpsPortfolioBreakdown();
+  const { showPortfolioBreakdown } = useShowPerpsPortfolioBreakdown();
   return (
     <Pressable
       onPress={() => showPortfolioBreakdown(261.56)}
-      testID="open-portfolio-breakdown">
-      <Text>{String(hasNonPerpsAssets)}</Text>
-    </Pressable>
+      testID="open-portfolio-breakdown"
+    />
   );
 };
 

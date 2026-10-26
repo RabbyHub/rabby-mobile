@@ -1,7 +1,10 @@
 /* eslint-disable react-native/no-inline-styles */
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 
-import { HistoryItemEntity } from '@/databases/entities/historyItem';
+import {
+  HistoryItemEntity,
+  type HistoryPageCursor,
+} from '@/databases/entities/historyItem';
 import {
   getTransactionHistoryLendingSuccessListSnapshot,
   getTransactionHistoryListSnapshot,
@@ -42,7 +45,7 @@ function LendingHistory(): JSX.Element {
   const isTestnet = false;
 
   const isReady = useRef(false);
-  const dbLastCursorRef = useRef<number>(0);
+  const dbLastCursorRef = useRef<HistoryPageCursor | null>(null);
   const dbFetchLoadingRef = useRef<boolean>(false);
   const [dbData, setDbData] = useState<HistoryDisplayItem[]>([]);
 
@@ -92,7 +95,7 @@ function LendingHistory(): JSX.Element {
       nextCursor,
     } = await HistoryItemEntity.getHistoryItemsPaginated(addresses, {
       pageSize: 20,
-      lastTimeAt: dbLastCursorRef.current,
+      cursor: dbLastCursorRef.current,
       filterScamAndSmallTx: false,
       filterLendingHistory: true,
     });
@@ -108,12 +111,12 @@ function LendingHistory(): JSX.Element {
       } as HistoryDisplayItem;
     });
 
-    if (dbLastCursorRef.current === 0) {
+    if (dbLastCursorRef.current === null) {
       setDbData(list);
     } else {
       setDbData(prev => mergeDataWithDeduplication(prev, list, 'back'));
     }
-    dbLastCursorRef.current = nextCursor || 0;
+    dbLastCursorRef.current = nextCursor ?? null;
     dbFetchLoadingRef.current = false;
     setFirstFetchDone(true);
     return { list, hasMore };
@@ -248,7 +251,7 @@ function LendingHistory(): JSX.Element {
   useEffect(() => {
     if (isReady.current) {
       setFirstFetchDone(false);
-      dbLastCursorRef.current = 0;
+      dbLastCursorRef.current = null;
       reloadAsync();
       runFetchLocalTx();
       historyListRef.current?.scrollToTop();

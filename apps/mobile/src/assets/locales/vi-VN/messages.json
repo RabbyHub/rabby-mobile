@@ -71,7 +71,8 @@
     "time": {
       "hour": "{{t}} giờ",
       "hours": "{{t}} giờ",
-      "mins": "{{t}} phút"
+      "mins": "{{t}} phút",
+      "ago": "{{time}} trước"
     },
     "Deleted": "đã xóa",
     "WalletCreated": "Đã tạo Wallet",
@@ -142,7 +143,8 @@
     "SavedSeedPhrase": "Tôi đã lưu cụm từ khôi phục.",
     "from": "Từ",
     "to": "Đến",
-    "copiedSuccessfully": "Sao chép thành công"
+    "copiedSuccessfully": "Sao chép thành công",
+    "failed": "Thất bại"
   },
   "page": {
     "transactions": {
@@ -1241,7 +1243,8 @@
         },
         "scan": {
           "title": "Quét Keystone để kết nối",
-          "description": "Quét mã QR trên ví Keystone của bạn"
+          "description": "Quét mã QR trên ví Keystone của bạn",
+          "invalidQRCode": "Mã QR không hợp lệ. Vui lòng quét mã QR đồng bộ của ví phần cứng."
         }
       },
       "ledger": {
@@ -1498,6 +1501,10 @@
       }
     },
     "singleHome": {
+      "tokenActions": {
+        "remove": "Gỡ bỏ",
+        "removeFailed": "Không thể gỡ bỏ token"
+      },
       "sectionHeader": {
         "Defi": "DeFi",
         "Nft": "NFT",
@@ -1649,6 +1656,10 @@
       "title": "GasAccount"
     },
     "setting": {
+      "removedToken": {
+        "title": "Token đã gỡ bỏ",
+        "description": "Các token đã gỡ bỏ sẽ bị ẩn khỏi danh mục đầu tư trên tất cả các địa chỉ của bạn, nhưng vẫn được tính vào số dư."
+      },
       "aboutUs": "Về Chúng Tôi",
       "themeMode": "Chế độ giao diện",
       "fingerPrint": "Vân tay",
@@ -1689,6 +1700,13 @@
     },
     "tokenDetail": {
       "excludeBalanceTipsButton": "Tôi hiểu rồi",
+      "removed": {
+        "restore": "Khôi phục token đã gỡ bỏ",
+        "restoreFailed": "Không thể khôi phục token",
+        "more": "Thêm",
+        "confirmTitle": "Gỡ bỏ token này?",
+        "confirmDescription": "· Token này sẽ không còn xuất hiện trong danh mục đầu tư của bạn sau khi gỡ bỏ.\n· Bạn có thể khôi phục bất cứ lúc nào trong Cài đặt >> Token đã gỡ bỏ."
+      },
       "action": {
         "less": "Hiển thị ít hơn",
         "Buy": "Mua",
@@ -1789,6 +1807,7 @@
       "headerTokenValueText": "Giá trị Token",
       "headerBalanceText": "Số dư",
       "copyCA": "Địa chỉ hợp đồng Token đã được sao chép",
+      "copyCAWarning": "Đây là địa chỉ hợp đồng Token,\nkhông thể dùng để nhận tài sản.",
       "wallet": "Ví",
       "customTestnetNotSupported": "Token trên chuỗi này không được hỗ trợ"
     },
@@ -2492,12 +2511,14 @@
           "positionAmount": "Khối lượng vị thế",
           "estimatedPnl": "PnL ước tính",
           "skipLimitConfirmation": "Không hiển thị lại xác nhận hai bước cho Lệnh giới hạn",
+          "skipMarketCloseConfirmation": "Không hiển thị lại xác nhận đóng vị thế theo giá thị trường này.",
           "closeSubmitted": "Đã gửi lệnh đóng",
           "closeFailed": "Không thể đóng vị thế",
           "minimumCloseAmount": "Số tiền đóng tối thiểu là 10 USD",
           "closeContextChanged": "Vị thế hoặc tài khoản đã thay đổi. Hãy kiểm tra lại."
         },
         "positionTpsl": {
+          "skipConfirmation": "Không hiển thị lại xác nhận TP/SL này.",
           "addButton": "Thêm TP/SL",
           "addTitle": "Thêm TP/SL",
           "cancelFailed": "Không thể hủy lệnh TP/SL",
@@ -2508,6 +2529,7 @@
           "duplicatePositionOrders": "Có nhiều lệnh TP/SL Vị thế ở phía này. Hãy hủy từng lệnh hoặc làm mới trước khi sửa.",
           "estimatedLiquidation": "Giá thanh lý ước tính",
           "estimatedPnl": "PnL ước tính",
+          "estimatedPnlDescription": "PnL ước tính <2>{{pnl}} {{quoteAsset}}(ROI: {{roi}}%)</2>",
           "estimatedPnlShort": "PnL ước tính",
           "invalidOrder": "Kiểm tra giá và số lượng TP/SL",
           "invalidTrigger": "Giá kích hoạt không hợp lệ với Giá đánh dấu mới nhất",
@@ -2690,7 +2712,6 @@
         "sizeTips": "Giá trị hoặc số lượng tổng thể của giao dịch của bạn, được xác định bởi ký quỹ và đòn bẩy.",
         "feeHyperliquid": "Hyperliquid",
         "feeRabby": "Rabby Wallet",
-        "feeRabbyDiscount": "Giảm phí giao dịch trong thời gian có hạn",
         "feeTitle": "Phí",
         "feeDesc": "Khi người dùng giao dịch, cả <1>phí giao dịch</1> và <2>phí builder</2> đều được áp dụng.",
         "amount": "Số tiền",
@@ -2757,7 +2778,7 @@
       },
       "PerpsDepositCard": {
         "deposit": "Nạp tiền",
-        "availableToTrade": "Có sẵn để giao dịch:",
+        "availableToTrade": "Khả dụng:",
         "swap": "Đổi"
       },
       "PerpsAccountSelectorPopup": {
@@ -2831,6 +2852,48 @@
       }
     },
     "perpsDetail": {
+      "simpleAccount": {
+        "margin": "Ký quỹ",
+        "averageEntry": "Giá vào trung bình",
+        "estimatedLiquidationPrice": "Giá thanh lý ước tính",
+        "estimatedLiquidationDistance": "Khoảng cách thanh lý ước tính",
+        "tpSl": "TP/SL",
+        "takeProfitPrice": "Giá chốt lời",
+        "stopLossPrice": "Giá cắt lỗ",
+        "estimatedPnl": "PNL ước tính",
+        "closePositionTitle": "Đóng vị thế {{coin}}",
+        "estimatedRealizedPnl": "PNL đã thực hiện ước tính"
+      },
+      "simpleChart": {
+        "openInterest": "Hợp đồng mở",
+        "volume24h": "Khối lượng 24 giờ",
+        "intervalTitle": "Khung thời gian nến",
+        "intervalDescription": "Mỗi nến biểu thị khoảng thời gian đã chọn.",
+        "minutes": "Phút",
+        "hours": "Giờ",
+        "days": "Ngày",
+        "open": "Giá mở cửa",
+        "low": "Giá thấp nhất",
+        "high": "Giá cao nhất",
+        "close": "Giá đóng cửa",
+        "time": "Thời gian",
+        "change": "Biến động",
+        "changePercent": "Biến động (%)",
+        "averageEntry": "Giá vào lệnh TB",
+        "takeProfit": "Chốt lời",
+        "stopLoss": "Cắt lỗ",
+        "liquidation": "Giá thanh lý",
+        "all": "TẤT CẢ",
+        "source": "Được hỗ trợ bởi Hyperliquid. Biểu đồ giá do <tradingview>TradingView</tradingview> cung cấp.",
+        "resetChart": "Đặt lại biểu đồ",
+        "backToLatest": "Về dữ liệu mới nhất",
+        "switchToArea": "Chuyển sang biểu đồ vùng",
+        "switchToCandle": "Chuyển sang biểu đồ nến",
+        "showVolume": "Hiển thị khối lượng 24 giờ",
+        "showOpenInterest": "Hiển thị hợp đồng mở",
+        "buy": "Mua",
+        "sell": "Bán"
+      },
       "PerpEditLimitPriceTag": {
         "setLimitBuyPrice": "Đặt Giá Mua Giới Hạn",
         "setLimitSellPrice": "Đặt Giá Bán Giới Hạn",

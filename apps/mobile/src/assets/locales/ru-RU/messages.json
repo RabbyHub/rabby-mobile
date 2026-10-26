@@ -70,7 +70,8 @@
     "time": {
       "hours": "{{t}} часов",
       "hour": "{{t}} час",
-      "mins": "{{t}} минут"
+      "mins": "{{t}} минут",
+      "ago": "{{time}} назад"
     },
     "appDescription": "Ваш основной кошелёк для Ethereum и EVM-сетей",
     "Deleted": "Удалено",
@@ -142,7 +143,8 @@
     "SavedSeedPhrase": "Я сохранил сид-фразу",
     "from": "От",
     "to": "Кому",
-    "copiedSuccessfully": "Успешно скопировано"
+    "copiedSuccessfully": "Успешно скопировано",
+    "failed": "Не удалось"
   },
   "page": {
     "getStart": {
@@ -1157,7 +1159,8 @@
         },
         "scan": {
           "title": "Сканируйте Keystone для подключения",
-          "description": "Отсканируйте QR-код на вашем кошельке Keystone"
+          "description": "Отсканируйте QR-код на вашем кошельке Keystone",
+          "invalidQRCode": "Недействительный QR-код. Отсканируйте QR-код синхронизации аппаратного кошелька."
         }
       },
       "privateKey": {
@@ -1595,6 +1598,10 @@
       "title": "Подтверждения"
     },
     "singleHome": {
+      "tokenActions": {
+        "remove": "Удалить",
+        "removeFailed": "Не удалось удалить токен"
+      },
       "sectionHeader": {
         "Nft": "NFT",
         "Token": "Токен",
@@ -1700,6 +1707,10 @@
       }
     },
     "setting": {
+      "removedToken": {
+        "title": "Удалённые токены",
+        "description": "Удалённые токены будут скрыты из вашего Портфолио для всех ваших адресов, но по-прежнему будут учитываться при расчёте баланса."
+      },
       "themeMode": "Режим темы",
       "followUs": "Подписывайтесь на нас",
       "tou": "Условия использования",
@@ -1827,6 +1838,13 @@
       "title": "GasAccount"
     },
     "tokenDetail": {
+      "removed": {
+        "restore": "Восстановить удалённый токен",
+        "restoreFailed": "Не удалось восстановить токен",
+        "more": "Больше",
+        "confirmTitle": "Удалить этот токен?",
+        "confirmDescription": "· После удаления этот токен больше не будет отображаться в вашем Портфолио.\n· Вы можете восстановить его в любое время в разделе Настройки >> Удалённые токены."
+      },
       "excludeBalanceTipsButton": "Понятно",
       "excludeBalanceTips": "Этот актив исключен из вашего общего баланса для точности. Вы можете нажать на него, чтобы просмотреть детали и включить его, если хотите.",
       "action": {
@@ -1928,6 +1946,7 @@
       "headerTokenValueText": "Значение токена",
       "headerBalanceText": "Баланс",
       "copyCA": "Адрес контракта токена скопирован",
+      "copyCAWarning": "Это адрес контракта токена.\nЕго нельзя использовать для получения активов.",
       "wallet": "Кошелёк",
       "customTestnetNotSupported": "Токен в этой сети не поддерживается"
     },
@@ -2492,12 +2511,14 @@
           "positionAmount": "Объём позиции",
           "estimatedPnl": "Расчётный PnL",
           "skipLimitConfirmation": "Больше не показывать двойное подтверждение для лимитного ордера.",
+          "skipMarketCloseConfirmation": "Больше не показывать это подтверждение закрытия позиции по рынку.",
           "closeSubmitted": "Ордер на закрытие отправлен",
           "closeFailed": "Не удалось закрыть позицию",
           "minimumCloseAmount": "Минимальная сумма закрытия — $10",
           "closeContextChanged": "Позиция или аккаунт изменились. Проверьте ещё раз."
         },
         "positionTpsl": {
+          "skipConfirmation": "Больше не показывать это подтверждение TP/SL.",
           "addButton": "Добавить TP/SL",
           "addTitle": "Добавить TP/SL",
           "cancelFailed": "Не удалось отменить ордер TP/SL",
@@ -2508,6 +2529,7 @@
           "duplicatePositionOrders": "На этой стороне существует несколько ордеров TP/SL позиции. Отмените их по отдельности или обновите данные перед изменением.",
           "estimatedLiquidation": "Расчётная цена ликвидации",
           "estimatedPnl": "Расчётный PnL",
+          "estimatedPnlDescription": "Расчётный PnL <2>{{pnl}} {{quoteAsset}}(ROI: {{roi}}%)</2>",
           "estimatedPnlShort": "Расчётный PnL",
           "invalidOrder": "Проверьте цену и объём TP/SL",
           "invalidTrigger": "Цена срабатывания недействительна для последней цены маркировки",
@@ -2691,7 +2713,6 @@
         "feeHyperliquid": "Hyperliquid",
         "feeTitle": "Комиссия",
         "feeRabby": "Rabby Wallet",
-        "feeRabbyDiscount": "Ограниченная по времени скидка на торговую комиссию",
         "feeDesc": "При совершении сделок взимаются <1>торговая комиссия</1> и <2>комиссия билдера</2>.",
         "amount": "Сумма",
         "asset": "Актив",
@@ -2757,7 +2778,7 @@
       },
       "PerpsDepositCard": {
         "deposit": "Депозит",
-        "availableToTrade": "Доступно для торговли:",
+        "availableToTrade": "Доступно:",
         "swap": "Обмен"
       },
       "PerpsAccountSelectorPopup": {
@@ -2833,6 +2854,48 @@
       }
     },
     "perpsDetail": {
+      "simpleAccount": {
+        "margin": "Маржа",
+        "averageEntry": "Средняя цена входа",
+        "estimatedLiquidationPrice": "Расч. цена ликв.",
+        "estimatedLiquidationDistance": "Расч. расстояние до ликв.",
+        "tpSl": "TP/SL",
+        "takeProfitPrice": "Цена тейк-профита",
+        "stopLossPrice": "Цена стоп-лосса",
+        "estimatedPnl": "Расч. PnL",
+        "closePositionTitle": "Закрыть позицию {{coin}}",
+        "estimatedRealizedPnl": "Расч. реализованный PnL"
+      },
+      "simpleChart": {
+        "openInterest": "Открытый интерес",
+        "volume24h": "Объём за 24 ч",
+        "intervalTitle": "Интервал свечей",
+        "intervalDescription": "Каждая свеча соответствует выбранному интервалу.",
+        "minutes": "Минуты",
+        "hours": "Часы",
+        "days": "Дни",
+        "open": "Открытие",
+        "low": "Минимум",
+        "high": "Максимум",
+        "close": "Закрытие",
+        "time": "Время",
+        "change": "Изменение",
+        "changePercent": "Изменение (%)",
+        "averageEntry": "Ср. цена входа",
+        "takeProfit": "Тейк-профит",
+        "stopLoss": "Стоп-лосс",
+        "liquidation": "Цена ликвидации",
+        "all": "ВСЁ",
+        "source": "Работает на базе Hyperliquid. График цены предоставлен <tradingview>TradingView.</tradingview>",
+        "resetChart": "Сбросить график",
+        "backToLatest": "К последним данным",
+        "switchToArea": "Переключить на график с областями",
+        "switchToCandle": "Переключить на свечной график",
+        "showVolume": "Показать объём за 24 часа",
+        "showOpenInterest": "Показать открытый интерес",
+        "buy": "Покупка",
+        "sell": "Продажа"
+      },
       "PerpEditLimitPriceTag": {
         "setLimitBuyPrice": "Установить лимитную цену покупки",
         "setLimitSellPrice": "Установить лимитную цену продажи",

@@ -37,8 +37,6 @@ const { usePerpsProInfoPanel } =
   require('./usePerpsProInfoPanel') as typeof import('./usePerpsProInfoPanel');
 const { usePerpsPortfolioLiveValue } =
   require('@/hooks/perps/usePerpsPortfolioLiveValue') as typeof import('@/hooks/perps/usePerpsPortfolioLiveValue');
-const { usePerpsPortfolioBreakdown } =
-  require('@/hooks/perps/usePerpsPortfolioBreakdown') as typeof import('@/hooks/perps/usePerpsPortfolioBreakdown');
 
 const initialState = perpsStore.getState();
 const spotMeta: SpotMeta = {
@@ -439,7 +437,7 @@ describe('Perps Pro account price publication integration', () => {
     expect(stakingRequests()).toHaveLength(1);
   });
 
-  it('keeps a staking-only portfolio unresolved until HYPE is priced and exposes its breakdown', async () => {
+  it('keeps a staking-only portfolio unresolved until HYPE is priced', async () => {
     perpsStore.setState({
       spotState: spotState('100', '0'),
       spotAssetCtxs: {},
@@ -457,10 +455,7 @@ describe('Perps Pro account price publication integration', () => {
     expect(value.result.current).toBe(300);
     expect(latest.accountState).toBe('ready');
     act(() => perpsStore.setState({ spotState: spotState('0', '0') }));
-    const breakdown = renderHook(() => usePerpsPortfolioBreakdown());
-    expect(breakdown.result.current.hasNonPerpsAssets).toBe(true);
     act(() => perpsStore.setState({ stakingSummary: null }));
-    expect(breakdown.result.current.hasNonPerpsAssets).toBe(false);
     expect(value.result.current).toBe(0);
   });
 });

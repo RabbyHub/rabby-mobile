@@ -244,6 +244,11 @@ describe('positionMargin', () => {
   });
 
   it('keeps targets on two decimals and signed deltas on six decimals', () => {
+    expect(
+      ['12', '12.09', '12.10', '12.11', '10.00', '0.1'].map(value =>
+        formatPositionMarginTarget(value),
+      ),
+    ).toEqual(['12.00', '12.09', '12.10', '12.11', '10.00', '0.10']);
     expect(formatPositionMarginTarget('1.239')).toBe('1.24');
     expect(
       calculatePositionMarginDelta({

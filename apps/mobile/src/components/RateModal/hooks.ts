@@ -25,6 +25,7 @@ import { runStartupTask } from '@/core/utils/startupScheduler';
 import { useShallow } from 'zustand/react/shallow';
 import { zCreate } from '@/core/utils/reexports';
 import { perfEvents } from '@/core/utils/perf';
+import { markRateGuideViewed } from './rateGuideState';
 
 const TX_COUNT_LIMIT = isNonPublicProductionEnv ? 1 : 3; // Minimum number of transactions before showing the rate guide
 const STAR_COUNT = 5;
@@ -172,12 +173,7 @@ export function useIncreaseTxCountOnAppTop({
 }
 
 const disableExposureRateGuide = () => {
-  setRateGuideLastExposure(prev => ({
-    ...getDefaultRateGuideLastExposure({
-      time: prev[VERSIONED_KEY]?.time,
-      userViewedRate: true,
-    }),
-  }));
+  setRateGuideLastExposure(prev => markRateGuideViewed(prev));
   setRateModalState(getDefaultValue());
 };
 

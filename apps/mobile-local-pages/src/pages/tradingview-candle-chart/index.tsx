@@ -1,4 +1,5 @@
 import '../../imports';
+import { createSimpleChart } from './perps-simple';
 
 import {
   createChart as LcCreateChart,
@@ -56,9 +57,9 @@ import {
   createPerpsProFontFaceCss,
   LIGHTWEIGHT_CHARTS_DEFAULT_FONT_FAMILY,
   PERPS_PRO_FONT_FACE_FAMILY,
-  PERPS_PRO_FONT_FAMILY,
   PERPS_PRO_FONT_STYLE_ELEMENT_ID,
   resolvePerpsProFontAssetUrls,
+  resolvePerpsProFontFamily,
 } from './perps-pro-font';
 import { ThemeColors2024 } from '@rabby-wallet/base-utils/src/isomorphic/theme-colors';
 
@@ -254,6 +255,8 @@ chartState.colors = { ...getChartColors() };
 chartState.description = { ...defaultDescription };
 
 const PERPS_PRO_KLINE_PROTOCOL_VERSION = 3;
+const PERPS_SIMPLE_KLINE_PROTOCOL_VERSION = 5;
+let simpleChart: ReturnType<typeof createSimpleChart> | null = null;
 const candleByTime = new Map<number, TradingViewCandlestickData>();
 const movingAverageByTime: Record<7 | 25 | 99, Map<number, number>> = {
   7: new Map(),
@@ -541,7 +544,7 @@ function ensurePerpsProFontsLoaded() {
     // Canvas labels can be measured before the async font load finishes.
     // Re-applying the same layout family invalidates them exactly once.
     chartState.chart.applyOptions({
-      layout: { fontFamily: PERPS_PRO_FONT_FAMILY },
+      layout: { fontFamily: resolvePerpsProFontFamily(getRuntimeInfo()) },
     });
   });
 }
@@ -556,11 +559,12 @@ function applyPerpsProFontMode(enabled: boolean) {
 
   if (enabled) {
     ensurePerpsProFontsLoaded();
+    const fontFamily = resolvePerpsProFontFamily(getRuntimeInfo());
     proDomElements.forEach(element => {
-      element.style.fontFamily = PERPS_PRO_FONT_FAMILY;
+      element.style.fontFamily = fontFamily;
       element.style.fontVariantNumeric = 'tabular-nums';
     });
-    emptyText.style.fontFamily = PERPS_PRO_FONT_FAMILY;
+    emptyText.style.fontFamily = fontFamily;
     return;
   }
 
@@ -973,7 +977,7 @@ function createProTooltipRow(
     isLast ? '' : 'margin-bottom:2px;'
   }"><span style="color:${
     chartState.colors?.tooltip.title
-  };min-width:0;overflow-wrap:anywhere;">${label}:</span><span style="color:${valueColor};min-width:0;flex-shrink:1;font-weight:600;text-align:right;overflow-wrap:anywhere;">${value}</span></div>`;
+  };min-width:0;overflow-wrap:anywhere;">${label}:</span><span style="color:${valueColor};min-width:0;flex-shrink:1;font-weight:700;text-align:right;overflow-wrap:anywhere;">${value}</span></div>`;
 }
 
 function renderPerpsProTooltip(candle: CandleStick, pointX: number) {
@@ -1622,6 +1626,7 @@ function createChart() {
       candleDataAppliedAck: true,
       olderCandleRequest: true,
       perpsProKlineProtocolVersion: PERPS_PRO_KLINE_PROTOCOL_VERSION,
+      perpsSimpleKlineProtocolVersion: PERPS_SIMPLE_KLINE_PROTOCOL_VERSION,
     },
   });
 }
@@ -1632,7 +1637,7 @@ function applyPerpsProChartOptions(config: PerpsProChartConfig) {
   }
   chartState.chart.applyOptions({
     layout: {
-      fontFamily: PERPS_PRO_FONT_FAMILY,
+      fontFamily: resolvePerpsProFontFamily(getRuntimeInfo()),
     },
     crosshair: {
       mode: CrosshairMode.Normal,
@@ -1957,20 +1962,39 @@ function handleSetCandlestickData(
         // allow one more request so RN can confirm the official boundary.
         lastOlderCandlesRequestKey = null;
       }
-      chartState.chart
-        .timeScale()
-        .setVisibleLogicalRange(
-          previousVisibleRange
-            ? shiftLogicalRangeForPrependedCandles(
-                previousVisibleRange,
-                prependedCount,
-              )
-            : getInitialVisibleLogicalRange(
-                message.data.length,
-                chartState.proConfig.initialVisibleBars,
-              ),
-        );
-      publishPerpsProPriceScaleAutoScale();
+      const nextRange = previousVisibleRange
+        ? shiftLogicalRangeForPrependedCandles(
+            previousVisibleRange,
+            prependedCount,
+          )
+        : getInitialVisibleLogicalRange(
+            message.data.length,
+            chartState.proConfig.initialVisibleBars,
+          );
+      const applyNextRange = () => {
+        if (
+          !chartState.chart ||
+          chartState.currentDataIdentity !== message.identity
+        ) {
+          return;
+        }
+        isApplyingVisibleLogicalRange = true;
+        try {
+          chartState.chart.timeScale().setVisibleLogicalRange(nextRange);
+        } finally {
+          isApplyingVisibleLogicalRange = false;
+        }
+        publishPerpsProPriceScaleAutoScale();
+      };
+      applyNextRange();
+      // `setData` updates the series/time-scale points asynchronously. In
+      // newArch/iOS the synchronous range call can land before that update;
+      // the series then keeps the old bar spacing and leaves the new candles
+      // stuck at the left edge. Re-apply once the data/layout has settled.
+      window.requestAnimationFrame(() => {
+        applyNextRange();
+        window.requestAnimationFrame(applyNextRange);
+      });
     } else if (message.fitContent) {
       chartState.chart.timeScale().fitContent();
     }
@@ -2093,6 +2117,69 @@ function handleUpdateTheme(colors: ChartColors, description: ChartDescription) {
 // Handle messages from RN
 function handleMessage(event: CustomEvent) {
   const message = event.detail as DuplexReceive;
+  if (
+    message.type === 'TRADINGVIEW_MESSAGE' &&
+    message.data.type === 'PERPS_SIMPLE_CHART'
+  ) {
+    if (!simpleChart) {
+      if (
+        message.data.action !== 'configure' &&
+        message.data.action !== 'replace'
+      )
+        return;
+      chartState.chart?.remove();
+      chartState.chart = null;
+      chartState.candlestickSeries = null;
+      containerEl.replaceChildren();
+      simpleChart = createSimpleChart(containerEl, postMessageToRN);
+      containerEl.append(loadingOverlay, emptyOverlay);
+      ensurePerpsProFontsLoaded();
+      void perpsProFontLoadPromise?.then(() => simpleChart?.refreshFonts());
+    }
+    if (!simpleChart.handle(message.data)) return;
+    if (
+      message.data.action === 'configure' ||
+      message.data.action === 'replace'
+    ) {
+      const { colors, labels } = message.data.config;
+      containerEl.style.background = colors.background;
+      updateLoadingSkeletonTheme({
+        ...(chartState.colors || getChartColors()),
+        background: colors.background,
+        border: colors.grid,
+      });
+      updateEmptyStateTheme(
+        {
+          ...(chartState.colors || getChartColors()),
+          background: colors.background,
+          secondaryText: colors.secondary,
+        },
+        {
+          ...(chartState.description || defaultDescription),
+          empty: labels.empty,
+        },
+      );
+    }
+    if (message.data.action === 'replace') {
+      setOverlayState(message.data.candles.length ? 'hidden' : 'empty');
+    } else if (message.data.action === 'data') {
+      setOverlayState(
+        message.data.candles.length
+          ? 'hidden'
+          : message.data.state === 'empty'
+          ? 'empty'
+          : 'hidden',
+      );
+    } else if (message.data.action === 'update') setOverlayState('hidden');
+    return;
+  }
+  if (simpleChart) {
+    if (message.type === 'GOT_RUNTIME_INFO') {
+      ensurePerpsProFontsLoaded();
+      void perpsProFontLoadPromise?.then(() => simpleChart?.refreshFonts());
+    }
+    return;
+  }
 
   switch (message.type) {
     case 'GOT_RUNTIME_INFO': {
@@ -2125,7 +2212,10 @@ function handleMessage(event: CustomEvent) {
       };
       handleUpdateTheme(colors, description);
       if (chartState.proConfig) {
-        ensurePerpsProFontsLoaded();
+        applyPerpsProFontMode(true);
+        chartState.chart?.applyOptions({
+          layout: { fontFamily: resolvePerpsProFontFamily(getRuntimeInfo()) },
+        });
       }
       break;
     }
@@ -2241,6 +2331,7 @@ function init() {
 // Cleanup on page unload
 window.addEventListener('beforeunload', () => {
   isPageUnloading = true;
+  simpleChart?.destroy();
   cancelPendingPerpsProCrosshairMarker();
   if (visibleLogicalRangeFrameId != null) {
     window.cancelAnimationFrame(visibleLogicalRangeFrameId);

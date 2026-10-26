@@ -1,3 +1,4 @@
+import { formatPositionTpSlSignedValue } from '../../utils/positionTpSlFormatting';
 import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
 import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
@@ -6,12 +7,18 @@ import BigNumber from 'bignumber.js';
 import React, { useMemo } from 'react';
 import { Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import {
+  PERPS_PRO_DIALOG_TOKENS,
+  resolvePerpsProDialogCardBackground,
+} from '../common/perpsProDialogVisual';
 import { PerpsProDottedUnderlineText } from '../common/PerpsProDottedUnderlineText';
+import { PerpsProPositionTpSlCancelAction } from './PerpsProPositionTpSlCancelAction';
 
 import type { PerpsPositionViewModel } from '../../model/position';
 import {
   calculatePartialTpSlCoverage,
   calculatePositionTpSlEstimatedPnl,
+  getPositionTpSlValueTone,
   sortPartialPositionTpSlOrders,
   type PerpsPositionTpSlKind,
   type PerpsPositionTpSlMarketSnapshot,
@@ -22,10 +29,10 @@ import {
   formatPerpsProDecimal,
   formatPerpsProPercent,
   formatPerpsProPrice,
-  formatPerpsProSignedDecimal,
 } from '../../utils/format';
 
 export const PerpsProPositionTpSlOrderList: React.FC<{
+  scope?: 'partial' | 'position';
   amountUnit: PerpsProTradeAmountUnit;
   cancelingOids: readonly number[];
   markPrice: string | null;
@@ -38,6 +45,7 @@ export const PerpsProPositionTpSlOrderList: React.FC<{
   position: PerpsPositionViewModel;
 }> = React.memo(
   ({
+    scope = 'partial',
     amountUnit,
     cancelingOids,
     markPrice,
@@ -53,36 +61,45 @@ export const PerpsProPositionTpSlOrderList: React.FC<{
     const { t } = useTranslation();
     const orders = useMemo(
       () =>
-        sortPartialPositionTpSlOrders(position.tpslOrders, position.direction),
-      [position.direction, position.tpslOrders],
+        scope === 'partial'
+          ? sortPartialPositionTpSlOrders(
+              position.tpslOrders,
+              position.direction,
+            )
+          : position.tpslOrders.filter(order => order.scope === 'position'),
+      [position.direction, position.tpslOrders, scope],
+    );
+
+    const groups = useMemo(
+      () =>
+        (['takeProfit', 'stopLoss'] as const)
+          .map(kind => {
+            const group = orders.filter(order => order.kind === kind);
+            return {
+              kind,
+              group,
+              coverage:
+                scope === 'partial'
+                  ? calculatePartialTpSlCoverage(group, position.baseSize)
+                  : null,
+            };
+          })
+          .filter(({ group }) => scope === 'position' || group.length > 0),
+      [orders, position.baseSize, scope],
     );
 
     return (
-      <View style={styles.list}>
-        <View style={styles.addRow}>
-          <Pressable
-            accessibilityRole="button"
-            disabled={pending}
-            onPress={onAdd}
-            style={styles.addButton}
-            testID="perps-pro-position-tpsl-add">
-            <Text style={styles.addButtonText}>
-              {t('page.perps.pro.positionTpsl.addButton')}
-            </Text>
-          </Pressable>
-        </View>
+      <View
+        style={[
+          styles.list,
+          scope === 'position' ? styles.positionList : null,
+        ]}>
         <View style={styles.groups}>
-          {(['takeProfit', 'stopLoss'] as const).map(kind => {
-            const group = orders.filter(order => order.kind === kind);
-            if (group.length === 0) {
-              return null;
-            }
-            const coverage = calculatePartialTpSlCoverage(
-              group,
-              position.baseSize,
-            );
+          {groups.map(({ kind, group, coverage }, index) => {
             return (
-              <View key={kind} style={styles.group}>
+              <View
+                key={kind}
+                style={index < groups.length - 1 ? styles.dividedGroup : null}>
                 <View style={styles.groupHeading}>
                   <View style={styles.groupTitle}>
                     <View
@@ -100,35 +117,51 @@ export const PerpsProPositionTpSlOrderList: React.FC<{
                       )}
                     </Text>
                   </View>
-                  <Text style={styles.coverage}>
-                    {t('page.perps.pro.positionTpsl.positionSizeCoverage', {
-                      percent: formatPerpsProPercent(
-                        coverage == null ? null : Number(coverage),
-                        2,
-                        false,
-                      ),
-                    })}
-                  </Text>
+                  {scope === 'partial' ? (
+                    <Text style={styles.coverage}>
+                      {t('page.perps.pro.positionTpsl.positionSizeCoverage', {
+                        percent: formatPerpsProPercent(
+                          coverage == null ? null : Number(coverage),
+                          2,
+                          false,
+                        ),
+                      })}
+                    </Text>
+                  ) : null}
                 </View>
                 <View style={styles.orderRows}>
-                  {group.map(order => (
-                    <PartialOrderRow
-                      amountUnit={amountUnit}
-                      canceling={cancelingOids.includes(order.oid)}
-                      key={order.key}
-                      kind={kind}
-                      markPrice={markPrice}
-                      market={market}
-                      onCancel={() => onCancelOrder(order)}
-                      onModify={() => onModify(order)}
-                      onOpenEstimatedPnlExplanation={
-                        onOpenEstimatedPnlExplanation
-                      }
-                      order={order}
-                      pending={pending}
-                      position={position}
-                    />
-                  ))}
+                  {group.length === 0 ? (
+                    <Pressable
+                      accessibilityRole="button"
+                      disabled={pending}
+                      onPress={onAdd}
+                      style={styles.orderAction}
+                      testID={`perps-pro-position-tpsl-add-${kind}`}>
+                      <Text style={styles.orderActionText}>
+                        {t('global.addButton')}
+                      </Text>
+                    </Pressable>
+                  ) : (
+                    group.map(order => (
+                      <OrderRow
+                        scope={scope}
+                        amountUnit={amountUnit}
+                        canceling={cancelingOids.includes(order.oid)}
+                        key={order.key}
+                        kind={kind}
+                        markPrice={markPrice}
+                        market={market}
+                        onCancel={() => onCancelOrder(order)}
+                        onModify={() => onModify(order)}
+                        onOpenEstimatedPnlExplanation={
+                          onOpenEstimatedPnlExplanation
+                        }
+                        order={order}
+                        pending={pending}
+                        position={position}
+                      />
+                    ))
+                  )}
                 </View>
               </View>
             );
@@ -141,7 +174,30 @@ export const PerpsProPositionTpSlOrderList: React.FC<{
 
 PerpsProPositionTpSlOrderList.displayName = 'PerpsProPositionTpSlOrderList';
 
-const PartialOrderRow: React.FC<{
+export const PerpsProPositionTpSlAddRow: React.FC<{
+  pending: boolean;
+  onAdd: () => void;
+}> = ({ pending, onAdd }) => {
+  const { styles } = useTheme2024({ getStyle });
+  const { t } = useTranslation();
+  return (
+    <View style={styles.addRow} testID="perps-pro-position-tpsl-add-row">
+      <Pressable
+        accessibilityRole="button"
+        disabled={pending}
+        onPress={onAdd}
+        style={styles.addButton}
+        testID="perps-pro-position-tpsl-add">
+        <Text style={styles.addButtonText}>
+          {t('page.perps.pro.positionTpsl.addButton')}
+        </Text>
+      </Pressable>
+    </View>
+  );
+};
+
+const OrderRow: React.FC<{
+  scope: 'partial' | 'position';
   amountUnit: PerpsProTradeAmountUnit;
   canceling: boolean;
   kind: PerpsPositionTpSlKind;
@@ -154,6 +210,7 @@ const PartialOrderRow: React.FC<{
   pending: boolean;
   position: PerpsPositionViewModel;
 }> = ({
+  scope,
   amountUnit,
   canceling,
   kind,
@@ -185,7 +242,7 @@ const PartialOrderRow: React.FC<{
   const pnl = calculatePositionTpSlEstimatedPnl({
     direction: position.direction,
     entryPrice: position.entryPrice,
-    size: order.remainingSize,
+    size: scope === 'position' ? position.baseSize : order.remainingSize,
     triggerPrice: order.triggerPrice,
   });
 
@@ -208,7 +265,7 @@ const PartialOrderRow: React.FC<{
       </View>
       <View style={styles.orderMetrics}>
         <OrderMetric
-          flex={128}
+          flex={1}
           label={
             <PerpsProDottedUnderlineText
               accessibilityLabel={estimatedPnlLabel}
@@ -217,25 +274,29 @@ const PartialOrderRow: React.FC<{
               {estimatedPnlLabel}
             </PerpsProDottedUnderlineText>
           }
-          tone={kind === 'takeProfit' ? 'positive' : 'negative'}
-          value={pnl == null ? '-' : formatPerpsProSignedDecimal(pnl, 2)}
+          tone={getPositionTpSlValueTone(pnl)}
+          value={pnl == null ? '-' : formatPositionTpSlSignedValue(pnl)}
         />
         <OrderMetric
-          flex={116}
+          flex={1}
           label={t('page.perps.pro.positions.price')}
           value={t('page.perps.pro.positions.market')}
         />
         <OrderMetric
-          flex={103}
+          flex={1}
           label={`${t(
             'page.perps.pro.positionTpsl.unfilledAmount',
           )} (${amountAsset})`}
           textAlign="right"
           testID={`perps-pro-position-tpsl-order-${order.oid}-unfilled`}
-          value={`${formatPerpsProDecimal(
-            displayAmount,
-            amountUnit === 'base' ? market.szDecimals : 2,
-          )}(${formatPerpsProPercent(Number(coverage), 2, false)})`}
+          value={
+            scope === 'position'
+              ? t('page.perps.pro.marketSelector.all')
+              : `${formatPerpsProDecimal(
+                  displayAmount,
+                  amountUnit === 'base' ? market.szDecimals : 2,
+                )}(${formatPerpsProPercent(Number(coverage), 2, false)})`
+          }
         />
       </View>
       <View style={styles.orderActions}>
@@ -243,18 +304,19 @@ const PartialOrderRow: React.FC<{
           accessibilityRole="button"
           disabled={pending || canceling}
           onPress={onModify}
-          style={styles.orderAction}>
+          style={[styles.orderAction, styles.halfAction]}>
           <Text style={styles.orderActionText}>
             {t('page.perps.pro.positionTpsl.modify')}
           </Text>
         </Pressable>
-        <Pressable
-          accessibilityRole="button"
-          disabled={pending || canceling}
+        <PerpsProPositionTpSlCancelAction
+          disabled={pending}
+          loading={canceling}
+          label={t('global.cancel')}
           onPress={onCancel}
-          style={styles.orderAction}>
-          <Text style={styles.orderActionText}>{t('global.cancel')}</Text>
-        </Pressable>
+          style={[styles.orderAction, styles.halfAction]}
+          textStyle={styles.orderActionText}
+        />
       </View>
     </View>
   );
@@ -307,26 +369,43 @@ const OrderMetric: React.FC<{
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
-  list: { paddingBottom: 40, paddingHorizontal: 16 },
-  addRow: { alignItems: 'flex-end', height: 42, paddingTop: 8 },
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
+  list: {
+    padding: 16,
+    paddingTop: 0,
+    borderBottomLeftRadius: 12,
+    borderBottomRightRadius: 12,
+    backgroundColor: resolvePerpsProDialogCardBackground(colors2024, isLight),
+  },
+  positionList: { paddingTop: 16 },
+  addRow: {
+    alignItems: 'flex-end',
+    height: 50,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    backgroundColor: resolvePerpsProDialogCardBackground(colors2024, isLight),
+  },
   addButton: {
     alignItems: 'center',
-    backgroundColor: colors2024['neutral-bg-2'],
+    backgroundColor: PERPS_PRO_DIALOG_TOKENS.selectedBackground,
     borderRadius: 6,
     height: 26,
     justifyContent: 'center',
     paddingHorizontal: 6,
   },
   addButtonText: {
-    color: colors2024['neutral-title-1'],
+    color: PERPS_PRO_DIALOG_TOKENS.actionBackground,
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     fontWeight: '500',
     lineHeight: 18,
   },
-  groups: { gap: 24, paddingTop: 8 },
-  group: {},
+  groups: { gap: 16 },
+  dividedGroup: {
+    borderBottomWidth: 1,
+    borderBottomColor: colors2024['neutral-line'],
+    paddingBottom: 16,
+  },
   groupHeading: {
     alignItems: 'center',
     flexDirection: 'row',
@@ -337,13 +416,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   takeProfitBar: {
     backgroundColor: colors2024['green-default'],
     borderRadius: 2,
-    height: 18,
+    height: 14,
     width: 4,
   },
   stopLossBar: {
     backgroundColor: colors2024['red-default'],
     borderRadius: 2,
-    height: 18,
+    height: 14,
     width: 4,
   },
   groupTitleText: {
@@ -364,12 +443,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontSize: 12,
     lineHeight: 16,
   },
-  orderRows: { gap: 12, paddingTop: 12 },
-  orderRow: {
-    borderBottomColor: colors2024['neutral-bg-5'],
-    borderBottomWidth: 1,
-    paddingBottom: 12,
-  },
+  orderRows: { gap: 10, paddingTop: 10 },
+  orderRow: {},
   triggerRow: {
     alignItems: 'center',
     flexDirection: 'row',
@@ -459,13 +534,14 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontWeight: '500',
     lineHeight: 18,
   },
+  halfAction: { flex: 1 },
   orderActions: { flexDirection: 'row', gap: 12, marginTop: 8 },
   orderAction: {
     alignItems: 'center',
-    backgroundColor: colors2024['neutral-bg-2'],
+    backgroundColor:
+      colors2024[isLight === false ? 'neutral-bg-5' : 'neutral-bg-2'],
     borderRadius: 6,
-    flex: 1,
-    height: 26,
+    height: 32,
     justifyContent: 'center',
   },
   orderActionText: {

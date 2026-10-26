@@ -247,7 +247,7 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   title: {
     fontSize: 28,
-    fontWeight: '800',
+    fontWeight: '900',
     color: ctx.colors2024['neutral-title-1'],
   },
   description: {
@@ -273,7 +273,7 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   statusLabel: {
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '500',
     color: ctx.colors2024['neutral-foot'],
   },
   statusValue: {

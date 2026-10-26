@@ -22,8 +22,12 @@ import {
   createGlobalBottomSheetModal,
   removeGlobalBottomSheetModal,
 } from '../GlobalBottomSheetModal';
-import type { GlobalModalViewProps } from '../GlobalBottomSheetModal/types';
-import { MODAL_NAMES } from '../GlobalBottomSheetModal/types';
+import type {
+  GlobalModalViewProps,
+  RemoveParams,
+} from '../GlobalBottomSheetModal/types';
+import { EVENT_NAMES, MODAL_NAMES } from '../GlobalBottomSheetModal/types';
+import { globalSheetModalEvents } from '../GlobalBottomSheetModal/event';
 import { CheckItem } from './CheckItem';
 import { noop } from 'lodash';
 import { BiometricsIcon } from './BiometricsIcon';
@@ -68,6 +72,8 @@ const DEFAULT_AUTH_TYPES: Exclude<apisLock.UIAuthType, 'none'>[] = [
 
 export interface AuthenticationModalProps extends ValidationBehaviorProps {
   confirmText?: string;
+  /** Visual type of the confirm button; destructive flows use `danger`. */
+  confirmButtonType?: 'primary' | 'danger';
   cancelText?: string;
   title: string;
   description?: string;
@@ -121,6 +127,7 @@ function FooterButtonGroup({
   bioActive,
   style,
   disabled,
+  confirmType = 'primary',
 }: {
   onCancel: () => void;
   onConfirm: () => void;
@@ -128,6 +135,7 @@ function FooterButtonGroup({
   bioActive?: boolean;
   style?: StyleProp<ViewStyle>;
   disabled?: boolean;
+  confirmType?: 'primary' | 'danger';
 }) {
   const { t } = useTranslation();
   const { styles: footerStyles, colors } = useThemeStyles(getFooterStyle);
@@ -154,6 +162,7 @@ function FooterButtonGroup({
         <>
           <View style={footerStyles.btnGap} />
           <Button
+            type={confirmType}
             icon={ctx =>
               authState.authType !== 'biometrics' ? null : (
                 <BiometricsIcon
@@ -220,7 +229,6 @@ const getFooterStyle = createGetStyles(colors => {
       // ...makeDebugBorder(),
     },
     confirmStyle: {
-      backgroundColor: colors['blue-default'],
       borderRadius: 8,
       width: '100%',
       height: '100%',
@@ -253,12 +261,14 @@ export const AuthenticationModal = ({
   checklist,
   disableValidation: requestedDisableValidation,
   authReadinessDiagnosticId = 0,
+  confirmButtonType = 'primary',
+  $onUnmount,
   // disableValidation: propNoValidation = !validationHandler,
   authType: authTypes = DEFAULT_AUTH_TYPES,
 }: GlobalModalViewProps<
   MODAL_NAMES.AUTHENTICATION,
   AuthenticationModalProps
->) => {
+> & { $onUnmount?: () => void }) => {
   const { t } = useTranslation();
   const { styles, colors } = useThemeStyles(getStyle);
   const { safeSizes } = useSafeAndroidBottomSizes({
@@ -298,6 +308,14 @@ export const AuthenticationModal = ({
   const { currentAuthType, setCurrentAuthType } =
     useAuthTypeSelection(availableAuthTypes);
   const hasRecordedMountRef = React.useRef(false);
+  const mountedRef = React.useRef(true);
+  React.useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      $onUnmount?.();
+    };
+  }, [$onUnmount]);
 
   React.useEffect(() => {
     const pwdStatusLabel = getPasswordStatusDiagnosticLabel(pwdStatus);
@@ -345,6 +363,7 @@ export const AuthenticationModal = ({
         await validationHandler?.(password);
         apisLock.updateUnlockTime();
       }
+      if (!mountedRef.current) return;
       onFinished?.({
         ...onFinishedReturnBase,
         authType: 'password',
@@ -403,6 +422,7 @@ export const AuthenticationModal = ({
           purpose: apisKeychain.RequestGenericPurpose.DECRYPT_PWD,
           onPlainPassword: async password => {
             await validationHandler?.(password);
+            if (!mountedRef.current) return;
             onFinished?.({
               ...onFinishedReturnBase,
               authType: 'biometrics',
@@ -579,6 +599,7 @@ export const AuthenticationModal = ({
       </View>
       <FooterButtonGroup
         authState={{ authType: currentAuthType }}
+        confirmType={confirmButtonType}
         // bioActive={bioAuthRef.current.stage !== BioAuthStage['idle']}
         style={StyleSheet.flatten([
           styles.footerButtonGroup,
@@ -654,15 +675,57 @@ AuthenticationModal.show = async (
     return { hideModal: () => {} };
   }
 
+  let acceptingResult = true;
+  let dismissed = false;
+  let pendingResult:
+    | Parameters<NonNullable<AuthenticationModalProps['onFinished']>>[0]
+    | undefined;
+  const discardResult = () => {
+    acceptingResult = false;
+    pendingResult = undefined;
+  };
+  const stopListeningForRemoval = () => {
+    globalSheetModalEvents.off(EVENT_NAMES.REMOVE, handleRemoval);
+  };
+  const handleRemoval = (removedId: string, params?: RemoveParams) => {
+    if (removedId === id && !params?.waitForDismiss) {
+      discardResult();
+      stopListeningForRemoval();
+    }
+  };
   const id = createGlobalBottomSheetModal({
     name: MODAL_NAMES.AUTHENTICATION,
     bottomSheetModalProps: {
       enableDynamicSizing: true,
-      onDismiss,
+      onDismiss() {
+        if (dismissed) {
+          return;
+        }
+        dismissed = true;
+        stopListeningForRemoval();
+        const result = pendingResult;
+        discardResult();
+        try {
+          // Native dismissal must finish before account changes or navigation.
+          // Preserve success-before-onDismiss for consumers that reject on dismiss.
+          if (result) {
+            props.onFinished?.(result);
+          }
+        } catch (err) {
+          console.error(err);
+        } finally {
+          onDismiss?.();
+        }
+      },
     },
     ...props,
     authReadinessDiagnosticId,
+    $onUnmount: () => {
+      pendingResult = undefined;
+      stopListeningForRemoval();
+    },
     onCancel: () => {
+      discardResult();
       try {
         onCancel?.();
       } catch (err) {
@@ -672,12 +735,22 @@ AuthenticationModal.show = async (
     },
     disableValidation,
     onFinished(ctx) {
-      hideModal();
-      props.onFinished?.(ctx);
+      if (!acceptingResult) {
+        return;
+      }
+      acceptingResult = false;
+      pendingResult = ctx;
+      // Lock/forced removal must cancel before the host can synchronously close.
+      globalSheetModalEvents.prependListener(EVENT_NAMES.REMOVE, handleRemoval);
+      void removeGlobalBottomSheetModal(id, {
+        duration: closeDuration,
+        waitForDismiss: true,
+      }).finally(stopListeningForRemoval);
     },
   });
 
   const hideModal = () => {
+    discardResult();
     return removeGlobalBottomSheetModal(id, { duration: closeDuration });
   };
   return { hideModal };

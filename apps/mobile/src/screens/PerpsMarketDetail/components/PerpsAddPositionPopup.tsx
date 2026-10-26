@@ -718,7 +718,7 @@ const getStyle = createGetStyles2024(ctx => {
     marginLabel: {
       fontSize: 20,
       lineHeight: 24,
-      fontWeight: '800',
+      fontWeight: '900',
       // marginBottom: 4,
       color: '#50D2C1',
       fontFamily: 'SF Pro Rounded',

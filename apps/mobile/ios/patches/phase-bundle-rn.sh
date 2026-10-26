@@ -232,4 +232,27 @@ echo "[RabbyMobileBuild] customize build environment vars finished."
 
 /bin/sh -c "$WITH_ENVIRONMENT $SENTRY_XCODE"
 
+# react-native-xcode.sh writes ip.txt from the build machine's current
+# en0..en8 IP. That IP is stale as soon as the developer changes networks.
+# Prefer the explicit dev-server host from .env/.env.local; otherwise keep a
+# stable mDNS host for Debug device builds.
+if [[ "$CONFIGURATION" == *Debug* ]] && [[ "$PLATFORM_NAME" == *iphoneos* ]]; then
+  load_env_var_from_candidate_files DEV_SERVER_HOSTNAME || true
+  metro_host="${DEV_SERVER_HOSTNAME:-${RCT_PACKAGER_HOSTNAME:-}}"
+  if [ -z "$metro_host" ]; then
+    local_host_name="$(scutil --get LocalHostName 2>/dev/null || true)"
+    if [ -n "$local_host_name" ]; then
+      metro_host="${local_host_name}.local"
+    fi
+  fi
+  if [ -n "$metro_host" ]; then
+    metro_ip_file="$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/ip.txt"
+    mkdir -p "$(dirname "$metro_ip_file")"
+    printf '%s\n' "$metro_host" > "$metro_ip_file"
+    echo "[RabbyMobileBuild] wrote stable Metro host to $metro_ip_file: $metro_host"
+  else
+    echo "[RabbyMobileBuild] unable to resolve a stable Metro host; leaving ip.txt unchanged"
+  fi
+fi
+
 echo "[RabbyMobileBuild] finish bundle with sentry build."

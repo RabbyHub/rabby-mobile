@@ -1254,7 +1254,8 @@
         },
         "scan": {
           "title": "Scan Keystone to Connect",
-          "description": "Scan the QR-code on your Keystone wallet"
+          "description": "Scan the QR-code on your Keystone wallet",
+          "invalidQRCode": "Invalid QR code. Please scan the sync QR code of the hardware wallet."
         }
       },
       "hd": {
@@ -1739,6 +1740,13 @@
       "ShowMore": "Show more",
       "Fold": "Fold",
       "customTestnetNotSupported": "The token on this chain is not supported",
+      "removed": {
+        "restore": "Restore removed token",
+        "restoreFailed": "Failed to restore token",
+        "more": "More",
+        "confirmTitle": "Remove this token?",
+        "confirmDescription": "· This token will no longer appear in your Portfolio after removal.\n· You can restore it anytime in Settings >> Removed Tokens."
+      },
       "TokenName": "Token Name",
       "Price": "Price",
       "HoldingValue": "Holding Value",
@@ -1769,6 +1777,7 @@
       "excludeBalanceTipsButton": "I Got It.",
       "price": "Price",
       "copyCA": "Token contract address copied",
+      "copyCAWarning": "This is a token contract address,\nCannot be used to receive assets.",
       "tabs": {
         "marketData": "Market data",
         "tokenSecurity": "Token Security"
@@ -1858,6 +1867,10 @@
       "selectChainTitle": "Select Chain"
     },
     "singleHome": {
+      "tokenActions": {
+        "remove": "Remove",
+        "removeFailed": "Failed to remove token"
+      },
       "sectionHeader": {
         "Defi": "DeFi",
         "Nft": "NFT",
@@ -1910,6 +1923,10 @@
       "modifyRPCURL": "Modify RPC URL",
       "themeMode": "Theme Mode",
       "clearPending": "Clear Pending Locally",
+      "removedToken": {
+        "title": "Removed Tokens",
+        "description": "Removed tokens will be hidden from your Portfolio across all your addresses, but still included in your balance calculation."
+      },
       "aboutUs": "About Us",
       "currentVersion": "Current Version",
       "feedback": "Feedback",
@@ -2411,7 +2428,6 @@
           "loadingMore": "Loading more history"
         },
         "positions": {
-          "__skip_translation": ["skipMarketCloseConfirmation"],
           "empty": "You have no positions",
           "closeAll": "Close All",
           "closeAllConfirmTitle": "Confirm Close All Positions",
@@ -2471,6 +2487,7 @@
           "closeContextChanged": "Position or account changed. Please review again."
         },
         "positionTpsl": {
+          "skipConfirmation": "Don't show this TP/SL confirmation again.",
           "addButton": "Add TP/SL",
           "addTitle": "Add TP/SL",
           "cancelFailed": "Failed to cancel TP/SL order",
@@ -2502,6 +2519,7 @@
           "takeProfit": "Take Profit",
           "takeProfitTrigger": "TP Trigger",
           "triggeredByMark": "Triggered by Mark",
+          "estimatedPnlDescription": "Estimated PnL <2>{{pnl}} {{quoteAsset}}(ROI: {{roi}}%)</2>",
           "triggerDescription": "When <1>Mark Price</1> reaches <1>{{trigger}} {{quoteAsset}}</1>, it will trigger a <1>Market</1> order. Estimated PnL will be <2>{{pnl}} {{quoteAsset}}(ROI: {{roi}}%)</2>",
           "triggerPrice": "Trigger Price",
           "unavailable": "Position TP/SL is temporarily unavailable",
@@ -2659,8 +2677,7 @@
         "feeTitle": "Fee",
         "feeDesc": "When users place trades, both\n<1>trading fees</1> and <2>builder fees</2> apply.",
         "feeHyperliquid": "Hyperliquid",
-        "feeRabby": "Rabby Wallet",
-        "feeRabbyDiscount": "Limited-time trading fee discount"
+        "feeRabby": "Rabby Wallet"
       },
       "PerpsAutoCloseModal": {
         "noPosition": "You must input margin first.",
@@ -2756,7 +2773,7 @@
         "logout": "Log out"
       },
       "PerpsDepositCard": {
-        "availableToTrade": "Available to trade: ",
+        "availableToTrade": "Available: ",
         "deposit": "Deposit",
         "swap": "Swap"
       },
@@ -2804,6 +2821,48 @@
       }
     },
     "perpsDetail": {
+      "simpleAccount": {
+        "margin": "Margin",
+        "averageEntry": "Avg. Entry",
+        "estimatedLiquidationPrice": "Est. Liq. Price",
+        "estimatedLiquidationDistance": "Est. Liq. Distance",
+        "tpSl": "TP/SL",
+        "takeProfitPrice": "Take Profit Price",
+        "stopLossPrice": "Stop Loss Price",
+        "estimatedPnl": "Est.PNL",
+        "closePositionTitle": "Close {{coin}} Position",
+        "estimatedRealizedPnl": "Est. Realized PNL"
+      },
+      "simpleChart": {
+        "openInterest": "Open interest",
+        "volume24h": "24h volume",
+        "intervalTitle": "Candle interval",
+        "intervalDescription": "Each candle represents the selected interval.",
+        "minutes": "Minutes",
+        "hours": "Hours",
+        "days": "Days",
+        "open": "Open",
+        "low": "Low",
+        "high": "High",
+        "close": "Close",
+        "time": "Time",
+        "change": "Change",
+        "changePercent": "Change (%)",
+        "averageEntry": "Avg. entry",
+        "takeProfit": "Take profit",
+        "stopLoss": "Stop loss",
+        "liquidation": "Liquidation",
+        "all": "ALL",
+        "source": "Powered by Hyperliquid. Price chart powered by <tradingview>TradingView.</tradingview>",
+        "resetChart": "Reset chart",
+        "backToLatest": "Back to latest",
+        "switchToArea": "Switch to area chart",
+        "switchToCandle": "Switch to candlestick chart",
+        "showVolume": "Show 24h volume",
+        "showOpenInterest": "Show open interest",
+        "buy": "Buy",
+        "sell": "Sell"
+      },
       "PerpsPosition": {
         "title": "Position",
         "unrealizedPnl": "Unrealized PNL",
@@ -3553,7 +3612,8 @@
     "time": {
       "hour": "{{t}} hour",
       "hours": "{{t}} hours",
-      "mins": "{{t}} mins"
+      "mins": "{{t}} mins",
+      "ago": "{{time}} ago"
     },
     "Unknown": "Unknown",
     "themeMode": {
@@ -3613,7 +3673,8 @@
       }
     },
     "from": "From",
-    "to": "To"
+    "to": "To",
+    "failed": "Failed"
   },
   "background": {
     "error": {

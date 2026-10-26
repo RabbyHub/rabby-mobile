@@ -139,6 +139,7 @@ import { getCexInfo } from '@/hooks/useCexSupportList';
 import { MultiActionProps } from '../TypedDataActions';
 import { apisTransactionHistory } from '@/core/apis/transactionHistory';
 import { calcGasLimit } from '@/core/apis/transactions';
+import { isHyperEvmChain } from '@/utils/hyperEvm';
 import { getEIP7702MiniGasLimit } from '@/utils/7702';
 import { Text } from '@/components/Typography';
 import { checkGasAccountLevelValidation } from './useGasAccountLevelValidation';
@@ -378,7 +379,7 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
     isSwap,
     isBridge,
     swapPreferMEVGuarded,
-    isViewGnosisSafe,
+    isViewGnosisSafe: requestedViewGnosisSafe,
     reqId,
     safeTxGas,
     authorizationList,
@@ -405,6 +406,10 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
       stripTopLevelData: true,
     });
   }, [chain.serverId, params.data]);
+
+  // Only the internal Safe queue has already built a transaction to sign.
+  const isViewGnosisSafe =
+    origin === INTERNAL_REQUEST_ORIGIN && requestedViewGnosisSafe === true;
 
   const is7702 = is7702Tx({ authorizationList } as any);
 
@@ -861,9 +866,8 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
     } // do not overwrite nonce if from === to(cancel transaction)
 
     const explainNonce = (updateNonce ? recommendNonce : tx.nonce) || '0x1';
-    const delegateCall = isGnosisAccount
-      ? !!params?.data?.[0]?.operation
-      : false;
+    const delegateCall =
+      isGnosisAccount && Number(params?.data?.[0]?.operation) === 1;
     const parseTxPromise = openapi.parseTx({
       chainId: chain.serverId,
       tx: omit(
@@ -896,14 +900,18 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
       chainId: tx.chainId,
     });
 
-    const blockPromise = apiProvider.requestETHRpc(
-      {
-        method: 'eth_getBlockByNumber',
-        params: ['latest', false],
-      },
-      chain.serverId,
-      currentAccount,
-    );
+    const blockPromise =
+      isHyperEvmChain(chain.id) &&
+      currentAccount.type !== KEYRING_TYPE.GnosisKeyring
+        ? Promise.resolve(null)
+        : apiProvider.requestETHRpc(
+            {
+              method: 'eth_getBlockByNumber',
+              params: ['latest', false],
+            },
+            chain.serverId,
+            currentAccount,
+          );
 
     const preExecPromise = openapi
       .preExecTx({

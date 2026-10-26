@@ -81,6 +81,10 @@ import { PENDGING_TIME } from '@/constant/expireTime';
 import { isString } from 'lodash';
 import { updateExpiredTime } from '@/databases/sync/utils';
 import { assertProviderRequest } from '../utils/assertProviderRequest';
+import {
+  findShadowedBuiltinType,
+  parseTypedDataJson,
+} from '../utils/typedDataTypes';
 import type { ProviderRequest } from './type';
 import { hexToNumber, isAddress, toHex } from 'viem';
 import { getProviderRequestChain } from './requestContext';
@@ -213,30 +217,31 @@ const normalizeSerializedTxHex = (serializedTx?: string) => {
   return normalized as `0x${string}`;
 };
 
-const normalizeTempoCalls = (params: {
-  approvalRes: TxWithTempoExtras<ApprovalRes>;
-  txParams: Record<string, any>;
-}): TempoTxCall[] => {
-  const { approvalRes, txParams } = params;
-  const tempoTx = buildTempoTransaction(
-    {
-      ...txParams,
-      ...approvalRes,
-      to: approvalRes.to ?? txParams.to,
-      data:
-        typeof approvalRes.data !== 'undefined'
-          ? approvalRes.data
-          : txParams.data,
-      value:
-        typeof approvalRes.value !== 'undefined'
-          ? approvalRes.value
-          : txParams.value,
-      calls: (approvalRes as any).calls ?? txParams.calls,
-    } as any,
-    { stripTopLevelData: true, forceTempoType: true },
-  );
+const normalizeTempoCalls = (
+  approvalRes: TxWithTempoExtras<ApprovalRes>,
+): TempoTxCall[] => {
+  let rawCalls = approvalRes.calls;
+  if (!Array.isArray(rawCalls) || !rawCalls.length) {
+    const hasTopLevelCall = [
+      approvalRes.to,
+      approvalRes.data,
+      approvalRes.value,
+    ].some(value => value != null && value !== '');
+    if (!hasTopLevelCall) {
+      throw new Error('tempo transaction has no approved calls');
+    }
+    rawCalls = [approvalRes];
+  }
 
-  return (tempoTx.calls || []) as TempoTxCall[];
+  // Missing call fields must stay missing after approval.
+  return rawCalls.map(
+    call =>
+      omitUndefined({
+        to: call?.to,
+        data: call?.data,
+        value: normalizeHexValue(call?.value),
+      }) as TempoTxCall,
+  );
 };
 
 const toTempoRpcQuantity = (value: unknown) => {
@@ -498,11 +503,21 @@ const signTypedDataVlidation = (
     session,
     account,
   } = req;
-  let jsonData;
+  let parsed: ReturnType<typeof parseTypedDataJson>;
   try {
-    jsonData = JSON.parse(data);
+    parsed = parseTypedDataJson(data);
   } catch (e) {
     throw ethErrors.rpc.invalidParams('data is not a validate JSON string');
+  }
+  if (parsed.hasProtoKey) {
+    throw ethErrors.rpc.invalidParams('data should not contain __proto__ key');
+  }
+  const jsonData = parsed.json;
+  const shadowedType = findShadowedBuiltinType(jsonData?.types);
+  if (shadowedType) {
+    throw ethErrors.rpc.invalidParams(
+      `types should not redefine built-in type: ${shadowedType}`,
+    );
   }
   if (!isInternalDappSnapshot(session.origin)) {
     const currentChain =
@@ -997,12 +1012,7 @@ class ProviderController extends BaseController {
 
     let signedTx;
     let tempoSerializedRawTx: `0x${string}` | undefined;
-    const tempoCalls = isTempoTx
-      ? normalizeTempoCalls({
-          approvalRes,
-          txParams: txParams as Record<string, any>,
-        })
-      : undefined;
+    const tempoCalls = isTempoTx ? normalizeTempoCalls(approvalRes) : undefined;
     const shouldUseKeyringTempoSign =
       isTempoTx && isSimpleOrHdKeyringType(currentAccount.type);
     try {
@@ -1012,7 +1022,6 @@ class ProviderController extends BaseController {
         const normalizedFeePayerSignature = normalizeTempoSecp256k1Signature(
           typedApprovalRes.feePayerSignature,
         );
-        const normalizedTxValue = normalizeHexValue(approvalRes.value);
         const normalizedTempoGas = approvalRes.gas || approvalRes.gasLimit;
         const has1559FeeFields =
           typeof approvalRes.maxFeePerGas !== 'undefined' ||
@@ -1022,12 +1031,6 @@ class ProviderController extends BaseController {
             chainId: Number(approvalRes.chainId),
             type: '0x76',
             from: txParams.from,
-            to: approvalRes.to ?? (txParams as any).to,
-            data:
-              typeof approvalRes.data !== 'undefined'
-                ? approvalRes.data
-                : (txParams as any).data,
-            value: normalizedTxValue as string | number | bigint | undefined,
             calls: tempoCalls,
             gas: normalizedTempoGas,
             gasPrice: has1559FeeFields ? undefined : approvalRes.gasPrice,
@@ -2135,18 +2138,15 @@ class ProviderController extends BaseController {
 
   personalEcRecover = ({
     data: {
-      params: [data, sig, extra = {}],
+      params: [data, signature],
     },
   }: {
     data: {
-      params: [string, string, any];
+      params: [string, string];
     };
   }) => {
-    return recoverPersonalSignature({
-      ...extra,
-      data,
-      sig,
-    });
+    // @metamask/eth-sig-util >= 4 reads `signature`; the legacy `sig` key throws
+    return recoverPersonalSignature({ data, signature });
   };
 
   @Reflect.metadata('SAFE', true)

@@ -238,7 +238,8 @@
     "time": {
       "mins": "{{t}} min",
       "hours": "{{t}} horas",
-      "hour": "{{t}} hora"
+      "hour": "{{t}} hora",
+      "ago": "há {{time}}"
     },
     "Deleted": "Eliminado",
     "WalletCreated": "Carteira criada",
@@ -317,7 +318,8 @@
     "SavedSeedPhrase": "Guardei a frase-semente.",
     "from": "De",
     "to": "Para",
-    "copiedSuccessfully": "Copiado com sucesso"
+    "copiedSuccessfully": "Copiado com sucesso",
+    "failed": "Falhou"
   },
   "page": {
     "getStart": {
@@ -1339,7 +1341,8 @@
       "keystone": {
         "scan": {
           "description": "Digitalize o código QR na sua carteira Keystone",
-          "title": "Digitalizar Keystone para Ligar"
+          "title": "Digitalizar Keystone para Ligar",
+          "invalidQRCode": "Código QR inválido. Digitalize o código QR de sincronização da carteira de hardware."
         },
         "camera": {
           "title": "Ligar Keystone",
@@ -1789,6 +1792,10 @@
       "title": "Adicionar rede personalizada à Rabby"
     },
     "singleHome": {
+      "tokenActions": {
+        "remove": "Remover",
+        "removeFailed": "Não foi possível remover o token"
+      },
       "sectionHeader": {
         "Defi": "DeFi",
         "Nft": "NFT",
@@ -1827,6 +1834,13 @@
       }
     },
     "tokenDetail": {
+      "removed": {
+        "restore": "Restaurar token removido",
+        "restoreFailed": "Não foi possível restaurar o token",
+        "more": "Mais",
+        "confirmTitle": "Remover este token?",
+        "confirmDescription": "· Este token deixará de aparecer no seu portefólio após a remoção.\n· Pode restaurá-lo a qualquer momento em Definições >> Tokens removidos."
+      },
       "excludeBalanceTipsButton": "Compreendi",
       "action": {
         "Sell": "Vender",
@@ -1928,6 +1942,7 @@
       "price": "Preço",
       "headerBalanceText": "Saldo",
       "copyCA": "Endereço do contrato do token copiado",
+      "copyCAWarning": "Este é o endereço do contrato de um token.\nNão pode ser utilizado para receber ativos.",
       "wallet": "Carteira",
       "customTestnetNotSupported": "O token desta rede não é suportado"
     },
@@ -1980,6 +1995,10 @@
       }
     },
     "setting": {
+      "removedToken": {
+        "title": "Tokens removidos",
+        "description": "Os tokens removidos ficarão ocultos no seu portefólio em todos os seus endereços, mas continuarão a ser incluídos no cálculo do seu saldo."
+      },
       "faceId": "Face ID",
       "screenTitle": "Definições",
       "policy": "Política de privacidade",
@@ -2667,12 +2686,14 @@
           "positionAmount": "Quantidade da posição",
           "estimatedPnl": "PnL estimado",
           "skipLimitConfirmation": "Não voltar a apresentar a dupla confirmação para ordens limite.",
+          "skipMarketCloseConfirmation": "Não voltar a apresentar esta confirmação de fecho da posição a mercado.",
           "closeSubmitted": "Ordem de fecho enviada",
           "closeFailed": "Falha ao fechar a posição",
           "minimumCloseAmount": "O montante mínimo de fecho é 10 $",
           "closeContextChanged": "A posição ou a conta foi alterada. Reveja novamente."
         },
         "positionTpsl": {
+          "skipConfirmation": "Não voltar a apresentar esta confirmação de TP/SL.",
           "addButton": "Adicionar TP/SL",
           "addTitle": "Adicionar TP/SL",
           "cancelFailed": "Falha ao cancelar a ordem TP/SL",
@@ -2683,6 +2704,7 @@
           "duplicatePositionOrders": "Existem várias ordens TP/SL de posição deste lado. Cancele-as individualmente ou atualize antes de modificar.",
           "estimatedLiquidation": "Preço de liquidação est.",
           "estimatedPnl": "PnL estimado",
+          "estimatedPnlDescription": "PnL estimado <2>{{pnl}} {{quoteAsset}}(ROI: {{roi}}%)</2>",
           "estimatedPnlShort": "PnL est.",
           "invalidOrder": "Reveja o preço e a quantidade de TP/SL",
           "invalidTrigger": "O preço de ativação é inválido para o preço de referência mais recente",
@@ -2844,7 +2866,6 @@
         "feeHyperliquid": "Hyperliquid",
         "feeTitle": "Taxa",
         "feeRabby": "Rabby Wallet",
-        "feeRabbyDiscount": "Desconto temporário nas taxas de negociação",
         "feeDesc": "Quando os utilizadores fazem operações, aplicam-se <1>taxas de negociação</1> e <2>taxas do builder</2>.",
         "amount": "Montante",
         "asset": "Ativo",
@@ -2909,7 +2930,7 @@
         "desc": "Está a terminar sessão da conta Perps atual. Pode restaurá-la a qualquer momento iniciando sessão novamente com este endereço."
       },
       "PerpsDepositCard": {
-        "availableToTrade": "Disponível para negociar:",
+        "availableToTrade": "Disponível:",
         "deposit": "Depositar",
         "swap": "Trocar"
       },
@@ -3007,6 +3028,48 @@
       }
     },
     "perpsDetail": {
+      "simpleAccount": {
+        "margin": "Margem",
+        "averageEntry": "Preço médio de entrada",
+        "estimatedLiquidationPrice": "Preço de liq. estimado",
+        "estimatedLiquidationDistance": "Distância de liq. estimada",
+        "tpSl": "TP/SL",
+        "takeProfitPrice": "Preço de realização de lucro",
+        "stopLossPrice": "Preço de stop loss",
+        "estimatedPnl": "PnL estimado",
+        "closePositionTitle": "Fechar posição de {{coin}}",
+        "estimatedRealizedPnl": "PnL realizado estimado"
+      },
+      "simpleChart": {
+        "openInterest": "Interesse em aberto",
+        "volume24h": "Volume em 24 h",
+        "intervalTitle": "Intervalo das velas",
+        "intervalDescription": "Cada vela representa o intervalo selecionado.",
+        "minutes": "Minutos",
+        "hours": "Horas",
+        "days": "Dias",
+        "open": "Abertura",
+        "low": "Mínimo",
+        "high": "Máximo",
+        "close": "Fecho",
+        "time": "Hora",
+        "change": "Variação",
+        "changePercent": "Variação (%)",
+        "averageEntry": "Preço médio de entrada",
+        "takeProfit": "Realização de lucros",
+        "stopLoss": "Stop loss",
+        "liquidation": "Preço de liquidação",
+        "all": "TUDO",
+        "source": "Serviço fornecido pela Hyperliquid. Gráfico de preços fornecido pelo <tradingview>TradingView.</tradingview>",
+        "resetChart": "Repor o gráfico",
+        "backToLatest": "Voltar aos dados mais recentes",
+        "switchToArea": "Mudar para gráfico de áreas",
+        "switchToCandle": "Mudar para gráfico de velas",
+        "showVolume": "Mostrar volume em 24 h",
+        "showOpenInterest": "Mostrar interesse em aberto",
+        "buy": "Compra",
+        "sell": "Venda"
+      },
       "PerpEditLimitPriceTag": {
         "setLimitBuyPrice": "Definir preço limite de compra",
         "setLimitSellPrice": "Definir preço limite de venda",

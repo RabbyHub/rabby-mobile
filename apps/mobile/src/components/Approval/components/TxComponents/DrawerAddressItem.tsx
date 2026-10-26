@@ -123,7 +123,7 @@ const getStyles = (colors: AppColorsVariants) =>
     nameAndAddress: { flex: 1, minWidth: 0 },
     name: {
       fontSize: 16,
-      fontWeight: '600',
+      fontWeight: '500',
       lineHeight: 18,
       color: colors['neutral-title-1'],
       marginRight: 8,

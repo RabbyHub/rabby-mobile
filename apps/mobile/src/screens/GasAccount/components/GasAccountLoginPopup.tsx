@@ -184,7 +184,7 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
   confirmTitle: {
     fontSize: 20,
     fontFamily: 'SF Pro Rounded',
-    fontWeight: '800',
+    fontWeight: '900',
     color: colors['neutral-title1'],
     paddingBottom: 0,
   },

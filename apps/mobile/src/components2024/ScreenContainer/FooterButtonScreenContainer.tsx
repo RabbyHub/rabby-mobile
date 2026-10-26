@@ -56,7 +56,7 @@ const getStyle = createGetStyles2024(ctx =>
     },
 
     footerButtonTitle: {
-      fontWeight: '600',
+      fontWeight: '500',
       fontSize: 16,
     },
     footerButtonDisabled: {

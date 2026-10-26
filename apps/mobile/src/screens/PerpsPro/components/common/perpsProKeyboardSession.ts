@@ -18,15 +18,63 @@ type FocusedInput = {
   sheetId?: string;
 };
 
+type AndroidPresentation = {
+  key: number;
+  surface: string;
+  sheetId?: string;
+};
+
 /** Local UI ownership only. A late blur may never clear another input's hint. */
 export const createPerpsProKeyboardSession = () => {
   let enabled = false;
   let focused: FocusedInput | null = null;
   let pendingFocus: FocusedInput | null = null;
+  let androidKeyboardVisible = false;
+  let presentation: AndroidPresentation | null = null;
+  let presentationOwner: string | null = null;
+  let presentationSequence = 0;
   const listeners = new Set<() => void>();
   const publish = () => listeners.forEach(listener => listener());
+  const clearPresentation = () => {
+    presentation = null;
+    presentationOwner = null;
+  };
+  const present = (input: FocusedInput) => {
+    if (!androidKeyboardVisible) {
+      return;
+    }
+    const surface = input.sheetId
+      ? `sheet:${input.sheetId}`
+      : input.scrollTrade
+      ? 'trade'
+      : `input:${input.id}`;
+    if (presentation?.surface !== surface) {
+      presentation = {
+        key: ++presentationSequence,
+        surface,
+        sheetId: input.sheetId,
+      };
+    }
+    presentationOwner = input.id;
+  };
+  const unregister = (id: string) => {
+    if (pendingFocus?.id === id) {
+      pendingFocus = null;
+    }
+    const changed = focused?.id === id || presentationOwner === id;
+    if (focused?.id === id) {
+      focused = null;
+    }
+    if (presentationOwner === id) {
+      clearPresentation();
+    }
+    if (changed) {
+      publish();
+    }
+  };
   return {
     getSnapshot: () => focused,
+    getAndroidPresentation: () => presentation,
     subscribe: (listener: () => void) => {
       listeners.add(listener);
       return () => {
@@ -37,9 +85,12 @@ export const createPerpsProKeyboardSession = () => {
       enabled = next;
       if (!next) {
         const previous = focused ?? pendingFocus;
+        const changed = focused != null || presentation != null;
         pendingFocus = null;
-        if (focused) {
-          focused = null;
+        focused = null;
+        androidKeyboardVisible = false;
+        clearPresentation();
+        if (changed) {
           publish();
         }
         previous?.input.blur();
@@ -51,6 +102,7 @@ export const createPerpsProKeyboardSession = () => {
       // input which is still focused; never replay a stale focus event.
       if (candidate?.input.isFocused()) {
         focused = candidate;
+        present(candidate);
         publish();
       }
     },
@@ -61,6 +113,7 @@ export const createPerpsProKeyboardSession = () => {
       }
       pendingFocus = null;
       focused = input;
+      present(input);
       publish();
     },
     blur: (id: string) => {
@@ -71,7 +124,22 @@ export const createPerpsProKeyboardSession = () => {
         return;
       }
       focused = null;
+      // Native blur and focus can arrive in separate JS turns. Keep only the
+      // Android surface while the keyboard is open, never a stale input ref.
       publish();
+    },
+    unregister,
+    setAndroidKeyboardVisible: (visible: boolean) => {
+      androidKeyboardVisible = enabled && visible;
+      const previous = presentation;
+      if (!androidKeyboardVisible) {
+        clearPresentation();
+      } else if (focused) {
+        present(focused);
+      }
+      if (previous !== presentation) {
+        publish();
+      }
     },
     updateMinimum: (
       id: string,

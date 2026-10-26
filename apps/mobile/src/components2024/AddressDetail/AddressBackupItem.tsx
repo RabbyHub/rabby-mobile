@@ -13,6 +13,7 @@ import { Item } from './Item';
 import { AuthenticationModal2024 } from '@/components/AuthenticationModal/AuthenticationModal2024';
 import { BackupBadge } from './BackupBadge';
 import { ensureWalletUnlockedForAction } from '@/utils/walletUnlock';
+import * as SecretVault from '@/core/utils/secretVault';
 
 interface AddressInfoProps {
   account: KeyringAccountWithAlias;
@@ -52,7 +53,7 @@ export const AddressBackupItem: React.FC<AddressInfoProps> = props => {
         navigateDeprecated(RootNames.StackAddress, {
           screen: RootNames.BackupPrivateKey,
           params: {
-            data,
+            privateKeyVaultId: SecretVault.store(data),
           },
         });
       },
