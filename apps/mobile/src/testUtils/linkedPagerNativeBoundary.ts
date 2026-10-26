@@ -30,6 +30,18 @@ export type PanBoundary = {
     },
     manager: PanManager,
   ) => void;
+  touchesMove?: (
+    event: {
+      allTouches: Array<{
+        x: number;
+        y: number;
+        absoluteX: number;
+        absoluteY: number;
+      }>;
+      numberOfTouches: number;
+    },
+    manager: PanManager,
+  ) => void;
 };
 
 type SharedCell = {
@@ -190,6 +202,7 @@ export function createGestureBoundary() {
     };
     for (const name of [
       'enabled',
+      'manualActivation',
       'activeOffsetX',
       'failOffsetY',
       'maxPointers',
@@ -217,6 +230,10 @@ export function createGestureBoundary() {
     }
     boundary.onTouchesDown = (handler: PanBoundary['touchesDown']) => {
       boundary.touchesDown = handler;
+      return boundary;
+    };
+    boundary.onTouchesMove = (handler: PanBoundary['touchesMove']) => {
+      boundary.touchesMove = handler;
       return boundary;
     };
     pans.push(boundary);

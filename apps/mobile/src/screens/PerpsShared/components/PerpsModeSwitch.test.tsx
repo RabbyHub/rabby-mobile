@@ -58,6 +58,13 @@ jest.mock('react-native-reanimated', () => {
     default: { View: require('react-native').View },
     useAnimatedStyle: animatedValue,
     useAnimatedProps: animatedValue,
+    // Derived values stay lazy so a test can move the pager position and read
+    // the recomputed cross-fade without a React update.
+    useDerivedValue: (factory: () => unknown) => ({
+      get value() {
+        return factory();
+      },
+    }),
     runOnUI: jest.fn(callback => callback),
   };
 });

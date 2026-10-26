@@ -187,8 +187,46 @@ describe('Root SubScreen playground component contract', () => {
     expect(
       within(node('scroll-Swap')).getByTestId('root-fixture-blank-Swap'),
     ).toBeTruthy();
-    expect(pan().config.activeOffsetX).toEqual([-20, 20]);
-    expect(pan().config.failOffsetY).toEqual([-12, 12]);
+    // Direction arbitration is manual now: the pager takes the gesture only
+    // when the first move is clearly horizontal.
+    expect(pan().config.manualActivation).toBe(true);
+    const vertical = down();
+    act(() => {
+      vertical.gesture.touchesMove?.(
+        {
+          allTouches: [
+            { x: 160, y: 340, absoluteX: 160, absoluteY: 340 },
+          ] as Array<{
+            x: number;
+            y: number;
+            absoluteX: number;
+            absoluteY: number;
+          }>,
+          numberOfTouches: 1,
+        },
+        vertical.manager,
+      );
+    });
+    expect(vertical.manager.activate).not.toHaveBeenCalled();
+    expect(vertical.manager.fail).toHaveBeenCalled();
+    const horizontal = down();
+    act(() => {
+      horizontal.gesture.touchesMove?.(
+        {
+          allTouches: [
+            { x: 220, y: 302, absoluteX: 220, absoluteY: 302 },
+          ] as Array<{
+            x: number;
+            y: number;
+            absoluteX: number;
+            absoluteY: number;
+          }>,
+          numberOfTouches: 1,
+        },
+        horizontal.manager,
+      );
+    });
+    expect(horizontal.manager.activate).toHaveBeenCalled();
     swipe(-WIDTH * 0.65);
     expect(node('status')).toHaveTextContent(/settled=Swap/);
     finish();
