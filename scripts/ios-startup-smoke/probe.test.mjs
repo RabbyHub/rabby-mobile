@@ -190,7 +190,7 @@ test('probe verifies the original producer and reports a new harness without qua
       {
         major: 16,
         version: '16.4',
-        testXcode: { version: '27.1' },
+        testXcode: { version: '26.3' },
         status: 'passed',
       },
     ],

@@ -35,6 +35,30 @@ test('simulator build pins UTF-8 locale before Ruby and CocoaPods preparation', 
   assert.doesNotMatch(steps, /^\s+(?:LANG|LC_ALL):/m);
 });
 
+test('local test jobs select the installed matrix Xcode while App build retains its selected compiler', async () => {
+  for (const name of ['startup', 'probe']) {
+    const source = await workflow(name);
+    const startup = job(source, 'startup');
+    assert.match(startup, /TEST_XCODE: \$\{\{ matrix.xcode \}\}/);
+    assert.match(
+      startup,
+      /if \[ "\$EXECUTION_ENVIRONMENT" = mobile-local \]; then toolchain_args\+=\(--installed\); fi/,
+    );
+    assert.match(
+      startup,
+      /toolchain\.mjs "\$TEST_XCODE" "\$\{toolchain_args\[@\]\}"/,
+    );
+    assert.doesNotMatch(startup, /xcode-select\s+(?:-s|--switch)/);
+  }
+  const build = job(await workflow('startup'), 'build');
+  assert.match(
+    build,
+    /BUILD_XCODE: \$\{\{ inputs.build_xcode \|\| '27.1' \}\}/,
+  );
+  assert.match(build, /toolchain\.mjs "\$BUILD_XCODE" --build/);
+  assert.doesNotMatch(build, /--installed/);
+});
+
 test('build-only creates reusable output without archive or startup qualification', async () => {
   const source = await workflow('startup');
   assert.match(

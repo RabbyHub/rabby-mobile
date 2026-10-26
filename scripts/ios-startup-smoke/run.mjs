@@ -7,7 +7,7 @@ import { randomUUID } from 'node:crypto';
 import { createHash } from 'node:crypto';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { parseArgs } from 'node:util';
-import { verifyToolchain } from './toolchain.mjs';
+import { findXcode, testXcodeVersion, verifyToolchain } from './toolchain.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 export const requiredMajors = [16, 17, 18, 26, 27];
@@ -184,9 +184,7 @@ export function selectRuntimes(
       build: runtime.buildversion,
       identifier: runtime.identifier,
       deviceType: device.identifier,
-      // Hosted old-OS shards retain their own toolchain; local has only 27.1.
-      testXcodeVersion:
-        environment === 'hosted' && major < 27 ? '26.3' : '27.1',
+      testXcodeVersion: testXcodeVersion(major, environment),
     };
   });
 }
@@ -211,40 +209,6 @@ export function readRuntimeInventory(env, execute = execFileSync) {
       maxBuffer: 8 * 1024 * 1024,
     }),
   );
-}
-
-async function findXcode(version) {
-  if (!/^\d+\.\d+(\.\d+)?$/.test(version))
-    throw new Error('Invalid Xcode version');
-  const found = [];
-  for (const entry of await fs.readdir('/Applications')) {
-    if (!/^Xcode.*\.app$/.test(entry)) continue;
-    const developerDir = path.join(
-      '/Applications',
-      entry,
-      'Contents/Developer',
-    );
-    try {
-      const description = read(
-        path.join(developerDir, 'usr/bin/xcodebuild'),
-        ['-version'],
-        { ...process.env, DEVELOPER_DIR: developerDir },
-      );
-      const actual = /^Xcode (\d+\.\d+(?:\.\d+)?)/.exec(description)?.[1];
-      if (actual === version || actual?.startsWith(version + '.'))
-        found.push({ developerDir, version: actual, description });
-    } catch {
-      // An incomplete/uninstalled Xcode is not a usable candidate.
-    }
-  }
-  found.sort(
-    (a, b) =>
-      compareVersions(b.version, a.version) ||
-      a.developerDir.localeCompare(b.developerDir),
-  );
-  if (!found.length)
-    throw new Error(`Xcode ${version} is not installed under /Applications`);
-  return found[0];
 }
 
 async function writeJSON(file, value) {
@@ -284,15 +248,14 @@ async function plan(options) {
         : undefined,
       probe: options.probe,
     });
-    const localToolchain =
-      environment === 'mobile-local' ? verifyToolchain('27.1') : undefined;
     const build = metadata
       ? { description: metadata.xcode }
-      : localToolchain || (await findXcode(options['build-xcode'] || '27.1'));
+      : environment === 'mobile-local'
+      ? verifyToolchain('27.1')
+      : await findXcode(options['build-xcode'] || '27.1');
     const runtimes = [];
     for (const major of majors) {
-      const testXcode =
-        localToolchain || (await findXcode(major < 27 ? '26.3' : '27.1'));
+      const testXcode = await findXcode(testXcodeVersion(major, environment));
       const inventory = readRuntimeInventory({
         ...process.env,
         DEVELOPER_DIR: testXcode.developerDir,

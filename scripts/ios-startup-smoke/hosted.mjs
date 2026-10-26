@@ -5,6 +5,7 @@ import { createHash } from 'node:crypto';
 import { isDeepStrictEqual } from 'node:util';
 import { pathToFileURL } from 'node:url';
 import { parseMajors, requiredMajors } from './run.mjs';
+import { testXcodeVersion } from './toolchain.mjs';
 
 export const hostedTargets = [
   { major: 16, runtime: '16.4', xcode: '26.3', runner: 'macos-26' },
@@ -52,7 +53,7 @@ export function matrix(
             ...target,
             // Explicit local representative, not a fallback after 18.5 fails.
             runtime: major === 18 ? '18.3.1' : target.runtime,
-            xcode: '27.1',
+            xcode: testXcodeVersion(major, environment),
             runner: [...localRunner],
             environment,
           };

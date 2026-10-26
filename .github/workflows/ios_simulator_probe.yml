@@ -149,10 +149,13 @@ jobs:
           nvm use "$(tr -d '\r\n' < .nvmrc)"
           node -e "if (process.versions.node.split('.')[0] !== '22') process.exit(1)"
           printf '%s\n' "$(dirname "$(command -v node)")" >> "$GITHUB_PATH"
-      - name: Verify selected Xcode without changing the host
+      - name: Select the exact installed test Xcode without changing the host
         env:
           TEST_XCODE: ${{ matrix.xcode }}
-        run: node scripts/ios-startup-smoke/toolchain.mjs "$TEST_XCODE"
+        run: |
+          toolchain_args=()
+          if [ "$EXECUTION_ENVIRONMENT" = mobile-local ]; then toolchain_args+=(--installed); fi
+          node scripts/ios-startup-smoke/toolchain.mjs "$TEST_XCODE" "${toolchain_args[@]}"
       - name: Download the selected app, not a newer or latest artifact
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:

@@ -49,7 +49,7 @@ test('pins hosted ARM64 targets, preserving iOS16 on Xcode26 and rejecting arbit
   assert.throws(() => matrix('16', 'latest'));
 });
 
-test('defaults both compiler and every test shard to mobile-local with only Xcode27.1', () => {
+test('defaults to mobile-local with App compiler27.1 and only iOS16 harness26.3', () => {
   const rows = matrix('16,17,18,26,27').include;
   assert.deepEqual(buildRunner('27.1'), [
     'self-hosted',
@@ -64,7 +64,7 @@ test('defaults both compiler and every test shard to mobile-local with only Xcod
   );
   for (const row of rows) {
     assert.deepEqual(row.runner, localRunner);
-    assert.equal(row.xcode, '27.1');
+    assert.equal(row.xcode, row.major === 16 ? '26.3' : '27.1');
     assert.equal(row.environment, 'mobile-local');
   }
   assert.throws(() => matrix('16', '26.3'), /mobile-local requires/);
@@ -136,7 +136,7 @@ test('aggregate requires all requested versions and one identical commit/binary/
     check([
       {
         ...reports[0],
-        results: [{ ...reports[0].results[0], testXcode: { version: '26.3' } }],
+        results: [{ ...reports[0].results[0], testXcode: { version: '27.1' } }],
       },
       ...reports.slice(1),
     ]).passed,

@@ -4,6 +4,15 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
+export function testXcodeVersion(major, environment = 'mobile-local') {
+  if (!['mobile-local', 'hosted'].includes(environment))
+    throw new Error('Choose mobile-local or hosted explicitly');
+  // Xcode 27.1's precompiled XCTest runner requires iOS 17 or newer.
+  return major === 16 || (environment === 'hosted' && major < 27)
+    ? '26.3'
+    : '27.1';
+}
+
 export function verifyToolchain(
   version,
   {
@@ -81,14 +90,58 @@ export function verifyToolchain(
   };
 }
 
+export async function findXcode(
+  version,
+  { readDirectory = fs.readdir, ...options } = {},
+) {
+  if (!['26.3', '27.1'].includes(version))
+    throw new Error('Unsupported Xcode version');
+  const found = [];
+  for (const entry of await readDirectory('/Applications')) {
+    if (!/^Xcode.*\.app$/.test(entry)) continue;
+    const developerDir = path.join(
+      '/Applications',
+      entry,
+      'Contents/Developer',
+    );
+    try {
+      found.push(
+        verifyToolchain(version, {
+          ...options,
+          env: { ...(options.env || process.env), DEVELOPER_DIR: developerDir },
+        }),
+      );
+    } catch {
+      // A different version or incomplete installation is not a fallback.
+    }
+  }
+  found.sort(
+    (a, b) =>
+      b.version.localeCompare(a.version, 'en', { numeric: true }) ||
+      a.developerDir.localeCompare(b.developerDir),
+  );
+  if (!found.length)
+    throw new Error(
+      `Xcode ${version} is not installed or usable under /Applications; provision it explicitly`,
+    );
+  return found[0];
+}
+
 if (
   process.argv[1] &&
   pathToFileURL(path.resolve(process.argv[1])).href === import.meta.url
 ) {
   try {
-    if (process.argv.slice(3).some(argument => argument !== '--build'))
-      throw new Error('Use toolchain.mjs <26.3|27.1> [--build]');
-    const selected = verifyToolchain(process.argv[2], {
+    if (
+      process.argv
+        .slice(3)
+        .some(argument => !['--build', '--installed'].includes(argument))
+    )
+      throw new Error('Use toolchain.mjs <26.3|27.1> [--build] [--installed]');
+    const select = process.argv.includes('--installed')
+      ? findXcode
+      : verifyToolchain;
+    const selected = await select(process.argv[2], {
       requireBuildRuntime: process.argv.includes('--build'),
     });
     if (process.env.GITHUB_ENV)

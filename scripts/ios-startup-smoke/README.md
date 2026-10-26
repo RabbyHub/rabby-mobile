@@ -11,8 +11,10 @@ provisioning, native compilation and the complete matrix have been qualified.
 One unsigned, arm64 **iOS Simulator** Regression app is built from the triggering
 full commit. The same executable and embedded Hermes bundle are distributed
 through a hash-verified archive to five test jobs. **Both app compilation and
-validation default to `[self-hosted, macOS, ARM64, mobile-local, mobile-ios-simulator]`**, using the
-runner's existing Xcode27.1. The local test jobs run serially. Manual
+validation default to `[self-hosted, macOS, ARM64, mobile-local, mobile-ios-simulator]`**.
+The App compiler stays Xcode 27.1. Local iOS 16.4 builds and runs only its
+XCTest harness with Xcode 26.3; local iOS 17+ uses Xcode 27.1 for the harness.
+The local test jobs run serially. Manual
 `execution_environment=hosted` explicitly selects this alternative matrix:
 
 | iOS runtime | Hosted runner | UI-test Xcode |
@@ -51,11 +53,22 @@ existing-wallet, upgrade, Home-data, transaction or performance validation.
 ## Persistent runner preflight and explicit hosted alternative
 
 The default `mobile-local` runner requires Node 22 through NVM,
-Ruby 2.7.4@rabbymobile through RVM, Bundler 2.4.22, Xcode 27.1 and the exact available
+Ruby 2.7.4@rabbymobile through RVM, Bundler 2.4.22, selected Xcode 27.1,
+an additional installed Xcode 26.3 for the iOS 16 harness, and the exact available
 runtimes 16.4, 17.5, **18.3.1**, 26.2, 27.0. App compilation additionally preflights the
 SDK-matching 27.1 platform runtime. `toolchain.mjs` checks the selected Xcode and
 exports `DEVELOPER_DIR` for child processes; it never calls `xcode-select -s`.
-The app compiler defaults to 27.1. Selecting 26.3 requires choosing hosted too.
+The app compiler defaults to 27.1. Selecting 26.3 **for App compilation**
+requires choosing hosted too.
+
+Xcode 27.1's precompiled XCTRunner/XCTest requires iOS 17 or newer, even when
+the harness project's deployment target is lower. Therefore only the local
+iOS 16.4 test shard explicitly requires Xcode 26.3. `toolchain.mjs --installed`
+and `run.mjs plan` resolve the requested installed version under `/Applications`
+and pin `DEVELOPER_DIR` for provisioning, harness compilation and test execution.
+They never change global selection. Missing/unusable 26.3 fails explicitly;
+there is no automatic install, fallback to 27.1, or skipped iOS 16 coverage.
+The shared App remains the original Xcode 27.1 build; only its test driver changes.
 
 Local iOS 18 uses the explicitly provisioned 18.3.1 representative; hosted keeps
 18.5. The runtime download service did not offer 18.5/18.6 to this local
@@ -68,8 +81,8 @@ global caches, or silently move a missing/offline runner job to hosted.
 `provision.mjs --check-only` records the exact runtime inventory and fails on
 missing/unavailable components. Provision the persistent machine separately;
 an installed runtime is not proof that an actual boot or App launch will pass.
-In particular, all local OS versions use 27.1, so the hosted 26.3 results are not
-automatically local 27.1 compatibility evidence.
+Local iOS 17/18/26 harnesses use 27.1, whereas their hosted counterparts use
+26.3; results from one harness toolchain are not automatically evidence for the other.
 
 The default checkout lives in `.ios-simulator-ci` with `clean: false` to avoid
 erasing the runner's ordinary checkout or generated caches. Build-source guards
@@ -105,9 +118,9 @@ When **hosted is explicitly selected**:
   stages. This does not increase App launch or XCTest execution deadlines;
   inventory timeouts still fail explicitly, without retries or skips.
 
-In hosted mode Xcode 26.3 remains the test toolchain for iOS 16 even when the
-**app** is compiled by 27.1; the oldest-runtime job stays on `macos-26`. Local
-preflight instead checks the real 27.1 inventory. Neither mode rebuilds the app
+Both modes use Xcode 26.3 as the test toolchain for iOS 16 even when the
+**app** is compiled by 27.1; the hosted oldest-runtime job stays on `macos-26`.
+Local preflight checks inventory using each shard's explicit toolchain. Neither mode rebuilds the app
 with an older compiler just to make one test pass.
 
 Each hosted VM installs at most its own test runtime, rather than loading the

@@ -334,11 +334,20 @@ test('hosted shards use the provisioned exact runtime, not a newer preinstalled 
   );
 });
 
-test('local planning never requires an uninstalled legacy Xcode or an implicit hosted fallback', () => {
-  const selected = selectRuntimes([runtime('16.4'), runtime('27.0')], [16, 27]);
+test('local planning pins only iOS16 to26.3 and never chooses an implicit hosted fallback', () => {
+  const selected = selectRuntimes(
+    [
+      runtime('16.4'),
+      runtime('17.5'),
+      runtime('18.3.1'),
+      runtime('26.2'),
+      runtime('27.0'),
+    ],
+    [16, 17, 18, 26, 27],
+  );
   assert.deepEqual(
     selected.map(item => item.testXcodeVersion),
-    ['27.1', '27.1'],
+    ['26.3', '27.1', '27.1', '27.1', '27.1'],
   );
   assert.throws(
     () => selectRuntimes([runtime('16.4')], [16], undefined, 'auto'),
