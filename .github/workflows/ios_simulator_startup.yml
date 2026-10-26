@@ -24,6 +24,10 @@ on:
         description: Only compile and retain the app; upload and startup can be probed separately
         type: boolean
         default: false
+      SKIP_NOTIFY_LARK:
+        description: Skip the final Feature Test group-bot summary
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -191,6 +195,8 @@ jobs:
     # An archived diagnostic app can survive a post-build provenance failure.
     # The uploader still rejects logs-only artifacts and invalid receipts.
     needs: build
+    outputs:
+      archive_key: ${{ steps.publish.outputs.archive_key }}
     if: ${{ !cancelled() && !inputs.build_only && needs.build.outputs.artifact_id != '' }}
     runs-on: [self-hosted, macOS, ARM64, mobile-local, mobile-ios-simulator]
     timeout-minutes: 30
@@ -224,6 +230,7 @@ jobs:
           merge-multiple: true
           path: ${{ env.EVIDENCE_ROOT }}/app
       - name: Verify and archive with the Simulator runner's local AWS profile
+        id: publish
         env:
           RABBY_MOBILE_BUILD_BUCKET: ${{ secrets.RABBY_MOBILE_BUILD_BUCKET }}
           SOURCE_COMMIT: ${{ github.sha }}
@@ -332,6 +339,8 @@ jobs:
     needs: [matrix, build, startup]
     if: always() && needs.matrix.result == 'success'
     runs-on: ubuntu-latest
+    outputs:
+      notification_report: ${{ steps.report.outputs.notification_report }}
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
@@ -353,6 +362,7 @@ jobs:
           merge-multiple: true
           path: ${{ runner.temp }}/startup-results/ios-startup-app-receipt
       - name: Require complete requested coverage of the same app
+        id: report
         if: always() && !inputs.build_only
         env:
           REQUESTED_MAJORS: ${{ inputs.ios_majors || '16,17,18,26,27' }}
@@ -372,3 +382,21 @@ jobs:
             "$GITHUB_SHA" "$GITHUB_RUN_ID" "$APP_ARTIFACT_ID" "$BUILD_RESULT" >> "$GITHUB_STEP_SUMMARY"
           test "$BUILD_RESULT" = success
           test -n "$APP_ARTIFACT_ID"
+
+  # Only this lightweight finalizer waits for both startup and private archival.
+  # Notification failure is visible separately; it cannot block their artifacts.
+  notify:
+    needs: [matrix, build, startup, archive, summary]
+    if: ${{ always() && github.repository == 'RabbyHub/rabby-mobile' && !inputs.SKIP_NOTIFY_LARK && (github.event_name != 'push' || github.event.deleted != true) }}
+    uses: ./.github/workflows/ios_simulator_notify.yml
+    with:
+      mode: startup
+      needs_json: ${{ toJSON(needs) }}
+      notification_report: ${{ needs.summary.outputs.notification_report }}
+      requested_majors: ${{ inputs.ios_majors || '16,17,18,26,27' }}
+      execution_environment: ${{ inputs.execution_environment || 'mobile-local' }}
+      build_only: ${{ inputs.build_only == true }}
+      build_xcode: ${{ inputs.build_xcode || '27.1' }}
+    secrets:
+      RABBY_MOBILE_LARK_CHAT_URL: ${{ secrets.RABBY_MOBILE_LARK_CHAT_URL || secrets.LARK_CHAT_URL }}
+      RABBY_MOBILE_LARK_CHAT_SECRET: ${{ secrets.RABBY_MOBILE_LARK_CHAT_SECRET || secrets.LARK_CHAT_SECRET }}

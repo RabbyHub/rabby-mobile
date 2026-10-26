@@ -6,6 +6,7 @@ import { isDeepStrictEqual } from 'node:util';
 import { pathToFileURL } from 'node:url';
 import { parseMajors, requiredMajors } from './run.mjs';
 import { testXcodeVersion } from './toolchain.mjs';
+import { writeNotificationReport } from './notification-report.mjs';
 
 export const hostedTargets = [
   { major: 16, runtime: '16.4', xcode: '26.3', runner: 'macos-26' },
@@ -263,6 +264,7 @@ async function main([action, ...args]) {
     if (process.env.GITHUB_STEP_SUMMARY)
       await fs.appendFile(process.env.GITHUB_STEP_SUMMARY, markdown);
     console.log(markdown);
+    await writeNotificationReport(result);
     if (
       !result.passed ||
       process.env.BUILD_RESULT !== 'success' ||

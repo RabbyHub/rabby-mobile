@@ -142,7 +142,9 @@ Official references:
 Only the app-build step receives the existing regression build material
 `RABBY_MOBILE_CODE2`, `RABBY_MOBILE_KR_PWD` and `MOBILE_SAFE_API_KEY`.
 No Match, ASC, distribution signing, Sentry-upload or Lark write credentials
-are needed by these jobs. Only the separate archive/source-transfer jobs invoke
+are needed by the build, startup or archive/source-transfer jobs. Only the
+separate final notification step receives the group webhook URL and signing
+secret described below. Only the archive/source-transfer jobs invoke
 AWS CLI, using the Simulator runner account's local `default` profile. Build and
 startup steps do not perform S3 operations, but jobs under the same self-hosted
 OS account are not a credential security boundary. The build inherits the source's React Native architecture, and does
@@ -185,6 +187,81 @@ The last-screen image may show SpringBoard after XCTest teardown; use XCTest
 attachments for first-screen proof. Evidence upload uses `always()`; no
 `continue-on-error` hides failures. The earlier device-IPA probe secret is
 unused; an arm64 device IPA is not retagged or re-signed into a simulator app.
+
+## End-of-run Lark summary
+
+`ios_simulator_startup.yml` and `ios_simulator_probe.yml` call the **same
+reusable `workflow_call` notification workflow** and the same `notify.mjs`
+sender. Startup waits for `matrix`, `build`, `startup`, `archive` and `summary`;
+Probe waits for `resolve`, `startup` and `summary`, including failed or skipped
+jobs. Manual input `SKIP_NOTIFY_LARK` defaults to `false` in both workflows;
+setting it to `true` skips only notification, not their work or existing
+summary. Publish pushes notify by default. The independent manual archive
+workflow does not send this group notification.
+
+The message identifies the source commit and reports each requested iOS result
+alongside the build and archive job states. Partial coverage remains partial;
+missing evidence is not a pass. A `build_only=true` run reports that startup
+was **not validated**, even if compilation succeeded. The original summary
+exports a compact `notification_report` before returning its coverage failure,
+so a failed check can still explain its results. If that output is unavailable,
+notification must report the missing evidence rather than invent successful
+rows. The archive job exposes its exact private `archive_key` separately; the
+notification does not fetch S3 or create a public or presigned download link.
+
+Probe selects `NOTIFICATION_MODE=probe`; the default remains `startup`.
+Even a full-matrix pass is explicitly a **diagnostic Probe**, never source
+qualification. Its message separates the original App commit and producer
+run/attempt from the current test-harness commit and Probe run/attempt. For S3
+it includes only the exact private archive key, not a public download link.
+The App compiler comes from the verified archive receipt, not a guess based on
+the current harness or environment. Probe reports resolve/test/summary states,
+not a new successful App build or S3 upload: it performed neither operation.
+
+Both summary owners use `notification-report.mjs` to export a compact report
+bound to the current workflow run and attempt. Probe additionally binds the
+original validated source object, App commit and harness commit, and always
+keeps `qualificationPassed: false`. A different run, commit, mode, requested
+runtime/toolchain set or source object cannot supply passing evidence. Missing
+or invalid source selection is reported as **App source unknown**, never filled
+with the current harness SHA. Retained evidence from an earlier attempt of the
+same run is identified explicitly; future attempts are rejected.
+
+In Startup, only `notify` additionally waits for the archive result. The existing startup and summary
+dependencies do not change, and notification cannot rewrite their conclusions,
+alter their artifacts or gate Feature Test package delivery. A notification
+failure is separately visible on the `notify` job; this does not promise that
+the overall workflow remains green when delivery fails.
+
+The five-minute notification job uses `ubuntu-latest`, checkout and Node 22.
+It does not install repository JS dependencies, rebuild the App/XCTest harness,
+provision a Simulator, or read AWS credentials. Only its send step receives
+`RABBY_MOBILE_LARK_CHAT_URL` and `RABBY_MOBILE_LARK_CHAT_SECRET`, using the same
+GitHub secret fallback to `LARK_CHAT_URL` / `LARK_CHAT_SECRET` as Feature Test.
+No Lark App ID/Secret, tenant-token request, image upload or Drive upload is
+needed. The sender is dependency-free; it does not invoke the Axios-dependent
+package notification script.
+
+There is no automatic send retry: an ambiguous timeout can mean that the group
+already received the message. Re-running the notification or another workflow
+attempt can send another message; this is not an exactly-once delivery promise.
+A forcibly cancelled workflow/job or unavailable runner cannot guarantee delivery.
+
+Preview a synthetic build-only message as JSON locally, without webhook
+credentials or any network request:
+
+```bash
+GITHUB_REPOSITORY=RabbyHub/rabby-mobile \
+GITHUB_SERVER_URL=https://github.com \
+GITHUB_SHA=0000000000000000000000000000000000000000 \
+GITHUB_REF_NAME=preview \
+GITHUB_RUN_ID=123 GITHUB_RUN_ATTEMPT=1 \
+REQUESTED_MAJORS=16,17,18,26,27 BUILD_XCODE=27.1 \
+EXECUTION_ENVIRONMENT=mobile-local BUILD_ONLY=true \
+STARTUP_REPORT='' \
+STARTUP_NEEDS='{"matrix":{"result":"success"},"build":{"result":"success"},"startup":{"result":"skipped"},"archive":{"result":"skipped"},"summary":{"result":"success"}}' \
+node scripts/ios-startup-smoke/notify.mjs send --dry-run
+```
 
 ## Independently test build, upload and startup
 
@@ -280,6 +357,9 @@ Manually run **iOS Simulator Artifact Probe** (`ios_simulator_probe.yml`) with:
 - `source_artifact_id`: its exact retained `ios-startup-app-...` artifact ID;
 - `ios_majors`: the desired declared majors (default `16,17,18,26,27`).
 - `execution_environment`: `mobile-local` (default) or explicit `hosted`.
+- `SKIP_NOTIFY_LARK`: `false` (default) sends the final diagnostic group summary
+  through the same production notification chain as Startup; `true` suppresses
+  only that message.
 
 The probe downloads that same-repository artifact with read-only Actions access,
 checks the run, commit, producer attempt and archive hashes, and installs the

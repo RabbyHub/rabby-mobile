@@ -29,6 +29,10 @@ on:
         description: iOS majors to probe (no app rebuild)
         default: '16,17,18,26,27'
         type: string
+      SKIP_NOTIFY_LARK:
+        description: Skip the final Lark summary for this probe
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -210,6 +214,8 @@ jobs:
     needs: [resolve, startup]
     if: always() && needs.resolve.result == 'success'
     runs-on: ubuntu-latest
+    outputs:
+      notification_report: ${{ steps.report.outputs.notification_report }}
     env:
       PROBE_SOURCE: ${{ needs.resolve.outputs.source }}
     steps:
@@ -233,6 +239,7 @@ jobs:
           merge-multiple: true
           path: ${{ runner.temp }}/probe-results/ios-startup-app-receipt
       - name: Report artifact-only coverage, never current-source qualification
+        id: report
         if: always()
         env:
           STARTUP_RESULT: ${{ needs.startup.result }}
@@ -247,3 +254,18 @@ jobs:
           path: |
             ${{ runner.temp }}/probe-results/summary.json
             ${{ runner.temp }}/probe-results/summary.md
+
+  notify:
+    needs: [resolve, startup, summary]
+    if: ${{ always() && github.repository == 'RabbyHub/rabby-mobile' && !inputs.SKIP_NOTIFY_LARK }}
+    uses: ./.github/workflows/ios_simulator_notify.yml
+    with:
+      mode: probe
+      needs_json: ${{ toJSON(needs) }}
+      notification_report: ${{ needs.summary.outputs.notification_report }}
+      source_json: ${{ needs.resolve.outputs.source }}
+      requested_majors: ${{ inputs.ios_majors || '16,17,18,26,27' }}
+      execution_environment: ${{ inputs.execution_environment || 'mobile-local' }}
+    secrets:
+      RABBY_MOBILE_LARK_CHAT_URL: ${{ secrets.RABBY_MOBILE_LARK_CHAT_URL || secrets.LARK_CHAT_URL }}
+      RABBY_MOBILE_LARK_CHAT_SECRET: ${{ secrets.RABBY_MOBILE_LARK_CHAT_SECRET || secrets.LARK_CHAT_SECRET }}

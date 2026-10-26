@@ -4,6 +4,7 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { matrix, summarize, verifyArchive } from './hosted.mjs';
 import { validateArchiveSource, validateGitRefName } from './archive.mjs';
+import { writeNotificationReport } from './notification-report.mjs';
 
 const repository = 'RabbyHub/rabby-mobile';
 const workflowPath = '.github/workflows/ios_simulator_startup.yml';
@@ -227,6 +228,7 @@ export async function main([action, ...args]) {
         environment: process.env.EXECUTION_ENVIRONMENT || 'mobile-local',
       }),
       artifactSource: source,
+      buildXcode: metadata.xcode,
     };
     const markdown = [
       '# iOS Simulator artifact probe — diagnostic only',
@@ -259,6 +261,7 @@ export async function main([action, ...args]) {
     if (process.env.GITHUB_STEP_SUMMARY)
       await fs.appendFile(process.env.GITHUB_STEP_SUMMARY, markdown);
     console.log(markdown);
+    await writeNotificationReport(result);
     if (!result.passed || process.env.STARTUP_RESULT !== 'success')
       throw new Error(
         'Incomplete or failed artifact probe; see per-runtime evidence',
