@@ -1,4 +1,5 @@
 // Shell-contract tests only: native compilation, CocoaPods and Metro are mocked.
+// These fixtures do not prove native startup or actual Metro bundle contents.
 // Run with: node --test apps/mobile/scripts/ci/build-ios-simulator.test.cjs
 const test = require('node:test');
 const assert = require('node:assert/strict');
@@ -42,6 +43,10 @@ function fixture(t, overrides = {}) {
   );
   write(path.join(repo, 'source-marker.txt'), 'original tracked source\n');
   write(
+    path.join(repo, '.gitignore'),
+    'apps/mobile/ios/RabbyMobile/AppConfig.*.local.xcconfig\n',
+  );
+  write(
     path.join(mobile, 'scripts/libs/node-runtime.sh'),
     'ensure_mobile_node_runtime() { :; }\n',
   );
@@ -56,6 +61,7 @@ if [ "\${1:-}" = reset_builtin_assets ]; then echo assets >> "$TEST_TRACE"; fi
     path.join(mobile, 'scripts/turbo-build/_fns.sh'),
     `
 turbo_prepare_js_dependencies() {
+  printf 'prepare-inputs:%s|%s|%s|%s|%s|%s\\n' "$RABBY_MOBILE_KR_PWD" "$RABBY_MOBILE_CODE" "$RABBY_MOBILE_SAFE_API_KEY" "$APP_ENV" "$RABBY_MOBILE_BUILD_ENV" "$CONFIGURATION" >> "$TEST_TRACE"
   echo js >> "$TEST_TRACE"
   export RABBY_MOBILE_TURBO_LOCAL_CACHE_ROOT="$TEST_CACHE"
 }
@@ -74,7 +80,7 @@ turbo_log() { echo "$*"; }
   );
   write(
     path.join(mobile, 'ios/patches/override-xcconfig-release.sh'),
-    'echo xcconfig >> "$TEST_TRACE"\n',
+    'echo xcconfig >> "$TEST_TRACE"\nmkdir -p "$TEST_REPO/apps/mobile/ios/RabbyMobile"\nprintf "RABBY_MOBILE_CODE = %s\\n" "$RABBY_MOBILE_CODE" > "$TEST_REPO/apps/mobile/ios/RabbyMobile/AppConfig.Regression.local.xcconfig"\n',
   );
   write(
     path.join(bin, 'uname'),
@@ -112,15 +118,26 @@ fs.appendFileSync(process.env.TEST_TRACE, JSON.stringify({args, env: {
   RCT_NEW_ARCH_ENABLED: process.env.RCT_NEW_ARCH_ENABLED,
   SKIP_BUNDLING: process.env.SKIP_BUNDLING,
   APP_ENV: process.env.APP_ENV,
+  RABBY_MOBILE_BUILD_ENV: process.env.RABBY_MOBILE_BUILD_ENV,
+  CONFIGURATION: process.env.CONFIGURATION,
+  RABBY_MOBILE_KR_PWD: process.env.RABBY_MOBILE_KR_PWD,
+  RABBY_MOBILE_CODE: process.env.RABBY_MOBILE_CODE,
+  RABBY_MOBILE_SAFE_API_KEY: process.env.RABBY_MOBILE_SAFE_API_KEY,
   DEVELOPER_DIR: process.env.DEVELOPER_DIR,
 }}) + '\\n');
 if (process.env.TEST_BUILD_STATUS) process.exit(Number(process.env.TEST_BUILD_STATUS));
 const dd = args[args.indexOf('-derivedDataPath') + 1];
 const app = path.join(dd, 'Build/Products/Regression-iphonesimulator/RabbyMobile.app');
+const rabbitCode = process.env.TEST_WRONG_NATIVE_CODE || args.find(arg => arg.startsWith('RABBY_MOBILE_CODE='))?.slice('RABBY_MOBILE_CODE='.length) || 'missing-code-setting';
+const receiptPath = args.find(arg => arg.startsWith('RABBY_MOBILE_SIMULATOR_BUNDLE_RECEIPT='))?.slice('RABBY_MOBILE_SIMULATOR_BUNDLE_RECEIPT='.length);
+if (!process.env.TEST_MISSING_METRO_RECEIPT && receiptPath) {
+  const buildInputProfile = args.find(arg => arg.startsWith('RABBY_MOBILE_SIMULATOR_BUILD_INPUT_PROFILE='))?.slice('RABBY_MOBILE_SIMULATOR_BUILD_INPUT_PROFILE='.length);
+  fs.writeFileSync(receiptPath, JSON.stringify({buildInputProfile}), {flag:'wx'});
+}
 fs.mkdirSync(app, {recursive:true});
 fs.writeFileSync(path.join(app, 'RabbyMobile'), 'native-test-binary');
 fs.writeFileSync(path.join(app, 'main.jsbundle'), process.env.TEST_PLAIN_JS ? Buffer.from('plain JS') : Buffer.from('c61fbc03c103191f0001', 'hex'));
-fs.writeFileSync(path.join(app, 'Info.plist'), '<?xml version="1.0"?><plist version="1.0"><dict>' + Object.entries({CFBundleExecutable:'RabbyMobile', CFBundleIdentifier:'com.debank.rabby-mobile-regression', CFBundleVersion:'1', CFBundleShortVersionString:'0.6.94', DTPlatformName:'iphonesimulator', MinimumOSVersion:'15.1'}).map(([key,value]) => '<key>'+key+'</key><string>'+value+'</string>').join('') + '</dict></plist>');
+fs.writeFileSync(path.join(app, 'Info.plist'), '<?xml version="1.0"?><plist version="1.0"><dict>' + Object.entries({CFBundleExecutable:'RabbyMobile', CFBundleIdentifier:'com.debank.rabby-mobile-regression', CFBundleVersion:'1', CFBundleShortVersionString:'0.6.94', DTPlatformName:'iphonesimulator', MinimumOSVersion:'15.1', rabbit_code:rabbitCode}).map(([key,value]) => '<key>'+key+'</key><string>'+value+'</string>').join('') + '</dict></plist>');
 if (process.env.TEST_TRACKED_CHANGE) fs.writeFileSync(path.join(process.env.TEST_REPO, 'source-marker.txt'), process.env.TEST_TRACKED_CHANGE);
 if (process.env.TEST_HEAD_DRIFT) execFileSync('git', ['-C', process.env.TEST_REPO, '-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid', 'commit', '--allow-empty', '-qm', 'unexpected concurrent commit']);
 `,
@@ -207,6 +224,16 @@ macTest(
     assert(native.args.includes('CODE_SIGNING_ALLOWED=NO'));
     assert(native.args.includes('EXCLUDED_ARCHS[sdk=iphonesimulator*]='));
     assert(native.args.includes('FORCE_BUNDLING=1'));
+    assert(
+      native.args.includes(
+        'RABBY_MOBILE_SIMULATOR_BUILD_INPUT_PROFILE=simulator-smoke-v1',
+      ),
+    );
+    assert(
+      native.args.includes(
+        `RABBY_MOBILE_SIMULATOR_BUNDLE_RECEIPT=${f.output}/metro-inputs.json`,
+      ),
+    );
     assert.equal(native.env.REALLY_UPLOAD, 'false');
     assert.equal(native.env.SENTRY_DISABLE_AUTO_UPLOAD, 'true');
     assert.equal(native.env.SKIP_BUNDLING, undefined);
@@ -217,6 +244,7 @@ macTest(
     );
     assert.equal(metadata.reactNativeArchitecture, 'new');
     assert.equal(metadata.schemaVersion, 2);
+    assert.equal(metadata.buildInputProfile, 'simulator-smoke-v1');
     assert.equal(
       metadata.sourceCommit,
       execFileSync('git', ['-C', f.repo, 'rev-parse', 'HEAD'], {
@@ -247,6 +275,72 @@ macTest(
   },
 );
 
+macTest(
+  'forces public test inputs without changing existing release xcconfigs',
+  t => {
+    const f = fixture(t, {
+      RABBY_MOBILE_KR_PWD: 'synthetic-production-password',
+      RABBY_MOBILE_CODE: 'synthetic-production-code',
+      RABBY_MOBILE_SAFE_API_KEY: 'synthetic-production-safe-key',
+      APP_ENV: 'production',
+      RABBY_MOBILE_BUILD_ENV: 'production',
+      CONFIGURATION: 'Release',
+      buildchannel: 'appstore',
+    });
+    const configDirectory = path.join(f.mobile, 'ios/RabbyMobile');
+    fs.mkdirSync(configDirectory, { recursive: true });
+    const existingConfigs = ['Regression', 'Release'].map(configuration => ({
+      file: path.join(
+        configDirectory,
+        `AppConfig.${configuration}.local.xcconfig`,
+      ),
+      content: `// synthetic existing ${configuration} config\nRABBY_MOBILE_CODE = synthetic-existing-${configuration}\n`,
+    }));
+    for (const { file, content } of existingConfigs)
+      fs.writeFileSync(file, content);
+    const result = f.run();
+    assert.equal(result.status, 0, result.stdout + result.stderr);
+    const trace = fs.readFileSync(f.trace, 'utf8');
+    const inputs = {
+      RABBY_MOBILE_KR_PWD: 'RABBY_SIMULATOR_SMOKE_PASSWORD',
+      RABBY_MOBILE_CODE: 'RABBY_SIMULATOR_SMOKE_CODE',
+      RABBY_MOBILE_SAFE_API_KEY: 'RABBY_SIMULATOR_SMOKE_SAFE_API_KEY',
+    };
+    assert.ok(
+      trace.includes(
+        `prepare-inputs:${[
+          ...Object.values(inputs),
+          'regression',
+          'regression',
+          'Regression',
+        ].join('|')}\n`,
+      ),
+    );
+    const native = JSON.parse(trace.trim().split('\n').at(-1));
+    for (const [key, value] of Object.entries(inputs))
+      assert.equal(native.env[key], value);
+    assert.equal(native.env.APP_ENV, 'regression');
+    assert.equal(native.env.RABBY_MOBILE_BUILD_ENV, 'regression');
+    assert.equal(native.env.CONFIGURATION, 'Regression');
+    assert.deepEqual(
+      native.args.filter(arg => arg.startsWith('RABBY_MOBILE_CODE=')),
+      ['RABBY_MOBILE_CODE=RABBY_SIMULATOR_SMOKE_CODE'],
+    );
+    assert.doesNotMatch(trace, /xcconfig/);
+    for (const { file, content } of existingConfigs)
+      assert.equal(fs.readFileSync(file, 'utf8'), content);
+    assert.equal(
+      JSON.parse(fs.readFileSync(path.join(f.output, 'metadata.json')))
+        .buildInputProfile,
+      'simulator-smoke-v1',
+    );
+    assert.doesNotMatch(
+      trace + result.stdout + result.stderr,
+      /synthetic-production/,
+    );
+  },
+);
+
 macTest('inherits legacy architecture without forcing newArch', t => {
   const f = fixture(t, { RCT_NEW_ARCH_ENABLED: '0' });
   const result = f.run();
@@ -262,6 +356,18 @@ macTest('inherits legacy architecture without forcing newArch', t => {
 for (const [name, env, status, message] of [
   ['Pod preparation failure', { TEST_POD_STATUS: '42' }, 42],
   ['native build failure', { TEST_BUILD_STATUS: '65' }, 65],
+  [
+    'skipped Metro bundling despite native success',
+    { TEST_MISSING_METRO_RECEIPT: '1' },
+    1,
+    /Missing valid fresh Simulator Metro input receipt/,
+  ],
+  [
+    'a different native rabbit code',
+    { TEST_WRONG_NATIVE_CODE: 'synthetic-other-native-code' },
+    1,
+    /does not use the public smoke code/,
+  ],
   [
     'device platform binary',
     { TEST_MACHO_PLATFORM: 'IOS' },

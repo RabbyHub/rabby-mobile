@@ -139,8 +139,23 @@ Official references:
 
 ## Isolation, outputs and failure handling
 
-Only the app-build step receives the existing regression build material
-`RABBY_MOBILE_CODE2`, `RABBY_MOBILE_KR_PWD` and `MOBILE_SAFE_API_KEY`.
+The Simulator build uses fixed, public, non-production inputs for
+`RABBY_MOBILE_KR_PWD`, `RABBY_MOBILE_CODE` and `RABBY_MOBILE_SAFE_API_KEY`.
+The build script overrides inherited values before dependency/asset/native
+preparation; this workflow does not supply the corresponding release secrets.
+It preserves the Regression configuration, passes the native code as an explicit
+Xcode build setting, and does not rewrite local Regression/Release xcconfigs.
+The final Metro launcher re-applies the public inputs after Xcode's shell/local
+environment loading and writes a success receipt into this build's fresh output
+directory. The build requires that receipt and verifies the native plist code
+before marking an archive eligible. Skipped bundling cannot silently qualify a
+stale DerivedData bundle; Metro's environment fingerprint separates transformed
+modules built with different inputs.
+These apps are fresh-install startup probes, not real-wallet or upgrade fixtures.
+The receipt records `buildInputProfile: simulator-smoke-v1`; public uploads
+require this exact profile as well as the existing archive hash/source/producer
+checks. The marker is the trusted recipe's publication policy, not a secret
+scanner or a sandbox against malicious code on the same OS account.
 No Match, ASC, distribution signing, Sentry-upload or Lark write credentials
 are needed by the build, startup or archive/source-transfer jobs. Only the
 separate final notification step receives the group webhook URL and signing
@@ -167,13 +182,18 @@ The shared app artifact is retained for **30 days** and includes:
 
 - `RabbyMobile-simulator.zip`, with executable permissions, and its build receipt:
   full commit, producer run/attempt, version, RN architecture, SDK/Xcode,
-  executable/JS/archive hashes and source provenance;
-- build logs and `source-changes.json` when tracked sources changed. This report
+  executable/JS/archive hashes, build-input profile and source provenance;
+- `macho-build.txt` and `source-changes.json` when tracked sources changed. This report
   contains paths, change types and content hashes, never raw source diffs.
+
+Public app uploads use an explicit file allowlist. Raw build and platform-install
+log files are not uploaded; use the runner console for those diagnostics.
+An absent/invalid receipt or legacy build-input profile prevents the app upload,
+including on failed builds. Historical archives are never relabelled as safe.
 
 Separate seven-day evidence artifacts preserve:
 
-- platform/runtime provisioning logs and exact inventory;
+- exact platform/runtime inventory;
 - per-runtime `.xcresult`, screenshots, logs and summaries, including failures.
 
 After native compilation succeeds, the app is archived **before** post-build
@@ -391,6 +411,12 @@ GitHub artifact for this probe run. Both startup shards **and the summary** cons
 that new transport artifact; they never request the expired/deleted original
 artifact or require the old workflow run to remain available. Original producer
 IDs remain in the source receipt and are not replaced by the relay's IDs.
+
+Before this public relay, the app must also pass the `simulator-smoke-v1`
+build-input profile check. Legacy private archives remain private and cannot be
+re-published by this workflow: build once with the non-production input recipe
+to seed future public transport/probes. Do not edit an old receipt to add the
+marker; that would not change the inputs embedded in its app.
 
 Missing/corrupt S3 objects fail explicitly. There is no automatic artifact/S3
 fallback, URL following, rebuild or qualification claim. The original workflow

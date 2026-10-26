@@ -559,6 +559,125 @@ test('S3 probe verifies and summarizes an archived original producer entirely of
   assert.deepEqual({ ...process.env }, originalEnvironment);
 });
 
+test('public relay verification requires the exact profile plus original producer, source and archive bytes', async t => {
+  const directory = await fs.mkdtemp(
+    path.join(os.tmpdir(), 'rabby-public-probe-'),
+  );
+  t.after(() => fs.rm(directory, { recursive: true, force: true }));
+  const source = s3Source();
+  // Only a transport fixture. No native app is extracted or executed.
+  const archive = Buffer.from('public simulator archive transport fixture');
+  const receipt = {
+    schemaVersion: 2,
+    buildInputProfile: 'simulator-smoke-v1',
+    sourceCommit: source.sourceCommit,
+    platform: 'iphonesimulator',
+    configuration: 'Regression',
+    architectures: ['arm64'],
+    executableSha256: 'b'.repeat(64),
+    jsBundleSha256: 'c'.repeat(64),
+    archive: {
+      file: 'RabbyMobile-simulator.zip',
+      bytes: archive.length,
+      sha256: createHash('sha256').update(archive).digest('hex'),
+    },
+    sourceProvenance: {
+      status: 'modified',
+      headCommit: source.sourceCommit,
+      changedFiles: ['generated.css'],
+    },
+    producer: {
+      repository: source.repository,
+      runId: source.runId,
+      runAttempt: source.runAttempt,
+    },
+  };
+  const env = {
+    PROBE_SOURCE: JSON.stringify(source),
+    // The relay must validate the original producer, not this current run.
+    GITHUB_RUN_ID: '999',
+    GITHUB_RUN_ATTEMPT: '8',
+  };
+  for (const scenario of [
+    'valid',
+    'legacy',
+    'unknown-profile',
+    'source',
+    'repository',
+    'runId',
+    'runAttempt',
+    'hash',
+    'invalid-selection',
+  ]) {
+    const appDir = path.join(directory, scenario);
+    await fs.mkdir(appDir);
+    const metadata = structuredClone(receipt);
+    if (scenario === 'legacy') delete metadata.buildInputProfile;
+    if (scenario === 'unknown-profile')
+      metadata.buildInputProfile = 'simulator-smoke-v2';
+    if (scenario === 'source') metadata.sourceCommit = 'd'.repeat(40);
+    if (['repository', 'runId', 'runAttempt'].includes(scenario))
+      metadata.producer[scenario] = 'different-producer';
+    const metadataPath = path.join(appDir, 'metadata.json');
+    const metadataText = JSON.stringify(metadata);
+    await fs.writeFile(metadataPath, metadataText);
+    const archiveBytes = Buffer.from(archive);
+    if (scenario === 'hash') archiveBytes[0] ^= 1;
+    await fs.writeFile(path.join(appDir, metadata.archive.file), archiveBytes);
+    const output = path.join(appDir, 'outputs');
+    const result = offlineCli(['verify-public', appDir], {
+      ...env,
+      GITHUB_OUTPUT: output,
+      ...(scenario === 'invalid-selection'
+        ? { PROBE_SOURCE: 'synthetic-private-input-not-valid-json' }
+        : {}),
+    });
+    if (scenario === 'valid') {
+      assert.equal(result.status, 0, result.stderr);
+      assert.equal(
+        result.stdout,
+        'Public Simulator artifact profile verified\n',
+      );
+      assert.equal(result.stderr, '');
+    } else {
+      assert.equal(result.status, 1, scenario);
+      assert.equal(result.stdout, '');
+      assert.match(
+        result.stderr,
+        /Public Simulator artifact verification failed/,
+      );
+      assert.doesNotMatch(result.stderr, /synthetic-private-input/);
+    }
+    // Neither acceptance nor rejection rewrites/relabels the receipt or emits
+    // a sidecar/Actions output that could independently authorize a relay.
+    assert.equal(await fs.readFile(metadataPath, 'utf8'), metadataText);
+    assert.deepEqual((await fs.readdir(appDir)).sort(), [
+      'RabbyMobile-simulator.zip',
+      'metadata.json',
+    ]);
+    if (scenario === 'legacy') {
+      const privateCheck = offlineCli(['verify', appDir], env);
+      assert.equal(privateCheck.status, 0, privateCheck.stderr);
+      assert.match(privateCheck.stdout, /Diagnostic s3 app verified/);
+      assert.equal(await fs.readFile(metadataPath, 'utf8'), metadataText);
+    }
+  }
+});
+
+test('verify-public CLI rejects missing or additional directory arguments without network', () => {
+  for (const args of [[], ['/missing', 'unexpected']]) {
+    const result = offlineCli(['verify-public', ...args], {
+      PROBE_SOURCE: JSON.stringify(s3Source()),
+    });
+    assert.equal(result.status, 1);
+    assert.equal(result.stdout, '');
+    assert.match(
+      result.stderr,
+      /Public Simulator artifact verification failed/,
+    );
+  }
+});
+
 test('probe workflow has no Rabby build and consumes only an explicitly selected artifact', async () => {
   const workflow = await fs.readFile(
     new URL('../../.github/workflows/ios_simulator_probe.yml', import.meta.url),

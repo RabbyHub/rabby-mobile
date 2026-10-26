@@ -61,6 +61,11 @@ export REALLY_UPLOAD=false SKIP_NOTIFY_LARK=true SENTRY_DISABLE_AUTO_UPLOAD=true
 export RABBY_MOBILE_LARK_DRIVE_UPLOAD=false RABBY_MOBILE_TURBO_REMOTE_SYNC=false
 export RABBY_MOBILE_BUILD_ENV=regression APP_ENV=regression buildchannel=selfhost-reg
 export CONFIGURATION=Regression
+# Public, non-production test constants. Never inherit release credentials in
+# an unsigned Simulator app that may be retained as a public CI artifact.
+export RABBY_MOBILE_KR_PWD=RABBY_SIMULATOR_SMOKE_PASSWORD
+export RABBY_MOBILE_CODE=RABBY_SIMULATOR_SMOKE_CODE
+export RABBY_MOBILE_SAFE_API_KEY=RABBY_SIMULATOR_SMOKE_SAFE_API_KEY
 export BUILD_TARGET_PLATFORM=ios RCT_NO_LAUNCH_PACKAGER=1
 export RABBY_MOBILE_TURBO_BUILD=true RABBY_MOBILE_TURBO_CACHE_MODE=local-first
 export FORCE_BUNDLING=1
@@ -107,7 +112,6 @@ else
   # Intentionally no syncrnversion: validate the source version, never bump it.
   turbo_mark_ios_build_artifacts_ready "$sim_assets_key"
 fi
-bash "$project_dir/ios/patches/override-xcconfig-release.sh"
 turbo_prepare_ruby_bundle
 turbo_prepare_cocoapods
 
@@ -133,6 +137,9 @@ xcodebuild build \
   ARCHS=arm64 'EXCLUDED_ARCHS[sdk=iphonesimulator*]=' \
   CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO \
   CODE_SIGN_IDENTITY= PROVISIONING_PROFILE_SPECIFIER= \
+  RABBY_MOBILE_CODE="$RABBY_MOBILE_CODE" \
+  RABBY_MOBILE_SIMULATOR_BUILD_INPUT_PROFILE=simulator-smoke-v1 \
+  RABBY_MOBILE_SIMULATOR_BUNDLE_RECEIPT="$sim_output_dir/metro-inputs.json" \
   SENTRY_DISABLE_AUTO_UPLOAD=true FORCE_BUNDLING=1
 
 # A failed xcodebuild exits above, before any previous DerivedData output can
@@ -221,6 +228,18 @@ if (plist.CFBundleShortVersionString !== pkg.version || !plist.CFBundleVersion) 
   throw new Error('Built app version does not match committed package metadata');
 }
 if (plist.DTPlatformName !== 'iphonesimulator') throw new Error('Expected Simulator plist platform');
+if (plist.rabbit_code !== 'RABBY_SIMULATOR_SMOKE_CODE') {
+  throw new Error('Built Simulator app does not use the public smoke code');
+}
+let metroInputs;
+try {
+  metroInputs = JSON.parse(fs.readFileSync(path.join(outputDir, 'metro-inputs.json'), 'utf8'));
+} catch {
+  throw new Error('Missing valid fresh Simulator Metro input receipt');
+}
+if (metroInputs?.buildInputProfile !== 'simulator-smoke-v1' || Object.keys(metroInputs).length !== 1) {
+  throw new Error('Missing valid fresh Simulator Metro input receipt');
+}
 const js = fs.readFileSync(path.join(appPath, 'main.jsbundle'));
 // Hermes bytecode magic (little-endian). Metro JS alone is not this lane's contract.
 if (js.subarray(0, 8).toString('hex') !== 'c61fbc03c103191f') {
@@ -229,6 +248,7 @@ if (js.subarray(0, 8).toString('hex') !== 'c61fbc03c103191f') {
 const hash = file => digest(fs.readFileSync(file));
 const metadata = {
   schemaVersion: 2,
+  buildInputProfile: 'simulator-smoke-v1',
   sourceCommit,
   sourceProvenance,
   producer: {

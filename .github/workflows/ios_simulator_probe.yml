@@ -96,6 +96,11 @@ jobs:
       - id: matrix
         if: inputs.source_type == 's3'
         run: node scripts/ios-startup-smoke/probe.mjs matrix
+      - name: Require public-safe app inputs before the GitHub artifact relay
+        if: inputs.source_type == 's3'
+        env:
+          PROBE_SOURCE: ${{ steps.fetch.outputs.source }}
+        run: node scripts/ios-startup-smoke/probe.mjs verify-public "$EVIDENCE_ROOT/app"
       - id: relay
         name: Relay verified S3 bytes without embedding AWS credentials
         if: inputs.source_type == 's3'

@@ -5,6 +5,7 @@ import { pathToFileURL } from 'node:url';
 import { matrix, summarize, verifyArchive } from './hosted.mjs';
 import { validateArchiveSource, validateGitRefName } from './archive.mjs';
 import { writeNotificationReport } from './notification-report.mjs';
+import { assertPublicArtifactProfile } from './public-artifact.mjs';
 
 const repository = 'RabbyHub/rabby-mobile';
 const workflowPath = '.github/workflows/ios_simulator_startup.yml';
@@ -187,6 +188,20 @@ export async function main([action, ...args]) {
     console.log(JSON.stringify(source, null, 2));
     return;
   }
+  if (action === 'verify-public') {
+    try {
+      if (args.length !== 1 || !args[0]) throw new Error();
+      const source = sourceFromEnvironment();
+      const metadata = await verifyProbeArchive(args[0], source);
+      assertPublicArtifactProfile(metadata);
+    } catch {
+      // The public relay must fail before upload, without echoing receipt or
+      // source contents. Keep the existing private verifier unchanged.
+      throw new Error('Public Simulator artifact verification failed');
+    }
+    console.log('Public Simulator artifact profile verified');
+    return;
+  }
   const source = sourceFromEnvironment();
   if (action === 'verify') {
     const metadata = await verifyProbeArchive(args[0], source);
@@ -268,7 +283,7 @@ export async function main([action, ...args]) {
       );
     return;
   }
-  throw new Error('Use matrix, resolve, verify or summary');
+  throw new Error('Use matrix, resolve, verify, verify-public or summary');
 }
 
 if (

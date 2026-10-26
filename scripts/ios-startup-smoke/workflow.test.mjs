@@ -85,6 +85,57 @@ test('build-only creates reusable output without archive or startup qualificatio
   assert.match(job(source, 'summary'), /if: always\(\) && !inputs.build_only/);
 });
 
+test('public app publication excludes release secrets and raw build logs and requires a verified profile', async () => {
+  const build = job(await workflow('startup'), 'build');
+  assert.doesNotMatch(
+    build,
+    /secrets\.(?:RABBY_MOBILE_KR_PWD|RABBY_MOBILE_CODE2|MOBILE_SAFE_API_KEY)/,
+  );
+  const gate = build.indexOf('id: public_app');
+  const upload = build.indexOf('id: app_artifact');
+  assert.ok(gate >= 0 && upload > gate);
+  assert.match(
+    build.slice(gate, upload),
+    /if: always\(\)[\s\S]*public-artifact\.mjs "\$EVIDENCE_ROOT\/build" "\$GITHUB_SHA"/,
+  );
+  assert.match(
+    build.slice(upload),
+    /if: \$\{\{ always\(\) && steps\.public_app\.outputs\.allowed == 'true' \}\}/,
+  );
+  const paths = build.slice(upload).matchAll(/^            (.+)$/gm);
+  assert.deepEqual(
+    Array.from(paths, match => match[1]),
+    [
+      '${{ env.EVIDENCE_ROOT }}/build/RabbyMobile-simulator.zip',
+      '${{ env.EVIDENCE_ROOT }}/build/metadata.json',
+      '${{ env.EVIDENCE_ROOT }}/build/source-changes.json',
+      '${{ env.EVIDENCE_ROOT }}/build/macho-build.txt',
+      '${{ env.EVIDENCE_ROOT }}/toolchain.json',
+      '${{ env.EVIDENCE_ROOT }}/build-platform.json',
+    ],
+  );
+});
+
+test('S3 public relay verifies the original archive profile before upload and cannot run after failure', async () => {
+  const resolve = job(await workflow('probe'), 'resolve');
+  const relay = resolve.indexOf('id: relay');
+  const gate = resolve.indexOf('probe.mjs verify-public');
+  assert.ok(gate >= 0 && relay > gate);
+  const gateStep = resolve.slice(resolve.lastIndexOf('      - ', gate), relay);
+  assert.match(gateStep, /if: inputs\.source_type == 's3'/);
+  assert.match(
+    gateStep,
+    /PROBE_SOURCE: \$\{\{ steps\.fetch\.outputs\.source \}\}/,
+  );
+  assert.match(gateStep, /verify-public "\$EVIDENCE_ROOT\/app"/);
+  const relayStep = resolve.slice(relay);
+  assert.match(relayStep, /if: inputs\.source_type == 's3'/);
+  assert.doesNotMatch(
+    gateStep + relayStep,
+    /always\(|continue-on-error|failure\(|!cancelled\(/,
+  );
+});
+
 test('local S3 archive is independent of startup and keeps the original build attempt on retry', async () => {
   const source = await workflow('startup');
   const archive = job(source, 'archive');
@@ -235,7 +286,7 @@ test('all S3 transfer jobs use the local default profile without login shells or
     const environment = transfer.match(/^    env:\n([\s\S]*?)(?=^    \w+:)/m);
     assert.ok(
       environment,
-      `${name}/${jobName} needs explicit AWS profile isolation`,
+      `${name}/${jobName} needs explicit AWS profile selection`,
     );
     assert.match(environment[1], /^      AWS_PROFILE: ['"]?default['"]?$/m);
     assert.match(
