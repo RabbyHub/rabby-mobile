@@ -90,6 +90,7 @@ const MultiSwap = ({
               <LogoWithText
                 key={token.id}
                 logo={token.logo_url}
+                logoRadius={16}
                 text={
                   <View style={commonStyle.rowFlexCenterItem}>
                     <Text style={commonStyle.primaryText}>
@@ -121,6 +122,7 @@ const MultiSwap = ({
                 <LogoWithText
                   key={token.id}
                   logo={token.logo_url}
+                  logoRadius={16}
                   text={
                     <View style={commonStyle.rowFlexCenterItem}>
                       <Text style={commonStyle.primaryText}>
