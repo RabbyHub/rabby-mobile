@@ -38474,6 +38474,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-native-nitro-modules@patch:react-native-nitro-modules@npm%3A0.36.5#./.yarn/patches/react-native-nitro-modules-npm-0.36.5-rabby.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
+  version: 0.36.5
+  resolution: "react-native-nitro-modules@patch:react-native-nitro-modules@npm%3A0.36.5#./.yarn/patches/react-native-nitro-modules-npm-0.36.5-rabby.patch::version=0.36.5&hash=5af275&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+  checksum: 10/840f4ddf522d284a788b3e3880e54d072dc8d0ec91e50a74c6d4192e07fa9ae5ef5614a4c7b6a3e197e8b97ff28569078f68e8e42b8db1c82350c1fca38a7d20
+  languageName: node
+  linkType: hard
+
 "react-native-pager-view@npm:6.7.0":
   version: 6.7.0
   resolution: "react-native-pager-view@npm:6.7.0"
