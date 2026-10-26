@@ -1,5 +1,5 @@
 import BigNumber from 'bignumber.js';
-import { AbstractPortfolioToken, DisplayNftItem } from '../types';
+import { DisplayNftItem } from '../types';
 import { SMALL_TOKEN_ID } from '@/utils/token';
 import { formatNetworth } from '@/utils/math';
 import { ITokenItem } from '@/store/tokens';
@@ -24,21 +24,6 @@ export const convertSmallTokenList = (tokens?: ITokenItem[]) => {
       ]
     : [];
 };
-export const getTotalFoldToken = (
-  tokens?: AbstractPortfolioToken[],
-  usdRate = 1,
-  symbol = '$',
-) => {
-  const tokensTotalValue = tokens
-    ?.reduce(
-      (acc, item) => acc.plus(item._isExcludeBalance ? 0 : item._usdValue || 0),
-      new BigNumber(0),
-    )
-    ?.times(usdRate)
-    .toNumber();
-  return formatNetworth(tokensTotalValue, false, symbol);
-};
-
 export const getAllDefiCount = (
   portfolios: IProtocolItem[],
   usdRate = 1,

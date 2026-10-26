@@ -1,18 +1,11 @@
-import { getAllAccountsToDisplay } from '@/core/apis/account';
 import type { IWalletKit } from '@reown/walletkit';
 import type { SessionTypes } from '@walletconnect/types';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
-import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import {
   getAddressFromCaip10,
   getChainsFromNamespaces,
   getMethodsFromNamespaces,
 } from './chainAccount';
-import {
-  getWalletConnectAccountForTopic,
-  isSameWalletConnectAccount,
-} from './accountSelection';
-import { addWalletConnectLog } from './debugLog';
 import { setWalletConnectDebugState } from './state';
 import type { WalletConnectSessionViewModel } from './types';
 
@@ -127,39 +120,4 @@ export function syncWalletConnectSessionsFromClient(walletKit: IWalletKit) {
 export function getWalletConnectSession(walletKit: IWalletKit, topic: string) {
   const activeSessions = walletKit.getActiveSessions();
   return activeSessions[topic] || null;
-}
-
-export async function resolveWalletConnectAccount(
-  session: SessionTypes.Struct,
-) {
-  const approvedAddress = getWalletConnectApprovedAddresses(session)[0];
-  const approvedAccount = getWalletConnectAccountForTopic(session.topic);
-  if (!approvedAddress && !approvedAccount) {
-    return null;
-  }
-
-  try {
-    const accounts = await getAllAccountsToDisplay();
-    if (approvedAccount) {
-      return (
-        accounts.find(account =>
-          isSameWalletConnectAccount(account, approvedAccount),
-        ) || null
-      );
-    }
-
-    return approvedAddress
-      ? accounts.find(account =>
-          isSameAddress(account.address, approvedAddress),
-        ) || null
-      : null;
-  } catch (error) {
-    addWalletConnectLog(
-      'sessions',
-      'failed to resolve approved Rabby account',
-      error,
-      'warn',
-    );
-    return null;
-  }
 }

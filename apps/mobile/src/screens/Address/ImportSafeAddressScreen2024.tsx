@@ -92,14 +92,14 @@ export const ImportSafeAddressScreen2024 = () => {
           type: KEYRING_TYPE.GnosisKeyring,
         });
       } else {
-        setError(err?.message || t('Not a valid address'));
+        setError(err?.message || t('page.importSafe.error.invalid'));
       }
     }
   };
 
   return (
     <FooterButtonScreenContainer
-      as="View"
+      as="KeyboardAvoidingView"
       buttonProps={{
         title: t('global.Confirm'),
         onPress: handleNext,

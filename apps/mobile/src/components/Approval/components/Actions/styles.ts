@@ -17,6 +17,7 @@ export const getActionsStyle = createGetStyles2024(
       flexDirection: 'row',
       alignItems: 'center',
       flex: 1,
+      minWidth: 0,
     },
     leftText: {
       color: colors2024['neutral-title-1'],
@@ -25,6 +26,8 @@ export const getActionsStyle = createGetStyles2024(
       fontStyle: 'normal',
       fontWeight: '700',
       lineHeight: 18,
+      flexShrink: 1,
+      minWidth: 0,
     },
     speedUpIcon: {
       width: 16,
@@ -42,6 +45,7 @@ export const getActionsStyle = createGetStyles2024(
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
+      gap: 8,
       paddingHorizontal: 16,
       paddingVertical: 12,
     },

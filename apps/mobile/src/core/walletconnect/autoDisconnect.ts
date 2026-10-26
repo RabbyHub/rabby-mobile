@@ -1,7 +1,7 @@
 import type { IWalletKit } from '@reown/walletkit';
 import { getSdkError } from '@walletconnect/utils';
 
-import { forgetWalletConnectAccountForTopic } from './accountSelection';
+import { forgetWalletConnectAccountForTopic } from './accountPersistence';
 import { addWalletConnectLog } from './debugLog';
 import {
   getWalletConnectAutoDisconnectEnabled as getAutoDisconnectEnabledSetting,

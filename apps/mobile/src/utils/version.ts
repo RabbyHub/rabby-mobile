@@ -2,7 +2,7 @@ import { Linking, Platform } from 'react-native';
 import VersionCheck from 'react-native-version-check';
 import Toast from 'react-native-root-toast';
 import semver from 'semver';
-import RNFS from 'react-native-fs';
+import RNFS from '@rabby-wallet/react-native-fs';
 
 import { toast } from '@/components2024/Toast';
 import { devLog } from './logger';
@@ -174,10 +174,10 @@ export async function getUpgradeInfo(options?: { forceLocalVersion?: string }) {
 
   try {
     finalRemoteInfo.changelog = await Promise.allSettled([
-      await fetch(`${RES_BASE_URL}/${finalRemoteInfo.version}.md`),
+      fetch(`${RES_BASE_URL}/${finalRemoteInfo.version}.md`),
       isProductionChannel
         ? Promise.resolve('')
-        : await fetch(`${PROD_RES_BASE_URL}/${finalRemoteInfo.version}.md`),
+        : fetch(`${PROD_RES_BASE_URL}/${finalRemoteInfo.version}.md`),
     ])
       .then(([channelMdRes, prodMdRes]) => {
         const channelMd =

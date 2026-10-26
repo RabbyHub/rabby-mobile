@@ -14,6 +14,7 @@ import { AppState } from 'react-native';
 
 import { SupportedLang } from '@/utils/i18n';
 import { matomoRequestEvent } from './analytics';
+import { APP_FEATURE_SWITCH } from '@/constant';
 
 type SettingsSnapshotPayload = {
   biometricsEnabled: boolean;
@@ -221,6 +222,10 @@ export const trackSettingsFaceId = async (enabled: boolean) => {
 };
 
 export const trackSettingsTxNotification = async (enabled: boolean) => {
+  if (!APP_FEATURE_SWITCH.transactionNotification) {
+    return false;
+  }
+
   return matomoRequestEvent({
     category: 'Settings Snapshot',
     action: 'Settings_TxNoti',
@@ -263,18 +268,12 @@ export const trackSettingsScreenshotToBug = async (enabled: boolean) => {
 export const trackSettingsSnapshotsOncePerDay = async (
   payload: SettingsSnapshotPayload,
 ) => {
-  await Promise.all([
+  const tasks = [
     trackSnapshotEventOncePerDay({
       trackKey: 'Settings_FaceID',
       category: 'Settings Snapshot',
       action: 'Settings_FaceID',
       label: getOnOffLabel(payload.biometricsEnabled),
-    }),
-    trackSnapshotEventOncePerDay({
-      trackKey: 'Settings_TxNoti',
-      category: 'Settings Snapshot',
-      action: 'Settings_TxNoti',
-      label: getOnOffLabel(payload.txNotificationEnabled),
     }),
     trackSnapshotEventOncePerDay({
       trackKey: 'Settings_LockTime',
@@ -300,7 +299,20 @@ export const trackSettingsSnapshotsOncePerDay = async (
       action: 'Settings_SStoBug',
       label: getOnOffLabel(payload.screenshotToBugEnabled),
     }),
-  ]);
+  ];
+
+  if (APP_FEATURE_SWITCH.transactionNotification) {
+    tasks.push(
+      trackSnapshotEventOncePerDay({
+        trackKey: 'Settings_TxNoti',
+        category: 'Settings Snapshot',
+        action: 'Settings_TxNoti',
+        label: getOnOffLabel(payload.txNotificationEnabled),
+      }),
+    );
+  }
+
+  await Promise.all(tasks);
 };
 
 export const useTrack0331HomeActiveSnapshots = () => {

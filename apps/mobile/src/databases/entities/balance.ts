@@ -6,8 +6,22 @@ import { prepareAppDataSource } from '../imports';
 import { columnConverter } from './_helpers';
 import type { EvmTotalBalanceResponse } from '../hooks/balance';
 import { APP_DB_PREFIX, ORM_TABLE_NAMES } from '../constant';
-import { PreparedStatement } from '@op-engineering/op-sqlite';
 import { ParseEntity } from '@/core/utils/typeorm';
+import { traceStartupDiagnostic } from '@/core/utils/startupDiagnostics';
+import {
+  executeStartupSqlite,
+  getStartupSqliteRowItem,
+  getStartupSqliteRowsLength,
+} from '../startupSqlite';
+
+type StartupBalanceCacheEntry = {
+  owner_addr: string;
+  isCore: boolean;
+};
+
+function buildStartupBalanceCacheKey(ownerAddr: string, isCore: boolean) {
+  return `${ownerAddr.toLowerCase()}-${isCore ? 'core' : 'nocore'}`;
+}
 
 @ParseEntity()
 @Entity(ORM_TABLE_NAMES.cache_balance)
@@ -102,6 +116,85 @@ export class BalanceEntity extends EntityAddressAssetBase {
       chain_list:
         columnConverter.jsonStringToObj(result?.chain_list || '[]') || [],
     };
+  }
+
+  static async queryBalanceCacheMapForStartup(
+    entries: StartupBalanceCacheEntry[],
+  ): Promise<Record<string, EvmTotalBalanceResponse>> {
+    const normalizedEntries = entries.map(entry => ({
+      owner_addr: entry.owner_addr.toLowerCase(),
+      isCore: !!entry.isCore,
+    }));
+    const addresses = Array.from(
+      new Set(normalizedEntries.map(entry => entry.owner_addr)),
+    );
+
+    if (!addresses.length) {
+      return {};
+    }
+
+    const startedAt = Date.now();
+    const tableName = `${APP_DB_PREFIX}${ORM_TABLE_NAMES.cache_balance}`;
+    const placeholders = addresses.map(() => '?').join(',');
+
+    try {
+      const result = await executeStartupSqlite(
+        `
+          SELECT owner_addr, balance, evm_usd_value, isCore, chain_list, _local_updated_at
+          FROM "${tableName}"
+          WHERE lower(owner_addr) IN (${placeholders})
+          ORDER BY _local_updated_at DESC
+        `,
+        addresses,
+      );
+      const rows = result.rows;
+      const rowCount = getStartupSqliteRowsLength(rows);
+      const entrySet = new Set(
+        normalizedEntries.map(entry =>
+          buildStartupBalanceCacheKey(entry.owner_addr, entry.isCore),
+        ),
+      );
+      const ret: Record<string, EvmTotalBalanceResponse> = {};
+
+      for (let index = 0; index < rowCount; index++) {
+        const row = getStartupSqliteRowItem(rows, index);
+        if (!row?.owner_addr) {
+          continue;
+        }
+
+        const key = buildStartupBalanceCacheKey(
+          String(row.owner_addr),
+          !!row.isCore,
+        );
+        if (!entrySet.has(key) || ret[key]) {
+          continue;
+        }
+
+        ret[key] = {
+          total_usd_value: Number(row.balance) || 0,
+          evm_usd_value: Number(row.evm_usd_value) || 0,
+          chain_list:
+            columnConverter.jsonStringToObj(row.chain_list || '[]') || [],
+        };
+      }
+
+      traceStartupDiagnostic('db', 'balance_startup_cache_fast_read', {
+        addressCount: addresses.length,
+        rowCount,
+        hitCount: Object.keys(ret).length,
+        durationMs: Date.now() - startedAt,
+      });
+
+      return ret;
+    } catch (error) {
+      traceStartupDiagnostic('db', 'balance_startup_cache_fast_read_failed', {
+        addressCount: addresses.length,
+        durationMs: Date.now() - startedAt,
+        error: error instanceof Error ? error.message : String(error),
+      });
+
+      return {};
+    }
   }
 
   static async queryAllBalance() {

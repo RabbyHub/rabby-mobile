@@ -2,6 +2,7 @@ describe('store/balance', () => {
   const mockQueryAllBalance = jest.fn();
   const mockQueryBalanceCache = jest.fn();
   const mockQueryBalance = jest.fn();
+  const mockQueryBalanceCacheMapForStartup = jest.fn();
   const mockIsExpired = jest.fn();
   const mockSyncBalance = jest.fn();
   const mockOpenapiGetTotalBalanceV2 = jest.fn();
@@ -9,11 +10,11 @@ describe('store/balance', () => {
   const mockGetAppChainTotalUsdValue = jest.fn();
   const mockBatchGetAppChains = jest.fn();
   const mockGetAppChains = jest.fn();
+  const mockEnsureAppChainStoreInitialized = jest.fn();
   let mockAppStorageState: Record<string, unknown>;
 
   const flushResourceFlowPersist = async () => {
-    await Promise.resolve();
-    await Promise.resolve();
+    await new Promise<void>(resolve => setImmediate(resolve));
   };
 
   let balanceModule: typeof import('./balance');
@@ -29,8 +30,9 @@ describe('store/balance', () => {
           mockOpenapiGetTotalBalanceV2(...args),
       },
     }));
-    jest.doMock('@/core/services', () => ({
-      keyringService: {
+    jest.doMock('@/core/serviceApi/keyring', () => ({
+      bindKeyringEvent: jest.fn(),
+      keyringServiceApi: {
         getAllAddresses: (...args: unknown[]) =>
           mockKeyringServiceGetAllAddresses(...args),
       },
@@ -46,11 +48,19 @@ describe('store/balance', () => {
         },
       },
     }));
+    jest.doMock('@/hooks/appSettings', () => ({
+      getHomeAssetSelectionSettings: () => ({
+        topN: 10,
+        includeWatchAddresses: false,
+      }),
+      isHomeAssetSelectionExperimentEnabled: () => false,
+    }));
     jest.doMock('@/core/utils/reexports', () => {
       const { create } = require('zustand');
+      const { mutative } = require('zustand-mutative');
       return {
         zCreate: create,
-        zMutative: <T>(input: T) => input,
+        zMutative: mutative,
       };
     });
     jest.doMock('@/databases/entities/balance', () => ({
@@ -58,6 +68,8 @@ describe('store/balance', () => {
         queryAllBalance: (...args: unknown[]) => mockQueryAllBalance(...args),
         queryBalanceCache: (...args: unknown[]) =>
           mockQueryBalanceCache(...args),
+        queryBalanceCacheMapForStartup: (...args: unknown[]) =>
+          mockQueryBalanceCacheMapForStartup(...args),
         queryBalance: (...args: unknown[]) => mockQueryBalance(...args),
         isExpired: (...args: unknown[]) => mockIsExpired(...args),
       },
@@ -79,6 +91,8 @@ describe('store/balance', () => {
       },
     }));
     jest.doMock('./appchain', () => ({
+      ensureAppChainStoreInitialized: (...args: unknown[]) =>
+        mockEnsureAppChainStoreInitialized(...args),
       useAppChainStore: {
         getState: () => ({
           appChainMap: {},
@@ -97,8 +111,44 @@ describe('store/balance', () => {
     jest.doMock('@rabby-wallet/keyring-utils', () => ({
       CORE_KEYRING_TYPES: ['SimpleKeyring'],
     }));
+    jest.doMock('@/hooks/appSettings', () => ({
+      getHomeAssetSelectionSettings: () => ({
+        topN: 10,
+        includeWatchAddresses: false,
+      }),
+      getHomeAssetSelectionSettingsKey: () => '10:0',
+      isHomeAssetSelectionExperimentEnabled: () => false,
+    }));
 
     balanceModule = require('./balance');
+  });
+
+  it('commits account selection snapshots without a Mutative raw-return warning', () => {
+    const warn = jest.spyOn(console, 'warn').mockImplementation();
+
+    balanceModule.commitAccountBalanceSelectionSnapshot(
+      {
+        selectedAccounts: [
+          {
+            address: '0xABCD',
+            type: 'SimpleKeyring',
+          },
+        ],
+        selectedAddresses: ['0xabcd'],
+        matteredAccountLength: 1,
+      },
+      {
+        source: 'accounts_changed',
+      },
+    );
+
+    expect(warn).not.toHaveBeenCalledWith(
+      expect.stringContaining(
+        'return value does not contain any draft of the base state',
+      ),
+    );
+
+    warn.mockRestore();
   });
 
   it('hydrates missing address memory from persisted sqlite cache first', async () => {
@@ -117,6 +167,7 @@ describe('store/balance', () => {
     ]);
 
     expect(mockQueryBalanceCache).toHaveBeenCalledWith('0xabcd', true);
+    expect(mockEnsureAppChainStoreInitialized).toHaveBeenCalled();
     expect(balanceModule.default.getAddressValue('0xabcd')).toEqual({
       evmBalance: 80,
       totalBalance: 100,
@@ -131,6 +182,73 @@ describe('store/balance', () => {
     ).toMatchObject({
       sourceOfCurrentValue: 'hydrate',
       hasValue: true,
+    });
+  });
+
+  it('uses persisted total balance on startup fast path', async () => {
+    mockQueryBalanceCacheMapForStartup.mockResolvedValue({
+      '0xabcd-core': {
+        total_usd_value: 100,
+        evm_usd_value: 80,
+        chain_list: [{ id: 'eth' }],
+      },
+    });
+
+    await balanceModule.default.hydrateCachedBalancesForAccounts(
+      [
+        {
+          address: '0xABCD',
+          type: 'SimpleKeyring',
+        },
+      ],
+      {
+        startupFastPath: true,
+      },
+    );
+
+    expect(mockEnsureAppChainStoreInitialized).not.toHaveBeenCalled();
+    expect(mockQueryBalanceCacheMapForStartup).toHaveBeenCalledWith([
+      {
+        owner_addr: '0xabcd',
+        isCore: true,
+      },
+    ]);
+    expect(balanceModule.default.getAddressValue('0xabcd')).toEqual({
+      evmBalance: 80,
+      totalBalance: 100,
+      chainList: [{ id: 'eth' }],
+      isCore: true,
+    });
+  });
+
+  it('falls back to appchain store for ambiguous migrated startup cache', async () => {
+    mockQueryBalanceCacheMapForStartup.mockResolvedValue({
+      '0xabcd-core': {
+        total_usd_value: 100,
+        evm_usd_value: 0,
+        chain_list: [{ id: 'eth' }],
+      },
+    });
+    mockGetAppChainTotalUsdValue.mockReturnValue(20);
+
+    await balanceModule.default.hydrateCachedBalancesForAccounts(
+      [
+        {
+          address: '0xABCD',
+          type: 'SimpleKeyring',
+        },
+      ],
+      {
+        startupFastPath: true,
+      },
+    );
+
+    expect(mockEnsureAppChainStoreInitialized).toHaveBeenCalled();
+    expect(balanceModule.default.getAddressValue('0xabcd')).toEqual({
+      evmBalance: 0,
+      totalBalance: 20,
+      chainList: [{ id: 'eth' }],
+      isCore: true,
     });
   });
 
@@ -186,6 +304,41 @@ describe('store/balance', () => {
       sourceOfCurrentValue: 'remote',
       persistStatus: 'success',
       hasValue: true,
+    });
+  });
+
+  it('recomputes total balance when appchain value changes after balance hydrate', async () => {
+    mockQueryBalanceCache.mockResolvedValue({
+      total_usd_value: 80,
+      evm_usd_value: 80,
+      chain_list: [{ id: 'eth' }],
+    });
+    mockGetAppChainTotalUsdValue.mockReturnValueOnce(0);
+
+    await balanceModule.default.hydrateCachedBalancesForAccounts([
+      {
+        address: '0xABCD',
+        type: 'SimpleKeyring',
+      },
+    ]);
+
+    expect(balanceModule.default.getAddressValue('0xabcd')).toMatchObject({
+      evmBalance: 80,
+      totalBalance: 80,
+    });
+
+    mockGetAppChainTotalUsdValue.mockReturnValue(25);
+    const changed = balanceModule.default.syncAppChainTotalsForAddresses(
+      ['0xABCD'],
+      {
+        trigger: 'test',
+      },
+    );
+
+    expect(changed).toBe(true);
+    expect(balanceModule.default.getAddressValue('0xabcd')).toMatchObject({
+      evmBalance: 80,
+      totalBalance: 105,
     });
   });
 });

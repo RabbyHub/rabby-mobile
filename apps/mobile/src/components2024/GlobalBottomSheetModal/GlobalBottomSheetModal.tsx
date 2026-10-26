@@ -23,7 +23,8 @@ import { useTheme2024 } from '@/hooks/theme';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { makeBottomSheetProps } from './utils-help';
 import { storeApiScreenshotReport } from '@/components/Screenshot/hooks';
-import { runIIFEFunc } from '@/core/utils/store';
+import { runStartupTask } from '@/core/utils/startupScheduler';
+import { STARTUP_TASKS } from '@/core/utils/startupTaskManifest';
 import { perfEvents } from '@/core/utils/perf';
 
 type ModalData = {
@@ -37,10 +38,16 @@ let globalRemoveAllModals: ((params?: RemoveParams) => void) | null = null;
 
 export const GlobalBottomSheetModal2024 = () => {
   const modalRefs = React.useRef<Record<string, ModalData['ref']>>({});
-  const presentedModalIds = React.useRef<Set<MODAL_ID>>(new Set());
+  const waitForDismissIdsRef = React.useRef(new Set<MODAL_ID>());
+  const pendingCreateTokensRef = React.useRef(new Map<MODAL_ID, symbol>());
+  const pendingPresentIdsRef = React.useRef(new Set<MODAL_ID>());
+  const presentedIdsRef = React.useRef(new Set<MODAL_ID>());
   const [modals, setModals] = React.useState<ModalData[]>([]);
 
   const removeAllModals = React.useCallback((params?: RemoveParams) => {
+    pendingCreateTokensRef.current.clear();
+    pendingPresentIdsRef.current.clear();
+    presentedIdsRef.current.clear();
     // Close all current modals
     Object.values(modalRefs.current).forEach(modalRef => {
       modalRef.current?.close(
@@ -50,15 +57,16 @@ export const GlobalBottomSheetModal2024 = () => {
 
     // Clear all modal refs
     modalRefs.current = {};
-    presentedModalIds.current.clear();
 
     // Clear all modals from state
     setModals([]);
   }, []);
 
   React.useEffect(() => {
+    const pendingCreates = pendingCreateTokensRef.current;
     globalRemoveAllModals = removeAllModals;
     return () => {
+      pendingCreates.clear();
       globalRemoveAllModals = null;
     };
   }, [removeAllModals]);
@@ -73,38 +81,32 @@ export const GlobalBottomSheetModal2024 = () => {
   const handlePresent = React.useCallback<
     GlobalSheetModalListeners[EVENT_NAMES.PRESENT]
   >(key => {
-    const currentModal = modalRefs.current[key]?.current;
-
-    if (!currentModal) {
-      if (__DEV__) {
-        console.warn(
-          `[GlobalBottomSheetModal] Modal with key ${key} not found`,
-        );
-      }
+    if (presentedIdsRef.current.has(key)) {
       return;
     }
-
-    currentModal.present();
-    presentedModalIds.current.add(key);
+    const modalRef = modalRefs.current[key];
+    if (!modalRef) {
+      return;
+    }
+    if (!modalRef.current) {
+      pendingPresentIdsRef.current.add(key);
+      return;
+    }
+    pendingPresentIdsRef.current.delete(key);
+    presentedIdsRef.current.add(key);
+    modalRef.current.present();
     globalSheetModalEvents.emit(EVENT_NAMES.PRESENTED, key);
   }, []);
 
-  React.useEffect(() => {
-    const pendingModals = modals.filter(
-      modal => !presentedModalIds.current.has(modal.id),
-    );
-    if (!pendingModals.length) {
-      return;
-    }
-
-    const timeoutId = setTimeout(() => {
-      pendingModals.forEach(modal => handlePresent(modal.id));
-    }, 100);
-
-    return () => {
-      clearTimeout(timeoutId);
-    };
-  }, [handlePresent, modals]);
+  // Fabric may commit the ref after a zero-delay timer has already run.
+  // Present from the committed tree; never report PRESENTED for a null ref.
+  React.useLayoutEffect(() => {
+    modals.forEach(modal => {
+      if (pendingPresentIdsRef.current.has(modal.id)) {
+        handlePresent(modal.id);
+      }
+    });
+  }, [modals, handlePresent]);
 
   const [getApproval] = useApproval();
 
@@ -112,7 +114,24 @@ export const GlobalBottomSheetModal2024 = () => {
     GlobalSheetModalListeners[EVENT_NAMES.CREATE]
   >(
     async (id, params) => {
-      const _approval = await getApproval();
+      // REMOVE, clear-all, or host unmount may happen while approval lookup
+      // is pending. A stale request must not recreate a dismissed sheet or
+      // mark its security state after its owner has gone away.
+      const createToken = Symbol(id);
+      pendingCreateTokensRef.current.set(id, createToken);
+      let _approval: Awaited<ReturnType<typeof getApproval>>;
+      try {
+        _approval = await getApproval();
+      } catch (error) {
+        if (pendingCreateTokensRef.current.get(id) === createToken) {
+          pendingCreateTokensRef.current.delete(id);
+        }
+        throw error;
+      }
+      if (pendingCreateTokensRef.current.get(id) !== createToken) {
+        return;
+      }
+      pendingCreateTokensRef.current.delete(id);
       const approvalComponent = _approval?.data
         ?.approvalComponent as APPROVAL_MODAL_NAMES;
 
@@ -126,52 +145,48 @@ export const GlobalBottomSheetModal2024 = () => {
           APPROVAL_MODAL_NAMES.PrivatekeyWaiting,
         ].includes(approvalComponent);
 
-      setModals(prev => {
-        const newModal = {
-          id,
-          params: {
-            ...params,
-            approvalComponent,
-            bottomSheetModalProps: {
-              ...params.bottomSheetModalProps,
-              enableDynamicSizing: isWaitingComponent
-                ? true
-                : params?.bottomSheetModalProps?.enableDynamicSizing || false,
-            },
-          },
-          snapPoints: isWaitingComponent
-            ? undefined
-            : approvalComponent && params.name === MODAL_NAMES.APPROVAL
-            ? APPROVAL_SNAP_POINTS[approvalComponent] ??
-              APPROVAL_SNAP_POINTS.Unknown
-            : MODAL_CONFIGS[params.name].snapPoints,
-          ref: React.createRef<AppBottomSheetModal>(),
-        };
-        modalRefs.current[id] = newModal.ref;
-
-        return [...prev, newModal];
-      });
+      // Set security state before a commit can present the sheet.
       if (params.preventScreenshotOnModalOpen) {
         bottomSheetModalSecurityApis.markAtSensitiveModal(id);
       }
       if (params.screenshotReportFreeBeforeModalClose) {
         storeApiScreenshotReport.markIsScreenshotReportFree(true);
       }
+      pendingPresentIdsRef.current.add(id);
+      // Allocate/register once per event, not in a replayable state updater.
+      // Otherwise a concurrent replay can leave the registry pointing to a
+      // discarded ref while the committed sheet owns another ref.
+      const newModal: ModalData = {
+        id,
+        params: {
+          ...params,
+          approvalComponent,
+          bottomSheetModalProps: {
+            ...params.bottomSheetModalProps,
+            enableDynamicSizing: isWaitingComponent
+              ? true
+              : params?.bottomSheetModalProps?.enableDynamicSizing || false,
+          },
+        },
+        snapPoints: isWaitingComponent
+          ? undefined
+          : approvalComponent && params.name === MODAL_NAMES.APPROVAL
+          ? APPROVAL_SNAP_POINTS[approvalComponent] ??
+            APPROVAL_SNAP_POINTS.Unknown
+          : MODAL_CONFIGS[params.name].snapPoints,
+        ref: React.createRef<AppBottomSheetModal>(),
+      };
+      modalRefs.current[id] = newModal.ref;
+      setModals(prev => [...prev, newModal]);
     },
     [getApproval],
   );
 
-  const handleRemove = React.useCallback<
-    GlobalSheetModalListeners[EVENT_NAMES.REMOVE]
-  >((key, params) => {
-    if (modalRefs.current[key]) {
-      // Empty object as props causes flash, undefined is preferred
-      modalRefs.current[key].current?.close(
-        Object.keys(params || {}).length ? { ...params } : undefined,
-      );
-    }
+  const finalizeRemove = React.useCallback((key: MODAL_ID) => {
+    pendingCreateTokensRef.current.delete(key);
+    pendingPresentIdsRef.current.delete(key);
+    presentedIdsRef.current.delete(key);
     delete modalRefs.current[key];
-    presentedModalIds.current.delete(key);
 
     setModals(prev => {
       return prev.filter(modal => modal.id !== key);
@@ -181,10 +196,52 @@ export const GlobalBottomSheetModal2024 = () => {
     globalSheetModalEvents.emit(EVENT_NAMES.DISMISS, key);
   }, []);
 
+  const handleRemove = React.useCallback<
+    GlobalSheetModalListeners[EVENT_NAMES.REMOVE]
+  >(
+    (key, params) => {
+      const { waitForDismiss, ...animationParams } = params || {};
+      const currentModal = modalRefs.current[key]?.current;
+
+      if (waitForDismiss && currentModal) {
+        waitForDismissIdsRef.current.add(key);
+        currentModal.close(
+          Object.keys(animationParams).length
+            ? { ...animationParams }
+            : undefined,
+        );
+        return;
+      }
+
+      if (currentModal) {
+        // Empty object as props causes flash, undefined is preferred
+        currentModal.close(
+          Object.keys(animationParams).length
+            ? { ...animationParams }
+            : undefined,
+        );
+      }
+      finalizeRemove(key);
+    },
+    [finalizeRemove],
+  );
+
   const handleDismiss = React.useCallback<
     GlobalSheetModalListeners[EVENT_NAMES.DISMISS]
   >(
     key => {
+      if (waitForDismissIdsRef.current.delete(key)) {
+        bottomSheetModalSecurityApis.removeAtSensitiveModal(key);
+
+        const params = modals.find(modal => modal.id === key)?.params;
+        if (params?.screenshotReportFreeBeforeModalClose) {
+          storeApiScreenshotReport.markIsScreenshotReportFree(false);
+        }
+
+        finalizeRemove(key);
+        return;
+      }
+
       globalSheetModalEvents.emit(EVENT_NAMES.DISMISS, key);
       bottomSheetModalSecurityApis.removeAtSensitiveModal(key);
 
@@ -195,7 +252,7 @@ export const GlobalBottomSheetModal2024 = () => {
 
       handleRemove(key);
     },
-    [handleRemove, modals],
+    [finalizeRemove, handleRemove, modals],
   );
 
   const handleSnapToIndex = React.useCallback<
@@ -344,8 +401,8 @@ export const removeAllGlobalBottomSheetModals = (params?: RemoveParams) => {
   }
 };
 
-runIIFEFunc(() => {
+runStartupTask(() => {
   perfEvents.subscribe('GLOBAL_CLEAR_ALL_COVERED_COMPONENTS', () => {
     removeAllGlobalBottomSheetModals();
   });
-});
+}, STARTUP_TASKS.globalBottomSheetClearListener);

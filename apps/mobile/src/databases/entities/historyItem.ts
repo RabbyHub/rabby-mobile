@@ -1,11 +1,13 @@
 import 'reflect-metadata';
-import {
-  BuyServiceProvider,
-  NFTItem,
-  TokenItem,
-} from '@rabby-wallet/rabby-api/dist/types';
-import { TxHistoryItem } from '@rabby-wallet/rabby-api/dist/types';
+import type { NFTItem, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import { BuyServiceProvider } from '@rabby-wallet/rabby-api/dist/types';
+import type { TxHistoryItem } from '@rabby-wallet/rabby-api/dist/types';
 import { Entity, Column, Brackets } from 'typeorm/browser';
+import type {
+  DataSource,
+  ObjectLiteral,
+  SelectQueryBuilder,
+} from 'typeorm/browser';
 import { EntityAddressAssetBase } from './base';
 import {
   columnConverter,
@@ -13,10 +15,10 @@ import {
   jsonTransformer,
 } from './_helpers';
 import { prepareAppDataSource } from '../imports';
+import type { ProjectItemType } from '@/types/history';
 import {
   CUSTOM_HISTORY_TITLE_TYPE,
   HistoryItemCateType,
-  ProjectItemType,
 } from '@/types/history';
 import {
   checkIsGasDepositTx,
@@ -24,18 +26,81 @@ import {
   isNFTTokenId,
 } from '@/utils/history';
 import type { IManageToken } from '@/types/assets';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import {
   GAS_ACCOUNT_RECEIVED_ADDRESS,
-  GAS_ACCOUNT_WITHDRAWED_ADDRESS,
+  GAS_ACCOUNT_WITHDRAWED_ADDRESSES,
   L2_DEPOSIT_ADDRESS_MAP,
 } from '@/constant/gas-account';
-import type { CustomTxItem } from '@/core/services/transactionHistory';
+import type {
+  CustomTxItem,
+  TransactionHistoryItem,
+} from '@/core/services/transactionHistory';
 import { APP_DB_PREFIX, ORM_TABLE_NAMES } from '../constant';
 import { PreparedStatement } from '@op-engineering/op-sqlite';
 import { ParseEntity } from '@/core/utils/typeorm';
 import { findChain } from '@/utils/chain';
 
 export type { ProjectItemType } from '@/types/history';
+
+/**
+ * Keyset cursor for {@link HistoryItemEntity.getHistoryItemsPaginated}. It
+ * mirrors the full sort key so rows sharing a `time_at` are never skipped at a
+ * page boundary.
+ */
+export type HistoryPageCursor = Pick<
+  HistoryItemEntity,
+  'time_at' | 'cate_id' | '_db_id'
+>;
+
+const getHistoryRepository = async (dataSource?: DataSource) =>
+  (dataSource ?? (await prepareAppDataSource())).getRepository(
+    HistoryItemEntity,
+  );
+
+export const toHistoryPageCursor = (
+  item: HistoryPageCursor,
+): HistoryPageCursor => ({
+  time_at: item.time_at,
+  cate_id: item.cate_id,
+  _db_id: item._db_id,
+});
+
+/** Sort by the full keyset (newest first, receive before send, unique tie breaker) and resume after `cursor`. */
+const applyHistoryPageOrder = <T extends ObjectLiteral>(
+  queryBuilder: SelectQueryBuilder<T>,
+  cursor?: HistoryPageCursor | null,
+) => {
+  if (cursor) {
+    queryBuilder.andWhere(
+      new Brackets(qb => {
+        qb.where('historyitem.time_at < :cursorTimeAt').orWhere(
+          new Brackets(sameTime => {
+            sameTime.where('historyitem.time_at = :cursorTimeAt').andWhere(
+              new Brackets(tie => {
+                tie
+                  .where('historyitem.cate_id > :cursorCateId')
+                  .orWhere(
+                    'historyitem.cate_id = :cursorCateId AND historyitem._db_id > :cursorDbId',
+                  );
+              }),
+            );
+          }),
+        );
+      }),
+      {
+        cursorTimeAt: cursor.time_at,
+        cursorCateId: cursor.cate_id,
+        cursorDbId: cursor._db_id,
+      },
+    );
+  }
+
+  return queryBuilder
+    .orderBy('historyitem.time_at', 'DESC')
+    .addOrderBy('historyitem.cate_id', 'ASC')
+    .addOrderBy('historyitem._db_id', 'ASC');
+};
 
 @ParseEntity()
 @Entity(ORM_TABLE_NAMES.cache_historyitem)
@@ -184,7 +249,8 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
     tokenDict: Record<string, TokenItem>,
     projectDict: Record<string, ProjectItemType>,
     pinedQueue: IManageToken[],
-    customTxItem?: CustomTxItem,
+    customTxItem: CustomTxItem | undefined,
+    transactions: readonly TransactionHistoryItem[],
   ) {
     e.owner_addr = owner_addr;
     e.other_addr = input.other_addr ?? '';
@@ -225,7 +291,7 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
     e.tx_eth_gas_fee = input.tx?.eth_gas_fee ?? 0;
     e.is_small_tx = this.judgeIsSmallUsdTx(e, pinedQueue);
     e.makeDbId();
-    e.history_type = this.getHistoryItemType(e);
+    e.history_type = this.getHistoryItemType(e, transactions);
     if (customTxItem) {
       e.history_custom_type = customTxItem.actionType;
     }
@@ -239,14 +305,14 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
       return false;
     }
 
-    const receives = item.receives;
+    const transfers = [...(item.receives || []), ...(item.sends || [])];
 
-    if (!receives || !receives.length) {
+    if (!transfers.length) {
       return true;
     }
     let allUsd = 0;
 
-    for (const i of receives) {
+    for (const i of transfers) {
       const token = i.token;
       const tokenIsNft = i.token_id?.length === 32;
       if (tokenIsNft) {
@@ -276,12 +342,16 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
     return false;
   }
 
-  static getHistoryItemType(data: HistoryItemEntity) {
+  static getHistoryItemType(
+    data: HistoryItemEntity,
+    transactions: readonly TransactionHistoryItem[],
+  ) {
     try {
       if (
         checkIsGasDepositTx({
           chainId: findChain({ serverId: data.chain })?.id,
           hash: data.txHash,
+          transactions,
         })
       ) {
         return HistoryItemCateType.GAS_DEPOSIT;
@@ -309,7 +379,9 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
 
       if (receives?.length === 1 && sends?.length === 0) {
         if (
-          data?.tx_from_address.toLowerCase() === GAS_ACCOUNT_WITHDRAWED_ADDRESS
+          GAS_ACCOUNT_WITHDRAWED_ADDRESSES.some(addr =>
+            isSameAddress(data?.tx_from_address, addr),
+          )
         ) {
           return HistoryItemCateType.GAS_WITHDRAW;
         }
@@ -390,6 +462,23 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
     return result.maxTimeAt;
   }
 
+  /** Count stored history rows of `owner_addr` with `from_ts <= time_at <= to_ts` (seconds). */
+  static async countInTimeRange(
+    owner_addr: string,
+    from_ts: number,
+    to_ts: number,
+    dataSource?: DataSource,
+  ): Promise<number> {
+    const repo = await getHistoryRepository(dataSource);
+
+    return repo
+      .createQueryBuilder('historyitem')
+      .where('historyitem.owner_addr = :owner_addr', { owner_addr })
+      .andWhere('historyitem.time_at >= :from_ts', { from_ts })
+      .andWhere('historyitem.time_at <= :to_ts', { to_ts })
+      .getCount();
+  }
+
   static async batchQueryHistory(owner_addr: string) {
     await prepareAppDataSource();
 
@@ -466,14 +555,17 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
     return res;
   }
 
-  static async getUnreadHistoryCount(owner_addrs: string[], maxTimeAt: number) {
-    await prepareAppDataSource();
+  static async getUnreadHistoryCount(
+    owner_addrs: string[],
+    maxTimeAt: number,
+    dataSource?: DataSource,
+  ): Promise<Pick<HistoryItemEntity, 'owner_addr' | 'txHash' | 'status'>[]> {
     const currentTime = new Date().getTime();
     console.log('getUnreadHistoryCount exec');
-    const repo = this.getRepository();
+    const repo = await getHistoryRepository(dataSource);
     const queryBuilder = repo
       .createQueryBuilder('historyitem')
-      .select(['owner_addr', 'txHash'])
+      .select(['owner_addr', 'txHash', 'status'])
       .where('historyitem.owner_addr IN (:...owner_addrs)', { owner_addrs })
       .andWhere('historyitem.time_at > :maxTimeAt', {
         maxTimeAt,
@@ -504,25 +596,24 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
     owner_addrs: string[],
     options: {
       pageSize?: number;
-      lastTimeAt?: number; // page cursor
+      cursor?: HistoryPageCursor | null; // page cursor
       maxTimeAt?: number;
       filterScamAndSmallTx?: boolean;
       filterLendingHistory?: boolean;
     } = {},
-  ) {
-    await prepareAppDataSource();
+    dataSource?: DataSource,
+  ): Promise<{
+    items: HistoryItemEntity[];
+    hasMore: boolean;
+    nextCursor?: HistoryPageCursor;
+  }> {
     const currentTime = new Date().getTime();
-    const {
-      pageSize = 50,
-      lastTimeAt,
-      maxTimeAt,
-      filterLendingHistory,
-    } = options;
+    const { pageSize = 50, cursor, maxTimeAt, filterLendingHistory } = options;
 
     const ninetyDaysAgo = Math.floor(currentTime / 1000) - 90 * 24 * 60 * 60;
-    console.log('getHistoryItemsPaginated exec', { pageSize, lastTimeAt });
+    console.log('getHistoryItemsPaginated exec', { pageSize, cursor });
 
-    const repo = this.getRepository();
+    const repo = await getHistoryRepository(dataSource);
     let queryBuilder = repo
       .createQueryBuilder('historyitem')
       .where('historyitem.owner_addr IN (:...owner_addrs)', { owner_addrs })
@@ -564,27 +655,14 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
       );
     }
 
-    // cursor page
-    if (lastTimeAt) {
-      queryBuilder = queryBuilder.andWhere(
-        'historyitem.time_at < :lastTimeAt',
-        {
-          lastTimeAt,
-        },
-      );
-    }
-
-    const res = await queryBuilder
-      .orderBy('historyitem.time_at', 'DESC')
-      // make receive front of send by cate_id order by asc
-      .addOrderBy('historyitem.cate_id', 'ASC')
+    const res = await applyHistoryPageOrder(queryBuilder, cursor)
       .take(pageSize + 1) // add one for check has more
       .getMany();
 
     const hasMore = res.length > pageSize;
     const items = hasMore ? res.slice(0, pageSize) : res;
-    const nextCursor =
-      items.length > 0 ? items[items.length - 1].time_at : undefined;
+    const lastItem = items[items.length - 1];
+    const nextCursor = lastItem ? toHistoryPageCursor(lastItem) : undefined;
 
     console.log(
       'getHistoryItemsPaginated exec time:',
@@ -602,19 +680,18 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
 
   static async getTokenHistoryItemSortedByTime(
     owner_addr: string,
-    start_time: number,
+    cursor: HistoryPageCursor | null,
     tokenId: string,
     chain: string,
     count?: number,
+    dataSource?: DataSource,
   ) {
-    await prepareAppDataSource();
-
-    const repo = this.getRepository();
+    const repo = await getHistoryRepository(dataSource);
     const currentTime = new Date().getTime();
     const ninetyDaysAgo = Math.floor(currentTime / 1000) - 90 * 24 * 60 * 60;
     console.log('getTokenHistoryItemSortedByTime exec');
 
-    let queryBuilder = repo
+    const queryBuilder = repo
       .createQueryBuilder('historyitem')
       .where('historyitem.owner_addr = :owner_addr', { owner_addr })
       .andWhere('historyitem.chain = :chain', { chain })
@@ -638,18 +715,11 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
             );
         }),
         { tokenId },
-      )
-      .orderBy('historyitem.time_at', 'DESC')
-      .take(count || 10000); // limit
-
-    if (start_time) {
-      queryBuilder = queryBuilder.andWhere(
-        'historyitem.time_at < :start_time',
-        { start_time },
       );
-    }
 
-    const res = await queryBuilder.getMany();
+    const res = await applyHistoryPageOrder(queryBuilder, cursor)
+      .take(count || 10000) // limit
+      .getMany();
     console.log(
       'getTokenHistoryItemSortedByTime exec done',
       new Date().getTime() - currentTime,

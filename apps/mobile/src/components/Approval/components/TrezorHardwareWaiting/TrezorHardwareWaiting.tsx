@@ -1,23 +1,18 @@
 import * as Sentry from '@sentry/react-native';
 import { toast } from '@/components2024/Toast';
-import {
-  notificationService,
-  preferenceService,
-  transactionHistoryService,
-} from '@/core/services/shared';
-import { Account } from '@/core/services/preference';
+import { notificationServiceApi } from '@/core/serviceApi/notification';
+import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
+import type { Account } from '@/core/startupServices/preference';
 import { useApproval } from '@/hooks/useApproval';
 import { APPROVAL_STATUS_MAP, eventBus, EVENTS } from '@/utils/events';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  ApprovalPopupContainer,
-  Props as ApprovalPopupContainerProps,
-} from '../Popup/ApprovalPopupContainer';
+import type { Props as ApprovalPopupContainerProps } from '../Popup/ApprovalPopupContainer';
+import { ApprovalPopupContainer } from '../Popup/ApprovalPopupContainer';
 import { useCommonPopupView } from '@/hooks/useCommonPopupView';
 import { StyleSheet, View } from 'react-native';
 import TrezorSVG from '@/assets/icons/wallet/trezor.svg';
-import { AppColorsVariants } from '@/constant/theme';
+import type { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
 import { stats } from '@/utils/stats';
 import {
@@ -30,6 +25,7 @@ import { apisSafe } from '@/core/apis/safe';
 import { emitSignComponentAmounted } from '@/core/utils/signEvent';
 import { findChain } from '@/utils/chain';
 import { Text } from '@/components/Typography';
+import { useRetryMinPending } from '@/components/Approval/hooks/useRetryMinPending';
 
 interface ApprovalParams {
   address: string;
@@ -115,17 +111,23 @@ export const TrezorHardwareWaiting = ({
     rejectApproval('user cancel');
   };
 
+  const { markRetryStarted, afterMinPending } = useRetryMinPending();
+
   const handleRetry = async (showToast = true) => {
     if (connectStatus === APPROVAL_STATUS_MAP.SUBMITTING) {
       toast.success(t('page.signFooterBar.ledger.resubmited'));
       return;
     }
     setConnectStatus(APPROVAL_STATUS_MAP.WAITING);
-    notificationService.callCurrentRequestDeferFn();
+    markRetryStarted();
+    // Fire and forget: this resolves only when signing ends, and a failed
+    // attempt is reported through SIGN_FINISHED instead.
+    void notificationServiceApi
+      .callCurrentRequestDeferFn()
+      .catch(console.error);
     if (showToast) {
       toast.success(t('page.signFooterBar.ledger.resent'));
     }
-    emitSignComponentAmounted();
   };
 
   const init = async () => {
@@ -139,7 +141,7 @@ export const TrezorHardwareWaiting = ({
     if (!isSignText) {
       const signingTxId = approval.data.params.signingTxId;
       if (signingTxId) {
-        const signingTx = await transactionHistoryService.getSigningTx(
+        const signingTx = await transactionHistoryServiceApi.getSigningTx(
           signingTxId,
         );
 
@@ -223,8 +225,10 @@ export const TrezorHardwareWaiting = ({
         Sentry.captureException(
           new Error('Trezor sign error: ' + JSON.stringify(data)),
         );
-        setConnectStatus(APPROVAL_STATUS_MAP.FAILED);
-        setErrorMessage(data.errorMsg);
+        afterMinPending(() => {
+          setConnectStatus(APPROVAL_STATUS_MAP.FAILED);
+          setErrorMessage(data.errorMsg);
+        });
       }
     });
 

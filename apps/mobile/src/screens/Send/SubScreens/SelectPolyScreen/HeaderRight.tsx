@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { View, StyleProp, ViewStyle, Keyboard } from 'react-native';
-import { Pressable } from 'react-native-gesture-handler';
+import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 import { IS_IOS } from '@/core/native/utils';
 import RcIconSwapHistory from '@/assets2024/icons/common/IconHistoryCC.svg';
 import { SendHistory } from './SendHistory';
@@ -11,6 +11,7 @@ import {
   useReadSendPendingCount,
   useReadSendSuccessTxList,
 } from '../../hooks/useSendPendingCount';
+import { useFocusEffect } from '@react-navigation/native';
 
 const SEND_IOS_HEADER_ICON_OFFSET = 6;
 
@@ -51,11 +52,14 @@ export const SendHeaderRight = ({
   return (
     <>
       <View style={[styles.container, styles.headerIconOffset, style]}>
-        <Pressable onPress={openHistory} style={styles.iconContainer}>
+        <CustomTouchableOpacity
+          as="RNGHTouchableOpacity"
+          onPress={openHistory}
+          style={styles.iconContainer}>
           <RcIconSwapHistory color={colors2024['neutral-body']} />
           {/* not very accurate */}
           {/* {Boolean(isShowDot) && <View style={styles.greenDot} />} */}
-        </Pressable>
+        </CustomTouchableOpacity>
       </View>
 
       <SendHistory

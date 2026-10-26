@@ -1,6 +1,8 @@
 import { useCallback, useEffect } from 'react';
+import { useShallow } from 'zustand/react/shallow';
 import { makeSWRKeyAsyncFunc } from '@/core/utils/concurrency';
-import addressBalanceStore, { IBalanceData } from '@/store/balance';
+import addressBalanceStore, { type IBalanceData } from '@/store/balance';
+import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 
 export type BalanceState = {
   balance: number | null;
@@ -70,25 +72,64 @@ const getAddressBalance = makeSWRKeyAsyncFunc(
 );
 
 export function useIsLoadingBalance(address?: string) {
-  const { isLoadingWithoutValue } =
-    addressBalanceStore.useAddressFlowState(address);
-  const balanceLoading = isLoadingWithoutValue;
+  const normalizedAddress = address?.toLowerCase() || '';
+  const balanceLoading = useActivityStore(
+    addressBalanceStore.useStore,
+    state => {
+      const meta = state.metaMap[normalizedAddress];
+      return (
+        !meta?.hasValue && (!!meta?.isHydrating || !!meta?.isFetchingRemote)
+      );
+    },
+    Object.is,
+    { storeLabel: 'address-balance' },
+  );
 
   return { balanceLoading };
 }
 
 export function useAddressBalance(address?: string) {
-  const balanceData = addressBalanceStore.useAddressValue(address);
+  const normalizedAddress = address?.toLowerCase() || '';
+  const balanceData = useActivityStore(
+    addressBalanceStore.useStore,
+    state => state.valueMap[normalizedAddress],
+    Object.is,
+    { storeLabel: 'address-balance' },
+  );
   const balance = balanceData?.totalBalance ?? null;
   const evmBalance = balanceData?.evmBalance ?? null;
 
   return { balance, evmBalance };
 }
 
+export function useAddressBalanceSnapshot(address?: string) {
+  const normalizedAddress = address?.toLowerCase() || '';
+
+  return useActivityStore(
+    addressBalanceStore.useStore,
+    useShallow(state => {
+      const balanceData = state.valueMap[normalizedAddress];
+      const meta = state.metaMap[normalizedAddress];
+
+      return {
+        balance: balanceData?.totalBalance ?? null,
+        evmBalance: balanceData?.evmBalance ?? null,
+        hasValue: !!meta?.hasValue,
+        isLoading: !!meta?.isHydrating || !!meta?.isFetchingRemote,
+        hasError: !!meta?.lastError && meta.lastError.phase !== 'persist',
+      };
+    }),
+    Object.is,
+    { storeLabel: 'address-balance-flow' },
+  );
+}
+
 function mapBalanceState(
   balanceData?: IBalanceData | null,
 ): BalanceState | null {
-  if (!balanceData) return null;
+  if (!balanceData) {
+    return null;
+  }
   return {
     balance: balanceData.totalBalance,
     evmBalance: balanceData.evmBalance,
@@ -107,14 +148,18 @@ export default function useCurrentBalance(options: {
 
   const fetchBalance = useCallback(
     async (params: Omit<GetAddressBalanceOptions, 'address' | 'fromScene'>) => {
-      if (!address) return;
+      if (!address) {
+        return;
+      }
       return getAddressBalance(address, { force: params.force, fromScene });
     },
     [address, fromScene],
   );
 
   useEffect(() => {
-    if (!address) return;
+    if (!address) {
+      return;
+    }
 
     if (options?.AUTO_FETCH) {
       fetchBalance({ force: true });

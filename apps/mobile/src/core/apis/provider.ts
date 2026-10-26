@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/react-native';
 import { ethers } from 'ethers';
 import { cloneDeep, omit } from 'lodash';
 import { Common, Hardfork } from '@ethereumjs/common';
@@ -7,24 +8,27 @@ import {
   isValidAddress,
   toChecksumAddress,
 } from '@ethereumjs/util';
-import { Chain, CHAINS_ENUM } from '@/constant/chains';
+import type { Chain } from '@/constant/chains';
+import { CHAINS_ENUM } from '@/constant/chains';
 import { addresses, abis } from '@eth-optimism/contracts-ts';
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import providerController from '../controllers/provider';
 import {
-  customRPCService,
-  notificationService,
-  preferenceService,
-  transactionHistoryService,
-} from '@/core/services';
-import { OP_STACK_ENUMS } from '@/constant/gas';
+  ensureNotificationServiceReady,
+  setCurrentMiniApprovalSync,
+} from '@/core/serviceApi/notification';
+import { getFallbackAccountSnapshot } from '@/core/serviceApi/preference';
+import { customRPCServiceApi } from '@/core/serviceApi/customRPC';
+import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
+import { OP_STACK_ENUMS, SCROLL_STYLE_L1_GAS_ORACLE } from '@/constant/gas';
 import { openapi } from '@/core/request';
 import BigNumber from 'bignumber.js';
 import { t } from 'i18next';
-import abiCoder, { AbiCoder } from 'web3-eth-abi';
-import { IExtractFromPromise } from '@/utils/type';
+import type { AbiCoder } from 'web3-eth-abi';
+import abiCoder from 'web3-eth-abi';
+import type { IExtractFromPromise } from '@/utils/type';
 import { findChain } from '@/utils/chain';
-import { Tx } from '@rabby-wallet/rabby-api/dist/types';
+import type { Tx } from '@rabby-wallet/rabby-api/dist/types';
 import type { Account } from '@/types/account';
 import { getRecommendNonce } from './recommendNonce';
 
@@ -58,6 +62,8 @@ export default function buildUnserializedTransaction(txMeta) {
   return TransactionFactory.fromTxData(txParams, { common });
 }
 
+export { sendRequest } from './sendRequest';
+
 export const requestETHRpc = <T = any>(
   data: { method: string; params: any },
   chainId: string,
@@ -77,8 +83,9 @@ export const requestETHRpc = <T = any>(
 export const scrollL1FeeEstimate = async (
   txParams: any,
   _account?: Account,
+  chain: CHAINS_ENUM = CHAINS_ENUM.SCRL,
 ) => {
-  const account = _account || preferenceService.getFallbackAccount();
+  const account = _account || getFallbackAccountSnapshot();
   const iface = new ethers.utils.Interface([
     {
       type: 'constructor',
@@ -100,13 +107,13 @@ export const scrollL1FeeEstimate = async (
   const calldata = iface.encodeFunctionData('getL1Fee', [
     bytesToHex(serializedTransaction),
   ]);
-  const res = await customRPCService.defaultEthRPC({
-    chainServerId: findChain({ enum: CHAINS_ENUM.SCRL })!.serverId,
+  const res = await customRPCServiceApi.defaultEthRPC({
+    chainServerId: findChain({ enum: chain })!.serverId,
     method: 'eth_call',
     params: [
       {
         from: account?.address,
-        to: '0x5300000000000000000000000000000000000002',
+        to: SCROLL_STYLE_L1_GAS_ORACLE[chain],
         data: calldata,
       },
       'latest',
@@ -121,7 +128,7 @@ export const opStackL1FeeEstimate = async (
   chain: CHAINS_ENUM,
   _account?: Account,
 ) => {
-  const account = _account || preferenceService.getFallbackAccount();
+  const account = _account || getFallbackAccountSnapshot();
   const address = addresses.GasPriceOracle[420];
   const abi = abis.GasPriceOracle;
   const serializedTransaction = buildUnserializedTransaction({
@@ -131,7 +138,7 @@ export const opStackL1FeeEstimate = async (
   const calldata = iface.encodeFunctionData('getL1Fee', [
     bytesToHex(serializedTransaction),
   ]);
-  const res = await customRPCService.defaultEthRPC({
+  const res = await customRPCServiceApi.defaultEthRPC({
     chainServerId: findChain({ enum: chain })!.serverId,
     method: 'eth_call',
     params: [
@@ -155,12 +162,12 @@ export const citreaL1FeeEstimate = async (txParams: any) => {
     }
 
     const [diffSizeRes, latestBlock] = await Promise.all([
-      customRPCService.defaultEthRPC({
+      customRPCServiceApi.defaultEthRPC({
         chainServerId,
         method: 'eth_estimateDiffSize',
         params: [txParams],
       }),
-      customRPCService.defaultEthRPC({
+      customRPCServiceApi.defaultEthRPC({
         chainServerId,
         method: 'eth_getBlockByNumber',
         params: ['latest', false],
@@ -184,6 +191,8 @@ export const citreaL1FeeEstimate = async (txParams: any) => {
   }
 };
 
+const l1FeeFailuresReported = new Set<string>();
+
 export const fetchEstimatedL1Fee = async (
   {
     txParams,
@@ -197,12 +206,26 @@ export const fetchEstimatedL1Fee = async (
   if (String(chain).toLowerCase() === 'citrea') {
     return citreaL1FeeEstimate(txParams);
   }
-  if (OP_STACK_ENUMS.includes(chain)) {
-    return opStackL1FeeEstimate(txParams, chain, account);
-  } else if (chain === CHAINS_ENUM.SCRL) {
-    return scrollL1FeeEstimate(txParams, account);
+  try {
+    if (OP_STACK_ENUMS.includes(chain)) {
+      return await opStackL1FeeEstimate(txParams, chain, account);
+    } else if (SCROLL_STYLE_L1_GAS_ORACLE[String(chain)]) {
+      return await scrollL1FeeEstimate(txParams, account, chain);
+    }
+  } catch (e) {
+    // Rethrow: an unknown l1 fee must never read as 0, which would under-reserve
+    // gas, pass the balance check, and get the broadcast rejected with
+    // `insufficient funds for l1fee + gas * price + value`. Reported once per
+    // chain per session so a flaky rpc cannot flood.
+    if (!l1FeeFailuresReported.has(String(chain))) {
+      l1FeeFailuresReported.add(String(chain));
+      Sentry.captureException(e instanceof Error ? e : new Error(String(e)), {
+        tags: { scene: 'l1Fee', chain: String(chain) },
+      });
+    }
+    throw e;
   }
-  return Promise.resolve('0x0');
+  return '0x0';
 };
 
 export const getERC20Allowance = async (
@@ -314,14 +337,15 @@ export const ethSendTransaction = async (
 ) => {
   const signingTxId = args?.[0]?.approvalRes?.signingTxId;
   try {
-    notificationService.currentMiniApproval = {
+    await ensureNotificationServiceReady();
+    setCurrentMiniApprovalSync({
       signingTxId,
-    };
+    });
     const res = await providerController.ethSendTransaction(...args);
     return res;
   } catch (e) {
     if (signingTxId != null) {
-      transactionHistoryService.removeSigningTx(signingTxId);
+      await transactionHistoryServiceApi.removeSigningTx(signingTxId);
     }
 
     throw e;

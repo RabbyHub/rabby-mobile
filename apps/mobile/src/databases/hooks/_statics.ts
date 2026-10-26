@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { atom, useAtom } from 'jotai';
-import RNFS from 'react-native-fs';
+import RNFS from '@rabby-wallet/react-native-fs';
 
 import { getRabbyAppDbPath } from '../constant';
 import { getDbFileSize } from '../dbfs';

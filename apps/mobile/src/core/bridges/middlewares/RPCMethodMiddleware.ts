@@ -1,9 +1,9 @@
 import { createAsyncMiddleware } from 'json-rpc-engine';
 
 import { isWhitelistedRPC, RPCStageTypes } from '../rpc/events';
-import { keyringService } from '@/core/services';
+import { keyringServiceApi } from '@/core/serviceApi/keyring';
 import { dappSendRequest } from '@/core/apis/sendRequest';
-import { ProviderRequest } from '@/core/controllers/type';
+import type { ProviderRequest } from '@/core/controllers/type';
 import { getActiveDappState, isRpcAllowed } from '../state';
 import { ethErrors } from 'eth-rpc-errors';
 import { SAFE_RPC_METHODS, SELF_CHECK_RPC_METHOD } from '@/constant/rpc';
@@ -70,7 +70,7 @@ RPCMethodsMiddleParameters) =>
   createAsyncMiddleware<{}, any>(async (req, res, next) => {
     // Used by eth_accounts and eth_coinbase RPCs.
     const getEthAccounts = async () => {
-      const accounts = await keyringService.getAccounts();
+      const accounts = await keyringServiceApi.getAccounts();
 
       res.result = accounts;
 

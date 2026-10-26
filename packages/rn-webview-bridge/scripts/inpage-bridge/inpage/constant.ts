@@ -5,6 +5,8 @@ export const WALLET_ICON =
 
 export const WALLET_NAME = 'Rabby Wallet';
 
+export const WALLET_RDNS = 'io.rabby';
+
 export const METAMASK_PROVIDER_INFO = {
   uuid: uuid(),
   name: 'MetaMask',

@@ -1,3 +1,4 @@
+import { RoundedFontStyles } from '@/core/utils/fonts';
 import 'react-native-gesture-handler';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -22,6 +23,7 @@ import { TransactionNavigatorParamList } from '@/navigation-type';
 import ApprovalsScreen from '../Approvals';
 import ReceiveScreen from '../Receive/Receive';
 import SwapBridgeScreen from '../SwapBridge';
+import { renderSwapBridgeHeader } from '../SwapBridge/SwapBridgeHeader';
 import { ConvertDustScreen } from '../ConvertDust';
 import { GasAccountScreen } from '../GasAccount';
 import { ScreenHeaderAccountSwitcher } from '@/components/AccountSwitcher/OnScreenHeader';
@@ -32,22 +34,48 @@ import { BatchRevokeScreen } from '../BatchRevoke/BatchRevoke';
 import { useTranslation } from 'react-i18next';
 import { PerpsOriginScreen } from '../Perps/index';
 import { PerpsMarketDetailScreen } from '../PerpsMarketDetail';
+import { PerpsMarketDetailHeader } from '../PerpsMarketDetail/components/PerpsMarketDetailHeader';
 import { PerpsHistoryScreen } from '../PerpsHistory';
+import { PerpsProHistoryScreen } from '../PerpsProHistory';
+import { PerpsProHistoryHeader } from '../PerpsProHistory/components/PerpsProHistoryHeader';
 import { PerpsSearchScreen } from '../PerpsSearch';
 import LendingHistory from '../Lending/components/LendingHistory';
 import LendingScreen from '../Lending';
+import { renderLendingHeader } from '../Lending/components/LendingHeaderTitle';
 import PredictionScreen from '../Prediction';
 import { PredictionScreenWithPreload } from '../InnerDapp/InnerDappPreloadScreens';
 import { useInnerDappPreloadStrategy } from '@/config/innerDappPreloadStrategy';
 import { Text } from '@/components/Typography';
 import { createGetStyles2024 } from '@/utils/styles';
 import { IS_IOS } from '@/core/native/utils';
+import { withRegressionScenario } from '@/devtools/regressionScenarios/react';
 
 const TransactionStack =
   createNativeStackNavigator<TransactionNavigatorParamList>();
 
 const CONVERT_DUST_HEADER_HEIGHT = 58;
 const SEND_IOS_HEADER_ICON_OFFSET = 6;
+const RegressionSendScreen = withRegressionScenario(SendScreen, {
+  screen: 'Send',
+});
+const RegressionMultiSendScreen = withRegressionScenario(
+  SendScreen.ForMultipleAddress,
+  {
+    screen: 'Send',
+  },
+);
+const RegressionSwapBridgeScreen = withRegressionScenario(SwapBridgeScreen, {
+  screen: 'SwapBridge',
+});
+const RegressionReceiveScreen = withRegressionScenario(ReceiveScreen, {
+  screen: 'Receive',
+});
+const RegressionMultiSwapBridgeScreen = withRegressionScenario(
+  SwapBridgeScreen.ForMultipleAddress,
+  {
+    screen: 'SwapBridge',
+  },
+);
 
 function ConvertDustHeader({
   title,
@@ -112,13 +140,12 @@ export default function TransactionNavigator() {
       })}>
       <TransactionStack.Screen
         name={RootNames.Send}
-        component={SendScreen}
+        component={RegressionSendScreen}
         options={mergeScreenOptions({
           title: 'Send',
           headerTitleStyle: {
             color: colors2024['neutral-title-1'],
-            fontWeight: '900',
-            fontFamily: 'SF Pro Rounded',
+            ...RoundedFontStyles.heavy,
             fontSize: 20,
           },
           headerLeft: renderSendHeaderLeft,
@@ -126,13 +153,12 @@ export default function TransactionNavigator() {
       />
       <TransactionStack.Screen
         name={RootNames.MultiSend}
-        component={SendScreen.ForMultipleAddress}
+        component={RegressionMultiSendScreen}
         options={mergeScreenOptions({
           title: 'Send',
           headerTitleStyle: {
             color: colors2024['neutral-title-1'],
-            fontWeight: '900',
-            fontFamily: 'SF Pro Rounded',
+            ...RoundedFontStyles.heavy,
             fontSize: 20,
           },
           headerLeft: renderSendHeaderLeft,
@@ -145,21 +171,19 @@ export default function TransactionNavigator() {
           title: 'Send',
           headerTitleStyle: {
             color: colors2024['neutral-title-1'],
-            fontWeight: '900',
-            fontFamily: 'SF Pro Rounded',
+            ...RoundedFontStyles.heavy,
             fontSize: 20,
           },
         })}
       />
       <TransactionStack.Screen
         name={RootNames.Receive}
-        component={ReceiveScreen}
+        component={RegressionReceiveScreen}
         options={mergeScreenOptions({
           title: 'Receive',
           headerTitleStyle: {
             color: colors2024['neutral-title-1'],
-            fontWeight: '900',
-            fontFamily: 'SF Pro Rounded',
+            ...RoundedFontStyles.heavy,
             fontSize: 20,
           },
         })}
@@ -193,8 +217,7 @@ export default function TransactionNavigator() {
           headerTintColor: colors['neutral-title-1'],
           headerTitleStyle: {
             fontSize: 20,
-            fontWeight: '900',
-            fontFamily: 'SF Pro Rounded',
+            ...RoundedFontStyles.heavy,
             color: colors['neutral-title-1'],
           },
           headerStyle: {
@@ -235,8 +258,7 @@ export default function TransactionNavigator() {
           headerTintColor: colors['neutral-title-1'],
           headerTitleStyle: {
             fontSize: 20,
-            fontWeight: '900',
-            fontFamily: 'SF Pro Rounded',
+            ...RoundedFontStyles.heavy,
             color: colors['neutral-title-1'],
           },
           headerStyle: {
@@ -254,8 +276,7 @@ export default function TransactionNavigator() {
           headerTintColor: colors['neutral-title-1'],
           headerTitleStyle: {
             fontSize: 20,
-            fontWeight: '900',
-            fontFamily: 'SF Pro Rounded',
+            ...RoundedFontStyles.heavy,
             color: colors['neutral-title-1'],
           },
           headerStyle: {
@@ -277,22 +298,22 @@ export default function TransactionNavigator() {
       {/* SwapBridgeScreen */}
       <TransactionStack.Screen
         name={RootNames.SwapBridge}
-        component={SwapBridgeScreen}
+        component={RegressionSwapBridgeScreen}
         options={mergeScreenOptions2024([
           {
             title: '',
-            headerTitle: () => null,
+            header: renderSwapBridgeHeader,
           },
         ])}
       />
 
       <TransactionStack.Screen
         name={RootNames.MultiSwapBridge}
-        component={SwapBridgeScreen.ForMultipleAddress}
+        component={RegressionMultiSwapBridgeScreen}
         options={mergeScreenOptions2024([
           {
             title: '',
-            headerTitle: () => null,
+            header: renderSwapBridgeHeader,
           },
         ])}
       />
@@ -301,7 +322,7 @@ export default function TransactionNavigator() {
         name={RootNames.Approvals}
         component={ApprovalsScreen}
         options={mergeScreenOptions({
-          title: 'Approvals',
+          title: t('page.approvals.title'),
           ...headerPresets.withBgCard2_2024,
         })}
       />
@@ -310,7 +331,7 @@ export default function TransactionNavigator() {
         name={RootNames.BatchRevoke}
         component={BatchRevokeScreen}
         options={mergeScreenOptions({
-          title: 'Batch Revoke',
+          title: t('page.batchRevoke.title'),
           ...headerPresets.withBgCard2_2024,
           headerStyle: {},
         })}
@@ -343,8 +364,7 @@ export default function TransactionNavigator() {
           headerTintColor: colors['neutral-title-1'],
           headerTitleStyle: {
             fontSize: 20,
-            fontWeight: '900',
-            fontFamily: 'SF Pro Rounded',
+            ...RoundedFontStyles.heavy,
             color: colors['neutral-title-1'],
           },
           headerStyle: {
@@ -357,6 +377,7 @@ export default function TransactionNavigator() {
         name={RootNames.Perps}
         component={PerpsOriginScreen}
         options={mergeScreenOptions({
+          headerShown: false,
           title: t('page.home.services.perps'),
           // ...headerPresets.withBgCard1_2024,
           // headerStyle: {
@@ -365,8 +386,7 @@ export default function TransactionNavigator() {
           headerTintColor: colors['neutral-title-1'],
           headerTitleStyle: {
             fontSize: 20,
-            fontWeight: '900',
-            fontFamily: 'SF Pro Rounded',
+            ...RoundedFontStyles.heavy,
             color: colors['neutral-title-1'],
           },
         })}
@@ -375,17 +395,21 @@ export default function TransactionNavigator() {
       <TransactionStack.Screen
         name={RootNames.PerpsMarketDetail}
         component={PerpsMarketDetailScreen}
-        options={mergeScreenOptions({
-          // title: t('page.home.services.perpsMarketDetail'),
-          // ...headerPresets.withBgCard1_2024,
-          headerTintColor: colors['neutral-title-1'],
-          headerTitleStyle: {
-            fontSize: 20,
-            fontWeight: '900',
-            fontFamily: 'SF Pro Rounded',
-            color: colors['neutral-title-1'],
-          },
-        })}
+        options={({ route }) =>
+          mergeScreenOptions({
+            title: '',
+            header: () => (
+              <PerpsMarketDetailHeader market={route.params.market} />
+            ),
+            // ...headerPresets.withBgCard1_2024,
+            headerTintColor: colors['neutral-title-1'],
+            headerTitleStyle: {
+              fontSize: 20,
+              ...RoundedFontStyles.heavy,
+              color: colors['neutral-title-1'],
+            },
+          })
+        }
       />
 
       <TransactionStack.Screen
@@ -397,13 +421,22 @@ export default function TransactionNavigator() {
           headerTintColor: colors['neutral-title-1'],
           headerTitleStyle: {
             fontSize: 20,
-            fontWeight: '900',
-            fontFamily: 'SF Pro Rounded',
+            ...RoundedFontStyles.heavy,
             color: colors['neutral-title-1'],
           },
           headerStyle: {
             backgroundColor: colors2024['neutral-bg-1'],
           },
+        })}
+      />
+      <TransactionStack.Screen
+        name={RootNames.PerpsProHistory}
+        component={PerpsProHistoryScreen}
+        options={mergeScreenOptions({
+          title: t('page.perps.pro.history.title'),
+          header: () => (
+            <PerpsProHistoryHeader title={t('page.perps.pro.history.title')} />
+          ),
         })}
       />
 
@@ -422,24 +455,16 @@ export default function TransactionNavigator() {
         name={RootNames.Lending}
         component={LendingScreen}
         options={mergeScreenOptions({
-          title: t('page.home.services.lending'),
+          title: '',
           ...headerPresets.withBgCard1_2024,
-          headerTitle: ctx => {
-            return (
-              <ScreenHeaderAccountSwitcher
-                forScene="Lending"
-                titleText={ctx.children}
-              />
-            );
-          },
+          header: renderLendingHeader,
           headerTintColor: colors['neutral-title-1'],
           headerStyle: {
             backgroundColor: colors2024['neutral-bg-1'],
           },
           headerTitleStyle: {
             fontSize: 12,
-            fontWeight: '900',
-            fontFamily: 'SF Pro Rounded',
+            ...RoundedFontStyles.heavy,
             color: colors['neutral-title-1'],
           },
         })}

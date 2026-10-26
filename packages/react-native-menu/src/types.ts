@@ -168,12 +168,17 @@ type MenuComponentPropsBase = {
 	testID?: string;
 };
 
-export type MenuComponentProps = React.PropsWithChildren<MenuComponentPropsBase> & {
-	androidSuppressNativeLongPress?: boolean;
-};
+export type MenuComponentProps =
+	React.PropsWithChildren<MenuComponentPropsBase> & {
+		androidSuppressNativeLongPress?: boolean;
+	};
 
 export type MenuComponentRef = {
-	show: () => void;
+	show: (actions?: MenuAction[]) => void;
+};
+
+export type NativeMenuComponentRef = {
+	show: (actions?: ProcessedMenuAction[]) => void;
 };
 
 export type ProcessedMenuAction = Omit<
@@ -195,10 +200,6 @@ export type NativeMenuComponentProps = {
 	title?: string;
 	hitSlop?: MenuComponentProps["hitSlop"];
 	testID?: string;
-	ref?: React.ForwardedRef<MenuComponentRef>;
-	isAnchoredToRight?: MenuComponentProps["isAnchoredToRight"];
-	themeVariant?: MenuComponentProps["themeVariant"];
-	suppressNativeLongPress?: boolean;
-	shouldOpenOnLongPress?: MenuComponentProps["shouldOpenOnLongPress"];
+	ref?: React.ForwardedRef<NativeMenuComponentRef>;
 	androidSuppressNativeLongPress?: boolean;
 };

@@ -42,14 +42,14 @@ const getStyles = createGetStyles2024(ctx => ({
   bannerTitle: {
     fontSize: 18,
     fontFamily: 'SF Pro Rounded',
-    fontWeight: '800',
+    fontWeight: '900',
     color: ctx.colors2024['neutral-title-1'],
     marginBottom: 8,
   },
   bannerDesc: {
     fontSize: 16,
     fontFamily: 'SF Pro Rounded',
-    fontWeight: '600',
+    fontWeight: '700',
     color: ctx.colors2024['neutral-title-1'],
   },
   card: {
@@ -67,7 +67,7 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   cardTitle: {
     fontFamily: 'SF Pro Rounded',
-    fontWeight: '800',
+    fontWeight: '900',
     fontSize: 16,
     color: ctx.colors2024['neutral-title-1'],
   },
@@ -79,7 +79,7 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   pillText: {
     fontFamily: 'SF Pro Rounded',
-    fontWeight: '600',
+    fontWeight: '700',
     fontSize: 12,
     color: ctx.colors2024['brand-default'],
   },
@@ -90,7 +90,7 @@ const getStyles = createGetStyles2024(ctx => ({
     fontSize: 12,
     color: ctx.colors2024['neutral-foot'],
     fontFamily: 'SF Pro Rounded',
-    fontWeight: '600',
+    fontWeight: '700',
   },
   row: {
     flexDirection: 'row',
@@ -102,7 +102,7 @@ const getStyles = createGetStyles2024(ctx => ({
     fontSize: 14,
     color: ctx.colors2024['neutral-body'],
     fontFamily: 'SF Pro Rounded',
-    fontWeight: '600',
+    fontWeight: '700',
   },
   rowAmount: {
     flex: 1,
@@ -117,7 +117,7 @@ const getStyles = createGetStyles2024(ctx => ({
     textAlign: 'right',
     fontSize: 14,
     fontFamily: 'SF Pro Rounded',
-    fontWeight: '600',
+    fontWeight: '700',
     color: ctx.colors2024['neutral-title-1'],
   },
   claimCard: {
@@ -149,7 +149,7 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   claimPoints: {
     fontFamily: 'SF Pro Rounded',
-    fontWeight: '800',
+    fontWeight: '900',
     fontSize: 16,
     color: ctx.colors2024['neutral-title-1'],
   },

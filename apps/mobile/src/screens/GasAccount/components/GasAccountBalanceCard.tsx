@@ -1,5 +1,6 @@
 import { RcIconGasBalanceBadgeBg } from '@/assets2024/icons/gas-account';
 import { Text } from '@/components/Typography';
+import { traceStartupDiagnostic } from '@/core/utils/startupDiagnostics';
 import { useTheme2024 } from '@/hooks/theme';
 import { formatUsdValue } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -22,10 +23,22 @@ export const GasAccountBalanceCard: React.FC<GasAccountBalanceCardProps> = ({
   amountStyle,
   labelStyle,
 }) => {
+  const renderStartedAt = Date.now();
+  const renderSeqRef = React.useRef(0);
   const { t } = useTranslation();
   const defaultLabel = t('page.gasAccount.gasBalance');
   const { styles } = useTheme2024({ getStyle });
   const amount = formatUsdValue(Number(balance || 0));
+
+  React.useEffect(() => {
+    renderSeqRef.current += 1;
+    traceStartupDiagnostic('gas-account', 'balance_card_render_commit', {
+      seq: renderSeqRef.current,
+      renderCommitMs: Date.now() - renderStartedAt,
+      hasBalance: Number(balance || 0) > 0,
+      amount,
+    });
+  });
 
   return (
     <View style={[styles.container, style]}>
@@ -70,7 +83,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 36,
     lineHeight: 42,
-    fontWeight: '800',
+    fontWeight: '700',
   },
   label: {
     color: colors2024['neutral-secondary'],

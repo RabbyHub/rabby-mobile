@@ -10,6 +10,7 @@ import ReactNativePostMessageStream from './ReactNativePostMessageStream';
 import { domReadyCall } from './util';
 import { hackGoogle } from './google';
 import { startCheckRules } from './rule';
+import { WALLET_RDNS } from './constant';
 
 const PORT_INPAGE = 'rabby-inpage';
 const PORT_CONTENT_SCRIPT = 'rabby-contentscript';
@@ -36,7 +37,7 @@ const rabbyProvider = initializeProvider({
     uuid: uuid(),
     name: process.env.RABBY_BUILD_NAME,
     icon: process.env.RABBY_BUILD_ICON,
-    rdns: process.env.RABBY_BUILD_APP_ID,
+    rdns: WALLET_RDNS,
   },
 });
 

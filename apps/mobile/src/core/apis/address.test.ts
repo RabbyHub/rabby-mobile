@@ -4,6 +4,7 @@ const KEYRING_TYPE = {
   WalletConnectKeyring: 'WalletConnectKeyring',
   SimpleKeyring: 'SimpleKeyring',
   HdKeyring: 'HdKeyring',
+  LedgerKeyring: 'LedgerKeyring',
 } as const;
 
 type Account = {
@@ -44,6 +45,9 @@ function loadAddressModule({
   const mockAddNewAccount = jest.fn().mockResolvedValue({
     address: '0xwatch',
   });
+  const mockAddNewWatchAccounts = jest
+    .fn()
+    .mockResolvedValue(['0xwatch-1', '0xwatch-2']);
   const mockRemoveAccount = jest.fn().mockResolvedValue(undefined);
   const mockHasAddress = jest.fn().mockResolvedValue(hasAddress);
   const mockGetAllVisibleAccountsArray = jest
@@ -81,6 +85,7 @@ function loadAddressModule({
   jest.doMock('@rabby-wallet/eth-keyring-watch', () => jest.fn());
   jest.doMock('@/core/apis/lock', () => ({
     isUnlocked: (...args: unknown[]) => mockIsUnlocked(...args),
+    ensureKeyringRuntimeReady: jest.fn(async () => undefined),
   }));
   jest.doMock('@/constant/event', () => ({
     BroadcastEvent: {
@@ -98,6 +103,60 @@ function loadAddressModule({
   jest.doMock('./keyring', () => ({
     getKeyring: (...args: unknown[]) => mockGetKeyring(...args),
   }));
+  jest.doMock('@/core/serviceApi/contact', () => ({
+    contactServiceApi: {
+      removeAlias: (...args: unknown[]) => mockRemoveAlias(...args),
+    },
+  }));
+  jest.doMock('@/core/serviceApi/dapp', () => ({
+    dappServiceApi: {
+      getDapps: (...args: unknown[]) => mockGetDapps(...args),
+      updateDapp: (...args: unknown[]) => mockUpdateDapp(...args),
+    },
+  }));
+  jest.doMock('@/core/serviceApi/keyring', () => ({
+    keyringServiceApi: {
+      addNewAccount: (...args: unknown[]) => mockAddNewAccount(...args),
+      addNewWatchAccounts: (...args: unknown[]) =>
+        mockAddNewWatchAccounts(...args),
+      getAllVisibleAccountsArray: (...args: unknown[]) =>
+        mockGetAllVisibleAccountsArray(...args),
+      hasAddress: (...args: unknown[]) => mockHasAddress(...args),
+      removeAccount: (...args: unknown[]) => mockRemoveAccount(...args),
+    },
+  }));
+  jest.doMock('@/core/serviceApi/perps', () => ({
+    perpsServiceApi: {
+      removeAgentWallet: (...args: unknown[]) => mockRemoveAgentWallet(...args),
+    },
+  }));
+  jest.doMock('@/core/serviceApi/preference', () => ({
+    getFallbackAccountSnapshot: (...args: unknown[]) =>
+      mockGetFallbackAccount(...args),
+    preferenceServiceApi: {
+      initCurrentAccount: (...args: unknown[]) =>
+        mockInitCurrentAccount(...args),
+      removeAddressAvatar: (...args: unknown[]) =>
+        mockRemoveAddressAvatar(...args),
+      removePinAddress: (...args: unknown[]) => mockRemovePinAddress(...args),
+      setCurrentAccount: (...args: unknown[]) => mockSetCurrentAccount(...args),
+    },
+  }));
+  jest.doMock('@/core/serviceApi/session', () => ({
+    sessionServiceApi: {
+      broadcastEvent: (...args: unknown[]) => mockBroadcastEvent(...args),
+    },
+  }));
+  jest.doMock('@/core/serviceApi/whitelist', () => ({
+    whitelistServiceApi: {
+      removeWhitelist: (...args: unknown[]) => mockRemoveWhitelist(...args),
+    },
+  }));
+  jest.doMock('@/core/serviceApi/transactionHistory', () => ({
+    transactionHistoryServiceApi: {
+      removeList: (...args: unknown[]) => mockRemoveList(...args),
+    },
+  }));
   jest.doMock('../services', () => ({
     contactService: {
       removeAlias: mockRemoveAlias,
@@ -108,6 +167,7 @@ function loadAddressModule({
     },
     keyringService: {
       addNewAccount: mockAddNewAccount,
+      addNewWatchAccounts: mockAddNewWatchAccounts,
       getAllVisibleAccountsArray: mockGetAllVisibleAccountsArray,
       hasAddress: mockHasAddress,
       removeAccount: mockRemoveAccount,
@@ -134,11 +194,15 @@ function loadAddressModule({
   }));
 
   const addressModule = require('./address') as typeof import('./address');
+  const { setWalletUnlockRequester } =
+    require('@/utils/walletUnlockGuard') as typeof import('@/utils/walletUnlockGuard');
 
   return {
     ...addressModule,
+    setWalletUnlockRequester,
     mocks: {
       mockAddNewAccount,
+      mockAddNewWatchAccounts,
       mockBroadcastEvent,
       mockDisconnectWalletConnectSessionsForRemovedAccount,
       mockGetAllVisibleAccountsArray,
@@ -183,6 +247,20 @@ describe('core/apis/address', () => {
     );
     expect(mocks.mockAddNewAccount).toHaveBeenCalledWith(
       mocks.mockWatchKeyring,
+    );
+    expect(mocks.mockInitCurrentAccount).toHaveBeenCalledTimes(1);
+  });
+
+  it('adds watch addresses in one service operation', async () => {
+    const { addWatchAddresses, mocks } = loadAddressModule();
+
+    await expect(
+      addWatchAddresses(['0xwatch-1', '0xwatch-2']),
+    ).resolves.toEqual(['0xwatch-1', '0xwatch-2']);
+
+    expect(mocks.mockAddNewWatchAccounts).toHaveBeenCalledWith(
+      mocks.mockWatchKeyring,
+      ['0xwatch-1', '0xwatch-2'],
     );
     expect(mocks.mockInitCurrentAccount).toHaveBeenCalledTimes(1);
   });
@@ -308,7 +386,7 @@ describe('core/apis/address', () => {
 
     await removeAddress(walletConnectAccount);
 
-    expect(mocks.mockIsUnlocked).not.toHaveBeenCalled();
+    expect(mocks.mockIsUnlocked).toHaveBeenCalledTimes(1);
     expect(mocks.mockRemoveAccount).toHaveBeenCalledWith(
       '0xwalletconnect',
       KEYRING_TYPE.WalletConnectKeyring,
@@ -327,22 +405,67 @@ describe('core/apis/address', () => {
     expect(mocks.mockSetCurrentAccount).not.toHaveBeenCalled();
   });
 
-  it('requires an unlocked wallet before removing sensitive keyring accounts', async () => {
-    const { removeAddress, mocks } = loadAddressModule({
-      isUnlocked: false,
+  it.each(Object.values(KEYRING_TYPE))(
+    'requires an unlocked wallet before removing %s accounts',
+    async type => {
+      const { removeAddress, mocks } = loadAddressModule({
+        isUnlocked: false,
+      });
+
+      await expect(removeAddress(createAccount({ type }))).rejects.toThrow(
+        'background.error.unlock',
+      );
+
+      expect(mocks.mockRemoveAccount).not.toHaveBeenCalled();
+      expect(mocks.mockRemoveAgentWallet).not.toHaveBeenCalled();
+      expect(
+        mocks.mockDisconnectWalletConnectSessionsForRemovedAccount,
+      ).not.toHaveBeenCalled();
+    },
+  );
+
+  it('waits for hardware account unlock before deletion and Agent cleanup', async () => {
+    const { removeAddress, setWalletUnlockRequester, mocks } =
+      loadAddressModule({ isUnlocked: false });
+    const account = createAccount({ type: KEYRING_TYPE.LedgerKeyring });
+    let finishUnlock!: () => void;
+    const unlockPromise = new Promise<void>(resolve => {
+      finishUnlock = resolve;
+    });
+    const requestUnlock = jest.fn(() => unlockPromise);
+    setWalletUnlockRequester(requestUnlock);
+
+    const removal = removeAddress(account);
+
+    expect(requestUnlock).toHaveBeenCalledTimes(1);
+    expect(mocks.mockRemoveAccount).not.toHaveBeenCalled();
+    expect(mocks.mockRemoveAgentWallet).not.toHaveBeenCalled();
+
+    mocks.mockIsUnlocked.mockReturnValue(true);
+    finishUnlock();
+    await expect(removal).resolves.toBeUndefined();
+
+    expect(mocks.mockRemoveAccount).toHaveBeenCalledWith(
+      account.address,
+      account.type,
+      account.brandName,
+      true,
+    );
+    expect(mocks.mockRemoveAgentWallet).toHaveBeenCalledWith(account.address);
+  });
+
+  it('keeps the hardware account and Agent data when unlock is cancelled', async () => {
+    const { removeAddress, setWalletUnlockRequester, mocks } =
+      loadAddressModule({ isUnlocked: false });
+    setWalletUnlockRequester(async () => {
+      throw new Error('Unlock cancelled');
     });
 
     await expect(
-      removeAddress(
-        createAccount({
-          type: KEYRING_TYPE.SimpleKeyring,
-        }),
-      ),
-    ).rejects.toThrow('background.error.unlock');
+      removeAddress(createAccount({ type: KEYRING_TYPE.LedgerKeyring })),
+    ).rejects.toThrow('Unlock cancelled');
 
     expect(mocks.mockRemoveAccount).not.toHaveBeenCalled();
-    expect(
-      mocks.mockDisconnectWalletConnectSessionsForRemovedAccount,
-    ).not.toHaveBeenCalled();
+    expect(mocks.mockRemoveAgentWallet).not.toHaveBeenCalled();
   });
 });

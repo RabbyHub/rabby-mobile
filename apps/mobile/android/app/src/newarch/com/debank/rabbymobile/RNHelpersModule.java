@@ -2,9 +2,13 @@ package com.debank.rabbymobile;
 
 import android.app.Activity;
 import android.content.ClipData;
+import android.content.ClipDescription;
+import android.content.ClipboardManager;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ResolveInfo;
 import android.net.Uri;
+import android.os.PersistableBundle;
 import androidx.annotation.NonNull;
 import androidx.core.content.FileProvider;
 
@@ -14,11 +18,19 @@ import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.module.annotations.ReactModule;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @ReactModule(name = RNHelpersModule.NAME)
 public class RNHelpersModule extends NativeRNHelpersSpec {
@@ -36,10 +48,100 @@ public class RNHelpersModule extends NativeRNHelpersSpec {
     return NAME;
   }
 
+  @Override
+  protected Map<String, Object> getTypedExportedConstants() {
+    Map<String, Object> constants = new HashMap<>();
+    constants.put("buildInfo", readBuildInfo());
+    return constants;
+  }
+
+  private Map<String, Object> readBuildInfo() {
+    Map<String, Object> buildInfo = new HashMap<>();
+
+    try (
+      BufferedReader reader = new BufferedReader(
+        new InputStreamReader(
+          reactContext.getAssets().open("rabby-build-info.json"),
+          StandardCharsets.UTF_8
+        )
+      )
+    ) {
+      StringBuilder json = new StringBuilder();
+      char[] buffer = new char[512];
+      int count;
+      while ((count = reader.read(buffer)) != -1) {
+        json.append(buffer, 0, count);
+      }
+
+      JSONObject decodedBuildInfo = new JSONObject(json.toString());
+      copyBuildInfoValue(decodedBuildInfo, buildInfo, "BUILD_GIT_HASH");
+      copyBuildInfoValue(decodedBuildInfo, buildInfo, "BUILD_GIT_HASH_TIME");
+      copyBuildInfoValue(decodedBuildInfo, buildInfo, "BUILD_TIME");
+      copyBuildInfoValue(decodedBuildInfo, buildInfo, "BUILD_GIT_COMMITOR");
+      copyBuildInfoValue(decodedBuildInfo, buildInfo, "METRO_CACHE_ENABLED");
+    } catch (IOException | JSONException ignored) {
+      // JS keeps its existing defaults when build metadata is unavailable.
+    }
+
+    return buildInfo;
+  }
+
+  private void copyBuildInfoValue(
+    JSONObject source,
+    Map<String, Object> destination,
+    String key
+  ) throws JSONException {
+    if (source.has(key) && !source.isNull(key)) {
+      destination.put(key, source.get(key));
+    }
+  }
+
   @ReactMethod
   @Override
   public void forceExitApp() {
     android.os.Process.killProcess(android.os.Process.myPid());
+  }
+
+  @ReactMethod
+  @Override
+  public void measureViewRelativeTo(double anchorTag, double viewportTag, Promise promise) {
+    NativeViewGeometry.measureRelativeTo(reactContext, (int) anchorTag, (int) viewportTag, promise);
+  }
+
+  @ReactMethod
+  @Override
+  public void androidTraceInstant(String name) {
+    RabbyStartupTrace.instant(name);
+  }
+
+  @ReactMethod
+  @Override
+  public void androidTraceBeginSection(String name) {
+    RabbyStartupTrace.beginSection(name);
+  }
+
+  @ReactMethod
+  @Override
+  public void androidTraceEndSection() {
+    RabbyStartupTrace.endSection();
+  }
+
+  @ReactMethod
+  @Override
+  public void androidTraceBeginAsyncSection(String name, double cookie) {
+    RabbyStartupTrace.beginAsyncSection(name, (int) cookie);
+  }
+
+  @ReactMethod
+  @Override
+  public void androidTraceEndAsyncSection(String name, double cookie) {
+    RabbyStartupTrace.endAsyncSection(name, (int) cookie);
+  }
+
+  @ReactMethod
+  @Override
+  public void androidTraceCounter(String name, double value) {
+    RabbyStartupTrace.counter(name, (int) value);
   }
 
   @ReactMethod
@@ -61,6 +163,24 @@ public class RNHelpersModule extends NativeRNHelpersSpec {
         promise.reject("E_MOVE_TASK_TO_BACK", error);
       }
     });
+  }
+
+  @ReactMethod
+  @Override
+  public void setSensitiveClipboard(String text, Promise promise) {
+    try {
+      ClipData clip = ClipData.newPlainText(null, text);
+      PersistableBundle extras = new PersistableBundle();
+      extras.putBoolean(ClipDescription.EXTRA_IS_SENSITIVE, true);
+      clip.getDescription().setExtras(extras);
+      ClipboardManager clipboard =
+        (ClipboardManager) reactContext.getSystemService(Context.CLIPBOARD_SERVICE);
+      // Android 13+ handles expiry with a system-controlled timeout.
+      clipboard.setPrimaryClip(clip);
+      promise.resolve(null);
+    } catch (Exception error) {
+      promise.reject("E_CLIPBOARD", "Failed to copy sensitive content");
+    }
   }
 
   @ReactMethod

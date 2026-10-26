@@ -1,12 +1,12 @@
 import React from 'react';
-import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, View, type GestureResponderEvent } from 'react-native';
+import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import RcIconJumpCC from '@/assets2024/icons/history/IconJumpCC.svg';
 import HelpIconCC from '@/assets2024/icons/common/help-cc.svg';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
-import { AbstractPortfolioToken } from '@/screens/Home/types';
 import { ellipsisAddress } from '@/utils/address';
 import { findChain } from '@/utils/chain';
 import { openTxExternalUrl } from '@/utils/transaction';
@@ -56,10 +56,8 @@ export const TokenChainAndContract: React.FC<Props> = ({
     };
   }, [token]);
 
-  const handleCopyAddress = useMemoizedFn<
-    React.ComponentProps<typeof TouchableOpacity>['onPress'] & object
-  >(evt => {
-    evt.stopPropagation();
+  const handleCopyAddress = useMemoizedFn((evt?: GestureResponderEvent) => {
+    evt?.stopPropagation?.();
     if (!token?.id) {
       return;
     }
@@ -108,7 +106,8 @@ export const TokenChainAndContract: React.FC<Props> = ({
               <Text style={styles.titleTexet}>
                 {t('page.sendToken.ContractAddress')}
               </Text>
-              <TouchableOpacity
+              <CustomTouchableOpacity
+                as="RNGHTouchableOpacity"
                 style={styles.iconJump}
                 onPress={() => {
                   openTxExternalUrl({
@@ -120,9 +119,10 @@ export const TokenChainAndContract: React.FC<Props> = ({
                   style={styles.icon}
                   color={colors2024['neutral-foot']}
                 />
-              </TouchableOpacity>
+              </CustomTouchableOpacity>
             </View>
-            <TouchableOpacity
+            <CustomTouchableOpacity
+              as="RNGHTouchableOpacity"
               onPress={handleCopyAddress}
               style={[styles.token, styles.bgContainer]}>
               <Text
@@ -137,14 +137,15 @@ export const TokenChainAndContract: React.FC<Props> = ({
                   color={colors2024['neutral-foot']}
                 />
               </View>
-            </TouchableOpacity>
+            </CustomTouchableOpacity>
           </View>
         )}
         {
           <View style={styles.itemContainer}>
             <View style={styles.helpContent}>
               <Text style={styles.titleTexet}>{t('page.tokenDetail.fdv')}</Text>
-              <TouchableOpacity
+              <CustomTouchableOpacity
+                as="RNGHTouchableOpacity"
                 onPress={() => {
                   const modalId = createGlobalBottomSheetModal2024({
                     name: MODAL_NAMES.DESCRIPTION,
@@ -179,7 +180,7 @@ export const TokenChainAndContract: React.FC<Props> = ({
                   height={20}
                   color={colors2024['neutral-info']}
                 />
-              </TouchableOpacity>
+              </CustomTouchableOpacity>
             </View>
             <View style={styles.token}>
               <Text
@@ -199,7 +200,7 @@ export const TokenChainAndContract: React.FC<Props> = ({
 const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   container: {
     // marginLeft: 0,
-    marginHorizontal: 20,
+    marginHorizontal: 12,
     marginTop: 12,
     gap: 12,
     display: 'flex',
@@ -246,6 +247,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     justifyContent: 'space-between',
     alignItems: 'center',
     flexShrink: 0,
+    marginLeft: 8,
     // marginBottom: 4,
   },
   helpContent: {
@@ -265,26 +267,6 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-  },
-  tokenSymbol: {
-    flexShrink: 1,
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 18,
-    lineHeight: 22,
-    fontWeight: '700',
-    flexWrap: 'nowrap',
-  },
-  contract: {
-    backgroundColor: colors2024['neutral-bg-2'],
-    borderRadius: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-
-    display: 'flex',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
   },
   titleContainer: {
     flexDirection: 'row',

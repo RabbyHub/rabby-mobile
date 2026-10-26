@@ -19,8 +19,9 @@ import {
 import { apiKeystone, apiTrezor } from '@/core/apis';
 import { matomoRequestEvent } from '@/utils/analytics';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
-import { keyringService, preferenceService } from '@/core/services';
-import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
+import { keyringServiceApi } from '@/core/serviceApi/keyring';
+import { setReportActionTs } from '@/core/serviceApi/preference';
+import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/utils/reportTimeoutAction';
 import { useFocusEffect } from '@react-navigation/native';
 import { navigate } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
@@ -56,7 +57,7 @@ export function ImportHardwareAddressScreen(): JSX.Element {
 
   const initAccounts = useCallback(async () => {
     try {
-      const accounts = await keyringService.getAllVisibleAccountsArray();
+      const accounts = await keyringServiceApi.getAllVisibleAccountsArray();
       setHasAccounts(!!accounts.length);
     } catch (err) {
       console.error(err);
@@ -88,9 +89,9 @@ export function ImportHardwareAddressScreen(): JSX.Element {
       label: KEYRING_CLASS.HARDWARE.LEDGER,
     });
     !hasAccounts &&
-      preferenceService.setReportActionTs(
+      void setReportActionTs(
         REPORT_TIMEOUT_ACTION_KEY.CLICK_LEDGER_CONNECT,
-      );
+      ).catch(console.error);
   }, [hasAccounts]);
 
   const goImport = useImportKeystone();

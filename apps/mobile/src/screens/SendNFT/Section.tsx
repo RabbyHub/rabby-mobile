@@ -1,7 +1,7 @@
 import React, { useCallback, useRef } from 'react';
 import { View, StyleSheet } from 'react-native';
-import { useThemeStyles, useTheme2024 } from '@/hooks/theme';
-import { createGetStyles, createGetStyles2024 } from '@/utils/styles';
+import { useTheme2024 } from '@/hooks/theme';
+import { createGetStyles2024 } from '@/utils/styles';
 import { useTranslation } from 'react-i18next';
 import {
   useSendNFTFormValuesSelector,
@@ -16,26 +16,6 @@ import { CopyAddressIcon } from '@/components/AddressViewer/CopyAddress';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { AddressItemShadowView } from '../Address/components/AddressItemShadowView';
 import { Text, TextInput } from '@/components/Typography';
-
-const getSectionStyles = createGetStyles(colors => {
-  return {
-    sectionPanel: {
-      borderRadius: 8,
-      padding: 12,
-      backgroundColor: colors['neutral-card1'],
-      width: '100%',
-    },
-  };
-});
-
-export function SendNFTSection({
-  children,
-  style,
-}: React.PropsWithChildren<RNViewProps>) {
-  const { styles } = useThemeStyles(getSectionStyles);
-
-  return <View style={[styles.sectionPanel, style]}>{children}</View>;
-}
 
 export const NFTSection = React.memo(function NFTSection({
   style,

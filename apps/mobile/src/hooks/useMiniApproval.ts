@@ -1,16 +1,19 @@
-import { Tx } from '@rabby-wallet/rabby-api/dist/types';
+import type { Tx } from '@rabby-wallet/rabby-api/dist/types';
 import { useMemoizedFn } from 'ahooks';
 import { atom, useAtom, useAtomValue, useSetAtom } from 'jotai';
 import { useClearMiniApprovalTask } from './useMiniApprovalTask';
 import { noop, uniqueId } from 'lodash';
-import { sendTransaction } from '@/utils/sendTransaction';
+import type { sendTransaction } from '@/utils/sendTransaction';
 import {
-  notificationService,
-  transactionHistoryService,
-} from '@/core/services';
+  ensureNotificationServiceReady,
+  getCurrentMiniApprovalSnapshot,
+  setCurrentMiniApprovalSync,
+} from '@/core/serviceApi/notification';
+import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
 import { sleep } from '@/utils/async';
-import { Account } from '@/core/services/preference';
-import { ReactNode, useCallback } from 'react';
+import type { Account } from '@/core/startupServices/preference';
+import type { ReactNode } from 'react';
+import { useCallback } from 'react';
 
 export let DirectSubmitReject;
 
@@ -66,6 +69,7 @@ export const useMiniApproval = () => {
       directSubmit?: boolean;
       account: Account;
     }) => {
+      await ensureNotificationServiceReady();
       // const currentApprovalId = uniqueId('mini-approval');
       // await sleep(200);
       return new Promise<Awaited<ReturnType<typeof sendTransaction>>[]>(
@@ -93,10 +97,17 @@ export const useMiniApproval = () => {
                 }));
                 setMiniSignExtraProps(() => DEFAULT_MINI_SIGN_TX_EXTRA_CONFIG);
                 const signingTxId =
-                  notificationService.currentMiniApproval?.signingTxId;
+                  getCurrentMiniApprovalSnapshot()?.signingTxId;
                 if (signingTxId) {
-                  transactionHistoryService.removeSigningTx(signingTxId);
-                  notificationService.currentMiniApproval = null;
+                  void transactionHistoryServiceApi
+                    .removeSigningTx(signingTxId)
+                    .catch(error => {
+                      console.error(
+                        '[useMiniApproval] remove signing tx failed',
+                        error,
+                      );
+                    });
+                  setCurrentMiniApprovalSync(null);
                 }
                 reject(e);
               },
@@ -110,7 +121,7 @@ export const useMiniApproval = () => {
                   checkGasFee: false,
                 }));
                 setMiniSignExtraProps(() => DEFAULT_MINI_SIGN_TX_EXTRA_CONFIG);
-                notificationService.currentMiniApproval = null;
+                setCurrentMiniApprovalSync(null);
                 resolve(res);
               },
             };

@@ -97,7 +97,7 @@ build_adhoc() {
   fi
 
   if turbo_build_enabled; then
-    turbo_prepare_ios_derived_data;
+    turbo_prepare_ios_derived_data || return $?
   fi
 
   if [ "$SENTRY_DISABLE_AUTO_UPLOAD" == "true" ]; then
@@ -119,10 +119,10 @@ prepare_ios_ruby_bundle() {
 }
 
 prepare_ios_build_artifacts() {
-  turbo_prepare_js_dependencies;
+  turbo_prepare_js_dependencies || return $?
 
   if turbo_build_enabled; then
-    ios_build_artifacts_key=$(turbo_compute_ios_build_artifacts_key)
+    ios_build_artifacts_key=$(turbo_compute_ios_build_artifacts_key) || return $?
   fi
 
   if turbo_build_enabled && turbo_ios_build_artifacts_ready "$ios_build_artifacts_key"; then
@@ -160,7 +160,7 @@ prepare_ios_native_deps() {
 
 if [[ -z $SKIP_BUILD || ! -f $ouput_dir/RabbyMobile.ipa ]]; then
   echo "[deploy-ios-adhoc] start build..."
-  build_adhoc;
+  build_adhoc || exit $?
   echo "[deploy-ios-adhoc] finish build."
 fi
 
@@ -199,7 +199,16 @@ if [ "$REALLY_UPLOAD" == "true" ]; then
   aws s3 sync $NO_VERIFY_SSL_FLAG $deployment_local_dir $deployment_s3_dir/ --exclude '*' --include "*.json" --acl public-read --content-type application/json --exact-timestamps
   aws s3 sync $NO_VERIFY_SSL_FLAG $deployment_local_dir $deployment_s3_dir/ --exclude '*' --include "*.md" --acl public-read --content-type text/plain --exact-timestamps
 
-  node $script_dir/notify-lark.js "$manifest_plist_url" ios "$(ios_fast_build_enabled_value)"
+  lark_drive_url=""
+  if [ "$RABBY_MOBILE_LARK_DRIVE_UPLOAD" = "true" ] && [ "$SKIP_NOTIFY_LARK" != "true" ]; then
+    echo "[deploy-ios-adhoc] upload IPA to Lark Drive..."
+    if ! lark_drive_url=$(node "$script_dir/ci/upload-package-to-lark-drive.js" "$deployment_local_dir/rabbymobile.ipa" "${version_bundle_name}.ipa"); then
+      echo "[deploy-ios-adhoc] ⚠️ Lark Drive upload failed; keeping AWS notification only."
+      [ "$RABBY_MOBILE_LARK_DRIVE_UPLOAD_REQUIRED" = "true" ] && exit 1
+    fi
+  fi
+
+  RABBY_MOBILE_LARK_DRIVE_URL="$lark_drive_url" node $script_dir/notify-lark.js "$manifest_plist_url" ios "$(ios_fast_build_enabled_value)"
 fi
 
 [ -z $RABBY_MOBILE_CDN_FRONTEND_ID ] && RABBY_MOBILE_CDN_FRONTEND_ID="<DIST_ID>"

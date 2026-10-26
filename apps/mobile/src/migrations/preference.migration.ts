@@ -58,6 +58,7 @@ export const preferenceServiceMigration =
       migrate: ctx => {
         const preferenceService = ctx.service;
         const srv = ctx.service;
+        const store = srv.getStoreSnapshot();
         console.debug(
           `${ctx.loggerPrefix} preferenceService.store.tokenManageSettingMap`,
           preferenceService.store.tokenManageSettingMap,
@@ -81,7 +82,7 @@ export const preferenceServiceMigration =
           //   JSON.stringify(srv.store.excludeDefiAndTokens, null, '\t'),
           // );
         };
-        const tokenManageSettingMap = { ...srv.store.tokenManageSettingMap };
+        const tokenManageSettingMap = store.tokenManageSettingMap;
         if (Object.keys(tokenManageSettingMap).length === 0) {
           _logMigratedData();
           return;
@@ -90,11 +91,11 @@ export const preferenceServiceMigration =
         // leave here for debug
         // console.debug('[preference::_migrate] srv.store.tokenManageSettingMap', JSON.stringify(srv.store.tokenManageSettingMap, null, '\t'));
         const lists = {
-          pinedQueue: srv.store.pinedQueue || [],
-          foldTokens: srv.store.foldTokens || [],
-          unfoldTokens: srv.store.unfoldTokens || [],
-          includeDefiAndTokens: srv.store.includeDefiAndTokens || [],
-          excludeDefiAndTokens: srv.store.excludeDefiAndTokens || [],
+          pinedQueue: store.pinedQueue || [],
+          foldTokens: store.foldTokens || [],
+          unfoldTokens: store.unfoldTokens || [],
+          includeDefiAndTokens: store.includeDefiAndTokens || [],
+          excludeDefiAndTokens: store.excludeDefiAndTokens || [],
         };
         const sets = {
           pinedQueue: new Set(lists.pinedQueue.map(x => makeManageTokenKey(x))),
@@ -178,16 +179,16 @@ export const preferenceServiceMigration =
         }
 
         flush_back: {
-          srv.store.pinedQueue = lists.pinedQueue;
-          srv.store.foldTokens = lists.foldTokens;
-          srv.store.unfoldTokens = lists.unfoldTokens;
-
-          srv.store.includeDefiAndTokens = lists.includeDefiAndTokens;
-          srv.store.excludeDefiAndTokens = lists.excludeDefiAndTokens;
+          srv.applyTokenSettingsMigration({
+            pinedQueue: lists.pinedQueue,
+            foldTokens: lists.foldTokens,
+            unfoldTokens: lists.unfoldTokens,
+            includeDefiAndTokens: lists.includeDefiAndTokens,
+            excludeDefiAndTokens: lists.excludeDefiAndTokens,
+            tokenManageSettingMap,
+          });
 
           _logMigratedData();
-
-          srv.store.tokenManageSettingMap = tokenManageSettingMap;
         }
       },
     },
@@ -196,8 +197,9 @@ export const preferenceServiceMigration =
       migrate: ctx => {
         try {
           const srv = ctx.service;
-          const pinedQueue = srv.store.pinedQueue || [];
-          const unfoldTokens = srv.store.unfoldTokens || [];
+          const store = srv.getStoreSnapshot();
+          const pinedQueue = store.pinedQueue || [];
+          const unfoldTokens = store.unfoldTokens || [];
 
           if (!pinedQueue.length || !unfoldTokens.length) {
             return;
@@ -213,11 +215,13 @@ export const preferenceServiceMigration =
             return;
           }
 
-          srv.store.unfoldTokens = filteredUnfoldTokens;
+          srv.applyTokenSettingsMigration({
+            unfoldTokens: filteredUnfoldTokens,
+          });
 
           console.debug(
             `${ctx.loggerPrefix} filtered unfoldTokens from pinedQueue`,
-            srv.store.unfoldTokens,
+            filteredUnfoldTokens,
           );
         } catch (e) {
           // DO NOTHING

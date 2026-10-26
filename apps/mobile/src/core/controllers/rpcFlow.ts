@@ -1,16 +1,22 @@
 import { ethErrors } from 'eth-rpc-errors';
-// import {
-//   keyringService,
-//   notificationService,
-//   permissionService,
-// } from 'background/service';
+import { autoConnectServiceApi } from '@/core/serviceApi/autoConnect';
+import { customTestnetServiceApi } from '@/core/serviceApi/customTestnet';
 import {
-  autoConnectService,
-  dappService,
-  keyringService,
-  notificationService,
-  preferenceService,
-} from '../services';
+  ensureDappServiceReady,
+  getConnectedDappSnapshot,
+  getDappSnapshot,
+  hasDappPermissionSnapshot,
+  updateDappSync,
+} from '@/core/serviceApi/dapp';
+import {
+  ensureNotificationServiceReady,
+  getNotificationStatsDataSnapshot,
+  notificationServiceApi,
+  setCurrentRequestDeferFnSync,
+  setNotificationStatsDataSync,
+  unlockNotificationSync,
+} from '@/core/serviceApi/notification';
+import { getFallbackAccountSnapshot } from '@/core/serviceApi/preference';
 import PromiseFlow from '@/utils/promiseFlow';
 import providerController from './provider';
 // import eventBus from '@/eventBus';
@@ -19,20 +25,20 @@ import * as Sentry from '@sentry/react-native';
 // import stats from '@/stats';
 import { addHexPrefix, stripHexPrefix } from 'ethereumjs-util';
 import { eventBus, EVENTS } from '@/utils/events';
-import { Chain, CHAINS_ENUM } from '@/constant/chains';
+import { Chain, CHAINS_ENUM, getTestnetChainList } from '@/constant/chains';
 import * as apisDapp from '../apis/dapp';
 import { stats } from '@/utils/stats';
 import { waitSignComponentAmounted } from '../utils/signEvent';
 import { findChain } from '@/utils/chain';
 import { gnosisController } from './gnosisController';
 import { underline2Camelcase } from '../utils/common';
-import { find, reject } from 'lodash';
 import { getRetryTxRecommendNonce, getRetryTxType } from '@/utils/errorTxRetry';
 import { hexToNumber, isHex } from 'viem';
 import { intToHex } from '@/utils/number';
 import BigNumber from 'bignumber.js';
 import { getAccountList } from '../apis/account';
 import { getDappAccount } from '@/core/utils/dappAccount';
+import { getTransactionHistoryTransactions } from '@/core/serviceApi/transactionHistory';
 import { shouldAutoConnect, shouldAutoPersonalSign } from './autoConnect';
 import { openapi } from '../request';
 import type { Account } from '@/types/account';
@@ -41,6 +47,7 @@ import { isWalletUnlockCancelled } from '@/utils/walletUnlockError';
 import {
   ensureProviderRequestContext,
   getProviderRequestChain,
+  normalizeProviderRequestChainId,
 } from './requestContext';
 
 export const resemblesETHAddress = (str: string): boolean => {
@@ -65,6 +72,10 @@ const flow = new PromiseFlow<{
 const flowContext = flow
   .use(async (ctx, next) => {
     ensureProviderRequestContext(ctx.request);
+    const customTestnetList = await customTestnetServiceApi.getList();
+    if (!getTestnetChainList().length && customTestnetList.length) {
+      await customTestnetServiceApi.syncChainList();
+    }
     return next();
   })
   .use(async (ctx, next) => {
@@ -115,7 +126,7 @@ const flowContext = flow
       requestContext?.source !== 'walletconnect' &&
       !Reflect.getMetadata('SAFE', providerController, mapMethod)
     ) {
-      if (!dappService.hasPermission(origin)) {
+      if (!hasDappPermissionSnapshot(origin)) {
         if (connectOrigins.has(origin)) {
           throw ethErrors.rpc.resourceNotFound(
             'Already processing connect. Please wait.',
@@ -127,7 +138,9 @@ const flowContext = flow
         try {
           let defaultChain: CHAINS_ENUM | null = null;
           let defaultAccount: Account | undefined = undefined;
-          const autoConnectInfo = await autoConnectService.autoConnect(origin);
+          const autoConnectInfo = await autoConnectServiceApi.autoConnect(
+            origin,
+          );
           if (autoConnectInfo) {
             defaultAccount = autoConnectInfo.defaultAccount;
             defaultChain = autoConnectInfo.defaultChain || CHAINS_ENUM.ETH;
@@ -135,11 +148,15 @@ const flowContext = flow
             isFromMobileInnerDapp &&
             shouldAutoConnect(origin, ctx.request.data.method)
           ) {
-            const site = dappService.getDapp(origin);
-            const { accounts } = await getAccountList();
+            const site = getDappSnapshot(origin);
+            const [{ accounts }, transactions] = await Promise.all([
+              getAccountList(),
+              getTransactionHistoryTransactions(),
+            ]);
             defaultAccount = getDappAccount({
               dappInfo: site,
               accounts,
+              transactions,
             })!;
             defaultChain =
               site?.chainId && findChain({ enum: site.chainId })
@@ -167,7 +184,7 @@ const flowContext = flow
               defaultChain = targetChain ? targetChain.enum : CHAINS_ENUM.ETH;
             }
           } else {
-            const res = await notificationService.requestApproval(
+            const res = await notificationServiceApi.requestApproval(
               {
                 params: { origin, name, icon, $mobileCtx },
                 account: ctx.request.account,
@@ -182,8 +199,7 @@ const flowContext = flow
           await apisDapp.connect({
             origin,
             chainId: defaultChain || CHAINS_ENUM.ETH,
-            currentAccount:
-              defaultAccount || preferenceService.getFallbackAccount(),
+            currentAccount: defaultAccount || getFallbackAccountSnapshot(),
             session: {
               name,
               icon,
@@ -191,8 +207,7 @@ const flowContext = flow
               $mobileCtx,
             },
           });
-          ctx.request.account =
-            defaultAccount || preferenceService.getFallbackAccount()!;
+          ctx.request.account = defaultAccount || getFallbackAccountSnapshot()!;
         } catch (e) {
           connectOrigins.delete(origin);
           throw e;
@@ -218,6 +233,24 @@ const flowContext = flow
     // console.debug('[debug] flowContext:: before check need approval');
     const [approvalType, condition, options = {}] =
       Reflect.getMetadata('APPROVAL', providerController, mapMethod) || [];
+
+    // Keep admission, analysis and signing on the same chain while approval waits.
+    if (
+      approvalType === 'SignTypedData' &&
+      ctx.request.requestContext?.source === 'dapp' &&
+      ctx.request.requestContext.chainId == null
+    ) {
+      const chain = findChain({
+        enum: getConnectedDappSnapshot(origin)?.chainId,
+      });
+      if (!chain) {
+        throw ethErrors.rpc.invalidParams('Unsupported chainId for typed data');
+      }
+      ctx.request.requestContext = {
+        ...ctx.request.requestContext,
+        chainId: chain.id,
+      };
+    }
 
     let windowHeight = 800;
     // TODO: remove this
@@ -249,22 +282,58 @@ const flowContext = flow
       ctx.request.data.params[0] = message;
       ctx.request.data.params[1] = from;
     }
-    if (approvalType && (!condition || !condition(ctx.request))) {
-      ctx.request.requestedApproval = true;
-      if (approvalType === 'SignTx' && !('chainId' in params[0])) {
+    if (approvalType === 'SignTx') {
+      const tx = params?.[0];
+      if (tx && !('chainId' in tx)) {
         const requestChain = getProviderRequestChain(ctx.request);
         if (requestChain) {
-          params[0].chainId = requestChain.id;
+          tx.chainId = requestChain.id;
         } else {
-          const site = dappService.getConnectedDapp(origin);
+          const site = getConnectedDappSnapshot(origin);
           const chain = findChain({
             enum: site?.chainId,
           });
           if (chain) {
-            params[0].chainId = chain.id;
+            tx.chainId = chain.id;
           }
         }
       }
+      const txChainId = normalizeProviderRequestChainId(tx?.chainId);
+      const chain = txChainId ? findChain({ id: txChainId }) : null;
+      if (!chain) {
+        const requestContext = ctx.request.requestContext;
+        Sentry.captureException(new Error('Unsupported SignTx chainId'), {
+          tags: {
+            scene: 'rpcFlow',
+            approvalType,
+            method,
+            source: requestContext?.source || 'unknown',
+          },
+          extra: {
+            origin,
+            sessionName: name,
+            rawChainId: tx?.chainId,
+            normalizedChainId: txChainId,
+            requestContext: requestContext
+              ? {
+                  origin: requestContext.origin,
+                  source: requestContext.source,
+                  chainId: requestContext.chainId,
+                }
+              : undefined,
+            connectedDappChainId: getConnectedDappSnapshot(origin)?.chainId,
+          },
+        });
+        throw ethErrors.rpc.invalidParams({
+          message: 'Unsupported chainId for eth_sendTransaction',
+          data: {
+            chainId: tx?.chainId,
+          },
+        });
+      }
+    }
+    if (approvalType && (!condition || !condition(ctx.request))) {
+      ctx.request.requestedApproval = true;
       if (
         !isFromMobileInnerDapp ||
         !shouldAutoPersonalSign({
@@ -274,7 +343,7 @@ const flowContext = flow
           msgParams: ctx.request.data.params,
         })
       ) {
-        ctx.approvalRes = await notificationService.requestApproval(
+        ctx.approvalRes = await notificationServiceApi.requestApproval(
           {
             approvalComponent: approvalType,
             params: {
@@ -293,9 +362,9 @@ const flowContext = flow
       }
 
       if (isSignApproval(approvalType)) {
-        const dapp = dappService.getDapp(origin);
+        const dapp = getDappSnapshot(origin);
         if (dapp) {
-          dappService.updateDapp({
+          updateDappSync({
             ...dapp,
             isSigned: true,
           });
@@ -328,22 +397,18 @@ const flowContext = flow
         msgParams: ctx.request.data.params,
       });
 
+    // With an approval UI, the dapp gets its answer from that UI (which also
+    // owns retries); otherwise the caller awaits requestDefer directly and must
+    // see the error instead of a request that never settles.
+    const callerAwaitsRequestDefer = isAutoPersonalSign || !uiRequestComponent;
+
     const createRequestDeferFn =
       (originApprovalRes: typeof approvalRes) =>
       async (isRetry = false) =>
-        new Promise(async resolve => {
-          let waitSignComponentPromise = Promise.resolve();
-          if (
-            !isAutoPersonalSign &&
-            isSignApproval(approvalType) &&
-            uiRequestComponent
-          ) {
-            waitSignComponentPromise = waitSignComponentAmounted();
-          }
-
+        new Promise(async (resolve, reject) => {
           if (originApprovalRes?.isGnosis) return resolve(undefined);
 
-          return waitSignComponentPromise.then(() => {
+          return Promise.resolve().then(() => {
             let _approvalRes = originApprovalRes;
 
             if (isRetry && mapMethod === 'ethSendTransaction') {
@@ -376,18 +441,20 @@ const flowContext = flow
                   break;
               }
               if (retryType) {
-                notificationService.setCurrentRequestDeferFn(
+                setCurrentRequestDeferFnSync(
                   createRequestDeferFn(_approvalRes),
                 );
               }
             }
 
-            return Promise.resolve(
-              providerController[mapMethod]({
-                ...request,
-                approvalRes: _approvalRes,
-              }),
-            )
+            // .then() so a synchronous throw lands in .catch below
+            return Promise.resolve()
+              .then(() =>
+                providerController[mapMethod]({
+                  ...request,
+                  approvalRes: _approvalRes,
+                }),
+              )
               .then(result => {
                 if (isSignApproval(approvalType)) {
                   eventBus.emit(EVENTS.SIGN_FINISHED, {
@@ -417,14 +484,28 @@ const flowContext = flow
                 } else if (__DEV__) {
                   console.error(e);
                 }
-                reject(e);
+                if (callerAwaitsRequestDefer) {
+                  reject(e);
+                }
               });
           });
         });
     const requestDeferFn = createRequestDeferFn(approvalRes);
 
-    notificationService.setCurrentRequestDeferFn(requestDeferFn);
-    const requestDefer = requestDeferFn();
+    // Safe owner signing registers its own retry fn
+    // (apisKeyring.signTypedDataWithUI); ours would only resolve undefined.
+    if (!approvalRes?.isGnosis) {
+      setCurrentRequestDeferFnSync(requestDeferFn);
+    }
+    // Only the first attempt waits for the waiting UI to mount. Retries are
+    // started from that mounted UI, which emits no further mount event.
+    const requestDefer =
+      !approvalRes?.isGnosis &&
+      !isAutoPersonalSign &&
+      isSignApproval(approvalType) &&
+      uiRequestComponent
+        ? waitSignComponentAmounted().then(() => requestDeferFn())
+        : requestDeferFn();
     async function requestApprovalLoop({
       uiRequestComponent,
       $account,
@@ -433,7 +514,7 @@ const flowContext = flow
       ctx.request.requestedApproval = true;
 
       try {
-        const res = await notificationService.requestApproval({
+        const res = await notificationServiceApi.requestApproval({
           approvalComponent: uiRequestComponent,
           params: {
             ...rest,
@@ -468,7 +549,7 @@ const flowContext = flow
         if (ctx.request.requestedApproval) {
           flow.requestedApproval = false;
           // only unlock notification if current flow is an approval flow
-          notificationService.unLock();
+          unlockNotificationSync();
         }
         return gnosisController.watchMessage({
           address: safeMessage.safeAddress,
@@ -488,7 +569,7 @@ const flowContext = flow
   .callback();
 
 function reportStatsData() {
-  const statsData = notificationService.getStatsData();
+  const statsData = getNotificationStatsDataSnapshot();
   if (!statsData || statsData.reported) return;
   if (statsData?.signed) {
     const sData: any = {
@@ -521,31 +602,39 @@ function reportStatsData() {
     });
   }
   statsData.reported = true;
-  notificationService.setStatsData(statsData);
+  setNotificationStatsDataSync(statsData);
 }
 
-export default async (request: ProviderRequest) => {
+async function runRpcFlow(request: ProviderRequest) {
   const ctx: any = {
     request: { ...request, requestedApproval: false },
   };
   try {
     const origin = request.origin || request.session.origin;
-    const dapp = dappService.getDapp(origin);
+    const dapp = getDappSnapshot(origin);
     if (dapp && !dapp.isDapp) {
-      dappService.updateDapp({
+      updateDappSync({
         ...dapp,
         isDapp: true,
       });
     }
   } catch (e) {}
-  notificationService.setStatsData();
+  setNotificationStatsDataSync();
   return flowContext(ctx).finally(() => {
     reportStatsData();
 
     if (ctx.request.requestedApproval) {
       flow.requestedApproval = false;
       // only unlock notification if current flow is an approval flow
-      notificationService.unLock();
+      unlockNotificationSync();
     }
   });
-};
+}
+
+export default async function rpcFlow(request: ProviderRequest) {
+  await Promise.all([
+    ensureDappServiceReady(),
+    ensureNotificationServiceReady(),
+  ]);
+  return runRpcFlow(request);
+}

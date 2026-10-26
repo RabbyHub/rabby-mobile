@@ -18,8 +18,9 @@ import { useTranslation } from 'react-i18next';
 import BigNumber from 'bignumber.js';
 import { Skeleton } from '@rneui/themed';
 import React from 'react';
-import * as DropdownMenu from 'zeego/src/dropdown-menu';
+import * as DropdownMenu from '@rabby-wallet/zeego/dropdown-menu';
 import { Text } from '@/components/Typography';
+import { useNativeMenuModalGate } from '@/utils/modalGate';
 
 interface Props {
   gasList: GasLevel[];
@@ -30,10 +31,12 @@ interface Props {
   disabled?: boolean;
 }
 
-const GasLevelIcon: React.FC<{ level: string; isActive }> = ({
-  level,
-  isActive,
-}) => {
+export const GasLevelIcon: React.FC<{
+  level: string;
+  isActive?: boolean;
+  size?: number;
+  color?: string;
+}> = ({ level, isActive, size = 20, color }) => {
   const colors = useThemeColors();
   const GasLevelSVG =
     level === 'slow'
@@ -44,12 +47,13 @@ const GasLevelIcon: React.FC<{ level: string; isActive }> = ({
       ? GasLevelInstantSVG
       : GasLevelCustomSVG;
   return (
-    <div>
-      <GasLevelSVG
-        color={isActive ? colors['blue-default'] : colors['neutral-body']}
-        width={20}
-      />
-    </div>
+    <GasLevelSVG
+      color={
+        color || (isActive ? colors['blue-default'] : colors['neutral-body'])
+      }
+      width={size}
+      height={size}
+    />
   );
 };
 
@@ -65,6 +69,7 @@ export const GasMenuButton: React.FC<Props> = ({
     getStyle,
   });
   const { t } = useTranslation();
+  const nativeMenuGateProps = useNativeMenuModalGate();
   const actions = React.useMemo(() => {
     const list = gasList.map(gas => {
       const gwei = new BigNumber(gas.price / 1e9).toFixed().slice(0, 8);
@@ -138,7 +143,7 @@ export const GasMenuButton: React.FC<Props> = ({
     return Content;
   }
   return (
-    <DropdownMenu.Root>
+    <DropdownMenu.Root {...nativeMenuGateProps}>
       <DropdownMenu.Trigger action="press">{Content}</DropdownMenu.Trigger>
       <DropdownMenu.Content
         loop

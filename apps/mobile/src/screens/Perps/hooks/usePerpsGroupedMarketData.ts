@@ -8,12 +8,8 @@ import {
   PerpsCategoryConfig,
   PerpsCategoryId,
 } from '../constants/perpsCategories';
-
-export type VisibleCategory = {
-  id: PerpsCategoryId;
-  cfg: PerpsCategoryConfig;
-  items: MarketData[];
-};
+import { groupPerpsMarkets } from './groupPerpsMarkets';
+export type { VisibleCategory } from './groupPerpsMarkets';
 
 type BuiltinSpec = {
   id: PerpsCategoryId;
@@ -22,6 +18,10 @@ type BuiltinSpec = {
   showRankOnHome: boolean;
   showRankOnSearch: boolean;
 };
+
+// Home modules preview this many pairs (favorites are the exception and show
+// everything); the full list lives on the search page's matching tab.
+const HOME_CATEGORY_LIMIT = 5;
 
 const BUILTIN_SPECS: BuiltinSpec[] = [
   {
@@ -34,7 +34,7 @@ const BUILTIN_SPECS: BuiltinSpec[] = [
   {
     id: 'topVolume',
     i18nKey: 'page.perps.categories.topVolume',
-    homeLimit: 5,
+    homeLimit: HOME_CATEGORY_LIMIT,
     showRankOnHome: true,
     showRankOnSearch: true,
   },
@@ -52,8 +52,9 @@ export function usePerpsGroupedMarketData(params: {
   const { t } = useTranslation();
   const { currentLanguage } = useAppLanguage();
 
-  return useMemo(() => {
-    const configs: PerpsCategoryConfig[] = [
+  const volumeSorted = useMemo(() => sortByVolDesc(marketData), [marketData]);
+  const configs = useMemo<PerpsCategoryConfig[]>(
+    () => [
       ...BUILTIN_SPECS.map<PerpsCategoryConfig>(b => ({
         id: b.id,
         label: t(b.i18nKey),
@@ -65,47 +66,16 @@ export function usePerpsGroupedMarketData(params: {
       ...(backendCategories ?? []).map<PerpsCategoryConfig>(c => ({
         id: c.id,
         label: c.translations?.[currentLanguage] ?? c.name ?? c.id,
-        homeLimit: 3,
+        homeLimit: HOME_CATEGORY_LIMIT,
         showRankOnHome: false,
         showRankOnSearch: false,
       })),
-    ];
+    ],
+    [backendCategories, t, currentLanguage],
+  );
 
-    const favSet = new Set(favoriteMarkets.map(s => s.toUpperCase()));
-
-    const volSorted = sortByVolDesc(marketData);
-
-    const fullByCategory: Record<PerpsCategoryId, MarketData[]> = {};
-    configs.forEach(cfg => {
-      if (cfg.id === 'favorite') {
-        fullByCategory[cfg.id] = volSorted.filter(item =>
-          favSet.has(item.name.toUpperCase()),
-        );
-      } else if (cfg.id === 'topVolume') {
-        fullByCategory[cfg.id] = volSorted;
-      } else {
-        fullByCategory[cfg.id] = volSorted.filter(
-          item => item.categoryId === cfg.id,
-        );
-      }
-    });
-
-    const visibleHome: VisibleCategory[] = configs
-      .map(cfg => {
-        const all = fullByCategory[cfg.id] ?? [];
-        const items = cfg.homeLimit == null ? all : all.slice(0, cfg.homeLimit);
-        return { id: cfg.id, cfg, items };
-      })
-      .filter(c => c.items.length > 0);
-
-    const visibleSearchTabs: VisibleCategory[] = configs
-      .filter(cfg => (fullByCategory[cfg.id] ?? []).length > 0)
-      .map(cfg => ({
-        id: cfg.id,
-        cfg,
-        items: fullByCategory[cfg.id] ?? [],
-      }));
-
-    return { fullByCategory, visibleHome, visibleSearchTabs };
-  }, [marketData, favoriteMarkets, backendCategories, t, currentLanguage]);
+  return useMemo(
+    () => groupPerpsMarkets(volumeSorted, favoriteMarkets, configs),
+    [volumeSorted, favoriteMarkets, configs],
+  );
 }

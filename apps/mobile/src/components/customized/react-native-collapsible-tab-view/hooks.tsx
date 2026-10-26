@@ -117,7 +117,9 @@ export const useScrollHandlerY = (
         ctx,
       );
     }
-    if (!enabled.value) return;
+    if (!enabled.value) {
+      return;
+    }
 
     if (typeof snapThreshold === 'number') {
       if (revealHeaderOnScroll) {
@@ -177,7 +179,9 @@ export const useScrollHandlerY = (
           );
         }
 
-        if (!enabled.value) return;
+        if (!enabled.value) {
+          return;
+        }
 
         if (focusedTab.value === name) {
           if (IS_IOS) {
@@ -234,12 +238,16 @@ export const useScrollHandlerY = (
             ctx,
           );
         }
-        if (!enabled.value) return;
+        if (!enabled.value) {
+          return;
+        }
 
         // ensure the header stops snapping
         cancelAnimation(accDiffClamp);
 
-        if (IS_IOS) cancelAnimation(afterDrag);
+        if (IS_IOS) {
+          cancelAnimation(afterDrag);
+        }
       },
       onEndDrag: (event, ctx) => {
         if (onAnimatedScrollEndDrag) {
@@ -251,7 +259,9 @@ export const useScrollHandlerY = (
             ctx,
           );
         }
-        if (!enabled.value) return;
+        if (!enabled.value) {
+          return;
+        }
 
         if (IS_IOS) {
           // we delay this by one frame so that onMomentumBegin may fire on iOS
@@ -278,7 +288,9 @@ export const useScrollHandlerY = (
             ctx,
           );
         }
-        if (!enabled.value) return;
+        if (!enabled.value) {
+          return;
+        }
 
         if (IS_IOS) {
           cancelAnimation(afterDrag);

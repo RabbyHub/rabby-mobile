@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Platform, TouchableOpacity, View } from 'react-native';
 
-import { DappInfo } from '@/core/services/dappService';
+import type { DappInfo } from '@/core/services/dappService';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTranslation } from 'react-i18next';
@@ -129,7 +129,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 18,
     lineHeight: 20,
-    fontWeight: '800',
+    fontWeight: '900',
   },
   edit: {
     color: colors2024['neutral-body'],

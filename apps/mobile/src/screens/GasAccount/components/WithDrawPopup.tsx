@@ -96,8 +96,11 @@ const WithDrawInitContent = ({
       }
       storeApiGasAccount.markSnapshotDirty('withdraw');
       await Promise.all([
-        storeApiGasAccount.refreshHistory(),
-        storeApiGasAccount.refreshSnapshot(),
+        storeApiGasAccount.refreshHistory({
+          reason: 'withdraw',
+          revalidateIfInFlight: true,
+        }),
+        storeApiGasAccount.refreshSnapshot({ reason: 'withdraw' }),
       ]);
       onClose();
       onAfterConfirm?.();
@@ -345,7 +348,7 @@ const getStyles = createGetStyles2024(({ colors, colors2024 }) => ({
     color: colors2024['neutral-title-1'],
     textAlign: 'center',
     fontSize: 20,
-    fontWeight: '800',
+    fontWeight: '900',
     lineHeight: 24,
     marginBottom: 8,
   },
@@ -372,7 +375,7 @@ const getStyles = createGetStyles2024(({ colors, colors2024 }) => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 20,
     fontStyle: 'normal',
-    fontWeight: '800',
+    fontWeight: '900',
     lineHeight: 24,
   },
 

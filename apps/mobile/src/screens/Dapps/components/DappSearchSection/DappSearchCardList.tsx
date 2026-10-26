@@ -1,13 +1,14 @@
 import RcIconClose from '@/assets/icons/dapp/icon-close.svg';
 import RcIconRight from '@/assets/icons/dapp/icon-right.svg';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
-import { CHAINS_ENUM } from '@/constant/chains';
-import { DappInfo } from '@/core/services/dappService';
+import type { CHAINS_ENUM } from '@/constant/chains';
+import type { DappInfo } from '@/core/services/dappService';
 import { useTheme2024 } from '@/hooks/theme';
 import { findChainByEnum } from '@/utils/chain';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
-import { FlatListProps, Image, Keyboard, Platform, View } from 'react-native';
+import type { FlatListProps } from 'react-native';
+import { Image, Keyboard, Platform, View } from 'react-native';
 import {
   FlatList,
   TouchableOpacity,
@@ -19,7 +20,7 @@ import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { Text } from '@/components/Typography';
 
 export const DappSearchCardList = ({

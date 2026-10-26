@@ -1,0 +1,236 @@
+{
+  "../../node_modules/@ledgerhq/domain-service/node_modules/axios/lib/utils.js": {
+    "globals": {
+      "Request": "r",
+      "Response": "r",
+      "TextEncoder": "r"
+    }
+  },
+  "../../node_modules/tslib/tslib.js": {
+    "globals": {
+      "__addDisposableResource": "rw",
+      "__assign": "rw",
+      "__asyncDelegator": "rw",
+      "__asyncGenerator": "rw",
+      "__asyncValues": "rw",
+      "__await": "rw",
+      "__awaiter": "rw",
+      "__classPrivateFieldGet": "rw",
+      "__classPrivateFieldIn": "rw",
+      "__classPrivateFieldSet": "rw",
+      "__createBinding": "rw",
+      "__decorate": "rw",
+      "__disposeResources": "rw",
+      "__esDecorate": "rw",
+      "__exportStar": "rw",
+      "__extends": "rw",
+      "__generator": "rw",
+      "__importDefault": "rw",
+      "__importStar": "rw",
+      "__makeTemplateObject": "rw",
+      "__metadata": "rw",
+      "__param": "rw",
+      "__propKey": "rw",
+      "__read": "rw",
+      "__rest": "rw",
+      "__runInitializers": "rw",
+      "__setFunctionName": "rw",
+      "__spread": "rw",
+      "__spreadArray": "rw",
+      "__spreadArrays": "rw",
+      "__values": "rw"
+    }
+  },
+  "../../node_modules/lodash.clonedeep/index.js": {
+    "globals": {
+      "Buffer": "r"
+    }
+  },
+  "node_modules/@onekeyfe/hd-core/node_modules/axios/dist/browser/axios.cjs": {
+    "globals": {
+      "Request": "r",
+      "Response": "r",
+      "TextEncoder": "r"
+    }
+  },
+  "node_modules/@react-navigation/elements/lib/module/getNamedContext.js": {
+    "globals": {
+      "__react_navigation__elements_contexts": "rw"
+    }
+  },
+  "node_modules/@sentry/core/build/cjs/utils/worldwide.js": {
+    "globals": {
+      "ErrorUtils": "r",
+      "HermesInternal": "r",
+      "TextEncoder": "r",
+      "XMLHttpRequest": "r",
+      "__SENTRY__": "rw",
+      "_sentryDebugIds": "r",
+      "console": "r",
+      "crypto": "r",
+      "location": "r",
+      "navigator": "r",
+      "performance": "r",
+      "process": "r"
+    }
+  },
+  "node_modules/fast-text-encoding/text.min.js": {
+    "globals": {
+      "TextDecoder": "rw",
+      "TextEncoder": "rw"
+    }
+  },
+  "node_modules/ethers/lib/index.js": {
+    "globals": {
+      "_ethers": "rw"
+    }
+  },
+  "node_modules/lodash/_freeGlobal.js": {
+    "globals": {
+      "Buffer": "r",
+      "process": "r"
+    }
+  },
+  "node_modules/lodash/lodash.js": {
+    "globals": {
+      "clearTimeout": "r",
+      "process": "r",
+      "setTimeout": "r"
+    }
+  },
+  "node_modules/react-native-gesture-handler/src/utils.ts": {
+    "globals": {
+      "process": "r"
+    }
+  },
+  "node_modules/react-native/Libraries/BatchedBridge/BatchedBridge.js": {
+    "globals": {
+      "__fbBatchedBridge": "rw"
+    }
+  },
+  "node_modules/react-native/Libraries/Core/polyfillPromise.js": {
+    "globals": {
+      "HermesInternal": "r"
+    }
+  },
+  "node_modules/react-native/Libraries/EventEmitter/RCTDeviceEventEmitter.js": {
+    "globals": {
+      "__rctDeviceEventEmitter": "rw"
+    }
+  },
+  "node_modules/react-native/Libraries/Utilities/PolyfillFunctions.js": {
+    "globals": {
+      "AbortController": "rw",
+      "AbortSignal": "rw",
+      "Blob": "rw",
+      "CharacterData": "rw",
+      "DOMRect": "rw",
+      "DOMRectList": "rw",
+      "DOMRectReadOnly": "rw",
+      "Document": "rw",
+      "Element": "rw",
+      "File": "rw",
+      "FileReader": "rw",
+      "FormData": "rw",
+      "HTMLCollection": "rw",
+      "HTMLElement": "rw",
+      "Headers": "rw",
+      "Node": "rw",
+      "NodeList": "rw",
+      "Request": "rw",
+      "Response": "rw",
+      "Text": "rw",
+      "URL": "rw",
+      "URLSearchParams": "rw",
+      "WebSocket": "rw",
+      "XMLHttpRequest": "rw",
+      "cancelAnimationFrame": "rw",
+      "cancelIdleCallback": "rw",
+      "clearImmediate": "rw",
+      "clearInterval": "rw",
+      "clearTimeout": "rw",
+      "fetch": "rw",
+      "queueMicrotask": "rw",
+      "requestAnimationFrame": "rw",
+      "requestIdleCallback": "rw",
+      "setImmediate": "rw",
+      "setInterval": "rw",
+      "setTimeout": "rw"
+    }
+  },
+  "node_modules/react-use/node_modules/tslib/tslib.js": {
+    "globals": {
+      "__addDisposableResource": "rw",
+      "__assign": "rw",
+      "__asyncDelegator": "rw",
+      "__asyncGenerator": "rw",
+      "__asyncValues": "rw",
+      "__await": "rw",
+      "__awaiter": "rw",
+      "__classPrivateFieldGet": "rw",
+      "__classPrivateFieldIn": "rw",
+      "__classPrivateFieldSet": "rw",
+      "__createBinding": "rw",
+      "__decorate": "rw",
+      "__disposeResources": "rw",
+      "__esDecorate": "rw",
+      "__exportStar": "rw",
+      "__extends": "rw",
+      "__generator": "rw",
+      "__importDefault": "rw",
+      "__importStar": "rw",
+      "__makeTemplateObject": "rw",
+      "__metadata": "rw",
+      "__param": "rw",
+      "__propKey": "rw",
+      "__read": "rw",
+      "__rest": "rw",
+      "__runInitializers": "rw",
+      "__setFunctionName": "rw",
+      "__spread": "rw",
+      "__spreadArray": "rw",
+      "__spreadArrays": "rw",
+      "__values": "rw"
+    }
+  },
+  "node_modules/tslib/tslib.js": {
+    "globals": {
+      "__addDisposableResource": "rw",
+      "__assign": "rw",
+      "__asyncDelegator": "rw",
+      "__asyncGenerator": "rw",
+      "__asyncValues": "rw",
+      "__await": "rw",
+      "__awaiter": "rw",
+      "__classPrivateFieldGet": "rw",
+      "__classPrivateFieldIn": "rw",
+      "__classPrivateFieldSet": "rw",
+      "__createBinding": "rw",
+      "__decorate": "rw",
+      "__disposeResources": "rw",
+      "__esDecorate": "rw",
+      "__exportStar": "rw",
+      "__extends": "rw",
+      "__generator": "rw",
+      "__importDefault": "rw",
+      "__importStar": "rw",
+      "__makeTemplateObject": "rw",
+      "__metadata": "rw",
+      "__param": "rw",
+      "__propKey": "rw",
+      "__read": "rw",
+      "__rest": "rw",
+      "__runInitializers": "rw",
+      "__setFunctionName": "rw",
+      "__spread": "rw",
+      "__spreadArray": "rw",
+      "__spreadArrays": "rw",
+      "__values": "rw"
+    }
+  },
+  "node_modules/typeorm/browser/platform/BrowserPlatformTools.js": {
+    "globals": {
+      "typeormMetadataArgsStorage": "rw"
+    }
+  }
+}

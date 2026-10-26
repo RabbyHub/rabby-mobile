@@ -1,8 +1,9 @@
 import { getAllAccountsToDisplay } from '@/core/apis/account';
 import { sortAccountsByBalance } from '@/utils/account';
 import { atom, useAtom } from 'jotai';
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 import type { IDisplayedAccountWithBalance } from '@/types/account';
+import { isEqual } from 'lodash';
 
 export type { IDisplayedAccountWithBalance } from '@/types/account';
 
@@ -14,39 +15,44 @@ const accountToDisplayStateAtom = atom<IState>({
   accountsList: [],
 });
 
+let accountsToDisplayRequest: Promise<
+  IDisplayedAccountWithBalance[] | null
+> | null = null;
+
 export function useAccountsToDisplay() {
   const [{ accountsList }, setAccountToDisplayState] = useAtom(
     accountToDisplayStateAtom,
   );
-  const loadingAccountsRef = React.useRef(false);
 
   const fetchAllAccountsToDisplay = useCallback(async () => {
-    if (loadingAccountsRef.current) return null;
-    loadingAccountsRef.current = true;
-
-    try {
-      const result = await getAllAccountsToDisplay();
-      setAccountToDisplayState(prev => {
-        let withBalanceList: IDisplayedAccountWithBalance[] = result;
-        if (result) {
-          withBalanceList = sortAccountsByBalance(result);
-        }
-        return {
-          ...prev,
-          accountsList: withBalanceList,
-        };
-      });
-    } catch (err) {
-    } finally {
-      loadingAccountsRef.current = false;
-      setAccountToDisplayState(prev => ({
-        ...prev,
-      }));
+    if (accountsToDisplayRequest) {
+      return accountsToDisplayRequest;
     }
+
+    accountsToDisplayRequest = getAllAccountsToDisplay()
+      .then(result => {
+        const withBalanceList = sortAccountsByBalance(result);
+        setAccountToDisplayState(prev => {
+          if (isEqual(prev.accountsList, withBalanceList)) {
+            return prev;
+          }
+          return {
+            ...prev,
+            accountsList: withBalanceList,
+          };
+        });
+        return withBalanceList;
+      })
+      .catch(() => null)
+      .finally(() => {
+        accountsToDisplayRequest = null;
+      });
+
+    return accountsToDisplayRequest;
   }, [setAccountToDisplayState]);
 
   return {
-    isLoadingAccounts: loadingAccountsRef.current,
+    isLoadingAccounts: !!accountsToDisplayRequest,
     accountsList,
     fetchAllAccountsToDisplay,
   };

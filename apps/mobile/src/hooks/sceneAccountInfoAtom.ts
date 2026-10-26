@@ -58,7 +58,7 @@ export const AccountSwitcherInfos = {
 // );
 
 // test migrate data
-// runIIFEFunc(() => {
+// runStartupTask(() => {
 //   if (__DEV__) {
 //     appJsonStore.removeItem('@SceneAccounts202512');
 //     appJsonStore.setItem('@SceneAccounts', {

@@ -9,11 +9,27 @@ function loadOfflineChainModule({
 }) {
   jest.resetModules();
 
-  const mockCreatePersistStore = jest.fn(() => persistedStore);
+  class MockStoreServiceBase {
+    private store: { closeTipsChains: string[] };
+
+    constructor(_storeName: string, template: { closeTipsChains: string[] }) {
+      this.store = persistedStore || template;
+    }
+
+    protected mutateStore(
+      recipe: (draft: { closeTipsChains: string[] }) => void,
+    ) {
+      recipe(this.store);
+    }
+
+    getStoreFieldSnapshot(key: 'closeTipsChains') {
+      return [...this.store[key]];
+    }
+  }
 
   jest.doMock('@rabby-wallet/persist-store', () => ({
     __esModule: true,
-    default: (...args: unknown[]) => mockCreatePersistStore(...args),
+    StoreServiceBase: MockStoreServiceBase,
   }));
   jest.doMock('@/core/storage/storeConstant', () => ({
     APP_STORE_NAMES: {
@@ -29,9 +45,6 @@ function loadOfflineChainModule({
 
   return {
     OfflineChainService,
-    mocks: {
-      mockCreatePersistStore,
-    },
   };
 }
 

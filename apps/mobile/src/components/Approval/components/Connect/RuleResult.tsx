@@ -158,9 +158,7 @@ const RuleResult = ({
             )}
             {collectList.length > 0 &&
               collectList.slice(0, 10).map((item, idx) => (
-                <View
-                  key={`${item.name}-${item.logo_url}-${idx}`}
-                  className="collect-list-item">
+                <View key={`${item.name}-${item.logo_url}-${idx}`}>
                   <Tip content={item.name} placement="top">
                     <Image
                       style={styles.collectListItemImage}

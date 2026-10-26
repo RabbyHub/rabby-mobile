@@ -206,50 +206,95 @@ export const JS_IFRAME_POST_MESSAGE_TO_PROVIDER = (
 })()`;
  */
 
-export const JSBridgeHarden = /* js */`(function () {
-    function safeStartsWith(str, search) {
-        if (typeof str !== 'string' || typeof search !== 'string') {
-            return false;
-        }
+export const BRIDGE_FRAME_CAPABILITY_KEY = '__rabbyFrameCapability';
+export const BRIDGE_FRAME_PAYLOAD_KEY = '__rabbyFramePayload';
 
-        for (let i = 0; i < search.length; i++) {
-          if (str[i] !== search[i]) {
-            return false;
-          }
-        }
+export const JSBridgeHarden = (capability: string) => {
+  const envelopePrefix = `${JSON.stringify({
+    [BRIDGE_FRAME_CAPABILITY_KEY]: capability,
+  }).slice(0, -1)},${JSON.stringify(BRIDGE_FRAME_PAYLOAD_KEY)}:`;
 
-        return true;
+  return /* js */`
+;(function () {
+  function safeStartsWith(str, search) {
+    if (typeof str !== 'string' || typeof search !== 'string') {
+      return false;
     }
 
-    if (window.ReactNativeWebView == null) {
-        return;
+    for (var i = 0; i < search.length; i++) {
+      if (str[i] !== search[i]) return false;
     }
-    const parse = JSON.parse;
-    const realPost = window.ReactNativeWebView.postMessage.bind(window.ReactNativeWebView);
-    function myPostMessage(msg) {
-        try {
-            const json = parse(msg);
-            if (json &&
-                json.name != null &&
-                !(location.origin === json.origin ||
-                    location.origin === json.origin + '/' || safeStartsWith(json.origin, location.origin + '/'))) {
-                console.warn('Origin mismatch in postMessage: expected ' +
-                    location.origin +
-                    ', got ' +
-                    json.origin);
-                return;
-            }
+
+    return true;
+  }
+
+  var bridge = window.ReactNativeWebView;
+  if (bridge == null) return;
+
+  var parse = JSON.parse;
+  var stringify = JSON.stringify;
+  var apply = Reflect.apply;
+  var nativeReceiver;
+  var nativePostMessage;
+  var iosHandler =
+    window.webkit &&
+    window.webkit.messageHandlers &&
+    window.webkit.messageHandlers.ReactNativeWebView;
+
+  if (iosHandler && typeof iosHandler.postMessage === 'function') {
+    nativeReceiver = iosHandler;
+    nativePostMessage = iosHandler.postMessage;
+  } else if (typeof bridge.postMessage === 'function') {
+    nativeReceiver = bridge;
+    nativePostMessage = bridge.postMessage;
+  } else {
+    return;
+  }
+
+  var envelopePrefix = ${JSON.stringify(envelopePrefix)};
+
+  function send(message) {
+    return apply(nativePostMessage, nativeReceiver, [message]);
+  }
+
+  function postMessageWithHarden(message) {
+    try {
+      var data = parse(message);
+      if (data && data.name) {
+        var payload = stringify(data);
+        data = parse(payload);
+
+        if (!data || !data.name) return;
+        if (
+          !(
+            location.origin === data.origin ||
+            location.origin === data.origin + '/' ||
+            safeStartsWith(data.origin, location.origin + '/')
+          )
+        ) {
+          console.warn(
+            'Origin mismatch in postMessage: expected ' +
+              location.origin +
+              ', got ' +
+              data.origin
+          );
+          return;
         }
-        catch (_a) { }
-        return realPost(msg);
-    }
-    window.ReactNativeWebView = new Proxy(window.ReactNativeWebView || {}, {
-        get: function (target, prop) {
-            if (prop === 'postMessage') {
-                return myPostMessage;
-            }
-            const f = Reflect.get(target, prop);
-            return typeof f === 'function' ? f.bind(target) : f;
-        },
-    });
-})();`;
+
+        return send(envelopePrefix + payload + '}');
+      }
+    } catch (_error) {}
+    return send(message);
+  }
+
+  var facade = Object.create(null);
+  Object.defineProperty(facade, 'postMessage', {
+    value: postMessageWithHarden,
+    enumerable: true,
+    writable: false,
+    configurable: false,
+  });
+  Object.freeze(facade);
+  window.ReactNativeWebView = facade;
+})();true;`;
+};

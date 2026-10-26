@@ -35,7 +35,7 @@ const styles = StyleSheet.create({
   left: {
     color: '#4b4d59',
     marginRight: 6,
-    fontWeight: 'normal',
+    fontWeight: '400',
   },
   right: {
     flex: 1,

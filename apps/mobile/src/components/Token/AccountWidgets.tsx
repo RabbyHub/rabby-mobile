@@ -1,9 +1,10 @@
 import { AddressItem } from '@/components2024/AddressItem/AddressItem';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { useTheme2024 } from '@/hooks/theme';
 import { ellipsisAddress } from '@/utils/address';
 import { createGetStyles2024 } from '@/utils/styles';
-import { View, ViewStyle } from 'react-native';
+import type { ViewStyle } from 'react-native';
+import { View } from 'react-native';
 import { Text } from '@/components/Typography';
 
 export function AccountInfoInTokenRow({
@@ -56,18 +57,18 @@ const getAccountInfoInTokenRowStyle = createGetStyles2024(({ colors2024 }) => {
       width: '100%',
     },
     walletIcon: {
-      width: 18,
-      height: 18,
+      width: 14,
+      height: 14,
       borderRadius: 4,
       flexShrink: 0,
     },
     accountAddress: {
-      color: colors2024['neutral-body'],
-      fontSize: 14,
+      color: colors2024['neutral-secondary'],
+      fontSize: 13,
       lineHeight: 16,
       fontWeight: '500',
       fontFamily: 'SF Pro Rounded',
-      marginHorizontal: 6,
+      marginHorizontal: 4,
       flexShrink: 1,
       flex: 1,
       minWidth: 0,

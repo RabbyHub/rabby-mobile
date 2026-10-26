@@ -3,13 +3,11 @@ import * as apisAutoLock from '@/core/apis/autoLock';
 import * as apisLock from '@/core/apis/lock';
 import { autoLockEvent } from '@/core/apis/autoLock';
 import { unlockTimeEvent } from '@/core/apis/lock';
-import { preferenceService } from '@/core/services';
+import { ensureServiceApiReady } from '@/core/serviceApi/createDeferredServiceApi';
+import { setPreferenceSync } from '@/core/serviceApi/preference';
 import { zCreate } from '@/core/utils/reexports';
-import {
-  resolveValFromUpdater,
-  runIIFEFunc,
-  UpdaterOrPartials,
-} from '@/core/utils/store';
+import type { UpdaterOrPartials } from '@/core/utils/store';
+import { resolveValFromUpdater } from '@/core/utils/store';
 import { atom, useAtom } from 'jotai';
 import { useShallow } from 'zustand/react/shallow';
 
@@ -26,14 +24,28 @@ const autoLockStore = zCreate<AppTimeoutState>(() => {
   };
 });
 
-runIIFEFunc(() => {
-  const times = apisAutoLock.getPersistedAutoLockTimes();
-  setAutoLockMinutes(times.minutes);
+let appTimeoutAutoLockHydrationStarted = false;
+let appTimeoutAutoLockHydrationPromise: Promise<void> | null = null;
 
+export function startAppTimeoutAutoLockHydration() {
+  if (appTimeoutAutoLockHydrationStarted) {
+    return appTimeoutAutoLockHydrationPromise || Promise.resolve();
+  }
+
+  appTimeoutAutoLockHydrationStarted = true;
   autoLockEvent.addListener('change', value => {
     autoLockStore.setState({ autoLockTime: value });
   });
-});
+
+  appTimeoutAutoLockHydrationPromise = ensureServiceApiReady(
+    'preferenceService',
+  ).then(() => {
+    const times = apisAutoLock.getPersistedAutoLockTimes();
+    setAutoLockMinutes(times.minutes);
+  });
+
+  return appTimeoutAutoLockHydrationPromise;
+}
 
 function setAutoLockMinutes(valOrFunc: UpdaterOrPartials<number>) {
   autoLockStore.setState(prev => {
@@ -62,10 +74,10 @@ export function useAutoLockTime() {
 
 export const onAutoLockTimeMsChange = (ms: number) => {
   const minutes = apisAutoLock.coerceAutoLockTimeout(ms).minutes;
-  setAutoLockMinutes(minutes);
-  preferenceService.setPreference({
+  setPreferenceSync({
     autoLockTime: minutes,
   });
+  setAutoLockMinutes(minutes);
   apisAutoLock.refreshAutolockTimeout();
 };
 
@@ -82,7 +94,7 @@ unlockTimeAtom.onMount = setter => {
 };
 
 export function useLastUnlockedAuth() {
-  const [time, setTime] = useAtom(unlockTimeAtom);
+  const [time, _setTime] = useAtom(unlockTimeAtom);
 
   // const fetchLastUnlockTime = useCallback(() => {
   //   const value = apisLock.getUnlockTime();

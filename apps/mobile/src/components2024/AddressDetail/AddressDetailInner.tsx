@@ -18,20 +18,28 @@ import { useQrCodeModal } from '../QrCodeModal/useQrCodeModal';
 import { useTranslation } from 'react-i18next';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { Text } from '@/components/Typography';
+import { withWhitelistService } from '@/hooks/whitelistServiceDependencies';
 
 interface AddressInfoProps {
   account: KeyringAccountWithAlias;
   onCancel: () => void;
   onDelete?: () => void;
   showQRcode?: boolean;
+  active?: boolean;
 }
 
-export const AddressDetailInner: React.FC<
+const AddressDetailInnerContent: React.FC<
   AddressInfoProps & {
     __IN_SHEET_MODAL__?: boolean;
   }
 > = props => {
-  const { account, onCancel, onDelete, __IN_SHEET_MODAL__ = false } = props;
+  const {
+    account,
+    active,
+    onCancel,
+    onDelete,
+    __IN_SHEET_MODAL__ = false,
+  } = props;
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { isAddrOnWhitelist, addWhitelist, removeWhitelist } = useWhitelist();
   const inWhiteList = useMemo(
@@ -97,7 +105,11 @@ export const AddressDetailInner: React.FC<
           <Text style={styles.subTitle}>
             {t('page.addressDetail.basicInfo')}
           </Text>
-          <AddressAssetsItem onCancel={onCancel} account={account} />
+          <AddressAssetsItem
+            active={active}
+            onCancel={onCancel}
+            account={account}
+          />
         </View>
         {showBackUp ? (
           <View style={styles.group}>
@@ -148,6 +160,10 @@ export const AddressDetailInner: React.FC<
     </View>
   );
 };
+
+export const AddressDetailInner = withWhitelistService(
+  AddressDetailInnerContent,
+);
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   root: {

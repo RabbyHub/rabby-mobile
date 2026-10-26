@@ -1,50 +1,60 @@
-/* eslint-disable @typescript-eslint/ban-types */
-import { EffectScope, effect as reffect, reactive, ReactiveEffectRunner } from '@vue/reactivity';
 import cloneDeep from 'lodash.clonedeep';
+import { apply, create, type Draft, type Patch, type Patches } from 'mutative';
 
-import { FieldNilable } from '@rabby-wallet/base-utils';
+import type { FieldNilable } from '@rabby-wallet/base-utils';
 
-import debounce from 'debounce';
-import { StorageItemTpl, StorageAdapater, makeMemoryStorage } from './storageAdapter';
+import {
+  type StorageAdapater,
+  type StorageItemTpl,
+  type StorageSnapshot,
+  makeMemoryStorage,
+} from './storageAdapter';
+
+declare const __DEV__: boolean | undefined;
 
 const DEFAULT_STORAGE = makeMemoryStorage();
+const MUTATING_ARRAY_METHODS = new Set([
+  'copyWithin',
+  'fill',
+  'pop',
+  'push',
+  'reverse',
+  'shift',
+  'sort',
+  'splice',
+  'unshift',
+]);
 
-function trackField<T extends object>(source: T, stub: object, key: string | string[]) {
-  const keys = Array.isArray(key) ? key : [key];
-  keys.forEach((key) => {
-    // @ts-expect-error
-    stub[key] = source[key];
-  });
+type PersistStorePath = ReadonlyArray<string | number>;
 
-  return keys;
+export interface PersistStoreChange<T extends StorageItemTpl> {
+  revision: number;
+  previousState: StorageSnapshot<T>;
+  state: StorageSnapshot<T>;
+  patches: Patches<true>;
+  inversePatches: Patches<true>;
+  changedKeys: ReadonlyArray<Extract<keyof T, string | number>>;
+  changedPaths: ReadonlyArray<PersistStorePath>;
 }
 
-class FieldsEffector {
-  #tplFields: Set<string>;
-  increamentalFields = new Map<string, ReactiveEffectRunner>();
+export type PersistStoreListener<T extends StorageItemTpl> = (
+  change: PersistStoreChange<T>,
+) => void;
 
-  constructor ({ tplFields }: {
-    tplFields: string[];
-  }) {
-    this.#tplFields = new Set(tplFields);
-  }
-
-  isTrackedField(key: string) {
-    return this.#tplFields.has(key) || this.increamentalFields.has(key);
-  }
-
-  addEffector(key: string, effector: ReactiveEffectRunner) {
-    if (this.#tplFields.has(key)) {
-      /* istanbul ignore next */
-      throw new Error(`[FieldsEffector::addEffector] Field ${key} is already tracked on initialization`);
-    }
-
-    this.increamentalFields.set(key, effector);
-  }
-
-  removeEffector(key: string) {
-    this.increamentalFields.delete(key);
-  }
+export interface PersistStoreController<T extends StorageItemTpl> {
+  readonly name: string;
+  getSnapshot(): StorageSnapshot<T>;
+  update(recipe: (draft: Draft<T>) => void): StorageSnapshot<T>;
+  subscribe(listener: PersistStoreListener<T>): () => void;
+  subscribeField<K extends Extract<keyof T, string | number>>(
+    key: K,
+    listener: (
+      value: StorageSnapshot<T>[K],
+      previousValue: StorageSnapshot<T>[K],
+      change: PersistStoreChange<T>,
+    ) => void,
+  ): () => void;
+  flushNow(): void;
 }
 
 export interface CreatePersistStoreParams<T extends StorageItemTpl> {
@@ -53,92 +63,261 @@ export interface CreatePersistStoreParams<T extends StorageItemTpl> {
   fromStorage?: boolean;
 }
 
-const createPersistStore = <T extends StorageItemTpl>({
-  name,
-  template = Object.create(null),
-  fromStorage = true
-}: CreatePersistStoreParams<T>, opts?: {
-  persistDebounce?: number;
+export interface CreatePersistStoreOptions<T extends StorageItemTpl> {
   storage?: StorageAdapater<Record<string, StorageItemTpl>>;
-  beforePersist?: (obj: FieldNilable<T>) => void;
-  beforeSetKV?: <K extends string>(k: K, value: FieldNilable<T>[K]) => void;
-}) => {
-  let tpl = template;
+  beforePersist?: (obj: StorageSnapshot<T>) => void;
+  enableDevMutationGuard?: boolean;
+  schedulePersist?: (task: () => void) => void;
+}
 
-  const {
-    persistDebounce = 1000,
-    storage = DEFAULT_STORAGE,
-    beforePersist,
-    beforeSetKV
-  } = opts || {};
-
-  if (fromStorage) {
-    const storageCache = storage.getItem(name);
-    tpl = Object.assign({}, template, storageCache);
-    if (!storageCache) {
-      storage.setItem(name, tpl);
-    }
+function isPlainContainer(value: unknown): value is object {
+  if (!value || typeof value !== 'object') {
+    return false;
   }
 
-  const persistStorage = debounce((name: string, obj: FieldNilable<T>) => {
-    beforePersist?.(obj);
-    storage.setItem(name, obj);
-  }, persistDebounce, { immediate: false });
+  if (Array.isArray(value)) {
+    return true;
+  }
 
-  const original = cloneDeep(tpl) as FieldNilable<T>;
+  const prototype = Object.getPrototypeOf(value);
+  return prototype === Object.prototype || prototype === null;
+}
 
-  const fieldEffector = new FieldsEffector({ tplFields: Object.keys(tpl) });
-  const effectScope = new EffectScope();
-  const trackStub = {};
+function formatPath(storeName: string, path: PersistStorePath) {
+  return [storeName, ...path].join('.');
+}
 
-  const rstore = effectScope.run(() => {
-    const store = new Proxy<FieldNilable<T>>(original, {
-      set(target: any, prop: string, value) {
-        if (!fieldEffector.isTrackedField(prop)) {
-          fieldEffector.addEffector(prop, reffect(() => {
-            trackField(target, trackStub, prop);
-          }));
+function makeReadonlySnapshot<T extends StorageItemTpl>(
+  snapshot: T,
+  storeName: string,
+): StorageSnapshot<T> {
+  const proxies = new WeakMap<object, object>();
+
+  const wrap = (value: unknown, path: PersistStorePath): unknown => {
+    if (!isPlainContainer(value)) {
+      return value;
+    }
+
+    const cached = proxies.get(value);
+    if (cached) {
+      return cached;
+    }
+
+    const mutationError = (property: PropertyKey): never => {
+      const nextPath = [...path, String(property)];
+      throw new TypeError(
+        `[persist-store] Cannot mutate immutable snapshot at ${formatPath(
+          storeName,
+          nextPath,
+        )}. Use update() or mutateStore() instead.`,
+      );
+    };
+
+    const proxy = new Proxy(value, {
+      get(target, property, receiver) {
+        if (
+          Array.isArray(target) &&
+          typeof property === 'string' &&
+          MUTATING_ARRAY_METHODS.has(property)
+        ) {
+          return () => mutationError(property);
         }
 
-        beforeSetKV?.(prop, value);
-
-        target[prop] = value;
-        persistStorage(name, target);
-
-        return true;
+        return wrap(Reflect.get(target, property, receiver), [
+          ...path,
+          String(property),
+        ]);
       },
-
-      deleteProperty(target, prop: string) {
-        if (Reflect.has(target, prop)) {
-          fieldEffector.removeEffector(prop);
-
-          beforeSetKV?.(prop, undefined);
-
-          Reflect.deleteProperty(target, prop);
-          persistStorage(name, target);
-        }
-
-        return true;
+      set(_target, property) {
+        return mutationError(property);
+      },
+      deleteProperty(_target, property) {
+        return mutationError(property);
+      },
+      defineProperty(_target, property) {
+        return mutationError(property);
+      },
+      setPrototypeOf() {
+        return mutationError('__proto__');
       },
     });
-    const rstore = reactive(store);
 
-    let initTracked = false;
-    // TODO: support nested?
-    reffect(() => {
-      if (!initTracked) {
-        // add stub here to ref rstore
-        trackField(rstore, trackStub, Object.keys(rstore));
-        initTracked = true;
+    proxies.set(value, proxy);
+    return proxy;
+  };
+
+  return wrap(snapshot, []) as StorageSnapshot<T>;
+}
+
+function defaultSchedulePersist(task: () => void) {
+  if (typeof queueMicrotask === 'function') {
+    queueMicrotask(task);
+    return;
+  }
+
+  void Promise.resolve().then(task);
+}
+
+function detachPatchValues(patches: Patches<true>): Patches<true> {
+  return patches.map(
+    (patch): Patch<true> =>
+      'value' in patch
+        ? {
+            ...patch,
+            value: cloneDeep(patch.value),
+          }
+        : { ...patch },
+  );
+}
+
+const createPersistStore = <T extends StorageItemTpl>(
+  {
+    name,
+    template = Object.create(null),
+    fromStorage = true,
+  }: CreatePersistStoreParams<T>,
+  opts?: CreatePersistStoreOptions<T>,
+): PersistStoreController<T> => {
+  const {
+    storage = DEFAULT_STORAGE,
+    beforePersist,
+    enableDevMutationGuard = typeof __DEV__ !== 'undefined' ? __DEV__ : false,
+    schedulePersist = defaultSchedulePersist,
+  } = opts || {};
+
+  const storageCache = fromStorage ? storage.getItem(name) : null;
+  const initialState = cloneDeep(
+    Object.assign({}, template, storageCache || {}),
+  ) as T;
+
+  if (fromStorage && !storageCache) {
+    storage.setItem(name, initialState);
+  }
+
+  let state = initialState;
+  let exposedState = enableDevMutationGuard
+    ? makeReadonlySnapshot(state, name)
+    : (state as StorageSnapshot<T>);
+  let revision = 0;
+  let pendingRevision = 0;
+  let persistedRevision = 0;
+  let scheduledFlushId = 0;
+  let flushScheduled = false;
+  const listeners = new Set<PersistStoreListener<T>>();
+
+  const persistPendingState = () => {
+    flushScheduled = false;
+    if (pendingRevision <= persistedRevision) {
+      return;
+    }
+
+    const revisionToPersist = pendingRevision;
+    const stateToPersist = state;
+    beforePersist?.(
+      enableDevMutationGuard
+        ? makeReadonlySnapshot(stateToPersist, name)
+        : (stateToPersist as StorageSnapshot<T>),
+    );
+    storage.setItem(name, stateToPersist);
+    persistedRevision = revisionToPersist;
+
+    if (pendingRevision > persistedRevision) {
+      scheduleFlush();
+    }
+  };
+
+  const scheduleFlush = () => {
+    if (flushScheduled) {
+      return;
+    }
+
+    flushScheduled = true;
+    const flushId = ++scheduledFlushId;
+    schedulePersist(() => {
+      if (flushId !== scheduledFlushId) {
+        return;
+      }
+      persistPendingState();
+    });
+  };
+
+  const controller: PersistStoreController<T> = {
+    name,
+    getSnapshot() {
+      return exposedState;
+    },
+    update(recipe) {
+      const previousState = state;
+      const [, sourcePatches, sourceInversePatches] = create(state, recipe, {
+        enablePatches: true,
+        enableAutoFreeze: false,
+      });
+
+      if (sourcePatches.length === 0) {
+        return exposedState;
       }
 
-      persistStorage(name, original);
-    });
+      const patches = detachPatchValues(sourcePatches);
+      const inversePatches = detachPatchValues(sourceInversePatches);
+      state = apply(state, patches, {
+        enableAutoFreeze: false,
+      }) as T;
+      exposedState = enableDevMutationGuard
+        ? makeReadonlySnapshot(state, name)
+        : (state as StorageSnapshot<T>);
+      revision += 1;
+      pendingRevision = revision;
 
-    return rstore;
-  });
+      const changedPaths = patches.map(patch => patch.path);
+      const changedKeys = Array.from(
+        new Set(
+          changedPaths
+            .map(path => path[0])
+            .filter(
+              (key): key is Extract<keyof T, string | number> =>
+                key !== undefined,
+            ),
+        ),
+      );
+      const previousExposedState = enableDevMutationGuard
+        ? makeReadonlySnapshot(previousState, name)
+        : (previousState as StorageSnapshot<T>);
+      const change: PersistStoreChange<T> = {
+        revision,
+        previousState: previousExposedState,
+        state: exposedState,
+        patches,
+        inversePatches,
+        changedKeys,
+        changedPaths,
+      };
 
-  return rstore as T;
+      scheduleFlush();
+      Array.from(listeners).forEach(listener => listener(change));
+      return exposedState;
+    },
+    subscribe(listener) {
+      listeners.add(listener);
+      return () => {
+        listeners.delete(listener);
+      };
+    },
+    subscribeField(key, listener) {
+      return controller.subscribe(change => {
+        if (!change.changedKeys.includes(key)) {
+          return;
+        }
+        listener(change.state[key], change.previousState[key], change);
+      });
+    },
+    flushNow() {
+      scheduledFlushId += 1;
+      persistPendingState();
+      storage.flushToDisk?.();
+    },
+  };
+
+  return controller;
 };
 
 export default createPersistStore;

@@ -42,6 +42,7 @@ import { resetNavigationOnTopOfHome } from '@/hooks/navigation';
 import i18next from 'i18next';
 import { Text } from '@/components/Typography';
 import { ensureWalletUnlockedForAction } from '@/utils/walletUnlock';
+import * as SecretVault from '@/core/utils/secretVault';
 
 const { isSameAddress } = addressUtils;
 
@@ -51,15 +52,15 @@ const MAX_STEP_COUNT = 10;
 export interface Props {
   params: {
     type: KEYRING_TYPE;
-    mnemonics?: string;
-    passphrase?: string;
+    mnemonicsVaultId?: string;
     keyringId?: number;
     /** @deprecated */
     isExistedKR?: boolean;
     account?: KeyringAccountWithAlias;
     brandName: string;
+    skipSuccessAnimation?: boolean;
   };
-  onCancel: () => void;
+  onCancel: () => void | Promise<void>;
 }
 
 const useGetAliasByAddress = () => {
@@ -179,21 +180,44 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
         : 1;
   }, [params.type, setting.hdPath]);
 
+  const mnemonicsPayloadRef =
+    React.useRef<SecretVault.MnemonicsVaultPayload | null>(null);
+  const mnemonicsPayloadFetchedRef = React.useRef(false);
+  React.useEffect(() => {
+    if (mnemonicsPayloadFetchedRef.current) {
+      return;
+    }
+    mnemonicsPayloadFetchedRef.current = true;
+    if (params.mnemonicsVaultId) {
+      mnemonicsPayloadRef.current = SecretVault.retrieveMnemonicsPayload(
+        params.mnemonicsVaultId,
+      );
+    }
+    if (
+      params.type === KEYRING_TYPE.HdKeyring &&
+      !mnemonicsPayloadRef.current
+    ) {
+      toast.show('Import session expired. Please try again.');
+      onCancel();
+    }
+  }, [params.mnemonicsVaultId, params.type, onCancel]);
+
   const mnemonicKeyringRef = React.useRef<
     ReturnType<typeof apiMnemonic.getKeyringByMnemonic> | undefined
   >(undefined);
   const getMnemonicKeyring = React.useCallback(() => {
-    if (params.type === KEYRING_TYPE.HdKeyring && params.mnemonics) {
+    const mnemonicsPayload = mnemonicsPayloadRef.current;
+    if (params.type === KEYRING_TYPE.HdKeyring && mnemonicsPayload) {
       if (!mnemonicKeyringRef.current) {
         mnemonicKeyringRef.current = apiMnemonic.getKeyringByMnemonic(
-          params.mnemonics!,
-          params.passphrase!,
+          mnemonicsPayload.mnemonics,
+          mnemonicsPayload.passphrase,
         );
       }
       return mnemonicKeyringRef.current;
     }
     return undefined;
-  }, [params.mnemonics, params.passphrase, params.type]);
+  }, [params.type]);
 
   const loadAddress = React.useCallback(
     async (index: number) => {
@@ -404,68 +428,82 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
     );
 
     if (params.type === KEYRING_TYPE.HdKeyring) {
+      const mnemonicsPayload = mnemonicsPayloadRef.current;
       setTimeout(() => {
-        activeAndPersistAccountsByMnemonics(
-          params.mnemonics!,
-          params.passphrase || '',
-          selectedAccounts,
-          true,
-        )
-          .then(() => {
+        (async () => {
+          let imported = false;
+          try {
+            await activeAndPersistAccountsByMnemonics(
+              mnemonicsPayload!.mnemonics,
+              mnemonicsPayload?.passphrase || '',
+              selectedAccounts,
+              true,
+            );
+            imported = true;
+          } catch (err: any) {
+            console.error(err);
+            toast.show(err.message);
+          } finally {
+            importToastHiddenRef.current?.();
+            setImporting(false);
+            await onCancel();
+          }
+
+          if (imported) {
             resetNavigationOnTopOfHome(RootNames.StackAddress, {
               screen: RootNames.ImportSuccess2024,
               params: {
                 type: hdType,
                 brandName: hdBrandName,
                 address: selectedAccounts.map(a => a.address),
-                mnemonics: params.mnemonics,
-                passphrase: params.passphrase,
+                mnemonicsVaultId: mnemonicsPayload
+                  ? SecretVault.storeMnemonicsPayload(mnemonicsPayload)
+                  : undefined,
                 keyringId: params.keyringId,
                 isExistedKR: params.isExistedKR,
+                skipSuccessAnimation: params.skipSuccessAnimation,
               },
             });
-          })
-          .catch((err: any) => {
-            console.error(err);
-            toast.show(err.message);
-          })
-          .finally(() => {
-            importToastHiddenRef.current?.();
-            setImporting(false);
-            onCancel();
-          });
+          }
+        })().catch(err => {
+          console.error(err);
+        });
       });
 
       return;
     }
 
+    let imported = false;
     try {
       for (const acc of selectedAccounts) {
         await apiHD?.importAddress(acc.index - 1);
       }
+      imported = true;
+    } catch (err: any) {
+      console.error(err);
+      toast.show(err.message);
+    } finally {
+      importToastHiddenRef.current?.();
+      setImporting(false);
+      await onCancel();
+    }
 
+    if (imported) {
       resetNavigationOnTopOfHome(RootNames.StackAddress, {
         screen: RootNames.ImportSuccess2024,
         params: {
           type: hdType,
           brandName: hdBrandName,
           address: selectedAccounts.map(a => a.address),
+          skipSuccessAnimation: params.skipSuccessAnimation,
         },
       });
-    } catch (err: any) {
-      console.error(err);
-      toast.show(err.message);
-    } finally {
-      onCancel();
-      importToastHiddenRef.current?.();
     }
-    setImporting(false);
   }, [
     params.type,
-    params.mnemonics,
-    params.passphrase,
     params.keyringId,
     params.isExistedKR,
+    params.skipSuccessAnimation,
     selectedAccounts,
     hdType,
     hdBrandName,
@@ -500,16 +538,14 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
       ...(params.type
         ? {
             keyringId: params.keyringId,
-            mnemonics: params.mnemonics,
-            passphrase: params.passphrase,
+            mnemonics: mnemonicsPayloadRef.current?.mnemonics,
+            passphrase: mnemonicsPayloadRef.current?.passphrase,
           }
         : {}),
     });
   }, [
     params.brandName,
     params.keyringId,
-    params.mnemonics,
-    params.passphrase,
     params.type,
     settingModalName,
     onCancel,
@@ -583,7 +619,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   title: {
     fontSize: 20,
-    fontWeight: '800',
+    fontWeight: '900',
     fontFamily: 'SF Pro Rounded',
     lineHeight: 24,
     color: colors2024['neutral-title-1'],

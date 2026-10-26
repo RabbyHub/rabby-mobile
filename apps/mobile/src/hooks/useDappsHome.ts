@@ -41,7 +41,7 @@ export const useDappsHome = () => {
 
   useFocusEffect(
     useCallback(() => {
-      getBrowserHistoryList();
+      void getBrowserHistoryList().catch(console.error);
     }, [getBrowserHistoryList]),
   );
 

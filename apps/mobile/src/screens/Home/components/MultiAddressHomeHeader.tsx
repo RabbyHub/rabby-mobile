@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
-import { Platform, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { useTheme2024 } from '@/hooks/theme';
@@ -23,11 +23,19 @@ import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
-import { apisHomeTabIndex } from '@/hooks/navigation';
+import { apisHomeTabIndex, HomeTabName } from '@/hooks/navigation';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { apiGlobalModal } from '@/components2024/GlobalBottomSheetModal/apiGlobalModal';
-import { computeBalanceChange } from '@/core/apis/balance';
 import { balance24hStore } from '@/store/balance24h';
+import { buildPortfolioAddressChange } from '@/store/homePortfolio/consistency';
+import Animated, { Easing, FadeInUp } from 'react-native-reanimated';
+import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
+import { useShallow } from 'zustand/react/shallow';
+import { useNavigation } from '@react-navigation/native';
+
+const PINNED_ADDRESS_LIST_ENTERING = FadeInUp.duration(460).easing(
+  Easing.out(Easing.cubic),
+);
 
 function MultiPinnedAddressList({
   pinnedAccountList,
@@ -40,14 +48,21 @@ function MultiPinnedAddressList({
   const pinnedAddresses = useMemo(() => {
     return pinnedAccountList.map(item => item.address.toLowerCase());
   }, [pinnedAccountList]);
-  const balance24hSnapshots =
-    balance24hStore.useAddresses24hBalanceSnapshots(pinnedAddresses);
+  const balance24hValues = useActivityStore(
+    balance24hStore.useStore,
+    useShallow(state =>
+      pinnedAddresses.map(address => state.valueMap[address]),
+    ),
+    Object.is,
+    { storeLabel: 'home-pinned-account-24h-balances' },
+  );
 
   const addressListData = useMemo(() => {
-    const multi24hBalance = balance24hSnapshots.reduce(
-      (acc, snapshot) => {
-        if (snapshot.value) {
-          acc[snapshot.address] = snapshot.value;
+    const multi24hBalance = pinnedAddresses.reduce(
+      (acc, address, index) => {
+        const balance24h = balance24hValues[index];
+        if (balance24h) {
+          acc[address] = balance24h;
         }
         return acc;
       },
@@ -64,26 +79,23 @@ function MultiPinnedAddressList({
       pinnedAccountList.map(item => {
         const lcAddr = item.address.toLowerCase();
         const address24hBalanceData = multi24hBalance[lcAddr];
-        const canShowChange =
-          !!address24hBalanceData && typeof item.evmBalance === 'number';
-        const total_usd_value = address24hBalanceData?.total_usd_value || 0;
-        const { assetsChange, changePercent } = computeBalanceChange(
-          item.evmBalance || 0,
-          total_usd_value,
-        );
+        const change = buildPortfolioAddressChange({
+          currentEvmBalance: item.evmBalance,
+          previousEvmBalance: address24hBalanceData?.total_usd_value,
+        });
 
         return {
           ...item,
           updateTime: address24hBalanceData?.updateTime,
-          balance: item.balance || 0,
-          evmBalance: item.evmBalance || 0,
-          changePercent: canShowChange ? changePercent : undefined,
-          isLoss: canShowChange ? assetsChange < 0 : undefined,
+          balance: item.balance ?? 0,
+          evmBalance: item.evmBalance ?? 0,
+          changePercent: change?.changePercent,
+          isLoss: change?.isLoss,
         };
       }),
       item => -(item.balance || 0),
     ).slice(0, 3);
-  }, [balance24hSnapshots, pinnedAccountList]);
+  }, [balance24hValues, pinnedAccountList, pinnedAddresses]);
 
   useEffect(() => {
     if (!addressListData?.length) {
@@ -97,23 +109,23 @@ function MultiPinnedAddressList({
   }, [addressListData?.length]);
 
   return (
-    <View
-      style={[
-        styles.accountList,
-        hideType === 'HALF_HIDE' ? styles.addressOpacity : null,
-      ]}>
-      {addressListData?.map(item => {
-        return (
-          <HomeAddressItem
-            hideType={hideType}
-            account={item}
-            updateTime={item.updateTime}
-            key={`${item.type}-${item.address}`}
-            isLoss={item.isLoss}
-            changePercent={item.changePercent}
-          />
-        );
-      })}
+    <View style={styles.accountList}>
+      <Animated.View
+        entering={PINNED_ADDRESS_LIST_ENTERING}
+        style={styles.accountListContent}>
+        {addressListData?.map(item => {
+          return (
+            <HomeAddressItem
+              hideType={hideType}
+              account={item}
+              updateTime={item.updateTime}
+              key={`${item.type}-${item.address}`}
+              isLoss={item.isLoss}
+              changePercent={item.changePercent}
+            />
+          );
+        })}
+      </Animated.View>
     </View>
   );
 }
@@ -127,12 +139,20 @@ export function MultiAddressHomeHeader(
   const { t } = useTranslation();
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const { isDisConnect } = useGlobalStatus();
+  const navigation = useNavigation();
 
   const pinnedAccountList = usePinnedAccountList();
   const [hideType] = useHideBalance();
 
   const modalRef =
     useRef<ReturnType<typeof createGlobalBottomSheetModal2024>>(undefined);
+
+  useEffect(
+    () => () => {
+      modalRef.current = undefined;
+    },
+    [],
+  );
 
   const handleWalletsListPress = useCallback(() => {
     setIsFoldMultiChart(true);
@@ -143,15 +163,23 @@ export function MultiAddressHomeHeader(
       category: 'Click_Header',
       action: 'Click_Address',
     });
-    modalRef.current = createGlobalBottomSheetModal2024({
+    let addAddressRequested = false;
+    const modalId = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.ADDRESS_LiST,
       onAddAddressPress: () => {
-        if (modalRef.current) {
-          removeGlobalBottomSheetModal2024(modalRef.current);
-        }
-        apiGlobalModal.showAddSelectMethodModal();
+        if (modalRef.current !== modalId || addAddressRequested) return;
+        addAddressRequested = true;
+        // Do not start a stack transition while the address sheet is sliding.
+        removeGlobalBottomSheetModal2024(modalId, { waitForDismiss: true });
       },
       bottomSheetModalProps: {
+        onDismiss: () => {
+          if (modalRef.current !== modalId) return;
+          modalRef.current = undefined;
+          if (addAddressRequested && navigation.isFocused()) {
+            apiGlobalModal.showAddSelectMethodModal();
+          }
+        },
         handleStyle: {
           backgroundColor: isLight
             ? colors2024['neutral-bg-0']
@@ -159,11 +187,12 @@ export function MultiAddressHomeHeader(
         },
       },
       onDone: () => {
-        removeGlobalBottomSheetModal2024(modalRef.current);
+        removeGlobalBottomSheetModal2024(modalRef.current, { duration: 0 });
         modalRef.current = undefined;
       },
     });
-  }, [colors2024, isLight]);
+    modalRef.current = modalId;
+  }, [colors2024, isLight, navigation]);
 
   return (
     <View style={[styles.container, style]}>
@@ -190,17 +219,20 @@ export function MultiAddressHomeHeader(
             // loading && styles.curveBoxLoading,
             {},
           ]}>
-          <RNLinearGradient
-            pointerEvents="none"
-            colors={
-              isLight
-                ? ['rgba(255, 255, 255, 1)', 'rgba(255, 255, 255, .54)']
-                : ['rgba(0, 0, 0, 0.10)', '#232428']
-            }
-            start={isLight ? { x: 0.25, y: 0.5 } : { x: 1.07, y: 0.42 }}
-            end={isLight ? { x: 0.75, y: 0.5 } : { x: -0.14, y: 0.59 }}
-            style={styles.curveCardGradientBg}
-          />
+          {/* Keep the border on one Fabric view: the legacy gradient forwards
+              border props to both its interop wrapper and its inset Paper view. */}
+          <View pointerEvents="none" style={styles.curveCardGradientBg}>
+            <RNLinearGradient
+              colors={
+                isLight
+                  ? ['rgba(255, 255, 255, 1)', 'rgba(255, 255, 255, .54)']
+                  : ['rgba(0, 0, 0, 0.10)', '#232428']
+              }
+              start={isLight ? { x: 0.25, y: 0.5 } : { x: 1.07, y: 0.42 }}
+              end={isLight ? { x: 0.75, y: 0.5 } : { x: -0.14, y: 0.59 }}
+              style={StyleSheet.absoluteFill}
+            />
+          </View>
           <View
             style={[
               styles.curveCard,
@@ -208,6 +240,7 @@ export function MultiAddressHomeHeader(
               // !pinnedAccountList.length && styles.noAddressCard,
             ]}>
             <MultiChart
+              tabName={HomeTabName.overview}
               hideType={hideType}
               onPressNetWorth={() => {
                 apisHomeTabIndex.homeTabScrollerRef.current?.setIndex(1);
@@ -314,6 +347,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       left: 0,
       right: 0,
       borderRadius: SIZES.cardContentRadius,
+      overflow: 'hidden',
       borderWidth: 1,
       borderColor: isLight ? 'rgba(255, 255, 255, 1)' : 'rgba(35, 36, 40, 1)',
     },
@@ -350,14 +384,16 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     accountList: {
       display: 'flex',
       flexDirection: 'column',
-      gap: 8,
       width: '100%',
       marginTop: 20,
       paddingHorizontal: 8,
       marginBottom: 12,
     },
-    addressOpacity: {
-      opacity: 0.3,
+    accountListContent: {
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 8,
+      width: '100%',
     },
     hidden: {
       display: 'none',

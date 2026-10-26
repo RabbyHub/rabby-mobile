@@ -64,8 +64,11 @@ echo "2. Link & Copy Assets..."
 cd $repo_dir/apps/mobile;
 yarn ../mobile-local-pages bundle:all && yarn link-assets;
 
+echo "3. Verify Built-in Page Assets..."
+yarn verify:local-pages;
+
 # cd $repo_dir/apps/mobile;
-# echo "3. Patch npm packages"
+# echo "4. Patch npm packages"
 # if [ -z "${CI:-}" ]; then
 #   yarn apply-patch
 # else

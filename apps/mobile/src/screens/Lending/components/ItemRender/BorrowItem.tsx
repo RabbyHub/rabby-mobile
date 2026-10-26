@@ -20,6 +20,7 @@ import { useLendingSummary, useSelectedMarket } from '../../hooks';
 import { formatTokenAmount } from '@/utils/number';
 import { Text } from '@/components/Typography';
 import { openLendingActionPopup } from '../../utils/actionPopup';
+import { assetCanBeBorrowedByUser } from '../../utils/borrow';
 
 interface BorrowItemProps extends RNViewProps {
   underlyingAsset: string;
@@ -114,16 +115,15 @@ const BorrowItem: React.FC<BorrowItemProps> = ({ underlyingAsset, style }) => {
   ]);
 
   const disableBorrowButton = useMemo(() => {
-    if (!reserve) {
-      return false;
-    }
-    // emode开启，但是不支持该池子借贷
-    const eModeBorrowDisabled =
-      !!userSummary?.userEmodeCategoryId &&
-      !reserve.reserve.eModes.find(
-        e => e.id === userSummary.userEmodeCategoryId,
-      );
-    if (eModeBorrowDisabled) {
+    if (
+      !reserve ||
+      !userSummary ||
+      !assetCanBeBorrowedByUser(
+        reserve.reserve,
+        userSummary,
+        reserve.reserve.eModes,
+      )
+    ) {
       return true;
     }
     if (BigNumber(reserve.reserve.totalDebt).gte(reserve.reserve.borrowCap)) {
@@ -133,11 +133,7 @@ const BorrowItem: React.FC<BorrowItemProps> = ({ underlyingAsset, style }) => {
       !userSummary?.availableBorrowsUSD ||
       userSummary?.availableBorrowsUSD === '0'
     );
-  }, [
-    reserve,
-    userSummary?.availableBorrowsUSD,
-    userSummary?.userEmodeCategoryId,
-  ]);
+  }, [reserve, userSummary]);
 
   const handlePressBorrow = () => {
     if (!reserve || !userSummary) {
@@ -221,15 +217,17 @@ const BorrowItem: React.FC<BorrowItemProps> = ({ underlyingAsset, style }) => {
                   ellipsizeMode="tail">
                   {reserve.reserve.symbol}
                 </Text>
-                <View style={styles.borrowedBadge}>
-                  <Text style={styles.borrowedBadgeText}>
-                    {t('page.Lending.borrowDetail.borrowed')}
-                  </Text>
-                </View>
               </View>
             </View>
-            <View style={styles.apyTag}>
-              <Text style={styles.apyTagText}>{`Apy ${apyText}`}</Text>
+            <View style={styles.badgeContainer}>
+              <View style={styles.borrowedBadge}>
+                <Text style={styles.borrowedBadgeText}>
+                  {t('page.Lending.borrowDetail.borrowed')}
+                </Text>
+              </View>
+              <View style={styles.apyTag}>
+                <Text style={styles.apyTagText}>{`Apy ${apyText}`}</Text>
+              </View>
             </View>
           </View>
           <View style={styles.amountArea}>
@@ -277,13 +275,15 @@ const BorrowItem: React.FC<BorrowItemProps> = ({ underlyingAsset, style }) => {
 
 export default BorrowItem;
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   container: {
     borderRadius: 16,
     paddingVertical: 14,
     paddingHorizontal: 0,
     marginTop: 12,
-    backgroundColor: colors2024['neutral-bg-2'],
+    backgroundColor: isLight
+      ? 'rgba(255, 255, 255, 0.9)'
+      : colors2024['neutral-bg-2'],
     position: 'relative',
     borderWidth: 1,
     borderColor: colors2024['neutral-bg-1'],
@@ -340,14 +340,14 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     gap: 5,
   },
   amountUsd: {
-    fontSize: 16,
-    lineHeight: 20,
-    fontWeight: '700',
+    fontSize: 18,
+    lineHeight: 22,
+    fontWeight: '500',
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
   },
   amountToken: {
-    fontSize: 14,
+    fontSize: 13,
     lineHeight: 18,
     fontWeight: '500',
     color: colors2024['neutral-secondary'],
@@ -373,14 +373,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
   },
-  buttonPrimary: {
-    flex: 1,
-    height: 32,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors2024['brand-light-1'],
-  },
   aaveButtonPrimary: {
     flex: 1,
     height: 32,
@@ -396,12 +388,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
   },
-  buttonPrimaryText: {
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '700',
-    color: colors2024['brand-default'],
-    fontFamily: 'SF Pro Rounded',
+  badgeContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    gap: 4,
   },
   borrowedBadge: {
     paddingHorizontal: 4,

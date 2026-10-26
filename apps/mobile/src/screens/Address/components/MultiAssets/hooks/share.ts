@@ -4,11 +4,12 @@ import { useFocusedTab } from 'react-native-collapsible-tab-view';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 
 import { useLoadAssets } from '@/screens/Search/useAssets';
-import { useAccountInfo } from '../hooks';
+import { useHomeAssetAccountInfo } from '../hooks';
 import type { HomeTabName as TabName } from '@/hooks/navigation';
-import { useMyAccounts } from '@/hooks/account';
+import { type KeyringAccountWithAlias, useMyAccounts } from '@/hooks/account';
 import addressBalanceStore, { balanceAccountsStore } from '@/store/balance';
 import { findAccountByPriority } from '@/utils/account';
+import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 
 export const useIsFocusedCurrentTab = (tabName: TabName) => {
   const hasBeenFocusedRef = useRef(false);
@@ -29,17 +30,20 @@ export const useIsFocusedCurrentTab = (tabName: TabName) => {
   return { isFocused, isFocusing };
 };
 
-export const useFindAccountByAddress = () => {
+export const useFindAccountByAddress = (
+  preferredAccounts?: KeyringAccountWithAlias[],
+) => {
   const { accounts } = useMyAccounts();
+  const candidateAccounts = preferredAccounts ?? accounts;
 
   const getAccountByAddress = useCallback(
     (address: string) => {
-      const _accounts = accounts.filter(account =>
+      const _accounts = candidateAccounts.filter(account =>
         isSameAddress(account?.address, address),
       );
       return findAccountByPriority(_accounts);
     },
-    [accounts],
+    [candidateAccounts],
   );
   return getAccountByAddress;
 };
@@ -52,8 +56,13 @@ export const useCheckIsExpireAndUpdate = ({
   isFocusing: boolean;
 }) => {
   const initRef = useRef(false);
-  const { myTop10Addresses } = useAccountInfo();
-  const balanceAccounts = balanceAccountsStore(s => s.balance);
+  const { myTop10Addresses } = useHomeAssetAccountInfo();
+  const balanceAccounts = useActivityStore(
+    balanceAccountsStore,
+    state => state.balance,
+    Object.is,
+    { storeLabel: 'home-multi-assets-balance-accounts' },
+  );
   const { checkIsExpireAndUpdate } = useLoadAssets();
   const triggerUpdate = useCallback(
     (force?: boolean) =>

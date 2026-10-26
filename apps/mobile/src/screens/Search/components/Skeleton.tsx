@@ -3,8 +3,6 @@ import { View, StyleProp, ViewStyle } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { Skeleton } from '@rneui/themed';
 import { createGetStyles2024 } from '@/utils/styles';
-import { useTranslation } from 'react-i18next';
-import { Text } from '@/components/Typography';
 
 export const ItemLoader = memo(
   ({ style }: { style?: StyleProp<ViewStyle> }) => {
@@ -20,37 +18,6 @@ export const ItemLoader = memo(
     );
   },
 );
-
-export const PositionLoader = () => {
-  const { styles } = useTheme2024({ getStyle });
-  const { t } = useTranslation();
-
-  return (
-    <View>
-      <View style={styles.section}>
-        <Text style={styles.sectionHeader}>
-          {t('page.search.sectionHeader.token')}
-        </Text>
-        <ItemLoader />
-        <ItemLoader />
-      </View>
-      <View style={styles.section}>
-        <Text style={styles.sectionHeader}>
-          {t('page.search.sectionHeader.Defi')}
-        </Text>
-        <ItemLoader />
-        <ItemLoader />
-      </View>
-      <View style={styles.section}>
-        <Text style={styles.sectionHeader}>
-          {t('page.search.sectionHeader.NFT')}
-        </Text>
-        <ItemLoader />
-        <ItemLoader />
-      </View>
-    </View>
-  );
-};
 
 const getStyle = createGetStyles2024(ctx => ({
   positionLoader: {
@@ -69,17 +36,5 @@ const getStyle = createGetStyles2024(ctx => ({
   loaderList: {
     gap: 4,
     flex: 1,
-  },
-  section: {
-    paddingBottom: 16,
-    gap: 8,
-  },
-  sectionHeader: {
-    marginLeft: 12,
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 18,
-    fontWeight: '500',
-    color: ctx.colors2024['neutral-secondary'],
-    lineHeight: 22,
   },
 }));

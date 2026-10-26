@@ -8,7 +8,7 @@ import {
   useExposureRateGuide,
   rateGuideLastExposureState,
 } from '@/components/RateModal/hooks';
-import { TipFeedbackByScreenshot } from '@/components/Screenshot/HomeCenterTip';
+import { ScreenshotFeedbackHomeTip } from '@/components/Screenshot/SubmitFeedback/HomeTip';
 import { useViewedHomeTip } from '@/components/Screenshot/hooks';
 import { ITEM_LAYOUT_PADDING_HORIZONTAL } from '@/constant/home';
 import {
@@ -24,7 +24,11 @@ import { ConvertDustBanner } from './ConvertDustBanner';
 import { useConvertDustBanner } from '../hooks/useConvertDustBanner';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { RootNames } from '@/constant/layout';
-import { IS_ANDROID, isBridgelessRuntimeEnabled } from '@/core/native/utils';
+import { IS_ANDROID } from '@/core/native/utils';
+import {
+  resolveHomeCenterAreaVisibility,
+  type HomeCenterAreaVisibility,
+} from './homeCenterAreaVisibility';
 
 export function HomeCenterArea() {
   const { styles } = useTheme2024({
@@ -42,11 +46,15 @@ export function HomeCenterArea() {
   const { shouldShowConvertDustBanner, dismissConvertDustBanner } =
     useConvertDustBanner();
   const homeCenterEntering =
-    IS_ANDROID && isBridgelessRuntimeEnabled()
+    IS_ANDROID &&
+    (global as typeof global & { RN$Bridgeless?: boolean }).RN$Bridgeless
       ? undefined
       : FadeInUp.duration(200);
 
   const prevAccountToShowReceiveTipRef = useRef(accountToShowReceiveTip);
+  const previousResolvedVisibilityRef = useRef<HomeCenterAreaVisibility | null>(
+    null,
+  );
   if (!isLoadingAccountToShowReceiveTip) {
     prevAccountToShowReceiveTipRef.current = accountToShowReceiveTip;
   }
@@ -72,54 +80,24 @@ export function HomeCenterArea() {
       offlineChainData.displayWillClosedChain &&
       offlineChainData.offlineChainInfo
     );
-
     const hasCompletedTransaction = txCount > 0;
+    const visibility = resolveHomeCenterAreaVisibility({
+      previousResolvedVisibility: previousResolvedVisibilityRef.current,
+      isLoadingAccountToShowReceiveTip,
+      hasAccountToShowReceiveTip: !!accountToShowReceiveTip,
+      forceShowDepositAssetsCard: !!forceShowDepositAssetsCard,
+      shouldShowConvertDustBanner,
+      hasCompletedTransaction,
+      hasOfflineChainData,
+      viewedScreenShotReportTip,
+      shouldShowRateGuideOnHome,
+    });
 
-    const blocks = {
-      soloAccountToShowReceiveTip: false as boolean,
-      rateGuideOnHome: false as boolean,
-      offlineChainData: false as boolean,
-      tipScreenshot: false as boolean,
-      convertDustBanner: false as boolean,
-    };
-
-    // Preserve previous account tip during refresh to prevent flickering
-    if (isLoadingAccountToShowReceiveTip) {
-      const hasPreviousTip = !!prevAccountToShowReceiveTipRef.current;
-      return {
-        blocksVisibility: {
-          ...blocks,
-          soloAccountToShowReceiveTip: hasPreviousTip,
-        },
-        noBetweenContent: !hasPreviousTip,
-        onlyOneContent: hasPreviousTip,
-      };
+    if (!isLoadingAccountToShowReceiveTip) {
+      previousResolvedVisibilityRef.current = visibility;
     }
 
-    if (accountToShowReceiveTip || forceShowDepositAssetsCard) {
-      blocks.soloAccountToShowReceiveTip = true;
-    } else {
-      if (shouldShowConvertDustBanner) {
-        blocks.convertDustBanner = true;
-      } else {
-        if (hasCompletedTransaction && hasOfflineChainData) {
-          blocks.offlineChainData = true;
-        }
-        if (hasCompletedTransaction && !viewedScreenShotReportTip) {
-          blocks.tipScreenshot = true;
-        } else if (shouldShowRateGuideOnHome) {
-          blocks.rateGuideOnHome = true;
-        }
-      }
-    }
-
-    const visibleEls = Object.values(blocks);
-    const hasBetweenContent = visibleEls.some(Boolean);
-    return {
-      blocksVisibility: blocks,
-      noBetweenContent: !hasBetweenContent,
-      onlyOneContent: visibleEls.filter(Boolean).length === 1,
-    };
+    return visibility;
   }, [
     shouldShowRateGuideOnHome,
     shouldShowConvertDustBanner,
@@ -153,7 +131,7 @@ export function HomeCenterArea() {
 
       {blocksVisibility.tipScreenshot && (
         <Animated.View entering={homeCenterEntering}>
-          <TipFeedbackByScreenshot />
+          <ScreenshotFeedbackHomeTip />
         </Animated.View>
       )}
 

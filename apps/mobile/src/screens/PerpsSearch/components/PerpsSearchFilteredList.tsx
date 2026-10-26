@@ -9,6 +9,7 @@ import { formatPerpsCoin, formatPerpsDisplayName } from '@/utils/perps';
 import { PerpsMarketItem } from '../../Perps/components/PerpsMarketSection/PerpsMarketItem';
 import IconEmptyDefi from '@/assets2024/singleHome/empty-defi.png';
 import IconEmptyDefiDark from '@/assets2024/singleHome/empty-defi-dark.png';
+import { useSimpleChartPreload } from '@/hooks/perps/candles/useSimpleChartPreload';
 
 export const PerpsSearchFilteredList: React.FC<{
   query: string;
@@ -17,6 +18,7 @@ export const PerpsSearchFilteredList: React.FC<{
 }> = ({ query, marketData, onSelect }) => {
   const { styles, isLight } = useTheme2024({ getStyle });
   const { t } = useTranslation();
+  const onViewableItemsChanged = useSimpleChartPreload();
 
   const list = useMemo(() => {
     const q = query.trim().toUpperCase();
@@ -46,6 +48,7 @@ export const PerpsSearchFilteredList: React.FC<{
 
   return (
     <FlatList
+      onViewableItemsChanged={onViewableItemsChanged}
       style={styles.container}
       contentContainerStyle={styles.content}
       data={list}
@@ -67,7 +70,7 @@ export const PerpsSearchFilteredList: React.FC<{
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: { flex: 1 },
-  content: { paddingHorizontal: 12, paddingBottom: 24 },
+  content: { paddingTop: 8, paddingHorizontal: 8, paddingBottom: 24 },
   empty: {
     paddingTop: 120,
     alignItems: 'center',

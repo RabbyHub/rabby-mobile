@@ -23,12 +23,13 @@ import RcIconEmptyToken from '@/assets2024/singleHome/empty-token.svg';
 import RcIconEmptyTokenDark from '@/assets2024/singleHome/empty-token-dark.svg';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { useBatchRevoke } from '@/screens/BatchRevoke/useBatchRevoke';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { useEIP7702Approvals } from '../useEIP7702Approvals';
 import { Text } from '@/components/Typography';
 import {
   BOTTOM_BUTTON_BOTTOM_OFFSET,
   BOTTOM_BUTTON_SINGLE_HEIGHT,
+  BOTTOM_BUTTON_TEXT_LINE_HEIGHT,
   BOTTOM_BUTTON_TITLE_STYLE,
   BOTTOM_BUTTON_TOP_OFFSET,
   getBottomButtonBottomOffset,
@@ -36,6 +37,7 @@ import {
 
 /** @deprecated import from '../layout' directly */
 export { ApprovalsLayouts };
+export { ApprovalsTabView } from './ApprovalsTabView';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -53,40 +55,6 @@ export function getScrollableSectionHeight(options?: {
     A.searchBarHeight -
     A.searchBarMarginOffset * 2 -
     (isAndroid ? 0 : A.contentInsetTopOffset + A.tabbarHeight)
-  );
-}
-
-export function ApprovalsTabView<T extends React.ComponentType<any>>({
-  children,
-  ViewComponent = View,
-  innerStyle,
-  ...props
-}: React.PropsWithChildren<
-  RNViewProps & {
-    ViewComponent?: T;
-    innerStyle?: RNViewProps['style'];
-  } & React.ComponentProps<T>
->) {
-  const {
-    safeSizeInfo: { safeSizes },
-  } = useApprovalsPage();
-  const { safeOffBottom } = useSafeSizes();
-
-  return (
-    <ViewComponent
-      {...props}
-      style={[
-        props?.style,
-        {
-          paddingTop: ApprovalsLayouts.tabbarHeight,
-          paddingBottom:
-            safeSizes.bottomAreaHeight + (isAndroid ? safeOffBottom : 0),
-        },
-      ]}>
-      <View style={[{ height: '100%', width: '100%' }, innerStyle]}>
-        {children}
-      </View>
-    </ViewComponent>
   );
 }
 
@@ -436,7 +404,7 @@ const getBottomSheetModalFooterButtonStyles = createGetStyles(colors => {
     footerText: {
       color: colors['neutral-title2'],
       fontSize: BOTTOM_BUTTON_TITLE_STYLE.fontSize,
-      lineHeight: BOTTOM_BUTTON_TITLE_STYLE.lineHeight,
+      lineHeight: BOTTOM_BUTTON_TEXT_LINE_HEIGHT,
       fontWeight: BOTTOM_BUTTON_TITLE_STYLE.fontWeight,
     },
     disabledFooterText: {

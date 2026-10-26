@@ -397,6 +397,10 @@ turbo_bundle_with_project_ruby() {
   tb_app_config="$RABBY_MOBILE_TURBO_BUNDLE_APP_CONFIG"
   tb_path="$RABBY_MOBILE_TURBO_BUNDLE_PATH"
   tb_force_ruby_platform="$RABBY_MOBILE_TURBO_BUNDLE_FORCE_RUBY_PLATFORM"
+  tb_bind_path=false
+  if turbo_build_enabled; then
+    tb_bind_path=true
+  fi
 
   bash -lc '
     set -e
@@ -405,18 +409,23 @@ turbo_bundle_with_project_ruby() {
     bundle_app_config="$3"
     bundle_path="$4"
     bundle_force_ruby_platform="$5"
-    shift 5
+    bundle_bind_path="$6"
+    shift 6
 
     cd "$work_dir"
     . "$HOME/.rvm/scripts/rvm"
     rvm use "$ruby_target" >/dev/null
 
-    env \
+    export \
       BUNDLE_APP_CONFIG="$bundle_app_config" \
       BUNDLE_PATH="$bundle_path" \
-      BUNDLE_FORCE_RUBY_PLATFORM="$bundle_force_ruby_platform" \
-      bundle "$@"
-  ' bash "$tb_work_dir" "$tb_ruby_target" "$tb_app_config" "$tb_path" "$tb_force_ruby_platform" "$@"
+      BUNDLE_FORCE_RUBY_PLATFORM="$bundle_force_ruby_platform"
+    # Bundler local settings override ENV, including paths from restored caches.
+    if [ "$bundle_bind_path" = true ]; then
+      bundle config set --local path "$bundle_path" || exit $?
+    fi
+    bundle "$@"
+  ' bash "$tb_work_dir" "$tb_ruby_target" "$tb_app_config" "$tb_path" "$tb_force_ruby_platform" "$tb_bind_path" "$@"
 }
 
 turbo_bundle_exec() {
@@ -430,6 +439,14 @@ turbo_bundle_exec() {
     return $?
   fi
 
+  if turbo_build_enabled; then
+    env \
+      BUNDLE_APP_CONFIG="$tb_app_config" \
+      BUNDLE_PATH="$tb_path" \
+      BUNDLE_FORCE_RUBY_PLATFORM="$tb_force_ruby_platform" \
+      bundle config set --local path "$tb_path" || return $?
+  fi
+
   env \
     BUNDLE_APP_CONFIG="$tb_app_config" \
     BUNDLE_PATH="$tb_path" \
@@ -438,7 +455,13 @@ turbo_bundle_exec() {
 }
 
 turbo_bundle_pod() {
-  turbo_bundle_exec exec ruby -e 'load Gem.bin_path("cocoapods", "pod")' -- "$@"
+  if [ "${RABBY_MOBILE_COCOAPODS_FORCE_HTTP1:-false}" = "true" ]; then
+    turbo_bundle_exec exec ruby \
+      -e 'require ARGV.shift; load Gem.bin_path("cocoapods", "pod")' -- \
+      "$script_dir/ci/cocoapods-force-http1.rb" "$@"
+  else
+    turbo_bundle_exec exec ruby -e 'load Gem.bin_path("cocoapods", "pod")' -- "$@"
+  fi
 }
 
 turbo_log() {
@@ -552,22 +575,7 @@ turbo_layer_restore_prefers_remote() {
 }
 
 turbo_hash_git_files() {
-  repo_root="$1"
-  shift
-
-  tmp_file=$(mktemp)
-  git -C "$repo_root" ls-files "$@" | LC_ALL=C sort >"$tmp_file"
-
-  {
-    while IFS= read -r rel_path; do
-      if [ -n "$rel_path" ] && [ -f "$repo_root/$rel_path" ]; then
-        file_hash=$(turbo_sha256 "$repo_root/$rel_path" | awk '{print $1}')
-        printf '%s:%s\n' "$rel_path" "$file_hash"
-      fi
-    done <"$tmp_file"
-  } | turbo_sha256 | awk '{print $1}'
-
-  rm -f "$tmp_file"
+  build_cache_hash_git_files "$@"
 }
 
 turbo_compute_js_deps_cache_key() {
@@ -579,7 +587,7 @@ turbo_compute_js_deps_cache_key() {
       .yarnrc.yml \
       .yarn/patches \
       apps/mobile/package.json
-  )
+  ) || return $?
 
   printf '%s\n' \
     "platform=$(turbo_platform_fingerprint)" \
@@ -596,7 +604,7 @@ turbo_compute_ruby_bundle_cache_key() {
       apps/mobile/Gemfile \
       apps/mobile/Gemfile.lock \
       apps/mobile/.bundle/config
-  )
+  ) || return $?
 
   ruby_version=$(turbo_bundle_exec exec ruby -v 2>/dev/null || ruby -v 2>/dev/null)
   bundler_version=$(turbo_bundle_exec --version 2>/dev/null || bundle --version 2>/dev/null)
@@ -615,10 +623,11 @@ turbo_compute_cocoapods_cache_key() {
     turbo_hash_git_files "$repo_root" \
       apps/mobile/ios/Podfile \
       apps/mobile/ios/Podfile.lock
-  )
+  ) || return $?
 
   printf '%s\n' \
     "platform=$(turbo_platform_fingerprint)" \
+    "react_native_arch=${RCT_NEW_ARCH_ENABLED:-1}" \
     "xcode=$(xcodebuild -version 2>/dev/null | tr '\n' '|')" \
     "ruby=$(ruby -v 2>/dev/null)" \
     "cocoapods=$(turbo_bundle_pod --version 2>/dev/null || pod --version 2>/dev/null)" \
@@ -628,6 +637,7 @@ turbo_compute_cocoapods_cache_key() {
 
 turbo_compute_gradle_cache_key() {
   repo_root="$RABBY_MOBILE_REPO_ROOT"
+  react_native_arch=$(build_cache_resolve_react_native_architecture) || return $?
   files_hash=$(
     turbo_hash_git_files "$repo_root" \
       apps/mobile/android/build.gradle \
@@ -637,10 +647,11 @@ turbo_compute_gradle_cache_key() {
       apps/mobile/android/gradle/wrapper/gradle-wrapper.properties \
       apps/mobile/package.json \
       yarn.lock
-  )
+  ) || return $?
 
   printf '%s\n' \
     "platform=$(turbo_platform_fingerprint)" \
+    "react_native_arch=$react_native_arch" \
     "java=$(java -version 2>&1 | head -n 1)" \
     "files=$files_hash" \
     | turbo_sha256 | awk '{print $1}'
@@ -655,7 +666,7 @@ turbo_compute_workspace_build_cache_key() {
       tsconfig.build.json \
       tsconfig.packages.build.json \
       packages
-  )
+  ) || return $?
 
   printf '%s\n' \
     "platform=$(turbo_platform_fingerprint)" \
@@ -866,7 +877,7 @@ turbo_compute_android_build_artifacts_key() {
       apps/mobile/worker-src \
       apps/mobile-local-pages \
       packages/base-utils
-  )
+  ) || return $?
 
   printf '%s\n' \
     "platform=$(turbo_platform_fingerprint)" \
@@ -921,7 +932,7 @@ turbo_compute_ios_build_artifacts_key() {
       apps/mobile/worker-src \
       apps/mobile-local-pages \
       packages/base-utils
-  )
+  ) || return $?
 
   printf '%s\n' \
     "platform=$(turbo_platform_fingerprint)" \
@@ -933,14 +944,13 @@ turbo_compute_ios_build_artifacts_key() {
 turbo_ios_build_artifacts_ready() {
   key="$1"
   stamp_file=$(turbo_ios_build_artifacts_stamp_file)
-  ios_resources_dir="$project_dir/ios/RabbyMobile/Resources"
   local_pages_output_dir="$project_dir/assets/ios/builtin-pages"
   worker_bundle="$project_dir/assets/ios/threads/worker.thread.jsbundle"
 
   [ -f "$stamp_file" ] || return 1
   [ "$(cat "$stamp_file" 2>/dev/null)" = "$key" ] || return 1
   [ -f "$worker_bundle" ] || return 1
-  turbo_dir_has_files "$ios_resources_dir" || return 1
+  # Fonts are Android-only; an empty iOS Resources directory is intentional.
   turbo_dir_has_files "$local_pages_output_dir" || return 1
 }
 
@@ -955,12 +965,20 @@ turbo_cocoapods_ready() {
   podfile_lock="$project_dir/ios/Podfile.lock"
   pods_manifest_lock="$project_dir/ios/Pods/Manifest.lock"
   xcworkspace_data="$project_dir/ios/RabbyMobile.xcworkspace/contents.xcworkspacedata"
+  architecture_stamp="$project_dir/ios/Pods/.rabby-react-native-architecture"
+  expected_architecture="${RCT_NEW_ARCH_ENABLED:-1}"
 
   [ -d "$project_dir/ios/Pods" ] || return 1
   [ -f "$podfile_lock" ] || return 1
   [ -f "$pods_manifest_lock" ] || return 1
   [ -f "$xcworkspace_data" ] || return 1
+  [ -f "$architecture_stamp" ] || return 1
+  [ "$(cat "$architecture_stamp" 2>/dev/null)" = "$expected_architecture" ] || return 1
   cmp -s "$podfile_lock" "$pods_manifest_lock"
+}
+
+turbo_mark_cocoapods_architecture() {
+  printf '%s' "${RCT_NEW_ARCH_ENABLED:-1}" >"$project_dir/ios/Pods/.rabby-react-native-architecture"
 }
 
 turbo_gradle_wrapper_version() {
@@ -1014,11 +1032,12 @@ turbo_compute_ios_derived_data_key() {
       apps/mobile/ios/RabbyMobile/Info.plist \
       apps/mobile/package.json \
       yarn.lock
-  )
+  ) || return $?
 
   printf '%s\n' \
     "platform=$(turbo_platform_fingerprint)" \
     "xcode=$(xcodebuild -version 2>/dev/null | tr '\n' '|')" \
+    "react_native_arch=${RCT_NEW_ARCH_ENABLED:-1}" \
     "files=$files_hash" \
     | turbo_sha256 | awk '{print $1}'
 }
@@ -1030,7 +1049,7 @@ turbo_ios_derived_data_dir() {
 
 turbo_prepare_ios_derived_data() {
   turbo_init_env
-  key=$(turbo_compute_ios_derived_data_key)
+  key=$(turbo_compute_ios_derived_data_key) || return $?
   derived_data_dir=$(turbo_ios_derived_data_dir "$key")
   mkdir -p "$derived_data_dir"
   export RABBY_MOBILE_TURBO_IOS_DERIVED_DATA_PATH="$derived_data_dir"
@@ -1120,7 +1139,7 @@ EOF
 
 turbo_prepare_workspace_build() {
   turbo_init_env
-  cache_key=$(turbo_compute_workspace_build_cache_key)
+  cache_key=$(turbo_compute_workspace_build_cache_key) || return $?
   stamp_file=$(turbo_workspace_build_key_stamp)
   current_key=""
 
@@ -1157,23 +1176,37 @@ turbo_prepare_workspace_build() {
 
 turbo_prepare_js_dependencies() {
   turbo_init_env
-  cache_key=$(turbo_compute_js_deps_cache_key)
+  js_deps_cache_key=$(turbo_compute_js_deps_cache_key) || return $?
 
   if turbo_build_enabled; then
-    turbo_restore_layer js-deps "$cache_key" \
-      .turbo-build/yarn \
-      .yarn/install-state.gz \
-      .yarn/unplugged || true
+    js_deps_local_ready=false
+    if [ "$(turbo_cache_mode)" = "local-first" ] &&
+      ! turbo_layer_remote_sync_enabled js-deps &&
+      [ -d "$(turbo_local_layer_dir js-deps "$js_deps_cache_key")" ] &&
+      [ -s "$RABBY_MOBILE_REPO_ROOT/.yarn/install-state.gz" ] &&
+      [ -s "$RABBY_MOBILE_REPO_ROOT/node_modules/.yarn-state.yml" ] &&
+      [ -n "${YARN_CACHE_FOLDER:-}" ] && [ -d "$YARN_CACHE_FOLDER" ]; then
+      # Local state is only a warm-path hint; Yarn still validates dependencies.
+      js_deps_local_ready=true
+      turbo_log "js dependencies available locally; skipping cache restore/save"
+    else
+      turbo_restore_layer js-deps "$js_deps_cache_key" \
+        .turbo-build/yarn \
+        .yarn/install-state.gz \
+        .yarn/unplugged || true
+    fi
 
     (
       cd "$RABBY_MOBILE_REPO_ROOT" &&
         yarn install --immutable --mode=skip-build
-    )
+    ) || return $?
 
-    turbo_save_layer js-deps "$cache_key" \
-      .turbo-build/yarn \
-      .yarn/install-state.gz \
-      .yarn/unplugged
+    if [ "$js_deps_local_ready" != "true" ]; then
+      turbo_save_layer js-deps "$js_deps_cache_key" \
+        .turbo-build/yarn \
+        .yarn/install-state.gz \
+        .yarn/unplugged
+    fi
 
     turbo_prepare_workspace_build
   else
@@ -1188,22 +1221,38 @@ turbo_prepare_js_dependencies() {
 
 turbo_prepare_ruby_bundle() {
   turbo_init_env
-  cache_key=$(turbo_compute_ruby_bundle_cache_key)
+  ruby_bundle_cache_key=$(turbo_compute_ruby_bundle_cache_key) || return $?
+
+  if turbo_build_enabled &&
+    [ "$(turbo_cache_mode)" = "local-first" ] &&
+    ! turbo_layer_remote_sync_enabled ruby-gems &&
+    turbo_bundle_exec check >/dev/null 2>&1; then
+    turbo_log "ruby bundle already satisfied locally"
+    if [ -d "$(turbo_local_layer_dir ruby-gems "$ruby_bundle_cache_key")" ]; then
+      turbo_log "skipping ruby bundle cache restore/save"
+      return 0
+    fi
+    turbo_save_layer ruby-gems "$ruby_bundle_cache_key" \
+      apps/mobile/.turbo-build/vendor/bundle \
+      apps/mobile/.turbo-build/bundle-config
+    return $?
+  fi
 
   if turbo_build_enabled; then
-    turbo_restore_layer ruby-gems "$cache_key" \
+    turbo_restore_layer ruby-gems "$ruby_bundle_cache_key" \
       apps/mobile/.turbo-build/vendor/bundle \
       apps/mobile/.turbo-build/bundle-config || true
   fi
 
   if ! turbo_bundle_exec check >/dev/null 2>&1; then
-    turbo_bundle_exec install --path "$RABBY_MOBILE_TURBO_BUNDLE_PATH"
+    turbo_bundle_exec install --path "$RABBY_MOBILE_TURBO_BUNDLE_PATH" || return $?
+    turbo_bundle_exec check >/dev/null 2>&1 || return $?
   else
     turbo_log "ruby bundle already satisfied"
   fi
 
   if turbo_build_enabled; then
-    turbo_save_layer ruby-gems "$cache_key" \
+    turbo_save_layer ruby-gems "$ruby_bundle_cache_key" \
       apps/mobile/.turbo-build/vendor/bundle \
       apps/mobile/.turbo-build/bundle-config
   fi
@@ -1211,7 +1260,7 @@ turbo_prepare_ruby_bundle() {
 
 turbo_prepare_cocoapods() {
   turbo_init_env
-  cache_key=$(turbo_compute_cocoapods_cache_key)
+  cache_key=$(turbo_compute_cocoapods_cache_key) || return $?
 
   if turbo_build_enabled; then
     if turbo_cocoapods_ready; then
@@ -1226,11 +1275,27 @@ turbo_prepare_cocoapods() {
       return 0
     fi
 
-    (cd "$project_dir/ios" && turbo_bundle_pod install) || return $?
+    turbo_install_cocoapods || return $?
+    turbo_mark_cocoapods_architecture
     turbo_save_layer cocoapods "$cache_key" apps/mobile/ios/Pods
   else
-    (cd "$project_dir/ios" && turbo_bundle_pod install --repo-update) || return $?
+    turbo_install_cocoapods --repo-update || return $?
+    turbo_mark_cocoapods_architecture
   fi
+}
+
+turbo_install_cocoapods() {
+  if (cd "$project_dir/ios" && turbo_bundle_pod install "$@"); then
+    return 0
+  else
+    tb_cocoapods_status=$?
+  fi
+
+  turbo_log "CocoaPods install failed with status $tb_cocoapods_status; retrying once with CDN requests forced to HTTP/1.1"
+  (
+    cd "$project_dir/ios" &&
+      RABBY_MOBILE_COCOAPODS_FORCE_HTTP1=true turbo_bundle_pod install "$@"
+  )
 }
 
 turbo_restore_gradle_state() {

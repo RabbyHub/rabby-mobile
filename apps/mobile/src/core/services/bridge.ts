@@ -1,11 +1,13 @@
 import { CHAINS_ENUM } from '@debank/common';
-import createPersistStore, {
+import cloneDeep from 'lodash/cloneDeep';
+import {
   StorageAdapaterOptions,
+  StoreServiceBase,
 } from '@rabby-wallet/persist-store';
 import { TokenItem, Tx } from '@rabby-wallet/rabby-api/dist/types';
 import { openapi } from '../request';
 import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
-import { getTxMatchData } from '@/utils/tempo';
+import { getTxMatchData } from '@/utils/tempoTx';
 
 export type BridgeRecord = {
   aggregator_id: string;
@@ -18,7 +20,9 @@ export type BridgeRecord = {
   to_token_amount: string | number;
   tx: Partial<Tx>;
   rabby_fee: number;
+  fee_rate: number;
   slippage: number;
+  duration: number;
 };
 
 export type BridgeServiceStore = {
@@ -30,43 +34,36 @@ export type BridgeServiceStore = {
   openBridgeHistoryTs: Record<string, number>;
 };
 
-export class BridgeService {
-  store: BridgeServiceStore = {
-    selectedChain: null,
-    selectedFromToken: undefined,
-    selectedToToken: undefined,
-    selectedAggregators: undefined,
-    openBridgeHistoryTs: {},
-  };
-
+export class BridgeService extends StoreServiceBase<
+  BridgeServiceStore,
+  APP_STORE_NAMES.bridge
+> {
   constructor(options?: StorageAdapaterOptions) {
-    const storage = createPersistStore<BridgeServiceStore>(
+    super(
+      APP_STORE_NAMES.bridge,
       {
-        name: APP_STORE_NAMES.bridge,
-        template: {
-          selectedChain: null,
-          txQuotes: {},
-          openBridgeHistoryTs: {},
-        },
+        selectedChain: null,
+        txQuotes: {},
+        openBridgeHistoryTs: {},
       },
       {
-        storage: options?.storageAdapter,
+        storageAdapter: options?.storageAdapter,
       },
     );
-
-    this.store = storage || this.store;
   }
 
   getBridgeData = (key?: keyof BridgeServiceStore) => {
-    return key ? this.store[key] : { ...this.store };
+    return cloneDeep(key ? this.store[key] : this.store);
   };
 
   getBridgeAggregators = () => {
-    return this.store.selectedAggregators;
+    return this.getStoreFieldSnapshot('selectedAggregators');
   };
 
   setBridgeAggregators = (selectedAggregators: string[]) => {
-    this.store.selectedAggregators = [...selectedAggregators];
+    this.mutateStore(draft => {
+      draft.selectedAggregators = [...selectedAggregators];
+    });
   };
 
   getSelectedChain = () => {
@@ -74,21 +71,27 @@ export class BridgeService {
   };
 
   setSelectedChain = (chain: CHAINS_ENUM) => {
-    this.store.selectedChain = chain;
+    this.mutateStore(draft => {
+      draft.selectedChain = chain;
+    });
   };
 
   getSelectedFromToken = () => {
-    return this.store.selectedFromToken;
+    return this.getStoreFieldSnapshot('selectedFromToken');
   };
   getSelectedToToken = () => {
-    return this.store.selectedToToken;
+    return this.getStoreFieldSnapshot('selectedToToken');
   };
 
   setSelectedFromToken = (token?: TokenItem) => {
-    this.store.selectedFromToken = token;
+    this.mutateStore(draft => {
+      draft.selectedFromToken = token;
+    });
   };
   setSelectedToToken = (token?: TokenItem) => {
-    this.store.selectedToToken = token;
+    this.mutateStore(draft => {
+      draft.selectedToToken = token;
+    });
   };
 
   getOpenBridgeHistoryTs = (address: string) => {
@@ -96,7 +99,9 @@ export class BridgeService {
   };
 
   setOpenBridgeHistoryTs = (address: string) => {
-    this.store.openBridgeHistoryTs[address] = Date.now();
+    this.mutateStore(draft => {
+      draft.openBridgeHistoryTs[address] = Date.now();
+    });
   };
 
   txQuotes: Record<string, BridgeRecord> = {};

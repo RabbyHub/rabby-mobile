@@ -94,10 +94,14 @@ export interface ITokenItem {
 }
 
 export type TokenAssetsResult = {
-  unFoldTokens: ITokenItem[];
-  foldTokens: ITokenItem[];
-  scamTokens: ITokenItem[];
-  hasFoldTokens: boolean;
+  tokens: ITokenItem[];
+  defaultVisibleTokenCount: number;
+  additionalTokenCount: number;
+  lowValueTokenCount: number;
+  additionalCoreUsdValue: number;
+  lowValueTokenPreviewLogoUrls: string[];
+  hasAdditionalTokens: boolean;
+  hasLpTokens: boolean;
 };
 
 export interface IProtocolItem {
@@ -119,13 +123,8 @@ export interface IProtocolPortfolio {
   _originPortfolio: PortfolioItem;
 }
 
-export type ICacheProtocolItem = {
-  fold: IProtocolItem[];
-  unFold: IProtocolItem[];
-};
+export type ICacheProtocolItem = IProtocolItem[];
 
 export type DisplayNftItem = NFTItem & {
-  _isFold?: boolean;
-  _isManualFold?: boolean;
   is_core?: boolean;
 };

@@ -2,11 +2,9 @@ import { ComplexProtocol } from '@rabby-wallet/rabby-api/dist/types';
 import { useCallback, useEffect, useState } from 'react';
 
 import { ProtocolItemEntity } from '@/databases/entities/portocolItem';
-import {
-  syncRemoteProtocols,
-  syncRemoteProtocol,
-} from '@/databases/sync/assets';
-import { batchQueryNFTsWithLocalCache } from '@/databases/hooks/nft';
+import { syncRemoteProtocol } from '@/databases/sync/assets';
+import { batchQueryNFTSnapshotWithLocalCache } from '@/databases/hooks/nft';
+import type { NftSnapshotLoadOptions } from '@/databases/hooks/nft';
 import {
   batchLoadProjects,
   loadPortfolioSnapshot,
@@ -73,27 +71,125 @@ export const loadAppChainComplexProtocols = async (
   }
 };
 
-export const syncProtocols = async (
+export const loadProtocols = async (
   address: string,
   force?: boolean,
-): Promise<IProtocolItem[]> => {
+): Promise<LoadedProtocolResult> => {
   if (!address) {
-    return [];
+    return {
+      address,
+      protocols: [],
+    };
   }
-  const isExpired = await ProtocolItemEntity.isExpired(address);
+  const normalizedAddress = address.toLowerCase();
+  const isExpired = await ProtocolItemEntity.isExpired(normalizedAddress);
 
   if (!isExpired && !force) {
-    const protocols = await ProtocolItemEntity.batchQueryProtocols(address);
-    return protocols;
+    const protocols = await ProtocolItemEntity.batchQueryProtocols(
+      normalizedAddress,
+    );
+    return {
+      address: normalizedAddress,
+      protocols,
+    };
   }
-  const snapshotRes = (await loadPortfolioSnapshot(address)) || [];
+  const snapshotRes = (await loadPortfolioSnapshot(normalizedAddress)) || [];
   const { protocols: appChainProtocols } = await loadAppChainComplexProtocols(
-    address,
+    normalizedAddress,
     force,
   );
   const protocols = [...snapshotRes, ...appChainProtocols];
-  syncRemoteProtocols(address, snapshotRes);
-  return protocols.map(p => complexProtocol2ProtocolItem(p, address));
+  return {
+    address: normalizedAddress,
+    protocols: protocols.map(p =>
+      complexProtocol2ProtocolItem(p, normalizedAddress),
+    ),
+    remoteProtocols: snapshotRes,
+  };
+};
+
+export type LoadedProtocolResult = {
+  address: string;
+  protocols: IProtocolItem[];
+  remoteProtocols?: ComplexProtocol[];
+};
+
+async function loadProtocolsForSync(
+  address: string,
+  force?: boolean,
+): Promise<LoadedProtocolResult> {
+  if (!address) {
+    return {
+      address,
+      protocols: [],
+    };
+  }
+
+  const normalizedAddress = address.toLowerCase();
+  const isExpired = await ProtocolItemEntity.isExpired(normalizedAddress);
+
+  if (!isExpired && !force) {
+    const protocols = await ProtocolItemEntity.batchQueryProtocols(
+      normalizedAddress,
+    );
+    return {
+      address: normalizedAddress,
+      protocols,
+    };
+  }
+
+  const snapshotRes = (await loadPortfolioSnapshot(normalizedAddress)) || [];
+  const { protocols: appChainProtocols } = await loadAppChainComplexProtocols(
+    normalizedAddress,
+    force,
+  );
+  const protocols = [...snapshotRes, ...appChainProtocols];
+
+  return {
+    address: normalizedAddress,
+    protocols: protocols.map(p =>
+      complexProtocol2ProtocolItem(p, normalizedAddress),
+    ),
+    remoteProtocols: snapshotRes,
+  };
+}
+
+export type LoadedProtocolMapResult = {
+  protocolMap: Record<string, IProtocolItem[]>;
+  remoteProtocolMap: Record<string, ComplexProtocol[]>;
+};
+
+export const loadProtocolsForAddresses = async (
+  addresses: string[],
+  force?: boolean,
+): Promise<LoadedProtocolMapResult> => {
+  const lowerAddresses = Array.from(
+    new Set(addresses.map(address => address.toLowerCase()).filter(Boolean)),
+  );
+  if (!lowerAddresses.length) {
+    return {
+      protocolMap: {},
+      remoteProtocolMap: {},
+    };
+  }
+
+  const results = await Promise.all(
+    lowerAddresses.map(address => loadProtocolsForSync(address, force)),
+  );
+  const protocolMap: Record<string, IProtocolItem[]> = {};
+  const remoteProtocolMap: Record<string, ComplexProtocol[]> = {};
+
+  results.forEach(result => {
+    protocolMap[result.address] = result.protocols;
+    if (result.remoteProtocols) {
+      remoteProtocolMap[result.address] = result.remoteProtocols;
+    }
+  });
+
+  return {
+    protocolMap,
+    remoteProtocolMap,
+  };
 };
 
 export const syncSpecificProtocol = async (
@@ -137,20 +233,16 @@ export const syncNFTs = async (
   address: string,
   force?: boolean,
   onlySync?: boolean,
+  options?: NftSnapshotLoadOptions,
 ) => {
-  try {
-    const nfts = await batchQueryNFTsWithLocalCache(
-      {
-        id: address,
-        isAll: true,
-        sortByCredit: true,
-      },
-      force,
-      onlySync,
-    );
-    return nfts;
-  } catch (e) {
-    console.error(e);
-    return [];
-  }
+  return batchQueryNFTSnapshotWithLocalCache(
+    {
+      id: address,
+      isAll: true,
+      sortByCredit: true,
+    },
+    force,
+    onlySync,
+    options,
+  );
 };

@@ -1,7 +1,7 @@
 import { ReactotronCore } from 'reactotron-core-client';
 import { ReactotronReactNative } from 'reactotron-react-native';
 
-import { makeJsEEClass } from '@/core/services/_utils';
+import { makeJsEEClass } from '@/core/utils/makeJsEEClass';
 
 type CM_CTX<T = any> = { reqid: string } & T;
 export type EventBusListeners = {

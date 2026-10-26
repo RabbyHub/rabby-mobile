@@ -133,6 +133,9 @@ export const GnosisDrawer = ({
 
   React.useEffect(() => {
     if (!visible) {
+      // Start every opening from "nothing selected" so the list cells and the
+      // proceed button can never show a stale selection.
+      setCheckedAccount(null);
       modalRef.current?.close();
     } else {
       modalRef.current?.present();
@@ -160,6 +163,7 @@ export const GnosisDrawer = ({
         </Text>
         <BottomSheetFlatList
           data={ownerAccounts}
+          extraData={checkedAccount}
           keyExtractor={item =>
             `${item.address}-${item.type}-${item.brandName}`
           }
@@ -192,6 +196,7 @@ export const GnosisDrawer = ({
             containerStyle={styles.buttonContainer}
           />
           <Button
+            key={checkedAccount ? 'proceed-enabled' : 'proceed-disabled'}
             onPress={handleConfirm}
             disabled={!checkedAccount}
             title={

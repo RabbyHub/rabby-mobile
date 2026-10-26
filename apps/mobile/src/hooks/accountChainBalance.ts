@@ -1,15 +1,12 @@
 import { useEffect, useMemo } from 'react';
 
-import { preferenceService } from '@/core/services';
-import { Account } from '@/core/services/preference';
-import { ChainWithBalance } from '@rabby-wallet/rabby-api/dist/types';
+import { getPreferenceSnapshot } from '@/core/serviceApi/preference';
+import type { Account } from '@/core/startupServices/preference';
+import type { ChainWithBalance } from '@rabby-wallet/rabby-api/dist/types';
 import { CORE_KEYRING_TYPES } from '@rabby-wallet/keyring-utils';
-import {
-  DisplayChainWithWhiteLogo,
-  formatChainToDisplay,
-  varyAndSortChainItems,
-} from '@/utils/chain';
-import { CHAINS_ENUM, Chain } from '@/constant/chains';
+import type { DisplayChainWithWhiteLogo } from '@/utils/chain';
+import { formatChainToDisplay, varyAndSortChainItems } from '@/utils/chain';
+import type { CHAINS_ENUM, Chain } from '@/constant/chains';
 import { coerceFloat } from '@/utils/number';
 import { zCreate } from '@/core/utils/reexports';
 import addressBalanceStore from '@/store/balance';
@@ -142,25 +139,22 @@ const fetchMatteredChainBalance = async ({
   };
 };
 
-const fetchOrderedChainList = async (opts: {
+// These inputs are already in memory. Route-entry display must not cross a
+// Promise boundary merely to read the same pinned chains and balance snapshot.
+export const getOrderedChainListSnapshot = (opts: {
   address?: string;
   supportChains?: CHAINS_ENUM[];
 }) => {
   const { address, supportChains } = opts || {};
-  const { pinned, matteredChainBalances } = await Promise.allSettled([
-    preferenceService.getPreference('pinnedChain'),
-    fetchMatteredChainBalance({ address }),
-  ]).then(([pinnedChain, balance]) => {
-    return {
-      pinned: (pinnedChain.status === 'fulfilled'
-        ? pinnedChain.value
-        : []) as CHAINS_ENUM[],
-      matteredChainBalances: (balance.status === 'fulfilled'
-        ? // only SUPPORT mainnet now
-          balance.value.matteredChainBalances
-        : {}) as MatteredChainBalances,
-    };
-  });
+  const pinned = (getPreferenceSnapshot('pinnedChain') || []) as CHAINS_ENUM[];
+  let matteredChainBalances: MatteredChainBalances = {};
+  try {
+    matteredChainBalances = buildMatteredChainBalances(
+      getChainListByAddress(address),
+    );
+  } catch {
+    // Preserve the async reader's settled-balance fallback.
+  }
 
   const { matteredList, unmatteredList } = varyAndSortChainItems({
     supportChains,
@@ -174,6 +168,10 @@ const fetchOrderedChainList = async (opts: {
     firstChain: matteredList[0],
   };
 };
+
+const fetchOrderedChainList = async (
+  opts: Parameters<typeof getOrderedChainListSnapshot>[0],
+) => getOrderedChainListSnapshot(opts);
 
 export function useLoadMatteredChainBalances({
   account: currentAccount,

@@ -1,4 +1,5 @@
 import { toast } from '@/components2024/Toast';
+import { isNonPublicProductionEnv } from '@/constant';
 import { storeApiExpSettingData } from '@/hooks/appSettings';
 import {
   openApiDebugEvents,
@@ -15,7 +16,7 @@ const openApiHttpToastState = {
 };
 
 export function startSubscribeOpenApiHttpErrorDebugToast() {
-  if (openApiHttpToastState.started) {
+  if (!isNonPublicProductionEnv || openApiHttpToastState.started) {
     return;
   }
 

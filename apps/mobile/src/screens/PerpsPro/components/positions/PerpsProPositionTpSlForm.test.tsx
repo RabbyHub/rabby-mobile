@@ -1,0 +1,1652 @@
+import { act, fireEvent, render, screen } from '@testing-library/react-native';
+import React from 'react';
+import { ActivityIndicator, Keyboard, StyleSheet } from 'react-native';
+import { colord } from 'colord';
+import { PERPS_PRO_DIALOG_TOKENS } from '../common/perpsProDialogVisual';
+
+const mockAmountInputBlur = jest.fn();
+const mockDecimalProps = jest.fn();
+const mockSliderProps = jest.fn();
+const mockTransProps = jest.fn();
+const mockModeSheetProps = jest.fn();
+let mockPositionModes: Record<'sl' | 'tp', 'pnl' | 'roi'> = {
+  sl: 'pnl',
+  tp: 'pnl',
+};
+const mockSetTpSlMode = jest.fn(
+  async (selection: { leg: 'sl' | 'tp'; mode: 'pnl' | 'roi' }) => {
+    mockPositionModes = {
+      ...mockPositionModes,
+      [selection.leg]: selection.mode,
+    };
+  },
+);
+const mockSliderHapticComplete = jest.fn();
+const mockSliderHapticStart = jest.fn();
+const mockSliderHapticValueChange = jest.fn();
+const mockUseSliderHaptics = jest.fn();
+let mockAndroid = false;
+jest.mock('@/core/native/utils', () => ({
+  get IS_ANDROID() {
+    return mockAndroid;
+  },
+  get IS_IOS() {
+    return !mockAndroid;
+  },
+}));
+
+jest.mock(
+  '@/assets2024/icons/perps/PerpsProTpSlSelectCaret.svg',
+  () => () => null,
+);
+
+jest.mock('@/components/Typography', () => ({
+  Text: require('react-native').Text,
+  TextInput: require('react-native').TextInput,
+}));
+
+jest.mock('@/components2024/Button', () => {
+  const ReactModule = require('react');
+  const { Pressable, Text } = require('react-native');
+  return {
+    Button: ({ buttonStyle, disabled, onPress, testID, title }: any) =>
+      ReactModule.createElement(
+        Pressable,
+        {
+          accessibilityState: { disabled },
+          disabled,
+          onPress,
+          style: buttonStyle,
+          testID,
+        },
+        ReactModule.createElement(Text, null, title),
+      ),
+  };
+});
+
+jest.mock('@/hooks/theme', () => ({
+  useTheme2024: ({ getStyle }: { getStyle: (input: object) => object }) => {
+    const colors2024 = new Proxy({}, { get: (_target, key) => String(key) });
+    return {
+      colors2024,
+      styles: getStyle({ colors2024, safeAreaInsets: { bottom: 0 } }),
+    };
+  },
+}));
+
+jest.mock('@/utils/styles', () => ({
+  createGetStyles2024: (getStyle: unknown) => getStyle,
+}));
+
+jest.mock('react-i18next', () => ({
+  Trans: (props: { i18nKey: string }) => {
+    mockTransProps(props);
+    return props.i18nKey;
+  },
+  useTranslation: () => ({ t: (key: string) => key }),
+}));
+
+jest.mock('../trade/PerpsProDecimalTextInput', () => {
+  const ReactModule = require('react');
+  const { TextInput } = require('react-native');
+  return {
+    PerpsProDecimalTextInput: ReactModule.forwardRef(
+      (
+        { normalizeValue, onChangeText, ...props }: any,
+        forwardedRef: React.Ref<unknown>,
+      ) => {
+        mockDecimalProps({ ...props, normalizeValue, onChangeText });
+        ReactModule.useImperativeHandle(forwardedRef, () => ({
+          blur: mockAmountInputBlur,
+        }));
+        return ReactModule.createElement(TextInput, {
+          ...props,
+          onChangeText: (value: string) =>
+            onChangeText(normalizeValue ? normalizeValue(value) : value),
+        });
+      },
+    ),
+  };
+});
+
+jest.mock('./PerpsProPositionTpSlBottomSheetTextInput', () => ({
+  PerpsProPositionTpSlBottomSheetTextInput: require('react-native').TextInput,
+}));
+
+jest.mock('../common/PerpsProSlider', () => ({
+  PerpsProSlider: (props: object) => {
+    mockSliderProps(props);
+    return null;
+  },
+}));
+
+jest.mock('../common/usePerpsProDismissKeyboard', () => ({
+  usePerpsProDismissKeyboard: () => (action: () => void) => action(),
+}));
+
+jest.mock('../common/usePerpsProSliderHaptics', () => ({
+  usePerpsProSliderHaptics: (options: object) => {
+    mockUseSliderHaptics(options);
+    return {
+      onSlidingComplete: mockSliderHapticComplete,
+      onSlidingStart: mockSliderHapticStart,
+      onValueChange: mockSliderHapticValueChange,
+    };
+  },
+}));
+
+jest.mock('../trade/PerpsProTpSlModeSheet', () => ({
+  PerpsProTpSlModeSheet: (props: object) => {
+    mockModeSheetProps(props);
+    return null;
+  },
+}));
+
+jest.mock('../../scene/usePerpsProTpSlModePreferences', () => ({
+  usePerpsProTpSlModePreferences: () => ({
+    hydrated: true,
+    opening: { sl: 'price', tp: 'price' },
+    position: mockPositionModes,
+    setMode: mockSetTpSlMode,
+  }),
+}));
+
+import type { PerpsPositionViewModel } from '../../model/position';
+import type {
+  PerpsPositionTpSlKind,
+  PerpsPositionTpSlOrderViewModel,
+} from '../../model/positionTpSl';
+import { PerpsProPositionTpSlBottomSheetTextInput } from './PerpsProPositionTpSlBottomSheetTextInput';
+import { PerpsProPositionTpSlForm } from './PerpsProPositionTpSlForm';
+
+const order = (
+  kind: PerpsPositionTpSlKind,
+  oid: number,
+  triggerPrice: string,
+  scope: 'partial' | 'position' = 'partial',
+): PerpsPositionTpSlOrderViewModel => ({
+  execution: 'market',
+  key: `${scope}:${oid}`,
+  kind,
+  oid,
+  originalSize: scope === 'position' ? '0' : '0.5',
+  remainingSize: scope === 'position' ? '0' : '0.5',
+  scope,
+  side: 'A',
+  timestamp: oid,
+  triggerPrice,
+});
+
+const position = (
+  tpslOrders: PerpsPositionTpSlOrderViewModel[] = [],
+): PerpsPositionViewModel => ({
+  baseSize: '1',
+  coin: 'BTC',
+  direction: 'long',
+  entryPrice: '100',
+  key: 'BTC',
+  leverage: 10,
+  liquidationPrice: '80',
+  margin: '10',
+  marginMode: 'cross',
+  marginRatio: null,
+  maxLeverage: 50,
+  pnl: '0',
+  quoteSize: '100',
+  roiRatio: '0',
+  tpslOrders,
+});
+
+const market = {
+  displayBase: 'BTC',
+  displayPair: 'BTCUSDC',
+  markPrice: '100',
+  pxDecimals: 2,
+  quoteAsset: 'USDC',
+  sourceTag: null,
+  szDecimals: 3,
+};
+
+const props = () => ({
+  amountUnit: 'base' as const,
+  cancelingOids: [],
+  markPrice: '100',
+  market,
+  onCancelOrder: jest.fn(),
+  onReview: jest.fn(),
+  pending: false,
+});
+
+const precisionModifyProps = () => {
+  const initialOrder = {
+    ...order('takeProfit', 7, '453719'),
+    originalSize: '0.0002',
+    remainingSize: '0.0001',
+  };
+  return {
+    ...props(),
+    amountUnit: 'quote' as const,
+    initialOrder,
+    markPrice: '84076',
+    market: { ...market, markPrice: '84076', pxDecimals: 1, szDecimals: 5 },
+    mode: 'modify' as const,
+    position: {
+      ...position([initialOrder]),
+      baseSize: '0.00014',
+      entryPrice: '83719',
+      leverage: 37,
+      liquidationPrice: '82540',
+    },
+  };
+};
+
+describe('PerpsProPositionTpSlForm', () => {
+  it.each(['add', 'modify', 'position'] as const)(
+    'opts in only the Android %s TP/SL fields, leaving Amount and iOS alone',
+    mode => {
+      const original = order(
+        'takeProfit',
+        1,
+        '110',
+        mode === 'position' ? 'position' : 'partial',
+      );
+      const unregister = jest.fn();
+      const keyboardReveal = {
+        registerInput: jest.fn(() => unregister),
+        onLayout: jest.fn(),
+      };
+      for (const android of [false, true]) {
+        mockAndroid = android;
+        const view = render(
+          <PerpsProPositionTpSlForm
+            {...props()}
+            initialOrder={mode === 'modify' ? original : null}
+            mode={mode}
+            position={position(mode === 'position' ? [original] : [])}
+            keyboardReveal={keyboardReveal}
+          />,
+        );
+        const legs = mode === 'modify' ? 1 : 2;
+        expect(screen.queryAllByTestId(/-reveal-group$/)).toHaveLength(
+          android ? legs : 0,
+        );
+        expect(keyboardReveal.registerInput).toHaveBeenCalledTimes(
+          android ? legs * 2 : 0,
+        );
+        if (android) {
+          fireEvent(
+            screen.getByTestId(
+              'perps-pro-position-tpsl-takeProfit-reveal-group',
+            ),
+            'layout',
+            {},
+          );
+          expect(keyboardReveal.onLayout).toHaveBeenCalledTimes(1);
+        }
+        view.unmount();
+        expect(unregister).toHaveBeenCalledTimes(android ? legs * 2 : 0);
+      }
+      mockAndroid = false;
+    },
+  );
+  it.each(['legs', 'duplicates'] as const)(
+    'shows waiting only on the canceled order and restores cancellation after failure (%s)',
+    scenario => {
+      const first = order('takeProfit', 1, '110', 'position');
+      const second = order(
+        scenario === 'duplicates' ? 'takeProfit' : 'stopLoss',
+        2,
+        scenario === 'duplicates' ? '120' : '90',
+        'position',
+      );
+      const input = props();
+      const form = (pending: boolean, cancelingOids: number[]) => (
+        <PerpsProPositionTpSlForm
+          {...input}
+          pending={pending}
+          cancelingOids={cancelingOids}
+          mode="position"
+          position={position([first, second])}
+        />
+      );
+      const view = render(form(true, [2]));
+      const buttons = screen.getAllByRole('button', { name: 'global.cancel' });
+      expect(buttons.map(button => button.props.accessibilityState)).toEqual([
+        { busy: false, disabled: true },
+        { busy: true, disabled: true },
+      ]);
+      expect(screen.UNSAFE_getAllByType(ActivityIndicator)).toHaveLength(1);
+      expect(screen.UNSAFE_getByType(ActivityIndicator).props.color).toBe(
+        PERPS_PRO_DIALOG_TOKENS.actionBackground,
+      );
+      fireEvent.press(buttons[1]!);
+      expect(input.onCancelOrder).not.toHaveBeenCalled();
+      view.rerender(form(false, []));
+      expect(screen.UNSAFE_queryByType(ActivityIndicator)).toBeNull();
+      fireEvent.press(
+        screen.getAllByRole('button', { name: 'global.cancel' })[1]!,
+      );
+      expect(input.onCancelOrder).toHaveBeenCalledWith(second);
+    },
+  );
+
+  describe.each(['pnl', 'roi'] as const)(
+    'price-derived %s input',
+    inputMode => {
+      it.each([
+        ['long', 'stopLoss', '120', '110', '5'],
+        ['short', 'stopLoss', '80', '90', '5'],
+        ['long', 'takeProfit', '80', '90', '−5'],
+        ['short', 'takeProfit', '120', '110', '−5'],
+        ['long', 'stopLoss', '120', '100', '0'],
+      ] as const)(
+        'preserves the signed price-derived input for %s %s at Mark %s and trigger %s',
+        (direction, kind, markPrice, trigger, expected) => {
+          mockPositionModes = { sl: inputMode, tp: inputMode };
+          const display =
+            inputMode === 'pnl'
+              ? expected
+              : expected === '0'
+              ? '0'
+              : expected.startsWith('−')
+              ? '−100'
+              : '100';
+          const initialOrder = order(kind, 7, trigger);
+          render(
+            <PerpsProPositionTpSlForm
+              {...props()}
+              initialOrder={initialOrder}
+              markPrice={markPrice}
+              mode="modify"
+              position={{ ...position([initialOrder]), direction }}
+            />,
+          );
+          const id = `perps-pro-position-tpsl-${kind}-mode-input`;
+          expect(screen.getByTestId(`${id}-formatted-value`)).toHaveTextContent(
+            display,
+          );
+          fireEvent(screen.getByTestId(id), 'focus');
+          expect(!!screen.queryByTestId(`${id}-negative-prefix`)).toBe(
+            expected.startsWith('−'),
+          );
+          fireEvent(screen.getByTestId(id), 'blur');
+          expect(
+            screen.getByTestId(`perps-pro-position-tpsl-${kind}-price`).props
+              .value,
+          ).toBe(trigger);
+        },
+      );
+    },
+  );
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockAndroid = false;
+    mockPositionModes = { sl: 'pnl', tp: 'pnl' };
+  });
+
+  it.each(['pnl', 'roi'] as const)(
+    'synchronizes only the changed leg and preserves the peer raw %s target and mode picker',
+    selectedMode => {
+      mockPositionModes = { tp: selectedMode, sl: selectedMode };
+      const tp = order('takeProfit', 7, '130', 'position');
+      const sl = order('stopLoss', 8, '90', 'position');
+      const input = props();
+      const view = render(
+        <PerpsProPositionTpSlForm
+          {...input}
+          mode="position"
+          position={position([tp, sl])}
+        />,
+      );
+      const tpId = 'perps-pro-position-tpsl-takeProfit-mode-input';
+      const slId = 'perps-pro-position-tpsl-stopLoss-mode-input';
+      fireEvent.changeText(screen.getByTestId(tpId), '35.00');
+      fireEvent.changeText(screen.getByTestId(slId), '5.00');
+      fireEvent.press(screen.getByTestId(`${slId}-mode`));
+      view.rerender(
+        <PerpsProPositionTpSlForm
+          {...input}
+          mode="position"
+          position={position([sl])}
+        />,
+      );
+      expect(screen.getByTestId(tpId).props.value).toBe('');
+      expect(screen.getByTestId(slId).props.value).toBe('5.00');
+      expect(mockModeSheetProps.mock.lastCall?.[0]).toMatchObject({
+        visible: true,
+        selected: selectedMode,
+      });
+      // Quantity/mark derivation must still use the retained mode source.
+      view.rerender(
+        <PerpsProPositionTpSlForm
+          {...input}
+          mode="position"
+          position={{ ...position([sl]), baseSize: '2' }}
+        />,
+      );
+      expect(screen.getByTestId(slId).props.value).toBe('5.00');
+      const replacement = {
+        ...sl,
+        oid: 9,
+        key: 'position:9',
+        triggerPrice: '80',
+      };
+      view.rerender(
+        <PerpsProPositionTpSlForm
+          {...input}
+          mode="position"
+          position={position([replacement])}
+        />,
+      );
+      expect(
+        screen.getByTestId('perps-pro-position-tpsl-stopLoss-price').props
+          .value,
+      ).toBe('80');
+      expect(screen.getByTestId(slId).props.value).not.toBe('5.00');
+      expect(mockModeSheetProps.mock.lastCall?.[0].visible).toBe(false);
+      fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-review'));
+      expect(input.onReview).not.toHaveBeenCalled();
+    },
+  );
+
+  it('discards only the duplicated leg and does not reset on order reordering', () => {
+    const tp = order('takeProfit', 7, '130', 'position');
+    const sl = order('stopLoss', 8, '90', 'position');
+    const input = props();
+    const view = render(
+      <PerpsProPositionTpSlForm
+        {...input}
+        mode="position"
+        position={position([tp, sl])}
+      />,
+    );
+    const tpId = 'perps-pro-position-tpsl-takeProfit-price';
+    const slId = 'perps-pro-position-tpsl-stopLoss-price';
+    fireEvent.changeText(screen.getByTestId(tpId), '135');
+    fireEvent.changeText(screen.getByTestId(slId), '95');
+    view.rerender(
+      <PerpsProPositionTpSlForm
+        {...input}
+        mode="position"
+        position={position([sl, tp])}
+      />,
+    );
+    expect(screen.getByTestId(tpId).props.value).toBe('135');
+    expect(screen.getByTestId(slId).props.value).toBe('95');
+    const duplicate = order('takeProfit', 9, '140', 'position');
+    view.rerender(
+      <PerpsProPositionTpSlForm
+        {...input}
+        mode="position"
+        position={position([tp, duplicate, sl])}
+      />,
+    );
+    expect(screen.queryByTestId(tpId)).toBeNull();
+    expect(screen.getByTestId(slId).props.value).toBe('95');
+    view.rerender(
+      <PerpsProPositionTpSlForm
+        {...input}
+        mode="position"
+        position={position([tp, sl])}
+      />,
+    );
+    expect(screen.getByTestId(tpId).props.value).toBe('130');
+    expect(screen.getByTestId(slId).props.value).toBe('95');
+  });
+
+  it('keeps Modify disabled until a valid field changes, then builds cancel-and-recreate intent', () => {
+    const initialOrder = order('takeProfit', 7, '110');
+    const input = props();
+    render(
+      <PerpsProPositionTpSlForm
+        {...input}
+        initialOrder={initialOrder}
+        mode="modify"
+        position={position([initialOrder])}
+      />,
+    );
+
+    expect(
+      screen.getByTestId('perps-pro-position-tpsl-review').props
+        .accessibilityState,
+    ).toEqual({ disabled: true });
+    fireEvent.changeText(
+      screen.getByTestId('perps-pro-position-tpsl-takeProfit-price'),
+      '112',
+    );
+    expect(
+      screen.getByTestId('perps-pro-position-tpsl-review').props
+        .accessibilityState,
+    ).toEqual({ disabled: false });
+    fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-review'));
+    expect(input.onReview).toHaveBeenCalledWith({
+      legs: [
+        {
+          kind: 'takeProfit',
+          replaceOid: 7,
+          size: '0.5',
+          triggerPrice: '112',
+        },
+      ],
+      mode: 'modify',
+      scope: 'partial',
+    });
+    expect(mockSliderProps.mock.lastCall?.[0]).toMatchObject({ value: 0 });
+    expect(
+      screen.getByTestId('perps-pro-position-tpsl-amount').props.value,
+    ).toBe('0.5');
+    expect(
+      screen.getByTestId('perps-pro-position-tpsl-amount-unit'),
+    ).toHaveTextContent('BTC');
+  });
+
+  describe('Partial Modify quantities', () => {
+    describe.each(['base', 'quote'] as const)('%s unit', amountUnit => {
+      it.each([
+        ['long', 'takeProfit', '453719', '37', '+37.00'],
+        ['long', 'stopLoss', '80000', '0.37', '-0.37'],
+        ['short', 'takeProfit', '80000', '0.37', '+0.37'],
+        ['short', 'stopLoss', '453719', '37', '-37.00'],
+      ] as const)(
+        'preserves the remaining size for %s %s through focus, Mark ticks and price edits',
+        (direction, kind, triggerPrice, magnitude, pnl) => {
+          const input = precisionModifyProps();
+          const initialOrder = {
+            ...input.initialOrder,
+            kind,
+            side: direction === 'long' ? ('A' as const) : ('B' as const),
+            triggerPrice,
+          };
+          const formProps = {
+            ...input,
+            amountUnit,
+            initialOrder,
+            position: {
+              ...input.position,
+              direction,
+              tpslOrders: [initialOrder],
+            },
+          };
+          const { rerender } = render(
+            <PerpsProPositionTpSlForm {...formProps} />,
+          );
+          const amount = screen.getByTestId('perps-pro-position-tpsl-amount');
+          const prefill = amountUnit === 'base' ? '0.0001' : '8.4';
+          expect(amount.props.value).toBe(prefill);
+          fireEvent(amount, 'pressIn');
+          fireEvent(amount, 'focus');
+          fireEvent.changeText(amount, prefill);
+          fireEvent(amount, 'blur');
+          rerender(
+            <PerpsProPositionTpSlForm {...formProps} markPrice="84123" />,
+          );
+          expect(
+            screen.getByTestId(`perps-pro-position-tpsl-${kind}-mode-input`)
+              .props.value,
+          ).toBe(magnitude);
+          expect(mockTransProps.mock.lastCall?.[0].values.pnl).toBe(pnl);
+          expect(
+            screen.getByTestId('perps-pro-position-tpsl-review').props
+              .accessibilityState,
+          ).toEqual({ disabled: true });
+          fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-review'));
+          expect(input.onReview).not.toHaveBeenCalled();
+          expect(mockSliderProps.mock.lastCall?.[0].value).toBe(0);
+
+          const nextTrigger = triggerPrice === '80000' ? '79000' : '454000';
+          fireEvent.changeText(
+            screen.getByTestId(`perps-pro-position-tpsl-${kind}-price`),
+            nextTrigger,
+          );
+          fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-review'));
+          expect(input.onReview).toHaveBeenCalledWith({
+            mode: 'modify',
+            scope: 'partial',
+            legs: [
+              {
+                kind,
+                replaceOid: 7,
+                size: '0.0001',
+                triggerPrice: nextTrigger,
+              },
+            ],
+          });
+        },
+      );
+    });
+
+    it.each(['84000', '84076'])(
+      'keeps one lot and its PnL when the initial Mark is %s',
+      initialMark => {
+        const input = precisionModifyProps();
+        input.initialOrder.remainingSize = '0.00001';
+        const { rerender } = render(
+          <PerpsProPositionTpSlForm {...input} markPrice={initialMark} />,
+        );
+        rerender(<PerpsProPositionTpSlForm {...input} markPrice="84123" />);
+        expect(
+          screen.getByTestId('perps-pro-position-tpsl-takeProfit-mode-input')
+            .props.value,
+        ).toBe('3.7');
+        expect(
+          screen.getByTestId('perps-pro-position-tpsl-review').props
+            .accessibilityState,
+        ).toEqual({ disabled: true });
+        fireEvent.changeText(
+          screen.getByTestId('perps-pro-position-tpsl-takeProfit-price'),
+          '454000',
+        );
+        fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-review'));
+        expect(input.onReview.mock.lastCall?.[0].legs[0].size).toBe('0.00001');
+      },
+    );
+
+    it('uses the original quantity when the user changes only the PnL target', () => {
+      const input = precisionModifyProps();
+      const { rerender } = render(<PerpsProPositionTpSlForm {...input} />);
+      fireEvent.changeText(
+        screen.getByTestId('perps-pro-position-tpsl-takeProfit-mode-input'),
+        '33',
+      );
+      rerender(<PerpsProPositionTpSlForm {...input} markPrice="85000" />);
+      expect(
+        screen.getByTestId('perps-pro-position-tpsl-takeProfit-mode-input')
+          .props.value,
+      ).toBe('33');
+      expect(
+        screen.getByTestId('perps-pro-position-tpsl-takeProfit-price').props
+          .value,
+      ).toBe('413719');
+      expect(mockTransProps.mock.lastCall?.[0].values.pnl).toBe('+33.00');
+      fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-review'));
+      expect(input.onReview.mock.lastCall?.[0].legs[0]).toMatchObject({
+        size: '0.0001',
+        triggerPrice: '413719',
+      });
+    });
+
+    it('uses the original quantity in ROI mode too', () => {
+      mockPositionModes.tp = 'roi';
+      const input = precisionModifyProps();
+      render(<PerpsProPositionTpSlForm {...input} />);
+      expect(
+        screen.getByTestId('perps-pro-position-tpsl-takeProfit-mode-input')
+          .props.value,
+      ).toBe('16352.32');
+      expect(mockTransProps.mock.lastCall?.[0].values.pnl).toBe('+37.00');
+      fireEvent.changeText(
+        screen.getByTestId('perps-pro-position-tpsl-takeProfit-mode-input'),
+        '100',
+      );
+      fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-review'));
+      expect(input.onReview.mock.lastCall?.[0].legs[0].size).toBe('0.0001');
+    });
+
+    it('switches to manual conversion after a real edit, including retyping the prefill', () => {
+      const input = precisionModifyProps();
+      const { rerender } = render(<PerpsProPositionTpSlForm {...input} />);
+      fireEvent.changeText(
+        screen.getByTestId('perps-pro-position-tpsl-amount'),
+        '',
+      );
+      expect(
+        screen.getByTestId('perps-pro-position-tpsl-review').props
+          .accessibilityState,
+      ).toEqual({ disabled: true });
+      fireEvent.changeText(
+        screen.getByTestId('perps-pro-position-tpsl-amount'),
+        '8.4',
+      );
+      expect(mockTransProps.mock.lastCall?.[0].values.pnl).toBe('+33.30');
+      fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-review'));
+      expect(input.onReview.mock.lastCall?.[0].legs[0].size).toBe('0.00009');
+      // Manual quote amounts retain the existing live Mark conversion.
+      rerender(<PerpsProPositionTpSlForm {...input} markPrice="84000" />);
+      expect(mockTransProps.mock.lastCall?.[0].values.pnl).toBe('+37.00');
+      expect(
+        screen.getByTestId('perps-pro-position-tpsl-review').props
+          .accessibilityState,
+      ).toEqual({ disabled: true });
+    });
+
+    it('lets the Slider replace the order quantity and clears it on manual entry', () => {
+      const input = precisionModifyProps();
+      render(<PerpsProPositionTpSlForm {...input} />);
+      act(() => mockSliderProps.mock.lastCall?.[0].onValueChange(50));
+      expect(mockTransProps.mock.lastCall?.[0].values.pnl).toBe('+25.90');
+      fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-review'));
+      expect(input.onReview.mock.lastCall?.[0].legs[0].size).toBe('0.00007');
+      fireEvent(screen.getByTestId('perps-pro-position-tpsl-amount'), 'focus');
+      expect(
+        screen.getByTestId('perps-pro-position-tpsl-amount').props.value,
+      ).toBe('');
+      expect(mockSliderProps.mock.lastCall?.[0].value).toBe(0);
+      expect(
+        screen.getByTestId('perps-pro-position-tpsl-review').props
+          .accessibilityState,
+      ).toEqual({ disabled: true });
+    });
+
+    it('blocks an oversized unchanged quantity after the position shrinks', () => {
+      const input = precisionModifyProps();
+      const { rerender } = render(<PerpsProPositionTpSlForm {...input} />);
+      fireEvent.changeText(
+        screen.getByTestId('perps-pro-position-tpsl-takeProfit-price'),
+        '454000',
+      );
+      rerender(
+        <PerpsProPositionTpSlForm
+          {...input}
+          position={{ ...input.position, baseSize: '0.00005' }}
+        />,
+      );
+      expect(
+        screen.getByTestId('perps-pro-position-tpsl-review').props
+          .accessibilityState,
+      ).toEqual({ disabled: true });
+      fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-review'));
+      expect(input.onReview).not.toHaveBeenCalled();
+      // An explicit new amount is still clamped to the live position limit.
+      fireEvent.changeText(
+        screen.getByTestId('perps-pro-position-tpsl-amount'),
+        '10',
+      );
+      expect(
+        screen.getByTestId('perps-pro-position-tpsl-amount').props.value,
+      ).toBe('4.2');
+      fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-review'));
+      expect(input.onReview.mock.lastCall?.[0].legs[0].size).toBe('0.00004');
+    });
+  });
+
+  it('colors the TP estimate by signed PnL instead of TP/SL kind', () => {
+    const initialOrder = order('takeProfit', 7, '105');
+    render(
+      <PerpsProPositionTpSlForm
+        {...props()}
+        initialOrder={initialOrder}
+        mode="modify"
+        position={{
+          ...position([initialOrder]),
+          entryPrice: '120',
+        }}
+      />,
+    );
+
+    mockTransProps.mockClear();
+    fireEvent.changeText(
+      screen.getByTestId('perps-pro-position-tpsl-takeProfit-price'),
+      '110',
+    );
+    expect(mockTransProps.mock.lastCall?.[0].values.pnl).toBe('-5.00');
+    expect(
+      StyleSheet.flatten(
+        mockTransProps.mock.lastCall?.[0].components['2'].props.style,
+      ),
+    ).toMatchObject({ color: 'red-default' });
+
+    fireEvent.changeText(
+      screen.getByTestId('perps-pro-position-tpsl-takeProfit-price'),
+      '130',
+    );
+    expect(mockTransProps.mock.lastCall?.[0].values.pnl).toBe('+5.00');
+    expect(
+      StyleSheet.flatten(
+        mockTransProps.mock.lastCall?.[0].components['2'].props.style,
+      ),
+    ).toMatchObject({ color: 'green-default' });
+  });
+
+  it('transfers Amount ownership between the input and Slider without retaining stale values', () => {
+    const initialOrder = order('takeProfit', 7, '110');
+    const keyboardDismiss = jest
+      .spyOn(Keyboard, 'dismiss')
+      .mockImplementation(jest.fn());
+    render(
+      <PerpsProPositionTpSlForm
+        {...props()}
+        initialOrder={initialOrder}
+        mode="modify"
+        position={position([initialOrder])}
+      />,
+    );
+
+    const amountInput = screen.getByTestId('perps-pro-position-tpsl-amount');
+    fireEvent(amountInput, 'focus');
+    act(() => mockSliderProps.mock.lastCall?.[0].onSlidingStart(0));
+    expect(mockAmountInputBlur).toHaveBeenCalledTimes(1);
+    expect(keyboardDismiss).toHaveBeenCalledTimes(1);
+
+    act(() => {
+      mockSliderProps.mock.lastCall?.[0].onValueChange(50);
+      mockSliderProps.mock.lastCall?.[0].onSlidingComplete(50);
+    });
+    expect(mockSliderHapticStart).toHaveBeenCalledWith(0);
+    expect(mockSliderHapticValueChange).toHaveBeenCalledWith(50);
+    expect(mockSliderHapticComplete).toHaveBeenCalledTimes(1);
+    expect(mockUseSliderHaptics).toHaveBeenCalledWith({
+      disabled: false,
+      maximumValue: 100,
+      minimumValue: 0,
+      step: 1,
+      value: expect.any(Number),
+    });
+    expect(
+      screen.getByTestId('perps-pro-position-tpsl-slider-amount'),
+    ).toHaveTextContent(/50%/);
+    expect(mockSliderProps.mock.lastCall?.[0]).toMatchObject({ value: 50 });
+
+    fireEvent(screen.getByTestId('perps-pro-position-tpsl-amount'), 'pressIn');
+    fireEvent(screen.getByTestId('perps-pro-position-tpsl-amount'), 'focus');
+    expect(mockSliderProps.mock.lastCall?.[0]).toMatchObject({ value: 0 });
+    expect(
+      screen.getByTestId('perps-pro-position-tpsl-amount').props.value,
+    ).toBe('');
+    expect(
+      screen.queryByTestId('perps-pro-position-tpsl-slider-amount'),
+    ).toBeNull();
+
+    fireEvent.changeText(
+      screen.getByTestId('perps-pro-position-tpsl-amount'),
+      '2',
+    );
+    expect(
+      screen.getByTestId('perps-pro-position-tpsl-amount').props.value,
+    ).toBe('1');
+    const amountProps = mockDecimalProps.mock.calls
+      .map(call => call[0])
+      .find(item => item.testID === 'perps-pro-position-tpsl-amount');
+    expect(amountProps.inputComponent).toBe(
+      PerpsProPositionTpSlBottomSheetTextInput,
+    );
+    expect(amountProps.focusCursorAtEnd).toBeUndefined();
+    expect(amountProps.focusCursorAtEndMode).toBeUndefined();
+
+    keyboardDismiss.mockRestore();
+  });
+
+  it('keeps the active Amount Slider appearance while Confirm is pending', () => {
+    const input = props();
+    const { rerender } = render(
+      <PerpsProPositionTpSlForm {...input} mode="add" position={position()} />,
+    );
+
+    act(() => {
+      mockSliderProps.mock.lastCall?.[0].onValueChange(50);
+    });
+    expect(mockSliderProps.mock.lastCall?.[0]).toMatchObject({
+      dimWhenDisabled: false,
+      disabled: false,
+      value: 50,
+    });
+
+    rerender(
+      <PerpsProPositionTpSlForm
+        {...input}
+        mode="add"
+        pending
+        position={position()}
+      />,
+    );
+    expect(mockSliderProps.mock.lastCall?.[0]).toMatchObject({
+      dimWhenDisabled: false,
+      disabled: true,
+      value: 50,
+    });
+    expect(
+      screen.getByTestId('perps-pro-position-tpsl-review').props
+        .accessibilityState,
+    ).toEqual({ disabled: true });
+  });
+
+  it('creates independent TP and SL legs with one shared amount and Mark validation', () => {
+    const input = props();
+    render(
+      <PerpsProPositionTpSlForm {...input} mode="add" position={position()} />,
+    );
+
+    fireEvent.changeText(
+      screen.getByTestId('perps-pro-position-tpsl-takeProfit-price'),
+      '110',
+    );
+    fireEvent.changeText(
+      screen.getByTestId('perps-pro-position-tpsl-stopLoss-price'),
+      '90',
+    );
+    fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-review'));
+
+    expect(input.onReview).toHaveBeenCalledWith({
+      legs: [
+        {
+          kind: 'takeProfit',
+          replaceOid: null,
+          size: '1',
+          triggerPrice: '110',
+        },
+        {
+          kind: 'stopLoss',
+          replaceOid: null,
+          size: '1',
+          triggerPrice: '90',
+        },
+      ],
+      mode: 'add',
+      scope: 'partial',
+    });
+    expect(
+      screen.getAllByText(
+        'page.perps.pro.positionTpsl.estimatedPnlDescription',
+      ),
+    ).toHaveLength(2);
+    expect(mockSliderProps.mock.lastCall?.[0]).toMatchObject({
+      maximumValue: 100,
+      minimumValue: 0,
+      pointCount: 5,
+      step: 1,
+      tone: 'neutral',
+      value: 100,
+    });
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-position-tpsl-amount-section').props
+          .style,
+      ),
+    ).toMatchObject({ marginTop: 20 });
+    expect(mockTransProps.mock.calls.map(call => call[0].values)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ pnl: '+10.00', roi: '+100.00' }),
+        expect.objectContaining({ pnl: '-10.00', roi: '-100.00' }),
+      ]),
+    );
+    expect(screen.queryByText(/Last/)).toBeNull();
+  });
+
+  it('keeps partial estimates visible and blocks review when PnL or ROI cannot derive a trigger', async () => {
+    const input = props();
+    render(
+      <PerpsProPositionTpSlForm {...input} mode="add" position={position()} />,
+    );
+
+    fireEvent.changeText(
+      screen.getByTestId('perps-pro-position-tpsl-takeProfit-mode-input'),
+      '999999',
+    );
+    mockTransProps.mockClear();
+    fireEvent.changeText(
+      screen.getByTestId('perps-pro-position-tpsl-stopLoss-mode-input'),
+      '101',
+    );
+
+    expect(
+      screen.getByTestId('perps-pro-position-tpsl-stopLoss-price').props.value,
+    ).toBe('');
+    expect(
+      screen.getByText('page.perps.pro.positionTpsl.slTriggerInvalid'),
+    ).toBeTruthy();
+    expect(
+      screen.getByTestId('perps-pro-position-tpsl-stopLoss-hint'),
+    ).toBeTruthy();
+    expect(mockTransProps.mock.lastCall?.[0].values).toMatchObject({
+      pnl: '--',
+      roi: '--',
+    });
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-position-tpsl-stopLoss-price-field').props
+          .style,
+      ),
+    ).toMatchObject({ borderColor: 'red-default', borderWidth: 1 });
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-position-tpsl-stopLoss-mode-input-field')
+          .props.style,
+      ),
+    ).toMatchObject({ borderColor: 'red-default', borderWidth: 1 });
+    expect(
+      screen.getByTestId('perps-pro-position-tpsl-review').props
+        .accessibilityState,
+    ).toEqual({ disabled: true });
+    fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-review'));
+    expect(input.onReview).not.toHaveBeenCalled();
+
+    fireEvent.press(
+      screen.getByTestId('perps-pro-position-tpsl-stopLoss-mode-input-mode'),
+    );
+    await act(async () => {
+      await mockModeSheetProps.mock.lastCall?.[0].onSelect('roi');
+    });
+    fireEvent.changeText(
+      screen.getByTestId('perps-pro-position-tpsl-stopLoss-mode-input'),
+      '1000',
+    );
+    expect(
+      screen.getByText('page.perps.pro.positionTpsl.slTriggerInvalid'),
+    ).toBeTruthy();
+    expect(
+      screen.getByTestId('perps-pro-position-tpsl-review').props
+        .accessibilityState,
+    ).toEqual({ disabled: true });
+
+    fireEvent.changeText(
+      screen.getByTestId('perps-pro-position-tpsl-stopLoss-mode-input'),
+      '100',
+    );
+    expect(
+      screen.queryByText('page.perps.pro.positionTpsl.slTriggerInvalid'),
+    ).toBeNull();
+    expect(
+      screen.getByTestId('perps-pro-position-tpsl-review').props
+        .accessibilityState,
+    ).toEqual({ disabled: false });
+    fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-review'));
+    expect(input.onReview).toHaveBeenCalledWith({
+      legs: [
+        {
+          kind: 'takeProfit',
+          replaceOid: null,
+          size: '1',
+          triggerPrice: '1000099',
+        },
+        {
+          kind: 'stopLoss',
+          replaceOid: null,
+          size: '1',
+          triggerPrice: '90',
+        },
+      ],
+      mode: 'add',
+      scope: 'partial',
+    });
+  });
+
+  it('keeps a partial Modify TP error visible when a short PnL cannot derive a trigger', () => {
+    const initialOrder = order('takeProfit', 7, '90');
+    render(
+      <PerpsProPositionTpSlForm
+        {...props()}
+        initialOrder={initialOrder}
+        mode="modify"
+        position={{
+          ...position([initialOrder]),
+          direction: 'short',
+          liquidationPrice: '120',
+        }}
+      />,
+    );
+
+    mockTransProps.mockClear();
+    fireEvent.changeText(
+      screen.getByTestId('perps-pro-position-tpsl-takeProfit-mode-input'),
+      '51',
+    );
+
+    expect(
+      screen.getByTestId('perps-pro-position-tpsl-takeProfit-price').props
+        .value,
+    ).toBe('');
+    expect(
+      screen.getByText('page.perps.pro.positionTpsl.tpTriggerInvalid'),
+    ).toBeTruthy();
+    expect(
+      screen.getByTestId('perps-pro-position-tpsl-takeProfit-hint'),
+    ).toBeTruthy();
+    expect(mockTransProps.mock.lastCall?.[0].values).toMatchObject({
+      pnl: '--',
+      roi: '--',
+    });
+    expect(
+      screen.getByTestId('perps-pro-position-tpsl-review').props
+        .accessibilityState,
+    ).toEqual({ disabled: true });
+  });
+
+  it('blocks silent Position modification for duplicate same-side remote orders and exposes each Cancel', () => {
+    const first = order('takeProfit', 1, '110', 'position');
+    const second = order('takeProfit', 2, '120', 'position');
+    const input = props();
+    render(
+      <PerpsProPositionTpSlForm
+        {...input}
+        mode="position"
+        position={position([first, second])}
+      />,
+    );
+
+    expect(
+      screen.getByText('page.perps.pro.positionTpsl.duplicatePositionOrders'),
+    ).toBeTruthy();
+    expect(screen.getAllByText('global.cancel')).toHaveLength(2);
+    expect(
+      screen.getByTestId('perps-pro-position-tpsl-review').props
+        .accessibilityState,
+    ).toEqual({ disabled: true });
+    fireEvent.press(screen.getAllByText('global.cancel')[1]!);
+    expect(input.onCancelOrder).toHaveBeenCalledWith(second);
+  });
+
+  it('omits estimate placeholders for genuinely empty Position inputs', () => {
+    render(
+      <PerpsProPositionTpSlForm
+        {...props()}
+        mode="position"
+        position={position()}
+      />,
+    );
+    expect(
+      screen.queryByTestId('perps-pro-position-tpsl-takeProfit-hint'),
+    ).toBeNull();
+    expect(
+      screen.queryByTestId('perps-pro-position-tpsl-stopLoss-hint'),
+    ).toBeNull();
+    expect(mockTransProps).not.toHaveBeenCalled();
+    expect(
+      screen.getByTestId(
+        'perps-pro-position-tpsl-takeProfit-price-placeholder',
+      ),
+    ).toHaveTextContent('page.perps.pro.positionTpsl.takeProfitTrigger');
+  });
+
+  it('uses the inline-empty geometry, defaults to the full position, and shows a standard disabled Confirm when pristine', () => {
+    const input = props();
+    render(
+      <PerpsProPositionTpSlForm
+        {...input}
+        mode="add"
+        position={position()}
+        presentation="inline-empty"
+      />,
+    );
+
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-position-tpsl-form-inline-empty').props
+          .style,
+      ),
+    ).toMatchObject({ paddingHorizontal: 16 });
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-position-tpsl-amount-section').props
+          .style,
+      ),
+    ).toMatchObject({ marginTop: 20 });
+    expect(
+      screen.getByTestId('perps-pro-position-tpsl-slider-amount'),
+    ).toHaveTextContent(/100%/);
+    expect(
+      screen.getByTestId('perps-pro-position-tpsl-amount-unit'),
+    ).toHaveTextContent('BTC');
+    expect(
+      screen.getByTestId('perps-pro-position-tpsl-review').props
+        .accessibilityState,
+    ).toEqual({ disabled: true });
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-position-tpsl-review').props.style,
+      ),
+    ).toMatchObject({
+      backgroundColor: colord(PERPS_PRO_DIALOG_TOKENS.actionBackground)
+        .alpha(0.4)
+        .toRgbString(),
+    });
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-position-tpsl-footer').props.style,
+      ),
+    ).toMatchObject({
+      paddingHorizontal: 4,
+      paddingBottom: 36,
+      paddingTop: 12,
+    });
+    expect(mockSliderProps.mock.lastCall?.[0]).toMatchObject({ value: 100 });
+
+    fireEvent.changeText(
+      screen.getByTestId('perps-pro-position-tpsl-takeProfit-price'),
+      '110',
+    );
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-position-tpsl-footer').props.style,
+      ),
+    ).toMatchObject({
+      paddingHorizontal: 4,
+      paddingBottom: 36,
+      paddingTop: 12,
+    });
+    expect(mockTransProps.mock.lastCall?.[0].values).toMatchObject({
+      pnl: '+10.00',
+      roi: '+100.00',
+    });
+    fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-review'));
+    expect(input.onReview).toHaveBeenCalledWith({
+      legs: [
+        {
+          kind: 'takeProfit',
+          replaceOid: null,
+          size: '1',
+          triggerPrice: '110',
+        },
+      ],
+      mode: 'add',
+      scope: 'partial',
+    });
+  });
+
+  it('keeps the Position form in the exact remaining Figma sheet height and bottom-anchors its footer', () => {
+    render(
+      <PerpsProPositionTpSlForm
+        {...props()}
+        minimumHeight={486}
+        mode="position"
+        position={position()}
+      />,
+    );
+
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-position-tpsl-form-tab').props.style,
+      ),
+    ).toMatchObject({ minHeight: 486, paddingHorizontal: 16 });
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-position-tpsl-footer').props.style,
+      ),
+    ).toMatchObject({
+      marginTop: 'auto',
+      paddingHorizontal: 4,
+      paddingBottom: 36,
+      paddingTop: 12,
+    });
+    expect(
+      screen.getByTestId('perps-pro-position-tpsl-form-card').props.onLayout,
+    ).toBeUndefined();
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-position-tpsl-form-tab').props.style,
+      ).flexGrow,
+    ).toBeUndefined();
+  });
+
+  it('defaults Position to PnL, hides Price, persists the leg, and limits input to two decimals', () => {
+    const input = props();
+    render(
+      <PerpsProPositionTpSlForm {...input} mode="add" position={position()} />,
+    );
+
+    fireEvent.press(
+      screen.getByTestId('perps-pro-position-tpsl-takeProfit-mode-input-mode'),
+    );
+    expect(mockModeSheetProps.mock.lastCall?.[0]).toMatchObject({
+      allowedModes: ['pnl', 'roi'],
+      selected: 'pnl',
+      visible: true,
+    });
+    act(() => mockModeSheetProps.mock.lastCall?.[0].onSelect('roi'));
+    expect(mockSetTpSlMode).toHaveBeenCalledWith({
+      leg: 'tp',
+      mode: 'roi',
+      surface: 'position',
+    });
+    act(() => mockModeSheetProps.mock.lastCall?.[0].onSelect('pnl'));
+    expect(
+      mockDecimalProps.mock.calls
+        .map(([inputProps]) => inputProps)
+        .find(
+          inputProps =>
+            inputProps.testID ===
+            'perps-pro-position-tpsl-takeProfit-mode-input',
+        ),
+    ).toMatchObject({ maxDecimals: 2 });
+    fireEvent.changeText(
+      screen.getByTestId('perps-pro-position-tpsl-takeProfit-mode-input'),
+      '10.1234',
+    );
+
+    expect(
+      screen.getByTestId('perps-pro-position-tpsl-takeProfit-mode-input').props
+        .value,
+    ).toBe('10.12');
+    expect(
+      screen.getByTestId('perps-pro-position-tpsl-takeProfit-price').props
+        .value,
+    ).toBe('110.12');
+    fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-review'));
+    expect(input.onReview).toHaveBeenCalledWith({
+      legs: [
+        {
+          kind: 'takeProfit',
+          replaceOid: null,
+          size: '1',
+          triggerPrice: '110.12',
+        },
+      ],
+      mode: 'add',
+      scope: 'partial',
+    });
+  });
+
+  it('keeps the current leg value when the already-selected mode is selected again', () => {
+    const full = order('takeProfit', 9, '110', 'position');
+    render(
+      <PerpsProPositionTpSlForm
+        {...props()}
+        mode="position"
+        position={position([full])}
+      />,
+    );
+
+    fireEvent.press(
+      screen.getByTestId('perps-pro-position-tpsl-takeProfit-mode-input-mode'),
+    );
+    act(() => mockModeSheetProps.mock.lastCall?.[0].onSelect('pnl'));
+    expect(
+      screen.getByTestId('perps-pro-position-tpsl-takeProfit-price').props
+        .value,
+    ).toBe('110');
+  });
+
+  it('shows the Desktop liquidation error on both full-position inputs without adding a PnL cap', () => {
+    const input = props();
+    render(
+      <PerpsProPositionTpSlForm
+        {...input}
+        mode="position"
+        position={position()}
+      />,
+    );
+
+    fireEvent.changeText(
+      screen.getByTestId('perps-pro-position-tpsl-stopLoss-mode-input'),
+      '40',
+    );
+
+    expect(
+      screen.getByText(
+        'page.perps.pro.positionTpsl.triggerHigherThanLiquidation',
+      ),
+    ).toBeTruthy();
+    expect(mockTransProps.mock.lastCall?.[0].values).toMatchObject({
+      pnl: '-40.00',
+      roi: '-400.00',
+    });
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-position-tpsl-stopLoss-price-field').props
+          .style,
+      ),
+    ).toMatchObject({ borderColor: 'red-default', borderWidth: 1 });
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-position-tpsl-stopLoss-mode-input-field')
+          .props.style,
+      ),
+    ).toMatchObject({ borderColor: 'red-default', borderWidth: 1 });
+    expect(
+      screen.getByTestId('perps-pro-position-tpsl-review').props
+        .accessibilityState,
+    ).toEqual({ disabled: true });
+
+    fireEvent.changeText(
+      screen.getByTestId('perps-pro-position-tpsl-stopLoss-mode-input'),
+      '10',
+    );
+    expect(
+      screen.queryByText(
+        'page.perps.pro.positionTpsl.triggerHigherThanLiquidation',
+      ),
+    ).toBeNull();
+    expect(
+      screen.getByTestId('perps-pro-position-tpsl-review').props
+        .accessibilityState,
+    ).toEqual({ disabled: false });
+
+    fireEvent.changeText(
+      screen.getByTestId('perps-pro-position-tpsl-takeProfit-mode-input'),
+      '999999',
+    );
+    fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-review'));
+    expect(input.onReview).toHaveBeenCalledWith(
+      expect.objectContaining({
+        legs: expect.arrayContaining([
+          expect.objectContaining({
+            kind: 'takeProfit',
+            triggerPrice: '1000099',
+          }),
+        ]),
+        mode: 'position',
+        scope: 'position',
+      }),
+    );
+  });
+
+  it('keeps the full-position estimate visible when PnL or ROI cannot derive a positive trigger', () => {
+    render(
+      <PerpsProPositionTpSlForm
+        {...props()}
+        mode="position"
+        position={position()}
+      />,
+    );
+
+    mockTransProps.mockClear();
+    fireEvent.changeText(
+      screen.getByTestId('perps-pro-position-tpsl-stopLoss-mode-input'),
+      '101',
+    );
+
+    expect(
+      screen.getByTestId('perps-pro-position-tpsl-stopLoss-price').props.value,
+    ).toBe('');
+    expect(
+      screen.getByText(
+        'page.perps.pro.positionTpsl.triggerHigherThanLiquidation',
+      ),
+    ).toBeTruthy();
+    expect(
+      screen.getByTestId('perps-pro-position-tpsl-stopLoss-hint'),
+    ).toBeTruthy();
+    expect(
+      screen.getAllByText(
+        'page.perps.pro.positionTpsl.estimatedPnlDescription',
+      ),
+    ).toHaveLength(1);
+    expect(mockTransProps).toHaveBeenCalledTimes(1);
+    expect(mockTransProps.mock.lastCall?.[0].values).toMatchObject({
+      pnl: '--',
+      roi: '--',
+    });
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-position-tpsl-stopLoss-price-field').props
+          .style,
+      ),
+    ).toMatchObject({ borderColor: 'red-default', borderWidth: 1 });
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-position-tpsl-stopLoss-mode-input-field')
+          .props.style,
+      ),
+    ).toMatchObject({ borderColor: 'red-default', borderWidth: 1 });
+    expect(
+      screen.getByTestId('perps-pro-position-tpsl-review').props
+        .accessibilityState,
+    ).toEqual({ disabled: true });
+
+    mockTransProps.mockClear();
+    fireEvent.changeText(
+      screen.getByTestId('perps-pro-position-tpsl-stopLoss-mode-input'),
+      '10',
+    );
+    expect(
+      screen.queryByText(
+        'page.perps.pro.positionTpsl.triggerHigherThanLiquidation',
+      ),
+    ).toBeNull();
+    expect(mockTransProps.mock.lastCall?.[0].values).toMatchObject({
+      pnl: '-10.00',
+      roi: '-100.00',
+    });
+    expect(
+      screen.getByTestId('perps-pro-position-tpsl-review').props
+        .accessibilityState,
+    ).toEqual({ disabled: false });
+
+    fireEvent.press(
+      screen.getByTestId('perps-pro-position-tpsl-stopLoss-mode-input-mode'),
+    );
+    act(() => mockModeSheetProps.mock.lastCall?.[0].onSelect('roi'));
+    mockTransProps.mockClear();
+    fireEvent.changeText(
+      screen.getByTestId('perps-pro-position-tpsl-stopLoss-mode-input'),
+      '1000',
+    );
+
+    expect(
+      screen.getByTestId('perps-pro-position-tpsl-stopLoss-price').props.value,
+    ).toBe('');
+    expect(
+      screen.getByText(
+        'page.perps.pro.positionTpsl.triggerHigherThanLiquidation',
+      ),
+    ).toBeTruthy();
+    expect(
+      screen.getAllByText(
+        'page.perps.pro.positionTpsl.estimatedPnlDescription',
+      ),
+    ).toHaveLength(1);
+    expect(mockTransProps).toHaveBeenCalledTimes(1);
+    expect(mockTransProps.mock.lastCall?.[0].values).toMatchObject({
+      pnl: '--',
+      roi: '--',
+    });
+    expect(
+      screen.getByTestId('perps-pro-position-tpsl-review').props
+        .accessibilityState,
+    ).toEqual({ disabled: true });
+  });
+
+  it('restores the persisted Position leg mode after the form remounts', async () => {
+    const first = render(
+      <PerpsProPositionTpSlForm
+        {...props()}
+        mode="position"
+        position={position()}
+      />,
+    );
+    fireEvent.press(
+      screen.getByTestId('perps-pro-position-tpsl-takeProfit-mode-input-mode'),
+    );
+    await act(async () => {
+      await mockModeSheetProps.mock.lastCall?.[0].onSelect('roi');
+    });
+    first.unmount();
+
+    render(
+      <PerpsProPositionTpSlForm
+        {...props()}
+        mode="position"
+        position={position()}
+      />,
+    );
+    fireEvent.press(
+      screen.getByTestId('perps-pro-position-tpsl-takeProfit-mode-input-mode'),
+    );
+
+    expect(mockModeSheetProps.mock.lastCall?.[0]).toMatchObject({
+      selected: 'roi',
+    });
+  });
+  it('prefills both full-position legs and replaces only the changed leg', () => {
+    const input = props();
+    const tp = order('takeProfit', 7, '110', 'position');
+    const sl = order('stopLoss', 8, '90', 'position');
+    render(
+      <PerpsProPositionTpSlForm
+        {...input}
+        mode="position"
+        presentation="position-modify"
+        position={position([tp, sl])}
+      />,
+    );
+    expect(screen.queryByTestId('perps-pro-position-tpsl-amount')).toBeNull();
+    expect(
+      screen.getByTestId('perps-pro-position-tpsl-takeProfit-price').props
+        .value,
+    ).toBe('110');
+    expect(
+      screen.getByTestId('perps-pro-position-tpsl-stopLoss-price').props.value,
+    ).toBe('90');
+    fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-review'));
+    expect(input.onReview).not.toHaveBeenCalled();
+    fireEvent.changeText(
+      screen.getByTestId('perps-pro-position-tpsl-takeProfit-price'),
+      '115',
+    );
+    fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-review'));
+    expect(input.onReview).toHaveBeenCalledWith({
+      mode: 'position',
+      scope: 'position',
+      legs: [
+        { kind: 'takeProfit', replaceOid: 7, size: null, triggerPrice: '115' },
+      ],
+    });
+  });
+
+  it('adds a missing full-position leg without replacing its unchanged companion', () => {
+    const input = props();
+    render(
+      <PerpsProPositionTpSlForm
+        {...input}
+        mode="position"
+        presentation="position-modify"
+        position={position([order('takeProfit', 7, '110', 'position')])}
+      />,
+    );
+    expect(
+      screen.getByTestId('perps-pro-position-tpsl-stopLoss-price').props.value,
+    ).toBe('');
+    fireEvent.changeText(
+      screen.getByTestId('perps-pro-position-tpsl-stopLoss-price'),
+      '90',
+    );
+    fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-review'));
+    expect(input.onReview).toHaveBeenCalledWith({
+      mode: 'position',
+      scope: 'position',
+      legs: [
+        { kind: 'stopLoss', replaceOid: null, size: null, triggerPrice: '90' },
+      ],
+    });
+  });
+
+  it('does not interpret clearing a full-position field as cancellation', () => {
+    const input = props();
+    render(
+      <PerpsProPositionTpSlForm
+        {...input}
+        mode="position"
+        presentation="position-modify"
+        position={position([
+          order('takeProfit', 7, '110', 'position'),
+          order('stopLoss', 8, '90', 'position'),
+        ])}
+      />,
+    );
+    fireEvent.changeText(
+      screen.getByTestId('perps-pro-position-tpsl-takeProfit-price'),
+      '',
+    );
+    fireEvent.changeText(
+      screen.getByTestId('perps-pro-position-tpsl-stopLoss-price'),
+      '85',
+    );
+    fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-review'));
+    expect(input.onCancelOrder).not.toHaveBeenCalled();
+    expect(input.onReview).toHaveBeenCalledWith({
+      mode: 'position',
+      scope: 'position',
+      legs: [
+        { kind: 'stopLoss', replaceOid: 8, size: null, triggerPrice: '85' },
+      ],
+    });
+  });
+});

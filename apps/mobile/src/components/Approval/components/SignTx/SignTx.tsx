@@ -1,5 +1,4 @@
-import { Account, ChainGas } from '@/core/services/preference';
-import { useSecurityEngine } from '@/hooks/securityEngine';
+import type { Account, ChainGas } from '@/core/startupServices/preference';
 import { useTheme2024 } from '@/hooks/theme';
 import { useApproval } from '@/hooks/useApproval';
 import { useCommonPopupView } from '@/hooks/useCommonPopupView';
@@ -7,16 +6,16 @@ import { intToHex } from '@/utils/number';
 import {
   calcMaxPriorityFee,
   validateGasPriceRange,
-  convertLegacyTo1559,
   is7702Tx,
 } from '@/utils/transaction';
-import { Chain } from '@/constant/chains';
+import { applySelectedGasToTx } from '@/utils/transactionGas';
+import type { Chain } from '@/constant/chains';
 import {
   KEYRING_CATEGORY_MAP,
   KEYRING_CLASS,
   KEYRING_TYPE,
 } from '@rabby-wallet/keyring-utils';
-import {
+import type {
   ExplainTxResponse,
   GasAccountCheckResult,
   GasLevel,
@@ -24,13 +23,11 @@ import {
   Tx,
   TxPushType,
   MultiAction,
-  TransactionAction,
 } from '@rabby-wallet/rabby-api/dist/types';
-import { Result } from '@rabby-wallet/rabby-security-engine';
-import { Level } from '@rabby-wallet/rabby-security-engine/dist/rules';
+import { TransactionAction } from '@rabby-wallet/rabby-api/dist/types';
 import BigNumber from 'bignumber.js';
+import type { ReactNode } from 'react';
 import React, {
-  ReactNode,
   useCallback,
   useEffect,
   useMemo,
@@ -41,13 +38,15 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import { WaitingSignComponent } from '../map';
 import { isHexString } from 'ethereumjs-util';
+import type {
+  ActionRequireData,
+  ParsedTransactionActionData,
+  SendRequireData,
+} from '@rabby-wallet/rabby-action';
 import {
   fetchActionRequiredData,
   parseAction,
   formatSecurityEngineContext,
-  ActionRequireData,
-  ParsedTransactionActionData,
-  SendRequireData,
 } from '@rabby-wallet/rabby-action';
 import { openapi, testOpenapi } from '@/core/request';
 import {
@@ -56,6 +55,7 @@ import {
   apiProvider,
   apiSecurityEngine,
 } from '@/core/apis';
+import { customRPCServiceApi } from '@/core/serviceApi/customRPC';
 import {
   ALIAS_ADDRESS,
   DEFAULT_GAS_LIMIT_RATIO,
@@ -63,16 +63,24 @@ import {
   SAFE_GAS_LIMIT_RATIO,
 } from '@/constant/gas';
 import { INTERNAL_REQUEST_ORIGIN } from '@/constant';
-import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine';
-import { SUPPORT_1559_KEYRING_TYPE } from '@/constant/tx';
 import {
-  customRPCService,
-  dappService,
-  keyringService,
-  preferenceService,
-  transactionHistoryService,
-  whitelistService,
-} from '@/core/services';
+  useApprovalSecurityEngine,
+  SecurityEngineScopeProvider,
+} from '../../hooks/useApprovalSecurityEngine';
+import {
+  useActionSecurity,
+  type PreparedSecurityActions,
+} from '../../hooks/useActionSecurity';
+import { SecurityEngineError } from '../SecurityEngine/SecurityEngineError';
+import { SUPPORT_1559_KEYRING_TYPE } from '@/constant/tx';
+import { getDappSnapshot } from '@/core/serviceApi/dapp';
+import { keyringServiceApi } from '@/core/serviceApi/keyring';
+import {
+  getLastTimeGasSelection,
+  updateLastTimeGasSelection,
+} from '@/core/serviceApi/preference';
+import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
+import { whitelistServiceApi } from '@/core/serviceApi/whitelist';
 import { toast } from '@/components2024/Toast';
 
 import RuleDrawer from '../SecurityEngine/RuleDrawer';
@@ -107,7 +115,7 @@ import { GnosisDrawer } from '../TxComponents/GnosisDrawer';
 import { SafeNonceSelector } from '../TxComponents/SafeNonceSelector';
 import { useMemoizedFn, useRequest } from 'ahooks';
 import { useEnterPassphraseModal } from '@/hooks/useEnterPassphraseModal';
-import { GasSelectorResponse } from '../TxComponents/GasSelector/GasSelectorHeader';
+import type { GasSelectorResponse } from '../TxComponents/GasSelector/GasSelectorHeader';
 import { SignMainnetGasSelectorHeader } from '../TxComponents/GasSelector/SignMainnetGasSelectorHeader';
 import { useEffectiveApprovalGasMethod } from '../TxComponents/GasSelector/useEffectiveApprovalGasMethod';
 import type { ApprovalGasMethod } from '../TxComponents/GasSelector/approvalGasDisplay';
@@ -115,13 +123,13 @@ import { SignAdvancedSettings } from '../SignAdvancedSettings';
 import { BroadcastMode } from '../BroadcastMode';
 import { useFindChain } from '@/hooks/useFindChain';
 import { SignTestnetTx } from '../SignTestnetTx';
-import { GasLessConfig } from '../FooterBar/GasLessComponents';
+import type { GasLessConfig } from '../FooterBar/GasLessComponents';
 import { CustomRPCErrorModal } from './CustomRPCErrorModal';
 import { useCustomRPC } from '@/hooks/useCustomRPC';
 import { findChain, isTestnet } from '@/utils/chain';
 import { getTimeSpan } from '@/utils/time';
 import { useGasAccountTxsCheck } from '@/screens/GasAccount/hooks/checkTsx';
-import { useGasAccountInfo } from '@/screens/GasAccount/hooks';
+import { useGasAccountSnapshotActivation } from '@/screens/GasAccount/hooks';
 import { EIP7702Warning } from '../EIP7702Warning';
 import { BlockedAddressDialog } from '@/components/Dialogs/BlockedAddressDialog';
 import { GnosisAdminFooterBarPopup } from '../TxComponents/GnosisAdminFooterBarPopup';
@@ -131,22 +139,25 @@ import { getCexInfo } from '@/hooks/useCexSupportList';
 import { MultiActionProps } from '../TypedDataActions';
 import { apisTransactionHistory } from '@/core/apis/transactionHistory';
 import { calcGasLimit } from '@/core/apis/transactions';
+import { isHyperEvmChain } from '@/utils/hyperEvm';
 import { getEIP7702MiniGasLimit } from '@/utils/7702';
 import { Text } from '@/components/Typography';
 import { checkGasAccountLevelValidation } from './useGasAccountLevelValidation';
-import {
-  GasAccountTopUpResult,
-  getBumpedNonceAfterTopUp,
-} from '@/screens/GasAccount/components/topUpContinuation';
+import type { GasAccountTopUpResult } from '@/screens/GasAccount/components/topUpContinuation';
+import { getBumpedNonceAfterTopUp } from '@/screens/GasAccount/components/topUpContinuation';
+import type {
+  GasTokenInfo,
+  TempoFeeTokenOption,
+  TxWithTempoExtras,
+} from '@/utils/tempo';
 import {
   calcTempoMaxGasCostRawAmountIn18,
-  GasTokenInfo,
+  buildTempoTransaction,
   isTempoBatchSupportedAccountType,
   isTempoChain,
   listTempoFeeTokenOptionsFromCache,
   loadTempoFeeTokenOptionsState,
-  TempoFeeTokenOption,
-  TxWithTempoExtras,
+  shouldUseTempoTransaction,
 } from '@/utils/tempo';
 import tokenListStore from '@/store/tokens';
 
@@ -193,7 +204,7 @@ interface BlockInfo {
 const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
   const { isGnosis } = params;
   const currentAccount = params.isGnosis ? params.account! : $account;
-  const site = dappService.getDapp(origin || '');
+  const site = getDappSnapshot(origin || '');
   const [isReady, setIsReady] = useState(false);
   const [nonceChanged, setNonceChanged] = useState(false);
   const [canProcess, setCanProcess] = useState(true);
@@ -261,9 +272,11 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
       contract_protocol_name: '',
     },
   });
-  const [actionData, setActionData] = useState<ParsedTransactionActionData>({});
-  const [actionRequireData, setActionRequireData] =
-    useState<ActionRequireData>(null);
+  const [preparedActions, setPreparedActions] =
+    useState<PreparedSecurityActions<ParsedTransactionActionData> | null>(null);
+  const actionData = preparedActions?.actions[0]?.data || {};
+  const actionRequireData = preparedActions?.actions[0]?.requireData || null;
+  const explainSequence = useRef(0);
   const { t } = useTranslation();
   const [preprocessSuccess, setPreprocessSuccess] = useState(true);
   const [chainId, setChainId] = useState<number>(
@@ -334,14 +347,13 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   // const scrollRefSize = useSize(scrollRef);
   // const scrollInfo = useScroll(scrollRef);
-  const [getApproval, resolveApproval, rejectApproval] = useApproval();
   if (!chain) {
     throw new Error('No support chain found');
   }
   const [support1559, setSupport1559] = useState(!!chain?.eip?.['1559']);
   const [footerShowShadow, setFooterShowShadow] = useState(false);
-  const { userData, rules, currentTx, ...apiApprovalSecurityEngine } =
-    useApprovalSecurityEngine();
+  const apiApprovalSecurityEngine = useApprovalSecurityEngine();
+  const { currentTx } = apiApprovalSecurityEngine;
 
   // useTestnetCheck({
   //   chainId,
@@ -367,7 +379,7 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
     isSwap,
     isBridge,
     swapPreferMEVGuarded,
-    isViewGnosisSafe,
+    isViewGnosisSafe: requestedViewGnosisSafe,
     reqId,
     safeTxGas,
     authorizationList,
@@ -381,8 +393,23 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
     validBefore,
     validAfter,
   } = useMemo(() => {
-    return normalizeTxParams(params.data[0]);
-  }, [params.data]);
+    const normalizedTx = normalizeTxParams(params.data[0]);
+    if (
+      !shouldUseTempoTransaction({
+        tx: normalizedTx as Record<string, unknown>,
+        chainServerId: chain.serverId,
+      })
+    ) {
+      return normalizedTx;
+    }
+    return buildTempoTransaction(normalizedTx as any, {
+      stripTopLevelData: true,
+    });
+  }, [chain.serverId, params.data]);
+
+  // Only the internal Safe queue has already built a transaction to sign.
+  const isViewGnosisSafe =
+    origin === INTERNAL_REQUEST_ORIGIN && requestedViewGnosisSafe === true;
 
   const is7702 = is7702Tx({ authorizationList } as any);
 
@@ -460,37 +487,39 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
   const [tempoGasTokenLoading, setTempoGasTokenLoading] = useState(false);
   const [tempoCurrentFeeTokenId, setTempoCurrentFeeTokenId] = useState('');
   const [tempoPreferredFeeTokenId, setTempoPreferredFeeTokenId] = useState('');
-  const { executeEngine } = useSecurityEngine();
-  const [multiActionList, setMultiActionList] = useState<
-    ParsedTransactionActionData[]
-  >([]);
-  const [multiActionRequireDataList, setMultiActionRequireDataList] = useState<
-    ActionRequireData[]
-  >([]);
-  const [multiActionEngineResultList, setMultiActionEngineResultList] =
-    useState<Result[][]>([]);
-  const isMultiActions = useMemo(() => {
-    return multiActionList.length > 0;
-  }, [multiActionList]);
-  const [engineResults, setEngineResults] = useState<Result[]>([]);
-
+  const security = useActionSecurity(
+    preparedActions,
+    apiApprovalSecurityEngine,
+    'transaction',
+  );
+  const {
+    engineResults,
+    securityLevel,
+    hasUnProcessSecurityResult,
+    blocked: securityBlocked,
+  } = security;
+  const isMultiActions = preparedActions?.type === 'multi';
+  const multiActionList = useMemo(
+    () => preparedActions?.actions.map(action => action.data) || [],
+    [preparedActions],
+  );
+  const multiActionRequireDataList = useMemo(
+    () => preparedActions?.actions.map(action => action.requireData) || [],
+    [preparedActions],
+  );
+  const multiActionEngineResultList = security.resultList;
+  const executeSecurityEngine = security.retry;
+  const [getApproval, resolveApproval, rejectApproval] = useApproval({
+    canResolve: () => isReady && security.canSubmit(),
+  });
+  const invalidateSecurity = () => {
+    explainSequence.current += 1;
+    security.invalidate();
+    setPreparedActions(null);
+    setIsReady(false);
+  };
   const [isShowBlockedTransactionDialog, setIsShowBlockedTransactionDialog] =
     useState(false);
-  const securityLevel = useMemo(() => {
-    const enableResults = engineResults.filter(result => {
-      return result.enable && !currentTx.processedRules.includes(result.id);
-    });
-    if (enableResults.some(result => result.level === Level.FORBIDDEN)) {
-      return Level.FORBIDDEN;
-    }
-    if (enableResults.some(result => result.level === Level.DANGER)) {
-      return Level.DANGER;
-    }
-    if (enableResults.some(result => result.level === Level.WARNING)) {
-      return Level.WARNING;
-    }
-    return undefined;
-  }, [engineResults, currentTx]);
 
   const isGasTopUp = tx.to?.toLowerCase() === GAS_TOP_UP_ADDRESS.toLowerCase();
   const isGasAccountTopUpFlow = !!params?.$ctx?.gasAccountTopUp || isGasTopUp;
@@ -807,7 +836,7 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
   const [isShowCustomRPCErrorModal, setIsShowCustomRPCErrorModal] =
     useState(false);
 
-  const explainTx = async (address: string) => {
+  const explainTx = async (address: string, sequence: number) => {
     let recommendNonce = updateNonce ? '0x0' : tx.nonce || '0x0';
     if (!isGnosisAccount) {
       try {
@@ -823,6 +852,7 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
             });
           }
         }
+        if (sequence !== explainSequence.current) return;
         setRecommendNonce(recommendNonce);
       } catch (e) {
         if (await apiCustomRPC.hasCustomRPC(chain.enum)) {
@@ -836,9 +866,8 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
     } // do not overwrite nonce if from === to(cancel transaction)
 
     const explainNonce = (updateNonce ? recommendNonce : tx.nonce) || '0x1';
-    const delegateCall = isGnosisAccount
-      ? !!params?.data?.[0]?.operation
-      : false;
+    const delegateCall =
+      isGnosisAccount && Number(params?.data?.[0]?.operation) === 1;
     const parseTxPromise = openapi.parseTx({
       chainId: chain.serverId,
       tx: omit(
@@ -871,14 +900,18 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
       chainId: tx.chainId,
     });
 
-    const blockPromise = apiProvider.requestETHRpc(
-      {
-        method: 'eth_getBlockByNumber',
-        params: ['latest', false],
-      },
-      chain.serverId,
-      currentAccount,
-    );
+    const blockPromise =
+      isHyperEvmChain(chain.id) &&
+      currentAccount.type !== KEYRING_TYPE.GnosisKeyring
+        ? Promise.resolve(null)
+        : apiProvider.requestETHRpc(
+            {
+              method: 'eth_getBlockByNumber',
+              params: ['latest', false],
+            },
+            chain.serverId,
+            currentAccount,
+          );
 
     const preExecPromise = openapi
       .preExecTx({
@@ -896,6 +929,7 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
         delegate_call: delegateCall,
       })
       .then(async res => {
+        if (sequence !== explainSequence.current) return;
         let estimateGas = 0;
         if (res.gas.success) {
           estimateGas = res.gas.gas_limit || res.gas.gas_used;
@@ -906,15 +940,18 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
           tx,
           chainId,
         });
+        if (sequence !== explainSequence.current) return;
         setGasUsed(gasUsed);
         setRecommendGasLimit(`0x${gas.toString(16)}`);
         let block = null;
         try {
           block = await blockPromise;
+          if (sequence !== explainSequence.current) return;
           setBlockInfo(block);
         } catch (e) {
           // DO NOTHING
         }
+        if (sequence !== explainSequence.current) return;
         if (tx.gas && origin === INTERNAL_REQUEST_ORIGIN) {
           setGasLimit(intToHex(Number(tx.gas))); // use origin gas as gasLimit when tx is an internal tx with gasLimit(i.e. for SendMax native token)
         } else if (!gasLimit) {
@@ -934,6 +971,7 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
             gasTokenDecimals: gasToken?.decimals || 18,
             checkTxValueInBalance,
           });
+          if (sequence !== explainSequence.current) return;
           setRecommendGasLimitRatio(_recommendGasLimitRatio);
           setGasLimit(_gasLimit);
         }
@@ -945,10 +983,13 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
 
     return parseTxPromise.then(async actionData => {
       return preExecPromise.then(async res => {
+        if (!res || sequence !== explainSequence.current) return;
         let parsed: ParsedTransactionActionData,
           requiredData: ActionRequireData;
         if (actionData.action?.type === 'multi_actions') {
           const actions = actionData.action.data as MultiAction;
+          if (!actions.length)
+            throw new Error('Empty transaction action batch');
           const parsedActions = actions.map(action =>
             parseAction({
               type: 'transaction',
@@ -975,13 +1016,14 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
                 chainId: chain.serverId,
                 sender: address,
                 walletProvider: {
+                  ethRpc: apiProvider.requestETHRpc,
                   hasPrivateKeyInWallet: apiKeyring.hasPrivateKeyInWallet,
-                  hasAddress: keyringService.hasAddress.bind(keyringService),
-                  getWhitelist: async () => whitelistService.getWhitelist(),
+                  hasAddress: address => keyringServiceApi.hasAddress(address),
+                  getWhitelist: async () => whitelistServiceApi.getWhitelist(),
                   isWhitelistEnabled: async () =>
-                    whitelistService.isWhitelistEnabled(),
+                    whitelistServiceApi.isWhitelistEnabled(),
                   getPendingTxsByNonce: async (...args) =>
-                    transactionHistoryService.getPendingTxsByNonce(...args),
+                    transactionHistoryServiceApi.getPendingTxsByNonce(...args),
                   findChain,
                   ALIAS_ADDRESS,
                 },
@@ -1006,19 +1048,22 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
                 isTestnet: isTestnet(chain.serverId),
                 provider: {
                   getTimeSpan,
-                  hasAddress: keyringService.hasAddress.bind(keyringService),
+                  hasAddress: address => keyringServiceApi.hasAddress(address),
                 },
               });
             }),
           );
-          const resultList = await Promise.all(
-            ctxList.map(ctx => executeEngine(ctx)),
-          );
+          if (sequence !== explainSequence.current) return;
           parsed = parsedActions[0];
           requiredData = requireDataList[0];
-          setMultiActionList(parsedActions);
-          setMultiActionRequireDataList(requireDataList);
-          setMultiActionEngineResultList(resultList);
+          setPreparedActions({
+            type: 'multi',
+            actions: parsedActions.map((data, index) => ({
+              data,
+              requireData: requireDataList[index],
+              ctx: ctxList[index],
+            })),
+          });
         } else {
           parsed = parseAction({
             type: 'transaction',
@@ -1042,13 +1087,14 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
             chainId: chain.serverId,
             sender: address,
             walletProvider: {
+              ethRpc: apiProvider.requestETHRpc,
               hasPrivateKeyInWallet: apiKeyring.hasPrivateKeyInWallet,
-              hasAddress: keyringService.hasAddress.bind(keyringService),
-              getWhitelist: async () => whitelistService.getWhitelist(),
+              hasAddress: address => keyringServiceApi.hasAddress(address),
+              getWhitelist: async () => whitelistServiceApi.getWhitelist(),
               isWhitelistEnabled: async () =>
-                whitelistService.isWhitelistEnabled(),
+                whitelistServiceApi.isWhitelistEnabled(),
               getPendingTxsByNonce: async (...args) =>
-                transactionHistoryService.getPendingTxsByNonce(...args),
+                transactionHistoryServiceApi.getPendingTxsByNonce(...args),
               findChain,
               ALIAS_ADDRESS,
             },
@@ -1069,19 +1115,21 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
             isTestnet: isTestnet(chain.serverId),
             provider: {
               getTimeSpan,
-              hasAddress: keyringService.hasAddress.bind(keyringService),
+              hasAddress: address => keyringServiceApi.hasAddress(address),
             },
           });
-          const result = await executeEngine(ctx);
-          setEngineResults(result);
-          setActionData(parsed);
-          setActionRequireData(requiredData);
+          if (sequence !== explainSequence.current) return;
+          setPreparedActions({
+            type: 'single',
+            actions: [{ data: parsed, requireData: requiredData, ctx }],
+          });
         }
 
         const approval = (await getApproval())!;
+        if (sequence !== explainSequence.current) return;
 
         approval?.signingTxId &&
-          (await transactionHistoryService.updateSigningTx(
+          (await transactionHistoryServiceApi.updateSigningTx(
             approval.signingTxId,
             {
               rawTx: {
@@ -1103,10 +1151,11 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
   };
 
   const explain = async () => {
+    invalidateSecurity();
+    const sequence = explainSequence.current;
     try {
-      setIsReady(false);
-      await explainTx(currentAccount.address);
-      setIsReady(true);
+      await explainTx(currentAccount.address, sequence);
+      if (sequence === explainSequence.current) setIsReady(true);
     } catch (e: any) {
       console.error(e);
       toast.show(e.message || JSON.stringify(e));
@@ -1122,6 +1171,7 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
   };
 
   const handleGnosisSign = async () => {
+    if (!isReady || !security.canSubmit()) return;
     const account = currentGnosisAdmin;
     if (!safeInfo || !account) {
       return;
@@ -1167,6 +1217,8 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
       throw new Error('Failed to generate typed data');
     }
 
+    if (!security.canSubmit()) return;
+    if (!(await getApproval()) || !security.canSubmit()) return;
     if (WaitingSignComponent[account.type]) {
       apisKeyring.signTypedDataWithUI(
         account.type,
@@ -1231,7 +1283,7 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
   const invokeEnterPassphrase = useEnterPassphraseModal('address');
 
   const handleAllow = async () => {
-    if (!selectedGas) {
+    if (!selectedGas || !isReady || !security.canSubmit()) {
       return;
     }
 
@@ -1263,7 +1315,7 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
       selected.gasLevel = selectedGas.level;
     }
     if (!isSpeedUp && !isCancel && !isSwap) {
-      await preferenceService.updateLastTimeGasSelection(chainId, selected);
+      await updateLastTimeGasSelection(chainId, selected);
     }
     const transaction: TxWithTempoExtras<Tx> = {
       from: tx.from,
@@ -1293,24 +1345,28 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
       (transaction as Tx).gasPrice = tx.gasPrice;
     }
 
-    const approval = (await getApproval())!;
+    const approval = await getApproval();
+    if (!approval || !security.canSubmit()) return;
     // gaEvent('allow');
 
     approval.signingTxId &&
-      (await transactionHistoryService.updateSigningTx(approval.signingTxId, {
-        rawTx: {
-          nonce: realNonce || tx.nonce,
+      (await transactionHistoryServiceApi.updateSigningTx(
+        approval.signingTxId,
+        {
+          rawTx: {
+            nonce: realNonce || tx.nonce,
+          },
+          explain: {
+            ...txDetail!,
+            approvalId: approval.id,
+            calcSuccess: !(checkErrors.length > 0),
+          },
+          action: {
+            actionData,
+            requiredData: actionRequireData,
+          },
         },
-        explain: {
-          ...txDetail!,
-          approvalId: approval.id,
-          calcSuccess: !(checkErrors.length > 0),
-        },
-        action: {
-          actionData,
-          requiredData: actionRequireData,
-        },
-      }));
+      ));
 
     if (isSend) {
       const sendActionRequireData = actionRequireData as SendRequireData;
@@ -1328,6 +1384,7 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
         });
     }
 
+    if (!security.canSubmit()) return;
     if (currentAccount?.type && WaitingSignComponent[currentAccount.type]) {
       resolveApproval({
         ...transaction,
@@ -1473,6 +1530,7 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
   };
 
   const handleCancel = () => {
+    invalidateSecurity();
     // gaEvent('cancel');
     setGnosisFooterBarVisible(false);
     rejectApproval('User rejected the request.');
@@ -1483,6 +1541,7 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
   };
 
   const handleTxChange = (obj: Record<string, any>) => {
+    invalidateSecurity();
     setTx({
       ...tx,
       ...obj,
@@ -1640,27 +1699,41 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
   };
 
   const handleIgnoreAllRules = () => {
-    apiApprovalSecurityEngine.processAllRules(
-      engineResults.map(result => result.id),
-    );
+    if (!security.ready) return;
+    apiApprovalSecurityEngine.processAllRules([
+      ...currentTx.processedRules,
+      ...security.pendingRuleKeys,
+    ]);
   };
 
   const handleIgnoreRule = (id: string) => {
-    apiApprovalSecurityEngine.processRule(id);
+    apiApprovalSecurityEngine.processRule(
+      id,
+      currentTx.ruleDrawer.selectRule?.scope,
+    );
     apiApprovalSecurityEngine.closeRuleDrawer();
   };
 
   const handleUndoIgnore = (id: string) => {
-    apiApprovalSecurityEngine.unProcessRule(id);
+    apiApprovalSecurityEngine.unProcessRule(
+      id,
+      currentTx.ruleDrawer.selectRule?.scope,
+    );
     apiApprovalSecurityEngine.closeRuleDrawer();
   };
 
   const handleRuleEnableStatusChange = async (id: string, value: boolean) => {
-    if (currentTx.processedRules.includes(id)) {
-      apiApprovalSecurityEngine.unProcessRule(id);
+    security.invalidate();
+    apiApprovalSecurityEngine.unProcessRule(
+      id,
+      currentTx.ruleDrawer.selectRule?.scope,
+    );
+    try {
+      await apiSecurityEngine.ruleEnableStatusChange(id, value);
+      await apiApprovalSecurityEngine.init();
+    } finally {
+      security.retry();
     }
-    await apiSecurityEngine.ruleEnableStatusChange(id, value);
-    apiApprovalSecurityEngine.init();
   };
 
   const handleRuleDrawerClose = (update: boolean) => {
@@ -1695,7 +1768,7 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
 
   const init = async () => {
     try {
-      await customRPCService.syncDefaultRPC();
+      await customRPCServiceApi.syncDefaultRPC();
     } catch (e) {
       console.error('signTx sync default rpc error', e);
     }
@@ -1765,8 +1838,9 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
         await getSafeInfo();
       }
       checkCanProcess();
-      const lastTimeGas: ChainGas | null =
-        await preferenceService.getLastTimeGasSelection(chainId);
+      const lastTimeGas: ChainGas | null = await getLastTimeGasSelection(
+        chainId,
+      );
       let customGasPrice = 0;
       if (lastTimeGas?.lastTimeSelect === 'gasPrice' && lastTimeGas.gasPrice) {
         // use cached gasPrice if exist
@@ -1829,26 +1903,19 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
 
       setSelectedGas(gas);
       setSupport1559(is1559);
-      if (is1559) {
-        const is7702 = is7702Tx(tx as any);
-        setTx(
-          omit(
-            {
-              ...convertLegacyTo1559({
-                ...tx,
-                gasPrice: intToHex(gas.price),
-              }),
-              authorizationList: (tx as any).authorizationList,
-            },
-            is7702 ? [] : ['authorizationList'],
-          ) as any,
-        );
-      } else {
-        setTx({
-          ...tx,
+      setTx(prev =>
+        applySelectedGasToTx({
+          tx: prev,
           gasPrice: intToHex(gas.price),
-        });
-      }
+          support1559: is1559,
+          enable7702: is7702Tx(prev as any),
+          isTempoTransaction: shouldUseTempoTransaction({
+            tx: prev as unknown as Record<string, unknown>,
+            chainServerId: chain.serverId,
+            accountType: currentAccount.type,
+          }),
+        }),
+      );
       setInited(true);
     } catch (e: any) {
       console.error(e);
@@ -1871,54 +1938,6 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
     //   }
     // }
   });
-
-  const executeSecurityEngine = async () => {
-    const ctx = await formatSecurityEngineContext({
-      type: 'transaction',
-      actionData: actionData,
-      requireData: actionRequireData,
-      chainId: chain.serverId,
-      isTestnet: isTestnet(chain.serverId),
-      provider: {
-        getTimeSpan,
-        hasAddress: keyringService.hasAddress.bind(keyringService),
-      },
-    });
-    const result = await executeEngine(ctx);
-    setEngineResults(result);
-  };
-
-  const hasUnProcessSecurityResult = useMemo(() => {
-    const { processedRules } = currentTx;
-    const enableResults = engineResults.filter(item => item.enable);
-    // const hasForbidden = enableResults.find(
-    //   (result) => result.level === Level.FORBIDDEN
-    // );
-    const hasSafe = !!enableResults.find(result => result.level === Level.SAFE);
-    const needProcess = enableResults.filter(
-      result =>
-        (result.level === Level.DANGER ||
-          result.level === Level.WARNING ||
-          result.level === Level.FORBIDDEN) &&
-        !processedRules.includes(result.id),
-    );
-
-    const trueDanger = needProcess.some(
-      item =>
-        ['1016', '1019', '1020', '1021'].includes(item.id) &&
-        item.level === Level.DANGER,
-    );
-    if (trueDanger) {
-      return true;
-    }
-
-    // if (hasForbidden) return true;
-    if (needProcess.length > 0) {
-      return !hasSafe;
-    } else {
-      return false;
-    }
-  }, [engineResults, currentTx]);
 
   useEffect(() => {
     init();
@@ -2081,12 +2100,14 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
     },
   );
 
-  useEffect(() => {
-    executeSecurityEngine();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userData, rules]);
+  useEffect(
+    () => () => {
+      explainSequence.current += 1;
+    },
+    [],
+  );
 
-  useGasAccountInfo();
+  useGasAccountSnapshotActivation();
 
   // TODO
   // useEffect(() => {
@@ -2117,7 +2138,7 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
   });
 
   return (
-    <>
+    <SecurityEngineScopeProvider scope={security.securityScopes[0]}>
       <View style={styles.wrapper}>
         <BottomSheetScrollView style={styles.approvalTx}>
           {txDetail && (
@@ -2125,10 +2146,12 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
               style={StyleSheet.flatten({
                 rowGap: 12,
               })}>
-              {txDetail && (
+              {security.error ? (
+                <SecurityEngineError onRetry={security.retry} />
+              ) : (
                 <TxTypeComponent
                   account={currentAccount}
-                  isReady={isReady}
+                  isReady={isReady && security.ready}
                   actionData={actionData}
                   actionRequireData={actionRequireData}
                   chain={chain}
@@ -2151,6 +2174,7 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
                           actionList: multiActionList,
                           requireDataList: multiActionRequireDataList,
                           engineResultList: multiActionEngineResultList,
+                          securityScopes: security.securityScopes,
                         }
                       : undefined
                   }
@@ -2226,8 +2250,9 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
               gnosisAccount={currentGnosisAdmin}
               account={currentGnosisAdmin}
               onCancel={handleCancel}
-              // securityLevel={securityLevel}
-              // hasUnProcessSecurityResult={hasUnProcessSecurityResult}
+              securityLevel={securityLevel}
+              hasUnProcessSecurityResult={hasUnProcessSecurityResult}
+              securityBlocked={!isReady || securityBlocked}
               onSubmit={runHandleGnosisSign}
               enableTooltip={
                 currentGnosisAdmin?.type === KEYRING_TYPE.WatchAddressKeyring
@@ -2357,6 +2382,7 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
             originLogo={site?.icon}
             hasUnProcessSecurityResult={hasUnProcessSecurityResult}
             securityLevel={securityLevel}
+            securityBlocked={!isReady || securityBlocked}
             gnosisAccount={isGnosis ? params.account : undefined}
             account={currentAccount}
             chain={chain}
@@ -2387,7 +2413,7 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
               (selectedGas ? selectedGas.price < 0 : true) ||
               !canProcess ||
               !!checkErrors.find(item => item.level === 'forbidden') ||
-              hasUnProcessSecurityResult
+              securityBlocked
             }
           />
         )}
@@ -2411,7 +2437,7 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
           rejectApproval();
         }}
       />
-    </>
+    </SecurityEngineScopeProvider>
   );
 };
 

@@ -580,9 +580,6 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     gap: 4,
     flex: 1,
   },
-  chatTopRight: {
-    justifyContent: 'flex-end',
-  },
   chatTop: {
     display: 'flex',
     flexDirection: 'row',
@@ -682,12 +679,6 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   firstAmountItemValue: {
     color: colors2024['neutral-title-1'],
-  },
-  amountItemGreen: {
-    color: colors2024['green-default'],
-  },
-  amountItemRed: {
-    color: colors2024['red-default'],
   },
   addressItem: {
     display: 'flex',

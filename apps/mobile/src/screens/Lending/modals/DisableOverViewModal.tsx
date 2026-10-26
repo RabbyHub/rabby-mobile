@@ -1,4 +1,5 @@
 import React, { useCallback } from 'react';
+import { RoundedFontStyles } from '@/core/utils/fonts';
 
 import { noop } from 'lodash';
 import { Pressable, View } from 'react-native';
@@ -39,7 +40,7 @@ const DisableEmodeOverviewModal = ({ onClose }: { onClose: () => void }) => {
       title: '',
       titleStyle: {
         marginTop: 0,
-        fontWeight: '900',
+        ...RoundedFontStyles.heavy,
       },
       sectionStyle: {
         marginTop: 8,
@@ -134,12 +135,12 @@ const DisableEmodeOverviewModal = ({ onClose }: { onClose: () => void }) => {
         <Button
           loadingType="circle"
           showTextOnLoading
+          type="aave"
           containerStyle={styles.fullWidthButton}
           height={BOTTOM_BUTTON_SINGLE_HEIGHT}
-          titleStyle={[BOTTOM_BUTTON_TITLE_STYLE, styles.closeButtonTitle]}
+          titleStyle={[BOTTOM_BUTTON_TITLE_STYLE]}
           onPress={() => handlePressManageEMode()}
           title={t('page.Lending.manageEmode.disableTitle')}
-          buttonStyle={styles.closeButton}
         />
       </View>
     </AutoLockView>
@@ -174,7 +175,7 @@ const getStyles = createGetStyles2024(ctx => ({
   title: {
     color: ctx.colors2024['neutral-secondary'],
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
     lineHeight: 20,
     textAlign: 'center',
     fontFamily: 'SF Pro Rounded',
@@ -187,22 +188,6 @@ const getStyles = createGetStyles2024(ctx => ({
     fontFamily: 'SF Pro Rounded',
     marginTop: 8,
     textAlign: 'center',
-  },
-  button: {
-    position: 'absolute',
-    bottom: getBottomButtonBottomOffset(ctx.safeAreaInsets.bottom),
-    width: '100%',
-  },
-  disabledButton: {
-    backgroundColor: ctx.colors2024['neutral-line'],
-  },
-  disabledTitle: {
-    color: ctx.colors2024['neutral-title-1'],
-  },
-  gasPreContainer: {
-    paddingHorizontal: 8,
-    marginTop: 12,
-    width: '100%',
   },
   buttonContainer: {
     position: 'absolute',
@@ -219,18 +204,9 @@ const getStyles = createGetStyles2024(ctx => ({
     gap: 12,
     backgroundColor: ctx.colors2024['neutral-bg-1'],
   },
-  directSignBtn: {
-    width: '100%',
-  },
   fullWidthButton: {
     flex: 1,
     height: BOTTOM_BUTTON_SINGLE_HEIGHT,
-  },
-  closeButtonTitle: {
-    color: ctx.colors2024['neutral-title-1'],
-  },
-  closeButton: {
-    backgroundColor: ctx.colors2024['neutral-line'],
   },
   item: {
     width: '100%',

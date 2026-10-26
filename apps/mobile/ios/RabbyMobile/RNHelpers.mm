@@ -1,15 +1,68 @@
 // RNHelpers.mm
 #import "RNHelpers.h"
 #import <Foundation/Foundation.h>
+#import <UIKit/UIKit.h>
 
 @implementation RNHelpers
+
+@synthesize viewRegistry_DEPRECATED = _viewRegistry_DEPRECATED;
 
 // To export a module named RNHelpers
 RCT_EXPORT_MODULE();
 
++ (BOOL)requiresMainQueueSetup {
+    return NO;
+}
+
+- (NSDictionary *)constantsToExport {
+    NSURL *buildInfoURL = [[NSBundle mainBundle] URLForResource:@"rabby-build-info" withExtension:@"json"];
+    NSDictionary *buildInfo = @{};
+
+    if (buildInfoURL != nil) {
+        NSData *buildInfoData = [NSData dataWithContentsOfURL:buildInfoURL];
+        if (buildInfoData != nil) {
+            id decodedBuildInfo = [NSJSONSerialization JSONObjectWithData:buildInfoData options:0 error:nil];
+            if ([decodedBuildInfo isKindOfClass:[NSDictionary class]]) {
+                buildInfo = decodedBuildInfo;
+            }
+        }
+    }
+
+    return @{ @"buildInfo": buildInfo };
+}
+
 #pragma mark - Public API
+RCT_EXPORT_METHOD(measureViewRelativeTo:(double)anchorTag
+                  viewportTag:(double)viewportTag
+                  resolver:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject) {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        UIView *anchor = [self.viewRegistry_DEPRECATED viewForReactTag:@(anchorTag)];
+        UIView *viewport = [self.viewRegistry_DEPRECATED viewForReactTag:@(viewportTag)];
+        if (anchor == nil || viewport == nil || anchor.window == nil || viewport.window == nil) {
+            reject(@"E_VIEW_UNAVAILABLE", @"Tooltip views are not mounted", nil);
+            return;
+        }
+        CGRect rect = [anchor convertRect:anchor.bounds toView:viewport];
+        resolve(@{@"x": @(rect.origin.x), @"y": @(rect.origin.y),
+                  @"width": @(rect.size.width), @"height": @(rect.size.height)});
+    });
+}
+
 RCT_EXPORT_METHOD(forceExitApp) {
     exit(0);
+}
+
+RCT_EXPORT_METHOD(setSensitiveClipboard:(NSString *)text
+                  resolver:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject) {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [[UIPasteboard generalPasteboard] setItems:@[@{@"public.utf8-plain-text": text}]
+                                          options:@{
+            UIPasteboardOptionExpirationDate: [NSDate dateWithTimeIntervalSinceNow:10 * 60]
+        }];
+        resolve(nil);
+    });
 }
 
 RCT_EXPORT_METHOD(iosExcludeFileFromBackup:

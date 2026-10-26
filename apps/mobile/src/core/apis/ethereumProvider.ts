@@ -7,7 +7,8 @@ import { CHAINS_ENUM } from '@/constant/chains';
 import type { Account } from '@/types/account';
 import { findChain } from '@/utils/chain';
 import providerController from '@/core/controllers/provider';
-import { notificationService, preferenceService } from '../services';
+import { bindNotificationEvent } from '@/core/serviceApi/notification';
+import { getFallbackAccountSnapshot } from '@/core/serviceApi/preference';
 import { underline2Camelcase } from '../utils/common';
 
 type SendRequestHandler = typeof import('./sendRequest').sendRequest;
@@ -108,13 +109,13 @@ export class EthereumProvider extends EventEmitter {
         return [this.currentAccount];
       case 'personal_sign':
         return new Promise((resolve, reject) => {
-          notificationService.on('resolve', data => {
+          void bindNotificationEvent('resolve', data => {
             if (data.uiRequestComponent) return;
             resolve(data);
-          });
-          notificationService.on('reject', err => {
+          }).catch(reject);
+          void bindNotificationEvent('reject', err => {
             reject(err);
-          });
+          }).catch(reject);
         });
       case 'eth_sendTransaction': {
         if (!sendRequestHandler) {
@@ -141,7 +142,7 @@ export class EthereumProvider extends EventEmitter {
                 type: this.currentAccountType,
                 brandName: this.currentAccountBrand,
               } as Account)
-            : preferenceService.getFallbackAccount()!,
+            : getFallbackAccountSnapshot()!,
         });
       }
       case 'eth_chainId':

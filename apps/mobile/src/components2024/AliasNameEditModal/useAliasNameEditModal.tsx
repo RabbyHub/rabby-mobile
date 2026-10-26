@@ -1,8 +1,6 @@
 import { zCreate } from '@/core/utils/reexports';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 import { KeyringAccountWithAlias } from '@/hooks/account';
-import { atom, useAtom } from 'jotai';
-import React from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
 export type AliasNameEditModalConfirmCallback = (aliasName: string) => void;
@@ -71,26 +69,24 @@ export let confirmCallBack: {
   value: undefined,
 };
 
-export const useAliasNameEditModal = () => {
-  const show = React.useCallback(
-    (
-      a: KeyringAccountWithAlias,
-      uri?: string,
-      cb?: AliasNameEditModalConfirmCallback,
-    ) => {
-      setVisible(true);
-      setAccount(a);
-      setAccountIcon(uri || '');
-      confirmCallBack.value = cb;
-    },
-    [],
-  );
-
-  const hide = React.useCallback(() => {
+export const aliasNameEditModal = {
+  show(
+    a: KeyringAccountWithAlias,
+    uri?: string,
+    cb?: AliasNameEditModalConfirmCallback,
+  ) {
+    setVisible(true);
+    setAccount(a);
+    setAccountIcon(uri || '');
+    confirmCallBack.value = cb;
+  },
+  hide() {
     setVisible(false);
     setAccountIcon('');
     confirmCallBack.value = undefined;
-  }, []);
+  },
+};
 
-  return { show, hide };
+export const useAliasNameEditModal = () => {
+  return aliasNameEditModal;
 };

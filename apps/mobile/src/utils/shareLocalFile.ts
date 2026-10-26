@@ -1,5 +1,5 @@
 import { Platform, Share } from 'react-native';
-import RNFS from 'react-native-fs';
+import RNFS from '@rabby-wallet/react-native-fs';
 
 import RNHelpers from '@/core/native/RNHelpers';
 

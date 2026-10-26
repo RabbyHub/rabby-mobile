@@ -10,7 +10,7 @@ import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, View } from 'react-native';
 import { SafeNonceOptionListItem } from './SafeNonceOptionListItem';
 import { SafeNoncePendingOptionContent } from './SafeNoncePendingOptionContent';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { Text } from '@/components/Typography';
 
 interface OptionListProps {
@@ -101,7 +101,7 @@ export const SafeNonceOptionList = ({
               onChange?.(+recommendNonce);
             }}
             isHideDivider>
-            <Text>
+            <Text style={styles.nonceSelectOptionText}>
               {recommendNonce} - {t('page.signTx.SafeNonceSelector.option.new')}
             </Text>
           </SafeNonceOptionListItem>
@@ -145,6 +145,12 @@ const getStyles = createGetStyles(colors => ({
     fontSize: 12,
     fontWeight: '400',
     lineHeight: 14,
+  },
+  nonceSelectOptionText: {
+    color: colors['neutral-title-1'],
+    fontSize: 13,
+    fontWeight: '500',
+    lineHeight: 16,
   },
   loadingContent: {
     paddingVertical: 20,

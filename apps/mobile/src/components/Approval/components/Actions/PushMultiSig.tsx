@@ -9,6 +9,7 @@ import { PushMultiSigRequireData } from '@rabby-wallet/rabby-action';
 import LogoWithText from './components/LogoWithText';
 import useCommonStyle from '../../hooks/useCommonStyle';
 import { SubTable, SubCol, SubRow } from './components/SubTable';
+import { AddressMemoRow } from './components/AddressMemoRow';
 import { Text } from '@/components/Typography';
 
 const PushMultiSig = ({
@@ -51,19 +52,10 @@ const PushMultiSig = ({
         </Col>
 
         <SubTable target={multiSignAddressRef}>
-          <SubCol>
-            <SubRow isTitle>
-              <Text style={commonStyle.subRowTitleText}>
-                {t('page.signTx.addressNote')}
-              </Text>
-            </SubRow>
-            <SubRow>
-              <Values.AddressMemo
-                textStyle={commonStyle.subRowText}
-                address={data.multisig_id}
-              />
-            </SubRow>
-          </SubCol>
+          <AddressMemoRow
+            textStyle={commonStyle.subRowText}
+            address={data.multisig_id}
+          />
           {multiSigInfo && (
             <SubCol>
               <SubRow isTitle>

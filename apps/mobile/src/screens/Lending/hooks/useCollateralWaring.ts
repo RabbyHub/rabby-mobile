@@ -6,6 +6,8 @@ import { useLendingSummary } from '../hooks';
 import { ReserveDataHumanized } from '@aave/contract-helpers';
 import { DisplayPoolReserveInfo } from '../type';
 import { useTranslation } from 'react-i18next';
+import { hasNonZeroEffectiveLtv } from '../utils/hfUtils';
+import { useMode } from './useMode';
 
 export enum ErrorType {
   DO_NOT_HAVE_SUPPLIES_IN_THIS_CURRENCY,
@@ -29,8 +31,9 @@ export const useCollateralWaring = ({
   userReserve: DisplayPoolReserveInfo | null;
   poolReserve?: ReserveWithEmodes;
 }) => {
-  const assetsBlockingWithdraw = useZeroLTVBlockingWithdraw();
   const { iUserSummary: userSummary } = useLendingSummary();
+  const { eModes } = useMode();
+  const assetsBlockingWithdraw = useZeroLTVBlockingWithdraw(eModes);
   const { t } = useTranslation();
 
   const errorType = useMemo(() => {
@@ -44,11 +47,13 @@ export const useCollateralWaring = ({
     const userEMode = reserveEModes.find(
       e => e.id === userSummary?.userEmodeCategoryId,
     );
-    const hasNonZeroLtv =
-      poolReserve.baseLTVasCollateral !== '0' ||
-      (!!userSummary?.userEmodeCategoryId &&
-        userEMode?.collateralEnabled &&
-        !userEMode?.ltvzeroEnabled);
+    const hasNonZeroLtv = hasNonZeroEffectiveLtv({
+      baseLTVasCollateral: poolReserve.baseLTVasCollateral,
+      isInEmode: !!userSummary?.userEmodeCategoryId,
+      emodeEntry: userEMode,
+      isEModeIsolated:
+        !!eModes[userSummary?.userEmodeCategoryId || 0]?.isolated,
+    });
     const collateralEmodeCategories = reserveEModes.filter(
       e => e.collateralEnabled && !e.ltvzeroEnabled,
     );
@@ -85,6 +90,7 @@ export const useCollateralWaring = ({
     assetsBlockingWithdraw,
     poolReserve,
     userReserve,
+    eModes,
     userSummary?.userEmodeCategoryId,
     userSummary?.totalBorrowsMarketReferenceCurrency,
   ]);

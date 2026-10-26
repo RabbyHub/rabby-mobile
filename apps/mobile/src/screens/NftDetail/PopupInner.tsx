@@ -248,7 +248,7 @@ const getStyle = createGetStyles(colors => ({
   nftCount: {
     color: colors['neutral-title2'],
     fontSize: 15,
-    fontWeight: '600',
+    fontWeight: '500',
   },
   details: {
     width: '100%',
@@ -261,7 +261,7 @@ const getStyle = createGetStyles(colors => ({
   title: {
     color: colors['neutral-title-1'],
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '500',
   },
   subtitle: {
     flexDirection: 'row',

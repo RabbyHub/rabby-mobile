@@ -232,13 +232,6 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     fontFamily: 'SF Pro Rounded',
     color: colors2024['neutral-foot'],
   },
-  transactionOverviewArrow: {
-    fontSize: 14,
-    lineHeight: 19,
-    fontWeight: '700',
-    fontFamily: 'SF Pro Rounded',
-    color: colors2024['neutral-title-1'],
-  },
   borrowBalanceGroup: {
     flex: 1,
     gap: 10,
@@ -254,9 +247,6 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   },
   hfContainer: {
     gap: 6,
-  },
-  hidden: {
-    display: 'none',
   },
   hfValue: {
     fontSize: 17,

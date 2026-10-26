@@ -3,9 +3,9 @@ import {
   GestureResponderEvent,
   Pressable,
   StyleSheet,
-  TouchableOpacity,
   View,
 } from 'react-native';
+import { TouchableOpacity } from 'react-native-gesture-handler';
 import { useTranslation } from 'react-i18next';
 import usePrevious from 'react-use/lib/usePrevious';
 
@@ -21,8 +21,7 @@ import { matomoRequestEvent } from '@/utils/analytics';
 
 import RcIconEyeCC from '@/assets2024/icons/home/eye-cc.svg';
 import RcIconEyeCloseCC from '@/assets2024/icons/home/eye-close-cc.svg';
-import RcIconEyeHalfCloseCC from '@/assets2024/icons/home/eye-half-close-cc.svg';
-import { FeedbackEntryOnHeader } from '@/components/Screenshot/FeedbackEntryOnHeader';
+import { FeedbackHistoryHeaderEntry } from '@/components/Screenshot/FeedbackHistory/HeaderEntry';
 import {
   HOME_TOP_HEADER_SIZES,
   ITEM_LAYOUT_PADDING_HORIZONTAL,
@@ -49,11 +48,30 @@ import { IS_ANDROID } from '@/core/native/utils';
 import { Text } from '@/components/Typography';
 import { useReportTokenTabView } from '../hooks/useReportTokenTabView';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
-import { useHomePortfolioStore } from '../hooks/useHomePortfolioSummary';
 import { useShallow } from 'zustand/react/shallow';
 import { MultiHeaderRightHistory } from '../MultiHeaderRightHistory';
 import RefreshNudgedTickerText from '@/components/Animated/RefreshNudgedTickerText';
 import { useValueFromSharedValue } from '@/hooks/reanimated';
+import {
+  isHomeProjectionWaitingForValue,
+  useHome24hProjection,
+  useHomeBalanceProjection,
+  useHomeRefreshProjection,
+} from '@/store/homePortfolio';
+
+const EMPTY_CHANGE_DATA = {
+  rawChange: 0,
+  changePercent: '',
+  isLoss: false,
+};
+
+const BALANCE_TICKER_FONT_SIZE = {
+  maxFontSize: 18,
+  minFontSize: 18,
+  threshold: 16,
+} satisfies NonNullable<
+  React.ComponentProps<typeof RefreshNudgedTickerText>['fontSizeByLength']
+>;
 
 const HeaderHeight = 30;
 const handleSwitchToTokenTab = (index: number) => {
@@ -63,23 +81,28 @@ const handleSwitchToTokenTab = (index: number) => {
 export function TabsTopHeader(): JSX.Element {
   const focusedTab = useValueFromSharedValue(apisHomeTabIndex.svTabName);
 
-  const {
-    totalBalance,
-    showBalanceLoadingWithoutLocal,
-    showChangeLoadingWithoutLocal,
-    isAnyRemoteRefreshing,
-    isChangeAnyLoading,
-    changeData,
-  } = useHomePortfolioStore(
+  const { balanceAvailability, totalBalance } = useHomeBalanceProjection(
     useShallow(state => ({
-      totalBalance: state.totalBalance,
-      showBalanceLoadingWithoutLocal: state.showBalanceLoadingWithoutLocal,
-      showChangeLoadingWithoutLocal: state.showChangeLoadingWithoutLocal,
-      isAnyRemoteRefreshing: state.isAnyRemoteRefreshing,
-      isChangeAnyLoading: state.isChangeAnyLoading,
-      changeData: state.changeData,
+      balanceAvailability: state.availability,
+      totalBalance: state.value?.totalBalance || 0,
     })),
   );
+  const { changeAvailability, changeData, changeActivity } =
+    useHome24hProjection(
+      useShallow(state => ({
+        changeAvailability: state.availability,
+        changeData: state.value || EMPTY_CHANGE_DATA,
+        changeActivity: state.activity,
+      })),
+    );
+  const isAnyRemoteRefreshing = useHomeRefreshProjection(
+    state => state.isAnyRemoteRefreshing,
+  );
+  const showBalanceLoadingWithoutLocal =
+    isHomeProjectionWaitingForValue(balanceAvailability);
+  const showChangeLoadingWithoutLocal =
+    isHomeProjectionWaitingForValue(changeAvailability);
+  const isChangeAnyLoading = changeActivity.isActive;
   const data = changeData;
   const scene24hLoading = isChangeAnyLoading;
 
@@ -89,16 +112,12 @@ export function TabsTopHeader(): JSX.Element {
   const { remoteVersion } = useUpgradeInfo();
 
   const [hideType, setHideType] = useHideBalance();
-  const handleHideTypeChange = useMemoizedFn((event: GestureResponderEvent) => {
-    event.stopPropagation();
-    if (hideType === 'HALF_HIDE') {
-      setHideType('HIDE');
-    } else if (hideType === 'HIDE') {
-      setHideType('SHOW');
-    } else {
-      setHideType('HALF_HIDE');
-    }
-  });
+  const handleHideTypeChange = useMemoizedFn(
+    (event?: GestureResponderEvent) => {
+      event?.stopPropagation?.();
+      setHideType(hideType === 'HIDE' ? 'SHOW' : 'HIDE');
+    },
+  );
   const { currency } = useCurrency();
   const tokenDisplayMode = useTokenList(s => s.tokenDisplayMode);
   const setTokenDisplayMode = useTokenList(s => s.setTokenDisplayMode);
@@ -155,6 +174,10 @@ export function TabsTopHeader(): JSX.Element {
   const showHeaderSideLoadingIndicator = useMemo(() => {
     return showBalanceLoadingWithoutLocal || isAnyRemoteRefreshing;
   }, [isAnyRemoteRefreshing, showBalanceLoadingWithoutLocal]);
+  const showNetWorthSideLoadingIndicator =
+    showHeaderSideLoadingIndicator &&
+    !showBalanceLoadingWithoutLocal &&
+    !showChangeLoading;
 
   const gasketWebViewRef = useRef<LocalWebView>(null);
 
@@ -220,13 +243,7 @@ export function TabsTopHeader(): JSX.Element {
           <TouchableOpacity
             style={[IS_ANDROID && { top: 2 }]}
             onPress={handleHideTypeChange}>
-            {hideType === 'HALF_HIDE' ? (
-              <RcIconEyeHalfCloseCC
-                color={colors2024['neutral-title-1']}
-                width={20}
-                height={20}
-              />
-            ) : hideType === 'HIDE' ? (
+            {hideType === 'HIDE' ? (
               <RcIconEyeCloseCC
                 color={colors2024['neutral-title-1']}
                 width={20}
@@ -262,11 +279,7 @@ export function TabsTopHeader(): JSX.Element {
                 lineHeight={22}
                 duration={320}
                 style={styles.balanceTextBox}
-                fontSizeByLength={{
-                  maxFontSize: 18,
-                  minFontSize: 18,
-                  threshold: 16,
-                }}
+                fontSizeByLength={BALANCE_TICKER_FONT_SIZE}
               />
             )}
             {!showBalanceLoadingWithoutLocal && changePercent ? (
@@ -288,7 +301,7 @@ export function TabsTopHeader(): JSX.Element {
               </View>
             ) : null}
             {!SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING &&
-            showHeaderSideLoadingIndicator ? (
+            showNetWorthSideLoadingIndicator ? (
               <LoadingCircle />
             ) : null}
           </Pressable>
@@ -297,10 +310,18 @@ export function TabsTopHeader(): JSX.Element {
 
       <Pressable
         style={styles.rightArea}
-        onPress={() => handleSwitchToTokenTab(1)}>
+        onPress={event => {
+          // RNGH header buttons do not stop RN responder bubbling. Only the
+          // empty header area should switch tabs, never Add Wallet / Feedback.
+          if (event.target === event.currentTarget) {
+            handleSwitchToTokenTab(1);
+          }
+        }}>
         {showRightArea ? (
           <>
-            <FeedbackEntryOnHeader style={styles.feedbackEntry} />
+            {focusedTab === HomeTabName.overview ? (
+              <FeedbackHistoryHeaderEntry style={styles.feedbackEntry} />
+            ) : null}
 
             <AddressListScreenButton type="address" />
             <Pressable

@@ -1,9 +1,10 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { memo, useState } from 'react';
-import { StyleProp, TouchableOpacity, View, ViewStyle } from 'react-native';
+import type { StyleProp, ViewStyle } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { WalletIcon } from '../WalletIcon/WalletIcon';
 import RcIconArrowRight from '@/assets/icons/approval/edit-arrow-right.svg';
 import { useAlias } from '@/hooks/alias';

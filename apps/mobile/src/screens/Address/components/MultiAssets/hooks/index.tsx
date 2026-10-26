@@ -1,6 +1,5 @@
 import {
   accountEvents,
-  filterOutTop10Accounts,
   isDirectlySignableAccount,
   isHardwareAccount,
 } from '@/core/apis/account';
@@ -11,8 +10,14 @@ import {
   storeApiAccounts,
   useAccounts,
 } from '@/hooks/account';
+import { useHomeAssetSelectionSettings } from '@/hooks/appSettings';
+import { DEFAULT_HOME_ASSET_TOP_N } from '@/constant/homeAssetSelection';
 import { useCreationWithShallowCompare } from '@/hooks/common/useMemozied';
-import addressBalanceStore from '@/store/balance';
+import addressBalanceStore, { balanceAccountsStore } from '@/store/balance';
+import {
+  pickHomeAccountSelectionFromAddresses,
+  pickHomeAccountSelectionFromSortedAccounts,
+} from '@/store/homePortfolio/accountSelection';
 import { useSortAddressList } from '@/screens/Address/useSortAddressList';
 import { filterMyAccounts } from '@/utils/account';
 import { eventBus, EventBusListeners, EVENTS } from '@/utils/events';
@@ -25,37 +30,74 @@ export const isTabsSwiping = {
   value: false,
 };
 
-export function useAccountInfo() {
+const EMPTY_SELECTED_ADDRESSES: string[] = [];
+
+type UseAccountInfoOptions = {
+  useHomeAssetSelectionPolicy?: boolean;
+};
+
+export function useAccountInfo(options?: UseAccountInfoOptions) {
   const { accounts, fetchAccounts } = useAccounts({
     disableAutoFetch: true,
   });
+  const {
+    topN: configuredTopN,
+    includeWatchAddresses: configuredIncludeWatchAddresses,
+    isExperimentEnabled: configuredHomeAssetSelectionExperimentEnabled,
+  } = useHomeAssetSelectionSettings();
+  const useHomeAssetSelectionPolicy = !!options?.useHomeAssetSelectionPolicy;
+  const topN = useHomeAssetSelectionPolicy
+    ? configuredTopN
+    : DEFAULT_HOME_ASSET_TOP_N;
+  const includeWatchAddresses =
+    useHomeAssetSelectionPolicy && configuredIncludeWatchAddresses;
+  const isHomeAssetSelectionExperimentEnabled =
+    useHomeAssetSelectionPolicy &&
+    configuredHomeAssetSelectionExperimentEnabled;
+  const selectedAddresses = balanceAccountsStore(state =>
+    isHomeAssetSelectionExperimentEnabled
+      ? state.selectedAddresses
+      : EMPTY_SELECTED_ADDRESSES,
+  );
+  const hasResolvedSelection = balanceAccountsStore(state =>
+    isHomeAssetSelectionExperimentEnabled ? state.hasResolvedSelection : false,
+  );
 
   const myAccounts = useCreationWithShallowCompare(
     () => filterMyAccounts(accounts),
     [accounts],
   );
 
-  const sortedList = useSortAddressList(myAccounts);
+  const sortedList = useSortAddressList(
+    includeWatchAddresses ? accounts : myAccounts,
+  );
   const {
     myTop10Accounts,
     myTop10Addresses,
     myTop10Records,
     myNotTop10Accounts,
   } = useCreationWithShallowCompare(() => {
-    const {
-      top10Accounts: myTop10Accounts,
-      top10Addresses: myTop10Addresses,
-      top10Records: myTop10Records,
-      restAccounts: myNotTop10Accounts,
-    } = filterOutTop10Accounts(sortedList, { gatherSameAddress: false });
+    const selection =
+      isHomeAssetSelectionExperimentEnabled && hasResolvedSelection
+        ? pickHomeAccountSelectionFromAddresses(sortedList, selectedAddresses)
+        : pickHomeAccountSelectionFromSortedAccounts(sortedList, {
+            topN,
+            uniqueAddresses: isHomeAssetSelectionExperimentEnabled,
+          });
 
     return {
-      myTop10Accounts,
-      myTop10Addresses,
-      myTop10Records,
-      myNotTop10Accounts,
+      myTop10Accounts: selection.selectedAccounts,
+      myTop10Addresses: selection.selectedAddresses,
+      myTop10Records: selection.selectedAddressRecords,
+      myNotTop10Accounts: selection.restAccounts,
     };
-  }, [sortedList]);
+  }, [
+    hasResolvedSelection,
+    isHomeAssetSelectionExperimentEnabled,
+    topN,
+    selectedAddresses,
+    sortedList,
+  ]);
 
   const stableTop10Addresses = useCreationWithShallowCompare(
     () => myTop10Addresses,
@@ -85,8 +127,16 @@ export function useAccountInfo() {
     }, [accounts]);
 
   const notMatteredAccounts = useCreationWithShallowCompare(() => {
+    if (includeWatchAddresses) {
+      return myNotTop10Accounts;
+    }
     return [...myNotTop10Accounts, ...gnosisAccounts, ...watchAccounts];
-  }, [myNotTop10Accounts, gnosisAccounts, watchAccounts]);
+  }, [
+    includeWatchAddresses,
+    myNotTop10Accounts,
+    gnosisAccounts,
+    watchAccounts,
+  ]);
 
   return {
     myTop10Accounts,
@@ -101,8 +151,14 @@ export function useAccountInfo() {
     hasSafeAddress,
     fetchAccounts,
     rawAllAccounts: accounts,
-    matteredAccountCount: filterMyAccounts(sortedList).length,
+    matteredAccountCount: includeWatchAddresses
+      ? sortedList.length
+      : filterMyAccounts(sortedList).length,
   };
+}
+
+export function useHomeAssetAccountInfo() {
+  return useAccountInfo({ useHomeAssetSelectionPolicy: true });
 }
 
 function isAccountToShowReceiveTip(account: KeyringAccountWithAlias) {
@@ -127,13 +183,19 @@ export async function getShowReceiveAddressTip(options?: {
     const accountsToCheck = myAccounts.filter(account =>
       isAccountToShowReceiveTip(account),
     );
-    if (accountsToCheck.length !== 1) return null;
+    if (accountsToCheck.length !== 1) {
+      return null;
+    }
 
     targetAccount = accountsToCheck[0];
   }
 
-  if (!targetAccount) return null;
-  if (!isAccountToShowReceiveTip(targetAccount)) return null;
+  if (!targetAccount) {
+    return null;
+  }
+  if (!isAccountToShowReceiveTip(targetAccount)) {
+    return null;
+  }
 
   const evmBalance =
     addressBalanceStore.getAddressValue(targetAccount.address)?.evmBalance ??
@@ -196,7 +258,9 @@ export function useAccountHomeShowReceiveTip(
   }, [detect]);
 
   useEffect(() => {
-    if (isForSingle) return;
+    if (isForSingle) {
+      return;
+    }
 
     const onTxCompleted: EventBusListeners[typeof EVENTS.TX_COMPLETED] = () => {
       detect();
@@ -219,7 +283,9 @@ export function useAccountHomeShowReceiveTip(
   }, [isForSingle, detect]);
 
   useEffect(() => {
-    if (isForSingle) return;
+    if (isForSingle) {
+      return;
+    }
 
     const onAccountsChanged = () => {
       detect();

@@ -8,7 +8,7 @@ import {
 } from '@/components';
 import { AppColorsVariants } from '@/constant/theme';
 import { apiCustomTestnet } from '@/core/apis';
-import {
+import type {
   TestnetChain,
   TestnetChainBase,
 } from '@/core/services/customTestnetService';

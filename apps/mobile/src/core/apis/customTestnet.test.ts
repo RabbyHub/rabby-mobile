@@ -26,8 +26,8 @@ function loadCustomTestnetModule() {
       getChainListByIds: (...args: unknown[]) => mockGetChainListByIds(...args),
     },
   }));
-  jest.doMock('../services/shared', () => ({
-    customTestnetService: {
+  jest.doMock('@/core/serviceApi/customTestnet', () => ({
+    customTestnetServiceApi: {
       add: mockAdd,
       addToken: jest.fn(),
       estimateGas: jest.fn(),
@@ -44,9 +44,14 @@ function loadCustomTestnetModule() {
       removeToken: jest.fn(),
       update: jest.fn(),
     },
-    transactionHistoryService,
   }));
-
+  jest.doMock('@/core/serviceApi/transactionHistory', () => ({
+    getTransactionHistoryTransactions: async () =>
+      Object.values(transactionHistoryService.store.transactions),
+    transactionHistoryServiceApi: {
+      getNonceByChain: (...args: unknown[]) => mockGetNonceByChain(...args),
+    },
+  }));
   const { apiCustomTestnet } =
     require('./customTestnet') as typeof import('./customTestnet');
 

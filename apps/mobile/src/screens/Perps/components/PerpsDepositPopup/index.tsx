@@ -19,7 +19,7 @@ import {
 import useAsync from 'react-use/lib/useAsync';
 import { Skeleton } from '@rneui/themed';
 import { openapi } from '@/core/request';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { useTheme2024 } from '@/hooks/theme';
 import { formatPerpsUsdValue, formatUsdValue } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -37,7 +37,15 @@ import React, {
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Keyboard, Platform, TouchableOpacity, View } from 'react-native';
+import {
+  Keyboard,
+  Platform,
+  TouchableOpacity,
+  View,
+  type StyleProp,
+  type TextStyle,
+  type TextInputProps,
+} from 'react-native';
 import { useUsdInput } from '@/hooks/useUsdInput';
 import AuthButton from '@/components2024/AuthButton';
 import { zCreate, zMutative } from '@/core/utils/reexports';
@@ -46,7 +54,7 @@ import {
   isAccountSupportMiniApproval,
 } from '@/utils/account';
 import { CHAINS_ENUM } from '@debank/common';
-import { PerpBridgeQuote, Tx } from '@rabby-wallet/rabby-api/dist/types';
+import type { PerpBridgeQuote, Tx } from '@rabby-wallet/rabby-api/dist/types';
 import { findChain, findChainByServerID } from '@/utils/chain';
 import { abiCoder } from '@/core/apis/sendRequest';
 import { getERC20Allowance } from '@/core/apis/provider';
@@ -59,18 +67,21 @@ import { IS_ANDROID } from '@/core/native/utils';
 import { tokenAmountBn } from '@/screens/Swap/utils';
 import { useTwoStepSwap } from '@/screens/Swap/hooks/twoStepSwap';
 import { AccountSummary } from '@/hooks/perps/usePerpsStore';
+import type {
+  PerpBridgeHistory,
+  PerpsDepositOptions,
+} from '@/hooks/perps/funding/types';
 
+import type { PerpsDepositTokenRow } from './PerpsSelectTokenPopup';
 import {
   getPerpsDepositTokenFromRow,
-  PerpsDepositTokenRow,
   PerpsSelectTokenPopup,
 } from './PerpsSelectTokenPopup';
 import { PerpsDepositTokenModal } from './PerpsDepositTokenModal';
+import type { ITokenItem, TokenEntityId } from '@/store/tokens';
 import useTokenList, {
   buildTokenEntityId,
   EMPTY_TOKEN_ENTITY_IDS,
-  ITokenItem,
-  TokenEntityId,
   tokenEntityResourceStore,
   useTokenIndexStore,
 } from '@/store/tokens';
@@ -85,13 +96,7 @@ import {
 } from '@/constant/layout';
 import { useShallow } from 'zustand/shallow';
 
-export interface PerpBridgeHistory {
-  from_chain_id: string;
-  from_token_id: string;
-  from_token_amount: number;
-  to_token_amount: number;
-  tx: Tx;
-}
+export type { PerpBridgeHistory } from '@/hooks/perps/funding/types';
 
 const EMPTY_PERPS_DEPOSIT_TOKEN_ROWS: PerpsDepositTokenRow[] = [];
 
@@ -222,14 +227,25 @@ const usePerpsDepositTokenIndexStore = zCreate(
 export const PerpsDepositPopup: React.FC<{
   account?: Account | null;
   visible?: boolean;
+  inputTextStyle?: StyleProp<TextStyle>;
+  inputColorProps?: Pick<TextInputProps, 'cursorColor' | 'selectionColor'>;
+  tooltipTextStyle?: StyleProp<TextStyle>;
   onClose(): void;
   onDeposit?(
     txs: Tx[],
     amount: string,
     cacheBridgeHistory?: PerpBridgeHistory,
-    options?: { skipHistory?: boolean; isHypeDeposit?: boolean },
+    options?: PerpsDepositOptions,
   ): Promise<string | undefined>;
-}> = ({ visible, onClose, account, onDeposit }) => {
+}> = ({
+  visible,
+  onClose,
+  account,
+  onDeposit,
+  inputTextStyle,
+  inputColorProps,
+  tooltipTextStyle,
+}) => {
   const modalRef = useRef<AppBottomSheetModal>(null);
 
   const { styles, colors2024, isLight } = useTheme2024({
@@ -857,6 +873,15 @@ export const PerpsDepositPopup: React.FC<{
       const txsToSign = shouldTwoStep ? twoStepCurrentTxs || [] : txs;
 
       const hash = await onDeposit?.(txsToSign, value, bridgeHistory, {
+        history: {
+          amount: isDirectDeposit
+            ? usdValue
+            : String(bridgeHistory?.from_token_amount ?? ''),
+          asset: getTokenSymbol(tokenInfo),
+          settlementAmount: value,
+          sourceChainId: tokenInfo.chain,
+          sourceTokenId: tokenInfo.id,
+        },
         skipHistory: isApproveStep,
         isHypeDeposit: isHypeDeposit,
       });
@@ -945,7 +970,11 @@ export const PerpsDepositPopup: React.FC<{
                 onClose={hideTip}
                 content={
                   <View style={{ width: 280, padding: 8 }}>
-                    <Text style={{ fontSize: 12, color: '#fff' }}>
+                    <Text
+                      style={[
+                        { fontSize: 12, color: '#fff' },
+                        tooltipTextStyle,
+                      ]}>
                       {t('page.perps.PerpsDepositPopup.estReceiveTooltip', {
                         number: bridgeQuote?.duration || 0,
                       })}
@@ -979,6 +1008,7 @@ export const PerpsDepositPopup: React.FC<{
     estReceiveUsdValue,
     tipVisible,
     hideTip,
+    tooltipTextStyle,
   ]);
 
   if (!account) {
@@ -1022,9 +1052,12 @@ export const PerpsDepositPopup: React.FC<{
             <View style={styles.inputContainer}>
               <View style={styles.inputWrapper}>
                 <BottomSheetTextInput
+                  cursorColor={inputColorProps?.cursorColor}
+                  selectionColor={inputColorProps?.selectionColor}
                   keyboardType="numeric"
                   style={[
                     styles.input,
+                    inputTextStyle,
                     !amountValidation.isValid && usdValue !== ''
                       ? styles.inputError
                       : null,

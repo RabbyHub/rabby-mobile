@@ -90,11 +90,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       alignSelf: 'flex-start',
       paddingTop: 2,
     },
-    tipIcon: {
-      width: 14,
-      justifyContent: 'center',
-      height: 20,
-    },
     tipText: {
       fontSize: 16,
       lineHeight: 20,

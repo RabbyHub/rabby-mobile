@@ -1,17 +1,21 @@
 import { DEX } from '@/constant/swap';
 import { openapi } from '@/core/request';
-import { swapService } from '@/core/services';
-import { atom, useAtom } from 'jotai';
+import { swapServiceApi } from '@/core/serviceApi/swap';
+import type { SwapServiceStore, ViewKey } from '@/core/services/swap';
+import type { SwapService } from '@/core/services/swap';
+import { atom, getDefaultStore, useAtom } from 'jotai';
 import { useMemo } from 'react';
+import { createRaceSafeHydratedAtom } from './raceSafeHydratedAtom';
 
-const swapUnlimitedAllowanceAtom = atom(false, (get, set, bool: boolean) => {
-  swapService.setUnlimitedAllowance(bool);
-  set(swapUnlimitedAllowanceAtom, bool);
+const swapUnlimitedAllowanceAtom = createRaceSafeHydratedAtom({
+  initialValue: false,
+  hydrate: () => swapServiceApi.getUnlimitedAllowance(),
+  optimisticUpdate: (_previous, value: boolean) => value,
+  commitUpdate: async (_previous, value: boolean) => {
+    await swapServiceApi.setUnlimitedAllowance(value).catch(console.error);
+    return value;
+  },
 });
-
-swapUnlimitedAllowanceAtom.onMount = s => {
-  s(swapService.getUnlimitedAllowance());
-};
 
 export const useSwapUnlimitedAllowance = () =>
   useAtom(swapUnlimitedAllowanceAtom);
@@ -34,56 +38,104 @@ swapSupportedDexList.onMount = setAtom => {
   });
 };
 
-const getSettings = () => ({
-  swapViewList: swapService.getSwapViewList(),
-  swapTradeList: swapService.getSwapTradeList(),
-  selectedChain: swapService.getSelectedChain(),
-  sortIncludeGasFee: swapService.getSwapSortIncludeGasFee(),
+type SwapSettingsState = {
+  swapViewList: SwapServiceStore['viewList'];
+  swapTradeList: SwapServiceStore['tradeList'];
+  selectedChain: SwapServiceStore['selectedChain'];
+  sortIncludeGasFee: boolean;
+};
+
+const defaultSettings: SwapSettingsState = {
+  swapViewList: {} as SwapServiceStore['viewList'],
+  swapTradeList: {} as SwapServiceStore['tradeList'],
+  selectedChain: null,
+  sortIncludeGasFee: true,
+};
+
+const getSettings = async (): Promise<SwapSettingsState> => ({
+  swapViewList: await swapServiceApi.getSwapViewList(),
+  swapTradeList: await swapServiceApi.getSwapTradeList(),
+  selectedChain: await swapServiceApi.getSelectedChain(),
+  sortIncludeGasFee: await swapServiceApi.getSwapSortIncludeGasFee(),
 });
 
-const settingSwapAtom = atom(getSettings());
+const getSettingsFromService = (service: SwapService): SwapSettingsState => ({
+  swapViewList: service.getSwapViewList(),
+  swapTradeList: service.getSwapTradeList(),
+  selectedChain: service.getSelectedChain(),
+  sortIncludeGasFee: service.getSwapSortIncludeGasFee(),
+});
+
+const settingSwapAtom = atom(defaultSettings);
+let swapSettingsMutationRevision = 0;
+let swapSettingsRefreshRevision = 0;
+
+export function prepareSwapSettingsFromService(service: SwapService) {
+  swapUnlimitedAllowanceAtom.prepare(service.getUnlimitedAllowance());
+  getDefaultStore().set(settingSwapAtom, getSettingsFromService(service));
+}
 
 settingSwapAtom.onMount = setAtom => {
-  setAtom(getSettings());
+  const revision = swapSettingsMutationRevision;
+  void getSettings()
+    .then(settings => {
+      if (revision === swapSettingsMutationRevision) {
+        setAtom(settings);
+      }
+    })
+    .catch(console.error);
 };
 
 function wrapSwapSettingsMethod<
-  T extends Record<string, (...args: any[]) => void>,
+  T extends Record<string, (...args: any[]) => Promise<unknown>>,
 >(
   obj: T,
-  cb: () => void,
-): { [K in keyof T]: (...args: Parameters<T[K]>) => void } {
+  readSettings: () => Promise<SwapSettingsState>,
+  applySettings: (settings: SwapSettingsState) => void,
+): { [K in keyof T]: (...args: Parameters<T[K]>) => Promise<void> } {
+  const refreshSettings = async () => {
+    const refreshRevision = ++swapSettingsRefreshRevision;
+    const settings = await readSettings();
+    if (refreshRevision === swapSettingsRefreshRevision) {
+      applySettings(settings);
+    }
+  };
+
   return Object.fromEntries(
     Object.entries(obj).map(([k, v]) => [
       k,
-      (...args: Parameters<T[typeof k]>) => {
-        v(...args);
-        cb();
+      async (...args: Parameters<T[typeof k]>) => {
+        ++swapSettingsMutationRevision;
+        try {
+          await v(...args);
+        } catch (error) {
+          await refreshSettings().catch(console.error);
+          throw error;
+        }
+        await refreshSettings();
       },
     ]),
-  ) as { [K in keyof T]: (...args: Parameters<T[K]>) => void };
+  ) as { [K in keyof T]: (...args: Parameters<T[K]>) => Promise<void> };
 }
 
 export const useSwapSettings = () => {
   const [settings, setSettings] = useAtom(settingSwapAtom);
 
   const methods = useMemo(() => {
-    const {
-      setSelectedChain,
-      setSwapTrade,
-      setSwapView,
-      setSwapSortIncludeGasFee,
-    } = swapService;
     return wrapSwapSettingsMethod(
       {
-        setSelectedChain,
-        setSwapTrade,
-        setSwapView,
-        setSwapSortIncludeGasFee,
+        setSelectedChain: (
+          chain: NonNullable<SwapServiceStore['selectedChain']>,
+        ) => swapServiceApi.setSelectedChain(chain),
+        setSwapTrade: (dexId: ViewKey, bool: boolean) =>
+          swapServiceApi.setSwapTrade(dexId, bool),
+        setSwapView: (id: ViewKey, bool: boolean) =>
+          swapServiceApi.setSwapView(id, bool),
+        setSwapSortIncludeGasFee: (bool: boolean) =>
+          swapServiceApi.setSwapSortIncludeGasFee(bool),
       },
-      () => {
-        setSettings(getSettings());
-      },
+      getSettings,
+      setSettings,
     );
   }, [setSettings]);
 

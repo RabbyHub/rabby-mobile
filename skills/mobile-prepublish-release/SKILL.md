@@ -1,6 +1,7 @@
 ---
 name: mobile-prepublish-release
-description: Prepare a Rabby Mobile publish PR from a clean branch by bumping the `apps/mobile` version, running `yarn rnversion`, creating a default changelog when missing, committing `build: publish <version>`, and opening a GitHub PR when `gh` is available. Use when Codex needs to cut a mobile publish branch or automate the routine release-prep steps.
+description: |-
+  Prepare a Rabby Mobile publish PR from a clean branch by bumping the `apps/mobile` version, running `yarn rnversion`, creating a default changelog when missing, committing `build: publish <version>`, and opening a GitHub PR when `gh` is available. Use when Codex needs to cut a mobile publish branch or automate the routine release-prep steps.
 ---
 
 # Mobile Prepublish Release

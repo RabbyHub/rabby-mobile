@@ -5,7 +5,7 @@ import { normalizeWhitelistAddresses } from '@/utils/whitelist';
 
 import { EntityAccountBase } from './base';
 import { prepareAppDataSource } from '../imports';
-import { resolveDriverAndConnectionFromEntity } from '@/core/databases/op-sqlite/typeorm';
+import { resolveDriverAndConnectionFromEntity } from '@/core/databases/typeormConnection';
 import { APP_DB_PREFIX, ORM_TABLE_NAMES } from '../constant';
 import { ormEvents } from './_helpers';
 

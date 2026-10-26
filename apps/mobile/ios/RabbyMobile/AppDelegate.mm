@@ -3,19 +3,24 @@
 #import <Firebase.h>
 #import <React/RCTBridge.h>
 #import <React/RCTBundleURLProvider.h>
+#import <React/RCTI18nUtil.h>
 #import <React/RCTRootView.h>
 #import <React/RCTLinkingManager.h>
 #import <React/RCTHTTPRequestHandler.h>
 #import <ReactAppDependencyProvider/RCTAppDependencyProvider.h>
 
 // splash screen
-#import "RNSplashScreen.h"
+#import "RNBootSplash.h"
 
 // push notification
 #import <UserNotifications/UserNotifications.h>
 #import <RNCPushNotificationIOS.h>
 
 #import <sys/utsname.h>
+
+@interface AppDelegate ()
+@property (nonatomic, copy, readwrite) NSDictionary *initialLaunchOptions;
+@end
 
 @implementation AppDelegate
 
@@ -50,34 +55,13 @@
   ];
 }
 
-- (void)configureUserAgentProvider
-{
-  NSString *userAgent = [self makeUserAgent];
-
-  RCTSetCustomNSURLSessionConfigurationProvider(^NSURLSessionConfiguration *{
-    NSURLSessionConfiguration *configuration = [NSURLSessionConfiguration defaultSessionConfiguration];
-    configuration.HTTPAdditionalHeaders = @{ @"User-Agent": userAgent };
-    return configuration;
-  });
-}
-
-- (void)configureBridgeUserAgentIfAvailable
-{
-  RCTBridge *bridge = self.bridge;
-  if (!bridge) {
-    return;
-  }
-
-  NSString *userAgent = [self makeUserAgent];
-  RCTHTTPRequestHandler *requestHandler = [bridge moduleForName:@"RCTHTTPRequestHandler"];
-  if ([requestHandler respondsToSelector:@selector(setDefaultRequestHeaders:)]) {
-    [requestHandler performSelector:@selector(setDefaultRequestHeaders:)
-                         withObject:@{@"User-Agent": userAgent}];
-  }
-}
-
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
+  // Rabby currently ships LTR locales only. Set this before React resolves the root layout direction.
+  RCTI18nUtil *i18nUtil = [RCTI18nUtil sharedInstance];
+  [i18nUtil allowRTL:NO];
+  [i18nUtil forceRTL:NO];
+
   [FIRApp configure];
 
   self.moduleName = @"RabbyMobile";
@@ -87,29 +71,56 @@
   NSString *rabbitCode = rabbitCodeFromBundle ?: @"RABBY_MOBILE_CODE_DEV";
   self.initialProps = @{ @"rabbitCode": rabbitCode };
 
-  [self configureUserAgentProvider];
+  NSString *userAgent = [self makeUserAgent];
+  RCTSetCustomNSURLSessionConfigurationProvider(^NSURLSessionConfiguration *{
+    NSURLSessionConfiguration *configuration = [NSURLSessionConfiguration defaultSessionConfiguration];
+    configuration.HTTPAdditionalHeaders = @{ @"User-Agent": userAgent };
+    return configuration;
+  });
 
   // Define UNUserNotificationCenter
   UNUserNotificationCenter *center = [UNUserNotificationCenter currentNotificationCenter];
   center.delegate = self;
 
-  BOOL didFinish = [super application:application didFinishLaunchingWithOptions:launchOptions];
-  [self configureBridgeUserAgentIfAvailable];
+  // Keep the factory on AppDelegate (RNThread uses it), but let SceneDelegate
+  // create the window and supply any cold-start URL before the React root starts.
+  self.automaticallyLoadReactNativeWindow = NO;
+  self.initialLaunchOptions = launchOptions ?: @{};
+  return [super application:application didFinishLaunchingWithOptions:launchOptions];
+}
 
-#if DEBUG
-  // react-native-splash-screen's iOS `show` implementation blocks the main
-  // thread until JS hides it, which can trigger scene-create watchdog when
-  // running a Metro-backed debug build on newer iOS versions.
-#else
-  [RNSplashScreen show];
-#endif
+- (BOOL)connectWindowScene:(UIWindowScene *)windowScene launchOptions:(NSDictionary *)launchOptions
+{
+  if (self.window) {
+    // Reconnecting a scene must not recreate the root, JS runtime, or worker.
+    self.window.windowScene = windowScene;
+    [self.window makeKeyAndVisible];
+    return NO;
+  }
 
-  return didFinish;
+  self.window = [[UIWindow alloc] initWithWindowScene:windowScene];
+  [self.reactNativeFactory startReactNativeWithModuleName:self.moduleName
+                                               inWindow:self.window
+                                      initialProperties:self.initialProps
+                                          launchOptions:launchOptions];
+
+  // In oldArch the bridge only exists after starting the root above.
+  RCTBridge *bridge = self.bridge;
+  if (bridge) {
+    RCTHTTPRequestHandler *requestHandler = [bridge moduleForName:@"RCTHTTPRequestHandler"];
+    if ([requestHandler respondsToSelector:@selector(setDefaultRequestHeaders:)]) {
+      [requestHandler performSelector:@selector(setDefaultRequestHeaders:)
+                           withObject:@{@"User-Agent": [self makeUserAgent]}];
+    }
+  }
+
+  return YES;
 }
 
 - (void)customizeRootView:(RCTRootView *)rootView
 {
   rootView.backgroundColor = [UIColor systemBackgroundColor];
+  [RNBootSplash initWithStoryboard:@"LaunchScreen" rootView:rootView];
 }
 
 //Called when a notification is delivered to a foreground app.

@@ -11,7 +11,6 @@ import {
   ImageStyle,
   StyleSheet,
   View,
-  ViewProps,
   ImageSourcePropType,
   StyleProp,
 } from 'react-native';
@@ -40,7 +39,6 @@ export default function NormalScreenContainer2024<
   {
     as?: T;
     noHeader?: boolean;
-    className?: ViewProps['className'];
     fitStatuBar?: boolean;
     style?: React.ComponentProps<typeof View>['style'];
     hideBottomBar?: boolean;

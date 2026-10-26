@@ -1,8 +1,9 @@
 import { AppColorsVariants } from '@/constant/theme';
 import { useTheme2024, useThemeColors } from '@/hooks/theme';
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Dimensions,
+  Keyboard,
   KeyboardAvoidingView,
   ScrollView,
   StyleProp,
@@ -36,6 +37,14 @@ const getStyle = createGetStyles2024(ctx =>
       position: 'relative',
     },
 
+    keyboardAvoidingMain: {
+      height: 'auto',
+      minHeight: 0,
+    },
+    keyboardAvoidingFooter: {
+      position: 'relative',
+    },
+
     footerContainer: {
       position: 'absolute',
       bottom: 0,
@@ -47,7 +56,7 @@ const getStyle = createGetStyles2024(ctx =>
     },
 
     footerButtonTitle: {
-      fontWeight: '600',
+      fontWeight: '500',
       fontSize: 16,
     },
     footerButtonDisabled: {
@@ -114,6 +123,24 @@ export const FooterButtonScreenContainer = <
   >) => {
   const { safeOffHeader, androidOnlyBottomOffset } = useSafeSizes();
   const { styles } = useTheme2024({ getStyle });
+  const keyboardAvoiding = _as === 'KeyboardAvoidingView';
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
+
+  useEffect(() => {
+    if (!keyboardAvoiding) return;
+
+    const showSubscription = Keyboard.addListener('keyboardDidShow', () => {
+      setKeyboardVisible(true);
+    });
+    const hideSubscription = Keyboard.addListener('keyboardDidHide', () => {
+      setKeyboardVisible(false);
+    });
+
+    return () => {
+      showSubscription.remove();
+      hideSubscription.remove();
+    };
+  }, [keyboardAvoiding]);
 
   const { winHeight, bottomOffset, headerOffset } = useMemo(() => {
     return {
@@ -139,6 +166,7 @@ export const FooterButtonScreenContainer = <
       <View
         style={[
           styles.main,
+          keyboardVisible && styles.keyboardAvoidingMain,
           {
             maxHeight:
               winHeight - headerOffset - (footerContainerHeight + bottomOffset),
@@ -150,8 +178,11 @@ export const FooterButtonScreenContainer = <
       <View
         style={[
           styles.footerContainer,
+          keyboardVisible && styles.keyboardAvoidingFooter,
           footerContainerStyle,
-          { bottom: bottomOffset, height: footerContainerHeight },
+          keyboardVisible
+            ? { height: footerContainerHeight, marginBottom: bottomOffset }
+            : { bottom: bottomOffset, height: footerContainerHeight },
         ]}>
         {buttonGroupProps && <FooterButtonGroup {...buttonGroupProps} />}
         {buttonProps && <Button type={'primary'} {...buttonProps} />}

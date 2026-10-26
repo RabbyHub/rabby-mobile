@@ -12,7 +12,7 @@ import RcIconSwitchBtnDark from '@/assets2024/icons/bridge/IconSwitchBtnDark.svg
 import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { CHAINS_ENUM } from '@/constant/chains';
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { useFindChain } from '@/hooks/useFindChain';
 import { useTheme2024 } from '@/hooks/theme';

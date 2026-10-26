@@ -1,20 +1,25 @@
-import type { FieldNilable } from "@rabby-wallet/base-utils";
+import type { Immutable } from 'mutative';
 
 export type Primitive = string | number | boolean | null | undefined;
-export type StorageItemTpl = { [P in string | number ]: Primitive | any | null };
+export type StorageItemTpl = { [P in string | number]: Primitive | any | null };
+export type StorageSnapshot<T extends StorageItemTpl> = {
+  readonly [K in keyof T]: Immutable<T[K]>;
+};
 
 export interface StorageAdapater<T extends StorageItemTpl = StorageItemTpl> {
-  getItem<K extends keyof T>(key: string): T[K] | null | undefined
+  getItem<K extends keyof T>(key: string): T[K] | null | undefined;
   // getAll(): FieldNilable<T>
-  setItem<V>(key: keyof T, value: V): void
-  removeItem(key: keyof T): void
-  clearAll(): void
-  flushToDisk?(): void
+  setItem<V>(key: keyof T, value: V): void;
+  removeItem(key: keyof T): void;
+  clearAll(): void;
+  flushToDisk?(): void;
 }
 
-export interface StorageAdapaterOptions<T extends StorageItemTpl = StorageItemTpl> {
+export interface StorageAdapaterOptions<
+  T extends StorageItemTpl = StorageItemTpl,
+> {
   storageAdapter?: StorageAdapater<StorageItemTpl>;
-  beforePersist?: (store: FieldNilable<T>) => void;
+  beforePersist?: (store: StorageSnapshot<T>) => void;
 }
 
 export function makeMemoryStorage() {
@@ -23,8 +28,12 @@ export function makeMemoryStorage() {
   const storage: StorageAdapater<StorageItemTpl> = {
     getItem: (key: string) => memoryStore.get(key),
     // getAll: () => Object.fromEntries(memoryStore.entries()),
-    setItem: (key: string, value: any) => { memoryStore.set(key, value) },
-    removeItem: (key: string) => { memoryStore.delete(key) },
+    setItem: (key: string, value: any) => {
+      memoryStore.set(key, value);
+    },
+    removeItem: (key: string) => {
+      memoryStore.delete(key);
+    },
     clearAll: () => memoryStore.clear(),
   };
 

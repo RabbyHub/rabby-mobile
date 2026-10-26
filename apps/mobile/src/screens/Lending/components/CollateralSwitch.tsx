@@ -2,7 +2,6 @@ import { AppSwitch2024 } from '@/components/customized/Switch2024';
 import { useTheme2024 } from '@/hooks/theme';
 import { DisplayPoolReserveInfo } from '../type';
 import { Tip } from '@/components';
-import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { useTranslation } from 'react-i18next';
 
 interface IProps {
@@ -18,12 +17,12 @@ export const CollateralSwitch: React.FC<IProps> = ({
   canBeEnabledAsCollateral,
   onValueChange,
 }) => {
-  const { colors2024 } = useTheme2024({ getStyle: getStyles });
+  const { colors2024 } = useTheme2024();
   const { t } = useTranslation();
-  const isEnabled =
-    reserve.usageAsCollateralEnabledOnUser && canBeEnabledAsCollateral;
+  const isEnabled = reserve.usageAsCollateralEnabledOnUser;
+  const canToggle = isEnabled || canBeEnabledAsCollateral;
 
-  if (!canBeEnabledAsCollateral) {
+  if (!canToggle) {
     return (
       <Tip
         as="RNGHPressable"
@@ -46,7 +45,7 @@ export const CollateralSwitch: React.FC<IProps> = ({
       value={isEnabled}
       barHeight={18}
       circleSize={18}
-      disabled={!canBeEnabledAsCollateral}
+      disabled={!canToggle}
       backgroundActive={colors2024['green-default']}
       circleBorderActiveColor={colors2024['green-default']}
       onValueChange={onValueChange}
@@ -54,7 +53,3 @@ export const CollateralSwitch: React.FC<IProps> = ({
     />
   );
 };
-
-const getStyles = createGetStyles2024(() => ({
-  tooltip: {},
-}));

@@ -1,5 +1,6 @@
 import 'react-native-gesture-handler';
 import React from 'react';
+import { RoundedFontStyles } from '@/core/utils/fonts';
 
 import { useStackScreenConfig } from '@/hooks/navigation';
 import { createCustomNativeStackNavigator as createNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
@@ -27,6 +28,8 @@ import { RestoreFromCloud } from '../RestoreFromCloud/RestoreFromCloud';
 import { IS_IOS } from '@/core/native/utils';
 import ImportMethods from '../Address/ImportMethods';
 import { ImportHardwareAddressScreen } from '../Address/ImportHardwareAddress';
+import { ImportPrivateKeyScreen2024 } from '../Address/ImportPrivateKeyScreen2024';
+import { ImportSeedPhraseScreen2024 } from '../Address/ImportSeedPhraseScreen2024';
 import { ImportSuccessScreen2024 } from '../Address/ImportSuccessScreen2024';
 import { createGetStyles2024 } from '@/utils/styles';
 import CreateNewAddress from '../Address/CreateNewAddress';
@@ -45,8 +48,26 @@ import { filterMyAccounts } from '@/utils/account';
 import { SyncExtensionPasswordScreen } from '../SyncExtension/SyncExtensionPasswordScreen';
 import { SyncExtensionAccountSuccessfulScreen } from '../SyncExtension/SyncExtensionAccountSuccessScreen';
 import PointsScreen from '../Points';
+import { APP_TEST_PASSWORD } from '@/constant';
+import { withRegressionScenario } from '@/devtools/regressionScenarios/react';
 
 const AddressStack = createNativeStackNavigator<AddressNavigatorParamList>();
+const RegressionSyncExtensionPasswordScreen = withRegressionScenario(
+  SyncExtensionPasswordScreen,
+  {
+    screen: 'SyncExtensionPassword',
+    injectProps: context => ({
+      regressionScenario: {
+        runId: context.runId,
+        autoSubmit:
+          context.scenario === 'sync-extension-password' &&
+          context.params.autoSubmit === 'true',
+        password: APP_TEST_PASSWORD,
+        report: context.report,
+      },
+    }),
+  },
+);
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   headerRight: {
@@ -335,6 +356,15 @@ export function AddressNavigator() {
         }}
       />
       <AddressStack.Screen
+        name={RootNames.ImportPrivateKey2024}
+        component={ImportPrivateKeyScreen2024}
+        options={{
+          headerTitle: t('screens.addressStackTitle.ImportPrivateKey'),
+          title: t('screens.addressStackTitle.ImportPrivateKey'),
+          headerTitleStyle: styles.headerTitleText,
+        }}
+      />
+      <AddressStack.Screen
         name={RootNames.ImportMnemonic}
         component={ImportSeedPhraseScreen}
         options={{
@@ -344,6 +374,15 @@ export function AddressNavigator() {
             fontSize: DEFAULT_NAVBAR_FONT_SIZE,
           },
           headerRight: CloudBackupButton,
+        }}
+      />
+      <AddressStack.Screen
+        name={RootNames.ImportMnemonic2024}
+        component={ImportSeedPhraseScreen2024}
+        options={{
+          headerTitle: t('screens.addressStackTitle.ImportMnemonic'),
+          title: t('screens.addressStackTitle.ImportMnemonic'),
+          headerTitleStyle: styles.headerTitleText,
         }}
       />
       <AddressStack.Screen
@@ -427,7 +466,7 @@ export function AddressNavigator() {
       />
       <AddressStack.Screen
         name={RootNames.SyncExtensionPassword}
-        component={SyncExtensionPasswordScreen}
+        component={RegressionSyncExtensionPasswordScreen}
         options={mergeScreenOptions({
           headerShadowVisible: false,
           headerShown: true,
@@ -451,7 +490,7 @@ export function AddressNavigator() {
             headerTitleAlign: 'center',
             headerShown: true,
             headerTintColor: colors2024['neutral-title-1'],
-            headerTitleStyle: [styles.headerTitleText, { fontWeight: '900' }],
+            headerTitleStyle: [styles.headerTitleText, RoundedFontStyles.heavy],
             headerTitle: t('page.rabbyPoints.title'),
           },
         ])}

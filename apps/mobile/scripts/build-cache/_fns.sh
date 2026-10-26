@@ -430,26 +430,16 @@ build_cache_layer_restore_prefers_remote() {
 }
 
 build_cache_hash_git_files() {
-  repo_root="$1"
-  shift
+  node "$project_dir/scripts/build-cache/hash-git-files.cjs" "$@"
+}
 
-  tmp_file=$(mktemp)
-  git -C "$repo_root" ls-files "$@" | LC_ALL=C sort >"$tmp_file"
-
-  {
-    while IFS= read -r rel_path; do
-      if [ -n "$rel_path" ] && [ -f "$repo_root/$rel_path" ]; then
-        file_hash=$(build_cache_sha256 "$repo_root/$rel_path" | awk '{print $1}')
-        printf '%s:%s\n' "$rel_path" "$file_hash"
-      fi
-    done <"$tmp_file"
-  } | build_cache_sha256 | awk '{print $1}'
-
-  rm -f "$tmp_file"
+build_cache_resolve_react_native_architecture() {
+  node "$RABBY_MOBILE_REPO_ROOT/apps/mobile/scripts/react-native-architecture.cjs"
 }
 
 build_cache_compute_gradle_cache_key() {
   repo_root="$RABBY_MOBILE_REPO_ROOT"
+  react_native_arch=$(build_cache_resolve_react_native_architecture) || return $?
   files_hash=$(
     build_cache_hash_git_files "$repo_root" \
       apps/mobile/android/build.gradle \
@@ -459,10 +449,11 @@ build_cache_compute_gradle_cache_key() {
       apps/mobile/android/gradle/wrapper/gradle-wrapper.properties \
       apps/mobile/package.json \
       yarn.lock
-  )
+  ) || return $?
 
   printf '%s\n' \
     "platform=$(build_cache_platform_fingerprint)" \
+    "react_native_arch=$react_native_arch" \
     "java=$(java -version 2>&1 | head -n 1)" \
     "files=$files_hash" \
     | build_cache_sha256 | awk '{print $1}'
@@ -570,7 +561,7 @@ build_cache_use_gradle_home_cache_key() {
 
 build_cache_restore_android_gradle_state() {
   build_cache_init_env
-  cache_key=$(build_cache_compute_gradle_cache_key)
+  cache_key=$(build_cache_compute_gradle_cache_key) || return $?
 
   if build_cache_should_write_gradle_proxy_properties; then
     build_cache_write_gradle_proxy_properties
@@ -647,7 +638,7 @@ build_cache_save_android_gradle_state_to_remote() {
 
 build_cache_save_android_gradle_state() {
   build_cache_init_env
-  cache_key=$(build_cache_compute_gradle_cache_key)
+  cache_key=$(build_cache_compute_gradle_cache_key) || return $?
 
   if ! build_cache_enabled; then
     return 0

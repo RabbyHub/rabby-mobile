@@ -206,6 +206,12 @@ export const RcScreenshotReport = makeThemeIcon2024FromCC(
   }),
 );
 
+import { default as RcBugReportCC } from '../feedback/chat-cc.svg';
+export const RcBugReport = makeThemeIcon2024FromCC(RcBugReportCC, ctx => ({
+  onLight: ctx.colors2024['brand-default'],
+  onDark: ctx.colors2024['brand-default'],
+}));
+
 import { default as RcIconCurrencyCC } from './icon-currency-cc.svg';
 export const RcIconCurrency = makeThemeIcon2024FromCC(
   RcIconCurrencyCC,
@@ -218,6 +224,15 @@ export const RcIconCurrency = makeThemeIcon2024FromCC(
 import { default as RcWalletConnectCC } from './icon-wallet-connect-cc.svg';
 export const RcWalletConnect = makeThemeIcon2024FromCC(
   RcWalletConnectCC,
+  ctx => ({
+    onLight: ctx.colors2024['brand-default'],
+    onDark: ctx.colors2024['brand-default'],
+  }),
+);
+
+import { default as RcManageWalletCC } from './icon-manage-wallet-cc.svg';
+export const RcManageWallet = makeThemeIcon2024FromCC(
+  RcManageWalletCC,
   ctx => ({
     onLight: ctx.colors2024['brand-default'],
     onDark: ctx.colors2024['brand-default'],

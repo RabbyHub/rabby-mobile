@@ -99,7 +99,7 @@ export const AccountSelectItem = ({
       </View>
       <View style={styles.extra}>
         {gasTokenBalance != null ? (
-          <Text className="text-12 text-r-neutral-body native-token-balance">
+          <Text style={styles.nativeTokenBalance}>
             {`${formatTokenAmount(gasTokenBalance.amount)} ${
               gasTokenBalance.symbol || chain?.nativeTokenSymbol || 'ETH'
             }`}
@@ -167,5 +167,9 @@ const getStyles = createGetStyles(colors => ({
     fontSize: 12,
     lineHeight: 14,
     color: colors['neutral-body'],
+  },
+  nativeTokenBalance: {
+    color: colors['neutral-body'],
+    fontSize: 12,
   },
 }));

@@ -23,14 +23,14 @@ import { WordsMatrix } from '@/components2024/WordsMatrix';
 import { replaceToFirst } from '@/utils/navigation';
 import { toast, toastWithIcon } from '@/components2024/Toast';
 import { addKeyringAndactiveAndPersistAccounts } from '@/core/apis/mnemonic';
-import { keyringService } from '@/core/services';
+import { keyringServiceApi } from '@/core/serviceApi/keyring';
 import { RootNames } from '@/constant/layout';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { useCreateAddressProc } from '@/hooks/address/useNewUser';
-import Clipboard from '@react-native-clipboard/clipboard';
+import RNHelpers from '@/core/native/RNHelpers';
 import IconScreenshotSecure from '@/assets2024/icons/address/screenshot-secure.svg';
 import IconCopySecure from '@/assets2024/icons/address/copy-secure.svg';
 import { useSheetModal } from '@/hooks/useSheetModal';
@@ -44,8 +44,8 @@ import {
   removeGlobalBottomSheetModal2024,
 } from '../GlobalBottomSheetModal';
 import { MODAL_NAMES } from '../GlobalBottomSheetModal/types';
-import { onCopiedSensitiveData } from '@/utils/clipboard';
 import { Text } from '@/components/Typography';
+import * as SecretVault from '@/core/utils/secretVault';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   tipsWrapper: {
@@ -318,7 +318,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 20,
     fontStyle: 'normal',
-    fontWeight: '800',
+    fontWeight: '900',
     lineHeight: 24,
     marginTop: 8,
   },
@@ -538,7 +538,7 @@ export const SeedPhrase: React.FC<Props> = ({
           accountsToCreate as any,
           true,
         );
-        keyringService.removePreMnemonics();
+        await keyringServiceApi.removePreMnemonics();
         replaceToFirst(RootNames.StackAddress, {
           screen: RootNames.ImportSuccess2024,
           params: {
@@ -547,8 +547,10 @@ export const SeedPhrase: React.FC<Props> = ({
             isFirstImport: true,
             isFirstCreate: true,
             address: [address],
-            mnemonics,
-            passphrase,
+            mnemonicsVaultId: SecretVault.storeMnemonicsPayload({
+              mnemonics,
+              passphrase,
+            }),
             isExistedKR: false,
             alias,
           },
@@ -827,11 +829,15 @@ const SecureBottomTips = ({
     };
   }, [t]);
 
-  const onCopy = () => {
-    Clipboard.setString(copyRaw || '');
-    onCopiedSensitiveData({ type: 'seedPhrase' });
-
-    toggleShowSheetModal('destroy');
+  const onCopy = async () => {
+    if (!copyRaw) return;
+    try {
+      await RNHelpers.setSensitiveClipboard(copyRaw);
+      toast.success(t('global.copied'));
+      toggleShowSheetModal('destroy');
+    } catch {
+      toast.error('Failed to copy');
+    }
   };
 
   useEffect(() => {

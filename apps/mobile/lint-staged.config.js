@@ -4,6 +4,10 @@ const path = require('path');
 const TSCONFIG_FILE = 'tsconfig.typecheck.temp.json';
 
 const tsconfigPath = path.resolve(__dirname, TSCONFIG_FILE);
+const eslintFixCommand = `eslint --rulesdir ${path.resolve(
+  __dirname,
+  'eslint-rules',
+)} --fix --quiet`;
 
 const tpl = JSON.parse(`
 {
@@ -32,9 +36,9 @@ const tpl = JSON.parse(`
 `);
 
 module.exports = {
-  '*.{,js,jsx}': 'eslint --fix --quiet',
+  '*.{,js,jsx}': eslintFixCommand,
   '*.{,ts,tsx}': [
-    'eslint --fix --quiet',
+    eslintFixCommand,
     !process.env.DISABLE_APP_TYPE_CHECK &&
       (stagedFiles => {
         tpl.include = tpl.include.concat(stagedFiles);

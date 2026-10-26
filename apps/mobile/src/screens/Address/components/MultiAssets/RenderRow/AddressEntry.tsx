@@ -6,8 +6,11 @@ import { useTheme2024 } from '@/hooks/theme';
 export const AddressEntry = ({
   data,
   onSelect,
+  onManage,
+  manageAccessibilityLabel,
   showMarkIfNewlyAdded,
-  contextMenuAndroidTriggerMode,
+  disableNavigate,
+  isShowBackupBadge,
 }: {
   data: KeyringAccountWithAlias & {
     changPercent?: string;
@@ -16,10 +19,11 @@ export const AddressEntry = ({
   showMarkIfNewlyAdded?: React.ComponentProps<
     typeof AddressItemEntry
   >['showMarkIfNewlyAdded'];
-  contextMenuAndroidTriggerMode?: React.ComponentProps<
-    typeof AddressItemEntry
-  >['contextMenuAndroidTriggerMode'];
   onSelect?: () => void;
+  onManage?: () => void;
+  manageAccessibilityLabel?: string;
+  disableNavigate?: boolean;
+  isShowBackupBadge?: boolean;
 }) => {
   const { styles } = useTheme2024({ getStyle });
 
@@ -30,8 +34,11 @@ export const AddressEntry = ({
       account={data}
       changePercent={data.changPercent}
       onSelect={onSelect}
+      onManage={onManage}
+      manageAccessibilityLabel={manageAccessibilityLabel}
       isLoss={data.isLoss}
-      contextMenuAndroidTriggerMode={contextMenuAndroidTriggerMode}
+      disableNavigate={disableNavigate}
+      isShowBackupBadge={isShowBackupBadge}
     />
   );
 };

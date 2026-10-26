@@ -1,7 +1,7 @@
 import { BaseEntity } from 'typeorm/browser';
 import { ClassOf } from '@rabby-wallet/base-utils';
 
-import { makeJsEEClass } from '@/core/services/_utils';
+import { makeJsEEClass } from '@/core/utils/makeJsEEClass';
 import { EntityAddressAssetBase } from '../entities/base';
 import { useEffect, useMemo, useRef } from 'react';
 import { safeParseJSON } from '@rabby-wallet/base-utils/dist/isomorphic/string';
@@ -17,7 +17,9 @@ export type SyncTaskOptions = {
     | 'protocols'
     | 'balance'
     | 'buy-history'
-    | 'cex';
+    | 'cex'
+    | 'appchain'
+    | 'asset-projection';
 };
 
 type RemoteDataUpsertedCtx = {

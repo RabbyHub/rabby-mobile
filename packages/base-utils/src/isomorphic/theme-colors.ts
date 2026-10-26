@@ -125,6 +125,7 @@ export const themeColorsNext2024 = {
     'neutral-bg-4': 'rgba(235, 237, 240, 1)',
     'neutral-bg-5': 'rgba(224, 229, 236, 0.5)',
     'neutral-line': 'rgba(224, 229, 236, 1)',
+    'neutral-sheet-handle': 'rgba(209, 212, 219, 1)',
     'neutral-title-1': 'rgba(25, 41, 69, 1)',
     /** @deprecated just for compability, use classcial's, not next's */
     'neutral-title-2': 'rgba(255, 255, 255, 1)',
@@ -136,6 +137,7 @@ export const themeColorsNext2024 = {
     'neutral-secondary': 'rgba(154, 156, 169, 1)',
     'neutral-info': 'rgba(197, 197, 207, 1)',
     'neutral-InvertHighlight': 'rgba(255, 255, 255, 1)',
+    'neutral-contrast': 'rgba(255, 255, 255, 1)',
     'neutral-black': 'rgba(0, 0, 0, 1)',
     'neutral-bg-gray': 'rgba(246, 247, 247, 1)',
   },
@@ -182,6 +184,7 @@ export const themeColorsNext2024 = {
     'neutral-bg-4': 'rgba(56, 59, 65, 1)',
     'neutral-bg-5': 'rgba(47, 49, 53, 0.5)',
     'neutral-line': 'rgba(47, 49, 53, 1)',
+    'neutral-sheet-handle': 'rgba(47, 49, 53, 1)',
     'neutral-title-1': 'rgba(247, 250, 252, 1)',
     /** @deprecated just for compability, use classcial's, not next's */
     'neutral-title-2': 'rgba(255, 255, 255, 1)',
@@ -193,6 +196,7 @@ export const themeColorsNext2024 = {
     'neutral-secondary': 'rgba(113, 115, 128, 1)',
     'neutral-info': 'rgba(86, 87, 95, 1)',
     'neutral-InvertHighlight': 'rgba(255, 255, 255, 1)',
+    'neutral-contrast': 'rgba(0, 0, 0, 1)',
     'neutral-black': 'rgba(0, 0, 0, 1)',
     'neutral-bg-gray': 'rgba(19, 20, 22, 1)',
   },

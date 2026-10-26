@@ -3,7 +3,7 @@ import { t } from 'i18next';
 import { decodeFunctionResult, encodeFunctionData } from 'viem';
 import { Abis as TempoAbis, Addresses as TempoAddresses } from 'viem/tempo';
 
-import { transactionHistoryService } from '@/core/services';
+import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
 import type { Account } from '@/types/account';
 import { findChain } from '@/utils/chain';
 import { isTempoChain } from '@/utils/tempoChain';
@@ -90,6 +90,6 @@ export const getRecommendNonce = async ({
     account,
   );
   const localNonce =
-    (await transactionHistoryService.getNonceByChain(from, chainId)) || 0;
+    (await transactionHistoryServiceApi.getNonceByChain(from, chainId)) || 0;
   return `0x${BigNumber.max(onChainNonce, localNonce).toString(16)}`;
 };

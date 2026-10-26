@@ -1,24 +1,14 @@
-import React, {
-  useMemo,
-  ReactNode,
-  useState,
-  useEffect,
-  useCallback,
-} from 'react';
-import {
-  View,
-  StyleSheet,
-  Image,
-  TouchableOpacity,
-  TextStyle,
-} from 'react-native';
+import type { ReactNode } from 'react';
+import React, { useMemo, useState, useEffect, useCallback } from 'react';
+import type { TextStyle } from 'react-native';
+import { View, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { useTranslation } from 'react-i18next';
-import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import type { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { toast } from '@/components2024/Toast';
 import AddressMemo from './AddressMemo';
 import UserListDrawer from './UserListDrawer';
-import { getTimeSpan } from '@/utils/time';
+import { formatTimeSpanToMinutes, getTimeSpan } from '@/utils/time';
 import { formatUsdValue, formatAmount } from '@/utils/number';
 import LogoWithText from './LogoWithText';
 import { ellipsis } from '@/utils/address';
@@ -43,14 +33,14 @@ import {
   removeContractWhitelist,
 } from '@/core/apis/securityEngine';
 import { useWhitelist } from '@/hooks/whitelist';
-import { keyringService } from '@/core/services';
+import { keyringServiceApi } from '@/core/serviceApi/keyring';
 import { useApprovalSecurityEngine } from '../../../hooks/useApprovalSecurityEngine';
 import useCommonStyle from '@/components/Approval/hooks/useCommonStyle';
 import { useThemeColors } from '@/hooks/theme';
 import { useTokenDetailSheetModalOnApprovals } from '@/components/TokenDetailPopup/hooks';
 import IconArrowRight from '@/assets/icons/approval/edit-arrow-right.svg';
 import { useFindChain } from '@/hooks/useFindChain';
-import { Chain } from '@/constant/chains';
+import type { Chain } from '@/constant/chains';
 import { Text } from '@/components/Typography';
 
 const { isSameAddress } = addressUtils;
@@ -78,6 +68,9 @@ const styles = StyleSheet.create({
   tokenAmountWrapper: {
     flex: 0,
     flexShrink: 0,
+  },
+  textValue: {
+    overflow: 'hidden',
   },
 });
 
@@ -146,14 +139,19 @@ const TimeSpanFuture = ({
   from = Math.floor(Date.now() / 1000),
   to,
   style,
+  showMinutes = false,
 }: {
   from?: number;
   to: number;
   style?: TextStyle;
+  showMinutes?: boolean;
 }) => {
   const timeSpan = useMemo(() => {
     if (!to) return '-';
     const { d, h, m } = getTimeSpan(to - from);
+    if (showMinutes) {
+      return formatTimeSpanToMinutes({ d, h, m });
+    }
     if (d > 0) {
       return `${d} day${d > 1 ? 's' : ''}`;
     }
@@ -164,7 +162,7 @@ const TimeSpanFuture = ({
       return `${m} minutes`;
     }
     return '1 minute';
-  }, [from, to]);
+  }, [from, showMinutes, to]);
   return <Text style={style}>{timeSpan}</Text>;
 };
 
@@ -198,23 +196,23 @@ const AddressMark = ({
   }) => {
     if (data.onWhitelist && !onWhitelist) {
       if (isContract && chainId) {
-        addContractWhitelist({
+        await addContractWhitelist({
           address,
           chainId,
         });
       } else {
-        addAddressWhitelist(address);
+        await addAddressWhitelist(address);
       }
       toast.success('Mark as "Trusted"');
     }
     if (data.onBlacklist && !onBlacklist) {
       if (isContract && chainId) {
-        addContractBlacklist({
+        await addContractBlacklist({
           address,
           chainId,
         });
       } else {
-        addAddressBlacklist(address);
+        await addAddressBlacklist(address);
       }
       toast.success('Mark as "Blocked"');
     }
@@ -224,21 +222,21 @@ const AddressMark = ({
       (onBlacklist || onWhitelist)
     ) {
       if (isContract && chainId) {
-        removeContractBlacklist({
+        await removeContractBlacklist({
           address,
           chainId,
         });
-        removeContractWhitelist({
+        await removeContractWhitelist({
           address,
           chainId,
         });
       } else {
-        removeAddressBlacklist(address);
-        removeAddressWhitelist(address);
+        await removeAddressBlacklist(address);
+        await removeAddressWhitelist(address);
       }
       toast.success(t('page.signTx.markRemoved'));
     }
-    init();
+    await init();
     onChange();
   };
   return (
@@ -414,11 +412,7 @@ const AddressWithCopy = ({
 };
 
 const TextValue = ({ children }: { children: ReactNode }) => {
-  return (
-    <View className="overflow-hidden overflow-ellipsis whitespace-nowrap">
-      {children}
-    </View>
-  );
+  return <View style={styles.textValue}>{children}</View>;
 };
 
 const DisplayChain = ({
@@ -514,7 +508,7 @@ const KnownAddress = ({
   const { t } = useTranslation();
 
   const handleAddressChange = async (addr: string) => {
-    const res = await keyringService.hasAddress(addr);
+    const res = await keyringServiceApi.hasAddress(addr);
     setInWhitelist(!!whitelist.find(item => isSameAddress(item, addr)));
     setHasAddress(res);
   };

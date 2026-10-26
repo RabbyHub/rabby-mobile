@@ -1,4 +1,8 @@
-import { contactService } from '@/core/services';
+import {
+  contactServiceApi,
+  getContactAliasSnapshot,
+} from '@/core/serviceApi/contact';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { atom, useAtom } from 'jotai';
 import React from 'react';
 
@@ -14,28 +18,34 @@ export const useApprovalAlias = () => {
 
   const accountMap = React.useMemo(() => {
     return accounts.reduce((acc, account) => {
-      acc[account.address] = account;
+      acc[account.address.toLowerCase()] = account;
       return acc;
     }, {} as Record<string, AccountWithAliasName>);
   }, [accounts]);
 
   const add = React.useCallback(
     async (address: string) => {
-      if (accounts.some(account => account.address === address)) {
+      const normalizedAddress = address.toLowerCase();
+      if (accounts.some(account => isSameAddress(account.address, address))) {
         return accounts;
       }
-      const alias = await contactService.getAliasByAddress(address)?.alias;
-      setAccounts([...accounts, { address, alias }]);
+      const alias = getContactAliasSnapshot(normalizedAddress)?.alias;
+      setAccounts([...accounts, { address: normalizedAddress, alias }]);
     },
     [accounts, setAccounts],
   );
 
   const update = React.useCallback(
     (address: string, alias: string) => {
+      const normalizedAddress = address.toLowerCase();
       setAccounts(accounts => {
         return accounts.map(account => {
-          if (account.address === address) {
-            contactService.updateAlias({ address, name: alias });
+          if (isSameAddress(account.address, address)) {
+            contactServiceApi
+              .updateAlias({ address: normalizedAddress, name: alias })
+              .catch(error => {
+                console.error('[useApprovalAlias] update alias failed', error);
+              });
             return { ...account, alias };
           }
           return account;

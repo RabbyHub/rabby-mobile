@@ -128,9 +128,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   tabTextActive: {
     fontWeight: '700',
-    color: isLight
-      ? colors2024['neutral-InvertHighlight']
-      : colors2024['neutral-black'],
+    color: colors2024['neutral-contrast'],
   },
   pagerContainer: {
     flex: 1,

@@ -1,23 +1,19 @@
+import { RoundedFontStyles } from '@/core/utils/fonts';
 import * as Sentry from '@sentry/react-native';
 import { toast } from '@/components2024/Toast';
-import {
-  notificationService,
-  preferenceService,
-  transactionHistoryService,
-} from '@/core/services/shared';
-import { Account } from '@/core/services/preference';
+import { notificationServiceApi } from '@/core/serviceApi/notification';
+import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
+import type { Account } from '@/core/startupServices/preference';
 import { useApproval } from '@/hooks/useApproval';
 import { APPROVAL_STATUS_MAP, eventBus, EVENTS } from '@/utils/events';
 import React, { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  ApprovalPopupContainer,
-  Props as ApprovalPopupContainerProps,
-} from '../Popup/ApprovalPopupContainer';
+import type { Props as ApprovalPopupContainerProps } from '../Popup/ApprovalPopupContainer';
+import { ApprovalPopupContainer } from '../Popup/ApprovalPopupContainer';
 import { useCommonPopupView } from '@/hooks/useCommonPopupView';
 import { StyleSheet, View } from 'react-native';
 import OneKeySVG from '@/assets/icons/wallet/onekey.svg';
-import { AppColorsVariants } from '@/constant/theme';
+import type { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
 import { stats } from '@/utils/stats';
 import {
@@ -29,10 +25,10 @@ import { adjustV } from '@/utils/gnosis';
 import { apisSafe } from '@/core/apis/safe';
 import { emitSignComponentAmounted } from '@/core/utils/signEvent';
 import { findChain } from '@/utils/chain';
+import type { RetryUpdateType } from '@/utils/errorTxRetry';
 import {
   getTxFailedResult,
   retryTxReset,
-  RetryUpdateType,
   setRetryTxRecommendNonce,
   setRetryTxType,
   useDebugToastErrorTxRetryInfo,
@@ -40,6 +36,7 @@ import {
 import useAsync from 'react-use/lib/useAsync';
 import { useUnmount } from 'ahooks';
 import { Text } from '@/components/Typography';
+import { useRetryMinPending } from '@/components/Approval/hooks/useRetryMinPending';
 
 interface ApprovalParams {
   address: string;
@@ -80,9 +77,8 @@ const getStyles = (colors: AppColorsVariants) =>
     },
     content: {
       fontSize: 20,
-      fontWeight: '900',
       lineHeight: 24,
-      fontFamily: 'SF Pro Rounded',
+      ...RoundedFontStyles.heavy,
     },
     contentWrapper: {
       flexDirection: 'row',
@@ -141,6 +137,8 @@ export const OneKeyHardwareWaiting = ({
 
   const [isRetrying, setIsRetrying] = React.useState(false);
 
+  const { markRetryStarted, afterMinPending } = useRetryMinPending();
+
   const handleRetry = async (showToast = true) => {
     if (isRetrying) {
       return;
@@ -152,6 +150,7 @@ export const OneKeyHardwareWaiting = ({
     setIsRetrying(true);
 
     setConnectStatus(APPROVAL_STATUS_MAP.WAITING);
+    markRetryStarted();
 
     retryTxReset();
     if (params.nonce && params.chainId && params.from && account) {
@@ -168,11 +167,14 @@ export const OneKeyHardwareWaiting = ({
       }
     }
 
-    notificationService.callCurrentRequestDeferFn(true);
+    // Fire and forget: this resolves only when signing ends, and a failed
+    // attempt is reported through SIGN_FINISHED instead.
+    void notificationServiceApi
+      .callCurrentRequestDeferFn(true)
+      .catch(console.error);
     if (showToast) {
       toast.success(t('page.signFooterBar.ledger.resent'));
     }
-    emitSignComponentAmounted();
     setIsRetrying(false);
   };
 
@@ -187,7 +189,7 @@ export const OneKeyHardwareWaiting = ({
     if (!isSignText) {
       const signingTxId = approval.data.params.signingTxId;
       if (signingTxId) {
-        const signingTx = await transactionHistoryService.getSigningTx(
+        const signingTx = await transactionHistoryServiceApi.getSigningTx(
           signingTxId,
         );
 
@@ -272,8 +274,10 @@ export const OneKeyHardwareWaiting = ({
         Sentry.captureException(
           new Error('OneKey sign error: ' + JSON.stringify(data)),
         );
-        setConnectStatus(APPROVAL_STATUS_MAP.FAILED);
-        setErrorMessage(data.errorMsg);
+        afterMinPending(() => {
+          setConnectStatus(APPROVAL_STATUS_MAP.FAILED);
+          setErrorMessage(data.errorMsg);
+        });
       }
     });
 

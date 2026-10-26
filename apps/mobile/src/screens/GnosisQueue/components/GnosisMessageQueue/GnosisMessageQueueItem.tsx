@@ -2,7 +2,7 @@ import { useThemeColors } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
 import { timeago } from '@/utils/time';
 import type { BasicSafeInfo, SafeMessage } from '@rabby-wallet/gnosis-sdk';
-import { ParseTxResponse } from '@rabby-wallet/rabby-api/dist/types';
+import type { ParseTxResponse } from '@rabby-wallet/rabby-api/dist/types';
 import { useRequest } from 'ahooks';
 import dayjs from 'dayjs';
 import React, { useMemo, useState } from 'react';
@@ -16,7 +16,7 @@ import { sendRequest } from '@/core/apis/sendRequest';
 import { findChain } from '@/utils/chain';
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import { apisSafe } from '@/core/apis/safe';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 // import { GnosisTransactionExplain } from './GnosisTransactionExplain';
 // import { GnosisTransactionConfirmations } from './GnosisTransactionConfirmations';
 // import { ReplacePopup } from './ReplacePopup';
@@ -63,13 +63,15 @@ export const GnosisMessageQueueItem = ({
   }
   if (ago.hour < 24) {
     if (ago.hour > 0) {
-      agoText += `${ago.hour} ${t('hour')}`;
+      agoText += t(ago.hour === 1 ? 'global.time.hour' : 'global.time.hours', {
+        t: ago.hour,
+      });
     }
     if (ago.minute > 0) {
       if (agoText) agoText += ' ';
-      agoText += `${ago.minute} ${t('min')}`;
+      agoText += t('global.time.mins', { t: ago.minute });
     }
-    agoText += ` ${t('ago')}`;
+    agoText = t('global.time.ago', { time: agoText });
   } else {
     const date = dayjs(data.created);
     agoText = date.format('YYYY/MM/DD');

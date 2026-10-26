@@ -67,7 +67,7 @@ const getRuleDrawerWrapperStyles = (colors: AppColorsVariants) =>
       lineHeight: 15,
       color: colors['neutral-body'],
       marginRight: 6,
-      fontWeight: 'normal',
+      fontWeight: '400',
       marginTop: 1,
     },
     threshold: {
@@ -282,7 +282,7 @@ const getStyles = (colors: AppColorsVariants) =>
       lineHeight: 14,
       textAlign: 'right',
       color: colors['neutral-body'],
-      fontWeight: 'normal',
+      fontWeight: '400',
       alignItems: 'center',
       flexDirection: 'row',
     },
@@ -300,6 +300,9 @@ const getStyles = (colors: AppColorsVariants) =>
       fontWeight: '500',
       marginTop: 6,
       textAlign: 'center',
+    },
+    relative: {
+      position: 'relative',
     },
     footer: {
       marginBottom: 20,
@@ -456,7 +459,7 @@ const RuleDrawer = ({
             </View>
           )}
 
-          <View className="relative">
+          <View style={styles.relative}>
             <Text style={styles.description}>{currentDescription}</Text>
             {valueTooltip ? (
               <Tip content={valueTooltip}>

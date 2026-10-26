@@ -36,6 +36,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
+    flexShrink: 1,
+    minWidth: 0,
     gap: 4,
     backgroundColor: colors2024['orange-light-1'],
     paddingHorizontal: 6,
@@ -48,5 +50,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontFamily: 'SF Pro Rounded',
     lineHeight: 18,
     color: colors2024['orange-default'],
+    flexShrink: 1,
   },
 }));

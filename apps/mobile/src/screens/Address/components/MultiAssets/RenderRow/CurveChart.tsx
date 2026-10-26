@@ -32,10 +32,18 @@ import { useRendererDetect } from '@/components/Perf/PerfDetector';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 import { useHomeStartupReady } from '@/core/utils/homeStartupReady';
 import { Text, AnimateableText } from '@/components/Typography';
-import { useHomePortfolioStore } from '@/screens/Home/hooks/useHomePortfolioSummary';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
 import { useShallow } from 'zustand/react/shallow';
-import RefreshNudgedTickerText from '@/components/Animated/RefreshNudgedTickerText';
+import TabFocusedTickerText from '@/components/Animated/TabFocusedTickerText';
+import {
+  EMPTY_HOME_CURVE_LIST,
+  getHomeCurveProjectionList,
+  isHomeProjectionWaitingForValue,
+  useHome24hProjection,
+  useHomeAccountProjection,
+  useHomeBalanceProjection,
+  useHomeCurveProjection,
+} from '@/store/homePortfolio';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 const AnimatedSVG = Animated.createAnimatedComponent(Svg);
@@ -43,7 +51,18 @@ const CHART_HORIZONTAL_INSET = 66;
 
 const MAX_NETWORTH_FS = 38;
 const MIN_NETWORTH_FS = 24;
-const NETWORTH_FIT_LEN = 7;
+const NETWORTH_FIT_LEN = 9;
+const NETWORTH_FONT_SIZE_OPTIONS = {
+  maxFontSize: MAX_NETWORTH_FS,
+  minFontSize: MIN_NETWORTH_FS,
+  threshold: NETWORTH_FIT_LEN,
+};
+
+const EMPTY_CHANGE_DATA = {
+  rawChange: 0,
+  changePercent: '',
+  isLoss: false,
+};
 
 const svIsFoldMultiChart = makeMutable(true);
 
@@ -108,8 +127,7 @@ const ChartContent = memo(function ChartContent({
           shape={d3Shape.curveCatmullRom}
           style={[
             styles.relative,
-            (hideType === 'HIDE' || hideType === 'HALF_HIDE') &&
-              styles.balanceOpacity,
+            hideType === 'HIDE' && styles.balanceOpacity,
           ]}>
           <LineChart.Path showInactivePath={false} color={pathColor} width={2}>
             <LineChart.Gradient color={pathColor} />
@@ -132,45 +150,54 @@ const ChartContent = memo(function ChartContent({
 });
 
 export const MultiChart = memo(function MultiChart({
+  tabName,
   hideType,
   style,
   onPressNetWorth,
   onPressWalletList,
 }: {
+  tabName: string;
   hideType: BALANCE_HIDE_TYPE;
   onPressNetWorth?: () => void;
   onPressWalletList?: () => void;
 } & RNViewProps) {
   const { styles } = useTheme2024({ getStyle });
-  const {
-    curveList,
-    changeData,
-    totalBalance,
-    matteredAccountLength,
-    isPendingMatteredAccountLength,
-    showBalanceLoadingWithoutLocal,
-    showChangeLoadingWithoutLocal,
-    isCurveAnyAddrLoading,
-  } = useHomePortfolioStore(
+  const { curveAvailability, curveList } = useHomeCurveProjection(
     useShallow(state => ({
-      curveList: state.curveList,
-      changeData: state.changeData,
-      totalBalance: state.totalBalance,
-      matteredAccountLength: state.matteredAccountLength,
-      isPendingMatteredAccountLength: state.isPendingMatteredAccountLength,
-      showBalanceLoadingWithoutLocal: state.showBalanceLoadingWithoutLocal,
-      showChangeLoadingWithoutLocal: state.showChangeLoadingWithoutLocal,
-      isCurveAnyAddrLoading: state.isCurveAnyAddrLoading,
+      curveAvailability: state.availability,
+      curveList: getHomeCurveProjectionList(state),
+    })),
+  );
+  const { matteredAccountLength, isPendingMatteredAccountLength } =
+    useHomeAccountProjection(
+      useShallow(state => ({
+        matteredAccountLength: state.matteredAccountLength,
+        isPendingMatteredAccountLength: state.isPendingMatteredAccountLength,
+      })),
+    );
+  const { balanceAvailability, totalBalance } = useHomeBalanceProjection(
+    useShallow(state => ({
+      balanceAvailability: state.availability,
+      totalBalance: state.value?.totalBalance || 0,
+    })),
+  );
+  const { changeAvailability, changeData } = useHome24hProjection(
+    useShallow(state => ({
+      changeAvailability: state.availability,
+      changeData: state.value || EMPTY_CHANGE_DATA,
     })),
   );
   const startupReady = useHomeStartupReady();
 
   useRendererDetect({ name: 'MultiAssets-MultiChart' });
 
-  const chartsData = startupReady ? curveList : [];
-  const showBalanceLoading = !startupReady || showBalanceLoadingWithoutLocal;
-  const showChangeLoading = !startupReady || showChangeLoadingWithoutLocal;
-  const isCurveLoading = !startupReady || isCurveAnyAddrLoading;
+  const chartsData = startupReady ? curveList : EMPTY_HOME_CURVE_LIST;
+  const showBalanceLoading =
+    !startupReady || isHomeProjectionWaitingForValue(balanceAvailability);
+  const showChangeLoading =
+    !startupReady || isHomeProjectionWaitingForValue(changeAvailability);
+  const isCurveLoading =
+    !startupReady || isHomeProjectionWaitingForValue(curveAvailability);
 
   return (
     <View
@@ -178,13 +205,10 @@ export const MultiChart = memo(function MultiChart({
       onTouchStart={e => {
         e.stopPropagation();
       }}>
-      <View
-        style={[
-          styles.chartContainer,
-          hideType === 'HALF_HIDE' && styles.balanceOpacity,
-        ]}>
+      <View style={styles.chartContainer}>
         <LineChart.Provider data={chartsData}>
           <ChartHeader
+            tabName={tabName}
             rawNetWorth={totalBalance}
             rawChange={changeData.rawChange}
             changePercent={changeData.changePercent}
@@ -213,6 +237,7 @@ export const MultiChart = memo(function MultiChart({
 });
 
 interface IHeaderProps {
+  tabName: string;
   rawNetWorth: number;
   rawChange: number;
   changePercent: string;
@@ -228,6 +253,7 @@ interface IHeaderProps {
 }
 const ChartHeader = React.memo(
   ({
+    tabName,
     rawNetWorth,
     rawChange,
     changePercent: _changePercent,
@@ -383,7 +409,6 @@ const ChartHeader = React.memo(
     const isHidden = useMemo(() => {
       return hideType === 'HIDE';
     }, [hideType]);
-
     return (
       <Animated.View style={styles.charHeader}>
         <View style={styles.netWorthContainer}>
@@ -394,33 +419,28 @@ const ChartHeader = React.memo(
             ]}
             onPress={onPressNetWorth}
             {...makeTestIDProps(E2E_ID.home.portfolioBalanceValue)}>
-            <RefreshNudgedTickerText
+            <TabFocusedTickerText
+              tabName={tabName}
               value={formatNetWorth}
+              animateWidth={false}
+              fitWidth
               maxLength={24}
-              lineHeight={46}
+              lineHeight={42}
               duration={320}
-              style={[
-                styles.netWorth,
-                hideType === 'HALF_HIDE' ? styles.balanceOpacity : null,
-              ]}
-              fontSizeByLength={{
-                maxFontSize: MAX_NETWORTH_FS,
-                minFontSize: MIN_NETWORTH_FS,
-                threshold: NETWORTH_FIT_LEN,
-              }}
+              style={styles.netWorth}
+              fontSizeByLength={NETWORTH_FONT_SIZE_OPTIONS}
             />
           </Pressable>
 
-          <Skeleton
-            {...makeTestIDProps(E2E_ID.home.portfolioBalanceLoading)}
-            width={181}
-            height={44}
-            style={[
-              styles.skeletonNetWorth,
-              !showNetWorthLoading && styles.hidden,
-            ]}
-            LinearGradientComponent={LoadingLinear}
-          />
+          {showNetWorthLoading && (
+            <Skeleton
+              {...makeTestIDProps(E2E_ID.home.portfolioBalanceLoading)}
+              width={181}
+              height={42}
+              style={styles.skeletonNetWorth}
+              LinearGradientComponent={LoadingLinear}
+            />
+          )}
 
           <Pressable
             style={({ pressed }) => [
@@ -449,8 +469,8 @@ const ChartHeader = React.memo(
           <Skeleton
             {...makeTestIDProps(E2E_ID.home.portfolioChangeLoading)}
             width={100}
-            height={22}
-            style={styles.skeletonNetWorth}
+            height={18}
+            style={styles.skeletonChange}
             LinearGradientComponent={LoadingLinear}
           />
         ) : (
@@ -469,10 +489,7 @@ const ChartHeader = React.memo(
             }}
             hitSlop={10}
             pressRetentionOffset={10}
-            style={[
-              styles.changeSection,
-              hideType === 'HALF_HIDE' ? styles.balanceOpacity : null,
-            ]}>
+            style={styles.changeSection}>
             {isHidden ? (
               <Text style={{ color: colors2024['neutral-title-1'] }}>***</Text>
             ) : (
@@ -516,15 +533,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     flexDirection: 'column',
     width: '100%',
     maxWidth: '100%',
-    gap: 4,
+    gap: 2,
     // ...makeDebugBorder('blue'),
-  },
-  skeleton: {
-    marginTop: 20,
-    borderRadius: 8,
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-1']
-      : colors2024['neutral-bg-2'],
   },
   skeletonNetWorth: {
     borderRadius: 8,
@@ -532,9 +542,15 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-bg-2'],
   },
+  skeletonChange: {
+    borderRadius: 8,
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
+  },
   netWorth: {
-    lineHeight: 46,
-    fontWeight: '800',
+    lineHeight: 42,
+    fontWeight: '700',
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
   },
@@ -544,24 +560,17 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     alignItems: 'center',
     justifyContent: 'flex-start',
   },
-  changeValue: {
-    fontSize: 16,
-    lineHeight: 20,
-    fontWeight: '700',
-    color: colors2024['green-default'],
-    fontFamily: 'SF Pro Rounded',
-  },
   changePercent: {
-    fontSize: 16,
-    lineHeight: 20,
+    fontSize: 14,
+    lineHeight: 18,
     fontWeight: '700',
     color: colors2024['green-default'],
     fontFamily: 'SF Pro Rounded',
   },
   changeTime: {
-    fontSize: 16,
-    fontWeight: '400',
-    lineHeight: 20,
+    fontSize: 14,
+    fontWeight: '700',
+    lineHeight: 18,
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
     marginLeft: 4,
@@ -577,23 +586,12 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     // ...makeDebugBorder('red'),
   },
   chartContainer: {},
-  globalWarning: {
-    marginHorizontal: 16,
-    marginBottom: 13,
-  },
   loading: {
     width: '100%',
     height: 114,
     paddingHorizontal: 0,
   },
   relative: { position: 'relative' },
-  bg: {
-    position: 'absolute',
-    left: 0,
-    width: '100%',
-    height: 32,
-    zIndex: -100,
-  },
   balanceOpacity: {
     opacity: 0.2,
   },
@@ -602,7 +600,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     alignItems: 'center',
     justifyContent: 'space-between',
     // ...makeDebugBorder('orange'),
-    lineHeight: 46,
+    lineHeight: 42,
   },
   netWorthTextContainer: {
     flex: 1,

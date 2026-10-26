@@ -1,11 +1,12 @@
 import { RcIconCloseCC } from '@/assets/icons/common';
-import { Tab } from '@/core/services/browserService';
+import type { Tab } from '@/core/services/browserService';
 import { useTheme2024 } from '@/hooks/theme';
 import { getViewShotUri } from '@/utils/browser';
 
 import { createGetStyles2024 } from '@/utils/styles';
 import { urlUtils } from '@rabby-wallet/base-utils';
-import { StyleProp, TouchableOpacity, View, ViewStyle } from 'react-native';
+import type { StyleProp, ViewStyle } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 import FastImage from 'react-native-fast-image';
 import { Text } from '@/components/Typography';
 

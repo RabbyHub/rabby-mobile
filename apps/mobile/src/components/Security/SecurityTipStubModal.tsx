@@ -13,11 +13,11 @@ import {
   useIOSScreenIsBeingCaptured,
   useIOSScreenshottedJustNow,
 } from '@/hooks/native/security';
+import type { ProtectedConf } from '@/hooks/native/sensitiveScene';
 import {
-  ProtectedConf,
   ProtectType,
   useAtSensitiveScene,
-} from '@/hooks/navigation';
+} from '@/hooks/native/sensitiveScene';
 import { getReadyNavigationInstance } from '@/utils/navigation';
 import { BlurView } from '@react-native-community/blur';
 import { Text } from '@/components/Typography';
@@ -164,7 +164,7 @@ const getStyles = createGetStyles(colors => ({
   title: {
     fontSize: 20,
     color: colors['neutral-title1'],
-    fontWeight: '600',
+    fontWeight: '500',
     textAlign: 'center',
   },
   body: {

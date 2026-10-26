@@ -93,6 +93,11 @@ build_official_ios_payload() {
     echo "Expected generated iOS bundle not found at $payload_app_dir/main.jsbundle"
     return 1
   fi
+
+  local build_info_file="$payload_app_dir/rabby-build-info.json"
+  local temporary_build_info_file="$build_info_file.tmp"
+  "$local_node_binary" "$project_dir/scripts/resolve-build-info.js" > "$temporary_build_info_file" || return 1
+  mv "$temporary_build_info_file" "$build_info_file"
 }
 
 prepare() {
@@ -150,6 +155,7 @@ patch_template_archive() {
 
   echo "[ios-fast-build] Replacing main.jsbundle in template archive..."
   cp "$payload_app_dir/main.jsbundle" "$archive_app/main.jsbundle"
+  cp "$payload_app_dir/rabby-build-info.json" "$archive_app/rabby-build-info.json"
 }
 
 extract_template_signing_identity() {

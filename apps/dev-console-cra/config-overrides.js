@@ -1,6 +1,7 @@
+/* eslint-env node */
+
 const path = require('path');
 
-/* eslint-disable import/no-extraneous-dependencies */
 const TsconfigPathsPlugin = require("tsconfig-paths-webpack-plugin");
 
 const {
@@ -19,10 +20,6 @@ const {
   addWebpackPlugin,
 } = require('customize-cra');
 
-const rewireReactHotLoader = require('react-app-rewire-hot-loader');
-const rewireStyledComponents = require("react-app-rewire-styled-components");
-
-// const StyleLintPlugin = require('stylelint-webpack-plugin');
 const eslintConfig = require('./.eslintrc.js');
 
 const getBabelImportPluginOpts = () => {
@@ -42,17 +39,12 @@ const getBabelImportPluginOpts = () => {
   }
 };
 
-const styledComponents = obj => config => {
-  config = rewireStyledComponents(config, process.env.NODE_ENV, obj);
-  return config;
-};
-
 /**
  * 使用eslint
  * @param configRules
  * @returns {function(*): *}
  */
- const useEslintConfig = configRules => config => {
+const useEslintConfig = configRules => config => {
   const updatedRules = config.module.rules.map(rule => {
     // Only target rules that have defined a `useEslintrc` parameter in their options
     if (rule.use && rule.use.some(use => use.options && use.options.useEslintrc !== void 0)) {
@@ -82,16 +74,9 @@ module.exports = override(
   addWebpackAlias({
     ['@']: path.resolve(__dirname, 'src')
   }),
-  (config, env) => {
-    config = rewireReactHotLoader(config, env);
-    return config;
-  },
   ...addExternalBabelPlugins(
     ["babel-plugin-import", getBabelImportPluginOpts(true)['antd'], 'antd-ext'],
   ),
-  styledComponents({
-    displayName: (process.env.NODE_ENV !== "production")
-  }),
   addLessLoader({
     lessOptions: {
       javascriptEnabled: true,

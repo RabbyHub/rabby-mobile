@@ -2,10 +2,15 @@ import { useCallback } from 'react';
 import { useAtom, useSetAtom } from 'jotai';
 
 import { atomByMMKV } from '@/core/storage/mmkv';
+import {
+  CONVERT_DUST_BANNER_VISITED_KEY,
+  getConvertDustBannerVisitedSnapshot,
+} from './convertDustBannerStorage';
 
 const convertDustBannerVisitedAtom = atomByMMKV<boolean>(
-  '@home.convertDustBanner.visited',
-  false,
+  CONVERT_DUST_BANNER_VISITED_KEY,
+  getConvertDustBannerVisitedSnapshot(),
+  { getOnInit: true },
 );
 
 function resolveVisited(value: boolean | undefined) {
@@ -41,4 +46,22 @@ export function useDismissConvertDustBanner() {
       return true;
     });
   }, [setVisited]);
+}
+
+export function useConvertDustBannerDebugControls() {
+  const [visited, setVisited] = useAtom(convertDustBannerVisitedAtom);
+
+  const resetConvertDustBannerVisited = useCallback(() => {
+    setVisited(false);
+  }, [setVisited]);
+
+  const markConvertDustBannerVisited = useCallback(() => {
+    setVisited(true);
+  }, [setVisited]);
+
+  return {
+    convertDustBannerVisited: resolveVisited(visited),
+    resetConvertDustBannerVisited,
+    markConvertDustBannerVisited,
+  };
 }

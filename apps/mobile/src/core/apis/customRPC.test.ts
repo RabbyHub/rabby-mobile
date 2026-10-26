@@ -8,8 +8,8 @@ function loadCustomRPCModule() {
   jest.doMock('@/utils/chain', () => ({
     findChain: (...args: unknown[]) => mockFindChain(...args),
   }));
-  jest.doMock('../services/shared', () => ({
-    customRPCService: {
+  jest.doMock('@/core/serviceApi/customRPC', () => ({
+    customRPCServiceApi: {
       getAllRPC: jest.fn(),
       getRPCByChain: jest.fn(),
       hasCustomRPC: jest.fn(),

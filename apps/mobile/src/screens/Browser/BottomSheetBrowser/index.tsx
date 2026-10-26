@@ -4,7 +4,7 @@ import AutoLockView from '@/components/AutoLockView';
 import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
 import { BOTTOM_SHEET_EXTRA } from '@/constant/browser';
 import { useBrowser } from '@/hooks/browser/useBrowser';
-import { useBrowserHistory } from '@/hooks/browser/useBrowserHistory';
+import { useBrowserHistoryCount } from '@/hooks/browser/useBrowserHistory';
 import { useTheme2024 } from '@/hooks/theme';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { matomoRequestEvent } from '@/utils/analytics';
@@ -26,8 +26,14 @@ import { BrowserScreen } from '../BrowserScreen';
 import { BrowserManage } from '../BrowserScreen/components/BrowserManage';
 import { BrowserHandler } from './BrowserHandler';
 import { BrowserFavoriteManage } from '../BrowserScreen/components/BrowserFavoriteManage';
+import { withBrowserDappServices } from '@/hooks/browser/browserServiceDependencies';
 
 export { BottomSheetDappInfoPopup } from './BottomSheetDappInfo';
+
+const BrowserManageWithServices = withBrowserDappServices(BrowserManage);
+const BrowserFavoriteManageWithServices = withBrowserDappServices(
+  BrowserFavoriteManage,
+);
 
 export const BottomSheetBrowser = () => {
   const { safeOffScreenTop } = useSafeSizes();
@@ -41,7 +47,7 @@ export const BottomSheetBrowser = () => {
 
   const modalRef = useRef<AppBottomSheetModal>(null);
   const { width } = useWindowDimensions();
-  const { browserHistoryList } = useBrowserHistory();
+  const browserHistoryCount = useBrowserHistoryCount();
 
   const snapPoints = useMemo(() => {
     return [safeOffScreenTop];
@@ -50,12 +56,12 @@ export const BottomSheetBrowser = () => {
   const isTransparent = useMemo(() => {
     return (
       browserState.trigger === 'home' &&
-      !browserHistoryList?.length &&
+      !browserHistoryCount &&
       !browserState.searchText.trim() &&
       browserState.isShowSearch
     );
   }, [
-    browserHistoryList?.length,
+    browserHistoryCount,
     browserState.isShowSearch,
     browserState.searchText,
     browserState.trigger,
@@ -251,7 +257,7 @@ export const BrowserManagePopup = () => {
         }
       }}>
       <AutoLockView as="View">
-        <BrowserManage />
+        {browserState.isShowManage ? <BrowserManageWithServices /> : null}
       </AutoLockView>
     </AppBottomSheetModal>
   );
@@ -328,7 +334,9 @@ export const BrowserFavoritePopup = () => {
         }
       }}>
       <AutoLockView as="View">
-        <BrowserFavoriteManage />
+        {browserState.isShowFavorite ? (
+          <BrowserFavoriteManageWithServices />
+        ) : null}
       </AutoLockView>
     </AppBottomSheetModal>
   );

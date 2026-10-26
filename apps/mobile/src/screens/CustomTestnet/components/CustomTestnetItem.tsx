@@ -1,14 +1,15 @@
 import RcIconDelete from '@/assets/icons/custom-testnet/delete-cc.svg';
 import RcIconEdit from '@/assets/icons/custom-testnet/edit-cc.svg';
 import { TestnetChainLogo } from '@/components/Chain/TestnetChainLogo';
-import { AppColorsVariants } from '@/constant/theme';
-import { TestnetChain } from '@/core/services/customTestnetService';
+import type { AppColorsVariants } from '@/constant/theme';
+import type { TestnetChain } from '@/core/services/customTestnetService';
 import { useThemeColors } from '@/hooks/theme';
 import { useMemoizedFn } from 'ahooks';
-import { EventEmitter } from 'ahooks/lib/useEventEmitter';
+import type { EventEmitter } from 'ahooks/lib/useEventEmitter';
 import { useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Animated, StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
+import type { StyleProp, ViewStyle } from 'react-native';
+import { Animated, StyleSheet, View } from 'react-native';
 import {
   RectButton,
   Swipeable,

@@ -1,3 +1,5 @@
+import CloseEdit from '@/assets2024/icons/perps/PerpsSimpleAccount/limit-edit.svg';
+import { SIMPLE_ACCOUNT_COLORS } from './account/visual';
 import React, { useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -19,13 +21,10 @@ import {
   formatPerpsCoin,
   formatTpOrSlPrice,
 } from '@/utils/perps';
-import {
-  PERPS_LIMIT_PRICE_BLOCK_PCT,
-  PERPS_LIMIT_PRICE_CONFIRM_PCT,
-} from '@/constant/perps';
+import { PERPS_LIMIT_PRICE_CONFIRM_PCT } from '@/constant/perps';
 import { createGetStyles2024 } from '@/utils/styles';
 import { BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
-import { useDebounceFn, useMemoizedFn, useRequest } from 'ahooks';
+import { useMemoizedFn, useRequest } from 'ahooks';
 import IconPerpEdit from '@/assets2024/icons/perps/IconPerpEdit.svg';
 import { useSlTpUsdInput } from '@/hooks/useUsdInput';
 import { Text } from '@/components/Typography';
@@ -37,6 +36,7 @@ import {
 } from '@/constant/layout';
 
 interface Props {
+  variant?: 'close';
   coin: string;
   quoteAsset: string;
   markPrice: number;
@@ -56,6 +56,7 @@ const QUICK_OPTIONS: { label: string; pct: number | 'mid' }[] = [
 
 export const PerpEditLimitPriceTag: React.FC<Props> = ({
   coin,
+  variant,
   quoteAsset,
   markPrice,
   szDecimals,
@@ -82,23 +83,7 @@ export const PerpEditLimitPriceTag: React.FC<Props> = ({
 
   const hasValue = Number(limitPrice) > 0;
 
-  // Debounce so the red error doesn't flash on every keystroke.
-  const [debouncedDeviation, setDebouncedDeviation] = React.useState(deviation);
-  const { run: scheduleDeviationSync, cancel: cancelDeviationSync } =
-    useDebounceFn(setDebouncedDeviation, { wait: 300 });
-  useEffect(() => {
-    if (!hasValue) {
-      cancelDeviationSync();
-      setDebouncedDeviation(0);
-      return;
-    }
-    scheduleDeviationSync(deviation);
-  }, [deviation, hasValue, scheduleDeviationSync, cancelDeviationSync]);
-
-  const showBlockedError =
-    hasValue && debouncedDeviation >= PERPS_LIMIT_PRICE_BLOCK_PCT;
-
-  const isValid = hasValue && !showBlockedError;
+  const isValid = hasValue;
 
   const handleQuickPress = useMemoizedFn(
     (opt: (typeof QUICK_OPTIONS)[number]) => {
@@ -147,17 +132,7 @@ export const PerpEditLimitPriceTag: React.FC<Props> = ({
     if (loading || !hasValue) {
       return;
     }
-    // Flush so the user sees the error tied to the value they just entered.
-    cancelDeviationSync();
-    setDebouncedDeviation(deviation);
-
-    if (deviation >= PERPS_LIMIT_PRICE_BLOCK_PCT) {
-      return;
-    }
-    if (
-      deviation >= PERPS_LIMIT_PRICE_CONFIRM_PCT &&
-      deviation < PERPS_LIMIT_PRICE_BLOCK_PCT
-    ) {
+    if (deviation >= PERPS_LIMIT_PRICE_CONFIRM_PCT) {
       Alert.alert(
         t('page.perpsDetail.PerpEditLimitPriceTag.confirmTitle'),
         t('page.perpsDetail.PerpEditLimitPriceTag.confirmMessage'),
@@ -186,17 +161,21 @@ export const PerpEditLimitPriceTag: React.FC<Props> = ({
   return (
     <>
       <TouchableOpacity
-        style={styles.tagContainer}
+        style={[styles.tagContainer, variant === 'close' && styles.closeTag]}
         onPress={() => {
           if (isPresentingRef.current) {
             return;
           }
           setModalVisible(true);
         }}>
-        <Text style={[styles.tagText]}>
+        <Text style={[styles.tagText, variant === 'close' && styles.closeText]}>
           {initLimitPrice ? `@ $${splitNumberByStep(initLimitPrice)}` : '-'}
         </Text>
-        <IconPerpEdit width={16} height={16} color={'#50D2C1'} />
+        {variant === 'close' ? (
+          <CloseEdit />
+        ) : (
+          <IconPerpEdit width={16} height={16} color={'#50D2C1'} />
+        )}
       </TouchableOpacity>
 
       <AppBottomSheetModal
@@ -231,22 +210,13 @@ export const PerpEditLimitPriceTag: React.FC<Props> = ({
               <View style={styles.priceInputWrap}>
                 <BottomSheetTextInput
                   keyboardType="numeric"
-                  style={StyleSheet.flatten([
-                    styles.priceInput,
-                    showBlockedError ? styles.inputError : null,
-                  ])}
+                  style={styles.priceInput}
                   placeholder="$0"
                   placeholderTextColor={colors2024['neutral-info']}
                   value={displayedValue}
                   onChangeText={v => handleInputChange(v.replace(/^\$/, ''))}
                 />
-                <View style={styles.errorRow}>
-                  {showBlockedError ? (
-                    <Text style={styles.errorMsg}>
-                      {t('page.perpsDetail.PerpEditLimitPriceTag.blockError')}
-                    </Text>
-                  ) : null}
-                </View>
+                <View style={styles.errorRow} />
               </View>
 
               <View style={styles.quickRow}>
@@ -283,6 +253,20 @@ export const PerpEditLimitPriceTag: React.FC<Props> = ({
 };
 
 const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
+  closeTag: {
+    minHeight: 20,
+    paddingVertical: 1,
+    paddingLeft: 12,
+    paddingRight: 6,
+    backgroundColor: SIMPLE_ACCOUNT_COLORS.limitBackground,
+  },
+  closeText: {
+    fontFamily: 'SF Pro Rounded',
+    fontWeight: '700',
+    fontSize: 14,
+    lineHeight: 18,
+    color: SIMPLE_ACCOUNT_COLORS.limit,
+  },
   tagContainer: {
     borderRadius: 100,
     backgroundColor: 'rgba(80, 210, 193, 0.12)',
@@ -353,16 +337,7 @@ const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
     textAlign: 'center',
     paddingVertical: 0,
   },
-  inputError: { color: colors2024['red-default'] },
-  errorRow: { minHeight: 16, alignItems: 'center' },
-  errorMsg: {
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 12,
-    lineHeight: 16,
-    fontWeight: '500',
-    color: colors2024['red-default'],
-    textAlign: 'center',
-  },
+  errorRow: { minHeight: 16 },
   quickRow: {
     flexDirection: 'row',
     gap: 8,

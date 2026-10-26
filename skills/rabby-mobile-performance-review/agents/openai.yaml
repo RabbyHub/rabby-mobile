@@ -1,0 +1,4 @@
+interface:
+  display_name: "Rabby Mobile Performance Review"
+  short_description: "Review mobile runtime performance impact"
+  default_prompt: "Use $rabby-mobile-performance-review to assess a Rabby Mobile change for performance regressions."

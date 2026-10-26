@@ -4,14 +4,22 @@ import {
   PortfolioItem,
 } from '@rabby-wallet/rabby-api/dist/types';
 import { Entity, Column, In } from 'typeorm/browser';
+import type { DataSource } from 'typeorm/browser';
 import { EntityAddressAssetBase } from './base';
 import { jsonTransformer } from './_helpers';
 import { prepareAppDataSource } from '../imports';
-import { ORM_TABLE_NAMES } from '../constant';
+import { APP_DB_PREFIX, ORM_TABLE_NAMES } from '../constant';
 import { ParseEntity } from '@/core/utils/typeorm';
+import { traceStartupDiagnostic } from '@/core/utils/startupDiagnostics';
+import {
+  executeStartupSqlite,
+  getStartupSqliteRowItem,
+  getStartupSqliteRowsLength,
+} from '../startupSqlite';
 
 // AppChain 数据过期时间：10分钟
 export const APPCHAIN_EXPIRED_TIME = 10 * 60 * 1000;
+const PROJECTION_RESOURCE_QUERY_BATCH_SIZE = 200;
 
 @ParseEntity()
 @Entity(ORM_TABLE_NAMES.cache_appchain)
@@ -93,6 +101,64 @@ export class AppChainEntity extends EntityAddressAssetBase {
     });
   }
 
+  static async queryAllForStartup(): Promise<AppChainEntity[]> {
+    const startedAt = Date.now();
+    const tableName = `${APP_DB_PREFIX}${ORM_TABLE_NAMES.cache_appchain}`;
+
+    try {
+      const result = await executeStartupSqlite(
+        `
+          SELECT owner_addr, id, name, site_url, logo_url, is_support_portfolio,
+                 is_visible, portfolio_item_list, usd_value
+          FROM "${tableName}"
+          ORDER BY usd_value DESC
+        `,
+      );
+      const rows = result.rows;
+      const rowCount = getStartupSqliteRowsLength(rows);
+      const entities: AppChainEntity[] = [];
+
+      for (let index = 0; index < rowCount; index++) {
+        const row = getStartupSqliteRowItem(rows, index);
+        if (!row?.owner_addr) {
+          continue;
+        }
+
+        const entity = new AppChainEntity();
+        entity.owner_addr = String(row.owner_addr);
+        entity.id = String(row.id || '');
+        entity.name = String(row.name || '');
+        entity.site_url = String(row.site_url || '');
+        entity.logo_url = String(row.logo_url || '');
+        entity.is_support_portfolio = !!row.is_support_portfolio;
+        entity.is_visible =
+          row.is_visible === undefined || row.is_visible === null
+            ? true
+            : !!row.is_visible;
+        entity.portfolio_item_list =
+          jsonTransformer.from(row.portfolio_item_list || '[]') || [];
+        entity.usd_value = Number(row.usd_value) || 0;
+        entity.makeDbId();
+        entities.push(entity);
+      }
+
+      traceStartupDiagnostic('db', 'appchain_startup_cache_fast_read', {
+        rowCount,
+        hitCount: entities.length,
+        durationMs: Date.now() - startedAt,
+      });
+
+      return entities;
+    } catch (error) {
+      traceStartupDiagnostic('db', 'appchain_startup_cache_fast_read_failed', {
+        durationMs: Date.now() - startedAt,
+        error: error instanceof Error ? error.message : String(error),
+      });
+
+      return [];
+    }
+  }
+
   static async getCountOfAccount() {
     await prepareAppDataSource();
 
@@ -160,6 +226,66 @@ export class AppChainEntity extends EntityAddressAssetBase {
       };
       grouped[e.owner_addr]!.push(appChainItem);
     }
+
+    return grouped;
+  }
+
+  static async queryByProtocolResourceIds(
+    resourceIds: string[],
+    dataSource?: DataSource,
+  ): Promise<Record<string, AppChainItem[]>> {
+    const repo = dataSource
+      ? dataSource.getRepository(AppChainEntity)
+      : (await prepareAppDataSource(), this.getRepository());
+
+    const normalizedResourceIds = Array.from(
+      new Set(resourceIds.map(resourceId => resourceId.toLowerCase())),
+    ).filter(Boolean);
+    if (!normalizedResourceIds.length) {
+      return {};
+    }
+
+    const resourceIdExpression = [
+      "LOWER(COALESCE(appchain.owner_addr, ''))",
+      "LOWER('RABBY_APP_CHAIN_' || COALESCE(appchain.id, ''))",
+      "LOWER(COALESCE(appchain.id, ''))",
+    ].join(" || ':' || ");
+    const entities: AppChainEntity[] = [];
+
+    for (
+      let start = 0;
+      start < normalizedResourceIds.length;
+      start += PROJECTION_RESOURCE_QUERY_BATCH_SIZE
+    ) {
+      const resourceIdChunk = normalizedResourceIds.slice(
+        start,
+        start + PROJECTION_RESOURCE_QUERY_BATCH_SIZE,
+      );
+      const rows = await repo
+        .createQueryBuilder('appchain')
+        .where(`${resourceIdExpression} IN (:...resourceIds)`, {
+          resourceIds: resourceIdChunk,
+        })
+        .getMany();
+      entities.push(...rows);
+    }
+
+    const grouped: Record<string, AppChainItem[]> = {};
+    entities.forEach(entity => {
+      const owner = entity.owner_addr.toLowerCase();
+      if (!grouped[owner]) {
+        grouped[owner] = [];
+      }
+      grouped[owner].push({
+        id: entity.id,
+        name: entity.name,
+        site_url: entity.site_url,
+        logo_url: entity.logo_url,
+        is_support_portfolio: entity.is_support_portfolio,
+        is_visible: entity.is_visible,
+        portfolio_item_list: entity.portfolio_item_list,
+      });
+    });
 
     return grouped;
   }

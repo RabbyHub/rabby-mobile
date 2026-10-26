@@ -247,13 +247,14 @@ public class RNThreadModule extends NativeRNThreadSpec implements LifecycleEvent
   }
 
   private String bundleUrlForFile(final String fileName) {
-    // http://localhost:8081/index.android.bundle?platform=android&dev=true&hot=false&minify=false
+    // The worker has no UI surface. A dev bundle initializes LogBox and other
+    // UI-only developer modules that are intentionally absent from its runtime.
     String sourceUrl = getDevSupportManager().getSourceUrl().replace("http://", "");
     return  "http://"
             + sourceUrl.split("/")[0]
             + "/"
             + fileName
-            + ".bundle?platform=android&dev=true&hot=false&minify=false";
+            + ".bundle?platform=android&dev=false&hot=false&minify=false";
   }
 
   private void downloadScriptToFileSync(String bundleUrl, String bundleOut) {

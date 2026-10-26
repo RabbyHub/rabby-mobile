@@ -154,7 +154,7 @@ const getStyles = createGetStyles(colors => {
       color: colors['neutral-title1'],
       textAlign: 'center',
       fontSize: 24,
-      fontWeight: '600',
+      fontWeight: '500',
     },
 
     subTitle: {

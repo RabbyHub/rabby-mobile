@@ -14,7 +14,7 @@ export const AaveManageButton = ({ onPress }: { onPress: () => void }) => {
   return (
     <TouchableOpacity style={[styles.button]} onPress={onPress}>
       <IconAaveCC
-        color={isLight ? colors2024['neutral-InvertHighlight'] : '#192945'}
+        color={colors2024['neutral-contrast']}
         width={20}
         height={20}
       />
@@ -37,7 +37,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     justifyContent: 'center',
   },
   buttonText: {
-    color: isLight ? colors2024['neutral-InvertHighlight'] : '#192945',
+    color: colors2024['neutral-contrast'],
     fontSize: 17,
     lineHeight: 22,
     fontWeight: '700',

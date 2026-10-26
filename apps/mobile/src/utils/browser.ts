@@ -1,7 +1,7 @@
 import { last } from 'lodash';
 import { APP_STORE_URL_PREFIXES } from '@/constant/browser';
 import { urlUtils } from '@rabby-wallet/base-utils';
-import RNFS from 'react-native-fs';
+import RNFS from '@rabby-wallet/react-native-fs';
 
 const googleDomainList = [
   'www.google.com',

@@ -1,13 +1,12 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Platform, ScrollView, TouchableOpacity, View } from 'react-native';
-import RNFS from 'react-native-fs';
+import RNFS from '@rabby-wallet/react-native-fs';
 import dayjs from 'dayjs';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import { Text } from '@/components/Typography';
 import { toast } from '@/components2024/Toast';
-import debugLogService, {
-  DebugLogEntry,
-} from '@/core/services/debugLogService';
+import type { DebugLogEntry } from '@/core/utils/debugLogService';
+import debugLogService from '@/core/utils/debugLogService';
 import { useTheme2024 } from '@/hooks/theme';
 import { shareLocalFile } from '@/utils/shareLocalFile';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -186,12 +185,12 @@ const getStyles = createGetStyles2024(ctx => {
     },
     headerBtnTitle: {
       fontSize: 13,
-      fontWeight: '600',
+      fontWeight: '500',
       color: ctx.colors2024['brand-default'],
     },
     headerCount: {
       fontSize: 14,
-      fontWeight: '600',
+      fontWeight: '500',
       color: ctx.colors2024['neutral-title-1'],
     },
     list: {

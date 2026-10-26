@@ -3,20 +3,10 @@ import { setJSExceptionHandler } from 'react-native-exception-handler';
 import { logger } from '@/utils/logger';
 import './perfs/bundle-splitter-analysis';
 import './devtools/e2eBridge';
-import './databases/orm';
-import './core/services';
+import '@/devtools/regressionScenarios/entry';
+import './databases/register';
 import './core/utils/devServerSettings';
 import './core/config/online';
-import { FlatList } from 'react-native';
-
-// @ts-expect-error React Native keeps this runtime defaultProps hook.
-FlatList.defaultProps = Object.assign({}, FlatList.defaultProps, {
-  /**
-   * @see https://github.com/software-mansion/react-native-screens/issues/2339#issuecomment-2350979876
-   * @see https://github.com/software-mansion/react-native-screens/issues/2339#issuecomment-3177692971
-   */
-  removeClippedSubviews: false,
-});
 
 setJSExceptionHandler((error, isFatal) => {
   logger.error('setJSExceptionHandler::error', {

@@ -1,0 +1,94 @@
+export type AssetProjectionAvailability = 'unresolved' | 'restoring' | 'ready';
+
+export type AssetProjectionViewState = 'loading' | 'data' | 'empty';
+
+export type AssetSourceSnapshotReadiness = Record<string, true>;
+
+const normalizeAddress = (address: string) => address.toLowerCase();
+
+export const hasConfirmedAssetProjectionSources = (
+  addresses: string[],
+  readiness: AssetSourceSnapshotReadiness,
+) =>
+  addresses.length === 0 ||
+  addresses.every(address => readiness[normalizeAddress(address)] === true);
+
+export const markAssetSourceSnapshotsReady = (
+  readiness: AssetSourceSnapshotReadiness,
+  addresses: string[],
+) => {
+  let nextReadiness = readiness;
+
+  new Set(addresses.map(normalizeAddress)).forEach(address => {
+    if (nextReadiness[address]) {
+      return;
+    }
+    if (nextReadiness === readiness) {
+      nextReadiness = { ...readiness };
+    }
+    nextReadiness[address] = true;
+  });
+
+  return nextReadiness;
+};
+
+export const retainAssetSourceSnapshotReadiness = (
+  readiness: AssetSourceSnapshotReadiness,
+  addresses: string[],
+) => {
+  const retainedAddresses = new Set(addresses.map(normalizeAddress));
+  const retainedEntries = Object.entries(readiness).filter(([address]) =>
+    retainedAddresses.has(address),
+  );
+
+  return retainedEntries.length === Object.keys(readiness).length
+    ? readiness
+    : (Object.fromEntries(retainedEntries) as AssetSourceSnapshotReadiness);
+};
+
+export const getAssetSourceReadinessChangedAddresses = (
+  previous: AssetSourceSnapshotReadiness,
+  next: AssetSourceSnapshotReadiness,
+) => {
+  const addresses = new Set([...Object.keys(previous), ...Object.keys(next)]);
+  return new Set(
+    Array.from(addresses).filter(
+      address => previous[address] !== next[address],
+    ),
+  );
+};
+
+export const resolveAssetProjectionAvailability = ({
+  hasProjection,
+  hasData,
+  hasCompleteSource,
+  isRestoring,
+}: {
+  hasProjection: boolean;
+  hasData: boolean;
+  hasCompleteSource: boolean;
+  isRestoring?: boolean;
+}): AssetProjectionAvailability => {
+  if (!hasProjection) {
+    return 'unresolved';
+  }
+  if (hasData || hasCompleteSource) {
+    return 'ready';
+  }
+
+  return isRestoring ? 'restoring' : 'unresolved';
+};
+
+export const resolveAssetProjectionViewState = ({
+  availability,
+  hasData,
+}: {
+  availability: AssetProjectionAvailability;
+  hasData: boolean;
+}): AssetProjectionViewState => {
+  if (hasData) {
+    return 'data';
+  }
+
+  return availability === 'ready' ? 'empty' : 'loading';
+};

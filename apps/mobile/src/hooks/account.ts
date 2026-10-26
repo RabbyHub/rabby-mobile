@@ -1,4 +1,5 @@
-import React, {
+import type React from 'react';
+import {
   useCallback,
   useEffect,
   useMemo,
@@ -6,7 +7,8 @@ import React, {
   useSyncExternalStore,
 } from 'react';
 
-import { KeyringAccount, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import type { KeyringAccount } from '@rabby-wallet/keyring-utils';
+import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 
 import type {
   Account,
@@ -18,21 +20,27 @@ import { filterMyAccounts } from '@/utils/account';
 import { useCreationWithShallowCompare } from './common/useMemozied';
 import { accountEvents } from '@/core/apis/account';
 import * as apiMnemonic from '@/core/apis/mnemonic';
-import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
+import type { UpdaterOrPartials } from '@/core/utils/store';
+import { resolveValFromUpdater } from '@/core/utils/store';
 import addressBalanceStore from '@/store/balance';
 import accountStore, {
   NEWLY_ADDED_ACCOUNT_DURATION,
   useAccountStore,
 } from '@/store/account';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import { keyringService, preferenceService } from '@/core/services';
+import {
+  clearNeedsBackupReminder,
+  getNeedsBackupReminderSnapshot,
+  setNeedsBackupReminder,
+} from '@/core/serviceApi/preference';
 import { EntityAccountBase } from '@/databases/entities/base';
 import { ormEvents } from '@/databases/entities/_helpers';
 import { InteractionManager } from 'react-native';
-import { appServiceEvents } from '@/core/services/_utils';
-import { Store } from '@/core/services/hdKeyringService';
+import { appServiceEvents } from '@/core/events/appServiceEvents';
 import { perfEvents } from '@/core/utils/perf';
 import { AccountInfoEntity } from '@/databases/entities/accountInfo';
+import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
+import { useShallow } from 'zustand/react/shallow';
 
 export type { KeyringAccountWithAlias as /** @deprecated */ KeyringAccountWithAlias } from '@/types/account';
 
@@ -96,7 +104,7 @@ async function getBasePublicKeyForAccount(
  */
 function getBackupReminderSnapshot(basePublicKey: string | null): boolean {
   if (!basePublicKey) return false;
-  return preferenceService.getNeedsBackupReminder(basePublicKey);
+  return getNeedsBackupReminderSnapshot(basePublicKey);
 }
 
 /**
@@ -129,19 +137,24 @@ export function useBackupReminder(account: KeyringAccount | null | undefined) {
   const brandName = account?.brandName;
   const hdPathBasePublicKey = account?.hdPathBasePublicKey;
   const publicKey = account?.publicKey;
-  const storedPublicKey = useAccountStore(s => {
-    if (!address || type !== KEYRING_TYPE.HdKeyring) {
-      return null;
-    }
+  const storedPublicKey = useActivityStore(
+    accountStore.useStore,
+    state => {
+      if (!address || type !== KEYRING_TYPE.HdKeyring) {
+        return null;
+      }
 
-    const storedAccount = s.accounts.find(
-      item =>
-        isSameAddress(item.address, address) &&
-        item.type === type &&
-        (!brandName || item.brandName === brandName),
-    );
-    return getBackupReminderKey(storedAccount);
-  });
+      const storedAccount = state.accounts.find(
+        item =>
+          isSameAddress(item.address, address) &&
+          item.type === type &&
+          (!brandName || item.brandName === brandName),
+      );
+      return getBackupReminderKey(storedAccount);
+    },
+    Object.is,
+    { storeLabel: 'account-backup-reminder' },
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -203,7 +216,7 @@ export async function setAccountNeedsBackupReminder(
 ) {
   const basePublicKey = await getBasePublicKeyForAccount(account);
   if (!basePublicKey) return;
-  preferenceService.setNeedsBackupReminder(basePublicKey, needsReminder);
+  await setNeedsBackupReminder(basePublicKey, needsReminder);
 }
 
 /**
@@ -213,7 +226,7 @@ export async function setAccountNeedsBackupReminder(
 export async function clearAccountBackupReminder(account: KeyringAccount) {
   const basePublicKey = await getBasePublicKeyForAccount(account);
   if (!basePublicKey) return;
-  preferenceService.clearNeedsBackupReminder(basePublicKey);
+  await clearNeedsBackupReminder(basePublicKey);
 }
 
 export function useDevNewlyAddedAccounts() {
@@ -237,7 +250,12 @@ export function setCurrentAccount(
 }
 
 export function useAccounts(opts?: { disableAutoFetch?: boolean }) {
-  const accounts = useAccountStore(s => s.accounts);
+  const accounts = useActivityStore(
+    accountStore.useStore,
+    state => state.accounts,
+    Object.is,
+    { storeLabel: 'accounts' },
+  );
 
   const { disableAutoFetch = false } = opts || {};
 
@@ -266,10 +284,16 @@ export const storeApiAccounts = {
   },
   fetchAccounts: accountStore.fetchAccounts,
   removeAccount: accountStore.removeAccount,
+  togglePinAddressAsync: accountStore.togglePinAddressAsync,
 };
 
 export function useMyAccounts(opts?: { disableAutoFetch?: boolean }) {
-  const allAccounts = useAccountStore(s => s.accounts);
+  const allAccounts = useActivityStore(
+    accountStore.useStore,
+    state => state.accounts,
+    Object.is,
+    { storeLabel: 'my-accounts' },
+  );
 
   const { disableAutoFetch = false } = opts || {};
 
@@ -291,16 +315,17 @@ export function useMyAccounts(opts?: { disableAutoFetch?: boolean }) {
 
 export const usePinAddresses = (opts?: { disableAutoFetch?: boolean }) => {
   const { disableAutoFetch = false } = opts || {};
-  const pinAddresses = useAccountStore(s => s.pinnedAddresses);
+  const pinAddresses = useActivityStore(
+    accountStore.useStore,
+    state => state.pinnedAddresses,
+    Object.is,
+    { storeLabel: 'pinned-addresses' },
+  );
 
-  const getPinAddresses = useCallback(() => {
-    const addresses = preferenceService.getPinAddresses();
-    accountStore.setPinnedAddresses(addresses);
-  }, []);
-
-  const getPinAddressesAsync = useCallback(async () => {
-    return getPinAddresses();
-  }, [getPinAddresses]);
+  const getPinAddressesAsync = useCallback(
+    () => accountStore.refreshPinnedAddresses(),
+    [],
+  );
 
   useEffect(() => {
     if (!disableAutoFetch) {
@@ -316,8 +341,24 @@ export const usePinAddresses = (opts?: { disableAutoFetch?: boolean }) => {
 };
 
 export const usePinnedAccountList = () => {
-  const pinAddresses = useAccountStore(s => s.pinnedAddresses);
-  const accounts = useAccountStore(s => s.accounts);
+  const { pinAddresses, accounts } = useActivityStore(
+    accountStore.useStore,
+    useShallow(state => ({
+      pinAddresses: state.pinnedAddresses,
+      accounts: state.accounts,
+    })),
+    Object.is,
+    { storeLabel: 'home-pinned-accounts' },
+  );
+
+  useEffect(() => {
+    accountStore.ensurePinnedAddressesHydrated().catch(error => {
+      if (__DEV__) {
+        console.error('[usePinnedAccountList] hydrate failed', error);
+      }
+    });
+  }, []);
+
   const pinnedBaseAccounts = useMemo(() => {
     const res: KeyringAccountWithAlias[] = [];
     pinAddresses?.forEach(pinAddr => {
@@ -344,14 +385,21 @@ export const usePinnedAccountList = () => {
   const pinnedAddresses = useMemo(() => {
     return pinnedBaseAccounts.map(item => item.address.toLowerCase());
   }, [pinnedBaseAccounts]);
-  const balanceSnapshots =
-    addressBalanceStore.useAddressesSnapshot(pinnedAddresses);
+  const balanceValues = useActivityStore(
+    addressBalanceStore.useStore,
+    useShallow(state =>
+      pinnedAddresses.map(address => state.valueMap[address]),
+    ),
+    Object.is,
+    { storeLabel: 'home-pinned-account-balances' },
+  );
 
   const pinnedAccountList = useMemo(() => {
-    const balanceMap = balanceSnapshots.reduce(
-      (acc, snapshot) => {
-        if (snapshot.value) {
-          acc[snapshot.address] = snapshot.value;
+    const balanceMap = pinnedAddresses.reduce(
+      (acc, address, index) => {
+        const balance = balanceValues[index];
+        if (balance) {
+          acc[address] = balance;
         }
         return acc;
       },
@@ -369,11 +417,11 @@ export const usePinnedAccountList = () => {
 
       return {
         ...item,
-        balance: balance?.totalBalance || item.balance || 0,
-        evmBalance: balance?.evmBalance || item.evmBalance || 0,
+        balance: balance?.totalBalance ?? item.balance ?? 0,
+        evmBalance: balance?.evmBalance ?? item.evmBalance ?? 0,
       };
     });
-  }, [balanceSnapshots, pinnedBaseAccounts]);
+  }, [balanceValues, pinnedAddresses, pinnedBaseAccounts]);
 
   return pinnedAccountList;
 };

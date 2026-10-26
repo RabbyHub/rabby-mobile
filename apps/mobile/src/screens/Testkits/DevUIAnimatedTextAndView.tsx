@@ -13,9 +13,18 @@ import {
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import { FontNames } from '@/core/utils/fonts';
 import TickerTexts, { TickItem } from '@/components/Animated/TickerText';
+import RefreshNudgedTickerText from '@/components/Animated/RefreshNudgedTickerText';
 import { Slider } from '@rneui/themed';
 import { useCreationWithDeepCompare } from '@/hooks/common/useMemozied';
 import { Text } from '@/components/Typography';
+import Animated, {
+  cancelAnimation,
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withSequence,
+  withTiming,
+} from 'react-native-reanimated';
 
 const NUMS_CONFIG = [
   {
@@ -97,6 +106,228 @@ function SampleRow({
   );
 }
 
+type HomeTickerStressMode = 'value-only' | 'horizontal' | 'vertical';
+
+const HOME_TICKER_INITIAL_VALUE = '$0';
+const HOME_TICKER_EXPECTED_VALUES = ['$1,131,313.13', '$0,000,000.00'];
+
+function HomeTickerLayoutSample({
+  alwaysMounted,
+  fixedWidth,
+  mode,
+  replayToken,
+  tabular,
+}: {
+  alwaysMounted?: boolean;
+  fixedWidth: boolean;
+  mode: HomeTickerStressMode;
+  replayToken: number;
+  tabular?: boolean;
+}) {
+  const { styles } = useTheme2024({
+    getStyle: getStyles,
+    isLight: true,
+  });
+  const value = useSharedValue(HOME_TICKER_INITIAL_VALUE);
+  const translateX = useSharedValue(0);
+  const translateY = useSharedValue(0);
+  const motionOpacity = useSharedValue(1);
+  const [animate, setAnimate] = useState(false);
+  const expectedValue =
+    HOME_TICKER_EXPECTED_VALUES[
+      replayToken % HOME_TICKER_EXPECTED_VALUES.length
+    ];
+
+  useEffect(() => {
+    let animationFrame = 0;
+    const updateTimer = setTimeout(() => {
+      value.value = expectedValue;
+      translateX.value = withSequence(
+        withTiming(mode === 'horizontal' ? -48 : 0, {
+          duration: 140,
+          easing: Easing.out(Easing.cubic),
+        }),
+        withTiming(0, {
+          duration: 180,
+          easing: Easing.inOut(Easing.cubic),
+        }),
+      );
+      translateY.value = withSequence(
+        withTiming(mode === 'vertical' ? -24 : 0, {
+          duration: 140,
+          easing: Easing.out(Easing.cubic),
+        }),
+        withTiming(0, {
+          duration: 180,
+          easing: Easing.inOut(Easing.cubic),
+        }),
+      );
+      motionOpacity.value = withSequence(
+        withTiming(0.92, {
+          duration: 140,
+          easing: Easing.out(Easing.cubic),
+        }),
+        withTiming(1, {
+          duration: 180,
+          easing: Easing.inOut(Easing.cubic),
+        }),
+      );
+      animationFrame = requestAnimationFrame(() => {
+        setAnimate(true);
+      });
+    }, 32);
+
+    setAnimate(false);
+    value.value = HOME_TICKER_INITIAL_VALUE;
+    cancelAnimation(translateX);
+    cancelAnimation(translateY);
+    cancelAnimation(motionOpacity);
+    translateX.value = 0;
+    translateY.value = 0;
+    motionOpacity.value = 1;
+
+    return () => {
+      clearTimeout(updateTimer);
+      if (animationFrame) {
+        cancelAnimationFrame(animationFrame);
+      }
+    };
+  }, [
+    expectedValue,
+    mode,
+    motionOpacity,
+    replayToken,
+    translateX,
+    translateY,
+    value,
+  ]);
+
+  const layoutStyle = useAnimatedStyle(() => {
+    return {
+      opacity: motionOpacity.value,
+      transform: [
+        { translateX: translateX.value },
+        { translateY: translateY.value },
+      ],
+    };
+  });
+
+  return (
+    <View style={styles.homeTickerSample}>
+      <Text style={styles.homeTickerSampleLabel}>
+        {alwaysMounted && tabular
+          ? 'Always mounted + tabular numerals'
+          : alwaysMounted
+          ? 'Always-mounted animation columns'
+          : tabular
+          ? 'Stable width + tabular numerals'
+          : fixedWidth
+          ? 'Stable-width control'
+          : 'Current auto-width'}
+      </Text>
+      <Animated.View style={[styles.homeTickerMotionStage, layoutStyle]}>
+        <View style={styles.homeTickerValueHost}>
+          <RefreshNudgedTickerText
+            value={value}
+            animate={alwaysMounted || animate}
+            animateWidth={false}
+            maxLength={16}
+            lineHeight={42}
+            duration={320}
+            style={[
+              styles.homeTickerText,
+              tabular && styles.homeTickerTabularText,
+            ]}
+            containerStyle={fixedWidth ? styles.homeTickerStableWidth : null}
+            fontSizeByLength={{
+              maxFontSize: 38,
+              minFontSize: 24,
+              threshold: 8,
+            }}
+          />
+        </View>
+      </Animated.View>
+      <Text style={styles.homeTickerExpected}>Expected: {expectedValue}</Text>
+    </View>
+  );
+}
+
+function HomeTickerLayoutStressCase() {
+  const { styles } = useTheme2024({
+    getStyle: getStyles,
+    isLight: true,
+  });
+  const [replay, setReplay] = useState<{
+    mode: HomeTickerStressMode;
+    token: number;
+  }>({
+    mode: 'value-only',
+    token: 0,
+  });
+
+  const replayMode = useCallback((mode: HomeTickerStressMode) => {
+    setReplay(previous => ({
+      mode,
+      token: previous.token + 1,
+    }));
+  }, []);
+
+  return (
+    <View style={styles.homeTickerStressSection}>
+      <Text style={styles.stressTitle}>Home balance layout stress</Text>
+      <Text style={styles.stressDescription}>
+        All rows run the Home `$0` to full-balance lifecycle. The controls
+        isolate intrinsic width, always-mounted animation columns, and tabular
+        numeral shaping. Pager and Scroll briefly move the parent and settle;
+        Value only isolates the first rendered frame.
+      </Text>
+      <View style={styles.stressButtons}>
+        <Button
+          title="Value only"
+          type="ghost"
+          containerStyle={styles.stressButton}
+          onPress={() => replayMode('value-only')}
+        />
+        <Button
+          title="Pager state"
+          type="ghost"
+          containerStyle={styles.stressButton}
+          onPress={() => replayMode('horizontal')}
+        />
+        <Button
+          title="Scroll state"
+          type="ghost"
+          containerStyle={styles.stressButton}
+          onPress={() => replayMode('vertical')}
+        />
+      </View>
+      <HomeTickerLayoutSample
+        fixedWidth={false}
+        mode={replay.mode}
+        replayToken={replay.token}
+      />
+      <HomeTickerLayoutSample
+        fixedWidth
+        mode={replay.mode}
+        replayToken={replay.token}
+      />
+      <HomeTickerLayoutSample
+        alwaysMounted
+        fixedWidth
+        mode={replay.mode}
+        replayToken={replay.token}
+      />
+      <HomeTickerLayoutSample
+        alwaysMounted
+        fixedWidth
+        tabular
+        mode={replay.mode}
+        replayToken={replay.token}
+      />
+    </View>
+  );
+}
+
 function DevUIAnimatedTextAndView(): JSX.Element {
   const { styles, colors2024 } = useTheme2024({
     getStyle: getStyles,
@@ -113,6 +344,7 @@ function DevUIAnimatedTextAndView(): JSX.Element {
         contentContainerStyle={styles.screenScrollableView}
         horizontal={false}>
         <Text style={styles.areaTitle}>Animated Text</Text>
+        <HomeTickerLayoutStressCase />
         <View
           style={{
             marginBottom: 8,
@@ -263,6 +495,68 @@ const getStyles = createGetStyles2024(ctx => {
       fontSize: 36,
       marginBottom: 12,
       color: ctx.colors2024['neutral-title-1'],
+    },
+    homeTickerStressSection: {
+      gap: 12,
+      marginBottom: 24,
+      padding: 12,
+      borderRadius: 8,
+      backgroundColor: ctx.colors2024['neutral-bg-2'],
+    },
+    stressTitle: {
+      fontSize: 18,
+      lineHeight: 24,
+      fontWeight: '700',
+      color: ctx.colors2024['neutral-title-1'],
+    },
+    stressDescription: {
+      fontSize: 13,
+      lineHeight: 18,
+      color: ctx.colors2024['neutral-secondary'],
+    },
+    stressButtons: {
+      flexDirection: 'row',
+      gap: 8,
+    },
+    stressButton: {
+      flex: 1,
+      minWidth: 0,
+    },
+    homeTickerSample: {
+      gap: 4,
+    },
+    homeTickerSampleLabel: {
+      fontSize: 13,
+      lineHeight: 18,
+      color: ctx.colors2024['neutral-secondary'],
+    },
+    homeTickerMotionStage: {
+      width: '100%',
+      height: 48,
+      justifyContent: 'center',
+    },
+    homeTickerValueHost: {
+      width: '100%',
+      height: 42,
+      alignItems: 'flex-start',
+      justifyContent: 'center',
+    },
+    homeTickerStableWidth: {
+      width: '100%',
+    },
+    homeTickerText: {
+      lineHeight: 42,
+      fontWeight: '700',
+      color: ctx.colors2024['neutral-title-1'],
+      fontFamily: 'SF Pro Rounded',
+    },
+    homeTickerTabularText: {
+      fontVariant: ['tabular-nums'],
+    },
+    homeTickerExpected: {
+      fontSize: 12,
+      lineHeight: 16,
+      color: ctx.colors2024['neutral-secondary'],
     },
     sliderContainer: {
       flex: 1,

@@ -1,11 +1,12 @@
-import { Tx, WithdrawAction } from '@rabby-wallet/rabby-api/dist/types';
+import type { Tx, WithdrawAction } from '@rabby-wallet/rabby-api/dist/types';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   BLACKLIST_METHODS,
   WHITELIST_ADDRESS,
   WHITELIST_SPENDER,
 } from './constant';
-import { AbiFunction, encodeFunctionData, parseAbiItem } from 'viem';
+import type { AbiFunction } from 'viem';
+import { encodeFunctionData, parseAbiItem } from 'viem';
 import { findChain } from '@/utils/chain';
 import { isValidAddress } from '@ethereumjs/util';
 import PQueue from 'p-queue';
@@ -14,7 +15,7 @@ import BigNumber from 'bignumber.js';
 import { CHAINS_ENUM } from '@/constant/chains';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { getERC20Allowance, requestETHRpc } from '@/core/apis/provider';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { approveToken } from '@/core/apis/approvals';
 
 const rpcQueue = new PQueue({
@@ -23,10 +24,14 @@ const rpcQueue = new PQueue({
   intervalCap: 10,
 });
 
-export const isBlacklistMethod = (method: string) => {
-  return BLACKLIST_METHODS.map(item => item.toLowerCase()).includes(
-    method.toLowerCase(),
-  );
+const BLACKLIST_METHOD_SET = new Set(
+  BLACKLIST_METHODS.map(name => name.toLowerCase()),
+);
+
+// Name parsed for encodeFunctionData. That name is what tx.data's selector is built from.
+// Any parameter overload of these names is blocked.
+export const isBlacklistMethodName = (name: string) => {
+  return BLACKLIST_METHOD_SET.has(name.toLowerCase());
 };
 
 export const isWhitelistAddress = (address: string) => {
@@ -90,6 +95,21 @@ export const getMethodDesc = (fncName: string) => {
   return `function ${normalizedName.split(')(')[0] + ')'}`;
 };
 
+export const parseActionAbi = (func: string) => {
+  const normalizedFunc = getMethodDesc(func);
+  return parseAbiItem(normalizedFunc) as AbiFunction;
+};
+
+export const buildActionCalldata = (func: string, strParams?: string[]) => {
+  const abi = parseActionAbi(func);
+  const calldata = encodeFunctionData({
+    abi: [abi],
+    functionName: abi.name,
+    args: strParams as any[],
+  });
+  return { abi, calldata };
+};
+
 export const useDappAction = (
   data: WithdrawAction | undefined,
   chain?: string,
@@ -106,11 +126,11 @@ export const useDappAction = (
 
   useEffect(() => {
     if (!data || !chain) {
+      setValid(false);
       return;
     }
     try {
-      const normalizedFunc = getMethodDesc(data.func);
-      const abi = parseAbiItem(normalizedFunc) as AbiFunction;
+      const { abi } = buildActionCalldata(data.func, data.str_params);
       const isAddressArray = abi.inputs.map(item => item.type === 'address');
       const addresses = data.str_params
         ? data.str_params
@@ -142,8 +162,7 @@ export const useDappAction = (
           setValid(false);
           return;
         }
-        const isValidMethod = !isBlacklistMethod(data.func);
-        if (!isValidMethod) {
+        if (isBlacklistMethodName(abi.name)) {
           setValid(false);
           return;
         }
@@ -247,16 +266,15 @@ export const useDappAction = (
       return [];
     }
 
-    const normalizedFunc = getMethodDesc(data.func);
-    const abi = parseAbiItem(normalizedFunc) as AbiFunction;
-    const params = data.str_params;
-    const calldata = encodeFunctionData({
-      abi: [abi],
-      functionName: abi.name,
-      args: params as any[],
-    });
-
-    const approve_txs = await buildApproveTxs();
+    let calldata: `0x${string}`;
+    let methodName = '';
+    try {
+      const built = buildActionCalldata(data.func, data.str_params);
+      methodName = built.abi.name;
+      calldata = built.calldata;
+    } catch (error) {
+      return [];
+    }
 
     const tx = {
       chainId: chainInfo.id,
@@ -265,6 +283,12 @@ export const useDappAction = (
       value: '0x0',
       data: calldata,
     } as any;
+
+    if (isBlacklistMethodName(methodName)) {
+      return [];
+    }
+
+    const approve_txs = await buildApproveTxs();
 
     return [...approve_txs, tx];
   }, [data, valid, currentAccount?.address, chainInfo?.id, buildApproveTxs]);

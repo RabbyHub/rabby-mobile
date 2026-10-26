@@ -9,7 +9,11 @@ export type WalletConnectNamespace = {
 
 export type WalletConnectNamespaces = Record<string, WalletConnectNamespace>;
 
-export type WalletConnectPairingSource = 'qr' | 'manual' | 'deeplink';
+export type WalletConnectPairingSource =
+  | 'qr'
+  | 'manual'
+  | 'deeplink'
+  | 'inner-webview';
 
 export type WalletConnectClientStatus =
   | 'idle'

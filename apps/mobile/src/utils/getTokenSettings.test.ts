@@ -1,10 +1,8 @@
 const mockGetUserTokenSettings = jest.fn();
 
-jest.mock('@/core/services', () => ({
-  preferenceService: {
-    getUserTokenSettings: (...args: unknown[]) =>
-      mockGetUserTokenSettings(...args),
-  },
+jest.mock('@/core/serviceApi/preference', () => ({
+  getUserTokenSettings: (...args: unknown[]) =>
+    mockGetUserTokenSettings(...args),
 }));
 
 import { getTokenSettings } from './getTokenSettings';

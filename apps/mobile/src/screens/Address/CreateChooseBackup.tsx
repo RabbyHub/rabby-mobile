@@ -14,7 +14,7 @@ import { RootNames } from '@/constant/layout';
 import { default as RcIconBackupCloud } from '@/assets/icons/nextComponent/IconBackupCloud.svg';
 import { default as RcIconBackupManual } from '@/assets/icons/nextComponent/IconBackupManual.svg';
 import { useRoute } from '@react-navigation/native';
-import { GetNestedScreenRouteProp } from '@/navigation-type';
+import type { GetNestedScreenRouteProp } from '@/navigation-type';
 import { Card } from '@/components2024/Card';
 import { useTranslation } from 'react-i18next';
 import { useTheme2024 } from '@/hooks/theme';
@@ -28,8 +28,8 @@ import {
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import LinearGradient from 'react-native-linear-gradient';
 import { IS_IOS } from '@/core/native/utils';
-import { preferenceService } from '@/core/services';
-import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
+import { setReportActionTs } from '@/core/serviceApi/preference';
+import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/utils/reportTimeoutAction';
 import { Text } from '@/components/Typography';
 
 function MainListBlocks() {
@@ -58,9 +58,9 @@ function MainListBlocks() {
       },
     });
     state?.delaySetPassword &&
-      preferenceService.setReportActionTs(
+      void setReportActionTs(
         REPORT_TIMEOUT_ACTION_KEY.CLICK_ICLOUD_BACKUP,
-      );
+      ).catch(console.error);
   }, [state]);
 
   const handleBackupToPaper = React.useCallback(() => {
@@ -78,9 +78,9 @@ function MainListBlocks() {
       },
     });
     state?.delaySetPassword &&
-      preferenceService.setReportActionTs(
+      void setReportActionTs(
         REPORT_TIMEOUT_ACTION_KEY.CLICK_MANUAL_BACKUP,
-      );
+      ).catch(console.error);
   }, [state]);
 
   return (

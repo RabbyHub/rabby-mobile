@@ -1,12 +1,19 @@
 import { resolveNativeModule, wrapPlatformOnlyMethod } from './utils';
-import { NativeModuleNames } from './specs/types';
+import NativeRNHelpers from './specs/NativeRNHelpers';
 
 const { RNHelpers: nativeModule } = resolveNativeModule(
-  NativeModuleNames.RNHelpers,
+  'RNHelpers',
+  NativeRNHelpers,
 );
 
+const buildInfo =
+  nativeModule.buildInfo || nativeModule.getConstants?.().buildInfo;
+
 const RNHelpers = Object.freeze({
-  ...nativeModule,
+  forceExitApp: nativeModule.forceExitApp,
+  measureViewRelativeTo: nativeModule.measureViewRelativeTo,
+  buildInfo,
+  setSensitiveClipboard: nativeModule.setSensitiveClipboard,
   moveTaskToBack: wrapPlatformOnlyMethod({
     method: nativeModule.moveTaskToBack,
     platform: 'android',

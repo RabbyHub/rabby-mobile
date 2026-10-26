@@ -1,4 +1,5 @@
-import { Account } from '@/core/services/preference';
+import { RoundedFontStyles } from '@/core/utils/fonts';
+import type { Account } from '@/core/startupServices/preference';
 import { apiContact } from '@/core/apis';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { ellipsisAddress } from '@/utils/address';
@@ -178,10 +179,9 @@ export const AccountItem = (props: Props) => {
           style={{
             color: colors2024['neutral-secondary'],
             textAlign: 'center',
-            fontFamily: 'SF Pro Rounded',
+            ...RoundedFontStyles.regular,
             fontSize: 16,
             fontStyle: 'normal',
-            fontWeight: '400',
           }}>
           {t('page.DAppFrame.walletBalance')}
         </Text>
@@ -189,10 +189,9 @@ export const AccountItem = (props: Props) => {
           style={{
             color: colors2024['neutral-secondary'],
             textAlign: 'center',
-            fontFamily: 'SF Pro Rounded',
+            ...RoundedFontStyles.regular,
             fontSize: 16,
             fontStyle: 'normal',
-            fontWeight: '400',
           }}>
           {t('page.DAppFrame.netWorth')}
         </Text>

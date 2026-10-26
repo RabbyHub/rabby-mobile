@@ -17,14 +17,14 @@ import IconRestoreRabby from '@/assets2024/icons/common/icon-restore-rabby.svg';
 import RcArrowRight2CC from '@/assets/icons/common/right-2-cc.svg';
 
 import { useNavigation } from '@react-navigation/native';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { RootStackParamsList } from '@/navigation-type';
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import type { RootStackParamsList } from '@/navigation-type';
 import { useSetPasswordFirst } from '@/hooks/useLock';
 import { useSeedPhrase } from '@/hooks/useSeedPhrase';
 import { IS_IOS } from '@/core/native/utils';
 import { useTranslation } from 'react-i18next';
 import { Text } from '@/components/Typography';
-import { keyringService } from '@/core/services';
+import { keyringServiceApi } from '@/core/serviceApi/keyring';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { apiMnemonic } from '@/core/apis';
 import { addKeyringAndactiveAndPersistAccounts } from '@/core/apis/mnemonic';
@@ -34,6 +34,7 @@ import { toast } from '@/components2024/Toast';
 import { setAccountNeedsBackupReminder } from '@/hooks/account';
 import { useImportAddressProc } from '@/hooks/address/useNewUser';
 import { ensureWalletUnlockedForAction } from '@/utils/walletUnlock';
+import * as SecretVault from '@/core/utils/secretVault';
 
 type SelectAddMethodProps = NativeStackScreenProps<
   RootStackParamsList,
@@ -56,9 +57,9 @@ function SelectAddMethod(): JSX.Element {
     creatingRef.current = true;
     try {
       const seedPhrase = await apiMnemonic.generatePreMnemonic();
-      const Keyring = keyringService.getKeyringClassForType(
+      const Keyring = (await keyringServiceApi.getKeyringClassForType(
         KEYRING_CLASS.MNEMONIC,
-      ) as any;
+      )) as any;
       const keyring = new Keyring({ mnemonic: seedPhrase, passphrase: '' });
       const accountsToCreate = keyring?.getAddresses(0, 1);
       const address = accountsToCreate?.[0]?.address;
@@ -73,7 +74,7 @@ function SelectAddMethod(): JSX.Element {
         })),
         false,
       );
-      keyringService.removePreMnemonics();
+      await keyringServiceApi.removePreMnemonics();
 
       await setAccountNeedsBackupReminder(
         {
@@ -91,8 +92,10 @@ function SelectAddMethod(): JSX.Element {
           brandName: KEYRING_CLASS.MNEMONIC,
           isFirstCreate: true,
           address: [address],
-          mnemonics: seedPhrase,
-          passphrase: '',
+          mnemonicsVaultId: SecretVault.storeMnemonicsPayload({
+            mnemonics: seedPhrase,
+            passphrase: '',
+          }),
           isExistedKR: false,
           alias: ellipsisAddress(address),
           showBackup: true,

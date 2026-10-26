@@ -1,4 +1,9 @@
-import { forwardRef } from "react";
+import {
+	forwardRef,
+	useImperativeHandle,
+	useMemo,
+	useRef,
+} from "react";
 import { processColor } from "react-native";
 
 import UIMenuView from "./UIMenuView";
@@ -8,6 +13,7 @@ import type {
 	ProcessedMenuAction,
 	NativeActionEvent,
 	MenuComponentRef,
+	NativeMenuComponentRef,
 } from "./types";
 import { objectHash } from "./utils";
 
@@ -24,10 +30,29 @@ const defaultHitslop = { top: 0, left: 0, bottom: 0, right: 0 };
 
 const MenuView = forwardRef<MenuComponentRef, MenuComponentProps>(
 	({ actions, hitSlop = defaultHitslop, ...props }, ref) => {
-		const processedActions = actions.map<ProcessedMenuAction>((action) =>
-			processAction(action),
+		const nativeRef = useRef<NativeMenuComponentRef>(null);
+		const processedActions = useMemo(
+			() =>
+				actions.map<ProcessedMenuAction>((action) => processAction(action)),
+			[actions],
 		);
-		const hash = objectHash(processedActions);
+		const hash = useMemo(() => {
+			return objectHash(processedActions);
+		}, [processedActions]);
+
+		useImperativeHandle(
+			ref,
+			() => ({
+				show: (nextActions) => {
+					nativeRef.current?.show(
+						nextActions?.map<ProcessedMenuAction>((action) =>
+							processAction(action),
+						),
+					);
+				},
+			}),
+			[],
+		);
 
 		return (
 			<UIMenuView
@@ -35,7 +60,7 @@ const MenuView = forwardRef<MenuComponentRef, MenuComponentProps>(
 				hitSlop={hitSlop}
 				actions={processedActions}
 				actionsHash={hash}
-				ref={ref}
+				ref={nativeRef}
 			/>
 		);
 	},

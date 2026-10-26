@@ -1,13 +1,14 @@
 import { useState, useRef, useMemo, useCallback, useEffect } from 'react';
 
 import { findChainByEnum, varyAndSortChainItems } from '@/utils/chain';
-import { CHAINS_ENUM, Chain } from '@debank/common';
+import type { Chain } from '@debank/common';
+import { CHAINS_ENUM } from '@debank/common';
 import {
   useChainBalances,
   useLoadMatteredChainBalances,
 } from './accountChainBalance';
-import { preferenceService } from '@/core/services';
-import { Account } from '@/core/services/preference';
+import { getPreferenceSnapshot } from '@/core/serviceApi/preference';
+import type { Account } from '@/core/startupServices/preference';
 
 export type ChainSelectorPurpose =
   | 'dashboard'
@@ -25,17 +26,19 @@ export function useAsyncInitializeChainList({
   supportChains,
   onChainInitializedAsync,
   account,
+  enabled = true,
 }: {
   supportChains?: Chain['enum'][];
   onChainInitializedAsync?: (firstEnum: CHAINS_ENUM) => void;
   account: Account;
+  enabled?: boolean;
 }) {
   const { matteredChainBalances } = useChainBalances();
 
   const pinned = useMemo(() => {
-    return ((
-      preferenceService.getPreference('pinnedChain') as CHAINS_ENUM[]
-    )?.filter(item => findChainByEnum(item)) || []) as CHAINS_ENUM[];
+    return ((getPreferenceSnapshot('pinnedChain') as CHAINS_ENUM[])?.filter(
+      item => findChainByEnum(item),
+    ) || []) as CHAINS_ENUM[];
   }, []);
 
   const { matteredList, unmatteredList } = useMemo(() => {
@@ -51,7 +54,9 @@ export function useAsyncInitializeChainList({
   const [, setSpinner] = useState(0);
   const updateInitStage = useCallback(
     async (nextStage: Exclude<FetchDataStage, false>) => {
-      if (!nextStage) return;
+      if (!nextStage) {
+        return;
+      }
       fetchChainDataStageRef.current = nextStage;
       setSpinner(prev => prev + 1);
     },
@@ -63,17 +68,21 @@ export function useAsyncInitializeChainList({
   });
 
   const fetchDataOnce = useCallback(async () => {
-    if (fetchChainDataStageRef.current) return;
+    if (fetchChainDataStageRef.current) {
+      return;
+    }
     updateInitStage('fetching');
 
-    preferenceService.getPreference('pinnedChain');
+    getPreferenceSnapshot('pinnedChain');
     await getMatteredChainBalance({ address: account?.address });
     updateInitStage('fetched');
   }, [updateInitStage, getMatteredChainBalance, account?.address]);
 
   useEffect(() => {
-    fetchDataOnce();
-  }, [fetchDataOnce]);
+    if (enabled) {
+      fetchDataOnce();
+    }
+  }, [enabled, fetchDataOnce]);
 
   const firstEnum = matteredList[0]?.enum;
 
@@ -88,12 +97,12 @@ export function useAsyncInitializeChainList({
   );
 
   useEffect(() => {
-    if (firstEnum && fetchChainDataStageRef.current === 'fetched') {
+    if (enabled && firstEnum && fetchChainDataStageRef.current === 'fetched') {
       updateInitStage('inited');
       chainRef.current = firstEnum;
       onChainInitializedAsync?.(firstEnum);
     }
-  }, [firstEnum, updateInitStage, onChainInitializedAsync]);
+  }, [enabled, firstEnum, updateInitStage, onChainInitializedAsync]);
 
   return {
     matteredList,

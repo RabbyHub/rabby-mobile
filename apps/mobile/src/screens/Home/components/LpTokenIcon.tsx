@@ -2,7 +2,6 @@ import React, { useCallback } from 'react';
 import RcLpTokenIcon from '@/assets2024/icons/home/RcLpTokenIcon.svg';
 
 import { useTheme2024 } from '@/hooks/theme';
-import { createGetStyles2024 } from '@/utils/styles';
 import { TouchableOpacity } from 'react-native';
 import {
   createGlobalBottomSheetModal2024,
@@ -11,7 +10,7 @@ import {
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 
 const LpTokenIcon: React.FC<{ protocolId: string }> = ({ protocolId }) => {
-  const { colors2024 } = useTheme2024({ getStyle: getStyles });
+  const { colors2024 } = useTheme2024();
 
   const handleOpenLpTokenDetail = useCallback(() => {
     const modalId = createGlobalBottomSheetModal2024({
@@ -43,10 +42,3 @@ const LpTokenIcon: React.FC<{ protocolId: string }> = ({ protocolId }) => {
 };
 
 export default LpTokenIcon;
-
-const getStyles = createGetStyles2024(({ colors2024 }) => ({
-  container: {
-    position: 'relative',
-    color: colors2024['red-default'],
-  },
-}));

@@ -1,14 +1,21 @@
-import { FocusAwareStatusBar, Text } from '@/components';
+import { Text } from '@/components';
 import RootScreenContainer from '@/components/ScreenContainer/RootScreenContainer';
 import { RootNames } from '@/constant/layout';
-import { contactService, preferenceService } from '@/core/services';
+import {
+  contactServiceApi,
+  getContactAliasSnapshot,
+} from '@/core/serviceApi/contact';
+import {
+  getFallbackAccountSnapshot,
+  setCurrentAccountSync,
+} from '@/core/serviceApi/preference';
 import { useThemeColors } from '@/hooks/theme';
 import {
   useIsFocused,
   useNavigation,
   useRoute,
 } from '@react-navigation/native';
-import { GetNestedScreenRouteProp } from '@/navigation-type';
+import type { GetNestedScreenRouteProp } from '@/navigation-type';
 import React from 'react';
 import {
   Keyboard,
@@ -24,8 +31,8 @@ import { FooterButton } from '@/components/FooterButton/FooterButton';
 import { useAccounts } from '@/hooks/account';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { addressUtils } from '@rabby-wallet/base-utils';
-import { RootStackParamsList } from '@/navigation-type';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import type { RootStackParamsList } from '@/navigation-type';
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RcIconRightCC } from '@/assets/icons/common';
 import { navigateDeprecated } from '@/utils/navigation';
 import { matomoRequestEvent } from '@/utils/analytics';
@@ -34,6 +41,7 @@ import { getKRCategoryByType } from '@/utils/transaction';
 import { Chain } from '@/constant/chains';
 import { GnosisSupportChainList } from './ImportSafeAddressScreen';
 import { apisHomeTabIndex } from '@/hooks/navigation';
+import * as SecretVault from '@/core/utils/secretVault';
 
 type ImportSuccessScreenProps = NativeStackScreenProps<RootStackParamsList>;
 
@@ -105,6 +113,21 @@ export const ImportSuccessScreen = () => {
     throw new Error('[ImportSuccessScreen] state is undefined');
   }
 
+  const mnemonicsPayloadRef =
+    React.useRef<SecretVault.MnemonicsVaultPayload | null>(null);
+  const mnemonicsPayloadFetchedRef = React.useRef(false);
+  React.useEffect(() => {
+    if (mnemonicsPayloadFetchedRef.current) {
+      return;
+    }
+    mnemonicsPayloadFetchedRef.current = true;
+    if (state.mnemonicsVaultId) {
+      mnemonicsPayloadRef.current = SecretVault.retrieveMnemonicsPayload(
+        state.mnemonicsVaultId,
+      );
+    }
+  }, [state.mnemonicsVaultId]);
+
   const [importAddresses, setImportAddresses] = React.useState<
     {
       address: string;
@@ -112,13 +135,15 @@ export const ImportSuccessScreen = () => {
     }[]
   >([]);
 
-  const handleDone = React.useCallback(() => {
-    importAddresses.forEach(item => {
-      contactService.setAlias({
-        address: item.address,
-        alias: item.aliasName,
-      });
-    });
+  const handleDone = React.useCallback(async () => {
+    await Promise.all(
+      importAddresses.map(item =>
+        contactServiceApi.setAlias({
+          address: item.address,
+          alias: item.aliasName,
+        }),
+      ),
+    );
     Keyboard.dismiss();
 
     navigation.reset({
@@ -145,7 +170,7 @@ export const ImportSuccessScreen = () => {
     setImportAddresses(
       addresses.map(address => ({
         address,
-        aliasName: contactService.getAliasByAddress(address)?.alias || '',
+        aliasName: getContactAliasSnapshot(address)?.alias || '',
       })),
     );
 
@@ -171,14 +196,14 @@ export const ImportSuccessScreen = () => {
           a.brandName === state.brandName &&
           addressUtils.isSameAddress(a.address, lastAddress),
       );
-      const currentAccount = preferenceService.getFallbackAccount();
+      const currentAccount = getFallbackAccountSnapshot();
       if (targetAccount) {
         if (
           !currentAccount ||
           targetAccount.brandName !== currentAccount.brandName ||
           !addressUtils.isSameAddress(currentAccount.address, lastAddress)
         ) {
-          preferenceService.setCurrentAccount(targetAccount);
+          setCurrentAccountSync(targetAccount);
         }
       }
     }
@@ -188,13 +213,15 @@ export const ImportSuccessScreen = () => {
     if (!state.isFirstImport) {
       return;
     }
+    const mnemonicsPayload = mnemonicsPayloadRef.current;
     navigateDeprecated(RootNames.StackAddress, {
       screen: RootNames.ImportMoreAddress,
       params: {
         type: state.type,
         brand: state.brandName,
-        mnemonics: state.mnemonics,
-        passphrase: state.passphrase,
+        mnemonicsVaultId: mnemonicsPayload
+          ? SecretVault.storeMnemonicsPayload(mnemonicsPayload)
+          : undefined,
         keyringId: state.keyringId,
       },
     });
@@ -252,7 +279,6 @@ export const ImportSuccessScreen = () => {
       </TouchableWithoutFeedback>
 
       <FooterButton title="Done" onPress={handleDone} />
-      <FocusAwareStatusBar backgroundColor={colors['blue-default']} />
     </RootScreenContainer>
   );
 };

@@ -4,16 +4,20 @@ import { formatUsdValue } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import { RNGHText as Text } from '@/components/Typography';
 import { CustomSkeleton } from '@/components2024/CustomSkeleton';
+import { BALANCE_HIDE_TYPE, useHideBalance } from '../hooks/useHideBalance';
 
 const PerpsPnlByHyperliquid: React.FC<{}> = () => {
   const { perpsPositionInfo } = usePerpsHomePnl();
   const { styles } = useTheme2024({ getStyle: getStyles });
   const { type } = perpsPositionInfo;
+  const [hideType] = useHideBalance();
 
   return perpsPositionInfo.isLoading ? (
     <CustomSkeleton width={50} height={18} style={styles.skeleton} />
   ) : perpsPositionInfo.show ? (
-    type === 'pnl' ? (
+    hideType === BALANCE_HIDE_TYPE.HIDE ? (
+      <Text style={styles.accountValue}>****</Text>
+    ) : type === 'pnl' ? (
       <Text
         style={[
           styles.text,

@@ -1,5 +1,6 @@
 import { openapi } from '@/core/request';
-import { gasAccountService, keyringService } from '@/core/services';
+import { getGasAccountAccountsWithBalanceSnapshot } from '@/core/serviceApi/gasAccount';
+import { isKeyringUnlockedSnapshot } from '@/core/serviceApi/keyring';
 import {
   getAccountList,
   filterDirectlySignableAccounts,
@@ -78,7 +79,7 @@ function mergeAccountsWithGasBalance(nextAccounts: GasAccountBalanceAccount[]) {
     return;
   }
 
-  const prevAccounts = gasAccountService.getAccountsWithGasAccountBalance();
+  const prevAccounts = getGasAccountAccountsWithBalanceSnapshot();
   const merged = [...prevAccounts];
 
   nextAccounts.forEach(account => {
@@ -93,6 +94,12 @@ function mergeAccountsWithGasBalance(nextAccounts: GasAccountBalanceAccount[]) {
   });
 
   getGasAccountStoreApi().setAccountsWithGasAccountBalance(merged);
+}
+
+async function getReadyGasAccountStoreApi() {
+  const storeApiGasAccount = getGasAccountStoreApi();
+  await storeApiGasAccount.ensureRuntimeReady();
+  return storeApiGasAccount;
 }
 
 async function loginAutoDetectedAccount(account?: KeyringAccount) {
@@ -130,19 +137,20 @@ function refreshAllAccountsWithBalanceInBackground(logContext: string) {
 export const refreshAccountsWithGasAccountBalance = makeAvoidParallelAsyncFunc(
   async () => {
     try {
+      const storeApiGasAccount = await getReadyGasAccountStoreApi();
       const { sortedAccounts } = await getAccountList({ filter: 'onlyMine' });
       if (!sortedAccounts.length) {
-        getGasAccountStoreApi().setAccountsWithGasAccountBalance([]);
+        storeApiGasAccount.setAccountsWithGasAccountBalance([]);
         return [];
       }
 
       const allWithBalance = await findAccountsWithBalance(sortedAccounts);
       const mapped = toGasAccountBalanceAccounts(allWithBalance);
-      getGasAccountStoreApi().setAccountsWithGasAccountBalance(mapped);
+      storeApiGasAccount.setAccountsWithGasAccountBalance(mapped);
       return mapped;
     } catch (error) {
       console.error('refreshAccountsWithGasAccountBalance error', error);
-      return gasAccountService.getAccountsWithGasAccountBalance();
+      return getGasAccountAccountsWithBalanceSnapshot();
     }
   },
 );
@@ -152,7 +160,8 @@ export async function autoLoginGasAccountIfNeeded() {
     return;
   }
 
-  const { sig } = getGasAccountStoreApi().getSession() || {};
+  const storeApiGasAccount = await getReadyGasAccountStoreApi();
+  const { sig } = storeApiGasAccount.getSession() || {};
   if (sig) {
     hasAttemptedAutoLogin = true;
     return;
@@ -173,7 +182,7 @@ export async function autoLoginGasAccountIfNeeded() {
     if (directAccount) {
       mergeAccountsWithGasBalance(toGasAccountBalanceAccounts([directAccount]));
       if (
-        keyringService.isUnlocked() &&
+        isKeyringUnlockedSnapshot() &&
         (await loginAutoDetectedAccount(directAccount))
       ) {
         refreshAllAccountsWithBalanceInBackground('after auto login');
@@ -195,7 +204,8 @@ export const checkAddedAccountsGasAccountIfNeeded = makeAvoidParallelAsyncFunc(
       return;
     }
 
-    const { sig } = getGasAccountStoreApi().getSession() || {};
+    const storeApiGasAccount = await getReadyGasAccountStoreApi();
+    const { sig } = storeApiGasAccount.getSession() || {};
     if (sig) {
       return;
     }
@@ -212,7 +222,7 @@ export const checkAddedAccountsGasAccountIfNeeded = makeAvoidParallelAsyncFunc(
       toGasAccountBalanceAccounts([...directWithBalance, ...hwWithBalance]),
     );
 
-    if (!keyringService.isUnlocked()) {
+    if (!isKeyringUnlockedSnapshot()) {
       setPendingHardwareAccount(hwWithBalance[0]);
       return;
     }

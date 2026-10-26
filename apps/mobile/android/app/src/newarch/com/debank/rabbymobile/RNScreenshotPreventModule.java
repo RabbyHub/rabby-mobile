@@ -1,7 +1,6 @@
 package com.debank.rabbymobile;
 
 import android.app.Activity;
-import android.content.ContentResolver;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
@@ -187,21 +186,38 @@ public class RNScreenshotPreventModule extends NativeRNScreenshotPreventSpec /* 
   }
 
   private void takeViewScreenshotAndNotify() {
-    ContentResolver contentResolver = this.reactContext.getContentResolver();
+    Activity activity = getCurrentActivity();
+    if (activity == null) {
+      emitUserDidTakeScreenshotEvent(createUserDidTakeScreenshotParams(null));
+      return;
+    }
+
+    // PixelCopy reads the composited window, including WebView canvases that View.draw() drops.
+    ScreenshotUtils.captureWindowToPngFile(
+        activity,
+        this.reactContext.getCacheDir(),
+        mainHandler,
+        captureResult -> emitUserDidTakeScreenshotEvent(createUserDidTakeScreenshotParams(captureResult))
+    );
+  }
+
+  private static WritableMap createUserDidTakeScreenshotParams(
+      ScreenshotUtils.ScreenshotCaptureResult captureResult
+  ) {
     WritableMap params = Arguments.createMap();
     params.putBoolean("captured", false);
 
-    Activity activity = getCurrentActivity();
-    if (activity != null) {
-        ViewGroup contentContainer = activity.findViewById(android.R.id.content);
-        String base64 = ScreenshotUtils.captureViewToPngBase64(contentContainer.getRootView());
-
-        params.putBoolean("captured", true);
-        params.putString("imageBase64", base64);
-        params.putString("imageType", "png");
+    if (captureResult != null) {
+      params.putBoolean("captured", true);
+      params.putString("path", captureResult.path);
+      params.putString("name", captureResult.name);
+      params.putInt("width", captureResult.width);
+      params.putInt("height", captureResult.height);
+      params.putString("imageBase64", "");
+      params.putString("imageType", "png");
     }
 
-    emitUserDidTakeScreenshotEvent(params);
+    return params;
   }
 
   @ReactMethod

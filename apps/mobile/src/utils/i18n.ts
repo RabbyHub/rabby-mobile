@@ -82,7 +82,7 @@ export function filterSupportedLang(lang: string): SupportedLang {
   return DEFAULT_LANG;
 }
 
-i18n
+export const i18nInitPromise = i18n
   .use(initReactI18next) // passes i18n down to react-i18next
   .init({
     fallbackLng: 'en-US',
@@ -94,6 +94,10 @@ i18n
     returnNull: false,
     returnEmptyString: false,
   });
+
+export async function waitForI18nInitialized() {
+  await i18nInitPromise;
+}
 
 export const I18N_NS = 'translations';
 

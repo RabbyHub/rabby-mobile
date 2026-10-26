@@ -5,7 +5,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import RcIconloading from '@/assets2024/icons/home/Iconloading.svg';
 import { Animated } from 'react-native';
 
-export const LoadingCircle = () => {
+export const LoadingCircle = ({ size = 24 }: { size?: number }) => {
   const { styles } = useTheme2024({ getStyle });
   const spinValue = useRef(new Animated.Value(0)).current;
 
@@ -34,7 +34,7 @@ export const LoadingCircle = () => {
         style={{
           transform: [{ rotate: spin }],
         }}>
-        <RcIconloading />
+        <RcIconloading width={size} height={size} />
       </Animated.View>
     </View>
   );

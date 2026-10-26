@@ -1,9 +1,10 @@
-import * as DropdownMenu from 'zeego/src/dropdown-menu';
-import { MenuItemCommonProps } from 'zeego/src/menu';
+import * as DropdownMenu from '@rabby-wallet/zeego/dropdown-menu';
+import { MenuItemCommonProps } from '@rabby-wallet/zeego/menu';
 import type { DropdownMenuContentProps } from '@radix-ui/react-dropdown-menu';
 import { ImageSourcePropType, Pressable } from 'react-native';
 import { IS_ANDROID } from '@/core/native/utils';
 import { Text } from '@/components/Typography';
+import { useNativeMenuModalGate } from '@/utils/modalGate';
 
 export interface MenuAction {
   title: string;
@@ -32,13 +33,16 @@ export const DropdownMenuView: React.FC<Props> = ({
   avoidCollisions = true,
   side = 'top',
 }) => {
+  const nativeMenuGateProps = useNativeMenuModalGate();
+
   return (
     <DropdownMenu.Root
       __unsafeIosProps={{
         previewConfig: {
           borderRadius: 30,
         },
-      }}>
+      }}
+      {...nativeMenuGateProps}>
       <DropdownMenu.Trigger>
         <Pressable hitSlop={5}>{children}</Pressable>
       </DropdownMenu.Trigger>

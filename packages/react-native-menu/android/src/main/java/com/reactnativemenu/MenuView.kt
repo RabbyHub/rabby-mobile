@@ -50,7 +50,10 @@ class MenuView(private val mContext: ReactContext) : ReactViewGroup(mContext) {
     })
   }
 
-  fun show(){
+  fun show(actions: ReadableArray? = null){
+    if (actions != null) {
+      mActions = actions
+    }
     prepareMenu()
   }
 

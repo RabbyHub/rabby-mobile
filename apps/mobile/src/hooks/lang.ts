@@ -8,10 +8,12 @@ import {
   zustandByMMKV,
 } from '@/core/storage/mmkv';
 import i18n, {
+  addResourceBundle,
   DEFAULT_LANG,
   filterSupportedLang,
   SupportedLang,
   SupportedLangs,
+  waitForI18nInitialized,
 } from '@/utils/i18n';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 
@@ -120,9 +122,17 @@ function gSetCurrentLanguage(valOrFunc: UpdaterOrPartials<LangSetting>) {
   });
 }
 
+async function changeI18nLanguage(lang: SupportedLang) {
+  const nextVal = filterSupportedLang(lang);
+  addResourceBundle(nextVal);
+  await waitForI18nInitialized();
+  addResourceBundle(nextVal);
+  await i18n.changeLanguage(nextVal);
+}
+
 const setCurrentLanguage = async (lang: SupportedLang) => {
   const nextVal = filterSupportedLang(lang);
-  await i18n.changeLanguage(nextVal);
+  await changeI18nLanguage(nextVal);
   gSetCurrentLanguage(makeLangSetting(nextVal));
 };
 
@@ -138,8 +148,7 @@ export function useAppLanguage() {
 }
 
 function i18nChange(lang: SupportedLang) {
-  i18n
-    .changeLanguage(filterSupportedLang(lang))
+  return changeI18nLanguage(lang)
     .then(() => {
       console.debug(`[useTriggerI18nChangeOnAppTop] current language: ${lang}`);
     })
@@ -148,9 +157,19 @@ function i18nChange(lang: SupportedLang) {
     });
 }
 
+let hasStartedSubscribeLangChange = false;
+let initialLanguageReadyPromise: Promise<void> | null = null;
+
 export function startSubscribeLangChange() {
-  i18nChange(langStore.getState().lang);
+  if (hasStartedSubscribeLangChange) {
+    return initialLanguageReadyPromise ?? Promise.resolve();
+  }
+  hasStartedSubscribeLangChange = true;
+
+  initialLanguageReadyPromise = i18nChange(langStore.getState().lang);
   langStore.subscribe(async state => {
     i18nChange(state.lang);
   });
+
+  return initialLanguageReadyPromise;
 }

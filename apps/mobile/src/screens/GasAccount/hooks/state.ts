@@ -67,6 +67,27 @@ export type GasAccountState<
   switchVisible: boolean;
 };
 
+export const isSameGasAccountSessionAccount = (
+  left?: GasAccountSessionAccount,
+  right?: GasAccountSessionAccount,
+) =>
+  left === right ||
+  (!!left &&
+    !!right &&
+    left.address === right.address &&
+    left.type === right.type &&
+    left.brandName === right.brandName);
+
+export const areGasAccountBalanceAccountsEqual = (
+  left: GasAccountBalanceAccount[],
+  right: GasAccountBalanceAccount[],
+) =>
+  left === right ||
+  (left.length === right.length &&
+    left.every((account, index) =>
+      isSameGasAccountSessionAccount(account, right[index]),
+    ));
+
 export const createInitialGasAccountState = <
   TAccountInfo = unknown,
   THistoryItem = unknown,
@@ -108,13 +129,25 @@ export const updateSessionState = <
 >(
   state: GasAccountState<TAccountInfo, THistoryItem, TPendingItem>,
   session: Partial<GasAccountSessionState>,
-): GasAccountState<TAccountInfo, THistoryItem, TPendingItem> => ({
-  ...state,
-  session: {
+): GasAccountState<TAccountInfo, THistoryItem, TPendingItem> => {
+  const nextSession = {
     ...state.session,
     ...session,
-  },
-});
+  };
+  if (
+    state.session.sig === nextSession.sig &&
+    state.session.accountId === nextSession.accountId &&
+    state.session.status === nextSession.status &&
+    isSameGasAccountSessionAccount(state.session.account, nextSession.account)
+  ) {
+    return state;
+  }
+
+  return {
+    ...state,
+    session: nextSession,
+  };
+};
 
 export const invalidateSessionState = <
   TAccountInfo = unknown,
@@ -148,13 +181,31 @@ export const updateDiscoveryState = <
 >(
   state: GasAccountState<TAccountInfo, THistoryItem, TPendingItem>,
   discovery: Partial<GasAccountDiscoveryState>,
-): GasAccountState<TAccountInfo, THistoryItem, TPendingItem> => ({
-  ...state,
-  discovery: {
+): GasAccountState<TAccountInfo, THistoryItem, TPendingItem> => {
+  const nextDiscovery = {
     ...state.discovery,
     ...discovery,
-  },
-});
+  };
+  if (
+    state.discovery.status === nextDiscovery.status &&
+    state.discovery.lastFetchedAt === nextDiscovery.lastFetchedAt &&
+    isSameGasAccountSessionAccount(
+      state.discovery.pendingHardwareAccount,
+      nextDiscovery.pendingHardwareAccount,
+    ) &&
+    areGasAccountBalanceAccountsEqual(
+      state.discovery.accountsWithBalance,
+      nextDiscovery.accountsWithBalance,
+    )
+  ) {
+    return state;
+  }
+
+  return {
+    ...state,
+    discovery: nextDiscovery,
+  };
+};
 
 export const markSnapshotDirtyState = <
   TAccountInfo = unknown,
@@ -184,7 +235,7 @@ export const startSnapshotRefreshState = <
   snapshot: {
     ...state.snapshot,
     status: 'refreshing',
-    dirty: true,
+    dirty: false,
     refreshReason: reason,
   },
 });
@@ -202,7 +253,6 @@ export const finishSnapshotRefreshState = <
     ...state.snapshot,
     accountInfo,
     status: 'ready',
-    dirty: false,
     lastFetchedAt: Date.now(),
   },
 });
@@ -218,6 +268,7 @@ export const failSnapshotRefreshState = <
   snapshot: {
     ...state.snapshot,
     status: 'error',
+    dirty: true,
   },
 });
 

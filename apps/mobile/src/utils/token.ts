@@ -21,6 +21,7 @@ import { safeParseJSON } from '@rabby-wallet/base-utils/dist/isomorphic/string';
 import type { Account } from '@/types/account';
 import { type TokenItemMaybeWithOwner } from '@/databases/hooks/token';
 import type { ITokenItem } from '@/types/assets';
+import { unlabeledCustomTokenSecurityFlags } from './tokenSecurityFlags';
 
 export const SMALL_TOKEN_ID = '_SMALL_TOKEN_';
 export const geTokenDecimals = async (
@@ -178,10 +179,8 @@ export function isTokenMarketClosed(token?: { market_status?: string | null }) {
 export type TokenItemFromAbstractPortfolioToken = TokenItemMaybeWithOwner & {
   cex_ids?: string[];
   isFakerFoldRow?: boolean;
-  isManualFold?: boolean;
   smallTokenAllUsdValue?: string;
   isPined?: boolean;
-  isFold?: boolean;
   isExcludeBalance?: boolean;
   pinIndex?: number;
 };
@@ -217,8 +216,6 @@ export const abstractTokenToTokenItem = (
     smallTokenAllUsdValue:
       token?.id === SMALL_TOKEN_ID ? token?._usdValueStr : undefined,
     isPined: token?._isPined,
-    isFold: token?._isFold,
-    isManualFold: token?._isManualFold,
     isExcludeBalance: token?._isExcludeBalance,
     pinIndex: token?._pinIndex,
   };
@@ -384,11 +381,7 @@ export const customTestnetTokenToTokenItem = (
     raw_amount_hex_str: `0x${new BigNumber(token.rawAmount || 0).toString(16)}`,
     decimals: token.decimals,
     display_symbol: token.symbol,
-    is_core: false,
-    is_verified: false,
-    is_wallet: false,
-    is_scam: false,
-    is_suspicious: false,
+    ...unlabeledCustomTokenSecurityFlags,
     logo_url: '',
     name: token.symbol,
     optimized_symbol: token.symbol,

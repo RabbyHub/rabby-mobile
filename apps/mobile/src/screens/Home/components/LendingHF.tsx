@@ -7,18 +7,41 @@ import { formatUsdValue } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useEffect } from 'react';
 import { Text } from '@/components/Typography';
+import { STARTUP_TASKS } from '@/core/utils/startupTaskManifest';
+import { scheduleStartupTask } from '@/core/utils/startupScheduler';
+import { BALANCE_HIDE_TYPE, useHideBalance } from '../hooks/useHideBalance';
 
-const NetWorthBadge: React.FC<{ netWorth: string }> = ({ netWorth }) => {
+function cancelStartupTaskHandle(
+  handle: ReturnType<typeof scheduleStartupTask> | undefined,
+) {
+  if (handle && typeof handle === 'object' && 'cancel' in handle) {
+    const maybeCancelable = handle as { cancel?: unknown };
+    if (typeof maybeCancelable.cancel === 'function') {
+      maybeCancelable.cancel();
+    }
+  }
+}
+
+const NetWorthBadge: React.FC<{ netWorth: string; isHidden: boolean }> = ({
+  netWorth,
+  isHidden,
+}) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   if (Number(netWorth) <= 0) {
     return null;
   }
-  return <Text style={styles.netWorthText}>{formatUsdValue(netWorth)}</Text>;
+  return (
+    <Text style={styles.netWorthText}>
+      {isHidden ? '****' : formatUsdValue(netWorth)}
+    </Text>
+  );
 };
 
 export const LendingHF: React.FC<{}> = () => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const { lendingHf } = useLendingHF();
+  const [hideType] = useHideBalance();
+  const isHidden = hideType === BALANCE_HIDE_TYPE.HIDE;
 
   useRendererDetect({ name: 'LendingHF' });
 
@@ -26,11 +49,12 @@ export const LendingHF: React.FC<{}> = () => {
     if (lendingHf) {
       return;
     }
-    const timer = setTimeout(() => {
+    const warmupHandle = scheduleStartupTask(() => {
       apisLending.fetchLendingData();
-    }, 200);
+    }, STARTUP_TASKS.homeLendingDataWarmup);
+
     return () => {
-      timer && clearTimeout(timer);
+      cancelStartupTaskHandle(warmupHandle);
     };
   }, [lendingHf]);
 
@@ -39,7 +63,15 @@ export const LendingHF: React.FC<{}> = () => {
     Number(lendingHf.healthFactor) <= 0 ||
     Number(lendingHf.healthFactor) >= 3
   ) {
-    return <NetWorthBadge netWorth={lendingHf?.netWorthUSD || '0'} />;
+    return (
+      <NetWorthBadge
+        netWorth={lendingHf?.netWorthUSD || '0'}
+        isHidden={isHidden}
+      />
+    );
+  }
+  if (isHidden) {
+    return <Text style={styles.netWorthText}>****</Text>;
   }
   return (
     <Text
@@ -61,12 +93,6 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     fontSize: 14,
     lineHeight: 18,
     fontWeight: '500',
-  },
-  green: {
-    color: colors2024['green-default'],
-  },
-  red: {
-    color: colors2024['red-default'],
   },
   netWorthText: {
     fontFamily: 'SF Pro Rounded',

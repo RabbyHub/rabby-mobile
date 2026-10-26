@@ -7,13 +7,13 @@ import {
   useAfterMountEffect,
   useChainCallback,
   useCollapsibleStyle,
+  useScrollHandlerY,
   useSharedAnimatedRef,
   useTabNameContext,
   useTabsContext,
   useUpdateScrollViewContentSize,
 } from 'react-native-collapsible-tab-view/src/hooks';
 import { RNGHFlatList } from '../reexports';
-import { useScrollHandlerY } from './hooks';
 
 type RNGHFlatListProps<T> = React.ComponentProps<typeof RNGHFlatList<T>>;
 const AnimatedRNGHFlatList =

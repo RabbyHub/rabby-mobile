@@ -8,7 +8,7 @@ import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { GasSelectorSkeleton } from '../GasSelector/GasSelectorSkeleton';
 import { SafeNonceOptionList } from './SafeNonceOptionList';
 import { RcArrowDownCC } from '@/assets/icons/common';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { Text, TextInput } from '@/components/Typography';
 
 interface SafeNonceSelectorProps {

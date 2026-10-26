@@ -9,9 +9,29 @@ export type ShareFileOptions = {
   subject?: string;
 };
 
+export type NativeBuildInfo = {
+  BUILD_GIT_HASH?: string;
+  BUILD_GIT_HASH_TIME?: string;
+  BUILD_TIME?: string;
+  BUILD_GIT_COMMITOR?: string;
+  METRO_CACHE_ENABLED?: boolean;
+};
+
 export interface Spec extends TurboModule {
+  getConstants(): { buildInfo?: NativeBuildInfo };
   forceExitApp(): void;
+  measureViewRelativeTo(
+    anchorTag: number,
+    viewportTag: number,
+  ): Promise<{ x: number; y: number; width: number; height: number }>;
+  androidTraceInstant(name: string): void;
+  androidTraceBeginSection(name: string): void;
+  androidTraceEndSection(): void;
+  androidTraceBeginAsyncSection(name: string, cookie: number): void;
+  androidTraceEndAsyncSection(name: string, cookie: number): void;
+  androidTraceCounter(name: string, value: number): void;
   moveTaskToBack(): Promise<boolean>;
+  setSensitiveClipboard(text: string): Promise<void>;
   shareFile(options: ShareFileOptions): Promise<void>;
   iosExcludeFileFromBackup(filePath: string): Promise<boolean>;
 }

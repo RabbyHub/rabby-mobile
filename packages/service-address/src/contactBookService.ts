@@ -21,27 +21,29 @@ export type ContactBookStore = {
 
 export class ContactBookService extends StoreServiceBase<ContactBookStore> {
   constructor(options?: StorageAdapaterOptions) {
-    super('contactBook', {
-      contacts: {},
-      aliases: {},
-    },
-    {
-      storageAdapter: options?.storageAdapter,
-    })
+    super(
+      'contactBook',
+      {
+        contacts: {},
+        aliases: {},
+      },
+      {
+        storageAdapter: options?.storageAdapter,
+      },
+    );
   }
 
   addContact(contact: ContactBookItem | ContactBookItem[]) {
     const contacts = Array.isArray(contact) ? contact : [contact];
-    contacts.forEach(contact => {
-      this.store.contacts = {
-        ...this.store.contacts,
-        [contact.address.toLowerCase()]: contact,
-      };
+    this.mutateStore(draft => {
+      contacts.forEach(contact => {
+        draft.contacts[contact.address.toLowerCase()] = contact;
+      });
     });
   }
 
   listContacts(): ContactBookItem[] {
-    return Object.values(this.store.contacts);
+    return Object.values(this.store.contacts).map(contact => ({ ...contact }));
   }
 
   getContactByAddress(address: string) {
@@ -50,31 +52,38 @@ export class ContactBookService extends StoreServiceBase<ContactBookStore> {
       return undefined;
     }
 
-    return contact;
+    return { ...contact };
   }
 
   getContactsByMap() {
-    return Object.assign({}, this.store.contacts);
+    return Object.fromEntries(
+      Object.entries(this.store.contacts).map(([key, value]) => [
+        key,
+        { ...value },
+      ]),
+    );
   }
 
   setAlias(aliasItem: AddressAliasItem | AddressAliasItem[]) {
     const aliases = Array.isArray(aliasItem) ? aliasItem : [aliasItem];
-    aliases.forEach(alias => {
-      this.store.aliases = {
-        ...this.store.aliases,
-        [alias.address.toLowerCase()]: alias,
-      };
+    this.mutateStore(draft => {
+      aliases.forEach(alias => {
+        draft.aliases[alias.address.toLowerCase()] = alias;
+      });
     });
   }
 
   listAlias() {
-    return Object.values(this.store.aliases);
+    return Object.values(this.store.aliases).map(alias => ({ ...alias }));
   }
 
-  getAliasByAddress(address: string, options?: {
-    /** @default false */
-    keepEmptyIfNotFound?: boolean;
-  }): AddressAliasItem | undefined {
+  getAliasByAddress(
+    address: string,
+    options?: {
+      /** @default false */
+      keepEmptyIfNotFound?: boolean;
+    },
+  ): AddressAliasItem | undefined {
     if (!address) {
       return undefined;
     }
@@ -88,19 +97,23 @@ export class ContactBookService extends StoreServiceBase<ContactBookStore> {
       };
     }
 
-    return alias;
+    return { ...alias };
   }
 
   getAliasByMap() {
-    return Object.assign({}, this.store.aliases);
+    return Object.fromEntries(
+      Object.entries(this.store.aliases).map(([key, value]) => [
+        key,
+        { ...value },
+      ]),
+    );
   }
 
   updateAlias(data: { address: string; name: string }) {
     const key = data.address.toLowerCase();
-    this.store.aliases = {
-      ...this.store.aliases,
-      [key]: { alias: data.name, address: key },
-    };
+    this.mutateStore(draft => {
+      draft.aliases[key] = { alias: data.name, address: key };
+    });
   }
 
   removeAlias = (address: string) => {
@@ -108,10 +121,12 @@ export class ContactBookService extends StoreServiceBase<ContactBookStore> {
     if (!this.store.aliases[key]) {
       return;
     }
-    if (this.store.contacts[key]) {
-      delete this.store.contacts[key];
-    } else {
-      delete this.store.aliases[key];
-    }
+    this.mutateStore(draft => {
+      if (draft.contacts[key]) {
+        delete draft.contacts[key];
+      } else {
+        delete draft.aliases[key];
+      }
+    });
   };
 }

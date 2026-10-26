@@ -1,5 +1,5 @@
 import { Platform } from 'react-native';
-import RNFS from 'react-native-fs';
+import RNFS from '@rabby-wallet/react-native-fs';
 
 export const APP_DB_PREFIX = 'rabby_';
 
@@ -10,13 +10,19 @@ export const ORM_TABLE_NAMES = {
   cache_balance: 'cache_balance',
   cache_cex: 'cache_cex',
 
-  cache_tokenitem: 'cache_tokenitem',
-  cache_nftitem: 'cache_nftitem',
+  cache_tokenitem_legacy: 'cache_tokenitem',
+  cache_tokenitem: 'cache_tokenitem_20260816',
+  cache_nftitem_legacy: 'cache_nftitem',
+  cache_nftitem: 'cache_nftitem_20260813',
   cache_historyitem: 'cache_historyitem',
   cache_local_historyitem: 'cache_local_historyitem',
 
   cache_portocolitem: 'cache_portocolitem',
   cache_appchain: 'cache_appchain',
+
+  projection_snapshot: 'projection_snapshot',
+  projection_item: 'projection_item',
+  projection_group_item: 'projection_group_item',
 } as const;
 
 // @see https://github.com/boltcode-js/react-native-sqlite-storage?tab=readme-ov-file#opening-a-database

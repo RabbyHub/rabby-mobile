@@ -87,10 +87,4 @@ const getStyles = createGetStyles2024(ctx => ({
     bottom: getBottomButtonBottomOffset(ctx.safeAreaInsets.bottom),
     width: '100%',
   },
-  disabledButton: {
-    backgroundColor: ctx.colors2024['neutral-line'],
-  },
-  disabledTitle: {
-    color: ctx.colors2024['neutral-title-1'],
-  },
 }));

@@ -26,9 +26,11 @@ function setupOneKeyBridgeModule() {
     UI_EVENT: 'UI_EVENT',
     UI_REQUEST: {
       REQUEST_PIN: 'REQUEST_PIN',
+      REQUEST_BUTTON: 'REQUEST_BUTTON',
       REQUEST_PASSPHRASE: 'REQUEST_PASSPHRASE',
       REQUEST_PASSPHRASE_ON_DEVICE: 'REQUEST_PASSPHRASE_ON_DEVICE',
       CLOSE_UI_WINDOW: 'CLOSE_UI_WINDOW',
+      CLOSE_UI_PIN_WINDOW: 'CLOSE_UI_PIN_WINDOW',
     },
     UI_RESPONSE: {
       RECEIVE_PIN: 'RECEIVE_PIN',
@@ -38,6 +40,8 @@ function setupOneKeyBridgeModule() {
   jest.doMock('@/utils/events', () => ({
     EVENT_ONEKEY_REQUEST_PASSPHRASE_ON_DEVICE:
       'ONEKEY_REQUEST_PASSPHRASE_ON_DEVICE',
+    EVENT_ONEKEY_CLOSE_UI_PIN_WINDOW: 'ONEKEY_CLOSE_UI_PIN_WINDOW',
+    EVENT_ONEKEY_REQUEST_BUTTON: 'ONEKEY_REQUEST_BUTTON',
     eventBus: {
       emit: mockEmit,
     },
@@ -93,5 +97,38 @@ describe('OneKeyBridge', () => {
       'ONEKEY_REQUEST_PASSPHRASE_ON_DEVICE',
       event,
     );
+  });
+
+  it('forwards SDK pin-window close events', async () => {
+    const { OneKeyBridge, mockOn, mockEmit } = setupOneKeyBridgeModule();
+    const bridge = new OneKeyBridge();
+
+    await bridge.init();
+
+    const event = {
+      type: 'CLOSE_UI_PIN_WINDOW',
+    };
+    mockOn.mock.calls[0][1](event);
+
+    expect(mockEmit).toHaveBeenCalledWith('ONEKEY_CLOSE_UI_PIN_WINDOW', event);
+  });
+
+  it('forwards SDK device-button request events', async () => {
+    const { OneKeyBridge, mockOn, mockEmit } = setupOneKeyBridgeModule();
+    const bridge = new OneKeyBridge();
+
+    await bridge.init();
+
+    const event = {
+      type: 'REQUEST_BUTTON',
+      payload: {
+        device: {
+          connectId: 'connect-id',
+        },
+      },
+    };
+    mockOn.mock.calls[0][1](event);
+
+    expect(mockEmit).toHaveBeenCalledWith('ONEKEY_REQUEST_BUTTON', event);
   });
 });

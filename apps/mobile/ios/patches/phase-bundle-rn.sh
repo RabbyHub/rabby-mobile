@@ -10,6 +10,8 @@ project_dir=$(dirname $(dirname $script_dir))
 WITH_ENVIRONMENT="$REACT_NATIVE_PATH/scripts/xcode/with-environment.sh"
 REACT_NATIVE_XCODE="$REACT_NATIVE_PATH/scripts/react-native-xcode.sh"
 SENTRY_XCODE="../node_modules/@sentry/react-native/scripts/sentry-xcode.sh"
+export CLI_PATH="$project_dir/scripts/metro-bundle-cli.js"
+export RABBY_MOBILE_METRO_CLI_DELEGATE="$REACT_NATIVE_PATH/scripts/bundle.js"
 
 # you can also run `sudo ln -s $(which node) /usr/local/bin/node` on macOS
 export NODE_BINARY=$(command -v node);
@@ -204,8 +206,20 @@ check_env_file() {
   fi
 }
 
+write_native_build_info() {
+  local output_dir="$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH"
+  local output_file="$output_dir/rabby-build-info.json"
+  local temporary_file="$output_file.tmp"
+
+  mkdir -p "$output_dir"
+  "$NODE_BINARY" "$project_dir/scripts/resolve-build-info.js" > "$temporary_file"
+  mv "$temporary_file" "$output_file"
+  echo "[RabbyMobileBuild] wrote native build info to $output_file"
+}
+
 log_bundle_env_diagnostics "$(resolve_bundle_env_file)"
 check_env_file;
+write_native_build_info;
 
 if [ "$CONFIGURATION" == "Debug" ] && [ "$IOS_SKIP_METRO_BUNDLE_ON_DEBUG" == "true" ]; then
   echo "[RabbyMobileBuild] skip debug bundle while preserving Metro device setup"
@@ -217,5 +231,28 @@ fi
 echo "[RabbyMobileBuild] customize build environment vars finished."
 
 /bin/sh -c "$WITH_ENVIRONMENT $SENTRY_XCODE"
+
+# react-native-xcode.sh writes ip.txt from the build machine's current
+# en0..en8 IP. That IP is stale as soon as the developer changes networks.
+# Prefer the explicit dev-server host from .env/.env.local; otherwise keep a
+# stable mDNS host for Debug device builds.
+if [[ "$CONFIGURATION" == *Debug* ]] && [[ "$PLATFORM_NAME" == *iphoneos* ]]; then
+  load_env_var_from_candidate_files DEV_SERVER_HOSTNAME || true
+  metro_host="${DEV_SERVER_HOSTNAME:-${RCT_PACKAGER_HOSTNAME:-}}"
+  if [ -z "$metro_host" ]; then
+    local_host_name="$(scutil --get LocalHostName 2>/dev/null || true)"
+    if [ -n "$local_host_name" ]; then
+      metro_host="${local_host_name}.local"
+    fi
+  fi
+  if [ -n "$metro_host" ]; then
+    metro_ip_file="$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/ip.txt"
+    mkdir -p "$(dirname "$metro_ip_file")"
+    printf '%s\n' "$metro_host" > "$metro_ip_file"
+    echo "[RabbyMobileBuild] wrote stable Metro host to $metro_ip_file: $metro_host"
+  else
+    echo "[RabbyMobileBuild] unable to resolve a stable Metro host; leaving ip.txt unchanged"
+  fi
+fi
 
 echo "[RabbyMobileBuild] finish bundle with sentry build."

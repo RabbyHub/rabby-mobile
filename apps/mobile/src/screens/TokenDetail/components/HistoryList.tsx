@@ -6,10 +6,10 @@ import React, {
   useState,
 } from 'react';
 import { useTheme2024 } from '@/hooks/theme';
-import { HistoryDisplayItem } from '@/screens/Transaction/MultiAddressHistory';
+import type { HistoryDisplayItem } from '@/screens/Transaction/MultiAddressHistory';
 import { createGetStyles2024 } from '@/utils/styles';
-import { useInfiniteScroll, useMemoizedFn, useMount } from 'ahooks';
-import { KeyringAccountWithAlias } from '@/hooks/account';
+import { useInfiniteScroll, useMemoizedFn } from 'ahooks';
+import type { KeyringAccountWithAlias } from '@/hooks/account';
 import {
   ensureHistoryListItemFromDb,
   fetchHistoryTokenItem,
@@ -20,9 +20,13 @@ import {
   HistoryList,
   type HistoryListHeaderComponent,
 } from '@/screens/Transaction/components/HistoryGroupList';
-import { transactionHistoryService } from '@/core/services';
-import { openapi } from '@/core/request';
 import {
+  getTransactionHistorySucceedListSnapshot,
+  getTransactionHistoryTransactions,
+  transactionHistoryServiceApi,
+} from '@/core/serviceApi/transactionHistory';
+import { openapi } from '@/core/request';
+import type {
   TxAllHistoryResult,
   TxHistoryResult,
 } from '@rabby-wallet/rabby-api/dist/types';
@@ -31,24 +35,38 @@ import { toast } from '@/components2024/Toast';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { Empty } from '@/screens/Transaction/components/Empty';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils/src/types';
-import { HistoryItemEntity } from '@/databases/entities/historyItem';
-import { ITokenItem } from '@/store/tokens';
+import {
+  HistoryItemEntity,
+  toHistoryPageCursor,
+  type HistoryPageCursor,
+} from '@/databases/entities/historyItem';
+import type { ITokenItem } from '@/store/tokens';
 import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
+import { useIsFocused } from '@react-navigation/native';
+import { useAppOrmSyncEvents } from '@/databases/sync/_event';
+import {
+  useTransactionHistoryServiceReady,
+  withTransactionHistoryService,
+} from '@/core/serviceApi/transactionHistoryHooks';
 
 interface IFetchHistory {
   last: number;
+  // keyset cursor for local DB pages; `last` stays the remote API start_time
+  dbCursor?: HistoryPageCursor;
   list: HistoryDisplayItem[];
 }
 
 const PAGE_COUNT = 20;
 
-export const TokenDetailHistoryList = ({
+const TokenDetailHistoryListContent = ({
   finalAccount,
   token,
   onRefresh,
   onReachTopStatusChange,
   ListHeaderComponent,
   baseTokenRefreshing,
+  disableHistoryRequest,
+  overWritePlaceholder,
 }: {
   finalAccount: KeyringAccountWithAlias | null;
   token: ITokenItem;
@@ -56,9 +74,12 @@ export const TokenDetailHistoryList = ({
   onReachTopStatusChange?: (status: boolean) => void;
   ListHeaderComponent?: HistoryListHeaderComponent;
   baseTokenRefreshing?: boolean;
+  disableHistoryRequest?: boolean;
+  overWritePlaceholder?: string;
 }) => {
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
+  const isFocused = useIsFocused();
 
   const { isSceneUsingAllAccounts, sceneCurrentAccountDepKey } =
     useSceneAccountInfo({
@@ -68,13 +89,19 @@ export const TokenDetailHistoryList = ({
   const currentAddress = finalAccount?.address;
 
   const isReady = useRef(false);
+  const requestPendingRef = useRef(false);
+  const requestSequenceRef = useRef(0);
   const lastMap = useRef<Record<string, number>>({});
-  const dbLastCursorRef = useRef<number>(0);
+  const dbCursorRef = useRef<HistoryPageCursor | null>(null);
   const hasMoreMap = useRef<Record<string, boolean>>({});
+  const loadedWindowSizeRef = useRef(PAGE_COUNT);
+  const [manualHistoryRefreshing, setManualHistoryRefreshing] = useState(false);
 
   const [historySuccessList, setHistorySuccessList] = useState<string[]>(
-    transactionHistoryService.getSucceedList(),
+    getTransactionHistorySucceedListSnapshot(),
   );
+  const transactionHistoryReady = useTransactionHistoryServiceReady();
+  const hasConsumedLocalStatusRef = useRef(false);
 
   const historyListRef = useRef<{ scrollToTop: () => void }>(null);
   const handleScroll = useCallback(
@@ -90,85 +117,84 @@ export const TokenDetailHistoryList = ({
     chain_id: string,
     token_id: string,
     isMyAddress?: boolean,
+    dbCursor: HistoryPageCursor | null = null,
+    pageCount = PAGE_COUNT,
   ): Promise<IFetchHistory> => {
     if (!address) {
       throw new Error('no account');
     }
 
-    try {
-      if (isMyAddress) {
-        const historyList =
-          await HistoryItemEntity.getTokenHistoryItemSortedByTime(
-            address,
-            startTime,
-            token_id,
-            chain_id,
-            PAGE_COUNT,
-          );
-        const list = historyList.map(item => {
-          return {
-            ...ensureHistoryListItemFromDb(item),
-            // hidden small and scam no need this prop
-            isSmallUsdTx: false,
-            isShowSuccess: false,
-          } as HistoryDisplayItem;
-        });
+    if (isMyAddress) {
+      const historyList =
+        await HistoryItemEntity.getTokenHistoryItemSortedByTime(
+          address,
+          dbCursor,
+          token_id,
+          chain_id,
+          pageCount,
+        );
+      const list = historyList.map(item => {
         return {
-          last: last(historyList)?.time_at || 0,
-          list,
-        };
-      } else {
-        const res = await openapi.listTxHisotry({
+          ...ensureHistoryListItemFromDb(item),
+          // hidden small and scam no need this prop
+          isSmallUsdTx: false,
+          isShowSuccess: false,
+        } as HistoryDisplayItem;
+      });
+      const lastItem = last(historyList);
+      return {
+        last: lastItem?.time_at || 0,
+        dbCursor: lastItem ? toHistoryPageCursor(lastItem) : undefined,
+        list,
+      };
+    } else {
+      const [res, transactions] = await Promise.all([
+        openapi.listTxHistory({
           id: address,
           start_time: startTime,
           page_count: PAGE_COUNT,
           chain_id,
           token_id,
-        });
+        }),
+        getTransactionHistoryTransactions(),
+      ]);
 
-        const { project_dict, history_list: list } = res;
-        const token_dict = (res as TxHistoryResult).token_dict;
-        const token_uuid_dict = (res as unknown as TxAllHistoryResult)
-          .token_uuid_dict;
-        const tokenDict = token_dict || token_uuid_dict;
+      const { project_dict, history_list: list } = res;
+      const token_dict = (res as TxHistoryResult).token_dict;
+      const token_uuid_dict = (res as unknown as TxAllHistoryResult)
+        .token_uuid_dict;
+      const tokenDict = token_dict || token_uuid_dict;
 
-        const displayList = list
-          .map(item => ({
-            ...item,
-            address,
-            key: `${address}_${item.chain}_${item.id}`,
-            project_item: project_dict[item.project_id || ''] || null,
-            token_approve: item.token_approve
-              ? {
-                  ...item.token_approve,
-                  token: fetchHistoryTokenItem(
-                    item.token_approve?.token_id || '',
-                    item.chain,
-                    tokenDict,
-                  ),
-                }
-              : null,
-            receives: item.receives.map(e => ({
-              ...e,
-              token: fetchHistoryTokenItem(e.token_id, item.chain, tokenDict),
-            })),
-            sends: item.sends.map(e => ({
-              ...e,
-              token: fetchHistoryTokenItem(e.token_id, item.chain, tokenDict),
-            })),
-            historyType: getHistoryItemType(item),
-          }))
-          .sort((v1, v2) => v2.time_at - v1.time_at);
-        return {
-          last: last(displayList)?.time_at || 0,
-          list: displayList,
-        };
-      }
-    } catch (e) {
-      toast.error(`${address} fetch failed, ${e}`);
+      const displayList = list
+        .map(item => ({
+          ...item,
+          address,
+          key: `${address}_${item.chain}_${item.id}`,
+          project_item: project_dict[item.project_id || ''] || null,
+          token_approve: item.token_approve
+            ? {
+                ...item.token_approve,
+                token: fetchHistoryTokenItem(
+                  item.token_approve?.token_id || '',
+                  item.chain,
+                  tokenDict,
+                ),
+              }
+            : null,
+          receives: item.receives.map(e => ({
+            ...e,
+            token: fetchHistoryTokenItem(e.token_id, item.chain, tokenDict),
+          })),
+          sends: item.sends.map(e => ({
+            ...e,
+            token: fetchHistoryTokenItem(e.token_id, item.chain, tokenDict),
+          })),
+          historyType: getHistoryItemType(item, transactions),
+        }))
+        .sort((v1, v2) => v2.time_at - v1.time_at);
       return {
-        last: 0,
-        list: [],
+        last: last(displayList)?.time_at || 0,
+        list: displayList,
       };
     }
   };
@@ -180,8 +206,16 @@ export const TokenDetailHistoryList = ({
     );
   }, [finalAccount]);
 
-  const batchFetchData = useMemoizedFn(async () => {
+  const batchFetchData = useMemoizedFn(async (isReload: boolean) => {
+    const requestSequence = ++requestSequenceRef.current;
     const list: HistoryDisplayItem[] = [];
+    if (disableHistoryRequest) {
+      return {
+        list,
+        hasMore: false,
+      };
+    }
+
     const account = finalAccount;
     if (!account) {
       return {
@@ -190,26 +224,39 @@ export const TokenDetailHistoryList = ({
       };
     }
     const addr = account.address.toLowerCase();
-    if (addr in hasMoreMap.current && !hasMoreMap.current[addr]) {
+    if (!isReload && hasMoreMap.current[addr] === false) {
       return {
         list: [],
         hasMore: false,
       };
     }
 
+    // Only local DB revalidation preserves the loaded window. Remote history
+    // retains its fixed API page size, including manual refreshes.
+    const pageCount =
+      isMyAddress && isReload ? loadedWindowSizeRef.current : PAGE_COUNT;
     const result = await fetchData(
       addr,
-      lastMap.current[addr] || 0,
+      isReload ? 0 : lastMap.current[addr] || 0,
       tokenItem.chain,
       tokenItem.id,
       isMyAddress,
+      isReload ? null : dbCursorRef.current,
+      pageCount,
     );
-    if (result.list.length < PAGE_COUNT) {
+    if (requestSequence !== requestSequenceRef.current) {
+      // ahooks cancels request callbacks, but useInfiniteScroll publishes its
+      // service result before that cancellation check. Do not fulfill a page
+      // superseded by a refresh, or it can overwrite the refreshed list/cursor.
+      throw new Error('Superseded token history page');
+    }
+    if (result.list.length < pageCount) {
       hasMoreMap.current[addr] = false;
     } else {
       hasMoreMap.current[addr] = true;
     }
     lastMap.current[addr] = result.last || 0;
+    dbCursorRef.current = result.dbCursor ?? null;
     list.push(
       ...result.list.map(item => {
         return {
@@ -234,31 +281,62 @@ export const TokenDetailHistoryList = ({
     loadingMore,
     loadMore,
     noMore,
-    reloadAsync,
+    reload,
     cancel,
-  } = useInfiniteScroll(() => batchFetchData(), {
-    isNoMore: d => (d ? !d.hasMore : false),
-    onSuccess() {},
+  } = useInfiniteScroll(lastData => batchFetchData(!lastData), {
+    isNoMore: d => disableHistoryRequest || (d ? !d.hasMore : false),
+    // Native lists can report their end repeatedly before React commits the
+    // loading flags. Reserve the request synchronously as well.
+    onBefore() {
+      requestPendingRef.current = true;
+    },
+    onFinally() {
+      requestPendingRef.current = false;
+      setManualHistoryRefreshing(false);
+    },
+    onError(error) {
+      // Only the current request reports failures. Rejecting the page leaves
+      // the visible rows intact; cancellation suppresses stale error toasts.
+      toast.error(`${currentAddress} fetch failed, ${error}`);
+    },
+  });
+
+  // A sync revalidation must not collapse a paginated window back to page one.
+  loadedWindowSizeRef.current = Math.max(
+    PAGE_COUNT,
+    fetchApiData?.list.length ?? 0,
+  );
+
+  const reloadHistory = useMemoizedFn(() => {
+    cancel();
+    if (!disableHistoryRequest) {
+      // Read the first page without discarding committed cursors. A failed
+      // refresh must still allow appending/retrying from the displayed window.
+      reload();
+    }
   });
 
   const refresh = useMemoizedFn(() => {
-    lastMap.current = {};
-    hasMoreMap.current = {};
-    reloadAsync();
+    // Native RefreshControl owns a visible scroll offset. Initial loads and
+    // background revalidation must not programmatically pull the list down.
+    setManualHistoryRefreshing(!disableHistoryRequest);
+    reloadHistory();
     onRefresh?.();
   });
 
   useEffect(() => {
     if (isReady.current) {
-      cancel();
-      refresh();
+      reloadHistory();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sceneCurrentAccountDepKey, isSceneUsingAllAccounts]);
 
   const batchFetchDataFromDbUpsert = useMemoizedFn(async () => {
-    dbLastCursorRef.current = 0;
-    reloadAsync();
+    if (!isFocused || !isMyAddress || disableHistoryRequest) {
+      return;
+    }
+    cancel();
+    reload();
   });
 
   const throttleBatchFetchData = useMemo(
@@ -276,11 +354,45 @@ export const TokenDetailHistoryList = ({
     };
   }, [throttleBatchFetchData]);
 
-  useMount(() => {
-    const list = transactionHistoryService.getSucceedList();
-    setHistorySuccessList(list);
-    transactionHistoryService.clearSuccessAndFailList(currentAddress);
+  useAppOrmSyncEvents({
+    taskFor: 'all-history',
+    onRemoteDataUpserted: ctx => {
+      if (
+        isFocused &&
+        isMyAddress &&
+        !disableHistoryRequest &&
+        ctx.success &&
+        ctx.owner_addr.toLowerCase() === currentAddress?.toLowerCase()
+      ) {
+        throttleBatchFetchData();
+      }
+    },
   });
+
+  const wasFocusedRef = useRef(isFocused);
+  useEffect(() => {
+    if (isFocused && !wasFocusedRef.current) {
+      void batchFetchDataFromDbUpsert();
+    }
+    if (!isFocused) {
+      throttleBatchFetchData.cancel();
+    }
+    wasFocusedRef.current = isFocused;
+  }, [isFocused, batchFetchDataFromDbUpsert, throttleBatchFetchData]);
+
+  useEffect(() => {
+    if (!transactionHistoryReady || hasConsumedLocalStatusRef.current) {
+      return;
+    }
+    hasConsumedLocalStatusRef.current = true;
+    const list = getTransactionHistorySucceedListSnapshot();
+    setHistorySuccessList(list);
+    void transactionHistoryServiceApi
+      .clearSuccessAndFailList(currentAddress)
+      .catch(error => {
+        console.error('[TokenHistory] clear local status failed', error);
+      });
+  }, [currentAddress, transactionHistoryReady]);
 
   const displayList = useMemo(() => {
     return (
@@ -300,7 +412,7 @@ export const TokenDetailHistoryList = ({
       isNeedFetchFromApi={!isMyAddress}
       firstFetchDone={false}
       loadingMore={loadingMore}
-      refreshLoading={loading || baseTokenRefreshing}
+      refreshLoading={manualHistoryRefreshing || !!baseTokenRefreshing}
       isForMultipleAddress={false}
       account={finalAccount}
       appendBottom={300}
@@ -312,7 +424,9 @@ export const TokenDetailHistoryList = ({
           <Empty
             style={styles.emptyStyle}
             title={
-              !isMyAddress
+              overWritePlaceholder
+                ? overWritePlaceholder
+                : !isMyAddress
                 ? t('page.activities.signedTx.empty.title')
                 : t('page.activities.signedTx.empty.titleLastThreeMonths')
             }
@@ -322,8 +436,13 @@ export const TokenDetailHistoryList = ({
       onScroll={handleScroll}
       scrollEventThrottle={16}
       loadMore={() => {
-        // avoid exec multi times loadMore
-        if (loadingMore || noMore) {
+        if (
+          requestPendingRef.current ||
+          loading ||
+          loadingMore ||
+          noMore ||
+          !fetchApiData?.hasMore
+        ) {
           return;
         }
         loadMore();
@@ -333,160 +452,31 @@ export const TokenDetailHistoryList = ({
   );
 };
 
+const TokenDetailHistoryListForScope = (
+  props: React.ComponentProps<typeof TokenDetailHistoryListContent>,
+) => {
+  // Pagination and in-flight completions belong to exactly one account/token
+  // scope. Remount that local state instead of publishing an old scope's page
+  // into the next one when its DB/API request resolves late.
+  const requestKey = JSON.stringify([
+    props.finalAccount?.address.toLowerCase(),
+    props.finalAccount?.type,
+    props.token.chain,
+    props.token.id,
+    !!props.disableHistoryRequest,
+  ]);
+  return <TokenDetailHistoryListContent key={requestKey} {...props} />;
+};
+
+export const TokenDetailHistoryList = withTransactionHistoryService(
+  TokenDetailHistoryListForScope,
+);
+
 const getStyle = createGetStyles2024(ctx => ({
   overwriteListContainer: {
     paddingHorizontal: 12,
   },
-  container: {
-    width: '100%',
-    // paddingHorizontal: 15,
-    marginTop: 0,
-    gap: 0,
-  },
-  bottomBg: {
-    backgroundColor: ctx.isLight
-      ? ctx.colors2024['neutral-bg-0']
-      : ctx.colors2024['neutral-bg-1'],
-  },
-  header: {
-    width: '100%',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    flexShrink: 0,
-    marginBottom: 4,
-  },
-  defiItem: {
-    width: '100%',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    // paddingVertical: 6,
-    backgroundColor: ctx.isLight
-      ? ctx.colors2024['neutral-bg-1']
-      : ctx.colors2024['neutral-bg-2'],
-    borderRadius: 16,
-    // borderColor: ctx.colors2024['neutral-line'],
-    // borderWidth: 1,
-    padding: 16,
-  },
-  defiItemContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    // marginBottom: 16,
-    // paddingHorizontal: 20,
-    gap: 6,
-  },
-  popupRelateTitle: {
-    color: ctx.colors2024['neutral-title-1'],
-    textAlign: 'center',
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 20,
-    lineHeight: 24,
-    fontWeight: '700',
-    marginBottom: 12,
-  },
-  relateTitle: {
-    color: ctx.colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 18,
-    lineHeight: 22,
-    paddingLeft: 5,
-    fontWeight: '900',
-  },
-  rightContent: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    padding: 4,
-    paddingRight: 1,
-  },
-  historyHeader: {
-    paddingHorizontal: 15,
-    marginBottom: -8,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  headerContent: {
-    color: ctx.colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '700',
-  },
-  defiItemText: {
-    color: ctx.colors2024['neutral-body'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    lineHeight: 20,
-    fontWeight: '700',
-    marginLeft: 6,
-  },
-  arrowStyle: {
-    marginTop: 0,
-  },
-
-  body: {},
-  balanceTitle: {
-    color: ctx.colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 20,
-    lineHeight: 24,
-    fontWeight: '800',
-  },
-
-  itemCard: {
-    marginTop: 12,
-    backgroundColor: ctx.colors2024['neutral-bg-1'],
-    borderRadius: 16,
-    borderColor: ctx.colors2024['neutral-line'],
-    borderWidth: 1,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-
-  tokenBox: {
-    display: 'flex',
-    flexDirection: 'row',
-    gap: 8,
-  },
-  actionBox: {
-    display: 'flex',
-    flexDirection: 'row',
-    gap: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  actionText: {
-    color: ctx.colors2024['brand-default'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 17,
-    lineHeight: 22,
-    fontWeight: '700',
-  },
-  tokenUsd: {
-    color: ctx.colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 28,
-    lineHeight: 36,
-    fontWeight: '800',
-  },
-  tokenAmount: {
-    color: ctx.colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 17,
-    lineHeight: 22,
-    fontWeight: '700',
-  },
   emptyStyle: {
     height: 150,
-  },
-  skeletonContainer: {
-    paddingHorizontal: 20,
-    flexDirection: 'column',
-    gap: 12,
   },
 }));

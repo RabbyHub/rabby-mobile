@@ -10,11 +10,12 @@ import { ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ScreenHeaderAccountSwitcher } from '@/components/AccountSwitcher/OnScreenHeader';
-import { transactionHistoryService } from '@/core/services';
-import { TransactionGroup } from '@/core/services/transactionHistory';
-import { KeyringAccountWithAlias, useMyAccounts } from '@/hooks/account';
+import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
+import type { TransactionGroup } from '@/core/services/transactionHistory';
+import type { KeyringAccountWithAlias } from '@/hooks/account';
+import { useMyAccounts } from '@/hooks/account';
 import { switchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
-import { GetNestedScreenRouteProp } from '@/navigation-type';
+import type { GetNestedScreenRouteProp } from '@/navigation-type';
 import { findAccountByPriority } from '@/utils/account';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
@@ -31,7 +32,7 @@ import { Send } from './components/Actions/Send';
 import { Swap } from './components/Actions/Swap';
 import { UnknownAction } from './components/Actions/UnknownAction';
 import { HistoryItemCateType } from './components/type';
-import { Text } from '@/components/Typography';
+import { HistoryHeaderTitle } from './components/HistoryHeaderTitle';
 
 function HistoryLocalDetailScreen(): JSX.Element {
   const route =
@@ -56,7 +57,7 @@ function HistoryLocalDetailScreen(): JSX.Element {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const { t } = useTranslation();
 
-  const fetchRefreshData = useCallback(() => {
+  const fetchRefreshData = useCallback(async () => {
     if (!isPending) {
       // has done
       return;
@@ -65,7 +66,7 @@ function HistoryLocalDetailScreen(): JSX.Element {
     const address = data.address;
     const chainId = data.chainId;
     const nonce = data.nonce;
-    const groups = transactionHistoryService.getPendingTxsByNonce(
+    const groups = await transactionHistoryServiceApi.getPendingTxsByNonce(
       address,
       chainId,
       nonce,
@@ -84,19 +85,26 @@ function HistoryLocalDetailScreen(): JSX.Element {
       <ScreenHeaderAccountSwitcher
         forScene="HistoryDetail"
         titleText={
-          <Text style={styles.headerTitleStyle} numberOfLines={1}>
+          <HistoryHeaderTitle>
             {title || t('page.transactions.itemTitle.Default')}
-          </Text>
+          </HistoryHeaderTitle>
         }
         disableSwitch={true}
       />
     );
-  }, [styles.headerTitleStyle, title, t]);
+  }, [title, t]);
 
   useEffect(() => {
     if (!data.isPending) {
       const rawId = `${data.address.toLowerCase()}-${data.maxGasTx?.hash}`;
-      transactionHistoryService.clearSuccessAndFailSingleId(rawId);
+      void transactionHistoryServiceApi
+        .clearSuccessAndFailSingleId(rawId)
+        .catch(error => {
+          console.error(
+            '[HistoryLocalDetail] clear local status failed',
+            error,
+          );
+        });
     }
   }, [data]);
 
@@ -314,7 +322,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 20,
     lineHeight: 24,
-    fontWeight: '800',
+    fontWeight: '900',
   },
   mutliBox: {
     width: '100%',
@@ -377,13 +385,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontSize: 14,
     lineHeight: 18,
     fontWeight: '700',
-  },
-  headerTitleStyle: {
-    color: colors2024['neutral-title-1'],
-    fontWeight: '800',
-    fontSize: 20,
-    fontFamily: 'SF Pro Rounded',
-    lineHeight: 24,
   },
 
   statuItemText: {

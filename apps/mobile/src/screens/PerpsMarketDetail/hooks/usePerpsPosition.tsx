@@ -1,11 +1,10 @@
 import { apisPerps } from '@/core/apis';
-import { usePerpsState } from '@/hooks/perps/usePerpsState';
 import {
   fetchAllDexsClearinghouseStateHttp,
   fetchClearinghouseStateHttp,
   fetchPositionOpenOrdersHttp,
-  fetchPositionOpenOrdersHttpForDexes,
   getDexByCoin,
+  getPerpsAccountRuntimeContext,
   perpsStore,
 } from '@/hooks/perps/usePerpsStore';
 import { runPerpsAction } from '@/hooks/perps/perpsActionError';
@@ -28,6 +27,51 @@ import { showToast } from '@/hooks/perps/showToast';
 import { formatPerpsCoin } from '@/utils/perps';
 import { Text } from '@/components/Typography';
 import { useTranslation } from 'react-i18next';
+import { executePerpsStableCoinOrder } from '@/hooks/perps/funding/perpsStableCoinOrder';
+import type { PerpsStableCoinOrderParams } from '@/hooks/perps/funding/types';
+import {
+  buildPerpsCancelOrdersCommand,
+  executePerpsCancelOrders,
+} from '@/hooks/perps/actions/cancelOrders';
+
+const refreshTpSlOrders = async (coin: string) => {
+  try {
+    await fetchPositionOpenOrdersHttp(getDexByCoin(coin));
+  } catch (error) {
+    // Keep read-back failures separate from accepted exchange actions.
+    Sentry.captureException(error);
+  }
+};
+
+// Hyperliquid acknowledges trigger orders with bare "waitingForTrigger" /
+// "waitingForFill" strings, which the SDK's OrderResponseStatus type omits.
+const isAcceptedOrderStatus = (status: unknown) => {
+  if (status === 'waitingForTrigger' || status === 'waitingForFill') {
+    return true;
+  }
+  if (!status || typeof status !== 'object') return false;
+  const value = status as {
+    error?: unknown;
+    filled?: { oid?: unknown };
+    resting?: { oid?: unknown };
+  };
+  return (
+    !value.error &&
+    (typeof value.resting?.oid === 'number' ||
+      typeof value.filled?.oid === 'number')
+  );
+};
+
+const getOrderStatusError = (statuses: readonly unknown[] | undefined) => {
+  for (const status of statuses ?? []) {
+    const error =
+      status && typeof status === 'object'
+        ? (status as { error?: unknown }).error
+        : undefined;
+    if (typeof error === 'string' && error) return error;
+  }
+  return undefined;
+};
 
 export const usePerpsPosition = () => {
   const currentPerpsAccount = perpsStore(s => s.currentPerpsAccount);
@@ -40,36 +84,57 @@ export const usePerpsPosition = () => {
   };
 
   const handleCancelOrder = useMemoizedFn(
-    async (oid: number, coin: string, actionType: 'tp' | 'sl') => {
+    async (
+      oids: readonly number[],
+      coin: string,
+      actionType: 'tp' | 'sl',
+      isSceneCurrent?: () => boolean,
+    ) => {
       const actionText = actionType === 'tp' ? 'Take profit' : 'Stop loss';
+      const context = getPerpsAccountRuntimeContext();
+      if (!oids.length || !context.account || isSceneCurrent?.() === false)
+        return false;
+      const isCurrent = () =>
+        getPerpsAccountRuntimeContext().generation === context.generation;
       return runPerpsAction(
         {
-          fallback: undefined,
+          fallback: false,
           label: actionText + ' cancel',
           getToastMessage: () => actionText + ' cancel error',
         },
         async () => {
-          const sdk = apisPerps.getPerpsSDK();
-          const res = await sdk.exchange?.cancelOrder([
-            {
-              oid,
-              coin,
-            },
-          ]);
-          if (
-            res?.response.data.statuses.every(
-              item => (item as unknown as string) === 'success',
-            )
-          ) {
-            showToast(actionText + ' canceled successfully', 'success');
-          } else {
-            showToast(actionText + ' cancel error', 'error');
-            Sentry.captureException(
-              new Error(
-                actionText + ' cancel error' + 'res: ' + JSON.stringify(res),
-              ),
+          let responded = false;
+          try {
+            const exchange = apisPerps.getPerpsSDK().exchange;
+            if (!exchange)
+              throw new Error('Hyperliquid exchange client unavailable');
+            // One batch removes duplicate same-side legs, so the X never
+            // reveals another hidden order with the same trigger.
+            const res = await exchange.cancelOrder(
+              oids.map(oid => ({ oid, coin })),
             );
+            responded = true;
+            if (!isCurrent()) return false;
+            const statuses = res?.response?.data?.statuses;
+            if (
+              res?.status !== 'ok' ||
+              statuses?.length !== oids.length ||
+              !statuses.every(item => (item as unknown) === 'success')
+            ) {
+              throw new Error(actionText + ' cancel error');
+            }
+          } catch (error) {
+            if (!isCurrent() || isSceneCurrent?.() === false) return false;
+            // Some legs of an answered batch may be gone; show what remains.
+            if (responded) await refreshTpSlOrders(coin);
+            throw error;
           }
+          // An accepted mutation stays successful if its read-back fails; WS
+          // will converge the confirmed order projection. Never replay it.
+          await refreshTpSlOrders(coin);
+          if (!isCurrent() || isSceneCurrent?.() === false) return false;
+          showToast(actionText + ' canceled successfully', 'success');
+          return true;
         },
       );
     },
@@ -90,27 +155,26 @@ export const usePerpsPosition = () => {
           getToastMessage: () => t('page.perps.cancelOrderToast.failed'),
         },
         async () => {
-          const sdk = apisPerps.getPerpsSDK();
-          const res = await sdk.exchange?.cancelOrder(
-            orders.map(o => ({ oid: o.oid, coin: o.coin })),
-          );
-          const statuses = res?.response.data.statuses ?? [];
-          const cancelledOids = statuses
-            .map((s, i) =>
-              (s as unknown as string) === 'success'
-                ? orders[i]?.oid ?? null
-                : null,
-            )
-            .filter((o): o is number => o != null);
-          const okCount = cancelledOids.length;
-          const failCount = statuses.length - okCount;
-
-          if (okCount > 0) {
-            // Cancel-All on Home can span multiple dexes — refresh just those.
-            fetchPositionOpenOrdersHttpForDexes(
-              orders.map(o => getDexByCoin(o.coin)),
-            );
+          const account = perpsStore.getState().currentPerpsAccount;
+          if (!account) {
+            throw new Error('No currentPerpsAccount');
           }
+          const command = buildPerpsCancelOrdersCommand(
+            account,
+            orders.map(order => ({ coin: order.coin, oid: order.oid })),
+          );
+          const result = await executePerpsCancelOrders(command);
+          if (result.failureReason === 'userCancelled') {
+            return [];
+          }
+          if (result.kind === 'staleContext') {
+            throw new Error('Perps account changed');
+          }
+          const cancelledOids = result.items
+            .filter(item => item.status === 'success')
+            .map(item => item.oid);
+          const okCount = cancelledOids.length;
+          const failCount = result.items.length - okCount;
 
           if (okCount > 0 && failCount === 0) {
             showToast(
@@ -133,16 +197,15 @@ export const usePerpsPosition = () => {
             );
             Sentry.captureException(
               new Error(
-                'cancel limit orders partial failure: ' + JSON.stringify(res),
+                'cancel limit orders partial failure: ' +
+                  JSON.stringify(result),
               ),
             );
             return cancelledOids;
           }
-          showToast(t('page.perps.cancelOrderToast.failed'), 'error');
-          Sentry.captureException(
-            new Error('cancel limit orders all failed: ' + JSON.stringify(res)),
+          throw new Error(
+            result.items[0]?.error || t('page.perps.cancelOrderToast.failed'),
           );
-          return [];
         },
       );
     },
@@ -179,29 +242,61 @@ export const usePerpsPosition = () => {
   );
 
   const handleSetAutoClose = useMemoizedFn(
-    async (params: {
-      coin: string;
-      tpTriggerPx: string;
-      slTriggerPx: string;
-      direction: 'Long' | 'Short';
-    }) => {
+    async (
+      params: {
+        coin: string;
+        tpTriggerPx: string;
+        slTriggerPx: string;
+        direction: 'Long' | 'Short';
+      },
+      isSceneCurrent?: () => boolean,
+    ) => {
       const autoCloseText = params.tpTriggerPx ? 'Take profit' : 'Stop loss';
+      const context = getPerpsAccountRuntimeContext();
+      if (!context.account || isSceneCurrent?.() === false) return false;
+      const isCurrent = () =>
+        getPerpsAccountRuntimeContext().generation === context.generation;
       return runPerpsAction(
         { fallback: false, label: autoCloseText + ' set', context: params },
         async () => {
-          const sdk = apisPerps.getPerpsSDK();
-          const { coin, tpTriggerPx, slTriggerPx, direction } = params;
-          const formattedTpTriggerPx = formatTriggerPx(tpTriggerPx);
-          const formattedSlTriggerPx = formatTriggerPx(slTriggerPx);
-          const res = await sdk.exchange?.bindTpslByOrderId({
-            coin,
-            isBuy: direction === 'Long',
-            tpTriggerPx: formattedTpTriggerPx,
-            slTriggerPx: formattedSlTriggerPx,
-            builder: PERPS_BUILDER_INFO,
-          });
-
-          fetchPositionOpenOrdersHttp(getDexByCoin(coin));
+          let responded = false;
+          try {
+            const exchange = apisPerps.getPerpsSDK().exchange;
+            if (!exchange)
+              throw new Error('Hyperliquid exchange client unavailable');
+            const { coin, tpTriggerPx, slTriggerPx, direction } = params;
+            const res = await exchange.bindTpslByOrderId({
+              coin,
+              isBuy: direction === 'Long',
+              tpTriggerPx: formatTriggerPx(tpTriggerPx),
+              slTriggerPx: formatTriggerPx(slTriggerPx),
+              builder: PERPS_BUILDER_INFO,
+            });
+            responded = true;
+            if (!isCurrent()) return false;
+            const statuses = res?.response?.data?.statuses as
+              | readonly unknown[]
+              | undefined;
+            if (
+              res?.status !== 'ok' ||
+              statuses?.length !==
+                Number(!!tpTriggerPx) + Number(!!slTriggerPx) ||
+              !statuses?.length ||
+              !statuses.every(isAcceptedOrderStatus)
+            ) {
+              throw new Error(
+                getOrderStatusError(statuses) || autoCloseText + ' set error',
+              );
+            }
+          } catch (error) {
+            if (!isCurrent() || isSceneCurrent?.() === false) return false;
+            // The exchange answered, so some legs may still rest; show the
+            // confirmed orders instead of inviting a duplicate retry.
+            if (responded) await refreshTpSlOrders(params.coin);
+            throw error;
+          }
+          await refreshTpSlOrders(params.coin);
+          if (!isCurrent() || isSceneCurrent?.() === false) return false;
           showToast(autoCloseText + ' set successfully', 'success');
           return true;
         },
@@ -215,21 +310,68 @@ export const usePerpsPosition = () => {
       size: string;
       price: string;
       direction: 'Long' | 'Short';
+      orderType?: PerpsOpenOrderType;
+      limitPx?: string;
     }) => {
       return runPerpsAction(
         { fallback: null, label: 'close position', context: params },
         async () => {
           const sdk = apisPerps.getPerpsSDK();
-          const { coin, direction, price, size } = params;
-          const res = await sdk.exchange?.marketOrderClose({
-            coin,
-            isBuy: direction === 'Short',
-            size,
-            midPx: price,
-            builder: PERPS_BUILDER_INFO,
-          });
+          const { coin, direction, price, size, orderType, limitPx } = params;
+          // Normalize like formatTriggerPx: the HL validator rejects
+          // otherwise-valid inputs such as '.5' or '3000.'.
+          const formattedLimitPx =
+            orderType === 'limit' ? formatTriggerPx(limitPx) : undefined;
+          if (orderType === 'limit' && !(Number(formattedLimitPx) > 0)) {
+            // Fail loudly instead of silently degrading to a market close.
+            throw new Error('Invalid Perps limit price');
+          }
+          // Close trades opposite the position: long -> sell, short -> buy.
+          const res =
+            orderType === 'limit' && formattedLimitPx
+              ? await sdk.exchange?.limitOrderOpen({
+                  coin,
+                  isBuy: direction === 'Short',
+                  size,
+                  limitPx: formattedLimitPx,
+                  tif: PERPS_LIMIT_TIF_DEFAULT,
+                  reduceOnly: true,
+                  builder: PERPS_BUILDER_INFO,
+                })
+              : await sdk.exchange?.marketOrderClose({
+                  coin,
+                  isBuy: direction === 'Short',
+                  size,
+                  midPx: price,
+                  builder: PERPS_BUILDER_INFO,
+                });
 
           const filled = res?.response?.data?.statuses[0]?.filled;
+          const resting = res?.response?.data?.statuses[0]?.resting;
+          if (orderType === 'limit' && resting) {
+            // Limit closes usually rest in the book. Treat as success; fake an
+            // avgPx from limitPx so callers' stats code keeps working, and set
+            // `resting` so callers can tell nothing has filled yet.
+            fetchPositionOpenOrdersHttp(getDexByCoin(coin));
+            showToast(
+              t(
+                'page.perpsDetail.PerpsClosePositionPopup.limitClosePlacedToast',
+                {
+                  direction,
+                  coin: formatPerpsCoin(coin),
+                  size,
+                  price: formattedLimitPx,
+                },
+              ),
+              'success',
+            );
+            return {
+              totalSz: size,
+              avgPx: formattedLimitPx ?? '0',
+              oid: resting.oid,
+              resting: true,
+            };
+          }
           if (filled) {
             const { totalSz, avgPx } = filled;
             const msg = `Closed ${direction} ${formatPerpsCoin(
@@ -241,6 +383,7 @@ export const usePerpsPosition = () => {
               totalSz: string;
               avgPx: string;
               oid: number;
+              resting?: boolean;
             };
           } else {
             const msg = res?.response?.data?.statuses[0]?.error;
@@ -406,46 +549,8 @@ export const usePerpsPosition = () => {
   );
 
   const handleStableCoinOrder = useMemoizedFn(
-    async (params: {
-      coin: 'USDH' | 'USDT' | 'USDE';
-      isBuy: boolean;
-      size: string;
-      limitPx: string;
-    }) => {
-      return runPerpsAction(
-        {
-          fallback: null,
-          label: 'spot order',
-          getToastMessage: error => error?.message || 'Swap failed',
-          context: params,
-        },
-        async () => {
-          if (
-            params.coin !== 'USDH' &&
-            params.coin !== 'USDT' &&
-            params.coin !== 'USDE'
-          ) {
-            throw new Error('Invalid stablecoin');
-          }
-
-          const sdk = apisPerps.getPerpsSDK();
-          const res = await sdk.exchange?.stableCoinOrder({
-            coin: params.coin,
-            isBuy: params.isBuy,
-            size: params.size,
-            limitPx: params.limitPx,
-          });
-          const filled = res?.response?.data?.statuses[0]?.filled;
-          if (filled) {
-            showToast('Swap completed successfully', 'success');
-            return filled;
-          }
-          const errorMsg = res?.response?.data?.statuses[0]?.error;
-          showToast(errorMsg || 'Swap failed', 'error');
-          return null;
-        },
-      );
-    },
+    async (params: PerpsStableCoinOrderParams) =>
+      executePerpsStableCoinOrder(currentPerpsAccount, params),
   );
 
   // One multiOrder of reduce-only IOC limits — one signature for all positions.
@@ -491,7 +596,7 @@ export const usePerpsPosition = () => {
           // closeAllPositions can span all dexes — refresh the full set so
           // sub-dex positions also reflect the close.
           fetchAllDexsClearinghouseStateHttp();
-          showToast('Closed all position successfully', 'success');
+          showToast('Closed all positions successfully', 'success');
           return filledResults;
         },
       );

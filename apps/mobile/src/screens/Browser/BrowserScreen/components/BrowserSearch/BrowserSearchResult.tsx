@@ -3,19 +3,30 @@ import { FlatList, View } from 'react-native';
 
 import { RcArrowRight3CC } from '@/assets/icons/common';
 import { RcIconBallCC, RcIconGoogle } from '@/assets/icons/dapp';
-import { DappInfo } from '@/core/services/dappService';
+import type { DappInfo } from '@/core/services/dappService';
 import { useTheme2024 } from '@/hooks/theme';
 import { BrowserSiteCard } from '@/screens/Browser/components/BrowserSiteCard';
 import { createGetStyles2024 } from '@/utils/styles';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import { TouchableOpacity } from 'react-native-gesture-handler';
-import { dappService } from '@/core/services';
+import {
+  ensureDappServiceReady,
+  getDappSnapshot,
+  updateDappSync,
+} from '@/core/serviceApi/dapp';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { useTranslation } from 'react-i18next';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { useMemoizedFn } from 'ahooks';
-import { ViewProps } from 'react-native';
+import type { ViewProps } from 'react-native';
 import { Text } from '@/components/Typography';
+
+async function ensureSearchResultDappStored(dapp: DappInfo) {
+  await ensureDappServiceReady();
+  if (!getDappSnapshot(safeGetOrigin(dapp.url || dapp.origin))?.isDapp) {
+    updateDappSync(dapp);
+  }
+}
 
 export function DappFirstSearchResult({
   data,
@@ -40,9 +51,11 @@ export function DappFirstSearchResult({
 
   const { t } = useTranslation();
 
-  const handlePress = useMemoizedFn((dapp: DappInfo) => {
-    if (!dappService.getDapp(safeGetOrigin(dapp.url || dapp.origin))?.isDapp) {
-      dappService.updateDapp(dapp);
+  const handlePress = useMemoizedFn(async (dapp: DappInfo) => {
+    try {
+      await ensureSearchResultDappStored(dapp);
+    } catch (error) {
+      console.error('[BrowserSearch] persist dapp failed', error);
     }
     onOpenURL?.(dapp.url || dapp.origin, {
       isRemindOpen: true,
@@ -173,9 +186,11 @@ export function BrowserSearchResult({
 
   const { t } = useTranslation();
 
-  const handlePress = useMemoizedFn((dapp: DappInfo) => {
-    if (!dappService.getDapp(safeGetOrigin(dapp.url || dapp.origin))?.isDapp) {
-      dappService.updateDapp(dapp);
+  const handlePress = useMemoizedFn(async (dapp: DappInfo) => {
+    try {
+      await ensureSearchResultDappStored(dapp);
+    } catch (error) {
+      console.error('[BrowserSearch] persist dapp failed', error);
     }
 
     onOpenURL?.(dapp.url || dapp.origin, {
@@ -262,7 +277,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 18,
     fontStyle: 'normal',
-    fontWeight: '800',
+    fontWeight: '900',
     lineHeight: 22,
     paddingBottom: 12,
   },

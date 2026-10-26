@@ -7,16 +7,14 @@ import AutoLockView from '@/components/AutoLockView';
 import { AccountSelector } from '@/components2024/AccountSelector';
 import { ChainSelector } from '@/components2024/ChainSelector';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
-import { DappInfo } from '@/core/services/dappService';
+import type { DappInfo } from '@/core/services/dappService';
 import { useTheme2024 } from '@/hooks/theme';
 import { DappIcon } from '@/screens/Dapps/components/DappIcon';
 import { createGetStyles2024 } from '@/utils/styles';
 import { CHAINS_ENUM } from '@debank/common';
 import { useTranslation } from 'react-i18next';
-import { preferenceService } from '@/core/services';
 import { apisDapp } from '@/core/apis';
-import { useMyAccounts } from '@/hooks/account';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { Text } from '@/components/Typography';
 
 interface Props {
@@ -90,10 +88,12 @@ export function CurrentDappPopup({
                   account={account}
                   value={dapp.chainId || CHAINS_ENUM.ETH}
                   onChange={v => {
-                    apisDapp.updateDappChain({
-                      ...dapp,
-                      chainId: v,
-                    });
+                    void apisDapp
+                      .updateDappChain({
+                        ...dapp,
+                        chainId: v,
+                      })
+                      .catch(console.error);
                   }}
                 />
               </View>
@@ -106,7 +106,9 @@ export function CurrentDappPopup({
                 <AccountSelector
                   value={account}
                   onChange={v => {
-                    apisDapp.setCurrentAccountForDapp(origin || dapp.origin, v);
+                    void apisDapp
+                      .setCurrentAccountForDapp(origin || dapp.origin, v)
+                      .catch(console.error);
                   }}
                 />
               </View>
@@ -117,7 +119,9 @@ export function CurrentDappPopup({
           <TouchableOpacity
             style={styles.button}
             onPress={() => {
-              apisDapp.disconnect(origin || dapp.origin);
+              void apisDapp
+                .disconnect(origin || dapp.origin)
+                .catch(console.error);
               onClose?.();
             }}>
             <RcIconDisconnectCC color={colors2024['red-default']} />

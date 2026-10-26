@@ -110,9 +110,7 @@ function syncDefaultChainData() {
 
 import { supportedChainToChain } from '@/isomorphic/chain';
 import type { Chain } from '@debank/common';
-import { ChainRaw, CHAINS_RAW_LIST } from '@debank/common/dist/chain-data';
 import { SupportedChain } from '@rabby-wallet/rabby-api/dist/types';
-import { keyBy } from 'lodash';
 
 const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = ${JSON.stringify(
     supported_chains_by_server_id,
@@ -120,9 +118,8 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
     2,
   )};
 
-const chainByServerId = keyBy(CHAINS_RAW_LIST, 'serverId')
-export const DEFAULT_CHAIN_LIST: Chain[] = Object.values(SupportedChainsByServerId).map(item => supportedChainToChain(item, chainByServerId));
-  `;
+export const DEFAULT_CHAIN_LIST: Chain[] = Object.values(SupportedChainsByServerId).map(item => supportedChainToChain(item));
+`;
 
   fs.writeFileSync(targetPath, formattedLines);
 
@@ -152,5 +149,11 @@ ${markdownContent}
   console.info('[syncTermOfUse] finished.');
 }
 
-syncDefaultChainData();
-syncTermOfUse();
+const syncTarget = process.argv[2];
+
+if (!syncTarget || syncTarget === 'chains') {
+  syncDefaultChainData();
+}
+if (!syncTarget || syncTarget === 'terms') {
+  syncTermOfUse();
+}

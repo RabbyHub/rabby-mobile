@@ -1,0 +1,176 @@
+import { render, screen } from '@testing-library/react-native';
+import React from 'react';
+import { StyleSheet, View } from 'react-native';
+import { colord } from 'colord';
+import { PERPS_PRO_DIALOG_TOKENS } from '../common/perpsProDialogVisual';
+
+jest.mock('@/assets2024/icons/perps/PerpsProCloseAllWarning.svg', () => {
+  const ReactModule = require('react');
+  const { View } = require('react-native');
+  return (props: object) => ReactModule.createElement(View, props);
+});
+
+jest.mock('@/components/Modal/TrackedModal', () => {
+  const ReactModule = require('react');
+  const { View } = require('react-native');
+  return {
+    TrackedModal: ({ children, visible }: any) =>
+      visible
+        ? ReactModule.createElement(View, { testID: 'tracked-modal' }, children)
+        : null,
+  };
+});
+
+jest.mock('@/components/Typography', () => ({
+  Text: require('react-native').Text,
+}));
+
+jest.mock('@/components2024/Button', () => {
+  const ReactModule = require('react');
+  const { Pressable, Text } = require('react-native');
+  return {
+    Button: ({
+      disabled,
+      loading,
+      onPress,
+      testID,
+      title,
+      buttonStyle,
+      titleStyle,
+      height,
+      loadingProps,
+    }: any) =>
+      ReactModule.createElement(
+        Pressable,
+        {
+          accessibilityState: { busy: loading, disabled },
+          disabled,
+          buttonStyle,
+          titleStyle,
+          height,
+          loadingProps,
+          onPress,
+          testID,
+        },
+        ReactModule.createElement(Text, null, loading ? 'loading' : title),
+      ),
+  };
+});
+
+jest.mock('@/hooks/theme', () => ({
+  useTheme2024: ({ getStyle }: { getStyle: (input: object) => object }) => {
+    const colors2024 = new Proxy({}, { get: (_target, key) => String(key) });
+    return { colors2024, styles: getStyle({ colors2024 }) };
+  },
+}));
+
+jest.mock('@/utils/styles', () => ({
+  createGetStyles2024: (getStyle: unknown) => getStyle,
+}));
+
+jest.mock('@/utils/modalGate', () => ({
+  MODAL_GATE_IDS: {
+    perpsProCloseAllConfirmation: 'perps-pro-close-all-confirmation',
+  },
+}));
+
+jest.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string) =>
+      ({
+        'page.perps.pro.positions.closeAllConfirmMessage':
+          'This will close all your positions and cancel their associated TP/SL orders.',
+        'page.perps.pro.positions.closeAllConfirmTitle':
+          'Confirm Close All Positions',
+      }[key] ?? key),
+  }),
+}));
+
+import { PerpsProCloseAllConfirmationModal } from './PerpsProCloseAllConfirmationModal';
+
+describe('PerpsProCloseAllConfirmationModal', () => {
+  it('uses the approved 353px warning-card shell and exact product copy', () => {
+    render(
+      <PerpsProCloseAllConfirmationModal
+        confirmation={{} as any}
+        onCancel={jest.fn()}
+        onConfirm={jest.fn()}
+        pending={false}
+      />,
+    );
+
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-close-all-confirmation-content').props
+          .style,
+      ),
+    ).toMatchObject({ gap: 16, width: '100%' });
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-close-all-confirmation-copy').props.style,
+      ),
+    ).toMatchObject({ gap: 8, paddingBottom: 8, width: '100%' });
+    const card = screen
+      .UNSAFE_getAllByType(View)
+      .map(view => StyleSheet.flatten(view.props.style))
+      .find(style => style?.maxWidth === 353);
+    expect(card).toMatchObject({
+      width: '100%',
+      maxWidth: 353,
+      padding: 24,
+      borderRadius: 12,
+      gap: 16,
+    });
+    const confirm = screen.getByTestId('perps-pro-close-all-confirm');
+    expect(confirm.props.height).toBe(40);
+    expect(StyleSheet.flatten(confirm.props.buttonStyle)).toMatchObject({
+      borderRadius: 10,
+      backgroundColor: '#23C0B0',
+    });
+    expect(StyleSheet.flatten(confirm.props.titleStyle)).toMatchObject({
+      fontSize: 16,
+      fontWeight: '700',
+    });
+    expect(
+      screen
+        .UNSAFE_getAllByType(View)
+        .some(view => StyleSheet.flatten(view.props.style)?.opacity === 0.3),
+    ).toBe(true);
+    expect(screen.getByText('Confirm Close All Positions')).toBeTruthy();
+    expect(
+      screen.getByText(
+        'This will close all your positions and cancel their associated TP/SL orders.',
+      ),
+    ).toBeTruthy();
+  });
+
+  it('keeps the confirmation visible and exposes the shared button loading state', () => {
+    render(
+      <PerpsProCloseAllConfirmationModal
+        confirmation={{} as any}
+        onCancel={jest.fn()}
+        onConfirm={jest.fn()}
+        pending
+      />,
+    );
+
+    expect(screen.getByTestId('tracked-modal')).toBeTruthy();
+    expect(
+      screen.getByTestId('perps-pro-close-all-confirm').props
+        .accessibilityState,
+    ).toEqual({ busy: true, disabled: true });
+    expect(screen.getByText('loading')).toBeTruthy();
+    const confirm = screen.getByTestId('perps-pro-close-all-confirm');
+    expect(
+      colord(
+        StyleSheet.flatten(confirm.props.buttonStyle).backgroundColor,
+      ).toRgb(),
+    ).toEqual({
+      ...colord(PERPS_PRO_DIALOG_TOKENS.actionBackground).toRgb(),
+      a: 0.4,
+    });
+    expect(confirm.props.loadingProps.color).toBe(
+      PERPS_PRO_DIALOG_TOKENS.actionForeground,
+    );
+  });
+});

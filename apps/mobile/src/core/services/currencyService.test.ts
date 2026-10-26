@@ -27,6 +27,15 @@ function loadCurrencyServiceModule(initialStore?: CurrencyStore) {
     ) {
       this.store = options.storageAdapter?.store || template;
     }
+
+    protected mutateStore(recipe: (draft: CurrencyStore) => void) {
+      recipe(this.store);
+      return this.store;
+    }
+
+    getStoreSnapshot() {
+      return JSON.parse(JSON.stringify(this.store)) as CurrencyStore;
+    }
   }
 
   jest.doMock('@rabby-wallet/persist-store', () => ({

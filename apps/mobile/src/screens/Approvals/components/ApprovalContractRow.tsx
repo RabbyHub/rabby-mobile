@@ -196,6 +196,7 @@ export const getCardStyles = createGetStyles2024(ctx => {
       alignItems: 'center',
       justifyContent: 'space-between',
       width: '100%',
+      gap: 8,
     },
     riskRow: {
       marginTop: 7,
@@ -207,6 +208,8 @@ export const getCardStyles = createGetStyles2024(ctx => {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'flex-start',
+      minWidth: 0,
+      flex: 1,
     },
     floorRight: {
       flexDirection: 'row',

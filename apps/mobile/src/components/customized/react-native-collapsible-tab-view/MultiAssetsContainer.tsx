@@ -79,8 +79,6 @@ export const MultiAssetsContainer = React.memo(
     allowHeaderOverscroll,
   }: MultiAssetsContainerProps) => {
     const containerRef = useContainerRef();
-    const tabBarContainerRef =
-      containerRef as unknown as React.RefObject<PagerView>;
 
     const [tabProps, tabNamesArray] = useTabProps(children, Tab);
 
@@ -105,7 +103,9 @@ export const MultiAssetsContainer = React.memo(
     );
 
     const contentInset = React.useMemo(() => {
-      if (allowHeaderOverscroll) return 0;
+      if (allowHeaderOverscroll) {
+        return 0;
+      }
 
       // necessary for the refresh control on iOS to be positioned underneath the header
       // this also adjusts the scroll bars to clamp underneath the header area
@@ -392,7 +392,7 @@ export const MultiAssetsContainer = React.memo(
               pointerEvents="box-none">
               {renderHeader &&
                 renderHeader({
-                  containerRef: tabBarContainerRef,
+                  containerRef,
                   index,
                   tabNames: tabNamesArray,
                   focusedTab,
@@ -407,7 +407,7 @@ export const MultiAssetsContainer = React.memo(
               pointerEvents="box-none">
               {renderTabBar &&
                 renderTabBar({
-                  containerRef: tabBarContainerRef,
+                  containerRef,
                   index,
                   tabNames: tabNamesArray,
                   focusedTab,

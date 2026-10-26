@@ -1,17 +1,18 @@
-import {
-  EventEmitterRecordToListeners,
-  makeRnEEClass,
-  resolveNativeModule,
-} from './utils';
-import { NativeModuleNames } from './specs/types';
+import { makeRnEEClass, resolveNativeModule } from './utils';
+import NativeRNTimeChanged from './specs/NativeRNTimeChanged';
 
 const { RNTimeChanged: nativeModule } = resolveNativeModule(
-  NativeModuleNames.RNTimeChanged,
+  'RNTimeChanged',
+  NativeRNTimeChanged,
 );
 
-type Listeners = EventEmitterRecordToListeners<
-  import('./specs/NativeRNTimeChanged').EventEmitterRecord
->;
+type Listeners = {
+  onTimeChanged: (ctx: {
+    androidAction?: string;
+    iosEvent?: string;
+    reason: 'timeSet' | 'timeZoneChanged' | 'unknown';
+  }) => any;
+};
 const { NativeEventEmitter } = makeRnEEClass<Listeners>();
 const eventEmitter = new NativeEventEmitter(nativeModule);
 
@@ -50,7 +51,7 @@ function subscribeTimeChanged(fn: Listeners['onTimeChanged']) {
 }
 
 const RNTimeChanged = Object.freeze({
-  ...nativeModule,
+  exitAppForSecurity: nativeModule.exitAppForSecurity,
   subscribeTimeChanged,
 });
 

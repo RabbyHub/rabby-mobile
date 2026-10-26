@@ -90,7 +90,10 @@ const Permit = ({
                 flexDirection: 'row',
                 gap: 4,
               })}>
-              <Values.TokenAmount value={tokenBalance} />
+              <Values.TokenAmount
+                style={commonStyle.subRowText}
+                value={tokenBalance}
+              />
               <Text style={commonStyle.subRowText}>
                 {ellipsisTokenSymbol(getTokenSymbol(actionData.token))}
               </Text>
@@ -107,7 +110,7 @@ const Permit = ({
           <Row>
             <Text style={commonStyle.primaryText}>
               {actionData.expire_at ? (
-                <Values.TimeSpanFuture to={actionData.expire_at} />
+                <Values.TimeSpanFuture to={actionData.expire_at} showMinutes />
               ) : (
                 '-'
               )}

@@ -1,8 +1,7 @@
 import { openapi } from '@/core/request';
-import { offlineChainService } from '@/core/services';
 import { useTheme2024 } from '@/hooks/theme';
 import addressBalanceStore from '@/store/balance';
-import { useAccountStore } from '@/store/account';
+import accountStore from '@/store/account';
 import { findChainByServerID } from '@/utils/chain';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTranslation } from 'react-i18next';
@@ -12,7 +11,7 @@ import RcIconTipsCC from '@/assets2024/icons/offlineChain/info-cc.svg';
 import RcIconCloseCC from '@/assets2024/icons/offlineChain/close-cc.svg';
 import { TouchableOpacity } from 'react-native';
 import dayjs from 'dayjs';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import {
   createGlobalBottomSheetModal2024,
@@ -20,47 +19,41 @@ import {
 } from '@/components2024/GlobalBottomSheetModal';
 import { useMockDataForHomeCenterArea } from '../hooks/homeCenterArea';
 import { isNonPublicProductionEnv } from '@/constant';
-import { zCreate } from '@/core/utils/reexports';
-import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 import { Text } from '@/components/Typography';
-
-// const closedTipsChainsAtom = atom(offlineChainService.getCloseTipsChains());
-type ClosedTipsState = {
-  closedTipsChains: string[];
-};
-const closedTipsStore = zCreate<ClosedTipsState>(() => ({
-  closedTipsChains: offlineChainService.getCloseTipsChains(),
-}));
-
-function setClosedTipsChainState(
-  valOrFunc: UpdaterOrPartials<ClosedTipsState['closedTipsChains']>,
-) {
-  closedTipsStore.setState(prev => {
-    const { newVal } = resolveValFromUpdater(prev.closedTipsChains, valOrFunc);
-
-    offlineChainService.setCloseTipsChains(newVal);
-
-    return { ...prev, closedTipsChains: newVal };
-  });
-}
-
-const clearOfflineChainTips = () => {
-  offlineChainService.mockClearCloseTipsChains();
-  setClosedTipsChainState([]);
-};
-
-const setClosedTipsChain = (chain: string) => {
-  setClosedTipsChainState(p => [...p, chain]);
-  offlineChainService.setCloseTipsChains([chain]);
-};
+import { withOfflineChainService } from './offlineChainServiceDependencies';
+import {
+  clearOfflineChainTips,
+  closedTipsStore,
+  hydrateClosedTipsChains,
+  setClosedTipsChain,
+} from './offlineChainState';
+import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
+import { useShallow } from 'zustand/react/shallow';
 
 export const useMockClearOfflineChainTips = () => {
   return { clearOfflineChainTips };
 };
 
 export const useOfflineChain = () => {
-  const closedTipsChains = closedTipsStore(s => s.closedTipsChains);
-  const accounts = useAccountStore(s => s.accounts);
+  useEffect(() => {
+    void hydrateClosedTipsChains().catch(console.error);
+  }, []);
+
+  const { closedTipsChains, closedTipsHydrated } = useActivityStore(
+    closedTipsStore,
+    useShallow(state => ({
+      closedTipsChains: state.closedTipsChains,
+      closedTipsHydrated: state.hydrated,
+    })),
+    Object.is,
+    { storeLabel: 'offline-chain-tips' },
+  );
+  const accounts = useActivityStore(
+    accountStore.useStore,
+    state => state.accounts,
+    Object.is,
+    { storeLabel: 'offline-chain-accounts' },
+  );
   const { mockData } = useMockDataForHomeCenterArea();
   const { value: offlineList } = useAsync(async () => {
     // leave here for mock data
@@ -74,17 +67,20 @@ export const useOfflineChain = () => {
 
     return openapi.getOfflineChainList();
   }, [mockData.forceShowOffchainNotify]);
-  const balanceSnapshots = addressBalanceStore.useAddressesSnapshot(
-    useMemo(() => {
-      return accounts.map(account => account.address.toLowerCase());
-    }, [accounts]),
+  const balanceAddresses = useMemo(
+    () => accounts.map(account => account.address.toLowerCase()),
+    [accounts],
+  );
+  const accountChainBalanceList = useActivityStore(
+    addressBalanceStore.useStore,
+    useShallow(state =>
+      balanceAddresses.map(address => state.valueMap[address]?.chainList || []),
+    ),
+    Object.is,
+    { storeLabel: 'offline-chain-balances' },
   );
 
   const list = useMemo(() => {
-    const accountChainBalanceList = balanceSnapshots.map(snapshot => {
-      return snapshot.value?.chainList || [];
-    });
-
     return offlineList
       ?.filter(e => {
         const isIn7days = dayjs
@@ -103,11 +99,14 @@ export const useOfflineChain = () => {
         );
       })
       .sort((a, b) => a.offline_at - b.offline_at);
-  }, [balanceSnapshots, offlineList, mockData.forceShowOffchainNotify]);
+  }, [accountChainBalanceList, offlineList, mockData.forceShowOffchainNotify]);
 
   const displayWillClosedChain = useMemo(
-    () => list?.filter(e => !closedTipsChains?.includes(e.id))?.[0],
-    [closedTipsChains, list],
+    () =>
+      closedTipsHydrated
+        ? list?.filter(e => !closedTipsChains?.includes(e.id))?.[0]
+        : undefined,
+    [closedTipsChains, closedTipsHydrated, list],
   );
 
   const offlineChainInfo = useMemo(
@@ -125,7 +124,7 @@ export const useOfflineChain = () => {
   };
 };
 
-export const OfflineChainNotify = ({
+const OfflineChainNotifyContent = ({
   data,
   style,
 }: {
@@ -202,39 +201,42 @@ export const OfflineChainNotify = ({
 
   return (
     <View style={[styles.container, style]}>
-      <Image
-        source={{ uri: chainInfo.logo }}
-        width={16}
-        height={16}
-        style={styles.logo}
-      />
+      <Image source={{ uri: chainInfo.logo }} style={styles.logo} />
 
       <View style={styles.textWrapper}>
-        <Text style={styles.text}>
+        <Text style={styles.text} numberOfLines={3} ellipsizeMode="tail">
           {t('page.dashboard.offlineChain.chain', {
             chain: chainInfo.name,
           })}
         </Text>
       </View>
 
-      <TouchableOpacity onPress={showTips} style={{ marginLeft: 40 }}>
-        <RcIconTipsCC
-          color={colors2024['orange-default']}
-          width={16}
-          height={16}
-        />
-      </TouchableOpacity>
+      <View style={styles.actions}>
+        <TouchableOpacity onPress={showTips} style={styles.iconButton}>
+          <RcIconTipsCC
+            color={colors2024['orange-default']}
+            width={16}
+            height={16}
+          />
+        </TouchableOpacity>
 
-      <TouchableOpacity style={{ marginLeft: 16 }} onPress={handleClose}>
-        <RcIconCloseCC
-          color={colors2024['orange-default']}
-          width={16}
-          height={16}
-        />
-      </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.iconButton, styles.closeButton]}
+          onPress={handleClose}>
+          <RcIconCloseCC
+            color={colors2024['orange-default']}
+            width={16}
+            height={16}
+          />
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };
+
+export const OfflineChainNotify = withOfflineChainService(
+  OfflineChainNotifyContent,
+);
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
@@ -244,7 +246,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     borderRadius: 12,
     backgroundColor: colors2024['orange-light-1'],
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
   },
   containerNone: {
     display: 'none',
@@ -253,14 +255,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: 16,
     height: 16,
     borderRadius: 9999,
-    alignSelf: 'flex-start',
     position: 'relative',
-    top: 1,
+    top: 2,
   },
   textWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
     flex: 1,
+    minWidth: 0,
+    marginLeft: 4,
   },
   text: {
     color: colors2024['orange-default'],
@@ -268,7 +269,27 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontSize: 16,
     fontStyle: 'normal',
     fontWeight: 500,
-    paddingHorizontal: 4,
+    flex: 1,
+    flexShrink: 1,
+    lineHeight: 20,
+  },
+  actions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+    marginLeft: 12,
+    position: 'relative',
+    top: -2,
+  },
+  iconButton: {
+    width: 20,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  closeButton: {
+    marginLeft: 12,
   },
 
   title: {

@@ -11,6 +11,11 @@ const createScope = () => ({
   setFingerprint: jest.fn(),
 });
 
+// NetInfo throws at import time when its native module is absent.
+jest.mock('@react-native-community/netinfo', () =>
+  require('@react-native-community/netinfo/jest/netinfo-mock.js'),
+);
+
 jest.mock('react-native-mmkv', () => {
   const stores = new Map();
 

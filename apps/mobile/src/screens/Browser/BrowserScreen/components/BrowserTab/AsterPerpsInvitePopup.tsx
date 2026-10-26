@@ -11,7 +11,6 @@ import AutoLockView from '@/components/AutoLockView';
 import { Button } from '@/components2024/Button';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { IS_ANDROID } from '@/core/native/utils';
-import { preferenceService } from '@/core/services';
 import { useTheme2024 } from '@/hooks/theme';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { createGetStyles2024 } from '@/utils/styles';

@@ -5,9 +5,9 @@ import {
   SIGN_PERMISSION_TYPES,
   SIGN_PERMISSION_OPTIONS,
 } from '@/constant/permission';
-import { preferenceService } from '@/core/services';
+import { getIsShowTestnetSnapshot } from '@/core/serviceApi/preference';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
-import { AppColorsVariants } from '@/constant/theme';
+import type { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
 import {
   AppBottomSheetModal,
@@ -82,7 +82,7 @@ export const SignTestnetPermission = ({
 }: SignTestnetPermissionProps) => {
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
-  const isShowTestnet = preferenceService.getIsShowTestnet();
+  const isShowTestnet = getIsShowTestnetSnapshot();
   const modalRef = React.useRef<AppBottomSheetModal>(null);
   const value = _value || SIGN_PERMISSION_TYPES.MAINNET_AND_TESTNET;
 

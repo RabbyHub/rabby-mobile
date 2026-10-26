@@ -15,7 +15,7 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    fontWeight: 'normal',
+    fontWeight: '400',
   },
   icon: {
     width: 16,

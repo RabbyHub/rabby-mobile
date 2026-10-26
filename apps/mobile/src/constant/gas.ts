@@ -135,9 +135,18 @@ export const ARB_LIKE_L2_CHAINS = [CHAINS_ENUM.ARBITRUM, CHAINS_ENUM.AURORA];
 
 export const CAN_NOT_SPECIFY_INTRINSIC_GAS_CHAINS = [...L2_ENUMS];
 
+const MORPH = 'MORPH' as CHAINS_ENUM;
+
+// scroll-style chains charge an l1 data fee on top of `gas * price + value`,
+// read from a `getL1Fee(bytes)` oracle predeploy whose address differs per chain
+export const SCROLL_STYLE_L1_GAS_ORACLE: Record<string, string> = {
+  [CHAINS_ENUM.SCRL]: '0x5300000000000000000000000000000000000002',
+  [MORPH]: '0x530000000000000000000000000000000000000f',
+};
+
 export const CAN_ESTIMATE_L1_FEE_CHAINS = [
   ...OP_STACK_ENUMS,
-  CHAINS_ENUM.SCRL,
+  ...Object.keys(SCROLL_STYLE_L1_GAS_ORACLE),
   ...ARB_LIKE_L2_CHAINS,
   CHAINS_ENUM.PZE,
   CHAINS_ENUM.ERA,

@@ -4,11 +4,11 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { useTranslation } from 'react-i18next';
 import { Text } from '@/components/Typography';
 import { touchedFeedback } from '@/utils/touch';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { RootNames } from '@/constant/layout';
 import { StackActions, useNavigation } from '@react-navigation/native';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { RootStackParamsList } from '@/navigation-type';
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import type { RootStackParamsList } from '@/navigation-type';
 import RcIconArrow from '@/assets/icons/home/setting';
 
 type HomeProps = NativeStackScreenProps<RootStackParamsList>;
@@ -123,7 +123,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     title: {
       fontFamily: 'SF Pro Rounded',
       fontSize: 20,
-      fontWeight: '800',
+      fontWeight: '900',
       lineHeight: 24,
       color: colors2024['neutral-title-1'],
       textAlign: 'center',

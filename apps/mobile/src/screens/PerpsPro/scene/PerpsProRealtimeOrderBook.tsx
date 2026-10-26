@@ -1,0 +1,270 @@
+import {
+  PERPS_BOOK_ATOMIC_SWITCH_BUDGET_MS,
+  type PerpsBookPrecision,
+} from '@/hooks/perps/subscriptions/perpsBookTypes';
+import {
+  PERPS_FAST_L2_DISPLAY_CACHE_MS,
+  prewarmPerpsFastL2HttpSnapshot,
+  usePerpsFastL2,
+  waitForPerpsFastL2HttpSnapshot,
+} from '@/hooks/perps/subscriptions/usePerpsFastL2';
+import { usePerpsLatestTrade } from '@/hooks/perps/subscriptions/usePerpsLatestTrade';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+
+import { PerpsProFundingDetailSheet } from '../components/funding/PerpsProFundingDetailSheet';
+import {
+  PerpsProOrderBook,
+  type PerpsProOrderBookPriceSelectionSource,
+} from '../components/orderbook/PerpsProOrderBook';
+import type { PerpsProMarket } from '../model/market';
+import type { PerpsProOrderBookPriceIntent } from '../model/orderBookPriceIntent';
+import type { PerpsProTradeAmountUnit } from '../model/trade';
+import {
+  processPerpsOrderBook,
+  type PerpsTickOption,
+} from '../model/orderBook';
+
+export const PERPS_PRO_ORDER_BOOK_RECONNECT_GRACE_MS =
+  PERPS_FAST_L2_DISPLAY_CACHE_MS;
+
+export const PerpsProRealtimeOrderBook: React.FC<{
+  amountUnit?: PerpsProTradeAmountUnit;
+  enabled: boolean;
+  height?: number;
+  market: PerpsProMarket;
+  onSelectTickOption: (option: PerpsTickOption) => void;
+  onSelectPrice?: (
+    price: string | null,
+    intent: PerpsProOrderBookPriceIntent,
+  ) => void;
+  onSelectPriceIntentStart?: () => PerpsProOrderBookPriceIntent;
+  precision: PerpsBookPrecision | null;
+  publicationEnabled?: boolean;
+  selectedTickOption: PerpsTickOption | null;
+  tickOptions: PerpsTickOption[];
+}> = ({
+  amountUnit = 'quote',
+  enabled,
+  height,
+  market,
+  onSelectTickOption,
+  onSelectPrice,
+  onSelectPriceIntentStart,
+  precision,
+  publicationEnabled = enabled,
+  selectedTickOption,
+  tickOptions,
+}) => {
+  const [fundingDetailOpen, setFundingDetailOpen] = useState(false);
+  const precisionIntentGenerationRef = useRef(0);
+  const marketIdentityRef = useRef(market.marketKey);
+  if (marketIdentityRef.current !== market.marketKey) {
+    marketIdentityRef.current = market.marketKey;
+    precisionIntentGenerationRef.current += 1;
+  }
+  const fastL2 = usePerpsFastL2({
+    coin: market.canonicalCoin,
+    enabled,
+    precision,
+    publicationEnabled,
+  });
+  const latestTrade = usePerpsLatestTrade({
+    coin: market.canonicalCoin,
+    enabled,
+    publicationEnabled,
+  });
+  const priceSelectionStateRef = useRef({
+    bookIdentity: fastL2.identity,
+    bookStatus: fastL2.status,
+    latestTradeIdentity: latestTrade.identity,
+    latestTradeStatus: latestTrade.status,
+    marketKey: market.marketKey,
+  });
+  priceSelectionStateRef.current = {
+    bookIdentity: fastL2.identity,
+    bookStatus: fastL2.status,
+    latestTradeIdentity: latestTrade.identity,
+    latestTradeStatus: latestTrade.status,
+    marketKey: market.marketKey,
+  };
+  const displayBook = fastL2.book;
+  const displayLatestTrade = latestTrade.trade;
+  const processedBook = useMemo(
+    () => processPerpsOrderBook(displayBook),
+    [displayBook],
+  );
+  const serverTime = Math.max(
+    displayBook?.time ?? 0,
+    displayLatestTrade?.time ?? 0,
+  );
+  const [serverClock, setServerClock] = useState<{
+    marketKey: string;
+    receivedAt: number;
+    serverTime: number;
+  } | null>(null);
+
+  const startPrecisionIntent = useCallback(
+    (option: PerpsTickOption) => {
+      if (
+        option.nSigFigs === selectedTickOption?.nSigFigs &&
+        option.mantissa === selectedTickOption.mantissa
+      ) {
+        precisionIntentGenerationRef.current += 1;
+        return;
+      }
+      void prewarmPerpsFastL2HttpSnapshot({
+        coin: market.canonicalCoin,
+        precision: {
+          mantissa: option.mantissa,
+          nSigFigs: option.nSigFigs,
+        },
+      });
+    },
+    [market.canonicalCoin, selectedTickOption],
+  );
+  const selectTickOptionWithSnapshot = useCallback(
+    (option: PerpsTickOption) => {
+      if (
+        option.nSigFigs === selectedTickOption?.nSigFigs &&
+        option.mantissa === selectedTickOption.mantissa
+      ) {
+        precisionIntentGenerationRef.current += 1;
+        return;
+      }
+      const generation = ++precisionIntentGenerationRef.current;
+      const marketKey = market.marketKey;
+      const precision = {
+        mantissa: option.mantissa,
+        nSigFigs: option.nSigFigs,
+      };
+      void waitForPerpsFastL2HttpSnapshot({
+        coin: market.canonicalCoin,
+        precision,
+        timeoutMs: PERPS_BOOK_ATOMIC_SWITCH_BUDGET_MS,
+      }).then(() => {
+        if (
+          generation === precisionIntentGenerationRef.current &&
+          marketIdentityRef.current === marketKey
+        ) {
+          onSelectTickOption(option);
+        }
+      });
+    },
+    [
+      market.canonicalCoin,
+      market.marketKey,
+      onSelectTickOption,
+      selectedTickOption,
+    ],
+  );
+
+  useEffect(() => {
+    setFundingDetailOpen(false);
+  }, [market.marketKey]);
+
+  useEffect(
+    () => () => {
+      precisionIntentGenerationRef.current += 1;
+    },
+    [],
+  );
+
+  useEffect(() => {
+    if (!Number.isFinite(serverTime) || serverTime <= 0) {
+      setServerClock(current =>
+        current?.marketKey === market.marketKey ? null : current,
+      );
+      return;
+    }
+    setServerClock({
+      marketKey: market.marketKey,
+      receivedAt: Date.now(),
+      serverTime,
+    });
+  }, [market.marketKey, serverTime]);
+
+  const currentServerClock =
+    serverClock?.marketKey === market.marketKey ? serverClock : null;
+  const selectCurrentBookPrice = useCallback(
+    (
+      price: string | null,
+      intent: PerpsProOrderBookPriceIntent,
+      source: PerpsProOrderBookPriceSelectionSource,
+    ) => {
+      const current = priceSelectionStateRef.current;
+      if (
+        source.type === 'book' &&
+        source.marketKey === current.marketKey &&
+        current.bookStatus === 'ready' &&
+        source.feedIdentity === current.bookIdentity
+      ) {
+        onSelectPrice?.(price, intent);
+      }
+    },
+    [onSelectPrice],
+  );
+  const selectCurrentLatestTradePrice = useCallback(
+    (
+      price: string | null,
+      intent: PerpsProOrderBookPriceIntent,
+      source: PerpsProOrderBookPriceSelectionSource,
+    ) => {
+      const current = priceSelectionStateRef.current;
+      if (
+        source.type === 'latestTrade' &&
+        source.marketKey === current.marketKey &&
+        current.latestTradeStatus === 'ready' &&
+        source.feedIdentity === current.latestTradeIdentity
+      ) {
+        onSelectPrice?.(price, intent);
+      }
+    },
+    [onSelectPrice],
+  );
+
+  return (
+    <>
+      <PerpsProOrderBook
+        amountUnit={amountUnit}
+        book={processedBook}
+        bookIdentity={fastL2.identity}
+        bookStatus={fastL2.status}
+        hasBookSnapshot={displayBook != null}
+        height={height}
+        latestTrade={displayLatestTrade}
+        latestTradeIdentity={latestTrade.identity}
+        market={market}
+        onOpenFunding={() => setFundingDetailOpen(true)}
+        onPrecisionIntentStart={startPrecisionIntent}
+        onSelectBookPrice={
+          onSelectPrice && fastL2.status === 'ready'
+            ? selectCurrentBookPrice
+            : undefined
+        }
+        onSelectLatestTradePrice={
+          onSelectPrice && latestTrade.status === 'ready'
+            ? selectCurrentLatestTradePrice
+            : undefined
+        }
+        onSelectTickOption={selectTickOptionWithSnapshot}
+        onSelectPriceIntentStart={onSelectPriceIntentStart}
+        selectedTickOption={selectedTickOption}
+        serverClock={currentServerClock}
+        tickOptions={tickOptions}
+      />
+      {fundingDetailOpen ? (
+        <PerpsProFundingDetailSheet
+          market={market}
+          onClose={() => setFundingDetailOpen(false)}
+          serverClock={currentServerClock}
+        />
+      ) : null}
+    </>
+  );
+};

@@ -1,11 +1,12 @@
 /* eslint-disable react-native/no-inline-styles */
-import React, { ReactNode, useCallback, useMemo } from 'react';
+import type { ReactNode } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import BigNumber from 'bignumber.js';
 import RcIconSwitchArrow from '@/assets2024/icons/history/IconSwitchArrow.svg';
 import RcIconSingleArrow from '@/assets2024/icons/history/IconSingleArrow.svg';
 import { View, TouchableOpacity } from 'react-native';
 import { AssetAvatar } from '@/components';
-import {
+import type {
   NFTItem,
   TokenItem,
   TxDisplayItem,
@@ -21,11 +22,11 @@ import { getTokenSymbol, tokenItemToITokenItem } from '@/utils/token';
 import { useTranslation } from 'react-i18next';
 import { navigateDeprecated, naviPush } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
-import { HistoryDisplayItem } from '../MultiAddressHistory';
+import type { HistoryDisplayItem } from '../MultiAddressHistory';
 import { HistoryItemTokenPrice } from './HistoryItemTokenPrice';
 import { ellipsisOverflowedText } from '@/utils/text';
 import { HistoryItemCateType } from './type';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { isArray } from 'lodash';
 import { Dimensions } from 'react-native';
 import { Text } from '@/components/Typography';
@@ -33,7 +34,6 @@ import { ChainIconFastImage } from '@/components/Chain/ChainIconImage';
 
 interface ItemProps {
   status: number;
-  className?: string;
   type?: HistoryItemCateType | undefined;
   token?: TokenItem | TokenItem[];
   chain: TxDisplayItem['chain'];
@@ -525,21 +525,21 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 20,
     lineHeight: 24,
-    fontWeight: '800',
+    fontWeight: '900',
   },
   tokenApproveAmountText: {
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 20,
     lineHeight: 24,
-    fontWeight: '800',
+    fontWeight: '900',
   },
   tokenAmountTextList: {
     color: colors2024['green-default'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 20,
     lineHeight: 24,
-    fontWeight: '800',
+    fontWeight: '900',
   },
   tokenPriceText: {
     color: colors2024['neutral-secondary'],

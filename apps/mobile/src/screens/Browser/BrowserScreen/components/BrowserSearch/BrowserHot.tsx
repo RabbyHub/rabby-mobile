@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { View } from 'react-native';
 
 import { openapi } from '@/core/request';
-import { DappInfo } from '@/core/services/dappService';
+import type { DappInfo } from '@/core/services/dappService';
 import { useBrowserBookmark } from '@/hooks/browser/useBrowserBookmark';
 import { useTheme2024 } from '@/hooks/theme';
 import { useDapps } from '@/hooks/useDapps';
@@ -90,7 +90,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 18,
     lineHeight: 20,
-    fontWeight: '800',
+    fontWeight: '900',
   },
   grid: {
     gap: 8,

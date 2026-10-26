@@ -26,7 +26,7 @@ import {
   makeDebugBorder,
   makeDevOnlyStyle,
 } from '@/utils/styles';
-import { IS_IOS, isTurboModuleEnabled } from '@/core/native/utils';
+import { IS_IOS } from '@/core/native/utils';
 
 import RcIconMultiTabGestureCC from './icons/MultiTabGesture-cc.svg';
 import RcIconMultiTabArrow from './icons/MultiTabArrow.svg';
@@ -372,14 +372,16 @@ export const HomeGuidanceMultipleTabs = ({
   };
 
   if (!secondaryIndicatorAbsLayout) return null;
-  if ((IS_IOS || isTurboModuleEnabled()) && !debouncedVisible) return null;
+  if (IS_IOS && !debouncedVisible) return null;
 
   return (
     // <GestureDetector gesture={panRightToLeftGesture} />
     <Animated.View
       pointerEvents={'none'}
       entering={guidanceVisible ? FadeIn.duration(250) : undefined}
-      exiting={FadeOut.duration(250)}
+      // FadeOut starts at opacity 1 even when this Android mask is hidden.
+      // Do not reveal it again when navigation removes the old Home tree.
+      exiting={guidanceVisible ? FadeOut.duration(250) : undefined}
       style={[
         styles.container,
         styles.containerMask,

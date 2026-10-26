@@ -7,7 +7,7 @@ import {
   valueToBigNumber,
 } from '@aave/math-utils';
 import { BigNumber } from 'bignumber.js';
-import { DisplayPoolReserveInfo } from '../type';
+import { DisplayPoolReserveInfo, EmodeCategory } from '../type';
 
 interface CalculateHFAfterWithdrawProps {
   user: FormatUserSummaryAndIncentivesResponse<
@@ -39,6 +39,49 @@ interface CalculateHFAfterCollateralRepayProps {
   debt: string;
 }
 
+export const getEmodeAdjustedReserves = <
+  T extends {
+    eModes: { id: number; collateralEnabled: boolean }[];
+    baseLTVasCollateral: string;
+  },
+>(
+  reserves: T[],
+  targetEmodeId: number,
+  eModes: Record<number, EmodeCategory>,
+) => {
+  if (!targetEmodeId || !eModes[targetEmodeId]?.isolated) {
+    return reserves;
+  }
+  return reserves.map(reserve => {
+    const inCollateralBitmap = reserve.eModes.find(
+      e => e.id === targetEmodeId,
+    )?.collateralEnabled;
+    return inCollateralBitmap
+      ? reserve
+      : { ...reserve, baseLTVasCollateral: '0' };
+  });
+};
+
+export const hasNonZeroEffectiveLtv = ({
+  baseLTVasCollateral,
+  isInEmode,
+  emodeEntry,
+  isEModeIsolated,
+}: {
+  baseLTVasCollateral: string;
+  isInEmode: boolean;
+  emodeEntry?: { collateralEnabled: boolean; ltvzeroEnabled: boolean };
+  isEModeIsolated: boolean;
+}) => {
+  if (!isInEmode) {
+    return baseLTVasCollateral !== '0';
+  }
+  if (emodeEntry?.collateralEnabled) {
+    return !emodeEntry.ltvzeroEnabled;
+  }
+  return !isEModeIsolated && baseLTVasCollateral !== '0';
+};
+
 export const effectUserAvailable = (
   user: FormatUserSummaryAndIncentivesResponse<
     ReserveDataHumanized & FormatReserveUSDResponse
@@ -59,25 +102,39 @@ export const calculateHFAfterSupply = (
   >,
   poolReserve: ReserveDataHumanized & FormatReserveUSDResponse,
   supplyAmountInEth: BigNumber,
+  eModes: Record<number, EmodeCategory>,
 ) => {
   let healthFactorAfterDeposit = user
     ? valueToBigNumber(user.healthFactor)
     : '-1';
 
+  const userEmode = poolReserve.eModes.find(
+    e => e.id === user.userEmodeCategoryId,
+  );
+  const hasEffectiveLtv = hasNonZeroEffectiveLtv({
+    baseLTVasCollateral: poolReserve.baseLTVasCollateral,
+    isInEmode: user.userEmodeCategoryId !== 0,
+    emodeEntry: userEmode,
+    isEModeIsolated: !!eModes[user.userEmodeCategoryId]?.isolated,
+  });
+  const additionalCollateral = hasEffectiveLtv
+    ? supplyAmountInEth
+    : valueToBigNumber(0);
+  const reserveLiquidationThreshold =
+    user.userEmodeCategoryId !== 0 && userEmode?.collateralEnabled
+      ? userEmode.eMode.formattedLiquidationThreshold
+      : poolReserve.formattedReserveLiquidationThreshold;
+
   const totalCollateralMarketReferenceCurrencyAfter = user
     ? valueToBigNumber(user.totalCollateralMarketReferenceCurrency).plus(
-        supplyAmountInEth,
+        additionalCollateral,
       )
     : '-1';
 
   const liquidationThresholdAfter = user
     ? valueToBigNumber(user.totalCollateralMarketReferenceCurrency)
         .multipliedBy(user.currentLiquidationThreshold)
-        .plus(
-          supplyAmountInEth.multipliedBy(
-            poolReserve.formattedReserveLiquidationThreshold,
-          ),
-        )
+        .plus(additionalCollateral.multipliedBy(reserveLiquidationThreshold))
         .dividedBy(totalCollateralMarketReferenceCurrencyAfter)
     : '-1';
 
@@ -121,11 +178,11 @@ export const calculateHFAfterWithdraw = ({
     isInEmode && userEMode
       ? userEMode.eMode.formattedLiquidationThreshold
       : poolReserve.formattedReserveLiquidationThreshold;
+  const hasLiquidationThreshold =
+    poolReserve.reserveLiquidationThreshold !== '0' ||
+    (isInEmode && userEMode?.collateralEnabled);
 
-  if (
-    userReserve?.usageAsCollateralEnabledOnUser &&
-    poolReserve.reserveLiquidationThreshold !== '0'
-  ) {
+  if (userReserve?.usageAsCollateralEnabledOnUser && hasLiquidationThreshold) {
     const amountToWithdrawInEth = valueToBigNumber(withdrawAmount).multipliedBy(
       poolReserve.formattedPriceInMarketReferenceCurrency,
     );
@@ -385,6 +442,9 @@ export const calculateHFAfterCollateralRepay = ({
     elem => elem.id === user.userEmodeCategoryId,
   );
   const isInEmode = user.userEmodeCategoryId !== 0;
+  const hasFromLiquidationThreshold =
+    fromAssetData.reserveLiquidationThreshold !== '0' ||
+    (isInEmode && fromEmode?.collateralEnabled);
   // it takes into account if in emode as threshold is different
   const reserveLiquidationThreshold =
     isInEmode && fromEmode
@@ -432,7 +492,7 @@ export const calculateHFAfterCollateralRepay = ({
   });
 
   const hfRealEffectOfFromAmount =
-    fromAssetData.reserveLiquidationThreshold !== '0' &&
+    hasFromLiquidationThreshold &&
     repayWithUserReserve?.usageAsCollateralEnabledOnUser
       ? calculateHealthFactorFromBalancesBigUnits({
           collateralBalanceMarketReferenceCurrency: valueToBigNumber(
@@ -440,8 +500,7 @@ export const calculateHFAfterCollateralRepay = ({
           ).multipliedBy(fromAssetData.priceInUSD),
           borrowBalanceMarketReferenceCurrency:
             debtLeftInMarketReference.toString(10),
-          currentLiquidationThreshold:
-            fromAssetData.formattedReserveLiquidationThreshold,
+          currentLiquidationThreshold: reserveLiquidationThreshold,
         }).toString()
       : '0';
 

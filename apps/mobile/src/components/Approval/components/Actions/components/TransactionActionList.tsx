@@ -193,7 +193,9 @@ export const SingleAction: React.FC<{
           engineResults={engineResults}
         />
       )}
-      {data?.deployContract && <DeployContract />}
+      {data?.deployContract && (
+        <DeployContract value={raw.value} chain={chain} />
+      )}
       {data?.pushMultiSig && (
         <PushMultiSig
           data={data.pushMultiSig}

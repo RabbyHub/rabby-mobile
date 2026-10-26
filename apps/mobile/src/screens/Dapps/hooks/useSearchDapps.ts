@@ -1,9 +1,9 @@
 import { TextInputProps } from 'react-native';
 /* eslint-disable @typescript-eslint/no-shadow */
 // import { useOpenDappView } from '../hooks/useDappView';
-import { CHAINS_ENUM } from '@/constant/chains';
+import type { CHAINS_ENUM } from '@/constant/chains';
 import { openapi } from '@/core/request';
-import { DappInfo } from '@/core/services/dappService';
+import type { DappInfo } from '@/core/services/dappService';
 import { useDapps } from '@/hooks/useDapps';
 import { findChainByEnum } from '@/utils/chain';
 import { stringUtils } from '@rabby-wallet/base-utils';

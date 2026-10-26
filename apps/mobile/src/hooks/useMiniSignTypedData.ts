@@ -1,7 +1,7 @@
 import { useSyncExternalStore } from 'react';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { sendSignTypedData } from '@/utils/sendTypedData';
-import { MiniTypedData } from './useMiniSignTypedDataApprovalTask';
+import type { MiniTypedData } from './useMiniSignTypedDataApprovalTask';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { apiLedger, apiOneKey } from '@/core/apis';
 import {

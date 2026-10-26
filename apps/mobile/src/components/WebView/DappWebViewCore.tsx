@@ -1,10 +1,4 @@
-import React, {
-  useCallback,
-  useMemo,
-  useRef,
-  useState,
-  useEffect,
-} from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { Linking, StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import WebView, { WebViewProps } from 'react-native-webview';
 
@@ -14,17 +8,17 @@ import { APP_UA_PARIALS, isNonPublicProductionEnv } from '@/constant';
 import { useJavaScriptBeforeContentLoaded } from '@/hooks/useBootstrap';
 import {
   BUILTIN_SPECIAL_URLS,
-  useSetupWebview,
+  useSetupWebviewWithServices,
 } from '@/core/bridges/useBackgroundBridge';
+import {
+  withBackgroundBridgeServices,
+  type BackgroundBridgeServiceInjectedProps,
+} from '@/core/bridges/backgroundBridgeServices';
 import { useWebViewControl } from '@/components/WebView/hooks';
 import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
-import { PATCH_ANCHOR_TARGET } from '@/core/bridges/builtInScripts/patchAnchor';
 import { checkShouldStartLoadingWithRequestForDappWebView } from './utils';
+import { useSyncActiveDappState } from './useSyncActiveDappState';
 import { getOnlineConfig } from '@/core/config/online';
-import {
-  getActiveDappState,
-  globalSetActiveDappState,
-} from '@/core/bridges/state';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import injectedAutoRunnerSource from '@/core/bridges/builtInScripts/innerDapp.webview.injected';
 import { BrowserProgressBar } from '@/screens/Browser/BrowserScreen/components/BrowserTab/BrowserProgressBar';
@@ -33,9 +27,7 @@ import { WebviewError } from '@/screens/Browser/BrowserScreen/components/Browser
 import { openExternalUrl } from '@/core/utils/linking';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-const autoRunnerInjected = `${
-  IS_ANDROID ? PATCH_ANCHOR_TARGET : ''
-}\ntrue;${injectedAutoRunnerSource}\ntrue;`;
+const autoRunnerInjected = `true;${injectedAutoRunnerSource}\ntrue;`;
 
 type OnLoadStartEvent = Parameters<NonNullable<WebViewProps['onLoadStart']>>[0];
 
@@ -91,7 +83,7 @@ function convertToWebviewUrl(dappOrigin: string) {
   return stringUtils.ensurePrefix(dappOrigin, 'https://');
 }
 
-export default function DappWebViewCore({
+function DappWebViewCore({
   dappOrigin,
   url,
   embedHtml,
@@ -119,7 +111,8 @@ export default function DappWebViewCore({
   style,
   offscreenPreload,
   disabled,
-}: DappWebViewCoreProps) {
+  coreServices,
+}: DappWebViewCoreProps & BackgroundBridgeServiceInjectedProps) {
   const internalController = useWebViewControl({});
   const {
     webviewRef,
@@ -141,41 +134,35 @@ export default function DappWebViewCore({
     }
   }, [webviewRef]);
 
-  useEffect(() => {
-    const tabId = internalController.webviewIdRef.current;
-    const nextOrigin = safeGetOrigin(dappOrigin) || dappOrigin;
+  useSyncActiveDappState({
+    dappOrigin,
+    webviewIdRef,
+    offscreenPreload,
+    webviewActive,
+  });
 
-    const activeState = getActiveDappState();
-    if (
-      activeState.tabId !== tabId ||
-      activeState.isScreenHide ||
-      activeState.dappOrigin !== nextOrigin
-    ) {
-      globalSetActiveDappState({
-        dappOrigin: nextOrigin,
-        tabId: offscreenPreload
-          ? 'innerGlobalTabId'
-          : internalController.webviewIdRef.current,
-        isScreenHide: !webviewActive,
-      });
-    }
-  }, [dappOrigin, internalController, offscreenPreload, webviewActive]);
+  const {
+    entryScriptWeb3Loaded,
+    beforeContentLoadedBuiltinScriptIds,
+    documentEndBuiltinScriptIds,
+  } = useJavaScriptBeforeContentLoaded();
 
-  const { entryScriptWeb3Loaded, fullScript } =
-    useJavaScriptBeforeContentLoaded();
-
-  const { onLoadStart: onBridgeLoadStart, onMessage: onBridgeMessage } =
-    useSetupWebview({
-      dappOrigin,
-      webviewRef,
-      webviewIdRef,
-      siteInfoRefs: {
-        urlRef,
-        titleRef,
-        iconRef,
-      },
-      isFromMobileInnerDapp: true,
-    });
+  const {
+    bridgeHardenScript,
+    onLoadStart: onBridgeLoadStart,
+    onMessage: onBridgeMessage,
+  } = useSetupWebviewWithServices({
+    dappOrigin,
+    webviewRef,
+    webviewIdRef,
+    siteInfoRefs: {
+      urlRef,
+      titleRef,
+      iconRef,
+    },
+    isFromMobileInnerDapp: true,
+    coreServices,
+  });
 
   const resolvedUrl = useMemo(() => {
     if (embedHtml) return undefined;
@@ -203,6 +190,8 @@ export default function DappWebViewCore({
     onLoadProgress: webviewOnLoadProgress,
     onShouldStartLoadWithRequest: webviewOnShouldStartLoadWithRequest,
     onMessage: webviewOnMessage,
+    injectedJavaScriptBeforeContentLoaded:
+      webviewInjectedJavaScriptBeforeContentLoaded,
     onError: webviewOnError,
     onOpenWindow: webviewOnOpenWindow,
     onNavigationStateChange: webviewOnNavigationStateChange,
@@ -522,11 +511,14 @@ export default function DappWebViewCore({
           scalesPageToFit: resolvedScalesPageToFit,
         })}
         javaScriptEnabled
-        injectedJavaScriptBeforeContentLoaded={fullScript}
+        injectedJavaScriptBeforeContentLoadedBuiltinScriptIds={
+          beforeContentLoadedBuiltinScriptIds
+        }
+        injectedJavaScriptBeforeContentLoaded={`${bridgeHardenScript}\n${
+          webviewInjectedJavaScriptBeforeContentLoaded ?? ''
+        }`}
         injectedJavaScriptBeforeContentLoadedForMainFrameOnly={true}
-        // {...(IS_ANDROID && {
-        //   injectedJavaScript: PATCH_ANCHOR_TARGET,
-        // })}
+        injectedJavaScriptBuiltinScriptIds={documentEndBuiltinScriptIds}
         injectedJavaScript={autoRunnerInjected}
         webviewDebuggingEnabled={webviewDebuggingEnabled}
         onNavigationStateChange={handleNavigationStateChange}
@@ -546,6 +538,11 @@ export default function DappWebViewCore({
     </View>
   );
 }
+
+export default withBackgroundBridgeServices(DappWebViewCore, {
+  fallback: props =>
+    props.disabled ? null : <View style={[styles.placeholder, props.style]} />,
+});
 
 const styles = StyleSheet.create({
   container: {

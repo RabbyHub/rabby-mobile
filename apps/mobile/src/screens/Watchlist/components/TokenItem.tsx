@@ -140,9 +140,9 @@ const TokenListItemComponent = ({
           {/* Token Chain Logo */}
           <AssetAvatar
             logo={item.logo_url}
-            size={46}
+            size={40}
             chain={item.chain}
-            chainSize={18}
+            chainSize={16}
             innerChainStyle={styles.chainLogo}
           />
           <View style={styles.tokenInfo}>
@@ -239,7 +239,7 @@ export const TokenItemSkeleton = () => {
 
 const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   tokenItem: {
-    paddingVertical: 12,
+    paddingVertical: 10,
     paddingHorizontal: 4,
     gap: 8,
     display: 'flex',
@@ -268,7 +268,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     gap: 4,
   },
   rwaName: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '500',
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
@@ -276,7 +276,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     flexShrink: 1,
   },
   tokenFdv: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '500',
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
@@ -309,9 +309,9 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     gap: 4,
   },
   priceText: {
-    fontWeight: '700',
-    fontSize: 14,
-    lineHeight: 18,
+    fontWeight: '500',
+    fontSize: 17,
+    lineHeight: 22,
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
   },
@@ -324,9 +324,6 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     textAlign: 'center',
     //width: '100%',
   },
-  changeTextPositive: {
-    color: colors2024['red-default'],
-  },
   trendContainer: {
     display: 'flex',
     flexDirection: 'row',
@@ -334,15 +331,9 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     alignContent: 'center',
     paddingVertical: 6,
     borderRadius: 6,
-    width: 68,
+    width: 78,
     gap: 2,
     alignItems: 'center',
-  },
-  closedTipIcon: {
-    width: 12,
-    height: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   leftSlot: {
     width: 24,
@@ -368,11 +359,6 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   skeletonItem: {
     backgroundColor: 'transparent',
   },
-  trendChartWrapper: {
-    height: 30,
-    marginTop: -10,
-    marginBottom: 10,
-  },
   lpTokenIconContainer: {
     marginLeft: 0,
     flexShrink: 0,
@@ -386,7 +372,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     flex: 1,
   },
   tokenFdvSeparator: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '500',
     color: colors2024['neutral-line'],
     fontFamily: 'SF Pro Rounded',

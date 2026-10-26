@@ -1,12 +1,9 @@
 import { AppState } from 'react-native';
 
 import { zCreate } from '@/core/utils/reexports';
-import {
-  resolveValFromUpdater,
-  runIIFEFunc,
-  UpdaterOrPartials,
-} from '@/core/utils/store';
-import { useShallow } from 'zustand/react/shallow';
+import type { UpdaterOrPartials } from '@/core/utils/store';
+import { resolveValFromUpdater } from '@/core/utils/store';
+import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 
 const PING_URL = 'https://app-api.rabby.io/ping';
 
@@ -26,10 +23,6 @@ async function checkNetwork(): Promise<boolean> {
 const networkStatusState = zCreate<{ isDisconnected: boolean }>(() => ({
   isDisconnected: false,
 }));
-
-runIIFEFunc(() => {
-  startNetworkPolling();
-});
 
 function setNetworkStatus(valOrFunc: UpdaterOrPartials<boolean>) {
   networkStatusState.setState(prev => {
@@ -51,7 +44,7 @@ function setNetworkStatus(valOrFunc: UpdaterOrPartials<boolean>) {
 let timer: NodeJS.Timeout | null = null;
 let started = false;
 
-function startNetworkPolling() {
+export function startGlobalNetworkPolling() {
   if (started) {
     return;
   }
@@ -71,7 +64,12 @@ function startNetworkPolling() {
 }
 
 export const useGlobalStatus = () => {
-  const isDisConnect = networkStatusState(useShallow(s => s.isDisconnected));
+  const isDisConnect = useActivityStore(
+    networkStatusState,
+    state => state.isDisconnected,
+    Object.is,
+    { storeLabel: 'global-network-status' },
+  );
 
   return { isDisConnect };
 };

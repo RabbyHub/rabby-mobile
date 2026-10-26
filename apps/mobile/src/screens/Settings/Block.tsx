@@ -1,3 +1,4 @@
+import { RoundedFontStyles } from '@/core/utils/fonts';
 /* eslint-disable react-native/no-inline-styles */
 import React from 'react';
 
@@ -17,7 +18,6 @@ export function Block({
   children,
 }: React.PropsWithChildren<{
   label: string;
-  className?: string;
   style?: React.ComponentProps<typeof View>['style'];
 }>) {
   const { colors2024, isLight } = useTheme2024();
@@ -26,10 +26,9 @@ export function Block({
     <View style={style}>
       <Text
         style={{
-          fontWeight: 'normal',
           fontSize: 16,
           color: colors2024['neutral-secondary'],
-          fontFamily: 'SF Pro Rounded',
+          ...RoundedFontStyles.regular,
           paddingLeft: 12,
         }}>
         {label}
@@ -87,9 +86,8 @@ function BlockItem({
       numberOfLines={1}
       style={{
         color: colors['neutral-body'],
-        fontWeight: '700',
         fontSize: 16,
-        fontFamily: 'SF Pro Rounded',
+        ...RoundedFontStyles.bold,
       }}>
       {label}
     </Text>
@@ -192,7 +190,7 @@ const getBlockItemStyles = createGetStyles2024(colors => {
     },
     defaultRightText: {
       color: colors['neutral-title-1'],
-      fontWeight: 'normal',
+      fontWeight: '400',
       fontSize: 14,
     },
   };
@@ -211,6 +209,7 @@ export type SettingConfBlock = {
     | 'rightNode'
     | 'disabled'
     | 'onDisabledPress'
+    | 'visible'
     | 'testID'
     | 'accessibilityLabel'
   >[];

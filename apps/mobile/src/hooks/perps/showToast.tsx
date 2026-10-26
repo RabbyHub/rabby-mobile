@@ -6,6 +6,7 @@ import { Text } from '@/components/Typography';
 export const showToast = (
   msg: string,
   type: 'success' | 'error' = 'success',
+  lifecycle?: { onHidden?: () => void },
 ) => {
   const msgText = String(msg);
   const content: Parameters<ReturnType<typeof toastWithIcon>>[0] =
@@ -28,12 +29,14 @@ export const showToast = (
       : msgText;
 
   const options = {
+    onHidden: lifecycle?.onHidden,
     position: toast.positions.CENTER,
+    standalone: !!lifecycle?.onHidden,
   };
 
   if (type === 'success') {
-    toast.success(content, options);
+    return toast.success(content, options);
   } else {
-    toast.error(content, options);
+    return toast.error(content, options);
   }
 };

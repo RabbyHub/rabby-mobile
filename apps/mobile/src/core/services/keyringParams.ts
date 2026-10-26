@@ -1,6 +1,9 @@
-import { ellipsisAddress } from '@/utils/address';
 import { bindLedgerEvents } from '@/utils/ledger';
 import { bindOneKeyEvents } from '@/utils/onekey';
+import {
+  setDefaultAddressAlias,
+  setDefaultAddressAliases,
+} from '@/core/utils/addressAlias';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { KeyringServiceOptions } from '@rabby-wallet/service-keyring/src/keyringService';
 import { getKeyringParams } from '../utils/getKeyringParams';
@@ -8,19 +11,12 @@ import { EthTrezorKeyring } from '@rabby-wallet/eth-keyring-trezor';
 
 export const onSetAddressAlias: KeyringServiceOptions['onSetAddressAlias'] &
   object = async (keyring, account, contactService) => {
-  const { address } = account;
-  if (!contactService) {
-    if (__DEV__) {
-      console.warn('contactService is not provided, skip setting alias');
-    }
-    return;
-  }
-  const existAlias = contactService.getAliasByAddress(address);
+  setDefaultAddressAlias(account, contactService);
+};
 
-  contactService.setAlias({
-    address,
-    alias: existAlias ? existAlias.alias : ellipsisAddress(address),
-  });
+export const onSetAddressAliases: KeyringServiceOptions['onSetAddressAliases'] &
+  object = async (keyring, accounts, contactService) => {
+  setDefaultAddressAliases(accounts, contactService);
 };
 
 export const onCreateKeyring: KeyringServiceOptions['onCreateKeyring'] &

@@ -6,6 +6,7 @@ import { StyleProp, TextStyle, View } from 'react-native';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { Text } from '@/components/Typography';
+import { ellipsisAddress } from '@/utils/address';
 
 export const AccountOverview = ({
   account,
@@ -19,7 +20,7 @@ export const AccountOverview = ({
   const { styles } = useTheme2024({ getStyle: getStyles });
   return (
     <View style={styles.accountBox}>
-      <View className="relative">
+      <View style={styles.relative}>
         <WalletIcon
           type={account.type as KEYRING_TYPE}
           address={account.address}
@@ -38,7 +39,7 @@ export const AccountOverview = ({
         numberOfLines={1}
         ellipsizeMode="tail"
         style={[styles.titleText, textStyle]}>
-        {account.aliasName}
+        {account.aliasName || ellipsisAddress(account.address)}
       </Text>
     </View>
   );
@@ -54,6 +55,9 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     width: 14,
     height: 14,
     borderRadius: 4,
+  },
+  relative: {
+    position: 'relative',
   },
   titleText: {
     flexShrink: 1,

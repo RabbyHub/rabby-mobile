@@ -38,6 +38,8 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
   slippage?: number;
   depthInsufficient?: boolean;
   slippageReady?: boolean;
+  /** Sticky visibility from useMarketSlippage: stays true once slippage exceeded the display threshold. */
+  shouldShowSlippage?: boolean;
   onSwitchToLimit?: () => void;
   summary: {
     coin: string;
@@ -67,6 +69,7 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
   slippage = 0,
   depthInsufficient,
   slippageReady,
+  shouldShowSlippage,
   onSwitchToLimit,
 }) => {
   const modalRef = useRef<AppBottomSheetModal>(null);
@@ -141,7 +144,11 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
                 </Text>
               </View>
               <View style={styles.coinContainer}>
-                <AssetAvatar size={24} logo={coinLogo} />
+                <AssetAvatar
+                  size={24}
+                  logo={coinLogo}
+                  logoStyle={styles.coinIcon}
+                />
                 <Text style={styles.value}>
                   {formatPerpsCoin(coin)}-{summary.quoteAsset || 'USDC'}
                 </Text>
@@ -315,7 +322,10 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
               </View>
             </View>
           </View>
-          {orderType === 'market' && slippageReady && Number(tradeSize) > 0 ? (
+          {orderType === 'market' &&
+          slippageReady &&
+          Number(tradeSize) > 0 &&
+          shouldShowSlippage ? (
             <View style={styles.list}>
               <MarketSlippage
                 slippage={slippage}
@@ -492,6 +502,9 @@ const getStyle = createGetStyles2024(ctx => {
       flexDirection: 'row',
       alignItems: 'center',
       // gap: 6,
+    },
+    coinIcon: {
+      backgroundColor: 'white',
     },
     tagContainer: {
       paddingVertical: 2,

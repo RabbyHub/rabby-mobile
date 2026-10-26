@@ -19,6 +19,7 @@ import {
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { useLendingService } from '../../hooks/useLendingService';
 import { Text } from '@/components/Typography';
+import { withLendingService } from '../../lendingServiceDependencies';
 
 interface SummaryItemProps {
   netWorth: string;
@@ -243,10 +244,15 @@ const SummaryItem: React.FC<SummaryItemProps> = ({
             {!!extraInfo && (
               <View style={[styles.extraContainer]}>
                 <View style={styles.extraLeft}>
-                  <Text style={styles.extraLeftText}>
+                  <Text
+                    numberOfLines={2}
+                    ellipsizeMode="tail"
+                    style={styles.extraLeftText}>
                     {t('page.Lending.summary.lq')}
                   </Text>
-                  <TouchableOpacity onPress={handleShowHFDescription}>
+                  <TouchableOpacity
+                    style={styles.extraMore}
+                    onPress={handleShowHFDescription}>
                     <Text style={styles.extraLeftMore}>
                       {t('page.Lending.summary.more')}
                     </Text>
@@ -276,12 +282,14 @@ const SummaryItem: React.FC<SummaryItemProps> = ({
   );
 };
 
-export default SummaryItem;
+export default withLendingService(SummaryItem);
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   container: {
     borderRadius: 16,
-    backgroundColor: colors2024['neutral-bg-2'],
+    backgroundColor: isLight
+      ? 'rgba(255, 255, 255, 0.9)'
+      : colors2024['neutral-bg-2'],
     paddingTop: 0,
     paddingBottom: 16,
   },
@@ -371,48 +379,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
     gap: 3,
   },
-  sectionHeader: {
-    color: colors2024['neutral-foot'],
-    fontSize: 12,
-    lineHeight: 14,
-    fontFamily: 'SF Pro Rounded',
-  },
-  hfTipsContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  hfTipsContentText: {
-    flex: 1,
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '500',
-    fontFamily: 'SF Pro Rounded',
-    color: colors2024['neutral-InvertHighlight'],
-  },
-  moreContainer: {
-    height: 14,
-  },
-  moreText: {
-    fontSize: 14,
-    fontWeight: '700',
-    fontFamily: 'SF Pro Rounded',
-    color: colors2024['brand-default'],
-  },
-  closeButton: {},
-  parentWrapperStyle: {
-    width: '100%',
-    flex: 1,
-    gap: 6,
-  },
-  contentStyle: {
-    paddingHorizontal: 12,
-    paddingRight: 19,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    height: 54,
-  },
   extraContainer: {
     position: 'relative',
     backgroundColor: colors2024['neutral-bg-5'],
@@ -422,28 +388,42 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     borderRadius: 12,
     paddingHorizontal: 12,
     paddingRight: 16,
+    paddingVertical: 10,
     marginHorizontal: 12,
-    height: 40,
+    minHeight: 40,
   },
   extraLeft: {
     flexDirection: 'row',
     alignItems: 'center',
+    flex: 1,
+    flexShrink: 1,
     gap: 6,
   },
   extraLeftText: {
     fontSize: 12,
+    lineHeight: 16,
     fontWeight: '500',
     fontFamily: 'SF Pro Rounded',
     color: colors2024['neutral-foot'],
+    flexShrink: 1,
+  },
+  extraMore: {
+    flexShrink: 0,
   },
   extraLeftMore: {
     fontSize: 12,
+    lineHeight: 16,
     fontWeight: '900',
     fontFamily: 'SF Pro Rounded',
     color: colors2024['neutral-title-1'],
   },
   extraClose: {
     marginLeft: 8,
+    flexShrink: 0,
+    width: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   triangle: {
     position: 'absolute',

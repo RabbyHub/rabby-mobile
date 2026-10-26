@@ -1,27 +1,25 @@
 package com.debank.rabbymobile;
 
 import android.os.Build;
-import android.app.Activity;
 import androidx.annotation.NonNull;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 
-import com.facebook.react.ReactApplication;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.ReactApplicationContext;
-import com.facebook.react.bridge.ReactContext;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.LifecycleEventListener;
 import com.facebook.react.module.annotations.ReactModule;
-import android.view.WindowManager;
 
 @ReactModule(name = RNTimeChangedModule.NAME)
 public class RNTimeChangedModule extends NativeRNTimeChangedSpec implements LifecycleEventListener {
   public static final String NAME = "RNTimeChanged";
   private final ReactApplicationContext reactContext;
+  private TimeChangeBroadcastReceiver timeChangeReceiver;
+  private boolean isTimeChangeReceiverRegistered = false;
 
   public RNTimeChangedModule(ReactApplicationContext reactContext) {
     super(reactContext);
@@ -55,10 +53,6 @@ public class RNTimeChangedModule extends NativeRNTimeChangedSpec implements Life
       String action = intent.getAction();
       params.putString("androidAction", action);
 
-      ReactApplication rnApp = (ReactApplication) context.getApplicationContext();
-      ReactContext reactContext = rnApp.getReactNativeHost().getReactInstanceManager()
-                                .getCurrentReactContext();
-
       if (Intent.ACTION_TIME_CHANGED.equals(action)) {
         params.putString("reason", "timeSet");
         emitOnTimeChangedEvent(params);
@@ -80,23 +74,46 @@ public class RNTimeChangedModule extends NativeRNTimeChangedSpec implements Life
 
   @Override
   public void onHostResume() {
-		IntentFilter filter = new IntentFilter();
+    if (isTimeChangeReceiverRegistered) {
+      return;
+    }
+
+    IntentFilter filter = new IntentFilter();
     filter.addAction(Intent.ACTION_TIME_CHANGED);
     filter.addAction(Intent.ACTION_TIMEZONE_CHANGED);
 
-    TimeChangeBroadcastReceiver tcreceiver = new TimeChangeBroadcastReceiver();
-    reactContext.registerReceiver(tcreceiver , filter);
+    timeChangeReceiver = new TimeChangeBroadcastReceiver();
 
     if (Build.VERSION.SDK_INT >= 34) {
-      reactContext.registerReceiver(tcreceiver, filter, Context.RECEIVER_EXPORTED);
+      reactContext.registerReceiver(
+        timeChangeReceiver,
+        filter,
+        Context.RECEIVER_EXPORTED
+      );
     } else {
-      reactContext.registerReceiver(tcreceiver, filter);
+      reactContext.registerReceiver(timeChangeReceiver, filter);
     }
+    isTimeChangeReceiverRegistered = true;
   }
+
   @Override
-  public void onHostPause() {}
+  public void onHostPause() {
+    unregisterTimeChangeReceiver();
+  }
+
   @Override
   public void onHostDestroy() {
-//    reactContext.unregisterReceiver(midnightBroadcastReceiver);
+    unregisterTimeChangeReceiver();
+    reactContext.removeLifecycleEventListener(this);
+  }
+
+  private void unregisterTimeChangeReceiver() {
+    if (!isTimeChangeReceiverRegistered || timeChangeReceiver == null) {
+      return;
+    }
+
+    reactContext.unregisterReceiver(timeChangeReceiver);
+    isTimeChangeReceiverRegistered = false;
+    timeChangeReceiver = null;
   }
 }

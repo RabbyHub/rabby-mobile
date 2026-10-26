@@ -119,6 +119,7 @@ export type RootStackParamsList = {
     rawPortfolios?: AbstractProject[]; // only for single address
     unHold?: boolean;
     isSwapToTokenDetail?: boolean;
+    isCustomTestnetToken?: boolean;
     tokenSelectType?: import('@/components/Token/TokenSelectorSheetModal').TokenSelectType;
   };
   [RootNames.TokenMarketInfo]: {
@@ -180,16 +181,26 @@ type TestKitsNavigatorParamsList = {
   [RootNames.DevUIScreenContainerShowCase]?: {};
   [RootNames.DevUIDapps]?: {};
   [RootNames.DevDataSQLite]?: {};
-  [RootNames.DevDataKeychain]?: {};
+  [RootNames.DevWatchAddressFixtureImport]?: {};
+  [RootNames.DevDataKeychain]?: {
+    keychainVersion?: import('@/core/apis/keychainVersionShared').CurrentKeychainVersion;
+  };
   [RootNames.DevDataKeyringVault]?: {};
   [RootNames.DevDataContactService]?: {};
   [RootNames.DevDataWhitelist]?: {};
   [RootNames.DevUIBuiltInPages]?: {};
   [RootNames.DevUIPermissions]?: {};
   [RootNames.DevUIWalletConnect]?: {};
-  [RootNames.DevCapabilityFile]?: {};
-  [RootNames.DevSwitches]?: {};
+  [RootNames.DevCapabilityFile]?: {
+    tab?: 'overview' | 'debug';
+  };
+  [RootNames.DevSwitches]?: {
+    appLaunchLock?: boolean;
+  };
   [RootNames.DevPerf]?: {};
+  [RootNames.DebugLogViewer]?: {};
+  [RootNames.StartupPerformanceLogViewer]?: {};
+  [RootNames.InMemoryLogViewer]?: {};
 };
 
 export type AddressNavigatorParamList = {
@@ -201,17 +212,16 @@ export type AddressNavigatorParamList = {
   // [RootNames.MultiAddressHome]?: {};
   [RootNames.CreateNewAddress]?: {
     noSetupPassword?: boolean;
-    useCurrentSeed?: boolean;
-    mnemonics?: string;
     title?: string;
-    accounts?: string[];
     isFirstCreate?: boolean;
   };
   [RootNames.SetPassword2024]?: {
     finishGoToScreen:
       | typeof RootNames.CreateSelectMethod
       | typeof RootNames.ImportSuccess2024
-      | typeof RootNames.CreateChooseBackup;
+      | typeof RootNames.ImportMnemonic2024
+      | typeof RootNames.CreateChooseBackup
+      | typeof RootNames.ImportPrivateKey2024;
     title?: string;
     hideProgress?: boolean;
     delaySetPassword?: boolean;
@@ -240,8 +250,7 @@ export type AddressNavigatorParamList = {
     isFirstCreate?: boolean;
     type: KEYRING_TYPE;
     supportChainList?: Chain[];
-    mnemonics?: string;
-    passphrase?: string;
+    mnemonicsVaultId?: string;
     keyringId?: number;
     alias?: string;
     isExistedKR?: boolean;
@@ -255,12 +264,13 @@ export type AddressNavigatorParamList = {
     isFirstCreate?: boolean;
     type: KEYRING_TYPE;
     supportChainList?: Chain[];
-    mnemonics?: string;
-    passphrase?: string;
+    mnemonicsVaultId?: string;
     keyringId?: number;
     alias?: string;
     isExistedKR?: boolean;
     showBackup?: boolean;
+    /** Follow-up imports can show their result without replaying the entrance. */
+    skipSuccessAnimation?: boolean;
   };
   [RootNames.ImportWatchAddress]?: {};
   [RootNames.ImportSafeAddress]?: {};
@@ -273,21 +283,22 @@ export type AddressNavigatorParamList = {
   [RootNames.ImportMoreAddress]?: {
     type: KEYRING_TYPE;
     brand?: string;
-    mnemonics?: string;
-    passphrase?: string;
+    mnemonicsVaultId?: string;
     keyringId?: number;
     isExistedKR?: boolean;
   };
   [RootNames.ImportPrivateKey]?: {};
+  [RootNames.ImportPrivateKey2024]?: {};
   [RootNames.ImportHardwareAddress]?: {};
   [RootNames.ImportMnemonic]?: {};
+  [RootNames.ImportMnemonic2024]?: {};
   [RootNames.AddMnemonic]?: {};
   [RootNames.PreCreateMnemonic]?: {};
   [RootNames.CreateMnemonic]?: {};
   [RootNames.CreateMnemonicBackup]?: {};
   [RootNames.CreateMnemonicVerify]?: {};
   [RootNames.BackupPrivateKey]?: {
-    data: string;
+    privateKeyVaultId: string;
   };
   [RootNames.RestoreFromCloud]?: {};
   [RootNames.WatchAddressList]?: {};
@@ -306,7 +317,8 @@ export type AccountNavigatorParamList = {
 
 export type SingleAddressNavigatorParamList = {
   [RootNames.SingleAddressHome]: {
-    // account: Account;
+    account?: Account;
+    navigationId?: number;
   };
 };
 
@@ -346,12 +358,14 @@ export type TransactionNavigatorParamList = {
         toAddress?: string;
         addressBrandName?: string;
         addrDesc?: AddrDescResponse['desc'];
+        regressionRunId?: string;
       }
     | {
         safeInfo: { nonce: number; chainId: number };
         toAddress?: string;
         addressBrandName?: string;
         addrDesc?: AddrDescResponse['desc'];
+        regressionRunId?: string;
       };
   [RootNames.MultiSend]?: TransactionNavigatorParamList['Send'] & object;
   [RootNames.SendNFT]: {
@@ -391,10 +405,17 @@ export type TransactionNavigatorParamList = {
     account?: KeyringAccountWithAlias;
     fromName?: string;
     dappId?: string;
+    market?: string;
+    marketCandidates?: string[];
+    /** set when this screen is the underlay pushed beneath the market detail page */
+    fromSource?: 'homePagePositionList';
   };
   [RootNames.PerpsMarketList]?: {};
   [RootNames.PerpsHistory]?: {
     coin?: string;
+  };
+  [RootNames.PerpsProHistory]?: {
+    initialTab?: 'orders' | 'trade' | 'transaction' | 'funding';
   };
   [RootNames.PerpsMarketDetail]: {
     market: string;
@@ -437,13 +458,19 @@ export type SettingNavigatorParamList = {
           | typeof RootNames.PreCreateMnemonic
           | typeof RootNames.ImportPrivateKey
           | typeof RootNames.ImportMnemonic
+          | typeof RootNames.ImportMnemonic2024
           | typeof RootNames.CreateSelectMethod
+          | typeof RootNames.ImportPrivateKey2024
           | typeof RootNames.ImportSuccess2024;
       }
     | {
         actionAfterSetup: 'testkits:fromSettings';
         // actionType: (SettingNavigatorParamList['Settings'] & object)['enterActionType'];
-        actionType: 'setBiometrics' | 'setAutoLockExpireTime' | 'lockWallet';
+        actionType:
+          | 'setBiometrics'
+          | 'setAutoLockExpireTime'
+          | 'setAppLaunchLock'
+          | 'lockWallet';
       };
   [RootNames.SetBiometricsAuthentication]: {};
   [RootNames.CustomTestnet]?: {};

@@ -56,6 +56,7 @@ import { BorrowActionPopup } from '@/screens/Lending/components/actions/BorrowAc
 import { RepayActionPopup } from '@/screens/Lending/components/actions/RepayActionPopup';
 import { HFDescription } from '@/screens/Lending/components/HFDescription';
 import { AddressListModal } from '@/screens/Address/components/MultiAssets/AddressList';
+import { ReceiveAddressListSheet } from '@/screens/Address/ReceiveAddressListSheet';
 import { ManageEmodeModal } from '@/screens/Lending/modals/ManageEmode';
 import ManageEmodeFullModal from '@/screens/Lending/modals/ManangeEmodeFullModal';
 import SelectCategoryModal from '@/screens/Lending/components/EmodeCategory/SelectCategoryModal';
@@ -69,6 +70,8 @@ import { SeedPhraseQrCode } from '../AddressDetail/SeedPhraseQrCode';
 import { LpTokenDescription } from '../LpTokenDescription';
 import CollateralTokenSelectModal from '@/screens/Lending/components/CollateralTokenSelect';
 import TokenGroupDetailSheet from '@/screens/Address/components/MultiAssets/TokenGroupDetailSheet';
+import { CustomTestnetAddTokenSheet } from '@/screens/Address/components/MultiAssets/CustomTestnetAssets/CustomTestnetAddTokenSheet';
+import { RemoveTokenConfirmPopup } from '@/components2024/RemoveTokenConfirmPopup';
 import RepayTokenSelectModal from '@/screens/Lending/components/RepayTokenModal';
 import {
   WalletConnectConnectSheet,
@@ -76,6 +79,10 @@ import {
 } from '@/components2024/WalletConnect/WalletConnectSheets';
 
 export const MODAL_MAX_HEIGHT = Dimensions.get('window').height - 104;
+const RECEIVE_ADDRESS_LIST_MODAL_HEIGHT = Math.max(
+  Dimensions.get('window').height - 200,
+  453,
+);
 
 function getDefaultViewTypePropsPreset(
   input?: Partial<GlobalBottomSheetModalProps>,
@@ -127,6 +134,10 @@ export const MODAL_CONFIGS = {
   [MODAL_NAMES.SIMPLE_CONFIRM]: {
     snapPoints: [229],
     Component: SimpleConfirmInner,
+  },
+  [MODAL_NAMES.REMOVE_TOKEN_CONFIRM]: {
+    snapPoints: undefined,
+    Component: RemoveTokenConfirmPopup,
   },
   [MODAL_NAMES.VIEW_RAW_DETAILS]: {
     snapPoints: ['80%'],
@@ -204,6 +215,14 @@ export const MODAL_CONFIGS = {
   [MODAL_NAMES.ADDRESS_LiST]: {
     snapPoints: [MODAL_MAX_HEIGHT],
     Component: AddressListModal,
+    globalModalPropsPreset: getDefaultViewTypePropsPreset({
+      enableContentPanningGesture: true,
+      rootViewType: 'View',
+    }),
+  },
+  [MODAL_NAMES.RECEIVE_ADDRESS_LIST]: {
+    snapPoints: [RECEIVE_ADDRESS_LIST_MODAL_HEIGHT],
+    Component: ReceiveAddressListSheet,
     globalModalPropsPreset: getDefaultViewTypePropsPreset({
       enableContentPanningGesture: true,
       rootViewType: 'View',
@@ -352,9 +371,7 @@ export const MODAL_CONFIGS = {
   [MODAL_NAMES.LENDING_TOKEN_LIST]: {
     snapPoints: [MODAL_MAX_HEIGHT],
     Component: LendingTokenList,
-    globalModalPropsPreset: getDefaultViewTypePropsPreset({
-      enableContentPanningGesture: false,
-    }),
+    globalModalPropsPreset: getDefaultViewTypePropsPreset(),
   },
   [MODAL_NAMES.DEBT_TOKEN_SELECT]: {
     snapPoints: ['85%'],
@@ -376,6 +393,11 @@ export const MODAL_CONFIGS = {
   [MODAL_NAMES.TOKEN_GROUP_DETAIL]: {
     snapPoints: [MODAL_MAX_HEIGHT],
     Component: TokenGroupDetailSheet,
+    globalModalPropsPreset: getDefaultViewTypePropsPreset(),
+  },
+  [MODAL_NAMES.CUSTOM_TESTNET_ADD_TOKEN]: {
+    snapPoints: [600],
+    Component: CustomTestnetAddTokenSheet,
     globalModalPropsPreset: getDefaultViewTypePropsPreset(),
   },
   [MODAL_NAMES.REPAY_TOKEN_SELECT]: {

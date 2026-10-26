@@ -1,32 +1,41 @@
+const {
+  isLegacyReactNativeArchitecture,
+} = require('./scripts/react-native-architecture.cjs');
+const {
+  getCryptoNativeDependencies,
+} = require('./scripts/crypto-architecture.cjs');
+
+const isLegacyArchitecture = isLegacyReactNativeArchitecture();
+
 /**
  * @type {import('@react-native-community/cli-types').Config}
  */
 module.exports = {
-  assets: ['./assets/fonts', './assets/custom'],
+  // Apple system fonts are resolved by UIKit on iOS, never bundled (ITMS-91182).
+  assets: ['./assets/custom'],
   iosAssets: [
     // './assets/android/builtin-pages'
   ],
   androidAssets: [
+    './assets/fonts',
     // './assets/ios/builtin-pages'
   ],
   dependencies: {
-    'react-native-ios-context-menu': {
+    ...getCryptoNativeDependencies(isLegacyArchitecture ? 'legacy' : 'new'),
+    'react-native-mmkv': isLegacyArchitecture
+      ? { platforms: { android: null, ios: null } }
+      : {},
+    'react-native-mmkv-legacy': isLegacyArchitecture
+      ? {}
+      : { platforms: { android: null, ios: null } },
+    '@rabby-wallet/react-native-ios-context-menu': {
       platforms: {
         android: null,
       },
     },
-    '@react-native-menu/menu': {
+    '@rabby-wallet/react-native-menu': {
       platforms: {
         ios: null,
-      },
-    },
-    '@rabby-wallet/react-native-keychain': {
-      platforms: {
-        android: {
-          packageImportPath:
-            'import com.rabbywallet.keychain.RabbyKeychainPackage;',
-          packageInstance: 'new RabbyKeychainPackage()',
-        },
       },
     },
     '@rabby-wallet/react-native-keychain-9': {

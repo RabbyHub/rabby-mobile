@@ -20,12 +20,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text } from '@/components/Typography';
 import { apiMnemonic } from '@/core/apis';
 import { addKeyringAndactiveAndPersistAccounts } from '@/core/apis/mnemonic';
-import { keyringService } from '@/core/services';
+import { keyringServiceApi } from '@/core/serviceApi/keyring';
 import { ellipsisAddress } from '@/utils/address';
 import { replaceToFirst } from '@/utils/navigation';
 import { toast } from '@/components2024/Toast';
 import { setAccountNeedsBackupReminder } from '@/hooks/account';
 import { ensureWalletUnlockedForAction } from '@/utils/walletUnlock';
+import * as SecretVault from '@/core/utils/secretVault';
 
 function MainListBlocks() {
   const { t } = useTranslation();
@@ -45,9 +46,9 @@ function MainListBlocks() {
     creatingRef.current = true;
     try {
       const seedPhrase = await apiMnemonic.generatePreMnemonic();
-      const Keyring = keyringService.getKeyringClassForType(
+      const Keyring = (await keyringServiceApi.getKeyringClassForType(
         KEYRING_CLASS.MNEMONIC,
-      ) as any;
+      )) as any;
       const keyring = new Keyring({ mnemonic: seedPhrase, passphrase: '' });
       const accountsToCreate = keyring?.getAddresses(0, 1);
       const address = accountsToCreate?.[0]?.address;
@@ -62,7 +63,7 @@ function MainListBlocks() {
         })),
         false,
       );
-      keyringService.removePreMnemonics();
+      await keyringServiceApi.removePreMnemonics();
 
       await setAccountNeedsBackupReminder(
         {
@@ -80,8 +81,10 @@ function MainListBlocks() {
           brandName: KEYRING_CLASS.MNEMONIC,
           isFirstCreate: true,
           address: [address],
-          mnemonics: seedPhrase,
-          passphrase: '',
+          mnemonicsVaultId: SecretVault.storeMnemonicsPayload({
+            mnemonics: seedPhrase,
+            passphrase: '',
+          }),
           isExistedKR: false,
           alias: ellipsisAddress(address),
           showBackup: true,

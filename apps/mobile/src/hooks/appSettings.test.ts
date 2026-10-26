@@ -75,7 +75,7 @@ jest.mock('@/core/utils/store', () => ({
   resolveValFromUpdater: jest.fn((prev: unknown, updater: unknown) => ({
     newVal: typeof updater === 'function' ? updater(prev) : updater,
   })),
-  runIIFEFunc: jest.fn((fn: () => void) => fn()),
+  runStartupTask: jest.fn((fn: () => void) => fn()),
 }));
 
 jest.mock('zustand/react/shallow', () => ({

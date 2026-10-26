@@ -1,7 +1,7 @@
 import React, { useCallback } from 'react';
 
 import { useTranslation } from 'react-i18next';
-import { Pressable, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 
 import { useTheme2024 } from '@/hooks/theme';
@@ -29,39 +29,53 @@ const EnabledEmodeInfo = ({
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   return (
-    <LinearGradient
-      colors={['#2FE0FF', '#D06BFF']}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 0 }}
-      style={styles.border}>
-      {/* 内部黑底避免内容被影响 */}
-      <Pressable style={styles.inner} onPress={onPress}>
+    <Pressable style={styles.border} onPress={onPress}>
+      <LinearGradient
+        pointerEvents="none"
+        colors={['#2FE0FF', '#D06BFF']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+        style={styles.borderGradient}
+      />
+      <View style={[styles.inner, styles.enabledInner]}>
         <LightingIcon width={18} height={18} />
-        <MaskedView
-          maskElement={
-            <Text numberOfLines={1} ellipsizeMode="tail" style={styles.text}>
-              {title}
-            </Text>
-          }>
-          <LinearGradient
-            colors={['#2FE0FF', '#D06BFF']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}>
-            <Text
-              numberOfLines={1}
-              ellipsizeMode="tail"
-              style={[styles.text, styles.opacity0]}>
-              {title}
-            </Text>
-          </LinearGradient>
-        </MaskedView>
+        {Platform.OS === 'android' ? (
+          // MaskedView under Fabric leaves the mask text rendered as a black
+          // rectangle on Android. Use the badge's accent color directly so the
+          // label stays legible and clips inside the gradient border (1042).
+          <Text
+            numberOfLines={1}
+            ellipsizeMode="tail"
+            style={[styles.text, styles.androidText]}>
+            {title}
+          </Text>
+        ) : (
+          <MaskedView
+            maskElement={
+              <Text numberOfLines={1} ellipsizeMode="tail" style={styles.text}>
+                {title}
+              </Text>
+            }>
+            <LinearGradient
+              colors={['#2FE0FF', '#D06BFF']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}>
+              <Text
+                numberOfLines={1}
+                ellipsizeMode="tail"
+                style={[styles.text, styles.opacity0]}>
+                {title}
+              </Text>
+            </LinearGradient>
+          </MaskedView>
+        )}
         <SettingIconCC
           width={18}
           height={18}
           color={colors2024['neutral-foot']}
         />
-      </Pressable>
-    </LinearGradient>
+      </View>
+    </Pressable>
   );
 };
 
@@ -157,7 +171,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    height: 22,
+    minHeight: 32,
     gap: 4,
   },
   emodeLabel: {
@@ -167,24 +181,15 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
   },
-  emodeValue: {
-    fontSize: 12,
-    lineHeight: 16,
-    maxWidth: 100,
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-    whiteSpace: 'nowrap',
-  },
-  enabledEmodeContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    borderWidth: 1,
-  },
   border: {
     padding: 1,
     borderRadius: 6,
     height: 32,
+    overflow: 'hidden',
+  },
+  borderGradient: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: 6,
   },
   inner: {
     backgroundColor: colors2024['neutral-bg-1'],
@@ -198,6 +203,9 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   disabledInner: {
     backgroundColor: colors2024['neutral-line'],
   },
+  enabledInner: {
+    borderRadius: 5,
+  },
   text: {
     fontSize: 12,
     lineHeight: 16,
@@ -207,6 +215,10 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     textOverflow: 'ellipsis',
     whiteSpace: 'nowrap',
     color: 'black',
+  },
+  androidText: {
+    color: '#8A6BFF',
+    flexShrink: 1,
   },
   disabledText: {
     fontSize: 12,

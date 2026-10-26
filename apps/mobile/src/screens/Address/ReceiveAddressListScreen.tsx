@@ -14,6 +14,7 @@ import { StackActions } from '@react-navigation/native';
 import { CHAINS_ENUM } from '@/constant/chains';
 import { preloadTransactionHotNavigator } from '@/perfs/preloads';
 import type { Account } from '@/types/account';
+import { storeApiAccounts } from '@/hooks/account';
 
 type CurrentAddressProps = NativeStackScreenProps<
   RootStackParamsList,
@@ -95,6 +96,13 @@ export function ReceiveAddressListScreen(): JSX.Element {
     },
     [navigation, route.params?.chainEnum, route.params?.tokenSymbol],
   );
+
+  React.useEffect(() => {
+    const accounts = storeApiAccounts.getAccounts();
+    if (accounts.length === 1) {
+      handleSelect(accounts[0]);
+    }
+  }, [handleSelect]);
 
   return (
     <NormalScreenContainer2024

@@ -1,5 +1,5 @@
 import { ContextMenuView } from '@/components2024/ContextMenuView/ContextMenuView';
-import { DappInfo } from '@/core/services/dappService';
+import type { DappInfo } from '@/core/services/dappService';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { stringUtils } from '@rabby-wallet/base-utils';
@@ -48,8 +48,8 @@ export const DappHistoryCardList = ({
             <ContextMenuView
               triggerProps={{ action: 'longPress' }}
               preViewBorderRadius={20}
-              menuConfig={{
-                menuTitle: stringUtils.unPrefix(item.origin, 'https://'),
+              menuTitle={stringUtils.unPrefix(item.origin, 'https://')}
+              getMenuConfig={() => ({
                 menuActions: [
                   {
                     title: 'Delete',
@@ -61,7 +61,7 @@ export const DappHistoryCardList = ({
                     },
                   },
                 ],
-              }}>
+              })}>
               <TouchableOpacity
                 onPress={() => {
                   onPress?.(item);

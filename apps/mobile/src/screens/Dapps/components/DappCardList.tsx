@@ -1,4 +1,4 @@
-import { DappInfo } from '@/core/services/dappService';
+import type { DappInfo } from '@/core/services/dappService';
 import { useThemeColors } from '@/hooks/theme';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';

@@ -122,4 +122,75 @@ describe('keyringService', () => {
       expect((keyringService as any)._isSubmittingPassword).toBe(false);
     });
   });
+
+  describe('startDeferredKeyringRuntimeRestore', () => {
+    it('does not let late restore completions mutate runtime keyrings after a failure', async () => {
+      let releaseSlowRestore!: () => void;
+
+      class SlowKeyring {
+        static type = 'SlowKeyring';
+        type = 'SlowKeyring';
+
+        async deserialize() {
+          await new Promise<void>(resolve => {
+            releaseSlowRestore = resolve;
+          });
+        }
+
+        async getAccounts() {
+          return ['0xslow'];
+        }
+      }
+
+      class FailingKeyring {
+        static type = 'FailingKeyring';
+        type = 'FailingKeyring';
+
+        async deserialize() {
+          throw new Error('restore failed');
+        }
+
+        async getAccounts() {
+          return [];
+        }
+      }
+
+      keyringService = new KeyringService({
+        encryptor: mockEncryptor as any,
+        keyringClasses: [SlowKeyring, FailingKeyring] as any,
+      });
+      keyringService.loadStore({
+        hasEncryptedKeyringData: true,
+      });
+      await keyringService.boot(password);
+
+      const previousKeyring = {
+        type: 'PreviousKeyring',
+      } as any;
+      keyringService.keyrings = [previousKeyring];
+      keyringService.memStore.updateState({
+        keyringRuntimeReady: false,
+      });
+      (keyringService as any).pendingKeyringRuntimeRestore = {
+        keyringsToRestore: [
+          { type: 'SlowKeyring', data: {} },
+          { type: 'FailingKeyring', data: {} },
+        ],
+        unencryptedKeyringData: [],
+        hasUnencryptedKeyringData: false,
+        scheduledAt: Date.now(),
+      };
+
+      await expect(
+        keyringService.startDeferredKeyringRuntimeRestore('test'),
+      ).rejects.toThrow('restore failed');
+      expect(keyringService.keyrings).toEqual([previousKeyring]);
+
+      releaseSlowRestore();
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(keyringService.keyrings).toEqual([previousKeyring]);
+    });
+  });
 });

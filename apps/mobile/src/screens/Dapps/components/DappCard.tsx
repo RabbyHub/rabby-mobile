@@ -2,13 +2,14 @@ import RcIconDisconnect from '@/assets/icons/dapp/icon-disconnect-circle.svg';
 import RcIconStarFull from '@/assets/icons/dapp/icon-star-full.svg';
 import RcIconStar from '@/assets/icons/dapp/icon-star.svg';
 import { TestnetChainLogo } from '@/components/Chain/TestnetChainLogo';
-import { DappInfo } from '@/core/services/dappService';
+import type { DappInfo } from '@/core/services/dappService';
 import { useTheme2024 } from '@/hooks/theme';
 import { findChain } from '@/utils/chain';
 import { createGetStyles2024 } from '@/utils/styles';
 import { stringUtils } from '@rabby-wallet/base-utils';
 import React from 'react';
-import { Image, Platform, StyleProp, View, ViewStyle } from 'react-native';
+import type { StyleProp, ViewStyle } from 'react-native';
+import { Image, Platform, View } from 'react-native';
 import {
   TouchableOpacity,
   TouchableWithoutFeedback,

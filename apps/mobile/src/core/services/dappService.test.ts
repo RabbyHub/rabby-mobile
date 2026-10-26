@@ -31,6 +31,15 @@ function loadDappServiceModule(initialStore?: DappStore) {
     ) {
       this.store = options.storageAdapter?.store || template;
     }
+
+    protected mutateStore(recipe: (draft: DappStore) => void) {
+      recipe(this.store);
+      return this.store;
+    }
+
+    getStoreSnapshot() {
+      return JSON.parse(JSON.stringify(this.store)) as DappStore;
+    }
   }
 
   jest.doMock('@rabby-wallet/persist-store', () => ({

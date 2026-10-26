@@ -239,19 +239,18 @@ abstract class MenuViewManagerBase : ReactClippingViewManager<MenuView>() {
 
   override fun receiveCommand(root: MenuView, commandId: Int, args: ReadableArray?) {
     when (commandId) {
-      COMMAND_SHOW -> root.show()
-    }
-  }
-
-  override fun receiveCommand(root: MenuView, commandId: String, args: ReadableArray?) {
-    when (commandId) {
-      NEW_ARCH_COMMAND_SHOW -> root.show()
+      COMMAND_SHOW -> root.show(
+        if (args != null && args.size() > 0 && !args.isNull(0)) {
+          args.getArray(0)
+        } else {
+          null
+        }
+      )
     }
   }
 
   companion object {
-    const val COMMAND_SHOW = 1
-    const val NEW_ARCH_COMMAND_SHOW = "show"
+    val COMMAND_SHOW = 1
     val SPACING_TYPES =
             arrayOf(
                     Spacing.ALL,

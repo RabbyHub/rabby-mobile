@@ -22,6 +22,28 @@ index 45e323e8fe045f2d9c74c912a446cfc81ce35b6b..463c0e1c95f10540eac9a290a21a33bf
  }
  
  // Resolves "LOCAL_SRC_FILES points to a missing file, Check that libfb.so exists or that its path is correct".
+diff --git a/lib/commonjs/index.js b/lib/commonjs/index.js
+index d641d5d..de0037b 100644
+--- a/lib/commonjs/index.js
++++ b/lib/commonjs/index.js
+@@ -31,9 +31,6 @@ const QuickCrypto = {
+   createCipheriv: _Cipher.createCipheriv,
+   createDecipher: _Cipher.createDecipher,
+   createDecipheriv: _Cipher.createDecipheriv,
+-  createPublicKey: _keys.createPublicKey,
+-  createPrivateKey: _keys.createPrivateKey,
+-  createSecretKey: _keys.createSecretKey,
+   publicEncrypt: _Cipher.publicEncrypt,
+   publicDecrypt: _Cipher.publicDecrypt,
+   privateDecrypt: _Cipher.privateDecrypt,
+@@ -52,5 +49,6 @@ const QuickCrypto = {
+   ...random,
+   getCiphers: _Utils.getCiphers,
+   getHashes: _Utils.getHashes,
+-  webcrypto: _webcrypto.default
++  webcrypto: _webcrypto.default,
++  ..._keys
+ };
 diff --git a/lib/module/index.js b/lib/module/index.js
 index f52cc589a4aef892833ecb2c43a547927c435a3d..8f5e1575519fcbbfed7e35ecc3bdfa1a2743c84b 100644
 --- a/lib/module/index.js

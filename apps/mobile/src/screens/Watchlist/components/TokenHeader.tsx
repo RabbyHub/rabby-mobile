@@ -39,12 +39,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
     gap: 2,
   },
-  priceCell: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    width: 'auto',
-    marginRight: 11.6,
-  },
   changeCell: {
     justifyContent: 'flex-end',
     alignItems: 'center',

@@ -1,11 +1,9 @@
-import { Chain } from '@/constant/chains';
-import { AppColorsVariants } from '@/constant/theme';
 import { apisSafe } from '@/core/apis/safe';
 import { useAccounts } from '@/hooks/account';
-import { useTheme2024, useThemeColors } from '@/hooks/theme';
+import { useTheme2024 } from '@/hooks/theme';
+import { useGnosisNetworks } from '@/hooks/gnosis/useGnosisNetworks';
 import { findChain } from '@/utils/chain';
 import { createGetStyles2024 } from '@/utils/styles';
-import type { BasicSafeInfo } from '@rabby-wallet/gnosis-sdk';
 import { useRequest } from 'ahooks';
 import { sortBy } from 'lodash';
 import React, { useEffect, useMemo, useState } from 'react';
@@ -18,57 +16,67 @@ import { Text } from '@/components/Typography';
 
 export const GnosisSafeInfoBar = ({
   address,
+  active = true,
 }: {
   address: string;
+  active?: boolean;
   type: string;
   brandName: string;
 }) => {
   const { t } = useTranslation();
   const { styles } = useTheme2024({ getStyle });
-  const [activeData, setActiveData] = useState<
-    | {
-        chain?: Chain | null;
-        data: BasicSafeInfo;
-      }
-    | undefined
-  >(undefined);
-
+  const [activeNetworkId, setActiveNetworkId] = useState<string>();
+  const { data: networks } = useGnosisNetworks({ address, active });
+  const networksKey = networks?.join(',');
   const { accounts } = useAccounts();
-  const { data: safeInfo } = useRequest(
+  const { data: safeInfo, cancel } = useRequest(
     async () => {
-      const networks = await apisSafe.getGnosisNetworkIds(address);
-      const res = await Promise.all(
-        networks.map(async networkId => {
-          const info = await apisSafe.getBasicSafeInfo({ address, networkId });
-
-          return {
-            chain: findChain({
-              networkId: networkId,
-            }),
-            data: {
-              ...info,
-            },
-          };
-        }),
+      const results = await Promise.allSettled(
+        (networks || []).map(async networkId => ({
+          networkId,
+          chain: findChain({ networkId }),
+          data: await apisSafe.getBasicSafeInfo({ address, networkId }),
+        })),
       );
-      const list = sortBy(res, item => {
-        return -(item?.data?.owners?.length || 0);
-      });
-      setActiveData(list[0]);
-      return list;
+      return {
+        address,
+        list: sortBy(
+          results.flatMap(result =>
+            result.status === 'fulfilled' && result.value.chain
+              ? [result.value]
+              : [],
+          ),
+          item => -(item.data.owners.length || 0),
+        ),
+      };
     },
     {
-      refreshDeps: [address],
+      ready: active && networks !== undefined,
+      refreshDeps: [address, networksKey],
     },
   );
+  useEffect(() => {
+    if (!active) {
+      cancel();
+    }
+  }, [active, cancel]);
 
-  // useEffect(() => {
-  //   if (address) {
-  //     apisSafe.syncGnosisNetworks(address);
-  //   }
-  // }, [address]);
+  const availableInfo = useMemo(
+    () =>
+      safeInfo?.address === address
+        ? safeInfo.list.filter(item => networks?.includes(item.networkId))
+        : [],
+    [address, networks, safeInfo],
+  );
+  const activeData =
+    availableInfo.find(item => item.networkId === activeNetworkId) ||
+    availableInfo[0];
 
-  if (!safeInfo) {
+  useEffect(() => {
+    setActiveNetworkId(activeData?.networkId);
+  }, [activeData?.networkId]);
+
+  if (!activeData) {
     return null;
   }
 
@@ -78,14 +86,14 @@ export const GnosisSafeInfoBar = ({
       <Item style={styles.subItem}>
         <View>
           <View style={styles.tabs}>
-            {safeInfo?.map(item => {
-              const isAcitve = activeData?.chain?.enum === item?.chain?.enum;
+            {availableInfo.map(item => {
+              const isAcitve = activeData.networkId === item.networkId;
               return (
                 <TouchableOpacity
                   onPress={() => {
-                    setActiveData(item);
+                    setActiveNetworkId(item.networkId);
                   }}
-                  key={item?.chain?.enum}>
+                  key={item.networkId}>
                   <View
                     style={[styles.tabItem, isAcitve && styles.tabItemActive]}>
                     <Text

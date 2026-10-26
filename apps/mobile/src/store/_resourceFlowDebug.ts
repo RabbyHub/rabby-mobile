@@ -1,4 +1,4 @@
-import { makeJsEEClass } from '@/core/services/_utils';
+import { makeJsEEClass } from '@/core/utils/makeJsEEClass';
 import { zCreate } from '@/core/utils/reexports';
 
 export type ResourceLocalTarget =

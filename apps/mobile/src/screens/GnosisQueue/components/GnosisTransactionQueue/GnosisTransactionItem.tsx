@@ -4,7 +4,7 @@ import { INTERNAL_REQUEST_ORIGIN, INTERNAL_REQUEST_SESSION } from '@/constant';
 import { apisSafe } from '@/core/apis/safe';
 import { sendRequest } from '@/core/apis/sendRequest';
 import { openapi } from '@/core/request';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { useThemeColors } from '@/hooks/theme';
 import { useSendRoutes } from '@/hooks/useSendRoutes';
@@ -15,13 +15,14 @@ import { intToHex } from '@rabby-wallet/biz-utils/dist/isomorphic/biz-number';
 import type { BasicSafeInfo } from '@rabby-wallet/gnosis-sdk';
 import type { SafeTransactionItem } from '@rabby-wallet/gnosis-sdk/dist/api';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
-import { ParseTxResponse } from '@rabby-wallet/rabby-api/dist/types';
+import type { ParseTxResponse } from '@rabby-wallet/rabby-api/dist/types';
 import { Skeleton } from '@rneui/themed';
 import { useMemoizedFn } from 'ahooks';
 import dayjs from 'dayjs';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleProp, View, ViewStyle } from 'react-native';
+import type { StyleProp, ViewStyle } from 'react-native';
+import { View } from 'react-native';
 import { toChecksumAddress } from 'web3-utils';
 import { GnosisTransactionConfirmations } from './GnosisTransactionConfirmations';
 import { GnosisTransactionExplain } from './GnosisTransactionExplain';
@@ -72,13 +73,15 @@ export const GnosisTransactionItem = ({
   }
   if (ago.hour < 24) {
     if (ago.hour > 0) {
-      agoText += `${ago.hour} ${t('hour')}`;
+      agoText += t(ago.hour === 1 ? 'global.time.hour' : 'global.time.hours', {
+        t: ago.hour,
+      });
     }
     if (ago.minute > 0) {
       if (agoText) agoText += ' ';
-      agoText += `${ago.minute} ${t('min')}`;
+      agoText += t('global.time.mins', { t: ago.minute });
     }
-    agoText += ` ${t('ago')}`;
+    agoText = t('global.time.ago', { time: agoText });
   } else {
     const date = dayjs(data.submissionDate);
     agoText = date.format('YYYY/MM/DD');

@@ -41,6 +41,9 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     gap: 11,
     paddingHorizontal: 16,
     paddingTop: 12,
+    paddingBottom: 8,
+    backgroundColor: colors2024['neutral-bg-1'],
+    borderRadius: 14,
   },
   image: {
     width: 123,

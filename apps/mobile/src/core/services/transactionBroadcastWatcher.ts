@@ -1,6 +1,7 @@
 import { findChainByID } from '@/utils/chain';
-import createPersistStore, {
+import {
   StorageAdapaterOptions,
+  StoreServiceBase,
 } from '@rabby-wallet/persist-store';
 import { TxRequest } from '@rabby-wallet/rabby-api/dist/types';
 import { openapi, testOpenapi } from '../request';
@@ -23,9 +24,12 @@ interface TransactionBroadcastWatcherStore {
   pendingTx: Record<string, WatcherItem>;
 }
 
-export class TransactionBroadcastWatcherService {
-  store!: TransactionBroadcastWatcherStore;
+export class TransactionBroadcastWatcherService extends StoreServiceBase<
+  TransactionBroadcastWatcherStore,
+  APP_STORE_NAMES.transactionBroadcastWatcher
+> {
   timers = {};
+  private started = false;
 
   transactionHistoryService: TransactionHistoryService;
   transactionWatcherService: TransactionWatcherService;
@@ -36,28 +40,19 @@ export class TransactionBroadcastWatcherService {
       transactionWatcherService: TransactionWatcherService;
     },
   ) {
+    super(
+      APP_STORE_NAMES.transactionBroadcastWatcher,
+      { pendingTx: {} },
+      { storageAdapter: options?.storageAdapter },
+    );
     this.transactionHistoryService = options?.transactionHistoryService;
     this.transactionWatcherService = options?.transactionWatcherService;
-    this.store = createPersistStore<TransactionBroadcastWatcherStore>(
-      {
-        name: APP_STORE_NAMES.transactionBroadcastWatcher,
-        template: {
-          pendingTx: {},
-        },
-      },
-      {
-        storage: options?.storageAdapter,
-      },
-    );
-
-    this.roll();
   }
 
   addTx = (reqId: string, data: WatcherItem) => {
-    this.store.pendingTx = {
-      ...this.store.pendingTx,
-      [reqId]: data,
-    };
+    this.mutateStore(draft => {
+      draft.pendingTx[reqId] = data;
+    });
   };
 
   updateTx = (id: string, data: Partial<WatcherItem>) => {
@@ -65,12 +60,9 @@ export class TransactionBroadcastWatcherService {
     if (!tx) {
       return;
     }
-    Object.assign(tx, data);
-
-    this.store.pendingTx = {
-      ...this.store.pendingTx,
-      [id]: tx,
-    };
+    this.mutateStore(draft => {
+      Object.assign(draft.pendingTx[id], data);
+    });
   };
 
   queryTxRequests = async () => {
@@ -150,14 +142,20 @@ export class TransactionBroadcastWatcherService {
   };
 
   removeTx = (reqId: string) => {
-    const pendingTx = { ...this.store.pendingTx };
-    delete pendingTx[reqId];
-    this.store.pendingTx = {
-      ...pendingTx,
-    };
+    this.mutateStore(draft => {
+      delete draft.pendingTx[reqId];
+    });
   };
 
   // fetch pending txs status every 5s
+  start = () => {
+    if (this.started) {
+      return;
+    }
+    this.started = true;
+    this.roll();
+  };
+
   roll = () => {
     interval(async () => {
       this.queryTxRequests();
@@ -165,17 +163,17 @@ export class TransactionBroadcastWatcherService {
   };
 
   clearPendingTx = (address: string) => {
-    this.store.pendingTx = Object.entries(this.store.pendingTx).reduce(
-      (m, [key, v]) => {
-        // keep pending txs of other addresses
-        if (v && !isSameAddress(address, v.address)) {
-          m[key] = v;
+    this.mutateStore(draft => {
+      Object.entries(draft.pendingTx).forEach(([key, value]) => {
+        if (!value) {
+          delete draft.pendingTx[key];
+          return;
         }
-
-        return m;
-      },
-      {},
-    );
+        if (isSameAddress(address, value.address)) {
+          delete draft.pendingTx[key];
+        }
+      });
+    });
   };
   removeLocalPendingTx = ({
     address,
@@ -186,29 +184,20 @@ export class TransactionBroadcastWatcherService {
     chainId?: number;
     nonce?: number;
   }) => {
-    this.store.pendingTx = Object.entries(this.store.pendingTx).reduce(
-      (m, [key, v]) => {
-        if (!v) {
-          return m;
+    this.mutateStore(draft => {
+      Object.entries(draft.pendingTx).forEach(([key, value]) => {
+        if (!value) {
+          delete draft.pendingTx[key];
+          return;
         }
-        const isSameAddr = isSameAddress(address, v.address);
-
         if (
-          isSameAddr &&
-          (chainId == null ? true : +chainId === v?.chainId) &&
-          (nonce == null ? true : +v.nonce === +nonce)
+          isSameAddress(address, value.address) &&
+          (chainId == null || +chainId === value.chainId) &&
+          (nonce == null || +value.nonce === +nonce)
         ) {
-          return m;
+          delete draft.pendingTx[key];
         }
-
-        // keep pending txs of other addresses
-        if (v) {
-          m[key] = v;
-        }
-
-        return m;
-      },
-      {},
-    );
+      });
+    });
   };
 }

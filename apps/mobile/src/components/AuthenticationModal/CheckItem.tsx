@@ -1,8 +1,8 @@
-import { StyleProp, StyleSheet, ViewStyle, View } from 'react-native';
+import { StyleProp, StyleSheet, ViewStyle } from 'react-native';
 
-import { createGetStyles, makeDebugBorder } from '@/utils/styles';
+import { CheckBoxRect } from '@/components2024/CheckBox';
+import { createGetStyles } from '@/utils/styles';
 import { useThemeStyles } from '@/hooks/theme';
-import { Radio } from '../Radio';
 import { TouchableOpacity } from '@gorhom/bottom-sheet';
 import { Text } from '@/components/Typography';
 
@@ -29,13 +29,7 @@ export const CheckItem: React.FC<Props> = ({
         style,
       ])}
       onPress={onPress}>
-      <View>
-        <Radio
-          containerStyle={styles.radio}
-          iconStyle={styles.iconStyle}
-          checked={checked}
-        />
-      </View>
+      <CheckBoxRect checked={checked} />
       <Text style={styles.text}>{label}</Text>
     </TouchableOpacity>
   );
@@ -55,20 +49,12 @@ const getStyle = createGetStyles(colors => {
     mainChecked: {
       borderColor: colors['blue-default'],
     },
-    iconStyle: { width: 20, height: 20 },
     text: {
       color: colors['neutral-title1'],
       fontSize: 14,
       lineHeight: 18,
       fontWeight: '500',
       flex: 1,
-    },
-    radio: {
-      padding: 0,
-      margin: 0,
-      marginLeft: 0,
-      marginRight: 0,
-      justifyContent: 'center',
     },
   };
 });

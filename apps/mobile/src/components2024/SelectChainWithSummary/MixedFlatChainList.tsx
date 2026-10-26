@@ -1,9 +1,10 @@
 import React, { useEffect, useMemo } from 'react';
-import { View, NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
+import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
+import { View } from 'react-native';
 import { useShallow } from 'zustand/shallow';
 
 import { zCreate, zMutative } from '@/core/utils/reexports';
-import { CHAINS_ENUM, Chain } from '@/constant/chains';
+import type { CHAINS_ENUM, Chain } from '@/constant/chains';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import ChainItem from './ChainItem';
@@ -13,11 +14,10 @@ import {
 } from '@/hooks/accountChainBalance';
 import { useAccountInfo } from '@/screens/Address/components/MultiAssets/hooks';
 import { BottomSheetSectionList } from '@gorhom/bottom-sheet';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
+import type { ITokenItem, TokenEntityId } from '@/store/tokens';
 import {
   EMPTY_TOKEN_ENTITY_IDS,
-  ITokenItem,
-  TokenEntityId,
   tokenEntityResourceStore,
   useTokenIndexStore,
 } from '@/store/tokens';

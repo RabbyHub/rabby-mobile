@@ -3,6 +3,11 @@ import { initWalletConnect } from './client';
 import { addWalletConnectLog } from './debugLog';
 import { getWalletConnectErrorMessage } from './error';
 import {
+  forgetWalletConnectPairingBrowserOrigin,
+  getWalletConnectPairingTopicFromUri,
+  rememberWalletConnectPairingBrowserOrigin,
+} from './pairingBrowserOrigin';
+import {
   clearWalletConnectDappRedirectPending,
   markWalletConnectDappRedirectPending,
 } from './redirectState';
@@ -40,10 +45,26 @@ function formatPairingError(error: unknown) {
 export async function pairWalletConnectUri(input: {
   uri: string;
   source: WalletConnectPairingSource;
+  browserOrigin?: string;
 }) {
   let parsed: ReturnType<typeof parseWalletConnectUri>;
+  let browserPairingTopic: string | null = null;
   try {
     parsed = parseWalletConnectUri(input.uri);
+    if (input.browserOrigin !== undefined) {
+      const topic = getWalletConnectPairingTopicFromUri(parsed.uri);
+      if (input.source !== 'inner-webview' || !topic) {
+        throw new Error(i18n.t('page.walletConnect.pairingFailed'));
+      }
+      const didRememberOrigin = rememberWalletConnectPairingBrowserOrigin({
+        topic,
+        browserOrigin: input.browserOrigin,
+      });
+      if (!didRememberOrigin) {
+        throw new Error(i18n.t('page.walletConnect.pairingFailed'));
+      }
+      browserPairingTopic = topic;
+    }
   } catch (error) {
     const message = formatPairingError(error);
     setWalletConnectDebugState(prev => ({
@@ -90,6 +111,9 @@ export async function pairWalletConnectUri(input: {
     });
     addWalletConnectLog('pairing', 'pairing submitted');
   } catch (error) {
+    if (browserPairingTopic) {
+      forgetWalletConnectPairingBrowserOrigin(browserPairingTopic);
+    }
     if (input.source === 'deeplink') {
       clearWalletConnectDappRedirectPending('pairing failed');
     }

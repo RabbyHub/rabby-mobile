@@ -1,13 +1,8 @@
 /* eslint-disable react-native/no-inline-styles */
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import {
-  Dimensions,
-  StyleProp,
-  TouchableOpacity,
-  View,
-  ViewStyle,
-} from 'react-native';
+import type { StyleProp, ViewStyle } from 'react-native';
+import { Dimensions, TouchableOpacity, View } from 'react-native';
 
 import { default as RcCaretDownCC } from './icons/caret-down-cc.svg';
 import TouchableView from '../Touchable/TouchableView';
@@ -16,9 +11,10 @@ import {
   useSceneAccountInfo,
   useSwitchSceneCurrentAccount,
 } from '@/hooks/accountsSwitcher';
-import { AccountSwitcherAopProps, useAccountSceneVisible } from './hooks';
+import type { AccountSwitcherAopProps } from './hooks';
+import { useAccountSceneVisible } from './hooks';
 import React, { useCallback, useEffect, useMemo } from 'react';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { LinearGradientContainer } from '@/components2024/ScreenContainer/LinearGradientContainer';
 import {
   AddressItemInPanel,
@@ -32,7 +28,7 @@ import { IS_ANDROID } from '@/core/native/utils';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { useCreationWithShallowCompare } from '@/hooks/common/useMemozied';
 import { AbstractPortfolioToken } from '@/screens/Home/types';
-import { ITokenItem } from '@/store/tokens';
+import type { ITokenItem } from '@/store/tokens';
 import { Text } from '@/components/Typography';
 
 export type AccountDisabledTipsResolver = (

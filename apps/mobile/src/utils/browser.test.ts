@@ -17,7 +17,7 @@ function loadBrowserModule() {
     },
   }));
 
-  jest.doMock('react-native-fs', () => ({
+  jest.doMock('@rabby-wallet/react-native-fs', () => ({
     DocumentDirectoryPath: '/documents',
   }));
 

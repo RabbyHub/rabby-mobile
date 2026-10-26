@@ -3,82 +3,84 @@ import {
   ContractAddress,
   UserData,
 } from '@rabby-wallet/rabby-security-engine/dist/rules';
-import { securityEngineService } from '../services';
+import { securityEngineServiceApi } from '@/core/serviceApi/securityEngine';
 
 export const getSecurityEngineRules = () => {
-  return securityEngineService.getRules();
+  return securityEngineServiceApi.getRules();
 };
 
 export const getSecurityEngineUserData = () => {
-  return securityEngineService.getUserData();
+  return securityEngineServiceApi.getUserData();
 };
 
 export const executeSecurityEngine = (actionData: ContextActionData) => {
-  return securityEngineService.execute(actionData);
+  return securityEngineServiceApi.execute(actionData);
 };
 
 export const updateUserData = (data: UserData) => {
-  securityEngineService.updateUserData(data);
+  return securityEngineServiceApi.updateUserData(data);
 };
 
-export const addContractWhitelist = (contract: ContractAddress) => {
-  securityEngineService.removeContractBlacklistFromAllChains(contract);
-  securityEngineService.addContractWhitelist(contract);
+export const addContractWhitelist = async (contract: ContractAddress) => {
+  await securityEngineServiceApi.removeContractBlacklistFromAllChains(contract);
+  await securityEngineServiceApi.addContractWhitelist(contract);
 };
 
-export const addContractBlacklist = (contract: ContractAddress) => {
-  securityEngineService.removeContractWhitelist(contract);
-  securityEngineService.addContractBlacklist(contract);
+export const addContractBlacklist = async (contract: ContractAddress) => {
+  await securityEngineServiceApi.removeContractWhitelist(contract);
+  await securityEngineServiceApi.addContractBlacklist(contract);
 };
 
 export const removeContractWhitelist = (contract: ContractAddress) => {
-  securityEngineService.removeContractWhitelist(contract);
+  return securityEngineServiceApi.removeContractWhitelist(contract);
 };
 
 export const removeContractBlacklist = (contract: ContractAddress) => {
-  securityEngineService.removeContractBlacklistFromAllChains(contract);
+  return securityEngineServiceApi.removeContractBlacklistFromAllChains(
+    contract,
+  );
 };
 
-export const addAddressWhitelist = (address: string) => {
-  securityEngineService.removeAddressBlacklist(address);
-  securityEngineService.addAddressWhitelist(address);
+export const addAddressWhitelist = async (address: string) => {
+  await securityEngineServiceApi.removeAddressBlacklist(address);
+  await securityEngineServiceApi.addAddressWhitelist(address);
 };
 
-export const addAddressBlacklist = (address: string) => {
-  securityEngineService.removeAddressWhitelist(address);
-  securityEngineService.addAddressBlacklist(address);
+export const addAddressBlacklist = async (address: string) => {
+  await securityEngineServiceApi.removeAddressWhitelist(address);
+  await securityEngineServiceApi.addAddressBlacklist(address);
 };
 
 export const removeAddressWhitelist = (address: string) => {
-  securityEngineService.removeAddressWhitelist(address);
+  return securityEngineServiceApi.removeAddressWhitelist(address);
 };
 
 export const removeAddressBlacklist = (address: string) => {
-  securityEngineService.removeAddressBlacklist(address);
+  return securityEngineServiceApi.removeAddressBlacklist(address);
 };
 
-export const addOriginWhitelist = (origin: string) => {
-  securityEngineService.removeOriginBlacklist(origin);
-  securityEngineService.addOriginWhitelist(origin);
+export const addOriginWhitelist = async (origin: string) => {
+  await securityEngineServiceApi.removeOriginBlacklist(origin);
+  await securityEngineServiceApi.addOriginWhitelist(origin);
 };
 
-export const addOriginBlacklist = (origin: string) => {
-  securityEngineService.removeOriginWhitelist(origin);
-  securityEngineService.addOriginBlacklist(origin);
+export const addOriginBlacklist = async (origin: string) => {
+  await securityEngineServiceApi.removeOriginWhitelist(origin);
+  await securityEngineServiceApi.addOriginBlacklist(origin);
 };
 
 export const removeOriginWhitelist = (origin: string) => {
-  securityEngineService.removeOriginWhitelist(origin);
+  return securityEngineServiceApi.removeOriginWhitelist(origin);
 };
 
 export const removeOriginBlacklist = (origin: string) => {
-  securityEngineService.removeOriginBlacklist(origin);
+  return securityEngineServiceApi.removeOriginBlacklist(origin);
 };
 
 export const ruleEnableStatusChange = (id: string, value: boolean) => {
   if (value) {
-    securityEngineService.enableRule(id);
+    return securityEngineServiceApi.enableRule(id);
   } else {
-    securityEngineService.disableRule(id);
+    return securityEngineServiceApi.disableRule(id);
   }
 };

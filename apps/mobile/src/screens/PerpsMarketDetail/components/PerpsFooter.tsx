@@ -5,14 +5,22 @@ import {
   BOTTOM_BUTTON_GAP,
   BOTTOM_BUTTON_SINGLE_HEIGHT,
   BOTTOM_BUTTON_TOP_OFFSET,
+  BOTTOM_BUTTON_TEXT_LINE_HEIGHT,
   getBottomButtonBottomOffset,
 } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import React, { useMemo } from 'react';
+import React from 'react';
+import { IS_ANDROID } from '@/core/native/utils';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+// Keep this override outside createGetStyles2024: its JSON normalization drops
+// undefined, which would let Button restore its full-height lineHeight.
+const naturalAndroidLineHeight = IS_ANDROID
+  ? { lineHeight: undefined }
+  : undefined;
 
 export const PerpsFooter: React.FC<{
   onLongPress?(): void;
@@ -34,6 +42,7 @@ export const PerpsFooter: React.FC<{
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const { bottom } = useSafeAreaInsets();
+  const titleStyle = [styles.titleFontsize, naturalAndroidLineHeight];
   const footerStyle = [
     styles.footer,
     { paddingBottom: getBottomButtonBottomOffset(bottom) },
@@ -47,21 +56,21 @@ export const PerpsFooter: React.FC<{
             <View style={styles.btnContainer}>
               <Button
                 type="hyperliquid-light"
-                buttonStyle={{ height: BOTTOM_BUTTON_DOUBLE_HEIGHT }}
+                height={BOTTOM_BUTTON_DOUBLE_HEIGHT}
                 title={t('page.perpsDetail.action.add', {
                   direction,
                 })}
-                titleStyle={styles.titleFontsize}
+                titleStyle={titleStyle}
                 onPress={onAddPress}
               />
             </View>
             <View style={styles.btnContainer}>
               <Button
                 type="hyperliquid"
-                buttonStyle={{ height: BOTTOM_BUTTON_DOUBLE_HEIGHT }}
+                height={BOTTOM_BUTTON_DOUBLE_HEIGHT}
                 title={t('page.perpsDetail.action.close')}
                 onPress={onClosePress}
-                titleStyle={styles.titleFontsize}
+                titleStyle={titleStyle}
               />
             </View>
           </View>
@@ -70,7 +79,7 @@ export const PerpsFooter: React.FC<{
             type="hyperliquid"
             title={t('page.perpsDetail.action.close')}
             onPress={onClosePress}
-            titleStyle={styles.titleFontsize}
+            titleStyle={[titleStyle, styles.singleTitle]}
             height={BOTTOM_BUTTON_SINGLE_HEIGHT}
           />
         )}
@@ -84,9 +93,9 @@ export const PerpsFooter: React.FC<{
           <View style={styles.btnContainer}>
             <Button
               type="primary"
-              titleStyle={styles.titleFontsize}
+              titleStyle={titleStyle}
+              height={BOTTOM_BUTTON_DOUBLE_HEIGHT}
               buttonStyle={{
-                height: BOTTOM_BUTTON_DOUBLE_HEIGHT,
                 backgroundColor: colors2024['green-default'],
               }}
               title={t('page.perpsDetail.action.long')}
@@ -96,9 +105,9 @@ export const PerpsFooter: React.FC<{
           <View style={styles.btnContainer}>
             <Button
               type="primary"
-              titleStyle={styles.titleFontsize}
+              titleStyle={titleStyle}
+              height={BOTTOM_BUTTON_DOUBLE_HEIGHT}
               buttonStyle={{
-                height: BOTTOM_BUTTON_DOUBLE_HEIGHT,
                 backgroundColor: colors2024['red-default'],
               }}
               title={t('page.perpsDetail.action.short')}
@@ -133,8 +142,18 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   titleFontsize: {
     fontSize: 18,
-    lineHeight: 22,
+    ...(IS_ANDROID
+      ? {
+          // Center the natural glyph metrics inside Button's 1px border.
+          // A full-button lineHeight plus font padding overflows this slot.
+          height: BOTTOM_BUTTON_DOUBLE_HEIGHT - 2,
+          paddingVertical: 0,
+          includeFontPadding: false,
+          textAlignVertical: 'center' as const,
+        }
+      : { lineHeight: BOTTOM_BUTTON_TEXT_LINE_HEIGHT }),
   },
+  singleTitle: IS_ANDROID ? { height: BOTTOM_BUTTON_SINGLE_HEIGHT - 2 } : {},
   btnGroup: {
     display: 'flex',
     flexDirection: 'row',

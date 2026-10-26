@@ -4,14 +4,12 @@ import { StyleSheet, View, TouchableOpacity, TextStyle } from 'react-native';
 import { BottomSheetInput } from '@/components/Input';
 import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
-import { useAlias } from '@/hooks/alias';
 import IconEdit from '@/assets/icons/approval/editpen.svg';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
 import {
   AppBottomSheetModal,
   AppBottomSheetModalTitle,
 } from '@/components/customized/BottomSheet';
-import useCommonStyle from '@/components/Approval/hooks/useCommonStyle';
 import { FooterButtonGroup } from '@/components/FooterButton/FooterButtonGroup';
 import { useApprovalAlias } from '@/components/Approval/hooks/useApprovalAlias';
 import { Text } from '@/components/Typography';
@@ -26,6 +24,28 @@ const getStyles = (colors: AppColorsVariants) =>
       paddingHorizontal: 20,
       paddingTop: 4,
     },
+    container: {
+      width: '100%',
+    },
+    aliasRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'flex-end',
+    },
+    aliasText: {
+      marginRight: 2,
+      flexShrink: 1,
+      minWidth: 0,
+    },
+    editIcon: {
+      width: 13,
+      height: 13,
+      flexShrink: 0,
+    },
+    errorText: {
+      marginTop: 10,
+      color: colors['red-default'],
+    },
   });
 
 const AddressMemo = ({
@@ -36,7 +56,7 @@ const AddressMemo = ({
   textStyle?: TextStyle;
 }) => {
   const alias = useApprovalAlias();
-  const addressAlias = alias.accountMap[address]?.alias;
+  const addressAlias = alias.accountMap[address.toLowerCase()]?.alias;
   const [visible, setVisible] = useState(false);
   const [inputText, setInputText] = useState(addressAlias || '');
   const [errorMessage, setErrorMessage] = useState('');
@@ -45,7 +65,6 @@ const AddressMemo = ({
   const colors = useThemeColors();
   const styles = getStyles(colors);
   const modalRef = React.useRef<AppBottomSheetModal>(null);
-  const commonStyle = useCommonStyle();
 
   const handleConfirm = () => {
     if (!inputText) {
@@ -88,13 +107,13 @@ const AddressMemo = ({
   }, [inputText]);
 
   return (
-    <View>
+    <View style={styles.container}>
       <TouchableOpacity onPress={handleEditMemo}>
-        <View style={commonStyle.rowFlexCenterItem}>
-          <Text className="mr-[2]" style={textStyle}>
+        <View style={styles.aliasRow}>
+          <Text style={[styles.aliasText, textStyle]}>
             {addressAlias || '-'}
           </Text>
-          <IconEdit className="w-[13px]" />
+          <IconEdit style={styles.editIcon} />
         </View>
       </TouchableOpacity>
       <AppBottomSheetModal
@@ -114,7 +133,7 @@ const AddressMemo = ({
               value={inputText}
               placeholder="Please input address note"
             />
-            <Text className="mt-[10] text-r-red-default">{errorMessage}</Text>
+            <Text style={styles.errorText}>{errorMessage}</Text>
           </View>
           <FooterButtonGroup
             onCancel={() => setVisible(false)}

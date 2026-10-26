@@ -1,15 +1,10 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import {
-  Keyboard,
-  Platform,
-  StyleProp,
-  TouchableOpacity,
-  View,
-  ViewStyle,
-} from 'react-native';
+import type { StyleProp, ViewStyle } from 'react-native';
+import { Keyboard, Platform, TouchableOpacity, View } from 'react-native';
 
 import { ReactIconHome } from '@/assets2024/icons/browser';
 import { NextSearchBar } from '@/components2024/SearchBar';
+import { AppBottomSheetTextInput } from '@/components/customized/BottomSheetTextInput';
 import { useBrowserHistory } from '@/hooks/browser/useBrowserHistory';
 import { useTheme2024 } from '@/hooks/theme';
 import { useSafeSizes } from '@/hooks/useAppLayout';
@@ -35,7 +30,7 @@ import { BrowserHot } from './BrowserHot';
 import { BrowserFavorite } from './BrowserFavorite';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LocalPannableDraggableView } from '@/components/customized/BottomSheetDraggableView';
-import { dappService } from '@/core/services';
+import { dappServiceApi } from '@/core/serviceApi/dapp';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { browserApis } from '@/hooks/browser/useBrowser';
 
@@ -130,10 +125,13 @@ export function BrowserSearch({
       isOpenURLRef.current = true;
       Keyboard.dismiss();
       await waitKeyboardHide();
-      if (
-        options?.isRemindOpen &&
-        !dappService.getDapp(safeGetOrigin(url))?.isSkipRemind
-      ) {
+      const dapp = options?.isRemindOpen
+        ? await dappServiceApi.getDapp(safeGetOrigin(url)).catch(error => {
+            console.error('[BrowserSearch] load dapp state failed', error);
+            return undefined;
+          })
+        : undefined;
+      if (options?.isRemindOpen && !dapp?.isSkipRemind) {
         browserApis.setPartialBrowserState({
           isShowDappInfo: true,
           dappInfoUrl: url,
@@ -270,7 +268,7 @@ export function BrowserSearch({
           />
         </TouchableOpacity> */}
         <NextSearchBar
-          as="BottomSheetTextInput"
+          inputComponent={AppBottomSheetTextInput}
           value={searchText}
           onChangeText={setSearchText}
           onCancel={handleCancel}

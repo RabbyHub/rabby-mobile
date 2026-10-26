@@ -2,24 +2,32 @@ import { useCallback, useEffect, useMemo } from 'react';
 import { atom, useAtom } from 'jotai';
 import useAsyncFn from 'react-use/lib/useAsyncFn';
 
-import {
-  KeyringAccountWithAlias,
-  storeApiAccounts,
-  useAccounts,
-} from '@/hooks/account';
+import type { KeyringAccountWithAlias } from '@/hooks/account';
+import { storeApiAccounts, useAccounts } from '@/hooks/account';
 import { openapi } from '@/core/request';
-import { ApprovalStatus } from '@rabby-wallet/rabby-api/dist/types';
+import type { ApprovalStatus } from '@rabby-wallet/rabby-api/dist/types';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import PQueue from 'p-queue';
 import { useMemoizedFn } from 'ahooks';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { zCreate } from '@/core/utils/reexports';
-import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
+import type { UpdaterOrPartials } from '@/core/utils/store';
+import { resolveValFromUpdater } from '@/core/utils/store';
 import { useCreationWithShallowCompare } from '@/hooks/common/useMemozied';
+import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 
-// const approvalStatusAtom = atom<ApprovalStatus[]>([]);
-const approvalStatusStore = zCreate<ApprovalStatus[]>(() => []);
-function setApprovalState(valOrFunc: UpdaterOrPartials<ApprovalStatus[]>) {
+type SingleAddressApprovalStatus = {
+  address: string | null;
+  data: ApprovalStatus[];
+};
+
+const approvalStatusStore = zCreate<SingleAddressApprovalStatus>(() => ({
+  address: null,
+  data: [],
+}));
+function setApprovalState(
+  valOrFunc: UpdaterOrPartials<SingleAddressApprovalStatus>,
+) {
   approvalStatusStore.setState(prev => {
     const { newVal, changed } = resolveValFromUpdater(prev, valOrFunc, {
       strict: true,
@@ -36,7 +44,13 @@ export function useApprovalAlert({
 }: {
   account: Account | null | undefined;
 }) {
-  const approvalState = approvalStatusStore(s => s);
+  const approvalState = useActivityStore(
+    approvalStatusStore,
+    state => state,
+    Object.is,
+    { storeLabel: 'single-address-approval-status' },
+  );
+  const currentAddress = currentAccount?.address.toLowerCase() ?? null;
 
   const [, loadApprovalStatus] = useAsyncFn(async () => {
     if (
@@ -44,24 +58,33 @@ export function useApprovalAlert({
       currentAccount.type !== KEYRING_TYPE.WatchAddressKeyring
     ) {
       try {
-        const data = await openapi.approvalStatus(currentAccount!.address);
-        setApprovalState(data);
+        const address = currentAccount.address;
+        const data = await openapi.approvalStatus(address);
+        setApprovalState({
+          address: address.toLowerCase(),
+          data,
+        });
       } catch (error) {}
+    } else {
+      setApprovalState({
+        address: currentAddress,
+        data: [],
+      });
     }
     return;
-  }, [currentAccount?.address]);
-
-  useEffect(() => {
-    loadApprovalStatus();
-  }, [loadApprovalStatus]);
+  }, [currentAddress, currentAccount?.type]);
 
   const approvalRiskAlert = useMemo(() => {
-    return approvalState.reduce(
+    if (approvalState.address !== currentAddress) {
+      return 0;
+    }
+
+    return approvalState.data.reduce(
       (pre, now) =>
         pre + now.nft_approval_danger_cnt + now.token_approval_danger_cnt,
       0,
     );
-  }, [approvalState]);
+  }, [approvalState, currentAddress]);
 
   return {
     loadApprovalStatus,
@@ -232,7 +255,12 @@ async function refreshApprovalAlertCountsForAccounts(
 }
 
 export function useApprovalAlertTotal() {
-  return approvalsAlertStore(s => s.total);
+  return useActivityStore(
+    approvalsAlertStore,
+    state => state.total,
+    Object.is,
+    { storeLabel: 'home-approval-badge' },
+  );
 }
 
 export function triggerApprovalAlertCounts(cacheTime: number) {

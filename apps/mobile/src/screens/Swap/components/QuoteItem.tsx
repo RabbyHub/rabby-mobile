@@ -1,5 +1,5 @@
 /* eslint-disable react-native/no-inline-styles */
-import ImgLock from '@/assets/icons/swap/lock.svg';
+import ImgLockCC from '@/assets/icons/swap/lock-cc.svg';
 import { CHAINS_ENUM } from '@debank/common';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { QuoteResult } from '@rabby-wallet/rabby-swap/dist/quote';
@@ -49,6 +49,7 @@ export interface QuoteItemProps {
   sortIncludeGasFee: boolean;
   onPress?: () => void;
   onCloseQuoteList?: () => void;
+  onSelect?: () => void;
 }
 
 export const DexQuoteItem = (
@@ -82,6 +83,7 @@ export const DexQuoteItem = (
     onlyShow,
     onPress,
     onCloseQuoteList,
+    onSelect,
   } = props;
 
   const { styles, colors2024 } = useTheme2024({ getStyle });
@@ -242,6 +244,7 @@ export const DexQuoteItem = (
     });
 
     onCloseQuoteList?.();
+    onSelect?.();
   }, [
     gasFeeTooHigh,
     inSufficient,
@@ -252,6 +255,7 @@ export const DexQuoteItem = (
     preExecResult,
     receiveToken.decimals,
     onCloseQuoteList,
+    onSelect,
     handleTips,
   ]);
 
@@ -299,7 +303,7 @@ export const DexQuoteItem = (
       activeOpacity={inSufficient || gasFeeTooHigh ? 1 : 0.2}
       style={[
         styles.dexContainer,
-        onlyShow ? styles.onlyShow : styles.normal,
+        onlyShow ? styles.onlyShow : styles.card,
         isActive && styles.active,
         inSufficient && styles.insufficient,
         isErrorQuote && styles.errorQuote,
@@ -317,22 +321,32 @@ export const DexQuoteItem = (
             loaded
             logo={quoteProviderInfo.logo}
             isLoading={isLoading}
+            size={30}
           />
-          <Text style={styles.nameText} numberOfLines={1} ellipsizeMode="tail">
-            {quoteProviderInfo.name}
-          </Text>
-          {!!preExecResult?.shouldApproveToken && (
-            <TouchableOpacity onPress={() => handleTips('approve')}>
-              <ImgLock width={16} height={16} />
-            </TouchableOpacity>
-          )}
-          {!onlyShow && isBestQuote && (
-            <View style={styles.bestInlineTag}>
-              <Text style={styles.bestInlineTagText}>
-                {t('page.swap.best')}
-              </Text>
-            </View>
-          )}
+          <View style={styles.providerMeta}>
+            <Text
+              style={styles.nameText}
+              numberOfLines={1}
+              ellipsizeMode="tail">
+              {quoteProviderInfo.name}
+            </Text>
+            {!!preExecResult?.shouldApproveToken && (
+              <TouchableOpacity onPress={() => handleTips('approve')}>
+                <ImgLockCC
+                  width={16}
+                  height={16}
+                  color={colors2024['neutral-foot']}
+                />
+              </TouchableOpacity>
+            )}
+            {!onlyShow && isBestQuote && (
+              <View style={[styles.bestInlineTag, styles.bestInlineTagCompact]}>
+                <Text style={styles.bestInlineTagText}>
+                  {t('page.swap.best')}
+                </Text>
+              </View>
+            )}
+          </View>
         </View>
 
         <View style={styles.rightSection}>
@@ -386,6 +400,12 @@ export const DexQuoteItem = (
         <View style={styles.diffBadge}>
           <Text style={styles.diffBadgeText}>{diffPercent}</Text>
         </View>
+      ) : !disabled && !onlyShow && isBestQuote ? (
+        <View style={[styles.diffBadge, styles.bestDiffBadge]}>
+          <Text style={[styles.diffBadgeText, styles.bestDiffBadgeText]}>
+            0.00%
+          </Text>
+        </View>
       ) : null}
     </TouchableOpacity>
   );
@@ -411,10 +431,15 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     borderWidth: 0,
     borderRadius: 0,
   },
-  normal: {
+  card: {
     backgroundColor: isLight
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-bg-2'],
+    shadowColor: 'rgba(0, 0, 0, 0.03)',
+    shadowOpacity: 1,
+    shadowRadius: 14.4,
+    shadowOffset: { width: 0, height: 20 },
+    elevation: 2,
   },
   active: {
     backgroundColor: colors2024['brand-light-1'],
@@ -435,15 +460,20 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   leftSection: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 8,
     flex: 1,
     overflow: 'hidden',
-    marginRight: 20,
+  },
+  providerMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    flexShrink: 1,
   },
   rightSection: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 6,
     justifyContent: 'flex-end',
     flexShrink: 0,
     maxWidth: '55%',
@@ -471,6 +501,11 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
     color: colors2024['neutral-InvertHighlight'],
+  },
+  bestInlineTagCompact: {
+    height: 'auto',
+    paddingHorizontal: 6,
+    paddingVertical: 1,
   },
   failedTipText: {
     fontSize: 14,
@@ -525,7 +560,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   diffBadge: {
     position: 'absolute',
     top: -1,
-    right: 0,
+    right: -1,
     borderRadius: 0,
     borderBottomLeftRadius: 8,
     paddingHorizontal: 6,
@@ -538,5 +573,11 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontFamily: 'SF Pro Rounded',
     fontWeight: '700',
     color: colors2024['red-default'],
+  },
+  bestDiffBadge: {
+    backgroundColor: colors2024['green-light-1'],
+  },
+  bestDiffBadgeText: {
+    color: colors2024['green-default'],
   },
 }));

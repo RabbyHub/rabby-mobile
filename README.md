@@ -26,7 +26,6 @@ This repository contains the following packages [^fn1]:
 - [`@rabby-wallet/service-keyring`](packages/service-keyring)
 - [`@rabby-wallet/universal-providers`](packages/providers)
 - [`dev-console-cra`](apps/dev-console-cra)
-- [`go-rabby-io`](apps/go.rabby.io)
 - [`mobile-local-pages`](apps/mobile-local-pages)
 - [`rabby-mobile`](apps/mobile)
 
@@ -41,7 +40,6 @@ Or, in graph form [^fn1]:
 graph LR;
 linkStyle default opacity:0.5
   dev_console_cra(["dev-console-cra"]);
-  go_rabby_io(["go-rabby-io"]);
   rabby_mobile(["rabby-mobile"]);
   mobile_local_pages(["mobile-local-pages"]);
   base_utils(["@rabby-wallet/base-utils"]);
@@ -62,7 +60,6 @@ linkStyle default opacity:0.5
   service_address(["@rabby-wallet/service-address"]);
   service_keyring(["@rabby-wallet/service-keyring"]);
   dev_console_cra --> rn_webview_bridge;
-  go_rabby_io --> base_utils;
   rabby_mobile --> biz_utils;
   rabby_mobile --> eth_keyring_gnosis;
   rabby_mobile --> eth_keyring_ledger;

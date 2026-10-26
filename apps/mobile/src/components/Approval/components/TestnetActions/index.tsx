@@ -1,5 +1,5 @@
-import { Chain } from '@/constant/chains';
-import { AppColorsVariants } from '@/constant/theme';
+import type { Chain } from '@/constant/chains';
+import type { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -39,7 +39,7 @@ import Loading from '../TxComponents/Loading';
 import ViewRawModal from '../TxComponents/ViewRawModal';
 import BalanceChange from '../TxComponents/BalanceChange';
 import { getMessageStyles } from '../TextActions';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { Text } from '@/components/Typography';
 
 export const TestnetActions = ({
@@ -104,11 +104,7 @@ export const TestnetActions = ({
             ...styles.actionHeader,
             ...(isUnknown ? styles.isUnknown : {}),
           }}>
-          <View
-            style={StyleSheet.flatten({
-              flexDirection: 'row',
-              alignItems: 'center',
-            })}>
+          <View style={styles.leftContainer}>
             {isSpeedUp && (
               <Tip placement="bottom" content={t('page.signTx.speedUpTooltip')}>
                 <IconSpeedUp style={styles.speedUpIcon} />
@@ -212,12 +208,15 @@ export const getActionsStyle = (colors: AppColorsVariants) =>
       flexDirection: 'row',
       alignItems: 'center',
       flex: 1,
+      minWidth: 0,
     },
     leftText: {
       fontSize: 16,
       lineHeight: 18,
       color: colors['neutral-title-1'],
       fontWeight: '500',
+      flexShrink: 1,
+      minWidth: 0,
     },
     speedUpIcon: {
       width: 16,
@@ -235,6 +234,7 @@ export const getActionsStyle = (colors: AppColorsVariants) =>
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
+      gap: 8,
       paddingHorizontal: 16,
       paddingVertical: 12,
     },

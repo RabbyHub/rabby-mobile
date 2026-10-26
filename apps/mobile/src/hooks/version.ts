@@ -1,12 +1,8 @@
 import { useState, useMemo, useRef, useCallback } from 'react';
 import { getVersion } from 'react-native-device-info';
+import { Platform } from 'react-native';
 
 import Toast from 'react-native-root-toast';
-import {
-  createGlobalBottomSheetModal,
-  removeGlobalBottomSheetModal,
-} from '@/components/GlobalBottomSheetModal';
-import { MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
 
 import { zustandByMMKV } from '@/core/storage/mmkv';
 
@@ -17,11 +13,19 @@ import {
   getUpgradeInfo,
 } from '@/utils/version';
 import { BUILD_CHANNEL } from '@/constant/env';
+import { UPGRADE_PROMPT_URL } from '@/constant/upgradePrompt';
+import { fetchUpgradePrompt } from '@/utils/upgradePrompt';
 import { APP_URLS, isNonPublicProductionEnv } from '@/constant';
 import { toast } from '@/components2024/Toast';
 import { useUnmountedRef } from './common/useMount';
 import { zCreate } from '@/core/utils/reexports';
 import { RefLikeObject } from '@/utils/type';
+import {
+  hasUpgradePromptReceipt,
+  isUpgradePromptVisible,
+  requestAutoUpgradePrompt,
+  showUpgradePrompt,
+} from '@/components/Upgrade/useUpgradePrompt';
 
 const appLocalVersion = getVersion();
 
@@ -55,16 +59,37 @@ const loadRemoteVersion = async () => {
 };
 
 export function loadVersionInfoOnBootstrap() {
-  loadRemoteVersion().catch(error => {
-    console.error('Load remote version info failed', error);
-  });
+  loadRemoteVersion()
+    .then(async result => {
+      if (
+        !result.finalRemoteInfo?.couldUpgrade ||
+        hasUpgradePromptReceipt(result.finalRemoteInfo.version)
+      ) {
+        return;
+      }
+      try {
+        const autoPrompt = await fetchUpgradePrompt(
+          UPGRADE_PROMPT_URL,
+          Platform.OS === 'android' ? 'android' : 'ios',
+          result.finalRemoteInfo.version,
+        );
+        requestAutoUpgradePrompt({ ...result.finalRemoteInfo, autoPrompt });
+      } catch (error) {
+        console.error('Load upgrade prompt config failed', error);
+      }
+    })
+    .catch(error => {
+      console.error('Load remote version info failed', error);
+    });
 }
 
 const openedModalIdRef: RefLikeObject<string> = { current: '' };
 const triggerCheckVersion = async (
   options?: Parameters<typeof getUpgradeInfo>[0],
 ) => {
-  if (openedModalIdRef.current) return;
+  if (openedModalIdRef.current || isUpgradePromptVisible()) {
+    return;
+  }
   openedModalIdRef.current = 'checking';
 
   return getUpgradeInfo(options)
@@ -76,25 +101,20 @@ const triggerCheckVersion = async (
           position: Toast.positions.BOTTOM,
         });
       } else {
-        openedModalIdRef.current = createGlobalBottomSheetModal({
-          name: MODAL_NAMES.TIP_UPGRADE,
-          title: 'New Version',
-          bottomSheetModalProps: {
-            onDismiss: () => {
-              removeGlobalBottomSheetModal(openedModalIdRef.current);
-              openedModalIdRef.current = '';
-            },
-          },
-        });
+        showUpgradePrompt(
+          result.finalRemoteInfo.version,
+          result.finalRemoteInfo.changelog,
+        );
       }
     })
     .catch(error => {
-      openedModalIdRef.current = '';
-
       console.error('Check version failed', error);
       toast.info('Check version failed', {
         position: Toast.positions.BOTTOM,
       });
+    })
+    .finally(() => {
+      openedModalIdRef.current = '';
     });
 };
 
@@ -118,7 +138,9 @@ export function useForceLocalVersionForNonProduction() {
 
   const forceLocalVersion = useCallback(
     (version: string) => {
-      if (!isNonPublicProductionEnv) return;
+      if (!isNonPublicProductionEnv) {
+        return;
+      }
 
       setLocalVersion(version);
       triggerCheckVersion({ forceLocalVersion: version });
@@ -156,11 +178,15 @@ export function useDownloadLatestApk() {
   const unmountedRef = useUnmountedRef();
 
   const startDownload = useCallback(async () => {
-    if (downloadingPromiseRef.current) return downloadingPromiseRef.current;
+    if (downloadingPromiseRef.current) {
+      return downloadingPromiseRef.current;
+    }
 
     downloadingPromiseRef.current = downloadLatestApk({
       onProgress: ctx => {
-        if (unmountedRef.current) return;
+        if (unmountedRef.current) {
+          return;
+        }
 
         setProgressInfo(prev => ({
           ...prev,
@@ -170,7 +196,9 @@ export function useDownloadLatestApk() {
       },
     })
       .then(res => {
-        if (unmountedRef.current) return res;
+        if (unmountedRef.current) {
+          return res;
+        }
 
         setProgressInfo(prev => ({
           ...prev,
@@ -192,10 +220,16 @@ export function useDownloadLatestApk() {
   }, [setProgressInfo]);
 
   const downloadStage = useMemo(() => {
-    if (!downloadingPromiseRef.current) return DownloadStage.none;
+    if (!downloadingPromiseRef.current) {
+      return DownloadStage.none;
+    }
 
-    if (progressInfo.percent >= 1) return DownloadStage.downloaded;
-    if (progressInfo.percent > 0) return DownloadStage.downloading;
+    if (progressInfo.percent >= 1) {
+      return DownloadStage.downloaded;
+    }
+    if (progressInfo.percent > 0) {
+      return DownloadStage.downloading;
+    }
 
     return DownloadStage.connecting;
   }, [progressInfo.percent]);

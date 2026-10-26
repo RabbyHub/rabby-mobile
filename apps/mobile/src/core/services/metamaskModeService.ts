@@ -33,7 +33,11 @@ export class MetamaskModeService extends StoreServiceBase<
       },
     );
 
-    this.store.data.updatedAt = this.store.data.updatedAt || 0;
+    if (!this.store.data.updatedAt) {
+      this.mutateStore(draft => {
+        draft.data.updatedAt = 0;
+      });
+    }
     this.syncMetamaskModeList();
     this.resetTimer();
   }
@@ -50,10 +54,10 @@ export class MetamaskModeService extends StoreServiceBase<
         .then(res => {
           return res.data as string[];
         });
-      this.store.data = {
-        sites,
-        updatedAt: Date.now(),
-      };
+      this.mutateStore(draft => {
+        draft.data.sites = sites;
+        draft.data.updatedAt = Date.now();
+      });
     } catch (e) {
       console.error('fetch metamask list error: ', e);
     }

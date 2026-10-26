@@ -1,11 +1,11 @@
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { DEX } from '@/constant/swap';
 import { eventBus, EVENTS } from '@/utils/events';
 import { getRpcTxReceipt } from '@/core/utils/tx';
 import { useMiniSigner } from '@/hooks/useSigner';
-import { findChain } from '@/utils/chain';
-import { Chain, CHAINS_ENUM } from '@debank/common';
-import {
+import type { findChain } from '@/utils/chain';
+import type { Chain, CHAINS_ENUM } from '@debank/common';
+import type {
   ExplainTxResponse,
   TokenItem,
 } from '@rabby-wallet/rabby-api/dist/types';
@@ -16,10 +16,10 @@ import { last, random } from 'lodash';
 import PQueue from 'p-queue';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { QuoteProvider, TDexQuoteData } from '../../Swap/hooks';
 import {
+  getRabbyFeeRate,
   isSwapWrapToken,
-  QuoteProvider,
-  TDexQuoteData,
   useQuoteMethods,
   useSwapSupportedDexList,
 } from '../../Swap/hooks';
@@ -190,6 +190,15 @@ export const getActiveProvider = async ({
     return null;
   }
 
+  const isWrapToken = isSwapWrapToken(payToken.id, receiveToken.id, chain.enum);
+  const feeRate = getRabbyFeeRate({
+    payToken,
+    payAmount,
+    payTokenPrice: payToken.price || 0,
+    receiveToken,
+    isWrapToken,
+  });
+
   const quoteResult = await getSingleQuote({
     dexId,
     userAddress: currentAddress,
@@ -198,9 +207,7 @@ export const getActiveProvider = async ({
     slippage,
     chain: chain.enum,
     payAmount,
-    fee: isSwapWrapToken(payToken.id, receiveToken.id, chain.enum)
-      ? '0'
-      : '0.25',
+    fee: feeRate,
     inSufficient: false,
     account,
   });
@@ -261,6 +268,13 @@ export const buildSwapTxs = async ({
   }
 
   try {
+    const feeRate = getRabbyFeeRate({
+      payToken,
+      payAmount: inputAmount,
+      payTokenPrice: payToken.price || 0,
+      receiveToken,
+      isWrapToken: isSwapWrapToken(payToken.id, receiveToken.id, chain),
+    });
     const toAmount = new BigNumber(quoteResult.toTokenAmount)
       .div(10 ** (quoteResult.toTokenDecimals || receiveToken.decimals))
       .toNumber();
@@ -288,6 +302,7 @@ export const buildSwapTxs = async ({
             slippage: new BigNumber(slippage).div(100).toNumber(),
           },
           dex_id: activeProvider.name || 'WrapToken',
+          fee_rate: Number(feeRate),
         },
         account,
       },

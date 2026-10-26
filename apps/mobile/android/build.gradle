@@ -5,7 +5,7 @@ buildscript {
         buildToolsVersion = "35.0.0"
         minSdkVersion = 26
         compileSdkVersion = 36
-        targetSdkVersion = 35
+        targetSdkVersion = 36
 
         // We use NDK 23 which has both M1 support and is the side-by-side NDK version from AGP.
         // ndkVersion = "28.2.13676358" // 28 will enable 16kb support by default, but now we use 27 temporarily
@@ -23,7 +23,7 @@ buildscript {
         maven { url "https://maven.aliyun.com/repository/central" }
     }
     dependencies {
-        classpath("com.android.tools.build:gradle")
+        classpath("com.android.tools.build:gradle:8.13.0")
         classpath("com.facebook.react:react-native-gradle-plugin")
         classpath("com.google.gms:google-services:4.4.0")
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin")
@@ -31,6 +31,18 @@ buildscript {
 }
 
 apply plugin: "com.facebook.react.rootproject"
+
+// RN libraries (including Google Sign-In and Reanimated) can define the same
+// Java classes at different source paths for old/new architecture. Treat an
+// architecture switch as a non-file input change so javac rebuilds its class-to-
+// source mapping instead of incrementally dropping the replacement classes.
+// Same-architecture incremental builds, task caching and parallelism remain on.
+def rabbyReactNativeArchitecture = gradle.extensions.extraProperties.get("rabbyReactNativeArchitecture").toString()
+subprojects { dependency ->
+    dependency.tasks.withType(org.gradle.api.tasks.compile.JavaCompile).configureEach {
+        inputs.property("rabbyReactNativeArchitecture", rabbyReactNativeArchitecture)
+    }
+}
 
 // plugins {
 //     id 'com.google.gms.google-services' version '4.4.2' apply false
