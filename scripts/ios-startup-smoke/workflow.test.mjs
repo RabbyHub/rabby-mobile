@@ -21,6 +21,16 @@ function job(source, name) {
   return match[1];
 }
 
+const localTransferLabels = [
+  'self-hosted',
+  'macOS',
+  'ARM64',
+  'mobile-local',
+  'mobile-ios-simulator',
+];
+const localTransferRunner =
+  /runs-on:\s*\[\s*self-hosted,\s*macOS,\s*ARM64,\s*mobile-local,\s*mobile-ios-simulator,?\s*\]/;
+
 test('simulator build pins UTF-8 locale before Ruby and CocoaPods preparation', async () => {
   const build = job(await workflow('startup'), 'build');
   const environment = build.match(/^    env:\n([\s\S]*?)(?=^    \w+:)/m);
@@ -75,17 +85,21 @@ test('build-only creates reusable output without archive or startup qualificatio
   assert.match(job(source, 'summary'), /if: always\(\) && !inputs.build_only/);
 });
 
-test('AWS archive is independent of startup and keeps the original build attempt on retry', async () => {
+test('local S3 archive is independent of startup and keeps the original build attempt on retry', async () => {
   const source = await workflow('startup');
   const archive = job(source, 'archive');
   assert.match(archive, /needs: build\n/);
-  assert.match(archive, /runs-on: \[self-hosted, macOS, ARM64, mobile-aws\]/);
+  assert.match(archive, localTransferRunner);
   assert.match(archive, /!cancelled\(\).*artifact_id != ''/);
   assert.match(archive, /artifact-ids:.*needs.build.outputs.artifact_id/);
   assert.match(
     archive,
     /SOURCE_RUN_ATTEMPT:.*needs.build.outputs.source_run_attempt/,
   );
+  assert.match(archive, /SOURCE_RUN_ID:.*github.run_id/);
+  assert.match(archive, /SOURCE_COMMIT:.*github.sha/);
+  assert.match(archive, /SOURCE_REF_NAME: \$\{\{ github.ref_name \}\}/);
+  assert.match(archive, /SOURCE_ARTIFACT_ID:.*needs.build.outputs.artifact_id/);
   assert.doesNotMatch(archive, /SOURCE_RUN_ATTEMPT:.*github.run_attempt/);
   assert.match(
     job(source, 'build'),
@@ -104,7 +118,7 @@ test('manual S3 upload probe reuses exactly selected bytes and the automatic upl
   const manual = await workflow('archive');
   assert.match(manual, /workflow_dispatch:/);
   assert.doesNotMatch(manual, /^  push:|workflow_run:|workflow_call:/m);
-  assert.match(manual, /runs-on: \[self-hosted, macOS, ARM64, mobile-aws\]/);
+  assert.match(job(manual, 'archive'), localTransferRunner);
   assert.match(manual, /probe\.mjs resolve/);
   assert.match(manual, /artifact-ids:.*steps.select.outputs.artifact_id/);
   assert.match(manual, /run-id:.*steps.select.outputs.artifact_run_id/);
@@ -112,9 +126,24 @@ test('manual S3 upload probe reuses exactly selected bytes and the automatic upl
     manual,
     /SOURCE_RUN_ATTEMPT:.*fromJSON\(steps.select.outputs.source\).runAttempt/,
   );
+  assert.match(
+    manual,
+    /SOURCE_REF_NAME: \$\{\{ steps.select.outputs.source_ref_name \}\}/,
+  );
+  assert.doesNotMatch(manual, /SOURCE_REF_NAME:.*github\.(?:ref|head_ref)/);
+  for (const [variable, field] of [
+    ['SOURCE_RUN_ID', 'runId'],
+    ['SOURCE_COMMIT', 'sourceCommit'],
+    ['SOURCE_ARTIFACT_ID', 'artifactId'],
+  ])
+    assert.match(
+      manual,
+      new RegExp(
+        `${variable}:.*fromJSON\\(steps.select.outputs.source\\).${field}`,
+      ),
+    );
   for (const source of [automatic, manual]) {
     assert.match(source, /archive\.mjs upload "\$EVIDENCE_ROOT\/app"/);
-    assert.match(source, /shell: bash -ieol pipefail \{0\}/);
     assert.match(source, /ARCHIVE_NODE/);
     assert.match(source, /clean: false/);
     assert.doesNotMatch(
@@ -128,10 +157,55 @@ test('manual S3 upload probe reuses exactly selected bytes and the automatic upl
   );
 });
 
+test('each archive job captures its own UTC timestamp once before checkout', async () => {
+  for (const name of ['startup', 'archive']) {
+    const archive = job(await workflow(name), 'archive');
+    const firstStep = archive.match(
+      /^    steps:\n      - name: Capture archive job start \(UTC\)\n([\s\S]*?)(?=^      - )/m,
+    );
+    assert.ok(
+      firstStep,
+      `${name} must capture time in its first executable step`,
+    );
+    assert.match(
+      firstStep[1],
+      /^        working-directory: \$\{\{ github.workspace \}\}$/m,
+    );
+    assert.match(
+      firstStep[1],
+      /printf 'ARCHIVE_JOB_STARTED_AT=%s\\n' "\$\(date -u '\+%Y%m%d%H%M%S'\)" >> "\$GITHUB_ENV"/,
+    );
+    assert.doesNotMatch(firstStep[1], /^\s+if:/m);
+    assert.equal(
+      (archive.match(/\bARCHIVE_JOB_STARTED_AT\b/g) || []).length,
+      1,
+    );
+    assert.equal((archive.match(/\bdate -u\b/g) || []).length, 1);
+    // The archive namespace uses the actual uploader run; original producer
+    // SOURCE_* bindings remain separate and must not replace GitHub's run ID.
+    assert.doesNotMatch(archive, /^\s+GITHUB_RUN_ID:/m);
+  }
+  assert.doesNotMatch(
+    job(await workflow('startup'), 'build'),
+    /ARCHIVE_JOB_STARTED_AT/,
+  );
+  assert.doesNotMatch(
+    job(await workflow('probe'), 'resolve'),
+    /ARCHIVE_JOB_STARTED_AT/,
+  );
+});
+
 test('S3 startup probe never asks the expired original artifact for transport', async () => {
   const source = await workflow('probe');
   const resolve = job(source, 'resolve');
-  assert.match(resolve, /inputs.source_type == 's3'.*mobile-aws/);
+  const runner = resolve.match(
+    /runs-on: \$\{\{ inputs.source_type == 's3' && fromJSON\('(\[[^\n]*\])'\) \|\| 'ubuntu-latest' \}\}/,
+  );
+  assert.ok(
+    runner,
+    'S3 must select local labels and artifact-only resolution must stay on Ubuntu',
+  );
+  assert.deepEqual(JSON.parse(runner[1]), localTransferLabels);
   assert.match(resolve, /artifact_id:.*steps.relay.outputs.artifact-id/);
   assert.match(
     resolve,
@@ -148,4 +222,64 @@ test('S3 startup probe never asks the expired original artifact for transport', 
       /artifact-ids:.*fromJSON|run-id:.*fromJSON|RABBY_MOBILE_BUILD_BUCKET|archive\.mjs fetch/,
     );
   }
+});
+
+test('all S3 transfer jobs use the local default profile without login shells or embedded AWS credentials', async () => {
+  for (const [name, jobName] of [
+    ['startup', 'archive'],
+    ['archive', 'archive'],
+    ['probe', 'resolve'],
+  ]) {
+    const source = await workflow(name);
+    const transfer = job(source, jobName);
+    const environment = transfer.match(/^    env:\n([\s\S]*?)(?=^    \w+:)/m);
+    assert.ok(
+      environment,
+      `${name}/${jobName} needs explicit AWS profile isolation`,
+    );
+    assert.match(environment[1], /^      AWS_PROFILE: ['"]?default['"]?$/m);
+    assert.match(
+      environment[1],
+      /^      AWS_EC2_METADATA_DISABLED: ['"]true['"]$/m,
+    );
+    assert.doesNotMatch(
+      transfer.slice(transfer.indexOf('    steps:')),
+      /^\s+(?:AWS_PROFILE|AWS_EC2_METADATA_DISABLED):/m,
+    );
+    assert.match(
+      source,
+      /^defaults:\n  run:\n    shell: bash --noprofile --norc -eo pipefail \{0\}$/m,
+    );
+    for (const [, shell] of transfer.matchAll(/^\s+shell:\s*(.+)$/gm))
+      assert.equal(shell, 'bash --noprofile --norc -eo pipefail {0}');
+    assert.doesNotMatch(
+      transfer,
+      /mobile-aws|configure-aws-credentials|AWS_ACCESS_KEY_ID|AWS_SECRET_ACCESS_KEY|AWS_SESSION_TOKEN|AWS_SECURITY_TOKEN/,
+    );
+    assert.match(
+      transfer,
+      /RABBY_MOBILE_BUILD_BUCKET: \$\{\{ secrets.RABBY_MOBILE_BUILD_BUCKET \}\}/,
+    );
+  }
+});
+
+test('private S3 transfers keep exact locators instead of public URLs, presigning or hardcoded buckets', async () => {
+  for (const [name, jobName] of [
+    ['startup', 'archive'],
+    ['archive', 'archive'],
+    ['probe', 'resolve'],
+  ]) {
+    const transfer = job(await workflow(name), jobName);
+    assert.doesNotMatch(
+      transfer,
+      /debank-(?:app-)?build-artifacts|download\.rabby\.io|\.s3[.-]|public-read|--acl|presign|no-verify-ssl|cloudfront/,
+    );
+  }
+  const resolve = job(await workflow('probe'), 'resolve');
+  assert.match(resolve, /S3_ARCHIVE_KEY: \$\{\{ inputs.s3_archive_key \}\}/);
+  assert.match(
+    resolve,
+    /archive\.mjs fetch "\$S3_ARCHIVE_KEY" "\$EVIDENCE_ROOT\/app"/,
+  );
+  assert.doesNotMatch(resolve, /\bcurl\b|\bwget\b/);
 });

@@ -141,9 +141,11 @@ Official references:
 
 Only the app-build step receives the existing regression build material
 `RABBY_MOBILE_CODE2`, `RABBY_MOBILE_KR_PWD` and `MOBILE_SAFE_API_KEY`.
-No Match, ASC, distribution signing, Sentry-upload, AWS or Lark write credentials
-are needed by the build or startup-test jobs. A separate AWS runner job owns S3
-archive transfers using its existing AWS CLI credential chain. The build inherits the source's React Native architecture, and does
+No Match, ASC, distribution signing, Sentry-upload or Lark write credentials
+are needed by these jobs. Only the separate archive/source-transfer jobs invoke
+AWS CLI, using the Simulator runner account's local `default` profile. Build and
+startup steps do not perform S3 operations, but jobs under the same self-hosted
+OS account are not a credential security boundary. The build inherits the source's React Native architecture, and does
 not raise the deployment target, bump versions, export an IPA or publish.
 
 Evidence uses a fresh `mktemp` directory per job/attempt. Local build and test
@@ -191,47 +193,72 @@ The jobs have three independent entry points:
 | Entry                                          | Input                                 | Runner / work                                                                             |
 | ---------------------------------------------- | ------------------------------------- | ----------------------------------------------------------------------------------------- |
 | `ios_simulator_startup.yml`, `build_only=true` | Source ref and compiler               | Mac mini builds once and retains a GitHub artifact; no S3 upload or startup qualification |
-| `ios_simulator_archive.yml`                    | Original build run ID and artifact ID | AWS uploads/verifies that exact existing archive; no app build or Simulator               |
+| `ios_simulator_archive.yml`                    | Original build run ID and artifact ID | Mac mini uploads/verifies that exact existing archive; no app build or Simulator          |
 | `ios_simulator_probe.yml`                      | Artifact IDs or exact S3 index key    | Probes the existing app; no Rabby Mobile rebuild                                          |
 
 For the first integration, run build-only on `mobile-local`, note its artifact ID
 and run ID, then manually run **iOS Simulator S3 Archive Probe** with those IDs.
 Repeat just that upload workflow when diagnosing IAM, connectivity or archive
-code. It always calls the same `archive.mjs upload` as automatic publication,
-and binds the **original** producer attempt, not the upload-probe run/attempt.
-An identical existing object is verified and reused; different bytes at the same
-key fail rather than overwrite. Fixing the transfer code does not require another
-native build. Re-running a failed automatic archive job also retains its original
-build attempt binding.
+code. It always calls the same `archive.mjs upload` as automatic publication.
+The receipt retains the **original** producer run/attempt, commit and artifact ID;
+the archive path separately identifies the **uploader** run and its job timestamp.
+A new upload job or re-run captures a new timestamp path without requiring another
+native build. Repeated upload calls using the same captured job timestamp verify
+and reuse identical objects; different bytes at that same key fail rather than
+overwrite. Re-running a failed automatic archive job still retains the original
+build attempt binding in its metadata.
 
-Normal publish runs (`build_only=false`) start the archive job and startup matrix
-independently after building. An AWS runner queue or upload failure cannot block
-startup validation or Feature Test's separate artifact delivery. Upload failures
-remain visible failures; they are not hidden with `continue-on-error`.
+Normal publish runs (`build_only=false`) make the archive job and startup matrix
+eligible independently after building. Upload success is not a dependency of
+startup validation or Feature Test's separate artifact delivery. Local jobs still
+share the Mac mini's runner capacity and may queue behind one another. Upload
+failures remain visible failures; they are not hidden with `continue-on-error`.
 
 ### Durable S3 archive
 
-Only `[self-hosted, macOS, ARM64, mobile-aws]` performs S3 reads/writes. Keep the
-AWS runner's existing `mobile`/`builder` labels and the Mac mini's `mobile-local`
-label. The additional labels select capabilities without re-registering runners.
-No AWS keys are copied to the Mac mini or embedded in artifacts. Transfer steps
-use the existing uploader's login-shell credential environment, pin the Node
-executable separately, and keep TLS verification enabled. No Match, deploy script,
-public ACL, Lark notification, version bump or CDN invalidation is involved.
+S3 reads/writes run on
+`[self-hosted, macOS, ARM64, mobile-local, mobile-ios-simulator]`, using the
+runner account's separately provisioned AWS CLI `default` profile. Workflows
+do not provision or embed AWS keys, source interactive shell profiles, or fall
+back to EC2 instance credentials. Hosted test jobs receive only the verified
+artifact, not AWS credentials. The AWS runner's existing labels and unrelated
+Feature Test/release runner selection are unchanged. TLS verification remains
+enabled. No Match, deploy script, public ACL, public download URL, presigned URL,
+Lark notification, version bump or CDN invalidation is involved.
 
 The existing `RABBY_MOBILE_BUILD_BUCKET` secret selects the bucket. Immutable
 objects live outside build-cache prefixes:
 
 ```text
-_private/rabby-mobile/ios-simulator/<source-commit>/<producer-run>/<producer-attempt>/
+_private/rabby-mobile/ios-simulator/<run>-<YYYYMMDDHHmmss>/
   RabbyMobile-simulator.zip
   metadata.json
   archive.json
 ```
 
-The ZIP and original receipt are verified before upload. The index is written
-last, after both payload objects are verified, and records exact keys, hashes,
-sizes and producer identity. There is no `latest` alias, overwrite or automatic
+The durable locator is
+`s3://<configured-bucket>/_private/rabby-mobile/ios-simulator/<run>-<YYYYMMDDHHmmss>/archive.json`.
+Here `<run>` is the upload job's actual `GITHUB_RUN_ID`, not `SOURCE_RUN_ID`.
+Both automatic and manual archive jobs capture UTC time once in their first
+executable step, before checkout, into `ARCHIVE_JOB_STARTED_AT` using
+`YYYYMMDDHHmmss` (year, month, day, hour, minute, second). The step explicitly
+uses `github.workspace`, which exists before the nested checkout. This timestamp
+is neither the original build time nor the workflow's queued/created time.
+The archive source records `archiveRunId` and `archiveJobStartedAt` bound to this
+key, while its original producer fields and the build receipt remain unchanged.
+The probe input takes only the key after the bucket, not an HTTPS link. The
+authenticated transfer job downloads the index and its referenced files to the
+Simulator Mac and checks them before use; no anonymous download is required.
+
+The ZIP and original receipt are verified before upload. The schema-2 index is
+written last, after both payload objects are verified, and records exact keys,
+hashes, sizes and producer identity. Its `git` section contains `repository`,
+the full source `commit`, `refName`, and `commitUrl`. Automatic archives use the
+build workflow's ref; manual uploads resolve the **original producer run's**
+ref, never the uploader workflow's ref. `refName` is `null` if original ref
+metadata is unavailable. A branch/tag can move: the recorded full commit SHA
+and its commit link are authoritative, while the ref name is reference-only.
+There is no `latest` alias, overwrite or automatic
 deletion. A complete `modified` source-provenance archive is retained for
 diagnosis without turning its original build green. Logs-only/incomplete build
 artifacts fail validation and cannot become reusable S3 archives.
@@ -278,7 +305,7 @@ reusable artifact.
 
 Select `source_type=s3` and pass the exact `s3_archive_key` ending in
 `archive.json` from the archive job summary. Leave the GitHub source IDs empty.
-An AWS-only resolve job fetches the index, receipt and ZIP, validates their keys,
+A resolve job on the Simulator Mac fetches the index, receipt and ZIP, validates their keys,
 producer and hashes, then relays those verified bytes through a new seven-day
 GitHub artifact for this probe run. Both startup shards **and the summary** consume
 that new transport artifact; they never request the expired/deleted original

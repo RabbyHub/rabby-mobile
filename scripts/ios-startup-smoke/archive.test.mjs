@@ -29,8 +29,10 @@ async function fixture(t, status = 'modified') {
     GITHUB_REPOSITORY: 'RabbyHub/rabby-mobile',
     GITHUB_RUN_ID: '123',
     GITHUB_RUN_ATTEMPT: '2',
+    ARCHIVE_JOB_STARTED_AT: '20261026125055',
     SOURCE_COMMIT: 'a'.repeat(40),
     SOURCE_ARTIFACT_ID: '456',
+    SOURCE_REF_NAME: 'publish/0.6.95',
   };
   const zip = Buffer.from(
     'unsigned simulator transport fixture, not executable',
@@ -114,8 +116,17 @@ test('upload commits index last and fetch preserves original source and modified
   );
   assert.equal(
     index.source.archiveKey,
-    `_private/rabby-mobile/ios-simulator/${f.env.SOURCE_COMMIT}/123/2/archive.json`,
+    '_private/rabby-mobile/ios-simulator/123-20261026125055/archive.json',
   );
+  assert.equal(index.schemaVersion, 2);
+  assert.equal(index.source.archiveRunId, '123');
+  assert.equal(index.source.archiveJobStartedAt, f.env.ARCHIVE_JOB_STARTED_AT);
+  assert.deepEqual(index.git, {
+    repository: 'RabbyHub/rabby-mobile',
+    commit: f.env.SOURCE_COMMIT,
+    refName: 'publish/0.6.95',
+    commitUrl: `https://github.com/RabbyHub/rabby-mobile/commit/${f.env.SOURCE_COMMIT}`,
+  });
   assert.equal(index.source.runConclusion, 'unknown');
   assert.equal(validateArchiveSource(index.source), index.source);
   const target = path.join(f.directory, 'fetch');
@@ -125,6 +136,10 @@ test('upload commits index last and fetch preserves original source and modified
     adapter: f.adapter,
   });
   assert.deepEqual(source, index.source);
+  assert.deepEqual(
+    JSON.parse(await fs.readFile(path.join(target, 'archive.json'))).git,
+    index.git,
+  );
   assert.deepEqual(
     await fs.readFile(path.join(target, 'RabbyMobile-simulator.zip')),
     f.zip,
@@ -142,9 +157,9 @@ test('same-byte upload replay is idempotent and original producer is independent
   f.env.SOURCE_RUN_ATTEMPT = '2';
   f.env.GITHUB_RUN_ID = '9999';
   f.env.GITHUB_RUN_ATTEMPT = '7';
+  f.env.GITHUB_REF_NAME = 'feat/upload-probe';
   const first = await uploadArchive(f.input, f);
   const before = [...f.objects].map(([key, bytes]) => [key, sha256(bytes)]);
-  f.env.GITHUB_RUN_ID = '99999';
   const second = await uploadArchive(f.input, f);
   assert.deepEqual(second, first);
   assert.deepEqual(
@@ -153,7 +168,89 @@ test('same-byte upload replay is idempotent and original producer is independent
   );
   assert.equal(first.source.runId, '123');
   assert.equal(first.source.runAttempt, '2');
+  assert.equal(first.source.archiveRunId, '9999');
+  assert.equal(first.git.refName, 'publish/0.6.95');
+  assert.equal(
+    first.source.archiveKey,
+    '_private/rabby-mobile/ios-simulator/9999-20261026125055/archive.json',
+  );
   assert.equal(f.calls.filter(([operation]) => operation === 'get').length, 6);
+});
+
+test('a new upload job gets a separate locator while retaining the original build producer', async t => {
+  const f = await fixture(t, 'clean');
+  f.env.SOURCE_RUN_ID = '123';
+  f.env.SOURCE_RUN_ATTEMPT = '2';
+  const first = await uploadArchive(f.input, f);
+  const original = [...f.objects].map(([key, bytes]) => [key, sha256(bytes)]);
+  // Re-run of the same workflow has the same run ID but a fresh job timestamp.
+  f.env.GITHUB_RUN_ATTEMPT = '3';
+  f.env.ARCHIVE_JOB_STARTED_AT = '20261027000102';
+  const second = await uploadArchive(f.input, f);
+  assert.equal(
+    second.source.archiveKey,
+    '_private/rabby-mobile/ios-simulator/123-20261027000102/archive.json',
+  );
+  // A standalone upload probe uses its own run ID, not the producer's run ID.
+  f.env.GITHUB_RUN_ID = '4567';
+  const third = await uploadArchive(f.input, f);
+  assert.equal(
+    third.source.archiveKey,
+    '_private/rabby-mobile/ios-simulator/4567-20261027000102/archive.json',
+  );
+  for (const index of [second, third]) {
+    for (const key of ['runId', 'runAttempt', 'sourceCommit', 'artifactId'])
+      assert.equal(index.source[key], first.source[key]);
+    assert.equal(index.objects.archive.sha256, first.objects.archive.sha256);
+  }
+  assert.equal(f.objects.size, 9);
+  for (const [key, hash] of original)
+    assert.equal(sha256(f.objects.get(key)), hash);
+});
+
+test('job timestamp is required and validates real UTC calendar dates before S3 access', async t => {
+  const f = await fixture(t);
+  for (const value of [
+    undefined,
+    '',
+    '2026-10-26T12:50:55Z',
+    '202610261250',
+    '202610261250550',
+    '20261026125055\n',
+    '20260229125055',
+    '20260431125055',
+    '20261301125055',
+    '20261000235055',
+    '20261026240000',
+    '20261026126000',
+    '20261026125060',
+  ]) {
+    f.env.ARCHIVE_JOB_STARTED_AT = value;
+    await assert.rejects(uploadArchive(f.input, f), /timestamp/);
+    assert.equal(f.calls.length, 0);
+  }
+  f.env.ARCHIVE_JOB_STARTED_AT = '20280229235959';
+  const index = await uploadArchive(f.input, f);
+  assert.equal(index.source.archiveJobStartedAt, '20280229235959');
+});
+
+test('unknown original ref stays null and malformed refs never enter outputs or S3', async t => {
+  const f = await fixture(t);
+  for (const value of [
+    'branch\ninjected=value',
+    'branch\rname',
+    'bad\0ref',
+    'a'.repeat(1025),
+  ]) {
+    f.env.SOURCE_REF_NAME = value;
+    await assert.rejects(uploadArchive(f.input, f), /Git ref/);
+    assert.equal(f.calls.length, 0);
+  }
+  delete f.env.SOURCE_REF_NAME;
+  f.env.GITHUB_REF_NAME = 'uploader-not-original';
+  const index = await uploadArchive(f.input, f);
+  assert.equal(index.git.refName, null);
+  assert.equal(index.git.commit, f.metadata.sourceCommit);
 });
 
 test('first PUT success with denied payload GET cannot publish an index and can recover by replay', async t => {
@@ -211,7 +308,8 @@ test('first successful PUT with corrupted readback blocks index publication', as
 
 test('conflicting immutable object fails without an index or overwriting the conflict', async t => {
   const f = await fixture(t);
-  const key = `_private/rabby-mobile/ios-simulator/${f.env.SOURCE_COMMIT}/123/2/RabbyMobile-simulator.zip`;
+  const key =
+    '_private/rabby-mobile/ios-simulator/123-20261026125055/RabbyMobile-simulator.zip';
   f.objects.set(key, Buffer.from('conflict'));
   await assert.rejects(uploadArchive(f.input, f), /conflicts/);
   assert.equal(f.objects.size, 1);
@@ -275,9 +373,11 @@ test('strict source and key validation rejects arbitrary locations, traversal an
   for (const key of [
     's3://another-bucket/archive.json',
     `https://example.test/${source.archiveKey}`,
-    source.archiveKey.replace('/123/', '/0123/'),
-    source.archiveKey.replace('/123/', '/9007199254740992/'),
-    source.archiveKey.replace('/123/', '/../'),
+    source.archiveKey.replace('/123-', '/0123-'),
+    source.archiveKey.replace('/123-', '/9007199254740992-'),
+    source.archiveKey.replace('/123-', '/../'),
+    source.archiveKey.replace('20261026125055', '20260230125055'),
+    `_private/rabby-mobile/ios-simulator/${source.sourceCommit}/123/2/archive.json`,
     source.archiveKey + '?query=x',
     source.archiveKey.replace('_private/', 'public/'),
     source.archiveKey + '\n',
@@ -290,7 +390,10 @@ test('strict source and key validation rejects arbitrary locations, traversal an
   for (const change of [
     { runConclusion: 'success' },
     { artifactId: '01' },
-    { runId: '124' },
+    { runId: '0123' },
+    { runAttempt: '0' },
+    { archiveRunId: '124' },
+    { archiveJobStartedAt: '20261026125056' },
     { sourceCommit: 'b'.repeat(40) },
     { repository: 'another/repo' },
     { artifactName: 'latest' },
@@ -306,6 +409,15 @@ test('fetch rejects tampered index, objects and receipt producer before exposing
     'large-index',
     'key',
     'index-producer',
+    'index-commit',
+    'index-archive-run',
+    'index-job-time',
+    'index-schema',
+    'index-git',
+    'index-git-commit',
+    'index-git-repository',
+    'index-git-url',
+    'index-git-ref',
     'zip',
     'metadata',
     'receipt-producer',
@@ -319,6 +431,21 @@ test('fetch rejects tampered index, objects and receipt producer before exposing
     if (failure === 'large-index') f.objects.set(key, Buffer.alloc(16385, ' '));
     if (failure === 'key') index.objects.archive.key = '../outside';
     if (failure === 'index-producer') index.source.runId = '999';
+    if (failure === 'index-commit') {
+      index.source.sourceCommit = 'd'.repeat(40);
+      index.source.artifactName = `ios-startup-app-${index.source.sourceCommit}-2`;
+    }
+    if (failure === 'index-archive-run') index.source.archiveRunId = '999';
+    if (failure === 'index-job-time')
+      index.source.archiveJobStartedAt = '20261026125056';
+    if (failure === 'index-schema') index.schemaVersion = 1;
+    if (failure === 'index-git') delete index.git;
+    if (failure === 'index-git-commit') index.git.commit = 'd'.repeat(40);
+    if (failure === 'index-git-repository') index.git.repository = 'other/repo';
+    if (failure === 'index-git-url')
+      index.git.commitUrl = 'https://example.test/';
+    if (failure === 'index-git-ref')
+      index.git.refName = 'branch\ninjected=value';
     if (failure === 'zip')
       f.objects.set(index.objects.archive.key, Buffer.from('tampered'));
     if (failure === 'metadata')
@@ -333,7 +460,10 @@ test('fetch rejects tampered index, objects and receipt producer before exposing
       index.objects.metadata.sha256 = sha256(bytes);
       index.objects.metadata.bytes = bytes.length;
     }
-    if (['key', 'index-producer', 'receipt-producer'].includes(failure))
+    if (
+      failure.startsWith('index-') ||
+      ['key', 'receipt-producer'].includes(failure)
+    )
       f.objects.set(key, Buffer.from(JSON.stringify(index)));
     const target = path.join(f.directory, 'fetch');
     await assert.rejects(fetchArchive(key, target, f));
@@ -413,7 +543,8 @@ test('CLI sanitizes AWS authentication and unknown failures without printing std
   const bin = path.join(f.directory, 'bin');
   await fs.mkdir(bin);
   const cli = fileURLToPath(new URL('./archive.mjs', import.meta.url));
-  const key = `_private/rabby-mobile/ios-simulator/${f.env.SOURCE_COMMIT}/123/2/archive.json`;
+  const key =
+    '_private/rabby-mobile/ios-simulator/123-20261026125055/archive.json';
   for (const code of [
     'InvalidAccessKeyId',
     'AccessDenied',

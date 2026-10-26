@@ -3,7 +3,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { matrix, summarize, verifyArchive } from './hosted.mjs';
-import { validateArchiveSource } from './archive.mjs';
+import { validateArchiveSource, validateGitRefName } from './archive.mjs';
 
 const repository = 'RabbyHub/rabby-mobile';
 const workflowPath = '.github/workflows/ios_simulator_startup.yml';
@@ -173,12 +173,15 @@ export async function main([action, ...args]) {
       github(`actions/runs/${runId}`),
     ]);
     const source = selectSource(artifact, run, runId, artifactId);
+    const refName = validateGitRefName(run.head_branch);
     const selected = selectedMatrix();
     await fs.appendFile(
       process.env.GITHUB_OUTPUT,
       `source=${JSON.stringify(source)}\nmatrix=${JSON.stringify(
         selected,
-      )}\nartifact_id=${source.artifactId}\nartifact_run_id=${source.runId}\n`,
+      )}\nartifact_id=${source.artifactId}\nartifact_run_id=${
+        source.runId
+      }\nsource_ref_name=${refName ?? ''}\n`,
     );
     console.log(JSON.stringify(source, null, 2));
     return;

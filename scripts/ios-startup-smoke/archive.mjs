@@ -15,6 +15,8 @@ const limits = { index: 16384, metadata: 1024 * 1024, archive: 2 * 1024 ** 3 };
 const sourceKeys = [
   'sourceType',
   'archiveKey',
+  'archiveRunId',
+  'archiveJobStartedAt',
   'repository',
   'runId',
   'runAttempt',
@@ -51,16 +53,53 @@ function id(value) {
   return value;
 }
 
+function jobTimestamp(value) {
+  requireThat(
+    typeof value === 'string' && /^[1-9][0-9]{13}$/.exec(value)?.[0] === value,
+    'Expected a UTC job timestamp in YYYYMMDDHHmmss format',
+  );
+  const iso = `${value.slice(0, 4)}-${value.slice(4, 6)}-${value.slice(
+    6,
+    8,
+  )}T${value.slice(8, 10)}:${value.slice(10, 12)}:${value.slice(12, 14)}.000Z`;
+  const date = new Date(iso);
+  requireThat(
+    Number.isFinite(date.getTime()) && date.toISOString() === iso,
+    'Invalid UTC job timestamp',
+  );
+  return value;
+}
+
+export function validateGitRefName(value) {
+  if (value == null) return null;
+  requireThat(
+    typeof value === 'string' &&
+      value.length > 0 &&
+      value.length <= 1024 &&
+      !/[\x00-\x20\x7f]/.test(value),
+    'Invalid original build Git ref name',
+  );
+  return value;
+}
+
+function gitReference(source, refName) {
+  return {
+    repository: source.repository,
+    commit: source.sourceCommit,
+    refName: validateGitRefName(refName),
+    commitUrl: `https://github.com/${source.repository}/commit/${source.sourceCommit}`,
+  };
+}
+
 function keyIdentity(key) {
   requireThat(typeof key === 'string', 'Invalid simulator archive key');
   const match = key.match(
-    /^_private\/rabby-mobile\/ios-simulator\/([a-f0-9]{40})\/([1-9][0-9]*)\/([1-9][0-9]*)\/archive\.json$/,
+    /^_private\/rabby-mobile\/ios-simulator\/([1-9][0-9]*)-([0-9]{14})\/archive\.json$/,
   );
   requireThat(match && match[0] === key, 'Invalid simulator archive key');
   return {
-    sourceCommit: match[1],
-    runId: id(match[2]),
-    runAttempt: id(match[3]),
+    archiveRunId: id(match[1]),
+    archiveJobStartedAt: jobTimestamp(match[2]),
   };
 }
 
@@ -71,14 +110,18 @@ export function validateArchiveSource(source) {
     source.sourceType === 's3' &&
       source.repository === repository &&
       source.runConclusion === 'unknown' &&
-      ['sourceCommit', 'runId', 'runAttempt'].every(
+      ['archiveRunId', 'archiveJobStartedAt'].every(
         key => source[key] === selected[key],
       ) &&
+      typeof source.sourceCommit === 'string' &&
+      /^[a-f0-9]{40}$/.exec(source.sourceCommit)?.[0] === source.sourceCommit &&
       source.artifactName ===
         `ios-startup-app-${source.sourceCommit}-${source.runAttempt}`,
     'S3 source identity does not match its archive key',
   );
   id(source.artifactId);
+  id(source.runId);
+  id(source.runAttempt);
   return source;
 }
 
@@ -91,9 +134,15 @@ function sourceFromEnvironment(env) {
     override ? env.SOURCE_RUN_ATTEMPT : env.GITHUB_RUN_ATTEMPT,
   );
   const sourceCommit = env.SOURCE_COMMIT;
+  // Bind the locator to this upload job; keep the original build producer below.
+  // Never use upload completion time or silently invent a missing job timestamp.
+  const archiveRunId = id(env.GITHUB_RUN_ID);
+  const archiveJobStartedAt = jobTimestamp(env.ARCHIVE_JOB_STARTED_AT);
   return validateArchiveSource({
     sourceType: 's3',
-    archiveKey: `${prefix}${sourceCommit}/${runId}/${runAttempt}/archive.json`,
+    archiveKey: `${prefix}${archiveRunId}-${archiveJobStartedAt}/archive.json`,
+    archiveRunId,
+    archiveJobStartedAt,
     repository,
     runId,
     runAttempt,
@@ -179,12 +228,21 @@ async function verifyReceipt(directory, source) {
 
 function validateIndex(index, key) {
   requireThat(
-    exactKeys(index, ['schemaVersion', 'kind', 'source', 'objects']) &&
-      index.schemaVersion === 1 &&
+    exactKeys(index, ['schemaVersion', 'kind', 'source', 'git', 'objects']) &&
+      index.schemaVersion === 2 &&
       index.kind === 'rabby-ios-simulator-archive',
     'Invalid S3 archive index',
   );
   validateArchiveSource(index.source);
+  requireThat(
+    exactKeys(index.git, ['repository', 'commit', 'refName', 'commitUrl']),
+    'Invalid archive Git reference fields',
+  );
+  const expectedGit = gitReference(index.source, index.git.refName);
+  requireThat(
+    Object.keys(expectedGit).every(key => index.git[key] === expectedGit[key]),
+    'Archive Git reference does not match its original build source',
+  );
   requireThat(
     index.source.archiveKey === key &&
       exactKeys(index.objects, ['archive', 'metadata']),
@@ -388,6 +446,9 @@ export async function uploadArchive(
   { env = process.env, adapter } = {},
 ) {
   const source = sourceFromEnvironment(env);
+  // Display-only branch/tag name from the original build context, never the
+  // uploader checkout. Commit and repository remain bound to the receipt.
+  const git = gitReference(source, env.SOURCE_REF_NAME || null);
   bucketFromEnvironment(env);
   adapter ||= createAwsAdapter({ env });
   const temporary = await fs.mkdtemp(
@@ -404,9 +465,10 @@ export async function uploadArchive(
     await verifyReceipt(temporary, source);
     const root = source.archiveKey.slice(0, -'archive.json'.length);
     const index = {
-      schemaVersion: 1,
+      schemaVersion: 2,
       kind: 'rabby-ios-simulator-archive',
       source,
+      git,
       objects: {},
     };
     for (const [kind, name] of [

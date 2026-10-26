@@ -24,9 +24,16 @@ defaults:
 jobs:
   archive:
     if: github.repository == 'RabbyHub/rabby-mobile'
-    runs-on: [self-hosted, macOS, ARM64, mobile-aws]
+    runs-on: [self-hosted, macOS, ARM64, mobile-local, mobile-ios-simulator]
     timeout-minutes: 30
+    env:
+      AWS_PROFILE: default
+      AWS_EC2_METADATA_DISABLED: 'true'
     steps:
+      - name: Capture archive job start (UTC)
+        working-directory: ${{ github.workspace }}
+        run: |
+          printf 'ARCHIVE_JOB_STARTED_AT=%s\n' "$(date -u '+%Y%m%d%H%M%S')" >> "$GITHUB_ENV"
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           ref: ${{ github.sha }}
@@ -56,10 +63,10 @@ jobs:
           merge-multiple: true
           path: ${{ env.EVIDENCE_ROOT }}/app
       - name: Upload or verify the same S3 archive without recompiling
-        shell: bash -ieol pipefail {0}
         env:
           RABBY_MOBILE_BUILD_BUCKET: ${{ secrets.RABBY_MOBILE_BUILD_BUCKET }}
           SOURCE_COMMIT: ${{ fromJSON(steps.select.outputs.source).sourceCommit }}
+          SOURCE_REF_NAME: ${{ steps.select.outputs.source_ref_name }}
           SOURCE_RUN_ID: ${{ fromJSON(steps.select.outputs.source).runId }}
           SOURCE_RUN_ATTEMPT: ${{ fromJSON(steps.select.outputs.source).runAttempt }}
           SOURCE_ARTIFACT_ID: ${{ fromJSON(steps.select.outputs.source).artifactId }}

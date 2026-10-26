@@ -45,8 +45,11 @@ defaults:
 jobs:
   resolve:
     if: github.repository == 'RabbyHub/rabby-mobile'
-    runs-on: ${{ inputs.source_type == 's3' && fromJSON('["self-hosted","macOS","ARM64","mobile-aws"]') || 'ubuntu-latest' }}
+    runs-on: ${{ inputs.source_type == 's3' && fromJSON('["self-hosted","macOS","ARM64","mobile-local","mobile-ios-simulator"]') || 'ubuntu-latest' }}
     timeout-minutes: 30
+    env:
+      AWS_PROFILE: default
+      AWS_EC2_METADATA_DISABLED: 'true'
     defaults:
       run:
         working-directory: .ios-simulator-probe-source-ci
@@ -80,9 +83,8 @@ jobs:
           SOURCE_ARTIFACT_ID: ${{ inputs.source_artifact_id }}
         run: node scripts/ios-startup-smoke/probe.mjs resolve
       - id: fetch
-        name: Fetch and verify S3 archive using only the AWS runner identity
+        name: Fetch and verify S3 archive with the Simulator runner's local AWS profile
         if: inputs.source_type == 's3'
-        shell: bash -ieol pipefail {0}
         env:
           RABBY_MOBILE_BUILD_BUCKET: ${{ secrets.RABBY_MOBILE_BUILD_BUCKET }}
           S3_ARCHIVE_KEY: ${{ inputs.s3_archive_key }}
@@ -91,7 +93,7 @@ jobs:
         if: inputs.source_type == 's3'
         run: node scripts/ios-startup-smoke/probe.mjs matrix
       - id: relay
-        name: Relay verified S3 bytes to Simulator runners without AWS credentials
+        name: Relay verified S3 bytes without embedding AWS credentials
         if: inputs.source_type == 's3'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:

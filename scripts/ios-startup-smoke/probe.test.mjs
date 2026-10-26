@@ -22,6 +22,7 @@ function fixture() {
     path: '.github/workflows/ios_simulator_startup.yml',
     event: 'push',
     head_sha: sha,
+    head_branch: 'publish/0.6.95',
     repository: { id: 456, full_name: 'RabbyHub/rabby-mobile' },
     head_repository: { id: 456, full_name: 'RabbyHub/rabby-mobile' },
   };
@@ -248,7 +249,10 @@ function s3Source() {
   return {
     ...source,
     sourceType: 's3',
-    archiveKey: `_private/rabby-mobile/ios-simulator/${source.sourceCommit}/123/1/archive.json`,
+    archiveKey:
+      '_private/rabby-mobile/ios-simulator/999-20261026125055/archive.json',
+    archiveRunId: '999',
+    archiveJobStartedAt: '20261026125055',
     runConclusion: 'unknown',
   };
 }
@@ -273,7 +277,9 @@ test('source discriminator is strict while old resolved GitHub selections remain
     { ...source, runConclusion: 'unknown' },
     { ...source, archiveKey: s3Source().archiveKey },
     { ...s3Source(), archiveKey: '../archive.json' },
-    { ...s3Source(), runId: '124' },
+    { ...s3Source(), runId: '0123' },
+    { ...s3Source(), archiveRunId: '998' },
+    { ...s3Source(), archiveJobStartedAt: '20261026125056' },
     { ...s3Source(), sourceCommit: 'e'.repeat(40) },
     { ...s3Source(), artifactName: `ios-startup-app-${source.sourceCommit}-2` },
     { ...s3Source(), runConclusion: 'success' },
@@ -340,6 +346,7 @@ test('GitHub resolution preserves original identity and emits separate transport
       SOURCE_RUN_ID: '123',
       SOURCE_ARTIFACT_ID: '789',
       REQUESTED_MAJORS: '18',
+      GITHUB_REF_NAME: 'feat/upload-probe',
     },
     {
       'https://api.github.com/repos/RabbyHub/rabby-mobile/actions/artifacts/789':
@@ -360,11 +367,50 @@ test('GitHub resolution preserves original identity and emits separate transport
   );
   assert.equal(values.artifact_id, '789');
   assert.equal(values.artifact_run_id, '123');
+  assert.equal(values.source_ref_name, 'publish/0.6.95');
   assert.deepEqual(
     JSON.parse(values.source),
     selectSource(artifact, run, '123', '789'),
   );
   assert.equal(JSON.parse(values.matrix).include[0].runtime, '18.3.1');
+});
+
+test('GitHub ref metadata may be unknown but must never inject Actions outputs', async t => {
+  const directory = await fs.mkdtemp(
+    path.join(os.tmpdir(), 'rabby-probe-ref-'),
+  );
+  t.after(() => fs.rm(directory, { recursive: true, force: true }));
+  for (const ref of [null, 'branch\ninjected=value', 'branch\rname']) {
+    const { artifact, run } = fixture();
+    run.head_branch = ref;
+    const output = path.join(
+      directory,
+      ref === null ? 'missing' : `invalid-${ref.includes('\r')}`,
+    );
+    const result = offlineCli(
+      ['resolve'],
+      {
+        GITHUB_OUTPUT: output,
+        GITHUB_TOKEN: 'test-fixture-not-a-real-token',
+        SOURCE_RUN_ID: '123',
+        SOURCE_ARTIFACT_ID: '789',
+        GITHUB_REF_NAME: 'uploader-not-original',
+      },
+      {
+        'https://api.github.com/repos/RabbyHub/rabby-mobile/actions/artifacts/789':
+          artifact,
+        'https://api.github.com/repos/RabbyHub/rabby-mobile/actions/runs/123':
+          run,
+      },
+    );
+    if (ref === null) {
+      assert.equal(result.status, 0, result.stderr);
+      assert.match(await fs.readFile(output, 'utf8'), /\nsource_ref_name=\n$/);
+    } else {
+      assert.equal(result.status, 1);
+      await assert.rejects(fs.stat(output), { code: 'ENOENT' });
+    }
+  }
 });
 
 test('matrix-only CLI needs neither a source nor GitHub and preserves the selected environment', async t => {
