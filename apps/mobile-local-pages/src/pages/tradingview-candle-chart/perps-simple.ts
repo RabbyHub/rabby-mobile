@@ -933,9 +933,7 @@ export function createSimpleChart(
       return true;
     },
     refreshFonts() {
-      chart.applyOptions({
-        layout: { fontFamily: PERPS_PRO_FONT_FACE_FAMILY },
-      });
+      chart.applyOptions({ layout: { fontFamily: PERPS_PRO_FONT_FACE_FAMILY } });
       schedule();
     },
     destroy() {
