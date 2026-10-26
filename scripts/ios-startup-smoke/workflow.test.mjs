@@ -21,6 +21,20 @@ function job(source, name) {
   return match[1];
 }
 
+test('simulator build pins UTF-8 locale before Ruby and CocoaPods preparation', async () => {
+  const build = job(await workflow('startup'), 'build');
+  const environment = build.match(/^    env:\n([\s\S]*?)(?=^    \w+:)/m);
+  assert.ok(environment, 'Missing build-job environment');
+  assert.match(environment[1], /^      LANG: 'en_US\.UTF-8'$/m);
+  assert.match(environment[1], /^      LC_ALL: 'en_US\.UTF-8'$/m);
+  // Job scope reaches toolchain setup and the native build without relying on
+  // an interactive shell, SSH's locale forwarding or a sourced user profile.
+  const steps = build.slice(build.indexOf('    steps:'));
+  assert.match(steps, /source "\$HOME\/\.rvm\/scripts\/rvm"/);
+  assert.match(steps, /build-ios-simulator\.sh/);
+  assert.doesNotMatch(steps, /^\s+(?:LANG|LC_ALL):/m);
+});
+
 test('build-only creates reusable output without archive or startup qualification', async () => {
   const source = await workflow('startup');
   assert.match(

@@ -199,6 +199,7 @@ macTest(
     assert.equal(result.status, 0, result.stdout + result.stderr);
     const trace = fs.readFileSync(f.trace, 'utf8');
     assert.match(trace, /js\ninpage\nyarn:check-nodeengines/);
+    assert.match(trace, /yarn:react-native-asset --ios-assets\n/);
     assert.match(trace, /pods:1/);
     assert.doesNotMatch(trace, /syncrnversion|fastlane|match|appstore/);
     const native = JSON.parse(trace.trim().split('\n').at(-1));

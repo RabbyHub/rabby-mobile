@@ -80,6 +80,9 @@ jobs:
       run:
         working-directory: .ios-simulator-ci
     env:
+      # SSH/LaunchAgent runners may otherwise give CocoaPods ASCII-8BIT strings.
+      LANG: 'en_US.UTF-8'
+      LC_ALL: 'en_US.UTF-8'
       NODE_OPTIONS: '--max_old_space_size=8192'
       REALLY_UPLOAD: 'false'
       SKIP_NOTIFY_LARK: 'true'

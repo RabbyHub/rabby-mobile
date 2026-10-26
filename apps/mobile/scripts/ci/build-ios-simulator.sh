@@ -100,7 +100,8 @@ else
   yarn check-nodeengines
   yarn ../mobile-local-pages make-theme
   yarn ../mobile-local-pages build --mode ios
-  yarn react-native-asset
+  # This lane must not rewrite Android's tracked asset-link manifest.
+  yarn react-native-asset --ios-assets
   bash "$script_dir/fns.sh" reset_builtin_assets
   yarn buildworker:prod:ios
   # Intentionally no syncrnversion: validate the source version, never bump it.
