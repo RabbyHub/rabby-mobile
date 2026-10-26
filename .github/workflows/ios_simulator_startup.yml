@@ -6,18 +6,30 @@ on:
       - 'publish/*'
   workflow_dispatch:
     inputs:
+      execution_environment:
+        description: Prefer mobile-local; hosted must be selected explicitly
+        type: choice
+        options: ['mobile-local', 'hosted']
+        default: 'mobile-local'
       build_xcode:
-        description: App compiler (26.3 matches release; 27.1 tests the newer SDK)
+        description: App compiler (mobile-local requires 27.1; hosted also supports 26.3)
         type: choice
         options: ['26.3', '27.1']
-        default: '26.3'
+        default: '27.1'
       ios_majors:
         description: Required iOS majors; a manual subset is reported as partial coverage
         type: string
         default: '16,17,18,26,27'
+      build_only:
+        description: Only compile and retain the app; upload and startup can be probed separately
+        type: boolean
+        default: false
 
 permissions:
   contents: read
+
+env:
+  EXECUTION_ENVIRONMENT: ${{ inputs.execution_environment || 'mobile-local' }}
 
 # Independent of Feature Test/release; never cancel their builds or delivery.
 concurrency:
@@ -47,17 +59,26 @@ jobs:
       - id: matrix
         env:
           REQUESTED_MAJORS: ${{ inputs.ios_majors || '16,17,18,26,27' }}
-          BUILD_XCODE: ${{ inputs.build_xcode || '26.3' }}
+          BUILD_XCODE: ${{ inputs.build_xcode || '27.1' }}
         run: |
           node --test scripts/ios-startup-smoke/*.test.mjs
-          node scripts/ios-startup-smoke/hosted.mjs matrix "$REQUESTED_MAJORS" "$BUILD_XCODE"
+          node scripts/ios-startup-smoke/hosted.mjs matrix "$REQUESTED_MAJORS" "$BUILD_XCODE" "$EXECUTION_ENVIRONMENT"
 
   build:
     needs: matrix
     outputs:
       artifact_id: ${{ steps.app_artifact.outputs.artifact-id }}
-    runs-on: ${{ needs.matrix.outputs.build_runner }}
+      source_run_attempt: ${{ steps.build_context.outputs.source_run_attempt }}
+    runs-on: ${{ fromJSON(needs.matrix.outputs.build_runner) }}
     timeout-minutes: 120
+    # Shared with both workflows' test jobs; never cancel a running local build.
+    concurrency:
+      group: ${{ inputs.execution_environment != 'hosted' && 'rabby-ios-simulator-mobile-local' || format('ios-simulator-build-{0}-{1}', github.run_id, github.run_attempt) }}
+      cancel-in-progress: false
+      queue: max
+    defaults:
+      run:
+        working-directory: .ios-simulator-ci
     env:
       NODE_OPTIONS: '--max_old_space_size=8192'
       REALLY_UPLOAD: 'false'
@@ -71,30 +92,50 @@ jobs:
         with:
           ref: ${{ github.sha }}
           persist-credentials: false
-      # The hosted image supplies Xcode; explicitly select/verify the version.
-      # This action does not download Xcode or depend on a self-hosted setup.
+          path: .ios-simulator-ci
+          clean: false
+      - name: Set isolated evidence and cache paths
+        id: build_context
+        run: |
+          EVIDENCE_ROOT="$(mktemp -d "$RUNNER_TEMP/ios-startup-build-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}.XXXXXX")"
+          printf 'EVIDENCE_ROOT=%s\n' "$EVIDENCE_ROOT" >> "$GITHUB_ENV"
+          printf 'source_run_attempt=%s\n' "$GITHUB_RUN_ATTEMPT" >> "$GITHUB_OUTPUT"
+          if [ "$EXECUTION_ENVIRONMENT" = hosted ]; then
+            printf 'RABBY_MOBILE_TURBO_LOCAL_CACHE_ROOT=%s/rabby-simulator-cache\n' "$RUNNER_TEMP" >> "$GITHUB_ENV"
+          fi
+      # Only disposable hosted VMs may change global Xcode selection.
       - uses: maxim-lobanov/setup-xcode@ed7a3b1fda3918c0306d1b724322adc0b8cc0a90 # v1
+        if: inputs.execution_environment == 'hosted'
         with:
-          xcode-version: ${{ inputs.build_xcode || '26.3' }}
+          xcode-version: ${{ inputs.build_xcode || '27.1' }}
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        if: inputs.execution_environment == 'hosted'
         with:
           node-version: '22'
+      - name: Use persistent runner Node and project Ruby
+        if: inputs.execution_environment != 'hosted'
+        run: |
+          source "$HOME/.nvm/nvm.sh"
+          nvm use "$(tr -d '\r\n' < .nvmrc)"
+          node -e "if (process.versions.node.split('.')[0] !== '22') process.exit(1)"
+          printf '%s\n' "$(dirname "$(command -v node)")" >> "$GITHUB_PATH"
+          source "$HOME/.rvm/scripts/rvm"
+          rvm use "$(tr -d '\r\n' < apps/mobile/.ruby-version)@$(tr -d '\r\n' < apps/mobile/.ruby-gemset)"
+          bundle _2.4.22_ --version
+          printf '%s\n' "$(dirname "$(command -v ruby)")" "$(dirname "$(command -v bundle)")" >> "$GITHUB_PATH"
+          printf 'GEM_HOME=%s\nGEM_PATH=%s\n' "$GEM_HOME" "$GEM_PATH" >> "$GITHUB_ENV"
       - uses: ruby/setup-ruby@7f797815d8adceb1c412e7abefdd1ab4abc47a5f # v1
+        if: inputs.execution_environment == 'hosted'
         with:
           ruby-version: '2.7.4'
           bundler: '2.4.22'
           bundler-cache: false
-          working-directory: apps/mobile
+          working-directory: .ios-simulator-ci/apps/mobile
       - name: Verify toolchains and build contracts
+        env:
+          BUILD_XCODE: ${{ inputs.build_xcode || '27.1' }}
         run: |
-          EVIDENCE_ROOT="$RUNNER_TEMP/ios-startup-build"
-          printf 'EVIDENCE_ROOT=%s\n' "$EVIDENCE_ROOT" >> "$GITHUB_ENV"
-          printf 'RABBY_MOBILE_TURBO_LOCAL_CACHE_ROOT=%s/rabby-simulator-cache\n' "$RUNNER_TEMP" >> "$GITHUB_ENV"
-          printf 'DEVELOPER_DIR=%s\n' "$(xcode-select -p)" >> "$GITHUB_ENV"
-          mkdir -p "$EVIDENCE_ROOT"
-          uname -m
-          xcodebuild -version
-          xcrun --sdk iphonesimulator --show-sdk-version
+          node scripts/ios-startup-smoke/toolchain.mjs "$BUILD_XCODE" | tee "$EVIDENCE_ROOT/toolchain.json"
           ruby -v
           bundle -v
           node --version
@@ -102,10 +143,15 @@ jobs:
           df -h "$RUNNER_TEMP"
           node --test apps/mobile/scripts/ci/build-ios-simulator.test.cjs
       - name: Prepare the compiler's iOS platform components
+        if: inputs.execution_environment == 'hosted'
         run: |
           SDK_VERSION="$(xcrun --sdk iphonesimulator --show-sdk-version)"
           xcodebuild -downloadPlatform iOS -buildVersion "$SDK_VERSION" -architectureVariant arm64 \
             2>&1 | tee "$EVIDENCE_ROOT/platform-install.log"
+      - name: Require the compiler's available Simulator platform before building
+        env:
+          BUILD_XCODE: ${{ inputs.build_xcode || '27.1' }}
+        run: node scripts/ios-startup-smoke/toolchain.mjs "$BUILD_XCODE" --build | tee "$EVIDENCE_ROOT/build-platform.json"
       - name: Build one unsigned Regression Simulator app
         env:
           RABBY_MOBILE_KR_PWD: ${{ secrets.RABBY_MOBILE_KR_PWD }}
@@ -133,39 +179,105 @@ jobs:
         with:
           name: ios-startup-build-environment-${{ github.run_attempt }}
           retention-days: 7
-          path: ${{ env.EVIDENCE_ROOT }}/platform-install.log
+          path: |
+            ${{ env.EVIDENCE_ROOT }}/platform-install.log
+            ${{ env.EVIDENCE_ROOT }}/toolchain.json
+            ${{ env.EVIDENCE_ROOT }}/build-platform.json
 
-  startup:
-    needs: [matrix, build]
-    strategy:
-      fail-fast: false
-      matrix: ${{ fromJSON(needs.matrix.outputs.matrix) }}
-    name: Startup iOS ${{ matrix.runtime }}
-    runs-on: ${{ matrix.runner }}
-    timeout-minutes: 60
+  archive:
+    # An archived diagnostic app can survive a post-build provenance failure.
+    # The uploader still rejects logs-only artifacts and invalid receipts.
+    needs: build
+    if: ${{ !cancelled() && !inputs.build_only && needs.build.outputs.artifact_id != '' }}
+    runs-on: [self-hosted, macOS, ARM64, mobile-aws]
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: .ios-simulator-archive-ci
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           ref: ${{ github.sha }}
           persist-credentials: false
-      - uses: maxim-lobanov/setup-xcode@ed7a3b1fda3918c0306d1b724322adc0b8cc0a90 # v1
-        with:
-          xcode-version: ${{ matrix.xcode }}
+          path: .ios-simulator-archive-ci
+          clean: false
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '22'
+      - name: Prepare isolated transfer paths
+        run: |
+          EVIDENCE_ROOT="$(mktemp -d "$RUNNER_TEMP/ios-startup-archive-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}.XXXXXX")"
+          printf 'EVIDENCE_ROOT=%s\nARCHIVE_NODE=%s\n' "$EVIDENCE_ROOT" "$(command -v node)" >> "$GITHUB_ENV"
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          artifact-ids: ${{ needs.build.outputs.artifact_id }}
+          merge-multiple: true
+          path: ${{ env.EVIDENCE_ROOT }}/app
+      - name: Verify and archive on the AWS runner without rebuilding
+        # Match the existing uploader's credential environment, not its deploy script.
+        shell: bash -ieol pipefail {0}
+        env:
+          RABBY_MOBILE_BUILD_BUCKET: ${{ secrets.RABBY_MOBILE_BUILD_BUCKET }}
+          SOURCE_COMMIT: ${{ github.sha }}
+          SOURCE_RUN_ID: ${{ github.run_id }}
+          SOURCE_RUN_ATTEMPT: ${{ needs.build.outputs.source_run_attempt }}
+          SOURCE_ARTIFACT_ID: ${{ needs.build.outputs.artifact_id }}
+        run: '"$ARCHIVE_NODE" scripts/ios-startup-smoke/archive.mjs upload "$EVIDENCE_ROOT/app"'
+
+  startup:
+    needs: [matrix, build]
+    if: ${{ !inputs.build_only }}
+    strategy:
+      fail-fast: false
+      max-parallel: ${{ inputs.execution_environment != 'hosted' && 1 || 5 }}
+      matrix: ${{ fromJSON(needs.matrix.outputs.matrix) }}
+    name: Startup iOS ${{ matrix.runtime }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 60
+    concurrency:
+      group: ${{ matrix.environment == 'mobile-local' && 'rabby-ios-simulator-mobile-local' || format('ios-simulator-test-{0}-{1}-{2}', github.run_id, github.run_attempt, matrix.major) }}
+      cancel-in-progress: false
+      queue: max
+    defaults:
+      run:
+        working-directory: .ios-simulator-ci
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+          path: .ios-simulator-ci
+          clean: false
+      - uses: maxim-lobanov/setup-xcode@ed7a3b1fda3918c0306d1b724322adc0b8cc0a90 # v1
+        if: matrix.environment == 'hosted'
+        with:
+          xcode-version: ${{ matrix.xcode }}
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        if: matrix.environment == 'hosted'
+        with:
+          node-version: '22'
+      - name: Use persistent runner Node
+        if: matrix.environment == 'mobile-local'
+        run: |
+          source "$HOME/.nvm/nvm.sh"
+          nvm use "$(tr -d '\r\n' < .nvmrc)"
+          node -e "if (process.versions.node.split('.')[0] !== '22') process.exit(1)"
+          printf '%s\n' "$(dirname "$(command -v node)")" >> "$GITHUB_PATH"
+      - name: Verify selected Xcode without changing the host
+        env:
+          TEST_XCODE: ${{ matrix.xcode }}
+        run: node scripts/ios-startup-smoke/toolchain.mjs "$TEST_XCODE"
       - name: Install and verify this job's exact Simulator runtime
         env:
           IOS_RUNTIME: ${{ matrix.runtime }}
         run: |
-          EVIDENCE_ROOT="$RUNNER_TEMP/ios-startup-test"
-          export DEVELOPER_DIR="$(xcode-select -p)"
+          EVIDENCE_ROOT="$(mktemp -d "$RUNNER_TEMP/ios-startup-test-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}.XXXXXX")"
           printf 'EVIDENCE_ROOT=%s\n' "$EVIDENCE_ROOT" >> "$GITHUB_ENV"
-          printf 'DEVELOPER_DIR=%s\n' "$DEVELOPER_DIR" >> "$GITHUB_ENV"
-          mkdir -p "$EVIDENCE_ROOT"
           df -h "$RUNNER_TEMP"
+          provision_args=()
+          if [ "$EXECUTION_ENVIRONMENT" = mobile-local ]; then provision_args+=(--check-only); fi
           node scripts/ios-startup-smoke/provision.mjs \
-            --runtime "$IOS_RUNTIME" --output "$EVIDENCE_ROOT/provision"
+            --runtime "$IOS_RUNTIME" --output "$EVIDENCE_ROOT/provision" "${provision_args[@]}"
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           artifact-ids: ${{ needs.build.outputs.artifact_id }}
@@ -182,6 +294,7 @@ jobs:
         run: |
           node scripts/ios-startup-smoke/run.mjs plan \
             --output "$EVIDENCE_ROOT/plan" --majors "$IOS_MAJOR" \
+            --execution-environment "$EXECUTION_ENVIRONMENT" \
             --runtime-version "$IOS_RUNTIME" --build-metadata "$EVIDENCE_ROOT/app/metadata.json"
           node scripts/ios-startup-smoke/run.mjs test \
             --plan "$EVIDENCE_ROOT/plan/plan.json" \
@@ -216,18 +329,19 @@ jobs:
         with:
           node-version: '22'
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        if: ${{ !inputs.build_only }}
         with:
           pattern: ios-startup-test-*
           path: ${{ runner.temp }}/startup-results
       - name: Download only this build's immutable app receipt
-        if: always() && needs.build.outputs.artifact_id != ''
+        if: always() && !inputs.build_only && needs.build.outputs.artifact_id != ''
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           artifact-ids: ${{ needs.build.outputs.artifact_id }}
           merge-multiple: true
           path: ${{ runner.temp }}/startup-results/ios-startup-app-receipt
       - name: Require complete requested coverage of the same app
-        if: always()
+        if: always() && !inputs.build_only
         env:
           REQUESTED_MAJORS: ${{ inputs.ios_majors || '16,17,18,26,27' }}
           BUILD_RESULT: ${{ needs.build.result }}
@@ -236,3 +350,13 @@ jobs:
           mkdir -p "$RUNNER_TEMP/startup-results"
           node scripts/ios-startup-smoke/hosted.mjs summary \
             "$RUNNER_TEMP/startup-results" "$REQUESTED_MAJORS" "$GITHUB_SHA"
+      - name: Report build-only output without claiming startup qualification
+        if: inputs.build_only
+        env:
+          BUILD_RESULT: ${{ needs.build.result }}
+          APP_ARTIFACT_ID: ${{ needs.build.outputs.artifact_id }}
+        run: |
+          printf '# Build only — no startup qualification\n\nCommit: %s\nRun: %s\nArtifact ID: %s\nBuild result: %s\n\nUse iOS Simulator S3 Archive Probe to test upload, or iOS Simulator Artifact Probe to test startup without rebuilding.\n' \
+            "$GITHUB_SHA" "$GITHUB_RUN_ID" "$APP_ARTIFACT_ID" "$BUILD_RESULT" >> "$GITHUB_STEP_SUMMARY"
+          test "$BUILD_RESULT" = success
+          test -n "$APP_ARTIFACT_ID"

@@ -14,13 +14,49 @@ export const hostedTargets = [
   { major: 27, runtime: '27.0', xcode: '27.1', runner: 'xcode-27' },
 ];
 
-export function matrix(majors, compiler) {
+export const localRunner = [
+  'self-hosted',
+  'macOS',
+  'ARM64',
+  'mobile-local',
+  'mobile-ios-simulator',
+];
+
+export function buildRunner(compiler, environment = 'mobile-local') {
+  if (!['mobile-local', 'hosted'].includes(environment))
+    throw new Error('Choose mobile-local or hosted explicitly');
   if (!['26.3', '27.1'].includes(compiler))
     throw new Error('Unsupported app compiler');
+  if (environment === 'mobile-local') {
+    if (compiler !== '27.1')
+      throw new Error(
+        'mobile-local requires Xcode 27.1; choose hosted for 26.3',
+      );
+    return [...localRunner];
+  }
+  return compiler === '27.1' ? 'xcode-27' : 'macos-26';
+}
+
+export function matrix(
+  majors,
+  compiler = '27.1',
+  environment = 'mobile-local',
+) {
+  buildRunner(compiler, environment);
   return {
-    include: parseMajors(majors).map(major =>
-      hostedTargets.find(target => target.major === major),
-    ),
+    include: parseMajors(majors).map(major => {
+      const target = hostedTargets.find(target => target.major === major);
+      return environment === 'hosted'
+        ? { ...target, environment }
+        : {
+            ...target,
+            // Explicit local representative, not a fallback after 18.5 fails.
+            runtime: major === 18 ? '18.3.1' : target.runtime,
+            xcode: '27.1',
+            runner: [...localRunner],
+            environment,
+          };
+    }),
   };
 }
 
@@ -94,9 +130,9 @@ export function summarize(
   commit,
   metadata,
   reports,
-  { probe = false, harnessCommit = commit } = {},
+  { probe = false, harnessCommit = commit, environment = 'mobile-local' } = {},
 ) {
-  const targets = matrix(majors, '26.3').include;
+  const targets = matrix(majors, '27.1', environment).include;
   let receiptValid = true;
   try {
     validateReceipt(metadata, commit, { probe });
@@ -113,6 +149,7 @@ export function summarize(
       matches.length === 1 &&
       receiptValid &&
       report.mode === (probe ? 'probe' : 'qualification') &&
+      report.environment === environment &&
       report.harnessCommit === harnessCommit &&
       report.commit === commit &&
       report.sourceCommit === commit &&
@@ -136,6 +173,7 @@ export function summarize(
     commit,
     harnessCommit,
     mode: probe ? 'probe' : 'qualification',
+    environment,
     sourceProvenance: metadata?.sourceProvenance,
     fullCoverage: targets.length === requiredMajors.length,
     passed: rows.every(row => row.status === 'passed'),
@@ -149,15 +187,15 @@ export function summarize(
 
 async function main([action, ...args]) {
   if (action === 'matrix') {
-    const [majors, compiler] = args;
-    const selected = matrix(majors, compiler);
+    const [majors, compiler = '27.1', environment = 'mobile-local'] = args;
+    const selected = matrix(majors, compiler, environment);
     await fs.appendFile(
       process.env.GITHUB_OUTPUT,
       'matrix=' +
         JSON.stringify(selected) +
         '\n' +
         'build_runner=' +
-        (compiler === '27.1' ? 'xcode-27' : 'macos-26') +
+        JSON.stringify(buildRunner(compiler, environment)) +
         '\n',
     );
     return;
@@ -188,7 +226,9 @@ async function main([action, ...args]) {
         // Missing receipts are failed rows, never silently omitted coverage.
       }
     }
-    const result = summarize(majors, commit, metadata, reports);
+    const result = summarize(majors, commit, metadata, reports, {
+      environment: process.env.EXECUTION_ENVIRONMENT || 'mobile-local',
+    });
     const markdown = [
       '# iOS Simulator startup coverage',
       '',
@@ -198,12 +238,17 @@ async function main([action, ...args]) {
         ? 'Full declared matrix requested.'
         : '**Manual subset; NOT full coverage.**',
       '',
-      '| iOS | Hosted runner | Test Xcode | Result |',
+      '| iOS | Runner | Test Xcode | Result |',
       '| --- | --- | --- | --- |',
       ...result.rows.map(
         row =>
           '| ' +
-          [row.runtime, row.runner, row.xcode, row.status].join(' | ') +
+          [
+            row.runtime,
+            Array.isArray(row.runner) ? row.runner.join(', ') : row.runner,
+            row.xcode,
+            row.status,
+          ].join(' | ') +
           ' |',
       ),
       '',

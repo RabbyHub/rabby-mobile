@@ -6,7 +6,14 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { parseArgs } from 'node:util';
 
-export const supportedRuntimes = ['16.4', '17.5', '18.5', '26.2', '27.0'];
+export const supportedRuntimes = [
+  '16.4',
+  '17.5',
+  '18.3.1',
+  '18.5',
+  '26.2',
+  '27.0',
+];
 export const installTimeoutMs = 25 * 60 * 1000;
 const inventoryArgs = ['simctl', 'list', 'runtimes', '--json'];
 
@@ -128,7 +135,7 @@ async function writeJSON(file, value) {
 }
 
 export async function provisionRuntime(
-  { runtime, output },
+  { runtime, output, checkOnly = false },
   {
     platform = process.platform,
     arch = process.arch,
@@ -157,6 +164,7 @@ export async function provisionRuntime(
     host: { platform, arch },
     developerDir: env.DEVELOPER_DIR,
     installAttempted: false,
+    checkOnly,
   };
   await writeJSON(metadataFile, metadata);
   const call = (command, commandArgs, options = {}) =>
@@ -181,6 +189,10 @@ export async function provisionRuntime(
     const existing = findRuntime(before, runtime);
     let installError;
     if (!existing) {
+      if (checkOnly)
+        throw new Error(
+          `iOS ${runtime} is missing or unavailable; provision the persistent runner explicitly`,
+        );
       metadata.stage = 'install';
       metadata.installAttempted = true;
       metadata.installCommand = { executable: '/usr/bin/xcodebuild', args };
@@ -239,10 +251,17 @@ if (
 ) {
   try {
     const { values } = parseArgs({
-      options: { runtime: { type: 'string' }, output: { type: 'string' } },
+      options: {
+        runtime: { type: 'string' },
+        output: { type: 'string' },
+        'check-only': { type: 'boolean', default: false },
+      },
       allowPositionals: false,
     });
-    const result = await provisionRuntime(values);
+    const result = await provisionRuntime({
+      ...values,
+      checkOnly: values['check-only'],
+    });
     console.log(`iOS ${result.runtime.version}: ${result.status}`);
   } catch (error) {
     console.error(error.message);

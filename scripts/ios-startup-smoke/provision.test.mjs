@@ -58,8 +58,15 @@ async function fixture(t, inventories, installError) {
 }
 
 test('only exact declared versions can select download commands', () => {
-  assert.deepEqual(supportedRuntimes, ['16.4', '17.5', '18.5', '26.2', '27.0']);
-  for (const version of ['16.4', '17.5', '18.5'])
+  assert.deepEqual(supportedRuntimes, [
+    '16.4',
+    '17.5',
+    '18.3.1',
+    '18.5',
+    '26.2',
+    '27.0',
+  ]);
+  for (const version of ['16.4', '17.5', '18.3.1', '18.5'])
     assert.deepEqual(installationArgs(version), [
       '-downloadPlatform',
       'iOS',
@@ -132,6 +139,31 @@ test('an available exact runtime is reused without downloading', async t => {
   assert.equal(result.installAttempted, false);
   assert(!f.calls.some(call => call.args[0] === '-downloadPlatform'));
   assert.equal((await f.read('after.json')).runtimes[0].version, '17.5');
+});
+
+test('persistent-runner check-only verifies existing runtimes without installing or narrowing coverage', async t => {
+  const ready = await fixture(t, [[runtime('16.4')], [runtime('16.4')]]);
+  const result = await provisionRuntime(
+    { runtime: '16.4', output: ready.output, checkOnly: true },
+    ready.dependencies,
+  );
+  assert.equal(result.status, 'reused');
+  assert.equal(result.checkOnly, true);
+  assert.equal(result.installAttempted, false);
+  assert(!ready.calls.some(call => call.args.includes('-downloadPlatform')));
+  const missing = await fixture(t, [[]]);
+  await assert.rejects(
+    provisionRuntime(
+      { runtime: '17.5', output: missing.output, checkOnly: true },
+      missing.dependencies,
+    ),
+    /provision the persistent runner explicitly/,
+  );
+  const metadata = await missing.read('metadata.json');
+  assert.equal(metadata.status, 'failed');
+  assert.equal(metadata.stage, 'inventory-before');
+  assert.equal(metadata.installAttempted, false);
+  assert(!missing.calls.some(call => call.args.includes('-downloadPlatform')));
 });
 
 test('a reused runtime disappearing before verification is a failure', async t => {

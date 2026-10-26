@@ -3,14 +3,17 @@
 This independent workflow runs on pushes to `publish/*` and by manual
 `workflow_dispatch`. It does **not** run after Feature Test, change existing
 packaging/upload jobs, or gate delivery of their IPA/APK artifacts. Its own
-failure stays red. Do not make it a release-required check until hosted
+failure stays red. Do not make it a release-required check until runner
 provisioning, native compilation and the complete matrix have been qualified.
 
 ## What is tested
 
 One unsigned, arm64 **iOS Simulator** Regression app is built from the triggering
 full commit. The same executable and embedded Hermes bundle are distributed
-through a hash-verified archive to five independent GitHub-hosted jobs:
+through a hash-verified archive to five test jobs. **Both app compilation and
+validation default to `[self-hosted, macOS, ARM64, mobile-local, mobile-ios-simulator]`**, using the
+runner's existing Xcode27.1. The local test jobs run serially. Manual
+`execution_environment=hosted` explicitly selects this alternative matrix:
 
 | iOS runtime | Hosted runner | UI-test Xcode |
 | ----------- | ------------- | ------------- |
@@ -45,23 +48,53 @@ so old retained evidence cannot mask a current job failure.
 This is packaged-app startup E2E on Simulator, not physical-device, signing,
 existing-wallet, upgrade, Home-data, transaction or performance validation.
 
-## Environment preparation is part of CI
+## Persistent runner preflight and explicit hosted alternative
 
-No `self-hosted`, `mobile` or `mobile-local` runner is used.
+The default `mobile-local` runner requires Node 22 through NVM,
+Ruby 2.7.4@rabbymobile through RVM, Bundler 2.4.22, Xcode 27.1 and the exact available
+runtimes 16.4, 17.5, **18.3.1**, 26.2, 27.0. App compilation additionally preflights the
+SDK-matching 27.1 platform runtime. `toolchain.mjs` checks the selected Xcode and
+exports `DEVELOPER_DIR` for child processes; it never calls `xcode-select -s`.
+The app compiler defaults to 27.1. Selecting 26.3 requires choosing hosted too.
+
+Local iOS 18 uses the explicitly provisioned 18.3.1 representative; hosted keeps
+18.5. The runtime download service did not offer 18.5/18.6 to this local
+toolchain during preparation. This is a declared matrix choice, not a fallback
+or skipped major. Summary validation requires the selected environment's exact
+minor, and 18.3.1 success must not be reported as 18.5 validation.
+
+Local CI does not install Xcode/runtimes, switch global toolchains, clean
+global caches, or silently move a missing/offline runner job to hosted.
+`provision.mjs --check-only` records the exact runtime inventory and fails on
+missing/unavailable components. Provision the persistent machine separately;
+an installed runtime is not proof that an actual boot or App launch will pass.
+In particular, all local OS versions use 27.1, so the hosted 26.3 results are not
+automatically local 27.1 compatibility evidence.
+
+The default checkout lives in `.ios-simulator-ci` with `clean: false` to avoid
+erasing the runner's ordinary checkout or generated caches. Build-source guards
+still reject tracked dirtiness and record mutations after compilation. Existing
+TURBO variants remain under `~/Library/Caches/rabby-mobile/build-cache`, never
+the runner's temporary evidence directory. NVM/RVM preflight uses installed
+versions and fails rather than compiling or installing a new global toolchain.
+An unrelated workflow that cleans the entire runner workspace can still remove
+this nested checkout and its in-checkout outputs. This lane does not change
+those workflows; the variant cache root outside that workspace remains intact.
+
+When **hosted is explicitly selected**:
 
 - The pinned hosted **image label** provides Xcode. `setup-xcode` explicitly
   selects the requested version and fails if the image no longer supplies it.
   It is a selector, **not an Xcode downloader**; we do not need Apple ID/2FA
   credentials to fetch an Xcode XIP in every job.
-- The default app compiler is **26.3**, matching release. Manual
-  `build_xcode=27.1` builds on `xcode-27` to exercise the newer SDK. The latter
-  hosted label is currently a public preview.
-- Build steps install Node22, Ruby2.7.4 and Bundler2.4.22; existing project helpers
+- `build_xcode=26.3` builds on `macos-26`; 27.1 builds on `xcode-27`. This hosted
+  selection is explicit, not automatic failure recovery.
+- Build steps install Node 22, Ruby 2.7.4 and Bundler 2.4.22; existing project helpers
   install locked JS/gem/Pod dependencies. No self-hosted RVM setup is assumed.
 - The build job explicitly prepares its SDK's iOS platform components.
-- Every test job invokes `provision.mjs`. It reuses only the exact available
+- Every hosted test job invokes `provision.mjs` with installation enabled. It reuses only the exact available
   runtime; otherwise it runs Apple's `xcodebuild -downloadPlatform iOS
--buildVersion <version>`. Versions26/27 request the arm64 variant. It then
+-buildVersion <version>`. Versions 26/27 request the arm64 variant. It then
   checks inventory again. Install failure or a still-missing runtime is an
   infrastructure failure, never an automatic skip or narrower matrix.
 - Provisioning is non-interactive and bounded; it records host/Xcode versions,
@@ -72,10 +105,10 @@ No `self-hosted`, `mobile` or `mobile-local` runner is used.
   stages. This does not increase App launch or XCTest execution deadlines;
   inventory timeouts still fail explicitly, without retries or skips.
 
-Xcode26.3 remains the test toolchain for iOS16 even when the **app** is compiled
-by27.1. Apple's iOS16.4 catalog caps both host macOS and Xcode below27, so the
-oldest-runtime job deliberately stays on `macos-26`. The app is not rebuilt
-with an older compiler just to make that job pass.
+In hosted mode Xcode 26.3 remains the test toolchain for iOS 16 even when the
+**app** is compiled by 27.1; the oldest-runtime job stays on `macos-26`. Local
+preflight instead checks the real 27.1 inventory. Neither mode rebuilds the app
+with an older compiler just to make one test pass.
 
 Each hosted VM installs at most its own test runtime, rather than loading the
 whole matrix onto one machine. Standard ARM64 hosted runners are substantially
@@ -96,12 +129,20 @@ Official references:
 Only the app-build step receives the existing regression build material
 `RABBY_MOBILE_CODE2`, `RABBY_MOBILE_KR_PWD` and `MOBILE_SAFE_API_KEY`.
 No Match, ASC, distribution signing, Sentry-upload, AWS or Lark write credentials
-are needed. The build inherits the source's React Native architecture, and does
+are needed by the build or startup-test jobs. A separate AWS runner job owns S3
+archive transfers using its existing AWS CLI credential chain. The build inherits the source's React Native architecture, and does
 not raise the deployment target, bump versions, export an IPA or publish.
 
-Each job uses its ephemeral VM and run-local temporary paths. Test shards use
-`fail-fast: false`, so one failing OS does not cancel the others. The workflow
-queues publish pushes per branch, independently of Feature Test/release.
+Evidence uses a fresh `mktemp` directory per job/attempt. Local build and test
+jobs in **both** workflows share `rabby-ios-simulator-mobile-local` concurrency
+with `cancel-in-progress: false` and `queue: max`; this protects their shared
+checkout, native build caches and Simulator access. Local matrix parallelism is
+one. Hosted jobs keep separate VMs and can run concurrently. This group does
+not govern unrelated workflows or manually launched processes on the host.
+Test shards use `fail-fast: false`, so one failing OS does not cancel the
+others. Publish pushes also queue per branch, independently of Feature
+Test/release. An offline local runner queues/fails visibly; there is no hidden
+hosted fallback.
 Only UUIDs created by the test driver are shut down/deleted; no `shutdown all`
 or deletion of pre-existing simulators/runtimes is used.
 
@@ -130,13 +171,75 @@ attachments for first-screen proof. Evidence upload uses `always()`; no
 `continue-on-error` hides failures. The earlier device-IPA probe secret is
 unused; an arm64 device IPA is not retagged or re-signed into a simulator app.
 
-## Probe a retained artifact without rebuilding Rabby Mobile
+## Independently test build, upload and startup
+
+The jobs have three independent entry points:
+
+| Entry                                          | Input                                 | Runner / work                                                                             |
+| ---------------------------------------------- | ------------------------------------- | ----------------------------------------------------------------------------------------- |
+| `ios_simulator_startup.yml`, `build_only=true` | Source ref and compiler               | Mac mini builds once and retains a GitHub artifact; no S3 upload or startup qualification |
+| `ios_simulator_archive.yml`                    | Original build run ID and artifact ID | AWS uploads/verifies that exact existing archive; no app build or Simulator               |
+| `ios_simulator_probe.yml`                      | Artifact IDs or exact S3 index key    | Probes the existing app; no Rabby Mobile rebuild                                          |
+
+For the first integration, run build-only on `mobile-local`, note its artifact ID
+and run ID, then manually run **iOS Simulator S3 Archive Probe** with those IDs.
+Repeat just that upload workflow when diagnosing IAM, connectivity or archive
+code. It always calls the same `archive.mjs upload` as automatic publication,
+and binds the **original** producer attempt, not the upload-probe run/attempt.
+An identical existing object is verified and reused; different bytes at the same
+key fail rather than overwrite. Fixing the transfer code does not require another
+native build. Re-running a failed automatic archive job also retains its original
+build attempt binding.
+
+Normal publish runs (`build_only=false`) start the archive job and startup matrix
+independently after building. An AWS runner queue or upload failure cannot block
+startup validation or Feature Test's separate artifact delivery. Upload failures
+remain visible failures; they are not hidden with `continue-on-error`.
+
+### Durable S3 archive
+
+Only `[self-hosted, macOS, ARM64, mobile-aws]` performs S3 reads/writes. Keep the
+AWS runner's existing `mobile`/`builder` labels and the Mac mini's `mobile-local`
+label. The additional labels select capabilities without re-registering runners.
+No AWS keys are copied to the Mac mini or embedded in artifacts. Transfer steps
+use the existing uploader's login-shell credential environment, pin the Node
+executable separately, and keep TLS verification enabled. No Match, deploy script,
+public ACL, Lark notification, version bump or CDN invalidation is involved.
+
+The existing `RABBY_MOBILE_BUILD_BUCKET` secret selects the bucket. Immutable
+objects live outside build-cache prefixes:
+
+```text
+_private/rabby-mobile/ios-simulator/<source-commit>/<producer-run>/<producer-attempt>/
+  RabbyMobile-simulator.zip
+  metadata.json
+  archive.json
+```
+
+The ZIP and original receipt are verified before upload. The index is written
+last, after both payload objects are verified, and records exact keys, hashes,
+sizes and producer identity. There is no `latest` alias, overwrite or automatic
+deletion. A complete `modified` source-provenance archive is retained for
+diagnosis without turning its original build green. Logs-only/incomplete build
+artifacts fail validation and cannot become reusable S3 archives.
+
+The first live transfer must verify read/write access to this **exact prefix**.
+Existing release-path upload success does not prove that permission. Bucket
+policy and lifecycle must also be checked separately: `_private` is a naming
+convention, not proof of private access or indefinite retention. The workflow
+does not alter IAM, bucket policies or lifecycle rules. The index key is a stable
+locator, not a public download URL or an expiring presigned link. Hashes detect
+corruption; provenance still relies on the trusted build and S3 write boundary.
+
+### Probe a retained artifact without rebuilding Rabby Mobile
 
 Manually run **iOS Simulator Artifact Probe** (`ios_simulator_probe.yml`) with:
 
+- `source_type=artifact` (default);
 - `source_run_id`: the completed **iOS Simulator Startup** producer run ID;
 - `source_artifact_id`: its exact retained `ios-startup-app-...` artifact ID;
 - `ios_majors`: the desired declared majors (default `16,17,18,26,27`).
+- `execution_environment`: `mobile-local` (default) or explicit `hosted`.
 
 The probe downloads that same-repository artifact with read-only Actions access,
 checks the run, commit, producer attempt and archive hashes, and installs the
@@ -158,6 +261,21 @@ receipt. Logs-only artifacts cannot be used. In particular, run `40194208595`
 predates early capture and contains no app; it needs one new build to seed a
 reusable artifact.
 
+### Probe S3 after the GitHub artifact expires
+
+Select `source_type=s3` and pass the exact `s3_archive_key` ending in
+`archive.json` from the archive job summary. Leave the GitHub source IDs empty.
+An AWS-only resolve job fetches the index, receipt and ZIP, validates their keys,
+producer and hashes, then relays those verified bytes through a new seven-day
+GitHub artifact for this probe run. Both startup shards **and the summary** consume
+that new transport artifact; they never request the expired/deleted original
+artifact or require the old workflow run to remain available. Original producer
+IDs remain in the source receipt and are not replaced by the relay's IDs.
+
+Missing/corrupt S3 objects fail explicitly. There is no automatic artifact/S3
+fallback, URL following, rebuild or qualification claim. The original workflow
+conclusion is recorded as unknown when it cannot be established from the archive.
+
 For a locally downloaded and verified artifact, the same split is available with
 `run.mjs plan --probe --build-metadata <metadata.json>` followed by
 `run.mjs test --probe --plan <plan.json> --app <RabbyMobile.app>
@@ -169,12 +287,10 @@ As with the build workflow, GitHub manual dispatch requires this new workflow to
 be registered on the default branch first. Adding it to an unmerged feature
 branch alone is not proof that its dispatch endpoint is available.
 
-For pre-merge CI verification, a temporary exact push trigger on
-`feat/ios-simulator-startup-ci` invokes only the probe, using producer run
-`40200867375` and artifact `12603038211`. The app-build workflow no longer runs
-on that feature branch. Push-mode inputs are fixed explicitly; manual dispatch
-still requires its supplied IDs. Remove the temporary probe push trigger and
-fixed input selectors before merging; publish builds remain unchanged.
+The temporary feature-branch push trigger and fixed historical artifact IDs
+have been removed. The probe is manual-only and always requires explicit IDs or an exact S3 index key;
+pushing this feature branch will not build or probe anything. The startup
+workflow still reacts to `publish/*` pushes.
 
 ## Local contract checks
 
@@ -182,16 +298,17 @@ fixed input selectors before merging; publish builds remain unchanged.
 node --test scripts/ios-startup-smoke/*.test.mjs \
   apps/mobile/scripts/ci/build-ios-simulator.test.cjs
 node scripts/ios-startup-smoke/run.mjs plan \
-  --output /absolute/new-plan-dir --majors 16,17 --build-xcode 26.3
+  --output /absolute/new-plan-dir --majors 16,17 --build-xcode 27.1 \
+  --execution-environment mobile-local
 ```
 
 These Node suites cover selection, installation process contracts, archive
 transport and aggregation; native subprocesses are mocked where necessary.
-They do not establish hosted native compilation or runtime boot success.
+They do not establish native compilation or runtime boot success on either
+runner environment.
 See [uitests/README.md](uitests/README.md) for real XCTest commands.
 
 The workflow must exist on the pushed publish branch to react to its pushes.
 Existing publish branches do not acquire it automatically. Manual dispatch
-requires registration on the default branch first. The temporary exact feature
-branch push trigger in the probe is only for qualification and must be removed
-before merge.
+requires registration on the default branch first. Removing the temporary push
+entry does not register an unmerged workflow for manual dispatch.

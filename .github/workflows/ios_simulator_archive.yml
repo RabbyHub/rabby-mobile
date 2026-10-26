@@ -1,0 +1,66 @@
+name: iOS Simulator S3 Archive Probe
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_run_id:
+        description: Completed iOS Simulator Startup build run ID (no rebuild)
+        required: true
+        type: string
+      source_artifact_id:
+        description: Exact retained ios-startup-app artifact ID to archive or verify again
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+
+defaults:
+  run:
+    shell: bash --noprofile --norc -eo pipefail {0}
+    working-directory: .ios-simulator-archive-ci
+
+jobs:
+  archive:
+    if: github.repository == 'RabbyHub/rabby-mobile'
+    runs-on: [self-hosted, macOS, ARM64, mobile-aws]
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+          path: .ios-simulator-archive-ci
+          clean: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+      - name: Check transfer contracts and prepare isolated paths
+        run: |
+          node --test scripts/ios-startup-smoke/archive.test.mjs scripts/ios-startup-smoke/probe.test.mjs
+          EVIDENCE_ROOT="$(mktemp -d "$RUNNER_TEMP/ios-archive-probe-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}.XXXXXX")"
+          printf 'EVIDENCE_ROOT=%s\nARCHIVE_NODE=%s\n' "$EVIDENCE_ROOT" "$(command -v node)" >> "$GITHUB_ENV"
+      - id: select
+        name: Resolve the original immutable build artifact
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          SOURCE_RUN_ID: ${{ inputs.source_run_id }}
+          SOURCE_ARTIFACT_ID: ${{ inputs.source_artifact_id }}
+        run: node scripts/ios-startup-smoke/probe.mjs resolve
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          artifact-ids: ${{ steps.select.outputs.artifact_id }}
+          run-id: ${{ steps.select.outputs.artifact_run_id }}
+          github-token: ${{ github.token }}
+          merge-multiple: true
+          path: ${{ env.EVIDENCE_ROOT }}/app
+      - name: Upload or verify the same S3 archive without recompiling
+        shell: bash -ieol pipefail {0}
+        env:
+          RABBY_MOBILE_BUILD_BUCKET: ${{ secrets.RABBY_MOBILE_BUILD_BUCKET }}
+          SOURCE_COMMIT: ${{ fromJSON(steps.select.outputs.source).sourceCommit }}
+          SOURCE_RUN_ID: ${{ fromJSON(steps.select.outputs.source).runId }}
+          SOURCE_RUN_ATTEMPT: ${{ fromJSON(steps.select.outputs.source).runAttempt }}
+          SOURCE_ARTIFACT_ID: ${{ fromJSON(steps.select.outputs.source).artifactId }}
+        run: '"$ARCHIVE_NODE" scripts/ios-startup-smoke/archive.mjs upload "$EVIDENCE_ROOT/app"'

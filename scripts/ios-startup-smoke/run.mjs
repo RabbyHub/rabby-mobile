@@ -7,6 +7,7 @@ import { randomUUID } from 'node:crypto';
 import { createHash } from 'node:crypto';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { parseArgs } from 'node:util';
+import { verifyToolchain } from './toolchain.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 export const requiredMajors = [16, 17, 18, 26, 27];
@@ -141,7 +142,14 @@ export function parseMajors(value) {
   return majors.sort((a, b) => a - b);
 }
 
-export function selectRuntimes(runtimes, majors, exactVersion) {
+export function selectRuntimes(
+  runtimes,
+  majors,
+  exactVersion,
+  environment = 'mobile-local',
+) {
+  if (!['mobile-local', 'hosted'].includes(environment))
+    throw new Error('Choose mobile-local or hosted explicitly');
   return majors.map(major => {
     const candidates = runtimes
       .filter(
@@ -176,8 +184,9 @@ export function selectRuntimes(runtimes, majors, exactVersion) {
       build: runtime.buildversion,
       identifier: runtime.identifier,
       deviceType: device.identifier,
-      // Keep old OS testing independent of the SDK used to compile the app.
-      testXcodeVersion: major >= 27 ? '27.1' : '26.3',
+      // Hosted old-OS shards retain their own toolchain; local has only 27.1.
+      testXcodeVersion:
+        environment === 'hosted' && major < 27 ? '26.3' : '27.1',
     };
   });
 }
@@ -249,8 +258,19 @@ async function plan(options) {
   await fs.mkdir(output, { recursive: false });
   try {
     const majors = parseMajors(options.majors || requiredMajors.join(','));
+    const environment = options['execution-environment'] || 'mobile-local';
+    if (!['mobile-local', 'hosted'].includes(environment))
+      throw new Error('Choose mobile-local or hosted explicitly');
+    if (
+      environment === 'mobile-local' &&
+      options['build-xcode'] &&
+      options['build-xcode'] !== '27.1'
+    )
+      throw new Error(
+        'mobile-local requires Xcode 27.1; choose hosted for 26.3',
+      );
     const harnessCommit = read('git', ['rev-parse', 'HEAD']);
-    // A hosted test job consumes the app receipt, not the build machine's
+    // A test job consumes the app receipt, not the build machine's
     // absolute Xcode path. Only its own UI-test toolchain must be installed.
     const metadataBytes = options['build-metadata']
       ? await fs.readFile(options['build-metadata'])
@@ -264,12 +284,15 @@ async function plan(options) {
         : undefined,
       probe: options.probe,
     });
+    const localToolchain =
+      environment === 'mobile-local' ? verifyToolchain('27.1') : undefined;
     const build = metadata
       ? { description: metadata.xcode }
-      : await findXcode(options['build-xcode'] || '26.3');
+      : localToolchain || (await findXcode(options['build-xcode'] || '27.1'));
     const runtimes = [];
     for (const major of majors) {
-      const testXcode = await findXcode(major >= 27 ? '27.1' : '26.3');
+      const testXcode =
+        localToolchain || (await findXcode(major < 27 ? '26.3' : '27.1'));
       const inventory = readRuntimeInventory({
         ...process.env,
         DEVELOPER_DIR: testXcode.developerDir,
@@ -278,11 +301,13 @@ async function plan(options) {
         inventory.runtimes,
         [major],
         options['runtime-version'],
+        environment,
       );
       runtimes.push({ ...runtime, testXcode });
     }
     const result = {
       schemaVersion: 1,
+      environment,
       ...binding,
       commit: binding.sourceCommit,
       qualificationPassed: false,
@@ -648,6 +673,7 @@ async function test(options) {
     results.every(result => result.status === 'passed');
   await writeJSON(path.join(output, 'results.json'), {
     ...binding,
+    environment: selected.environment,
     commit: selected.commit,
     appHash,
     jsHash,
@@ -701,6 +727,7 @@ export async function main(args) {
       output: { type: 'string' },
       majors: { type: 'string' },
       'build-xcode': { type: 'string' },
+      'execution-environment': { type: 'string' },
       'build-metadata': { type: 'string' },
       'runtime-version': { type: 'string' },
       plan: { type: 'string' },
@@ -714,7 +741,7 @@ export async function main(args) {
   if (positionals[0] === 'test' && values.plan && values.app && values.metadata)
     return test(values);
   throw new Error(
-    'Use plan --output DIR [--majors 16,17,18,26,27] [--build-xcode 26.3] [--build-metadata FILE] [--probe], or test --plan FILE --app APP --metadata FILE --output DIR [--probe]',
+    'Use plan --output DIR [--majors 16,17,18,26,27] [--build-xcode 27.1] [--execution-environment mobile-local|hosted] [--build-metadata FILE] [--probe], or test --plan FILE --app APP --metadata FILE --output DIR [--probe]',
   );
 }
 

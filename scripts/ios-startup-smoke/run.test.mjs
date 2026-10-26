@@ -305,7 +305,7 @@ test('selects latest available runtime per major and never changes its actual id
   );
   assert.equal(selected[0].version, '17.10');
   assert.equal(selected[1].identifier, actualId);
-  assert.equal(selected[1].testXcodeVersion, '26.3');
+  assert.equal(selected[1].testXcodeVersion, '27.1');
 });
 
 test('a missing required OS version is an infrastructure failure, not a skipped pass', () => {
@@ -324,11 +324,25 @@ test('hosted shards use the provisioned exact runtime, not a newer preinstalled 
     [runtime('17.5'), runtime('17.6')],
     [17],
     '17.5',
+    'hosted',
   );
   assert.equal(selected[0].version, '17.5');
+  assert.equal(selected[0].testXcodeVersion, '26.3');
   assert.throws(
     () => selectRuntimes([runtime('17.6')], [17], '17.5'),
     /missing/,
+  );
+});
+
+test('local planning never requires an uninstalled legacy Xcode or an implicit hosted fallback', () => {
+  const selected = selectRuntimes([runtime('16.4'), runtime('27.0')], [16, 27]);
+  assert.deepEqual(
+    selected.map(item => item.testXcodeVersion),
+    ['27.1', '27.1'],
+  );
+  assert.throws(
+    () => selectRuntimes([runtime('16.4')], [16], undefined, 'auto'),
+    /explicitly/,
   );
 });
 

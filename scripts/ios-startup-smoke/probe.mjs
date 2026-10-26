@@ -3,6 +3,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { matrix, summarize, verifyArchive } from './hosted.mjs';
+import { validateArchiveSource } from './archive.mjs';
 
 const repository = 'RabbyHub/rabby-mobile';
 const workflowPath = '.github/workflows/ios_simulator_startup.yml';
@@ -50,6 +51,7 @@ export function selectSource(artifact, run, runId, artifactId) {
       'Artifact is not an available app from the selected same-repository simulator build',
     );
   return {
+    sourceType: 'artifact',
     repository,
     runId,
     artifactId,
@@ -81,20 +83,62 @@ async function github(endpoint) {
   return response.json();
 }
 
-function sourceFromEnvironment() {
-  const source = JSON.parse(process.env.PROBE_SOURCE || 'null');
+export function validateProbeSource(source) {
+  if (source?.sourceType === 's3') return validateArchiveSource(source);
+  const allowed = new Set([
+    'sourceType',
+    'repository',
+    'runId',
+    'artifactId',
+    'runAttempt',
+    'sourceCommit',
+    'artifactName',
+    'runConclusion',
+  ]);
   if (
+    !source ||
+    typeof source !== 'object' ||
+    Array.isArray(source) ||
+    Object.keys(source).some(key => !allowed.has(key)) ||
+    (source.sourceType !== undefined && source.sourceType !== 'artifact') ||
     source?.repository !== repository ||
-    !/^[a-f0-9]{40}$/.test(source?.sourceCommit)
+    typeof source.sourceCommit !== 'string' ||
+    source.sourceCommit.length !== 40 ||
+    !/^[a-f0-9]{40}$/.test(source?.sourceCommit) ||
+    !['runId', 'artifactId', 'runAttempt'].every(
+      key => typeof source[key] === 'string',
+    )
   )
     throw new Error('Missing resolved artifact selection');
   id(source.runId);
   id(source.artifactId);
   id(source.runAttempt);
-  return source;
+  if (
+    source.artifactName !==
+      `ios-startup-app-${source.sourceCommit}-${source.runAttempt}` ||
+    ![
+      'success',
+      'failure',
+      'neutral',
+      'cancelled',
+      'skipped',
+      'timed_out',
+      'action_required',
+      'stale',
+      'startup_failure',
+    ].includes(source.runConclusion)
+  )
+    throw new Error('Invalid resolved artifact name or run conclusion');
+  // Old resolved GitHub selections did not have a sourceType discriminator.
+  return { ...source, sourceType: 'artifact' };
+}
+
+function sourceFromEnvironment() {
+  return validateProbeSource(JSON.parse(process.env.PROBE_SOURCE || 'null'));
 }
 
 export async function verifyProbeArchive(directory, source) {
+  source = validateProbeSource(source);
   return verifyArchive(directory, source.sourceCommit, {
     probe: true,
     producer: {
@@ -105,7 +149,22 @@ export async function verifyProbeArchive(directory, source) {
   });
 }
 
-async function main([action, ...args]) {
+function selectedMatrix() {
+  return matrix(
+    process.env.REQUESTED_MAJORS || '16,17,18,26,27',
+    '27.1',
+    process.env.EXECUTION_ENVIRONMENT || 'mobile-local',
+  );
+}
+
+export async function main([action, ...args]) {
+  if (action === 'matrix') {
+    await fs.appendFile(
+      process.env.GITHUB_OUTPUT,
+      `matrix=${JSON.stringify(selectedMatrix())}\n`,
+    );
+    return;
+  }
   if (action === 'resolve') {
     const runId = id(process.env.SOURCE_RUN_ID);
     const artifactId = id(process.env.SOURCE_ARTIFACT_ID);
@@ -114,13 +173,12 @@ async function main([action, ...args]) {
       github(`actions/runs/${runId}`),
     ]);
     const source = selectSource(artifact, run, runId, artifactId);
-    const selected = matrix(
-      process.env.REQUESTED_MAJORS || '16,17,18,26,27',
-      '26.3',
-    );
+    const selected = selectedMatrix();
     await fs.appendFile(
       process.env.GITHUB_OUTPUT,
-      `source=${JSON.stringify(source)}\nmatrix=${JSON.stringify(selected)}\n`,
+      `source=${JSON.stringify(source)}\nmatrix=${JSON.stringify(
+        selected,
+      )}\nartifact_id=${source.artifactId}\nartifact_run_id=${source.runId}\n`,
     );
     console.log(JSON.stringify(source, null, 2));
     return;
@@ -133,7 +191,7 @@ async function main([action, ...args]) {
       JSON.stringify(source, null, 2) + '\n',
     );
     console.log(
-      `Diagnostic artifact verified: ${source.artifactId}; source ${source.sourceCommit}; provenance ${metadata.sourceProvenance.status}`,
+      `Diagnostic ${source.sourceType} app verified: original artifact ${source.artifactId}; source ${source.sourceCommit}; provenance ${metadata.sourceProvenance.status}`,
     );
     return;
   }
@@ -163,13 +221,20 @@ async function main([action, ...args]) {
       ...summarize(majors, source.sourceCommit, metadata, reports, {
         probe: true,
         harnessCommit,
+        environment: process.env.EXECUTION_ENVIRONMENT || 'mobile-local',
       }),
       artifactSource: source,
     };
     const markdown = [
       '# iOS Simulator artifact probe — diagnostic only',
       '',
-      `Artifact: ${source.artifactId}; build run: ${source.runId}; attempt: ${source.runAttempt}`,
+      `Storage: ${
+        source.sourceType === 's3' ? 'S3 archive' : 'GitHub Actions artifact'
+      }`,
+      ...(source.sourceType === 's3'
+        ? [`Archive key: ${source.archiveKey}`]
+        : []),
+      `Original producer: ${source.repository}; build run: ${source.runId}; attempt: ${source.runAttempt}; artifact: ${source.artifactId}`,
       `App source: ${source.sourceCommit}; test harness: ${harnessCommit}`,
       `Source provenance: ${metadata.sourceProvenance.status}; original run: ${source.runConclusion}`,
       '',
@@ -197,7 +262,7 @@ async function main([action, ...args]) {
       );
     return;
   }
-  throw new Error('Use resolve, verify or summary');
+  throw new Error('Use matrix, resolve, verify or summary');
 }
 
 if (
