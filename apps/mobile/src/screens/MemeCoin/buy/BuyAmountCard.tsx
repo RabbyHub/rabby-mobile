@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
-import { TouchableOpacity, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { Keyboard, TouchableOpacity, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import RcIconPencilCC from '@/assets2024/memecoin/pencil-cc.svg';
 import { AssetAvatar } from '@/components/AssetAvatar';
 import { Text, TextInput } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
+import { formatUsdValue } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import { DashedDivider } from '../components/DashedDivider';
 
@@ -12,12 +13,13 @@ const MAX_AVATARS = 6;
 
 export const BuyAmountCard = ({
   amountText,
-  invalid,
+  amountUsd,
   onChangeAmount,
   memes,
 }: {
   amountText: string;
-  invalid: boolean;
+  /** null when amountText is invalid */
+  amountUsd: number | null;
   onChangeAmount: (text: string) => void;
   memes: Array<{ id: string; chain: string; logoUrl: string }>;
 }) => {
@@ -25,7 +27,21 @@ export const BuyAmountCard = ({
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const [editing, setEditing] = useState(false);
   const overflow = memes.length > MAX_AVATARS;
-  const amountStyle = [styles.amount, invalid && styles.amountInvalid];
+  const amountStyle = [
+    styles.amount,
+    amountUsd === null && styles.amountInvalid,
+  ];
+
+  // Android hides the keyboard on back without blurring the input
+  useEffect(() => {
+    if (!editing) {
+      return;
+    }
+    const sub = Keyboard.addListener('keyboardDidHide', () =>
+      setEditing(false),
+    );
+    return () => sub.remove();
+  }, [editing]);
 
   return (
     <View style={styles.card}>
@@ -50,7 +66,9 @@ export const BuyAmountCard = ({
             style={styles.amountTouch}
             onPress={() => setEditing(true)}>
             <Text style={[amountStyle, styles.amountText]} numberOfLines={1}>
-              ${amountText}
+              {amountUsd === null
+                ? `$${amountText}`
+                : formatUsdValue(amountUsd)}
             </Text>
             <RcIconPencilCC
               width={24}

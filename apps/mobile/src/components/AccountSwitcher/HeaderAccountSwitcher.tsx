@@ -41,12 +41,14 @@ export function HeaderAccountSwitcher({
   disableSwitch = false,
   formatDefaultAliasAsAddress = false,
   hideAccountName = false,
+  showCaretWhenDisabled = false,
   maxWidth = 180,
   style,
 }: AccountSwitcherAopProps<{
   disableSwitch?: boolean;
   formatDefaultAliasAsAddress?: boolean;
   hideAccountName?: boolean;
+  showCaretWhenDisabled?: boolean;
   maxWidth?: number;
   style?: StyleProp<ViewStyle>;
 }>) {
@@ -106,14 +108,18 @@ export function HeaderAccountSwitcher({
               {accountName}
             </Text>
           )}
-          {!disableSwitch && (
+          {(!disableSwitch || showCaretWhenDisabled) && (
             <CaretArrowIconCC
               dir="down"
               style={isVisible ? styles.reverseCaret : null}
               width={14}
               height={14}
               bgColor={colors2024['neutral-bg-5']}
-              lineColor={colors2024['neutral-title-1']}
+              lineColor={
+                disableSwitch
+                  ? colors2024['neutral-foot']
+                  : colors2024['neutral-title-1']
+              }
             />
           )}
         </TouchableOpacity>

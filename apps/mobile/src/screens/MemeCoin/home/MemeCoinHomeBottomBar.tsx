@@ -17,7 +17,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { MaxPriceImpactSelector } from '../components/MaxPriceImpactSelector';
 import type { MaxPriceImpactPct } from '../ui/helpers';
 
-const useKeyboardVisible = () => {
+export const useKeyboardVisible = () => {
   const [visible, setVisible] = useState(false);
   useEffect(() => {
     const show = Keyboard.addListener(
@@ -69,7 +69,7 @@ export const MemeCoinHomeBottomBar = ({
         <NextSearchBar
           value={keyword}
           onChangeText={onKeywordChange}
-          onCancel={() => onKeywordChange('')}
+          noCancel
           placeholder={
             mode === 'market'
               ? t('page.memeCoin.searchMarket')

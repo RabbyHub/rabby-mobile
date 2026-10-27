@@ -28,6 +28,7 @@ export const MemeCoinHeader = ({
             forScene="MakeTransactionAbout"
             disableSwitch={disableSwitch}
             hideAccountName
+            showCaretWhenDisabled
             style={styles.switcher}
           />
         </View>

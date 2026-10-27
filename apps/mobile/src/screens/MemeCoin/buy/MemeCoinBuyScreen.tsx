@@ -160,7 +160,7 @@ const MemeCoinBuyContent = ({
         keyboardDismissMode="on-drag">
         <BuyAmountCard
           amountText={amountText}
-          invalid={amountUsd === null}
+          amountUsd={amountUsd}
           onChangeAmount={setAmountText}
           memes={memes}
         />

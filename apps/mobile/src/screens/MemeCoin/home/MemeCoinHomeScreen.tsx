@@ -10,6 +10,10 @@ import { useFocusEffect } from '@react-navigation/native';
 import { Skeleton } from '@rneui/themed';
 import { useMemoizedFn } from 'ahooks';
 import { useTranslation } from 'react-i18next';
+import {
+  AndroidSoftInputModes,
+  KeyboardController,
+} from 'react-native-keyboard-controller';
 import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
 import { Text } from '@/components/Typography';
 import { toast } from '@/components2024/Toast';
@@ -50,7 +54,10 @@ import {
   toSellHoldings,
 } from '../ui/helpers';
 import { getChainNativeToken } from '../ui/nativeToken';
-import { MemeCoinHomeBottomBar } from './MemeCoinHomeBottomBar';
+import {
+  MemeCoinHomeBottomBar,
+  useKeyboardVisible,
+} from './MemeCoinHomeBottomBar';
 
 type HomeMode = 'market' | 'holdings';
 
@@ -70,6 +77,7 @@ export const MemeCoinHomeScreen = () => {
   const { t } = useTranslation();
   const { styles } = useTheme2024({ getStyle });
   const { safeOffHeader } = useSafeSizes();
+  const keyboardVisible = useKeyboardVisible();
   const { finalSceneCurrentAccount: account } = useSceneAccountInfo({
     forScene: 'MakeTransactionAbout',
   });
@@ -139,6 +147,23 @@ export const MemeCoinHomeScreen = () => {
         refreshMemeHoldings(address);
       }
     }, [address, clearSelection]),
+  );
+
+  // Android pans the whole window by default (header slides off). The app is
+  // edge-to-edge, so the system never resizes: stop the pan and let the
+  // padding KeyboardAvoidingView lift the bottom bar instead. Its Android hide
+  // event leaves a navigation-bar-high padding, so padding is on only while
+  // the keyboard is up.
+  useFocusEffect(
+    useCallback(() => {
+      if (IS_IOS) {
+        return;
+      }
+      KeyboardController.setInputMode(
+        AndroidSoftInputModes.SOFT_INPUT_ADJUST_NOTHING,
+      );
+      return () => KeyboardController.setDefaultMode();
+    }, []),
   );
 
   const selectedSet = useMemo(
@@ -298,6 +323,9 @@ export const MemeCoinHomeScreen = () => {
       : mode === 'holdings'
       ? t('page.memeCoin.value')
       : t('page.memeCoin.marketCap');
+  // Figma drops the column label when a search finds nothing
+  const noSearchMatch =
+    hasKeyword && rows.length === 0 && !(mode === 'market' && searchLoading);
 
   const listHeader = (
     <View style={styles.listHeader}>
@@ -319,17 +347,19 @@ export const MemeCoinHomeScreen = () => {
             ? t('page.memeCoin.marketTitle')
             : t('page.memeCoin.holdingsTitle')}
         </Text>
-        <TouchableOpacity
-          disabled={selectedCount === 0}
-          onPress={clearSelection}
-          hitSlop={8}>
-          <Text
-            style={
-              selectedCount > 0 ? styles.sectionAction : styles.sectionLabel
-            }>
-            {rightLabel}
-          </Text>
-        </TouchableOpacity>
+        {selectedCount > 0 || !noSearchMatch ? (
+          <TouchableOpacity
+            disabled={selectedCount === 0}
+            onPress={clearSelection}
+            hitSlop={8}>
+            <Text
+              style={
+                selectedCount > 0 ? styles.sectionAction : styles.sectionLabel
+              }>
+              {rightLabel}
+            </Text>
+          </TouchableOpacity>
+        ) : null}
       </View>
     </View>
   );
@@ -384,7 +414,7 @@ export const MemeCoinHomeScreen = () => {
   return (
     <KeyboardAvoidingView
       style={[styles.screen, { paddingTop: safeOffHeader }]}
-      behavior={IS_IOS ? 'padding' : undefined}>
+      behavior={IS_IOS || keyboardVisible ? 'padding' : undefined}>
       <FlatList
         data={rows}
         keyExtractor={keyExtractor}

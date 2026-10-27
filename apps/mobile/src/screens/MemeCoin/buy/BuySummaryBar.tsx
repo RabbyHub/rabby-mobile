@@ -16,6 +16,10 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { MaxPriceImpactSelector } from '../components/MaxPriceImpactSelector';
 import type { BuySummary, MaxPriceImpactPct } from '../ui/helpers';
 
+/** drops zero cents only, as in Figma: $100 needed, Another $65.21 needed */
+const formatUsdNoZeroCents = (usd: number) =>
+  formatUsdValue(usd).replace(/\.00$/, '');
+
 export const BuySummaryBar = ({
   selectedTotalUsd,
   summary,
@@ -38,14 +42,14 @@ export const BuySummaryBar = ({
   const summaryText =
     summary.kind === 'none'
       ? t('page.memeCoin.buy.needed', {
-          amount: formatUsdValue(summary.neededUsd),
+          amount: formatUsdNoZeroCents(summary.neededUsd),
         })
       : summary.kind === 'short'
       ? t('page.memeCoin.buy.anotherNeeded', {
-          amount: formatUsdValue(summary.shortfallUsd),
+          amount: formatUsdNoZeroCents(summary.shortfallUsd),
         })
       : t('page.memeCoin.buy.totalEstPayment', {
-          amount: formatUsdValue(summary.totalPaymentUsd),
+          amount: formatUsdNoZeroCents(summary.totalPaymentUsd),
         });
 
   return (
