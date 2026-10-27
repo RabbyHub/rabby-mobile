@@ -78,7 +78,12 @@ export const MemeCoinHomeScreen = () => {
   const marketItems = useMemeMarketStore(s => s.items);
   const marketLoading = useMemeMarketStore(s => s.loading);
   const marketError = useMemeMarketStore(s => s.error);
-  const { holdings, totalUsd } = useMemeHoldings(address);
+  const {
+    holdings,
+    totalUsd,
+    loaded: holdingsLoaded,
+    loadFailed: holdingsLoadFailed,
+  } = useMemeHoldings(address);
 
   const [mode, setMode] = useState<HomeMode>('market');
   const [keyword, setKeyword] = useState('');
@@ -114,6 +119,12 @@ export const MemeCoinHomeScreen = () => {
       refreshMemeHoldings(address);
     }
   }, [address, clearSelection]);
+
+  const retryHoldings = useCallback(() => {
+    if (address) {
+      refreshMemeHoldings(address);
+    }
+  }, [address]);
 
   useFocusEffect(
     useCallback(() => {
@@ -319,8 +330,11 @@ export const MemeCoinHomeScreen = () => {
     mode === 'market' && !hasKeyword && marketItems.length === 0;
   let listEmpty: React.ReactElement;
   if (
-    mode === 'market' &&
-    (hasKeyword ? searchLoading : marketEmpty && marketLoading)
+    mode === 'market'
+      ? hasKeyword
+        ? searchLoading
+        : marketEmpty && marketLoading
+      : !holdingsLoaded && !holdingsLoadFailed
   ) {
     listEmpty = (
       <View>
@@ -338,6 +352,13 @@ export const MemeCoinHomeScreen = () => {
       <MemeEmptyState
         text={t('page.memeCoin.loadFailed')}
         onPress={refreshMemeMarket}
+      />
+    );
+  } else if (mode === 'holdings' && holdingsLoadFailed) {
+    listEmpty = (
+      <MemeEmptyState
+        text={t('page.memeCoin.loadFailed')}
+        onPress={retryHoldings}
       />
     );
   } else {
