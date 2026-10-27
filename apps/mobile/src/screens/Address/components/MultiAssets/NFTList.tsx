@@ -193,7 +193,7 @@ const NFTListInner = () => {
   const getAccountByAddress = useFindAccountByAddress(myTop10Accounts);
   const { isFocused, isFocusing } = useIsFocusedCurrentTab(TabName.nft);
 
-  useScrollToTopOnChainChange({
+  const suspendVisibleAnchor = useScrollToTopOnChainChange({
     chain,
     isCurrentTab: isFocusing,
   });
@@ -543,7 +543,9 @@ const NFTListInner = () => {
         maxToRenderPerBatch={NFT_LIST_RENDER_BATCH_SIZE}
         updateCellsBatchingPeriod={NFT_LIST_BATCHING_PERIOD_MS}
         removeClippedSubviews={IS_ANDROID}
-        maintainVisibleContentPosition={{ minIndexForVisible: 0 }}
+        maintainVisibleContentPosition={
+          suspendVisibleAnchor ? undefined : { minIndexForVisible: 0 }
+        }
         ItemSeparatorComponent={ListRenderSeparator}
         ListHeaderComponent={
           <RefreshPlaceholderIOS
