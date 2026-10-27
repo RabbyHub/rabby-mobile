@@ -284,6 +284,48 @@ describe('transaction history sync', () => {
 
       expect(mockedOpenapi.getAllTxHistory).toHaveBeenCalledTimes(1);
     });
+
+    it('still fetches for a sync that joins a Home round only checking the count', async () => {
+      // the Home round's regular sync is not due, only its daily count check
+      updateHistoryTimeSingleAddress(ADDRESS, Date.now() - 60 * 1000);
+      const txCount = createDeferred<{ tx_count: number; has_more: boolean }>();
+      mockedOpenapi.getTxCount.mockReturnValueOnce(txCount.promise);
+
+      const home = syncTop10History([ADDRESS], false);
+      await waitFor(() =>
+        expect(mockedOpenapi.getTxCount).toHaveBeenCalledTimes(1),
+      );
+      const single = syncSingleAddress(ADDRESS);
+
+      // local history matches the server, so the check itself fetches nothing
+      txCount.resolve({ tx_count: 0, has_more: false });
+      await Promise.all([home, single]);
+
+      expect(mockedOpenapi.getTxCount).toHaveBeenCalledTimes(1);
+      expect(mockedOpenapi.hasNewTxFrom).toHaveBeenCalledTimes(1);
+      expect(mockedOpenapi.listTxHistory).toHaveBeenCalledWith(
+        expect.objectContaining({ id: ADDRESS }),
+      );
+    });
+
+    it('still checks the count for a sync that joins a run without the check', async () => {
+      const page = createDeferred<never>();
+      mockedOpenapi.getAllTxHistory.mockReturnValueOnce(page.promise);
+
+      const imported = syncMultiAddressesHistory([ADDRESS]);
+      await waitFor(() =>
+        expect(mockedOpenapi.getAllTxHistory).toHaveBeenCalledTimes(1),
+      );
+      const single = syncSingleAddress(ADDRESS);
+
+      page.resolve(makeHistoryResult([]));
+      await Promise.all([imported, single]);
+
+      expect(mockedOpenapi.getTxCount).toHaveBeenCalledTimes(1);
+      // the import already fetched, so only the check runs after it
+      expect(mockedOpenapi.getAllTxHistory).toHaveBeenCalledTimes(1);
+      expect(mockedOpenapi.hasNewTxFrom).not.toHaveBeenCalled();
+    });
   });
 
   describe('90-day completeness check', () => {

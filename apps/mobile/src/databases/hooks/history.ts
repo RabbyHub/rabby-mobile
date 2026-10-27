@@ -411,18 +411,37 @@ const runAddressHistorySync = async (
   }
 };
 
-const addressHistorySyncInFlight = new Map<string, Promise<void>>();
+const addressHistorySyncInFlight = new Map<
+  string,
+  { task: AddressHistorySyncTask; run: Promise<void> }
+>();
 
-/** Home, single-address and import syncs of one address share a run */
-const syncAddressHistory = (address: string, task: AddressHistorySyncTask) => {
+/**
+ * Home, single-address and import syncs of one address share a run. A request
+ * asking for more than the running sync does (a fetch joining a Home round that
+ * only checks the count, or a count check joining an import sync) runs the
+ * missing part once that run finishes.
+ */
+const syncAddressHistory = (
+  address: string,
+  task: AddressHistorySyncTask,
+): Promise<void> => {
   const inFlight = addressHistorySyncInFlight.get(address);
   if (inFlight) {
-    return inFlight;
+    const missing = {
+      ...task,
+      fetchNew: task.fetchNew && !inFlight.task.fetchNew,
+      checkTxCount: task.checkTxCount && !inFlight.task.checkTxCount,
+    };
+    if (!missing.fetchNew && !missing.checkTxCount) {
+      return inFlight.run;
+    }
+    return inFlight.run.then(() => syncAddressHistory(address, missing));
   }
   const run = runAddressHistorySync(address, task).finally(() => {
     addressHistorySyncInFlight.delete(address);
   });
-  addressHistorySyncInFlight.set(address, run);
+  addressHistorySyncInFlight.set(address, { task, run });
   return run;
 };
 
