@@ -2,6 +2,10 @@ name: Xcode Toolchain Downloads
 
 on:
   workflow_dispatch:
+  # Temporary registration only; the notification job excludes push events.
+  push:
+    branches: [feat/ios-simulator-startup-ci]
+    paths: [.github/workflows/xcode_toolchain_downloads.yml]
 
 permissions:
   contents: read
@@ -13,7 +17,7 @@ defaults:
 
 jobs:
   notify:
-    if: github.repository == 'RabbyHub/rabby-mobile'
+    if: github.repository == 'RabbyHub/rabby-mobile' && github.event_name == 'workflow_dispatch'
     runs-on: [self-hosted, macOS, ARM64, mobile-local]
     timeout-minutes: 15
     env:
