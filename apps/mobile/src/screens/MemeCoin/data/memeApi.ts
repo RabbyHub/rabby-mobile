@@ -1,7 +1,4 @@
-import {
-  temporaryFetchMemeTokenList,
-  temporaryFetchMemeUserTokenList,
-} from './temporaryMemeSource';
+import { openapi } from '@/core/request';
 
 export type RawMemeToken = {
   /** currently always 'hood' (= Rabby chain serverId 'hood') */
@@ -42,12 +39,13 @@ export type MemeTokenListParams = {
   pageSize?: number;
 };
 
-// The App endpoint for meme_coin.token_list / meme_coin.user.token_list is
-// pending; replace these bodies when it ships.
-export const fetchMemeTokenList = (
-  params: MemeTokenListParams,
-): Promise<MemeTokenListResult> => temporaryFetchMemeTokenList(params);
+export const fetchMemeTokenList = ({
+  symbol,
+  page,
+  pageSize,
+}: MemeTokenListParams): Promise<MemeTokenListResult> =>
+  openapi.getMemeTokenList({ symbol, page, page_size: pageSize });
 
 export const fetchMemeUserTokenList = (
   address: string,
-): Promise<MemeUserTokenListResult> => temporaryFetchMemeUserTokenList(address);
+): Promise<MemeUserTokenListResult> => openapi.getMemeUserTokenList(address);
