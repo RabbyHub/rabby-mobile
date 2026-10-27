@@ -3426,6 +3426,7 @@
       "screenTitle": "Подключить кошелек",
       "connectingToRabby": "Подключение к Rabby",
       "pairingFailed": "Сопряжение WalletConnect не удалось.",
+      "proposalNotReceived": "QR-код WalletConnect, возможно, устарел. Обновите его и попробуйте снова.",
       "connected": "Успешно подключено. Вернитесь в DApp.",
       "proposalExpired": "Предложение WalletConnect истекло.",
       "pairingExpired": "Сопряжение WalletConnect истекло. Обновите QR-код dapp и попробуйте снова.",

@@ -3482,6 +3482,7 @@
       "screenTitle": "เชื่อมต่อวอลเล็ต",
       "connectingToRabby": "กำลังเชื่อมต่อกับ Rabby",
       "pairingFailed": "การจับคู่ WalletConnect ล้มเหลว",
+      "proposalNotReceived": "คิวอาร์โค้ด WalletConnect อาจหมดอายุแล้ว โปรดรีเฟรชแล้วลองอีกครั้ง",
       "connected": "เชื่อมต่อสำเร็จ โปรดกลับไปที่ DApp",
       "proposalExpired": "ข้อเสนอ WalletConnect หมดอายุแล้ว",
       "pairingExpired": "การจับคู่ WalletConnect หมดอายุแล้ว รีเฟรชคิวอาร์โค้ด dapp แล้วลองอีกครั้ง",

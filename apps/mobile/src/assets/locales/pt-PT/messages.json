@@ -3600,6 +3600,7 @@
       "screenTitle": "Ligar carteira",
       "connectingToRabby": "A ligar ao Rabby",
       "pairingFailed": "O emparelhamento WalletConnect falhou.",
+      "proposalNotReceived": "O código QR do WalletConnect pode ter expirado. Atualize-o e tente novamente.",
       "connected": "Ligado com sucesso. Volte à DApp.",
       "proposalExpired": "A proposta WalletConnect expirou.",
       "pairingExpired": "O emparelhamento WalletConnect expirou. Atualize o código QR da DApp e tente novamente.",
