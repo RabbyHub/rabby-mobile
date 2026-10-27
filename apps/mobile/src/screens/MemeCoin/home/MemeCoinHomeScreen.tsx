@@ -297,8 +297,6 @@ export const MemeCoinHomeScreen = () => {
       ? t('page.memeCoin.clear')
       : mode === 'holdings'
       ? t('page.memeCoin.value')
-      : hasKeyword
-      ? t('page.memeCoin.matchCount', { count: rows.length })
       : t('page.memeCoin.marketCap');
 
   const listHeader = (
