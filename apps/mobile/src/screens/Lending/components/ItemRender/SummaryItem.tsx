@@ -164,10 +164,11 @@ const SummaryItem: React.FC<SummaryItemProps> = ({
                 style={[
                   styles.metricItem,
                   styles.metricItemCompact,
+                  styles.healthMetric,
                   isHFEmpty(Number(healthFactor || '0')) && styles.hidden,
                 ]}>
                 <Pressable
-                  style={[styles.metricItem, { paddingHorizontal: 0 }]}
+                  style={styles.healthMetricBody}
                   onPress={handleShowHFDescription}>
                   <View style={styles.healthFactorHeader}>
                     <Text style={styles.metricLabel}>
@@ -242,7 +243,7 @@ const SummaryItem: React.FC<SummaryItemProps> = ({
               </View>
             </View>
             {!!extraInfo && (
-              <View style={[styles.extraContainer]}>
+              <View style={styles.extraContainer}>
                 <View style={styles.extraLeft}>
                   <Text
                     numberOfLines={2}
@@ -306,6 +307,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   rowCompact: {
     justifyContent: 'flex-start',
+    alignItems: 'flex-end',
   },
   metricItem: {
     flex: 1,
@@ -315,6 +317,13 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   metricItemCompact: {
     flex: 0,
     width: '33.33%',
+  },
+  healthMetric: {
+    alignSelf: 'stretch',
+    justifyContent: 'flex-end',
+  },
+  healthMetricBody: {
+    gap: 6,
   },
   hidden: {
     display: 'none',
@@ -429,7 +438,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     position: 'absolute',
     bottom: -16,
     left: '50%',
-    color: 'black',
     transform: [{ translateX: -6 }],
   },
 }));
