@@ -1,5 +1,7 @@
 import React, { useCallback, useMemo } from 'react';
-import { Platform, RefreshControl, View, ViewToken } from 'react-native';
+import { Platform, View, ViewToken } from 'react-native';
+import { RefreshControl } from 'react-native-gesture-handler';
+import { CollapsibleRefreshControl } from '@/components/customized/ScrollViewLike/CollapsibleRefreshControl';
 
 import { RootNames } from '@/constant/layout';
 import { atomByMMKV } from '@/core/storage/mmkv';
@@ -330,7 +332,8 @@ export function MarketCategoryContent({
       onViewableItemsChanged={onViewableItemsChanged}
       viewabilityConfig={VIEWABILITY_CONFIG}
       refreshControl={
-        <RefreshControl
+        <CollapsibleRefreshControl
+          as={RefreshControl}
           refreshing={tokenListLoading && list.length !== 0}
           onRefresh={() => getTokenList(orderBy, order)}
         />

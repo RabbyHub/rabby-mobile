@@ -551,7 +551,7 @@ export const TokenMarketInfoScreen = () => {
               <RefreshControl
                 refreshing={false}
                 onRefresh={handleRefresh}
-                progressViewOffset={isAndroid ? TOKEN_MARKET_TAB_BAR_HEIGHT : 0}
+                progressViewOffset={TOKEN_MARKET_TAB_BAR_HEIGHT}
               />
             }
             style={styles.innerContainer}>
@@ -637,7 +637,7 @@ export const TokenMarketInfoScreen = () => {
               <RefreshControl
                 refreshing={false}
                 onRefresh={handleRefresh}
-                progressViewOffset={isAndroid ? TOKEN_MARKET_TAB_BAR_HEIGHT : 0}
+                progressViewOffset={TOKEN_MARKET_TAB_BAR_HEIGHT}
               />
             }
             style={styles.innerContainer}>
