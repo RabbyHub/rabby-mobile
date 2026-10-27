@@ -16,7 +16,7 @@ export const useScrollToTopOnChainChange = ({
   const previousChainRef = useRef(chain);
   const pendingScrollRef = useRef(false);
   const tabName = useTabNameContext();
-  const { refMap } = useTabsContext();
+  const { refMap, contentInset } = useTabsContext();
   const scrollTo = useScroller();
 
   useEffect(() => {
@@ -39,27 +39,30 @@ export const useScrollToTopOnChainChange = ({
     // (`maintainVisibleContentPosition`), so scrolling in the same commit is
     // immediately overridden. Wait for the sheet close + projection commit,
     // then scroll the native list directly (QA 1131).
+    //
+    // Land on the visual top (`-contentInset`), not the first row.
+    // `scrollToLocation` clamps to y >= 0, which hides the iOS tab-bar inset
+    // on the single-address page and the pull-to-refresh list header on the
+    // multi-address page.
     const timer = setTimeout(() => {
       const target = refMap[tabName];
       const list = target?.current as
         | {
-            scrollToLocation?: (params: {
-              sectionIndex: number;
-              itemIndex: number;
-              viewOffset: number;
-              animated: boolean;
-            }) => void;
+            getScrollResponder?: () => {
+              scrollTo?: (params: {
+                x?: number;
+                y?: number;
+                animated?: boolean;
+              }) => void;
+            } | null;
           }
         | null
         | undefined;
+      const topOffset = -(contentInset?.value ?? 0);
+      const responder = list?.getScrollResponder?.();
 
-      if (list?.scrollToLocation) {
-        list.scrollToLocation({
-          sectionIndex: 0,
-          itemIndex: 0,
-          viewOffset: 0,
-          animated: false,
-        });
+      if (responder?.scrollTo) {
+        responder.scrollTo({ x: 0, y: topOffset, animated: false });
         return;
       }
 
@@ -67,5 +70,5 @@ export const useScrollToTopOnChainChange = ({
     }, 250);
 
     return () => clearTimeout(timer);
-  }, [chain, isCurrentTab, refMap, scrollTo, tabName]);
+  }, [chain, contentInset, isCurrentTab, refMap, scrollTo, tabName]);
 };
