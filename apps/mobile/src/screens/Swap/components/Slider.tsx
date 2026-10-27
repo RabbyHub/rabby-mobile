@@ -1,23 +1,25 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
-import { LayoutChangeEvent, StyleSheet, View } from 'react-native';
+import { AnimateableText, Text } from '@/components/Typography';
+import React, { useEffect, useRef } from 'react';
+import { StyleSheet, View } from 'react-native';
 import { RootSiblingPortal } from 'react-native-root-siblings';
-import { Text } from '@/components/Typography';
+import Animated, {
+  useAnimatedProps,
+  useAnimatedStyle,
+  useSharedValue,
+} from 'react-native-reanimated';
 
 const BUBBLE_PORTAL_Z_INDEX = 9999;
 const BUBBLE_HORIZONTAL_MARGIN = 8;
 const ARROW_HORIZONTAL_MARGIN = 16;
 const BUBBLE_VERTICAL_OFFSET = 5;
+const THUMB_SIZE = 14;
 
-const clamp = (value: number, min: number, max: number) =>
-  Math.min(Math.max(value, min), max);
+const clamp = (value: number, min: number, max: number) => {
+  'worklet';
+  return Math.min(Math.max(value, min), max);
+};
 
 export const BubbleWithText = ({
   slide,
@@ -48,103 +50,151 @@ export const BubbleWithText = ({
   );
 };
 
-export const SliderBubblePortal = ({
-  anchorRef,
-  slide,
-  visible,
-}: {
-  anchorRef: React.RefObject<View | null>;
-  slide: number;
-  visible: boolean;
-}) => {
+type BubbleGeometry = {
+  progress: number;
+  trackX: number;
+  trackY: number;
+  trackW: number;
+  portalX: number;
+  portalY: number;
+  portalW: number;
+  bubbleW: number;
+  bubbleH: number;
+};
+
+const getBubbleGeometry = ({
+  progress,
+  trackX,
+  trackY,
+  trackW,
+  portalX,
+  portalY,
+  portalW,
+  bubbleW,
+  bubbleH,
+}: BubbleGeometry) => {
+  'worklet';
+
+  const ratio = clamp(progress, 0, 100) / 100;
+  const travel = Math.max(0, trackW - THUMB_SIZE);
+  const anchorX = trackX + ratio * travel + THUMB_SIZE / 2 - portalX;
+  const anchorY = trackY + THUMB_SIZE / 2 - portalY;
+  const ready = bubbleW > 0 && bubbleH > 0 && trackW > 0 && portalW > 0;
+  const maxLeft = Math.max(
+    BUBBLE_HORIZONTAL_MARGIN,
+    portalW - bubbleW - BUBBLE_HORIZONTAL_MARGIN,
+  );
+  const left = clamp(anchorX - bubbleW / 2, BUBBLE_HORIZONTAL_MARGIN, maxLeft);
+  const maxArrowOffset = Math.max(0, bubbleW / 2 - ARROW_HORIZONTAL_MARGIN);
+
+  return {
+    ready,
+    left,
+    top: Math.max(0, anchorY - bubbleH - BUBBLE_VERTICAL_OFFSET),
+    arrowOffsetX: clamp(
+      anchorX - (left + bubbleW / 2),
+      -maxArrowOffset,
+      maxArrowOffset,
+    ),
+  };
+};
+
+export type SliderBubbleHandle = {
+  setProgress: (value: number) => void;
+};
+
+export const SliderBubblePortal = React.forwardRef<
+  SliderBubbleHandle,
+  {
+    trackRef: React.RefObject<View | null>;
+    slide: number;
+    visible: boolean;
+  }
+>(({ trackRef, slide, visible }, ref) => {
+  const { styles } = useTheme2024({ getStyle: getBubbleStyles });
   const rootRef = useRef<View>(null);
-  const [anchorPosition, setAnchorPosition] = useState<{
-    x: number;
-    y: number;
-  } | null>(null);
-  const [portalFrame, setPortalFrame] = useState<{
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-  } | null>(null);
-  const [bubbleSize, setBubbleSize] = useState<{
-    width: number;
-    height: number;
-  } | null>(null);
+  const progress = useSharedValue(slide);
+  const trackX = useSharedValue(0);
+  const trackY = useSharedValue(0);
+  const trackW = useSharedValue(0);
+  const portalX = useSharedValue(0);
+  const portalY = useSharedValue(0);
+  const portalW = useSharedValue(0);
+  const bubbleW = useSharedValue(0);
+  const bubbleH = useSharedValue(0);
 
-  const measureAnchor = useCallback(() => {
-    anchorRef.current?.measureInWindow((x, y, anchorWidth, anchorHeight) => {
-      setAnchorPosition({
-        x: x + anchorWidth / 2,
-        y: y + anchorHeight / 2,
-      });
-    });
-  }, [anchorRef]);
+  React.useImperativeHandle(
+    ref,
+    () => ({
+      setProgress: (value: number) => {
+        progress.value = value;
+      },
+    }),
+    [progress],
+  );
 
-  const measurePortal = useCallback(() => {
-    rootRef.current?.measureInWindow((x, y, width, height) => {
-      setPortalFrame({ x, y, width, height });
-    });
-  }, []);
-
-  const bubblePosition = useMemo(() => {
-    if (!anchorPosition || !portalFrame || !bubbleSize) {
-      return null;
+  useEffect(() => {
+    if (visible) {
+      return;
     }
-
-    const anchorX = anchorPosition.x - portalFrame.x;
-    const anchorY = anchorPosition.y - portalFrame.y;
-    const maxLeft = Math.max(
-      BUBBLE_HORIZONTAL_MARGIN,
-      portalFrame.width - bubbleSize.width - BUBBLE_HORIZONTAL_MARGIN,
-    );
-    const left = clamp(
-      anchorX - bubbleSize.width / 2,
-      BUBBLE_HORIZONTAL_MARGIN,
-      maxLeft,
-    );
-    const maxArrowOffset = Math.max(
-      0,
-      bubbleSize.width / 2 - ARROW_HORIZONTAL_MARGIN,
-    );
-
-    return {
-      left,
-      top: Math.max(0, anchorY - bubbleSize.height - BUBBLE_VERTICAL_OFFSET),
-      arrowOffsetX: clamp(
-        anchorX - (left + bubbleSize.width / 2),
-        -maxArrowOffset,
-        maxArrowOffset,
-      ),
-    };
-  }, [anchorPosition, bubbleSize, portalFrame]);
+    progress.value = slide;
+  }, [progress, slide, visible]);
 
   useEffect(() => {
     if (!visible) {
-      setAnchorPosition(null);
-      setPortalFrame(null);
       return;
     }
 
-    const frame = requestAnimationFrame(() => {
-      measurePortal();
-      measureAnchor();
+    trackRef.current?.measureInWindow((x, y, width) => {
+      if (width <= 0) {
+        return;
+      }
+      trackX.value = x;
+      trackY.value = y;
+      trackW.value = width;
+    });
+  }, [trackRef, trackW, trackX, trackY, visible]);
+
+  const textProps = useAnimatedProps(() => {
+    return { text: `${Math.round(progress.value)}%` };
+  });
+
+  const bubbleStyle = useAnimatedStyle(() => {
+    const geometry = getBubbleGeometry({
+      progress: progress.value,
+      trackX: trackX.value,
+      trackY: trackY.value,
+      trackW: trackW.value,
+      portalX: portalX.value,
+      portalY: portalY.value,
+      portalW: portalW.value,
+      bubbleW: bubbleW.value,
+      bubbleH: bubbleH.value,
     });
 
-    return () => {
-      cancelAnimationFrame(frame);
+    return {
+      opacity: geometry.ready ? 1 : 0,
+      transform: [{ translateX: geometry.left }, { translateY: geometry.top }],
     };
-  }, [measureAnchor, measurePortal, slide, visible]);
+  });
 
-  const handleRootLayout = useCallback(() => {
-    measurePortal();
-  }, [measurePortal]);
+  const arrowStyle = useAnimatedStyle(() => {
+    const geometry = getBubbleGeometry({
+      progress: progress.value,
+      trackX: trackX.value,
+      trackY: trackY.value,
+      trackW: trackW.value,
+      portalX: portalX.value,
+      portalY: portalY.value,
+      portalW: portalW.value,
+      bubbleW: bubbleW.value,
+      bubbleH: bubbleH.value,
+    });
 
-  const handleBubbleLayout = useCallback((event: LayoutChangeEvent) => {
-    const { width, height } = event.nativeEvent.layout;
-    setBubbleSize({ width, height });
-  }, []);
+    return {
+      transform: [{ translateX: geometry.arrowOffsetX }],
+    };
+  });
 
   if (!visible) {
     return null;
@@ -156,27 +206,40 @@ export const SliderBubblePortal = ({
         ref={rootRef}
         pointerEvents="none"
         style={portalStyles.root}
-        onLayout={handleRootLayout}>
-        <View
-          onLayout={handleBubbleLayout}
-          style={[
-            portalStyles.bubble,
-            bubblePosition
-              ? {
-                  left: bubblePosition.left,
-                  top: bubblePosition.top,
-                }
-              : portalStyles.hiddenBubble,
-          ]}>
-          <BubbleWithText
-            slide={slide}
-            arrowOffsetX={bubblePosition?.arrowOffsetX}
-          />
-        </View>
+        onLayout={() => {
+          rootRef.current?.measureInWindow((x, y, width) => {
+            portalX.value = x;
+            portalY.value = y;
+            portalW.value = width;
+          });
+        }}>
+        <Animated.View
+          onLayout={event => {
+            bubbleW.value = event.nativeEvent.layout.width;
+            bubbleH.value = event.nativeEvent.layout.height;
+          }}
+          style={[portalStyles.bubble, bubbleStyle]}>
+          <View style={styles.container}>
+            <View style={styles.bubble}>
+              <AnimateableText
+                style={styles.text}
+                numberOfLines={1}
+                animatedProps={textProps}
+              />
+            </View>
+            <Animated.View style={[styles.arrowWrapper, arrowStyle]}>
+              <View style={styles.arrowBorder}>
+                <View style={styles.arrowInner} />
+              </View>
+            </Animated.View>
+          </View>
+        </Animated.View>
       </View>
     </RootSiblingPortal>
   );
-};
+});
+
+SliderBubblePortal.displayName = 'SliderBubblePortal';
 
 const portalStyles = StyleSheet.create({
   root: {
@@ -186,11 +249,6 @@ const portalStyles = StyleSheet.create({
   },
   bubble: {
     position: 'absolute',
-  },
-  hiddenBubble: {
-    left: 0,
-    top: 0,
-    opacity: 0,
   },
 });
 
