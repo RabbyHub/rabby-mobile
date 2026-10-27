@@ -13,7 +13,7 @@ import Animated, {
 const BUBBLE_PORTAL_Z_INDEX = 9999;
 const BUBBLE_HORIZONTAL_MARGIN = 8;
 const ARROW_HORIZONTAL_MARGIN = 16;
-const BUBBLE_VERTICAL_OFFSET = 5;
+const BUBBLE_VERTICAL_OFFSET = 12;
 const THUMB_SIZE = 14;
 
 const clamp = (value: number, min: number, max: number) => {
