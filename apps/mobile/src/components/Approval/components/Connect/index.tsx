@@ -31,7 +31,12 @@ import RuleDrawer from '../SecurityEngine/RuleDrawer';
 import RuleResult from './RuleResult';
 import { SignTestnetPermission } from './SignTestnetPermission';
 import UserListDrawer from './UserListDrawer';
-import ArrowDownSVG from '@/assets/icons/approval/arrow-down-blue.svg';
+import ArrowDownCC from '@/assets/icons/common/arrow-down-cc.svg';
+import {
+  BOTTOM_BUTTON_BOTTOM_OFFSET,
+  BOTTOM_BUTTON_DOUBLE_HEIGHT,
+  BOTTOM_BUTTON_GAP,
+} from '@/constant/layout';
 import { StyleSheet } from 'react-native';
 import type { AppColors2024Variants } from '@/constant/theme';
 import { AppColorsVariants } from '@/constant/theme';
@@ -133,7 +138,7 @@ ConnectProps) => {
   const [selectedAccount, setSelectedAccount] = useState<
     Account | undefined | null
   >(accounts?.[0] || getFallbackAccountSnapshot());
-  const { colors, styles, colors2024 } = useTheme2024({ getStyle });
+  const { styles, colors2024 } = useTheme2024({ getStyle });
   const [, resolveApproval, rejectApproval] = useApproval();
   const { t } = useTranslation();
   const [defaultChain, setDefaultChain] = useState(CHAINS_ENUM.ETH);
@@ -656,30 +661,29 @@ ConnectProps) => {
         </View>
         <View style={styles.footer}>
           <Button
-            type="ghost"
-            containerStyle={[styles.button]}
+            type="plain"
+            height={BOTTOM_BUTTON_DOUBLE_HEIGHT}
+            containerStyle={styles.buttonContainer}
+            buttonStyle={styles.button}
             onPress={
               displayBlockedRequestApproval ? activeCancelPopup : handleCancel
             }
-            title={
-              <View style={styles.cancelButtonTextView}>
-                <Text style={styles.cancelButtonText}>
-                  {connectBtnStatus.cancelBtnText}
-                </Text>
-                {displayBlockedRequestApproval && (
-                  <ArrowDownSVG width={16} height={16} />
-                )}
-              </View>
+            title={connectBtnStatus.cancelBtnText}
+            iconRight={
+              displayBlockedRequestApproval ? (
+                //@ts-expect-error
+                <ArrowDownCC style={styles.cancelIcon} width={12} />
+              ) : null
             }
           />
           <Button
-            containerStyle={[styles.button]}
             type="primary"
+            height={BOTTOM_BUTTON_DOUBLE_HEIGHT}
+            containerStyle={styles.buttonContainer}
+            buttonStyle={styles.button}
+            titleStyle={styles.buttonText}
             onPress={() => handleAllow()}
             disabled={isLoading || connectBtnStatus.disabled}
-            disabledTitleStyle={{
-              color: colors['neutral-title-2'],
-            }}
             title={t('page.connect.connectBtn')}
           />
         </View>
@@ -764,14 +768,14 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   footerContainer: {
     paddingTop: 16,
-    paddingBottom: 56,
+    paddingBottom: BOTTOM_BUTTON_BOTTOM_OFFSET,
     backgroundColor: colors2024['neutral-bg-1'],
   },
   footer: {
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: BOTTOM_BUTTON_GAP,
     paddingHorizontal: 20,
   },
   connectWalletRow: {
@@ -821,25 +825,21 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   securityTipIcon: {
     marginRight: 4,
   },
-  button: {
-    width: '50%',
-    height: 52,
+  buttonContainer: {
     flex: 1,
   },
-
-  cancelButtonTextView: {
-    display: 'flex',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 2,
+  button: {
+    height: BOTTOM_BUTTON_DOUBLE_HEIGHT,
+    borderRadius: 12,
   },
-  cancelButtonText: {
-    color: colors2024['brand-default'],
+  buttonText: {
+    color: colors2024['neutral-InvertHighlight'],
+    fontSize: 18,
     fontFamily: 'SF Pro Rounded',
-    fontSize: 20,
-    lineHeight: 24,
     fontWeight: '700',
+  },
+  cancelIcon: {
+    color: colors2024['neutral-title-1'],
   },
   titleWrapper: {
     flexDirection: 'row',

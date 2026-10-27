@@ -1,4 +1,9 @@
 import { CustomSkeleton } from '@/components2024/CustomSkeleton';
+import {
+  BOTTOM_BUTTON_BOTTOM_OFFSET,
+  BOTTOM_BUTTON_DOUBLE_HEIGHT,
+  BOTTOM_BUTTON_GAP,
+} from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
@@ -170,14 +175,14 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   footerContainer: {
     paddingTop: 16,
-    paddingBottom: 56,
+    paddingBottom: BOTTOM_BUTTON_BOTTOM_OFFSET,
     backgroundColor: colors2024['neutral-bg-1'],
   },
   footer: {
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: BOTTOM_BUTTON_GAP,
     paddingHorizontal: 20,
   },
   footerItem: {
@@ -194,8 +199,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   btn: {
     width: '100%',
-    height: 56,
-    borderRadius: 4,
+    height: BOTTOM_BUTTON_DOUBLE_HEIGHT,
+    borderRadius: 12,
   },
   connectWalletLabel: {
     width: 106,

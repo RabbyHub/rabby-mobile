@@ -1,6 +1,10 @@
 import { APPROVAL_MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
+import { Dimensions } from 'react-native';
 import type { ApprovalComponentType } from '.';
+
+// Connect 弹窗顶部距离屏幕顶部 120
+const CONNECT_SNAP_POINT = Dimensions.get('window').height - 120;
 
 export const WaitingSignComponent: Record<string, ApprovalComponentType> = {
   [KEYRING_CLASS.MNEMONIC]: 'PrivatekeyWaiting',
@@ -17,7 +21,7 @@ export const APPROVAL_SNAP_POINTS: Record<
   APPROVAL_MODAL_NAMES,
   (string | number)[]
 > = {
-  [APPROVAL_MODAL_NAMES.Connect]: ['80%'],
+  [APPROVAL_MODAL_NAMES.Connect]: [CONNECT_SNAP_POINT],
   [APPROVAL_MODAL_NAMES.SignText]: ['100%'],
   [APPROVAL_MODAL_NAMES.SignTypedData]: ['100%'],
   [APPROVAL_MODAL_NAMES.SignTx]: ['100%'],
