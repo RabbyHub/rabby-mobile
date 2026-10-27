@@ -38,12 +38,14 @@ type CustomTestnetListProps = {
   isEditing: boolean;
   refreshVersion: number;
   onEdit: (item: TestnetChain) => void;
+  onHasNetworksChange: (hasNetworks: boolean) => void;
 };
 
 const CustomTestnetListContent = ({
   isEditing,
   refreshVersion,
   onEdit,
+  onHasNetworksChange,
 }: CustomTestnetListProps) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
@@ -53,7 +55,9 @@ const CustomTestnetListContent = ({
   );
 
   const refreshList = useMemoizedFn(() => {
-    setList(sortBy(customTestnetService.getList(), 'name'));
+    const nextList = sortBy(customTestnetService.getList(), 'name');
+    setList(nextList);
+    onHasNetworksChange(nextList.length > 0);
   });
 
   useEffect(() => {
@@ -97,7 +101,15 @@ export function CustomTestnetScreen(): JSX.Element {
   const { colors2024, styles } = useTheme2024({ getStyle: getStyles });
   const navigation = useNavigation();
   const [isEditing, setIsEditing] = useState(false);
+  const [hasNetworks, setHasNetworks] = useState(false);
   const { t } = useTranslation();
+
+  const handleHasNetworksChange = useMemoizedFn((value: boolean) => {
+    setHasNetworks(value);
+    if (!value) {
+      setIsEditing(false);
+    }
+  });
 
   const [state, setState] = useSetState<{
     isShowModal: boolean;
@@ -172,14 +184,16 @@ export function CustomTestnetScreen(): JSX.Element {
               {t('page.customTestnet.screenTitle')}
             </Text>
           </View>
-          <TouchableOpacity
-            accessibilityRole="button"
-            hitSlop={12}
-            onPress={() => setIsEditing(value => !value)}>
-            <Text style={styles.editButton}>
-              {t(isEditing ? 'global.Cancel' : 'global.Edit')}
-            </Text>
-          </TouchableOpacity>
+          {hasNetworks && (
+            <TouchableOpacity
+              accessibilityRole="button"
+              hitSlop={12}
+              onPress={() => setIsEditing(value => !value)}>
+              <Text style={styles.editButton}>
+                {t(isEditing ? 'global.Cancel' : 'global.Edit')}
+              </Text>
+            </TouchableOpacity>
+          )}
         </View>
         <View style={styles.descContainer}>
           <Text style={styles.desc}>{t('page.customTestnet.desc')}</Text>
@@ -189,6 +203,7 @@ export function CustomTestnetScreen(): JSX.Element {
             isEditing={isEditing}
             refreshVersion={listRefreshVersion}
             onEdit={handleEditClick}
+            onHasNetworksChange={handleHasNetworksChange}
           />
         </View>
         <View style={styles.footer}>
