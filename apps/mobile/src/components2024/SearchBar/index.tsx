@@ -7,7 +7,6 @@ import React, {
 } from 'react';
 import {
   LayoutChangeEvent,
-  Platform,
   Pressable,
   StyleProp,
   StyleSheet,
@@ -98,11 +97,11 @@ export const NextSearchBar = ({
   const effectivePlaceholderColor =
     placeholderTextColor ?? styles.placeholder.color;
   // Fabric's iOS TextInput draws the native placeholder lower than the text
-  // baseline when the field has an explicit height (QA 1022/672). Keep the
-  // native placeholder for semantics but paint the visible one ourselves,
-  // centered against the same box as the input text.
-  const useManagedPlaceholder =
-    Platform.OS === 'ios' && !!placeholder && isEmpty;
+  // baseline when the field has an explicit height (QA 1022/672). Android's
+  // native hint wraps inside that same 46px box when the string is long.
+  // Keep the native placeholder for semantics but paint a single-line one
+  // ourselves, centered against the same box as the input text.
+  const useManagedPlaceholder = !!placeholder && isEmpty;
   const showManagedPlaceholder =
     useManagedPlaceholder &&
     !!inputLayout &&
@@ -234,6 +233,7 @@ export const NextSearchBar = ({
               ellipsizeMode="tail"
               style={[
                 styles.placeholder,
+                styles.placeholderText,
                 {
                   color: effectivePlaceholderColor,
                   fontSize: flattenedInputStyle?.fontSize,
@@ -319,7 +319,10 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   placeholderOverlay: {
     position: 'absolute',
     justifyContent: 'center',
-    alignItems: 'flex-start',
+    alignItems: 'stretch',
+  },
+  placeholderText: {
+    width: '100%',
   },
   cancelText: {
     fontFamily: 'SF Pro Rounded',
