@@ -133,20 +133,28 @@ export const ReceiverPopup: React.FC<Props> = ({ data }) => {
         {data.hasReceiverMnemonicInWallet && (
           <Col>
             <Row isTitle>
-              <Text>{t('page.signTx.addressSource')}</Text>
+              <Text style={commonStyle.detailRowTitleText}>
+                {t('page.signTx.addressSource')}
+              </Text>
             </Row>
             <Row>
-              <Text>{t('page.signTx.send.fromMySeedPhrase')}</Text>
+              <Text style={commonStyle.detailPrimaryText}>
+                {t('page.signTx.send.fromMySeedPhrase')}
+              </Text>
             </Row>
           </Col>
         )}
         {data.hasReceiverPrivateKeyInWallet && (
           <Col>
             <Row isTitle>
-              <Text>{t('page.signTx.addressSource')}</Text>
+              <Text style={commonStyle.detailRowTitleText}>
+                {t('page.signTx.addressSource')}
+              </Text>
             </Row>
             <Row>
-              <Text>{t('page.signTx.send.fromMyPrivateKey')}</Text>
+              <Text style={commonStyle.detailPrimaryText}>
+                {t('page.signTx.send.fromMyPrivateKey')}
+              </Text>
             </Row>
           </Col>
         )}
