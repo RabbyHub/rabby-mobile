@@ -12,7 +12,7 @@ import { getSwapGasReserveGasLimit } from '@/screens/Swap/utils';
 import useTokenList from '@/store/tokens';
 import { findChainByEnum, findChainByServerID } from '@/utils/chain';
 import { defaultTokenFilter } from '@/utils/lpToken';
-import { pickDefaultPaymentAsset } from '../engine/defaultSelection';
+import { pickDefaultPaymentAssets } from '../engine/defaultSelection';
 import { toChainGasInfo } from '../engine/gas';
 import { tokenKey } from '../engine/keys';
 import {
@@ -183,14 +183,13 @@ export const usePaymentAssets = ({
     if (touchedRef.current || !chainGasReady) {
       return;
     }
-    const picked = pickDefaultPaymentAsset({
+    const next = pickDefaultPaymentAssets({
       assets,
       memes,
       amountUsd,
       chainGas,
       gasAccountBalanceUsd,
-    });
-    const next = picked ? [tokenKey(picked)] : [];
+    }).map(tokenKey);
     setSelectedKeys(prev =>
       prev.length === next.length && prev.every((k, i) => k === next[i])
         ? prev

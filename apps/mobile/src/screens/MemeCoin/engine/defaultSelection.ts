@@ -8,7 +8,7 @@ import type {
   PlanResult,
 } from './types';
 
-export type PickDefaultPaymentAssetParams = {
+export type PickDefaultPaymentAssetsParams = {
   assets: PaymentAsset[];
   memes: MemeTarget[];
   amountUsd: number;
@@ -24,33 +24,30 @@ const mainnetCrossLegCount = (plan: PlanResult) =>
     l => l.kind === 'bridge' && l.pay.chain === ETH_MAINNET_SERVER_ID,
   ).length;
 
-export const pickDefaultPaymentAsset = ({
+const canComplete = (plan: PlanResult) =>
+  plan.legs.length > 0 &&
+  plan.shortfallUsd === 0 &&
+  plan.legs.every(l => l.gasPayer !== 'risk');
+
+/**
+ * One asset that can pay everything alone when there is one; otherwise the
+ * largest assets until together they can; otherwise nothing.
+ */
+export const pickDefaultPaymentAssets = ({
   assets,
   memes,
   amountUsd,
   chainGas,
   gasAccountBalanceUsd,
-}: PickDefaultPaymentAssetParams): PaymentAsset | null => {
+}: PickDefaultPaymentAssetsParams): PaymentAsset[] => {
   const memeChains = new Set(memes.map(m => m.chain));
   const sameChainRank = (a: PaymentAsset) => (memeChains.has(a.chain) ? 0 : 1);
+  const planWith = (sources: PaymentAsset[]) =>
+    planBuy({ amountUsd, memes, sources, chainGas, gasAccountBalanceUsd });
 
   const [best] = assets
-    .map(asset => ({
-      asset,
-      plan: planBuy({
-        amountUsd,
-        memes,
-        sources: [asset],
-        chainGas,
-        gasAccountBalanceUsd,
-      }),
-    }))
-    .filter(
-      ({ plan }) =>
-        plan.legs.length > 0 &&
-        plan.shortfallUsd === 0 &&
-        plan.legs.every(l => l.gasPayer !== 'risk'),
-    )
+    .map(asset => ({ asset, plan: planWith([asset]) }))
+    .filter(({ plan }) => canComplete(plan))
     .sort(
       (a, b) =>
         sameChainRank(a.asset) - sameChainRank(b.asset) ||
@@ -61,5 +58,19 @@ export const pickDefaultPaymentAsset = ({
         compareText(tokenKey(a.asset), tokenKey(b.asset)),
     );
 
-  return best?.asset ?? null;
+  if (best) {
+    return [best.asset];
+  }
+
+  const byValue = [...assets].sort(
+    (a, b) => b.usdValue - a.usdValue || compareText(tokenKey(a), tokenKey(b)),
+  );
+  const batch: PaymentAsset[] = [];
+  for (const asset of byValue) {
+    batch.push(asset);
+    if (batch.length > 1 && canComplete(planWith(batch))) {
+      return batch;
+    }
+  }
+  return [];
 };

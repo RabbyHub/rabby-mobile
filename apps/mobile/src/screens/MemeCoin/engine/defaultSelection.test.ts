@@ -1,4 +1,4 @@
-import { pickDefaultPaymentAsset } from './defaultSelection';
+import { pickDefaultPaymentAssets } from './defaultSelection';
 import type { ChainGasInfo, MemeTarget, PaymentAsset } from './types';
 
 const meme = (symbol: string, chain: string, marketCap = 1): MemeTarget => ({
@@ -35,50 +35,43 @@ const pick = (
   amountUsd: number,
   chainGas?: Record<string, ChainGasInfo>,
 ) =>
-  pickDefaultPaymentAsset({
+  pickDefaultPaymentAssets({
     assets,
     memes,
     amountUsd,
     chainGas: chainGas ?? Object.fromEntries(assets.map(a => [a.chain, okGas])),
     gasAccountBalanceUsd: 0,
-  });
+  }).map(a => a.symbol);
 
-describe('pickDefaultPaymentAsset', () => {
-  it('returns null when no single asset can pay everything', () => {
+describe('pickDefaultPaymentAssets', () => {
+  it('prefers a same-chain long-tail token over a cross-chain mainstream token', () => {
     expect(
       pick(
-        [asset('USDC', 'base', 80, true), asset('USDT', 'eth', 30, true)],
-        [meme('PEPE', 'eth')],
-        100,
+        [asset('USDC', 'base', 1000, true), asset('ARB', 'arb', 100, false)],
+        [meme('MOG', 'arb')],
+        50,
       ),
-    ).toBeNull();
-  });
-
-  it('prefers a same-chain long-tail token over a cross-chain mainstream token', () => {
-    const result = pick(
-      [asset('USDC', 'base', 1000, true), asset('ARB', 'arb', 100, false)],
-      [meme('MOG', 'arb')],
-      50,
-    );
-    expect(result?.symbol).toBe('ARB');
+    ).toEqual(['ARB']);
   });
 
   it('prefers fewer cross-chain legs within the same-chain group', () => {
-    const result = pick(
-      [asset('BNB', 'bsc', 500, true), asset('USDT', 'eth', 500, true)],
-      [meme('PEPE', 'eth'), meme('SHIB', 'eth'), meme('BONK', 'bsc')],
-      90,
-    );
-    expect(result?.symbol).toBe('USDT');
+    expect(
+      pick(
+        [asset('BNB', 'bsc', 500, true), asset('USDT', 'eth', 500, true)],
+        [meme('PEPE', 'eth'), meme('SHIB', 'eth'), meme('BONK', 'bsc')],
+        90,
+      ),
+    ).toEqual(['USDT']);
   });
 
   it('prefers mainstream when cross-chain counts tie', () => {
-    const result = pick(
-      [asset('AERO', 'base', 500, false), asset('USDC', 'base', 500, true)],
-      [meme('BONK', 'bsc')],
-      40,
-    );
-    expect(result?.symbol).toBe('USDC');
+    expect(
+      pick(
+        [asset('AERO', 'base', 500, false), asset('USDC', 'base', 500, true)],
+        [meme('BONK', 'bsc')],
+        40,
+      ),
+    ).toEqual(['USDC']);
   });
 
   it('prefers fewer mainnet cross-chain legs, then higher value', () => {
@@ -87,24 +80,46 @@ describe('pickDefaultPaymentAsset', () => {
         [asset('USDT', 'eth', 900, true), asset('USDC', 'base', 300, true)],
         [meme('BONK', 'bsc')],
         40,
-      )?.symbol,
-    ).toBe('USDC');
+      ),
+    ).toEqual(['USDC']);
     expect(
       pick(
         [asset('USDC', 'base', 300, true), asset('USDT', 'arb', 500, true)],
         [meme('BONK', 'bsc')],
         40,
-      )?.symbol,
-    ).toBe('USDT');
+      ),
+    ).toEqual(['USDT']);
+  });
+
+  it('adds assets from the largest value down until the batch can pay', () => {
+    expect(
+      pick(
+        [
+          asset('ARB', 'arb', 45, false),
+          asset('USDC', 'base', 60, true),
+          asset('USDT', 'eth', 50, true),
+        ],
+        [meme('PEPE', 'eth')],
+        100,
+      ),
+    ).toEqual(['USDC', 'USDT']);
+  });
+
+  it('picks nothing when even every asset together falls short', () => {
+    expect(
+      pick(
+        [asset('USDC', 'base', 50, true), asset('USDT', 'eth', 30, true)],
+        [meme('PEPE', 'eth')],
+        100,
+      ),
+    ).toEqual([]);
   });
 
   it('skips candidates whose legs have no gas source', () => {
-    const result = pick(
-      [asset('USDC', 'base', 500, true)],
-      [meme('BONK', 'bsc')],
-      40,
-      { base: { perLegGasUsd: 1, nativeBalanceUsd: 0, bridgeSupported: true } },
-    );
-    expect(result).toBeNull();
+    expect(
+      pick([asset('USDC', 'base', 500, true)], [meme('BONK', 'bsc')], 40, {
+        base: { perLegGasUsd: 1, nativeBalanceUsd: 0, bridgeSupported: true },
+      }),
+    ).toEqual([]);
   });
 });
