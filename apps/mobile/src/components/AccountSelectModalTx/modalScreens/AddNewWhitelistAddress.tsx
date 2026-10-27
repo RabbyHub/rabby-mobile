@@ -55,7 +55,6 @@ import {
 } from '@/utils/cex';
 import { useAtom } from 'jotai';
 import { toast } from '@/components2024/Toast';
-import { matomoRequestEvent } from '@/utils/analytics';
 import { ellipsisAddress } from '@/utils/address';
 import { useAccounts } from '@/hooks/account';
 import { useMemoizedFn } from 'ahooks';
@@ -139,8 +138,7 @@ export const ScreenAddNewWhitelistAddress = ({
         setLoading(true);
         Keyboard.dismiss();
 
-        const { inWhitelist, account, isImported } =
-          findAccountWithoutBalance(address);
+        const { inWhitelist, account } = findAccountWithoutBalance(address);
         if (inWhitelist) {
           toast.show(t('page.whitelist.alreadyAdded'));
         } else {
@@ -171,12 +169,6 @@ export const ScreenAddNewWhitelistAddress = ({
                 removeGlobalBottomSheetModal2024(confirmModalIRef.current);
               confirmModalIRef.current = null;
 
-              matomoRequestEvent({
-                category: 'Send Usage',
-                action: isImported
-                  ? 'Send_AddWhitelist_imported'
-                  : 'Send_AddWhitelist_notImported',
-              });
               if (confirmedCex) {
                 setCexId(address, confirmedCex.id);
               } else {

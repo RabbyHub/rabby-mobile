@@ -14,7 +14,6 @@ import { useBrowserBookmark } from '@/hooks/browser/useBrowserBookmark';
 import { useTheme2024 } from '@/hooks/theme';
 import { useDapps } from '@/hooks/useDapps';
 import { DappIcon } from '@/screens/Dapps/components/DappIcon';
-import { matomoRequestEvent } from '@/utils/analytics';
 import { createGetStyles2024 } from '@/utils/styles';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
@@ -280,11 +279,6 @@ const DappInfoPopupContent: React.FC<DappInfoPopupProps> = ({
         url,
         name: displayName || origin,
         createdAt: Date.now(),
-      });
-      matomoRequestEvent({
-        category: 'Websites Usage',
-        action: 'Website_Favorite',
-        label: origin,
       });
     }
   });

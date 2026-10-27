@@ -6,7 +6,6 @@ import { Text } from '@/components';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import type { KeyringAccountWithAlias } from '@/hooks/account';
-import { useAccounts } from '@/hooks/account';
 import AddressPopover from '../AddressPopover';
 import AddressSource from '../AddressSourceCard';
 import { AppSwitch2024 } from '@/components/customized/Switch2024';
@@ -20,8 +19,6 @@ import type {
   ProjectItem,
 } from '@rabby-wallet/rabby-api/dist/types';
 import { Skeleton } from '@rneui/themed';
-import { matomoRequestEvent } from '@/utils/analytics';
-import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { CheckBoxRect } from '@/components2024/CheckBox';
 import { RcIconWarningCircleCC } from '@/assets2024/icons/common';
 import { toast } from '@/components2024/Toast';
@@ -69,9 +66,6 @@ const ConfirmAddress = ({
     [cex, disableWhiteSwitch],
   );
   const [isChecked, setIsChecked] = useState(false);
-  const { accounts } = useAccounts({
-    disableAutoFetch: true,
-  });
   const { safeSizes } = useSafeAndroidBottomSizes({
     footerButtonGroupMb: 35,
   });
@@ -79,15 +73,6 @@ const ConfirmAddress = ({
   const setInWhitelist = useCallback(
     async (bool: boolean) => {
       if (bool) {
-        const isImported = accounts.some(i =>
-          isSameAddress(i.address, account.address),
-        );
-        matomoRequestEvent({
-          category: 'Send Usage',
-          action: isImported
-            ? 'Send_AddWhitelist_imported'
-            : 'Send_AddWhitelist_notImported',
-        });
         return addWhitelist(account.address, {
           hasValidated: true,
           onAdded: () => {
@@ -98,7 +83,7 @@ const ConfirmAddress = ({
         return removeWhitelist(account.address);
       }
     },
-    [account.address, addWhitelist, removeWhitelist, t, accounts],
+    [account.address, addWhitelist, removeWhitelist, t],
   );
 
   const handleConfirm = async () => {

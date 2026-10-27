@@ -43,23 +43,23 @@ describe('core/serviceApi deferred side effects', () => {
   it('requires notification sync side effects to run after activation', () => {
     mockStartupScheduler();
 
-    const { setNotificationStatsDataSync } =
+    const { setCurrentRequestDeferFnSync } =
       require('./notification') as typeof import('./notification');
     const { registerService } =
       require('@/core/services/serviceRegistry') as typeof import('@/core/services/serviceRegistry');
 
-    const setStatsData = jest.fn();
-    const statsData = { type: 'personalSign', signed: true };
-    expect(() => setNotificationStatsDataSync(statsData as any)).toThrow(
+    const setCurrentRequestDeferFn = jest.fn();
+    const deferFn = jest.fn();
+    expect(() => setCurrentRequestDeferFnSync(deferFn)).toThrow(
       'Core service "notificationService" is not registered',
     );
 
     registerService('notificationService', {
-      setStatsData,
+      setCurrentRequestDeferFn,
     } as any);
 
-    setNotificationStatsDataSync(statsData as any);
-    expect(setStatsData).toHaveBeenCalledWith(statsData);
+    setCurrentRequestDeferFnSync(deferFn);
+    expect(setCurrentRequestDeferFn).toHaveBeenCalledWith(deferFn);
   });
 
   it('keeps preference command side effects synchronous after activation', () => {
@@ -112,16 +112,17 @@ describe('core/serviceApi deferred side effects', () => {
   it('keeps notification sync side effects unavailable until its loader completes', async () => {
     mockStartupScheduler();
 
-    const { ensureNotificationServiceReady, setNotificationStatsDataSync } =
+    const { ensureNotificationServiceReady, setCurrentRequestDeferFnSync } =
       require('./notification') as typeof import('./notification');
     const { registerCoreServiceLoader, registerService } =
       require('@/core/services/serviceRegistry') as typeof import('@/core/services/serviceRegistry');
 
-    const setStatsData = jest.fn();
+    const setCurrentRequestDeferFn = jest.fn();
+    const deferFn = jest.fn();
     let finishLoader: (() => void) | undefined;
     registerCoreServiceLoader('notificationService', async () => {
       registerService('notificationService', {
-        setStatsData,
+        setCurrentRequestDeferFn,
       } as any);
       await new Promise<void>(resolve => {
         finishLoader = resolve;
@@ -131,15 +132,15 @@ describe('core/serviceApi deferred side effects', () => {
     const readiness = ensureNotificationServiceReady();
     await flushDeferredServiceWork();
 
-    expect(() => setNotificationStatsDataSync(undefined)).toThrow(
+    expect(() => setCurrentRequestDeferFnSync(deferFn)).toThrow(
       'Core service "notificationService" is not fully loaded',
     );
 
     finishLoader?.();
     await readiness;
 
-    setNotificationStatsDataSync(undefined);
-    expect(setStatsData).toHaveBeenCalledWith(undefined);
+    setCurrentRequestDeferFnSync(deferFn);
+    expect(setCurrentRequestDeferFn).toHaveBeenCalledWith(deferFn);
   });
 
   it('requires gas account sync side effects to run after activation', async () => {

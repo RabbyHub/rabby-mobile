@@ -168,16 +168,6 @@ import {
 } from '@/hooks/appNotification';
 import type { SwitchToggleType } from '@/components/customized/Switch2024';
 import { AppSwitch2024 } from '@/components/customized/Switch2024';
-import type { SupportedLang } from '@/utils/i18n';
-import type { CurrencyItem } from '@rabby-wallet/rabby-api/dist/types';
-import {
-  trackSettingsCurrency,
-  trackSettingsFaceId,
-  trackSettingsLanguage,
-  trackSettingsLockTime,
-  trackSettingsScreenshotToBug,
-  trackSettingsTxNotification,
-} from '@/utils/analytics0331';
 import { Text } from '@/components/Typography';
 import { useAppSecurityChain } from '@/hooks/global';
 import { useToggleShowUnlockStatusBar } from '@/hooks/appSettings';
@@ -204,18 +194,11 @@ const CLEAR_APP_CACHE_EXIT_DELAY_MS = 2000;
 
 const isIOS = Platform.OS === 'ios';
 
-function TrackedTransactionNotificationSwitch() {
+function TransactionNotificationSwitch() {
   const { value } = useAppNotificationEnabled();
 
   const handleToggle = useCallback(async (nextEnabled: boolean) => {
-    const finalValue = await setEnableTransactionNofification(nextEnabled);
-    if (typeof finalValue !== 'boolean') {
-      return;
-    }
-
-    trackSettingsTxNotification(finalValue).catch(error => {
-      console.error('trackSettingsTxNotification failed', error);
-    });
+    await setEnableTransactionNofification(nextEnabled);
   }, []);
 
   return (
@@ -626,54 +609,20 @@ function SettingsBlocks() {
   const { clearBrowserData } = useClearBrowserData();
 
   const { toggleScreenshotToReport } = useScreenshotToReportEnabled();
-  const handleBiometricsToggleSuccess = useCallback((enabled: boolean) => {
-    trackSettingsFaceId(enabled).catch(error => {
-      console.error('trackSettingsFaceId failed', error);
-    });
-  }, []);
-
   const handleTransactionNotificationToggle = useCallback(async () => {
     if (!APP_FEATURE_SWITCH.transactionNotification) {
       return;
     }
 
-    const finalValue = await setEnableTransactionNofification(prev => !prev);
-    if (typeof finalValue !== 'boolean') {
-      return;
-    }
-
-    trackSettingsTxNotification(finalValue).catch(error => {
-      console.error('trackSettingsTxNotification failed', error);
-    });
+    await setEnableTransactionNofification(prev => !prev);
   }, []);
 
   const handleScreenshotToBugToggle = useCallback(
     (enabled?: boolean) => {
-      const nextEnabled = toggleScreenshotToReport(enabled);
-      trackSettingsScreenshotToBug(nextEnabled).catch(error => {
-        console.error('trackSettingsScreenshotToBug failed', error);
-      });
+      toggleScreenshotToReport(enabled);
     },
     [toggleScreenshotToReport],
   );
-
-  const handleAutoLockSelect = useCallback((ms: number) => {
-    trackSettingsLockTime(ms).catch(error => {
-      console.error('trackSettingsLockTime failed', error);
-    });
-  }, []);
-
-  const handleLanguageSelect = useCallback((lang: SupportedLang) => {
-    trackSettingsLanguage(lang).catch(error => {
-      console.error('trackSettingsLanguage failed', error);
-    });
-  }, []);
-
-  const handleCurrencySelect = useCallback((item: CurrencyItem) => {
-    trackSettingsCurrency(item.code).catch(error => {
-      console.error('trackSettingsCurrency failed', error);
-    });
-  }, []);
 
   const allowAppLaunchLockToggle = useCallback(
     (nextEnabled: boolean) =>
@@ -757,7 +706,6 @@ function SettingsBlocks() {
             rightNode: (
               <SwitchBiometricsAuthentication
                 ref={switchBiometricsRef}
-                onToggleSuccess={handleBiometricsToggleSuccess}
                 onUnavailablePress={showBiometricsUnavailableToast}
               />
             ),
@@ -773,7 +721,7 @@ function SettingsBlocks() {
           {
             label: t('page.setting.transactionNotification'),
             icon: RcNotification,
-            rightNode: <TrackedTransactionNotificationSwitch />,
+            rightNode: <TransactionNotificationSwitch />,
             visible: APP_FEATURE_SWITCH.transactionNotification,
             onPress: () => {
               handleTransactionNotificationToggle();
@@ -867,15 +815,7 @@ function SettingsBlocks() {
           {
             label: t('page.setting.screenshotReportSwitch'),
             icon: RcScreenshotReport,
-            rightNode: (
-              <SwitchScreenshotToReport
-                onToggleSuccess={enabled => {
-                  trackSettingsScreenshotToBug(enabled).catch(error => {
-                    console.error('trackSettingsScreenshotToBug failed', error);
-                  });
-                }}
-              />
-            ),
+            rightNode: <SwitchScreenshotToReport />,
             onPress: () => {
               handleScreenshotToBugToggle();
             },
@@ -1063,14 +1003,11 @@ function SettingsBlocks() {
         }}
       />
 
-      <SelectAutolockTimeBottomSheetModal
-        ref={selectAutolockTimeRef}
-        onSelectTimeMs={handleAutoLockSelect}
-      />
+      <SelectAutolockTimeBottomSheetModal ref={selectAutolockTimeRef} />
 
-      <CurrentLanguageSelectorModal onSelectLanguage={handleLanguageSelect} />
+      <CurrentLanguageSelectorModal />
 
-      <CurrencySelectorPopup onSelectCurrency={handleCurrencySelect} />
+      <CurrencySelectorPopup />
     </>
   );
 }

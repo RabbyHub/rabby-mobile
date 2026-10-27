@@ -78,7 +78,6 @@
     "@aave/math-utils": "1.38.0",
     "@craftzdog/react-native-buffer": "^6.0.5",
     "@debank/common": "0.3.60",
-    "@debank/festats": "1.0.4",
     "@eth-optimism/contracts-ts": "^0.17.0",
     "@ethereumjs/common": "4.4.0",
     "@ethereumjs/tx": "5.4.0",

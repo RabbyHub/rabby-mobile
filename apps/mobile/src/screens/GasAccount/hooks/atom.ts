@@ -10,7 +10,6 @@ import {
   getGasAccountPendingHardwareAccountSnapshot,
   getGasAccountServiceGenerationSnapshot,
   setGasAccountAccountsWithBalanceSync,
-  setGasAccountCurrentBalanceStateSync,
   setGasAccountHasClaimedGiftSync,
   setGasAccountPendingHardwareAccountSync,
   setGasAccountSigSync,
@@ -37,7 +36,6 @@ import { runStartupTask } from '@/core/utils/startupScheduler';
 import { STARTUP_TASKS } from '@/core/utils/startupTaskManifest';
 import { traceStartupDiagnostic } from '@/core/utils/startupDiagnostics';
 import { eventBus, EVENTS } from '@/utils/events';
-import { handleGasAccountLoginSuccess } from '@/utils/gasAccountAnalytics';
 import { setGasAccountStoreApi } from '@/utils/gasAccountStoreApiBridge';
 import { sendPersonalMessage } from '@/utils/sendPersonalMessage';
 import {
@@ -410,7 +408,6 @@ const setGasAccount = (
 ) => {
   setGasAccountSigSync(sig, account);
   if (!sig || !account) {
-    setGasAccountCurrentBalanceStateSync();
     gasAccountStore.setState(prev => invalidateSessionState(prev));
     return;
   }
@@ -777,17 +774,6 @@ const performSnapshotRefresh = async ({
     if (result.account.id) {
       const hasBalance = Number(result.account.balance || 0) > 0;
       measureGasAccountStoreSyncStep(
-        'refresh_snapshot_set_current_balance_state',
-        () => {
-          setGasAccountCurrentBalanceStateSync(accountId, hasBalance);
-        },
-        {
-          reason,
-          requestId,
-          hasBalance,
-        },
-      );
-      measureGasAccountStoreSyncStep(
         'refresh_snapshot_finish_set_state',
         () => {
           gasAccountStore.setState(prev =>
@@ -876,13 +862,6 @@ const refreshSnapshot = async (
       reason,
       requestId,
     });
-    measureGasAccountStoreSyncStep(
-      'refresh_snapshot_clear_balance_state',
-      () => {
-        setGasAccountCurrentBalanceStateSync();
-      },
-      { reason, requestId },
-    );
     return undefined;
   }
 
@@ -1357,7 +1336,6 @@ export const storeApiGasAccount = {
   loadMoreHistory,
   invalidateSession(options?: { recheckAccounts?: boolean }) {
     setGasAccountSigSync();
-    setGasAccountCurrentBalanceStateSync();
     gasAccountStore.setState(prev => invalidateSessionState(prev));
     if (options?.recheckAccounts) {
       triggerReLoginAfterInvalidSession();
@@ -1458,7 +1436,6 @@ export const storeApiGasAccount = {
       );
 
       if (result?.success) {
-        handleGasAccountLoginSuccess(signature, selectAccount);
         storeApiGasAccount.setGasAccount(signature, selectAccount);
         setGasAccountHasClaimedGiftSync(true);
         storeApiGasAccount.clearPendingHardwareAccount();

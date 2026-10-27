@@ -29,8 +29,6 @@ import type { UIContactBookItem } from '@/core/apis/contact';
 import type { Account, ChainGas } from '@/core/startupServices/preference';
 import { apiContact, apiProvider, apiToken } from '@/core/apis';
 import { formatSpeicalAmount } from '@/utils/number';
-import { getKRCategoryByType } from '@/utils/transaction';
-import { matomoRequestEvent } from '@/utils/analytics';
 import { toast } from '@/components2024/Toast';
 import { bizNumberUtils } from '@rabby-wallet/biz-utils';
 import { resetNavigationTo, useRabbyAppNavigation } from '@/hooks/navigation';
@@ -558,16 +556,6 @@ export function useSendNFTForm({
 
       putScreenState({ isSubmitLoading: true });
 
-      matomoRequestEvent({
-        category: 'Send',
-        action: 'createTx',
-        label: [
-          chainItem?.name,
-          getKRCategoryByType(currentAccount?.type),
-          currentAccount?.brandName,
-          'nft',
-        ].join('|'),
-      });
       if (!currentAccount) {
         return;
       }
@@ -712,7 +700,6 @@ export function useSendNFTForm({
       prepareDirectSubmitMiniTx,
       toAddress,
       currentAccount,
-      chainItem?.name,
       nftToken,
       navigation,
     ],

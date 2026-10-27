@@ -26,7 +26,138 @@ function beforeSendSentryEvent(event: SentryEvent, hint?: SentryEventHint) {
     return null;
   }
 
-  return shouldDropSentryEvent(event, hint) ? null : event;
+  return shouldDropSentryEvent(event, hint) ? null : scrubSentryPayload(event);
+}
+
+function beforeSendSentryBreadcrumb(breadcrumb: SentryBreadcrumb) {
+  const kept = dropWhenTrackingOptedOut(breadcrumb);
+  return kept ? scrubSentryPayload(kept) : null;
+}
+
+function beforeSendSentryTransaction(event: SentryTransactionEvent) {
+  const kept = dropWhenTrackingOptedOut(event);
+  return kept ? scrubSentryPayload(kept) : null;
+}
+
+const EVM_ADDRESS_PATTERN = /\b0x[0-9a-fA-F]{40}\b/g;
+export const SENTRY_REDACTED_ADDRESS = '0x[redacted]';
+// Rabby API GETs carry addresses in query params (`?id=0x…`, `?user_addr=…`).
+const URL_QUERY_IN_TEXT_PATTERN =
+  /\b((?:https?|wss?):\/\/[^\s?#"'<>]+)[?#][^\s"'<>]*/gi;
+const URL_VALUE_KEYS = new Set(['url', 'http.url', 'url.full', 'from', 'to']);
+const URL_QUERY_KEYS = new Set([
+  'http.query',
+  'http.fragment',
+  'url.query',
+  'url.fragment',
+]);
+const MAX_SCRUB_DEPTH = 12;
+
+function scrubSentryText(text: string) {
+  return text
+    .replace(URL_QUERY_IN_TEXT_PATTERN, '$1')
+    .replace(EVM_ADDRESS_PATTERN, SENTRY_REDACTED_ADDRESS);
+}
+
+function isPlainObject(value: object): value is Record<string, unknown> {
+  const proto = Object.getPrototypeOf(value);
+  return proto === Object.prototype || proto === null;
+}
+
+/**
+ * Copy-on-write: breadcrumb data and `extra` can hold live app objects
+ * (console arguments, store state), so nothing is mutated in place and an
+ * unchanged value keeps its identity.
+ */
+function scrubSentryValue(
+  value: unknown,
+  depth: number,
+  ancestors: Set<object>,
+  key?: string,
+): unknown {
+  if (typeof value === 'string') {
+    const text =
+      key && URL_VALUE_KEYS.has(key)
+        ? value.replace(/[?#][\s\S]*$/, '')
+        : value;
+    return scrubSentryText(text);
+  }
+
+  if (
+    !value ||
+    typeof value !== 'object' ||
+    depth > MAX_SCRUB_DEPTH ||
+    ancestors.has(value)
+  ) {
+    return value;
+  }
+
+  if (value instanceof Error) {
+    const plain = {
+      ...value,
+      name: value.name,
+      message: value.message,
+      stack: value.stack,
+    };
+    const scrubbed = scrubSentryValue(plain, depth, ancestors, key);
+    return scrubbed === plain ? value : scrubbed;
+  }
+
+  if (!Array.isArray(value) && !isPlainObject(value)) {
+    return value;
+  }
+
+  ancestors.add(value);
+  try {
+    if (Array.isArray(value)) {
+      let changed = false;
+      const next = value.map(item => {
+        const scrubbed = scrubSentryValue(item, depth + 1, ancestors);
+        changed ||= scrubbed !== item;
+        return scrubbed;
+      });
+      return changed ? next : value;
+    }
+
+    let changed = false;
+    const next: Record<string, unknown> = {};
+    for (const [entryKey, entryValue] of Object.entries(value)) {
+      if (URL_QUERY_KEYS.has(entryKey)) {
+        changed = true;
+        continue;
+      }
+
+      const scrubbedKey = scrubSentryText(entryKey);
+      const scrubbedValue = scrubSentryValue(
+        entryValue,
+        depth + 1,
+        ancestors,
+        entryKey,
+      );
+      changed ||= scrubbedKey !== entryKey || scrubbedValue !== entryValue;
+
+      let outputKey = scrubbedKey;
+      for (
+        let suffix = 2;
+        Object.prototype.hasOwnProperty.call(next, outputKey);
+        suffix++
+      ) {
+        outputKey = `${scrubbedKey}#${suffix}`;
+      }
+      next[outputKey] = scrubbedValue;
+    }
+    return changed ? next : value;
+  } finally {
+    ancestors.delete(value);
+  }
+}
+
+/**
+ * Strips URL query strings and redacts EVM addresses from anything that is
+ * about to leave the device (events, transactions, breadcrumbs).
+ */
+export function scrubSentryPayload<T>(payload: T): T {
+  return scrubSentryValue(payload, 0, new Set()) as T;
 }
 
 function canInitializeSentry() {
@@ -74,6 +205,20 @@ export function syncSentryUserBehaviorTrackingEnabled() {
 type SentryBeforeSend = NonNullable<ReactNativeOptions['beforeSend']>;
 type SentryEvent = Parameters<SentryBeforeSend>[0];
 type SentryEventHint = Parameters<SentryBeforeSend>[1];
+type SentryBreadcrumb = Parameters<
+  NonNullable<ReactNativeOptions['beforeBreadcrumb']>
+>[0];
+type SentryTransactionEvent = Parameters<
+  NonNullable<ReactNativeOptions['beforeSendTransaction']>
+>[0];
+
+// Read by sentry-cocoa from the native options dict; not in the RN typings.
+// JS already records every request as an XHR breadcrumb (scrubbed below), but
+// native crash reports never pass through the JS hooks, so the duplicate
+// NSURLSession breadcrumbs (with `http.query`) are turned off.
+const NATIVE_ONLY_SENTRY_OPTIONS = {
+  enableNetworkBreadcrumbs: false,
+};
 
 export const SENTRY_IGNORED_ERROR_MESSAGES = [
   'Missing or invalid topic field',
@@ -218,14 +363,15 @@ export function initSentry() {
     enableAutoSessionTracking: true,
     environment: getSentryEnv(),
     debug: SENTRY_DEBUG,
-    beforeBreadcrumb: breadcrumb => dropWhenTrackingOptedOut(breadcrumb),
+    beforeBreadcrumb: beforeSendSentryBreadcrumb,
     beforeSend: beforeSendSentryEvent,
-    beforeSendTransaction: event => dropWhenTrackingOptedOut(event),
+    beforeSendTransaction: beforeSendSentryTransaction,
     _experiments: {
       // The sampling rate for profiling is relative to TracesSampleRate.
       // In this case, we'll capture profiles for 100% of transactions.
       profilesSampleRate: 1.0,
     },
+    ...NATIVE_ONLY_SENTRY_OPTIONS,
   });
   sentryInitialized = true;
 }

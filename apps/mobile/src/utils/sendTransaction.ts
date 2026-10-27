@@ -15,8 +15,6 @@ import { findChain, isTestnet } from './chain';
 import { keyringServiceApi } from '@/core/serviceApi/keyring';
 import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
 import { whitelistServiceApi } from '@/core/serviceApi/whitelist';
-import { miscServiceApi } from '@/core/serviceApi/misc';
-import { notificationServiceApi } from '@/core/serviceApi/notification';
 import { apiKeyring, apiProvider } from '@/core/apis';
 import { openapi, testOpenapi } from '@/core/request';
 import { INTERNAL_REQUEST_ORIGIN, INTERNAL_REQUEST_SESSION } from '@/constant';
@@ -36,11 +34,7 @@ import {
 } from '@rabby-wallet/rabby-action';
 import { ALIAS_ADDRESS } from '@/constant/gas';
 import { calcGasLimit } from '@/core/apis/transactions';
-import { stats } from './stats';
-import {
-  KEYRING_CATEGORY_MAP,
-  KEYRING_TYPE,
-} from '@rabby-wallet/keyring-utils';
+import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { apisTransactionHistory } from '@/core/apis/transactionHistory';
 import { getCexInfo } from '@/hooks/useCexSupportList';
 import { isNonPublicProductionEnv } from '@/constant';
@@ -208,21 +202,6 @@ export const sendTransaction = async ({
   }
 
   const signingTxId = await transactionHistoryServiceApi.addSigningTx(tx);
-
-  const reportGasLevel =
-    normalGas.level || miscServiceApi.getCurrentGasLevel() || 'normal';
-
-  stats.report('createTransaction', {
-    type: currentAccount.brandName,
-    category: KEYRING_CATEGORY_MAP[currentAccount.type],
-    chainId: chain.serverId,
-    createdBy: ga ? 'rabby' : 'dapp',
-    source: ga?.source || '',
-    trigger: ga?.trigger || '',
-    networkType: chain?.isTestnet ? 'Custom Network' : 'Integrated Network',
-    swapUseSlider: ga?.swapUseSlider ?? '',
-    gasLevel: reportGasLevel,
-  });
 
   // pre exec tx
   const preExecResult =
@@ -585,51 +564,6 @@ export const sendTransaction = async ({
     }
   }
 
-  const handleSendAfter = async () => {
-    const statsData = await notificationServiceApi.getStatsData();
-
-    if (statsData?.signed) {
-      const sData: any = {
-        type: statsData?.type,
-        chainId: statsData?.chainId,
-        category: statsData?.category,
-        success: statsData?.signedSuccess,
-        preExecSuccess: statsData?.preExecSuccess,
-        createdBy: statsData?.createdBy,
-        source: statsData?.source,
-        trigger: statsData?.trigger,
-        networkType: chain?.isTestnet ? 'Custom Network' : 'Integrated Network',
-      };
-      if (statsData.signMethod) {
-        sData.signMethod = statsData.signMethod;
-      }
-      stats.report('signedTransaction', sData);
-    }
-    if (statsData?.submit) {
-      stats.report('submitTransaction', {
-        type: statsData?.type,
-        chainId: statsData?.chainId,
-        category: statsData?.category,
-        success: statsData?.submitSuccess,
-        preExecSuccess: statsData?.preExecSuccess,
-        createdBy: statsData?.createdBy,
-        source: statsData?.source,
-        trigger: statsData?.trigger,
-        networkType: statsData?.networkType || '',
-      });
-    }
-  };
-
-  stats.report('signTransaction', {
-    type: currentAccount.brandName,
-    category: KEYRING_CATEGORY_MAP[currentAccount.type],
-    chainId: chain.serverId,
-    createdBy: ga ? 'rabby' : 'dapp',
-    source: ga?.source || '',
-    trigger: ga?.trigger || '',
-    networkType: chain?.isTestnet ? 'Custom Network' : 'Integrated Network',
-  });
-
   // submit tx
   let hash = '';
   try {
@@ -655,9 +589,7 @@ export const sendTransaction = async ({
       result: undefined,
       account,
     });
-    await handleSendAfter();
   } catch (e) {
-    await handleSendAfter();
     const err = new Error((e as any).message);
     err.name = FailedCode.SubmitTxFailed;
     eventBus.emit(EVENTS.COMMON_HARDWARE.REJECTED, err.message);
@@ -762,20 +694,6 @@ export const sendTransactionByMiniSignV2 = async ({
 
   const signingTxId = await transactionHistoryServiceApi.addSigningTx(tx);
   onSigningTxCreated?.(signingTxId);
-
-  const reportGasLevel = miscServiceApi.getCurrentGasLevel() || 'normal';
-
-  stats.report('createTransaction', {
-    type: currentAccount.brandName,
-    category: KEYRING_CATEGORY_MAP[currentAccount.type],
-    chainId: chain.serverId,
-    createdBy: ga ? 'rabby' : 'dapp',
-    source: ga?.source || '',
-    trigger: ga?.trigger || '',
-    networkType: chain?.isTestnet ? 'Custom Network' : 'Integrated Network',
-    swapUseSlider: ga?.swapUseSlider ?? '',
-    gasLevel: reportGasLevel,
-  });
 
   const transaction: TxWithTempoExtras<Tx> = {
     from: tx.from,
@@ -932,51 +850,6 @@ export const sendTransactionByMiniSignV2 = async ({
 
   onProgress?.('builded');
 
-  const handleSendAfter = async () => {
-    const statsData = await notificationServiceApi.getStatsData();
-
-    if (statsData?.signed) {
-      const sData: any = {
-        type: statsData?.type,
-        chainId: statsData?.chainId,
-        category: statsData?.category,
-        success: statsData?.signedSuccess,
-        preExecSuccess: statsData?.preExecSuccess,
-        createdBy: statsData?.createdBy,
-        source: statsData?.source,
-        trigger: statsData?.trigger,
-        networkType: statsData?.networkType,
-      };
-      if (statsData.signMethod) {
-        sData.signMethod = statsData.signMethod;
-      }
-      stats.report('signedTransaction', sData);
-    }
-    if (statsData?.submit) {
-      stats.report('submitTransaction', {
-        type: statsData?.type,
-        chainId: statsData?.chainId,
-        category: statsData?.category,
-        success: statsData?.submitSuccess,
-        preExecSuccess: statsData?.preExecSuccess,
-        createdBy: statsData?.createdBy,
-        source: statsData?.source,
-        trigger: statsData?.trigger,
-        networkType: statsData?.networkType || '',
-      });
-    }
-  };
-
-  stats.report('signTransaction', {
-    type: currentAccount.brandName,
-    category: KEYRING_CATEGORY_MAP[currentAccount.type],
-    chainId: chain.serverId,
-    createdBy: ga ? 'rabby' : 'dapp',
-    source: ga?.source || '',
-    trigger: ga?.trigger || '',
-    networkType: chain?.isTestnet ? 'Custom Network' : 'Integrated Network',
-  });
-
   // submit tx
   let hash = '';
   const account = currentAccount;
@@ -1008,9 +881,7 @@ export const sendTransactionByMiniSignV2 = async ({
       result: undefined,
       account: account,
     });
-    await handleSendAfter();
   } catch (e) {
-    await handleSendAfter();
     const err = new Error((e as any).message);
     err.name = FailedCode.SubmitTxFailed;
     eventBus.emit(EVENTS.COMMON_HARDWARE.REJECTED, err.message);

@@ -1,8 +1,6 @@
 import { browserApis, useHomeDisplayedTabs } from '@/hooks/browser/useBrowser';
 import { useTheme2024 } from '@/hooks/theme';
-import { matomoRequestEvent } from '@/utils/analytics';
 import { createGetStyles2024 } from '@/utils/styles';
-import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { BlurView, BlurViewProps } from '@react-native-community/blur';
 import React from 'react';
 import { Platform, View } from 'react-native';
@@ -202,14 +200,6 @@ export const BrowserSearchEntry: React.FC = () => {
                     tab={tab}
                     onPress={() => {
                       browserApis.switchToTab(tab.id);
-                      const origin = safeGetOrigin(tab.url || tab.initialUrl);
-                      if (origin) {
-                        matomoRequestEvent({
-                          category: 'Websites Usage',
-                          action: 'Website_Visit_Home Tab',
-                          label: origin,
-                        });
-                      }
                     }}
                     onPressClose={() => {
                       browserApis.closeTab(tab.id);

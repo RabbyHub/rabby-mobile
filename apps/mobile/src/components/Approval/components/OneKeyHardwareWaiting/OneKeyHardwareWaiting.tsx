@@ -15,16 +15,9 @@ import { StyleSheet, View } from 'react-native';
 import OneKeySVG from '@/assets/icons/wallet/onekey.svg';
 import type { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
-import { stats } from '@/utils/stats';
-import {
-  KEYRING_CATEGORY_MAP,
-  KEYRING_CLASS,
-} from '@rabby-wallet/keyring-utils';
-import { matomoRequestEvent } from '@/utils/analytics';
 import { adjustV } from '@/utils/gnosis';
 import { apisSafe } from '@/core/apis/safe';
 import { emitSignComponentAmounted } from '@/core/utils/signEvent';
-import { findChain } from '@/utils/chain';
 import type { RetryUpdateType } from '@/utils/errorTxRetry';
 import {
   getTxFailedResult,
@@ -104,9 +97,6 @@ export const OneKeyHardwareWaiting = ({
     APPROVAL_STATUS_MAP.WAITING,
   );
   const [getApproval, resolveApproval, rejectApproval] = useApproval();
-  const chain = findChain({
-    id: params.chainId || 1,
-  })!;
   const { t } = useTranslation();
   const [isSignText, setIsSignText] = React.useState(false);
   const [result, setResult] = React.useState('');
@@ -197,27 +187,7 @@ export const OneKeyHardwareWaiting = ({
           setErrorMessage(t('page.signFooterBar.qrcode.failedToGetExplain'));
           return;
         }
-
-        const explain = signingTx.explain;
-
-        stats.report('signTransaction', {
-          type: account.brandName,
-          chainId: chain.serverId,
-          category: KEYRING_CATEGORY_MAP[account.type],
-          preExecSuccess: explain
-            ? explain?.calcSuccess && explain?.pre_exec?.success
-            : true,
-          createdBy: params?.$ctx?.ga ? 'rabby' : 'dapp',
-          source: params?.$ctx?.ga?.source || '',
-          trigger: params?.$ctx?.ga?.trigger || '',
-        });
       }
-    } else {
-      stats.report('startSignText', {
-        type: account.brandName,
-        category: KEYRING_CATEGORY_MAP[account.type],
-        method: params?.extra?.signTextMethod,
-      });
     }
     eventBus.addListener(EVENTS.COMMON_HARDWARE.REJECTED, async data => {
       setErrorMessage(data);
@@ -259,12 +229,6 @@ export const OneKeyHardwareWaiting = ({
           setErrorMessage(e.message);
           return;
         }
-
-        matomoRequestEvent({
-          category: 'Transaction',
-          action: 'Submit',
-          label: KEYRING_CLASS.HARDWARE.ONEKEY,
-        });
 
         setSignFinishedData({
           data: sig,

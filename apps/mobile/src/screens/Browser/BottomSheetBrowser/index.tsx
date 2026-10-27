@@ -7,7 +7,6 @@ import { useBrowser } from '@/hooks/browser/useBrowser';
 import { useBrowserHistoryCount } from '@/hooks/browser/useBrowserHistory';
 import { useTheme2024 } from '@/hooks/theme';
 import { useSafeSizes } from '@/hooks/useAppLayout';
-import { matomoRequestEvent } from '@/utils/analytics';
 import {
   EVENT_SHOW_BROWSER,
   EVENT_SHOW_BROWSER_MANAGE,
@@ -136,13 +135,6 @@ export const BottomSheetBrowser = () => {
       onChange={index => {
         if (index === -1) {
           // 手动下拉关闭？
-          if (browserState.isShowBrowser && !browserState.isShowSearch) {
-            matomoRequestEvent({
-              category: 'Websites Usage',
-              action: `Website_Exit`,
-              label: 'Drop Down',
-            });
-          }
           setPartialBrowserState({
             isShowBrowser: false,
             isShowSearch: false,
@@ -152,11 +144,6 @@ export const BottomSheetBrowser = () => {
           });
           // onHideBrowser();
           terminateTabs();
-        } else {
-          matomoRequestEvent({
-            category: 'Websites Usage',
-            action: 'Website_Start',
-          });
         }
       }}>
       <AutoLockView as="View" style={styles.customContentStyle}>

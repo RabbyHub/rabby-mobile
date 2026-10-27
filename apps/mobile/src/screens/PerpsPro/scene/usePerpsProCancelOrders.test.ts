@@ -2,7 +2,6 @@ import { act, renderHook, waitFor } from '@testing-library/react-native';
 
 const mockExecuteCancel = jest.fn();
 const mockEnsureApproval = jest.fn();
-const mockReport = jest.fn();
 const mockShowToast = jest.fn();
 let mockCurrentAccount: { address: string; type: string } | null;
 
@@ -41,12 +40,6 @@ jest.mock('@/hooks/perps/usePerpsStore', () => ({
       currentPerpsAccount: mockCurrentAccount,
     }),
   },
-}));
-jest.mock('@/utils/perps', () => ({
-  getStatsReportSide: () => 'Long',
-}));
-jest.mock('@/utils/stats', () => ({
-  stats: { report: (...args: any[]) => mockReport(...args) },
 }));
 jest.mock('@sentry/react-native', () => ({ captureException: jest.fn() }));
 jest.mock('react-i18next', () => ({
@@ -123,10 +116,6 @@ describe('usePerpsProCancelOrders', () => {
       'page.perps.pro.openOrders.cancelSuccess',
       'success',
     );
-    expect(mockReport).toHaveBeenCalledWith(
-      'perpsTradeHistory',
-      expect.objectContaining({ trade_type: 'pro cancel limit order' }),
-    );
   });
 
   it('requires confirmation before Cancel All and submits the frozen category rows', async () => {
@@ -146,24 +135,6 @@ describe('usePerpsProCancelOrders', () => {
       { coin: 'BTC', oid: 1 },
       { coin: 'BTC', oid: 2 },
     ]);
-  });
-
-  it('keeps an accepted cancellation successful when analytics throws', async () => {
-    mockReport.mockImplementationOnce(() => {
-      throw new Error('analytics unavailable');
-    });
-    const hook = renderHook(() => usePerpsProCancelOrders());
-    act(() => hook.result.current.confirmCancelOrder(order(1)));
-
-    act(() => hook.result.current.confirmCancellation());
-
-    await waitFor(() =>
-      expect(mockShowToast).toHaveBeenCalledWith(
-        'page.perps.pro.openOrders.cancelSuccess',
-        'success',
-      ),
-    );
-    expect(mockExecuteCancel).toHaveBeenCalledTimes(1);
   });
 
   it('does not approve or cancel old rows if the account changes while confirmation is open', async () => {

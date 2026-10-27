@@ -54,11 +54,9 @@ jest.mock('react-i18next', () => ({
 jest.mock('@/hooks/perps/usePerpsStore', () => ({
   perpsStore: (selector: any) => selector({ currentPerpsAccount: null }),
 }));
-jest.mock('@/utils/stats', () => ({ stats: { report: jest.fn() } }));
 jest.mock('@/constant', () => ({ APP_VERSIONS: {} }));
 jest.mock('@/utils/perps', () => ({
   formatPerpsCoin: (v: string) => v,
-  getStatsReportSide: jest.fn(),
 }));
 jest.mock('@/components/Tip', () => ({ Tip: ({ children }: any) => children }));
 jest.mock(
