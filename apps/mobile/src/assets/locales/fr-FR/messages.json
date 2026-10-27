@@ -3317,6 +3317,7 @@
       "screenTitle": "Connecter le portefeuille",
       "connectingToRabby": "Connexion à Rabby",
       "pairingFailed": "L'appairage WalletConnect a échoué.",
+      "proposalNotReceived": "La dapp n'a pas répondu. Actualisez le QR code de la dapp et réessayez.",
       "connected": "Connexion réussie. Veuillez retourner à la DApp.",
       "proposalExpired": "La proposition WalletConnect a expiré.",
       "pairingExpired": "L'appairage WalletConnect a expiré. Actualisez le code QR de la DApp et réessayez.",

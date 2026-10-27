@@ -3357,6 +3357,7 @@
       "screenTitle": "ウォレットを接続",
       "connectingToRabby": "Rabbyに接続中",
       "pairingFailed": "WalletConnectのペアリングに失敗しました。",
+      "proposalNotReceived": "Dappから応答がありません。DappのQRコードを更新して再試行してください。",
       "connected": "接続しました。DAppに戻ってください。",
       "proposalExpired": "WalletConnectの接続リクエストは期限切れです。",
       "pairingExpired": "WalletConnectのペアリングの有効期限が切れました。DAppのQRコードを更新して、もう一度お試しください。",

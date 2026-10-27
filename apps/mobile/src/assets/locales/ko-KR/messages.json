@@ -3307,6 +3307,7 @@
       "screenTitle": "지갑 연결",
       "connectingToRabby": "Rabby에 연결 중",
       "pairingFailed": "WalletConnect 페어링에 실패했습니다.",
+      "proposalNotReceived": "Dapp이 응답하지 않습니다. Dapp QR 코드를 새로 고친 후 다시 시도하세요.",
       "connected": "성공적으로 연결되었습니다. DApp으로 돌아가세요.",
       "proposalExpired": "WalletConnect 제안이 만료되었습니다.",
       "pairingExpired": "WalletConnect 페어링이 만료되었습니다. dapp QR 코드를 새로고침한 후 다시 시도하세요.",
