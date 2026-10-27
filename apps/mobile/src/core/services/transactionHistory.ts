@@ -215,6 +215,21 @@ const removeFeaturePendingFromDraft = (
   );
 };
 
+const isGroupableNumber = (value: unknown): value is number =>
+  typeof value === 'number' && !Number.isNaN(value);
+
+/**
+ * Only well-formed txs get an index key, so a key hit matches exactly the
+ * groups the strict `isSameAddress` / `===` comparison would match.
+ */
+const getTxGroupKey = (tx: TransactionHistoryItem) =>
+  typeof tx.address === 'string' &&
+  tx.address &&
+  isGroupableNumber(tx.chainId) &&
+  isGroupableNumber(tx.nonce)
+    ? `${tx.address.toLowerCase()}:${tx.chainId}:${tx.nonce}`
+    : null;
+
 // TODO
 export class TransactionHistoryService extends StoreServiceBase<
   TxHistoryStore,
@@ -645,11 +660,16 @@ export class TransactionHistoryService extends StoreServiceBase<
         return;
       }
       const tx = cloneDeep(storeTx) as TransactionHistoryItem;
-      // Txs without an address never matched an existing group before.
-      const key = tx.address
-        ? `${tx.address.toLowerCase()}:${tx.chainId}:${tx.nonce}`
-        : null;
-      const group = key ? groupByKey.get(key) : undefined;
+      const key = getTxGroupKey(tx);
+      const group = key
+        ? groupByKey.get(key)
+        : // Malformed txs keep the original strict-equality matching.
+          groups.find(
+            g =>
+              isSameAddress(g.address, tx.address) &&
+              g.nonce === tx.nonce &&
+              g.chainId === tx.chainId,
+          );
       if (group) {
         group.txs.push(tx);
       } else {

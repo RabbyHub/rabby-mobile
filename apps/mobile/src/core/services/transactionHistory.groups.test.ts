@@ -78,6 +78,26 @@ describe('TransactionHistoryService.getTransactionGroups', () => {
     ]);
   });
 
+  it('keeps strict matching for malformed chainId and nonce values', () => {
+    const service = new TransactionHistoryService();
+    setTransactions(service, [
+      tx('0xabc', 1, 1, 'number-chain'),
+      tx('0xabc', '1' as unknown as number, 1, 'string-chain-1'),
+      tx('0xabc', '1' as unknown as number, 1, 'string-chain-2'),
+      tx('0xabc', 1, NaN, 'nan-1'),
+      tx('0xabc', 1, NaN, 'nan-2'),
+    ]);
+
+    const groups = service.getTransactionGroups({ address: '0xabc' });
+
+    expect(groups.map(g => g.txs.map(item => item.hash))).toEqual([
+      ['number-chain'],
+      ['string-chain-1', 'string-chain-2'],
+      ['nan-1'],
+      ['nan-2'],
+    ]);
+  });
+
   it('returns copies that do not leak mutations into the store', () => {
     const service = new TransactionHistoryService();
     setTransactions(service, [tx('0xabc', 1, 1, 'a1')]);
