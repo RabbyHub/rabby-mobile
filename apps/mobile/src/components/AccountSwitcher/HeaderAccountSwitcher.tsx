@@ -40,11 +40,13 @@ export function HeaderAccountSwitcher({
   forScene,
   disableSwitch = false,
   formatDefaultAliasAsAddress = false,
+  hideAccountName = false,
   maxWidth = 180,
   style,
 }: AccountSwitcherAopProps<{
   disableSwitch?: boolean;
   formatDefaultAliasAsAddress?: boolean;
+  hideAccountName?: boolean;
   maxWidth?: number;
   style?: StyleProp<ViewStyle>;
 }>) {
@@ -99,9 +101,11 @@ export function HeaderAccountSwitcher({
             type={finalSceneCurrentAccount.brandName}
             address={finalSceneCurrentAccount.address}
           />
-          <Text style={styles.accountName} numberOfLines={1}>
-            {accountName}
-          </Text>
+          {!hideAccountName && (
+            <Text style={styles.accountName} numberOfLines={1}>
+              {accountName}
+            </Text>
+          )}
           {!disableSwitch && (
             <CaretArrowIconCC
               dir="down"

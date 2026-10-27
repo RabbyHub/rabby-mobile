@@ -42,7 +42,7 @@ const MemeCoinExecuteContent = ({
   const { mode, legs, maxPriceImpactPct, tokenLogos } = params;
   const { t } = useTranslation();
   const { styles } = useTheme2024({ getStyle });
-  const { safeOffBottom } = useSafeSizes();
+  const { safeOffHeader, safeOffBottom } = useSafeSizes();
   const { store, start, openExitDialog, continueExecution, stopAndExit } =
     useMemeTradeTask({ account, legs, maxPriceImpactPct });
   const status = store(s => s.status);
@@ -92,7 +92,7 @@ const MemeCoinExecuteContent = ({
   const buttonState = getExecuteButtonState(status, done, legs.length);
 
   return (
-    <View style={styles.screen}>
+    <View style={[styles.screen, { paddingTop: safeOffHeader }]}>
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
         <View style={styles.titleRow}>
           <View style={styles.titleLeft}>

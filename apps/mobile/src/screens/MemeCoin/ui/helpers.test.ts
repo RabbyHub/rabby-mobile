@@ -3,6 +3,7 @@ import { tokenKey } from '../engine/keys';
 import type { PlanResult, PlannedLeg } from '../engine/types';
 import {
   canConfirmBuy,
+  formatMarketCapUsd,
   getBuySummary,
   getExecuteButtonState,
   parseBuyAmount,
@@ -46,6 +47,15 @@ describe('parseBuyAmount', () => {
       expect(parseBuyAmount(text)).toBeNull();
     },
   );
+});
+
+describe('formatMarketCapUsd', () => {
+  it('shows whole dollars with separators and no K/M/B suffix', () => {
+    expect(formatMarketCapUsd(132262615.4)).toBe('$132,262,615');
+    expect(formatMarketCapUsd(2500000000)).toBe('$2,500,000,000');
+    expect(formatMarketCapUsd(36805.5)).toBe('$36,806');
+    expect(formatMarketCapUsd(0)).toBe('$0');
+  });
 });
 
 describe('getBuySummary', () => {

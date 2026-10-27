@@ -1,3 +1,4 @@
+import BigNumber from 'bignumber.js';
 import type { MemeHolding } from '../data/types';
 import { AMOUNT_EPSILON } from '../engine/constants';
 import type { SellHolding } from '../engine/execLegs';
@@ -22,6 +23,10 @@ export const parseBuyAmount = (text: string): number | null => {
   const value = Number(normalized);
   return value > 0 ? value : null;
 };
+
+/** whole dollars with thousands separators, never abbreviated: $132,262,615 */
+export const formatMarketCapUsd = (usd: number) =>
+  `$${new BigNumber(usd).toFormat(0)}`;
 
 export type BuySummary =
   | { kind: 'none'; neededUsd: number }

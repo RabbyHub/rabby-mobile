@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { Text } from '@/components/Typography';
 import type { Account } from '@/core/startupServices/preference';
 import { useTheme2024 } from '@/hooks/theme';
+import { useSafeSizes } from '@/hooks/useAppLayout';
 import type {
   GetNestedScreenRouteProp,
   TransactionNavigatorParamList,
@@ -45,6 +46,7 @@ const MemeCoinBuyContent = ({
 }) => {
   const { t } = useTranslation();
   const { styles } = useTheme2024({ getStyle });
+  const { safeOffHeader } = useSafeSizes();
 
   const [amountText, setAmountText] = useState(
     DEFAULT_BUY_AMOUNT_USD.toFixed(2),
@@ -150,7 +152,7 @@ const MemeCoinBuyContent = ({
   }
 
   return (
-    <View style={styles.screen}>
+    <View style={[styles.screen, { paddingTop: safeOffHeader }]}>
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.content}

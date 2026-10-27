@@ -3,11 +3,10 @@ import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import RcMemeCoinTitle from '@/assets2024/memecoin/memecoin-title.svg';
 import { HeaderAccountSwitcher } from '@/components/AccountSwitcher/HeaderAccountSwitcher';
+import { ScreenLayouts } from '@/constant/layout';
 import { HeaderBackPressable } from '@/hooks/navigation';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-
-export const MEMECOIN_HEADER_HEIGHT = 56;
 
 export const MemeCoinHeader = ({
   disableSwitch,
@@ -28,6 +27,7 @@ export const MemeCoinHeader = ({
           <HeaderAccountSwitcher
             forScene="MakeTransactionAbout"
             disableSwitch={disableSwitch}
+            hideAccountName
             style={styles.switcher}
           />
         </View>
@@ -41,7 +41,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     backgroundColor: colors2024['neutral-bg-0'],
   },
   inner: {
-    height: MEMECOIN_HEADER_HEIGHT,
+    // the transparent header overlays the page; screens pad by safeOffHeader
+    height: ScreenLayouts.headerAreaHeight,
     flexDirection: 'row',
     alignItems: 'center',
     paddingLeft: 12,

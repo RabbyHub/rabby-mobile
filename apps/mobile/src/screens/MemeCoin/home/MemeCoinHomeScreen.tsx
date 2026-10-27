@@ -10,19 +10,17 @@ import { useFocusEffect } from '@react-navigation/native';
 import { Skeleton } from '@rneui/themed';
 import { useMemoizedFn } from 'ahooks';
 import { useTranslation } from 'react-i18next';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text } from '@/components/Typography';
 import { toast } from '@/components2024/Toast';
 import { IS_IOS } from '@/core/native/utils';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { useTheme2024 } from '@/hooks/theme';
-import { formatUsdValueKMB } from '@/screens/Home/utils/price';
+import { useSafeSizes } from '@/hooks/useAppLayout';
 import { isAccountSupportDirectSign } from '@/utils/account';
 import { formatUsdValue } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import { BalanceCard } from '../components/BalanceCard';
 import { HoldingsPill } from '../components/HoldingsPill';
-import { MEMECOIN_HEADER_HEIGHT } from '../components/MemeCoinHeader';
 import { MemeEmptyState } from '../components/MemeEmptyState';
 import { MEME_ROW_HEIGHT, MemeTokenRow } from '../components/MemeTokenRow';
 import { filterBySymbolPrefix } from '../data/market';
@@ -46,6 +44,7 @@ import {
 } from '../navigation';
 import {
   DEFAULT_MAX_PRICE_IMPACT_PCT,
+  formatMarketCapUsd,
   type MaxPriceImpactPct,
   toSellHoldings,
 } from '../ui/helpers';
@@ -69,7 +68,7 @@ const keyExtractor = (row: HomeRow) => row.key;
 export const MemeCoinHomeScreen = () => {
   const { t } = useTranslation();
   const { styles } = useTheme2024({ getStyle });
-  const { top } = useSafeAreaInsets();
+  const { safeOffHeader } = useSafeSizes();
   const { finalSceneCurrentAccount: account } = useSceneAccountInfo({
     forScene: 'MakeTransactionAbout',
   });
@@ -281,7 +280,7 @@ export const MemeCoinHomeScreen = () => {
         address={item.meme.id}
         valueText={
           item.valueUsd === null
-            ? formatUsdValueKMB(item.meme.marketCap)
+            ? formatMarketCapUsd(item.meme.marketCap)
             : formatUsdValue(item.valueUsd)
         }
         change24h={item.meme.change24h}
@@ -305,7 +304,14 @@ export const MemeCoinHomeScreen = () => {
         totalUsd={holdingsLoaded ? totalUsd : null}
         loading={!holdingsLoaded && !holdingsLoadFailed}
       />
-      <HoldingsPill mode={mode} avatars={holdingAvatars} onPress={switchMode} />
+      {/* holdings mode keeps the pill: it is the way back to the market */}
+      {mode === 'holdings' || holdings.length > 0 ? (
+        <HoldingsPill
+          mode={mode}
+          avatars={holdingAvatars}
+          onPress={switchMode}
+        />
+      ) : null}
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>
           {mode === 'market'
@@ -376,9 +382,8 @@ export const MemeCoinHomeScreen = () => {
 
   return (
     <KeyboardAvoidingView
-      style={styles.screen}
-      behavior={IS_IOS ? 'padding' : undefined}
-      keyboardVerticalOffset={MEMECOIN_HEADER_HEIGHT + top}>
+      style={[styles.screen, { paddingTop: safeOffHeader }]}
+      behavior={IS_IOS ? 'padding' : undefined}>
       <FlatList
         data={rows}
         keyExtractor={keyExtractor}
