@@ -27,7 +27,6 @@ import { AddFromChainList } from './AddFromChainList';
 import { CustomTestnetForm } from './CustomTestnetForm';
 import {
   BOTTOM_BUTTON_DOUBLE_HEIGHT,
-  BOTTOM_BUTTON_TITLE_STYLE,
   BOTTOM_BUTTON_TOP_OFFSET,
   BOTTOM_BUTTON_GAP,
   getBottomButtonBottomOffset,
@@ -39,6 +38,7 @@ import { navigateDeprecated } from '@/utils/navigation';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { createGetStyles2024 } from '@/utils/styles';
 import { Text } from '@/components/Typography';
+import { buttonTitleStyles } from '../buttonStyles';
 
 type Props = {
   isEdit?: boolean;
@@ -219,14 +219,14 @@ export const EditCustomTestnetPopup = ({
                   onPress={onCancel}
                   title={t('global.cancel')}
                   height={BOTTOM_BUTTON_DOUBLE_HEIGHT}
-                  titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
+                  titleStyle={buttonTitleStyles.double}
                   type="plain"
                   containerStyle={styles.btnContainer}
                 />
                 <Button
                   title={t('global.confirm')}
                   height={BOTTOM_BUTTON_DOUBLE_HEIGHT}
-                  titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
+                  titleStyle={buttonTitleStyles.double}
                   onPress={handleSubmit}
                   loading={loading}
                   containerStyle={styles.btnContainer}
