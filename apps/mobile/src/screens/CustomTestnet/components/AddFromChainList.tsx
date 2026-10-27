@@ -192,6 +192,7 @@ export const AddFromChainList = ({
           <NextSearchBar
             as="BottomSheetTextInput"
             noCancel
+            centerPlaceholder
             style={styles.searchBar}
             inputContainerStyle={styles.searchInputContainer}
             placeholder={t('page.customTestnet.AddFromChainList.search')}
