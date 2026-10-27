@@ -5,7 +5,6 @@ import { Button } from '@/components2024/Button';
 import RcIconBack from '@/assets/icons/custom-testnet/back.svg';
 import {
   BOTTOM_BUTTON_SINGLE_HEIGHT,
-  BOTTOM_BUTTON_TITLE_STYLE,
   BOTTOM_BUTTON_TOP_OFFSET,
   getBottomButtonBottomOffset,
 } from '@/constant/layout';
@@ -34,6 +33,7 @@ import {
   useCustomTestnetService,
   withCustomTestnetService,
 } from './customTestnetServiceDependencies';
+import { buttonTitleStyles } from './buttonStyles';
 
 type CustomTestnetListProps = {
   isEditing: boolean;
@@ -206,7 +206,7 @@ export function CustomTestnetScreen(): JSX.Element {
           <Button
             title={t('page.customTestnet.add')}
             height={BOTTOM_BUTTON_SINGLE_HEIGHT}
-            titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
+            titleStyle={buttonTitleStyles.single}
             onPress={handleAddClick}
           />
         </View>
