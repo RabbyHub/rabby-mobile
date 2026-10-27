@@ -31,6 +31,8 @@ export const useMemeSearch = (keyword: string, enabled: boolean) => {
     const requestId = ++requestIdRef.current;
     loadingMoreRef.current = false;
     if (!symbol) {
+      // leaving search: the next search must not start from these results
+      setResult(INITIAL_RESULT);
       return;
     }
     const timer = setTimeout(() => {
@@ -89,10 +91,13 @@ export const useMemeSearch = (keyword: string, enabled: boolean) => {
       });
   });
 
+  // While the next keyword is debounced / loading, keep showing the previous results.
+  const shown = symbol && result.symbol ? result : null;
+
   return {
-    items: current ? current.items : EMPTY_ITEMS,
+    items: shown ? shown.items : EMPTY_ITEMS,
     hasMore: current ? current.hasMore : false,
-    loading: !!symbol && !current,
+    loading: !!symbol && !shown,
     loadMore,
   };
 };
