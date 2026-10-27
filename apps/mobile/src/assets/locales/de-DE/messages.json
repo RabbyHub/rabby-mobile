@@ -3599,7 +3599,7 @@
       "screenTitle": "Wallet verbinden",
       "connectingToRabby": "Verbindung zu Rabby wird hergestellt",
       "pairingFailed": "WalletConnect-Kopplung fehlgeschlagen.",
-      "proposalNotReceived": "Die Dapp hat nicht geantwortet. Aktualisiere den QR-Code der Dapp und versuche es erneut.",
+      "proposalNotReceived": "Der WalletConnect-QR-Code ist möglicherweise abgelaufen. Bitte aktualisiere ihn und versuche es erneut.",
       "connected": "Erfolgreich verbunden. Bitte kehren Sie zur DApp zurück.",
       "proposalExpired": "WalletConnect-Anfrage abgelaufen.",
       "pairingExpired": "WalletConnect-Kopplung abgelaufen. Aktualisieren Sie den DApp-QR-Code und versuchen Sie es erneut.",

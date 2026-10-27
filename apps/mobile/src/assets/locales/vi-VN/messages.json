@@ -3424,7 +3424,7 @@
       "screenTitle": "Kết nối ví",
       "connectingToRabby": "Đang kết nối với Rabby",
       "pairingFailed": "Ghép nối WalletConnect thất bại.",
-      "proposalNotReceived": "Dapp không phản hồi. Hãy làm mới mã QR của dapp và thử lại.",
+      "proposalNotReceived": "Mã QR WalletConnect có thể đã hết hạn. Vui lòng làm mới và thử lại.",
       "connected": "Đã kết nối thành công. Vui lòng quay lại DApp.",
       "proposalExpired": "Yêu cầu kết nối WalletConnect đã hết hạn.",
       "pairingExpired": "Ghép nối WalletConnect đã hết hạn. Làm mới mã QR dapp và thử lại.",

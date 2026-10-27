@@ -3307,7 +3307,7 @@
       "screenTitle": "Cüzdanı Bağla",
       "connectingToRabby": "Rabby'ye bağlanıyor",
       "pairingFailed": "WalletConnect eşleştirmesi başarısız.",
-      "proposalNotReceived": "Dapp yanıt vermedi. Dapp QR kodunu yenileyip tekrar deneyin.",
+      "proposalNotReceived": "WalletConnect QR kodunun süresi dolmuş olabilir. Lütfen yenileyip tekrar deneyin.",
       "connected": "Başarıyla bağlandı. Lütfen DApp'e geri dönün.",
       "proposalExpired": "WalletConnect teklifinin süresi doldu.",
       "pairingExpired": "WalletConnect eşleştirmesinin süresi doldu. dapp QR kodunu yenileyip tekrar deneyin.",
