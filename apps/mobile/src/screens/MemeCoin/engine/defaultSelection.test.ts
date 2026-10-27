@@ -91,18 +91,19 @@ describe('pickDefaultPaymentAssets', () => {
     ).toEqual(['USDT']);
   });
 
-  it('adds assets from the largest value down until the batch can pay', () => {
+  it('falls back to the assets the planner uses from all of them', () => {
+    // same-chain USDT first, then the smallest cross-chain asset that fits
     expect(
       pick(
         [
-          asset('ARB', 'arb', 45, false),
-          asset('USDC', 'base', 60, true),
-          asset('USDT', 'eth', 50, true),
+          asset('USDT', 'eth', 30, true),
+          asset('USDC', 'base', 80, true),
+          asset('ETH', 'arb', 70, true),
         ],
         [meme('PEPE', 'eth')],
         100,
       ),
-    ).toEqual(['USDC', 'USDT']);
+    ).toEqual(['USDT', 'ETH']);
   });
 
   it('picks nothing when even every asset together falls short', () => {

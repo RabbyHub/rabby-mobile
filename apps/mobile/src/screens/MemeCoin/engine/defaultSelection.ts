@@ -31,7 +31,7 @@ const canComplete = (plan: PlanResult) =>
 
 /**
  * One asset that can pay everything alone when there is one; otherwise the
- * largest assets until together they can; otherwise nothing.
+ * assets the planner uses when given all of them; otherwise nothing.
  */
 export const pickDefaultPaymentAssets = ({
   assets,
@@ -62,15 +62,8 @@ export const pickDefaultPaymentAssets = ({
     return [best.asset];
   }
 
-  const byValue = [...assets].sort(
-    (a, b) => b.usdValue - a.usdValue || compareText(tokenKey(a), tokenKey(b)),
-  );
-  const batch: PaymentAsset[] = [];
-  for (const asset of byValue) {
-    batch.push(asset);
-    if (batch.length > 1 && canComplete(planWith(batch))) {
-      return batch;
-    }
-  }
-  return [];
+  const plan = planWith(assets);
+  return canComplete(plan)
+    ? assets.filter(a => (plan.paymentBySource[tokenKey(a)] ?? 0) > 0)
+    : [];
 };
