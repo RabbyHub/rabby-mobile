@@ -58,7 +58,7 @@ export function TokenMoreSheet({
           const onPress = item.disabled
             ? onDisabledAction
             : () => {
-                modalRef.current?.dismiss();
+                modalRef.current?.dismiss({ duration: 0 });
                 item.onPress();
               };
 
