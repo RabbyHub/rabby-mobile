@@ -41,7 +41,6 @@ import { makeTestIDProps } from '@/utils/makeTestIDProps';
 
 const SIZES = {
   /* input height from Figma: 56px */
-  inputAndBioAreaHeight: 102 /* 56px input + 46px padding bottom */,
   inputHeight: 56,
   inputBioButtonHeight: 48,
   bioAuthContainerHeight: 64,
@@ -242,6 +241,7 @@ export const AuthenticationModal2024 = ({
   description: descriptionProp,
   placeholder,
   $createParams,
+  $onUnmount,
   checklist,
   // disableValidation: propNoValidation = !validationHandler,
   authType: authTypes = /* propNoValidation ? ['none'] :  */ [
@@ -251,7 +251,7 @@ export const AuthenticationModal2024 = ({
 }: GlobalModalViewProps<
   MODAL_NAMES.AUTHENTICATION,
   AuthenticationModalProps
->) => {
+> & { $onUnmount?: () => void }) => {
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { safeSizes } = useSafeAndroidBottomSizes({
@@ -268,7 +268,11 @@ export const AuthenticationModal2024 = ({
   );
   const hasCheckFailed = checklistState.includes(false);
 
-  const [password, setPassword] = React.useState(APP_TEST_PWD);
+  // Keep the typed password in a ref: a per-keystroke state update re-renders
+  // the dynamically sized sheet, which re-measures while the keyboard is up
+  // and makes the sheet jitter (and the iOS keyboard briefly re-apply its
+  // input traits).
+  const passwordRef = React.useRef(APP_TEST_PWD);
   const [error, setError] = React.useState<string>();
 
   const onFinishedReturnBase = useMemo(
@@ -291,6 +295,14 @@ export const AuthenticationModal2024 = ({
 
   const { currentAuthType, setCurrentAuthType } =
     useAuthTypeSelection(availableAuthTypes);
+  const mountedRef = React.useRef(true);
+  React.useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      $onUnmount?.();
+    };
+  }, [$onUnmount]);
 
   // Compute title and description based on current auth type
   const title = React.useMemo(() => {
@@ -305,17 +317,22 @@ export const AuthenticationModal2024 = ({
       : descriptionProp;
   }, [descriptionProp, currentAuthType]);
   const handleSubmitForm = React.useCallback(async () => {
-    if (hasCheckFailed) return;
+    if (hasCheckFailed || !mountedRef.current) {
+      return;
+    }
 
     try {
       if (!disableValidation) {
-        await validationHandler?.(password);
+        await validationHandler?.(passwordRef.current);
         apisLock.updateUnlockTime();
+      }
+      if (!mountedRef.current) {
+        return;
       }
       onFinished?.({
         ...onFinishedReturnBase,
         authType: 'password',
-        getValidatedPassword: () => password,
+        getValidatedPassword: () => passwordRef.current,
       });
     } catch (err: any) {
       console.error(err);
@@ -326,7 +343,6 @@ export const AuthenticationModal2024 = ({
     disableValidation,
     onFinishedReturnBase,
     onFinished,
-    password,
     validationHandler,
   ]);
 
@@ -343,12 +359,10 @@ export const AuthenticationModal2024 = ({
     [setCurrentAuthType, setBioAuth],
   );
 
-  React.useEffect(() => {
-    setError('');
-  }, [password]);
-
   const handleAuthWithBiometrics = React.useCallback(async () => {
-    if (hasCheckFailed) return;
+    if (hasCheckFailed || !mountedRef.current) {
+      return;
+    }
 
     if (bioAuthRef.current.stage === BioAuthStage['authenticating']) return;
 
@@ -359,6 +373,9 @@ export const AuthenticationModal2024 = ({
           purpose: apisKeychain.RequestGenericPurpose.DECRYPT_PWD,
           onPlainPassword: async password => {
             await validationHandler?.(password);
+            if (!mountedRef.current) {
+              return;
+            }
             onFinished?.({
               ...onFinishedReturnBase,
               authType: 'biometrics',
@@ -482,13 +499,20 @@ export const AuthenticationModal2024 = ({
                   )}
                   iconColor={colors2024['neutral-title-1']}
                   inputProps={{
-                    value: password,
+                    // Uncontrolled on purpose: every keystroke must not
+                    // re-render/re-measure the sheet.
+                    defaultValue: passwordRef.current,
                     secureTextEntry: true,
                     inputMode: 'text',
                     returnKeyType: 'done',
                     returnKeyLabel: t('global.Confirm'),
                     placeholderTextColor: colors2024['neutral-foot'],
-                    onChangeText: setPassword,
+                    onChangeText: value => {
+                      passwordRef.current = value;
+                      if (error) {
+                        setError('');
+                      }
+                    },
                     ...makeTestIDProps(E2E_ID.authModal.passwordInput),
                   }}
                   style={StyleSheet.flatten([
@@ -499,7 +523,10 @@ export const AuthenticationModal2024 = ({
                   ])}
                   hasError={Boolean(error)}
                   fieldErrorContainerStyle={{ paddingLeft: 4, marginTop: 8 }}
-                  tipText={error}
+                  // Keep one line reserved for the error so the dynamically
+                  // sized sheet does not re-measure (and flicker) while the
+                  // user types.
+                  tipText={error || ' '}
                 />
                 {/* {__DEV__ && bioComputed.isBiometricsEnabled && (
                   <BioButton
@@ -563,16 +590,47 @@ AuthenticationModal2024.show = async (
     return { hideModal: () => {} };
   }
 
+  let acceptingResult = true;
+  let dismissed = false;
+  let pendingResult:
+    | Parameters<NonNullable<AuthenticationModalProps['onFinished']>>[0]
+    | undefined;
+  const discardResult = () => {
+    acceptingResult = false;
+    pendingResult = undefined;
+  };
   const id = createGlobalBottomSheetModal2024({
     name: MODAL_NAMES.AUTHENTICATION,
     bottomSheetModalProps: {
       enableDynamicSizing: true,
-      onDismiss,
+      onDismiss() {
+        if (dismissed) {
+          return;
+        }
+        dismissed = true;
+        const result = pendingResult;
+        discardResult();
+        try {
+          // Native dismissal must finish before a caller opens the backup sheet.
+          // Preserve success-before-onDismiss for consumers that reject on dismiss.
+          if (result) {
+            props.onFinished?.(result);
+          }
+        } catch (err) {
+          console.error(err);
+        } finally {
+          onDismiss?.();
+        }
+      },
     },
     ...props,
     confirmText,
     hideCancelButton,
+    $onUnmount: () => {
+      pendingResult = undefined;
+    },
     onCancel: () => {
+      discardResult();
       try {
         onCancel?.();
       } catch (err) {
@@ -582,12 +640,20 @@ AuthenticationModal2024.show = async (
     },
     disableValidation,
     onFinished(ctx) {
-      hideModal();
-      props.onFinished?.(ctx);
+      if (!acceptingResult) {
+        return;
+      }
+      acceptingResult = false;
+      pendingResult = ctx;
+      void removeGlobalBottomSheetModal2024(id, {
+        duration: closeDuration,
+        waitForDismiss: true,
+      });
     },
   });
 
   const hideModal = () => {
+    discardResult();
     return removeGlobalBottomSheetModal2024(id, { duration: closeDuration });
   };
   return { hideModal };
@@ -629,8 +695,9 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => {
     },
     inputAreaWithPwd: {
       paddingTop: 0,
-      paddingBottom: 46,
-      height: SIZES.inputAndBioAreaHeight,
+      // Let the sheet hug its content: a fixed 102pt password area left a
+      // large empty gap under the button in the verify-password sheet.
+      paddingBottom: 0,
     },
     inputAreaWithBio: {
       height: 12,

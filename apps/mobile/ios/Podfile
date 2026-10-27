@@ -1,5 +1,6 @@
-# Keep New Architecture off by default; set RCT_NEW_ARCH_ENABLED=1 to validate it.
-ENV['RCT_NEW_ARCH_ENABLED'] = ENV.fetch('RCT_NEW_ARCH_ENABLED', '0')
+# New Architecture is the default for this branch; retain the environment flag
+# for explicit architecture validation.
+ENV['RCT_NEW_ARCH_ENABLED'] = ENV.fetch('RCT_NEW_ARCH_ENABLED', '1')
 
 def node_require(script)
   # Resolve script with node to allow for hoisting
@@ -69,8 +70,9 @@ target 'RabbyMobile' do
   )
 
   target 'RabbyMobileTests' do
-    inherit! :complete
-    # Pods for testing
+    # The host app already links the static Pods. Linking them into the test
+    # bundle again runs native module registration twice (for example Nitro).
+    inherit! :search_paths
   end
 
   pre_install do |installer|
@@ -129,12 +131,21 @@ end
 
 def patch_build_settings(installer)
   arch = `arch`.strip
+  min_ios_version = Gem::Version.new(min_ios_version_supported)
 
   installer.pods_project.targets.each do |target|
     # https://github.com/facebook/react-native/issues/37748#issuecomment-1580589448
     target.build_configurations.each do |config|
       config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= ['$(inherited)', '_LIBCPP_ENABLE_CXX17_REMOVED_UNARY_BINARY_FUNCTION']
       config.build_settings['ENABLE_BITCODE'] = 'NO'
+
+      # Xcode 27 rejects deployment targets below iOS 15. RN's own bump only covers
+      # each pod's main target, so resource bundle targets (e.g. *_Privacy) keep
+      # the pod's old minimum and fail the build.
+      deployment_target = config.build_settings['IPHONEOS_DEPLOYMENT_TARGET']
+      if deployment_target && Gem::Version.new(deployment_target) < min_ios_version
+        config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = min_ios_version_supported
+      end
     end
     # https://github.com/CocoaPods/CocoaPods/issues/11402
     if target.respond_to?(:product_type) and target.product_type == "com.apple.product-type.bundle"

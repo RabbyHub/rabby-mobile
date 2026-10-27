@@ -1,9 +1,17 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import useAsync from 'react-use/lib/useAsync';
-import { keyringServiceApi } from '@/core/serviceApi/keyring';
+import {
+  bindKeyringMemStore,
+  getKeyringMemStoreStateSnapshot,
+  keyringServiceApi,
+} from '@/core/serviceApi/keyring';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
-import type { TypeKeyringGroup } from './useWalletTypeData';
-import { useWalletTypeData } from './useWalletTypeData';
+import { isEqual } from 'lodash';
+import { useAccounts, usePinAddresses } from './account';
+import {
+  buildSeedPhraseGroups,
+  selectPublicHdKeyrings,
+} from './seedPhraseGroups';
 import { useEnterPassphraseModal } from '@/hooks/useEnterPassphraseModal';
 import { apiMnemonic } from '@/core/apis';
 import { activeAndPersistAccountsByMnemonics } from '@/core/apis/mnemonic';
@@ -25,9 +33,35 @@ const useGetHdKeys = () => {
 };
 
 export const useSeedPhrase = () => {
-  const { accountGroup } = useWalletTypeData();
-  const { value } = useGetHdKeys();
+  const { accounts: visibleAccounts } = useAccounts({ disableAutoFetch: true });
+  const { pinAddresses } = usePinAddresses({ disableAutoFetch: true });
+  const [hdKeyrings, setHdKeyrings] = useState(() =>
+    selectPublicHdKeyrings(getKeyringMemStoreStateSnapshot()),
+  );
   const { t } = useTranslation();
+
+  useEffect(() => {
+    let disposed = false;
+    let unsubscribe: (() => void) | undefined;
+    bindKeyringMemStore(snapshot => {
+      if (!disposed) {
+        const next = selectPublicHdKeyrings(snapshot);
+        setHdKeyrings(previous => (isEqual(previous, next) ? previous : next));
+      }
+    })
+      .then(cleanup => {
+        if (disposed) {
+          cleanup();
+        } else {
+          unsubscribe = cleanup;
+        }
+      })
+      .catch(console.error);
+    return () => {
+      disposed = true;
+      unsubscribe?.();
+    };
+  }, []);
 
   const invokeEnterPassphrase = useEnterPassphraseModal('publickey');
 
@@ -122,35 +156,16 @@ export const useSeedPhrase = () => {
     [],
   );
 
-  const seedPhraseList = useMemo(() => {
-    if (accountGroup && value) {
-      const publicKeys = value.map(e => e.publicKey!);
-      const pbMappings = Object.values(accountGroup[0]).reduce((pre, cur) => {
-        if (cur.type === KEYRING_TYPE.HdKeyring) {
-          pre[cur.publicKey || ''] = cur;
-        }
-        return pre;
-      }, {} as Record<string, TypeKeyringGroup>);
-
-      return publicKeys
-        .map(e => pbMappings[e])
-        .filter(e => !!e)
-        .sort((a, b) => {
-          const getTotalValue = (item: typeof a) =>
-            (item.list || []).reduce((pre, now) => {
-              return pre + (now.balance || 0);
-            }, 0);
-          const aValue = getTotalValue(a);
-          const bValue = getTotalValue(b);
-          if (aValue === bValue) {
-            return (b.list.length || 0) - (a.list.length || 0);
-          }
-          return bValue - aValue;
-        })
-        .map((e, index) => ({ ...e, index: index })) as TypeKeyringGroup[];
-    }
-    return [];
-  }, [accountGroup, value]);
+  const seedPhraseList = useMemo(
+    () =>
+      buildSeedPhraseGroups(
+        hdKeyrings,
+        visibleAccounts,
+        pinAddresses,
+        t('page.manageAddress.seed-phrase'),
+      ),
+    [hdKeyrings, visibleAccounts, pinAddresses, t],
+  );
 
   return {
     seedPhraseList,

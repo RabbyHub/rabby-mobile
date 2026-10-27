@@ -209,10 +209,12 @@ const renderInfo = ({
   initialTab = 'positions',
   initialOffsets = [120, 400, 650],
   stickyOffset = 100,
+  emitInitialLayout = true,
 }: {
   initialTab?: PerpsProInfoTab;
   initialOffsets?: readonly [number, number, number];
   stickyOffset?: number;
+  emitInitialLayout?: boolean;
 } = {}) => {
   const pagerRef = React.createRef<PerpsProInfoPagerHandle>();
   const selected = jest.fn();
@@ -222,9 +224,11 @@ const renderInfo = ({
     typeof usePerpsProAndroidSceneScrollCoordinator
   >['visualOffset'];
   let indicator!: ReturnType<typeof useSharedValue<number>>;
+  let updateActiveTab!: React.Dispatch<React.SetStateAction<PerpsProInfoTab>>;
   const Harness = () => {
     const [activeTab, setActiveTab] =
       React.useState<PerpsProInfoTab>(initialTab);
+    updateActiveTab = setActiveTab;
     bridge = usePerpsProInfoScrollBridge(initialTab);
     visualOffset = usePerpsProAndroidSceneScrollCoordinator({
       controller: bridge,
@@ -274,6 +278,11 @@ const renderInfo = ({
       });
   });
   act(() => {
+    if (emitInitialLayout) {
+      fireEvent(screen.getByTestId('perps-pro-info-pager'), 'layout', {
+        nativeEvent: { layout: { width: 393, height: 600, x: 0, y: 0 } },
+      });
+    }
     flushUI();
     mockRunOnUI(() => {
       initialOffsets.forEach((offset, index) => {
@@ -287,7 +296,15 @@ const renderInfo = ({
     });
     flushReactions();
   });
-  return { pagerRef, selected, finished, bridge, indicator, visualOffset };
+  return {
+    pagerRef,
+    selected,
+    finished,
+    bridge,
+    indicator,
+    visualOffset,
+    updateActiveTab,
+  };
 };
 
 const startHorizontalSwipe = () => {
@@ -337,6 +354,71 @@ describe('Info Pager and Android Scene input integration', () => {
   });
 
   afterEach(() => jest.restoreAllMocks());
+
+  it.each([false, true])(
+    'converges cold account presentation before layout and keeps tabs interactive (initial selection delivered: %s)',
+    deliverInitialSelection => {
+      const { pagerRef, selected, finished, bridge, updateActiveTab } =
+        renderInfo({ initialTab: 'account', emitInitialLayout: false });
+      const pager = screen.getByTestId('perps-pro-info-pager');
+      if (deliverInitialSelection) {
+        // Fabric can report an intermediate first child before initialPage.
+        // Neither acknowledgement represents a user selection.
+        fireEvent(pager, 'pageSelected', { nativeEvent: { position: 0 } });
+        fireEvent(pager, 'pageSelected', { nativeEvent: { position: 2 } });
+      }
+      act(() => {
+        updateActiveTab('positions');
+        pagerRef.current?.syncPageWithoutAnimation('positions', 1);
+        flushUI();
+      });
+      fireEvent(pager, 'layout', {
+        nativeEvent: { layout: { width: 393, height: 0, x: 0, y: 0 } },
+      });
+      act(flushUI);
+      expect(mockNativeCommands).toEqual([]);
+      expect(selected).not.toHaveBeenCalled();
+      expect(finished).not.toHaveBeenCalled();
+      expect(bridge.activeIndex.value).toBe(2);
+      expect(bridge.pageGestureActive.value).toBe(false);
+
+      // A missed native initial selected must not leave requests waiting
+      // forever. The ordinary layout event releases the latest request.
+      fireEvent(pager, 'layout', {
+        nativeEvent: { layout: { width: 393, height: 600, x: 0, y: 0 } },
+      });
+      act(flushUI);
+      expect(mockNativeCommands).toEqual([
+        { name: 'setPageWithoutAnimation', position: 0 },
+      ]);
+      expect(bridge.pageGestureActive.value).toBe(true);
+      // A late initial-page acknowledgement must not steal the pending page.
+      fireEvent(pager, 'pageSelected', { nativeEvent: { position: 2 } });
+      expect(finished).not.toHaveBeenCalled();
+      selectAndSettle(0);
+      expect(finished).toHaveBeenLastCalledWith(1);
+      expect(selected).not.toHaveBeenCalled();
+      expect(bridge.activeIndex.value).toBe(0);
+      expect(bridge.pageGestureActive.value).toBe(false);
+      expect(
+        screen.getByTestId('perps-pro-info-page-positions').props.pointerEvents,
+      ).toBe('auto');
+
+      mockAutoAcknowledge = true;
+      act(() => {
+        pagerRef.current?.setPage('openOrders', 2);
+        flushUI();
+        flushReactions();
+      });
+      expect(selected).toHaveBeenLastCalledWith('openOrders', 2);
+      expect(bridge.activeIndex.value).toBe(1);
+      expect(bridge.pageGestureActive.value).toBe(false);
+      expect(
+        screen.getByTestId('perps-pro-info-page-openOrders').props
+          .pointerEvents,
+      ).toBe('auto');
+    },
+  );
 
   it.each([false, true])(
     'keeps the scene offset when Android selects before queued JS work (delayed JS: %s)',

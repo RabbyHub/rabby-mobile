@@ -47,10 +47,8 @@ import {
 } from '@/constant/layout';
 import { GnosisSupportChainList } from './components/GnosisSupportChainList';
 import RcIconRightCC from '@/assets/icons/common/right-2-cc.svg';
-import {
-  createGlobalBottomSheetModal2024,
-  removeGlobalBottomSheetModal2024,
-} from '@/components2024/GlobalBottomSheetModal';
+import { createGlobalBottomSheetModal2024 } from '@/components2024/GlobalBottomSheetModal';
+import { dismissImportMoreAddressPopup } from '@/hooks/useShowImportMoreAddressPopup';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import addressBalanceStore from '@/store/balance';
 import { syncMultiAddressesHistory } from '@/databases/hooks/history';
@@ -169,12 +167,25 @@ export const ImportSuccessScreen2024 = () => {
     }
   });
 
+  const resolveImportAddresses = React.useCallback(() => {
+    const addresses = Array.isArray(state.address)
+      ? state.address
+      : [state.address];
+    return addresses.map(address => ({
+      address,
+      aliasName:
+        state.alias ||
+        getContactAliasSnapshot(address)?.alias ||
+        ellipsisAddress(address || '') ||
+        '',
+    }));
+  }, [state.address, state.alias]);
   const [importAddresses, setImportAddresses] = React.useState<
     {
       address: string;
       aliasName: string;
     }[]
-  >([]);
+  >(resolveImportAddresses);
 
   const saveFirstAddressAlias = React.useCallback(() => {
     return Promise.all(
@@ -218,16 +229,7 @@ export const ImportSuccessScreen2024 = () => {
     const addresses = Array.isArray(state?.address)
       ? state?.address
       : [state?.address];
-    setImportAddresses(
-      addresses.map(address => ({
-        address,
-        aliasName:
-          state?.alias ||
-          getContactAliasSnapshot(address)?.alias ||
-          ellipsisAddress(address || '') ||
-          '',
-      })),
-    );
+    setImportAddresses(resolveImportAddresses());
 
     matomoRequestEvent({
       category: 'Import Address',
@@ -253,7 +255,7 @@ export const ImportSuccessScreen2024 = () => {
       syncMultiAddressesHistory(syncAddresses);
       eventBus.emit('PERPS_ADD_ADDRESSES', syncAddresses);
     }
-  }, [state, t]);
+  }, [state, t, resolveImportAddresses]);
   React.useEffect(() => {
     setTimeout(() => fetchAccounts(), 0);
   }, [fetchAccounts]);
@@ -307,6 +309,7 @@ export const ImportSuccessScreen2024 = () => {
         : undefined,
       keyringId: state.keyringId,
       brandName: state.brandName,
+      skipSuccessAnimation: true,
     };
 
     modalRef.current = createGlobalBottomSheetModal2024({
@@ -317,11 +320,7 @@ export const ImportSuccessScreen2024 = () => {
           modalRef.current = undefined;
         },
       },
-      onCancel: () => {
-        if (modalRef.current) {
-          removeGlobalBottomSheetModal2024(modalRef.current);
-        }
-      },
+      onCancel: () => dismissImportMoreAddressPopup(modalRef.current),
     });
   };
 
@@ -367,6 +366,7 @@ export const ImportSuccessScreen2024 = () => {
       <View style={[styles.container, { paddingTop: top }]}>
         <WalletSuccessCard
           style={{ flex: 1 }}
+          autoPlay={!state.skipSuccessAnimation}
           title={
             onlyFirstAccount
               ? t(

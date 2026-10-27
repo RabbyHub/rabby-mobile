@@ -19,6 +19,9 @@ import { Text } from '@/components/Typography';
 
 export type AsssetKey = 'token' | 'defi' | 'nft';
 
+/** Number of chain icons the filter pill reserves space for. */
+const CHAIN_ICON_SLOTS = 3;
+
 export const ChainSelector = ({
   top3Chains,
   onChainClick,
@@ -45,35 +48,43 @@ export const ChainSelector = ({
       />
     </View>
   ) : (
-    !!top3Chains?.length && (
-      <Pressable
-        style={StyleSheet.flatten([styles.chainContainer, style])}
-        onPress={() => onChainClick?.(false)}>
-        <View style={styles.chainIconsContainer}>
-          {top3Chains.map((chainId, index) => (
+    // Render the filter immediately and fill the top chains in when the asset
+    // projection is ready. Waiting for the projection left the control blank
+    // for seconds after the token list started loading (QA 1145).
+    <Pressable
+      style={StyleSheet.flatten([styles.chainContainer, style])}
+      onPress={() => onChainClick?.(false)}>
+      <View style={styles.chainIconsContainer}>
+        {/* Always keep three icon slots so the pill does not shift when the
+            projection fills the real chain icons in. */}
+        {Array.from({ length: CHAIN_ICON_SLOTS }).map((_, index) => {
+          const chainId = top3Chains?.[index];
+          return (
             <View
-              key={chainId}
+              key={chainId || `chain-placeholder-${index}`}
               style={StyleSheet.flatten([
                 styles.chainIconContainer,
+                !chainId && styles.chainIconPlaceholder,
                 { marginLeft: index === 0 ? 0 : -8 },
               ])}>
-              <ChainIconImage
-                containerStyle={styles.chainIcon}
-                size={18}
-                chainEnum={findChainByServerID(chainId)?.enum}
-                key={index}
-              />
+              {chainId ? (
+                <ChainIconImage
+                  containerStyle={styles.chainIcon}
+                  size={18}
+                  chainEnum={findChainByServerID(chainId)?.enum}
+                />
+              ) : null}
             </View>
-          ))}
-        </View>
-        <Text style={styles.countChain}>All</Text>
-        <ArrowRightSVG
-          style={styles.icon}
-          width={16}
-          color={colors2024['neutral-secondary']}
-        />
-      </Pressable>
-    )
+          );
+        })}
+      </View>
+      <Text style={styles.countChain}>All</Text>
+      <ArrowRightSVG
+        style={styles.icon}
+        width={16}
+        color={colors2024['neutral-secondary']}
+      />
+    </Pressable>
   );
 };
 
@@ -125,5 +136,8 @@ const getStyle = createGetStyles2024(ctx => ({
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  chainIconPlaceholder: {
+    backgroundColor: 'transparent',
   },
 }));

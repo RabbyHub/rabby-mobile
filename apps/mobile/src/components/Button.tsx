@@ -232,6 +232,11 @@ export const Button = ({
       style={[styles.container, containerStyle, !height ? {} : { height }]}
       testID="RABBY_BUTTON_WRAPPER">
       <TouchableComponentInternal
+        // RN 0.81's background ripple can leave dynamic background colors stale.
+        // Keep native feedback without sharing the button's background drawable.
+        {...(TouchableComponentInternal === TouchableNativeFeedback
+          ? { useForeground: true }
+          : {})}
         onPress={handleOnPress}
         delayPressIn={0}
         activeOpacity={0.3}

@@ -2852,6 +2852,18 @@
       }
     },
     "perpsDetail": {
+      "simpleAccount": {
+        "margin": "Ký quỹ",
+        "averageEntry": "Giá vào trung bình",
+        "estimatedLiquidationPrice": "Giá thanh lý ước tính",
+        "estimatedLiquidationDistance": "Khoảng cách thanh lý ước tính",
+        "tpSl": "TP/SL",
+        "takeProfitPrice": "Giá chốt lời",
+        "stopLossPrice": "Giá cắt lỗ",
+        "estimatedPnl": "PNL ước tính",
+        "closePositionTitle": "Đóng vị thế {{coin}}",
+        "estimatedRealizedPnl": "PNL đã thực hiện ước tính"
+      },
       "simpleChart": {
         "openInterest": "Hợp đồng mở",
         "volume24h": "Khối lượng 24 giờ",

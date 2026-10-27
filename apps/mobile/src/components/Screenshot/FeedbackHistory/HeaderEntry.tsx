@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
-import { TouchableOpacity, View } from 'react-native';
+import { View } from 'react-native';
+import { TouchableOpacity } from 'react-native-gesture-handler';
 
 import { toggleFeedbackHistoryVisible } from '../hooks';
 
@@ -66,6 +67,7 @@ export function FeedbackHistoryHeaderEntry({ style }: RNViewProps) {
 const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
   iconContainer: {
     height: '100%',
+    justifyContent: 'center',
   },
 
   icon: {

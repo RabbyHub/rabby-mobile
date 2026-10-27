@@ -4,7 +4,7 @@
 import * as ContextMenu from '@rabby-wallet/zeego/context-menu';
 import { MenuTriggerProps } from '@rabby-wallet/zeego/menu';
 import type { ContextMenuContentProps } from '@radix-ui/react-context-menu';
-import { ImageSourcePropType, Platform } from 'react-native';
+import { ImageSourcePropType, Platform, View } from 'react-native';
 import { IS_ANDROID } from '@/core/native/utils';
 import { apisTheme } from '@/hooks/theme';
 import { memo, useCallback, useMemo, useRef } from 'react';
@@ -12,6 +12,7 @@ import { memo, useCallback, useMemo, useRef } from 'react';
 import { MenuComponentRef } from '@rabby-wallet/react-native-menu';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { runOnJS } from 'react-native-reanimated';
+import { useNativeMenuModalGate } from '@/utils/modalGate';
 // import { touchedFeedback } from '@/utils/touch';
 
 const IS_IOS_27_OR_ABOVE =
@@ -90,6 +91,7 @@ const ContextMenuViewInner = ({
   androidLongPressDuration = 350,
 }: Props) => {
   const androidMenuViewRef = useRef<MenuComponentRef>(null);
+  const nativeMenuGateProps = useNativeMenuModalGate();
 
   const androidShowMenu = useCallback(() => {
     // touchedFeedback();
@@ -137,7 +139,8 @@ const ContextMenuViewInner = ({
   return (
     <ContextMenu.Root
       __unsafeIosProps={iosProps}
-      androidMenuViewRef={androidMenuViewRef}>
+      androidMenuViewRef={androidMenuViewRef}
+      {...nativeMenuGateProps}>
       <ContextMenu.Trigger
         action="longPress"
         {...triggerProps}
@@ -148,7 +151,8 @@ const ContextMenuViewInner = ({
         })}>
         {longPressGesture ? (
           <GestureDetector gesture={longPressGesture}>
-            {children}
+            {/* Composite children may drop GestureDetector's collapsable prop. */}
+            <View collapsable={false}>{children}</View>
           </GestureDetector>
         ) : (
           children

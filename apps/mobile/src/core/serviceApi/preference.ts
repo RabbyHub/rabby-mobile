@@ -116,6 +116,15 @@ export async function getLastTimeSendToken(
   )) as ReturnType<PreferenceService['getLastTimeSendToken']>;
 }
 
+/** Current-memory display read; distinguish an unready owner from no history. */
+export function getLastTimeSendTokenSnapshot(address: string) {
+  const service = getRegisteredService('preferenceService');
+  return {
+    ready: !!service,
+    token: service?.getLastTimeSendToken(address) ?? null,
+  };
+}
+
 export async function setLastTimeSendToken(
   ...args: Parameters<PreferenceService['setLastTimeSendToken']>
 ) {

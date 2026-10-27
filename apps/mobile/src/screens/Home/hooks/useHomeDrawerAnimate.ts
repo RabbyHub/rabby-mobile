@@ -33,7 +33,7 @@ export function getPullThreshold(height: number = scrWinHeight) {
 }
 
 export const homeDrawerAnimateMutable = {
-  tabsOpacity: makeMutable(0),
+  tabsOpacity: makeMutable(1),
   pullPercent: makeMutable(0),
   isExpanded: makeMutable(false),
   translateY: makeMutable(0),

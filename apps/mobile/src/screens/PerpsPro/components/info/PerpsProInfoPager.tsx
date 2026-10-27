@@ -230,6 +230,7 @@ const PerpsProInfoPagerInner = <Row,>(
   // Native selected is an acknowledgement, not necessarily a business commit
   // or the physical end of an animation.
   const nativeSelectedPosition = useSharedValue(selectedIndexRef.current);
+  const isPagerLaidOut = useSharedValue(false);
   const latestRequestId = useSharedValue(initialRequestId);
   const pendingPageRequest = useSharedValue<PerpsProInfoPageRequest | null>(
     null,
@@ -691,15 +692,63 @@ const PerpsProInfoPagerInner = <Row,>(
       latestRequestId.value = request.id;
       prepareAndroidPages();
       pendingPageRequest.value = request;
-      if (programmaticSelectionTargetPosition.value < 0) {
+      if (
+        isPagerLaidOut.value &&
+        programmaticSelectionTargetPosition.value < 0
+      ) {
         startProgrammaticPage(request);
       }
     },
     [
+      isPagerLaidOut,
       latestRequestId,
       pendingPageRequest,
       prepareAndroidPages,
       programmaticSelectionTargetPosition,
+      startProgrammaticPage,
+    ],
+  );
+
+  const handlePagerLayout = useCallback(
+    (event: LayoutChangeEvent) => {
+      const { width, height } = event.nativeEvent.layout;
+      if (width <= 0 || height <= 0) {
+        return;
+      }
+      runOnUI(() => {
+        'worklet';
+        if (isPagerLaidOut.value) {
+          return;
+        }
+        isPagerLaidOut.value = true;
+        // Fabric may drop commands issued during the initial mount. Keep only
+        // the latest intent until this fixed set of pages has laid out. Use the
+        // ordinary JS layout event: Reanimated can miss mount-time selected
+        // events before its native event handler has been registered.
+        const request =
+          pendingPageRequest.value ??
+          (nativeSelectedPosition.value !== settledPagePosition.value
+            ? {
+                animated: false,
+                id: latestRequestId.value,
+                notifySelection: false,
+                position: settledPagePosition.value,
+              }
+            : null);
+        if (request) {
+          pendingPageRequest.value = request;
+          prepareAndroidPages();
+          startProgrammaticPage(request);
+        }
+      })();
+    },
+    [
+      isPagerLaidOut,
+      latestRequestId,
+      nativeSelectedPosition,
+      pendingPageRequest,
+      prepareAndroidPages,
+      settledPagePosition,
       startProgrammaticPage,
     ],
   );
@@ -777,6 +826,12 @@ const PerpsProInfoPagerInner = <Row,>(
         return;
       }
       nativeSelectedPosition.value = position;
+      // Initial attachment (or a native drag while JS layout is queued) is
+      // not a completed request. Retain the native position for reconciliation
+      // without consuming the pending intent or changing the business tab.
+      if (!isPagerLaidOut.value) {
+        return;
+      }
       const issuedTarget = programmaticSelectionTargetPosition.value;
       if (issuedTarget >= 0) {
         if (position !== issuedTarget) {
@@ -909,6 +964,9 @@ const PerpsProInfoPagerInner = <Row,>(
     useEvent<PageScrollStateChangedNativeEvent>(
       event => {
         'worklet';
+        if (!isPagerLaidOut.value) {
+          return;
+        }
         if (event.pageScrollState === 'dragging') {
           if (programmaticSelectionTargetPosition.value >= 0) {
             return;
@@ -980,6 +1038,9 @@ const PerpsProInfoPagerInner = <Row,>(
   const handlePageScroll = useEvent<PagerViewOnPageScrollEvent>(
     event => {
       'worklet';
+      if (!isPagerLaidOut.value) {
+        return;
+      }
       const pagePosition = Math.max(
         0,
         Math.min(PERPS_PRO_INFO_TABS.length - 1, event.position + event.offset),
@@ -1136,6 +1197,7 @@ const PerpsProInfoPagerInner = <Row,>(
   return (
     <ReanimatedPagerView
       initialPage={selectedIndexRef.current}
+      onLayout={handlePagerLayout}
       offscreenPageLimit={offscreenPageLimit}
       onPageScroll={handlePageScroll}
       onPageScrollStateChanged={handlePageScrollStateChanged}

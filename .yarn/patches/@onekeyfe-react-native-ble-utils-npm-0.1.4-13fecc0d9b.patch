@@ -1,0 +1,111 @@
+diff --git a/ios/BleUtils.swift b/ios/BleUtils.swift
+index 1dd806a7b531dd8d8856271d4df1cd8d26d29f93..ca685bd3891806d71449a900f1f6a418facec9de 100644
+--- a/ios/BleUtils.swift
++++ b/ios/BleUtils.swift
+@@ -3,67 +3,71 @@ import CoreBluetooth
+ 
+ @objc(BleUtilsModule)
+ class BleUtilsModule: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
+-    private var manager: CBCentralManager?
++    // Created lazily: instantiating CBCentralManager triggers the iOS Bluetooth
++    // permission prompt, so defer it until a hardware wallet method is called.
++    // State reads, delegate callbacks and pendingStateBlocks all run on stateQueue.
++    private lazy var manager: CBCentralManager = CBCentralManager(delegate: self, queue: stateQueue)
++    private let stateQueue = DispatchQueue(label: "BleUtilsModule.stateQueue")
+     private let serialQueue = DispatchQueue(label: "BleUtilsModule.serialQueue")
+-    private var stateChangedCallbacks: [RCTResponseSenderBlock] = []
++    private var pendingStateBlocks: [() -> Void] = []
+ 
+   @objc
+     static func requiresMainQueueSetup() -> Bool {
+       return false
+     }
+ 
+-    override init() {
+-      super.init()
+-      manager = CBCentralManager(delegate: self, queue: nil)
++    func centralManagerDidUpdateState(_ central: CBCentralManager) {
++        let blocks = pendingStateBlocks
++        pendingStateBlocks.removeAll()
++        blocks.forEach { $0() }
+     }
+ 
+-    func centralManagerDidUpdateState(_ central: CBCentralManager) {
+-        if !stateChangedCallbacks.isEmpty {
+-            let stateName = Helper.centralManagerStateToString(central.state)
+-            for callback in stateChangedCallbacks {
+-                callback([stateName])
++    private func whenStateKnown(_ block: @escaping () -> Void) {
++        stateQueue.async {
++            if self.manager.state == .unknown {
++                self.pendingStateBlocks.append(block)
++            } else {
++                block()
+             }
+-            stateChangedCallbacks.removeAll()
+         }
+     }
+ 
+     @objc public func checkState(_ callback: @escaping RCTResponseSenderBlock) {
+-        if let manager = manager {
+-            if manager.state == .unknown {
+-                stateChangedCallbacks.append(callback)
+-            } else {
+-                let stateName = Helper.centralManagerStateToString(manager.state)
+-                callback([stateName])
+-            }
++        whenStateKnown { [weak self] in
++            guard let self = self else { return }
++            callback([Helper.centralManagerStateToString(self.manager.state)])
+         }
+     }
+ 
+     @objc public func getConnectedPeripherals(_ serviceUUIDStrings: [String],
+                                               callback: @escaping RCTResponseSenderBlock) {
+-        NSLog("Get connected peripherals")
+-        var serviceUUIDs: [CBUUID] = []
++        whenStateKnown { [weak self] in
++            guard let self = self else { return }
++            NSLog("Get connected peripherals")
++            var serviceUUIDs: [CBUUID] = []
+ 
+-        for uuidString in serviceUUIDStrings {
+-            serviceUUIDs.append(CBUUID(string: uuidString))
+-        }
++            for uuidString in serviceUUIDStrings {
++                serviceUUIDs.append(CBUUID(string: uuidString))
++            }
+ 
+-        var connectedPeripherals: [Peripheral] = []
++            var connectedPeripherals: [Peripheral] = []
+ 
+-        let connectedCBPeripherals: [CBPeripheral] = manager?.retrieveConnectedPeripherals(withServices: serviceUUIDs) ?? []
++            let connectedCBPeripherals: [CBPeripheral] = self.manager.retrieveConnectedPeripherals(withServices: serviceUUIDs)
+ 
+-        serialQueue.sync {
+-            for ph in connectedCBPeripherals {
+-                let peripheral = Peripheral(peripheral: ph)
+-                connectedPeripherals.append(peripheral)
++            self.serialQueue.sync {
++                for ph in connectedCBPeripherals {
++                    let peripheral = Peripheral(peripheral: ph)
++                    connectedPeripherals.append(peripheral)
++                }
+             }
+-        }
+ 
+-        var foundedPeripherals: [[String: Any]] = []
++            var foundedPeripherals: [[String: Any]] = []
+ 
+-        for peripheral in connectedPeripherals {
+-            foundedPeripherals.append(peripheral.advertisingInfo())
+-        }
++            for peripheral in connectedPeripherals {
++                foundedPeripherals.append(peripheral.advertisingInfo())
++            }
+ 
+-        callback([NSNull(), foundedPeripherals])
++            callback([NSNull(), foundedPeripherals])
++        }
+     }
+ }

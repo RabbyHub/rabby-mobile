@@ -139,25 +139,22 @@ const fetchMatteredChainBalance = async ({
   };
 };
 
-const fetchOrderedChainList = async (opts: {
+// These inputs are already in memory. Route-entry display must not cross a
+// Promise boundary merely to read the same pinned chains and balance snapshot.
+export const getOrderedChainListSnapshot = (opts: {
   address?: string;
   supportChains?: CHAINS_ENUM[];
 }) => {
   const { address, supportChains } = opts || {};
-  const { pinned, matteredChainBalances } = await Promise.allSettled([
-    getPreferenceSnapshot('pinnedChain'),
-    fetchMatteredChainBalance({ address }),
-  ]).then(([pinnedChain, balance]) => {
-    return {
-      pinned: (pinnedChain.status === 'fulfilled'
-        ? pinnedChain.value
-        : []) as CHAINS_ENUM[],
-      matteredChainBalances: (balance.status === 'fulfilled'
-        ? // only SUPPORT mainnet now
-          balance.value.matteredChainBalances
-        : {}) as MatteredChainBalances,
-    };
-  });
+  const pinned = (getPreferenceSnapshot('pinnedChain') || []) as CHAINS_ENUM[];
+  let matteredChainBalances: MatteredChainBalances = {};
+  try {
+    matteredChainBalances = buildMatteredChainBalances(
+      getChainListByAddress(address),
+    );
+  } catch {
+    // Preserve the async reader's settled-balance fallback.
+  }
 
   const { matteredList, unmatteredList } = varyAndSortChainItems({
     supportChains,
@@ -171,6 +168,10 @@ const fetchOrderedChainList = async (opts: {
     firstChain: matteredList[0],
   };
 };
+
+const fetchOrderedChainList = async (
+  opts: Parameters<typeof getOrderedChainListSnapshot>[0],
+) => getOrderedChainListSnapshot(opts);
 
 export function useLoadMatteredChainBalances({
   account: currentAccount,

@@ -1,10 +1,9 @@
-import React, { useState } from 'react';
-import { Platform, Pressable, View } from 'react-native';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { Image, Platform, Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import RcMore from '@/assets/icons/home/more-cc.svg';
 import RcFavorite from '@/assets2024/icons/browser/favorite-cc.svg';
-import RcRemoveArrow from '@/assets2024/icons/common/token-header-remove-arrow.svg';
 import { Tip } from '@/components/Tip';
 import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
@@ -16,22 +15,47 @@ import type { ITokenItem } from '@/store/tokens';
 import { createGetStyles2024 } from '@/utils/styles';
 import { MODAL_GATE_IDS } from '@/utils/modalGate';
 import { createRemoveTokenConfirmPopup } from '@/components2024/RemoveTokenConfirmPopup';
+import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 
 /** Token header actions with a confirmation before removal. */
 export const RightMore: React.FC<{
   token: ITokenItem;
   refreshTags: () => void;
 }> = ({ token, refreshTags }) => {
-  const { styles, colors2024 } = useTheme2024({ getStyle });
+  const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const isPinned = useIsUserTokenPinned(token);
   const [visible, setVisible] = useState(false);
+  const pendingRemoveTokenRef = useRef<ITokenItem | null>(null);
 
   const handleFavorite = () => {
     setVisible(false);
     toggleUserTokenPinned(token);
     setTimeout(refreshTags, 0);
   };
+
+  const openPendingRemove = useCallback(() => {
+    const pending = pendingRemoveTokenRef.current;
+    if (!pending) {
+      return;
+    }
+    pendingRemoveTokenRef.current = null;
+    createRemoveTokenConfirmPopup(pending);
+  }, []);
+
+  useEffect(() => {
+    if (Platform.OS === 'ios' || visible) {
+      return;
+    }
+    // RN Modal onDismiss is iOS-only. On Android the gate releases as soon as
+    // visible flips, so open on the next tick instead of waiting forever.
+    const timer = setTimeout(openPendingRemove, 0);
+    return () => clearTimeout(timer);
+  }, [openPendingRemove, visible]);
+
+  const handleModalDismiss = useCallback(() => {
+    openPendingRemove();
+  }, [openPendingRemove]);
 
   return (
     <Tip
@@ -41,6 +65,7 @@ export const RightMore: React.FC<{
       placement="bottom"
       isVisible={visible}
       modalGateId={MODAL_GATE_IDS.tokenDetailHeaderMenu}
+      onModalDismiss={handleModalDismiss}
       onClose={() => setVisible(false)}
       closeOnContentInteraction={false}
       displayInsets={{ top: 12, bottom: 12, left: 12, right: 12 }}
@@ -49,54 +74,66 @@ export const RightMore: React.FC<{
       content={
         <View style={styles.menu}>
           <Pressable
-            style={styles.menuItem}
+            style={({ pressed }) => [
+              styles.menuItem,
+              pressed && styles.menuItemPressed,
+            ]}
             accessibilityRole="button"
             onPress={handleFavorite}>
-            <Text style={styles.favoriteText}>
-              {t(
-                isPinned
-                  ? 'page.tokenDetail.action.unfavorite'
-                  : 'page.tokenDetail.action.favorite',
-              )}
-            </Text>
-            <RcFavorite
-              width={20}
-              height={20}
-              color={colors2024['orange-default']}
-              fill={isPinned ? 'currentColor' : 'none'}
-              stroke={isPinned ? 'none' : colors2024['orange-default']}
-              strokeWidth={1.5}
-            />
-          </Pressable>
-          <Pressable
-            style={styles.menuItem}
-            accessibilityRole="button"
-            onPress={() => {
-              setVisible(false);
-              createRemoveTokenConfirmPopup(token);
-            }}>
             {({ pressed }) => (
               <>
                 <Text
-                  style={[styles.removeText, pressed && styles.pressedText]}>
-                  {t('page.singleHome.tokenActions.remove')}
+                  style={[styles.favoriteText, pressed && styles.pressedText]}>
+                  {t(
+                    isPinned
+                      ? 'page.tokenDetail.action.unfavorite'
+                      : 'page.tokenDetail.action.favorite',
+                  )}
                 </Text>
-                <RcRemoveArrow
-                  color={colors2024[pressed ? 'brand-default' : 'neutral-foot']}
+                <RcFavorite
+                  width={20}
+                  height={20}
+                  color={colors2024['orange-default']}
+                  fill={isPinned ? 'currentColor' : 'none'}
+                  stroke={isPinned ? 'none' : colors2024['orange-default']}
+                  strokeWidth={1.5}
                 />
               </>
             )}
           </Pressable>
+          <Pressable
+            style={({ pressed }) => [
+              styles.menuItem,
+              pressed && styles.menuItemPressed,
+            ]}
+            accessibilityRole="button"
+            onPress={() => {
+              pendingRemoveTokenRef.current = token;
+              setVisible(false);
+            }}>
+            <Text style={styles.removeText}>
+              {t('page.singleHome.tokenActions.remove')}
+            </Text>
+            <Image
+              source={
+                isLight
+                  ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_remove.png')
+                  : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_remove_dark.png')
+              }
+              style={styles.removeIcon}
+            />
+          </Pressable>
         </View>
       }>
-      <Pressable
+      <CustomTouchableOpacity
+        as="RNGHTouchableOpacity"
         style={styles.trigger}
         accessibilityRole="button"
         accessibilityLabel={t('page.tokenDetail.removed.more')}
         hitSlop={10}
         onPress={() => setVisible(true)}>
         <RcMore color={colors2024['neutral-body']} />
-      </Pressable>
+      </CustomTouchableOpacity>
     </Tip>
   );
 };
@@ -136,6 +173,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
+  menuItemPressed: {
+    backgroundColor: colors2024['neutral-bg-2'],
+  },
   favoriteText: {
     color: isLight
       ? colors2024['neutral-black']
@@ -146,11 +186,15 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     lineHeight: 20,
   },
   removeText: {
-    color: colors2024['neutral-title-1'],
+    color: colors2024['red-default'],
     fontFamily: 'SF Pro Rounded',
     fontWeight: '700',
     fontSize: 16,
     lineHeight: 20,
   },
   pressedText: { color: colors2024['brand-default'] },
+  removeIcon: {
+    width: 22,
+    height: 22,
+  },
 }));

@@ -1,5 +1,6 @@
 import { PERPS_PRO_DIALOG_TOKENS } from '../common/perpsProDialogVisual';
 import { ThemeColors2024 } from '@/constant/theme';
+import { RoundedFontStyles } from '@/core/utils/fonts';
 let mockThemeMode: 'light' | 'dark' | undefined;
 beforeEach(() => {
   mockThemeMode = undefined;
@@ -455,7 +456,7 @@ describe('PerpsProClosePositionSheet', () => {
     ).toMatchObject({
       color: 'green-default',
       fontSize: 12,
-      fontWeight: '500',
+      ...RoundedFontStyles.medium,
       lineHeight: 16,
     });
     expect(screen.getByText('Entry Price (USDC)')).toBeTruthy();

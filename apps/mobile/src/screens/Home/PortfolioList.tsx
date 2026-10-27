@@ -2,6 +2,7 @@ import React, { useCallback, useState, useMemo } from 'react';
 import type { ListRenderItem } from 'react-native';
 import { View } from 'react-native';
 import { RefreshControl } from 'react-native-gesture-handler';
+import { CollapsibleRefreshControl } from '@/components/customized/ScrollViewLike/CollapsibleRefreshControl';
 
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
@@ -342,7 +343,8 @@ export const PortfolioList = ({ onForeground, onRefresh }: Props) => {
         removeClippedSubviews
         maintainVisibleContentPosition={{ minIndexForVisible: 0 }}
         refreshControl={
-          <RefreshControl
+          <CollapsibleRefreshControl
+            as={RefreshControl}
             style={styles.bgContainer}
             onRefresh={async () => {
               if (!lowerAddress) {

@@ -1,3 +1,4 @@
+import { RoundedFontStyles } from '@/core/utils/fonts';
 import { useTranslation } from 'react-i18next';
 
 import { RootNames, makeHeadersPresets } from '@/constant/layout';
@@ -49,9 +50,7 @@ export function SettingNavigator() {
             headerTitle: () => (
               <I18nRouteScreenTitle
                 i18nTitle={({ t }) => t('page.setting.screenTitle')}
-                style={{
-                  fontWeight: '900',
-                }}
+                style={RoundedFontStyles.heavy}
               />
             ),
             headerTitleAlign: 'center',
@@ -88,8 +87,7 @@ export function SettingNavigator() {
           headerTintColor: colors['neutral-title-2'],
           headerTitleStyle: {
             color: colors['neutral-title-2'],
-            fontWeight: '900',
-            fontFamily: 'SF Pro Rounded',
+            ...RoundedFontStyles.heavy,
           },
         })}
       />

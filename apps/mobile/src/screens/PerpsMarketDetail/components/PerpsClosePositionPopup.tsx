@@ -1,26 +1,44 @@
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { closeQuantitySummary } from './account/model';
+import { SIMPLE_ACCOUNT_COLORS } from './account/visual';
 import AutoLockView from '@/components/AutoLockView';
-import RcIconInfoCC from '@/assets2024/icons/perps/IconInfoCC.svg';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { Button } from '@/components2024/Button';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { useTheme2024 } from '@/hooks/theme';
-import { useTipsPopup } from '@/hooks/useTipsPopup';
-import { formatPercent } from '@/screens/Home/utils/price';
 import { splitNumberByStep } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
-import { BottomSheetView } from '@gorhom/bottom-sheet';
+import {
+  BottomSheetView,
+  BottomSheetScrollView,
+  BottomSheetFooter,
+  type BottomSheetFooterProps,
+} from '@gorhom/bottom-sheet';
 import { useMemoizedFn } from 'ahooks';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { useTranslation } from 'react-i18next';
-import { TouchableOpacity, View } from 'react-native';
+import {
+  Platform,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+  useWindowDimensions,
+} from 'react-native';
 import { PerpsSlider } from './PerpsSlider';
 import { MarketSlippage } from './MarketSlippage';
 import { useMarketSlippage } from '../hooks/useMarketSlippage';
 import { PerpEditLimitPriceTag } from './PerpEditLimitPriceTag';
-import IconOrderTypeSwitch from '@/assets2024/icons/perps/IconOrderTypeSwitch.svg';
+import IconOrderTypeSwitch from '@/assets2024/icons/perps/PerpsSimpleAccount/order-type-switch.svg';
 import { formatTpOrSlPrice, isMarketableLimit } from '@/utils/perps';
 import {
-  PERPS_EXCHANGE_FEE_NUMBER,
   PERPS_MINI_USD_VALUE,
   type PerpsOpenOrderType,
 } from '@/constant/perps';
@@ -32,9 +50,15 @@ import {
   getBottomButtonBottomOffset,
 } from '@/constant/layout';
 
+// Maximum single-line body: title + Amount (with warning) + order details
+// (limit price or market slippage) + minimum footer gap. Shorter states leave
+// the spare space BELOW the cards; translations/font scaling can scroll.
+const CLOSE_CONTENT_HEIGHT = 421;
+
 export const PerpsClosePositionPopup: React.FC<{
   visible?: boolean;
   coin: string;
+  displayName?: string;
   direction: 'Long' | 'Short';
   positionSize: string;
   marginUsed: number;
@@ -54,15 +78,14 @@ export const PerpsClosePositionPopup: React.FC<{
 }> = ({
   visible,
   coin,
+  displayName = coin,
   direction,
   positionSize,
-  marginUsed,
   pnl,
   markPrice,
   entryPrice,
   szDecimals,
   quoteAsset = 'USDC',
-  providerFee,
   onCancel,
   onConfirm,
   handleClosePosition,
@@ -74,7 +97,11 @@ export const PerpsClosePositionPopup: React.FC<{
   });
 
   const { t } = useTranslation();
-  const { showTipsPopup } = useTipsPopup();
+  const bottomSheetProps = useMemo(
+    () =>
+      makeBottomSheetProps({ colors: colors2024, linearGradientType: 'bg1' }),
+    [colors2024],
+  );
 
   const [loading, setLoading] = useState<boolean>(false);
   const [closePercent, setClosePercent] = useState<number>(100);
@@ -175,10 +202,6 @@ export const PerpsClosePositionPopup: React.FC<{
     enabled: !!visible && orderType === 'market',
   });
 
-  const bothFee = useMemo(() => {
-    return providerFee + PERPS_EXCHANGE_FEE_NUMBER;
-  }, [providerFee]);
-
   const isValidClosePercent = useMemo(() => {
     if (loading) {
       return true;
@@ -205,338 +228,405 @@ export const PerpsClosePositionPopup: React.FC<{
     }
   });
 
+  const quantity = closeQuantitySummary(
+    positionSize,
+    closePercent,
+    szDecimals,
+    markPrice,
+  );
+  const disabled =
+    !isValidClosePercent || (orderType === 'limit' && !(Number(limitPx) > 0));
+  const { height: windowHeight } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+  const [footerHeight, setFooterHeight] = useState(
+    BOTTOM_BUTTON_SINGLE_HEIGHT +
+      BOTTOM_BUTTON_TOP_OFFSET +
+      getBottomButtonBottomOffset(insets.bottom),
+  );
   const snapPoints = useMemo(
-    () => [orderType === 'limit' ? 622 : 578],
-    [orderType],
+    () => [
+      Math.min(
+        windowHeight - insets.top,
+        36 + CLOSE_CONTENT_HEIGHT + footerHeight,
+      ),
+    ],
+    [windowHeight, insets.top, footerHeight],
+  );
+
+  const footerRef = useRef<CloseFooterHandle>(null);
+  const footerSnapshot = useRef({ disabled, loading });
+  footerSnapshot.current = { disabled, loading };
+  useLayoutEffect(() => {
+    footerRef.current?.update(footerSnapshot.current);
+  }, [disabled, loading]);
+  const handleFooterHeight = useMemoizedFn((height: number) => {
+    setFooterHeight(previous =>
+      Math.abs(previous - height) < 0.5 ? previous : height,
+    );
+  });
+  const confirmClose = useMemoizedFn(() => {
+    if (!disabled && !loading) return closePosition();
+  });
+  // The component type must stay stable even when the button changes state.
+  const renderFooter = useCallback(
+    (props: BottomSheetFooterProps) => (
+      <ClosePositionFooter
+        {...props}
+        ref={footerRef}
+        snapshotRef={footerSnapshot}
+        onConfirm={confirmClose}
+        onHeight={handleFooterHeight}
+      />
+    ),
+    [confirmClose, handleFooterHeight],
   );
 
   return (
     <AppBottomSheetModal
       ref={modalRef}
-      {...makeBottomSheetProps({
-        colors: colors2024,
-        linearGradientType: 'bg1',
-      })}
+      {...bottomSheetProps}
+      handleIndicatorStyle={[
+        styles.handle,
+        {
+          backgroundColor: isLight
+            ? SIMPLE_ACCOUNT_COLORS.handle
+            : colors2024['neutral-line'],
+        },
+      ]}
       onDismiss={onCancel}
+      footerComponent={renderFooter}
       snapPoints={snapPoints}>
       <BottomSheetView style={styles.sheetView}>
-        <AutoLockView style={[styles.container]}>
-          <View>
-            <Text style={styles.title}>
-              {t('page.perpsDetail.PerpsClosePositionPopup.title')}
-            </Text>
-          </View>
-
-          <View style={styles.amountSection}>
-            <View style={styles.amountHeader}>
-              <Text style={styles.amountLabel}>
-                {t('page.perpsDetail.PerpsClosePositionPopup.amount')}
-              </Text>
-            </View>
-            <View style={styles.amountValueRow}>
-              <View style={styles.amountValueContainer}>
-                <Text style={styles.amountValue}>
-                  ${splitNumberByStep(marginUsed.toFixed(2))}
-                </Text>
-                <Text style={styles.totalLabel}>
-                  {t('page.perpsDetail.PerpsClosePositionPopup.total')}
+        <AutoLockView style={styles.container}>
+          <BottomSheetScrollView
+            contentContainerStyle={[
+              styles.scrollContent,
+              { paddingBottom: footerHeight },
+            ]}>
+            <View style={styles.content}>
+              <View>
+                <Text style={styles.title}>
+                  {t('page.perpsDetail.simpleAccount.closePositionTitle', {
+                    coin: displayName,
+                  })}
                 </Text>
               </View>
-              <Text style={styles.percentageText}>{closePercent}%</Text>
-            </View>
-            <View style={styles.minimumWarningContainer}>
-              {!isValidClosePercent && (
-                <Text style={styles.minimumWarning}>
-                  {t(
-                    'page.perpsDetail.PerpsClosePositionPopup.minimumWarning',
-                    {
-                      percent: minClosePercent,
-                    },
-                  )}
-                </Text>
-              )}
-            </View>
-            <PerpsSlider
-              step={1}
-              value={closePercent}
-              onValueChange={setClosePercent}
-              showPercentage={false}
-            />
-          </View>
 
-          <View style={styles.orderTypeCard}>
-            <View style={styles.orderTypeItem}>
-              <Text style={styles.pnlLabel}>
-                {t('page.perpsDetail.PerpsOpenPositionPopup.orderType')}
-              </Text>
-              <TouchableOpacity
-                style={styles.orderTypeToggle}
-                onPress={toggleOrderType}>
-                <Text style={styles.orderTypeToggleText}>
-                  {orderType === 'market'
-                    ? t(
-                        'page.perpsDetail.PerpsOpenPositionPopup.orderTypeMarket',
-                      )
-                    : t(
-                        'page.perpsDetail.PerpsOpenPositionPopup.orderTypeLimit',
-                      )}
+              <View style={styles.amountSection}>
+                <View style={styles.amountHeader}>
+                  <Text style={styles.amountLabel}>
+                    {t('page.perpsDetail.PerpsClosePositionPopup.amount')}
+                  </Text>
+                </View>
+                <Text style={styles.percentageText}>{closePercent}%</Text>
+                <Text style={styles.quantity}>
+                  {splitNumberByStep(quantity.notional)} {quoteAsset} ={' '}
+                  {quantity.quantity} {displayName}
                 </Text>
-                <IconOrderTypeSwitch width={14} height={14} />
-              </TouchableOpacity>
-            </View>
-            {orderType === 'limit' ? (
-              <View style={styles.orderTypeItem}>
-                <Text style={styles.pnlLabel}>
-                  {t('page.perpsDetail.PerpsOpenPositionPopup.limitPrice')}
-                </Text>
-                <PerpEditLimitPriceTag
-                  coin={coin}
-                  quoteAsset={quoteAsset}
-                  markPrice={markPrice}
-                  szDecimals={szDecimals}
-                  // Closing trades the opposite side: long -> limit sell.
-                  direction={direction === 'Long' ? 'Short' : 'Long'}
-                  initLimitPrice={limitPx}
-                  handleSetLimitPx={async (price: string) => setLimitPx(price)}
+                {!isValidClosePercent && (
+                  <Text style={styles.minimumWarning}>
+                    {t(
+                      'page.perpsDetail.PerpsClosePositionPopup.minimumWarning',
+                      {
+                        percent: minClosePercent,
+                      },
+                    )}
+                  </Text>
+                )}
+                <View style={styles.slider}>
+                  <PerpsSlider
+                    variant="close"
+                    step={1}
+                    value={closePercent}
+                    onValueChange={setClosePercent}
+                    showPercentage={false}
+                  />
+                </View>
+              </View>
+              <View style={styles.orderTypeCard}>
+                <View pointerEvents="none" style={styles.cardBorder} />
+                <View style={styles.orderTypeItem}>
+                  <Text style={styles.pnlLabel}>
+                    {t('page.perpsDetail.PerpsOpenPositionPopup.orderType')}
+                  </Text>
+                  <TouchableOpacity
+                    style={styles.orderTypeToggle}
+                    onPress={toggleOrderType}>
+                    <Text style={styles.orderTypeToggleText}>
+                      {orderType === 'market'
+                        ? t(
+                            'page.perpsDetail.PerpsOpenPositionPopup.orderTypeMarket',
+                          )
+                        : t(
+                            'page.perpsDetail.PerpsOpenPositionPopup.orderTypeLimit',
+                          )}
+                    </Text>
+                    <IconOrderTypeSwitch width={14} height={14} />
+                  </TouchableOpacity>
+                </View>
+                {orderType === 'limit' ? (
+                  <View style={[styles.orderTypeItem, styles.limitRow]}>
+                    <Text style={styles.pnlLabel}>
+                      {t('page.perpsDetail.PerpsOpenPositionPopup.limitPrice')}
+                    </Text>
+                    <PerpEditLimitPriceTag
+                      variant="close"
+                      coin={coin}
+                      quoteAsset={quoteAsset}
+                      markPrice={markPrice}
+                      szDecimals={szDecimals}
+                      // Closing trades the opposite side: long -> limit sell.
+                      direction={direction === 'Long' ? 'Short' : 'Long'}
+                      initLimitPrice={limitPx}
+                      handleSetLimitPx={async (price: string) =>
+                        setLimitPx(price)
+                      }
+                    />
+                  </View>
+                ) : null}
+                <View style={styles.orderTypeItem}>
+                  <Text style={styles.pnlLabel}>
+                    {t('page.perpsDetail.simpleAccount.estimatedRealizedPnl')}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.pnlValue,
+                      closedPnl >= 0 ? styles.green : styles.red,
+                    ]}>
+                    {closedPnl >= 0 ? '+' : '-'}$
+                    {splitNumberByStep(Math.abs(closedPnl).toFixed(2))}
+                  </Text>
+                </View>
+                <MarketSlippage
+                  rowStyle={styles.limitRow}
+                  visible={
+                    orderType === 'market' &&
+                    slippageReady &&
+                    Number(positionSize) > 0 &&
+                    shouldShowSlippage
+                  }
+                  slippage={slippage}
+                  depthInsufficient={depthInsufficient}
                 />
               </View>
-            ) : null}
-          </View>
-
-          <View style={styles.pnlCard}>
-            <View style={styles.pnlCardRow}>
-              <Text style={styles.pnlLabel}>
-                {t('page.perpsDetail.PerpsClosePositionPopup.estReceive')}
-              </Text>
-              <Text style={[styles.pnlValue]}>
-                {'+'}$
-                {splitNumberByStep(
-                  ((marginUsed * closePercent) / 100).toFixed(2),
-                )}
-              </Text>
+              <View style={styles.confirmSpacer} />
             </View>
-            <View style={styles.pnlCardRow}>
-              <Text style={styles.pnlLabel}>
-                {t('page.perpsDetail.PerpsClosePositionPopup.estClosedPnl')}
-              </Text>
-              <Text
-                style={[
-                  styles.pnlValue,
-                  closedPnl >= 0 ? styles.green : styles.red,
-                ]}>
-                {closedPnl >= 0 ? '+' : '-'}$
-                {splitNumberByStep(Math.abs(closedPnl).toFixed(2))}
-              </Text>
-            </View>
-          </View>
-          <MarketSlippage
-            style={styles.slippageContainer}
-            visible={
-              orderType === 'market' &&
-              slippageReady &&
-              Number(positionSize) > 0 &&
-              shouldShowSlippage
-            }
-            slippage={slippage}
-            depthInsufficient={depthInsufficient}
-          />
-
-          <View style={styles.footer}>
-            <Button
-              type="hyperliquid"
-              title={t('page.perpsDetail.PerpsClosePositionPopup.confirm')}
-              height={BOTTOM_BUTTON_SINGLE_HEIGHT}
-              titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
-              loading={loading}
-              disabled={
-                !isValidClosePercent ||
-                (orderType === 'limit' && !(Number(limitPx) > 0))
-              }
-              onPress={closePosition}
-            />
-          </View>
+          </BottomSheetScrollView>
         </AutoLockView>
       </BottomSheetView>
     </AppBottomSheetModal>
   );
 };
 
-const getStyle = createGetStyles2024(ctx => {
-  const { colors2024, isLight, safeAreaInsets } = ctx;
+type CloseFooterSnapshot = { disabled: boolean; loading: boolean };
+type CloseFooterHandle = { update: (state: CloseFooterSnapshot) => void };
+const ClosePositionFooter = React.forwardRef<
+  CloseFooterHandle,
+  BottomSheetFooterProps & {
+    snapshotRef: React.RefObject<CloseFooterSnapshot>;
+    onConfirm: () => void;
+    onHeight: (height: number) => void;
+  }
+>(function ClosePositionFooter(
+  { snapshotRef, onConfirm, onHeight, ...props },
+  ref,
+) {
+  const { styles } = useTheme2024({ getStyle });
+  const { t } = useTranslation();
+  const [{ disabled, loading }, setSnapshot] = useState(
+    () => snapshotRef.current,
+  );
+  useImperativeHandle(
+    ref,
+    () => ({
+      update: next =>
+        setSnapshot(previous =>
+          previous.disabled === next.disabled &&
+          previous.loading === next.loading
+            ? previous
+            : next,
+        ),
+    }),
+    [],
+  );
+  return (
+    <BottomSheetFooter {...props}>
+      <AutoLockView
+        style={styles.footer}
+        onLayout={event => onHeight(event.nativeEvent.layout.height)}>
+        <View style={!disabled && !loading ? styles.confirmShadow : undefined}>
+          <Button
+            type="hyperliquid"
+            title={t('page.perpsDetail.PerpsClosePositionPopup.confirm')}
+            height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+            titleStyle={StyleSheet.flatten([
+              BOTTOM_BUTTON_TITLE_STYLE,
+              styles.confirmTitle,
+              !disabled && styles.confirmTitleActive,
+              Platform.OS === 'android'
+                ? {
+                    lineHeight: undefined,
+                    includeFontPadding: false,
+                    textAlignVertical: 'center',
+                  }
+                : { lineHeight: 22 },
+            ])}
+            buttonStyle={
+              !disabled && !loading ? styles.confirmButton : undefined
+            }
+            loading={loading}
+            disabled={disabled}
+            onPress={onConfirm}
+          />
+        </View>
+      </AutoLockView>
+    </BottomSheetFooter>
+  );
+});
+
+const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => {
+  const text = {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    lineHeight: 18,
+  } as const;
   return {
-    sheetView: {
-      height: '100%',
-    },
-    container: {
-      height: '100%',
+    sheetView: { height: '100%' },
+    container: { flex: 1 },
+    scrollContent: { flexGrow: 1 },
+    content: {
+      flexGrow: 1,
       paddingHorizontal: 20,
+      paddingTop: 12,
+      paddingBottom: 24,
     },
+    confirmSpacer: { flexGrow: 1 },
+    handle: { width: 50.2, height: 6.3, borderRadius: 3.15 },
     footer: {
-      marginTop: 'auto',
+      backgroundColor: colors2024['neutral-bg-1'],
+      paddingHorizontal: 20,
       paddingTop: BOTTOM_BUTTON_TOP_OFFSET,
       paddingBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
     },
     title: {
-      fontFamily: 'SF Pro Rounded',
+      ...text,
       fontSize: 20,
       lineHeight: 24,
       fontWeight: '900',
       color: colors2024['neutral-title-1'],
-      marginBottom: 20,
+      marginBottom: 23,
       textAlign: 'center',
     },
     amountSection: {
       backgroundColor: colors2024['neutral-bg-2'],
-      borderWidth: 1,
-      borderColor: colors2024['neutral-line'],
       borderRadius: 20,
-      paddingVertical: 16,
-      paddingBottom: 20,
-      paddingHorizontal: 20,
+      padding: 16,
       marginBottom: 12,
+      ...(Platform.OS === 'ios'
+        ? {
+            shadowColor: '#000000',
+            shadowOffset: { width: 0, height: 10 },
+            shadowOpacity: 0.02,
+            shadowRadius: 5.5,
+          }
+        : {}),
     },
-    amountHeader: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      marginBottom: 4,
-    },
+    amountHeader: { marginBottom: 12 },
     amountLabel: {
-      fontFamily: 'SF Pro Rounded',
+      ...text,
       fontSize: 20,
       lineHeight: 24,
       fontWeight: '900',
-      color: '#50D2C1',
+      color: SIMPLE_ACCOUNT_COLORS.accent,
     },
     percentageText: {
-      fontFamily: 'SF Pro Rounded',
+      ...text,
       fontSize: 36,
       lineHeight: 42,
       fontWeight: '900',
-      color: '#50D2C1',
+      fontVariant: ['tabular-nums'],
+      color: SIMPLE_ACCOUNT_COLORS.accent,
     },
-    amountValueContainer: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 4,
+    quantity: {
+      ...text,
+      fontWeight: '500',
+      fontVariant: ['tabular-nums'],
+      color: colors2024['neutral-foot'],
+      marginTop: 4,
     },
-    amountValueRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      height: 42,
-    },
-    amountValue: {
-      fontFamily: 'SF Pro Rounded',
-      fontSize: 20,
-      lineHeight: 24,
-      fontWeight: '900',
-      color: colors2024['neutral-title-1'],
-    },
-    totalLabel: {
-      fontFamily: 'SF Pro Rounded',
-      fontSize: 18,
-      lineHeight: 22,
-      fontWeight: '700',
-      color: colors2024['neutral-info'],
-    },
+    slider: { marginTop: 16, height: 20 },
     minimumWarning: {
-      fontFamily: 'SF Pro Rounded',
-      fontSize: 14,
-      lineHeight: 18,
+      ...text,
       fontWeight: '500',
       color: colors2024['red-default'],
-    },
-    minimumWarningContainer: {
-      marginBottom: 16,
-      // marginTop: -4,
-      height: 14,
-    },
-    pnlCardRow: {
-      width: '100%',
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
+      marginTop: 4,
     },
     orderTypeCard: {
+      borderRadius: 12,
+      paddingHorizontal: 16,
+      paddingVertical: 4,
+    },
+    cardBorder: {
+      ...StyleSheet.absoluteFillObject,
       borderWidth: 1,
       borderColor: colors2024['neutral-line'],
-      borderRadius: 16,
-      width: '100%',
-      marginBottom: 12,
+      borderRadius: 12,
     },
     orderTypeItem: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      paddingHorizontal: 16,
-      paddingVertical: 12,
+      minHeight: 42,
+      gap: 8,
+      paddingVertical: 8,
     },
-    orderTypeToggle: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 4,
-    },
+    limitRow: { minHeight: 44 },
+    orderTypeToggle: { flexDirection: 'row', alignItems: 'center', gap: 4 },
     orderTypeToggleText: {
+      ...text,
       fontSize: 16,
       lineHeight: 20,
       fontWeight: '500',
       color: colors2024['neutral-title-1'],
-      fontFamily: 'SF Pro Rounded',
-    },
-    pnlCard: {
-      borderWidth: 1,
-      borderColor: colors2024['neutral-line'],
-      borderRadius: 16,
-      paddingHorizontal: 16,
-      paddingVertical: 16,
-      flexDirection: 'column',
-      gap: 12,
-      width: '100%',
-      alignContent: 'center',
-      alignItems: 'center',
-      marginBottom: 12,
-    },
-    slippageContainer: {
-      borderWidth: 1,
-      borderColor: colors2024['neutral-line'],
-      borderRadius: 16,
-      paddingHorizontal: 16,
-      paddingVertical: 16,
     },
     pnlLabel: {
-      fontFamily: 'SF Pro Rounded',
-      fontSize: 14,
-      lineHeight: 18,
+      ...text,
       fontWeight: '500',
       color: colors2024['neutral-foot'],
+      flexShrink: 1,
     },
     pnlValue: {
-      fontFamily: 'SF Pro Rounded',
+      ...text,
+      fontWeight: '700',
+      fontVariant: ['tabular-nums'],
       color: colors2024['neutral-title-1'],
-      fontSize: 17,
-      lineHeight: 22,
-      fontWeight: '900',
+      flexShrink: 1,
+      textAlign: 'right',
     },
-    red: {
-      color: colors2024['red-default'],
+
+    red: { color: colors2024['red-default'] },
+    green: { color: colors2024['green-default'] },
+    confirmTitle: {
+      ...text,
+      fontSize: 18,
+      fontWeight: '700',
     },
-    green: {
-      color: colors2024['green-default'],
+    confirmTitleActive: { color: SIMPLE_ACCOUNT_COLORS.buttonText },
+    confirmButton: {
+      backgroundColor: SIMPLE_ACCOUNT_COLORS.accent,
+      borderRadius: 12,
     },
-    feeContainer: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: 4,
-      marginBottom: 20,
-    },
-    fee: {
-      fontSize: 14,
-      lineHeight: 18,
-      fontWeight: '400',
-      fontFamily: 'SF Pro Rounded',
-      color: colors2024['neutral-foot'],
+    confirmShadow: {
+      borderRadius: 12,
+      backgroundColor: SIMPLE_ACCOUNT_COLORS.accent,
+      ...(Platform.OS === 'ios'
+        ? {
+            shadowColor: SIMPLE_ACCOUNT_COLORS.confirmShadow,
+            shadowOffset: { width: 0, height: 8 },
+            shadowOpacity: 0.1,
+            shadowRadius: 6,
+          }
+        : { elevation: 4 }),
     },
   };
 });

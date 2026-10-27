@@ -173,11 +173,17 @@ export function RemovedTokenPopup({ onClose }: { onClose(): void }) {
                 selectedTokenRef.current = info.token;
                 modalRef.current?.dismiss();
               }}>
-              <LinearGradient
-                useAngle
-                angle={49.5}
-                colors={cardColors}
-                style={styles.card}>
+              <View style={styles.card}>
+                {/* Keep the border on one Fabric view: the legacy gradient
+                    forwards border props to both its interop wrapper and its
+                    inset Paper view. */}
+                <LinearGradient
+                  pointerEvents="none"
+                  useAngle
+                  angle={49.5}
+                  colors={cardColors}
+                  style={StyleSheet.absoluteFill}
+                />
                 <AssetAvatar
                   logo={info.logoUrl}
                   chain={item.chainId.toLowerCase()}
@@ -188,7 +194,7 @@ export function RemovedTokenPopup({ onClose }: { onClose(): void }) {
                 <Text style={styles.symbol} numberOfLines={1}>
                   {info.symbol || item.tokenId}
                 </Text>
-              </LinearGradient>
+              </View>
             </TouchableOpacity>
           );
         }}
@@ -229,6 +235,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     }),
   },
   card: {
+    overflow: 'hidden',
     height: TOKEN_CARD_HEIGHT,
     borderRadius: TOKEN_CARD_RADIUS,
     borderWidth: 1,

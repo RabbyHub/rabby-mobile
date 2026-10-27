@@ -6,6 +6,9 @@ import React, {
   type Ref,
 } from 'react';
 import {
+  LayoutChangeEvent,
+  Platform,
+  Pressable,
   StyleProp,
   StyleSheet,
   TextInputProps,
@@ -64,6 +67,9 @@ export const NextSearchBar = ({
   noCancel,
   as = 'TextInput',
   inputComponent,
+  placeholder,
+  placeholderTextColor,
+  onLayout,
   ...rest
 }: Props & { ref?: Ref<NextSearchBarMethods> }) => {
   const { t } = useTranslation();
@@ -72,8 +78,54 @@ export const NextSearchBar = ({
   });
 
   const inputRef = useRef<any>(null);
-  const isEmpty = !value;
+  // Callers may leave the field uncontrolled (e.g. the token selector sheet
+  // keeps the query in its own state and only forwards onChangeText). Track the
+  // text locally in that case so the managed iOS placeholder and the clear
+  // affordance follow what the user typed instead of the absent prop.
+  const [uncontrolledValue, setUncontrolledValue] = useState('');
+  const effectiveValue = value ?? uncontrolledValue;
+  const isEmpty = !effectiveValue;
+  const [inputLayout, setInputLayout] = useState<{
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  } | null>(null);
   const [isFocus, setIsFocus] = useState(false);
+
+  const flattenedInputStyle: TextStyle =
+    StyleSheet.flatten([styles.input as TextStyle, inputStyle]) ?? {};
+  const effectivePlaceholderColor =
+    placeholderTextColor ?? styles.placeholder.color;
+  // Fabric's iOS TextInput draws the native placeholder lower than the text
+  // baseline when the field has an explicit height (QA 1022/672). Keep the
+  // native placeholder for semantics but paint the visible one ourselves,
+  // centered against the same box as the input text.
+  const useManagedPlaceholder =
+    Platform.OS === 'ios' && !!placeholder && isEmpty;
+  const showManagedPlaceholder =
+    useManagedPlaceholder &&
+    !!inputLayout &&
+    inputLayout.width > 0 &&
+    inputLayout.height > 0;
+
+  const handleInputLayout = useMemoizedFn((event: LayoutChangeEvent) => {
+    const { x, y, width, height } = event.nativeEvent.layout;
+    setInputLayout(prev => {
+      if (
+        prev &&
+        prev.x === x &&
+        prev.y === y &&
+        prev.width === width &&
+        prev.height === height
+      ) {
+        return prev;
+      }
+      return { x, y, width, height };
+    });
+    onLayout?.(event);
+  });
+
   const handleBlur = useMemoizedFn(e => {
     setIsFocus(false);
     onBlur?.(e);
@@ -81,6 +133,12 @@ export const NextSearchBar = ({
   const handleFocus = useMemoizedFn(e => {
     setIsFocus(true);
     onFocus?.(e);
+  });
+  const handleChangeText = useMemoizedFn((text: string) => {
+    if (value === undefined) {
+      setUncontrolledValue(text);
+    }
+    onChangeText?.(text);
   });
 
   const InputComponent =
@@ -95,6 +153,7 @@ export const NextSearchBar = ({
         return inputRef.current?.blur();
       },
       clear() {
+        setUncontrolledValue('');
         return inputRef.current?.clear();
       },
     };
@@ -103,6 +162,15 @@ export const NextSearchBar = ({
   return (
     <View style={[styles.container, style]}>
       <View style={[styles.inputContainer, inputContainerStyle]}>
+        {/* The input only occupies its text area, so taps on the container's
+            empty sides never reached it (QA 1176). Catch them behind the
+            content; the input, icon and clear button stay on top. */}
+        <Pressable
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+          onPress={() => inputRef.current?.focus()}
+          style={StyleSheet.absoluteFill}
+        />
         <TouchableWithoutFeedback
           hitSlop={8}
           onPress={() => {
@@ -124,21 +192,64 @@ export const NextSearchBar = ({
             inputStyle,
             isEmpty ? styles.placeholder : null,
           ])}
-          placeholderTextColor={styles.placeholder.color}
-          value={value}
-          onChangeText={onChangeText}
+          placeholder={placeholder}
+          placeholderTextColor={
+            showManagedPlaceholder ? 'transparent' : effectivePlaceholderColor
+          }
+          value={effectiveValue}
+          onChangeText={handleChangeText}
           onChange={onChange}
           onBlur={handleBlur}
           onFocus={handleFocus}
+          onLayout={handleInputLayout}
           autoCorrect={false}
           spellCheck={false}
           {...rest}
         />
+        {showManagedPlaceholder ? (
+          <View
+            pointerEvents="none"
+            accessible={false}
+            accessibilityElementsHidden
+            importantForAccessibility="no-hide-descendants"
+            style={[
+              styles.placeholderOverlay,
+              {
+                left: inputLayout.x,
+                top: inputLayout.y,
+                width: inputLayout.width,
+                height: inputLayout.height,
+                paddingLeft:
+                  flattenedInputStyle?.paddingLeft ??
+                  flattenedInputStyle?.paddingHorizontal ??
+                  0,
+                paddingRight:
+                  flattenedInputStyle?.paddingRight ??
+                  flattenedInputStyle?.paddingHorizontal ??
+                  0,
+              },
+            ]}>
+            <Text
+              numberOfLines={1}
+              ellipsizeMode="tail"
+              style={[
+                styles.placeholder,
+                {
+                  color: effectivePlaceholderColor,
+                  fontSize: flattenedInputStyle?.fontSize,
+                  lineHeight: flattenedInputStyle?.lineHeight,
+                  letterSpacing: flattenedInputStyle?.letterSpacing,
+                },
+              ]}>
+              {placeholder}
+            </Text>
+          </View>
+        ) : null}
         {!isEmpty ? (
           <TouchableWithoutFeedback
             hitSlop={8}
             onPress={() => {
-              onChangeText?.('');
+              handleChangeText('');
             }}>
             {isLight ? (
               <RcNextCloseCircle
@@ -204,6 +315,11 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontFamily: 'SF Pro Rounded',
     fontWeight: '500',
     color: colors2024['neutral-secondary'],
+  },
+  placeholderOverlay: {
+    position: 'absolute',
+    justifyContent: 'center',
+    alignItems: 'flex-start',
   },
   cancelText: {
     fontFamily: 'SF Pro Rounded',

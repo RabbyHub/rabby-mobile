@@ -2870,6 +2870,25 @@ export class KeyringService extends RNEventEmitter {
           },
         };
       }
+      // extension vault may carry repeated addresses; keep the first of each.
+      // WalletConnect keyring stores account objects, leave those untouched.
+      if (Array.isArray(item.data?.accounts)) {
+        return {
+          ...item,
+          data: {
+            ...item.data,
+            accounts: item.data.accounts.filter(
+              (account: unknown, idx: number, arr: unknown[]) =>
+                typeof account !== 'string' ||
+                arr.findIndex(
+                  e =>
+                    typeof e === 'string' &&
+                    addressUtils.isSameAddress(e, account),
+                ) === idx,
+            ),
+          },
+        };
+      }
       return item;
     });
 
@@ -2901,11 +2920,15 @@ export class KeyringService extends RNEventEmitter {
           const newAccounts = newDisplayKeyring.accounts;
 
           newAccounts?.forEach(newAccount => {
-            const newAccountExist = allAccounts?.some(
+            const newAccountExist = [
+              ...(allAccounts ?? []),
+              ...addedAccounts,
+            ].some(
               existAddr =>
-                newAccount?.address?.toLowerCase() ===
-                  existAddr?.address?.toLowerCase() &&
-                keyring.type === (existAddr.type || existAddr.brandName),
+                addressUtils.isSameAddress(
+                  newAccount?.address,
+                  existAddr?.address,
+                ) && keyring.type === (existAddr.type || existAddr.brandName),
             );
 
             if (!newAccountExist && newAccounts.length) {

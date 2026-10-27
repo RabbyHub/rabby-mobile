@@ -38,8 +38,9 @@ import { isLpToken } from '@/utils/lpToken';
 import LpTokenIcon from '../LpTokenIcon';
 import LpTokenSwitch from '../LpTokenSwitch';
 import { colord } from 'colord';
-import { isNumber } from 'lodash';
+import { isNumber, noop } from 'lodash';
 import { Text } from '@/components/Typography';
+import { IS_IOS } from '@/core/native/utils';
 
 export const formatPercentage = (x: number, ignoreSign = false) => {
   if (Math.abs(x) < 0.00001) {
@@ -62,6 +63,7 @@ export const TokenRowV2 = memo(
     account,
     scene = 'default',
     hideChainLogo = false,
+    hasContextMenu = false,
   }: {
     data: ITokenItem;
     style?: ViewStyle;
@@ -69,6 +71,7 @@ export const TokenRowV2 = memo(
     logoSize?: number;
     chainLogoSize?: number;
     hideChainLogo?: boolean;
+    hasContextMenu?: boolean;
     getMenuActions?: (token: ITokenItem) => MenuAction[];
     hideFoldTag?: boolean;
     disableMenu?: boolean;
@@ -109,7 +112,9 @@ export const TokenRowV2 = memo(
     return (
       <TouchableOpacity
         style={StyleSheet.flatten([styles.tokenRowWrap, style])}
-        delayLongPress={200}
+        delayLongPress={IS_IOS ? 150 : 200}
+        // A long-press callback also makes RN suppress onPress on release.
+        onLongPress={IS_IOS && hasContextMenu ? noop : undefined}
         onPress={onPressToken}>
         <View pointerEvents="none" style={styles.tokenRowWrapV2InnerBorder} />
         <View style={styles.tokenRowTokenWrap}>
@@ -459,7 +464,10 @@ export const ExternalTokenRow = memo(
                 <View style={styles.priceInfo}>
                   {bottomRightText &&
                     (rightInfoMode === 'balance' ? (
-                      <Text style={styles.searchAmountStr}>
+                      <Text
+                        style={styles.searchAmountStr}
+                        numberOfLines={1}
+                        ellipsizeMode="tail">
                         {bottomRightText}
                       </Text>
                     ) : isNumber(data.price_24h_change) ? (

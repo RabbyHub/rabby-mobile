@@ -12,6 +12,7 @@ import {
   ViewStyle,
 } from 'react-native';
 import { RefreshControl } from 'react-native-gesture-handler';
+import { CollapsibleRefreshControl } from '@/components/customized/ScrollViewLike/CollapsibleRefreshControl';
 import { useTranslation } from 'react-i18next';
 import {
   Tabs,
@@ -139,6 +140,7 @@ const TokenResourceRowContent = React.memo(
     return (
       <TokenRowV2
         data={token}
+        hasContextMenu
         style={tokenStyle}
         onTokenPress={onTokenPress}
         scene="portfolio"
@@ -910,7 +912,8 @@ export const TokenList = ({ onForeground, onRefresh }: Props) => {
         showsHorizontalScrollIndicator={false}
         style={[styles.bgContainer, styles.list]}
         refreshControl={
-          <RefreshControl
+          <CollapsibleRefreshControl
+            as={RefreshControl}
             style={styles.bgContainer}
             onRefresh={handleRefresh}
             refreshing={isScreenFocused && isManualRefreshing}

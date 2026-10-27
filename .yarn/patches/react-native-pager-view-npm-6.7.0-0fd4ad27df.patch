@@ -19,3 +19,34 @@ index aad38b2bf38cec3bc9fd90301b49b368c483f673..a1de30f7aef174ec61bbd2c5657b318e
      }
  
      public override fun createViewInstance(reactContext: ThemedReactContext): NestedScrollableHost {
+diff --git a/ios/Fabric/RNCPagerViewComponentView.mm b/ios/Fabric/RNCPagerViewComponentView.mm
+--- a/ios/Fabric/RNCPagerViewComponentView.mm
++++ b/ios/Fabric/RNCPagerViewComponentView.mm
+@@ -307,3 +307,12 @@
++- (void)scrollViewDidEndDragging:(UIScrollView *)scrollView willDecelerate:(BOOL)decelerate {
++    // UIKit does not call didEndDecelerating when a drag stops at touch-up.
++    // Complete the state transition here so consumers can accept taps again.
++    if (!decelerate) {
++        const auto strongEventEmitter = *std::dynamic_pointer_cast<const RNCViewPagerEventEmitter>(_eventEmitter);
++        strongEventEmitter.onPageScrollStateChanged(RNCViewPagerEventEmitter::OnPageScrollStateChanged{.pageScrollState = RNCViewPagerEventEmitter::OnPageScrollStateChangedPageScrollState::Idle });
++    }
++}
++
+ - (void)scrollViewDidEndDecelerating:(UIScrollView *)scrollView {
+     const auto strongEventEmitter = *std::dynamic_pointer_cast<const RNCViewPagerEventEmitter>(_eventEmitter);
+     strongEventEmitter.onPageScrollStateChanged(RNCViewPagerEventEmitter::OnPageScrollStateChanged{.pageScrollState =  RNCViewPagerEventEmitter::OnPageScrollStateChangedPageScrollState::Idle });
+diff --git a/ios/RNCPagerView.m b/ios/RNCPagerView.m
+--- a/ios/RNCPagerView.m
++++ b/ios/RNCPagerView.m
+@@ -397,3 +397,11 @@
++- (void)scrollViewDidEndDragging:(UIScrollView *)scrollView willDecelerate:(BOOL)decelerate {
++    // UIKit does not call didEndDecelerating when a drag stops at touch-up.
++    // Complete the state transition here so consumers can accept taps again.
++    if (!decelerate) {
++        [self.eventDispatcher sendEvent:[[RCTOnPageScrollStateChanged alloc] initWithReactTag:self.reactTag state:@"idle" coalescingKey:_coalescingKey++]];
++    }
++}
++
+ - (void)scrollViewDidEndDecelerating:(UIScrollView *)scrollView {
+     [self.eventDispatcher sendEvent:[[RCTOnPageScrollStateChanged alloc] initWithReactTag:self.reactTag state:@"idle" coalescingKey:_coalescingKey++]];
+ }
