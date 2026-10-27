@@ -13,7 +13,7 @@ import type {
 import useTokenList from '@/store/tokens';
 import { createGetStyles2024 } from '@/utils/styles';
 import { MemeEmptyState } from '../components/MemeEmptyState';
-import { useMemeMarketStore } from '../data/memeMarketStore';
+import { useMemeHoldings } from '../data/memeHoldingsStore';
 import { toBuyExecLegs } from '../engine/execLegs';
 import { tokenKey } from '../engine/keys';
 import { usePaymentAssets } from '../hooks/usePaymentAssets';
@@ -54,7 +54,7 @@ const MemeCoinBuyContent = ({
   );
   const amountUsd = parseBuyAmount(amountText);
 
-  const market = useMemeMarketStore(s => s.list);
+  const { holdings } = useMemeHoldings(account.address);
   const tokens = useTokenList(
     s => s.tokenListMap[account.address.toLowerCase()],
   );
@@ -73,10 +73,10 @@ const MemeCoinBuyContent = ({
   const memeTokenKeys = useMemo(
     () =>
       new Set([
-        ...market.map(m => tokenKey(m)),
+        ...holdings.map(h => tokenKey(h.meme)),
         ...memes.map(m => tokenKey(m)),
       ]),
-    [market, memes],
+    [holdings, memes],
   );
 
   const { assets, selectedKeys, toggle, plan, ready } = usePaymentAssets({

@@ -17,7 +17,7 @@ type Props = {
   symbol: string;
   address: string;
   valueText: string;
-  change24h: number;
+  change24h: number | null;
   selected: boolean;
   onPress: (itemKey: string) => void;
 };
@@ -54,9 +54,13 @@ export const MemeTokenRow = React.memo(function MemeTokenRow({
         <Text style={styles.value} numberOfLines={1}>
           {valueText}
         </Text>
-        <Text style={change24h < 0 ? styles.changeDown : styles.changeUp}>
-          {formatPercentageKMB(change24h)}
-        </Text>
+        {change24h === null ? (
+          <Text style={styles.changeNone}>--</Text>
+        ) : (
+          <Text style={change24h < 0 ? styles.changeDown : styles.changeUp}>
+            {formatPercentageKMB(change24h)}
+          </Text>
+        )}
       </View>
       {selected ? <SelectedBadge /> : null}
     </TouchableOpacity>
@@ -126,5 +130,12 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 16,
     fontWeight: '500',
     color: colors2024['red-default'],
+  },
+  changeNone: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '500',
+    color: colors2024['neutral-foot'],
   },
 }));

@@ -127,7 +127,6 @@ describe('toSellHoldings', () => {
       symbol: id.toUpperCase(),
       logoUrl: 'logo',
       price: 1,
-      marketCap: 1,
       change24h: 0,
     },
     amount: 1,

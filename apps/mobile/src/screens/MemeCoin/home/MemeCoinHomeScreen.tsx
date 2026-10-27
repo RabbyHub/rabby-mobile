@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { Skeleton } from '@rneui/themed';
+import { useMemoizedFn } from 'ahooks';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text } from '@/components/Typography';
@@ -16,7 +17,6 @@ import { IS_IOS } from '@/core/native/utils';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { useTheme2024 } from '@/hooks/theme';
 import { formatUsdValueKMB } from '@/screens/Home/utils/price';
-import useTokenList from '@/store/tokens';
 import { isAccountSupportDirectSign } from '@/utils/account';
 import { formatUsdValue } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -25,10 +25,18 @@ import { HoldingsPill } from '../components/HoldingsPill';
 import { MEMECOIN_HEADER_HEIGHT } from '../components/MemeCoinHeader';
 import { MemeEmptyState } from '../components/MemeEmptyState';
 import { MEME_ROW_HEIGHT, MemeTokenRow } from '../components/MemeTokenRow';
-import { filterBySymbol } from '../data/market';
-import { refreshMemeMarket, useMemeMarketStore } from '../data/memeMarketStore';
-import type { MemeMarketItem } from '../data/types';
-import { useMemeHoldings } from '../data/useMemeHoldings';
+import { filterBySymbolPrefix } from '../data/market';
+import {
+  refreshMemeHoldings,
+  useMemeHoldings,
+} from '../data/memeHoldingsStore';
+import {
+  loadMoreMemeMarket,
+  refreshMemeMarket,
+  useMemeMarketStore,
+} from '../data/memeMarketStore';
+import type { MemeMarketItem, MemeToken } from '../data/types';
+import { useMemeSearch } from '../data/useMemeSearch';
 import { toSellExecLegs } from '../engine/execLegs';
 import { tokenKey } from '../engine/keys';
 import {
@@ -47,9 +55,14 @@ import { MemeCoinHomeBottomBar } from './MemeCoinHomeBottomBar';
 type HomeMode = 'market' | 'holdings';
 
 /** valueUsd is null in market mode (the row shows market cap instead) */
-type HomeRow = { key: string; meme: MemeMarketItem; valueUsd: number | null };
+type HomeRow =
+  | { key: string; meme: MemeMarketItem; valueUsd: null }
+  | { key: string; meme: MemeToken; valueUsd: number };
 
 const SKELETON_ROWS = 6;
+
+const NO_MARKET_SELECTION: Record<string, MemeMarketItem> = {};
+const NO_HOLDING_KEYS: string[] = [];
 
 const keyExtractor = (row: HomeRow) => row.key;
 
@@ -62,28 +75,45 @@ export const MemeCoinHomeScreen = () => {
   });
   const address = account?.address;
 
-  const market = useMemeMarketStore(s => s.list);
+  const marketItems = useMemeMarketStore(s => s.items);
   const marketLoading = useMemeMarketStore(s => s.loading);
   const marketError = useMemeMarketStore(s => s.error);
   const { holdings, totalUsd } = useMemeHoldings(address);
 
   const [mode, setMode] = useState<HomeMode>('market');
   const [keyword, setKeyword] = useState('');
-  const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
+  // market picks are snapshots: search results are not in the paged list
+  const [selectedMarket, setSelectedMarket] =
+    useState<Record<string, MemeMarketItem>>(NO_MARKET_SELECTION);
+  const [selectedHoldingKeys, setSelectedHoldingKeys] =
+    useState<string[]>(NO_HOLDING_KEYS);
   const [maxPriceImpactPct, setMaxPriceImpactPct] = useState<MaxPriceImpactPct>(
     DEFAULT_MAX_PRICE_IMPACT_PCT,
   );
+
+  const hasKeyword = !!keyword.trim();
+  const {
+    items: searchItems,
+    loading: searchLoading,
+    loadMore: loadMoreSearch,
+  } = useMemeSearch(keyword, mode === 'market');
+  const marketList = hasKeyword ? searchItems : marketItems;
+
+  const clearSelection = useCallback(() => {
+    setSelectedMarket(NO_MARKET_SELECTION);
+    setSelectedHoldingKeys(NO_HOLDING_KEYS);
+  }, []);
 
   useEffect(() => {
     refreshMemeMarket();
   }, []);
 
   useEffect(() => {
-    setSelectedKeys([]);
+    clearSelection();
     if (address) {
-      useTokenList.getState().getTokenList(address, true);
+      refreshMemeHoldings(address);
     }
-  }, [address]);
+  }, [address, clearSelection]);
 
   useFocusEffect(
     useCallback(() => {
@@ -93,41 +123,47 @@ export const MemeCoinHomeScreen = () => {
       Keyboard.dismiss();
       setMode('market');
       setKeyword('');
-      setSelectedKeys([]);
+      clearSelection();
       if (address) {
-        useTokenList.getState().getTokenList(address, true);
+        refreshMemeHoldings(address);
       }
-    }, [address]),
+    }, [address, clearSelection]),
   );
 
-  const selectedSet = useMemo(() => new Set(selectedKeys), [selectedKeys]);
+  const selectedSet = useMemo(
+    () =>
+      new Set(
+        mode === 'market' ? Object.keys(selectedMarket) : selectedHoldingKeys,
+      ),
+    [mode, selectedMarket, selectedHoldingKeys],
+  );
 
   const rows = useMemo<HomeRow[]>(
     () =>
       mode === 'market'
-        ? filterBySymbol(market, keyword, m => m.symbol).map(meme => ({
+        ? marketList.map(meme => ({
             key: tokenKey(meme),
             meme,
             valueUsd: null,
           }))
-        : filterBySymbol(holdings, keyword, h => h.meme.symbol).map(h => ({
-            key: tokenKey(h.meme),
-            meme: h.meme,
-            valueUsd: h.valueUsd,
-          })),
-    [mode, market, holdings, keyword],
+        : filterBySymbolPrefix(holdings, keyword, h => h.meme.symbol).map(
+            h => ({
+              key: tokenKey(h.meme),
+              meme: h.meme,
+              valueUsd: h.valueUsd,
+            }),
+          ),
+    [mode, marketList, holdings, keyword],
   );
 
-  const selectedMemes = useMemo(
-    () => market.filter(m => selectedSet.has(tokenKey(m))),
-    [market, selectedSet],
-  );
-  const selectedHoldings = useMemo(
-    () => holdings.filter(h => selectedSet.has(tokenKey(h.meme))),
-    [holdings, selectedSet],
-  );
+  const selectedHoldings = useMemo(() => {
+    const keys = new Set(selectedHoldingKeys);
+    return holdings.filter(h => keys.has(tokenKey(h.meme)));
+  }, [holdings, selectedHoldingKeys]);
   const selectedCount =
-    mode === 'market' ? selectedMemes.length : selectedHoldings.length;
+    mode === 'market'
+      ? Object.keys(selectedMarket).length
+      : selectedHoldings.length;
 
   const holdingAvatars = useMemo(
     () =>
@@ -135,19 +171,40 @@ export const MemeCoinHomeScreen = () => {
     [holdings],
   );
 
-  const toggle = useCallback((key: string) => {
-    setSelectedKeys(prev =>
-      prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key],
-    );
-  }, []);
+  const toggle = useMemoizedFn((key: string) => {
+    if (mode === 'holdings') {
+      setSelectedHoldingKeys(prev =>
+        prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key],
+      );
+      return;
+    }
+    setSelectedMarket(prev => {
+      if (prev[key]) {
+        const next = { ...prev };
+        delete next[key];
+        return next;
+      }
+      const meme = marketList.find(m => tokenKey(m) === key);
+      return meme ? { ...prev, [key]: meme } : prev;
+    });
+  });
 
   const switchMode = useCallback(() => {
     setMode(prev => (prev === 'market' ? 'holdings' : 'market'));
     setKeyword('');
-    setSelectedKeys([]);
-  }, []);
+    clearSelection();
+  }, [clearSelection]);
 
-  const clearSelection = useCallback(() => setSelectedKeys([]), []);
+  const handleEndReached = useCallback(() => {
+    if (mode !== 'market') {
+      return;
+    }
+    if (hasKeyword) {
+      loadMoreSearch();
+    } else {
+      loadMoreMemeMarket();
+    }
+  }, [hasKeyword, loadMoreSearch, mode]);
 
   const isSupportedAccount = useCallback(() => {
     if (!account) {
@@ -166,7 +223,7 @@ export const MemeCoinHomeScreen = () => {
     }
     pushMemeCoinBuy({
       accountAddress: account.address,
-      memes: selectedMemes.map(m => ({
+      memes: Object.values(selectedMarket).map(m => ({
         id: m.id,
         chain: m.chain,
         symbol: m.symbol,
@@ -174,7 +231,7 @@ export const MemeCoinHomeScreen = () => {
         logoUrl: m.logoUrl,
       })),
     });
-  }, [account, isSupportedAccount, selectedMemes]);
+  }, [account, isSupportedAccount, selectedMarket]);
 
   const handleSell = useCallback(() => {
     if (!account || !isSupportedAccount()) {
@@ -224,7 +281,6 @@ export const MemeCoinHomeScreen = () => {
     [selectedSet, toggle],
   );
 
-  const hasKeyword = !!keyword.trim();
   const rightLabel =
     selectedCount > 0
       ? t('page.memeCoin.clear')
@@ -259,8 +315,13 @@ export const MemeCoinHomeScreen = () => {
     </View>
   );
 
+  const marketEmpty =
+    mode === 'market' && !hasKeyword && marketItems.length === 0;
   let listEmpty: React.ReactElement;
-  if (market.length === 0 && marketLoading) {
+  if (
+    mode === 'market' &&
+    (hasKeyword ? searchLoading : marketEmpty && marketLoading)
+  ) {
     listEmpty = (
       <View>
         {Array.from({ length: SKELETON_ROWS }).map((_, index) => (
@@ -272,7 +333,7 @@ export const MemeCoinHomeScreen = () => {
         ))}
       </View>
     );
-  } else if (market.length === 0 && marketError) {
+  } else if (marketEmpty && marketError) {
     listEmpty = (
       <MemeEmptyState
         text={t('page.memeCoin.loadFailed')}
@@ -307,6 +368,8 @@ export const MemeCoinHomeScreen = () => {
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
         initialNumToRender={10}
+        onEndReached={handleEndReached}
+        onEndReachedThreshold={0.5}
       />
       <MemeCoinHomeBottomBar
         mode={mode}

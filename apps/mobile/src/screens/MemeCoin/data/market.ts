@@ -1,20 +1,28 @@
-import type { TokenMarketTokenItem } from '@rabby-wallet/rabby-api/dist/types';
-import { compareText, tokenKey } from '../engine/keys';
-import type { MemeHolding, MemeMarketItem } from './types';
+import { tokenKey } from '../engine/keys';
+import type { RawMemePosition, RawMemeToken } from './memeApi';
+import type { MemeHolding, MemeMarketItem, MemeToken } from './types';
 
-export const toMemeMarketItem = (
-  item: TokenMarketTokenItem,
-): MemeMarketItem => ({
-  id: item.id,
-  chain: item.chain,
-  symbol: item.display_symbol || item.symbol,
-  logoUrl: item.logo_url,
-  price: item.price || 0,
-  marketCap: item.fdv || 0,
-  change24h: item.price_24h_change || 0,
+const toMemeToken = (raw: Omit<RawMemeToken, 'fdv_usd'>): MemeToken => ({
+  id: raw.id,
+  chain: raw.chain_id,
+  symbol: raw.symbol,
+  logoUrl: raw.logo_url ?? '',
+  price: raw.price,
+  change24h: raw.price_24h_change,
 });
 
-export const filterBySymbol = <T>(
+export const toMemeMarketItem = (raw: RawMemeToken): MemeMarketItem => ({
+  ...toMemeToken(raw),
+  marketCap: raw.fdv_usd,
+});
+
+export const toMemeHolding = (raw: RawMemePosition): MemeHolding => ({
+  meme: toMemeToken(raw),
+  amount: raw.amount,
+  valueUsd: raw.usd_value,
+});
+
+export const filterBySymbolPrefix = <T>(
   list: T[],
   keyword: string,
   getSymbol: (item: T) => string,
@@ -23,40 +31,21 @@ export const filterBySymbol = <T>(
   if (!q) {
     return list;
   }
-  return list.filter(item => getSymbol(item).toLowerCase().includes(q));
+  return list.filter(item => getSymbol(item).toLowerCase().startsWith(q));
 };
 
-export type WalletTokenLike = {
-  id: string;
-  chain: string;
-  amount: number;
-  price: number;
-  usd_value?: number;
-};
-
-export const deriveMemeHoldings = (
-  walletTokens: WalletTokenLike[],
-  market: MemeMarketItem[],
-) => {
-  const byKey = new Map(market.map(m => [tokenKey(m), m]));
-  const holdings: MemeHolding[] = [];
-  for (const token of walletTokens) {
-    const meme = byKey.get(tokenKey(token));
-    if (meme && token.amount > 0) {
-      holdings.push({
-        meme,
-        amount: token.amount,
-        valueUsd: token.usd_value ?? token.amount * (token.price || 0),
-      });
+export const appendByTokenKey = <T extends MemeToken>(
+  list: T[],
+  more: T[],
+): T[] => {
+  const seen = new Set(list.map(item => tokenKey(item)));
+  const added = more.filter(item => {
+    const key = tokenKey(item);
+    if (seen.has(key)) {
+      return false;
     }
-  }
-  holdings.sort(
-    (a, b) =>
-      b.valueUsd - a.valueUsd ||
-      compareText(tokenKey(a.meme), tokenKey(b.meme)),
-  );
-  return {
-    holdings,
-    totalUsd: holdings.reduce((sum, h) => sum + h.valueUsd, 0),
-  };
+    seen.add(key);
+    return true;
+  });
+  return added.length ? [...list, ...added] : list;
 };
