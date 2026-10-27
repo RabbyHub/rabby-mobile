@@ -1,9 +1,15 @@
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import React, { useCallback, useEffect, useState } from 'react';
 
-import { FooterButton } from '@/components/FooterButton/FooterButton';
+import { Button } from '@/components2024/Button';
+import RcIconBack from '@/assets/icons/custom-testnet/back.svg';
+import {
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
+  BOTTOM_BUTTON_TITLE_STYLE,
+  BOTTOM_BUTTON_TOP_OFFSET,
+  getBottomButtonBottomOffset,
+} from '@/constant/layout';
 import { toast } from '@/components2024/Toast';
-import type { AppColorsVariants } from '@/constant/theme';
 import type {
   TestnetChain,
   TestnetChainBase,
@@ -11,20 +17,18 @@ import type {
 import { useThemeColors } from '@/hooks/theme';
 import { useEventEmitter, useMemoizedFn, useSetState } from 'ahooks';
 import type { EventEmitter } from 'ahooks/lib/useEventEmitter';
+import { useTheme2024 } from '@/hooks/theme';
+import { createGetStyles2024 } from '@/utils/styles';
 import { sortBy } from 'lodash';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, View } from 'react-native';
-import {
-  FlatList,
-  TouchableOpacity,
-  TouchableWithoutFeedback,
-} from 'react-native-gesture-handler';
+import { View } from 'react-native';
+import { FlatList, TouchableOpacity } from 'react-native-gesture-handler';
 import { CustomTestnetItem } from './components/CustomTestnetItem';
 import type { EditCustomTestnetPopupType } from './components/EditTestnetPopup';
 import { EditCustomTestnetPopup } from './components/EditTestnetPopup';
 import { Empty } from './components/Empty';
 import { useHandleBackPressClosable } from '@/hooks/useAppGesture';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { Text } from '@/components/Typography';
 import {
   useCustomTestnetService,
@@ -32,18 +36,17 @@ import {
 } from './customTestnetServiceDependencies';
 
 type CustomTestnetListProps = {
-  close$: EventEmitter<void>;
+  isEditing: boolean;
   refreshVersion: number;
   onEdit: (item: TestnetChain) => void;
 };
 
 const CustomTestnetListContent = ({
-  close$,
+  isEditing,
   refreshVersion,
   onEdit,
 }: CustomTestnetListProps) => {
-  const colors = useThemeColors();
-  const styles = getStyles(colors);
+  const { styles } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
   const customTestnetService = useCustomTestnetService();
   const [list, setList] = useState(() =>
@@ -62,14 +65,15 @@ const CustomTestnetListContent = ({
     customTestnetService.remove(item.id);
     refreshList();
     toast.success(t('global.Deleted'));
-    close$.emit();
   });
 
   return (
     <FlatList
       style={styles.list}
+      contentContainerStyle={
+        list.length ? styles.listContent : styles.emptyList
+      }
       data={list}
-      onScrollBeginDrag={() => close$.emit()}
       keyboardShouldPersistTaps="handled"
       renderItem={({ item }) => {
         return (
@@ -77,22 +81,13 @@ const CustomTestnetListContent = ({
             item={item}
             onEdit={onEdit}
             onRemove={handleRemoveClick}
-            onPress={onEdit}
-            editable
+            editable={isEditing}
             containerStyle={styles.item}
-            close$={close$}
           />
         );
       }}
       keyExtractor={item => item.enum}
-      ListEmptyComponent={
-        <Empty
-          description={t('page.customTestnet.empty')}
-          style={{
-            paddingTop: 200,
-          }}
-        />
-      }
+      ListEmptyComponent={<Empty description={t('page.customTestnet.empty')} />}
     />
   );
 };
@@ -100,8 +95,9 @@ const CustomTestnetListContent = ({
 const CustomTestnetList = withCustomTestnetService(CustomTestnetListContent);
 
 export function CustomTestnetScreen(): JSX.Element {
-  const colors = useThemeColors();
-  const styles = getStyles(colors);
+  const { colors2024, styles } = useTheme2024({ getStyle: getStyles });
+  const navigation = useNavigation();
+  const [isEditing, setIsEditing] = useState(false);
   const { t } = useTranslation();
 
   const [state, setState] = useSetState<{
@@ -114,7 +110,6 @@ export function CustomTestnetScreen(): JSX.Element {
     isEdit: false,
   });
 
-  const close$ = useEventEmitter<void>();
   const [listRefreshVersion, setListRefreshVersion] = useState(0);
 
   const handleAddClick = useMemoizedFn(() => {
@@ -124,7 +119,6 @@ export function CustomTestnetScreen(): JSX.Element {
       isEdit: false,
     };
     setState(next);
-    close$.emit();
   });
 
   const handleConfirm = useMemoizedFn(async () => {
@@ -133,7 +127,6 @@ export function CustomTestnetScreen(): JSX.Element {
       current: null,
       isEdit: false,
     });
-    close$.emit();
     setListRefreshVersion(version => version + 1);
   });
 
@@ -144,7 +137,6 @@ export function CustomTestnetScreen(): JSX.Element {
       isEdit: true,
     };
     setState(next);
-    close$.emit();
   });
 
   const modalRef = React.useRef<EditCustomTestnetPopupType>(null);
@@ -159,33 +151,51 @@ export function CustomTestnetScreen(): JSX.Element {
 
   return (
     <>
-      <TouchableWithoutFeedback
-        onPress={() => {
-          close$.emit();
-          console.log('custom testnet screen 1');
-        }}
-        accessible={false}
-        style={{
-          height: '100%',
-        }}>
-        <NormalScreenContainer>
-          <View style={styles.descContainer}>
-            <Text style={styles.desc}>{t('page.customTestnet.desc')}</Text>
-          </View>
-          <View style={styles.main}>
-            <CustomTestnetList
-              close$={close$}
-              refreshVersion={listRefreshVersion}
-              onEdit={handleEditClick}
+      <NormalScreenContainer noHeader overwriteStyle={styles.screen}>
+        <View style={styles.header}>
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityLabel={t('global.backButton')}
+            hitSlop={12}
+            onPress={() => navigation.goBack()}>
+            <RcIconBack
+              color={colors2024['neutral-body']}
+              style={styles.backIcon}
             />
+          </TouchableOpacity>
+          <View style={styles.headerTitle} pointerEvents="none">
+            <Text style={styles.title}>
+              {t('page.customTestnet.screenTitle')}
+            </Text>
           </View>
-          <FooterButton
-            title={t('page.customTestnet.add')}
-            onPress={handleAddClick}
-            TouchableComponent={TouchableOpacity}
+          <TouchableOpacity
+            accessibilityRole="button"
+            hitSlop={12}
+            onPress={() => setIsEditing(value => !value)}>
+            <Text style={styles.editButton}>
+              {t(isEditing ? 'global.Cancel' : 'global.Edit')}
+            </Text>
+          </TouchableOpacity>
+        </View>
+        <View style={styles.descContainer}>
+          <Text style={styles.desc}>{t('page.customTestnet.desc')}</Text>
+        </View>
+        <View style={styles.main}>
+          <CustomTestnetList
+            isEditing={isEditing}
+            refreshVersion={listRefreshVersion}
+            onEdit={handleEditClick}
           />
-        </NormalScreenContainer>
-      </TouchableWithoutFeedback>
+        </View>
+        <View style={styles.footer}>
+          <Button
+            title={t('page.customTestnet.add')}
+            height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+            titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
+            onPress={handleAddClick}
+          />
+        </View>
+      </NormalScreenContainer>
       <EditCustomTestnetPopup
         ref={modalRef}
         visible={state.isShowModal}
@@ -204,28 +214,73 @@ export function CustomTestnetScreen(): JSX.Element {
   );
 }
 
-const getStyles = (colors: AppColorsVariants) =>
-  StyleSheet.create({
-    descContainer: {
-      marginTop: 8,
-      marginBottom: 20,
-      paddingHorizontal: 20,
-    },
-    desc: {
-      fontSize: 14,
-      fontWeight: '400',
-      lineHeight: 16,
-      textAlign: 'center',
-      color: colors['neutral-body'],
-    },
-    main: {
-      flex: 1,
-    },
-    list: {
-      paddingHorizontal: 20,
-      height: '100%',
-    },
-    item: {
-      marginBottom: 12,
-    },
-  });
+const getStyles = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
+  screen: {
+    backgroundColor: colors2024['neutral-bg-0'],
+  },
+  header: {
+    height: 56,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+  },
+  headerTitle: {
+    position: 'absolute',
+    left: 64,
+    right: 64,
+    alignItems: 'center',
+  },
+  title: {
+    fontFamily: 'SF Pro Rounded',
+    fontWeight: '900',
+    fontSize: 20,
+    lineHeight: 24,
+    color: colors2024['neutral-title-1'],
+  },
+  backIcon: {
+    transform: [{ rotate: '180deg' }],
+  },
+  editButton: {
+    fontFamily: 'SF Pro Rounded',
+    fontWeight: '700',
+    fontSize: 16,
+    lineHeight: 20,
+    color: colors2024['brand-default'],
+  },
+  descContainer: {
+    marginTop: 8,
+    marginBottom: 20,
+    paddingHorizontal: 24,
+  },
+  desc: {
+    fontFamily: 'SF Pro Rounded',
+    fontWeight: '500',
+    fontSize: 16,
+    lineHeight: 20,
+    textAlign: 'center',
+    color: colors2024['neutral-secondary'],
+  },
+  main: {
+    flex: 1,
+  },
+  list: {
+    paddingHorizontal: 16,
+    flex: 1,
+  },
+  listContent: {
+    paddingBottom: 24,
+  },
+  item: {
+    marginBottom: 12,
+  },
+  emptyList: {
+    flexGrow: 1,
+  },
+  footer: {
+    paddingHorizontal: 20,
+    paddingTop: BOTTOM_BUTTON_TOP_OFFSET,
+    paddingBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
+    backgroundColor: colors2024['neutral-bg-1'],
+  },
+}));
