@@ -8,6 +8,9 @@ import { formatUsdValue } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import { SelectedBadge } from '../components/SelectedBadge';
 
+export const PAYMENT_ROW_HEIGHT = 70;
+export const PAYMENT_ROW_GAP = 8;
+
 export const PaymentAssetRow = React.memo(function PaymentAssetRow({
   itemKey,
   logoUrl,
@@ -58,8 +61,8 @@ export const PaymentAssetRow = React.memo(function PaymentAssetRow({
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   row: {
-    height: 70,
-    marginBottom: 8,
+    height: PAYMENT_ROW_HEIGHT,
+    marginBottom: PAYMENT_ROW_GAP,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 14,
