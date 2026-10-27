@@ -98,6 +98,7 @@ export function SettingNavigator() {
           title: 'Custom Network',
           headerTitle: 'Custom Network',
           ...headerPresets.withBgCard2,
+          headerShown: false,
         }}
       />
       {__DEV__ && (
