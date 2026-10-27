@@ -10,6 +10,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { Skeleton } from '@rneui/themed';
 import { useMemoizedFn } from 'ahooks';
 import { useTranslation } from 'react-i18next';
+import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
 import { Text } from '@/components/Typography';
 import { toast } from '@/components2024/Toast';
 import { IS_IOS } from '@/core/native/utils';
@@ -408,6 +409,7 @@ export const MemeCoinHomeScreen = () => {
         onBuy={handleBuy}
         onSell={handleSell}
       />
+      <AccountSwitcherModal forScene="MakeTransactionAbout" inScreen />
     </KeyboardAvoidingView>
   );
 };
