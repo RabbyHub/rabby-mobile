@@ -37,6 +37,7 @@ export interface Props extends Omit<TextInputProps, 'style'> {
   inputContainerStyle?: StyleProp<ViewStyle>;
   onCancel?(): void;
   noCancel?: boolean;
+  centerPlaceholder?: boolean;
   searchIcon?: ReactNode;
   alwaysShowCancel?: boolean;
   inputStyle?: StyleProp<TextStyle>;
@@ -64,6 +65,7 @@ export const NextSearchBar = ({
   onFocus,
   onCancel,
   noCancel,
+  centerPlaceholder = false,
   as = 'TextInput',
   inputComponent,
   placeholder,
@@ -91,17 +93,19 @@ export const NextSearchBar = ({
     height: number;
   } | null>(null);
   const [isFocus, setIsFocus] = useState(false);
+  const showCenteredPlaceholder =
+    centerPlaceholder && isEmpty && !isFocus && !!placeholder;
 
   const flattenedInputStyle: TextStyle =
     StyleSheet.flatten([styles.input as TextStyle, inputStyle]) ?? {};
   const effectivePlaceholderColor =
     placeholderTextColor ?? styles.placeholder.color;
   // Fabric's iOS TextInput draws the native placeholder lower than the text
-  // baseline when the field has an explicit height (QA 1022/672). Android's
-  // native hint wraps inside that same 46px box when the string is long.
-  // Keep the native placeholder for semantics but paint a single-line one
-  // ourselves, centered against the same box as the input text.
-  const useManagedPlaceholder = !!placeholder && isEmpty;
+  // baseline when the field has an explicit height (QA 1022/672). Keep the
+  // native placeholder for semantics but paint the visible one ourselves,
+  // centered against the same box as the input text.
+  const useManagedPlaceholder =
+    !!placeholder && isEmpty && !showCenteredPlaceholder;
   const showManagedPlaceholder =
     useManagedPlaceholder &&
     !!inputLayout &&
@@ -142,6 +146,14 @@ export const NextSearchBar = ({
 
   const InputComponent =
     inputComponent || (as === 'TextInput' ? TextInput : BottomSheetTextInput);
+  const renderedSearchIcon = searchIcon || (
+    <RcNextSearchCC
+      style={styles.searchIcon}
+      color={colors2024['neutral-secondary']}
+      width={20}
+      height={20}
+    />
+  );
 
   useImperativeHandle(ref, () => {
     return {
@@ -171,18 +183,13 @@ export const NextSearchBar = ({
           style={StyleSheet.absoluteFill}
         />
         <TouchableWithoutFeedback
+          {...(showCenteredPlaceholder && { accessible: false })}
+          style={showCenteredPlaceholder && styles.hiddenInputContent}
           hitSlop={8}
           onPress={() => {
             inputRef.current?.focus();
           }}>
-          {searchIcon || (
-            <RcNextSearchCC
-              style={styles.searchIcon}
-              color={colors2024['neutral-secondary']}
-              width={20}
-              height={20}
-            />
-          )}
+          {renderedSearchIcon}
         </TouchableWithoutFeedback>
         <InputComponent
           ref={inputRef}
@@ -190,10 +197,14 @@ export const NextSearchBar = ({
             styles.input,
             inputStyle,
             isEmpty ? styles.placeholder : null,
+            showCenteredPlaceholder && styles.hiddenInputContent,
           ])}
+          {...(showCenteredPlaceholder && { accessible: false })}
           placeholder={placeholder}
           placeholderTextColor={
-            showManagedPlaceholder ? 'transparent' : effectivePlaceholderColor
+            showManagedPlaceholder || showCenteredPlaceholder
+              ? 'transparent'
+              : effectivePlaceholderColor
           }
           value={effectiveValue}
           onChangeText={handleChangeText}
@@ -205,6 +216,28 @@ export const NextSearchBar = ({
           spellCheck={false}
           {...rest}
         />
+        {showCenteredPlaceholder && placeholder ? (
+          <Pressable
+            accessibilityLabel={placeholder}
+            accessibilityRole="button"
+            onPress={() => inputRef.current?.focus()}
+            style={[StyleSheet.absoluteFill, styles.centeredPlaceholder]}>
+            <View
+              pointerEvents="none"
+              style={styles.centeredPlaceholderContent}>
+              {renderedSearchIcon}
+              <Text
+                numberOfLines={1}
+                style={[
+                  styles.placeholder,
+                  styles.centeredPlaceholderText,
+                  { color: effectivePlaceholderColor },
+                ]}>
+                {placeholder}
+              </Text>
+            </View>
+          </Pressable>
+        ) : null}
         {showManagedPlaceholder ? (
           <View
             pointerEvents="none"
@@ -299,6 +332,25 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
 
   searchIcon: {},
   closeIcon: {},
+  hiddenInputContent: {
+    opacity: 0,
+  },
+  centeredPlaceholder: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 12,
+  },
+  centeredPlaceholderContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
+    maxWidth: '100%',
+  },
+  centeredPlaceholderText: {
+    fontSize: 16,
+    lineHeight: 20,
+    flexShrink: 1,
+  },
   input: {
     flex: 1,
     fontFamily: 'SF Pro Rounded',
