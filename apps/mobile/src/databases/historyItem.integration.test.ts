@@ -227,6 +227,35 @@ describe('HistoryItemEntity queries', () => {
     ).resolves.toBe(3);
   });
 
+  it('returns the newest time per owner, merging owner address case', async () => {
+    const now = nowSec();
+    const source = await saveItems([
+      makeHistoryItem({ owner: OWNER_A, txHash: '0xa1', time_at: now - 30 }),
+      makeHistoryItem({ owner: OWNER_A, txHash: '0xa2', time_at: now - 10 }),
+      makeHistoryItem({
+        owner: OWNER_B.toUpperCase().replace('0X', '0x'),
+        txHash: '0xb1',
+        time_at: now - 5,
+      }),
+      makeHistoryItem({ owner: OWNER_B, txHash: '0xb2', time_at: now - 50 }),
+    ]);
+
+    await expect(
+      HistoryItemEntity.getLatestTimeByOwner(source),
+    ).resolves.toEqual({
+      [OWNER_A]: now - 10,
+      [OWNER_B]: now - 5,
+    });
+  });
+
+  it('returns no owners for an empty history table', async () => {
+    dataSource = await createMemoryAppDataSource();
+
+    await expect(
+      HistoryItemEntity.getLatestTimeByOwner(dataSource),
+    ).resolves.toEqual({});
+  });
+
   it('returns the status of unread incoming transactions', async () => {
     const recent = nowSec() - 60;
     const failed = makeHistoryItem({
