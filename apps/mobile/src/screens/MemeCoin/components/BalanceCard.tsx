@@ -1,4 +1,5 @@
 import React from 'react';
+import { Skeleton } from '@rneui/themed';
 import { useTranslation } from 'react-i18next';
 import LinearGradient from 'react-native-linear-gradient';
 import RcBalanceCloud from '@/assets2024/memecoin/balance-cloud.svg';
@@ -9,7 +10,14 @@ import { createGetStyles2024 } from '@/utils/styles';
 
 const GRADIENT_END_LIGHT = '#FEFAED';
 
-export const BalanceCard = ({ totalUsd }: { totalUsd: number }) => {
+export const BalanceCard = ({
+  totalUsd,
+  loading,
+}: {
+  /** null when holdings could not be loaded */
+  totalUsd: number | null;
+  loading: boolean;
+}) => {
   const { t } = useTranslation();
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
 
@@ -27,9 +35,13 @@ export const BalanceCard = ({ totalUsd }: { totalUsd: number }) => {
         <RcBalanceCloud width={76} height={32} style={styles.cloud} />
       ) : null}
       <Text style={styles.label}>{t('page.memeCoin.balance')}</Text>
-      <Text style={styles.value} numberOfLines={1}>
-        {formatUsdValue(totalUsd)}
-      </Text>
+      {loading ? (
+        <Skeleton width={140} height={36} style={styles.valueSkeleton} />
+      ) : (
+        <Text style={styles.value} numberOfLines={1}>
+          {totalUsd === null ? '--' : formatUsdValue(totalUsd)}
+        </Text>
+      )}
       <Text style={styles.pnl}>--</Text>
     </LinearGradient>
   );
@@ -65,6 +77,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 36,
     fontWeight: '900',
     color: colors2024['neutral-title-1'],
+  },
+  valueSkeleton: {
+    marginTop: 20,
+    borderRadius: 8,
   },
   pnl: {
     marginTop: 8,

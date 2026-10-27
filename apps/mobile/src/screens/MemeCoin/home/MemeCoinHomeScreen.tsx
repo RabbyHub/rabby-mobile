@@ -303,7 +303,10 @@ export const MemeCoinHomeScreen = () => {
 
   const listHeader = (
     <View style={styles.listHeader}>
-      <BalanceCard totalUsd={totalUsd} />
+      <BalanceCard
+        totalUsd={holdingsLoaded ? totalUsd : null}
+        loading={!holdingsLoaded && !holdingsLoadFailed}
+      />
       <HoldingsPill mode={mode} avatars={holdingAvatars} onPress={switchMode} />
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>
