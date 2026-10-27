@@ -41,6 +41,16 @@ function beforeSendSentryTransaction(event: SentryTransactionEvent) {
 
 const EVM_ADDRESS_PATTERN = /\b0x[0-9a-fA-F]{40}\b/g;
 export const SENTRY_REDACTED_ADDRESS = '0x[redacted]';
+export const SENTRY_REDACTED = '[redacted]';
+// A private key has the same shape as a tx/block hash, so every 32-byte hex
+// value is dropped.
+const HEX_32_BYTES_PATTERN = /\b(?:0x)?[0-9a-fA-F]{64}\b/g;
+const SENSITIVE_KEY_PATTERN =
+  /mnemonic|seed|phrase|private_?key|secret|password|passphrase|vault|keystore|ciphertext|entropy/i;
+const MNEMONIC_MIN_WORDS = 12;
+// 12+ words separated only by whitespace, commas, quotes or brackets, as in a
+// typed phrase, `String(words)` or `JSON.stringify(words)`.
+const WORD_RUN_PATTERN = /[a-z]+(?:[\s,"'[\]]+[a-z]+){11,}/gi;
 // Rabby API GETs carry addresses in query params (`?id=0x…`, `?user_addr=…`).
 const URL_QUERY_IN_TEXT_PATTERN =
   /\b((?:https?|wss?):\/\/[^\s?#"'<>]+)[?#][^\s"'<>]*/gi;
@@ -53,10 +63,90 @@ const URL_QUERY_KEYS = new Set([
 ]);
 const MAX_SCRUB_DEPTH = 12;
 
+let bip39Words: Set<string> | undefined;
+
+function isBip39Word(word: string) {
+  if (!bip39Words) {
+    // Loaded on first scrub: index.js imports this module eagerly, and the
+    // wordlist is not needed until something is about to be sent.
+    const { wordlist } =
+      require('@scure/bip39/wordlists/english') as typeof import('@scure/bip39/wordlists/english');
+    bip39Words = new Set(wordlist);
+  }
+  return bip39Words.has(word.toLowerCase());
+}
+
+function redactMnemonicRuns(text: string) {
+  return text.replace(WORD_RUN_PATTERN, run => {
+    const spans: Array<[number, number]> = [];
+    let runStart = 0;
+    let runEnd = 0;
+    let count = 0;
+    const closeRun = () => {
+      if (count >= MNEMONIC_MIN_WORDS) {
+        spans.push([runStart, runEnd]);
+      }
+      count = 0;
+    };
+
+    const wordPattern = /[a-z]+/gi;
+    for (
+      let match = wordPattern.exec(run);
+      match;
+      match = wordPattern.exec(run)
+    ) {
+      if (!isBip39Word(match[0])) {
+        closeRun();
+        continue;
+      }
+      if (count === 0) {
+        runStart = match.index;
+      }
+      count += 1;
+      runEnd = match.index + match[0].length;
+    }
+    closeRun();
+
+    if (!spans.length) {
+      return run;
+    }
+    let output = '';
+    let cursor = 0;
+    for (const [start, end] of spans) {
+      output += run.slice(cursor, start) + SENTRY_REDACTED;
+      cursor = end;
+    }
+    return output + run.slice(cursor);
+  });
+}
+
+function isMnemonicWordList(values: unknown[]) {
+  let count = 0;
+  for (const item of values) {
+    if (typeof item === 'string' && isBip39Word(item.trim())) {
+      count += 1;
+    }
+  }
+  return count >= MNEMONIC_MIN_WORDS;
+}
+
+function isSensitiveEntry(key: string, value: unknown) {
+  return (
+    SENSITIVE_KEY_PATTERN.test(key) &&
+    value !== null &&
+    value !== undefined &&
+    typeof value !== 'boolean' &&
+    typeof value !== 'number'
+  );
+}
+
 function scrubSentryText(text: string) {
-  return text
-    .replace(URL_QUERY_IN_TEXT_PATTERN, '$1')
-    .replace(EVM_ADDRESS_PATTERN, SENTRY_REDACTED_ADDRESS);
+  return redactMnemonicRuns(
+    text
+      .replace(URL_QUERY_IN_TEXT_PATTERN, '$1')
+      .replace(HEX_32_BYTES_PATTERN, SENTRY_REDACTED)
+      .replace(EVM_ADDRESS_PATTERN, SENTRY_REDACTED_ADDRESS),
+  );
 }
 
 function isPlainObject(value: object): value is Record<string, unknown> {
@@ -107,6 +197,10 @@ function scrubSentryValue(
     return value;
   }
 
+  if (Array.isArray(value) && isMnemonicWordList(value)) {
+    return SENTRY_REDACTED;
+  }
+
   ancestors.add(value);
   try {
     if (Array.isArray(value)) {
@@ -128,12 +222,9 @@ function scrubSentryValue(
       }
 
       const scrubbedKey = scrubSentryText(entryKey);
-      const scrubbedValue = scrubSentryValue(
-        entryValue,
-        depth + 1,
-        ancestors,
-        entryKey,
-      );
+      const scrubbedValue = isSensitiveEntry(entryKey, entryValue)
+        ? SENTRY_REDACTED
+        : scrubSentryValue(entryValue, depth + 1, ancestors, entryKey);
       changed ||= scrubbedKey !== entryKey || scrubbedValue !== entryValue;
 
       let outputKey = scrubbedKey;
@@ -153,8 +244,10 @@ function scrubSentryValue(
 }
 
 /**
- * Strips URL query strings and redacts EVM addresses from anything that is
- * about to leave the device (events, transactions, breadcrumbs).
+ * Strips URL query strings and redacts EVM addresses, 32-byte hex values
+ * (private keys), BIP39 mnemonics and values under secret-looking keys from
+ * anything that is about to leave the device (events, transactions,
+ * breadcrumbs).
  */
 export function scrubSentryPayload<T>(payload: T): T {
   return scrubSentryValue(payload, 0, new Set()) as T;
@@ -363,6 +456,10 @@ export function initSentry() {
     enableAutoSessionTracking: true,
     environment: getSentryEnv(),
     debug: SENTRY_DEBUG,
+    // Console output can carry anything (a logged seed phrase, keyring state)
+    // and builds that keep `console` still report here, so it never becomes
+    // breadcrumbs. Overrides the default Breadcrumbs integration by name.
+    integrations: [Sentry.breadcrumbsIntegration({ console: false })],
     beforeBreadcrumb: beforeSendSentryBreadcrumb,
     beforeSend: beforeSendSentryEvent,
     beforeSendTransaction: beforeSendSentryTransaction,

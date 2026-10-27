@@ -429,9 +429,12 @@ describe('sentry scrubbing', () => {
     });
   });
 
-  it('keeps unchanged payloads, longer hex values and cycles intact', () => {
+  it('keeps unchanged payloads intact and survives cycles', () => {
     const { sentryModule } = loadInitOptions();
-    const clean = { message: `tx ${TX_HASH}`, extra: { count: 1 } };
+    const clean = {
+      message: 'Unexpected database failure while loading tokens',
+      extra: { count: 1, hasSeedPhrase: true, passwordAttempts: 2 },
+    };
     const cyclic: Record<string, unknown> = { address: ADDRESS };
     cyclic.self = cyclic;
 
@@ -446,5 +449,133 @@ describe('sentry scrubbing', () => {
     const { options } = loadInitOptions();
 
     expect(options.enableNetworkBreadcrumbs).toBe(false);
+  });
+});
+
+const PRIVATE_KEY =
+  '4c0883a69102937d6231471b5dbb6204fe5129617082792ae468d01a3f362318';
+const MNEMONIC_WORDS = [
+  'legal',
+  'winner',
+  'thank',
+  'year',
+  'wave',
+  'sausage',
+  'worth',
+  'useful',
+  'legal',
+  'winner',
+  'thank',
+  'yellow',
+];
+const MNEMONIC = MNEMONIC_WORDS.join(' ');
+
+describe('sentry secret scrubbing', () => {
+  afterEach(() => {
+    jest.resetModules();
+    jest.clearAllMocks();
+    (globalThis as { __DEV__?: boolean }).__DEV__ = originalDev;
+    jest.dontMock('@/core/native/RNHelpers');
+    jest.dontMock('react-native-haptic-feedback');
+    jest.dontMock('@/constant');
+    jest.dontMock('@/constant/env');
+  });
+
+  function scrub<T>(payload: T) {
+    return loadSentryFilterModule().scrubSentryPayload(payload);
+  }
+
+  it('redacts 32-byte hex values such as private keys and tx hashes', () => {
+    const scrubbed = scrub({
+      message: `import failed for ${PRIVATE_KEY}`,
+      extra: { key: `0x${PRIVATE_KEY}`, hash: TX_HASH },
+    });
+
+    expect(scrubbed).toEqual({
+      message: 'import failed for [redacted]',
+      extra: { key: '[redacted]', hash: '[redacted]' },
+    });
+  });
+
+  it('redacts values under secret-looking keys but keeps flags', () => {
+    const scrubbed = scrub({
+      extra: {
+        mnemonic: 'anything at all',
+        privateKey: { raw: 'nested' },
+        password: '123456',
+        vault: 'agent-key',
+        seedPhraseBackedUp: true,
+        passwordAttempts: 3,
+        keyringType: 'HD Key Tree',
+      },
+    });
+
+    expect(scrubbed.extra).toEqual({
+      mnemonic: '[redacted]',
+      privateKey: '[redacted]',
+      password: '[redacted]',
+      vault: '[redacted]',
+      seedPhraseBackedUp: true,
+      passwordAttempts: 3,
+      keyringType: 'HD Key Tree',
+    });
+  });
+
+  it.each([
+    ['space separated', `restore with ${MNEMONIC} failed`],
+    ['comma joined', `words: ${String(MNEMONIC_WORDS)}`],
+    ['JSON array', `words: ${JSON.stringify(MNEMONIC_WORDS)}`],
+    ['capitalized', `restore with ${MNEMONIC.toUpperCase()} failed`],
+  ])('redacts a BIP39 mnemonic in text (%s)', (_label, text) => {
+    const scrubbed = scrub({ message: text });
+
+    expect(scrubbed.message).toContain('[redacted]');
+    MNEMONIC_WORDS.forEach(word => {
+      expect(scrubbed.message.toLowerCase()).not.toMatch(
+        new RegExp(`\\b${word}\\b`),
+      );
+    });
+  });
+
+  it('redacts a logged word array such as console breadcrumb arguments', () => {
+    const breadcrumb = {
+      category: 'console',
+      message: String(MNEMONIC_WORDS),
+      data: { arguments: [MNEMONIC_WORDS], logger: 'console' },
+    };
+
+    const scrubbed = scrub(breadcrumb);
+
+    expect(scrubbed.message).toBe('[redacted]');
+    expect(scrubbed.data.arguments).toEqual(['[redacted]']);
+    expect(breadcrumb.data.arguments[0]).toBe(MNEMONIC_WORDS);
+  });
+
+  it('keeps short word runs and ordinary sentences', () => {
+    const shortRun = MNEMONIC_WORDS.slice(0, 11).join(' ');
+    const sentence =
+      'The quick brown fox jumps over the lazy dog while the user waits for the network';
+    const payload = { message: shortRun, extra: { note: sentence } };
+
+    expect(scrub(payload)).toBe(payload);
+  });
+
+  it('never enables screenshots, view hierarchy, replay or console breadcrumbs', () => {
+    const { sentry, sentryModule } = loadSentryModule({
+      userBehaviorTrackingOptOut: false,
+    });
+    sentryModule.initSentry();
+    const options = (sentry.init as jest.Mock).mock.calls[0][0];
+
+    expect(options.attachScreenshot).not.toBe(true);
+    expect(options.attachViewHierarchy).not.toBe(true);
+    expect(options.sendDefaultPii).not.toBe(true);
+    expect(options.replaysSessionSampleRate).toBeUndefined();
+    expect(options.replaysOnErrorSampleRate).toBeUndefined();
+    expect(options._experiments?.replaysSessionSampleRate).toBeUndefined();
+    expect(options._experiments?.replaysOnErrorSampleRate).toBeUndefined();
+    expect(options.integrations).toEqual([
+      { name: 'Breadcrumbs', options: { console: false } },
+    ]);
   });
 });
