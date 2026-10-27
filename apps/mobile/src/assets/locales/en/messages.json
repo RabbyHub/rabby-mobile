@@ -3380,7 +3380,9 @@
       "noHoldings": "No holdings yet",
       "loadFailed": "Failed to load. Tap to retry",
       "buyN": "Buy {{count}} Memes",
+      "buyN_one": "Buy {{count}} Meme",
       "sellN": "Sell {{count}} Memes",
+      "sellN_one": "Sell {{count}} Meme",
       "allocateTip": "Allocate buy amount by market cap ratio of selected coins.",
       "maxPriceImpact": "Max Price Impact",
       "unsupportedAccount": "Memecoin trading only supports seed phrase and private key addresses",
@@ -3388,6 +3390,7 @@
       "buy": {
         "amount": "Buy Amount",
         "memes": "{{count}} memes",
+        "memes_one": "{{count}} meme",
         "totalMemes": "{{count}} total memes",
         "selectAssets": "Select assets for payment",
         "estPayment": "Est. Payment {{amount}}",
@@ -3401,6 +3404,7 @@
       "execute": {
         "title": "Execute",
         "buySubtitle": "Trades on the same chain run one by one; different chains run in parallel.",
+        "buySubtitleShort": "Runs in order per chain, in parallel across chains.",
         "sellSubtitle": "Proceeds remain on respective chains",
         "estReceipt": "Est. receipt(USD)",
         "statusPending": "Pending",

@@ -99,7 +99,7 @@ const MemeCoinExecuteContent = ({
             <Text style={styles.title}>{t('page.memeCoin.execute.title')}</Text>
             <Text style={styles.subtitle}>
               {mode === 'buy'
-                ? t('page.memeCoin.execute.buySubtitle')
+                ? t('page.memeCoin.execute.buySubtitleShort')
                 : t('page.memeCoin.execute.sellSubtitle')}
             </Text>
           </View>
