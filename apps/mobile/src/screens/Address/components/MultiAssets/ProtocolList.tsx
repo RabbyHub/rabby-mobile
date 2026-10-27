@@ -154,7 +154,7 @@ export const ProtocolList = () => {
   const [showAllProtocols, setShowAllProtocols] = useState(false);
   const { isFocused, isFocusing } = useIsFocusedCurrentTab(TabName.defi);
 
-  useScrollToTopOnChainChange({
+  const suspendVisibleAnchor = useScrollToTopOnChainChange({
     chain,
     isCurrentTab: isFocusing,
   });
@@ -727,9 +727,10 @@ export const ProtocolList = () => {
         maxToRenderPerBatch={8}
         updateCellsBatchingPeriod={32}
         removeClippedSubviews={IS_ANDROID}
-        {...(!IS_ANDROID && {
-          maintainVisibleContentPosition: { minIndexForVisible: 0 },
-        })}
+        {...(!IS_ANDROID &&
+          !suspendVisibleAnchor && {
+            maintainVisibleContentPosition: { minIndexForVisible: 0 },
+          })}
         onLayout={onHighCardinalityListLayout}
         onContentSizeChange={onHighCardinalityListContentSizeChange}
         onViewableItemsChanged={onHighCardinalityViewableItemsChanged}

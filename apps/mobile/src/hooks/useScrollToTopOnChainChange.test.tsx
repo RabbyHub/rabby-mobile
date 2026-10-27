@@ -8,7 +8,10 @@ const mockTabsContext: {
   refMap: {
     token: {
       current?: {
-        getScrollResponder: () => { scrollTo: typeof mockNativeScrollTo };
+        getScrollResponder: () => {
+          scrollTo: typeof mockNativeScrollTo;
+          props?: { contentInset?: { top?: number } };
+        };
       } | null;
     };
   };
@@ -50,8 +53,8 @@ describe('useScrollToTopOnChainChange', () => {
     rerender({ chain: 'eth', isCurrentTab: true });
     await flushFrames();
 
-    expect(mockScrollTo).toHaveBeenCalledTimes(1);
-    expect(mockScrollTo).toHaveBeenCalledWith(
+    expect(mockScrollTo).toHaveBeenCalledTimes(2);
+    expect(mockScrollTo).toHaveBeenLastCalledWith(
       {},
       0,
       0,
@@ -72,7 +75,14 @@ describe('useScrollToTopOnChainChange', () => {
 
     rerender({ chain: 'eth', isCurrentTab: true });
     await flushFrames();
-    expect(mockScrollTo).toHaveBeenCalledTimes(1);
+    expect(mockScrollTo).toHaveBeenCalledTimes(2);
+    expect(mockScrollTo).toHaveBeenLastCalledWith(
+      {},
+      0,
+      0,
+      false,
+      expect.any(String),
+    );
   });
 
   it('scrolls to the visual top instead of the first row', async () => {
@@ -90,11 +100,39 @@ describe('useScrollToTopOnChainChange', () => {
     rerender({ chain: 'eth', isCurrentTab: true });
     await flushFrames();
 
-    expect(mockNativeScrollTo).toHaveBeenCalledWith({
+    expect(mockNativeScrollTo).toHaveBeenLastCalledWith({
       x: 0,
       y: -36,
       animated: false,
     });
     expect(mockScrollTo).not.toHaveBeenCalled();
   });
+
+  it.each([0, 32])(
+    'uses the applied inset %s instead of the shared inset',
+    async appliedInset => {
+      mockTabsContext.contentInset.value = 36;
+      mockTabsContext.refMap.token = {
+        current: {
+          getScrollResponder: () => ({
+            scrollTo: mockNativeScrollTo,
+            props: { contentInset: { top: appliedInset } },
+          }),
+        },
+      };
+      const { rerender } = renderHook(
+        props => useScrollToTopOnChainChange(props),
+        { initialProps: { chain: undefined, isCurrentTab: true } },
+      );
+
+      rerender({ chain: 'eth', isCurrentTab: true });
+      await flushFrames();
+
+      expect(mockNativeScrollTo).toHaveBeenLastCalledWith({
+        x: 0,
+        y: -appliedInset,
+        animated: false,
+      });
+    },
+  );
 });
