@@ -1,5 +1,6 @@
 import type { BridgeHistory } from '@rabby-wallet/rabby-api/dist/types';
 import type { BridgeTxHistoryItem } from '@/core/services/transactionHistory';
+import { ONE_HOUR_MS } from '../constants';
 import type { BridgeRecordData } from './statusTypes';
 
 export const getBridgeRecordKey = (record: BridgeRecordData) =>
@@ -10,20 +11,31 @@ export const getBridgeRecordKey = (record: BridgeRecordData) =>
 export const sameBridgeHash = (left?: string, right?: string) =>
   !!left && !!right && left.toLowerCase() === right.toLowerCase();
 
+type BridgeHistoryLookup = {
+  chain?: string;
+  hash?: string;
+  acceleratedHash?: string;
+};
+
 export function findBridgeHistory(
   list: BridgeHistory[],
-  local: BridgeTxHistoryItem,
+  source: BridgeHistoryLookup,
 ) {
+  const byHash = (hash?: string) =>
+    list.find(
+      item =>
+        item.from_token.chain === source.chain &&
+        sameBridgeHash(item.from_tx?.tx_id, hash),
+    );
+  return byHash(source.acceleratedHash) || byHash(source.hash);
+}
+
+/** 本地还在等远程记录，且创建已超过 1 小时。终态和已取消不算。 */
+export function isStaleUnmatchedLocal(local: BridgeTxHistoryItem) {
   return (
-    list.find(
-      item =>
-        item.from_token.chain === local.fromToken.chain &&
-        sameBridgeHash(item.from_tx?.tx_id, local.acceleratedHash),
-    ) ||
-    list.find(
-      item =>
-        item.from_token.chain === local.fromToken.chain &&
-        sameBridgeHash(item.from_tx?.tx_id, local.hash),
-    )
+    !local.isCanceled &&
+    (local.status === 'pending' || local.status === 'fromSuccess') &&
+    !!local.createdAt &&
+    Date.now() - local.createdAt > ONE_HOUR_MS
   );
 }

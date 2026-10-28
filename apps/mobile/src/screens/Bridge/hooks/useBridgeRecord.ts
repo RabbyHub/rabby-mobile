@@ -3,11 +3,12 @@ import { useInterval, useMemoizedFn } from 'ahooks';
 import { openapi } from '@/core/request';
 import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
 import type { BridgeTxHistoryItem } from '@/core/services/transactionHistory';
+import { bridgeRemoteSourceCompleteTs } from '../utils/remoteFromTx';
 import { getBridgeStatus } from '../utils/status';
 import {
   findBridgeHistory,
   getBridgeRecordKey,
-  sameBridgeHash,
+  isStaleUnmatchedLocal,
 } from '../utils/record';
 import type { BridgeRecordData } from '../utils/statusTypes';
 
@@ -58,8 +59,16 @@ export function useBridgeRecord(initial: BridgeRecordData, enabled: boolean) {
     try {
       let local = record.local;
       // 先同步本地源链确认、加速和取消结果，再查询跨链状态。
+      // 存储里还没有完成时间时，保留内存里已经记下的时间。
       if (local) {
-        local = (await readLocalBridgeRecord(local)) || local;
+        const rememberedCompleteTs = local.fromTxCompleteTs;
+        const stored = await readLocalBridgeRecord(local);
+        local = stored
+          ? {
+              ...stored,
+              fromTxCompleteTs: stored.fromTxCompleteTs || rememberedCompleteTs,
+            }
+          : local;
       }
       if (!isCurrent()) {
         return;
@@ -98,15 +107,53 @@ export function useBridgeRecord(initial: BridgeRecordData, enabled: boolean) {
       if (!isCurrent()) {
         return;
       }
-      const history = local
-        ? findBridgeHistory(response.history_list || [], local)
-        : response.history_list?.find(
-            item =>
-              item.from_token.chain === record.history?.from_token.chain &&
-              sameBridgeHash(item.from_tx.tx_id, record.history?.from_tx.tx_id),
-          );
+      const list = Array.isArray(response.history_list)
+        ? response.history_list
+        : undefined;
+      const history = list
+        ? findBridgeHistory(list, {
+            chain: local?.fromToken.chain ?? record.history?.from_token.chain,
+            hash: local ? local.hash : record.history?.from_tx.tx_id,
+            acceleratedHash: local?.acceleratedHash,
+          })
+        : undefined;
+      // 列表正常返回、又对不上，且本地从未有过远程记录时，才结束这条待处理。
+      if (
+        local &&
+        list &&
+        !history &&
+        !record.history &&
+        isStaleUnmatchedLocal(local)
+      ) {
+        await transactionHistoryServiceApi.completeBridgeTxHistory(
+          local.hash,
+          local.fromChainId,
+          'failed',
+        );
+        if (isCurrent()) {
+          setRecord({
+            ...record,
+            local: { ...local, status: 'failed', completedAt: Date.now() },
+          });
+        }
+        return;
+      }
       let next = { ...record, local, history: history ?? record.history };
       if (local && history && !local.isCanceled) {
+        // 与插件一致：远程 time_at，否则沿用已有时间，再没有才用当前时间。
+        if (
+          history.status === 'pending' &&
+          history.from_tx?.status === 'success'
+        ) {
+          local = {
+            ...local,
+            fromTxCompleteTs:
+              bridgeRemoteSourceCompleteTs(history) ||
+              local.fromTxCompleteTs ||
+              Date.now(),
+          };
+        }
+        next = { ...next, local };
         const status = getBridgeStatus(next);
         const terminal =
           status.scene === 'succeeded'

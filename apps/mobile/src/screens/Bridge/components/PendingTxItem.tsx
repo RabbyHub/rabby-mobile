@@ -69,7 +69,10 @@ export const BridgePendingTxItem = ({
     active && !!local,
   );
   const status = useBridgeStatus(record, active, 'card');
-  const visible = !!(record.local || record.history);
+  const visible = !!(
+    record.history ||
+    (record.local && record.local.status !== 'failed')
+  );
   // 同步卡片显示状态，供父组件调整底部信息。
   useEffect(() => {
     onDisplayChange?.(visible);
