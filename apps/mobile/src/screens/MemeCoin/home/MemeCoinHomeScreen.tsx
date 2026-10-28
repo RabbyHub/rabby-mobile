@@ -483,7 +483,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontSize: 14,
     lineHeight: 18,
     fontWeight: '400',
-    color: colors2024['neutral-body'],
+    color: colors2024['neutral-secondary'],
   },
   sectionAction: {
     paddingRight: 8,
