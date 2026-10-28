@@ -20,6 +20,10 @@ import {
   TokenItem,
 } from '@rabby-wallet/rabby-api/dist/types';
 import { BridgeSlippage } from './BridgeSlippage';
+import {
+  formatBridgeDuration,
+  getBridgeDurationColor,
+} from '../utils/duration';
 import { tokenPriceImpact } from '../hooks/token';
 import { AppSwitch, AssetAvatar } from '@/components';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -186,16 +190,10 @@ const BridgeShowMore = ({
 
   const showSourceFallback = !!insufficient || !fromToken || !supportDirectSign;
 
-  const durationColor = useMemo(() => {
-    const mins = Math.ceil((duration || 0) / 60);
-    if (mins > 10) {
-      return colors2024['red-default'];
-    }
-    if (mins > 3) {
-      return colors2024['orange-default'];
-    }
-    return colors2024['brand-default'];
-  }, [duration, colors2024]);
+  const durationColor = useMemo(
+    () => getBridgeDurationColor(duration, colors2024),
+    [duration, colors2024],
+  );
 
   const QuoteContent = useMemo(
     () => (
@@ -268,12 +266,10 @@ const BridgeShowMore = ({
       const content = (
         <>
           {isBestQuote ? BestQuoteContent : QuoteContent}
-          {type === 'bridge' && duration ? (
+          {type === 'bridge' && (sourceLogo || sourceName) ? (
             <Text style={[styles.sourceName, { color: durationColor }]}>
               {' · '}
-              {t('page.bridge.duration', {
-                duration: Math.ceil(duration / 60),
-              })}
+              {formatBridgeDuration(duration, t)}
             </Text>
           ) : null}
           {showArrow && (sourceName || sourceLogo) ? (

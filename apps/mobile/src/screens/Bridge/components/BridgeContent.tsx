@@ -680,7 +680,7 @@ export const BridgeContent = ({
                   .toString(),
                 toChainId: toToken.chain,
                 toTokenId: toToken.id,
-                slippage: new BigNumber(slippageState).div(100).toString(10),
+                slippage: new BigNumber(slippage).div(100).toString(10),
                 quoteKey: selectedBridgeQuote.quote_key || {},
               },
               openapi,
@@ -880,7 +880,7 @@ export const BridgeContent = ({
               .toString(),
             toChainId: toToken.chain,
             toTokenId: toToken.id,
-            slippage: new BigNumber(slippageState).div(100).toString(10),
+            slippage: new BigNumber(slippage).div(100).toString(10),
             quoteKey: selectedBridgeQuote.quote_key || {},
           },
           openapi,
@@ -934,7 +934,7 @@ export const BridgeContent = ({
               tx: tx,
               rabby_fee: selectedBridgeQuote.rabby_fee.usd_value,
               fee_rate: Number(feeRate),
-              slippage: new BigNumber(slippageState).div(100).toNumber(),
+              slippage: new BigNumber(slippage).div(100).toNumber(),
               duration: selectedBridgeQuote.duration,
             },
             account: currentAccount,
@@ -1276,7 +1276,7 @@ export const BridgeContent = ({
             toChainId: findChainByServerID(toToken?.chain || '')?.id || 0,
             fromToken: fromToken!,
             toToken: toToken!,
-            slippage: new BigNumber(slippageState).div(100).toNumber(),
+            slippage: new BigNumber(slippage).div(100).toNumber(),
             fromAmount: Number(amount),
             dexId: selectedBridgeQuote?.aggregator.id!,
             toAmount: Number(selectedBridgeQuote?.to_token_amount || 0),
@@ -1335,12 +1335,11 @@ export const BridgeContent = ({
     Number(amount) > 0 &&
     !quoteLoading &&
     !quoteList?.length;
-  const [bridgeProgressVisible, setBridgeProgressVisible] = useState(false);
-  const showStickyInfo =
-    !!fromToken &&
-    !!toToken &&
-    !noQuote &&
-    !(bridgeProgressVisible && !amountAvailable);
+  const showStickyInfo = !!fromToken && !!toToken && !noQuote;
+  const pendingCardAddress =
+    !amountAvailable && !selectedBridgeQuote && !recommendFromToken
+      ? currentAccount?.address
+      : undefined;
   const showClosedMarketTip =
     (!!fromToken || !!toToken) && quoteBlockedByClosedMarket;
 
@@ -1687,6 +1686,43 @@ export const BridgeContent = ({
     [setSlippage, setSlippageChanged],
   );
 
+  const stickyInfo = showStickyInfo ? (
+    <BridgeShowMore
+      insufficient={inSufficient}
+      duration={selectedBridgeQuote?.duration}
+      supportDirectSign={canShowDirectSubmit}
+      openFeePopup={openFeePopup}
+      sourceName={selectedBridgeQuote?.aggregator.name || ''}
+      sourceLogo={selectedBridgeQuote?.aggregator.logo_url || ''}
+      slippage={slippageState}
+      displaySlippage={slippage}
+      onSlippageChange={handleSlippageChange}
+      fromToken={fromToken}
+      toToken={toToken}
+      amount={amount || 0}
+      toAmount={selectedBridgeQuote?.to_token_amount}
+      openQuotesList={openQuotesList}
+      quoteLoading={quoteLoading}
+      slippageError={isSlippageHigh || isSlippageLow}
+      autoSlippage={autoSlippage}
+      isCustomSlippage={isCustomSlippage}
+      setAutoSlippage={setAutoSlippage}
+      setIsCustomSlippage={setIsCustomSlippage}
+      type="bridge"
+      isRabbyFeeFree={feeRate === SWAP_FEE_RATE.FREE}
+      isRabbyFeeHalf={feeRate === SWAP_FEE_RATE.HALF}
+      isBestQuote={
+        !!bestQuoteId &&
+        !!selectedBridgeQuote &&
+        bestQuoteId?.aggregatorId === selectedBridgeQuote.aggregator.id &&
+        bestQuoteId?.bridgeId === selectedBridgeQuote.bridge_id
+      }
+      onDepositPopupVisibleChange={setDepositQuoteRefreshPaused}
+      onSlippageOptionsOpenChange={setSlippageOptionsQuoteRefreshPaused}
+      onGasSettingsOpenChange={setGasSettingsQuoteRefreshPaused}
+    />
+  ) : null;
+
   const footerBottomOffset = getBottomButtonBottomOffset(bottom);
   const footerReserveHeight =
     BOTTOM_BUTTON_TOP_OFFSET +
@@ -1796,92 +1832,62 @@ export const BridgeContent = ({
             </View>
           ) : null}
 
-          <View>
-            {showStickyInfo && (
-              <BridgeShowMore
-                insufficient={inSufficient}
-                duration={selectedBridgeQuote?.duration}
-                supportDirectSign={canShowDirectSubmit}
-                openFeePopup={openFeePopup}
-                sourceName={selectedBridgeQuote?.aggregator.name || ''}
-                sourceLogo={selectedBridgeQuote?.aggregator.logo_url || ''}
-                slippage={slippageState}
-                displaySlippage={slippage}
-                onSlippageChange={handleSlippageChange}
-                fromToken={fromToken}
-                toToken={toToken}
-                amount={amount || 0}
-                toAmount={selectedBridgeQuote?.to_token_amount}
-                openQuotesList={openQuotesList}
-                quoteLoading={quoteLoading}
-                slippageError={isSlippageHigh || isSlippageLow}
-                autoSlippage={autoSlippage}
-                isCustomSlippage={isCustomSlippage}
-                setAutoSlippage={setAutoSlippage}
-                setIsCustomSlippage={setIsCustomSlippage}
-                type="bridge"
-                isRabbyFeeFree={feeRate === SWAP_FEE_RATE.FREE}
-                isRabbyFeeHalf={feeRate === SWAP_FEE_RATE.HALF}
-                isBestQuote={
-                  !!bestQuoteId &&
-                  !!selectedBridgeQuote &&
-                  bestQuoteId?.aggregatorId ===
-                    selectedBridgeQuote.aggregator.id &&
-                  bestQuoteId?.bridgeId === selectedBridgeQuote.bridge_id
-                }
-                onDepositPopupVisibleChange={setDepositQuoteRefreshPaused}
-                onSlippageOptionsOpenChange={
-                  setSlippageOptionsQuoteRefreshPaused
-                }
-                onGasSettingsOpenChange={setGasSettingsQuoteRefreshPaused}
-              />
-            )}
-            {showClosedMarketTip && (
-              <MarketClosedTip style={styles.marketClosedTip} />
-            )}
-            {noQuote && (
-              <>
-                {recommendFromToken ? (
-                  <RecommendFromToken
-                    token={recommendFromToken}
-                    onOk={fillRecommendFromToken}
-                  />
-                ) : (
-                  <>
-                    <Text style={styles.noRecoomedTokenText}>
-                      {t('page.bridge.no-quote-found')}
-                    </Text>
-                    <View style={{ marginHorizontal: 24, marginTop: 12 }}>
-                      <BridgeSlippage
-                        value={slippage}
-                        displaySlippage={slippage}
-                        onChange={handleSlippageChange}
-                        autoSlippage={autoSlippage}
-                        isCustomSlippage={isCustomSlippage}
-                        setAutoSlippage={setAutoSlippage}
-                        setIsCustomSlippage={setIsCustomSlippage}
-                        type="bridge"
-                        loading={quoteLoading}
-                        onOptionsOpenChange={
-                          setSlippageOptionsQuoteRefreshPaused
-                        }
-                      />
-                    </View>
-                  </>
-                )}
-              </>
-            )}
-          </View>
-          {!amountAvailable &&
-            !selectedBridgeQuote &&
-            !recommendFromToken &&
-            currentAccount?.address && (
-              <BridgePendingTxItem
-                userAddress={currentAccount.address}
-                enabled={sceneActive}
-                onDisplayChange={setBridgeProgressVisible}
-              />
-            )}
+          {pendingCardAddress ? (
+            <BridgePendingTxItem
+              userAddress={pendingCardAddress}
+              enabled={sceneActive}>
+              {card => (
+                <>
+                  <View>
+                    {card ? null : stickyInfo}
+                    {showClosedMarketTip && (
+                      <MarketClosedTip style={styles.marketClosedTip} />
+                    )}
+                  </View>
+                  {card}
+                </>
+              )}
+            </BridgePendingTxItem>
+          ) : (
+            <View>
+              {stickyInfo}
+              {showClosedMarketTip && (
+                <MarketClosedTip style={styles.marketClosedTip} />
+              )}
+              {noQuote && (
+                <>
+                  {recommendFromToken ? (
+                    <RecommendFromToken
+                      token={recommendFromToken}
+                      onOk={fillRecommendFromToken}
+                    />
+                  ) : (
+                    <>
+                      <Text style={styles.noRecoomedTokenText}>
+                        {t('page.bridge.no-quote-found')}
+                      </Text>
+                      <View style={{ marginHorizontal: 24, marginTop: 12 }}>
+                        <BridgeSlippage
+                          value={slippage}
+                          displaySlippage={slippage}
+                          onChange={handleSlippageChange}
+                          autoSlippage={autoSlippage}
+                          isCustomSlippage={isCustomSlippage}
+                          setAutoSlippage={setAutoSlippage}
+                          setIsCustomSlippage={setIsCustomSlippage}
+                          type="bridge"
+                          loading={quoteLoading}
+                          onOptionsOpenChange={
+                            setSlippageOptionsQuoteRefreshPaused
+                          }
+                        />
+                      </View>
+                    </>
+                  )}
+                </>
+              )}
+            </View>
+          )}
         </KeyboardAwareScrollView>
 
         <View

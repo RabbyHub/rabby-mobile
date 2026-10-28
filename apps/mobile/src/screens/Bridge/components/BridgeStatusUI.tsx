@@ -207,7 +207,7 @@ function BridgeStep({
               />
             </TouchableOpacity>
           ) : (
-            <Text style={styles.waiting}>
+            <Text style={styles.waiting} numberOfLines={1}>
               {t(
                 step.detail.kind === 'tokenNotSent'
                   ? 'page.bridge.status.tokenNotSent'

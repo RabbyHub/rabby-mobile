@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, type ReactNode } from 'react';
 import { View } from 'react-native';
 import { useIsFocused } from '@react-navigation/native';
 import { useAppState } from '@react-native-community/hooks';
@@ -16,12 +16,12 @@ import { ONE_DAY_MS } from '../constants';
 
 export const BridgePendingTxItem = ({
   userAddress,
-  onDisplayChange,
   enabled = true,
+  children,
 }: {
   userAddress: string;
-  onDisplayChange?: (visible: boolean) => void;
   enabled?: boolean;
+  children: (card: ReactNode) => ReactNode;
 }) => {
   const { styles } = useTheme2024({ getStyle });
   const focused = useIsFocused();
@@ -73,23 +73,22 @@ export const BridgePendingTxItem = ({
     record.history ||
     (record.local && record.local.status !== 'failed')
   );
-  // 同步卡片显示状态，供父组件调整底部信息。
-  useEffect(() => {
-    onDisplayChange?.(visible);
-    return () => onDisplayChange?.(false);
-  }, [visible, onDisplayChange]);
-  if (!visible) {
-    return null;
-  }
+  // 卡片和报价预览由同一次渲染决定，避免提交后先画出两边。
   return (
-    <View style={styles.card}>
-      <BridgeProgressCard
-        status={status}
-        enabled={active}
-        onOpen={() => openBridgeDetail(record)}
-        onSupport={openBridgeSupport}
-      />
-    </View>
+    <>
+      {children(
+        visible ? (
+          <View style={styles.card}>
+            <BridgeProgressCard
+              status={status}
+              enabled={active}
+              onOpen={() => openBridgeDetail(record)}
+              onSupport={openBridgeSupport}
+            />
+          </View>
+        ) : null,
+      )}
+    </>
   );
 };
 

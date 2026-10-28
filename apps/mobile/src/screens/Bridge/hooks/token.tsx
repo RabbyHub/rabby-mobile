@@ -928,7 +928,7 @@ export const useBridge = (
                         .toString(),
                   toChainId: toToken.chain,
                   toTokenId: toToken.id,
-                  slippage: new BigNumber(slippageObj.slippageState || '1')
+                  slippage: new BigNumber(slippageObj.slippage)
                     .div(100)
                     .toString(10),
                   feeRate: Number(feeRate),
