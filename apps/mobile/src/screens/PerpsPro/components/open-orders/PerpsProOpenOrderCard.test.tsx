@@ -312,7 +312,7 @@ describe('PerpsProOpenOrderCard', () => {
       color: 'neutral-title-1',
       fontFamily: 'SF Pro Rounded',
       fontSize: 14,
-      fontWeight: '500',
+      fontWeight: '700',
       lineHeight: 18,
     });
     expect(StyleSheet.flatten(cancelButton.props.style)).toMatchObject({

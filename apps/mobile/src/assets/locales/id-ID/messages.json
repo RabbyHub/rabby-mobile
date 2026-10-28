@@ -2749,6 +2749,8 @@
         "tpSl": "TP/SL",
         "takeProfitPrice": "Harga ambil untung",
         "stopLossPrice": "Harga hentikan rugi",
+        "funding": "Pendanaan",
+        "nextFundingRate": "Tingkat Pendanaan Berikutnya",
         "estimatedPnl": "Estimasi PNL",
         "closePositionTitle": "Tutup Posisi {{coin}}",
         "estimatedRealizedPnl": "Estimasi PNL Terealisasi"

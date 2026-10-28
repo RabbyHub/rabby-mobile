@@ -2799,6 +2799,8 @@
         "tpSl": "利確/損切り",
         "takeProfitPrice": "利確価格",
         "stopLossPrice": "損切り価格",
+        "funding": "資金調達料",
+        "nextFundingRate": "次回の資金調達率",
         "estimatedPnl": "予想損益",
         "closePositionTitle": "{{coin}} ポジションを決済",
         "estimatedRealizedPnl": "予想実現損益"

@@ -13,7 +13,6 @@ import {
 import { attachSimplePriceAxis } from './perps-simple-axis';
 import { createSimpleNativePriceAxis } from './perps-simple-native-axis';
 import { formatTime, formatYTime } from './chart-logic';
-import { PERPS_PRO_FONT_FACE_FAMILY } from './perps-pro-font';
 import {
   avoidSimpleLabelOverlap,
   layoutSimplePriceLabels,
@@ -37,6 +36,7 @@ import type {
 export function createSimpleChart(
   container: HTMLElement,
   publish: (event: SimpleChartEvent) => void,
+  fontFamily: string,
 ) {
   const host = document.createElement('div');
   Object.assign(host.style, {
@@ -48,7 +48,7 @@ export function createSimpleChart(
   const chart = createChart(host, {
     autoSize: true,
     layout: {
-      fontFamily: PERPS_PRO_FONT_FACE_FAMILY,
+      fontFamily,
       fontSize: 11,
       attributionLogo: false,
     },
@@ -106,7 +106,7 @@ export function createSimpleChart(
     pointerEvents: 'none',
     overflow: 'hidden',
     zIndex: '3',
-    fontFamily: PERPS_PRO_FONT_FACE_FAMILY,
+    fontFamily,
   });
   host.appendChild(overlay);
   let identity = '';
@@ -933,9 +933,7 @@ export function createSimpleChart(
       return true;
     },
     refreshFonts() {
-      chart.applyOptions({
-        layout: { fontFamily: PERPS_PRO_FONT_FACE_FAMILY },
-      });
+      chart.applyOptions({ layout: { fontFamily } });
       schedule();
     },
     destroy() {

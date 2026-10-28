@@ -2899,6 +2899,8 @@
         "tpSl": "止盈/止损",
         "takeProfitPrice": "止盈价格",
         "stopLossPrice": "止损价格",
+        "funding": "资金费",
+        "nextFundingRate": "下一期资金费率",
         "estimatedPnl": "预计盈亏",
         "closePositionTitle": "平掉 {{coin}} 仓位",
         "estimatedRealizedPnl": "预计已实现盈亏"

@@ -1,5 +1,6 @@
 import { formatPositionTpSlSignedValue } from '../../utils/positionTpSlFormatting';
 import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
+import RcIconAdd from '@/assets2024/icons/perps/PerpsProTpSlAdd.svg';
 import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -89,11 +90,7 @@ export const PerpsProPositionTpSlOrderList: React.FC<{
     );
 
     return (
-      <View
-        style={[
-          styles.list,
-          scope === 'position' ? styles.positionList : null,
-        ]}>
+      <View style={styles.list}>
         <View style={styles.groups}>
           {groups.map(({ kind, group, coverage }, index) => {
             return (
@@ -174,25 +171,28 @@ export const PerpsProPositionTpSlOrderList: React.FC<{
 
 PerpsProPositionTpSlOrderList.displayName = 'PerpsProPositionTpSlOrderList';
 
-export const PerpsProPositionTpSlAddRow: React.FC<{
+export const PerpsProPositionTpSlAddButton: React.FC<{
   pending: boolean;
   onAdd: () => void;
 }> = ({ pending, onAdd }) => {
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   return (
-    <View style={styles.addRow} testID="perps-pro-position-tpsl-add-row">
-      <Pressable
-        accessibilityRole="button"
-        disabled={pending}
-        onPress={onAdd}
-        style={styles.addButton}
-        testID="perps-pro-position-tpsl-add">
-        <Text style={styles.addButtonText}>
-          {t('page.perps.pro.positionTpsl.addButton')}
-        </Text>
-      </Pressable>
-    </View>
+    <Pressable
+      accessibilityRole="button"
+      disabled={pending}
+      onPress={onAdd}
+      style={styles.addButton}
+      testID="perps-pro-position-tpsl-add">
+      <RcIconAdd
+        color={PERPS_PRO_DIALOG_TOKENS.actionBackground}
+        height={16}
+        width={16}
+      />
+      <Text style={styles.addButtonText}>
+        {t('page.perps.pro.positionTpsl.addButton')}
+      </Text>
+    </Pressable>
   );
 };
 
@@ -372,33 +372,25 @@ const OrderMetric: React.FC<{
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   list: {
     padding: 16,
-    paddingTop: 0,
-    borderBottomLeftRadius: 12,
-    borderBottomRightRadius: 12,
-    backgroundColor: resolvePerpsProDialogCardBackground(colors2024, isLight),
-  },
-  positionList: { paddingTop: 16 },
-  addRow: {
-    alignItems: 'flex-end',
-    height: 50,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
+    borderRadius: 16,
     backgroundColor: resolvePerpsProDialogCardBackground(colors2024, isLight),
   },
   addButton: {
     alignItems: 'center',
     backgroundColor: PERPS_PRO_DIALOG_TOKENS.selectedBackground,
     borderRadius: 6,
-    height: 26,
+    flexDirection: 'row',
+    gap: 4,
+    height: 30,
     justifyContent: 'center',
     paddingHorizontal: 6,
   },
   addButtonText: {
     color: PERPS_PRO_DIALOG_TOKENS.actionBackground,
     fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    fontWeight: '500',
-    lineHeight: 18,
+    fontSize: 12,
+    fontWeight: '700',
+    lineHeight: 16,
   },
   groups: { gap: 16 },
   dividedGroup: {
@@ -548,7 +540,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: '700',
     lineHeight: 18,
   },
 }));

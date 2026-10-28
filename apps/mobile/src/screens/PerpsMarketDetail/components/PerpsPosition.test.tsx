@@ -49,6 +49,7 @@ jest.mock('@/utils/styles', () => ({
   createGetStyles2024: (fn: unknown) => fn,
 }));
 jest.mock('react-i18next', () => ({
+  Trans: () => null,
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 jest.mock('@/hooks/perps/usePerpsStore', () => ({
@@ -57,6 +58,32 @@ jest.mock('@/hooks/perps/usePerpsStore', () => ({
 jest.mock('@/constant', () => ({ APP_VERSIONS: {} }));
 jest.mock('@/utils/perps', () => ({
   formatPerpsCoin: (v: string) => v,
+  handleDisplayFundingPayments: (v: string) => `funding:${v}`,
+}));
+jest.mock(
+  '@/screens/PerpsPro/components/common/PerpsProDottedUnderlineText',
+  () => ({
+    PerpsProDottedUnderlineText: ({ children, onPress }: any) =>
+      require('react').createElement(
+        require('react-native').Text,
+        { onPress },
+        children,
+      ),
+  }),
+);
+const mockFundingSheet = jest.fn((_props: object) => null);
+jest.mock(
+  '@/screens/PerpsPro/components/funding/PerpsProFundingDetailSheet',
+  () => ({
+    PerpsProFundingDetailSheet: (sheetProps: object) =>
+      mockFundingSheet(sheetProps),
+  }),
+);
+jest.mock('@/screens/PerpsPro/model/market', () => ({
+  buildPerpsProMarket: (marketData: object) => ({ marketData }),
+}));
+jest.mock('@/screens/PerpsPro/utils/format', () => ({
+  formatPerpsProFundingRate: (v: unknown) => `rate:${v}`,
 }));
 jest.mock('@/components/Tip', () => ({ Tip: ({ children }: any) => children }));
 jest.mock(
@@ -233,3 +260,41 @@ it('spans the divider across the card content with symmetric insets', () => {
   expect(divider.props.style).not.toHaveProperty('marginLeft');
   expect(divider.props.style).not.toHaveProperty('marginHorizontal');
 });
+
+it.each([
+  ['12.4', 'fundingPayments', 'red-default'],
+  ['-3', 'fundingGains', 'green-default'],
+] as const)(
+  'shows funding %s as %s and opens the Pro funding sheet',
+  (fundingPayments, label, color) => {
+    const ui = render(
+      <PerpsPosition
+        {...props}
+        activeAssetCtx={{ funding: '0.0000125', oraclePx: '110' } as any}
+        currentAssetCtx={{ funding: '0.0001', oraclePx: '100' } as any}
+        positionData={{ ...props.positionData!, fundingPayments }}
+      />,
+    );
+    expect(ui.getByText('rate:0.0000125')).toBeTruthy();
+    expect(ui.getByText(`funding:${fundingPayments}`)).toHaveStyle({ color });
+    fireEvent.press(ui.getByText(`page.perpsDetail.PerpsPosition.${label}`));
+    expect(mockTips).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: `page.perpsDetail.PerpsPosition.${label}`,
+      }),
+    );
+    expect(mockFundingSheet).not.toHaveBeenCalled();
+    fireEvent.press(
+      ui.getByText('page.perpsDetail.simpleAccount.nextFundingRate'),
+    );
+    expect(mockFundingSheet).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        market: {
+          marketData: { funding: '0.0000125', oraclePx: '110' },
+        },
+        serverClock: null,
+      }),
+    );
+    mockFundingSheet.mockClear();
+  },
+);
