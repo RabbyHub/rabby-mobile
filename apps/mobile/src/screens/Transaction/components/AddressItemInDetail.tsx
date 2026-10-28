@@ -15,6 +15,7 @@ import React, { useCallback, useMemo } from 'react';
 import { TouchableOpacity, View } from 'react-native';
 import FastImage from 'react-native-fast-image';
 import { useGetCexList } from '../hook';
+import { DetailAddressText } from './DetailAddressText';
 
 export type AddressItemInDetailProps = {
   address: string;
@@ -111,7 +112,7 @@ export const AddressItemInDetail = ({
               />
             ) : null}
           </View>
-          <Text style={styles.itemAddressText}>{address}</Text>
+          <DetailAddressText address={address} />
         </View>
       </TouchableOpacity>
     </View>
@@ -123,15 +124,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-  },
-  itemAddressText: {
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
-    textAlign: 'right',
-    width: 170,
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '400',
   },
   itemContentText: {
     color: colors2024['neutral-body'],
