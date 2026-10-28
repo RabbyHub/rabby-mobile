@@ -351,7 +351,13 @@
         "empty": {
           "title": "Chưa có lịch sử giao dịch",
           "titleLastThreeMonths": "Không có lịch sử giao dịch trong 90 ngày",
+          "titleInLast90Days": "Không có giao dịch nào trong 90 ngày qua",
+          "titleNoTransactions": "Không có giao dịch nào",
           "testnetNoHistory": "Lịch sử giao dịch token tùy chỉnh không khả dụng."
+        },
+        "noMore": {
+          "title": "Không còn giao dịch nào.",
+          "titleInLast90Days": "Không còn giao dịch nào trong 90 ngày qua."
         },
         "CancelTxPopup": {
           "options": {

@@ -461,7 +461,13 @@
         "empty": {
           "title": "Aucune transaction signée pour le moment",
           "titleLastThreeMonths": "Aucun historique de transactions depuis 90 jours",
+          "titleInLast90Days": "Aucune transaction au cours des 90 derniers jours",
+          "titleNoTransactions": "Aucune transaction",
           "testnetNoHistory": "L'historique des transactions du token personnalisé n'est pas disponible."
+        },
+        "noMore": {
+          "title": "Aucune autre transaction.",
+          "titleInLast90Days": "Aucune autre transaction au cours des 90 derniers jours."
         },
         "tips": {
           "canNotCancel": "Impossible d’accélérer ou d’annuler : il ne s’agit pas de la première transaction en attente",

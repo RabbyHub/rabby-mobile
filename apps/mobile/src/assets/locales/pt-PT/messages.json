@@ -436,7 +436,13 @@
         "empty": {
           "title": "Ainda não há transações assinadas",
           "titleLastThreeMonths": "Sem histórico de transações nos últimos 90 dias",
+          "titleInLast90Days": "Sem transações nos últimos 90 dias",
+          "titleNoTransactions": "Sem transações",
           "testnetNoHistory": "O histórico de transações de tokens personalizados não está disponível."
+        },
+        "noMore": {
+          "title": "Não há mais transações.",
+          "titleInLast90Days": "Não há mais transações nos últimos 90 dias."
         },
         "CancelTxPopup": {
           "title": "Cancelar transação",

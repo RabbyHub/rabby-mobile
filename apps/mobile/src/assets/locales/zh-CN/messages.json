@@ -556,7 +556,13 @@
         "empty": {
           "title": "暂无交易记录",
           "titleLastThreeMonths": "90天内没有交易记录",
+          "titleInLast90Days": "近 90 天没有交易记录",
+          "titleNoTransactions": "暂无交易记录",
           "testnetNoHistory": "自定义代币交易记录不可用。"
+        },
+        "noMore": {
+          "title": "没有更多交易记录",
+          "titleInLast90Days": "近 90 天没有更多交易记录"
         },
         "tips": {
           "canNotCancel": "无法加速或取消：这不是第一笔待确认交易。",

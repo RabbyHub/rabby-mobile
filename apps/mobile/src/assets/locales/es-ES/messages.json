@@ -681,7 +681,13 @@
         "empty": {
           "title": "Aún no hay transacciones firmadas",
           "titleLastThreeMonths": "Sin historial de transacciones en 90 días",
+          "titleInLast90Days": "No hay transacciones en los últimos 90 días",
+          "titleNoTransactions": "No hay transacciones",
           "testnetNoHistory": "El historial de transacciones de tokens personalizados no está disponible."
+        },
+        "noMore": {
+          "title": "No hay más transacciones.",
+          "titleInLast90Days": "No hay más transacciones en los últimos 90 días."
         },
         "message": {
           "cancelSuccess": "Cancelado",
