@@ -170,7 +170,7 @@ const getStyle = createGetStyles2024(
       fontFamily: 'SF Pro Rounded',
       fontSize: 20,
       lineHeight: 24,
-      fontWeight: '900',
+      fontWeight: '700',
     },
     usdValue: {
       color: colors2024['neutral-secondary'],

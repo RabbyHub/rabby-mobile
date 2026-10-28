@@ -295,6 +295,7 @@ export const HistoryTokenList = ({
               const tokenIsNft = item.token_id?.length === 32;
               return (
                 <TouchableOpacity
+                  key={token?.id}
                   onPress={() => handlePress(token, tokenIsNft)}>
                   <View style={[styles.swapBox]}>
                     <View
@@ -387,6 +388,7 @@ export const HistoryTokenList = ({
               const tokenIsNft = item.token_id?.length === 32;
               return (
                 <TouchableOpacity
+                  key={token?.id}
                   onPress={() => handlePress(token, tokenIsNft)}>
                   <View style={[styles.swapBox]}>
                     <View
@@ -525,21 +527,21 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 20,
     lineHeight: 24,
-    fontWeight: '900',
+    fontWeight: '700',
   },
   tokenApproveAmountText: {
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 20,
     lineHeight: 24,
-    fontWeight: '900',
+    fontWeight: '700',
   },
   tokenAmountTextList: {
     color: colors2024['green-default'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 20,
     lineHeight: 24,
-    fontWeight: '900',
+    fontWeight: '700',
   },
   tokenPriceText: {
     color: colors2024['neutral-secondary'],
