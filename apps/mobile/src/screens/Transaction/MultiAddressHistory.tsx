@@ -27,11 +27,11 @@ import {
   useRequest,
 } from 'ahooks';
 import PQueue from 'p-queue';
-import { last, unionBy, orderBy, debounce } from 'lodash';
+import { last, orderBy, debounce } from 'lodash';
 import { View } from 'react-native';
 import { useRoute } from '@react-navigation/native';
 import type { TxHistoryResult } from '@rabby-wallet/rabby-api/dist/types';
-import { HistoryList } from './components/HistoryGroupList';
+import { BridgeAwareHistoryList } from './components/BridgeAwareHistoryList';
 import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
 import { BottomSheetModalTokenDetail } from '@/components/TokenDetailPopup/BottomSheetModalTokenDetail';
 import { useGeneralTokenDetailSheetModal } from '@/components/TokenDetailPopup/hooks';
@@ -380,7 +380,7 @@ function HistoryContent({
               }) || item.isSynced;
 
             if (isSynced && !item.isSynced) {
-              void transactionHistoryServiceApi
+              transactionHistoryServiceApi
                 .updateTx({
                   ...item.maxGasTx,
                   isSynced: true,
@@ -538,7 +538,7 @@ function HistoryContent({
     hasConsumedLocalStatusRef.current = true;
     const list = getTransactionHistorySucceedListSnapshot();
     setHistorySuccessList(list);
-    void transactionHistoryServiceApi
+    transactionHistoryServiceApi
       .clearSuccessAndFailList(
         isForMultipleAddress ? undefined : currentAddress,
       )
@@ -702,7 +702,17 @@ function HistoryContent({
     <View style={{ paddingTop: 0, position: 'relative', height: '100%' }}>
       <>
         <TransactionAlert pendingTxs={groups?.filter(item => item.isPending)} />
-        <HistoryList
+        <BridgeAwareHistoryList
+          bridgeEnabled={!isTestnet && !isInTokenDetail}
+          accounts={accountList}
+          scopeKey={`${sceneCurrentAccountDepKey}:${
+            isSceneUsingAllAccounts
+              ? myTop10Addresses
+                  .map(address => address.toLowerCase())
+                  .sort()
+                  .join(',')
+              : 'single'
+          }`}
           ref={historyListRef}
           historySuccessList={historySuccessList}
           list={combinedList}

@@ -1,5 +1,5 @@
 import { ProjectItem } from '@rabby-wallet/rabby-api/dist/types';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { CexEntity } from '@/databases/entities/cex';
 import { useMemoizedFn, useMount } from 'ahooks';
 import { globalSupportCexList } from '@/hooks/useCexSupportList';
@@ -9,7 +9,7 @@ export const useGetCexList = () => {
   // const [list, setList] = useState<ProjectItem[]>([]);
   const [addressCex, setAddressCex] = useState<Record<string, ProjectItem>>({});
   const getCexInfoByAddress = useCallback(
-    (address: string) => {
+    (address: string): ProjectItem | undefined => {
       const localCexId = getCexId(address);
       const localCexInfo = globalSupportCexList.find(
         item => item.id === localCexId,
