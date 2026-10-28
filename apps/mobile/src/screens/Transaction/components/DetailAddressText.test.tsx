@@ -29,11 +29,21 @@ describe('splitAddressInTwoLines', () => {
 });
 
 describe('DetailAddressText', () => {
-  it('renders the split address', () => {
+  it('renders the split address capped at two lines, shrinking to fit', () => {
     render(<DetailAddressText address={ADDRESS} />);
 
-    expect(
-      screen.getByText('0x07964f135f276412b31\n82a3b2407b8dd45000000'),
-    ).toBeTruthy();
+    const text = screen.getByText(
+      '0x07964f135f276412b31\n82a3b2407b8dd45000000',
+    );
+    expect(text.props.numberOfLines).toBe(2);
+    expect(text.props.adjustsFontSizeToFit).toBe(true);
+  });
+
+  it('does not cap or shrink text it cannot split', () => {
+    render(<DetailAddressText address="0x07964f" />);
+
+    const text = screen.getByText('0x07964f');
+    expect(text.props.numberOfLines).toBeUndefined();
+    expect(text.props.adjustsFontSizeToFit).toBeUndefined();
   });
 });
