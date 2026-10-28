@@ -37,7 +37,8 @@ import RcIconBridgeRightArrowCC from '@/assets2024/icons/bridge/IconRightArrowCC
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { AssetAvatar } from '@/components';
-import { ONE_DAY_MS, ONE_HOUR_MS, ONE_MINUTE_MS } from '../constants';
+import { ONE_DAY_MS, ONE_MINUTE_MS } from '../constants';
+import { resolveBridgeArrival } from '../utils/bridgeArrival';
 import { openapi } from '@/core/request';
 import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
 import { Button } from '@/components2024/Button';
@@ -1030,43 +1031,34 @@ export const BridgePendingTxItem = ({
       });
       const bridgeHistoryList = res.history_list;
       if (bridgeHistoryList && bridgeHistoryList?.length > 0) {
-        const hash = historyData.acceleratedHash || historyData.hash;
-        const findTx = bridgeHistoryList.find(
-          item => item.from_tx?.tx_id === hash,
-        );
-        if (!findTx) {
-          const currentTime = Date.now();
-          const txCreateTime = historyData.createdAt;
-          if (currentTime - txCreateTime > ONE_HOUR_MS) {
-            // tx create time is more than 60 minutes, set this tx failed
-            await transactionHistoryServiceApi.completeBridgeTxHistory(
-              historyData.hash,
-              historyData.fromChainId!,
-              'failed',
-            );
-            setData(null);
-          }
-        } else {
-          if (findTx.status === 'completed' || findTx.status === 'failed') {
-            const status =
-              findTx.status === 'completed' ? 'allSuccess' : 'failed';
-            const updateData = {
-              ...historyData,
-              status,
-              actualToToken: findTx.to_actual_token,
-              actualToAmount: findTx.actual.receive_token_amount,
-              completedAt: Date.now(),
-            };
-            setData(updateData as BridgeTxHistoryItem);
-            await transactionHistoryServiceApi.completeBridgeTxHistory(
-              historyData.hash,
-              historyData.fromChainId!,
-              status,
-              findTx,
-            );
-          } else {
-            setData(historyData);
-          }
+        const resolution = resolveBridgeArrival(bridgeHistoryList, {
+          hash: historyData.acceleratedHash || historyData.hash,
+          createdAt: historyData.createdAt,
+          now: Date.now(),
+        });
+        if (resolution.type === 'notFoundTimeout') {
+          await transactionHistoryServiceApi.completeBridgeTxHistory(
+            historyData.hash,
+            historyData.fromChainId!,
+            'failed',
+          );
+          setData(null);
+        } else if (resolution.type === 'settled') {
+          const { status, bridgeTx: findTx } = resolution;
+          const updateData = {
+            ...historyData,
+            status,
+            actualToToken: findTx.to_actual_token,
+            actualToAmount: findTx.actual.receive_token_amount,
+            completedAt: Date.now(),
+          };
+          setData(updateData as BridgeTxHistoryItem);
+          await transactionHistoryServiceApi.completeBridgeTxHistory(
+            historyData.hash,
+            historyData.fromChainId!,
+            status,
+            findTx,
+          );
         }
       }
     }
@@ -1116,37 +1108,28 @@ export const BridgePendingTxItem = ({
       }
 
       const recentlyTxHash = data?.acceleratedHash || data?.hash;
-      const findTx = bridgeHistoryList.find(
-        item => item.from_tx?.tx_id === recentlyTxHash,
-      );
+      const resolution = resolveBridgeArrival(bridgeHistoryList, {
+        hash: recentlyTxHash,
+        createdAt: data?.createdAt,
+        now: Date.now(),
+      });
 
-      if (!findTx) {
-        const currentTime = Date.now();
-        const txCreateTime = data?.createdAt;
-        if (currentTime - txCreateTime > ONE_HOUR_MS) {
-          // tx create time is more than 60 minutes, set this tx failed
-          void transactionHistoryServiceApi
-            .completeBridgeTxHistory(
-              recentlyTxHash,
-              data?.fromChainId,
-              'failed',
-            )
-            .catch(error => {
-              console.error(
-                '[BridgeHistory] persist failed status failed',
-                error,
-              );
-            });
-          setData(null);
-          return;
-        }
+      if (resolution.type === 'notFoundTimeout') {
+        // tx create time is more than 60 minutes, set this tx failed
+        void transactionHistoryServiceApi
+          .completeBridgeTxHistory(recentlyTxHash, data?.fromChainId, 'failed')
+          .catch(error => {
+            console.error(
+              '[BridgeHistory] persist failed status failed',
+              error,
+            );
+          });
+        setData(null);
+        return;
       }
 
-      if (
-        findTx &&
-        (findTx.status === 'completed' || findTx.status === 'failed')
-      ) {
-        const status = findTx.status === 'completed' ? 'allSuccess' : 'failed';
+      if (resolution.type === 'settled') {
+        const { status, bridgeTx: findTx } = resolution;
         const updateData = {
           ...data,
           status,

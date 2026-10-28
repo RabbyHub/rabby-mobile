@@ -6,6 +6,7 @@ import type {
 } from '@react-navigation/native';
 
 import type { Account, KeyringAccountWithAlias } from '@/types/account';
+import type { ExecLeg, MemeTarget } from '@/screens/MemeCoin/engine/types';
 import {} from '@react-navigation/bottom-tabs';
 
 import type { RootNames } from './constant/layout';
@@ -385,6 +386,21 @@ export type TransactionNavigatorParamList = {
   [RootNames.ConvertDust]?: {
     disableAccountSwitch?: boolean;
     fromHomeConvertDustBanner?: boolean;
+  };
+  [RootNames.MemeCoin]?: undefined;
+  [RootNames.MemeCoinBuy]: {
+    accountAddress: string;
+    /** snapshot at confirm time; marketCap drives the allocation */
+    memes: Array<MemeTarget & { logoUrl: string }>;
+  };
+  [RootNames.MemeCoinExecute]: {
+    accountAddress: string;
+    mode: 'buy' | 'sell';
+    /** frozen at confirm time, already in execution order */
+    legs: ExecLeg[];
+    maxPriceImpactPct: 1 | 5 | 20;
+    /** tokenKey -> logo url, display only */
+    tokenLogos: Record<string, string>;
   };
   [RootNames.GasAccount]?: {};
   [RootNames.BatchRevoke]: {
