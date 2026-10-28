@@ -12,20 +12,28 @@ import CrossInfo from '@/assets2024/icons/perps/PerpsSimpleAccount/cross-info.sv
 import Up from '@/assets2024/icons/perps/PerpsSimpleChart/up.svg';
 import Down from '@/assets2024/icons/perps/PerpsSimpleChart/down.svg';
 import { hasPositivePrice, simpleLiquidationGap } from './account/model';
-import { useTranslation } from 'react-i18next';
+import { Trans, useTranslation } from 'react-i18next';
 import { TouchableOpacity, View } from 'react-native';
 import { PerpEditTpSlPriceTag } from './PerpEditTpSlPriceTag';
 import { PerpsEditMarginPopup } from './PerpsEditMarginPopup';
 import BigNumber from 'bignumber.js';
 import { MarketData } from '@/hooks/perps/usePerpsStore';
 import { WsActiveAssetCtx } from '@rabby-wallet/hyperliquid-sdk';
-import { formatPerpsCoin, getStatsReportSide } from '@/utils/perps';
+import {
+  formatPerpsCoin,
+  getStatsReportSide,
+  handleDisplayFundingPayments,
+} from '@/utils/perps';
 import { stats } from '@/utils/stats';
 import { perpsStore } from '@/hooks/perps/usePerpsStore';
 import { useShallow } from 'zustand/shallow';
 import { APP_VERSIONS } from '@/constant';
 import { Text } from '@/components/Typography';
 import { Tip } from '@/components/Tip';
+import { PerpsProDottedUnderlineText } from '@/screens/PerpsPro/components/common/PerpsProDottedUnderlineText';
+import { PerpsProFundingDetailSheet } from '@/screens/PerpsPro/components/funding/PerpsProFundingDetailSheet';
+import { buildPerpsProMarket } from '@/screens/PerpsPro/model/market';
+import { formatPerpsProFundingRate } from '@/screens/PerpsPro/utils/format';
 
 export const PerpsPosition: React.FC<{
   showRiskPopup: boolean;
@@ -109,6 +117,7 @@ export const PerpsPosition: React.FC<{
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const [editMarginVisible, setEditMarginVisible] = useState(false);
+  const [fundingDetailOpen, setFundingDetailOpen] = useState(false);
   const currentPerpsAccount = perpsStore(
     useShallow(s => s.currentPerpsAccount),
   );
@@ -148,9 +157,32 @@ export const PerpsPosition: React.FC<{
     return pnlUsdValue;
   }, [slPrice, positionData]);
 
+  const nextFundingRate = activeAssetCtx?.funding ?? currentAssetCtx?.funding;
+  // Only build the Pro market snapshot while its funding sheet is open.
+  const fundingMarket = useMemo(() => {
+    if (!fundingDetailOpen || !currentAssetCtx) {
+      return null;
+    }
+    return buildPerpsProMarket({
+      ...currentAssetCtx,
+      funding: nextFundingRate ?? currentAssetCtx.funding,
+      oraclePx: activeAssetCtx?.oraclePx ?? currentAssetCtx.oraclePx,
+    });
+  }, [
+    fundingDetailOpen,
+    currentAssetCtx,
+    nextFundingRate,
+    activeAssetCtx?.oraclePx,
+  ]);
+
   if (!positionData) {
     return null;
   }
+
+  const isFundingGains = Number(positionData.fundingPayments || 0) < 0;
+  const fundingPaymentsLabel = isFundingGains
+    ? t('page.perpsDetail.PerpsPosition.fundingGains')
+    : t('page.perpsDetail.PerpsPosition.fundingPayments');
 
   const displayName = currentAssetCtx?.displayName || coin;
   const quoteAsset = currentAssetCtx?.quoteAsset || 'USDC';
@@ -252,10 +284,14 @@ export const PerpsPosition: React.FC<{
                 {Math.abs(positionData.pnl).toFixed(2)}
               </Text>
               <View style={styles.roiRow}>
-                {positionData.pnlPercent > 0 ? (
-                  <Up color={colors2024['green-default']} />
-                ) : positionData.pnlPercent < 0 ? (
-                  <Down color={colors2024['red-default']} />
+                {positionData.pnlPercent !== 0 ? (
+                  <View style={styles.roiIcon}>
+                    {positionData.pnlPercent > 0 ? (
+                      <Up color={colors2024['green-default']} />
+                    ) : (
+                      <Down color={colors2024['red-default']} />
+                    )}
+                  </View>
                 ) : null}
                 <Text
                   style={[
@@ -275,7 +311,7 @@ export const PerpsPosition: React.FC<{
           <View style={styles.divider} testID="perps-position-divider">
             <View style={styles.dividerLine} />
           </View>
-          <View style={styles.details}>
+          <View>
             <View style={styles.detailRow}>
               <TouchableOpacity
                 onPress={() =>
@@ -286,7 +322,7 @@ export const PerpsPosition: React.FC<{
                   })
                 }>
                 <View style={styles.positionValueLabel}>
-                  <Text style={styles.label}>
+                  <Text style={styles.detailLabel}>
                     {t('page.perpsDetail.PerpsPosition.size')}
                   </Text>
                   <RcIconInfoCC
@@ -302,7 +338,7 @@ export const PerpsPosition: React.FC<{
               </Text>
             </View>
             <View style={styles.detailRow}>
-              <Text style={styles.label}>
+              <Text style={styles.detailLabel}>
                 {t('page.perpsDetail.simpleAccount.averageEntry')}
               </Text>
               <Text style={styles.value}>
@@ -310,7 +346,7 @@ export const PerpsPosition: React.FC<{
               </Text>
             </View>
             <View style={styles.detailRow}>
-              <Text style={styles.label}>
+              <Text style={styles.detailLabel}>
                 {t('page.perpsDetail.simpleAccount.estimatedLiquidationPrice')}
               </Text>
               <Text style={styles.value}>
@@ -320,7 +356,7 @@ export const PerpsPosition: React.FC<{
               </Text>
             </View>
             <View style={styles.detailRow}>
-              <Text style={styles.label}>
+              <Text style={styles.detailLabel}>
                 {t(
                   'page.perpsDetail.simpleAccount.estimatedLiquidationDistance',
                 )}
@@ -335,12 +371,8 @@ export const PerpsPosition: React.FC<{
           <Text style={styles.cardTitle}>
             {t('page.perpsDetail.simpleAccount.tpSl')}
           </Text>
-          <View style={styles.tpSlRows}>
-            <View
-              style={[
-                styles.tpSlRow,
-                tpPrice ? styles.setRow : styles.emptyRow,
-              ]}>
+          <View>
+            <View style={[styles.tpSlRow, tpPrice ? styles.setRow : null]}>
               <Text style={styles.label}>
                 {t('page.perpsDetail.simpleAccount.takeProfitPrice')}
               </Text>
@@ -400,11 +432,7 @@ export const PerpsPosition: React.FC<{
                 }}
               />
             </View>
-            <View
-              style={[
-                styles.tpSlRow,
-                slPrice ? styles.setRow : styles.emptyRow,
-              ]}>
+            <View style={[styles.tpSlRow, slPrice ? styles.setRow : null]}>
               <Text style={styles.label}>
                 {t('page.perpsDetail.simpleAccount.stopLossPrice')}
               </Text>
@@ -466,8 +494,66 @@ export const PerpsPosition: React.FC<{
             </View>
           </View>
         </View>
+        <View style={styles.tpSlCard}>
+          <Text style={styles.cardTitle}>
+            {t('page.perpsDetail.simpleAccount.funding')}
+          </Text>
+          <View style={styles.detailRow}>
+            <PerpsProDottedUnderlineText
+              accessibilityLabel={t(
+                'page.perpsDetail.simpleAccount.nextFundingRate',
+              )}
+              containerStyle={styles.fundingLabel}
+              onPress={() => setFundingDetailOpen(true)}
+              style={styles.label}>
+              {t('page.perpsDetail.simpleAccount.nextFundingRate')}
+            </PerpsProDottedUnderlineText>
+            <Text style={styles.value}>
+              {formatPerpsProFundingRate(nextFundingRate)}
+            </Text>
+          </View>
+          <View style={styles.detailRow}>
+            <PerpsProDottedUnderlineText
+              accessibilityLabel={fundingPaymentsLabel}
+              onPress={() =>
+                showTipsPopup({
+                  title: fundingPaymentsLabel,
+                  desc: (
+                    <Text style={styles.fundingText}>
+                      <Trans
+                        t={t}
+                        i18nKey="page.perpsDetail.PerpsPosition.fundingTipsBold"
+                        components={{
+                          bold: <Text style={styles.fundingTextBold} />,
+                        }}
+                      />
+                    </Text>
+                  ),
+                  buttonType: 'hyperliquid',
+                })
+              }
+              containerStyle={styles.fundingLabel}
+              style={styles.label}>
+              {fundingPaymentsLabel}
+            </PerpsProDottedUnderlineText>
+            <Text
+              style={[
+                styles.value,
+                isFundingGains ? styles.green : styles.red,
+              ]}>
+              {handleDisplayFundingPayments(positionData.fundingPayments)}
+            </Text>
+          </View>
+        </View>
       </View>
 
+      {fundingMarket ? (
+        <PerpsProFundingDetailSheet
+          market={fundingMarket}
+          onClose={() => setFundingDetailOpen(false)}
+          serverClock={null}
+        />
+      ) : null}
       <PerpsRiskLevelPopup
         isCross={positionData?.type === 'cross'}
         visible={!!showRiskPopup}
@@ -548,8 +634,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       backgroundColor: isLight
         ? colors2024['neutral-bg-1']
         : colors2024['neutral-bg-2'],
-      padding: 12,
-      paddingBottom: 16,
+      paddingHorizontal: 16,
+      paddingVertical: 12,
     },
     mainAmounts: {
       flexDirection: 'row',
@@ -561,10 +647,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     pnlColumn: { flexShrink: 1, alignItems: 'flex-end', gap: 4 },
     amountLabel: {
       ...text,
-      fontSize: 12,
-      lineHeight: 16,
-      fontWeight: '700',
-      color: colors2024['neutral-body'],
+      fontWeight: '500',
+      color: colors2024['neutral-secondary'],
     },
     amountValue: {
       ...text,
@@ -575,7 +659,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       flexShrink: 1,
     },
     marginValueRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-    roiRow: { flexDirection: 'row', alignItems: 'center', gap: 2 },
+    roiRow: { flexDirection: 'row', alignItems: 'center', gap: 3 },
+    roiIcon: { width: 24.8, alignItems: 'center' },
     roi: { ...text, fontSize: 12, lineHeight: 16, fontWeight: '700' },
     divider: { height: 0, marginVertical: 12 },
     dividerLine: {
@@ -586,12 +671,12 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       borderBottomWidth: 1,
       borderColor: colors2024['neutral-line'],
     },
-    details: { gap: 16 },
     detailRow: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
       gap: 8,
+      paddingVertical: 6,
     },
     positionValueLabel: { flexDirection: 'row', alignItems: 'center', gap: 4 },
     label: {
@@ -600,9 +685,16 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       color: colors2024['neutral-secondary'],
       flexShrink: 1,
     },
+    detailLabel: {
+      ...text,
+      fontSize: 13,
+      fontWeight: '500',
+      color: colors2024['neutral-secondary'],
+      flexShrink: 1,
+    },
     value: {
       ...text,
-      fontWeight: '400',
+      fontWeight: '700',
       color: colors2024['neutral-title-1'],
       textAlign: 'right',
       flexShrink: 1,
@@ -612,7 +704,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       backgroundColor: isLight
         ? colors2024['neutral-bg-1']
         : colors2024['neutral-bg-2'],
-      padding: 12,
+      paddingHorizontal: 16,
+      paddingVertical: 12,
     },
     cardTitle: {
       ...text,
@@ -620,14 +713,13 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       color: colors2024['neutral-body'],
       paddingVertical: 6,
     },
-    tpSlRows: { gap: 10 },
     tpSlRow: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
       gap: 8,
+      paddingVertical: 6,
     },
-    emptyRow: { minHeight: 32 },
     setRow: { minHeight: 52 },
     crossText: {
       ...text,
@@ -659,5 +751,15 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     green: { color: colors2024['green-default'] },
     red: { color: colors2024['red-default'] },
     neutral: { color: colors2024['neutral-foot'] },
+    fundingLabel: { alignSelf: 'center', flexShrink: 1 },
+    fundingText: {
+      ...text,
+      fontSize: 16,
+      lineHeight: 20,
+      fontWeight: '400',
+      color: colors2024['neutral-secondary'],
+      textAlign: 'center',
+    },
+    fundingTextBold: { fontFamily: 'SF Pro Rounded', fontWeight: '900' },
   };
 });

@@ -2862,6 +2862,8 @@
         "tpSl": "TP/SL",
         "takeProfitPrice": "Цена тейк-профита",
         "stopLossPrice": "Цена стоп-лосса",
+        "funding": "Фандинг",
+        "nextFundingRate": "Следующая ставка фандинга",
         "estimatedPnl": "Расч. PnL",
         "closePositionTitle": "Закрыть позицию {{coin}}",
         "estimatedRealizedPnl": "Расч. реализованный PnL"

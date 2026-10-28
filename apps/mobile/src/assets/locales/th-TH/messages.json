@@ -2918,6 +2918,8 @@
         "tpSl": "TP/SL",
         "takeProfitPrice": "ราคาทำกำไร",
         "stopLossPrice": "ราคาหยุดขาดทุน",
+        "funding": "ค่าฟันดิง",
+        "nextFundingRate": "อัตราฟันดิงครั้งถัดไป",
         "estimatedPnl": "PNL โดยประมาณ",
         "closePositionTitle": "ปิดโพซิชัน {{coin}}",
         "estimatedRealizedPnl": "PNL ที่เกิดขึ้นจริงโดยประมาณ"

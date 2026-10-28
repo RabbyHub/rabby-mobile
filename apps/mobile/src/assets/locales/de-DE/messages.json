@@ -3035,6 +3035,8 @@
         "tpSl": "TP/SL",
         "takeProfitPrice": "Take-Profit-Preis",
         "stopLossPrice": "Stop-Loss-Preis",
+        "funding": "Finanzierung",
+        "nextFundingRate": "Nächste Funding-Rate",
         "estimatedPnl": "Gesch. PnL",
         "closePositionTitle": "{{coin}}-Position schließen",
         "estimatedRealizedPnl": "Gesch. realisierter PnL"

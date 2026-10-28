@@ -2743,6 +2743,8 @@
         "tpSl": "TP/SL",
         "takeProfitPrice": "Kâr alma fiyatı",
         "stopLossPrice": "Zarar durdurma fiyatı",
+        "funding": "Fonlama",
+        "nextFundingRate": "Sonraki Fonlama Oranı",
         "estimatedPnl": "Tahmini PNL",
         "closePositionTitle": "{{coin}} Pozisyonunu Kapat",
         "estimatedRealizedPnl": "Tahmini gerçekleşmiş PNL"

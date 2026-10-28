@@ -2860,6 +2860,8 @@
         "tpSl": "TP/SL",
         "takeProfitPrice": "Giá chốt lời",
         "stopLossPrice": "Giá cắt lỗ",
+        "funding": "Funding",
+        "nextFundingRate": "Tỷ lệ funding tiếp theo",
         "estimatedPnl": "PNL ước tính",
         "closePositionTitle": "Đóng vị thế {{coin}}",
         "estimatedRealizedPnl": "PNL đã thực hiện ước tính"

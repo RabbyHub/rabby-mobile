@@ -2743,6 +2743,8 @@
         "tpSl": "익절/손절",
         "takeProfitPrice": "익절 가격",
         "stopLossPrice": "손절 가격",
+        "funding": "펀딩",
+        "nextFundingRate": "다음 펀딩 비율",
         "estimatedPnl": "예상 PNL",
         "closePositionTitle": "{{coin}} 포지션 종료",
         "estimatedRealizedPnl": "예상 실현 PNL"
