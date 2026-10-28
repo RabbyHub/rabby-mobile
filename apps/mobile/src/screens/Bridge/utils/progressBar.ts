@@ -40,21 +40,6 @@ export type BridgeProgressBar = {
   footer: BridgeProgressFooter;
 };
 
-export type BridgePopupCaption =
-  | { kind: 'estimate'; time: string }
-  | { kind: 'stillBridging' }
-  | { kind: 'delayed' }
-  | { kind: 'sourceFailed' }
-  | { kind: 'failed' }
-  | { kind: 'refunded' }
-  | { kind: 'none' };
-
-export type BridgePopupButton =
-  | 'back'
-  | 'delayedSupport'
-  | 'failedSupport'
-  | 'refund';
-
 export type BridgePopupStep =
   | 'processing'
   | 'queued'
@@ -62,19 +47,6 @@ export type BridgePopupStep =
   | 'completed'
   | 'failed'
   | 'refund';
-
-export type BridgePopupState = {
-  title: 'processing' | 'pending' | 'failed' | 'refunded' | 'completed';
-  step1: BridgePopupStep;
-  step2: BridgePopupStep;
-  step3?: 'refund';
-  caption: BridgePopupCaption;
-  button: BridgePopupButton;
-  refund?: {
-    txId?: string;
-    chainServerId?: string;
-  };
-};
 
 const formatEta = (remainingSeconds: number) =>
   formatEstimateClock(remainingSeconds, true);
@@ -131,109 +103,6 @@ const sourceDoneProgress = (
     step1: 'success',
     step2: 'destLoading',
     footer: { kind: 'stillBridging' },
-  };
-};
-
-const sourceElapsedMs = (item: BridgeTxHistoryItem, now: number) =>
-  item.fromTxCompleteTs ? Math.max(0, now - item.fromTxCompleteTs) : 0;
-
-/** 弹窗仅在源链成功后倒计时，短于 5 秒的预估也正常展示。 */
-export const getBridgePopupState = (
-  item: BridgeTxHistoryItem,
-  now = Date.now(),
-): BridgePopupState => {
-  if (item.status === 'fromFailed') {
-    return {
-      title: 'refunded',
-      step1: 'failed',
-      step2: 'refund',
-      caption: { kind: 'sourceFailed' },
-      button: 'refund',
-      // 源链失败时资产未发出；没有独立退款交易则查看源链失败交易。
-      refund: refundDetails(item) || {
-        txId: item.acceleratedHash || item.hash,
-        chainServerId: item.fromToken.chain,
-      },
-    };
-  }
-
-  if (item.status === 'allSuccess') {
-    return {
-      title: 'completed',
-      step1: 'completed',
-      step2: 'completed',
-      caption: { kind: 'none' },
-      button: 'back',
-    };
-  }
-
-  if (item.status === 'failed') {
-    const refund = refundDetails(item);
-    if (refund) {
-      const original =
-        !!item.actualToToken?.id &&
-        !!item.fromToken?.id &&
-        item.actualToToken.chain === item.fromToken.chain &&
-        isSameAddress(item.actualToToken.id, item.fromToken.id);
-      return {
-        title: 'refunded',
-        step1: 'completed',
-        step2: 'failed',
-        step3: 'refund',
-        // 原币退回不显示 Refunded in {symbol}，异链或异币才显示。
-        caption: original ? { kind: 'none' } : { kind: 'refunded' },
-        button: 'refund',
-        refund,
-      };
-    }
-    return {
-      title: 'failed',
-      step1: 'completed',
-      step2: 'failed',
-      caption: { kind: 'failed' },
-      button: 'failedSupport',
-    };
-  }
-
-  if (item.status === 'fromSuccess') {
-    const elapsedMs = sourceElapsedMs(item, now);
-    if (item.fromTxCompleteTs && elapsedMs >= BRIDGE_PROGRESS_DELAY_MS) {
-      return {
-        title: 'pending',
-        step1: 'completed',
-        step2: 'pending',
-        caption: { kind: 'delayed' },
-        button: 'delayedSupport',
-      };
-    }
-
-    const estimateSeconds = item.estimatedDuration || 0;
-    const remainingSeconds = estimateSeconds - elapsedMs / 1000;
-    if (remainingSeconds > 0) {
-      return {
-        title: 'processing',
-        step1: 'completed',
-        step2: 'processing',
-        caption: { kind: 'estimate', time: formatEta(remainingSeconds) },
-        button: 'back',
-      };
-    }
-
-    return {
-      title: 'processing',
-      step1: 'completed',
-      step2: 'processing',
-      caption: { kind: 'stillBridging' },
-      button: 'back',
-    };
-  }
-
-  return {
-    title: 'processing',
-    step1: 'processing',
-    step2: 'queued',
-    caption: { kind: 'none' },
-    button: 'back',
   };
 };
 
@@ -306,20 +175,4 @@ export const getBridgeProgressRefreshMs = (
   }
   // 倒计时，或源链完成后前 5 秒的空白期。
   return BRIDGE_STATUS_TICK_MS;
-};
-
-export const getBridgePopupRefreshMs = (
-  item: BridgeTxHistoryItem,
-  popup: BridgePopupState,
-) => {
-  if (item.status !== 'fromSuccess') {
-    return undefined;
-  }
-  if (popup.caption.kind === 'estimate') {
-    return BRIDGE_STATUS_TICK_MS;
-  }
-  if (popup.caption.kind === 'stillBridging') {
-    return BRIDGE_STATUS_SLOW_TICK_MS;
-  }
-  return undefined;
 };
