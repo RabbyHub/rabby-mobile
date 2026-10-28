@@ -18,6 +18,11 @@ import { ThemeColors2024 } from '@/constant/theme';
 
 let mockAndroid = false;
 let mockThemeMode: 'light' | 'dark' | undefined;
+jest.mock('@/assets2024/icons/perps/PerpsProTpSlAdd.svg', () => {
+  const ReactModule = require('react');
+  const { View: NativeView } = require('react-native');
+  return (props: object) => ReactModule.createElement(NativeView, props);
+});
 jest.mock('react-native/Libraries/ReactNative/UIManager', () => ({
   __esModule: true,
   default: {
@@ -55,7 +60,7 @@ const mockNativeGate = {
   animatedKeyboardState: { value: { status: 2 } },
   animatedLayoutState: { value: { handleHeight: 40 } },
 };
-let mockViewportHeight = 718;
+let mockViewportHeight = 742;
 let mockContentHeight = 800;
 let mockContentTop = 100;
 let mockAnimatedReactions: Array<{
@@ -430,7 +435,7 @@ describe('PerpsProPositionTpSlSheet', () => {
     mockThemeMode = undefined;
     mockAnimatedReactions = [];
     mockNextFormInstanceId = 0;
-    mockViewportHeight = 718;
+    mockViewportHeight = 742;
     mockContentHeight = 800;
     mockContentTop = 100;
     mockNativeGate.animatedAnimationState.value.status = 2;
@@ -535,25 +540,25 @@ describe('PerpsProPositionTpSlSheet', () => {
           disappearsOnIndex: -1,
         });
       };
-      expectShell(758);
+      expectShell(782);
       expect(
         StyleSheet.flatten(
           screen.getByTestId('perps-pro-position-tpsl-tabs').props.style,
         ),
-      ).toMatchObject({ paddingHorizontal: 16 });
+      ).toMatchObject({ flexDirection: 'row', paddingLeft: 8 });
       fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-add'));
-      expectShell(704);
+      expectShell(722);
       fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-back'));
       fireEvent.press(screen.getAllByText('Modify')[0]!);
-      expectShell(604);
+      expectShell(622);
       fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-back'));
       fireEvent.press(screen.getByText('Position TP/SL'));
-      expectShell(758);
+      expectShell(782);
       for (const lock of ['pending', 'coveredByReview', 'reviewRequesting']) {
         view.rerender(
           <PerpsProPositionTpSlSheet {...props} {...{ [lock]: true }} />,
         );
-        expectShell(758, true);
+        expectShell(782, true);
         view.rerender(<PerpsProPositionTpSlSheet {...props} />);
         if (lock === 'coveredByReview') {
           fireEvent(
@@ -564,7 +569,7 @@ describe('PerpsProPositionTpSlSheet', () => {
           const observer = mockAnimatedReactions.at(-1)!;
           act(() => observer.react(observer.prepare()));
         }
-        expectShell(758);
+        expectShell(782);
       }
       fireEvent.press(screen.getByText('TP/SL'));
       view.rerender(
@@ -574,7 +579,7 @@ describe('PerpsProPositionTpSlSheet', () => {
         />,
       );
       expect(screen.getByTestId('tpsl-form-add')).toBeTruthy();
-      expectShell(758);
+      expectShell(782);
     },
   );
 
@@ -665,16 +670,21 @@ describe('PerpsProPositionTpSlSheet', () => {
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-position-tpsl-tabs').props.style,
       ),
-    ).toMatchObject({
-      borderBottomColor: 'neutral-bg-5',
-      height: 34,
-      paddingHorizontal: 16,
-    });
+    ).toMatchObject({ flexDirection: 'row', paddingLeft: 8 });
     expect(
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-position-tpsl-add').props.style,
       ),
-    ).toMatchObject({ height: 26, paddingHorizontal: 6 });
+    ).toMatchObject({
+      borderRadius: 6,
+      flexDirection: 'row',
+      gap: 4,
+      height: 30,
+      paddingHorizontal: 6,
+    });
+    expect(
+      StyleSheet.flatten(screen.getByText('Add TP/SL').props.style),
+    ).toMatchObject({ fontSize: 12, fontWeight: '700', lineHeight: 16 });
     expect(screen.getAllByText('Market')).toHaveLength(2);
     expect(screen.queryByText(/Last/)).toBeNull();
     expect(mockBottomSheetProps.mock.lastCall?.[0]).toMatchObject({
@@ -860,13 +870,13 @@ describe('PerpsProPositionTpSlSheet', () => {
   );
 
   it.each([
-    ['content fits', 718, 100],
-    ['overflow is already scrolled to the bottom', 800, 18],
+    ['content fits', 742, 100],
+    ['overflow is already scrolled to the bottom', 800, 42],
   ])('does not scroll when %s', (_label, height, top) => {
     render(<PerpsProPositionTpSlSheet {...makeSheetProps([])} />);
     mockContentHeight = height as number;
     mockContentTop = top as number;
-    layoutViewport(718);
+    layoutViewport(742);
     completeKeyboardSession();
     runNativeReactions();
     flushScrollFrame();
@@ -888,7 +898,7 @@ describe('PerpsProPositionTpSlSheet', () => {
   ])('rejects a late native measurement after %s', action => {
     const props = makeSheetProps([]);
     const view = render(<PerpsProPositionTpSlSheet {...props} />);
-    layoutViewport(718);
+    layoutViewport(742);
     completeKeyboardSession();
     runNativeReactions();
     let finishContent:
@@ -897,7 +907,7 @@ describe('PerpsProPositionTpSlSheet', () => {
     jest
       .spyOn(UIManager, 'measureInWindow')
       .mockImplementation((node, callback) => {
-        if (node === 1001) callback(0, 100, 393, 718);
+        if (node === 1001) callback(0, 100, 393, 742);
         else finishContent = callback;
       });
     flushScrollFrame();
@@ -1212,7 +1222,7 @@ describe('PerpsProPositionTpSlSheet', () => {
 
     expect(screen.queryByTestId('tpsl-form-add')).toBeNull();
     expect(screen.getByTestId('perps-pro-position-tpsl-order-3')).toBeTruthy();
-    expect(mockBottomSheetProps.mock.lastCall?.[0].snapPoints).toEqual([758]);
+    expect(mockBottomSheetProps.mock.lastCall?.[0].snapPoints).toEqual([782]);
   });
 
   it('uses Figma heights and removes a confirmed canceled item in-place', () => {
@@ -1233,7 +1243,7 @@ describe('PerpsProPositionTpSlSheet', () => {
       />,
     );
 
-    expect(mockBottomSheetProps.mock.lastCall?.[0].snapPoints).toEqual([758]);
+    expect(mockBottomSheetProps.mock.lastCall?.[0].snapPoints).toEqual([782]);
     expect(screen.getByTestId('perps-pro-position-tpsl-order-1')).toBeTruthy();
 
     rerender(
@@ -1257,10 +1267,10 @@ describe('PerpsProPositionTpSlSheet', () => {
     expect(screen.getByTestId('perps-pro-position-tpsl-order-2')).toBeTruthy();
 
     fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-add'));
-    expect(mockBottomSheetProps.mock.lastCall?.[0].snapPoints).toEqual([704]);
+    expect(mockBottomSheetProps.mock.lastCall?.[0].snapPoints).toEqual([722]);
   });
 
-  it('renders the 758px inline form and full position header when the TP/SL tab has no partial orders', () => {
+  it('renders the 782px inline form and full position header when the TP/SL tab has no partial orders', () => {
     render(
       <PerpsProPositionTpSlSheet
         amountUnit="base"
@@ -1278,7 +1288,7 @@ describe('PerpsProPositionTpSlSheet', () => {
       />,
     );
 
-    expect(mockBottomSheetProps.mock.lastCall?.[0].snapPoints).toEqual([758]);
+    expect(mockBottomSheetProps.mock.lastCall?.[0].snapPoints).toEqual([782]);
     expect(mockHeaderProps.mock.lastCall?.[0]).toMatchObject({
       variant: 'empty',
     });
@@ -1292,7 +1302,7 @@ describe('PerpsProPositionTpSlSheet', () => {
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-position-tpsl-tabs').props.style,
       ),
-    ).toMatchObject({ paddingHorizontal: 16 });
+    ).toMatchObject({ flexDirection: 'row', paddingLeft: 8 });
   });
 
   it('switches from the list to the inline form after the final confirmed cancellation', () => {
@@ -1333,7 +1343,7 @@ describe('PerpsProPositionTpSlSheet', () => {
     expect(screen.queryByTestId('perps-pro-position-tpsl-order-1')).toBeNull();
     expect(screen.queryByTestId('perps-pro-position-tpsl-order-2')).toBeNull();
     expect(screen.getByTestId('tpsl-form-add')).toBeTruthy();
-    expect(mockBottomSheetProps.mock.lastCall?.[0].snapPoints).toEqual([758]);
+    expect(mockBottomSheetProps.mock.lastCall?.[0].snapPoints).toEqual([782]);
   });
   const makeSheetProps = (tpslOrders = position.tpslOrders) => ({
     amountUnit: 'base' as const,
@@ -1369,7 +1379,7 @@ describe('PerpsProPositionTpSlSheet', () => {
         initialOrder: null,
         position: input.position,
       });
-      expect(mockBottomSheetProps.mock.lastCall?.[0].snapPoints).toEqual([598]);
+      expect(mockBottomSheetProps.mock.lastCall?.[0].snapPoints).toEqual([616]);
       fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-back'));
       expect(screen.getByText('All')).toBeTruthy();
       fireEvent.press(screen.getByText('Modify'));
@@ -1466,13 +1476,13 @@ describe('PerpsProPositionTpSlSheet', () => {
     expect(original.onContentHeightChange).toBeUndefined();
     act(() => mockKeyboardListeners.get('keyboardDidShow')?.());
 
-    expect(mockBottomSheetProps.mock.lastCall?.[0].snapPoints).toEqual([758]);
+    expect(mockBottomSheetProps.mock.lastCall?.[0].snapPoints).toEqual([782]);
     expect(mockFormProps.mock.lastCall?.[0].instanceId).toBe(
       original.instanceId,
     );
     act(() => mockKeyboardListeners.get('keyboardDidHide')?.());
     act(() => mockAnimationFrameCallback?.(0));
-    expect(mockBottomSheetProps.mock.lastCall?.[0].snapPoints).toEqual([758]);
+    expect(mockBottomSheetProps.mock.lastCall?.[0].snapPoints).toEqual([782]);
     expect(mockFormProps.mock.lastCall?.[0].instanceId).toBe(
       original.instanceId,
     );
@@ -1527,10 +1537,10 @@ describe('PerpsProPositionTpSlSheet', () => {
         <PerpsProPositionTpSlSheet {...props} settlement={settled} />,
       );
       expect(mockBottomSheetProps.mock.lastCall?.[0].snapPoints).toEqual([
-        platform === 'android' ? 638 : 604,
+        platform === 'android' ? 656 : 622,
       ]);
       act(() => mockKeyboardListeners.get('keyboardDidHide')?.());
-      expect(mockBottomSheetProps.mock.lastCall?.[0].snapPoints).toEqual([758]);
+      expect(mockBottomSheetProps.mock.lastCall?.[0].snapPoints).toEqual([782]);
       expect(screen.getByTestId('tpsl-scroll').props.scrollEnabled).toBe(false);
       fireEvent(
         screen.getByTestId('perps-pro-position-tpsl-page-content'),

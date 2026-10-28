@@ -20,16 +20,16 @@ const PERPS_PRO_MARKET_SELECTOR_DESIGN_TOP = 104;
 const PERPS_PRO_MARKET_SELECTOR_MIN_HEIGHT = 320;
 export const PERPS_PRO_POSITION_TPSL_PAGE_HEADER_HEIGHT = 56;
 const PERPS_PRO_POSITION_TPSL_DESIGN_HEIGHTS = {
-  form: 758,
-  list: 758,
+  form: 782,
+  list: 782,
   // Include both normal 26px PnL hints before the keyboard ever opens.
-  add: 704,
-  modify: 604,
-  'position-modify': 598,
+  add: 722,
+  modify: 622,
+  'position-modify': 616,
 } as const;
 const PERPS_PRO_POSITION_TPSL_SUBPAGE_CHROME_HEIGHT =
-  PERPS_PRO_POSITION_TPSL_PAGE_HEADER_HEIGHT + 130;
-const PERPS_PRO_POSITION_TPSL_TAB_CHROME_HEIGHT = 232;
+  PERPS_PRO_POSITION_TPSL_PAGE_HEADER_HEIGHT + 148;
+const PERPS_PRO_POSITION_TPSL_TAB_CHROME_HEIGHT = 256;
 export type PerpsProPositionTpSlPage =
   keyof typeof PERPS_PRO_POSITION_TPSL_DESIGN_HEIGHTS;
 

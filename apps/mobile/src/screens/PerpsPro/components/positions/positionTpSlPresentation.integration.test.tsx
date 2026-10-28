@@ -56,7 +56,7 @@ const mockNativeSheetState = {
   animatedAnimationState: { value: { status: 2 } },
   animatedScrollableStatus: { value: 1 },
   animatedPosition: { value: 94 },
-  animatedSheetHeight: { value: 758 },
+  animatedSheetHeight: { value: 782 },
   animatedDetentsState: { value: { detents: [94] } },
   animatedKeyboardState: { value: { status: 2 } },
   animatedLayoutState: { value: { handleHeight: 40 } },
@@ -662,7 +662,7 @@ describe('position TP/SL input source integration', () => {
             within(scroll).queryByTestId('perps-pro-position-tpsl-page-header'),
           ).toBeNull();
         }
-        const height = entry === 'add' ? 704 : 758;
+        const height = entry === 'add' ? 722 : 782;
         const expectedViewport = height - 40 - (entry === 'add' ? 56 : 0);
         expect(
           screen.getByTestId('native-main-sheet').props.snapPoints,

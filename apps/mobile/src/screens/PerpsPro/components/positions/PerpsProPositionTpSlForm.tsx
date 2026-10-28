@@ -720,7 +720,7 @@ const getStyle = createGetStyles2024(
       borderBottomRightRadius: 12,
     },
     subpageCard: { borderTopLeftRadius: 12, borderTopRightRadius: 12 },
-    tabCard: { paddingTop: 20 },
+    tabCard: { borderTopLeftRadius: 12, borderTopRightRadius: 12 },
     addCard: { marginBottom: 0 },
     sides: { gap: 20 },
     positionModifySides: { gap: 36 },
