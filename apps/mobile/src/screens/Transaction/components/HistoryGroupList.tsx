@@ -342,6 +342,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
     gap: 8,
     paddingTop: 16,
+    // keep clear of the screen edge where the bottom inset is 0 (Android)
+    paddingBottom: 20,
   },
   noMoreLine: {
     flex: 1,
