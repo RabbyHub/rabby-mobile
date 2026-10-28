@@ -1,4 +1,5 @@
 import React from 'react';
+import { StyleSheet, View } from 'react-native';
 import { Skeleton } from '@rneui/themed';
 import { useTranslation } from 'react-i18next';
 import LinearGradient from 'react-native-linear-gradient';
@@ -22,15 +23,21 @@ export const BalanceCard = ({
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
 
   return (
-    <LinearGradient
-      colors={[
-        colors2024['neutral-card-1'],
-        isLight ? GRADIENT_END_LIGHT : colors2024['neutral-card-1'],
-      ]}
-      locations={[0.4, 0.98]}
-      start={{ x: 0, y: 0.2 }}
-      end={{ x: 1, y: 0.8 }}
-      style={styles.card}>
+    <View style={styles.card}>
+      {/* Keep border and padding off the legacy gradient: under Fabric it
+          forwards them to both its interop wrapper and its inset Paper view. */}
+      <View pointerEvents="none" style={styles.background}>
+        <LinearGradient
+          colors={[
+            colors2024['neutral-card-1'],
+            isLight ? GRADIENT_END_LIGHT : colors2024['neutral-card-1'],
+          ]}
+          locations={[0.4, 0.98]}
+          start={{ x: 0, y: 0.2 }}
+          end={{ x: 1, y: 0.8 }}
+          style={StyleSheet.absoluteFill}
+        />
+      </View>
       {isLight ? (
         <RcBalanceCloud width={76} height={32} style={styles.cloud} />
       ) : null}
@@ -43,24 +50,28 @@ export const BalanceCard = ({
         </Text>
       )}
       <Text style={styles.pnl}>--</Text>
-    </LinearGradient>
+    </View>
   );
 };
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   card: {
     height: 140,
+    // padding includes the background layer's 2px border
+    paddingTop: 20,
+    paddingHorizontal: 16,
+  },
+  background: {
+    ...StyleSheet.absoluteFillObject,
     borderRadius: 14,
     borderWidth: 2,
     borderColor: colors2024['neutral-bg-1'],
-    paddingTop: 18,
-    paddingHorizontal: 14,
     overflow: 'hidden',
   },
   cloud: {
     position: 'absolute',
-    left: 8,
-    top: 10,
+    left: 10,
+    top: 12,
     transform: [{ scaleX: -1 }],
   },
   label: {
