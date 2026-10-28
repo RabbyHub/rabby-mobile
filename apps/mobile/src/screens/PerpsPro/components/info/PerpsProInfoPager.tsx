@@ -412,8 +412,17 @@ const PerpsProInfoPagerInner = <Row,>(
       }
       recordDesiredOffset(tab, offset);
       listRefs.current[tab]?.scrollToOffset({ animated: false, offset });
+      // The active list's native onScroll mapping is attached after this
+      // commit, so the correction's scroll event can reach the list before the
+      // shared scene offset observes it. Publish the commanded offset directly.
+      onActivateOffset(offset);
     },
-    [correctAndroidPageOffset, prepareOffsetsOnUI, recordDesiredOffset],
+    [
+      correctAndroidPageOffset,
+      onActivateOffset,
+      prepareOffsetsOnUI,
+      recordDesiredOffset,
+    ],
   );
 
   const preparePages = useCallback(() => {
