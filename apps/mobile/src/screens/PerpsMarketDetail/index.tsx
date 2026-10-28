@@ -51,6 +51,7 @@ import { RootNames, getBottomButtonBottomOffset } from '@/constant/layout';
 import { PerpsAddPositionPopup } from './components/PerpsAddPositionPopup';
 import { PerpsLimitOrdersForCoin } from './components/PerpsLimitOrdersForCoin';
 import { usePerpsState } from '@/hooks/perps/usePerpsState';
+import { usePerpsRuntimeStatus } from '@/hooks/perps/runtime/usePerpsRuntimeStatus';
 import { showToast } from '@/hooks/perps/showToast';
 import { PerpsAgentsLimitModal } from '../Perps/components/PerpsAgentsLimitModal';
 import { PerpsPositionSkeletonLoader } from '../Perps/components/PerpsSkeletonLoader';
@@ -106,6 +107,11 @@ export const PerpsMarketDetailScreen = () => {
   } = usePerpsState();
 
   const currentAssetCtx = perpsStore(s => s.marketDataMap[coin]);
+  const perpsRuntimeStatus = usePerpsRuntimeStatus().status;
+  // Footer actions depend on whether a position exists. A failed runtime never
+  // initializes, so keep the existing actions reachable in that case.
+  const isPositionStateResolved =
+    isInitialized || perpsRuntimeStatus === 'error';
   // const hasPermission = true;
   const [showRiskPopup, setShowRiskPopup] = useState(false);
   // useEffect(() => {
@@ -547,6 +553,7 @@ export const PerpsMarketDetailScreen = () => {
           <PerpsFooter
             hasPermission={hasPermission}
             hasPosition={hasPosition}
+            loading={!isPositionStateResolved}
             direction={positionData?.direction}
             onAddPress={async () => {
               await handleActionApproveStatus();
