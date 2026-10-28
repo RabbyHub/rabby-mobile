@@ -25,10 +25,22 @@ export function DetailAddressText({
   style?: StyleProp<TextStyle>;
 }) {
   const { styles } = useTheme2024({ getStyle });
+  const text = splitAddressInTwoLines(address || '');
+  const isSplit = text !== (address || '');
 
   return (
-    <Text style={[styles.address, style]}>
-      {splitAddressInTwoLines(address || '')}
+    <Text
+      style={[styles.address, style]}
+      // the width fits regular glyphs; heavier ones (iOS Bold Text, Android
+      // font weight adjustment) shrink slightly instead of adding a line
+      {...(isSplit
+        ? {
+            numberOfLines: 2,
+            adjustsFontSizeToFit: true,
+            minimumFontScale: 0.7,
+          }
+        : {})}>
+      {text}
     </Text>
   );
 }
