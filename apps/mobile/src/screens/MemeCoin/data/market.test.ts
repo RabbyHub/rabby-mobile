@@ -66,7 +66,12 @@ describe('toMemeHolding', () => {
       },
       amount: 5,
       valueUsd: 10,
+      pnl: null,
     });
+  });
+
+  it('takes the P&L from the backend field', () => {
+    expect(toMemeHolding(position({ pnl: -3.1 })).pnl).toBe(-3.1);
   });
 });
 

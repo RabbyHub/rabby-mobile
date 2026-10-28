@@ -17,4 +17,6 @@ export type MemeHolding = {
   meme: MemeToken;
   amount: number;
   valueUsd: number;
+  /** USD; null until the backend returns it */
+  pnl: number | null;
 };

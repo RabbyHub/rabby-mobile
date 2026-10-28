@@ -5,6 +5,7 @@ import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { formatPercentageKMB } from '@/screens/Market/utils/formatPercentageKMB';
 import { ellipsisAddress } from '@/utils/address';
+import { formatUsdValue } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import { SelectedBadge } from './SelectedBadge';
 
@@ -18,6 +19,8 @@ type Props = {
   address: string;
   valueText: string;
   change24h: number | null;
+  /** holding rows only: USD, shown instead of change24h; null renders "--" */
+  pnl?: number | null;
   selected: boolean;
   onPress: (itemKey: string) => void;
 };
@@ -30,6 +33,7 @@ export const MemeTokenRow = React.memo(function MemeTokenRow({
   address,
   valueText,
   change24h,
+  pnl,
   selected,
   onPress,
 }: Props) {
@@ -54,7 +58,20 @@ export const MemeTokenRow = React.memo(function MemeTokenRow({
         <Text style={styles.value} numberOfLines={1}>
           {valueText}
         </Text>
-        {change24h === null ? (
+        {pnl !== undefined ? (
+          <Text
+            style={
+              pnl === null
+                ? styles.changeNone
+                : pnl < 0
+                ? styles.changeDown
+                : styles.changeUp
+            }>
+            {pnl === null
+              ? '--'
+              : `${pnl < 0 ? '' : '+'}${formatUsdValue(pnl)}`}
+          </Text>
+        ) : change24h === null ? (
           <Text style={styles.changeNone}>--</Text>
         ) : (
           <Text style={change24h < 0 ? styles.changeDown : styles.changeUp}>

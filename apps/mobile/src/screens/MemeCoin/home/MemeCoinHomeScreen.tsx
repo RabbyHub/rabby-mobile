@@ -64,7 +64,12 @@ type HomeMode = 'market' | 'holdings';
 /** valueUsd is null in market mode (the row shows market cap instead) */
 type HomeRow =
   | { key: string; meme: MemeMarketItem; valueUsd: null }
-  | { key: string; meme: MemeToken; valueUsd: number };
+  | {
+      key: string;
+      meme: MemeToken;
+      valueUsd: number;
+      pnl: number | null;
+    };
 
 const SKELETON_ROWS = 6;
 
@@ -187,6 +192,7 @@ export const MemeCoinHomeScreen = () => {
               key: tokenKey(h.meme),
               meme: h.meme,
               valueUsd: h.valueUsd,
+              pnl: h.pnl,
             }),
           ),
     [mode, marketList, holdings, keyword],
@@ -310,6 +316,7 @@ export const MemeCoinHomeScreen = () => {
             : formatUsdValue(item.valueUsd)
         }
         change24h={item.meme.change24h}
+        pnl={item.valueUsd === null ? undefined : item.pnl}
         selected={selectedSet.has(item.key)}
         onPress={toggle}
       />

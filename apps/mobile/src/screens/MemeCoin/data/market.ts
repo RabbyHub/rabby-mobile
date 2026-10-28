@@ -20,6 +20,7 @@ export const toMemeHolding = (raw: RawMemePosition): MemeHolding => ({
   meme: toMemeToken(raw),
   amount: raw.amount,
   valueUsd: raw.usd_value,
+  pnl: raw.pnl ?? null,
 });
 
 export const filterBySymbolPrefix = <T>(
