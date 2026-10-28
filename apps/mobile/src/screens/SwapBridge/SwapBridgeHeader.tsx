@@ -78,7 +78,7 @@ function SwapBridgeHeaderRight({
         {activeTab === 'swap' ? (
           <SwapHeader isForMultipleAddress={isForMultipleAddress} />
         ) : (
-          <BridgeHeader />
+          <BridgeHeader isForMultipleAddress={isForMultipleAddress} />
         )}
       </View>
     </View>

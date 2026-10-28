@@ -185,6 +185,7 @@ export const RootNames = {
   BatchRevoke: 'BatchRevoke',
   History: 'History',
   HistoryDetail: 'HistoryDetail',
+  BridgeDetail: 'BridgeDetail',
   HistoryLocalDetail: 'HistoryLocalDetail',
   MultiAddressHistory: 'MultiAddressHistory',
   LendingHistory: 'LendingHistory',
@@ -329,6 +330,12 @@ function makeScreenSpecConfig() {
       }),
     };
 
+    const bridgeDetailPageConf = <ScreenSystemBarConfig>{
+      statusBarStyle,
+      statusBarBackgroundColor:
+        colors2024[isDarkTheme ? 'neutral-bg-1' : 'neutral-bg-0'],
+    };
+
     const transparentDefault2024Conf = <ScreenSystemBarConfig>{
       statusBarStyle,
       statusBarBackgroundColor: 'transparent',
@@ -421,6 +428,7 @@ function makeScreenSpecConfig() {
       [RootNames.BatchRevoke]: transparentDefault2024Conf,
       [RootNames.History]: historyPageConf,
       [RootNames.HistoryDetail]: historyPageConf,
+      [RootNames.BridgeDetail]: bridgeDetailPageConf,
       [RootNames.HistoryLocalDetail]: historyPageConf,
       [RootNames.MultiAddressHistory]: historyPageConf,
       [RootNames.LendingHistory]: bg1Default2024Conf,

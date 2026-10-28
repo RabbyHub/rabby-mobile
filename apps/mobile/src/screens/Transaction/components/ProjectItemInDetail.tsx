@@ -17,6 +17,7 @@ type Props = {
   address?: string;
   chain?: Parameters<typeof openTxExternalUrl>[0]['chain'];
   style?: StyleProp<ViewStyle>;
+  addressTextStyle?: React.ComponentProps<typeof Text>['style'];
 };
 
 export const ProjectItemInDetail = ({
@@ -26,6 +27,7 @@ export const ProjectItemInDetail = ({
   address,
   chain,
   style,
+  addressTextStyle,
 }: Props) => {
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
@@ -47,6 +49,7 @@ export const ProjectItemInDetail = ({
         {title}
       </Text>
       <TouchableOpacity
+        disabled={!address}
         style={{
           alignItems: 'flex-end',
           flexShrink: 1,
@@ -66,16 +69,19 @@ export const ProjectItemInDetail = ({
           <Text style={styles.itemContentText} numberOfLines={1}>
             {name || t('global.Unknown')}
           </Text>
-          <RcIconJumpCC
-            width={14}
-            height={14}
-            color={colors2024['neutral-foot']}
-          />
+          {!!address && (
+            <RcIconJumpCC
+              width={14}
+              height={14}
+              color={colors2024['neutral-foot']}
+            />
+          )}
         </View>
-        <Text style={styles.itemAddressText}>
-          {/* {ellipsisAddress(address || '')} */}
-          {address}
-        </Text>
+        {!!address && (
+          <Text style={[styles.itemAddressText, addressTextStyle]}>
+            {address}
+          </Text>
+        )}
       </TouchableOpacity>
     </View>
   );

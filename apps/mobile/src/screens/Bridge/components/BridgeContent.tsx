@@ -1712,6 +1712,7 @@ export const BridgeContent = ({
           <AccountSwitcherModal forScene="MakeTransactionAbout" inScreen />
         )}
         <BridgePendingTransactionsController
+          isForMultipleAddress={isForMultipleAddress}
           ref={pendingTransactionsRef}
           disableHeaderRight={disableHeaderRight}
           enabled={sceneActive}
@@ -1877,6 +1878,7 @@ export const BridgeContent = ({
             currentAccount?.address && (
               <BridgePendingTxItem
                 userAddress={currentAccount.address}
+                enabled={sceneActive}
                 onDisplayChange={setBridgeProgressVisible}
               />
             )}

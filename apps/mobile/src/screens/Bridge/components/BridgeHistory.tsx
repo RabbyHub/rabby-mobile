@@ -1,269 +1,282 @@
-/* eslint-disable react-native/no-inline-styles */
-import React, { useCallback, useEffect, useMemo, useRef } from 'react';
-import { View, ActivityIndicator, Image } from 'react-native';
-import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+import { ActivityIndicator, FlatList, Image, View } from 'react-native';
+import type { BottomSheetModalMethods } from '@gorhom/bottom-sheet/src/types';
 import { useTranslation } from 'react-i18next';
-import { useBridgeHistory } from '../hooks';
+import dayjs from 'dayjs';
 import { Skeleton } from '@rneui/themed';
-import { createGetStyles2024 } from '@/utils/styles';
-import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
-import { AppBottomSheetModal } from '@/components';
-import { BottomSheetModalMethods } from '@gorhom/bottom-sheet/src/types';
-import { ModalLayouts } from '@/constant/layout';
-import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
+import { Text } from '@/components/Typography';
+import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { BridgeHistoryItem } from '@/components2024/HistoryItem/BridgeHistoryItem';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import IconEmpty from '@/assets2024/images/lending/empty.png';
-import IconEmptyDark from '@/assets2024/images/lending/empty-dark.png';
-import { AddressItem } from '@/components2024/AddressItem/AddressItem';
-import { ellipsisAddress } from '@/utils/address';
+import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
+import { useTheme2024 } from '@/hooks/theme';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { useHandleBackPressClosable } from '@/hooks/useAppGesture';
-import { useFocusEffect } from '@react-navigation/native';
-import { Text } from '@/components/Typography';
+import { useFocusEffect, useIsFocused } from '@react-navigation/native';
+import { useAppState } from '@react-native-community/hooks';
+import {
+  useSafeAreaInsets,
+  useSafeAreaFrame,
+} from 'react-native-safe-area-context';
+import { createGetStyles2024 } from '@/utils/styles';
+import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
+import type { BridgeTxHistoryItem } from '@/core/services/transactionHistory';
+import type { BridgeHistory } from '@rabby-wallet/rabby-api/dist/types';
+import Empty from '@/assets2024/images/lending/empty.png';
+import EmptyDark from '@/assets2024/images/lending/empty-dark.png';
+import { useBridgeHistory } from '../hooks/history';
+import { sameBridgeHash } from '../utils/record';
+import { openBridgeDetail } from '../utils/navigation';
 
-const ItemSeparator = () => {
+type Entry =
+  | { id: string; date: string; history?: undefined }
+  | { id: string; history: BridgeHistory; date?: undefined };
+
+const HISTORY_SKELETON_COUNT = 5;
+
+function HistorySkeleton() {
   const { styles } = useTheme2024({ getStyle });
-  return <View style={styles.item} />;
-};
+  const rows: React.ReactNode[] = [];
+  for (let index = 0; index < HISTORY_SKELETON_COUNT; index += 1) {
+    rows.push(<Skeleton key={index} style={styles.skeleton} />);
+  }
+  return <View style={styles.skeletonList}>{rows}</View>;
+}
 
-const HistoryList = ({ recentShowTime }: { recentShowTime: number }) => {
+function HistoryList({
+  enabled,
+  onSelect,
+  isForMultipleAddress,
+}: {
+  enabled: boolean;
+  onSelect: () => void;
+  isForMultipleAddress: boolean;
+}) {
   const { styles, isLight } = useTheme2024({ getStyle });
-  const { txList, loading, loadMore, noMore } = useBridgeHistory();
   const { t } = useTranslation();
   const { bottom } = useSafeAreaInsets();
-
-  const renderItem = useCallback(
-    ({ item }) => (
-      <BridgeHistoryItem data={item} recentShowTime={recentShowTime} />
-    ),
-    [recentShowTime],
-  );
-
-  const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
+  const { finalSceneCurrentAccount: account } = useSceneAccountInfo({
     forScene: 'MakeTransactionAbout',
   });
-
-  const ListHeaderComponent = useCallback(() => {
-    return (
-      <View
-        style={{
-          marginBottom: 12,
-        }}>
-        <Text style={styles.headerTitle}>{t('page.bridge.history')}</Text>
-        {Boolean(currentAccount) && (
-          <AddressItem account={currentAccount!}>
-            {({ WalletIcon, WalletAddress }) => {
-              return (
-                <View style={styles.addressRow}>
-                  <WalletIcon style={styles.walletIcon} />
-                  <Text
-                    numberOfLines={1}
-                    ellipsizeMode="tail"
-                    style={styles.address}>
-                    {currentAccount?.aliasName ||
-                      ellipsisAddress(currentAccount?.address || '')}
-                  </Text>
-                </View>
-              );
-            }}
-          </AddressItem>
-        )}
-      </View>
-    );
-  }, [styles, t, currentAccount]);
-
-  const ListEndLoader = useCallback(() => {
-    if (noMore) {
-      return null;
+  const { txList, loading, loadingMore, loadMore, noMore } =
+    useBridgeHistory(enabled);
+  const [locals, setLocals] = useState<BridgeTxHistoryItem[]>([]);
+  // 交易集合或状态变化时重读本地记录，补充源链确认及取消信息。
+  const statusKey = txList?.list
+    .map(item => `${item.from_tx.tx_id}:${item.status}:${item.from_tx.status}`)
+    .join('|');
+  useEffect(() => {
+    let active = true;
+    if (enabled && account?.address) {
+      transactionHistoryServiceApi
+        .getBridgeTxHistory(account.address)
+        .then(records => {
+          if (active) {
+            setLocals(records);
+          }
+        })
+        .catch(error =>
+          console.warn('[BridgeHistory] load local history failed', error),
+        );
     }
-    return <ActivityIndicator style={styles.loading} />;
-  }, [noMore, styles.loading]);
-
-  const ListEmptyComponent = useMemo(
-    () =>
-      !loading && (!txList || !txList?.list?.length) ? (
-        <View style={styles.emptyView}>
-          <Image
-            source={isLight ? IconEmpty : IconEmptyDark}
-            width={160}
-            height={120}
-            style={{
-              width: 163,
-              height: 126,
+    return () => {
+      active = false;
+    };
+  }, [enabled, account?.address, statusKey]);
+  const entries = useMemo(() => {
+    const result: Entry[] = [];
+    let previousDate = '';
+    for (const history of [...(txList?.list || [])].sort(
+      (a, b) => b.create_at - a.create_at,
+    )) {
+      const date = dayjs(history.create_at * 1000).format('YYYY-MM-DD');
+      if (date !== previousDate) {
+        result.push({
+          id: `date:${date}`,
+          date:
+            date === dayjs().format('YYYY-MM-DD')
+              ? t('page.bridge.status.today')
+              : dayjs(history.create_at * 1000).format('MMM D, YYYY'),
+        });
+        previousDate = date;
+      }
+      result.push({
+        id: `${history.from_token.chain}:${history.from_tx.tx_id}`,
+        history,
+      });
+    }
+    return result;
+  }, [txList, t]);
+  const renderItem = useCallback(
+    ({ item }: { item: Entry }) => {
+      if (!item.history) {
+        return <Text style={styles.date}>{item.date}</Text>;
+      }
+      const data = item.history;
+      const local = locals.find(
+        record =>
+          record.fromToken.chain === data.from_token.chain &&
+          (sameBridgeHash(record.hash, data.from_tx.tx_id) ||
+            sameBridgeHash(record.acceleratedHash, data.from_tx.tx_id)),
+      );
+      return (
+        <View style={styles.row}>
+          <BridgeHistoryItem
+            data={data}
+            local={local}
+            enabled={enabled}
+            onPress={() => {
+              // 先关闭历史弹窗再进入详情，避免弹层覆盖新页面。
+              onSelect();
+              openBridgeDetail({
+                address: account?.address || '',
+                history: data,
+                local,
+                isForMultipleAddress,
+              });
             }}
           />
-          <Text style={styles.emptyText}>
-            {t('page.swap.no-transaction-records')}
-          </Text>
         </View>
-      ) : loading ? (
-        <>
-          {Array.from({ length: 10 }).map((_, idx) => (
-            <Skeleton style={styles.skeletonBlock} key={idx} />
-          ))}
-        </>
-      ) : null,
+      );
+    },
     [
-      loading,
-      txList,
-      styles.emptyView,
-      styles.emptyText,
-      styles.skeletonBlock,
-      isLight,
-      t,
+      locals,
+      enabled,
+      onSelect,
+      account?.address,
+      isForMultipleAddress,
+      styles.date,
+      styles.row,
     ],
   );
-
-  const sortedList = useMemo(() => {
-    if (!txList) {
-      return [];
-    }
-    return txList.list.sort((a, b) => {
-      // status pending first
-      if (a.status === 'pending' && b.status !== 'pending') {
-        return -1;
-      }
-      if (a.status !== 'pending' && b.status === 'pending') {
-        return 1;
-      }
-      return 0;
-    });
-  }, [txList]);
-
   return (
     <>
-      {ListHeaderComponent()}
-      <BottomSheetFlatList
-        contentContainerStyle={[
-          {
-            paddingBottom: 20 + bottom,
-          },
-        ]}
-        style={styles.flatList}
-        // stickyHeaderIndices={[0]}
-        // ListHeaderComponent={ListHeaderComponent}
-        ItemSeparatorComponent={ItemSeparator}
-        data={sortedList}
+      <Text style={styles.title}>{t('page.bridge.status.historyTitle')}</Text>
+      <FlatList
+        data={entries}
         renderItem={renderItem}
-        keyExtractor={item => item.detail_url}
-        onEndReached={loadMore}
-        onEndReachedThreshold={0.6}
-        ListFooterComponent={ListEndLoader}
-        ListEmptyComponent={ListEmptyComponent}
+        keyExtractor={item => item.id}
+        style={styles.list}
+        contentContainerStyle={{ paddingBottom: bottom + 20 }}
+        onEndReached={() => {
+          if (!noMore) {
+            loadMore();
+          }
+        }}
+        onEndReachedThreshold={0.5}
+        ListFooterComponent={loadingMore ? <ActivityIndicator /> : null}
+        ListEmptyComponent={
+          loading ? (
+            <HistorySkeleton />
+          ) : (
+            <View style={styles.empty}>
+              <Image
+                source={isLight ? Empty : EmptyDark}
+                style={styles.emptyImage}
+              />
+              <Text style={styles.emptyText}>
+                {t('page.swap.no-transaction-records')}
+              </Text>
+            </View>
+          )
+        }
       />
     </>
   );
-};
+}
 
-export const BridgeTxHistory = ({
+export function BridgeTxHistory({
   visible,
   onClose,
-  recentShowTime,
+  isForMultipleAddress = false,
 }: {
   visible: boolean;
   onClose: () => void;
-  recentShowTime: number;
-}) => {
-  const bottomRef = useRef<BottomSheetModalMethods>(null);
-  const { colors2024 } = useTheme2024({ getStyle });
-
-  const snapPoints = useMemo(() => [ModalLayouts.defaultHeightPercentText], []);
-
+  recentShowTime?: number;
+  isForMultipleAddress?: boolean;
+}) {
+  const ref = useRef<BottomSheetModalMethods>(null);
+  const focused = useIsFocused();
+  const appState = useAppState();
+  // 弹窗隐藏、页面失焦或应用退到后台时暂停列表请求和计时。
+  const active = visible && focused && appState === 'active';
+  const { height } = useSafeAreaFrame();
+  const { colors2024, isLight } = useTheme2024();
   useEffect(() => {
-    if (visible) {
-      bottomRef.current?.present();
-    } else {
-      bottomRef.current?.dismiss();
-    }
+    visible ? ref.current?.present() : ref.current?.dismiss();
   }, [visible]);
-
-  const isDarkTheme = useGetBinaryMode() === 'dark';
-
   const { onHardwareBackHandler } = useHandleBackPressClosable(
     useCallback(() => {
-      bottomRef.current?.dismiss();
-      return !visible;
+      // 仅在弹窗可见时拦截返回键，避免关闭后阻止正常返回。
+      if (!visible) {
+        return false;
+      }
+      ref.current?.dismiss();
+      return true;
     }, [visible]),
     { autoEffectEnabled: false },
   );
-
   useFocusEffect(onHardwareBackHandler);
-
   return (
     <AppBottomSheetModal
-      ref={bottomRef}
-      snapPoints={snapPoints}
+      ref={ref}
+      snapPoints={[Math.min(652, height * 0.9)]}
+      enableContentPanningGesture={false}
       onDismiss={onClose}
       {...makeBottomSheetProps({
         colors: colors2024,
-        linearGradientType: isDarkTheme ? 'bg1' : 'bg0',
+        linearGradientType: isLight ? 'bg0' : 'bg1',
       })}>
-      <HistoryList recentShowTime={recentShowTime} />
+      {/* 关闭时卸载列表，停止后续轮询和行内计时。 */}
+      {visible && (
+        <HistoryList
+          enabled={active}
+          isForMultipleAddress={isForMultipleAddress}
+          onSelect={() => {
+            // 点击记录时立即卸载弹窗，由 onDismiss 同步关闭状态。
+            ref.current?.destroy();
+          }}
+        />
+      )}
     </AppBottomSheetModal>
   );
-};
+}
 
-const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
-  emptyText: {
+const getStyle = createGetStyles2024(({ colors2024 }) => ({
+  title: {
+    fontFamily: 'SF Pro Rounded',
+    fontWeight: '900',
+    fontSize: 20,
+    lineHeight: 24,
     textAlign: 'center',
+    color: colors2024['neutral-title-1'],
+    marginTop: 10,
+    marginBottom: 18,
+  },
+  list: { paddingHorizontal: 16 },
+  date: {
+    fontFamily: 'SF Pro Rounded',
+    fontWeight: '700',
+    fontSize: 14,
+    lineHeight: 18,
+    color: colors2024['neutral-secondary'],
+    marginLeft: 12,
+    marginBottom: 8,
+    marginTop: 4,
+  },
+  row: { marginBottom: 8 },
+  skeletonList: { gap: 8 },
+  skeleton: { width: '100%', height: 74, borderRadius: 16 },
+  emptyImage: { width: 163, height: 126 },
+  empty: { marginTop: 100, alignItems: 'center', gap: 16 },
+  emptyText: {
+    fontFamily: 'SF Pro Rounded',
     fontSize: 16,
     color: colors2024['neutral-info'],
-    fontFamily: 'SF Pro Rounded',
-  },
-  skeletonBlock: {
-    width: '100%',
-    height: 74,
-    padding: 0,
-    borderRadius: 16,
-    marginTop: 8,
-  },
-  emptyView: {
-    marginTop: '50%',
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 16,
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    textAlign: 'center',
-    paddingBottom: 0,
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-0']
-      : colors2024['neutral-bg-1'],
-  },
-  flatList: {
-    paddingHorizontal: 20,
-  },
-  item: {
-    height: 8,
-  },
-  addressRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '100%',
-    paddingHorizontal: 20,
-  },
-  walletIcon: {
-    borderRadius: 4,
-    width: 18,
-    height: 18,
-    marginRight: 4,
-  },
-  address: {
-    margin: 4,
-    fontFamily: 'SF Pro Rounded',
-    fontWeight: '700',
-    lineHeight: 20,
-    fontSize: 16,
-    color: colors2024['neutral-foot'],
-  },
-  loading: {
-    marginTop: 8,
   },
 }));

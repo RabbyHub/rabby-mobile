@@ -323,6 +323,7 @@ export type SingleAddressNavigatorParamList = {
 };
 
 export type TransactionNavigatorParamList = {
+  [RootNames.BridgeDetail]: import('./screens/Bridge/utils/statusTypes').BridgeRecordData;
   [RootNames.History]?: {};
   [RootNames.MultiAddressHistory]?: {
     isInTokenDetail?: boolean;

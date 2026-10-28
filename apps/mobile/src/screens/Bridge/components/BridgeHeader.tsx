@@ -38,9 +38,11 @@ export interface BridgeHeaderRef {
 
 export const BridgeHeader = ({
   clearBridgeHistoryRedDot,
+  isForMultipleAddress = false,
   ref,
 }: {
   clearBridgeHistoryRedDot?: () => number | Promise<number>;
+  isForMultipleAddress?: boolean;
   ref?: Ref<BridgeHeaderRef>;
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
@@ -100,6 +102,7 @@ export const BridgeHeader = ({
       </View>
 
       <BridgeTxHistory
+        isForMultipleAddress={isForMultipleAddress}
         visible={historyVisible}
         onClose={closeHistory}
         recentShowTime={recentShowTime}

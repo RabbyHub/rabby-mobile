@@ -444,6 +444,70 @@ const setLastScreenshot = (
   setLastScreenshotNow(image, uploadNow);
 };
 
+let manualScreenshotInProgress = false;
+
+/** 主动截图并打开现有反馈流程，上传和提交由用户后续操作触发。 */
+export async function captureAndOpenScreenshotFeedback() {
+  // 截图执行中或反馈弹窗已打开时忽略重复点击。
+  if (
+    manualScreenshotInProgress ||
+    feedbackByScreenshotStore.getState().submitModalShown
+  ) {
+    return;
+  }
+  if (
+    !getGlobalScreenCapturable() ||
+    storeApiScreenshotReport.isScreenshotReportFree()
+  ) {
+    throw new Error('Screen capture is unavailable');
+  }
+  manualScreenshotInProgress = true;
+  let captureUri: string | undefined;
+  let releaseCapture: ((uri: string) => void) | undefined;
+  try {
+    const viewShot = await import('react-native-view-shot');
+    releaseCapture = viewShot.releaseCapture;
+    await appScreenshotFS.initializeBeforeCapture();
+    captureUri = await viewShot.captureScreen({
+      format: 'png',
+      result: 'tmpfile',
+    });
+    const dimensions = await new Promise<{ width: number; height: number }>(
+      (resolve, reject) =>
+        Image.getSize(
+          captureUri!,
+          (width, height) => resolve({ width, height }),
+          reject,
+        ),
+    );
+    const path = await appScreenshotFS.saveScreenshotFrom(captureUri, {
+      imageType: 'image/png',
+    });
+    if (!path) {
+      throw new Error('Screenshot could not be saved');
+    }
+    // 截图期间可能切入受保护页面，保存后再次校验并清理文件。
+    if (!getGlobalScreenCapturable()) {
+      await RNFS.unlink(AppScreenshotFS.normalizeLocalFilePath(path)).catch(
+        () => undefined,
+      );
+      throw new Error('Screen capture became unavailable');
+    }
+    setLastScreenshot(
+      Image.resolveAssetSource({
+        uri: AppScreenshotFS.normalizeImageUri(path, 'image/png'),
+        ...dimensions,
+      }),
+    );
+  } finally {
+    // 无论成功失败都释放临时截图并解除执行锁。
+    if (captureUri) {
+      releaseCapture?.(captureUri);
+    }
+    manualScreenshotInProgress = false;
+  }
+}
+
 export function debugShowSubmitFeedbackByScreenshotModal() {
   setLastScreenshot(
     Image.resolveAssetSource({
