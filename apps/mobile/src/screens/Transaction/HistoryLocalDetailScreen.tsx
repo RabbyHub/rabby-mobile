@@ -3,18 +3,17 @@ import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { useFocusEffect, useRoute } from '@react-navigation/native';
+import { useRoute } from '@react-navigation/native';
 import { useInterval } from 'ahooks';
 import React, { useCallback, useEffect, useMemo } from 'react';
 import { ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { ScreenHeaderAccountSwitcher } from '@/components/AccountSwitcher/OnScreenHeader';
+import { ScreenHeaderAccountTitle } from '@/components/AccountSwitcher/OnScreenHeader';
 import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
 import type { TransactionGroup } from '@/core/services/transactionHistory';
 import type { KeyringAccountWithAlias } from '@/hooks/account';
 import { useMyAccounts } from '@/hooks/account';
-import { switchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import type { GetNestedScreenRouteProp } from '@/navigation-type';
 import { findAccountByPriority } from '@/utils/account';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
@@ -80,19 +79,6 @@ function HistoryLocalDetailScreen(): JSX.Element {
   useInterval(fetchRefreshData, 5000);
 
   const { setNavigationOptions } = useSafeSetNavigationOptions();
-  const getHeaderTitle = React.useCallback(() => {
-    return (
-      <ScreenHeaderAccountSwitcher
-        forScene="HistoryDetail"
-        titleText={
-          <HistoryHeaderTitle>
-            {title || t('page.transactions.itemTitle.Default')}
-          </HistoryHeaderTitle>
-        }
-        disableSwitch={true}
-      />
-    );
-  }, [title, t]);
 
   useEffect(() => {
     if (!data.isPending) {
@@ -107,12 +93,6 @@ function HistoryLocalDetailScreen(): JSX.Element {
         });
     }
   }, [data]);
-
-  useEffect(() => {
-    setNavigationOptions({
-      headerTitle: getHeaderTitle,
-    });
-  }, [setNavigationOptions, getHeaderTitle]);
 
   const needUseSwap = useMemo(() => {
     if (type === HistoryItemCateType.Swap) {
@@ -148,13 +128,24 @@ function HistoryLocalDetailScreen(): JSX.Element {
       : accounts.find(item => isSameAddress(item.address, data.address));
   }, [account, accounts, data.address]);
 
-  useFocusEffect(
-    useCallback(() => {
-      if (currentAccount) {
-        switchSceneCurrentAccount('HistoryDetail', currentAccount);
-      }
-    }, [currentAccount]),
-  );
+  const getHeaderTitle = React.useCallback(() => {
+    return (
+      <ScreenHeaderAccountTitle
+        account={currentAccount}
+        titleText={
+          <HistoryHeaderTitle>
+            {title || t('page.transactions.itemTitle.Default')}
+          </HistoryHeaderTitle>
+        }
+      />
+    );
+  }, [currentAccount, title, t]);
+
+  useEffect(() => {
+    setNavigationOptions({
+      headerTitle: getHeaderTitle,
+    });
+  }, [setNavigationOptions, getHeaderTitle]);
 
   const actionElement = data.maxGasTx?.action?.actionData?.approveToken ? (
     <ApproveToken

@@ -6,7 +6,6 @@ import { Text } from '@/components/Typography';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { getAliasName } from '@/core/apis/contact';
 import { KeyringAccountWithAlias } from '@/hooks/account';
-import { switchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { useTheme2024 } from '@/hooks/theme';
 import { apisSingleHome } from '@/screens/Home/hooks/singleHome';
 import { ellipsisAddress } from '@/utils/address';
@@ -54,7 +53,6 @@ export const AddressItemInDetail = ({
       if (accountSelectCtx.isUnderContext) {
         accountSelectCtx.fnCloseModal();
       }
-      switchSceneCurrentAccount('HistoryDetail', account);
       apisSingleHome.navigateToSingleHome(account);
     }
   }, [account, accountSelectCtx]);

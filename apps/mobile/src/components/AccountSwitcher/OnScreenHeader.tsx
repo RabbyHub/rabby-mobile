@@ -19,6 +19,67 @@ import useMount from 'react-use/lib/useMount';
 import { AddressItem } from '@/components2024/AddressItem/AddressItem';
 import { useRendererDetect } from '../Perf/PerfDetector';
 import { Text } from '@/components/Typography';
+import type { KeyringAccountWithAlias } from '@/hooks/account';
+
+function HeaderAccountRow({
+  account,
+  trailing,
+}: {
+  account: KeyringAccountWithAlias;
+  trailing?: React.ReactNode;
+}) {
+  const { styles } = useTheme2024({ getStyle });
+
+  return (
+    <AddressItem style={styles.addressItem} account={account}>
+      {({ WalletIcon }) => {
+        return (
+          <View style={styles.addressRow}>
+            <WalletIcon style={styles.walletIcon} />
+            <View style={styles.nameBox}>
+              <Text
+                numberOfLines={1}
+                ellipsizeMode="tail"
+                style={styles.address}>
+                {account.aliasName || ellipsisAddress(account.address)}
+              </Text>
+            </View>
+            {trailing}
+          </View>
+        );
+      }}
+    </AddressItem>
+  );
+}
+
+/**
+ * Display-only variant of {@link ScreenHeaderAccountSwitcher}: the caller
+ * decides which account is shown, nothing is read from or written to a scene.
+ */
+export function ScreenHeaderAccountTitle({
+  titleText,
+  account,
+}: {
+  titleText: React.ReactNode;
+  account?: KeyringAccountWithAlias | null;
+}) {
+  const { styles } = useTheme2024({ getStyle });
+
+  return (
+    <View style={styles.container}>
+      {typeof titleText === 'string' ? (
+        <Text style={styles.titleText}>{titleText}</Text>
+      ) : (
+        titleText
+      )}
+      {account ? (
+        <View style={styles.wrapperAddressRow}>
+          <HeaderAccountRow account={account} />
+        </View>
+      ) : null}
+    </View>
+  );
+}
 
 export function ScreenHeaderAccountSwitcher({
   titleText = '',
@@ -93,37 +154,22 @@ export function ScreenHeaderAccountSwitcher({
       <View style={styles.wrapperAddressRow}>
         {!isSceneUsingAllAccounts ? (
           !!finalSceneCurrentAccount && (
-            <AddressItem
-              style={styles.addressItem}
-              account={finalSceneCurrentAccount}>
-              {({ WalletIcon }) => {
-                return (
-                  <View style={styles.addressRow}>
-                    <WalletIcon style={styles.walletIcon} />
-                    <View style={styles.nameBox}>
-                      <Text
-                        numberOfLines={1}
-                        ellipsizeMode="tail"
-                        style={styles.address}>
-                        {finalSceneCurrentAccount.aliasName ||
-                          ellipsisAddress(finalSceneCurrentAccount?.address)}
-                      </Text>
-                    </View>
-                    {!disableSwitch && (
-                      <IconCom
-                        style={[
-                          styles.addressCaretIcon,
-                          isOpen && styles.reverseCaret,
-                        ]}
-                        width={18}
-                        height={18}
-                        color={colors2024['neutral-bg-4']}
-                      />
-                    )}
-                  </View>
-                );
-              }}
-            </AddressItem>
+            <HeaderAccountRow
+              account={finalSceneCurrentAccount}
+              trailing={
+                !disableSwitch && (
+                  <IconCom
+                    style={[
+                      styles.addressCaretIcon,
+                      isOpen && styles.reverseCaret,
+                    ]}
+                    width={18}
+                    height={18}
+                    color={colors2024['neutral-bg-4']}
+                  />
+                )
+              }
+            />
           )
         ) : (
           <>
