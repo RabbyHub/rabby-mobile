@@ -3385,7 +3385,7 @@
       "sellN_one": "Sell {{count}} Meme",
       "allocateTip": "Allocate buy amount by market cap ratio of selected coins.",
       "maxPriceImpact": "Max Price Impact",
-      "unsupportedAccount": "Memecoin trading only supports seed phrase and private key addresses",
+      "unsupportedAddressType": "Address type not supported",
       "accountChanged": "Address changed. Please start again",
       "buy": {
         "amount": "Buy Amount",

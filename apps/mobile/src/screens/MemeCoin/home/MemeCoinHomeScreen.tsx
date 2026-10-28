@@ -247,7 +247,7 @@ export const MemeCoinHomeScreen = () => {
       return false;
     }
     if (!isAccountSupportDirectSign(account.type)) {
-      toast.error(t('page.memeCoin.unsupportedAccount'));
+      toast.error(t('page.memeCoin.unsupportedAddressType'));
       return false;
     }
     return true;
