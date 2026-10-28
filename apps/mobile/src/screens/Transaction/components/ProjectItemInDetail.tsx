@@ -9,6 +9,7 @@ import { openTxExternalUrl } from '@/utils/transaction';
 import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleProp, TouchableOpacity, View, ViewStyle } from 'react-native';
+import { DetailAddressText } from './DetailAddressText';
 
 type Props = {
   title: string;
@@ -72,10 +73,7 @@ export const ProjectItemInDetail = ({
             color={colors2024['neutral-foot']}
           />
         </View>
-        <Text style={styles.itemAddressText}>
-          {/* {ellipsisAddress(address || '')} */}
-          {address}
-        </Text>
+        <DetailAddressText address={address} />
       </TouchableOpacity>
     </View>
   );
@@ -98,15 +96,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontWeight: '500',
     maxWidth: '45%',
     minWidth: 0,
-  },
-  itemAddressText: {
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
-    textAlign: 'right',
-    width: 170,
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '400',
   },
   itemContentText: {
     color: colors2024['neutral-body'],

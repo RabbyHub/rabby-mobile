@@ -402,7 +402,13 @@
         "empty": {
           "title": "暫無交易記錄",
           "titleLastThreeMonths": "90 天內無交易紀錄",
+          "titleInLast90Days": "近 90 天無交易紀錄",
+          "titleNoTransactions": "暫無交易紀錄",
           "testnetNoHistory": "自訂代幣交易記錄不可用。"
+        },
+        "noMore": {
+          "title": "沒有更多交易紀錄",
+          "titleInLast90Days": "近 90 天沒有更多交易紀錄"
         },
         "CancelTxConfirmPopup": {
           "title": "清除本機待處理記錄",

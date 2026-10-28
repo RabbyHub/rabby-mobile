@@ -549,7 +549,13 @@
         "empty": {
           "title": "No Transaction history",
           "titleLastThreeMonths": "No Transaction history in 90 Days",
+          "titleInLast90Days": "No transactions in the last 90 days",
+          "titleNoTransactions": "No transactions",
           "testnetNoHistory": "Custom token transaction history not available."
+        },
+        "noMore": {
+          "title": "No more transactions.",
+          "titleInLast90Days": "No more transactions in the last 90 days."
         },
         "common": {
           "pendingDetail": "Pending detail"

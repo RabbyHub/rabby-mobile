@@ -13,6 +13,7 @@ import { useMemoizedFn } from 'ahooks';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { TouchableOpacity, View } from 'react-native';
+import { DetailAddressText } from '../../DetailAddressText';
 
 type Chain = NonNullable<ReturnType<typeof findChain>>;
 
@@ -65,7 +66,7 @@ export const ActionSpenderView = ({
               color={colors2024['neutral-foot']}
             />
           </View>
-          <Text style={styles.itemAddressText}>{spender}</Text>
+          <DetailAddressText address={spender} />
         </View>
       </ViewMore>
       <TouchableOpacity
@@ -86,15 +87,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   explorerLink: {
     marginTop: 4,
     padding: 2,
-  },
-  itemAddressText: {
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '400',
-    textAlign: 'right',
-    width: 170,
   },
   itemContentText: {
     color: colors2024['neutral-body'],

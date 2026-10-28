@@ -527,7 +527,13 @@
         "empty": {
           "title": "Tidak ada riwayat Transaksi",
           "titleLastThreeMonths": "Tidak ada riwayat Transaksi dalam 90 Hari",
+          "titleInLast90Days": "Tidak ada transaksi dalam 90 hari terakhir",
+          "titleNoTransactions": "Tidak ada transaksi",
           "testnetNoHistory": "Riwayat transaksi token kustom tidak tersedia."
+        },
+        "noMore": {
+          "title": "Tidak ada transaksi lagi.",
+          "titleInLast90Days": "Tidak ada transaksi lagi dalam 90 hari terakhir."
         },
         "common": {
           "pendingDetail": "Detail Tertunda"

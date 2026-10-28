@@ -498,7 +498,13 @@
         "empty": {
           "title": "まだ署名されたトランザクションはありません。",
           "titleLastThreeMonths": "90日間取引履歴がありません",
+          "titleInLast90Days": "過去90日間の取引はありません",
+          "titleNoTransactions": "取引はありません",
           "testnetNoHistory": "カスタムトークンのトランザクション履歴は利用できません。"
+        },
+        "noMore": {
+          "title": "これ以上の取引はありません。",
+          "titleInLast90Days": "過去90日間の取引はこれ以上ありません。"
         },
         "CancelTxPopup": {
           "title": "トランザクションをキャンセル",

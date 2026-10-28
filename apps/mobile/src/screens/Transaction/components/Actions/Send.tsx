@@ -404,7 +404,7 @@ const getStyle = createGetStyles2024(
       fontFamily: 'SF Pro Rounded',
       fontSize: 20,
       lineHeight: 24,
-      fontWeight: '900',
+      fontWeight: '700',
       maxWidth: '100%',
       ...(IS_ANDROID && {
         width: '75%',
