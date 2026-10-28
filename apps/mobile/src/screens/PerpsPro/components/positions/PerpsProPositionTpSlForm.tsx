@@ -756,7 +756,7 @@ const getStyle = createGetStyles2024(
       color: PERPS_PRO_DIALOG_TOKENS.actionBackground,
       fontFamily: 'SF Pro Rounded',
       fontSize: 14,
-      fontWeight: '500',
+      fontWeight: '700',
       lineHeight: 18,
     },
     inputShell: {
