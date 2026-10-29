@@ -98,6 +98,7 @@ const BuyNFT = ({
           <Row>
             <LogoWithText
               logo={actionData.pay_token.logo_url}
+              logoRadius={16}
               text={`${formatAmount(
                 actionData.pay_token.amount,
               )} ${ellipsisTokenSymbol(getTokenSymbol(actionData.pay_token))}`}

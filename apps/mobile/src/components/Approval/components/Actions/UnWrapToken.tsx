@@ -96,6 +96,7 @@ const UnWrapToken = ({
           <Row>
             <LogoWithText
               logo={payToken.logo_url}
+              logoRadius={16}
               text={
                 <View style={commonStyle.row}>
                   <Text style={commonStyle.primaryText}>
