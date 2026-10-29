@@ -78,7 +78,9 @@ export const ProjectItemInDetail = ({
             />
           )}
         </View>
-        <DetailAddressText address={address} />
+        {!!address && (
+          <DetailAddressText address={address} style={addressTextStyle} />
+        )}
       </TouchableOpacity>
     </View>
   );

@@ -114,7 +114,7 @@ export const AddressItemInDetail = ({
               />
             ) : null}
           </View>
-          <DetailAddressText address={address} />
+          <DetailAddressText address={address} style={addressTextStyle} />
         </View>
       </TouchableOpacity>
     </View>

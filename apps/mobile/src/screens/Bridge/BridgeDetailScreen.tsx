@@ -13,10 +13,10 @@ import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { openExternalUrl } from '@/core/utils/linking';
 import {
   BOTTOM_BUTTON_SINGLE_HEIGHT,
-  BOTTOM_BUTTON_TITLE_STYLE,
   BOTTOM_BUTTON_TOP_OFFSET,
   RootNames,
   getBottomButtonBottomOffset,
+  getBottomButtonCenteredTitleStyle,
 } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 import { useSafeSizes } from '@/hooks/useAppLayout';
@@ -45,6 +45,10 @@ import {
 import { openBridgeSupport } from './utils/support';
 import { getBridgeHistoryTxId } from './utils/record';
 import { useBridgeSourceMetadata } from './hooks/useBridgeSourceMetadata';
+
+const buttonTitleStyle = getBottomButtonCenteredTitleStyle(
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
+);
 
 export function BridgeDetailScreen() {
   const { safeOffHeader } = useSafeSizes();
@@ -264,7 +268,7 @@ export function BridgeDetailScreen() {
           }
           height={BOTTOM_BUTTON_SINGLE_HEIGHT}
           titleStyle={{
-            ...BOTTOM_BUTTON_TITLE_STYLE,
+            ...buttonTitleStyle,
             ...(!supportAction && !refundAction && !status.completed
               ? { color: colors2024['brand-default'] }
               : {}),

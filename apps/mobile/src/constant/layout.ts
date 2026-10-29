@@ -7,7 +7,7 @@ import {
   ThemeColors2024,
 } from './theme';
 import { IS_ANDROID } from '@/core/native/utils';
-import { Dimensions } from 'react-native';
+import { Dimensions, type TextStyle } from 'react-native';
 
 export const BOTTOM_BUTTON_BOTTOM_OFFSET = 36;
 export const BOTTOM_BUTTON_TOP_OFFSET = 12;
@@ -24,6 +24,19 @@ export const BOTTOM_BUTTON_TITLE_STYLE = {
   fontSize: BOTTOM_BUTTON_TEXT_SIZE,
   fontWeight: '700',
 } as const;
+// 保留 undefined 以覆盖 Button 默认行高，不能放入会清除 undefined 的主题样式工厂。
+export const getBottomButtonCenteredTitleStyle = (
+  height: number,
+): TextStyle => ({
+  ...BOTTOM_BUTTON_TITLE_STYLE,
+  lineHeight: IS_ANDROID ? undefined : BOTTOM_BUTTON_TEXT_LINE_HEIGHT,
+  paddingVertical: 0,
+  ...(IS_ANDROID && {
+    height: height - 2,
+    includeFontPadding: false,
+    textAlignVertical: 'center' as const,
+  }),
+});
 export const BOTTOM_BUTTON_COMPACT_TITLE_STYLE = {
   fontSize: 16,
   fontWeight: '500',
