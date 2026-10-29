@@ -138,7 +138,7 @@ export const PerpsLimitOrdersSectionView: React.FC<Props> = ({
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
-    marginBottom: 24,
+    marginBottom: 30,
   },
   homeContainer: {
     marginTop: 24,

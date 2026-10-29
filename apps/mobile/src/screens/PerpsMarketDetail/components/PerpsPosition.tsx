@@ -608,7 +608,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     lineHeight: 18,
   } as const;
   return {
-    section: { marginBottom: 24, gap: 12 },
+    section: { marginBottom: 30, gap: 12 },
     header: { alignItems: 'center', gap: 4, flexDirection: 'row' },
     sectionTitleRow: {
       flexDirection: 'row',
