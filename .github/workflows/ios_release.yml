@@ -62,7 +62,7 @@ jobs:
       - ${{ matrix.machine_loc }}
     env:
       RABBY_MOBILE_NM_USE_CACHE: 'true'
-      XCODE_VER: '26.3'
+      XCODE_VER: '27.1'
     steps:
       - name: Checkout git repo
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
