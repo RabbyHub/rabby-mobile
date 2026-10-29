@@ -8,11 +8,7 @@ import { useStore } from 'zustand';
 import { createStore, type StoreApi } from 'zustand/vanilla';
 import { BridgeHistoryItem } from '@/components2024/HistoryItem/BridgeHistoryItem';
 import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
-import type {
-  BridgeTxHistoryItem,
-  TransactionGroup,
-} from '@/core/services/transactionHistory';
-import type { HistoryDisplayItem } from '@/types/history';
+import type { BridgeTxHistoryItem } from '@/core/services/transactionHistory';
 import type { Account } from '@/types/account';
 import { isSupportDBAccount } from '@/utils/account';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -22,15 +18,17 @@ import { useBridgeHistoryByTxIds } from '../hooks/useBridgeHistoryByTxIds';
 import {
   bridgeSourceKey,
   historyTxKey,
+  getHistoryBridgeTx,
   mergeHistoryWithBridge,
   isBridgeHistoryRow,
   type BridgeAwareHistoryItem,
   type BridgeHistoryRow,
+  type BridgeHistoryTransaction,
 } from '../utils/bridgeHistory';
 import { HistoryList } from './HistoryGroupList';
 
 type Props = Omit<React.ComponentProps<typeof HistoryList>, 'list'> & {
-  list: (HistoryDisplayItem | TransactionGroup)[];
+  list: BridgeHistoryTransaction[];
   accounts: Account[];
   scopeKey: string;
 };
@@ -56,10 +54,8 @@ function BridgeHistoryListContent({
   const focused = useIsFocused();
   const appState = useAppState();
   const active = focused && appState === 'active';
-  const items = useMemo(
-    () => props.list.filter(item => 'project_item' in item),
-    [props.list],
-  );
+  // 刚确认的交易可能仍只有本地分组，也需要参与识别和源链抑制。
+  const items = props.list;
   const pollableKeys = useMemo(() => {
     const byAddress = new Map(
       accounts.map(account => [account.address.toLowerCase(), account]),
@@ -69,11 +65,14 @@ function BridgeHistoryListContent({
         .filter(item =>
           isSupportDBAccount(
             props.account ||
-              item.account ||
+              ('project_item' in item ? item.account : undefined) ||
               byAddress.get(item.address.toLowerCase()),
           ),
         )
-        .map(item => historyTxKey(item.chain, item.id)),
+        .map(item => {
+          const { chain, hash } = getHistoryBridgeTx(item);
+          return historyTxKey(chain, hash);
+        }),
     );
   }, [accounts, items, props.account]);
   const {

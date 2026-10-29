@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useMemoizedFn } from 'ahooks';
 import type { BridgeHistory } from '@rabby-wallet/rabby-api/dist/types';
-import type { HistoryDisplayItem } from '@/types/history';
 import {
   getBridgeHistorySnapshot,
   subscribeBridgeHistory,
@@ -11,11 +10,13 @@ import {
   BRIDGE_HISTORY_TX_BATCH,
   canDisplayBridge,
   collectBridgeQueries,
+  getHistoryBridgeTx,
   historyTxKey,
   isBridgeHistoryRow,
   isBridgeCandidate,
   type BridgeAwareHistoryItem,
   type BridgeHistoryQuery,
+  type BridgeHistoryTransaction,
 } from '../utils/bridgeHistory';
 
 const EMPTY_RECORDS: BridgeHistory[] = [];
@@ -25,7 +26,7 @@ export function useBridgeHistoryByTxIds({
   pollableKeys,
   active,
 }: {
-  items: HistoryDisplayItem[];
+  items: BridgeHistoryTransaction[];
   pollableKeys: Set<string>;
   active: boolean;
 }) {
@@ -40,10 +41,11 @@ export function useBridgeHistoryByTxIds({
   const { transactionKeys, indices, byHash } = useMemo(() => {
     const keys = new Set<string>();
     const positions = new Map<string, number>();
-    const byKey = new Map<string, HistoryDisplayItem>();
+    const byKey = new Map<string, BridgeHistoryTransaction>();
     items.forEach((item, index) => {
-      positions.set(item.key, index);
-      const key = historyTxKey(item.chain, item.id);
+      const { chain, hash } = getHistoryBridgeTx(item);
+      const key = historyTxKey(chain, hash);
+      positions.set(key, index);
       byKey.set(key, item);
       if (canDisplayBridge(item)) {
         keys.add(key);
@@ -111,11 +113,10 @@ export function useBridgeHistoryByTxIds({
       const batches = new Set<number>();
       for (const entry of visible) {
         const item = isBridgeHistoryRow(entry) ? entry.anchor : entry;
-        if ('project_item' in item) {
-          const index = indices.get(item.key);
-          if (index !== undefined) {
-            batches.add(Math.floor(index / BRIDGE_HISTORY_TX_BATCH));
-          }
+        const { chain, hash } = getHistoryBridgeTx(item);
+        const index = indices.get(historyTxKey(chain, hash));
+        if (index !== undefined) {
+          batches.add(Math.floor(index / BRIDGE_HISTORY_TX_BATCH));
         }
       }
       const queries = new Map<string, BridgeHistoryQuery>();

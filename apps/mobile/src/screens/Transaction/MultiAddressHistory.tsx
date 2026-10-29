@@ -371,10 +371,14 @@ function HistoryContent({
       ...(isTestnet
         ? completeds
         : completeds.filter(item => {
+            const localTx = item.maxGasTx;
+            if (!localTx) {
+              return false;
+            }
             const isSynced =
               !!rawDataList?.list.find(tx => {
                 return (
-                  tx.id === item.maxGasTx.hash &&
+                  tx.id === localTx.hash &&
                   findChainByServerID(tx.chain)?.id === item.chainId
                 );
               }) || item.isSynced;
@@ -382,7 +386,7 @@ function HistoryContent({
             if (isSynced && !item.isSynced) {
               transactionHistoryServiceApi
                 .updateTx({
-                  ...item.maxGasTx,
+                  ...localTx,
                   isSynced: true,
                 })
                 .catch(error => {
@@ -694,6 +698,7 @@ function HistoryContent({
     const uniqueGroups =
       groups?.filter(
         group =>
+          !!group.maxGasTx &&
           (group.isPending || firstFetchDone) &&
           !recentTxKeys.has(
             `${group.address.toLowerCase()}-${group.maxGasTx.hash}`,

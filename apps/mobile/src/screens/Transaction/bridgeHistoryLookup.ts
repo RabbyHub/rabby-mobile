@@ -269,11 +269,17 @@ export function subscribeBridgeHistory(
     if (!subscribers.has(subscriber)) {
       return;
     }
+    const previousQueries = new Set(subscriber.queries.map(queryKey));
     Object.assign(subscriber, input);
     publish(subscriber);
     for (const query of input.queries) {
-      const cached = cache.get(queryKey(query));
-      enqueue(query, refresh && !cached?.history);
+      const key = queryKey(query);
+      const cached = cache.get(key);
+      // 新进入查询范围的交易补查一次空缓存，避免预热过早时漏掉新 Bridge。
+      enqueue(
+        query,
+        !cached?.history && (refresh || !previousQueries.has(key)),
+      );
     }
     if (refresh) {
       for (const history of subscriber.records.values()) {
