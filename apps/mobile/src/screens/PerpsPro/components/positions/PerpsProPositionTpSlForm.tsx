@@ -748,9 +748,9 @@ const getStyle = createGetStyles2024(
     sideTitle: {
       color: colors2024['neutral-title-1'],
       fontFamily: 'SF Pro Rounded',
-      fontSize: 14,
-      fontWeight: '500',
-      lineHeight: 18,
+      fontSize: 16,
+      fontWeight: '700',
+      lineHeight: 20,
     },
     cancelText: {
       color: PERPS_PRO_DIALOG_TOKENS.actionBackground,

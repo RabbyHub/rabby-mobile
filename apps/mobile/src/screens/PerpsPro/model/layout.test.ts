@@ -90,29 +90,33 @@ describe('Perps Pro layout model', () => {
     ).toBe(716);
   });
 
-  it('keeps both main TP/SL tabs at the same safe capped height', () => {
-    expect(
-      getPerpsProPositionTpSlSnapPoint({
-        page: 'list',
-        topInset: 47,
-        windowHeight: 852,
-      }),
-    ).toBe(782);
-    expect(
-      getPerpsProPositionTpSlSnapPoint({
-        page: 'form',
-        topInset: 47,
-        windowHeight: 852,
-      }),
-    ).toBe(782);
-    expect(
-      getPerpsProPositionTpSlSnapPoint({
-        page: 'form',
-        topInset: 150,
-        windowHeight: 852,
-      }),
-    ).toBe(686);
-  });
+  it.each([
+    [852, 59, 785],
+    [874, 62, 804],
+    [932, 59, 865],
+    [667, 20, 639],
+    [500, 47, 445],
+    [852, 150, 694],
+    [20, 59, 0],
+    [Number.NaN, 59, 0],
+    [852, Number.NaN, 844],
+  ])(
+    'keeps list, form and Add equally above the market bar at height %s and inset %s',
+    (windowHeight, topInset, height) => {
+      for (const page of ['list', 'form', 'add'] as const) {
+        for (const formBottomPaddingExtra of [0, 34]) {
+          expect(
+            getPerpsProPositionTpSlSnapPoint({
+              page,
+              formBottomPaddingExtra,
+              topInset,
+              windowHeight,
+            }),
+          ).toBe(height);
+        }
+      }
+    },
+  );
 
   it('reserves the exact remaining 782px sheet height for every TP/SL form presentation', () => {
     expect(
@@ -135,7 +139,6 @@ describe('Perps Pro layout model', () => {
     ).toBe(486);
   });
   it.each([
-    ['add', 722],
     ['modify', 622],
     ['position-modify', 616],
   ] as const)('sizes the %s page to its approved content', (page, height) => {
@@ -155,7 +158,7 @@ describe('Perps Pro layout model', () => {
     ).toBe(437);
   });
   it.each([
-    ['subpage', 722, 478],
+    ['subpage', 782, 538],
     ['subpage', 622, 378],
     ['position-modify', 616, 372],
   ] as const)(
@@ -178,10 +181,8 @@ describe('Perps Pro layout model', () => {
       ).toBe(193);
     },
   );
-  it('budgets both normal PnL hints and only the actual form bottom-padding increment', () => {
+  it('preserves modify heights and their actual form bottom-padding increment', () => {
     for (const [page, base] of [
-      ['form', 782],
-      ['add', 722],
       ['modify', 622],
       ['position-modify', 616],
     ] as const) {
@@ -202,25 +203,15 @@ describe('Perps Pro layout model', () => {
         }),
       ).toBe(617);
     }
-    for (const [page, height] of [['list', 782]] as const) {
-      expect(
-        getPerpsProPositionTpSlSnapPoint({
-          page,
-          formBottomPaddingExtra: 34,
-          topInset: 24,
-          windowHeight: 900,
-        }),
-      ).toBe(height);
-    }
     for (const extra of [-10, Number.NaN, Number.POSITIVE_INFINITY]) {
       expect(
         getPerpsProPositionTpSlSnapPoint({
-          page: 'add',
+          page: 'modify',
           formBottomPaddingExtra: extra,
           topInset: 24,
           windowHeight: 900,
         }),
-      ).toBe(722);
+      ).toBe(622);
     }
   });
 });

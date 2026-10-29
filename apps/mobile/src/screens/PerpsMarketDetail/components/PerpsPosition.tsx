@@ -1,7 +1,7 @@
 /* eslint-disable react-native/no-inline-styles */
-import RcIconInfoCC from '@/assets2024/icons/perps/IconInfoCC.svg';
 import { useTheme2024 } from '@/hooks/theme';
 import { useTipsPopup } from '@/hooks/useTipsPopup';
+import { getBottomButtonBottomOffset } from '@/constant/layout';
 import { PerpsRiskLevelPopup } from '@/screens/Perps/components/PerpsPositionSection/PerpsRiskLevelPopup';
 import { calculateDistanceToLiquidation } from '@/screens/Perps/components/PerpsPositionSection/utils';
 import { splitNumberByStep } from '@/utils/number';
@@ -14,6 +14,7 @@ import Down from '@/assets2024/icons/perps/PerpsSimpleChart/down.svg';
 import { hasPositivePrice, simpleLiquidationGap } from './account/model';
 import { Trans, useTranslation } from 'react-i18next';
 import { TouchableOpacity, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PerpEditTpSlPriceTag } from './PerpEditTpSlPriceTag';
 import { PerpsEditMarginPopup } from './PerpsEditMarginPopup';
 import { MarketData } from '@/hooks/perps/usePerpsStore';
@@ -106,6 +107,7 @@ export const PerpsPosition: React.FC<{
   handleUpdateMargin,
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
+  const insets = useSafeAreaInsets();
   const { t } = useTranslation();
   const [editMarginVisible, setEditMarginVisible] = useState(false);
   const [fundingDetailOpen, setFundingDetailOpen] = useState(false);
@@ -301,25 +303,19 @@ export const PerpsPosition: React.FC<{
           </View>
           <View>
             <View style={styles.detailRow}>
-              <TouchableOpacity
+              <PerpsProDottedUnderlineText
+                accessibilityLabel={t('page.perpsDetail.PerpsPosition.size')}
+                containerStyle={styles.fundingLabel}
                 onPress={() =>
                   showTipsPopup({
                     title: t('page.perpsDetail.PerpsPosition.size'),
                     desc: t('page.perpsDetail.PerpsPosition.sizeTips'),
                     buttonType: 'hyperliquid',
                   })
-                }>
-                <View style={styles.positionValueLabel}>
-                  <Text style={styles.detailLabel}>
-                    {t('page.perpsDetail.PerpsPosition.size')}
-                  </Text>
-                  <RcIconInfoCC
-                    width={18}
-                    height={18}
-                    color={colors2024['neutral-info']}
-                  />
-                </View>
-              </TouchableOpacity>
+                }
+                style={styles.detailLabel}>
+                {t('page.perpsDetail.PerpsPosition.size')}
+              </PerpsProDottedUnderlineText>
               <Text style={styles.value}>
                 {positionData.positionValue.toFixed(2)} {quoteAsset} ={' '}
                 {positionData.size} {formatPerpsCoin(displayName)}
@@ -470,12 +466,14 @@ export const PerpsPosition: React.FC<{
                         t={t}
                         i18nKey="page.perpsDetail.PerpsPosition.fundingTipsBold"
                         components={{
-                          bold: <Text style={styles.fundingTextBold} />,
+                          positive: <Text style={styles.fundingTextPositive} />,
+                          negative: <Text style={styles.fundingTextNegative} />,
                         }}
                       />
                     </Text>
                   ),
                   buttonType: 'hyperliquid',
+                  bottomPadding: getBottomButtonBottomOffset(insets.bottom),
                 })
               }
               containerStyle={styles.fundingLabel}
@@ -554,7 +552,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     lineHeight: 18,
   } as const;
   return {
-    section: { marginBottom: 24, gap: 12 },
+    section: { marginBottom: 30, gap: 12 },
     header: { alignItems: 'center', gap: 4, flexDirection: 'row' },
     sectionTitleRow: {
       flexDirection: 'row',
@@ -624,7 +622,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       gap: 8,
       paddingVertical: 6,
     },
-    positionValueLabel: { flexDirection: 'row', alignItems: 'center', gap: 4 },
     label: {
       ...text,
       fontWeight: '500',
@@ -706,6 +703,15 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       color: colors2024['neutral-secondary'],
       textAlign: 'center',
     },
-    fundingTextBold: { fontFamily: 'SF Pro Rounded', fontWeight: '900' },
+    fundingTextPositive: {
+      fontFamily: 'SF Pro Rounded',
+      fontWeight: '700',
+      color: colors2024['green-default'],
+    },
+    fundingTextNegative: {
+      fontFamily: 'SF Pro Rounded',
+      fontWeight: '700',
+      color: colors2024['red-default'],
+    },
   };
 });

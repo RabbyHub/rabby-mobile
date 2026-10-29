@@ -2930,7 +2930,7 @@
         "settings": "Cài đặt",
         "unrealizedPnl": "PNL chưa thực hiện",
         "marginMode": "Chế độ ký quỹ",
-        "fundingTipsBold": "Phần này hiển thị tổng funding đã được thanh toán kể từ khi mở vị thế. Giá trị <bold>xanh (dương)</bold> nghĩa là bạn nhận funding từ trader khác, còn giá trị <bold>đỏ (âm)</bold> là chi phí funding bạn đã trả cho họ.",
+        "fundingTipsBold": "Phần này hiển thị tổng funding đã được thanh toán kể từ khi mở vị thế. Giá trị <positive>xanh (dương)</positive> nghĩa là bạn nhận funding từ trader khác, còn giá trị <negative>đỏ (âm)</negative> là chi phí funding bạn đã trả cho họ.",
         "crossTips": "Trong chế độ ký quỹ chéo, giá thanh lý của một vị thế riêng lẻ chỉ là giá ước tính để tham khảo."
       },
       "PerpsInfo": {

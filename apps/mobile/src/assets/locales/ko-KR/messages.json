@@ -2813,7 +2813,7 @@
         "unrealizedPnl": "미실현 PNL",
         "marginMode": "마진 모드",
         "settings": "설정",
-        "fundingTipsBold": "포지션을 연 이후 정산된 총 펀딩비를 보여줍니다. <bold>녹색(양수)</bold> 값은 다른 트레이더로부터 펀딩비를 받았다는 뜻이고, <bold>빨간색(음수)</bold> 값은 지급한 펀딩비 비용입니다.",
+        "fundingTipsBold": "포지션을 연 이후 정산된 총 펀딩비를 보여줍니다. <positive>녹색(양수)</positive> 값은 다른 트레이더로부터 펀딩비를 받았다는 뜻이고, <negative>빨간색(음수)</negative> 값은 지급한 펀딩비 비용입니다.",
         "crossTips": "크로스 마진 모드에서는 단일 포지션의 청산 가격이 참고용으로만 제공되는 추정값입니다."
       },
       "PerpsInfo": {

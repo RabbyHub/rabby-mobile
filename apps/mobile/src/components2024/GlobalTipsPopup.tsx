@@ -69,8 +69,14 @@ export const GlobalTipsPopup: React.FC<{}> = ({}) => {
     buttonType,
     buttonTitle,
     bgType,
+    bottomPadding,
     enablePanDownToClose,
   } = presentation;
+  const bottomPaddingStyle = useMemo(
+    () =>
+      bottomPadding == null ? undefined : { paddingBottom: bottomPadding },
+    [bottomPadding],
+  );
 
   const { styles, colors2024 } = useTheme2024({
     getStyle: getStyle,
@@ -108,7 +114,11 @@ export const GlobalTipsPopup: React.FC<{}> = ({}) => {
         enableDynamicSizing
         maxDynamicContentSize={maxHeight}>
         <BottomSheetView
-          style={[styles.container, bgType === 'bg0' && styles.containerBg0]}>
+          style={[
+            styles.container,
+            bgType === 'bg0' && styles.containerBg0,
+            bottomPaddingStyle,
+          ]}>
           <View>
             <Text style={styles.title}>{title}</Text>
           </View>
