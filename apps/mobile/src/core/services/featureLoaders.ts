@@ -186,14 +186,8 @@ export function loadBrowserService() {
     const browserService = new BrowserService({
       storageAdapter: appStorage,
     });
-    checkBrowserTabsOnLoad({
-      tabs: browserService.store.browserTabs.tabs,
-      historyCount: browserService.store.browserHistory.ids.length,
-      bookmarkCount: browserService.store.browserBookmarks.ids.length,
-    });
-    browserService.subscribeStoreField('browserTabs', browserTabs => {
-      recordBrowserTabsChange(browserTabs.tabs);
-    });
+    checkBrowserTabsOnLoad(browserService.store);
+    browserService.subscribeStoreField('browserTabs', recordBrowserTabsChange);
     registerService('browserService', browserService);
   });
 }

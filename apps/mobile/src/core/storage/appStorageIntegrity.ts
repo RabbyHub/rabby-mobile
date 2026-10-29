@@ -42,12 +42,23 @@ type CanaryKey =
   | typeof STORAGE_DIAGNOSTICS_MMKV_KEYS.CONTACT_BOOK_CANARY
   | typeof STORAGE_DIAGNOSTICS_MMKV_KEYS.BROWSER_TABS_CANARY;
 
-type AliasLike = Readonly<{ alias?: string }> | null | undefined;
+// Persisted data can have any shape, so every reader below checks types.
+type AliasLike = Readonly<{ alias?: unknown }> | null | undefined;
 type AliasMap = Readonly<Record<string, AliasLike>>;
 type TabLike =
-  | Readonly<{ url?: string; initialUrl?: string }>
+  | Readonly<{ url?: unknown; initialUrl?: unknown }>
   | null
   | undefined;
+type BrowserTabsLike =
+  | Readonly<{ tabs?: ReadonlyArray<TabLike> | null }>
+  | null
+  | undefined;
+type EntityStateLike = Readonly<{ ids?: ReadonlyArray<unknown> }> | null;
+type BrowserStoreLike = Readonly<{
+  browserTabs?: BrowserTabsLike;
+  browserHistory?: EntityStateLike;
+  browserBookmarks?: EntityStateLike;
+}>;
 
 const WATCHED_APP_STORE_KEYS = [
   APP_STORE_NAMES.preference,
@@ -98,9 +109,17 @@ function getRuntimeArchitecture(): RuntimeArchitecture {
     : 'legacy';
 }
 
+/** For failures inside these diagnostics. */
 function warnInDev(message: string, detail?: unknown) {
   if (__DEV__) {
     console.warn(`[AppStorageIntegrity] ${message}`, detail);
+  }
+}
+
+/** For the reports themselves, kept out of the dev warning overlay. */
+function logReportInDev(message: string, detail?: unknown) {
+  if (__DEV__) {
+    console.debug(`[AppStorageIntegrity] ${message}`, detail);
   }
 }
 
@@ -138,6 +157,10 @@ function markReportedForCurrentVersion(dedupeKey: string) {
   return true;
 }
 
+function getDedupeKey(issue: AppStorageIntegrityIssue, scope: string) {
+  return scope ? `${issue}:${scope}` : issue;
+}
+
 function reportAppStorageIntegrityIssue(
   issue: AppStorageIntegrityIssue,
   options: {
@@ -149,7 +172,7 @@ function reportAppStorageIntegrityIssue(
   },
 ) {
   const { scope = '', oncePerVersion = false, extra } = options;
-  const dedupeKey = scope ? `${issue}:${scope}` : issue;
+  const dedupeKey = getDedupeKey(issue, scope);
   if (reportedThisSession.has(dedupeKey)) {
     return;
   }
@@ -161,7 +184,7 @@ function reportAppStorageIntegrityIssue(
   const rnArch = getRuntimeArchitecture();
   // Created here so the stack trace points at the caller.
   const error = new Error(`[AppStorageIntegrity] ${dedupeKey}`);
-  warnInDev(dedupeKey, extra);
+  logReportInDev(dedupeKey, extra);
 
   void import('@sentry/react-native')
     .then(Sentry => {
@@ -227,7 +250,12 @@ function reportJsonParseFailure(
 ) {
   try {
     const fileId = source.fileId || 'unknown';
-    const key = source.key.replace(ADDRESS_PATTERN, '0x<address>');
+    const key = String(source.key).replace(ADDRESS_PATTERN, '0x<address>');
+    const scope = `${fileId}/${key}`;
+    // Checked before the scan below, which reads the whole value.
+    if (reportedThisSession.has(getDedupeKey('json_parse_failed', scope))) {
+      return;
+    }
     let replacementCharCount = 0;
     let nulCharCount = 0;
     for (let index = 0; index < raw.length; index += 1) {
@@ -240,7 +268,7 @@ function reportJsonParseFailure(
     }
 
     reportAppStorageIntegrityIssue('json_parse_failed', {
-      scope: `${fileId}/${key}`,
+      scope,
       oncePerVersion: true,
       extra: {
         // Truncation shows as a missing closing char, double encoding as a
@@ -262,10 +290,11 @@ function reportJsonParseFailure(
 export function countAliases(aliases: AliasMap | null | undefined) {
   let total = 0;
   let custom = 0;
-  if (aliases) {
+  if (aliases && typeof aliases === 'object') {
     Object.keys(aliases).forEach(key => {
       total += 1;
-      const alias = aliases[key]?.alias?.trim();
+      const rawAlias = aliases[key]?.alias;
+      const alias = typeof rawAlias === 'string' ? rawAlias.trim() : '';
       if (
         alias &&
         !DEFAULT_ALIAS_PATTERN.test(alias) &&
@@ -278,14 +307,20 @@ export function countAliases(aliases: AliasMap | null | undefined) {
   return { total, custom };
 }
 
-function countBrowserTabs(tabs: ReadonlyArray<TabLike> | null | undefined) {
-  if (!tabs) {
+function countBrowserTabs(tabs: unknown) {
+  if (!Array.isArray(tabs)) {
     return 0;
   }
   // Same filter BrowserService applies when it restores tabs.
-  return tabs.filter(tab =>
-    HTTP_URL_PATTERN.test(tab?.url || tab?.initialUrl || ''),
-  ).length;
+  return tabs.filter((tab: TabLike) => {
+    const url = tab?.url || tab?.initialUrl;
+    return typeof url === 'string' && HTTP_URL_PATTERN.test(url);
+  }).length;
+}
+
+function countEntityIds(state: EntityStateLike | undefined) {
+  const ids = state?.ids;
+  return Array.isArray(ids) ? ids.length : 0;
 }
 
 function isCountDropped(previous: number, current: number) {
@@ -398,7 +433,10 @@ export function checkContactBookAtStartup(input: {
   }
 }
 
-/** Subscribed to every `aliases` write of the contact book. */
+/**
+ * Subscribed to every `aliases` write of the contact book. Runs inside the
+ * store update, so it must never throw.
+ */
 export function recordContactBookAliasesChange(
   aliases: AliasMap,
   previousAliases: AliasMap,
@@ -429,13 +467,9 @@ export function recordContactBookAliasesChange(
 }
 
 /** Runs right after BrowserService restored its persisted tabs. */
-export function checkBrowserTabsOnLoad(input: {
-  tabs: ReadonlyArray<TabLike>;
-  historyCount: number;
-  bookmarkCount: number;
-}) {
+export function checkBrowserTabsOnLoad(store: BrowserStoreLike) {
   try {
-    const tabCount = countBrowserTabs(input.tabs);
+    const tabCount = countBrowserTabs(store.browserTabs?.tabs);
     const previous = readCanary(
       STORAGE_DIAGNOSTICS_MMKV_KEYS.BROWSER_TABS_CANARY,
     );
@@ -447,8 +481,8 @@ export function checkBrowserTabsOnLoad(input: {
           // A partial loss points at tab restore logic, not storage.
           tabCount,
           // Kept history or bookmarks mean only the tabs were cleared.
-          historyCount: input.historyCount,
-          bookmarkCount: input.bookmarkCount,
+          historyCount: countEntityIds(store.browserHistory),
+          bookmarkCount: countEntityIds(store.browserBookmarks),
           ...captureAppStorageStartupSnapshot(),
         },
       });
@@ -463,12 +497,19 @@ export function checkBrowserTabsOnLoad(input: {
   }
 }
 
-/** Subscribed to every `browserTabs` write of BrowserService. */
-export function recordBrowserTabsChange(tabs: ReadonlyArray<TabLike>) {
-  writeCanary(
-    STORAGE_DIAGNOSTICS_MMKV_KEYS.BROWSER_TABS_CANARY,
-    countBrowserTabs(tabs),
-  );
+/**
+ * Subscribed to every `browserTabs` write of BrowserService. Runs inside the
+ * store update, so it must never throw.
+ */
+export function recordBrowserTabsChange(browserTabs: BrowserTabsLike) {
+  try {
+    writeCanary(
+      STORAGE_DIAGNOSTICS_MMKV_KEYS.BROWSER_TABS_CANARY,
+      countBrowserTabs(browserTabs?.tabs),
+    );
+  } catch (error) {
+    warnInDev('browser tabs change check failed', error);
+  }
 }
 
 export function resetAppStorageIntegrityStateForTests() {

@@ -1,5 +1,6 @@
 import * as Sentry from '@sentry/react-native';
 import { getVersion } from 'react-native-device-info';
+import { createPersistStore } from '@rabby-wallet/persist-store';
 
 import {
   captureAppStorageStartupSnapshot,
@@ -319,12 +320,21 @@ describe('appStorageIntegrity', () => {
       { url: '', initialUrl: 'https://aave.com' },
       { url: 'about:blank' },
     ];
+    const emptyBrowserStore = {
+      browserTabs: { tabs: [] },
+      browserHistory: { ids: [] },
+      browserBookmarks: { ids: [] },
+    };
     seedAppStorage();
-    checkBrowserTabsOnLoad({ tabs, historyCount: 4, bookmarkCount: 1 });
+    checkBrowserTabsOnLoad({
+      browserTabs: { tabs },
+      browserHistory: { ids: ['a', 'b', 'c', 'd'] },
+      browserBookmarks: { ids: ['e'] },
+    });
 
     nextLaunch('0.6.95');
     seedAppStorage(['browser']);
-    checkBrowserTabsOnLoad({ tabs: [], historyCount: 0, bookmarkCount: 0 });
+    checkBrowserTabsOnLoad(emptyBrowserStore);
     await flushReports();
     expect(reportedIssues()).toEqual(['browser_tabs_dropped_between_launches']);
     expect(
@@ -343,12 +353,74 @@ describe('appStorageIntegrity', () => {
     );
 
     captureException.mockClear();
-    recordBrowserTabsChange(tabs);
-    recordBrowserTabsChange([]);
+    recordBrowserTabsChange({ tabs });
+    recordBrowserTabsChange({ tabs: [] });
     nextLaunch('0.6.95');
     seedAppStorage();
-    checkBrowserTabsOnLoad({ tabs: [], historyCount: 0, bookmarkCount: 0 });
+    checkBrowserTabsOnLoad(emptyBrowserStore);
     await flushReports();
     expect(captureException).not.toHaveBeenCalled();
+  });
+
+  it('never throws on malformed persisted data', () => {
+    // Listeners run inside store updates; a throw would break the caller.
+    const malformed: unknown[] = [null, undefined, 0, 'x', [], {}, [null, 1]];
+    malformed.forEach(value => {
+      const loose = value as never;
+      expect(() => countAliases(loose)).not.toThrow();
+      expect(() =>
+        countAliases({ [ADDRESS_A]: { alias: value } } as never),
+      ).not.toThrow();
+      expect(() => recordContactBookAliasesChange(loose, loose)).not.toThrow();
+      expect(() => recordBrowserTabsChange(loose)).not.toThrow();
+      expect(() => recordBrowserTabsChange({ tabs: loose })).not.toThrow();
+      expect(() =>
+        checkBrowserTabsOnLoad({
+          browserTabs: loose,
+          browserHistory: loose,
+          browserBookmarks: loose,
+        }),
+      ).not.toThrow();
+      expect(() =>
+        checkContactBookAtStartup({ isBootedWallet: true, aliases: loose }),
+      ).not.toThrow();
+    });
+    expect(countAliases({ [ADDRESS_A]: { alias: 5 } } as never)).toEqual({
+      total: 1,
+      custom: 0,
+    });
+
+    // A real store: a throwing listener would surface from update().
+    const store = createPersistStore<{
+      browserTabs: unknown;
+      aliases: unknown;
+    }>({
+      name: 'malformedStoreTest',
+      template: { browserTabs: { tabs: [] }, aliases: {} },
+    });
+    store.subscribeField('browserTabs', value =>
+      recordBrowserTabsChange(value as never),
+    );
+    store.subscribeField('aliases', (value, previous) =>
+      recordContactBookAliasesChange(value as never, previous as never),
+    );
+    expect(() =>
+      store.update(draft => {
+        draft.browserTabs = { tabs: { length: 3 } };
+        draft.aliases = 'garbage';
+      }),
+    ).not.toThrow();
+    expect(() =>
+      store.update(draft => {
+        draft.browserTabs = null;
+        draft.aliases = null;
+      }),
+    ).not.toThrow();
+
+    storageDiagnosticsMMKV.set('canary.contactBook', 'not json');
+    storageDiagnosticsMMKV.set('reportedIssues', '[1,2]');
+    expect(() =>
+      checkContactBookAtStartup({ isBootedWallet: true, aliases: {} }),
+    ).not.toThrow();
   });
 });
