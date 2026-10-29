@@ -97,11 +97,11 @@ sim_started_at="$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
 echo "[ios-simulator] source=$sim_commit architecture=$sim_architecture"
 
 turbo_prepare_js_dependencies
+ensure_inpage_bridge_assets
 sim_assets_key="$(turbo_compute_ios_build_artifacts_key)"
 if turbo_ios_build_artifacts_ready "$sim_assets_key"; then
   turbo_log 'ios build artifacts already up to date'
 else
-  ensure_inpage_bridge_assets
   yarn check-nodeengines
   yarn ../mobile-local-pages make-theme
   yarn ../mobile-local-pages build --mode ios
