@@ -1864,6 +1864,58 @@ describe('PerpsProInfoPager', () => {
     ]);
   });
 
+  it('publishes the iOS corrected offset to the shared scene offset', () => {
+    const onActivateOffset = jest.fn();
+    const ref = React.createRef<PerpsProInfoPagerHandle>();
+    const scrollBridge = createScrollBridge([500, 0, 0]);
+    const element = (activeTab: PerpsProInfoTab) => (
+      <PerpsProInfoPager
+        activeTab={activeTab}
+        contentContainerStyle={{ account: {}, positions: {}, openOrders: {} }}
+        data={data}
+        getActiveScrollOffset={() => 500}
+        keepAllTabsMounted
+        indicatorPosition={{ value: 0 } as SharedValue<number>}
+        nativeVerticalScrollEnabled
+        onActivateOffset={onActivateOffset}
+        onActiveScroll={jest.fn()}
+        onLayout={jest.fn()}
+        onPageDragStart={jest.fn()}
+        onPagePreview={jest.fn()}
+        onPageRequestFinished={jest.fn()}
+        onPageSelected={jest.fn()}
+        ref={ref}
+        renderItem={({ item }) => <View testID={item.key} />}
+        renderListHeader={tab => <View testID={`header-${tab}`} />}
+        requestedTab={null}
+        scrollBridge={scrollBridge}
+        stickyOffset={400}
+      />
+    );
+    const { rerender } = render(element('positions'));
+    fireEvent(screen.getByTestId('perps-pro-info-pager'), 'layout', {
+      nativeEvent: { layout: { x: 0, y: 0, width: 390, height: 600 } },
+    });
+    const account = screen.getByTestId('perps-pro-scroll-account', {
+      includeHiddenElements: true,
+    });
+    fireEvent(account, 'layout', {
+      nativeEvent: { layout: { height: 600, width: 390, x: 0, y: 0 } },
+    });
+    fireEvent(account, 'contentSizeChange', 390, 1200);
+
+    // Deep Positions prepares Account at the sticky boundary, but its native
+    // offset has not reached it yet when the page is selected.
+    act(() => ref.current?.setPage('account', 1));
+    fireEvent(screen.getByTestId('perps-pro-info-pager'), 'pageSelected', {
+      nativeEvent: { position: 2 },
+    });
+    expect(onActivateOffset).toHaveBeenLastCalledWith(0);
+
+    rerender(element('account'));
+    expect(onActivateOffset).toHaveBeenLastCalledWith(400);
+  });
+
   it('publishes native list bounds and invalidates the trade bridge on page changes', () => {
     const scrollBridge = createScrollBridge();
     renderPager({ scrollBridge });

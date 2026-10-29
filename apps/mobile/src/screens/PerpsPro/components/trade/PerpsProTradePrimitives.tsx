@@ -301,7 +301,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     color: colors2024['neutral-title-2'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: '700',
     lineHeight: 18,
   },
   tradeButtonSubtitle: {

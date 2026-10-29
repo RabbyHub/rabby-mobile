@@ -1,5 +1,5 @@
 import { ProjectItem } from '@rabby-wallet/rabby-api/dist/types';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { CexEntity } from '@/databases/entities/cex';
 import { useMemoizedFn, useMount } from 'ahooks';
 import { globalSupportCexList } from '@/hooks/useCexSupportList';
@@ -24,7 +24,7 @@ export const useGetCexList = () => {
     const tempObj = {} as Record<string, ProjectItem>;
     const cexList = res.filter(item => item.is_deposit);
     cexList.forEach(item => {
-      tempObj[item.owner_addr] = {
+      tempObj[item.owner_addr.toLowerCase()] = {
         id: item.cexId,
         name: item.name,
         site_url: '',

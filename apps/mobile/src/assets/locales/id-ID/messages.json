@@ -2743,6 +2743,8 @@
         "tpSl": "TP/SL",
         "takeProfitPrice": "Harga ambil untung",
         "stopLossPrice": "Harga hentikan rugi",
+        "funding": "Pendanaan",
+        "nextFundingRate": "Tingkat Pendanaan Berikutnya",
         "estimatedPnl": "Estimasi PNL",
         "closePositionTitle": "Tutup Posisi {{coin}}",
         "estimatedRealizedPnl": "Estimasi PNL Terealisasi"
@@ -2805,7 +2807,7 @@
         "details": "Rincian",
         "settings": "Pengaturan",
         "marginMode": "Mode Margin",
-        "fundingTipsBold": "Ini menampilkan total funding yang telah diselesaikan sejak posisi dibuka. Nilai <bold>hijau (positif)</bold> berarti Anda menerima funding dari trader lain, sedangkan nilai <bold>merah (negatif)</bold> adalah biaya funding yang Anda bayarkan kepada mereka.",
+        "fundingTipsBold": "Ini menampilkan total funding yang telah diselesaikan sejak posisi dibuka. Nilai <positive>hijau (positif)</positive> berarti Anda menerima funding dari trader lain, sedangkan nilai <negative>merah (negatif)</negative> adalah biaya funding yang Anda bayarkan kepada mereka.",
         "crossTips": "Dalam mode Cross Margin, harga likuidasi untuk satu posisi adalah estimasi hanya untuk referensi."
       },
       "PerpsInfo": {

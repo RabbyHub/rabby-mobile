@@ -19,19 +19,22 @@ const PERPS_PRO_SHEET_TOP_SAFE_GAP = 16;
 const PERPS_PRO_MARKET_SELECTOR_DESIGN_TOP = 104;
 const PERPS_PRO_MARKET_SELECTOR_MIN_HEIGHT = 320;
 export const PERPS_PRO_POSITION_TPSL_PAGE_HEADER_HEIGHT = 56;
+// Stay above the collapsed market label (40 - 22) / 2 = 9 and chart icon,
+// leaving only 8px of background below the top safe area.
+const PERPS_PRO_POSITION_TPSL_TOP_GAP = 8;
 const PERPS_PRO_POSITION_TPSL_DESIGN_HEIGHTS = {
-  form: 758,
-  list: 758,
-  // Include both normal 26px PnL hints before the keyboard ever opens.
-  add: 704,
-  modify: 604,
-  'position-modify': 598,
+  modify: 622,
+  'position-modify': 616,
 } as const;
 const PERPS_PRO_POSITION_TPSL_SUBPAGE_CHROME_HEIGHT =
-  PERPS_PRO_POSITION_TPSL_PAGE_HEADER_HEIGHT + 130;
-const PERPS_PRO_POSITION_TPSL_TAB_CHROME_HEIGHT = 232;
+  PERPS_PRO_POSITION_TPSL_PAGE_HEADER_HEIGHT + 148;
+const PERPS_PRO_POSITION_TPSL_TAB_CHROME_HEIGHT = 256;
 export type PerpsProPositionTpSlPage =
-  keyof typeof PERPS_PRO_POSITION_TPSL_DESIGN_HEIGHTS;
+  | 'form'
+  | 'list'
+  | 'add'
+  | 'modify'
+  | 'position-modify';
 
 export type PerpsProPositionTpSlFormPresentation =
   | 'inline-empty'
@@ -179,14 +182,19 @@ export const getPerpsProPositionTpSlSnapPoint = ({
   const safeTopInset = Number.isFinite(topInset) && topInset > 0 ? topInset : 0;
   const safeWindowHeight =
     Number.isFinite(windowHeight) && windowHeight > 0 ? windowHeight : 0;
+  if (page === 'form' || page === 'list' || page === 'add') {
+    return Math.max(
+      0,
+      safeWindowHeight - safeTopInset - PERPS_PRO_POSITION_TPSL_TOP_GAP,
+    );
+  }
   const availableHeight = Math.max(
     0,
     safeWindowHeight - safeTopInset - PERPS_PRO_SHEET_TOP_SAFE_GAP,
   );
-  const extraBottomPadding =
-    page !== 'list' && Number.isFinite(formBottomPaddingExtra)
-      ? Math.max(0, formBottomPaddingExtra)
-      : 0;
+  const extraBottomPadding = Number.isFinite(formBottomPaddingExtra)
+    ? Math.max(0, formBottomPaddingExtra)
+    : 0;
   return Math.min(
     availableHeight,
     PERPS_PRO_POSITION_TPSL_DESIGN_HEIGHTS[page] + extraBottomPadding,
