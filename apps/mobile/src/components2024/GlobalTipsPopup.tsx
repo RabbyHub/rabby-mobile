@@ -14,7 +14,7 @@ import React, {
   useRef,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useWindowDimensions, View } from 'react-native';
+import { StyleSheet, useWindowDimensions, View } from 'react-native';
 import { Text } from '@/components/Typography';
 
 export const GlobalTipsPopup: React.FC<{}> = ({}) => {
@@ -72,15 +72,19 @@ export const GlobalTipsPopup: React.FC<{}> = ({}) => {
     bottomPadding,
     enablePanDownToClose,
   } = presentation;
-  const bottomPaddingStyle = useMemo(
-    () =>
-      bottomPadding == null ? undefined : { paddingBottom: bottomPadding },
-    [bottomPadding],
-  );
-
   const { styles, colors2024 } = useTheme2024({
     getStyle: getStyle,
   });
+  // BottomSheetView 5.2.8 only composes the first two entries of a style array.
+  const containerStyle = useMemo(
+    () =>
+      StyleSheet.flatten([
+        styles.container,
+        bgType === 'bg0' && styles.containerBg0,
+        bottomPadding == null ? undefined : { paddingBottom: bottomPadding },
+      ]),
+    [styles.container, styles.containerBg0, bgType, bottomPadding],
+  );
 
   const { t } = useTranslation();
 
@@ -113,12 +117,7 @@ export const GlobalTipsPopup: React.FC<{}> = ({}) => {
         enablePanDownToClose={enablePanDownToClose}
         enableDynamicSizing
         maxDynamicContentSize={maxHeight}>
-        <BottomSheetView
-          style={[
-            styles.container,
-            bgType === 'bg0' && styles.containerBg0,
-            bottomPaddingStyle,
-          ]}>
+        <BottomSheetView style={containerStyle}>
           <View>
             <Text style={styles.title}>{title}</Text>
           </View>
