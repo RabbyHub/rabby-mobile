@@ -102,6 +102,10 @@ jest.mock('@sentry/react-native', () => {
     captureEvent: jest.fn(() => 'mock-event-id'),
     addBreadcrumb: jest.fn(),
     addIntegration: jest.fn(),
+    breadcrumbsIntegration: jest.fn(options => ({
+      name: 'Breadcrumbs',
+      options,
+    })),
     configureScope: jest.fn(callback => {
       if (typeof callback === 'function') {
         callback(scope);

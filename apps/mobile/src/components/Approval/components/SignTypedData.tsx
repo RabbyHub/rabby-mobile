@@ -41,9 +41,6 @@ import { View } from 'react-native';
 import useAsyncRetry from 'react-use/lib/useAsyncRetry';
 import { useTheme2024 } from '@/hooks/theme';
 import { getStyles } from './SignTx/style';
-import { matomoRequestEvent } from '@/utils/analytics';
-import { getKRCategoryByType } from '@/utils/transaction';
-import { stats } from '@/utils/stats';
 import { toast } from '@/components2024/Toast';
 import { adjustV } from '@/utils/gnosis';
 import { useEnterPassphraseModal } from '@/hooks/useEnterPassphraseModal';
@@ -400,36 +397,8 @@ export const SignTypedData = ({
     },
   );
 
-  const report = async (
-    action:
-      | 'createSignText'
-      | 'startSignText'
-      | 'cancelSignText'
-      | 'completeSignText',
-    extra?: Record<string, any>,
-  ) => {
-    if (currentAccount) {
-      matomoRequestEvent({
-        category: 'SignText',
-        action: action,
-        label: [
-          getKRCategoryByType(currentAccount.type),
-          currentAccount.brandName,
-        ].join('|'),
-        transport: 'beacon',
-      });
-      stats.report(action, {
-        type: currentAccount.brandName,
-        category: getKRCategoryByType(currentAccount.type),
-        method: underline2Camelcase(params.method),
-        ...extra,
-      });
-    }
-  };
-
   const handleCancel = () => {
     security.invalidate();
-    report('cancelSignText');
     rejectApproval('User rejected the request.');
   };
 
@@ -489,9 +458,6 @@ export const SignTypedData = ({
             },
           );
           result = adjustV('eth_signTypedData', result);
-          report('completeSignText', {
-            success: true,
-          });
           const sigs = await apisSafe.getGnosisTransactionSignatures();
           if (sigs.length > 0) {
             await apisSafe.gnosisAddConfirmation(
@@ -506,9 +472,6 @@ export const SignTypedData = ({
           resolveApproval(result, false, false);
         } catch (e: any) {
           toast.info(e?.message);
-          report('completeSignText', {
-            success: false,
-          });
         }
       }
       return;
@@ -527,7 +490,6 @@ export const SignTypedData = ({
 
       return;
     }
-    report('startSignText');
     resolveApproval({});
   };
 
@@ -781,7 +743,6 @@ export const SignTypedData = ({
   useEffect(() => {
     init();
     checkWachMode();
-    report('createSignText');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

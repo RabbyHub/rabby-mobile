@@ -3,7 +3,6 @@ import { DEX, ETH_USDT_CONTRACT, SWAP_FEE_ADDRESS } from '@/constant/swap';
 import { getERC20Allowance, getRecommendNonce } from '@/core/apis/provider';
 import { openapi } from '@/core/request';
 import { formatUsdValue } from '@/utils/number';
-import { stats } from '@/utils/stats';
 import { CHAINS, CHAINS_ENUM } from '@debank/common';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import type {
@@ -430,13 +429,6 @@ export const useQuoteMethods = () => {
           })
         : null;
       try {
-        stats.report('swapRequestQuote', {
-          dex: dexId,
-          chain,
-          fromToken: payToken.id,
-          toToken: receiveToken.id,
-        });
-
         const getData = () =>
           getQuote(
             isSwapWrapToken(payToken.id, receiveToken.id, chain)
@@ -463,14 +455,6 @@ export const useQuoteMethods = () => {
           );
 
         const data = await getData();
-
-        stats.report('swapQuoteResult', {
-          dex: dexId,
-          chain,
-          fromToken: payToken.id,
-          toToken: receiveToken.id,
-          status: data ? 'success' : 'fail',
-        });
 
         let preExecResult;
         if (data) {
@@ -602,14 +586,6 @@ export const useQuoteMethods = () => {
         onFinishedQuote();
         return quote;
       } catch (error) {
-        stats.report('swapQuoteResult', {
-          dex: dexId,
-          chain,
-          fromToken: payToken.id,
-          toToken: receiveToken.id,
-          status: 'fail',
-        });
-
         const quote: TDexQuoteData = {
           data: null,
           name: dexId,

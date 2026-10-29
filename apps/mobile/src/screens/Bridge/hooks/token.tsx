@@ -14,7 +14,6 @@ import {
 } from 'react';
 import useAsyncFn from 'react-use/lib/useAsyncFn';
 import useDebounce from 'react-use/lib/useDebounce';
-import { stats } from '@/utils/stats';
 import { openapi } from '@/core/request';
 import { useRefreshId, useSetQuoteVisible, useSetRefreshId } from './context';
 import { getChainDefaultToken } from '@/constant/swap';
@@ -934,21 +933,7 @@ export const useBridge = (
                   feeRate: Number(feeRate),
                 },
                 openapi,
-              ).catch(e => {
-                if (
-                  currentFetchId === fetchIdRef.current &&
-                  !alternativeToken
-                ) {
-                  stats.report('bridgeQuoteResult', {
-                    aggregatorIds: bridgeAggregator.id,
-                    fromChainId: fromToken.chain,
-                    fromTokenId: fromToken.id,
-                    toTokenId: toToken.id,
-                    toChainId: toToken.chain,
-                    status: 'fail',
-                  });
-                }
-              });
+              ).catch(() => undefined);
 
               if (alternativeToken) {
                 if (
@@ -962,16 +947,6 @@ export const useBridge = (
               }
               if (data && currentFetchId === fetchIdRef.current) {
                 originData.push(...data);
-              }
-              if (currentFetchId === fetchIdRef.current) {
-                stats.report('bridgeQuoteResult', {
-                  aggregatorIds: bridgeAggregator.id,
-                  fromChainId: fromToken.chain,
-                  fromTokenId: fromToken.id,
-                  toTokenId: toToken.id,
-                  toChainId: toToken.chain,
-                  status: data?.length ? 'success' : 'none',
-                });
               }
 
               const validData =
@@ -1045,15 +1020,6 @@ export const useBridge = (
 
             setSelectedBridgeQuote(undefined);
           }
-
-          stats.report('bridgeQuoteResult', {
-            aggregatorIds: aggregatorsList.map(e => e.id).join(','),
-            fromChainId: fromToken.chain,
-            fromTokenId: fromToken.id,
-            toTokenId: toToken.id,
-            toChainId: toToken.chain,
-            status: data ? (data?.length === 0 ? 'none' : 'success') : 'fail',
-          });
         }
       }
     }, [

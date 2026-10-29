@@ -17,18 +17,9 @@ import { TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PerpEditTpSlPriceTag } from './PerpEditTpSlPriceTag';
 import { PerpsEditMarginPopup } from './PerpsEditMarginPopup';
-import BigNumber from 'bignumber.js';
 import { MarketData } from '@/hooks/perps/usePerpsStore';
 import { WsActiveAssetCtx } from '@rabby-wallet/hyperliquid-sdk';
-import {
-  formatPerpsCoin,
-  getStatsReportSide,
-  handleDisplayFundingPayments,
-} from '@/utils/perps';
-import { stats } from '@/utils/stats';
-import { perpsStore } from '@/hooks/perps/usePerpsStore';
-import { useShallow } from 'zustand/shallow';
-import { APP_VERSIONS } from '@/constant';
+import { formatPerpsCoin, handleDisplayFundingPayments } from '@/utils/perps';
 import { Text } from '@/components/Typography';
 import { Tip } from '@/components/Tip';
 import { PerpsProDottedUnderlineText } from '@/screens/PerpsPro/components/common/PerpsProDottedUnderlineText';
@@ -120,9 +111,6 @@ export const PerpsPosition: React.FC<{
   const { t } = useTranslation();
   const [editMarginVisible, setEditMarginVisible] = useState(false);
   const [fundingDetailOpen, setFundingDetailOpen] = useState(false);
-  const currentPerpsAccount = perpsStore(
-    useShallow(s => s.currentPerpsAccount),
-  );
 
   const distanceLiquidation = calculateDistanceToLiquidation(
     positionData?.liquidationPrice,
@@ -403,27 +391,6 @@ export const PerpsPosition: React.FC<{
                     slTriggerPx: '',
                     direction: positionData?.direction as 'Long' | 'Short',
                   });
-                  if (res) {
-                    const isBuy = positionData?.direction === 'Long';
-                    stats.report('perpsTradeHistory', {
-                      created_at: new Date().getTime(),
-                      user_addr: currentPerpsAccount?.address || '',
-                      trade_type: 'has position set tp',
-                      leverage: positionData?.leverage.toString(),
-                      trade_side: getStatsReportSide(!isBuy, true),
-                      margin_mode:
-                        positionData?.type === 'cross' ? 'cross' : 'isolated',
-                      coin: coin,
-                      size: positionData?.size,
-                      price: Number(price).toString(),
-                      trade_usd_value: new BigNumber(price)
-                        .times(positionData?.size)
-                        .toFixed(2),
-                      service_provider: 'hyperliquid',
-                      app_version: APP_VERSIONS.fromNative || '0',
-                      address_type: currentPerpsAccount?.type || '',
-                    });
-                  }
                   return res;
                 }}
               />
@@ -463,27 +430,6 @@ export const PerpsPosition: React.FC<{
                     slTriggerPx: price,
                     direction: positionData?.direction as 'Long' | 'Short',
                   });
-                  if (res) {
-                    const isBuy = positionData?.direction === 'Long';
-                    stats.report('perpsTradeHistory', {
-                      created_at: new Date().getTime(),
-                      user_addr: currentPerpsAccount?.address || '',
-                      trade_type: 'has position set sl',
-                      leverage: positionData?.leverage.toString(),
-                      trade_side: getStatsReportSide(!isBuy, true),
-                      margin_mode:
-                        positionData?.type === 'cross' ? 'cross' : 'isolated',
-                      coin: coin,
-                      size: positionData?.size,
-                      price: Number(price).toString(),
-                      trade_usd_value: new BigNumber(price)
-                        .times(positionData?.size)
-                        .toFixed(2),
-                      service_provider: 'hyperliquid',
-                      app_version: APP_VERSIONS.fromNative || '0',
-                      address_type: currentPerpsAccount?.type || '',
-                    });
-                  }
                   return res;
                 }}
               />

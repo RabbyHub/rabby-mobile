@@ -52,10 +52,6 @@ jest.mock('@/utils/events', () => ({
   },
 }));
 
-jest.mock('@/utils/stats', () => ({
-  stats: {},
-}));
-
 jest.mock('@/utils/perps', () => ({
   formatAllDexsClearinghouseState: jest.fn(),
   formatMarkData: jest.fn(),

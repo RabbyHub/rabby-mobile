@@ -18,7 +18,6 @@ import { navigateToPreferredPerps } from '@/hooks/perps/navigation/navigateToPre
 import { useSelectedMarket } from '@/screens/Lending/hooks';
 import { clearLendingActionPopupState } from '@/screens/Lending/utils/actionPopup';
 import { IProtocolPortfolio } from '@/store/protocols';
-import { matomoRequestEvent } from '@/utils/analytics';
 
 export { isAave3Portfolio, keyToMarketKey, marketKeyToProtocolId };
 
@@ -142,10 +141,6 @@ export const useProtocolConfig = () => {
             !!item?._originPortfolio?.detail?.position_token?.name;
 
           if (isNavigateDetail) {
-            matomoRequestEvent({
-              category: 'Rabby Perps',
-              action: 'Perps_ManageToPosition',
-            });
             const positionToken =
               item?._originPortfolio?.detail?.position_token;
             const market = positionToken?.symbol || '';
@@ -158,10 +153,6 @@ export const useProtocolConfig = () => {
             });
             return;
           }
-          matomoRequestEvent({
-            category: 'Rabby Perps',
-            action: 'Perps_ManageToPerps',
-          });
           await navigateToPreferredPerps({
             account,
             navigation,

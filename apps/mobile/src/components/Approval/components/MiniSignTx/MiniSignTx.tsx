@@ -10,7 +10,6 @@ import type { Account, ChainGas } from '@/core/startupServices/preference';
 import { useTheme2024 } from '@/hooks/theme';
 import { useFindChain } from '@/hooks/useFindChain';
 import { useSheetModal } from '@/hooks/useSheetModal';
-import { matomoRequestEvent } from '@/utils/analytics';
 import { intToHex } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import {
@@ -747,21 +746,6 @@ export const MiniSignTx = ({
 
       setNativeTokenBalance(balanceInfo.rawBalance);
       setGasToken(balanceInfo.token);
-
-      // stats.report('createTransaction', {
-      //   type: currentAccount.brandName,
-      //   category: KEYRING_CATEGORY_MAP[currentAccount.type],
-      //   chainId: chain.serverId,
-      //   createBy: params?.$ctx?.ga ? 'rabby' : 'dapp',
-      //   source: params?.$ctx?.ga?.source || '',
-      //   trigger: params?.$ctx?.ga?.trigger || '',
-      // });
-
-      matomoRequestEvent({
-        category: 'Transaction',
-        action: 'init',
-        label: currentAccount.brandName,
-      });
 
       checkCanProcess();
       const lastTimeGas: ChainGas = {

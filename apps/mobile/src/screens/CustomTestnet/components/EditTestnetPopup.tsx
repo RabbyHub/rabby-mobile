@@ -12,7 +12,6 @@ import type {
   TestnetChainBase,
 } from '@/core/services/customTestnetService';
 import { useTheme2024 } from '@/hooks/theme';
-import { matomoRequestEvent } from '@/utils/analytics';
 import { useMemoizedFn, useRequest } from 'ahooks';
 import React, {
   useEffect,
@@ -49,11 +48,6 @@ type Props = {
   onConfirm(values: TestnetChain): void;
   // onChange?: (values: Partial<TestnetChainBase>) => void;
   height?: number;
-  ctx?: {
-    ga?: {
-      source?: string;
-    };
-  };
 };
 export type EditCustomTestnetPopupType = {
   doBack: () => void;
@@ -65,7 +59,6 @@ export const EditCustomTestnetPopup = ({
   onConfirm,
   isEdit,
   // onChange,
-  ctx,
   ref,
 }: Props & { ref?: Ref<EditCustomTestnetPopupType> }) => {
   const [isShowAddFromChainList, setIsShowAddFromChainList] = useState(false);
@@ -85,17 +78,10 @@ export const EditCustomTestnetPopup = ({
   });
 
   const { loading, runAsync: runAddTestnet } = useRequest(
-    (
-      data: TestnetChainBase,
-      ctx?: {
-        ga?: {
-          source?: string;
-        };
-      },
-    ) => {
+    (data: TestnetChainBase) => {
       return isEdit
         ? apiCustomTestnet.updateCustomTestnet(data)
-        : apiCustomTestnet.addCustomTestnet(data, ctx);
+        : apiCustomTestnet.addCustomTestnet(data);
     },
     {
       manual: true,
@@ -109,7 +95,7 @@ export const EditCustomTestnetPopup = ({
     if (!isValid) {
       return;
     }
-    const res = await runAddTestnet(values, ctx);
+    const res = await runAddTestnet(values);
     if ('error' in res) {
       formik.setFieldError(res.error.key, res.error.message);
 
@@ -244,12 +230,6 @@ export const EditCustomTestnetPopup = ({
           formik.resetForm();
           formik.setValues(item);
           setIsShowAddFromChainList(false);
-          const source = ctx?.ga?.source || 'setting';
-          matomoRequestEvent({
-            category: 'Custom Network',
-            action: 'Choose ChainList Network',
-            label: `${source}_${String(item.id)}`,
-          });
         }}
       />
       <ConfirmModifyRpcModal

@@ -16,7 +16,6 @@ import type {
 } from '@/core/services/customTestnetService';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { matomoRequestEvent } from '@/utils/analytics';
 import { useMemoizedFn, useSetState } from 'ahooks';
 import { sortBy } from 'lodash';
 import { useTranslation } from 'react-i18next';
@@ -131,11 +130,6 @@ export function CustomTestnetScreen(): JSX.Element {
       isEdit: false,
     };
     setState(next);
-
-    matomoRequestEvent({
-      category: 'Custom Network',
-      action: 'Click Add Network',
-    });
   });
 
   const handleConfirm = useMemoizedFn(async () => {

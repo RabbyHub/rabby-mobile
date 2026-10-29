@@ -201,24 +201,6 @@ export async function removeBlockedToken(token: Token) {
   await preferenceServiceApi.removeBlockedToken(token);
 }
 
-export async function setReportActionTs(
-  ...args: Parameters<PreferenceService['setReportActionTs']>
-) {
-  await preferenceServiceApi.setReportActionTs(...args);
-}
-
-export async function getSendLogTime() {
-  return (await preferenceServiceApi.getSendLogTime()) as ReturnType<
-    PreferenceService['getSendLogTime']
-  >;
-}
-
-export async function updateSendLogTime(
-  ...args: Parameters<PreferenceService['updateSendLogTime']>
-) {
-  await preferenceServiceApi.updateSendLogTime(...args);
-}
-
 export type UserTokenSettings = ReturnType<
   PreferenceService['getUserTokenSettingsSync']
 >;

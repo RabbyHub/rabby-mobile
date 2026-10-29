@@ -59,7 +59,6 @@ import { AccountSelector } from '@/components2024/AccountSelector';
 import type { Account } from '@/core/startupServices/preference';
 import { ConnectSkeleton } from './ConnectSkeleton';
 import { useAccounts, useMyAccounts } from '@/hooks/account';
-import { matomoRequestEvent } from '@/utils/analytics';
 import { getDappAccount } from '@/core/utils/dappAccount';
 import { Text } from '@/components/Typography';
 import { getTransactionHistoryTransactions } from '@/core/serviceApi/transactionHistory';
@@ -474,12 +473,7 @@ ConnectProps) => {
       defaultChain,
       defaultAccount: selectedAccount,
     });
-    matomoRequestEvent({
-      category: 'Websites Usage',
-      action: 'Website_Connected',
-      label: origin,
-    });
-  }, [defaultChain, origin, resolveApproval, selectedAccount]);
+  }, [defaultChain, resolveApproval, selectedAccount]);
 
   const handleRuleDrawerClose = (update: boolean) => {
     if (update) {

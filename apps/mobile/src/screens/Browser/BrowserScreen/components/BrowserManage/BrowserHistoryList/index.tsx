@@ -11,7 +11,6 @@ import type { StyleProp, ViewStyle } from 'react-native';
 import { View } from 'react-native';
 import { BrowserHistoryEmpty } from './BrowserHistoryEmpty';
 import { BrowserHistorySiteList } from './BrowserHistorySiteList';
-import { matomoRequestEvent } from '@/utils/analytics';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 
 export const BrowserHistoryList = ({
@@ -32,13 +31,6 @@ export const BrowserHistoryList = ({
     openTab(dappInfo.url || dappInfo.origin, {
       isRemindOpen: true,
     });
-    if (dappInfo.origin) {
-      matomoRequestEvent({
-        category: 'Websites Usage',
-        action: 'Website_Visit_Website Recent',
-        label: dappInfo.origin,
-      });
-    }
   });
 
   const handleFavoritePress = useMemoizedFn((dappInfo: DappInfo) => {

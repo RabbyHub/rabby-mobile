@@ -1,7 +1,6 @@
 jest.mock('nanoid', () => ({ nanoid: () => 'id' }));
 jest.mock('../request', () => ({ openapi: {}, testOpenapi: {} }));
 jest.mock('@/databases/sync/utils', () => ({ updateExpiredTime: jest.fn() }));
-jest.mock('@/utils/stats', () => ({ stats: { report: jest.fn() } }));
 jest.mock('@/utils/token', () => ({
   customTestnetTokenToTokenItem: jest.fn(),
   getTokenSymbol: jest.fn(),

@@ -5,11 +5,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { Card } from '@/components2024/Card';
 import { ListItem } from '@/components2024/ListItem/ListItem';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
-import {
-  KEYRING_CATEGORY,
-  KEYRING_CLASS,
-  KEYRING_TYPE,
-} from '@rabby-wallet/keyring-utils';
+import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { useImportKeystone } from '@/components/ConnectKeystone/useImportKeystone';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import {
@@ -17,11 +13,8 @@ import {
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
 import { apiKeystone, apiTrezor } from '@/core/apis';
-import { matomoRequestEvent } from '@/utils/analytics';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { keyringServiceApi } from '@/core/serviceApi/keyring';
-import { setReportActionTs } from '@/core/serviceApi/preference';
-import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/utils/reportTimeoutAction';
 import { useFocusEffect } from '@react-navigation/native';
 import { navigate } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
@@ -83,26 +76,11 @@ export function ImportHardwareAddressScreen(): JSX.Element {
         }, 0);
       },
     });
-    matomoRequestEvent({
-      category: 'Import Address',
-      action: `Begin_Import_${KEYRING_CATEGORY.Hardware}`,
-      label: KEYRING_CLASS.HARDWARE.LEDGER,
-    });
-    !hasAccounts &&
-      void setReportActionTs(
-        REPORT_TIMEOUT_ACTION_KEY.CLICK_LEDGER_CONNECT,
-      ).catch(console.error);
-  }, [hasAccounts]);
+  }, []);
 
   const goImport = useImportKeystone();
 
   const handleKeystone = React.useCallback(async () => {
-    matomoRequestEvent({
-      category: 'Import Address',
-      action: `Begin_Import_${KEYRING_CATEGORY.Hardware}`,
-      label: KEYRING_CLASS.HARDWARE.KEYSTONE,
-    });
-
     const isReady = await apiKeystone.isReady();
     if (isReady) {
       goImport();
@@ -135,11 +113,6 @@ export function ImportHardwareAddressScreen(): JSX.Element {
           removeGlobalBottomSheetModal2024(id);
         }, 0);
       },
-    });
-    matomoRequestEvent({
-      category: 'Import Address',
-      action: `Begin_Import_${KEYRING_CATEGORY.Hardware}`,
-      label: KEYRING_CLASS.HARDWARE.ONEKEY,
     });
   }, []);
 

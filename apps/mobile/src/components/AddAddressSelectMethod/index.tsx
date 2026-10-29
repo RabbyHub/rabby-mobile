@@ -13,9 +13,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { ListItem } from '@/components2024/ListItem/ListItem';
 import type { useSetPasswordFirst } from '@/hooks/useLock';
-import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/utils/reportTimeoutAction';
 import { keyringServiceApi } from '@/core/serviceApi/keyring';
-import { setReportActionTs } from '@/core/serviceApi/preference';
 import { Text } from '@/components/Typography';
 import { useSeedPhrase } from '@/hooks/useSeedPhrase';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
@@ -171,9 +169,6 @@ export const AddAddressSelectMethod: React.FC<Props> = ({
         <ListItem
           disableArrow={true}
           onPress={() => {
-            void setReportActionTs(
-              REPORT_TIMEOUT_ACTION_KEY.CLICK_SCAN_SYNC_EXTENSION,
-            );
             naviPush(RootNames.Scanner, { syncExtension: true });
             onDone();
           }}

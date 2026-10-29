@@ -43,11 +43,8 @@ import { naviPush } from '@/utils/navigation';
 import { calculateDistanceToLiquidation } from './components/PerpsPositionSection/utils';
 import { PerpsSkeletonLoader } from './components/PerpsSkeletonLoader';
 import { usePerpsPosition } from '../PerpsMarketDetail/hooks/usePerpsPosition';
-import { checkPerpsReference, getStatsReportSide } from '@/utils/perps';
+import { checkPerpsReference } from '@/utils/perps';
 import { perpsServiceApi } from '@/core/serviceApi/perps';
-import { stats } from '@/utils/stats';
-import { APP_VERSIONS } from '@/constant';
-import BigNumber from 'bignumber.js';
 import { perpsStore } from '@/hooks/perps/usePerpsStore';
 import { traceStartupDiagnostic } from '@/core/utils/startupDiagnostics';
 import { usePerpsFundingHistoryJournal } from '@/hooks/perps/funding/usePerpsFundingHistoryJournal';
@@ -310,35 +307,7 @@ export const PerpsSimpleScreen: React.FC<PerpsSimpleScreenProps> = ({
                   if (!clearinghouseState) {
                     return;
                   }
-                  const filledResults = await handleCloseAllPositions(
-                    clearinghouseState,
-                  );
-                  if (!filledResults) {
-                    return;
-                  }
-                  for (const { filled, position } of filledResults) {
-                    const isBuy = Number(position.szi || 0) > 0;
-                    stats.report('perpsTradeHistory', {
-                      created_at: new Date().getTime(),
-                      user_addr: currentPerpsAccount?.address || '',
-                      trade_type: 'close all position',
-                      leverage: position.leverage.value.toString(),
-                      trade_side: getStatsReportSide(!isBuy, true),
-                      margin_mode:
-                        position.leverage.type === 'cross'
-                          ? 'cross'
-                          : 'isolated',
-                      coin: position.coin,
-                      size: filled.totalSz,
-                      price: filled.avgPx,
-                      trade_usd_value: new BigNumber(filled.avgPx)
-                        .times(filled.totalSz)
-                        .toFixed(2),
-                      service_provider: 'hyperliquid',
-                      app_version: APP_VERSIONS.fromNative || '0',
-                      address_type: currentPerpsAccount?.type || '',
-                    });
-                  }
+                  await handleCloseAllPositions(clearinghouseState);
                 }}
               />
               <PerpsLimitOrdersSection
