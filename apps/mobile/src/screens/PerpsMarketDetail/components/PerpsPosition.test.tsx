@@ -1,8 +1,4 @@
 jest.mock(
-  '@/assets2024/icons/perps/IconInfoCC.svg',
-  () => require('react-native').View,
-);
-jest.mock(
   '@/assets2024/icons/perps/PerpsProAvailableAdd.svg',
   () => require('react-native').View,
 );

@@ -1,5 +1,4 @@
 /* eslint-disable react-native/no-inline-styles */
-import RcIconInfoCC from '@/assets2024/icons/perps/IconInfoCC.svg';
 import { useTheme2024 } from '@/hooks/theme';
 import { useTipsPopup } from '@/hooks/useTipsPopup';
 import { PerpsRiskLevelPopup } from '@/screens/Perps/components/PerpsPositionSection/PerpsRiskLevelPopup';
@@ -313,25 +312,19 @@ export const PerpsPosition: React.FC<{
           </View>
           <View>
             <View style={styles.detailRow}>
-              <TouchableOpacity
+              <PerpsProDottedUnderlineText
+                accessibilityLabel={t('page.perpsDetail.PerpsPosition.size')}
+                containerStyle={styles.fundingLabel}
                 onPress={() =>
                   showTipsPopup({
                     title: t('page.perpsDetail.PerpsPosition.size'),
                     desc: t('page.perpsDetail.PerpsPosition.sizeTips'),
                     buttonType: 'hyperliquid',
                   })
-                }>
-                <View style={styles.positionValueLabel}>
-                  <Text style={styles.detailLabel}>
-                    {t('page.perpsDetail.PerpsPosition.size')}
-                  </Text>
-                  <RcIconInfoCC
-                    width={18}
-                    height={18}
-                    color={colors2024['neutral-info']}
-                  />
-                </View>
-              </TouchableOpacity>
+                }
+                style={styles.detailLabel}>
+                {t('page.perpsDetail.PerpsPosition.size')}
+              </PerpsProDottedUnderlineText>
               <Text style={styles.value}>
                 {positionData.positionValue.toFixed(2)} {quoteAsset} ={' '}
                 {positionData.size} {formatPerpsCoin(displayName)}
@@ -678,7 +671,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       gap: 8,
       paddingVertical: 6,
     },
-    positionValueLabel: { flexDirection: 'row', alignItems: 'center', gap: 4 },
     label: {
       ...text,
       fontWeight: '500',
