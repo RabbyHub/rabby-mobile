@@ -1636,6 +1636,9 @@
       "selectAddressesToAdd": "추가할 주소를 선택하세요"
     },
     "customTestnet": {
+      "screenTitle": "사용자 정의 네트워크",
+      "removeNetwork": "{{name}} 삭제",
+      "editTitle": "사용자 정의 네트워크 수정",
       "id": "ID",
       "empty": "사용자 지정 네트워크 없음",
       "currency": "통화",

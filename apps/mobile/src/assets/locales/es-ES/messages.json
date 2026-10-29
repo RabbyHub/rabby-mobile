@@ -1738,6 +1738,9 @@
       }
     },
     "customTestnet": {
+      "screenTitle": "Red personalizada",
+      "removeNetwork": "Eliminar {{name}}",
+      "editTitle": "Editar red personalizada",
       "empty": "Sin red personalizada",
       "add": "Añadir red personalizada",
       "id": "ID",

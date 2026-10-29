@@ -1649,6 +1649,9 @@
       "fixedModeTag": "固定模式"
     },
     "customTestnet": {
+      "screenTitle": "自定义网络",
+      "removeNetwork": "删除 {{name}}",
+      "editTitle": "编辑自定义网络",
       "currency": "货币",
       "add": "添加自定义网络",
       "empty": "无自定义网络",

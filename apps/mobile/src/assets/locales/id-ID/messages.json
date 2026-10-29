@@ -1530,6 +1530,9 @@
       "alreadyClaimedXPoints": "Sudah diklaim: {{point}}"
     },
     "customTestnet": {
+      "screenTitle": "Jaringan Kustom",
+      "removeNetwork": "Hapus {{name}}",
+      "editTitle": "Edit Jaringan Kustom",
       "CustomTestnetForm": {
         "id": "ID Rantai",
         "rpcUrl": "RPC URL",

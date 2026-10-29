@@ -1953,6 +1953,9 @@
       "customTestnetNotSupported": "O token desta rede não é suportado"
     },
     "customTestnet": {
+      "screenTitle": "Rede personalizada",
+      "removeNetwork": "Eliminar {{name}}",
+      "editTitle": "Editar rede personalizada",
       "add": "Adicionar rede personalizada",
       "currency": "Moeda",
       "empty": "Sem rede personalizada",
