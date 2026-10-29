@@ -4,48 +4,79 @@ import type { TestnetChain } from '@/core/services/customTestnetService';
 import { createTestnetChain } from '@/core/utils/customTestnetChain';
 import { useDebounce, useInfiniteScroll, useRequest } from 'ahooks';
 import RcIconBack from '@/assets/icons/custom-testnet/back.svg';
-import { AppBottomSheetModalTitle } from '@/components/customized/BottomSheet';
+import {
+  AppBottomSheetModal,
+  AppBottomSheetModalTitle,
+} from '@/components/customized/BottomSheet';
+import AutoLockView from '@/components/AutoLockView';
 import { Tip } from '@/components/Tip';
+import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { NextSearchBar } from '@/components2024/SearchBar';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { findChain } from '@/utils/chain';
 import { BottomSheetSectionList } from '@gorhom/bottom-sheet';
 import { range, sortBy } from 'lodash';
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { StyleProp, ViewStyle } from 'react-native';
-import {
-  Keyboard,
-  TouchableWithoutFeedback,
-  useWindowDimensions,
-  View,
-} from 'react-native';
+import { Keyboard, TouchableWithoutFeedback, View } from 'react-native';
 import { TouchableOpacity } from 'react-native-gesture-handler';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withTiming,
-} from 'react-native-reanimated';
 import { CustomTestnetItem } from './CustomTestnetItem';
 import { Empty } from './Empty';
 import { SkeletonCard } from './SkeletonCard';
+
+type AddFromChainListContentProps = {
+  onClose?: () => void;
+  onSelect?: (chain: TestnetChain) => void;
+};
 
 export const AddFromChainList = ({
   visible,
   onClose,
   onSelect,
-}: {
+}: AddFromChainListContentProps & {
   visible?: boolean;
-  onClose?: () => void;
-  onSelect?: (chain: TestnetChain) => void;
 }) => {
+  const { colors2024 } = useTheme2024();
+  const modalRef = useRef<AppBottomSheetModal>(null);
+
+  useEffect(() => {
+    if (visible) {
+      modalRef.current?.present();
+    } else {
+      modalRef.current?.close();
+    }
+  }, [visible]);
+
+  return (
+    <AppBottomSheetModal
+      ref={modalRef}
+      snapPoints={['80%']}
+      onDismiss={onClose}
+      enableDismissOnClose
+      enableDynamicSizing={false}
+      enablePanDownToClose
+      keyboardBehavior="extend"
+      keyboardBlurBehavior="restore"
+      android_keyboardInputMode="adjustPan"
+      {...makeBottomSheetProps({
+        linearGradientType: 'bg0',
+        colors: colors2024,
+      })}>
+      <AddFromChainListContent onClose={onClose} onSelect={onSelect} />
+    </AppBottomSheetModal>
+  );
+};
+
+const AddFromChainListContent = ({
+  onClose,
+  onSelect,
+}: AddFromChainListContentProps) => {
   const { t } = useTranslation();
   const { colors2024, styles } = useTheme2024({ getStyle: getStyles });
   const [_search, setSearch] = React.useState('');
   const search = useDebounce(_search, { wait: 500 });
-  const { width: windowWidth } = useWindowDimensions();
-  const left = useSharedValue(windowWidth);
 
   const { loading, data, loadingMore, loadMore } = useInfiniteScroll(
     async data => {
@@ -78,31 +109,22 @@ export const AddFromChainList = ({
     },
   );
 
-  const {
-    data: usedList,
-    loading: isLoadingUsed,
-    runAsync: runGetUsedList,
-  } = useRequest(
-    () => {
-      return apiCustomTestnet.getUsedCustomTestnetChainList().then(list => {
-        return sortBy(
-          list.map(item => {
-            return createTestnetChain({
-              name: item.name,
-              id: item.chain_id,
-              nativeTokenSymbol: item.native_currency.symbol,
-              rpcUrl: item.rpc || '',
-              scanLink: item.explorer || '',
-            });
-          }),
-          'name',
-        );
-      });
-    },
-    {
-      manual: true,
-    },
-  );
+  const { data: usedList, loading: isLoadingUsed } = useRequest(() => {
+    return apiCustomTestnet.getUsedCustomTestnetChainList().then(list => {
+      return sortBy(
+        list.map(item => {
+          return createTestnetChain({
+            name: item.name,
+            id: item.chain_id,
+            nativeTokenSymbol: item.native_currency.symbol,
+            rpcUrl: item.rpc || '',
+            scanLink: item.explorer || '',
+          });
+        }),
+        'name',
+      );
+    });
+  });
 
   const isLoading = loading || isLoadingUsed;
   const list = useMemo(() => {
@@ -124,29 +146,6 @@ export const AddFromChainList = ({
     return !usedList?.length && !list?.length;
   }, [isLoading, search, list, usedList]);
 
-  useEffect(() => {
-    if (visible) {
-      left.value = withTiming(0, {
-        duration: 400,
-      });
-    } else {
-      left.value = withTiming(windowWidth, {
-        duration: 400,
-      });
-    }
-  }, [left, visible, windowWidth]);
-
-  useEffect(() => {
-    if (visible) {
-      runGetUsedList();
-    }
-  }, [runGetUsedList, visible]);
-
-  const containerStyle = useAnimatedStyle(() => {
-    return {
-      transform: [{ translateX: left.value }],
-    };
-  });
   const handleClose = useCallback(() => {
     Keyboard.dismiss();
     onClose?.();
@@ -160,16 +159,8 @@ export const AddFromChainList = ({
   );
 
   return (
-    <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
-      <Animated.View
-        pointerEvents={visible ? 'auto' : 'none'}
-        accessibilityElementsHidden={!visible}
-        importantForAccessibility={visible ? 'auto' : 'no-hide-descendants'}
-        style={[
-          styles.container,
-          { transform: [{ translateX: windowWidth }] },
-          containerStyle,
-        ]}>
+    <AutoLockView as="View" style={styles.content}>
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
         <View style={styles.header}>
           <View style={styles.navbar}>
             <View style={styles.navbarLeft}>
@@ -200,30 +191,28 @@ export const AddFromChainList = ({
             onChangeText={setSearch}
           />
         </View>
-        <View style={styles.listContainer}>
-          {!visible ? null : isLoading ? (
-            <View style={styles.skeletonContainer}>
-              {range(0, 4).map(i => {
-                return <SkeletonCard key={i} />;
-              })}
-            </View>
-          ) : isEmpty ? (
-            <Empty
-              description={t('page.customTestnet.AddFromChainList.empty')}
-            />
-          ) : (
-            <CustomTestnetList
-              list={list}
-              usedList={usedList || []}
-              loading={loading}
-              loadingMore={loadingMore}
-              loadMore={loadMore}
-              onSelect={handleSelect}
-            />
-          )}
-        </View>
-      </Animated.View>
-    </TouchableWithoutFeedback>
+      </TouchableWithoutFeedback>
+      <View style={styles.listContainer}>
+        {isLoading ? (
+          <View style={styles.skeletonContainer}>
+            {range(0, 4).map(i => {
+              return <SkeletonCard key={i} />;
+            })}
+          </View>
+        ) : isEmpty ? (
+          <Empty description={t('page.customTestnet.AddFromChainList.empty')} />
+        ) : (
+          <CustomTestnetList
+            list={list}
+            usedList={usedList || []}
+            loading={loading}
+            loadingMore={loadingMore}
+            loadMore={loadMore}
+            onSelect={handleSelect}
+          />
+        )}
+      </View>
+    </AutoLockView>
   );
 };
 
@@ -291,24 +280,27 @@ const CustomTestnetList = ({
 };
 
 const getStyles = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
-  container: {
-    position: 'absolute',
+  content: {
+    flex: 1,
     backgroundColor: colors2024['neutral-bg-0'],
-    top: 0,
-    left: 0,
-    bottom: 0,
-    width: '100%',
   },
   header: {
     paddingHorizontal: 20,
+    paddingTop: 12,
   },
   navbar: {
     position: 'relative',
+    minHeight: 24,
+    justifyContent: 'center',
+    marginBottom: 19,
   },
   navbarLeft: {
     position: 'absolute',
-    top: 28,
+    left: 0,
+    top: 0,
+    bottom: 0,
     zIndex: 10,
+    justifyContent: 'center',
   },
   backIcon: {
     transform: [{ rotate: '180deg' }],
@@ -319,8 +311,8 @@ const getStyles = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
     fontSize: 20,
     lineHeight: 24,
     color: colors2024['neutral-title-1'],
-    paddingTop: 28,
-    marginBottom: 19,
+    paddingTop: 0,
+    marginBottom: 0,
   },
   searchBar: {
     marginBottom: 12,
