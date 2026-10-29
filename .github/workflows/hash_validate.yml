@@ -81,10 +81,10 @@ jobs:
   # --- Job 2: 构建 iOS ---
   build-ios:
     name: Build iOS & Generate Hash
-    runs-on: macos-26
+    runs-on: xcode-27
     env:
       NODE_OPTIONS: '--max_old_space_size=8192'
-      XCODE_VER: '26.3'
+      XCODE_VER: '27.1'
 
     outputs:
       ios_hash: ${{ steps.generate_hash.outputs.hash }}
