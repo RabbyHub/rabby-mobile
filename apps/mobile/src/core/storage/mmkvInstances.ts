@@ -50,6 +50,10 @@ export const lendingDataCacheMMKV = new MMKV({
   id: MMKV_FILE_NAMES.LENDING_DATA_CACHE,
 });
 
+export const storageDiagnosticsMMKV = new MMKV({
+  id: MMKV_FILE_NAMES.STORAGE_DIAGNOSTICS,
+});
+
 export const ALL_KNOWN_MMKV_INSTANCES = {
   [MMKV_FILE_NAMES.DEFAULT]: appMMKV,
   [MMKV_FILE_NAMES.KEYCHAIN]: keychainMMKV,
@@ -62,4 +66,5 @@ export const ALL_KNOWN_MMKV_INSTANCES = {
   [MMKV_FILE_NAMES.TESTNET_BALANCE]: testnetBalanceMMKV,
   [MMKV_FILE_NAMES.WALLETCONNECT]: walletConnectMMKV,
   [MMKV_FILE_NAMES.LENDING_DATA_CACHE]: lendingDataCacheMMKV,
+  [MMKV_FILE_NAMES.STORAGE_DIAGNOSTICS]: storageDiagnosticsMMKV,
 } as const;
