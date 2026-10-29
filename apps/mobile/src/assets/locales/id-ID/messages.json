@@ -3307,6 +3307,7 @@
       "screenTitle": "Hubungkan Dompet",
       "connectingToRabby": "Menghubungkan ke Rabby",
       "pairingFailed": "Penyandingan WalletConnect gagal.",
+      "proposalNotReceived": "Kode QR WalletConnect mungkin sudah kedaluwarsa. Muat ulang lalu coba lagi.",
       "connected": "Berhasil terhubung. Silakan kembali ke DApp.",
       "proposalExpired": "Proposal WalletConnect kedaluwarsa.",
       "pairingExpired": "Penyandingan WalletConnect kedaluwarsa. Muat ulang kode QR dapp dan coba lagi.",

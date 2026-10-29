@@ -301,7 +301,7 @@ export const TokenList = () => {
 
   const { isFocused, isFocusing } = useIsFocusedCurrentTab(TabName.token);
 
-  useScrollToTopOnChainChange({
+  const suspendVisibleAnchor = useScrollToTopOnChainChange({
     chain,
     isCurrentTab: isFocusing,
   });
@@ -1102,7 +1102,9 @@ export const TokenList = () => {
         maxToRenderPerBatch={TOKEN_LIST_RENDER_BATCH_SIZE}
         updateCellsBatchingPeriod={TOKEN_LIST_BATCHING_PERIOD_MS}
         removeClippedSubviews={IS_ANDROID}
-        maintainVisibleContentPosition={{ minIndexForVisible: 0 }}
+        maintainVisibleContentPosition={
+          suspendVisibleAnchor ? undefined : { minIndexForVisible: 0 }
+        }
       />
     </GestureDetector>
   );

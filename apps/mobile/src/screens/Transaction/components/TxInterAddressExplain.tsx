@@ -68,7 +68,7 @@ export const TxInterAddressExplain = ({
     const amount = data.token_approve?.value || 0;
 
     interAddressExplain = (
-      <View style={[styles.explain, isApprove && styles.explainForApprove]}>
+      <View style={[styles.explain]}>
         <Text
           style={StyleSheet.flatten([styles.actionTitle])}
           numberOfLines={1}>
@@ -113,13 +113,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   explain: {
     flexShrink: 1,
     maxWidth: '100%',
-  },
-  explainForApprove: {
-    width: '100%',
-    flexShrink: 0,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-start',
   },
   actionTitle: {
     fontFamily: 'SF Pro Rounded',

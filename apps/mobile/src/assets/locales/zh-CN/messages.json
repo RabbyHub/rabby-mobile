@@ -1464,6 +1464,7 @@
       "screenTitle": "连接钱包",
       "connectingToRabby": "正在连接到 Rabby",
       "pairingFailed": "WalletConnect 配对失败。",
+      "proposalNotReceived": "WalletConnect 二维码可能已失效，请刷新后重试。",
       "connected": "连接成功，请返回 DApp。",
       "proposalExpired": "WalletConnect 连接请求已过期。",
       "pairingExpired": "WalletConnect 配对已过期。请刷新 DApp 二维码后重试。",

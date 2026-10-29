@@ -171,7 +171,6 @@ export default function MarketScreen() {
         index={index}
         indexDecimal={indexDecimal}
         text=""
-        style={styles.tabLabel}
         containerStyle={styles.watchlistLabelContainer}
         icon={
           <RcIconFavorite
@@ -186,7 +185,7 @@ export default function MarketScreen() {
         }
       />
     ),
-    [colors2024, styles.watchlistLabelContainer, styles.tabLabel],
+    [colors2024, styles.watchlistLabelContainer],
   );
 
   return (
@@ -220,7 +219,6 @@ export default function MarketScreen() {
             const renderCategoryLabel = ({ index, indexDecimal }) => (
               <CustomLabel
                 index={index}
-                style={styles.tabLabel}
                 containerStyle={styles.categoryLabelContainer}
                 indexDecimal={indexDecimal}
                 text={marketTabLabelMap[category.id] ?? category.name}
@@ -309,9 +307,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       height: TAB_BAR_HEIGHT,
       justifyContent: 'center',
       alignItems: 'center',
-    },
-    tabLabel: {
-      marginTop: 0,
     },
   };
 });
