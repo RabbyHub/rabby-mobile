@@ -27,6 +27,8 @@ export type PerpsCandleFeedStatus =
 
 export type PerpsCandleFeedSnapshot = {
   candles: PerpsCandle[];
+  /** A resumed publisher needs one full replacement, even after a newer tick. */
+  publicationEpoch?: number;
   /** Simple range coverage uses the source boundary, before weekly aggregation. */
   sourceStartTime?: number;
   error: Error | null;
@@ -88,12 +90,15 @@ export const usePerpsCandleFeed = ({
   enabled,
   initialSourceCandles,
   interval,
+  publicationEnabled = true,
   simplePresentation = false,
 }: {
   coin: string;
   enabled: boolean;
   initialSourceCandles?: ReadonlyArray<PerpsCandle>;
   interval: PerpsCandleDataInterval;
+  /** Pause React publication, not the source subscription or history. */
+  publicationEnabled?: boolean;
   /** Simple-only warm start/recovery; default callers retain their preload contract. */
   simplePresentation?: boolean;
 }) => {
@@ -101,6 +106,11 @@ export const usePerpsCandleFeed = ({
   initialSourceCandlesRef.current = initialSourceCandles;
   const identity = createIdentity(enabled, coin, interval);
   const generationRef = useRef(0);
+  const publicationEnabledRef = useRef(publicationEnabled);
+  publicationEnabledRef.current = publicationEnabled;
+  const publicationEpochRef = useRef(0);
+  const previousPublicationEnabledRef = useRef(publicationEnabled);
+  const publishCurrentRef = useRef<(() => void) | null>(null);
   const hasStarted = useRef(false);
   const wasInactive = useRef(false);
   const [retryEpoch, setRetryEpoch] = useState(0);
@@ -116,18 +126,30 @@ export const usePerpsCandleFeed = ({
     status: identity === 'disabled' ? 'idle' : 'loading',
     updateType: 'reset',
   });
+  const publishSnapshot = useCallback((next: PerpsCandleFeedSnapshot) => {
+    if (!publicationEnabledRef.current) {
+      return;
+    }
+    setSnapshot(
+      publicationEpochRef.current > 0
+        ? { ...next, publicationEpoch: publicationEpochRef.current }
+        : next,
+    );
+  }, []);
 
   useEffect(() => {
     generationRef.current += 1;
     const generation = generationRef.current;
-    setSnapshot({
+    const resetSnapshot: PerpsCandleFeedSnapshot = {
       candles: [],
       error: null,
       identity,
       latestCandle: null,
       status: identity === 'disabled' ? 'idle' : 'loading',
       updateType: 'reset',
-    });
+    };
+    publishCurrentRef.current = () => publishSnapshot(resetSnapshot);
+    publishSnapshot(resetSnapshot);
 
     if (identity === 'disabled') {
       // Initial preference hydration is not a resume: keep its in-flight preload.
@@ -142,14 +164,16 @@ export const usePerpsCandleFeed = ({
     try {
       sdk = apisPerps.getPerpsSDK();
     } catch (error) {
-      setSnapshot({
+      const errorSnapshot: PerpsCandleFeedSnapshot = {
         candles: [],
         error: toError(error, 'Failed to access Perps candle SDK'),
         identity,
         latestCandle: null,
         status: 'error',
         updateType: 'reset',
-      });
+      };
+      publishCurrentRef.current = () => publishSnapshot(errorSnapshot);
+      publishSnapshot(errorSnapshot);
       return;
     }
 
@@ -187,10 +211,19 @@ export const usePerpsCandleFeed = ({
     };
 
     const isCurrent = () => generationRef.current === generation;
+    let sourceStatus: PerpsCandleFeedStatus = 'loading';
+    let sourceError: Error | null = null;
     const commitSourceCandles = (
       updateType: PerpsCandleFeedSnapshot['updateType'],
     ) => {
       if (!isCurrent()) {
+        return;
+      }
+      sourceStatus = sourceCandles.size > 0 ? 'ready' : 'empty';
+      sourceError = null;
+      // Keep the complete raw map current while hidden, without rebuilding
+      // sorted/aggregated display candles or waking the retained chart tree.
+      if (!publicationEnabledRef.current) {
         return;
       }
       const candles = selectPerpsDisplayCandles(
@@ -207,7 +240,7 @@ export const usePerpsCandleFeed = ({
           ? Math.min(...sourceCandles.keys())
           : undefined;
       }
-      setSnapshot({
+      publishSnapshot({
         candles,
         ...(simplePresentation && sourceStartTime !== undefined
           ? { sourceStartTime }
@@ -227,7 +260,9 @@ export const usePerpsCandleFeed = ({
       if (!isCurrent()) {
         return;
       }
-      setSnapshot({
+      sourceStatus = status;
+      sourceError = error;
+      publishSnapshot({
         candles: [],
         error,
         identity,
@@ -235,6 +270,16 @@ export const usePerpsCandleFeed = ({
         status,
         updateType: 'reset',
       });
+    };
+    publishCurrentRef.current = () => {
+      if (!isCurrent()) {
+        return;
+      }
+      if (sourceStatus === 'ready' || sourceStatus === 'empty') {
+        commitSourceCandles('snapshot');
+      } else {
+        setNonReady(sourceStatus as 'loading' | 'stale' | 'error', sourceError);
+      }
     };
 
     const loadBaseline = async ({
@@ -497,6 +542,7 @@ export const usePerpsCandleFeed = ({
     return () => {
       clearRecoveryTimer();
       generationRef.current += 1;
+      publishCurrentRef.current = null;
       retryRef.current = () => {};
       loadOlderRef.current = () => Promise.resolve('ignored');
       baselineRequest += 1;
@@ -510,7 +556,25 @@ export const usePerpsCandleFeed = ({
         console.error('[usePerpsCandleFeed] unsubscribe failed', error);
       }
     };
-  }, [coin, identity, interval, retryEpoch, simplePresentation]);
+  }, [
+    coin,
+    identity,
+    interval,
+    publishSnapshot,
+    retryEpoch,
+    simplePresentation,
+  ]);
+
+  useEffect(() => {
+    const wasEnabled = previousPublicationEnabledRef.current;
+    previousPublicationEnabledRef.current = publicationEnabled;
+    if (publicationEnabled && !wasEnabled) {
+      publicationEpochRef.current += 1;
+      // Carry the epoch into every subsequent frame: batching a new realtime
+      // tick with this catch-up must not turn it into a last-candle-only update.
+      publishCurrentRef.current?.();
+    }
+  }, [publicationEnabled]);
 
   const visibleSnapshot = useMemo<PerpsCandleFeedSnapshot>(
     () =>

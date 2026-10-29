@@ -1,11 +1,6 @@
 import { useEffect, useLayoutEffect, useRef } from 'react';
-import {
-  Easing,
-  ReduceMotion,
-  cancelAnimation,
-  useSharedValue,
-  withTiming,
-} from 'react-native-reanimated';
+import { Animated, Easing, useAnimatedValue } from 'react-native';
+import { useReducedMotion } from 'react-native-reanimated';
 
 export const PERPS_PRO_ORDER_BOOK_PERCENT_ANIMATION = {
   durationMs: 250,
@@ -30,9 +25,12 @@ export const usePerpsProOrderBookPercentAnimation = ({
   hasValue,
   targetPercent,
   valueIdentity,
-}: PercentPresentation & { targetPercent: number }) => {
+}: PercentPresentation & { targetPercent: number }): Animated.Value => {
   const normalizedTarget = normalizePercent(targetPercent);
-  const animatedPercent = useSharedValue(normalizedTarget);
+  const animatedPercent = useAnimatedValue(normalizedTarget, {
+    useNativeDriver: true,
+  });
+  const reducedMotion = useReducedMotion();
   const previousPresentationRef = useRef<PreviousPercentPresentation | null>(
     null,
   );
@@ -53,9 +51,10 @@ export const usePerpsProOrderBookPercentAnimation = ({
       previous.animationIdentity === animationIdentity &&
       previous.valueIdentity === valueIdentity;
 
-    if (!canAnimate) {
-      cancelAnimation(animatedPercent);
-      animatedPercent.value = normalizedTarget;
+    if (!canAnimate || reducedMotion) {
+      // setValue cancels the previous native timing before snapping. Do not
+      // asynchronously read back an old value when a newer snapshot arrives.
+      animatedPercent.setValue(normalizedTarget);
       return;
     }
 
@@ -63,22 +62,25 @@ export const usePerpsProOrderBookPercentAnimation = ({
       return;
     }
 
-    animatedPercent.value = withTiming(normalizedTarget, {
+    Animated.timing(animatedPercent, {
+      toValue: normalizedTarget,
       duration: PERPS_PRO_ORDER_BOOK_PERCENT_ANIMATION.durationMs,
       easing: PERPS_PRO_ORDER_BOOK_PERCENT_ANIMATION.easing,
-      reduceMotion: ReduceMotion.System,
-    });
+      useNativeDriver: true,
+      isInteraction: false,
+    }).start();
   }, [
     animatedPercent,
     animationIdentity,
     hasValue,
     normalizedTarget,
+    reducedMotion,
     valueIdentity,
   ]);
 
   useEffect(
     () => () => {
-      cancelAnimation(animatedPercent);
+      animatedPercent.stopAnimation();
     },
     [animatedPercent],
   );

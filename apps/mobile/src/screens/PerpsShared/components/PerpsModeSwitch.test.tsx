@@ -4,6 +4,11 @@ import { StyleSheet } from 'react-native';
 
 import { PerpsModeSwitch } from './PerpsModeSwitch';
 
+// Keep callback and disabled semantics real; native hit testing is device-only.
+jest.mock('react-native-gesture-handler', () => ({
+  Pressable: require('react-native').Pressable,
+}));
+
 jest.mock('@/components/Typography', () => {
   const { Text } = require('react-native');
   return { Text };
@@ -72,8 +77,16 @@ describe('PerpsModeSwitch', () => {
 
   it('disables both labels while a mode save is in flight', () => {
     const onSelectMode = jest.fn();
+    const onPressInMode = jest.fn();
+    const onPressOutMode = jest.fn();
     const screen = render(
-      <PerpsModeSwitch activeMode="pro" disabled onSelectMode={onSelectMode} />,
+      <PerpsModeSwitch
+        activeMode="pro"
+        disabled
+        onPressInMode={onPressInMode}
+        onPressOutMode={onPressOutMode}
+        onSelectMode={onSelectMode}
+      />,
     );
 
     expect(
@@ -95,7 +108,14 @@ describe('PerpsModeSwitch', () => {
       StyleSheet.flatten(screen.getByText('Pro').props.style),
     ).toMatchObject({ fontFamily: 'SF Pro Rounded' });
 
-    fireEvent.press(screen.getByTestId('perps-mode-simple'));
+    ['simple', 'pro'].forEach(mode => {
+      const target = screen.getByTestId(`perps-mode-${mode}`);
+      fireEvent(target, 'pressIn');
+      fireEvent(target, 'pressOut');
+      fireEvent.press(target);
+    });
+    expect(onPressInMode).not.toHaveBeenCalled();
+    expect(onPressOutMode).not.toHaveBeenCalled();
     expect(onSelectMode).not.toHaveBeenCalled();
   });
 
@@ -131,20 +151,27 @@ describe('PerpsModeSwitch', () => {
   it('reports press intent only for the enabled target before selection', () => {
     const onPressInMode = jest.fn();
     const onPressOutMode = jest.fn();
+    const onSelectMode = jest.fn();
     const screen = render(
       <PerpsModeSwitch
         activeMode="simple"
         onPressInMode={onPressInMode}
         onPressOutMode={onPressOutMode}
-        onSelectMode={jest.fn()}
+        onSelectMode={onSelectMode}
       />,
     );
+
+    fireEvent(screen.getByTestId('perps-mode-simple'), 'pressIn');
+    fireEvent(screen.getByTestId('perps-mode-simple'), 'pressOut');
+    expect(onPressInMode).not.toHaveBeenCalled();
+    expect(onPressOutMode).not.toHaveBeenCalled();
 
     fireEvent(screen.getByTestId('perps-mode-pro'), 'pressIn');
     fireEvent(screen.getByTestId('perps-mode-pro'), 'pressOut');
 
     expect(onPressInMode).toHaveBeenCalledWith('pro');
     expect(onPressOutMode).toHaveBeenCalledWith('pro');
+    expect(onSelectMode).not.toHaveBeenCalled();
   });
 
   it('renders the Figma New badge without changing the Pro press target', () => {

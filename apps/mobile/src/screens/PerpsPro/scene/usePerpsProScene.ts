@@ -12,7 +12,7 @@ import { perpsStore, usePerpsStore } from '@/hooks/perps/usePerpsStore';
 import type { TransactionNavigatorParamList } from '@/navigation-type';
 
 import {
-  buildPerpsProMarket,
+  buildPerpsProMarketDescriptor,
   buildPerpsProMarkets,
   type PerpsProMarket,
 } from '../model/market';
@@ -35,6 +35,7 @@ import {
   waitForPerpsProRealtimeDisplaySnapshot,
 } from './perpsProEntryIntent';
 import { usePerpsBookPrecision } from './usePerpsBookPrecision';
+import { selectPerpsProMarketData } from './usePerpsProLiveMarket';
 
 const getStaticMarketSignature = (market: {
   brief?: string;
@@ -457,13 +458,13 @@ export const usePerpsProScene = () => {
   );
   const isResolvingMarket = catalogue.length > 0 && catalogueMarket == null;
   const canonicalCoin = catalogueMarket?.canonicalCoin ?? '';
-  const liveMarketData = perpsStore(state =>
-    canonicalCoin ? state.marketDataMap[canonicalCoin] : undefined,
-  );
-  const currentMarket = useMemo<PerpsProMarket | null>(
-    () =>
-      liveMarketData ? buildPerpsProMarket(liveMarketData) : catalogueMarket,
-    [catalogueMarket, liveMarketData],
+  // The scene owns identity/layout, not ticking trade or market-bar data.
+  // A descriptor change still propagates immediately (quote, name, dex, etc.).
+  const currentMarket = perpsStore(
+    useShallow(state => {
+      const data = selectPerpsProMarketData(state, canonicalCoin);
+      return data ? buildPerpsProMarketDescriptor(data) : null;
+    }),
   );
   const hasAuthoritativeCurrentPosition = perpsStore(state => {
     if (!canonicalCoin || !state.isUserDataReady) {
@@ -483,20 +484,23 @@ export const usePerpsProScene = () => {
     !!currentMarket &&
     (hasAuthoritativeCurrentPosition || hasPreparedTradeConfiguration);
 
-  const markPrice = Number(currentMarket?.marketData.markPx);
-  const markMagnitude =
-    Number.isFinite(markPrice) && markPrice > 0
-      ? Math.floor(Math.log10(markPrice))
+  const markMagnitude = perpsStore(state => {
+    const price = Number(
+      selectPerpsProMarketData(state, canonicalCoin)?.markPx,
+    );
+    return Number.isFinite(price) && price > 0
+      ? Math.floor(Math.log10(price))
       : null;
+  });
+  const sizeDecimals = perpsStore(
+    state => selectPerpsProMarketData(state, canonicalCoin)?.szDecimals,
+  );
   const tickOptions = useMemo(
     () =>
-      markMagnitude == null || currentMarket?.marketData.szDecimals == null
+      markMagnitude == null || sizeDecimals == null
         ? []
-        : getPerpTickOptions(
-            10 ** markMagnitude,
-            currentMarket.marketData.szDecimals,
-          ),
-    [currentMarket?.marketData.szDecimals, markMagnitude],
+        : getPerpTickOptions(10 ** markMagnitude, sizeDecimals),
+    [sizeDecimals, markMagnitude],
   );
 
   const { precision, selectTickOption, selectedTickOption } =

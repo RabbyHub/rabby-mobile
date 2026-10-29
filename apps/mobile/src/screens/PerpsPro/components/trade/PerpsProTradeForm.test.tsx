@@ -125,39 +125,47 @@ jest.mock('../common/PerpsProDottedUnderlineText', () => ({
 
 const mockDismissKeyboardThen = jest.fn((action: () => void) => action());
 const mockBboSheetProps = jest.fn();
+const mockConfigurationSheetProps = jest.fn();
+
+function mockConfigurationSheet(name: string) {
+  return require('react').memo((props: object) => {
+    mockConfigurationSheetProps(name, props);
+    return null;
+  });
+}
 
 jest.mock('../common/usePerpsProDismissKeyboard', () => ({
   usePerpsProDismissKeyboard: () => mockDismissKeyboardThen,
 }));
 
 jest.mock('../positions/PerpsProLeverageSheet', () => ({
-  PerpsProLeverageSheet: () => null,
+  PerpsProLeverageSheet: mockConfigurationSheet('leverage'),
 }));
 
 jest.mock('./PerpsProBboSheet', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
   return {
-    PerpsProBboSheet: (props: object) => {
+    PerpsProBboSheet: ReactModule.memo((props: object) => {
       mockBboSheetProps(props);
       return ReactModule.createElement(View, {
         ...props,
         testID: 'bbo-sheet',
       });
-    },
+    }),
   };
 });
 
 jest.mock('./PerpsProTifSheet', () => ({
-  PerpsProTifSheet: () => null,
+  PerpsProTifSheet: mockConfigurationSheet('tif'),
 }));
 
 jest.mock('./PerpsProMarginModeSheet', () => ({
-  PerpsProMarginModeSheet: () => null,
+  PerpsProMarginModeSheet: mockConfigurationSheet('margin'),
 }));
 
 jest.mock('./PerpsProOrderTypeSheet', () => ({
-  PerpsProOrderTypeSheet: () => null,
+  PerpsProOrderTypeSheet: mockConfigurationSheet('orderType'),
 }));
 
 jest.mock('./PerpsProTpSlModeSheet', () => ({
@@ -251,11 +259,84 @@ const controller = (
 describe('PerpsProTradeForm order matrix', () => {
   afterEach(() => act(() => perpsProKeyboardSession.setEnabled(false)));
   beforeEach(() => {
+    mockConfigurationSheetProps.mockClear();
+    mockBboSheetProps.mockClear();
     mockFocusTextInput.mockClear();
     mockDismissKeyboardThen.mockReset();
     mockDismissKeyboardThen.mockImplementation(action => action());
     mockCancelAnimation.mockClear();
     mockWithTiming.mockClear();
+  });
+
+  it('does not rerender configuration sheets for unrelated price or amount updates', () => {
+    const trade = controller();
+    const onAddFunds = jest.fn();
+    const view = render(
+      <PerpsProTradeForm controller={trade} onAddFunds={onAddFunds} />,
+    );
+    expect(mockConfigurationSheetProps).toHaveBeenCalledTimes(4);
+    expect(mockBboSheetProps).toHaveBeenCalledTimes(1);
+    view.rerender(
+      <PerpsProTradeForm
+        controller={{
+          ...trade,
+          form: { ...trade.form, amount: '2' },
+          market: {
+            ...trade.market!,
+            marketData: { ...trade.market!.marketData, markPx: '64000' },
+          },
+        }}
+        onAddFunds={onAddFunds}
+      />,
+    );
+    expect(mockConfigurationSheetProps).toHaveBeenCalledTimes(4);
+    expect(mockBboSheetProps).toHaveBeenCalledTimes(1);
+
+    fireEvent.press(screen.getByText('25x'));
+    expect(mockConfigurationSheetProps).toHaveBeenLastCalledWith(
+      'leverage',
+      expect.objectContaining({ visible: true, pending: false }),
+    );
+    view.rerender(
+      <PerpsProTradeForm
+        controller={{ ...trade, leveragePending: true }}
+        onAddFunds={onAddFunds}
+      />,
+    );
+    expect(mockConfigurationSheetProps).toHaveBeenLastCalledWith(
+      'leverage',
+      expect.objectContaining({ visible: true, pending: true }),
+    );
+  });
+
+  it('uses the current leverage callback and only closes after a successful update', async () => {
+    const trade = controller();
+    const onAddFunds = jest.fn();
+    const view = render(
+      <PerpsProTradeForm controller={trade} onAddFunds={onAddFunds} />,
+    );
+    fireEvent.press(screen.getByText('25x'));
+    const confirm = jest
+      .fn()
+      .mockResolvedValueOnce(false)
+      .mockResolvedValueOnce(true);
+    view.rerender(
+      <PerpsProTradeForm
+        controller={{ ...trade, confirmLeverage: confirm }}
+        onAddFunds={onAddFunds}
+      />,
+    );
+    const props = () =>
+      mockConfigurationSheetProps.mock.calls
+        .filter(([name]) => name === 'leverage')
+        .at(-1)![1];
+    await act(async () => props().onConfirm(12));
+    expect(confirm).toHaveBeenLastCalledWith(12);
+    expect(trade.confirmLeverage).not.toHaveBeenCalled();
+    expect(props().visible).toBe(true);
+    await act(async () => props().onConfirm(15));
+    expect(confirm).toHaveBeenLastCalledWith(15);
+    expect(props().visible).toBe(false);
   });
 
   it('keeps the real form frame visible but fail-closed while configuration is preparing', () => {

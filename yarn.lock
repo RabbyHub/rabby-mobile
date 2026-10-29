@@ -9864,6 +9864,17 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@rabby-wallet/rn-collapsible-scene-view@workspace:^, @rabby-wallet/rn-collapsible-scene-view@workspace:packages/rn-collapsible-scene-view":
+  version: 0.0.0-use.local
+  resolution: "@rabby-wallet/rn-collapsible-scene-view@workspace:packages/rn-collapsible-scene-view"
+  peerDependencies:
+    react: ">=18"
+    react-native: ">=0.76"
+    react-native-gesture-handler: ">=2"
+    react-native-reanimated: ">=3"
+  languageName: unknown
+  linkType: soft
+
 "@rabby-wallet/rn-page-provider@workspace:packages/rn-page-provider":
   version: 0.0.0-use.local
   resolution: "@rabby-wallet/rn-page-provider@workspace:packages/rn-page-provider"
@@ -11910,7 +11921,7 @@ __metadata:
 
 "@rneui/base@patch:@rneui/base@npm%3A4.0.0-rc.8#./.yarn/patches/@rneui-base-npm-4.0.0-rc.8-23456f2e0d.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
   version: 4.0.0-rc.8
-  resolution: "@rneui/base@patch:@rneui/base@npm%3A4.0.0-rc.8#./.yarn/patches/@rneui-base-npm-4.0.0-rc.8-23456f2e0d.patch::version=4.0.0-rc.8&hash=cd9028&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
+  resolution: "@rneui/base@patch:@rneui/base@npm%3A4.0.0-rc.8#./.yarn/patches/@rneui-base-npm-4.0.0-rc.8-23456f2e0d.patch::version=4.0.0-rc.8&hash=455116&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
   dependencies:
     "@types/react-native-vector-icons": "npm:^6.4.10"
     color: "npm:^3.2.1"
@@ -11921,7 +11932,7 @@ __metadata:
   peerDependencies:
     react-native-safe-area-context: ">= 3.0.0"
     react-native-vector-icons: ">7.0.0"
-  checksum: 10/3220f921c132906766b9f7eb69b837651ba663f2219dbada3c7fe084b31767820c1a3587154ba9366d1d803091e3ec6ea7f6a031e35cec4f80f2294368c65272
+  checksum: 10/9d8ea72cd43200829df022da620d6df782d0c394db02edefd94a9b2a84d3dd983417cf8451dbf18b8b87e4000949bb9107473092c62325382abfcca590fb26e8
   languageName: node
   linkType: hard
 
@@ -37439,6 +37450,7 @@ __metadata:
     "@rabby-wallet/react-native-ios-context-menu": "workspace:^"
     "@rabby-wallet/react-native-keychain-9": "workspace:^"
     "@rabby-wallet/react-native-menu": "workspace:^"
+    "@rabby-wallet/rn-collapsible-scene-view": "workspace:^"
     "@rabby-wallet/rozenite-resource-flow-plugin": "workspace:^"
     "@rabby-wallet/service-address": "workspace:^"
     "@rabby-wallet/service-keyring": "workspace:^"
@@ -38496,11 +38508,11 @@ __metadata:
 
 "react-native-pager-view@patch:react-native-pager-view@npm%3A6.7.0#./.yarn/patches/react-native-pager-view-npm-6.7.0-0fd4ad27df.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
   version: 6.7.0
-  resolution: "react-native-pager-view@patch:react-native-pager-view@npm%3A6.7.0#./.yarn/patches/react-native-pager-view-npm-6.7.0-0fd4ad27df.patch::version=6.7.0&hash=2c4441&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
+  resolution: "react-native-pager-view@patch:react-native-pager-view@npm%3A6.7.0#./.yarn/patches/react-native-pager-view-npm-6.7.0-0fd4ad27df.patch::version=6.7.0&hash=ea0807&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
   peerDependencies:
     react: "*"
     react-native: "*"
-  checksum: 10/3a003075fe796652bad1dcea6be95207e2872918a58736af0850b82ef912a0aa2357d4bce89c9dab1deb1318bafae7336e973de929e5402b79a4b81edcf60638
+  checksum: 10/35814cf828dca5f50d54734837e48b366e725daedd55e0ee3d687b4653ad1f1f92e183f04b71085bca6032d26d471bbddaecb1b1101e01f17c0f6f1bf37d5e19
   languageName: node
   linkType: hard
 

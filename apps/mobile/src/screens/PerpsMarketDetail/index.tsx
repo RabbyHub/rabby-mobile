@@ -1,8 +1,5 @@
-import {
-  createAccountHeaderPresentation,
-  simplePositionPriceText,
-  type AccountHeaderHandle,
-} from './components/account/model';
+import { simplePositionPriceText } from './components/account/model';
+import { createPerpsMarketDetailHeaderSource } from './components/account/marketDetailHeaderPresentation';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { apisPerps } from '@/core/apis';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
@@ -35,7 +32,6 @@ import { PerpsSimpleChartSource } from './components/chart/PerpsSimpleChartSourc
 import { PerpsClosePositionPopup } from './components/PerpsClosePositionPopup';
 import { PerpsDepositCard } from './components/PerpsDepositCard';
 import { PerpsFooter } from './components/PerpsFooter';
-import { PerpsHeaderTitle } from './components/PerpsHeaderTitle';
 import { PerpsAbout } from './components/PerpsAbout';
 import { PerpsOpenPositionPopup } from './components/PerpsOpenPositionPopup';
 import { PerpsPosition } from './components/PerpsPosition';
@@ -47,8 +43,7 @@ import { PerpsRegionAlert } from '../Perps/components/PerpsRegionAlert';
 
 import { usePerpsPopupState } from '../Perps/hooks/usePerpsPopupState';
 
-import { naviReplace } from '@/utils/navigation';
-import { RootNames, getBottomButtonBottomOffset } from '@/constant/layout';
+import { getBottomButtonBottomOffset } from '@/constant/layout';
 import { PerpsAddPositionPopup } from './components/PerpsAddPositionPopup';
 import { PerpsLimitOrdersForCoin } from './components/PerpsLimitOrdersForCoin';
 import { usePerpsState } from '@/hooks/perps/usePerpsState';
@@ -352,14 +347,11 @@ export const PerpsMarketDetailScreen = () => {
     [currentPosition, currentAssetCtx?.pxDecimals],
   );
 
-  const accountHeaderRef = useRef<AccountHeaderHandle>(null);
-  const headerPresentation = useMemo(
-    () =>
-      createAccountHeaderPresentation(snapshot =>
-        accountHeaderRef.current?.update(snapshot),
-      ),
-    [],
+  const headerSource = useMemo(
+    () => createPerpsMarketDetailHeaderSource(route.key, coin),
+    [route.key, coin],
   );
+  const headerPresentation = headerSource.presentation;
   const chartContainerRef = useRef<View>(null);
   const chartContainerY = useRef(0);
   const priceNodeRef = useRef<View | null>(null);
@@ -396,48 +388,12 @@ export const PerpsMarketDetailScreen = () => {
     [headerPresentation],
   );
   useLayoutEffect(() => {
+    const deactivate = headerSource.activate();
     headerPresentation.reset();
     priceNodeRef.current = null;
     priceMeasureId.current += 1;
-  }, [coin, headerPresentation]);
-
-  const HeaderTitle = useCallback(() => {
-    return (
-      <PerpsHeaderTitle
-        ref={accountHeaderRef}
-        snapshotRef={headerPresentation.snapshot}
-        // account={currentPerpsAccount}
-        popupIsOpen={false}
-        quoteCoin={currentAssetCtx?.quoteAsset}
-        displayName={currentAssetCtx?.displayName || coin}
-        coin={coin}
-        logoUrl={currentAssetCtx?.logoUrl}
-        onSelectCoin={() => {
-          naviReplace(RootNames.StackTransaction, {
-            screen: RootNames.PerpsSearch,
-            params: {
-              openFromSource: 'marketDetail',
-              initialTab: 'topVolume',
-            },
-          });
-        }}
-      />
-    );
-  }, [
-    coin,
-    currentAssetCtx?.logoUrl,
-    currentAssetCtx?.quoteAsset,
-    currentAssetCtx?.displayName,
-    headerPresentation,
-    // currentPerpsAccount,
-  ]);
-
-  useEffect(() => {
-    navigation.setOptions({
-      header: HeaderTitle,
-    });
-  }, [navigation, HeaderTitle]);
-
+    return deactivate;
+  }, [headerPresentation, headerSource]);
   // if (!market) {
   //   navigation.goBack();
   //   toast.error('Market not found');

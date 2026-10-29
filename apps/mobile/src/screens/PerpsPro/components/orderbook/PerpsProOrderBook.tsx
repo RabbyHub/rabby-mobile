@@ -5,8 +5,7 @@ import type { PerpsLatestTrade } from '@/hooks/perps/subscriptions/usePerpsLates
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
-import { Pressable, View } from 'react-native';
-import Animated, { useAnimatedStyle } from 'react-native-reanimated';
+import { Pressable, View, type ViewStyle } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import type { PerpsServerClockSample } from '../../model/funding';
@@ -17,6 +16,7 @@ import type { PerpsProTradeAmountUnit } from '../../model/trade';
 import {
   calculatePerpsBuyRatio,
   getNextPerpsOrderBookMode,
+  getPerpsOrderBookDepthPercent,
   getPerpsOrderBookDisplayState,
   getPerpsOrderBookLayout,
   getVisiblePerpsOrderBookMaxTotal,
@@ -41,7 +41,7 @@ import {
   PerpsProOrderBookRatioSkeleton,
 } from './PerpsProOrderBookSkeleton';
 import { PerpsProPrecisionSheet } from './PerpsProPrecisionSheet';
-import { usePerpsProOrderBookPercentAnimation } from './usePerpsProOrderBookPercentAnimation';
+import { PerpsProOrderBookRatioTrack } from './PerpsProOrderBookRatioTrack';
 
 export const getPerpsProOrderBookRowKey = (
   side: 'ask' | 'bid',
@@ -64,6 +64,75 @@ type PendingPriceSelection = Readonly<{
   price: string | null;
   source: PerpsProOrderBookPriceSelectionSource;
 }>;
+
+// Trade/clock/market updates share these unchanged sides. Keep the existing
+// price-keyed depth animations and slot-keyed touch targets inside the boundary.
+const PerpsProOrderBookSide = React.memo(function PerpsProOrderBookSide({
+  amountDecimals,
+  amountUnit,
+  animationIdentity,
+  depthLayerStyle,
+  maxVisibleTotal,
+  onSelectPrice,
+  onSelectPriceIntentStart,
+  priceDecimals,
+  rowCount,
+  rows,
+  side,
+  style,
+}: {
+  amountDecimals: number;
+  amountUnit: PerpsProTradeAmountUnit;
+  animationIdentity: string;
+  depthLayerStyle: ViewStyle;
+  maxVisibleTotal: number;
+  onSelectPrice?: (price: string | null) => void;
+  onSelectPriceIntentStart?: (price: string | null) => void;
+  priceDecimals: number;
+  rowCount: number;
+  rows: PerpsOrderBookDisplayRow[];
+  side: 'ask' | 'bid';
+  style: ViewStyle;
+}) {
+  const displayRows = Array.from(
+    { length: rowCount },
+    (_, index) => rows[index] ?? null,
+  );
+  return (
+    <View style={style}>
+      <View pointerEvents="none" style={depthLayerStyle}>
+        {displayRows.map((level, index) =>
+          level ? (
+            <PerpsProOrderBookDepth
+              animationIdentity={animationIdentity}
+              key={getPerpsProOrderBookDepthKey(side, level)}
+              price={level.price}
+              targetPercent={getPerpsOrderBookDepthPercent(
+                level,
+                maxVisibleTotal,
+              )}
+              rowIndex={index}
+              side={side}
+            />
+          ) : null,
+        )}
+      </View>
+      {displayRows.map((level, index) => (
+        <PerpsProOrderBookRow
+          amountDecimals={amountDecimals}
+          amount={(amountUnit === 'base' ? level?.size : level?.usdSize) ?? 0}
+          key={getPerpsProOrderBookRowKey(side, index)}
+          price={level?.price ?? null}
+          priceNumber={level?.priceNumber ?? 0}
+          onSelectPrice={onSelectPrice}
+          onSelectPriceIntentStart={onSelectPriceIntentStart}
+          priceDecimals={priceDecimals}
+          side={side}
+        />
+      ))}
+    </View>
+  );
+});
 
 export const PerpsProOrderBook: React.FC<{
   amountUnit?: PerpsProTradeAmountUnit;
@@ -92,7 +161,7 @@ export const PerpsProOrderBook: React.FC<{
   selectedTickOption: PerpsTickOption | null;
   serverClock: PerpsServerClockSample | null;
   tickOptions: PerpsTickOption[];
-}> = ({
+}> = React.memo(function PerpsProOrderBook({
   amountUnit = 'quote',
   bookIdentity,
   book,
@@ -111,10 +180,14 @@ export const PerpsProOrderBook: React.FC<{
   selectedTickOption,
   serverClock,
   tickOptions,
-}) => {
+}) {
   const { colors2024, styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const openFieldExplanation = usePerpsProFieldExplanation();
+  const openMarkPriceExplanation = useCallback(
+    () => openFieldExplanation('markPrice'),
+    [openFieldExplanation],
+  );
   const [mode, setMode] = useState<PerpsOrderBookMode>('both');
   const [precisionOpen, setPrecisionOpen] = useState(false);
   const layout = getPerpsOrderBookLayout({
@@ -131,8 +204,11 @@ export const PerpsProOrderBook: React.FC<{
       }),
     [book, mode, rowCount],
   );
-  const maxVisibleTotal = getVisiblePerpsOrderBookMaxTotal(visible);
-  const buyRatio = calculatePerpsBuyRatio(book);
+  const maxVisibleTotal = useMemo(
+    () => getVisiblePerpsOrderBookMaxTotal(visible),
+    [visible],
+  );
+  const buyRatio = useMemo(() => calculatePerpsBuyRatio(book), [book]);
   const hasRatio = buyRatio.buy + buyRatio.sell > 0;
   const orderBookPriceDecimals =
     selectedTickOption?.priceDecimals ?? market?.marketData.pxDecimals ?? 2;
@@ -150,18 +226,6 @@ export const PerpsProOrderBook: React.FC<{
     status: bookStatus,
   });
   const animationIdentity = `${bookIdentity}|${mode}|${rowCount}|${displayState}`;
-  const animatedBuyRatio = usePerpsProOrderBookPercentAnimation({
-    animationIdentity,
-    hasValue: hasRatio,
-    targetPercent: buyRatio.buy,
-    valueIdentity: 'buy-ratio',
-  });
-  const buyRatioTrackStyle = useAnimatedStyle(() => ({
-    flexGrow: animatedBuyRatio.value,
-  }));
-  const sellRatioTrackStyle = useAnimatedStyle(() => ({
-    flexGrow: 100 - animatedBuyRatio.value,
-  }));
   const pendingPriceSelectionRef = useRef<PendingPriceSelection | null>(null);
   const getPriceSelectionSource = useCallback(
     (
@@ -215,53 +279,36 @@ export const PerpsProOrderBook: React.FC<{
     ],
   );
 
+  const startBookPriceSelection = useCallback(
+    (price: string | null) => startPriceSelection('book', price),
+    [startPriceSelection],
+  );
+  const finishBookPriceSelection = useCallback(
+    (price: string | null) => finishPriceSelection('book', price),
+    [finishPriceSelection],
+  );
+
   const renderRows = (
     side: 'ask' | 'bid',
     rows: PerpsOrderBookDisplayRow[],
-  ) => {
-    const displayRows = Array.from(
-      { length: rowCount },
-      (_, index) => rows[index] ?? null,
-    );
-    return (
-      <View style={styles.bookSide}>
-        <View pointerEvents="none" style={styles.bookDepthLayer}>
-          {displayRows.map((level, index) =>
-            level ? (
-              <PerpsProOrderBookDepth
-                animationIdentity={animationIdentity}
-                key={getPerpsProOrderBookDepthKey(side, level)}
-                level={level}
-                maxTotal={maxVisibleTotal}
-                rowIndex={index}
-                side={side}
-              />
-            ) : null,
-          )}
-        </View>
-        {displayRows.map((level, index) => (
-          <PerpsProOrderBookRow
-            amountDecimals={amountDecimals}
-            amountUnit={amountUnit}
-            key={getPerpsProOrderBookRowKey(side, index)}
-            level={level ?? undefined}
-            onSelectPrice={
-              onSelectBookPrice
-                ? () => finishPriceSelection('book', level?.price ?? null)
-                : undefined
-            }
-            onSelectPriceIntentStart={
-              onSelectBookPrice
-                ? () => startPriceSelection('book', level?.price ?? null)
-                : undefined
-            }
-            priceDecimals={orderBookPriceDecimals}
-            side={side}
-          />
-        ))}
-      </View>
-    );
-  };
+  ) => (
+    <PerpsProOrderBookSide
+      amountDecimals={amountDecimals}
+      amountUnit={amountUnit}
+      animationIdentity={animationIdentity}
+      depthLayerStyle={styles.bookDepthLayer}
+      maxVisibleTotal={maxVisibleTotal}
+      onSelectPrice={onSelectBookPrice ? finishBookPriceSelection : undefined}
+      onSelectPriceIntentStart={
+        onSelectBookPrice ? startBookPriceSelection : undefined
+      }
+      priceDecimals={orderBookPriceDecimals}
+      rowCount={rowCount}
+      rows={rows}
+      side={side}
+      style={styles.bookSide}
+    />
+  );
 
   const latestTradePressable = (
     <Pressable
@@ -334,7 +381,7 @@ export const PerpsProOrderBook: React.FC<{
                       'page.perps.pro.fieldExplanations.markPrice.title',
                     )}
                     containerStyle={styles.markPriceUnderline}
-                    onPress={() => openFieldExplanation('markPrice')}
+                    onPress={openMarkPriceExplanation}
                     style={styles.markPrice}>
                     {formatPerpsProPrice(
                       market?.marketData.markPx,
@@ -354,7 +401,7 @@ export const PerpsProOrderBook: React.FC<{
                       'page.perps.pro.fieldExplanations.markPrice.title',
                     )}
                     containerStyle={styles.markPriceUnderline}
-                    onPress={() => openFieldExplanation('markPrice')}
+                    onPress={openMarkPriceExplanation}
                     style={styles.markPrice}>
                     {formatPerpsProPrice(
                       market?.marketData.markPx,
@@ -382,22 +429,11 @@ export const PerpsProOrderBook: React.FC<{
                 style={[styles.ratioLabel, styles.buyRatio]}>
                 {buyRatio.buy.toFixed(2)}%
               </Text>
-              <View style={styles.ratioTrack}>
-                {hasRatio ? (
-                  <>
-                    <Animated.View
-                      style={[styles.buyRatioTrack, buyRatioTrackStyle]}
-                      testID="perps-pro-order-book-buy-ratio-track"
-                    />
-                    <Animated.View
-                      style={[styles.sellRatioTrack, sellRatioTrackStyle]}
-                      testID="perps-pro-order-book-sell-ratio-track"
-                    />
-                  </>
-                ) : (
-                  <View style={styles.emptyRatioTrack} />
-                )}
-              </View>
+              <PerpsProOrderBookRatioTrack
+                animationIdentity={animationIdentity}
+                buyPercent={buyRatio.buy}
+                hasValue={hasRatio}
+              />
               <Text
                 numberOfLines={1}
                 style={[styles.ratioLabel, styles.sellRatio]}>
@@ -443,7 +479,7 @@ export const PerpsProOrderBook: React.FC<{
       ) : null}
     </View>
   );
-};
+});
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
@@ -585,28 +621,5 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   sellRatio: {
     color: colors2024['red-default'],
     textAlign: 'right',
-  },
-  ratioTrack: {
-    flexDirection: 'row',
-    flex: 1,
-    gap: 2,
-    height: 4,
-  },
-  buyRatioTrack: {
-    backgroundColor: colors2024['green-default'],
-    borderBottomLeftRadius: 2,
-    borderTopLeftRadius: 2,
-    flexBasis: 0,
-  },
-  sellRatioTrack: {
-    backgroundColor: colors2024['red-default'],
-    borderBottomRightRadius: 2,
-    borderTopRightRadius: 2,
-    flexBasis: 0,
-  },
-  emptyRatioTrack: {
-    backgroundColor: colors2024['neutral-line'],
-    borderRadius: 2,
-    flex: 1,
   },
 }));
