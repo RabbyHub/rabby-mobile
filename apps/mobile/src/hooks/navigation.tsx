@@ -156,6 +156,12 @@ export function HeaderBackPressable({
 type ScreenOptions = Omit<NativeStackNavigationOptions, 'headerTitleStyle'> & {
   headerTitleStyle: NativeStackNavigationOptions['headerTitleStyle'] & object;
 };
+
+const IOS_LIQUID_GLASS_HEADER_OPTIONS = {
+  headerLeftBackgroundVisible: false,
+  headerRightBackgroundVisible: false,
+} as const;
+
 export const useStackScreenConfig = () => {
   const appThemeMode = useGetBinaryMode();
 
@@ -168,6 +174,7 @@ export const useStackScreenConfig = () => {
       const screenOptions: ScreenOptions = {
         animation: IS_IOS ? 'slide_from_right' : 'none',
         animationDuration: 200,
+        ...IOS_LIQUID_GLASS_HEADER_OPTIONS,
         ...headerPresets.onlyTitle,
         headerTitleStyle: {
           ...(headerPresets.onlyTitle.headerTitleStyle as object),
@@ -214,6 +221,7 @@ export const useStackScreenConfig = () => {
       const screenOptions: ScreenOptions = {
         animation: IS_IOS ? 'slide_from_right' : 'none',
         animationDuration: 200,
+        ...IOS_LIQUID_GLASS_HEADER_OPTIONS,
         ...headerPresets.onlyTitle,
         headerTitleStyle: {
           ...(headerPresets.onlyTitle.headerTitleStyle as object),

@@ -603,7 +603,7 @@ function dispatchWhenNavigationReady(
 
 function resetExistingHomeFlowToOverview() {
   const rootState = navigationRef.getRootState();
-  if (!canResetRootToHome(rootState)) {
+  if (!rootState || !canResetRootToHome(rootState)) {
     return false;
   }
 
@@ -649,6 +649,10 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
       const target = payload.target || 'home';
       runWhenNavigationReady(() => {
         const rootState = navigationRef.getRootState();
+        if (!rootState) {
+          void openRabbyGoTarget(target);
+          return;
+        }
         const activeRootRoute = rootState.routes[rootState.index];
         if (activeRootRoute?.name === RootNames.Unlock) {
           UnlockUIManager.queueResetNaviOnTopOfHomeWhenUnlock(
