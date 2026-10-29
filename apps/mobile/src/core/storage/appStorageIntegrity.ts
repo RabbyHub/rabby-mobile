@@ -11,8 +11,11 @@ import { APP_STORE_NAMES } from './storeConstant';
  * Sentry diagnostics for unexpected loss of user data kept in `mmkv.default`,
  * such as wallet aliases and open browser tabs.
  *
- * Reports carry storage key names and counts only. They never include
- * addresses, alias text, URLs or stored values.
+ * Each report sends only fields that separate the suspected causes: the
+ * whole file lost, one value unreadable, a code path overwriting it, or a
+ * loss tied to an app upgrade or architecture switch. App version and device
+ * come with every Sentry event. Addresses, alias text, URLs and stored
+ * values are never sent.
  */
 
 export type AppStorageIntegrityIssue =
@@ -20,13 +23,11 @@ export type AppStorageIntegrityIssue =
   | 'json_parse_failed'
   /** A booted wallet starts without `preference` or `contactBook`. */
   | 'core_store_missing'
-  /** A booted wallet starts with accounts but no alias at all. */
-  | 'aliases_empty_with_accounts'
   /** Fewer custom aliases than the previous launch recorded. */
   | 'aliases_dropped_between_launches'
   /** One write removed or reset several aliases at once. */
   | 'aliases_bulk_dropped'
-  /** No browser tabs although the previous launch recorded some. */
+  /** Fewer browser tabs than the previous launch recorded. */
   | 'browser_tabs_dropped_between_launches';
 
 type RuntimeArchitecture = 'new' | 'legacy';
@@ -34,13 +35,12 @@ type RuntimeArchitecture = 'new' | 'legacy';
 type CountCanary = {
   appVersion: string;
   rnArch: RuntimeArchitecture;
-  updatedAt: number;
   count: number;
-  totalCount?: number;
 };
 
 type CanaryKey =
-  (typeof STORAGE_DIAGNOSTICS_MMKV_KEYS)[keyof typeof STORAGE_DIAGNOSTICS_MMKV_KEYS];
+  | typeof STORAGE_DIAGNOSTICS_MMKV_KEYS.CONTACT_BOOK_CANARY
+  | typeof STORAGE_DIAGNOSTICS_MMKV_KEYS.BROWSER_TABS_CANARY;
 
 type AliasLike = Readonly<{ alias?: string }> | null | undefined;
 type AliasMap = Readonly<Record<string, AliasLike>>;
@@ -58,18 +58,23 @@ const WATCHED_APP_STORE_KEYS = [
   APP_MMKV_WEAK_KEYS.SCENE_ACCOUNTS,
 ] as const;
 
-export type AppStoragePresence = Record<
-  (typeof WATCHED_APP_STORE_KEYS)[number],
-  boolean
->;
+type WatchedAppStoreKey = (typeof WATCHED_APP_STORE_KEYS)[number];
+
+type AppStorageStartupSnapshot = {
+  missingStores: WatchedAppStoreKey[];
+  /** Only read when something is missing, to tell a lost file from one lost key. */
+  appStorageKeyCount?: number;
+};
 
 // Default aliases are shortened addresses such as `0x1234ab...cd5678`.
 const DEFAULT_ALIAS_PATTERN = /^0x[0-9a-f]{2,8}\.{3}[0-9a-f]{2,8}$/i;
 const HTTP_URL_PATTERN = /^https?:\/\//;
 const ADDRESS_PATTERN = /0x[0-9a-f]{40}/gi;
+const JSON_EDGE_CHARS = new Set(['{', '}', '[', ']', '"']);
 
 const reportedThisSession = new Set<string>();
 const lastCanarySignatures = new Map<CanaryKey, string>();
+let startupSnapshot: AppStorageStartupSnapshot | undefined;
 let appVersionCache: string | undefined;
 
 function getAppVersion() {
@@ -83,7 +88,7 @@ function getAppVersion() {
   return appVersionCache;
 }
 
-export function getRuntimeArchitecture(): RuntimeArchitecture {
+function getRuntimeArchitecture(): RuntimeArchitecture {
   const runtime = globalThis as typeof globalThis & {
     RN$Bridgeless?: boolean;
     nativeFabricUIManager?: unknown;
@@ -93,25 +98,17 @@ export function getRuntimeArchitecture(): RuntimeArchitecture {
     : 'legacy';
 }
 
-function warnInDev(message: string, error?: unknown) {
+function warnInDev(message: string, detail?: unknown) {
   if (__DEV__) {
-    console.warn(`[AppStorageIntegrity] ${message}`, error);
+    console.warn(`[AppStorageIntegrity] ${message}`, detail);
   }
 }
 
-export function hasAppStorageKey(key: string) {
+function hasAppStorageKey(key: string) {
   try {
     return appMMKV.contains(key);
   } catch {
     return false;
-  }
-}
-
-function getAppStorageKeyCount() {
-  try {
-    return appMMKV.getAllKeys().length;
-  } catch {
-    return null;
   }
 }
 
@@ -141,15 +138,15 @@ function markReportedForCurrentVersion(dedupeKey: string) {
   return true;
 }
 
-export function reportAppStorageIntegrityIssue(
+function reportAppStorageIntegrityIssue(
   issue: AppStorageIntegrityIssue,
   options: {
     /** Narrows grouping, for example to one storage key. */
     scope?: string;
     /** For conditions that persist across launches. */
     oncePerVersion?: boolean;
-    extra?: Record<string, unknown>;
-  } = {},
+    extra: Record<string, unknown>;
+  },
 ) {
   const { scope = '', oncePerVersion = false, extra } = options;
   const dedupeKey = scope ? `${issue}:${scope}` : issue;
@@ -162,16 +159,9 @@ export function reportAppStorageIntegrityIssue(
   }
 
   const rnArch = getRuntimeArchitecture();
-  const context = {
-    issue,
-    scope: scope || undefined,
-    appVersion: getAppVersion(),
-    rnArch,
-    ...extra,
-  };
   // Created here so the stack trace points at the caller.
   const error = new Error(`[AppStorageIntegrity] ${dedupeKey}`);
-  warnInDev(dedupeKey, context);
+  warnInDev(dedupeKey, extra);
 
   void import('@sentry/react-native')
     .then(Sentry => {
@@ -183,10 +173,31 @@ export function reportAppStorageIntegrityIssue(
           rn_arch: rnArch,
           ...(scope ? { app_storage_scope: scope } : {}),
         },
-        extra: context,
+        extra,
       });
     })
     .catch(() => undefined);
+}
+
+/**
+ * Records which watched keys exist before any store service recreates a
+ * missing one. Taken once per launch; later calls return the first result.
+ */
+export function captureAppStorageStartupSnapshot(): AppStorageStartupSnapshot {
+  if (!startupSnapshot) {
+    const missingStores = WATCHED_APP_STORE_KEYS.filter(
+      key => !hasAppStorageKey(key),
+    );
+    startupSnapshot = { missingStores };
+    if (missingStores.length) {
+      try {
+        startupSnapshot.appStorageKeyCount = appMMKV.getAllKeys().length;
+      } catch (error) {
+        warnInDev('failed to count app storage keys', error);
+      }
+    }
+  }
+  return startupSnapshot;
 }
 
 /**
@@ -200,21 +211,23 @@ export function parseStoredJsonOrReport<T>(
 ): T | null {
   try {
     return JSON.parse(raw);
-  } catch (error) {
-    reportAppStorageJsonParseFailure({ ...source, raw, error });
+  } catch {
+    reportJsonParseFailure(raw, source);
     return null;
   }
 }
 
-function reportAppStorageJsonParseFailure(input: {
-  fileId?: string;
-  key: string;
-  raw: string;
-  error: unknown;
-}) {
+function describeEdgeChar(char: string | undefined) {
+  return char !== undefined && JSON_EDGE_CHARS.has(char) ? char : 'other';
+}
+
+function reportJsonParseFailure(
+  raw: string,
+  source: { fileId?: string; key: string },
+) {
   try {
-    const { fileId = 'unknown', raw, error } = input;
-    const key = input.key.replace(ADDRESS_PATTERN, '0x<address>');
+    const fileId = source.fileId || 'unknown';
+    const key = source.key.replace(ADDRESS_PATTERN, '0x<address>');
     let replacementCharCount = 0;
     let nulCharCount = 0;
     for (let index = 0; index < raw.length; index += 1) {
@@ -225,43 +238,25 @@ function reportAppStorageJsonParseFailure(input: {
         nulCharCount += 1;
       }
     }
-    const errorMessage = (
-      error instanceof Error ? error.message : String(error)
-    )
-      // Some engines quote part of the input in the message.
-      .replace(/(["'`]).*?\1/g, '$1…$1')
-      .slice(0, 120);
 
     reportAppStorageIntegrityIssue('json_parse_failed', {
       scope: `${fileId}/${key}`,
       oncePerVersion: true,
       extra: {
-        fileId,
-        key,
+        // Truncation shows as a missing closing char, double encoding as a
+        // leading quote, and a length near a page size as a file-level issue.
         rawLength: raw.length,
-        firstCharCode: raw.charCodeAt(0),
-        lastCharCode: raw.charCodeAt(raw.length - 1),
+        firstChar: describeEdgeChar(raw[0]),
+        lastChar: describeEdgeChar(raw[raw.length - 1]),
+        // Bytes that were not valid UTF-8 when read back.
         replacementCharCount,
+        // Zero-filled regions point at file corruption.
         nulCharCount,
-        errorMessage,
       },
     });
   } catch (error) {
     warnInDev('failed to report JSON parse failure', error);
   }
-}
-
-/** Must run before any store service recreates a missing key. */
-export function captureAppStoragePresence(): AppStoragePresence {
-  const presence = {} as AppStoragePresence;
-  WATCHED_APP_STORE_KEYS.forEach(key => {
-    presence[key] = hasAppStorageKey(key);
-  });
-  return presence;
-}
-
-function getMissingStores(presence: AppStoragePresence) {
-  return WATCHED_APP_STORE_KEYS.filter(key => !presence[key]);
 }
 
 export function countAliases(aliases: AliasMap | null | undefined) {
@@ -283,9 +278,7 @@ export function countAliases(aliases: AliasMap | null | undefined) {
   return { total, custom };
 }
 
-export function countBrowserTabs(
-  tabs: ReadonlyArray<TabLike> | null | undefined,
-) {
+function countBrowserTabs(tabs: ReadonlyArray<TabLike> | null | undefined) {
   if (!tabs) {
     return 0;
   }
@@ -299,15 +292,8 @@ function isCountDropped(previous: number, current: number) {
   return previous > 0 && (current === 0 || previous - current >= 2);
 }
 
-function getCanarySignature(
-  canary: Pick<CountCanary, 'appVersion' | 'rnArch' | 'count' | 'totalCount'>,
-) {
-  return [
-    canary.appVersion,
-    canary.rnArch,
-    canary.count,
-    canary.totalCount ?? '',
-  ].join('|');
+function getCanarySignature(canary: CountCanary) {
+  return [canary.appVersion, canary.rnArch, canary.count].join('|');
 }
 
 function readCanary(key: CanaryKey): CountCanary | null {
@@ -331,18 +317,17 @@ function readCanary(key: CanaryKey): CountCanary | null {
   }
 }
 
-/** Writes only when the counts, app version or architecture changed. */
+/** Writes only when the count, app version or architecture changed. */
 function writeCanary(
   key: CanaryKey,
-  counts: { count: number; totalCount?: number },
+  count: number,
   previous?: CountCanary | null,
 ) {
   try {
     const canary: CountCanary = {
       appVersion: getAppVersion(),
       rnArch: getRuntimeArchitecture(),
-      updatedAt: Date.now(),
-      ...counts,
+      count,
     };
     const signature = getCanarySignature(canary);
     const lastSignature =
@@ -360,77 +345,52 @@ function writeCanary(
 }
 
 /**
- * Compares the contact book loaded at startup with the presence snapshot and
- * with the counts recorded by the previous launch.
+ * Checks the contact book loaded at startup against the startup snapshot and
+ * the custom alias count recorded by the previous launch.
  */
 export function checkContactBookAtStartup(input: {
-  presence: AppStoragePresence;
-  accountAddresses: readonly string[];
+  /** The keyring was set up before, so this is not a first launch. */
+  isBootedWallet: boolean;
   aliases: AliasMap;
 }) {
   try {
-    const { presence, accountAddresses, aliases } = input;
-    const counts = countAliases(aliases);
-    const accountCount = accountAddresses.length;
-    const missingStores = getMissingStores(presence);
-    let appStorageKeyCount: number | null | undefined;
-    const getKeyCount = () => {
-      if (appStorageKeyCount === undefined) {
-        appStorageKeyCount = getAppStorageKeyCount();
-      }
-      return appStorageKeyCount;
-    };
+    const snapshot = captureAppStorageStartupSnapshot();
+    const counts = countAliases(input.aliases);
 
-    if (accountCount > 0 && (!presence.preference || !presence.contactBook)) {
+    if (
+      input.isBootedWallet &&
+      (snapshot.missingStores.includes(APP_STORE_NAMES.preference) ||
+        snapshot.missingStores.includes(APP_STORE_NAMES.contactBook))
+    ) {
       reportAppStorageIntegrityIssue('core_store_missing', {
         oncePerVersion: true,
-        extra: {
-          accountCount,
-          missingStores,
-          appStorageKeyCount: getKeyCount(),
-        },
+        extra: { ...snapshot },
       });
     }
 
-    if (accountCount > 0 && counts.total === 0) {
-      reportAppStorageIntegrityIssue('aliases_empty_with_accounts', {
-        oncePerVersion: true,
-        extra: {
-          accountCount,
-          contactBookPresent: presence.contactBook,
-          missingStores,
-          appStorageKeyCount: getKeyCount(),
-        },
-      });
-    }
-
+    // An empty contact book alone is not reported: creating a seed phrase
+    // from the add-address sheet or syncing from the extension can leave
+    // accounts without aliases, and the UI then shows shortened addresses.
     const previous = readCanary(
       STORAGE_DIAGNOSTICS_MMKV_KEYS.CONTACT_BOOK_CANARY,
     );
     if (previous && isCountDropped(previous.count, counts.custom)) {
       reportAppStorageIntegrityIssue('aliases_dropped_between_launches', {
         extra: {
-          previousCustomAliasCount: previous.count,
-          customAliasCount: counts.custom,
-          previousAliasCount: previous.totalCount,
-          aliasCount: counts.total,
           previousAppVersion: previous.appVersion,
           previousRnArch: previous.rnArch,
-          previousUpdatedAt: previous.updatedAt,
-          accountCount,
-          accountsWithoutAlias: accountAddresses.filter(
-            address => !aliases[address.toLowerCase()],
-          ).length,
-          contactBookPresent: presence.contactBook,
-          missingStores,
-          appStorageKeyCount: getKeyCount(),
+          // 0 and partial losses point at different causes.
+          customAliasCount: counts.custom,
+          // 0: the store was emptied. Above 0: names were reset to defaults.
+          aliasCount: counts.total,
+          ...snapshot,
         },
       });
     }
 
     writeCanary(
       STORAGE_DIAGNOSTICS_MMKV_KEYS.CONTACT_BOOK_CANARY,
-      { count: counts.custom, totalCount: counts.total },
+      counts.custom,
       previous,
     );
   } catch (error) {
@@ -446,24 +406,23 @@ export function recordContactBookAliasesChange(
   try {
     const counts = countAliases(aliases);
     const previousCounts = countAliases(previousAliases);
+    const removedAliasCount = previousCounts.total - counts.total;
+    const removedCustomAliasCount = previousCounts.custom - counts.custom;
     // Removing an address deletes one alias per write.
-    if (
-      previousCounts.total - counts.total >= 2 ||
-      previousCounts.custom - counts.custom >= 2
-    ) {
+    if (removedAliasCount >= 2 || removedCustomAliasCount >= 2) {
+      // The stack trace shows which code made the write.
       reportAppStorageIntegrityIssue('aliases_bulk_dropped', {
         extra: {
-          previousAliasCount: previousCounts.total,
-          aliasCount: counts.total,
-          previousCustomAliasCount: previousCounts.custom,
-          customAliasCount: counts.custom,
+          // Above 0: entries deleted. 0 with custom names lost: overwritten.
+          removedAliasCount,
+          removedCustomAliasCount,
         },
       });
     }
-    writeCanary(STORAGE_DIAGNOSTICS_MMKV_KEYS.CONTACT_BOOK_CANARY, {
-      count: counts.custom,
-      totalCount: counts.total,
-    });
+    writeCanary(
+      STORAGE_DIAGNOSTICS_MMKV_KEYS.CONTACT_BOOK_CANARY,
+      counts.custom,
+    );
   } catch (error) {
     warnInDev('contact book change check failed', error);
   }
@@ -471,7 +430,6 @@ export function recordContactBookAliasesChange(
 
 /** Runs right after BrowserService restored its persisted tabs. */
 export function checkBrowserTabsOnLoad(input: {
-  browserStorePresent: boolean;
   tabs: ReadonlyArray<TabLike>;
   historyCount: number;
   bookmarkCount: number;
@@ -484,22 +442,20 @@ export function checkBrowserTabsOnLoad(input: {
     if (previous && isCountDropped(previous.count, tabCount)) {
       reportAppStorageIntegrityIssue('browser_tabs_dropped_between_launches', {
         extra: {
-          previousTabCount: previous.count,
-          tabCount,
           previousAppVersion: previous.appVersion,
           previousRnArch: previous.rnArch,
-          previousUpdatedAt: previous.updatedAt,
-          browserStorePresent: input.browserStorePresent,
+          // A partial loss points at tab restore logic, not storage.
+          tabCount,
+          // Kept history or bookmarks mean only the tabs were cleared.
           historyCount: input.historyCount,
           bookmarkCount: input.bookmarkCount,
-          contactBookPresent: hasAppStorageKey(APP_STORE_NAMES.contactBook),
-          appStorageKeyCount: getAppStorageKeyCount(),
+          ...captureAppStorageStartupSnapshot(),
         },
       });
     }
     writeCanary(
       STORAGE_DIAGNOSTICS_MMKV_KEYS.BROWSER_TABS_CANARY,
-      { count: tabCount },
+      tabCount,
       previous,
     );
   } catch (error) {
@@ -509,13 +465,15 @@ export function checkBrowserTabsOnLoad(input: {
 
 /** Subscribed to every `browserTabs` write of BrowserService. */
 export function recordBrowserTabsChange(tabs: ReadonlyArray<TabLike>) {
-  writeCanary(STORAGE_DIAGNOSTICS_MMKV_KEYS.BROWSER_TABS_CANARY, {
-    count: countBrowserTabs(tabs),
-  });
+  writeCanary(
+    STORAGE_DIAGNOSTICS_MMKV_KEYS.BROWSER_TABS_CANARY,
+    countBrowserTabs(tabs),
+  );
 }
 
 export function resetAppStorageIntegrityStateForTests() {
   reportedThisSession.clear();
   lastCanarySignatures.clear();
+  startupSnapshot = undefined;
   appVersionCache = undefined;
 }

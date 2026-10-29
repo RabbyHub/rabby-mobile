@@ -31,7 +31,7 @@ import {
   persistKeyringState,
 } from '../storage/mmkv';
 import {
-  captureAppStoragePresence,
+  captureAppStorageStartupSnapshot,
   checkContactBookAtStartup,
   recordContactBookAliasesChange,
 } from '../storage/appStorageIntegrity';
@@ -106,33 +106,6 @@ function getKeyringStateSummary(value: unknown) {
   };
 }
 
-function getPublicSnapshotAddresses(value: unknown) {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) {
-    return [];
-  }
-
-  const snapshot = (value as Record<string, unknown>).publicAccountSnapshot;
-  const accounts =
-    snapshot && typeof snapshot === 'object' && !Array.isArray(snapshot)
-      ? (snapshot as Record<string, unknown>).accounts
-      : undefined;
-  if (!Array.isArray(accounts)) {
-    return [];
-  }
-
-  const addresses = new Set<string>();
-  accounts.forEach(account => {
-    const address =
-      account && typeof account === 'object'
-        ? (account as { address?: unknown }).address
-        : undefined;
-    if (typeof address === 'string' && address) {
-      addresses.add(address.toLowerCase());
-    }
-  });
-  return Array.from(addresses);
-}
-
 function recordKeyringStorageDiagnostic(
   event: string,
   data: Record<string, unknown>,
@@ -159,7 +132,7 @@ const keyringClasses = [
 
 export function loadStartupCoreServices() {
   // Taken before migrations and service constructors recreate missing keys.
-  const appStoragePresence = captureAppStoragePresence();
+  captureAppStorageStartupSnapshot();
   migrateAppStorage(appStorage);
 
   const normalizedKeyringState = normalizeKeyringState({
@@ -213,9 +186,11 @@ export function loadStartupCoreServices() {
   const contactService = new ContactBookService({
     storageAdapter: appStorage,
   });
+  const keyringStateSummary = getKeyringStateSummary(keyringState);
   checkContactBookAtStartup({
-    presence: appStoragePresence,
-    accountAddresses: getPublicSnapshotAddresses(keyringState),
+    isBootedWallet:
+      keyringStateSummary.hasBooted === true ||
+      keyringStateSummary.hasVault === true,
     aliases: contactService.store.aliases,
   });
   contactService.subscribeStoreField('aliases', (aliases, previousAliases) => {
