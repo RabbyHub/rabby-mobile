@@ -5,13 +5,13 @@ import {
   AppBottomSheetModalTitle,
 } from '@/components/customized/BottomSheet';
 import { Button } from '@/components2024/Button';
+import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { apiCustomTestnet } from '@/core/apis';
 import type {
   TestnetChain,
   TestnetChainBase,
 } from '@/core/services/customTestnetService';
-import { useTheme2024, useThemeColors } from '@/hooks/theme';
-import { matomoRequestEvent } from '@/utils/analytics';
+import { useTheme2024 } from '@/hooks/theme';
 import { useMemoizedFn, useRequest } from 'ahooks';
 import React, {
   useEffect,
@@ -151,13 +151,6 @@ export const EditCustomTestnetPopup = ({
     <>
       <AppBottomSheetModal
         snapPoints={['80%']}
-        backgroundStyle={
-          isShowAddFromChainList ? styles.quickAddBackground : styles.background
-        }
-        handleStyle={
-          isShowAddFromChainList ? styles.quickAddBackground : styles.background
-        }
-        handleIndicatorStyle={styles.handleIndicator}
         ref={modalRef}
         onDismiss={onCancel}
         keyboardBehavior="interactive"
@@ -166,7 +159,12 @@ export const EditCustomTestnetPopup = ({
         enableDynamicSizing={false}
         enableHandlePanningGesture
         enableContentPanningGesture
-        enablePanDownToClose>
+        enablePanDownToClose
+        enableDismissOnClose
+        {...makeBottomSheetProps({
+          linearGradientType: 'bg1',
+          colors: colors2024,
+        })}>
         <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
           <AutoLockView as="View" style={styles.content}>
             <View style={[styles.container]}>
@@ -219,21 +217,21 @@ export const EditCustomTestnetPopup = ({
                   containerStyle={styles.btnContainer}
                 />
               </View>
-              <AddFromChainList
-                visible={isShowAddFromChainList}
-                onClose={() => {
-                  setIsShowAddFromChainList(false);
-                }}
-                onSelect={item => {
-                  formik.resetForm();
-                  formik.setValues(item);
-                  setIsShowAddFromChainList(false);
-                }}
-              />
             </View>
           </AutoLockView>
         </TouchableWithoutFeedback>
       </AppBottomSheetModal>
+      <AddFromChainList
+        visible={isShowAddFromChainList}
+        onClose={() => {
+          setIsShowAddFromChainList(false);
+        }}
+        onSelect={item => {
+          formik.resetForm();
+          formik.setValues(item);
+          setIsShowAddFromChainList(false);
+        }}
+      />
       <ConfirmModifyRpcModal
         visible={isShowModifyRpcModal}
         chainId={formik.values.id}
@@ -264,28 +262,13 @@ const getStyles = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
   container: {
     flex: 1,
   },
-  background: {
-    backgroundColor: colors2024['neutral-bg-1'],
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
-  },
-  quickAddBackground: {
-    backgroundColor: colors2024['neutral-bg-0'],
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
-  },
-  handleIndicator: {
-    width: 50,
-    height: 6,
-    backgroundColor: colors2024['neutral-line'],
-  },
   modalTitle: {
     fontFamily: 'SF Pro Rounded',
     fontWeight: '900',
     fontSize: 20,
     lineHeight: 24,
     color: colors2024['neutral-title-1'],
-    paddingTop: 28,
+    paddingTop: 12,
     marginBottom: 22,
   },
   quickAddAsRow: {
