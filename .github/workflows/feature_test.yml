@@ -98,7 +98,7 @@ jobs:
       SKIP_BUILD: ${{ inputs.__SKIP_BUILD }}
       RABBY_MOBILE_NM_USE_CACHE: ${{ inputs.RABBY_MOBILE_NM_USE_CACHE }}
       RABBY_MOBILE_ANDROID_16KB_CHECK: ${{ inputs.ANDROID_16KB_CHECK }}
-      XCODE_VER: '26.3'
+      XCODE_VER: '27.1'
     steps:
       - name: Checkout git repo
         uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3
