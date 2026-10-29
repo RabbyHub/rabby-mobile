@@ -451,7 +451,13 @@
         "empty": {
           "title": "Noch keine signierten Transaktionen",
           "titleLastThreeMonths": "Keine Transaktionshistorie in 90 Tagen",
+          "titleInLast90Days": "Keine Transaktionen in den letzten 90 Tagen",
+          "titleNoTransactions": "Keine Transaktionen",
           "testnetNoHistory": "Transaktionsverlauf für benutzerdefinierte Token nicht verfügbar."
+        },
+        "noMore": {
+          "title": "Keine weiteren Transaktionen.",
+          "titleInLast90Days": "Keine weiteren Transaktionen in den letzten 90 Tagen."
         },
         "common": {
           "pendingDetail": "Ausstehende Details"

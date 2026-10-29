@@ -680,7 +680,13 @@
         "empty": {
           "title": "아직 서명된 거래 없음",
           "titleLastThreeMonths": "90일 이내 거래 내역 없음",
+          "titleInLast90Days": "최근 90일간 거래 내역 없음",
+          "titleNoTransactions": "거래 내역 없음",
           "testnetNoHistory": "사용자 정의 토큰 거래 내역을 사용할 수 없습니다."
+        },
+        "noMore": {
+          "title": "더 이상 거래 내역이 없습니다.",
+          "titleInLast90Days": "최근 90일간 더 이상 거래 내역이 없습니다."
         },
         "CancelTxPopup": {
           "title": "트랜잭션 취소",

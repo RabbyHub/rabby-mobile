@@ -527,7 +527,13 @@
         "empty": {
           "title": "İşlem geçmişi yok",
           "titleLastThreeMonths": "Son 90 Günde İşlem Geçmişi Yok",
+          "titleInLast90Days": "Son 90 günde işlem yok",
+          "titleNoTransactions": "İşlem yok",
           "testnetNoHistory": "Özel token işlem geçmişi mevcut değil."
+        },
+        "noMore": {
+          "title": "Başka işlem yok.",
+          "titleInLast90Days": "Son 90 günde başka işlem yok."
         },
         "common": {
           "pendingDetail": "Bekleyen işlem ayrıntısı"
