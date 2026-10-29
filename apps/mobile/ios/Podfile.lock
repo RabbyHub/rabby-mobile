@@ -4401,7 +4401,7 @@ SPEC CHECKSUMS:
   RNFBAnalytics: f2d2de1d546f626bbe9ca1be75fdf156930a8efe
   RNFBApp: def68a9cfa45d685d540a2934bab81bc32e8cc87
   RNFBMessaging: e356d5e27b9bd54db1e26c5112cfe3e9d0083aef
-  RNFS: d1d4e3dfcd6a6b5bb5feb44f47670daaa40a96ea
+  RNFS: ff05e87d029872ec4649cc6f3fc74862d4e09b2f
   RNGestureHandler: c6f6f26fef9654b198c2e91445b7cf9ddfa31c05
   RNGoogleSignin: 36a8f846b65743969a8ef169973d6bbba0ce4fc3
   RNInAppBrowser: e36d6935517101ccba0e875bac8ad7b0cb655364
