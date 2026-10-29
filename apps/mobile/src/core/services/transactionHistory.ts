@@ -215,6 +215,21 @@ const removeFeaturePendingFromDraft = (
   );
 };
 
+const isGroupableNumber = (value: unknown): value is number =>
+  typeof value === 'number' && !Number.isNaN(value);
+
+/**
+ * Only well-formed txs get an index key, so a key hit matches exactly the
+ * groups the strict `isSameAddress` / `===` comparison would match.
+ */
+const getTxGroupKey = (tx: TransactionHistoryItem) =>
+  typeof tx.address === 'string' &&
+  tx.address &&
+  isGroupableNumber(tx.chainId) &&
+  isGroupableNumber(tx.nonce)
+    ? `${tx.address.toLowerCase()}:${tx.chainId}:${tx.nonce}`
+    : null;
+
 // TODO
 export class TransactionHistoryService extends StoreServiceBase<
   TxHistoryStore,
@@ -623,34 +638,46 @@ export class TransactionHistoryService extends StoreServiceBase<
   }) {
     const { address, chainId, nonce } = args || {};
     const groups: TransactionGroup[] = [];
+    const groupByKey = new Map<string, TransactionGroup>();
 
-    this.getStoreFieldSnapshot('transactions').forEach(tx => {
-      if (address != null && !isSameAddress(address, tx.address)) {
+    // Filter on the read-only store snapshot and clone only matched txs, so
+    // callers still get mutable copies without cloning the whole history.
+    this.store.transactions.forEach(storeTx => {
+      if (address != null && !isSameAddress(address, storeTx.address)) {
         return;
       }
-      if (chainId != null && tx.chainId !== chainId) {
+      if (chainId != null && storeTx.chainId !== chainId) {
         return;
       }
-      if (nonce != null && tx.nonce !== nonce) {
+      if (nonce != null && storeTx.nonce !== nonce) {
         return;
       }
       if (
         !findChain({
-          id: tx.chainId,
+          id: storeTx.chainId,
         })
       ) {
         return;
       }
-      const group = groups.find(
-        g =>
-          isSameAddress(g.address, tx.address) &&
-          g.nonce === tx.nonce &&
-          g.chainId === tx.chainId,
-      );
+      const tx = cloneDeep(storeTx) as TransactionHistoryItem;
+      const key = getTxGroupKey(tx);
+      const group = key
+        ? groupByKey.get(key)
+        : // Malformed txs keep the original strict-equality matching.
+          groups.find(
+            g =>
+              isSameAddress(g.address, tx.address) &&
+              g.nonce === tx.nonce &&
+              g.chainId === tx.chainId,
+          );
       if (group) {
         group.txs.push(tx);
       } else {
-        groups.push(new TransactionGroup({ txs: [tx] }));
+        const newGroup = new TransactionGroup({ txs: [tx] });
+        groups.push(newGroup);
+        if (key) {
+          groupByKey.set(key, newGroup);
+        }
       }
     });
 
