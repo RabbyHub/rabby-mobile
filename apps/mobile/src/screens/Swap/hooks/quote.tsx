@@ -586,6 +586,7 @@ export const useQuoteMethods = () => {
               name: dexId,
               isDex: true,
               preExecResult: null,
+              isSdkPass: effectiveSdkPass,
             };
             setQuote?.(quote);
             return quote;
@@ -855,6 +856,8 @@ export type TDexQuoteData = {
   name: string;
   isDex: true;
   preExecResult: QuotePreExecResultInfo;
+  // Keeps the SDK result when pre-execution fails and preExecResult is null.
+  isSdkPass?: boolean;
   loading?: boolean;
   isBest?: boolean;
 };
