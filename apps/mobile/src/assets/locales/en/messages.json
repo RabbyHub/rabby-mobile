@@ -1407,6 +1407,7 @@
       "screenTitle": "Connect Wallet",
       "connectingToRabby": "Connecting to Rabby",
       "pairingFailed": "WalletConnect pairing failed.",
+      "proposalNotReceived": "WalletConnect QR code may have expired. Please refresh it and try again.",
       "connected": "Connected successfully. Please return to the Dapp.",
       "proposalExpired": "WalletConnect proposal expired.",
       "pairingExpired": "WalletConnect pairing expired. Refresh the dapp QR code and try again.",

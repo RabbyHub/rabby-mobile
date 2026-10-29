@@ -3498,6 +3498,7 @@
       "screenTitle": "Conectar cartera",
       "connectingToRabby": "Conectando a Rabby",
       "pairingFailed": "El emparejamiento de WalletConnect ha fallado.",
+      "proposalNotReceived": "Es posible que el código QR de WalletConnect haya caducado. Actualízalo e inténtalo de nuevo.",
       "connected": "Conectado correctamente. Vuelve a la DApp.",
       "proposalExpired": "La propuesta de WalletConnect ha caducado.",
       "pairingExpired": "El emparejamiento de WalletConnect ha caducado. Actualiza el código QR de la dapp e inténtalo de nuevo.",
