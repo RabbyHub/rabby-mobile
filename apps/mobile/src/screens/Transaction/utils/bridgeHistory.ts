@@ -12,6 +12,7 @@ import { BRIDGE_HISTORY_POLL_MAX_AGE_MS } from '@/screens/Bridge/constants';
 
 export const BRIDGE_HISTORY_TX_BATCH = 20;
 export const BRIDGE_HISTORY_INIT_SCAN_LIMIT = 100;
+export const BRIDGE_HISTORY_WARMUP_SCAN_LIMIT = 200;
 
 export const historyTxKey = (chain?: string, hash?: string) =>
   `${(chain || '').toLowerCase()}:${(hash || '').toLowerCase()}`;

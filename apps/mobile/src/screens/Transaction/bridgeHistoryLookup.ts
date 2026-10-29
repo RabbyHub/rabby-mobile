@@ -28,6 +28,9 @@ const cache = new LRUCache<string, { history: BridgeHistory | null }>({
   max: 2000,
 });
 const subscribers = new Set<Subscriber>();
+// 预热查询没有页面订阅，单独登记以免被 prune 丢弃；请求结束即移除，失败不重试。
+const prefetchKeys = new Set<string>();
+const PREFETCH_PRIORITY = 2;
 const queue = new Map<string, Task>();
 let request: Request | undefined;
 let pollTimer: ReturnType<typeof setTimeout> | undefined;
@@ -37,27 +40,43 @@ let lastStartedAt = 0;
 const queryKey = (query: BridgeHistoryQuery) =>
   historyTxKey(query.chain, query.hash);
 
-function isRelevant(subscriber: Subscriber, history: BridgeHistory) {
+function isRelevant(transactionKeys: Set<string>, history: BridgeHistory) {
   return (
-    subscriber.transactionKeys.has(bridgeSourceKey(history)) ||
-    subscriber.transactionKeys.has(bridgeReceiveKey(history))
+    transactionKeys.has(bridgeSourceKey(history)) ||
+    transactionKeys.has(bridgeReceiveKey(history))
   );
 }
 
-function publish(subscriber: Subscriber) {
+export function getBridgeHistorySnapshot(
+  transactionKeys: Set<string>,
+  records: BridgeHistory[],
+) {
+  if (!transactionKeys.size) {
+    return [];
+  }
   const next = new Map<string, BridgeHistory>();
   // 保留页面快照，避免共享 LRU 淘汰后已展示的条目退回普通交易。
-  for (const [key, history] of subscriber.records) {
+  for (const history of records) {
+    const key = bridgeSourceKey(history);
     const latest = cache.peek(key)?.history || history;
-    if (isRelevant(subscriber, latest)) {
+    if (isRelevant(transactionKeys, latest)) {
       next.set(key, latest);
     }
   }
   for (const [key, entry] of cache) {
-    if (entry.history && isRelevant(subscriber, entry.history)) {
+    if (entry.history && isRelevant(transactionKeys, entry.history)) {
       next.set(key, entry.history);
     }
   }
+  return [...next.values()];
+}
+
+function publish(subscriber: Subscriber) {
+  const next = new Map(
+    getBridgeHistorySnapshot(subscriber.transactionKeys, [
+      ...subscriber.records.values(),
+    ]).map(history => [bridgeSourceKey(history), history]),
+  );
   const changed =
     next.size !== subscriber.records.size ||
     [...next].some(([key, history]) => subscriber.records.get(key) !== history);
@@ -68,6 +87,9 @@ function publish(subscriber: Subscriber) {
 }
 
 function isNeeded(key: string) {
+  if (prefetchKeys.has(key)) {
+    return true;
+  }
   return [...subscribers].some(
     subscriber =>
       subscriber.records.has(key) ||
@@ -143,7 +165,12 @@ function prune() {
 }
 
 function drain() {
-  if (request || rateTimer || !subscribers.size || !queue.size) {
+  if (
+    request ||
+    rateTimer ||
+    (!subscribers.size && !prefetchKeys.size) ||
+    !queue.size
+  ) {
     return;
   }
   const wait = lastStartedAt + 500 - Date.now();
@@ -202,11 +229,25 @@ function drain() {
       }
     })
     .finally(() => {
+      for (const { query } of tasks) {
+        prefetchKeys.delete(queryKey(query));
+      }
       if (request === current) {
         request = undefined;
         drain();
       }
     });
+}
+
+export function prefetchBridgeHistory(queries: BridgeHistoryQuery[]) {
+  for (const query of queries) {
+    enqueue(query, false, PREFETCH_PRIORITY);
+    const key = queryKey(query);
+    if (queue.has(key)) {
+      prefetchKeys.add(key);
+    }
+  }
+  drain();
 }
 
 export function subscribeBridgeHistory(

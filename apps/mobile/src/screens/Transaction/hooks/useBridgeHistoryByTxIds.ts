@@ -2,7 +2,10 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useMemoizedFn } from 'ahooks';
 import type { BridgeHistory } from '@rabby-wallet/rabby-api/dist/types';
 import type { HistoryDisplayItem } from '@/types/history';
-import { subscribeBridgeHistory } from '../bridgeHistoryLookup';
+import {
+  getBridgeHistorySnapshot,
+  subscribeBridgeHistory,
+} from '../bridgeHistoryLookup';
 import {
   BRIDGE_HISTORY_INIT_SCAN_LIMIT,
   BRIDGE_HISTORY_TX_BATCH,
@@ -26,7 +29,6 @@ export function useBridgeHistoryByTxIds({
   pollableKeys: Set<string>;
   active: boolean;
 }) {
-  const [records, setRecords] = useState(EMPTY_RECORDS);
   const subscription = useRef<
     ReturnType<typeof subscribeBridgeHistory> | undefined
   >(undefined);
@@ -49,6 +51,15 @@ export function useBridgeHistoryByTxIds({
     });
     return { transactionKeys: keys, indices: positions, byHash: byKey };
   }, [items]);
+
+  const [publishedRecords, setRecords] = useState(() =>
+    getBridgeHistorySnapshot(transactionKeys, EMPTY_RECORDS),
+  );
+  // 列表数据到达时同步合并缓存，避免先显示普通交易再替换。
+  const records = useMemo(
+    () => getBridgeHistorySnapshot(transactionKeys, publishedRecords),
+    [transactionKeys, publishedRecords],
+  );
 
   const buildInput = useMemoizedFn(() => {
     const queries = new Map<string, BridgeHistoryQuery>();

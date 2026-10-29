@@ -690,15 +690,17 @@ function HistoryContent({
     );
 
     // filter out groups that are the same as the recent transactions
+    // completed groups can only be deduped after the first page arrives
     const uniqueGroups =
       groups?.filter(
         group =>
+          (group.isPending || firstFetchDone) &&
           !recentTxKeys.has(
             `${group.address.toLowerCase()}-${group.maxGasTx.hash}`,
           ),
       ) || [];
     return [...(uniqueGroups || []), ...(displayList || [])];
-  }, [groups, displayList]);
+  }, [groups, displayList, firstFetchDone]);
 
   return (
     // eslint-disable-next-line react-native/no-inline-styles

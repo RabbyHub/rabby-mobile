@@ -191,6 +191,13 @@ async function warmHomeHistoryAfterStartup() {
   await syncTop10History(top10Addresses, false);
 }
 
+async function warmBridgeHistoryAfterStartup() {
+  const { warmBridgeHistoryForAddresses } = await import(
+    '@/screens/Transaction/bridgeHistoryWarmup'
+  );
+  await warmBridgeHistoryForAddresses(getSelectedBalanceAddressesSnapshot());
+}
+
 async function warmReceiveAddressListAfterStartup() {
   await Promise.all([
     storeApiAccounts.fetchAccounts(),
@@ -728,6 +735,10 @@ function HomeOverviewPostStartupEffects({
       () => warmHomeHistoryAfterStartup(),
       STARTUP_TASKS.homeHistoryWarmup,
     );
+    const bridgeHistoryWarmupHandle = scheduleStartupTask(
+      () => warmBridgeHistoryAfterStartup(),
+      STARTUP_TASKS.homeBridgeHistoryWarmup,
+    );
     const receiveAddressListWarmupHandle = scheduleStartupTask(
       () => warmReceiveAddressListAfterStartup(),
       STARTUP_TASKS.homeReceiveAddressListWarmup,
@@ -735,6 +746,7 @@ function HomeOverviewPostStartupEffects({
 
     return () => {
       cancelStartupTaskHandle(historyWarmupHandle);
+      cancelStartupTaskHandle(bridgeHistoryWarmupHandle);
       cancelStartupTaskHandle(receiveAddressListWarmupHandle);
     };
   }, []);
