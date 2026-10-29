@@ -401,7 +401,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   groupHeading: {
     alignItems: 'center',
     flexDirection: 'row',
-    height: 18,
+    height: 20,
     justifyContent: 'space-between',
   },
   groupTitle: { alignItems: 'center', flexDirection: 'row', gap: 6 },
@@ -420,9 +420,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   groupTitleText: {
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    fontWeight: '500',
-    lineHeight: 18,
+    fontSize: 16,
+    fontWeight: '700',
+    lineHeight: 20,
   },
   coverage: {
     ...PERPS_PRO_NUMBER_STYLE,
@@ -432,7 +432,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     textAlign: 'right',
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 12,
+    fontSize: 13,
     lineHeight: 16,
   },
   orderRows: { gap: 10, paddingTop: 10 },
