@@ -1,6 +1,7 @@
 /* eslint-disable react-native/no-inline-styles */
 import { useTheme2024 } from '@/hooks/theme';
 import { useTipsPopup } from '@/hooks/useTipsPopup';
+import { getBottomButtonBottomOffset } from '@/constant/layout';
 import { PerpsRiskLevelPopup } from '@/screens/Perps/components/PerpsPositionSection/PerpsRiskLevelPopup';
 import { calculateDistanceToLiquidation } from '@/screens/Perps/components/PerpsPositionSection/utils';
 import { splitNumberByStep } from '@/utils/number';
@@ -13,6 +14,7 @@ import Down from '@/assets2024/icons/perps/PerpsSimpleChart/down.svg';
 import { hasPositivePrice, simpleLiquidationGap } from './account/model';
 import { Trans, useTranslation } from 'react-i18next';
 import { TouchableOpacity, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PerpEditTpSlPriceTag } from './PerpEditTpSlPriceTag';
 import { PerpsEditMarginPopup } from './PerpsEditMarginPopup';
 import BigNumber from 'bignumber.js';
@@ -114,6 +116,7 @@ export const PerpsPosition: React.FC<{
   handleUpdateMargin,
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
+  const insets = useSafeAreaInsets();
   const { t } = useTranslation();
   const [editMarginVisible, setEditMarginVisible] = useState(false);
   const [fundingDetailOpen, setFundingDetailOpen] = useState(false);
@@ -517,12 +520,14 @@ export const PerpsPosition: React.FC<{
                         t={t}
                         i18nKey="page.perpsDetail.PerpsPosition.fundingTipsBold"
                         components={{
-                          bold: <Text style={styles.fundingTextBold} />,
+                          positive: <Text style={styles.fundingTextPositive} />,
+                          negative: <Text style={styles.fundingTextNegative} />,
                         }}
                       />
                     </Text>
                   ),
                   buttonType: 'hyperliquid',
+                  bottomPadding: getBottomButtonBottomOffset(insets.bottom),
                 })
               }
               containerStyle={styles.fundingLabel}
@@ -752,6 +757,15 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       color: colors2024['neutral-secondary'],
       textAlign: 'center',
     },
-    fundingTextBold: { fontFamily: 'SF Pro Rounded', fontWeight: '900' },
+    fundingTextPositive: {
+      fontFamily: 'SF Pro Rounded',
+      fontWeight: '700',
+      color: colors2024['green-default'],
+    },
+    fundingTextNegative: {
+      fontFamily: 'SF Pro Rounded',
+      fontWeight: '700',
+      color: colors2024['red-default'],
+    },
   };
 });

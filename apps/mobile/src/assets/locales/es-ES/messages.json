@@ -2998,7 +2998,7 @@
         "settings": "Ajustes",
         "unrealizedPnl": "PNL no realizado",
         "marginMode": "Modo Margen",
-        "fundingTipsBold": "Esto muestra el total de funding liquidado desde que se abrió la posición. Los valores <bold>verdes (positivos)</bold> significan que has recibido funding de otros traders, mientras que los valores <bold>rojos (negativos)</bold> son costes de funding que les has pagado.",
+        "fundingTipsBold": "Esto muestra el total de funding liquidado desde que se abrió la posición. Los valores <positive>verdes (positivos)</positive> significan que has recibido funding de otros traders, mientras que los valores <negative>rojos (negativos)</negative> son costes de funding que les has pagado.",
         "crossTips": "En el modo de Margen Cruzado, el precio de liquidación para una sola posición es una estimación solo para referencia."
       },
       "PerpsInfo": {

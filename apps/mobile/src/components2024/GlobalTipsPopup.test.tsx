@@ -76,7 +76,11 @@ jest.mock('@gorhom/bottom-sheet', () => {
   const { View: NativeView } = require('react-native');
   return {
     BottomSheetView: (props: Record<string, unknown>) =>
-      ReactModule.createElement(NativeView, props, props.children),
+      ReactModule.createElement(
+        NativeView,
+        { ...props, testID: 'tips-content' },
+        props.children,
+      ),
   };
 });
 
@@ -105,7 +109,7 @@ const PortfolioTipsTrigger = () => {
   );
 };
 
-const OtherTipsTrigger = () => {
+const OtherTipsTrigger = ({ bottomPadding }: { bottomPadding?: number }) => {
   const showTipsPopup = useShowTipsPopup();
   return (
     <Pressable
@@ -114,6 +118,7 @@ const OtherTipsTrigger = () => {
           desc: 'Other popup',
           owner: 'other-owner',
           title: 'Other popup',
+          bottomPadding,
         })
       }
       testID="show-other-tips"
@@ -151,6 +156,26 @@ const modalProps = () => mockModalProps.mock.calls.at(-1)![0];
 describe('GlobalTipsPopup', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+  });
+
+  it('applies the requested bottom spacing and restores the default for the next popup', () => {
+    render(
+      <Provider>
+        <OtherTipsTrigger bottomPadding={36} />
+        <PortfolioTipsTrigger />
+        <GlobalTipsPopup />
+      </Provider>,
+    );
+    fireEvent.press(screen.getByTestId('show-other-tips'));
+    expect(screen.getByTestId('tips-content')).toHaveStyle({
+      paddingBottom: 36,
+    });
+    fireEvent.press(screen.getByTestId('tips-close-button'));
+    act(() => modalProps().onDismiss());
+    fireEvent.press(screen.getByTestId('show-portfolio-tips'));
+    expect(screen.getByTestId('tips-content')).toHaveStyle({
+      paddingBottom: 56,
+    });
   });
 
   it('forwards owner-opted pan-down dismissal without changing the default', () => {

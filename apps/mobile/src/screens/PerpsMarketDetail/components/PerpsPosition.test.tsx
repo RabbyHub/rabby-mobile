@@ -28,6 +28,19 @@ import { PerpsPosition } from './PerpsPosition';
 import { simplePositionPriceText } from './account/model';
 
 const mockTips = jest.fn();
+let mockAndroid = false;
+jest.mock('@/core/native/utils', () => ({
+  get IS_ANDROID() {
+    return mockAndroid;
+  },
+  get IS_IOS() {
+    return !mockAndroid;
+  },
+}));
+jest.mock('react-native-safe-area-context', () => ({
+  ...jest.requireActual('react-native-safe-area-context'),
+  useSafeAreaInsets: () => ({ top: 0, bottom: 34, left: 0, right: 0 }),
+}));
 jest.mock('@/hooks/useTipsPopup', () => ({
   useTipsPopup: () => ({ showTipsPopup: mockTips }),
 }));
@@ -44,10 +57,26 @@ jest.mock('@/hooks/theme', () => ({
 jest.mock('@/utils/styles', () => ({
   createGetStyles2024: (fn: unknown) => fn,
 }));
-jest.mock('react-i18next', () => ({
-  Trans: () => null,
-  useTranslation: () => ({ t: (key: string) => key }),
-}));
+jest.mock('react-i18next', () => {
+  const { Trans } = jest.requireActual('react-i18next');
+  const i18n = require('i18next').createInstance();
+  i18n.init({
+    initImmediate: false,
+    lng: 'en',
+    resources: {
+      en: { translation: require('@/assets/locales/en/messages.json') },
+    },
+  });
+  return {
+    Trans: (transProps: object) =>
+      require('react').createElement(Trans, {
+        ...transProps,
+        i18n,
+        t: i18n.t.bind(i18n),
+      }),
+    useTranslation: () => ({ t: (key: string) => key }),
+  };
+});
 jest.mock('@/hooks/perps/usePerpsStore', () => ({
   perpsStore: (selector: any) => selector({ currentPerpsAccount: null }),
 }));
@@ -294,5 +323,36 @@ it.each([
       }),
     );
     mockFundingSheet.mockClear();
+  },
+);
+
+it.each([
+  [false, 36],
+  [true, 70],
+] as const)(
+  'colors the funding explanation and applies bottom spacing on Android=%s',
+  (android, bottomPadding) => {
+    mockAndroid = android;
+    try {
+      const ui = render(<PerpsPosition {...props} />);
+      fireEvent.press(
+        ui.getByText('page.perpsDetail.PerpsPosition.fundingPayments'),
+      );
+      const popup = mockTips.mock.lastCall![0];
+      expect(popup.bottomPadding).toBe(bottomPadding);
+      const description = render(popup.desc);
+      expect(description.getByText('Green (positive)')).toHaveStyle({
+        color: 'green-default',
+        fontFamily: 'SF Pro Rounded',
+        fontWeight: '700',
+      });
+      expect(description.getByText('Red (negative)')).toHaveStyle({
+        color: 'red-default',
+        fontFamily: 'SF Pro Rounded',
+        fontWeight: '700',
+      });
+    } finally {
+      mockAndroid = false;
+    }
   },
 );

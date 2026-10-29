@@ -2807,7 +2807,7 @@
         "marginMode": "Marjin Modu",
         "unrealizedPnl": "Gerçekleşmemiş PNL",
         "details": "Ayrıntılar",
-        "fundingTipsBold": "Bu, pozisyon açıldığından beri hesaplanan toplam fonlamayı gösterir. <bold>Yeşil (pozitif)</bold> değerler diğer yatırımcılardan fonlama aldığınız, <bold>kırmızı (negatif)</bold> değerler ise onlara ödediğiniz fonlama maliyetleri anlamına gelir.",
+        "fundingTipsBold": "Bu, pozisyon açıldığından beri hesaplanan toplam fonlamayı gösterir. <positive>Yeşil (pozitif)</positive> değerler diğer yatırımcılardan fonlama aldığınız, <negative>kırmızı (negatif)</negative> değerler ise onlara ödediğiniz fonlama maliyetleri anlamına gelir.",
         "crossTips": "Çapraz Marj modunda tek bir pozisyonun tasfiye fiyatı yalnızca referans amaçlı bir tahmindir."
       },
       "PerpsInfo": {

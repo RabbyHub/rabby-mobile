@@ -2884,7 +2884,7 @@
         "entryPrice": "Entry Price",
         "tpPrice": "Take-Profit Price",
         "slPrice": "Stop-Loss Price",
-        "fundingTipsBold": "This shows your total funding settled since the position was opened. <bold>Green (positive)</bold> values mean you’ve earned from other traders, while <bold>Red (negative)</bold> values are funding costs you've paid to them.",
+        "fundingTipsBold": "This shows your total funding settled since the position was opened. <positive>Green (positive)</positive> values mean you’ve earned from other traders, while <negative>Red (negative)</negative> values are funding costs you've paid to them.",
         "sizeTips": "The total value or quantity of your trade, set by margin and leverage."
       },
       "PerpMarginModePopup": {
