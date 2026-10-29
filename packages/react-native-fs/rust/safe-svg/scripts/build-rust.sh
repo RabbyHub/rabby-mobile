@@ -67,6 +67,45 @@ if [[ "${IOS_PLATFORM}" == "${IOS_ARCHS}" || -z "${IOS_ARCHS}" ]]; then
   exit 2
 fi
 
+# The Rust staticlib bundles its own copy of Rust std. Other prebuilt Rust
+# libraries in the app (e.g. WalletConnect's libyttrium.a) bundle another one,
+# so symbols like _rust_eh_personality would be defined twice at app link time
+# (it only stays hidden when dead code stripping is on). Prelink into a single
+# object that only exports the C API from include/rabby_safe_svg.h; every other
+# symbol becomes local.
+EXPORTED_SYMBOLS_FILE="${BUILD_ROOT}/exported_symbols.txt"
+mkdir -p "${BUILD_ROOT}"
+cat > "${EXPORTED_SYMBOLS_FILE}" <<'SYMBOLS'
+_rabby_safe_svg_render_file
+_rabby_safe_svg_sha256
+SYMBOLS
+
+case "${IOS_PLATFORM}" in
+  iphoneos) LD_PLATFORM="ios" ;;
+  iphonesimulator) LD_PLATFORM="ios-simulator" ;;
+  *) LD_PLATFORM="" ;;
+esac
+IOS_MIN_VERSION="${IPHONEOS_DEPLOYMENT_TARGET:-12.4}"
+IOS_SDK_VERSION="$(xcrun --sdk "${IOS_PLATFORM}" --show-sdk-version)"
+
+# Called directly (not inside $(...)) so `set -e` stops the build on failure.
+prelink_ios_library() {
+  local arch="$1"
+  local library="$2"
+  local output="$3"
+  local object="${output%.a}.o"
+  mkdir -p "$(dirname "${output}")"
+  xcrun ld -r \
+    -arch "${arch}" \
+    -platform_version "${LD_PLATFORM}" "${IOS_MIN_VERSION}" "${IOS_SDK_VERSION}" \
+    -all_load \
+    -exported_symbols_list "${EXPORTED_SYMBOLS_FILE}" \
+    "${library}" \
+    -o "${object}"
+  rm -f "${output}"
+  xcrun libtool -static -o "${output}" "${object}"
+}
+
 LIBRARIES=()
 for arch in ${IOS_ARCHS}; do
   case "${IOS_PLATFORM}:${arch}" in
@@ -78,7 +117,11 @@ for arch in ${IOS_ARCHS}; do
       exit 2
       ;;
   esac
-  LIBRARIES+=("$(build_target "${RUST_TARGET}")")
+  build_target "${RUST_TARGET}" >/dev/null
+  RUST_LIBRARY="${BUILD_ROOT}/${RUST_TARGET}/${RUST_TARGET}/release/librabby_safe_svg.a"
+  PRELINKED_LIBRARY="${BUILD_ROOT}/prelinked/${RUST_TARGET}/librabby_safe_svg.a"
+  prelink_ios_library "${arch}" "${RUST_LIBRARY}" "${PRELINKED_LIBRARY}"
+  LIBRARIES+=("${PRELINKED_LIBRARY}")
 done
 
 if [[ "${#LIBRARIES[@]}" -eq 1 ]]; then
