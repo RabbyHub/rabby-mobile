@@ -60,7 +60,7 @@ const mockNativeGate = {
   animatedKeyboardState: { value: { status: 2 } },
   animatedLayoutState: { value: { handleHeight: 40 } },
 };
-let mockViewportHeight = 742;
+let mockViewportHeight = 757;
 let mockContentHeight = 800;
 let mockContentTop = 100;
 let mockAnimatedReactions: Array<{
@@ -435,7 +435,7 @@ describe('PerpsProPositionTpSlSheet', () => {
     mockThemeMode = undefined;
     mockAnimatedReactions = [];
     mockNextFormInstanceId = 0;
-    mockViewportHeight = 742;
+    mockViewportHeight = 757;
     mockContentHeight = 800;
     mockContentTop = 100;
     mockNativeGate.animatedAnimationState.value.status = 2;
@@ -540,25 +540,25 @@ describe('PerpsProPositionTpSlSheet', () => {
           disappearsOnIndex: -1,
         });
       };
-      expectShell(782);
+      expectShell(797);
       expect(
         StyleSheet.flatten(
           screen.getByTestId('perps-pro-position-tpsl-tabs').props.style,
         ),
       ).toMatchObject({ flexDirection: 'row', paddingLeft: 8 });
       fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-add'));
-      expectShell(782);
+      expectShell(797);
       fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-back'));
       fireEvent.press(screen.getAllByText('Modify')[0]!);
       expectShell(622);
       fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-back'));
       fireEvent.press(screen.getByText('Position TP/SL'));
-      expectShell(782);
+      expectShell(797);
       for (const lock of ['pending', 'coveredByReview', 'reviewRequesting']) {
         view.rerender(
           <PerpsProPositionTpSlSheet {...props} {...{ [lock]: true }} />,
         );
-        expectShell(782, true);
+        expectShell(797, true);
         view.rerender(<PerpsProPositionTpSlSheet {...props} />);
         if (lock === 'coveredByReview') {
           fireEvent(
@@ -569,7 +569,7 @@ describe('PerpsProPositionTpSlSheet', () => {
           const observer = mockAnimatedReactions.at(-1)!;
           act(() => observer.react(observer.prepare()));
         }
-        expectShell(782);
+        expectShell(797);
       }
       fireEvent.press(screen.getByText('TP/SL'));
       view.rerender(
@@ -579,7 +579,7 @@ describe('PerpsProPositionTpSlSheet', () => {
         />,
       );
       expect(screen.getByTestId('tpsl-form-add')).toBeTruthy();
-      expectShell(782);
+      expectShell(797);
     },
   );
 
@@ -870,13 +870,13 @@ describe('PerpsProPositionTpSlSheet', () => {
   );
 
   it.each([
-    ['content fits', 742, 100],
-    ['overflow is already scrolled to the bottom', 800, 42],
+    ['content fits', 757, 100],
+    ['overflow is already scrolled to the bottom', 800, 57],
   ])('does not scroll when %s', (_label, height, top) => {
     render(<PerpsProPositionTpSlSheet {...makeSheetProps([])} />);
     mockContentHeight = height as number;
     mockContentTop = top as number;
-    layoutViewport(742);
+    layoutViewport(757);
     completeKeyboardSession();
     runNativeReactions();
     flushScrollFrame();
@@ -898,7 +898,7 @@ describe('PerpsProPositionTpSlSheet', () => {
   ])('rejects a late native measurement after %s', action => {
     const props = makeSheetProps([]);
     const view = render(<PerpsProPositionTpSlSheet {...props} />);
-    layoutViewport(742);
+    layoutViewport(757);
     completeKeyboardSession();
     runNativeReactions();
     let finishContent:
@@ -907,7 +907,7 @@ describe('PerpsProPositionTpSlSheet', () => {
     jest
       .spyOn(UIManager, 'measureInWindow')
       .mockImplementation((node, callback) => {
-        if (node === 1001) callback(0, 100, 393, 742);
+        if (node === 1001) callback(0, 100, 393, 757);
         else finishContent = callback;
       });
     flushScrollFrame();
@@ -1045,7 +1045,7 @@ describe('PerpsProPositionTpSlSheet', () => {
     fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-add'));
     expect(screen.getByTestId('tpsl-form-add')).toBeTruthy();
     expect(mockFormProps.mock.lastCall?.[0]).toMatchObject({
-      minimumHeight: 538,
+      minimumHeight: 553,
       presentation: 'subpage',
     });
     expect(screen.getByText('TP/SL')).toBeTruthy();
@@ -1066,7 +1066,7 @@ describe('PerpsProPositionTpSlSheet', () => {
     fireEvent.press(screen.getByText('Position TP/SL'));
     expect(screen.getByTestId('tpsl-form-position')).toBeTruthy();
     expect(mockFormProps.mock.lastCall?.[0]).toMatchObject({
-      minimumHeight: 486,
+      minimumHeight: 501,
       presentation: 'tab',
     });
   });
@@ -1222,10 +1222,10 @@ describe('PerpsProPositionTpSlSheet', () => {
 
     expect(screen.queryByTestId('tpsl-form-add')).toBeNull();
     expect(screen.getByTestId('perps-pro-position-tpsl-order-3')).toBeTruthy();
-    expect(mockBottomSheetProps.mock.lastCall?.[0].snapPoints).toEqual([782]);
+    expect(mockBottomSheetProps.mock.lastCall?.[0].snapPoints).toEqual([797]);
   });
 
-  it('uses Figma heights and removes a confirmed canceled item in-place', () => {
+  it('keeps main pages equally tall and removes a confirmed canceled item in-place', () => {
     const { rerender } = render(
       <PerpsProPositionTpSlSheet
         amountUnit="base"
@@ -1243,7 +1243,7 @@ describe('PerpsProPositionTpSlSheet', () => {
       />,
     );
 
-    expect(mockBottomSheetProps.mock.lastCall?.[0].snapPoints).toEqual([782]);
+    expect(mockBottomSheetProps.mock.lastCall?.[0].snapPoints).toEqual([797]);
     expect(screen.getByTestId('perps-pro-position-tpsl-order-1')).toBeTruthy();
 
     rerender(
@@ -1267,10 +1267,10 @@ describe('PerpsProPositionTpSlSheet', () => {
     expect(screen.getByTestId('perps-pro-position-tpsl-order-2')).toBeTruthy();
 
     fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-add'));
-    expect(mockBottomSheetProps.mock.lastCall?.[0].snapPoints).toEqual([782]);
+    expect(mockBottomSheetProps.mock.lastCall?.[0].snapPoints).toEqual([797]);
   });
 
-  it('renders the 782px inline form and full position header when the TP/SL tab has no partial orders', () => {
+  it('renders the 797px inline form and full position header when the TP/SL tab has no partial orders', () => {
     render(
       <PerpsProPositionTpSlSheet
         amountUnit="base"
@@ -1288,12 +1288,12 @@ describe('PerpsProPositionTpSlSheet', () => {
       />,
     );
 
-    expect(mockBottomSheetProps.mock.lastCall?.[0].snapPoints).toEqual([782]);
+    expect(mockBottomSheetProps.mock.lastCall?.[0].snapPoints).toEqual([797]);
     expect(mockHeaderProps.mock.lastCall?.[0]).toMatchObject({
       variant: 'empty',
     });
     expect(mockFormProps.mock.lastCall?.[0]).toMatchObject({
-      minimumHeight: 486,
+      minimumHeight: 501,
       mode: 'add',
       presentation: 'inline-empty',
     });
@@ -1343,7 +1343,7 @@ describe('PerpsProPositionTpSlSheet', () => {
     expect(screen.queryByTestId('perps-pro-position-tpsl-order-1')).toBeNull();
     expect(screen.queryByTestId('perps-pro-position-tpsl-order-2')).toBeNull();
     expect(screen.getByTestId('tpsl-form-add')).toBeTruthy();
-    expect(mockBottomSheetProps.mock.lastCall?.[0].snapPoints).toEqual([782]);
+    expect(mockBottomSheetProps.mock.lastCall?.[0].snapPoints).toEqual([797]);
   });
   const makeSheetProps = (tpslOrders = position.tpslOrders) => ({
     amountUnit: 'base' as const,
@@ -1476,13 +1476,13 @@ describe('PerpsProPositionTpSlSheet', () => {
     expect(original.onContentHeightChange).toBeUndefined();
     act(() => mockKeyboardListeners.get('keyboardDidShow')?.());
 
-    expect(mockBottomSheetProps.mock.lastCall?.[0].snapPoints).toEqual([782]);
+    expect(mockBottomSheetProps.mock.lastCall?.[0].snapPoints).toEqual([797]);
     expect(mockFormProps.mock.lastCall?.[0].instanceId).toBe(
       original.instanceId,
     );
     act(() => mockKeyboardListeners.get('keyboardDidHide')?.());
     act(() => mockAnimationFrameCallback?.(0));
-    expect(mockBottomSheetProps.mock.lastCall?.[0].snapPoints).toEqual([782]);
+    expect(mockBottomSheetProps.mock.lastCall?.[0].snapPoints).toEqual([797]);
     expect(mockFormProps.mock.lastCall?.[0].instanceId).toBe(
       original.instanceId,
     );
@@ -1540,7 +1540,7 @@ describe('PerpsProPositionTpSlSheet', () => {
         platform === 'android' ? 656 : 622,
       ]);
       act(() => mockKeyboardListeners.get('keyboardDidHide')?.());
-      expect(mockBottomSheetProps.mock.lastCall?.[0].snapPoints).toEqual([782]);
+      expect(mockBottomSheetProps.mock.lastCall?.[0].snapPoints).toEqual([797]);
       expect(screen.getByTestId('tpsl-scroll').props.scrollEnabled).toBe(false);
       fireEvent(
         screen.getByTestId('perps-pro-position-tpsl-page-content'),

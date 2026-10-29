@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 import React from 'react';
-import { Keyboard, UIManager } from 'react-native';
+import { Dimensions, Keyboard, UIManager } from 'react-native';
 import {
   act,
   cleanupAsync,
@@ -56,7 +56,7 @@ const mockNativeSheetState = {
   animatedAnimationState: { value: { status: 2 } },
   animatedScrollableStatus: { value: 1 },
   animatedPosition: { value: 94 },
-  animatedSheetHeight: { value: 782 },
+  animatedSheetHeight: { value: 844 },
   animatedDetentsState: { value: { detents: [94] } },
   animatedKeyboardState: { value: { status: 2 } },
   animatedLayoutState: { value: { handleHeight: 40 } },
@@ -249,7 +249,9 @@ const priceId = 'perps-pro-position-tpsl-stopLoss-price';
 
 describe('position TP/SL input source integration', () => {
   let unregister: () => void;
+  const originalWindow = Dimensions.get('window');
   beforeAll(() => {
+    Dimensions.set({ window: { ...originalWindow, width: 393, height: 852 } });
     const values = new Map<string, unknown>();
     const storageAdapter: StorageAdapater = {
       getItem: key => values.get(String(key)) ?? null,
@@ -297,6 +299,7 @@ describe('position TP/SL input source integration', () => {
     jest.clearAllTimers();
   });
   afterAll(() => {
+    Dimensions.set({ window: originalWindow });
     unregister();
     perpsStore.setState({ marketDataMap: originalMarketData });
     jest.useRealTimers();
@@ -662,7 +665,7 @@ describe('position TP/SL input source integration', () => {
             within(scroll).queryByTestId('perps-pro-position-tpsl-page-header'),
           ).toBeNull();
         }
-        const height = 782;
+        const height = 844;
         const expectedViewport = height - 40 - (entry === 'add' ? 56 : 0);
         expect(
           screen.getByTestId('native-main-sheet').props.snapPoints,
