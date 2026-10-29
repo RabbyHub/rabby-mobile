@@ -1,18 +1,17 @@
 /* eslint-disable @typescript-eslint/no-shadow */
-import RcIconFlash from '@/assets/icons/custom-testnet/flash-cc.svg';
-import RcIconRight from '@/assets/icons/custom-testnet/right-cc.svg';
+import RcIconRight from '@/assets/icons/custom-testnet/quick-add-right.svg';
 import {
   AppBottomSheetModal,
   AppBottomSheetModalTitle,
-  Button,
-} from '@/components';
-import { AppColorsVariants } from '@/constant/theme';
+} from '@/components/customized/BottomSheet';
+import { Button } from '@/components2024/Button';
+import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { apiCustomTestnet } from '@/core/apis';
 import type {
   TestnetChain,
   TestnetChainBase,
 } from '@/core/services/customTestnetService';
-import { useTheme2024, useThemeColors } from '@/hooks/theme';
+import { useTheme2024 } from '@/hooks/theme';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { useMemoizedFn, useRequest } from 'ahooks';
 import React, {
@@ -22,24 +21,25 @@ import React, {
   type Ref,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  Dimensions,
-  Keyboard,
-  StyleSheet,
-  TouchableWithoutFeedback,
-  View,
-} from 'react-native';
+import { Keyboard, TouchableWithoutFeedback, View } from 'react-native';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import { useCustomTestnetForm } from '../hooks/useCustomTestnetForm';
 import { AddFromChainList } from './AddFromChainList';
 import { CustomTestnetForm } from './CustomTestnetForm';
-import { ModalLayouts, RootNames } from '@/constant/layout';
+import {
+  BOTTOM_BUTTON_DOUBLE_HEIGHT,
+  BOTTOM_BUTTON_TOP_OFFSET,
+  BOTTOM_BUTTON_GAP,
+  getBottomButtonBottomOffset,
+  RootNames,
+} from '@/constant/layout';
 import AutoLockView from '@/components/AutoLockView';
 import { ConfirmModifyRpcModal } from './ConfirmModifyRpcModal';
 import { navigateDeprecated } from '@/utils/navigation';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
-import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
+import { createGetStyles2024 } from '@/utils/styles';
 import { Text } from '@/components/Typography';
+import { buttonTitleStyles } from '../buttonStyles';
 
 type Props = {
   isEdit?: boolean;
@@ -70,7 +70,7 @@ export const EditCustomTestnetPopup = ({
 }: Props & { ref?: Ref<EditCustomTestnetPopupType> }) => {
   const [isShowAddFromChainList, setIsShowAddFromChainList] = useState(false);
   const [isShowModifyRpcModal, setIsShowModifyRpcModal] = useState(false);
-  const { colors, styles } = useTheme2024({ getStyle: getStyles });
+  const { colors2024, styles } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
   const formik = useCustomTestnetForm({
     onSubmit(values) {},
@@ -174,28 +174,21 @@ export const EditCustomTestnetPopup = ({
         enableHandlePanningGesture
         enableContentPanningGesture
         enablePanDownToClose
-        // footerComponent={props => {
-        //   if (isShowAddFromChainList || isShowModifyRpcModal) {
-        //     return null;
-        //   }
-        //   return (
-        //     <BottomSheetFooter
-        //       bottomInset={bottomOffset}
-        //       animatedFooterPosition={props.animatedFooterPosition}>
-
-        //     </BottomSheetFooter>
-        //   );
-        // }}
-      >
-        <TouchableWithoutFeedback
-          style={{ flex: 1, height: '100%' }}
-          onPress={Keyboard.dismiss}
-          accessible={false}>
-          <AutoLockView as="View" style={{ flex: 1, height: '100%' }}>
+        enableDismissOnClose
+        {...makeBottomSheetProps({
+          linearGradientType: 'bg1',
+          colors: colors2024,
+        })}>
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+          <AutoLockView as="View" style={styles.content}>
             <View style={[styles.container]}>
               <AppBottomSheetModalTitle
                 style={styles.modalTitle}
-                title={t('page.customRpc.EditCustomTestnetModal.title')}
+                title={t(
+                  isEdit
+                    ? 'page.customTestnet.editTitle'
+                    : 'page.customRpc.EditCustomTestnetModal.title',
+                )}
               />
               <View style={styles.quickAddAsRow}>
                 <TouchableOpacity
@@ -203,76 +196,62 @@ export const EditCustomTestnetPopup = ({
                     setIsShowAddFromChainList(true);
                   }}
                   style={[styles.quickAdd]}>
-                  <RcIconFlash color={colors['neutral-body']} />
                   <Text style={styles.quickAddText}>
                     {t('page.customRpc.EditCustomTestnetModal.quickAdd')}
                   </Text>
-                  <RcIconRight color={colors['neutral-body']} />
+                  <RcIconRight color={colors2024['neutral-body']} />
                 </TouchableOpacity>
               </View>
 
-              <BottomSheetScrollView style={styles.formScrollView}>
+              <BottomSheetScrollView
+                style={styles.formScrollView}
+                contentContainerStyle={styles.formContent}
+                keyboardShouldPersistTaps="handled">
                 <CustomTestnetForm
                   formik={formik}
                   isEdit={isEdit}
                   __IN_BOTTOM_SHEET__
                 />
               </BottomSheetScrollView>
-              <View
-                style={[
-                  // styles.bsFooterContainer,
-                  styles.footer,
-                ]}>
+              <View style={styles.footer}>
                 <Button
                   onPress={onCancel}
                   title={t('global.cancel')}
-                  buttonStyle={[styles.buttonStyle]}
-                  titleStyle={styles.btnCancelTitle}
-                  type="white"
-                  containerStyle={[
-                    styles.btnContainer,
-                    styles.btnCancelContainer,
-                  ]}
+                  height={BOTTOM_BUTTON_DOUBLE_HEIGHT}
+                  titleStyle={buttonTitleStyles.double}
+                  type="plain"
+                  containerStyle={styles.btnContainer}
                 />
                 <Button
                   title={t('global.confirm')}
-                  buttonStyle={[
-                    styles.buttonStyle,
-                    { backgroundColor: colors['blue-default'] },
-                  ]}
-                  style={{
-                    width: '100%',
-                  }}
-                  titleStyle={styles.btnConfirmTitle}
+                  height={BOTTOM_BUTTON_DOUBLE_HEIGHT}
+                  titleStyle={buttonTitleStyles.double}
                   onPress={handleSubmit}
                   loading={loading}
-                  containerStyle={[
-                    styles.btnContainer,
-                    styles.btnConfirmContainer,
-                  ]}
+                  containerStyle={styles.btnContainer}
                 />
               </View>
-              <AddFromChainList
-                visible={isShowAddFromChainList}
-                onClose={() => {
-                  setIsShowAddFromChainList(false);
-                }}
-                onSelect={item => {
-                  formik.resetForm();
-                  formik.setValues(item);
-                  setIsShowAddFromChainList(false);
-                  const source = ctx?.ga?.source || 'setting';
-                  matomoRequestEvent({
-                    category: 'Custom Network',
-                    action: 'Choose ChainList Network',
-                    label: `${source}_${String(item.id)}`,
-                  });
-                }}
-              />
             </View>
           </AutoLockView>
         </TouchableWithoutFeedback>
       </AppBottomSheetModal>
+      <AddFromChainList
+        visible={isShowAddFromChainList}
+        onClose={() => {
+          setIsShowAddFromChainList(false);
+        }}
+        onSelect={item => {
+          formik.resetForm();
+          formik.setValues(item);
+          setIsShowAddFromChainList(false);
+          const source = ctx?.ga?.source || 'setting';
+          matomoRequestEvent({
+            category: 'Custom Network',
+            action: 'Choose ChainList Network',
+            label: `${source}_${String(item.id)}`,
+          });
+        }}
+      />
       <ConfirmModifyRpcModal
         visible={isShowModifyRpcModal}
         chainId={formik.values.id}
@@ -296,115 +275,59 @@ export const EditCustomTestnetPopup = ({
   );
 };
 
-const SIZES = {
-  innerPx: 20,
-  buttonHeight: 52,
-  footerPt: 20,
-  footerPb: 12,
-  scrollViewPb: 20,
-  footerHeight: 20 /* pt */ + 52 /* button height */ + 12 /* padding bottom */,
-  containerPb: 20 + 52 + 12, // scrollViewPb + buttonHeight + footerPb + extra space
-};
-
-const getStyles = createGetStyles2024(({ colors, safeAreaInsets }) => {
-  return {
-    container: {
-      height: '100%',
-      flexDirection: 'column',
-      paddingBottom: SIZES.containerPb + safeAreaInsets.bottom,
-    },
-    modalTitle: {
-      paddingTop: ModalLayouts.titleTopOffset,
-      // ...makeDebugBorder('green'),
-      height: 36,
-    },
-    quickAddAsRow: {
-      paddingHorizontal: SIZES.innerPx,
-      // ...makeDebugBorder(),
-      marginBottom: 20,
-    },
-    quickAdd: {
-      borderRadius: 6,
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 8,
-      padding: 16,
-      backgroundColor: colors['blue-light-1'],
-    },
-    quickAddText: {
-      flex: 1,
-      fontSize: 16,
-      lineHeight: 19,
-      fontWeight: '500',
-      color: colors['neutral-title-1'],
-    },
-    formScrollView: {
-      height: '100%',
-      flexShrink: 1,
-      paddingHorizontal: SIZES.innerPx,
-      paddingTop: 0,
-      paddingBottom: SIZES.scrollViewPb,
-      // ...makeDebugBorder('blue'),
-    },
-    // bsFooterContainer: {
-    //   // ...makeDebugBorder('red'),
-    //   height: SIZES.footerHeight,
-    //   maxWidth: Dimensions.get('window').width,
-    //   backgroundColor: colors['neutral-bg-1'],
-    //   display: 'flex',
-    //   flexDirection: 'row',
-    //   gap: 16,
-    //   justifyContent: 'space-between',
-    //   borderTopColor: colors['neutral-line'],
-    //   borderTopWidth: StyleSheet.hairlineWidth,
-    //   paddingTop: SIZES.footerPt,
-    //   paddingHorizontal: SIZES.innerPx,
-    //   paddingBottom: SIZES.footerPb,
-    // },
-    footer: {
-      position: 'absolute',
-      bottom: 0,
-      left: 0,
-      height: SIZES.footerHeight + safeAreaInsets.bottom,
-      width: '100%',
-      maxWidth: Dimensions.get('window').width,
-      display: 'flex',
-      flexDirection: 'row',
-      gap: 16,
-      justifyContent: 'space-between',
-      borderTopColor: colors['neutral-line'],
-      borderTopWidth: StyleSheet.hairlineWidth,
-      paddingTop: SIZES.footerPt,
-      paddingHorizontal: SIZES.innerPx,
-      paddingBottom: SIZES.footerPb + safeAreaInsets.bottom,
-    },
-    btnContainer: {
-      display: 'flex',
-      height: SIZES.buttonHeight,
-      justifyContent: 'center',
-      alignItems: 'center',
-      borderRadius: 8,
-      flex: 1,
-      maxWidth: '100%',
-      minWidth: 0,
-    },
-
-    buttonStyle: {
-      width: '100%',
-      height: '100%',
-    },
-    btnCancelContainer: {
-      borderColor: colors['blue-default'],
-      borderWidth: StyleSheet.hairlineWidth,
-    },
-    btnCancelTitle: {
-      color: colors['blue-default'],
-      flex: 1,
-    },
-    btnConfirmContainer: {},
-    btnConfirmTitle: {
-      color: colors['neutral-title-2'],
-      flex: 1,
-    },
-  };
-});
+const getStyles = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
+  content: {
+    flex: 1,
+  },
+  container: {
+    flex: 1,
+  },
+  modalTitle: {
+    fontFamily: 'SF Pro Rounded',
+    fontWeight: '900',
+    fontSize: 20,
+    lineHeight: 24,
+    color: colors2024['neutral-title-1'],
+    paddingTop: 12,
+    marginBottom: 22,
+  },
+  quickAddAsRow: {
+    paddingHorizontal: 20,
+    marginBottom: 22,
+  },
+  quickAdd: {
+    height: 56,
+    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 16,
+    backgroundColor: colors2024['brand-light-1'],
+  },
+  quickAddText: {
+    flex: 1,
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 15,
+    lineHeight: 18,
+    fontWeight: '500',
+    color: colors2024['neutral-title-1'],
+  },
+  formScrollView: {
+    flex: 1,
+  },
+  formContent: {
+    paddingHorizontal: 20,
+    paddingBottom: 12,
+  },
+  footer: {
+    flexDirection: 'row',
+    gap: BOTTOM_BUTTON_GAP,
+    paddingHorizontal: 20,
+    paddingTop: BOTTOM_BUTTON_TOP_OFFSET,
+    paddingBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
+    backgroundColor: colors2024['neutral-bg-1'],
+  },
+  btnContainer: {
+    flex: 1,
+  },
+}));

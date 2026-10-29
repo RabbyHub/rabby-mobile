@@ -1578,6 +1578,9 @@
       "ClaimComing": "Claim coming!"
     },
     "customTestnet": {
+      "screenTitle": "Custom Network",
+      "removeNetwork": "Delete {{name}}",
+      "editTitle": "Edit Custom Network",
       "desc": "Rabby cannot verify the security of custom networks. Please add trusted networks only.",
       "add": "Add Custom Network",
       "empty": "No Custom Network",

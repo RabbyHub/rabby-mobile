@@ -1,17 +1,12 @@
 import { FormInput } from '@/components/Form/Input';
-import { AppColorsVariants } from '@/constant/theme';
-import { useTheme2024, useThemeColors } from '@/hooks/theme';
+import { useTheme2024 } from '@/hooks/theme';
 import { isNumber } from 'lodash';
 import React, { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
+import type { StyleProp, ViewStyle } from 'react-native';
+import { View } from 'react-native';
 import { useCustomTestnetForm } from '../hooks/useCustomTestnetForm';
 import { createGetStyles2024 } from '@/utils/styles';
-import {
-  Gesture,
-  GestureDetector,
-  Pressable,
-} from 'react-native-gesture-handler';
 import { Text, TextInput } from '@/components/Typography';
 
 const FormItem = ({
@@ -35,13 +30,29 @@ const FormItem = ({
   const value = isNumber(val) ? val.toString() : val;
 
   return (
-    <View style={[styles.formItem, style]}>
-      <Text style={styles.formLabel}>{label}</Text>
+    <View
+      style={[
+        styles.formItem,
+        __IN_BOTTOM_SHEET__ && styles.modernFormItem,
+        style,
+      ]}>
+      <Text
+        style={[styles.formLabel, __IN_BOTTOM_SHEET__ && styles.modernLabel]}>
+        {label}
+      </Text>
       <FormInput
         as={__IN_BOTTOM_SHEET__ ? 'BottomSheetTextInput' : 'TextInput'}
         disableNestedTouchEventOnAndroid={__IN_BOTTOM_SHEET__}
-        style={disabled ? { borderWidth: 0 } : null}
-        inputStyle={[styles.input, disabled ? styles.inputDisabled : null]}
+        style={[
+          disabled && styles.borderless,
+          __IN_BOTTOM_SHEET__ && styles.modernInputContainer,
+        ]}
+        inputStyle={[
+          styles.input,
+          disabled && styles.inputDisabled,
+          __IN_BOTTOM_SHEET__ && styles.modernInput,
+          __IN_BOTTOM_SHEET__ && disabled && styles.modernInputDisabled,
+        ]}
         ref={formInputRef}
         hasError={!!formik.errors[name]}
         inputProps={{
@@ -63,16 +74,57 @@ const FormItem = ({
         }}
       />
       {formik.errors[name] ? (
-        <View style={styles.formItemExtra}>
-          <Text style={styles.formItemError}>{formik.errors[name]}</Text>
+        <View
+          style={[
+            styles.formItemExtra,
+            __IN_BOTTOM_SHEET__ && styles.modernExtra,
+          ]}>
+          <Text
+            style={[
+              styles.formItemError,
+              __IN_BOTTOM_SHEET__ && styles.modernError,
+            ]}>
+            {formik.errors[name]}
+          </Text>
         </View>
       ) : null}
     </View>
   );
 };
 
-const getFormItemStyles = createGetStyles2024(({ colors }) => {
+const getFormItemStyles = createGetStyles2024(({ colors, colors2024 }) => {
   return {
+    borderless: { borderWidth: 0 },
+    modernFormItem: { marginBottom: 24 },
+    modernLabel: {
+      fontFamily: 'SF Pro Rounded',
+      fontWeight: '500',
+      fontSize: 16,
+      lineHeight: 20,
+      color: colors2024['neutral-secondary'],
+    },
+    modernInputContainer: {
+      borderWidth: 0,
+      borderRadius: 12,
+      backgroundColor: colors2024['neutral-bg-2'],
+    },
+    modernInput: {
+      height: 56,
+      paddingHorizontal: 16,
+      fontFamily: 'SF Pro Rounded',
+      fontWeight: '700',
+      fontSize: 16,
+      color: colors2024['neutral-title-1'],
+    },
+    modernInputDisabled: { color: colors2024['neutral-secondary'] },
+    modernExtra: { marginTop: 4 },
+    modernError: {
+      fontFamily: 'SF Pro Rounded',
+      fontWeight: '400',
+      fontSize: 14,
+      lineHeight: 18,
+      color: colors2024['red-default'],
+    },
     input: {
       height: 52,
       borderRadius: 6,
@@ -122,8 +174,6 @@ export const CustomTestnetForm = ({
 }) => {
   const { t } = useTranslation();
 
-  // const {colors, styles} = useTheme2024({ getStyle: getStyles });
-
   return (
     <>
       <FormItem
@@ -164,11 +214,3 @@ export const CustomTestnetForm = ({
     </>
   );
 };
-
-const getStyles = createGetStyles2024(({ colors }) => {
-  return {
-    container: {
-      height: '100%',
-    },
-  };
-});
