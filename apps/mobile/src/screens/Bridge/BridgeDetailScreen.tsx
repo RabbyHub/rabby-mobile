@@ -10,6 +10,7 @@ import { Button } from '@/components2024/Button';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
+import { openExternalUrl } from '@/core/utils/linking';
 import {
   BOTTOM_BUTTON_SINGLE_HEIGHT,
   BOTTOM_BUTTON_TITLE_STYLE,
@@ -42,6 +43,7 @@ import {
   BridgeStatusSteps,
 } from './components/BridgeStatusUI';
 import { openBridgeSupport } from './utils/support';
+import { getBridgeHistoryTxId } from './utils/record';
 import { useBridgeSourceMetadata } from './hooks/useBridgeSourceMetadata';
 
 export function BridgeDetailScreen() {
@@ -93,6 +95,8 @@ export function BridgeDetailScreen() {
   }, [setNavigationOptions, headerTitle]);
   const sourceChain = findChain({ serverId: status.fromToken?.chain });
   const toChain = findChain({ serverId: status.toToken?.chain });
+  const detailUrl = record.history?.detail_url;
+  const historyTxId = getBridgeHistoryTxId(record);
   const { to: metadataTo } = useBridgeSourceMetadata({
     address: record.address,
     chainId: status.fromToken?.chain,
@@ -225,21 +229,29 @@ export function BridgeDetailScreen() {
               </Text>
             </MetaRow>
           )}
-          <MetaRow label="Hash">
-            <TouchableOpacity
-              style={styles.hashRow}
-              onPress={() =>
-                openTxExternalUrl({
-                  chain: status.fromToken?.chain,
-                  txHash: status.sourceHash,
-                })
-              }>
-              <Text style={[styles.metaValue, styles.hash]}>
-                {ellipsisAddress(status.sourceHash || '')}
-              </Text>
-              <Jump width={14} height={14} color={colors2024['neutral-foot']} />
-            </TouchableOpacity>
-          </MetaRow>
+          {!!historyTxId && (
+            <MetaRow label="Hash">
+              <TouchableOpacity
+                style={styles.hashRow}
+                disabled={!detailUrl}
+                onPress={() => {
+                  if (detailUrl) {
+                    openExternalUrl(detailUrl);
+                  }
+                }}>
+                <Text style={[styles.metaValue, !!detailUrl && styles.hash]}>
+                  {ellipsisAddress(historyTxId)}
+                </Text>
+                {!!detailUrl && (
+                  <Jump
+                    width={14}
+                    height={14}
+                    color={colors2024['neutral-foot']}
+                  />
+                )}
+              </TouchableOpacity>
+            </MetaRow>
+          )}
         </View>
       </ScrollView>
       <View style={styles.footer}>

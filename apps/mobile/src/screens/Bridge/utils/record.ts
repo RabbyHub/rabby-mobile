@@ -8,6 +8,13 @@ export const getBridgeRecordKey = (record: BridgeRecordData) =>
     record.local?.fromToken.chain || record.history?.from_token.chain
   }:${record.local?.hash || record.history?.from_tx.tx_id}`;
 
+export const getBridgeHistoryTxId = ({ history, local }: BridgeRecordData) =>
+  history?.from_tx?.tx_id ||
+  history?.detail_url?.split('/').pop() ||
+  local?.acceleratedHash ||
+  local?.hash ||
+  '';
+
 export const sameBridgeHash = (left?: string, right?: string) =>
   !!left && !!right && left.toLowerCase() === right.toLowerCase();
 

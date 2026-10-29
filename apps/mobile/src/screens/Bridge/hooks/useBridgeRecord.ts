@@ -140,7 +140,7 @@ export function useBridgeRecord(initial: BridgeRecordData, enabled: boolean) {
       }
       let next = { ...record, local, history: history ?? record.history };
       if (local && history && !local.isCanceled) {
-        // 与插件一致：远程 time_at，否则沿用已有时间，再没有才用当前时间。
+        // 确认时间优先取远程 time_at，否则沿用已有时间，最后用当前时间兜底。
         if (
           history.status === 'pending' &&
           history.from_tx?.status === 'success'
