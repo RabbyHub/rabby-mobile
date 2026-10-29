@@ -15,6 +15,8 @@ import { IS_ANDROID } from '@/core/native/utils';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Skeleton } from '@rneui/themed';
+import { PerpsSkeletonGradient } from '@/screens/Perps/components/PerpsSkeletonLoader';
 
 // Keep this override outside createGetStyles2024: its JSON normalization drops
 // undefined, which would let Button restore its full-height lineHeight.
@@ -29,6 +31,8 @@ export const PerpsFooter: React.FC<{
   onAddPress?(): void;
   hasPermission?: boolean;
   hasPosition?: boolean;
+  /** Position state is not resolved yet; actions depend on it. */
+  loading?: boolean;
   direction?: string;
 }> = ({
   onLongPress,
@@ -37,6 +41,7 @@ export const PerpsFooter: React.FC<{
   onAddPress,
   hasPermission,
   hasPosition,
+  loading,
   direction,
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
@@ -48,6 +53,39 @@ export const PerpsFooter: React.FC<{
     { paddingBottom: getBottomButtonBottomOffset(bottom) },
   ];
 
+  if (loading) {
+    return (
+      <View style={footerStyle} testID="perps-footer-skeleton">
+        {hasPermission ? (
+          <View style={styles.btnGroup}>
+            <View style={styles.btnContainer}>
+              <Skeleton
+                animation="wave"
+                height={BOTTOM_BUTTON_DOUBLE_HEIGHT}
+                LinearGradientComponent={PerpsSkeletonGradient}
+                style={styles.skeleton}
+              />
+            </View>
+            <View style={styles.btnContainer}>
+              <Skeleton
+                animation="wave"
+                height={BOTTOM_BUTTON_DOUBLE_HEIGHT}
+                LinearGradientComponent={PerpsSkeletonGradient}
+                style={styles.skeleton}
+              />
+            </View>
+          </View>
+        ) : (
+          <Skeleton
+            animation="wave"
+            height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+            LinearGradientComponent={PerpsSkeletonGradient}
+            style={styles.skeleton}
+          />
+        )}
+      </View>
+    );
+  }
   if (hasPosition) {
     return (
       <View style={footerStyle}>
@@ -162,6 +200,10 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   btnContainer: {
     flex: 1,
+  },
+  skeleton: {
+    backgroundColor: 'rgba(190,190,190,0.2)',
+    borderRadius: 12,
   },
   noPermissonBtn: {
     fontSize: 18,
