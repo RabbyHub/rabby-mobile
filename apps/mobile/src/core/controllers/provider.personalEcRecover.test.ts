@@ -15,8 +15,6 @@ jest.mock('../request', () => ({ openapi: {} }));
 jest.mock('@/core/serviceApi/customTestnet', () => ({}));
 jest.mock('@/utils/transaction', () => ({}));
 jest.mock('@/utils/events', () => ({ eventBus: {}, EVENTS: {} }));
-jest.mock('@/utils/stats', () => ({ stats: {} }));
-jest.mock('@/utils/analytics', () => ({}));
 jest.mock('@/databases/sync/utils', () => ({}));
 
 import providerController from './provider';

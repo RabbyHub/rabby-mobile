@@ -98,6 +98,7 @@ export const HistoryList = ({
   isNeedFetchFromApi,
   appendBottom,
   moreLoadingLength = 1,
+  noMoreText,
   style,
   ListHeaderComponent,
   emptyComponent,
@@ -121,6 +122,8 @@ export const HistoryList = ({
   isNeedFetchFromApi?: boolean;
   appendBottom?: number;
   moreLoadingLength?: number;
+  /** shown under the last item once there is nothing left to load */
+  noMoreText?: string;
   style?: StyleProp<ViewStyle>;
   ListHeaderComponent?: HistoryListHeaderComponent;
   emptyComponent?: React.ReactElement | null;
@@ -246,8 +249,8 @@ export const HistoryList = ({
           <Empty
             title={
               isNeedFetchFromApi
-                ? t('page.activities.signedTx.empty.title')
-                : t('page.activities.signedTx.empty.titleLastThreeMonths')
+                ? t('page.activities.signedTx.empty.titleNoTransactions')
+                : t('page.activities.signedTx.empty.titleInLast90Days')
             }
           />
         ) : null
@@ -277,7 +280,16 @@ export const HistoryList = ({
             })}
           </>
         ) : (
-          <View style={{ height: bottom + (appendBottom || 0) }} />
+          <>
+            {noMoreText && markedList.length ? (
+              <View style={styles.noMore}>
+                <View style={styles.noMoreLine} />
+                <Text style={styles.noMoreText}>{noMoreText}</Text>
+                <View style={styles.noMoreLine} />
+              </View>
+            ) : null}
+            <View style={{ height: bottom + (appendBottom || 0) }} />
+          </>
         )
       }
       refreshControl={
@@ -331,5 +343,27 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     marginBottom: 8,
     color: colors2024['neutral-secondary'],
     lineHeight: 18,
+  },
+  noMore: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingTop: 16,
+    // keep clear of the screen edge where the bottom inset is 0 (Android)
+    paddingBottom: 20,
+  },
+  noMoreLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: colors2024['neutral-line'],
+  },
+  noMoreText: {
+    flexShrink: 1,
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    fontWeight: '500',
+    lineHeight: 18,
+    textAlign: 'center',
+    color: colors2024['neutral-secondary'],
   },
 }));

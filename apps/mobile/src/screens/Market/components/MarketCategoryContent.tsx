@@ -1,13 +1,11 @@
 import React, { useCallback, useMemo } from 'react';
-import { Platform, RefreshControl, View, ViewToken } from 'react-native';
+import { Platform, View, ViewToken } from 'react-native';
+import { RefreshControl } from 'react-native-gesture-handler';
+import { CollapsibleRefreshControl } from '@/components/customized/ScrollViewLike/CollapsibleRefreshControl';
 
 import { RootNames } from '@/constant/layout';
 import { atomByMMKV } from '@/core/storage/mmkv';
 import { useTheme2024 } from '@/hooks/theme';
-import {
-  buildMarketTokenDetailFrom,
-  getMarketTabClickListAction,
-} from '@/screens/Market/analytics';
 import { navigateDeprecated } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
 import { memeItemToITokenItem } from '@/utils/token';
@@ -22,7 +20,6 @@ import {
   TokenListItem,
 } from '../../Meme/components/TokenItem';
 import { useTokenMarketTokenList } from '../../Meme/hooks/useTokenMarketTokenList';
-import { matomoRequestEvent } from '@/utils/analytics';
 import WatchListHeader from '../../Watchlist/components/TokenHeader';
 import { marketRealtimePriceAtom } from '../atom';
 import { useSetAtom } from 'jotai';
@@ -194,31 +191,13 @@ export function MarketCategoryContent({
     supportedSortFields,
   ]);
 
-  const handleOpenTokenDetail = useCallback(
-    (token: TokenMarketTokenItem) => {
-      const clickAction = getMarketTabClickListAction(categoryId);
-
-      if (clickAction) {
-        matomoRequestEvent({
-          category: 'Rabby Market',
-          action: clickAction,
-        });
-      }
-
-      navigateDeprecated(RootNames.TokenMarketInfo, {
-        token: memeItemToITokenItem(token, ''),
-        unHold: false,
-        needUseCacheToken: true,
-        from: buildMarketTokenDetailFrom({
-          categoryId,
-          id: token.id,
-          chain: token.chain,
-          symbol: token.symbol,
-        }),
-      });
-    },
-    [categoryId],
-  );
+  const handleOpenTokenDetail = useCallback((token: TokenMarketTokenItem) => {
+    navigateDeprecated(RootNames.TokenMarketInfo, {
+      token: memeItemToITokenItem(token, ''),
+      unHold: false,
+      needUseCacheToken: true,
+    });
+  }, []);
 
   const renderItem = useCallback(
     ({ item, index }: { item: TokenMarketTokenItem; index: number }) => {
@@ -353,7 +332,8 @@ export function MarketCategoryContent({
       onViewableItemsChanged={onViewableItemsChanged}
       viewabilityConfig={VIEWABILITY_CONFIG}
       refreshControl={
-        <RefreshControl
+        <CollapsibleRefreshControl
+          as={RefreshControl}
           refreshing={tokenListLoading && list.length !== 0}
           onRefresh={() => getTokenList(orderBy, order)}
         />

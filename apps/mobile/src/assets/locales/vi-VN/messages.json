@@ -351,7 +351,13 @@
         "empty": {
           "title": "Chưa có lịch sử giao dịch",
           "titleLastThreeMonths": "Không có lịch sử giao dịch trong 90 ngày",
+          "titleInLast90Days": "Không có giao dịch nào trong 90 ngày qua",
+          "titleNoTransactions": "Không có giao dịch nào",
           "testnetNoHistory": "Lịch sử giao dịch token tùy chỉnh không khả dụng."
+        },
+        "noMore": {
+          "title": "Không còn giao dịch nào.",
+          "titleInLast90Days": "Không còn giao dịch nào trong 90 ngày qua."
         },
         "CancelTxPopup": {
           "options": {
@@ -2860,6 +2866,8 @@
         "tpSl": "TP/SL",
         "takeProfitPrice": "Giá chốt lời",
         "stopLossPrice": "Giá cắt lỗ",
+        "funding": "Funding",
+        "nextFundingRate": "Tỷ lệ funding tiếp theo",
         "estimatedPnl": "PNL ước tính",
         "closePositionTitle": "Đóng vị thế {{coin}}",
         "estimatedRealizedPnl": "PNL đã thực hiện ước tính"
@@ -2922,7 +2930,7 @@
         "settings": "Cài đặt",
         "unrealizedPnl": "PNL chưa thực hiện",
         "marginMode": "Chế độ ký quỹ",
-        "fundingTipsBold": "Phần này hiển thị tổng funding đã được thanh toán kể từ khi mở vị thế. Giá trị <bold>xanh (dương)</bold> nghĩa là bạn nhận funding từ trader khác, còn giá trị <bold>đỏ (âm)</bold> là chi phí funding bạn đã trả cho họ.",
+        "fundingTipsBold": "Phần này hiển thị tổng funding đã được thanh toán kể từ khi mở vị thế. Giá trị <positive>xanh (dương)</positive> nghĩa là bạn nhận funding từ trader khác, còn giá trị <negative>đỏ (âm)</negative> là chi phí funding bạn đã trả cho họ.",
         "crossTips": "Trong chế độ ký quỹ chéo, giá thanh lý của một vị thế riêng lẻ chỉ là giá ước tính để tham khảo."
       },
       "PerpsInfo": {
@@ -3424,6 +3432,7 @@
       "screenTitle": "Kết nối ví",
       "connectingToRabby": "Đang kết nối với Rabby",
       "pairingFailed": "Ghép nối WalletConnect thất bại.",
+      "proposalNotReceived": "Mã QR WalletConnect có thể đã hết hạn. Vui lòng làm mới và thử lại.",
       "connected": "Đã kết nối thành công. Vui lòng quay lại DApp.",
       "proposalExpired": "Yêu cầu kết nối WalletConnect đã hết hạn.",
       "pairingExpired": "Ghép nối WalletConnect đã hết hạn. Làm mới mã QR dapp và thử lại.",

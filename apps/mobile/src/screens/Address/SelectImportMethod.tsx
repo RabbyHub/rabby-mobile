@@ -16,8 +16,6 @@ import {
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { useTranslation } from 'react-i18next';
-import { setReportActionTs } from '@/core/serviceApi/preference';
-import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/utils/reportTimeoutAction';
 import { E2E_ID } from '@/constant/e2e';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
 
@@ -55,9 +53,6 @@ function SelectImportMethod(): JSX.Element {
     navigation.navigate(RootNames.StackAddress, {
       screen: RootNames.ImportHardwareAddress,
     });
-    void setReportActionTs(
-      REPORT_TIMEOUT_ACTION_KEY.CLICK_CONNECT_HARDWARE,
-    ).catch(console.error);
   }, [navigation]);
 
   const handleTips = React.useCallback(() => {

@@ -7,7 +7,7 @@ import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { getTokenSymbol, tokenItemToITokenItem } from '@/utils/token';
 import type { SendAction, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import React, { useMemo } from 'react';
-import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { ScrollView, TouchableOpacity, View } from 'react-native';
 
 import type { TransactionGroup } from '@/core/services/transactionHistory';
 
@@ -44,7 +44,6 @@ import {
   useAccountSelectModalCtx,
   useIsUnderAccountSelectModalContext,
 } from '@/components/AccountSelectModalTx/hooks';
-import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 import { BottomSheetScrollView, BottomSheetView } from '@gorhom/bottom-sheet';
 import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import { Text } from '@/components/Typography';
@@ -70,17 +69,6 @@ const SendContent: React.FC<Props> = ({
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
 
-  const { safeSizes } = useSafeAndroidBottomSizes({
-    inModalContainerPb:
-      SIZES.buttonHeight + SIZES.containerPb + SIZES.bottomContentBottom,
-    // inModalButtonContainerPt: SIZES.containerPt,
-    inModalButtonContainerHeight:
-      SIZES.containerPt +
-      SIZES.buttonHeight +
-      SIZES.containerPb +
-      SIZES.bottomContentBottom,
-    inModalButtonContainerBottom: SIZES.bottomContentBottom,
-  });
   const { t } = useTranslation();
   const { actionData, sendAmount, sendUsdValue, chain } = useMemo(() => {
     const maxGasTx = data.maxGasTx;
@@ -150,9 +138,6 @@ const SendContent: React.FC<Props> = ({
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[
           accountSelectCtx.isUnderContext && styles.inModalBsContainer,
-          accountSelectCtx.isUnderContext && {
-            paddingBottom: safeSizes.inModalContainerPb,
-          },
         ]}>
         <View style={styles.card}>
           <TouchableOpacity onPress={handleGotoTokenDetail}>
@@ -232,20 +217,11 @@ const SendContent: React.FC<Props> = ({
         </ActionDetailSection>
       </ViewComp>
       <View
-        style={[
+        style={
           accountSelectCtx.isUnderContext
-            ? StyleSheet.flatten([
-                styles.inModalButtonContainer,
-                {
-                  paddingTop: SIZES.containerPt,
-                  height: safeSizes.inModalButtonContainerHeight,
-                  bottom: IS_ANDROID
-                    ? safeSizes.inModalButtonContainerBottom
-                    : 0,
-                },
-              ])
-            : styles.buttonContainer,
-        ]}>
+            ? styles.inModalButtonContainer
+            : styles.buttonContainer
+        }>
         <View
           style={[
             accountSelectCtx.isUnderContext && styles.inModalButtonInner,
@@ -318,9 +294,11 @@ const SIZES = {
 
 const getStyle = createGetStyles2024(
   ({ colors2024, isLight, safeAreaInsets }) => ({
+    // The account select sheet already pads the Android system bar inset.
     inModalBsContainer: {
       // flexShrink: 1,
-      paddingBottom: SIZES.buttonHeight + 12,
+      paddingBottom:
+        SIZES.buttonHeight + SIZES.containerPb + SIZES.bottomContentBottom,
       justifyContent: 'flex-end',
     },
     ghostButton: {
@@ -426,7 +404,7 @@ const getStyle = createGetStyles2024(
       fontFamily: 'SF Pro Rounded',
       fontSize: 20,
       lineHeight: 24,
-      fontWeight: '900',
+      fontWeight: '700',
       maxWidth: '100%',
       ...(IS_ANDROID && {
         width: '75%',
@@ -452,8 +430,11 @@ const getStyle = createGetStyles2024(
       marginTop: 0,
       width: '100%',
       height:
-        SIZES.containerPt + SIZES.buttonHeight + SIZES.bottomContentBottom,
-      bottom: SIZES.bottomContentBottom,
+        SIZES.containerPt +
+        SIZES.buttonHeight +
+        SIZES.containerPb +
+        SIZES.bottomContentBottom,
+      bottom: 0,
       // ...makeDebugBorder(),
       paddingTop: SIZES.containerPt,
     },

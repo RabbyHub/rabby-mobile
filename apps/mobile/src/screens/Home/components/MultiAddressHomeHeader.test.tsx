@@ -51,7 +51,6 @@ jest.mock('@/hooks/account', () => ({ usePinnedAccountList: () => [] }));
 jest.mock('@/hooks/useGlobalStatus', () => ({
   useGlobalStatus: () => ({ isDisConnect: false }),
 }));
-jest.mock('@/utils/analytics', () => ({ matomoRequestEvent: jest.fn() }));
 jest.mock('@/components2024/GlobalWarning/Warining', () => ({
   GlobalWarning: () => null,
 }));

@@ -10,8 +10,6 @@ const mockPersonalEcRecover = jest.fn();
 const mockGetDapp = jest.fn();
 const mockGetConnectedDapp = jest.fn();
 const mockUpdateDapp = jest.fn();
-const mockGetStatsData = jest.fn();
-const mockSetStatsData = jest.fn();
 const mockSetCurrentRequestDeferFn = jest.fn();
 let mockCurrentDeferFn: unknown;
 const mockUnLock = jest.fn();
@@ -55,15 +53,11 @@ jest.mock('@/core/serviceApi/dapp', () => ({
 jest.mock('@/core/serviceApi/notification', () => ({
   ensureNotificationServiceReady: (...args: unknown[]) =>
     mockEnsureNotificationServiceReady(...args),
-  getNotificationStatsDataSnapshot: (...args: unknown[]) =>
-    mockGetStatsData(...args),
   notificationServiceApi: {
     requestApproval: (...args: unknown[]) => mockRequestApproval(...args),
   },
   setCurrentRequestDeferFnSync: (...args: unknown[]) =>
     mockSetCurrentRequestDeferFn(...args),
-  setNotificationStatsDataSync: (...args: unknown[]) =>
-    mockSetStatsData(...args),
   unlockNotificationSync: (...args: unknown[]) => mockUnLock(...args),
 }));
 
@@ -84,8 +78,6 @@ jest.mock('../services', () => ({
   keyringService: {},
   notificationService: {
     requestApproval: (...args: unknown[]) => mockRequestApproval(...args),
-    getStatsData: (...args: unknown[]) => mockGetStatsData(...args),
-    setStatsData: (...args: unknown[]) => mockSetStatsData(...args),
     setCurrentRequestDeferFn: (...args: unknown[]) =>
       mockSetCurrentRequestDeferFn(...args),
     unLock: (...args: unknown[]) => mockUnLock(...args),
@@ -146,12 +138,6 @@ jest.mock('@/utils/events', () => ({
   },
   EVENTS: {
     SIGN_FINISHED: 'SIGN_FINISHED',
-  },
-}));
-
-jest.mock('@/utils/stats', () => ({
-  stats: {
-    report: jest.fn(),
   },
 }));
 
@@ -223,7 +209,6 @@ describe('rpcFlow SignTx chain guard', () => {
     mockGetConnectedDapp.mockReturnValue({
       chainId: 'eth',
     });
-    mockGetStatsData.mockReturnValue(undefined);
   });
 
   it('rejects unsupported SignTx chain before opening approval', async () => {
@@ -638,7 +623,6 @@ describe('rpcFlow error propagation without an approval UI', () => {
     jest.clearAllMocks();
     mockGetCustomTestnetList.mockReturnValue([]);
     mockGetTestnetChainList.mockReturnValue([]);
-    mockGetStatsData.mockReturnValue(undefined);
   });
 
   it('rejects when the handler throws synchronously', async () => {

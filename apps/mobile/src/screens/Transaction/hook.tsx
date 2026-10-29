@@ -24,7 +24,7 @@ export const useGetCexList = () => {
     const tempObj = {} as Record<string, ProjectItem>;
     const cexList = res.filter(item => item.is_deposit);
     cexList.forEach(item => {
-      tempObj[item.owner_addr] = {
+      tempObj[item.owner_addr.toLowerCase()] = {
         id: item.cexId,
         name: item.name,
         site_url: '',

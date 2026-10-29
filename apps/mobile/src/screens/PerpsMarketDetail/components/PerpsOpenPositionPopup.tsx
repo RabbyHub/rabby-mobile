@@ -13,7 +13,6 @@ import {
   formatPerpsCoin,
   formatPerpsPct,
   formatTpOrSlPrice,
-  getStatsReportSide,
   isMarketableLimit,
 } from '@/utils/perps';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -74,8 +73,6 @@ import { useShallow } from 'zustand/shallow';
 import { resolvePerpsProProjectedTradeRisk } from '@/screens/PerpsPro/model/tradeRisk';
 import { usePerpsProLeverageUpdate } from '@/screens/PerpsPro/scene/usePerpsProLeverageUpdate';
 import { showToast } from '@/hooks/perps/showToast';
-import { stats } from '@/utils/stats';
-import { APP_VERSIONS } from '@/constant';
 import { Text, TextInput } from '@/components/Typography';
 import {
   BOTTOM_BUTTON_SINGLE_HEIGHT,
@@ -554,7 +551,7 @@ export const PerpsOpenPositionPopup: React.FC<{
   });
 
   const openPosition = useMemoizedFn(async () => {
-    const res = await handleOpenPosition({
+    await handleOpenPosition({
       coin,
       size: tradeSize,
       leverage,
@@ -566,61 +563,6 @@ export const PerpsOpenPositionPopup: React.FC<{
       orderType,
       limitPx: orderType === 'limit' ? limitPx : undefined,
     });
-    if (res) {
-      const isLimit = orderType === 'limit';
-      const { avgPx, totalSz } = res;
-      const isBuy = direction === 'Long';
-      stats.report('perpsTradeHistory', {
-        created_at: new Date().getTime(),
-        user_addr: currentPerpsAccount?.address || '',
-        trade_type: isLimit ? 'open position limit' : 'open position',
-        leverage: leverage.toString(),
-        trade_side: getStatsReportSide(isBuy, false),
-        margin_mode: selectedMarginMode === 'cross' ? 'cross' : 'isolated',
-        coin: coin,
-        size: totalSz,
-        price: avgPx,
-        trade_usd_value: new BigNumber(avgPx).times(totalSz).toFixed(2),
-        service_provider: 'hyperliquid',
-        app_version: APP_VERSIONS.fromNative || '0',
-        address_type: currentPerpsAccount?.type || '',
-      });
-      tpTriggerPx &&
-        !isLimit &&
-        stats.report('perpsTradeHistory', {
-          created_at: new Date().getTime(),
-          user_addr: currentPerpsAccount?.address || '',
-          trade_type: 'open position tp',
-          leverage: leverage.toString(),
-          trade_side: getStatsReportSide(!isBuy, true),
-          margin_mode: selectedMarginMode === 'cross' ? 'cross' : 'isolated',
-          coin: coin,
-          size: totalSz,
-          price: tpTriggerPx,
-          trade_usd_value: new BigNumber(tpTriggerPx).times(totalSz).toFixed(2),
-          service_provider: 'hyperliquid',
-          app_version: APP_VERSIONS.fromNative || '0',
-          address_type: currentPerpsAccount?.type || '',
-        });
-      slTriggerPx &&
-        !isLimit &&
-        stats.report('perpsTradeHistory', {
-          created_at: new Date().getTime(),
-          user_addr: currentPerpsAccount?.address || '',
-          trade_type: 'open position sl',
-          leverage: leverage.toString(),
-          trade_side: getStatsReportSide(!isBuy, true),
-          margin_mode: selectedMarginMode === 'cross' ? 'cross' : 'isolated',
-          coin: coin,
-          size: totalSz,
-          price: slTriggerPx,
-          trade_usd_value: new BigNumber(slTriggerPx).times(totalSz).toFixed(2),
-          service_provider: 'hyperliquid',
-          app_version: APP_VERSIONS.fromNative || '0',
-          address_type: currentPerpsAccount?.type || '',
-        });
-    }
-
     setIsReviewMode(false);
     onConfirm();
   });

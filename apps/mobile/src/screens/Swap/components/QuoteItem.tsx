@@ -55,6 +55,7 @@ export interface QuoteItemProps {
 export const DexQuoteItem = (
   props: QuoteItemProps & {
     preExecResult: QuotePreExecResultInfo;
+    isSdkPass?: boolean;
     onErrQuote?: React.Dispatch<React.SetStateAction<string[]>>;
     onlyShowErrorQuote?: boolean;
     onlyShow?: boolean;
@@ -75,6 +76,7 @@ export const DexQuoteItem = (
     // fee,
     inSufficient,
     preExecResult,
+    isSdkPass,
     quoteProviderInfo,
     setActiveProvider,
     currentProvider,
@@ -92,6 +94,9 @@ export const DexQuoteItem = (
   const { sortIncludeGasFee } = useSwapSettings();
 
   const isSdkDataPass = !!preExecResult?.isSdkPass;
+  const isSdkFailed = preExecResult
+    ? !preExecResult.isSdkPass
+    : isSdkPass === false;
 
   const halfBetterRateString = '';
 
@@ -137,7 +142,7 @@ export const DexQuoteItem = (
         error = t('page.swap.unable-to-fetch-the-price');
       }
 
-      if (!isSdkDataPass && !!preExecResult) {
+      if (isSdkFailed) {
         disable = true;
         error = t('page.swap.security-verification-failed');
       }
@@ -156,7 +161,7 @@ export const DexQuoteItem = (
       receiveToken.price,
       preExecResult,
       dexId,
-      isSdkDataPass,
+      isSdkFailed,
       payAmount,
       bestQuoteAmount,
       sortIncludeGasFee,

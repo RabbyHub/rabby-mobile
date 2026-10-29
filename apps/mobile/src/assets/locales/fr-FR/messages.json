@@ -461,7 +461,13 @@
         "empty": {
           "title": "Aucune transaction signée pour le moment",
           "titleLastThreeMonths": "Aucun historique de transactions depuis 90 jours",
+          "titleInLast90Days": "Aucune transaction au cours des 90 derniers jours",
+          "titleNoTransactions": "Aucune transaction",
           "testnetNoHistory": "L'historique des transactions du token personnalisé n'est pas disponible."
+        },
+        "noMore": {
+          "title": "Aucune autre transaction.",
+          "titleInLast90Days": "Aucune autre transaction au cours des 90 derniers jours."
         },
         "tips": {
           "canNotCancel": "Impossible d’accélérer ou d’annuler : il ne s’agit pas de la première transaction en attente",
@@ -2753,6 +2759,8 @@
         "tpSl": "TP/SL",
         "takeProfitPrice": "Prix de prise de profit",
         "stopLossPrice": "Prix de stop-loss",
+        "funding": "Financement",
+        "nextFundingRate": "Prochain taux de financement",
         "estimatedPnl": "PnL estimé",
         "closePositionTitle": "Fermer la position {{coin}}",
         "estimatedRealizedPnl": "PnL réalisé estimé"
@@ -2815,7 +2823,7 @@
         "settings": "Paramètres",
         "details": "Détails",
         "marginMode": "Mode de marge",
-        "fundingTipsBold": "Cela affiche le total du funding réglé depuis l’ouverture de la position. Les valeurs <bold>vertes (positives)</bold> signifient que vous avez reçu du funding d’autres traders, tandis que les valeurs <bold>rouges (négatives)</bold> correspondent aux coûts de funding que vous leur avez payés.",
+        "fundingTipsBold": "Cela affiche le total du funding réglé depuis l’ouverture de la position. Les valeurs <positive>vertes (positives)</positive> signifient que vous avez reçu du funding d’autres traders, tandis que les valeurs <negative>rouges (négatives)</negative> correspondent aux coûts de funding que vous leur avez payés.",
         "crossTips": "En mode de marge croisée, le prix de liquidation d’une position unique est une estimation fournie à titre indicatif."
       },
       "PerpsInfo": {
@@ -3317,6 +3325,7 @@
       "screenTitle": "Connecter le portefeuille",
       "connectingToRabby": "Connexion à Rabby",
       "pairingFailed": "L'appairage WalletConnect a échoué.",
+      "proposalNotReceived": "Le QR code WalletConnect a peut-être expiré. Actualisez-le et réessayez.",
       "connected": "Connexion réussie. Veuillez retourner à la DApp.",
       "proposalExpired": "La proposition WalletConnect a expiré.",
       "pairingExpired": "L'appairage WalletConnect a expiré. Actualisez le code QR de la DApp et réessayez.",

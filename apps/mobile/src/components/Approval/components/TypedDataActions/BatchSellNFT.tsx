@@ -124,6 +124,7 @@ const BatchSellNFT = ({
             <View style={styles.relative}>
               <LogoWithText
                 logo={actionData.receive_token.logo_url}
+                logoRadius={16}
                 text={
                   <View style={commonStyle.rowFlexCenterItem}>
                     <Values.TokenAmount

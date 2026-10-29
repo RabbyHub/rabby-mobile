@@ -53,6 +53,7 @@ const RevokePermit2 = ({
           <Row>
             <LogoWithText
               logo={actionData.token.logo_url}
+              logoRadius={16}
               text={
                 <Values.TokenSymbol
                   token={requireData.token}

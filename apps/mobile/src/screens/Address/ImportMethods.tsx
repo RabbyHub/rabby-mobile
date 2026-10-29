@@ -43,8 +43,6 @@ import LinearGradient from 'react-native-linear-gradient';
 import { useTranslation } from 'react-i18next';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamsList } from '@/navigation-type';
-import { setReportActionTs } from '@/core/serviceApi/preference';
-import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/utils/reportTimeoutAction';
 import { IS_IOS } from '@/core/native/utils';
 import { Text } from '@/components/Typography';
 import { E2E_ID } from '@/constant/e2e';
@@ -129,11 +127,6 @@ function ImportMethods(): JSX.Element {
                     params: {},
                   }),
                 );
-
-                !state?.isNotNewUserProc &&
-                  void setReportActionTs(
-                    REPORT_TIMEOUT_ACTION_KEY.CLICK_IMPORT_SEED_PHRASE,
-                  ).catch(console.error);
               }}>
               <SeedPhraseIcon style={styles.icon} />
               <Text style={styles.importType}>
@@ -160,11 +153,6 @@ function ImportMethods(): JSX.Element {
                     params: {},
                   }),
                 );
-
-                !state?.isNotNewUserProc &&
-                  void setReportActionTs(
-                    REPORT_TIMEOUT_ACTION_KEY.CLICK_IMPORT_PRIVATE_KEY,
-                  ).catch(console.error);
               }}>
               <PrivateKeyIcon style={styles.icon} />
               <Text style={styles.importType}>
@@ -219,10 +207,6 @@ function ImportMethods(): JSX.Element {
                         syncExtension: true,
                       }),
                     );
-
-                    void setReportActionTs(
-                      REPORT_TIMEOUT_ACTION_KEY.CLICK_SCAN_SYNC_EXTENSION,
-                    ).catch(console.error);
                   }}>
                   <IconSyncRabby style={styles.icon} />
                   <Text style={styles.importType}>
@@ -296,10 +280,6 @@ function ImportMethods(): JSX.Element {
                       params: {},
                     }),
                   );
-
-                  void setReportActionTs(
-                    REPORT_TIMEOUT_ACTION_KEY.CLICK_CONNECT_HARDWARE,
-                  ).catch(console.error);
                 }}>
                 <Image source={HardWareIcon} style={styles.icon} />
                 <Text style={styles.importType}>

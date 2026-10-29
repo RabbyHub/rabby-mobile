@@ -27,7 +27,6 @@ import { PerpsSimpleChartScrollView } from './components/chart/PerpsSimplePriceA
 import { PerpsDepositPopup } from '../Perps/components/PerpsDepositPopup';
 import { EnableUnifiedAccountPopup } from '../Perps/components/EnableUnifiedAccountPopup';
 import { PerpsSpotSwapPopup } from '../Perps/components/PerpsSpotSwapPopup';
-import BigNumber from 'bignumber.js';
 import { PerpsHistorySection } from '../Perps/components/PerpsHistorySection';
 import { usePerpsDeposit } from '../Perps/hooks/usePerpsDeposit';
 import { PerpsChart } from './components/PerpsChart';
@@ -52,13 +51,12 @@ import { RootNames, getBottomButtonBottomOffset } from '@/constant/layout';
 import { PerpsAddPositionPopup } from './components/PerpsAddPositionPopup';
 import { PerpsLimitOrdersForCoin } from './components/PerpsLimitOrdersForCoin';
 import { usePerpsState } from '@/hooks/perps/usePerpsState';
+import { usePerpsRuntimeStatus } from '@/hooks/perps/runtime/usePerpsRuntimeStatus';
 import { showToast } from '@/hooks/perps/showToast';
 import { PerpsAgentsLimitModal } from '../Perps/components/PerpsAgentsLimitModal';
 import { PerpsPositionSkeletonLoader } from '../Perps/components/PerpsSkeletonLoader';
 import { usePerpsAccount } from '@/hooks/perps/usePerpsAccount';
-import { stats } from '@/utils/stats';
-import { getStatsReportSide, isLimitOrder } from '@/utils/perps';
-import { APP_VERSIONS } from '@/constant';
+import { isLimitOrder } from '@/utils/perps';
 import { Text } from '@/components/Typography';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils/src/types';
 import { withWalletUnlock } from '@/utils/walletUnlockGuard';
@@ -109,6 +107,11 @@ export const PerpsMarketDetailScreen = () => {
   } = usePerpsState();
 
   const currentAssetCtx = perpsStore(s => s.marketDataMap[coin]);
+  const perpsRuntimeStatus = usePerpsRuntimeStatus().status;
+  // Footer actions depend on whether a position exists. A failed runtime never
+  // initializes, so keep the existing actions reachable in that case.
+  const isPositionStateResolved =
+    isInitialized || perpsRuntimeStatus === 'error';
   // const hasPermission = true;
   const [showRiskPopup, setShowRiskPopup] = useState(false);
   // useEffect(() => {
@@ -550,6 +553,7 @@ export const PerpsMarketDetailScreen = () => {
           <PerpsFooter
             hasPermission={hasPermission}
             hasPosition={hasPosition}
+            loading={!isPositionStateResolved}
             direction={positionData?.direction}
             onAddPress={async () => {
               await handleActionApproveStatus();
@@ -687,7 +691,7 @@ export const PerpsMarketDetailScreen = () => {
             } else {
               sizeStr = positionData?.size.toString() || '0';
             }
-            const res = await handleClosePosition({
+            await handleClosePosition({
               coin,
               size: sizeStr,
               direction: positionData?.direction as 'Long' | 'Short',
@@ -695,29 +699,6 @@ export const PerpsMarketDetailScreen = () => {
               orderType,
               limitPx,
             });
-            if (res) {
-              const { avgPx, totalSz } = res;
-              const isBuy = positionData?.direction === 'Long';
-              stats.report('perpsTradeHistory', {
-                created_at: new Date().getTime(),
-                user_addr: currentPerpsAccount?.address || '',
-                trade_type:
-                  orderType === 'limit'
-                    ? 'close position limit'
-                    : 'close position',
-                leverage: positionData?.leverage.toString(),
-                trade_side: getStatsReportSide(!isBuy, true),
-                margin_mode:
-                  positionData.type === 'cross' ? 'cross' : 'isolated',
-                coin: coin,
-                size: totalSz,
-                price: avgPx,
-                trade_usd_value: new BigNumber(avgPx).times(totalSz).toFixed(2),
-                service_provider: 'hyperliquid',
-                app_version: APP_VERSIONS.fromNative || '0',
-                address_type: currentPerpsAccount?.type || '',
-              });
-            }
           }}
         />
       ) : null}
@@ -762,7 +743,7 @@ export const PerpsMarketDetailScreen = () => {
             handleSwapPress();
           }}
           handleAddPosition={async (tradeSize: string) => {
-            const res = await handleOpenPosition({
+            await handleOpenPosition({
               coin,
               size: tradeSize,
               leverage: positionData?.leverage || 1,
@@ -771,26 +752,6 @@ export const PerpsMarketDetailScreen = () => {
               midPx: activeAssetCtx?.markPx || '0',
               isAddingPosition: true,
             });
-            if (res) {
-              const { avgPx, totalSz } = res;
-              const isBuy = positionData?.direction === 'Long';
-              stats.report('perpsTradeHistory', {
-                created_at: new Date().getTime(),
-                user_addr: currentPerpsAccount?.address || '',
-                trade_type: 'add position',
-                leverage: positionData?.leverage.toString(),
-                trade_side: getStatsReportSide(isBuy, false),
-                margin_mode:
-                  positionData.type === 'cross' ? 'cross' : 'isolated',
-                coin: coin,
-                size: totalSz,
-                price: avgPx,
-                trade_usd_value: new BigNumber(avgPx).times(totalSz).toFixed(2),
-                service_provider: 'hyperliquid',
-                app_version: APP_VERSIONS.fromNative || '0',
-                address_type: currentPerpsAccount?.type || '',
-              });
-            }
           }}
         />
       ) : null}

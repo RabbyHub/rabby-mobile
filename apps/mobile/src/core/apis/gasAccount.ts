@@ -212,8 +212,6 @@ export const afterTopUpGasAccount = async ({
       new Error(
         'topUp GasAccount tx failed, params: ' +
           JSON.stringify({
-            userAddr: account.address,
-            gasAccount: accountId,
             chain: chainServerId,
             amount,
           }),
