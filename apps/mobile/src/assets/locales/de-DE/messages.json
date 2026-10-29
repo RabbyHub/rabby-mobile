@@ -3035,6 +3035,8 @@
         "tpSl": "TP/SL",
         "takeProfitPrice": "Take-Profit-Preis",
         "stopLossPrice": "Stop-Loss-Preis",
+        "funding": "Finanzierung",
+        "nextFundingRate": "Nächste Funding-Rate",
         "estimatedPnl": "Gesch. PnL",
         "closePositionTitle": "{{coin}}-Position schließen",
         "estimatedRealizedPnl": "Gesch. realisierter PnL"
@@ -3097,7 +3099,7 @@
         "settings": "Einstellungen",
         "unrealizedPnl": "Unrealisierter PNL",
         "details": "Details",
-        "fundingTipsBold": "Dies zeigt die seit Eröffnung der Position abgerechneten Funding-Gebühren insgesamt. <bold>Grüne (positive)</bold> Werte bedeuten, dass Sie Funding von anderen Tradern erhalten haben, während <bold>rote (negative)</bold> Werte Funding-Kosten sind, die Sie gezahlt haben.",
+        "fundingTipsBold": "Dies zeigt die seit Eröffnung der Position abgerechneten Funding-Gebühren insgesamt. <positive>Grüne (positive)</positive> Werte bedeuten, dass Sie Funding von anderen Tradern erhalten haben, während <negative>rote (negative)</negative> Werte Funding-Kosten sind, die Sie gezahlt haben.",
         "crossTips": "Im Cross-Margin-Modus ist der Liquidationspreis einer einzelnen Position nur ein Schätzwert zur Orientierung."
       },
       "PerpsInfo": {

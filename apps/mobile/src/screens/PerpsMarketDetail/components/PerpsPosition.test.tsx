@@ -1,8 +1,4 @@
 jest.mock(
-  '@/assets2024/icons/perps/IconInfoCC.svg',
-  () => require('react-native').View,
-);
-jest.mock(
   '@/assets2024/icons/perps/PerpsProAvailableAdd.svg',
   () => require('react-native').View,
 );
@@ -32,6 +28,19 @@ import { PerpsPosition } from './PerpsPosition';
 import { simplePositionPriceText } from './account/model';
 
 const mockTips = jest.fn();
+let mockAndroid = false;
+jest.mock('@/core/native/utils', () => ({
+  get IS_ANDROID() {
+    return mockAndroid;
+  },
+  get IS_IOS() {
+    return !mockAndroid;
+  },
+}));
+jest.mock('react-native-safe-area-context', () => ({
+  ...jest.requireActual('react-native-safe-area-context'),
+  useSafeAreaInsets: () => ({ top: 0, bottom: 34, left: 0, right: 0 }),
+}));
 jest.mock('@/hooks/useTipsPopup', () => ({
   useTipsPopup: () => ({ showTipsPopup: mockTips }),
 }));
@@ -48,9 +57,26 @@ jest.mock('@/hooks/theme', () => ({
 jest.mock('@/utils/styles', () => ({
   createGetStyles2024: (fn: unknown) => fn,
 }));
-jest.mock('react-i18next', () => ({
-  useTranslation: () => ({ t: (key: string) => key }),
-}));
+jest.mock('react-i18next', () => {
+  const { Trans } = jest.requireActual('react-i18next');
+  const i18n = require('i18next').createInstance();
+  i18n.init({
+    initImmediate: false,
+    lng: 'en',
+    resources: {
+      en: { translation: require('@/assets/locales/en/messages.json') },
+    },
+  });
+  return {
+    Trans: (transProps: object) =>
+      require('react').createElement(Trans, {
+        ...transProps,
+        i18n,
+        t: i18n.t.bind(i18n),
+      }),
+    useTranslation: () => ({ t: (key: string) => key }),
+  };
+});
 jest.mock('@/hooks/perps/usePerpsStore', () => ({
   perpsStore: (selector: any) => selector({ currentPerpsAccount: null }),
 }));
@@ -59,6 +85,32 @@ jest.mock('@/constant', () => ({ APP_VERSIONS: {} }));
 jest.mock('@/utils/perps', () => ({
   formatPerpsCoin: (v: string) => v,
   getStatsReportSide: jest.fn(),
+  handleDisplayFundingPayments: (v: string) => `funding:${v}`,
+}));
+jest.mock(
+  '@/screens/PerpsPro/components/common/PerpsProDottedUnderlineText',
+  () => ({
+    PerpsProDottedUnderlineText: ({ children, onPress }: any) =>
+      require('react').createElement(
+        require('react-native').Text,
+        { onPress },
+        children,
+      ),
+  }),
+);
+const mockFundingSheet = jest.fn((_props: object) => null);
+jest.mock(
+  '@/screens/PerpsPro/components/funding/PerpsProFundingDetailSheet',
+  () => ({
+    PerpsProFundingDetailSheet: (sheetProps: object) =>
+      mockFundingSheet(sheetProps),
+  }),
+);
+jest.mock('@/screens/PerpsPro/model/market', () => ({
+  buildPerpsProMarket: (marketData: object) => ({ marketData }),
+}));
+jest.mock('@/screens/PerpsPro/utils/format', () => ({
+  formatPerpsProFundingRate: (v: unknown) => `rate:${v}`,
 }));
 jest.mock('@/components/Tip', () => ({ Tip: ({ children }: any) => children }));
 jest.mock(
@@ -235,3 +287,72 @@ it('spans the divider across the card content with symmetric insets', () => {
   expect(divider.props.style).not.toHaveProperty('marginLeft');
   expect(divider.props.style).not.toHaveProperty('marginHorizontal');
 });
+
+it.each([
+  ['12.4', 'fundingPayments', 'red-default'],
+  ['-3', 'fundingGains', 'green-default'],
+] as const)(
+  'shows funding %s as %s and opens the Pro funding sheet',
+  (fundingPayments, label, color) => {
+    const ui = render(
+      <PerpsPosition
+        {...props}
+        activeAssetCtx={{ funding: '0.0000125', oraclePx: '110' } as any}
+        currentAssetCtx={{ funding: '0.0001', oraclePx: '100' } as any}
+        positionData={{ ...props.positionData!, fundingPayments }}
+      />,
+    );
+    expect(ui.getByText('rate:0.0000125')).toBeTruthy();
+    expect(ui.getByText(`funding:${fundingPayments}`)).toHaveStyle({ color });
+    fireEvent.press(ui.getByText(`page.perpsDetail.PerpsPosition.${label}`));
+    expect(mockTips).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: `page.perpsDetail.PerpsPosition.${label}`,
+      }),
+    );
+    expect(mockFundingSheet).not.toHaveBeenCalled();
+    fireEvent.press(
+      ui.getByText('page.perpsDetail.simpleAccount.nextFundingRate'),
+    );
+    expect(mockFundingSheet).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        market: {
+          marketData: { funding: '0.0000125', oraclePx: '110' },
+        },
+        serverClock: null,
+      }),
+    );
+    mockFundingSheet.mockClear();
+  },
+);
+
+it.each([
+  [false, 36],
+  [true, 70],
+] as const)(
+  'colors the funding explanation and applies bottom spacing on Android=%s',
+  (android, bottomPadding) => {
+    mockAndroid = android;
+    try {
+      const ui = render(<PerpsPosition {...props} />);
+      fireEvent.press(
+        ui.getByText('page.perpsDetail.PerpsPosition.fundingPayments'),
+      );
+      const popup = mockTips.mock.lastCall![0];
+      expect(popup.bottomPadding).toBe(bottomPadding);
+      const description = render(popup.desc);
+      expect(description.getByText('Green (positive)')).toHaveStyle({
+        color: 'green-default',
+        fontFamily: 'SF Pro Rounded',
+        fontWeight: '700',
+      });
+      expect(description.getByText('Red (negative)')).toHaveStyle({
+        color: 'red-default',
+        fontFamily: 'SF Pro Rounded',
+        fontWeight: '700',
+      });
+    } finally {
+      mockAndroid = false;
+    }
+  },
+);

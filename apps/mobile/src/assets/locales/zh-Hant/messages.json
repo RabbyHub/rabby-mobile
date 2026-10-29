@@ -2915,6 +2915,8 @@
         "tpSl": "止盈/止損",
         "takeProfitPrice": "止盈價格",
         "stopLossPrice": "止損價格",
+        "funding": "資金費",
+        "nextFundingRate": "下一期資金費率",
         "estimatedPnl": "預計盈虧",
         "closePositionTitle": "平掉 {{coin}} 倉位",
         "estimatedRealizedPnl": "預計已實現盈虧"
@@ -2977,7 +2979,7 @@
         "unrealizedPnl": "未實現盈虧",
         "marginMode": "保證金模式",
         "details": "詳細資料",
-        "fundingTipsBold": "這顯示自開倉以來已結算的資金費總額。<bold>綠色（正數）</bold>表示您從其他交易者處獲得資金費，<bold>紅色（負數）</bold>表示您向其他交易者支付的資金費成本。",
+        "fundingTipsBold": "這顯示自開倉以來已結算的資金費總額。<positive>綠色（正數）</positive>表示您從其他交易者處獲得資金費，<negative>紅色（負數）</negative>表示您向其他交易者支付的資金費成本。",
         "crossTips": "全倉保證金模式下，單個倉位的強平價格僅為估算值，僅供參考。"
       },
       "PerpsInfo": {
