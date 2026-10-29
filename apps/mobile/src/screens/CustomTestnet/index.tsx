@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 
 import { Button } from '@/components2024/Button';
 import RcIconBack from '@/assets/icons/custom-testnet/back.svg';
+import RcIconEdit from '@/assets/icons/custom-testnet/edit.svg';
 import {
   BOTTOM_BUTTON_SINGLE_HEIGHT,
   BOTTOM_BUTTON_TOP_OFFSET,
@@ -187,11 +188,16 @@ export function CustomTestnetScreen(): JSX.Element {
           {hasNetworks && (
             <TouchableOpacity
               accessibilityRole="button"
+              accessibilityLabel={t(
+                isEditing ? 'global.Cancel' : 'global.Edit',
+              )}
               hitSlop={12}
               onPress={() => setIsEditing(value => !value)}>
-              <Text style={styles.editButton}>
-                {t(isEditing ? 'global.Cancel' : 'global.Edit')}
-              </Text>
+              {isEditing ? (
+                <Text style={styles.editButton}>{t('global.Cancel')}</Text>
+              ) : (
+                <RcIconEdit color={colors2024['neutral-title-1']} />
+              )}
             </TouchableOpacity>
           )}
         </View>
