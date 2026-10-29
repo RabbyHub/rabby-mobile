@@ -547,7 +547,7 @@ describe('PerpsProPositionTpSlSheet', () => {
         ),
       ).toMatchObject({ flexDirection: 'row', paddingLeft: 8 });
       fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-add'));
-      expectShell(722);
+      expectShell(782);
       fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-back'));
       fireEvent.press(screen.getAllByText('Modify')[0]!);
       expectShell(622);
@@ -1045,7 +1045,7 @@ describe('PerpsProPositionTpSlSheet', () => {
     fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-add'));
     expect(screen.getByTestId('tpsl-form-add')).toBeTruthy();
     expect(mockFormProps.mock.lastCall?.[0]).toMatchObject({
-      minimumHeight: 478,
+      minimumHeight: 538,
       presentation: 'subpage',
     });
     expect(screen.getByText('TP/SL')).toBeTruthy();
@@ -1267,7 +1267,7 @@ describe('PerpsProPositionTpSlSheet', () => {
     expect(screen.getByTestId('perps-pro-position-tpsl-order-2')).toBeTruthy();
 
     fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-add'));
-    expect(mockBottomSheetProps.mock.lastCall?.[0].snapPoints).toEqual([722]);
+    expect(mockBottomSheetProps.mock.lastCall?.[0].snapPoints).toEqual([782]);
   });
 
   it('renders the 782px inline form and full position header when the TP/SL tab has no partial orders', () => {

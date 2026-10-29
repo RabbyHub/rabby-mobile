@@ -135,7 +135,7 @@ describe('Perps Pro layout model', () => {
     ).toBe(486);
   });
   it.each([
-    ['add', 722],
+    ['add', 782],
     ['modify', 622],
     ['position-modify', 616],
   ] as const)('sizes the %s page to its approved content', (page, height) => {
@@ -155,7 +155,7 @@ describe('Perps Pro layout model', () => {
     ).toBe(437);
   });
   it.each([
-    ['subpage', 722, 478],
+    ['subpage', 782, 538],
     ['subpage', 622, 378],
     ['position-modify', 616, 372],
   ] as const)(
@@ -181,7 +181,7 @@ describe('Perps Pro layout model', () => {
   it('budgets both normal PnL hints and only the actual form bottom-padding increment', () => {
     for (const [page, base] of [
       ['form', 782],
-      ['add', 722],
+      ['add', 782],
       ['modify', 622],
       ['position-modify', 616],
     ] as const) {
@@ -220,7 +220,7 @@ describe('Perps Pro layout model', () => {
           topInset: 24,
           windowHeight: 900,
         }),
-      ).toBe(722);
+      ).toBe(782);
     }
   });
 });

@@ -23,7 +23,7 @@ const PERPS_PRO_POSITION_TPSL_DESIGN_HEIGHTS = {
   form: 782,
   list: 782,
   // Include both normal 26px PnL hints before the keyboard ever opens.
-  add: 722,
+  add: 782,
   modify: 622,
   'position-modify': 616,
 } as const;

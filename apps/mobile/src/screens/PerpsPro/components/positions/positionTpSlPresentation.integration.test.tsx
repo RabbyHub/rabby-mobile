@@ -662,7 +662,7 @@ describe('position TP/SL input source integration', () => {
             within(scroll).queryByTestId('perps-pro-position-tpsl-page-header'),
           ).toBeNull();
         }
-        const height = entry === 'add' ? 722 : 782;
+        const height = 782;
         const expectedViewport = height - 40 - (entry === 'add' ? 56 : 0);
         expect(
           screen.getByTestId('native-main-sheet').props.snapPoints,
