@@ -43,7 +43,10 @@ import {
   BridgeStatusSteps,
 } from './components/BridgeStatusUI';
 import { openBridgeSupport } from './utils/support';
-import { getBridgeHistoryTxId } from './utils/record';
+import {
+  getAllowedBridgeDetailUrl,
+  getBridgeHistoryTxId,
+} from './utils/record';
 import { useBridgeSourceMetadata } from './hooks/useBridgeSourceMetadata';
 
 const buttonTitleStyle = getBottomButtonCenteredTitleStyle(
@@ -99,7 +102,7 @@ export function BridgeDetailScreen() {
   }, [setNavigationOptions, headerTitle]);
   const sourceChain = findChain({ serverId: status.fromToken?.chain });
   const toChain = findChain({ serverId: status.toToken?.chain });
-  const detailUrl = record.history?.detail_url;
+  const detailUrl = getAllowedBridgeDetailUrl(record.history?.detail_url);
   const historyTxId = getBridgeHistoryTxId(record);
   const { to: metadataTo } = useBridgeSourceMetadata({
     address: record.address,
