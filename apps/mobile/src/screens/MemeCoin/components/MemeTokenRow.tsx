@@ -95,7 +95,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     borderRadius: 14,
     borderWidth: 2,
     borderColor: 'transparent',
-    overflow: 'hidden',
     backgroundColor: colors2024['neutral-card-1'],
   },
   rowSelected: {
