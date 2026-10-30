@@ -11,7 +11,16 @@ export enum MMKV_FILE_NAMES {
   WALLETCONNECT = 'mmkv.walletconnect',
 
   LENDING_DATA_CACHE = 'mmkv.lendingDataCache',
+
+  /** Kept apart from `mmkv.default` so it survives a loss of that file. */
+  STORAGE_DIAGNOSTICS = 'mmkv.storageDiagnostics',
 }
+
+export const STORAGE_DIAGNOSTICS_MMKV_KEYS = {
+  CONTACT_BOOK_CANARY: 'canary.contactBook',
+  BROWSER_TABS_CANARY: 'canary.browserTabs',
+  REPORTED_ISSUES: 'reportedIssues',
+} as const;
 
 export const APP_MMKV_KEYS = {
   LEGACY_KEYRING_STATE: 'keyringState',

@@ -6,7 +6,6 @@ import {
   type Configuration as MMKVConfiguration,
 } from 'react-native-mmkv';
 
-import { stringUtils } from '@rabby-wallet/base-utils';
 import { StorageAdapater } from '@rabby-wallet/persist-store';
 import { atomWithStorage, createJSONStorage } from 'jotai/utils';
 import {
@@ -26,6 +25,7 @@ import {
   zMutative,
   zPersist,
 } from '../utils/reexports';
+import { parseStoredJsonOrReport } from './appStorageIntegrity';
 import { appMMKV, keyringCheckpointMMKV, keyringMMKV } from './mmkvInstances';
 import { APP_MMKV_KEYS, MMKV_FILE_NAMES } from './mmkvConstants';
 import { unwrapDuplicatedJsonString } from './mmkvJsonCompat';
@@ -72,7 +72,7 @@ export function makeMMKVStorageByInstance(
 
     return !value
       ? null
-      : stringUtils.safeParseJSON(value, { defaultValue: null });
+      : parseStoredJsonOrReport<T>(value, { fileId: options?.id, key });
   }
 
   function setItem<T>(key: string, value: T): void {

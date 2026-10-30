@@ -30,6 +30,11 @@ import {
   normalizeKeyringState,
   persistKeyringState,
 } from '../storage/mmkv';
+import {
+  captureAppStorageStartupSnapshot,
+  checkContactBookAtStartup,
+  recordContactBookAliasesChange,
+} from '../storage/appStorageIntegrity';
 import { APP_MMKV_KEYS } from '../storage/mmkvConstants';
 import { inspectPersistedKeyringState } from '../storage/keyringStateMigration';
 import { APP_STORE_NAMES } from '../storage/storeConstant';
@@ -126,6 +131,8 @@ const keyringClasses = [
 ] as (typeof KeyringIntf)[];
 
 export function loadStartupCoreServices() {
+  // Taken before migrations and service constructors recreate missing keys.
+  captureAppStorageStartupSnapshot();
   migrateAppStorage(appStorage);
 
   const normalizedKeyringState = normalizeKeyringState({
@@ -178,6 +185,16 @@ export function loadStartupCoreServices() {
 
   const contactService = new ContactBookService({
     storageAdapter: appStorage,
+  });
+  const keyringStateSummary = getKeyringStateSummary(keyringState);
+  checkContactBookAtStartup({
+    isBootedWallet:
+      keyringStateSummary.hasBooted === true ||
+      keyringStateSummary.hasVault === true,
+    aliases: contactService.store.aliases,
+  });
+  contactService.subscribeStoreField('aliases', (aliases, previousAliases) => {
+    recordContactBookAliasesChange(aliases, previousAliases);
   });
   contactService.subscribeStoreFields((key, value) => {
     if (key === 'aliases') {

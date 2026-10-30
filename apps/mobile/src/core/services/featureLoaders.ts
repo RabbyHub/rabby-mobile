@@ -1,3 +1,8 @@
+import {
+  captureAppStorageStartupSnapshot,
+  checkBrowserTabsOnLoad,
+  recordBrowserTabsChange,
+} from '../storage/appStorageIntegrity';
 import { appStorage } from '../storage/mmkv';
 import { APP_STORE_NAMES } from '../storage/storeConstant';
 import { migrateService } from '@/migrations/migrations';
@@ -175,12 +180,15 @@ export function loadBridgeService() {
 export function loadBrowserService() {
   return loadFeatureService('browserService', async () => {
     const { BrowserService } = await import('./browserService');
-    registerService(
-      'browserService',
-      new BrowserService({
-        storageAdapter: appStorage,
-      }),
-    );
+    // No-op once startup took it; otherwise taken before the constructor
+    // recreates a missing `browser` key.
+    captureAppStorageStartupSnapshot();
+    const browserService = new BrowserService({
+      storageAdapter: appStorage,
+    });
+    checkBrowserTabsOnLoad(browserService.store);
+    browserService.subscribeStoreField('browserTabs', recordBrowserTabsChange);
+    registerService('browserService', browserService);
   });
 }
 
