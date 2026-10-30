@@ -18,7 +18,15 @@ import {
   type AndroidBiometricSecurityLevel,
 } from './androidBiometricsRegression';
 import { isNonProductionDiagnosticsEnabled } from '../utils/diagnosticEnv';
-import { markWalletUnlockDiagnosticStage } from '@/utils/walletUnlockDiagnostics';
+import {
+  markWalletUnlockDiagnosticStage,
+  recordWalletUnlockPayloadDiagnostic,
+} from '@/utils/walletUnlockDiagnostics';
+import {
+  describePasswordPayload,
+  emitDecryptDiagnostic,
+  type DecryptDiagnosticObserver,
+} from '../utils/encryptorDiagnostics';
 
 export const KEYCHAIN_DEFAULT_SERVICE = 'com.debank';
 export const KEYCHAIN_GENERIC_USER = 'rabbymobile-user';
@@ -1141,6 +1149,18 @@ export function createBusinessKeychainApi({
     );
     const result = await keychainModule.getGenericPassword(options);
     const credentials = result as DefaultRet;
+    markWalletUnlockDiagnosticStage(
+      walletUnlockDiagnosticsAttemptId,
+      'keychain_native_result',
+      {
+        keychainSource: sourceLabel,
+        hasStoredPasswordPayload: !!credentials && !!credentials.password,
+        storage:
+          credentials && typeof credentials.storage === 'string'
+            ? credentials.storage
+            : undefined,
+      },
+    );
 
     traceAndroidKeychainPerf('biometric_entry_read_end', {
       elapsedMs: Date.now() - startedAt,
@@ -1643,6 +1663,7 @@ export function createBusinessKeychainApi({
   async function decryptStoredPasswordWithRabbitCodeCandidates(
     instance: SecureKeyChainInstance,
     encryptedPassword: string,
+    walletUnlockDiagnosticsAttemptId?: string,
   ) {
     const currentRabbitCode = instance.getRabbitCode();
     const rabbitCodeCandidates = [
@@ -1655,11 +1676,27 @@ export function createBusinessKeychainApi({
     let lastError: unknown = null;
 
     for (const rabbitCodeCandidate of rabbitCodeCandidates) {
+      const observer: DecryptDiagnosticObserver | undefined =
+        walletUnlockDiagnosticsAttemptId
+          ? event =>
+              recordWalletUnlockPayloadDiagnostic(
+                walletUnlockDiagnosticsAttemptId,
+                rabbitCodeCandidates.indexOf(rabbitCodeCandidate) + 1,
+                rabbitCodeCandidates.length,
+                event,
+              )
+          : undefined;
       try {
         const decrypted = (await appEncryptorApi.decrypt(
           rabbitCodeCandidate,
           encryptedPassword,
+          observer,
         )) as KeychainCompatibleUserCredentials;
+        emitDecryptDiagnostic(observer, () => ({
+          phase: 'credentials_shape',
+          outcome: 'succeeded',
+          ...describePasswordPayload(decrypted),
+        }));
 
         return {
           decrypted,
@@ -1823,6 +1860,7 @@ export function createBusinessKeychainApi({
           await decryptStoredPasswordWithRabbitCodeCandidates(
             instance,
             encryptedPassword,
+            walletUnlockDiagnosticsAttemptId,
           );
         traceAndroidKeychainPerf('decrypt_password_payload_end', {
           elapsedMs: Date.now() - startedAt,
@@ -1915,7 +1953,7 @@ export function createBusinessKeychainApi({
             markWalletUnlockDiagnosticStage(
               walletUnlockDiagnosticsAttemptId,
               'plain_password_callback',
-              { keychainSource: sourceLabel, purpose },
+              { keychainSource: sourceLabel, purpose, usedFallbackRabbitCode },
             );
             await onPlainPassword?.(
               credentialsWithVaultKey.password,
