@@ -13,6 +13,8 @@ export const PerpsSimpleHeader: React.FC<{
   onPressInPro?: () => void;
   onPressOutPro?: () => void;
   onSwitchToPro: () => void;
+  /** Opens the spot screens; the Spot tab is hidden when absent. */
+  onSelectSpot?: () => void;
   showProNewBadge?: boolean;
 }> = React.memo(
   ({
@@ -21,6 +23,7 @@ export const PerpsSimpleHeader: React.FC<{
     onPressInPro,
     onPressOutPro,
     onSwitchToPro,
+    onSelectSpot,
     showProNewBadge = false,
   }) => {
     const [popupState, setPopupState] = usePerpsPopupState();
@@ -85,6 +88,7 @@ export const PerpsSimpleHeader: React.FC<{
         onPressInMode={handlePressInMode}
         onPressOutMode={handlePressOutMode}
         onSelectMode={handleSelectMode}
+        onSelectSpot={onSelectSpot}
         showBottomDivider={false}
         showProNewBadge={showProNewBadge}
       />
