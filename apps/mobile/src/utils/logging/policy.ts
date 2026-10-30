@@ -31,8 +31,18 @@ export function resolveAppFileLoggingEnabled(options: {
   runtimeEnv: string;
   localEnabled: boolean;
   prodOnlineEnabled: boolean;
+  diagnosticExportEnabled?: boolean;
 }) {
-  const { runtimeEnv, localEnabled, prodOnlineEnabled } = options;
+  const {
+    runtimeEnv,
+    localEnabled,
+    prodOnlineEnabled,
+    diagnosticExportEnabled,
+  } = options;
+
+  if (diagnosticExportEnabled) {
+    return true;
+  }
 
   return runtimeEnv === 'production' ? prodOnlineEnabled : localEnabled;
 }
@@ -41,6 +51,7 @@ export function resolveConsoleCaptureEnabled(options: {
   runtimeEnv: string;
   localEnabled: boolean;
   prodOnlineEnabled: boolean;
+  diagnosticExportEnabled?: boolean;
 }) {
   return resolveAppFileLoggingEnabled(options);
 }

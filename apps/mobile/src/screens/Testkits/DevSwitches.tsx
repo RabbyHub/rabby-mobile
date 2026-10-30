@@ -381,6 +381,7 @@ function DevSwitchAboutAppLogging() {
     canToggle,
     effectiveEnabled,
     isOnlineControlled,
+    isDiagnosticExportEnabled,
     localDefaultEnabled,
     policyEnv,
     runtimeEnv,
@@ -397,7 +398,9 @@ function DevSwitchAboutAppLogging() {
     refreshSnapshot();
   }, [effectiveEnabled, refreshSnapshot]);
 
-  const statusText = canToggle
+  const statusText = isDiagnosticExportEnabled
+    ? 'This diagnostic-export build forces file logging and console capture on'
+    : canToggle
     ? effectiveEnabled
       ? `${
           policyEnv === 'development' ? 'Development' : 'Regression'

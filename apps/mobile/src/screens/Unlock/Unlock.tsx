@@ -8,6 +8,7 @@ import {
   KeyboardAvoidingView,
   InteractionManager,
   Alert,
+  TouchableOpacity,
 } from 'react-native';
 import * as Yup from 'yup';
 
@@ -61,6 +62,8 @@ import { isNonProductionDiagnosticsEnabled } from '@/core/utils/diagnosticEnv';
 import { preloadTransactionHotNavigator } from '@/perfs/preloads';
 import { cancelPendingWalletUnlock } from '@/utils/walletUnlock';
 import { logger } from '@/utils/logger';
+import { IS_LOCAL_STORAGE_EXPORT_ENABLED } from '@/constant/env';
+import { useLocalStorageArchiveGesture } from '@/hooks/useLocalStorageArchiveGesture';
 import { toastUnlocking } from '@/utils/toastUnlocking';
 import {
   beginUnlockCriticalWindow,
@@ -408,6 +411,7 @@ export default function UnlockScreen({
   const { t } = useTranslation();
 
   const RcRabbyLogo = isLight ? RcRabbyLogoLight : RcRabbyLogoDark;
+  const handleArchiveTap = useLocalStorageArchiveGesture(10);
   const navigation = useRabbyAppNavigation();
   const { params } = useRoute<GetRootScreenRouteProp<'Unlock'>>();
   const {
@@ -1047,7 +1051,13 @@ export default function UnlockScreen({
         style={styles.innerContainer}
         keyboardVerticalOffset={-80}>
         <View style={styles.topContainer}>
-          <RcRabbyLogo style={styles.logo} width={125} height={134} />
+          <TouchableOpacity
+            activeOpacity={1}
+            style={styles.logo}
+            disabled={!IS_LOCAL_STORAGE_EXPORT_ENABLED}
+            onPress={handleArchiveTap}>
+            <RcRabbyLogo width={125} height={134} />
+          </TouchableOpacity>
         </View>
         <View style={styles.bodyContainer}>
           {usingPassword ? (
