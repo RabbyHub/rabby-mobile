@@ -28,10 +28,30 @@ fi
 mkdir -p "$(dirname "${OUTPUT}")"
 BUILD_ROOT="$(dirname "${OUTPUT}")/cargo-target"
 
+# Rust embeds the absolute source paths of dependencies (for example
+# /Users/<name>/.cargo/registry/src/...) into panic messages. Remap the cargo
+# home to a fixed prefix so the binary does not depend on the build machine's
+# user name; otherwise hash validation builds differ between machines.
+# CARGO_ENCODED_RUSTFLAGS (0x1f-separated) keeps paths with spaces intact.
+CARGO_HOME_DIR="${CARGO_HOME:-${HOME}/.cargo}"
+RUSTFLAGS_SEP=$'\x1f'
+REMAP_RUSTFLAGS="--remap-path-prefix=${CARGO_HOME_DIR}=/cargo"
+if [[ -n "${CARGO_ENCODED_RUSTFLAGS:-}" ]]; then
+  ENCODED_RUSTFLAGS="${CARGO_ENCODED_RUSTFLAGS}${RUSTFLAGS_SEP}${REMAP_RUSTFLAGS}"
+else
+  read -r -a EXISTING_RUSTFLAGS <<<"${RUSTFLAGS:-}"
+  ENCODED_RUSTFLAGS=""
+  for flag in ${EXISTING_RUSTFLAGS[@]+"${EXISTING_RUSTFLAGS[@]}"}; do
+    ENCODED_RUSTFLAGS+="${flag}${RUSTFLAGS_SEP}"
+  done
+  ENCODED_RUSTFLAGS+="${REMAP_RUSTFLAGS}"
+fi
+
 build_target() {
   local rust_target="$1"
   local target_dir="${BUILD_ROOT}/${rust_target}"
   CARGO_TARGET_DIR="${target_dir}" \
+  CARGO_ENCODED_RUSTFLAGS="${ENCODED_RUSTFLAGS}" \
     "${CARGO_BIN}" +1.95.0 build \
       --manifest-path "${CRATE_DIR}/Cargo.toml" \
       --release \
