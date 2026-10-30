@@ -95,10 +95,8 @@ const NFTBalanceChange = ({
                     <IconDefaultNFT width="100%" height="100%" />
                   }
                   type={item?.content_type}
-                  src={item?.content?.endsWith('.svg') ? '' : item?.content}
-                  thumbnail={
-                    item?.content?.endsWith('.svg') ? '' : item?.content
-                  }
+                  src={item?.content}
+                  thumbnail={item?.content}
                   playIconSize={18}
                   mediaStyle={styles.nftIcon}
                   style={styles.nftIcon}
@@ -141,10 +139,8 @@ const NFTBalanceChange = ({
                     <IconDefaultNFT width="100%" height="100%" />
                   }
                   type={item?.content_type}
-                  src={item?.content?.endsWith('.svg') ? '' : item?.content}
-                  thumbnail={
-                    item?.content?.endsWith('.svg') ? '' : item?.content
-                  }
+                  src={item?.content}
+                  thumbnail={item?.content}
                   playIconSize={18}
                   mediaStyle={styles.nftIcon}
                   style={styles.nftIcon}
@@ -382,7 +378,7 @@ const getStyle = createGetStyles2024(({ colors, colors2024, isLight }) => {
       fontFamily: 'SF Pro Rounded',
       fontSize: 20,
       lineHeight: 24,
-      fontWeight: '900',
+      fontWeight: '700',
       flexShrink: 1,
       minWidth: 0,
     },

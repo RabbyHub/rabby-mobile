@@ -57,7 +57,6 @@ import type {
   PerpTopTokenV3,
   PerpTopTokenCategory,
 } from '@rabby-wallet/rabby-api/dist/types';
-import { stats } from '@/utils/stats';
 import BigNumber from 'bignumber.js';
 import { mergeUserFills, reconcileHttpFills } from './userFills';
 import { publishPerpsProHistoryEvent } from './history/perpsHistoryEvents';

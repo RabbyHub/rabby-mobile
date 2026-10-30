@@ -1,7 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAtom, useSetAtom } from 'jotai';
 import type { ViewToken } from 'react-native';
-import { Platform, Pressable, RefreshControl, View } from 'react-native';
+import { Platform, Pressable, View } from 'react-native';
+import { RefreshControl } from 'react-native-gesture-handler';
+import { CollapsibleRefreshControl } from '@/components/customized/ScrollViewLike/CollapsibleRefreshControl';
 import { Tabs } from 'react-native-collapsible-tab-view';
 
 import { Button } from '@/components2024/Button';
@@ -18,10 +20,6 @@ import {
   RootNames,
 } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
-import {
-  buildMarketTokenDetailFrom,
-  getMarketTabClickListAction,
-} from '@/screens/Market/analytics';
 import { navigateDeprecated } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
 import { tokenItemToITokenItem } from '@/utils/token';
@@ -41,7 +39,6 @@ import {
   watchlistChangeSortAtom,
   watchlistTokenSortAtom,
 } from './sort';
-import { matomoRequestEvent } from '@/utils/analytics';
 import { marketRealtimePriceAtom } from '../Market/atom';
 import { TAB_BAR_HEIGHT } from '../Market/constants';
 import { setWatchlistTopCache } from './cache';
@@ -130,7 +127,7 @@ export function WatchlistContent({
     const tokens = hotTokenList.filter(token =>
       selectedTokens.has(`${token.chain}:${token.id}`),
     );
-    void Promise.all(
+    Promise.all(
       tokens.map(token =>
         pinUserToken({
           chainId: token.chain,
@@ -153,24 +150,10 @@ export function WatchlistContent({
 
   const handleOpenTokenDetail = useCallback(
     (token: TokenDetailWithPriceCurve) => {
-      const clickAction = getMarketTabClickListAction('watchlist');
-
-      if (clickAction) {
-        matomoRequestEvent({
-          category: 'Rabby Market',
-          action: clickAction,
-        });
-      }
       navigateDeprecated(RootNames.TokenMarketInfo, {
         token: tokenItemToITokenItem(token, ''),
         unHold: false,
         needUseCacheToken: true,
-        from: buildMarketTokenDetailFrom({
-          categoryId: 'watchlist',
-          id: token.id,
-          chain: token.chain,
-          symbol: token.symbol,
-        }),
       });
     },
     [],
@@ -384,7 +367,8 @@ export function WatchlistContent({
           onViewableItemsChanged={onViewableItemsChanged}
           viewabilityConfig={VIEWABILITY_CONFIG}
           refreshControl={
-            <RefreshControl
+            <CollapsibleRefreshControl
+              as={RefreshControl}
               refreshing={isManualRefreshing}
               onRefresh={handleManualRefresh}
             />
@@ -396,7 +380,7 @@ export function WatchlistContent({
           <Pressable
             onPress={() => {
               setSkip(true);
-              void setWatchlistSkip(true).catch(console.error);
+              setWatchlistSkip(true).catch(console.error);
             }}>
             <Text style={styles.skipText}>
               {t('page.watchlist.footer.skip')}
@@ -417,58 +401,56 @@ export function WatchlistContent({
   );
 }
 
-const getStyle = createGetStyles2024(
-  ({ isLight, colors2024, safeAreaInsets }) => ({
-    header: {
-      height: 8,
-    },
-    scrollView: {
-      flex: 1,
-    },
-    scrollViewContent: {
-      paddingHorizontal: 16,
-      paddingTop: 0,
-      marginTop: isAndroid ? TAB_BAR_HEIGHT : 0,
-      flexGrow: 1,
-    },
-    stickyHeader: {
-      paddingTop: 14,
-      paddingBottom: 4,
-      backgroundColor: colors2024['neutral-bg-1'],
-    },
-    centerEmpty: {
-      marginTop: '50%',
-    },
-    footer: {
-      backgroundColor: colors2024['neutral-bg-1'],
-      paddingHorizontal: 20,
-      paddingBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
-      position: 'absolute',
-      bottom: 0,
-      left: 0,
-      right: 0,
-    },
-    skipText: {
-      fontSize: 16,
-      lineHeight: 20,
-      color: colors2024['neutral-secondary'],
-      fontWeight: '500',
-      fontFamily: 'SF Pro Rounded',
-      textAlign: 'center',
-      paddingBottom: 17,
-      paddingTop: 14,
-    },
-    bottomPadding: {
-      height: 160,
-    },
-    topEmpty: {
-      marginTop: 26,
-    },
-    tokenItem: {
-      paddingHorizontal: 12,
-    },
-    firstItemPadding: {
-      paddingTop: 8,
-    },
-  }),
-);
+const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
+  header: {
+    height: 8,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollViewContent: {
+    paddingHorizontal: 16,
+    paddingTop: 0,
+    marginTop: isAndroid ? TAB_BAR_HEIGHT : 0,
+    flexGrow: 1,
+  },
+  stickyHeader: {
+    paddingTop: 14,
+    paddingBottom: 4,
+    backgroundColor: colors2024['neutral-bg-1'],
+  },
+  centerEmpty: {
+    marginTop: '50%',
+  },
+  footer: {
+    backgroundColor: colors2024['neutral-bg-1'],
+    paddingHorizontal: 20,
+    paddingBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+  },
+  skipText: {
+    fontSize: 16,
+    lineHeight: 20,
+    color: colors2024['neutral-secondary'],
+    fontWeight: '500',
+    fontFamily: 'SF Pro Rounded',
+    textAlign: 'center',
+    paddingBottom: 17,
+    paddingTop: 14,
+  },
+  bottomPadding: {
+    height: 160,
+  },
+  topEmpty: {
+    marginTop: 26,
+  },
+  tokenItem: {
+    paddingHorizontal: 12,
+  },
+  firstItemPadding: {
+    paddingTop: 8,
+  },
+}));

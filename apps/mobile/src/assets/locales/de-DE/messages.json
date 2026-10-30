@@ -451,7 +451,13 @@
         "empty": {
           "title": "Noch keine signierten Transaktionen",
           "titleLastThreeMonths": "Keine Transaktionshistorie in 90 Tagen",
+          "titleInLast90Days": "Keine Transaktionen in den letzten 90 Tagen",
+          "titleNoTransactions": "Keine Transaktionen",
           "testnetNoHistory": "Transaktionsverlauf für benutzerdefinierte Token nicht verfügbar."
+        },
+        "noMore": {
+          "title": "Keine weiteren Transaktionen.",
+          "titleInLast90Days": "Keine weiteren Transaktionen in den letzten 90 Tagen."
         },
         "common": {
           "pendingDetail": "Ausstehende Details"
@@ -3035,6 +3041,8 @@
         "tpSl": "TP/SL",
         "takeProfitPrice": "Take-Profit-Preis",
         "stopLossPrice": "Stop-Loss-Preis",
+        "funding": "Finanzierung",
+        "nextFundingRate": "Nächste Funding-Rate",
         "estimatedPnl": "Gesch. PnL",
         "closePositionTitle": "{{coin}}-Position schließen",
         "estimatedRealizedPnl": "Gesch. realisierter PnL"
@@ -3097,7 +3105,7 @@
         "settings": "Einstellungen",
         "unrealizedPnl": "Unrealisierter PNL",
         "details": "Details",
-        "fundingTipsBold": "Dies zeigt die seit Eröffnung der Position abgerechneten Funding-Gebühren insgesamt. <bold>Grüne (positive)</bold> Werte bedeuten, dass Sie Funding von anderen Tradern erhalten haben, während <bold>rote (negative)</bold> Werte Funding-Kosten sind, die Sie gezahlt haben.",
+        "fundingTipsBold": "Dies zeigt die seit Eröffnung der Position abgerechneten Funding-Gebühren insgesamt. <positive>Grüne (positive)</positive> Werte bedeuten, dass Sie Funding von anderen Tradern erhalten haben, während <negative>rote (negative)</negative> Werte Funding-Kosten sind, die Sie gezahlt haben.",
         "crossTips": "Im Cross-Margin-Modus ist der Liquidationspreis einer einzelnen Position nur ein Schätzwert zur Orientierung."
       },
       "PerpsInfo": {
@@ -3599,6 +3607,7 @@
       "screenTitle": "Wallet verbinden",
       "connectingToRabby": "Verbindung zu Rabby wird hergestellt",
       "pairingFailed": "WalletConnect-Kopplung fehlgeschlagen.",
+      "proposalNotReceived": "Der WalletConnect-QR-Code ist möglicherweise abgelaufen. Bitte aktualisiere ihn und versuche es erneut.",
       "connected": "Erfolgreich verbunden. Bitte kehren Sie zur DApp zurück.",
       "proposalExpired": "WalletConnect-Anfrage abgelaufen.",
       "pairingExpired": "WalletConnect-Kopplung abgelaufen. Aktualisieren Sie den DApp-QR-Code und versuchen Sie es erneut.",

@@ -1,0 +1,73 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {};
+	objectVersion = 56;
+	objects = {
+		A10000000000000000000001 /* StartupSmokeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000002 /* StartupSmokeTests.swift */; };
+		A10000000000000000000002 /* StartupSmokeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartupSmokeTests.swift; sourceTree = "<group>"; };
+		A10000000000000000000003 /* StartupSmoke.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = StartupSmoke.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		A10000000000000000000004 = {
+			isa = PBXGroup;
+			children = (A10000000000000000000002, A10000000000000000000005);
+			sourceTree = "<group>";
+		};
+		A10000000000000000000005 /* Products */ = {isa = PBXGroup; children = (A10000000000000000000003); name = Products; sourceTree = "<group>"; };
+		A10000000000000000000006 /* Sources */ = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (A10000000000000000000001); runOnlyForDeploymentPostprocessing = 0; };
+		A10000000000000000000007 /* Frameworks */ = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+		A10000000000000000000008 /* Resources */ = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+		A10000000000000000000009 /* StartupSmoke */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A1000000000000000000000D;
+			buildPhases = (A10000000000000000000006, A10000000000000000000007, A10000000000000000000008);
+			buildRules = ();
+			dependencies = ();
+			name = StartupSmoke;
+			productName = StartupSmoke;
+			productReference = A10000000000000000000003;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+		A1000000000000000000000A /* Project object */ = {
+			isa = PBXProject;
+			attributes = {BuildIndependentTargetsInParallel = YES; LastUpgradeCheck = 1600; };
+			buildConfigurationList = A1000000000000000000000B;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (en, Base);
+			mainGroup = A10000000000000000000004;
+			productRefGroup = A10000000000000000000005;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (A10000000000000000000009);
+		};
+		A1000000000000000000000B = {isa = XCConfigurationList; buildConfigurations = (A1000000000000000000000C); defaultConfigurationIsVisible = 0; defaultConfigurationName = Debug; };
+		A1000000000000000000000C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		A1000000000000000000000D = {isa = XCConfigurationList; buildConfigurations = (A1000000000000000000000E); defaultConfigurationIsVisible = 0; defaultConfigurationName = Debug; };
+		A1000000000000000000000E /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGNING_ALLOWED = NO;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/Frameworks", "@loader_path/Frameworks");
+				PRODUCT_BUNDLE_IDENTIFIER = "com.debank.rabby.startup-smoke";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = iphonesimulator;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+	};
+	rootObject = A1000000000000000000000A;
+}

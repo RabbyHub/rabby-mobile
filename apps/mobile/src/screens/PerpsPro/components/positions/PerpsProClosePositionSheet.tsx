@@ -84,7 +84,7 @@ const PerpsProCloseBottomSheetTextInput = React.forwardRef<
 PerpsProCloseBottomSheetTextInput.displayName =
   'PerpsProCloseBottomSheetTextInput';
 
-const SHEET_HEIGHT = 550;
+const SHEET_HEIGHT = 564;
 const SheetContent = IS_ANDROID ? BottomSheetScrollView : BottomSheetView;
 
 const calculateEstimatedPnl = (

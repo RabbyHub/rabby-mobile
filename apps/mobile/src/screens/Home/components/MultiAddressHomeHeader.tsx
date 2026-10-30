@@ -5,8 +5,6 @@ import { useTranslation } from 'react-i18next';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 
-import { matomoRequestEvent } from '@/utils/analytics';
-
 import { BlurShadowView } from '@/components2024/BluerShadow';
 import { GlobalWarning } from '@/components2024/GlobalWarning/Warining';
 import { usePinnedAccountList } from '@/hooks/account';
@@ -97,17 +95,6 @@ function MultiPinnedAddressList({
     ).slice(0, 3);
   }, [balance24hValues, pinnedAccountList, pinnedAddresses]);
 
-  useEffect(() => {
-    if (!addressListData?.length) {
-      return;
-    }
-    matomoRequestEvent({
-      category: 'Pin Address',
-      action: 'PinAddress_Active',
-      label: `PinAddress_${addressListData?.length}`,
-    });
-  }, [addressListData?.length]);
-
   return (
     <View style={styles.accountList}>
       <Animated.View
@@ -159,10 +146,6 @@ export function MultiAddressHomeHeader(
     if (modalRef.current) {
       removeGlobalBottomSheetModal2024(modalRef.current);
     }
-    matomoRequestEvent({
-      category: 'Click_Header',
-      action: 'Click_Address',
-    });
     let addAddressRequested = false;
     const modalId = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.ADDRESS_LiST,

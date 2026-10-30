@@ -20,7 +20,10 @@ jest.mock('react-native-reanimated', () => {
   const ReactModule = require('react');
   return {
     __esModule: true,
-    default: { createAnimatedComponent: (component: unknown) => component },
+    default: {
+      createAnimatedComponent: (component: unknown) => component,
+      View: require('react-native').View,
+    },
     Easing: {
       cubic: (value: number) => value,
       out: (easing: (value: number) => number) => easing,
@@ -107,8 +110,8 @@ jest.mock('@/utils/styles', () => ({
   createGetStyles2024: (getStyle: unknown) => getStyle,
 }));
 
-jest.mock('@rneui/themed', () => ({
-  Slider: (props: object) => {
+jest.mock('@/components/perps/PerpsGestureSlider', () => ({
+  PerpsGestureSlider: (props: object) => {
     const ReactModule = require('react');
     const { View } = require('react-native');
     return ReactModule.createElement(View, { ...props, testID: 'rne-slider' });

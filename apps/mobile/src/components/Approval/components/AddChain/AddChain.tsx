@@ -1,8 +1,7 @@
 import { useApproval } from '@/hooks/useApproval';
 import type { AddEthereumChainParams } from './type';
 import { useTranslation } from 'react-i18next';
-import { useMemoizedFn, useMount, useRequest } from 'ahooks';
-import { matomoRequestEvent } from '@/utils/analytics';
+import { useMemoizedFn, useRequest } from 'ahooks';
 import { CustomTestnetForm } from '@/screens/CustomTestnet/components/CustomTestnetForm';
 import { useCustomTestnetForm } from '@/screens/CustomTestnet/hooks/useCustomTestnetForm';
 import { Button } from '@/components/Button';
@@ -54,13 +53,6 @@ export const AddChain = ({ params }: { params: AddChainProps }) => {
     });
   }, [addChainParams, setFormValues]);
 
-  useMount(() => {
-    matomoRequestEvent({
-      category: 'Custom Network',
-      action: 'Dapp Add Network',
-    });
-  });
-
   const { loading, runAsync: runAddChain } = useRequest(
     async () => {
       const values = formik.values as any;
@@ -70,11 +62,7 @@ export const AddChain = ({ params }: { params: AddChainProps }) => {
         return;
       }
 
-      const res = await apiCustomTestnet.addCustomTestnet(values, {
-        ga: {
-          source: 'dapp',
-        },
-      });
+      const res = await apiCustomTestnet.addCustomTestnet(values);
       if ('error' in res) {
         formik.setFieldError(res.error.key, res.error.message);
         throw new Error(res.error.message);

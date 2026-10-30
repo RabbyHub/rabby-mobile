@@ -498,7 +498,13 @@
         "empty": {
           "title": "まだ署名されたトランザクションはありません。",
           "titleLastThreeMonths": "90日間取引履歴がありません",
+          "titleInLast90Days": "過去90日間の取引はありません",
+          "titleNoTransactions": "取引はありません",
           "testnetNoHistory": "カスタムトークンのトランザクション履歴は利用できません。"
+        },
+        "noMore": {
+          "title": "これ以上の取引はありません。",
+          "titleInLast90Days": "過去90日間の取引はこれ以上ありません。"
         },
         "CancelTxPopup": {
           "title": "トランザクションをキャンセル",
@@ -2793,6 +2799,8 @@
         "tpSl": "利確/損切り",
         "takeProfitPrice": "利確価格",
         "stopLossPrice": "損切り価格",
+        "funding": "資金調達料",
+        "nextFundingRate": "次回の資金調達率",
         "estimatedPnl": "予想損益",
         "closePositionTitle": "{{coin}} ポジションを決済",
         "estimatedRealizedPnl": "予想実現損益"
@@ -2855,7 +2863,7 @@
         "details": "詳細情報",
         "settings": "設定",
         "unrealizedPnl": "含み損益",
-        "fundingTipsBold": "ポジションを建ててから現在までに決済された資金調達料の合計です。<bold>緑（プラス）</bold>は他のトレーダーから受け取った収益、<bold>赤（マイナス）</bold>は他のトレーダーへ支払った費用を示します。",
+        "fundingTipsBold": "ポジションを建ててから現在までに決済された資金調達料の合計です。<positive>緑（プラス）</positive>は他のトレーダーから受け取った収益、<negative>赤（マイナス）</negative>は他のトレーダーへ支払った費用を示します。",
         "crossTips": "クロス証拠金モードでは、個別ポジションの清算価格は参考値として算出された推定価格です。"
       },
       "PerpsInfo": {
@@ -3357,6 +3365,7 @@
       "screenTitle": "ウォレットを接続",
       "connectingToRabby": "Rabbyに接続中",
       "pairingFailed": "WalletConnectのペアリングに失敗しました。",
+      "proposalNotReceived": "WalletConnectのQRコードが無効になっている可能性があります。更新して再試行してください。",
       "connected": "接続しました。DAppに戻ってください。",
       "proposalExpired": "WalletConnectの接続リクエストは期限切れです。",
       "pairingExpired": "WalletConnectのペアリングの有効期限が切れました。DAppのQRコードを更新して、もう一度お試しください。",

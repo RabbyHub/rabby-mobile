@@ -453,6 +453,7 @@ function HistoryContent({
     loadMore,
     noMore,
     reloadAsync,
+    mutate,
     cancel,
   } = useInfiniteScroll(() => batchFetchData(), {
     isNoMore: d => (d ? !d.hasMore : false),
@@ -597,7 +598,8 @@ function HistoryContent({
           historyListRef.current?.scrollToTop();
           if (!isNeedFetchFromApi) {
             dbLastCursorRef.current = null;
-            batchFetchDataFromDb(value);
+            // this refetch bypasses useInfiniteScroll, keep its noMore in sync
+            batchFetchDataFromDb(value).then(mutate);
           }
         }}
       />
@@ -608,6 +610,7 @@ function HistoryContent({
     setIsShowAll,
     isNeedFetchFromApi,
     batchFetchDataFromDb,
+    mutate,
   ]);
 
   const { setNavigationOptions } = useSafeSetNavigationOptions();
@@ -714,6 +717,13 @@ function HistoryContent({
           refreshLoading={isNeedFetchFromApi && loading}
           isForMultipleAddress={isForMultipleAddress}
           account={isSceneUsingAllAccounts ? null : finalSceneCurrentAccount}
+          noMoreText={
+            noMore
+              ? isNeedFetchFromApi
+                ? t('page.activities.signedTx.noMore.title')
+                : t('page.activities.signedTx.noMore.titleInLast90Days')
+              : undefined
+          }
           loadMore={() => {
             // avoid exec multi times loadMore
             if (loadingMore || noMore) {

@@ -47,13 +47,11 @@ import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHisto
 import {
   CUSTOM_HISTORY_ACTION,
   CUSTOM_HISTORY_TITLE_TYPE,
-  LendingReportType,
-  LendingSignType,
 } from '@/screens/Transaction/components/type';
 import { useRefreshHistoryId } from '../../hooks';
 import wrapperToken from '../../config/wrapperToken';
 import { calculateMaxWithdrawAmount } from '../../utils/calculateMaxWithdrawAmount';
-import { APP_VERSIONS, INTERNAL_REQUEST_SESSION } from '@/constant';
+import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import { apiProvider } from '@/core/apis';
 import { Button } from '@/components2024/Button';
 import { MINI_SIGN_ERROR } from '@/components2024/MiniSignV2/state/SignatureManager';
@@ -61,7 +59,6 @@ import { SignatureInstanceProvider } from '@/components2024/MiniSignV2/state/Sig
 import { useSignatureStoreOf } from '@/components2024/MiniSignV2/state/useSignatureStore';
 import { CHAINS_ENUM } from '@debank/common';
 import type { ReserveDataHumanized } from '@aave/contract-helpers';
-import { stats } from '@/utils/stats';
 import { isZeroAmount } from '../../utils/number';
 import { Text } from '@/components/Typography';
 import { useZeroLTVBlockingWithdraw } from '../../hooks/useZeroLTVBlockingWithdraw';
@@ -452,10 +449,6 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
           throw new Error('no txs');
         }
         let results: string[] = [];
-        const signType =
-          canShowDirectSubmit && !forceFullSign
-            ? LendingSignType.Simplified
-            : LendingSignType.Full;
         if (canShowDirectSubmit && !forceFullSign) {
           try {
             results = await openDirect({
@@ -507,43 +500,6 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
           );
         }
 
-        const targetPool = formattedPoolReservesAndIncentives.find(item => {
-          return isSameAddress(
-            currentReserve.underlyingAsset,
-            API_ETH_MOCK_ADDRESS,
-          )
-            ? isSameAddress(
-                item.underlyingAsset,
-                wrapperToken?.[currentReserve.chain]?.address,
-              )
-            : isSameAddress(
-                item.underlyingAsset,
-                currentReserve.underlyingAsset,
-              );
-        });
-        const usdValue = targetPool
-          ? new BigNumber(amount || '0')
-              .multipliedBy(
-                BigNumber(
-                  targetPool.formattedPriceInMarketReferenceCurrency || '0',
-                ),
-              )
-              .toString()
-          : '0';
-
-        stats.report('aaveInternalTx', {
-          tx_type: LendingReportType.Withdraw,
-          chain: chainInfo?.serverId || '',
-          tx_id: txId || '',
-          user_addr: currentAccount.address || '',
-          address_type: currentAccount.type || '',
-          usd_value: usdValue,
-          create_at: Date.now(),
-          app_version: APP_VERSIONS.fromNative || '0',
-          signType,
-          ...(source ? { source } : {}),
-        });
-
         refresh();
         toast.success(
           `${t('page.Lending.withdrawDetail.actions')} ${t(
@@ -566,15 +522,10 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
       activeTxs,
       amount,
       canShowDirectSubmit,
-      formattedPoolReservesAndIncentives,
-      chainInfo?.serverId,
       refresh,
       t,
       onClose,
       openDirect,
-      currentReserve.underlyingAsset,
-      currentReserve.chain,
-      source,
       isZeroLTVWithdrawBlocked,
       buildTransactions,
     ],

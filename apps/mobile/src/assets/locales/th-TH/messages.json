@@ -900,7 +900,13 @@
         "empty": {
           "title": "ยังไม่มีการทำธุรกรรมที่เซ็นชื่อ",
           "titleLastThreeMonths": "ไม่มีประวัติการทำธุรกรรมใน 90 วัน",
+          "titleInLast90Days": "ไม่มีธุรกรรมในช่วง 90 วันที่ผ่านมา",
+          "titleNoTransactions": "ไม่มีธุรกรรม",
           "testnetNoHistory": "ไม่มีประวัติธุรกรรมของโทเค็นแบบกำหนดเอง"
+        },
+        "noMore": {
+          "title": "ไม่มีธุรกรรมเพิ่มเติม",
+          "titleInLast90Days": "ไม่มีธุรกรรมเพิ่มเติมในช่วง 90 วันที่ผ่านมา"
         },
         "CancelTxPopup": {
           "title": "ยกเลิกการทำธุรกรรม",
@@ -2918,6 +2924,8 @@
         "tpSl": "TP/SL",
         "takeProfitPrice": "ราคาทำกำไร",
         "stopLossPrice": "ราคาหยุดขาดทุน",
+        "funding": "ค่าฟันดิง",
+        "nextFundingRate": "อัตราฟันดิงครั้งถัดไป",
         "estimatedPnl": "PNL โดยประมาณ",
         "closePositionTitle": "ปิดโพซิชัน {{coin}}",
         "estimatedRealizedPnl": "PNL ที่เกิดขึ้นจริงโดยประมาณ"
@@ -2980,7 +2988,7 @@
         "settings": "การตั้งค่า",
         "marginMode": "โหมดมาร์จิ้น",
         "unrealizedPnl": "PNL ที่ยังไม่เกิดขึ้นจริง",
-        "fundingTipsBold": "ส่วนนี้แสดงยอดค่าฟันดิงรวมที่ชำระแล้วตั้งแต่เปิดโพซิชัน ค่า <bold>สีเขียว (บวก)</bold> หมายถึงคุณได้รับค่าฟันดิงจากเทรดเดอร์อื่น ส่วนค่า <bold>สีแดง (ลบ)</bold> คือค่าฟันดิงที่คุณจ่ายให้พวกเขา",
+        "fundingTipsBold": "ส่วนนี้แสดงยอดค่าฟันดิงรวมที่ชำระแล้วตั้งแต่เปิดโพซิชัน ค่า <positive>สีเขียว (บวก)</positive> หมายถึงคุณได้รับค่าฟันดิงจากเทรดเดอร์อื่น ส่วนค่า <negative>สีแดง (ลบ)</negative> คือค่าฟันดิงที่คุณจ่ายให้พวกเขา",
         "crossTips": "ในโหมด Cross Margin ราคาชำระบัญชีของแต่ละโพซิชันเป็นเพียงค่าประมาณสำหรับอ้างอิง"
       },
       "PerpsInfo": {
@@ -3482,6 +3490,7 @@
       "screenTitle": "เชื่อมต่อวอลเล็ต",
       "connectingToRabby": "กำลังเชื่อมต่อกับ Rabby",
       "pairingFailed": "การจับคู่ WalletConnect ล้มเหลว",
+      "proposalNotReceived": "คิวอาร์โค้ด WalletConnect อาจหมดอายุแล้ว โปรดรีเฟรชแล้วลองอีกครั้ง",
       "connected": "เชื่อมต่อสำเร็จ โปรดกลับไปที่ DApp",
       "proposalExpired": "ข้อเสนอ WalletConnect หมดอายุแล้ว",
       "pairingExpired": "การจับคู่ WalletConnect หมดอายุแล้ว รีเฟรชคิวอาร์โค้ด dapp แล้วลองอีกครั้ง",

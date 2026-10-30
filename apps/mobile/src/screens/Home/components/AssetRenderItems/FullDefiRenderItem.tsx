@@ -13,7 +13,6 @@ import { useBrowser } from '@/hooks/browser/useBrowser';
 import { navigateToPreferredPerps } from '@/hooks/perps/navigation/navigateToPreferredPerps';
 import { isAppChain } from '../../utils/appchain';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
-import { matomoRequestEvent } from '@/utils/analytics';
 import { AssetAvatar } from '@/components/AssetAvatar';
 import { ellipsisOverflowedText } from '@/utils/text';
 import { AccountOverview } from '../AccountOverview';
@@ -100,13 +99,6 @@ export const FullDefiRenderItem = ({
           console.error('[FullDefiRenderItem] persist dapp failed', error);
         }
         openTab(data?.site_url);
-        if (origin) {
-          matomoRequestEvent({
-            category: 'Websites Usage',
-            action: 'Website_Visit_Defi Detail',
-            label: origin,
-          });
-        }
       }
     }
   }, [
@@ -338,7 +330,6 @@ export const FullDefiRenderItem = ({
               item={item}
               chain={data?.chain}
               protocolLogo={data?.logo}
-              protocolName={data?.name}
               onRefresh={handleRefresh}
               address={account.address}
               addressType={account.type}

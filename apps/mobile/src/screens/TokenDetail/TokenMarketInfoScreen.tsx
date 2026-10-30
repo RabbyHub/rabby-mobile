@@ -15,13 +15,11 @@ import { openapi } from '@/core/request';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { useTheme2024 } from '@/hooks/theme';
 import type { AbstractProject } from '@/screens/Home/types';
-import { getMarketTabToSwapPageAction } from '@/screens/Market/analytics';
 import { findChain, findChainByServerID } from '@/utils/chain';
 import { createGetStyles2024 } from '@/utils/styles';
 import { mergeTokenSecurityFields } from '@/utils/tokenSecurityFlags';
 import { CHAINS_ENUM } from '@debank/common';
 import { getFallbackAccountSnapshot } from '@/core/serviceApi/preference';
-import { matomoRequestEvent } from '@/utils/analytics';
 import { useRoute, useFocusEffect } from '@react-navigation/native';
 import { useMemoizedFn, useRequest } from 'ahooks';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -138,7 +136,7 @@ export const RiskTokenTips = ({ isDanger }: { isDanger?: boolean }) => {
 export const TokenMarketInfoScreen = () => {
   const route =
     useRoute<GetRootScreenNavigationProps<'TokenMarketInfo'>['route']>();
-  const { token, account, tokenSelectType, from } = route.params || {};
+  const { token, account, tokenSelectType } = route.params || {};
   const { styles, isLight, colors2024 } = useTheme2024({
     getStyle,
   });
@@ -287,16 +285,7 @@ export const TokenMarketInfoScreen = () => {
       await switchSceneCurrentAccount('MakeTransactionAbout', toAccount);
       // 关闭弹窗隐藏
       setIsFromBack(false);
-      const marketAction = from?.scene
-        ? getMarketTabToSwapPageAction(from.scene)
-        : null;
 
-      if (marketAction) {
-        matomoRequestEvent({
-          category: 'Rabby Market',
-          action: marketAction,
-        });
-      }
       navigation.push(RootNames.StackTransaction, {
         screen: account ? RootNames.SwapBridge : RootNames.MultiSwapBridge,
         params: {
@@ -306,7 +295,6 @@ export const TokenMarketInfoScreen = () => {
           type,
           address,
           isFromSwap,
-          from,
         },
       });
     },
@@ -563,7 +551,7 @@ export const TokenMarketInfoScreen = () => {
               <RefreshControl
                 refreshing={false}
                 onRefresh={handleRefresh}
-                progressViewOffset={isAndroid ? TOKEN_MARKET_TAB_BAR_HEIGHT : 0}
+                progressViewOffset={TOKEN_MARKET_TAB_BAR_HEIGHT}
               />
             }
             style={styles.innerContainer}>
@@ -649,7 +637,7 @@ export const TokenMarketInfoScreen = () => {
               <RefreshControl
                 refreshing={false}
                 onRefresh={handleRefresh}
-                progressViewOffset={isAndroid ? TOKEN_MARKET_TAB_BAR_HEIGHT : 0}
+                progressViewOffset={TOKEN_MARKET_TAB_BAR_HEIGHT}
               />
             }
             style={styles.innerContainer}>

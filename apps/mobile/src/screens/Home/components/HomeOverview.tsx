@@ -64,7 +64,6 @@ import addressBalanceStore, {
   balanceAccountsStore,
   getSelectedBalanceAddressesSnapshot,
 } from '@/store/balance';
-import { matomoRequestEvent } from '@/utils/analytics';
 import { navigateDeprecated } from '@/utils/navigation';
 import { useTranslation } from 'react-i18next';
 import { useSortAddressList } from '../../Address/useSortAddressList';
@@ -1489,10 +1488,6 @@ const HomeMenuItem: React.FC<HomeMenuItemProps> = ({
     console.debug('[perf] touched menu', el.key);
     onPress(el.key);
     markVisited();
-    matomoRequestEvent({
-      category: 'Click_Services',
-      action: `Click_${el.key}`,
-    });
   }, [el.key, markVisited, onPress]);
 
   return (

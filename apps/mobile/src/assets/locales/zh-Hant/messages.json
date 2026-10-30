@@ -402,7 +402,13 @@
         "empty": {
           "title": "暫無交易記錄",
           "titleLastThreeMonths": "90 天內無交易紀錄",
+          "titleInLast90Days": "近 90 天無交易紀錄",
+          "titleNoTransactions": "暫無交易紀錄",
           "testnetNoHistory": "自訂代幣交易記錄不可用。"
+        },
+        "noMore": {
+          "title": "沒有更多交易紀錄",
+          "titleInLast90Days": "近 90 天沒有更多交易紀錄"
         },
         "CancelTxConfirmPopup": {
           "title": "清除本機待處理記錄",
@@ -2915,6 +2921,8 @@
         "tpSl": "止盈/止損",
         "takeProfitPrice": "止盈價格",
         "stopLossPrice": "止損價格",
+        "funding": "資金費",
+        "nextFundingRate": "下一期資金費率",
         "estimatedPnl": "預計盈虧",
         "closePositionTitle": "平掉 {{coin}} 倉位",
         "estimatedRealizedPnl": "預計已實現盈虧"
@@ -2977,7 +2985,7 @@
         "unrealizedPnl": "未實現盈虧",
         "marginMode": "保證金模式",
         "details": "詳細資料",
-        "fundingTipsBold": "這顯示自開倉以來已結算的資金費總額。<bold>綠色（正數）</bold>表示您從其他交易者處獲得資金費，<bold>紅色（負數）</bold>表示您向其他交易者支付的資金費成本。",
+        "fundingTipsBold": "這顯示自開倉以來已結算的資金費總額。<positive>綠色（正數）</positive>表示您從其他交易者處獲得資金費，<negative>紅色（負數）</negative>表示您向其他交易者支付的資金費成本。",
         "crossTips": "全倉保證金模式下，單個倉位的強平價格僅為估算值，僅供參考。"
       },
       "PerpsInfo": {
@@ -3479,6 +3487,7 @@
       "screenTitle": "連接錢包",
       "connectingToRabby": "正在連接到 Rabby",
       "pairingFailed": "WalletConnect 配對失敗。",
+      "proposalNotReceived": "WalletConnect 二維碼可能已失效，請重新整理後再試一次。",
       "connected": "連接成功，請返回 DApp。",
       "proposalExpired": "WalletConnect 連接請求已過期。",
       "pairingExpired": "WalletConnect 配對已過期。請重新整理 DApp QR Code 後重試。",

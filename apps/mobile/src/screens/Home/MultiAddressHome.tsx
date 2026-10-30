@@ -1,22 +1,12 @@
-import { useAppThemeConfig, useTheme2024 } from '@/hooks/theme';
-import { trackGasAccountActiveStatusOncePerDay } from '@/utils/gasAccountAnalytics';
+import { useTheme2024 } from '@/hooks/theme';
 import { autoLoginGasAccountIfNeeded } from '@/utils/autoLoginGasAccount';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useFocusEffect } from '@react-navigation/native';
 import React, { useCallback, useEffect } from 'react';
-import { AppState, View } from 'react-native';
+import { View } from 'react-native';
 
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import * as apisAccount from '@/core/apis/account';
-import {
-  browserServiceApi,
-  getBrowserBookmarks,
-} from '@/core/serviceApi/browser';
-import {
-  getPinnedTokenSnapshot,
-  getPreferenceSnapshot,
-  setPreference,
-} from '@/core/serviceApi/preference';
 import {
   resetHomeStartupReady,
   scheduleHomeStartupReady,
@@ -24,14 +14,11 @@ import {
   useHomePostStartupReady,
 } from '@/core/utils/homeStartupReady';
 import { apisHomeTabIndex, resetNavigationTo } from '@/hooks/navigation';
-import { matomoRequestEvent } from '@/utils/analytics';
 import { getReadyNavigationInstance } from '@/utils/navigation';
 import { useRendererDetect } from '@/components/Perf/PerfDetector';
 import { HomeGuidanceMultipleTabs } from '@/components2024/Animations/HomeGuidanceMultipleTabs';
-import { useTrack0331HomeActiveSnapshots } from '@/utils/analytics0331';
 import { deleteLongTimeCurveCache } from '@/utils/24balanceCurveCache';
 import { deleteLongTime24hBalanceCache } from '@/utils/24hBalanceCache';
-import dayjs from 'dayjs';
 import { setIsFoldMultiChart } from '../Address/components/MultiAssets/RenderRow/CurveChart';
 import { TabsMultiAssets } from '../Address/components/MultiAssets/TabsMultiAssets';
 import { useInitDetectDBAssets } from '../Search/useAssets';
@@ -175,7 +162,6 @@ function startHomeDbLowPriorityHold() {
 
 function HomeDeferredLifecycle() {
   useInitDetectDBAssets();
-  useTrack0331HomeActiveSnapshots();
 
   return null;
 }
@@ -253,13 +239,7 @@ function HomeReadableAccountStoresBootstrap() {
   return null;
 }
 
-function HomePostStartupEffects({
-  appThemeConfig,
-  trackGasAccountActive,
-}: {
-  appThemeConfig: ReturnType<typeof useAppThemeConfig>;
-  trackGasAccountActive: () => void;
-}) {
+function HomePostStartupEffects() {
   const homePostStartupReady = useHomePostStartupReady();
 
   useEffect(() => {
@@ -300,26 +280,6 @@ function HomePostStartupEffects({
         return;
       }
 
-      trackGasAccountActive();
-
-      const subscription = AppState.addEventListener('change', state => {
-        if (state === 'active') {
-          trackGasAccountActive();
-        }
-      });
-
-      return () => {
-        subscription.remove();
-      };
-    }, [homePostStartupReady, trackGasAccountActive]),
-  );
-
-  useFocusEffect(
-    useCallback(() => {
-      if (!homePostStartupReady) {
-        return;
-      }
-
       let cancelled = false;
       import('../GasAccount/hooks/atom')
         .then(({ storeApiGasAccount }) => {
@@ -344,57 +304,6 @@ function HomePostStartupEffects({
     }, [homePostStartupReady]),
   );
 
-  useEffect(() => {
-    if (!homePostStartupReady) {
-      return;
-    }
-
-    matomoRequestEvent({
-      category: 'ThemeMode',
-      action: `ThemeMode_${appThemeConfig}`,
-    });
-  }, [appThemeConfig, homePostStartupReady]);
-
-  useEffect(() => {
-    if (!homePostStartupReady) {
-      return;
-    }
-
-    const lastReportTime = getPreferenceSnapshot('lastReportTime') || 0;
-    if (!lastReportTime || !dayjs(lastReportTime).isToday()) {
-      void Promise.all([
-        browserServiceApi.getBrowserTabs(),
-        getBrowserBookmarks(),
-      ])
-        .then(([browserTabs, browserBookmarks]) => {
-          matomoRequestEvent({
-            category: 'Websites Usage',
-            action: 'Website_LikeStatus',
-            label: `LikeDapp:${browserBookmarks.ids.length}`,
-          });
-
-          matomoRequestEvent({
-            category: 'Websites Usage',
-            action: 'Website_TabStatus',
-            label: `TabNumber:${browserTabs.tabs.length}`,
-          });
-
-          matomoRequestEvent({
-            category: 'Watchlist Usage',
-            action: 'Watchlist_LikeStatus',
-            label: `LikeToken:${getPinnedTokenSnapshot().length}`,
-          });
-
-          return setPreference({
-            lastReportTime: Date.now(),
-          });
-        })
-        .catch(error => {
-          console.error('[Home] report daily local state failed', error);
-        });
-    }
-  }, [homePostStartupReady]);
-
   if (!homePostStartupReady) {
     return null;
   }
@@ -411,15 +320,8 @@ function MultiAddressHome(): JSX.Element {
   const { styles, colors2024, isLight } = useTheme2024({
     getStyle,
   });
-  const appThemeConfig = useAppThemeConfig();
   const isLoss = useHome24hProjection(state => !!state.value?.isLoss);
   useRendererDetect({ name: 'MultiAddressHome' });
-
-  const trackGasAccountActive = useCallback(() => {
-    trackGasAccountActiveStatusOncePerDay().catch(error => {
-      console.error('trackGasAccountActiveStatusOncePerDay error', error);
-    });
-  }, []);
 
   useEffect(() => {
     apisHomeTabIndex.setTabIndex(0);
@@ -454,10 +356,7 @@ function MultiAddressHome(): JSX.Element {
       <HomeStartupReadyScheduler />
       <HomeContentReadyScheduler />
       <HomeReadableAccountStoresBootstrap />
-      <HomePostStartupEffects
-        appThemeConfig={appThemeConfig}
-        trackGasAccountActive={trackGasAccountActive}
-      />
+      <HomePostStartupEffects />
 
       <TmpHomeRefresher />
     </NormalScreenContainer2024>

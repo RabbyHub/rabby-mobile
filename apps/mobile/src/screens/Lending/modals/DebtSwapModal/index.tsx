@@ -24,7 +24,7 @@ import { Button } from '@/components2024/Button';
 import { useMiniSigner } from '@/hooks/useSigner';
 import AutoLockView from '@/components/AutoLockView';
 import { createGetStyles2024 } from '@/utils/styles';
-import { APP_VERSIONS, INTERNAL_REQUEST_SESSION } from '@/constant';
+import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import { RcIconSwapBottomArrow } from '@/assets/icons/swap';
 import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
@@ -46,8 +46,6 @@ import { useSignatureStoreOf } from '@/components2024/MiniSignV2/state/useSignat
 import {
   CUSTOM_HISTORY_ACTION,
   CUSTOM_HISTORY_TITLE_TYPE,
-  LendingReportType,
-  LendingSignType,
 } from '@/screens/Transaction/components/type';
 import {
   createGlobalBottomSheetModal2024,
@@ -99,7 +97,6 @@ import {
 } from './warning';
 import BridgeSwitchBtn from '@/screens/Bridge/components/BridgeSwitchBtn';
 import { Text } from '@/components/Typography';
-import { stats } from '@/utils/stats';
 import { hasInsufficientSwapLiquidity } from '../../utils/swap';
 
 interface DebtSwapModalProps {
@@ -767,10 +764,6 @@ export default function DebtSwapModal({
         }
 
         let results: string[] = [];
-        const signType =
-          canShowDirectSubmit && !p?.forceFullSign
-            ? LendingSignType.Simplified
-            : LendingSignType.Full;
         if (canShowDirectSubmit && !p?.forceFullSign) {
           try {
             results = await openDirect({
@@ -825,21 +818,6 @@ export default function DebtSwapModal({
           );
         }
 
-        const usdValue = new BigNumber(debouncedFromAmount || '0')
-          .multipliedBy(new BigNumber(fromToken.usdPrice || '0'))
-          .toString();
-
-        stats.report('aaveInternalTx', {
-          tx_type: LendingReportType.DebtSwap,
-          chain: chainInfo?.serverId || '',
-          tx_id: txId || '',
-          user_addr: currentAccount.address || '',
-          address_type: currentAccount.type || '',
-          usd_value: usdValue,
-          create_at: Date.now(),
-          app_version: APP_VERSIONS.fromNative || '0',
-          signType,
-        });
         toast.success(
           `${t('page.Lending.debtSwap.actions.title')} ${t(
             'page.Lending.submitted',
@@ -860,7 +838,6 @@ export default function DebtSwapModal({
       currentAccount,
       canShowDirectSubmit,
       chainInfo?.id,
-      chainInfo?.serverId,
       t,
       closeMiniSigner,
       onClose,
@@ -870,8 +847,6 @@ export default function DebtSwapModal({
       refresh,
       isInsufficientLiquidity,
       isExceedMaxLtvAfterSwap,
-      debouncedFromAmount,
-      fromToken.usdPrice,
     ],
   );
 

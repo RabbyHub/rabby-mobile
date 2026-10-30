@@ -23,7 +23,7 @@ import {
   UnlockUIManager,
   useStackScreenConfig,
 } from './hooks/navigation';
-import { analytics, matomoLogScreenView } from './utils/analytics';
+import { analytics } from './utils/analytics';
 
 import { AppStatusBar } from './components/AppStatusBar';
 import AutoLockView from './components/AutoLockView';
@@ -269,10 +269,9 @@ const onStateChange: React.ComponentProps<
     onRouteChange(currentRouteName, previousRouteName);
 
     analytics.logScreenView({
-      screen_name: routeNameRef.current || '',
-      screen_class: routeNameRef.current || '',
+      screen_name: currentRouteName || '',
+      screen_class: currentRouteName || '',
     });
-    matomoLogScreenView({ name: currentRouteName! });
   }
   routeNameRef.current = currentRouteName;
 };
@@ -509,7 +508,6 @@ export default function AppNavigation() {
       screen_name: readyRootName,
       screen_class: readyRootName,
     });
-    matomoLogScreenView({ name: readyRootName });
   }, []);
 
   useDetermineExitAppOnPressBack();

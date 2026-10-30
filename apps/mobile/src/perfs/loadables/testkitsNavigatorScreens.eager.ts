@@ -7,6 +7,7 @@ export { default as DevUIFontShowCase } from '@/screens/Testkits/DevUIFontShowCa
 export { default as DevUIFormShowCase } from '@/screens/Testkits/DevUIFormShowCase';
 export { default as DevUIAccountShowCase } from '@/screens/Testkits/DevUIAccountShowCase';
 export { default as DevUIComponents2024ShowCase } from '@/screens/Testkits/DevUIComponents2024ShowCase';
+export { default as DevUISafeSvgMedia } from '@/screens/Testkits/DevUISafeSvgMedia';
 export { default as DevUIToast } from '@/screens/Testkits/DevUIToast';
 export { default as DevUINotifications } from '@/screens/Testkits/DevUINotifications';
 export { default as DevUIScreenContainerShowCase } from '@/screens/Testkits/DevUIScreenContainerShowCase';

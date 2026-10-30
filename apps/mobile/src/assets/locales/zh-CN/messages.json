@@ -556,7 +556,13 @@
         "empty": {
           "title": "暂无交易记录",
           "titleLastThreeMonths": "90天内没有交易记录",
+          "titleInLast90Days": "近 90 天没有交易记录",
+          "titleNoTransactions": "暂无交易记录",
           "testnetNoHistory": "自定义代币交易记录不可用。"
+        },
+        "noMore": {
+          "title": "没有更多交易记录",
+          "titleInLast90Days": "近 90 天没有更多交易记录"
         },
         "tips": {
           "canNotCancel": "无法加速或取消：这不是第一笔待确认交易。",
@@ -1464,6 +1470,7 @@
       "screenTitle": "连接钱包",
       "connectingToRabby": "正在连接到 Rabby",
       "pairingFailed": "WalletConnect 配对失败。",
+      "proposalNotReceived": "WalletConnect 二维码可能已失效，请刷新后重试。",
       "connected": "连接成功，请返回 DApp。",
       "proposalExpired": "WalletConnect 连接请求已过期。",
       "pairingExpired": "WalletConnect 配对已过期。请刷新 DApp 二维码后重试。",
@@ -2892,6 +2899,8 @@
         "tpSl": "止盈/止损",
         "takeProfitPrice": "止盈价格",
         "stopLossPrice": "止损价格",
+        "funding": "资金费",
+        "nextFundingRate": "下一期资金费率",
         "estimatedPnl": "预计盈亏",
         "closePositionTitle": "平掉 {{coin}} 仓位",
         "estimatedRealizedPnl": "预计已实现盈亏"
@@ -2954,7 +2963,7 @@
         "unrealizedPnl": "未实现盈亏",
         "marginMode": "保证金模式",
         "settings": "设置",
-        "fundingTipsBold": "这显示自开仓以来已结算的资金费总额。<bold>绿色（正数）</bold>表示您从其他交易者处获得资金费，<bold>红色（负数）</bold>表示您向其他交易者支付的资金费成本。",
+        "fundingTipsBold": "这显示自开仓以来已结算的资金费总额。<positive>绿色（正数）</positive>表示您从其他交易者处获得资金费，<negative>红色（负数）</negative>表示您向其他交易者支付的资金费成本。",
         "crossTips": "全仓保证金模式下，单个仓位的强平价格仅为估算值，仅供参考。"
       },
       "PerpsInfo": {

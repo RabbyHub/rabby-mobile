@@ -5,7 +5,6 @@ import {
   useBrowserActiveTabState,
 } from '@/hooks/browser/useBrowser';
 import { useTheme2024 } from '@/hooks/theme';
-import { matomoRequestEvent } from '@/utils/analytics';
 import { EVENT_BROWSER_ACTION, eventBus } from '@/utils/events';
 import { createGetStyles2024 } from '@/utils/styles';
 import { urlUtils } from '@rabby-wallet/base-utils';
@@ -46,11 +45,6 @@ const BrowserHandlerContent = () => {
       trigger: '',
     });
     // onHideBrowser();
-    matomoRequestEvent({
-      category: 'Websites Usage',
-      action: `Website_Exit`,
-      label: 'Click X',
-    });
   });
 
   const [activeTabState] = useBrowserActiveTabState();

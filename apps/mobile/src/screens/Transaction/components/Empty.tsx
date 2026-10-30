@@ -53,6 +53,8 @@ const getStyle = createGetStyles2024(({ colors, colors2024, isLight }) => ({
     fontSize: 16,
     lineHeight: 20,
     fontWeight: '400',
+    // longer locales wrap; keep every line centered
+    textAlign: 'center',
   },
   desc: {
     color: colors['neutral-body'],

@@ -70,6 +70,7 @@ export const BatchRevokePermit2 = ({
                   {group[spender].map(token => (
                     <LogoWithText
                       logo={token.logo_url}
+                      logoRadius={16}
                       text={
                         <Values.TokenSymbol
                           token={token}

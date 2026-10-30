@@ -436,7 +436,13 @@
         "empty": {
           "title": "Ainda não há transações assinadas",
           "titleLastThreeMonths": "Sem histórico de transações nos últimos 90 dias",
+          "titleInLast90Days": "Sem transações nos últimos 90 dias",
+          "titleNoTransactions": "Sem transações",
           "testnetNoHistory": "O histórico de transações de tokens personalizados não está disponível."
+        },
+        "noMore": {
+          "title": "Não há mais transações.",
+          "titleInLast90Days": "Não há mais transações nos últimos 90 dias."
         },
         "CancelTxPopup": {
           "title": "Cancelar transação",
@@ -3036,6 +3042,8 @@
         "tpSl": "TP/SL",
         "takeProfitPrice": "Preço de realização de lucro",
         "stopLossPrice": "Preço de stop loss",
+        "funding": "Financiamento",
+        "nextFundingRate": "Próxima taxa de financiamento",
         "estimatedPnl": "PnL estimado",
         "closePositionTitle": "Fechar posição de {{coin}}",
         "estimatedRealizedPnl": "PnL realizado estimado"
@@ -3098,7 +3106,7 @@
         "unrealizedPnl": "PNL não realizado",
         "settings": "Definições",
         "marginMode": "Modo de Margem",
-        "fundingTipsBold": "Isto mostra o total de funding liquidado desde que a posição foi aberta. Valores <bold>verdes (positivos)</bold> significam que recebeu funding de outros traders, enquanto valores <bold>vermelhos (negativos)</bold> são custos de funding que pagou a eles.",
+        "fundingTipsBold": "Isto mostra o total de funding liquidado desde que a posição foi aberta. Valores <positive>verdes (positivos)</positive> significam que recebeu funding de outros traders, enquanto valores <negative>vermelhos (negativos)</negative> são custos de funding que pagou a eles.",
         "crossTips": "No modo de Margem Cruzada, o preço de liquidação para uma única posição é uma estimativa apenas para referência."
       },
       "PerpsInfo": {
@@ -3600,6 +3608,7 @@
       "screenTitle": "Ligar carteira",
       "connectingToRabby": "A ligar ao Rabby",
       "pairingFailed": "O emparelhamento WalletConnect falhou.",
+      "proposalNotReceived": "O código QR do WalletConnect pode ter expirado. Atualize-o e tente novamente.",
       "connected": "Ligado com sucesso. Volte à DApp.",
       "proposalExpired": "A proposta WalletConnect expirou.",
       "pairingExpired": "O emparelhamento WalletConnect expirou. Atualize o código QR da DApp e tente novamente.",
