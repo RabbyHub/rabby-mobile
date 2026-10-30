@@ -1530,6 +1530,9 @@
       "alreadyClaimedXPoints": "Zaten talep edildi: {{point}}"
     },
     "customTestnet": {
+      "screenTitle": "Özel Ağ",
+      "removeNetwork": "{{name}} ağını sil",
+      "editTitle": "Özel Ağı Düzenle",
       "CustomTestnetForm": {
         "rpcUrl": "RPC URL",
         "idRequired": "Lütfen zincir kimliğini girin",

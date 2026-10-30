@@ -1892,6 +1892,9 @@
       "confirmRequired": "Vui lòng xác nhận mật khẩu"
     },
     "customTestnet": {
+      "screenTitle": "Mạng tùy chỉnh",
+      "removeNetwork": "Xóa {{name}}",
+      "editTitle": "Chỉnh sửa mạng tùy chỉnh",
       "empty": "Không có mạng tùy chỉnh",
       "id": "ID",
       "add": "Thêm mạng tùy chỉnh",
