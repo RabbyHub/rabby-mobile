@@ -129,6 +129,19 @@ end
 #   pod 'RNNotifeeCore', :path => '../node_modules/@notifee/react-native/RNNotifeeCore.podspec'
 # end
 
+# libc++ hardening assertions (pulled in by Swift C++ interop, e.g. Nitro modules)
+# embed __FILE__ paths of SDK headers, which include the Xcode install path
+# (/Applications/Xcode.app vs /Applications/Xcode_27.1.app on CI). Remap it to a
+# fixed prefix so hash validation builds match across machines.
+XCODE_PATH_MAP_FLAG = '"-fmacro-prefix-map=$(DEVELOPER_DIR)=/XcodeDeveloper"'
+
+def append_build_flag(config, key, flag)
+  value = config.build_settings[key] || '$(inherited)'
+  value = value.join(' ') if value.is_a?(Array)
+  return if value.include?(flag)
+  config.build_settings[key] = "#{value} #{flag}"
+end
+
 def patch_build_settings(installer)
   arch = `arch`.strip
   min_ios_version = Gem::Version.new(min_ios_version_supported)
@@ -138,6 +151,10 @@ def patch_build_settings(installer)
     target.build_configurations.each do |config|
       config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= ['$(inherited)', '_LIBCPP_ENABLE_CXX17_REMOVED_UNARY_BINARY_FUNCTION']
       config.build_settings['ENABLE_BITCODE'] = 'NO'
+
+      append_build_flag(config, 'OTHER_CFLAGS', XCODE_PATH_MAP_FLAG)
+      append_build_flag(config, 'OTHER_CPLUSPLUSFLAGS', XCODE_PATH_MAP_FLAG)
+      append_build_flag(config, 'OTHER_SWIFT_FLAGS', "-Xcc #{XCODE_PATH_MAP_FLAG}")
 
       # Xcode 27 rejects deployment targets below iOS 15. RN's own bump only covers
       # each pod's main target, so resource bundle targets (e.g. *_Privacy) keep
