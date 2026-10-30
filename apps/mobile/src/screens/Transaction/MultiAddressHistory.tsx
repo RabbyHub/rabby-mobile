@@ -27,11 +27,11 @@ import {
   useRequest,
 } from 'ahooks';
 import PQueue from 'p-queue';
-import { last, unionBy, orderBy, debounce } from 'lodash';
+import { last, orderBy, debounce } from 'lodash';
 import { View } from 'react-native';
 import { useRoute } from '@react-navigation/native';
 import type { TxHistoryResult } from '@rabby-wallet/rabby-api/dist/types';
-import { HistoryList } from './components/HistoryGroupList';
+import { BridgeAwareHistoryList } from './components/BridgeAwareHistoryList';
 import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
 import { BottomSheetModalTokenDetail } from '@/components/TokenDetailPopup/BottomSheetModalTokenDetail';
 import { useGeneralTokenDetailSheetModal } from '@/components/TokenDetailPopup/hooks';
@@ -371,18 +371,22 @@ function HistoryContent({
       ...(isTestnet
         ? completeds
         : completeds.filter(item => {
+            const localTx = item.maxGasTx;
+            if (!localTx) {
+              return false;
+            }
             const isSynced =
               !!rawDataList?.list.find(tx => {
                 return (
-                  tx.id === item.maxGasTx.hash &&
+                  tx.id === localTx.hash &&
                   findChainByServerID(tx.chain)?.id === item.chainId
                 );
               }) || item.isSynced;
 
             if (isSynced && !item.isSynced) {
-              void transactionHistoryServiceApi
+              transactionHistoryServiceApi
                 .updateTx({
-                  ...item.maxGasTx,
+                  ...localTx,
                   isSynced: true,
                 })
                 .catch(error => {
@@ -539,7 +543,7 @@ function HistoryContent({
     hasConsumedLocalStatusRef.current = true;
     const list = getTransactionHistorySucceedListSnapshot();
     setHistorySuccessList(list);
-    void transactionHistoryServiceApi
+    transactionHistoryServiceApi
       .clearSuccessAndFailList(
         isForMultipleAddress ? undefined : currentAddress,
       )
@@ -690,22 +694,35 @@ function HistoryContent({
     );
 
     // filter out groups that are the same as the recent transactions
+    // completed groups can only be deduped after the first page arrives
     const uniqueGroups =
       groups?.filter(
         group =>
+          !!group.maxGasTx &&
+          (group.isPending || firstFetchDone) &&
           !recentTxKeys.has(
             `${group.address.toLowerCase()}-${group.maxGasTx.hash}`,
           ),
       ) || [];
     return [...(uniqueGroups || []), ...(displayList || [])];
-  }, [groups, displayList]);
+  }, [groups, displayList, firstFetchDone]);
 
   return (
     // eslint-disable-next-line react-native/no-inline-styles
     <View style={{ paddingTop: 0, position: 'relative', height: '100%' }}>
       <>
         <TransactionAlert pendingTxs={groups?.filter(item => item.isPending)} />
-        <HistoryList
+        <BridgeAwareHistoryList
+          bridgeEnabled={!isTestnet && !isInTokenDetail}
+          accounts={accountList}
+          scopeKey={`${sceneCurrentAccountDepKey}:${
+            isSceneUsingAllAccounts
+              ? myTop10Addresses
+                  .map(address => address.toLowerCase())
+                  .sort()
+                  .join(',')
+              : 'single'
+          }`}
           ref={historyListRef}
           historySuccessList={historySuccessList}
           list={combinedList}

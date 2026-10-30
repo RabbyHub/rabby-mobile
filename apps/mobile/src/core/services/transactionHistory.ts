@@ -112,12 +112,14 @@ export interface BridgeTxHistoryItem {
   status: 'pending' | 'fromSuccess' | 'fromFailed' | 'allSuccess' | 'failed';
   acceleratedHash?: string;
   hash: string;
-  estimatedDuration: number; // ms from server
+  estimatedDuration: number; // seconds from server
   createdAt: number;
   fromTxCompleteTs?: number;
   completedAt?: number;
   actualToToken?: TokenItem; // actual token, may be not toToken
   actualToAmount?: number; // actual amount
+  toTxId?: string;
+  isCanceled?: boolean;
 }
 
 export interface SwapTxHistoryItem {
@@ -483,6 +485,12 @@ export class TransactionHistoryService extends StoreServiceBase<
     });
   }
 
+  getBridgeTxHistory(address: string) {
+    return this.getStoreFieldSnapshot('bridgeTxHistory').filter(item =>
+      isSameAddress(item.address, address),
+    );
+  }
+
   getRecentPendingTxHistory(
     address: string,
     type: 'swap' | 'send' | 'bridge' | 'approveSwap' | 'approveBridge',
@@ -551,7 +559,11 @@ export class TransactionHistoryService extends StoreServiceBase<
         if (!item) return;
 
         if ('fromChainId' in item) {
-          item.status = status === 'success' ? 'fromSuccess' : 'fromFailed';
+          item.isCanceled = Boolean(completedTx.action?.actionData?.cancelTx);
+          item.status =
+            status === 'success' && !item.isCanceled
+              ? 'fromSuccess'
+              : 'fromFailed';
           item.fromTxCompleteTs = Date.now();
           item.acceleratedHash = completedTx.hash || item.hash;
         } else {
@@ -570,12 +582,21 @@ export class TransactionHistoryService extends StoreServiceBase<
   ) {
     this.mutateStore(draft => {
       draft.bridgeTxHistory.forEach(item => {
-        if (item.fromChainId !== chainId || item.hash !== from_tx_id) return;
+        if (
+          item.fromChainId !== chainId ||
+          (item.hash !== from_tx_id && item.acceleratedHash !== from_tx_id) ||
+          item.isCanceled
+        ) {
+          return;
+        }
 
         item.status = status;
         item.completedAt = Date.now();
-        item.actualToToken = cloneDeep(bridgeTx?.to_actual_token);
-        item.actualToAmount = bridgeTx?.actual?.receive_token_amount;
+        if (bridgeTx) {
+          item.actualToToken = cloneDeep(bridgeTx.to_actual_token);
+          item.actualToAmount = bridgeTx.actual?.receive_token_amount;
+          item.toTxId = bridgeTx.to_tx?.tx_id || item.toTxId;
+        }
       });
     });
   }

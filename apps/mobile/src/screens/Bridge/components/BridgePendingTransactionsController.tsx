@@ -1,4 +1,6 @@
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
+import { useIsFocused } from '@react-navigation/native';
+import { useAppState } from '@react-native-community/hooks';
 import React, {
   forwardRef,
   useCallback,
@@ -17,19 +19,23 @@ export type BridgePendingTransactionsControllerRef = {
 type BridgePendingTransactionsControllerProps = {
   disableHeaderRight: boolean;
   enabled: boolean;
+  isForMultipleAddress?: boolean;
 };
 
 export const BridgePendingTransactionsController = forwardRef<
   BridgePendingTransactionsControllerRef,
   BridgePendingTransactionsControllerProps
->(({ disableHeaderRight, enabled }, ref) => {
+>(({ disableHeaderRight, enabled, isForMultipleAddress }, ref) => {
   const { setNavigationOptions } = useSafeSetNavigationOptions();
+  const focused = useIsFocused();
+  const appState = useAppState();
+  const active = enabled && focused && appState === 'active';
   const headerRef = useRef<BridgeHeaderRef>(null);
   const {
     runAsync: runFetchPendingCount,
     runFetchLocalPendingTx,
     clearBridgeHistoryRedDot,
-  } = usePollBridgePendingNumber(10000, enabled);
+  } = usePollBridgePendingNumber(10000, active);
 
   useImperativeHandle(
     ref,
@@ -45,11 +51,12 @@ export const BridgePendingTransactionsController = forwardRef<
   const headerRight = useCallback(
     () => (
       <BridgeHeader
+        isForMultipleAddress={isForMultipleAddress}
         ref={headerRef}
         clearBridgeHistoryRedDot={clearBridgeHistoryRedDot}
       />
     ),
-    [clearBridgeHistoryRedDot],
+    [clearBridgeHistoryRedDot, isForMultipleAddress],
   );
 
   useEffect(() => {

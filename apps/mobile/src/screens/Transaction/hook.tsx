@@ -9,7 +9,7 @@ export const useGetCexList = () => {
   // const [list, setList] = useState<ProjectItem[]>([]);
   const [addressCex, setAddressCex] = useState<Record<string, ProjectItem>>({});
   const getCexInfoByAddress = useCallback(
-    (address: string) => {
+    (address: string): ProjectItem | undefined => {
       const localCexId = getCexId(address);
       const localCexInfo = globalSupportCexList.find(
         item => item.id === localCexId,
