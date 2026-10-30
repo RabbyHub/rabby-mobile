@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useInterval, useMemoizedFn } from 'ahooks';
+import { isEqual } from 'lodash';
 import { openapi } from '@/core/request';
 import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
 import type { BridgeTxHistoryItem } from '@/core/services/transactionHistory';
@@ -13,12 +14,19 @@ import {
 import type { BridgeRecordData } from '../utils/statusTypes';
 
 async function readLocalBridgeRecord(local: BridgeTxHistoryItem) {
-  return (await transactionHistoryServiceApi.getRecentTxHistory(
+  const stored = (await transactionHistoryServiceApi.getRecentTxHistory(
     local.address,
     local.hash,
     local.fromChainId,
     'bridge',
   )) as BridgeTxHistoryItem | null;
+  // 存储里还没有完成时间时，保留内存里已经记下的时间。
+  return stored
+    ? {
+        ...stored,
+        fromTxCompleteTs: stored.fromTxCompleteTs || local.fromTxCompleteTs,
+      }
+    : local;
 }
 
 export function useBridgeRecord(initial: BridgeRecordData, enabled: boolean) {
@@ -44,37 +52,30 @@ export function useBridgeRecord(initial: BridgeRecordData, enabled: boolean) {
     }
     const requestGeneration = generation.current;
     const requestKey = `${key}:${requestGeneration}`;
-    // 上一轮查询未结束时跳过本轮，避免同一实例重复请求。
-    if (inFlight.current === requestKey) {
-      return;
-    }
-    inFlight.current = requestKey;
-    const controller = new AbortController();
-    request.current = controller;
+    let controller: AbortController | undefined;
     const isCurrent = () =>
-      !controller.signal.aborted &&
+      !controller?.signal.aborted &&
       requestGeneration === generation.current &&
       identity.current === key &&
       active.current;
     try {
-      let local = record.local;
-      // 先同步本地源链确认、加速和取消结果，再查询跨链状态。
-      // 存储里还没有完成时间时，保留内存里已经记下的时间。
-      if (local) {
-        const rememberedCompleteTs = local.fromTxCompleteTs;
-        const stored = await readLocalBridgeRecord(local);
-        local = stored
-          ? {
-              ...stored,
-              fromTxCompleteTs: stored.fromTxCompleteTs || rememberedCompleteTs,
-            }
-          : local;
-      }
+      const storedLocal = record.local
+        ? await readLocalBridgeRecord(record.local)
+        : undefined;
       if (!isCurrent()) {
         return;
       }
-      if (local?.isCanceled) {
-        setRecord({ ...record, local });
+      // 本地确认结果先更新界面，不等待远程请求，也不覆盖期间更新的远程记录。
+      if (storedLocal) {
+        setRecord(current =>
+          isEqual(current.local, storedLocal)
+            ? current
+            : { ...current, local: storedLocal },
+        );
+      }
+      let local = storedLocal;
+      // 远程请求去重不阻塞本地同步，取消后不再查询远程状态。
+      if (local?.isCanceled || inFlight.current === requestKey) {
         return;
       }
       const hashes = [
@@ -85,6 +86,9 @@ export function useBridgeRecord(initial: BridgeRecordData, enabled: boolean) {
       if (!hashes.length) {
         return;
       }
+      inFlight.current = requestKey;
+      controller = new AbortController();
+      request.current = controller;
       const { data: response } = await openapi.request.post<
         Awaited<ReturnType<typeof openapi.getBridgeHistoryListByTxIds>>
       >(
@@ -97,12 +101,9 @@ export function useBridgeRecord(initial: BridgeRecordData, enabled: boolean) {
       if (!isCurrent()) {
         return;
       }
-      // 请求期间也可能完成取消，返回后重读本地状态以免覆盖取消结果。
+      // 请求期间本地状态仍会更新，返回后重读，避免旧快照覆盖确认或取消结果。
       if (local) {
-        const latest = await readLocalBridgeRecord(local);
-        if (latest?.isCanceled) {
-          local = latest;
-        }
+        local = await readLocalBridgeRecord(local);
       }
       if (!isCurrent()) {
         return;
@@ -197,10 +198,10 @@ export function useBridgeRecord(initial: BridgeRecordData, enabled: boolean) {
         console.warn('[Bridge] refresh failed', error);
       }
     } finally {
-      if (inFlight.current === requestKey) {
+      if (controller && inFlight.current === requestKey) {
         inFlight.current = undefined;
       }
-      if (request.current === controller) {
+      if (controller && request.current === controller) {
         request.current = undefined;
       }
     }

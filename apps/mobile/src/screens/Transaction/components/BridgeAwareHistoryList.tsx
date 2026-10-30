@@ -111,7 +111,17 @@ function BridgeHistoryListContent({
         .join(','),
     [list],
   );
-  // 本地记录仅补充已识别条目，按页面批量读取，不新增本地轮询或写入。
+  const localStatusKey = useMemo(
+    () =>
+      records
+        .map(
+          item =>
+            `${bridgeSourceKey(item)}:${item.status}:${item.from_tx.status}`,
+        )
+        .join('|'),
+    [records],
+  );
+  // 记录集合或状态变化时批量重读本地快照，补齐确认时间、加速哈希和取消标记。
   useEffect(() => {
     let current = true;
     if (active && localAddressKey) {
@@ -138,7 +148,7 @@ function BridgeHistoryListContent({
     return () => {
       current = false;
     };
-  }, [rowStore, active, localAddressKey]);
+  }, [rowStore, active, localAddressKey, localStatusKey]);
   const renderBridgeItem = useMemoizedFn((row: BridgeHistoryRow) => (
     <BridgeRow
       row={row}
