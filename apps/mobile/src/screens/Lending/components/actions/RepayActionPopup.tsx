@@ -1,4 +1,5 @@
 import { useTheme2024 } from '@/hooks/theme';
+import { useAuthFormGuard } from '@/hooks/useAuthFormGuard';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, {
   useCallback,
@@ -200,6 +201,21 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
     [currentAccount?.type],
   );
   const directSignBtnRef = useRef<DirectSignBtnMethods>(null);
+  const authForm = useAuthFormGuard(
+    {
+      amount,
+      amountMode: _amount,
+      account: currentAccount?.address,
+      accountType: currentAccount?.type,
+      accountBrand: currentAccount?.brandName,
+      chain: chainEnum,
+      market: selectedMarketData?.market,
+      token: reserve.underlyingAsset,
+      repayToken: selectedRepayToken?.address,
+      isAtTokenRepay,
+    },
+    () => toast.info(t('page.bridge.formChangedAmount')),
+  );
 
   const afterHF = useMemo(() => {
     if (!amount || isZeroAmount(amount)) {
@@ -508,7 +524,7 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
               onClose?.();
             }
             if (error === MINI_SIGN_ERROR.PREFETCH_FAILURE) {
-              handleRepay(true);
+              await handleRepay(true);
             }
             return;
           }
@@ -636,7 +652,10 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
 
   const handleChangeAmount = useCallback(
     (value: string) => {
-      if (directSignBtnRef.current?.isAuthInProgress()) {
+      if (
+        authForm.blockInput() ||
+        directSignBtnRef.current?.isAuthInProgress()
+      ) {
         return;
       }
       const maxSelected = value === '-1';
@@ -651,14 +670,20 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
         setAmount(value);
       }
     },
-    [repayAmount.isDebtUp, repayAmount.amount],
+    [authForm, repayAmount.isDebtUp, repayAmount.amount],
   );
 
   const handleClickToken = useCallback(() => {
+    if (authForm.blockInput()) {
+      return;
+    }
     const modalId = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.REPAY_TOKEN_SELECT,
       availableRepayTokens: availableRepayTokens,
       onChange: v => {
+        if (authForm.blockInput()) {
+          return;
+        }
         setIsAtTokenRepay(v.aToken);
         removeGlobalBottomSheetModal2024(modalId);
       },
@@ -675,7 +700,7 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
         },
       },
     });
-  }, [availableRepayTokens, colors2024, isLight]);
+  }, [authForm, availableRepayTokens, colors2024, isLight]);
 
   useEffect(() => {
     checkApproveStatus();
@@ -803,7 +828,10 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
             wrapperStyle={styles.directSignBtn}
             authTitle={t('page.Lending.repayDetail.actions')}
             title={t('page.Lending.repayDetail.actions')}
-            onFinished={() => handleRepay()}
+            onBeforeAuth={authForm.onBeforeAuth}
+            onCancel={authForm.onCancel}
+            onAuthModalDismiss={authForm.onAuthModalDismiss}
+            onFinished={() => authForm.onFinished(() => handleRepay())}
             disabled={
               !amount ||
               isZeroAmount(amount) ||

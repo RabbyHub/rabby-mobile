@@ -69,6 +69,7 @@ import {
   getBottomButtonBottomOffset,
 } from '@/constant/layout';
 import { assetCanBeBorrowedByUser } from '../../utils/borrow';
+import { useAuthFormGuard } from '@/hooks/useAuthFormGuard';
 
 export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
   reserve,
@@ -94,6 +95,19 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
     [currentAccount?.type],
   );
   const directSignBtnRef = useRef<DirectSignBtnMethods>(null);
+  const authForm = useAuthFormGuard(
+    {
+      amount,
+      account: currentAccount?.address,
+      accountType: currentAccount?.type,
+      accountBrand: currentAccount?.brandName,
+      chain: chainEnum,
+      market: selectedMarketData?.market,
+      token: reserve.underlyingAsset,
+      riskChecked: isChecked,
+    },
+    () => toast.info(t('page.bridge.formChangedAmount')),
+  );
   const {
     openDirect,
     prefetch: prefetchMiniSigner,
@@ -246,7 +260,7 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
               onClose?.();
             }
             if (error === MINI_SIGN_ERROR.PREFETCH_FAILURE) {
-              handleBorrow(true);
+              await handleBorrow(true);
             }
             return;
           }
@@ -428,9 +442,17 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
         </View>
         <TokenAmountInput
           value={amount}
-          onChange={setAmount}
+          onChange={value => {
+            if (authForm.blockInput()) {
+              return;
+            }
+            setAmount(value);
+          }}
           symbol={reserve.reserve.symbol}
           handleClickMaxButton={() => {
+            if (authForm.blockInput()) {
+              return;
+            }
             setAmount(availableToBorrow.amount || '0');
           }}
           tokenAmount={Number(availableToBorrow.amount || '0')}
@@ -500,6 +522,9 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
               <TouchableOpacity
                 style={styles.checkbox}
                 onPress={() => {
+                  if (authForm.blockInput()) {
+                    return;
+                  }
                   setIsChecked(prev => !prev);
                 }}>
                 <CheckBoxRect size={16} checked={isChecked} />
@@ -512,6 +537,7 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
 
           {canShowDirectSubmit ? (
             <DirectSignBtn
+              ref={directSignBtnRef}
               loading={isLoading}
               loadingType="circle"
               key={`${amount}`}
@@ -519,7 +545,10 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
               wrapperStyle={styles.directSignBtn}
               authTitle={t('page.Lending.borrowDetail.actions')}
               title={t('page.Lending.borrowDetail.actions')}
-              onFinished={() => handleBorrow()}
+              onBeforeAuth={authForm.onBeforeAuth}
+              onCancel={authForm.onCancel}
+              onAuthModalDismiss={authForm.onAuthModalDismiss}
+              onFinished={() => authForm.onFinished(() => handleBorrow())}
               disabled={
                 hasNoSupply ||
                 !canBorrow ||
