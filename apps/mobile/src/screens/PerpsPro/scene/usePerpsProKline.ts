@@ -10,13 +10,33 @@ import {
   getPerpsCandleSourceIdentity,
   isPerpsCandleSourceSnapshotFresh,
   loadPerpsCandleSourceSnapshot,
+  preloadPerpsCandleSourceSnapshots,
   type PerpsCandleSourceSnapshot,
 } from '@/hooks/perps/candles/sourceSnapshot';
 import { usePerpsCandleFeed } from '@/hooks/perps/candles/usePerpsCandleFeed';
+import { PERPS_PRO_CANDLE_INTERVAL_OPTIONS } from '@/hooks/perps/candles/interval';
 
 type KlinePreferenceState = {
   hydrated: boolean;
   interval: PerpsCandleInterval;
+};
+
+const getKlinePrefetchIntervals = (
+  interval: PerpsCandleInterval,
+): PerpsCandleInterval[] => {
+  const options = PERPS_PRO_CANDLE_INTERVAL_OPTIONS.map(option => option.value);
+  const index = options.indexOf(interval);
+  if (index < 0) {
+    return [interval];
+  }
+  const intervals: PerpsCandleInterval[] = [interval];
+  [-1, 1, -2, 2].forEach(offset => {
+    const candidate = options[index + offset];
+    if (candidate) {
+      intervals.push(candidate);
+    }
+  });
+  return intervals;
 };
 
 export const usePerpsProKline = ({
@@ -130,6 +150,11 @@ export const usePerpsProKline = ({
       .then(snapshot => {
         if (active && snapshot.identity === expectedIdentity) {
           setPreloadedSnapshot(snapshot);
+          preloadPerpsCandleSourceSnapshots({
+            coin,
+            intervals: getKlinePrefetchIntervals(preference.interval).slice(1),
+            isActive: () => active,
+          }).catch(() => undefined);
         }
       })
       .catch(error => {

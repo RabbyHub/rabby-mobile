@@ -5,6 +5,7 @@ import type { PerpsCandleInterval } from '@/constant/perps';
 const mockGetSelectedKlineInterval = jest.fn();
 const mockSetSelectedKlineInterval = jest.fn();
 const mockLoadPerpsCandleSourceSnapshot = jest.fn();
+const mockPreloadPerpsCandleSourceSnapshots = jest.fn();
 const mockUsePerpsCandleFeed = jest.fn(
   ({
     coin,
@@ -40,6 +41,7 @@ jest.mock('@/hooks/perps/candles/sourceSnapshot', () => ({
     `${coin}:${interval}`,
   isPerpsCandleSourceSnapshotFresh: () => true,
   loadPerpsCandleSourceSnapshot: mockLoadPerpsCandleSourceSnapshot,
+  preloadPerpsCandleSourceSnapshots: mockPreloadPerpsCandleSourceSnapshots,
 }));
 
 const { usePerpsProKline } =
@@ -67,6 +69,7 @@ describe('usePerpsProKline', () => {
     jest.clearAllMocks();
     mockGetSelectedKlineInterval.mockResolvedValue('15m');
     mockSetSelectedKlineInterval.mockResolvedValue(undefined);
+    mockPreloadPerpsCandleSourceSnapshots.mockResolvedValue(undefined);
     mockLoadPerpsCandleSourceSnapshot.mockImplementation(
       ({ coin, interval }: { coin: string; interval: string }) =>
         Promise.resolve({
@@ -204,6 +207,11 @@ describe('usePerpsProKline', () => {
     expect(hook.result.current.feed).toMatchObject({
       identity: 'BTC:15m',
       status: 'ready',
+    });
+    expect(mockPreloadPerpsCandleSourceSnapshots).toHaveBeenCalledWith({
+      coin: 'BTC',
+      intervals: ['5m', '30m', '1m', '1h'],
+      isActive: expect.any(Function),
     });
   });
 });
