@@ -11,6 +11,7 @@ import RcIconSendCC from '@/assets2024/icons/home/IconSendCC.svg';
 import RcIconSwapCC from '@/assets2024/icons/home/IconSwapCC.svg';
 import RcIconMarketCC from '@/assets2024/icons/home/IconMarketCC.svg';
 import RcIconConvertDustCC from '@/assets2024/icons/home/IconDustCC.svg';
+import RcIconMemeCoinCC from '@/assets2024/icons/home/IconMemeCoinCC.svg';
 
 import { RootNames } from '@/constant/layout';
 import { useRegressionScenarioComponentAction } from '@/devtools/regressionScenarios/react';
@@ -1001,6 +1002,11 @@ export const HomeOverview = React.memo(() => {
           title: t('page.home.services.convertDust'),
           icon: RcIconConvertDustCC,
         },
+        {
+          key: MultiHomeFeatTitle.MemeCoin,
+          title: t('page.home.services.meme'),
+          icon: RcIconMemeCoinCC,
+        },
       ].filter(Boolean) as {
         key: MultiHomeFeatTitle;
         title: string;
@@ -1315,6 +1321,11 @@ export const HomeOverview = React.memo(() => {
           navigation.push(RootNames.StackTransaction, {
             screen: RootNames.ConvertDust,
             params: {},
+          });
+          break;
+        case MultiHomeFeatTitle.MemeCoin:
+          navigation.push(RootNames.StackTransaction, {
+            screen: RootNames.MemeCoin,
           });
           break;
         default:

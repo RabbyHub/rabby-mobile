@@ -118,6 +118,18 @@ jest.mock('../Transaction/HistoryLocalDetailScreen', () => ({
 jest.mock('../Approvals', () => () => null);
 jest.mock('../Receive/Receive', () => () => null);
 jest.mock('../ConvertDust', () => ({ ConvertDustScreen: () => null }));
+jest.mock('../MemeCoin/home/MemeCoinHomeScreen', () => ({
+  MemeCoinHomeScreen: () => null,
+}));
+jest.mock('../MemeCoin/buy/MemeCoinBuyScreen', () => ({
+  MemeCoinBuyScreen: () => null,
+}));
+jest.mock('../MemeCoin/execute/MemeCoinExecuteScreen', () => ({
+  MemeCoinExecuteScreen: () => null,
+}));
+jest.mock('../MemeCoin/components/MemeCoinHeader', () => ({
+  MemeCoinHeader: () => null,
+}));
 jest.mock('../GasAccount', () => ({ GasAccountScreen: () => null }));
 jest.mock('../Transaction/MultiAddressHistory', () => ({
   __esModule: true,
