@@ -37,7 +37,9 @@ install_common_dependencies
 
 # 定义总的导出目录
 TIMESTAMP=$(date '+%Y%m%d-%H%M%S')
-EXPORT_BASE_DIR="$REPO_ROOT/apps/mobile/validation_exports_${TIMESTAMP}"
+EXPORT_ROOT="${VALIDATION_EXPORT_ROOT:-$ORIGINAL_DIR}"
+mkdir -p "$EXPORT_ROOT"
+EXPORT_BASE_DIR="$EXPORT_ROOT/validation_exports_${TIMESTAMP}"
 mkdir -p "$EXPORT_BASE_DIR"
 echo "ℹ️ 构建产物将导出至: $EXPORT_BASE_DIR"
 
