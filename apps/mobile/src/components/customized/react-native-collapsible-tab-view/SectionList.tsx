@@ -10,7 +10,6 @@ import {
   useAfterMountEffect,
   useChainCallback,
   useCollapsibleStyle,
-  useConvertAnimatedToValue,
   useScrollHandlerY,
   useSharedAnimatedRef,
   useTabNameContext,
@@ -106,14 +105,13 @@ export function TabsSectionList<T, SectionT>({
       }),
     [progressViewOffset, refreshControl],
   );
-  const contentInsetValue = useConvertAnimatedToValue(contentInset);
   const memoContentInset = React.useMemo(
-    () => ({ top: contentInsetValue }),
-    [contentInsetValue],
+    () => ({ top: contentInset }),
+    [contentInset],
   );
   const memoContentOffset = React.useMemo(
-    () => ({ x: 0, y: -contentInsetValue }),
-    [contentInsetValue],
+    () => ({ x: 0, y: -contentInset }),
+    [contentInset],
   );
 
   return (
