@@ -446,10 +446,6 @@ export type TransactionNavigatorParamList = {
     autoFocus?: boolean;
   };
   [RootNames.Lending]?: {
-    tokenAddress?: string;
-    direction?: 'supply' | 'borrow';
-    source?: string;
-    account?: KeyringAccountWithAlias;
     dappId?: string;
   };
   [RootNames.Prediction]?: {};
