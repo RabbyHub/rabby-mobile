@@ -1,24 +1,50 @@
-import React from 'react';
-import { StyleSheet, View } from 'react-native';
+import React, { useState } from 'react';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Skeleton } from '@rneui/themed';
+import { useTranslation } from 'react-i18next';
 import LinearGradient from 'react-native-linear-gradient';
 import RcBalanceGlow from '@/assets2024/memecoin/balance-glow.svg';
 import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { formatMemeBalanceUsd } from '../ui/formatBalance';
+import type { MemePnl, MemePnlPeriod } from '../data/types';
+import { formatMemeBalanceUsd, formatMemePnlUsd } from '../ui/formatBalance';
+import { MEME_PNL_CURVE_WIDTH, MemePnlCurve } from './MemePnlCurve';
 
 const GRADIENT_END_LIGHT = '#FEFAED';
+const TAB_ACTIVE_BG = '#2F3135';
+const TAB_ACTIVE_TEXT = '#F7FAFC';
+const TAB_WIDTH = 40;
+const TABS_PADDING = 2;
+const TABS_WIDTH = TAB_WIDTH * 2 + TABS_PADDING * 2;
+const CARD_INSET = 16;
+// the total shrinks to stay this far from the tabs
+const VALUE_TABS_GAP = 16;
+const VALUE_MIN_FONT_SCALE = 0.5;
 
-export const BalanceCard = ({
+const PERIOD_LABEL_KEYS: Record<MemePnlPeriod, string> = {
+  '24h': 'page.memeCoin.pnlPeriod24h',
+  all: 'page.memeCoin.pnlPeriodAll',
+};
+const PERIODS: MemePnlPeriod[] = ['24h', 'all'];
+
+export const BalanceCard = React.memo(function BalanceCard({
   totalUsd,
   loading,
+  pnl,
 }: {
   /** null when holdings could not be loaded */
   totalUsd: number | null;
   loading: boolean;
-}) => {
+  /** undefined until the P&L has loaded */
+  pnl?: MemePnl;
+}) {
+  const { t } = useTranslation();
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
+  const [period, setPeriod] = useState<MemePnlPeriod>('24h');
+
+  const current = pnl?.periods[period];
+  const isLoss = !!current && current.totalUsd < 0;
 
   return (
     <View style={styles.card}>
@@ -40,21 +66,59 @@ export const BalanceCard = ({
       {loading ? (
         <Skeleton width={140} height={36} style={styles.valueSkeleton} />
       ) : (
-        <Text style={styles.value} numberOfLines={1}>
+        <Text
+          style={styles.value}
+          numberOfLines={1}
+          adjustsFontSizeToFit
+          minimumFontScale={VALUE_MIN_FONT_SCALE}>
           {totalUsd === null ? '--' : formatMemeBalanceUsd(totalUsd)}
         </Text>
       )}
-      <Text style={styles.pnl}>--</Text>
+      <View style={styles.pnlRow}>
+        <Text
+          numberOfLines={1}
+          style={[
+            styles.pnlValue,
+            !current ? styles.pnlNone : isLoss ? styles.pnlDown : styles.pnlUp,
+          ]}>
+          {current ? formatMemePnlUsd(current.totalUsd) : '--'}
+        </Text>
+        <Text style={styles.pnlLabel}>{t(PERIOD_LABEL_KEYS[period])}</Text>
+      </View>
+      <View style={styles.tabs}>
+        {PERIODS.map(item => (
+          <TouchableOpacity
+            key={item}
+            hitSlop={{ top: 8, bottom: 8 }}
+            onPress={() => setPeriod(item)}
+            style={[styles.tab, item === period && styles.tabActive]}>
+            <Text
+              style={[styles.tabText, item === period && styles.tabTextActive]}>
+              {t(PERIOD_LABEL_KEYS[item])}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+      {/* after the tabs, so the cursor tooltip paints over them */}
+      {current ? (
+        <View style={styles.curve}>
+          <MemePnlCurve
+            key={period}
+            points={current.points}
+            color={colors2024[isLoss ? 'red-default' : 'green-default']}
+          />
+        </View>
+      ) : null}
     </View>
   );
-};
+});
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   card: {
     height: 120,
     // padding includes the background layer's 2px border
     paddingTop: 20,
-    paddingHorizontal: 16,
+    paddingHorizontal: CARD_INSET,
     shadowColor: '#777B98',
     shadowOpacity: 0.06,
     shadowRadius: 30,
@@ -72,7 +136,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     left: -63,
     top: 30,
   },
+  curve: {
+    position: 'absolute',
+    top: 52,
+    right: CARD_INSET,
+  },
   value: {
+    marginRight: TABS_WIDTH + VALUE_TABS_GAP,
     fontFamily: 'SF Pro Rounded',
     fontSize: 32,
     lineHeight: 36,
@@ -82,12 +152,63 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   valueSkeleton: {
     borderRadius: 8,
   },
-  pnl: {
+  pnlRow: {
     marginTop: 10,
+    marginRight: MEME_PNL_CURVE_WIDTH,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  pnlValue: {
+    flexShrink: 1,
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     lineHeight: 18,
     fontWeight: '700',
+  },
+  pnlUp: {
+    color: colors2024['green-default'],
+  },
+  pnlDown: {
+    color: colors2024['red-default'],
+  },
+  pnlNone: {
     color: colors2024['neutral-secondary'],
+  },
+  pnlLabel: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '400',
+    color: colors2024['neutral-secondary'],
+  },
+  tabs: {
+    position: 'absolute',
+    top: 16,
+    right: CARD_INSET,
+    flexDirection: 'row',
+    padding: TABS_PADDING,
+    borderRadius: 6,
+    backgroundColor: colors2024['neutral-bg-2'],
+  },
+  tab: {
+    width: TAB_WIDTH,
+    height: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 4,
+  },
+  tabActive: {
+    backgroundColor: TAB_ACTIVE_BG,
+  },
+  tabText: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 10,
+    lineHeight: 16,
+    fontWeight: '700',
+    color: colors2024['neutral-secondary'],
+  },
+  tabTextActive: {
+    color: TAB_ACTIVE_TEXT,
   },
 }));

@@ -37,6 +37,7 @@ import {
   refreshMemeMarket,
   useMemeMarketStore,
 } from '../data/memeMarketStore';
+import { refreshMemePnl, useMemePnl } from '../data/memePnlStore';
 import type { MemeMarketItem, MemeToken } from '../data/types';
 import { useMemeSearch } from '../data/useMemeSearch';
 import { toSellExecLegs } from '../engine/execLegs';
@@ -99,6 +100,7 @@ export const MemeCoinHomeScreen = () => {
     loaded: holdingsLoaded,
     loadFailed: holdingsLoadFailed,
   } = useMemeHoldings(address);
+  const pnl = useMemePnl(address);
 
   const [mode, setModeState] = useState<HomeMode>(getMemeCoinHomeMode);
   const setMode = useCallback((next: HomeMode) => {
@@ -136,18 +138,17 @@ export const MemeCoinHomeScreen = () => {
     refreshMemeMarket();
   }, []);
 
-  useEffect(() => {
-    clearSelection();
+  const refreshHoldings = useCallback(() => {
     if (address) {
       refreshMemeHoldings(address);
-    }
-  }, [address, clearSelection]);
-
-  const retryHoldings = useCallback(() => {
-    if (address) {
-      refreshMemeHoldings(address);
+      refreshMemePnl(address);
     }
   }, [address]);
+
+  useEffect(() => {
+    clearSelection();
+    refreshHoldings();
+  }, [clearSelection, refreshHoldings]);
 
   useFocusEffect(
     useCallback(() => {
@@ -159,10 +160,8 @@ export const MemeCoinHomeScreen = () => {
       setKeyword('');
       setSearching(false);
       clearSelection();
-      if (address) {
-        refreshMemeHoldings(address);
-      }
-    }, [address, clearSelection, setMode]),
+      refreshHoldings();
+    }, [clearSelection, refreshHoldings, setMode]),
   );
 
   // Android pans the whole window by default (header slides off). The app is
@@ -202,9 +201,9 @@ export const MemeCoinHomeScreen = () => {
             key: tokenKey(h.meme),
             meme: h.meme,
             valueUsd: h.valueUsd,
-            pnl: h.pnl,
+            pnl: pnl?.byToken[tokenKey(h.meme)] ?? null,
           })),
-    [mode, marketList, holdings],
+    [mode, marketList, holdings, pnl],
   );
 
   const selectedHoldings = useMemo(() => {
@@ -359,6 +358,7 @@ export const MemeCoinHomeScreen = () => {
       <BalanceCard
         totalUsd={holdingsLoaded ? totalUsd : null}
         loading={!holdingsLoaded && !holdingsLoadFailed}
+        pnl={pnl}
       />
       {/* holdings mode keeps the pill: it is the way back to the market */}
       {mode === 'holdings' || holdings.length > 0 ? (
@@ -423,7 +423,7 @@ export const MemeCoinHomeScreen = () => {
     listEmpty = (
       <MemeEmptyState
         text={t('page.memeCoin.loadFailed')}
-        onPress={retryHoldings}
+        onPress={refreshHoldings}
       />
     );
   } else {

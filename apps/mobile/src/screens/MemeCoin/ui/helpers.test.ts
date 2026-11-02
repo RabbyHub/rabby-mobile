@@ -142,7 +142,6 @@ describe('toSellHoldings', () => {
     },
     amount: 1,
     valueUsd,
-    pnl: null,
   });
 
   it('pairs each meme with its chain native token and drops unknown chains', () => {

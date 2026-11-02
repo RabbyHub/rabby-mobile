@@ -1,6 +1,9 @@
+import { chaintable } from '@/core/chaintable';
+import type {
+  MemeTokenListResult,
+  RawMemeToken,
+} from '@/core/chaintable/types';
 import { toMemeMarketItem } from './market';
-import { fetchMemeTokenList } from './memeApi';
-import type { MemeTokenListResult, RawMemeToken } from './memeApi';
 import {
   loadMoreMemeMarket,
   MEME_MARKET_PAGE_SIZE,
@@ -12,12 +15,11 @@ jest.mock('react-native-haptic-feedback', () => ({
   trigger: jest.fn(),
 }));
 
-jest.mock('./memeApi', () => ({
-  fetchMemeTokenList: jest.fn(),
-  fetchMemeUserTokenList: jest.fn(),
+jest.mock('@/core/chaintable', () => ({
+  chaintable: { getMemeTokenList: jest.fn() },
 }));
 
-const fetchList = fetchMemeTokenList as jest.Mock;
+const fetchList = chaintable.getMemeTokenList as jest.Mock;
 
 const raw = (id: string): RawMemeToken => ({
   chain_id: 'hood',

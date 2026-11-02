@@ -16,3 +16,7 @@ export const formatMemeBalanceUsd = (usd: number) => {
   const text = formatUsdValue(usd);
   return text === '$0.00' ? '$0' : text;
 };
+
+/** +$200.32 / -$3.10; zero counts as a gain */
+export const formatMemePnlUsd = (usd: number) =>
+  `${usd < 0 ? '' : '+'}${formatUsdValue(usd)}`;

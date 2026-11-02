@@ -3379,6 +3379,9 @@
     },
     "memeCoin": {
       "holdingsEntry": "holdings",
+      "pnlPeriod24h": "24h",
+      "pnlPeriodAll": "All",
+      "pnlTipLabel": "PnL",
       "backToMarket": "Back to Meme Market",
       "marketTitle": "Meme Market",
       "holdingsTitle": "Holdings",

@@ -1,6 +1,6 @@
+import { chaintable } from '@/core/chaintable';
 import { zCreate } from '@/core/utils/reexports';
 import { toMemeHolding } from './market';
-import { fetchMemeUserTokenList } from './memeApi';
 import type { MemeHolding } from './types';
 
 type MemeHoldingsEntry = { holdings: MemeHolding[]; totalUsd: number };
@@ -31,7 +31,8 @@ export const refreshMemeHoldings = (address: string) => {
   let task = inflight.get(key);
   if (!task) {
     setFailed(key, false);
-    task = fetchMemeUserTokenList(key)
+    task = chaintable
+      .getMemeUserTokenList(key)
       .then(res =>
         useMemeHoldingsStore.setState(state => ({
           byAddress: {

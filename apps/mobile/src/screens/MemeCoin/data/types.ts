@@ -17,6 +17,14 @@ export type MemeHolding = {
   meme: MemeToken;
   amount: number;
   valueUsd: number;
-  /** USD; null until the backend returns it */
-  pnl: number | null;
+};
+
+export type MemePnlPeriod = '24h' | 'all';
+
+export type MemePnlPoint = { timestamp: number; value: number };
+
+export type MemePnl = {
+  periods: Record<MemePnlPeriod, { totalUsd: number; points: MemePnlPoint[] }>;
+  /** all-time P&L in USD by tokenKey; a held token without a known cost is absent */
+  byToken: Record<string, number>;
 };
