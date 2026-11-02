@@ -3,9 +3,11 @@ import { tokenKey } from '../engine/keys';
 import type { PlanResult, PlannedLeg } from '../engine/types';
 import {
   canConfirmBuy,
+  formatAllocationPct,
   formatMarketCapUsd,
   getBuySummary,
   getExecuteButtonState,
+  getMemeAllocations,
   parseBuyAmount,
   pickTokenLogos,
   toSellHoldings,
@@ -115,13 +117,20 @@ describe('canConfirmBuy', () => {
 
 describe('getExecuteButtonState', () => {
   it('maps the task status', () => {
-    expect(getExecuteButtonState('idle', 0, 3)).toEqual({ kind: 'start' });
-    expect(getExecuteButtonState('running', 1, 3)).toEqual({
+    expect(getExecuteButtonState('idle', 0, 3, false)).toEqual({
+      kind: 'start',
+    });
+    expect(getExecuteButtonState('running', 1, 3, true)).toEqual({
       kind: 'executing',
       done: 1,
       total: 3,
     });
-    expect(getExecuteButtonState('finished', 3, 3)).toEqual({ kind: 'done' });
+    expect(getExecuteButtonState('finished', 3, 3, false)).toEqual({
+      kind: 'done',
+    });
+    expect(getExecuteButtonState('finished', 3, 3, true)).toEqual({
+      kind: 'retry',
+    });
   });
 });
 
@@ -180,5 +189,48 @@ describe('pickTokenLogos', () => {
         logos,
       ),
     ).toEqual({ 'base:0xusdc': 'usdc.png' });
+  });
+});
+
+describe('getMemeAllocations', () => {
+  const memes = [
+    { id: 'a', chain: 'eth', symbol: 'A', marketCap: 10 },
+    { id: 'b', chain: 'eth', symbol: 'B', marketCap: 60 },
+    { id: 'c', chain: 'eth', symbol: 'C', marketCap: 30 },
+  ];
+
+  it('splits by market cap, largest first', () => {
+    expect(
+      getMemeAllocations(100, memes).map(a => [
+        a.meme.id,
+        a.ratio,
+        a.amountUsd,
+      ]),
+    ).toEqual([
+      ['b', 0.6, 60],
+      ['c', 0.3, 30],
+      ['a', 0.1, 10],
+    ]);
+  });
+
+  it('keeps the ratios when the amount is zero', () => {
+    expect(getMemeAllocations(0, memes).map(a => a.amountUsd)).toEqual([
+      0, 0, 0,
+    ]);
+    expect(getMemeAllocations(0, memes)[0].ratio).toBe(0.6);
+  });
+});
+
+describe('formatAllocationPct', () => {
+  it.each([
+    [0.6, '60%'],
+    [0.7052, '71%'],
+    [0.2948, '29%'],
+    [1, '100%'],
+    [0.009, '<1%'],
+    [0.01, '1%'],
+    [0, '0%'],
+  ])('formats %p as %p', (ratio, expected) => {
+    expect(formatAllocationPct(ratio)).toBe(expected);
   });
 });

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useMemoizedFn } from 'ahooks';
 import type { GasLevel } from '@rabby-wallet/rabby-api/dist/types';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import { isStableTokenPair } from '@rabby-wallet/rabby-swap';
 import { SWAP_SUPPORT_CHAINS } from '@/constant/swap';
 import { gasMarketV2 } from '@/core/apis/provider';
 import { openapi } from '@/core/request';
@@ -12,7 +13,6 @@ import { getSwapGasReserveGasLimit } from '@/screens/Swap/utils';
 import useTokenList from '@/store/tokens';
 import { findChainByEnum, findChainByServerID } from '@/utils/chain';
 import { defaultTokenFilter } from '@/utils/lpToken';
-import { pickDefaultPaymentAssets } from '../engine/defaultSelection';
 import { toChainGasInfo } from '../engine/gas';
 import { tokenKey } from '../engine/keys';
 import {
@@ -33,8 +33,7 @@ type ChainNetInfo = { gasPriceWei: number; nativePrice: number };
 
 /**
  * `memes`, `memeTokenKeys` and `account` must be referentially stable
- * (memoized) across renders, otherwise the default-selection effect re-runs
- * on every render.
+ * (memoized) across renders, otherwise the plan is recomputed on every render.
  */
 export const usePaymentAssets = ({
   account,
@@ -78,6 +77,8 @@ export const usePaymentAssets = ({
           t.id,
           findChainByServerID(t.chain)?.nativeTokenAddress || '',
         ),
+        // the same list Swap uses for its stablecoin fee tier
+        isStable: isStableTokenPair(t, t),
       })),
     [tokens],
   );
@@ -177,28 +178,7 @@ export const usePaymentAssets = ({
   const chainGasReady = tokens !== undefined && gasCache?.key === gasKey;
 
   const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
-  const touchedRef = useRef(false);
-
-  useEffect(() => {
-    if (touchedRef.current || !chainGasReady) {
-      return;
-    }
-    const next = pickDefaultPaymentAssets({
-      assets,
-      memes,
-      amountUsd,
-      chainGas,
-      gasAccountBalanceUsd,
-    }).map(tokenKey);
-    setSelectedKeys(prev =>
-      prev.length === next.length && prev.every((k, i) => k === next[i])
-        ? prev
-        : next,
-    );
-  }, [assets, memes, amountUsd, chainGas, gasAccountBalanceUsd, chainGasReady]);
-
   const toggle = useMemoizedFn((key: string) => {
-    touchedRef.current = true;
     setSelectedKeys(prev =>
       prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key],
     );

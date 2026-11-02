@@ -3,10 +3,9 @@ import type { MemeHolding } from '../data/types';
 import { AMOUNT_EPSILON } from '../engine/constants';
 import type { SellHolding } from '../engine/execLegs';
 import { tokenKey } from '../engine/keys';
-import type { PlanResult, TokenRef } from '../engine/types';
+import { computeMemeTargets } from '../engine/planner';
+import type { MemeTarget, PlanResult, TokenRef } from '../engine/types';
 import type { MemeTradeTaskStatus } from '../hooks/useMemeTradeTask';
-
-export const DEFAULT_BUY_AMOUNT_USD = 100;
 
 export const MAX_PRICE_IMPACT_OPTIONS = [1, 5, 20] as const;
 export type MaxPriceImpactPct = (typeof MAX_PRICE_IMPACT_OPTIONS)[number];
@@ -74,12 +73,14 @@ export const canConfirmBuy = ({
 export type ExecuteButtonState =
   | { kind: 'start' }
   | { kind: 'executing'; done: number; total: number }
+  | { kind: 'retry' }
   | { kind: 'done' };
 
 export const getExecuteButtonState = (
   status: MemeTradeTaskStatus,
   done: number,
   total: number,
+  canRetry: boolean,
 ): ExecuteButtonState => {
   if (status === 'idle') {
     return { kind: 'start' };
@@ -87,7 +88,7 @@ export const getExecuteButtonState = (
   if (status === 'running') {
     return { kind: 'executing', done, total };
   }
-  return { kind: 'done' };
+  return canRetry ? { kind: 'retry' } : { kind: 'done' };
 };
 
 export const toSellHoldings = (
@@ -124,4 +125,24 @@ export const pickTokenLogos = (
     }
   }
   return result;
+};
+
+export const getMemeAllocations = <T extends MemeTarget>(
+  amountUsd: number,
+  memes: T[],
+) =>
+  computeMemeTargets(1, memes)
+    .map(({ meme, amountUsd: ratio }) => ({
+      meme,
+      ratio,
+      amountUsd: amountUsd * ratio,
+    }))
+    .sort((a, b) => b.ratio - a.ratio);
+
+/** whole percent, so two items fit on one row at 360dp: 60%, <1% */
+export const formatAllocationPct = (ratio: number) => {
+  const pct = new BigNumber(ratio).times(100);
+  return pct.gt(0) && pct.lt(1)
+    ? '<1%'
+    : `${pct.decimalPlaces(0).toString(10)}%`;
 };

@@ -42,3 +42,6 @@ export const countFinishedLegs = (
   Object.values(states).filter(
     s => s?.phase === 'success' || s?.phase === 'failed',
   ).length;
+
+export const isLegRetryable = (state?: LegState) =>
+  state?.phase === 'failed' && state.failReason !== 'arrivalFailed';

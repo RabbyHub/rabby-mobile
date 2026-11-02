@@ -47,7 +47,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 8,
   },
   label: {
     fontFamily: 'SF Pro Rounded',

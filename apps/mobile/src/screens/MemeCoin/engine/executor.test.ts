@@ -3,6 +3,7 @@ import {
   type BroadcastResult,
   type LegRunner,
 } from './executor';
+import { ExecutionStoppedError } from './pauseGate';
 import type { ExecLeg, LegState } from './types';
 
 type Deferred<T> = {
@@ -61,14 +62,19 @@ const setup = (legs: ExecLeg[]) => {
   };
   const states: Record<string, LegState> = {};
   let finished = 0;
-  const executor = createMemeTradeExecutor(legs, runner, {
-    onLegState: (key, state) => {
-      states[key] = state;
+  const executor = createMemeTradeExecutor(
+    legs,
+    runner,
+    {
+      onLegState: (key, state) => {
+        states[key] = state;
+      },
+      onFinished: () => {
+        finished += 1;
+      },
     },
-    onFinished: () => {
-      finished += 1;
-    },
-  });
+    { retryDelay: () => Promise.resolve() },
+  );
   return {
     executor,
     calls,
@@ -187,5 +193,221 @@ describe('createMemeTradeExecutor', () => {
       'cancelled',
     ]);
     expect(t.finished()).toBe(1);
+  });
+});
+
+describe('auto retry', () => {
+  const setupAttempts = (
+    attempts: Array<BroadcastResult | Error>,
+    stopOnDelay = false,
+  ) => {
+    const states: Record<string, LegState> = {};
+    const delays: number[] = [];
+    let calls = 0;
+    const runner: LegRunner = {
+      prepareAndBroadcast: async (_leg, gate) => {
+        await gate.wait();
+        const next = attempts[calls++];
+        if (next instanceof Error) {
+          throw next;
+        }
+        return next;
+      },
+      waitForReceipt: async () => true,
+      waitForArrival: async () => true,
+    };
+    const executor = createMemeTradeExecutor(
+      [leg('a1', 'eth')],
+      runner,
+      {
+        onLegState: (key, state) => {
+          states[key] = state;
+        },
+        onFinished: () => undefined,
+      },
+      {
+        retryDelay: async ms => {
+          delays.push(ms);
+          if (stopOnDelay) {
+            executor.stop();
+          }
+        },
+      },
+    );
+    return { executor, states, delays, calls: () => calls };
+  };
+  const ok: BroadcastResult = { ok: true, txHash: '0x1' };
+
+  it.each(['simulationFailed', 'noQuote', 'priceImpact'] as const)(
+    'retries %s until it succeeds',
+    async reason => {
+      const t = setupAttempts([{ ok: false, reason }, ok]);
+      t.executor.start();
+      await flush();
+      expect(t.calls()).toBe(2);
+      expect(t.delays).toEqual([1500]);
+      expect(t.states.a1).toEqual({ phase: 'success', txHash: '0x1' });
+    },
+  );
+
+  it('gives up after two retries and keeps the last reason', async () => {
+    const fail: BroadcastResult = { ok: false, reason: 'simulationFailed' };
+    const t = setupAttempts([fail, fail, fail, ok]);
+    t.executor.start();
+    await flush();
+    expect(t.calls()).toBe(3);
+    expect(t.states.a1).toEqual({
+      phase: 'failed',
+      failReason: 'simulationFailed',
+    });
+  });
+
+  it.each([
+    'gasNotEnough',
+    'gasTooHigh',
+    'insufficientBalance',
+    'failed',
+  ] as const)('does not retry %s', async reason => {
+    const t = setupAttempts([{ ok: false, reason }, ok]);
+    t.executor.start();
+    await flush();
+    expect(t.calls()).toBe(1);
+    expect(t.states.a1).toEqual({ phase: 'failed', failReason: reason });
+  });
+
+  it('retries errors thrown before broadcast', async () => {
+    const t = setupAttempts([new Error('network'), ok]);
+    t.executor.start();
+    await flush();
+    expect(t.calls()).toBe(2);
+    expect(t.states.a1.phase).toBe('success');
+  });
+
+  it('fails after errors keep being thrown', async () => {
+    const boom = new Error('network');
+    const t = setupAttempts([boom, boom, boom, ok]);
+    t.executor.start();
+    await flush();
+    expect(t.calls()).toBe(3);
+    expect(t.states.a1).toEqual({
+      phase: 'failed',
+      failReason: 'failed',
+      txHash: undefined,
+    });
+  });
+
+  it('does not retry once execution was stopped', async () => {
+    const t = setupAttempts([new ExecutionStoppedError(), ok]);
+    t.executor.start();
+    await flush();
+    expect(t.calls()).toBe(1);
+    expect(t.states.a1.phase).toBe('cancelled');
+  });
+
+  it('stops retrying when stopped during the delay', async () => {
+    const t = setupAttempts([{ ok: false, reason: 'noQuote' }, ok], true);
+    t.executor.start();
+    await flush();
+    expect(t.calls()).toBe(1);
+    expect(t.states.a1.phase).toBe('cancelled');
+  });
+});
+
+describe('bridge arrival failure', () => {
+  it('uses arrivalFailed when arrival is negative', async () => {
+    const t = setup([leg('a1', 'eth', 'bridge')]);
+    t.executor.start();
+    await flush();
+    t.prepare('a1').resolve({ ok: true, txHash: '0xb' });
+    await flush();
+    t.receipt('a1').resolve(true);
+    await flush();
+    t.arrival('a1').resolve(false);
+    await flush();
+    expect(t.states.a1).toEqual({
+      phase: 'failed',
+      failReason: 'arrivalFailed',
+      txHash: '0xb',
+    });
+  });
+
+  it('uses arrivalFailed when waiting for arrival throws', async () => {
+    const t = setup([leg('a1', 'eth', 'bridge')]);
+    t.executor.start();
+    await flush();
+    t.prepare('a1').resolve({ ok: true, txHash: '0xb' });
+    await flush();
+    t.receipt('a1').resolve(true);
+    await flush();
+    t.arrival('a1').reject(new Error('boom'));
+    await flush();
+    expect(t.states.a1).toEqual({
+      phase: 'failed',
+      failReason: 'arrivalFailed',
+      txHash: '0xb',
+    });
+  });
+
+  it('keeps failed for a reverted source tx and never retries it', async () => {
+    const t = setup([leg('a1', 'eth', 'bridge')]);
+    t.executor.start();
+    await flush();
+    t.prepare('a1').resolve({ ok: true, txHash: '0xb' });
+    await flush();
+    t.receipt('a1').resolve(false);
+    await flush();
+    expect(t.states.a1).toEqual({
+      phase: 'failed',
+      failReason: 'failed',
+      txHash: '0xb',
+    });
+    expect(t.calls.filter(c => c === 'prepare:a1')).toHaveLength(1);
+  });
+  it('keeps a retrying leg preparing and holds the next leg on its chain', async () => {
+    const history: LegState[] = [];
+    const calls: string[] = [];
+    const attempts: BroadcastResult[] = [
+      { ok: false, reason: 'noQuote' },
+      { ok: true, txHash: '0x1' },
+    ];
+    const runner: LegRunner = {
+      prepareAndBroadcast: async l => {
+        calls.push(`prepare:${l.key}`);
+        return l.key === 'a1' ? attempts.shift()! : { ok: true, txHash: '0x2' };
+      },
+      waitForReceipt: async l => {
+        calls.push(`receipt:${l.key}`);
+        return true;
+      },
+      waitForArrival: async () => true,
+    };
+    const executor = createMemeTradeExecutor(
+      [leg('a1', 'eth'), leg('a2', 'eth')],
+      runner,
+      {
+        onLegState: (key, state) => {
+          if (key === 'a1') {
+            history.push(state);
+          }
+        },
+        onFinished: () => undefined,
+      },
+      { retryDelay: () => Promise.resolve() },
+    );
+    executor.start();
+    await flush();
+    expect(calls).toEqual([
+      'prepare:a1',
+      'prepare:a1',
+      'receipt:a1',
+      'prepare:a2',
+      'receipt:a2',
+    ]);
+    expect(history.map(s => s.phase)).toEqual([
+      'queued',
+      'preparing',
+      'confirming',
+      'success',
+    ]);
   });
 });

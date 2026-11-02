@@ -12,6 +12,7 @@ import {
   createMemeTradeExecutor,
   type MemeTradeExecutor,
 } from '../engine/executor';
+import { isLegRetryable } from '../engine/displayStatus';
 import { createLegRunner } from '../engine/legRunner';
 import { createLifecycleController } from '../engine/lifecycle';
 import type { ExecLeg, LegState } from '../engine/types';
@@ -62,10 +63,8 @@ export const useMemeTradeTask = ({
     [],
   );
 
-  const start = useMemoizedFn(() => {
-    if (executorRef.current) {
-      return;
-    }
+  // Every run gets its own executor and signers; the finished one is done with them.
+  const run = useMemoizedFn((runLegs: ExecLeg[]) => {
     const { deps, dispose } = createProductionLegRunnerDeps({
       account,
       getDexQuote,
@@ -73,7 +72,7 @@ export const useMemeTradeTask = ({
       maxPriceImpactPct,
     });
     store.setState({ status: 'running' });
-    const executor = createMemeTradeExecutor(legs, createLegRunner(deps), {
+    const executor = createMemeTradeExecutor(runLegs, createLegRunner(deps), {
       onLegState: (key, state) =>
         store.setState(prev => ({ states: { ...prev.states, [key]: state } })),
       onFinished: () => {
@@ -84,6 +83,25 @@ export const useMemeTradeTask = ({
     executorRef.current = executor;
     executor.start();
     lifecycle.sync();
+  });
+
+  const start = useMemoizedFn(() => {
+    if (!executorRef.current) {
+      run(legs);
+    }
+  });
+
+  const retry = useMemoizedFn((keys: string[]) => {
+    const { status, states } = store.getState();
+    if (status !== 'finished') {
+      return;
+    }
+    const retryLegs = legs.filter(
+      leg => keys.includes(leg.key) && isLegRetryable(states[leg.key]),
+    );
+    if (retryLegs.length) {
+      run(retryLegs);
+    }
   });
 
   useEffect(() => {
@@ -139,5 +157,12 @@ export const useMemeTradeTask = ({
     executorRef.current?.stop();
   });
 
-  return { store, start, openExitDialog, continueExecution, stopAndExit };
+  return {
+    store,
+    start,
+    retry,
+    openExitDialog,
+    continueExecution,
+    stopAndExit,
+  };
 };

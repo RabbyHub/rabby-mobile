@@ -1745,6 +1745,9 @@
       "customTestnetNotSupported": "このチェーン上のトークンはサポートされていません"
     },
     "customTestnet": {
+      "screenTitle": "カスタムネットワーク",
+      "removeNetwork": "{{name}}を削除",
+      "editTitle": "カスタムネットワークを編集",
       "add": "カスタムネットワークを追加",
       "currency": "通貨",
       "CustomTestnetForm": {

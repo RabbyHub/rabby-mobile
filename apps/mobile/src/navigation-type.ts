@@ -391,6 +391,8 @@ export type TransactionNavigatorParamList = {
   [RootNames.MemeCoin]?: undefined;
   [RootNames.MemeCoinBuy]: {
     accountAddress: string;
+    /** entered on the home; still editable on the preview page */
+    amountUsd: number;
     /** snapshot at confirm time; marketCap drives the allocation */
     memes: Array<MemeTarget & { logoUrl: string }>;
   };

@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { Text } from '@/components/Typography';
 import { Button } from '@/components2024/Button';
 import {
+  BOTTOM_BUTTON_GAP,
   BOTTOM_BUTTON_SINGLE_HEIGHT,
   BOTTOM_BUTTON_TITLE_STYLE,
   BOTTOM_BUTTON_TOP_OFFSET,
@@ -22,7 +23,7 @@ import type {
   TransactionNavigatorParamList,
 } from '@/navigation-type';
 import { createGetStyles2024 } from '@/utils/styles';
-import { countFinishedLegs } from '../engine/displayStatus';
+import { countFinishedLegs, isLegRetryable } from '../engine/displayStatus';
 import { useMemeTradeTask } from '../hooks/useMemeTradeTask';
 import { returnToMemeCoinHome } from '../navigation';
 import { getExecuteButtonState } from '../ui/helpers';
@@ -43,11 +44,20 @@ const MemeCoinExecuteContent = ({
   const { t } = useTranslation();
   const { styles } = useTheme2024({ getStyle });
   const { safeOffHeader, safeOffBottom } = useSafeSizes();
-  const { store, start, openExitDialog, continueExecution, stopAndExit } =
-    useMemeTradeTask({ account, legs, maxPriceImpactPct });
+  const {
+    store,
+    start,
+    retry,
+    openExitDialog,
+    continueExecution,
+    stopAndExit,
+  } = useMemeTradeTask({ account, legs, maxPriceImpactPct });
   const status = store(s => s.status);
   const exitDialogOpen = store(s => s.exitDialogOpen);
   const done = store(s => countFinishedLegs(s.states));
+  const canRetry = store(s =>
+    legs.some(leg => isLegRetryable(s.states[leg.key])),
+  );
   const navigation = useNavigation();
   const [leaving, setLeaving] = useState(false);
   const pendingActionRef = useRef<
@@ -89,7 +99,19 @@ const MemeCoinExecuteContent = ({
 
   const handleDone = useCallback(() => setLeaving(true), []);
 
-  const buttonState = getExecuteButtonState(status, done, legs.length);
+  const handleRetryLeg = useCallback((key: string) => retry([key]), [retry]);
+
+  const handleRetryAll = useCallback(
+    () => retry(legs.map(leg => leg.key)),
+    [legs, retry],
+  );
+
+  const buttonState = getExecuteButtonState(
+    status,
+    done,
+    legs.length,
+    canRetry,
+  );
 
   return (
     <View style={[styles.screen, { paddingTop: safeOffHeader }]}>
@@ -117,6 +139,7 @@ const MemeCoinExecuteContent = ({
             mode={mode}
             store={store}
             tokenLogos={tokenLogos}
+            onRetry={handleRetryLeg}
           />
         ))}
       </ScrollView>
@@ -139,12 +162,33 @@ const MemeCoinExecuteContent = ({
               noShadow
             />
           </View>
+        ) : buttonState.kind === 'retry' ? (
+          <View style={styles.buttonRow}>
+            <Button
+              type="plain"
+              title={t('page.memeCoin.execute.back')}
+              height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+              titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
+              containerStyle={styles.backButton}
+              onPress={handleDone}
+              noShadow
+            />
+            <Button
+              type="primary"
+              title={t('page.memeCoin.execute.retryFailed')}
+              height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+              titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
+              containerStyle={styles.retryButton}
+              onPress={handleRetryAll}
+              noShadow
+            />
+          </View>
         ) : (
           <Button
             type="primary"
             title={
               buttonState.kind === 'start'
-                ? t('page.memeCoin.execute.start')
+                ? t('page.memeCoin.execute.confirm')
                 : t('page.memeCoin.execute.done')
             }
             height={BOTTOM_BUTTON_SINGLE_HEIGHT}
@@ -193,7 +237,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   content: {
     paddingTop: 12,
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     paddingBottom: 16,
   },
   titleRow: {
@@ -232,10 +276,21 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   bottomBar: {
     flexShrink: 0,
     paddingTop: BOTTOM_BUTTON_TOP_OFFSET,
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
     backgroundColor: colors2024['neutral-bg-1'],
   },
   executingButton: {
     backgroundColor: colors2024['brand-light-1'],
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    gap: BOTTOM_BUTTON_GAP,
+  },
+  // Figma: 143 and 198 of the row
+  backButton: {
+    flex: 143,
+  },
+  retryButton: {
+    flex: 198,
   },
 }));

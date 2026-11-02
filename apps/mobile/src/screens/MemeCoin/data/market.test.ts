@@ -1,9 +1,4 @@
-import {
-  appendByTokenKey,
-  filterBySymbolPrefix,
-  toMemeHolding,
-  toMemeMarketItem,
-} from './market';
+import { appendByTokenKey, toMemeHolding, toMemeMarketItem } from './market';
 import type { RawMemePosition, RawMemeToken } from './memeApi';
 
 const raw = (over: Partial<RawMemeToken> = {}): RawMemeToken => ({
@@ -72,26 +67,6 @@ describe('toMemeHolding', () => {
 
   it('takes the P&L from the backend field', () => {
     expect(toMemeHolding(position({ pnl: -3.1 })).pnl).toBe(-3.1);
-  });
-});
-
-describe('filterBySymbolPrefix', () => {
-  const list = [
-    { symbol: 'DOGE-1' },
-    { symbol: 'HOTDOG' },
-    { symbol: 'DOGGO' },
-    { symbol: 'PEPE' },
-  ];
-
-  it('matches a case-insensitive trimmed prefix', () => {
-    expect(filterBySymbolPrefix(list, '  dOg ', m => m.symbol)).toEqual([
-      { symbol: 'DOGE-1' },
-      { symbol: 'DOGGO' },
-    ]);
-  });
-
-  it('returns the same list for an empty keyword', () => {
-    expect(filterBySymbolPrefix(list, '  ', m => m.symbol)).toBe(list);
   });
 });
 

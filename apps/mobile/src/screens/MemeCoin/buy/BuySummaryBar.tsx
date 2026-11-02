@@ -79,7 +79,7 @@ export const BuySummaryBar = ({
         onChange={onMaxPriceImpactChange}
       />
       <Button
-        title={t('page.memeCoin.buy.confirm')}
+        title={t('page.memeCoin.buy.preview')}
         height={BOTTOM_BUTTON_SINGLE_HEIGHT}
         titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
         disabled={confirmDisabled}
@@ -95,11 +95,11 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   bar: {
     flexShrink: 0,
     paddingTop: BOTTOM_BUTTON_TOP_OFFSET,
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
     gap: 16,
     backgroundColor: colors2024['neutral-bg-1'],
     shadowColor: '#4B4E62',
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.12,
     shadowRadius: 15,
     shadowOffset: { width: 0, height: 0 },
   },
@@ -107,7 +107,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     alignItems: 'flex-start',
     justifyContent: 'space-between',
-    paddingHorizontal: 8,
   },
   totalLabel: {
     fontFamily: 'SF Pro Rounded',

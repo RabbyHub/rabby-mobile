@@ -29,7 +29,6 @@ const asset = (
   usdValue,
   price: 1,
   isNative: false,
-  isMainstream: ['USDT', 'USDC'].includes(symbol),
   ...over,
 });
 
@@ -80,9 +79,7 @@ describe('planBuy', () => {
       input({
         amountUsd: 50,
         memes: [PEPE],
-        sources: [
-          asset('ETH', 'eth', 100, { isNative: true, isMainstream: true }),
-        ],
+        sources: [asset('ETH', 'eth', 100, { isNative: true })],
         chainGas: { eth: gas({ perLegGasUsd: 2, nativeBalanceUsd: 100 }) },
       }),
     );
@@ -96,7 +93,7 @@ describe('planBuy', () => {
     expect(plan.shortfallUsd).toBe(0);
   });
 
-  it('best-fit picks the smallest covering source, long-tail first', () => {
+  it('best-fit picks the smallest covering source', () => {
     const plan = planBuy(
       input({
         amountUsd: 50,
@@ -104,24 +101,20 @@ describe('planBuy', () => {
         sources: [
           asset('USDT', 'eth', 300),
           asset('USDC', 'eth', 55),
-          asset('LINK', 'eth', 60),
+          asset('DAI', 'eth', 60),
         ],
         chainGas: { eth: gas() },
       }),
     );
-    expect(plan.legs.map(l => l.pay.symbol)).toEqual(['LINK']);
+    expect(plan.legs.map(l => l.pay.symbol)).toEqual(['USDC']);
   });
 
-  it('cross-chain avoids mainnet and prefers mainstream', () => {
+  it('cross-chain avoids mainnet', () => {
     const plan = planBuy(
       input({
         amountUsd: 40,
         memes: [BONK],
-        sources: [
-          asset('USDT', 'eth', 100),
-          asset('AERO', 'base', 100),
-          asset('USDC', 'base', 100),
-        ],
+        sources: [asset('USDT', 'eth', 100), asset('USDC', 'base', 100)],
         chainGas: { eth: gas(), base: gas() },
       }),
     );
@@ -149,7 +142,7 @@ describe('planBuy', () => {
         amountUsd: 50,
         memes: [PEPE],
         sources: [
-          asset('ETH', 'eth', 1, { isNative: true, isMainstream: true }),
+          asset('ETH', 'eth', 1, { isNative: true }),
           asset('USDT', 'eth', 100),
         ],
         chainGas: { eth: gas({ perLegGasUsd: 2, nativeBalanceUsd: 1 }) },
@@ -186,7 +179,7 @@ describe('planBuy', () => {
         amountUsd: 85,
         memes: [meme('PEPE', 'eth', 100), meme('WOJAK', 'eth', 100)],
         sources: [
-          asset('ETH', 'eth', 100, { isNative: true, isMainstream: true }),
+          asset('ETH', 'eth', 100, { isNative: true }),
           asset('USDC', 'base', 100),
         ],
         chainGas: {
@@ -217,10 +210,10 @@ describe('planBuy', () => {
         amountUsd: 100,
         memes: [PEPE, BONK],
         sources: [
-          asset('ETH', 'eth', 50, { isNative: true, isMainstream: true }),
+          asset('ETH', 'eth', 50, { isNative: true }),
           asset('USDT', 'eth', 30),
           asset('USDC', 'base', 80),
-          asset('BNB', 'bsc', 18, { isNative: true, isMainstream: true }),
+          asset('BNB', 'bsc', 18, { isNative: true }),
         ],
         chainGas: {
           eth: gas({ perLegGasUsd: 2, nativeBalanceUsd: 50 }),

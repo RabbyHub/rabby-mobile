@@ -23,18 +23,6 @@ export const toMemeHolding = (raw: RawMemePosition): MemeHolding => ({
   pnl: raw.pnl ?? null,
 });
 
-export const filterBySymbolPrefix = <T>(
-  list: T[],
-  keyword: string,
-  getSymbol: (item: T) => string,
-): T[] => {
-  const q = keyword.trim().toLowerCase();
-  if (!q) {
-    return list;
-  }
-  return list.filter(item => getSymbol(item).toLowerCase().startsWith(q));
-};
-
 export const appendByTokenKey = <T extends MemeToken>(
   list: T[],
   more: T[],

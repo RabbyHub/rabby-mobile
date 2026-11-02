@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Keyboard, TouchableOpacity, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import RcIconPencilCC from '@/assets2024/memecoin/pencil-cc.svg';
@@ -8,8 +8,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import { formatUsdValue } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import { DashedDivider } from '../components/DashedDivider';
-
-const MAX_AVATARS = 6;
+import { formatAllocationPct, getMemeAllocations } from '../ui/helpers';
 
 export const BuyAmountCard = ({
   amountText,
@@ -21,12 +20,21 @@ export const BuyAmountCard = ({
   /** null when amountText is invalid */
   amountUsd: number | null;
   onChangeAmount: (text: string) => void;
-  memes: Array<{ id: string; chain: string; logoUrl: string }>;
+  memes: Array<{
+    id: string;
+    chain: string;
+    symbol: string;
+    marketCap: number;
+    logoUrl: string;
+  }>;
 }) => {
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const [editing, setEditing] = useState(false);
-  const overflow = memes.length > MAX_AVATARS;
+  const allocations = useMemo(
+    () => getMemeAllocations(amountUsd ?? 0, memes),
+    [amountUsd, memes],
+  );
   const amountStyle = [
     styles.amount,
     amountUsd === null && styles.amountInvalid,
@@ -82,31 +90,27 @@ export const BuyAmountCard = ({
         </View>
       </View>
       <DashedDivider style={styles.divider} />
-      <View style={styles.memeRow}>
-        <View style={styles.avatars}>
-          {memes.slice(0, MAX_AVATARS).map(meme => (
+      <View style={styles.allocations}>
+        {allocations.map(({ meme, ratio, amountUsd: memeUsd }) => (
+          <View key={`${meme.chain}:${meme.id}`} style={styles.allocation}>
             <AssetAvatar
-              key={`${meme.chain}:${meme.id}`}
               logo={meme.logoUrl}
               chain={meme.chain}
               size={28}
               chainSize={12}
               logoStyle={styles.memeLogo}
             />
-          ))}
-          {overflow ? (
-            <View style={styles.more}>
-              <View style={styles.dot} />
-              <View style={styles.dot} />
-              <View style={styles.dot} />
+            <View style={styles.allocationText}>
+              <Text style={styles.allocationUsd} numberOfLines={1}>
+                {formatUsdValue(memeUsd)}
+              </Text>
+              <View style={styles.allocationDivider} />
+              <Text style={styles.allocationPct} numberOfLines={1}>
+                {formatAllocationPct(ratio)}
+              </Text>
             </View>
-          ) : null}
-        </View>
-        <Text style={styles.memeCount}>
-          {overflow
-            ? t('page.memeCoin.buy.totalMemes', { count: memes.length })
-            : t('page.memeCoin.buy.memes', { count: memes.length })}
-        </Text>
+          </View>
+        ))}
       </View>
     </View>
   );
@@ -174,45 +178,53 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     color: colors2024['neutral-secondary'],
   },
   divider: {
-    marginTop: 14,
+    marginTop: 16,
     marginBottom: 14,
   },
-  memeRow: {
+  allocations: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    columnGap: 28,
+    rowGap: 8,
+  },
+  allocation: {
+    // two per row: the 28 gap keeps a third item from fitting at 40%
+    flexBasis: '40%',
+    flexGrow: 1,
+    minWidth: 0,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     gap: 10,
   },
-  avatars: {
+  allocationText: {
+    flexShrink: 1,
+    minWidth: 0,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 5,
   },
-  memeLogo: {
-    borderRadius: 8,
+  allocationUsd: {
+    flexShrink: 0,
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '500',
+    color: colors2024['neutral-body'],
   },
-  more: {
-    width: 28,
-    height: 28,
-    borderRadius: 7,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 3,
-    backgroundColor: colors2024['neutral-bg-5'],
+  allocationDivider: {
+    width: 1,
+    height: 12,
+    backgroundColor: colors2024['neutral-line'],
   },
-  dot: {
-    width: 3,
-    height: 3,
-    borderRadius: 1.5,
-    backgroundColor: colors2024['neutral-secondary'],
-  },
-  memeCount: {
+  allocationPct: {
     flexShrink: 1,
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     lineHeight: 18,
     fontWeight: '400',
     color: colors2024['neutral-secondary'],
+  },
+  memeLogo: {
+    borderRadius: 8,
   },
 }));
