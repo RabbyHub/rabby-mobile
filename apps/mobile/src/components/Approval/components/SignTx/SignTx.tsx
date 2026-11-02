@@ -125,6 +125,10 @@ import { useGasAccountTxsCheck } from '@/screens/GasAccount/hooks/checkTsx';
 import { useGasAccountSnapshotActivation } from '@/screens/GasAccount/hooks';
 import { EIP7702Warning } from '../EIP7702Warning';
 import { BlockedAddressDialog } from '@/components/Dialogs/BlockedAddressDialog';
+import {
+  getTxAddressesToCheck,
+  hasBlockedAddress,
+} from '@/core/utils/blockedAddress';
 import { GnosisAdminFooterBarPopup } from '../TxComponents/GnosisAdminFooterBarPopup';
 import { apisKeyring } from '@/core/apis/keyring';
 import { adjustV } from '@/utils/gnosis';
@@ -1692,25 +1696,10 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
   };
 
   const checkIsBlockedTransaction = async () => {
-    let isBlockedTo = false;
-    let isBlockedFrom = false;
-    try {
-      const isBlockedFromPromise = openapi.isBlockedAddress(tx.from);
-      const isBlockedToPromise = tx.to
-        ? openapi.isBlockedAddress(tx.to)
-        : Promise.resolve({ is_blocked: false });
-
-      if (tx.to) {
-        const { is_blocked } = await isBlockedToPromise;
-        isBlockedTo = is_blocked;
-      }
-      const { is_blocked } = await isBlockedFromPromise;
-      isBlockedFrom = is_blocked;
-      if (isBlockedTo || isBlockedFrom) {
-        setIsShowBlockedTransactionDialog(true);
-      }
-    } catch (e) {
-      // NOTHING
+    // A failed lookup only lets its own address through, so it can't hide a
+    // blocked sender behind a receiver lookup error.
+    if (await hasBlockedAddress(getTxAddressesToCheck(tx))) {
+      setIsShowBlockedTransactionDialog(true);
     }
   };
 
