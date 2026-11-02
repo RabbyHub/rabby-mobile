@@ -4,6 +4,7 @@ export type EncryptorDecryptDetail = {
   vault: any;
   exportedKeyString?: string;
   salt?: string;
+  kdfVersion?: string;
 };
 
 export type EncryptorEncryptDetail = {
@@ -29,7 +30,10 @@ export type EncryptorAdapter = {
     object: any,
   ) => Promise<EncryptorEncryptDetail>;
   /** Add explicit KDF metadata without re-encrypting a legacy payload. */
-  normalizeKdfMetadata?: (encryptedString: string) => string | null;
+  normalizeKdfMetadata?: (
+    encryptedString: string,
+    resolvedVersion?: string,
+  ) => string | null;
 };
 
 export const nodeEncryptor = {

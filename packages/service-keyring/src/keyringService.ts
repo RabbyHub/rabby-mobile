@@ -287,6 +287,8 @@ export class KeyringService extends RNEventEmitter {
   private readonly onPersistVaultUpgrade?: KeyringServiceOptions['onPersistVaultUpgrade'];
 
   private unlockSessionId = 0;
+  private resolvedVaultKdfVersion?: string;
+  private resolvedBootedKdfVersion?: string;
 
   private trustedVaultKeyWrite: Promise<void> = Promise.resolve();
   private pendingKeyringRuntimeRestore: DeferredKeyringRuntimeRestore | null =
@@ -776,6 +778,8 @@ export class KeyringService extends RNEventEmitter {
       this._isSubmittingPassword = true;
       this.unlockSessionId += 1;
       const { unlockSessionId } = this;
+      this.resolvedVaultKdfVersion = undefined;
+      this.resolvedBootedKdfVersion = undefined;
       let vaultKeyCandidate: VaultKeyCandidate | undefined;
       if (shouldVerifyBeforeUnlock) {
         this.traceKeyringPerf('submit_password.verify_password_start', {
@@ -1049,10 +1053,10 @@ export class KeyringService extends RNEventEmitter {
     const store = this.store;
     const currentState = store.getState();
     const nextVault = currentState.vault
-      ? normalize(currentState.vault)
+      ? normalize(currentState.vault, this.resolvedVaultKdfVersion)
       : null;
     const nextBooted = currentState.booted
-      ? normalize(currentState.booted)
+      ? normalize(currentState.booted, this.resolvedBootedKdfVersion)
       : null;
     if (nextVault === null && nextBooted === null) {
       return;
@@ -1103,7 +1107,11 @@ export class KeyringService extends RNEventEmitter {
       // throw new Error(i18n.t('background.error.canNotUnlock'));
       throw new Error('Cannot unlock without a previous vault');
     }
-    await this.encryptor.decrypt(password, encryptedBooted);
+    const detail = await this.encryptor.decryptWithDetail(
+      password,
+      encryptedBooted,
+    );
+    this.resolvedBootedKdfVersion = detail.kdfVersion;
   }
   /**
    * Remove Empty Keyrings
@@ -1616,6 +1624,7 @@ export class KeyringService extends RNEventEmitter {
         encryptedVault,
       );
       vault = decryptDetail.vault;
+      this.resolvedVaultKdfVersion = decryptDetail.kdfVersion;
       this.traceKeyringPerf('unlock_keyrings.decrypt_password_end', {
         elapsedMs: nowMs() - startedAt,
         hasExportedKeyString: Boolean(decryptDetail.exportedKeyString),

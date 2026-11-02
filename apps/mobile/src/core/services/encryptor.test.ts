@@ -246,6 +246,27 @@ describe('RNEncryptor KDF version registry', () => {
     );
   });
 
+  it('tries registered versions for an unversioned 600k payload', async () => {
+    const encrypted = {
+      cipher: fixtures[1].encrypted.cipher,
+      iv: fixtures[1].encrypted.iv,
+      salt: fixtures[1].encrypted.salt,
+    };
+    const detail = await new RNEncryptor().decryptWithDetail(
+      password,
+      JSON.stringify(encrypted),
+    );
+
+    expect(detail.vault).toEqual(vault);
+    expect(detail.kdfVersion).toBe(KDF_VERSION_PBKDF2_600000);
+    expect(
+      jest
+        .mocked(Aes.pbkdf2)
+        .mock.calls.slice(0, 2)
+        .map(call => call[2]),
+    ).toEqual([5000, 600000]);
+  });
+
   it.each(fixtures)(
     'rejects a wrong password for the $iterations-iteration vault',
     async fixture => {
@@ -347,13 +368,18 @@ describe('RNEncryptor metadata normalization', () => {
       iv: fixtures[0].encrypted.iv,
       salt: fixtures[0].encrypted.salt,
     };
-    const normalized = new RNEncryptor().normalizeKdfMetadata(
+    const encryptor = new RNEncryptor();
+    const normalized = encryptor.normalizeKdfMetadata(
       JSON.stringify(encrypted),
+      KDF_VERSION_ORIGINAL,
     );
 
     expect(normalized).not.toBeNull();
     expect(JSON.parse(normalized!)).toEqual(fixtures[0].encrypted);
-    expect(new RNEncryptor().normalizeKdfMetadata(normalized!)).toBeNull();
+    expect(encryptor.normalizeKdfMetadata(normalized!)).toBeNull();
+    expect(
+      encryptor.normalizeKdfMetadata(JSON.stringify(encrypted)),
+    ).toBeNull();
   });
 
   it('promotes previous keyMetadata to the registered version marker', () => {

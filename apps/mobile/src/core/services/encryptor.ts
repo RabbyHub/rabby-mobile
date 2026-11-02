@@ -154,6 +154,37 @@ function resolvePayloadKdfOptions(
   return parseLegacyKeyMetadata(encryptedData.keyMetadata);
 }
 
+function parseKdfVersion(value: unknown): KdfVersion {
+  if (!isKnownKdfVersion(value)) {
+    throw new Error('Unsupported RNEncryptor KDF version');
+  }
+  return value;
+}
+
+function getUnversionedKdfCandidates(): KeyDerivationOptions[] {
+  // A test build from before version metadata existed may already have written
+  // the newer KDF. Keep this bounded to registered versions and try them in
+  // strength order; never guess an unregistered algorithm.
+  return Object.values(KDF_REGISTRY)
+    .sort(
+      (left, right) =>
+        KDF_VERSION_RANK[left.version] - KDF_VERSION_RANK[right.version],
+    )
+    .map(cloneKdfOptions);
+}
+
+function resolvePayloadKdfCandidates(
+  encryptedData: Pick<EncryptedData, 'kdf' | 'keyMetadata'>,
+): KeyDerivationOptions[] {
+  if (encryptedData.kdf !== undefined) {
+    return [parseKdfMetadata(encryptedData.kdf)];
+  }
+  if (encryptedData.keyMetadata !== undefined) {
+    return [parseLegacyKeyMetadata(encryptedData.keyMetadata)];
+  }
+  return getUnversionedKdfCandidates();
+}
+
 function resolveExportedKdfOptions(
   exportedKey: Pick<ExportedRNEncryptorKey, 'kdf' | 'keyMetadata'>,
 ): KeyDerivationOptions {
@@ -188,6 +219,26 @@ async function _encryptWithKey(text: string, key: string) {
 
 async function _decryptWithKey(encryptedData: EncryptedData, key: string) {
   return Aes.decrypt(encryptedData.cipher, key, encryptedData.iv, algorithms);
+}
+
+async function decryptWithCandidates(
+  password: string,
+  encryptedData: EncryptedData,
+) {
+  let lastError: unknown;
+  for (const options of resolvePayloadKdfCandidates(encryptedData)) {
+    try {
+      const key = await _keyFromPassword(password, encryptedData.salt, options);
+      const data = await _decryptWithKey(encryptedData, key);
+      return { data: JSON.parse(data), options };
+    } catch (error) {
+      lastError = error;
+    }
+  }
+
+  throw lastError instanceof Error
+    ? lastError
+    : new Error('Unable to decrypt RNEncryptor payload');
 }
 
 async function encryptWithPassword(
@@ -272,7 +323,10 @@ export default class RNEncryptor implements EncryptorAdapter {
    * Adds explicit KDF metadata to a legacy payload without changing its
    * ciphertext, IV or salt. Returns null when no metadata update is needed.
    */
-  normalizeKdfMetadata(encryptedString: string): string | null {
+  normalizeKdfMetadata(
+    encryptedString: string,
+    resolvedVersion?: string,
+  ): string | null {
     let payload: EncryptedData;
     try {
       payload = JSON.parse(encryptedString) as EncryptedData;
@@ -280,7 +334,15 @@ export default class RNEncryptor implements EncryptorAdapter {
         return null;
       }
 
-      const resolved = resolvePayloadKdfOptions(payload);
+      const resolved =
+        payload.keyMetadata !== undefined
+          ? resolvePayloadKdfOptions(payload)
+          : resolvedVersion
+          ? KDF_REGISTRY[parseKdfVersion(resolvedVersion)]
+          : null;
+      if (!resolved) {
+        return null;
+      }
       const { keyMetadata: _legacyMetadata, ...rest } = payload;
       return JSON.stringify({
         ...rest,
@@ -320,22 +382,27 @@ export default class RNEncryptor implements EncryptorAdapter {
 
   async decrypt(password: string, encryptedString: string) {
     const encryptedData = JSON.parse(encryptedString) as EncryptedData;
-    const options = resolvePayloadKdfOptions(encryptedData);
-    const key = await _keyFromPassword(password, encryptedData.salt, options);
-    const data = await _decryptWithKey(encryptedData, key);
-
-    return JSON.parse(data);
+    const result = await decryptWithCandidates(password, encryptedData);
+    return result.data;
   }
 
   async decryptWithDetail(password: string, encryptedString: string) {
     const encryptedData = JSON.parse(encryptedString) as EncryptedData;
-    const options = resolvePayloadKdfOptions(encryptedData);
-    const key = await _keyFromPassword(password, encryptedData.salt, options);
-    const data = await _decryptWithKey(encryptedData, key);
+    const result = await decryptWithCandidates(password, encryptedData);
+    const key = await _keyFromPassword(
+      password,
+      encryptedData.salt,
+      result.options,
+    );
     return {
-      vault: JSON.parse(data),
-      exportedKeyString: serializeExportedKey(key, encryptedData.salt, options),
+      vault: result.data,
+      exportedKeyString: serializeExportedKey(
+        key,
+        encryptedData.salt,
+        result.options,
+      ),
       salt: encryptedData.salt,
+      kdfVersion: result.options.version,
     };
   }
 
@@ -345,13 +412,24 @@ export default class RNEncryptor implements EncryptorAdapter {
   ) {
     const encryptedData = JSON.parse(encryptedString) as EncryptedData;
     const exportedKey = parseExportedKey(exportedKeyString);
-    const payloadOptions = resolvePayloadKdfOptions(encryptedData);
-    const exportedOptions = resolveExportedKdfOptions(exportedKey);
+    const hasPayloadMetadata =
+      encryptedData.kdf !== undefined ||
+      encryptedData.keyMetadata !== undefined;
+    const hasExportedMetadata =
+      exportedKey.kdf !== undefined || exportedKey.keyMetadata !== undefined;
 
-    if (
-      exportedKey.salt !== encryptedData.salt ||
-      exportedOptions.version !== payloadOptions.version
-    ) {
+    if (exportedKey.salt !== encryptedData.salt) {
+      throw new Error('Invalid exported RNEncryptor key');
+    }
+    if (hasPayloadMetadata && hasExportedMetadata) {
+      const payloadOptions = resolvePayloadKdfOptions(encryptedData);
+      const exportedOptions = resolveExportedKdfOptions(exportedKey);
+      if (exportedOptions.version !== payloadOptions.version) {
+        throw new Error('Invalid exported RNEncryptor key');
+      }
+    }
+
+    if (!exportedKey.key) {
       throw new Error('Invalid exported RNEncryptor key');
     }
 

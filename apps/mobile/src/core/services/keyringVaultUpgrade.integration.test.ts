@@ -280,6 +280,34 @@ describe('password vault upgrade integration', () => {
     }
   });
 
+  it('recognizes an unversioned 600k vault and records its version', async () => {
+    const { state } = await createFixture({
+      vaultEncryptor: upgradedEncryptor,
+      bootedEncryptor: upgradedEncryptor,
+    });
+    const before = copy(state);
+    before.vault = state.vault ? stripKdfMetadata(state.vault) : undefined;
+    before.booted = state.booted ? stripKdfMetadata(state.booted) : undefined;
+    const { service, commits, readDurable, readCheckpoint } = openService(
+      before,
+      { encryptor: legacyEncryptor },
+    );
+
+    await service.submitPassword(password);
+
+    const persisted = readDurable();
+    expect(commits).toHaveLength(1);
+    expect(readCheckpoint()).toEqual(before);
+    for (const field of ['vault', 'booted'] as const) {
+      const originalEnvelope = JSON.parse(before[field]!);
+      const persistedEnvelope = JSON.parse(persisted[field]!);
+      expect(persistedEnvelope.kdf?.version).toBe('20261022');
+      expect(persistedEnvelope.cipher).toBe(originalEnvelope.cipher);
+      expect(persistedEnvelope.iv).toBe(originalEnvelope.iv);
+      expect(persistedEnvelope.salt).toBe(originalEnvelope.salt);
+    }
+  });
+
   it('upgrades previous keyMetadata to the registered version without re-encrypting', async () => {
     const { state } = await createFixture({
       vaultEncryptor: upgradedEncryptor,
