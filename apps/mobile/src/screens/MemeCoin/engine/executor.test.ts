@@ -363,4 +363,51 @@ describe('bridge arrival failure', () => {
     });
     expect(t.calls.filter(c => c === 'prepare:a1')).toHaveLength(1);
   });
+  it('keeps a retrying leg preparing and holds the next leg on its chain', async () => {
+    const history: LegState[] = [];
+    const calls: string[] = [];
+    const attempts: BroadcastResult[] = [
+      { ok: false, reason: 'noQuote' },
+      { ok: true, txHash: '0x1' },
+    ];
+    const runner: LegRunner = {
+      prepareAndBroadcast: async l => {
+        calls.push(`prepare:${l.key}`);
+        return l.key === 'a1' ? attempts.shift()! : { ok: true, txHash: '0x2' };
+      },
+      waitForReceipt: async l => {
+        calls.push(`receipt:${l.key}`);
+        return true;
+      },
+      waitForArrival: async () => true,
+    };
+    const executor = createMemeTradeExecutor(
+      [leg('a1', 'eth'), leg('a2', 'eth')],
+      runner,
+      {
+        onLegState: (key, state) => {
+          if (key === 'a1') {
+            history.push(state);
+          }
+        },
+        onFinished: () => undefined,
+      },
+      { retryDelay: () => Promise.resolve() },
+    );
+    executor.start();
+    await flush();
+    expect(calls).toEqual([
+      'prepare:a1',
+      'prepare:a1',
+      'receipt:a1',
+      'prepare:a2',
+      'receipt:a2',
+    ]);
+    expect(history.map(s => s.phase)).toEqual([
+      'queued',
+      'preparing',
+      'confirming',
+      'success',
+    ]);
+  });
 });
