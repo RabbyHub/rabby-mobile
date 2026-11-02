@@ -33,6 +33,8 @@ export type EncryptorAdapter = {
     object: any,
     currentEncryptedString?: string,
   ) => Promise<string>;
+  /** Add explicit KDF metadata without re-encrypting a legacy payload. */
+  normalizeKdfMetadata?: (encryptedString: string) => string | null;
 };
 
 export const nodeEncryptor = {
