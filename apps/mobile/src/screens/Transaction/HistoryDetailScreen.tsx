@@ -8,12 +8,11 @@ import { ScrollView, TouchableOpacity, View } from 'react-native';
 
 import RcIconJumpCC from '@/assets2024/icons/history/IconJumpCC.svg';
 import { getBottomButtonBottomOffset } from '@/constant/layout';
-import { ScreenHeaderAccountSwitcher } from '@/components/AccountSwitcher/OnScreenHeader';
+import { ScreenHeaderAccountTitle } from '@/components/AccountSwitcher/OnScreenHeader';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { Text } from '@/components/Typography';
 import { toast } from '@/components2024/Toast';
-import { switchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { GetNestedScreenRouteProp } from '@/navigation-type';
 import { findAccountByPriority } from '@/utils/account';
 import { ellipsisAddress } from '@/utils/address';
@@ -25,7 +24,7 @@ import { openTxExternalUrl } from '@/utils/transaction';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
-import { useFocusEffect, useRoute } from '@react-navigation/native';
+import { useRoute } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { RevokeTokenBtn } from './components/Actions/components/RevokeTokenBtn';
 import { AddressItemInDetail } from './components/AddressItemInDetail';
@@ -37,6 +36,7 @@ import { getApproveTokeName } from './components/utils';
 import { isAddress } from 'viem';
 import { getTokenSymbol } from '@/utils/token';
 import { ProjectItemInDetail } from './components/ProjectItemInDetail';
+import { HistoryHeaderTitle } from './components/HistoryHeaderTitle';
 
 function HistoryDetailScreen(): JSX.Element {
   const route =
@@ -51,25 +51,6 @@ function HistoryDetailScreen(): JSX.Element {
   const isScam = data.is_scam;
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const { setNavigationOptions } = useSafeSetNavigationOptions();
-  const getHeaderTitle = React.useCallback(() => {
-    return (
-      <ScreenHeaderAccountSwitcher
-        forScene="HistoryDetail"
-        titleText={
-          <Text style={styles.headerTitleStyle} numberOfLines={1}>
-            {title || t('page.transactions.itemTitle.Default')}
-          </Text>
-        }
-        disableSwitch={true}
-      />
-    );
-  }, [styles.headerTitleStyle, title, t]);
-
-  React.useEffect(() => {
-    setNavigationOptions({
-      headerTitle: getHeaderTitle,
-    });
-  }, [setNavigationOptions, getHeaderTitle]);
 
   const { chainItem, touchable } = useMemo(() => {
     const info =
@@ -190,13 +171,24 @@ function HistoryDetailScreen(): JSX.Element {
       : accounts.find(item => isSameAddress(item.address, data.address));
   }, [account, accounts, data.address]);
 
-  useFocusEffect(
-    useCallback(() => {
-      if (currentAccount) {
-        switchSceneCurrentAccount('HistoryDetail', currentAccount);
-      }
-    }, [currentAccount]),
-  );
+  const getHeaderTitle = React.useCallback(() => {
+    return (
+      <ScreenHeaderAccountTitle
+        account={currentAccount}
+        titleText={
+          <HistoryHeaderTitle>
+            {title || t('page.transactions.itemTitle.Default')}
+          </HistoryHeaderTitle>
+        }
+      />
+    );
+  }, [currentAccount, title, t]);
+
+  React.useEffect(() => {
+    setNavigationOptions({
+      headerTitle: getHeaderTitle,
+    });
+  }, [setNavigationOptions, getHeaderTitle]);
 
   const contractInfo = useMemo(() => {
     if (data.cate_id === 'send' || data.cate_id === 'receive') {
@@ -592,13 +584,6 @@ const getStyle = createGetStyles2024(
     },
     operationText: {
       textTransform: 'capitalize',
-    },
-    headerTitleStyle: {
-      color: colors2024['neutral-title-1'],
-      fontWeight: '800',
-      fontSize: 20,
-      fontFamily: 'SF Pro Rounded',
-      lineHeight: 24,
     },
     scamContainerWrapper: {
       paddingHorizontal: PADDING_HORIZONTAL,

@@ -31,7 +31,13 @@ import RuleDrawer from '../SecurityEngine/RuleDrawer';
 import RuleResult from './RuleResult';
 import { SignTestnetPermission } from './SignTestnetPermission';
 import UserListDrawer from './UserListDrawer';
-import ArrowDownSVG from '@/assets/icons/approval/arrow-down-blue.svg';
+import ArrowDownCC from '@/assets/icons/common/arrow-down-cc.svg';
+import {
+  BOTTOM_BUTTON_BOTTOM_OFFSET,
+  BOTTOM_BUTTON_DOUBLE_HEIGHT,
+  BOTTOM_BUTTON_GAP,
+  BOTTOM_BUTTON_TOP_OFFSET,
+} from '@/constant/layout';
 import { StyleSheet } from 'react-native';
 import type { AppColors2024Variants } from '@/constant/theme';
 import { AppColorsVariants } from '@/constant/theme';
@@ -53,7 +59,6 @@ import { AccountSelector } from '@/components2024/AccountSelector';
 import type { Account } from '@/core/startupServices/preference';
 import { ConnectSkeleton } from './ConnectSkeleton';
 import { useAccounts, useMyAccounts } from '@/hooks/account';
-import { matomoRequestEvent } from '@/utils/analytics';
 import { getDappAccount } from '@/core/utils/dappAccount';
 import { Text } from '@/components/Typography';
 import { getTransactionHistoryTransactions } from '@/core/serviceApi/transactionHistory';
@@ -468,12 +473,7 @@ ConnectProps) => {
       defaultChain,
       defaultAccount: selectedAccount,
     });
-    matomoRequestEvent({
-      category: 'Websites Usage',
-      action: 'Website_Connected',
-      label: origin,
-    });
-  }, [defaultChain, origin, resolveApproval, selectedAccount]);
+  }, [defaultChain, resolveApproval, selectedAccount]);
 
   const handleRuleDrawerClose = (update: boolean) => {
     if (update) {
@@ -656,25 +656,27 @@ ConnectProps) => {
         </View>
         <View style={styles.footer}>
           <Button
-            type="ghost"
-            containerStyle={[styles.button]}
+            type="plain"
+            height={BOTTOM_BUTTON_DOUBLE_HEIGHT}
+            containerStyle={styles.button}
+            buttonStyle={styles.buttonInner}
             onPress={
               displayBlockedRequestApproval ? activeCancelPopup : handleCancel
             }
-            title={
-              <View style={styles.cancelButtonTextView}>
-                <Text style={styles.cancelButtonText}>
-                  {connectBtnStatus.cancelBtnText}
-                </Text>
-                {displayBlockedRequestApproval && (
-                  <ArrowDownSVG width={16} height={16} />
-                )}
-              </View>
+            title={connectBtnStatus.cancelBtnText}
+            iconRight={
+              displayBlockedRequestApproval ? (
+                //@ts-expect-error
+                <ArrowDownCC style={styles.cancelIcon} width={12} />
+              ) : null
             }
           />
           <Button
-            containerStyle={[styles.button]}
             type="primary"
+            height={BOTTOM_BUTTON_DOUBLE_HEIGHT}
+            containerStyle={styles.button}
+            buttonStyle={styles.buttonInner}
+            titleStyle={styles.confirmButtonText}
             onPress={() => handleAllow()}
             disabled={isLoading || connectBtnStatus.disabled}
             disabledTitleStyle={{
@@ -764,14 +766,14 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   footerContainer: {
     paddingTop: 16,
-    paddingBottom: 56,
+    paddingBottom: BOTTOM_BUTTON_BOTTOM_OFFSET,
     backgroundColor: colors2024['neutral-bg-1'],
   },
   footer: {
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: BOTTOM_BUTTON_GAP,
     paddingHorizontal: 20,
   },
   connectWalletRow: {
@@ -780,7 +782,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: 12,
-    marginBottom: 14,
+    marginBottom: BOTTOM_BUTTON_TOP_OFFSET,
     paddingHorizontal: 24,
   },
   connectWalletValue: {
@@ -822,24 +824,20 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     marginRight: 4,
   },
   button: {
-    width: '50%',
-    height: 52,
     flex: 1,
   },
-
-  cancelButtonTextView: {
-    display: 'flex',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 2,
+  buttonInner: {
+    height: BOTTOM_BUTTON_DOUBLE_HEIGHT,
+    borderRadius: 12,
   },
-  cancelButtonText: {
-    color: colors2024['brand-default'],
+  confirmButtonText: {
+    color: colors2024['neutral-InvertHighlight'],
+    fontSize: 18,
     fontFamily: 'SF Pro Rounded',
-    fontSize: 20,
-    lineHeight: 24,
     fontWeight: '700',
+  },
+  cancelIcon: {
+    color: colors2024['neutral-title-1'],
   },
   titleWrapper: {
     flexDirection: 'row',

@@ -85,7 +85,7 @@ prepare_android_build_artifacts() {
   turbo_prepare_ruby_bundle || return $?
 
   if turbo_build_enabled; then
-    android_build_artifacts_key=$(turbo_compute_android_build_artifacts_key)
+    android_build_artifacts_key=$(turbo_compute_android_build_artifacts_key) || return $?
 
     if turbo_android_build_artifacts_ready "$android_build_artifacts_key"; then
       turbo_log "android build artifacts already up to date"

@@ -104,7 +104,10 @@ import {
   ensureFeatureActivation,
   markFeatureActivation,
 } from '@/core/utils/featureActivationDiagnostics';
-import { getInitialDisplayToken } from './initialDisplayToken';
+import {
+  getInitialDisplayToken,
+  getInitialSendTokenDisplaySnapshot,
+} from './initialDisplayToken';
 
 const AnimatedKeyboardAwareScrollView = Animated.createAnimatedComponent(
   KeyboardAwareScrollView,
@@ -575,7 +578,7 @@ function SendScreen({
     hasSelectedGasLevel: !!screenState.selectedGasLevel,
   });
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!currentAccount || !isFocused) {
       return;
     }
@@ -767,8 +770,15 @@ function SendScreen({
       initialTokenCommitGuardRef.current();
     if (!isSessionActive()) return;
 
-    let targetToken: TokenItem | null = null;
     const { chainItem: latestChainItem, currentToken } = getSendChainToken();
+    let targetToken = getInitialSendTokenDisplaySnapshot({
+      accountAddress: currentAccount?.address || '',
+      params: navParams,
+      fallbackToken: currentToken,
+    });
+    markSendScreenPerf('initial_display_token_snapshot', {
+      available: !!targetToken,
+    });
 
     if (
       navParams &&
@@ -801,7 +811,7 @@ function SendScreen({
         ...EMPTY_TOKEN_ITEM,
       };
       target && apiSendToken.setChainEnum(target.enum);
-    } else {
+    } else if (!targetToken) {
       if (currentAccount?.address) {
         const lastTokenStartedAt = Date.now();
         markSendScreenPerf('last_time_send_token_start');
@@ -977,7 +987,10 @@ function SendScreen({
     }
   }, []);
 
-  useEffect(() => {
+  // Commit an already-known token identity before the first visible frame.
+  // Missing metadata/recipient recommendations still follow the async path;
+  // no balance, gas, or submission-readiness gate is bypassed.
+  useLayoutEffect(() => {
     const loadState = initialTokenLoadRef.current;
     markSendScreenPerf('init_effect_commit', {
       inited: screenState.inited,

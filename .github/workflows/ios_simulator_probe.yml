@@ -1,0 +1,276 @@
+name: iOS Simulator Artifact Probe
+
+on:
+  workflow_dispatch:
+    inputs:
+      execution_environment:
+        description: Prefer mobile-local; hosted must be selected explicitly
+        type: choice
+        options: ['mobile-local', 'hosted']
+        default: 'mobile-local'
+      source_type:
+        description: Read a retained GitHub artifact or a durable S3 archive
+        type: choice
+        options: ['artifact', 's3']
+        default: 'artifact'
+      source_run_id:
+        description: Completed iOS Simulator Startup build run ID
+        required: false
+        type: string
+      source_artifact_id:
+        description: Exact retained ios-startup-app artifact ID from that run
+        required: false
+        type: string
+      s3_archive_key:
+        description: Exact archive.json key from S3 upload (source_type=s3; no URL)
+        required: false
+        type: string
+      ios_majors:
+        description: iOS majors to probe (no app rebuild)
+        default: '16,17,18,26,27'
+        type: string
+      SKIP_NOTIFY_LARK:
+        description: Skip the final Lark summary for this probe
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  actions: read
+
+env:
+  REQUESTED_MAJORS: ${{ inputs.ios_majors }}
+  EXECUTION_ENVIRONMENT: ${{ inputs.execution_environment || 'mobile-local' }}
+
+defaults:
+  run:
+    shell: bash --noprofile --norc -eo pipefail {0}
+
+jobs:
+  resolve:
+    if: github.repository == 'RabbyHub/rabby-mobile'
+    runs-on: ${{ inputs.source_type == 's3' && fromJSON('["self-hosted","macOS","ARM64","mobile-local","mobile-ios-simulator"]') || 'ubuntu-latest' }}
+    timeout-minutes: 30
+    env:
+      AWS_PROFILE: default
+      AWS_EC2_METADATA_DISABLED: 'true'
+    defaults:
+      run:
+        working-directory: .ios-simulator-probe-source-ci
+    outputs:
+      source: ${{ steps.select.outputs.source || steps.fetch.outputs.source }}
+      matrix: ${{ steps.select.outputs.matrix || steps.matrix.outputs.matrix }}
+      # Transport IDs are separate from the original build producer in source.
+      artifact_id: ${{ steps.relay.outputs.artifact-id || steps.select.outputs.artifact_id }}
+      artifact_run_id: ${{ steps.relay.outputs.artifact-id && github.run_id || steps.select.outputs.artifact_run_id }}
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+          path: .ios-simulator-probe-source-ci
+          clean: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+      - run: node --test scripts/ios-startup-smoke/*.test.mjs
+      - name: Prepare isolated transfer paths
+        run: |
+          EVIDENCE_ROOT="$(mktemp -d "$RUNNER_TEMP/ios-probe-source-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}.XXXXXX")"
+          printf 'EVIDENCE_ROOT=%s\nARCHIVE_NODE=%s\n' "$EVIDENCE_ROOT" "$(command -v node)" >> "$GITHUB_ENV"
+      - id: select
+        if: inputs.source_type != 's3'
+        name: Resolve one immutable same-repository build artifact
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          SOURCE_RUN_ID: ${{ inputs.source_run_id }}
+          SOURCE_ARTIFACT_ID: ${{ inputs.source_artifact_id }}
+        run: node scripts/ios-startup-smoke/probe.mjs resolve
+      - id: fetch
+        name: Fetch and verify S3 archive with the Simulator runner's local AWS profile
+        if: inputs.source_type == 's3'
+        env:
+          RABBY_MOBILE_BUILD_BUCKET: ${{ secrets.RABBY_MOBILE_BUILD_BUCKET }}
+          S3_ARCHIVE_KEY: ${{ inputs.s3_archive_key }}
+        run: '"$ARCHIVE_NODE" scripts/ios-startup-smoke/archive.mjs fetch "$S3_ARCHIVE_KEY" "$EVIDENCE_ROOT/app"'
+      - id: matrix
+        if: inputs.source_type == 's3'
+        run: node scripts/ios-startup-smoke/probe.mjs matrix
+      - name: Require public-safe app inputs before the GitHub artifact relay
+        if: inputs.source_type == 's3'
+        env:
+          PROBE_SOURCE: ${{ steps.fetch.outputs.source }}
+        run: node scripts/ios-startup-smoke/probe.mjs verify-public "$EVIDENCE_ROOT/app"
+      - id: relay
+        name: Relay verified S3 bytes without embedding AWS credentials
+        if: inputs.source_type == 's3'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: ios-probe-s3-source-${{ github.run_id }}-${{ github.run_attempt }}
+          retention-days: 7
+          compression-level: 0
+          if-no-files-found: error
+          path: |
+            ${{ env.EVIDENCE_ROOT }}/app/RabbyMobile-simulator.zip
+            ${{ env.EVIDENCE_ROOT }}/app/metadata.json
+            ${{ env.EVIDENCE_ROOT }}/app/archive.json
+
+  startup:
+    needs: resolve
+    strategy:
+      fail-fast: false
+      max-parallel: ${{ inputs.execution_environment != 'hosted' && 1 || 5 }}
+      matrix: ${{ fromJSON(needs.resolve.outputs.matrix) }}
+    name: Probe iOS ${{ matrix.runtime }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 60
+    concurrency:
+      group: ${{ matrix.environment == 'mobile-local' && 'rabby-ios-simulator-mobile-local' || format('ios-simulator-probe-{0}-{1}-{2}', github.run_id, github.run_attempt, matrix.major) }}
+      cancel-in-progress: false
+      queue: max
+    defaults:
+      run:
+        working-directory: .ios-simulator-ci
+    env:
+      PROBE_SOURCE: ${{ needs.resolve.outputs.source }}
+    steps:
+      # Keep the current test harness, not the old app's checkout.
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+          path: .ios-simulator-ci
+          clean: false
+      - name: Set run-local evidence path
+        run: |
+          EVIDENCE_ROOT="$(mktemp -d "$RUNNER_TEMP/ios-startup-probe-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}.XXXXXX")"
+          printf 'EVIDENCE_ROOT=%s\n' "$EVIDENCE_ROOT" >> "$GITHUB_ENV"
+      - uses: maxim-lobanov/setup-xcode@ed7a3b1fda3918c0306d1b724322adc0b8cc0a90 # v1
+        if: matrix.environment == 'hosted'
+        with:
+          xcode-version: ${{ matrix.xcode }}
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        if: matrix.environment == 'hosted'
+        with:
+          node-version: '22'
+      - name: Use persistent runner Node
+        if: matrix.environment == 'mobile-local'
+        run: |
+          source "$HOME/.nvm/nvm.sh"
+          nvm use "$(tr -d '\r\n' < .nvmrc)"
+          node -e "if (process.versions.node.split('.')[0] !== '22') process.exit(1)"
+          printf '%s\n' "$(dirname "$(command -v node)")" >> "$GITHUB_PATH"
+      - name: Select the exact installed test Xcode without changing the host
+        env:
+          TEST_XCODE: ${{ matrix.xcode }}
+        run: |
+          toolchain_args=()
+          if [ "$EXECUTION_ENVIRONMENT" = mobile-local ]; then toolchain_args+=(--installed); fi
+          node scripts/ios-startup-smoke/toolchain.mjs "$TEST_XCODE" "${toolchain_args[@]}"
+      - name: Download the selected app, not a newer or latest artifact
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          artifact-ids: ${{ needs.resolve.outputs.artifact_id }}
+          run-id: ${{ needs.resolve.outputs.artifact_run_id }}
+          github-token: ${{ github.token }}
+          merge-multiple: true
+          path: ${{ env.EVIDENCE_ROOT }}/app
+      - name: Verify receipt, producer and archive before provisioning
+        run: |
+          node scripts/ios-startup-smoke/probe.mjs verify "$EVIDENCE_ROOT/app"
+          ditto -x -k "$EVIDENCE_ROOT/app/RabbyMobile-simulator.zip" "$EVIDENCE_ROOT/app"
+      - name: Install and verify this exact Simulator runtime
+        env:
+          IOS_RUNTIME: ${{ matrix.runtime }}
+        run: |
+          provision_args=()
+          if [ "$EXECUTION_ENVIRONMENT" = mobile-local ]; then provision_args+=(--check-only); fi
+          node scripts/ios-startup-smoke/provision.mjs \
+            --runtime "$IOS_RUNTIME" --output "$EVIDENCE_ROOT/provision" "${provision_args[@]}"
+      - name: Probe two cold starts without compiling Rabby Mobile
+        env:
+          IOS_MAJOR: ${{ matrix.major }}
+          IOS_RUNTIME: ${{ matrix.runtime }}
+        run: |
+          node scripts/ios-startup-smoke/run.mjs plan --probe \
+            --output "$EVIDENCE_ROOT/plan" --majors "$IOS_MAJOR" \
+            --execution-environment "$EXECUTION_ENVIRONMENT" \
+            --runtime-version "$IOS_RUNTIME" --build-metadata "$EVIDENCE_ROOT/app/metadata.json"
+          node scripts/ios-startup-smoke/run.mjs test --probe \
+            --plan "$EVIDENCE_ROOT/plan/plan.json" \
+            --app "$EVIDENCE_ROOT/app/RabbyMobile.app" \
+            --metadata "$EVIDENCE_ROOT/app/metadata.json" --output "$EVIDENCE_ROOT/tests"
+      - name: Preserve probe evidence without duplicating the app
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: ios-startup-probe-test-${{ matrix.major }}
+          overwrite: true
+          retention-days: 7
+          if-no-files-found: warn
+          path: |
+            ${{ env.EVIDENCE_ROOT }}/app/metadata.json
+            ${{ env.EVIDENCE_ROOT }}/app/probe-source.json
+            ${{ env.EVIDENCE_ROOT }}/provision
+            ${{ env.EVIDENCE_ROOT }}/plan
+            ${{ env.EVIDENCE_ROOT }}/tests
+
+  summary:
+    needs: [resolve, startup]
+    if: always() && needs.resolve.result == 'success'
+    runs-on: ubuntu-latest
+    outputs:
+      notification_report: ${{ steps.report.outputs.notification_report }}
+    env:
+      PROBE_SOURCE: ${{ needs.resolve.outputs.source }}
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          pattern: ios-startup-probe-test-*
+          path: ${{ runner.temp }}/probe-results
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        if: always()
+        with:
+          artifact-ids: ${{ needs.resolve.outputs.artifact_id }}
+          run-id: ${{ needs.resolve.outputs.artifact_run_id }}
+          github-token: ${{ github.token }}
+          merge-multiple: true
+          path: ${{ runner.temp }}/probe-results/ios-startup-app-receipt
+      - name: Report artifact-only coverage, never current-source qualification
+        id: report
+        if: always()
+        env:
+          STARTUP_RESULT: ${{ needs.startup.result }}
+        run: |
+          node scripts/ios-startup-smoke/probe.mjs summary \
+            "$RUNNER_TEMP/probe-results" "$REQUESTED_MAJORS" "$GITHUB_SHA"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
+        with:
+          name: ios-startup-probe-summary-${{ github.run_attempt }}
+          retention-days: 7
+          path: |
+            ${{ runner.temp }}/probe-results/summary.json
+            ${{ runner.temp }}/probe-results/summary.md
+
+  notify:
+    needs: [resolve, startup, summary]
+    if: ${{ always() && github.repository == 'RabbyHub/rabby-mobile' && !inputs.SKIP_NOTIFY_LARK }}
+    uses: ./.github/workflows/ios_simulator_notify.yml
+    with:
+      mode: probe
+      needs_json: ${{ toJSON(needs) }}
+      notification_report: ${{ needs.summary.outputs.notification_report }}
+      source_json: ${{ needs.resolve.outputs.source }}
+      requested_majors: ${{ inputs.ios_majors || '16,17,18,26,27' }}
+      execution_environment: ${{ inputs.execution_environment || 'mobile-local' }}
+    secrets:
+      RABBY_MOBILE_LARK_CHAT_URL: ${{ secrets.RABBY_MOBILE_LARK_CHAT_URL || secrets.LARK_CHAT_URL }}
+      RABBY_MOBILE_LARK_CHAT_SECRET: ${{ secrets.RABBY_MOBILE_LARK_CHAT_SECRET || secrets.LARK_CHAT_SECRET }}

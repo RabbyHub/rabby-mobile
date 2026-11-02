@@ -1,3 +1,4 @@
+import { RoundedFontStyles } from '@/core/utils/fonts';
 import { createCustomNativeStackNavigator as createNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
 import {
   DarkTheme,
@@ -22,7 +23,7 @@ import {
   UnlockUIManager,
   useStackScreenConfig,
 } from './hooks/navigation';
-import { analytics, matomoLogScreenView } from './utils/analytics';
+import { analytics } from './utils/analytics';
 
 import { AppStatusBar } from './components/AppStatusBar';
 import AutoLockView from './components/AutoLockView';
@@ -268,10 +269,9 @@ const onStateChange: React.ComponentProps<
     onRouteChange(currentRouteName, previousRouteName);
 
     analytics.logScreenView({
-      screen_name: routeNameRef.current || '',
-      screen_class: routeNameRef.current || '',
+      screen_name: currentRouteName || '',
+      screen_class: currentRouteName || '',
     });
-    matomoLogScreenView({ name: currentRouteName! });
   }
   routeNameRef.current = currentRouteName;
 };
@@ -508,7 +508,6 @@ export default function AppNavigation() {
       screen_name: readyRootName,
       screen_class: readyRootName,
     });
-    matomoLogScreenView({ name: readyRootName });
   }, []);
 
   useDetermineExitAppOnPressBack();
@@ -576,8 +575,10 @@ export default function AppNavigation() {
                   component={HomeScreenNavigator}
                   options={{
                     ...RootAnimOptions,
-                    // Hidden Home state updates should not compete with the pushed screen.
-                    freezeOnBlur: true,
+                    // Home keeps animated pagers mounted across nested add-wallet
+                    // routes. Fabric freezing detaches their animated views, so
+                    // returning from a second pushed screen can leave Home blank.
+                    freezeOnBlur: false,
                   }}
                 />
                 <RootStack.Screen
@@ -794,8 +795,7 @@ export default function AppNavigation() {
                       headerTintColor: colors['neutral-title-2'],
                       headerTitleStyle: {
                         color: colors['neutral-title-2'],
-                        fontWeight: '900',
-                        fontFamily: 'SF Pro Rounded',
+                        ...RoundedFontStyles.heavy,
                       },
                     })}
                   />
@@ -849,7 +849,7 @@ function AccountNavigator() {
         },
         headerTitleStyle: {
           color: colors['neutral-title-1'],
-          fontWeight: 'normal',
+          fontWeight: '400',
         },
       })}>
       <AccountStack.Screen

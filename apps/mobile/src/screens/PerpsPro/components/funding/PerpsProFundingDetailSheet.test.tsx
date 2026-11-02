@@ -9,6 +9,7 @@ import {
 import fs from 'fs';
 import path from 'path';
 import React from 'react';
+import { RoundedFontStyles } from '@/core/utils/fonts';
 import { StyleSheet } from 'react-native';
 
 import { ThemeColors2024 } from '@/constant/theme';
@@ -187,7 +188,7 @@ describe.each(['light', 'dark'] as const)(
         ),
       ).toMatchObject({
         fontSize: 20,
-        fontWeight: '800',
+        ...RoundedFontStyles.heavy,
         lineHeight: 24,
       });
       expect(

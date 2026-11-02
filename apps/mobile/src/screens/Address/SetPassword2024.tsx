@@ -38,11 +38,7 @@ import {
 } from '@/hooks/address/useNewUser';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import type { AddressNavigatorParamList } from '@/navigation-type';
-import {
-  setReportActionTs,
-  setUserBehaviorTrackingOptOutSync,
-} from '@/core/serviceApi/preference';
-import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/utils/reportTimeoutAction';
+import { setUserBehaviorTrackingOptOutSync } from '@/core/serviceApi/preference';
 import type { TextInput } from '@/components/Typography';
 import { Text } from '@/components/Typography';
 import { E2E_ID } from '@/constant/e2e';
@@ -174,10 +170,6 @@ function useSetupPasswordForm(
         }
       } finally {
         toastHide();
-
-        void setReportActionTs(
-          REPORT_TIMEOUT_ACTION_KEY.SET_PASSWORD_DONE,
-        ).catch(console.error);
       }
     },
   });
@@ -584,7 +576,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   headerTitleStyle: {
     color: colors2024['neutral-title-1'],
-    fontWeight: '800',
+    fontWeight: '900',
     fontSize: 20,
     fontFamily: 'SF Pro Rounded',
     lineHeight: 24,

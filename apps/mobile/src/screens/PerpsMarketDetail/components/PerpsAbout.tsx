@@ -47,7 +47,7 @@ export const PerpsAbout: React.FC<{
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   section: {
-    marginBottom: 24,
+    marginBottom: 30,
   },
   header: {
     paddingHorizontal: 4,

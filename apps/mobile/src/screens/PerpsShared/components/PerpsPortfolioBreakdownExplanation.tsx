@@ -41,8 +41,7 @@ export const useShowPerpsPortfolioBreakdown = () => {
   const { t } = useTranslation();
   const showTipsPopup = useShowTipsPopup();
   const hideTipsPopup = useHideTipsPopup(PERPS_PORTFOLIO_BREAKDOWN_TIPS_OWNER);
-  const { hasNonPerpsAssets, breakdownMode, getBreakdownValues } =
-    usePerpsPortfolioBreakdown();
+  const { breakdownMode, getBreakdownValues } = usePerpsPortfolioBreakdown();
 
   // The tips sheet lives on the global navigation layer — it does NOT go
   // away when this screen is popped (e.g. iOS edge-swipe back). Close our
@@ -104,7 +103,7 @@ export const useShowPerpsPortfolioBreakdown = () => {
     });
   });
 
-  return { hasNonPerpsAssets, showPortfolioBreakdown };
+  return { showPortfolioBreakdown };
 };
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({

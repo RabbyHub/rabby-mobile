@@ -1,4 +1,4 @@
-import type { PerpsCandleInterval } from '@/constant/perps';
+import type { PerpsCandleDataInterval } from '@/constant/perps';
 import { apisPerps } from '@/core/apis/perps';
 
 import { parsePerpsCandles, type PerpsCandle } from './candle';
@@ -16,16 +16,35 @@ export type PerpsCandleSourceSnapshot = {
 const PERPS_CANDLE_PRELOAD_TTL_MS = 15_000;
 const PERPS_CANDLE_PRELOAD_CACHE_SIZE = 24;
 const snapshotCache = new Map<string, PerpsCandleSourceSnapshot>();
-const pendingSnapshots = new Map<string, Promise<PerpsCandleSourceSnapshot>>();
+const pendingSnapshots = new Map<
+  string,
+  {
+    startedAt: number;
+    promise: Promise<PerpsCandleSourceSnapshot>;
+  }
+>();
 
 export const getPerpsCandleSourceIdentity = (
   coin: string,
-  interval: PerpsCandleInterval,
+  interval: PerpsCandleDataInterval,
 ) => `${coin}:${interval}`;
 
 export const isPerpsCandleSourceSnapshotFresh = (
   snapshot: PerpsCandleSourceSnapshot,
 ) => Date.now() - snapshot.loadedAt <= PERPS_CANDLE_PRELOAD_TTL_MS;
+
+/** Read without starting a request. Stale snapshots are never used as a new baseline. */
+export const readPerpsCandleSourceSnapshot = (
+  coin: string,
+  interval: PerpsCandleDataInterval,
+) => {
+  const snapshot = snapshotCache.get(
+    getPerpsCandleSourceIdentity(coin, interval),
+  );
+  return snapshot && isPerpsCandleSourceSnapshotFresh(snapshot)
+    ? snapshot
+    : null;
+};
 
 const pruneSnapshotCache = () => {
   snapshotCache.forEach((snapshot, identity) => {
@@ -58,7 +77,7 @@ export const loadPerpsCandleSourcePage = async ({
   candleCount: number;
   coin: string;
   endTime: number;
-  interval: PerpsCandleInterval;
+  interval: PerpsCandleDataInterval;
 }): Promise<PerpsCandle[]> => {
   const sdk = apisPerps.getPerpsSDK();
   const { sourceInterval, sourceIntervalMs } = getPerpsCandleSource(interval);
@@ -77,15 +96,25 @@ export const loadPerpsCandleSourceSnapshot = ({
   coin,
   forceRefresh = false,
   interval,
+  pendingNotBefore,
+  maxPendingAgeMs,
 }: {
   coin: string;
   forceRefresh?: boolean;
-  interval: PerpsCandleInterval;
+  interval: PerpsCandleDataInterval;
+  /** Opt-in Simple recovery boundary; ordinary preload/Pro still deduplicate. */
+  pendingNotBefore?: number;
+  maxPendingAgeMs?: number;
 }): Promise<PerpsCandleSourceSnapshot> => {
   const identity = getPerpsCandleSourceIdentity(coin, interval);
   const pending = pendingSnapshots.get(identity);
-  if (pending) {
-    return pending;
+  if (
+    pending &&
+    (pendingNotBefore === undefined || pending.startedAt >= pendingNotBefore) &&
+    (maxPendingAgeMs === undefined ||
+      Date.now() - pending.startedAt < maxPendingAgeMs)
+  ) {
+    return pending.promise;
   }
 
   const cached = snapshotCache.get(identity);
@@ -105,22 +134,26 @@ export const loadPerpsCandleSourceSnapshot = ({
   const request = sdk.info
     .candleSnapshot(coin, sourceInterval, startTime, endTime)
     .then(response => {
-      pruneSnapshotCache();
       const snapshot = {
         candles: limitCandles(parsePerpsCandles(response), sourceCandleCount),
         identity,
         loadedAt: Date.now(),
       } satisfies PerpsCandleSourceSnapshot;
-      snapshotCache.set(identity, snapshot);
+      // A superseded request can finish for its own caller, but must not replace
+      // the newer snapshot or delete the newer in-flight request.
+      if (pendingSnapshots.get(identity)?.promise === request) {
+        pruneSnapshotCache();
+        snapshotCache.set(identity, snapshot);
+      }
       return snapshot;
     })
     .finally(() => {
-      if (pendingSnapshots.get(identity) === request) {
+      if (pendingSnapshots.get(identity)?.promise === request) {
         pendingSnapshots.delete(identity);
       }
     });
 
-  pendingSnapshots.set(identity, request);
+  pendingSnapshots.set(identity, { startedAt: endTime, promise: request });
   return request;
 };
 

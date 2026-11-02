@@ -1,5 +1,5 @@
 import { urlUtils } from '@rabby-wallet/base-utils';
-import { ShouldStartLoadRequestEvent } from 'react-native-webview/lib/RNCWebViewNativeComponent';
+import type { ShouldStartLoadRequestEvent } from 'react-native-webview/lib/RNCWebViewNativeComponent';
 
 import {
   allowLinkOpen,
@@ -22,18 +22,28 @@ export function checkShouldStartLoadingWithRequestForDappWebView(
   evt: Pick<ShouldStartLoadRequestEvent, 'url'> & {
     sourceDocumentURL?: string;
   },
-  options?: { enforceWalletConnectOrigin?: boolean },
+  options?: {
+    enforceWalletConnectOrigin?: boolean;
+    canOpenExternalUrl?: () => boolean;
+  },
 ): boolean /* should allow */ {
   const url = evt.url;
   const { protocol = '' } = urlUtils.safeParseURL(url) || {};
   // Continue request loading it the protocol is whitelisted
   if (protocolAllowList.includes(protocol)) return true;
 
+  const alertResult = getAlertMessage(protocol);
+  if (!alertResult.needAlert && alertResult.allowOpenLink) return true;
+
+  const canOpenExternalUrl = options?.canOpenExternalUrl;
+  // Hidden tabs must not open apps, show permission alerts, or start pairing.
+  if (canOpenExternalUrl && !canOpenExternalUrl()) return false;
+
   // If it is a trusted deeplink protocol, do not show the
   // warning alert. Allow the OS to deeplink the URL
   // and stop the webview from loading it.
   if (trustedProtocolToDeeplink.includes(protocol)) {
-    allowLinkOpen(url);
+    allowLinkOpen(url, canOpenExternalUrl);
     return false;
   }
 
@@ -54,7 +64,6 @@ export function checkShouldStartLoadingWithRequestForDappWebView(
     return false;
   }
 
-  const alertResult = getAlertMessage(protocol);
   if (alertResult.needAlert) {
     // Pop up an alert dialog box to prompt the user for permission
     // to execute the request
@@ -66,7 +75,7 @@ export function checkShouldStartLoadingWithRequestForDappWebView(
       },
       {
         text: 'Allow',
-        onPress: () => allowLinkOpen(url),
+        onPress: () => allowLinkOpen(url, canOpenExternalUrl),
         style: 'default',
       },
     ]);

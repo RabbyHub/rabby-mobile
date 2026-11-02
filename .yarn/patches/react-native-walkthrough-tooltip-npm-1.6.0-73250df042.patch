@@ -1,0 +1,389 @@
+diff --git a/src/geom.js b/src/geom.js
+--- a/src/geom.js
++++ b/src/geom.js
+@@ -21,7 +21,56 @@
+   }
+ }
+ 
+-const swapSizeDimmensions = size => new Size(size.height, size.width);
++// Native headers can be close to any edge; fit the complete bubble, not just
++// its anchor. Keep arrow bases attached when moving the bubble into view.
++export const constrainGeometryToViewport = (geometry, options) => {
++  const { windowDims, displayInsets, contentSize, arrowSize } = options;
++  const { placement } = geometry;
++  const horizontal = placement === 'left' || placement === 'right';
++  const arrowExtent = horizontal ? arrowSize.width : arrowSize.height;
++  const left = displayInsets.left + (placement === 'right' ? arrowExtent : 0);
++  const top = displayInsets.top + (placement === 'bottom' ? arrowExtent : 0);
++  const right =
++    windowDims.width -
++    displayInsets.right -
++    (placement === 'left' ? arrowExtent : 0);
++  const bottom =
++    windowDims.height -
++    displayInsets.bottom -
++    (placement === 'top' ? arrowExtent : 0);
++  const width = Math.max(0, Math.min(contentSize.width, right - left));
++  const height = Math.max(0, Math.min(contentSize.height, bottom - top));
++  const clamp = (value, min, max) =>
++    Math.max(min, Math.min(Math.max(min, max), value));
++  const x = clamp(geometry.tooltipOrigin.x, left, right - width);
++  const y = clamp(geometry.tooltipOrigin.y, top, bottom - height);
++  const anchorPoint = new Point(geometry.anchorPoint.x, geometry.anchorPoint.y);
++  if (horizontal) {
++    anchorPoint.y = clamp(
++      anchorPoint.y,
++      y + arrowSize.height / 2,
++      y + height - arrowSize.height / 2,
++    );
++    anchorPoint.x =
++      placement === 'left' ? x + width + arrowExtent : x - arrowExtent;
++  } else if (placement !== 'center') {
++    anchorPoint.x = clamp(
++      anchorPoint.x,
++      x + arrowSize.width / 2,
++      x + width - arrowSize.width / 2,
++    );
++    anchorPoint.y =
++      placement === 'top' ? y + height + arrowExtent : y - arrowExtent;
++  }
++  return {
++    ...geometry,
++    tooltipOrigin: new Point(x, y),
++    adjustedContentSize: new Size(width, height),
++    anchorPoint,
++  };
++};
++
++const swapSizeDimmensions = (size) => new Size(size.height, size.width);
+ 
+ const makeChildlessRect = ({ displayInsets, windowDims, placement }) => {
+   switch (placement) {
+diff --git a/src/styles.js b/src/styles.js
+--- a/src/styles.js
++++ b/src/styles.js
+@@ -38,7 +38,7 @@
+   },
+ });
+ 
+-const arrowRotationForPlacement = placement => {
++const arrowRotationForPlacement = (placement) => {
+   switch (placement) {
+     case 'bottom':
+       return '180deg';
+@@ -130,7 +130,7 @@
+   }
+ };
+ 
+-const styleGenerator = styleGeneratorProps => {
++const styleGenerator = (styleGeneratorProps) => {
+   const {
+     adjustedContentSize,
+     displayInsets,
+@@ -148,10 +148,12 @@
+     height > 0 && { height }, // ignore special case of -1 with center placement (and 0 when not yet measured)
+     width > 0 && { width }, // ignore special case of -1 with center placement (and 0 when not yet measured)
+     ownProps.contentStyle,
++    ownProps.measureAnchor && width > 0 && { maxWidth: width },
++    ownProps.measureAnchor && height > 0 && { maxHeight: height },
+   ];
+ 
+-  const contentBackgroundColor = StyleSheet.flatten(contentStyle)
+-    .backgroundColor;
++  const contentBackgroundColor =
++    StyleSheet.flatten(contentStyle).backgroundColor;
+ 
+   const arrowStyle = [
+     styles.arrow,
+diff --git a/src/tooltip.js b/src/tooltip.js
+--- a/src/tooltip.js
++++ b/src/tooltip.js
+@@ -19,6 +19,7 @@
+   computeBottomGeometry,
+   computeLeftGeometry,
+   computeRightGeometry,
++  constrainGeometryToViewport,
+ } from './geom';
+ import styleGenerator from './styles';
+ import TooltipChildrenContext from './tooltip-children.context';
+@@ -32,10 +33,10 @@
+   right: 24,
+ };
+ 
+-const computeDisplayInsets = insetsFromProps =>
++const computeDisplayInsets = (insetsFromProps) =>
+   Object.assign({}, DEFAULT_DISPLAY_INSETS, insetsFromProps);
+ 
+-const invertPlacement = placement => {
++const invertPlacement = (placement) => {
+   switch (placement) {
+     case 'top':
+       return 'bottom';
+@@ -109,6 +110,7 @@
+     topAdjustment: PropTypes.number,
+     horizontalAdjustment: PropTypes.number,
+     accessible: PropTypes.bool,
++    measureAnchor: PropTypes.func,
+   };
+ 
+   constructor(props) {
+@@ -121,6 +123,8 @@
+     this.dimensionsSubscription = null;
+ 
+     this.childWrapper = React.createRef();
++    this.viewport = React.createRef();
++    this.measurementVersion = 0;
+     this.state = {
+       // no need to wait for interactions if not visible initially
+       waitingForInteractions: isVisible && useInteractionManager,
+@@ -156,6 +160,10 @@
+     const placementChanged = prevProps.placement !== placement;
+     const becameVisible = isVisible && !prevProps.isVisible;
+     const insetsChanged = !rfcIsEqual(prevState.displayInsets, displayInsets);
++    if (prevProps.isVisible !== isVisible) {
++      this.measurementVersion += 1;
++      this.isMeasuringChild = false;
++    }
+ 
+     if (contentChanged || placementChanged || becameVisible || insetsChanged) {
+       setTimeout(() => {
+@@ -165,6 +173,7 @@
+   }
+ 
+   componentWillUnmount() {
++    this.measurementVersion += 1;
+     // removeEventListener deprecated
+     // https://reactnative.dev/docs/dimensions#removeeventlistener
+     if (this.dimensionsSubscription?.remove) {
+@@ -212,7 +221,7 @@
+     return null;
+   }
+ 
+-  updateWindowDims = dims => {
++  updateWindowDims = (dims) => {
+     this.setState(
+       {
+         windowDims: dims.window,
+@@ -241,7 +250,7 @@
+     );
+   };
+ 
+-  measureContent = e => {
++  measureContent = (e) => {
+     const { width, height } = e.nativeEvent.layout;
+     const contentSize = new Size(width, height);
+     this.setState({ contentSize }, () => {
+@@ -249,7 +258,7 @@
+     });
+   };
+ 
+-  onChildMeasurementComplete = rect => {
++  onChildMeasurementComplete = (rect) => {
+     this.setState(
+       {
+         childRect: rect,
+@@ -266,6 +275,76 @@
+ 
++  onModalShow = () => {
++    if (!this.props.measureAnchor || !this.props.isVisible) return;
++    // Layout may fire before the Modal has joined its native window. Replace
++    // any pre-show measurement rather than leaving an invisible busy overlay.
++    this.modalShownVersion = ++this.measurementVersion;
++    this.isMeasuringChild = false;
++    this.measureChildRect();
++  };
++
++  onNativeMeasurementFailure = (version) => {
++    if (version !== this.measurementVersion) return;
++    this.isMeasuringChild = false;
++    // A presented but unmeasurable tooltip must not retain an invisible
++    // full-screen Modal. Pre-show failures wait for the one onShow retry.
++    if (this.props.isVisible && this.modalShownVersion === version) {
++      this.props.onClose();
++    }
++  };
++
+   measureChildRect = () => {
+     const doMeasurement = () => {
++      if (this.props.measureAnchor) {
++        if (!this.props.isVisible || this.isMeasuringChild) {
++          return;
++        }
++        if (this.state.waitingForInteractions) {
++          this.setState(
++            { waitingForInteractions: false },
++            this.measureChildRect,
++          );
++          return;
++        }
++        if (!this.viewport.current) return;
++        if (React.Children.count(this.props.children) === 0) {
++          this.doChildlessPlacement();
++          return;
++        }
++        if (!this.childWrapper.current) return;
++        this.isMeasuringChild = true;
++        const version = this.measurementVersion;
++        Promise.resolve()
++          .then(() =>
++            this.props.measureAnchor(
++              this.childWrapper.current,
++              this.viewport.current,
++            ),
++          )
++          .then((rect) => {
++            if (version !== this.measurementVersion) return;
++            this.isMeasuringChild = false;
++            if (
++              Object.values(rect).every(Number.isFinite) &&
++              rect.width > 0 &&
++              rect.height > 0
++            ) {
++              this.onChildMeasurementComplete(
++                new Rect(
++                  rect.x,
++                  rect.y + this.props.topAdjustment,
++                  rect.width,
++                  rect.height,
++                ),
++              );
++            } else {
++              this.onNativeMeasurementFailure(version);
++            }
++          })
++          .catch(() => {
++            this.onNativeMeasurementFailure(version);
++          });
++        return;
++      }
+       if (!this.isMeasuringChild) {
+         this.isMeasuringChild = true;
+         if (
+@@ -276,7 +335,7 @@
+             (x, y, width, height, pageX, pageY) => {
+               const childRect = new Rect(pageX, pageY, width, height);
+               if (
+-                Object.values(childRect).every(value => value !== undefined)
++                Object.values(childRect).every((value) => value !== undefined)
+               ) {
+                 this.onChildMeasurementComplete(childRect);
+               } else {
+@@ -304,13 +363,8 @@
+ 
+   computeGeometry = () => {
+     const { arrowSize, childContentSpacing } = this.props;
+-    const {
+-      childRect,
+-      contentSize,
+-      displayInsets,
+-      placement,
+-      windowDims,
+-    } = this.state;
++    const { childRect, contentSize, displayInsets, placement, windowDims } =
++      this.state;
+ 
+     const options = {
+       displayInsets,
+@@ -349,7 +403,10 @@
+       }
+     }
+ 
+-    const { tooltipOrigin, anchorPoint, adjustedContentSize } = geom;
++    const { tooltipOrigin, anchorPoint, adjustedContentSize } = this.props
++      .measureAnchor
++      ? constrainGeometryToViewport(geom, options)
++      : geom;
+ 
+     this.setState({
+       tooltipOrigin,
+@@ -429,7 +486,20 @@
+         onPress={onPressBackground}
+         accessible={this.props.accessible}
+       >
+-        <View style={generatedStyles.containerStyle}>
++        <View
++          ref={this.viewport}
++          collapsable={false}
++          style={generatedStyles.containerStyle}
++          onLayout={(event) => {
++            if (this.props.measureAnchor) {
++              const { width, height } = event.nativeEvent.layout;
++              this.setState(
++                { windowDims: { width, height } },
++                this.measureChildRect,
++              );
++            }
++          }}
++        >
+           <View style={[generatedStyles.backgroundStyle]}>
+             <View style={generatedStyles.tooltipStyle}>
+               {hasChildren ? <View style={generatedStyles.arrowStyle} /> : null}
+@@ -455,12 +525,8 @@
+   };
+ 
+   render() {
+-    const {
+-      children,
+-      isVisible,
+-      useReactNativeModal,
+-      modalComponent,
+-    } = this.props;
++    const { children, isVisible, useReactNativeModal, modalComponent } =
++      this.props;
+ 
+     const hasChildren = React.Children.count(children) > 0;
+     const showTooltip = isVisible && !this.state.waitingForInteractions;
+@@ -472,6 +551,7 @@
+           <ModalComponent
+             transparent
+             visible={showTooltip}
++            onShow={this.onModalShow}
+             onRequestClose={this.props.onClose}
+             supportedOrientations={this.props.supportedOrientations}
+           >
+@@ -483,6 +559,7 @@
+         {hasChildren ? (
+           <View
+             ref={this.childWrapper}
++            collapsable={false}
+             onLayout={this.measureChildRect}
+             style={this.props.parentWrapperStyle}
+           >
+diff --git a/src/tooltip.d.ts b/src/tooltip.d.ts
+--- a/src/tooltip.d.ts
++++ b/src/tooltip.d.ts
+@@ -3,7 +3,12 @@
+ 
+ declare module 'react-native-walkthrough-tooltip' {
+   import React from 'react';
+-  import { GestureResponderEvent, StyleProp, ViewStyle } from 'react-native';
++  import {
++    GestureResponderEvent,
++    StyleProp,
++    ViewStyle,
++    View,
++  } from 'react-native';
+ 
+   type Orientation =
+     | 'portrait'
+@@ -46,9 +51,19 @@
+     childrenWrapperStyle?: StyleProp<ViewStyle>;
+ 
+     // Styles the view element that wraps the original children
+-    parentWrapperStyle?: StyleProp<ViewStyle>
++    parentWrapperStyle?: StyleProp<ViewStyle>;
+   }
+ 
+   export interface TooltipProps extends Partial<TooltipStyleProps> {
++    // Measure actual mounted anchor coordinates relative to the overlay viewport.
++    measureAnchor?: (
++      anchor: View,
++      viewport: View,
++    ) => Promise<{
++      x: number;
++      y: number;
++      width: number;
++      height: number;
++    }>;
+     // When true (default), user can interact with child element
+     allowChildInteraction?: boolean;

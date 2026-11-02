@@ -84,6 +84,7 @@ const SwapLimitPay = ({
           <Row>
             <LogoWithText
               logo={actionData.receiveToken.logo_url}
+              logoRadius={16}
               text={
                 <View style={commonStyle.rowFlexCenterItem}>
                   <Text style={commonStyle.primaryText}>
@@ -107,6 +108,7 @@ const SwapLimitPay = ({
           <Row>
             <LogoWithText
               logo={actionData.payToken.logo_url}
+              logoRadius={16}
               text={
                 <View style={commonStyle.rowFlexCenterItem}>
                   <Text style={commonStyle.primaryText}>

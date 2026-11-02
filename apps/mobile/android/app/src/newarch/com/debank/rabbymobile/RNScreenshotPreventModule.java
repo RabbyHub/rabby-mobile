@@ -186,30 +186,38 @@ public class RNScreenshotPreventModule extends NativeRNScreenshotPreventSpec /* 
   }
 
   private void takeViewScreenshotAndNotify() {
+    Activity activity = getCurrentActivity();
+    if (activity == null) {
+      emitUserDidTakeScreenshotEvent(createUserDidTakeScreenshotParams(null));
+      return;
+    }
+
+    // PixelCopy reads the composited window, including WebView canvases that View.draw() drops.
+    ScreenshotUtils.captureWindowToPngFile(
+        activity,
+        this.reactContext.getCacheDir(),
+        mainHandler,
+        captureResult -> emitUserDidTakeScreenshotEvent(createUserDidTakeScreenshotParams(captureResult))
+    );
+  }
+
+  private static WritableMap createUserDidTakeScreenshotParams(
+      ScreenshotUtils.ScreenshotCaptureResult captureResult
+  ) {
     WritableMap params = Arguments.createMap();
     params.putBoolean("captured", false);
 
-    Activity activity = getCurrentActivity();
-    if (activity != null) {
-        ViewGroup contentContainer = activity.findViewById(android.R.id.content);
-        ScreenshotUtils.ScreenshotCaptureResult captureResult =
-            ScreenshotUtils.captureViewToPngFile(
-                contentContainer.getRootView(),
-                this.reactContext.getCacheDir()
-            );
-
-        if (captureResult != null) {
-          params.putBoolean("captured", true);
-          params.putString("path", captureResult.path);
-          params.putString("name", captureResult.name);
-          params.putInt("width", captureResult.width);
-          params.putInt("height", captureResult.height);
-          params.putString("imageBase64", "");
-          params.putString("imageType", "png");
-        }
+    if (captureResult != null) {
+      params.putBoolean("captured", true);
+      params.putString("path", captureResult.path);
+      params.putString("name", captureResult.name);
+      params.putInt("width", captureResult.width);
+      params.putInt("height", captureResult.height);
+      params.putString("imageBase64", "");
+      params.putString("imageType", "png");
     }
 
-    emitUserDidTakeScreenshotEvent(params);
+    return params;
   }
 
   @ReactMethod

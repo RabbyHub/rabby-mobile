@@ -21,8 +21,8 @@ jest.mock('@/hooks/theme', () => ({
 jest.mock('@/utils/styles', () => ({
   createGetStyles2024: (getStyle: unknown) => getStyle,
 }));
-jest.mock('@rneui/themed', () => ({
-  Slider: (props: object) => {
+jest.mock('@/components/perps/PerpsGestureSlider', () => ({
+  PerpsGestureSlider: (props: object) => {
     const ReactModule = require('react');
     return ReactModule.createElement(require('react-native').View, {
       ...props,
@@ -103,6 +103,33 @@ describe('PerpsProManageMarginSlider', () => {
       step: 0.01,
       value: 15,
     });
+  });
+
+  it('preserves decimal width across tail-zero and integer transitions', () => {
+    const onValueChange = jest.fn();
+    render(
+      <PerpsProManageMarginSlider
+        maximum="30"
+        minimum="0"
+        onValueChange={onValueChange}
+        value="12"
+      />,
+    );
+    for (const [value, expected] of [
+      [12.09, '12.09'],
+      [12.1, '12.10'],
+      [12.11, '12.11'],
+      [9.99, '9.99'],
+      [10, '10.00'],
+      [0.1, '0.10'],
+    ] as const) {
+      fireEvent(
+        screen.getByTestId('native-margin-slider'),
+        'valueChange',
+        value,
+      );
+      expect(onValueChange).toHaveBeenLastCalledWith(expected);
+    }
   });
 
   it('normalizes emitted values and disables a zero-width range', () => {
@@ -232,6 +259,6 @@ describe('PerpsProManageMarginSlider', () => {
     });
     screen.getByTestId('native-margin-slider').props.onValueChange(10.4);
     expect(mockSliderHapticValueChange.mock.lastCall?.[0]).toBeCloseTo(80);
-    expect(onValueChange).toHaveBeenLastCalledWith('10.4');
+    expect(onValueChange).toHaveBeenLastCalledWith('10.40');
   });
 });

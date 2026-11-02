@@ -16,7 +16,6 @@ import {
 } from '@/core/serviceApi/dapp';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { useTranslation } from 'react-i18next';
-import { matomoRequestEvent } from '@/utils/analytics';
 import { useMemoizedFn } from 'ahooks';
 import type { ViewProps } from 'react-native';
 import { Text } from '@/components/Typography';
@@ -60,13 +59,6 @@ export function DappFirstSearchResult({
     onOpenURL?.(dapp.url || dapp.origin, {
       isRemindOpen: true,
     });
-    if (dapp.origin) {
-      matomoRequestEvent({
-        category: 'Websites Usage',
-        action: 'Website_Visit_Search Results',
-        label: dapp.origin,
-      });
-    }
   });
 
   return (
@@ -123,14 +115,6 @@ export function DappFirstSearchResult({
                   ? searchText
                   : `https://${searchText}`;
                 onOpenURL?.(url, { isDirect: true });
-                const origin = safeGetOrigin(url);
-                if (origin) {
-                  matomoRequestEvent({
-                    category: 'Websites Usage',
-                    action: 'Website_Visit_Direct Open',
-                    label: origin,
-                  });
-                }
               }}>
               <RcIconBallCC
                 style={styles.listItemIcon}
@@ -196,13 +180,6 @@ export function BrowserSearchResult({
     onOpenURL?.(dapp.url || dapp.origin, {
       isRemindOpen: true,
     });
-    if (dapp.origin) {
-      matomoRequestEvent({
-        category: 'Websites Usage',
-        action: 'Website_Visit_Search Results',
-        label: dapp.origin,
-      });
-    }
   });
 
   return (
@@ -277,7 +254,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 18,
     fontStyle: 'normal',
-    fontWeight: '800',
+    fontWeight: '900',
     lineHeight: 22,
     paddingBottom: 12,
   },

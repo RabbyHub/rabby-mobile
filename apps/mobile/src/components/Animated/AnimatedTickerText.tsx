@@ -1,5 +1,7 @@
 import React, { memo, useCallback, useEffect, useState } from 'react';
 import {
+  AccessibilityInfo,
+  Platform,
   StyleProp,
   StyleSheet,
   TextProps,
@@ -21,7 +23,10 @@ import Animated, {
 } from 'react-native-reanimated';
 import { AnimateableText, AnimatedText } from '@/components/Typography';
 import { getFontSizeByLength } from '@/utils/fontSize';
-import { getRequiredTickerColumnCount } from './AnimatedTickerText.utils';
+import {
+  getFittedTickerFontSize,
+  getRequiredTickerColumnCount,
+} from './AnimatedTickerText.utils';
 
 type AnimatedStringValue = {
   value: string;
@@ -39,6 +44,8 @@ type AnimatedTickerTextProps = {
   maxLength?: number;
   duration?: number;
   animate?: boolean;
+  /** Pause rolling digits without changing the animated ticker's glyph layout. */
+  active?: boolean;
   lineHeight: number;
   style?: StyleProp<TextStyle>;
   containerStyle?: StyleProp<ViewStyle>;
@@ -46,6 +53,8 @@ type AnimatedTickerTextProps = {
   containerProps?: ViewProps;
   fontSizeByLength?: FontSizeByLengthOptions;
   animateWidth?: boolean;
+  /** Fit animated columns into their measured row without changing the value. */
+  fitWidth?: boolean;
 };
 
 type TickerTextState = {
@@ -53,6 +62,8 @@ type TickerTextState = {
   isRtl: boolean;
   isOverflow: boolean;
   fontSize: number | undefined;
+  /** iOS Bold Text，只在启动时读一次。为 true 时使用更宽的字形宽度。 */
+  boldText: boolean;
 };
 
 type TickerColumnProps = {
@@ -62,7 +73,6 @@ type TickerColumnProps = {
   maxLength: number;
   duration: number;
   lineHeight: number;
-  initialFontSize?: number;
   style?: StyleProp<TextStyle>;
   textProps?: TextProps;
   animateWidth: boolean;
@@ -70,6 +80,23 @@ type TickerColumnProps = {
 
 const DIGITS = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
 const GLYPH_SIDE_BEARING = 0;
+let cachedIosBoldText = false;
+let iosBoldTextPromise: Promise<boolean> | null = null;
+
+const readIosBoldTextOnce = () => {
+  if (Platform.OS !== 'ios') {
+    return Promise.resolve(false);
+  }
+  if (!iosBoldTextPromise) {
+    iosBoldTextPromise = AccessibilityInfo.isBoldTextEnabled()
+      .then(enabled => {
+        cachedIosBoldText = enabled;
+        return enabled;
+      })
+      .catch(() => false);
+  }
+  return iosBoldTextPromise;
+};
 
 const getSlotChar = (text: string, slotIndex: number, maxLength: number) => {
   'worklet';
@@ -132,17 +159,17 @@ const getDigitIndex = (char: string) => {
   }
 };
 
-const getDigitWidthUnit = (char: string) => {
+const getDigitWidthUnit = (char: string, boldText: boolean) => {
   'worklet';
 
   switch (char) {
     // 先留在这，需要配置再改
     default:
-      return 0.61;
+      return boldText ? 0.66 : 0.61;
   }
 };
 
-const getCharWidthUnit = (char: string) => {
+const getCharWidthUnit = (char: string, boldText: boolean) => {
   'worklet';
 
   switch (char) {
@@ -158,7 +185,7 @@ const getCharWidthUnit = (char: string) => {
     case '7':
     case '8':
     case '9':
-      return getDigitWidthUnit(char);
+      return getDigitWidthUnit(char, boldText);
     case ' ':
       return 0.24;
     case ',':
@@ -183,7 +210,7 @@ const getCharWidthUnit = (char: string) => {
     case 'K':
     case 'B':
     case 'T':
-      return 0.64;
+      return boldText ? 0.68 : 0.64;
     case '₩':
     case 'W':
     case 'M':
@@ -207,19 +234,100 @@ const getCharWidthUnit = (char: string) => {
     case '₉':
       return 0.42;
     default:
-      return 0.72;
+      return boldText ? 0.73 : 0.72;
   }
 };
 
-const getTextFontSize = (text: string, options?: FontSizeByLengthOptions) => {
+const getTextFontSize = (
+  text: string,
+  options?: FontSizeByLengthOptions,
+  availableWidth = 0,
+  boldText = false,
+) => {
   'worklet';
 
   if (!options) {
     return undefined;
   }
 
-  return getFontSizeByLength(text?.length ?? 0, options);
+  const fontSize = getFontSizeByLength(text?.length ?? 0, options);
+  if (availableWidth <= 0 || hasRtlText(text)) {
+    return fontSize;
+  }
+  let widthUnits = 0;
+  for (let index = 0; index < text.length; index += 1) {
+    widthUnits += getCharWidthUnit(text.charAt(index), boldText);
+  }
+  return getFittedTickerFontSize(fontSize, widthUnits, availableWidth);
 };
+
+const getColumnWidth = (
+  textState: TickerTextState,
+  slotIndex: number,
+  maxLength: number,
+) => {
+  'worklet';
+
+  if (textState.isRtl || textState.isOverflow) {
+    return 0;
+  }
+  const char = getSlotChar(textState.text, slotIndex, maxLength);
+  return char
+    ? (textState.fontSize ?? 38) * getCharWidthUnit(char, textState.boldText) +
+        GLYPH_SIDE_BEARING
+    : 0;
+};
+
+// Offscreen Home tickers still participate in a navigation transition. Keep the
+// same per-glyph geometry, but release the rolling digits and their reactions.
+const PausedTickerColumn = memo(
+  ({
+    textState,
+    slotIndex,
+    maxLength,
+    lineHeight,
+    style,
+    textProps,
+  }: Pick<
+    TickerColumnProps,
+    | 'textState'
+    | 'slotIndex'
+    | 'maxLength'
+    | 'lineHeight'
+    | 'style'
+    | 'textProps'
+  >) => {
+    const columnStyle = useAnimatedStyle(() => {
+      const width = getColumnWidth(textState.value, slotIndex, maxLength);
+      return { width, height: lineHeight, opacity: width ? 1 : 0 };
+    }, [lineHeight, maxLength, slotIndex]);
+    const textSizeStyle = useAnimatedStyle(() => {
+      const fontSize = textState.value.fontSize;
+      return fontSize ? { fontSize } : {};
+    });
+    const staticTextProps = useAnimatedProps(
+      () => ({
+        text: getSlotChar(textState.value.text, slotIndex, maxLength),
+      }),
+      [maxLength, slotIndex],
+    );
+
+    return (
+      <Animated.View style={[styles.column, columnStyle]}>
+        <AnimateableText
+          {...textProps}
+          style={[
+            style,
+            textSizeStyle,
+            styles.staticText,
+            { lineHeight, height: lineHeight },
+          ]}
+          animatedProps={staticTextProps}
+        />
+      </Animated.View>
+    );
+  },
+);
 
 const AnimatedTickerColumn = memo(
   ({
@@ -229,22 +337,19 @@ const AnimatedTickerColumn = memo(
     maxLength,
     duration,
     lineHeight,
-    initialFontSize,
     style,
     textProps,
     animateWidth,
   }: TickerColumnProps) => {
-    const initialChar = getSlotChar(value.value, slotIndex, maxLength);
+    const initialChar = getSlotChar(textState.value.text, slotIndex, maxLength);
     const initialDigit = getDigitIndex(initialChar);
     const digitPosition = useSharedValue(
       initialDigit >= 0 ? -initialDigit * lineHeight : 0,
     );
+    // Resuming after blur must start at the retained fitted width. Waiting for
+    // the width reaction can expose one unfitted frame during navigation back.
     const columnWidth = useSharedValue(
-      initialChar
-        ? (initialFontSize ?? lineHeight * 0.9) *
-            getCharWidthUnit(initialChar) +
-            GLYPH_SIDE_BEARING
-        : 0,
+      getColumnWidth(textState.value, slotIndex, maxLength),
     );
 
     useEffect(() => {
@@ -281,24 +386,7 @@ const AnimatedTickerColumn = memo(
     );
 
     useAnimatedReaction(
-      () => {
-        const {
-          text,
-          isRtl,
-          isOverflow,
-          fontSize: textFontSize,
-        } = textState.value;
-
-        if (isRtl || isOverflow) {
-          return 0;
-        }
-
-        const char = getSlotChar(text, slotIndex, maxLength);
-        const fontSize = textFontSize ?? 38;
-        return char
-          ? fontSize * getCharWidthUnit(char) + GLYPH_SIDE_BEARING
-          : 0;
-      },
+      () => getColumnWidth(textState.value, slotIndex, maxLength),
       (nextWidth, previousWidth) => {
         if (previousWidth == null) {
           columnWidth.value = nextWidth;
@@ -407,6 +495,7 @@ const AnimatedTickerText = ({
   maxLength = 16,
   duration = 300,
   animate = true,
+  active = true,
   lineHeight,
   style,
   containerStyle,
@@ -414,7 +503,29 @@ const AnimatedTickerText = ({
   containerProps,
   fontSizeByLength,
   animateWidth = true,
+  fitWidth = false,
 }: AnimatedTickerTextProps) => {
+  const availableWidth = useSharedValue(0);
+  const boldTextEnabled = useSharedValue(cachedIosBoldText);
+  useEffect(() => {
+    let cancelled = false;
+    readIosBoldTextOnce().then(enabled => {
+      if (!cancelled) {
+        boldTextEnabled.value = enabled;
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [boldTextEnabled]);
+  const callerOnLayout = containerProps?.onLayout;
+  const handleLayout = useCallback<NonNullable<ViewProps['onLayout']>>(
+    event => {
+      availableWidth.value = event.nativeEvent.layout.width;
+      callerOnLayout?.(event);
+    },
+    [availableWidth, callerOnLayout],
+  );
   const [columnCount, setColumnCount] = useState(() =>
     getRequiredTickerColumnCount(value.value || '', maxLength),
   );
@@ -440,13 +551,21 @@ const AnimatedTickerText = ({
   const textState = useDerivedValue(() => {
     const text = value.value || '';
 
+    const boldText = boldTextEnabled.value;
+
     return {
       text,
       isRtl: hasRtlText(text),
       isOverflow: text.length > maxLength,
-      fontSize: getTextFontSize(text, fontSizeByLength),
+      fontSize: getTextFontSize(
+        text,
+        fontSizeByLength,
+        fitWidth && text.length <= maxLength ? availableWidth.value : 0,
+        boldText,
+      ),
+      boldText,
     };
-  }, [fontSizeByLength, maxLength]);
+  }, [boldTextEnabled, fitWidth, fontSizeByLength, maxLength]);
 
   const fallbackAnimatedProps = useAnimatedProps(() => {
     return {
@@ -458,7 +577,7 @@ const AnimatedTickerText = ({
     const { isRtl, isOverflow, fontSize } = textState.value;
 
     return {
-      display: isRtl || isOverflow ? 'flex' : 'none',
+      display: !animate || isRtl || isOverflow ? 'flex' : 'none',
       ...(fontSize ? { fontSize } : {}),
     };
   });
@@ -471,14 +590,20 @@ const AnimatedTickerText = ({
       ),
     [columnCount, maxLength],
   );
-  const initialFontSize = getTextFontSize(value.value || '', fontSizeByLength);
 
   return (
-    <View {...containerProps} style={[styles.row, containerStyle]}>
+    <View
+      {...containerProps}
+      onLayout={fitWidth ? handleLayout : callerOnLayout}
+      style={[styles.row, containerStyle]}>
       {!animate ? (
         <AnimateableText
           {...textProps}
-          style={[style, { lineHeight, height: lineHeight }]}
+          style={[
+            style,
+            fitWidth && fallbackStyle,
+            { lineHeight, height: lineHeight },
+          ]}
           animatedProps={fallbackAnimatedProps}
         />
       ) : (
@@ -494,21 +619,32 @@ const AnimatedTickerText = ({
         />
       )}
       {animate
-        ? columns.map(index => (
-            <AnimatedTickerColumn
-              key={index}
-              value={value}
-              textState={textState}
-              slotIndex={index}
-              maxLength={maxLength}
-              duration={duration}
-              lineHeight={lineHeight}
-              initialFontSize={initialFontSize}
-              style={style}
-              textProps={textProps}
-              animateWidth={animateWidth}
-            />
-          ))
+        ? columns.map(index =>
+            active ? (
+              <AnimatedTickerColumn
+                key={index}
+                value={value}
+                textState={textState}
+                slotIndex={index}
+                maxLength={maxLength}
+                duration={duration}
+                lineHeight={lineHeight}
+                style={style}
+                textProps={textProps}
+                animateWidth={animateWidth}
+              />
+            ) : (
+              <PausedTickerColumn
+                key={index}
+                textState={textState}
+                slotIndex={index}
+                maxLength={maxLength}
+                lineHeight={lineHeight}
+                style={style}
+                textProps={textProps}
+              />
+            ),
+          )
         : null}
     </View>
   );

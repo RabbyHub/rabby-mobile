@@ -35,12 +35,11 @@ import type { RootStackParamsList } from '@/navigation-type';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RcIconRightCC } from '@/assets/icons/common';
 import { navigateDeprecated } from '@/utils/navigation';
-import { matomoRequestEvent } from '@/utils/analytics';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
-import { getKRCategoryByType } from '@/utils/transaction';
 import { Chain } from '@/constant/chains';
 import { GnosisSupportChainList } from './ImportSafeAddressScreen';
 import { apisHomeTabIndex } from '@/hooks/navigation';
+import * as SecretVault from '@/core/utils/secretVault';
 
 type ImportSuccessScreenProps = NativeStackScreenProps<RootStackParamsList>;
 
@@ -112,6 +111,21 @@ export const ImportSuccessScreen = () => {
     throw new Error('[ImportSuccessScreen] state is undefined');
   }
 
+  const mnemonicsPayloadRef =
+    React.useRef<SecretVault.MnemonicsVaultPayload | null>(null);
+  const mnemonicsPayloadFetchedRef = React.useRef(false);
+  React.useEffect(() => {
+    if (mnemonicsPayloadFetchedRef.current) {
+      return;
+    }
+    mnemonicsPayloadFetchedRef.current = true;
+    if (state.mnemonicsVaultId) {
+      mnemonicsPayloadRef.current = SecretVault.retrieveMnemonicsPayload(
+        state.mnemonicsVaultId,
+      );
+    }
+  }, [state.mnemonicsVaultId]);
+
   const [importAddresses, setImportAddresses] = React.useState<
     {
       address: string;
@@ -157,12 +171,6 @@ export const ImportSuccessScreen = () => {
         aliasName: getContactAliasSnapshot(address)?.alias || '',
       })),
     );
-
-    matomoRequestEvent({
-      category: 'Import Address',
-      action: `Success_Import_${getKRCategoryByType(state.type)}`,
-      label: state.brandName,
-    });
   }, [state]);
 
   React.useEffect(() => {
@@ -197,13 +205,15 @@ export const ImportSuccessScreen = () => {
     if (!state.isFirstImport) {
       return;
     }
+    const mnemonicsPayload = mnemonicsPayloadRef.current;
     navigateDeprecated(RootNames.StackAddress, {
       screen: RootNames.ImportMoreAddress,
       params: {
         type: state.type,
         brand: state.brandName,
-        mnemonics: state.mnemonics,
-        passphrase: state.passphrase,
+        mnemonicsVaultId: mnemonicsPayload
+          ? SecretVault.storeMnemonicsPayload(mnemonicsPayload)
+          : undefined,
         keyringId: state.keyringId,
       },
     });

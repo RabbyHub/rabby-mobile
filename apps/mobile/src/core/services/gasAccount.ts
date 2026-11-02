@@ -6,7 +6,6 @@ import {
 import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
 import type { Account } from '@/types/account';
 import { openapi } from '../request';
-import dayjs from 'dayjs';
 
 const CACHE_VALIDITY_PERIOD = 60 * 60 * 1000;
 
@@ -54,28 +53,6 @@ export type GasAccountServiceStore = {
   eligibilityCache: GasAccountEligibilityCache;
   lastEligibilityCheckTimestamp?: number;
   currentEligibleAddress?: ClaimedGiftAddress;
-  hasEverLoggedIn?: boolean;
-  currentBalanceAccountId?: string;
-  currentHasBalance?: boolean;
-  ga4ActiveEventTime?: number;
-};
-
-const getInitialHasEverLoggedIn = (
-  rawStore?: Partial<GasAccountServiceStore> | null,
-) => {
-  if (typeof rawStore?.hasEverLoggedIn === 'boolean') {
-    return rawStore.hasEverLoggedIn;
-  }
-
-  if (rawStore?.sig && rawStore?.accountId) {
-    return true;
-  }
-
-  if (rawStore) {
-    return undefined;
-  }
-
-  return false;
 };
 
 export class GasAccountService extends StoreServiceBase<
@@ -91,9 +68,6 @@ export class GasAccountService extends StoreServiceBase<
   };
 
   constructor(options?: StorageAdapaterOptions) {
-    const rawStore = options?.storageAdapter?.getItem(
-      APP_STORE_NAMES.gasAccount,
-    ) as Partial<GasAccountServiceStore> | null | undefined;
     super(
       APP_STORE_NAMES.gasAccount,
       {
@@ -101,16 +75,11 @@ export class GasAccountService extends StoreServiceBase<
         eligibilityCache: {},
         lastEligibilityCheckTimestamp: undefined,
         currentEligibleAddress: undefined,
-        hasEverLoggedIn: false,
-        ga4ActiveEventTime: 0,
       },
       {
         storageAdapter: options?.storageAdapter,
       },
     );
-    this.mutateStore(draft => {
-      draft.hasEverLoggedIn = getInitialHasEverLoggedIn(rawStore);
-    });
   }
 
   getGasAccountData = (key?: keyof GasAccountServiceStore) => {
@@ -130,8 +99,6 @@ export class GasAccountService extends StoreServiceBase<
         draft.sig = undefined;
         draft.accountId = undefined;
         draft.account = undefined;
-        draft.currentBalanceAccountId = undefined;
-        draft.currentHasBalance = undefined;
       } else {
         draft.sig = sig;
         draft.accountId = account.address;
@@ -546,40 +513,6 @@ export class GasAccountService extends StoreServiceBase<
       remainingTime,
     };
   };
-
-  markLoggedIn() {
-    const isFirstLogin = this.store.hasEverLoggedIn === false;
-    this.mutateStore(draft => {
-      draft.hasEverLoggedIn = true;
-    });
-    return isFirstLogin;
-  }
-
-  getCurrentBalanceState() {
-    return {
-      accountId: this.store.currentBalanceAccountId,
-      hasBalance: this.store.currentHasBalance,
-    };
-  }
-
-  setCurrentBalanceState(accountId?: string, hasBalance?: boolean) {
-    this.mutateStore(draft => {
-      draft.currentBalanceAccountId = accountId;
-      draft.currentHasBalance = hasBalance;
-    });
-  }
-
-  hasTrackedGa4ActiveToday() {
-    return dayjs(this.store.ga4ActiveEventTime || 0)
-      .utc()
-      .isSame(dayjs().utc(), 'day');
-  }
-
-  markGa4ActiveTracked(timestamp = Date.now()) {
-    this.mutateStore(draft => {
-      draft.ga4ActiveEventTime = timestamp;
-    });
-  }
 
   getPendingHardwareAccount() {
     return this.runtimeState.pendingHardwareAccount;

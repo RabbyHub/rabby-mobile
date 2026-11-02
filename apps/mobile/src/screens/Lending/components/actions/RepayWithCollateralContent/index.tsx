@@ -25,7 +25,7 @@ import { toast } from '@/components2024/Toast';
 import { Button } from '@/components2024/Button';
 import { useMiniSigner } from '@/hooks/useSigner';
 import { createGetStyles2024 } from '@/utils/styles';
-import { APP_VERSIONS, INTERNAL_REQUEST_SESSION } from '@/constant';
+import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { isAccountSupportMiniApproval } from '@/utils/account';
@@ -43,8 +43,6 @@ import { useSignatureStoreOf } from '@/components2024/MiniSignV2/state/useSignat
 import {
   CUSTOM_HISTORY_ACTION,
   CUSTOM_HISTORY_TITLE_TYPE,
-  LendingReportType,
-  LendingSignType,
 } from '@/screens/Transaction/components/type';
 import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
 import { normalizeBN, valueToBigNumber } from '@aave/math-utils';
@@ -101,7 +99,6 @@ import { ethers } from 'ethers';
 import { DEFAULT_REPAY_WITH_COLLATERAL_SLIPPAGE } from './utils';
 import RepayWithCollateralOverview from './Overview';
 import { Text } from '@/components/Typography';
-import { stats } from '@/utils/stats';
 import { hasInsufficientSwapLiquidity } from '../../../utils/swap';
 
 interface RepayWithCollateralProps {
@@ -810,10 +807,6 @@ export default function RepayWithCollateral({
         }
 
         let results: string[] = [];
-        const signType =
-          canShowDirectSubmit && !p?.forceFullSign
-            ? LendingSignType.Simplified
-            : LendingSignType.Full;
         if (canShowDirectSubmit && !p?.forceFullSign) {
           try {
             results = await openDirect({
@@ -871,22 +864,6 @@ export default function RepayWithCollateral({
           );
         }
 
-        const usdValue = new BigNumber(debouncedRepayAmount || '0')
-          .multipliedBy(new BigNumber(repayToken.usdPrice || '0'))
-          .toString();
-
-        stats.report('aaveInternalTx', {
-          tx_type: LendingReportType.RepayWithCollateral,
-          chain: chainInfo?.serverId || '',
-          tx_id: txId || '',
-          user_addr: currentAccount.address || '',
-          address_type: currentAccount.type || '',
-          usd_value: usdValue,
-          create_at: Date.now(),
-          app_version: APP_VERSIONS.fromNative || '0',
-          signType,
-          ...(source ? { source } : {}),
-        });
         toast.success(
           `${t('page.Lending.repayWithCollateral.action.title', {
             collateral: selectedCollateralToken?.symbol,
@@ -908,15 +885,12 @@ export default function RepayWithCollateral({
       currentTxs,
       canShowDirectSubmit,
       chainInfo?.id,
-      chainInfo?.serverId,
       t,
       closeMiniSigner,
       onClose,
       openDirect,
       ctx?.gasFeeTooHigh,
       refresh,
-      repayToken.usdPrice,
-      source,
       isFlashLoanDisabled,
       isInsufficientLiquidity,
     ],

@@ -1,4 +1,5 @@
 import type { PerpsProTradeAmountUnit } from '@/core/services/perpsService';
+import type { PerpsFillFeeSnapshot } from '@/utils/perpsFillFee';
 import React from 'react';
 
 import type { PerpsProHistoryRow } from '../types';
@@ -10,7 +11,10 @@ import { PerpsProTransactionHistoryRowView } from './rows/PerpsProTransactionHis
 export const PerpsProHistoryRowView: React.FC<{
   active?: boolean;
   amountUnit: PerpsProTradeAmountUnit;
-  onShowFeeExplanation: (isLiquidation: boolean) => void;
+  onShowFeeExplanation: (
+    isLiquidation: boolean,
+    fill: PerpsFillFeeSnapshot,
+  ) => void;
   row: PerpsProHistoryRow;
 }> = React.memo(({ active = true, amountUnit, onShowFeeExplanation, row }) => {
   switch (row.kind) {

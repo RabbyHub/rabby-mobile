@@ -1,6 +1,10 @@
 import React from 'react';
 import { act, fireEvent, render } from '@testing-library/react-native';
-import { TouchableOpacity, type ViewStyle } from 'react-native';
+import {
+  StyleSheet as RNStyleSheet,
+  TouchableOpacity,
+  type ViewStyle,
+} from 'react-native';
 
 import type { KeyringAccountWithAlias } from '@/hooks/account';
 
@@ -25,6 +29,7 @@ let mockHandleTouchesCancelled: (() => void) | undefined;
 let mockContextMenuProps: MockContextMenuProps | undefined;
 let mockDragIconProps: { height?: number; width?: number } | undefined;
 let mockCardStyle: ViewStyle | undefined;
+let mockIsIOS = false;
 
 jest.mock('react-native-sortables', () => {
   const React = require('react');
@@ -160,7 +165,12 @@ jest.mock('@/databases/hooks/cex', () => ({
 }));
 
 jest.mock('@/core/native/utils', () => ({
-  IS_ANDROID: false,
+  get IS_ANDROID() {
+    return !mockIsIOS;
+  },
+  get IS_IOS() {
+    return mockIsIOS;
+  },
 }));
 
 jest.mock('@/components/Typography', () => {
@@ -228,6 +238,7 @@ const account = {
 
 describe('WhiteListItemInSheetModal sortable interactions', () => {
   beforeEach(() => {
+    mockIsIOS = false;
     mockHandleStyle = undefined;
     mockHandleTouchableStyle = undefined;
     mockHandleTouchesDown = undefined;
@@ -356,5 +367,84 @@ describe('WhiteListItemInSheetModal sortable interactions', () => {
 
     act(() => mockHandleTouchesCancelled?.());
     expect(mockCardStyle?.backgroundColor).toBe('neutral-bg-1');
+  });
+
+  // These assertions exercise the actual iOS style branch. The native menu
+  // and sortables are mocked, so they cannot establish whether Fabric retains
+  // the native descendants during a real drag (#1063).
+  it('keeps iOS content rendered and its card transparent through drag activation and release', () => {
+    mockIsIOS = true;
+    const view = render(
+      <WhiteListItemInSheetModal
+        account={account}
+        enableMenu
+        hideBalance
+        inWhiteList
+        sortable
+      />,
+    );
+    const rootStyle = () =>
+      RNStyleSheet.flatten(view.UNSAFE_getByType(TouchableOpacity).props.style);
+    expect(mockCardStyle?.backgroundColor).toBe('transparent');
+    expect(rootStyle().borderWidth).toBe(1);
+    expect(rootStyle().backgroundColor).toBeUndefined();
+
+    act(() => mockHandleTouchesDown?.());
+    expect(rootStyle().backgroundColor).toBe('brand-light-1');
+    expect(mockCardStyle?.backgroundColor).toBe('transparent');
+
+    view.rerender(
+      <WhiteListItemInSheetModal
+        account={account}
+        enableMenu
+        hideBalance
+        inWhiteList
+        interactionDisabled
+        isActiveDragging
+        sortable
+      />,
+    );
+    expect(rootStyle().backgroundColor).toBe('brand-light-1');
+    expect(mockCardStyle?.backgroundColor).toBe('transparent');
+    expect(view.getByText(account.aliasName!)).toBeVisible();
+    expect(view.getByTestId('drag-handle-icon')).toBeVisible();
+    expect(
+      mockContextMenuProps
+        ?.getMenuConfig()
+        .menuActions.every(action => action.disabled),
+    ).toBe(true);
+
+    view.rerender(
+      <WhiteListItemInSheetModal
+        account={account}
+        enableMenu
+        hideBalance
+        inWhiteList
+        sortable
+      />,
+    );
+    expect(rootStyle().backgroundColor).toBeUndefined();
+    expect(mockCardStyle?.backgroundColor).toBe('transparent');
+    expect(view.getByText(account.aliasName!)).toBeVisible();
+  });
+
+  it('clears the iOS root highlight when the handle touch is cancelled', () => {
+    mockIsIOS = true;
+    const view = render(
+      <WhiteListItemInSheetModal
+        account={account}
+        enableMenu
+        hideBalance
+        inWhiteList
+        sortable
+      />,
+    );
+    const rootStyle = () =>
+      RNStyleSheet.flatten(view.UNSAFE_getByType(TouchableOpacity).props.style);
+    act(() => mockHandleTouchesDown?.());
+    expect(rootStyle().backgroundColor).toBe('brand-light-1');
+    act(() => mockHandleTouchesCancelled?.());
+    expect(rootStyle().backgroundColor).toBeUndefined();
+    expect(mockCardStyle?.backgroundColor).toBe('transparent');
   });
 });

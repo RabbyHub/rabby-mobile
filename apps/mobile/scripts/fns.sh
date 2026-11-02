@@ -1724,22 +1724,12 @@ reset_builtin_assets() {
   local script_dir="$RABBY_FNS_SCRIPT_DIR"
   local project_dir=$(dirname $script_dir)
 
-  # local targets=(
-  #   # $project_dir/android/app/src/main/assets/fonts
-  #   $project_dir/ios/RabbyMobile/Resources/
-  # )
-  # for target in "${targets[@]}"
-  # do
-  #   echo "cleanup and copy fonts to $target..."
-  #   rm -rf $target && mkdir -p $target;
-  #   cp $project_dir/assets/fonts/* $target
-  # done
-
-  # iOS
-  local ios_target=$project_dir/ios/RabbyMobile/Resources/
-  echo "cleanup and copy fonts to $ios_target..."
-  rm -rf $ios_target && mkdir -p $ios_target;
-  cp $project_dir/assets/fonts/* $ios_target
+  # iOS resolves SF Pro Rounded through UIKit. Remove only the generated
+  # copies left by older builds; never copy Apple fonts into the iOS bundle.
+  local font_weight
+  for font_weight in Regular Medium Bold Heavy; do
+    rm -f "$project_dir/ios/RabbyMobile/Resources/SF-Pro-Rounded-$font_weight.otf"
+  done
 
   # Android
   mkdir -p $project_dir/android/app/src/main/assets/fonts && \
@@ -1764,14 +1754,33 @@ reset_builtin_assets() {
     echo "haven't build $project_dir/assets/android/builtin-pages/, skipped copy";
   fi
 
-  # rm -f $android_assets_target/sf_pro_all.ttf && cp $project_dir/assets/fonts/* $ios_target
 }
 
 ensure_inpage_bridge_assets() {
   local current_project_dir
   current_project_dir=$(resolve_mobile_project_dir)
 
-  local missing_targets=""
+  local expected_sha1=""
+  local manifest_path
+  for manifest_path in \
+    "$current_project_dir/ios/link-assets-manifest.json" \
+    "$current_project_dir/android/link-assets-manifest.json"
+  do
+    [ -s "$manifest_path" ] || continue
+    expected_sha1=$(
+      node -e '
+        const fs = require("fs");
+        const manifest = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
+        const entry = Array.isArray(manifest.data)
+          ? manifest.data.find(item => item && item.path === "assets/custom/InpageBridgeWeb3.js")
+          : null;
+        if (entry && typeof entry.sha1 === "string") process.stdout.write(entry.sha1);
+      ' "$manifest_path"
+    )
+    [ -n "$expected_sha1" ] && break
+  done
+
+  local stale_targets=""
   local target
 
   for target in \
@@ -1779,17 +1788,33 @@ ensure_inpage_bridge_assets() {
     "$current_project_dir/src/core/bridges/InpageBridgeWeb3.js"
   do
     if [ ! -s "$target" ]; then
-      missing_targets="${missing_targets}${target}
+      stale_targets="${stale_targets}missing: ${target}
 "
+      continue
+    fi
+
+    if [ -n "$expected_sha1" ]; then
+      local actual_sha1
+      actual_sha1=$(
+        node -e '
+          const crypto = require("crypto");
+          const fs = require("fs");
+          process.stdout.write(crypto.createHash("sha1").update(fs.readFileSync(process.argv[1])).digest("hex"));
+        ' "$target"
+      )
+      if [ "$actual_sha1" != "$expected_sha1" ]; then
+        stale_targets="${stale_targets}stale (${actual_sha1} != ${expected_sha1}): ${target}
+"
+      fi
     fi
   done
 
-  if [ -z "$missing_targets" ]; then
+  if [ -z "$stale_targets" ]; then
     return 0
   fi
 
-  echo "[ensure_inpage_bridge_assets] regenerate inpage bridge assets because these targets are missing:"
-  printf '%s' "$missing_targets" | while IFS= read -r target; do
+  echo "[ensure_inpage_bridge_assets] regenerate inpage bridge assets because these targets are missing or stale:"
+  printf '%s' "$stale_targets" | while IFS= read -r target; do
     [ -n "$target" ] || continue
     printf '[ensure_inpage_bridge_assets]   - %s\n' "$target"
   done

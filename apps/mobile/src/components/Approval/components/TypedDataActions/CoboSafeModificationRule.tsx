@@ -7,6 +7,7 @@ import LogoWithText from '../Actions/components/LogoWithText';
 import { View } from 'react-native';
 import useCommonStyle from '../../hooks/useCommonStyle';
 import { SubTable, SubCol, SubRow } from '../Actions/components/SubTable';
+import { AddressMemoRow } from '../Actions/components/AddressMemoRow';
 import { Text } from '@/components/Typography';
 
 const CoboSafeModificationRule = ({
@@ -36,19 +37,10 @@ const CoboSafeModificationRule = ({
         </Col>
 
         <SubTable target={addressRef}>
-          <SubCol>
-            <SubRow isTitle>
-              <Text style={commonStyle.subRowTitleText}>
-                {t('page.signTx.addressNote')}
-              </Text>
-            </SubRow>
-            <SubRow>
-              <Values.AddressMemo
-                textStyle={commonStyle.subRowText}
-                address={actionData.multisig_id}
-              />
-            </SubRow>
-          </SubCol>
+          <AddressMemoRow
+            textStyle={commonStyle.subRowText}
+            address={actionData.multisig_id}
+          />
 
           <SubCol>
             <SubRow isTitle>

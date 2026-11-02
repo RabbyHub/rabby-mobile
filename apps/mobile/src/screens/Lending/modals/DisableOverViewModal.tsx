@@ -1,4 +1,5 @@
 import React, { useCallback } from 'react';
+import { RoundedFontStyles } from '@/core/utils/fonts';
 
 import { noop } from 'lodash';
 import { Pressable, View } from 'react-native';
@@ -39,7 +40,7 @@ const DisableEmodeOverviewModal = ({ onClose }: { onClose: () => void }) => {
       title: '',
       titleStyle: {
         marginTop: 0,
-        fontWeight: '900',
+        ...RoundedFontStyles.heavy,
       },
       sectionStyle: {
         marginTop: 8,
@@ -174,7 +175,7 @@ const getStyles = createGetStyles2024(ctx => ({
   title: {
     color: ctx.colors2024['neutral-secondary'],
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
     lineHeight: 20,
     textAlign: 'center',
     fontFamily: 'SF Pro Rounded',

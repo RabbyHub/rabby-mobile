@@ -119,6 +119,7 @@ export const Quotes = ({
           <DexQuoteItemOld
             inSufficient={inSufficient}
             preExecResult={dex?.preExecResult}
+            isSdkPass={dex?.isSdkPass}
             quote={dex?.data}
             name={dex?.name}
             isBestQuote
@@ -175,6 +176,7 @@ export const Quotes = ({
               key={name}
               inSufficient={inSufficient}
               preExecResult={params.preExecResult}
+              isSdkPass={params.isSdkPass}
               quote={data as unknown as any}
               name={name}
               isBestQuote={idx === 0}
@@ -263,6 +265,7 @@ export const Quotes = ({
               onlyShowErrorQuote
               inSufficient={inSufficient}
               preExecResult={params.preExecResult}
+              isSdkPass={params.isSdkPass}
               quote={data as unknown as any}
               name={name}
               isBestQuote={idx === 0}
@@ -424,7 +427,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     marginTop: 14,
     fontSize: 20,
     lineHeight: 24,
-    fontWeight: '800',
+    fontWeight: '900',
     fontFamily: 'SF Pro Rounded',
     textAlign: 'center',
     color: colors2024['neutral-title-1'],

@@ -1,5 +1,10 @@
 import React, { useMemo } from 'react';
-import { LayoutChangeEvent, StyleSheet, TextInputProps } from 'react-native';
+import {
+  LayoutChangeEvent,
+  Platform,
+  StyleSheet,
+  TextInputProps,
+} from 'react-native';
 
 import {
   Text,
@@ -57,7 +62,9 @@ export const AutoShrinkAmountTextInput = React.forwardRef<
 
       return {
         includeFontPadding: false,
-        lineHeight,
+        // Keep the iOS paragraph line height independent of the fixed input
+        // height while the fitted font changes; UITextField owns its baseline.
+        lineHeight: Platform.OS === 'ios' ? undefined : lineHeight,
         overflow: 'hidden' as const,
         paddingVertical: 0,
         textAlignVertical: 'center' as const,

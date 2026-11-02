@@ -2,11 +2,6 @@ import {
   tokenizeSignMessageText,
   tokenizeSignTypedDataMessage,
 } from './signMessageTokenizer';
-import {
-  addSignMessageOriginFallback,
-  hasSignMessageOriginMismatch,
-} from './signMessageOrigin';
-
 const address = '0xde709f2102306220921060314715629080e2fb77';
 
 describe('sign message highlighter', () => {
@@ -104,74 +99,5 @@ describe('sign message highlighter', () => {
       { type: 'address', value: address, address },
       { type: 'address', value: spender, address: spender },
     ]);
-  });
-});
-
-describe('sign message origin fallback', () => {
-  it('detects a visible hostname that differs from the request hostname', () => {
-    expect(
-      hasSignMessageOriginMismatch(
-        'URI: https://docs.example.org/address/0x1234',
-        'http://127.0.0.1:8080',
-      ),
-    ).toBe(true);
-    expect(
-      hasSignMessageOriginMismatch(
-        '"verifying_contract": "intents.near"',
-        'https://near.com',
-      ),
-    ).toBe(false);
-    expect(
-      hasSignMessageOriginMismatch(
-        '"verifying_contract": "https://intents.near"',
-        'https://near.com',
-      ),
-    ).toBe(true);
-  });
-
-  it('adds verifyAddress only for unparsed external requests', () => {
-    const ctx = { contractCall: {} } as any;
-
-    expect(
-      addSignMessageOriginFallback(ctx, {
-        isUnparsedAction: true,
-        isInternalOrigin: false,
-        message: 'URI: https://docs.example.org',
-        origin: 'http://127.0.0.1:8080',
-      }),
-    ).toEqual({
-      contractCall: {},
-      verifyAddress: {
-        allowOrigins: [],
-        origin: 'http://127.0.0.1:8080',
-      },
-    });
-
-    expect(
-      addSignMessageOriginFallback(ctx, {
-        isUnparsedAction: false,
-        isInternalOrigin: false,
-        message: 'URI: https://docs.example.org',
-        origin: 'http://127.0.0.1:8080',
-      }),
-    ).toBe(ctx);
-
-    expect(
-      addSignMessageOriginFallback(ctx, {
-        isUnparsedAction: true,
-        isInternalOrigin: false,
-        message: 'URI: https://example.com/login',
-        origin: 'https://EXAMPLE.com.:443',
-      }),
-    ).toBe(ctx);
-
-    expect(
-      addSignMessageOriginFallback(ctx, {
-        isUnparsedAction: true,
-        isInternalOrigin: true,
-        message: 'URI: https://docs.example.org',
-        origin: 'https://example.com',
-      }),
-    ).toBe(ctx);
   });
 });

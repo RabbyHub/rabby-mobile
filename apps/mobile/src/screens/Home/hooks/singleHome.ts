@@ -30,6 +30,7 @@ import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 
 type SingleHomeState = {
   currentAccount: Account | null;
+  navigationId: number | null;
   selectedChain: ChainListItem | null;
   foldChart: boolean;
 };
@@ -70,17 +71,20 @@ function shouldKeepPreviousSelectData(
 function getDefault(): SingleHomeState {
   return {
     currentAccount: null,
+    navigationId: null,
     selectedChain: null,
     foldChart: true,
   };
 }
 const singleHomeState = zCreate<SingleHomeState>(() => getDefault());
+let nextNavigationId = 0;
 
-function presetSingHomeAccount(account: Account) {
+function presetSingHomeAccount(account: Account, navigationId: number) {
   singleHomeState.setState(prev => {
     const nextState = {
       ...getDefault(),
       currentAccount: account,
+      navigationId,
     };
 
     if (isSameSingleHomeAccount(prev.currentAccount, account)) {
@@ -105,7 +109,8 @@ export const apisSingleHome = {
         'single-address',
         'single_address_navigation_requested',
       );
-    presetSingHomeAccount(account);
+    const navigationId = ++nextNavigationId;
+    presetSingHomeAccount(account, navigationId);
     markFeatureActivation('single-address', 'state-prepared', {
       cycleId,
       reason: 'single_home_account_preset',
@@ -122,6 +127,7 @@ export const apisSingleHome = {
         screen: RootNames.SingleAddressHome,
         params: {
           account: account,
+          navigationId,
         },
       });
     } else {
@@ -129,15 +135,20 @@ export const apisSingleHome = {
         screen: RootNames.SingleAddressHome,
         params: {
           account: account,
+          navigationId,
         },
       });
     }
   },
-  clearCurrentAccount: () => {
-    singleHomeState.setState(prev => ({
-      ...prev,
-      currentAccount: null,
-    }));
+  clearCurrentAccount: (navigationId: number | undefined) => {
+    singleHomeState.setState(prev => {
+      // A replaced screen can unmount after the next account was prepared.
+      // Even another entry for the same address has a different owner.
+      if (navigationId === undefined || prev.navigationId !== navigationId) {
+        return prev;
+      }
+      return { ...prev, currentAccount: null, navigationId: null };
+    });
   },
   getCurrentAddress: () => {
     return singleHomeState.getState().currentAccount?.address;
@@ -172,6 +183,13 @@ export const apisSingleHome = {
     });
   },
 };
+
+export function useSingleHomeNavigationCleanup(navigationId?: number) {
+  useEffect(
+    () => () => apisSingleHome.clearCurrentAccount(navigationId),
+    [navigationId],
+  );
+}
 
 export function useSingleHomeAccount() {
   return {

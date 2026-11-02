@@ -1,5 +1,6 @@
 import { ThemeColors, ThemeColors2024 } from '@/constant/theme';
 import { getBottomButtonBottomOffset } from '@/constant/layout';
+import { RoundedFontStyles } from '@/core/utils/fonts';
 import { StyleSheet } from 'react-native';
 
 import { getPerpsProTransferSheetStyles } from './PerpsProTransferSheet.styles';
@@ -34,9 +35,8 @@ describe('PerpsProTransferSheet Figma styles', () => {
       handle.height,
     );
     expect(StyleSheet.flatten(styles.title)).toMatchObject({
-      fontFamily: 'SF Pro Rounded',
+      ...RoundedFontStyles.heavy,
       fontSize: 20,
-      fontWeight: '800',
       lineHeight: 24,
     });
     expect(StyleSheet.flatten(styles.directionCard)).toMatchObject({
@@ -65,11 +65,15 @@ describe('PerpsProTransferSheet Figma styles', () => {
       height: 40,
     });
     expect(StyleSheet.flatten(styles.shortcutText)).toMatchObject({
-      fontFamily: 'SF Pro Rounded',
+      ...RoundedFontStyles.medium,
       fontSize: 14,
-      fontWeight: '500',
       lineHeight: 18,
     });
+    for (const amountStyle of [styles.amountPrefix, styles.amountInput]) {
+      expect(StyleSheet.flatten(amountStyle)).toMatchObject(
+        RoundedFontStyles.heavy,
+      );
+    }
     expect(StyleSheet.flatten(styles.button)).toMatchObject({
       borderRadius: 12,
       elevation: 4,

@@ -3,12 +3,14 @@ import { Trans, useTranslation } from 'react-i18next';
 import {
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
   StyleSheet,
   TouchableOpacity,
   View,
 } from 'react-native';
 
 import { TrackedModal } from '@/components/Modal/TrackedModal';
+import { SimplePositionTpSlModal } from './SimplePositionTpSlModal';
 import { Button } from '@/components2024/Button';
 import { useTheme2024 } from '@/hooks/theme';
 import { MODAL_GATE_IDS } from '@/utils/modalGate';
@@ -16,6 +18,8 @@ import { formatUsdValue, splitNumberByStep } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useMemoizedFn, useRequest } from 'ahooks';
 import IconPerpEdit from '@/assets2024/icons/perps/IconPerpEdit.svg';
+import PositionEdit from '@/assets2024/icons/perps/PerpsSimpleAccount/tpsl-edit.svg';
+import PositionCancel from '@/assets2024/icons/perps/PerpsSimpleAccount/tpsl-cancel.svg';
 import IconPerpDelete from '@/assets2024/icons/perps/IconTagClearCC.svg';
 import { toast } from '@/components2024/Toast';
 import { useSlTpUsdInput } from '@/hooks/useUsdInput';
@@ -25,6 +29,7 @@ import {
   formatTpOrSlPrice,
 } from '@/utils/perps';
 import RcIconCloseCC from '@/assets2024/icons/perps/IconCloseCC.svg';
+import { CircleSpinnerCC } from '@/components2024/CircleSpinner/CircleSpinnerCC';
 import { Text, TextInput } from '@/components/Typography';
 import {
   BOTTOM_BUTTON_SINGLE_HEIGHT,
@@ -33,6 +38,8 @@ import {
 } from '@/constant/layout';
 
 interface Props {
+  variant?: 'position';
+  estimatedPnl?: number | null;
   coin: string;
   handleActionApproveStatus?: () => Promise<void>;
   entryPrice?: number;
@@ -48,7 +55,10 @@ interface Props {
   actionType: 'tp' | 'sl';
   quoteAsset: string;
   type: 'openPosition' | 'hasPosition';
-  handleSetAutoClose: (price: string) => Promise<void>;
+  handleSetAutoClose: (price: string) => Promise<void | boolean>;
+  actionPending?: boolean;
+  /** Position tags only: swap the X for the shared spinner while cancelling. */
+  cancelPending?: boolean;
   handleCancelAutoClose: () => Promise<void>;
 }
 
@@ -71,8 +81,69 @@ const PRICE_GAIN_QUICK_OPTIONS = [
   },
 ];
 
+// Keep the open-position editor on its existing native Modal path.
+function TpSlEditorModal({
+  position,
+  children,
+  onCloseStart,
+  ...props
+}: React.PropsWithChildren<{
+  position: boolean;
+  visible: boolean;
+  onRequestClose: () => void;
+  onShow?: () => void;
+  onDismiss?: () => void;
+  onCloseStart?: () => void;
+}>) {
+  if (position) {
+    return (
+      <SimplePositionTpSlModal
+        modalId={MODAL_GATE_IDS.perpsEditTpSlPrice}
+        onCloseStart={onCloseStart}
+        {...props}>
+        {children}
+      </SimplePositionTpSlModal>
+    );
+  }
+  return (
+    <TrackedModal
+      modalId={MODAL_GATE_IDS.perpsEditTpSlPrice}
+      transparent
+      animationType="fade"
+      {...props}>
+      <KeyboardAvoidingView
+        style={legacyModalStyles.keyboardAvoidView}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        enabled={Platform.OS === 'ios'}>
+        <TouchableOpacity
+          style={legacyModalStyles.modalOverlay}
+          onPress={props.onRequestClose}>
+          {children}
+        </TouchableOpacity>
+      </KeyboardAvoidingView>
+    </TrackedModal>
+  );
+}
+
+const legacyModalStyles = StyleSheet.create({
+  keyboardAvoidView: {
+    height: '100%',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+  },
+});
+
 export const PerpEditTpSlPriceTag: React.FC<Props> = ({
   coin,
+  variant,
+  estimatedPnl,
   handleActionApproveStatus,
   entryPrice,
   markPrice,
@@ -88,9 +159,19 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
   type,
   quoteAsset,
   handleSetAutoClose,
+  actionPending = false,
+  cancelPending = false,
   handleCancelAutoClose,
 }) => {
   const [modalVisible, setModalVisible] = React.useState(false);
+  const pressInFlight = React.useRef(false);
+  const mounted = React.useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
   const { t } = useTranslation();
   const { styles, colors2024, isLight } = useTheme2024({
     getStyle,
@@ -233,7 +314,7 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
     loading,
   } = useRequest(
     async () => {
-      await handleSetAutoClose(autoClosePrice);
+      return handleSetAutoClose(autoClosePrice);
     },
     {
       manual: true,
@@ -241,19 +322,26 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
         console.error('Failed to set auto close:', error);
         toast.error(error.message || 'Failed to set auto close');
       },
-      onSuccess() {
-        setModalVisible(false);
+      onSuccess(result) {
+        if (result !== false) setModalVisible(false);
       },
     },
   );
 
+  const resetDraft = useMemoizedFn(() => {
+    setAutoClosePrice('');
+    setActiveOption(0);
+  });
+
   React.useEffect(() => {
     if (!modalVisible) {
-      setAutoClosePrice('');
-      setActiveOption(0);
       cancel();
+      // Leave the position draft intact until the Portal finishes fading.
+      if (variant !== 'position') {
+        resetDraft();
+      }
     }
-  }, [cancel, setAutoClosePrice, modalVisible]);
+  }, [cancel, modalVisible, resetDraft, variant]);
 
   const handleQuickOptionPress = useMemoizedFn((pct: number) => {
     setActiveOption(pct);
@@ -295,7 +383,7 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
   }, [modalVisible]);
 
   useEffect(() => {
-    if (modalVisible && type === 'hasPosition') {
+    if (modalVisible && type === 'hasPosition' && variant !== 'position') {
       // Increase delay to wait for modal animation to complete
       const timer = setTimeout(() => {
         autoCloseInputRef.current?.focus();
@@ -306,38 +394,99 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [modalVisible]);
 
+  const EditIcon = variant === 'position' ? PositionEdit : IconPerpEdit;
+  const CancelIcon = variant === 'position' ? PositionCancel : IconPerpDelete;
+  const constrainPosition = variant === 'position' && Platform.OS === 'ios';
+  const BodyContainer = constrainPosition ? ScrollView : View;
+  const showCancelSpinner =
+    variant === 'position' && cancelPending && !!initTpOrSlPrice;
+
   return (
     <>
       <TouchableOpacity
-        style={styles.tagContainer}
+        disabled={actionPending}
+        accessibilityRole="button"
+        accessibilityState={{
+          busy: showCancelSpinner,
+          disabled: actionPending,
+        }}
+        style={[
+          styles.tagContainer,
+          variant === 'position' && styles.positionTag,
+          variant === 'position' && !!initTpOrSlPrice && styles.positionSetTag,
+        ]}
         onPress={async () => {
-          await handleActionApproveStatus?.();
-          if (initTpOrSlPrice) {
-            await handleCancelAutoClose();
+          if (
+            variant === 'position' &&
+            (actionPending || pressInFlight.current)
+          )
             return;
+          pressInFlight.current = true;
+          try {
+            await handleActionApproveStatus?.();
+            if (!mounted.current) return;
+            if (initTpOrSlPrice) {
+              await handleCancelAutoClose();
+              return;
+            }
+            if (disableEdit) {
+              toast.error(t('page.perps.PerpsAutoCloseModal.noPosition'));
+              return;
+            }
+            if (variant === 'position') resetDraft();
+            setModalVisible(true);
+          } finally {
+            pressInFlight.current = false;
           }
-
-          if (disableEdit) {
-            toast.error(t('page.perps.PerpsAutoCloseModal.noPosition'));
-            return;
-          }
-          setModalVisible(true);
         }}>
-        <Text style={[styles.tagText, disableEdit && styles.tagTextDisabled]}>
-          {initTpOrSlPrice ? `$${splitNumberByStep(initTpOrSlPrice)}` : '-'}
-        </Text>
-        {initTpOrSlPrice ? (
-          <IconPerpDelete
+        {variant === 'position' ? (
+          <View style={styles.positionContent}>
+            <Text
+              style={[
+                styles.tagText,
+                styles.positionPrice,
+                !initTpOrSlPrice && styles.positionEmptyPrice,
+              ]}>
+              {initTpOrSlPrice
+                ? `${splitNumberByStep(initTpOrSlPrice)} ${quoteAsset}`
+                : '-'}
+            </Text>
+            {!!initTpOrSlPrice && estimatedPnl != null && (
+              <Text style={styles.positionPnl}>
+                {t('page.perpsDetail.simpleAccount.estimatedPnl')}{' '}
+                <Text
+                  style={
+                    estimatedPnl >= 0
+                      ? styles.positionGreen
+                      : styles.positionRed
+                  }>
+                  {estimatedPnl >= 0 ? '+' : '-'}
+                  {formatUsdValue(Math.abs(estimatedPnl))}
+                </Text>
+              </Text>
+            )}
+          </View>
+        ) : (
+          <Text style={[styles.tagText, disableEdit && styles.tagTextDisabled]}>
+            {initTpOrSlPrice ? `$${splitNumberByStep(initTpOrSlPrice)}` : '-'}
+          </Text>
+        )}
+        {showCancelSpinner ? (
+          <CircleSpinnerCC size={16} color={colors2024['neutral-secondary']} />
+        ) : initTpOrSlPrice ? (
+          <CancelIcon
             width={16}
             height={16}
             color={colors2024['neutral-secondary']}
           />
         ) : (
-          <IconPerpEdit
+          <EditIcon
             width={16}
             height={16}
             color={
-              disableEdit
+              variant === 'position'
+                ? colors2024['neutral-foot']
+                : disableEdit
                 ? 'rgba(80, 210, 193, .5)'
                 : isLight
                 ? colors2024['neutral-title-1']
@@ -346,242 +495,256 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
           />
         )}
       </TouchableOpacity>
-      <TrackedModal
-        modalId={MODAL_GATE_IDS.perpsEditTpSlPrice}
-        transparent={true}
+      <TpSlEditorModal
+        position={variant === 'position'}
         visible={modalVisible}
-        animationType="fade"
-        onRequestClose={() => {
-          if (loading) {
-            return;
-          }
-          setModalVisible(false);
-        }}>
-        <KeyboardAvoidingView
-          style={styles.keyboardAvoidView}
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          enabled={Platform.OS === 'ios'}>
-          <TouchableOpacity
-            style={styles.modalOverlay}
-            onPress={() => {
-              if (loading) {
-                return;
+        onShow={
+          variant === 'position'
+            ? () => {
+                if (!loading) autoCloseInputRef.current?.focus();
               }
-              setModalVisible(false);
-            }}>
-            <TouchableOpacity
-              activeOpacity={1}
-              style={styles.modal}
-              onPress={evt => {
-                evt.stopPropagation();
-              }}>
-              <View style={styles.container}>
-                <View style={styles.inner}>
-                  <TouchableOpacity
-                    style={styles.closeButton}
-                    onPress={() => {
-                      setModalVisible(false);
-                    }}>
-                    <RcIconCloseCC
-                      width={20}
-                      height={20}
-                      color={colors2024['neutral-secondary']}
+            : undefined
+        }
+        onCloseStart={() => autoCloseInputRef.current?.blur()}
+        onDismiss={variant === 'position' ? resetDraft : undefined}
+        onRequestClose={() => {
+          if (!loading) setModalVisible(false);
+        }}>
+        <TouchableOpacity
+          activeOpacity={1}
+          style={[styles.modal, constrainPosition && styles.constrained]}
+          onPress={evt => {
+            evt.stopPropagation();
+          }}>
+          <View
+            style={[styles.container, constrainPosition && styles.constrained]}>
+            <View
+              style={[styles.inner, constrainPosition && styles.constrained]}>
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={() => {
+                  setModalVisible(false);
+                }}>
+                <RcIconCloseCC
+                  width={20}
+                  height={20}
+                  color={colors2024['neutral-secondary']}
+                />
+              </TouchableOpacity>
+              <View style={styles.header}>
+                <Text style={styles.title}>
+                  {direction} {formatPerpsCoin(coin)}
+                </Text>
+                {type === 'openPosition' ? (
+                  <Text style={styles.subTitle}>
+                    {formatPerpsCoin(coin)}/{quoteAsset}{' '}
+                    <Text style={styles.subTitlePrice}>{`$${splitNumberByStep(
+                      markPrice,
+                    )}`}</Text>
+                  </Text>
+                ) : (
+                  <Text style={styles.subTitle}>
+                    <Trans
+                      i18nKey="page.perpsDetail.PerpsAutoCloseModal.EntryAndCurrentPriceTpl"
+                      values={{
+                        entryPrice: `$${splitNumberByStep(
+                          entryPrice || markPrice,
+                        )}`,
+                        price: `$${splitNumberByStep(markPrice)}`,
+                      }}
+                      components={{
+                        1: <Text style={styles.subTitlePrice} />,
+                        2: <Text style={styles.subTitlePrice} />,
+                      }}
                     />
-                  </TouchableOpacity>
-                  <View style={styles.header}>
-                    <Text style={styles.title}>
-                      {direction} {formatPerpsCoin(coin)}
-                    </Text>
-                    {type === 'openPosition' ? (
-                      <Text style={styles.subTitle}>
-                        {formatPerpsCoin(coin)}/{quoteAsset}{' '}
+                  </Text>
+                )}
+              </View>
+              <BodyContainer
+                {...(constrainPosition
+                  ? {
+                      style: styles.scrollBody,
+                      contentContainerStyle: [
+                        styles.body,
+                        styles.scrollBodyContent,
+                      ],
+                      keyboardShouldPersistTaps: 'handled' as const,
+                    }
+                  : { style: styles.body })}>
+                <Text style={styles.bodyTitle}>
+                  {actionType === 'tp'
+                    ? t('page.perpsDetail.PerpsAutoCloseModal.takeProfitWhen')
+                    : t('page.perpsDetail.PerpsAutoCloseModal.stopLossWhen')}
+                </Text>
+                <View style={styles.formRow}>
+                  {PRICE_GAIN_QUICK_OPTIONS.map(option => (
+                    <View
+                      style={StyleSheet.flatten([
+                        styles.formItemQuickOption,
+                        activeOption === option.value
+                          ? {
+                              backgroundColor: 'rgba(80, 210, 193, 0.12)',
+                              borderColor: '#50D2C1',
+                            }
+                          : null,
+                      ])}>
+                      <TouchableOpacity
+                        key={option.value}
+                        onPress={() => {
+                          handleQuickOptionPress(option.value);
+                        }}>
                         <Text
-                          style={styles.subTitlePrice}>{`$${splitNumberByStep(
-                          markPrice,
-                        )}`}</Text>
-                      </Text>
-                    ) : (
-                      <Text style={styles.subTitle}>
-                        <Trans
-                          i18nKey="page.perpsDetail.PerpsAutoCloseModal.EntryAndCurrentPriceTpl"
-                          values={{
-                            entryPrice: `$${splitNumberByStep(
-                              entryPrice || markPrice,
-                            )}`,
-                            price: `$${splitNumberByStep(markPrice)}`,
-                          }}
-                          components={{
-                            1: <Text style={styles.subTitlePrice} />,
-                            2: <Text style={styles.subTitlePrice} />,
-                          }}
-                        />
-                      </Text>
-                    )}
-                  </View>
-                  <View style={styles.body}>
-                    <Text style={styles.bodyTitle}>
-                      {actionType === 'tp'
-                        ? t(
-                            'page.perpsDetail.PerpsAutoCloseModal.takeProfitWhen',
-                          )
-                        : t(
-                            'page.perpsDetail.PerpsAutoCloseModal.stopLossWhen',
-                          )}
-                    </Text>
-                    <View style={styles.formRow}>
-                      {PRICE_GAIN_QUICK_OPTIONS.map(option => (
-                        <View
                           style={StyleSheet.flatten([
-                            styles.formItemQuickOption,
-                            activeOption === option.value
-                              ? {
-                                  backgroundColor: 'rgba(80, 210, 193, 0.12)',
-                                  borderColor: '#50D2C1',
-                                }
-                              : null,
+                            styles.formItemQuickTitle,
+                            activeOption === option.value &&
+                              styles.formItemQuickTitleActive,
                           ])}>
-                          <TouchableOpacity
-                            key={option.value}
-                            onPress={() => {
-                              handleQuickOptionPress(option.value);
-                            }}>
-                            <Text
-                              style={StyleSheet.flatten([
-                                styles.formItemQuickTitle,
-                                activeOption === option.value &&
-                                  styles.formItemQuickTitleActive,
-                              ])}>
-                              {actionType === 'tp' ? '+' : '-'} {option.label}
-                            </Text>
-                          </TouchableOpacity>
-                        </View>
-                      ))}
-                    </View>
-                    <View style={styles.formRow}>
-                      <View style={styles.formItemHalf}>
-                        <Text style={styles.formItemLabel}>
-                          {direction === 'Long'
-                            ? actionType === 'tp'
-                              ? t(
-                                  'page.perpsDetail.PerpsAutoCloseModal.priceAbove',
-                                )
-                              : t(
-                                  'page.perpsDetail.PerpsAutoCloseModal.priceBelow',
-                                )
-                            : actionType === 'tp'
-                            ? t(
-                                'page.perpsDetail.PerpsAutoCloseModal.priceBelow',
-                              )
-                            : t(
-                                'page.perpsDetail.PerpsAutoCloseModal.priceAbove',
-                              )}
+                          {actionType === 'tp' ? '+' : '-'} {option.label}
                         </Text>
-                        <TextInput
-                          keyboardType="numeric"
-                          style={[
-                            styles.input,
-                            priceValidation.error ? styles.inputError : null,
-                          ]}
-                          placeholder="$0"
-                          value={displayedAutoClosePrice}
-                          onChangeText={handlePriceChange}
-                          ref={autoCloseInputRef}
-                        />
-                      </View>
+                      </TouchableOpacity>
                     </View>
-
-                    <View style={styles.pnlTextWrapper}>
-                      {priceValidation.error ? (
-                        <Text style={styles.errorMsg}>
-                          {priceValidation.errorMessage}
-                        </Text>
-                      ) : null}
-                    </View>
-
-                    <View style={styles.pnlCardWrapper}>
-                      <View style={styles.pnlCardWrapperItem}>
-                        <Text style={[styles.pnlText]}>
-                          {gainOrLoss === 'gain'
-                            ? t(
-                                'page.perpsDetail.PerpsAutoCloseModal.youGainRoi',
-                              )
-                            : t(
-                                'page.perpsDetail.PerpsAutoCloseModal.youLossRoi',
-                              )}
-                          :
-                        </Text>
-                        {priceValidation.error || priceIsEmptyValue ? (
-                          <Text style={styles.infoText}>-</Text>
-                        ) : (
-                          <Text
-                            style={[
-                              styles.infoText,
-                              {
-                                color:
-                                  gainOrLoss === 'gain'
-                                    ? colors2024['green-default']
-                                    : colors2024['red-default'],
-                              },
-                            ]}>
-                            {gainOrLoss === 'gain' ? '+' : '-'}
-                            {formatPerpsPct(Math.abs(Number(gainPct)))}
-                          </Text>
-                        )}
-                      </View>
-                      <View style={styles.pnlCardWrapperItem}>
-                        <Text style={[styles.pnlText]}>
-                          {actionType === 'tp'
-                            ? t(
-                                'page.perpsDetail.PerpsAutoCloseModal.takeProfitExpectedPNL',
-                              )
-                            : t(
-                                'page.perpsDetail.PerpsAutoCloseModal.stopLossExpectedPNL',
-                              )}
-                          :
-                        </Text>
-                        {priceValidation.error || priceIsEmptyValue ? (
-                          <Text style={styles.infoText}>-</Text>
-                        ) : (
-                          <Text
-                            style={[
-                              styles.infoText,
-                              {
-                                color:
-                                  gainOrLoss === 'gain'
-                                    ? colors2024['green-default']
-                                    : colors2024['red-default'],
-                              },
-                            ]}>
-                            {gainOrLoss === 'gain' ? '+' : '-'}
-                            {formatUsdValue(Math.abs(Number(calculatedPnl)))}
-                          </Text>
-                        )}
-                      </View>
-                    </View>
-                  </View>
-                  <View style={styles.footer}>
-                    <Button
-                      type="hyperliquid"
-                      loading={loading}
-                      title={t('global.confirm')}
-                      disabled={!isValidPrice}
-                      onPress={handleConfirm}
-                      height={BOTTOM_BUTTON_SINGLE_HEIGHT}
-                      titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
-                      containerStyle={styles.containerStyle}
+                  ))}
+                </View>
+                <View style={styles.formRow}>
+                  <View style={styles.formItemHalf}>
+                    <Text style={styles.formItemLabel}>
+                      {direction === 'Long'
+                        ? actionType === 'tp'
+                          ? t('page.perpsDetail.PerpsAutoCloseModal.priceAbove')
+                          : t('page.perpsDetail.PerpsAutoCloseModal.priceBelow')
+                        : actionType === 'tp'
+                        ? t('page.perpsDetail.PerpsAutoCloseModal.priceBelow')
+                        : t('page.perpsDetail.PerpsAutoCloseModal.priceAbove')}
+                    </Text>
+                    <TextInput
+                      keyboardType="numeric"
+                      style={[
+                        styles.input,
+                        priceValidation.error ? styles.inputError : null,
+                      ]}
+                      placeholder="$0"
+                      value={displayedAutoClosePrice}
+                      onChangeText={handlePriceChange}
+                      ref={autoCloseInputRef}
                     />
                   </View>
                 </View>
+
+                <View style={styles.pnlTextWrapper}>
+                  {priceValidation.error ? (
+                    <Text style={styles.errorMsg}>
+                      {priceValidation.errorMessage}
+                    </Text>
+                  ) : null}
+                </View>
+
+                <View style={styles.pnlCardWrapper}>
+                  <View style={styles.pnlCardWrapperItem}>
+                    <Text style={[styles.pnlText]}>
+                      {gainOrLoss === 'gain'
+                        ? t('page.perpsDetail.PerpsAutoCloseModal.youGainRoi')
+                        : t('page.perpsDetail.PerpsAutoCloseModal.youLossRoi')}
+                      :
+                    </Text>
+                    {priceValidation.error || priceIsEmptyValue ? (
+                      <Text style={styles.infoText}>-</Text>
+                    ) : (
+                      <Text
+                        style={[
+                          styles.infoText,
+                          {
+                            color:
+                              gainOrLoss === 'gain'
+                                ? colors2024['green-default']
+                                : colors2024['red-default'],
+                          },
+                        ]}>
+                        {gainOrLoss === 'gain' ? '+' : '-'}
+                        {formatPerpsPct(Math.abs(Number(gainPct)))}
+                      </Text>
+                    )}
+                  </View>
+                  <View style={styles.pnlCardWrapperItem}>
+                    <Text style={[styles.pnlText]}>
+                      {actionType === 'tp'
+                        ? t(
+                            'page.perpsDetail.PerpsAutoCloseModal.takeProfitExpectedPNL',
+                          )
+                        : t(
+                            'page.perpsDetail.PerpsAutoCloseModal.stopLossExpectedPNL',
+                          )}
+                      :
+                    </Text>
+                    {priceValidation.error || priceIsEmptyValue ? (
+                      <Text style={styles.infoText}>-</Text>
+                    ) : (
+                      <Text
+                        style={[
+                          styles.infoText,
+                          {
+                            color:
+                              gainOrLoss === 'gain'
+                                ? colors2024['green-default']
+                                : colors2024['red-default'],
+                          },
+                        ]}>
+                        {gainOrLoss === 'gain' ? '+' : '-'}
+                        {formatUsdValue(Math.abs(Number(calculatedPnl)))}
+                      </Text>
+                    )}
+                  </View>
+                </View>
+              </BodyContainer>
+              <View style={styles.footer}>
+                <Button
+                  type="hyperliquid"
+                  loading={loading}
+                  title={t('global.confirm')}
+                  disabled={!isValidPrice}
+                  onPress={handleConfirm}
+                  height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+                  titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
+                  containerStyle={styles.containerStyle}
+                />
               </View>
-            </TouchableOpacity>
-          </TouchableOpacity>
-        </KeyboardAvoidingView>
-      </TrackedModal>
+            </View>
+          </View>
+        </TouchableOpacity>
+      </TpSlEditorModal>
     </>
   );
 };
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
+  positionTag: {
+    paddingVertical: 1,
+    paddingLeft: 12,
+    paddingRight: 6,
+    backgroundColor: colors2024['neutral-bg-5'],
+    minHeight: 20,
+    flexShrink: 1,
+  },
+  positionSetTag: { borderRadius: 10, paddingVertical: 2, minHeight: 40 },
+  positionContent: { alignItems: 'flex-end', gap: 2, flexShrink: 1 },
+  positionPrice: {
+    fontFamily: 'SF Pro Rounded',
+    fontWeight: '700',
+    fontSize: 14,
+    lineHeight: 18,
+    color: colors2024['neutral-title-1'],
+    textAlign: 'right',
+  },
+  positionEmptyPrice: { color: colors2024['neutral-foot'] },
+  positionPnl: {
+    fontFamily: 'SF Pro Rounded',
+    fontWeight: '500',
+    fontSize: 12,
+    lineHeight: 16,
+    color: colors2024['neutral-foot'],
+    textAlign: 'right',
+  },
+  positionGreen: { color: colors2024['green-default'] },
+  positionRed: { color: colors2024['red-default'] },
   tagContainer: {
     borderRadius: 100,
     backgroundColor: 'rgba(80, 210, 193, 0.12)',
@@ -602,18 +765,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   tagTextDisabled: {
     opacity: 0.5,
   },
-  keyboardAvoidView: {
-    height: '100%',
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    width: '100%',
-    height: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-  },
+  constrained: { maxHeight: '100%', flexShrink: 1 },
+  scrollBody: { width: '100%', flexShrink: 1, marginBottom: 20 },
+  scrollBodyContent: { marginBottom: 0 },
   container: {
     width: '100%',
     backgroundColor: colors2024['neutral-bg-0'],
@@ -788,14 +942,14 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 17,
     lineHeight: 22,
-    fontWeight: '800',
+    fontWeight: '900',
   },
 
   infoText: {
     fontFamily: 'SF Pro Rounded',
     fontSize: 17,
     lineHeight: 22,
-    fontWeight: '800',
+    fontWeight: '900',
     color: colors2024['neutral-info'],
   },
 

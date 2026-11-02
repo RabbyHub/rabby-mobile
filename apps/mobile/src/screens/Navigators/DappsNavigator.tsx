@@ -25,7 +25,7 @@ export function DappsNavigator() {
         },
         headerTitleStyle: {
           color: colors['neutral-title-1'],
-          fontWeight: 'normal',
+          fontWeight: '400',
         },
         headerTintColor: colors['neutral-title-1'],
       })}
@@ -49,7 +49,7 @@ export function DappsNavigator() {
         options={mergeScreenOptions({
           headerTintColor: colors['neutral-title-1'],
           headerTitleStyle: {
-            fontWeight: '800',
+            fontWeight: '900',
             color: colors['neutral-title-1'],
           },
         })}

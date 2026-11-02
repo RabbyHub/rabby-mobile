@@ -27,9 +27,6 @@ jest.mock('@/databases/sync/assets', () => ({
 jest.mock('@/utils/appchain', () => ({
   formatAppChain: jest.fn(value => value),
 }));
-jest.mock('@/utils/lendingUserStatus', () => ({
-  reportLendingUserStatusOnce: jest.fn(),
-}));
 jest.mock('@/utils/protocol', () => ({
   complexProtocol2ProtocolItem: jest.fn((value, address) => ({
     ...value,

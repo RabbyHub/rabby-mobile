@@ -67,6 +67,6 @@ const getStyle = (colors: AppColorsVariants) =>
       fontSize: 15,
       lineHeight: 18,
       color: colors['neutral-body'],
-      fontWeight: '600',
+      fontWeight: '500',
     },
   });

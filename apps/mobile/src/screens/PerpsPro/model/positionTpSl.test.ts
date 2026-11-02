@@ -3,6 +3,7 @@ import type { OpenOrder } from '@rabby-wallet/hyperliquid-sdk';
 import { buildPerpsOpenOrderTopology } from './openOrderTopology';
 import {
   buildPositionTpSlSummary,
+  getPositionTpSlValueTone,
   calculatePartialTpSlCoverage,
   calculatePositionTpSlEstimatedPnl,
   calculatePositionTpSlRoi,
@@ -479,5 +480,22 @@ describe('Perps Pro position TP/SL model', () => {
         triggerPrice: '100000000000000000000000000000000000000',
       }).kind,
     ).toBe('valid');
+  });
+});
+
+describe('position TP/SL signed presentation', () => {
+  it.each([
+    ['10', 'positive'],
+    ['-10', 'negative'],
+    ['0.00001', 'positive'],
+    ['-0.00001', 'negative'],
+    ['0', 'neutral'],
+    ['-0', 'neutral'],
+    [null, 'neutral'],
+    ['', 'neutral'],
+    ['NaN', 'neutral'],
+    ['Infinity', 'neutral'],
+  ])('classifies %s as %s before display rounding', (value, expected) => {
+    expect(getPositionTpSlValueTone(value)).toBe(expected);
   });
 });

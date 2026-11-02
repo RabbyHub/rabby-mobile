@@ -13,6 +13,8 @@ type TipsPopupState = {
   enablePanDownToClose?: boolean;
   /** Sheet background; defaults to 'bg1'. */
   bgType?: 'bg0' | 'bg1';
+  /** Space below the button; defaults to the popup's existing 56px. */
+  bottomPadding?: number;
   buttonStyle?: StyleProp<ViewStyle>;
   buttonTitleStyle?: StyleProp<TextStyle>;
   buttonTitle?: string;

@@ -24,7 +24,6 @@ import { addressUtils } from '@rabby-wallet/base-utils';
 import { useSwapSettings } from './settings';
 import type { QuoteProvider, TDexQuoteData } from './quote';
 import { useQuoteMethods } from './quote';
-import { stats } from '@/utils/stats';
 import { formatTokenAmountInput } from '@/utils/number';
 import { getTokenSymbol, isTokenMarketClosed } from '@/utils/token';
 import { useDebounceFn, useRequest } from 'ahooks';
@@ -55,6 +54,7 @@ import { useSwapService } from '../swapServiceDependencies';
 import { mergeSwapQuoteBatch } from './quoteResultBatch';
 import { useSceneActiveAsync } from '@/screens/SwapBridge/hooks/useSceneActiveAsync';
 import { getRabbyFeeInfo, type SwapFeeRate } from './fee';
+import { resolveSwapChainTokens } from './swapChainTokens';
 
 export const enableInsufficientQuote = true;
 
@@ -631,18 +631,17 @@ export const useTokenPair = ({
       handleChain(c, {
         markExplicitSelection: opts?.markExplicitSelection !== false,
       });
+      if (c === chain) {
+        return;
+      }
       if (!opts?.changeTo) {
-        setPayToken({
-          ...getChainDefaultToken(c),
-          ...(opts?.payTokenId ? { id: opts?.payTokenId } : {}),
+        const nextTokens = resolveSwapChainTokens({
+          chain: c,
+          payTokenId: opts?.payTokenId,
+          payUseBaseToken: opts?.payUseBaseToken,
         });
-        if (opts?.payUseBaseToken) {
-          setReceiveToken({
-            ...getChainDefaultToken(c),
-          });
-        } else {
-          setReceiveToken(undefined);
-        }
+        setPayToken(nextTokens.payToken);
+        setReceiveToken(nextTokens.receiveToken);
       } else {
         setReceiveToken({
           ...getChainDefaultToken(c),
@@ -660,7 +659,7 @@ export const useTokenPair = ({
       setSlider(0);
       setActiveProvider(undefined);
     },
-    [handleChain, setActiveProvider, setPayToken, setReceiveToken],
+    [chain, handleChain, setActiveProvider, setPayToken, setReceiveToken],
   );
 
   const switchSwapAgain = useCallback(
@@ -1338,7 +1337,6 @@ export const useTokenPair = ({
       return;
     }
     hasReportedSwapEntryRef.current = true;
-    stats.report('enterSwapDescPage', {});
   }, [active]);
 
   /* slider */

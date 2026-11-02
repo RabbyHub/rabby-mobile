@@ -1,6 +1,5 @@
 import { UserAbstractionResp } from '@rabby-wallet/hyperliquid-sdk';
 import { useMemoizedFn } from 'ahooks';
-import { useShallow } from 'zustand/react/shallow';
 
 import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 import {
@@ -80,16 +79,10 @@ export const computePortfolioBreakdownValues = (
 };
 
 export const usePerpsPortfolioBreakdown = () => {
-  // Icon visibility only needs "does any spot or staking asset exist" — a boolean that
-  // flips on balance changes, not on price ticks — plus the account mode.
-  const { hasNonPerpsAssets, userAbstraction } = useActivityStore(
+  // Only the account mode is subscribed; values are read at press time.
+  const userAbstraction = useActivityStore(
     perpsStore,
-    useShallow(s => ({
-      hasNonPerpsAssets:
-        s.spotState.rawBalances.some(b => Number(b.total) > 0) ||
-        Number(getStakedHypeAmount(s.stakingSummary)) > 0,
-      userAbstraction: s.userAbstraction,
-    })),
+    s => s.userAbstraction,
     Object.is,
     { storeLabel: 'perps-portfolio-breakdown' },
   );
@@ -106,7 +99,6 @@ export const usePerpsPortfolioBreakdown = () => {
   );
 
   return {
-    hasNonPerpsAssets,
     breakdownMode,
     getBreakdownValues,
   };

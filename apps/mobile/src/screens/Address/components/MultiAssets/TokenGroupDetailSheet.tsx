@@ -1,5 +1,6 @@
 import React, { memo, useCallback, useMemo } from 'react';
 import { TouchableOpacity, View } from 'react-native';
+import type { FlatListProps } from 'react-native';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 
 import { useTheme2024 } from '@/hooks/theme';
@@ -18,8 +19,21 @@ import { AssetAvatar } from '@/components/AssetAvatar';
 import { Text } from '@/components/Typography';
 import { AccountOverview } from '@/screens/Home/components/AccountOverview';
 import { getTokenSymbol } from '@/utils/token';
-import { formatAmount } from '@/utils/number';
+import { formatAmountValueKMB } from '@/screens/TokenDetail/util';
 import type { KeyringAccountWithAlias } from '@/hooks/account';
+
+const ROW_MARGIN_BOTTOM = 8;
+const LIST_PADDING_TOP = 12;
+const ROW_EXTENT = ASSETS_ITEM_HEIGHT_NEW + ROW_MARGIN_BOTTOM;
+
+const getItemLayout: NonNullable<FlatListProps<ITokenItem>['getItemLayout']> = (
+  _data,
+  index,
+) => ({
+  length: ROW_EXTENT,
+  offset: LIST_PADDING_TOP + ROW_EXTENT * index,
+  index,
+});
 
 type TokenGroupDetailSheetProps = GlobalModalViewProps<
   MODAL_NAMES.TOKEN_GROUP_DETAIL,
@@ -67,7 +81,7 @@ const AmountOnlyTokenDistributionRow = memo(
             )}
           </View>
           <Text numberOfLines={1} style={styles.tokenBalance}>
-            {formatAmount(token.amount, 4, true)}
+            {formatAmountValueKMB(token.amount, 4, true)}
           </Text>
         </View>
       </TouchableOpacity>
@@ -120,6 +134,7 @@ const TokenGroupDetailSheet: React.FC<TokenGroupDetailSheetProps> = ({
           `${item.owner_addr}-${item.chain}-${item.id}-${item.inner_id ?? ''}`
         }
         contentContainerStyle={styles.list}
+        getItemLayout={getItemLayout}
         renderItem={({ item }) => {
           const account = getAccountByAddress(item.owner_addr);
           return (
@@ -156,12 +171,12 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   list: {
     paddingHorizontal: 16,
-    paddingTop: 12,
+    paddingTop: LIST_PADDING_TOP,
     paddingBottom: 24,
   },
   rowWrap: {
     height: ASSETS_ITEM_HEIGHT_NEW,
-    marginBottom: 8,
+    marginBottom: ROW_MARGIN_BOTTOM,
   },
   renderItemWrapper: {
     height: ASSETS_ITEM_HEIGHT_NEW,

@@ -71,6 +71,7 @@ import { LpTokenDescription } from '../LpTokenDescription';
 import CollateralTokenSelectModal from '@/screens/Lending/components/CollateralTokenSelect';
 import TokenGroupDetailSheet from '@/screens/Address/components/MultiAssets/TokenGroupDetailSheet';
 import { CustomTestnetAddTokenSheet } from '@/screens/Address/components/MultiAssets/CustomTestnetAssets/CustomTestnetAddTokenSheet';
+import { RemoveTokenConfirmPopup } from '@/components2024/RemoveTokenConfirmPopup';
 import RepayTokenSelectModal from '@/screens/Lending/components/RepayTokenModal';
 import {
   WalletConnectConnectSheet,
@@ -133,6 +134,10 @@ export const MODAL_CONFIGS = {
   [MODAL_NAMES.SIMPLE_CONFIRM]: {
     snapPoints: [229],
     Component: SimpleConfirmInner,
+  },
+  [MODAL_NAMES.REMOVE_TOKEN_CONFIRM]: {
+    snapPoints: undefined,
+    Component: RemoveTokenConfirmPopup,
   },
   [MODAL_NAMES.VIEW_RAW_DETAILS]: {
     snapPoints: ['80%'],

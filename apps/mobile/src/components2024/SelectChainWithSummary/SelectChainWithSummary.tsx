@@ -32,6 +32,7 @@ import type { Account } from '@/core/startupServices/preference';
 import { useRendererDetect } from '@/components/Perf/PerfDetector';
 import type { TextInput } from '@/components/Typography';
 import { Text } from '@/components/Typography';
+import { ensureCustomTestnetStoreHydrated } from '@/core/serviceApi/customTestnet';
 const useChainSelectorList = ({
   supportChains,
   netTabKey,
@@ -44,6 +45,17 @@ const useChainSelectorList = ({
   account?: Account;
 }) => {
   const [search, setSearch] = useState('');
+
+  useEffect(() => {
+    try {
+      ensureCustomTestnetStoreHydrated();
+    } catch (error) {
+      console.error(
+        '[SelectChainWithSummary] hydrate custom networks failed',
+        error,
+      );
+    }
+  }, []);
 
   const {
     testnetMatteredChainBalances,
@@ -115,6 +127,7 @@ const useChainSelectorList = ({
     matteredList,
     unmatteredList: search?.trim() ? allSearched : unmatteredList,
     allSearched,
+    testnetList,
     // handleStarChange,
     // handleSort,
     search,
@@ -166,6 +179,7 @@ export default function SelectChainWithSummary({
     setSearch,
     matteredList: _matteredList,
     unmatteredList: _unmatteredList,
+    testnetList,
   } = useChainSelectorList({
     // set undefined to allow all main chains
     supportChains: supportChains,
@@ -173,6 +187,8 @@ export default function SelectChainWithSummary({
     netTabKey: !hideMainnetTab ? selectedTab : 'testnet',
     account,
   });
+  // Do not offer a Custom Network tab when the runtime has no custom networks.
+  const showTestnetTab = isShowTestnet && testnetList.length > 0;
 
   const [matteredList, unmatteredList] = useMemo(() => {
     const filterChain = (chain: Chain) => {
@@ -266,7 +282,7 @@ export default function SelectChainWithSummary({
             />
           </View>
         )}
-        {isShowTestnet && !hideMainnetTab ? (
+        {showTestnetTab && !hideMainnetTab ? (
           <NetSwitchTabs
             value={selectedTab}
             onTabChange={onTabChange}
@@ -345,7 +361,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   titleText: {
     color: colors2024['neutral-title-1'],
     fontSize: 20,
-    fontWeight: '800',
+    fontWeight: '900',
     fontFamily: 'SF Pro Rounded',
     textAlign: 'center',
     lineHeight: 24,

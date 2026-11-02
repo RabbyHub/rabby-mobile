@@ -1,3 +1,4 @@
+import { RoundedFontStyles } from '@/core/utils/fonts';
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
@@ -21,10 +22,9 @@ export const BalanceChangeLoading = () => {
         },
         title: {
           color: colors2024['neutral-title-1'],
-          fontFamily: 'SF Pro Rounded',
+          ...RoundedFontStyles.bold,
           fontSize: 14,
           fontStyle: 'normal',
-          fontWeight: '700',
           lineHeight: 18,
         },
         row: {

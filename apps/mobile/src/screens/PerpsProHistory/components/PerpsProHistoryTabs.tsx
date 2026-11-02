@@ -17,17 +17,19 @@ import {
   View,
   type LayoutChangeEvent,
   type LayoutRectangle,
-  type ScrollViewProps,
   type StyleProp,
   type TextStyle,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import Animated, {
   useAnimatedProps,
+  useAnimatedReaction,
+  useAnimatedRef,
   useAnimatedScrollHandler,
   useAnimatedStyle,
   useDerivedValue,
   useSharedValue,
+  scrollTo,
   type SharedValue,
 } from 'react-native-reanimated';
 import Svg, { Path, type PathProps } from 'react-native-svg';
@@ -48,10 +50,6 @@ const STRIP_MOMENTUM_VELOCITY_EPSILON = 0.01;
 const STRIP_MOMENTUM_OFFSET_EPSILON = 0.5;
 type PerpsProHistoryTabFrames = Partial<
   Record<PerpsProHistoryTab, LayoutRectangle>
->;
-type PerpsProHistoryAnimatedScrollProps = Pick<
-  ScrollViewProps,
-  'contentOffset'
 >;
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
@@ -335,6 +333,7 @@ export const PerpsProHistoryTabs: React.FC<{
   const [viewportWidth, setViewportWidth] = useState(0);
   const [contentWidth, setContentWidth] = useState(0);
   const actualStripOffset = useSharedValue(0);
+  const stripRef = useAnimatedRef<Animated.ScrollView>();
   const manualStripActive = useSharedValue(false);
   const stripBias = useSharedValue(0);
   const stripBiasGeometryVersion = useSharedValue('');
@@ -391,15 +390,25 @@ export const PerpsProHistoryTabs: React.FC<{
     });
   }, [geometryVersion, maximumStripOffset, position, stripAnchors]);
 
-  const animatedScrollProps =
-    useAnimatedProps<PerpsProHistoryAnimatedScrollProps>(() => {
-      if (manualStripActive.value) {
-        return {};
+  // A controlled contentOffset remains in Fabric's animated props registry
+  // even when the worklet returns {} during a drag. Later commits replay it
+  // and pull the user's scroll back. Issue commands only for automatic moves.
+  useAnimatedReaction(
+    () =>
+      stripGeometryReady && !manualStripActive.value
+        ? effectiveStripOffset.value
+        : null,
+    target => {
+      if (
+        target !== null &&
+        Math.abs(target - actualStripOffset.value) >
+          STRIP_MOMENTUM_OFFSET_EPSILON
+      ) {
+        scrollTo(stripRef, target, 0, false);
       }
-      return {
-        contentOffset: { x: effectiveStripOffset.value, y: 0 },
-      };
-    });
+    },
+    [stripGeometryReady],
+  );
 
   const indicatorAnimatedProps = useAnimatedProps<PathProps>(() => {
     const frame = getPerpsProTabIndicatorFrame(
@@ -473,11 +482,15 @@ export const PerpsProHistoryTabs: React.FC<{
         />
       </Svg>
       <Animated.ScrollView
-        animatedProps={animatedScrollProps}
+        ref={stripRef}
         contentContainerStyle={styles.content}
         horizontal
-        onContentSizeChange={width => setContentWidth(width)}
-        onLayout={event => setViewportWidth(event.nativeEvent.layout.width)}
+        onContentSizeChange={width => {
+          setContentWidth(width);
+        }}
+        onLayout={event => {
+          setViewportWidth(event.nativeEvent.layout.width);
+        }}
         onScroll={handleScroll}
         scrollEventThrottle={16}
         showsHorizontalScrollIndicator={false}

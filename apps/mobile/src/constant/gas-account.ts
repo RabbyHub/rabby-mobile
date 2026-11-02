@@ -10,8 +10,11 @@ export const L2_DEPOSIT_ADDRESS_MAP: Record<string, string> = {
   [CHAINS_ENUM.AVAX]: '0x16ac3457ce84e6c5f80b394c59ccb2fd17049a62',
 };
 
-export const GAS_ACCOUNT_WITHDRAWED_ADDRESS =
-  '0xad003006ceb0934012c289d1cfdb1db915998f74';
+// keep the old address so historical withdrawals are still recognized
+export const GAS_ACCOUNT_WITHDRAWED_ADDRESSES = [
+  '0xad003006ceb0934012c289d1cfdb1db915998f74',
+  '0x5f90d992166156876f495f57a913646cdf6e0edb',
+];
 
 export const GAS_ACCOUNT_RECEIVED_ADDRESS =
   '0x91604f590d66ace8975eed6bd16cf55647d1c499';

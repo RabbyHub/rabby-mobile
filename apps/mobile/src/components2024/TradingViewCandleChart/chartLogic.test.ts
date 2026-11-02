@@ -285,7 +285,7 @@ describe('Perps Pro local chart calculations', () => {
     expect(PERPS_PRO_CROSSHAIR_LABEL_LAYOUT).toEqual({
       borderRadius: 6,
       fontSize: 12,
-      fontWeight: 510,
+      fontWeight: 500,
       lineHeight: 16,
       paddingHorizontal: 6,
       paddingVertical: 4,

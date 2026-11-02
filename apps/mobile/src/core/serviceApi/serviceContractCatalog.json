@@ -63,7 +63,8 @@
       "requestCustomRPC": "query"
     },
     "keyringService": {
-      "DEV_GET_UNENCRYPTED_KEYRING_DATA": "query"
+      "DEV_GET_UNENCRYPTED_KEYRING_DATA": "query",
+      "refreshMemStoreKeyrings": "command"
     },
     "perpsService": {
       "upsertPerpsAttachedTpSlJournalEntry": "command",

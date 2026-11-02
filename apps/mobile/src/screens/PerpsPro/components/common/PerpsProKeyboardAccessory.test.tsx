@@ -82,6 +82,10 @@ const measureOverlay = (windowY: number) => {
 
 // Unit/component coverage: native keyboard events and route focus are boundaries.
 describe('PerpsProKeyboardAccessory', () => {
+  const runtime = globalThis as typeof globalThis & {
+    nativeFabricUIManager?: unknown;
+  };
+  const initialFabric = runtime.nativeFabricUIManager;
   const platform = Platform.OS;
   const initialAppState = AppState.currentState;
   const statusBarHeight = StatusBar.currentHeight;
@@ -104,6 +108,9 @@ describe('PerpsProKeyboardAccessory', () => {
       }),
     );
   beforeEach(() => {
+    // This suite protects the existing Paper host and Android overlay.
+    // Fabric composition is covered by iosKeyboardAccessory.integration.test.tsx.
+    runtime.nativeFabricUIManager = undefined;
     AppState.currentState = 'active';
     StatusBar.currentHeight = 24;
     Platform.OS = 'ios';
@@ -128,6 +135,7 @@ describe('PerpsProKeyboardAccessory', () => {
       });
   });
   afterEach(() => {
+    runtime.nativeFabricUIManager = initialFabric;
     act(() => perpsProKeyboardSession.setEnabled(false));
     Platform.OS = platform;
     AppState.currentState = initialAppState;
@@ -309,6 +317,99 @@ describe('PerpsProKeyboardAccessory', () => {
     act(() => keyboardListeners.get('keyboardDidHide')?.({}));
     expect(screen.queryByTestId('perps-pro-keyboard-accessory')).toBeNull();
   });
+
+  it.each(['done', 'focus'] as const)(
+    'keeps the native overlay across a same-sheet focus gap, followed by %s',
+    next => {
+      Platform.OS = 'android';
+      render(<PerpsProKeyboardAccessory />, {
+        wrapper: BottomSheetModalProvider,
+      });
+      act(() =>
+        perpsProKeyboardSession.focus({
+          id: 'price',
+          input,
+          minimum: null,
+          scrollTrade: false,
+          sheetId: 'tpsl',
+        }),
+      );
+      act(() =>
+        keyboardListeners.get('keyboardDidShow')?.({
+          endCoordinates: { screenY: 560, height: 300 },
+        }),
+      );
+      measureOverlay(-24);
+      const overlay = screen.getByTestId('perps-pro-keyboard-overlay');
+      const presentation = perpsProKeyboardSession.getAndroidPresentation();
+      act(() => perpsProKeyboardSession.blur('price'));
+      expect(perpsProKeyboardSession.getSnapshot()).toBeNull();
+      expect(screen.getByTestId('perps-pro-keyboard-overlay')).toBe(overlay);
+      expect(screen.getByTestId('perps-pro-keyboard-accessory')).toBeVisible();
+      const nextInput = { ...input, blur: jest.fn() };
+      if (next === 'focus') {
+        act(() =>
+          perpsProKeyboardSession.focus({
+            id: 'pnl',
+            input: nextInput,
+            minimum: null,
+            scrollTrade: false,
+            sheetId: 'tpsl',
+          }),
+        );
+        expect(screen.getByTestId('perps-pro-keyboard-overlay')).toBe(overlay);
+        expect(perpsProKeyboardSession.getAndroidPresentation()).toBe(
+          presentation,
+        );
+        act(() => perpsProKeyboardSession.unregister('price'));
+        expect(screen.getByTestId('perps-pro-keyboard-overlay')).toBe(overlay);
+      }
+      fireEvent.press(screen.getByTestId('perps-pro-keyboard-done'));
+      expect(input.blur).not.toHaveBeenCalled();
+      expect(nextInput.blur).toHaveBeenCalledTimes(next === 'focus' ? 1 : 0);
+      expect(Keyboard.dismiss).toHaveBeenCalledTimes(1);
+      expect(screen.queryByTestId('perps-pro-keyboard-overlay')).toBeNull();
+    },
+  );
+
+  it.each(['hide', 'unregister', 'route', 'background', 'unmount'] as const)(
+    'cleans the Android presentation during a focus gap on %s',
+    action => {
+      Platform.OS = 'android';
+      const view = render(<PerpsProKeyboardAccessory />, {
+        wrapper: BottomSheetModalProvider,
+      });
+      focus();
+      act(() =>
+        keyboardListeners.get('keyboardDidShow')?.({
+          endCoordinates: { screenY: 560, height: 300 },
+        }),
+      );
+      act(() => perpsProKeyboardSession.blur('amount'));
+      expect(screen.getByTestId('perps-pro-keyboard-overlay')).toBeTruthy();
+      if (action === 'hide') {
+        act(() => keyboardListeners.get('keyboardDidHide')?.({}));
+      }
+      if (action === 'unregister') {
+        act(() => perpsProKeyboardSession.unregister('amount'));
+      }
+      if (action === 'background') {
+        act(() => appStateListener('background'));
+      }
+      if (action === 'route') {
+        mockRouteFocused = false;
+        view.rerender(<PerpsProKeyboardAccessory />);
+      }
+      if (action === 'unmount') {
+        view.unmount();
+      }
+      expect(perpsProKeyboardSession.getAndroidPresentation()).toBeNull();
+      expect(perpsProKeyboardSession.getSnapshot()).toBeNull();
+      if (action !== 'unmount') {
+        expect(screen.queryByTestId('perps-pro-keyboard-overlay')).toBeNull();
+      }
+    },
+  );
 
   it('mounts above the existing sheet in the same real PortalHost and Done removes only the accessory', () => {
     Platform.OS = 'android';

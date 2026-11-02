@@ -1,0 +1,38 @@
+diff --git a/cpp/core/Promise.hpp b/cpp/core/Promise.hpp
+index 45021a8..9bb9446 100644
+--- a/cpp/core/Promise.hpp
++++ b/cpp/core/Promise.hpp
+@@ -36,7 +36,13 @@ public:
+   ~Promise() {
+     if (isPending()) [[unlikely]] {
+       auto message = std::string("Timeouted: Promise<") + TypeInfo::getFriendlyTypename<TResult>() + "> was destroyed!";
+-      reject(std::make_exception_ptr(std::runtime_error(message)));
++      // Keep Swift C++ interop compatible with iOS < 18 when built with Xcode 27.
++      // Backport of https://github.com/margelo/nitro/pull/1824.
++      try {
++        throw std::runtime_error(message);
++      } catch (...) {
++        reject(std::current_exception());
++      }
+     }
+   }
+ 
+diff --git a/ios/utils/RuntimeError.hpp b/ios/utils/RuntimeError.hpp
+index 58cb2cb..0992c95 100644
+--- a/ios/utils/RuntimeError.hpp
++++ b/ios/utils/RuntimeError.hpp
+@@ -14,7 +14,13 @@
+ namespace margelo::nitro {
+ 
+ static inline std::exception_ptr makeException(const std::string& message) {
+-  return std::make_exception_ptr(std::runtime_error(message));
++  // Keep Swift C++ interop compatible with iOS < 18 when built with Xcode 27.
++  // Backport of https://github.com/margelo/nitro/pull/1824.
++  try {
++    throw std::runtime_error(message);
++  } catch (...) {
++    return std::current_exception();
++  }
+ }
+ 
+ static inline std::string getExceptionMessage(const std::exception_ptr& exception) {

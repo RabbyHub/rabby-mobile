@@ -6,7 +6,7 @@ import { Dimensions, View } from 'react-native';
 // caret-down-cc.svg
 import { default as RcCaretDownCircleCC } from './icons/caret-down-circle.svg';
 import { default as RcCaretDownCircleDarkCC } from './icons/caret-down-circle-dark.svg';
-import TouchableView from '../Touchable/TouchableView';
+import { CustomTouchableOpacity } from '../CustomTouchableOpacity';
 import { AccountSwitcherAopProps, useAccountSceneVisible } from './hooks';
 import {
   useSceneAccountInfo,
@@ -19,6 +19,67 @@ import useMount from 'react-use/lib/useMount';
 import { AddressItem } from '@/components2024/AddressItem/AddressItem';
 import { useRendererDetect } from '../Perf/PerfDetector';
 import { Text } from '@/components/Typography';
+import type { KeyringAccountWithAlias } from '@/hooks/account';
+
+function HeaderAccountRow({
+  account,
+  trailing,
+}: {
+  account: KeyringAccountWithAlias;
+  trailing?: React.ReactNode;
+}) {
+  const { styles } = useTheme2024({ getStyle });
+
+  return (
+    <AddressItem style={styles.addressItem} account={account}>
+      {({ WalletIcon }) => {
+        return (
+          <View style={styles.addressRow}>
+            <WalletIcon style={styles.walletIcon} />
+            <View style={styles.nameBox}>
+              <Text
+                numberOfLines={1}
+                ellipsizeMode="tail"
+                style={styles.address}>
+                {account.aliasName || ellipsisAddress(account.address)}
+              </Text>
+            </View>
+            {trailing}
+          </View>
+        );
+      }}
+    </AddressItem>
+  );
+}
+
+/**
+ * Display-only variant of {@link ScreenHeaderAccountSwitcher}: the caller
+ * decides which account is shown, nothing is read from or written to a scene.
+ */
+export function ScreenHeaderAccountTitle({
+  titleText,
+  account,
+}: {
+  titleText: React.ReactNode;
+  account?: KeyringAccountWithAlias | null;
+}) {
+  const { styles } = useTheme2024({ getStyle });
+
+  return (
+    <View style={styles.container}>
+      {typeof titleText === 'string' ? (
+        <Text style={styles.titleText}>{titleText}</Text>
+      ) : (
+        titleText
+      )}
+      {account ? (
+        <View style={styles.wrapperAddressRow}>
+          <HeaderAccountRow account={account} />
+        </View>
+      ) : null}
+    </View>
+  );
+}
 
 export function ScreenHeaderAccountSwitcher({
   titleText = '',
@@ -76,9 +137,12 @@ export function ScreenHeaderAccountSwitcher({
   const IconCom = isLight ? RcCaretDownCircleCC : RcCaretDownCircleDarkCC;
 
   return (
-    <TouchableView
+    <CustomTouchableOpacity
+      as="RNGHTouchableOpacity"
       style={styles.container}
       disabled={disableSwitch}
+      activeOpacity={1}
+      hitSlop={8}
       onPress={() => {
         const nextOpen = !isOpen;
         toggleSceneVisible(forScene, nextOpen);
@@ -90,37 +154,22 @@ export function ScreenHeaderAccountSwitcher({
       <View style={styles.wrapperAddressRow}>
         {!isSceneUsingAllAccounts ? (
           !!finalSceneCurrentAccount && (
-            <AddressItem
-              style={styles.addressItem}
-              account={finalSceneCurrentAccount}>
-              {({ WalletIcon }) => {
-                return (
-                  <View style={styles.addressRow}>
-                    <WalletIcon style={styles.walletIcon} />
-                    <View style={styles.nameBox}>
-                      <Text
-                        numberOfLines={1}
-                        ellipsizeMode="tail"
-                        style={styles.address}>
-                        {finalSceneCurrentAccount.aliasName ||
-                          ellipsisAddress(finalSceneCurrentAccount?.address)}
-                      </Text>
-                    </View>
-                    {!disableSwitch && (
-                      <IconCom
-                        style={[
-                          styles.addressCaretIcon,
-                          isOpen && styles.reverseCaret,
-                        ]}
-                        width={18}
-                        height={18}
-                        color={colors2024['neutral-bg-4']}
-                      />
-                    )}
-                  </View>
-                );
-              }}
-            </AddressItem>
+            <HeaderAccountRow
+              account={finalSceneCurrentAccount}
+              trailing={
+                !disableSwitch && (
+                  <IconCom
+                    style={[
+                      styles.addressCaretIcon,
+                      isOpen && styles.reverseCaret,
+                    ]}
+                    width={18}
+                    height={18}
+                    color={colors2024['neutral-bg-4']}
+                  />
+                )
+              }
+            />
           )
         ) : (
           <>
@@ -141,7 +190,7 @@ export function ScreenHeaderAccountSwitcher({
           </>
         )}
       </View>
-    </TouchableView>
+    </CustomTouchableOpacity>
   );
 }
 
@@ -161,6 +210,11 @@ const getStyle = createGetStyles2024(ctx => {
       fontWeight: '900',
       lineHeight: 24,
       fontSize: 20,
+      // Fabric/Android keeps the platform font padding on the title, which
+      // pushed the account row below it; normalize the text box so the alias
+      // sits right under the title on both architectures (QA 1141).
+      includeFontPadding: false,
+      textAlignVertical: 'center',
       color: ctx.colors2024['neutral-title-1'],
     },
     wrapperAddressRow: {
@@ -168,6 +222,7 @@ const getStyle = createGetStyles2024(ctx => {
       alignItems: 'center',
       justifyContent: 'center',
       width: SCREEN_WIDTH - 140,
+      marginTop: -2,
     },
     addressRow: {
       flexDirection: 'row',
@@ -189,7 +244,7 @@ const getStyle = createGetStyles2024(ctx => {
     nameBox: {
       flexShrink: 1,
       minWidth: 0,
-      margin: 4,
+      marginHorizontal: 4,
     },
     address: {
       fontFamily: 'SF Pro Rounded',
@@ -197,6 +252,8 @@ const getStyle = createGetStyles2024(ctx => {
       lineHeight: 20,
       fontSize: 16,
       width: '100%',
+      includeFontPadding: false,
+      textAlignVertical: 'center',
       color: ctx.colors2024['neutral-foot'],
     },
     multipleAddress: {
@@ -206,6 +263,8 @@ const getStyle = createGetStyles2024(ctx => {
       fontWeight: '500',
       lineHeight: 20,
       fontSize: 16,
+      includeFontPadding: false,
+      textAlignVertical: 'center',
       color: ctx.colors2024['neutral-foot'],
     },
     addressCaretIcon: {

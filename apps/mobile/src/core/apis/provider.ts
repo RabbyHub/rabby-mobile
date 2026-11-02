@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/react-native';
 import { ethers } from 'ethers';
 import { cloneDeep, omit } from 'lodash';
 import { Common, Hardfork } from '@ethereumjs/common';
@@ -19,7 +20,7 @@ import {
 import { getFallbackAccountSnapshot } from '@/core/serviceApi/preference';
 import { customRPCServiceApi } from '@/core/serviceApi/customRPC';
 import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
-import { OP_STACK_ENUMS } from '@/constant/gas';
+import { OP_STACK_ENUMS, SCROLL_STYLE_L1_GAS_ORACLE } from '@/constant/gas';
 import { openapi } from '@/core/request';
 import BigNumber from 'bignumber.js';
 import { t } from 'i18next';
@@ -82,6 +83,7 @@ export const requestETHRpc = <T = any>(
 export const scrollL1FeeEstimate = async (
   txParams: any,
   _account?: Account,
+  chain: CHAINS_ENUM = CHAINS_ENUM.SCRL,
 ) => {
   const account = _account || getFallbackAccountSnapshot();
   const iface = new ethers.utils.Interface([
@@ -106,12 +108,12 @@ export const scrollL1FeeEstimate = async (
     bytesToHex(serializedTransaction),
   ]);
   const res = await customRPCServiceApi.defaultEthRPC({
-    chainServerId: findChain({ enum: CHAINS_ENUM.SCRL })!.serverId,
+    chainServerId: findChain({ enum: chain })!.serverId,
     method: 'eth_call',
     params: [
       {
         from: account?.address,
-        to: '0x5300000000000000000000000000000000000002',
+        to: SCROLL_STYLE_L1_GAS_ORACLE[chain],
         data: calldata,
       },
       'latest',
@@ -189,6 +191,8 @@ export const citreaL1FeeEstimate = async (txParams: any) => {
   }
 };
 
+const l1FeeFailuresReported = new Set<string>();
+
 export const fetchEstimatedL1Fee = async (
   {
     txParams,
@@ -202,12 +206,26 @@ export const fetchEstimatedL1Fee = async (
   if (String(chain).toLowerCase() === 'citrea') {
     return citreaL1FeeEstimate(txParams);
   }
-  if (OP_STACK_ENUMS.includes(chain)) {
-    return opStackL1FeeEstimate(txParams, chain, account);
-  } else if (chain === CHAINS_ENUM.SCRL) {
-    return scrollL1FeeEstimate(txParams, account);
+  try {
+    if (OP_STACK_ENUMS.includes(chain)) {
+      return await opStackL1FeeEstimate(txParams, chain, account);
+    } else if (SCROLL_STYLE_L1_GAS_ORACLE[String(chain)]) {
+      return await scrollL1FeeEstimate(txParams, account, chain);
+    }
+  } catch (e) {
+    // Rethrow: an unknown l1 fee must never read as 0, which would under-reserve
+    // gas, pass the balance check, and get the broadcast rejected with
+    // `insufficient funds for l1fee + gas * price + value`. Reported once per
+    // chain per session so a flaky rpc cannot flood.
+    if (!l1FeeFailuresReported.has(String(chain))) {
+      l1FeeFailuresReported.add(String(chain));
+      Sentry.captureException(e instanceof Error ? e : new Error(String(e)), {
+        tags: { scene: 'l1Fee', chain: String(chain) },
+      });
+    }
+    throw e;
   }
-  return Promise.resolve('0x0');
+  return '0x0';
 };
 
 export const getERC20Allowance = async (

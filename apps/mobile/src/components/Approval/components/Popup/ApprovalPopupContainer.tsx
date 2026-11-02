@@ -144,13 +144,10 @@ export const ApprovalPopupContainer: React.FC<Props> = ({
   style,
   retryUpdateType = 'origin',
 }) => {
-  const [iconColor, setIconColor] = React.useState('');
-  const [contentColor, setContentColor] = React.useState<
-    keyof AppColorsVariants
-  >(
-    // @ts-expect-error
-    '', // FIXME
-  );
+  // QR signing mounts this container only after receiving the signature.
+  // Resolve the theme key during render so the first native frame is themed.
+  const contentColor: keyof AppColorsVariants =
+    status === 'RESOLVED' ? 'green-default' : 'neutral-title-1';
   const { t } = useTranslation();
   const { colors2024, styles } = useTheme2024({ getStyle: getStyles });
 
@@ -177,32 +174,6 @@ export const ApprovalPopupContainer: React.FC<Props> = ({
         return ConnectQRCodeSVG;
     }
   }, [hdType]);
-
-  React.useEffect(() => {
-    switch (status) {
-      case 'SENDING':
-        setIconColor('blue-light-1');
-        setContentColor('neutral-title-1');
-        break;
-      case 'WAITING':
-      case 'SUBMITTING':
-        setIconColor('blue-light-1');
-        setContentColor('neutral-title-1');
-        break;
-      case 'FAILED':
-      case 'REJECTED':
-        setIconColor('orange-default');
-        setContentColor('neutral-title-1');
-
-        break;
-      case 'RESOLVED':
-        setIconColor('bg-green');
-        setContentColor('green-default');
-        break;
-      default:
-        break;
-    }
-  }, [status]);
 
   const InfoSVG = React.useMemo(() => {
     switch (status) {
@@ -270,24 +241,30 @@ export const ApprovalPopupContainer: React.FC<Props> = ({
           <Dots color={contentColor} />
         ) : null}
       </View>
-      <ScrollView
-        style={StyleSheet.flatten([
-          styles.description,
-          !description && styles.noDescription,
-        ])}>
-        <Text
-          style={[
-            styles.descriptionText,
-            {
-              color: colors2024['neutral-secondary'],
-            },
-          ]}>
-          {description}
-        </Text>
-      </ScrollView>
+      {description ? (
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          style={styles.description}>
+          <Text
+            style={[
+              styles.descriptionText,
+              {
+                color: colors2024['neutral-secondary'],
+              },
+            ]}>
+            {description}
+          </Text>
+        </ScrollView>
+      ) : (
+        <View style={styles.noDescription} />
+      )}
 
       <View style={styles.footer}>
-        {status === 'SENDING' && <FooterResend onResend={onRetry} />}
+        {/* QR signing has already supplied a signature before SENDING; only
+            a failure should offer another scan, not an in-flight submission. */}
+        {status === 'SENDING' && hdType !== 'keystone' && (
+          <FooterResend onResend={onRetry} />
+        )}
         {status === 'WAITING' && <FooterResend onResend={onRetry} />}
         {status === 'FAILED' && (
           <FooterResendCancelGroup

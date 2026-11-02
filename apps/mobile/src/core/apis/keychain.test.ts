@@ -68,6 +68,16 @@ describe('core/apis/keychain current facade', () => {
       isBrokenBiometricsEntryError: jest.fn(() => false),
       makeKeyChainError: jest.fn(),
       parseKeychainError: jest.fn(() => ({ isCancelledByUser: false })),
+      summarizeKeychainDebugState: jest.fn((state: any) => {
+        const { storedUsernameBase64, storedPasswordBase64, ...safeState } =
+          state || {};
+
+        return {
+          ...safeState,
+          hasStoredUsernameBase64: !!storedUsernameBase64,
+          hasStoredPasswordBase64: !!storedPasswordBase64,
+        };
+      }),
     }));
     jest.doMock('./keychainV9_0_0', () => ({
       KEYCHAIN_SOURCE_LABEL: 'v9-label',

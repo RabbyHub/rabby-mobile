@@ -49,7 +49,6 @@ import {
 } from '@gorhom/bottom-sheet';
 import { GasSelectContainer } from './GasSelectContainer';
 import { FooterButton } from '@/components2024/FooterButton/FooterButton';
-import { matomoRequestEvent } from '@/utils/analytics';
 import { Skeleton } from '@rneui/themed';
 import GasLogoSVG from '@/assets/icons/sign/tx/gas-logo-cc.svg';
 import { calcGasEstimated } from '@/utils/time';
@@ -623,15 +622,10 @@ export const GasSelectorHeader = ({
       setIsSelectCustom(true);
       setCustomGas(undefined);
     }
-    matomoRequestEvent({
-      category: 'Transaction',
-      action: 'EditGas',
-      label: chain?.serverId,
-    });
     setTimeout(() => {
       customerInputRef.current?.focus();
     }, 50);
-  }, [chain?.serverId, gasLimit, nonce, rawSelectedGas]);
+  }, [gasLimit, nonce, rawSelectedGas]);
 
   const panelSelection = (e, gas: GasLevel) => {
     e.stopPropagation();

@@ -1,0 +1,39 @@
+name: Xcode Toolchain Downloads
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash --noprofile --norc -eo pipefail {0}
+    working-directory: .xcode-toolchain-downloads-ci
+
+jobs:
+  notify:
+    if: github.repository == 'RabbyHub/rabby-mobile'
+    runs-on: [self-hosted, macOS, ARM64, mobile-local]
+    timeout-minutes: 15
+    env:
+      AWS_PROFILE: default
+      AWS_EC2_METADATA_DISABLED: 'true'
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+          path: .xcode-toolchain-downloads-ci
+          clean: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+      - name: Check download-link contracts without credentials or network
+        run: node --test scripts/xcode-toolchains/download-links.test.mjs
+      - name: Sign catalogued downloads and send one private Lark message
+        env:
+          RABBY_MOBILE_BUILD_BUCKET: ${{ secrets.RABBY_MOBILE_BUILD_BUCKET }}
+          RABBY_MOBILE_LARK_CHAT_URL: ${{ secrets.RABBY_MOBILE_LARK_CHAT_URL || secrets.LARK_CHAT_URL }}
+          RABBY_MOBILE_LARK_CHAT_SECRET: ${{ secrets.RABBY_MOBILE_LARK_CHAT_SECRET || secrets.LARK_CHAT_SECRET }}
+        run: node scripts/xcode-toolchains/download-links.mjs

@@ -62,7 +62,7 @@ jobs:
       - ${{ matrix.machine_loc }}
     env:
       RABBY_MOBILE_NM_USE_CACHE: 'true'
-      XCODE_VER: '26.3'
+      XCODE_VER: '27.1'
     steps:
       - name: Checkout git repo
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
@@ -121,6 +121,11 @@ jobs:
         with:
           # use specific version rather than 'latest-stable' if multiple Xcodes installed
           xcode-version: ${{ env.XCODE_VER }}
+
+      - name: Setup Rust toolchain for safe SVG rasterization
+        uses: dtolnay/rust-toolchain@e081816240890017053eacbb1bdf337761dc5582 # 1.95.0
+        with:
+          targets: aarch64-apple-ios,aarch64-apple-ios-sim,x86_64-apple-ios
 
       - name: Enable Corepack
         run: corepack enable
@@ -334,8 +339,8 @@ jobs:
           RABBY_MOBILE_ASC_API_KEY_ID: ${{ secrets.RABBY_MOBILE_ASC_API_KEY_ID }}
           RABBY_MOBILE_ASC_API_ISSUER_ID: ${{ secrets.RABBY_MOBILE_ASC_API_ISSUER_ID }}
           RABBY_MOBILE_ASC_API_PRIVATE_KEY_BASE64: ${{ secrets.RABBY_MOBILE_ASC_API_PRIVATE_KEY_BASE64 }}
-          RABBY_MOBILE_LARK_CHAT_URL: ${{ secrets.LARK_CHAT_URL }}
-          RABBY_MOBILE_LARK_CHAT_SECRET: ${{ secrets.LARK_CHAT_SECRET }}
+          RABBY_MOBILE_LARK_CHAT_URL: ${{ secrets.RABBY_MOBILE_LARK_CHAT_URL || secrets.LARK_CHAT_URL }}
+          RABBY_MOBILE_LARK_CHAT_SECRET: ${{ secrets.RABBY_MOBILE_LARK_CHAT_SECRET || secrets.LARK_CHAT_SECRET }}
           RABBY_ROBOT_LARK_APP_ID: ${{ secrets.RABBY_ROBOT_LARK_APP_ID }}
           RABBY_ROBOT_LARK_APP_SECRET: ${{ secrets.RABBY_ROBOT_LARK_APP_SECRET }}
           # see more details on https://docs.github.com/en/actions/learn-github-actions/contexts#github-context

@@ -12,6 +12,7 @@ import {
   ViewStyle,
 } from 'react-native';
 import { RefreshControl } from 'react-native-gesture-handler';
+import { CollapsibleRefreshControl } from '@/components/customized/ScrollViewLike/CollapsibleRefreshControl';
 import { useTranslation } from 'react-i18next';
 import {
   Tabs,
@@ -64,6 +65,8 @@ import { apiCustomTestnet } from '@/core/apis';
 import { toast } from '@/components2024/Toast';
 import { isWatchOrSafeAccount } from '@/utils/account';
 import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
+import { TokenRowContextMenu } from './components/TokenRowContextMenu';
+import { createRemoveTokenConfirmPopup } from '@/components2024/RemoveTokenConfirmPopup';
 import {
   useRegressionScenario,
   useRegressionScenarioAssertion,
@@ -109,18 +112,20 @@ type TokenListExtraItem =
 
 type TokenListItem = TokenProjectionSectionItem<TokenListExtraItem>;
 
-const TokenResourceRow = React.memo(
+type TokenResourceRowProps = {
+  tokenId: TokenEntityId;
+  tokenStyle?: ViewStyle;
+  loaderStyle?: ViewStyle;
+  onTokenPress(token: ITokenItem): void;
+};
+
+const TokenResourceRowContent = React.memo(
   ({
     tokenId,
     tokenStyle,
     loaderStyle,
     onTokenPress,
-  }: {
-    tokenId: TokenEntityId;
-    tokenStyle?: ViewStyle;
-    loaderStyle?: ViewStyle;
-    onTokenPress(token: ITokenItem): void;
-  }) => {
+  }: TokenResourceRowProps) => {
     const token = useActivityStore(
       tokenEntityResourceStore.useStore,
       state => state.valueMap[tokenId],
@@ -135,12 +140,40 @@ const TokenResourceRow = React.memo(
     return (
       <TokenRowV2
         data={token}
+        hasContextMenu
         style={tokenStyle}
         onTokenPress={onTokenPress}
-        //logoSize={46}
-        //chainLogoSize={18}
         scene="portfolio"
       />
+    );
+  },
+);
+
+const TokenResourceRow = React.memo(
+  ({
+    onRemoveToken,
+    ...rowProps
+  }: TokenResourceRowProps & {
+    onRemoveToken(token: ITokenItem): void;
+  }) => {
+    const { tokenId, loaderStyle } = rowProps;
+    // Balance/price updates belong to the content, not the native menu host.
+    const hasToken = useActivityStore(
+      tokenEntityResourceStore.useStore,
+      state => !!state.valueMap[tokenId],
+      Object.is,
+      { storeLabel: 'single-address-token-entities' },
+    );
+
+    if (!hasToken) {
+      return <ItemLoader style={loaderStyle} />;
+    }
+
+    const content = <TokenResourceRowContent {...rowProps} />;
+    return (
+      <TokenRowContextMenu tokenId={tokenId} onRemoveToken={onRemoveToken}>
+        {content}
+      </TokenRowContextMenu>
     );
   },
 );
@@ -218,7 +251,7 @@ export const TokenList = ({ onForeground, onRefresh }: Props) => {
     return focusedTab === 'tokens';
   }, [focusedTab]);
 
-  useScrollToTopOnChainChange({
+  const suspendVisibleAnchor = useScrollToTopOnChainChange({
     chain: selectedChain,
     isCurrentTab: isFocused,
   });
@@ -284,7 +317,7 @@ export const TokenList = ({ onForeground, onRefresh }: Props) => {
     state =>
       !!singleAssetsKey &&
       !!state.singleAssetsConfigByKey[singleAssetsKey] &&
-      !!state.singleAssetsResultByKey[singleAssetsKey],
+      !!state.singleDisplayAssetsResultByKey[singleAssetsKey],
     Object.is,
     { storeLabel: 'single-address-token-assets-index-readiness' },
   );
@@ -294,7 +327,7 @@ export const TokenList = ({ onForeground, onRefresh }: Props) => {
     useShallow(state => {
       const result =
         (singleAssetsKey
-          ? state.singleAssetsResultByKey[singleAssetsKey]
+          ? state.singleDisplayAssetsResultByKey[singleAssetsKey]
           : undefined) || EMPTY_TOKEN_ASSETS_INDEX_RESULT;
       return {
         additionalCoreUsdValue: result.additionalCoreUsdValue,
@@ -687,6 +720,7 @@ export const TokenList = ({ onForeground, onRefresh }: Props) => {
           tokenStyle={tokenRowStyle}
           loaderStyle={styles.removeLeft}
           onTokenPress={handleOpenTokenDetail}
+          onRemoveToken={createRemoveTokenConfirmPopup}
         />
       </View>
     ),
@@ -869,7 +903,9 @@ export const TokenList = ({ onForeground, onRefresh }: Props) => {
         maxToRenderPerBatch={TOKEN_LIST_RENDER_BATCH_SIZE}
         updateCellsBatchingPeriod={TOKEN_LIST_BATCHING_PERIOD_MS}
         removeClippedSubviews={IS_ANDROID}
-        maintainVisibleContentPosition={{ minIndexForVisible: 0 }}
+        maintainVisibleContentPosition={
+          suspendVisibleAnchor ? undefined : { minIndexForVisible: 0 }
+        }
         ItemSeparatorComponent={ListSeparator}
         renderSectionFooter={ListSeparator}
         stickySectionHeadersEnabled={false}
@@ -878,7 +914,8 @@ export const TokenList = ({ onForeground, onRefresh }: Props) => {
         showsHorizontalScrollIndicator={false}
         style={[styles.bgContainer, styles.list]}
         refreshControl={
-          <RefreshControl
+          <CollapsibleRefreshControl
+            as={RefreshControl}
             style={styles.bgContainer}
             onRefresh={handleRefresh}
             refreshing={isScreenFocused && isManualRefreshing}

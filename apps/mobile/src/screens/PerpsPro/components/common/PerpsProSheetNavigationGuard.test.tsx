@@ -7,6 +7,7 @@ let mockRequestBack: (() => boolean) | null = null;
 let mockEdgeOnEnd:
   | ((event: { translationX: number; velocityX: number }) => void)
   | null = null;
+const mockTapCallbacks: Record<string, (...args: any[]) => void> = {};
 
 jest.mock('@/core/native/utils', () => ({ IS_IOS: true }));
 
@@ -34,7 +35,23 @@ jest.mock('react-native-gesture-handler', () => {
     },
   );
   return {
-    Gesture: { Pan: () => gesture },
+    Gesture: {
+      Pan: () => gesture,
+      Tap: () => {
+        const tap: Record<string, jest.Mock> = {};
+        for (const method of ['maxDistance', 'runOnJS']) {
+          tap[method] = jest.fn(() => tap);
+        }
+        for (const method of ['onBegin', 'onEnd', 'onFinalize']) {
+          tap[method] = jest.fn(callback => {
+            mockTapCallbacks[method] = callback;
+            return tap;
+          });
+        }
+        return tap;
+      },
+      Exclusive: (...gestures: unknown[]) => gestures,
+    },
     GestureDetector: ({ children }: { children: React.ReactNode }) => children,
   };
 });
@@ -68,6 +85,44 @@ describe('PerpsProSheetNavigationGuard', () => {
     mockRequestBack = null;
     mockEdgeOnEnd = null;
     resetPerpsProSheetNavigationGuardForTests();
+  });
+
+  it('forwards a successful tap inside the measured back target and cancels a failed tap', () => {
+    const dismiss = jest.fn();
+    let finishMeasure:
+      | ((x: number, y: number, width: number, height: number) => void)
+      | undefined;
+    const node = {
+      measureInWindow: jest.fn(callback => {
+        finishMeasure = callback;
+      }),
+    };
+    renderHook(() =>
+      usePerpsProSheetNavigationRegistration({
+        active: true,
+        backTarget: {
+          ref: { current: node as unknown as View },
+          sessionKey: 'modify:1',
+        },
+        dismiss,
+      }),
+    );
+    render(<PerpsProSheetGlobalEdgeTarget />);
+    const point = { absoluteX: 20, absoluteY: 300 };
+    act(() => {
+      mockTapCallbacks.onBegin(point);
+      mockTapCallbacks.onEnd(point, true);
+      mockTapCallbacks.onFinalize(point, true);
+      finishMeasure?.(0, 280, 72, 72);
+    });
+    expect(dismiss).toHaveBeenCalledTimes(1);
+    act(() => {
+      mockTapCallbacks.onBegin(point);
+      mockTapCallbacks.onEnd(point, false);
+      mockTapCallbacks.onFinalize(point, false);
+    });
+    expect(node.measureInWindow).toHaveBeenCalledTimes(1);
+    expect(dismiss).toHaveBeenCalledTimes(1);
   });
 
   it('disables route swipe while any Pro sheet is active and restores it', () => {

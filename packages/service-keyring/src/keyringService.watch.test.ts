@@ -533,6 +533,80 @@ describe('keyringService support eth-keyring-watch', () => {
       expect(spy.calledOnceWithExactly(addedAccounts[0])).toBe(true);
     });
 
+    it('dedupes repeated addresses from extension vault', async () => {
+      await keyringService.persistAllKeyrings();
+
+      const upperAddr = `0x${TEST_ADDR.slice(2).toUpperCase()}`;
+      const addedAccounts = await keyringService.syncExtensionData([
+        {
+          type: KEYRING_TYPE.WatchAddressKeyring,
+          data: { accounts: [TEST_ADDR, upperAddr, TEST_ADDR, TEST_ADDR_2] },
+        },
+        {
+          type: KEYRING_TYPE.WatchAddressKeyring,
+          data: { accounts: [TEST_ADDR] },
+        },
+      ] as any);
+
+      expect(addedAccounts.map(a => a.address)).toStrictEqual([
+        TEST_ADDR,
+        TEST_ADDR_2,
+      ]);
+      expect(await keyringService.getAllVisibleAccountsArray()).toHaveLength(2);
+    });
+
+    it('keeps object accounts when syncing extension vault', async () => {
+      class TestWalletConnectKeyring {
+        static type = KEYRING_TYPE.WalletConnectKeyring;
+
+        type = KEYRING_TYPE.WalletConnectKeyring;
+
+        accounts: { address: string; brandName: string }[] = [];
+
+        async serialize() {
+          return { accounts: this.accounts };
+        }
+
+        async deserialize(data: { accounts?: any[] }) {
+          this.accounts = data.accounts || [];
+        }
+
+        async getAccounts() {
+          return this.accounts.map(a => a.address);
+        }
+
+        async getAccountsWithBrand() {
+          return this.accounts;
+        }
+      }
+
+      keyringService = new KeyringService({
+        encryptor: mockEncryptor as any,
+        keyringClasses: [TestWalletConnectKeyring as any],
+      });
+      keyringService.loadStore({});
+      await keyringService.boot(password);
+      await keyringService.clearKeyrings();
+      await keyringService.persistAllKeyrings();
+
+      const addedAccounts = await keyringService.syncExtensionData([
+        {
+          type: KEYRING_TYPE.WalletConnectKeyring,
+          data: {
+            accounts: [
+              { address: TEST_ADDR, brandName: 'MetaMask' },
+              { address: TEST_ADDR_2, brandName: 'MetaMask' },
+            ],
+          },
+        },
+      ] as any);
+
+      expect(addedAccounts.map(a => a.address)).toStrictEqual([
+        TEST_ADDR,
+        TEST_ADDR_2,
+      ]);
+    });
+
     it('rejects locked private key export', async () => {
       await keyringService.setLocked();
 

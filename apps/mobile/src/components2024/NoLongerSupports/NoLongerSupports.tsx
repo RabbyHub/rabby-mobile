@@ -30,7 +30,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   headlineText: {
     fontSize: 20,
     lineHeight: 24,
-    fontWeight: '800',
+    fontWeight: '900',
     fontFamily: 'SF Pro Rounded',
     color: colors2024['neutral-title-1'],
     marginBottom: 19,

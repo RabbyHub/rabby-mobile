@@ -18,8 +18,6 @@ import * as Sentry from '@sentry/react-native';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { reportPerpsProCloseAllHistory } from '../analytics/manualTradeHistory';
-
 export interface PerpsProCloseAllConfirmation {
   account: Account;
   command: PerpsCloseAllPositionsCommand;
@@ -110,7 +108,6 @@ export const usePerpsProCloseAll = (accountIdentity: string) => {
       setPending(true);
       try {
         const result = await executePerpsCloseAllPositions(command);
-        reportPerpsProCloseAllHistory(command, result.confirmedFills);
         if (result.failureReason === 'userCancelled') {
           return;
         }

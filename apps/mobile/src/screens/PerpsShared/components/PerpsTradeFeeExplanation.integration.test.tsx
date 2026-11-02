@@ -19,7 +19,7 @@ const FeeExplanationTrigger = () => {
 
   return (
     <Pressable
-      onPress={() => showFeeExplanation(false)}
+      onPress={() => showFeeExplanation(false, null)}
       testID="open-fee-explanation">
       <Text>Open fee explanation</Text>
     </Pressable>
@@ -37,7 +37,7 @@ const ScopedTipsControls = () => {
   return (
     <View>
       <Pressable
-        onPress={() => showHistoryFeeExplanation(false)}
+        onPress={() => showHistoryFeeExplanation(false, null)}
         testID="open-owned-fee-explanation"
       />
       <Pressable

@@ -620,7 +620,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     textAlign: 'center',
     fontSize: 20,
     fontStyle: 'normal',
-    fontWeight: '800',
+    fontWeight: '900',
     lineHeight: 24,
   },
   giftInfoHeaderText: {

@@ -21,8 +21,6 @@ import { Text } from '@/components/Typography';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamsList } from '@/navigation-type';
-import { setReportActionTs } from '@/core/serviceApi/preference';
-import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/utils/reportTimeoutAction';
 import { useDuplicateAddressModal } from './components/DuplicateAddressModal';
 import { useShowImportMoreAddressPopup } from '@/hooks/useShowImportMoreAddressPopup';
 import * as SecretVault from '@/core/utils/secretVault';
@@ -30,6 +28,7 @@ import { E2E_ID } from '@/constant/e2e';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
 import { ensureWalletUnlockedForAction } from '@/utils/walletUnlock';
 import { IS_ANDROID } from '@/core/native/utils';
+import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 
 /** Toast position at the top of screen */
 const TOAST_POSITION_TOP = 30;
@@ -190,7 +189,9 @@ export const ImportSecret = ({ route }: ScreenProps) => {
   const TabToggle = useCallback(() => {
     return (
       <View style={styles.tabContainer}>
-        <Pressable
+        <CustomTouchableOpacity
+          as="RNGHTouchableOpacity"
+          activeOpacity={1}
           style={[styles.tab, activeTab === 'seedPhrase' && styles.tabActive]}
           onPress={() => handleTabChange('seedPhrase')}>
           <Text
@@ -200,8 +201,10 @@ export const ImportSecret = ({ route }: ScreenProps) => {
             ]}>
             {t('page.manageAddress.seed-phrase')}
           </Text>
-        </Pressable>
-        <Pressable
+        </CustomTouchableOpacity>
+        <CustomTouchableOpacity
+          as="RNGHTouchableOpacity"
+          activeOpacity={1}
           style={[styles.tab, activeTab === 'privateKey' && styles.tabActive]}
           onPress={() => handleTabChange('privateKey')}
           {...makeTestIDProps(E2E_ID.onboarding.privateKeyTab)}>
@@ -212,7 +215,7 @@ export const ImportSecret = ({ route }: ScreenProps) => {
             ]}>
             {t('page.manageAddress.private-key')}
           </Text>
-        </Pressable>
+        </CustomTouchableOpacity>
       </View>
     );
   }, [activeTab, handleTabChange, styles, t]);
@@ -285,8 +288,10 @@ export const ImportSecret = ({ route }: ScreenProps) => {
                   brandName: KEYRING_CLASS.MNEMONIC,
                   isFirstImport: true,
                   address: [firstAddress?.[0].address],
-                  mnemonics: cleanedMnemonic,
-                  passphrase: '',
+                  mnemonicsVaultId: SecretVault.storeMnemonicsPayload({
+                    mnemonics: cleanedMnemonic,
+                    passphrase: '',
+                  }),
                   keyringId: keyringId || undefined,
                   isExistedKR,
                 },
@@ -299,8 +304,10 @@ export const ImportSecret = ({ route }: ScreenProps) => {
           showImportMorePopup({
             type: KEYRING_TYPE.HdKeyring,
             brandName: KEYRING_CLASS.MNEMONIC,
-            mnemonics: cleanedMnemonic,
-            passphrase: '',
+            mnemonicsVaultId: SecretVault.storeMnemonicsPayload({
+              mnemonics: cleanedMnemonic,
+              passphrase: '',
+            }),
             keyringId: keyringId || undefined,
           });
         } catch (error) {
@@ -321,9 +328,6 @@ export const ImportSecret = ({ route }: ScreenProps) => {
           seedPhraseVaultId: vaultId,
         });
       }
-      void setReportActionTs(
-        REPORT_TIMEOUT_ACTION_KEY.CLICK_IMPORT_SEED_PHRASE,
-      ).catch(console.error);
     } else {
       // Clean and validate private key
       let cleanedPrivateKey: string;
@@ -370,9 +374,6 @@ export const ImportSecret = ({ route }: ScreenProps) => {
           privateKeyVaultId: vaultId,
         });
       }
-      void setReportActionTs(
-        REPORT_TIMEOUT_ACTION_KEY.CLICK_IMPORT_PRIVATE_KEY,
-      ).catch(console.error);
     }
   }, [
     activeTab,

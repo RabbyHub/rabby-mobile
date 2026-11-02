@@ -1,6 +1,6 @@
 import { act, renderHook } from '@testing-library/react-native';
 import type { BottomSheetScrollViewMethods } from '@gorhom/bottom-sheet';
-import { Keyboard, StatusBar, UIManager } from 'react-native';
+import { Keyboard, StatusBar, UIManager, type View } from 'react-native';
 import {
   perpsProKeyboardSession,
   type PerpsProKeyboardInput,
@@ -52,6 +52,7 @@ const flushFrame = () =>
   });
 const showKeyboard = (screenY = 500) =>
   act(() => {
+    perpsProKeyboardSession.setAndroidKeyboardVisible(true);
     listeners.get('keyboardDidShow')?.({
       endCoordinates: { height: 300, screenY },
     });
@@ -144,11 +145,35 @@ describe('Android sheet keyboard viewport (native geometry boundary)', () => {
     jest
       .spyOn(Keyboard, 'metrics')
       .mockReturnValue({ height: 300, screenY: 500, screenX: 0, width: 393 });
+    perpsProKeyboardSession.setAndroidKeyboardVisible(true);
     const { result } = renderHook(() =>
       usePerpsProSheetKeyboard({ visible: true, scrollViewRef }),
     );
     focus(result.current.sheetId);
     expect(result.current.accessoryInset).toBe(48);
+  });
+
+  it('keeps the sheet inset across separate blur/focus turns and releases it on Done or owner removal', () => {
+    const { result, rerender } = mountSheet();
+    act(() => perpsProKeyboardSession.blur('amount'));
+    expect(perpsProKeyboardSession.getSnapshot()).toBeNull();
+    expect(result.current.accessoryInset).toBe(48);
+    flushFrame();
+    expect(UIManager.measureInWindow).not.toHaveBeenCalled();
+    focus(result.current.sheetId, 'pnl');
+    expect(result.current.accessoryInset).toBe(48);
+    act(() => perpsProKeyboardSession.unregister('amount'));
+    expect(result.current.accessoryInset).toBe(48);
+    act(() => perpsProKeyboardSession.setAndroidKeyboardVisible(false));
+    expect(result.current.accessoryInset).toBe(0);
+    showKeyboard();
+    expect(result.current.accessoryInset).toBe(48);
+    act(() => perpsProKeyboardSession.unregister('pnl'));
+    expect(result.current.accessoryInset).toBe(0);
+    rerender({ visible: false });
+    expect(result.current.accessoryInset).toBe(0);
+    expect(perpsProKeyboardSession.getAndroidPresentation()).toBeNull();
+    expect(perpsProKeyboardSession.getSnapshot()).toBeNull();
   });
 
   it('scrolls the full Amount field plus gap above Done after a warning grows the content', () => {
@@ -172,6 +197,119 @@ describe('Android sheet keyboard viewport (native geometry boundary)', () => {
     measureInput(0, 310, 200, 40);
     measureContent(0, 600, 200, 40);
     expect(scrollTo).toHaveBeenCalledWith({ animated: false, y: 448 });
+  });
+
+  const registerGroup = (hook: ReturnType<typeof mountSheet>) => {
+    let measureGroup: Measure;
+    const target = {
+      current: {
+        measureInWindow: jest.fn((callback: Measure) => {
+          measureGroup = callback;
+        }),
+      } as unknown as View | null,
+    };
+    const unregister = hook.result.current.inputReveal.registerInput(
+      input,
+      target,
+    );
+    return {
+      target,
+      unregister,
+      measure: (...args: Parameters<Measure>) => measureGroup(...args),
+    };
+  };
+
+  it.each([66, 82, 114])(
+    'reveals the input and its %s-high PnL/error group, even when the input already fits',
+    height => {
+      const hook = mountSheet();
+      const group = registerGroup(hook);
+      flushFrame();
+      measureViewport(0, 100, 393, 400);
+      measureInput(0, 370, 200, 40); // input bottom 434 + gap 8 < Done top 452
+      group.measure(0, 370, 329, height);
+      measureContent(0, 600, 200, 40);
+      expect(scrollTo).toHaveBeenCalledWith({
+        animated: false,
+        y: 600 + height + 8 - 328,
+      });
+    },
+  );
+
+  it('remeasures hint layout changes inside an unchanged form minimum height', () => {
+    const hook = mountSheet();
+    const group = registerGroup(hook);
+    flushFrame();
+    measureViewport(0, 100, 393, 400);
+    measureInput(0, 370, 200, 40);
+    group.measure(0, 370, 329, 40);
+    expect(scrollTo).not.toHaveBeenCalled();
+    act(() => hook.result.current.inputReveal.onLayout());
+    flushFrame();
+    measureViewport(0, 100, 393, 400);
+    measureInput(0, 370, 200, 40);
+    group.measure(0, 370, 329, 98);
+    measureContent(0, 600, 200, 40);
+    expect(scrollTo).toHaveBeenCalledWith({ animated: false, y: 378 });
+  });
+
+  it('keeps the input visible when its feedback is taller than the available viewport', () => {
+    const hook = mountSheet();
+    const group = registerGroup(hook);
+    flushFrame();
+    measureViewport(0, 100, 393, 80);
+    measureInput(0, 140, 200, 40);
+    group.measure(0, 140, 329, 146);
+    measureContent(0, 600, 200, 40);
+    expect(scrollTo).toHaveBeenCalledWith({ animated: false, y: 592 });
+  });
+
+  it.each([
+    'unregister',
+    'replace-node',
+    'layout',
+    'hide-keyboard',
+    'drag',
+    'switch-input',
+  ] as const)('rejects delayed group measurements after %s', change => {
+    const hook = mountSheet();
+    const group = registerGroup(hook);
+    flushFrame();
+    measureViewport(0, 100, 393, 400);
+    measureInput(0, 370, 200, 40);
+    if (change === 'unregister') {
+      group.unregister();
+    }
+    if (change === 'replace-node') {
+      group.target.current = null;
+    }
+    if (change === 'layout') {
+      act(() => hook.result.current.inputReveal.onLayout());
+    }
+    if (change === 'hide-keyboard') {
+      act(() => listeners.get('keyboardDidHide')?.());
+    }
+    if (change === 'drag') {
+      act(() => hook.result.current.cancelMeasurement());
+    }
+    if (change === 'switch-input') {
+      focus(hook.result.current.sheetId, 'other-field');
+    }
+    group.measure(0, 370, 329, 98);
+    expect(UIManager.measureLayout).not.toHaveBeenCalled();
+    expect(scrollTo).not.toHaveBeenCalled();
+  });
+
+  it('falls back to the input-only contract after group unmount', () => {
+    const hook = mountSheet();
+    const group = registerGroup(hook);
+    group.unregister();
+    act(() => hook.result.current.ensureInputVisible());
+    flushFrame();
+    measureViewport(0, 100, 393, 400);
+    measureInput(0, 420, 200, 40);
+    measureContent(0, 600, 200, 40);
+    expect(scrollTo).toHaveBeenCalledWith({ animated: false, y: 320 });
   });
 
   it('scrolls back up when switching to an input above the viewport', () => {

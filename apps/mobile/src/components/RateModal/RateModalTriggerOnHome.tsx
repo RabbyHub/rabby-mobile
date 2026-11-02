@@ -12,7 +12,6 @@ import {
 import { useExposureRateGuide, useRateModal } from './hooks';
 import PressableStar from './RateStar';
 import { useEffect, useState } from 'react';
-import { matomoRequestEvent } from '@/utils/analytics';
 
 const STAR_SIZE = 32;
 const TRIGGER_HEIGHT = 100;
@@ -26,17 +25,6 @@ const styles = StyleSheet.create({
     height: STAR_SIZE,
   },
 });
-
-function starToText(number: number) {
-  const map: Record<number, string> = {
-    1: 'One',
-    2: 'Two',
-    3: 'Three',
-    4: 'Four',
-    5: 'Five',
-  };
-  return map[number] ?? 'Unknown';
-}
 
 export function RateModalTriggerOnHome({ style }: RNViewProps) {
   const { isLight, colors2024 } = useTheme2024();
@@ -55,10 +43,6 @@ export function RateModalTriggerOnHome({ style }: RNViewProps) {
       toggleShowRateModal(true, {
         starCountOnOpen: userSelectedStar,
       });
-      matomoRequestEvent({
-        category: 'Rate Rabby',
-        action: `Rate_Star_${starToText(userSelectedStar)}`,
-      });
       setUserSelectedStar(0);
     }, TRIGGER_AFTER_DELAY);
 
@@ -67,15 +51,6 @@ export function RateModalTriggerOnHome({ style }: RNViewProps) {
       setUserSelectedStar(0);
     };
   }, [userSelectedStar, toggleShowRateModal]);
-
-  useEffect(() => {
-    if (!shouldShowRateGuideOnHome) return;
-
-    matomoRequestEvent({
-      category: 'Rate Rabby',
-      action: 'Rate_Show',
-    });
-  }, [shouldShowRateGuideOnHome]);
 
   if (!shouldShowRateGuideOnHome) return null;
 

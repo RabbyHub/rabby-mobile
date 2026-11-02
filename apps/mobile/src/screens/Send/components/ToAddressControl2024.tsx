@@ -17,6 +17,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { Card } from '@/components2024/Card';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { ellipsisAddress } from '@/utils/address';
+import { makeAccountObject } from '@/utils/account';
 import { RcIconLockCC, RcIconSwitchCC } from '@/assets/icons/send';
 import { useWhitelist } from '@/hooks/whitelist';
 import type { Cex } from '@rabby-wallet/rabby-api/dist/types';
@@ -31,6 +32,7 @@ import { useAlias2 } from '@/hooks/alias';
 import { default as RcIconUnknownAddressAvatarCC } from '../icons/unknown-address-avatar-cc.svg';
 import { CaretArrowIconCC } from '@/components/Icons/CaretArrowIconCC';
 import {
+  useSendTokenFormValuesSelector,
   useSendTokenInternalShallowSelector,
   useSendTokenScreenStateSelector,
 } from '../hooks/useSendToken';
@@ -441,12 +443,21 @@ function ToAddressControl2024({ style }: React.PropsWithChildren<RNViewProps>) {
   const { isAddrOnWhitelist } = useWhitelist();
   const { list: supportedCexList } = useCexSupportList();
   const addrDesc = useSendTokenScreenStateSelector(state => state.toAddrDesc);
-  const { handleFieldChange, toAccount, toAddressPositiveTips } =
+  const toAddress = useSendTokenFormValuesSelector(values => values.to);
+  const { handleFieldChange, derivedToAccount, toAddressPositiveTips } =
     useSendTokenInternalShallowSelector(ctx => ({
       handleFieldChange: ctx.callbacks.handleFieldChange,
-      toAccount: ctx.computed.toAccount,
+      derivedToAccount: ctx.computed.toAccount,
       toAddressPositiveTips: ctx.computed.toAddressPositiveTips,
     }));
+  // The recipient controller publishes enriched state after the first render.
+  // Keep the section in place using the form's actual (possibly empty) address.
+  const toAccount = useMemo(
+    () =>
+      derivedToAccount ||
+      makeAccountObject<KeyringAccountWithAlias>({ address: toAddress }),
+    [derivedToAccount, toAddress],
+  );
 
   const { t } = useTranslation();
 
@@ -480,10 +491,6 @@ function ToAddressControl2024({ style }: React.PropsWithChildren<RNViewProps>) {
     },
     [handleFieldChange],
   );
-
-  if (!toAccount) {
-    return null;
-  }
 
   return (
     <View

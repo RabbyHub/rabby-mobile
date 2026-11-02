@@ -14,7 +14,6 @@ import { DEFAULT_AUTO_LOCK_MINUTES } from '@/constant/autoLock';
 import { appServiceEvents } from '@/core/events/appServiceEvents';
 import { isNonPublicProductionEnv } from '@/constant';
 import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
-import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/utils/reportTimeoutAction';
 import { BALANCE_HIDE_TYPE } from '@/constant/balanceHide';
 import {
   resolveDefaultUserBehaviorTrackingOptOut,
@@ -79,22 +78,6 @@ function syncUserBehaviorTrackingSdkOptOut() {
     });
 }
 
-function reportMatomoWatchlistStarToken(token: IManageToken) {
-  void import('@/utils/analytics')
-    .then(({ matomoRequestEvent }) => {
-      matomoRequestEvent({
-        category: 'Watchlist Usage',
-        action: 'Watchlist_StarToken',
-        label: `${token.chainId}_${token.tokenId}`,
-      });
-    })
-    .catch(error => {
-      if (__DEV__) {
-        console.error('[PreferenceService] matomoRequestEvent error', error);
-      }
-    });
-}
-
 export interface ChainGas {
   gasPrice?: number | null; // custom cached gas price
   gasLevel?: string | null; // cached gasLevel
@@ -127,7 +110,6 @@ export interface PreferenceStore {
 
   tokenApprovalChain: Record<string, CHAINS_ENUM>;
   nftApprovalChain: Record<string, CHAINS_ENUM>;
-  sendLogTime?: number;
   lastSelectedGasTopUpChain?: Record<string, CHAINS_ENUM>;
   sendEnableTime?: number;
   hasOpenCopyTrading?: boolean;
@@ -135,6 +117,7 @@ export interface PreferenceStore {
   blockedToken?: Token[];
   // manage token
   pinedQueue?: IManageToken[]; // maual always true
+  removedTokens?: IManageToken[];
   foldTokens?: IManageToken[];
   unfoldTokens?: IManageToken[];
   includeDefiAndTokens?: IDefiOrToken[];
@@ -145,8 +128,6 @@ export interface PreferenceStore {
   foldNfts?: IManageNft[];
   unFoldNfts?: IManageNft[];
 
-  reportActionTsSet: Record<REPORT_TIMEOUT_ACTION_KEY, number>;
-  currentReportActionStats: REPORT_TIMEOUT_ACTION_KEY;
   tokenManageSettingMap: ITokenManageSettingMap;
   collectionStarred?: Token[];
   /**
@@ -173,12 +154,7 @@ export interface PreferenceStore {
   isInvited?: boolean;
   safeSelfHostConfirm?: Record<string, boolean>;
   /**
-   *  The unique visitor ID
-   */
-  extensionId?: string;
-  /**
-   * When true, user behavior tracking is disabled for festats, GA, Matomo,
-   * and Sentry.
+   * When true, user behavior tracking is disabled for GA and Sentry.
    */
   [USER_BEHAVIOR_TRACKING_OPT_OUT_KEY]: boolean;
 
@@ -193,8 +169,6 @@ export interface PreferenceStore {
   tempCurrentAccount?: Account;
   /** 用户是否跳过了watchlist引导 */
   watchlistSkipV2?: boolean;
-
-  lastReportTime?: number;
 
   balanceHideType?: BALANCE_HIDE_TYPE;
 
@@ -289,13 +263,11 @@ export class PreferenceService extends StoreServiceBase<
         pinnedChain: [],
         tokenApprovalChain: {},
         nftApprovalChain: {},
-        sendLogTime: 0,
         sendEnableTime: 0,
         customizedToken: [],
         blockedToken: [],
+        removedTokens: [],
         collectionStarred: [],
-        reportActionTsSet: {} as Record<REPORT_TIMEOUT_ACTION_KEY, number>,
-        currentReportActionStats: REPORT_TIMEOUT_ACTION_KEY.NONE,
         hiddenBalance: false,
         isShowTestnet: false,
         autoLockTime: DEFAULT_AUTO_LOCK_MINUTES,
@@ -332,7 +304,9 @@ export class PreferenceService extends StoreServiceBase<
         beforePersist(obj) {
           if (!obj) {
             const msg = `[preferenceService] preference set as nil value (${obj}), it's unexpected`;
-            if (__DEV__) console.error(msg);
+            if (__DEV__) {
+              console.error(msg);
+            }
             capturePreferenceException(new Error(msg));
           }
         },
@@ -345,6 +319,10 @@ export class PreferenceService extends StoreServiceBase<
     this.mutateStore(draft => {
       delete draft.balanceMap;
       delete draft.testnetBalanceMap;
+      // Migrate the removed mode persisted by previous versions.
+      if ((draft.balanceHideType as string | undefined) === 'HALF_HIDE') {
+        draft.balanceHideType = BALANCE_HIDE_TYPE.HIDE;
+      }
       // Reset current account if the app did not close cleanly.
       if (draft.tempCurrentAccount) {
         draft.currentAccount = draft.tempCurrentAccount;
@@ -825,59 +803,6 @@ export class PreferenceService extends StoreServiceBase<
     return cloneDeep(this.store.collectionStarred || []);
   };
 
-  getReportActionTs = (key: REPORT_TIMEOUT_ACTION_KEY) => {
-    return this.store.reportActionTsSet?.[key] || 0;
-  };
-
-  getReportActionTimeout = (
-    from: REPORT_TIMEOUT_ACTION_KEY,
-    to: REPORT_TIMEOUT_ACTION_KEY,
-  ) => {
-    if (
-      this.store.reportActionTsSet?.[to] &&
-      this.store.reportActionTsSet?.[from] &&
-      this.store.reportActionTsSet?.[to] > this.store.reportActionTsSet?.[from]
-    ) {
-      return (
-        this.store.reportActionTsSet[to] - this.store.reportActionTsSet[from]
-      );
-    }
-
-    return 0;
-  };
-
-  setReportActionTs = (
-    key: REPORT_TIMEOUT_ACTION_KEY,
-    reportExtra?: Record<string, string> | undefined,
-  ) => {
-    try {
-      const ts = Date.now();
-      const beforeKey = this.store.currentReportActionStats;
-      this.mutateStore(draft => {
-        draft.reportActionTsSet[key] = ts;
-        if (key !== beforeKey) {
-          draft.currentReportActionStats = key;
-        }
-      });
-      if (key === beforeKey) {
-        return;
-      }
-
-      // report stats
-      void import('../utils/reportActionStats')
-        .then(({ reportActionStats }) => {
-          reportActionStats(this, key, beforeKey, reportExtra);
-        })
-        .catch(error => {
-          if (__DEV__) {
-            console.error('[PreferenceService] reportActionStats error', error);
-          }
-        });
-    } catch (error) {
-      console.error('[PreferenceService] setReportActionTs error', error);
-    }
-  };
-
   setPasswordIsAutoGenerated = (value: boolean) => {
     this.mutateStore(draft => {
       draft.passwordIsAutoGenerated = value;
@@ -917,14 +842,6 @@ export class PreferenceService extends StoreServiceBase<
     });
   };
 
-  getSendLogTime = () => {
-    return this.store.sendLogTime || 0;
-  };
-  updateSendLogTime = (time: number) => {
-    this.mutateStore(draft => {
-      draft.sendLogTime = time;
-    });
-  };
   getSendEnableTime = () => {
     return this.store.sendEnableTime || 0;
   };
@@ -1015,7 +932,6 @@ export class PreferenceService extends StoreServiceBase<
         draft.pinedQueue = [token, ...(draft.pinedQueue || [])];
       });
       // this.manualUnFoldToken(token);
-      reportMatomoWatchlistStarToken(token);
     }
   };
   removePinedToken = (token: IManageToken) => {
@@ -1030,6 +946,43 @@ export class PreferenceService extends StoreServiceBase<
   };
 
   /** =========toggle pinToken end =========== */
+
+  getRemovedTokens = (): IManageToken[] => {
+    return this.getStoreFieldSnapshot('removedTokens') || [];
+  };
+
+  isTokenRemoved = (token: IManageToken): boolean => {
+    return (this.store.removedTokens || []).some(
+      item =>
+        item.chainId.toLowerCase() === token.chainId.toLowerCase() &&
+        isSameAddress(item.tokenId, token.tokenId),
+    );
+  };
+
+  addRemovedToken = (token: IManageToken) => {
+    if (this.isTokenRemoved(token)) {
+      return;
+    }
+    this.mutateStore(draft => {
+      draft.removedTokens = [
+        { chainId: token.chainId, tokenId: token.tokenId },
+        ...(draft.removedTokens || []),
+      ];
+    });
+  };
+
+  removeRemovedToken = (token: IManageToken) => {
+    if (!this.isTokenRemoved(token)) {
+      return;
+    }
+    this.mutateStore(draft => {
+      draft.removedTokens = draft.removedTokens?.filter(
+        item =>
+          item.chainId.toLowerCase() !== token.chainId.toLowerCase() ||
+          !isSameAddress(item.tokenId, token.tokenId),
+      );
+    });
+  };
 
   /** =========toggle fold token start =========== */
   manualFoldToken = (token: IManageToken) => {

@@ -33,7 +33,9 @@ export const resolvePerpsProInfoTabPresentation = ({
 } => {
   if (!preferencesHydrated) {
     return {
-      activeInfoTab: null,
+      // Keep the panel (and its loading/error/retry state) reachable while
+      // preferences load. This is presentation only, not a saved selection.
+      activeInfoTab: 'account',
       automaticSelection: previousAutomaticSelection,
     };
   }
@@ -55,7 +57,9 @@ export const resolvePerpsProInfoTabPresentation = ({
 
   if (accountIdentity ? !accountFactsReady : !accountSelectionReady) {
     return {
-      activeInfoTab: null,
+      // A slow or failed account baseline must not remove the entire lower
+      // half of Perps. Resolve the automatic default only once facts arrive.
+      activeInfoTab: 'account',
       automaticSelection: previousAutomaticSelection,
     };
   }

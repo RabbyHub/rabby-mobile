@@ -1,8 +1,14 @@
 import { useMemo } from 'react';
-import { ScrollView, StyleProp, View, ViewStyle } from 'react-native';
+import {
+  ScrollView,
+  StyleProp,
+  TextStyle,
+  View,
+  ViewStyle,
+} from 'react-native';
 
 import { Text } from '@/components/Typography';
-import { createGetStyles } from '@/utils/styles';
+import { createGetStyles, mutateStyles } from '@/utils/styles';
 import { useThemeStyles } from '@/hooks/theme';
 import { parseMarkdown } from './parseMarkdown';
 import type { MarkdownBlock, MarkdownParseResult } from './parseMarkdown';
@@ -10,6 +16,8 @@ import type { MarkdownBlock, MarkdownParseResult } from './parseMarkdown';
 const HEADING_FONT_SIZES = [28, 22, 18, 16, 15, 14] as const;
 const BODY_FONT_SIZE = 14;
 const BODY_LINE_HEIGHT = 18;
+
+type MarkdownFontStyles = Record<'body' | 'heading', TextStyle>;
 
 export function MarkdownNative({
   markdown,
@@ -33,6 +41,14 @@ export function MarkdownNative({
     () => parsedMarkdown ?? parseMarkdown(markdown),
     [markdown, parsedMarkdown],
   );
+  const fontStyles = useMemo<MarkdownFontStyles>(
+    () =>
+      mutateStyles({
+        body: { fontFamily },
+        heading: { fontFamily, fontWeight: '700' },
+      }),
+    [fontFamily],
+  );
 
   const bodyColor = textColor ?? colors['neutral-body'];
   const titleColor = headingColor ?? colors['neutral-title-1'];
@@ -48,7 +64,7 @@ export function MarkdownNative({
           isFirst={index === 0}
           bodyColor={bodyColor}
           titleColor={titleColor}
-          fontFamily={fontFamily}
+          fontStyles={fontStyles}
         />
       ))}
     </ScrollView>
@@ -60,13 +76,13 @@ function MarkdownBlockView({
   isFirst,
   bodyColor,
   titleColor,
-  fontFamily,
+  fontStyles,
 }: {
   block: MarkdownBlock;
   isFirst: boolean;
   bodyColor: string;
   titleColor: string;
-  fontFamily?: string;
+  fontStyles: MarkdownFontStyles;
 }) {
   const { styles } = useThemeStyles(getStyles);
 
@@ -79,9 +95,9 @@ function MarkdownBlockView({
         <Text
           style={[
             styles.heading,
+            fontStyles.heading,
             {
               color: titleColor,
-              fontFamily,
               fontSize,
               lineHeight: Math.round(fontSize * 1.4),
               marginTop: isFirst ? 0 : 16,
@@ -99,7 +115,8 @@ function MarkdownBlockView({
               <Text
                 style={[
                   block.ordered ? styles.orderedMarker : styles.unorderedMarker,
-                  { color: bodyColor, fontFamily },
+                  fontStyles.body,
+                  { color: bodyColor },
                 ]}>
                 {block.ordered ? `${item.order}.` : '•'}
               </Text>
@@ -107,7 +124,8 @@ function MarkdownBlockView({
                 style={[
                   styles.bodyText,
                   styles.listItemText,
-                  { color: bodyColor, fontFamily },
+                  fontStyles.body,
+                  { color: bodyColor },
                 ]}>
                 {item.text}
               </Text>
@@ -120,7 +138,7 @@ function MarkdownBlockView({
         return <View style={styles.emptyLine} />;
       }
       return (
-        <Text style={[styles.bodyText, { color: bodyColor, fontFamily }]}>
+        <Text style={[styles.bodyText, fontStyles.body, { color: bodyColor }]}>
           {block.text}
         </Text>
       );
@@ -139,7 +157,6 @@ const getStyles = createGetStyles(colors => ({
     paddingLeft: 5,
   },
   heading: {
-    fontWeight: '600',
     marginBottom: 8,
   },
   bodyText: {

@@ -108,7 +108,7 @@ export function getPerpsProLatestCandleClose(
 export const PERPS_PRO_CROSSHAIR_LABEL_LAYOUT = {
   borderRadius: 6,
   fontSize: 12,
-  fontWeight: 510,
+  fontWeight: 500,
   lineHeight: 16,
   paddingHorizontal: 6,
   paddingVertical: 4,

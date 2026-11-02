@@ -36,14 +36,13 @@ import { FooterButtonScreenContainer } from '@/components2024/ScreenContainer/Fo
 import { useSetPasswordFirst } from '@/hooks/useLock';
 import { useImportAddressProc } from '@/hooks/address/useNewUser';
 import { useShowImportMoreAddressPopup } from '@/hooks/useShowImportMoreAddressPopup';
-import { setReportActionTs } from '@/core/serviceApi/preference';
-import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/utils/reportTimeoutAction';
 import {
   isNewlyInputTextSameWithContentFromClipboard,
   onPastedSensitiveData,
 } from '@/utils/clipboard';
 import { Text } from '@/components/Typography';
 import { ensureWalletUnlockedForAction } from '@/utils/walletUnlock';
+import * as SecretVault from '@/core/utils/secretVault';
 
 const getStyles = createGetStyles2024(ctx => ({
   screen: {
@@ -176,8 +175,10 @@ export const ImportSeedPhraseScreen2024 = () => {
                 brandName: KEYRING_CLASS.MNEMONIC,
                 isFirstImport: true,
                 address: [firstAddress?.[0].address],
-                mnemonics: formatMnemonics,
-                passphrase: '',
+                mnemonicsVaultId: SecretVault.storeMnemonicsPayload({
+                  mnemonics: formatMnemonics,
+                  passphrase: '',
+                }),
                 keyringId: keyringId || undefined,
                 isExistedKR,
               },
@@ -189,8 +190,10 @@ export const ImportSeedPhraseScreen2024 = () => {
         showImportMorePopup({
           type: KEYRING_TYPE.HdKeyring,
           brandName: KEYRING_CLASS.MNEMONIC,
-          mnemonics: formatMnemonics,
-          passphrase: '',
+          mnemonicsVaultId: SecretVault.storeMnemonicsPayload({
+            mnemonics: formatMnemonics,
+            passphrase: '',
+          }),
           keyringId: keyringId || undefined,
         });
       })
@@ -276,9 +279,6 @@ export const ImportSeedPhraseScreen2024 = () => {
         isFirstImportPassword: true,
       })
     ) {
-      void setReportActionTs(
-        REPORT_TIMEOUT_ACTION_KEY.IMPORT_SEED_PHRASE_CONFIRM,
-      ).catch(console.error);
       setConfirmCB(importSeedPhrase);
       return;
     }

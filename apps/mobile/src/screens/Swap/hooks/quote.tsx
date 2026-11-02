@@ -3,8 +3,6 @@ import { DEX, ETH_USDT_CONTRACT, SWAP_FEE_ADDRESS } from '@/constant/swap';
 import { getERC20Allowance, getRecommendNonce } from '@/core/apis/provider';
 import { openapi } from '@/core/request';
 import { formatUsdValue } from '@/utils/number';
-import { stats } from '@/utils/stats';
-import * as Sentry from '@sentry/react-native';
 import { CHAINS, CHAINS_ENUM } from '@debank/common';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import type {
@@ -17,7 +15,6 @@ import {
   DEX_ENUM,
   getRouter as getSwapRouter,
   getSpender,
-  verifySdk,
 } from '@rabby-wallet/rabby-swap';
 import type { QuoteResult } from '@rabby-wallet/rabby-swap/dist/quote';
 import { getQuote } from '@rabby-wallet/rabby-swap/dist/quote';
@@ -33,6 +30,7 @@ import {
   getSwapNativeTokenAddress,
   isSwapWrapToken,
 } from '../utils';
+import { verifyAndReportSwapSdk } from './swapReport';
 
 const { isSameAddress } = addressUtils;
 
@@ -431,13 +429,6 @@ export const useQuoteMethods = () => {
           })
         : null;
       try {
-        stats.report('swapRequestQuote', {
-          dex: dexId,
-          chain,
-          fromToken: payToken.id,
-          toToken: receiveToken.id,
-        });
-
         const getData = () =>
           getQuote(
             isSwapWrapToken(payToken.id, receiveToken.id, chain)
@@ -465,23 +456,9 @@ export const useQuoteMethods = () => {
 
         const data = await getData();
 
-        stats.report('swapQuoteResult', {
-          dex: dexId,
-          chain,
-          fromToken: payToken.id,
-          toToken: receiveToken.id,
-          status: data ? 'success' : 'fail',
-        });
-
         let preExecResult;
         if (data) {
-          const {
-            isSdkDataPass,
-            routerPass,
-            spenderPass,
-            callDataPass,
-            receiverPass,
-          } = verifySdk({
+          const sdkResult = verifyAndReportSwapSdk({
             chain,
             dexId,
             slippage,
@@ -499,26 +476,9 @@ export const useQuoteMethods = () => {
             nativeTokenAddress: getSwapNativeTokenAddress(chain),
             chainId: getSwapChainId(chain),
           });
-          if (!isSdkDataPass) {
-            const failed = [
-              ...(!routerPass ? ['router'] : []),
-              ...(!spenderPass ? ['spender'] : []),
-              ...(!callDataPass ? ['calldata'] : []),
-              ...(!receiverPass ? ['receiver'] : []),
-            ];
-            const failedKey = failed.join(',') || 'unknown';
-
-            Sentry.captureException(new Error('swap isSdkDataPass false'), {
-              level: 'warning',
-              tags: {
-                swap_dex: dexId,
-                swap_chain: chain,
-                swap_verify_failed: failedKey,
-                swap_token_pair: `${payToken.id}/${receiveToken.id}`,
-              },
-              fingerprint: ['swap-verify-sdk', String(dexId), failedKey],
-            });
-          }
+          // Every DEX parser is covered. A decode miss fails closed in the SDK,
+          // so calldata and receiver results gate the quote for all of them.
+          const effectiveSdkPass = sdkResult.isSdkDataPass;
           if (inSufficient) {
             const quote: TDexQuoteData = {
               data,
@@ -529,7 +489,7 @@ export const useQuoteMethods = () => {
                 gasPrice: 0,
                 gasUsed: 0,
                 gasUsdValue: '0',
-                isSdkPass: isSdkDataPass,
+                isSdkPass: effectiveSdkPass,
                 shouldApproveToken: false,
                 shouldTwoStepApprove: false,
               },
@@ -603,13 +563,14 @@ export const useQuoteMethods = () => {
               },
             );
 
-            preExecResult.isSdkPass = isSdkDataPass;
+            preExecResult.isSdkPass = effectiveSdkPass;
           } catch (error) {
             const quote: TDexQuoteData = {
               data,
               name: dexId,
               isDex: true,
               preExecResult: null,
+              isSdkPass: effectiveSdkPass,
             };
             setQuote?.(quote);
             return quote;
@@ -625,14 +586,6 @@ export const useQuoteMethods = () => {
         onFinishedQuote();
         return quote;
       } catch (error) {
-        stats.report('swapQuoteResult', {
-          dex: dexId,
-          chain,
-          fromToken: payToken.id,
-          toToken: receiveToken.id,
-          status: 'fail',
-        });
-
         const quote: TDexQuoteData = {
           data: null,
           name: dexId,
@@ -879,6 +832,8 @@ export type TDexQuoteData = {
   name: string;
   isDex: true;
   preExecResult: QuotePreExecResultInfo;
+  // Keeps the SDK result when pre-execution fails and preExecResult is null.
+  isSdkPass?: boolean;
   loading?: boolean;
   isBest?: boolean;
 };

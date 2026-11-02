@@ -57,10 +57,13 @@ async function removeGlobalBottomSheetModal(
   const promise = new Promise<string | null>(resolve => {
     const handler = (closedId: string) => {
       if (closedId === id) {
+        globalSheetModalEvents.off(EVENT_NAMES.CLOSED, handler);
         resolve(id);
       }
     };
-    globalSheetModalEvents.once(EVENT_NAMES.CLOSED, handler);
+    // Other sheets may finish closing first. Retain this listener until the
+    // requested sheet closes, and register before REMOVE can close it inline.
+    globalSheetModalEvents.on(EVENT_NAMES.CLOSED, handler);
   });
   globalSheetModalEvents.emit(EVENT_NAMES.REMOVE, id, removeParams);
 

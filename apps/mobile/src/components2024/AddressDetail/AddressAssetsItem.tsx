@@ -14,11 +14,12 @@ import { Item } from './Item';
 
 interface AddressInfoProps {
   account: KeyringAccountWithAlias;
+  active?: boolean;
   onCancel: () => void;
 }
 
 export const AddressAssetsItem: React.FC<AddressInfoProps> = props => {
-  const { account, onCancel } = props;
+  const { account, active, onCancel } = props;
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
 
@@ -67,6 +68,7 @@ export const AddressAssetsItem: React.FC<AddressInfoProps> = props => {
 
       {account.type === KEYRING_TYPE.GnosisKeyring ? (
         <GnosisSafeInfoBar
+          active={active}
           address={account.address}
           type={account.type}
           brandName={account.brandName}

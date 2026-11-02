@@ -1,14 +1,16 @@
 import { zustandByMMKV } from '@/core/storage/mmkv';
 import { zCreate } from '@/core/utils/reexports';
 import { parseMarkdown } from '@/components/Markdown/parseMarkdown';
+import { getAutoUpgradePromptDecision } from '@/utils/upgradePrompt';
 
 type UpgradePromptInfo = {
   version: string;
   couldUpgrade: boolean;
+  autoPrompt?: boolean;
   changelog: string;
 };
 
-// 按版本记录已经展示过的更新，后续出现更高版本时仍可再次提示。
+// 按版本记录已展示或配置明确不提示的更新，新版本仍可再次判断。
 const upgradePromptReceiptStore = zustandByMMKV<{
   lastPromptedVersion: string;
 }>('@UpgradePromptReceiptMMKV', {
@@ -25,20 +27,29 @@ const upgradePromptStore = zCreate<{
   pendingInfo: null,
 }));
 
-// 展示记录只和当前提示的版本号关联，新版本仍会再次提示。
+// 处理记录只和对应版本号关联，新版本仍会再次判断。
 function hasPromptedVersion(version: string) {
   const { lastPromptedVersion } = upgradePromptReceiptStore.getState();
   return lastPromptedVersion === version;
 }
 
+export function hasUpgradePromptReceipt(version: string) {
+  return !!version && hasPromptedVersion(version);
+}
+
 // 自动检查完成后先缓存，等待进入首页时再展示。
 export function requestAutoUpgradePrompt(info: UpgradePromptInfo) {
-  if (
-    !info.couldUpgrade ||
-    hasPromptedVersion(info.version) ||
-    typeof info.changelog !== 'string' ||
-    !info.changelog.trim()
-  ) {
+  const decision = getAutoUpgradePromptDecision({
+    couldUpgrade: info.couldUpgrade,
+    alreadyPrompted: hasPromptedVersion(info.version),
+    autoPrompt: info.autoPrompt,
+    changelogValid: parseMarkdown(info.changelog).success,
+  });
+  if (!decision.willShow) {
+    // 缺失或请求失败不落处理记录，允许后续补配置或网络恢复后重新判断。
+    if (decision.reason === 'config-off') {
+      upgradePromptReceiptStore.setState({ lastPromptedVersion: info.version });
+    }
     return;
   }
 

@@ -97,7 +97,7 @@ build_adhoc() {
   fi
 
   if turbo_build_enabled; then
-    turbo_prepare_ios_derived_data;
+    turbo_prepare_ios_derived_data || return $?
   fi
 
   if [ "$SENTRY_DISABLE_AUTO_UPLOAD" == "true" ]; then
@@ -119,10 +119,10 @@ prepare_ios_ruby_bundle() {
 }
 
 prepare_ios_build_artifacts() {
-  turbo_prepare_js_dependencies;
+  turbo_prepare_js_dependencies || return $?
 
   if turbo_build_enabled; then
-    ios_build_artifacts_key=$(turbo_compute_ios_build_artifacts_key)
+    ios_build_artifacts_key=$(turbo_compute_ios_build_artifacts_key) || return $?
   fi
 
   if turbo_build_enabled && turbo_ios_build_artifacts_ready "$ios_build_artifacts_key"; then

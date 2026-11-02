@@ -1,3 +1,4 @@
+import { RoundedFontStyles } from '@/core/utils/fonts';
 import 'react-native-gesture-handler';
 import { makeHeadersPresets, RootNames } from '@/constant/layout';
 import { createCustomNativeStackNavigator as createNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
@@ -58,8 +59,7 @@ export default function HomeNonTabNavigator() {
           },
           headerTitleStyle: {
             fontSize: 20,
-            fontWeight: '900',
-            fontFamily: 'SF Pro Rounded',
+            ...RoundedFontStyles.heavy,
             color: colors['neutral-title-1'],
           },
         })}
@@ -78,8 +78,7 @@ export default function HomeNonTabNavigator() {
           },
           headerTitleStyle: {
             fontSize: 20,
-            fontWeight: '900',
-            fontFamily: 'SF Pro Rounded',
+            ...RoundedFontStyles.heavy,
             color: colors['neutral-title-1'],
           },
         })}
@@ -98,8 +97,7 @@ export default function HomeNonTabNavigator() {
           },
           headerTitleStyle: {
             fontSize: 20,
-            fontWeight: '900',
-            fontFamily: 'SF Pro Rounded',
+            ...RoundedFontStyles.heavy,
             color: colors['neutral-title-1'],
           },
         })}

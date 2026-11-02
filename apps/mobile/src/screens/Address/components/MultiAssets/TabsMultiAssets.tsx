@@ -13,7 +13,6 @@ import { apisHomeTabIndex, HomeTabName } from '@/hooks/navigation';
 import { HomeCustomMaterialTabBar } from '@/screens/Home/components/CustomTabBar';
 import { TabsTopHeader } from '@/screens/Home/components/OverviewTopHeader';
 import { HOME_TOP_HEADER_SIZES } from '@/constant/home';
-import { matomoRequestEvent } from '@/utils/analytics';
 import { Tabs, useFocusedTab } from 'react-native-collapsible-tab-view';
 import { isTabsSwiping } from './hooks';
 import { NFTList } from './NFTList';
@@ -151,14 +150,6 @@ export const TabsMultiAssets: React.FC<TabMultiAssetsProps> = () => {
   const handleTabChange = useCallback(
     ({ prevIndex, index }: { prevIndex: number; index: number }) => {
       // 在前两个tab之间切换
-      const isSwapBetweenOverviewAndOtherTabs =
-        (prevIndex === 0 && index === 1) || (prevIndex === 1 && index === 0);
-      if (isSwapBetweenOverviewAndOtherTabs) {
-        matomoRequestEvent({
-          category: 'HomeTab',
-          action: 'HomeTab_Switch',
-        });
-      }
     },
     [],
   );

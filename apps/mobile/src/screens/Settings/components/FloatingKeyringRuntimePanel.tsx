@@ -757,7 +757,7 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 12,
     lineHeight: 16,
-    fontWeight: '800',
+    fontWeight: '900',
   },
   headerRow: {
     minHeight: 20,

@@ -6,7 +6,11 @@ import { useTheme2024 } from '@/hooks/theme';
 import { useAccounts } from '@/hooks/account';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { ScrollView, TouchableOpacity } from 'react-native-gesture-handler';
-import { CompositeScreenProps, useRoute } from '@react-navigation/native';
+import {
+  CompositeScreenProps,
+  useIsFocused,
+  useRoute,
+} from '@react-navigation/native';
 import { addressUtils } from '@rabby-wallet/base-utils';
 
 import {
@@ -28,6 +32,7 @@ type AddressDetailProps = CompositeScreenProps<
 
 function AddressDetailScreen(): JSX.Element {
   const { colors2024 } = useTheme2024();
+  const isFocused = useIsFocused();
   const { params } = useRoute<AddressDetailProps['route']>();
   const { setNavigationOptions, navigation } = useSafeSetNavigationOptions();
   const qrCodeModal = useQrCodeModal();
@@ -72,6 +77,7 @@ function AddressDetailScreen(): JSX.Element {
       <ScrollView>
         {account ? (
           <AddressDetailInner
+            active={isFocused}
             account={account}
             onCancel={() => noop}
             onDelete={() => {

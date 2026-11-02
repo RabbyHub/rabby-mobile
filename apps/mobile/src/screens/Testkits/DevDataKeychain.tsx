@@ -4200,7 +4200,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   versionRadioLabel: {
     color: colors2024['neutral-title-1'],
     fontSize: 15,
-    fontWeight: '600',
+    fontWeight: '500',
     lineHeight: 20,
   },
   versionRadioMeta: {
@@ -4378,7 +4378,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   statusLabel: {
     color: colors2024['neutral-foot'],
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '500',
     lineHeight: 16,
   },
   statusLabelCompact: {
@@ -4393,7 +4393,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   },
   statusValueCompact: {
     fontSize: 13,
-    fontWeight: '600',
+    fontWeight: '500',
     lineHeight: 18,
   },
   statusValueNoWrap: {
@@ -4403,7 +4403,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     marginTop: 10,
     color: colors2024['neutral-title-1'],
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '500',
     lineHeight: 20,
   },
   plainPasswordOverflowValue: {

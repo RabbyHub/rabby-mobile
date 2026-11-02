@@ -430,7 +430,7 @@ const getStyles = createGetStyles2024(ctx =>
     radioLabel: {
       color: ctx.colors2024['neutral-title-1'],
       fontSize: 16,
-      fontWeight: '600',
+      fontWeight: '500',
     },
     pillsContainer: {
       alignSelf: 'flex-start',

@@ -1,12 +1,11 @@
 import { useCallback, useContext, useId, useLayoutEffect, useRef } from 'react';
-import { Platform } from 'react-native';
 import type { RefObject } from 'react';
 import {
-  PERPS_PRO_KEYBOARD_ACCESSORY_ID,
   perpsProKeyboardSession,
   type PerpsProKeyboardInput,
 } from './perpsProKeyboardSession';
 import { PerpsProKeyboardSheetContext } from './PerpsProKeyboardSheetContext';
+import { getPerpsProKeyboardAccessoryID } from './perpsProKeyboardAccessoryBinding';
 
 export const usePerpsProKeyboardInput = (
   inputRef: RefObject<PerpsProKeyboardInput | null | undefined>,
@@ -32,10 +31,10 @@ export const usePerpsProKeyboardInput = (
   useLayoutEffect(() => {
     perpsProKeyboardSession.updateMinimum(id, getMinimum ?? minimum);
   }, [getMinimum, id, minimum]);
-  useLayoutEffect(() => () => perpsProKeyboardSession.blur(id), [id]);
+  useLayoutEffect(() => () => perpsProKeyboardSession.unregister(id), [id]);
   useLayoutEffect(() => {
     if (!enabled) {
-      perpsProKeyboardSession.blur(id);
+      perpsProKeyboardSession.unregister(id);
     }
   }, [enabled, id]);
   const onFocus = useCallback(() => {
@@ -53,8 +52,7 @@ export const usePerpsProKeyboardInput = (
   }, [enabled, id, inputRef, scrollTrade, sheetId]);
   const onBlur = useCallback(() => perpsProKeyboardSession.blur(id), [id]);
   return {
-    inputAccessoryViewID:
-      Platform.OS === 'ios' ? PERPS_PRO_KEYBOARD_ACCESSORY_ID : undefined,
+    inputAccessoryViewID: getPerpsProKeyboardAccessoryID(id),
     onBlur,
     onFocus,
   };

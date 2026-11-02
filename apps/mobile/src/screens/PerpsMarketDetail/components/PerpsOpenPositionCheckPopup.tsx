@@ -144,7 +144,11 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
                 </Text>
               </View>
               <View style={styles.coinContainer}>
-                <AssetAvatar size={24} logo={coinLogo} />
+                <AssetAvatar
+                  size={24}
+                  logo={coinLogo}
+                  logoStyle={styles.coinIcon}
+                />
                 <Text style={styles.value}>
                   {formatPerpsCoin(coin)}-{summary.quoteAsset || 'USDC'}
                 </Text>
@@ -498,6 +502,9 @@ const getStyle = createGetStyles2024(ctx => {
       flexDirection: 'row',
       alignItems: 'center',
       // gap: 6,
+    },
+    coinIcon: {
+      backgroundColor: 'white',
     },
     tagContainer: {
       paddingVertical: 2,

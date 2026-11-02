@@ -1,3 +1,4 @@
+import { RoundedFontStyles } from '@/core/utils/fonts';
 import React, { useCallback, useEffect, useMemo } from 'react';
 import {
   LayoutChangeEvent,
@@ -30,7 +31,7 @@ import RcUpgradeClose from '@/assets/icons/upgrade/close.svg';
 import RcUpgradeSliderThumbLight from '@/assets/icons/upgrade/slider-thumb-light.svg';
 import RcUpgradeSliderThumbDark from '@/assets/icons/upgrade/slider-thumb-dark.svg';
 import { useGetBinaryMode } from '@/hooks/theme';
-import { MODAL_GATE_IDS } from '@/utils/modalGate';
+import { MODAL_GATE_IDS, type ModalGateId } from '@/utils/modalGate';
 
 const CARD_WIDTH = 313;
 const CARD_HEIGHT = 426;
@@ -165,7 +166,7 @@ export function UpgradePromptDialog({
   remoteVersion: { version: string; changelog: string };
   onClose: () => void;
   onUpdate: () => void;
-  modalId?: string;
+  modalId?: ModalGateId;
 }) {
   const { t } = useTranslation();
   const isDark = useGetBinaryMode() === 'dark';
@@ -299,9 +300,8 @@ const styles = StyleSheet.create({
     marginHorizontal: CONTENT_HORIZONTAL_PADDING,
     height: 45,
     color: '#192945',
-    fontFamily: 'SF Pro Rounded',
+    ...RoundedFontStyles.bold,
     fontSize: 36,
-    fontWeight: '700',
     lineHeight: 42,
   },
   titleDark: {
@@ -329,9 +329,8 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 10,
     color: '#C5C5CF',
-    fontFamily: 'SF Pro Rounded',
+    ...RoundedFontStyles.regular,
     fontSize: 12,
-    fontWeight: '400',
     lineHeight: 16,
     textAlign: 'center',
   },
@@ -364,9 +363,8 @@ const styles = StyleSheet.create({
   sliderLabel: {
     paddingLeft: 64,
     color: '#192945',
-    fontFamily: 'SF Pro Rounded',
+    ...RoundedFontStyles.bold,
     fontSize: 20,
-    fontWeight: '700',
     lineHeight: 24,
   },
   sliderLabelDark: {

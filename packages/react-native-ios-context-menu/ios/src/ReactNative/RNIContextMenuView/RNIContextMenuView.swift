@@ -336,7 +336,10 @@ class RNIContextMenuView: UIView {
   };
 
   override func insertReactSubview(_ subview: UIView!, at atIndex: Int) {
-    super.insertSubview(subview, at: atIndex);
+    // Fabric's legacy interop mounts and removes by reactSubviews indices.
+    // Keep every child in that registry, including detached preview wrappers;
+    // UIKit's shorter visible-subview array is not the React child order.
+    super.insertReactSubview(subview, at: atIndex);
 
     if let wrapperView = subview as? RNIWrapperView,
        let nativeID    = subview.nativeID,
@@ -365,6 +368,19 @@ class RNIContextMenuView: UIView {
 
       wrapperView.removeFromSuperview();
       wrapperView.isMovingToParent = false;
+    };
+  };
+
+  override func didUpdateReactSubviews() {
+    for subview in self.reactSubviews() ?? [] {
+      if subview is RNIWrapperView,
+         let nativeID = subview.nativeID,
+         NativeIDKey(rawValue: nativeID) != nil {
+        // These children belong to the preview controllers, not the trigger.
+        continue;
+      };
+
+      super.addSubview(subview);
     };
   };
 
@@ -486,7 +502,7 @@ fileprivate extension RNIContextMenuView {
   };
 
   /// configure target preview based on `previewConfig`
-  func makeTargetedPreview() -> UITargetedPreview {
+  func makeTargetedPreview() -> UITargetedPreview? {
     // alias to variable
     let previewConfig = self._previewConfig;
 
@@ -524,6 +540,8 @@ fileprivate extension RNIContextMenuView {
     if let targetNode = previewConfig.targetViewNode,
        let targetView = self.bridge.uiManager.view(forReactTag: targetNode) {
 
+      guard targetView.window != nil else { return nil };
+
       // A - Targeted preview provided....
       return UITargetedPreview(
         view: targetView,
@@ -531,6 +549,10 @@ fileprivate extension RNIContextMenuView {
       );
 
     } else {
+      // UIKit may request a dismissal preview after a list row is detached.
+      // UITargetedPreview(view:parameters:) throws when the view has no window.
+      guard self.window != nil else { return nil };
+
       // B - No targeted preview provided....
       return UITargetedPreview(
         view: self,

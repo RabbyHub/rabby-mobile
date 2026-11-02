@@ -16,7 +16,7 @@ import {
 import Clipboard from '@react-native-clipboard/clipboard';
 
 import { default as RcCaretDownCC } from './icons/caret-down-cc.svg';
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { AddressItem } from '@/components2024/AddressItem/AddressItem';
 import { RcIconAddWhitelist, RcIconCopy, RcIconQR } from './icons';
 import type { Account } from '@/core/startupServices/preference';
@@ -199,8 +199,11 @@ export function AccountsPanelInSheetModal({
     React.useState(true);
   const { t } = useTranslation();
 
-  const { unionedRecentHistory, runAsync: fetchRecentHistory } = useRecentSend({
+  // Load recent sends only while the sheet is visible; becoming visible again
+  // re-runs it once via `ready`, without a second mount-time fetch.
+  const { unionedRecentHistory } = useRecentSend({
     useAllHistory: true,
+    ready: parentVisible,
   });
   const {
     list: whitelistAccounts,
@@ -209,12 +212,6 @@ export function AccountsPanelInSheetModal({
     findAccountWithoutBalance,
     updateWhitelistOrder,
   } = useWhitelistVariedAccounts();
-
-  useEffect(() => {
-    if (parentVisible) {
-      fetchRecentHistory();
-    }
-  }, [parentVisible, fetchRecentHistory]);
 
   const recentUsedAddresses = useMemo(() => {
     return unionedRecentHistory.filter(
@@ -373,14 +370,14 @@ export function AccountsPanelInSheetModal({
                       height={22}
                     />
                   </View>
-                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <View style={styles.addWhitelistHintContent}>
                     <Text style={styles.addWhitelistHintText}>
                       {t(
                         'component.accountSelectModalTx.addTrustedAddress.desc',
                       )}
                     </Text>
                     <TouchableOpacity
-                      style={{ marginLeft: 8 }}
+                      style={styles.addWhitelistHintButton}
                       onPress={() => {
                         fnNavTo('add-new-whitelist-addr');
                       }}>
@@ -701,7 +698,7 @@ const getPanelStyle = createGetStyles2024(ctx => {
 
     addWhitelistHintContainer: {
       marginTop: 12,
-      height: 106,
+      minHeight: 106,
       paddingHorizontal: 10,
       paddingVertical: 16,
       borderRadius: 20,
@@ -723,7 +720,21 @@ const getPanelStyle = createGetStyles2024(ctx => {
       backgroundColor: colors2024['green-light-1'],
       borderRadius: 12,
     },
+    addWhitelistHintContent: {
+      width: '100%',
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      alignItems: 'center',
+      justifyContent: 'center',
+      columnGap: 8,
+      rowGap: 4,
+    },
+    addWhitelistHintButton: {
+      maxWidth: '100%',
+    },
     addWhitelistHintText: {
+      maxWidth: '100%',
+      textAlign: 'center',
       color: colors2024['neutral-secondary'],
       fontFamily: 'SF Pro Rounded',
       fontSize: 16,

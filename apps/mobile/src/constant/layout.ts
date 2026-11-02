@@ -1,3 +1,4 @@
+import { RoundedFontStyles } from '@/core/utils/fonts';
 import { NativeStackNavigationOptions } from '@react-navigation/native-stack';
 import {
   AppColors2024Variants,
@@ -148,6 +149,7 @@ export const RootNames = {
   DevUIFormShowCase: 'DevUIFormShowCase',
   DevUIAccountShowCase: 'DevUIAccountShowCase',
   DevUIComponents2024ShowCase: 'DevUIComponents2024ShowCase',
+  DevUISafeSvgMedia: 'DevUISafeSvgMedia',
   DevUIScreenContainerShowCase: 'DevUIScreenContainerShowCase',
   DevUIToast: 'DevUIToast',
   DevUINotifications: 'DevUINotifications',
@@ -386,6 +388,7 @@ function makeScreenSpecConfig() {
       [RootNames.DevUIFormShowCase]: bg1Default2024Conf,
       [RootNames.DevUIAccountShowCase]: bg1Default2024Conf,
       [RootNames.DevUIComponents2024ShowCase]: bg1Default2024Conf,
+      [RootNames.DevUISafeSvgMedia]: bg1Default2024Conf,
       [RootNames.DevUIToast]: bg1Default2024Conf,
       [RootNames.DevUINotifications]: bg1Default2024Conf,
       [RootNames.DevUIScreenContainerShowCase]: bg1Default2024Conf,
@@ -587,8 +590,7 @@ export function makeHeadersPresets({
       },
       headerTitleStyle: {
         color: colors?.['neutral-title-1'],
-        fontWeight: '700' as const,
-        fontFamily: 'SF Pro Rounded',
+        ...RoundedFontStyles.bold,
         fontSize: DEFAULT_NAVBAR_FONT_SIZE,
       },
       headerTintColor: colors?.['neutral-title-1'],
@@ -599,8 +601,7 @@ export function makeHeadersPresets({
       },
       headerTitleStyle: {
         color: colors?.['neutral-title-1'],
-        fontWeight: '700' as const,
-        fontFamily: 'SF Pro Rounded',
+        ...RoundedFontStyles.bold,
         fontSize: DEFAULT_NAVBAR_FONT_SIZE,
       },
       headerTintColor: colors?.['neutral-title-1'],
@@ -611,16 +612,14 @@ export function makeHeadersPresets({
       },
       headerTitleStyle: {
         color: colors?.['neutral-title-1'],
-        fontWeight: '700' as const,
-        fontFamily: 'SF Pro Rounded',
+        ...RoundedFontStyles.bold,
         fontSize: DEFAULT_NAVBAR_FONT_SIZE,
       },
       headerTintColor: colors?.['neutral-title-1'],
     },
     titleFont_2024: {
       color: colors2024?.['neutral-title-1'],
-      fontWeight: '700' as const,
-      fontFamily: 'SF Pro Rounded',
+      ...RoundedFontStyles.bold,
       fontSize: 20,
     },
   };
