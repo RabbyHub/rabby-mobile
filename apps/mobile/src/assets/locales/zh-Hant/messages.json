@@ -1843,6 +1843,9 @@
       "customTestnetNotSupported": "不支援該鏈上的代幣"
     },
     "customTestnet": {
+      "screenTitle": "自訂網路",
+      "removeNetwork": "刪除 {{name}}",
+      "editTitle": "編輯自訂網路",
       "add": "新增自訂網路",
       "id": "ID",
       "empty": "無自訂網路",

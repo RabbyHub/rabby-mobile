@@ -2084,6 +2084,9 @@
       "fixedModeTag": "Fester Modus"
     },
     "customTestnet": {
+      "screenTitle": "Benutzerdefiniertes Netzwerk",
+      "removeNetwork": "{{name}} löschen",
+      "editTitle": "Benutzerdefiniertes Netzwerk bearbeiten",
       "currency": "Währung",
       "add": "Benutzerdefiniertes Netzwerk hinzufügen",
       "empty": "Kein benutzerdefiniertes Netzwerk",
