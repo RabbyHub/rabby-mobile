@@ -73,12 +73,14 @@ export const canConfirmBuy = ({
 export type ExecuteButtonState =
   | { kind: 'start' }
   | { kind: 'executing'; done: number; total: number }
+  | { kind: 'retry' }
   | { kind: 'done' };
 
 export const getExecuteButtonState = (
   status: MemeTradeTaskStatus,
   done: number,
   total: number,
+  canRetry: boolean,
 ): ExecuteButtonState => {
   if (status === 'idle') {
     return { kind: 'start' };
@@ -86,7 +88,7 @@ export const getExecuteButtonState = (
   if (status === 'running') {
     return { kind: 'executing', done, total };
   }
-  return { kind: 'done' };
+  return canRetry ? { kind: 'retry' } : { kind: 'done' };
 };
 
 export const toSellHoldings = (

@@ -117,13 +117,20 @@ describe('canConfirmBuy', () => {
 
 describe('getExecuteButtonState', () => {
   it('maps the task status', () => {
-    expect(getExecuteButtonState('idle', 0, 3)).toEqual({ kind: 'start' });
-    expect(getExecuteButtonState('running', 1, 3)).toEqual({
+    expect(getExecuteButtonState('idle', 0, 3, false)).toEqual({
+      kind: 'start',
+    });
+    expect(getExecuteButtonState('running', 1, 3, true)).toEqual({
       kind: 'executing',
       done: 1,
       total: 3,
     });
-    expect(getExecuteButtonState('finished', 3, 3)).toEqual({ kind: 'done' });
+    expect(getExecuteButtonState('finished', 3, 3, false)).toEqual({
+      kind: 'done',
+    });
+    expect(getExecuteButtonState('finished', 3, 3, true)).toEqual({
+      kind: 'retry',
+    });
   });
 });
 

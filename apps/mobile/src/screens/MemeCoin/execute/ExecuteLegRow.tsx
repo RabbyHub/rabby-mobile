@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { type TextStyle, View } from 'react-native';
+import React, { useCallback, useEffect } from 'react';
+import { type TextStyle, TouchableOpacity, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import Animated, {
   cancelAnimation,
@@ -22,7 +22,7 @@ import { formatUsdValue } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import { DashedDivider } from '../components/DashedDivider';
 import { FAIL_REASON_I18N_KEY } from '../engine/constants';
-import { getLegDisplayStatuses } from '../engine/displayStatus';
+import { getLegDisplayStatuses, isLegRetryable } from '../engine/displayStatus';
 import { tokenKey } from '../engine/keys';
 import type { DisplayStatus, ExecLeg, FailReason } from '../engine/types';
 import type { MemeTradeTaskStore } from '../hooks/useMemeTradeTask';
@@ -101,22 +101,32 @@ export const ExecuteLegRow = React.memo(function ExecuteLegRow({
   mode,
   store,
   tokenLogos,
+  onRetry,
 }: {
   leg: ExecLeg;
   legs: ExecLeg[];
   mode: 'buy' | 'sell';
   store: MemeTradeTaskStore;
   tokenLogos: Record<string, string>;
+  onRetry: (key: string) => void;
 }) {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   // Primitive selectors: a row re-renders only when its own status changes.
   const status = store(s => getLegDisplayStatuses(legs, s.states)[leg.key]);
   const failReason = store(s => s.states[leg.key]?.failReason);
+  const retryable = store(
+    s => s.status === 'finished' && isLegRetryable(s.states[leg.key]),
+  );
+  const handlePress = useCallback(() => onRetry(leg.key), [onRetry, leg.key]);
   const payLogo = tokenLogos[tokenKey(leg.pay)];
   const receiveLogo = tokenLogos[tokenKey(leg.receive)];
 
   return (
-    <View style={styles.card}>
+    <TouchableOpacity
+      activeOpacity={0.8}
+      disabled={!retryable}
+      onPress={handlePress}
+      style={styles.card}>
       <View style={styles.topRow}>
         <View style={styles.side}>
           <AssetAvatar
@@ -161,7 +171,7 @@ export const ExecuteLegRow = React.memo(function ExecuteLegRow({
       </View>
       <DashedDivider style={styles.divider} />
       <LegStatus status={status} failReason={failReason} />
-    </View>
+    </TouchableOpacity>
   );
 });
 
