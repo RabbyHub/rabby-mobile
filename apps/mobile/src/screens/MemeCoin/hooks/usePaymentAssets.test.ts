@@ -169,11 +169,11 @@ describe('usePaymentAssets', () => {
       expect(result.current.plan.spendableTotalUsd).toBeCloseTo(90);
 
       await act(async () => {
-        // 2,000,000 gas x 1e10 wei = 0.02 native at $1
-        releaseGas([{ level: 'normal', price: 1e10 }]);
+        // 100,000 gas x 1e11 wei = 0.01 native at $1
+        releaseGas([{ level: 'normal', price: 1e11 }]);
       });
       await flush();
-      expect(result.current.plan.spendableTotalUsd).toBeCloseTo(89.98);
+      expect(result.current.plan.spendableTotalUsd).toBeCloseTo(89.99);
     });
 
     it('reserves nothing when the gas request fails', async () => {
