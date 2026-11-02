@@ -80,12 +80,13 @@ const MemeCoinBuyContent = ({
     [holdings, memes],
   );
 
-  const { assets, selectedKeys, toggle, plan, ready } = usePaymentAssets({
-    account,
-    memes: memeTargets,
-    memeTokenKeys,
-    amountUsd: parsedAmountUsd ?? 0,
-  });
+  const { assets, selectedKeys, toggle, plan, listReady, gasReady } =
+    usePaymentAssets({
+      account,
+      memes: memeTargets,
+      memeTokenKeys,
+      amountUsd: parsedAmountUsd ?? 0,
+    });
 
   const logoByKey = useMemo(() => {
     const map = new Map<string, string>();
@@ -108,7 +109,7 @@ const MemeCoinBuyContent = ({
     plan,
   });
   const confirmDisabled = !canConfirmBuy({
-    ready,
+    ready: gasReady,
     amountUsd: parsedAmountUsd,
     plan,
   });
@@ -128,7 +129,7 @@ const MemeCoinBuyContent = ({
   }, [account.address, logoByKey, maxPriceImpactPct, plan.legs]);
 
   let paymentList: React.ReactNode;
-  if (!ready) {
+  if (!listReady) {
     paymentList = Array.from({ length: SKELETON_ROWS }).map((_, index) => (
       <Skeleton
         key={index}

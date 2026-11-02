@@ -4,13 +4,14 @@ import useTokenList from '@/store/tokens';
 import type { MemeTarget } from '../engine/types';
 import { usePaymentAssets } from './usePaymentAssets';
 
+const mockGasMarket = jest.fn();
+
 jest.mock('@/store/tokens', () => {
   const { create } = jest.requireActual('zustand');
   return {
     __esModule: true,
     default: create(() => ({
       tokenListMap: {},
-      sourceSnapshotReadyByAddress: {},
       getTokenList: jest.fn(),
     })),
   };
@@ -23,7 +24,7 @@ jest.mock('@rabby-wallet/base-utils/dist/isomorphic/address', () => ({
 }));
 jest.mock('@/constant/swap', () => ({ SWAP_SUPPORT_CHAINS: ['HOOD', 'ETH'] }));
 jest.mock('@/core/apis/provider', () => ({
-  gasMarketV2: async () => [{ level: 'normal', price: 1 }],
+  gasMarketV2: (params: { chainId: string }) => mockGasMarket(params.chainId),
 }));
 jest.mock('@/core/request', () => ({
   openapi: { getToken: async () => ({ price: 1 }) },
@@ -72,6 +73,7 @@ const ethUsdc = {
   price: 1,
   usd_value: 100,
 };
+const GAS_LEVELS = [{ level: 'normal', price: 1 }];
 
 const flush = () =>
   act(async () => {
@@ -86,67 +88,111 @@ const render = () =>
 const setStore = (
   state: Partial<{
     tokenListMap: Record<string, unknown>;
-    sourceSnapshotReadyByAddress: Record<string, true>;
     getTokenList: () => Promise<void>;
   }>,
 ) =>
   (useTokenList as unknown as { setState(s: unknown): void }).setState(state);
 
-const never = () => new Promise<void>(() => undefined);
+const never = <T>() => new Promise<T>(() => undefined);
 
-describe('usePaymentAssets ready', () => {
+describe('usePaymentAssets', () => {
   beforeEach(() => {
-    setStore({
-      tokenListMap: {},
-      sourceSnapshotReadyByAddress: {},
-      getTokenList: never,
-    });
+    mockGasMarket.mockReset();
+    mockGasMarket.mockResolvedValue(GAS_LEVELS);
+    setStore({ tokenListMap: {}, getTokenList: never });
   });
 
-  it('keeps loading on a partial list until the complete one arrives', async () => {
-    setStore({ tokenListMap: { [KEY]: [hoodEth] } });
-    const { result } = render();
-    await flush();
-    expect(result.current.ready).toBe(false);
+  describe('listReady', () => {
+    it('shows the list without waiting for gas or the refresh', async () => {
+      mockGasMarket.mockImplementation(() => never());
+      setStore({ tokenListMap: { [KEY]: [hoodEth] } });
+      const { result } = render();
+      await flush();
+      expect(result.current.listReady).toBe(true);
+      expect(result.current.assets).toHaveLength(1);
+    });
 
-    await act(async () => {
-      setStore({
-        tokenListMap: { [KEY]: [hoodEth, ethUsdc] },
-        sourceSnapshotReadyByAddress: { [KEY]: true },
+    it('stays ready while the list grows to a new chain', async () => {
+      mockGasMarket.mockImplementation(() => never());
+      setStore({ tokenListMap: { [KEY]: [hoodEth] } });
+      const { result } = render();
+      await flush();
+
+      await act(async () => {
+        setStore({ tokenListMap: { [KEY]: [hoodEth, ethUsdc] } });
       });
+      expect(result.current.listReady).toBe(true);
+      expect(result.current.assets.map(a => a.chain)).toEqual(['eth', 'hood']);
     });
-    await flush();
-    expect(result.current.ready).toBe(true);
-    expect(result.current.assets.map(a => a.chain)).toEqual(['eth', 'hood']);
+
+    it('loads while there is nothing to pay with yet', async () => {
+      const { result } = render();
+      await flush();
+      expect(result.current.listReady).toBe(false);
+
+      await act(async () => {
+        setStore({ tokenListMap: { [KEY]: [hoodEth] } });
+      });
+      expect(result.current.listReady).toBe(true);
+    });
+
+    it('stops loading when the refresh fails with no list at all', async () => {
+      setStore({ getTokenList: () => Promise.reject(new Error('network')) });
+      const { result } = render();
+      await flush();
+      expect(result.current.listReady).toBe(true);
+      expect(result.current.assets).toEqual([]);
+    });
+
+    it('stops loading when the refresh ends with nothing to pay with', async () => {
+      setStore({ getTokenList: () => Promise.resolve() });
+      const { result } = render();
+      await flush();
+      expect(result.current.listReady).toBe(true);
+      expect(result.current.assets).toEqual([]);
+    });
   });
 
-  it('shows a complete list at once while it refreshes in the background', async () => {
-    setStore({
-      tokenListMap: { [KEY]: [hoodEth, ethUsdc] },
-      sourceSnapshotReadyByAddress: { [KEY]: true },
-    });
-    const { result } = render();
-    await flush();
-    expect(result.current.ready).toBe(true);
-    expect(result.current.assets).toHaveLength(2);
-  });
+  describe('gasReady', () => {
+    it('waits only for the gas of the selected assets', async () => {
+      let releaseEthGas!: (levels: typeof GAS_LEVELS) => void;
+      mockGasMarket.mockImplementation((chainId: string) =>
+        chainId === 'eth'
+          ? new Promise(resolve => {
+              releaseEthGas = resolve;
+            })
+          : Promise.resolve(GAS_LEVELS),
+      );
+      setStore({ tokenListMap: { [KEY]: [hoodEth, ethUsdc] } });
+      const { result } = render();
+      await flush();
+      expect(result.current.gasReady).toBe(true);
 
-  it('shows what it has when the refresh fails', async () => {
-    setStore({
-      tokenListMap: { [KEY]: [hoodEth] },
-      getTokenList: () => Promise.reject(new Error('network')),
-    });
-    const { result } = render();
-    await flush();
-    expect(result.current.ready).toBe(true);
-    expect(result.current.assets).toHaveLength(1);
-  });
+      act(() => result.current.toggle('hood:hood'));
+      expect(result.current.gasReady).toBe(true);
 
-  it('does not load forever when the refresh fails with no list at all', async () => {
-    setStore({ getTokenList: () => Promise.reject(new Error('network')) });
-    const { result } = render();
-    await flush();
-    expect(result.current.ready).toBe(true);
-    expect(result.current.assets).toEqual([]);
+      act(() => result.current.toggle('eth:0xusdc'));
+      expect(result.current.gasReady).toBe(false);
+
+      await act(async () => {
+        releaseEthGas(GAS_LEVELS);
+      });
+      await flush();
+      expect(result.current.gasReady).toBe(true);
+    });
+
+    it('fetches each chain once as the list grows', async () => {
+      setStore({ tokenListMap: { [KEY]: [hoodEth] } });
+      render();
+      await flush();
+      await act(async () => {
+        setStore({ tokenListMap: { [KEY]: [hoodEth, ethUsdc] } });
+      });
+      await flush();
+      expect(mockGasMarket.mock.calls.map(([chain]) => chain)).toEqual([
+        'hood',
+        'eth',
+      ]);
+    });
   });
 });

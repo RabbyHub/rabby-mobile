@@ -68,13 +68,6 @@ export const usePaymentAssets = ({
   const tokens = useTokenList(
     s => s.tokenListMap[account.address.toLowerCase()],
   );
-  // The stored list can be partial (the cache API, or one token patched after a
-  // tx) until a complete one arrives. If the refresh ends without one, show what
-  // there is rather than loading forever.
-  const hasCompleteTokens = useTokenList(
-    s => !!s.sourceSnapshotReadyByAddress[account.address.toLowerCase()],
-  );
-  const tokensReady = hasCompleteTokens || refreshSettled;
   const bridgeChainEnums = useBridgeSupportedChains();
   const { value: gasAccountInfo } = useGasAccountInfo();
   const gasAccountBalanceUsd = gasAccountInfo?.account.balance ?? 0;
@@ -129,17 +122,20 @@ export const usePaymentAssets = ({
   accountRef.current = account;
 
   const accountAddress = account.address;
-  const gasKey = `${accountAddress.toLowerCase()}|${chainsKey}`;
-  const [gasCache, setGasCache] = useState<{
-    key: string;
-    byChain: Record<string, ChainNetInfo>;
-  } | null>(null);
+  const [gasByChain, setGasByChain] = useState<Record<string, ChainNetInfo>>(
+    {},
+  );
+  const requestedGasChainsRef = useRef(new Set<string>());
 
+  // Per chain, so a slow chain holds back only the assets on it.
   useEffect(() => {
-    let cancelled = false;
     const chains = chainsKey ? chainsKey.split(',') : [];
-    Promise.all(
-      chains.map(async chainServerId => {
+    chains
+      .filter(
+        chainServerId => !requestedGasChainsRef.current.has(chainServerId),
+      )
+      .forEach(async chainServerId => {
+        requestedGasChainsRef.current.add(chainServerId);
         const chain = findChainByServerID(chainServerId);
         const native = walletTokensRef.current.find(
           t => t.chain === chainServerId && t.isNative,
@@ -158,29 +154,19 @@ export const usePaymentAssets = ({
               .then(t => t.price || 0)
               .catch(() => 0),
         ]);
-        return [
-          chainServerId,
-          {
+        setGasByChain(prev => ({
+          ...prev,
+          [chainServerId]: {
             gasPriceWei: levels.find(l => l.level === 'normal')?.price || 0,
             nativePrice,
           },
-        ] as const;
-      }),
-    ).then(entries => {
-      if (!cancelled) {
-        setGasCache({ key: gasKey, byChain: Object.fromEntries(entries) });
-      }
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [chainsKey, accountAddress, gasKey]);
+        }));
+      });
+  }, [chainsKey, accountAddress]);
 
   const chainGas = useMemo(() => {
     const result: Record<string, ChainGasInfo> = {};
-    for (const [chainServerId, net] of Object.entries(
-      gasCache?.byChain ?? {},
-    )) {
+    for (const [chainServerId, net] of Object.entries(gasByChain)) {
       const chain = findChainByServerID(chainServerId);
       const native = walletTokens.find(
         t => t.chain === chainServerId && t.isNative,
@@ -195,8 +181,7 @@ export const usePaymentAssets = ({
       });
     }
     return result;
-  }, [gasCache, walletTokens, bridgeChains]);
-  const chainGasReady = gasCache?.key === gasKey;
+  }, [gasByChain, walletTokens, bridgeChains]);
 
   const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
   const toggle = useMemoizedFn((key: string) => {
@@ -205,16 +190,21 @@ export const usePaymentAssets = ({
     );
   });
 
+  const selectedAssets = useMemo(
+    () => assets.filter(a => selectedKeys.includes(tokenKey(a))),
+    [assets, selectedKeys],
+  );
+
   const plan = useMemo(
     () =>
       planBuy({
         amountUsd,
         memes,
-        sources: assets.filter(a => selectedKeys.includes(tokenKey(a))),
+        sources: selectedAssets,
         chainGas,
         gasAccountBalanceUsd,
       }),
-    [amountUsd, memes, assets, selectedKeys, chainGas, gasAccountBalanceUsd],
+    [amountUsd, memes, selectedAssets, chainGas, gasAccountBalanceUsd],
   );
 
   return {
@@ -222,6 +212,9 @@ export const usePaymentAssets = ({
     selectedKeys,
     toggle,
     plan,
-    ready: tokensReady && chainGasReady,
+    /** same as the Swap token selector: show what there is, the list grows as the refresh completes */
+    listReady: assets.length > 0 || refreshSettled,
+    /** the plan needs gas only for the chains of the selected assets */
+    gasReady: selectedAssets.every(a => !!gasByChain[a.chain]),
   };
 };
