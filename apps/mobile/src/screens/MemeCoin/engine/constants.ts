@@ -24,5 +24,17 @@ export const FAIL_REASON_I18N_KEY: Record<FailReason, string> = {
   gasTooHigh: 'page.convertDust.failReason.gasCostTooHigh',
   simulationFailed: 'page.signTx.swap.simulationFailed',
   insufficientBalance: 'page.swap.insufficient-balance',
+  arrivalFailed: 'global.failed',
   failed: 'global.failed',
 };
+
+/** can clear up on a fresh quote; all of them happen before anything is broadcast */
+export const AUTO_RETRY_REASONS: readonly FailReason[] = [
+  'simulationFailed',
+  'noQuote',
+  'priceImpact',
+];
+
+export const MAX_AUTO_RETRIES = 2;
+
+export const AUTO_RETRY_DELAY_MS = 1500;

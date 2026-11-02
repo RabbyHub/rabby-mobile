@@ -77,6 +77,8 @@ export type FailReason =
   | 'gasTooHigh'
   | 'simulationFailed'
   | 'insufficientBalance'
+  /** bridge only: the source tx is mined, so the funds may still be on the way */
+  | 'arrivalFailed'
   | 'failed';
 
 export type LegPhase =

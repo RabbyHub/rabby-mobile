@@ -1,4 +1,8 @@
-import { countFinishedLegs, getLegDisplayStatuses } from './displayStatus';
+import {
+  countFinishedLegs,
+  getLegDisplayStatuses,
+  isLegRetryable,
+} from './displayStatus';
 import type { ExecLeg, LegState } from './types';
 
 const leg = (key: string, chain: string): ExecLeg => ({
@@ -51,5 +55,30 @@ describe('getLegDisplayStatuses', () => {
         c: { phase: 'confirming' },
       }),
     ).toBe(2);
+  });
+});
+
+describe('isLegRetryable', () => {
+  it('allows failed legs except bridge arrival failures', () => {
+    expect(isLegRetryable({ phase: 'failed', failReason: 'noQuote' })).toBe(
+      true,
+    );
+    expect(
+      isLegRetryable({ phase: 'failed', failReason: 'failed', txHash: '0x1' }),
+    ).toBe(true);
+    expect(
+      isLegRetryable({
+        phase: 'failed',
+        failReason: 'arrivalFailed',
+        txHash: '0x1',
+      }),
+    ).toBe(false);
+  });
+
+  it('rejects anything that has not failed', () => {
+    expect(isLegRetryable(undefined)).toBe(false);
+    expect(isLegRetryable({ phase: 'success', txHash: '0x1' })).toBe(false);
+    expect(isLegRetryable({ phase: 'preparing' })).toBe(false);
+    expect(isLegRetryable({ phase: 'cancelled' })).toBe(false);
   });
 });
