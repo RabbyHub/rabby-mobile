@@ -91,7 +91,6 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
   reserve,
   userSummary,
   onClose,
-  source,
 }) => {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
   const [_amount, setAmount] = useState<string | undefined>(undefined);
@@ -846,7 +845,6 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
   reserve,
   userSummary,
   onClose,
-  source,
 }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
@@ -996,14 +994,12 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
           reserve={reserve}
           userSummary={userSummary}
           onClose={onClose}
-          source={source}
         />
       ) : repayToken ? (
         <RepayWithCollateral
           onClose={onClose}
           repayToken={repayToken}
           defaultCollateralToken={defaultCollateralToken}
-          source={source}
         />
       ) : null}
     </AutoLockView>

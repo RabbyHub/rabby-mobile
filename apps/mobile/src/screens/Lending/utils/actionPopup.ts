@@ -13,7 +13,6 @@ type LendingActionPopupType = 'supply' | 'repay';
 type LendingActionPopupDescriptor = {
   popup: LendingActionPopupType;
   tokenAddress: string;
-  source?: string;
 };
 
 const popupRuntime = {
@@ -43,20 +42,17 @@ export const openLendingActionPopup = ({
   reserve,
   userSummary,
   colors2024,
-  source,
   onBeforeSwapNavigate,
 }: {
   popup: LendingActionPopupType;
   reserve: DisplayPoolReserveInfo;
   userSummary: UserSummary;
   colors2024: Record<string, string>;
-  source?: string;
   onBeforeSwapNavigate?: () => void;
 }) => {
   const descriptor: LendingActionPopupDescriptor = {
     popup,
     tokenAddress: reserve.reserve.underlyingAsset,
-    ...(source ? { source } : {}),
   };
 
   const modalName =
@@ -68,7 +64,6 @@ export const openLendingActionPopup = ({
     name: modalName,
     reserve,
     userSummary,
-    source: source === 'Portfolio Defi' ? source : undefined,
     ...(popup === 'supply' && onBeforeSwapNavigate
       ? { onBeforeSwapNavigate }
       : {}),
