@@ -24,7 +24,12 @@ import { DashedDivider } from '../components/DashedDivider';
 import { FAIL_REASON_I18N_KEY } from '../engine/constants';
 import { getLegDisplayStatuses, isLegRetryable } from '../engine/displayStatus';
 import { tokenKey } from '../engine/keys';
-import type { DisplayStatus, ExecLeg, FailReason } from '../engine/types';
+import type {
+  DisplayStatus,
+  ExecLeg,
+  FailReason,
+  TokenRef,
+} from '../engine/types';
 import type { MemeTradeTaskStore } from '../hooks/useMemeTradeTask';
 
 // Long amounts shrink to stay whole; names use an ellipsis instead.
@@ -98,6 +103,20 @@ const LegStatus = ({
   );
 };
 
+const MemeInfo = ({ meme }: { meme: TokenRef }) => {
+  const { styles } = useTheme2024({ getStyle });
+  return (
+    <View style={styles.memeInfo}>
+      <Text style={styles.symbol} numberOfLines={1}>
+        {meme.symbol}
+      </Text>
+      <Text style={styles.address} numberOfLines={1}>
+        {ellipsisAddress(meme.id, 4)}
+      </Text>
+    </View>
+  );
+};
+
 export const ExecuteLegRow = React.memo(function ExecuteLegRow({
   leg,
   legs,
@@ -131,11 +150,7 @@ export const ExecuteLegRow = React.memo(function ExecuteLegRow({
       onPress={handlePress}
       style={styles.card}>
       <View style={styles.topRow}>
-        <View
-          style={[
-            styles.side,
-            mode === 'buy' ? styles.sideToken : styles.sideMeme,
-          ]}>
+        <View style={styles.side}>
           <AssetAvatar
             logo={payLogo}
             chain={leg.pay.chain}
@@ -151,14 +166,7 @@ export const ExecuteLegRow = React.memo(function ExecuteLegRow({
               {formatUsdValue(leg.amountUsd)}
             </Text>
           ) : (
-            <View style={styles.memeInfo}>
-              <Text style={styles.symbol} numberOfLines={1}>
-                {leg.pay.symbol}
-              </Text>
-              <Text style={styles.address} numberOfLines={1}>
-                {ellipsisAddress(leg.pay.id, 4)}
-              </Text>
-            </View>
+            <MemeInfo meme={leg.pay} />
           )}
         </View>
         <RcIconArrowCC
@@ -166,12 +174,7 @@ export const ExecuteLegRow = React.memo(function ExecuteLegRow({
           height={20}
           color={colors2024['neutral-secondary']}
         />
-        <View
-          style={[
-            styles.side,
-            styles.sideEnd,
-            mode === 'buy' ? styles.sideMeme : styles.sideToken,
-          ]}>
+        <View style={[styles.side, styles.sideEnd]}>
           <AssetAvatar
             logo={receiveLogo}
             chain={leg.receive.chain}
@@ -179,9 +182,7 @@ export const ExecuteLegRow = React.memo(function ExecuteLegRow({
             chainSize={16}
           />
           {mode === 'buy' ? (
-            <Text style={styles.symbol} numberOfLines={1}>
-              {leg.receive.symbol}
-            </Text>
+            <MemeInfo meme={leg.receive} />
           ) : (
             <Text
               style={styles.symbol}
@@ -214,6 +215,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     gap: 10,
   },
   side: {
+    flex: 1,
     minWidth: 0,
     flexDirection: 'row',
     alignItems: 'center',
@@ -221,13 +223,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   sideEnd: {
     justifyContent: 'flex-end',
-  },
-  // of the width beside the arrow: 60% for the token with its amount, 40% for the meme
-  sideToken: {
-    flex: 3,
-  },
-  sideMeme: {
-    flex: 2,
   },
   memeInfo: {
     flexShrink: 1,
