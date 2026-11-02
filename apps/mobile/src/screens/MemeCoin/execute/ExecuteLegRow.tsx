@@ -24,8 +24,16 @@ import { DashedDivider } from '../components/DashedDivider';
 import { FAIL_REASON_I18N_KEY } from '../engine/constants';
 import { getLegDisplayStatuses, isLegRetryable } from '../engine/displayStatus';
 import { tokenKey } from '../engine/keys';
-import type { DisplayStatus, ExecLeg, FailReason } from '../engine/types';
+import type {
+  DisplayStatus,
+  ExecLeg,
+  FailReason,
+  TokenRef,
+} from '../engine/types';
 import type { MemeTradeTaskStore } from '../hooks/useMemeTradeTask';
+
+// Long amounts shrink to stay whole; names use an ellipsis instead.
+const AMOUNT_MIN_FONT_SCALE = 0.5;
 
 const SpinningIcon = () => {
   const rotation = useSharedValue(0);
@@ -95,6 +103,20 @@ const LegStatus = ({
   );
 };
 
+const MemeInfo = ({ meme }: { meme: TokenRef }) => {
+  const { styles } = useTheme2024({ getStyle });
+  return (
+    <View style={styles.memeInfo}>
+      <Text style={styles.symbol} numberOfLines={1}>
+        {meme.symbol}
+      </Text>
+      <Text style={styles.address} numberOfLines={1}>
+        {ellipsisAddress(meme.id, 4)}
+      </Text>
+    </View>
+  );
+};
+
 export const ExecuteLegRow = React.memo(function ExecuteLegRow({
   leg,
   legs,
@@ -136,22 +158,19 @@ export const ExecuteLegRow = React.memo(function ExecuteLegRow({
             chainSize={16}
           />
           {mode === 'buy' ? (
-            <Text style={styles.amount} numberOfLines={1}>
+            <Text
+              style={styles.amount}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={AMOUNT_MIN_FONT_SCALE}>
               {formatUsdValue(leg.amountUsd)}
             </Text>
           ) : (
-            <View style={styles.memeInfo}>
-              <Text style={styles.symbol} numberOfLines={1}>
-                {leg.pay.symbol}
-              </Text>
-              <Text style={styles.address} numberOfLines={1}>
-                {ellipsisAddress(leg.pay.id, 4)}
-              </Text>
-            </View>
+            <MemeInfo meme={leg.pay} />
           )}
         </View>
         <RcIconArrowCC
-          width={21}
+          width={20}
           height={20}
           color={colors2024['neutral-secondary']}
         />
@@ -162,11 +181,17 @@ export const ExecuteLegRow = React.memo(function ExecuteLegRow({
             size={40}
             chainSize={16}
           />
-          <Text style={styles.symbol} numberOfLines={1}>
-            {mode === 'buy'
-              ? leg.receive.symbol
-              : `≈${formatUsdValue(leg.amountUsd)}`}
-          </Text>
+          {mode === 'buy' ? (
+            <MemeInfo meme={leg.receive} />
+          ) : (
+            <Text
+              style={styles.symbol}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={AMOUNT_MIN_FONT_SCALE}>
+              {`≈${formatUsdValue(leg.amountUsd)}`}
+            </Text>
+          )}
         </View>
       </View>
       <DashedDivider style={styles.divider} />

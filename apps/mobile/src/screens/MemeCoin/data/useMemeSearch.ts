@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useMemoizedFn } from 'ahooks';
+import { chaintable } from '@/core/chaintable';
 import { appendByTokenKey, toMemeMarketItem } from './market';
-import { fetchMemeTokenList } from './memeApi';
 import type { MemeMarketItem } from './types';
 
 const SEARCH_DEBOUNCE_MS = 300;
@@ -36,7 +36,8 @@ export const useMemeSearch = (keyword: string, enabled: boolean) => {
       return;
     }
     const timer = setTimeout(() => {
-      fetchMemeTokenList({ symbol, page: 1 })
+      chaintable
+        .getMemeTokenList({ symbol, page: 1 })
         .then(res => {
           if (requestId === requestIdRef.current) {
             setResult({
@@ -65,7 +66,8 @@ export const useMemeSearch = (keyword: string, enabled: boolean) => {
     }
     const requestId = requestIdRef.current;
     loadingMoreRef.current = true;
-    fetchMemeTokenList({ symbol: current.symbol, page: current.page + 1 })
+    chaintable
+      .getMemeTokenList({ symbol: current.symbol, page: current.page + 1 })
       .then(res => {
         if (requestId === requestIdRef.current) {
           setResult(prev =>

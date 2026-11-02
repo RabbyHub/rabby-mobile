@@ -1,6 +1,6 @@
+import { chaintable } from '@/core/chaintable';
 import { zCreate } from '@/core/utils/reexports';
 import { appendByTokenKey, toMemeMarketItem } from './market';
-import { fetchMemeTokenList } from './memeApi';
 import type { MemeMarketItem } from './types';
 
 export const MEME_MARKET_PAGE_SIZE = 100;
@@ -28,7 +28,8 @@ let inflight: Promise<void> | null = null;
 export const refreshMemeMarket = () => {
   if (!inflight) {
     useMemeMarketStore.setState({ loading: true, error: false });
-    inflight = fetchMemeTokenList({ page: 1, pageSize: MEME_MARKET_PAGE_SIZE })
+    inflight = chaintable
+      .getMemeTokenList({ page: 1, pageSize: MEME_MARKET_PAGE_SIZE })
       .then(res =>
         useMemeMarketStore.setState({
           items: res.tokens.map(toMemeMarketItem),
@@ -53,7 +54,7 @@ export const loadMoreMemeMarket = async () => {
   }
   useMemeMarketStore.setState({ loadingMore: true });
   try {
-    const res = await fetchMemeTokenList({
+    const res = await chaintable.getMemeTokenList({
       page: page + 1,
       pageSize: MEME_MARKET_PAGE_SIZE,
     });

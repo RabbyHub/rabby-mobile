@@ -7,12 +7,14 @@ import {
 } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { Text } from '@/components/Typography';
+import AuthButton from '@/components2024/AuthButton';
 import { Button } from '@/components2024/Button';
 import {
   BOTTOM_BUTTON_GAP,
   BOTTOM_BUTTON_SINGLE_HEIGHT,
   BOTTOM_BUTTON_TITLE_STYLE,
   BOTTOM_BUTTON_TOP_OFFSET,
+  BOTTOM_BUTTON_WITH_ICON_TITLE_STYLE,
   getBottomButtonBottomOffset,
 } from '@/constant/layout';
 import type { Account } from '@/core/startupServices/preference';
@@ -55,8 +57,8 @@ const MemeCoinExecuteContent = ({
   const status = store(s => s.status);
   const exitDialogOpen = store(s => s.exitDialogOpen);
   const done = store(s => countFinishedLegs(s.states));
-  const canRetry = store(s =>
-    legs.some(leg => isLegRetryable(s.states[leg.key])),
+  const retryCount = store(
+    s => legs.filter(leg => isLegRetryable(s.states[leg.key])).length,
   );
   const navigation = useNavigation();
   const [leaving, setLeaving] = useState(false);
@@ -110,7 +112,7 @@ const MemeCoinExecuteContent = ({
     status,
     done,
     legs.length,
-    canRetry,
+    retryCount > 0,
   );
 
   return (
@@ -175,7 +177,9 @@ const MemeCoinExecuteContent = ({
             />
             <Button
               type="primary"
-              title={t('page.memeCoin.execute.retryFailed')}
+              title={t('page.memeCoin.execute.retryFailedTxns', {
+                count: retryCount,
+              })}
               height={BOTTOM_BUTTON_SINGLE_HEIGHT}
               titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
               containerStyle={styles.retryButton}
@@ -183,17 +187,24 @@ const MemeCoinExecuteContent = ({
               noShadow
             />
           </View>
+        ) : buttonState.kind === 'start' ? (
+          <AuthButton
+            type="primary"
+            title={t('page.memeCoin.execute.confirm')}
+            authTitle={t('page.whitelist.confirmPassword')}
+            height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+            titleStyle={BOTTOM_BUTTON_WITH_ICON_TITLE_STYLE}
+            onFinished={start}
+            syncUnlockTime
+            noShadow
+          />
         ) : (
           <Button
             type="primary"
-            title={
-              buttonState.kind === 'start'
-                ? t('page.memeCoin.execute.confirm')
-                : t('page.memeCoin.execute.done')
-            }
+            title={t('page.memeCoin.execute.done')}
             height={BOTTOM_BUTTON_SINGLE_HEIGHT}
             titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
-            onPress={buttonState.kind === 'start' ? start : handleDone}
+            onPress={handleDone}
             noShadow
           />
         )}

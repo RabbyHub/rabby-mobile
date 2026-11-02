@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { Keyboard, TouchableOpacity, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { RcNextSearchCC } from '@/assets/icons/common';
-import { Text } from '@/components/Typography';
 import { Button } from '@/components2024/Button';
 import { NextSearchBar } from '@/components2024/SearchBar';
 import {
@@ -39,16 +38,22 @@ export const useKeyboardVisible = () => {
   return visible;
 };
 
-const PlaceholderButton = ({ title }: { title: string }) => {
-  const { styles } = useTheme2024({ getStyle });
-  return (
-    <View style={styles.placeholder}>
-      <Text style={styles.placeholderText} numberOfLines={1}>
-        {title}
-      </Text>
-    </View>
-  );
+const PLACEHOLDER_TITLE_STYLE = {
+  color: 'rgba(255, 255, 255, 0.6)',
+  opacity: 0.8,
 };
+
+const PlaceholderButton = ({ title }: { title: string }) => (
+  <Button
+    title={title}
+    height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+    titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
+    disabledTitleStyle={PLACEHOLDER_TITLE_STYLE}
+    disabled
+    noShadow
+    type="primary"
+  />
+);
 
 export const MemeCoinHomeBottomBar = ({
   mode,
@@ -182,21 +187,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   idlePlaceholder: {
     flex: 1,
     minWidth: 0,
-  },
-  placeholder: {
-    height: BOTTOM_BUTTON_SINGLE_HEIGHT,
-    paddingHorizontal: 12,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors2024['neutral-bg-2'],
-  },
-  placeholderText: {
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 18,
-    lineHeight: 22,
-    fontWeight: '700',
-    color: colors2024['neutral-secondary'],
   },
   searchButton: {
     width: BOTTOM_BUTTON_SINGLE_HEIGHT,

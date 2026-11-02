@@ -47,8 +47,22 @@ export const usePaymentAssets = ({
   memeTokenKeys: ReadonlySet<string>;
   amountUsd: number;
 }) => {
+  const [refreshSettled, setRefreshSettled] = useState(false);
   useEffect(() => {
-    useTokenList.getState().getTokenList(account.address, true);
+    let cancelled = false;
+    setRefreshSettled(false);
+    useTokenList
+      .getState()
+      .getTokenList(account.address, true)
+      .catch(() => undefined)
+      .finally(() => {
+        if (!cancelled) {
+          setRefreshSettled(true);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [account.address]);
 
   const tokens = useTokenList(
@@ -108,17 +122,21 @@ export const usePaymentAssets = ({
   accountRef.current = account;
 
   const accountAddress = account.address;
-  const gasKey = `${accountAddress.toLowerCase()}|${chainsKey}`;
-  const [gasCache, setGasCache] = useState<{
-    key: string;
-    byChain: Record<string, ChainNetInfo>;
-  } | null>(null);
+  const [gasByChain, setGasByChain] = useState<Record<string, ChainNetInfo>>(
+    {},
+  );
+  const requestedGasChainsRef = useRef(new Set<string>());
 
+  // Nothing waits on this: a chain that has not answered reserves no gas, which
+  // only makes the plan optimistic, and execution re-reads gas and caps the amount.
   useEffect(() => {
-    let cancelled = false;
     const chains = chainsKey ? chainsKey.split(',') : [];
-    Promise.all(
-      chains.map(async chainServerId => {
+    chains
+      .filter(
+        chainServerId => !requestedGasChainsRef.current.has(chainServerId),
+      )
+      .forEach(async chainServerId => {
+        requestedGasChainsRef.current.add(chainServerId);
         const chain = findChainByServerID(chainServerId);
         const native = walletTokensRef.current.find(
           t => t.chain === chainServerId && t.isNative,
@@ -137,45 +155,35 @@ export const usePaymentAssets = ({
               .then(t => t.price || 0)
               .catch(() => 0),
         ]);
-        return [
-          chainServerId,
-          {
+        setGasByChain(prev => ({
+          ...prev,
+          [chainServerId]: {
             gasPriceWei: levels.find(l => l.level === 'normal')?.price || 0,
             nativePrice,
           },
-        ] as const;
-      }),
-    ).then(entries => {
-      if (!cancelled) {
-        setGasCache({ key: gasKey, byChain: Object.fromEntries(entries) });
-      }
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [chainsKey, accountAddress, gasKey]);
+        }));
+      });
+  }, [chainsKey, accountAddress]);
 
   const chainGas = useMemo(() => {
     const result: Record<string, ChainGasInfo> = {};
-    for (const [chainServerId, net] of Object.entries(
-      gasCache?.byChain ?? {},
-    )) {
+    for (const { chain: chainServerId } of assets) {
       const chain = findChainByServerID(chainServerId);
       const native = walletTokens.find(
         t => t.chain === chainServerId && t.isNative,
       );
+      const net = gasByChain[chainServerId];
       result[chainServerId] = toChainGasInfo({
         gasLimit: getSwapGasReserveGasLimit(chain?.enum || ''),
-        gasPriceWei: net.gasPriceWei,
+        gasPriceWei: net?.gasPriceWei ?? 0,
         nativeDecimals: chain?.nativeTokenDecimals || 18,
-        nativePrice: net.nativePrice,
+        nativePrice: net?.nativePrice ?? 0,
         nativeBalanceUsd: native?.usdValue ?? 0,
         bridgeSupported: bridgeChains.has(chainServerId),
       });
     }
     return result;
-  }, [gasCache, walletTokens, bridgeChains]);
-  const chainGasReady = tokens !== undefined && gasCache?.key === gasKey;
+  }, [assets, gasByChain, walletTokens, bridgeChains]);
 
   const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
   const toggle = useMemoizedFn((key: string) => {
@@ -184,16 +192,21 @@ export const usePaymentAssets = ({
     );
   });
 
+  const selectedAssets = useMemo(
+    () => assets.filter(a => selectedKeys.includes(tokenKey(a))),
+    [assets, selectedKeys],
+  );
+
   const plan = useMemo(
     () =>
       planBuy({
         amountUsd,
         memes,
-        sources: assets.filter(a => selectedKeys.includes(tokenKey(a))),
+        sources: selectedAssets,
         chainGas,
         gasAccountBalanceUsd,
       }),
-    [amountUsd, memes, assets, selectedKeys, chainGas, gasAccountBalanceUsd],
+    [amountUsd, memes, selectedAssets, chainGas, gasAccountBalanceUsd],
   );
 
   return {
@@ -201,6 +214,7 @@ export const usePaymentAssets = ({
     selectedKeys,
     toggle,
     plan,
-    ready: chainGasReady,
+    /** same as the Swap token selector: show what there is, the list grows as the refresh completes */
+    listReady: assets.length > 0 || refreshSettled,
   };
 };

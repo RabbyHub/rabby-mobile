@@ -1,5 +1,3 @@
-import { openapi } from '@/core/request';
-
 export type RawMemeToken = {
   /** currently always 'hood' (= Rabby chain serverId 'hood') */
   chain_id: string;
@@ -25,8 +23,6 @@ export type MemeTokenListResult = {
 export type RawMemePosition = Omit<RawMemeToken, 'fdv_usd'> & {
   amount: number;
   usd_value: number;
-  /** P&L in USD; not returned by the backend yet */
-  pnl?: number | null;
 };
 
 export type MemeUserTokenListResult = {
@@ -35,19 +31,34 @@ export type MemeUserTokenListResult = {
   positions: RawMemePosition[];
 };
 
+export type RawMemePnlPosition = {
+  chain_id: string;
+  id: string;
+  /** null when the token was held 24h ago but had no price then */
+  pnl_24h_usd_value: number | null;
+  cost_usd_value: number;
+  pnl_all_usd_value: number;
+};
+
+export type RawMemePnlPoint = {
+  /** UTC RFC3339 */
+  time_at: string;
+  pnl_usd_value: number;
+};
+
+export type MemeUserPnlResult = {
+  owner: string;
+  total_pnl_24h_usd_value: number;
+  total_cost_usd_value: number;
+  total_pnl_all_usd_value: number;
+  /** a held token missing here has no known cost, so no P&L */
+  positions: RawMemePnlPosition[];
+  curve_24h: RawMemePnlPoint[];
+  curve_all: RawMemePnlPoint[];
+};
+
 export type MemeTokenListParams = {
   symbol?: string;
   page?: number;
   pageSize?: number;
 };
-
-export const fetchMemeTokenList = ({
-  symbol,
-  page,
-  pageSize,
-}: MemeTokenListParams): Promise<MemeTokenListResult> =>
-  openapi.getMemeTokenList({ symbol, page, page_size: pageSize });
-
-export const fetchMemeUserTokenList = (
-  address: string,
-): Promise<MemeUserTokenListResult> => openapi.getMemeUserTokenList(address);

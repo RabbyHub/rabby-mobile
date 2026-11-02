@@ -34,7 +34,7 @@ import { PAYMENT_ROW_HEIGHT, PaymentAssetRow } from './PaymentAssetRow';
 
 type BuyMemes = TransactionNavigatorParamList['MemeCoinBuy']['memes'];
 
-const SKELETON_ROWS = 3;
+const SKELETON_ROWS = 4;
 
 const MemeCoinBuyContent = ({
   account,
@@ -80,7 +80,7 @@ const MemeCoinBuyContent = ({
     [holdings, memes],
   );
 
-  const { assets, selectedKeys, toggle, plan, ready } = usePaymentAssets({
+  const { assets, selectedKeys, toggle, plan, listReady } = usePaymentAssets({
     account,
     memes: memeTargets,
     memeTokenKeys,
@@ -108,7 +108,6 @@ const MemeCoinBuyContent = ({
     plan,
   });
   const confirmDisabled = !canConfirmBuy({
-    ready,
     amountUsd: parsedAmountUsd,
     plan,
   });
@@ -128,7 +127,7 @@ const MemeCoinBuyContent = ({
   }, [account.address, logoByKey, maxPriceImpactPct, plan.legs]);
 
   let paymentList: React.ReactNode;
-  if (!ready) {
+  if (!listReady) {
     paymentList = Array.from({ length: SKELETON_ROWS }).map((_, index) => (
       <Skeleton
         key={index}

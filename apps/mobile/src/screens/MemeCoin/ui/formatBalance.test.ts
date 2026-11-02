@@ -1,7 +1,8 @@
-import { formatMemeBalanceUsd } from './formatBalance';
+import { formatMemeBalanceUsd, formatMemePnlUsd } from './formatBalance';
 
 jest.mock('@/utils/number', () => ({
-  formatUsdValue: (usd: number) => `$${usd.toFixed(2)}`,
+  formatUsdValue: (usd: number) =>
+    `${usd < 0 ? '-' : ''}$${Math.abs(usd).toFixed(2)}`,
 }));
 
 describe('formatMemeBalanceUsd', () => {
@@ -23,5 +24,15 @@ describe('formatMemeBalanceUsd', () => {
 
   it.each([0, 0.001])('shows no cents when it would read $0.00: %p', usd => {
     expect(formatMemeBalanceUsd(usd)).toBe('$0');
+  });
+});
+
+describe('formatMemePnlUsd', () => {
+  it.each([
+    [200.32, '+$200.32'],
+    [0, '+$0.00'],
+    [-3.1, '-$3.10'],
+  ])('signs the amount: %p', (usd, expected) => {
+    expect(formatMemePnlUsd(usd)).toBe(expected);
   });
 });

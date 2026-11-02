@@ -1,5 +1,10 @@
-import { appendByTokenKey, toMemeHolding, toMemeMarketItem } from './market';
-import type { RawMemePosition, RawMemeToken } from './memeApi';
+import type { RawMemePosition, RawMemeToken } from '@/core/chaintable/types';
+import {
+  appendByTokenKey,
+  toMemeHolding,
+  toMemeMarketItem,
+  toMemePnl,
+} from './market';
 
 const raw = (over: Partial<RawMemeToken> = {}): RawMemeToken => ({
   chain_id: 'hood',
@@ -61,12 +66,51 @@ describe('toMemeHolding', () => {
       },
       amount: 5,
       valueUsd: 10,
-      pnl: null,
+    });
+  });
+});
+
+describe('toMemePnl', () => {
+  const pnl = toMemePnl({
+    owner: '0xowner',
+    total_pnl_24h_usd_value: 11.1,
+    total_cost_usd_value: 100,
+    total_pnl_all_usd_value: -30.8,
+    positions: [
+      {
+        chain_id: 'hood',
+        id: '0xAbC',
+        pnl_24h_usd_value: null,
+        cost_usd_value: 100,
+        pnl_all_usd_value: -30.8,
+      },
+    ],
+    curve_24h: [
+      { time_at: '2026-11-01T07:00:00Z', pnl_usd_value: 0 },
+      { time_at: '2026-11-02T07:13:00Z', pnl_usd_value: 11.1 },
+    ],
+    curve_all: [{ time_at: '2026-11-02T07:13:00Z', pnl_usd_value: -30.8 }],
+  });
+
+  it('keeps each period total with its curve', () => {
+    expect(pnl.periods).toEqual({
+      '24h': {
+        totalUsd: 11.1,
+        points: [
+          { timestamp: Date.UTC(2026, 10, 1, 7), value: 0 },
+          { timestamp: Date.UTC(2026, 10, 2, 7, 13), value: 11.1 },
+        ],
+      },
+      all: {
+        totalUsd: -30.8,
+        points: [{ timestamp: Date.UTC(2026, 10, 2, 7, 13), value: -30.8 }],
+      },
     });
   });
 
-  it('takes the P&L from the backend field', () => {
-    expect(toMemeHolding(position({ pnl: -3.1 })).pnl).toBe(-3.1);
+  it('indexes the all-time P&L by the same key the holdings use', () => {
+    const holdingKey = 'hood:0xabc';
+    expect(pnl.byToken).toEqual({ [holdingKey]: -30.8 });
   });
 });
 

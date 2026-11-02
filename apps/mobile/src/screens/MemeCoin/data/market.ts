@@ -1,6 +1,17 @@
+import type {
+  MemeUserPnlResult,
+  RawMemePnlPoint,
+  RawMemePosition,
+  RawMemeToken,
+} from '@/core/chaintable/types';
 import { tokenKey } from '../engine/keys';
-import type { RawMemePosition, RawMemeToken } from './memeApi';
-import type { MemeHolding, MemeMarketItem, MemeToken } from './types';
+import type {
+  MemeHolding,
+  MemeMarketItem,
+  MemePnl,
+  MemePnlPoint,
+  MemeToken,
+} from './types';
 
 const toMemeToken = (raw: Omit<RawMemeToken, 'fdv_usd'>): MemeToken => ({
   id: raw.id,
@@ -20,7 +31,31 @@ export const toMemeHolding = (raw: RawMemePosition): MemeHolding => ({
   meme: toMemeToken(raw),
   amount: raw.amount,
   valueUsd: raw.usd_value,
-  pnl: raw.pnl ?? null,
+});
+
+const toPnlPoints = (curve: RawMemePnlPoint[]): MemePnlPoint[] =>
+  curve.map(point => ({
+    timestamp: new Date(point.time_at).getTime(),
+    value: point.pnl_usd_value,
+  }));
+
+export const toMemePnl = (raw: MemeUserPnlResult): MemePnl => ({
+  periods: {
+    '24h': {
+      totalUsd: raw.total_pnl_24h_usd_value,
+      points: toPnlPoints(raw.curve_24h),
+    },
+    all: {
+      totalUsd: raw.total_pnl_all_usd_value,
+      points: toPnlPoints(raw.curve_all),
+    },
+  },
+  byToken: Object.fromEntries(
+    raw.positions.map(position => [
+      tokenKey({ chain: position.chain_id, id: position.id }),
+      position.pnl_all_usd_value,
+    ]),
+  ),
 });
 
 export const appendByTokenKey = <T extends MemeToken>(
