@@ -1,7 +1,7 @@
 import React from 'react';
 import { TouchableOpacity, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import RcIconChevronCC from '@/assets2024/icons/convertDust/right-cc.svg';
+import RcIconChevronCC from '@/assets2024/memecoin/chevron-cc.svg';
 import { AssetAvatar } from '@/components/AssetAvatar';
 import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
@@ -9,6 +9,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 
 const MAX_AVATARS = 8;
 const ACCENT_LIGHT = '#9B4626';
+const CHEVRON_LIGHT = '#CD965E';
 
 export const HoldingsPill = ({
   mode,
@@ -22,13 +23,14 @@ export const HoldingsPill = ({
   const { t } = useTranslation();
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const accent = isLight ? ACCENT_LIGHT : colors2024['orange-default'];
+  const chevron = isLight ? CHEVRON_LIGHT : colors2024['orange-default'];
 
   return (
     <TouchableOpacity activeOpacity={0.8} onPress={onPress} style={styles.pill}>
       {mode === 'holdings' ? (
         <>
           <View style={[styles.chevronBox, styles.chevronBack]}>
-            <RcIconChevronCC width={6} height={12} color={accent} />
+            <RcIconChevronCC width={8} height={14} color={chevron} />
           </View>
           <Text style={[styles.text, styles.centerText, { color: accent }]}>
             {t('page.memeCoin.backToMarket')}
@@ -51,7 +53,7 @@ export const HoldingsPill = ({
             {t('page.memeCoin.holdingsEntry')}
           </Text>
           <View style={styles.chevronBox}>
-            <RcIconChevronCC width={6} height={12} color={accent} />
+            <RcIconChevronCC width={8} height={14} color={chevron} />
           </View>
         </>
       )}
