@@ -27,6 +27,9 @@ import { tokenKey } from '../engine/keys';
 import type { DisplayStatus, ExecLeg, FailReason } from '../engine/types';
 import type { MemeTradeTaskStore } from '../hooks/useMemeTradeTask';
 
+// Long amounts shrink to stay whole; names use an ellipsis instead.
+const AMOUNT_MIN_FONT_SCALE = 0.5;
+
 const SpinningIcon = () => {
   const rotation = useSharedValue(0);
   useEffect(() => {
@@ -128,7 +131,11 @@ export const ExecuteLegRow = React.memo(function ExecuteLegRow({
       onPress={handlePress}
       style={styles.card}>
       <View style={styles.topRow}>
-        <View style={styles.side}>
+        <View
+          style={[
+            styles.side,
+            mode === 'buy' ? styles.sideToken : styles.sideMeme,
+          ]}>
           <AssetAvatar
             logo={payLogo}
             chain={leg.pay.chain}
@@ -136,7 +143,11 @@ export const ExecuteLegRow = React.memo(function ExecuteLegRow({
             chainSize={16}
           />
           {mode === 'buy' ? (
-            <Text style={styles.amount} numberOfLines={1}>
+            <Text
+              style={styles.amount}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={AMOUNT_MIN_FONT_SCALE}>
               {formatUsdValue(leg.amountUsd)}
             </Text>
           ) : (
@@ -151,22 +162,35 @@ export const ExecuteLegRow = React.memo(function ExecuteLegRow({
           )}
         </View>
         <RcIconArrowCC
-          width={21}
+          width={20}
           height={20}
           color={colors2024['neutral-secondary']}
         />
-        <View style={[styles.side, styles.sideEnd]}>
+        <View
+          style={[
+            styles.side,
+            styles.sideEnd,
+            mode === 'buy' ? styles.sideMeme : styles.sideToken,
+          ]}>
           <AssetAvatar
             logo={receiveLogo}
             chain={leg.receive.chain}
             size={40}
             chainSize={16}
           />
-          <Text style={styles.symbol} numberOfLines={1}>
-            {mode === 'buy'
-              ? leg.receive.symbol
-              : `≈${formatUsdValue(leg.amountUsd)}`}
-          </Text>
+          {mode === 'buy' ? (
+            <Text style={styles.symbol} numberOfLines={1}>
+              {leg.receive.symbol}
+            </Text>
+          ) : (
+            <Text
+              style={styles.symbol}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={AMOUNT_MIN_FONT_SCALE}>
+              {`≈${formatUsdValue(leg.amountUsd)}`}
+            </Text>
+          )}
         </View>
       </View>
       <DashedDivider style={styles.divider} />
@@ -190,7 +214,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     gap: 10,
   },
   side: {
-    flex: 1,
     minWidth: 0,
     flexDirection: 'row',
     alignItems: 'center',
@@ -198,6 +221,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   sideEnd: {
     justifyContent: 'flex-end',
+  },
+  // of the width beside the arrow: 60% for the token with its amount, 40% for the meme
+  sideToken: {
+    flex: 3,
+  },
+  sideMeme: {
+    flex: 2,
   },
   memeInfo: {
     flexShrink: 1,
