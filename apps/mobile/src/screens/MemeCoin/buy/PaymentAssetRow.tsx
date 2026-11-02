@@ -9,7 +9,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { SelectedBadge } from '../components/SelectedBadge';
 
 export const PAYMENT_ROW_HEIGHT = 70;
-export const PAYMENT_ROW_GAP = 8;
+const PAYMENT_ROW_GAP = 8;
 
 export const PaymentAssetRow = React.memo(function PaymentAssetRow({
   itemKey,

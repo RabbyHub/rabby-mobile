@@ -1,4 +1,3 @@
-import { MAINSTREAM_STABLE_SYMBOLS } from './constants';
 import { compareText, tokenKey } from './keys';
 import type { ChainServerId, PaymentAsset } from './types';
 
@@ -9,6 +8,7 @@ export type WalletToken = {
   price: number;
   usdValue: number;
   isNative: boolean;
+  isStable: boolean;
 };
 
 export type BuildPaymentAssetListParams = {
@@ -19,13 +19,6 @@ export type BuildPaymentAssetListParams = {
   swapSupportedChains: ReadonlySet<ChainServerId>;
   bridgeSupportedChains: ReadonlySet<ChainServerId>;
 };
-
-export const isMainstreamToken = (token: {
-  symbol: string;
-  isNative: boolean;
-}) =>
-  token.isNative ||
-  MAINSTREAM_STABLE_SYMBOLS.includes(token.symbol.toUpperCase());
 
 const canProduceLeg = (
   chain: ChainServerId,
@@ -41,6 +34,7 @@ export const buildPaymentAssetList = (
     params.memeChains.has(asset.chain) ? 0 : 1;
 
   return params.tokens
+    .filter(token => token.isNative || token.isStable)
     .filter(token => !params.memeTokenKeys.has(tokenKey(token)))
     .filter(token => token.price > 0)
     .filter(token => canProduceLeg(token.chain, params))
@@ -51,7 +45,6 @@ export const buildPaymentAssetList = (
       usdValue: token.usdValue,
       price: token.price,
       isNative: token.isNative,
-      isMainstream: isMainstreamToken(token),
     }))
     .sort(
       (a, b) =>

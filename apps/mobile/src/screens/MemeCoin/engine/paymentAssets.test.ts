@@ -1,8 +1,4 @@
-import {
-  buildPaymentAssetList,
-  isMainstreamToken,
-  type WalletToken,
-} from './paymentAssets';
+import { buildPaymentAssetList, type WalletToken } from './paymentAssets';
 
 const token = (over: Partial<WalletToken>): WalletToken => ({
   id: 'tk',
@@ -11,6 +7,7 @@ const token = (over: Partial<WalletToken>): WalletToken => ({
   price: 1,
   usdValue: 10,
   isNative: false,
+  isStable: true,
   ...over,
 });
 
@@ -20,14 +17,6 @@ const base = {
   swapSupportedChains: new Set(['eth', 'bsc', 'base', 'arb']),
   bridgeSupportedChains: new Set(['eth', 'bsc', 'base', 'arb']),
 };
-
-describe('isMainstreamToken', () => {
-  it('treats native and whitelisted stablecoins as mainstream, ignoring case', () => {
-    expect(isMainstreamToken({ symbol: 'ETH', isNative: true })).toBe(true);
-    expect(isMainstreamToken({ symbol: 'usdc', isNative: false })).toBe(true);
-    expect(isMainstreamToken({ symbol: 'ARB', isNative: false })).toBe(false);
-  });
-});
 
 describe('buildPaymentAssetList', () => {
   it('excludes held or targeted memes by chain + lowercase id', () => {
@@ -100,17 +89,22 @@ describe('buildPaymentAssetList', () => {
     ]);
   });
 
-  it('marks mainstream on each asset', () => {
+  it('keeps only native tokens and stablecoins', () => {
     const list = buildPaymentAssetList({
       ...base,
       tokens: [
-        token({ id: 'n', symbol: 'ETH', isNative: true }),
-        token({ id: 'l', symbol: 'LINK' }),
+        token({
+          id: 'native',
+          symbol: 'ETH',
+          usdValue: 30,
+          isNative: true,
+          isStable: false,
+        }),
+        token({ id: 'stable', symbol: 'USDT', usdValue: 20 }),
+        token({ id: 'weth', symbol: 'WETH', usdValue: 10, isStable: false }),
+        token({ id: 'link', symbol: 'LINK', usdValue: 5, isStable: false }),
       ],
     });
-    expect(list.map(a => [a.symbol, a.isMainstream])).toEqual([
-      ['ETH', true],
-      ['LINK', false],
-    ]);
+    expect(list.map(a => a.symbol)).toEqual(['ETH', 'USDT']);
   });
 });

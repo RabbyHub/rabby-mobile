@@ -15,7 +15,6 @@ export type PaymentAsset = TokenRef & {
   usdValue: number;
   price: number;
   isNative: boolean;
-  isMainstream: boolean;
 };
 
 export type ChainGasInfo = {

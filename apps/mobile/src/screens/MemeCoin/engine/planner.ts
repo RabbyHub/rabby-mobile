@@ -35,12 +35,9 @@ const toRef = ({ id, chain, symbol }: TokenRef): TokenRef => ({
 const riskLast = (s: SourceState) => (s.gasPayer === 'risk' ? 1 : 0);
 const mainnetLast = (s: SourceState) =>
   s.asset.chain === ETH_MAINNET_SERVER_ID ? 1 : 0;
-const mainstreamFirst = (s: SourceState) => (s.asset.isMainstream ? 0 : 1);
-const longTailFirst = (s: SourceState) => (s.asset.isMainstream ? 1 : 0);
 
 const sameChainSingle: SourceOrder = (a, b) =>
   riskLast(a) - riskLast(b) ||
-  longTailFirst(a) - longTailFirst(b) ||
   a.remaining - b.remaining ||
   compareText(a.key, b.key);
 
@@ -52,14 +49,12 @@ const sameChainSplit: SourceOrder = (a, b) =>
 const crossChainSingle: SourceOrder = (a, b) =>
   riskLast(a) - riskLast(b) ||
   mainnetLast(a) - mainnetLast(b) ||
-  mainstreamFirst(a) - mainstreamFirst(b) ||
   a.remaining - b.remaining ||
   compareText(a.key, b.key);
 
 const crossChainSplit: SourceOrder = (a, b) =>
   riskLast(a) - riskLast(b) ||
   mainnetLast(a) - mainnetLast(b) ||
-  mainstreamFirst(a) - mainstreamFirst(b) ||
   b.remaining - a.remaining ||
   compareText(a.key, b.key);
 
