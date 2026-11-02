@@ -57,8 +57,8 @@ const MemeCoinExecuteContent = ({
   const status = store(s => s.status);
   const exitDialogOpen = store(s => s.exitDialogOpen);
   const done = store(s => countFinishedLegs(s.states));
-  const canRetry = store(s =>
-    legs.some(leg => isLegRetryable(s.states[leg.key])),
+  const retryCount = store(
+    s => legs.filter(leg => isLegRetryable(s.states[leg.key])).length,
   );
   const navigation = useNavigation();
   const [leaving, setLeaving] = useState(false);
@@ -112,7 +112,7 @@ const MemeCoinExecuteContent = ({
     status,
     done,
     legs.length,
-    canRetry,
+    retryCount > 0,
   );
 
   return (
@@ -177,7 +177,9 @@ const MemeCoinExecuteContent = ({
             />
             <Button
               type="primary"
-              title={t('page.memeCoin.execute.retryFailed')}
+              title={t('page.memeCoin.execute.retryFailedTxns', {
+                count: retryCount,
+              })}
               height={BOTTOM_BUTTON_SINGLE_HEIGHT}
               titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
               containerStyle={styles.retryButton}
