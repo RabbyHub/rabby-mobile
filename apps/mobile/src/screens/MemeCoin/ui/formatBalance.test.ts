@@ -17,8 +17,11 @@ describe('formatMemeBalanceUsd', () => {
   it.each([
     [50, '$50.00'],
     [12.34, '$12.34'],
-    [0, '$0.00'],
   ])('keeps the normal format up to $50: %p', (usd, expected) => {
     expect(formatMemeBalanceUsd(usd)).toBe(expected);
+  });
+
+  it.each([0, 0.001])('shows no cents when it would read $0.00: %p', usd => {
+    expect(formatMemeBalanceUsd(usd)).toBe('$0');
   });
 });
