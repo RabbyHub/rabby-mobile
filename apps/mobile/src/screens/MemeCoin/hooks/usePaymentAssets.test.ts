@@ -154,7 +154,7 @@ describe('usePaymentAssets', () => {
   });
 
   describe('gas', () => {
-    it('reserves the default gas until the real one arrives', async () => {
+    it('reserves nothing until the real gas arrives', async () => {
       let releaseGas!: (levels: typeof GAS_LEVELS) => void;
       mockGasMarket.mockImplementation(
         () =>
@@ -166,22 +166,23 @@ describe('usePaymentAssets', () => {
       const { result } = render(1000);
       await flush();
       act(() => result.current.toggle('hood:hood'));
-      expect(result.current.plan.spendableTotalUsd).toBeCloseTo(89.9);
+      expect(result.current.plan.spendableTotalUsd).toBeCloseTo(90);
 
       await act(async () => {
-        releaseGas(GAS_LEVELS);
+        // 2,000,000 gas x 1e10 wei = 0.02 native at $1
+        releaseGas([{ level: 'normal', price: 1e10 }]);
       });
       await flush();
-      expect(result.current.plan.spendableTotalUsd).toBeCloseTo(90);
+      expect(result.current.plan.spendableTotalUsd).toBeCloseTo(89.98);
     });
 
-    it('keeps the default gas when the gas request fails', async () => {
+    it('reserves nothing when the gas request fails', async () => {
       mockGasMarket.mockRejectedValue(new Error('network'));
       setStore({ tokenListMap: { [KEY]: [hoodEth] } });
       const { result } = render(1000);
       await flush();
       act(() => result.current.toggle('hood:hood'));
-      expect(result.current.plan.spendableTotalUsd).toBeCloseTo(89.9);
+      expect(result.current.plan.spendableTotalUsd).toBeCloseTo(90);
     });
 
     it('can plan a cross-chain asset before its gas arrives', async () => {

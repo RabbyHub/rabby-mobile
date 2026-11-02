@@ -13,7 +13,7 @@ import { getSwapGasReserveGasLimit } from '@/screens/Swap/utils';
 import useTokenList from '@/store/tokens';
 import { findChainByEnum, findChainByServerID } from '@/utils/chain';
 import { defaultTokenFilter } from '@/utils/lpToken';
-import { defaultPerLegGasUsd, toChainGasInfo } from '../engine/gas';
+import { toChainGasInfo } from '../engine/gas';
 import { tokenKey } from '../engine/keys';
 import {
   buildPaymentAssetList,
@@ -127,7 +127,8 @@ export const usePaymentAssets = ({
   );
   const requestedGasChainsRef = useRef(new Set<string>());
 
-  // The plan uses a default until a chain answers, so nothing waits on this.
+  // Nothing waits on this: a chain that has not answered reserves no gas, which
+  // only makes the plan optimistic, and execution re-reads gas and caps the amount.
   useEffect(() => {
     const chains = chainsKey ? chainsKey.split(',') : [];
     chains
@@ -154,13 +155,13 @@ export const usePaymentAssets = ({
               .then(t => t.price || 0)
               .catch(() => 0),
         ]);
-        const gasPriceWei = levels.find(l => l.level === 'normal')?.price;
-        if (gasPriceWei && nativePrice) {
-          setGasByChain(prev => ({
-            ...prev,
-            [chainServerId]: { gasPriceWei, nativePrice },
-          }));
-        }
+        setGasByChain(prev => ({
+          ...prev,
+          [chainServerId]: {
+            gasPriceWei: levels.find(l => l.level === 'normal')?.price || 0,
+            nativePrice,
+          },
+        }));
       });
   }, [chainsKey, accountAddress]);
 
@@ -171,23 +172,15 @@ export const usePaymentAssets = ({
       const native = walletTokens.find(
         t => t.chain === chainServerId && t.isNative,
       );
-      const nativeBalanceUsd = native?.usdValue ?? 0;
-      const bridgeSupported = bridgeChains.has(chainServerId);
       const net = gasByChain[chainServerId];
-      result[chainServerId] = net
-        ? toChainGasInfo({
-            gasLimit: getSwapGasReserveGasLimit(chain?.enum || ''),
-            gasPriceWei: net.gasPriceWei,
-            nativeDecimals: chain?.nativeTokenDecimals || 18,
-            nativePrice: net.nativePrice,
-            nativeBalanceUsd,
-            bridgeSupported,
-          })
-        : {
-            perLegGasUsd: defaultPerLegGasUsd(chainServerId),
-            nativeBalanceUsd,
-            bridgeSupported,
-          };
+      result[chainServerId] = toChainGasInfo({
+        gasLimit: getSwapGasReserveGasLimit(chain?.enum || ''),
+        gasPriceWei: net?.gasPriceWei ?? 0,
+        nativeDecimals: chain?.nativeTokenDecimals || 18,
+        nativePrice: net?.nativePrice ?? 0,
+        nativeBalanceUsd: native?.usdValue ?? 0,
+        bridgeSupported: bridgeChains.has(chainServerId),
+      });
     }
     return result;
   }, [assets, gasByChain, walletTokens, bridgeChains]);

@@ -4,10 +4,6 @@ export const ETH_MAINNET_SERVER_ID = 'eth';
 
 export const AMOUNT_EPSILON = 1e-9;
 
-/** USD reserved per leg until the real gas of a chain is known */
-export const DEFAULT_MAINNET_PER_LEG_GAS_USD = 5;
-export const DEFAULT_PER_LEG_GAS_USD = 0.1;
-
 export const BRIDGE_ARRIVAL_POLL_INTERVAL_MS = 3 * 1000;
 
 export const AUTO_LOCK_REFRESH_INTERVAL_MS = 60 * 1000;
