@@ -16,6 +16,7 @@ import {
 } from 'react-native';
 import { useCurrentTabScrollY } from 'react-native-collapsible-tab-view';
 import { useShallow } from 'zustand/shallow';
+import { runOnJS, useAnimatedReaction } from 'react-native-reanimated';
 
 import { ASSETS_ITEM_HEIGHT_NEW, RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
@@ -1037,6 +1038,20 @@ export const TokenList = () => {
       return onRefresh();
     },
   });
+  const [isPullRefreshVisible, setIsPullRefreshVisible] = useState(false);
+
+  // RefreshPlaceholderIOS changes the list header height throughout the pull
+  // and its closing animation. Keeping the native visible anchor enabled while
+  // that header shrinks anchors the first token row to a stale offset, leaving
+  // a large blank area above short token lists.
+  useAnimatedReaction(
+    () => pullDistance.value > 0,
+    (visible, previous) => {
+      if (visible !== previous) {
+        runOnJS(setIsPullRefreshVisible)(visible);
+      }
+    },
+  );
 
   useEffect(() => {
     console.debug('[PulldownRefresh] TokenList isLoading changed', isLoading);
@@ -1103,7 +1118,9 @@ export const TokenList = () => {
         updateCellsBatchingPeriod={TOKEN_LIST_BATCHING_PERIOD_MS}
         removeClippedSubviews={IS_ANDROID}
         maintainVisibleContentPosition={
-          suspendVisibleAnchor ? undefined : { minIndexForVisible: 0 }
+          suspendVisibleAnchor || isPullRefreshVisible
+            ? undefined
+            : { minIndexForVisible: 0 }
         }
       />
     </GestureDetector>
