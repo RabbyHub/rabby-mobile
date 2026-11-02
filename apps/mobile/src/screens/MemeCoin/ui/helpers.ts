@@ -57,15 +57,12 @@ export const getBuySummary = ({
 };
 
 export const canConfirmBuy = ({
-  ready,
   amountUsd,
   plan,
 }: {
-  ready: boolean;
   amountUsd: number | null;
   plan: PlanResult;
 }) =>
-  ready &&
   amountUsd !== null &&
   plan.legs.length > 0 &&
   plan.shortfallUsd <= AMOUNT_EPSILON;

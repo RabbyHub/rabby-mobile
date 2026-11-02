@@ -80,9 +80,9 @@ const flush = () =>
     await new Promise(resolve => setTimeout(resolve, 0));
   });
 
-const render = () =>
+const render = (amountUsd = 1) =>
   renderHook(() =>
-    usePaymentAssets({ account, memes, memeTokenKeys, amountUsd: 1 }),
+    usePaymentAssets({ account, memes, memeTokenKeys, amountUsd }),
   );
 
 const setStore = (
@@ -153,32 +153,45 @@ describe('usePaymentAssets', () => {
     });
   });
 
-  describe('gasReady', () => {
-    it('waits only for the gas of the selected assets', async () => {
-      let releaseEthGas!: (levels: typeof GAS_LEVELS) => void;
-      mockGasMarket.mockImplementation((chainId: string) =>
-        chainId === 'eth'
-          ? new Promise(resolve => {
-              releaseEthGas = resolve;
-            })
-          : Promise.resolve(GAS_LEVELS),
+  describe('gas', () => {
+    it('reserves the default gas until the real one arrives', async () => {
+      let releaseGas!: (levels: typeof GAS_LEVELS) => void;
+      mockGasMarket.mockImplementation(
+        () =>
+          new Promise(resolve => {
+            releaseGas = resolve;
+          }),
       );
-      setStore({ tokenListMap: { [KEY]: [hoodEth, ethUsdc] } });
-      const { result } = render();
+      setStore({ tokenListMap: { [KEY]: [hoodEth] } });
+      const { result } = render(1000);
       await flush();
-      expect(result.current.gasReady).toBe(true);
-
       act(() => result.current.toggle('hood:hood'));
-      expect(result.current.gasReady).toBe(true);
-
-      act(() => result.current.toggle('eth:0xusdc'));
-      expect(result.current.gasReady).toBe(false);
+      expect(result.current.plan.spendableTotalUsd).toBeCloseTo(89.9);
 
       await act(async () => {
-        releaseEthGas(GAS_LEVELS);
+        releaseGas(GAS_LEVELS);
       });
       await flush();
-      expect(result.current.gasReady).toBe(true);
+      expect(result.current.plan.spendableTotalUsd).toBeCloseTo(90);
+    });
+
+    it('keeps the default gas when the gas request fails', async () => {
+      mockGasMarket.mockRejectedValue(new Error('network'));
+      setStore({ tokenListMap: { [KEY]: [hoodEth] } });
+      const { result } = render(1000);
+      await flush();
+      act(() => result.current.toggle('hood:hood'));
+      expect(result.current.plan.spendableTotalUsd).toBeCloseTo(89.9);
+    });
+
+    it('can plan a cross-chain asset before its gas arrives', async () => {
+      mockGasMarket.mockImplementation(() => never());
+      setStore({ tokenListMap: { [KEY]: [ethUsdc] } });
+      const { result } = render();
+      await flush();
+      act(() => result.current.toggle('eth:0xusdc'));
+      expect(result.current.plan.shortfallUsd).toBe(0);
+      expect(result.current.plan.legs.map(l => l.kind)).toEqual(['bridge']);
     });
 
     it('fetches each chain once as the list grows', async () => {

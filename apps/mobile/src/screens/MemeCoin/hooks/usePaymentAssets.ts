@@ -13,7 +13,7 @@ import { getSwapGasReserveGasLimit } from '@/screens/Swap/utils';
 import useTokenList from '@/store/tokens';
 import { findChainByEnum, findChainByServerID } from '@/utils/chain';
 import { defaultTokenFilter } from '@/utils/lpToken';
-import { toChainGasInfo } from '../engine/gas';
+import { defaultPerLegGasUsd, toChainGasInfo } from '../engine/gas';
 import { tokenKey } from '../engine/keys';
 import {
   buildPaymentAssetList,
@@ -127,7 +127,7 @@ export const usePaymentAssets = ({
   );
   const requestedGasChainsRef = useRef(new Set<string>());
 
-  // Per chain, so a slow chain holds back only the assets on it.
+  // The plan uses a default until a chain answers, so nothing waits on this.
   useEffect(() => {
     const chains = chainsKey ? chainsKey.split(',') : [];
     chains
@@ -154,34 +154,43 @@ export const usePaymentAssets = ({
               .then(t => t.price || 0)
               .catch(() => 0),
         ]);
-        setGasByChain(prev => ({
-          ...prev,
-          [chainServerId]: {
-            gasPriceWei: levels.find(l => l.level === 'normal')?.price || 0,
-            nativePrice,
-          },
-        }));
+        const gasPriceWei = levels.find(l => l.level === 'normal')?.price;
+        if (gasPriceWei && nativePrice) {
+          setGasByChain(prev => ({
+            ...prev,
+            [chainServerId]: { gasPriceWei, nativePrice },
+          }));
+        }
       });
   }, [chainsKey, accountAddress]);
 
   const chainGas = useMemo(() => {
     const result: Record<string, ChainGasInfo> = {};
-    for (const [chainServerId, net] of Object.entries(gasByChain)) {
+    for (const { chain: chainServerId } of assets) {
       const chain = findChainByServerID(chainServerId);
       const native = walletTokens.find(
         t => t.chain === chainServerId && t.isNative,
       );
-      result[chainServerId] = toChainGasInfo({
-        gasLimit: getSwapGasReserveGasLimit(chain?.enum || ''),
-        gasPriceWei: net.gasPriceWei,
-        nativeDecimals: chain?.nativeTokenDecimals || 18,
-        nativePrice: net.nativePrice,
-        nativeBalanceUsd: native?.usdValue ?? 0,
-        bridgeSupported: bridgeChains.has(chainServerId),
-      });
+      const nativeBalanceUsd = native?.usdValue ?? 0;
+      const bridgeSupported = bridgeChains.has(chainServerId);
+      const net = gasByChain[chainServerId];
+      result[chainServerId] = net
+        ? toChainGasInfo({
+            gasLimit: getSwapGasReserveGasLimit(chain?.enum || ''),
+            gasPriceWei: net.gasPriceWei,
+            nativeDecimals: chain?.nativeTokenDecimals || 18,
+            nativePrice: net.nativePrice,
+            nativeBalanceUsd,
+            bridgeSupported,
+          })
+        : {
+            perLegGasUsd: defaultPerLegGasUsd(chainServerId),
+            nativeBalanceUsd,
+            bridgeSupported,
+          };
     }
     return result;
-  }, [gasByChain, walletTokens, bridgeChains]);
+  }, [assets, gasByChain, walletTokens, bridgeChains]);
 
   const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
   const toggle = useMemoizedFn((key: string) => {
@@ -214,7 +223,5 @@ export const usePaymentAssets = ({
     plan,
     /** same as the Swap token selector: show what there is, the list grows as the refresh completes */
     listReady: assets.length > 0 || refreshSettled,
-    /** the plan needs gas only for the chains of the selected assets */
-    gasReady: selectedAssets.every(a => !!gasByChain[a.chain]),
   };
 };

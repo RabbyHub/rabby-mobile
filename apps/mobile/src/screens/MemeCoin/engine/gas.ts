@@ -1,5 +1,15 @@
 import BigNumber from 'bignumber.js';
+import {
+  DEFAULT_MAINNET_PER_LEG_GAS_USD,
+  DEFAULT_PER_LEG_GAS_USD,
+  ETH_MAINNET_SERVER_ID,
+} from './constants';
 import type { ChainGasInfo } from './types';
+
+export const defaultPerLegGasUsd = (chainServerId: string) =>
+  chainServerId === ETH_MAINNET_SERVER_ID
+    ? DEFAULT_MAINNET_PER_LEG_GAS_USD
+    : DEFAULT_PER_LEG_GAS_USD;
 
 export const gasReserveInNativeUnits = ({
   gasLimit,

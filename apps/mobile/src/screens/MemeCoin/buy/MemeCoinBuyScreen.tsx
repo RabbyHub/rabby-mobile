@@ -80,13 +80,12 @@ const MemeCoinBuyContent = ({
     [holdings, memes],
   );
 
-  const { assets, selectedKeys, toggle, plan, listReady, gasReady } =
-    usePaymentAssets({
-      account,
-      memes: memeTargets,
-      memeTokenKeys,
-      amountUsd: parsedAmountUsd ?? 0,
-    });
+  const { assets, selectedKeys, toggle, plan, listReady } = usePaymentAssets({
+    account,
+    memes: memeTargets,
+    memeTokenKeys,
+    amountUsd: parsedAmountUsd ?? 0,
+  });
 
   const logoByKey = useMemo(() => {
     const map = new Map<string, string>();
@@ -109,7 +108,6 @@ const MemeCoinBuyContent = ({
     plan,
   });
   const confirmDisabled = !canConfirmBuy({
-    ready: gasReady,
     amountUsd: parsedAmountUsd,
     plan,
   });

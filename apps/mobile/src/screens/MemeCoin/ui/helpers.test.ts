@@ -92,22 +92,14 @@ describe('getBuySummary', () => {
 });
 
 describe('canConfirmBuy', () => {
-  it('needs ready data, a valid amount, legs and no shortfall', () => {
-    expect(canConfirmBuy({ ready: true, amountUsd: 100, plan: plan() })).toBe(
-      true,
-    );
-    expect(canConfirmBuy({ ready: false, amountUsd: 100, plan: plan() })).toBe(
+  it('needs a valid amount, legs and no shortfall', () => {
+    expect(canConfirmBuy({ amountUsd: 100, plan: plan() })).toBe(true);
+    expect(canConfirmBuy({ amountUsd: null, plan: plan() })).toBe(false);
+    expect(canConfirmBuy({ amountUsd: 100, plan: plan({ legs: [] }) })).toBe(
       false,
     );
-    expect(canConfirmBuy({ ready: true, amountUsd: null, plan: plan() })).toBe(
-      false,
-    );
-    expect(
-      canConfirmBuy({ ready: true, amountUsd: 100, plan: plan({ legs: [] }) }),
-    ).toBe(false);
     expect(
       canConfirmBuy({
-        ready: true,
         amountUsd: 100,
         plan: plan({ shortfallUsd: 5 }),
       }),
