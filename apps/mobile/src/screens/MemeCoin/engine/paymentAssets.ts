@@ -29,11 +29,8 @@ const canProduceLeg = (
 
 export const buildPaymentAssetList = (
   params: BuildPaymentAssetListParams,
-): PaymentAsset[] => {
-  const sameChainRank = (asset: PaymentAsset) =>
-    params.memeChains.has(asset.chain) ? 0 : 1;
-
-  return params.tokens
+): PaymentAsset[] =>
+  params.tokens
     .filter(token => token.isNative || token.isStable)
     .filter(token => !params.memeTokenKeys.has(tokenKey(token)))
     .filter(token => token.price > 0)
@@ -48,9 +45,7 @@ export const buildPaymentAssetList = (
     }))
     .sort(
       (a, b) =>
-        sameChainRank(a) - sameChainRank(b) ||
         b.usdValue - a.usdValue ||
         compareText(a.chain, b.chain) ||
         compareText(a.symbol, b.symbol),
     );
-};

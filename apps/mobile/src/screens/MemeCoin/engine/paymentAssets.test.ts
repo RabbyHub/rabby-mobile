@@ -63,7 +63,7 @@ describe('buildPaymentAssetList', () => {
     expect(list).toHaveLength(1);
   });
 
-  it('sorts same-chain group first, then usd value desc, then chain and symbol', () => {
+  it('sorts by usd value desc, then chain and symbol', () => {
     const list = buildPaymentAssetList({
       ...base,
       tokens: [
@@ -81,11 +81,11 @@ describe('buildPaymentAssetList', () => {
       ],
     });
     expect(list.map(a => `${a.chain}:${a.symbol}`)).toEqual([
-      'eth:USDT',
-      'bsc:BNB',
       'base:USDC',
       'arb:ARB',
       'base:AERO',
+      'eth:USDT',
+      'bsc:BNB',
     ]);
   });
 
