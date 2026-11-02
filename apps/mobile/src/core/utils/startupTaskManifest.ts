@@ -170,6 +170,18 @@ export const STARTUP_TASKS = {
     idleTimeoutMs: 5000,
     budgetMs: 600,
   }),
+  homeMemeHoldingsWarmup: defineStartupTask({
+    label: 'home.memeHoldingsWarmup',
+    owner: 'memecoin',
+    reason:
+      'warm the Memecoin entry balance only after Home is usable and early interactions are likely quiet',
+    stage: 'homePostStartupIdle',
+    priority: 'low',
+    delayMs: 3000,
+    fallbackMs: 10000,
+    idleTimeoutMs: 5000,
+    budgetMs: 120,
+  }),
   cexSupportListFetch: defineStartupTask({
     label: 'cex.supportListFetch',
     owner: 'cex',
