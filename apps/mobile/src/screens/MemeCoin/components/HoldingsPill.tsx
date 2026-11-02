@@ -27,12 +27,14 @@ export const HoldingsPill = ({
     <TouchableOpacity activeOpacity={0.8} onPress={onPress} style={styles.pill}>
       {mode === 'holdings' ? (
         <>
-          <View style={styles.backChevron}>
+          <View style={[styles.chevronBox, styles.chevronBack]}>
             <RcIconChevronCC width={6} height={12} color={accent} />
           </View>
           <Text style={[styles.text, styles.centerText, { color: accent }]}>
             {t('page.memeCoin.backToMarket')}
           </Text>
+          {/* keeps the title centered in the pill */}
+          <View style={styles.chevronBox} />
         </>
       ) : (
         <>
@@ -41,14 +43,16 @@ export const HoldingsPill = ({
               <View
                 key={avatar.key}
                 style={[styles.avatarRing, index > 0 && styles.avatarOverlap]}>
-                <AssetAvatar logo={avatar.logoUrl} size={30} />
+                <AssetAvatar logo={avatar.logoUrl} size={32} />
               </View>
             ))}
           </View>
           <Text style={[styles.text, { color: accent }]}>
             {t('page.memeCoin.holdingsEntry')}
           </Text>
-          <RcIconChevronCC width={6} height={12} color={accent} />
+          <View style={styles.chevronBox}>
+            <RcIconChevronCC width={6} height={12} color={accent} />
+          </View>
         </>
       )}
     </TouchableOpacity>
@@ -59,13 +63,12 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   pill: {
     height: 64,
     marginTop: 20,
-    paddingHorizontal: 16,
+    paddingHorizontal: 14,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
     borderRadius: 14,
-    borderWidth: 1,
-    borderColor: colors2024['orange-disable'],
+    borderWidth: 2,
+    borderColor: colors2024['orange-light-2'],
     backgroundColor: colors2024['neutral-card-1'],
   },
   avatars: {
@@ -74,10 +77,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
   },
   avatarRing: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    borderWidth: 1,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 2,
     borderColor: colors2024['neutral-bg-1'],
     overflow: 'hidden',
   },
@@ -94,7 +97,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flex: 1,
     textAlign: 'center',
   },
-  backChevron: {
+  chevronBox: {
+    width: 20,
+    height: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  chevronBack: {
     transform: [{ rotate: '180deg' }],
   },
 }));

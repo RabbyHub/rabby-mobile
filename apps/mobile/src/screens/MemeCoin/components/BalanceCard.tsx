@@ -1,13 +1,12 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Skeleton } from '@rneui/themed';
-import { useTranslation } from 'react-i18next';
 import LinearGradient from 'react-native-linear-gradient';
-import RcBalanceCloud from '@/assets2024/memecoin/balance-cloud.svg';
+import RcBalanceGlow from '@/assets2024/memecoin/balance-glow.svg';
 import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
-import { formatUsdValue } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
+import { formatMemeBalanceUsd } from '../ui/formatBalance';
 
 const GRADIENT_END_LIGHT = '#FEFAED';
 
@@ -19,7 +18,6 @@ export const BalanceCard = ({
   totalUsd: number | null;
   loading: boolean;
 }) => {
-  const { t } = useTranslation();
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
 
   return (
@@ -37,16 +35,13 @@ export const BalanceCard = ({
           end={{ x: 1, y: 0.8 }}
           style={StyleSheet.absoluteFill}
         />
+        {isLight ? <RcBalanceGlow style={styles.glow} /> : null}
       </View>
-      {isLight ? (
-        <RcBalanceCloud width={76} height={32} style={styles.cloud} />
-      ) : null}
-      <Text style={styles.label}>{t('page.memeCoin.balance')}</Text>
       {loading ? (
         <Skeleton width={140} height={36} style={styles.valueSkeleton} />
       ) : (
         <Text style={styles.value} numberOfLines={1}>
-          {totalUsd === null ? '--' : formatUsdValue(totalUsd)}
+          {totalUsd === null ? '--' : formatMemeBalanceUsd(totalUsd)}
         </Text>
       )}
       <Text style={styles.pnl}>--</Text>
@@ -56,10 +51,14 @@ export const BalanceCard = ({
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   card: {
-    height: 140,
+    height: 120,
     // padding includes the background layer's 2px border
     paddingTop: 20,
     paddingHorizontal: 16,
+    shadowColor: '#777B98',
+    shadowOpacity: 0.06,
+    shadowRadius: 30,
+    shadowOffset: { width: 0, height: 12 },
   },
   background: {
     ...StyleSheet.absoluteFillObject,
@@ -68,33 +67,23 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     borderColor: colors2024['neutral-bg-1'],
     overflow: 'hidden',
   },
-  cloud: {
+  glow: {
     position: 'absolute',
-    left: 10,
-    top: 12,
-    transform: [{ scaleX: -1 }],
-  },
-  label: {
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '500',
-    color: colors2024['neutral-foot'],
+    left: -63,
+    top: 30,
   },
   value: {
-    marginTop: 20,
     fontFamily: 'SF Pro Rounded',
-    fontSize: 28,
+    fontSize: 32,
     lineHeight: 36,
     fontWeight: '900',
     color: colors2024['neutral-title-1'],
   },
   valueSkeleton: {
-    marginTop: 20,
     borderRadius: 8,
   },
   pnl: {
-    marginTop: 8,
+    marginTop: 10,
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     lineHeight: 18,
