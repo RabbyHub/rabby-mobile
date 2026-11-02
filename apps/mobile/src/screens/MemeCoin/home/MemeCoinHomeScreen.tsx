@@ -28,7 +28,6 @@ import { BalanceCard } from '../components/BalanceCard';
 import { HoldingsPill } from '../components/HoldingsPill';
 import { MemeEmptyState } from '../components/MemeEmptyState';
 import { MEME_ROW_HEIGHT, MemeTokenRow } from '../components/MemeTokenRow';
-import { filterBySymbolPrefix } from '../data/market';
 import {
   refreshMemeHoldings,
   useMemeHoldings,
@@ -44,13 +43,16 @@ import { toSellExecLegs } from '../engine/execLegs';
 import { tokenKey } from '../engine/keys';
 import {
   consumeMemeCoinHomeReset,
+  getMemeCoinHomeMode,
   pushMemeCoinBuy,
   pushMemeCoinExecute,
+  setMemeCoinHomeMode,
 } from '../navigation';
 import {
   DEFAULT_MAX_PRICE_IMPACT_PCT,
   formatMarketCapUsd,
   type MaxPriceImpactPct,
+  parseBuyAmount,
   toSellHoldings,
 } from '../ui/helpers';
 import { getChainNativeToken } from '../ui/nativeToken';
@@ -98,8 +100,15 @@ export const MemeCoinHomeScreen = () => {
     loadFailed: holdingsLoadFailed,
   } = useMemeHoldings(address);
 
-  const [mode, setMode] = useState<HomeMode>('market');
+  const [mode, setModeState] = useState<HomeMode>(getMemeCoinHomeMode);
+  const setMode = useCallback((next: HomeMode) => {
+    setMemeCoinHomeMode(next);
+    setModeState(next);
+  }, []);
   const [keyword, setKeyword] = useState('');
+  const [searching, setSearching] = useState(false);
+  const [amountText, setAmountText] = useState('');
+  const amountUsd = parseBuyAmount(amountText);
   // market picks are snapshots: search results are not in the paged list
   const [selectedMarket, setSelectedMarket] =
     useState<Record<string, MemeMarketItem>>(NO_MARKET_SELECTION);
@@ -120,6 +129,7 @@ export const MemeCoinHomeScreen = () => {
   const clearSelection = useCallback(() => {
     setSelectedMarket(NO_MARKET_SELECTION);
     setSelectedHoldingKeys(NO_HOLDING_KEYS);
+    setAmountText('');
   }, []);
 
   useEffect(() => {
@@ -147,11 +157,12 @@ export const MemeCoinHomeScreen = () => {
       Keyboard.dismiss();
       setMode('market');
       setKeyword('');
+      setSearching(false);
       clearSelection();
       if (address) {
         refreshMemeHoldings(address);
       }
-    }, [address, clearSelection]),
+    }, [address, clearSelection, setMode]),
   );
 
   // Android pans the whole window by default (header slides off). The app is
@@ -187,15 +198,13 @@ export const MemeCoinHomeScreen = () => {
             meme,
             valueUsd: null,
           }))
-        : filterBySymbolPrefix(holdings, keyword, h => h.meme.symbol).map(
-            h => ({
-              key: tokenKey(h.meme),
-              meme: h.meme,
-              valueUsd: h.valueUsd,
-              pnl: h.pnl,
-            }),
-          ),
-    [mode, marketList, holdings, keyword],
+        : holdings.map(h => ({
+            key: tokenKey(h.meme),
+            meme: h.meme,
+            valueUsd: h.valueUsd,
+            pnl: h.pnl,
+          })),
+    [mode, marketList, holdings],
   );
 
   const selectedHoldings = useMemo(() => {
@@ -232,10 +241,19 @@ export const MemeCoinHomeScreen = () => {
   });
 
   const switchMode = useCallback(() => {
-    setMode(prev => (prev === 'market' ? 'holdings' : 'market'));
+    setMode(mode === 'market' ? 'holdings' : 'market');
     setKeyword('');
+    setSearching(false);
     clearSelection();
-  }, [clearSelection]);
+  }, [clearSelection, mode, setMode]);
+
+  const startSearch = useCallback(() => setSearching(true), []);
+
+  const cancelSearch = useCallback(() => {
+    Keyboard.dismiss();
+    setKeyword('');
+    setSearching(false);
+  }, []);
 
   const handleEndReached = useCallback(() => {
     if (mode !== 'market') {
@@ -260,11 +278,13 @@ export const MemeCoinHomeScreen = () => {
   }, [account, t]);
 
   const handleBuy = useCallback(() => {
-    if (!account || !isSupportedAccount()) {
+    if (amountUsd === null || !account || !isSupportedAccount()) {
       return;
     }
+    Keyboard.dismiss();
     pushMemeCoinBuy({
       accountAddress: account.address,
+      amountUsd,
       memes: Object.values(selectedMarket).map(m => ({
         id: m.id,
         chain: m.chain,
@@ -273,7 +293,7 @@ export const MemeCoinHomeScreen = () => {
         logoUrl: m.logoUrl,
       })),
     });
-  }, [account, isSupportedAccount, selectedMarket]);
+  }, [account, amountUsd, isSupportedAccount, selectedMarket]);
 
   const handleSell = useCallback(() => {
     if (!account || !isSupportedAccount()) {
@@ -410,7 +430,7 @@ export const MemeCoinHomeScreen = () => {
     listEmpty = (
       <MemeEmptyState
         text={
-          mode === 'holdings' && !hasKeyword
+          mode === 'holdings'
             ? t('page.memeCoin.noHoldings')
             : t('page.memeCoin.noMatch')
         }
@@ -439,8 +459,14 @@ export const MemeCoinHomeScreen = () => {
       <MemeCoinHomeBottomBar
         mode={mode}
         selectedCount={selectedCount}
+        searching={searching}
+        onStartSearch={startSearch}
+        onCancelSearch={cancelSearch}
         keyword={keyword}
         onKeywordChange={setKeyword}
+        amountText={amountText}
+        onChangeAmount={setAmountText}
+        buyDisabled={amountUsd === null}
         maxPriceImpactPct={maxPriceImpactPct}
         onMaxPriceImpactChange={setMaxPriceImpactPct}
         onBuy={handleBuy}
@@ -457,7 +483,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     backgroundColor: colors2024['neutral-bg-0'],
   },
   listContent: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     paddingBottom: 16,
   },
   listHeader: {

@@ -6,8 +6,6 @@ import { tokenKey } from '../engine/keys';
 import type { PlanResult, TokenRef } from '../engine/types';
 import type { MemeTradeTaskStatus } from '../hooks/useMemeTradeTask';
 
-export const DEFAULT_BUY_AMOUNT_USD = 100;
-
 export const MAX_PRICE_IMPACT_OPTIONS = [1, 5, 20] as const;
 export type MaxPriceImpactPct = (typeof MAX_PRICE_IMPACT_OPTIONS)[number];
 export const DEFAULT_MAX_PRICE_IMPACT_PCT: MaxPriceImpactPct = 5;

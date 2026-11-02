@@ -598,4 +598,30 @@ describe('PerpsProDecimalTextInput', () => {
 
     expect(screen.getByTestId('decimal-input').props.maxLength).toBe(4);
   });
+
+  it('keeps the Pro caret color unless an accent color is passed', () => {
+    const { rerender } = render(
+      <PerpsProDecimalTextInput
+        maxDecimals={2}
+        onChangeText={jest.fn()}
+        testID="input"
+        value=""
+      />,
+    );
+    expect(screen.getByTestId('input').props.cursorColor).toBe(
+      PERPS_PRO_DIALOG_TOKENS.inputCursor,
+    );
+
+    rerender(
+      <PerpsProDecimalTextInput
+        accentColor="#4C65FF"
+        maxDecimals={2}
+        onChangeText={jest.fn()}
+        testID="input"
+        value=""
+      />,
+    );
+    expect(screen.getByTestId('input').props.cursorColor).toBe('#4C65FF');
+    expect(screen.getByTestId('input').props.selectionColor).toBe('#4C65FF');
+  });
 });

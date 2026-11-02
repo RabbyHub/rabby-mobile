@@ -29,6 +29,8 @@ type PerpsProDecimalTextInputProps = Omit<
   | 'selection'
   | 'value'
 > & {
+  /** replaces the Pro mint on the caret and selection */
+  accentColor?: string;
   getKeyboardMinimum?: () => string | null;
   keyboardMinimum?: string | null;
   keyboardScrollTrade?: boolean;
@@ -56,6 +58,7 @@ export const PerpsProDecimalTextInput = React.memo(
   React.forwardRef<TextInput, PerpsProDecimalTextInputProps>(
     (
       {
+        accentColor,
         canonicalizeValueOnBlur,
         getKeyboardMinimum,
         keyboardMinimum = null,
@@ -285,6 +288,9 @@ export const PerpsProDecimalTextInput = React.memo(
       const textInputProps: TextInputProps = {
         ...inputProps,
         ...PERPS_PRO_INPUT_COLOR_PROPS,
+        ...(accentColor
+          ? { cursorColor: accentColor, selectionColor: accentColor }
+          : null),
         inputAccessoryViewID,
         allowFontScaling: false,
         inputMode,

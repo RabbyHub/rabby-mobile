@@ -21,7 +21,6 @@ import { usePaymentAssets } from '../hooks/usePaymentAssets';
 import { pushMemeCoinExecute } from '../navigation';
 import {
   canConfirmBuy,
-  DEFAULT_BUY_AMOUNT_USD,
   DEFAULT_MAX_PRICE_IMPACT_PCT,
   getBuySummary,
   type MaxPriceImpactPct,
@@ -40,21 +39,21 @@ const SKELETON_ROWS = 3;
 const MemeCoinBuyContent = ({
   account,
   memes,
+  amountUsd,
 }: {
   account: Account;
   memes: BuyMemes;
+  amountUsd: number;
 }) => {
   const { t } = useTranslation();
   const { styles } = useTheme2024({ getStyle });
   const { safeOffHeader } = useSafeSizes();
 
-  const [amountText, setAmountText] = useState(
-    DEFAULT_BUY_AMOUNT_USD.toFixed(2),
-  );
+  const [amountText, setAmountText] = useState(amountUsd.toFixed(2));
   const [maxPriceImpactPct, setMaxPriceImpactPct] = useState<MaxPriceImpactPct>(
     DEFAULT_MAX_PRICE_IMPACT_PCT,
   );
-  const amountUsd = parseBuyAmount(amountText);
+  const parsedAmountUsd = parseBuyAmount(amountText);
 
   const { holdings } = useMemeHoldings(account.address);
   const tokens = useTokenList(
@@ -85,7 +84,7 @@ const MemeCoinBuyContent = ({
     account,
     memes: memeTargets,
     memeTokenKeys,
-    amountUsd: amountUsd ?? 0,
+    amountUsd: parsedAmountUsd ?? 0,
   });
 
   const logoByKey = useMemo(() => {
@@ -104,11 +103,15 @@ const MemeCoinBuyContent = ({
   );
 
   const summary = getBuySummary({
-    amountUsd: amountUsd ?? 0,
+    amountUsd: parsedAmountUsd ?? 0,
     selectedCount: selectedKeys.length,
     plan,
   });
-  const confirmDisabled = !canConfirmBuy({ ready, amountUsd, plan });
+  const confirmDisabled = !canConfirmBuy({
+    ready,
+    amountUsd: parsedAmountUsd,
+    plan,
+  });
 
   const handleConfirm = useCallback(() => {
     const legs = toBuyExecLegs(plan.legs);
@@ -164,7 +167,7 @@ const MemeCoinBuyContent = ({
         keyboardDismissMode="on-drag">
         <BuyAmountCard
           amountText={amountText}
-          amountUsd={amountUsd}
+          amountUsd={parsedAmountUsd}
           onChangeAmount={setAmountText}
           memes={memes}
         />
@@ -192,13 +195,15 @@ export const MemeCoinBuyScreen = () => {
     useRoute<
       GetNestedScreenRouteProp<'TransactionNavigatorParamList', 'MemeCoinBuy'>
     >();
-  const { accountAddress, memes } = route.params;
+  const { accountAddress, memes, amountUsd } = route.params;
   const account = useMemeCoinAccount(accountAddress, () => navigation.goBack());
 
   if (!account) {
     return <View style={styles.screen} />;
   }
-  return <MemeCoinBuyContent account={account} memes={memes} />;
+  return (
+    <MemeCoinBuyContent account={account} memes={memes} amountUsd={amountUsd} />
+  );
 };
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({

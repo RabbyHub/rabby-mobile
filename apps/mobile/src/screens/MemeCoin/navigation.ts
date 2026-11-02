@@ -12,6 +12,17 @@ export const consumeMemeCoinHomeReset = () => {
   return pending;
 };
 
+type MemeCoinHomeMode = 'market' | 'holdings';
+
+let rememberedHomeMode: MemeCoinHomeMode = 'market';
+
+/** Outlives the home screen, not the app process. */
+export const getMemeCoinHomeMode = () => rememberedHomeMode;
+
+export const setMemeCoinHomeMode = (mode: MemeCoinHomeMode) => {
+  rememberedHomeMode = mode;
+};
+
 export const pushMemeCoinBuy = (
   params: TransactionNavigatorParamList[typeof RootNames.MemeCoinBuy],
 ) =>
