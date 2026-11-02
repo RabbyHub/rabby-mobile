@@ -47,13 +47,34 @@ export const usePaymentAssets = ({
   memeTokenKeys: ReadonlySet<string>;
   amountUsd: number;
 }) => {
+  const [refreshSettled, setRefreshSettled] = useState(false);
   useEffect(() => {
-    useTokenList.getState().getTokenList(account.address, true);
+    let cancelled = false;
+    setRefreshSettled(false);
+    useTokenList
+      .getState()
+      .getTokenList(account.address, true)
+      .catch(() => undefined)
+      .finally(() => {
+        if (!cancelled) {
+          setRefreshSettled(true);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [account.address]);
 
   const tokens = useTokenList(
     s => s.tokenListMap[account.address.toLowerCase()],
   );
+  // The stored list can be partial (the cache API, or one token patched after a
+  // tx) until a complete one arrives. If the refresh ends without one, show what
+  // there is rather than loading forever.
+  const hasCompleteTokens = useTokenList(
+    s => !!s.sourceSnapshotReadyByAddress[account.address.toLowerCase()],
+  );
+  const tokensReady = hasCompleteTokens || refreshSettled;
   const bridgeChainEnums = useBridgeSupportedChains();
   const { value: gasAccountInfo } = useGasAccountInfo();
   const gasAccountBalanceUsd = gasAccountInfo?.account.balance ?? 0;
@@ -175,7 +196,7 @@ export const usePaymentAssets = ({
     }
     return result;
   }, [gasCache, walletTokens, bridgeChains]);
-  const chainGasReady = tokens !== undefined && gasCache?.key === gasKey;
+  const chainGasReady = gasCache?.key === gasKey;
 
   const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
   const toggle = useMemoizedFn((key: string) => {
@@ -201,6 +222,6 @@ export const usePaymentAssets = ({
     selectedKeys,
     toggle,
     plan,
-    ready: chainGasReady,
+    ready: tokensReady && chainGasReady,
   };
 };
