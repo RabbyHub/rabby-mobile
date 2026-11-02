@@ -58,6 +58,7 @@ import { MultiHomeFeatTitle } from '@/constant/newStyle';
 import { currencyServiceApi } from '@/core/serviceApi/currency';
 import { storeApiAccounts, useMyAccounts } from '@/hooks/account';
 import { storeApiAccountsSwitcher } from '@/hooks/accountsSwitcher';
+import { refreshMemeHoldings } from '@/screens/MemeCoin/data/memeHoldingsStore';
 import { apisHomeTabIndex, useRabbyAppNavigation } from '@/hooks/navigation';
 import { navigateToPerpsHome } from '@/hooks/perps/navigation/navigateToPreferredPerps';
 import addressBalanceStore, {
@@ -1034,6 +1035,13 @@ export const HomeOverview = React.memo(() => {
     // update at background
     forceUpdateApprovalAlertCounts();
     apisLending.fetchLendingData();
+    // keep the wallet entry balance in sync with the account it shows
+    const memeAddress = storeApiAccountsSwitcher.getSceneAccountInfo({
+      forScene: 'MakeTransactionAbout',
+    }).finalSceneCurrentAccount?.address;
+    if (memeAddress) {
+      refreshMemeHoldings(memeAddress);
+    }
     const forceRefresh = true;
     void currencyServiceApi.syncCurrencyList(forceRefresh).catch(error => {
       console.error('[HomeOverview] refresh currency list failed', error);
