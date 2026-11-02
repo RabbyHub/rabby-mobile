@@ -139,10 +139,10 @@ export const getMemeAllocations = <T extends MemeTarget>(
     }))
     .sort((a, b) => b.ratio - a.ratio);
 
-/** up to 2 decimals without trailing zeros: 60%, 12.5%, <0.01% */
+/** whole percent, so two items fit on one row at 360dp: 60%, <1% */
 export const formatAllocationPct = (ratio: number) => {
   const pct = new BigNumber(ratio).times(100);
-  return pct.gt(0) && pct.lt(0.01)
-    ? '<0.01%'
-    : `${pct.decimalPlaces(2).toString(10)}%`;
+  return pct.gt(0) && pct.lt(1)
+    ? '<1%'
+    : `${pct.decimalPlaces(0).toString(10)}%`;
 };

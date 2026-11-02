@@ -224,10 +224,11 @@ describe('getMemeAllocations', () => {
 describe('formatAllocationPct', () => {
   it.each([
     [0.6, '60%'],
-    [0.125, '12.5%'],
-    [0.9997, '99.97%'],
+    [0.7052, '71%'],
+    [0.2948, '29%'],
     [1, '100%'],
-    [0.00005, '<0.01%'],
+    [0.009, '<1%'],
+    [0.01, '1%'],
     [0, '0%'],
   ])('formats %p as %p', (ratio, expected) => {
     expect(formatAllocationPct(ratio)).toBe(expected);

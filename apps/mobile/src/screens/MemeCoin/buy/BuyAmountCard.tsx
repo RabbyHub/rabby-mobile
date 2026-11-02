@@ -204,7 +204,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     gap: 5,
   },
   allocationUsd: {
-    flexShrink: 1,
+    flexShrink: 0,
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     lineHeight: 18,
@@ -217,7 +217,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     backgroundColor: colors2024['neutral-line'],
   },
   allocationPct: {
-    flexShrink: 0,
+    flexShrink: 1,
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     lineHeight: 18,
