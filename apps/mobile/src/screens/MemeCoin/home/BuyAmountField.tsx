@@ -1,9 +1,11 @@
 import React from 'react';
 import { TouchableOpacity, View } from 'react-native';
-import { Text } from '@/components/Typography';
+import { Text, TextInput } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
-import { PerpsProDecimalTextInput } from '@/screens/PerpsPro/components/trade/PerpsProDecimalTextInput';
+import { sanitizePerpsProDecimalEditingInput } from '@/utils/perpsPriceProtocol';
 import { createGetStyles2024 } from '@/utils/styles';
+
+const MAX_AMOUNT_DECIMALS = 2;
 
 const QUICK_AMOUNTS = [
   { value: '50', label: '50' },
@@ -24,10 +26,15 @@ export const BuyAmountField = ({
   return (
     <>
       <View style={styles.inputBox}>
-        <PerpsProDecimalTextInput
-          accentColor={colors2024['brand-default']}
-          maxDecimals={2}
-          onChangeText={onChangeAmount}
+        <TextInput
+          cursorColor={colors2024['brand-default']}
+          selectionColor={colors2024['brand-default']}
+          keyboardType="decimal-pad"
+          onChangeText={text =>
+            onChangeAmount(
+              sanitizePerpsProDecimalEditingInput(text, MAX_AMOUNT_DECIMALS),
+            )
+          }
           placeholder="0"
           placeholderTextColor={colors2024['neutral-info']}
           style={styles.input}
@@ -41,7 +48,6 @@ export const BuyAmountField = ({
         {QUICK_AMOUNTS.map(({ value, label }) => (
           <TouchableOpacity
             key={value}
-            activeOpacity={0.8}
             onPress={() => onChangeAmount(value)}
             style={styles.quickItem}>
             <Text style={styles.quickText}>{label}</Text>
