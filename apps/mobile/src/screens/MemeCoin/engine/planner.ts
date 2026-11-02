@@ -58,7 +58,10 @@ const crossChainSplit: SourceOrder = (a, b) =>
   b.remaining - a.remaining ||
   compareText(a.key, b.key);
 
-export const computeMemeTargets = (amountUsd: number, memes: MemeTarget[]) => {
+export const computeMemeTargets = <T extends MemeTarget>(
+  amountUsd: number,
+  memes: T[],
+) => {
   const totalCap = memes.reduce((sum, m) => sum + Math.max(m.marketCap, 0), 0);
   return memes.map(meme => ({
     meme,

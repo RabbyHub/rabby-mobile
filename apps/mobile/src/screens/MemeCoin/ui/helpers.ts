@@ -3,7 +3,8 @@ import type { MemeHolding } from '../data/types';
 import { AMOUNT_EPSILON } from '../engine/constants';
 import type { SellHolding } from '../engine/execLegs';
 import { tokenKey } from '../engine/keys';
-import type { PlanResult, TokenRef } from '../engine/types';
+import { computeMemeTargets } from '../engine/planner';
+import type { MemeTarget, PlanResult, TokenRef } from '../engine/types';
 import type { MemeTradeTaskStatus } from '../hooks/useMemeTradeTask';
 
 export const MAX_PRICE_IMPACT_OPTIONS = [1, 5, 20] as const;
@@ -122,4 +123,24 @@ export const pickTokenLogos = (
     }
   }
   return result;
+};
+
+export const getMemeAllocations = <T extends MemeTarget>(
+  amountUsd: number,
+  memes: T[],
+) =>
+  computeMemeTargets(1, memes)
+    .map(({ meme, amountUsd: ratio }) => ({
+      meme,
+      ratio,
+      amountUsd: amountUsd * ratio,
+    }))
+    .sort((a, b) => b.ratio - a.ratio);
+
+/** up to 2 decimals without trailing zeros: 60%, 12.5%, <0.01% */
+export const formatAllocationPct = (ratio: number) => {
+  const pct = new BigNumber(ratio).times(100);
+  return pct.gt(0) && pct.lt(0.01)
+    ? '<0.01%'
+    : `${pct.decimalPlaces(2).toString(10)}%`;
 };

@@ -3401,16 +3401,13 @@
       "accountChanged": "Address changed. Please start again",
       "buy": {
         "amount": "Buy Amount",
-        "memes": "{{count}} memes",
-        "memes_one": "{{count}} meme",
-        "totalMemes": "{{count}} total memes",
         "selectAssets": "Select assets for payment",
         "estPayment": "Est. Payment {{amount}}",
         "selectedTotal": "Selected Total",
         "needed": "{{amount}} needed",
         "anotherNeeded": "Another {{amount}} needed",
         "totalEstPayment": "Total Est. Payment {{amount}}",
-        "confirm": "Confirm",
+        "preview": "Preview",
         "noAssets": "No available assets"
       },
       "execute": {

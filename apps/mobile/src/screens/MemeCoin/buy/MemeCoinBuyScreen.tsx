@@ -216,7 +216,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   content: {
     paddingTop: 12,
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     paddingBottom: 16,
   },
   sectionTitle: {
