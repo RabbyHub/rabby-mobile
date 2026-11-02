@@ -20,7 +20,10 @@ import {
 } from '@metamask/eth-sig-util';
 import cloneDeep from 'lodash/cloneDeep';
 import { openapi } from '../request';
-import { hasBlockedAddress } from '../utils/blockedAddress';
+import {
+  getTxAddressesToCheck,
+  hasBlockedAddress,
+} from '../utils/blockedAddress';
 import { t } from 'i18next';
 import { bridgeServiceApi } from '@/core/serviceApi/bridge';
 import { customRPCServiceApi } from '@/core/serviceApi/customRPC';
@@ -760,10 +763,11 @@ class ProviderController extends BaseController {
     // Started now, awaited right before signing, so it overlaps the tx build.
     const isBlockedPromise = hasBlockedAddress([
       txParams.from,
-      approvalRes.from,
-      approvalRes.to,
+      ...getTxAddressesToCheck(approvalRes),
       ...(Array.isArray((approvalRes as any).calls)
-        ? (approvalRes as any).calls.map((call: any) => call?.to)
+        ? (approvalRes as any).calls.flatMap((call: any) =>
+            getTxAddressesToCheck(call || {}),
+          )
         : []),
     ]);
     const isSend = !!txParams.isSend;

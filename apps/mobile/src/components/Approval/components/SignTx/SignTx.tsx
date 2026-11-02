@@ -125,7 +125,10 @@ import { useGasAccountTxsCheck } from '@/screens/GasAccount/hooks/checkTsx';
 import { useGasAccountSnapshotActivation } from '@/screens/GasAccount/hooks';
 import { EIP7702Warning } from '../EIP7702Warning';
 import { BlockedAddressDialog } from '@/components/Dialogs/BlockedAddressDialog';
-import { hasBlockedAddress } from '@/core/utils/blockedAddress';
+import {
+  getTxAddressesToCheck,
+  hasBlockedAddress,
+} from '@/core/utils/blockedAddress';
 import { GnosisAdminFooterBarPopup } from '../TxComponents/GnosisAdminFooterBarPopup';
 import { apisKeyring } from '@/core/apis/keyring';
 import { adjustV } from '@/utils/gnosis';
@@ -1695,7 +1698,7 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
   const checkIsBlockedTransaction = async () => {
     // A failed lookup only lets its own address through, so it can't hide a
     // blocked sender behind a receiver lookup error.
-    if (await hasBlockedAddress([tx.from, tx.to])) {
+    if (await hasBlockedAddress(getTxAddressesToCheck(tx))) {
       setIsShowBlockedTransactionDialog(true);
     }
   };

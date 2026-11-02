@@ -348,6 +348,46 @@ describe('provider.ethSendTransaction broadcast chain pinning', () => {
     expect(mockSubmitTxV2).not.toHaveBeenCalled();
   });
 
+  it('refuses an ERC-20 transfer whose calldata receiver is blocked', async () => {
+    const receiver = '0x4444444444444444444444444444444444444444';
+    const data = `0xa9059cbb${receiver
+      .slice(2)
+      .padStart(64, '0')}${'1'.padStart(64, '0')}`;
+    mockIsBlockedAddress.mockImplementation(async (address: string) => ({
+      is_blocked: address === receiver,
+    }));
+
+    await expect(
+      providerController.ethSendTransaction(
+        makeOptions({
+          data: { params: [{ ...TX_PARAMS, data }] },
+          approvalRes: makeApprovalRes({ data }),
+        }),
+      ),
+    ).rejects.toMatchObject({
+      message: 'common.dialogs.blockedTransaction.content',
+    });
+    expect(mockSignTransaction).not.toHaveBeenCalled();
+  });
+
+  it('does not start signing before a slow lookup settles', async () => {
+    let settle: (res: { is_blocked: boolean }) => void = () => {};
+    const lookup = new Promise<{ is_blocked: boolean }>(resolve => {
+      settle = resolve;
+    });
+    mockIsBlockedAddress.mockReturnValue(lookup);
+
+    const result = providerController.ethSendTransaction(makeOptions());
+    await new Promise(resolve => setTimeout(resolve, 20));
+    expect(mockSignTransaction).not.toHaveBeenCalled();
+
+    settle({ is_blocked: true });
+    await expect(result).rejects.toMatchObject({
+      message: 'common.dialogs.blockedTransaction.content',
+    });
+    expect(mockSignTransaction).not.toHaveBeenCalled();
+  });
+
   it('signs when a lookup fails and nothing is known to be blocked', async () => {
     mockIsBlockedAddress.mockRejectedValue(new Error('network'));
 

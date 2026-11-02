@@ -6,7 +6,11 @@ jest.mock('../request', () => ({
   },
 }));
 
-import { clearBlockedAddressCache, hasBlockedAddress } from './blockedAddress';
+import {
+  clearBlockedAddressCache,
+  getTxAddressesToCheck,
+  hasBlockedAddress,
+} from './blockedAddress';
 
 const SENDER = '0x1111111111111111111111111111111111111111';
 const RECEIVER = '0xAbCdEf0000000000000000000000000000000002';
@@ -64,5 +68,41 @@ describe('hasBlockedAddress', () => {
     });
 
     await expect(hasBlockedAddress([RECEIVER, SENDER])).resolves.toBe(true);
+  });
+});
+
+describe('getTxAddressesToCheck', () => {
+  const word = (addr: string) => addr.slice(2).toLowerCase().padStart(64, '0');
+  const TOKEN = '0x3333333333333333333333333333333333333333';
+
+  it('adds the ERC-20 transfer receiver from calldata', () => {
+    const data = `0xa9059cbb${word(RECEIVER)}${'1'.padStart(64, '0')}`;
+    expect(getTxAddressesToCheck({ from: SENDER, to: TOKEN, data })).toEqual([
+      SENDER,
+      TOKEN,
+      RECEIVER.toLowerCase(),
+    ]);
+  });
+
+  it('adds both addresses of an NFT safeTransferFrom', () => {
+    const data = `0x42842e0e${word(SENDER)}${word(RECEIVER)}${'1'.padStart(
+      64,
+      '0',
+    )}`;
+    expect(getTxAddressesToCheck({ from: SENDER, to: TOKEN, data })).toEqual([
+      SENDER,
+      TOKEN,
+      SENDER,
+      RECEIVER.toLowerCase(),
+    ]);
+  });
+
+  it('ignores other or truncated calldata', () => {
+    expect(
+      getTxAddressesToCheck({ from: SENDER, to: TOKEN, data: '0x095ea7b3' }),
+    ).toEqual([SENDER, TOKEN]);
+    expect(
+      getTxAddressesToCheck({ from: SENDER, to: TOKEN, data: '0xa9059cbb00' }),
+    ).toEqual([SENDER, TOKEN]);
   });
 });
