@@ -20,6 +20,8 @@ import {
 } from '@metamask/eth-sig-util';
 import cloneDeep from 'lodash/cloneDeep';
 import { openapi } from '../request';
+import { hasBlockedAddress } from '../utils/blockedAddress';
+import { t } from 'i18next';
 import { bridgeServiceApi } from '@/core/serviceApi/bridge';
 import { customRPCServiceApi } from '@/core/serviceApi/customRPC';
 import { customTestnetServiceApi } from '@/core/serviceApi/customTestnet';
@@ -755,6 +757,15 @@ class ProviderController extends BaseController {
     } = cloneDeep(options);
     const currentAccount = account;
     const keyring = await this._checkAddress(txParams.from, options);
+    // Started now, awaited right before signing, so it overlaps the tx build.
+    const isBlockedPromise = hasBlockedAddress([
+      txParams.from,
+      approvalRes.from,
+      approvalRes.to,
+      ...(Array.isArray((approvalRes as any).calls)
+        ? (approvalRes as any).calls.map((call: any) => call?.to)
+        : []),
+    ]);
     const isSend = !!txParams.isSend;
     const isSpeedUp = !!txParams.isSpeedUp;
     const isCancel = !!txParams.isCancel;
@@ -957,6 +968,15 @@ class ProviderController extends BaseController {
     const shouldUseKeyringTempoSign =
       isTempoTx && isSimpleOrHdKeyringType(currentAccount.type);
     try {
+      // Every tx signing path (SignTx, mini sign, direct sendTransaction)
+      // lands here, so refuse blocked addresses before any keyring or device
+      // is asked. Inside the try so the UI gets the usual signing failure.
+      if (await isBlockedPromise) {
+        // Same text as the blocked dialog in SignTx / Send.
+        throw ethErrors.rpc.transactionRejected(
+          t('common.dialogs.blockedTransaction.content'),
+        );
+      }
       if (isTempoTx) {
         const typedApprovalRes = approvalRes as any;
         const shouldBackendSponsorTempo = isGasAccount || isGasLess;
