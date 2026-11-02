@@ -1,7 +1,6 @@
 import type { GasLevel, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import type { Tx } from '@rabby-wallet/rabby-api/dist/types';
 import BigNumber from 'bignumber.js';
-import { Alert } from 'react-native';
 
 import type {
   SignatureAction,
@@ -29,6 +28,7 @@ import {
 } from '@/hooks/onekey/useOneKeyStatus';
 import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
 import { getMiniSignGasPanelController } from './MiniSignGasPanelController';
+import { showBlockedAddressDialog } from './blockedAddressDialog';
 
 const ETH_GAS_USD_LIMIT = 15;
 const OTHER_GAS_USD_LIMIT = 5;
@@ -617,11 +617,7 @@ export class SignatureManager {
   private blockIfNeeded(ctx?: SignerCtx | null) {
     if (!ctx?.isBlocked) return false;
     this.reset();
-    Alert.alert(
-      t('common.dialogs.blockedTransaction.title'),
-      t('common.dialogs.blockedTransaction.content'),
-      [{ text: t('common.dialogs.blockedTransaction.button') }],
-    );
+    showBlockedAddressDialog();
     return true;
   }
 
