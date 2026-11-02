@@ -21,6 +21,7 @@ import { IS_IOS } from '@/core/native/utils';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { useTheme2024 } from '@/hooks/theme';
 import { useSafeSizes } from '@/hooks/useAppLayout';
+import type { Account } from '@/types/account';
 import { isAccountSupportDirectSign } from '@/utils/account';
 import { formatUsdValue } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -276,6 +277,14 @@ export const MemeCoinHomeScreen = () => {
     return true;
   }, [account, t]);
 
+  const getAccountDisabledTips = useCallback(
+    (item: Account) =>
+      isAccountSupportDirectSign(item.type)
+        ? undefined
+        : t('page.memeCoin.unsupportedAddressType'),
+    [t],
+  );
+
   const handleBuy = useCallback(() => {
     if (amountUsd === null || !account || !isSupportedAccount()) {
       return;
@@ -472,7 +481,11 @@ export const MemeCoinHomeScreen = () => {
         onBuy={handleBuy}
         onSell={handleSell}
       />
-      <AccountSwitcherModal forScene="MakeTransactionAbout" inScreen />
+      <AccountSwitcherModal
+        forScene="MakeTransactionAbout"
+        inScreen
+        getAccountDisabledTips={getAccountDisabledTips}
+      />
     </KeyboardAvoidingView>
   );
 };
