@@ -34,7 +34,7 @@ import { PAYMENT_ROW_HEIGHT, PaymentAssetRow } from './PaymentAssetRow';
 
 type BuyMemes = TransactionNavigatorParamList['MemeCoinBuy']['memes'];
 
-const SKELETON_ROWS = 3;
+const SKELETON_ROWS = 4;
 
 const MemeCoinBuyContent = ({
   account,
