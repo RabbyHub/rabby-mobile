@@ -2106,6 +2106,11 @@ function handleSetCandlestickData(
     }
 
     if (chartState.proConfig) {
+      if (!previousVisibleRange) {
+        // A new data set must not inherit a price range the user dragged on
+        // the previous interval; the time range is reset below as well.
+        resetPerpsProPriceScale(chartState.candlestickSeries);
+      }
       const prependedCount = previousVisibleRange
         ? getPrependedCandleCount(previousData, message.data)
         : 0;
