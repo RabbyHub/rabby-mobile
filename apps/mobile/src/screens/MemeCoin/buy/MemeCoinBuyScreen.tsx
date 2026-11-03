@@ -1,9 +1,14 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { Keyboard, ScrollView, View } from 'react-native';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import {
+  useFocusEffect,
+  useNavigation,
+  useRoute,
+} from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { Text } from '@/components/Typography';
 import type { Account } from '@/core/startupServices/preference';
+import { useHandleBackPressClosable } from '@/hooks/useAppGesture';
 import { useTheme2024 } from '@/hooks/theme';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import type {
@@ -65,6 +70,17 @@ const MemeCoinBuyContent = ({
     Keyboard.dismiss();
     setSheetVisible(true);
   }, []);
+  // Android back closes the sheet first: popping the page under an open sheet
+  // leaves the sheet on screen over the previous page.
+  const { onHardwareBackHandler } = useHandleBackPressClosable(
+    useCallback(() => {
+      if (sheetVisible) {
+        closeSheet();
+      }
+      return !sheetVisible;
+    }, [closeSheet, sheetVisible]),
+  );
+  useFocusEffect(onHardwareBackHandler);
   const parsedAmountUsd = parseBuyAmount(amountText);
 
   const { holdings } = useMemeHoldings(account.address);
