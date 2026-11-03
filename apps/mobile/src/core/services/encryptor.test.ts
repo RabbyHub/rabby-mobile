@@ -312,6 +312,27 @@ describe('RNEncryptor KDF version registry', () => {
   });
 
   it.each(fixtures)(
+    'derives the $iterations-iteration key once per decryptWithDetail',
+    async fixture => {
+      const detail = await new RNEncryptor().decryptWithDetail(
+        password,
+        JSON.stringify(fixture.encrypted),
+      );
+
+      expect(detail.vault).toEqual(vault);
+      expect(detail.kdfVersion).toBe(fixture.kdf.version);
+      expect(jest.mocked(Aes.pbkdf2)).toHaveBeenCalledTimes(1);
+      expect(jest.mocked(Aes.pbkdf2)).toHaveBeenLastCalledWith(
+        password,
+        salt,
+        fixture.iterations,
+        256,
+        'sha256',
+      );
+    },
+  );
+
+  it.each(fixtures)(
     'rejects a wrong password for the $iterations-iteration vault',
     async fixture => {
       await expect(

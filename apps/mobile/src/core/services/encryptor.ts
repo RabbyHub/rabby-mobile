@@ -230,7 +230,7 @@ async function decryptWithCandidates(
     try {
       const key = await _keyFromPassword(password, encryptedData.salt, options);
       const data = await _decryptWithKey(encryptedData, key);
-      return { data: JSON.parse(data), options };
+      return { data: JSON.parse(data), options, key };
     } catch (error) {
       lastError = error;
     }
@@ -414,15 +414,10 @@ export default class RNEncryptor implements EncryptorAdapter {
   async decryptWithDetail(password: string, encryptedString: string) {
     const encryptedData = JSON.parse(encryptedString) as EncryptedData;
     const result = await decryptWithCandidates(password, encryptedData);
-    const key = await _keyFromPassword(
-      password,
-      encryptedData.salt,
-      result.options,
-    );
     return {
       vault: result.data,
       exportedKeyString: serializeExportedKey(
-        key,
+        result.key,
         encryptedData.salt,
         result.options,
       ),
