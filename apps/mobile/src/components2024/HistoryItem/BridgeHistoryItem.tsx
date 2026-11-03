@@ -36,9 +36,28 @@ export function BridgeHistoryItem({
   );
   const sourceFailed = status.scene === 'sourceFailed';
   const sourceSent = status.scene !== 'sourcePending' && !sourceFailed;
-  const received = status.completed;
-  const receiveToken = received ? status.receiveToken : status.toToken;
-  const receiveAmount = received ? status.receiveAmount : status.toAmount;
+  const received = status.completed || status.refunded;
+  const fromAmount = data.actual?.pay_token_amount ?? status.fromAmount;
+  const actualReceiveAmount =
+    data.actual?.receive_token_amount ?? local?.actualToAmount;
+  const actualReceiveToken = data.to_actual_token?.id
+    ? data.to_actual_token
+    : local?.actualToToken;
+  const receiveToken =
+    actualReceiveAmount != null && actualReceiveToken?.id
+      ? actualReceiveToken
+      : sourceFailed
+      ? status.fromToken
+      : status.completed
+      ? status.receiveToken
+      : status.toToken;
+  const receiveAmount =
+    actualReceiveAmount ??
+    (sourceFailed
+      ? fromAmount
+      : status.completed
+      ? status.receiveAmount
+      : status.toAmount);
   const mark = status.failed
     ? 'failed'
     : status.completed
@@ -61,7 +80,7 @@ export function BridgeHistoryItem({
           </Text>
         </View>
       )}
-      <View style={status.failed && styles.dimmed}>
+      <View>
         <ExchangeIcon
           leftIcon={<AssetAvatar logo={status.fromToken?.logo_url} size={32} />}
           rightIcon={<AssetAvatar logo={status.toToken?.logo_url} size={32} />}
@@ -81,13 +100,8 @@ export function BridgeHistoryItem({
           </View>
           <Text
             numberOfLines={1}
-            style={[
-              styles.amount,
-              sourceSent && styles.sent,
-              status.failed && styles.dimmed,
-            ]}>
-            -{formatTokenAmount(status.fromAmount)}{' '}
-            {getTokenSymbol(status.fromToken)}
+            style={[styles.amount, sourceSent && styles.sent]}>
+            -{formatTokenAmount(fromAmount)} {getTokenSymbol(status.fromToken)}
           </Text>
         </View>
         <View style={styles.row}>
@@ -106,12 +120,11 @@ export function BridgeHistoryItem({
           </View>
           <Text
             numberOfLines={1}
-            style={[
-              styles.amount,
-              received && styles.received,
-              status.failed && styles.dimmed,
-            ]}>
-            +{!received ? '≈' : ''}
+            style={[styles.amount, received && styles.received]}>
+            +
+            {actualReceiveAmount == null && !status.completed && !sourceFailed
+              ? '≈'
+              : ''}
             {formatTokenAmount(receiveAmount)} {getTokenSymbol(receiveToken)}
           </Text>
         </View>
@@ -154,8 +167,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     flexShrink: 1,
     fontFamily: 'SF Pro Rounded',
     fontWeight: '500',
-    fontSize: 14,
-    lineHeight: 18,
+    fontSize: 16,
+    lineHeight: 20,
     color: colors2024['neutral-info'],
     textAlign: 'right',
   },
@@ -169,7 +182,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontWeight: '700',
     color: colors2024['green-default'],
   },
-  dimmed: { opacity: 0.5 },
   route: { flexDirection: 'row', alignItems: 'center', gap: 4, flexShrink: 1 },
   chain: { width: 14, height: 14, borderRadius: 4 },
   routeArrow: {

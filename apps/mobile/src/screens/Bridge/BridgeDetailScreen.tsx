@@ -391,7 +391,7 @@ const getStyle = createGetStyles2024(
       borderRadius: 16,
       backgroundColor: isLight
         ? colors2024['neutral-bg-1']
-        : colors2024['neutral-bg-2'],
+        : colors2024['neutral-bg-3'],
       padding: 12,
     },
     tokenSection: { marginBottom: 16 },

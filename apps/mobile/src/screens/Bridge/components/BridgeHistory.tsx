@@ -212,12 +212,12 @@ export function BridgeTxHistory({
   }, [visible]);
   const { onHardwareBackHandler } = useHandleBackPressClosable(
     useCallback(() => {
-      // 仅在弹窗可见时拦截返回键，避免关闭后阻止正常返回。
+      // Hook 内部会取反：true 放行页面返回，false 消费本次返回以关闭弹窗。
       if (!visible) {
-        return false;
+        return true;
       }
       ref.current?.dismiss();
-      return true;
+      return false;
     }, [visible]),
     { autoEffectEnabled: false },
   );
