@@ -1759,6 +1759,7 @@ function applyPerpsProChartOptions(config: PerpsProChartConfig) {
   }
   chartState.chart.applyOptions({
     layout: {
+      attributionLogo: false,
       fontFamily: resolvePerpsProFontFamily(getRuntimeInfo()),
       fontSize: 10,
       textColor: (chartState.colors || getChartColors()).secondaryText,
@@ -2030,6 +2031,7 @@ function handleSetCandlestickData(
   } else {
     chartState.chart.applyOptions({
       layout: {
+        attributionLogo: true,
         fontFamily: legacyChartFontFamily,
         fontSize: 12,
         textColor: (chartState.colors || getChartColors()).text,
