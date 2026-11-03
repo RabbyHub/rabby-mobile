@@ -11,6 +11,8 @@ import type { PerpsProMarket } from '../../model/market';
 import type { PerpsPositionViewModel } from '../../model/position';
 
 const mockModalProps = jest.fn();
+const mockSheetClose = jest.fn();
+const mockSheetSnapToIndex = jest.fn();
 const mockClearCrosshair = jest.fn();
 const mockChartMount = jest.fn();
 const mockChartUnmount = jest.fn();
@@ -138,7 +140,11 @@ jest.mock('@gorhom/bottom-sheet', () => {
   return {
     __esModule: true,
     default: ReactModule.forwardRef(
-      (props: Record<string, unknown>, _ref: React.Ref<unknown>) => {
+      (props: Record<string, unknown>, ref: React.Ref<unknown>) => {
+        ReactModule.useImperativeHandle(ref, () => ({
+          close: mockSheetClose,
+          snapToIndex: mockSheetSnapToIndex,
+        }));
         mockModalProps(props);
         return ReactModule.createElement(
           View,
@@ -283,6 +289,27 @@ describe('PerpsProKlineSheet', () => {
 
     act(() => props.onChange(-1));
     expect(onClose).toHaveBeenCalledTimes(2);
+  });
+
+  it('closes and reopens through the sheet ref when visibility changes', () => {
+    const view = render(
+      <PerpsProKlineSheet enabled market={market} onClose={jest.fn()} />,
+    );
+    view.rerender(
+      <PerpsProKlineSheet
+        enabled
+        market={market}
+        onClose={jest.fn()}
+        visible={false}
+      />,
+    );
+    expect(mockSheetClose).toHaveBeenCalledTimes(1);
+    expect(mockModalProps.mock.calls.at(-1)?.[0].index).toBe(0);
+
+    view.rerender(
+      <PerpsProKlineSheet enabled market={market} onClose={jest.fn()} />,
+    );
+    expect(mockSheetSnapToIndex).toHaveBeenLastCalledWith(0);
   });
 
   it('shows reset only after a viewport change and hides it per market', () => {

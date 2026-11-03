@@ -374,6 +374,10 @@ export const PerpsProKlineSheet: React.FC<{
   visible = true,
 }) => {
   const chartRef = useRef<TradingViewChartRef>(null);
+  const sheetRef = useRef<BottomSheet>(null);
+  // `index` only seeds the mount position: the library's index-prop path
+  // (snapToIndex) cannot reach -1, so later changes go through the ref.
+  const [initialIndex] = useState(visible ? 0 : -1);
   const [viewportState, setViewportState] = useState({
     marketKey: market.marketKey,
     resetVisible: false,
@@ -453,6 +457,14 @@ export const PerpsProKlineSheet: React.FC<{
   );
 
   useEffect(() => {
+    if (visible) {
+      sheetRef.current?.snapToIndex(0);
+    } else {
+      sheetRef.current?.close();
+    }
+  }, [visible]);
+
+  useEffect(() => {
     if (!visible) {
       return;
     }
@@ -481,9 +493,10 @@ export const PerpsProKlineSheet: React.FC<{
         enablePanDownToClose
         failOffsetX={[-8, 8]}
         handleComponent={renderHeader}
-        index={visible ? 0 : -1}
+        index={initialIndex}
         keyboardBehavior="extend"
         onChange={handleSheetChange}
+        ref={sheetRef}
         snapPoints={snapPoints}>
         <BottomSheetView style={themedStyles.content}>
           <PerpsProKlineChart
