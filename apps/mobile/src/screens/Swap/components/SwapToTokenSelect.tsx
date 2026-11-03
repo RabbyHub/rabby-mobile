@@ -430,7 +430,7 @@ const SwapToTokenSelect = ({
                   size={26}
                   chain={token.chain}
                   logo={token.logo_url}
-                  chainSize={type === 'send' ? 12 : 0}
+                  chainSize={0}
                 />
                 <Text numberOfLines={1} style={styles.tokenSymbol}>
                   {ellipsisOverflowedText(getTokenSymbol(token), 5)}
