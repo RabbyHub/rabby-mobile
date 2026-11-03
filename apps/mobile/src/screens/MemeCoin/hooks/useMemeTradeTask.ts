@@ -93,13 +93,15 @@ export const useMemeTradeTask = ({
 
   const retry = useMemoizedFn((keys: string[]) => {
     const { status, states } = store.getState();
-    if (status !== 'finished') {
-      return;
-    }
     const retryLegs = legs.filter(
       leg => keys.includes(leg.key) && isLegRetryable(states[leg.key]),
     );
-    if (retryLegs.length) {
+    if (!retryLegs.length) {
+      return;
+    }
+    if (status === 'running') {
+      executorRef.current?.enqueue(retryLegs);
+    } else {
       run(retryLegs);
     }
   });

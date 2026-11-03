@@ -1,5 +1,6 @@
 import { AppState } from 'react-native';
 import { act, renderHook } from '@testing-library/react-native';
+import { getLegDisplayStatuses } from '../engine/displayStatus';
 import type { BroadcastResult, LegRunner } from '../engine/executor';
 import type { ExecLeg } from '../engine/types';
 import { createProductionLegRunnerDeps } from '../engine/deps';
@@ -49,10 +50,14 @@ const mockRunner: LegRunner = {
 
 const mockCreateDeps = createProductionLegRunnerDeps as jest.Mock;
 
-const leg = (key: string, kind: ExecLeg['kind'] = 'swap'): ExecLeg => ({
+const leg = (
+  key: string,
+  kind: ExecLeg['kind'] = 'swap',
+  chain = 'eth',
+): ExecLeg => ({
   key,
   kind,
-  pay: { id: key, chain: 'eth', symbol: key },
+  pay: { id: key, chain, symbol: key },
   receive: { id: 'meme', chain: 'bsc', symbol: 'MEME' },
   amountUsd: 1,
   payAll: false,
@@ -87,7 +92,7 @@ describe('useMemeTradeTask manual retry', () => {
     mockCreateDeps.mockImplementation(() => ({ deps: {}, dispose: jest.fn() }));
   });
 
-  it('ignores retry while the first run is still going', async () => {
+  it('ignores retry for a leg that has not failed', async () => {
     holds.a = deferred();
     prepareResults.a = [failed];
     const { hook, state, settle } = setup([leg('a')]);
@@ -102,6 +107,73 @@ describe('useMemeTradeTask manual retry', () => {
     holds.a.release();
     await settle();
     expect(state().status).toBe('finished');
+  });
+
+  it('retries a failed leg right away while another chain is still running', async () => {
+    holds.b = deferred();
+    prepareResults.a = [failed, ok];
+    prepareResults.b = [ok];
+    const { hook, state, settle } = setup([
+      leg('a', 'swap', 'eth'),
+      leg('b', 'swap', 'bsc'),
+    ]);
+    act(() => hook.result.current.start());
+    await settle();
+    expect(state().states.a.phase).toBe('failed');
+    expect(state().status).toBe('running');
+
+    act(() => hook.result.current.retry(['a']));
+    await settle();
+    expect(state().states.a.phase).toBe('success');
+    expect(state().status).toBe('running');
+    expect(mockCreateDeps).toHaveBeenCalledTimes(1);
+
+    holds.b.release();
+    await settle();
+    expect(state().status).toBe('finished');
+  });
+
+  it('keeps a retried leg waiting behind the leg running on its chain', async () => {
+    holds.b = deferred();
+    prepareResults.a = [failed, ok];
+    prepareResults.b = [ok];
+    const legs = [leg('a'), leg('b')];
+    const { hook, state, settle } = setup(legs);
+    act(() => hook.result.current.start());
+    await settle();
+    expect(state().states.a.phase).toBe('failed');
+    expect(state().states.b.phase).toBe('preparing');
+
+    act(() => hook.result.current.retry(['a']));
+    await settle();
+    expect(state().states.a.phase).toBe('queued');
+    expect(getLegDisplayStatuses(legs, state().states).a).toBe(
+      'pendingPrevious',
+    );
+    expect(prepareCalls).toEqual(['a', 'b']);
+
+    holds.b.release();
+    await settle();
+    expect(prepareCalls).toEqual(['a', 'b', 'a']);
+    expect(state().states.a.phase).toBe('success');
+    expect(state().status).toBe('finished');
+  });
+
+  it('queues the leg once when it is tapped twice', async () => {
+    holds.b = deferred();
+    prepareResults.a = [failed, ok, ok];
+    prepareResults.b = [ok];
+    const { hook, settle } = setup([leg('a'), leg('b')]);
+    act(() => hook.result.current.start());
+    await settle();
+
+    act(() => {
+      hook.result.current.retry(['a']);
+      hook.result.current.retry(['a']);
+    });
+    holds.b.release();
+    await settle();
+    expect(prepareCalls).toEqual(['a', 'b', 'a']);
   });
 
   it('re-runs only the failed leg and keeps the success leg untouched', async () => {

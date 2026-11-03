@@ -136,9 +136,7 @@ export const ExecuteLegRow = React.memo(function ExecuteLegRow({
   // Primitive selectors: a row re-renders only when its own status changes.
   const status = store(s => getLegDisplayStatuses(legs, s.states)[leg.key]);
   const failReason = store(s => s.states[leg.key]?.failReason);
-  const retryable = store(
-    s => s.status === 'finished' && isLegRetryable(s.states[leg.key]),
-  );
+  const retryable = store(s => isLegRetryable(s.states[leg.key]));
   const handlePress = useCallback(() => onRetry(leg.key), [onRetry, leg.key]);
   const payLogo = tokenLogos[tokenKey(leg.pay)];
   const receiveLogo = tokenLogos[tokenKey(leg.receive)];
