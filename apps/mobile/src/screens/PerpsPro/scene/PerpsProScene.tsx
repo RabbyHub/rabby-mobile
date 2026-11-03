@@ -41,6 +41,7 @@ import {
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Reanimated, { runOnUI, useSharedValue } from 'react-native-reanimated';
 
 import { PerpsProAccountAssetRow } from '../components/account/PerpsProAccountAssetRow';
@@ -51,7 +52,10 @@ import {
   PerpsProFundingOverlay,
   type PerpsProFundingMode,
 } from '../components/account/PerpsProFundingOverlay';
-import { PerpsProKlineSheet } from '../components/chart/PerpsProKlineSheet';
+import {
+  getPerpsProKlinePanelHeight,
+  PerpsProKlineSheet,
+} from '../components/chart/PerpsProKlineSheet';
 import { registerPerpsProKeyboardTradeScroll } from '../components/common/perpsProKeyboardSession';
 import { PerpsProEmptyState } from '../components/common/PerpsProEmptyState';
 import { PerpsProFieldExplanationProvider } from '../components/common/PerpsProFieldExplanationProvider';
@@ -357,6 +361,7 @@ export const PerpsProScene: React.FC<{
   const marketSelectorRef = useRef<PerpsProMarketSelectorHandle>(null);
   const infoPagerRef = useRef<PerpsProInfoPagerHandle>(null);
   const [klineOpen, setKlineOpen] = useState(false);
+  const safeAreaInsets = useSafeAreaInsets();
   const [klineActivated, setKlineActivated] = useState(false);
   const [appState, setAppState] = useState<AppStateStatus>(
     AppState.currentState,
@@ -409,9 +414,9 @@ export const PerpsProScene: React.FC<{
     const subscription = AppState.addEventListener('change', setAppState);
     return () => subscription.remove();
   }, []);
-  const openKline = useCallback(() => {
+  const toggleKline = useCallback(() => {
     setKlineActivated(true);
-    setKlineOpen(true);
+    setKlineOpen(open => !open);
   }, []);
   const closeKline = useCallback(() => setKlineOpen(false), []);
   const closeFundingOverlay = useCallback(() => setFundingOverlay(null), []);
@@ -747,6 +752,10 @@ export const PerpsProScene: React.FC<{
         : null,
     [infoTabsNaturalAnchor, scrollViewportHeight],
   );
+  // The docked K-line covers the viewport bottom; keep every row reachable.
+  const klinePanelInset = klineOpen
+    ? getPerpsProKlinePanelHeight(safeAreaInsets.bottom)
+    : 0;
   const populatedInfoBottomPadding =
     scrollViewportHeight > 0
       ? getPerpsProPopulatedInfoSectionBottomPadding({
@@ -759,9 +768,9 @@ export const PerpsProScene: React.FC<{
   >(() => {
     const trailingStyle = (populated: boolean): ViewStyle => ({
       paddingBottom:
-        populated && populatedInfoBottomPadding != null
+        (populated && populatedInfoBottomPadding != null
           ? populatedInfoBottomPadding
-          : 32,
+          : 32) + klinePanelInset,
     });
     return {
       account: [
@@ -790,6 +799,7 @@ export const PerpsProScene: React.FC<{
     info.accountState,
     info.openOrderCollectionPresentation,
     info.positionCollectionPresentation,
+    klinePanelInset,
     populatedInfoBottomPadding,
     scrollContentMinimumHeightStyle,
     styles.scrollContent,
@@ -1363,7 +1373,8 @@ export const PerpsProScene: React.FC<{
   ) : (
     <PerpsProMarketBar
       market={scene.currentMarket}
-      onOpenKline={openKline}
+      klineOpen={klineOpen}
+      onToggleKline={toggleKline}
       onPress={openMarketSelector}
     />
   );
@@ -1517,19 +1528,20 @@ export const PerpsProScene: React.FC<{
         onConfirm={confirmUnifiedEnable}
       />
       {scene.currentMarket ? (
-        <PerpsProSheetNavigationBoundary
-          active={klineOpen}
-          dismiss={closeKline}>
-          <PerpsProKlineSheet
-            enabled={
-              klineActivated && scene.klineEnabled && appState === 'active'
-            }
-            market={scene.currentMarket}
-            onClose={closeKline}
-            preloadEnabled={scene.klineEnabled && appState === 'active'}
-            visible={klineOpen}
-          />
-        </PerpsProSheetNavigationBoundary>
+        // Docked panel, not a modal: page navigation stays available.
+        <PerpsProKlineSheet
+          enabled={
+            klineActivated && scene.klineEnabled && appState === 'active'
+          }
+          market={scene.currentMarket}
+          onClose={closeKline}
+          position={
+            info.allPositionsByCoin.get(scene.currentMarket.canonicalCoin) ??
+            null
+          }
+          preloadEnabled={scene.klineEnabled && appState === 'active'}
+          visible={klineOpen}
+        />
       ) : null}
       {fundingOverlay ? (
         <PerpsProSheetNavigationBoundary

@@ -21,6 +21,9 @@ const { appendSimplePriceGuide } = await import(
 const logic = await import(
   pathToFileURL(path.join(base, 'perps-simple-logic.ts'))
 );
+const { renderPerpsPriceTags } = await import(
+  pathToFileURL(path.join(base, 'perps-price-tags.ts'))
+);
 const source = fs.readFileSync(path.join(base, 'perps-simple.ts'), 'utf8');
 const ast = ts.createSourceFile(
   'chart.ts',
@@ -157,6 +160,7 @@ function scene(
     historyRetryBlocked: false,
     applying: false,
     appendSimplePriceGuide,
+    renderPerpsPriceTags,
     ...logic,
   };
   vm.runInNewContext(js + '\nrender();', context);

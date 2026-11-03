@@ -3,6 +3,7 @@ import {
   type PerpsCandleDataInterval,
   type PerpsCandleInterval,
 } from '@/constant/perps';
+import { SIMPLE_INTERVAL_GROUPS } from '@/constant/perpsSimpleChart';
 
 const MINUTE_MS = 60 * 1000;
 const DAY_MS = 24 * 60 * MINUTE_MS;
@@ -27,22 +28,16 @@ const INTERVAL_DURATION_MS: Record<
   '3d': 3 * DAY_MS,
 };
 
+// Same intervals and labels as the Simple interval sheet; both modes share
+// one interval preference.
 export const PERPS_PRO_CANDLE_INTERVAL_OPTIONS: ReadonlyArray<{
   label: string;
-  value: PerpsCandleInterval;
-}> = [
-  { label: '1m', value: '1m' },
-  { label: '5m', value: '5m' },
-  { label: '15m', value: '15m' },
-  { label: '30m', value: '30m' },
-  { label: '1H', value: '1h' },
-  { label: '4H', value: '4h' },
-  { label: '8H', value: '8h' },
-  { label: '12H', value: '12h' },
-  { label: '1D', value: '1d' },
-  { label: '1W', value: '1w' },
-  { label: '1M', value: '1M' },
-];
+  value: PerpsCandleDataInterval;
+}> = SIMPLE_INTERVAL_GROUPS.flatMap(group => group.values).map(value => ({
+  label:
+    value.endsWith('d') || value.endsWith('w') ? value.toUpperCase() : value,
+  value,
+}));
 
 export const getPerpsCandleSource = (
   interval: PerpsCandleDataInterval,

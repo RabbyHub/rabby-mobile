@@ -3,9 +3,12 @@ import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
 import { View } from 'react-native';
 
+import { PerpsChartLoadingGif } from '@/screens/PerpsShared/components/PerpsChartLoadingGif';
+
 import { PerpsProSkeletonBlock } from '../loading/PerpsProSkeletonBlock';
 
-export const PERPS_PRO_KLINE_CHART_HEIGHT = 224;
+// MA band (22) + plot + time axis; the panel adds header and bottom padding.
+export const PERPS_PRO_KLINE_CHART_HEIGHT = 228;
 
 export const PerpsProKlineSkeleton: React.FC<{ overlay?: boolean }> =
   React.memo(({ overlay = false }) => {
@@ -21,15 +24,9 @@ export const PerpsProKlineSkeleton: React.FC<{ overlay?: boolean }> =
           <PerpsProSkeletonBlock height={8} style={styles.rounded} width={52} />
           <PerpsProSkeletonBlock height={8} style={styles.rounded} width={52} />
         </View>
+        {/* The shared loading GIF replaces the skeleton candles. */}
         <View style={styles.chart}>
-          {[40, 70, 52, 82, 62, 96, 72, 54, 78, 46].map((height, index) => (
-            <PerpsProSkeletonBlock
-              key={`${height}:${index}`}
-              height={height}
-              style={styles.candle}
-              width={6}
-            />
-          ))}
+          <PerpsChartLoadingGif />
         </View>
       </View>
     );
@@ -41,8 +38,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
     backgroundColor: colors2024['neutral-bg-1'],
     height: PERPS_PRO_KLINE_CHART_HEIGHT,
-    paddingHorizontal: 16,
-    paddingTop: 8,
+    paddingLeft: 4,
+    paddingRight: 16,
+    paddingTop: 4,
     width: '100%',
   },
   overlay: {
@@ -59,15 +57,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     borderRadius: 4,
   },
   chart: {
-    alignItems: 'flex-end',
+    alignItems: 'center',
     flex: 1,
-    flexDirection: 'row',
-    gap: 12,
-    justifyContent: 'space-around',
-    paddingBottom: 18,
-    paddingHorizontal: 8,
-  },
-  candle: {
-    borderRadius: 2,
+    justifyContent: 'center',
   },
 }));

@@ -1,11 +1,11 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import {
-  DEFAULT_PERPS_CANDLE_INTERVAL,
-  type PerpsCandleInterval,
-} from '@/constant/perps';
-import { apisPerps } from '@/core/apis/perps';
+import type { PerpsCandleDataInterval } from '@/constant/perps';
 import { selectPerpsDisplayCandles } from '@/hooks/perps/candles/candle';
+import {
+  updatePerpsChartPreference,
+  usePerpsChartPreference,
+} from '@/hooks/perps/candles/chartPreference';
 import {
   getPerpsCandleSourceIdentity,
   isPerpsCandleSourceSnapshotFresh,
@@ -13,11 +13,6 @@ import {
   type PerpsCandleSourceSnapshot,
 } from '@/hooks/perps/candles/sourceSnapshot';
 import { usePerpsCandleFeed } from '@/hooks/perps/candles/usePerpsCandleFeed';
-
-type KlinePreferenceState = {
-  hydrated: boolean;
-  interval: PerpsCandleInterval;
-};
 
 export const usePerpsProKline = ({
   coin,
@@ -28,89 +23,22 @@ export const usePerpsProKline = ({
   enabled: boolean;
   preloadEnabled?: boolean;
 }) => {
-  const [preference, setPreference] = useState<KlinePreferenceState>({
-    hydrated: false,
-    interval: DEFAULT_PERPS_CANDLE_INTERVAL,
-  });
-  const lifecycleGenerationRef = useRef(0);
-  const writeGenerationRef = useRef(0);
-  const writeQueueRef = useRef<Promise<void>>(Promise.resolve());
-  const persistedIntervalRef = useRef<PerpsCandleInterval>(
-    DEFAULT_PERPS_CANDLE_INTERVAL,
-  );
+  // Linked with Simple: Pro reads and writes the shared chart preference.
+  const { hydrated, preference: chartPreference } = usePerpsChartPreference();
+  const preference = { hydrated, interval: chartPreference.interval };
   const [preloadedSnapshot, setPreloadedSnapshot] =
     useState<PerpsCandleSourceSnapshot | null>(null);
   const [preloadError, setPreloadError] = useState<Error | null>(null);
 
-  useEffect(() => {
-    const lifecycleGeneration = lifecycleGenerationRef.current + 1;
-    lifecycleGenerationRef.current = lifecycleGeneration;
-    let active = true;
-
-    apisPerps
-      .getSelectedKlineInterval()
-      .then(interval => {
-        if (active && lifecycleGenerationRef.current === lifecycleGeneration) {
-          persistedIntervalRef.current = interval;
-          setPreference({ hydrated: true, interval });
-        }
-      })
-      .catch(error => {
-        console.error('[PerpsPro] read K-line interval failed', error);
-        if (active && lifecycleGenerationRef.current === lifecycleGeneration) {
-          persistedIntervalRef.current = DEFAULT_PERPS_CANDLE_INTERVAL;
-          setPreference({
-            hydrated: true,
-            interval: DEFAULT_PERPS_CANDLE_INTERVAL,
-          });
-        }
-      });
-
-    return () => {
-      active = false;
-      if (lifecycleGenerationRef.current === lifecycleGeneration) {
-        lifecycleGenerationRef.current += 1;
-        writeGenerationRef.current += 1;
-      }
-    };
-  }, []);
-
   const selectInterval = useCallback(
-    (interval: PerpsCandleInterval) => {
-      if (!preference.hydrated || interval === preference.interval) {
+    (interval: PerpsCandleDataInterval) => {
+      if (!hydrated || interval === chartPreference.interval) {
         return;
       }
-
-      const lifecycleGeneration = lifecycleGenerationRef.current;
-      const writeGeneration = writeGenerationRef.current + 1;
-      writeGenerationRef.current = writeGeneration;
-      setPreference({ hydrated: true, interval });
-
-      const persistence = writeQueueRef.current.then(() =>
-        apisPerps.setSelectedKlineInterval(interval),
-      );
-      writeQueueRef.current = persistence.catch(() => undefined);
-      persistence
-        .then(() => {
-          if (lifecycleGenerationRef.current === lifecycleGeneration) {
-            persistedIntervalRef.current = interval;
-          }
-        })
-        .catch(error => {
-          console.error('[PerpsPro] persist K-line interval failed', error);
-          if (
-            lifecycleGenerationRef.current !== lifecycleGeneration ||
-            writeGenerationRef.current !== writeGeneration
-          ) {
-            return;
-          }
-          setPreference({
-            hydrated: true,
-            interval: persistedIntervalRef.current,
-          });
-        });
+      // A Pro choice is a manual interval in Simple, keeping its chart style.
+      updatePerpsChartPreference({ ...chartPreference, range: null, interval });
     },
-    [preference.hydrated, preference.interval],
+    [chartPreference, hydrated],
   );
 
   const expectedIdentity = getPerpsCandleSourceIdentity(

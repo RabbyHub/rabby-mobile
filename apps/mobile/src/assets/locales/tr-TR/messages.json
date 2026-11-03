@@ -2259,8 +2259,7 @@
           }
         },
         "chart": {
-          "open": "Grafiği aç",
-          "resetPriceScale": "Grafik fiyat ölçeğini sıfırla"
+          "open": "Grafiği aç"
         },
         "account": {
           "disabledFrame": "Hesap işlemleri bu aşamada kullanılamıyor",
