@@ -97,4 +97,20 @@ describe('Perps address-bound permission', () => {
     });
     expect(hasCurrentPerpPermission()).toBe(false);
   });
+
+  it('times out a stalled check so the next action re-checks', async () => {
+    jest.useFakeTimers();
+    try {
+      mockGetPerpPermission.mockReturnValueOnce(new Promise(() => undefined));
+      const stalled = ensureCurrentPerpPermission(ACCOUNT_A);
+      await jest.advanceTimersByTimeAsync(5000);
+      await expect(stalled).resolves.toBe(false);
+
+      mockGetPerpPermission.mockResolvedValueOnce({ has_permission: true });
+      await expect(ensureCurrentPerpPermission(ACCOUNT_A)).resolves.toBe(true);
+      expect(mockGetPerpPermission).toHaveBeenCalledTimes(2);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
 });

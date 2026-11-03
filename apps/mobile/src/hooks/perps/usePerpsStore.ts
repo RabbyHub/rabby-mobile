@@ -754,6 +754,7 @@ const setHasPermission = (payload: boolean) => {
 const getPermissionTarget = (state: PerpsState) =>
   state.currentPerpsAccount?.address.toLowerCase() ?? '';
 
+const PERP_PERMISSION_TIMEOUT = 5000;
 const pendingPermissionChecks = new Map<string, Promise<void>>();
 
 const fetchPerpPermission = (address: string): Promise<void> => {
@@ -765,9 +766,12 @@ const fetchPerpPermission = (address: string): Promise<void> => {
   const request = (async () => {
     let granted: boolean | null = null;
     try {
-      const { has_permission } = await openapi.getPerpPermission({
-        id: address,
-      });
+      // openapi has no axios timeout; a stalled check must not block retries.
+      const { has_permission } = await withTimeout(
+        openapi.getPerpPermission({ id: address }),
+        PERP_PERMISSION_TIMEOUT,
+        'getPerpPermission',
+      );
       granted = has_permission === true;
     } catch (error) {
       console.error('[perps] fetch permission failed', error);

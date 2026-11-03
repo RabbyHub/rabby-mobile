@@ -64,6 +64,7 @@ jest.mock('@/hooks/perps/showToast', () => ({
   showToast: (...args: unknown[]) => mockShowToast(...args),
 }));
 jest.mock('@/hooks/perps/usePerpsStore', () => ({
+  ensureCurrentPerpPermission: async () => true,
   perpsStore: { getState: () => mockGetState() },
 }));
 jest.mock('@sentry/react-native', () => ({ captureException: jest.fn() }));
