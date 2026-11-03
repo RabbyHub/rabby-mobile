@@ -28,6 +28,11 @@ export type EncryptorAdapter = {
     password: string,
     object: any,
   ) => Promise<EncryptorEncryptDetail>;
+  encryptKeyringState?: (
+    password: string,
+    object: any,
+    currentEncryptedString?: string,
+  ) => Promise<string>;
 };
 
 export const nodeEncryptor = {
