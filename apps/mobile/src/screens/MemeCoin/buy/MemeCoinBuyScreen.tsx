@@ -126,7 +126,7 @@ const MemeCoinBuyContent = ({
 
   const summary = getBuySummary({
     amountUsd: parsedAmountUsd ?? 0,
-    selectedCount: selectedKeys.length,
+    selectedCount: selectedAssets.length,
     plan,
   });
   const previewDisabled = !canConfirmBuy({

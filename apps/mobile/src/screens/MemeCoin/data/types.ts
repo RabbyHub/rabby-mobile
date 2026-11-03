@@ -15,7 +15,7 @@ export type MemeMarketItem = MemeToken & {
 
 export type MemeHolding = {
   meme: MemeToken;
-  /** null until the backend returns it */
+  /** null when the backend has none for this token */
   marketCap: number | null;
   amount: number;
   valueUsd: number;

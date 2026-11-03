@@ -136,7 +136,7 @@ export const getMemeAllocations = <T extends MemeTarget>(
     }))
     .sort((a, b) => b.ratio - a.ratio);
 
-/** whole percent, so two items fit on one row at 360dp: 60%, <1% */
+/** whole percent: 60%, <1% */
 export const formatAllocationPct = (ratio: number) => {
   const pct = new BigNumber(ratio).times(100);
   return pct.gt(0) && pct.lt(1)
