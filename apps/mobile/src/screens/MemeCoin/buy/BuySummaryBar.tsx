@@ -5,7 +5,6 @@ import { Text } from '@/components/Typography';
 import { Button } from '@/components2024/Button';
 import {
   BOTTOM_BUTTON_SINGLE_HEIGHT,
-  BOTTOM_BUTTON_TITLE_STYLE,
   BOTTOM_BUTTON_TOP_OFFSET,
   getBottomButtonBottomOffset,
 } from '@/constant/layout';
@@ -14,6 +13,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import { formatUsdValue } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import { MaxPriceImpactSelector } from '../components/MaxPriceImpactSelector';
+import { MEME_BUTTON_TITLE_STYLE } from '../ui/buttonStyles';
 import type { BuySummary, MaxPriceImpactPct } from '../ui/helpers';
 
 /** drops zero cents only, as in Figma: $100 needed, Another $65.21 needed */
@@ -81,7 +81,7 @@ export const BuySummaryBar = ({
       <Button
         title={t('page.memeCoin.buy.preview')}
         height={BOTTOM_BUTTON_SINGLE_HEIGHT}
-        titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
+        titleStyle={MEME_BUTTON_TITLE_STYLE}
         disabled={confirmDisabled}
         onPress={onConfirm}
         noShadow

@@ -7,7 +7,6 @@ import { NextSearchBar } from '@/components2024/SearchBar';
 import {
   BOTTOM_BUTTON_GAP,
   BOTTOM_BUTTON_SINGLE_HEIGHT,
-  BOTTOM_BUTTON_TITLE_STYLE,
   BOTTOM_BUTTON_TOP_OFFSET,
   getBottomButtonBottomOffset,
 } from '@/constant/layout';
@@ -16,6 +15,7 @@ import { useSafeSizes } from '@/hooks/useAppLayout';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { MaxPriceImpactSelector } from '../components/MaxPriceImpactSelector';
+import { MEME_BUTTON_TITLE_STYLE } from '../ui/buttonStyles';
 import type { MaxPriceImpactPct } from '../ui/helpers';
 import { BuyAmountField } from './BuyAmountField';
 
@@ -47,7 +47,7 @@ const PlaceholderButton = ({ title }: { title: string }) => (
   <Button
     title={title}
     height={BOTTOM_BUTTON_SINGLE_HEIGHT}
-    titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
+    titleStyle={MEME_BUTTON_TITLE_STYLE}
     disabledTitleStyle={PLACEHOLDER_TITLE_STYLE}
     disabled
     noShadow
@@ -108,7 +108,7 @@ export const MemeCoinHomeBottomBar = ({
           <Button
             title={t('page.memeCoin.sellN', { count: selectedCount })}
             height={BOTTOM_BUTTON_SINGLE_HEIGHT}
-            titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
+            titleStyle={MEME_BUTTON_TITLE_STYLE}
             onPress={onSell}
             noShadow
             type="primary"
@@ -125,7 +125,7 @@ export const MemeCoinHomeBottomBar = ({
         <Button
           title={t('page.memeCoin.buyN', { count: selectedCount })}
           height={BOTTOM_BUTTON_SINGLE_HEIGHT}
-          titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
+          titleStyle={MEME_BUTTON_TITLE_STYLE}
           disabled={buyDisabled}
           onPress={onBuy}
           noShadow
