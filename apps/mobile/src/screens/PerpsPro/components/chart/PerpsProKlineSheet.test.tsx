@@ -332,6 +332,12 @@ describe('PerpsProKlineSheet', () => {
           scope: 'partial',
           triggerPrice: '90',
         },
+        {
+          kind: 'stopLoss',
+          remainingSize: '0',
+          scope: 'position',
+          triggerPrice: '85',
+        },
       ],
     } as unknown as PerpsPositionViewModel;
     render(
@@ -359,16 +365,17 @@ describe('PerpsProKlineSheet', () => {
         title: 'page.perpsDetail.simpleChart.liquidation',
       },
       {
-        id: 'tp:120',
+        id: 'tp',
         kind: 'tp',
         price: 120,
-        title: 'page.perpsDetail.simpleChart.takeProfit 100%',
+        title: 'page.perpsDetail.simpleChart.takeProfit',
       },
       {
-        id: 'sl:90',
+        // The partial SL at 90 is not drawn; only the position-scope one.
+        id: 'sl',
         kind: 'sl',
-        price: 90,
-        title: 'page.perpsDetail.simpleChart.stopLoss 25%',
+        price: 85,
+        title: 'page.perpsDetail.simpleChart.stopLoss',
       },
     ]);
   });

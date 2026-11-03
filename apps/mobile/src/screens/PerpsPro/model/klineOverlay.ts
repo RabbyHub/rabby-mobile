@@ -1,5 +1,3 @@
-import BigNumber from 'bignumber.js';
-
 import type { PerpsProOverlayLine } from '@/components2024/TradingViewCandleChart/type';
 
 import type { PerpsPositionViewModel } from './position';
@@ -16,13 +14,9 @@ const positivePrice = (value: string | null | undefined) => {
   return Number.isFinite(price) && price > 0 ? price : null;
 };
 
-const formatShare = (share: BigNumber) =>
-  share.lt(1) ? '<1%' : `${share.integerValue(BigNumber.ROUND_HALF_UP)}%`;
-
 /**
- * Position guides for the Pro K-line. Every active TP/SL is drawn: a
- * position-scope order covers 100%, a partial one shows its share of the
- * current size, and orders at the same trigger price merge into one line.
+ * Position guides for the Pro K-line, matching Simple: entry, liquidation
+ * and the position-scope TP/SL only. Partial TP/SL orders are not drawn.
  */
 export const buildPerpsProKlineOverlayLines = (
   position: PerpsPositionViewModel | null,
@@ -51,45 +45,19 @@ export const buildPerpsProKlineOverlayLines = (
     });
   }
 
-  const positionSize = new BigNumber(position.baseSize);
-  const shares = new Map<
-    string,
-    { kind: 'tp' | 'sl'; price: number; share: BigNumber }
-  >();
-  position.tpslOrders.forEach(order => {
-    const price = positivePrice(order.triggerPrice);
+  (['takeProfit', 'stopLoss'] as const).forEach(kind => {
+    const order = position.tpslOrders.find(
+      item => item.scope === 'position' && item.kind === kind,
+    );
+    const price = positivePrice(order?.triggerPrice);
     if (price === null) {
       return;
     }
-    const kind = order.kind === 'takeProfit' ? 'tp' : 'sl';
-    const share =
-      order.scope === 'position'
-        ? new BigNumber(100)
-        : positionSize.gt(0)
-        ? new BigNumber(order.remainingSize).div(positionSize).times(100)
-        : null;
-    if (!share?.isFinite() || share.lte(0)) {
-      return;
-    }
-    const id = `${kind}:${price}`;
-    const existing = shares.get(id);
-    shares.set(id, {
-      kind,
-      price,
-      share: BigNumber.min(
-        100,
-        (existing?.share ?? new BigNumber(0)).plus(share),
-      ),
-    });
-  });
-  shares.forEach(({ kind, price, share }, id) => {
     lines.push({
-      id,
-      kind,
+      id: kind === 'takeProfit' ? 'tp' : 'sl',
+      kind: kind === 'takeProfit' ? 'tp' : 'sl',
       price,
-      title: `${
-        kind === 'tp' ? labels.takeProfit : labels.stopLoss
-      } ${formatShare(share)}`,
+      title: kind === 'takeProfit' ? labels.takeProfit : labels.stopLoss,
     });
   });
   return lines;
