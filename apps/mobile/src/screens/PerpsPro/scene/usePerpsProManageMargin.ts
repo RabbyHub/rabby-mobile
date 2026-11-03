@@ -8,6 +8,7 @@ import {
 import {
   fetchClearinghouseStateHttp,
   fetchSpotStateHttp,
+  hasCurrentPerpPermission,
   isPerpsUserAbstractionReadyForAccount,
   perpsStore,
   type PerpsState,
@@ -350,7 +351,7 @@ export const usePerpsProManageMargin = () => {
       showToast(t('page.perps.pro.positions.marginContextChanged'), 'error');
       return;
     }
-    if (!openingState.hasPermission) {
+    if (!hasCurrentPerpPermission(openingState)) {
       showToast(t('page.perps.regionNotSupport'), 'error');
       return;
     }
@@ -392,7 +393,7 @@ export const usePerpsProManageMargin = () => {
         !account ||
         !market ||
         !position ||
-        !state.hasPermission ||
+        !hasCurrentPerpPermission(state) ||
         getPerpsRuntimeIdentity(account) !== activeEditor.accountIdentity ||
         position.leverage?.type !== 'isolated' ||
         !signedSize.isFinite() ||
@@ -401,7 +402,7 @@ export const usePerpsProManageMargin = () => {
       ) {
         resetEditor();
         showToast(
-          state.hasPermission
+          hasCurrentPerpPermission(state)
             ? t('page.perps.pro.positions.marginContextChanged')
             : t('page.perps.regionNotSupport'),
           'error',
