@@ -9855,16 +9855,16 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@rabby-wallet/rabby-action@npm:0.1.16":
-  version: 0.1.16
-  resolution: "@rabby-wallet/rabby-action@npm:0.1.16"
+"@rabby-wallet/rabby-action@npm:0.1.17":
+  version: 0.1.17
+  resolution: "@rabby-wallet/rabby-action@npm:0.1.17"
   peerDependencies:
     "@debank/common": "*"
     "@rabby-wallet/rabby-api": "*"
     "@rabby-wallet/rabby-security-engine": "*"
     bignumber.js: "*"
     p-queue: ^7.3.0
-  checksum: 10/ebe77c61045e9b1857244f290f2a36f8d2521aa4a8aa88d5c168f67fc948cabde75c7f1fad6cb13aebebb6c888c4fa43c85e203115722309c254bee9e7b98e92
+  checksum: 10/624ed2af91f98bb1da4037fe7a2f173a37d631b5f338f69208c3bb478b83d47a106124556844ae98950da9924309841cdf993409424d2daeba36735457a21dbb
   languageName: node
   linkType: hard
 
@@ -9921,13 +9921,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rabby-wallet/rabby-security-engine@npm:2.0.12":
-  version: 2.0.12
-  resolution: "@rabby-wallet/rabby-security-engine@npm:2.0.12"
+"@rabby-wallet/rabby-security-engine@npm:2.0.13":
+  version: 2.0.13
+  resolution: "@rabby-wallet/rabby-security-engine@npm:2.0.13"
   peerDependencies:
     "@debank/common": "*"
     "@rabby-wallet/rabby-api": "*"
-  checksum: 10/f2aaf2f992aedc1d3087dd721523a186c6b5c3d44b6c752ef839f11dbe2a22bafa6df606a72d3a5f585b79230185ad64660244bc423de4dce5a1b00bee342fb5
+  checksum: 10/f964c8a07a8fd3f5a0654643dc0fcdfce981de29192130b956916206b7a42b8c22581125e60994bc8bfe44eb1ee2fea6427c334837e7f8f2645f064f63ec3ae4
   languageName: node
   linkType: hard
 
@@ -37855,11 +37855,11 @@ __metadata:
     "@rabby-wallet/hyperliquid-sdk": "npm:1.1.19"
     "@rabby-wallet/object-multiplex": "workspace:^"
     "@rabby-wallet/persist-store": "workspace:^"
-    "@rabby-wallet/rabby-action": "npm:0.1.16"
+    "@rabby-wallet/rabby-action": "npm:0.1.17"
     "@rabby-wallet/rabby-api": "npm:0.9.69"
     "@rabby-wallet/rabby-bridge": "npm:0.0.12"
     "@rabby-wallet/rabby-logger": "npm:0.3.1"
-    "@rabby-wallet/rabby-security-engine": "npm:2.0.12"
+    "@rabby-wallet/rabby-security-engine": "npm:2.0.13"
     "@rabby-wallet/rabby-sign-bvm": "npm:0.1.1"
     "@rabby-wallet/rabby-swap": "npm:0.0.92"
     "@rabby-wallet/react-native-bootsplash": "workspace:^"
