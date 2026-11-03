@@ -6,6 +6,7 @@ import { PaymentTokenSelectSheet } from './PaymentTokenSelectSheet';
 
 const mockPresent = jest.fn();
 const mockDismiss = jest.fn();
+let mockOnDismiss: (() => void) | undefined;
 
 jest.mock('@/components/customized/BottomSheet', () => {
   const { useImperativeHandle } = jest.requireActual('react');
@@ -13,10 +14,13 @@ jest.mock('@/components/customized/BottomSheet', () => {
     AppBottomSheetModal: ({
       ref,
       children,
+      onDismiss,
     }: {
       ref: unknown;
       children: unknown;
+      onDismiss?: () => void;
     }) => {
+      mockOnDismiss = onDismiss;
       useImperativeHandle(ref, () => ({
         present: mockPresent,
         dismiss: mockDismiss,
@@ -125,6 +129,12 @@ describe('PaymentTokenSelectSheet', () => {
     expect(mockPresent).toHaveBeenCalledTimes(1);
     rerender(<PaymentTokenSelectSheet {...props} visible={false} />);
     expect(mockDismiss).toHaveBeenCalledTimes(1);
+  });
+
+  it('closes when the sheet is swiped away', () => {
+    const { onClose } = renderSheet();
+    mockOnDismiss?.();
+    expect(onClose).toHaveBeenCalledTimes(1);
   });
 
   it('asks for the whole amount when nothing is selected', () => {
