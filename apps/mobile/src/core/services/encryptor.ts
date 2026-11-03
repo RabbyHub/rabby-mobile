@@ -363,6 +363,31 @@ export default class RNEncryptor implements EncryptorAdapter {
     return JSON.stringify(encryptedData);
   }
 
+  /**
+   * Encrypts keyring state with the new-wallet policy: a fresh wallet uses the
+   * strongest registered version, while rewrites inherit the version of the
+   * ciphertext they replace so a password change never downgrades it.
+   */
+  async encryptKeyringState(
+    password: string,
+    object: unknown,
+    currentEncryptedString?: string,
+  ) {
+    const options: KeyDerivationOptions = currentEncryptedString
+      ? resolvePayloadKdfOptions(
+          JSON.parse(currentEncryptedString) as EncryptedData,
+        )
+      : KDF_REGISTRY[KDF_VERSION_PBKDF2_600000];
+
+    const { encryptedData } = await encryptWithPassword(
+      password,
+      object,
+      options,
+    );
+
+    return JSON.stringify(encryptedData);
+  }
+
   async encryptWithDetail(password: string, object: any) {
     const { encryptedData, key } = await encryptWithPassword(
       password,

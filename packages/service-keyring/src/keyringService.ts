@@ -385,13 +385,31 @@ export class KeyringService extends RNEventEmitter {
       passwordState: normalizeKeyringPasswordState(initState.passwordState),
     });
   }
+  private encryptKeyringState(
+    password: string,
+    object: unknown,
+    currentEncryptedString?: string,
+  ) {
+    return this.encryptor.encryptKeyringState
+      ? this.encryptor.encryptKeyringState(
+          password,
+          object,
+          currentEncryptedString,
+        )
+      : this.encryptor.encrypt(password, object);
+  }
   private async _setupBoot(
     password: string,
     passwordState?: KeyringPasswordState,
   ) {
     this.unlockSessionId += 1;
     this.#password = password;
-    const encryptBooted = await this.encryptor.encrypt(password, 'true');
+    const { vault, booted } = this.store.getState();
+    const encryptBooted = await this.encryptKeyringState(
+      password,
+      'true',
+      booted || vault,
+    );
     this.store.updateState({
       booted: encryptBooted,
       ...(passwordState ? { passwordState } : null),
@@ -2596,9 +2614,14 @@ export class KeyringService extends RNEventEmitter {
       this.getUnencryptedKeyringData(serializedKeyrings);
     const publicAccountSnapshot =
       await this.buildPublicAccountSnapshotFromRuntime();
+    const state = this.store.getState();
     const [booted, vault] = await Promise.all([
-      this.encryptor.encrypt(password, 'true'),
-      this.encryptor.encrypt(password, serializedKeyrings as unknown as Buffer),
+      this.encryptKeyringState(password, 'true', state.booted || state.vault),
+      this.encryptKeyringState(
+        password,
+        serializedKeyrings as unknown as Buffer,
+        state.vault || state.booted,
+      ),
     ]);
 
     this.#password = password;
@@ -2679,9 +2702,11 @@ export class KeyringService extends RNEventEmitter {
     const publicAccountSnapshot =
       await this.buildPublicAccountSnapshotFromRuntime();
 
-    const encryptedString = await this.encryptor.encrypt(
+    const state = this.store.getState();
+    const encryptedString = await this.encryptKeyringState(
       this.#password as string,
       serializedKeyrings as unknown as Buffer,
+      state.vault || state.booted,
     );
 
     this.store.updateState({

@@ -76,7 +76,10 @@ type PersistedState = ReturnType<KeyringService['store']['getState']>;
 const subscriptions: (() => void)[] = [];
 
 function memoryStorage(initial: PersistedState): KeyringStateStorage {
-  const data = new Map([['keyring', JSON.stringify(initial)]]);
+  const data = new Map<string, string>();
+  if (Object.keys(initial).length) {
+    data.set('keyring', JSON.stringify(initial));
+  }
   return {
     contains: key => data.has(key),
     delete: key => {
@@ -222,7 +225,7 @@ function pauseFirstUpgradedDerivation() {
   return { pending, release };
 }
 
-describe('password vault upgrade integration', () => {
+describe('keyring KDF policy and vault upgrade integration', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.mocked(Aes.pbkdf2).mockReset().mockImplementation(nativePbkdf2);
@@ -248,6 +251,83 @@ describe('password vault upgrade integration', () => {
     expect(copy(service.store.getState())).toEqual(before);
     expect(readDurable()).toEqual(state);
     expect(commits).toEqual([]);
+  });
+
+  it('uses 600k for a new wallet and preserves it when adding accounts and changing password', async () => {
+    const { service } = openService({}, { encryptor: legacyEncryptor });
+    const nextPassword = 'new-wallet-password';
+
+    await service.boot(password);
+    expectIterations(service.store.getState().booted, 600000);
+
+    await service.importPrivateKey(privateKey);
+    expectIterations(service.store.getState().vault, 600000);
+    expectIterations(service.store.getState().booted, 600000);
+
+    await service.updatePassword(password, nextPassword);
+
+    expectIterations(service.store.getState().vault, 600000);
+    expectIterations(service.store.getState().booted, 600000);
+    await expect(service.verifyPassword(nextPassword)).resolves.toBeUndefined();
+    await expect(service.verifyPassword(password)).rejects.toThrow();
+  });
+
+  it('preserves a 600k wallet across restart and subsequent persistence', async () => {
+    const { state } = await createFixture({
+      vaultEncryptor: upgradedEncryptor,
+      bootedEncryptor: upgradedEncryptor,
+    });
+    const { service, commits } = openService(state, {
+      encryptor: legacyEncryptor,
+    });
+
+    await service.submitPassword(password);
+    await service.persistAllKeyrings();
+
+    expectIterations(service.store.getState().vault, 600000);
+    expectIterations(service.store.getState().booted, 600000);
+    expect(commits).toEqual([]);
+  });
+
+  it('keeps a legacy wallet at 5k when adding accounts and changing password', async () => {
+    const { state } = await createFixture();
+    const { service } = openService(state, { encryptor: legacyEncryptor });
+    const nextPassword = 'legacy-wallet-password';
+
+    await service.submitPassword(password);
+    await service.importPrivateKey('22'.repeat(32));
+    await service.updatePassword(password, nextPassword);
+
+    expectIterations(service.store.getState().vault, 5000);
+    expectIterations(service.store.getState().booted, 5000);
+    expect(
+      jest.mocked(Aes.pbkdf2).mock.calls.every(call => call[2] === 5000),
+    ).toBe(true);
+    await expect(service.verifyPassword(nextPassword)).resolves.toBeUndefined();
+  });
+
+  it('preserves each credential parameter independently during a password change', async () => {
+    const { state } = await createFixture({
+      bootedEncryptor: upgradedEncryptor,
+    });
+    const { service } = openService(state, { encryptor: legacyEncryptor });
+    const nextPassword = 'mixed-wallet-password';
+
+    await service.updatePassword(password, nextPassword);
+
+    expectIterations(service.store.getState().vault, 5000);
+    expectIterations(service.store.getState().booted, 600000);
+    await expect(service.verifyPassword(nextPassword)).resolves.toBeUndefined();
+  });
+
+  it('does not treat an existing legacy booted-only wallet as new', async () => {
+    const booted = await legacyEncryptor.encrypt(password, 'true');
+    const { service } = openService({ booted }, { encryptor: legacyEncryptor });
+
+    await service.resetPassword('legacy-empty-wallet-password');
+
+    expectIterations(service.store.getState().vault, 5000);
+    expectIterations(service.store.getState().booted, 5000);
   });
 
   it('adds original version metadata to an unversioned legacy vault', async () => {

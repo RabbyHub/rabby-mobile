@@ -189,6 +189,50 @@ describe('RNEncryptor KDF version registry', () => {
     );
   });
 
+  it('uses the 600k version for a new keyring and inherits the version of existing ciphertext', async () => {
+    const encryptor = new RNEncryptor();
+    const newKeyring = await encryptor.encryptKeyringState(password, vault);
+    const rewrittenNewKeyring = await encryptor.encryptKeyringState(
+      password,
+      vault,
+      newKeyring,
+    );
+    const rewrittenLegacyKeyring = await encryptor.encryptKeyringState(
+      password,
+      vault,
+      JSON.stringify(fixtures[0].encrypted),
+    );
+
+    expect(JSON.parse(newKeyring).kdf).toEqual(DERIVATION_OPTIONS_OWASP2023);
+    expect(JSON.parse(rewrittenNewKeyring).kdf).toEqual(
+      DERIVATION_OPTIONS_OWASP2023,
+    );
+    expect(JSON.parse(rewrittenLegacyKeyring).kdf).toEqual(
+      LEGACY_DERIVATION_OPTIONS,
+    );
+    expect(jest.mocked(Aes.pbkdf2).mock.calls.map(call => call[2])).toEqual([
+      600000, 600000, 5000,
+    ]);
+  });
+
+  it('rejects invalid existing keyring metadata instead of using the new-wallet policy', async () => {
+    await expect(
+      new RNEncryptor().encryptKeyringState(
+        password,
+        vault,
+        '{"keyMetadata":{}}',
+      ),
+    ).rejects.toThrow('Unsupported RNEncryptor key derivation options');
+    await expect(
+      new RNEncryptor().encryptKeyringState(
+        password,
+        vault,
+        '{"kdf":{"version":"unknown"}}',
+      ),
+    ).rejects.toThrow('Unsupported RNEncryptor KDF version');
+    expect(Aes.pbkdf2).not.toHaveBeenCalled();
+  });
+
   it.each([5000, 600000] as const)(
     'reads both registered versions when configured for %i',
     async configuredIterations => {

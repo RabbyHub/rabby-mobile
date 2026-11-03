@@ -29,6 +29,11 @@ export type EncryptorAdapter = {
     password: string,
     object: any,
   ) => Promise<EncryptorEncryptDetail>;
+  encryptKeyringState?: (
+    password: string,
+    object: any,
+    currentEncryptedString?: string,
+  ) => Promise<string>;
   /** Add explicit KDF metadata without re-encrypting a legacy payload. */
   normalizeKdfMetadata?: (
     encryptedString: string,
