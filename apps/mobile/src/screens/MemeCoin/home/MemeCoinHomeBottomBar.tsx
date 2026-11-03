@@ -38,6 +38,8 @@ export const useKeyboardVisible = () => {
   return visible;
 };
 
+const ACTION_ROW_GAP = 16;
+
 const PLACEHOLDER_TITLE_STYLE = {
   color: 'rgba(255, 255, 255, 0.6)',
   opacity: 0.8,
@@ -55,6 +57,43 @@ const PlaceholderButton = ({ title }: { title: string }) => (
   />
 );
 
+const ActionRow = ({
+  title,
+  disabled,
+  onPress,
+  onCancel,
+}: {
+  title: string;
+  disabled?: boolean;
+  onPress: () => void;
+  onCancel: () => void;
+}) => {
+  const { t } = useTranslation();
+  const { styles } = useTheme2024({ getStyle });
+  return (
+    <View style={styles.actionRow}>
+      <Button
+        title={title}
+        height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+        titleStyle={MEME_BUTTON_TITLE_STYLE}
+        containerStyle={styles.actionMain}
+        disabled={disabled}
+        onPress={onPress}
+        noShadow
+        type="primary"
+      />
+      <Button
+        title={t('page.memeCoin.cancel')}
+        height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+        titleStyle={MEME_BUTTON_TITLE_STYLE}
+        buttonStyle={styles.cancelButton}
+        onPress={onCancel}
+        type="plain"
+      />
+    </View>
+  );
+};
+
 export const MemeCoinHomeBottomBar = ({
   mode,
   selectedCount,
@@ -70,6 +109,7 @@ export const MemeCoinHomeBottomBar = ({
   onMaxPriceImpactChange,
   onBuy,
   onSell,
+  onCancelSelection,
 }: {
   mode: 'market' | 'holdings';
   selectedCount: number;
@@ -85,6 +125,7 @@ export const MemeCoinHomeBottomBar = ({
   onMaxPriceImpactChange: (value: MaxPriceImpactPct) => void;
   onBuy: () => void;
   onSell: () => void;
+  onCancelSelection: () => void;
 }) => {
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
@@ -105,13 +146,10 @@ export const MemeCoinHomeBottomBar = ({
             value={maxPriceImpactPct}
             onChange={onMaxPriceImpactChange}
           />
-          <Button
+          <ActionRow
             title={t('page.memeCoin.sellN', { count: selectedCount })}
-            height={BOTTOM_BUTTON_SINGLE_HEIGHT}
-            titleStyle={MEME_BUTTON_TITLE_STYLE}
             onPress={onSell}
-            noShadow
-            type="primary"
+            onCancel={onCancelSelection}
           />
         </>
       );
@@ -122,14 +160,11 @@ export const MemeCoinHomeBottomBar = ({
           amountText={amountText}
           onChangeAmount={onChangeAmount}
         />
-        <Button
+        <ActionRow
           title={t('page.memeCoin.buyN', { count: selectedCount })}
-          height={BOTTOM_BUTTON_SINGLE_HEIGHT}
-          titleStyle={MEME_BUTTON_TITLE_STYLE}
           disabled={buyDisabled}
           onPress={onBuy}
-          noShadow
-          type="primary"
+          onCancel={onCancelSelection}
         />
       </>
     );
@@ -179,6 +214,17 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     shadowOpacity: 0.12,
     shadowRadius: 15,
     shadowOffset: { width: 0, height: 0 },
+  },
+  actionRow: {
+    flexDirection: 'row',
+    gap: ACTION_ROW_GAP,
+  },
+  actionMain: {
+    flex: 1,
+    minWidth: 0,
+  },
+  cancelButton: {
+    paddingHorizontal: 20,
   },
   idleRow: {
     flexDirection: 'row',

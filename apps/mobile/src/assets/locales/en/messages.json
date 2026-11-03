@@ -3388,6 +3388,7 @@
       "marketCap": "Market Cap",
       "marketCapValue": "Market Cap / Value",
       "clear": "Clear",
+      "cancel": "cancel",
       "searchMarket": "Search Meme Market",
       "noMatch": "No matching Memes",
       "noHoldings": "No holdings yet",

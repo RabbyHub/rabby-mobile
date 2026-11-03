@@ -133,6 +133,11 @@ export const MemeCoinHomeScreen = () => {
     setAmountText('');
   }, []);
 
+  const cancelSelection = useCallback(() => {
+    Keyboard.dismiss();
+    clearSelection();
+  }, [clearSelection]);
+
   useEffect(() => {
     refreshMemeMarket();
   }, []);
@@ -481,6 +486,7 @@ export const MemeCoinHomeScreen = () => {
         onMaxPriceImpactChange={setMaxPriceImpactPct}
         onBuy={handleBuy}
         onSell={handleSell}
+        onCancelSelection={cancelSelection}
       />
       <AccountSwitcherModal
         forScene="MakeTransactionAbout"
