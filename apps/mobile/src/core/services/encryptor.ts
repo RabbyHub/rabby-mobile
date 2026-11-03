@@ -7,9 +7,6 @@ const algorithms_pbkdf2 = 'sha256';
 const LEGACY_PBKDF2_ITERATIONS = 5_000;
 const UPGRADED_PBKDF2_ITERATIONS = 600_000;
 
-// Controls the encryption target. Existing ciphertext selects its own KDF.
-const ENABLE_PBKDF2_600000 = false;
-
 export type KeyDerivationOptions = {
   algorithm: 'PBKDF2';
   params: {
@@ -148,11 +145,7 @@ export default class RNEncryptor implements EncryptorAdapter {
   constructor({
     keyDerivationOptions = {
       algorithm: 'PBKDF2',
-      params: {
-        iterations: ENABLE_PBKDF2_600000
-          ? UPGRADED_PBKDF2_ITERATIONS
-          : LEGACY_PBKDF2_ITERATIONS,
-      },
+      params: { iterations: LEGACY_PBKDF2_ITERATIONS },
     },
   }: { keyDerivationOptions?: KeyDerivationOptions } = {}) {
     this.keyDerivationOptions = parseKeyMetadata(keyDerivationOptions);
@@ -179,6 +172,28 @@ export default class RNEncryptor implements EncryptorAdapter {
       password,
       object,
       this.keyDerivationOptions,
+    );
+
+    return JSON.stringify(encryptedData);
+  }
+
+  async encryptKeyringState(
+    password: string,
+    object: unknown,
+    currentEncryptedString?: string,
+  ) {
+    const keyDerivationOptions: KeyDerivationOptions = currentEncryptedString
+      ? parseKeyMetadata(
+          (JSON.parse(currentEncryptedString) as EncryptedData).keyMetadata,
+        )
+      : {
+          algorithm: 'PBKDF2',
+          params: { iterations: UPGRADED_PBKDF2_ITERATIONS },
+        };
+    const { encryptedData } = await encryptWithPassword(
+      password,
+      object,
+      keyDerivationOptions,
     );
 
     return JSON.stringify(encryptedData);
