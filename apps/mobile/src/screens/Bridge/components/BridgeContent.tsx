@@ -1563,6 +1563,10 @@ export const BridgeContent = ({
 
   const showRiskTips =
     isSlippageHigh || isSlippageLow || showLoss || miniSignGasFeeTooHigh;
+  const footerTipContent =
+    !isSupportedChain && externalDapps.length < 1
+      ? t('component.externalSwapBrideDappPopup.noDapps')
+      : undefined;
   const showRiskConfirm = showRiskTips && !btnDisabled && !miniSignLoading;
   const [riskChecked, setRiskChecked] = useState(false);
   const riskConfirmKey = useMemo(
@@ -1846,11 +1850,9 @@ export const BridgeContent = ({
             },
           ]}>
           <Tip
-            content={
-              !isSupportedChain && externalDapps.length < 1
-                ? t('component.externalSwapBrideDappPopup.noDapps')
-                : undefined
-            }>
+            noPressable={!footerTipContent}
+            isVisible={footerTipContent ? undefined : false}
+            content={footerTipContent}>
             <View>
               {showRiskConfirm ? (
                 <SignRiskWarning
