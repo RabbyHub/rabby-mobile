@@ -23,6 +23,8 @@ export type MemeTokenListResult = {
 export type RawMemePosition = Omit<RawMemeToken, 'fdv_usd'> & {
   amount: number;
   usd_value: number;
+  /** requested from the backend; absent until it ships */
+  fdv_usd?: number | null;
 };
 
 export type MemeUserTokenListResult = {

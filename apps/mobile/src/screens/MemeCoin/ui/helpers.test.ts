@@ -140,6 +140,7 @@ describe('toSellHoldings', () => {
       price: 1,
       change24h: 0,
     },
+    marketCap: null,
     amount: 1,
     valueUsd,
   });

@@ -64,9 +64,18 @@ describe('toMemeHolding', () => {
         price: 2,
         change24h: null,
       },
+      marketCap: null,
       amount: 5,
       valueUsd: 10,
     });
+  });
+
+  it('reads the market cap once the backend returns it', () => {
+    expect(toMemeHolding(position({ fdv_usd: 6e8 })).marketCap).toBe(6e8);
+  });
+
+  it('treats a null market cap as unknown', () => {
+    expect(toMemeHolding(position({ fdv_usd: null })).marketCap).toBeNull();
   });
 });
 
@@ -108,9 +117,8 @@ describe('toMemePnl', () => {
     });
   });
 
-  it('indexes the all-time P&L by the same key the holdings use', () => {
-    const holdingKey = 'hood:0xabc';
-    expect(pnl.byToken).toEqual({ [holdingKey]: -30.8 });
+  it('keeps no per-token P&L', () => {
+    expect(pnl).not.toHaveProperty('byToken');
   });
 });
 

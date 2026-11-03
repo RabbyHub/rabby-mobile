@@ -3386,7 +3386,7 @@
       "marketTitle": "Meme Market",
       "holdingsTitle": "Holdings",
       "marketCap": "Market Cap",
-      "value": "Value",
+      "marketCapValue": "Market Cap / Value",
       "clear": "Clear",
       "searchMarket": "Search Meme Market",
       "noMatch": "No matching Memes",
