@@ -459,7 +459,9 @@ export const MemeCoinHomeScreen = () => {
         ListHeaderComponent={listHeader}
         ListEmptyComponent={listEmpty}
         contentContainerStyle={styles.listContent}
-        keyboardShouldPersistTaps="handled"
+        // Search results stay tappable with the keyboard up; with a selection the
+        // keyboard belongs to the amount field and a tap on the list only closes it.
+        keyboardShouldPersistTaps={selectedCount > 0 ? 'never' : 'handled'}
         keyboardDismissMode="on-drag"
         initialNumToRender={10}
         onEndReached={handleEndReached}
