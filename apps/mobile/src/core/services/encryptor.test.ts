@@ -153,7 +153,7 @@ describe('RNEncryptor PBKDF2 compatibility', () => {
     expect(Aes.randomKey).toHaveBeenNthCalledWith(2, 16);
   });
 
-  it('writes 600,000-iteration metadata only when explicitly configured', async () => {
+  it('writes 600,000-iteration metadata for generic encryption only when explicitly configured', async () => {
     jest
       .mocked(Aes.randomKey)
       .mockResolvedValueOnce(saltHex)
@@ -172,6 +172,43 @@ describe('RNEncryptor PBKDF2 compatibility', () => {
       256,
       'sha256',
     );
+  });
+
+  it('uses 600k for a new keyring and inherits the parameters of existing ciphertext', async () => {
+    const encryptor = new RNEncryptor();
+    const newKeyring = await encryptor.encryptKeyringState(password, vault);
+    const rewrittenNewKeyring = await encryptor.encryptKeyringState(
+      password,
+      vault,
+      newKeyring,
+    );
+    const rewrittenLegacyKeyring = await encryptor.encryptKeyringState(
+      password,
+      vault,
+      JSON.stringify(fixtures[0].encrypted),
+    );
+
+    expect(JSON.parse(newKeyring).keyMetadata?.params.iterations ?? 5000).toBe(
+      600000,
+    );
+    expect(
+      JSON.parse(rewrittenNewKeyring).keyMetadata?.params.iterations ?? 5000,
+    ).toBe(600000);
+    expect(JSON.parse(rewrittenLegacyKeyring).keyMetadata).toBeUndefined();
+    expect(jest.mocked(Aes.pbkdf2).mock.calls.map(call => call[2])).toEqual([
+      600000, 600000, 5000,
+    ]);
+  });
+
+  it('rejects invalid existing keyring metadata instead of using the new-wallet policy', async () => {
+    await expect(
+      new RNEncryptor().encryptKeyringState(
+        password,
+        vault,
+        '{"keyMetadata":{}}',
+      ),
+    ).rejects.toThrow('Unsupported RNEncryptor key derivation options');
+    expect(Aes.pbkdf2).not.toHaveBeenCalled();
   });
 
   describe.each([5000, 600000] as const)(
