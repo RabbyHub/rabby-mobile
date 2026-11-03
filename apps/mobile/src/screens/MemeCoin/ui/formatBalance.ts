@@ -23,4 +23,4 @@ export const formatMemePnlUsd = (usd: number) =>
 
 /** drops zero cents only, as in Figma: $100 needed, Another $65.21 needed */
 export const formatUsdNoZeroCents = (usd: number) =>
-  formatUsdValue(usd).replace(/.00$/, '');
+  formatUsdValue(usd).replace(/\.00$/, '');
