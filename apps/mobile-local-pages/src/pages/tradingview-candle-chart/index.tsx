@@ -1759,6 +1759,7 @@ function applyPerpsProChartOptions(config: PerpsProChartConfig) {
   }
   chartState.chart.applyOptions({
     layout: {
+      attributionLogo: false,
       fontFamily: resolvePerpsProFontFamily(getRuntimeInfo()),
       fontSize: 10,
       textColor: (chartState.colors || getChartColors()).secondaryText,
@@ -2030,6 +2031,7 @@ function handleSetCandlestickData(
   } else {
     chartState.chart.applyOptions({
       layout: {
+        attributionLogo: true,
         fontFamily: legacyChartFontFamily,
         fontSize: 12,
         textColor: (chartState.colors || getChartColors()).text,
@@ -2104,6 +2106,11 @@ function handleSetCandlestickData(
     }
 
     if (chartState.proConfig) {
+      if (!previousVisibleRange) {
+        // A new data set must not inherit a price range the user dragged on
+        // the previous interval; the time range is reset below as well.
+        resetPerpsProPriceScale(chartState.candlestickSeries);
+      }
       const prependedCount = previousVisibleRange
         ? getPrependedCandleCount(previousData, message.data)
         : 0;
