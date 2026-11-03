@@ -2259,8 +2259,7 @@
           }
         },
         "chart": {
-          "open": "차트 열기",
-          "resetPriceScale": "차트 가격 눈금 초기화"
+          "open": "차트 열기"
         },
         "account": {
           "disabledFrame": "현재 단계에서는 계정 기능을 사용할 수 없습니다",

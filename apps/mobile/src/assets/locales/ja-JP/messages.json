@@ -2309,8 +2309,7 @@
           }
         },
         "chart": {
-          "open": "チャートを開く",
-          "resetPriceScale": "チャートの価格スケールをリセット"
+          "open": "チャートを開く"
         },
         "account": {
           "disabledFrame": "このフェーズではアカウント操作を利用できません",

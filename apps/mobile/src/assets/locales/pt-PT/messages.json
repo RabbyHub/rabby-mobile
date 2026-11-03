@@ -2551,8 +2551,7 @@
           }
         },
         "chart": {
-          "open": "Abrir gráfico",
-          "resetPriceScale": "Repor a escala de preços do gráfico"
+          "open": "Abrir gráfico"
         },
         "account": {
           "disabledFrame": "As ações da conta não estão disponíveis nesta fase",

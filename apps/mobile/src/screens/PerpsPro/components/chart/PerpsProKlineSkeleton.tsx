@@ -5,7 +5,8 @@ import { View } from 'react-native';
 
 import { PerpsProSkeletonBlock } from '../loading/PerpsProSkeletonBlock';
 
-export const PERPS_PRO_KLINE_CHART_HEIGHT = 224;
+// MA band (22) + plot + time axis; the panel adds header and bottom padding.
+export const PERPS_PRO_KLINE_CHART_HEIGHT = 228;
 
 export const PerpsProKlineSkeleton: React.FC<{ overlay?: boolean }> =
   React.memo(({ overlay = false }) => {
@@ -41,8 +42,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
     backgroundColor: colors2024['neutral-bg-1'],
     height: PERPS_PRO_KLINE_CHART_HEIGHT,
-    paddingHorizontal: 16,
-    paddingTop: 8,
+    paddingLeft: 4,
+    paddingRight: 16,
+    paddingTop: 4,
     width: '100%',
   },
   overlay: {

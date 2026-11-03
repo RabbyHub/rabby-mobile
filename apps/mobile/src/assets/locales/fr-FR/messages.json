@@ -2268,8 +2268,7 @@
           }
         },
         "chart": {
-          "open": "Ouvrir le graphique",
-          "resetPriceScale": "Réinitialiser l’échelle des prix du graphique"
+          "open": "Ouvrir le graphique"
         },
         "account": {
           "disabledFrame": "Les actions du compte ne sont pas disponibles à cette étape",
