@@ -8,3 +8,7 @@ export const MEME_BUTTON_TITLE_STYLE = {
   ...BOTTOM_BUTTON_TITLE_STYLE,
   lineHeight: undefined,
 };
+
+export const MEME_BUTTON_DISABLED_TITLE_STYLE = {
+  color: 'rgba(255, 255, 255, 0.6)',
+};

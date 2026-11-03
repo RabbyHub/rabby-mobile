@@ -35,7 +35,7 @@ export const formatMarketCapUsd = (usd: number) =>
 export type BuySummary =
   | { kind: 'none'; neededUsd: number }
   | { kind: 'short'; shortfallUsd: number }
-  | { kind: 'enough'; totalPaymentUsd: number };
+  | { kind: 'enough' };
 
 export const getBuySummary = ({
   amountUsd,
@@ -52,13 +52,7 @@ export const getBuySummary = ({
   if (plan.shortfallUsd > AMOUNT_EPSILON) {
     return { kind: 'short', shortfallUsd: plan.shortfallUsd };
   }
-  return {
-    kind: 'enough',
-    totalPaymentUsd: Object.values(plan.paymentBySource).reduce(
-      (sum, v) => sum + v,
-      0,
-    ),
-  };
+  return { kind: 'enough' };
 };
 
 export const canConfirmBuy = ({

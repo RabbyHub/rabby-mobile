@@ -222,6 +222,7 @@ export const usePaymentAssets = ({
   return {
     assets,
     selectedKeys,
+    selectedAssets,
     toggle,
     plan,
     /** same as the Swap token selector: show what there is, the list grows as the refresh completes */

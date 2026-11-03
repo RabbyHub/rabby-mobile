@@ -77,7 +77,7 @@ describe('getBuySummary', () => {
     ).toEqual({ kind: 'short', shortfallUsd: 20 });
   });
 
-  it('sums the estimated payment when fully covered, ignoring float noise', () => {
+  it('is enough when fully covered, ignoring float noise', () => {
     expect(
       getBuySummary({
         amountUsd: 100,
@@ -87,7 +87,7 @@ describe('getBuySummary', () => {
           paymentBySource: { a: 60, b: 40 },
         }),
       }),
-    ).toEqual({ kind: 'enough', totalPaymentUsd: 100 });
+    ).toEqual({ kind: 'enough' });
   });
 });
 

@@ -1,7 +1,6 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { ScrollView, View } from 'react-native';
+import { Keyboard, ScrollView, View } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { Skeleton } from '@rneui/themed';
 import { useTranslation } from 'react-i18next';
 import { Text } from '@/components/Typography';
 import type { Account } from '@/core/startupServices/preference';
@@ -13,7 +12,6 @@ import type {
 } from '@/navigation-type';
 import useTokenList from '@/store/tokens';
 import { createGetStyles2024 } from '@/utils/styles';
-import { MemeEmptyState } from '../components/MemeEmptyState';
 import { useMemeHoldings } from '../data/memeHoldingsStore';
 import { toBuyExecLegs } from '../engine/execLegs';
 import { tokenKey } from '../engine/keys';
@@ -30,12 +28,11 @@ import {
 } from '../ui/helpers';
 import { useMemeCoinAccount } from '../ui/useMemeCoinAccount';
 import { BuyAmountCard } from './BuyAmountCard';
-import { BuySummaryBar } from './BuySummaryBar';
-import { PAYMENT_ROW_HEIGHT, PaymentAssetRow } from './PaymentAssetRow';
+import { BuyPreviewBar } from './BuyPreviewBar';
+import { PaymentTokenSelectSheet } from './PaymentTokenSelectSheet';
+import { PaymentTokensSection } from './PaymentTokensSection';
 
 type BuyMemes = TransactionNavigatorParamList['MemeCoinBuy']['memes'];
-
-const SKELETON_ROWS = 4;
 
 const MemeCoinBuyContent = ({
   account,
@@ -61,6 +58,13 @@ const MemeCoinBuyContent = ({
       setAllocationMode(mode => (mode === 'marketCap' ? 'equal' : 'marketCap')),
     [],
   );
+  // the page opens on the token picker
+  const [sheetVisible, setSheetVisible] = useState(true);
+  const closeSheet = useCallback(() => setSheetVisible(false), []);
+  const openSheet = useCallback(() => {
+    Keyboard.dismiss();
+    setSheetVisible(true);
+  }, []);
   const parsedAmountUsd = parseBuyAmount(amountText);
 
   const { holdings } = useMemeHoldings(account.address);
@@ -88,13 +92,14 @@ const MemeCoinBuyContent = ({
     [holdings, memes],
   );
 
-  const { assets, selectedKeys, toggle, plan, listReady } = usePaymentAssets({
-    account,
-    memes: memeTargets,
-    memeTokenKeys,
-    amountUsd: parsedAmountUsd ?? 0,
-    allocationMode,
-  });
+  const { assets, selectedAssets, selectedKeys, toggle, plan, listReady } =
+    usePaymentAssets({
+      account,
+      memes: memeTargets,
+      memeTokenKeys,
+      amountUsd: parsedAmountUsd ?? 0,
+      allocationMode,
+    });
 
   const logoByKey = useMemo(() => {
     const map = new Map<string, string>();
@@ -103,25 +108,17 @@ const MemeCoinBuyContent = ({
     return map;
   }, [tokens, memes]);
 
-  const selectedTotalUsd = useMemo(
-    () =>
-      assets
-        .filter(a => selectedKeys.includes(tokenKey(a)))
-        .reduce((sum, a) => sum + a.usdValue, 0),
-    [assets, selectedKeys],
-  );
-
   const summary = getBuySummary({
     amountUsd: parsedAmountUsd ?? 0,
     selectedCount: selectedKeys.length,
     plan,
   });
-  const confirmDisabled = !canConfirmBuy({
+  const previewDisabled = !canConfirmBuy({
     amountUsd: parsedAmountUsd,
     plan,
   });
 
-  const handleConfirm = useCallback(() => {
+  const handlePreview = useCallback(() => {
     const legs = toBuyExecLegs(plan.legs);
     pushMemeCoinExecute({
       accountAddress: account.address,
@@ -134,37 +131,6 @@ const MemeCoinBuyContent = ({
       ),
     });
   }, [account.address, logoByKey, maxPriceImpactPct, plan.legs]);
-
-  let paymentList: React.ReactNode;
-  if (!listReady) {
-    paymentList = Array.from({ length: SKELETON_ROWS }).map((_, index) => (
-      <Skeleton
-        key={index}
-        height={PAYMENT_ROW_HEIGHT}
-        style={styles.skeletonRow}
-      />
-    ));
-  } else if (!assets.length) {
-    paymentList = <MemeEmptyState text={t('page.memeCoin.buy.noAssets')} />;
-  } else {
-    paymentList = assets.map(asset => {
-      const key = tokenKey(asset);
-      const selected = selectedKeys.includes(key);
-      return (
-        <PaymentAssetRow
-          key={key}
-          itemKey={key}
-          logoUrl={logoByKey.get(key) || ''}
-          chain={asset.chain}
-          symbol={asset.symbol}
-          usdValue={asset.usdValue}
-          estPaymentUsd={selected ? plan.paymentBySource[key] ?? 0 : undefined}
-          selected={selected}
-          onPress={toggle}
-        />
-      );
-    });
-  }
 
   return (
     <View style={[styles.screen, { paddingTop: safeOffHeader }]}>
@@ -182,18 +148,30 @@ const MemeCoinBuyContent = ({
           allocationMode={allocationMode}
           onToggleAllocationMode={toggleAllocationMode}
         />
-        <Text style={styles.sectionTitle}>
-          {t('page.memeCoin.buy.selectAssets')}
-        </Text>
-        {paymentList}
+        <PaymentTokensSection
+          selectedAssets={selectedAssets}
+          paymentBySource={plan.paymentBySource}
+          logoByKey={logoByKey}
+          onSelectTokens={openSheet}
+        />
       </ScrollView>
-      <BuySummaryBar
-        selectedTotalUsd={selectedTotalUsd}
+      <BuyPreviewBar
         summary={summary}
         maxPriceImpactPct={maxPriceImpactPct}
         onMaxPriceImpactChange={setMaxPriceImpactPct}
-        confirmDisabled={confirmDisabled}
-        onConfirm={handleConfirm}
+        disabled={previewDisabled}
+        onPreview={handlePreview}
+      />
+      <PaymentTokenSelectSheet
+        visible={sheetVisible}
+        onClose={closeSheet}
+        assets={assets}
+        selectedKeys={selectedKeys}
+        onToggle={toggle}
+        listReady={listReady}
+        paymentBySource={plan.paymentBySource}
+        summary={summary}
+        logoByKey={logoByKey}
       />
     </View>
   );
@@ -238,19 +216,5 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 20,
     fontWeight: '900',
     color: colors2024['neutral-title-1'],
-  },
-  sectionTitle: {
-    marginTop: 20,
-    marginBottom: 8,
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    lineHeight: 20,
-    fontWeight: '900',
-    color: colors2024['neutral-title-1'],
-  },
-  skeletonRow: {
-    width: '100%',
-    marginBottom: 8,
-    borderRadius: 14,
   },
 }));

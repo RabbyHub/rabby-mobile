@@ -242,4 +242,14 @@ describe('usePaymentAssets', () => {
       expect(result.current.plan.legs.map(l => l.amountUsd)).toEqual([20, 20]);
     });
   });
+
+  it('returns the selected assets', async () => {
+    setStore({ tokenListMap: { [KEY]: [hoodEth, ethUsdc] } });
+    const { result } = render();
+    await flush();
+    expect(result.current.selectedAssets).toEqual([]);
+
+    act(() => result.current.toggle('hood:hood'));
+    expect(result.current.selectedAssets.map(a => a.symbol)).toEqual(['ETH']);
+  });
 });

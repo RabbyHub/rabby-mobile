@@ -3407,13 +3407,15 @@
         "allocation": "Allocation",
         "byMarketCap": "By Market Cap",
         "equalSplit": "Equal Split",
-        "selectAssets": "Select assets for payment",
         "estPayment": "Est. Payment {{amount}}",
-        "selectedTotal": "Selected Total",
         "needed": "{{amount}} needed",
         "anotherNeeded": "Another {{amount}} needed",
-        "totalEstPayment": "Total Est. Payment {{amount}}",
         "preview": "Preview",
+        "paymentTokens": "Payment Tokens",
+        "selectTokens": "Select Tokens",
+        "estPaymentLabel": "Est. Payment",
+        "noPaymentToken": "No payment token selected",
+        "confirm": "Confirm",
         "noAssets": "No available assets"
       },
       "execute": {
