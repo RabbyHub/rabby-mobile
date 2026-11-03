@@ -52,6 +52,11 @@ jobs:
           # cmdline-tools replaces the obsolete SDK Tools package.
           packages: 'platform-tools'
 
+      - name: Setup Rust toolchain for safe SVG rasterization
+        uses: dtolnay/rust-toolchain@e081816240890017053eacbb1bdf337761dc5582 # 1.95.0
+        with:
+          targets: aarch64-linux-android,armv7-linux-androideabi,i686-linux-android,x86_64-linux-android
+
       - name: Validate Android App
         id: generate_hash
         run: |
@@ -69,12 +74,14 @@ jobs:
           RABBY_MOBILE_SAFE_API_KEY: ${{ secrets.MOBILE_SAFE_API_KEY }}
 
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           path: apps/mobile/validation_exports_*
           name: android-build
           retention-days: 1
 
       - name: Clean logs
+        if: always()
         run: |
           rm -rf apps/mobile/validation_exports_*
 
@@ -116,6 +123,11 @@ jobs:
           which bundle
           bundle -v
 
+      - name: Setup Rust toolchain for safe SVG rasterization
+        uses: dtolnay/rust-toolchain@e081816240890017053eacbb1bdf337761dc5582 # 1.95.0
+        with:
+          targets: aarch64-apple-ios,aarch64-apple-ios-sim,x86_64-apple-ios
+
       - name: Validate iOS App
         id: generate_hash
         run: |
@@ -138,12 +150,14 @@ jobs:
           RABBY_MOBILE_SAFE_API_KEY: ${{ secrets.MOBILE_SAFE_API_KEY }}
 
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           path: apps/mobile/validation_exports_*
           name: ios-build
           retention-days: 1
 
       - name: Clean logs
+        if: always()
         run: |
           rm -rf apps/mobile/validation_exports_*
 

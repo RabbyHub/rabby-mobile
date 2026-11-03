@@ -1758,6 +1758,9 @@
       "alreadyClaimedXPoints": "Déjà réclamé : {{point}}"
     },
     "customTestnet": {
+      "screenTitle": "Réseau personnalisé",
+      "removeNetwork": "Supprimer {{name}}",
+      "editTitle": "Modifier le réseau personnalisé",
       "add": "Ajouter un réseau personnalisé",
       "currency": "Devise",
       "signTx": {
