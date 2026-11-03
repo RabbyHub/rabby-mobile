@@ -19,8 +19,8 @@ jest.mock('@/utils/number', () => ({
   formatUsdValue: (usd: number) => `$${usd.toFixed(2)}`,
 }));
 jest.mock('@/components/AssetAvatar', () => ({ AssetAvatar: () => null }));
-jest.mock('@/assets2024/icons/history/ImgEmpty.svg', () => () => null);
-jest.mock('@/assets2024/icons/history/ImgEmptyDark.svg', () => () => null);
+jest.mock('@/assets2024/memecoin/empty-payment-light.svg', () => () => null);
+jest.mock('@/assets2024/memecoin/empty-payment-dark.svg', () => () => null);
 
 const eth: PaymentAsset = {
   id: '0xeth',

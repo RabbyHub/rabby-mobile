@@ -1,8 +1,8 @@
 import React from 'react';
 import { TouchableOpacity, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import RcImgEmpty from '@/assets2024/icons/history/ImgEmpty.svg';
-import RcImgEmptyDark from '@/assets2024/icons/history/ImgEmptyDark.svg';
+import RcImgEmptyDark from '@/assets2024/memecoin/empty-payment-dark.svg';
+import RcImgEmpty from '@/assets2024/memecoin/empty-payment-light.svg';
 import { AssetAvatar } from '@/components/AssetAvatar';
 import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
