@@ -257,6 +257,10 @@ export interface PerpsState {
   marketDataStatus: MarketDataStatus;
   categories: PerpTopTokenCategory[];
   hasPermission: boolean;
+  // Lowercased address ('' = IP only) that hasPermission was checked for;
+  // null while unknown or after a failed check. Execution gates read
+  // hasCurrentPerpPermission instead of the display flag.
+  permissionAddress: string | null;
   perpFee: number;
   isLogin: boolean;
   isInitialized: boolean;
@@ -336,6 +340,7 @@ export const initialState: PerpsState = {
   userAbstractionCachedAddress: null,
   isOpenOrdersReady: false,
   hasPermission: true,
+  permissionAddress: null,
   perpFee: 0.00045,
   currentPerpsAccount: null,
   clearinghouseStateMap: {},
@@ -746,11 +751,68 @@ const setHasPermission = (payload: boolean) => {
   setPerpsState(prev => ({ ...prev, hasPermission: payload }));
 };
 
-const fetchPerpPermission = async (address: string) => {
-  const { has_permission } = await openapi.getPerpPermission({ id: address });
+const getPermissionTarget = (state: PerpsState) =>
+  state.currentPerpsAccount?.address.toLowerCase() ?? '';
 
-  setHasPermission(has_permission);
-  // setHasPermission(true);
+const pendingPermissionChecks = new Map<string, Promise<void>>();
+
+const fetchPerpPermission = (address: string): Promise<void> => {
+  const target = address.toLowerCase();
+  const pending = pendingPermissionChecks.get(target);
+  if (pending) {
+    return pending;
+  }
+  const request = (async () => {
+    let granted: boolean | null = null;
+    try {
+      const { has_permission } = await openapi.getPerpPermission({
+        id: address,
+      });
+      granted = has_permission === true;
+    } catch (error) {
+      console.error('[perps] fetch permission failed', error);
+    }
+    // Drop results for an address that is no longer current.
+    if (getPermissionTarget(perpsStore.getState()) !== target) {
+      return;
+    }
+    setPerpsState(prev =>
+      granted === null
+        ? { ...prev, permissionAddress: null }
+        : { ...prev, hasPermission: granted, permissionAddress: target },
+    );
+  })().finally(() => {
+    pendingPermissionChecks.delete(target);
+  });
+  pendingPermissionChecks.set(target, request);
+  return request;
+};
+
+/** Permission confirmed for the current account; unknown or failed denies. */
+export const hasCurrentPerpPermission = (
+  state: PerpsState = perpsStore.getState(),
+) =>
+  !!state.currentPerpsAccount &&
+  state.hasPermission &&
+  state.permissionAddress === state.currentPerpsAccount.address.toLowerCase();
+
+/** Resolves the current account's permission, re-checking when unknown. */
+export const ensureCurrentPerpPermission = async (
+  account: Pick<Account, 'address'>,
+) => {
+  const isCurrent = () => {
+    const current = perpsStore.getState().currentPerpsAccount;
+    return !!current && isSameAddress(current.address, account.address);
+  };
+  if (!isCurrent()) {
+    return false;
+  }
+  if (
+    perpsStore.getState().permissionAddress !== account.address.toLowerCase()
+  ) {
+    await fetchPerpPermission(account.address);
+  }
+  return isCurrent() && hasCurrentPerpPermission();
 };
 
 const setIsFetchAllDone = (payload: boolean) => {
@@ -1473,6 +1535,7 @@ const resetAccountState = () => {
     approveSignatures: [],
     fillsOrderTpOrSl: {},
     hasPermission: true,
+    permissionAddress: null,
     homePositionPnl: {
       pnl: 0,
       show: false,
@@ -2792,7 +2855,7 @@ export const apisPerpsStore = {
     // isInitialized=true would skip initIsLogin and a self-sign account could
     // not sign after an unlock.
     setInitialized(false);
-    fetchPerpPermission('');
+    void fetchPerpPermission('');
   },
 };
 
@@ -2927,7 +2990,7 @@ export const usePerpsStore = () => {
       scheduleAccountReadinessFallback(account.address);
     }
     fetchUserNonFundingLedgerUpdates();
-    fetchPerpPermission(account.address);
+    void fetchPerpPermission(account.address);
     void fetchUserAbstraction(account).catch(error => {
       console.error('[perps] fetch user abstraction failed', error);
     });
