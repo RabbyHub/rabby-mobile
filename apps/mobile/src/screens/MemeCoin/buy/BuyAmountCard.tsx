@@ -145,10 +145,11 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     alignItems: 'center',
   },
+  // No lineHeight: iOS offsets it for Text but not for TextInput, so the amount
+  // would drop a few points when it turns into the input.
   amount: {
     fontFamily: 'SF Pro Rounded',
     fontSize: 28,
-    lineHeight: 36,
     fontWeight: '900',
     color: colors2024['neutral-title-1'],
   },
