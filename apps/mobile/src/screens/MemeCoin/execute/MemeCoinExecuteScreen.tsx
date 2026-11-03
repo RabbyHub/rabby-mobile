@@ -297,11 +297,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     gap: BOTTOM_BUTTON_GAP,
   },
-  // Figma: 143 and 198 of the row
   backButton: {
-    flex: 143,
+    width: 143,
   },
   retryButton: {
-    flex: 198,
+    flex: 1,
   },
 }));
