@@ -2,19 +2,28 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Keyboard, TouchableOpacity, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import RcIconPencilCC from '@/assets2024/memecoin/pencil-cc.svg';
+import RcIconSwitchCC from '@/assets2024/memecoin/switch-cc.svg';
 import { AssetAvatar } from '@/components/AssetAvatar';
 import { Text, TextInput } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { formatUsdValue } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import { DashedDivider } from '../components/DashedDivider';
+import type { AllocationMode } from '../engine/types';
 import { formatAllocationPct, getMemeAllocations } from '../ui/helpers';
+
+const ALLOCATION_LABEL_KEYS: Record<AllocationMode, string> = {
+  marketCap: 'page.memeCoin.buy.byMarketCap',
+  equal: 'page.memeCoin.buy.equalSplit',
+};
 
 export const BuyAmountCard = ({
   amountText,
   amountUsd,
   onChangeAmount,
   memes,
+  allocationMode,
+  onToggleAllocationMode,
 }: {
   amountText: string;
   /** null when amountText is invalid */
@@ -27,13 +36,15 @@ export const BuyAmountCard = ({
     marketCap: number;
     logoUrl: string;
   }>;
+  allocationMode: AllocationMode;
+  onToggleAllocationMode: () => void;
 }) => {
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const [editing, setEditing] = useState(false);
   const allocations = useMemo(
-    () => getMemeAllocations(amountUsd ?? 0, memes, 'marketCap'),
-    [amountUsd, memes],
+    () => getMemeAllocations(amountUsd ?? 0, memes, allocationMode),
+    [amountUsd, memes, allocationMode],
   );
   const amountStyle = [
     styles.amount,
@@ -53,7 +64,6 @@ export const BuyAmountCard = ({
 
   return (
     <View style={styles.card}>
-      <Text style={styles.label}>{t('page.memeCoin.buy.amount')}</Text>
       <View style={styles.amountRow}>
         {editing ? (
           <View style={styles.amountTouch}>
@@ -90,16 +100,40 @@ export const BuyAmountCard = ({
         </View>
       </View>
       <DashedDivider style={styles.divider} />
+      <View style={styles.allocationHeader}>
+        <Text style={styles.allocationLabel}>
+          {t('page.memeCoin.buy.allocation')}
+        </Text>
+        <TouchableOpacity
+          activeOpacity={0.8}
+          hitSlop={8}
+          onPress={onToggleAllocationMode}
+          style={styles.allocationToggle}>
+          <Text style={styles.allocationMode}>
+            {t(ALLOCATION_LABEL_KEYS[allocationMode])}
+          </Text>
+          <RcIconSwitchCC
+            width={14}
+            height={14}
+            color={colors2024['brand-default']}
+          />
+        </TouchableOpacity>
+      </View>
       <View style={styles.allocations}>
         {allocations.map(({ meme, ratio, amountUsd: memeUsd }) => (
           <View key={`${meme.chain}:${meme.id}`} style={styles.allocation}>
-            <AssetAvatar
-              logo={meme.logoUrl}
-              chain={meme.chain}
-              size={28}
-              chainSize={12}
-              logoStyle={styles.memeLogo}
-            />
+            <View style={styles.allocationMeme}>
+              <AssetAvatar
+                logo={meme.logoUrl}
+                chain={meme.chain}
+                size={28}
+                chainSize={12}
+                logoStyle={styles.memeLogo}
+              />
+              <Text style={styles.allocationSymbol} numberOfLines={1}>
+                {meme.symbol}
+              </Text>
+            </View>
             <View style={styles.allocationText}>
               <Text style={styles.allocationUsd} numberOfLines={1}>
                 {formatUsdValue(memeUsd)}
@@ -124,15 +158,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     borderRadius: 16,
     backgroundColor: colors2024['neutral-card-1'],
   },
-  label: {
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '500',
-    color: colors2024['neutral-foot'],
-  },
   amountRow: {
-    marginTop: 8,
     height: 36,
     flexDirection: 'row',
     alignItems: 'center',
@@ -182,32 +208,64 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   divider: {
     marginTop: 16,
-    marginBottom: 14,
   },
-  allocations: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    columnGap: 28,
-    rowGap: 8,
-  },
-  allocation: {
-    // two per row: the 28 gap keeps a third item from fitting at 40%
-    flexBasis: '40%',
-    flexGrow: 1,
-    minWidth: 0,
+  allocationHeader: {
+    marginTop: 14,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    justifyContent: 'space-between',
   },
-  allocationText: {
+  allocationLabel: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '500',
+    color: colors2024['neutral-secondary'],
+  },
+  allocationToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  allocationMode: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 13,
+    lineHeight: 16,
+    fontWeight: '500',
+    color: colors2024['neutral-title-1'],
+  },
+  allocations: {
+    marginTop: 14,
+    gap: 8,
+  },
+  allocation: {
+    height: 28,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  allocationMeme: {
     flexShrink: 1,
     minWidth: 0,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
+    gap: 8,
+  },
+  allocationSymbol: {
+    flexShrink: 1,
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '500',
+    color: colors2024['neutral-body'],
+  },
+  allocationText: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
   allocationUsd: {
-    flexShrink: 0,
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     lineHeight: 18,
@@ -220,7 +278,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     backgroundColor: colors2024['neutral-line'],
   },
   allocationPct: {
-    flexShrink: 1,
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     lineHeight: 18,

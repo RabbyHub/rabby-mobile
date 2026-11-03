@@ -17,6 +17,7 @@ import { MemeEmptyState } from '../components/MemeEmptyState';
 import { useMemeHoldings } from '../data/memeHoldingsStore';
 import { toBuyExecLegs } from '../engine/execLegs';
 import { tokenKey } from '../engine/keys';
+import type { AllocationMode } from '../engine/types';
 import { usePaymentAssets } from '../hooks/usePaymentAssets';
 import { pushMemeCoinExecute } from '../navigation';
 import {
@@ -53,6 +54,13 @@ const MemeCoinBuyContent = ({
   const [maxPriceImpactPct, setMaxPriceImpactPct] = useState<MaxPriceImpactPct>(
     DEFAULT_MAX_PRICE_IMPACT_PCT,
   );
+  const [allocationMode, setAllocationMode] =
+    useState<AllocationMode>('marketCap');
+  const toggleAllocationMode = useCallback(
+    () =>
+      setAllocationMode(mode => (mode === 'marketCap' ? 'equal' : 'marketCap')),
+    [],
+  );
   const parsedAmountUsd = parseBuyAmount(amountText);
 
   const { holdings } = useMemeHoldings(account.address);
@@ -85,7 +93,7 @@ const MemeCoinBuyContent = ({
     memes: memeTargets,
     memeTokenKeys,
     amountUsd: parsedAmountUsd ?? 0,
-    allocationMode: 'marketCap',
+    allocationMode,
   });
 
   const logoByKey = useMemo(() => {
@@ -165,11 +173,14 @@ const MemeCoinBuyContent = ({
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag">
+        <Text style={styles.amountTitle}>{t('page.memeCoin.buy.amount')}</Text>
         <BuyAmountCard
           amountText={amountText}
           amountUsd={parsedAmountUsd}
           onChangeAmount={setAmountText}
           memes={memes}
+          allocationMode={allocationMode}
+          onToggleAllocationMode={toggleAllocationMode}
         />
         <Text style={styles.sectionTitle}>
           {t('page.memeCoin.buy.selectAssets')}
@@ -218,6 +229,15 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     paddingTop: 12,
     paddingHorizontal: 12,
     paddingBottom: 16,
+  },
+  amountTitle: {
+    marginBottom: 8,
+    paddingHorizontal: 8,
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '900',
+    color: colors2024['neutral-title-1'],
   },
   sectionTitle: {
     marginTop: 20,

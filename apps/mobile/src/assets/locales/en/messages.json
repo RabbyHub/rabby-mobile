@@ -3404,6 +3404,9 @@
       "accountChanged": "Address changed. Please start again",
       "buy": {
         "amount": "Buy Amount",
+        "allocation": "Allocation",
+        "byMarketCap": "By Market Cap",
+        "equalSplit": "Equal Split",
         "selectAssets": "Select assets for payment",
         "estPayment": "Est. Payment {{amount}}",
         "selectedTotal": "Selected Total",
