@@ -4,6 +4,7 @@ import { Skeleton } from '@rneui/themed';
 import { useTranslation } from 'react-i18next';
 import LinearGradient from 'react-native-linear-gradient';
 import RcBalanceGlow from '@/assets2024/memecoin/balance-glow.svg';
+import RcBalanceGlowDark from '@/assets2024/memecoin/balance-glow-dark.svg';
 import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -12,8 +13,7 @@ import { formatMemeBalanceUsd, formatMemePnlUsd } from '../ui/formatBalance';
 import { MEME_PNL_CURVE_WIDTH, MemePnlCurve } from './MemePnlCurve';
 
 const GRADIENT_END_LIGHT = '#FEFAED';
-const TAB_ACTIVE_BG = '#2F3135';
-const TAB_ACTIVE_TEXT = '#F7FAFC';
+const GRADIENT_END_DARK = '#1F1D17';
 const TAB_WIDTH = 40;
 const TABS_PADDING = 2;
 const TABS_WIDTH = TAB_WIDTH * 2 + TABS_PADDING * 2;
@@ -52,16 +52,21 @@ export const BalanceCard = React.memo(function BalanceCard({
           forwards them to both its interop wrapper and its inset Paper view. */}
       <View pointerEvents="none" style={styles.background}>
         <LinearGradient
-          colors={[
-            colors2024['neutral-card-1'],
-            isLight ? GRADIENT_END_LIGHT : colors2024['neutral-card-1'],
-          ]}
+          colors={
+            isLight
+              ? [colors2024['neutral-card-1'], GRADIENT_END_LIGHT]
+              : [colors2024['neutral-bg-2'], GRADIENT_END_DARK]
+          }
           locations={[0.4, 0.98]}
           start={{ x: 0, y: 0.2 }}
           end={{ x: 1, y: 0.8 }}
           style={StyleSheet.absoluteFill}
         />
-        {isLight ? <RcBalanceGlow style={styles.glow} /> : null}
+        {isLight ? (
+          <RcBalanceGlow style={styles.glow} />
+        ) : (
+          <RcBalanceGlowDark style={styles.glow} />
+        )}
       </View>
       {loading ? (
         <Skeleton width={140} height={36} style={styles.valueSkeleton} />
@@ -113,14 +118,14 @@ export const BalanceCard = React.memo(function BalanceCard({
   );
 });
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   card: {
     height: 120,
     // padding includes the background layer's 2px border
     paddingTop: 20,
     paddingHorizontal: CARD_INSET,
-    shadowColor: '#777B98',
-    shadowOpacity: 0.06,
+    shadowColor: isLight ? '#777B98' : '#6F759F',
+    shadowOpacity: isLight ? 0.06 : 0.08,
     shadowRadius: 30,
     shadowOffset: { width: 0, height: 12 },
   },
@@ -199,7 +204,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     borderRadius: 4,
   },
   tabActive: {
-    backgroundColor: TAB_ACTIVE_BG,
+    backgroundColor: isLight ? '#2F3135' : '#E0E5EC',
   },
   tabText: {
     fontFamily: 'SF Pro Rounded',
@@ -209,6 +214,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     color: colors2024['neutral-secondary'],
   },
   tabTextActive: {
-    color: TAB_ACTIVE_TEXT,
+    color: isLight ? '#F7FAFC' : '#192945',
   },
 }));

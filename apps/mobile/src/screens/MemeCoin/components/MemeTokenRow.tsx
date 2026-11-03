@@ -74,7 +74,7 @@ export const MemeTokenRow = React.memo(function MemeTokenRow({
   );
 });
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   row: {
     height: MEME_ROW_HEIGHT,
     marginBottom: 8,
@@ -85,7 +85,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     borderRadius: 14,
     borderWidth: 2,
     borderColor: 'transparent',
-    backgroundColor: colors2024['neutral-card-1'],
+    backgroundColor: colors2024[isLight ? 'neutral-card-1' : 'neutral-bg-2'],
   },
   rowSelected: {
     borderColor: colors2024['brand-disable'],

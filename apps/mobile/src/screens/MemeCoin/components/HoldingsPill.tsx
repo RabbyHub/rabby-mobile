@@ -8,8 +8,8 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 
 const MAX_AVATARS = 8;
-const ACCENT_LIGHT = '#9B4626';
 const CHEVRON_LIGHT = '#CD965E';
+const CHEVRON_DARK = '#664A2D';
 
 export const HoldingsPill = ({
   mode,
@@ -21,9 +21,8 @@ export const HoldingsPill = ({
   onPress: () => void;
 }) => {
   const { t } = useTranslation();
-  const { styles, colors2024, isLight } = useTheme2024({ getStyle });
-  const accent = isLight ? ACCENT_LIGHT : colors2024['orange-default'];
-  const chevron = isLight ? CHEVRON_LIGHT : colors2024['orange-default'];
+  const { styles, isLight } = useTheme2024({ getStyle });
+  const chevron = isLight ? CHEVRON_LIGHT : CHEVRON_DARK;
 
   return (
     <TouchableOpacity activeOpacity={0.8} onPress={onPress} style={styles.pill}>
@@ -32,7 +31,7 @@ export const HoldingsPill = ({
           <View style={[styles.chevronBox, styles.chevronBack]}>
             <RcIconChevronCC width={8} height={14} color={chevron} />
           </View>
-          <Text style={[styles.text, styles.centerText, { color: accent }]}>
+          <Text style={[styles.text, styles.centerText]}>
             {t('page.memeCoin.backToMarket')}
           </Text>
           {/* keeps the title centered in the pill */}
@@ -49,9 +48,7 @@ export const HoldingsPill = ({
               </View>
             ))}
           </View>
-          <Text style={[styles.text, { color: accent }]}>
-            {t('page.memeCoin.holdingsEntry')}
-          </Text>
+          <Text style={styles.text}>{t('page.memeCoin.holdingsEntry')}</Text>
           <View style={styles.chevronBox}>
             <RcIconChevronCC width={8} height={14} color={chevron} />
           </View>
@@ -61,7 +58,7 @@ export const HoldingsPill = ({
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   pill: {
     height: 64,
     marginTop: 20,
@@ -70,8 +67,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
     borderRadius: 14,
     borderWidth: 2,
-    borderColor: colors2024['orange-light-2'],
-    backgroundColor: colors2024['neutral-card-1'],
+    borderColor: colors2024[isLight ? 'orange-light-2' : 'orange-light-1'],
+    backgroundColor: colors2024[isLight ? 'neutral-card-1' : 'neutral-bg-2'],
   },
   avatars: {
     flex: 1,
@@ -94,6 +91,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontSize: 16,
     lineHeight: 20,
     fontWeight: '900',
+    color: '#9B4626',
   },
   centerText: {
     flex: 1,

@@ -203,14 +203,14 @@ export const MemeCoinHomeBottomBar = ({
   return <View style={[styles.bar, { paddingBottom }]}>{content}</View>;
 };
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   bar: {
     flexShrink: 0,
     paddingTop: BOTTOM_BUTTON_TOP_OFFSET,
     paddingHorizontal: 20,
     gap: 16,
     backgroundColor: colors2024['neutral-bg-1'],
-    shadowColor: '#4B4E62',
+    shadowColor: isLight ? '#4B4E62' : '#6F759F',
     shadowOpacity: 0.12,
     shadowRadius: 15,
     shadowOffset: { width: 0, height: 0 },
