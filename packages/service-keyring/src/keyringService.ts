@@ -288,7 +288,9 @@ export class KeyringService extends RNEventEmitter {
 
   private unlockSessionId = 0;
   private resolvedVaultKdfVersion?: string;
+  private resolvedVaultCiphertext?: string;
   private resolvedBootedKdfVersion?: string;
+  private resolvedBootedCiphertext?: string;
 
   private trustedVaultKeyWrite: Promise<void> = Promise.resolve();
   private pendingKeyringRuntimeRestore: DeferredKeyringRuntimeRestore | null =
@@ -797,7 +799,9 @@ export class KeyringService extends RNEventEmitter {
       this.unlockSessionId += 1;
       const { unlockSessionId } = this;
       this.resolvedVaultKdfVersion = undefined;
+      this.resolvedVaultCiphertext = undefined;
       this.resolvedBootedKdfVersion = undefined;
+      this.resolvedBootedCiphertext = undefined;
       let vaultKeyCandidate: VaultKeyCandidate | undefined;
       if (shouldVerifyBeforeUnlock) {
         this.traceKeyringPerf('submit_password.verify_password_start', {
@@ -1060,6 +1064,11 @@ export class KeyringService extends RNEventEmitter {
    * Add explicit KDF metadata to legacy envelopes after a successful unlock.
    * This is a metadata-only repair: cipher, IV, salt and the derived key remain
    * unchanged, so it is safe to run after the normal unlock path.
+   *
+   * The resolved version belongs to the exact envelope that was decrypted. If
+   * the store now holds different ciphertext (a concurrent writer replaced it
+   * while the upgrade was pending), skip that field instead of stamping the
+   * previous envelope's version onto unrelated bytes.
    */
   private normalizeVaultMetadataAfterUnlock(unlockSessionId: number) {
     const normalize = this.encryptor.normalizeKdfMetadata;
@@ -1070,12 +1079,15 @@ export class KeyringService extends RNEventEmitter {
 
     const store = this.store;
     const currentState = store.getState();
-    const nextVault = currentState.vault
-      ? normalize(currentState.vault, this.resolvedVaultKdfVersion)
-      : null;
-    const nextBooted = currentState.booted
-      ? normalize(currentState.booted, this.resolvedBootedKdfVersion)
-      : null;
+    const nextVault =
+      currentState.vault && currentState.vault === this.resolvedVaultCiphertext
+        ? normalize(currentState.vault, this.resolvedVaultKdfVersion)
+        : null;
+    const nextBooted =
+      currentState.booted &&
+      currentState.booted === this.resolvedBootedCiphertext
+        ? normalize(currentState.booted, this.resolvedBootedKdfVersion)
+        : null;
     if (nextVault === null && nextBooted === null) {
       return;
     }
@@ -1130,6 +1142,7 @@ export class KeyringService extends RNEventEmitter {
       encryptedBooted,
     );
     this.resolvedBootedKdfVersion = detail.kdfVersion;
+    this.resolvedBootedCiphertext = encryptedBooted;
   }
   /**
    * Remove Empty Keyrings
@@ -1643,6 +1656,7 @@ export class KeyringService extends RNEventEmitter {
       );
       vault = decryptDetail.vault;
       this.resolvedVaultKdfVersion = decryptDetail.kdfVersion;
+      this.resolvedVaultCiphertext = encryptedVault;
       this.traceKeyringPerf('unlock_keyrings.decrypt_password_end', {
         elapsedMs: nowMs() - startedAt,
         hasExportedKeyString: Boolean(decryptDetail.exportedKeyString),

@@ -799,6 +799,32 @@ describe('keyring KDF policy and vault upgrade integration', () => {
     expect(commits).toEqual([]);
   });
 
+  it('does not stamp the earlier resolved version onto a replaced unversioned vault', async () => {
+    const { state, rawVault } = await createFixture();
+    const replacement = stripKdfMetadata(
+      await upgradedEncryptor.encrypt(password, rawVault),
+    );
+    const { service, commits } = openService(state, {
+      encryptor: upgradedEncryptor,
+    });
+    const gate = pauseFirstUpgradedDerivation();
+    const unlocking = service.submitPassword(password);
+    await gate.pending;
+    service.store.updateState({ vault: replacement });
+    gate.release();
+    await unlocking;
+
+    const persisted = service.store.getState().vault!;
+    expect(persisted).toBe(replacement);
+    // The replacement is a 600k envelope; stamping the earlier 5k version onto
+    // it would make every later password unlock derive the wrong key.
+    expect(JSON.parse(persisted).kdf).toBeUndefined();
+    await expect(
+      upgradedEncryptor.decrypt(password, persisted),
+    ).resolves.toEqual(rawVault);
+    expect(commits).toEqual([]);
+  });
+
   it('does not overwrite credentials from a concurrent password change', async () => {
     const { state } = await createFixture();
     const { service, commits } = openService(state);
