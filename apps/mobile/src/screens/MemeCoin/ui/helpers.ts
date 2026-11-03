@@ -4,7 +4,12 @@ import { AMOUNT_EPSILON } from '../engine/constants';
 import type { SellHolding } from '../engine/execLegs';
 import { tokenKey } from '../engine/keys';
 import { computeMemeTargets } from '../engine/planner';
-import type { MemeTarget, PlanResult, TokenRef } from '../engine/types';
+import type {
+  AllocationMode,
+  MemeTarget,
+  PlanResult,
+  TokenRef,
+} from '../engine/types';
 import type { MemeTradeTaskStatus } from '../hooks/useMemeTradeTask';
 
 export const MAX_PRICE_IMPACT_OPTIONS = [1, 5, 20] as const;
@@ -127,8 +132,9 @@ export const pickTokenLogos = (
 export const getMemeAllocations = <T extends MemeTarget>(
   amountUsd: number,
   memes: T[],
+  mode: AllocationMode,
 ) =>
-  computeMemeTargets(1, memes)
+  computeMemeTargets(1, memes, mode)
     .map(({ meme, amountUsd: ratio }) => ({
       meme,
       ratio,

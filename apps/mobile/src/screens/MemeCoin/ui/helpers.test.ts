@@ -192,7 +192,7 @@ describe('getMemeAllocations', () => {
 
   it('splits by market cap, largest first', () => {
     expect(
-      getMemeAllocations(100, memes).map(a => [
+      getMemeAllocations(100, memes, 'marketCap').map(a => [
         a.meme.id,
         a.ratio,
         a.amountUsd,
@@ -205,10 +205,16 @@ describe('getMemeAllocations', () => {
   });
 
   it('keeps the ratios when the amount is zero', () => {
-    expect(getMemeAllocations(0, memes).map(a => a.amountUsd)).toEqual([
-      0, 0, 0,
-    ]);
-    expect(getMemeAllocations(0, memes)[0].ratio).toBe(0.6);
+    expect(
+      getMemeAllocations(0, memes, 'marketCap').map(a => a.amountUsd),
+    ).toEqual([0, 0, 0]);
+    expect(getMemeAllocations(0, memes, 'marketCap')[0].ratio).toBe(0.6);
+  });
+
+  it('splits evenly in equal mode and keeps the given order', () => {
+    const allocations = getMemeAllocations(90, memes, 'equal');
+    expect(allocations.map(a => a.meme.id)).toEqual(['a', 'b', 'c']);
+    allocations.forEach(a => expect(a.amountUsd).toBeCloseTo(30));
   });
 });
 

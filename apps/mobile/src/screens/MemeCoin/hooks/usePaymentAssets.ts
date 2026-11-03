@@ -20,7 +20,7 @@ import {
   type WalletToken,
 } from '../engine/paymentAssets';
 import { planBuy } from '../engine/planner';
-import type { ChainGasInfo, MemeTarget } from '../engine/types';
+import type { AllocationMode, ChainGasInfo, MemeTarget } from '../engine/types';
 
 const toServerIds = (enums: string[]) =>
   new Set(
@@ -40,12 +40,14 @@ export const usePaymentAssets = ({
   memes,
   memeTokenKeys,
   amountUsd,
+  allocationMode,
 }: {
   account: Account;
   memes: MemeTarget[];
   /** Keys must be built with `tokenKey()` (chain + lowercase id); the payment list matches these exact strings. */
   memeTokenKeys: ReadonlySet<string>;
   amountUsd: number;
+  allocationMode: AllocationMode;
 }) => {
   const [refreshSettled, setRefreshSettled] = useState(false);
   useEffect(() => {
@@ -202,11 +204,19 @@ export const usePaymentAssets = ({
       planBuy({
         amountUsd,
         memes,
+        allocationMode,
         sources: selectedAssets,
         chainGas,
         gasAccountBalanceUsd,
       }),
-    [amountUsd, memes, selectedAssets, chainGas, gasAccountBalanceUsd],
+    [
+      amountUsd,
+      memes,
+      allocationMode,
+      selectedAssets,
+      chainGas,
+      gasAccountBalanceUsd,
+    ],
   );
 
   return {

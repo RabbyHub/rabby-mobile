@@ -85,6 +85,7 @@ const MemeCoinBuyContent = ({
     memes: memeTargets,
     memeTokenKeys,
     amountUsd: parsedAmountUsd ?? 0,
+    allocationMode: 'marketCap',
   });
 
   const logoByKey = useMemo(() => {

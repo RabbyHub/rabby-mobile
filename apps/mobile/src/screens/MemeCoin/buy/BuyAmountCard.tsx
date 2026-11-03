@@ -32,7 +32,7 @@ export const BuyAmountCard = ({
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const [editing, setEditing] = useState(false);
   const allocations = useMemo(
-    () => getMemeAllocations(amountUsd ?? 0, memes),
+    () => getMemeAllocations(amountUsd ?? 0, memes, 'marketCap'),
     [amountUsd, memes],
   );
   const amountStyle = [

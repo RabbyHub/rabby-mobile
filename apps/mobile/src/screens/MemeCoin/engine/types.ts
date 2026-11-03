@@ -26,9 +26,13 @@ export type ChainGasInfo = {
   bridgeSupported: boolean;
 };
 
+/** how the buy amount is split across the memes */
+export type AllocationMode = 'marketCap' | 'equal';
+
 export type PlanInput = {
   amountUsd: number;
   memes: MemeTarget[];
+  allocationMode: AllocationMode;
   sources: PaymentAsset[];
   chainGas: Record<ChainServerId, ChainGasInfo>;
   /** Gas Deposit balance in USD, shared by all chains */

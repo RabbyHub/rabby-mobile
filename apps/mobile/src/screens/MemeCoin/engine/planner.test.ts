@@ -42,6 +42,7 @@ const gas = (over: Partial<ChainGasInfo> = {}): ChainGasInfo => ({
 const input = (over: Partial<PlanInput>): PlanInput => ({
   amountUsd: 100,
   memes: [],
+  allocationMode: 'marketCap',
   sources: [],
   chainGas: {},
   gasAccountBalanceUsd: 0,
@@ -53,22 +54,43 @@ const BONK = meme('BONK', 'bsc', 400_000_000);
 
 describe('computeMemeTargets', () => {
   it('splits by market cap', () => {
-    expect(computeMemeTargets(100, [PEPE, BONK]).map(t => t.amountUsd)).toEqual(
-      [60, 40],
-    );
+    expect(
+      computeMemeTargets(100, [PEPE, BONK], 'marketCap').map(t => t.amountUsd),
+    ).toEqual([60, 40]);
   });
 
   it('splits equally when no market cap is known', () => {
-    const targets = computeMemeTargets(90, [
-      meme('A', 'eth', 0),
-      meme('B', 'eth', 0),
-      meme('C', 'eth', 0),
-    ]);
+    const targets = computeMemeTargets(
+      90,
+      [meme('A', 'eth', 0), meme('B', 'eth', 0), meme('C', 'eth', 0)],
+      'marketCap',
+    );
     expect(targets.map(t => t.amountUsd)).toEqual([30, 30, 30]);
+  });
+
+  it('splits evenly in equal mode, whatever the market caps', () => {
+    expect(
+      computeMemeTargets(100, [PEPE, BONK], 'equal').map(t => t.amountUsd),
+    ).toEqual([50, 50]);
   });
 });
 
 describe('planBuy', () => {
+  it('plans the same amount for each meme in equal mode', () => {
+    const plan = planBuy(
+      input({
+        allocationMode: 'equal',
+        memes: [PEPE, BONK],
+        sources: [asset('USDT', 'eth', 100), asset('USDC', 'bsc', 100)],
+        chainGas: { eth: gas(), bsc: gas() },
+      }),
+    );
+    expect(plan.legs.map(l => [l.receive.symbol, l.amountUsd])).toEqual([
+      ['BONK', 50],
+      ['PEPE', 50],
+    ]);
+  });
+
   it('returns an empty plan when there is nothing to buy', () => {
     expect(planBuy(input({ amountUsd: 0, memes: [PEPE] })).legs).toEqual([]);
     expect(planBuy(input({ memes: [] })).shortfallUsd).toBe(100);
