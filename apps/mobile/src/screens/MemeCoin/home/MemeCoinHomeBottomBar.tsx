@@ -223,7 +223,10 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     flex: 1,
     minWidth: 0,
   },
+  // Button's inner view defaults to width 100%, which stretches past the title
+  // in a row where the button sizes to its content.
   cancelButton: {
+    width: 'auto',
     paddingHorizontal: 20,
   },
   idleRow: {
