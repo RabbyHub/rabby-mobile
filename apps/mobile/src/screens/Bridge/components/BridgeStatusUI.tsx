@@ -11,6 +11,9 @@ import { openTxExternalUrl } from '@/utils/transaction';
 import { useTranslation } from 'react-i18next';
 import Jump from '@/assets2024/icons/history/IconJumpCC.svg';
 import StepArrow from '@/assets2024/icons/bridge/IconBridgeStepArrowCC.svg';
+import StepNumber1 from '@/assets2024/icons/bridge/IconBridgeStepNumber1CC.svg';
+import StepNumber2 from '@/assets2024/icons/bridge/IconBridgeStepNumber2CC.svg';
+import StepNumber3 from '@/assets2024/icons/bridge/IconBridgeStepNumber3CC.svg';
 import type { BridgeStatus } from '../utils/status';
 import type { BridgePopupStep } from '../utils/progressBar';
 import { BridgeStatusIcon } from './BridgeStatusIcon';
@@ -156,6 +159,8 @@ function BridgeStep({
     step.direction === 'refund' ? 'refund' : pending ? 'pending' : step.status;
   const hash = step.detail.kind === 'hash' ? step.detail.txId : undefined;
   const queued = displayStatus === 'queued';
+  const StepNumberIcon =
+    index === 0 ? StepNumber1 : index === 1 ? StepNumber2 : StepNumber3;
   const tone =
     displayStatus === 'completed'
       ? colors2024['green-default']
@@ -178,8 +183,11 @@ function BridgeStep({
       : colors2024['neutral-line'];
   return (
     <View style={styles.step}>
-      <View style={[styles.stepNumber, queued && styles.queued]}>
-        <Text style={styles.stepNumberText}>{index + 1}</Text>
+      <View
+        accessible
+        accessibilityLabel={`${index + 1}`}
+        style={[styles.stepNumber, queued && styles.queued]}>
+        <StepNumberIcon color={colors2024['neutral-body']} />
       </View>
       {!last && <StepArrow width={18} height={69} style={styles.stepArrow} />}
       <View style={[styles.stepHeading, queued && styles.queued]}>
@@ -276,7 +284,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   step: {
     backgroundColor: isLight
       ? colors2024['neutral-bg-2']
-      : colors2024['neutral-bg-1'],
+      : colors2024['neutral-bg-5'],
     borderRadius: 12,
     paddingLeft: 40,
     paddingRight: 12,
@@ -295,16 +303,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  stepNumberText: {
-    fontFamily: 'SF Pro Rounded',
-    fontWeight: '900',
-    fontSize: 14,
-    fontStyle: 'italic',
-    color: colors2024['neutral-body'],
-  },
   stepArrow: {
     position: 'absolute',
-    left: 15,
+    left: 13,
     top: 39,
     width: 18,
     height: 69,
@@ -331,7 +332,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontSize: 12,
     lineHeight: 16,
     color: colors2024['neutral-secondary'],
-    textDecorationLine: 'underline',
   },
   waiting: {
     fontFamily: 'SF Pro Rounded',

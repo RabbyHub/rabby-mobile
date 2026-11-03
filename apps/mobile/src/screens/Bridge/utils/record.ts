@@ -9,11 +9,43 @@ export const getBridgeRecordKey = (record: BridgeRecordData) =>
   }:${record.local?.hash || record.history?.from_tx.tx_id}`;
 
 export const getBridgeHistoryTxId = ({ history, local }: BridgeRecordData) =>
-  history?.from_tx?.tx_id ||
-  history?.detail_url?.split('/').pop() ||
-  local?.acceleratedHash ||
-  local?.hash ||
-  '';
+  history?.from_tx?.tx_id || local?.acceleratedHash || local?.hash || '';
+
+// 只放行聚合器 scan_url 拼出来的 https 详情页。
+const BRIDGE_DETAIL_URL_PREFIXES = [
+  'https://explorer.li.fi/tx/',
+  'https://across.to/transfer/',
+  'https://www.socketscan.io/tx/',
+  'https://explorer.mayan.finance/swap/',
+  'https://layerzeroscan.com/tx/',
+  'https://axelarscan.io/gmp/',
+  'https://www.relay.link/transaction/',
+  'https://explorer.near-intents.org/transactions/',
+];
+
+export function getAllowedBridgeDetailUrl(url?: string | null) {
+  if (!url) {
+    return '';
+  }
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    return '';
+  }
+  if (parsed.protocol !== 'https:' || parsed.username || parsed.password) {
+    return '';
+  }
+  const allowed = BRIDGE_DETAIL_URL_PREFIXES.some(prefix => {
+    const expected = new URL(prefix);
+    return (
+      parsed.origin === expected.origin &&
+      parsed.pathname.startsWith(expected.pathname) &&
+      parsed.pathname.length > expected.pathname.length
+    );
+  });
+  return allowed ? parsed.href : '';
+}
 
 export const sameBridgeHash = (left?: string, right?: string) =>
   !!left && !!right && left.toLowerCase() === right.toLowerCase();
