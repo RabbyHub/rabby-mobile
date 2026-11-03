@@ -1,5 +1,6 @@
 import '../../imports';
 import { createSimpleChart } from './perps-simple';
+import { renderPerpsPriceTags, type PerpsPriceTag } from './perps-price-tags';
 
 import {
   createChart as LcCreateChart,
@@ -20,6 +21,7 @@ import {
   type ChartDescription,
   type CandleStick,
   type PerpsProChartConfig,
+  type PerpsProOverlays,
   type TPSLPriceLines,
 } from './types';
 import {
@@ -254,7 +256,9 @@ const chartState = createChartState();
 chartState.colors = { ...getChartColors() };
 chartState.description = { ...defaultDescription };
 
-const PERPS_PRO_KLINE_PROTOCOL_VERSION = 3;
+const PERPS_PRO_KLINE_PROTOCOL_VERSION = 4;
+// MA legend row (16px) plus its 6px gap; the plot below it stays visible.
+const PERPS_PRO_MA_BAND_HEIGHT = 22;
 const PERPS_SIMPLE_KLINE_PROTOCOL_VERSION = 5;
 let simpleChart: ReturnType<typeof createSimpleChart> | null = null;
 const candleByTime = new Map<number, TradingViewCandlestickData>();
@@ -283,19 +287,33 @@ containerEl.style.position = 'relative';
 
 const maLegend = document.createElement('div');
 maLegend.style.position = 'absolute';
-maLegend.style.left = '8px';
-maLegend.style.right = '52px';
-maLegend.style.top = '2px';
+maLegend.style.left = '0';
+maLegend.style.right = '0';
+maLegend.style.top = '0';
+maLegend.style.height = `${PERPS_PRO_MA_BAND_HEIGHT}px`;
+maLegend.style.boxSizing = 'border-box';
+maLegend.style.padding = '0 4px 6px';
 maLegend.style.display = 'none';
-maLegend.style.alignItems = 'center';
-maLegend.style.flexWrap = 'wrap';
-maLegend.style.gap = '8px';
+maLegend.style.alignItems = 'flex-start';
+maLegend.style.gap = '6px';
+maLegend.style.overflow = 'hidden';
 maLegend.style.pointerEvents = 'none';
-maLegend.style.fontSize = '9px';
-maLegend.style.lineHeight = '12px';
+maLegend.style.fontSize = '10px';
+maLegend.style.lineHeight = '16px';
 maLegend.style.whiteSpace = 'nowrap';
 maLegend.style.zIndex = '14';
 containerEl.appendChild(maLegend);
+
+// Pro price tags share the Simple renderer; the opaque MA band stays on top.
+const proPriceOverlay = document.createElement('div');
+proPriceOverlay.style.position = 'absolute';
+proPriceOverlay.style.left = '0';
+proPriceOverlay.style.right = '0';
+proPriceOverlay.style.top = '0';
+proPriceOverlay.style.pointerEvents = 'none';
+proPriceOverlay.style.overflow = 'hidden';
+proPriceOverlay.style.zIndex = '13';
+containerEl.appendChild(proPriceOverlay);
 
 let hasRenderableData = false;
 type OverlayState = 'loading' | 'empty' | 'hidden';
@@ -546,12 +564,15 @@ function ensurePerpsProFontsLoaded() {
     chartState.chart.applyOptions({
       layout: { fontFamily: resolvePerpsProFontFamily(getRuntimeInfo()) },
     });
+    // Price tags equalize their measured widths; re-measure in the real font.
+    schedulePerpsProPriceOverlayRender();
   });
 }
 
 function applyPerpsProFontMode(enabled: boolean) {
   const proDomElements = [
     maLegend,
+    proPriceOverlay,
     proCrosshairLabel,
     proCrosshairTimeLabel,
     tooltip,
@@ -753,11 +774,12 @@ function updateMaLegend(time?: number) {
       const value = getMovingAverageValueAtTime(period, targetTime);
       return `<span style="color: ${
         colors.ma[period]
-      };min-width:0;max-width:100%;white-space:normal;overflow-wrap:anywhere;">MA(${period}): ${
+      };flex-shrink:0;">MA(${period}): ${
         value == null ? '--' : formatProPrice(value, config.priceDecimals)
       }</span>`;
     })
     .join('');
+  maLegend.style.background = colors.background;
   maLegend.style.display = 'flex';
 }
 
@@ -1306,33 +1328,121 @@ let isPerpsProHorizontalTouchScroll = false;
 let isPerpsProFutureTouchBoundary = false;
 let lastOlderCandlesRequestKey: string | null = null;
 let exhaustedHistoryIdentity: string | null = null;
-let perpsProPriceScaleStateFrameId: number | null = null;
-let lastPublishedPerpsProPriceScaleAutoScale: boolean | null = null;
+let perpsProViewportFrameId: number | null = null;
+let lastPublishedPerpsProResetVisible: boolean | null = null;
+let perpsProActiveTouchCount = 0;
+// Only a user pan/zoom marks the viewport; realtime shifts and history
+// prepends keep the default view reachable without a reset.
+let perpsProUserViewportChanged = false;
+let perpsProOverlays: PerpsProOverlays | null = null;
+let perpsProPriceOverlayFrameId: number | null = null;
 
-function publishPerpsProPriceScaleAutoScale() {
+function publishPerpsProViewport() {
   if (!chartState.proConfig) {
     return;
   }
-  const autoScale = getPerpsProPriceScaleAutoScale(
-    chartState.candlestickSeries,
-  );
-  if (autoScale === lastPublishedPerpsProPriceScaleAutoScale) {
+  const resetVisible =
+    perpsProUserViewportChanged ||
+    !getPerpsProPriceScaleAutoScale(chartState.candlestickSeries);
+  if (resetVisible === lastPublishedPerpsProResetVisible) {
     return;
   }
-  lastPublishedPerpsProPriceScaleAutoScale = autoScale;
+  lastPublishedPerpsProResetVisible = resetVisible;
   postMessageToRN({
-    type: 'PERPS_PRO_PRICE_SCALE_AUTO_SCALE_CHANGED',
-    autoScale,
+    type: 'PERPS_PRO_VIEWPORT_CHANGED',
+    resetVisible,
   });
 }
 
-function schedulePerpsProPriceScaleAutoScalePublish() {
-  if (!chartState.proConfig || perpsProPriceScaleStateFrameId != null) {
+function schedulePerpsProViewportPublish() {
+  if (!chartState.proConfig || perpsProViewportFrameId != null) {
     return;
   }
-  perpsProPriceScaleStateFrameId = window.requestAnimationFrame(() => {
-    perpsProPriceScaleStateFrameId = null;
-    publishPerpsProPriceScaleAutoScale();
+  perpsProViewportFrameId = window.requestAnimationFrame(() => {
+    perpsProViewportFrameId = null;
+    publishPerpsProViewport();
+  });
+}
+
+function getPerpsProPriceTags(): PerpsPriceTag[] {
+  const last = chartState.currentData[chartState.currentData.length - 1];
+  if (!perpsProOverlays || !last) {
+    return [];
+  }
+  const { colors, lines } = perpsProOverlays;
+  // Market price guides use the fixed accent, independently of candle direction.
+  const tags: PerpsPriceTag[] = [
+    {
+      id: 'latest',
+      price: last.close,
+      color: colors.accent,
+      background: colors.accent,
+      text: colors.contrast,
+    },
+  ];
+  lines.forEach(line => {
+    if (!Number.isFinite(line.price) || line.price <= 0) {
+      return;
+    }
+    const lineColors =
+      line.kind === 'entry'
+        ? {
+            color: colors.entry,
+            background: colors.entryBackground,
+            text: colors.entryText,
+          }
+        : {
+            color:
+              line.kind === 'tp'
+                ? colors.up
+                : line.kind === 'sl'
+                ? colors.down
+                : colors.liquidation,
+            background:
+              line.kind === 'tp'
+                ? colors.up
+                : line.kind === 'sl'
+                ? colors.down
+                : colors.liquidation,
+            text: colors.contrast,
+          };
+    tags.push({
+      id: line.id,
+      price: line.price,
+      title: line.title,
+      ...lineColors,
+    });
+  });
+  return tags;
+}
+
+function renderPerpsProPriceOverlay() {
+  proPriceOverlay.replaceChildren();
+  const config = chartState.proConfig;
+  const chart = chartState.chart;
+  const series = chartState.candlestickSeries;
+  if (!config || !chart || !series || !perpsProOverlays || !hasRenderableData) {
+    return;
+  }
+  const paneHeight = chart.panes()[0].getHeight();
+  proPriceOverlay.style.height = `${paneHeight}px`;
+  renderPerpsPriceTags(proPriceOverlay, {
+    tags: getPerpsProPriceTags(),
+    paneHeight,
+    top: PERPS_PRO_MA_BAND_HEIGHT,
+    priceToCoordinate: price => series.priceToCoordinate(price),
+    priceText: price => formatProPrice(price, config.priceDecimals),
+    titleOutline: perpsProOverlays.colors.background,
+  });
+}
+
+function schedulePerpsProPriceOverlayRender() {
+  if (perpsProPriceOverlayFrameId != null) {
+    return;
+  }
+  perpsProPriceOverlayFrameId = window.requestAnimationFrame(() => {
+    perpsProPriceOverlayFrameId = null;
+    renderPerpsProPriceOverlay();
   });
 }
 
@@ -1343,12 +1453,15 @@ function resetPerpsProTouchBoundaryGesture() {
   isPerpsProFutureTouchBoundary = false;
 }
 
-function handlePerpsProTouchGestureEnd() {
+function handlePerpsProTouchGestureEnd(event: TouchEvent) {
+  perpsProActiveTouchCount = event.touches.length;
   resetPerpsProTouchBoundaryGesture();
-  schedulePerpsProPriceScaleAutoScalePublish();
+  schedulePerpsProViewportPublish();
+  schedulePerpsProPriceOverlayRender();
 }
 
 function handlePerpsProBoundaryTouchStart(event: TouchEvent) {
+  perpsProActiveTouchCount = event.touches.length;
   if (!chartState.proConfig || event.touches.length !== 1) {
     resetPerpsProTouchBoundaryGesture();
     return;
@@ -1365,6 +1478,10 @@ function handlePerpsProBoundaryTouchStart(event: TouchEvent) {
 }
 
 function handlePerpsProBoundaryTouchMove(event: TouchEvent) {
+  if (chartState.proConfig) {
+    // A price-axis drag changes the scale without a time-range event.
+    schedulePerpsProPriceOverlayRender();
+  }
   if (!chartState.proConfig || event.touches.length !== 1) {
     resetPerpsProTouchBoundaryGesture();
     return;
@@ -1463,6 +1580,11 @@ function handleVisibleLogicalRangeChange(
   schedulePerpsProCrosshairLabelRender();
   if (!range || !chartState.proConfig) {
     return;
+  }
+  schedulePerpsProPriceOverlayRender();
+  if (perpsProActiveTouchCount > 0 && !isApplyingVisibleLogicalRange) {
+    perpsProUserViewportChanged = true;
+    schedulePerpsProViewportPublish();
   }
   if (perpsProTouchPoint && perpsProTouchStartRange) {
     if (
@@ -1638,6 +1760,8 @@ function applyPerpsProChartOptions(config: PerpsProChartConfig) {
   chartState.chart.applyOptions({
     layout: {
       fontFamily: resolvePerpsProFontFamily(getRuntimeInfo()),
+      fontSize: 10,
+      textColor: (chartState.colors || getChartColors()).secondaryText,
     },
     crosshair: {
       mode: CrosshairMode.Normal,
@@ -1672,13 +1796,29 @@ function applyPerpsProChartOptions(config: PerpsProChartConfig) {
   });
 }
 
-function handleResetPerpsProPriceScale() {
-  if (!chartState.proConfig) {
+function handleResetPerpsProViewport() {
+  const config = chartState.proConfig;
+  if (!config || !chartState.chart || !chartState.candlestickSeries) {
     return;
   }
-  if (resetPerpsProPriceScale(chartState.candlestickSeries)) {
-    publishPerpsProPriceScaleAutoScale();
+  clearPerpsProCrosshair();
+  isApplyingVisibleLogicalRange = true;
+  try {
+    chartState.chart
+      .timeScale()
+      .setVisibleLogicalRange(
+        getInitialVisibleLogicalRange(
+          chartState.currentData.length,
+          config.initialVisibleBars,
+        ),
+      );
+  } finally {
+    isApplyingVisibleLogicalRange = false;
   }
+  resetPerpsProPriceScale(chartState.candlestickSeries);
+  perpsProUserViewportChanged = false;
+  publishPerpsProViewport();
+  schedulePerpsProPriceOverlayRender();
 }
 
 // Create candlestick series
@@ -1867,11 +2007,14 @@ function handleSetCandlestickData(
   clearPerpsProCrosshair();
   chartState.proConfig = message.proConfig ?? null;
   if (!chartState.proConfig) {
-    if (perpsProPriceScaleStateFrameId != null) {
-      window.cancelAnimationFrame(perpsProPriceScaleStateFrameId);
-      perpsProPriceScaleStateFrameId = null;
+    if (perpsProViewportFrameId != null) {
+      window.cancelAnimationFrame(perpsProViewportFrameId);
+      perpsProViewportFrameId = null;
     }
-    lastPublishedPerpsProPriceScaleAutoScale = null;
+    lastPublishedPerpsProResetVisible = null;
+  }
+  if (!previousVisibleRange) {
+    perpsProUserViewportChanged = false;
   }
   applyPerpsProFontMode(chartState.proConfig != null);
   chartState.currentDataIdentity = message.identity ?? null;
@@ -1888,6 +2031,8 @@ function handleSetCandlestickData(
     chartState.chart.applyOptions({
       layout: {
         fontFamily: legacyChartFontFamily,
+        fontSize: 12,
+        textColor: (chartState.colors || getChartColors()).text,
       },
       crosshair: {
         vertLine: { labelVisible: true },
@@ -1901,6 +2046,7 @@ function handleSetCandlestickData(
   if (!message.data?.length) {
     hasRenderableData = false;
     clearChartData();
+    schedulePerpsProPriceOverlayRender();
     setOverlayState('empty');
     acknowledgeAppliedData();
     return;
@@ -1913,6 +2059,11 @@ function handleSetCandlestickData(
   if (chartState.candlestickSeries) {
     hasRenderableData = true;
     setOverlayState('hidden');
+    // Pro draws the latest price with the shared tag renderer instead.
+    chartState.candlestickSeries.applyOptions({
+      lastValueVisible: !chartState.proConfig,
+      priceLineVisible: !chartState.proConfig,
+    });
     chartState.currentData = message.data;
     rebuildCandleLookup();
     chartState.candlestickSeries.setData(message.data);
@@ -1984,7 +2135,8 @@ function handleSetCandlestickData(
         } finally {
           isApplyingVisibleLogicalRange = false;
         }
-        publishPerpsProPriceScaleAutoScale();
+        publishPerpsProViewport();
+        schedulePerpsProPriceOverlayRender();
       };
       applyNextRange();
       // `setData` updates the series/time-scale points asynchronously. In
@@ -2052,6 +2204,7 @@ function handleUpdateCandlestickData(data: TradingViewCandlestickData) {
       rebuildMovingAverageSeries();
     }
     schedulePerpsProCrosshairLabelRender();
+    schedulePerpsProPriceOverlayRender();
     if (chartState.selectedTime === Number(data.time)) {
       const selectedCandle = getCandleAtTime(Number(data.time));
       if (selectedCandle) {
@@ -2081,7 +2234,7 @@ function handleUpdateTheme(colors: ChartColors, description: ChartDescription) {
     chartState.chart.applyOptions({
       layout: {
         background: { color: colors.background },
-        textColor: colors.text,
+        textColor: chartState.proConfig ? colors.secondaryText : colors.text,
       },
       grid: {
         vertLines: { color: colors.border },
@@ -2109,6 +2262,7 @@ function handleUpdateTheme(colors: ChartColors, description: ChartDescription) {
     crosshairMarkerBorderColor: colors.text,
   });
   updateMaLegend(chartState.selectedTime ?? undefined);
+  schedulePerpsProPriceOverlayRender();
 
   containerEl.style.background = colors.background;
   document.body.style.background = colors.background;
@@ -2265,8 +2419,12 @@ function handleMessage(event: CustomEvent) {
             clearPerpsProCrosshair();
           }
           break;
-        case 'RESET_PERPS_PRO_PRICE_SCALE':
-          handleResetPerpsProPriceScale();
+        case 'RESET_PERPS_PRO_VIEWPORT':
+          handleResetPerpsProViewport();
+          break;
+        case 'SET_PERPS_PRO_OVERLAYS':
+          perpsProOverlays = tvMessage.overlays;
+          schedulePerpsProPriceOverlayRender();
           break;
         case 'UPDATE_THEME':
           handleUpdateTheme(tvMessage.colors, tvMessage.description);
@@ -2290,6 +2448,7 @@ function handleResize() {
         height: window.innerHeight,
       });
       schedulePerpsProCrosshairLabelRender();
+      schedulePerpsProPriceOverlayRender();
     }
   }, 100);
 }
@@ -2340,9 +2499,13 @@ window.addEventListener('beforeunload', () => {
   if (visibleLogicalRangeFrameId != null) {
     window.cancelAnimationFrame(visibleLogicalRangeFrameId);
   }
-  if (perpsProPriceScaleStateFrameId != null) {
-    window.cancelAnimationFrame(perpsProPriceScaleStateFrameId);
-    perpsProPriceScaleStateFrameId = null;
+  if (perpsProViewportFrameId != null) {
+    window.cancelAnimationFrame(perpsProViewportFrameId);
+    perpsProViewportFrameId = null;
+  }
+  if (perpsProPriceOverlayFrameId != null) {
+    window.cancelAnimationFrame(perpsProPriceOverlayFrameId);
+    perpsProPriceOverlayFrameId = null;
   }
   window.removeEventListener('messageFromRN', handleMessage as EventListener);
   window.removeEventListener('resize', handleResize);
