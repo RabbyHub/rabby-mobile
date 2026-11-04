@@ -2230,6 +2230,7 @@
       "customNetworkTokenHeader": "Hinzugefügte benutzerdefinierte Netzwerke"
     },
     "browser": {
+      "openInRabbyPerps": "In Rabby Perps öffnen",
       "BrowserHeader": {
         "searchIos": "Website durchsuchen",
         "searchAndroid": "Suche DApp"

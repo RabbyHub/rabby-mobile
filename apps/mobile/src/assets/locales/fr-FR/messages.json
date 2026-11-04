@@ -1947,6 +1947,7 @@
       "customNetworkTokenHeader": "Réseaux personnalisés ajoutés"
     },
     "browser": {
+      "openInRabbyPerps": "Ouvrir dans Rabby Perps",
       "BrowserHeader": {
         "searchIos": "Rechercher le site Web",
         "searchAndroid": "Rechercher DApp"

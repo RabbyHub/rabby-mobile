@@ -1988,6 +1988,7 @@
       "customNetworkTokenHeader": "追加済みカスタムネットワーク"
     },
     "browser": {
+      "openInRabbyPerps": "Rabby Perps で開く",
       "BrowserHeader": {
         "searchAndroid": "DAppを検索",
         "searchIos": "ウェブサイトを検索"
