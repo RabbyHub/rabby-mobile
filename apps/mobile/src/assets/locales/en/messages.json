@@ -3436,6 +3436,7 @@
       "maxPriceImpact": "Max Price Impact",
       "unsupportedAddressType": "Address type not supported",
       "accountChanged": "Address changed. Please start again",
+      "addressSwitchUnsupported": "Address switching isn't supported on this page.",
       "buy": {
         "amount": "Buy Amount",
         "allocation": "Allocation",
@@ -3447,6 +3448,7 @@
         "preview": "Preview",
         "paymentTokens": "Payment Tokens",
         "selectTokens": "Select Tokens",
+        "selectPaymentAssets": "Select assets for payment",
         "estPaymentLabel": "Est. Payment",
         "noPaymentToken": "No payment token selected",
         "confirm": "Confirm",

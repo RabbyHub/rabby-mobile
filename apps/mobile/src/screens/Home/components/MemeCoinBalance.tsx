@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { Text } from '@/components/Typography';
+import { CustomSkeleton } from '@/components2024/CustomSkeleton';
 import { scheduleStartupTask } from '@/core/utils/startupScheduler';
 import { STARTUP_TASKS } from '@/core/utils/startupTaskManifest';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
@@ -19,7 +20,7 @@ export const MemeCoinBalance: React.FC = () => {
     forScene: 'MakeTransactionAbout',
   });
   const address = account?.address;
-  const { totalUsd, loaded } = useMemeHoldings(address);
+  const { totalUsd, loaded, loadFailed } = useMemeHoldings(address);
   const [hideType] = useHideBalance();
 
   useEffect(() => {
@@ -36,7 +37,13 @@ export const MemeCoinBalance: React.FC = () => {
     };
   }, [address, loaded]);
 
-  if (!loaded || totalUsd <= 0) {
+  if (!address || loadFailed) {
+    return null;
+  }
+  if (!loaded) {
+    return <CustomSkeleton width={50} height={18} style={styles.skeleton} />;
+  }
+  if (totalUsd <= 0) {
     return null;
   }
   return (
@@ -55,5 +62,8 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 18,
     fontWeight: '500',
     color: colors2024['neutral-secondary'],
+  },
+  skeleton: {
+    borderRadius: 8,
   },
 }));

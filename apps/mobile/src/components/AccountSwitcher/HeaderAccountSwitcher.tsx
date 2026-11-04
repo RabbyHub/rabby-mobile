@@ -39,6 +39,7 @@ const getHeaderAccountName = (
 export function HeaderAccountSwitcher({
   forScene,
   disableSwitch = false,
+  onDisabledPress,
   formatDefaultAliasAsAddress = false,
   hideAccountName = false,
   showCaretWhenDisabled = false,
@@ -46,6 +47,7 @@ export function HeaderAccountSwitcher({
   style,
 }: AccountSwitcherAopProps<{
   disableSwitch?: boolean;
+  onDisabledPress?: () => void;
   formatDefaultAliasAsAddress?: boolean;
   hideAccountName?: boolean;
   showCaretWhenDisabled?: boolean;
@@ -88,9 +90,13 @@ export function HeaderAccountSwitcher({
     <View style={[styles.accountSelectorContainer, { maxWidth }, style]}>
       <View style={styles.accountSelectorWidthLimiter}>
         <TouchableOpacity
-          disabled={disableSwitch}
+          disabled={disableSwitch && !onDisabledPress}
           style={styles.accountSelector}
           onPress={() => {
+            if (disableSwitch) {
+              onDisabledPress?.();
+              return;
+            }
             const nextVisible = !isVisible;
             toggleSceneVisible(forScene, nextVisible);
             if (nextVisible) {

@@ -20,9 +20,12 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { useMemeHoldings } from '../data/memeHoldingsStore';
 import { toBuyExecLegs } from '../engine/execLegs';
 import { tokenKey } from '../engine/keys';
-import type { AllocationMode } from '../engine/types';
 import { usePaymentAssets } from '../hooks/usePaymentAssets';
 import { pushMemeCoinExecute } from '../navigation';
+import {
+  toggleAllocationMode,
+  useAllocationMode,
+} from '../ui/allocationModeStore';
 import {
   canConfirmBuy,
   DEFAULT_MAX_PRICE_IMPACT_PCT,
@@ -56,13 +59,7 @@ const MemeCoinBuyContent = ({
   const [maxPriceImpactPct, setMaxPriceImpactPct] = useState<MaxPriceImpactPct>(
     DEFAULT_MAX_PRICE_IMPACT_PCT,
   );
-  const [allocationMode, setAllocationMode] =
-    useState<AllocationMode>('marketCap');
-  const toggleAllocationMode = useCallback(
-    () =>
-      setAllocationMode(mode => (mode === 'marketCap' ? 'equal' : 'marketCap')),
-    [],
-  );
+  const allocationMode = useAllocationMode();
   // the page opens on the token picker
   const [sheetVisible, setSheetVisible] = useState(true);
   const closeSheet = useCallback(() => setSheetVisible(false), []);
