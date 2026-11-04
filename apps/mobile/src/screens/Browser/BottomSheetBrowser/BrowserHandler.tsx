@@ -348,6 +348,10 @@ const getStyle = createGetStyles2024(
         paddingRight: 10 + safeAreaInsets.right,
         height: HANDLE_HEIGHT + topGap,
       },
+      handleComponentWithEntry: {
+        justifyContent: 'space-between',
+        paddingLeft: 15,
+      },
       handleComponentContainer: {
         display: 'flex',
         backgroundColor: isLight
