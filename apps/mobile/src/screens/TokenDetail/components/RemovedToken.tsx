@@ -6,13 +6,12 @@ import { useTranslation } from 'react-i18next';
 import RcMore from '@/assets/icons/home/more-cc.svg';
 import { Text } from '@/components/Typography';
 import { Button } from '@/components2024/Button';
+import { buttonTitleStyles } from '@/components2024/Button/buttonStyles';
 import { TokenMoreSheet, type TokenMoreAction } from './TokenMoreSheet';
 import { toast } from '@/components2024/Toast';
 import {
   BOTTOM_BUTTON_GAP,
   BOTTOM_BUTTON_SINGLE_HEIGHT,
-  BOTTOM_BUTTON_TEXT_LINE_HEIGHT,
-  BOTTOM_BUTTON_TITLE_STYLE,
   getBottomButtonBottomOffset,
 } from '@/constant/layout';
 import { useRemovedTokens } from '@/hooks/useRemovedTokens';
@@ -66,7 +65,7 @@ export function RestoreRemovedTokenActions({
           type="primary"
           title={t('page.tokenDetail.removed.restore')}
           height={BOTTOM_BUTTON_SINGLE_HEIGHT}
-          titleStyle={[BOTTOM_BUTTON_TITLE_STYLE, styles.restoreTitle]}
+          titleStyle={buttonTitleStyles.single}
           containerStyle={styles.restoreContainer}
           buttonStyle={styles.restoreButton}
           loading={restoring}
@@ -117,10 +116,6 @@ const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
       getBottomButtonBottomOffset(safeAreaInsets.bottom) + BOTTOM_BUTTON_GAP,
   },
   restoreContainer: { flex: 1 },
-  restoreTitle: {
-    lineHeight: BOTTOM_BUTTON_TEXT_LINE_HEIGHT,
-    paddingVertical: 0,
-  },
   restoreButton: { borderRadius: 10 },
   more: {
     width: BOTTOM_BUTTON_SINGLE_HEIGHT,
