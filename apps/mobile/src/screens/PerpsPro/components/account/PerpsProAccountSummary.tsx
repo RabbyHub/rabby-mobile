@@ -17,7 +17,7 @@ const ACCOUNT_ACTION_COLOR = '#23C0B0';
 const ACCOUNT_ACTION_BACKGROUND = 'rgba(80, 210, 193, 0.1)';
 
 interface PerpsProAccountSummaryProps {
-  account: PerpsAccountViewModel;
+  account: Pick<PerpsAccountViewModel, 'primaryValue' | 'unrealizedPnl'>;
   onDeposit: () => void;
   onWithdraw: () => void;
 }

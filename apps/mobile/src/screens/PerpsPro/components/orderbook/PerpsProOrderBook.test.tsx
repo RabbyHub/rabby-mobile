@@ -1,10 +1,11 @@
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
-import { StyleSheet, View as NativeView } from 'react-native';
+import { Animated, Easing, StyleSheet, View as NativeView } from 'react-native';
 
 const mockOpenFieldExplanation = jest.fn();
 const mockCancelAnimation = jest.fn();
 const mockWithTiming = jest.fn((value: number) => value);
+const mockThemeContext = React.createContext('initial');
 
 import type { MarketData } from '@/hooks/perps/usePerpsStore';
 
@@ -12,6 +13,8 @@ import { buildPerpsProMarket } from '../../model/market';
 import { getPerpsProColumnLayout } from '../../model/layout';
 import { PerpsProOrderBookRatioSkeleton } from './PerpsProOrderBookSkeleton';
 import { processPerpsOrderBook } from '../../model/orderBook';
+import * as orderBookModel from '../../model/orderBook';
+import * as orderBookFormat from '../../utils/format';
 import {
   getPerpsProOrderBookDepthKey,
   getPerpsProOrderBookRowKey,
@@ -29,6 +32,7 @@ jest.mock('react-native-reanimated', () => {
     cancelAnimation: (...args: unknown[]) => mockCancelAnimation(...args),
     useAnimatedStyle: (updater: () => object) => updater(),
     useSharedValue: (value: number) => ReactModule.useRef({ value }).current,
+    useReducedMotion: () => false,
     withTiming: (...args: [number, object]) => mockWithTiming(...args),
   };
 });
@@ -43,20 +47,25 @@ jest.mock('@/components/Typography', () => ({
   Text: require('react-native').Text,
 }));
 
-jest.mock('@/hooks/theme', () => ({
-  useTheme2024: ({ getStyle }: { getStyle: (input: object) => object }) => {
-    const colors2024 = new Proxy(
-      {},
-      {
-        get: (_target, key) => String(key),
-      },
-    );
-    return {
-      colors2024,
-      styles: getStyle({ colors2024 }),
-    };
-  },
-}));
+jest.mock('@/hooks/theme', () => {
+  const ReactModule = require('react');
+  return {
+    useTheme2024: ({ getStyle }: { getStyle: (input: object) => object }) => {
+      const theme = ReactModule.useContext(mockThemeContext);
+      // Match the real theme hook's stable styles until theme inputs change.
+      return ReactModule.useMemo(() => {
+        const colors2024 = new Proxy(
+          {},
+          {
+            get: (_target, key) =>
+              theme === 'initial' ? String(key) : `${theme}:${String(key)}`,
+          },
+        );
+        return { colors2024, styles: getStyle({ colors2024 }) };
+      }, [getStyle, theme]);
+    },
+  };
+});
 
 jest.mock('@/utils/styles', () => ({
   createGetStyles2024: (getStyle: unknown) => getStyle,
@@ -157,9 +166,501 @@ const marketData: MarketData = {
 const btcMarket = buildPerpsProMarket(marketData);
 
 describe('PerpsProOrderBook display shell', () => {
+  let nativeTiming: jest.SpyInstance;
+
   beforeEach(() => {
     jest.clearAllMocks();
+    nativeTiming = jest.spyOn(Animated, 'timing').mockReturnValue({
+      start: jest.fn(),
+      stop: jest.fn(),
+      reset: jest.fn(),
+    });
   });
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('does not rebuild either book side for latest-trade, clock, or market-price updates', () => {
+    const depthPercent = jest.spyOn(
+      orderBookModel,
+      'getPerpsOrderBookDepthPercent',
+    );
+    const props: React.ComponentProps<typeof PerpsProOrderBook> = {
+      ...defaultProps,
+      book: processPerpsOrderBook({
+        coin: 'BTC',
+        levels: [
+          [{ n: 1, px: '100', sz: '1' }],
+          [{ n: 1, px: '101', sz: '1' }],
+        ],
+        time: 100,
+      }),
+      bookIdentity: 'BTC:5:null',
+      bookStatus: 'ready',
+      hasBookSnapshot: true,
+      latestTrade: {
+        coin: 'BTC',
+        price: '102.50',
+        side: 'buy',
+        size: '1',
+        tid: 1,
+        time: 100,
+      },
+      market: btcMarket,
+      onSelectBookPrice: jest.fn(),
+    };
+    const view = render(<PerpsProOrderBook {...props} />);
+    // One populated level per side means exactly one depth calculation per
+    // side render. This guards JS subtree rebuilding, not native frame timing.
+    expect(depthPercent).toHaveBeenCalledTimes(2);
+    const latestTrade = { ...props.latestTrade!, price: '103.50', tid: 2 };
+    view.rerender(<PerpsProOrderBook {...props} latestTrade={latestTrade} />);
+    expect(screen.getByText('103.50')).toBeTruthy();
+    expect(depthPercent).toHaveBeenCalledTimes(2);
+
+    const serverClock = { receivedAt: 200, serverTime: 200 };
+    view.rerender(
+      <PerpsProOrderBook
+        {...props}
+        latestTrade={latestTrade}
+        serverClock={serverClock}
+      />,
+    );
+    expect(depthPercent).toHaveBeenCalledTimes(2);
+
+    view.rerender(
+      <PerpsProOrderBook
+        {...props}
+        latestTrade={latestTrade}
+        market={buildPerpsProMarket({
+          ...marketData,
+          funding: '0.0002',
+          markPx: '32.3426',
+        })}
+        serverClock={serverClock}
+      />,
+    );
+    expect(screen.getByText('32.34')).toBeTruthy();
+    expect(screen.getByText('101.00')).toBeTruthy();
+    expect(depthPercent).toHaveBeenCalledTimes(2);
+  });
+
+  it('rebuilds book sides for precision, amount unit, book, and selection-handler changes', () => {
+    const depthPercent = jest.spyOn(
+      orderBookModel,
+      'getPerpsOrderBookDepthPercent',
+    );
+    const createBook = (bidSize: string) =>
+      processPerpsOrderBook({
+        coin: 'BTC',
+        levels: [
+          [{ n: 1, px: '100.1234', sz: bidSize }],
+          [{ n: 1, px: '101.1234', sz: '3' }],
+        ],
+        time: 100,
+      });
+    let props: React.ComponentProps<typeof PerpsProOrderBook> = {
+      ...defaultProps,
+      book: createBook('2'),
+      bookIdentity: 'BTC:5:null',
+      bookStatus: 'ready',
+      hasBookSnapshot: true,
+      market: btcMarket,
+    };
+    const view = render(<PerpsProOrderBook {...props} />);
+    expect(depthPercent).toHaveBeenCalledTimes(2);
+    expect(screen.getByText('101.12')).toBeTruthy();
+
+    props = {
+      ...props,
+      selectedTickOption: {
+        displayPrice: 1,
+        mantissa: null,
+        nSigFigs: 2,
+        priceDecimals: 0,
+      },
+    };
+    view.rerender(<PerpsProOrderBook {...props} />);
+    expect(depthPercent).toHaveBeenCalledTimes(4);
+    expect(screen.getByText('101')).toBeTruthy();
+    expect(screen.queryByText('101.12')).toBeNull();
+
+    props = { ...props, amountUnit: 'base' };
+    view.rerender(<PerpsProOrderBook {...props} />);
+    expect(depthPercent).toHaveBeenCalledTimes(6);
+    expect(screen.getByText('2')).toBeTruthy();
+    expect(screen.getByText('3')).toBeTruthy();
+
+    props = { ...props, book: createBook('4') };
+    view.rerender(<PerpsProOrderBook {...props} />);
+    expect(depthPercent).toHaveBeenCalledTimes(8);
+    expect(screen.getByText('4')).toBeTruthy();
+    expect(nativeTiming).toHaveBeenCalledWith(expect.any(Animated.Value), {
+      toValue: 0.75,
+      duration: 250,
+      easing: expect.any(Function),
+      useNativeDriver: true,
+      isInteraction: false,
+    });
+
+    const onSelectBookPrice = jest.fn();
+    const onSelectPriceIntentStart = jest.fn(() => ({
+      type: 'attachedTpSlPrice' as const,
+      leg: 'sl' as const,
+    }));
+    props = { ...props, onSelectBookPrice, onSelectPriceIntentStart };
+    view.rerender(<PerpsProOrderBook {...props} />);
+    expect(depthPercent).toHaveBeenCalledTimes(10);
+    const row = screen.getByText('101');
+    fireEvent(row, 'pressIn');
+    fireEvent.press(row);
+    expect(onSelectBookPrice).toHaveBeenCalledWith(
+      '101.1234',
+      { type: 'attachedTpSlPrice', leg: 'sl' },
+      {
+        feedIdentity: 'BTC:5:null',
+        marketKey: btcMarket.marketKey,
+        type: 'book',
+      },
+    );
+  });
+
+  it('updates side, row, and depth theme consumers while book props stay unchanged', () => {
+    const depthPercent = jest.spyOn(
+      orderBookModel,
+      'getPerpsOrderBookDepthPercent',
+    );
+    const props: React.ComponentProps<typeof PerpsProOrderBook> = {
+      ...defaultProps,
+      book: processPerpsOrderBook({
+        coin: 'BTC',
+        levels: [
+          [{ n: 1, px: '100', sz: '1' }],
+          [{ n: 1, px: '101', sz: '1' }],
+        ],
+        time: 100,
+      }),
+      bookStatus: 'ready',
+      hasBookSnapshot: true,
+      market: btcMarket,
+    };
+    const view = render(
+      <mockThemeContext.Provider value="initial">
+        <PerpsProOrderBook {...props} />
+      </mockThemeContext.Provider>,
+    );
+    expect(depthPercent).toHaveBeenCalledTimes(2);
+    expect(
+      StyleSheet.flatten(screen.getByText('101.00').props.style).color,
+    ).toBe('red-default');
+    view.rerender(
+      <mockThemeContext.Provider value="changed">
+        <PerpsProOrderBook {...props} />
+      </mockThemeContext.Provider>,
+    );
+    expect(depthPercent).toHaveBeenCalledTimes(4);
+    expect(
+      StyleSheet.flatten(screen.getByText('101.00').props.style).color,
+    ).toBe('changed:red-default');
+    expect(
+      StyleSheet.flatten(
+        screen.getAllByTestId('perps-pro-order-book-depth')[0].props.style,
+      ).backgroundColor,
+    ).toBe('changed:red-light-1');
+  });
+
+  it('renders only changed row values while still updating cumulative depth and price selection', () => {
+    const formatAmount = jest.spyOn(
+      orderBookFormat,
+      'formatPerpsProOrderBookAmount',
+    );
+    const createBook = (bestBidSize = '1', time = 100) =>
+      processPerpsOrderBook({
+        coin: 'BTC',
+        levels: [
+          [
+            { n: 1, px: '100', sz: bestBidSize },
+            { n: 1, px: '99', sz: '1' },
+          ],
+          [
+            { n: 1, px: '101', sz: '1' },
+            { n: 1, px: '102', sz: '1' },
+          ],
+        ],
+        time,
+      });
+    const onSelectBookPrice = jest.fn();
+    const props: React.ComponentProps<typeof PerpsProOrderBook> = {
+      ...defaultProps,
+      book: createBook(),
+      bookIdentity: 'BTC:5:null',
+      bookStatus: 'ready',
+      hasBookSnapshot: true,
+      market: btcMarket,
+      onSelectBookPrice,
+    };
+    const view = render(<PerpsProOrderBook {...props} />);
+    expect(formatAmount).toHaveBeenCalledTimes(4);
+    formatAmount.mockClear();
+    mockWithTiming.mockClear();
+    nativeTiming.mockClear();
+
+    // A new snapshot creates fresh level objects, not new displayed values.
+    view.rerender(<PerpsProOrderBook {...props} book={createBook('1', 200)} />);
+    expect(formatAmount).not.toHaveBeenCalled();
+    expect(mockWithTiming).not.toHaveBeenCalled();
+    expect(nativeTiming).not.toHaveBeenCalled();
+    view.rerender(
+      <PerpsProOrderBook
+        {...props}
+        book={createBook('1', 200)}
+        serverClock={{ receivedAt: 300, serverTime: 300 }}
+      />,
+    );
+    expect(formatAmount).not.toHaveBeenCalled();
+    expect(mockWithTiming).not.toHaveBeenCalled();
+    expect(nativeTiming).not.toHaveBeenCalled();
+
+    // Changing one size affects other rows' cumulative totals, not their text.
+    const nextBook = createBook('2', 400);
+    view.rerender(<PerpsProOrderBook {...props} book={nextBook} />);
+    expect(formatAmount).toHaveBeenCalledTimes(1);
+    expect(formatAmount).toHaveBeenLastCalledWith(200, 2);
+    expect(screen.getByText('200')).toBeTruthy();
+    expect(nativeTiming).toHaveBeenCalledWith(expect.any(Animated.Value), {
+      toValue: ((2 / 3) * 100) / 100,
+      duration: 250,
+      easing: expect.any(Function),
+      useNativeDriver: true,
+      isInteraction: false,
+    });
+
+    formatAmount.mockClear();
+    mockWithTiming.mockClear();
+    nativeTiming.mockClear();
+    view.rerender(
+      <PerpsProOrderBook {...props} amountUnit="base" book={nextBook} />,
+    );
+    expect(formatAmount).toHaveBeenCalledTimes(4);
+    expect(formatAmount).toHaveBeenCalledWith(2, 4);
+    expect(formatAmount).toHaveBeenCalledWith(1, 4);
+    expect(mockWithTiming).not.toHaveBeenCalled();
+    expect(nativeTiming).not.toHaveBeenCalled();
+    fireEvent.press(screen.getByText('101.00'));
+    expect(onSelectBookPrice).toHaveBeenCalledWith(
+      '101',
+      { type: 'tradePrice' },
+      {
+        feedIdentity: 'BTC:5:null',
+        marketKey: btcMarket.marketKey,
+        type: 'book',
+      },
+    );
+  });
+
+  it('uses replacement selection callbacks without requiring a new book or price', () => {
+    const onSelectBookPrice = jest.fn();
+    const onSelectPriceIntentStart = jest.fn(() => ({
+      type: 'tradePrice' as const,
+    }));
+    const props: React.ComponentProps<typeof PerpsProOrderBook> = {
+      ...defaultProps,
+      book: processPerpsOrderBook({
+        coin: 'BTC',
+        levels: [[], [{ n: 1, px: '101.1234', sz: '2' }]],
+        time: 100,
+      }),
+      bookIdentity: 'BTC:5:null',
+      bookStatus: 'ready',
+      hasBookSnapshot: true,
+      market: btcMarket,
+      onSelectBookPrice,
+      onSelectPriceIntentStart,
+    };
+    const view = render(<PerpsProOrderBook {...props} />);
+    const nextSelect = jest.fn();
+    const nextIntentStart = jest.fn(() => ({
+      type: 'attachedTpSlPrice' as const,
+      leg: 'tp' as const,
+    }));
+    view.rerender(
+      <PerpsProOrderBook
+        {...props}
+        onSelectBookPrice={nextSelect}
+        onSelectPriceIntentStart={nextIntentStart}
+      />,
+    );
+    const row = screen.getByText('101.12');
+    fireEvent(row, 'pressIn');
+    fireEvent.press(row);
+    expect(onSelectBookPrice).not.toHaveBeenCalled();
+    expect(onSelectPriceIntentStart).not.toHaveBeenCalled();
+    expect(nextIntentStart).toHaveBeenCalledTimes(1);
+    expect(nextSelect).toHaveBeenCalledWith(
+      '101.1234',
+      { type: 'attachedTpSlPrice', leg: 'tp' },
+      {
+        feedIdentity: 'BTC:5:null',
+        marketKey: btcMarket.marketKey,
+        type: 'book',
+      },
+    );
+  });
+
+  it('reuses book-derived calculations for trade and clock updates but immediately displays a new book', () => {
+    const maxVisibleTotal = jest.spyOn(
+      orderBookModel,
+      'getVisiblePerpsOrderBookMaxTotal',
+    );
+    const buyRatio = jest.spyOn(orderBookModel, 'calculatePerpsBuyRatio');
+    const book = processPerpsOrderBook({
+      coin: 'BTC',
+      levels: [[{ n: 1, px: '100', sz: '1' }], [{ n: 1, px: '100', sz: '1' }]],
+      time: 100,
+    });
+    const props: React.ComponentProps<typeof PerpsProOrderBook> = {
+      ...defaultProps,
+      book,
+      bookIdentity: 'BTC:5:null',
+      bookStatus: 'ready',
+      hasBookSnapshot: true,
+      latestTrade: {
+        coin: 'BTC',
+        price: '102.50',
+        side: 'buy',
+        size: '1',
+        tid: 1,
+        time: 100,
+      },
+      market: btcMarket,
+      serverClock: { receivedAt: 100, serverTime: 100 },
+    };
+    const view = render(<PerpsProOrderBook {...props} />);
+    expect(maxVisibleTotal).toHaveBeenCalledTimes(1);
+    expect(maxVisibleTotal).toHaveLastReturnedWith(1);
+    expect(buyRatio).toHaveBeenCalledTimes(1);
+    expect(screen.getAllByText('50.00%')).toHaveLength(2);
+
+    const latestTrade = {
+      ...props.latestTrade!,
+      price: '103.50',
+      tid: 2,
+      time: 200,
+    };
+    view.rerender(<PerpsProOrderBook {...props} latestTrade={latestTrade} />);
+    expect(screen.getByText('103.50')).toBeTruthy();
+    expect(screen.queryByText('102.50')).toBeNull();
+    expect(maxVisibleTotal).toHaveBeenCalledTimes(1);
+    expect(buyRatio).toHaveBeenCalledTimes(1);
+
+    const serverClock = { receivedAt: 200, serverTime: 200 };
+    view.rerender(
+      <PerpsProOrderBook
+        {...props}
+        latestTrade={latestTrade}
+        serverClock={serverClock}
+      />,
+    );
+    expect(maxVisibleTotal).toHaveBeenCalledTimes(1);
+    expect(buyRatio).toHaveBeenCalledTimes(1);
+
+    const nextBook = processPerpsOrderBook({
+      coin: 'BTC',
+      levels: [[{ n: 1, px: '200', sz: '3' }], [{ n: 1, px: '200', sz: '1' }]],
+      time: 300,
+    });
+    view.rerender(
+      <PerpsProOrderBook
+        {...props}
+        book={nextBook}
+        latestTrade={latestTrade}
+        serverClock={serverClock}
+      />,
+    );
+    expect(maxVisibleTotal).toHaveBeenCalledTimes(2);
+    expect(maxVisibleTotal).toHaveLastReturnedWith(3);
+    expect(buyRatio).toHaveBeenCalledTimes(2);
+    expect(buyRatio).toHaveBeenLastCalledWith(nextBook);
+    expect(screen.getByText('75.00%')).toBeTruthy();
+    expect(screen.getByText('25.00%')).toBeTruthy();
+    expect(screen.getAllByText('200.00')).toHaveLength(2);
+    expect(screen.queryByText('100.00')).toBeNull();
+    const depths = screen.getAllByTestId('perps-pro-order-book-depth');
+    expect(depths).toHaveLength(2);
+    expect(
+      StyleSheet.flatten(depths[0].props.style).transform[0].scaleX,
+    ).toBeCloseTo(1 / 3);
+    expect(StyleSheet.flatten(depths[1].props.style)).toMatchObject({
+      width: '100%',
+      transform: [{ scaleX: 1 }],
+    });
+  });
+
+  it('recalculates visible depth for mode and row-count changes without recalculating the full-book ratio', () => {
+    const maxVisibleTotal = jest.spyOn(
+      orderBookModel,
+      'getVisiblePerpsOrderBookMaxTotal',
+    );
+    const buyRatio = jest.spyOn(orderBookModel, 'calculatePerpsBuyRatio');
+    const book = processPerpsOrderBook({
+      coin: 'BTC',
+      levels: [
+        Array.from({ length: 20 }, (_, index) => ({
+          n: 1,
+          px: String(100 - index),
+          sz: '1',
+        })),
+        Array.from({ length: 20 }, (_, index) => ({
+          n: 1,
+          px: String(101 + index),
+          sz: '1',
+        })),
+      ],
+      time: 100,
+    });
+    const props: React.ComponentProps<typeof PerpsProOrderBook> = {
+      ...defaultProps,
+      book,
+      bookIdentity: 'BTC:5:null',
+      bookStatus: 'ready',
+      hasBookSnapshot: true,
+      height: 416,
+      market: btcMarket,
+    };
+    const view = render(<PerpsProOrderBook {...props} />);
+    expect(screen.getAllByTestId('perps-pro-order-book-row')).toHaveLength(12);
+    expect(maxVisibleTotal).toHaveBeenCalledTimes(1);
+    expect(maxVisibleTotal).toHaveLastReturnedWith(6);
+    expect(buyRatio).toHaveBeenCalledTimes(1);
+    expect(screen.getByText('45.02%')).toBeTruthy();
+    expect(screen.getByText('54.98%')).toBeTruthy();
+
+    fireEvent.press(screen.getByLabelText('page.perps.pro.orderBook.viewBoth'));
+    expect(
+      screen.getByLabelText('page.perps.pro.orderBook.viewBids'),
+    ).toBeTruthy();
+    expect(screen.getAllByTestId('perps-pro-order-book-row')).toHaveLength(13);
+    expect(maxVisibleTotal).toHaveBeenCalledTimes(2);
+    expect(maxVisibleTotal).toHaveLastReturnedWith(13);
+    expect(buyRatio).toHaveBeenCalledTimes(1);
+    expect(screen.getByText('45.02%')).toBeTruthy();
+    expect(screen.getByText('54.98%')).toBeTruthy();
+
+    view.rerender(<PerpsProOrderBook {...props} height={476} />);
+    expect(screen.getAllByTestId('perps-pro-order-book-row')).toHaveLength(16);
+    expect(maxVisibleTotal).toHaveBeenCalledTimes(3);
+    expect(maxVisibleTotal).toHaveLastReturnedWith(16);
+    expect(buyRatio).toHaveBeenCalledTimes(1);
+    expect(screen.getByText('45.02%')).toBeTruthy();
+    expect(screen.getByText('54.98%')).toBeTruthy();
+    const depths = screen.getAllByTestId('perps-pro-order-book-depth');
+    expect(depths).toHaveLength(16);
+    expect(StyleSheet.flatten(depths[15].props.style)).toMatchObject({
+      width: '100%',
+      transform: [{ scaleX: 1 }],
+    });
+  });
+
   it('keeps the fixed body mounted while display state changes', () => {
     const view = render(<PerpsProOrderBook {...defaultProps} />);
 
@@ -253,6 +754,9 @@ describe('PerpsProOrderBook display shell', () => {
       screen.getByLabelText('page.perps.pro.fieldExplanations.markPrice.title'),
     );
     expect(mockOpenFieldExplanation).toHaveBeenCalledWith('markPrice');
+    const markPricePress = screen.getByLabelText(
+      'page.perps.pro.fieldExplanations.markPrice.title',
+    ).props.onPress;
 
     view.rerender(
       <PerpsProOrderBook
@@ -289,6 +793,12 @@ describe('PerpsProOrderBook display shell', () => {
     expect(screen.getByText('31.56')).toBeTruthy();
     expect(screen.getByText('31.33')).toBeTruthy();
     expect(screen.getByText('31.34')).toBeTruthy();
+    const markPrice = screen.getByLabelText(
+      'page.perps.pro.fieldExplanations.markPrice.title',
+    );
+    expect(markPrice.props.onPress).toBe(markPricePress);
+    fireEvent.press(markPrice);
+    expect(mockOpenFieldExplanation).toHaveBeenCalledTimes(2);
   });
 
   it('forwards the raw latest trade price only when explicit selection is enabled', () => {
@@ -592,8 +1102,14 @@ describe('PerpsProOrderBook display shell', () => {
     );
 
     expect(screen.getAllByText('50.00%')).toHaveLength(2);
-    expect(mockWithTiming).not.toHaveBeenCalled();
-    mockCancelAnimation.mockClear();
+    fireEvent(
+      screen.getByTestId('perps-pro-order-book-ratio-track'),
+      'layout',
+      {
+        nativeEvent: { layout: { width: 50, height: 4, x: 0, y: 0 } },
+      },
+    );
+    expect(nativeTiming).not.toHaveBeenCalled();
 
     view.rerender(
       <PerpsProOrderBook
@@ -608,14 +1124,28 @@ describe('PerpsProOrderBook display shell', () => {
 
     expect(screen.getByText('75.00%')).toBeTruthy();
     expect(screen.getByText('25.00%')).toBeTruthy();
-    expect(mockWithTiming).toHaveBeenCalledWith(25, {
+    // Depth bars also use native timing, but use a normalized 0..1 scale.
+    // Bind this assertion to the ratio's own 0..100 Animated.Value.
+    const [ratioValue, ratioConfig] = nativeTiming.mock.calls.find(
+      ([, config]) => config.toValue === 25,
+    )!;
+    expect(ratioValue).toBeInstanceOf(Animated.Value);
+    expect(ratioConfig).toMatchObject({
+      toValue: 25,
       duration: 250,
-      easing: 'desktop-ease-out',
-      reduceMotion: 'system',
+      easing: expect.any(Function),
+      useNativeDriver: true,
+      isInteraction: false,
+    });
+    const expectedEasing = Easing.bezier(0, 0, 0.2, 1);
+    [0, 0.25, 0.5, 0.75, 1].forEach(progress => {
+      expect(ratioConfig.easing(progress)).toBeCloseTo(
+        expectedEasing(progress),
+      );
     });
 
-    mockWithTiming.mockClear();
-    mockCancelAnimation.mockClear();
+    nativeTiming.mockClear();
+    const snapRatio = jest.spyOn(ratioValue, 'setValue');
     view.rerender(
       <PerpsProOrderBook
         {...defaultProps}
@@ -629,8 +1159,10 @@ describe('PerpsProOrderBook display shell', () => {
 
     expect(screen.getByText('80.00%')).toBeTruthy();
     expect(screen.getByText('20.00%')).toBeTruthy();
-    expect(mockWithTiming).not.toHaveBeenCalled();
-    expect(mockCancelAnimation).toHaveBeenCalled();
+    expect(
+      nativeTiming.mock.calls.filter(([value]) => value === ratioValue),
+    ).toHaveLength(0);
+    expect(snapRatio).toHaveBeenCalledWith(20);
   });
 
   it.each([0, 3.89, 12.45, 44.77, 50, 99.99, 100])(
@@ -813,15 +1345,23 @@ describe('PerpsProOrderBook display shell', () => {
     expect(getPerpsProOrderBookDepthKey('ask', { price: '101' })).toBe(
       'ask:101',
     );
-    expect(mockWithTiming).toHaveBeenCalledWith(100, {
+    expect(nativeTiming).toHaveBeenCalledWith(expect.any(Animated.Value), {
+      toValue: 1,
       duration: 250,
-      easing: 'desktop-ease-out',
-      reduceMotion: 'system',
+      easing: expect.any(Function),
+      useNativeDriver: true,
+      isInteraction: false,
     });
   });
 
   it('keeps the pressed row mounted and commits its frozen raw price when L2 removes that price', () => {
     const onSelectBookPrice = jest.fn();
+    const nextSelectBookPrice = jest.fn();
+    const onSelectPriceIntentStart = jest.fn(() => ({
+      type: 'attachedTpSlPrice' as const,
+      leg: 'tp' as const,
+    }));
+    const nextIntentStart = jest.fn(() => ({ type: 'tradePrice' as const }));
     const createBook = (askLevels: [string, string][]) =>
       processPerpsOrderBook({
         coin: 'BTC',
@@ -846,6 +1386,7 @@ describe('PerpsProOrderBook display shell', () => {
         hasBookSnapshot
         market={btcMarket}
         onSelectBookPrice={onSelectBookPrice}
+        onSelectPriceIntentStart={onSelectPriceIntentStart}
       />,
     );
     const pressedRow = screen.getByText('101.00').parent;
@@ -863,16 +1404,20 @@ describe('PerpsProOrderBook display shell', () => {
         bookStatus="ready"
         hasBookSnapshot
         market={btcMarket}
-        onSelectBookPrice={onSelectBookPrice}
+        onSelectBookPrice={nextSelectBookPrice}
+        onSelectPriceIntentStart={nextIntentStart}
       />,
     );
 
     expect(screen.getByText('100.50').parent).toBe(pressedRow);
     fireEvent.press(pressedRow!);
-    expect(onSelectBookPrice).toHaveBeenCalledTimes(1);
-    expect(onSelectBookPrice).toHaveBeenCalledWith(
+    expect(onSelectPriceIntentStart).toHaveBeenCalledTimes(1);
+    expect(nextIntentStart).not.toHaveBeenCalled();
+    expect(onSelectBookPrice).not.toHaveBeenCalled();
+    expect(nextSelectBookPrice).toHaveBeenCalledTimes(1);
+    expect(nextSelectBookPrice).toHaveBeenCalledWith(
       '101',
-      { type: 'tradePrice' },
+      { type: 'attachedTpSlPrice', leg: 'tp' },
       {
         feedIdentity: 'BTC:5:null',
         marketKey: btcMarket.marketKey,

@@ -102,6 +102,12 @@ public class RNHelpersModule extends NativeRNHelpersSpec {
     android.os.Process.killProcess(android.os.Process.myPid());
   }
 
+  @ReactMethod(isBlockingSynchronousMethod = true)
+  @Override
+  public boolean androidStopHermesSamplingProfiler() {
+    return RabbyHermesProfiler.stopSampling();
+  }
+
   @ReactMethod
   @Override
   public void measureViewRelativeTo(double anchorTag, double viewportTag, Promise promise) {

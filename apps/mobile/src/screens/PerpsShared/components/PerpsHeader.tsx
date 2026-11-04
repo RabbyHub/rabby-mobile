@@ -68,6 +68,7 @@ export const PerpsHeader: React.FC<PerpsHeaderProps> = React.memo(
         />
         <View style={styles.left} testID="perps-header-left">
           <CustomTouchableOpacity
+            as="RNGHTouchableOpacity"
             accessibilityRole="button"
             onPress={navBack}
             style={styles.backButton}

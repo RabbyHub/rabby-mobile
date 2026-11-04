@@ -1,20 +1,27 @@
 import {
   act,
   fireEvent,
-  render,
+  render as renderNative,
   screen,
   within,
 } from '@testing-library/react-native';
 import React from 'react';
 import {
+  Animated as NativeAnimated,
   AppState,
   Dimensions,
+  FlatList,
   Keyboard,
   Platform,
   StyleSheet,
   type AppStateStatus,
-  type LayoutChangeEvent,
 } from 'react-native';
+import type { L2Book, WsActiveAssetData } from '@rabby-wallet/hyperliquid-sdk';
+import {
+  nativeBoundary,
+  type PanBoundary,
+  type PanEvent,
+} from '@/testUtils/linkedPagerNativeBoundary';
 
 let mockIsLight = true;
 const mockUsePerpsProScene = jest.fn();
@@ -23,6 +30,45 @@ const mockMarketSelectorPresent = jest.fn();
 const mockOrderBookRender = jest.fn();
 const mockOrderBookProps = jest.fn();
 const mockTradeFormProps = jest.fn();
+const mockTradeHookProps = jest.fn();
+const mockOrderConfirmationProps = jest.fn();
+const mockGetActiveAssetData = jest.fn();
+const mockLeverageUpdateProps = jest.fn();
+const mockAssetSubscriptions: {
+  callback: (data: WsActiveAssetData) => void;
+  coin: string;
+  address: string;
+  unsubscribe: jest.Mock;
+}[] = [];
+const mockUpdateLeverage = jest.fn(async () => true);
+const mockBboSubscriptions: {
+  callback: (book: L2Book) => void;
+  coin: string;
+  unsubscribe: jest.Mock;
+}[] = [];
+const mockBboWs = {
+  on: jest.fn(),
+  off: jest.fn(),
+  subscribeToActiveAssetCtx: jest.fn(),
+  subscribeToActiveAssetData: jest.fn(
+    (
+      coin: string,
+      address: string,
+      callback: (data: WsActiveAssetData) => void,
+    ) => {
+      const unsubscribe = jest.fn();
+      mockAssetSubscriptions.push({ callback, coin, address, unsubscribe });
+      return { unsubscribe };
+    },
+  ),
+  subscribeToL2Book: jest.fn(
+    ({ coin }: { coin: string }, callback: (book: L2Book) => void) => {
+      const unsubscribe = jest.fn();
+      mockBboSubscriptions.push({ callback, coin, unsubscribe });
+      return { unsubscribe };
+    },
+  ),
+};
 const mockFundingOverlayProps = jest.fn();
 const mockEnableUnifiedProps = jest.fn();
 const mockExecuteEnableUnified = jest.fn(async () => undefined);
@@ -33,6 +79,11 @@ const mockDismissKeyboardThen = jest.fn((action: () => void) => action());
 const mockConfirmCancelAll = jest.fn();
 const mockConfirmCancelOrder = jest.fn();
 const mockRequestCloseAll = jest.fn();
+let mockOrderPending = false;
+const mockIsOrderPending = () => mockOrderPending;
+const mockManageMarginOpen = jest.fn();
+const mockTransferOpen = jest.fn();
+const mockTranslate = (key: string) => key;
 const mockKlineProps = jest.fn();
 const mockUsePerpsProPositionActions = jest.fn();
 const mockUsePerpsProPositionTpSl = jest.fn();
@@ -44,14 +95,10 @@ const mockCloseConfirmationSheetProps = jest.fn();
 const mockSelectOrderBookPrice = jest.fn();
 const mockGetOrderBookPriceIntent = jest.fn();
 const mockTriggerImpact = jest.fn();
-const mockInfoPagerSetPage = jest.fn();
-const mockInfoPagerSetPageWithoutAnimation = jest.fn();
-let mockQueueInfoCallbacks = false;
-const mockInfoCallbacks: Array<() => unknown> = [];
-let mockManualTouchesDown:
-  | ((event: unknown, stateManager: { fail: () => void }) => void)
-  | null = null;
-let mockTradeHasPermission = true;
+const mockSetPage = jest.fn();
+const mockPageCommands = jest.fn();
+let mockTradeAmountUnit: 'base' | 'quote' = 'quote';
+let mockLeveragePending = false;
 let mockTradeFocusedLeg: 'sl' | 'tp' | null = null;
 let mockOrderBookPriceIntent:
   | { type: 'attachedTpSlPrice'; leg: 'sl' | 'tp' }
@@ -65,122 +112,50 @@ let mockTradeForm: {
   orderType: 'conditional' | 'limit' | 'market';
 } = { bboEnabled: false, orderType: 'market' };
 
-jest.mock('react-native-pager-view', () => {
-  const ReactModule = require('react');
-  const { View } = require('react-native');
-  return ReactModule.forwardRef(
-    (
-      {
-        children,
-        onLayout,
-        ...props
-      }: {
-        children: React.ReactNode;
-        onLayout?: (event: LayoutChangeEvent) => void;
-      },
-      ref: React.Ref<unknown>,
-    ) => {
-      ReactModule.useImperativeHandle(ref, () => ({
-        setPage: mockInfoPagerSetPage,
-        setPageWithoutAnimation: mockInfoPagerSetPageWithoutAnimation,
-      }));
-      ReactModule.useEffect(() => {
-        onLayout?.({
-          nativeEvent: { layout: { width: 393, height: 600, x: 0, y: 0 } },
-        } as LayoutChangeEvent);
-      }, []);
-      return ReactModule.createElement(View, { ...props, onLayout }, children);
-    },
-  );
-});
-
 jest.mock('react-native-reanimated', () => {
-  const ReactModule = require('react');
   const ReactNative = require('react-native');
-  const useSharedValue = (value: unknown) =>
-    ReactModule.useRef({ value }).current;
+  const boundary =
+    require('@/testUtils/linkedPagerNativeBoundary').createReanimatedBoundary();
   return {
-    __esModule: true,
-    default: {
-      createAnimatedComponent: (Component: React.ComponentType) => Component,
-      ScrollView: ReactNative.ScrollView,
-      Text: ReactNative.Text,
-      useSharedValue,
-      View: ReactNative.View,
-    },
-    cancelAnimation: jest.fn(),
+    ...boundary,
+    default: { ...boundary.default, Text: ReactNative.Text },
+    Easing: { ...boundary.Easing, bezier: jest.fn(() => 'ease-out') },
     dispatchCommand: (
       ref: { current: Record<string, (...args: unknown[]) => void> },
       name: string,
       args: unknown[],
     ) => ref.current[name](...args),
-    runOnUI: (callback: (...args: unknown[]) => unknown) => callback,
-    Easing: { bezier: jest.fn(() => 'ease-out') },
     ReduceMotion: { System: 'system' },
-    runOnJS:
-      (callback: (...args: unknown[]) => unknown) =>
-      (...args: unknown[]) => {
-        if (mockQueueInfoCallbacks) {
-          mockInfoCallbacks.push(() => callback(...args));
-        } else {
-          return callback(...args);
-        }
-      },
-    scrollTo: jest.fn(),
-    useAnimatedRef: () => {
-      const ref = (component?: unknown) => {
-        ref.current = component ?? null;
-        return 0;
-      };
-      ref.current = null;
-      ref.observe = jest.fn(() => jest.fn());
-      return ref;
-    },
-    useAnimatedReaction: jest.fn(),
-    useAnimatedScrollHandler: () => jest.fn(),
-    useAnimatedStyle: (factory: () => object) => factory(),
-    useEvent:
-      (handler: (event: object) => void, eventNames?: string[]) =>
-      (event: { nativeEvent?: object }) =>
-        handler({
-          ...(event.nativeEvent ?? event),
-          eventName: eventNames?.[0] ?? 'onPageScroll',
-        }),
+    useDerivedValue: (factory: () => unknown) => ({
+      value: factory(),
+    }),
     useScrollViewOffset: (_ref: unknown, offset: unknown) => offset,
-    useSharedValue,
     withDecay: jest.fn(({ velocity }: { velocity: number }) => velocity),
-    withTiming: (target: number) => target,
   };
 });
 
-jest.mock('./usePerpsProAndroidScenePresentation', () => ({
-  usePerpsProAndroidScenePresentation: ({
-    infoTabsAnchorY,
-    marketNaturalAnchorY,
-    sceneLeadInHeight,
-  }: {
-    infoTabsAnchorY: number;
-    marketNaturalAnchorY: number;
-    sceneLeadInHeight: number;
-  }) => ({
-    headerAnimatedStyle: {
-      opacity: 1,
-      transform: [{ translateY: 0 }],
-    },
-    infoTabsAnimatedStyle: {
-      transform: [{ translateY: infoTabsAnchorY }],
-    },
-    marketAnimatedStyle: {
-      transform: [{ translateY: marketNaturalAnchorY }],
-    },
-    regionAlertAnimatedStyle: {
-      transform: [{ translateY: marketNaturalAnchorY }],
-    },
-    tradeAnimatedStyle: {
-      transform: [{ translateY: sceneLeadInHeight }],
-    },
-  }),
-}));
+jest.mock('react-native-pager-view', () => {
+  const ReactModule = require('react');
+  const { View } = require('react-native');
+  return {
+    __esModule: true,
+    default: ReactModule.forwardRef(
+      (props: { testID?: string }, ref: React.Ref<unknown>) => {
+        ReactModule.useImperativeHandle(
+          ref,
+          () => ({
+            setPage: (index: number) => {
+              mockSetPage(index);
+              mockPageCommands(props.testID, index);
+            },
+          }),
+          [props.testID],
+        );
+        return ReactModule.createElement(View, props);
+      },
+    ),
+  };
+});
 
 jest.mock('@/screens/Perps/components/PerpsRegionAlert', () => {
   const ReactModule = require('react');
@@ -196,11 +171,24 @@ jest.mock('@/screens/Perps/components/PerpsRegionAlert', () => {
   };
 });
 
-jest.mock('@/hooks/perps/subscriptions/useActiveAssetSubscription', () => ({
-  useActiveAssetSubscription: () => ({
-    activeAssetData: null,
-    refreshActiveAssetData: jest.fn(async () => null),
-  }),
+jest.mock('@/hooks/perps/usePerpsStore', () => ({
+  perpsStore: require('zustand').create(() => ({
+    currentPerpsAccount: null,
+    hasPermission: true,
+  })),
+}));
+
+jest.mock('@/core/apis/perps', () => ({
+  apisPerps: {
+    getPerpsSDK: () => ({
+      ws: mockBboWs,
+      info: { getActiveAssetData: mockGetActiveAssetData },
+    }),
+  },
+}));
+
+jest.mock('./usePerpsProTradePreferences', () => ({
+  usePerpsProTradeAmountUnit: () => mockTradeAmountUnit,
 }));
 
 jest.mock('@/hooks/perps/funding/usePerpsFundingHistoryJournal', () => ({
@@ -258,36 +246,13 @@ jest.mock('react-native-screens', () => ({
 }));
 
 jest.mock('react-native-gesture-handler', () => {
-  const panGesture: Record<string, jest.Mock> = {};
-  [
-    'activeOffsetX',
-    'failOffsetY',
-    'manualActivation',
-    'maxPointers',
-    'runOnJS',
-    'shouldCancelWhenOutside',
-  ].forEach(method => {
-    panGesture[method] = jest.fn(() => panGesture);
-  });
-  [
-    'onEnd',
-    'onFinalize',
-    'onStart',
-    'onTouchesDown',
-    'onTouchesMove',
-    'onUpdate',
-  ].forEach(method => {
-    panGesture[method] = jest.fn(() => panGesture);
-  });
-  const manualGesture: Record<string, jest.Mock> = {};
-  manualGesture.onTouchesDown = jest.fn(callback => {
-    mockManualTouchesDown = callback;
-    return manualGesture;
-  });
+  const ReactModule = require('react');
+  const boundary =
+    require('@/testUtils/linkedPagerNativeBoundary').createGestureBoundary();
   return {
+    Pressable: require('react-native').Pressable,
     Gesture: {
-      Manual: () => manualGesture,
-      Pan: () => panGesture,
+      Pan: boundary.Gesture.Pan,
       Tap: () => {
         const tap: Record<string, jest.Mock> = {};
         for (const method of [
@@ -303,7 +268,12 @@ jest.mock('react-native-gesture-handler', () => {
       },
       Exclusive: (...gestures: unknown[]) => gestures,
     },
-    GestureDetector: ({ children }: { children: React.ReactNode }) => children,
+    GestureDetector: (
+      props: React.PropsWithChildren<{ gesture: PanBoundary }>,
+    ) =>
+      props.gesture.config
+        ? ReactModule.createElement(boundary.GestureDetector, props)
+        : props.children,
   };
 });
 
@@ -355,21 +325,26 @@ jest.mock(
   }),
 );
 
-jest.mock('@/hooks/theme', () => ({
-  useTheme2024: ({ getStyle }: { getStyle: (input: object) => object }) => {
-    const colors2024 = new Proxy(
-      {},
-      {
-        get: (_target, key) => String(key),
-      },
-    );
-    return {
-      colors2024,
-      isLight: mockIsLight,
-      styles: getStyle({ colors2024, isLight: mockIsLight }),
-    };
-  },
-}));
+jest.mock('@/hooks/theme', () => {
+  const ReactModule = jest.requireActual('react');
+  const colors2024 = new Proxy(
+    {},
+    {
+      get: (_target, key) => String(key),
+    },
+  );
+  return {
+    useTheme2024: ({ getStyle }: { getStyle: (input: object) => object }) => {
+      const isLight = mockIsLight;
+      // Match the real hook's stable styles until the theme inputs change.
+      const styles = ReactModule.useMemo(
+        () => getStyle({ colors2024, isLight }),
+        [getStyle, isLight],
+      );
+      return { colors2024, isLight, styles };
+    },
+  };
+});
 
 jest.mock('@/utils/styles', () => ({
   createGetStyles2024: (getStyle: unknown) => getStyle,
@@ -377,7 +352,7 @@ jest.mock('@/utils/styles', () => ({
 
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (key: string) => key,
+    t: mockTranslate,
   }),
 }));
 
@@ -634,7 +609,10 @@ jest.mock('../components/trade/PerpsProTradeForm', () => {
 });
 
 jest.mock('../components/trade/PerpsProOrderConfirmationSheet', () => ({
-  PerpsProOrderConfirmationSheet: () => null,
+  PerpsProOrderConfirmationSheet: (props: object) => {
+    mockOrderConfirmationProps(props);
+    return null;
+  },
 }));
 
 jest.mock('./PerpsProRealtimeOrderBook', () => {
@@ -655,42 +633,48 @@ jest.mock('./usePerpsProScene', () => ({
   usePerpsProScene: mockUsePerpsProScene,
 }));
 
-jest.mock('./usePerpsProBboBook', () => ({
-  usePerpsProBboBook: () => ({
-    book: null,
-    prices: { asks1: null, asks5: null, bids1: null, bids5: null },
-    sessionKey: null,
-    status: 'loading',
-  }),
+// This suite owns scene/list wiring; live market subscription contracts are
+// covered with the real hook in its own and TradePanelOwner's tests.
+jest.mock('./usePerpsProLiveMarket', () => ({
+  usePerpsProLiveMarket: (coin: string) => {
+    const market =
+      mockUsePerpsProScene.mock.results.at(-1)?.value?.currentMarket;
+    return coin && market?.canonicalCoin === coin ? market : null;
+  },
 }));
 
 jest.mock('./usePerpsProTrade', () => ({
-  usePerpsProTrade: ({ market }: { market: unknown }) => ({
-    amountUnit: 'quote',
-    closeReview: jest.fn(),
-    confirmReview: jest.fn(),
-    form: mockTradeForm,
-    getOrderBookPriceIntent: () => mockGetOrderBookPriceIntent(),
-    hasPermission: mockTradeHasPermission,
-    leverage: 1,
-    marginMode: 'isolated',
-    market,
-    pending: false,
-    review: null,
-    selectOrderBookPrice: (...args: unknown[]) =>
-      mockSelectOrderBookPrice(...args),
-    setPrice: jest.fn(),
-    setSkipConfirmation: jest.fn(),
-    skipConfirmation: false,
-    tpSl: { focusedLeg: mockTradeFocusedLeg },
-  }),
+  usePerpsProTrade: (props: { market: unknown }) => {
+    mockTradeHookProps(props);
+    return {
+      amountUnit: mockTradeAmountUnit,
+      closeReview: jest.fn(),
+      confirmReview: jest.fn(),
+      form: mockTradeForm,
+      getOrderBookPriceIntent: () => mockGetOrderBookPriceIntent(),
+      leverage: 1,
+      marginMode: 'isolated',
+      market: props.market,
+      pending: false,
+      review: null,
+      selectOrderBookPrice: (...args: unknown[]) =>
+        mockSelectOrderBookPrice(...args),
+      setPrice: jest.fn(),
+      setSkipConfirmation: jest.fn(),
+      skipConfirmation: false,
+      tpSl: { focusedLeg: mockTradeFocusedLeg },
+    };
+  },
 }));
 
 jest.mock('./usePerpsProLeverageUpdate', () => ({
-  usePerpsProLeverageUpdate: () => ({
-    pending: false,
-    update: jest.fn(async () => true),
-  }),
+  usePerpsProLeverageUpdate: (props: object) => {
+    mockLeverageUpdateProps(props);
+    return {
+      pending: mockLeveragePending,
+      update: mockUpdateLeverage,
+    };
+  },
 }));
 
 jest.mock('./usePerpsProInfoPanel', () => ({
@@ -705,7 +689,7 @@ jest.mock('./usePerpsProCancelOrders', () => ({
     confirmCancelOrder: mockConfirmCancelOrder,
     dismissConfirmation: jest.fn(),
     isCancelAllPending: false,
-    isOrderPending: () => false,
+    isOrderPending: mockIsOrderPending,
   }),
 }));
 
@@ -736,7 +720,7 @@ jest.mock('./usePerpsProManageMargin', () => ({
     dirty: false,
     draft: '',
     editor: null,
-    open: jest.fn(),
+    open: mockManageMarginOpen,
     pending: false,
     selectTarget: jest.fn(),
     view: null,
@@ -752,20 +736,36 @@ jest.mock('./usePerpsProTransfer', () => ({
     close: jest.fn(),
     confirm: jest.fn(),
     editor: null,
-    open: jest.fn(),
+    open: mockTransferOpen,
     pending: false,
   }),
 }));
 
 const { PerpsProScene } =
   require('./PerpsProScene') as typeof import('./PerpsProScene');
+const { perpsStore: mockPerpsStore } =
+  require('@/hooks/perps/usePerpsStore') as typeof import('@/hooks/perps/usePerpsStore');
+const { PerpsProTabIndicator } =
+  require('../components/common/PerpsProTabIndicator') as typeof import('../components/common/PerpsProTabIndicator');
+const { PerpsProInfoSingleList } =
+  require('../components/info/PerpsProInfoSingleList') as typeof import('../components/info/PerpsProInfoSingleList');
+const { LinkedScenePager } =
+  require('@rabby-wallet/rn-collapsible-scene-view/src/LinkedScenePager') as typeof import('@rabby-wallet/rn-collapsible-scene-view/src/LinkedScenePager');
+const { buildLinkedSceneModel } =
+  require('@rabby-wallet/rn-collapsible-scene-view/src/linkedSceneModel') as typeof import('@rabby-wallet/rn-collapsible-scene-view/src/linkedSceneModel');
+const { CollapsibleHeaderLayer, CollapsiblePinnedLayer, SceneList } =
+  require('@rabby-wallet/rn-collapsible-scene-view') as typeof import('@rabby-wallet/rn-collapsible-scene-view');
+const { scrollPerpsProTradeAboveKeyboard } =
+  require('../components/common/perpsProKeyboardSession') as typeof import('../components/common/perpsProKeyboardSession');
+const tradeDisplayVisibility =
+  require('./usePerpsProTradeDisplayVisibility') as typeof import('./usePerpsProTradeDisplayVisibility');
 
 const createSceneState = (overrides: Record<string, unknown> = {}) => ({
   accountLeverageConfiguration: null,
   cancelPendingMarketSelection: jest.fn(),
   currentMarket: null,
   executionActive: false,
-  fundingHistoryEnabled: false,
+  fundingHistoryEnabled: true,
   isResolvingMarket: false,
   klineEnabled: false,
   marketDataStatus: 'success',
@@ -786,9 +786,62 @@ const createSceneState = (overrides: Record<string, unknown> = {}) => ({
 
 const createInfoState = (overrides: Record<string, unknown> = {}) => {
   const openOrders = (overrides.openOrders ?? []) as unknown[];
+  const openOrderCategory = (overrides.openOrderCategory ?? 'basic') as
+    | 'basic'
+    | 'conditional';
+  const openOrderCollectionPresentation =
+    overrides.openOrderCollectionPresentation ??
+    (openOrders.length > 0 ? 'populated' : 'unresolved');
+  const otherPresentation =
+    openOrderCollectionPresentation === 'populated'
+      ? 'filteredEmpty'
+      : openOrderCollectionPresentation;
+  const openOrdersByCategory = overrides.openOrdersByCategory ?? {
+    basic: openOrderCategory === 'basic' ? openOrders : [],
+    conditional: openOrderCategory === 'conditional' ? openOrders : [],
+  };
+  const openOrderCollectionPresentationByCategory =
+    overrides.openOrderCollectionPresentationByCategory ?? {
+      basic:
+        openOrderCategory === 'basic'
+          ? openOrderCollectionPresentation
+          : otherPresentation,
+      conditional:
+        openOrderCategory === 'conditional'
+          ? openOrderCollectionPresentation
+          : otherPresentation,
+    };
   const positions = (overrides.positions ?? []) as unknown[];
+  // This suite isolates Scene composition. The real selector/store/activity
+  // contract is exercised in usePerpsProInfoPanel.integration.test.tsx.
+  const account = (overrides.account ?? {
+    assets: [],
+    mode: 'standard',
+  }) as {
+    assets: { coin: string; key: string }[];
+    mode: string;
+    primaryValue?: string;
+    unrealizedPnl?: string;
+  };
+  const accountControl = {
+    mode: account.mode,
+    marginRatio: null,
+    hasUnresolvedDexes: false,
+    hasUnpricedNonZeroAssets: false,
+  };
+  const accountAssetKeys = account.assets.map(asset => asset.key);
+  const summary = {
+    primaryValue: account.primaryValue ?? '0',
+    unrealizedPnl: account.unrealizedPnl ?? '0',
+  };
+  const accountSelectors = {
+    control: () => accountControl,
+    assetKeys: () => accountAssetKeys,
+    valuation: () => account,
+    summary: () => summary,
+  };
   return {
-    account: { assets: [], mode: 'standard' },
+    account,
     accountIdentity: 'test-account',
     accountState: 'loading',
     activeInfoTab: 'account',
@@ -800,10 +853,10 @@ const createInfoState = (overrides: Record<string, unknown> = {}) => {
     fundingAccountValueReady: false,
     hideOtherOpenOrderSymbols: false,
     hideOtherPositionSymbols: false,
-    openOrderCategory: 'basic',
-    openOrderCollectionPresentation:
-      overrides.openOrderCollectionPresentation ??
-      (openOrders.length > 0 ? 'populated' : 'unresolved'),
+    openOrderCategory,
+    openOrderCollectionPresentation,
+    openOrderCollectionPresentationByCategory,
+    openOrdersByCategory,
     openOrderCommandCandidates: [],
     openOrderCounts: { basic: 0, conditional: 0, unsupported: 0 },
     openOrders,
@@ -820,17 +873,178 @@ const createInfoState = (overrides: Record<string, unknown> = {}) => {
     userAbstraction: 'default',
     userAbstractionReady: false,
     ...overrides,
+    accountControl,
+    accountAssetKeys,
+    accountSelectors,
   };
 };
 
-const createDeferred = () => {
-  let resolve!: () => void;
-  let reject!: (reason?: unknown) => void;
-  const promise = new Promise<void>((resolvePromise, rejectPromise) => {
-    resolve = resolvePromise;
-    reject = rejectPromise;
+const installOptimisticInfoPanelMock = (
+  persist = jest.fn(),
+  overrides: Record<string, unknown> = {},
+) => {
+  mockUsePerpsProInfoPanel.mockImplementation(function useInfoPanel() {
+    const [activeInfoTab, setActiveInfoTab] = React.useState<
+      'positions' | 'openOrders' | 'account'
+    >('account');
+    const [openOrderCategory, setOpenOrderCategory] = React.useState<
+      'basic' | 'conditional'
+    >(overrides.openOrderCategory === 'conditional' ? 'conditional' : 'basic');
+    return createInfoState({
+      ...overrides,
+      activeInfoTab,
+      openOrderCategory,
+      setOpenOrderCategory,
+      setActiveInfoTab: (tab: typeof activeInfoTab) => {
+        setActiveInfoTab(tab);
+        persist(tab);
+      },
+    });
   });
-  return { promise, reject, resolve };
+  return persist;
+};
+
+type InfoTab = 'positions' | 'openOrders' | 'account';
+const infoTabs: readonly InfoTab[] = ['positions', 'openOrders', 'account'];
+const getInfoList = (tab?: InfoTab) => {
+  const testID =
+    tab === 'openOrders'
+      ? `perps-pro-open-orders-rows-${
+          screen.UNSAFE_getByType(PerpsProInfoSingleList).props.openOrders
+            .controls.category
+        }`
+      : tab
+      ? `perps-pro-info-list-rows-${tab}`
+      : 'perps-pro-info-list';
+  const list = screen
+    .UNSAFE_getAllByType(FlatList)
+    .find(node => node.props.testID === testID);
+  if (!list) {
+    throw new Error(`Missing list ${testID}`);
+  }
+  return list;
+};
+const INFO_TRACK_WIDTH = 400;
+const getInfoTrack = () => screen.getByTestId('perps-pro-info-list-root-track');
+const getInfoModel = () =>
+  buildLinkedSceneModel(screen.UNSAFE_getByType(LinkedScenePager).props.pages);
+const getInfoLeaf = (tab: InfoTab, category?: 'basic' | 'conditional') => {
+  const model = getInfoModel();
+  const categoryKey =
+    category ??
+    screen.UNSAFE_getByType(PerpsProInfoSingleList).props.openOrders.controls
+      .category;
+  return model.leaves.find(
+    leaf =>
+      leaf.path.key === tab &&
+      (leaf.path.childKey === undefined || leaf.path.childKey === categoryKey),
+  )!;
+};
+const getInfoPage = (tab: InfoTab, category?: 'basic' | 'conditional') =>
+  screen.getByTestId(
+    `perps-pro-info-list-page-${getInfoLeaf(tab, category).physicalKey}`,
+    {
+      includeHiddenElements: true,
+    },
+  );
+const layoutInfoTrack = () => {
+  const layout = screen.queryByTestId('perps-pro-info-list-layout');
+  if (!layout) {
+    return;
+  }
+  fireEvent(layout, 'layout', {
+    nativeEvent: {
+      layout: { width: INFO_TRACK_WIDTH, height: 600, x: 0, y: 0 },
+    },
+  });
+};
+const render = (element: React.ReactElement) => {
+  const result = renderNative(element);
+  layoutInfoTrack();
+  return {
+    ...result,
+    rerender: (next: React.ReactElement) => {
+      result.rerender(next);
+      layoutInfoTrack();
+    },
+  };
+};
+const infoPan = () =>
+  screen.getByTestId('perps-pro-info-list-pan').props.gesture as PanBoundary;
+const panEvent = (translationX = 0): PanEvent => ({
+  translationX,
+  translationY: 0,
+  velocityX: 0,
+  x: 200,
+  y: 200,
+  absoluteX: 200,
+  absoluteY: 200,
+});
+let swipe: { pan: PanBoundary; start: number; progress: number } | undefined;
+const beginSwipe = () => {
+  const path = screen.UNSAFE_getByType(LinkedScenePager).props.activePath;
+  const start = getInfoModel().leaves.find(
+    leaf => leaf.path.key === path.key && leaf.path.childKey === path.childKey,
+  )!.index;
+  const pan = infoPan();
+  swipe = { pan, start, progress: start };
+  act(() => {
+    pan.touchesDown?.(
+      { numberOfTouches: 1, allTouches: [{ x: 200, y: 200 }] },
+      { fail: jest.fn(), activate: jest.fn(), end: jest.fn() },
+    );
+    pan.handlers.onStart?.(panEvent());
+  });
+};
+const physicalPageScroll = (progress: number) => {
+  if (swipe) {
+    swipe.progress = progress;
+    const { pan, start } = swipe;
+    act(() =>
+      pan.handlers.onUpdate(panEvent((start - progress) * INFO_TRACK_WIDTH)),
+    );
+  } else if (nativeBoundary.animations().length) {
+    // Advance the actual UI animation without invoking its completion.
+    act(() => nativeBoundary.advanceAnimations(0.8));
+  }
+};
+const finishPhysicalPage = (_progress?: number) => {
+  if (swipe) {
+    const { pan, start, progress } = swipe;
+    swipe = undefined;
+    act(() => {
+      const event = panEvent((start - progress) * INFO_TRACK_WIDTH);
+      pan.handlers.onEnd(event, true);
+      pan.handlers.onFinalize?.(event, true);
+    });
+  }
+  if (nativeBoundary.animations().length) {
+    act(() => nativeBoundary.finishNextAnimation());
+  }
+};
+// Legacy outer-tab assertions use logical positions. Map only their event
+// coordinates onto the declared leaves; no production state is assigned.
+const logicalProgressToPhysical = (progress: number) => {
+  const model = getInfoModel();
+  const lower = Math.max(0, Math.min(2, Math.floor(progress)));
+  const upper = Math.min(2, lower + 1);
+  const from = model.roots[lower].lastLeafIndex;
+  const to = model.roots[upper].firstLeafIndex;
+  return from + (to - from) * (progress - lower);
+};
+const pageState = (state: 'dragging' | 'settling' | 'idle') => {
+  if (state === 'dragging') {
+    beginSwipe();
+  } else if (state === 'idle') {
+    finishPhysicalPage();
+  }
+};
+const pageScroll = (position: number, offset: number) =>
+  physicalPageScroll(logicalProgressToPhysical(position + offset));
+const settleInfoPage = (tab: InfoTab) => {
+  const position = getInfoLeaf(tab).index;
+  physicalPageScroll(position);
+  finishPhysicalPage(position);
 };
 
 const createPositionActionsState = (
@@ -854,12 +1068,25 @@ const createPositionActionsState = (
   ...overrides,
 });
 
+let assetFixtureId = 0;
+const createActiveAssetData = (
+  coin: string,
+  user: string,
+): WsActiveAssetData => ({
+  availableToTrade: ['100', '100'],
+  coin,
+  leverage: { type: 'cross', value: 10 },
+  markPx: '100',
+  maxTradeSzs: ['100', '100'],
+  user,
+});
+
 describe('PerpsProScene market loading states', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    nativeBoundary.reset();
+    swipe = undefined;
     mockIsLight = true;
-    mockQueueInfoCallbacks = false;
-    mockInfoCallbacks.splice(0);
     mockDismissKeyboardThen.mockReset();
     mockDismissKeyboardThen.mockImplementation(action => action());
     mockIsPerpsActionUserCancelled.mockReturnValue(false);
@@ -869,16 +1096,25 @@ describe('PerpsProScene market loading states', () => {
     mockSelectOrderBookPrice.mockImplementation(
       () => mockOrderBookSelectionOutcome,
     );
-    mockTradeHasPermission = true;
+    mockPerpsStore.setState({ currentPerpsAccount: null, hasPermission: true });
+    mockAssetSubscriptions.length = 0;
+    mockGetActiveAssetData.mockReset();
+    mockGetActiveAssetData.mockImplementation(async (coin, address) =>
+      createActiveAssetData(coin, address),
+    );
+    mockTradeAmountUnit = 'quote';
+    mockOrderPending = false;
+    mockLeveragePending = false;
+    mockBboSubscriptions.length = 0;
     mockTradeFocusedLeg = null;
     mockOrderBookPriceIntent = { type: 'tradePrice' };
     mockOrderBookSelectionOutcome = 'accepted';
     mockTradeForm = { bboEnabled: false, orderType: 'market' };
-    mockManualTouchesDown = null;
     Object.defineProperty(AppState, 'currentState', {
       configurable: true,
       value: 'active',
     });
+    mockUsePerpsProInfoPanel.mockReset();
     mockUsePerpsProInfoPanel.mockReturnValue(createInfoState());
     mockUsePerpsProPositionActions.mockReturnValue(
       createPositionActionsState(),
@@ -921,6 +1157,404 @@ describe('PerpsProScene market loading states', () => {
     });
   });
 
+  it('contains real BBO publications in the trade owner without rerendering Scene or its list', () => {
+    mockUsePerpsProScene.mockReturnValue(
+      createSceneState({
+        currentMarket: {
+          canonicalCoin: 'BTC',
+          marketKey: 'hyperliquid::BTC',
+          marketData: { maxLeverage: 40, onlyIsolated: false },
+          quoteAsset: 'USDC',
+        },
+        executionActive: true,
+        realtimeEnabled: true,
+        tradeConfigurationReady: true,
+      }),
+    );
+    render(
+      <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+    );
+    const list = getInfoList();
+    const originalListProps = list.props;
+    const originalHeader = screen.getByTestId('perps-pro-list-lead-in').props;
+    const sceneRenders = mockUsePerpsProScene.mock.calls.length;
+    const tradeRenders = mockTradeHookProps.mock.calls.length;
+    expect(mockBboSubscriptions).toHaveLength(1);
+
+    const book: L2Book = {
+      coin: 'BTC',
+      levels: [[{ n: 1, px: '99', sz: '1' }], [{ n: 1, px: '101', sz: '1' }]],
+      time: 1,
+    };
+    act(() => mockBboSubscriptions[0].callback(book));
+
+    expect(mockTradeHookProps.mock.calls.length).toBeGreaterThan(tradeRenders);
+    expect(mockTradeHookProps.mock.lastCall?.[0]).toMatchObject({
+      bboBook: book,
+      bboPrices: { asks1: '101', bids1: '99' },
+      bboStatus: 'ready',
+    });
+    expect(mockUsePerpsProScene).toHaveBeenCalledTimes(sceneRenders);
+    expect(getInfoList()).toBe(list);
+    expect(list.props).toBe(originalListProps);
+    expect(screen.getByTestId('perps-pro-list-lead-in').props).toBe(
+      originalHeader,
+    );
+  });
+
+  it('contains one real active-asset feed in the trade owner without rerendering Scene or its list', () => {
+    const address = `0x${String(++assetFixtureId).padStart(40, '0')}`;
+    mockPerpsStore.setState({
+      currentPerpsAccount: { address } as never,
+    });
+    mockUsePerpsProScene.mockReturnValue(
+      createSceneState({
+        currentMarket: {
+          canonicalCoin: 'BTC',
+          marketKey: 'hyperliquid::BTC',
+          marketData: { maxLeverage: 40, onlyIsolated: false },
+          quoteAsset: 'USDC',
+        },
+        klineEnabled: true,
+      }),
+    );
+    const view = render(
+      <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+    );
+    const list = getInfoList();
+    const listProps = list.props;
+    const headerProps = screen.getByTestId('perps-pro-list-lead-in').props;
+    const sceneRenders = mockUsePerpsProScene.mock.calls.length;
+    const leverageRenders = mockLeverageUpdateProps.mock.calls.length;
+    const tradeRenders = mockTradeHookProps.mock.calls.length;
+    expect(mockAssetSubscriptions).toHaveLength(1);
+    expect(mockBboWs.subscribeToActiveAssetCtx).not.toHaveBeenCalled();
+    expect(leverageRenders).toBe(sceneRenders);
+
+    const data = createActiveAssetData('BTC', address);
+    act(() => mockAssetSubscriptions[0].callback(data));
+    expect(mockTradeHookProps.mock.calls.length).toBeGreaterThan(tradeRenders);
+    expect(mockTradeHookProps.mock.lastCall?.[0].activeAssetData).toBe(data);
+    expect(mockUsePerpsProScene).toHaveBeenCalledTimes(sceneRenders);
+    expect(mockLeverageUpdateProps).toHaveBeenCalledTimes(leverageRenders);
+    expect(getInfoList()).toBe(list);
+    expect(list.props).toBe(listProps);
+    expect(screen.getByTestId('perps-pro-list-lead-in').props).toBe(
+      headerProps,
+    );
+    expect(mockAssetSubscriptions).toHaveLength(1);
+    view.unmount();
+    expect(mockAssetSubscriptions[0].unsubscribe).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps the shared leverage refresh stable while reading the current owner handle and scope', async () => {
+    const address = `0x${String(++assetFixtureId).padStart(40, '0')}`;
+    mockPerpsStore.setState({ currentPerpsAccount: { address } as never });
+    const sceneForCoin = (coin: string) =>
+      createSceneState({
+        currentMarket: {
+          canonicalCoin: coin,
+          marketKey: `hyperliquid::${coin}`,
+          marketData: { maxLeverage: 40, onlyIsolated: false },
+          quoteAsset: 'USDC',
+        },
+        klineEnabled: true,
+      });
+    mockUsePerpsProScene.mockReturnValue(sceneForCoin('BTC'));
+    const props = { isModeSwitching: false, onSwitchToSimple: jest.fn() };
+    const view = render(<PerpsProScene {...props} />);
+    const refresh: () => Promise<unknown> =
+      mockLeverageUpdateProps.mock.lastCall?.[0].refreshActiveAssetData;
+    const localRefresh =
+      mockTradeHookProps.mock.lastCall?.[0].refreshActiveAssetData;
+    expect(refresh).not.toBe(localRefresh);
+    await act(async () => {
+      await expect(refresh()).resolves.toEqual(
+        createActiveAssetData('BTC', address),
+      );
+    });
+    expect(mockGetActiveAssetData).toHaveBeenLastCalledWith('BTC', address);
+
+    mockUsePerpsProScene.mockReturnValue(sceneForCoin('ETH'));
+    view.rerender(<PerpsProScene {...props} />);
+    expect(
+      mockLeverageUpdateProps.mock.lastCall?.[0].refreshActiveAssetData,
+    ).toBe(refresh);
+    expect(mockTradeHookProps.mock.lastCall?.[0].refreshActiveAssetData).toBe(
+      localRefresh,
+    );
+    const sceneRenders = mockUsePerpsProScene.mock.calls.length;
+    const nextAddress = `0x${String(++assetFixtureId).padStart(40, '0')}`;
+    act(() => {
+      mockPerpsStore.setState({
+        currentPerpsAccount: { address: nextAddress } as never,
+      });
+    });
+    expect(mockUsePerpsProScene).toHaveBeenCalledTimes(sceneRenders);
+    await act(async () => {
+      await expect(refresh()).resolves.toEqual(
+        createActiveAssetData('ETH', nextAddress),
+      );
+    });
+    expect(mockGetActiveAssetData).toHaveBeenLastCalledWith('ETH', nextAddress);
+    expect(mockAssetSubscriptions).toHaveLength(3);
+    expect(mockLeverageUpdateProps).toHaveBeenCalledTimes(sceneRenders);
+    view.unmount();
+    await expect(refresh()).resolves.toBeNull();
+    expect(mockGetActiveAssetData).toHaveBeenCalledTimes(2);
+  });
+
+  it('keeps the trade owner alive before preference hydration and across tab switches', () => {
+    mockUsePerpsProScene.mockReturnValue(
+      createSceneState({
+        currentMarket: {
+          canonicalCoin: 'BTC',
+          marketKey: 'hyperliquid::BTC',
+          marketData: { maxLeverage: 40, onlyIsolated: false },
+          quoteAsset: 'USDC',
+        },
+        realtimeEnabled: true,
+        tradeConfigurationReady: true,
+      }),
+    );
+    mockUsePerpsProInfoPanel.mockReturnValue(
+      createInfoState({ activeInfoTab: null }),
+    );
+    const props = { isModeSwitching: false, onSwitchToSimple: jest.fn() };
+    const view = render(<PerpsProScene {...props} />);
+    expect(screen.queryByTestId('perps-pro-info-list')).toBeNull();
+    expect(mockBboSubscriptions).toHaveLength(1);
+    expect(mockTradeHookProps).toHaveBeenCalled();
+    expect(mockOrderConfirmationProps).toHaveBeenCalled();
+
+    for (const activeInfoTab of ['positions', 'account', 'openOrders']) {
+      mockUsePerpsProInfoPanel.mockReturnValue(
+        createInfoState({ activeInfoTab }),
+      );
+      view.rerender(<PerpsProScene {...props} />);
+      settleInfoPage(activeInfoTab as InfoTab);
+      expect(screen.UNSAFE_getAllByType(FlatList)).toHaveLength(5);
+    }
+    expect(mockBboSubscriptions).toHaveLength(1);
+    expect(mockBboSubscriptions[0].unsubscribe).not.toHaveBeenCalled();
+  });
+
+  it('shares the same leverage request lock with the trade and position owners', () => {
+    mockUsePerpsProScene.mockReturnValue(createSceneState());
+    const props = { isModeSwitching: false, onSwitchToSimple: jest.fn() };
+    const view = render(<PerpsProScene {...props} />);
+    for (const pending of [false, true, false]) {
+      mockLeveragePending = pending;
+      view.rerender(<PerpsProScene {...props} />);
+      expect(mockUsePerpsProPositionActions.mock.lastCall?.[0]).toMatchObject({
+        leveragePending: pending,
+        updateLeverageRequest: mockUpdateLeverage,
+      });
+      expect(mockTradeHookProps.mock.lastCall?.[0]).toMatchObject({
+        leveragePending: pending,
+        refreshActiveAssetData: expect.any(Function),
+        updateLeverageRequest: mockUpdateLeverage,
+      });
+      expect(mockLeverageUpdateProps).toHaveBeenCalledTimes(
+        mockUsePerpsProScene.mock.calls.length,
+      );
+    }
+  });
+
+  it('observes permission changes directly without waiting for a trade publication', () => {
+    mockUsePerpsProScene.mockReturnValue(createSceneState());
+    render(
+      <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+    );
+    expect(screen.queryByTestId('perps-region-alert')).toBeNull();
+    act(() => mockPerpsStore.setState({ hasPermission: false }));
+    expect(screen.getByTestId('perps-region-alert')).toBeOnTheScreen();
+    act(() => mockPerpsStore.setState({ hasPermission: true }));
+    expect(screen.queryByTestId('perps-region-alert')).toBeNull();
+  });
+
+  it('keeps row rendering stable for unrelated scene and info-wrapper updates', () => {
+    mockUsePerpsProScene.mockReturnValue(createSceneState());
+    const info = createInfoState({ activeInfoTab: 'positions' });
+    mockUsePerpsProInfoPanel.mockReturnValue(info);
+    const props = { isModeSwitching: false, onSwitchToSimple: jest.fn() };
+    const view = render(<PerpsProScene {...props} />);
+    const firstRenderer = screen.UNSAFE_getByType(PerpsProInfoSingleList).props
+      .renderItemByTab.positions;
+
+    // Hooks can return a new wrapper while all row-relevant facts stay equal.
+    mockUsePerpsProInfoPanel.mockReturnValue({
+      ...info,
+      pendingFundingCount: 1,
+    });
+    view.rerender(<PerpsProScene {...props} />);
+    expect(
+      screen.UNSAFE_getByType(PerpsProInfoSingleList).props.renderItemByTab
+        .positions,
+    ).toBe(firstRenderer);
+
+    mockUsePerpsProInfoPanel.mockReturnValue({
+      ...info,
+      hideOtherPositionSymbols: true,
+    });
+    view.rerender(<PerpsProScene {...props} />);
+    expect(
+      screen.UNSAFE_getByType(PerpsProInfoSingleList).props.renderItemByTab
+        .positions,
+    ).not.toBe(firstRenderer);
+    expect(screen.UNSAFE_getAllByType(FlatList)).toHaveLength(5);
+  });
+
+  it.each(['positions', 'openOrders'] as const)(
+    'keeps the active %s list unchanged by Account valuation and catches up when selected',
+    activeInfoTab => {
+      mockUsePerpsProScene.mockReturnValue(createSceneState());
+      const info = createInfoState({
+        activeInfoTab,
+        accountState: 'ready',
+        account: {
+          assets: [],
+          diagnostics: {
+            complete: true,
+            unresolvedDexes: [],
+            unpricedNonZeroAssets: [],
+          },
+          metrics: [],
+          mode: 'standard',
+          primaryKey: 'balance',
+          primaryValue: '100',
+          titleKey: 'perpsAccountSummary',
+          unrealizedPnl: '0',
+        },
+      });
+      mockUsePerpsProInfoPanel.mockReturnValue(info);
+      const props = { isModeSwitching: false, onSwitchToSimple: jest.fn() };
+      const view = render(<PerpsProScene {...props} />);
+      const list = getInfoList(activeInfoTab);
+      const originalListProps = list.props;
+      const originalPage = screen.UNSAFE_getByType(
+        PerpsProInfoSingleList,
+      ).props;
+      const updated = createInfoState({
+        ...info,
+        account: {
+          ...info.account,
+          assets: [...info.account.assets],
+          primaryValue: '123',
+        },
+      });
+      mockUsePerpsProInfoPanel.mockReturnValue(updated);
+      view.rerender(<PerpsProScene {...props} />);
+      const page = screen.UNSAFE_getByType(PerpsProInfoSingleList).props;
+      expect(page.rowsByTab[activeInfoTab]).toBe(
+        originalPage.rowsByTab[activeInfoTab],
+      );
+      expect(page.renderItemByTab[activeInfoTab]).toBe(
+        originalPage.renderItemByTab[activeInfoTab],
+      );
+      expect(page.renderItemByTab.account).not.toBe(
+        originalPage.renderItemByTab.account,
+      );
+      expect(getInfoList(activeInfoTab)).toBe(list);
+      expect(Object.is(list.props, originalListProps)).toBe(true);
+
+      mockUsePerpsProInfoPanel.mockReturnValue({
+        ...updated,
+        activeInfoTab: 'account',
+      });
+      view.rerender(<PerpsProScene {...props} />);
+      settleInfoPage('account');
+      expect(getInfoList(activeInfoTab)).toBe(list);
+      expect(
+        screen.getByTestId('perps-pro-account-portfolio-value').props.children,
+      ).toBe('$123.00');
+    },
+  );
+
+  it('keeps the active Account list unchanged by position-only data while preserving the latest tab rows', () => {
+    mockUsePerpsProScene.mockReturnValue(createSceneState());
+    const info = createInfoState({ activeInfoTab: 'account' });
+    mockUsePerpsProInfoPanel.mockReturnValue(info);
+    const props = { isModeSwitching: false, onSwitchToSimple: jest.fn() };
+    const view = render(<PerpsProScene {...props} />);
+    const list = getInfoList('account');
+    const originalProps = list.props;
+    const updated = {
+      ...info,
+      positions: [{ key: 'BTC', coin: 'BTC' }],
+      allPositionsCount: 1,
+      positionCollectionPresentation: 'populated',
+    };
+    mockUsePerpsProInfoPanel.mockReturnValue(updated);
+    view.rerender(<PerpsProScene {...props} />);
+    // A collection becoming populated also changes the other tab's content
+    // padding. Its current-tab style must remain independent.
+    expect(list.props.data).toBe(originalProps.data);
+    expect(list.props.renderItem).toBe(originalProps.renderItem);
+    expect(Object.is(list.props, originalProps)).toBe(true);
+    mockUsePerpsProInfoPanel.mockReturnValue({
+      ...updated,
+      activeInfoTab: 'positions',
+    });
+    view.rerender(<PerpsProScene {...props} />);
+    settleInfoPage('positions');
+    expect(screen.getByTestId('position-card')).toBeTruthy();
+    expect(getInfoList('account')).toBe(list);
+  });
+
+  it.each(['positions', 'openOrders'] as const)(
+    'keeps %s placeholder data stable across fresh empty poll responses',
+    activeInfoTab => {
+      mockUsePerpsProScene.mockReturnValue(createSceneState());
+      const info = createInfoState({
+        activeInfoTab,
+        positions: [],
+        openOrders: [],
+        positionCollectionPresentation: 'authoritativeEmpty',
+        openOrderCollectionPresentation: 'authoritativeEmpty',
+      });
+      mockUsePerpsProInfoPanel.mockReturnValue(info);
+      const props = { isModeSwitching: false, onSwitchToSimple: jest.fn() };
+      const view = render(<PerpsProScene {...props} />);
+      const list = getInfoList(activeInfoTab);
+      const verticalOwner = getInfoList();
+      const originalData = list.props.data;
+      mockUsePerpsProInfoPanel.mockReturnValue({
+        ...info,
+        positions: [],
+        openOrders: [],
+      });
+      view.rerender(<PerpsProScene {...props} />);
+      expect(list.props.data).toBe(originalData);
+
+      mockUsePerpsProInfoPanel.mockReturnValue({
+        ...info,
+        positionCollectionPresentation: 'populated',
+        openOrderCollectionPresentation: 'populated',
+        openOrderCollectionPresentationByCategory: {
+          basic: 'populated',
+          conditional: 'filteredEmpty',
+        },
+        positions: [{ key: 'BTC', coin: 'BTC' }],
+        openOrders: [{ key: 'order-1', coin: 'BTC' }],
+        openOrdersByCategory: {
+          basic: [{ key: 'order-1', coin: 'BTC' }],
+          conditional: [],
+        },
+      });
+      view.rerender(<PerpsProScene {...props} />);
+      expect(getInfoList(activeInfoTab).props.data).not.toBe(originalData);
+      expect(
+        screen.getByTestId(
+          activeInfoTab === 'positions' ? 'position-card' : 'open-order-card',
+        ),
+      ).toBeTruthy();
+      // Adding the two category leaves replaces the horizontal topology, but
+      // must never replace the only native vertical owner.
+      expect(getInfoList()).toBe(verticalOwner);
+    },
+  );
+
   it('keeps the full skeleton while a ready catalogue resolves its market', () => {
     mockUsePerpsProScene.mockReturnValue(
       createSceneState({
@@ -941,7 +1575,7 @@ describe('PerpsProScene market loading states', () => {
     );
   });
 
-  it('mounts the info pager for the resolved tab without exposing a fallback page', () => {
+  it('mounts the retained pages for the resolved tab without exposing inactive rows', () => {
     Object.defineProperty(Platform, 'OS', {
       configurable: true,
       value: 'ios',
@@ -954,11 +1588,9 @@ describe('PerpsProScene market loading states', () => {
       <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
     );
 
-    expect(screen.queryByTestId('perps-pro-info-pager')).toBeNull();
+    expect(screen.queryByTestId('perps-pro-info-list')).toBeNull();
     expect(screen.queryByTestId('perps-pro-info-tabs-overlay')).toBeNull();
-    expect(
-      screen.getByTestId('perps-pro-trade-scroll-bridge').props.scrollEnabled,
-    ).toBe(false);
+    expect(screen.queryByTestId('perps-pro-trade-section')).toBeNull();
 
     mockUsePerpsProInfoPanel.mockReturnValue(
       createInfoState({ activeInfoTab: 'positions' }),
@@ -967,33 +1599,32 @@ describe('PerpsProScene market loading states', () => {
       <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
     );
 
-    expect(screen.getByTestId('perps-pro-info-pager').props.initialPage).toBe(
-      0,
-    );
+    expect(screen.getByTestId('perps-pro-info-list')).toBeOnTheScreen();
+    expect(screen.UNSAFE_getAllByType(FlatList)).toHaveLength(5);
+    expect(screen.getByTestId('perps-pro-trade-section')).toBeTruthy();
+    expect(screen.getByTestId('perps-pro-positions-controls')).toBeTruthy();
+    expect(screen.queryByTestId('account-skeleton')).toBeNull();
     expect(
-      screen.getByTestId('perps-pro-info-pager').props.offscreenPageLimit,
-    ).toBeUndefined();
-    expect(screen.getByTestId('perps-pro-info-tabs-overlay')).toBeOnTheScreen();
-    expect(
-      screen.getByTestId('perps-pro-trade-scroll-bridge').props.scrollEnabled,
-    ).toBe(true);
-    expect(
-      screen.getByTestId('perps-pro-scroll-account', {
-        includeHiddenElements: true,
-      }),
-    ).toBeOnTheScreen();
+      screen.getByTestId('perps-pro-info-tab-positions').props
+        .accessibilityState,
+    ).toEqual({ selected: true });
   });
 
-  it('observes a new touch without taking ownership from child gestures', () => {
+  it('keeps trade and header outside the UI horizontal track', () => {
     mockUsePerpsProScene.mockReturnValue(createSceneState());
     render(
       <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
     );
-    const stateManager = { fail: jest.fn() };
-
-    act(() => mockManualTouchesDown?.({}, stateManager));
-
-    expect(stateManager.fail).toHaveBeenCalledTimes(1);
+    const pager = getInfoTrack();
+    expect(within(pager).queryByTestId('perps-pro-trade-section')).toBeNull();
+    expect(within(pager).queryByTestId('perps-pro-list-lead-in')).toBeNull();
+    expect(
+      within(screen.getByTestId('perps-pro-info-list')).getByTestId(
+        'perps-pro-trade-section',
+      ),
+    ).toBeOnTheScreen();
+    expect(screen.getByTestId('perps-pro-info-list-pan')).toBeOnTheScreen();
+    expect(pager.props.horizontal).toBeUndefined();
   });
 
   it('renders the order-book and static trade frame before account trade configuration is ready', () => {
@@ -1932,49 +2563,267 @@ describe('PerpsProScene market loading states', () => {
     });
   });
 
-  it('keeps one fixed scroll owner and reserves stable overlay lead-in geometry', () => {
+  it('shares one stable native scroll value between the list and every floating layer', () => {
+    installOptimisticInfoPanelMock();
+    mockPerpsStore.setState({ hasPermission: false });
+    mockUsePerpsProScene.mockReturnValue(createSceneState());
+    render(
+      <PerpsProScene
+        initialRegionAlertLayout={{
+          height: 52,
+          width: Dimensions.get('window').width - 32,
+        }}
+        isModeSwitching={false}
+        onSwitchToSimple={jest.fn()}
+      />,
+    );
+
+    const nativeScrollY = screen.UNSAFE_getByType(PerpsProInfoSingleList).props
+      .nativeScrollY;
+    expect(nativeScrollY).toBeInstanceOf(NativeAnimated.Value);
+    expect(screen.UNSAFE_getByType(SceneList).props.nativeScrollY).toBe(
+      nativeScrollY,
+    );
+    const pinnedLayers = screen.UNSAFE_getAllByType(CollapsiblePinnedLayer);
+    expect(pinnedLayers.map(layer => layer.props.testID).sort()).toEqual([
+      'perps-pro-info-tabs-overlay',
+      'perps-pro-market-overlay',
+      'perps-pro-region-alert-overlay',
+    ]);
+    for (const layer of [
+      screen.UNSAFE_getByType(CollapsibleHeaderLayer),
+      ...pinnedLayers,
+    ]) {
+      expect(layer.props.nativeScrollY).toBe(nativeScrollY);
+    }
+
+    fireEvent.press(screen.getByTestId('perps-pro-info-tab-positions'));
+    settleInfoPage('positions');
+
+    expect(screen.UNSAFE_getByType(SceneList).props.nativeScrollY).toBe(
+      nativeScrollY,
+    );
+    expect(
+      screen.UNSAFE_getByType(PerpsProInfoSingleList).props.nativeScrollY,
+    ).toBe(nativeScrollY);
+    for (const layer of [
+      screen.UNSAFE_getByType(CollapsibleHeaderLayer),
+      ...screen.UNSAFE_getAllByType(CollapsiblePinnedLayer),
+    ]) {
+      expect(layer.props.nativeScrollY).toBe(nativeScrollY);
+    }
+  });
+
+  // Component wiring only: apply the real geometry predicate at a fixed deep
+  // offset. This does not exercise native measurement or the UI-thread mapper.
+  it('keeps order book publication permissive until current-width trade geometry is measured', () => {
+    const visibility = jest
+      .spyOn(tradeDisplayVisibility, 'usePerpsProTradeDisplayVisibility')
+      .mockImplementation(input =>
+        tradeDisplayVisibility.isPerpsProTradeDisplayVisible({
+          ...input,
+          scrollY: 10_000,
+        }),
+      );
+    mockUsePerpsProScene.mockReturnValue(
+      createSceneState({
+        currentMarket: {
+          canonicalCoin: 'BTC',
+          marketKey: 'hyperliquid::BTC',
+          marketData: { maxLeverage: 40, onlyIsolated: false },
+          quoteAsset: 'USDC',
+        },
+        orderBookSubscriptionEnabled: true,
+        realtimeEnabled: true,
+      }),
+    );
+    render(
+      <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+    );
+    const width = Dimensions.get('window').width;
+    const scrollOffset = screen.UNSAFE_getByType(PerpsProInfoSingleList).props
+      .scrollOffset;
+    expect(visibility.mock.lastCall?.[0]).toEqual({
+      accountIdentity: 'test-account',
+      scrollY: scrollOffset,
+      tradeTop: null,
+      tradeBottom: null,
+      viewportHeight: 0,
+    });
+    expect(mockOrderBookProps.mock.lastCall?.[0].viewportVisible).toBe(true);
+
+    fireEvent(screen.getByTestId('perps-pro-info-list'), 'layout', {
+      nativeEvent: { layout: { height: 700, width, x: 0, y: 0 } },
+    });
+    for (const measuredWidth of [0, width - 32]) {
+      // The mocked book's layout event reaches the owner's outer onLayout.
+      fireEvent(screen.getByTestId('realtime-order-book'), 'layout', {
+        nativeEvent: {
+          layout: { height: 480, width: measuredWidth, x: 0, y: 0 },
+        },
+      });
+      expect(visibility.mock.lastCall?.[0]).toMatchObject({
+        tradeTop: null,
+        tradeBottom: null,
+        viewportHeight: 700,
+      });
+      expect(mockOrderBookProps.mock.lastCall?.[0].viewportVisible).toBe(true);
+    }
+
+    fireEvent(screen.getByTestId('realtime-order-book'), 'layout', {
+      nativeEvent: { layout: { height: 480, width, x: 0, y: 0 } },
+    });
+    expect(visibility.mock.lastCall?.[0]).toEqual({
+      accountIdentity: 'test-account',
+      scrollY: scrollOffset,
+      tradeTop: 96,
+      tradeBottom: 576,
+      viewportHeight: 700,
+    });
+    expect(mockOrderBookProps.mock.lastCall?.[0]).toMatchObject({
+      enabled: true,
+      publicationEnabled: true,
+      viewportVisible: false,
+    });
+  });
+
+  it('invalidates old trade geometry on orientation change until the new width is measured', () => {
+    const visibility = jest
+      .spyOn(tradeDisplayVisibility, 'usePerpsProTradeDisplayVisibility')
+      .mockImplementation(input =>
+        tradeDisplayVisibility.isPerpsProTradeDisplayVisible({
+          ...input,
+          scrollY: 10_000,
+        }),
+      );
+    const previousDimensions = {
+      window: Dimensions.get('window'),
+      screen: Dimensions.get('screen'),
+    };
+    const width = previousDimensions.window.width;
+    const nextWidth = width + 300;
+    mockUsePerpsProScene.mockReturnValue(
+      createSceneState({
+        currentMarket: {
+          canonicalCoin: 'BTC',
+          marketKey: 'hyperliquid::BTC',
+          marketData: { maxLeverage: 40, onlyIsolated: false },
+          quoteAsset: 'USDC',
+        },
+        orderBookSubscriptionEnabled: true,
+        realtimeEnabled: true,
+      }),
+    );
+    const view = render(
+      <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+    );
+    try {
+      fireEvent(screen.getByTestId('perps-pro-info-list'), 'layout', {
+        nativeEvent: { layout: { height: 700, width, x: 0, y: 0 } },
+      });
+      fireEvent(screen.getByTestId('realtime-order-book'), 'layout', {
+        nativeEvent: { layout: { height: 480, width, x: 0, y: 0 } },
+      });
+      expect(mockOrderBookProps.mock.lastCall?.[0].viewportVisible).toBe(false);
+
+      act(() => {
+        Dimensions.set({
+          window: { ...previousDimensions.window, width: nextWidth },
+          screen: { ...previousDimensions.screen, width: nextWidth },
+        });
+      });
+      expect(visibility.mock.lastCall?.[0]).toMatchObject({
+        tradeTop: null,
+        tradeBottom: null,
+      });
+      expect(mockOrderBookProps.mock.lastCall?.[0].viewportVisible).toBe(true);
+
+      fireEvent(screen.getByTestId('perps-pro-info-list'), 'layout', {
+        nativeEvent: {
+          layout: { height: 400, width: nextWidth, x: 0, y: 0 },
+        },
+      });
+      expect(visibility.mock.lastCall?.[0]).toMatchObject({
+        tradeTop: null,
+        tradeBottom: null,
+        viewportHeight: 400,
+      });
+      expect(mockOrderBookProps.mock.lastCall?.[0].viewportVisible).toBe(true);
+
+      fireEvent(screen.getByTestId('realtime-order-book'), 'layout', {
+        nativeEvent: {
+          layout: { height: 520, width: nextWidth, x: 0, y: 0 },
+        },
+      });
+      expect(visibility.mock.lastCall?.[0]).toMatchObject({
+        tradeTop: 96,
+        tradeBottom: 616,
+        viewportHeight: 400,
+      });
+      expect(mockOrderBookProps.mock.lastCall?.[0]).toMatchObject({
+        enabled: true,
+        publicationEnabled: true,
+        viewportVisible: false,
+      });
+    } finally {
+      view.unmount();
+      act(() => Dimensions.set(previousDimensions));
+    }
+  });
+
+  it('keeps lead-in, trade and tab spacing inside the native list header', () => {
     mockUsePerpsProScene.mockReturnValue(createSceneState());
 
     render(
       <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
     );
 
-    const scroll = screen.getByTestId('perps-pro-scroll');
-    const tradeScrollBridge = screen.getByTestId(
-      'perps-pro-trade-scroll-bridge',
-    );
-    expect(scroll.props.stickyHeaderIndices).toEqual([]);
+    const scroll = screen.getByTestId('perps-pro-info-list');
+    const tradeSection = screen.getByTestId('perps-pro-trade-section');
+    // Floating chrome follows the list offset; Trade stays in normal header flow.
+    expect(screen.getByTestId('perps-pro-info-tabs-overlay')).toBeTruthy();
     expect(StyleSheet.flatten(scroll.props.style)?.transform).toBeUndefined();
-    expect(tradeScrollBridge.props.keyboardShouldPersistTaps).toBe('handled');
+    expect(StyleSheet.flatten(tradeSection.props.style)).toMatchObject({
+      backgroundColor: 'neutral-bg-1',
+    });
+    expect(StyleSheet.flatten(tradeSection.props.style)?.position).not.toBe(
+      'absolute',
+    );
+    expect(
+      StyleSheet.flatten(tradeSection.props.style)?.transform,
+    ).toBeUndefined();
     expect(
       StyleSheet.flatten(
-        screen.getByTestId('perps-pro-trade-overlay').props.style,
+        screen.getByTestId('perps-pro-list-lead-in').props.style,
       ),
-    ).toMatchObject({ backgroundColor: 'neutral-bg-1', zIndex: 1 });
-    expect(screen.getAllByTestId('perps-pro-trade-scroll-bridge')).toHaveLength(
-      1,
-    );
+    ).toMatchObject({ height: 96 });
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-list-tabs-placeholder').props.style,
+      ),
+    ).toMatchObject({ height: 60 });
+    const header = screen.UNSAFE_getByType(PerpsProInfoSingleList).props
+      .listHeader;
+    expect(
+      header.props.children.map(
+        (child: React.ReactElement<{ testID?: string }>) => child.props.testID,
+      ),
+    ).toEqual([
+      'perps-pro-list-lead-in',
+      'perps-pro-trade-section',
+      'perps-pro-list-tabs-placeholder',
+    ]);
     expect(screen.getByTestId('pro-header').props).not.toHaveProperty(
       'showBottomDivider',
     );
     fireEvent(scroll, 'layout', {
       nativeEvent: { layout: { height: 700, width: 393, x: 0, y: 0 } },
     });
-    expect(
-      StyleSheet.flatten(
-        screen.getByTestId('perps-pro-scroll').props.contentContainerStyle,
-      ),
-    ).toMatchObject({ minHeight: 1202 });
-    expect(
-      StyleSheet.flatten(
-        screen.getByTestId('perps-pro-header-lead-in-spacer').props.style,
-      ),
-    ).toMatchObject({ height: 56 });
-    expect(
-      StyleSheet.flatten(
-        screen.getByTestId('perps-pro-market-lead-in-spacer').props.style,
-      ),
-    ).toMatchObject({ height: 40 });
+    const pageStyle = StyleSheet.flatten(getInfoList('account').props.style);
+    const rowStartOffset = screen.UNSAFE_getByType(PerpsProInfoSingleList).props
+      .rowStartOffset;
+    expect(pageStyle).toMatchObject({ minHeight: 1202 - rowStartOffset });
+    expect(pageStyle?.paddingTop ?? 0).toBe(0);
     const marketOverlayStyle = StyleSheet.flatten(
       screen.getByTestId('perps-pro-market-overlay').props.style,
     );
@@ -1990,20 +2839,9 @@ describe('PerpsProScene market loading states', () => {
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-info-tabs-spacer').props.style,
       ),
-    ).toMatchObject({ height: 60 });
-    const infoTabsOverlayStyle = StyleSheet.flatten(
-      screen.getByTestId('perps-pro-info-tabs-overlay').props.style,
-    );
-    expect(infoTabsOverlayStyle).toEqual(
-      expect.objectContaining({ height: 38 }),
-    );
-    const infoTabsTranslateY = infoTabsOverlayStyle?.transform?.[0]
-      ?.translateY as unknown as number | { __getValue: () => number };
-    expect(
-      typeof infoTabsTranslateY === 'number'
-        ? infoTabsTranslateY
-        : infoTabsTranslateY.__getValue(),
-    ).toBe(542);
+    ).toMatchObject({ height: 22 });
+    // The tab strip is a pinned layer below the market bar.
+    expect(screen.getByTestId('perps-pro-info-tabs-overlay')).toBeTruthy();
     expect(screen.getAllByTestId('perps-pro-info-tab-account')).toHaveLength(1);
   });
 
@@ -2024,17 +2862,17 @@ describe('PerpsProScene market loading states', () => {
       expect(StyleSheet.flatten(divider.props.style)).toMatchObject({
         backgroundColor: isLight ? 'neutral-bg-0' : 'neutral-bg-2',
         height: 6,
-        bottom: 38,
+        bottom: 0,
         left: 0,
         right: 0,
       });
       expect(StyleSheet.flatten(spacer.props.style)).toMatchObject({
-        height: 60,
+        height: 22,
       });
     },
   );
 
-  it('uses one Android scene gesture owner and a shared Trade offset', () => {
+  it('keeps Android vertical scrolling owned by the outer list including Trade', () => {
     Object.defineProperty(Platform, 'OS', {
       configurable: true,
       value: 'android',
@@ -2045,296 +2883,564 @@ describe('PerpsProScene market loading states', () => {
       <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
     );
 
-    const scroll = screen.getByTestId('perps-pro-scroll');
-    expect(scroll.props.scrollEnabled).toBe(false);
+    const scroll = screen.getByTestId('perps-pro-info-list');
+    // The native list now owns vertical scrolling on Android too; the scene no
+    // longer synthesises it with per-frame scrollTo calls.
+    expect(scroll.props.scrollEnabled).toBe(true);
+    expect(screen.UNSAFE_getAllByType(FlatList)).toHaveLength(5);
+    expect(getInfoTrack()).toBeOnTheScreen();
+    expect(screen.UNSAFE_getAllByType(SceneList)).toHaveLength(1);
+    expect(infoTabs.map(tab => getInfoList(tab).props.data)).toHaveLength(3);
     expect(
-      screen.getByTestId('perps-pro-scroll-positions', {
-        includeHiddenElements: true,
-      }),
+      within(scroll).getByTestId('perps-pro-trade-section'),
     ).toBeOnTheScreen();
     expect(
-      screen.getByTestId('perps-pro-info-pager').props.offscreenPageLimit,
-    ).toBe(2);
-    expect(
-      screen.getByTestId('perps-pro-trade-scroll-bridge').props.scrollEnabled,
-    ).toBe(false);
-    expect(
       StyleSheet.flatten(
-        screen.getByTestId('perps-pro-trade-overlay').props.style,
-      )?.transform,
-    ).toEqual([{ translateY: 96 }]);
+        screen.getByTestId('perps-pro-trade-section').props.style,
+      )?.position,
+    ).not.toBe('absolute');
 
     view.unmount();
   });
 
-  it('animates adjacent info tabs and persists only after Pager selection', () => {
-    const setActiveInfoTab = jest.fn();
-    mockUsePerpsProScene.mockReturnValue(createSceneState());
-    mockUsePerpsProInfoPanel.mockReturnValue(
-      createInfoState({ setActiveInfoTab }),
-    );
-    const animationFrame = jest
-      .spyOn(global, 'requestAnimationFrame')
-      .mockImplementation(callback => {
-        callback(0);
-        return 1;
+  it.each(['android', 'ios'] as const)(
+    'commits a tab press only after %s UI-animation completion',
+    platform => {
+      Object.defineProperty(Platform, 'OS', {
+        configurable: true,
+        value: platform,
       });
+      const persist = installOptimisticInfoPanelMock();
+      mockUsePerpsProScene.mockReturnValue(createSceneState());
+      render(
+        <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+      );
+      const list = getInfoList();
+      const accountRows = getInfoList('account');
+      fireEvent.press(screen.getByTestId('perps-pro-info-tab-openOrders'));
+      expect(nativeBoundary.animations()).toHaveLength(1);
+      expect(persist).not.toHaveBeenCalled();
+      expect(
+        screen.getByTestId('perps-pro-info-tab-account').props
+          .accessibilityState,
+      ).toEqual({ selected: true });
+      physicalPageScroll(getInfoLeaf('openOrders').index);
+      expect(persist).not.toHaveBeenCalled();
+      pageState('idle');
+      expect(persist.mock.calls).toEqual([['openOrders']]);
+      expect(getInfoList()).toBe(list);
+      expect(getInfoList('account')).toBe(accountRows);
+      expect(
+        screen.getByTestId('perps-pro-open-orders-controls'),
+      ).toBeOnTheScreen();
+      expect(
+        screen.getByTestId('perps-pro-info-tab-openOrders').props
+          .accessibilityState,
+      ).toEqual({ selected: true });
+      expect(
+        screen.UNSAFE_getByType(PerpsProTabIndicator).props.position.value,
+      ).toBe(1);
+    },
+  );
 
-    render(
-      <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
-    );
-
-    fireEvent.press(screen.getByTestId('perps-pro-info-tab-openOrders'));
-    expect(mockInfoPagerSetPage).toHaveBeenCalledWith(1);
-    expect(setActiveInfoTab).not.toHaveBeenCalled();
-    expect(mockUsePerpsProInfoPanel).toHaveBeenLastCalledWith(
-      expect.any(String),
-      'openOrders',
-      false,
-    );
-
-    fireEvent(screen.getByTestId('perps-pro-info-pager'), 'pageSelected', {
-      nativeEvent: { position: 1 },
+  it('serializes rapid reverse tab presses while retaining all page identities', () => {
+    Object.defineProperty(Platform, 'OS', {
+      configurable: true,
+      value: 'android',
     });
-    expect(setActiveInfoTab).toHaveBeenCalledWith('openOrders');
-    animationFrame.mockRestore();
-  });
-
-  it('keeps the settled info tab when a rapid reverse press supersedes an in-flight page', () => {
-    const setActiveInfoTab = jest.fn(() => new Promise<void>(() => undefined));
+    const persist = installOptimisticInfoPanelMock();
     mockUsePerpsProScene.mockReturnValue(createSceneState());
-    mockUsePerpsProInfoPanel.mockReturnValue(
-      createInfoState({ setActiveInfoTab }),
-    );
-    const animationFrame = jest
-      .spyOn(global, 'requestAnimationFrame')
-      .mockImplementation(callback => {
-        callback(0);
-        return 1;
-      });
-
     render(
       <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
     );
+    const list = getInfoList();
+    const retainedLists = infoTabs.map(tab => getInfoList(tab));
     fireEvent.press(screen.getByTestId('perps-pro-info-tab-openOrders'));
-    expect(mockInfoPagerSetPage).toHaveBeenLastCalledWith(1);
-
     fireEvent.press(screen.getByTestId('perps-pro-info-tab-account'));
-    expect(mockInfoPagerSetPageWithoutAnimation).not.toHaveBeenCalled();
-    expect(mockInfoPagerSetPage).toHaveBeenCalledTimes(1);
-
-    const pager = screen.getByTestId('perps-pro-info-pager');
-    fireEvent(pager, 'pageSelected', { nativeEvent: { position: 1 } });
-    expect(mockInfoPagerSetPage).toHaveBeenLastCalledWith(2);
-    expect(setActiveInfoTab).not.toHaveBeenCalled();
-
-    fireEvent(pager, 'pageSelected', { nativeEvent: { position: 2 } });
-    expect(setActiveInfoTab).not.toHaveBeenCalled();
-    expect(
-      screen.getByTestId('perps-pro-info-tab-account').props.accessibilityState,
-    ).toEqual({ selected: true });
-
-    animationFrame.mockRestore();
-  });
-
-  it('preserves a newer click while an older native commit waits on JS', () => {
-    const setActiveInfoTab = jest.fn(() => new Promise<void>(() => undefined));
-    mockUsePerpsProScene.mockReturnValue(createSceneState());
-    mockUsePerpsProInfoPanel.mockReturnValue(
-      createInfoState({ setActiveInfoTab }),
-    );
-    render(
-      <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
-    );
-    const pager = screen.getByTestId('perps-pro-info-pager');
-    fireEvent.press(screen.getByTestId('perps-pro-info-tab-openOrders'));
-    mockQueueInfoCallbacks = true;
-    fireEvent(pager, 'pageSelected', { nativeEvent: { position: 1 } });
     fireEvent.press(screen.getByTestId('perps-pro-info-tab-positions'));
-    expect(mockInfoPagerSetPage).toHaveBeenLastCalledWith(0);
-    act(() => mockInfoCallbacks.splice(0).forEach(callback => callback()));
-    expect(setActiveInfoTab).not.toHaveBeenCalled();
-    expect(mockUsePerpsProInfoPanel).toHaveBeenLastCalledWith(
-      expect.any(String),
-      'positions',
-      false,
-    );
+    expect(nativeBoundary.animations()).toHaveLength(1);
+    expect(persist).not.toHaveBeenCalled();
+    settleInfoPage('openOrders');
+    expect(nativeBoundary.animations()).toHaveLength(1);
+    expect(nativeBoundary.animationHistory()).toHaveLength(2);
+    settleInfoPage('positions');
+    expect(getInfoList()).toBe(list);
+    expect(infoTabs.map(tab => getInfoList(tab))).toEqual(retainedLists);
+    expect(
+      screen.getByTestId('perps-pro-positions-controls'),
+    ).toBeOnTheScreen();
+    expect(screen.queryByTestId('perps-pro-open-orders-controls')).toBeNull();
     expect(
       screen.getByTestId('perps-pro-info-tab-positions').props
         .accessibilityState,
     ).toEqual({ selected: true });
-    fireEvent(pager, 'pageSelected', { nativeEvent: { position: 0 } });
-    act(() => mockInfoCallbacks.splice(0).forEach(callback => callback()));
-    expect(setActiveInfoTab.mock.calls).toEqual([['positions']]);
+    expect(
+      screen.UNSAFE_getByType(PerpsProTabIndicator).props.position.value,
+    ).toBe(0);
+    fireEvent.press(screen.getByTestId('perps-pro-info-tab-account'));
+    settleInfoPage('account');
+    expect(getInfoList()).toBe(list);
+    expect(infoTabs.map(tab => getInfoList(tab))).toEqual(retainedLists);
+    expect(persist.mock.calls).toEqual([
+      ['openOrders'],
+      ['positions'],
+      ['account'],
+    ]);
+    expect(
+      screen.UNSAFE_getByType(PerpsProTabIndicator).props.position.value,
+    ).toBe(2);
   });
 
-  it('persists both selections when native pages reverse before React rerenders', () => {
-    const setActiveInfoTab = jest.fn(() => new Promise<void>(() => undefined));
+  it('commits native row swipes through the same preference owner without native commands', () => {
+    Object.defineProperty(Platform, 'OS', {
+      configurable: true,
+      value: 'android',
+    });
+    const persist = installOptimisticInfoPanelMock(jest.fn(), {
+      openOrdersByCategory: {
+        basic: [],
+        conditional: [{ key: 'conditional:BTC:1', coin: 'BTC' }],
+      },
+      openOrderCollectionPresentationByCategory: {
+        basic: 'filteredEmpty',
+        conditional: 'populated',
+      },
+      openOrderCounts: { basic: 0, conditional: 1, unsupported: 0 },
+      allOpenOrdersCount: 1,
+    });
     mockUsePerpsProScene.mockReturnValue(createSceneState());
-    mockUsePerpsProInfoPanel.mockReturnValue(
-      createInfoState({ setActiveInfoTab }),
-    );
-
     render(
       <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
     );
-    const pager = screen.getByTestId('perps-pro-info-pager');
-
-    fireEvent(pager, 'pageSelected', { nativeEvent: { position: 1 } });
-    fireEvent(pager, 'pageSelected', { nativeEvent: { position: 2 } });
-
-    expect(setActiveInfoTab.mock.calls).toEqual([['openOrders'], ['account']]);
+    const list = getInfoList();
+    // Mount notifications and repeated boundary notifications are not intent.
+    pageScroll(2, 0);
+    pageState('idle');
+    expect(persist).not.toHaveBeenCalled();
+    pageState('dragging');
+    pageScroll(1, 0.7);
+    expect(
+      screen.UNSAFE_getByType(PerpsProTabIndicator).props.position.value,
+    ).toBeCloseTo(1.7);
+    pageState('settling');
+    pageScroll(1, 0);
+    expect(persist).not.toHaveBeenCalled();
     expect(
       screen.getByTestId('perps-pro-info-tab-account').props.accessibilityState,
     ).toEqual({ selected: true });
+    pageScroll(1, 0);
+    pageState('idle');
+    expect(
+      screen.getByTestId('perps-pro-open-orders-controls'),
+    ).toBeOnTheScreen();
+    expect(
+      screen.UNSAFE_getByType(PerpsProTabIndicator).props.position.value,
+    ).toBe(1);
+    // Enter the group's remembered/default child, not its directional edge.
+    expect(
+      screen.getByTestId('perps-pro-open-orders-tab-basic').props
+        .accessibilityState.selected,
+    ).toBe(true);
+    expect(screen.getByTestId('perps-pro-open-orders-empty')).toBeOnTheScreen();
+    pageState('dragging');
+    physicalPageScroll(1.6);
+    finishPhysicalPage();
+    expect(
+      screen.getByTestId('perps-pro-open-orders-tab-conditional').props
+        .accessibilityState.selected,
+    ).toBe(true);
+    // The empty sibling remains a real stop in the reverse direction too.
+    pageState('dragging');
+    physicalPageScroll(1.4);
+    expect(
+      screen.UNSAFE_getByType(PerpsProTabIndicator).props.position.value,
+    ).toBe(1);
+    pageState('settling');
+    physicalPageScroll(1);
+    finishPhysicalPage(1);
+    expect(
+      screen.getByTestId('perps-pro-open-orders-tab-basic').props
+        .accessibilityState.selected,
+    ).toBe(true);
+    expect(screen.getByTestId('perps-pro-open-orders-empty')).toBeOnTheScreen();
+    expect(persist.mock.calls).toEqual([['openOrders']]);
+    pageState('dragging');
+    pageScroll(0, 0.3);
+    pageState('settling');
+    pageScroll(0, 0);
+    expect(persist.mock.calls).toEqual([['openOrders']]);
+    pageScroll(0, 0);
+    pageState('idle');
+    expect(
+      screen.getByTestId('perps-pro-positions-controls'),
+    ).toBeOnTheScreen();
+    pageScroll(0, 0);
+    pageState('idle');
+    expect(persist.mock.calls).toEqual([['openOrders'], ['positions']]);
+    expect(getInfoList()).toBe(list);
+    expect(nativeBoundary.animations()).toHaveLength(0);
+    expect(
+      screen.getByTestId('perps-pro-info-tab-positions').props
+        .accessibilityState,
+    ).toEqual({ selected: true });
+    expect(
+      screen.UNSAFE_getByType(PerpsProTabIndicator).props.position.value,
+    ).toBe(0);
   });
 
-  it('ignores stale preference echoes until the latest native tab write settles', async () => {
-    const openOrdersWrite = createDeferred();
-    const accountWrite = createDeferred();
-    const setActiveInfoTab = jest
-      .fn()
-      .mockReturnValueOnce(openOrdersWrite.promise)
-      .mockReturnValueOnce(accountWrite.promise);
+  it.each(['android', 'ios'] as const)(
+    'keeps authoritative-empty Orders selected until a second native swipe on %s',
+    platform => {
+      jest.replaceProperty(Platform, 'OS', platform);
+      const persist = jest.fn();
+      let emptyOrderState = {
+        openOrders: [],
+        openOrdersByCategory: { basic: [], conditional: [] },
+      };
+      // Component coverage with the existing InfoPanel seam: native events
+      // are supplied, so this cannot prove physical hit-testing or gestures.
+      mockUsePerpsProInfoPanel.mockImplementation(function useInfoPanel() {
+        const [activeInfoTab, setActiveInfoTab] =
+          React.useState<InfoTab>('positions');
+        return createInfoState({
+          ...emptyOrderState,
+          activeInfoTab,
+          openOrderCollectionPresentation: 'authoritativeEmpty',
+          setActiveInfoTab: (tab: InfoTab) => {
+            setActiveInfoTab(tab);
+            persist(tab);
+          },
+        });
+      });
+      mockUsePerpsProScene.mockReturnValue(createSceneState());
+      const props = {
+        isModeSwitching: false,
+        onSwitchToSimple: jest.fn(),
+      };
+      const view = render(<PerpsProScene {...props} />);
+      const list = getInfoList();
+      const pager = getInfoTrack();
+      expect(nativeBoundary.animations()).toHaveLength(0);
+
+      pageState('dragging');
+      pageScroll(0, 0.6);
+      expect(persist).not.toHaveBeenCalled();
+      pageState('settling');
+      pageScroll(1, 0);
+      pageScroll(1, 0);
+      expect(persist).not.toHaveBeenCalled();
+      pageState('idle');
+
+      const expectOrdersSelected = () => {
+        expect(persist.mock.calls).toEqual([['openOrders']]);
+        for (const tab of infoTabs) {
+          expect(
+            screen.getByTestId(`perps-pro-info-tab-${tab}`).props
+              .accessibilityState.selected,
+          ).toBe(tab === 'openOrders');
+        }
+        expect(
+          screen.getByTestId('perps-pro-open-orders-empty-illustration'),
+        ).toBeOnTheScreen();
+        expect(
+          screen.queryByTestId('perps-pro-open-orders-controls'),
+        ).toBeNull();
+        expect(getInfoPage('openOrders').props.pointerEvents).toBe('auto');
+        expect(getInfoList()).toBe(list);
+        expect(getInfoTrack()).toBe(pager);
+        expect(
+          screen.UNSAFE_getByType(PerpsProTabIndicator).props.position.value,
+        ).toBe(1);
+        expect(nativeBoundary.animations()).toHaveLength(0);
+      };
+      expectOrdersSelected();
+
+      pageScroll(1, 0);
+      pageState('idle');
+      pageScroll(1, 0);
+      expectOrdersSelected();
+
+      view.rerender(<PerpsProScene {...props} />);
+      expectOrdersSelected();
+      emptyOrderState = {
+        openOrders: [],
+        openOrdersByCategory: { basic: [], conditional: [] },
+      };
+      view.rerender(<PerpsProScene {...props} />);
+      pageScroll(1, 0);
+      pageState('idle');
+      expectOrdersSelected();
+
+      pageState('dragging');
+      pageScroll(1, 0.6);
+      expect(persist.mock.calls).toEqual([['openOrders']]);
+      pageState('settling');
+      pageScroll(2, 0);
+      pageScroll(2, 0);
+      pageState('idle');
+      expect(persist.mock.calls).toEqual([['openOrders'], ['account']]);
+      expect(
+        screen.getByTestId('perps-pro-info-tab-account').props
+          .accessibilityState.selected,
+      ).toBe(true);
+      expect(getInfoPage('account').props.pointerEvents).toBe('auto');
+      expect(getInfoList()).toBe(list);
+      expect(getInfoTrack()).toBe(pager);
+      expect(nativeBoundary.animations()).toHaveLength(0);
+    },
+  );
+
+  it.each(['android', 'ios'] as const)(
+    'does not commit a cancelled native row swipe on %s',
+    platform => {
+      Object.defineProperty(Platform, 'OS', {
+        configurable: true,
+        value: platform,
+      });
+      const persist = installOptimisticInfoPanelMock();
+      mockUsePerpsProScene.mockReturnValue(createSceneState());
+      render(
+        <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+      );
+      const list = getInfoList();
+      const data = list.props.data;
+
+      pageState('dragging');
+      pageScroll(1, 0.4);
+      pageState('settling');
+      pageScroll(2, 0);
+      pageState('idle');
+
+      expect(persist).not.toHaveBeenCalled();
+      expect(getInfoList()).toBe(list);
+      expect(list.props.data).toBe(data);
+      expect(screen.queryByTestId('perps-pro-open-orders-controls')).toBeNull();
+      expect(
+        screen.getByTestId('perps-pro-info-tab-account').props
+          .accessibilityState,
+      ).toEqual({ selected: true });
+      expect(
+        screen.UNSAFE_getByType(PerpsProTabIndicator).props.position.value,
+      ).toBe(2);
+    },
+  );
+
+  it.each([
+    ['basic', 'account', 2.5],
+    ['conditional', 'positions', 0.5],
+  ] as const)(
+    'preserves Orders %s after clicking %s and swiping back',
+    (category, awayTab, returnProgress) => {
+      installOptimisticInfoPanelMock(jest.fn(), {
+        openOrderCategory: category,
+      });
+      mockUsePerpsProScene.mockReturnValue(createSceneState());
+      render(
+        <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+      );
+      fireEvent.press(screen.getByTestId('perps-pro-info-tab-openOrders'));
+      settleInfoPage('openOrders');
+      const list = getInfoList();
+      const childList = getInfoList('openOrders');
+      fireEvent.press(screen.getByTestId(`perps-pro-info-tab-${awayTab}`));
+      settleInfoPage(awayTab);
+
+      pageState('dragging');
+      physicalPageScroll(returnProgress);
+      expect(
+        screen.getByTestId(`perps-pro-open-orders-tab-${category}`, {
+          includeHiddenElements: true,
+        }).props.accessibilityState.selected,
+      ).toBe(true);
+      finishPhysicalPage();
+
+      expect(
+        screen.getByTestId('perps-pro-info-tab-openOrders').props
+          .accessibilityState.selected,
+      ).toBe(true);
+      expect(
+        screen.getByTestId(`perps-pro-open-orders-tab-${category}`).props
+          .accessibilityState.selected,
+      ).toBe(true);
+      expect(getInfoPage('openOrders', category).props.pointerEvents).toBe(
+        'auto',
+      );
+      expect(getInfoList()).toBe(list);
+      expect(getInfoList('openOrders')).toBe(childList);
+      expect(mockConfirmCancelAll).not.toHaveBeenCalled();
+      expect(mockConfirmCancelOrder).not.toHaveBeenCalled();
+    },
+  );
+
+  it('retains non-interactive neighbouring pages without committing or invoking trade actions', () => {
+    const persist = installOptimisticInfoPanelMock();
+    const switchToSimple = jest.fn();
+    mockUsePerpsProScene.mockReturnValue(createSceneState());
+    render(
+      <PerpsProScene
+        isModeSwitching={false}
+        onSwitchToSimple={switchToSimple}
+      />,
+    );
+    const list = getInfoList();
+    const data = list.props.data;
+    const neighbour = getInfoPage('openOrders', 'conditional');
+    const retainedLists = infoTabs.map(tab => getInfoList(tab));
+    pageState('dragging');
+    pageScroll(1, 0.7);
+
+    expect(getInfoPage('openOrders', 'conditional')).toBe(neighbour);
+    expect(neighbour.props).toMatchObject({
+      accessibilityElementsHidden: true,
+      importantForAccessibility: 'no-hide-descendants',
+      pointerEvents: 'none',
+    });
+    expect(
+      screen.getByTestId('perps-pro-open-orders-controls', {
+        includeHiddenElements: true,
+      }),
+    ).toBeTruthy();
+    expect(
+      within(neighbour).queryByTestId('perps-pro-open-orders-controls', {
+        includeHiddenElements: true,
+      }),
+    ).toBeNull();
+    let groupOwner = screen.getByTestId(
+      'perps-pro-info-list-group-openOrders',
+      {
+        includeHiddenElements: true,
+      },
+    ).parent;
+    while (groupOwner && groupOwner.props.pointerEvents === undefined) {
+      groupOwner = groupOwner.parent;
+    }
+    expect(groupOwner?.props.pointerEvents).toBe('none');
+    expect(getInfoList()).toBe(list);
+    expect(infoTabs.map(tab => getInfoList(tab))).toEqual(retainedLists);
+    expect(list.props.data).toBe(data);
+    expect(list.props.removeClippedSubviews).toBe(false);
+    expect(persist).not.toHaveBeenCalled();
+    expect(mockConfirmCancelAll).not.toHaveBeenCalled();
+    expect(mockConfirmCancelOrder).not.toHaveBeenCalled();
+    expect(mockRequestCloseAll).not.toHaveBeenCalled();
+    expect(mockSelectOrderBookPrice).not.toHaveBeenCalled();
+    expect(mockEnsurePerpsActionApproval).not.toHaveBeenCalled();
+    expect(mockExecuteEnableUnified).not.toHaveBeenCalled();
+    expect(switchToSimple).not.toHaveBeenCalled();
+
+    pageState('settling');
+    pageScroll(2, 0);
+    pageState('idle');
+    expect(getInfoPage('openOrders', 'conditional')).toBe(neighbour);
+    expect(screen.queryByTestId('perps-pro-open-orders-controls')).toBeNull();
+    expect(persist).not.toHaveBeenCalled();
+  });
+
+  it('scrolls the same native list for keyboard overlap using the current tab bounds', () => {
+    installOptimisticInfoPanelMock();
+    mockUsePerpsProScene.mockReturnValue(createSceneState());
+    const view = render(
+      <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+    );
+    const list = getInfoList();
+    const scrollToOffset = jest
+      .spyOn(list.instance, 'scrollToOffset')
+      .mockImplementation(() => undefined);
+    fireEvent(screen.getByTestId('perps-pro-info-list'), 'layout', {
+      nativeEvent: { layout: { height: 700, width: 393, x: 0, y: 0 } },
+    });
+    fireEvent(
+      screen.getByTestId('perps-pro-info-list'),
+      'contentSizeChange',
+      393,
+      2000,
+    );
+
+    fireEvent.press(screen.getByTestId('perps-pro-info-tab-openOrders'));
+    settleInfoPage('openOrders');
+    fireEvent(
+      screen.getByTestId('perps-pro-info-list'),
+      'contentSizeChange',
+      393,
+      1000,
+    );
+    act(() => scrollPerpsProTradeAboveKeyboard(450));
+
+    expect(getInfoList()).toBe(list);
+    expect(scrollToOffset).toHaveBeenCalledTimes(1);
+    expect(scrollToOffset).toHaveBeenLastCalledWith({
+      animated: false,
+      offset: 300,
+    });
+    act(() => scrollPerpsProTradeAboveKeyboard(-10));
+    expect(scrollToOffset).toHaveBeenCalledTimes(1);
+    view.unmount();
+    act(() => scrollPerpsProTradeAboveKeyboard(50));
+    expect(scrollToOffset).toHaveBeenCalledTimes(1);
+  });
+
+  it('returns the same native list to the top after a card market selection', async () => {
+    installOptimisticInfoPanelMock(jest.fn(), {
+      openOrders: [{ coin: 'BTC', key: 'order-btc' }],
+    });
+    const selectMarketByCoin = jest.fn(async () => true);
+    mockUsePerpsProScene.mockReturnValue(
+      createSceneState({ selectMarketByCoin }),
+    );
+    render(
+      <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+    );
+    const list = getInfoList();
+    const scrollToOffset = jest
+      .spyOn(list.instance, 'scrollToOffset')
+      .mockImplementation(() => undefined);
+    fireEvent.press(screen.getByTestId('perps-pro-info-tab-openOrders'));
+    settleInfoPage('openOrders');
+
+    await act(async () => {
+      await mockOpenOrderCardProps.mock.lastCall?.[0].onPressMarket('BTC');
+    });
+
+    expect(selectMarketByCoin).toHaveBeenCalledWith('BTC');
+    expect(getInfoList()).toBe(list);
+    expect(scrollToOffset).toHaveBeenCalledTimes(1);
+    expect(scrollToOffset).toHaveBeenCalledWith({ animated: false, offset: 0 });
+  });
+
+  it('uses the preference owner rollback as the single source of list and tab state', () => {
     mockUsePerpsProScene.mockReturnValue(createSceneState());
     mockUsePerpsProInfoPanel.mockReturnValue(
-      createInfoState({ activeInfoTab: 'account', setActiveInfoTab }),
+      createInfoState({ activeInfoTab: 'openOrders' }),
     );
     const view = render(
       <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
     );
-    const pager = screen.getByTestId('perps-pro-info-pager');
-
-    fireEvent(pager, 'pageSelected', { nativeEvent: { position: 1 } });
-    fireEvent(pager, 'pageSelected', { nativeEvent: { position: 2 } });
+    const list = getInfoList();
+    expect(
+      screen.getByTestId('perps-pro-open-orders-controls'),
+    ).toBeOnTheScreen();
+    // Generation and persistence rollback are tested by the preference owner;
+    // this scene must adopt its published value rather than retain another state.
     mockUsePerpsProInfoPanel.mockReturnValue(
-      createInfoState({ activeInfoTab: 'openOrders', setActiveInfoTab }),
+      createInfoState({ activeInfoTab: 'positions' }),
     );
     view.rerender(
       <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
     );
-
+    expect(nativeBoundary.animations()).toHaveLength(1);
+    settleInfoPage('positions');
+    expect(getInfoList()).toBe(list);
     expect(
-      screen.getByTestId('perps-pro-info-tab-account').props.accessibilityState,
-    ).toEqual({ selected: true });
-    expect(mockInfoPagerSetPageWithoutAnimation).not.toHaveBeenCalled();
-
-    await act(async () => {
-      openOrdersWrite.resolve();
-      await openOrdersWrite.promise;
-    });
+      screen.getByTestId('perps-pro-positions-controls'),
+    ).toBeOnTheScreen();
+    expect(screen.queryByTestId('perps-pro-open-orders-controls')).toBeNull();
     expect(
-      screen.getByTestId('perps-pro-info-tab-account').props.accessibilityState,
-    ).toEqual({ selected: true });
-
-    mockUsePerpsProInfoPanel.mockReturnValue(
-      createInfoState({ activeInfoTab: 'account', setActiveInfoTab }),
-    );
-    view.rerender(
-      <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
-    );
-    await act(async () => {
-      accountWrite.resolve();
-      await accountWrite.promise;
-    });
-
-    expect(mockInfoPagerSetPageWithoutAnimation).not.toHaveBeenCalled();
-    expect(setActiveInfoTab.mock.calls).toEqual([['openOrders'], ['account']]);
-  });
-
-  it('realigns the native pager only after the latest preference write rolls back', async () => {
-    const write = createDeferred();
-    const setActiveInfoTab = jest.fn(() => write.promise);
-    mockUsePerpsProScene.mockReturnValue(createSceneState());
-    mockUsePerpsProInfoPanel.mockReturnValue(
-      createInfoState({ activeInfoTab: 'account', setActiveInfoTab }),
-    );
-    const view = render(
-      <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
-    );
-    const pager = screen.getByTestId('perps-pro-info-pager');
-
-    fireEvent(pager, 'pageSelected', { nativeEvent: { position: 1 } });
-    mockUsePerpsProInfoPanel.mockReturnValue(
-      createInfoState({ activeInfoTab: 'account', setActiveInfoTab }),
-    );
-    view.rerender(
-      <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
-    );
-    expect(
-      screen.getByTestId('perps-pro-info-tab-openOrders').props
+      screen.getByTestId('perps-pro-info-tab-positions').props
         .accessibilityState,
     ).toEqual({ selected: true });
-    expect(mockInfoPagerSetPageWithoutAnimation).not.toHaveBeenCalled();
-
-    await act(async () => {
-      write.resolve();
-      await write.promise;
-    });
-
-    expect(mockInfoPagerSetPageWithoutAnimation).toHaveBeenCalledWith(2);
     expect(
-      screen.getByTestId('perps-pro-info-tab-account').props.accessibilityState,
-    ).toEqual({ selected: true });
-  });
-
-  it('previews the top info tab during a drag without persisting it', () => {
-    const setActiveInfoTab = jest.fn();
-    mockUsePerpsProScene.mockReturnValue(createSceneState());
-    mockUsePerpsProInfoPanel.mockReturnValue(
-      createInfoState({ setActiveInfoTab }),
-    );
-
-    render(
-      <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
-    );
-
-    const pager = screen.getByTestId('perps-pro-info-pager');
-    expect(
-      screen.getByTestId('perps-pro-info-tab-account').props.accessibilityState,
-    ).toEqual({ selected: true });
-
-    fireEvent(pager, 'pageScroll', {
-      nativeEvent: { offset: 0.49, position: 1 },
-    });
-    expect(
-      screen.getByTestId('perps-pro-info-tab-account').props.accessibilityState,
-    ).toEqual({ selected: true });
-
-    fireEvent(pager, 'pageScrollStateChanged', {
-      nativeEvent: { pageScrollState: 'dragging' },
-    });
-    fireEvent(pager, 'pageScroll', {
-      nativeEvent: { offset: 0.45, position: 1 },
-    });
-    expect(
-      screen.getByTestId('perps-pro-info-tab-openOrders').props
-        .accessibilityState,
-    ).toMatchObject({ selected: true });
-    expect(setActiveInfoTab).not.toHaveBeenCalled();
-
-    fireEvent(pager, 'pageScroll', {
-      nativeEvent: { offset: 0.55, position: 1 },
-    });
-    expect(
-      screen.getByTestId('perps-pro-info-tab-account').props.accessibilityState,
-    ).toEqual({ selected: true });
-
-    fireEvent(pager, 'pageScrollStateChanged', {
-      nativeEvent: { pageScrollState: 'settling' },
-    });
-    fireEvent(pager, 'pageScroll', {
-      nativeEvent: { offset: 0.45, position: 1 },
-    });
-    expect(
-      screen.getByTestId('perps-pro-info-tab-openOrders').props
-        .accessibilityState,
-    ).toMatchObject({ selected: true });
-    expect(setActiveInfoTab).not.toHaveBeenCalled();
-
-    fireEvent(pager, 'pageSelected', { nativeEvent: { position: 1 } });
-    expect(setActiveInfoTab).toHaveBeenCalledTimes(1);
-    expect(setActiveInfoTab).toHaveBeenCalledWith('openOrders');
+      screen.UNSAFE_getByType(PerpsProTabIndicator).props.position.value,
+    ).toBe(0);
   });
 
   it('presents the prewarmed selector without rerendering the scene content', () => {
@@ -2367,7 +3473,7 @@ describe('PerpsProScene market loading states', () => {
   });
 
   it('places the measured region alert above the Market and outside Trade', () => {
-    mockTradeHasPermission = false;
+    mockPerpsStore.setState({ hasPermission: false });
     mockUsePerpsProScene.mockReturnValue(
       createSceneState({
         currentMarket: {
@@ -2390,19 +3496,25 @@ describe('PerpsProScene market loading states', () => {
       />,
     );
 
-    expect(screen.getByTestId('perps-pro-region-alert-slot')).toBeTruthy();
     expect(screen.getByTestId('perps-pro-region-alert-overlay')).toBeTruthy();
-    expect(
-      StyleSheet.flatten(
-        screen.getByTestId('perps-pro-region-alert-overlay').props.style,
-      ),
-    ).toMatchObject({
+    const readTranslateY = (style: unknown) => {
+      const translateY = StyleSheet.flatten(style)?.transform?.[0]
+        ?.translateY as unknown as number | { __getValue: () => number };
+      return typeof translateY === 'number'
+        ? translateY
+        : translateY.__getValue();
+    };
+    const regionAlertStyle = StyleSheet.flatten(
+      screen.getByTestId('perps-pro-region-alert-overlay').props.style,
+    );
+    expect(regionAlertStyle).toMatchObject({
       backgroundColor: 'neutral-bg-1',
       left: 0,
-      minHeight: 104,
       right: 0,
       zIndex: 4,
     });
+    // The alert collapses with the header from its natural position.
+    expect(readTranslateY(regionAlertStyle)).toBe(56);
     expect(screen.getByTestId('realtime-order-book')).toBeTruthy();
     expect(screen.getByTestId('trade-form')).toBeTruthy();
     expect(screen.getByTestId('pro-header').props).not.toHaveProperty(
@@ -2413,40 +3525,12 @@ describe('PerpsProScene market loading states', () => {
       4,
     );
     expect(screen.getByTestId('perps-region-alert').props.topSpacing).toBe(8);
-    expect(
-      StyleSheet.flatten(
-        screen.getByTestId('perps-pro-region-alert-slot').props.style,
-      ),
-    ).toMatchObject({ height: 64 });
-    const getRestrictedOverlayGeometry = () => {
-      const restrictedSurfaceStyle = StyleSheet.flatten(
-        screen.getByTestId('perps-pro-region-alert-overlay').props.style,
-      );
-      const marketOverlayStyle = StyleSheet.flatten(
-        screen.getByTestId('perps-pro-market-overlay').props.style,
-      );
-      const restrictedSurfaceTranslateY = restrictedSurfaceStyle?.transform?.[0]
-        ?.translateY as unknown as number | { __getValue: () => number };
-      const surfaceTranslateY =
-        typeof restrictedSurfaceTranslateY === 'number'
-          ? restrictedSurfaceTranslateY
-          : restrictedSurfaceTranslateY.__getValue();
-      const marketTop = marketOverlayStyle?.top as number;
-      return {
-        effectiveMarketY: surfaceTranslateY + marketTop,
-        marketOverlayStyle,
-      };
-    };
-    expect(getRestrictedOverlayGeometry()).toEqual({
-      effectiveMarketY: 120,
-      marketOverlayStyle: expect.objectContaining({
-        height: 40,
-        top: 64,
-      }),
-    });
-    expect(
-      getRestrictedOverlayGeometry().marketOverlayStyle?.transform,
-    ).toBeUndefined();
+    const marketOverlayStyle = StyleSheet.flatten(
+      screen.getByTestId('perps-pro-market-overlay').props.style,
+    );
+    expect(marketOverlayStyle).toMatchObject({ height: 40 });
+    // Market starts below the alert and pins at the alert's bottom edge.
+    expect(readTranslateY(marketOverlayStyle)).toBe(120);
     fireEvent.press(screen.getByTestId('market-bar'));
     expect(mockMarketSelectorPresent).toHaveBeenCalledTimes(1);
 
@@ -2461,26 +3545,14 @@ describe('PerpsProScene market loading states', () => {
       },
     });
     expect(
-      StyleSheet.flatten(
-        screen.getByTestId('perps-pro-region-alert-overlay').props.style,
+      readTranslateY(
+        screen.getByTestId('perps-pro-market-overlay').props.style,
       ),
-    ).toMatchObject({ minHeight: 105 });
-    expect(
-      StyleSheet.flatten(
-        screen.getByTestId('perps-pro-region-alert-slot').props.style,
-      ),
-    ).toMatchObject({ height: 65 });
-    expect(getRestrictedOverlayGeometry()).toEqual({
-      effectiveMarketY: 121,
-      marketOverlayStyle: expect.objectContaining({
-        height: 40,
-        top: 65,
-      }),
-    });
+    ).toBe(121);
   });
 
   it('uses the account restriction before the current market resolves', () => {
-    mockTradeHasPermission = false;
+    mockPerpsStore.setState({ hasPermission: false });
     mockUsePerpsProScene.mockReturnValue(
       createSceneState({ isResolvingMarket: true }),
     );
@@ -2501,26 +3573,22 @@ describe('PerpsProScene market loading states', () => {
       'showBottomDivider',
     );
     expect(screen.getByTestId('market-bar-skeleton')).toBeOnTheScreen();
-    const restrictedSurfaceStyle = StyleSheet.flatten(
-      screen.getByTestId('perps-pro-region-alert-overlay').props.style,
-    );
-    const restrictedSurfaceTranslateY = restrictedSurfaceStyle?.transform?.[0]
-      ?.translateY as unknown as number | { __getValue: () => number };
     const marketOverlayStyle = StyleSheet.flatten(
       screen.getByTestId('perps-pro-market-overlay').props.style,
     );
-    const surfaceTranslateY =
-      typeof restrictedSurfaceTranslateY === 'number'
-        ? restrictedSurfaceTranslateY
-        : restrictedSurfaceTranslateY.__getValue();
-    expect(restrictedSurfaceStyle).toMatchObject({ minHeight: 86 });
-    expect(marketOverlayStyle).toMatchObject({ height: 40, top: 46 });
-    expect(marketOverlayStyle?.transform).toBeUndefined();
-    expect(surfaceTranslateY + (marketOverlayStyle?.top as number)).toBe(102);
+    const marketTranslateY = marketOverlayStyle?.transform?.[0]
+      ?.translateY as unknown as number | { __getValue: () => number };
+    expect(marketOverlayStyle).toMatchObject({ height: 40 });
+    // header (56) + measured alert extent (8 + 34 + 4).
+    expect(
+      typeof marketTranslateY === 'number'
+        ? marketTranslateY
+        : marketTranslateY.__getValue(),
+    ).toBe(102);
   });
 
   it('waits for the restricted alert measurement before painting positioned overlays', () => {
-    mockTradeHasPermission = false;
+    mockPerpsStore.setState({ hasPermission: false });
     mockUsePerpsProScene.mockReturnValue(createSceneState());
 
     render(
@@ -2529,7 +3597,7 @@ describe('PerpsProScene market loading states', () => {
 
     expect(screen.getByTestId('perps-region-alert')).toBeOnTheScreen();
     expect(screen.queryByTestId('perps-pro-market-overlay')).toBeNull();
-    expect(screen.queryByTestId('perps-pro-info-tabs-overlay')).toBeNull();
+    expect(screen.getByTestId('perps-pro-info-tabs-overlay')).toBeTruthy();
 
     fireEvent(screen.getByTestId('perps-region-alert'), 'layout', {
       nativeEvent: {
@@ -2542,27 +3610,22 @@ describe('PerpsProScene market loading states', () => {
       },
     });
 
-    const restrictedSurfaceStyle = StyleSheet.flatten(
-      screen.getByTestId('perps-pro-region-alert-overlay').props.style,
-    );
-    const restrictedSurfaceTranslateY = restrictedSurfaceStyle?.transform?.[0]
-      ?.translateY as unknown as number | { __getValue: () => number };
     const marketOverlayStyle = StyleSheet.flatten(
       screen.getByTestId('perps-pro-market-overlay').props.style,
     );
-    const surfaceTranslateY =
-      typeof restrictedSurfaceTranslateY === 'number'
-        ? restrictedSurfaceTranslateY
-        : restrictedSurfaceTranslateY.__getValue();
-    expect(restrictedSurfaceStyle).toMatchObject({ minHeight: 104 });
-    expect(marketOverlayStyle).toMatchObject({ height: 40, top: 64 });
-    expect(marketOverlayStyle?.transform).toBeUndefined();
-    expect(surfaceTranslateY + (marketOverlayStyle?.top as number)).toBe(120);
+    const marketTranslateY = marketOverlayStyle?.transform?.[0]
+      ?.translateY as unknown as number | { __getValue: () => number };
+    expect(marketOverlayStyle).toMatchObject({ height: 40 });
+    expect(
+      typeof marketTranslateY === 'number'
+        ? marketTranslateY
+        : marketTranslateY.__getValue(),
+    ).toBe(120);
     expect(screen.getByTestId('perps-pro-info-tabs-overlay')).toBeOnTheScreen();
   });
 
   it('rejects a cached restricted alert measurement from another width', () => {
-    mockTradeHasPermission = false;
+    mockPerpsStore.setState({ hasPermission: false });
     mockUsePerpsProScene.mockReturnValue(createSceneState());
 
     render(
@@ -2618,12 +3681,14 @@ describe('PerpsProScene market loading states', () => {
     expect(mockKlineProps.mock.lastCall?.[0]).toMatchObject({
       enabled: false,
       preloadEnabled: true,
+      publicationEnabled: false,
       visible: false,
     });
 
     fireEvent.press(screen.getByTestId('kline-trigger'));
     expect(mockKlineProps.mock.lastCall?.[0]).toMatchObject({
       enabled: true,
+      publicationEnabled: true,
       visible: true,
     });
 
@@ -2631,17 +3696,23 @@ describe('PerpsProScene market loading states', () => {
     expect(screen.getByTestId('kline-sheet')).toBeTruthy();
     expect(mockKlineProps.mock.lastCall?.[0]).toMatchObject({
       enabled: true,
+      publicationEnabled: false,
       visible: false,
     });
 
     fireEvent.press(screen.getByTestId('kline-trigger'));
-    expect(mockKlineProps.mock.lastCall?.[0]).toMatchObject({ visible: true });
+    expect(mockKlineProps.mock.lastCall?.[0]).toMatchObject({
+      publicationEnabled: true,
+      visible: true,
+    });
   });
 
   it('stops the retained Candle Feed while the app is in background', () => {
     let onAppStateChange: ((state: AppStateStatus) => void) | undefined;
     jest.spyOn(AppState, 'addEventListener').mockImplementation((event, cb) => {
-      if (event === 'change') onAppStateChange = cb;
+      if (event === 'change') {
+        onAppStateChange = cb;
+      }
       return { remove: jest.fn() } as never;
     });
     mockUsePerpsProScene.mockReturnValue(
@@ -2664,12 +3735,14 @@ describe('PerpsProScene market loading states', () => {
     expect(mockKlineProps.mock.lastCall?.[0]).toMatchObject({
       enabled: false,
       preloadEnabled: false,
+      publicationEnabled: false,
     });
 
     act(() => onAppStateChange?.('active'));
     expect(mockKlineProps.mock.lastCall?.[0]).toMatchObject({
       enabled: true,
       preloadEnabled: true,
+      publicationEnabled: true,
     });
   });
 
@@ -2860,11 +3933,260 @@ describe('PerpsProScene market loading states', () => {
       <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
     );
 
+    settleInfoPage('openOrders');
     expect(
       screen.getByTestId('perps-pro-open-orders-empty-illustration'),
     ).toBeTruthy();
     expect(screen.getByText('page.perps.pro.openOrders.empty')).toBeTruthy();
     expect(screen.queryByTestId('perps-pro-open-orders-controls')).toBeNull();
+  });
+
+  it.each(['ios', 'android'] as const)(
+    'settles only the requested Orders pill and keeps Cancel All on all coins of the committed category on %s',
+    platform => {
+      jest.replaceProperty(Platform, 'OS', platform);
+      const basic = {
+        key: 'basic:BTC:1',
+        coin: 'BTC',
+        oid: 1,
+        category: 'basic',
+      };
+      const conditional = {
+        key: 'conditional:BTC:2',
+        coin: 'BTC',
+        oid: 2,
+        category: 'conditional',
+      };
+      const allBasic = [
+        basic,
+        { ...basic, key: 'basic:ETH:3', coin: 'ETH', oid: 3 },
+      ];
+      const allConditional = [
+        conditional,
+        { ...conditional, key: 'conditional:ETH:4', coin: 'ETH', oid: 4 },
+      ];
+      const byCategory = { basic: [basic], conditional: [conditional] };
+      const committed = jest.fn();
+      mockUsePerpsProScene.mockReturnValue(createSceneState());
+      mockUsePerpsProInfoPanel.mockImplementation(function useInfo() {
+        const [category, setCategory] = React.useState<'basic' | 'conditional'>(
+          'basic',
+        );
+        return createInfoState({
+          activeInfoTab: 'openOrders',
+          openOrderCategory: category,
+          openOrders: byCategory[category],
+          openOrdersByCategory: byCategory,
+          openOrderCollectionPresentationByCategory: {
+            basic: 'populated',
+            conditional: 'populated',
+          },
+          openOrderCounts: { basic: 2, conditional: 2, unsupported: 1 },
+          allOpenOrdersCount: 4,
+          hideOtherOpenOrderSymbols: true,
+          openOrderCommandCandidates:
+            category === 'basic' ? allBasic : allConditional,
+          setOpenOrderCategory: (next: typeof category) => {
+            committed(next);
+            setCategory(next);
+          },
+        });
+      });
+      render(
+        <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+      );
+      const track = getInfoTrack();
+      const basicList = getInfoList('openOrders');
+      expect(screen.UNSAFE_getAllByType(SceneList)).toHaveLength(1);
+      expect(screen.UNSAFE_getAllByType(FlatList)).toHaveLength(5);
+      expect(
+        screen.getAllByTestId('perps-pro-open-orders-controls'),
+      ).toHaveLength(1);
+      expect(
+        within(getInfoPage('openOrders', 'basic')).queryByTestId(
+          'perps-pro-open-orders-controls',
+        ),
+      ).toBeNull();
+      fireEvent.press(
+        within(screen.getByTestId('perps-pro-open-orders-controls')).getByRole(
+          'button',
+        ),
+      );
+      expect(mockConfirmCancelAll).toHaveBeenLastCalledWith(allBasic, 'basic');
+      mockConfirmCancelAll.mockClear();
+      fireEvent.press(
+        screen.getByTestId('perps-pro-open-orders-tab-conditional'),
+      );
+      expect(nativeBoundary.animations()).toHaveLength(1);
+      expect(committed).not.toHaveBeenCalled();
+      expect(
+        screen.getByTestId('perps-pro-open-orders-tab-basic', {
+          includeHiddenElements: true,
+        }).props.accessibilityState.selected,
+      ).toBe(true);
+      fireEvent.press(
+        within(
+          screen.getByTestId('perps-pro-open-orders-controls', {
+            includeHiddenElements: true,
+          }),
+        ).getByRole('button', { includeHiddenElements: true }),
+      );
+      expect(mockConfirmCancelAll).not.toHaveBeenCalled();
+      expect(getInfoPage('openOrders', 'conditional').props.pointerEvents).toBe(
+        'none',
+      );
+      physicalPageScroll(2);
+      expect(committed).not.toHaveBeenCalled();
+      finishPhysicalPage(2);
+      expect(committed).toHaveBeenCalledTimes(1);
+      expect(committed).toHaveBeenCalledWith('conditional');
+      expect(
+        screen.getByTestId('perps-pro-open-orders-tab-conditional').props
+          .accessibilityState.selected,
+      ).toBe(true);
+      fireEvent.press(
+        within(screen.getByTestId('perps-pro-open-orders-controls')).getByRole(
+          'button',
+        ),
+      );
+      expect(mockConfirmCancelAll).toHaveBeenLastCalledWith(
+        allConditional,
+        'conditional',
+      );
+      expect(screen.UNSAFE_getAllByType(FlatList)).toContain(basicList);
+      expect(getInfoPage('openOrders', 'conditional').props.pointerEvents).toBe(
+        'auto',
+      );
+      expect(getInfoTrack()).toBe(track);
+    },
+  );
+
+  it('catches up retained Orders callbacks, pending state, units and unfiltered edit position without replacing the data array', () => {
+    jest.replaceProperty(Platform, 'OS', 'ios');
+    const basic = {
+      key: 'basic:BTC:1',
+      coin: 'BTC',
+      oid: 1,
+      category: 'basic',
+    };
+    const conditional = {
+      key: 'conditional:ETH:2',
+      coin: 'ETH',
+      oid: 2,
+      category: 'conditional',
+      side: 'sell',
+      reduceOnly: true,
+      editKind: 'triggerMarket',
+    };
+    const byCategory = { basic: [basic], conditional: [conditional] };
+    const firstPosition = { coin: 'ETH', direction: 'long', baseSize: '1' };
+    const nextPosition = { ...firstPosition, baseSize: '2' };
+    const firstOpen = jest.fn();
+    const latestOpen = jest.fn();
+    const info = createInfoState({
+      activeInfoTab: 'openOrders',
+      openOrderCategory: 'basic',
+      openOrders: byCategory.basic,
+      openOrdersByCategory: byCategory,
+      openOrderCollectionPresentationByCategory: {
+        basic: 'populated',
+        conditional: 'populated',
+      },
+      allPositionsByCoin: new Map([['ETH', firstPosition]]),
+      positions: [],
+      hideOtherPositionSymbols: true,
+      openOrderCounts: { basic: 1, conditional: 1, unsupported: 0 },
+    });
+    mockUsePerpsProScene.mockReturnValue(createSceneState());
+    mockUsePerpsProInfoPanel.mockReturnValue(info);
+    const editor = mockUsePerpsProOpenOrderEdit();
+    mockUsePerpsProOpenOrderEdit.mockReturnValue({
+      ...editor,
+      open: firstOpen,
+    });
+    const props = { isModeSwitching: false, onSwitchToSimple: jest.fn() };
+    const view = render(<PerpsProScene {...props} />);
+    const conditionalList = screen
+      .UNSAFE_getAllByType(FlatList)
+      .find(
+        node => node.props.testID === 'perps-pro-open-orders-rows-conditional',
+      )!;
+    const data = conditionalList.props.data;
+    mockOpenOrderCardProps.mockClear();
+    mockOrderPending = true;
+    mockTradeAmountUnit = 'base';
+    mockUsePerpsProInfoPanel.mockReturnValue({
+      ...info,
+      allPositionsByCoin: new Map([['ETH', nextPosition]]),
+    });
+    mockUsePerpsProOpenOrderEdit.mockReturnValue({
+      ...editor,
+      open: latestOpen,
+    });
+    view.rerender(<PerpsProScene {...props} />);
+    expect(
+      mockOpenOrderCardProps.mock.calls.some(
+        ([value]) => value.order === conditional,
+      ),
+    ).toBe(false);
+    expect(conditionalList.props.data).toBe(data);
+    fireEvent.press(
+      screen.getByTestId('perps-pro-open-orders-tab-conditional'),
+    );
+    const latest = mockOpenOrderCardProps.mock.calls
+      .map(([value]) => value)
+      .findLast(value => value.order === conditional);
+    expect(latest).toMatchObject({
+      amountUnit: 'base',
+      cancelPending: true,
+      editEnabled: true,
+    });
+    expect(conditionalList.props.data).toBe(data);
+    expect(firstOpen).not.toHaveBeenCalled();
+    expect(latestOpen).not.toHaveBeenCalled();
+    expect(mockConfirmCancelOrder).not.toHaveBeenCalled();
+    physicalPageScroll(2);
+    finishPhysicalPage(2);
+    act(() => latest.onEdit(conditional));
+    expect(latestOpen).toHaveBeenCalledWith(conditional, nextPosition);
+    act(() => latest.onCancel(conditional));
+    expect(mockConfirmCancelOrder).toHaveBeenCalledWith(conditional);
+  });
+
+  it('remounts the UI track on account change while preserving the committed pill and rejecting old gesture callbacks', () => {
+    jest.replaceProperty(Platform, 'OS', 'ios');
+    const committed = jest.fn();
+    const info = createInfoState({
+      activeInfoTab: 'openOrders',
+      openOrderCategory: 'conditional',
+      accountIdentity: 'account-a',
+      setOpenOrderCategory: committed,
+    });
+    mockUsePerpsProScene.mockReturnValue(createSceneState());
+    mockUsePerpsProInfoPanel.mockReturnValue(info);
+    const props = { isModeSwitching: false, onSwitchToSimple: jest.fn() };
+    const view = render(<PerpsProScene {...props} />);
+    const outer = getInfoTrack();
+    const stalePan = infoPan();
+    mockUsePerpsProInfoPanel.mockReturnValue({
+      ...info,
+      accountIdentity: 'account-b',
+    });
+    view.rerender(<PerpsProScene {...props} />);
+    expect(getInfoTrack()).not.toBe(outer);
+    expect(nativeBoundary.animations()).toHaveLength(0);
+    act(() => {
+      stalePan.handlers.onStart(panEvent());
+      stalePan.handlers.onUpdate(panEvent(300));
+      stalePan.handlers.onEnd(panEvent(300), true);
+      stalePan.handlers.onFinalize?.(panEvent(300), true);
+      nativeBoundary.finishAnimations();
+    });
+    expect(committed).not.toHaveBeenCalled();
+    expect(
+      screen.getByTestId('perps-pro-open-orders-tab-conditional').props
+        .accessibilityState.selected,
+    ).toBe(true);
   });
 
   it('keeps controls when a filter has no visible rows but the source is not empty', () => {
@@ -2892,6 +4214,7 @@ describe('PerpsProScene market loading states', () => {
     view.rerender(
       <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
     );
+    settleInfoPage('openOrders');
     expect(screen.getByTestId('perps-pro-open-orders-controls')).toBeTruthy();
     expect(screen.getByTestId('perps-pro-open-orders-empty')).toBeTruthy();
   });
@@ -2919,6 +4242,7 @@ describe('PerpsProScene market loading states', () => {
     view.rerender(
       <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
     );
+    settleInfoPage('openOrders');
     expect(screen.getByTestId('perps-pro-open-orders-controls')).toBeTruthy();
     expect(screen.queryByTestId('perps-pro-open-orders-empty')).toBeNull();
   });
@@ -2964,6 +4288,7 @@ describe('PerpsProScene market loading states', () => {
       <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
     );
 
+    settleInfoPage('openOrders');
     const openOrderCheckbox = within(
       screen.getByTestId('perps-pro-open-orders-controls'),
     ).getByRole('checkbox');
@@ -3060,14 +4385,17 @@ describe('PerpsProScene market loading states', () => {
     const view = render(
       <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
     );
-    const scroll = screen.getByTestId('perps-pro-scroll');
+    const scroll = screen.getByTestId('perps-pro-info-list');
     fireEvent(scroll, 'layout', {
       nativeEvent: { layout: { height: 700, width: 393, x: 0, y: 0 } },
     });
 
+    const rowStartOffset = screen.UNSAFE_getByType(PerpsProInfoSingleList).props
+      .rowStartOffset;
+    const expectedMinHeight = 1202 - rowStartOffset;
     expect(
-      StyleSheet.flatten(scroll.props.contentContainerStyle),
-    ).toMatchObject({ minHeight: 1202, paddingBottom: 386 });
+      StyleSheet.flatten(getInfoList('account').props.style),
+    ).toMatchObject({ minHeight: expectedMinHeight, paddingBottom: 386 });
 
     mockUsePerpsProInfoPanel.mockReturnValue(
       createInfoState({
@@ -3079,11 +4407,10 @@ describe('PerpsProScene market loading states', () => {
       <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
     );
 
+    settleInfoPage('positions');
     expect(
-      StyleSheet.flatten(
-        screen.getByTestId('perps-pro-scroll').props.contentContainerStyle,
-      ),
-    ).toMatchObject({ minHeight: 1202, paddingBottom: 386 });
+      StyleSheet.flatten(getInfoList('positions').props.style),
+    ).toMatchObject({ minHeight: expectedMinHeight, paddingBottom: 386 });
 
     mockUsePerpsProInfoPanel.mockReturnValue(
       createInfoState({
@@ -3095,11 +4422,10 @@ describe('PerpsProScene market loading states', () => {
       <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
     );
 
+    settleInfoPage('openOrders');
     expect(
-      StyleSheet.flatten(
-        screen.getByTestId('perps-pro-scroll').props.contentContainerStyle,
-      ),
-    ).toMatchObject({ minHeight: 1202, paddingBottom: 386 });
+      StyleSheet.flatten(getInfoList('openOrders').props.style),
+    ).toMatchObject({ minHeight: expectedMinHeight, paddingBottom: 386 });
 
     mockUsePerpsProInfoPanel.mockReturnValue(
       createInfoState({
@@ -3111,11 +4437,10 @@ describe('PerpsProScene market loading states', () => {
       <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
     );
 
+    settleInfoPage('positions');
     expect(
-      StyleSheet.flatten(
-        screen.getByTestId('perps-pro-scroll').props.contentContainerStyle,
-      ),
-    ).toMatchObject({ minHeight: 1202, paddingBottom: 32 });
+      StyleSheet.flatten(getInfoList('positions').props.style),
+    ).toMatchObject({ minHeight: expectedMinHeight, paddingBottom: 32 });
 
     mockUsePerpsProInfoPanel.mockReturnValue(
       createInfoState({
@@ -3126,11 +4451,10 @@ describe('PerpsProScene market loading states', () => {
       <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
     );
 
+    settleInfoPage('account');
     expect(
-      StyleSheet.flatten(
-        screen.getByTestId('perps-pro-scroll').props.contentContainerStyle,
-      ),
-    ).toMatchObject({ minHeight: 1202, paddingBottom: 32 });
+      StyleSheet.flatten(getInfoList('account').props.style),
+    ).toMatchObject({ minHeight: expectedMinHeight, paddingBottom: 32 });
   });
 
   it('closes the local funding overlay when the active account changes', () => {

@@ -53,6 +53,10 @@ RCT_EXPORT_METHOD(forceExitApp) {
     exit(0);
 }
 
+RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(androidStopHermesSamplingProfiler) {
+    return @NO;
+}
+
 RCT_EXPORT_METHOD(setSensitiveClipboard:(NSString *)text
                   resolver:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject) {

@@ -3,6 +3,11 @@ import React from 'react';
 import { StyleSheet } from 'react-native';
 import type { SharedValue } from 'react-native-reanimated';
 
+// Keep callback and disabled semantics real; native hit testing is device-only.
+jest.mock('react-native-gesture-handler', () => ({
+  Pressable: require('react-native').Pressable,
+}));
+
 jest.mock('@/assets2024/icons/perps/IconHistoryCC.svg', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
@@ -240,6 +245,28 @@ describe('PerpsProInfoTabs', () => {
     fireEvent.press(screen.getByTestId('perps-pro-history'));
     expect(onHistoryPress).toHaveBeenCalledTimes(1);
     expect(onHistoryPress).toHaveBeenLastCalledWith(false);
+  });
+
+  it('dispatches the selected tab without invoking the independent History action', () => {
+    const onChange = jest.fn();
+    const onHistoryPress = jest.fn();
+    render(
+      <PerpsProInfoTabs
+        activeTab="account"
+        historyEnabled
+        indicatorPosition={indicatorPosition}
+        onChange={onChange}
+        onHistoryPress={onHistoryPress}
+        openOrdersCount={0}
+        pendingFundingCount={0}
+        positionsCount={0}
+      />,
+    );
+
+    fireEvent.press(screen.getByTestId('perps-pro-info-tab-openOrders'));
+    expect(onChange).toHaveBeenCalledTimes(1);
+    expect(onChange).toHaveBeenCalledWith('openOrders');
+    expect(onHistoryPress).not.toHaveBeenCalled();
   });
 
   it('hides the count for one pending operation and shows it above one', () => {

@@ -223,6 +223,11 @@ export const usePerpsProCancelOrders = () => {
     void execute(snapshot.orders, snapshot.account);
   }, [confirmation, execute]);
 
+  const isOrderPending = useCallback(
+    (oid: number) => pendingOidSet.has(oid),
+    [pendingOidSet],
+  );
+
   return {
     confirmation,
     confirmCancellation,
@@ -230,6 +235,6 @@ export const usePerpsProCancelOrders = () => {
     confirmCancelOrder,
     dismissConfirmation,
     isCancelAllPending: pendingOids.length > 0,
-    isOrderPending: (oid: number) => pendingOidSet.has(oid),
+    isOrderPending,
   };
 };

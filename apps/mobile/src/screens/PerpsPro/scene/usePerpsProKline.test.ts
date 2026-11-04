@@ -103,6 +103,7 @@ describe('usePerpsProKline', () => {
       enabled: false,
       initialSourceCandles: undefined,
       interval: '15m',
+      publicationEnabled: true,
     });
 
     await flushPromises();
@@ -116,6 +117,7 @@ describe('usePerpsProKline', () => {
       enabled: true,
       initialSourceCandles: expect.any(Array),
       interval: '1M',
+      publicationEnabled: true,
     });
   });
 
@@ -176,6 +178,7 @@ describe('usePerpsProKline', () => {
       enabled: true,
       initialSourceCandles: expect.any(Array),
       interval: '15m',
+      publicationEnabled: true,
     });
     consoleError.mockRestore();
   });
@@ -200,10 +203,43 @@ describe('usePerpsProKline', () => {
       enabled: false,
       initialSourceCandles: expect.any(Array),
       interval: '15m',
+      publicationEnabled: true,
     });
     expect(hook.result.current.feed).toMatchObject({
       identity: 'BTC:15m',
       status: 'ready',
     });
+  });
+
+  it('pauses publication independently of the live feed and preload lifecycle', async () => {
+    const hook = renderHook(
+      ({ publicationEnabled }) =>
+        usePerpsProKline({
+          coin: 'BTC',
+          enabled: true,
+          preloadEnabled: true,
+          publicationEnabled,
+        }),
+      { initialProps: { publicationEnabled: true } },
+    );
+    await flushPromises();
+    const preloadCalls = mockLoadPerpsCandleSourceSnapshot.mock.calls.length;
+
+    hook.rerender({ publicationEnabled: false });
+    expect(mockUsePerpsCandleFeed).toHaveBeenLastCalledWith({
+      coin: 'BTC',
+      enabled: true,
+      initialSourceCandles: expect.any(Array),
+      interval: '15m',
+      publicationEnabled: false,
+    });
+    hook.rerender({ publicationEnabled: true });
+    expect(mockUsePerpsCandleFeed).toHaveBeenLastCalledWith(
+      expect.objectContaining({ enabled: true, publicationEnabled: true }),
+    );
+    expect(mockLoadPerpsCandleSourceSnapshot).toHaveBeenCalledTimes(
+      preloadCalls,
+    );
+    expect(mockGetSelectedKlineInterval).toHaveBeenCalledTimes(1);
   });
 });

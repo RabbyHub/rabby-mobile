@@ -5,7 +5,13 @@ import { PERPS_MINI_USD_VALUE } from '@/constant/perps';
 import { Text, type TextInput } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
@@ -81,6 +87,24 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
     (nextSheet: Exclude<Sheet, null>) =>
       dismissKeyboardThen(() => setSheet(nextSheet)),
     [dismissKeyboardThen],
+  );
+  const closeSheet = useCallback(() => setSheet(null), []);
+  const confirmLeverage = controller.confirmLeverage;
+  const confirmLeverageAndClose = useCallback(
+    async (value: number) => {
+      if (await confirmLeverage(value)) {
+        closeSheet();
+      }
+    },
+    [closeSheet, confirmLeverage],
+  );
+  const { marginMode, marginModeDisabledReason } = controller;
+  const disabledMarginModes = useMemo<readonly ('cross' | 'isolated')[]>(
+    () =>
+      marginModeDisabledReason
+        ? [marginMode === 'cross' ? 'isolated' : 'cross']
+        : [],
+    [marginMode, marginModeDisabledReason],
   );
   useEffect(() => {
     if (!configurationReady) {
@@ -476,32 +500,28 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
       </View>
 
       <PerpsProOrderTypeSheet
-        onClose={() => setSheet(null)}
+        onClose={closeSheet}
         onSelect={controller.setOrderType}
         selected={form.orderType}
         visible={configurationReady && sheet === 'orderType'}
       />
       <PerpsProMarginModeSheet
-        disabledValues={
-          controller.marginModeDisabledReason
-            ? [controller.marginMode === 'cross' ? 'isolated' : 'cross']
-            : []
-        }
+        disabledValues={disabledMarginModes}
         marketName={market?.displayBase ?? '-'}
-        onClose={() => setSheet(null)}
+        onClose={closeSheet}
         onSelect={controller.setMarginMode}
         pending={controller.leveragePending}
         selected={controller.marginMode}
         visible={configurationReady && sheet === 'margin'}
       />
       <PerpsProTifSheet
-        onClose={() => setSheet(null)}
+        onClose={closeSheet}
         onSelect={controller.setTif}
         selected={form.tif}
         visible={configurationReady && sheet === 'tif'}
       />
       <PerpsProBboSheet
-        onClose={() => setSheet(null)}
+        onClose={closeSheet}
         onSelect={controller.enableBbo}
         options={bboOptions}
         selected={form.bboStrategy}
@@ -510,12 +530,8 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
       <PerpsProLeverageSheet
         currentLeverage={controller.leverage}
         maxLeverage={market?.marketData.maxLeverage ?? 1}
-        onClose={() => setSheet(null)}
-        onConfirm={async value => {
-          if (await controller.confirmLeverage(value)) {
-            setSheet(null);
-          }
-        }}
+        onClose={closeSheet}
+        onConfirm={confirmLeverageAndClose}
         pending={controller.leveragePending}
         visible={configurationReady && sheet === 'leverage'}
       />
