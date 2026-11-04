@@ -57,7 +57,8 @@ export function usePerpsSimpleChart({
     return () => sub.remove();
   }, []);
   const active = isFocused && foreground;
-  // Shared with Pro: either mode's interval change is reflected in the other.
+  // Shared with Pro: a manual interval from either mode shows in both; Pro
+  // ignores range views.
   const { preference, hydrated } = usePerpsChartPreference();
   const updatePreference = useMemoizedFn((value: SimpleChartPreference) =>
     updatePerpsChartPreference(value),

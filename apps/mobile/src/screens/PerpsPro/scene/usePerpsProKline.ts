@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import type { PerpsCandleDataInterval } from '@/constant/perps';
+import {
+  DEFAULT_PERPS_CANDLE_INTERVAL,
+  type PerpsCandleDataInterval,
+} from '@/constant/perps';
 import { selectPerpsDisplayCandles } from '@/hooks/perps/candles/candle';
 import {
   updatePerpsChartPreference,
@@ -23,22 +26,31 @@ export const usePerpsProKline = ({
   enabled: boolean;
   preloadEnabled?: boolean;
 }) => {
-  // Linked with Simple: Pro reads and writes the shared chart preference.
+  // Manual intervals are shared with Simple; a Simple range view keeps Pro
+  // on its own 15m default.
   const { hydrated, preference: chartPreference } = usePerpsChartPreference();
-  const preference = { hydrated, interval: chartPreference.interval };
+  const preference = {
+    hydrated,
+    interval:
+      chartPreference.range === null
+        ? chartPreference.interval
+        : DEFAULT_PERPS_CANDLE_INTERVAL,
+  };
   const [preloadedSnapshot, setPreloadedSnapshot] =
     useState<PerpsCandleSourceSnapshot | null>(null);
   const [preloadError, setPreloadError] = useState<Error | null>(null);
 
   const selectInterval = useCallback(
     (interval: PerpsCandleDataInterval) => {
-      if (!hydrated || interval === chartPreference.interval) {
+      // Compare with what Pro shows: re-picking 15m over a range view must
+      // not move Simple out of that range.
+      if (!hydrated || interval === preference.interval) {
         return;
       }
       // A Pro choice is a manual interval in Simple, keeping its chart style.
       updatePerpsChartPreference({ ...chartPreference, range: null, interval });
     },
-    [chartPreference, hydrated],
+    [chartPreference, hydrated, preference.interval],
   );
 
   const expectedIdentity = getPerpsCandleSourceIdentity(
