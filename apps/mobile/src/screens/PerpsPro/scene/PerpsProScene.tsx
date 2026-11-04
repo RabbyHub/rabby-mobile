@@ -83,10 +83,10 @@ import {
 } from '../components/info/usePerpsProInfoScrollBridge';
 import {
   createPerpsProInfoTabsTranslateY,
-  getPerpsProPopulatedInfoSectionBottomPadding,
   getPerpsProInfoSectionMinimumContentHeight,
   getPerpsProInfoTabsNaturalAnchor,
   PERPS_PRO_INFO_TABS_HEIGHT,
+  PERPS_PRO_INFO_SECTION_BOTTOM_PADDING,
   PERPS_PRO_INFO_SECTION_DIVIDER_HEIGHT,
   PERPS_PRO_INFO_TABS_PLACEHOLDER_HEIGHT,
 } from '../components/info/perpsProInfoTabsSticky';
@@ -756,54 +756,22 @@ export const PerpsProScene: React.FC<{
   const klinePanelInset = klineOpen
     ? getPerpsProKlinePanelHeight(safeAreaInsets.bottom)
     : 0;
-  const populatedInfoBottomPadding =
-    scrollViewportHeight > 0
-      ? getPerpsProPopulatedInfoSectionBottomPadding({
-          marketBarHeight: PERPS_PRO_MARKET_BAR_HEIGHT,
-          viewportHeight: scrollViewportHeight,
-        })
-      : null;
   const scrollContentStyles = useMemo<
     Record<PerpsProInfoTab, ViewStyle[]>
   >(() => {
-    const trailingStyle = (populated: boolean): ViewStyle => ({
-      paddingBottom:
-        (populated && populatedInfoBottomPadding != null
-          ? populatedInfoBottomPadding
-          : 32) + klinePanelInset,
-    });
-    return {
-      account: [
-        styles.scrollContent,
-        ...(scrollContentMinimumHeightStyle
-          ? [scrollContentMinimumHeightStyle]
-          : []),
-        trailingStyle(info.accountState === 'ready'),
-      ],
-      positions: [
-        styles.scrollContent,
-        ...(scrollContentMinimumHeightStyle
-          ? [scrollContentMinimumHeightStyle]
-          : []),
-        trailingStyle(info.positionCollectionPresentation === 'populated'),
-      ],
-      openOrders: [
-        styles.scrollContent,
-        ...(scrollContentMinimumHeightStyle
-          ? [scrollContentMinimumHeightStyle]
-          : []),
-        trailingStyle(info.openOrderCollectionPresentation === 'populated'),
-      ],
-    };
-  }, [
-    info.accountState,
-    info.openOrderCollectionPresentation,
-    info.positionCollectionPresentation,
-    klinePanelInset,
-    populatedInfoBottomPadding,
-    scrollContentMinimumHeightStyle,
-    styles.scrollContent,
-  ]);
+    // Short tabs keep the one-page minimum; long tabs end a fixed gap below
+    // their last row.
+    const style: ViewStyle[] = [
+      styles.scrollContent,
+      ...(scrollContentMinimumHeightStyle
+        ? [scrollContentMinimumHeightStyle]
+        : []),
+      {
+        paddingBottom: PERPS_PRO_INFO_SECTION_BOTTOM_PADDING + klinePanelInset,
+      },
+    ];
+    return { account: style, positions: style, openOrders: style };
+  }, [klinePanelInset, scrollContentMinimumHeightStyle, styles.scrollContent]);
   const marketTranslateY = useMemo(
     () =>
       showRegionAlert
@@ -1780,7 +1748,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   scrollContent: {
     backgroundColor: colors2024['neutral-bg-1'],
     flexGrow: 1,
-    paddingBottom: 32,
   },
   headerLeadInSpacer: { height: PERPS_PRO_HEADER_HEIGHT },
   marketLeadInSpacer: { height: PERPS_PRO_MARKET_BAR_HEIGHT },
