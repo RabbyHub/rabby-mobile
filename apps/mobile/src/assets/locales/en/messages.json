@@ -3402,6 +3402,7 @@
       "maxPriceImpact": "Max Price Impact",
       "unsupportedAddressType": "Address type not supported",
       "accountChanged": "Address changed. Please start again",
+      "addressSwitchUnsupported": "Address switching isn't supported on this page.",
       "buy": {
         "amount": "Buy Amount",
         "allocation": "Allocation",

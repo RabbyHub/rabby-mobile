@@ -1,20 +1,31 @@
 import React from 'react';
 import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import RcMemeCoinTitle from '@/assets2024/memecoin/memecoin-title.svg';
+import RcIconWarning from '@/assets2024/memecoin/warning.svg';
 import { HeaderAccountSwitcher } from '@/components/AccountSwitcher/HeaderAccountSwitcher';
+import { toast, toastWithIcon } from '@/components2024/Toast';
 import { ScreenLayouts } from '@/constant/layout';
 import { HeaderBackPressable } from '@/hooks/navigation';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
+
+const toastWarning = toastWithIcon(RcIconWarning);
 
 export const MemeCoinHeader = ({
   disableSwitch,
 }: {
   disableSwitch?: boolean;
 }) => {
+  const { t } = useTranslation();
   const { styles } = useTheme2024({ getStyle });
   const { top } = useSafeAreaInsets();
+  const warnSwitchUnsupported = () => {
+    toastWarning(t('page.memeCoin.addressSwitchUnsupported'), {
+      position: toast.positions.CENTER,
+    });
+  };
 
   return (
     <View style={[styles.outer, { paddingTop: top }]}>
@@ -27,6 +38,7 @@ export const MemeCoinHeader = ({
           <HeaderAccountSwitcher
             forScene="MakeTransactionAbout"
             disableSwitch={disableSwitch}
+            onDisabledPress={warnSwitchUnsupported}
             hideAccountName
             showCaretWhenDisabled
             style={styles.switcher}
