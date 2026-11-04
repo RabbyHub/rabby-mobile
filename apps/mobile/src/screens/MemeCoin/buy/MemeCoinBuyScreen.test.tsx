@@ -3,9 +3,19 @@ import { act, fireEvent, render } from '@testing-library/react-native';
 import { BackHandler } from 'react-native';
 import useTokenList from '@/store/tokens';
 import { pushMemeCoinExecute } from '../navigation';
+import { allocationModeStore } from '../ui/allocationModeStore';
 import { MemeCoinBuyScreen } from './MemeCoinBuyScreen';
 
 const mockGasMarket = jest.fn();
+
+jest.mock('@/core/storage/mmkv', () => ({
+  zustandByMMKV: (_key: string, initialState: object) => {
+    const { create } = jest.requireActual(
+      'zustand',
+    ) as typeof import('zustand');
+    return create(() => initialState);
+  },
+}));
 
 jest.mock('@/store/tokens', () => {
   const { create } = jest.requireActual('zustand');
@@ -197,6 +207,7 @@ describe('MemeCoinBuyScreen allocation wiring', () => {
 
   beforeEach(() => {
     (pushMemeCoinExecute as jest.Mock).mockClear();
+    allocationModeStore.setState({ mode: 'marketCap' });
     mockGasMarket.mockReset();
     mockGasMarket.mockResolvedValue([{ level: 'normal', price: 1 }]);
     (useTokenList as unknown as { setState(s: unknown): void }).setState({
@@ -236,6 +247,23 @@ describe('MemeCoinBuyScreen allocation wiring', () => {
     await flush();
     screen.getByText('page.memeCoin.buy.equalSplit');
     fireEvent.press(screen.getByText('page.memeCoin.buy.preview'));
+
+    expect(legAmounts()).toEqual([50, 50]);
+  });
+
+  it('keeps the switched mode on the next entry', async () => {
+    const first = render(<MemeCoinBuyScreen />);
+    await flush();
+    fireEvent.press(first.getByText('page.memeCoin.buy.byMarketCap'));
+    await flush();
+    first.unmount();
+
+    const second = render(<MemeCoinBuyScreen />);
+    await flush();
+    second.getByText('page.memeCoin.buy.equalSplit');
+    fireEvent.press(second.getByText('pick:ETH'));
+    await flush();
+    fireEvent.press(second.getByText('page.memeCoin.buy.preview'));
 
     expect(legAmounts()).toEqual([50, 50]);
   });
