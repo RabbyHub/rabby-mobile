@@ -11,12 +11,7 @@ import { ApprovalPopupContainer } from '../Popup/ApprovalPopupContainer';
 import { useCommonPopupView } from '@/hooks/useCommonPopupView';
 import { StyleSheet, View } from 'react-native';
 import { useGetBinaryMode, useTheme2024, useThemeColors } from '@/hooks/theme';
-import { stats } from '@/utils/stats';
-import {
-  KEYRING_CATEGORY_MAP,
-  KEYRING_CLASS,
-} from '@rabby-wallet/keyring-utils';
-import { matomoRequestEvent } from '@/utils/analytics';
+import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { adjustV } from '@/utils/gnosis';
 import { getWalletIcon } from '@/utils/walletInfo';
 import { apisSafe } from '@/core/apis/safe';
@@ -194,30 +189,7 @@ export const PrivatekeyWaiting = ({
           setErrorMessage(t('page.signFooterBar.qrcode.failedToGetExplain'));
           return;
         }
-
-        const explain = signingTx?.explain;
-
-        stats.report('signTransaction', {
-          type: account.brandName,
-          chainId: chain?.serverId || '',
-          category: KEYRING_CATEGORY_MAP[account.type],
-          preExecSuccess: explain
-            ? explain?.calcSuccess && explain?.pre_exec?.success
-            : true,
-          createdBy: params?.$ctx?.ga ? 'rabby' : 'dapp',
-          source: params?.$ctx?.ga?.source || '',
-          trigger: params?.$ctx?.ga?.trigger || '',
-          networkType: chain?.isTestnet
-            ? 'Custom Network'
-            : 'Integrated Network',
-        });
       }
-    } else {
-      stats.report('startSignText', {
-        type: account.brandName,
-        category: KEYRING_CATEGORY_MAP[account.type],
-        method: params?.extra?.signTextMethod,
-      });
     }
 
     eventBus.addListener(EVENTS.TX_SUBMITTING, async () => {
@@ -256,11 +228,6 @@ export const PrivatekeyWaiting = ({
           setErrorMessage(e.message);
           return;
         }
-        matomoRequestEvent({
-          category: 'Transaction',
-          action: 'Submit',
-          label: chain?.isTestnet ? 'Custom Network' : 'Integrated Network',
-        });
         setSignFinishedData({
           data: sig,
           approvalId: approval.id,

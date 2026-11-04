@@ -4,7 +4,6 @@ const mockBuildCommand = jest.fn();
 const mockExecute = jest.fn();
 const mockEnsureApproval = jest.fn();
 const mockGetState = jest.fn();
-const mockReportCloseAllHistory = jest.fn();
 const mockEnsureUnlock = jest.fn(async () => true);
 const mockShowToast = jest.fn();
 
@@ -36,10 +35,6 @@ jest.mock('@/utils/walletUnlock', () => ({
 jest.mock('@sentry/react-native', () => ({ captureException: jest.fn() }));
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
-}));
-jest.mock('../analytics/manualTradeHistory', () => ({
-  reportPerpsProCloseAllHistory: (...args: unknown[]) =>
-    mockReportCloseAllHistory(...args),
 }));
 
 import { usePerpsProCloseAll } from './usePerpsProCloseAll';
@@ -136,18 +131,6 @@ describe('usePerpsProCloseAll', () => {
 
     expect(hook.result.current.pending).toBe(false);
     expect(hook.result.current.confirmation).toBeNull();
-    expect(mockReportCloseAllHistory).toHaveBeenCalledWith(
-      { type: 'closeAllPositions' },
-      [
-        {
-          coin: 'BTC',
-          oid: 1,
-          price: '100',
-          signedSize: '1',
-          size: '1',
-        },
-      ],
-    );
   });
 
   it('shows an authoritative server rejection instead of the generic close-all error', async () => {

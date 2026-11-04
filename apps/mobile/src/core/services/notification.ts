@@ -4,14 +4,10 @@ import { v4 as uuidv4 } from 'uuid';
 import { EthereumProviderError } from 'eth-rpc-errors/dist/classes';
 import * as Sentry from '@sentry/react-native';
 
-// import stats from '@/stats';
 import BigNumber from 'bignumber.js';
 
-import { stats } from '@/utils/stats';
-import { KEYRING_CATEGORY_MAP } from '@rabby-wallet/keyring-utils';
 import { apisAppWin } from './appWin';
 import type { EVENT_NAMES } from '@/components/GlobalBottomSheetModal/types';
-import { findChain } from '@/utils/chain';
 import type { Account } from '@/types/account';
 
 export interface Approval {
@@ -44,23 +40,6 @@ const QUEUE_APPROVAL_COMPONENTS_WHITELIST = [
   'PrivatekeyWaiting',
   'CoinbaseWaiting',
 ];
-
-export type StatsData = {
-  signed: boolean;
-  signedSuccess: boolean;
-  submit: boolean;
-  submitSuccess: boolean;
-  type: string;
-  chainId: string;
-  category: string;
-  preExecSuccess: boolean;
-  createdBy: string;
-  source: any;
-  trigger: any;
-  reported: boolean;
-  signMethod?: string;
-  networkType?: string;
-};
 
 type RequestApprovalParamBase = {
   approvalComponent: string;
@@ -96,7 +75,6 @@ export class NotificationService extends Events {
   notifyWindowId: null | string = null;
   isLocked = false;
   currentRequestDeferFn?: (isRetry?: boolean) => void;
-  statsData: StatsData | undefined;
   preferenceService: import('../startupServices/preference').PreferenceService;
   transactionHistoryService: import('./transactionHistory').TransactionHistoryService;
 
@@ -251,31 +229,6 @@ export class NotificationService extends Events {
       }
     }
     const data = inputData as RequestApprovalParamBase;
-    const currentAccount =
-      data.account || this.preferenceService.getFallbackAccount();
-    const reportExplain = (signingTxId?: string) => {
-      const signingTx = signingTxId
-        ? this.transactionHistoryService.getSigningTx(signingTxId)
-        : null;
-      const explain = signingTx?.explain;
-      const chain = findChain({
-        id: signingTx?.rawTx.chainId,
-      });
-
-      if ((explain || chain?.isTestnet) && currentAccount) {
-        stats.report('preExecTransaction', {
-          type: currentAccount.brandName,
-          category: KEYRING_CATEGORY_MAP[currentAccount.type],
-          chainId: chain?.serverId || '',
-          success: explain
-            ? explain.calcSuccess && explain.pre_exec.success
-            : true,
-          createdBy: data?.params.$ctx?.ga ? 'rabby' : 'dapp',
-          source: data?.params.$ctx?.ga?.source || '',
-          trigger: data?.params.$ctx?.ga?.trigger || '',
-        });
-      }
-    };
     return new Promise(async (resolve, reject) => {
       const uuid = uuidv4();
       let signingTxId;
@@ -295,15 +248,9 @@ export class NotificationService extends Events {
         data: data as any,
         winProps,
         resolve(data) {
-          if (this.data.approvalComponent === 'SignTx') {
-            reportExplain(this.signingTxId);
-          }
           resolve(data);
         },
         reject(data) {
-          if (this.data.approvalComponent === 'SignTx') {
-            reportExplain(this.signingTxId);
-          }
           reject(data);
         },
       };
@@ -410,14 +357,6 @@ export class NotificationService extends Events {
 
   callCurrentRequestDeferFn = (isRetry?: boolean) => {
     return this.currentRequestDeferFn?.(isRetry);
-  };
-
-  setStatsData = (data?: StatsData) => {
-    this.statsData = data;
-  };
-
-  getStatsData = () => {
-    return this.statsData;
   };
 
   private addLastRejectDapp() {

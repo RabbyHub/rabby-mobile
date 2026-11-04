@@ -13,7 +13,7 @@ const linearStyle = StyleSheet.create({
   },
 });
 
-const Linear = () => {
+export const PerpsSkeletonGradient = () => {
   return (
     <LinearGradient
       start={{ x: 0, y: 0 }}
@@ -47,7 +47,7 @@ export const PerpsPositionSkeletonLoader: React.FC = () => {
                 animation="wave"
                 width={100}
                 height={20}
-                LinearGradientComponent={Linear}
+                LinearGradientComponent={PerpsSkeletonGradient}
                 style={styles.skeleton}
               />
             </View>
@@ -56,7 +56,7 @@ export const PerpsPositionSkeletonLoader: React.FC = () => {
                 animation="wave"
                 width={80}
                 height={20}
-                LinearGradientComponent={Linear}
+                LinearGradientComponent={PerpsSkeletonGradient}
                 style={styles.skeleton}
               />
             </View>
@@ -79,14 +79,14 @@ export const PerpsSkeletonLoader: React.FC = () => {
             animation="wave"
             width={120}
             height={36}
-            LinearGradientComponent={Linear}
+            LinearGradientComponent={PerpsSkeletonGradient}
             style={styles.skeleton}
           />
           <Skeleton
             animation="wave"
             height={36}
             width={100}
-            LinearGradientComponent={Linear}
+            LinearGradientComponent={PerpsSkeletonGradient}
             style={styles.skeleton}
           />
         </View>
@@ -94,7 +94,7 @@ export const PerpsSkeletonLoader: React.FC = () => {
           animation="wave"
           width={80}
           height={18}
-          LinearGradientComponent={Linear}
+          LinearGradientComponent={PerpsSkeletonGradient}
           style={styles.skeleton}
         />
       </View>
@@ -105,7 +105,7 @@ export const PerpsSkeletonLoader: React.FC = () => {
           animation="wave"
           width={100}
           height={18}
-          LinearGradientComponent={Linear}
+          LinearGradientComponent={PerpsSkeletonGradient}
           style={[styles.skeleton, styles.sectionTitle]}
         />
         <View style={styles.marketItem}>
@@ -115,7 +115,7 @@ export const PerpsSkeletonLoader: React.FC = () => {
               circle
               width={36}
               height={36}
-              LinearGradientComponent={Linear}
+              LinearGradientComponent={PerpsSkeletonGradient}
               style={[styles.skeleton, styles.marketIcon]}
             />
             <View style={styles.marketItemInfo}>
@@ -123,14 +123,14 @@ export const PerpsSkeletonLoader: React.FC = () => {
                 animation="wave"
                 width={80}
                 height={16}
-                LinearGradientComponent={Linear}
+                LinearGradientComponent={PerpsSkeletonGradient}
                 style={[styles.skeleton, styles.marketName]}
               />
               <Skeleton
                 animation="wave"
                 width={60}
                 height={14}
-                LinearGradientComponent={Linear}
+                LinearGradientComponent={PerpsSkeletonGradient}
                 style={styles.skeleton}
               />
             </View>
@@ -140,14 +140,14 @@ export const PerpsSkeletonLoader: React.FC = () => {
               animation="wave"
               width={100}
               height={20}
-              LinearGradientComponent={Linear}
+              LinearGradientComponent={PerpsSkeletonGradient}
               style={[styles.skeleton, styles.marketPrice]}
             />
             <Skeleton
               animation="wave"
               width={60}
               height={16}
-              LinearGradientComponent={Linear}
+              LinearGradientComponent={PerpsSkeletonGradient}
               style={styles.skeleton}
             />
           </View>
@@ -160,7 +160,7 @@ export const PerpsSkeletonLoader: React.FC = () => {
           animation="wave"
           width={120}
           height={18}
-          LinearGradientComponent={Linear}
+          LinearGradientComponent={PerpsSkeletonGradient}
           style={styles.skeleton}
         />
       </View>
@@ -174,7 +174,7 @@ export const PerpsSkeletonLoader: React.FC = () => {
               circle
               width={36}
               height={36}
-              LinearGradientComponent={Linear}
+              LinearGradientComponent={PerpsSkeletonGradient}
               style={[styles.skeleton, styles.marketIcon]}
             />
             <View style={styles.marketItemInfo}>
@@ -182,14 +182,14 @@ export const PerpsSkeletonLoader: React.FC = () => {
                 animation="wave"
                 width={80}
                 height={16}
-                LinearGradientComponent={Linear}
+                LinearGradientComponent={PerpsSkeletonGradient}
                 style={[styles.skeleton, styles.marketName]}
               />
               <Skeleton
                 animation="wave"
                 width={60}
                 height={14}
-                LinearGradientComponent={Linear}
+                LinearGradientComponent={PerpsSkeletonGradient}
                 style={styles.skeleton}
               />
             </View>
@@ -199,14 +199,14 @@ export const PerpsSkeletonLoader: React.FC = () => {
               animation="wave"
               width={100}
               height={20}
-              LinearGradientComponent={Linear}
+              LinearGradientComponent={PerpsSkeletonGradient}
               style={[styles.skeleton, styles.marketPrice]}
             />
             <Skeleton
               animation="wave"
               width={60}
               height={16}
-              LinearGradientComponent={Linear}
+              LinearGradientComponent={PerpsSkeletonGradient}
               style={styles.skeleton}
             />
           </View>

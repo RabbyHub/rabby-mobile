@@ -37,13 +37,6 @@ import type { ITokenItem } from './types/assets';
  * https://reactnavigation.org/docs/typescript/
  */
 
-export type FromSceneParam = {
-  scene: string;
-  id?: string;
-  chain?: string;
-  symbol?: string;
-};
-
 export type SwapBridgeTab = 'swap' | 'bridge';
 
 export type SwapBridgeParams = {
@@ -57,7 +50,6 @@ export type SwapBridgeParams = {
   isSwapToTokenDetail?: boolean;
   isFromSwap?: boolean;
   isFromCopyTrading?: boolean;
-  from?: FromSceneParam;
   toChainEnum?: CHAINS_ENUM;
   toTokenId?: TokenItem['id'];
 };
@@ -132,7 +124,6 @@ export type RootStackParamsList = {
     unHold?: boolean;
     isSwapToTokenDetail?: boolean;
     tokenSelectType?: import('@/components/Token/TokenSelectorSheetModal').TokenSelectType;
-    from?: FromSceneParam;
   };
 };
 
@@ -178,6 +169,7 @@ type TestKitsNavigatorParamsList = {
   [RootNames.DevUIFormShowCase]?: {};
   [RootNames.DevUIAccountShowCase]?: {};
   [RootNames.DevUIComponents2024ShowCase]?: {};
+  [RootNames.DevUISafeSvgMedia]?: {};
   [RootNames.DevUIScreenContainerShowCase]?: {};
   [RootNames.DevUIDapps]?: {};
   [RootNames.DevDataSQLite]?: {};

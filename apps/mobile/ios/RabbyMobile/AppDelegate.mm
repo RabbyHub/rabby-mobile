@@ -18,6 +18,10 @@
 
 #import <sys/utsname.h>
 
+@interface AppDelegate ()
+@property (nonatomic, copy, readwrite) NSDictionary *initialLaunchOptions;
+@end
+
 @implementation AppDelegate
 
 - (NSString *)_getDarwinVersion
@@ -78,18 +82,39 @@
   UNUserNotificationCenter *center = [UNUserNotificationCenter currentNotificationCenter];
   center.delegate = self;
 
-  BOOL didFinish = [super application:application didFinishLaunchingWithOptions:launchOptions];
+  // Keep the factory on AppDelegate (RNThread uses it), but let SceneDelegate
+  // create the window and supply any cold-start URL before the React root starts.
+  self.automaticallyLoadReactNativeWindow = NO;
+  self.initialLaunchOptions = launchOptions ?: @{};
+  return [super application:application didFinishLaunchingWithOptions:launchOptions];
+}
 
+- (BOOL)connectWindowScene:(UIWindowScene *)windowScene launchOptions:(NSDictionary *)launchOptions
+{
+  if (self.window) {
+    // Reconnecting a scene must not recreate the root, JS runtime, or worker.
+    self.window.windowScene = windowScene;
+    [self.window makeKeyAndVisible];
+    return NO;
+  }
+
+  self.window = [[UIWindow alloc] initWithWindowScene:windowScene];
+  [self.reactNativeFactory startReactNativeWithModuleName:self.moduleName
+                                               inWindow:self.window
+                                      initialProperties:self.initialProps
+                                          launchOptions:launchOptions];
+
+  // In oldArch the bridge only exists after starting the root above.
   RCTBridge *bridge = self.bridge;
   if (bridge) {
     RCTHTTPRequestHandler *requestHandler = [bridge moduleForName:@"RCTHTTPRequestHandler"];
     if ([requestHandler respondsToSelector:@selector(setDefaultRequestHeaders:)]) {
       [requestHandler performSelector:@selector(setDefaultRequestHeaders:)
-                           withObject:@{@"User-Agent": userAgent}];
+                           withObject:@{@"User-Agent": [self makeUserAgent]}];
     }
   }
 
-  return didFinish;
+  return YES;
 }
 
 - (void)customizeRootView:(RCTRootView *)rootView

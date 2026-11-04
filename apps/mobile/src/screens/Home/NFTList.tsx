@@ -148,7 +148,7 @@ const NFTListInner = ({ onForeground, onRefresh }: Props) => {
   const focusedTab = useFocusedTab();
   const isFocused = focusedTab === 'nft';
 
-  useScrollToTopOnChainChange({
+  const suspendVisibleAnchor = useScrollToTopOnChainChange({
     chain: selectedChain,
     isCurrentTab: isFocused,
   });
@@ -406,7 +406,9 @@ const NFTListInner = ({ onForeground, onRefresh }: Props) => {
         windowSize={15}
         maxToRenderPerBatch={15}
         removeClippedSubviews={IS_ANDROID}
-        maintainVisibleContentPosition={{ minIndexForVisible: 0 }}
+        maintainVisibleContentPosition={
+          suspendVisibleAnchor ? undefined : { minIndexForVisible: 0 }
+        }
         // estimatedItemSize={ASSETS_ITEM_HEIGHT_NEW + ASSETS_SEPARATOR_HEIGHT}
         ItemSeparatorComponent={ListRenderSeparator}
         ListFooterComponent={ListRenderFooter}

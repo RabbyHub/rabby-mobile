@@ -23,7 +23,6 @@ import BigNumber from 'bignumber.js';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { reportPerpsProPositionTpSlHistory } from '../analytics/manualTradeHistory';
 import { buildPerpsProMarketDescriptor } from '../model/market';
 import type { PerpsPositionViewModel } from '../model/position';
 import type {
@@ -206,10 +205,6 @@ export const usePerpsProPositionTpSl = (
       try {
         await ensurePerpsActionApproval(editorSnapshot.account);
         const result = await executePerpsPositionTpSl(command);
-        reportPerpsProPositionTpSlHistory(command, result, {
-          leverage: editorSnapshot.position.leverage,
-          marginMode: editorSnapshot.position.marginMode,
-        });
         const hasMutation = result.legs.some(
           leg => leg.cancel === 'success' || leg.create === 'success',
         );

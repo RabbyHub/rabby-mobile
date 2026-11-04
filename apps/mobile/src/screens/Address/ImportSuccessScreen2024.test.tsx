@@ -55,7 +55,6 @@ jest.mock('@/core/serviceApi/contact', () => ({
 jest.mock('@/core/serviceApi/preference', () => ({
   getFallbackAccountSnapshot: () => null,
 }));
-jest.mock('@/utils/analytics', () => ({ matomoRequestEvent: jest.fn() }));
 jest.mock('@/utils/transaction', () => ({
   getKRCategoryByType: () => 'watch',
 }));

@@ -181,7 +181,10 @@ extension RNIMenuActionItem {
 
     #if swift(>=5.5)
     if #available(iOS 15.0, *) {
-      action.subtitle =
+      // Set through UIMenuElement (iOS 15+). Newer SDKs resolve
+      // `UIAction.subtitle` to the iOS 16 `UIMenuLeaf` requirement instead.
+      let menuElement: UIMenuElement = action;
+      menuElement.subtitle =
            self.actionSubtitle
         ?? self.fallbackActionSubtitle;
     };

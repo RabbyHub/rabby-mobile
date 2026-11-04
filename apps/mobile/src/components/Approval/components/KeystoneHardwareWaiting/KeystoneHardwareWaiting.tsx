@@ -11,13 +11,8 @@ import { StyleSheet, View } from 'react-native';
 import KeystoneSVG from '@/assets/icons/wallet/keystone.svg';
 import type { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
-import { stats } from '@/utils/stats';
-import {
-  HARDWARE_KEYRING_TYPES,
-  KEYRING_CATEGORY_MAP,
-} from '@rabby-wallet/keyring-utils';
+import { HARDWARE_KEYRING_TYPES } from '@rabby-wallet/keyring-utils';
 import { apiKeystone } from '@/core/apis';
-import { findChain, findChainByEnum } from '@/utils/chain';
 import Player from './Player';
 import Reader from './Reader';
 import { adjustV } from '@/utils/gnosis';
@@ -121,10 +116,6 @@ export const KeystoneHardwareWaiting = ({
   const account = params.isGnosis ? params.account! : $account;
   const colors = useThemeColors();
   const styles = useMemo(() => getStyles(colors), [colors]);
-
-  const chain = findChain({
-    id: params.chainId || 1,
-  })!.enum;
 
   const cancelRef = useRef(false);
 
@@ -246,27 +237,7 @@ export const KeystoneHardwareWaiting = ({
             setErrorMessage(t('page.signFooterBar.qrcode.failedToGetExplain'));
             return;
           }
-
-          const explain = signingTx.explain;
-
-          stats.report('signTransaction', {
-            type: account.brandName,
-            chainId: findChainByEnum(chain)?.serverId || '',
-            category: KEYRING_CATEGORY_MAP[account.type],
-            preExecSuccess: explain
-              ? explain?.calcSuccess && explain?.pre_exec?.success
-              : true,
-            createdBy: params?.$ctx?.ga ? 'rabby' : 'dapp',
-            source: params?.$ctx?.ga?.source || '',
-            trigger: params?.$ctx?.ga?.trigger || '',
-          });
         }
-      } else {
-        stats.report('startSignText', {
-          type: account.brandName,
-          category: KEYRING_CATEGORY_MAP[account.type],
-          method: params?.extra?.signTextMethod,
-        });
       }
       setErrorMessage('');
       setStatus(QR_HARDWARE_STATUS.SIGN);

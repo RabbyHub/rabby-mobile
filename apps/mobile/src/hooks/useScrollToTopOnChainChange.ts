@@ -1,4 +1,5 @@
-import { useEffect, useRef } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
+import type { ScrollView } from 'react-native';
 import {
   useScroller,
   useTabNameContext,
@@ -13,59 +14,58 @@ export const useScrollToTopOnChainChange = ({
   chain: string | null | undefined;
   isCurrentTab: boolean;
 }) => {
-  const previousChainRef = useRef(chain);
+  const chainRef = useRef(chain);
   const pendingScrollRef = useRef(false);
+  const [suspendVisibleAnchor, setSuspendVisibleAnchor] = useState(false);
   const tabName = useTabNameContext();
-  const { refMap } = useTabsContext();
+  const { refMap, contentInset } = useTabsContext();
   const scrollTo = useScroller();
 
-  useEffect(() => {
-    const previousChain = previousChainRef.current;
-    previousChainRef.current = chain;
-
-    if (previousChain !== chain) {
-      pendingScrollRef.current = true;
+  if (chain !== chainRef.current) {
+    chainRef.current = chain;
+    pendingScrollRef.current = true;
+    if (!suspendVisibleAnchor) {
+      setSuspendVisibleAnchor(true);
     }
+  }
 
-    // The chain selector is a sheet: the tab can be unfocused while the user
-    // picks a chain, so defer the scroll until the tab is current again.
+  useLayoutEffect(() => {
     if (!pendingScrollRef.current || !isCurrentTab) {
       return;
     }
-    pendingScrollRef.current = false;
-
-    // The selected chain swaps the token projection asynchronously. The list
-    // also keeps its visible item anchored across that data change
-    // (`maintainVisibleContentPosition`), so scrolling in the same commit is
-    // immediately overridden. Wait for the sheet close + projection commit,
-    // then scroll the native list directly (QA 1131).
-    const timer = setTimeout(() => {
-      const target = refMap[tabName];
-      const list = target?.current as
-        | {
-            scrollToLocation?: (params: {
-              sectionIndex: number;
-              itemIndex: number;
-              viewOffset: number;
-              animated: boolean;
-            }) => void;
-          }
-        | null
-        | undefined;
-
-      if (list?.scrollToLocation) {
-        list.scrollToLocation({
-          sectionIndex: 0,
-          itemIndex: 0,
-          viewOffset: 0,
-          animated: false,
-        });
-        return;
-      }
-
+    const target = refMap[tabName];
+    const list = target?.current as
+      | { getScrollResponder?: () => ScrollView | null | undefined }
+      | null
+      | undefined;
+    const responder = list?.getScrollResponder?.();
+    if (responder?.scrollTo) {
+      // Use the applied inset, including zero, to preserve the resting gap.
+      const inset =
+        responder.props?.contentInset?.top ?? contentInset?.value ?? 0;
+      responder.scrollTo({ x: 0, y: -inset, animated: false });
+    } else {
       runOnUI(scrollTo)(target, 0, 0, false, '[useScrollToTopOnChainChange]');
-    }, 250);
+    }
 
+    if (!suspendVisibleAnchor) {
+      pendingScrollRef.current = false;
+      return;
+    }
+
+    // Restore anchoring after the projection settles, then correct its offset
+    // in the next layout effect, after Fabric's native anchor adjustment.
+    const timer = setTimeout(() => setSuspendVisibleAnchor(false), 250);
     return () => clearTimeout(timer);
-  }, [chain, isCurrentTab, refMap, scrollTo, tabName]);
+  }, [
+    chain,
+    contentInset,
+    isCurrentTab,
+    refMap,
+    scrollTo,
+    suspendVisibleAnchor,
+    tabName,
+  ]);
+
+  return suspendVisibleAnchor;
 };

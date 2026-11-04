@@ -42,7 +42,7 @@ import {
 } from './PerpsProManageMarginAmountRow';
 import { PerpsProManageMarginSlider } from './PerpsProManageMarginSlider';
 
-const SHEET_HEIGHT = 564;
+const SHEET_HEIGHT = 578;
 const CONTENT_HEIGHT = SHEET_HEIGHT - 40;
 
 const formatManageMarginLiquidationPrice = (
@@ -217,25 +217,25 @@ export const PerpsProManageMarginSheet: React.FC<{
                   </Text>
                 </View>
               </View>
-              <View style={styles.priceGroup}>
-                <View style={styles.factRow}>
-                  <Text style={styles.factLabel}>
+              <View>
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>
                     {t('page.perps.pro.positions.entry')} (
                     {displayView.quoteAsset})
                   </Text>
-                  <Text style={styles.factValueRounded}>
+                  <Text style={styles.infoValue}>
                     {formatPerpsProPrice(
                       displayView.entryPrice,
                       displayView.pxDecimals,
                     )}
                   </Text>
                 </View>
-                <View style={styles.factRow}>
-                  <Text style={styles.factLabel}>
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>
                     {t('page.perps.pro.positions.mark')} (
                     {displayView.quoteAsset})
                   </Text>
-                  <Text style={styles.factValue}>
+                  <Text style={styles.infoValue}>
                     {formatPerpsProPrice(
                       displayView.markPrice,
                       displayView.pxDecimals,
@@ -369,9 +369,11 @@ const getStyle = createGetStyles2024(
     infoCard: {
       backgroundColor: resolvePerpsProDialogCardBackground(colors2024, isLight),
       borderRadius: 12,
-      padding: 16,
+      paddingBottom: 12,
+      paddingHorizontal: 16,
+      paddingTop: 16,
       gap: 10,
-      height: 104,
+      height: 118,
       left: 16,
       right: 16,
       top: 56,
@@ -408,7 +410,31 @@ const getStyle = createGetStyles2024(
     },
     longText: getPerpsProTintedTagTextStyle(colors2024, 'positive'),
     shortText: getPerpsProTintedTagTextStyle(colors2024, 'negative'),
-    priceGroup: { gap: 10 },
+    infoRow: {
+      alignItems: 'center',
+      flexDirection: 'row',
+      gap: 8,
+      justifyContent: 'space-between',
+      paddingVertical: 6,
+    },
+    infoLabel: {
+      color: colors2024['neutral-secondary'],
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 13,
+      fontWeight: '500',
+      lineHeight: 18,
+    },
+    infoValue: {
+      ...PERPS_PRO_NUMBER_STYLE,
+      flexShrink: 1,
+      minWidth: 0,
+      textAlign: 'right',
+      color: colors2024['neutral-title-1'],
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 14,
+      fontWeight: '700',
+      lineHeight: 18,
+    },
     factRow: {
       alignItems: 'center',
       flexDirection: 'row',
@@ -423,17 +449,6 @@ const getStyle = createGetStyles2024(
       lineHeight: 16,
     },
     factValue: {
-      ...PERPS_PRO_NUMBER_STYLE,
-      flexShrink: 1,
-      minWidth: 0,
-      textAlign: 'right',
-      color: colors2024['neutral-title-1'],
-      fontFamily: 'SF Pro Rounded',
-      fontSize: 12,
-      fontWeight: '500',
-      lineHeight: 16,
-    },
-    factValueRounded: {
       ...PERPS_PRO_NUMBER_STYLE,
       flexShrink: 1,
       minWidth: 0,
@@ -468,7 +483,7 @@ const getStyle = createGetStyles2024(
       left: 16,
       position: 'absolute',
       right: 16,
-      top: 168,
+      top: 182,
     },
     minimumValue: {
       ...PERPS_PRO_NUMBER_STYLE,
@@ -520,7 +535,7 @@ const getStyle = createGetStyles2024(
       left: 16,
       position: 'absolute',
       right: 16,
-      top: 338,
+      top: 352,
     },
     riskValue: {
       alignItems: 'center',

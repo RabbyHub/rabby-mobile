@@ -90,7 +90,8 @@ const rules: Rule[] = [
   {
     matches: ['https://app.uniswap.org'],
     hiddenSelectors: [
-      '#AppHeader ._display-flex._alignItems-stretch._flexBasis-auto._boxSizing-border-box._minHeight-0px._minWidth-0px._flexShrink-0._flexDirection-column._position-relative._zIndex-1020._pointerEvents-auto',
+      // Uniswap's generated class names change between releases; anchor on the promo banner's test id instead.
+      '#AppHeader > div:has([data-testid="mobile-promo-banner-close-button"])',
     ],
   },
   {

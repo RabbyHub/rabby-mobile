@@ -14,10 +14,13 @@ import {
 import {
   Animated,
   BackHandler,
+  Dimensions,
+  Keyboard,
   Platform,
   StyleSheet,
   TouchableOpacity,
   View,
+  type KeyboardEvent,
 } from 'react-native';
 import {
   BottomSheetModalProvider,
@@ -349,6 +352,19 @@ it('uses the whole new price tag to cancel and preserves the default trigger pre
     MODAL_GATE_IDS.perpsEditTpSlPrice,
   );
   expect(cancel).toHaveBeenCalledTimes(2);
+  const input = ui.getByPlaceholderText('$0');
+  fireEvent.changeText(input, '120');
+  fireEvent.press(ui.getByTestId('simple-position-tpsl-backdrop'));
+  // The rendered draft must survive the entire exit animation.
+  expect(ui.getByPlaceholderText('$0').props.value).toBe('$120');
+  expect(getVisibleBlockingModalIds()).toContain(
+    MODAL_GATE_IDS.perpsEditTpSlPrice,
+  );
+  act(() => jest.advanceTimersByTime(350));
+  expect(ui.queryByPlaceholderText('$0')).toBeNull();
+  await act(async () => fireEvent.press(ui.getByText('-')));
+  expect(ui.getByPlaceholderText('$0').props.value).toBe('');
+  expect(props.handleSetAutoClose).not.toHaveBeenCalled();
 });
 
 it('swaps only a set position tag X for the shared spinner while cancelling', () => {
@@ -944,16 +960,24 @@ it('retains the position portal and gate through fade-out, reopening and unmount
     };
   });
   const modalId = MODAL_GATE_IDS.perpsEditTpSlPrice;
+  const shown = jest.fn();
+  const dismissed = jest.fn();
   const surface = (visible: boolean) =>
     safe(
-      <SimplePositionTpSlModal visible={visible} modalId={modalId}>
+      <SimplePositionTpSlModal
+        visible={visible}
+        modalId={modalId}
+        onShow={shown}
+        onDismiss={dismissed}>
         <TextInput placeholder="Retained draft" defaultValue="120" />
       </SimplePositionTpSlModal>,
     );
   try {
     const ui = render(surface(true));
     const draft = ui.getByPlaceholderText('Retained draft');
+    expect(shown).not.toHaveBeenCalled();
     act(() => animations[0].finish({ finished: true }));
+    expect(shown).toHaveBeenCalledTimes(1);
     ui.rerender(surface(false));
     const interruptedExit = animations[animations.length - 1];
     expect(getVisibleBlockingModalIds()).toContain(modalId);
@@ -962,11 +986,13 @@ it('retains the position portal and gate through fade-out, reopening and unmount
     ui.rerender(surface(true));
     expect(interruptedExit.stop).toHaveBeenCalledTimes(1);
     act(() => interruptedExit.finish({ finished: true }));
+    expect(dismissed).not.toHaveBeenCalled();
     expect(ui.getByPlaceholderText('Retained draft')).toBe(draft);
     expect(getVisibleBlockingModalIds()).toContain(modalId);
 
     ui.rerender(surface(false));
     act(() => animations[animations.length - 1].finish({ finished: true }));
+    expect(dismissed).toHaveBeenCalledTimes(1);
     expect(ui.queryByPlaceholderText('Retained draft')).toBeNull();
     expect(getVisibleBlockingModalIds()).not.toContain(modalId);
 
@@ -981,5 +1007,75 @@ it('retains the position portal and gate through fade-out, reopening and unmount
   } finally {
     await cleanupAsync();
     timing.mockRestore();
+  }
+});
+
+it('corrects the iOS keyboard frame without moving the backdrop or the exiting card', async () => {
+  const originalOS = Platform.OS;
+  Platform.OS = 'ios';
+  const listeners = new Map<string, (event: KeyboardEvent) => void>();
+  const subscribe = jest
+    .spyOn(Keyboard, 'addListener')
+    .mockImplementation((name, listener) => {
+      listeners.set(name, listener);
+      return { remove: () => listeners.delete(name) };
+    });
+  const metrics = jest.spyOn(Keyboard, 'metrics').mockReturnValue(undefined);
+  const surface = (visible: boolean) =>
+    safe(
+      <SimplePositionTpSlModal
+        visible={visible}
+        modalId={MODAL_GATE_IDS.perpsEditTpSlPrice}>
+        <View />
+      </SimplePositionTpSlModal>,
+    );
+  const screenHeight = Dimensions.get('window').height;
+  const frame = (screenY: number): KeyboardEvent => ({
+    duration: 0,
+    easing: 'keyboard',
+    endCoordinates: {
+      screenX: 0,
+      screenY,
+      width: Dimensions.get('window').width,
+      height: screenHeight - screenY,
+    },
+  });
+  try {
+    const ui = render(surface(true));
+    const card = () => ui.getByTestId('simple-position-tpsl-viewport');
+    const geometry = () => StyleSheet.flatten(card().props.style);
+    fireEvent(card(), 'layout', {
+      nativeEvent: { layout: { x: 16, y: 0, width: 361, height: 464 } },
+    });
+    const backdrop = ui.getByTestId('simple-position-tpsl-backdrop');
+    const backdropStyle = StyleSheet.flatten(backdrop.props.style);
+    act(() => listeners.get('keyboardWillChangeFrame')!(frame(500)));
+    expect(geometry().top).toBeGreaterThanOrEqual(16);
+    expect(geometry().top + 464).toBeLessThanOrEqual(500 - 16);
+    expect(geometry().maxHeight).toBe(500 - 32);
+
+    act(() => listeners.get('keyboardDidShow')!(frame(550)));
+    expect(geometry().maxHeight).toBe(550 - 32);
+    act(() => listeners.get('keyboardDidChangeFrame')!(frame(400)));
+    expect(geometry().maxHeight).toBe(400 - 32);
+    expect(geometry().top).toBe(16);
+    expect(ui.getByTestId('simple-position-tpsl-backdrop')).toBe(backdrop);
+    expect(StyleSheet.flatten(backdrop.props.style)).toEqual(backdropStyle);
+
+    const closingGeometry = geometry();
+    const lateHide = listeners.get('keyboardWillHide')!;
+    ui.rerender(surface(false));
+    act(() => lateHide(frame(screenHeight)));
+    expect(geometry()).toEqual(closingGeometry);
+    expect(listeners.size).toBe(0);
+    ui.rerender(surface(true));
+    expect(geometry().maxHeight).toBe(screenHeight - 32);
+    await cleanupAsync();
+    expect(listeners.size).toBe(0);
+  } finally {
+    await cleanupAsync();
+    metrics.mockRestore();
+    subscribe.mockRestore();
+    Platform.OS = originalOS;
   }
 });

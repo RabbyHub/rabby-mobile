@@ -105,6 +105,7 @@ const Swap = ({
           <Row>
             <LogoWithText
               logo={payToken.logo_url}
+              logoRadius={16}
               text={
                 <View style={commonStyle.row}>
                   <Text style={commonStyle.primaryText}>
@@ -129,6 +130,7 @@ const Swap = ({
             <View>
               <LogoWithText
                 logo={receiveToken.logo_url}
+                logoRadius={16}
                 text={
                   balanceChange.success && balanceChange.support ? (
                     <View style={commonStyle.row}>

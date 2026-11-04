@@ -26,7 +26,7 @@ export const getPerpsProClosePositionSheetStyles = createGetStyles2024(
       ...(IS_ANDROID
         ? {
             minHeight:
-              550 -
+              564 -
               40 +
               getBottomButtonBottomOffset(safeAreaInsets.bottom) -
               BOTTOM_BUTTON_BOTTOM_OFFSET,
@@ -39,11 +39,17 @@ export const getPerpsProClosePositionSheetStyles = createGetStyles2024(
     positionHeader: {
       backgroundColor: resolvePerpsProDialogCardBackground(colors2024, isLight),
       borderRadius: 12,
-      gap: 10,
       marginTop: 24,
-      padding: 16,
+      paddingBottom: 12,
+      paddingHorizontal: 16,
+      paddingTop: 16,
     },
-    pairRow: { alignItems: 'center', flexDirection: 'row', gap: 4 },
+    pairRow: {
+      alignItems: 'center',
+      flexDirection: 'row',
+      gap: 4,
+      marginBottom: 10,
+    },
     pair: {
       color: colors2024['neutral-title-1'],
       fontFamily: 'SF Pro Rounded',
@@ -59,19 +65,21 @@ export const getPerpsProClosePositionSheetStyles = createGetStyles2024(
       alignItems: 'center',
       flexDirection: 'row',
       justifyContent: 'space-between',
+      paddingVertical: 6,
     },
     priceSummaryLabel: {
       color: colors2024['neutral-secondary'],
       fontFamily: 'SF Pro Rounded',
-      fontSize: 12,
-      lineHeight: 16,
+      fontSize: 13,
+      fontWeight: '500',
+      lineHeight: 18,
     },
     priceSummaryValue: {
       color: colors2024['neutral-title-1'],
       fontFamily: 'SF Pro Rounded',
-      fontWeight: '500',
-      fontSize: 12,
-      lineHeight: 16,
+      fontWeight: '700',
+      fontSize: 14,
+      lineHeight: 18,
     },
     form: {
       gap: 0,

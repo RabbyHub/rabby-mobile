@@ -65,16 +65,6 @@ export function setCurrentRequestDeferFnSync(
   requireNotificationService().setCurrentRequestDeferFn(value);
 }
 
-export function getNotificationStatsDataSnapshot() {
-  return getRegisteredService('notificationService')?.getStatsData();
-}
-
-export function setNotificationStatsDataSync(
-  ...args: Parameters<NotificationService['setStatsData']>
-) {
-  requireNotificationService().setStatsData(...args);
-}
-
 export function unlockNotificationSync() {
   requireNotificationService().unLock();
 }

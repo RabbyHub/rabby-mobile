@@ -527,7 +527,8 @@ const getStyles = createGetStyles2024(ctx => ({
 
   afterInput: {
     marginTop: 16,
-    flexDirection: 'row',
+    flexDirection: 'column',
+    gap: 12,
   },
 
   ensResult: {

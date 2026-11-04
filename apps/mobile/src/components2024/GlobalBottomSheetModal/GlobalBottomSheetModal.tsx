@@ -17,7 +17,10 @@ import { useHandleBackPressClosable } from '@/hooks/useAppGesture';
 import { BottomSheetScrollView, BottomSheetView } from '@gorhom/bottom-sheet';
 import { useRefreshAutoLockPanResponder } from '@/components/AutoLockView';
 import { globalSheetModalEvents } from './event';
-import { APPROVAL_SNAP_POINTS } from '@/components/Approval/components/map';
+import {
+  APPROVAL_SNAP_POINTS,
+  APPROVAL_TOP_INSETS,
+} from '@/components/Approval/components/map';
 import { bottomSheetModalSecurityApis } from './security';
 import { useTheme2024 } from '@/hooks/theme';
 import { useSafeSizes } from '@/hooks/useAppLayout';
@@ -145,6 +148,11 @@ export const GlobalBottomSheetModal2024 = () => {
           APPROVAL_MODAL_NAMES.PrivatekeyWaiting,
         ].includes(approvalComponent);
 
+      const approvalTopInset =
+        approvalComponent && params.name === MODAL_NAMES.APPROVAL
+          ? APPROVAL_TOP_INSETS[approvalComponent]
+          : undefined;
+
       // Set security state before a commit can present the sheet.
       if (params.preventScreenshotOnModalOpen) {
         bottomSheetModalSecurityApis.markAtSensitiveModal(id);
@@ -163,6 +171,9 @@ export const GlobalBottomSheetModal2024 = () => {
           approvalComponent,
           bottomSheetModalProps: {
             ...params.bottomSheetModalProps,
+            ...(approvalTopInset !== undefined && {
+              topInset: approvalTopInset,
+            }),
             enableDynamicSizing: isWaitingComponent
               ? true
               : params?.bottomSheetModalProps?.enableDynamicSizing || false,

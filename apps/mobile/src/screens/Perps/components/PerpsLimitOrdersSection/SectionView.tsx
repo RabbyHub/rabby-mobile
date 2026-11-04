@@ -2,15 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { Alert, TouchableOpacity, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useMemoizedFn } from 'ahooks';
-import BigNumber from 'bignumber.js';
 
 import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { perpsStore } from '@/hooks/perps/usePerpsStore';
-import { getStatsReportSide } from '@/utils/perps';
-import { stats } from '@/utils/stats';
-import { APP_VERSIONS } from '@/constant';
 
 import { PerpsLimitOrderItem } from './PerpsLimitOrderItem';
 import { PerpsLimitOrderDetailPopup } from './PerpsLimitOrderDetailPopup';
@@ -44,30 +40,6 @@ export const PerpsLimitOrdersSectionView: React.FC<Props> = ({
     setActiveRow(null);
   }, [currentPerpsAccount?.address, currentPerpsAccount?.type]);
 
-  const reportCancelled = useMemoizedFn((cancelledRows: LimitOrderRow[]) => {
-    cancelledRows.forEach(row => {
-      const { order, leverage } = row;
-      const isBuy = order.side === 'B';
-      stats.report('perpsTradeHistory', {
-        created_at: new Date().getTime(),
-        user_addr: currentPerpsAccount?.address || '',
-        trade_type: 'cancel limit order',
-        leverage: leverage?.value.toString() || '',
-        trade_side: getStatsReportSide(isBuy, false),
-        margin_mode: leverage?.type || '',
-        coin: order.coin,
-        size: order.origSz,
-        price: order.limitPx,
-        trade_usd_value: new BigNumber(order.limitPx)
-          .times(order.origSz)
-          .toFixed(2),
-        service_provider: 'hyperliquid',
-        app_version: APP_VERSIONS.fromNative || '0',
-        address_type: currentPerpsAccount?.type || '',
-      });
-    });
-  });
-
   const handleCancelAll = useMemoizedFn(async () => {
     if (!canInteract()) {
       return;
@@ -88,11 +60,7 @@ export const PerpsLimitOrdersSectionView: React.FC<Props> = ({
             if (!canInteract()) {
               return;
             }
-            const cancelledOids = await handleCancelLimitOrders(
-              rows.map(r => r.order),
-            );
-            const cancelledSet = new Set(cancelledOids);
-            reportCancelled(rows.filter(r => cancelledSet.has(r.order.oid)));
+            await handleCancelLimitOrders(rows.map(r => r.order));
           },
         },
       ],
@@ -109,7 +77,6 @@ export const PerpsLimitOrdersSectionView: React.FC<Props> = ({
     }
     const cancelledOids = await handleCancelLimitOrders([activeRow.order]);
     if (cancelledOids.length > 0) {
-      reportCancelled([activeRow]);
       setActiveRow(null);
     }
   });
@@ -162,7 +129,7 @@ export const PerpsLimitOrdersSectionView: React.FC<Props> = ({
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
-    marginBottom: 24,
+    marginBottom: 30,
   },
   homeContainer: {
     marginTop: 24,

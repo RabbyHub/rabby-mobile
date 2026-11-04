@@ -50,6 +50,13 @@ export const DevUIRootSubScreen = registerAppScreen<
   name: TESTKITS_PRELOAD_SCREENS.DevUIRootSubScreen,
 });
 
+export const DevUISafeSvgMedia = registerAppScreen<
+  typeof import('@/screens/Testkits/DevUISafeSvgMedia').default
+>({
+  loader: () => import('@/screens/Testkits/DevUISafeSvgMedia'),
+  name: TESTKITS_PRELOAD_SCREENS.DevUISafeSvgMedia,
+});
+
 export const DevUIToast = registerAppScreen<
   typeof import('@/screens/Testkits/DevUIToast').default
 >({

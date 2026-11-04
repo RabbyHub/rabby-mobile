@@ -10,10 +10,8 @@ import {
 } from '@/core/serviceApi/dapp';
 import {
   ensureNotificationServiceReady,
-  getNotificationStatsDataSnapshot,
   notificationServiceApi,
   setCurrentRequestDeferFnSync,
-  setNotificationStatsDataSync,
   unlockNotificationSync,
 } from '@/core/serviceApi/notification';
 import { getFallbackAccountSnapshot } from '@/core/serviceApi/preference';
@@ -22,12 +20,10 @@ import providerController from './provider';
 // import eventBus from '@/eventBus';
 import { ProviderRequest } from './type';
 import * as Sentry from '@sentry/react-native';
-// import stats from '@/stats';
 import { addHexPrefix, stripHexPrefix } from 'ethereumjs-util';
 import { eventBus, EVENTS } from '@/utils/events';
 import { Chain, CHAINS_ENUM, getTestnetChainList } from '@/constant/chains';
 import * as apisDapp from '../apis/dapp';
-import { stats } from '@/utils/stats';
 import { waitSignComponentAmounted } from '../utils/signEvent';
 import { findChain } from '@/utils/chain';
 import { gnosisController } from './gnosisController';
@@ -538,7 +534,6 @@ const flowContext = flow
     if (!isAutoPersonalSign && uiRequestComponent) {
       ctx.request.requestedApproval = true;
       const result = await requestApprovalLoop({ uiRequestComponent, ...rest });
-      reportStatsData();
       if (rest?.safeMessage) {
         const safeMessage: {
           safeAddress: string;
@@ -568,43 +563,6 @@ const flowContext = flow
   })
   .callback();
 
-function reportStatsData() {
-  const statsData = getNotificationStatsDataSnapshot();
-  if (!statsData || statsData.reported) return;
-  if (statsData?.signed) {
-    const sData: any = {
-      type: statsData?.type,
-      chainId: statsData?.chainId,
-      category: statsData?.category,
-      success: statsData?.signedSuccess,
-      preExecSuccess: statsData?.preExecSuccess,
-      createdBy: statsData?.createdBy,
-      source: statsData?.source,
-      trigger: statsData?.trigger,
-      networkType: statsData?.networkType,
-    };
-    if (statsData.signMethod) {
-      sData.signMethod = statsData.signMethod;
-    }
-    stats.report('signedTransaction', sData);
-  }
-  if (statsData?.submit) {
-    stats.report('submitTransaction', {
-      type: statsData?.type,
-      chainId: statsData?.chainId,
-      category: statsData?.category,
-      success: statsData?.submitSuccess,
-      preExecSuccess: statsData?.preExecSuccess,
-      createdBy: statsData?.createdBy,
-      source: statsData?.source,
-      trigger: statsData?.trigger,
-      networkType: statsData?.networkType || '',
-    });
-  }
-  statsData.reported = true;
-  setNotificationStatsDataSync(statsData);
-}
-
 async function runRpcFlow(request: ProviderRequest) {
   const ctx: any = {
     request: { ...request, requestedApproval: false },
@@ -619,10 +577,7 @@ async function runRpcFlow(request: ProviderRequest) {
       });
     }
   } catch (e) {}
-  setNotificationStatsDataSync();
   return flowContext(ctx).finally(() => {
-    reportStatsData();
-
     if (ctx.request.requestedApproval) {
       flow.requestedApproval = false;
       // only unlock notification if current flow is an approval flow

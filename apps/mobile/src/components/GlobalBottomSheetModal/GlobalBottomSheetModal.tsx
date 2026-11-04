@@ -21,7 +21,10 @@ import { useHandleBackPressClosable } from '@/hooks/useAppGesture';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { useRefreshAutoLockPanResponder } from '../AutoLockView';
 import { globalSheetModalEvents } from './event';
-import { APPROVAL_SNAP_POINTS } from '../Approval/components/map';
+import {
+  APPROVAL_SNAP_POINTS,
+  APPROVAL_TOP_INSETS,
+} from '../Approval/components/map';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 
 type ModalData = {
@@ -84,6 +87,11 @@ export const GlobalBottomSheetModal = () => {
           APPROVAL_MODAL_NAMES.TrezorHardwareWaiting,
         ].includes(approvalComponent);
 
+      const approvalTopInset =
+        approvalComponent && params.name === MODAL_NAMES.APPROVAL
+          ? APPROVAL_TOP_INSETS[approvalComponent]
+          : undefined;
+
       setModals(prev => {
         const newModal = {
           id,
@@ -92,6 +100,9 @@ export const GlobalBottomSheetModal = () => {
             approvalComponent,
             bottomSheetModalProps: {
               ...params.bottomSheetModalProps,
+              ...(approvalTopInset !== undefined && {
+                topInset: approvalTopInset,
+              }),
               enableDynamicSizing: isWaitingComponent
                 ? true
                 : params?.bottomSheetModalProps?.enableDynamicSizing || false,

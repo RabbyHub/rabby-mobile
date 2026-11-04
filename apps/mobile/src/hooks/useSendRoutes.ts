@@ -7,7 +7,6 @@ import {
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
-import { matomoRequestEvent } from '@/utils/analytics';
 import { naviPush } from '@/utils/navigation';
 import { whitelistServiceApi } from '@/core/serviceApi/whitelist';
 import { storeApiAccounts } from '@/hooks/account';
@@ -106,11 +105,6 @@ export const useSendRoutes = () => {
   /** @deprecated */
   const navigateToSendPolyScreen = useCallback(
     async (isForSingleAddress: boolean, params: SendRouteIntent = {}) => {
-      matomoRequestEvent({
-        category: 'Send Usage',
-        action: 'Send_Enter',
-      });
-
       if (params.toAddress) {
         const { inWhitelist, account, isMyImported } =
           await findAccountWithoutBalanceForSendRoute(params.toAddress);

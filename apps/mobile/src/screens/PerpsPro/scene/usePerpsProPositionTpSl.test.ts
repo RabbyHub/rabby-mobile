@@ -9,7 +9,6 @@ const mockShowToast = jest.fn();
 const mockGetState = jest.fn();
 const mockGetSkipConfirmation = jest.fn();
 const mockSetSkipConfirmation = jest.fn();
-const mockReportPositionTpSlHistory = jest.fn();
 
 jest.mock('@/core/serviceApi/perps', () => ({
   perpsServiceApi: {
@@ -70,10 +69,6 @@ jest.mock('../model/market', () => ({
     displayPair: 'BTCUSDC',
     sourceTag: null,
   }),
-}));
-jest.mock('../analytics/manualTradeHistory', () => ({
-  reportPerpsProPositionTpSlHistory: (...args: any[]) =>
-    mockReportPositionTpSlHistory(...args),
 }));
 
 import type { PerpsPositionViewModel } from '../model/position';
@@ -206,11 +201,6 @@ describe('usePerpsProPositionTpSl', () => {
     expect(mockShowToast).toHaveBeenCalledWith(
       'page.perps.pro.positionTpsl.submitted',
       'success',
-    );
-    expect(mockReportPositionTpSlHistory).toHaveBeenCalledWith(
-      expect.objectContaining({ type: 'positionTpSl' }),
-      expect.objectContaining({ kind: 'success' }),
-      { leverage: 10, marginMode: 'isolated' },
     );
   });
 

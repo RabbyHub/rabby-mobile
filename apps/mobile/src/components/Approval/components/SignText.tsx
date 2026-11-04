@@ -31,9 +31,6 @@ import RuleDrawer from './SecurityEngine/RuleDrawer';
 import Actions from './TextActions';
 import { useTheme2024 } from '@/hooks/theme';
 import { getStyles } from './SignTx/style';
-import { getKRCategoryByType } from '@/utils/transaction';
-import { matomoRequestEvent } from '@/utils/analytics';
-import { stats } from '@/utils/stats';
 import { useEnterPassphraseModal } from '@/hooks/useEnterPassphraseModal';
 import { CHAINS } from '@debank/common';
 import { getTimeSpan } from '@/utils/time';
@@ -188,36 +185,7 @@ export const SignText = ({
 
   const isViewGnosisSafe = params?.$ctx?.isViewGnosisSafe;
 
-  const report = async (
-    action:
-      | 'createSignText'
-      | 'startSignText'
-      | 'cancelSignText'
-      | 'completeSignText',
-    extra?: Record<string, any>,
-  ) => {
-    if (!currentAccount) {
-      return;
-    }
-    matomoRequestEvent({
-      category: 'SignText',
-      action: action,
-      label: [
-        getKRCategoryByType(currentAccount.type),
-        currentAccount.brandName,
-      ].join('|'),
-      transport: 'beacon',
-    });
-    stats.report(action, {
-      type: currentAccount.brandName,
-      category: getKRCategoryByType(currentAccount.type),
-      method: 'personalSign',
-      ...extra,
-    });
-  };
-
   const handleCancel = () => {
-    report('cancelSignText');
     rejectApproval('User rejected the request.');
   };
 
@@ -252,7 +220,6 @@ export const SignText = ({
 
       return;
     }
-    report('startSignText');
     resolveApproval({});
   };
 
@@ -485,7 +452,6 @@ export const SignText = ({
   }, []);
 
   useEffect(() => {
-    report('createSignText');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

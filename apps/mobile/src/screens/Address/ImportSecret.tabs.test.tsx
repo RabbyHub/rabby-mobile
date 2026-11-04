@@ -88,12 +88,6 @@ jest.mock('@/utils/clipboard', () => ({ onPastedSensitiveData: jest.fn() }));
 jest.mock('@/components/Typography', () => ({
   Text: require('react-native').Text,
 }));
-jest.mock('@/core/serviceApi/preference', () => ({
-  setReportActionTs: jest.fn(),
-}));
-jest.mock('@/core/utils/reportTimeoutAction', () => ({
-  REPORT_TIMEOUT_ACTION_KEY: {},
-}));
 jest.mock('./components/DuplicateAddressModal', () => ({
   useDuplicateAddressModal: () => ({ show: jest.fn() }),
 }));

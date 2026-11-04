@@ -27,11 +27,10 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import RcIconWalletCC from '@/assets2024/icons/swap/wallet-cc.svg';
-import { SliderBubblePortal } from './Slider';
+import { SliderBubblePortal, type SliderBubbleHandle } from './Slider';
 import type { Account } from '@/core/startupServices/preference';
 import { CustomSkeleton } from '@/components2024/CustomSkeleton';
 import usePrevious from 'react-use/lib/usePrevious';
-import { ITokenItem } from '@/store/tokens';
 import { Text } from '@/components/Typography';
 import {
   AutoShrinkAmountText,
@@ -120,7 +119,17 @@ const SwapTokenItemInner = (props: SwapTokenItemProps) => {
   );
 
   const [isSliderBubbleVisible, setIsSliderBubbleVisible] = useState(false);
-  const sliderThumbRef = useRef<View>(null);
+  const bubbleRef = useRef<SliderBubbleHandle>(null);
+  const sliderTrackRef = useRef<View>(null);
+  const onSliderValueChange = useCallback(
+    (value: number) => {
+      // Move the bubble before the amount update. That update re-renders the
+      // page, which is what left the bubble behind the finger.
+      bubbleRef.current?.setProgress(value);
+      onChangeSlider?.(value);
+    },
+    [onChangeSlider],
+  );
 
   const onSlidingStart = useCallback(() => {
     if (!disabled) {
@@ -177,33 +186,39 @@ const SwapTokenItemInner = (props: SwapTokenItemProps) => {
         </Text>
         {isFrom && (
           <RootScenePagerGestureBlock style={styles.sliderContainer}>
-            <Slider
-              key={`${token?.id}-${token?.chain}`}
-              allowTouchTrack={!disabled}
-              disabled={disabled}
-              style={styles.slider}
-              value={slider}
-              onSlidingStart={onSlidingStart}
-              onValueChange={onChangeSlider}
-              onSlidingComplete={onAfterChangeSlider}
-              minimumValue={0}
-              maximumValue={100}
-              minimumTrackTintColor={colors2024['brand-default']}
-              maximumTrackTintColor={colors2024['neutral-line']}
-              step={1}
-              thumbStyle={styles.thumbStyle}
-              thumbProps={{
-                children: (
-                  <View>
-                    <View ref={sliderThumbRef} style={styles.outerThumb}>
-                      <View style={styles.innerThumb} />
+            <View
+              ref={sliderTrackRef}
+              collapsable={false}
+              style={styles.slider}>
+              <Slider
+                key={`${token?.id}-${token?.chain}`}
+                allowTouchTrack={!disabled}
+                disabled={disabled}
+                style={styles.sliderInner}
+                value={slider}
+                onSlidingStart={onSlidingStart}
+                onValueChange={onSliderValueChange}
+                onSlidingComplete={onAfterChangeSlider}
+                minimumValue={0}
+                maximumValue={100}
+                minimumTrackTintColor={colors2024['brand-default']}
+                maximumTrackTintColor={colors2024['neutral-line']}
+                step={1}
+                thumbStyle={styles.thumbStyle}
+                thumbProps={{
+                  children: (
+                    <View>
+                      <View style={styles.outerThumb}>
+                        <View style={styles.innerThumb} />
+                      </View>
                     </View>
-                  </View>
-                ),
-              }}
-            />
+                  ),
+                }}
+              />
+            </View>
             <SliderBubblePortal
-              anchorRef={sliderThumbRef}
+              ref={bubbleRef}
+              trackRef={sliderTrackRef}
               slide={slider || 0}
               visible={isSliderBubbleVisible}
             />
@@ -350,6 +365,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   slider: {
     width: 126,
+    height: 4,
+  },
+  sliderInner: {
+    width: '100%',
     height: 4,
   },
   sliderValue: {

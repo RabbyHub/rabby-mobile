@@ -1,0 +1,28 @@
+diff --git a/ios/RNSScreenStackHeaderConfig.mm b/ios/RNSScreenStackHeaderConfig.mm
+index 3a093ae040c58426fddf7ce823719cf40cf11793..247a1aef3e3168aecc01bc413e4c30834f775337 100644
+--- a/ios/RNSScreenStackHeaderConfig.mm
++++ b/ios/RNSScreenStackHeaderConfig.mm
+@@ -638,11 +638,23 @@ + (void)updateViewController:(UIViewController *)vc
+         navitem.leftItemsSupplementBackButton = config.backButtonInCustomView;
+ #endif
+         UIBarButtonItem *buttonItem = [[UIBarButtonItem alloc] initWithCustomView:subview];
++#if defined(__IPHONE_26_0) && __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_26_0
++        if (@available(iOS 26.0, *)) {
++          // Rabby's custom header controls already define their own visual shape.
++          // iOS 26 otherwise draws a Liquid Glass capsule behind every custom bar item.
++          buttonItem.hidesSharedBackground = YES;
++        }
++#endif
+         navitem.leftBarButtonItem = buttonItem;
+         break;
+       }
+       case RNSScreenStackHeaderSubviewTypeRight: {
+         UIBarButtonItem *buttonItem = [[UIBarButtonItem alloc] initWithCustomView:subview];
++#if defined(__IPHONE_26_0) && __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_26_0
++        if (@available(iOS 26.0, *)) {
++          buttonItem.hidesSharedBackground = YES;
++        }
++#endif
+         navitem.rightBarButtonItem = buttonItem;
+         break;
+       }

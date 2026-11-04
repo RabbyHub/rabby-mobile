@@ -25,7 +25,6 @@ import Animated, {
   useSharedValue,
 } from 'react-native-reanimated';
 
-import { matomoRequestEvent } from '@/utils/analytics';
 import {
   SCROLLABLE_DECELERATION_RATE_MAPPER,
   SCROLLABLE_STATUS,
@@ -105,11 +104,6 @@ export const DappFavoriteList: React.FC<{
 
     // openTab(item.url || item.origin);
     onDappPress?.(item);
-    matomoRequestEvent({
-      category: 'Websites Usage',
-      action: 'Website_Visit_Website Favorite List',
-      label: item.origin,
-    });
   });
 
   return (

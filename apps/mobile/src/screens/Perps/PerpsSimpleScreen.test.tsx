@@ -116,7 +116,6 @@ jest.mock('@/core/utils/startupDiagnostics', () => ({
 
 jest.mock('@/utils/perps', () => ({
   checkPerpsReference: jest.fn(),
-  getStatsReportSide: jest.fn(),
 }));
 
 jest.mock('@/utils/navigation', () => ({ naviPush: jest.fn() }));
@@ -125,6 +124,11 @@ jest.mock('@/utils/stats', () => ({ stats: { report: jest.fn() } }));
 
 jest.mock('@/core/serviceApi/perps', () => ({
   perpsServiceApi: { setInviteConfig: jest.fn().mockResolvedValue(undefined) },
+}));
+
+jest.mock('ahooks', () => ({
+  useMemoizedFn: (fn: unknown) => fn,
+  useRequest: () => ({ data: false, mutate: jest.fn() }),
 }));
 
 jest.mock('react-i18next', () => ({
