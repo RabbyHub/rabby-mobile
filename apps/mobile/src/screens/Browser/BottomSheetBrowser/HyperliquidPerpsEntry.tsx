@@ -15,6 +15,9 @@ import { useMemoizedFn } from 'ahooks';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
+import { BlurView } from '@react-native-community/blur';
+import { colord } from 'colord';
+import { IS_IOS } from '@/core/native/utils';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import {
   HYPERLIQUID_APP_ORIGIN,
@@ -25,7 +28,10 @@ const PERPS_NAVIGATION = { push: naviPush };
 const SOURCE = 'browser-hyperliquid-entry';
 
 export const HyperliquidPerpsEntry = () => {
-  const { styles, colors2024 } = useTheme2024({ getStyle });
+  const { styles, colors2024, isLight } = useTheme2024({ getStyle });
+  // Figma: 60% white over a 4.5px backdrop blur. Android keeps the solid
+  // tint, like BrowserSearchEntry; dark mode has no design and stays opaque.
+  const showBlur = IS_IOS && isLight;
   const { t } = useTranslation();
   const { setPartialBrowserState } = useBrowser();
   const { dapps } = useDapps();
@@ -64,6 +70,17 @@ export const HyperliquidPerpsEntry = () => {
   return (
     <TouchableOpacity onPress={handlePress} hitSlop={5}>
       <View style={styles.container}>
+        {showBlur ? (
+          <>
+            <BlurView
+              style={StyleSheet.absoluteFill}
+              blurType="light"
+              blurAmount={5}
+              reducedTransparencyFallbackColor={colors2024['neutral-bg-1']}
+            />
+            <View style={styles.tint} />
+          </>
+        ) : null}
         <Text style={styles.text} numberOfLines={1}>
           {t('page.browser.openInRabbyPerps')}
         </Text>
@@ -78,26 +95,36 @@ export const HyperliquidPerpsEntry = () => {
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
-  container: {
-    // Same height as the actions capsule (handle row 40 - bottom padding 7).
-    height: 33,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 15,
-    borderRadius: 19,
-    backgroundColor: isLight
-      ? 'rgba(255, 255, 255, 0.6)'
-      : colors2024['neutral-bg-5'],
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors2024['neutral-contrast'],
-  },
-  text: {
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '500',
-    color: colors2024['neutral-body'],
-  },
-}));
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
+  const tint = isLight
+    ? colord(colors2024['neutral-bg-1']).alpha(0.6).toRgbString()
+    : colors2024['neutral-bg-5'];
+
+  return {
+    container: {
+      // Same height as the actions capsule (handle row 40 - bottom padding 7).
+      height: 33,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      paddingHorizontal: 15,
+      borderRadius: 19,
+      overflow: 'hidden',
+      // On iOS light the tint sits above the BlurView instead.
+      backgroundColor: IS_IOS && isLight ? 'transparent' : tint,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors2024['neutral-contrast'],
+    },
+    tint: {
+      ...StyleSheet.absoluteFillObject,
+      backgroundColor: tint,
+    },
+    text: {
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 14,
+      lineHeight: 18,
+      fontWeight: '500',
+      color: colors2024['neutral-body'],
+    },
+  };
+});
