@@ -69,6 +69,7 @@ function loadSyncChainServiceModule(initialStore?: SyncChainStore) {
       mockSupportedChainToChain(...args),
   }));
   jest.doMock('@/constant/chains', () => ({
+    CHAINS_ENUM: { ETH: 'ETH' },
     updateChainStore: (...args: unknown[]) => mockUpdateChainStore(...args),
   }));
 
@@ -105,7 +106,7 @@ describe('core/services/syncChainService', () => {
     jest.useFakeTimers().setSystemTime(new Date(now));
     const cachedChains = [
       {
-        enum: 'eth',
+        enum: 'ETH',
         id: 1,
         name: 'Ethereum',
         serverId: 'eth',
@@ -144,7 +145,7 @@ describe('core/services/syncChainService', () => {
     mocks.mockAxiosGet.mockResolvedValue({
       data: [
         {
-          enum: 'eth',
+          enum: 'ETH',
           id: 1,
           is_disabled: false,
           name: 'Ethereum',
@@ -172,7 +173,7 @@ describe('core/services/syncChainService', () => {
     );
     expect(mocks.mockSupportedChainToChain).toHaveBeenCalledTimes(1);
     expect(mocks.mockSupportedChainToChain).toHaveBeenCalledWith({
-      enum: 'eth',
+      enum: 'ETH',
       id: 1,
       is_disabled: false,
       name: 'Ethereum',
@@ -181,7 +182,7 @@ describe('core/services/syncChainService', () => {
     expect(mocks.mockUpdateChainStore).toHaveBeenCalledWith({
       mainnetList: [
         {
-          enum: 'eth',
+          enum: 'ETH',
           id: 1,
           name: 'Ethereum',
           serverId: 'eth',
@@ -191,7 +192,7 @@ describe('core/services/syncChainService', () => {
     expect(service.store.data).toEqual({
       chains: [
         {
-          enum: 'eth',
+          enum: 'ETH',
           id: 1,
           name: 'Ethereum',
           serverId: 'eth',
@@ -209,7 +210,7 @@ describe('core/services/syncChainService', () => {
         data: {
           chains: [
             {
-              enum: 'eth',
+              enum: 'ETH',
               id: 1,
               name: 'Ethereum',
               serverId: 'eth',
@@ -220,6 +221,13 @@ describe('core/services/syncChainService', () => {
       });
     mocks.mockAxiosGet.mockResolvedValue({
       data: [
+        {
+          enum: 'ETH',
+          id: 1,
+          is_disabled: false,
+          name: 'Ethereum',
+          server_id: 'eth',
+        },
         {
           enum: 'megaeth',
           id: 4326,
@@ -240,6 +248,12 @@ describe('core/services/syncChainService', () => {
     expect(mocks.mockUpdateChainStore).toHaveBeenLastCalledWith({
       mainnetList: [
         {
+          enum: 'ETH',
+          id: 1,
+          name: 'Ethereum',
+          serverId: 'eth',
+        },
+        {
           enum: 'megaeth',
           id: 4326,
           name: 'MegaETH',
@@ -247,6 +261,129 @@ describe('core/services/syncChainService', () => {
         },
       ],
     });
+  });
+
+  it('keeps the current list when a fetched list has no enabled ETH', async () => {
+    const now = 7_500_000;
+    jest.useFakeTimers().setSystemTime(new Date(now));
+    const consoleError = jest
+      .spyOn(console, 'error')
+      .mockImplementation(() => undefined);
+    const cachedChains = [
+      {
+        enum: 'ETH',
+        id: 1,
+        name: 'Ethereum',
+        serverId: 'eth',
+      },
+    ];
+    const { SyncChainService, mocks, storageAdapter } =
+      loadSyncChainServiceModule({
+        data: {
+          chains: cachedChains,
+          updatedAt: now,
+        },
+      });
+    mocks.mockAxiosGet.mockResolvedValue({
+      data: [
+        {
+          enum: 'BSC',
+          id: 56,
+          is_disabled: false,
+          name: 'BNB Chain',
+          server_id: 'bsc',
+        },
+        {
+          enum: 'ETH',
+          id: 1,
+          is_disabled: true,
+          name: 'Ethereum',
+          server_id: 'eth',
+        },
+      ],
+    });
+    const onMainnetChainListUpdated = jest.fn();
+
+    try {
+      const service = new SyncChainService({
+        storageAdapter: storageAdapter as never,
+        onMainnetChainListUpdated,
+      });
+      activeTimers.push(service.timer);
+      mocks.mockUpdateChainStore.mockClear();
+      await service.syncMainnetChainList({ force: true });
+
+      expect(mocks.mockUpdateChainStore).not.toHaveBeenCalled();
+      expect(service.store.data).toEqual({
+        chains: cachedChains,
+        updatedAt: now,
+      });
+      expect(onMainnetChainListUpdated).not.toHaveBeenCalled();
+    } finally {
+      consoleError.mockRestore();
+    }
+  });
+
+  it('notifies once a fetched list replaces the current one, not when the fetch fails', async () => {
+    const now = 7_800_000;
+    jest.useFakeTimers().setSystemTime(new Date(now));
+    const consoleError = jest
+      .spyOn(console, 'error')
+      .mockImplementation(() => undefined);
+    const { SyncChainService, mocks, storageAdapter } =
+      loadSyncChainServiceModule({
+        data: {
+          chains: [
+            {
+              enum: 'ETH',
+              id: 1,
+              name: 'Ethereum',
+              serverId: 'eth',
+            },
+          ],
+          updatedAt: now,
+        },
+      });
+    const onMainnetChainListUpdated = jest.fn(() => {
+      expect(mocks.mockUpdateChainStore).toHaveBeenLastCalledWith({
+        mainnetList: [
+          {
+            enum: 'ETH',
+            id: 1,
+            name: 'Ethereum',
+            serverId: 'eth',
+          },
+        ],
+      });
+    });
+
+    try {
+      const service = new SyncChainService({
+        storageAdapter: storageAdapter as never,
+        onMainnetChainListUpdated,
+      });
+      activeTimers.push(service.timer);
+
+      mocks.mockAxiosGet.mockRejectedValueOnce(new Error('network'));
+      await service.syncMainnetChainList({ force: true });
+      expect(onMainnetChainListUpdated).not.toHaveBeenCalled();
+
+      mocks.mockAxiosGet.mockResolvedValueOnce({
+        data: [
+          {
+            enum: 'ETH',
+            id: 1,
+            is_disabled: false,
+            name: 'Ethereum',
+            server_id: 'eth',
+          },
+        ],
+      });
+      await service.syncMainnetChainList({ force: true });
+      expect(onMainnetChainListUpdated).toHaveBeenCalledTimes(1);
+    } finally {
+      consoleError.mockRestore();
+    }
   });
 
   it('deduplicates concurrent remote chain refreshes', async () => {
@@ -276,7 +413,17 @@ describe('core/services/syncChainService', () => {
     expect(firstRequest).toBe(secondRequest);
     expect(mocks.mockAxiosGet).toHaveBeenCalledTimes(1);
 
-    resolveRequest({ data: [] });
+    resolveRequest({
+      data: [
+        {
+          enum: 'ETH',
+          id: 1,
+          is_disabled: false,
+          name: 'Ethereum',
+          server_id: 'eth',
+        },
+      ],
+    });
     await firstRequest;
   });
 });
