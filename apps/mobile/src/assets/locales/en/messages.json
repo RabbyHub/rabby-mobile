@@ -3414,6 +3414,7 @@
         "preview": "Preview",
         "paymentTokens": "Payment Tokens",
         "selectTokens": "Select Tokens",
+        "selectPaymentAssets": "Select assets for payment",
         "estPaymentLabel": "Est. Payment",
         "noPaymentToken": "No payment token selected",
         "confirm": "Confirm",

@@ -147,7 +147,9 @@ export const PaymentTokenSelectSheet = ({
       })}
       style={SHEET_STYLE}>
       <View style={styles.content}>
-        <Text style={styles.title}>{t('page.memeCoin.buy.selectTokens')}</Text>
+        <Text style={styles.title}>
+          {t('page.memeCoin.buy.selectPaymentAssets')}
+        </Text>
         <BottomSheetScrollView
           style={styles.list}
           contentContainerStyle={styles.listContent}>
