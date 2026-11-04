@@ -174,12 +174,9 @@ export const STARTUP_TASKS = {
     label: 'home.memeHoldingsWarmup',
     owner: 'memecoin',
     reason:
-      'warm the Memecoin entry balance only after Home is usable and early interactions are likely quiet',
-    stage: 'homePostStartupIdle',
-    priority: 'low',
-    delayMs: 3000,
-    fallbackMs: 10000,
-    idleTimeoutMs: 5000,
+      'load the Memecoin entry balance as soon as Home is entered, like the Perps entry',
+    stage: 'homeEntryReady',
+    priority: 'normal',
     budgetMs: 120,
   }),
   cexSupportListFetch: defineStartupTask({
