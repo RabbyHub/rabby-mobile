@@ -58,6 +58,7 @@ import {
 } from 'react-native-keyboard-controller';
 import Video from 'react-native-video';
 import AutoLockView from '../../AutoLockView';
+import { ShareAddressCheckbox } from '../SubmitFeedback/ShareAddressCheckbox';
 import { AppBottomSheetModal } from '../../customized/BottomSheet';
 import { BottomSheetHandlableView } from '../../customized/BottomSheetHandle';
 import { ThemeColors2024 } from '@/constant/theme';
@@ -315,6 +316,8 @@ export const FeedbackHistoryBottomSheet: React.FC = () => {
   );
   const replyTextRef = useRef('');
   const [hasReplyText, setHasReplyText] = useState(false);
+  // Address sharing is opt-in per message, like the screenshot submit modal.
+  const [includeAddress, setIncludeAddress] = useState(false);
   const [replyInputResetKey, setReplyInputResetKey] = useState(0);
   const scrollViewRef = useRef<ScrollView>(null);
   const pendingScrollToBottomRef = useRef(false);
@@ -602,6 +605,7 @@ export const FeedbackHistoryBottomSheet: React.FC = () => {
 
       const extraInfo = await getScreenshotFeedbackExtraSafely(
         totalBalanceText,
+        { includeAddress },
       );
 
       await openapi.postClientFeedbackMessage({
@@ -617,6 +621,7 @@ export const FeedbackHistoryBottomSheet: React.FC = () => {
       onSuccess: async () => {
         clearReplyText();
         resetSelectedMedia();
+        setIncludeAddress(false);
         toast.success(t('component.submitFeedbackSuccessModal.desc'), {
           hideOnPress: true,
         });
@@ -630,6 +635,7 @@ export const FeedbackHistoryBottomSheet: React.FC = () => {
   );
 
   useEffect(() => {
+    setIncludeAddress(false);
     if (isShowHistory) {
       clearReplyText();
       resetSelectedMedia();
@@ -759,6 +765,8 @@ export const FeedbackHistoryBottomSheet: React.FC = () => {
                   onPreviewMedia={handleOpenMediaPreview}
                   onSubmit={handleSubmitReply}
                   submitting={isSubmittingReply}
+                  includeAddress={includeAddress}
+                  onIncludeAddressChange={setIncludeAddress}
                 />
               </KeyboardAwareScrollView>
 
@@ -895,6 +903,8 @@ function ReplyComposer({
   submitting,
   uploadingMedia,
   mediaUploadReady,
+  includeAddress,
+  onIncludeAddressChange,
 }: {
   inputResetKey: number;
   onChangeText: (text: string) => void;
@@ -907,6 +917,8 @@ function ReplyComposer({
   onPreviewMedia: (media: FeedbackPreviewMedia) => void;
   onSubmit?: (() => void) | (() => Promise<void>);
   submitting?: boolean;
+  includeAddress: boolean;
+  onIncludeAddressChange: (includeAddress: boolean) => void;
 }) {
   const { styles, isLight } = useTheme2024({ getStyle });
   const { t } = useTranslation();
@@ -931,99 +943,110 @@ function ReplyComposer({
     <View style={[styles.messageRow, styles.userMessageRow]}>
       <View
         style={[styles.messageBubble, styles.userBubble, styles.replyBubble]}>
-        <TextInput
-          key={inputResetKey}
-          onChangeText={onChangeText}
-          multiline
-          textAlignVertical="top"
-          placeholder={t('component.feedbackHistoryModal.replyPlaceholder', {
-            defaultValue: 'Enter a new reply... (optional)',
-          })}
-          placeholderTextColor={styles.replyInputPlaceholder.color}
-          style={styles.replyInput}
-          // enterKeyHint="send"
-          // onSubmitEditing={() => {
-          //   if (
-          //     !uploadingMedia &&
-          //     (hasReplyText || (selectedMedia && mediaUploadReady))
-          //   ) {
-          //     onSubmit?.();
-          //   }
-          // }}
-        />
-        {selectedMediaUri ? (
-          <View style={styles.mediaPreviewContainer}>
-            <TouchableOpacity
-              activeOpacity={uploadingMedia ? 1 : 0.85}
-              disabled={uploadingMedia}
-              onPress={handlePreviewSelectedMedia}>
-              {isSelectedVideo ? (
-                <View>
-                  <Video
+        <View style={styles.replyContent}>
+          <TextInput
+            key={inputResetKey}
+            onChangeText={onChangeText}
+            multiline
+            textAlignVertical="top"
+            placeholder={t('component.feedbackHistoryModal.replyPlaceholder', {
+              defaultValue: 'Enter a new reply... (optional)',
+            })}
+            placeholderTextColor={styles.replyInputPlaceholder.color}
+            style={styles.replyInput}
+            // enterKeyHint="send"
+            // onSubmitEditing={() => {
+            //   if (
+            //     !uploadingMedia &&
+            //     (hasReplyText || (selectedMedia && mediaUploadReady))
+            //   ) {
+            //     onSubmit?.();
+            //   }
+            // }}
+          />
+          {selectedMediaUri ? (
+            <View style={styles.mediaPreviewContainer}>
+              <TouchableOpacity
+                activeOpacity={uploadingMedia ? 1 : 0.85}
+                disabled={uploadingMedia}
+                onPress={handlePreviewSelectedMedia}>
+                {isSelectedVideo ? (
+                  <View>
+                    <Video
+                      source={{ uri: selectedMediaUri }}
+                      style={styles.mediaPreview}
+                      resizeMode="cover"
+                      paused
+                      muted
+                    />
+                    {!uploadingMedia ? (
+                      <View style={styles.videoPlayBadge}>
+                        <View style={styles.videoPlayTriangle} />
+                      </View>
+                    ) : null}
+                  </View>
+                ) : (
+                  <FastImage
                     source={{ uri: selectedMediaUri }}
                     style={styles.mediaPreview}
                     resizeMode="cover"
-                    paused
-                    muted
                   />
-                  {!uploadingMedia ? (
-                    <View style={styles.videoPlayBadge}>
-                      <View style={styles.videoPlayTriangle} />
-                    </View>
-                  ) : null}
-                </View>
-              ) : (
-                <FastImage
-                  source={{ uri: selectedMediaUri }}
-                  style={styles.mediaPreview}
-                  resizeMode="cover"
-                />
-              )}
-            </TouchableOpacity>
-
-            {uploadingMedia ? (
-              <View pointerEvents="none" style={styles.mediaUploadMask}>
-                <ActivityIndicator size="small" color="#fff" />
-              </View>
-            ) : null}
-            <View style={styles.removeMediaButton}>
-              <TouchableOpacity onPress={onRemoveMedia} disabled={submitting}>
-                {isLight ? (
-                  <RcCloseIconLight width={21} height={21} />
-                ) : (
-                  <RcCloseIconDark width={21} height={21} />
                 )}
               </TouchableOpacity>
-            </View>
-          </View>
-        ) : (
-          <View style={styles.mediaPlaceholderContainer}>
-            <TouchableOpacity onPress={onPickMedia} disabled={submitting}>
-              <View style={styles.mediaPlaceholder}>
-                <Text style={styles.mediaPlaceholderText}>+</Text>
-                <Text style={styles.mediaPlaceholderText}>
-                  {t('component.feedbackHistoryModal.mediaPlaceholder', {
-                    defaultValue: 'Image/Video',
-                  })}
-                </Text>
+
+              {uploadingMedia ? (
+                <View pointerEvents="none" style={styles.mediaUploadMask}>
+                  <ActivityIndicator size="small" color="#fff" />
+                </View>
+              ) : null}
+              <View style={styles.removeMediaButton}>
+                <TouchableOpacity onPress={onRemoveMedia} disabled={submitting}>
+                  {isLight ? (
+                    <RcCloseIconLight width={21} height={21} />
+                  ) : (
+                    <RcCloseIconDark width={21} height={21} />
+                  )}
+                </TouchableOpacity>
               </View>
-            </TouchableOpacity>
-          </View>
-        )}
-        <Button
-          title={t('component.screenshotModal.submitButtonText')}
-          type="primary"
-          height={32}
-          onPress={onSubmit}
-          loading={submitting}
-          disabled={
-            submitting ||
-            uploadingMedia ||
-            (!hasReplyText && (!selectedMediaUri || !mediaUploadReady))
-          }
-          containerStyle={styles.replySubmitButtonContainer}
-          buttonStyle={styles.replySubmitButton}
-          titleStyle={styles.replySubmitButtonTitle}
+            </View>
+          ) : (
+            <View style={styles.mediaPlaceholderContainer}>
+              <TouchableOpacity onPress={onPickMedia} disabled={submitting}>
+                <View style={styles.mediaPlaceholder}>
+                  <Text style={styles.mediaPlaceholderText}>+</Text>
+                  <Text style={styles.mediaPlaceholderText}>
+                    {t('component.feedbackHistoryModal.mediaPlaceholder', {
+                      defaultValue: 'Image/Video',
+                    })}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            </View>
+          )}
+          <Button
+            title={t('component.screenshotModal.submitButtonText')}
+            type="primary"
+            height={32}
+            onPress={onSubmit}
+            loading={submitting}
+            disabled={
+              submitting ||
+              uploadingMedia ||
+              (!hasReplyText && (!selectedMediaUri || !mediaUploadReady))
+            }
+            containerStyle={styles.replySubmitButtonContainer}
+            buttonStyle={styles.replySubmitButton}
+            titleStyle={styles.replySubmitButtonTitle}
+          />
+        </View>
+        <View style={styles.replyDivider} />
+        <ShareAddressCheckbox
+          testID="feedback-chat-include-address"
+          checked={includeAddress}
+          onChange={onIncludeAddressChange}
+          disabled={submitting}
+          style={styles.replyIncludeAddress}
+          textStyle={styles.replyIncludeAddressText}
         />
       </View>
       <Avatar isUser />
@@ -1156,7 +1179,27 @@ const getStyle = createGetStyles2024(
     imageWithText: {
       marginTop: 7,
     },
-    replyBubble: {},
+    replyBubble: {
+      // Full-bleed divider: horizontal padding moves to the content blocks.
+      paddingHorizontal: 0,
+      paddingBottom: 0,
+    },
+    replyContent: {
+      paddingHorizontal: 12,
+    },
+    replyDivider: {
+      height: 1,
+      marginTop: 12,
+      backgroundColor: colors2024['neutral-line'],
+      opacity: 0.5,
+    },
+    replyIncludeAddress: {
+      paddingTop: 10,
+      paddingBottom: 12,
+    },
+    replyIncludeAddressText: {
+      color: colors2024['neutral-info'],
+    },
     replyInput: {
       // height: 42,
       width: '100%',

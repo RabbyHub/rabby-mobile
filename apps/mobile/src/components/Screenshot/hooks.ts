@@ -216,6 +216,8 @@ type FeedbackByScreenshotState = {
   feedbackHistoryRefreshKey: number;
   feedbackText: string;
   uploadedImageUrl: string;
+  /** Opt-in per report: off whenever the submit modal opens or closes. */
+  includeAddress: boolean;
 
   totalBalanceText: string;
 };
@@ -227,6 +229,7 @@ function getDefaultValue(): FeedbackByScreenshotState {
     feedbackHistoryRefreshKey: 0,
     feedbackText: '',
     uploadedImageUrl: '',
+    includeAddress: false,
 
     totalBalanceText: '',
   };
@@ -352,6 +355,7 @@ const setLastScreenshotNow = (
     submitModalShown: !!image,
     feedbackText: '',
     uploadedImageUrl: '',
+    includeAddress: false,
   }));
 
   if (image?.uri && uploadNow) {
@@ -676,6 +680,22 @@ const onChangeFeedback = (feedback: string) => {
   }));
 };
 
+const setFeedbackIncludeAddress = (includeAddress: boolean) => {
+  setFeedbackByScreenshot(prev => ({
+    ...prev,
+    includeAddress,
+  }));
+};
+
+export function useScreenshotFeedbackIncludeAddress() {
+  const includeAddress = feedbackByScreenshotStore(s => s.includeAddress);
+
+  return {
+    includeAddress,
+    setIncludeAddress: setFeedbackIncludeAddress,
+  };
+}
+
 export function useFeedbackOnScreenshot() {
   const { submitModalShown, feedbackText, uploadedImageUrl } =
     feedbackByScreenshotStore(
@@ -707,14 +727,19 @@ const closeSubmitModal = ({
     lastScreenshot: null,
     feedbackText: clearText ? '' : prev.feedbackText,
     uploadedImageUrl: '',
+    includeAddress: false,
   }));
 };
 
 export async function getScreenshotFeedbackExtraSafely(
   totalBalanceText: string,
+  { includeAddress = false }: { includeAddress?: boolean } = {},
 ) {
   try {
-    return await getScreenshotFeedbackExtra({ totalBalanceText });
+    return await getScreenshotFeedbackExtra({
+      totalBalanceText,
+      includeAddress,
+    });
   } catch (error) {
     console.error('screenshot feedback extra error', error);
     return {};
@@ -722,12 +747,14 @@ export async function getScreenshotFeedbackExtraSafely(
 }
 
 export function useSubmitFeedbackOnScreenshot() {
-  const { lastScreenshot, totalBalanceText } = feedbackByScreenshotStore(
-    useShallow(s => ({
-      lastScreenshot: s.lastScreenshot,
-      totalBalanceText: s.totalBalanceText,
-    })),
-  );
+  const { lastScreenshot, totalBalanceText, includeAddress } =
+    feedbackByScreenshotStore(
+      useShallow(s => ({
+        lastScreenshot: s.lastScreenshot,
+        totalBalanceText: s.totalBalanceText,
+        includeAddress: s.includeAddress,
+      })),
+    );
 
   const { globalModalShown, feedbackText, uploadedImageUrl } =
     useFeedbackOnScreenshot();
@@ -757,6 +784,7 @@ export function useSubmitFeedbackOnScreenshot() {
 
         const extraInfo = await getScreenshotFeedbackExtraSafely(
           totalBalanceText,
+          { includeAddress },
         );
         // console.debug('[debug] extraInfo', extraInfo);
 
@@ -778,6 +806,7 @@ export function useSubmitFeedbackOnScreenshot() {
     [
       feedbackText,
       totalBalanceText,
+      includeAddress,
       uploadedImageUrl,
       lastScreenshot?.uri,
       isSubmittingRef,
