@@ -129,6 +129,7 @@ export const BuyAmountCard = ({
                 size={28}
                 chainSize={12}
                 logoStyle={styles.memeLogo}
+                innerChainStyle={styles.memeChain}
               />
               <Text style={styles.allocationSymbol} numberOfLines={1}>
                 {meme.symbol}
@@ -286,5 +287,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   memeLogo: {
     borderRadius: 8,
+  },
+  memeChain: {
+    right: -1,
+    bottom: -1,
   },
 }));
