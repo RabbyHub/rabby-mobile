@@ -1284,10 +1284,8 @@ export const BridgeContent = ({
     !quoteLoading &&
     !quoteList?.length;
   const showStickyInfo = !!fromToken && !!toToken && !noQuote;
-  const pendingCardAddress =
-    !amountAvailable && !selectedBridgeQuote && !recommendFromToken
-      ? currentAccount?.address
-      : undefined;
+  const hideBridgeProgress =
+    amountAvailable || !!selectedBridgeQuote || !!recommendFromToken;
   const showClosedMarketTip =
     (!!fromToken || !!toToken) && quoteBlockedByClosedMarket;
 
@@ -1784,62 +1782,54 @@ export const BridgeContent = ({
             </View>
           ) : null}
 
-          {pendingCardAddress ? (
-            <BridgePendingTxItem
-              userAddress={pendingCardAddress}
-              enabled={sceneActive}>
-              {card => (
-                <>
-                  <View>
-                    {card ? null : stickyInfo}
-                    {showClosedMarketTip && (
-                      <MarketClosedTip style={styles.marketClosedTip} />
-                    )}
-                  </View>
-                  {card}
-                </>
-              )}
-            </BridgePendingTxItem>
-          ) : (
-            <View>
-              {stickyInfo}
-              {showClosedMarketTip && (
-                <MarketClosedTip style={styles.marketClosedTip} />
-              )}
-              {noQuote && (
-                <>
-                  {recommendFromToken ? (
-                    <RecommendFromToken
-                      token={recommendFromToken}
-                      onOk={fillRecommendFromToken}
-                    />
-                  ) : (
+          <BridgePendingTxItem
+            userAddress={currentAccount?.address || ''}
+            enabled={sceneActive}
+            hidden={hideBridgeProgress}>
+            {card => (
+              <>
+                <View>
+                  {card ? null : stickyInfo}
+                  {showClosedMarketTip && (
+                    <MarketClosedTip style={styles.marketClosedTip} />
+                  )}
+                  {noQuote && (
                     <>
-                      <Text style={styles.noRecoomedTokenText}>
-                        {t('page.bridge.no-quote-found')}
-                      </Text>
-                      <View style={{ marginHorizontal: 24, marginTop: 12 }}>
-                        <BridgeSlippage
-                          value={slippage}
-                          displaySlippage={slippage}
-                          onChange={handleSlippageChange}
-                          autoSlippage={autoSlippage}
-                          isCustomSlippage={isCustomSlippage}
-                          setAutoSlippage={setAutoSlippage}
-                          setIsCustomSlippage={setIsCustomSlippage}
-                          type="bridge"
-                          loading={quoteLoading}
-                          onOptionsOpenChange={
-                            setSlippageOptionsQuoteRefreshPaused
-                          }
+                      {recommendFromToken ? (
+                        <RecommendFromToken
+                          token={recommendFromToken}
+                          onOk={fillRecommendFromToken}
                         />
-                      </View>
+                      ) : (
+                        <>
+                          <Text style={styles.noRecoomedTokenText}>
+                            {t('page.bridge.no-quote-found')}
+                          </Text>
+                          <View style={{ marginHorizontal: 24, marginTop: 12 }}>
+                            <BridgeSlippage
+                              value={slippage}
+                              displaySlippage={slippage}
+                              onChange={handleSlippageChange}
+                              autoSlippage={autoSlippage}
+                              isCustomSlippage={isCustomSlippage}
+                              setAutoSlippage={setAutoSlippage}
+                              setIsCustomSlippage={setIsCustomSlippage}
+                              type="bridge"
+                              loading={quoteLoading}
+                              onOptionsOpenChange={
+                                setSlippageOptionsQuoteRefreshPaused
+                              }
+                            />
+                          </View>
+                        </>
+                      )}
                     </>
                   )}
-                </>
-              )}
-            </View>
-          )}
+                </View>
+                {card}
+              </>
+            )}
+          </BridgePendingTxItem>
         </KeyboardAwareScrollView>
 
         <View
