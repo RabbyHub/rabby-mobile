@@ -107,13 +107,13 @@ describe('usePerpsProKline', () => {
 
     expect(hook.result.current).toMatchObject({
       hydrated: false,
-      interval: '30m',
+      interval: '15m',
     });
     expect(mockUsePerpsCandleFeed).toHaveBeenLastCalledWith({
       coin: 'BTC',
       enabled: false,
       initialSourceCandles: undefined,
-      interval: '30m',
+      interval: '15m',
     });
 
     await flushPromises();
@@ -152,7 +152,27 @@ describe('usePerpsProKline', () => {
     expect(mockSetSimpleChartPreference).toHaveBeenCalledWith(next);
   });
 
-  it('falls back to the Simple default when preference hydration fails', async () => {
+  it('keeps 15m over a Simple range view and ignores re-picking it', async () => {
+    mockGetSimpleChartPreference.mockResolvedValue({
+      version: 2,
+      style: 'candle',
+      range: '1W',
+      interval: '4h',
+    });
+    const pro = renderHook(() =>
+      usePerpsProKline({ coin: 'BTC', enabled: true }),
+    );
+    const simple = renderHook(() => usePerpsChartPreference());
+    await flushPromises();
+
+    expect(pro.result.current.interval).toBe('15m');
+    act(() => pro.result.current.selectInterval('15m'));
+    await flushPromises();
+    expect(mockSetSimpleChartPreference).not.toHaveBeenCalled();
+    expect(simple.result.current.preference.range).toBe('1W');
+  });
+
+  it('falls back to the Pro default when preference hydration fails', async () => {
     const consoleError = jest
       .spyOn(console, 'error')
       .mockImplementation(() => undefined);
@@ -167,7 +187,7 @@ describe('usePerpsProKline', () => {
 
     expect(hook.result.current).toMatchObject({
       hydrated: true,
-      interval: '30m',
+      interval: '15m',
     });
     consoleError.mockRestore();
   });
@@ -185,16 +205,16 @@ describe('usePerpsProKline', () => {
 
     expect(mockLoadPerpsCandleSourceSnapshot).toHaveBeenCalledWith({
       coin: 'BTC',
-      interval: '30m',
+      interval: '15m',
     });
     expect(mockUsePerpsCandleFeed).toHaveBeenLastCalledWith({
       coin: 'BTC',
       enabled: false,
       initialSourceCandles: expect.any(Array),
-      interval: '30m',
+      interval: '15m',
     });
     expect(hook.result.current.feed).toMatchObject({
-      identity: 'BTC:30m',
+      identity: 'BTC:15m',
       status: 'ready',
     });
   });

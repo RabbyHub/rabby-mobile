@@ -166,15 +166,6 @@ jest.mock('../../scene/usePerpsProKline', () => ({
   usePerpsProKline: mockUsePerpsProKline,
 }));
 
-jest.mock('../loading/PerpsProSkeletonBlock', () => {
-  const ReactModule = require('react');
-  const { View } = require('react-native');
-  return {
-    PerpsProSkeletonBlock: (props: Record<string, unknown>) =>
-      ReactModule.createElement(View, props),
-  };
-});
-
 jest.mock('./PerpsProKlineSkeleton', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');

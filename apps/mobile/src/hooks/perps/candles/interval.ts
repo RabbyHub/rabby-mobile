@@ -28,8 +28,8 @@ const INTERVAL_DURATION_MS: Record<
   '3d': 3 * DAY_MS,
 };
 
-// Same intervals and labels as the Simple interval sheet; both modes share
-// one interval preference.
+// Same intervals and labels as the Simple interval sheet, so a manual
+// interval picked in either mode exists in the other.
 export const PERPS_PRO_CANDLE_INTERVAL_OPTIONS: ReadonlyArray<{
   label: string;
   value: PerpsCandleDataInterval;
