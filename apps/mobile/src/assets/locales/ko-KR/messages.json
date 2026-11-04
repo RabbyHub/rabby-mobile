@@ -1938,6 +1938,7 @@
       "customNetworkTokenHeader": "추가된 사용자 정의 네트워크"
     },
     "browser": {
+      "openInRabbyPerps": "Rabby Perps에서 열기",
       "BrowserHeader": {
         "searchAndroid": "DApp 검색",
         "searchIos": "웹사이트 검색"
