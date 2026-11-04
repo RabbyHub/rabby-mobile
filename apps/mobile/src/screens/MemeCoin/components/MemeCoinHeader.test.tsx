@@ -41,7 +41,6 @@ jest.mock('@/components2024/WalletIcon/WalletIcon', () => ({
   },
 }));
 jest.mock('@/components2024/Toast', () => ({
-  toast: { positions: { CENTER: 0 } },
   toastWithIcon:
     () =>
     (...args: unknown[]) =>
@@ -76,7 +75,6 @@ describe('MemeCoinHeader', () => {
     expect(mockToastWarning).toHaveBeenCalledTimes(1);
     expect(mockToastWarning).toHaveBeenCalledWith(
       'page.memeCoin.addressSwitchUnsupported',
-      { position: 0 },
     );
     expect(mockToggleSceneVisible).not.toHaveBeenCalled();
     expect(mockPreFetchData).not.toHaveBeenCalled();

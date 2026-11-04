@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import RcMemeCoinTitle from '@/assets2024/memecoin/memecoin-title.svg';
 import RcIconWarning from '@/assets2024/memecoin/warning.svg';
 import { HeaderAccountSwitcher } from '@/components/AccountSwitcher/HeaderAccountSwitcher';
-import { toast, toastWithIcon } from '@/components2024/Toast';
+import { toastWithIcon } from '@/components2024/Toast';
 import { ScreenLayouts } from '@/constant/layout';
 import { HeaderBackPressable } from '@/hooks/navigation';
 import { useTheme2024 } from '@/hooks/theme';
@@ -22,9 +22,7 @@ export const MemeCoinHeader = ({
   const { styles } = useTheme2024({ getStyle });
   const { top } = useSafeAreaInsets();
   const warnSwitchUnsupported = () => {
-    toastWarning(t('page.memeCoin.addressSwitchUnsupported'), {
-      position: toast.positions.CENTER,
-    });
+    toastWarning(t('page.memeCoin.addressSwitchUnsupported'));
   };
 
   return (
