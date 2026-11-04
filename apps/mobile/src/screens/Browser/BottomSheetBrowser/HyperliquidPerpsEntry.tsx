@@ -68,7 +68,7 @@ export const HyperliquidPerpsEntry = () => {
   });
 
   return (
-    <TouchableOpacity onPress={handlePress} hitSlop={5}>
+    <TouchableOpacity onPress={handlePress} hitSlop={5} activeOpacity={1}>
       <View style={styles.container}>
         {showBlur ? (
           <>
