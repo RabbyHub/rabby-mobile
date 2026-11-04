@@ -320,48 +320,51 @@ export const BrowserHandler = () => {
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
-  return {
-    handleComponent: {
-      display: 'flex',
-      flexDirection: 'row',
-      paddingBottom: 7,
-      justifyContent: 'flex-end',
-      paddingRight: 10,
-      height: 40,
-    },
-    handleComponentContainer: {
-      display: 'flex',
-      backgroundColor: isLight
-        ? colors2024['neutral-bg-1']
-        : colors2024['neutral-bg-5'],
-      alignItems: 'center',
-      flexDirection: 'row',
-      borderRadius: 19,
-      gap: 8,
+const getStyle = createGetStyles2024(
+  ({ colors2024, isLight, safeAreaInsets }) => {
+    return {
+      handleComponent: {
+        display: 'flex',
+        flexDirection: 'row',
+        paddingBottom: 7,
+        justifyContent: 'flex-end',
+        // clear a side camera/status-bar column, e.g. on iPhone Duo
+        paddingRight: 10 + safeAreaInsets.right,
+        height: 40,
+      },
+      handleComponentContainer: {
+        display: 'flex',
+        backgroundColor: isLight
+          ? colors2024['neutral-bg-1']
+          : colors2024['neutral-bg-5'],
+        alignItems: 'center',
+        flexDirection: 'row',
+        borderRadius: 19,
+        gap: 8,
 
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: colors2024['neutral-contrast'],
-    },
-    handleItemFirst: {
-      paddingVertical: 4,
-      paddingLeft: 12,
-    },
-    handleItem: {
-      paddingVertical: 4,
-    },
-    handleItemLast: {
-      paddingVertical: 4,
-      paddingRight: 12,
-    },
-    divider: {
-      // width: StyleSheet.hairlineWidth,
-      width: 1,
-      height: 20,
-      backgroundColor: colors2024['neutral-line'],
-    },
-    placeholder: {
-      height: 40,
-    },
-  };
-});
+        borderWidth: StyleSheet.hairlineWidth,
+        borderColor: colors2024['neutral-contrast'],
+      },
+      handleItemFirst: {
+        paddingVertical: 4,
+        paddingLeft: 12,
+      },
+      handleItem: {
+        paddingVertical: 4,
+      },
+      handleItemLast: {
+        paddingVertical: 4,
+        paddingRight: 12,
+      },
+      divider: {
+        // width: StyleSheet.hairlineWidth,
+        width: 1,
+        height: 20,
+        backgroundColor: colors2024['neutral-line'],
+      },
+      placeholder: {
+        height: 40,
+      },
+    };
+  },
+);
