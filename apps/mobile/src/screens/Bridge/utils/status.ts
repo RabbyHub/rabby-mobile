@@ -150,3 +150,24 @@ export function getBridgeStatus(record: BridgeRecordData, now = Date.now()) {
 }
 
 export type BridgeStatus = ReturnType<typeof getBridgeStatus>;
+
+export type BridgeHistoryPendingStatus = 'processing' | 'pending' | null;
+
+export function getBridgeHistoryPendingStatus({
+  progress,
+}: BridgeStatus): BridgeHistoryPendingStatus {
+  if (
+    !progress ||
+    !(
+      progress.step1 === 'sourceLoading' ||
+      progress.step2 === 'destLoading' ||
+      progress.step2 === 'destDelayed'
+    )
+  ) {
+    return null;
+  }
+  return progress.footer.kind === 'stillBridging' ||
+    progress.footer.kind === 'delayed'
+    ? 'pending'
+    : 'processing';
+}

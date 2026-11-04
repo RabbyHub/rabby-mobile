@@ -1,7 +1,13 @@
-import React, { useEffect, useState, type ReactNode } from 'react';
+import React, {
+  useEffect,
+  useLayoutEffect,
+  useState,
+  type ReactNode,
+} from 'react';
 import { View } from 'react-native';
-import { useIsFocused } from '@react-navigation/native';
+import { useIsFocused, useRoute } from '@react-navigation/native';
 import { useAppState } from '@react-native-community/hooks';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
 import type { BridgeTxHistoryItem } from '@/core/services/transactionHistory';
 import { useScreenSceneAccountContext } from '@/hooks/accountsSwitcher';
@@ -13,26 +19,33 @@ import { openBridgeDetail } from '../utils/navigation';
 import { openBridgeSupport } from '../utils/support';
 import { BridgeProgressCard } from './BridgeProgressCard';
 import { ONE_DAY_MS } from '../constants';
+import { setBridgeHistoryPending } from '../hooks/historyPending';
+import { getBridgeHistoryPendingStatus } from '../utils/status';
 
 export const BridgePendingTxItem = ({
   userAddress,
   enabled = true,
+  hidden = false,
   children,
 }: {
   userAddress: string;
   enabled?: boolean;
+  hidden?: boolean;
   children: (card: ReactNode) => ReactNode;
 }) => {
   const { styles } = useTheme2024({ getStyle });
   const focused = useIsFocused();
+  const route = useRoute();
   const appState = useAppState();
   const active = enabled && focused && appState === 'active';
   const { ofScreen } = useScreenSceneAccountContext();
   const [local, setLocal] = useState<BridgeTxHistoryItem>();
-  // 地址或启用状态变化时重读本地记录，避免继续显示上一地址的交易。
+  const currentLocal =
+    local && isSameAddress(local.address, userAddress) ? local : undefined;
+  const sceneKey = `${route.key}:${userAddress.toLowerCase()}`;
+  // 卡片显隐变化时也重读，接上填入金额后新提交的交易。
   useEffect(() => {
     let disposed = false;
-    setLocal(undefined);
     if (userAddress && enabled) {
       transactionHistoryServiceApi
         .getRecentPendingTxHistory(userAddress, 'bridge')
@@ -58,26 +71,35 @@ export const BridgePendingTxItem = ({
     return () => {
       disposed = true;
     };
-  }, [userAddress, enabled]);
+  }, [userAddress, enabled, hidden]);
   // 仅在场景启用、页面聚焦且应用在前台时跟踪交易。
   const record = useBridgeRecord(
     {
       address: userAddress,
-      local,
+      local: currentLocal,
       isForMultipleAddress: ofScreen === 'MultiSwapBridge',
     },
-    active && !!local,
+    active && !!currentLocal,
   );
   const status = useBridgeStatus(record, active, 'card');
   const visible = !!(
     record.history ||
     (record.local && record.local.status !== 'failed')
   );
+  const pending =
+    active && hidden && visible ? getBridgeHistoryPendingStatus(status) : null;
+  useLayoutEffect(() => {
+    setBridgeHistoryPending(sceneKey, pending);
+  }, [sceneKey, pending]);
+  useLayoutEffect(
+    () => () => setBridgeHistoryPending(sceneKey, null),
+    [sceneKey],
+  );
   // 卡片和报价预览由同一次渲染决定，避免提交后先画出两边。
   return (
     <>
       {children(
-        visible ? (
+        visible && !hidden ? (
           <View style={styles.card}>
             <BridgeProgressCard
               status={status}
