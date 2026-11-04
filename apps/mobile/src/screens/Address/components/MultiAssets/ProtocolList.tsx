@@ -61,7 +61,8 @@ import {
 import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 import { useScrollToTopOnChainChange } from '@/hooks/useScrollToTopOnChainChange';
 import { resolveAssetProjectionViewState } from '@/store/assetProjectionAvailability';
-import { runOnJS, useAnimatedReaction } from 'react-native-reanimated';
+import { useDerivedValue } from 'react-native-reanimated';
+import { useValueFromSharedValue } from '@/hooks/reanimated';
 
 const MemoizedFullDefiRenderItem = React.memo(FullDefiRenderItem);
 const MemoizedEmptyAssets = React.memo(EmptyAssets);
@@ -679,18 +680,10 @@ export const ProtocolList = () => {
       return onRefresh();
     },
   });
-  const [isPullRefreshVisible, setIsPullRefreshVisible] = useState(false);
-
   // Keep the native visible anchor from pinning rows to a stale offset while
   // RefreshPlaceholderIOS changes the list header height.
-  useAnimatedReaction(
-    () => pullDistance.value > 0,
-    (visible, previous) => {
-      if (visible !== previous) {
-        runOnJS(setIsPullRefreshVisible)(visible);
-      }
-    },
-  );
+  const svIsPullRefreshVisible = useDerivedValue(() => pullDistance.value > 0);
+  const isPullRefreshVisible = useValueFromSharedValue(svIsPullRefreshVisible);
 
   useEffect(() => {
     console.debug(
