@@ -20,3 +20,7 @@ export const formatMemeBalanceUsd = (usd: number) => {
 /** +$200.32 / -$3.10; zero counts as a gain */
 export const formatMemePnlUsd = (usd: number) =>
   `${usd < 0 ? '' : '+'}${formatUsdValue(usd)}`;
+
+/** drops zero cents only, as in Figma: $100 needed, Another $65.21 needed */
+export const formatUsdNoZeroCents = (usd: number) =>
+  formatUsdValue(usd).replace(/\.00$/, '');

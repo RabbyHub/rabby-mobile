@@ -65,15 +65,13 @@ import {
 
 type HomeMode = 'market' | 'holdings';
 
-/** valueUsd is null in market mode (the row shows market cap instead) */
-type HomeRow =
-  | { key: string; meme: MemeMarketItem; valueUsd: null }
-  | {
-      key: string;
-      meme: MemeToken;
-      valueUsd: number;
-      pnl: number | null;
-    };
+type HomeRow = {
+  key: string;
+  meme: MemeToken;
+  marketCap: number | null;
+  /** holdings mode only */
+  valueUsd: number | null;
+};
 
 const SKELETON_ROWS = 6;
 
@@ -134,6 +132,11 @@ export const MemeCoinHomeScreen = () => {
     setSelectedHoldingKeys(NO_HOLDING_KEYS);
     setAmountText('');
   }, []);
+
+  const cancelSelection = useCallback(() => {
+    Keyboard.dismiss();
+    clearSelection();
+  }, [clearSelection]);
 
   useEffect(() => {
     refreshMemeMarket();
@@ -196,15 +199,16 @@ export const MemeCoinHomeScreen = () => {
         ? marketList.map(meme => ({
             key: tokenKey(meme),
             meme,
+            marketCap: meme.marketCap,
             valueUsd: null,
           }))
         : holdings.map(h => ({
             key: tokenKey(h.meme),
             meme: h.meme,
+            marketCap: h.marketCap,
             valueUsd: h.valueUsd,
-            pnl: pnl?.byToken[tokenKey(h.meme)] ?? null,
           })),
-    [mode, marketList, holdings, pnl],
+    [mode, marketList, holdings],
   );
 
   const selectedHoldings = useMemo(() => {
@@ -339,12 +343,12 @@ export const MemeCoinHomeScreen = () => {
         symbol={item.meme.symbol}
         address={item.meme.id}
         valueText={
-          item.valueUsd === null
-            ? formatMarketCapUsd(item.meme.marketCap)
-            : formatUsdValue(item.valueUsd)
+          item.marketCap === null ? '--' : formatMarketCapUsd(item.marketCap)
         }
         change24h={item.meme.change24h}
-        pnl={item.valueUsd === null ? undefined : item.pnl}
+        holdingValueText={
+          item.valueUsd === null ? undefined : formatUsdValue(item.valueUsd)
+        }
         selected={selectedSet.has(item.key)}
         onPress={toggle}
       />
@@ -356,7 +360,7 @@ export const MemeCoinHomeScreen = () => {
     selectedCount > 0
       ? t('page.memeCoin.clear')
       : mode === 'holdings'
-      ? t('page.memeCoin.value')
+      ? t('page.memeCoin.marketCapValue')
       : t('page.memeCoin.marketCap');
   // Figma drops the column label when a search finds nothing
   const noSearchMatch =
@@ -459,7 +463,9 @@ export const MemeCoinHomeScreen = () => {
         ListHeaderComponent={listHeader}
         ListEmptyComponent={listEmpty}
         contentContainerStyle={styles.listContent}
-        keyboardShouldPersistTaps="handled"
+        // Search results stay tappable with the keyboard up; with a selection the
+        // keyboard belongs to the amount field and a tap on the list only closes it.
+        keyboardShouldPersistTaps={selectedCount > 0 ? 'never' : 'handled'}
         keyboardDismissMode="on-drag"
         initialNumToRender={10}
         onEndReached={handleEndReached}
@@ -480,6 +486,7 @@ export const MemeCoinHomeScreen = () => {
         onMaxPriceImpactChange={setMaxPriceImpactPct}
         onBuy={handleBuy}
         onSell={handleSell}
+        onCancelSelection={cancelSelection}
       />
       <AccountSwitcherModal
         forScene="MakeTransactionAbout"
@@ -510,6 +517,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     justifyContent: 'space-between',
   },
   sectionTitle: {
+    paddingLeft: 8,
     fontFamily: 'SF Pro Rounded',
     fontSize: 16,
     lineHeight: 20,

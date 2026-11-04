@@ -38,6 +38,8 @@ export type ExecutorCallbacks = {
 
 export type MemeTradeExecutor = {
   start(): void;
+  /** While running: adds legs behind whatever is already queued on their chain. */
+  enqueue(legs: ExecLeg[]): void;
   pause(): void;
   resume(): void;
   stop(): void;
@@ -50,14 +52,6 @@ export type ExecutorOptions = {
 const defaultRetryDelay = (ms: number) =>
   new Promise<void>(resolve => setTimeout(resolve, ms));
 
-const groupByPayChain = (legs: ExecLeg[]) => {
-  const groups = new Map<string, ExecLeg[]>();
-  legs.forEach(leg => {
-    groups.set(leg.pay.chain, [...(groups.get(leg.pay.chain) ?? []), leg]);
-  });
-  return Array.from(groups.values());
-};
-
 /** `legs` must already be in execution order (amount desc, D16). */
 export const createMemeTradeExecutor = (
   legs: ExecLeg[],
@@ -66,9 +60,18 @@ export const createMemeTradeExecutor = (
   { retryDelay = defaultRetryDelay }: ExecutorOptions = {},
 ): MemeTradeExecutor => {
   const gate = createPauseGate();
-  const arrivals: Promise<void>[] = [];
+  const chainTails = new Map<string, Promise<void>>();
+  // Legs and bridge arrivals that have not settled; the last one ends the run.
+  let unsettled = 0;
   let started = false;
   const setState = callbacks.onLegState;
+
+  const settleOne = () => {
+    unsettled -= 1;
+    if (unsettled === 0) {
+      callbacks.onFinished();
+    }
+  };
 
   const settleError = (
     key: string,
@@ -132,8 +135,10 @@ export const createMemeTradeExecutor = (
         return;
       }
       setState(leg.key, { phase: 'arriving', txHash: hash });
-      arrivals.push(
-        runner.waitForArrival(leg, hash, gate).then(
+      unsettled += 1;
+      runner
+        .waitForArrival(leg, hash, gate)
+        .then(
           arrived =>
             setState(
               leg.key,
@@ -146,21 +151,32 @@ export const createMemeTradeExecutor = (
                   },
             ),
           error => settleError(leg.key, error, hash, 'arrivalFailed'),
-        ),
-      );
+        )
+        .then(settleOne);
     } catch (error) {
       settleError(leg.key, error, txHash);
     }
   };
 
-  const runChain = async (chainLegs: ExecLeg[]) => {
-    for (const leg of chainLegs) {
-      if (gate.isStopped()) {
-        setState(leg.key, { phase: 'cancelled' });
-        continue;
-      }
+  const runQueuedLeg = async (leg: ExecLeg) => {
+    if (gate.isStopped()) {
+      setState(leg.key, { phase: 'cancelled' });
+    } else {
       await runLeg(leg);
     }
+    settleOne();
+  };
+
+  const enqueue = (newLegs: ExecLeg[]) => {
+    unsettled += newLegs.length;
+    newLegs.forEach(leg => {
+      setState(leg.key, { phase: 'queued' });
+      const tail = chainTails.get(leg.pay.chain) ?? Promise.resolve();
+      chainTails.set(
+        leg.pay.chain,
+        tail.then(() => runQueuedLeg(leg)),
+      );
+    });
   };
 
   return {
@@ -169,11 +185,12 @@ export const createMemeTradeExecutor = (
         return;
       }
       started = true;
-      legs.forEach(leg => setState(leg.key, { phase: 'queued' }));
-      Promise.all(groupByPayChain(legs).map(runChain))
-        .then(() => Promise.all(arrivals))
-        .then(() => callbacks.onFinished());
+      enqueue(legs);
+      if (!legs.length) {
+        callbacks.onFinished();
+      }
     },
+    enqueue,
     pause: () => gate.pause(),
     resume: () => gate.resume(),
     stop: () => gate.stop(),

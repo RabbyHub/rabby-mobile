@@ -77,7 +77,7 @@ describe('getBuySummary', () => {
     ).toEqual({ kind: 'short', shortfallUsd: 20 });
   });
 
-  it('sums the estimated payment when fully covered, ignoring float noise', () => {
+  it('is enough when fully covered, ignoring float noise', () => {
     expect(
       getBuySummary({
         amountUsd: 100,
@@ -87,7 +87,7 @@ describe('getBuySummary', () => {
           paymentBySource: { a: 60, b: 40 },
         }),
       }),
-    ).toEqual({ kind: 'enough', totalPaymentUsd: 100 });
+    ).toEqual({ kind: 'enough' });
   });
 });
 
@@ -140,6 +140,7 @@ describe('toSellHoldings', () => {
       price: 1,
       change24h: 0,
     },
+    marketCap: null,
     amount: 1,
     valueUsd,
   });
@@ -192,7 +193,7 @@ describe('getMemeAllocations', () => {
 
   it('splits by market cap, largest first', () => {
     expect(
-      getMemeAllocations(100, memes).map(a => [
+      getMemeAllocations(100, memes, 'marketCap').map(a => [
         a.meme.id,
         a.ratio,
         a.amountUsd,
@@ -205,10 +206,16 @@ describe('getMemeAllocations', () => {
   });
 
   it('keeps the ratios when the amount is zero', () => {
-    expect(getMemeAllocations(0, memes).map(a => a.amountUsd)).toEqual([
-      0, 0, 0,
-    ]);
-    expect(getMemeAllocations(0, memes)[0].ratio).toBe(0.6);
+    expect(
+      getMemeAllocations(0, memes, 'marketCap').map(a => a.amountUsd),
+    ).toEqual([0, 0, 0]);
+    expect(getMemeAllocations(0, memes, 'marketCap')[0].ratio).toBe(0.6);
+  });
+
+  it('splits evenly in equal mode and keeps the given order', () => {
+    const allocations = getMemeAllocations(90, memes, 'equal');
+    expect(allocations.map(a => a.meme.id)).toEqual(['a', 'b', 'c']);
+    allocations.forEach(a => expect(a.amountUsd).toBeCloseTo(30));
   });
 });
 

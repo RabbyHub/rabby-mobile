@@ -4,7 +4,12 @@ import { AMOUNT_EPSILON } from '../engine/constants';
 import type { SellHolding } from '../engine/execLegs';
 import { tokenKey } from '../engine/keys';
 import { computeMemeTargets } from '../engine/planner';
-import type { MemeTarget, PlanResult, TokenRef } from '../engine/types';
+import type {
+  AllocationMode,
+  MemeTarget,
+  PlanResult,
+  TokenRef,
+} from '../engine/types';
 import type { MemeTradeTaskStatus } from '../hooks/useMemeTradeTask';
 
 export const MAX_PRICE_IMPACT_OPTIONS = [1, 5, 20] as const;
@@ -30,7 +35,7 @@ export const formatMarketCapUsd = (usd: number) =>
 export type BuySummary =
   | { kind: 'none'; neededUsd: number }
   | { kind: 'short'; shortfallUsd: number }
-  | { kind: 'enough'; totalPaymentUsd: number };
+  | { kind: 'enough' };
 
 export const getBuySummary = ({
   amountUsd,
@@ -47,13 +52,7 @@ export const getBuySummary = ({
   if (plan.shortfallUsd > AMOUNT_EPSILON) {
     return { kind: 'short', shortfallUsd: plan.shortfallUsd };
   }
-  return {
-    kind: 'enough',
-    totalPaymentUsd: Object.values(plan.paymentBySource).reduce(
-      (sum, v) => sum + v,
-      0,
-    ),
-  };
+  return { kind: 'enough' };
 };
 
 export const canConfirmBuy = ({
@@ -127,8 +126,9 @@ export const pickTokenLogos = (
 export const getMemeAllocations = <T extends MemeTarget>(
   amountUsd: number,
   memes: T[],
+  mode: AllocationMode,
 ) =>
-  computeMemeTargets(1, memes)
+  computeMemeTargets(1, memes, mode)
     .map(({ meme, amountUsd: ratio }) => ({
       meme,
       ratio,
@@ -136,7 +136,7 @@ export const getMemeAllocations = <T extends MemeTarget>(
     }))
     .sort((a, b) => b.ratio - a.ratio);
 
-/** whole percent, so two items fit on one row at 360dp: 60%, <1% */
+/** whole percent: 60%, <1% */
 export const formatAllocationPct = (ratio: number) => {
   const pct = new BigNumber(ratio).times(100);
   return pct.gt(0) && pct.lt(1)

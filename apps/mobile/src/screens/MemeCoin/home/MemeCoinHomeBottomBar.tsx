@@ -7,7 +7,6 @@ import { NextSearchBar } from '@/components2024/SearchBar';
 import {
   BOTTOM_BUTTON_GAP,
   BOTTOM_BUTTON_SINGLE_HEIGHT,
-  BOTTOM_BUTTON_TITLE_STYLE,
   BOTTOM_BUTTON_TOP_OFFSET,
   getBottomButtonBottomOffset,
 } from '@/constant/layout';
@@ -16,6 +15,7 @@ import { useSafeSizes } from '@/hooks/useAppLayout';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { MaxPriceImpactSelector } from '../components/MaxPriceImpactSelector';
+import { MEME_BUTTON_TITLE_STYLE } from '../ui/buttonStyles';
 import type { MaxPriceImpactPct } from '../ui/helpers';
 import { BuyAmountField } from './BuyAmountField';
 
@@ -38,6 +38,8 @@ export const useKeyboardVisible = () => {
   return visible;
 };
 
+const ACTION_ROW_GAP = 16;
+
 const PLACEHOLDER_TITLE_STYLE = {
   color: 'rgba(255, 255, 255, 0.6)',
   opacity: 0.8,
@@ -47,13 +49,50 @@ const PlaceholderButton = ({ title }: { title: string }) => (
   <Button
     title={title}
     height={BOTTOM_BUTTON_SINGLE_HEIGHT}
-    titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
+    titleStyle={MEME_BUTTON_TITLE_STYLE}
     disabledTitleStyle={PLACEHOLDER_TITLE_STYLE}
     disabled
     noShadow
     type="primary"
   />
 );
+
+const ActionRow = ({
+  title,
+  disabled,
+  onPress,
+  onCancel,
+}: {
+  title: string;
+  disabled?: boolean;
+  onPress: () => void;
+  onCancel: () => void;
+}) => {
+  const { t } = useTranslation();
+  const { styles } = useTheme2024({ getStyle });
+  return (
+    <View style={styles.actionRow}>
+      <Button
+        title={title}
+        height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+        titleStyle={MEME_BUTTON_TITLE_STYLE}
+        containerStyle={styles.actionMain}
+        disabled={disabled}
+        onPress={onPress}
+        noShadow
+        type="primary"
+      />
+      <Button
+        title={t('page.memeCoin.cancel')}
+        height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+        titleStyle={MEME_BUTTON_TITLE_STYLE}
+        buttonStyle={styles.cancelButton}
+        onPress={onCancel}
+        type="plain"
+      />
+    </View>
+  );
+};
 
 export const MemeCoinHomeBottomBar = ({
   mode,
@@ -70,6 +109,7 @@ export const MemeCoinHomeBottomBar = ({
   onMaxPriceImpactChange,
   onBuy,
   onSell,
+  onCancelSelection,
 }: {
   mode: 'market' | 'holdings';
   selectedCount: number;
@@ -85,6 +125,7 @@ export const MemeCoinHomeBottomBar = ({
   onMaxPriceImpactChange: (value: MaxPriceImpactPct) => void;
   onBuy: () => void;
   onSell: () => void;
+  onCancelSelection: () => void;
 }) => {
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
@@ -105,13 +146,10 @@ export const MemeCoinHomeBottomBar = ({
             value={maxPriceImpactPct}
             onChange={onMaxPriceImpactChange}
           />
-          <Button
+          <ActionRow
             title={t('page.memeCoin.sellN', { count: selectedCount })}
-            height={BOTTOM_BUTTON_SINGLE_HEIGHT}
-            titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
             onPress={onSell}
-            noShadow
-            type="primary"
+            onCancel={onCancelSelection}
           />
         </>
       );
@@ -122,14 +160,11 @@ export const MemeCoinHomeBottomBar = ({
           amountText={amountText}
           onChangeAmount={onChangeAmount}
         />
-        <Button
+        <ActionRow
           title={t('page.memeCoin.buyN', { count: selectedCount })}
-          height={BOTTOM_BUTTON_SINGLE_HEIGHT}
-          titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
           disabled={buyDisabled}
           onPress={onBuy}
-          noShadow
-          type="primary"
+          onCancel={onCancelSelection}
         />
       </>
     );
@@ -168,17 +203,31 @@ export const MemeCoinHomeBottomBar = ({
   return <View style={[styles.bar, { paddingBottom }]}>{content}</View>;
 };
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   bar: {
     flexShrink: 0,
     paddingTop: BOTTOM_BUTTON_TOP_OFFSET,
     paddingHorizontal: 20,
     gap: 16,
     backgroundColor: colors2024['neutral-bg-1'],
-    shadowColor: '#4B4E62',
+    shadowColor: isLight ? '#4B4E62' : '#6F759F',
     shadowOpacity: 0.12,
     shadowRadius: 15,
     shadowOffset: { width: 0, height: 0 },
+  },
+  actionRow: {
+    flexDirection: 'row',
+    gap: ACTION_ROW_GAP,
+  },
+  actionMain: {
+    flex: 1,
+    minWidth: 0,
+  },
+  // Button's inner view defaults to width 100%, which stretches past the title
+  // in a row where the button sizes to its content.
+  cancelButton: {
+    width: 'auto',
+    paddingHorizontal: 20,
   },
   idleRow: {
     flexDirection: 'row',

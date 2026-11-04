@@ -1,7 +1,7 @@
 import { act, renderHook } from '@testing-library/react-native';
 import type { Account } from '@/core/startupServices/preference';
 import useTokenList from '@/store/tokens';
-import type { MemeTarget } from '../engine/types';
+import type { AllocationMode, MemeTarget } from '../engine/types';
 import { usePaymentAssets } from './usePaymentAssets';
 
 const mockGasMarket = jest.fn();
@@ -82,7 +82,13 @@ const flush = () =>
 
 const render = (amountUsd = 1) =>
   renderHook(() =>
-    usePaymentAssets({ account, memes, memeTokenKeys, amountUsd }),
+    usePaymentAssets({
+      account,
+      memes,
+      memeTokenKeys,
+      amountUsd,
+      allocationMode: 'marketCap',
+    }),
   );
 
 const setStore = (
@@ -208,5 +214,42 @@ describe('usePaymentAssets', () => {
         'eth',
       ]);
     });
+  });
+
+  describe('allocationMode', () => {
+    it('plans with the mode it is given', async () => {
+      const twoMemes: MemeTarget[] = [
+        { id: '0xa', chain: 'hood', symbol: 'A', marketCap: 3 },
+        { id: '0xb', chain: 'hood', symbol: 'B', marketCap: 1 },
+      ];
+      setStore({ tokenListMap: { [KEY]: [hoodEth] } });
+      const { result, rerender } = renderHook(
+        ({ allocationMode }: { allocationMode: AllocationMode }) =>
+          usePaymentAssets({
+            account,
+            memes: twoMemes,
+            memeTokenKeys,
+            amountUsd: 40,
+            allocationMode,
+          }),
+        { initialProps: { allocationMode: 'marketCap' as AllocationMode } },
+      );
+      await flush();
+      act(() => result.current.toggle('hood:hood'));
+      expect(result.current.plan.legs.map(l => l.amountUsd)).toEqual([30, 10]);
+
+      rerender({ allocationMode: 'equal' });
+      expect(result.current.plan.legs.map(l => l.amountUsd)).toEqual([20, 20]);
+    });
+  });
+
+  it('returns the selected assets', async () => {
+    setStore({ tokenListMap: { [KEY]: [hoodEth, ethUsdc] } });
+    const { result } = render();
+    await flush();
+    expect(result.current.selectedAssets).toEqual([]);
+
+    act(() => result.current.toggle('hood:hood'));
+    expect(result.current.selectedAssets.map(a => a.symbol)).toEqual(['ETH']);
   });
 });

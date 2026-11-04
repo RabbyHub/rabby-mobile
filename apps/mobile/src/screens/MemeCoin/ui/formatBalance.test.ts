@@ -1,8 +1,14 @@
-import { formatMemeBalanceUsd, formatMemePnlUsd } from './formatBalance';
+import { formatUsdValue } from '@/utils/number';
+import {
+  formatMemeBalanceUsd,
+  formatMemePnlUsd,
+  formatUsdNoZeroCents,
+} from './formatBalance';
 
 jest.mock('@/utils/number', () => ({
-  formatUsdValue: (usd: number) =>
-    `${usd < 0 ? '-' : ''}$${Math.abs(usd).toFixed(2)}`,
+  formatUsdValue: jest.fn(
+    (usd: number) => `${usd < 0 ? '-' : ''}$${Math.abs(usd).toFixed(2)}`,
+  ),
 }));
 
 describe('formatMemeBalanceUsd', () => {
@@ -34,5 +40,20 @@ describe('formatMemePnlUsd', () => {
     [-3.1, '-$3.10'],
   ])('signs the amount: %p', (usd, expected) => {
     expect(formatMemePnlUsd(usd)).toBe(expected);
+  });
+});
+
+describe('formatUsdNoZeroCents', () => {
+  it.each([
+    [100, '$100'],
+    [65.21, '$65.21'],
+    [100.5, '$100.50'],
+  ])('drops zero cents only: %p', (usd, expected) => {
+    expect(formatUsdNoZeroCents(usd)).toBe(expected);
+  });
+
+  it('leaves a value without cents alone', () => {
+    (formatUsdValue as jest.Mock).mockReturnValueOnce('$1,500');
+    expect(formatUsdNoZeroCents(1500)).toBe('$1,500');
   });
 });

@@ -81,7 +81,15 @@ const setup = (legs: ExecLeg[]) => {
     states,
     finished: () => finished,
     prepare: (k: string) => get(prepare, k),
+    prepareAgain: (k: string) => {
+      prepare.delete(k);
+      return get(prepare, k);
+    },
     receipt: (k: string) => get(receipt, k),
+    receiptAgain: (k: string) => {
+      receipt.delete(k);
+      return get(receipt, k);
+    },
     arrival: (k: string) => get(arrival, k),
   };
 };
@@ -192,6 +200,131 @@ describe('createMemeTradeExecutor', () => {
       'cancelled',
       'cancelled',
     ]);
+    expect(t.finished()).toBe(1);
+  });
+
+  it('finishes right away when there is nothing to run', async () => {
+    const t = setup([]);
+    t.executor.start();
+    await flush();
+    expect(t.finished()).toBe(1);
+  });
+});
+
+describe('enqueue while running', () => {
+  const failed: BroadcastResult = { ok: false, reason: 'failed' };
+  const ok: BroadcastResult = { ok: true, txHash: '0x1' };
+
+  it('runs the leg right away when its chain is idle', async () => {
+    const t = setup([leg('a1', 'eth'), leg('b1', 'bsc')]);
+    t.executor.start();
+    await flush();
+    t.prepare('a1').resolve(failed);
+    await flush();
+    expect(t.states.a1.phase).toBe('failed');
+
+    t.prepareAgain('a1');
+    t.executor.enqueue([leg('a1', 'eth')]);
+    expect(t.states.a1.phase).toBe('queued');
+    await flush();
+    expect(t.states.a1.phase).toBe('preparing');
+    expect(t.calls.filter(c => c === 'prepare:a1')).toHaveLength(2);
+  });
+
+  it('waits behind everything already on its chain', async () => {
+    const t = setup([leg('a1', 'eth'), leg('a2', 'eth'), leg('a3', 'eth')]);
+    t.executor.start();
+    await flush();
+    t.prepare('a1').resolve(failed);
+    await flush();
+    expect(t.states.a2.phase).toBe('preparing');
+
+    t.prepareAgain('a1');
+    t.executor.enqueue([leg('a1', 'eth')]);
+    await flush();
+    expect(t.states.a1.phase).toBe('queued');
+
+    t.prepare('a2').resolve(ok);
+    await flush();
+    t.receipt('a2').resolve(true);
+    await flush();
+    t.prepare('a3').resolve(ok);
+    await flush();
+    expect(t.states.a1.phase).toBe('queued');
+    t.receipt('a3').resolve(true);
+    await flush();
+
+    expect(t.states.a1.phase).toBe('preparing');
+    expect(t.calls.filter(c => c.startsWith('prepare:'))).toEqual([
+      'prepare:a1',
+      'prepare:a2',
+      'prepare:a3',
+      'prepare:a1',
+    ]);
+  });
+
+  it('finishes once, after the enqueued leg settles', async () => {
+    const t = setup([leg('a1', 'eth'), leg('b1', 'bsc')]);
+    t.executor.start();
+    await flush();
+    t.prepare('a1').resolve(failed);
+    await flush();
+
+    t.prepareAgain('a1');
+    t.receiptAgain('a1');
+    t.executor.enqueue([leg('a1', 'eth')]);
+    t.prepare('b1').resolve(failed);
+    await flush();
+    expect(t.finished()).toBe(0);
+
+    t.prepare('a1').resolve(ok);
+    await flush();
+    t.receipt('a1').resolve(true);
+    await flush();
+    expect(t.states.a1.phase).toBe('success');
+    expect(t.finished()).toBe(1);
+  });
+
+  it('accepts a leg while only a bridge arrival is still pending', async () => {
+    const t = setup([leg('a1', 'eth'), leg('b1', 'bsc', 'bridge')]);
+    t.executor.start();
+    await flush();
+    t.prepare('a1').resolve(failed);
+    t.prepare('b1').resolve(ok);
+    await flush();
+    t.receipt('b1').resolve(true);
+    await flush();
+    expect(t.states.b1.phase).toBe('arriving');
+    expect(t.finished()).toBe(0);
+
+    t.prepareAgain('a1');
+    t.executor.enqueue([leg('a1', 'eth')]);
+    await flush();
+    t.arrival('b1').resolve(true);
+    await flush();
+    expect(t.states.a1.phase).toBe('preparing');
+    expect(t.finished()).toBe(0);
+
+    t.prepare('a1').resolve(failed);
+    await flush();
+    expect(t.finished()).toBe(1);
+  });
+
+  it('cancels a leg enqueued after stop', async () => {
+    const t = setup([leg('a1', 'eth'), leg('b1', 'bsc')]);
+    t.executor.start();
+    await flush();
+    t.prepare('a1').resolve(failed);
+    await flush();
+
+    t.executor.stop();
+    t.executor.enqueue([leg('a1', 'eth')]);
+    await flush();
+    expect(t.states.a1.phase).toBe('cancelled');
+    expect(t.calls.filter(c => c === 'prepare:a1')).toHaveLength(1);
+
+    t.prepare('b1').reject(new ExecutionStoppedError());
+    await flush();
     expect(t.finished()).toBe(1);
   });
 });

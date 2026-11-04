@@ -6,7 +6,6 @@ import { useTheme2024 } from '@/hooks/theme';
 import { formatPercentageKMB } from '@/screens/Market/utils/formatPercentageKMB';
 import { ellipsisAddress } from '@/utils/address';
 import { createGetStyles2024 } from '@/utils/styles';
-import { formatMemePnlUsd } from '../ui/formatBalance';
 import { SelectedBadge } from './SelectedBadge';
 
 export const MEME_ROW_HEIGHT = 70;
@@ -19,8 +18,8 @@ type Props = {
   address: string;
   valueText: string;
   change24h: number | null;
-  /** holding rows only: USD, shown instead of change24h; null renders "--" */
-  pnl?: number | null;
+  /** holding rows only: shown instead of change24h */
+  holdingValueText?: string;
   selected: boolean;
   onPress: (itemKey: string) => void;
 };
@@ -33,7 +32,7 @@ export const MemeTokenRow = React.memo(function MemeTokenRow({
   address,
   valueText,
   change24h,
-  pnl,
+  holdingValueText,
   selected,
   onPress,
 }: Props) {
@@ -58,19 +57,12 @@ export const MemeTokenRow = React.memo(function MemeTokenRow({
         <Text style={styles.value} numberOfLines={1}>
           {valueText}
         </Text>
-        {pnl !== undefined ? (
-          <Text
-            style={
-              pnl === null
-                ? styles.changeNone
-                : pnl < 0
-                ? styles.changeDown
-                : styles.changeUp
-            }>
-            {pnl === null ? '--' : formatMemePnlUsd(pnl)}
+        {holdingValueText !== undefined ? (
+          <Text style={styles.footText} numberOfLines={1}>
+            {holdingValueText}
           </Text>
         ) : change24h === null ? (
-          <Text style={styles.changeNone}>--</Text>
+          <Text style={styles.footText}>--</Text>
         ) : (
           <Text style={change24h < 0 ? styles.changeDown : styles.changeUp}>
             {formatPercentageKMB(change24h)}
@@ -82,7 +74,7 @@ export const MemeTokenRow = React.memo(function MemeTokenRow({
   );
 });
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   row: {
     height: MEME_ROW_HEIGHT,
     marginBottom: 8,
@@ -93,7 +85,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     borderRadius: 14,
     borderWidth: 2,
     borderColor: 'transparent',
-    backgroundColor: colors2024['neutral-card-1'],
+    backgroundColor: colors2024[isLight ? 'neutral-card-1' : 'neutral-bg-2'],
   },
   rowSelected: {
     borderColor: colors2024['brand-disable'],
@@ -145,7 +137,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontWeight: '500',
     color: colors2024['red-default'],
   },
-  changeNone: {
+  footText: {
     fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     lineHeight: 16,

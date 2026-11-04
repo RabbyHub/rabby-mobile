@@ -12,9 +12,7 @@ import { Button } from '@/components2024/Button';
 import {
   BOTTOM_BUTTON_GAP,
   BOTTOM_BUTTON_SINGLE_HEIGHT,
-  BOTTOM_BUTTON_TITLE_STYLE,
   BOTTOM_BUTTON_TOP_OFFSET,
-  BOTTOM_BUTTON_WITH_ICON_TITLE_STYLE,
   getBottomButtonBottomOffset,
 } from '@/constant/layout';
 import type { Account } from '@/core/startupServices/preference';
@@ -28,6 +26,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { countFinishedLegs, isLegRetryable } from '../engine/displayStatus';
 import { useMemeTradeTask } from '../hooks/useMemeTradeTask';
 import { returnToMemeCoinHome } from '../navigation';
+import { MEME_BUTTON_TITLE_STYLE } from '../ui/buttonStyles';
 import { getExecuteButtonState } from '../ui/helpers';
 import { useMemeCoinAccount } from '../ui/useMemeCoinAccount';
 import { ExecuteLegRow } from './ExecuteLegRow';
@@ -159,7 +158,7 @@ const MemeCoinExecuteContent = ({
                 total: buttonState.total,
               })}
               height={BOTTOM_BUTTON_SINGLE_HEIGHT}
-              titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
+              titleStyle={MEME_BUTTON_TITLE_STYLE}
               buttonStyle={styles.executingButton}
               noShadow
             />
@@ -170,7 +169,7 @@ const MemeCoinExecuteContent = ({
               type="plain"
               title={t('page.memeCoin.execute.back')}
               height={BOTTOM_BUTTON_SINGLE_HEIGHT}
-              titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
+              titleStyle={MEME_BUTTON_TITLE_STYLE}
               containerStyle={styles.backButton}
               onPress={handleDone}
               noShadow
@@ -181,7 +180,7 @@ const MemeCoinExecuteContent = ({
                 count: retryCount,
               })}
               height={BOTTOM_BUTTON_SINGLE_HEIGHT}
-              titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
+              titleStyle={MEME_BUTTON_TITLE_STYLE}
               containerStyle={styles.retryButton}
               onPress={handleRetryAll}
               noShadow
@@ -193,7 +192,7 @@ const MemeCoinExecuteContent = ({
             title={t('page.memeCoin.execute.confirm')}
             authTitle={t('page.whitelist.confirmPassword')}
             height={BOTTOM_BUTTON_SINGLE_HEIGHT}
-            titleStyle={BOTTOM_BUTTON_WITH_ICON_TITLE_STYLE}
+            titleStyle={MEME_BUTTON_TITLE_STYLE}
             onFinished={start}
             syncUnlockTime
             noShadow
@@ -203,7 +202,7 @@ const MemeCoinExecuteContent = ({
             type="primary"
             title={t('page.memeCoin.execute.done')}
             height={BOTTOM_BUTTON_SINGLE_HEIGHT}
-            titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
+            titleStyle={MEME_BUTTON_TITLE_STYLE}
             onPress={handleDone}
             noShadow
           />
@@ -297,11 +296,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     gap: BOTTOM_BUTTON_GAP,
   },
-  // Figma: 143 and 198 of the row
   backButton: {
-    flex: 143,
+    width: 143,
   },
   retryButton: {
-    flex: 198,
+    flex: 1,
   },
 }));

@@ -1,6 +1,7 @@
 import { AMOUNT_EPSILON, ETH_MAINNET_SERVER_ID } from './constants';
 import { compareText, legKey, tokenKey } from './keys';
 import type {
+  AllocationMode,
   ChainServerId,
   GasPayer,
   MemeTarget,
@@ -61,8 +62,12 @@ const crossChainSplit: SourceOrder = (a, b) =>
 export const computeMemeTargets = <T extends MemeTarget>(
   amountUsd: number,
   memes: T[],
+  mode: AllocationMode,
 ) => {
-  const totalCap = memes.reduce((sum, m) => sum + Math.max(m.marketCap, 0), 0);
+  const totalCap =
+    mode === 'marketCap'
+      ? memes.reduce((sum, m) => sum + Math.max(m.marketCap, 0), 0)
+      : 0;
   return memes.map(meme => ({
     meme,
     amountUsd:
@@ -159,7 +164,11 @@ const fill = (
 };
 
 const allocate = (input: PlanInput, sources: SourceState[]): Allocation[] => {
-  const targets = computeMemeTargets(input.amountUsd, input.memes)
+  const targets = computeMemeTargets(
+    input.amountUsd,
+    input.memes,
+    input.allocationMode,
+  )
     .filter(t => t.amountUsd > AMOUNT_EPSILON)
     .sort(
       (a, b) =>
