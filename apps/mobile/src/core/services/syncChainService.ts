@@ -65,6 +65,13 @@ export class SyncChainService extends StoreServiceBase<
     this.resetTimer();
   }
 
+  /**
+   * Whether the chain store holds a synced mainnet list, cached or fetched.
+   * Until then it only has the bundled list, which misses newer chains.
+   */
+  hasSyncedMainnetList = () =>
+    this.store.data.chains.some(chain => chain.enum === CHAINS_ENUM.ETH);
+
   syncMainnetChainList = (
     options: SyncMainnetChainListOptions = {},
   ): Promise<void> => {

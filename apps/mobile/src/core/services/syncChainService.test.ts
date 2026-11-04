@@ -130,6 +130,7 @@ describe('core/services/syncChainService', () => {
       mainnetList: cachedChains,
     });
     expect(mocks.mockAxiosGet).not.toHaveBeenCalled();
+    expect(service.hasSyncedMainnetList()).toBe(true);
   });
 
   it('fetches supported chains after cooldown, filters disabled chains, converts them, and updates storage', async () => {
@@ -165,8 +166,11 @@ describe('core/services/syncChainService', () => {
     });
     activeTimers.push(service.timer);
     service.store.data.updatedAt = 0;
+    // only the bundled list until the first fetch lands
+    expect(service.hasSyncedMainnetList()).toBe(false);
 
     await service.syncMainnetChainList();
+    expect(service.hasSyncedMainnetList()).toBe(true);
 
     expect(mocks.mockAxiosGet).toHaveBeenCalledWith(
       'https://static.debank.com/supported_chains.json',

@@ -1,10 +1,7 @@
 import { CHAINS_ENUM } from '@/constant/chains';
 import { BroadcastEvent } from '@/constant/event';
 import type { DappInfo } from '@/core/services/dappService';
-import {
-  getRegisteredService,
-  isCoreServiceRegistered,
-} from '@/core/services/serviceRegistry';
+import { getRegisteredService } from '@/core/services/serviceRegistry';
 import { findChain } from '@/utils/chain';
 import { ensureCustomTestnetStoreHydrated } from './customTestnet';
 import { broadcastSessionEventSync } from './session';
@@ -20,7 +17,7 @@ const isOnUnsupportedChain = (dapp: DappInfo) =>
  *
  * Returns the dapps as they were before the reset. Does nothing until the chain
  * list is final: the mainnet list is the bundled one until syncChainService has
- * restored its cache, and custom networks come from their own snapshot.
+ * a cached or fetched list, and custom networks come from their own snapshot.
  *
  * Never throws: it runs inside the dapp and chain-sync service loaders.
  */
@@ -36,7 +33,10 @@ export function disconnectDappsWithUnsupportedChain(): DappInfo[] {
 function resetDappsWithUnsupportedChain(): DappInfo[] {
   // registered, not loaded: this also runs inside both services' loaders
   const dappService = getRegisteredService('dappService');
-  if (!dappService || !isCoreServiceRegistered('syncChainService')) {
+  // a reset cannot be undone, so never judge chains against the bundled list:
+  // with no cached list, wait for the first fetch to call back
+  const syncChainService = getRegisteredService('syncChainService');
+  if (!dappService || !syncChainService?.hasSyncedMainnetList()) {
     return [];
   }
 

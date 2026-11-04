@@ -54,6 +54,8 @@ const BSC_CHAIN = supportedChain('bsc', 56, 'BNB Chain');
 // not in the bundled list, so it only exists once a synced list has it
 const NEW_CHAIN = supportedChain('rabbynewchain', 987654321, 'New Chain');
 const NEW_CHAIN_ENUM = 'RABBYNEWCHAIN' as CHAINS_ENUM;
+// in neither the bundled list nor any synced one
+const GONE_CHAIN_ENUM = 'RABBYGONECHAIN' as CHAINS_ENUM;
 
 const mockNextChainList = (chains: ReturnType<typeof supportedChain>[]) => {
   jest.mocked(axios.get).mockResolvedValueOnce({ data: chains });
@@ -220,6 +222,43 @@ describe('dapps on a chain removed from the chain list', () => {
     expect(dappService.getDapp('https://new.example')).toMatchObject({
       chainId: NEW_CHAIN_ENUM,
       isConnected: true,
+    });
+  });
+
+  it('waits for the first fetch when no chain list was cached', async () => {
+    const { dappService, startChainSync } = setUpServices([
+      createDapp('https://new.example', NEW_CHAIN_ENUM),
+      createDapp('https://gone.example', GONE_CHAIN_ENUM),
+    ]);
+    let respond!: (chains: ReturnType<typeof supportedChain>[]) => void;
+    jest.mocked(axios.get).mockImplementationOnce(
+      () =>
+        new Promise(resolve => {
+          respond = chains => resolve({ data: chains });
+        }) as never,
+    );
+
+    // registered while the first fetch is pending: only the bundled list
+    const syncChainService = startChainSync([]);
+    expect(dappService.getDapp('https://new.example')).toMatchObject({
+      chainId: NEW_CHAIN_ENUM,
+      isConnected: true,
+    });
+    expect(dappService.getDapp('https://gone.example')).toMatchObject({
+      chainId: GONE_CHAIN_ENUM,
+      isConnected: true,
+    });
+
+    respond([ETH_CHAIN, NEW_CHAIN]);
+    await syncChainService.syncMainnetChainList();
+
+    expect(dappService.getDapp('https://new.example')).toMatchObject({
+      chainId: NEW_CHAIN_ENUM,
+      isConnected: true,
+    });
+    expect(dappService.getDapp('https://gone.example')).toMatchObject({
+      chainId: CHAINS_ENUM.ETH,
+      isConnected: false,
     });
   });
 

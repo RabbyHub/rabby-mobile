@@ -309,7 +309,7 @@ export function loadSyncChainService() {
         onMainnetChainListUpdated: disconnectDappsWithUnsupportedChain,
       }),
     );
-    // the cached mainnet list is restored now
+    // the cached mainnet list, if any, is restored now
     disconnectDappsWithUnsupportedChain();
   });
 }
