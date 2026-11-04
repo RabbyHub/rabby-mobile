@@ -43,6 +43,8 @@ class ApiCustomTestnet {
 
   getCustomTestnetGasMarket = customTestnetServiceApi.getGasMarket;
 
+  getCustomTestnetEip1559Support = customTestnetServiceApi.getEip1559Support;
+
   getCustomTestnetToken = customTestnetServiceApi.getToken;
   removeCustomTestnetToken = customTestnetServiceApi.removeToken;
   addCustomTestnetToken = customTestnetServiceApi.addToken;
