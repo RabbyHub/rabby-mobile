@@ -29,9 +29,6 @@ const SOURCE = 'browser-hyperliquid-entry';
 
 export const HyperliquidPerpsEntry = () => {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
-  // Figma: 60% white over a 4.5px backdrop blur. Android keeps the solid
-  // tint, like BrowserSearchEntry; dark mode has no design and stays opaque.
-  const showBlur = IS_IOS && isLight;
   const { t } = useTranslation();
   const { setPartialBrowserState } = useBrowser();
   const { dapps } = useDapps();
@@ -70,13 +67,17 @@ export const HyperliquidPerpsEntry = () => {
   return (
     <TouchableOpacity onPress={handlePress} hitSlop={5} activeOpacity={1}>
       <View style={styles.container}>
-        {showBlur ? (
+        {IS_IOS ? (
           <>
             <BlurView
               style={StyleSheet.absoluteFill}
-              blurType="light"
+              blurType={isLight ? 'light' : 'dark'}
               blurAmount={5}
-              reducedTransparencyFallbackColor={colors2024['neutral-bg-1']}
+              reducedTransparencyFallbackColor={
+                isLight
+                  ? colors2024['neutral-bg-1']
+                  : colors2024['neutral-bg-2']
+              }
             />
             <View style={styles.tint} />
           </>
@@ -95,10 +96,17 @@ export const HyperliquidPerpsEntry = () => {
   );
 };
 
+// Figma: a translucent tint over a 4.5px backdrop blur. The tint alone is
+// see-through (dark neutral-bg-5 is 50% alpha), so it is only used on top of
+// the iOS BlurView; Android has no blur and uses opaque colors instead, like
+// BrowserSearchEntry.
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
   const tint = isLight
     ? colord(colors2024['neutral-bg-1']).alpha(0.6).toRgbString()
     : colors2024['neutral-bg-5'];
+  const androidBackground = isLight
+    ? colors2024['neutral-bg-1']
+    : colors2024['neutral-bg-2'];
 
   return {
     container: {
@@ -110,8 +118,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       paddingHorizontal: 15,
       borderRadius: 19,
       overflow: 'hidden',
-      // On iOS light the tint sits above the BlurView instead.
-      backgroundColor: IS_IOS && isLight ? 'transparent' : tint,
+      backgroundColor: IS_IOS ? 'transparent' : androidBackground,
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: colors2024['neutral-contrast'],
     },
