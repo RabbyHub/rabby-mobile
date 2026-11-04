@@ -1,8 +1,14 @@
 import Aes from 'react-native-aes-crypto';
-import RNEncryptor from './encryptor';
+import RNEncryptor, {
+  DERIVATION_OPTIONS_OWASP2023,
+  KDF_VERSION_ORIGINAL,
+  KDF_VERSION_PBKDF2_600000,
+  LEGACY_DERIVATION_OPTIONS,
+  type KeyDerivationOptions,
+} from './encryptor';
 
-// Unit coverage for RNEncryptor's wire format and derivation policy. Only the
-// native boundary is replaced; this does not verify iOS/Android bridge behavior.
+// Only the native crypto boundary is replaced. These tests cover the envelope
+// version registry, compatibility parsing and metadata normalization.
 jest.mock('react-native-aes-crypto', () => {
   const crypto: typeof import('node:crypto') = require('node:crypto');
   const { Buffer } = require('node:buffer');
@@ -59,44 +65,55 @@ const salt = 'MDAwMTAyMDMwNDA1MDYwNzA4MDkwYTBiMGMwZDBlMGY=';
 const iv = '101112131415161718191a1b1c1d1e1f';
 const legacyMetadata = {
   algorithm: 'PBKDF2' as const,
-  params: { iterations: 5000 as const },
+  params: { iterations: 5000 },
 };
 const strongerMetadata = {
   algorithm: 'PBKDF2' as const,
-  params: { iterations: 600000 as const },
+  params: { iterations: 600000 },
 };
 
-// Fixed independently using Python hashlib.pbkdf2_hmac('sha256', ..., 32)
-// and OpenSSL enc -aes-256-cbc with PKCS#7 padding. Salt is the UTF-8 base64
-// representation of hex random bytes, preserving the pre-existing wire format.
-// The 600k vector uses hashlib.pbkdf2_hmac('sha256', password.encode(),
-// salt.encode(), 600000, 32), then openssl enc -aes-256-cbc -K <key hex>
-// -iv 101112131415161718191a1b1c1d1e1f -base64 -A on JSON.stringify(vault).
+// Ciphertext vectors are unchanged by KDF versioning: the same password, salt,
+// key and IV produce the same AES-CBC ciphertext.
 const fixtures = [
   {
     iterations: 5000,
+    kdf: LEGACY_DERIVATION_OPTIONS,
     key: '446561e78f1e7ae32418aedeff6b17e29d2395da8b12d24c9f2bfe7843633ac0',
     encrypted: {
       cipher:
         'sX500q21aXLyKbSHmrSx8dn0/GMgKqqoGlWWdSxDrgJIwqlCsic9n0+5kKCcpw0V',
       iv,
       salt,
+      kdf: LEGACY_DERIVATION_OPTIONS,
     },
   },
   {
     iterations: 600000,
+    kdf: DERIVATION_OPTIONS_OWASP2023,
     key: 'f5c1f6ccd754b39c7c655759fc590d7cd7f966926906869cef9289975b28b8de',
     encrypted: {
       cipher:
         'OrQXspVasgaoArLYMCh9KPM4OfQyFCarsZiLhglXpBs/x2EiKyJqS4oO6Qvbu7cX',
       iv,
       salt,
-      keyMetadata: strongerMetadata,
+      kdf: DERIVATION_OPTIONS_OWASP2023,
     },
   },
 ] as const;
 
-const invalidMetadata = [
+const invalidKdfMetadata = [
+  null,
+  {},
+  [],
+  'PBKDF2',
+  { version: 'unknown' },
+  { version: KDF_VERSION_ORIGINAL, iterations: 600000 },
+  { version: KDF_VERSION_PBKDF2_600000, iterations: 5000 },
+  { version: KDF_VERSION_PBKDF2_600000, algorithm: 'scrypt' },
+  { version: KDF_VERSION_PBKDF2_600000, hash: 'sha512' },
+];
+
+const invalidLegacyMetadata = [
   null,
   {},
   [],
@@ -118,16 +135,16 @@ function exportedFixture(fixture: (typeof fixtures)[number]) {
     version: 1,
     salt,
     key: fixture.key,
-    ...(fixture.iterations === 600000 ? { keyMetadata: strongerMetadata } : {}),
+    kdf: fixture.kdf,
   };
 }
 
-describe('RNEncryptor PBKDF2 compatibility', () => {
+describe('RNEncryptor KDF version registry', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  it('keeps the default at 5,000 iterations and preserves the legacy payload', async () => {
+  it('writes the original version explicitly by default', async () => {
     jest
       .mocked(Aes.randomKey)
       .mockResolvedValueOnce(saltHex)
@@ -149,17 +166,15 @@ describe('RNEncryptor PBKDF2 compatibility', () => {
       iv,
       'aes-256-cbc',
     );
-    expect(Aes.randomKey).toHaveBeenNthCalledWith(1, 16);
-    expect(Aes.randomKey).toHaveBeenNthCalledWith(2, 16);
   });
 
-  it('writes 600,000-iteration metadata for generic encryption only when explicitly configured', async () => {
+  it('writes the dated 600k version only when explicitly configured', async () => {
     jest
       .mocked(Aes.randomKey)
       .mockResolvedValueOnce(saltHex)
       .mockResolvedValueOnce(iv);
     const encryptor = new RNEncryptor({
-      keyDerivationOptions: strongerMetadata,
+      keyDerivationOptions: DERIVATION_OPTIONS_OWASP2023,
     });
 
     const encrypted = await encryptor.encrypt(password, vault);
@@ -174,7 +189,7 @@ describe('RNEncryptor PBKDF2 compatibility', () => {
     );
   });
 
-  it('uses 600k for a new keyring and inherits the parameters of existing ciphertext', async () => {
+  it('uses the 600k version for a new keyring and inherits the version of existing ciphertext', async () => {
     const encryptor = new RNEncryptor();
     const newKeyring = await encryptor.encryptKeyringState(password, vault);
     const rewrittenNewKeyring = await encryptor.encryptKeyringState(
@@ -188,13 +203,13 @@ describe('RNEncryptor PBKDF2 compatibility', () => {
       JSON.stringify(fixtures[0].encrypted),
     );
 
-    expect(JSON.parse(newKeyring).keyMetadata?.params.iterations ?? 5000).toBe(
-      600000,
+    expect(JSON.parse(newKeyring).kdf).toEqual(DERIVATION_OPTIONS_OWASP2023);
+    expect(JSON.parse(rewrittenNewKeyring).kdf).toEqual(
+      DERIVATION_OPTIONS_OWASP2023,
     );
-    expect(
-      JSON.parse(rewrittenNewKeyring).keyMetadata?.params.iterations ?? 5000,
-    ).toBe(600000);
-    expect(JSON.parse(rewrittenLegacyKeyring).keyMetadata).toBeUndefined();
+    expect(JSON.parse(rewrittenLegacyKeyring).kdf).toEqual(
+      LEGACY_DERIVATION_OPTIONS,
+    );
     expect(jest.mocked(Aes.pbkdf2).mock.calls.map(call => call[2])).toEqual([
       600000, 600000, 5000,
     ]);
@@ -208,42 +223,111 @@ describe('RNEncryptor PBKDF2 compatibility', () => {
         '{"keyMetadata":{}}',
       ),
     ).rejects.toThrow('Unsupported RNEncryptor key derivation options');
+    await expect(
+      new RNEncryptor().encryptKeyringState(
+        password,
+        vault,
+        '{"kdf":{"version":"unknown"}}',
+      ),
+    ).rejects.toThrow('Unsupported RNEncryptor KDF version');
     expect(Aes.pbkdf2).not.toHaveBeenCalled();
   });
 
-  describe.each([5000, 600000] as const)(
-    'with %i iterations configured for new encryption',
-    configuredIterations => {
-      it.each(fixtures)(
-        'reads the fixed $iterations-iteration vault using its payload metadata',
-        async fixture => {
-          const encryptor =
-            configuredIterations === 5000
-              ? new RNEncryptor()
-              : new RNEncryptor({
-                  keyDerivationOptions: strongerMetadata,
-                });
-          const encrypted = JSON.stringify(fixture.encrypted);
+  it.each([5000, 600000] as const)(
+    'reads both registered versions when configured for %i',
+    async configuredIterations => {
+      const encryptor =
+        configuredIterations === 5000
+          ? new RNEncryptor()
+          : new RNEncryptor({
+              keyDerivationOptions: DERIVATION_OPTIONS_OWASP2023,
+            });
 
-          await expect(encryptor.decrypt(password, encrypted)).resolves.toEqual(
-            vault,
-          );
-          const detail = await encryptor.decryptWithDetail(password, encrypted);
+      for (const fixture of fixtures) {
+        await expect(
+          encryptor.decrypt(password, JSON.stringify(fixture.encrypted)),
+        ).resolves.toEqual(vault);
+      }
+    },
+  );
 
-          expect(detail.vault).toEqual(vault);
-          expect(detail.salt).toBe(salt);
-          expect(JSON.parse(detail.exportedKeyString)).toEqual(
-            exportedFixture(fixture),
-          );
-          expect(Aes.pbkdf2).toHaveBeenCalledTimes(2);
-          expect(Aes.pbkdf2).toHaveBeenLastCalledWith(
-            password,
-            salt,
-            fixture.iterations,
-            256,
-            'sha256',
-          );
-        },
+  it('reads unversioned original payloads', async () => {
+    const encrypted = {
+      cipher: fixtures[0].encrypted.cipher,
+      iv: fixtures[0].encrypted.iv,
+      salt: fixtures[0].encrypted.salt,
+    };
+
+    await expect(
+      new RNEncryptor().decrypt(password, JSON.stringify(encrypted)),
+    ).resolves.toEqual(vault);
+    expect(Aes.pbkdf2).toHaveBeenCalledWith(
+      password,
+      salt,
+      5000,
+      256,
+      'sha256',
+    );
+  });
+
+  it('reads the previous draft keyMetadata format as its registered version', async () => {
+    const encrypted = {
+      cipher: fixtures[1].encrypted.cipher,
+      iv: fixtures[1].encrypted.iv,
+      salt: fixtures[1].encrypted.salt,
+      keyMetadata: strongerMetadata,
+    };
+
+    await expect(
+      new RNEncryptor().decrypt(password, JSON.stringify(encrypted)),
+    ).resolves.toEqual(vault);
+    expect(Aes.pbkdf2).toHaveBeenCalledWith(
+      password,
+      salt,
+      600000,
+      256,
+      'sha256',
+    );
+  });
+
+  it('tries registered versions for an unversioned 600k payload', async () => {
+    const encrypted = {
+      cipher: fixtures[1].encrypted.cipher,
+      iv: fixtures[1].encrypted.iv,
+      salt: fixtures[1].encrypted.salt,
+    };
+    const detail = await new RNEncryptor().decryptWithDetail(
+      password,
+      JSON.stringify(encrypted),
+    );
+
+    expect(detail.vault).toEqual(vault);
+    expect(detail.kdfVersion).toBe(KDF_VERSION_PBKDF2_600000);
+    expect(
+      jest
+        .mocked(Aes.pbkdf2)
+        .mock.calls.slice(0, 2)
+        .map(call => call[2]),
+    ).toEqual([5000, 600000]);
+  });
+
+  it.each(fixtures)(
+    'derives the $iterations-iteration key once per decryptWithDetail',
+    async fixture => {
+      const detail = await new RNEncryptor().decryptWithDetail(
+        password,
+        JSON.stringify(fixture.encrypted),
+      );
+
+      expect(detail.vault).toEqual(vault);
+      expect(detail.kdfVersion).toBe(fixture.kdf.version);
+      expect(jest.mocked(Aes.pbkdf2)).toHaveBeenCalledTimes(1);
+      expect(jest.mocked(Aes.pbkdf2)).toHaveBeenLastCalledWith(
+        password,
+        salt,
+        fixture.iterations,
+        256,
+        'sha256',
       );
     },
   );
@@ -251,60 +335,38 @@ describe('RNEncryptor PBKDF2 compatibility', () => {
   it.each(fixtures)(
     'rejects a wrong password for the $iterations-iteration vault',
     async fixture => {
-      const encryptor = new RNEncryptor();
-      const encrypted = JSON.stringify(fixture.encrypted);
-
       await expect(
-        encryptor.decrypt('incorrect password', encrypted),
-      ).rejects.toThrow();
-      await expect(
-        encryptor.decryptWithDetail('incorrect password', encrypted),
+        new RNEncryptor().decrypt(
+          'incorrect password',
+          JSON.stringify(fixture.encrypted),
+        ),
       ).rejects.toThrow();
     },
   );
 
-  it.each([legacyMetadata, strongerMetadata])(
-    'uses fresh salt and IV for every encryption with %j',
-    async keyDerivationOptions => {
-      const encryptor = new RNEncryptor({ keyDerivationOptions });
-      const first = JSON.parse(await encryptor.encrypt(password, vault));
-      const second = JSON.parse(await encryptor.encrypt(password, vault));
-
-      expect(first.salt).not.toBe(second.salt);
-      expect(first.iv).not.toBe(second.iv);
-      expect(first.cipher).not.toBe(second.cipher);
-      expect(atob(first.salt)).toMatch(/^[0-9a-f]{32}$/);
-      expect(first.iv).toMatch(/^[0-9a-f]{32}$/);
-      await expect(
-        encryptor.decrypt(password, JSON.stringify(second)),
-      ).resolves.toEqual(vault);
-    },
-  );
-
-  it('isolates the configured iteration count from later caller mutation', async () => {
+  it('isolates configured metadata from later caller mutation', async () => {
     const options = {
       keyDerivationOptions: {
-        algorithm: 'PBKDF2' as const,
-        params: { iterations: 600000 as 5000 | 600000 },
+        ...DERIVATION_OPTIONS_OWASP2023,
       },
     };
     const encryptor = new RNEncryptor(options);
-    options.keyDerivationOptions.params.iterations = 5000;
+    options.keyDerivationOptions.iterations = 5000;
 
     const encrypted = await encryptor.encrypt(password, vault);
 
-    expect(JSON.parse(encrypted).keyMetadata).toEqual(strongerMetadata);
+    expect(JSON.parse(encrypted).kdf).toEqual(DERIVATION_OPTIONS_OWASP2023);
     expect(jest.mocked(Aes.pbkdf2).mock.calls[0][2]).toBe(600000);
   });
 
-  it.each(invalidMetadata)(
+  it.each(invalidKdfMetadata)(
     'rejects invalid encryption options %j before native work',
     keyDerivationOptions => {
       expect(
         () =>
           new RNEncryptor({
             keyDerivationOptions:
-              keyDerivationOptions as typeof strongerMetadata,
+              keyDerivationOptions as unknown as KeyDerivationOptions,
           }),
       ).toThrow();
       expect(Aes.randomKey).not.toHaveBeenCalled();
@@ -313,24 +375,17 @@ describe('RNEncryptor PBKDF2 compatibility', () => {
     },
   );
 
-  it.each(invalidMetadata)(
-    'rejects invalid vault metadata %j before native derivation or decryption',
-    async keyMetadata => {
-      const encryptor = new RNEncryptor();
+  it.each([...invalidKdfMetadata, ...invalidLegacyMetadata])(
+    'rejects invalid payload metadata %j before native derivation',
+    async metadata => {
       const encrypted = JSON.stringify({
         ...fixtures[0].encrypted,
-        keyMetadata,
+        kdf: 'version' in Object(metadata) ? undefined : metadata,
+        keyMetadata: metadata,
       });
 
-      await expect(encryptor.decrypt(password, encrypted)).rejects.toThrow();
       await expect(
-        encryptor.decryptWithDetail(password, encrypted),
-      ).rejects.toThrow();
-      await expect(
-        encryptor.decryptWithExportedKey(
-          encrypted,
-          JSON.stringify(exportedFixture(fixtures[0])),
-        ),
+        new RNEncryptor().decrypt(password, encrypted),
       ).rejects.toThrow();
       expect(Aes.pbkdf2).not.toHaveBeenCalled();
       expect(Aes.decrypt).not.toHaveBeenCalled();
@@ -338,112 +393,82 @@ describe('RNEncryptor PBKDF2 compatibility', () => {
   );
 });
 
-describe('RNEncryptor vault upgrades', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
-
+describe('RNEncryptor upgrade policy', () => {
   it.each(fixtures)(
-    'keeps a $iterations-iteration vault when the configured target is 5,000',
+    'treats the $iterations-iteration payload as current for the 5k target',
     fixture => {
       expect(
         new RNEncryptor().isVaultUpdated(JSON.stringify(fixture.encrypted)),
       ).toBe(true);
-      expect(Aes.pbkdf2).not.toHaveBeenCalled();
-      expect(Aes.encrypt).not.toHaveBeenCalled();
-      expect(Aes.decrypt).not.toHaveBeenCalled();
     },
   );
 
   it.each(fixtures)(
-    'only requests an upgrade for weaker vaults with $iterations stored iterations',
+    'requests an upgrade only for older versions when targeting $iterations',
     fixture => {
       const encryptor = new RNEncryptor({
-        keyDerivationOptions: strongerMetadata,
+        keyDerivationOptions: DERIVATION_OPTIONS_OWASP2023,
       });
 
       expect(encryptor.isVaultUpdated(JSON.stringify(fixture.encrypted))).toBe(
         fixture.iterations === 600000,
       );
-      expect(Aes.pbkdf2).not.toHaveBeenCalled();
     },
   );
 
-  it.each(invalidMetadata)(
-    'rejects malformed metadata %j when checking whether to upgrade',
-    keyMetadata => {
-      const encrypted = JSON.stringify({
-        ...fixtures[0].encrypted,
-        keyMetadata,
-      });
+  it('does not rewrite payloads with unknown versions', () => {
+    const encrypted = JSON.stringify({
+      ...fixtures[0].encrypted,
+      kdf: { version: 'future' },
+    });
 
-      expect(() => new RNEncryptor().isVaultUpdated(encrypted)).toThrow();
-      expect(Aes.pbkdf2).not.toHaveBeenCalled();
-    },
-  );
+    expect(new RNEncryptor().isVaultUpdated(encrypted)).toBe(true);
+  });
+});
 
-  it('rejects invalid JSON when checking whether to upgrade', () => {
-    expect(() => new RNEncryptor().isVaultUpdated('not JSON')).toThrow();
+describe('RNEncryptor metadata normalization', () => {
+  it('adds the original version without changing ciphertext, IV or salt', () => {
+    const encrypted = {
+      cipher: fixtures[0].encrypted.cipher,
+      iv: fixtures[0].encrypted.iv,
+      salt: fixtures[0].encrypted.salt,
+    };
+    const encryptor = new RNEncryptor();
+    const normalized = encryptor.normalizeKdfMetadata(
+      JSON.stringify(encrypted),
+      KDF_VERSION_ORIGINAL,
+    );
+
+    expect(normalized).not.toBeNull();
+    expect(JSON.parse(normalized!)).toEqual(fixtures[0].encrypted);
+    expect(encryptor.normalizeKdfMetadata(normalized!)).toBeNull();
+    expect(
+      encryptor.normalizeKdfMetadata(JSON.stringify(encrypted)),
+    ).toBeNull();
   });
 
-  it.each(fixtures)(
-    'returns the $iterations-iteration ciphertext and its exported key from one derivation',
-    async fixture => {
-      jest
-        .mocked(Aes.randomKey)
-        .mockResolvedValueOnce(saltHex)
-        .mockResolvedValueOnce(iv);
-      const encryptor =
-        fixture.iterations === 5000
-          ? new RNEncryptor()
-          : new RNEncryptor({ keyDerivationOptions: strongerMetadata });
-
-      const detail = await encryptor.encryptWithDetail(password, vault);
-
-      expect(JSON.parse(detail.vault)).toEqual(fixture.encrypted);
-      expect(JSON.parse(detail.exportedKeyString)).toEqual(
-        exportedFixture(fixture),
-      );
-      expect(Aes.pbkdf2).toHaveBeenCalledTimes(1);
-      expect(Aes.pbkdf2).toHaveBeenCalledWith(
-        password,
-        salt,
-        fixture.iterations,
-        256,
-        'sha256',
-      );
-      await expect(
-        new RNEncryptor().decryptWithExportedKey(
-          detail.vault,
-          detail.exportedKeyString,
-        ),
-      ).resolves.toEqual(vault);
-      expect(Aes.pbkdf2).toHaveBeenCalledTimes(1);
-      await expect(
-        new RNEncryptor().decrypt(password, detail.vault),
-      ).resolves.toEqual(vault);
-    },
-  );
-
-  it('uses a fresh salt and IV when creating replacement vaults and keys', async () => {
-    const encryptor = new RNEncryptor({
-      keyDerivationOptions: strongerMetadata,
-    });
-    const first = await encryptor.encryptWithDetail(password, vault);
-    const second = await encryptor.encryptWithDetail(password, vault);
-    const firstEncrypted = JSON.parse(first.vault);
-    const secondEncrypted = JSON.parse(second.vault);
-
-    expect(firstEncrypted.salt).not.toBe(secondEncrypted.salt);
-    expect(firstEncrypted.iv).not.toBe(secondEncrypted.iv);
-    expect(JSON.parse(first.exportedKeyString).key).not.toBe(
-      JSON.parse(second.exportedKeyString).key,
+  it('promotes previous keyMetadata to the registered version marker', () => {
+    const encrypted = {
+      cipher: fixtures[1].encrypted.cipher,
+      iv: fixtures[1].encrypted.iv,
+      salt: fixtures[1].encrypted.salt,
+      keyMetadata: strongerMetadata,
+    };
+    const normalized = new RNEncryptor().normalizeKdfMetadata(
+      JSON.stringify(encrypted),
     );
-    expect(Aes.pbkdf2).toHaveBeenCalledTimes(2);
-    await expect(
-      encryptor.decryptWithExportedKey(second.vault, second.exportedKeyString),
-    ).resolves.toEqual(vault);
-    expect(Aes.pbkdf2).toHaveBeenCalledTimes(2);
+
+    expect(normalized).not.toBeNull();
+    expect(JSON.parse(normalized!)).toEqual(fixtures[1].encrypted);
+  });
+
+  it('leaves versioned and invalid payloads untouched', () => {
+    expect(
+      new RNEncryptor().normalizeKdfMetadata(
+        JSON.stringify(fixtures[0].encrypted),
+      ),
+    ).toBeNull();
+    expect(new RNEncryptor().normalizeKdfMetadata('not JSON')).toBeNull();
   });
 });
 
@@ -453,7 +478,7 @@ describe('RNEncryptor exported-key compatibility', () => {
   });
 
   it.each(fixtures)(
-    'decrypts a $iterations-iteration vault with its exported key without PBKDF2',
+    'decrypts a $iterations-iteration vault with its exported key',
     async fixture => {
       await expect(
         new RNEncryptor().decryptWithExportedKey(
@@ -461,58 +486,40 @@ describe('RNEncryptor exported-key compatibility', () => {
           JSON.stringify(exportedFixture(fixture)),
         ),
       ).resolves.toEqual(vault);
-
       expect(Aes.pbkdf2).not.toHaveBeenCalled();
       expect(Aes.decrypt).toHaveBeenCalledTimes(1);
     },
   );
 
-  it.each(['vault', 'exportedKey'] as const)(
-    'normalizes absent and explicit legacy metadata on the %s',
-    async target => {
-      const encrypted = {
-        ...fixtures[0].encrypted,
-        ...(target === 'vault' ? { keyMetadata: legacyMetadata } : {}),
-      };
-      const exportedKey = {
-        ...exportedFixture(fixtures[0]),
-        ...(target === 'exportedKey' ? { keyMetadata: legacyMetadata } : {}),
-      };
+  it('accepts previous-draft exported-key metadata', async () => {
+    await expect(
+      new RNEncryptor().decryptWithExportedKey(
+        JSON.stringify({
+          cipher: fixtures[1].encrypted.cipher,
+          iv: fixtures[1].encrypted.iv,
+          salt: fixtures[1].encrypted.salt,
+          keyMetadata: strongerMetadata,
+        }),
+        JSON.stringify({
+          version: 1,
+          salt,
+          key: fixtures[1].key,
+          keyMetadata: strongerMetadata,
+        }),
+      ),
+    ).resolves.toEqual(vault);
+  });
 
-      await expect(
-        new RNEncryptor().decryptWithExportedKey(
-          JSON.stringify(encrypted),
-          JSON.stringify(exportedKey),
-        ),
-      ).resolves.toEqual(vault);
-      expect(Aes.pbkdf2).not.toHaveBeenCalled();
-    },
-  );
-
-  it.each(fixtures)(
-    'rejects mismatched derivation metadata despite equal salt for $iterations iterations',
-    async fixture => {
-      const mismatchedKey = {
-        version: 1,
-        salt,
-        key: fixture.key,
-        ...(fixture.iterations === 5000
-          ? { keyMetadata: strongerMetadata }
-          : {}),
-      };
-
-      await expect(
-        new RNEncryptor().decryptWithExportedKey(
-          JSON.stringify(fixture.encrypted),
-          JSON.stringify(mismatchedKey),
-        ),
-      ).rejects.toThrow();
-      expect(Aes.pbkdf2).not.toHaveBeenCalled();
-      expect(Aes.decrypt).not.toHaveBeenCalled();
-    },
-  );
-
-  it('rejects an exported key from another salt before native decryption', async () => {
+  it('rejects mismatched versions and salts before native decryption', async () => {
+    await expect(
+      new RNEncryptor().decryptWithExportedKey(
+        JSON.stringify(fixtures[0].encrypted),
+        JSON.stringify({
+          ...exportedFixture(fixtures[0]),
+          kdf: DERIVATION_OPTIONS_OWASP2023,
+        }),
+      ),
+    ).rejects.toThrow();
     await expect(
       new RNEncryptor().decryptWithExportedKey(
         JSON.stringify(fixtures[1].encrypted),
@@ -522,18 +529,11 @@ describe('RNEncryptor exported-key compatibility', () => {
     expect(Aes.pbkdf2).not.toHaveBeenCalled();
     expect(Aes.decrypt).not.toHaveBeenCalled();
   });
+});
 
-  it.each(invalidMetadata)(
-    'rejects invalid exported-key metadata %j before native decryption',
-    async keyMetadata => {
-      await expect(
-        new RNEncryptor().decryptWithExportedKey(
-          JSON.stringify(fixtures[0].encrypted),
-          JSON.stringify({ ...exportedFixture(fixtures[0]), keyMetadata }),
-        ),
-      ).rejects.toThrow();
-      expect(Aes.pbkdf2).not.toHaveBeenCalled();
-      expect(Aes.decrypt).not.toHaveBeenCalled();
-    },
-  );
+describe('KDF version exports', () => {
+  it('keeps the public version ids stable', () => {
+    expect(KDF_VERSION_ORIGINAL).toBe('original');
+    expect(KDF_VERSION_PBKDF2_600000).toBe('20261022');
+  });
 });

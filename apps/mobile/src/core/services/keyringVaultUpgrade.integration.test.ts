@@ -6,7 +6,7 @@ import {
   KeyringService,
   type KeyringServiceOptions,
 } from '../../../../../packages/service-keyring/src/keyringService';
-import RNEncryptor from './encryptor';
+import RNEncryptor, { DERIVATION_OPTIONS_OWASP2023 } from './encryptor';
 import { createKeyringStatePersistence } from '../storage/keyringStatePersistence';
 import type { KeyringStateStorage } from '../storage/keyringStateMigration';
 
@@ -67,10 +67,7 @@ const nativeEncrypt = jest.mocked(Aes.encrypt).getMockImplementation()!;
 const nativeDecrypt = jest.mocked(Aes.decrypt).getMockImplementation()!;
 const password = 'integration-only password 🔐';
 const privateKey = '11'.repeat(32);
-const strongerMetadata = {
-  algorithm: 'PBKDF2' as const,
-  params: { iterations: 600000 as const },
-};
+const strongerMetadata = DERIVATION_OPTIONS_OWASP2023;
 const legacyEncryptor = new RNEncryptor();
 const upgradedEncryptor = new RNEncryptor({
   keyDerivationOptions: strongerMetadata,
@@ -97,6 +94,29 @@ function memoryStorage(initial: PersistedState): KeyringStateStorage {
 
 function copy<T>(value: T): T {
   return JSON.parse(JSON.stringify(value));
+}
+
+function stripKdfMetadata(encrypted: string) {
+  const {
+    kdf: _kdf,
+    keyMetadata: _keyMetadata,
+    ...envelope
+  } = JSON.parse(encrypted);
+  return JSON.stringify(envelope);
+}
+
+function toPreviousDraftMetadata(encrypted: string) {
+  const { kdf, ...envelope } = JSON.parse(encrypted);
+  if (kdf?.iterations !== 600000) {
+    throw new Error('Expected a 600k fixture');
+  }
+  return JSON.stringify({
+    ...envelope,
+    keyMetadata: {
+      algorithm: 'PBKDF2',
+      params: { iterations: 600000 },
+    },
+  });
 }
 
 async function createFixture({
@@ -181,9 +201,7 @@ function openService(
 
 function expectIterations(encrypted: string | undefined, count: number) {
   expect(encrypted).toBeDefined();
-  expect(JSON.parse(encrypted!).keyMetadata?.params.iterations ?? 5000).toBe(
-    count,
-  );
+  expect(JSON.parse(encrypted!).kdf?.iterations ?? 5000).toBe(count);
 }
 
 function pauseFirstUpgradedDerivation() {
@@ -310,6 +328,97 @@ describe('keyring KDF policy and vault upgrade integration', () => {
 
     expectIterations(service.store.getState().vault, 5000);
     expectIterations(service.store.getState().booted, 5000);
+  });
+
+  it('adds original version metadata to an unversioned legacy vault', async () => {
+    const { state } = await createFixture();
+    const before = copy(state);
+    before.vault = state.vault ? stripKdfMetadata(state.vault) : undefined;
+    before.booted = state.booted ? stripKdfMetadata(state.booted) : undefined;
+    const { service, commits, readDurable, readCheckpoint } = openService(
+      before,
+      { encryptor: legacyEncryptor },
+    );
+
+    await service.submitPassword(password);
+
+    const persisted = readDurable();
+    expect(commits).toHaveLength(1);
+    expect(readCheckpoint()).toEqual(before);
+    for (const field of ['vault', 'booted'] as const) {
+      const originalEnvelope = JSON.parse(before[field]!);
+      const persistedEnvelope = JSON.parse(persisted[field]!);
+      expect(persistedEnvelope.kdf).toEqual({
+        version: 'original',
+        algorithm: 'PBKDF2',
+        hash: 'sha256',
+        iterations: 5000,
+      });
+      expect(persistedEnvelope.cipher).toBe(originalEnvelope.cipher);
+      expect(persistedEnvelope.iv).toBe(originalEnvelope.iv);
+      expect(persistedEnvelope.salt).toBe(originalEnvelope.salt);
+    }
+  });
+
+  it('recognizes an unversioned 600k vault and records its version', async () => {
+    const { state } = await createFixture({
+      vaultEncryptor: upgradedEncryptor,
+      bootedEncryptor: upgradedEncryptor,
+    });
+    const before = copy(state);
+    before.vault = state.vault ? stripKdfMetadata(state.vault) : undefined;
+    before.booted = state.booted ? stripKdfMetadata(state.booted) : undefined;
+    const { service, commits, readDurable, readCheckpoint } = openService(
+      before,
+      { encryptor: legacyEncryptor },
+    );
+
+    await service.submitPassword(password);
+
+    const persisted = readDurable();
+    expect(commits).toHaveLength(1);
+    expect(readCheckpoint()).toEqual(before);
+    for (const field of ['vault', 'booted'] as const) {
+      const originalEnvelope = JSON.parse(before[field]!);
+      const persistedEnvelope = JSON.parse(persisted[field]!);
+      expect(persistedEnvelope.kdf?.version).toBe('20261022');
+      expect(persistedEnvelope.cipher).toBe(originalEnvelope.cipher);
+      expect(persistedEnvelope.iv).toBe(originalEnvelope.iv);
+      expect(persistedEnvelope.salt).toBe(originalEnvelope.salt);
+    }
+  });
+
+  it('upgrades previous keyMetadata to the registered version without re-encrypting', async () => {
+    const { state } = await createFixture({
+      vaultEncryptor: upgradedEncryptor,
+      bootedEncryptor: upgradedEncryptor,
+    });
+    const before = copy(state);
+    before.vault = state.vault
+      ? toPreviousDraftMetadata(state.vault)
+      : undefined;
+    before.booted = state.booted
+      ? toPreviousDraftMetadata(state.booted)
+      : undefined;
+    const { service, commits, readDurable, readCheckpoint } = openService(
+      before,
+      { encryptor: legacyEncryptor },
+    );
+
+    await service.submitPassword(password);
+
+    const persisted = readDurable();
+    expect(commits).toHaveLength(1);
+    expect(readCheckpoint()).toEqual(before);
+    for (const field of ['vault', 'booted'] as const) {
+      const originalEnvelope = JSON.parse(before[field]!);
+      const persistedEnvelope = JSON.parse(persisted[field]!);
+      expect(persistedEnvelope.kdf?.version).toBe('20261022');
+      expect(persistedEnvelope.keyMetadata).toBeUndefined();
+      expect(persistedEnvelope.cipher).toBe(originalEnvelope.cipher);
+      expect(persistedEnvelope.iv).toBe(originalEnvelope.iv);
+      expect(persistedEnvelope.salt).toBe(originalEnvelope.salt);
+    }
   });
 
   it('commits both 600k credentials once and publishes a cached key valid after restart', async () => {
@@ -687,6 +796,32 @@ describe('keyring KDF policy and vault upgrade integration', () => {
 
     expect(service.store.getState().vault).toBe(replacement);
     expect(service.store.getState().booted).toBe(state.booted);
+    expect(commits).toEqual([]);
+  });
+
+  it('does not stamp the earlier resolved version onto a replaced unversioned vault', async () => {
+    const { state, rawVault } = await createFixture();
+    const replacement = stripKdfMetadata(
+      await upgradedEncryptor.encrypt(password, rawVault),
+    );
+    const { service, commits } = openService(state, {
+      encryptor: upgradedEncryptor,
+    });
+    const gate = pauseFirstUpgradedDerivation();
+    const unlocking = service.submitPassword(password);
+    await gate.pending;
+    service.store.updateState({ vault: replacement });
+    gate.release();
+    await unlocking;
+
+    const persisted = service.store.getState().vault!;
+    expect(persisted).toBe(replacement);
+    // The replacement is a 600k envelope; stamping the earlier 5k version onto
+    // it would make every later password unlock derive the wrong key.
+    expect(JSON.parse(persisted).kdf).toBeUndefined();
+    await expect(
+      upgradedEncryptor.decrypt(password, persisted),
+    ).resolves.toEqual(rawVault);
     expect(commits).toEqual([]);
   });
 

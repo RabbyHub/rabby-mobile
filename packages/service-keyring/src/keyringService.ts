@@ -287,6 +287,10 @@ export class KeyringService extends RNEventEmitter {
   private readonly onPersistVaultUpgrade?: KeyringServiceOptions['onPersistVaultUpgrade'];
 
   private unlockSessionId = 0;
+  private resolvedVaultKdfVersion?: string;
+  private resolvedVaultCiphertext?: string;
+  private resolvedBootedKdfVersion?: string;
+  private resolvedBootedCiphertext?: string;
 
   private trustedVaultKeyWrite: Promise<void> = Promise.resolve();
   private pendingKeyringRuntimeRestore: DeferredKeyringRuntimeRestore | null =
@@ -794,6 +798,10 @@ export class KeyringService extends RNEventEmitter {
       this._isSubmittingPassword = true;
       this.unlockSessionId += 1;
       const { unlockSessionId } = this;
+      this.resolvedVaultKdfVersion = undefined;
+      this.resolvedVaultCiphertext = undefined;
+      this.resolvedBootedKdfVersion = undefined;
+      this.resolvedBootedCiphertext = undefined;
       let vaultKeyCandidate: VaultKeyCandidate | undefined;
       if (shouldVerifyBeforeUnlock) {
         this.traceKeyringPerf('submit_password.verify_password_start', {
@@ -868,6 +876,13 @@ export class KeyringService extends RNEventEmitter {
         options,
       );
       vaultKeyCandidate = upgradedVaultKey ?? vaultKeyCandidate;
+      this.normalizeVaultMetadataAfterUnlock(unlockSessionId);
+      if (vaultKeyCandidate) {
+        // Metadata normalization preserves the key but changes the envelope
+        // string. Keep the cached-key candidate bound to the persisted vault.
+        vaultKeyCandidate.vault =
+          this.store.getState().vault ?? vaultKeyCandidate.vault;
+      }
       if (vaultKeyCandidate && options.onTrustedVaultKeyString) {
         this.queueTrustedVaultKeyWrite(
           vaultKeyCandidate,
@@ -1044,6 +1059,70 @@ export class KeyringService extends RNEventEmitter {
       return undefined;
     }
   }
+
+  /**
+   * Add explicit KDF metadata to legacy envelopes after a successful unlock.
+   * This is a metadata-only repair: cipher, IV, salt and the derived key remain
+   * unchanged, so it is safe to run after the normal unlock path.
+   *
+   * The resolved version belongs to the exact envelope that was decrypted. If
+   * the store now holds different ciphertext (a concurrent writer replaced it
+   * while the upgrade was pending), skip that field instead of stamping the
+   * previous envelope's version onto unrelated bytes.
+   */
+  private normalizeVaultMetadataAfterUnlock(unlockSessionId: number) {
+    const normalize = this.encryptor.normalizeKdfMetadata;
+    const persist = this.onPersistVaultUpgrade;
+    if (!normalize || !persist) {
+      return;
+    }
+
+    const store = this.store;
+    const currentState = store.getState();
+    const nextVault =
+      currentState.vault && currentState.vault === this.resolvedVaultCiphertext
+        ? normalize(currentState.vault, this.resolvedVaultKdfVersion)
+        : null;
+    const nextBooted =
+      currentState.booted &&
+      currentState.booted === this.resolvedBootedCiphertext
+        ? normalize(currentState.booted, this.resolvedBootedKdfVersion)
+        : null;
+    if (nextVault === null && nextBooted === null) {
+      return;
+    }
+
+    if (
+      this.store !== store ||
+      this.unlockSessionId !== unlockSessionId ||
+      !this.isUnlocked() ||
+      store.getState() !== currentState
+    ) {
+      return;
+    }
+
+    const nextState = {
+      ...currentState,
+      ...(nextVault !== null ? { vault: nextVault } : null),
+      ...(nextBooted !== null ? { booted: nextBooted } : null),
+    };
+
+    try {
+      const persisted: unknown = persist(nextState);
+      if (
+        persisted !== true ||
+        this.store !== store ||
+        store.getState() !== currentState ||
+        this.unlockSessionId !== unlockSessionId ||
+        !this.isUnlocked()
+      ) {
+        return;
+      }
+      store.putState(nextState);
+    } catch {
+      // Metadata repair is optional maintenance after a successful unlock.
+    }
+  }
   /**
    * Verify Password
    *
@@ -1058,7 +1137,12 @@ export class KeyringService extends RNEventEmitter {
       // throw new Error(i18n.t('background.error.canNotUnlock'));
       throw new Error('Cannot unlock without a previous vault');
     }
-    await this.encryptor.decrypt(password, encryptedBooted);
+    const detail = await this.encryptor.decryptWithDetail(
+      password,
+      encryptedBooted,
+    );
+    this.resolvedBootedKdfVersion = detail.kdfVersion;
+    this.resolvedBootedCiphertext = encryptedBooted;
   }
   /**
    * Remove Empty Keyrings
@@ -1571,6 +1655,8 @@ export class KeyringService extends RNEventEmitter {
         encryptedVault,
       );
       vault = decryptDetail.vault;
+      this.resolvedVaultKdfVersion = decryptDetail.kdfVersion;
+      this.resolvedVaultCiphertext = encryptedVault;
       this.traceKeyringPerf('unlock_keyrings.decrypt_password_end', {
         elapsedMs: nowMs() - startedAt,
         hasExportedKeyString: Boolean(decryptDetail.exportedKeyString),
