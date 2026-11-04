@@ -320,17 +320,25 @@ export const BrowserHandler = () => {
   );
 };
 
+const HANDLE_HEIGHT = 40;
+// keep the capsule off the screen edge when there is no status bar on top,
+// e.g. on the iPhone Duo cover screen
+const MIN_TOP_GAP = 10;
+
 const getStyle = createGetStyles2024(
   ({ colors2024, isLight, safeAreaInsets }) => {
+    const topGap = Math.max(0, MIN_TOP_GAP - safeAreaInsets.top);
+
     return {
       handleComponent: {
         display: 'flex',
         flexDirection: 'row',
+        paddingTop: topGap,
         paddingBottom: 7,
         justifyContent: 'flex-end',
         // clear a side camera/status-bar column, e.g. on iPhone Duo
         paddingRight: 10 + safeAreaInsets.right,
-        height: 40,
+        height: HANDLE_HEIGHT + topGap,
       },
       handleComponentContainer: {
         display: 'flex',
@@ -363,7 +371,7 @@ const getStyle = createGetStyles2024(
         backgroundColor: colors2024['neutral-line'],
       },
       placeholder: {
-        height: 40,
+        height: HANDLE_HEIGHT + topGap,
       },
     };
   },
