@@ -24,7 +24,6 @@ import { addressUtils } from '@rabby-wallet/base-utils';
 import { useSwapSettings } from './settings';
 import type { QuoteProvider, TDexQuoteData } from './quote';
 import { useQuoteMethods } from './quote';
-import { stats } from '@/utils/stats';
 import { formatTokenAmountInput } from '@/utils/number';
 import { getTokenSymbol, isTokenMarketClosed } from '@/utils/token';
 import { useDebounceFn, useRequest } from 'ahooks';
@@ -1338,7 +1337,6 @@ export const useTokenPair = ({
       return;
     }
     hasReportedSwapEntryRef.current = true;
-    stats.report('enterSwapDescPage', {});
   }, [active]);
 
   /* slider */

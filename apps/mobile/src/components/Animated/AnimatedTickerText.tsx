@@ -1,5 +1,7 @@
 import React, { memo, useCallback, useEffect, useState } from 'react';
 import {
+  AccessibilityInfo,
+  Platform,
   StyleProp,
   StyleSheet,
   TextProps,
@@ -60,6 +62,8 @@ type TickerTextState = {
   isRtl: boolean;
   isOverflow: boolean;
   fontSize: number | undefined;
+  /** iOS Bold Text，只在启动时读一次。为 true 时使用更宽的字形宽度。 */
+  boldText: boolean;
 };
 
 type TickerColumnProps = {
@@ -76,6 +80,23 @@ type TickerColumnProps = {
 
 const DIGITS = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
 const GLYPH_SIDE_BEARING = 0;
+let cachedIosBoldText = false;
+let iosBoldTextPromise: Promise<boolean> | null = null;
+
+const readIosBoldTextOnce = () => {
+  if (Platform.OS !== 'ios') {
+    return Promise.resolve(false);
+  }
+  if (!iosBoldTextPromise) {
+    iosBoldTextPromise = AccessibilityInfo.isBoldTextEnabled()
+      .then(enabled => {
+        cachedIosBoldText = enabled;
+        return enabled;
+      })
+      .catch(() => false);
+  }
+  return iosBoldTextPromise;
+};
 
 const getSlotChar = (text: string, slotIndex: number, maxLength: number) => {
   'worklet';
@@ -138,17 +159,17 @@ const getDigitIndex = (char: string) => {
   }
 };
 
-const getDigitWidthUnit = (char: string) => {
+const getDigitWidthUnit = (char: string, boldText: boolean) => {
   'worklet';
 
   switch (char) {
     // 先留在这，需要配置再改
     default:
-      return 0.61;
+      return boldText ? 0.66 : 0.61;
   }
 };
 
-const getCharWidthUnit = (char: string) => {
+const getCharWidthUnit = (char: string, boldText: boolean) => {
   'worklet';
 
   switch (char) {
@@ -164,7 +185,7 @@ const getCharWidthUnit = (char: string) => {
     case '7':
     case '8':
     case '9':
-      return getDigitWidthUnit(char);
+      return getDigitWidthUnit(char, boldText);
     case ' ':
       return 0.24;
     case ',':
@@ -189,7 +210,7 @@ const getCharWidthUnit = (char: string) => {
     case 'K':
     case 'B':
     case 'T':
-      return 0.64;
+      return boldText ? 0.68 : 0.64;
     case '₩':
     case 'W':
     case 'M':
@@ -213,7 +234,7 @@ const getCharWidthUnit = (char: string) => {
     case '₉':
       return 0.42;
     default:
-      return 0.72;
+      return boldText ? 0.73 : 0.72;
   }
 };
 
@@ -221,6 +242,7 @@ const getTextFontSize = (
   text: string,
   options?: FontSizeByLengthOptions,
   availableWidth = 0,
+  boldText = false,
 ) => {
   'worklet';
 
@@ -234,7 +256,7 @@ const getTextFontSize = (
   }
   let widthUnits = 0;
   for (let index = 0; index < text.length; index += 1) {
-    widthUnits += getCharWidthUnit(text.charAt(index));
+    widthUnits += getCharWidthUnit(text.charAt(index), boldText);
   }
   return getFittedTickerFontSize(fontSize, widthUnits, availableWidth);
 };
@@ -251,7 +273,8 @@ const getColumnWidth = (
   }
   const char = getSlotChar(textState.text, slotIndex, maxLength);
   return char
-    ? (textState.fontSize ?? 38) * getCharWidthUnit(char) + GLYPH_SIDE_BEARING
+    ? (textState.fontSize ?? 38) * getCharWidthUnit(char, textState.boldText) +
+        GLYPH_SIDE_BEARING
     : 0;
 };
 
@@ -483,6 +506,18 @@ const AnimatedTickerText = ({
   fitWidth = false,
 }: AnimatedTickerTextProps) => {
   const availableWidth = useSharedValue(0);
+  const boldTextEnabled = useSharedValue(cachedIosBoldText);
+  useEffect(() => {
+    let cancelled = false;
+    readIosBoldTextOnce().then(enabled => {
+      if (!cancelled) {
+        boldTextEnabled.value = enabled;
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [boldTextEnabled]);
   const callerOnLayout = containerProps?.onLayout;
   const handleLayout = useCallback<NonNullable<ViewProps['onLayout']>>(
     event => {
@@ -516,6 +551,8 @@ const AnimatedTickerText = ({
   const textState = useDerivedValue(() => {
     const text = value.value || '';
 
+    const boldText = boldTextEnabled.value;
+
     return {
       text,
       isRtl: hasRtlText(text),
@@ -524,9 +561,11 @@ const AnimatedTickerText = ({
         text,
         fontSizeByLength,
         fitWidth && text.length <= maxLength ? availableWidth.value : 0,
+        boldText,
       ),
+      boldText,
     };
-  }, [fitWidth, fontSizeByLength, maxLength]);
+  }, [boldTextEnabled, fitWidth, fontSizeByLength, maxLength]);
 
   const fallbackAnimatedProps = useAnimatedProps(() => {
     return {

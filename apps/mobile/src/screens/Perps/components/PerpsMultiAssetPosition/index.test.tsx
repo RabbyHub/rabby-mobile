@@ -62,7 +62,6 @@ jest.mock('@/hooks/navigation', () => ({
 jest.mock('@/hooks/perps/navigation/navigateToPreferredPerps', () => ({
   navigateToPreferredPerps: jest.fn(),
 }));
-jest.mock('@/utils/analytics', () => ({ matomoRequestEvent: jest.fn() }));
 jest.mock('@/utils/perps', () => ({
   formatPerpsCoin: (coin: string) => coin,
   getFallbackCoinLogoUrl: (coin: string) => `${coin}.png`,

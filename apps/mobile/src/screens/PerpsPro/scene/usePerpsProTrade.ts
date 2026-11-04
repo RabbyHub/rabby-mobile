@@ -47,10 +47,6 @@ import {
   type PerpsProAttachedTpSlCommand,
   type PerpsProAttachedTpSlGuardFailureReason,
 } from '../actions/openOrderWithAttachedTpSl';
-import {
-  reportPerpsProAttachedOrderHistory,
-  reportPerpsProOpenOrderHistory,
-} from '../analytics/manualTradeHistory';
 import type { PerpsProBboPrices, PerpsProBboStrategy } from '../model/bbo';
 import { resolvePerpsProBboPrice } from '../model/bbo';
 import {
@@ -1906,7 +1902,6 @@ export const usePerpsProTrade = ({
           undefined,
           isSceneCurrent,
         );
-        reportPerpsProOpenOrderHistory(executableCommand, result.confirmed);
         if (result.failureReason === 'userCancelled') return;
         if (result.failureReason === 'regionRestricted') {
           showToast(t('page.perps.regionNotSupport'), 'error');
@@ -2048,11 +2043,6 @@ export const usePerpsProTrade = ({
         const result = await executeAttachedTpSl(
           command,
           ensureAttachedLeverage,
-        );
-        reportPerpsProAttachedOrderHistory(
-          command,
-          result.confirmedParent,
-          result.confirmedChildren,
         );
         if (result.kind === 'userCancelled') return;
         if (result.kind === 'staleContext') {

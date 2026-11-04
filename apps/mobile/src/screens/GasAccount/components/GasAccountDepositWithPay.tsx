@@ -5,7 +5,7 @@ import { toast } from '@/components2024/Toast';
 import { pollDepositStatus } from '@/core/apis/gasAccount';
 import { openapi } from '@/core/request';
 import { useTheme2024 } from '@/hooks/theme';
-import { waitPurchaseUpdated } from '@/utils/iap';
+import { purchaseWithReconnect, waitPurchaseUpdated } from '@/utils/iap';
 import { formatUsdValue } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import * as Sentry from '@sentry/react-native';
@@ -14,6 +14,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Platform, StyleSheet, View } from 'react-native';
 import { isUserCancelledError, requestPurchase } from 'react-native-iap';
+import { reconnectIAP } from '@/hooks/iap/useIAPListener';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { gasAccountProducts } from '@/constant/iap';
 import {
@@ -109,26 +110,34 @@ export const GasAccountDepositWithPay: React.FC<Props> = ({
       if (!data.account?.uuid) {
         throw new Error('get pay info failed');
       }
-      const [purchase] = await Promise.all([
-        waitPurchaseUpdated(),
-        requestPurchase({
-          request: Platform.select({
-            ios: {
-              apple: {
-                sku: product.id,
-                appAccountToken: data.account.uuid,
+      const purchaseProduct = async () => {
+        const [result] = await Promise.all([
+          waitPurchaseUpdated(),
+          requestPurchase({
+            request: Platform.select({
+              ios: {
+                apple: {
+                  sku: product.id,
+                  appAccountToken: data.account.uuid,
+                },
               },
-            },
-            android: {
-              google: {
-                skus: [product.id],
-                obfuscatedAccountId: targetGasAccountAddress,
+              android: {
+                google: {
+                  skus: [product.id],
+                  obfuscatedAccountId: targetGasAccountAddress,
+                },
               },
-            },
-          })!,
-          type: 'in-app',
-        }),
-      ]);
+            })!,
+            type: 'in-app',
+          }),
+        ]);
+        return result;
+      };
+
+      const purchase = await purchaseWithReconnect(
+        purchaseProduct,
+        reconnectIAP,
+      );
 
       if (onWaitDepositResult) {
         const transactionId = Platform.select({
@@ -170,12 +179,12 @@ export const GasAccountDepositWithPay: React.FC<Props> = ({
       manual: true,
       onError(e: any) {
         console.error(e);
-        Sentry.captureException(e);
         if (isUserCancelledError(e)) {
           toast.error(t('page.gasAccount.depositPayPopup.depositCanceled'), {
             position: toast.positions.CENTER,
           });
         } else {
+          Sentry.captureException(e);
           toast.error(t('page.gasAccount.depositPayPopup.depositFailed'), {
             position: toast.positions.CENTER,
           });

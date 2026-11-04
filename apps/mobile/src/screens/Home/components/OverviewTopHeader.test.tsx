@@ -48,7 +48,6 @@ jest.mock('@/constant/layout', () => ({ RootNames: {} }));
 jest.mock('@/hooks/version', () => ({
   useUpgradeInfo: () => ({ remoteVersion: { couldUpgrade: false } }),
 }));
-jest.mock('@/utils/analytics', () => ({ matomoRequestEvent: jest.fn() }));
 jest.mock('@/utils/currency', () => ({
   formatSmallCurrencyValueParts: (
     value: number,
@@ -66,9 +65,6 @@ jest.mock('../hooks/useHomeDrawerAnimate', () => ({
     opacityStyle: {},
     pullPercent: { value: 0 },
   }),
-}));
-jest.mock('../hooks/useReportTokenTabView', () => ({
-  useReportTokenTabView: jest.fn(),
 }));
 jest.mock('@/hooks/reanimated', () => ({
   useValueFromSharedValue: (value: { value: unknown }) => value.value,

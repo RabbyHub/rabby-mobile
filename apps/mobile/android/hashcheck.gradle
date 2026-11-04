@@ -1,42 +1,40 @@
-// 移除 --build-id
-def hashcheckCMakeScript = new File(project.projectDir, "hashcheck.cmake")
+// Shared native configuration for the app and library hashcheck builds.
+def hashcheckCMakeScript = new File(rootProject.projectDir, "hashcheck.cmake")
 
 if (!hashcheckCMakeScript.exists()) {
     throw new GradleException("==> [Reproducible Build] ERROR: Required script not found at ${hashcheckCMakeScript.absolutePath}. Aborting.")
 }
 
-def cmakeArg = "-C${hashcheckCMakeScript.absolutePath}"
+def workspaceDir = rootProject.projectDir.parentFile.parentFile.parentFile
+// CMake evaluates -C immediately, so the inputs it reads must precede it.
+def cmakeArgs = [
+    "-DRABBY_HASHCHECK_SOURCE_ROOT=${workspaceDir.absolutePath}".toString(),
+    "-DRABBY_HASHCHECK_GRADLE_USER_HOME=${gradle.gradleUserHomeDir.absolutePath}".toString(),
+    "-C${hashcheckCMakeScript.absolutePath}".toString(),
+]
 
 def patchAndroidProject = { p, ext ->
-    try {
-        ext.buildTypes.each { buildType ->
-            def cmakeBlock = buildType.externalNativeBuild?.cmake
-            if (cmakeBlock != null) {
-                def currentArgs = cmakeBlock.arguments ?: []
-                if (!currentArgs.contains(cmakeArg)) {
-                    currentArgs.add(cmakeArg)
-                    cmakeBlock.arguments = currentArgs
-                    println "==> [Reproducible Build] Patched CMake config for project: ${p.path}, buildType: ${buildType.name}"
-                }
-            }
-        }
-    } catch (Exception e) {
-        println "==> [Reproducible Build] WARN: Failed to patch ${p.path}: ${e.message}"
+    ext.buildTypes.each { buildType ->
+        def cmakeBlock = buildType.externalNativeBuild.cmake
+        // AGP's arguments setter appends rather than replacing the list.
+        cmakeBlock.arguments.removeAll(cmakeArgs)
+        cmakeBlock.arguments.addAll(cmakeArgs)
+        println "==> [Reproducible Build] Patched CMake config for project: ${p.path}, buildType: ${buildType.name}"
     }
 }
 
-subprojects { sub ->
-    sub.pluginManager.withPlugin('com.android.application') {
-        def androidComponents = sub.extensions.findByName('androidComponents')
-        androidComponents?.finalizeDsl { ext ->
-            patchAndroidProject(sub, ext)
+if (project == rootProject) {
+    // The RN root plugin can evaluate :app before this script is applied.
+    // The app registers its own callback from app/hashcheck.gradle instead.
+    subprojects { sub ->
+        sub.pluginManager.withPlugin('com.android.library') {
+            sub.extensions.getByName('androidComponents').finalizeDsl { ext ->
+                patchAndroidProject(sub, ext)
+            }
         }
     }
-
-    sub.pluginManager.withPlugin('com.android.library') {
-        def androidComponents = sub.extensions.findByName('androidComponents')
-        androidComponents?.finalizeDsl { ext ->
-            patchAndroidProject(sub, ext)
-        }
+} else {
+    extensions.getByName('androidComponents').finalizeDsl { ext ->
+        patchAndroidProject(project, ext)
     }
 }

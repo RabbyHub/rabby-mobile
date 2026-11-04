@@ -462,6 +462,26 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
     return result.maxTimeAt;
   }
 
+  /** Newest stored `time_at` per owner (lowercased), for every owner with rows. */
+  static async getLatestTimeByOwner(
+    dataSource?: DataSource,
+  ): Promise<Record<string, number>> {
+    const repo = await getHistoryRepository(dataSource);
+    const rows = await repo
+      .createQueryBuilder('historyitem')
+      .select('historyitem.owner_addr', 'owner_addr')
+      .addSelect('MAX(historyitem.time_at)', 'maxTimeAt')
+      .groupBy('historyitem.owner_addr')
+      .getRawMany<{ owner_addr: string; maxTimeAt: number }>();
+
+    const latestTimes: Record<string, number> = {};
+    rows.forEach(({ owner_addr, maxTimeAt }) => {
+      const owner = owner_addr.toLowerCase();
+      latestTimes[owner] = Math.max(latestTimes[owner] || 0, maxTimeAt);
+    });
+    return latestTimes;
+  }
+
   /** Count stored history rows of `owner_addr` with `from_ts <= time_at <= to_ts` (seconds). */
   static async countInTimeRange(
     owner_addr: string,

@@ -5,7 +5,6 @@ function loadCustomTestnetModule() {
   const mockGetTransactionCount = jest.fn();
   const mockGetNonceByChain = jest.fn();
   const mockGetChainListByIds = jest.fn();
-  const mockMatomoRequestEvent = jest.fn();
   const mockFindChain = jest.fn();
 
   const transactionHistoryService = {
@@ -15,9 +14,6 @@ function loadCustomTestnetModule() {
     },
   };
 
-  jest.doMock('@/utils/analytics', () => ({
-    matomoRequestEvent: (...args: unknown[]) => mockMatomoRequestEvent(...args),
-  }));
   jest.doMock('@/utils/chain', () => ({
     findChain: (...args: unknown[]) => mockFindChain(...args),
   }));
@@ -63,7 +59,6 @@ function loadCustomTestnetModule() {
       mockGetChainListByIds,
       mockGetNonceByChain,
       mockGetTransactionCount,
-      mockMatomoRequestEvent,
       transactionHistoryService,
     },
   };
@@ -72,54 +67,6 @@ function loadCustomTestnetModule() {
 describe('core/apis/customTestnet', () => {
   afterEach(() => {
     jest.resetModules();
-  });
-
-  it('records the successful add-network analytics event with the request source', async () => {
-    const { apiCustomTestnet, mocks } = loadCustomTestnetModule();
-    mocks.mockAdd.mockResolvedValue({
-      id: 9001,
-      name: 'Local Testnet',
-    });
-
-    await expect(
-      apiCustomTestnet.addCustomTestnet(
-        {
-          id: 9001,
-          name: 'Local Testnet',
-        } as never,
-        {
-          ga: {
-            source: 'dapp',
-          },
-        },
-      ),
-    ).resolves.toEqual({
-      id: 9001,
-      name: 'Local Testnet',
-    });
-
-    expect(mocks.mockMatomoRequestEvent).toHaveBeenCalledWith({
-      action: 'Success Add Network',
-      category: 'Custom Network',
-      label: 'dapp_9001',
-    });
-  });
-
-  it('does not record the success analytics event when add returns an error payload', async () => {
-    const { apiCustomTestnet, mocks } = loadCustomTestnetModule();
-    mocks.mockAdd.mockResolvedValue({
-      error: 'invalid rpc',
-    });
-
-    await expect(
-      apiCustomTestnet.addCustomTestnet({
-        id: 9001,
-      } as never),
-    ).resolves.toEqual({
-      error: 'invalid rpc',
-    });
-
-    expect(mocks.mockMatomoRequestEvent).not.toHaveBeenCalled();
   });
 
   it('uses the larger value between on-chain and local custom-testnet nonce', async () => {

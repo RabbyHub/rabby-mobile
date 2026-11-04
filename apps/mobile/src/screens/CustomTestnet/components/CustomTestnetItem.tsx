@@ -1,21 +1,14 @@
-import RcIconDelete from '@/assets/icons/custom-testnet/delete-cc.svg';
-import RcIconEdit from '@/assets/icons/custom-testnet/edit-cc.svg';
+import RcIconRemove from '@/assets/icons/custom-testnet/remove.svg';
+import RcIconEdit from '@/assets/icons/custom-testnet/edit.svg';
 import { TestnetChainLogo } from '@/components/Chain/TestnetChainLogo';
-import type { AppColorsVariants } from '@/constant/theme';
+import { Text } from '@/components/Typography';
 import type { TestnetChain } from '@/core/services/customTestnetService';
-import { useThemeColors } from '@/hooks/theme';
-import { useMemoizedFn } from 'ahooks';
-import type { EventEmitter } from 'ahooks/lib/useEventEmitter';
-import { useMemo, useRef } from 'react';
+import { useTheme2024 } from '@/hooks/theme';
+import { createGetStyles2024 } from '@/utils/styles';
 import { useTranslation } from 'react-i18next';
 import type { StyleProp, ViewStyle } from 'react-native';
-import { Animated, StyleSheet, View } from 'react-native';
-import {
-  RectButton,
-  Swipeable,
-  TouchableOpacity,
-} from 'react-native-gesture-handler';
-import { Text } from '@/components/Typography';
+import { View } from 'react-native';
+import { TouchableOpacity } from 'react-native-gesture-handler';
 
 export const CustomTestnetItem = ({
   style,
@@ -26,7 +19,6 @@ export const CustomTestnetItem = ({
   onPress,
   editable,
   disabled,
-  close$,
 }: {
   style?: StyleProp<ViewStyle>;
   containerStyle?: StyleProp<ViewStyle>;
@@ -36,176 +28,115 @@ export const CustomTestnetItem = ({
   onPress?: (item: TestnetChain) => void;
   editable?: boolean;
   disabled?: boolean;
-  close$?: EventEmitter<void>;
 }) => {
-  const colors = useThemeColors();
-  const styles = useMemo(() => getStyles(colors), [colors]);
-
+  const { colors2024, styles } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
 
-  const swipeRef = useRef<any>(null);
-
-  close$?.useSubscription(() => {
-    swipeRef.current?.close();
-  });
-
-  const renderRightActions = useMemoizedFn(
-    (
-      progress: Animated.AnimatedInterpolation<number>,
-      dragX: Animated.AnimatedInterpolation<number>,
-    ) => {
-      const trans = [128, 64].map(x => {
-        return progress.interpolate({
-          inputRange: [0, 1],
-          outputRange: [x, 0],
-        });
-      });
-
-      return (
-        <Animated.View
-          style={[
-            styles.actionContainer,
-            // eslint-disable-next-line react-native/no-inline-styles
-            {
-              width: 128,
-            },
-          ]}>
-          <Animated.View
-            style={{
-              transform: [{ translateX: trans[0] }],
-            }}>
-            <RectButton
-              style={[styles.action, styles.actionEdit]}
-              onPress={() => {
-                onEdit?.(item);
-              }}>
-              <RcIconEdit color={colors['neutral-title-2']} />
-            </RectButton>
-          </Animated.View>
-
-          <Animated.View
-            style={{
-              transform: [{ translateX: trans[1] }],
-            }}>
-            <RectButton
-              style={[styles.action, styles.actionDelete]}
-              onPress={() => {
-                onRemove?.(item);
-              }}>
-              <RcIconDelete color={colors['neutral-title-2']} />
-            </RectButton>
-          </Animated.View>
-        </Animated.View>
-      );
-    },
-  );
-
-  const Content = (
-    <TouchableOpacity
-      onPress={() => {
-        onPress?.(item);
-      }}>
-      <View
-        style={[
-          styles.item,
-          editable
-            ? {
-                borderRadius: 0,
-              }
-            : null,
-          style,
-        ]}>
-        <TestnetChainLogo name={item.name} size={32} />
-        <View style={styles.content}>
-          <Text style={styles.name}>{item.name}</Text>
-          <View style={styles.footer}>
-            <Text style={styles.info}>
-              {t('page.customTestnet.currency')}:{' '}
-              <Text style={styles.infoValue}>{item.nativeTokenSymbol}</Text>
-            </Text>
-            <Text style={styles.info}>
-              {t('page.customTestnet.id')}:{' '}
-              <Text style={styles.infoValue}>{item.id}</Text>
-            </Text>
-          </View>
+  const content = (
+    <View
+      style={[
+        styles.item,
+        editable && styles.editableItem,
+        disabled && styles.disabled,
+        style,
+      ]}>
+      <TestnetChainLogo name={item.name} size={40} roundedSquare />
+      <View style={styles.content}>
+        <Text style={styles.name} numberOfLines={1}>
+          {item.name}
+        </Text>
+        <View style={styles.footer}>
+          <Text style={styles.info} numberOfLines={1}>
+            {t('page.customTestnet.currency')}: {item.nativeTokenSymbol}
+          </Text>
+          <Text style={styles.info} numberOfLines={1}>
+            {t('page.customTestnet.id')}:{item.id}
+          </Text>
         </View>
       </View>
-    </TouchableOpacity>
+      {editable && <RcIconEdit color={colors2024['neutral-title-1']} />}
+    </View>
   );
-  if (editable) {
-    return (
-      <Swipeable
-        ref={swipeRef}
-        renderRightActions={renderRightActions}
-        rightThreshold={40}
-        overshootRight={false}
-        containerStyle={[styles.swipeContainer, containerStyle]}>
-        {Content}
-      </Swipeable>
-    );
-  } else {
-    return Content;
-  }
+
+  return (
+    <View style={[styles.row, containerStyle]}>
+      {editable && (
+        <TouchableOpacity
+          accessibilityRole="button"
+          accessibilityLabel={t('page.customTestnet.removeNetwork', {
+            name: item.name,
+          })}
+          hitSlop={10}
+          onPress={() => onRemove?.(item)}>
+          <RcIconRemove />
+        </TouchableOpacity>
+      )}
+      {disabled || (!onPress && !editable) ? (
+        <View style={styles.card} accessibilityState={{ disabled: !!disabled }}>
+          {content}
+        </View>
+      ) : (
+        <TouchableOpacity
+          containerStyle={styles.card}
+          accessibilityRole="button"
+          onPress={() => (editable ? onEdit?.(item) : onPress?.(item))}>
+          {content}
+        </TouchableOpacity>
+      )}
+    </View>
+  );
 };
 
-const getStyles = (colors: AppColorsVariants) =>
-  StyleSheet.create({
-    item: {
-      flexDirection: 'row',
-      borderRadius: 8,
-      backgroundColor: colors['neutral-card-1'],
-      paddingHorizontal: 16,
-      paddingVertical: 12,
-      gap: 12,
-      alignItems: 'center',
-    },
-    logo: {
-      width: 32,
-      height: 32,
-    },
-    content: {
-      minWidth: 0,
-      flex: 1,
-    },
-    name: {
-      fontSize: 16,
-      lineHeight: 19,
-      color: colors['neutral-title-1'],
-      fontWeight: '500',
-      marginBottom: 4,
-    },
-    footer: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 16,
-    },
-    info: {
-      fontSize: 13,
-      lineHeight: 16,
-      color: colors['neutral-foot'],
-    },
-    infoValue: {
-      color: colors['neutral-body'],
-    },
-
-    swipeContainer: {
-      borderRadius: 8,
-    },
-    actionContainer: {
-      flexDirection: 'row',
-      width: 128,
-      alignItems: 'stretch',
-    },
-    action: {
-      paddingHorizontal: 20,
-      justifyContent: 'center',
-      alignItems: 'center',
-      height: '100%',
-    },
-    actionEdit: {
-      backgroundColor: colors['blue-default'],
-    },
-    actionDelete: {
-      backgroundColor: colors['red-default'],
-    },
-  });
+const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
+  row: {
+    flexDirection: 'row',
+    gap: 12,
+    alignItems: 'center',
+  },
+  card: {
+    flex: 1,
+    minWidth: 0,
+    borderRadius: 12,
+    backgroundColor: colors2024[isLight ? 'neutral-bg-1' : 'neutral-bg-2'],
+  },
+  item: {
+    flexDirection: 'row',
+    borderRadius: 12,
+    backgroundColor: colors2024[isLight ? 'neutral-bg-1' : 'neutral-bg-2'],
+    paddingHorizontal: 12,
+    paddingVertical: 14,
+    gap: 8,
+    alignItems: 'center',
+  },
+  content: {
+    minWidth: 0,
+    flex: 1,
+    gap: 2,
+  },
+  editableItem: {
+    gap: 12,
+  },
+  name: {
+    fontFamily: 'SF Pro Rounded',
+    fontWeight: '700',
+    fontSize: 16,
+    lineHeight: 20,
+    color: colors2024['neutral-title-1'],
+  },
+  footer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 23,
+  },
+  info: {
+    fontFamily: 'SF Pro Rounded',
+    fontWeight: '500',
+    fontSize: 13,
+    lineHeight: 18,
+    color: colors2024['neutral-secondary'],
+    flexShrink: 1,
+  },
+  disabled: {
+    opacity: 0.3,
+  },
+}));

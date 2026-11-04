@@ -217,12 +217,14 @@ export const FormInput = ({
 
   return (
     <WrapperComp
-      onPress={() => {
-        if (!Keyboard.isVisible()) {
-          inputRef.current?.blur();
-        }
-        inputRef.current?.focus();
-      }}>
+      {...(needPatchTouchEvent && {
+        onPress: () => {
+          if (!Keyboard.isVisible()) {
+            inputRef.current?.blur();
+          }
+          inputRef.current?.focus();
+        },
+      })}>
       <View
         {...viewProps}
         {...(needPatchTouchEvent && {

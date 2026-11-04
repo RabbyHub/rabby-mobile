@@ -308,7 +308,7 @@ export const AssetContainer = () => {
       headerHeight={0}
       lazy
       renderHeader={renderHeader}
-      tabBarHeight={32}
+      tabBarHeight={36}
       onTabChange={({ tabName }) => {
         setTimeout(() => {
           apisSingleHome.setFoldChart(true);

@@ -4,7 +4,6 @@ import { initCoreServices } from '@/core/serviceApi/init';
 import { perpsServiceApi } from '@/core/serviceApi/perps';
 import { customTestnetServiceApi } from '@/core/serviceApi/customTestnet';
 import { initApis } from '@/core/apis/init';
-import { sendUserAddressEvent } from '@/core/apis/analytics';
 import { apisLock, apisPerps } from '@/core/apis';
 import { accountEvents } from '@/core/apis/account';
 import { loadSecurityChain } from './global';
@@ -111,8 +110,6 @@ export function useInitializeAppOnTop() {
       traceAndroidInstant('global_task.post_unlock_ui_ready.start', {
         source: 'useBootstrap',
       });
-      sendUserAddressEvent();
-
       doInitializeApis();
       getBootstrapAccountFlags().then(accountFlags => {
         storeApiLock.setAppLock(prev => ({

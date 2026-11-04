@@ -15,7 +15,6 @@ import { KeyringAccountWithAlias } from '@/hooks/account';
 import { AddressItemContextMenu } from '@/screens/Address/components/AddressItemContextMenu';
 import { trigger } from 'react-native-haptic-feedback';
 import { BALANCE_HIDE_TYPE } from '../hooks/useHideBalance';
-import { matomoRequestEvent } from '@/utils/analytics';
 import { apisSingleHome } from '../hooks/singleHome';
 import { Text } from '@/components/Typography';
 import { formatSmallCurrencyValue } from '@/hooks/useCurve';
@@ -66,10 +65,6 @@ export const HomeAddressItem: React.FC<{
           trigger('impactLight', {
             enableVibrateFallback: true,
             ignoreAndroidSystemSettings: false,
-          });
-          matomoRequestEvent({
-            category: 'Pin Address',
-            action: 'PinAddress_ClickView',
           });
           apisSingleHome.navigateToSingleHome(account, { activationCycleId });
         }}

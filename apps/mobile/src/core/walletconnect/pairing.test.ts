@@ -1,5 +1,8 @@
 import { initWalletConnect } from './client';
-import { pairWalletConnectUri } from './pairing';
+import {
+  pairWalletConnectUri,
+  WALLETCONNECT_PROPOSAL_WAIT_MS,
+} from './pairing';
 import {
   forgetWalletConnectPairingBrowserOrigin,
   getWalletConnectPairingBrowserOrigin,
@@ -54,7 +57,12 @@ describe('walletconnect pairing', () => {
     jest.mocked(initWalletConnect).mockReset();
   });
 
+  beforeEach(() => {
+    jest.useFakeTimers();
+  });
+
   afterEach(() => {
+    jest.useRealTimers();
     forgetWalletConnectPairingBrowserOrigin('abc123');
   });
 
@@ -184,5 +192,50 @@ describe('walletconnect pairing', () => {
       status: 'error',
       error: 'Missing WalletConnect project id.',
     });
+  });
+
+  it('marks pairing as error when no proposal arrives in time', async () => {
+    const walletKit = {
+      pair: jest.fn().mockResolvedValue(undefined),
+    } as unknown as Awaited<ReturnType<typeof initWalletConnect>>;
+    jest.mocked(initWalletConnect).mockResolvedValue(walletKit);
+
+    await pairWalletConnectUri({
+      uri: WC_URI,
+      source: 'qr',
+    });
+
+    jest.advanceTimersByTime(WALLETCONNECT_PROPOSAL_WAIT_MS - 1);
+    expect(mockState.pairing.status).toBe('pairing');
+
+    jest.advanceTimersByTime(1);
+    expect(mockState.pairing).toMatchObject({
+      status: 'error',
+      uri: WC_URI,
+    });
+  });
+
+  it('keeps proposal state when the proposal wait times out', async () => {
+    const walletKit = {
+      pair: jest.fn().mockImplementation(async () => {
+        mockState = {
+          ...mockState,
+          pairing: {
+            ...mockState.pairing,
+            status: 'proposal',
+          },
+        };
+      }),
+    } as unknown as Awaited<ReturnType<typeof initWalletConnect>>;
+    jest.mocked(initWalletConnect).mockResolvedValue(walletKit);
+
+    await pairWalletConnectUri({
+      uri: WC_URI,
+      source: 'qr',
+    });
+    jest.advanceTimersByTime(WALLETCONNECT_PROPOSAL_WAIT_MS);
+
+    expect(mockState.pairing.status).toBe('proposal');
+    expect(mockState.pairing.error).toBeUndefined();
   });
 });

@@ -42,6 +42,12 @@ export const DevUISwipableSubScreen = registerAppScreen<
   loader: () => import('@/screens/Testkits/DevUISwipableSubScreen'),
   name: TESTKITS_PRELOAD_SCREENS.DevUISwipableSubScreen,
 });
+export const DevUISafeSvgMedia = registerAppScreen<
+  typeof import('@/screens/Testkits/DevUISafeSvgMedia').default
+>({
+  loader: () => import('@/screens/Testkits/DevUISafeSvgMedia'),
+  name: TESTKITS_PRELOAD_SCREENS.DevUISafeSvgMedia,
+});
 
 export const DevUIToast = registerAppScreen<
   typeof import('@/screens/Testkits/DevUIToast').default

@@ -17,7 +17,6 @@ import { createGetStyles2024 } from '@/utils/styles';
 
 import RcIconSetting from '@/assets2024/icons/common/IconSetting.svg';
 import { useUpgradeInfo } from '@/hooks/version';
-import { matomoRequestEvent } from '@/utils/analytics';
 
 import RcIconEyeCC from '@/assets2024/icons/home/eye-cc.svg';
 import RcIconEyeCloseCC from '@/assets2024/icons/home/eye-close-cc.svg';
@@ -46,7 +45,6 @@ import useTokenList from '@/store/tokens';
 import { useHomeDrawerOpacityStyle } from '../hooks/useHomeDrawerAnimate';
 import { IS_ANDROID } from '@/core/native/utils';
 import { Text } from '@/components/Typography';
-import { useReportTokenTabView } from '../hooks/useReportTokenTabView';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
 import { useShallow } from 'zustand/react/shallow';
 import { MultiHeaderRightHistory } from '../MultiHeaderRightHistory';
@@ -139,10 +137,6 @@ export function TabsTopHeader(): JSX.Element {
     }
     return 'By Address';
   }, [tokenDisplayMode]);
-  useReportTokenTabView({
-    focusedTab,
-    tokenDisplayModeLabel,
-  });
   const handleToggleTokenDisplayMode = useCallback(() => {
     if (tokenDisplayMode === 'byAddress') {
       setTokenDisplayMode('byAsset');
@@ -332,11 +326,6 @@ export function TabsTopHeader(): JSX.Element {
                 navigation.navigateDeprecated(RootNames.StackSettings, {
                   screen: RootNames.Settings,
                   params: {},
-                });
-
-                matomoRequestEvent({
-                  category: 'Click_Header',
-                  action: 'Click_Setting',
                 });
               }}>
               <View style={styles.headerTouchableIcon}>

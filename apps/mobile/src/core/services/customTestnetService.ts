@@ -25,7 +25,6 @@ import {
 } from 'viem/actions';
 import { GasLevel, Tx } from '@rabby-wallet/rabby-api/dist/types';
 import axios from 'axios';
-// import { matomoRequestEvent } from '@/utils/analytics';
 import {
   StorageAdapaterOptions,
   StoreServiceBase,
@@ -61,15 +60,6 @@ let idCounter = Math.floor(Math.random() * MAX);
 function getUniqueId(): number {
   idCounter = (idCounter + 1) % MAX;
   return idCounter;
-}
-
-async function reportCustomNetworkStatus(value: number) {
-  const { matomoRequestEvent } = await import('@/utils/analytics');
-  matomoRequestEvent({
-    category: 'Custom Network',
-    action: 'Custom Network Status',
-    value,
-  });
 }
 
 export class CustomTestnetService extends StoreServiceBase<
@@ -179,9 +169,6 @@ export class CustomTestnetService extends StoreServiceBase<
     this.syncChainList();
     this.syncStore();
 
-    if (this.getList().length) {
-      reportCustomNetworkStatus(this.getList().length);
-    }
     return nextChain;
   };
 
@@ -195,9 +182,6 @@ export class CustomTestnetService extends StoreServiceBase<
     delete this.chains[chainId];
     this.syncChainList();
     this.syncStore();
-    if (this.getList().length) {
-      reportCustomNetworkStatus(this.getList().length);
-    }
   };
 
   getClient = (chainId: number) => {

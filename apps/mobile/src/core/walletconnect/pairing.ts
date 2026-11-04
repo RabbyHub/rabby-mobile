@@ -16,6 +16,44 @@ import type { WalletConnectPairingSource } from './types';
 import { emitWalletConnectUiEvent } from './uiEvents';
 import { parseWalletConnectUri, WalletConnectUriError } from './uri';
 
+// pair() resolving does not guarantee the dapp sends a session_proposal
+// (e.g. a reused or already-consumed URI), so stop waiting eventually.
+export const WALLETCONNECT_PROPOSAL_WAIT_MS = 30_000;
+let proposalWaitTimer: ReturnType<typeof setTimeout> | null = null;
+
+function clearProposalWaitTimer() {
+  if (proposalWaitTimer) {
+    clearTimeout(proposalWaitTimer);
+    proposalWaitTimer = null;
+  }
+}
+
+function setPairingErrorIfPending(uri: string, message: string) {
+  let didSetError = false;
+  setWalletConnectDebugState(prev => {
+    if (prev.pairing.status !== 'pairing' || prev.pairing.uri !== uri) {
+      return prev;
+    }
+
+    didSetError = true;
+    return {
+      ...prev,
+      pairing: {
+        ...prev.pairing,
+        status: 'error',
+        error: message,
+      },
+    };
+  });
+  if (didSetError) {
+    emitWalletConnectUiEvent({
+      type: 'pairingError',
+      message,
+    });
+  }
+  return didSetError;
+}
+
 function formatPairingError(error: unknown) {
   if (error instanceof WalletConnectUriError) {
     return error.message;
@@ -88,6 +126,7 @@ export async function pairWalletConnectUri(input: {
     clearWalletConnectDappRedirectPending('new non-deeplink pairing');
   }
 
+  clearProposalWaitTimer();
   setWalletConnectDebugState(prev => ({
     ...prev,
     pairing: {
@@ -110,6 +149,19 @@ export async function pairWalletConnectUri(input: {
       uri: parsed.uri,
     });
     addWalletConnectLog('pairing', 'pairing submitted');
+    proposalWaitTimer = setTimeout(() => {
+      proposalWaitTimer = null;
+      if (
+        setPairingErrorIfPending(
+          parsed.uri,
+          i18n.t('page.walletConnect.proposalNotReceived'),
+        )
+      ) {
+        addWalletConnectLog('pairing', 'no session_proposal received', {
+          waitMs: WALLETCONNECT_PROPOSAL_WAIT_MS,
+        });
+      }
+    }, WALLETCONNECT_PROPOSAL_WAIT_MS);
   } catch (error) {
     if (browserPairingTopic) {
       forgetWalletConnectPairingBrowserOrigin(browserPairingTopic);
@@ -118,31 +170,7 @@ export async function pairWalletConnectUri(input: {
       clearWalletConnectDappRedirectPending('pairing failed');
     }
     const message = formatPairingError(error);
-    let didSetError = false;
-    setWalletConnectDebugState(prev => {
-      if (
-        prev.pairing.status !== 'pairing' ||
-        prev.pairing.uri !== parsed.uri
-      ) {
-        return prev;
-      }
-
-      didSetError = true;
-      return {
-        ...prev,
-        pairing: {
-          ...prev.pairing,
-          status: 'error',
-          error: message,
-        },
-      };
-    });
-    if (didSetError) {
-      emitWalletConnectUiEvent({
-        type: 'pairingError',
-        message,
-      });
-    }
+    setPairingErrorIfPending(parsed.uri, message);
     addWalletConnectLog('pairing', 'pairing failed', error, 'error');
     throw new Error(message);
   }

@@ -30,12 +30,7 @@ import {
 } from '@/hooks/navigation';
 import { getFormikErrorsCount } from '@/utils/patch';
 import { useFocusEffect, useRoute } from '@react-navigation/native';
-import {
-  APP_FEATURE_SWITCH,
-  APP_TEST_PWD,
-  APP_VERSIONS,
-  APPLICATION_ID,
-} from '@/constant';
+import { APP_FEATURE_SWITCH, APP_TEST_PWD } from '@/constant';
 import {
   KEYCHAIN_ERROR_CODES,
   RequestGenericPurpose,
@@ -56,9 +51,6 @@ import { NextInput } from '@/components2024/Form/Input';
 import YesIcon from '@/assets2024/icons/common/check.svg';
 import i18next from 'i18next';
 import { measureTime } from '@/core/utils/statics';
-import { stats } from '@/utils/stats';
-import DeviceInfo from 'react-native-device-info';
-import { getAddressesForReport } from '@/core/apis/address';
 import { perfEvents } from '@/core/utils/perf';
 import type { GetRootScreenRouteProp } from '@/navigation-type';
 import type { TextInput } from '@/components/Typography';
@@ -100,35 +92,6 @@ export type UnlockRegressionScenarioProps = {
     ) => void;
   };
 };
-
-function runTryCatch<T extends (...args: any[]) => any>(
-  fn: T,
-): ReturnType<T> | null {
-  try {
-    return fn();
-  } catch (error) {
-    console.error('Error occurred:', error);
-    return null;
-  }
-}
-async function reportUnlockTime(
-  timsMs: number,
-  unlockType: 'password' | 'biometrics',
-) {
-  stats.report('unlockTime', {
-    unlock_type: unlockType,
-    duration: timsMs,
-    os_version: DeviceInfo.getSystemVersion(),
-    os_name: DeviceInfo.getSystemName(),
-    app_ver: APP_VERSIONS.forFeedback,
-    app_id: APPLICATION_ID,
-    callable_addr_count:
-      (await runTryCatch(
-        async () =>
-          await getAddressesForReport().then(res => res.myCallableAddressCount),
-      )) || 0,
-  });
-}
 
 const LAYOUTS = {
   footerButtonHeight: 52,
@@ -370,13 +333,10 @@ function useUnlockForm(
       setUnlockSyncCriticalMode(true, 'password_submit');
       const hideToast = needAlert ? null : toastUnlocking();
       try {
-        measureTime.start('UnlockWithPassword');
         const result = await storeApisUnlock.unlockApp(values.password, {
           deferMemStoreKeyringsUpdate: isAndroid,
           deferKeyringRuntimeRestore: isAndroid,
         });
-        const timeResult = measureTime.end('UnlockWithPassword');
-        reportUnlockTime(timeResult.diff, 'password');
 
         if (result.error) {
           helpers?.setFieldError(
@@ -739,7 +699,6 @@ export default function UnlockScreen({
                   : undefined,
               });
               const timeResult = measureTime.end('UnlockWithBiometrics');
-              reportUnlockTime(timeResult.diff, 'biometrics');
 
               traceAndroidUnlockPerf('unlock_app_end', {
                 elapsedMs: Date.now() - startedAt,

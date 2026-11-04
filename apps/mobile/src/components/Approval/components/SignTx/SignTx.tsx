@@ -10,11 +10,7 @@ import {
 } from '@/utils/transaction';
 import { applySelectedGasToTx } from '@/utils/transactionGas';
 import type { Chain } from '@/constant/chains';
-import {
-  KEYRING_CATEGORY_MAP,
-  KEYRING_CLASS,
-  KEYRING_TYPE,
-} from '@rabby-wallet/keyring-utils';
+import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import type {
   ExplainTxResponse,
   GasAccountCheckResult,
@@ -41,7 +37,6 @@ import { isHexString } from 'ethereumjs-util';
 import type {
   ActionRequireData,
   ParsedTransactionActionData,
-  SendRequireData,
 } from '@rabby-wallet/rabby-action';
 import {
   fetchActionRequiredData,
@@ -102,11 +97,9 @@ import {
 //   checkNativeLevelInsufficient,
 // } from './validation';
 import { TxTypeComponent } from './TxTypeComponent';
-import { normalizeTxParams, toType } from './util';
+import { normalizeTxParams } from './util';
 import { getStyles } from './style';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
-import { matomoRequestEvent } from '@/utils/analytics';
-import { stats } from '@/utils/stats';
 import Safe from '@rabby-wallet/gnosis-sdk';
 import type { BasicSafeInfo } from '@rabby-wallet/gnosis-sdk';
 import { apisSafe } from '@/core/apis/safe';
@@ -1184,17 +1177,6 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
       await invokeEnterPassphrase(account.address);
     }
 
-    stats.report('signTransaction', {
-      type: KEYRING_TYPE.GnosisKeyring,
-      category: KEYRING_CATEGORY_MAP[KEYRING_CLASS.GNOSIS],
-      chainId: chain.serverId,
-      preExecSuccess:
-        checkErrors.length > 0 || !txDetail?.pre_exec.success ? false : true,
-      createdBy: params?.$ctx?.ga ? 'rabby' : 'dapp',
-      source: params?.$ctx?.ga?.source || '',
-      trigger: params?.$ctx?.ga?.trigger || '',
-      networkType: chain?.isTestnet ? 'Custom Network' : 'Integrated Network',
-    });
     if (!isViewGnosisSafe) {
       const params: any = {
         from: tx.from,
@@ -1347,7 +1329,6 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
 
     const approval = await getApproval();
     if (!approval || !security.canSubmit()) return;
-    // gaEvent('allow');
 
     approval.signingTxId &&
       (await transactionHistoryServiceApi.updateSigningTx(
@@ -1367,22 +1348,6 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
           },
         },
       ));
-
-    if (isSend) {
-      const sendActionRequireData = actionRequireData as SendRequireData;
-      const toAddress = params?.$ctx?.ga?.toAddress;
-      toAddress &&
-        toType(toAddress, !!sendActionRequireData.cex).then(type => {
-          matomoRequestEvent({
-            category: 'Send Usage',
-            action: `Send_${type}_${
-              sendActionRequireData?.onTransferWhitelist
-                ? 'Whitelist'
-                : 'NotWhitelist'
-            }`,
-          });
-        });
-    }
 
     if (!security.canSubmit()) return;
     if (currentAccount?.type && WaitingSignComponent[currentAccount.type]) {
@@ -1417,22 +1382,6 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
       return;
     }
 
-    stats.report('signTransaction', {
-      type: currentAccount.brandName,
-      chainId: chain.serverId,
-      category: KEYRING_CATEGORY_MAP[currentAccount.type],
-      preExecSuccess:
-        checkErrors.length > 0 || !txDetail?.pre_exec.success ? false : true,
-      createdBy: params?.$ctx?.ga ? 'rabby' : 'dapp',
-      source: params?.$ctx?.ga?.source || '',
-      trigger: params?.$ctx?.ga?.trigger || '',
-    });
-
-    matomoRequestEvent({
-      category: 'Transaction',
-      action: 'Submit',
-      label: currentAccount.brandName,
-    });
     resolveApproval({
       ...transaction,
       nonce: realNonce || tx.nonce,
@@ -1531,7 +1480,6 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
 
   const handleCancel = () => {
     invalidateSecurity();
-    // gaEvent('cancel');
     setGnosisFooterBarVisible(false);
     rejectApproval('User rejected the request.');
   };
@@ -1827,12 +1775,6 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
         setTempoGasTokenLoading(false);
       }
 
-      matomoRequestEvent({
-        category: 'Transaction',
-        action: 'init',
-        label: currentAccount.brandName,
-      });
-
       if (currentAccount.type === KEYRING_TYPE.GnosisKeyring) {
         setIsGnosisAccount(true);
         await getSafeInfo();
@@ -1881,17 +1823,6 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
         // no cache, use the fast level in gasMarket
         gas = gasList.find(item => item.level === 'normal')!;
       }
-
-      stats.report('createTransaction', {
-        type: currentAccount.brandName,
-        category: KEYRING_CATEGORY_MAP[currentAccount.type],
-        chainId: chain.serverId,
-        createdBy: params?.$ctx?.ga ? 'rabby' : 'dapp',
-        source: params?.$ctx?.ga?.source || '',
-        trigger: params?.$ctx?.ga?.trigger || '',
-        swapUseSlider: params?.$ctx?.ga?.swapUseSlider ?? '',
-        gasLevel: gas?.level || 'normal',
-      });
 
       const fee = calcMaxPriorityFee(
         gasList,

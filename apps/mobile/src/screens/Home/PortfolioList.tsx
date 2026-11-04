@@ -119,7 +119,7 @@ export const PortfolioList = ({ onForeground, onRefresh }: Props) => {
     return currentFocused;
   }, [focusedTab]);
 
-  useScrollToTopOnChainChange({
+  const suspendVisibleAnchor = useScrollToTopOnChainChange({
     chain: selectedChain,
     isCurrentTab: isFocused,
   });
@@ -341,7 +341,9 @@ export const PortfolioList = ({ onForeground, onRefresh }: Props) => {
         windowSize={4}
         maxToRenderPerBatch={15}
         removeClippedSubviews
-        maintainVisibleContentPosition={{ minIndexForVisible: 0 }}
+        maintainVisibleContentPosition={
+          suspendVisibleAnchor ? undefined : { minIndexForVisible: 0 }
+        }
         refreshControl={
           <CollapsibleRefreshControl
             as={RefreshControl}

@@ -29,15 +29,24 @@ jest.mock('@/utils/styles', () => ({
   createGetStyles2024: (getStyle: unknown) => getStyle,
 }));
 
-jest.mock('@rneui/themed', () => ({
-  Slider: (props: { thumbProps?: { children?: React.ReactNode } }) => {
+jest.mock('react-native-reanimated', () => {
+  const ReactModule = require('react');
+  return {
+    __esModule: true,
+    default: { View: require('react-native').View },
+    useAnimatedStyle: (factory: () => object) => factory(),
+    useSharedValue: (value: number) => ReactModule.useRef({ value }).current,
+  };
+});
+
+jest.mock('@/components/perps/PerpsGestureSlider', () => ({
+  PerpsGestureSlider: (props: object) => {
     const ReactModule = require('react');
     const { View } = require('react-native');
-    return ReactModule.createElement(
-      View,
-      { ...props, testID: 'amount-slider-input' },
-      props.thumbProps?.children,
-    );
+    return ReactModule.createElement(View, {
+      ...props,
+      testID: 'amount-slider-input',
+    });
   },
 }));
 
@@ -48,12 +57,23 @@ describe('PerpsProTradeAmountSlider haptics', () => {
     jest.clearAllMocks();
   });
 
-  it('moves the design SVG inside the existing transparent thumb', () => {
+  const layoutRail = (width: number) =>
+    fireEvent(
+      screen.getByTestId('perps-pro-trade-amount-slider-rail'),
+      'layout',
+      { nativeEvent: { layout: { width, height: 1, x: 0, y: 0 } } },
+    );
+  const translateXOf = (testID: string) =>
+    StyleSheet.flatten(screen.getByTestId(testID).props.style).transform[0]
+      .translateX;
+
+  it('keeps the design SVG and the transparent gesture thumb geometry', () => {
     render(<PerpsProTradeAmountSlider onChange={jest.fn()} value={25} />);
     const slider = screen.getByTestId('amount-slider-input');
-    const thumb = screen.getByTestId('perps-pro-trade-amount-slider-thumb');
 
-    expect(thumb.props).toMatchObject({
+    expect(
+      screen.getByTestId('perps-pro-trade-amount-slider-thumb').props,
+    ).toMatchObject({
       accessible: false,
       fill: 'neutral-bg-1',
       stroke: 'neutral-title-1',
@@ -63,55 +83,40 @@ describe('PerpsProTradeAmountSlider haptics', () => {
     });
     expect(StyleSheet.flatten(slider.props.thumbStyle)).toMatchObject({
       backgroundColor: 'transparent',
-      borderRadius: 0,
-      borderWidth: 0,
       height: 13,
       width: 13,
     });
+    expect(slider.props.progressValue).toEqual({ value: 25 });
   });
 
-  it.each([0, 1, 25, 50, 75, 99, 100])(
-    'centers the percentage over the thumb at %s percent for narrow and wide tracks',
-    value => {
-      render(<PerpsProTradeAmountSlider onChange={jest.fn()} value={value} />);
-      const slider = screen.getByTestId('amount-slider-input');
-      act(() => slider.props.onSlidingStart(value));
+  it('draws track, thumb and tooltip from the gesture position, not the delayed value', () => {
+    render(<PerpsProTradeAmountSlider onChange={jest.fn()} value={0} />);
+    layoutRail(200);
+    const slider = screen.getByTestId('amount-slider-input');
 
-      const tooltip = screen.getByTestId(
-        'perps-pro-trade-amount-slider-tooltip',
-      );
-      const tooltipStyle = StyleSheet.flatten(tooltip.props.style);
-      const tooltipTrack = StyleSheet.flatten(
-        tooltip.parent?.parent?.props.style,
-      );
-      const sliderStyle = StyleSheet.flatten(slider.props.style);
-      const thumbStyle = StyleSheet.flatten(slider.props.thumbStyle);
-      expect(tooltip).toHaveTextContent(`${value}%`);
-      expect(tooltipStyle.width).toBe(36);
+    // The UI-thread gesture mirror moves before the Trade form re-renders.
+    slider.props.progressValue.value = 50;
+    act(() => slider.props.onSlidingStart(0));
 
-      for (const width of [165, 193, 211, 248]) {
-        const thumbCenter =
-          sliderStyle.marginHorizontal +
-          thumbStyle.width / 2 +
-          ((width - 2 * sliderStyle.marginHorizontal - thumbStyle.width) *
-            value) /
-            100;
-        const tooltipCenter =
-          tooltipTrack.left +
-          ((width - tooltipTrack.left - tooltipTrack.right) *
-            parseFloat(tooltipStyle.left)) /
-            100 +
-          tooltipStyle.transform[0].translateX +
-          tooltipStyle.width / 2;
-        expect(tooltipCenter).toBeCloseTo(thumbCenter, 8);
-      }
+    expect(translateXOf('perps-pro-trade-amount-slider-thumb-position')).toBe(
+      100,
+    );
+    expect(translateXOf('perps-pro-trade-amount-slider-active-track')).toBe(
+      -100,
+    );
+    expect(translateXOf('perps-pro-trade-amount-slider-tooltip')).toBe(
+      100 - 18,
+    );
+    const activePoints = screen
+      .getAllByTestId('perps-pro-trade-amount-slider-point-active')
+      .map(point => StyleSheet.flatten(point.props.style).opacity);
+    expect(activePoints).toEqual([1, 1, 1, 0, 0]);
 
-      act(() => slider.props.onSlidingComplete());
-      expect(
-        screen.queryByTestId('perps-pro-trade-amount-slider-tooltip'),
-      ).toBeNull();
-    },
-  );
+    act(() => slider.props.onSlidingComplete());
+    expect(
+      screen.queryByTestId('perps-pro-trade-amount-slider-tooltip'),
+    ).toBeNull();
+  });
 
   it('triggers feedback when dragging to the next discrete unit', () => {
     const onChange = jest.fn();

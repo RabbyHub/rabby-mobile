@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect } from 'react';
+import RNFS from '@rabby-wallet/react-native-fs';
 import { Linking } from 'react-native';
 import { StackActions } from '@react-navigation/native';
 import { t } from 'i18next';
@@ -103,6 +104,7 @@ type OnParseUrlAndProcessAction = (payload: {
     | typeof RootNames.DevCapabilityFile
     | typeof RootNames.DevUIAnimatedTextAndView
     | typeof RootNames.DevUISwipableSubScreen
+    | typeof RootNames.DevUISafeSvgMedia
     | typeof RootNames.DebugLogViewer
     | typeof RootNames.StartupPerformanceLogViewer
     | typeof RootNames.DevDataSQLite
@@ -130,6 +132,7 @@ const NON_PRODUCTION_TESTKIT_SCREENS = {
   DevCapabilityFile: RootNames.DevCapabilityFile,
   DevUIAnimatedTextAndView: RootNames.DevUIAnimatedTextAndView,
   DevUISwipableSubScreen: RootNames.DevUISwipableSubScreen,
+  DevUISafeSvgMedia: RootNames.DevUISafeSvgMedia,
   DebugLogViewer: RootNames.DebugLogViewer,
   StartupPerformanceLogViewer: RootNames.StartupPerformanceLogViewer,
   DevDataSQLite: RootNames.DevDataSQLite,
@@ -517,6 +520,7 @@ async function clearAppCacheFromLink() {
   try {
     abortAllSyncTasks('clear-app-cache-link');
     resetUpdateHistoryTime();
+    await RNFS.clearSafeSvgCache();
     await dropAppDataSourceAndQuitApp({
       exitDelayMs: 300,
     });

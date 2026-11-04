@@ -8,7 +8,6 @@ import { AppBottomSheetTextInput } from '@/components/customized/BottomSheetText
 import { useBrowserHistory } from '@/hooks/browser/useBrowserHistory';
 import { useTheme2024 } from '@/hooks/theme';
 import { useSafeSizes } from '@/hooks/useAppLayout';
-import { matomoRequestEvent } from '@/utils/analytics';
 import { createGetStyles2024 } from '@/utils/styles';
 import {
   BottomSheetScrollView,
@@ -170,11 +169,6 @@ export function BrowserSearch({
   const handlePressHome = useMemoizedFn(() => {
     Keyboard.dismiss();
     onClose?.(true);
-    matomoRequestEvent({
-      category: 'Websites Usage',
-      action: `Website_Exit`,
-      label: 'Click Home',
-    });
   });
 
   const [key, setKey] = useState(0);
@@ -224,13 +218,6 @@ export function BrowserSearch({
                     handleOpenUrl(dapp.url || dapp.origin, {
                       isRemindOpen: true,
                     });
-                    if (dapp.origin) {
-                      matomoRequestEvent({
-                        category: 'Websites Usage',
-                        action: 'Website_Visit_Recent List',
-                        label: dapp.origin,
-                      });
-                    }
                   }}
                 />
               </>

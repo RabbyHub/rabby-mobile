@@ -277,7 +277,7 @@ export const usePerpsState = (
     return signActions;
   });
 
-  const checkBuilderFee = useMemoizedFn(async address => {
+  const checkBuilderFee = useMemoizedFn(async () => {
     try {
       const sdk = apisPerps.getPerpsSDK();
       const res = await sdk.info.getMaxBuilderFee(
@@ -290,7 +290,7 @@ export const usePerpsState = (
       console.error('Failed to set builder fee:', error);
       Sentry.captureException(
         error instanceof Error ? error : new Error(String(error)),
-        { extra: { scene: 'PERPS set builder fee error', address } },
+        { extra: { scene: 'PERPS set builder fee error' } },
       );
     }
   });
@@ -429,9 +429,7 @@ export const usePerpsState = (
         Sentry.captureException(e instanceof Error ? e : new Error(String(e)), {
           extra: {
             scene: 'checkAccountApproveStatus failed',
-            address: account.address,
             accountType: account.type,
-            agentAddress,
           },
         });
       }
@@ -524,9 +522,7 @@ export const usePerpsState = (
         Sentry.captureException(e instanceof Error ? e : new Error(String(e)), {
           extra: {
             scene: 'ensure login approve sign failed',
-            address: account.address,
             accountType: account.type,
-            agentAddress,
           },
         });
       }
@@ -586,7 +582,6 @@ export const usePerpsState = (
           {
             extra: {
               scene: 'Failed to handle action approve status',
-              address: currentPerpsAccount?.address,
               accountType: currentPerpsAccount?.type,
             },
           },
@@ -727,7 +722,7 @@ export const usePerpsState = (
           await loginPerpsAccount(account);
           setAccountNeedApproveAgent(false);
           setAccountNeedApproveBuilderFee(false);
-          checkBuilderFee(account.address);
+          checkBuilderFee();
         } else {
           // 过期或者没sendApprove过，需要创建新的agent，同时签名
           await handleLoginWithSignApprove(account);
@@ -745,7 +740,6 @@ export const usePerpsState = (
         {
           extra: {
             scene: 'Failed to login Perps account',
-            address: account.address,
             accountType: account.type,
           },
         },

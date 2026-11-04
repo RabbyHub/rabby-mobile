@@ -2131,7 +2131,11 @@ function handleMessage(event: CustomEvent) {
       chartState.chart = null;
       chartState.candlestickSeries = null;
       containerEl.replaceChildren();
-      simpleChart = createSimpleChart(containerEl, postMessageToRN);
+      simpleChart = createSimpleChart(
+        containerEl,
+        postMessageToRN,
+        resolvePerpsProFontFamily(getRuntimeInfo()),
+      );
       containerEl.append(loadingOverlay, emptyOverlay);
       ensurePerpsProFontsLoaded();
       void perpsProFontLoadPromise?.then(() => simpleChart?.refreshFonts());

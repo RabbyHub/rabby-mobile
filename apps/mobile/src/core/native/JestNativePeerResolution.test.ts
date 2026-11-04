@@ -50,11 +50,18 @@ describe('app-owned native peers in Jest', () => {
   });
 
   it.each(peerSpecifiers)(
-    'cannot resolve %s without the app ownership mapping',
+    'never resolves %s to the app peer without the ownership mapping',
     specifier => {
-      expect(() => createResolver().resolveModule(issuer, specifier)).toThrow(
-        /Cannot find module/,
-      );
+      // A hoisted workspace copy may still exist after dependency changes, so
+      // the invariant is that an unmapped resolver never returns the app-owned
+      // peer; it either fails to resolve or points somewhere else.
+      let resolved: string | undefined;
+      try {
+        resolved = createResolver().resolveModule(issuer, specifier);
+      } catch {
+        resolved = undefined;
+      }
+      expect(resolved).not.toBe(appRequire.resolve(specifier));
     },
   );
 

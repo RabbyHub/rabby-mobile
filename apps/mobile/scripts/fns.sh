@@ -1760,7 +1760,27 @@ ensure_inpage_bridge_assets() {
   local current_project_dir
   current_project_dir=$(resolve_mobile_project_dir)
 
-  local missing_targets=""
+  local expected_sha1=""
+  local manifest_path
+  for manifest_path in \
+    "$current_project_dir/ios/link-assets-manifest.json" \
+    "$current_project_dir/android/link-assets-manifest.json"
+  do
+    [ -s "$manifest_path" ] || continue
+    expected_sha1=$(
+      node -e '
+        const fs = require("fs");
+        const manifest = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
+        const entry = Array.isArray(manifest.data)
+          ? manifest.data.find(item => item && item.path === "assets/custom/InpageBridgeWeb3.js")
+          : null;
+        if (entry && typeof entry.sha1 === "string") process.stdout.write(entry.sha1);
+      ' "$manifest_path"
+    )
+    [ -n "$expected_sha1" ] && break
+  done
+
+  local stale_targets=""
   local target
 
   for target in \
@@ -1768,17 +1788,33 @@ ensure_inpage_bridge_assets() {
     "$current_project_dir/src/core/bridges/InpageBridgeWeb3.js"
   do
     if [ ! -s "$target" ]; then
-      missing_targets="${missing_targets}${target}
+      stale_targets="${stale_targets}missing: ${target}
 "
+      continue
+    fi
+
+    if [ -n "$expected_sha1" ]; then
+      local actual_sha1
+      actual_sha1=$(
+        node -e '
+          const crypto = require("crypto");
+          const fs = require("fs");
+          process.stdout.write(crypto.createHash("sha1").update(fs.readFileSync(process.argv[1])).digest("hex"));
+        ' "$target"
+      )
+      if [ "$actual_sha1" != "$expected_sha1" ]; then
+        stale_targets="${stale_targets}stale (${actual_sha1} != ${expected_sha1}): ${target}
+"
+      fi
     fi
   done
 
-  if [ -z "$missing_targets" ]; then
+  if [ -z "$stale_targets" ]; then
     return 0
   fi
 
-  echo "[ensure_inpage_bridge_assets] regenerate inpage bridge assets because these targets are missing:"
-  printf '%s' "$missing_targets" | while IFS= read -r target; do
+  echo "[ensure_inpage_bridge_assets] regenerate inpage bridge assets because these targets are missing or stale:"
+  printf '%s' "$stale_targets" | while IFS= read -r target; do
     [ -n "$target" ] || continue
     printf '[ensure_inpage_bridge_assets]   - %s\n' "$target"
   done

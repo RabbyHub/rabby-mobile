@@ -2,6 +2,11 @@ import { fireEvent, render, screen } from '@testing-library/react-native';
 import { PortalProvider } from '@gorhom/portal';
 import React from 'react';
 
+jest.mock('@/assets2024/icons/perps/PerpsProTpSlAdd.svg', () => {
+  const ReactModule = require('react');
+  const { View: NativeView } = require('react-native');
+  return (props: object) => ReactModule.createElement(NativeView, props);
+});
 jest.mock('react-native-linear-gradient', () => require('react-native').View);
 jest.mock('react-native-gesture-handler', () => ({
   State: { ACTIVE: 4 },

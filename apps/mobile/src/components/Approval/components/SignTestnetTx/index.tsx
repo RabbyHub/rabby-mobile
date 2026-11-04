@@ -10,11 +10,7 @@ import type { Account, ChainGas } from '@/core/startupServices/preference';
 import { useApproval } from '@/hooks/useApproval';
 import { useCommonPopupView } from '@/hooks/useCommonPopupView';
 import { intToHex } from '@/utils/number';
-import {
-  KEYRING_CATEGORY_MAP,
-  KEYRING_CLASS,
-  KEYRING_TYPE,
-} from '@rabby-wallet/keyring-utils';
+import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import type { GasLevel, Tx } from '@rabby-wallet/rabby-api/dist/types';
 import BigNumber from 'bignumber.js';
 import { isHexString } from 'ethereumjs-util';
@@ -25,9 +21,7 @@ import type { AppColors2024Variants } from '@/constant/theme';
 import { useTheme2024 } from '@/hooks/theme';
 import { useEnterPassphraseModal } from '@/hooks/useEnterPassphraseModal';
 import { useFindChain } from '@/hooks/useFindChain';
-import { matomoRequestEvent } from '@/utils/analytics';
 import i18n from '@/utils/i18n';
-import { stats } from '@/utils/stats';
 import { toChecksumAddress } from '@ethereumjs/util';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { useMount, useRequest } from 'ahooks';
@@ -357,11 +351,6 @@ export const SignTestnetTx = ({
     //   ),
     // );
 
-    matomoRequestEvent({
-      category: 'Transaction',
-      action: 'init',
-      label: chain?.isTestnet ? 'Custom Network' : 'Integrated Network',
-    });
     if (currentAccount.type === KEYRING_TYPE.GnosisKeyring) {
       setIsGnosisAccount(true);
     }
@@ -421,17 +410,6 @@ export const SignTestnetTx = ({
       // no cache, use the fast level in gasMarket
       gas = gasList.find(item => item.level === 'normal')!;
     }
-    stats.report('createTransaction', {
-      type: currentAccount.brandName,
-      category: KEYRING_CATEGORY_MAP[currentAccount.type],
-      chainId: chain?.serverId || '',
-      createdBy: params?.$ctx?.ga ? 'rabby' : 'dapp',
-      source: params?.$ctx?.ga?.source || '',
-      trigger: params?.$ctx?.ga?.trigger || '',
-      networkType: chain?.isTestnet ? 'Custom Network' : 'Integrated Network',
-      swapUseSlider: params?.$ctx?.ga?.swapUseSlider ?? '',
-      gasLevel: gas.level || 'normal',
-    });
 
     setSelectedGas(gas);
     setTx({
@@ -518,7 +496,6 @@ export const SignTestnetTx = ({
   };
 
   const handleCancel = () => {
-    //  gaEvent('cancel');
     rejectApproval('User rejected the request.');
   };
 
@@ -600,22 +577,6 @@ export const SignTestnetTx = ({
     //   return;
     // }
 
-    stats.report('signTransaction', {
-      type: currentAccount.brandName,
-      chainId: chain?.serverId || '',
-      category: KEYRING_CATEGORY_MAP[currentAccount.type],
-      preExecSuccess: true,
-      createdBy: params?.$ctx?.ga ? 'rabby' : 'dapp',
-      source: params?.$ctx?.ga?.source || '',
-      trigger: params?.$ctx?.ga?.trigger || '',
-      networkType: chain?.isTestnet ? 'Custom Network' : 'Integrated Network',
-    });
-
-    matomoRequestEvent({
-      category: 'Transaction',
-      action: 'Submit',
-      label: chain?.isTestnet ? 'Custom Network' : 'Integrated Network',
-    });
     resolveApproval({
       ...transaction,
       nonce: realNonce || tx.nonce,

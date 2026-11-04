@@ -230,6 +230,14 @@ fi
 [ ! -z $DO_POD_INSTALL ] && bundle install && bundle exec pod install;
 echo "[RabbyMobileBuild] customize build environment vars finished."
 
+# sentry-cli loads the nearest .env (apps/mobile/.env) into its own process
+# env by default, and the Metro bundle it starts inherits that env.
+# react-native-dotenv ranks process env above every dotenv file, so .env
+# would silently override .env.production in Release builds.
+# Set SENTRY_LOAD_DOTENV=1 to opt back in.
+export SENTRY_LOAD_DOTENV="${SENTRY_LOAD_DOTENV:-0}"
+echo "[RabbyMobileBuild] SENTRY_LOAD_DOTENV is $SENTRY_LOAD_DOTENV"
+
 /bin/sh -c "$WITH_ENVIRONMENT $SENTRY_XCODE"
 
 # react-native-xcode.sh writes ip.txt from the build machine's current

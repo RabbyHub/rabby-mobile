@@ -12,7 +12,6 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import type { Account } from '@/core/startupServices/preference';
-import { matomoRequestEvent } from '@/utils/analytics';
 
 type InnerDappWebViewScreenProps = {
   list: DappSelectItem[];

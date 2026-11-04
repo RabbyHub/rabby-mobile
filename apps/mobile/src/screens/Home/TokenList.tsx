@@ -251,7 +251,7 @@ export const TokenList = ({ onForeground, onRefresh }: Props) => {
     return focusedTab === 'tokens';
   }, [focusedTab]);
 
-  useScrollToTopOnChainChange({
+  const suspendVisibleAnchor = useScrollToTopOnChainChange({
     chain: selectedChain,
     isCurrentTab: isFocused,
   });
@@ -903,7 +903,9 @@ export const TokenList = ({ onForeground, onRefresh }: Props) => {
         maxToRenderPerBatch={TOKEN_LIST_RENDER_BATCH_SIZE}
         updateCellsBatchingPeriod={TOKEN_LIST_BATCHING_PERIOD_MS}
         removeClippedSubviews={IS_ANDROID}
-        maintainVisibleContentPosition={{ minIndexForVisible: 0 }}
+        maintainVisibleContentPosition={
+          suspendVisibleAnchor ? undefined : { minIndexForVisible: 0 }
+        }
         ItemSeparatorComponent={ListSeparator}
         renderSectionFooter={ListSeparator}
         stickySectionHeadersEnabled={false}

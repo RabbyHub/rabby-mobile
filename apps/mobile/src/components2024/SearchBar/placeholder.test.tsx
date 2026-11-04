@@ -136,12 +136,12 @@ describe('NextSearchBar managed iOS placeholder', () => {
     expect(screen.queryByText('搜索链')).toBeNull();
   });
 
-  it('keeps the native placeholder on Android', () => {
+  it('truncates a long placeholder on Android instead of wrapping it', () => {
     setPlatform('android');
     render(
       <NextSearchBar
         testID="search"
-        placeholder="搜索链"
+        placeholder="Search Token Name / Address"
         value=""
         onChangeText={jest.fn()}
       />,
@@ -151,8 +151,12 @@ describe('NextSearchBar managed iOS placeholder', () => {
     const input = screen.getByTestId('search');
     fireEvent(input, 'layout', inputLayoutEvent);
 
-    expect(input.props.placeholderTextColor).not.toBe('transparent');
-    expect(screen.queryByText('搜索链')).toBeNull();
+    expect(input.props.placeholderTextColor).toBe('transparent');
+    const managed = screen.getByText('Search Token Name / Address', {
+      includeHiddenElements: true,
+    });
+    expect(managed.props.numberOfLines).toBe(1);
+    expect(managed.props.ellipsizeMode).toBe('tail');
   });
 
   it('drops the managed placeholder when an uncontrolled field receives text', () => {
