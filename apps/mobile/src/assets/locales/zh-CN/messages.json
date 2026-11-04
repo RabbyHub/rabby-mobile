@@ -3599,7 +3599,8 @@
       },
       "alertText": "第三方 DApp：如遇使用问题，请联系 DApp 支持。Rabby 仅提供浏览功能。",
       "title": "截图报告问题",
-      "submitFailed": "提交失败。"
+      "submitFailed": "提交失败。",
+      "includeAddress": "附带我的地址，便于排查问题"
     },
     "submitFeedbackSuccessModal": {
       "desc": "提交成功！"

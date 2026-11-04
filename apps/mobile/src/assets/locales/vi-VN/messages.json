@@ -3590,7 +3590,8 @@
       },
       "alertText": "DApp bên thứ ba: nếu gặp vấn đề sử dụng, vui lòng liên hệ bộ phận hỗ trợ DApp. Rabby chỉ cung cấp quyền truy cập xem.",
       "title": "Chụp màn hình để Báo cáo Lỗi",
-      "submitFailed": "Gửi thất bại."
+      "submitFailed": "Gửi thất bại.",
+      "includeAddress": "Chia sẻ địa chỉ của tôi để hỗ trợ khắc phục sự cố"
     },
     "submitFeedbackSuccessModal": {
       "desc": "Gửi thành công!"

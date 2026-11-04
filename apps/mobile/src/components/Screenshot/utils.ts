@@ -84,14 +84,43 @@ ErrorUtils.setGlobalHandler((error, isFatal) => {
   latestErrorsRef.current = list.sort((a, b) => b.time - a.time).slice(0, 50);
 });
 
+// Matches EVM addresses (40 hex) and longer hex strings such as tx hashes
+// (64 hex), since a tx hash also reveals its sender on-chain.
+const SCREENSHOT_FEEDBACK_ADDRESS_REGEX = /0x[0-9a-f]{40,}/gi;
+export const SCREENSHOT_FEEDBACK_MASKED_ADDRESS = '0x***';
+
+export function maskScreenshotFeedbackAddresses<T extends string | null>(
+  value: T,
+): T {
+  if (!value) {
+    return value;
+  }
+
+  return value.replace(
+    SCREENSHOT_FEEDBACK_ADDRESS_REGEX,
+    SCREENSHOT_FEEDBACK_MASKED_ADDRESS,
+  ) as T;
+}
+
 export async function getScreenshotFeedbackExtra({
   totalBalanceText,
+  includeAddress,
 }: {
   totalBalanceText: string;
+  /**
+   * Addresses are attached only when the user explicitly opts in. Any other
+   * value leaves them out and masks addresses found in free-text fields.
+   */
+  includeAddress?: boolean;
 }): Promise<UserFeedbackItem['extra'] & object> {
-  const latestErrors = runTryCatch(() =>
+  const shouldIncludeAddress = includeAddress === true;
+  const rawLatestErrors = runTryCatch(() =>
     JSON.stringify(latestErrorsRef.current),
   );
+  // Error payloads can carry addresses (RPC params, thrown objects).
+  const latestErrors = shouldIncludeAddress
+    ? rawLatestErrors
+    : maskScreenshotFeedbackAddresses(rawLatestErrors);
 
   const appVersionText = APP_VERSIONS.forFeedback;
   const appVersion = APP_VERSIONS.fromNative;
@@ -130,11 +159,15 @@ export async function getScreenshotFeedbackExtra({
     applicationId: APPLICATION_ID,
     myCallableAddressCount,
     myUncallableAddressCount,
-    myFirstAddress: myFirstCallableAccount?.address,
     myFirstAddressType: myFirstCallableAccount?.type,
-    myCurrentAddress: myCurrentAccount?.address,
     myCurrentAddressType: myCurrentAccount?.type,
-    mySceneAddresses: await runTryCatch(async () => await getSceneAddresses()),
+    ...(shouldIncludeAddress && {
+      myFirstAddress: myFirstCallableAccount?.address,
+      myCurrentAddress: myCurrentAccount?.address,
+      mySceneAddresses: await runTryCatch(
+        async () => await getSceneAddresses(),
+      ),
+    }),
 
     systemName: runTryCatch(() => DeviceInfo.getSystemName()),
     systemVersion: runTryCatch(() => DeviceInfo.getSystemVersion()),

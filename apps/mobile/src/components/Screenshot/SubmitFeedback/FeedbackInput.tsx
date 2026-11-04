@@ -11,6 +11,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { IS_ANDROID } from '@/core/native/utils';
 import { Text, TextInput } from '@/components/Typography';
+import { ScreenshotFeedbackShareAddressCheckbox } from './ShareAddressCheckbox';
 
 export type BottomInputMethods = {};
 export type BottomInputProps = {} & RNViewProps;
@@ -40,37 +41,43 @@ export const ScreenshotFeedbackInput = ({
   return (
     <View style={[styles.container, style]}>
       <View style={[styles.inputContainer]}>
-        <TextInput
-          ref={inputRef}
-          value={value}
-          onChangeText={text => {
-            onChangeFeedback(text);
-          }}
-          multiline={true}
-          onBlur={handleDone}
-          submitBehavior="blurAndSubmit"
-          returnKeyType="done"
-          enterKeyHint="done"
-          textAlign="left"
-          textAlignVertical="top"
-          autoFocus={IS_ANDROID}
-          placeholder={t('component.screenshotModal.feedbackInput.placeholder')}
-          placeholderTextColor={styles.inputPlaceholder.color}
-          style={[styles.input, isEmpty ? styles.inputPlaceholder : null]}
-        />
-        {/* <Text style={styles.inputTextLenIndicator}>
-          <Text style={[valueOverLimit && styles.inputTextOverLimit]}>
-            {value.length}
-          </Text>
-          {`/${SCREENSHOT_FEEDBACK_MAX_LENGTH - 1}`}
-        </Text> */}
+        <View style={styles.inputArea}>
+          <TextInput
+            ref={inputRef}
+            value={value}
+            onChangeText={text => {
+              onChangeFeedback(text);
+            }}
+            multiline={true}
+            onBlur={handleDone}
+            submitBehavior="blurAndSubmit"
+            returnKeyType="done"
+            enterKeyHint="done"
+            textAlign="left"
+            textAlignVertical="top"
+            autoFocus={IS_ANDROID}
+            placeholder={t(
+              'component.screenshotModal.feedbackInput.placeholder',
+            )}
+            placeholderTextColor={styles.inputPlaceholder.color}
+            style={[styles.input, isEmpty ? styles.inputPlaceholder : null]}
+          />
+          {/* <Text style={styles.inputTextLenIndicator}>
+            <Text style={[valueOverLimit && styles.inputTextOverLimit]}>
+              {value.length}
+            </Text>
+            {`/${SCREENSHOT_FEEDBACK_MAX_LENGTH - 1}`}
+          </Text> */}
+        </View>
+        <View style={styles.divider} />
+        <ScreenshotFeedbackShareAddressCheckbox />
       </View>
     </View>
   );
 };
 
 export const ScreenshotFeedbackInputSizes = {
-  mainHeight: 108,
+  mainHeight: 85,
   get totalContainerHeight() {
     return this.mainHeight + 12 * 2;
   },
@@ -88,12 +95,21 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
     inputContainer: {
       flex: 1,
       width: '100%',
-      height: ScreenshotFeedbackInputSizes.mainHeight,
       borderRadius: 12,
+      backgroundColor: colors2024['neutral-bg-5'],
+      overflow: 'hidden',
+    },
+    inputArea: {
+      width: '100%',
+      height: ScreenshotFeedbackInputSizes.mainHeight,
       paddingHorizontal: 12,
       paddingVertical: 12,
-      backgroundColor: colors2024['neutral-bg-5'],
-      maxHeight: 78,
+    },
+    divider: {
+      height: 1,
+      width: '100%',
+      backgroundColor: colors2024['neutral-line'],
+      opacity: 0.5,
     },
     input: {
       flex: 1,

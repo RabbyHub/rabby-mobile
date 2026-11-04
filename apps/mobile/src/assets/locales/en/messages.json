@@ -3518,7 +3518,8 @@
       "switchArea": {
         "skipText": "Skip this popup for 1 day"
       },
-      "alertText": "Third-party DApp: for usage issues please contact DApp support. Rabby provides viewing access only"
+      "alertText": "Third-party DApp: for usage issues please contact DApp support. Rabby provides viewing access only",
+      "includeAddress": "Share my addresses to help troubleshoot"
     },
     "submitFeedbackSuccessModal": {
       "desc": "Submitted Successfully!"

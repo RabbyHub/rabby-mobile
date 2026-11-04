@@ -3590,7 +3590,8 @@
       },
       "alertText": "타사 DApp: 사용 문제는 DApp 지원팀에 문의하세요. Rabby는 보기 전용 접근만 제공합니다.",
       "title": "스크린샷으로 버그 신고",
-      "submitFailed": "제출에 실패했습니다."
+      "submitFailed": "제출에 실패했습니다.",
+      "includeAddress": "문제 해결을 위해 내 주소 공유"
     },
     "submitFeedbackSuccessModal": {
       "desc": "성공적으로 제출되었습니다!"

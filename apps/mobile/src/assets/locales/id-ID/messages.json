@@ -3473,7 +3473,8 @@
       },
       "alertText": "DApp pihak ketiga: untuk masalah penggunaan, silakan hubungi dukungan DApp. Rabby hanya menyediakan akses melihat.",
       "title": "Tangkapan Layar untuk Melaporkan Bug",
-      "submitFailed": "Gagal mengirim."
+      "submitFailed": "Gagal mengirim.",
+      "includeAddress": "Bagikan alamat saya untuk membantu pemecahan masalah"
     },
     "submitFeedbackSuccessModal": {
       "desc": "Dikirim Berhasil!"
