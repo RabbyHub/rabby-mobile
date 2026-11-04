@@ -1,37 +1,5 @@
 [
   {
-    "category": "Perps",
-    "name": "Hyperliquid",
-    "origin": "https://app.hyperliquid.xyz",
-    "logo": "https://static.debank.com/image/dapp/logo_url/06166d17b67b2dedc8e9749d79f7ec32/06166d17b67b2dedc8e9749d79f7ec32.png",
-    "zh": "主打极致性能与订单簿体验的链上永续合约交易平台。",
-    "en": "An onchain perpetuals exchange focused on high performance and a native order book trading experience."
-  },
-  {
-    "category": "Perps",
-    "name": "Aster",
-    "origin": "https://www.asterdex.com",
-    "logo": "https://static.debank.com/image/dapp/logo_url/b48bf8dd2dbe46acaa0332516de19089/b48bf8dd2dbe46acaa0332516de19089.png",
-    "zh": "面向所有交易者的下一代永续合约 DEX,强调更专业的衍生品交易体验。",
-    "en": "A next-generation perpetual DEX for all traders, built around a more professional derivatives trading experience."
-  },
-  {
-    "category": "Perps",
-    "name": "Lighter",
-    "origin": "https://app.lighter.xyz",
-    "logo": "https://static.debank.com/image/dapp/logo_url/4464216a32be3baa5df9ed1c45d0d609/4464216a32be3baa5df9ed1c45d0d609.png",
-    "zh": "主打更轻、更快撮合体验的链上交易平台。",
-    "en": "An onchain trading platform focused on a lighter, faster matching and execution experience."
-  },
-  {
-    "category": "Perps",
-    "name": "StandX",
-    "origin": "https://standx.com",
-    "logo": "https://static-assets.rabby.io/files/a412611f-3b2f-4c54-b0da-0a519466d958.png",
-    "zh": "以可赚收益的 DUSD 保证金为特色的永续合约交易平台。",
-    "en": "A perpetuals trading platform distinguished by its yield-bearing DUSD margin model."
-  },
-  {
     "category": "RWA",
     "name": "xStocks",
     "origin": "https://xstocks.fi",
@@ -214,6 +182,38 @@
     "logo": "https://static.debank.com/image/dapp/logo_url/a56bf85820246425fface6a20000f0b0/a56bf85820246425fface6a20000f0b0.png",
     "zh": "围绕多主题事件交易构建的预测市场平台。",
     "en": "A prediction market platform built around trading across a wide range of event categories."
+  },
+  {
+    "category": "Perps",
+    "name": "Hyperliquid",
+    "origin": "https://app.hyperliquid.xyz",
+    "logo": "https://static.debank.com/image/dapp/logo_url/06166d17b67b2dedc8e9749d79f7ec32/06166d17b67b2dedc8e9749d79f7ec32.png",
+    "zh": "主打极致性能与订单簿体验的链上永续合约交易平台。",
+    "en": "An onchain perpetuals exchange focused on high performance and a native order book trading experience."
+  },
+  {
+    "category": "Perps",
+    "name": "Aster",
+    "origin": "https://www.asterdex.com",
+    "logo": "https://static.debank.com/image/dapp/logo_url/b48bf8dd2dbe46acaa0332516de19089/b48bf8dd2dbe46acaa0332516de19089.png",
+    "zh": "面向所有交易者的下一代永续合约 DEX,强调更专业的衍生品交易体验。",
+    "en": "A next-generation perpetual DEX for all traders, built around a more professional derivatives trading experience."
+  },
+  {
+    "category": "Perps",
+    "name": "Lighter",
+    "origin": "https://app.lighter.xyz",
+    "logo": "https://static.debank.com/image/dapp/logo_url/4464216a32be3baa5df9ed1c45d0d609/4464216a32be3baa5df9ed1c45d0d609.png",
+    "zh": "主打更轻、更快撮合体验的链上交易平台。",
+    "en": "An onchain trading platform focused on a lighter, faster matching and execution experience."
+  },
+  {
+    "category": "Perps",
+    "name": "StandX",
+    "origin": "https://standx.com",
+    "logo": "https://static-assets.rabby.io/files/a412611f-3b2f-4c54-b0da-0a519466d958.png",
+    "zh": "以可赚收益的 DUSD 保证金为特色的永续合约交易平台。",
+    "en": "A perpetuals trading platform distinguished by its yield-bearing DUSD margin model."
   },
   {
     "category": "DEX",

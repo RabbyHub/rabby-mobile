@@ -16,10 +16,11 @@ import {
 } from 'react-native';
 import { useCurrentTabScrollY } from 'react-native-collapsible-tab-view';
 import { useShallow } from 'zustand/shallow';
-import { runOnJS, useAnimatedReaction } from 'react-native-reanimated';
+import { useDerivedValue } from 'react-native-reanimated';
 
 import { ASSETS_ITEM_HEIGHT_NEW, RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
+import { useValueFromSharedValue } from '@/hooks/reanimated';
 import {
   TokenRowSectionLpTokenHeader,
   TokenRowV2,
@@ -1038,20 +1039,12 @@ export const TokenList = () => {
       return onRefresh();
     },
   });
-  const [isPullRefreshVisible, setIsPullRefreshVisible] = useState(false);
-
   // RefreshPlaceholderIOS changes the list header height throughout the pull
   // and its closing animation. Keeping the native visible anchor enabled while
   // that header shrinks anchors the first token row to a stale offset, leaving
   // a large blank area above short token lists.
-  useAnimatedReaction(
-    () => pullDistance.value > 0,
-    (visible, previous) => {
-      if (visible !== previous) {
-        runOnJS(setIsPullRefreshVisible)(visible);
-      }
-    },
-  );
+  const svIsPullRefreshVisible = useDerivedValue(() => pullDistance.value > 0);
+  const isPullRefreshVisible = useValueFromSharedValue(svIsPullRefreshVisible);
 
   useEffect(() => {
     console.debug('[PulldownRefresh] TokenList isLoading changed', isLoading);

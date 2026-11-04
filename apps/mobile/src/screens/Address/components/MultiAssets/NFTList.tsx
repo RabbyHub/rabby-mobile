@@ -72,7 +72,8 @@ import type { KeyringAccountWithAlias } from '@/hooks/account';
 import { useScrollToTopOnChainChange } from '@/hooks/useScrollToTopOnChainChange';
 import { resolveAssetProjectionViewState } from '@/store/assetProjectionAvailability';
 import { useShallow } from 'zustand/react/shallow';
-import { runOnJS, useAnimatedReaction } from 'react-native-reanimated';
+import { useDerivedValue } from 'react-native-reanimated';
+import { useValueFromSharedValue } from '@/hooks/reanimated';
 
 const NFT_LIST_INITIAL_RENDER_COUNT = 10;
 const NFT_LIST_RENDER_BATCH_SIZE = 8;
@@ -501,18 +502,10 @@ const NFTListInner = () => {
       return onRefresh();
     },
   });
-  const [isPullRefreshVisible, setIsPullRefreshVisible] = useState(false);
-
   // Keep the native visible anchor from pinning rows to a stale offset while
   // RefreshPlaceholderIOS changes the list header height.
-  useAnimatedReaction(
-    () => pullDistance.value > 0,
-    (visible, previous) => {
-      if (visible !== previous) {
-        runOnJS(setIsPullRefreshVisible)(visible);
-      }
-    },
-  );
+  const svIsPullRefreshVisible = useDerivedValue(() => pullDistance.value > 0);
+  const isPullRefreshVisible = useValueFromSharedValue(svIsPullRefreshVisible);
 
   useEffect(() => {
     console.debug('[PulldownRefresh] NFTList isLoading changed', isLoading);

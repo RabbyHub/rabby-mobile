@@ -1938,6 +1938,7 @@
       "customNetworkTokenHeader": "Jaringan kustom yang ditambahkan"
     },
     "browser": {
+      "openInRabbyPerps": "Buka di Rabby Perps",
       "BrowserHeader": {
         "searchIos": "Cari Situs Web",
         "searchAndroid": "Cari DApp"
