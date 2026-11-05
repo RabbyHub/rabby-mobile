@@ -19,7 +19,13 @@ run_ios_build_and_hash() {
   echo "⏳ 清理环境、安装 Pods 并执行构建..."
   rm -rf ~/Library/Developer/Xcode/DerivedData/RabbyMobile-* "$PROJECT_DIR/ios/Package" "$PROJECT_DIR/ios/build" "$PROJECT_DIR/ios/DerivedData"
 
-  cd "$PROJECT_DIR/ios" && bundle exec pod deintegrate &>/dev/null && RCT_NEW_ARCH_ENABLED="${RCT_NEW_ARCH_ENABLED:-1}" bundle exec pod install --deployment --repo-update --allow-root >>"$build_log_file" 2>&1
+  cd "$PROJECT_DIR/ios"
+  # A fresh validation checkout has no Pods yet; deintegrate can fail there.
+  # Keep its output for diagnosis and continue to the actual pod install.
+  if ! bundle exec pod deintegrate >>"$build_log_file" 2>&1; then
+    echo "[warn] pod deintegrate failed; continuing to pod install" >>"$build_log_file"
+  fi
+  RCT_NEW_ARCH_ENABLED="${RCT_NEW_ARCH_ENABLED:-1}" bundle exec pod install --deployment --repo-update --allow-root >>"$build_log_file" 2>&1
   if [ $? -ne 0 ]; then
     echo "❌ Pods 安装失败，请检查日志: $build_log_file"
     exit 1
