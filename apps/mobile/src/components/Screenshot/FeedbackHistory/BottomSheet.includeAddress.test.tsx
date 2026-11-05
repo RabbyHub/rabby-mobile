@@ -22,14 +22,25 @@ const mockSheetModal = {
   toggleShowSheetModal: jest.fn(),
 };
 
-jest.mock('../hooks', () => ({
-  getScreenshotFeedbackExtraSafely: jest.fn(async () => ({ app: 'extra' })),
-  useFeedbackHistoryVisible: () => mockHistoryVisible,
-  useScreenshotFeedbackIncludeAddress: () => ({
+// The remembered choice is a small store here; its persistence is covered with
+// the real hook in ../SubmitFeedback/ShareAddressCheckbox.test.tsx.
+jest.mock('../hooks', () => {
+  const includeAddressStore = require('zustand').create(() => ({
     includeAddress: false,
-    setIncludeAddress: jest.fn(),
-  }),
-}));
+  }));
+  return {
+    includeAddressStore,
+    getScreenshotFeedbackExtraSafely: jest.fn(async () => ({ app: 'extra' })),
+    useFeedbackHistoryVisible: () => mockHistoryVisible,
+    useScreenshotFeedbackIncludeAddress: () => ({
+      includeAddress: includeAddressStore(
+        (s: { includeAddress: boolean }) => s.includeAddress,
+      ),
+      setIncludeAddress: (includeAddress: boolean) =>
+        includeAddressStore.setState({ includeAddress }),
+    }),
+  };
+});
 jest.mock('./MediaPreview', () => ({ FeedbackMediaPreview: () => null }));
 jest.mock('@/core/request', () => ({
   openapi: {
@@ -139,6 +150,15 @@ jest.mock(
 
 const getExtra = jest.mocked(getScreenshotFeedbackExtraSafely);
 const postFeedback = jest.mocked(openapi.postClientFeedbackMessage);
+const rememberedChoice = () =>
+  (
+    jest.requireMock('../hooks') as {
+      includeAddressStore: {
+        getState: () => { includeAddress: boolean };
+        setState: (state: { includeAddress: boolean }) => void;
+      };
+    }
+  ).includeAddressStore;
 
 // The sheet schedules scroll-to-bottom work (setTimeout + rAF) after loads and
 // sends. Let it run before the test ends so no timer outlives the environment.
@@ -171,6 +191,7 @@ async function renderChat() {
 describe('FeedbackHistoryBottomSheet address opt-in', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    rememberedChoice().setState({ includeAddress: false });
   });
 
   afterEach(async () => {
@@ -187,7 +208,9 @@ describe('FeedbackHistoryBottomSheet address opt-in', () => {
   it('sends a reply without addresses unless the box is checked', async () => {
     const { view, isChecked, sendReply } = await renderChat();
 
-    expect(view.getByText('component.screenshotModal.includeAddress'));
+    expect(
+      view.getByText('component.screenshotModal.includeAddress'),
+    ).toBeTruthy();
     expect(isChecked()).toBe(false);
 
     await sendReply('still broken');
@@ -201,15 +224,27 @@ describe('FeedbackHistoryBottomSheet address opt-in', () => {
     );
   });
 
-  it('passes the opt-in with the reply and clears it after sending', async () => {
-    const { view, checkbox, isChecked, sendReply } = await renderChat();
+  it('passes the opt-in with the reply and keeps it checked after sending', async () => {
+    const { checkbox, isChecked, sendReply } = await renderChat();
 
     fireEvent.press(checkbox());
+    expect(isChecked()).toBe(true);
+    expect(rememberedChoice().getState().includeAddress).toBe(true);
+
+    await sendReply('still broken');
+
+    expect(getExtra).toHaveBeenCalledWith({ includeAddress: true });
+    expect(isChecked()).toBe(true);
+  });
+
+  it('opens with the remembered choice', async () => {
+    rememberedChoice().setState({ includeAddress: true });
+    const { isChecked, sendReply } = await renderChat();
+
     expect(isChecked()).toBe(true);
 
     await sendReply('still broken');
 
     expect(getExtra).toHaveBeenCalledWith({ includeAddress: true });
-    await waitFor(() => expect(isChecked()).toBe(false));
   });
 });

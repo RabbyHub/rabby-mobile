@@ -32,11 +32,17 @@ type ScreenshotFeedbackStore = {
   viewedHomeTip: boolean;
   showFeedbackOnScreenshot_20250923: boolean | null;
   disableScreenshotToReportUntil: number; // timestamp
+  /**
+   * Last choice of the "share my addresses" checkbox, shared by the screenshot
+   * submit modal and the feedback chat. Off until the user checks it.
+   */
+  includeAddress: boolean;
 };
 const getDefaultValueFeedback = (): ScreenshotFeedbackStore => ({
   viewedHomeTip: FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT,
   showFeedbackOnScreenshot_20250923: true,
   disableScreenshotToReportUntil: -1,
+  includeAddress: false,
 });
 const Keys = Object.keys(
   getDefaultValueFeedback(),
@@ -215,8 +221,6 @@ type FeedbackByScreenshotState = {
   feedbackHistoryRefreshKey: number;
   feedbackText: string;
   uploadedImageUrl: string;
-  /** Opt-in per report: off whenever the submit modal opens or closes. */
-  includeAddress: boolean;
 };
 function getDefaultValue(): FeedbackByScreenshotState {
   return {
@@ -226,7 +230,6 @@ function getDefaultValue(): FeedbackByScreenshotState {
     feedbackHistoryRefreshKey: 0,
     feedbackText: '',
     uploadedImageUrl: '',
-    includeAddress: false,
   };
 }
 export const SCREENSHOT_FEEDBACK_MAX_LENGTH = 301;
@@ -336,7 +339,6 @@ const setLastScreenshotNow = (
     submitModalShown: !!image,
     feedbackText: '',
     uploadedImageUrl: '',
-    includeAddress: false,
   }));
 
   if (image?.uri && uploadNow) {
@@ -662,14 +664,20 @@ const onChangeFeedback = (feedback: string) => {
 };
 
 const setFeedbackIncludeAddress = (includeAddress: boolean) => {
-  setFeedbackByScreenshot(prev => ({
+  setScreenshotFeedback(prev => ({
     ...prev,
     includeAddress,
   }));
 };
 
+/** Only an explicit `true` counts as consent, whatever was persisted. */
+const getFeedbackIncludeAddress = () =>
+  screenshotFeedbackStore.getState().includeAddress === true;
+
 export function useScreenshotFeedbackIncludeAddress() {
-  const includeAddress = feedbackByScreenshotStore(s => s.includeAddress);
+  const includeAddress = screenshotFeedbackStore(
+    s => s.includeAddress === true,
+  );
 
   return {
     includeAddress,
@@ -708,7 +716,6 @@ const closeSubmitModal = ({
     lastScreenshot: null,
     feedbackText: clearText ? '' : prev.feedbackText,
     uploadedImageUrl: '',
-    includeAddress: false,
   }));
 };
 
@@ -724,12 +731,7 @@ export async function getScreenshotFeedbackExtraSafely({
 }
 
 export function useSubmitFeedbackOnScreenshot() {
-  const { lastScreenshot, includeAddress } = feedbackByScreenshotStore(
-    useShallow(s => ({
-      lastScreenshot: s.lastScreenshot,
-      includeAddress: s.includeAddress,
-    })),
-  );
+  const lastScreenshot = feedbackByScreenshotStore(s => s.lastScreenshot);
 
   const { globalModalShown, feedbackText, uploadedImageUrl } =
     useFeedbackOnScreenshot();
@@ -757,8 +759,9 @@ export function useSubmitFeedbackOnScreenshot() {
           throw new Error('No screenshot available');
         }
 
+        // Read at send time so the submit callback does not depend on it.
         const extraInfo = await getScreenshotFeedbackExtraSafely({
-          includeAddress,
+          includeAddress: getFeedbackIncludeAddress(),
         });
         // console.debug('[debug] extraInfo', extraInfo);
 
@@ -779,7 +782,6 @@ export function useSubmitFeedbackOnScreenshot() {
     },
     [
       feedbackText,
-      includeAddress,
       uploadedImageUrl,
       lastScreenshot?.uri,
       isSubmittingRef,
