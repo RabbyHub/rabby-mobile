@@ -51,6 +51,7 @@ import {
 } from '../ui/helpers';
 import { getChainNativeToken } from '../ui/nativeToken';
 import {
+  dismissKeyboardThen,
   MemeCoinHomeBottomBar,
   useKeyboardVisible,
 } from './MemeCoinHomeBottomBar';
@@ -242,9 +243,8 @@ export const MemeCoinHomeScreen = () => {
   const startSearch = useCallback(() => setSearching(true), []);
 
   const cancelSearch = useCallback(() => {
-    Keyboard.dismiss();
     setKeyword('');
-    setSearching(false);
+    dismissKeyboardThen(() => setSearching(false));
   }, []);
 
   const handleEndReached = useCallback(() => {
