@@ -10,6 +10,7 @@ import {
   getMemeAllocations,
   parseBuyAmount,
   pickTokenLogos,
+  sanitizeBuyAmountInput,
   toSellHoldings,
 } from './helpers';
 
@@ -49,6 +50,18 @@ describe('parseBuyAmount', () => {
       expect(parseBuyAmount(text)).toBeNull();
     },
   );
+});
+
+describe('sanitizeBuyAmountInput', () => {
+  it.each([
+    ['12.345', '12.34'],
+    ['12,345', '12.34'],
+    ['12.', '12.'],
+    ['1.2.3', '1.23'],
+    ['abc', ''],
+  ])('turns %p into %p', (text, expected) => {
+    expect(sanitizeBuyAmountInput(text)).toBe(expected);
+  });
 });
 
 describe('formatMarketCapUsd', () => {

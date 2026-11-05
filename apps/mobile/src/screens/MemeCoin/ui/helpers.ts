@@ -1,4 +1,5 @@
 import BigNumber from 'bignumber.js';
+import { sanitizePerpsProDecimalEditingInput } from '@/utils/perpsPriceProtocol';
 import type { MemeHolding } from '../data/types';
 import { AMOUNT_EPSILON } from '../engine/constants';
 import type { SellHolding } from '../engine/execLegs';
@@ -17,6 +18,7 @@ export type MaxPriceImpactPct = (typeof MAX_PRICE_IMPACT_OPTIONS)[number];
 export const DEFAULT_MAX_PRICE_IMPACT_PCT: MaxPriceImpactPct = 5;
 
 const BUY_AMOUNT_PATTERN = /^(\d+\.?\d{0,2}|\.\d{1,2})$/;
+const MAX_BUY_AMOUNT_DECIMALS = 2;
 
 /** ',' counts as the decimal separator; valid amounts are > 0 with at most 2 decimals. */
 export const parseBuyAmount = (text: string): number | null => {
@@ -27,6 +29,10 @@ export const parseBuyAmount = (text: string): number | null => {
   const value = Number(normalized);
   return value > 0 ? value : null;
 };
+
+/** For amount inputs while typing: drops anything parseBuyAmount would reject for its format. */
+export const sanitizeBuyAmountInput = (text: string) =>
+  sanitizePerpsProDecimalEditingInput(text, MAX_BUY_AMOUNT_DECIMALS);
 
 /** whole dollars with thousands separators, never abbreviated: $132,262,615 */
 export const formatMarketCapUsd = (usd: number) =>

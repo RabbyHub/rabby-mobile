@@ -10,7 +10,11 @@ import { formatUsdValue } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import { DashedDivider } from '../components/DashedDivider';
 import type { AllocationMode } from '../engine/types';
-import { formatAllocationPct, getMemeAllocations } from '../ui/helpers';
+import {
+  formatAllocationPct,
+  getMemeAllocations,
+  sanitizeBuyAmountInput,
+} from '../ui/helpers';
 
 const ALLOCATION_LABEL_KEYS: Record<AllocationMode, string> = {
   marketCap: 'page.memeCoin.buy.byMarketCap',
@@ -72,7 +76,9 @@ export const BuyAmountCard = ({
               autoFocus
               selectTextOnFocus
               value={amountText}
-              onChangeText={onChangeAmount}
+              onChangeText={text =>
+                onChangeAmount(sanitizeBuyAmountInput(text))
+              }
               onBlur={() => setEditing(false)}
               keyboardType="decimal-pad"
               style={[amountStyle, styles.amountInput]}
