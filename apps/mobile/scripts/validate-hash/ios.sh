@@ -108,7 +108,7 @@ run_ios_build_and_hash() {
       # Keep the complete framework binary (load commands and all sections) in
       # the hash. Require the pinned framework binary to embed the canonical
       # Xcode path; otherwise a rebuilt framework fails closed.
-      node "$SCRIPT_DIR/check_macho_paths.js" "$macho_path"
+      node "$SCRIPT_DIR/check_macho_paths.js" "$macho_path" || exit 1
     fi
   done < <(find "$app_path" -type f -print0)
 
