@@ -25,7 +25,6 @@ const mockSheetModal = {
 jest.mock('../hooks', () => ({
   getScreenshotFeedbackExtraSafely: jest.fn(async () => ({ app: 'extra' })),
   useFeedbackHistoryVisible: () => mockHistoryVisible,
-  useScreenshotFeedbackTotalBalanceText: () => '$1',
   useScreenshotFeedbackIncludeAddress: () => ({
     includeAddress: false,
     setIncludeAddress: jest.fn(),
@@ -193,7 +192,7 @@ describe('FeedbackHistoryBottomSheet address opt-in', () => {
 
     await sendReply('still broken');
 
-    expect(getExtra).toHaveBeenCalledWith('$1', { includeAddress: false });
+    expect(getExtra).toHaveBeenCalledWith({ includeAddress: false });
     expect(postFeedback).toHaveBeenCalledWith(
       expect.objectContaining({
         content: 'still broken',
@@ -210,7 +209,7 @@ describe('FeedbackHistoryBottomSheet address opt-in', () => {
 
     await sendReply('still broken');
 
-    expect(getExtra).toHaveBeenCalledWith('$1', { includeAddress: true });
+    expect(getExtra).toHaveBeenCalledWith({ includeAddress: true });
     await waitFor(() => expect(isChecked()).toBe(false));
   });
 });

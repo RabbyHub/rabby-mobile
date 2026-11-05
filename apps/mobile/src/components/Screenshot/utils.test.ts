@@ -177,25 +177,28 @@ describe('Screenshot feedback utils', () => {
       });
     });
 
-    it('leaves addresses out unless the user opts in', async () => {
+    it('leaves addresses and their types out unless the user opts in', async () => {
       const { getScreenshotFeedbackExtra } = loadUtils();
       recordGlobalError({
         message: `send failed from ${FIRST_ADDRESS} in ${TX_HASH} on 0x38`,
       });
 
-      const extra = await getScreenshotFeedbackExtra({
-        totalBalanceText: '$1',
-      });
+      const extra = await getScreenshotFeedbackExtra();
 
       expect(extra).not.toHaveProperty('myFirstAddress');
       expect(extra).not.toHaveProperty('myCurrentAddress');
       expect(extra).not.toHaveProperty('mySceneAddresses');
+      expect(extra).not.toHaveProperty('myFirstAddressType');
+      expect(extra).not.toHaveProperty('myCurrentAddressType');
+      expect(extra).not.toHaveProperty('totalBalanceText');
       expect(extra).toMatchObject({
         myCallableAddressCount: 1,
         myUncallableAddressCount: 1,
-        myFirstAddressType: 'HD Key Tree',
-        myCurrentAddressType: 'Simple Key Pair',
       });
+      const serializedText = JSON.stringify(extra);
+      for (const accountType of ['HD Key Tree', 'Simple Key Pair']) {
+        expect(serializedText).not.toContain(accountType);
+      }
       expect(mockGetItem).not.toHaveBeenCalled();
       expect(mockGetPerpsCurrentAccount).not.toHaveBeenCalled();
 
@@ -211,27 +214,29 @@ describe('Screenshot feedback utils', () => {
       const { getScreenshotFeedbackExtra } = loadUtils();
 
       const extra = await getScreenshotFeedbackExtra({
-        totalBalanceText: '$1',
         includeAddress: 'true' as unknown as boolean,
       });
 
       expect(extra).not.toHaveProperty('myCurrentAddress');
+      expect(extra).not.toHaveProperty('myCurrentAddressType');
     });
 
-    it('attaches addresses and raw errors after the user opts in', async () => {
+    it('attaches addresses, their types and raw errors after the user opts in', async () => {
       const { getScreenshotFeedbackExtra } = loadUtils();
       recordGlobalError({ message: `send failed from ${FIRST_ADDRESS}` });
 
       const extra = await getScreenshotFeedbackExtra({
-        totalBalanceText: '$1',
         includeAddress: true,
       });
 
       expect(extra).toMatchObject({
         myFirstAddress: FIRST_ADDRESS,
+        myFirstAddressType: 'HD Key Tree',
         myCurrentAddress: CURRENT_ADDRESS,
+        myCurrentAddressType: 'Simple Key Pair',
         mySceneAddresses: expect.objectContaining({ Receive: '0xreceive' }),
       });
+      expect(extra).not.toHaveProperty('totalBalanceText');
       expect(extra.latestErrors).toContain(FIRST_ADDRESS);
     });
   });

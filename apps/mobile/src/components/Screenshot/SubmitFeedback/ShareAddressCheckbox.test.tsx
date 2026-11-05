@@ -132,9 +132,7 @@ describe('ScreenshotFeedbackShareAddressCheckbox', () => {
       await submitApi.submitFeedbackByScreenshot();
     });
 
-    expect(getExtra).toHaveBeenCalledWith(
-      expect.objectContaining({ includeAddress: false }),
-    );
+    expect(getExtra).toHaveBeenCalledWith({ includeAddress: false });
     expect(postFeedback).toHaveBeenCalledWith(
       expect.objectContaining({ extra: { appVersion: '1.0.0' } }),
     );
@@ -152,9 +150,7 @@ describe('ScreenshotFeedbackShareAddressCheckbox', () => {
       await submitApi.submitFeedbackByScreenshot();
     });
 
-    expect(getExtra).toHaveBeenCalledWith(
-      expect.objectContaining({ includeAddress: true }),
-    );
+    expect(getExtra).toHaveBeenCalledWith({ includeAddress: true });
   });
 
   it('resets the opt-in every time the modal closes or reopens', () => {

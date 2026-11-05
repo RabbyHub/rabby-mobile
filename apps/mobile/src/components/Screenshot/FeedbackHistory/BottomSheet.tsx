@@ -19,7 +19,6 @@ import {
 import {
   getScreenshotFeedbackExtraSafely,
   useFeedbackHistoryVisible,
-  useScreenshotFeedbackTotalBalanceText,
 } from '../hooks';
 import {
   FeedbackMediaPreview,
@@ -305,7 +304,6 @@ export const FeedbackHistoryBottomSheet: React.FC = () => {
     feedbackHistoryRefreshKey,
     toggleFeedbackHistoryVisible,
   } = useFeedbackHistoryVisible();
-  const totalBalanceText = useScreenshotFeedbackTotalBalanceText();
   const [selectedMedia, setSelectedMedia] =
     useState<PickedFeedbackMedia | null>(null);
   const [uploadedMediaUrls, setUploadedMediaUrls] =
@@ -603,10 +601,9 @@ export const FeedbackHistoryBottomSheet: React.FC = () => {
       }
       Keyboard.dismiss();
 
-      const extraInfo = await getScreenshotFeedbackExtraSafely(
-        totalBalanceText,
-        { includeAddress },
-      );
+      const extraInfo = await getScreenshotFeedbackExtraSafely({
+        includeAddress,
+      });
 
       await openapi.postClientFeedbackMessage({
         device_id: deviceId,
