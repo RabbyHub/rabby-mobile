@@ -122,14 +122,14 @@ function ReceiveScreen(): JSX.Element {
           onPress={() => setShowName(e => !e)}>
           {showName ? (
             <RcIconEyeCC
-              width={20}
-              height={20}
+              width={16}
+              height={16}
               color={colors2024['neutral-title-1']}
             />
           ) : (
             <RcIconEyeCloseCC
-              width={20}
-              height={20}
+              width={16}
+              height={16}
               color={colors2024['neutral-title-1']}
             />
           )}
@@ -276,15 +276,17 @@ function ReceiveScreen(): JSX.Element {
             />
 
             {/* Original QR Card */}
-            <ReceiveAddressCard
-              account={account}
-              selectedChain={selectedChain}
-              onSelectChainChange={setSelectedChain}
-              safeChains={safeChains}
-              showAddress={showName}
-              showQr={!isShowWatchModeModal}
-              onCopy={handleCopy}
-            />
+            <View style={styles.qrCardWrapper}>
+              <ReceiveAddressCard
+                account={account}
+                selectedChain={selectedChain}
+                onSelectChainChange={setSelectedChain}
+                safeChains={safeChains}
+                showAddress={showName}
+                showQr={!isShowWatchModeModal}
+                onCopy={handleCopy}
+              />
+            </View>
           </View>
         </ScrollView>
 
@@ -355,6 +357,11 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     marginBottom: 12,
     marginTop: 8,
     width: '100%',
+  },
+  // 24 + 12 gives the design's 36px side gap for the QR card only.
+  qrCardWrapper: {
+    width: '100%',
+    paddingHorizontal: 12,
   },
   // Backup Reminder Card styles
   backupReminderCard: {

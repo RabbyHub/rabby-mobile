@@ -25,6 +25,8 @@ import { createGetStyles2024 } from '@/utils/styles';
 const EMPTY_CHAINS: Chain[] = [];
 
 const IconCopySize = 17;
+// 200px QR frame: 182 code + 8 padding + 1 border on each side.
+const QR_CODE_SIZE = 182;
 const CHAIN_LOGO_SIZE = 18;
 const SHOWN_CHAIN_COUNT = 3;
 // Same pinned order as the extension Receive page.
@@ -172,7 +174,7 @@ export function ReceiveAddressCard({
       />
       <View style={styles.qrCardCode}>
         {account?.address && showQr ? (
-          <QRCode value={account.address} size={190} />
+          <QRCode value={account.address} size={QR_CODE_SIZE} />
         ) : (
           <View style={styles.qrCodePlaceholder} />
         )}
@@ -244,7 +246,7 @@ export function ReceiveAddressCard({
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   qrCard: {
     alignItems: 'center',
-    borderRadius: 30,
+    borderRadius: 16,
     width: '100%',
     paddingTop: 23,
     paddingBottom: 35,
@@ -254,7 +256,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     paddingHorizontal: 30,
   },
   qrCardHeader: {
-    fontSize: 17,
+    fontSize: 16,
     lineHeight: 20,
     fontWeight: '500',
     color: colors2024['neutral-secondary'],
@@ -265,14 +267,14 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   qrCardCode: {
     borderWidth: 1,
     borderColor: colors2024['neutral-line'],
-    borderRadius: 10,
+    borderRadius: 8,
     padding: 8,
     marginBottom: 24,
     backgroundColor: 'white',
   },
   qrCodePlaceholder: {
-    width: 190,
-    height: 190,
+    width: QR_CODE_SIZE,
+    height: QR_CODE_SIZE,
   },
   addressDetailContainer: {
     width: '100%',
