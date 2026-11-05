@@ -1669,8 +1669,8 @@
     },
     "receiveAddressList": {
       "selectChainTitle": "Seleccionar red",
-      "title": "Seleccionar cartera",
-      "subtitle": "Elige una cartera para recibir tus criptoactivos."
+      "title": "Seleccionar cartera para recibir",
+      "subtitle": "Elige una dirección de cartera para recibir tus activos."
     },
     "sign": {
       "transactionSpeed": "Velocidad de Transacción"

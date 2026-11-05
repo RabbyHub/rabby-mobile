@@ -1727,7 +1727,7 @@
     "receiveAddressList": {
       "selectChainTitle": "選擇鏈",
       "title": "選擇錢包以接收",
-      "subtitle": "選擇錢包以接收您的加密資產。"
+      "subtitle": "選擇一個錢包地址來接收您的資產。"
     },
     "tokenDetail": {
       "removed": {
