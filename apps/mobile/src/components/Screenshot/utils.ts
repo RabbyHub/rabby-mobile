@@ -102,9 +102,31 @@ export function maskScreenshotFeedbackAddresses<T extends string | null>(
   ) as T;
 }
 
+function isCallableAccount(account: Pick<Account, 'type'>) {
+  return (
+    account.type !== KEYRING_TYPE.WatchAddressKeyring &&
+    account.type !== KEYRING_TYPE.GnosisKeyring
+  );
+}
+
+/** The fields the user agrees to share by checking "Share address". */
+async function getScreenshotFeedbackAddressFields() {
+  const myAccountList = await getAllAccounts();
+  const myFirstCallableAccount = myAccountList.find(isCallableAccount);
+  const myCurrentAccount = getFallbackAccountSnapshot();
+
+  return {
+    myFirstAddressType: myFirstCallableAccount?.type,
+    myCurrentAddressType: myCurrentAccount?.type,
+    myFirstAddress: myFirstCallableAccount?.address,
+    myCurrentAddress: myCurrentAccount?.address,
+    mySceneAddresses: await runTryCatch(async () => await getSceneAddresses()),
+  };
+}
+
 /**
- * Builds the diagnostics attached to a feedback message. Balances are never
- * attached.
+ * Builds the diagnostics attached to a feedback message. Balances and address
+ * counts are never attached.
  */
 export async function getScreenshotFeedbackExtra({
   includeAddress,
@@ -130,27 +152,9 @@ export async function getScreenshotFeedbackExtra({
   const appBuildNumber = APP_VERSIONS.buildNumber;
   const appBuildRevision = BUILD_GIT_INFO.BUILD_GIT_HASH;
 
-  const myAccountList = await getAllAccounts();
-  let myFirstCallableAccount: Account | undefined;
-  const {
-    callables: myCallableAddressCount,
-    uncallables: myUncallableAddressCount,
-  } = myAccountList.reduce(
-    (acc, item) => {
-      if (
-        item.type !== KEYRING_TYPE.WatchAddressKeyring &&
-        item.type !== KEYRING_TYPE.GnosisKeyring
-      ) {
-        myFirstCallableAccount = myFirstCallableAccount || item;
-        acc.callables += 1;
-      } else {
-        acc.uncallables += 1;
-      }
-      return acc;
-    },
-    { callables: 0, uncallables: 0 },
-  );
-  const myCurrentAccount = getFallbackAccountSnapshot();
+  const addressFields = shouldIncludeAddress
+    ? await getScreenshotFeedbackAddressFields()
+    : null;
 
   return {
     currentScreen: getLatestNavigationName(),
@@ -159,17 +163,7 @@ export async function getScreenshotFeedbackExtra({
     appBuildNumber,
     appBuildRevision,
     applicationId: APPLICATION_ID,
-    myCallableAddressCount,
-    myUncallableAddressCount,
-    ...(shouldIncludeAddress && {
-      myFirstAddressType: myFirstCallableAccount?.type,
-      myCurrentAddressType: myCurrentAccount?.type,
-      myFirstAddress: myFirstCallableAccount?.address,
-      myCurrentAddress: myCurrentAccount?.address,
-      mySceneAddresses: await runTryCatch(
-        async () => await getSceneAddresses(),
-      ),
-    }),
+    ...addressFields,
 
     systemName: runTryCatch(() => DeviceInfo.getSystemName()),
     systemVersion: runTryCatch(() => DeviceInfo.getSystemVersion()),

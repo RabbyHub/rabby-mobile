@@ -191,16 +191,16 @@ describe('Screenshot feedback utils', () => {
       expect(extra).not.toHaveProperty('myFirstAddressType');
       expect(extra).not.toHaveProperty('myCurrentAddressType');
       expect(extra).not.toHaveProperty('totalBalanceText');
-      expect(extra).toMatchObject({
-        myCallableAddressCount: 1,
-        myUncallableAddressCount: 1,
-      });
+      expect(extra).not.toHaveProperty('myCallableAddressCount');
+      expect(extra).not.toHaveProperty('myUncallableAddressCount');
       const serializedText = JSON.stringify(extra);
       for (const accountType of ['HD Key Tree', 'Simple Key Pair']) {
         expect(serializedText).not.toContain(accountType);
       }
       expect(mockGetItem).not.toHaveBeenCalled();
       expect(mockGetPerpsCurrentAccount).not.toHaveBeenCalled();
+      expect(mockGetAllAccounts).not.toHaveBeenCalled();
+      expect(mockGetFallbackAccountSnapshot).not.toHaveBeenCalled();
 
       const serialized = JSON.stringify(extra).toLowerCase();
       for (const address of [FIRST_ADDRESS, CURRENT_ADDRESS, WATCH_ADDRESS]) {
@@ -237,6 +237,8 @@ describe('Screenshot feedback utils', () => {
         mySceneAddresses: expect.objectContaining({ Receive: '0xreceive' }),
       });
       expect(extra).not.toHaveProperty('totalBalanceText');
+      expect(extra).not.toHaveProperty('myCallableAddressCount');
+      expect(extra).not.toHaveProperty('myUncallableAddressCount');
       expect(extra.latestErrors).toContain(FIRST_ADDRESS);
     });
   });
