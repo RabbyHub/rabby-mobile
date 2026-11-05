@@ -93,6 +93,12 @@ function ReceiveScreen(): JSX.Element {
   const needsBackupReminder = useBackupReminder(account);
   const offlineChainData = useOfflineChain();
   const txCount = rateGuideLastExposureState(state => state.txCount);
+  // Mirrors the render conditions of the two notices above the QR card.
+  const hasTopNotice =
+    needsBackupReminder ||
+    (txCount > 0 &&
+      !!offlineChainData.displayWillClosedChain &&
+      !!offlineChainData.offlineChainInfo);
 
   const headerTitle = useMemo(
     () => (
@@ -274,7 +280,11 @@ function ReceiveScreen(): JSX.Element {
             />
 
             {/* Original QR Card */}
-            <View style={styles.qrCardWrapper}>
+            <View
+              style={[
+                styles.qrCardWrapper,
+                !hasTopNotice && styles.qrCardWrapperFirst,
+              ]}>
               <ReceiveAddressCard
                 account={account}
                 selectedChain={selectedChain}
@@ -360,6 +370,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   qrCardWrapper: {
     width: '100%',
     paddingHorizontal: 12,
+  },
+  // Design gap between the header and the QR card when no notice is shown.
+  qrCardWrapperFirst: {
+    marginTop: 40,
   },
   // Backup Reminder Card styles
   backupReminderCard: {
