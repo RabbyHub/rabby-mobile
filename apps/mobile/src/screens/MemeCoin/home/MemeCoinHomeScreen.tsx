@@ -243,8 +243,9 @@ export const MemeCoinHomeScreen = () => {
   const startSearch = useCallback(() => setSearching(true), []);
 
   const cancelSearch = useCallback(() => {
+    Keyboard.dismiss();
     setKeyword('');
-    dismissKeyboardThen(() => setSearching(false));
+    setSearching(false);
   }, []);
 
   const handleEndReached = useCallback(() => {
