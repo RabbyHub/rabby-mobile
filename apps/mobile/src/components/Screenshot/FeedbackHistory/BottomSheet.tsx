@@ -19,6 +19,7 @@ import {
 import {
   getScreenshotFeedbackExtraSafely,
   useFeedbackHistoryVisible,
+  useScreenshotFeedbackIncludeAddress,
 } from '../hooks';
 import {
   FeedbackMediaPreview,
@@ -314,8 +315,10 @@ export const FeedbackHistoryBottomSheet: React.FC = () => {
   );
   const replyTextRef = useRef('');
   const [hasReplyText, setHasReplyText] = useState(false);
-  // Address sharing is opt-in per message, like the screenshot submit modal.
-  const [includeAddress, setIncludeAddress] = useState(false);
+  // Address sharing is opt-in. The last choice is remembered and shared with
+  // the screenshot submit modal.
+  const { includeAddress, setIncludeAddress } =
+    useScreenshotFeedbackIncludeAddress();
   const [replyInputResetKey, setReplyInputResetKey] = useState(0);
   const scrollViewRef = useRef<ScrollView>(null);
   const pendingScrollToBottomRef = useRef(false);
@@ -618,7 +621,6 @@ export const FeedbackHistoryBottomSheet: React.FC = () => {
       onSuccess: async () => {
         clearReplyText();
         resetSelectedMedia();
-        setIncludeAddress(false);
         toast.success(t('component.submitFeedbackSuccessModal.desc'), {
           hideOnPress: true,
         });
@@ -632,7 +634,6 @@ export const FeedbackHistoryBottomSheet: React.FC = () => {
   );
 
   useEffect(() => {
-    setIncludeAddress(false);
     if (isShowHistory) {
       clearReplyText();
       resetSelectedMedia();

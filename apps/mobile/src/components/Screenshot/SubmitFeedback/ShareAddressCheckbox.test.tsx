@@ -30,11 +30,22 @@ jest.mock('@rabby-wallet/react-native-fs', () => ({}));
 jest.mock('@/core/request', () => ({
   openapi: { postClientFeedbackMessage: jest.fn(async () => ({})) },
 }));
-jest.mock('@/core/storage/mmkv', () => ({
-  zustandByMMKV: (_key: string, initial: object) =>
-    require('zustand').create(() => initial),
+// Stands in for the MMKV-backed stores; exposes them so tests can read what
+// would be saved and seed what a previous app session saved.
+jest.mock('@/core/storage/mmkv', () => {
+  const persistedStores = new Map<string, unknown>();
+  return {
+    persistedStores,
+    zustandByMMKV: (key: string, initial: object) => {
+      const store = require('zustand').create(() => initial);
+      persistedStores.set(key, store);
+      return store;
+    },
+  };
+});
+jest.mock('@/core/storage/mmkvConstants', () => ({
+  APP_MMKV_WEAK_KEYS: { SCREENSHOT_FEEDBACK: 'screenshot-feedback' },
 }));
-jest.mock('@/core/storage/mmkvConstants', () => ({ APP_MMKV_WEAK_KEYS: {} }));
 jest.mock('@/constant', () => ({ isNonPublicProductionEnv: false }));
 jest.mock('../utils', () => ({
   getScreenshotFeedbackExtra: jest.fn(async () => ({ appVersion: '1.0.0' })),
@@ -88,6 +99,21 @@ jest.mock('@/assets2024/icons/common/checkbox-round-empty-cc.svg', () => {
 const getExtra = jest.mocked(getScreenshotFeedbackExtra);
 const postFeedback = jest.mocked(openapi.postClientFeedbackMessage);
 
+type PersistedFeedbackStore = {
+  getState: () => Record<string, unknown>;
+  setState: (partial: Record<string, unknown>) => void;
+};
+const persistedFeedbackStore = () =>
+  (
+    jest.requireMock('@/core/storage/mmkv') as {
+      persistedStores: Map<string, PersistedFeedbackStore>;
+    }
+  ).persistedStores.get('screenshot-feedback')!;
+
+function seedSavedChoice(includeAddress: unknown) {
+  act(() => persistedFeedbackStore().setState({ includeAddress }));
+}
+
 type SubmitApi = ReturnType<typeof useSubmitFeedbackOnScreenshot>;
 let submitApi: SubmitApi;
 
@@ -115,6 +141,7 @@ function renderOpenModal() {
 describe('ScreenshotFeedbackShareAddressCheckbox', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    seedSavedChoice(false);
   });
 
   afterEach(() => {
@@ -124,7 +151,9 @@ describe('ScreenshotFeedbackShareAddressCheckbox', () => {
   it('starts unchecked and submits without addresses by default', async () => {
     const { view, isChecked } = renderOpenModal();
 
-    expect(view.getByText('component.screenshotModal.includeAddress'));
+    expect(
+      view.getByText('component.screenshotModal.includeAddress'),
+    ).toBeTruthy();
     expect(isChecked()).toBe(false);
     expect(view.getByTestId('unchecked')).toBeTruthy();
 
@@ -153,20 +182,50 @@ describe('ScreenshotFeedbackShareAddressCheckbox', () => {
     expect(getExtra).toHaveBeenCalledWith({ includeAddress: true });
   });
 
-  it('resets the opt-in every time the modal closes or reopens', () => {
+  it('remembers the last choice across closing and reopening', () => {
     const { checkbox, isChecked } = renderOpenModal();
 
     fireEvent.press(checkbox());
-    expect(isChecked()).toBe(true);
-
-    act(() => submitApi.closeSubmitModal({ clearText: false }));
-    expect(isChecked()).toBe(false);
-
+    act(() => submitApi.closeSubmitModal());
     openSubmitModal();
+
+    expect(isChecked()).toBe(true);
+    expect(persistedFeedbackStore().getState().includeAddress).toBe(true);
+
     fireEvent.press(checkbox());
+    act(() => submitApi.closeSubmitModal());
+    openSubmitModal();
+
+    expect(isChecked()).toBe(false);
+    expect(persistedFeedbackStore().getState().includeAddress).toBe(false);
+  });
+
+  it('restores a choice saved by an earlier session', async () => {
+    seedSavedChoice(true);
+    const { isChecked } = renderOpenModal();
+
     expect(isChecked()).toBe(true);
 
-    openSubmitModal();
-    expect(isChecked()).toBe(false);
+    await act(async () => {
+      await submitApi.submitFeedbackByScreenshot();
+    });
+
+    expect(getExtra).toHaveBeenCalledWith({ includeAddress: true });
   });
+
+  it.each([undefined, 'true', 1])(
+    'treats a saved value of %p as unchecked',
+    async saved => {
+      seedSavedChoice(saved);
+      const { isChecked } = renderOpenModal();
+
+      expect(isChecked()).toBe(false);
+
+      await act(async () => {
+        await submitApi.submitFeedbackByScreenshot();
+      });
+
+      expect(getExtra).toHaveBeenCalledWith({ includeAddress: false });
+    },
+  );
 });
