@@ -123,8 +123,7 @@ export const MemeCoinHomeScreen = () => {
   }, []);
 
   const cancelSelection = useCallback(() => {
-    Keyboard.dismiss();
-    clearSelection();
+    dismissKeyboardThen(clearSelection);
   }, [clearSelection]);
 
   useEffect(() => {
