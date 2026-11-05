@@ -1,56 +1,57 @@
 ---
 name: rabby-mobile-typography
-description: 规范 Rabby Mobile 原生字体和字重，排查机型上的文字显示异常。修改 apps/mobile 的 fontFamily、fontWeight、文字样式或字体兼容性时使用；Web/CSS 和 SVG 字体按各自渲染环境判断。
+description: Standardize Rabby Mobile native fonts and weights, and diagnose text-rendering problems on specific devices. Use when changing fontFamily, fontWeight, text styles, or font compatibility in apps/mobile; evaluate Web/CSS and SVG fonts according to their own rendering environment.
 ---
 
-# Rabby Mobile 字体与字重
+# Rabby Mobile Fonts and Weights
 
-从字体文件、样式转换路径和最终原生 Text 样式判断兼容性，不以 React Native 类型允许某个字重作为项目支持的依据。
+Judge compatibility from the font files, the style transformation path and the final native Text style. Do not treat a weight accepted by React Native types as evidence that the project supports it.
 
-## 标准与依据
+## Standards and source of truth
 
-业务文字显式设置字重时，统一使用字符串 `'400'`、`'500'`、`'700'`、`'900'`。默认正文可以省略字重；不要为了补齐声明改变现有字体或继承关系。新代码不使用 `'normal'`、`'bold'`、`'semibold'` 等别名表示这四档。需要精确档位时可使用 `'100'`–`'800'`，它们现在映射到各自对应的单字重文件。
+When business text explicitly sets a weight, use the strings `'400'`, `'500'`, `'700'` and `'900'`. Body text may omit the weight by default; do not change existing fonts or inheritance just to complete a declaration. New code must not use aliases such as `'normal'`, `'bold'` or `'semibold'` for these four tiers. Precise tiers `'100'`–`'800'` are also available and now map to their matching single-weight files.
 
-| 语义             | 业务字重 | iOS `ui-rounded` 字重 | Android SF Pro Rounded 文件     | 工厂外静态样式              |
-| ---------------- | -------- | --------------------- | ------------------------------- | --------------------------- |
-| Thin / 极细      | `'100'`  | `'100'`               | `SF-Pro-Rounded-Thin.otf`       | -                           |
-| Ultralight       | `'200'`  | `'200'`               | `SF-Pro-Rounded-Ultralight.otf` | -                           |
-| Light            | `'300'`  | `'300'`               | `SF-Pro-Rounded-Light.otf`      | -                           |
-| Regular / 正文   | `'400'`  | `'400'`               | `SF-Pro-Rounded-Regular.otf`    | `RoundedFontStyles.regular` |
-| Medium / 中等    | `'500'`  | `'500'`               | `SF-Pro-Rounded-Medium.otf`     | `RoundedFontStyles.medium`  |
-| Semibold         | `'600'`  | `'600'`               | `SF-Pro-Rounded-Semibold.otf`   | -                           |
-| Bold / 加粗      | `'700'`  | `'700'`               | `SF-Pro-Rounded-Bold.otf`       | `RoundedFontStyles.bold`    |
-| Heavy            | `'800'`  | `'800'`               | `SF-Pro-Rounded-Heavy.otf`      | `RoundedFontStyles.heavy`   |
-| Black / 强强调   | `'900'`  | `'900'`               | `SF-Pro-Rounded-Black.otf`      | -                           |
+| Meaning          | Business weight | iOS `ui-rounded` weight | Android SF Pro Rounded file     | Static factory-external style |
+| ---------------- | --------------- | ----------------------- | ------------------------------- | ----------------------------- |
+| Thin             | `'100'`         | `'100'`                 | `SF-Pro-Rounded-Thin.otf`       | -                             |
+| Ultralight       | `'200'`         | `'200'`                 | `SF-Pro-Rounded-Ultralight.otf` | -                             |
+| Light            | `'300'`         | `'300'`                 | `SF-Pro-Rounded-Light.otf`      | -                             |
+| Regular / body   | `'400'`         | `'400'`                 | `SF-Pro-Rounded-Regular.otf`    | `RoundedFontStyles.regular`   |
+| Medium           | `'500'`         | `'500'`                 | `SF-Pro-Rounded-Medium.otf`     | `RoundedFontStyles.medium`    |
+| Semibold         | `'600'`         | `'600'`                 | `SF-Pro-Rounded-Semibold.otf`   | -                             |
+| Bold             | `'700'`         | `'700'`                 | `SF-Pro-Rounded-Bold.otf`       | `RoundedFontStyles.bold`      |
+| Heavy            | `'800'`         | `'800'`                 | `SF-Pro-Rounded-Heavy.otf`      | `RoundedFontStyles.heavy`     |
+| Black / emphasis | `'900'`         | `'900'`                 | `SF-Pro-Rounded-Black.otf`      | -                             |
 
-九个字重均已打包；需要保持旧 `RoundedFontStyles.heavy` 的视觉时使用 `'800'`（Heavy），
-业务 `'900'` 现在对应 Black。
+All nine weights are bundled. Use `'800'` (Heavy) when the previous
+`RoundedFontStyles.heavy` visual is intended; business `'900'` now resolves to
+Black.
 
-源码依据：
+Source references:
 
-- [字体资产](../../apps/mobile/assets/fonts)、[原生资源配置](../../apps/mobile/react-native.config.js)：上述九个独立文件仅供 Android 使用。iOS 不得内嵌 Apple 字体（ITMS-91182），也不得通过 `UIAppFonts` 或 WebView 再注册这些文件。
-- iOS 依赖 **newArch / Fabric** 原生已有的 `ui-rounded` 支持；不为旧字体名或 oldArch 添加 RN 原生补丁、全局 font handler 或私有系统字体名。字体分支应基于 newArch 分支验证，不能单独带入 oldArch 出包分支。
-- [fonts.ts](../../apps/mobile/src/core/utils/fonts.ts)：`getRoundedFontStyle` 生成完整的平台 family/weight；`'900'` 映射 Black，`'800'` 映射 Heavy。`RoundedFontStyles` 提供 regular/medium/bold/heavy 四个语义静态对象，其中 `heavy` 固定使用 `'800'`，`FontNames.sf_pro` 为 iOS `System` / Android `Roboto`。`getFontWeightType` 按精确档位返回。
-- [styles.ts](../../apps/mobile/src/utils/styles.ts)：`mutateStyles` 按 `getRoundedFontStyle` 的精确档位选择 Android 文件，`'900'` 进入 Black，`'800'` 进入 Heavy。
-- [PR #2206](https://github.com/RabbyHub/rabby-mobile/pull/2206)：业务 Rounded 字重曾从 `'800'` 修正为 `'900'`。在九个字体文件齐备后，`'900'` 对应 Black；需要旧 Heavy 视觉时使用 `RoundedFontStyles.heavy`（`'800'`）。不要将其描述成 Heavy 字体文件本身的元数据是 900。
-- [旧版 Text](../../apps/mobile/src/components/Text.tsx)：Android Roboto 用 `'500'` 表达旧业务的 semibold 意图。该组件的历史容错不代表所有文字组件都会修正字重。
+- [Font assets](../../apps/mobile/assets/fonts) and [native resource config](../../apps/mobile/react-native.config.js): the nine standalone files are for Android only. iOS must not bundle Apple fonts (ITMS-91182), and must not register these files through `UIAppFonts` or WebView.
+- iOS relies on the **newArch / Fabric** built-in `ui-rounded` support. Do not add RN native patches, global font handlers or private system font names for legacy font names or oldArch. Validate the font branch against the newArch branch; do not carry it into an oldArch packaging branch on its own.
+- [fonts.ts](../../apps/mobile/src/core/utils/fonts.ts): `getRoundedFontStyle` produces the complete platform family/weight pair. `'900'` maps to Black and `'800'` maps to Heavy. `RoundedFontStyles` exposes four semantic static objects (`regular` / `medium` / `bold` / `heavy`); `heavy` is pinned to `'800'`. `FontNames.sf_pro` is iOS `System` / Android `Roboto`. `getFontWeightType` returns exact tiers.
+- [styles.ts](../../apps/mobile/src/utils/styles.ts): `mutateStyles` selects the Android file through `getRoundedFontStyle`'s exact tier; `'900'` reaches Black and `'800'` reaches Heavy.
+- [PR #2206](https://github.com/RabbyHub/rabby-mobile/pull/2206): business Rounded weights were previously corrected from `'800'` to `'900'`. With all nine files available, `'900'` is Black; use `RoundedFontStyles.heavy` (`'800'`) for the old Heavy visual. Do not describe the Heavy font file's own metadata as 900.
+- [Legacy Text](../../apps/mobile/src/components/Text.tsx): Android Roboto uses `'500'` to express the old business semibold intent. That component's historical tolerance does not mean every text component corrects weights.
 
-迁移已有样式时，先确定最终字体：Rounded 的 `'600'` 改为 `'700'`；系统默认字体、旧版 SF Pro/Roboto 的 `'600'` 改为 `'500'`，沿用项目历史约定；需要 Heavy 时用 `'800'`，需要 Black 时用 `'900'`。不要把所有 `'600'` 无区别替换为同一个值。`FontWeightEnum` 和通用分类函数可以保留完整原生字重枚举；它们接受输入不等于业务样式应使用该输入。
+When migrating existing styles, decide the final font first: change Rounded `'600'` to `'700'`; change system-default and legacy SF Pro/Roboto `'600'` to `'500'` following the project convention; use `'800'` for Heavy and `'900'` for Black. Do not blindly replace every `'600'` with the same value. `FontWeightEnum` and the generic classifier may keep the full native weight enum; accepting an input does not mean business styles should use it.
 
-## 样式转换边界
+## Style transformation boundaries
 
-优先沿用当前组件的字体体系。2024 主题样式用 `SF Pro Rounded` 作为逻辑 family；主题工厂输出 iOS `ui-rounded` 或 Android 单字重文件。旧样式中的 `SF Pro` 转换为 iOS `System` / Android `Roboto`，不要顺带重设计旧页面的字体。
+Prefer the existing component font system. 2024 theme styles use `SF Pro Rounded` as the logical family; the theme factory emits iOS `ui-rounded` or an Android single-weight file. Legacy `SF Pro` styles become iOS `System` / Android `Roboto`; do not redesign legacy page fonts as a side effect.
 
-文字组件从 [Typography](../../apps/mobile/src/components/Typography.tsx) 导入，包括 `Text`、`TextInput`、`AnimatedText` 等。它提供默认 `allowFontScaling: false`，**不转换 fontFamily/fontWeight，也不校验字体**。
+Import text components from [Typography](../../apps/mobile/src/components/Typography.tsx), including `Text`, `TextInput`, `AnimatedText` and others. It defaults `allowFontScaling: false` and **does not transform fontFamily/fontWeight or validate fonts**.
 
-`createGetStyles` 和 `createGetStyles2024` 的普通样式经过 `mutateStyles`：
+Plain styles created by `createGetStyles` and `createGetStyles2024` pass through `mutateStyles`:
 
-- iOS 输出 `ui-rounded` 与对应系统字重，在已有样式创建边界转换，不在 Typography / 每次 render 中扫描样式。
-- Android 输出对应的单字重文件名，并清空 `fontWeight`。
-- 转换按每个样式对象独立执行，不会先合并 Text 的 style 数组。需要改变 Rounded 字重的每个样式对象都应同时声明 family 和 weight。
-- `createGetStyles2024` 返回的 `reanimatedStyles` 函数不经过该转换。普通 `StyleSheet.create`、内联样式、动画样式、第三方组件的 text/title/input style 也不能假定经过转换。
+- iOS emits `ui-rounded` with the matching system weight at the existing style-creation boundary; it does not scan styles in Typography or on every render.
+- Android emits the matching single-weight file name and clears `fontWeight`.
+- Transformation runs per style object and does not merge a Text style array first. Every style object that changes a Rounded weight must declare both family and weight.
+- The `reanimatedStyles` function returned by `createGetStyles2024` does not pass through this transformation. Plain `StyleSheet.create`, inline styles, animated styles and third-party text/title/input styles must not be assumed transformed.
 
-主题样式示例：
+Theme style example:
 
 ```tsx
 import { Text } from '@/components/Typography';
@@ -69,14 +70,14 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   },
 }));
 
-// styles 来自 useTheme2024({ getStyle: getStyles })。
-// 每个覆盖层都能独立得到正确的 Android 字体文件。
+// styles comes from useTheme2024({ getStyle: getStyles }).
+// Each override receives the correct Android font file independently.
 <Text style={[styles.label, selected && styles.selectedLabel]}>{label}</Text>;
 ```
 
-不要使用 `[styles.label, { fontWeight: '700' }]` 给转换后的 Android 单字重 family 加粗，也不要把 family 与 weight 拆成两个待转换的样式。
+Do not use `[styles.label, { fontWeight: '700' }]` to embolden an already transformed Android single-weight family, and do not split family and weight into two separately transformed styles.
 
-必须绕过主题工厂时，使用完整静态样式，不使用旧 PostScript 别名，也不单独追加业务 `fontWeight`：
+When you must bypass the theme factory, use a complete static style. Do not use legacy PostScript aliases and do not append a business `fontWeight` on its own:
 
 ```tsx
 import { StyleSheet } from 'react-native';
@@ -87,15 +88,15 @@ const textStyles = StyleSheet.create({
 });
 ```
 
-`mutateStyles` 不再把已经解析好的 Android 单字重 family 误改成 Roboto，也不会把 iOS 已解析的 `ui-rounded / 800` 重分组为 Bold；重复转换保持结果。需要动态字重的原始样式可在已有 memo / 样式创建阶段调用 `getRoundedFontStyle`。`cleanSpecialSoloWeightFont` 只清理 Android 单字重文件的冗余 weight，保留 iOS `ui-rounded` 的必要 weight。
+`mutateStyles` no longer rewrites an already-resolved Android single-weight family to Roboto, and does not regroup a resolved iOS `ui-rounded / 800` as Bold; repeated transformation is idempotent. For raw styles that need a dynamic weight, call `getRoundedFontStyle` at the existing memo or style-creation stage. `cleanSpecialSoloWeightFont` only removes the redundant weight from an Android single-weight file and preserves the required iOS `ui-rounded` weight.
 
-style 数组的覆盖也要用完整样式：`[styles.label, RoundedFontStyles.heavy]`，不要追加 `{ fontWeight: '900' }`；后者在 iOS 会重新变成 Black，在 Android 会覆盖单字重文件的约定。
+Style-array overrides must also use complete styles: `[styles.label, RoundedFontStyles.heavy]`, not an appended `{ fontWeight: '900' }`. The latter becomes Black again on iOS and overrides the single-weight-file contract on Android.
 
-第三方文字组件要追踪最终 style 合并顺序、默认字体和默认字重；仅修改调用处的字重不能证明最终样式正确。处理 Reanimated 数值文本时把静态字体留在现有静态样式中，不为字体修复新增每帧处理。
+Track the final style merge order, default family and default weight for third-party text components; changing a call-site weight alone does not prove the final style is correct. For Reanimated numeric text, keep static fonts in the existing static style and do not add per-frame work for a font fix.
 
-## 排查范围与例外
+## Investigation scope and exceptions
 
-从仓库根目录搜索，包括属性、条件表达式、传入第三方组件的样式和 NativeWind 类名，再沿组件调用链确认继承及覆盖：
+Search from the repository root, including props, conditional expressions, styles passed into third-party components and NativeWind class names. Then follow the component call chain to confirm inheritance and overrides:
 
 ```bash
 rg -n 'fontWeight|fontFamily|font-weight|font-family' apps/mobile/src
@@ -103,19 +104,19 @@ rg -n 'font-(thin|extralight|light|normal|medium|semibold|bold|extrabold|black)'
 rg --files apps/mobile/assets/fonts
 ```
 
-搜索零命中某个字面量不是完整覆盖证据；同时检查数字值、枚举、动态 props、平台分支和后续 style 覆盖。迁移应落在业务调用处，不为清除搜索结果修改通用枚举或测试中的非法输入用例。
+A zero-hit search for one literal is not proof of complete coverage. Also inspect numeric values, enums, dynamic props, platform branches and later style overrides. Migrations belong at business call sites; do not edit generic enums or invalid-input test cases just to clear search results.
 
-- WebView HTML/CSS、`apps/mobile-local-pages`、SVG 文本由不同的字体解析路径处理，不能机械套用 RN Rounded 的规则；先查其 `@font-face`、实际资产或 SVG 字体依赖。
-- react-native-svg 和 react-native-screens 的原生导航标题仍可能使用旧 `RCTFont`，不能从 App 已启用 newArch 推断它们支持 `ui-rounded`。固定图标文字（例如 GAS）使用路径，不嵌入字体；iOS 普通圆角导航标题通过应用侧 RN Text 渲染，保留原生导航容器与已有自定义标题。新增大标题或其它原生文字组件时单独确认支持，不新增原生兼容补丁。
-- Pro K 线的 [perps-pro-font.ts](../../apps/mobile-local-pages/src/pages/tradingview-candle-chart/perps-pro-font.ts)：iOS 使用 CSS `ui-rounded`，不加载字体文件；Android 为 `Rabby SF Pro Rounded` 注册 `400 / 500 / 700`。十字光标标签用 `500`、Pro tooltip 强调用 `700`。不要写 `510`、`600` 或直接搬用原生的 `900`。同文件里的 legacy 图表分支与 demo 使用系统 Web 字体，其 `600` 不属于原生 Rounded 的缺档问题。
-- `System`、`Roboto`、`monospace`、`Menlo` 等系统/等宽字体不转换成 Rounded。普通业务字重仍遵循四档；确实需要其他系统或等宽字重时，保留有明确产品用途与目标平台字体支持证据的例外，并在代码附近说明。
-- 字体资产升级或新增字重需要同步检查 Android 资源和 iOS 系统字体解析，不能只增加一个 CSS 数字或枚举值。Xcode 的 `Check bundled system fonts` 阶段检查实际 `.app`；不要禁用该检查来绕过字体问题。
+- WebView HTML/CSS, `apps/mobile-local-pages` and SVG text use different font-resolution paths. Do not mechanically apply the RN Rounded rules; inspect their `@font-face`, actual assets or SVG font dependency first.
+- Native navigation titles in react-native-svg and react-native-screens may still use the legacy `RCTFont`. Do not infer `ui-rounded` support from the app already running newArch. Fixed icon text (for example GAS) uses paths and does not embed fonts; ordinary iOS rounded navigation titles render through application RN Text while preserving the native navigation container and existing custom titles. Confirm support separately when adding large titles or other native text components, and do not add native compatibility patches.
+- Pro K-line [perps-pro-font.ts](../../apps/mobile-local-pages/src/pages/tradingview-candle-chart/perps-pro-font.ts): iOS uses CSS `ui-rounded` and loads no font file; Android registers `400 / 500 / 700` for `Rabby SF Pro Rounded`. Use `500` for crosshair labels and `700` for Pro tooltip emphasis. Do not write `510` or `600`, and do not copy the native `900` directly. The legacy chart branch and demo in the same file use system Web fonts; their `600` is not the native Rounded missing-tier problem.
+- System/monospace fonts such as `System`, `Roboto`, `monospace` and `Menlo` are not converted to Rounded. Ordinary business weights still follow the four tiers; when another system or monospace weight is genuinely required, keep an exception with a clear product purpose and evidence of target-platform font support, and document it near the code.
+- Font asset upgrades or new weights must also check Android resources and iOS system-font resolution; adding a CSS number or enum value alone is not enough. Xcode's `Check bundled system fonts` phase inspects the actual `.app`; do not disable that check to bypass a font problem.
 
-## 验证与性能
+## Validation and performance
 
-有限静态样式迁移应保持原有组件、主题工厂、订阅边界和布局逻辑。不要在 Typography 或每次 render 中新增全量样式扫描，不要通过改变全局字重分类来替代调用处修复。Home 和列表仍检查是否引入样式对象重建、额外订阅或渲染扩散；纯字面量修复通常无需性能基准。
+Limited static-style migrations should preserve existing components, theme factories, subscription boundaries and layout logic. Do not add a full style scan in Typography or on every render, and do not replace a call-site fix by changing global weight classification. For Home and lists, still check for style-object recreation, extra subscriptions and render spread; a pure literal fix usually needs no performance benchmark.
 
-修改 `apps/mobile` 代码后执行 [AGENTS.md](../../AGENTS.md) 的完整必需验证集：
+After changing `apps/mobile` code, run the full required validation set from [AGENTS.md](../../AGENTS.md):
 
 ```bash
 yarn workspace rabby-mobile lint:cycles
@@ -125,15 +126,15 @@ yarn workspace rabby-mobile test --runInBand
 yarn workspace rabby-mobile test:integration:ci
 ```
 
-静态检查和 Jest 无法证明原生字形正确。用 iOS、Android 真机检查受影响的普通文字、金额/数字、输入框、按钮、动画文字及截断布局，优先覆盖原故障机型与对应文字内容；比较四档字重、中文与英文混排、长文本是否缺字、回退或裁切。交付时说明实际验证的平台、场景和剩余未验证项；没有真机证据时不要宣称已修复所有机型。
+Static checks and Jest cannot prove native glyph rendering. Check affected ordinary text, amounts/numbers, inputs, buttons, animated text and truncated layouts on real iOS and Android devices. Prioritize the original failing device and matching content; compare the four weight tiers, mixed Chinese/English text, and long text for missing glyphs, fallback or clipping. In delivery, state the platforms and scenarios actually verified and the remaining unverified items; do not claim all devices are fixed without real-device evidence.
 
-iOS 系统字体与打包边界的专项验证：
+Targeted validation for iOS system fonts and bundling boundaries:
 
-首次从内嵌字体版本切换时，旧的增量 `.app` 可能仍残留已从资源列表移除的字体。如果检查命中旧构建产物，清理该构建配置的产物后重新打包；不要跳过审计或在签名后修改包。
+When switching from a bundled-font release for the first time, an old incremental `.app` may still contain fonts removed from the resource list. If the check hits an old build product, clean that build configuration's output and rebuild; do not skip the audit or modify the package after signing.
 
 ```bash
 yarn workspace rabby-mobile test:ios-fonts
 yarn workspace rabby-mobile check:ios-fonts /absolute/path/RabbyMobile.app
 ```
 
-`fonts.test.ts` / `styles.test.ts` 验证 JS 映射、工厂边界与幂等，不证明原生字形。专项包测试验证资源排除和最终包审计，也不替代 newArch 真机视觉检查。原生导航标题改用 RN Text 后，不再拥有系统原生标题文字的转场动画，验收时需观察这一差异。
+`fonts.test.ts` / `styles.test.ts` validate JS mapping, factory boundaries and idempotence; they do not prove native glyphs. The targeted package test validates resource exclusion and the final package audit, and does not replace newArch real-device visual checks. After native navigation titles move to RN Text, they no longer have the system native title transition animation; observe that difference during acceptance.
