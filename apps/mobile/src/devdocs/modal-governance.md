@@ -11,6 +11,35 @@ Recent iOS freeze reports match a native `Modal` residue pattern:
 
 Android does not show the same severity in current repro paths.
 
+## Root Cause and Native Fix (iOS)
+
+RN's Fabric `RCTModalHostViewComponentView` presents every `Modal` from its
+nearest view controller. When that controller is already presenting something
+(another RN `Modal`, a `Tip`, a zeego menu, a system sheet) or is mid-transition,
+UIKit refuses the presentation. Upstream still marks the modal as presented, so
+its empty full-screen host view stays in the React hierarchy and swallows every
+touch. It is often unnoticed until the sheets above it close, for example on
+returning to Home.
+
+Field repro (0.6.97): on the full sign page, open the GasAccount info `Tip`,
+take a screenshot (feedback modal is rejected), close the Tip and the dapp
+sheet. Home stops responding.
+
+The `react-native` Yarn patch fixes this for every RN `Modal`, including
+third-party ones (`react-native-walkthrough-tooltip`, RNEUI `Dialog`):
+
+- A presentation that UIKit would refuse, or did refuse, waits and retries
+  every 150 ms until the presenter is free. The modal then appears.
+- The host view never receives touches. Its content lives in the presented
+  controller.
+- A modal hidden before it ever reached the screen still emits `onDismiss`, so
+  JS unmounts it and `TrackedModal` releases its gate.
+
+The JS gate below stays useful. It avoids the visible delay and keeps the open
+order predictable, but a missing gate no longer freezes the app.
+
+Dev repro: Regression Switches → "Open Tip -> Screenshot Modal".
+
 ## Foundation Added
 
 - `src/utils/modalGate.ts`
