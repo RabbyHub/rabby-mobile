@@ -15,6 +15,8 @@ export const AcquireMemeStoreData = 'AcquireMemeStoreData';
 export const MemStoreDataReady = 'MemStoreDataReady';
 export const DEFAULT_BRAND = 'Keystone';
 
+const wiredInteractions = new WeakSet();
+
 enum KEYRING_ACCOUNT {
   standard = 'account.standard',
   ledger_live = 'account.ledger_live',
@@ -55,10 +57,33 @@ export default class KeystoneKeyring extends MetaMaskKeyring {
   constructor() {
     super();
 
-    this.getInteraction().on(AcquireMemeStoreData, () => {
-      const request = this.getMemStore().getState().sign?.request;
+    const interaction = this.getInteraction();
+    // The interaction provider is a process-wide singleton; wire it only once.
+    if (wiredInteractions.has(interaction)) {
+      return;
+    }
+    wiredInteractions.add(interaction);
+
+    const memStore = this.getMemStore();
+    // Pull: the sign page asks for the current request.
+    interaction.on(AcquireMemeStoreData, () => {
+      const request = memStore.getState().sign?.request;
       if (request) {
-        this.getInteraction().emit(MemStoreDataReady, request);
+        interaction.emit(MemStoreDataReady, request);
+      }
+    });
+    // Push: the request may be created after the page pulled
+    // (e.g. slow pre-sign checks), so announce each new request once.
+    let pushedRequestId: string | undefined;
+    memStore.subscribe(state => {
+      const request = state.sign?.request;
+      if (!request) {
+        pushedRequestId = undefined;
+        return;
+      }
+      if (request.requestId !== pushedRequestId) {
+        pushedRequestId = request.requestId;
+        interaction.emit(MemStoreDataReady, request);
       }
     });
   }
