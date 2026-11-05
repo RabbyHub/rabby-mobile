@@ -125,6 +125,12 @@ function removeFilePath(otoolSContent) {
   return otoolSContent?.replace(/literal pool for: \"\/Users\/[^\n]+/g, '');
 }
 
+function isControlFlowInstruction(line) {
+  return /^[0-9a-f]+\t(?:ret|b|br|cbz|cbnz|tbz|tbnz|b\.[a-z]+)\b/.test(
+    line,
+  );
+}
+
 /**
  * Linker layout changes between otherwise identical builds can shift literal
  * pool pages and their add/ldr offsets. The literal text and symbol names stay
@@ -164,26 +170,49 @@ function normalizeMachOLayoutNoise(otoolSContent) {
   for (let i = 0; i < lines.length; i += 1) {
     if (!lines[i].includes('/cargo/registry/src/')) continue;
 
+    const literal = lines[i].match(/literal pool for: "(.*)"$/);
+    const literalLength = literal
+      ? Buffer.byteLength(literal[1], 'latin1')
+      : -1;
     lines[i] = lines[i].replace(
       /\/cargo\/registry\/src\/[^/]+\//g,
       '/cargo/registry/src/__rabby_registry__/',
     );
+    if (literalLength <= 0) {
+      continue;
+    }
 
-    // The string length immediate can be a few instructions before or after
-    // the literal-pool reference (compilers interleave stp/ldr setup).
-    let closestMov = -1;
-    let closestDistance = 5;
-    for (let j = Math.max(0, i - 4); j <= Math.min(lines.length - 1, i + 4); j += 1) {
-      if (/^[0-9a-f]+\tmov\tw\d+, #0x[0-9a-f]+$/.test(lines[j])) {
-        const distance = Math.abs(j - i);
-        if (distance < closestDistance) {
-          closestMov = j;
-          closestDistance = distance;
+    // The cargo panic message stores its string length in a nearby
+    // `mov wN, #<len>`. Only normalize an immediate that exactly equals this
+    // literal's byte length; unrelated constants and argument setup stay.
+    const movAt = j => {
+      const mov = lines[j].match(
+        /^[0-9a-f]+\tmov\tw\d+, #0x([0-9a-f]+)$/,
+      );
+      return mov && parseInt(mov[1], 16) === literalLength ? j : -1;
+    };
+
+    let lengthMov = -1;
+    for (let j = i + 1; j <= Math.min(lines.length - 1, i + 6); j += 1) {
+      if (isControlFlowInstruction(lines[j])) break;
+      const found = movAt(j);
+      if (found >= 0) {
+        lengthMov = found;
+        break;
+      }
+    }
+    if (lengthMov < 0) {
+      for (let j = i - 1; j >= Math.max(0, i - 6); j -= 1) {
+        if (isControlFlowInstruction(lines[j])) break;
+        const found = movAt(j);
+        if (found >= 0) {
+          lengthMov = found;
+          break;
         }
       }
     }
-    if (closestMov >= 0) {
-      lines[closestMov] = lines[closestMov].replace(
+    if (lengthMov >= 0) {
+      lines[lengthMov] = lines[lengthMov].replace(
         /#0x[0-9a-f]+$/,
         '#0x0',
       );

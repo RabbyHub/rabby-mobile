@@ -106,8 +106,9 @@ run_ios_build_and_hash() {
       rm -f "$macho_path"
     else
       # Keep the complete framework binary (load commands and all sections) in
-      # the hash; normalize only known volatile absolute paths in place.
-      node "$SCRIPT_DIR/normalize_macho_paths.js" "$macho_path"
+      # the hash. Require the pinned framework binary to embed the canonical
+      # Xcode path; otherwise a rebuilt framework fails closed.
+      node "$SCRIPT_DIR/check_macho_paths.js" "$macho_path"
     fi
   done < <(find "$app_path" -type f -print0)
 

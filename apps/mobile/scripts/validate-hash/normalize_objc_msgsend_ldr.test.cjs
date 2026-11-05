@@ -82,3 +82,35 @@ test('normalizes cargo registry paths and adjacent string length immediates', ()
   assert.equal(normalizeMachOLayoutNoise(first), expected);
   assert.equal(normalizeMachOLayoutNoise(second), expected);
 });
+
+test('does not erase unrelated nearby MOV immediates', () => {
+  const first = [
+    '0000000000022c20\tadd\tx10, x8, #0x0 ; literal pool for: "/cargo/registry/src/rsproxy.cn-e3de039b2554c837/fontdb-0.23.0/src/lib.rs"',
+    '0000000000022c24\tstr\tx8, [x19]',
+    '0000000000022c28\tmov\tw0, #0x1',
+    '0000000000022c2c\tret',
+  ].join('\n');
+  const second = [
+    '0000000000022c20\tadd\tx10, x8, #0x0 ; literal pool for: "/cargo/registry/src/rsproxy.cn-e3de039b2554c837/fontdb-0.23.0/src/lib.rs"',
+    '0000000000022c24\tstr\tx8, [x19]',
+    '0000000000022c28\tmov\tw0, #0x2',
+    '0000000000022c2c\tret',
+  ].join('\n');
+
+  assert.match(normalizeMachOLayoutNoise(first), /mov\tw0, #0x1/);
+  assert.match(normalizeMachOLayoutNoise(second), /mov\tw0, #0x2/);
+  assert.notEqual(
+    normalizeMachOLayoutNoise(first),
+    normalizeMachOLayoutNoise(second),
+  );
+});
+
+test('does not normalize a length-like immediate across a function boundary', () => {
+  const input = [
+    '0000000000022c20\tadd\tx10, x8, #0x0 ; literal pool for: "/cargo/registry/src/rsproxy.cn-e3de039b2554c837/fontdb-0.23.0/src/lib.rs"',
+    '0000000000022c24\tret',
+    '0000000000022c28\tmov\tw0, #0x48',
+  ].join('\n');
+
+  assert.match(normalizeMachOLayoutNoise(input), /mov\tw0, #0x48/);
+});
