@@ -152,7 +152,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 8,
+    gap: 12,
     minHeight: 20,
   },
   heading: { flexDirection: 'row', alignItems: 'center', gap: 4 },
@@ -182,7 +182,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontWeight: '700',
     color: colors2024['green-default'],
   },
-  route: { flexDirection: 'row', alignItems: 'center', gap: 4, flexShrink: 1 },
+  route: { flexDirection: 'row', alignItems: 'center', gap: 4, flexShrink: 0 },
   chain: { width: 14, height: 14, borderRadius: 4 },
   routeArrow: {
     color: colors2024['neutral-secondary'],

@@ -6,6 +6,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import { formatPercentageKMB } from '@/screens/Market/utils/formatPercentageKMB';
 import { ellipsisAddress } from '@/utils/address';
 import { createGetStyles2024 } from '@/utils/styles';
+import { formatMemePnlUsd } from '../ui/formatBalance';
 import { SelectedBadge } from './SelectedBadge';
 
 export const MEME_ROW_HEIGHT = 70;
@@ -18,8 +19,8 @@ type Props = {
   address: string;
   valueText: string;
   change24h: number | null;
-  /** holding rows only: shown instead of change24h */
-  holdingValueText?: string;
+  /** holding rows only: USD, shown instead of change24h; null renders "--" */
+  pnl?: number | null;
   selected: boolean;
   onPress: (itemKey: string) => void;
 };
@@ -32,7 +33,7 @@ export const MemeTokenRow = React.memo(function MemeTokenRow({
   address,
   valueText,
   change24h,
-  holdingValueText,
+  pnl,
   selected,
   onPress,
 }: Props) {
@@ -57,12 +58,19 @@ export const MemeTokenRow = React.memo(function MemeTokenRow({
         <Text style={styles.value} numberOfLines={1}>
           {valueText}
         </Text>
-        {holdingValueText !== undefined ? (
-          <Text style={styles.footText} numberOfLines={1}>
-            {holdingValueText}
+        {pnl !== undefined ? (
+          <Text
+            style={
+              pnl === null
+                ? styles.changeNone
+                : pnl < 0
+                ? styles.changeDown
+                : styles.changeUp
+            }>
+            {pnl === null ? '--' : formatMemePnlUsd(pnl)}
           </Text>
         ) : change24h === null ? (
-          <Text style={styles.footText}>--</Text>
+          <Text style={styles.changeNone}>--</Text>
         ) : (
           <Text style={change24h < 0 ? styles.changeDown : styles.changeUp}>
             {formatPercentageKMB(change24h)}
@@ -137,7 +145,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontWeight: '500',
     color: colors2024['red-default'],
   },
-  footText: {
+  changeNone: {
     fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     lineHeight: 16,

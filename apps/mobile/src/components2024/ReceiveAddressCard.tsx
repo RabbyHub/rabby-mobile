@@ -142,7 +142,12 @@ export function ReceiveAddressCard({
       {singleChain ? (
         <>
           {renderChainLogo(singleChain)}
-          <Text style={styles.selectChainText}>{singleChain.name}</Text>
+          <Text
+            style={[styles.selectChainText, styles.selectChainName]}
+            numberOfLines={1}
+            ellipsizeMode="tail">
+            {singleChain.name}
+          </Text>
         </>
       ) : (
         <>
@@ -327,6 +332,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
+    flexShrink: 1,
   },
   chainLogoList: {
     flexDirection: 'row',
@@ -343,6 +349,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-bg-4'],
     overflow: 'hidden',
+    flexShrink: 0,
   },
   chainLogoOverlap: {
     marginLeft: -4,
@@ -359,7 +366,12 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontWeight: '700',
     color: colors2024['neutral-title-1'],
   },
+  // Long custom network names truncate instead of pushing the arrow out.
+  selectChainName: {
+    flexShrink: 1,
+  },
   selectChainArrow: {
+    flexShrink: 0,
     transform: [{ rotate: '90deg' }],
   },
   highlightAddrPart: {
