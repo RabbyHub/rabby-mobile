@@ -125,6 +125,21 @@ function removeFilePath(otoolSContent) {
   return otoolSContent?.replace(/literal pool for: \"\/Users\/[^\n]+/g, '');
 }
 
+/**
+ * Linker layout changes between otherwise identical builds can shift literal
+ * pool pages and their add/ldr offsets. The literal text and symbol names stay
+ * identical, so normalize only the layout-dependent address operands.
+ */
+function normalizeMachOLayoutNoise(otoolSContent) {
+  return otoolSContent
+    .replace(
+      /^([0-9a-f]+\tadrp\tx\d+, )-?\d+ ; 0x[0-9a-f]+$/gm,
+      (_, prefix) => `${prefix}0 ; 0x0`,
+    )
+    .replace(/#0x[0-9a-f]+( ; literal pool for:)/g, '#0x0$1')
+    .replace(/#0x[0-9a-f]+(\] ; literal pool symbol address:)/g, '#0x0$1');
+}
+
 async function main() {
   const args = process.argv.slice(2);
   let otoolSFilePath = null;
@@ -180,13 +195,17 @@ async function main() {
 
   const otoolSContentWithoutFilePath = removeFilePath(otoolSContent);
 
-  const result = normalizeOtoolFilePureString(
-    otoolSContentWithoutFilePath,
-    linkMapGotAddressStrings,
+  const result = normalizeMachOLayoutNoise(
+    normalizeOtoolFilePureString(
+      otoolSContentWithoutFilePath,
+      linkMapGotAddressStrings,
+    ),
   );
 
   console.log(result);
 }
+
+module.exports = { normalizeMachOLayoutNoise };
 
 if (require.main === module) {
   main().catch(err => {
