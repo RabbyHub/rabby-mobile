@@ -39,10 +39,8 @@ import { toSellExecLegs } from '../engine/execLegs';
 import { tokenKey } from '../engine/keys';
 import {
   consumeMemeCoinHomeReset,
-  getMemeCoinHomeMode,
   pushMemeCoinBuy,
   pushMemeCoinExecute,
-  setMemeCoinHomeMode,
 } from '../navigation';
 import {
   DEFAULT_MAX_PRICE_IMPACT_PCT,
@@ -95,11 +93,7 @@ export const MemeCoinHomeScreen = () => {
   } = useMemeHoldings(address);
   const pnl = useMemePnl(address);
 
-  const [mode, setModeState] = useState<HomeMode>(getMemeCoinHomeMode);
-  const setMode = useCallback((next: HomeMode) => {
-    setMemeCoinHomeMode(next);
-    setModeState(next);
-  }, []);
+  const [mode, setMode] = useState<HomeMode>('market');
   const [keyword, setKeyword] = useState('');
   const [searching, setSearching] = useState(false);
   const [amountText, setAmountText] = useState('');
@@ -159,7 +153,7 @@ export const MemeCoinHomeScreen = () => {
       setSearching(false);
       clearSelection();
       refreshHoldings();
-    }, [clearSelection, refreshHoldings, setMode]),
+    }, [clearSelection, refreshHoldings]),
   );
 
   // Android pans the whole window by default (header slides off). The app is
@@ -243,7 +237,7 @@ export const MemeCoinHomeScreen = () => {
     setKeyword('');
     setSearching(false);
     clearSelection();
-  }, [clearSelection, mode, setMode]);
+  }, [clearSelection, mode]);
 
   const startSearch = useCallback(() => setSearching(true), []);
 
