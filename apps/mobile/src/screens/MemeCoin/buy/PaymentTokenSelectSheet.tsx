@@ -1,4 +1,10 @@
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { View } from 'react-native';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { Skeleton } from '@rneui/themed';
@@ -55,6 +61,8 @@ const SHEET_STYLE = {
   borderTopRightRadius: 20,
 } as const;
 
+const NO_ANIMATION = { duration: 0 };
+
 export const PaymentTokenSelectSheet = ({
   visible,
   onClose,
@@ -85,6 +93,9 @@ export const PaymentTokenSelectSheet = ({
     () => [SHEET_HEIGHT_ABOVE_SAFE_OFFSET + bottomOffset],
     [bottomOffset],
   );
+  // the page opens on the sheet, so only the first open skips the slide
+  const [openedOnce, setOpenedOnce] = useState(false);
+  const handleSheetChange = useCallback(() => setOpenedOnce(true), []);
 
   useEffect(() => {
     if (visible) {
@@ -140,6 +151,8 @@ export const PaymentTokenSelectSheet = ({
     <AppBottomSheetModal
       ref={modalRef}
       snapPoints={snapPoints}
+      animationConfigs={openedOnce ? undefined : NO_ANIMATION}
+      onChange={handleSheetChange}
       onDismiss={onClose}
       {...makeBottomSheetProps({
         linearGradientType: isLight ? 'bg0' : 'bg1',
