@@ -3646,7 +3646,7 @@
       "alertText": "第三方 DApp：如遇使用問題，請聯絡 DApp 支援。Rabby 僅提供瀏覽功能。",
       "title": "截圖回報問題",
       "submitFailed": "提交失敗。",
-      "includeAddress": "附帶我的地址，便於排查問題"
+      "includeAddress": "分享地址以便排查問題"
     },
     "submitFeedbackSuccessModal": {
       "desc": "提交成功！"

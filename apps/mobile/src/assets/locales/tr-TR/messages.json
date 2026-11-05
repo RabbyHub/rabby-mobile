@@ -3474,7 +3474,7 @@
       "alertText": "Üçüncü taraf DApp: kullanım sorunları için lütfen DApp desteğiyle iletişime geçin. Rabby yalnızca görüntüleme erişimi sağlar.",
       "title": "Hata Bildirmek için Ekran Görüntüsü",
       "submitFailed": "Gönderim başarısız.",
-      "includeAddress": "Sorunun giderilmesi için adreslerimi paylaş"
+      "includeAddress": "Sorun giderme için adresi paylaş"
     },
     "submitFeedbackSuccessModal": {
       "desc": "Başarıyla Gönderildi!"
