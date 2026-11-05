@@ -1804,7 +1804,7 @@
     "receiveAddressList": {
       "selectChainTitle": "Pilih Rantai",
       "title": "Pilih Dompet untuk Menerima",
-      "subtitle": "Pilih dompet untuk menerima kripto Anda."
+      "subtitle": "Pilih alamat dompet untuk menerima aset Anda."
     },
     "singleHome": {
       "tokenActions": {

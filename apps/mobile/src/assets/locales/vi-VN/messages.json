@@ -1532,8 +1532,8 @@
     },
     "receiveAddressList": {
       "selectChainTitle": "Chọn chuỗi",
-      "title": "Chọn ví",
-      "subtitle": "Chọn ví để nhận crypto của bạn."
+      "title": "Chọn ví để nhận",
+      "subtitle": "Chọn một địa chỉ ví để nhận tài sản của bạn."
     },
     "miniSignFooterBar": {
       "status": {
