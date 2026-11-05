@@ -77,7 +77,9 @@ export const ScreenshotFeedbackInput = ({
 };
 
 export const ScreenshotFeedbackInputSizes = {
-  mainHeight: 85,
+  // With the 1px divider below it, the text area takes the design's 85; the
+  // address row adds 36 for a 121 box.
+  mainHeight: 84,
   get totalContainerHeight() {
     return this.mainHeight + 12 * 2;
   },
