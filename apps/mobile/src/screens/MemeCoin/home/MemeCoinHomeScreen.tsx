@@ -1,11 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import {
-  FlatList,
-  Keyboard,
-  KeyboardAvoidingView,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { FlatList, Keyboard, KeyboardAvoidingView, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { Skeleton } from '@rneui/themed';
 import { useMemoizedFn } from 'ahooks';
@@ -357,9 +351,7 @@ export const MemeCoinHomeScreen = () => {
   );
 
   const rightLabel =
-    selectedCount > 0
-      ? t('page.memeCoin.clear')
-      : mode === 'holdings'
+    mode === 'holdings'
       ? t('page.memeCoin.marketCapValue')
       : t('page.memeCoin.marketCap');
   // Figma drops the column label when a search finds nothing
@@ -387,19 +379,9 @@ export const MemeCoinHomeScreen = () => {
             ? t('page.memeCoin.marketTitle')
             : t('page.memeCoin.holdingsTitle')}
         </Text>
-        {selectedCount > 0 || !noSearchMatch ? (
-          <TouchableOpacity
-            disabled={selectedCount === 0}
-            onPress={clearSelection}
-            hitSlop={8}>
-            <Text
-              style={
-                selectedCount > 0 ? styles.sectionAction : styles.sectionLabel
-              }>
-              {rightLabel}
-            </Text>
-          </TouchableOpacity>
-        ) : null}
+        {noSearchMatch ? null : (
+          <Text style={styles.sectionLabel}>{rightLabel}</Text>
+        )}
       </View>
     </View>
   );
@@ -531,14 +513,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 18,
     fontWeight: '400',
     color: colors2024['neutral-secondary'],
-  },
-  sectionAction: {
-    paddingRight: 8,
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    lineHeight: 20,
-    fontWeight: '400',
-    color: colors2024['neutral-body'],
   },
   skeletonRow: {
     width: '100%',
