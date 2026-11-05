@@ -29,7 +29,6 @@ export const toMemeMarketItem = (raw: RawMemeToken): MemeMarketItem => ({
 
 export const toMemeHolding = (raw: RawMemePosition): MemeHolding => ({
   meme: toMemeToken(raw),
-  marketCap: raw.fdv_usd ?? null,
   amount: raw.amount,
   valueUsd: raw.usd_value,
 });
@@ -51,6 +50,12 @@ export const toMemePnl = (raw: MemeUserPnlResult): MemePnl => ({
       points: toPnlPoints(raw.curve_all),
     },
   },
+  byToken: Object.fromEntries(
+    raw.positions.map(position => [
+      tokenKey({ chain: position.chain_id, id: position.id }),
+      position.pnl_all_usd_value,
+    ]),
+  ),
 });
 
 export const appendByTokenKey = <T extends MemeToken>(

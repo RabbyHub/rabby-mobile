@@ -58,13 +58,15 @@ import {
 
 type HomeMode = 'market' | 'holdings';
 
-type HomeRow = {
-  key: string;
-  meme: MemeToken;
-  marketCap: number | null;
-  /** holdings mode only */
-  valueUsd: number | null;
-};
+/** valueUsd is null in market mode (the row shows market cap instead) */
+type HomeRow =
+  | { key: string; meme: MemeMarketItem; valueUsd: null }
+  | {
+      key: string;
+      meme: MemeToken;
+      valueUsd: number;
+      pnl: number | null;
+    };
 
 const SKELETON_ROWS = 6;
 
@@ -187,16 +189,15 @@ export const MemeCoinHomeScreen = () => {
         ? marketList.map(meme => ({
             key: tokenKey(meme),
             meme,
-            marketCap: meme.marketCap,
             valueUsd: null,
           }))
         : holdings.map(h => ({
             key: tokenKey(h.meme),
             meme: h.meme,
-            marketCap: h.marketCap,
             valueUsd: h.valueUsd,
+            pnl: pnl?.byToken[tokenKey(h.meme)] ?? null,
           })),
-    [mode, marketList, holdings],
+    [mode, marketList, holdings, pnl],
   );
 
   const selectedHoldings = useMemo(() => {
@@ -330,12 +331,12 @@ export const MemeCoinHomeScreen = () => {
         symbol={item.meme.symbol}
         address={item.meme.id}
         valueText={
-          item.marketCap === null ? '--' : formatMarketCapUsd(item.marketCap)
+          item.valueUsd === null
+            ? formatMarketCapUsd(item.meme.marketCap)
+            : formatUsdValue(item.valueUsd)
         }
         change24h={item.meme.change24h}
-        holdingValueText={
-          item.valueUsd === null ? undefined : formatUsdValue(item.valueUsd)
-        }
+        pnl={item.valueUsd === null ? undefined : item.pnl}
         selected={selectedSet.has(item.key)}
         onPress={toggle}
       />
@@ -345,7 +346,7 @@ export const MemeCoinHomeScreen = () => {
 
   const rightLabel =
     mode === 'holdings'
-      ? t('page.memeCoin.marketCapValue')
+      ? t('page.memeCoin.valuePnl')
       : t('page.memeCoin.marketCap');
   // Figma drops the column label when a search finds nothing
   const noSearchMatch =

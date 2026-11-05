@@ -23,8 +23,6 @@ export type MemeTokenListResult = {
 export type RawMemePosition = Omit<RawMemeToken, 'fdv_usd'> & {
   amount: number;
   usd_value: number;
-  /** market cap; absent or null when the backend has none for this token */
-  fdv_usd?: number | null;
 };
 
 export type MemeUserTokenListResult = {
