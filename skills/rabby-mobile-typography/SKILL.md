@@ -9,25 +9,33 @@ description: 规范 Rabby Mobile 原生字体和字重，排查机型上的文�
 
 ## 标准与依据
 
-业务文字显式设置字重时，统一使用字符串 `'400'`、`'500'`、`'700'`、`'900'`。默认正文可以省略字重；不要为了补齐声明改变现有字体或继承关系。新代码不使用 `'normal'`、`'bold'`、`'semibold'` 等别名表示这四档。
+业务文字显式设置字重时，统一使用字符串 `'400'`、`'500'`、`'700'`、`'900'`。默认正文可以省略字重；不要为了补齐声明改变现有字体或继承关系。新代码不使用 `'normal'`、`'bold'`、`'semibold'` 等别名表示这四档。需要精确档位时可使用 `'100'`–`'800'`，它们现在映射到各自对应的单字重文件。
 
-| 语义           | 业务字重 | iOS `ui-rounded` 字重 | Android SF Pro Rounded 文件  | 工厂外静态样式              |
-| -------------- | -------- | --------------------- | ---------------------------- | --------------------------- |
-| Regular / 正文 | `'400'`  | `'400'`               | `SF-Pro-Rounded-Regular.otf` | `RoundedFontStyles.regular` |
-| Medium / 中等  | `'500'`  | `'500'`               | `SF-Pro-Rounded-Medium.otf`  | `RoundedFontStyles.medium`  |
-| Bold / 加粗    | `'700'`  | `'700'`               | `SF-Pro-Rounded-Bold.otf`    | `RoundedFontStyles.bold`    |
-| Heavy / 强强调 | `'900'`  | `'800'`               | `SF-Pro-Rounded-Heavy.otf`   | `RoundedFontStyles.heavy`   |
+| 语义             | 业务字重 | iOS `ui-rounded` 字重 | Android SF Pro Rounded 文件     | 工厂外静态样式              |
+| ---------------- | -------- | --------------------- | ------------------------------- | --------------------------- |
+| Thin / 极细      | `'100'`  | `'100'`               | `SF-Pro-Rounded-Thin.otf`       | -                           |
+| Ultralight       | `'200'`  | `'200'`               | `SF-Pro-Rounded-Ultralight.otf` | -                           |
+| Light            | `'300'`  | `'300'`               | `SF-Pro-Rounded-Light.otf`      | -                           |
+| Regular / 正文   | `'400'`  | `'400'`               | `SF-Pro-Rounded-Regular.otf`    | `RoundedFontStyles.regular` |
+| Medium / 中等    | `'500'`  | `'500'`               | `SF-Pro-Rounded-Medium.otf`     | `RoundedFontStyles.medium`  |
+| Semibold         | `'600'`  | `'600'`               | `SF-Pro-Rounded-Semibold.otf`   | -                           |
+| Bold / 加粗      | `'700'`  | `'700'`               | `SF-Pro-Rounded-Bold.otf`       | `RoundedFontStyles.bold`    |
+| Heavy            | `'800'`  | `'800'`               | `SF-Pro-Rounded-Heavy.otf`      | `RoundedFontStyles.heavy`   |
+| Black / 强强调   | `'900'`  | `'900'`               | `SF-Pro-Rounded-Black.otf`      | -                           |
+
+九个字重均已打包；需要保持旧 `RoundedFontStyles.heavy` 的视觉时使用 `'800'`（Heavy），
+业务 `'900'` 现在对应 Black。
 
 源码依据：
 
-- [字体资产](../../apps/mobile/assets/fonts)、[原生资源配置](../../apps/mobile/react-native.config.js)：上述四个独立文件仅供 Android 使用。iOS 不得内嵌 Apple 字体（ITMS-91182），也不得通过 `UIAppFonts` 或 WebView 再注册这些文件。
+- [字体资产](../../apps/mobile/assets/fonts)、[原生资源配置](../../apps/mobile/react-native.config.js)：上述九个独立文件仅供 Android 使用。iOS 不得内嵌 Apple 字体（ITMS-91182），也不得通过 `UIAppFonts` 或 WebView 再注册这些文件。
 - iOS 依赖 **newArch / Fabric** 原生已有的 `ui-rounded` 支持；不为旧字体名或 oldArch 添加 RN 原生补丁、全局 font handler 或私有系统字体名。字体分支应基于 newArch 分支验证，不能单独带入 oldArch 出包分支。
-- [fonts.ts](../../apps/mobile/src/core/utils/fonts.ts)：`getRoundedFontStyle` 生成完整的平台 family/weight；iOS 业务 Heavy 输出 `'800'`（UIKit Heavy），不是 `'900'`（Black）。`RoundedFontStyles` 提供四档静态对象，`FontNames.sf_pro` 为 iOS `System` / Android `Roboto`。`getFontWeightType` 保持项目内部的字重分组。
-- [styles.ts](../../apps/mobile/src/utils/styles.ts)：`mutateStyles` 把 Rounded 的 Heavy 分组选为 Android Heavy 字体文件，`'900'` 才进入该组，`'800'` 会落到 Bold。
-- [PR #2206](https://github.com/RabbyHub/rabby-mobile/pull/2206)：业务 Rounded 字重从 `'800'` 修正为 `'900'`。这确立的是项目调用约定；不要将其描述成 Heavy 字体文件本身的元数据是 900，或所有系统字体的 Heavy 都等于 900。
+- [fonts.ts](../../apps/mobile/src/core/utils/fonts.ts)：`getRoundedFontStyle` 生成完整的平台 family/weight；`'900'` 映射 Black，`'800'` 映射 Heavy。`RoundedFontStyles` 提供 regular/medium/bold/heavy 四个语义静态对象，其中 `heavy` 固定使用 `'800'`，`FontNames.sf_pro` 为 iOS `System` / Android `Roboto`。`getFontWeightType` 按精确档位返回。
+- [styles.ts](../../apps/mobile/src/utils/styles.ts)：`mutateStyles` 按 `getRoundedFontStyle` 的精确档位选择 Android 文件，`'900'` 进入 Black，`'800'` 进入 Heavy。
+- [PR #2206](https://github.com/RabbyHub/rabby-mobile/pull/2206)：业务 Rounded 字重曾从 `'800'` 修正为 `'900'`。在九个字体文件齐备后，`'900'` 对应 Black；需要旧 Heavy 视觉时使用 `RoundedFontStyles.heavy`（`'800'`）。不要将其描述成 Heavy 字体文件本身的元数据是 900。
 - [旧版 Text](../../apps/mobile/src/components/Text.tsx)：Android Roboto 用 `'500'` 表达旧业务的 semibold 意图。该组件的历史容错不代表所有文字组件都会修正字重。
 
-迁移已有样式时，先确定最终字体：Rounded 的 `'600'` 改为 `'700'`，保持已有 Android Bold 映射；系统默认字体、旧版 SF Pro/Roboto 的 `'600'` 改为 `'500'`，沿用项目历史约定；业务强强调的 `'800'` 改为 `'900'`。不要把所有 `'600'` 无区别替换为同一个值。`FontWeightEnum` 和通用分类函数可以保留完整原生字重枚举；它们接受输入不等于业务样式应使用该输入。
+迁移已有样式时，先确定最终字体：Rounded 的 `'600'` 改为 `'700'`；系统默认字体、旧版 SF Pro/Roboto 的 `'600'` 改为 `'500'`，沿用项目历史约定；需要 Heavy 时用 `'800'`，需要 Black 时用 `'900'`。不要把所有 `'600'` 无区别替换为同一个值。`FontWeightEnum` 和通用分类函数可以保留完整原生字重枚举；它们接受输入不等于业务样式应使用该输入。
 
 ## 样式转换边界
 
