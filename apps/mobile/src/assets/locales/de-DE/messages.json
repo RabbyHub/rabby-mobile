@@ -1798,8 +1798,8 @@
     },
     "receiveAddressList": {
       "selectChainTitle": "Netzwerk auswählen",
-      "title": "Wallet auswählen, um zu empfangen",
-      "subtitle": "Wählen Sie eine Wallet aus, um Ihre Krypto zu empfangen."
+      "title": "Wallet zum Empfangen auswählen",
+      "subtitle": "Wählen Sie eine Wallet-Adresse, um Ihre Assets zu empfangen."
     },
     "approvalsAddressList": {
       "title": "Genehmigungen"

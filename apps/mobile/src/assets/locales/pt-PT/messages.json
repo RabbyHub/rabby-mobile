@@ -1780,8 +1780,8 @@
     },
     "receiveAddressList": {
       "selectChainTitle": "Selecionar rede",
-      "title": "Selecionar carteira",
-      "subtitle": "Escolha uma carteira para receber os seus criptoativos."
+      "title": "Selecionar carteira para receber",
+      "subtitle": "Escolha um endereço de carteira para receber os seus ativos."
     },
     "miniSignFooterBar": {
       "status": {
