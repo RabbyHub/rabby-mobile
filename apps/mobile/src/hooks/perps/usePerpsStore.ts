@@ -756,6 +756,25 @@ const getPermissionTarget = (state: PerpsState) =>
 
 const PERP_PERMISSION_TIMEOUT = 5000;
 const pendingPermissionChecks = new Map<string, Promise<void>>();
+let permissionRequestSeq = 0;
+const appliedPermissionSeq = new Map<string, number>();
+
+const applyPerpPermission = (target: string, seq: number, granted: boolean) => {
+  // Drop results for an address that is no longer current, and results
+  // older than one already applied for it.
+  if (
+    getPermissionTarget(perpsStore.getState()) !== target ||
+    seq <= (appliedPermissionSeq.get(target) ?? 0)
+  ) {
+    return;
+  }
+  appliedPermissionSeq.set(target, seq);
+  setPerpsState(prev => ({
+    ...prev,
+    hasPermission: granted,
+    permissionAddress: target,
+  }));
+};
 
 const fetchPerpPermission = (address: string): Promise<void> => {
   const target = address.toLowerCase();
@@ -763,31 +782,28 @@ const fetchPerpPermission = (address: string): Promise<void> => {
   if (pending) {
     return pending;
   }
-  const request = (async () => {
-    let granted: boolean | null = null;
-    try {
-      // openapi has no axios timeout; a stalled check must not block retries.
-      const { has_permission } = await withTimeout(
-        openapi.getPerpPermission({ id: address }),
-        PERP_PERMISSION_TIMEOUT,
-        'getPerpPermission',
-      );
-      granted = has_permission === true;
-    } catch (error) {
+  const seq = ++permissionRequestSeq;
+  // The timeout only bounds the waiters; a slow response still applies.
+  const response = openapi
+    .getPerpPermission({ id: address })
+    .then(({ has_permission }) => {
+      applyPerpPermission(target, seq, has_permission === true);
+    });
+  // openapi has no axios timeout; a stalled check must not block retries.
+  const request = withTimeout(
+    response,
+    PERP_PERMISSION_TIMEOUT,
+    'getPerpPermission',
+  )
+    .catch(error => {
       console.error('[perps] fetch permission failed', error);
-    }
-    // Drop results for an address that is no longer current.
-    if (getPermissionTarget(perpsStore.getState()) !== target) {
-      return;
-    }
-    setPerpsState(prev =>
-      granted === null
-        ? { ...prev, permissionAddress: null }
-        : { ...prev, hasPermission: granted, permissionAddress: target },
-    );
-  })().finally(() => {
-    pendingPermissionChecks.delete(target);
-  });
+      if (getPermissionTarget(perpsStore.getState()) === target) {
+        setPerpsState(prev => ({ ...prev, permissionAddress: null }));
+      }
+    })
+    .finally(() => {
+      pendingPermissionChecks.delete(target);
+    });
   pendingPermissionChecks.set(target, request);
   return request;
 };
