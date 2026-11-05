@@ -315,8 +315,8 @@ export const FeedbackHistoryBottomSheet: React.FC = () => {
   );
   const replyTextRef = useRef('');
   const [hasReplyText, setHasReplyText] = useState(false);
-  // Address sharing is opt-in. The last choice is remembered and shared with
-  // the screenshot submit modal.
+  // Address sharing is checked by default. The last choice is remembered and
+  // shared with the screenshot submit modal.
   const { includeAddress, setIncludeAddress } =
     useScreenshotFeedbackIncludeAddress();
   const [replyInputResetKey, setReplyInputResetKey] = useState(0);

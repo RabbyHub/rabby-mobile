@@ -23,8 +23,9 @@ export type ShareAddressCheckboxProps = RNViewProps & {
 };
 
 /**
- * "Share my addresses to help troubleshoot" opt-in row used by every
- * feedback composer. Callers own the state and must start it unchecked.
+ * "Share my addresses to help troubleshoot" row used by every feedback
+ * composer. Callers own the state; both composers bind it to the remembered
+ * choice, which starts checked.
  */
 export function ShareAddressCheckbox({
   checked,
