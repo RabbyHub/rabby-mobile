@@ -15,8 +15,6 @@ export type MemeMarketItem = MemeToken & {
 
 export type MemeHolding = {
   meme: MemeToken;
-  /** null when the backend has none for this token */
-  marketCap: number | null;
   amount: number;
   valueUsd: number;
 };
@@ -27,4 +25,6 @@ export type MemePnlPoint = { timestamp: number; value: number };
 
 export type MemePnl = {
   periods: Record<MemePnlPeriod, { totalUsd: number; points: MemePnlPoint[] }>;
+  /** all-time P&L in USD by tokenKey; a held token without a known cost is absent */
+  byToken: Record<string, number>;
 };
