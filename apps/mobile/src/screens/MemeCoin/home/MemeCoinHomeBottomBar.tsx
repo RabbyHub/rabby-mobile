@@ -38,19 +38,6 @@ export const useKeyboardVisible = () => {
   return visible;
 };
 
-/** For bar swaps: a button swapped in earlier would ride above the closing keyboard. */
-export const dismissKeyboardThen = (done: () => void) => {
-  if (!Keyboard.isVisible()) {
-    done();
-    return;
-  }
-  const sub = Keyboard.addListener('keyboardDidHide', () => {
-    sub.remove();
-    done();
-  });
-  Keyboard.dismiss();
-};
-
 const ACTION_ROW_GAP = 16;
 
 const PLACEHOLDER_TITLE_STYLE = {

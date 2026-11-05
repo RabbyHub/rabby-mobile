@@ -1,10 +1,6 @@
 import React from 'react';
-import { Keyboard } from 'react-native';
 import { fireEvent, render } from '@testing-library/react-native';
-import {
-  dismissKeyboardThen,
-  MemeCoinHomeBottomBar,
-} from './MemeCoinHomeBottomBar';
+import { MemeCoinHomeBottomBar } from './MemeCoinHomeBottomBar';
 
 jest.mock('@/hooks/theme', () => ({
   useTheme2024: () => ({ styles: {}, colors2024: {} }),
@@ -109,46 +105,5 @@ describe('MemeCoinHomeBottomBar', () => {
     ['50', '100', '500', '1,000'].forEach(label =>
       expect(queryByText(label)).toBeNull(),
     );
-  });
-});
-
-describe('dismissKeyboardThen', () => {
-  afterEach(() => jest.restoreAllMocks());
-
-  it('runs right away when the keyboard is down', () => {
-    jest.spyOn(Keyboard, 'isVisible').mockReturnValue(false);
-    const addListener = jest.spyOn(Keyboard, 'addListener');
-    const done = jest.fn();
-    dismissKeyboardThen(done);
-    expect(done).toHaveBeenCalledTimes(1);
-    expect(addListener).not.toHaveBeenCalled();
-  });
-
-  it('waits until the keyboard has finished closing', () => {
-    jest.spyOn(Keyboard, 'isVisible').mockReturnValue(true);
-    const dismiss = jest
-      .spyOn(Keyboard, 'dismiss')
-      .mockImplementation(() => {});
-    const remove = jest.fn();
-    let onHidden: () => void = () => {};
-    const addListener = jest
-      .spyOn(Keyboard, 'addListener')
-      .mockImplementation(((_event: string, listener: () => void) => {
-        onHidden = listener;
-        return { remove };
-      }) as unknown as typeof Keyboard.addListener);
-    const done = jest.fn();
-
-    dismissKeyboardThen(done);
-    expect(addListener).toHaveBeenCalledWith(
-      'keyboardDidHide',
-      expect.any(Function),
-    );
-    expect(dismiss).toHaveBeenCalledTimes(1);
-    expect(done).not.toHaveBeenCalled();
-
-    onHidden();
-    expect(done).toHaveBeenCalledTimes(1);
-    expect(remove).toHaveBeenCalledTimes(1);
   });
 });

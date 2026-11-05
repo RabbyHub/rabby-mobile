@@ -51,7 +51,6 @@ import {
 } from '../ui/helpers';
 import { getChainNativeToken } from '../ui/nativeToken';
 import {
-  dismissKeyboardThen,
   MemeCoinHomeBottomBar,
   useKeyboardVisible,
 } from './MemeCoinHomeBottomBar';
@@ -125,7 +124,8 @@ export const MemeCoinHomeScreen = () => {
   }, []);
 
   const cancelSelection = useCallback(() => {
-    dismissKeyboardThen(clearSelection);
+    Keyboard.dismiss();
+    clearSelection();
   }, [clearSelection]);
 
   useEffect(() => {
