@@ -161,6 +161,35 @@ function normalizeMachOLayoutNoise(otoolSContent) {
     }
   }
 
+  for (let i = 0; i < lines.length; i += 1) {
+    if (!lines[i].includes('/cargo/registry/src/')) continue;
+
+    lines[i] = lines[i].replace(
+      /\/cargo\/registry\/src\/[^/]+\//g,
+      '/cargo/registry/src/__rabby_registry__/',
+    );
+
+    // The string length immediate can be a few instructions before or after
+    // the literal-pool reference (compilers interleave stp/ldr setup).
+    let closestMov = -1;
+    let closestDistance = 5;
+    for (let j = Math.max(0, i - 4); j <= Math.min(lines.length - 1, i + 4); j += 1) {
+      if (/^[0-9a-f]+\tmov\tw\d+, #0x[0-9a-f]+$/.test(lines[j])) {
+        const distance = Math.abs(j - i);
+        if (distance < closestDistance) {
+          closestMov = j;
+          closestDistance = distance;
+        }
+      }
+    }
+    if (closestMov >= 0) {
+      lines[closestMov] = lines[closestMov].replace(
+        /#0x[0-9a-f]+$/,
+        '#0x0',
+      );
+    }
+  }
+
   return lines.join('\n');
 }
 

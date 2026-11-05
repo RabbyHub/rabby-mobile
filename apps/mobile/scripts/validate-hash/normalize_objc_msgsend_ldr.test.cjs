@@ -64,3 +64,21 @@ test('does not normalize an adrp whose next instruction uses another base', () =
     /add\tx1, x2, #0x3f9 ; literal pool for: "foo"/,
   );
 });
+
+test('normalizes cargo registry paths and adjacent string length immediates', () => {
+  const first = [
+    '0000000000022c20\tadd\tx10, x8, #0x0 ; literal pool for: "/cargo/registry/src/rsproxy.cn-e3de039b2554c837/fontdb-0.23.0/src/lib.rs"',
+    '0000000000022c24\tmov\tw8, #0x48',
+  ].join('\n');
+  const second = [
+    '0000000000022c20\tadd\tx10, x8, #0x0 ; literal pool for: "/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/fontdb-0.23.0/src/lib.rs"',
+    '0000000000022c24\tmov\tw8, #0x4d',
+  ].join('\n');
+  const expected = [
+    '0000000000022c20\tadd\tx10, x8, #0x0 ; literal pool for: "/cargo/registry/src/__rabby_registry__/fontdb-0.23.0/src/lib.rs"',
+    '0000000000022c24\tmov\tw8, #0x0',
+  ].join('\n');
+
+  assert.equal(normalizeMachOLayoutNoise(first), expected);
+  assert.equal(normalizeMachOLayoutNoise(second), expected);
+});
