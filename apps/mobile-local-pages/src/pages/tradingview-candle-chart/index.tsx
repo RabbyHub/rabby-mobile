@@ -1912,6 +1912,8 @@ function ensureMovingAverageSeries() {
         lastValueVisible: false,
         lineWidth: 1,
         priceLineVisible: false,
+        // Keep the price scale fitted to candles; out-of-range MA lines clip.
+        autoscaleInfoProvider: () => null,
       });
     }
   });
