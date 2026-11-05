@@ -3646,7 +3646,7 @@
       "alertText": "サードパーティ製DApp：利用上の問題はDAppのサポートへお問い合わせください。Rabbyは閲覧機能のみ提供します",
       "title": "スクリーンショットでバグを報告",
       "submitFailed": "送信に失敗しました。",
-      "includeAddress": "問題調査のためにアドレスを共有する"
+      "includeAddress": "トラブルシューティングのためにアドレスを共有"
     },
     "submitFeedbackSuccessModal": {
       "desc": "送信しました！"

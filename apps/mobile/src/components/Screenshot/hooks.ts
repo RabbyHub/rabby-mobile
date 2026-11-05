@@ -34,7 +34,7 @@ type ScreenshotFeedbackStore = {
   disableScreenshotToReportUntil: number; // timestamp
   /**
    * Last choice of the "share my addresses" checkbox, shared by the screenshot
-   * submit modal and the feedback chat. Off until the user checks it.
+   * submit modal and the feedback chat. On until the user unchecks it.
    */
   includeAddress: boolean;
 };
@@ -42,7 +42,7 @@ const getDefaultValueFeedback = (): ScreenshotFeedbackStore => ({
   viewedHomeTip: FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT,
   showFeedbackOnScreenshot_20250923: true,
   disableScreenshotToReportUntil: -1,
-  includeAddress: false,
+  includeAddress: true,
 });
 const Keys = Object.keys(
   getDefaultValueFeedback(),
@@ -670,13 +670,16 @@ const setFeedbackIncludeAddress = (includeAddress: boolean) => {
   }));
 };
 
-/** Only an explicit `true` counts as consent, whatever was persisted. */
+/**
+ * Checked by default. Only a saved `false`, written when the user unchecks the
+ * box, turns it off.
+ */
 const getFeedbackIncludeAddress = () =>
-  screenshotFeedbackStore.getState().includeAddress === true;
+  screenshotFeedbackStore.getState().includeAddress !== false;
 
 export function useScreenshotFeedbackIncludeAddress() {
   const includeAddress = screenshotFeedbackStore(
-    s => s.includeAddress === true,
+    s => s.includeAddress !== false,
   );
 
   return {

@@ -5,7 +5,7 @@ import { openapi } from '@/core/request';
 import { getScreenshotFeedbackExtraSafely } from '../hooks';
 import { FeedbackHistoryBottomSheet } from './BottomSheet';
 
-// Component coverage of the reply composer's address opt-in. The sheet host,
+// Component coverage of the reply composer's address checkbox. The sheet host,
 // keyboard, media pickers and the network are mocked process boundaries; the
 // payload rules themselves are covered in ../utils.test.ts.
 const CHECKBOX_TEST_ID = 'feedback-chat-include-address';
@@ -26,7 +26,7 @@ const mockSheetModal = {
 // the real hook in ../SubmitFeedback/ShareAddressCheckbox.test.tsx.
 jest.mock('../hooks', () => {
   const includeAddressStore = require('zustand').create(() => ({
-    includeAddress: false,
+    includeAddress: true,
   }));
   return {
     includeAddressStore,
@@ -188,10 +188,10 @@ async function renderChat() {
   return { view, checkbox, isChecked, sendReply };
 }
 
-describe('FeedbackHistoryBottomSheet address opt-in', () => {
+describe('FeedbackHistoryBottomSheet address sharing', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    rememberedChoice().setState({ includeAddress: false });
+    rememberedChoice().setState({ includeAddress: true });
   });
 
   afterEach(async () => {
@@ -205,17 +205,17 @@ describe('FeedbackHistoryBottomSheet address opt-in', () => {
     );
   });
 
-  it('sends a reply without addresses unless the box is checked', async () => {
+  it('sends a reply with addresses by default', async () => {
     const { view, isChecked, sendReply } = await renderChat();
 
     expect(
       view.getByText('component.screenshotModal.includeAddress'),
     ).toBeTruthy();
-    expect(isChecked()).toBe(false);
+    expect(isChecked()).toBe(true);
 
     await sendReply('still broken');
 
-    expect(getExtra).toHaveBeenCalledWith({ includeAddress: false });
+    expect(getExtra).toHaveBeenCalledWith({ includeAddress: true });
     expect(postFeedback).toHaveBeenCalledWith(
       expect.objectContaining({
         content: 'still broken',
@@ -224,27 +224,27 @@ describe('FeedbackHistoryBottomSheet address opt-in', () => {
     );
   });
 
-  it('passes the opt-in with the reply and keeps it checked after sending', async () => {
+  it('sends without addresses once unchecked and keeps it unchecked after sending', async () => {
     const { checkbox, isChecked, sendReply } = await renderChat();
 
     fireEvent.press(checkbox());
-    expect(isChecked()).toBe(true);
-    expect(rememberedChoice().getState().includeAddress).toBe(true);
+    expect(isChecked()).toBe(false);
+    expect(rememberedChoice().getState().includeAddress).toBe(false);
 
     await sendReply('still broken');
 
-    expect(getExtra).toHaveBeenCalledWith({ includeAddress: true });
-    expect(isChecked()).toBe(true);
+    expect(getExtra).toHaveBeenCalledWith({ includeAddress: false });
+    expect(isChecked()).toBe(false);
   });
 
   it('opens with the remembered choice', async () => {
-    rememberedChoice().setState({ includeAddress: true });
+    rememberedChoice().setState({ includeAddress: false });
     const { isChecked, sendReply } = await renderChat();
 
-    expect(isChecked()).toBe(true);
+    expect(isChecked()).toBe(false);
 
     await sendReply('still broken');
 
-    expect(getExtra).toHaveBeenCalledWith({ includeAddress: true });
+    expect(getExtra).toHaveBeenCalledWith({ includeAddress: false });
   });
 });
