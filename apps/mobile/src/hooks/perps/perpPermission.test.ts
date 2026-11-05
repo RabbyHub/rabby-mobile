@@ -113,4 +113,37 @@ describe('Perps address-bound permission', () => {
       jest.useRealTimers();
     }
   });
+
+  it('applies a slow result after the timeout but never over a newer one', async () => {
+    jest.useFakeTimers();
+    try {
+      perpsStore.setState({ hasPermission: false });
+      const slow = deferred<{ has_permission: boolean }>();
+      mockGetPerpPermission.mockReturnValueOnce(slow.promise);
+      const first = ensureCurrentPerpPermission(ACCOUNT_A);
+      await jest.advanceTimersByTimeAsync(5000);
+      await expect(first).resolves.toBe(false);
+
+      slow.resolve({ has_permission: true });
+      await jest.advanceTimersByTimeAsync(0);
+      expect(hasCurrentPerpPermission()).toBe(true);
+
+      const older = deferred<{ has_permission: boolean }>();
+      perpsStore.setState({ permissionAddress: null });
+      mockGetPerpPermission.mockReturnValueOnce(older.promise);
+      const timedOut = ensureCurrentPerpPermission(ACCOUNT_A);
+      await jest.advanceTimersByTimeAsync(5000);
+      await expect(timedOut).resolves.toBe(false);
+
+      mockGetPerpPermission.mockResolvedValueOnce({ has_permission: false });
+      await expect(ensureCurrentPerpPermission(ACCOUNT_A)).resolves.toBe(false);
+
+      older.resolve({ has_permission: true });
+      await jest.advanceTimersByTimeAsync(0);
+      expect(perpsStore.getState().hasPermission).toBe(false);
+      expect(hasCurrentPerpPermission()).toBe(false);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
 });
