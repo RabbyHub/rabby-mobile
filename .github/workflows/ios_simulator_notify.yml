@@ -1,0 +1,71 @@
+name: iOS Simulator Lark Summary
+
+on:
+  workflow_call:
+    inputs:
+      mode:
+        description: Evidence mode (startup or probe)
+        required: true
+        type: string
+      needs_json:
+        description: Calling workflow's job results
+        required: true
+        type: string
+      notification_report:
+        description: Compact evidence from the summary owner
+        type: string
+        default: ''
+      source_json:
+        description: Original artifact producer selected by the probe
+        type: string
+        default: ''
+      requested_majors:
+        type: string
+        default: '16,17,18,26,27'
+      execution_environment:
+        type: string
+        default: 'mobile-local'
+      build_only:
+        type: boolean
+        default: false
+      build_xcode:
+        type: string
+        default: '27.1'
+    secrets:
+      RABBY_MOBILE_LARK_CHAT_URL:
+        required: true
+      RABBY_MOBILE_LARK_CHAT_SECRET:
+        required: true
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash --noprofile --norc -eo pipefail {0}
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+      - name: Send final Simulator summary to the Feature Test Lark bot
+        env:
+          NOTIFICATION_MODE: ${{ inputs.mode }}
+          STARTUP_NEEDS: ${{ inputs.needs_json }}
+          STARTUP_REPORT: ${{ inputs.notification_report }}
+          PROBE_SOURCE: ${{ inputs.source_json }}
+          REQUESTED_MAJORS: ${{ inputs.requested_majors }}
+          EXECUTION_ENVIRONMENT: ${{ inputs.execution_environment }}
+          BUILD_ONLY: ${{ inputs.build_only && 'true' || 'false' }}
+          BUILD_XCODE: ${{ inputs.build_xcode }}
+          RABBY_MOBILE_LARK_CHAT_URL: ${{ secrets.RABBY_MOBILE_LARK_CHAT_URL }}
+          RABBY_MOBILE_LARK_CHAT_SECRET: ${{ secrets.RABBY_MOBILE_LARK_CHAT_SECRET }}
+        run: node scripts/ios-startup-smoke/notify.mjs send

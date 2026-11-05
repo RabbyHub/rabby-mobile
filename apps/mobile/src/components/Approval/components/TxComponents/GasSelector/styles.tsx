@@ -1,6 +1,6 @@
 import { AppColorsVariants } from '@/constant/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { StyleSheet } from 'react-native';
+import { Platform, StyleSheet } from 'react-native';
 
 export const getStyle = createGetStyles2024(({ colors2024 }) => ({
   header: {
@@ -332,6 +332,15 @@ export const getStyle = createGetStyles2024(({ colors2024 }) => ({
   feeInput: {
     paddingHorizontal: 16,
     paddingVertical: 18,
+    // Android measures an empty TextInput differently from entered text.
+    // Keep both states in the existing 22pt line + 36pt padding slot.
+    ...(Platform.OS === 'android'
+      ? {
+          height: 58,
+          includeFontPadding: false,
+          textAlignVertical: 'center' as const,
+        }
+      : {}),
     borderRadius: 8,
     backgroundColor: colors2024['neutral-bg-2'],
     fontSize: 17,

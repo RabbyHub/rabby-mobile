@@ -13,6 +13,7 @@ import {
   Platform,
   StyleSheet,
   type AppStateStatus,
+  type LayoutChangeEvent,
 } from 'react-native';
 
 let mockIsLight = true;
@@ -69,14 +70,26 @@ jest.mock('react-native-pager-view', () => {
   const { View } = require('react-native');
   return ReactModule.forwardRef(
     (
-      { children, ...props }: { children: React.ReactNode },
+      {
+        children,
+        onLayout,
+        ...props
+      }: {
+        children: React.ReactNode;
+        onLayout?: (event: LayoutChangeEvent) => void;
+      },
       ref: React.Ref<unknown>,
     ) => {
       ReactModule.useImperativeHandle(ref, () => ({
         setPage: mockInfoPagerSetPage,
         setPageWithoutAnimation: mockInfoPagerSetPageWithoutAnimation,
       }));
-      return ReactModule.createElement(View, props, children);
+      ReactModule.useEffect(() => {
+        onLayout?.({
+          nativeEvent: { layout: { width: 393, height: 600, x: 0, y: 0 } },
+        } as LayoutChangeEvent);
+      }, []);
+      return ReactModule.createElement(View, { ...props, onLayout }, children);
     },
   );
 });

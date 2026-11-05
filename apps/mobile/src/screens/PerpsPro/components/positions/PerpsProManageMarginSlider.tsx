@@ -1,7 +1,7 @@
 import RcThumb from '@/assets2024/icons/perps/PerpsProLeverageThumb.svg';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { Slider } from '@rneui/themed';
+import { PerpsGestureSlider as Slider } from '@/components/perps/PerpsGestureSlider';
 import BigNumber from 'bignumber.js';
 import React, { useMemo } from 'react';
 import { View } from 'react-native';

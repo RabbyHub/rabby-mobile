@@ -18,8 +18,15 @@ const allIds = new IdSet<string>();
 globalSheetModalEvents.on(EVENT_NAMES.CREATE, id => {
   allIds.add(id);
 });
-globalSheetModalEvents.on(EVENT_NAMES.REMOVE, id => {
-  allIds.delete(id);
+globalSheetModalEvents.on(EVENT_NAMES.REMOVE, (id, params) => {
+  if (!params?.waitForDismiss) {
+    allIds.delete(id);
+  }
+});
+globalSheetModalEvents.on(EVENT_NAMES.CLOSED, id => {
+  if (allIds.has(id)) {
+    allIds.delete(id);
+  }
 });
 bindKeyringEventAfterRegistration('lock', () => {
   allIds.forEach(id => {

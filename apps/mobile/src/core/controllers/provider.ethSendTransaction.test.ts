@@ -105,11 +105,6 @@ jest.mock('@/core/serviceApi/preference', () => ({
   },
 }));
 
-jest.mock('@/core/serviceApi/notification', () => ({
-  getNotificationStatsDataSnapshot: jest.fn(() => undefined),
-  setNotificationStatsDataSync: jest.fn(),
-}));
-
 jest.mock('@/core/serviceApi/session', () => ({
   broadcastSessionEventSync: jest.fn(),
 }));
@@ -199,22 +194,14 @@ jest.mock('@/utils/events', () => ({
   },
 }));
 
-jest.mock('@/utils/stats', () => ({
-  stats: {
-    report: jest.fn(),
-  },
-}));
-
-jest.mock('@/utils/analytics', () => ({
-  matomoRequestEvent: jest.fn(),
-}));
-
 jest.mock('@/databases/sync/utils', () => ({
   updateExpiredTime: jest.fn(async () => undefined),
 }));
 
-jest.mock('@/utils/gasAccountAnalytics', () => ({
-  handleGasAccountLoginSuccess: jest.fn(async () => undefined),
+jest.mock('@/core/serviceApi/gasAccount', () => ({
+  gasAccountServiceApi: {
+    setGasAccountSig: jest.fn(async () => undefined),
+  },
 }));
 
 import providerController from './provider';

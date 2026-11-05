@@ -1,7 +1,4 @@
 import type { Account } from '@/types/account';
-import { matomoRequestEvent } from './analytics';
-import { stats } from './stats';
-import { getKRCategoryByType } from './transaction';
 import { apisKeyring } from '@/core/apis/keyring';
 import { eventBus } from '@rabby-wallet/keyring-utils';
 import { EVENTS } from './events';
@@ -11,42 +8,6 @@ export enum FailedCode {
   SubmitTxFailed = 'SubmitTxFailed',
   DefaultFailed = 'DefaultFailed',
 }
-
-const report = async ({
-  action,
-  currentAccount,
-  method,
-  extra,
-}: {
-  action:
-    | 'createSignText'
-    | 'startSignText'
-    | 'cancelSignText'
-    | 'completeSignText';
-  currentAccount;
-  method: string;
-  extra?: Record<string, any>;
-}) => {
-  if (!currentAccount) {
-    return;
-  }
-  matomoRequestEvent({
-    category: 'SignText',
-    action: action,
-    label: [
-      getKRCategoryByType(currentAccount.type),
-      currentAccount.brandName,
-    ].join('|'),
-    transport: 'beacon',
-  });
-
-  await stats.report(action, {
-    type: currentAccount.brandName,
-    category: getKRCategoryByType(currentAccount.type),
-    method,
-    ...extra,
-  });
-};
 
 type ProgressStatus = 'building' | 'builded' | 'signed' | 'submitted';
 
@@ -72,23 +33,8 @@ export const sendSignTypedData = async ({
   // const { address, ...currentAccount } = account;
 
   const method = `ethSignTypedData${version === 'V1' ? '' : version}`;
-  report({
-    action: 'createSignText',
-    currentAccount,
-    method,
-  });
 
   onProgress?.('builded');
-
-  const handleSendAfter = async () => {
-    report({
-      action: 'completeSignText',
-      currentAccount,
-      method,
-    });
-  };
-
-  report({ action: 'startSignText', currentAccount, method });
 
   let hash = '';
   try {
@@ -99,11 +45,8 @@ export const sendSignTypedData = async ({
       signTextMethod: method,
       version: version,
     });
-
-    await handleSendAfter();
   } catch (e) {
     console.error(e);
-    await handleSendAfter();
     const err = new Error((e as any).message);
     err.name = FailedCode.SubmitTxFailed;
     eventBus.emit(EVENTS.COMMON_HARDWARE.REJECTED, err.message);

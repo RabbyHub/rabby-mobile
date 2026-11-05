@@ -100,6 +100,11 @@ public class RNHelpersModule extends SimplePackageSpec {
   }
 
   @ReactMethod
+  public void measureViewRelativeTo(double anchorTag, double viewportTag, Promise promise) {
+    NativeViewGeometry.measureRelativeTo(reactContext, (int) anchorTag, (int) viewportTag, promise);
+  }
+
+  @ReactMethod
   public void androidTraceInstant(String name) {
     RabbyStartupTrace.instant(name);
   }

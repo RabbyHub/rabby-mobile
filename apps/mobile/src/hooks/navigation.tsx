@@ -27,7 +27,10 @@ import type { RootStackParamsList } from '@/navigation-type';
 import * as apisLock from '@/core/apis/lock';
 import * as apisAccount from '@/core/apis/account';
 import { IS_IOS } from '@/core/native/utils';
-import { cleanSpecialSoloWeightFont } from '@/core/utils/fonts';
+import {
+  cleanSpecialSoloWeightFont,
+  RoundedFontStyles,
+} from '@/core/utils/fonts';
 import type { BottomTabNavigationOptions } from '@react-navigation/bottom-tabs';
 import { zCreate } from '@/core/utils/reexports';
 import type { UpdaterOrPartials } from '@/core/utils/store';
@@ -135,6 +138,8 @@ export function HeaderBackPressable({
   const { colors2024 } = apisTheme.getColors2024(themeMode);
   return (
     <CustomTouchableOpacity
+      // Native-stack header controls need native gesture arbitration on Fabric.
+      as="RNGHTouchableOpacity"
       {...touchableProps}
       style={[styles.backButtonStyle, style]}
       hitSlop={hitSlop}
@@ -173,6 +178,7 @@ export const useStackScreenConfig = () => {
         headerTintColor: colors['neutral-title-1'],
         headerLeft: ({ tintColor }) => (
           <CustomTouchableOpacity
+            as="RNGHTouchableOpacity"
             style={styles.backButtonStyle}
             hitSlop={24}
             onPress={navBack}>
@@ -212,8 +218,7 @@ export const useStackScreenConfig = () => {
         headerTitleStyle: {
           ...(headerPresets.onlyTitle.headerTitleStyle as object),
           color: colors2024['neutral-title-1'],
-          fontWeight: '900',
-          fontFamily: 'SF Pro Rounded',
+          ...RoundedFontStyles.heavy,
           fontSize: 20,
         },
         headerTintColor: colors2024['neutral-title-1'],
@@ -257,8 +262,7 @@ export function useBottomTabScreenConfig() {
         headerTitleStyle: {
           ...(headerPresets.onlyTitle.headerTitleStyle as object),
           color: colors2024['neutral-title-1'],
-          fontWeight: '900',
-          fontFamily: 'SF Pro Rounded',
+          ...RoundedFontStyles.heavy,
           fontSize: 20,
         },
         headerTintColor: colors2024['neutral-title-1'],

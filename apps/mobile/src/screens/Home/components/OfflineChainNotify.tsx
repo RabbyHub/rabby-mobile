@@ -36,7 +36,7 @@ export const useMockClearOfflineChainTips = () => {
 
 export const useOfflineChain = () => {
   useEffect(() => {
-    void hydrateClosedTipsChains().catch(console.error);
+    hydrateClosedTipsChains().catch(console.error);
   }, []);
 
   const { closedTipsChains, closedTipsHydrated } = useActivityStore(
@@ -246,7 +246,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     borderRadius: 12,
     backgroundColor: colors2024['orange-light-1'],
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
   },
   containerNone: {
     display: 'none',
@@ -255,8 +255,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: 16,
     height: 16,
     borderRadius: 9999,
-    position: 'relative',
-    top: 2,
   },
   textWrapper: {
     flex: 1,
@@ -269,8 +267,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontSize: 16,
     fontStyle: 'normal',
     fontWeight: 500,
-    flex: 1,
-    flexShrink: 1,
     lineHeight: 20,
   },
   actions: {
@@ -279,8 +275,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     justifyContent: 'center',
     flexShrink: 0,
     marginLeft: 12,
-    position: 'relative',
-    top: -2,
   },
   iconButton: {
     width: 20,

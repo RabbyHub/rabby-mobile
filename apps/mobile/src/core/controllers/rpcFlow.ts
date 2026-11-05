@@ -10,10 +10,8 @@ import {
 } from '@/core/serviceApi/dapp';
 import {
   ensureNotificationServiceReady,
-  getNotificationStatsDataSnapshot,
   notificationServiceApi,
   setCurrentRequestDeferFnSync,
-  setNotificationStatsDataSync,
   unlockNotificationSync,
 } from '@/core/serviceApi/notification';
 import { getFallbackAccountSnapshot } from '@/core/serviceApi/preference';
@@ -22,17 +20,14 @@ import providerController from './provider';
 // import eventBus from '@/eventBus';
 import { ProviderRequest } from './type';
 import * as Sentry from '@sentry/react-native';
-// import stats from '@/stats';
 import { addHexPrefix, stripHexPrefix } from 'ethereumjs-util';
 import { eventBus, EVENTS } from '@/utils/events';
 import { Chain, CHAINS_ENUM, getTestnetChainList } from '@/constant/chains';
 import * as apisDapp from '../apis/dapp';
-import { stats } from '@/utils/stats';
 import { waitSignComponentAmounted } from '../utils/signEvent';
 import { findChain } from '@/utils/chain';
 import { gnosisController } from './gnosisController';
 import { underline2Camelcase } from '../utils/common';
-import { find, reject } from 'lodash';
 import { getRetryTxRecommendNonce, getRetryTxType } from '@/utils/errorTxRetry';
 import { hexToNumber, isHex } from 'viem';
 import { intToHex } from '@/utils/number';
@@ -398,22 +393,18 @@ const flowContext = flow
         msgParams: ctx.request.data.params,
       });
 
+    // With an approval UI, the dapp gets its answer from that UI (which also
+    // owns retries); otherwise the caller awaits requestDefer directly and must
+    // see the error instead of a request that never settles.
+    const callerAwaitsRequestDefer = isAutoPersonalSign || !uiRequestComponent;
+
     const createRequestDeferFn =
       (originApprovalRes: typeof approvalRes) =>
       async (isRetry = false) =>
-        new Promise(async resolve => {
-          let waitSignComponentPromise = Promise.resolve();
-          if (
-            !isAutoPersonalSign &&
-            isSignApproval(approvalType) &&
-            uiRequestComponent
-          ) {
-            waitSignComponentPromise = waitSignComponentAmounted();
-          }
-
+        new Promise(async (resolve, reject) => {
           if (originApprovalRes?.isGnosis) return resolve(undefined);
 
-          return waitSignComponentPromise.then(() => {
+          return Promise.resolve().then(() => {
             let _approvalRes = originApprovalRes;
 
             if (isRetry && mapMethod === 'ethSendTransaction') {
@@ -452,12 +443,14 @@ const flowContext = flow
               }
             }
 
-            return Promise.resolve(
-              providerController[mapMethod]({
-                ...request,
-                approvalRes: _approvalRes,
-              }),
-            )
+            // .then() so a synchronous throw lands in .catch below
+            return Promise.resolve()
+              .then(() =>
+                providerController[mapMethod]({
+                  ...request,
+                  approvalRes: _approvalRes,
+                }),
+              )
               .then(result => {
                 if (isSignApproval(approvalType)) {
                   eventBus.emit(EVENTS.SIGN_FINISHED, {
@@ -487,14 +480,28 @@ const flowContext = flow
                 } else if (__DEV__) {
                   console.error(e);
                 }
-                reject(e);
+                if (callerAwaitsRequestDefer) {
+                  reject(e);
+                }
               });
           });
         });
     const requestDeferFn = createRequestDeferFn(approvalRes);
 
-    setCurrentRequestDeferFnSync(requestDeferFn);
-    const requestDefer = requestDeferFn();
+    // Safe owner signing registers its own retry fn
+    // (apisKeyring.signTypedDataWithUI); ours would only resolve undefined.
+    if (!approvalRes?.isGnosis) {
+      setCurrentRequestDeferFnSync(requestDeferFn);
+    }
+    // Only the first attempt waits for the waiting UI to mount. Retries are
+    // started from that mounted UI, which emits no further mount event.
+    const requestDefer =
+      !approvalRes?.isGnosis &&
+      !isAutoPersonalSign &&
+      isSignApproval(approvalType) &&
+      uiRequestComponent
+        ? waitSignComponentAmounted().then(() => requestDeferFn())
+        : requestDeferFn();
     async function requestApprovalLoop({
       uiRequestComponent,
       $account,
@@ -527,7 +534,6 @@ const flowContext = flow
     if (!isAutoPersonalSign && uiRequestComponent) {
       ctx.request.requestedApproval = true;
       const result = await requestApprovalLoop({ uiRequestComponent, ...rest });
-      reportStatsData();
       if (rest?.safeMessage) {
         const safeMessage: {
           safeAddress: string;
@@ -557,43 +563,6 @@ const flowContext = flow
   })
   .callback();
 
-function reportStatsData() {
-  const statsData = getNotificationStatsDataSnapshot();
-  if (!statsData || statsData.reported) return;
-  if (statsData?.signed) {
-    const sData: any = {
-      type: statsData?.type,
-      chainId: statsData?.chainId,
-      category: statsData?.category,
-      success: statsData?.signedSuccess,
-      preExecSuccess: statsData?.preExecSuccess,
-      createdBy: statsData?.createdBy,
-      source: statsData?.source,
-      trigger: statsData?.trigger,
-      networkType: statsData?.networkType,
-    };
-    if (statsData.signMethod) {
-      sData.signMethod = statsData.signMethod;
-    }
-    stats.report('signedTransaction', sData);
-  }
-  if (statsData?.submit) {
-    stats.report('submitTransaction', {
-      type: statsData?.type,
-      chainId: statsData?.chainId,
-      category: statsData?.category,
-      success: statsData?.submitSuccess,
-      preExecSuccess: statsData?.preExecSuccess,
-      createdBy: statsData?.createdBy,
-      source: statsData?.source,
-      trigger: statsData?.trigger,
-      networkType: statsData?.networkType || '',
-    });
-  }
-  statsData.reported = true;
-  setNotificationStatsDataSync(statsData);
-}
-
 async function runRpcFlow(request: ProviderRequest) {
   const ctx: any = {
     request: { ...request, requestedApproval: false },
@@ -608,10 +577,7 @@ async function runRpcFlow(request: ProviderRequest) {
       });
     }
   } catch (e) {}
-  setNotificationStatsDataSync();
   return flowContext(ctx).finally(() => {
-    reportStatsData();
-
     if (ctx.request.requestedApproval) {
       flow.requestedApproval = false;
       // only unlock notification if current flow is an approval flow

@@ -74,7 +74,7 @@ describe('PerpsProPositionTpSlHeader', () => {
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-position-tpsl-metrics-main').props.style,
       ),
-    ).toMatchObject({ gap: 10, marginTop: 10 });
+    ).toMatchObject({ marginTop: 10 });
     expect(screen.getByText('BTCUSDC')).toBeTruthy();
     expect(
       StyleSheet.flatten(screen.getByText('tpsl').props.style),
@@ -213,7 +213,7 @@ describe('PerpsProPositionTpSlHeader', () => {
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-position-tpsl-metrics-empty').props.style,
       ),
-    ).toMatchObject({ gap: 10, marginTop: 10 });
+    ).toMatchObject({ marginTop: 10 });
     expect(
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-position-tpsl-pair-empty').props.style,

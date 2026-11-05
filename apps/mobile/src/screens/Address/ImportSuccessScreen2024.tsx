@@ -5,7 +5,6 @@ import {
 } from '@/core/serviceApi/contact';
 import {
   getFallbackAccountSnapshot,
-  setReportActionTs,
   setCurrentAccountSync,
 } from '@/core/serviceApi/preference';
 import { useTheme2024 } from '@/hooks/theme';
@@ -31,9 +30,7 @@ import { useAccounts } from '@/hooks/account';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import type { RootStackParamsList } from '@/navigation-type';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { matomoRequestEvent } from '@/utils/analytics';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
-import { getKRCategoryByType } from '@/utils/transaction';
 import { Button } from '@/components2024/Button';
 import { ellipsisAddress } from '@/utils/address';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -47,14 +44,11 @@ import {
 } from '@/constant/layout';
 import { GnosisSupportChainList } from './components/GnosisSupportChainList';
 import RcIconRightCC from '@/assets/icons/common/right-2-cc.svg';
-import {
-  createGlobalBottomSheetModal2024,
-  removeGlobalBottomSheetModal2024,
-} from '@/components2024/GlobalBottomSheetModal';
+import { createGlobalBottomSheetModal2024 } from '@/components2024/GlobalBottomSheetModal';
+import { dismissImportMoreAddressPopup } from '@/hooks/useShowImportMoreAddressPopup';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import addressBalanceStore from '@/store/balance';
 import { syncMultiAddressesHistory } from '@/databases/hooks/history';
-import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/utils/reportTimeoutAction';
 import useTokenList from '@/store/tokens';
 import usePortfolioList from '@/store/protocols';
 import { eventBus } from '@/utils/events';
@@ -169,12 +163,25 @@ export const ImportSuccessScreen2024 = () => {
     }
   });
 
+  const resolveImportAddresses = React.useCallback(() => {
+    const addresses = Array.isArray(state.address)
+      ? state.address
+      : [state.address];
+    return addresses.map(address => ({
+      address,
+      aliasName:
+        state.alias ||
+        getContactAliasSnapshot(address)?.alias ||
+        ellipsisAddress(address || '') ||
+        '',
+    }));
+  }, [state.address, state.alias]);
   const [importAddresses, setImportAddresses] = React.useState<
     {
       address: string;
       aliasName: string;
     }[]
-  >([]);
+  >(resolveImportAddresses);
 
   const saveFirstAddressAlias = React.useCallback(() => {
     return Promise.all(
@@ -200,10 +207,6 @@ export const ImportSuccessScreen2024 = () => {
     await saveFirstAddressAlias();
     Keyboard.dismiss();
 
-    void setReportActionTs(
-      REPORT_TIMEOUT_ACTION_KEY.ADD_NEW_ADDRESS_DONE,
-    ).catch(console.error);
-
     if (onlyFirstAccount) {
       apisSingleHome.navigateToSingleHome(onlyFirstAccount, { replace: true });
     } else {
@@ -218,22 +221,7 @@ export const ImportSuccessScreen2024 = () => {
     const addresses = Array.isArray(state?.address)
       ? state?.address
       : [state?.address];
-    setImportAddresses(
-      addresses.map(address => ({
-        address,
-        aliasName:
-          state?.alias ||
-          getContactAliasSnapshot(address)?.alias ||
-          ellipsisAddress(address || '') ||
-          '',
-      })),
-    );
-
-    matomoRequestEvent({
-      category: 'Import Address',
-      action: `Success_Import_${getKRCategoryByType(state?.type)}`,
-      label: state?.brandName,
-    });
+    setImportAddresses(resolveImportAddresses());
 
     addressBalanceStore.batchGetTotalBalance(addresses, true, {
       scene: 'ImportSuccess',
@@ -253,7 +241,7 @@ export const ImportSuccessScreen2024 = () => {
       syncMultiAddressesHistory(syncAddresses);
       eventBus.emit('PERPS_ADD_ADDRESSES', syncAddresses);
     }
-  }, [state, t]);
+  }, [state, t, resolveImportAddresses]);
   React.useEffect(() => {
     setTimeout(() => fetchAccounts(), 0);
   }, [fetchAccounts]);
@@ -307,6 +295,7 @@ export const ImportSuccessScreen2024 = () => {
         : undefined,
       keyringId: state.keyringId,
       brandName: state.brandName,
+      skipSuccessAnimation: true,
     };
 
     modalRef.current = createGlobalBottomSheetModal2024({
@@ -317,11 +306,7 @@ export const ImportSuccessScreen2024 = () => {
           modalRef.current = undefined;
         },
       },
-      onCancel: () => {
-        if (modalRef.current) {
-          removeGlobalBottomSheetModal2024(modalRef.current);
-        }
-      },
+      onCancel: () => dismissImportMoreAddressPopup(modalRef.current),
     });
   };
 
@@ -367,6 +352,7 @@ export const ImportSuccessScreen2024 = () => {
       <View style={[styles.container, { paddingTop: top }]}>
         <WalletSuccessCard
           style={{ flex: 1 }}
+          autoPlay={!state.skipSuccessAnimation}
           title={
             onlyFirstAccount
               ? t(

@@ -101,7 +101,7 @@ export const SafeNonceOptionList = ({
               onChange?.(+recommendNonce);
             }}
             isHideDivider>
-            <Text>
+            <Text style={styles.nonceSelectOptionText}>
               {recommendNonce} - {t('page.signTx.SafeNonceSelector.option.new')}
             </Text>
           </SafeNonceOptionListItem>
@@ -145,6 +145,12 @@ const getStyles = createGetStyles(colors => ({
     fontSize: 12,
     fontWeight: '400',
     lineHeight: 14,
+  },
+  nonceSelectOptionText: {
+    color: colors['neutral-title-1'],
+    fontSize: 13,
+    fontWeight: '500',
+    lineHeight: 16,
   },
   loadingContent: {
     paddingVertical: 20,

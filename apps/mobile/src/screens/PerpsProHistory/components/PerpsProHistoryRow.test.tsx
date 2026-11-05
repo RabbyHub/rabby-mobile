@@ -8,6 +8,7 @@ import React from 'react';
 import { Animated, Pressable, StyleSheet } from 'react-native';
 
 import { ThemeColors2024 } from '@/constant/theme';
+import { RoundedFontStyles } from '@/core/utils/fonts';
 
 jest.mock('@/components/Typography', () => ({
   Text: require('react-native').Text,
@@ -168,16 +169,15 @@ describe('PerpsProHistoryRowView Trade, Transaction and Funding', () => {
     ).toBeUndefined();
 
     fireEvent.press(screen.getByLabelText('page.perps.historyDetail.feeTitle'));
-    expect(onShowFeeExplanation).toHaveBeenCalledWith(false);
+    expect(onShowFeeExplanation).toHaveBeenCalledWith(false, row.feeSnapshot);
     expect(screen.queryByText('Perp')).toBeNull();
     expect(screen.getByText('S')).toBeTruthy();
     expect(screen.queryByText('page.perps.pro.history.sell')).toBeNull();
     const sideText = screen.getByLabelText('page.perps.pro.history.sell');
     expect(StyleSheet.flatten(sideText.props.style)).toMatchObject({
       color: 'neutral-InvertHighlight',
-      fontFamily: 'SF Pro Rounded',
+      ...RoundedFontStyles.bold,
       fontSize: 12,
-      fontWeight: '700',
       lineHeight: 16,
     });
     const sideTag = screen.getByTestId(
@@ -224,7 +224,7 @@ describe('PerpsProHistoryRowView Trade, Transaction and Funding', () => {
     );
     fireEvent.press(screen.getByLabelText('page.perps.historyDetail.feeTitle'));
 
-    expect(onShowFeeExplanation).toHaveBeenCalledWith(true);
+    expect(onShowFeeExplanation).toHaveBeenCalledWith(true, row.feeSnapshot);
   });
 
   it('renders Transaction Type and signed Amount without a navigation arrow', () => {
@@ -473,9 +473,8 @@ describe('PerpsProHistoryRowView Orders', () => {
       ),
     ).toMatchObject({
       color: 'neutral-InvertHighlight',
-      fontFamily: 'SF Pro Rounded',
+      ...RoundedFontStyles.bold,
       fontSize: 12,
-      fontWeight: '700',
       lineHeight: 16,
     });
   });
@@ -636,9 +635,8 @@ describe('PerpsProHistoryRowView Orders', () => {
       StyleSheet.flatten(screen.getByText('xyz').props.style),
     ).toMatchObject({
       color: 'neutral-foot',
-      fontFamily: 'SF Pro Rounded',
+      ...RoundedFontStyles.medium,
       fontSize: 12,
-      fontWeight: '500',
       lineHeight: 16,
     });
     expect(screen.queryByText('Perp')).toBeNull();

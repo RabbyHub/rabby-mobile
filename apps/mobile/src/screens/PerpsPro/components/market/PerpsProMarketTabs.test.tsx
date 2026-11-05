@@ -8,6 +8,7 @@ import {
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import type { SharedValue } from 'react-native-reanimated';
+import { RoundedFontStyles } from '@/core/utils/fonts';
 
 const mockScrollTo = jest.fn();
 
@@ -357,9 +358,8 @@ describe('PerpsProMarketTabs', () => {
     expect(
       StyleSheet.flatten(screen.getByText('All').props.style),
     ).toMatchObject({
-      fontFamily: 'SF Pro Rounded',
+      ...RoundedFontStyles.bold,
       fontSize: 14,
-      fontWeight: '700',
       lineHeight: 18,
     });
     expect(

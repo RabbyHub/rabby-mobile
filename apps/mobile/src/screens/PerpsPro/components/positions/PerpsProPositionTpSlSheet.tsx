@@ -7,6 +7,7 @@ import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { IS_ANDROID } from '@/core/native/utils';
 import { Text } from '@/components/Typography';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
+import { ThemeColors2024 } from '@/constant/theme';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import {
@@ -64,12 +65,9 @@ import {
 } from './PerpsProPositionTpSlHeader';
 import {
   PerpsProPositionTpSlOrderList,
-  PerpsProPositionTpSlAddRow,
+  PerpsProPositionTpSlAddButton,
 } from './PerpsProPositionTpSlOrderList';
-import {
-  getPerpsProDialogStyles,
-  resolvePerpsProDialogCardBackground,
-} from '../common/perpsProDialogVisual';
+import { getPerpsProDialogStyles } from '../common/perpsProDialogVisual';
 import { PerpsProDialogBackdrop } from '../common/PerpsProDialogBackdrop';
 import { usePerpsProFieldExplanation } from '../common/PerpsProFieldExplanationContext';
 import { usePerpsProSheetNavigationRegistration } from '../common/perpsProSheetNavigationRegistry';
@@ -605,7 +603,7 @@ export const PerpsProPositionTpSlSheet: React.FC<{
     }, [restoreLayoutReady]);
 
     const tabs = (
-      <View style={styles.tabCard}>
+      <View style={styles.tabRow}>
         <View style={styles.tabs} testID="perps-pro-position-tpsl-tabs">
           <TabButton
             active={tab === 'partial'}
@@ -618,6 +616,14 @@ export const PerpsProPositionTpSlSheet: React.FC<{
             onPress={() => switchTab('position')}
           />
         </View>
+        {isPartialList ? (
+          <PerpsProPositionTpSlAddButton
+            pending={interactionLocked}
+            onAdd={() => {
+              if (!interactionLocked) setPartialPage('add');
+            }}
+          />
+        ) : null}
       </View>
     );
     const header = (
@@ -702,14 +708,6 @@ export const PerpsProPositionTpSlSheet: React.FC<{
               ) : null}
               <View style={isOrderList ? styles.listCard : styles.listPage}>
                 {isOrderList ? tabs : null}
-                {isPartialList ? (
-                  <PerpsProPositionTpSlAddRow
-                    pending={interactionLocked}
-                    onAdd={() => {
-                      if (!interactionLocked) setPartialPage('add');
-                    }}
-                  />
-                ) : null}
                 <View
                   style={styles.listPage}
                   pointerEvents={interactionLocked ? 'none' : 'auto'}>
@@ -970,32 +968,28 @@ const getStyle = createGetStyles2024(
         paddingBottom: Math.max(12, safeAreaInsets.bottom),
       },
       formTabs: { marginHorizontal: 16, marginTop: 8 },
-      tabCard: {
-        backgroundColor: resolvePerpsProDialogCardBackground(
-          colors2024,
-          isLight,
-        ),
-        borderTopLeftRadius: 12,
-        borderTopRightRadius: 12,
-        paddingTop: 4,
-      },
-      tabs: {
-        borderBottomColor: colors2024['neutral-bg-5'],
-        borderBottomWidth: 1,
+      tabRow: {
+        alignItems: 'center',
         flexDirection: 'row',
-        gap: 12,
-        height: 34,
-        paddingHorizontal: 16,
+        height: 40,
+        justifyContent: 'space-between',
+        marginBottom: 8,
       },
+      tabs: { flexDirection: 'row', paddingLeft: 8 },
       tab: {
         alignItems: 'center',
-        borderBottomColor: 'transparent',
-        borderBottomWidth: 3,
-        height: 33,
+        borderRadius: 120,
+        height: 30,
         justifyContent: 'center',
-        paddingHorizontal: 2,
+        paddingHorizontal: 12,
       },
-      activeTab: { borderBottomColor: colors2024['neutral-title-1'] },
+      activeTab: {
+        backgroundColor:
+          isLight === false
+            ? colors2024['neutral-title-1']
+            : ThemeColors2024.dark['neutral-bg-0'],
+        borderRadius: 6,
+      },
       tabText: {
         color: colors2024['neutral-secondary'],
         fontFamily: 'SF Pro Rounded',
@@ -1004,7 +998,10 @@ const getStyle = createGetStyles2024(
         lineHeight: 18,
       },
       activeTabText: {
-        color: colors2024['neutral-title-1'],
+        color:
+          isLight === false
+            ? colors2024['neutral-bg-0']
+            : ThemeColors2024.dark['neutral-title-1'],
         fontFamily: 'SF Pro Rounded',
         fontSize: 14,
         fontWeight: '700',

@@ -101,6 +101,8 @@ import {
 } from './useSendRecipientState';
 import {
   DEFAULT_NATIVE_TRANSFER_GAS_LIMIT,
+  estimateNativeTransferGas,
+  needsNativeTransferGasEstimate,
   resolveNativeTransferGasLimit,
 } from '../nativeTransferGas';
 
@@ -642,6 +644,36 @@ export function useSendTokenForm({
   }
   const formValuesLatestRef = useRef<FormSendToken>(formValues);
   const getLatestFormValues = useMemoizedFn(() => formValuesLatestRef.current);
+  const customGasEstimateRef = useRef<{
+    key: string;
+    gasNumber: number;
+  } | null>(null);
+  const gasEstimateRequestRef = useRef(0);
+  const getGasEstimateKey = useMemoizedFn(
+    (input?: {
+      chainItem?: Chain | null;
+      tokenItem?: TokenItem;
+      currentAddress?: string;
+    }) => {
+      const latest = getSendChainToken();
+      const values = getLatestFormValues();
+      return JSON.stringify([
+        input?.chainItem?.serverId ?? latest.chainItem?.serverId,
+        input?.tokenItem?.id ?? latest.currentToken.id,
+        (input?.currentAddress ?? currentAccount?.address)?.toLowerCase(),
+        values.to?.toLowerCase(),
+        values.messageDataForSendToEoa,
+        values.messageDataForContractCall,
+      ]);
+    },
+  );
+  const getEstimatedNativeGas = useMemoizedFn((chain: Chain) => {
+    if (!chain.isTestnet) {
+      return getSendTokenScreenState().estimatedGas;
+    }
+    const estimate = customGasEstimateRef.current;
+    return estimate?.key === getGasEstimateKey() ? estimate.gasNumber : 0;
+  });
   const setCommittedFormValues = useCallback(
     (next: FormSendToken | ((prev: FormSendToken) => FormSendToken)) => {
       setFormValues(prev => {
@@ -1127,6 +1159,7 @@ export function useSendTokenForm({
       // L2 has extra validation fee so we can not set gasLimit as 21000 when send native token
       const couldSpecifyIntrinsicGas =
         !CAN_NOT_SPECIFY_INTRINSIC_GAS_CHAINS.includes(chain.enum);
+      const estimatedGas = getEstimatedNativeGas(chain);
 
       try {
         const code = await apiProvider.requestETHRpc(
@@ -1139,8 +1172,8 @@ export function useSendTokenForm({
         );
         const notContract = !!code && (code === '0x' || code === '0x0');
         const gasLimit = resolveNativeTransferGasLimit({
-          estimatedGas: latestScreenState.estimatedGas,
-          needEstimateGas: !!chain.needEstimateGas,
+          estimatedGas,
+          needEstimateGas: needsNativeTransferGasEstimate(chain),
           couldSpecifyIntrinsicGas,
           isContract: !notContract,
         });
@@ -1154,8 +1187,8 @@ export function useSendTokenForm({
         }
       } catch (e) {
         const gasLimit = resolveNativeTransferGasLimit({
-          estimatedGas: latestScreenState.estimatedGas,
-          needEstimateGas: !!chain.needEstimateGas,
+          estimatedGas: chain.isTestnet ? 0 : estimatedGas,
+          needEstimateGas: needsNativeTransferGasEstimate(chain),
           couldSpecifyIntrinsicGas,
         });
         if (gasLimit) {
@@ -1235,6 +1268,9 @@ export function useSendTokenForm({
     }: FormSendToken & {
       isForceSignTx?: boolean;
     }) => {
+      if (getSendTokenScreenState().isEstimatingGas) {
+        return;
+      }
       if (storeApiExpSettingData.getShouldBlockSubmitIfFormChangedOnAuth()) {
         const snapshot = formValuesRef.current.getSnapshot();
 
@@ -1283,6 +1319,7 @@ export function useSendTokenForm({
         // L2 has extra validation fee so we can not set gasLimit as 21000 when send native token
         const couldSpecifyIntrinsicGas =
           !CAN_NOT_SPECIFY_INTRINSIC_GAS_CHAINS.includes(chain.enum);
+        const estimatedGas = getEstimatedNativeGas(chain);
 
         try {
           const code = await apiProvider.requestETHRpc(
@@ -1295,8 +1332,8 @@ export function useSendTokenForm({
           );
           const notContract = !!code && (code === '0x' || code === '0x0');
           const gasLimit = resolveNativeTransferGasLimit({
-            estimatedGas: latestScreenState.estimatedGas,
-            needEstimateGas: !!chain.needEstimateGas,
+            estimatedGas,
+            needEstimateGas: needsNativeTransferGasEstimate(chain),
             couldSpecifyIntrinsicGas,
             isContract: !notContract,
           });
@@ -1310,8 +1347,8 @@ export function useSendTokenForm({
           }
         } catch (e) {
           const gasLimit = resolveNativeTransferGasLimit({
-            estimatedGas: latestScreenState.estimatedGas,
-            needEstimateGas: !!chain.needEstimateGas,
+            estimatedGas: chain.isTestnet ? 0 : estimatedGas,
+            needEstimateGas: needsNativeTransferGasEstimate(chain),
             couldSpecifyIntrinsicGas,
           });
           if (gasLimit) {
@@ -1485,6 +1522,7 @@ export function useSendTokenForm({
       isNativeToken,
       isShowMessageDataForToken,
       prepareDirectSubmitMiniTx,
+      getEstimatedNativeGas,
       openDirect,
       persistSendTxHistory,
       runFetchPendingCount,
@@ -1507,71 +1545,68 @@ export function useSendTokenForm({
       shouldCommit?: () => boolean;
     }) => {
       const result = { gasNumber: 0 };
-      const shouldCommit = input?.shouldCommit;
-
-      const doReturn = (nextGas = DEFAULT_NATIVE_TRANSFER_GAS_LIMIT) => {
-        result.gasNumber = nextGas;
-
-        if (!shouldCommit || shouldCommit()) {
-          putScreenState({ estimatedGas: result.gasNumber });
-        }
-        return result;
-      };
-
+      const requestId = ++gasEstimateRequestRef.current;
+      const estimateKey = getGasEstimateKey(input);
       const latestChainToken = getSendChainToken();
-
       const {
         chainItem: lastestChainItem = latestChainToken.chainItem,
         tokenItem = latestChainToken.currentToken,
         currentAddress = currentAccount?.address,
       } = input || {};
 
-      if (!lastestChainItem?.needEstimateGas) {
+      const doReturn = (gasNumber: number) => {
+        result.gasNumber = gasNumber;
+        if (
+          (!input?.shouldCommit || input.shouldCommit()) &&
+          (!lastestChainItem?.isTestnet ||
+            (requestId === gasEstimateRequestRef.current &&
+              estimateKey === getGasEstimateKey()))
+        ) {
+          if (lastestChainItem?.isTestnet) {
+            customGasEstimateRef.current = { key: estimateKey, gasNumber };
+          }
+          putScreenState({ estimatedGas: gasNumber });
+        }
+        return result;
+      };
+
+      if (!lastestChainItem) {
+        return doReturn(0);
+      }
+      if (!needsNativeTransferGasEstimate(lastestChainItem)) {
         return doReturn(DEFAULT_NATIVE_TRANSFER_GAS_LIMIT);
       }
       if (!currentAddress) {
-        return doReturn();
-      }
-
-      if (lastestChainItem.serverId !== tokenItem.chain) {
-        console.warn(
-          'estimateGasOnChain:: chain not matched!',
-          lastestChainItem,
-          tokenItem,
+        return doReturn(
+          lastestChainItem.isTestnet ? 0 : DEFAULT_NATIVE_TRANSFER_GAS_LIMIT,
         );
+      }
+      if (lastestChainItem.serverId !== tokenItem.chain) {
         return result;
       }
 
       const to = getLatestFormValues().to;
-
-      let _gasUsed: string = intToHex(DEFAULT_NATIVE_TRANSFER_GAS_LIMIT);
-      try {
-        _gasUsed = await apiProvider.requestETHRpc<string>(
-          {
-            method: 'eth_estimateGas',
-            params: [
-              {
-                from: currentAddress,
-                to: to && isValidAddress(to) ? to : zeroAddress(),
-                gasPrice: intToHex(0),
-                value: intToHex(0),
-              },
-            ],
-          },
-          lastestChainItem.serverId,
-          currentAccount,
-        );
-      } catch (err) {
-        console.error(err);
+      if (
+        lastestChainItem.isTestnet &&
+        (tokenItem.id !== lastestChainItem.nativeTokenAddress ||
+          !isValidAddress(to))
+      ) {
+        return doReturn(0);
       }
-      const gasUsed = new BigNumber(_gasUsed)
-        .multipliedBy(1.5)
-        .integerValue()
-        .toNumber();
-
-      return doReturn(Number(gasUsed));
+      const gasNumber = await estimateNativeTransferGas({
+        chain: lastestChainItem,
+        from: currentAddress,
+        to: to && isValidAddress(to) ? to : zeroAddress(),
+        estimateGas: tx =>
+          apiProvider.requestETHRpc<string>(
+            { method: 'eth_estimateGas', params: [tx] },
+            lastestChainItem.serverId,
+            currentAccount,
+          ),
+      });
+      return doReturn(gasNumber);
     },
-    [currentAccount, getLatestFormValues],
+    [currentAccount, getLatestFormValues, getGasEstimateKey],
   );
 
   const loadCurrentToken = useMemoizedFn(
@@ -1595,12 +1630,17 @@ export function useSendTokenForm({
         return null;
       }
       if (result) {
-        void estimateGasOnChain({
-          chainItem: chain,
-          tokenItem: result,
-          currentAddress,
-          shouldCommit,
-        });
+        const { isEstimatingGas, showGasReserved } = getSendTokenScreenState();
+        // Once MAX has reserved gas, keep that limit paired with its amount.
+        // A balance refresh must not replace it with another estimate.
+        if (!chain?.isTestnet || (!isEstimatingGas && !showGasReserved)) {
+          void estimateGasOnChain({
+            chainItem: chain,
+            tokenItem: result,
+            currentAddress,
+            shouldCommit,
+          });
+        }
         putChainToken({ currentToken: { ...result, tokenId: id } });
         putScreenState(prev => ({
           agreeRequiredChecks: {
@@ -1694,83 +1734,103 @@ export function useSendTokenForm({
         return;
       }
 
+      const formSnapshot = getLatestFormValues();
+      const estimateKey = getGasEstimateKey();
+      const isCurrent = () =>
+        estimateKey === getGasEstimateKey() &&
+        isEqual(formSnapshot, getLatestFormValues()) &&
+        currentToken.raw_amount_hex_str ===
+          getSendChainToken().currentToken.raw_amount_hex_str;
       const tokenBalance = new BigNumber(
         currentToken.raw_amount_hex_str || 0,
       ).div(10 ** currentToken.decimals);
       let amount = tokenBalance.toFixed();
-      const to = getLatestFormValues().to;
-
-      const {
-        gasLevel = latestScreenState.selectedGasLevel ||
-          (await loadGasListAndResolve().then(
-            result => result.instantGasLevel,
-          )),
-      } = input || {};
-      const needReserveGasOnSendToken = !!gasLevel && gasLevel?.price > 0;
+      const to = formSnapshot.to;
       const couldReserveGas = isNativeToken && !latestScreenState.isGnosisSafe;
 
-      if (couldReserveGas && needReserveGasOnSendToken) {
-        putScreenState({ showGasReserved: true, isEstimatingGas: true });
-        try {
+      putScreenState({ isEstimatingGas: true });
+      try {
+        const gasLevel =
+          input?.gasLevel ||
+          latestScreenState.selectedGasLevel ||
+          (await loadGasListAndResolve()).instantGasLevel;
+        if (!isCurrent()) {
+          return;
+        }
+        const hasUsableGasPrice =
+          !!gasLevel && Number.isFinite(gasLevel.price) && gasLevel.price >= 0;
+        if (couldReserveGas && gasLevel && hasUsableGasPrice) {
+          putScreenState({ showGasReserved: true });
           const { gasNumber } = await estimateGasOnChain({
             chainItem,
             tokenItem: currentToken,
+            shouldCommit: isCurrent,
           });
-
-          let gasTokenAmount = onGasChange({
-            gasLevel: gasLevel,
-            updateTokenAmount: false,
-            gasLimit: gasNumber,
-          });
-          if (
-            chainItem &&
-            CAN_ESTIMATE_L1_FEE_CHAINS.includes(chainItem.enum)
-          ) {
-            const l1GasFee = await apiProvider.fetchEstimatedL1Fee(
-              {
-                txParams: {
-                  chainId: chainItem.id,
-                  from: currentAccount.address,
-                  to: to && isValidAddress(to) ? to : zeroAddress(),
-                  value: currentToken.raw_amount_hex_str,
-                  gas: intToHex(DEFAULT_NATIVE_TRANSFER_GAS_LIMIT),
-                  gasPrice: `0x${new BigNumber(gasLevel.price).toString(16)}`,
-                  data: '0x',
+          if (!isCurrent()) {
+            return;
+          }
+          if (gasNumber > 0) {
+            let gasTokenAmount = onGasChange({
+              gasLevel,
+              updateTokenAmount: false,
+              gasLimit: gasNumber,
+            });
+            if (
+              chainItem &&
+              CAN_ESTIMATE_L1_FEE_CHAINS.includes(chainItem.enum)
+            ) {
+              const l1GasFee = await apiProvider.fetchEstimatedL1Fee(
+                {
+                  txParams: {
+                    chainId: chainItem.id,
+                    from: currentAccount.address,
+                    to: to && isValidAddress(to) ? to : zeroAddress(),
+                    value: currentToken.raw_amount_hex_str,
+                    gas: intToHex(DEFAULT_NATIVE_TRANSFER_GAS_LIMIT),
+                    gasPrice: `0x${new BigNumber(gasLevel.price).toString(16)}`,
+                    data: '0x',
+                  },
+                  account: currentAccount,
                 },
-                account: currentAccount,
-              },
-              chainItem.enum,
-            );
-            gasTokenAmount = gasTokenAmount
-              .plus(new BigNumber(l1GasFee).div(1e18))
-              .times(1.1);
-          }
-          const tokenForSend = tokenBalance.minus(gasTokenAmount);
-          amount = tokenForSend.gt(0) ? tokenForSend.toFixed() : '0';
-          if (tokenForSend.lt(0)) {
+                chainItem.enum,
+              );
+              gasTokenAmount = gasTokenAmount
+                .plus(new BigNumber(l1GasFee).div(1e18))
+                .times(1.1);
+            }
+            if (!isCurrent()) {
+              return;
+            }
+            const tokenForSend = tokenBalance.minus(gasTokenAmount);
+            amount = tokenForSend.gt(0) ? tokenForSend.toFixed() : '0';
+            if (tokenForSend.lt(0)) {
+              putScreenState({ showGasReserved: false });
+            }
+          } else {
+            // Custom networks may not support the gas probe (or expose no
+            // usable gas price). MAX must still fill the balance like the
+            // online build; the submit-time gas check reports real failures.
             putScreenState({ showGasReserved: false });
+            amount = tokenBalance.toFixed();
           }
-        } catch (e) {
-          if (!latestScreenState.isGnosisSafe) {
-            // // Gas fee reservation required
-            // setBalanceWarn(t('page.sendToken.balanceWarn.gasFeeReservation'));
-            putScreenState({ showGasReserved: false });
-          }
-        } finally {
-          putScreenState({ isEstimatingGas: false });
         }
+        if (isCurrent()) {
+          patchFormValues({ ...getLatestFormValues(), amount });
+        }
+      } catch (error) {
+        if (isCurrent()) {
+          putScreenState({ showGasReserved: false });
+          toast.info(i18next.t('page.signTx.failToFetchGasCost'));
+        }
+      } finally {
+        putScreenState({ isEstimatingGas: false });
       }
-
-      const newValues = {
-        ...getLatestFormValues(),
-        amount,
-      };
-      patchFormValues(newValues);
     },
     [
       currentAccount,
       currentToken,
       getLatestFormValues,
+      getGasEstimateKey,
       loadGasListAndResolve,
       isNativeToken,
       patchFormValues,
@@ -1799,6 +1859,13 @@ export function useSendTokenForm({
     const latestScreenState = getSendTokenScreenState();
     const couldReserveGas = isNativeToken && !latestScreenState.isGnosisSafe;
     if (currentToken && couldReserveGas) {
+      if (chainItem?.isTestnet) {
+        const gasLevel = latestScreenState.gasList?.find(
+          e => e.level === 'fast',
+        );
+        await handleMaxInfoChanged(gasLevel ? { gasLevel } : undefined);
+        return;
+      }
       if (latestScreenState.gasList) {
         const gasLevel = latestScreenState.gasList.find(
           e => e.level === 'fast',
@@ -2545,11 +2612,12 @@ export function SendTokenRecipientController({
 }
 
 export function useSendTokenCanSubmit() {
-  const { balanceError, initialTokenReady, isLoading } =
+  const { balanceError, initialTokenReady, isLoading, isEstimatingGas } =
     useSendTokenScreenStateShallowSelector(state => ({
       balanceError: state.balanceError,
       initialTokenReady: state.initialTokenReady,
       isLoading: state.isLoading,
+      isEstimatingGas: state.isEstimatingGas,
     }));
   const { amount, to } = useSendTokenFormValuesShallowSelector(values => ({
     amount: values.amount,
@@ -2561,7 +2629,8 @@ export function useSendTokenCanSubmit() {
     isValidAddress(to) &&
     !balanceError &&
     new BigNumber(amount || 0).gt(0) &&
-    !isLoading
+    !isLoading &&
+    !isEstimatingGas
   );
 }
 

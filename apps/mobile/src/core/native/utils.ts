@@ -50,6 +50,10 @@ interface NativeModulesStatic {
       METRO_CACHE_ENABLED?: boolean;
     };
     forceExitApp(): void;
+    measureViewRelativeTo(
+      anchorTag: number,
+      viewportTag: number,
+    ): Promise<{ x: number; y: number; width: number; height: number }>;
     androidTraceInstant?(name: string): void;
     androidTraceBeginSection?(name: string): void;
     androidTraceEndSection?(): void;

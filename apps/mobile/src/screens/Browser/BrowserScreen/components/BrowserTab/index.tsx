@@ -6,6 +6,7 @@ import React, {
   useRef,
   useState,
   useImperativeHandle,
+  useLayoutEffect,
 } from 'react';
 import type { Ref } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
@@ -27,19 +28,18 @@ import { BackgroundBridgeBoundary } from '@/core/bridges/BackgroundBridgeBoundar
 import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import { saveBrowserScreenshot } from '@/core/serviceApi/browser';
 import { perpsServiceApi } from '@/core/serviceApi/perps';
-import { getDappSnapshot } from '@/core/serviceApi/dapp';
 import { setHasShowAsterPopup } from '@/core/serviceApi/preference';
 import type { Tab } from '@/core/services/browserService';
 import {
+  canBrowserTabOpenExternalUrl,
   useBrowser,
   useBrowserActiveTabState,
 } from '@/hooks/browser/useBrowser';
 import { useBrowserBookmark } from '@/hooks/browser/useBrowserBookmark';
 import { useJavaScriptBeforeContentLoaded } from '@/hooks/useBootstrap';
 import { useDappAccountResolver, useDapps } from '@/hooks/useDapps';
-import { matomoRequestEvent } from '@/utils/analytics';
 import { sleep } from '@/utils/async';
-import { isGoogle, isValidAppStoreUrl } from '@/utils/browser';
+import { isValidAppStoreUrl } from '@/utils/browser';
 import { coerceInteger } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import { urlUtils } from '@rabby-wallet/base-utils';
@@ -127,6 +127,17 @@ export const BrowserTab = ({
   const { browserState, setPartialBrowserState } = useBrowser();
   const debounceProgress = useDebounce(progress, { wait: 500 });
   const [, setBrowserActiveTabState] = useBrowserActiveTabState();
+  const mountedRef = useRef(false);
+  useLayoutEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+  const canOpenExternalUrl = useCallback(
+    () => mountedRef.current && canBrowserTabOpenExternalUrl(tabId),
+    [tabId],
+  );
 
   const {
     webviewRef,
@@ -249,11 +260,6 @@ export const BrowserTab = ({
         name: webviewState.title,
         createdAt: Date.now(),
       });
-      matomoRequestEvent({
-        category: 'Websites Usage',
-        action: 'Website_Favorite',
-        label: safeGetOrigin(webviewState.resolvedUrl),
-      });
     }
   });
 
@@ -341,6 +347,7 @@ export const BrowserTab = ({
   });
 
   const handleOpenInBrowser = useMemoizedFn(() => {
+    if (!canOpenExternalUrl()) return;
     Linking.openURL(webviewState.resolvedUrl);
   });
 
@@ -365,19 +372,13 @@ export const BrowserTab = ({
     setPartialBrowserState({
       isShowBrowser: false,
     });
-
-    matomoRequestEvent({
-      category: 'Websites Usage',
-      action: 'Website_Exit',
-      label: 'Click Home',
-    });
   });
 
   const handleOnOpenWindow = useMemoizedFn(
     (syntheticEvent: { nativeEvent: { targetUrl: string } }) => {
       const { nativeEvent } = syntheticEvent;
       const { targetUrl } = nativeEvent;
-      if (!targetUrl) {
+      if (!targetUrl || !canOpenExternalUrl()) {
         return;
       }
 
@@ -417,26 +418,6 @@ export const BrowserTab = ({
       handleViewShot();
     }
   }, [debounceProgress, handleViewShot, isActive]);
-
-  useEffect(() => {
-    if (!browserState.isShowBrowser || browserState.isShowSearch) {
-      return;
-    }
-    const origin = urlInfo?.origin;
-    if (isActive && origin && dappInfo?.isConnected) {
-      matomoRequestEvent({
-        category: 'Websites Usage',
-        action: 'Website_Connected',
-        label: origin,
-      });
-    }
-  }, [
-    browserState.isShowBrowser,
-    browserState.isShowSearch,
-    isActive,
-    dappInfo?.isConnected,
-    urlInfo?.origin,
-  ]);
 
   React.useImperativeHandle(
     ref,
@@ -767,25 +748,15 @@ export const BrowserTab = ({
                           // }
                         }}
                         onFileDownload={e => {
+                          if (!canOpenExternalUrl()) return;
                           Linking.openURL(e.nativeEvent.downloadUrl);
                         }}
                         onShouldStartLoadWithRequest={nativeEvent => {
-                          const origin = safeGetOrigin(nativeEvent.url);
-                          if (
-                            isGoogle(webviewState.resolvedUrl) &&
-                            getDappSnapshot(origin)?.isDapp &&
-                            origin
-                          ) {
-                            matomoRequestEvent({
-                              category: 'Websites Usage',
-                              action: 'Website_Visit_Page Link',
-                              label: origin,
-                            });
-                          }
                           return checkShouldStartLoadingWithRequestForDappWebView(
                             nativeEvent,
                             {
                               enforceWalletConnectOrigin: true,
+                              canOpenExternalUrl,
                             },
                           );
                         }}

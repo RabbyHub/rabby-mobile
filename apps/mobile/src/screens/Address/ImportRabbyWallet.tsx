@@ -18,8 +18,6 @@ import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { Trans, useTranslation } from 'react-i18next';
 import { IS_IOS } from '@/core/native/utils';
 import { useSetPasswordFirst } from '@/hooks/useLock';
-import { setReportActionTs } from '@/core/serviceApi/preference';
-import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/utils/reportTimeoutAction';
 
 import HelpSVG from '@/assets2024/icons/common/help.svg';
 import IconSyncExtension from '@/assets2024/icons/common/iconSyncExtension.svg';
@@ -42,9 +40,6 @@ function ImportRabbyWallet({ route }: ImportRabbyWalletProps): JSX.Element {
 
   const handleSyncExtension = React.useCallback(() => {
     navigation.navigate(RootNames.Scanner, { syncExtension: true });
-    void setReportActionTs(
-      REPORT_TIMEOUT_ACTION_KEY.CLICK_SCAN_SYNC_EXTENSION,
-    ).catch(console.error);
   }, [navigation]);
 
   const handleCloudRestore = React.useCallback(() => {

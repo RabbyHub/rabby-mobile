@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { RoundedFontStyles } from '@/core/utils/fonts';
 import { Pressable, View } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -58,7 +59,7 @@ const SupplyActionOverView: React.FC<
       title: t('page.Lending.modalDesc.availableToBorrow'),
       titleStyle: {
         marginTop: 12,
-        fontWeight: '900',
+        ...RoundedFontStyles.heavy,
       },
       sectionStyle: {
         marginTop: 8,

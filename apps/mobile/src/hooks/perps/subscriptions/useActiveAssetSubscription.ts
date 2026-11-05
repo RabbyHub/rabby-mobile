@@ -19,15 +19,22 @@ import { AppState, type AppStateStatus } from 'react-native';
  */
 export const useActiveAssetSubscription = (
   coin: string,
-  options: { enabled?: boolean } = {},
+  options: { enabled?: boolean; trackContextFreshness?: boolean } = {},
 ) => {
   const enabled = options.enabled ?? true;
+  const trackContextFreshness = options.trackContextFreshness ?? false;
   const currentAddress = perpsStore(
     state => state.currentPerpsAccount?.address,
   );
   const [activeAssetCtx, setActiveAssetCtx] = useState<
     WsActiveAssetCtx['ctx'] | null
   >(null);
+  // Optional display-only context. Raw ctx/data retain their trading contract.
+  const [displayContext, setDisplayContext] = useState<{
+    coin: string;
+    ctx: WsActiveAssetCtx['ctx'];
+  } | null>(null);
+  const contextSubscription = useRef(0);
   const [activeAssetData, setActiveAssetData] =
     useState<WsActiveAssetData | null>(() => {
       const address = perpsStore.getState().currentPerpsAccount?.address;
@@ -36,6 +43,7 @@ export const useActiveAssetSubscription = (
   const coinRef = useRef(coin);
   const unsubCtxRef = useRef<() => void>(() => undefined);
   const unsubDataRef = useRef<() => void>(() => undefined);
+  const unsubFreshnessRef = useRef<() => void>(() => undefined);
 
   useEffect(() => {
     coinRef.current = coin;
@@ -44,12 +52,15 @@ export const useActiveAssetSubscription = (
   const unsubscribeAll = useMemoizedFn(() => {
     unsubCtxRef.current?.();
     unsubDataRef.current?.();
+    unsubFreshnessRef.current();
     unsubCtxRef.current = () => undefined;
     unsubDataRef.current = () => undefined;
+    unsubFreshnessRef.current = () => undefined;
   });
 
   const seedCurrentContext = useMemoizedFn(() => {
     setActiveAssetCtx(null);
+    if (trackContextFreshness) setDisplayContext(null);
     const address = perpsStore.getState().currentPerpsAccount?.address;
     setActiveAssetData(
       address ? readActiveAssetDataFromCache(coinRef.current, address) : null,
@@ -57,6 +68,7 @@ export const useActiveAssetSubscription = (
   });
 
   const subscribeAll = useMemoizedFn(() => {
+    const subscription = ++contextSubscription.current;
     unsubscribeAll();
     seedCurrentContext();
     if (!enabled || !coinRef.current) {
@@ -64,11 +76,29 @@ export const useActiveAssetSubscription = (
     }
 
     const sdk = apisPerps.getPerpsSDK();
+    if (trackContextFreshness) {
+      const invalidate = () => {
+        if (subscription === contextSubscription.current)
+          setDisplayContext(null);
+      };
+      sdk.ws.on('close', invalidate);
+      sdk.ws.on('reconnecting', invalidate);
+      unsubFreshnessRef.current = () => {
+        sdk.ws.off('close', invalidate);
+        sdk.ws.off('reconnecting', invalidate);
+      };
+    }
     unsubCtxRef.current = sdk.ws.subscribeToActiveAssetCtx(
       coinRef.current,
       data => {
         if (coinRef.current === data.coin) {
           setActiveAssetCtx(data.ctx);
+          if (
+            trackContextFreshness &&
+            subscription === contextSubscription.current
+          ) {
+            setDisplayContext({ coin: data.coin, ctx: data.ctx });
+          }
         }
       },
     ).unsubscribe;
@@ -97,14 +127,26 @@ export const useActiveAssetSubscription = (
 
   useEffect(() => {
     subscribeAll();
-    return unsubscribeAll;
-  }, [coin, currentAddress, enabled, subscribeAll, unsubscribeAll]);
+    return () => {
+      contextSubscription.current += 1;
+      unsubscribeAll();
+    };
+  }, [
+    coin,
+    currentAddress,
+    enabled,
+    trackContextFreshness,
+    subscribeAll,
+    unsubscribeAll,
+  ]);
 
   useEffect(() => {
     let appStateRef = AppState.currentState;
     const subscription = AppState.addEventListener(
       'change',
       (nextAppState: AppStateStatus) => {
+        if (trackContextFreshness && nextAppState !== 'active')
+          setDisplayContext(null);
         if (
           enabled &&
           appStateRef.match(/inactive|background/) &&
@@ -116,7 +158,7 @@ export const useActiveAssetSubscription = (
       },
     );
     return () => subscription.remove();
-  }, [enabled, subscribeAll]);
+  }, [enabled, trackContextFreshness, subscribeAll]);
 
   const refreshActiveAssetData = useMemoizedFn(async () => {
     const expectedCoin = coinRef.current;
@@ -144,6 +186,11 @@ export const useActiveAssetSubscription = (
 
   return {
     activeAssetCtx,
+    displayAssetCtx: trackContextFreshness
+      ? enabled && displayContext?.coin === coin
+        ? displayContext.ctx
+        : null
+      : activeAssetCtx,
     activeAssetData,
     refreshActiveAssetData,
   };

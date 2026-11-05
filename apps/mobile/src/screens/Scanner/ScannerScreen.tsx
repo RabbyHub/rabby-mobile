@@ -63,14 +63,23 @@ export const ScannerScreen = () => {
   const [currentCount, setCurrentCount] = useState(0);
 
   const isSyncExtensionScanned = useRef(false);
+  // Camera callbacks can arrive again while the native-stack pop/replace is
+  // still animating. Consume one result per scanner route, not per frame.
+  const hasCompletedScan = useRef(false);
 
   const count = useRef(0);
 
   const handleCodeScanned = React.useCallback(
     (data: Code[]) => {
+      const value = data.find(code => !!code.value)?.value;
+      if (!value || hasCompletedScan.current) {
+        return;
+      }
+      if (!navState?.syncExtension) {
+        hasCompletedScan.current = true;
+      }
       scannerEvents.emit(ScannerEventType.scanned);
       if (navState?.syncExtension) {
-        const value = data[0]?.value;
         if (value && value.startsWith('ur:')) {
           try {
             decoder.receivePart(value);
@@ -80,10 +89,11 @@ export const ScannerScreen = () => {
             count.current++;
 
             if (decoder.isComplete()) {
-              count.current = 0;
-              isSyncExtensionScanned.current = true;
               const ur = decoder.resultUR();
               const result = strFromU8(gunzipSync(Uint8Array.from(ur.cbor)));
+              hasCompletedScan.current = true;
+              count.current = 0;
+              isSyncExtensionScanned.current = true;
               setText(result);
 
               nav.dispatch(
@@ -97,7 +107,7 @@ export const ScannerScreen = () => {
           }
         }
       } else {
-        setText(data[0].value!);
+        setText(value);
         nav.goBack();
       }
     },
@@ -107,7 +117,7 @@ export const ScannerScreen = () => {
   useEffect(() => {
     if (navState?.syncExtension) {
       return () => {
-        if (!isSyncExtensionScanned) {
+        if (!isSyncExtensionScanned.current) {
           setText(undefined);
         }
       };

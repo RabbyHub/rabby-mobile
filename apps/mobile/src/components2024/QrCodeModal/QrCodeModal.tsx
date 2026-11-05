@@ -15,10 +15,6 @@ export const QrCodeModal: React.FC = () => {
   const [visible, setVisible] = useAtom(visibleAtom);
   const [data] = useAtom(dataAtom);
 
-  if (!visible) {
-    return null;
-  }
-
   return (
     <TrackedModal
       modalId={MODAL_GATE_IDS.qrCode}
@@ -29,16 +25,23 @@ export const QrCodeModal: React.FC = () => {
       onRequestClose={() => {
         setVisible(false);
       }}>
-      <TouchableOpacity
-        onPress={() => setVisible(false)}
-        style={styles.overlay}>
-        <View style={styles.container}>
-          <QRCode value={data} size={DeviceUtils.getDeviceWidth() - 144} />
-        </View>
-        <View style={styles.closeButton}>
-          <CloseCircleSVG color={colors2024['neutral-InvertHighlight']} />
-        </View>
-      </TouchableOpacity>
+      {/* Keep the content mounted while the native modal dismisses; gating
+          on `visible` leaves an empty frame and causes the close flicker. */}
+      {data ? (
+        <TouchableOpacity
+          // Default TouchableOpacity opacity feedback fades the QR itself
+          // before the modal closes, which QA sees as a flicker.
+          activeOpacity={1}
+          onPress={() => setVisible(false)}
+          style={styles.overlay}>
+          <View style={styles.container}>
+            <QRCode value={data} size={DeviceUtils.getDeviceWidth() - 144} />
+          </View>
+          <View style={styles.closeButton}>
+            <CloseCircleSVG color={colors2024['neutral-InvertHighlight']} />
+          </View>
+        </TouchableOpacity>
+      ) : null}
     </TrackedModal>
   );
 };

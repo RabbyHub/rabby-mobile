@@ -291,7 +291,9 @@ export const TokenList = ({
                     style={styles.aave3ActionButton}
                     activeOpacity={0.8}
                     onPress={() => onTokenAction?.(l, actionDirection)}>
-                    <Text style={styles.aave3ActionButtonText}>
+                    <Text
+                      numberOfLines={1}
+                      style={styles.aave3ActionButtonText}>
                       {actionText}
                     </Text>
                   </TouchableOpacity>
@@ -345,6 +347,8 @@ export const Supplements = ({ data, style }: SupplementsProps) => {
     </LinearGradient>
   ) : null;
 };
+
+const AAVE3_ACTION_WIDTH = 70;
 
 const getStyles = createGetStyles2024(({ colors2024 }) => ({
   portfolioHeader: {
@@ -454,7 +458,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     textAlign: 'right',
   },
   aave3ActionHeader: {
-    width: 65,
+    width: AAVE3_ACTION_WIDTH,
   },
   tokenListCol: {
     flexBasis: '35%',
@@ -521,11 +525,12 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     justifyContent: 'flex-end',
   },
   aave3ActionCell: {
-    width: 70,
+    width: AAVE3_ACTION_WIDTH,
+    flexShrink: 0,
     alignItems: 'flex-end',
   },
   aave3ActionButton: {
-    width: 66,
+    width: AAVE3_ACTION_WIDTH,
     borderRadius: 4,
     backgroundColor: colors2024['neutral-line'],
     paddingHorizontal: 6,

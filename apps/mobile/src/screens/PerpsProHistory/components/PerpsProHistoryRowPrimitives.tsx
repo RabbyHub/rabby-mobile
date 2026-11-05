@@ -1,3 +1,4 @@
+import { getRoundedFontStyle } from '@/core/utils/fonts';
 import { Text } from '@/components/Typography';
 import { PERPS_PRO_NUMBER_STYLE } from '@/screens/PerpsPro/components/common/perpsProNumberText';
 import { useTheme2024 } from '@/hooks/theme';
@@ -128,9 +129,8 @@ const value = (color: string, fontWeight: '400' | '500' = '400') => ({
   ...PERPS_PRO_NUMBER_STYLE,
   color,
   flexShrink: 1,
-  fontFamily: PERPS_PRO_FONT_FAMILY,
+  ...getRoundedFontStyle(fontWeight),
   fontSize: 12,
-  fontWeight,
   lineHeight: 16,
   marginLeft: 16,
   textAlign: 'right' as const,

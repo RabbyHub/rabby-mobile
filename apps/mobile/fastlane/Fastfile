@@ -162,7 +162,8 @@ platform :ios do
       skip_build_archive: ios_adhoc_skip_build_archive?,
       derived_data_path: turbo_build_enabled? ? turbo_ios_derived_data_path : nil,
       destination: "generic/platform=iOS",
-      clean: ios_adhoc_skip_build_archive? ? false : !turbo_build_enabled?,
+      # Allow local native incremental builds without enabling Turbo cache restore.
+      clean: !(ios_adhoc_skip_build_archive? || turbo_build_enabled? || ENV['RABBY_MOBILE_IOS_INCREMENTAL_BUILD'] == 'true'),
       ## if you wanna output log to stdout, uncomment below 2 lines
       # xcodebuild_formatter: '',
       # suppress_xcode_output: false,
@@ -290,7 +291,7 @@ platform :android do
       "MYAPP_UPLOAD_STORE_PASSWORD" => ENV['RABBY_MOBILE_ANDROID_STORE_PASSWORD'],
       "MYAPP_UPLOAD_KEY_ALIAS" => ENV['RABBY_MOBILE_ANDROID_KEY_ALIAS'],
       "MYAPP_UPLOAD_KEY_PASSWORD" => ENV['RABBY_MOBILE_ANDROID_KEY_PASSWORD']
-    }.merge(opts.fetch(:properties, {})))
+    }.merge(opts.fetch(:properties, {})), system_properties: opts[:system_properties])
 
     android_version_code = android_get_version_code(gradle_file: "./android/app/build.gradle")
     android_version_name = android_get_version_name(gradle_file: "./android/app/build.gradle")
@@ -337,8 +338,8 @@ platform :android do
         UI.message("Not using Gradle cache for selfhost-reg build")
         gradle(task: 'clean', project_dir: './android')
       end
-      build_rabbymobile_app(tasks: ['assembleRegression'], properties: {
-        "org.gradle.configuration-cache"=>use_cache == 'true',
+      build_rabbymobile_app(tasks: ['assembleRegression'], system_properties: {
+        "org.gradle.configuration-cache"=>false,
         "org.gradle.caching"=>use_cache == 'true',
         "org.gradle.parallel"=>true,
       })

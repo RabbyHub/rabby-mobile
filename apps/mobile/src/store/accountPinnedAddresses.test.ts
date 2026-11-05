@@ -103,9 +103,6 @@ describe('accountStore pinned address hydration', () => {
     jest.doMock('@rabby-wallet/keyring-utils', () => ({
       KEYRING_TYPE: { HdKeyring: 'HdKeyring' },
     }));
-    jest.doMock('@/utils/analytics', () => ({
-      matomoRequestEvent: jest.fn(),
-    }));
     jest.doMock('@/hooks/historyTokenDict', () => ({
       updateHistoryTimeSingleAddress: jest.fn(),
     }));

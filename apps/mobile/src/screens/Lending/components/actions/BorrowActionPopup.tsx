@@ -48,12 +48,10 @@ import { useTranslation } from 'react-i18next';
 import {
   CUSTOM_HISTORY_ACTION,
   CUSTOM_HISTORY_TITLE_TYPE,
-  LendingReportType,
-  LendingSignType,
 } from '@/screens/Transaction/components/type';
 import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
 import { useRefreshHistoryId } from '../../hooks';
-import { APP_VERSIONS, INTERNAL_REQUEST_SESSION } from '@/constant';
+import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import { apiProvider } from '@/core/apis';
 import { Button } from '@/components2024/Button';
 import { MINI_SIGN_ERROR } from '@/components2024/MiniSignV2/state/SignatureManager';
@@ -62,7 +60,6 @@ import { useSignatureStoreOf } from '@/components2024/MiniSignV2/state/useSignat
 import { CHAINS_ENUM } from '@debank/common';
 import BorrowToCapTip from '../Tips/BorrowToCapTip';
 import { formatTokenAmount } from '@/utils/number';
-import { stats } from '@/utils/stats';
 import { isZeroAmount } from '../../utils/number';
 import { Text } from '@/components/Typography';
 import {
@@ -234,10 +231,6 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
           throw new Error('no txs');
         }
         let results: string[] = [];
-        const signType =
-          canShowDirectSubmit && !forceFullSign
-            ? LendingSignType.Simplified
-            : LendingSignType.Full;
         if (canShowDirectSubmit && !forceFullSign) {
           try {
             results = await openDirect({
@@ -287,31 +280,6 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
           );
         }
 
-        const targetPool = formattedPoolReservesAndIncentives.find(item =>
-          isSameAddress(item.underlyingAsset, reserve.underlyingAsset),
-        );
-        const usdValue = targetPool
-          ? new BigNumber(amount || '0')
-              .multipliedBy(
-                BigNumber(
-                  targetPool.formattedPriceInMarketReferenceCurrency || '0',
-                ),
-              )
-              .toString()
-          : '0';
-
-        stats.report('aaveInternalTx', {
-          tx_type: LendingReportType.Borrow,
-          chain: chainInfo?.serverId || '',
-          tx_id: txId || '',
-          user_addr: currentAccount.address || '',
-          address_type: currentAccount.type || '',
-          usd_value: usdValue,
-          create_at: Date.now(),
-          app_version: APP_VERSIONS.fromNative || '0',
-          signType,
-        });
-
         refresh();
         toast.success(
           `${t('page.Lending.borrowDetail.actions')} ${t(
@@ -330,13 +298,10 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
       txs,
       amount,
       canShowDirectSubmit,
-      formattedPoolReservesAndIncentives,
-      chainInfo?.serverId,
       refresh,
       t,
       onClose,
       openDirect,
-      reserve.underlyingAsset,
     ],
   );
 

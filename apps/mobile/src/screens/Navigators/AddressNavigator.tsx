@@ -1,5 +1,6 @@
 import 'react-native-gesture-handler';
 import React from 'react';
+import { RoundedFontStyles } from '@/core/utils/fonts';
 
 import { useStackScreenConfig } from '@/hooks/navigation';
 import { createCustomNativeStackNavigator as createNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
@@ -489,7 +490,7 @@ export function AddressNavigator() {
             headerTitleAlign: 'center',
             headerShown: true,
             headerTintColor: colors2024['neutral-title-1'],
-            headerTitleStyle: [styles.headerTitleText, { fontWeight: '900' }],
+            headerTitleStyle: [styles.headerTitleText, RoundedFontStyles.heavy],
             headerTitle: t('page.rabbyPoints.title'),
           },
         ])}

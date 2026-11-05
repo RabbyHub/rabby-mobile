@@ -20,6 +20,7 @@ import { Portal, PortalProvider } from '@gorhom/portal';
 import { TextInput } from '@/components/Typography';
 import { PerpsProDecimalTextInput } from './components/trade/PerpsProDecimalTextInput';
 import { PerpsProMarketSearchBar } from './components/market/PerpsProMarketSearchBar';
+import { PerpsProPositionTpSlInput } from './components/positions/PerpsProPositionTpSlInput';
 import { PerpsProKeyboardAccessory } from './components/common/PerpsProKeyboardAccessory';
 import {
   PERPS_PRO_KEYBOARD_ACCESSORY_ID,
@@ -95,6 +96,37 @@ const Inputs = ({
             onChangeText={() => undefined}
             onFocusChange={() => undefined}
           />
+        </View>
+      </Portal>
+    ) : null}
+  </>
+);
+
+const PositionTpSlField = ({ name }: { name: string }) => {
+  const [value, setValue] = useState('');
+  return (
+    <PerpsProPositionTpSlInput
+      accessibilityLabel={name}
+      disabled={false}
+      label={name}
+      maxDecimals={2}
+      onChangeText={setValue}
+      testID={name}
+      value={value}
+    />
+  );
+};
+
+const positionTpSlFields = ['tp-price', 'tp-pnl', 'sl-price', 'sl-pnl'];
+const PositionTpSlInputs = ({ open }: { open: boolean }) => (
+  <>
+    <PerpsProKeyboardAccessory />
+    {open ? (
+      <Portal name="position-tpsl">
+        <View testID="position-tpsl">
+          {positionTpSlFields.map(name => (
+            <PositionTpSlField key={name} name={name} />
+          ))}
         </View>
       </Portal>
     ) : null}
@@ -236,5 +268,46 @@ describe('Pro iOS accessory binding across renderers', () => {
     view.rerender(<Inputs sheet />);
     expect(hostFor('sheet-price').props.nativeID).not.toBe(oldId);
     hostFor('market-search');
+  });
+
+  it('keeps TP/SL accessories paired through focus, Done and reopening the editor', () => {
+    const view = render(<PositionTpSlInputs open={false} />, { wrapper });
+    expect(screen.UNSAFE_queryAllByType(InputAccessoryView)).toHaveLength(0);
+    view.rerender(<PositionTpSlInputs open />);
+    const hosts = positionTpSlFields.map(hostFor);
+    const oldIds = hosts.map(host => host.props.nativeID);
+    expect(new Set(oldIds).size).toBe(positionTpSlFields.length);
+
+    for (const [index, name] of positionTpSlFields.entries()) {
+      const input = screen.getByTestId(name);
+      fireEvent(input, 'focus');
+      fireEvent.changeText(input, '0.');
+      const owner = perpsProKeyboardSession.getSnapshot();
+      expect(owner).not.toBeNull();
+      // The RN mock omits the native caret command used on non-empty refocus.
+      Object.assign(owner!.input, { setSelection: jest.fn() });
+      // RN's Jest TextInput instances share a prototype-level native blur mock.
+      const blur = jest.spyOn(owner!.input, 'blur').mockClear();
+      fireEvent.press(
+        within(hosts[index]).getByTestId('perps-pro-keyboard-done'),
+      );
+      expect(blur).toHaveBeenCalledTimes(1);
+      expect(blur.mock.contexts[0]).toBe(owner!.input);
+      expect(perpsProKeyboardSession.getSnapshot()).toBeNull();
+      expect(input.props.value).toBe('0.');
+      expect(hostFor(name)).toBe(hosts[index]);
+      expect(screen.getByTestId(name)).toBe(input);
+      fireEvent(input, 'blur');
+    }
+    expect(Keyboard.dismiss).toHaveBeenCalledTimes(positionTpSlFields.length);
+
+    fireEvent(screen.getByTestId('tp-price'), 'focus');
+    view.rerender(<PositionTpSlInputs open={false} />);
+    expect(perpsProKeyboardSession.getSnapshot()).toBeNull();
+    expect(screen.UNSAFE_queryAllByType(InputAccessoryView)).toHaveLength(0);
+    view.rerender(<PositionTpSlInputs open />);
+    for (const name of positionTpSlFields) {
+      expect(oldIds).not.toContain(hostFor(name).props.nativeID);
+    }
   });
 });

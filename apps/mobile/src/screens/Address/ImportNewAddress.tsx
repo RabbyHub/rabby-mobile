@@ -8,8 +8,6 @@ import { default as RcBuilding } from '@/assets/icons/address/building-cc.svg';
 import { default as RcSafe } from '@/assets/icons/address/icon-safe.svg';
 import { RootNames } from '@/constant/layout';
 import { RootStackParamsList } from '@/navigation-type';
-import { matomoRequestEvent } from '@/utils/analytics';
-import { KEYRING_CATEGORY, KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { HardwareDeviceList } from './components/HardwareDeviceList';
@@ -51,11 +49,6 @@ function MainListBlocks() {
             navigation.push(RootNames.StackAddress, {
               screen: RootNames.ImportSafeAddress,
             });
-            matomoRequestEvent({
-              category: 'Import Address',
-              action: `Begin_Import_${KEYRING_CATEGORY.Contract}`,
-              label: KEYRING_CLASS.GNOSIS,
-            });
           }}
         />
       </View>
@@ -68,11 +61,6 @@ function MainListBlocks() {
           onPress={() => {
             navigation.push(RootNames.StackAddress, {
               screen: RootNames.ImportWatchAddress,
-            });
-            matomoRequestEvent({
-              category: 'Import Address',
-              action: `Begin_Import_${KEYRING_CATEGORY.WatchMode}`,
-              label: KEYRING_CLASS.WATCH,
             });
           }}
         />

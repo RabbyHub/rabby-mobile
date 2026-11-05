@@ -138,13 +138,14 @@ export const apisKeyring = {
     options?: any,
   ) => {
     await ensureNotificationServiceReady();
-    const fn = () =>
-      waitSignComponentAmounted().then(() => {
-        apisKeyring.signTypedData(type, from, data as any, options);
-      });
+    const fn = async () => {
+      apisKeyring.signTypedData(type, from, data as any, options);
+    };
 
     setCurrentRequestDeferFnSync(fn);
-    return fn();
+    // Only the first attempt waits for the waiting UI to mount; retries are
+    // started from that mounted UI, which emits no further mount event.
+    return waitSignComponentAmounted().then(fn);
   },
 };
 

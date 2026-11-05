@@ -1,4 +1,20 @@
-import { shouldClearConsumedSwapNavigationParams } from './navigationParams';
+import {
+  getSwapBridgeActiveTab,
+  shouldClearConsumedSwapNavigationParams,
+} from './navigationParams';
+
+describe('SwapBridge active tab', () => {
+  it.each([undefined, {}, { activeTab: 'swap' }, { activeTab: 'unknown' }])(
+    'defaults to Swap for absent or invalid params',
+    params => {
+      expect(getSwapBridgeActiveTab(params)).toBe('swap');
+    },
+  );
+
+  it('uses Bridge when the route selects it', () => {
+    expect(getSwapBridgeActiveTab({ activeTab: 'bridge' })).toBe('bridge');
+  });
+});
 
 describe('Swap navigation params', () => {
   it.each([

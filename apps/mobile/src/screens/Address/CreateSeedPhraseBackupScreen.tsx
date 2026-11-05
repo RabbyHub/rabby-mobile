@@ -40,8 +40,6 @@ export const CreateSeedPhraseBackupScreen = () => {
     return seedPhrase?.split(' ') || [];
   }, [seedPhrase]);
 
-  console.log(words);
-
   return (
     <FooterButtonScreenContainer
       buttonText={"I've saved the phrase"}

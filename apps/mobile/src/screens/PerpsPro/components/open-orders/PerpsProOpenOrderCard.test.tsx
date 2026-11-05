@@ -6,6 +6,7 @@ import {
   within,
 } from '@testing-library/react-native';
 import React from 'react';
+import { RoundedFontStyles } from '@/core/utils/fonts';
 import { StyleSheet } from 'react-native';
 
 type MockMarketIdentity = {
@@ -260,9 +261,8 @@ describe('PerpsProOpenOrderCard', () => {
     expect(buySideTagStyle.borderWidth).toBeUndefined();
     expect(screen.getByText('B').props.style).toMatchObject({
       color: 'neutral-InvertHighlight',
-      fontFamily: 'SF Pro Rounded',
+      ...RoundedFontStyles.bold,
       fontSize: 12,
-      fontWeight: '700',
       lineHeight: 16,
     });
     expect(screen.getByText('50%')).toBeTruthy();
@@ -312,7 +312,7 @@ describe('PerpsProOpenOrderCard', () => {
       color: 'neutral-title-1',
       fontFamily: 'SF Pro Rounded',
       fontSize: 14,
-      fontWeight: '500',
+      fontWeight: '700',
       lineHeight: 18,
     });
     expect(StyleSheet.flatten(cancelButton.props.style)).toMatchObject({
@@ -388,9 +388,8 @@ describe('PerpsProOpenOrderCard', () => {
     expect(sellSideTagStyle.borderWidth).toBeUndefined();
     expect(screen.getByText('Stop Market').props.style).toMatchObject({
       color: 'red-default',
-      fontFamily: 'SF Pro Rounded',
+      ...RoundedFontStyles.medium,
       fontSize: 12,
-      fontWeight: '500',
       lineHeight: 16,
     });
     expect(screen.getByText('S').props.style).toMatchObject({
@@ -414,9 +413,8 @@ describe('PerpsProOpenOrderCard', () => {
     );
     expect(sourceTextStyle).toEqual({
       color: 'neutral-foot',
-      fontFamily: 'SF Pro Rounded',
+      ...RoundedFontStyles.medium,
       fontSize: 12,
-      fontWeight: '500',
       lineHeight: 16,
     });
     expect(sourceTextStyle.fontVariant).toBeUndefined();

@@ -11,11 +11,13 @@ const isLegacyArchitecture = isLegacyReactNativeArchitecture();
  * @type {import('@react-native-community/cli-types').Config}
  */
 module.exports = {
-  assets: ['./assets/fonts', './assets/custom'],
+  // Apple system fonts are resolved by UIKit on iOS, never bundled (ITMS-91182).
+  assets: ['./assets/custom'],
   iosAssets: [
     // './assets/android/builtin-pages'
   ],
   androidAssets: [
+    './assets/fonts',
     // './assets/ios/builtin-pages'
   ],
   dependencies: {

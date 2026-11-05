@@ -87,12 +87,6 @@ export function setGasAccountSigSync(
   requireGasAccountService().setGasAccountSig(...args);
 }
 
-export function setGasAccountCurrentBalanceStateSync(
-  ...args: Parameters<GasAccountService['setCurrentBalanceState']>
-) {
-  requireGasAccountService().setCurrentBalanceState(...args);
-}
-
 export function setGasAccountAccountsWithBalanceSync(
   ...args: Parameters<GasAccountService['setAccountsWithGasAccountBalance']>
 ) {
@@ -125,26 +119,6 @@ export function getGasAccountAccountsWithBalanceSnapshot() {
       'gasAccountService',
     )?.getAccountsWithGasAccountBalance() || []
   );
-}
-
-export function getGasAccountCurrentBalanceStateSnapshot() {
-  return (
-    getRegisteredService('gasAccountService')?.getCurrentBalanceState() || {
-      accountId: undefined,
-      hasBalance: undefined,
-    }
-  );
-}
-
-export function hasGasAccountTrackedGa4ActiveTodaySnapshot() {
-  return (
-    getRegisteredService('gasAccountService')?.hasTrackedGa4ActiveToday() ||
-    false
-  );
-}
-
-export async function markGasAccountLoggedIn() {
-  return gasAccountServiceApi.markLoggedIn();
 }
 
 export async function setGasAccountLastDepositAccount(

@@ -77,6 +77,7 @@ type DuplexDefs = {
     receive: {
       type: 'TRADINGVIEW_MESSAGE';
       data:
+        | import('../pages/tradingview-candle-chart/types').SimpleChartMessage
         | {
             type: 'SET_CANDLESTICK_DATA';
             data: Array<TradingViewCandlestickData>;
@@ -174,8 +175,13 @@ type DuplexDefs = {
         candleDataAppliedAck?: boolean;
         olderCandleRequest?: boolean;
         perpsProKlineProtocolVersion?: number;
+        perpsSimpleKlineProtocolVersion?: number;
       };
     };
+    receive: never;
+  };
+  TradingView_Simple: {
+    post: import('../pages/tradingview-candle-chart/types').SimpleChartEvent;
     receive: never;
   };
   TradingView_CandleDataApplied: {

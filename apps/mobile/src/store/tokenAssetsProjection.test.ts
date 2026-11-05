@@ -1,4 +1,6 @@
 import type { ITokenItem } from '@/types/assets';
+import React, { type ReactNode } from 'react';
+import { act, renderHook } from '@testing-library/react-native';
 
 jest.mock('@/core/apis/account', () => ({
   getTop10MyAccounts: jest.fn(() => []),
@@ -78,6 +80,9 @@ import {
   scheduleAssetProjectionPersistence,
 } from './assetProjectionPersistence';
 import { notifySyncAbortHandlers } from '@/databases/sync/abort';
+import { createStoreActivityScope } from '@/core/state/storeActivity';
+import { StoreActivityProvider } from '@/hooks/storeActivity/StoreActivityProvider';
+import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 
 const ADDRESS = '0xAbCd';
 const NORMALIZED_ADDRESS = ADDRESS.toLowerCase();
@@ -159,6 +164,92 @@ const replaceAddressTokens = (tokens: ITokenItem[]) => {
   useTokenIndexStore.getState().syncAddressTokens(NORMALIZED_ADDRESS, tokens);
 };
 
+const createPersistedHomeProjection = (tokenId: string) => ({
+  rows: [{ type: 'token', id: tokenId }],
+  groups: [],
+  metadata: {
+    additionalCoreUsdValue: 0,
+    additionalTokenCount: 0,
+    defaultVisibleTokenCount: 1,
+    hasAdditionalTokens: false,
+    hasLpTokens: false,
+    lowValueTokenCount: 0,
+    segmentRowCounts: {
+      additionalDefault: 0,
+      additionalLp: 0,
+      lowValueDefault: 0,
+      lowValueLp: 0,
+      primary: 1,
+    },
+    selectedSegmentMode: 'default',
+  },
+});
+
+const restoreHomeProjection = async (
+  expired = false,
+  projectionOptions: {
+    chainServerId?: string;
+    isLpTokenEnabled?: boolean;
+    tokenDisplayMode?: 'byAddress' | 'byAsset' | 'bySymbol';
+  } = {},
+) => {
+  const visibleToken = createToken('visible-token', { usd_value: 20 });
+  const visibleTokenId = buildTokenEntityId(visibleToken);
+  mockedTokenItemEntity.isExpired.mockResolvedValue(expired);
+  mockedRestoreAssetProjection.mockResolvedValueOnce(
+    createPersistedHomeProjection(visibleTokenId) as never,
+  );
+  mockedTokenItemEntity.batchMultiAddressTokensByResourceIds.mockResolvedValueOnce(
+    [visibleToken] as never,
+  );
+  const key = prepareMultiAddressTokenAssetsProjection({
+    addresses: [ADDRESS],
+    tokenDisplayMode: 'byAddress',
+    ...projectionOptions,
+  });
+  await tokenListStore.getState().batchGetTokenList([ADDRESS], false, {
+    preferredMultiAssetsProjectionKey: key,
+  });
+  const expectedRows = [{ type: 'token', tokenId: visibleTokenId }];
+  expect(
+    useTokenAssetsIndexStore.getState().multiAssetsResultByKey[key]?.rows,
+  ).toEqual(expectedRows);
+  expect(
+    tokenListStore.getState().tokenListMap[NORMALIZED_ADDRESS],
+  ).toBeUndefined();
+  expect(
+    tokenListStore.getState().sourceSnapshotReadyByAddress[NORMALIZED_ADDRESS],
+  ).toBe(expired ? undefined : true);
+  return { key, visibleToken, visibleTokenId, expectedRows };
+};
+
+const restoreUnindexedHomeProjection = async () => {
+  const visibleToken = createToken('visible-token', { usd_value: 20 });
+  const visibleTokenId = buildTokenEntityId(visibleToken);
+  mockedRestoreAssetProjection.mockResolvedValueOnce(
+    createPersistedHomeProjection(visibleTokenId) as never,
+  );
+  mockedTokenItemEntity.batchMultiAddressTokensByResourceIds.mockResolvedValueOnce(
+    [visibleToken] as never,
+  );
+  const key = prepareMultiAddressTokenAssetsProjection({
+    addresses: [ADDRESS, SECOND_ADDRESS],
+    tokenDisplayMode: 'byAddress',
+  });
+  await waitFor(
+    () =>
+      useTokenAssetsIndexStore.getState().multiAssetsResultByKey[key]?.rows
+        .length === 1,
+  );
+  await waitForNextTask();
+  expect(useTokenIndexStore.getState().addressTokenIds).toEqual({});
+  expect(tokenListStore.getState().sourceSnapshotReadyByAddress).toEqual({});
+  return {
+    key,
+    result: useTokenAssetsIndexStore.getState().multiAssetsResultByKey[key],
+  };
+};
+
 describe('single-address token assets projection', () => {
   beforeEach(() => {
     notifySyncAbortHandlers('token-assets-projection-test-reset');
@@ -178,16 +269,18 @@ describe('single-address token assets projection', () => {
     tokenEntityResourceStore.upsertTokens([], 'remote', {
       pruneMissing: true,
     });
-    useTokenIndexStore.setState({
-      addressTokenIds: {},
-      addressVersions: {},
-      tokenStaticMap: {},
-    });
     tokenListStore.setState({
       tokenListMap: {},
       sourceSnapshotReadyByAddress: {},
       isLoading: false,
       isLoadingByAddress: {},
+    });
+    // Clearing the source map synchronously updates its registered indexes.
+    // Reset those derived stores last so the next case starts unhydrated.
+    useTokenIndexStore.setState({
+      addressTokenIds: {},
+      addressVersions: {},
+      tokenStaticMap: {},
     });
   });
 
@@ -530,6 +623,901 @@ describe('single-address token assets projection', () => {
     expect(
       useTokenAssetsIndexStore.getState().multiAssetsResultByKey[key]?.rows,
     ).toEqual([{ type: 'token', tokenId: visibleTokenId }]);
+  });
+
+  it.each([
+    ['unchanged', [ADDRESS, SECOND_ADDRESS]],
+    ['reordered', [SECOND_ADDRESS, ADDRESS]],
+  ] as const)(
+    'retains a projection-only Home snapshot when the same address scope is %s',
+    async (_label, nextAddresses) => {
+      const { key, result: restoredResult } =
+        await restoreUnindexedHomeProjection();
+      const publishedRowCounts: number[] = [];
+      const unsubscribe = useTokenAssetsIndexStore.subscribe(state => {
+        publishedRowCounts.push(state.multiAssetsResultByKey[key].rows.length);
+      });
+
+      try {
+        const reusedKey = prepareMultiAddressTokenAssetsProjection({
+          addresses: [...nextAddresses],
+          tokenDisplayMode: 'byAddress',
+        });
+
+        expect(reusedKey).toBe(key);
+        expect(
+          useTokenAssetsIndexStore.getState().multiAssetsResultByKey[key],
+        ).toBe(restoredResult);
+        expect(
+          useTokenAssetsIndexStore.getState().multiAssetsAvailabilityByKey[key],
+        ).toBe('ready');
+        expect(publishedRowCounts).not.toContain(0);
+        expect(mockedRestoreAssetProjection).toHaveBeenCalledTimes(1);
+        expect(
+          mockedTokenItemEntity.batchMultiAddressTokens,
+        ).not.toHaveBeenCalled();
+      } finally {
+        unsubscribe();
+      }
+    },
+  );
+
+  it.each([
+    { addresses: [SECOND_ADDRESS], tokenDisplayMode: 'byAddress' as const },
+    {
+      addresses: [ADDRESS, SECOND_ADDRESS],
+      chainServerId: 'matic',
+      tokenDisplayMode: 'byAddress' as const,
+    },
+    {
+      addresses: [ADDRESS, SECOND_ADDRESS],
+      tokenDisplayMode: 'byAsset' as const,
+    },
+  ])(
+    'does not reuse a restored Home projection for a different scope: %j',
+    async input => {
+      const { key, result } = await restoreUnindexedHomeProjection();
+
+      const nextKey = prepareMultiAddressTokenAssetsProjection(input);
+
+      expect(nextKey).not.toBe(key);
+      expect(
+        useTokenAssetsIndexStore.getState().multiAssetsResultByKey[nextKey]
+          .rows,
+      ).toEqual([]);
+      expect(
+        useTokenAssetsIndexStore.getState().multiAssetsResultByKey[key],
+      ).toBe(result);
+    },
+  );
+
+  it('does not reuse a projection-only Home snapshot after cache invalidation', async () => {
+    const { key } = await restoreUnindexedHomeProjection();
+    notifySyncAbortHandlers('invalidate-restored-home-projection');
+
+    prepareMultiAddressTokenAssetsProjection({
+      addresses: [SECOND_ADDRESS, ADDRESS],
+      tokenDisplayMode: 'byAddress',
+    });
+
+    expect(
+      useTokenAssetsIndexStore.getState().multiAssetsResultByKey[key].rows,
+    ).toEqual([]);
+  });
+
+  it('replaces a retained Home projection when all address sources become empty', async () => {
+    const { key } = await restoreUnindexedHomeProjection();
+    prepareMultiAddressTokenAssetsProjection({
+      addresses: [SECOND_ADDRESS, ADDRESS],
+      tokenDisplayMode: 'byAddress',
+    });
+
+    tokenListStore.setState({
+      tokenListMap: {
+        [NORMALIZED_ADDRESS]: [],
+        [NORMALIZED_SECOND_ADDRESS]: [],
+      },
+      sourceSnapshotReadyByAddress: {
+        [NORMALIZED_ADDRESS]: true,
+        [NORMALIZED_SECOND_ADDRESS]: true,
+      },
+    });
+    prepareMultiAddressTokenAssetsProjection({
+      addresses: [SECOND_ADDRESS, ADDRESS],
+      tokenDisplayMode: 'byAddress',
+    });
+
+    expect(
+      useTokenAssetsIndexStore.getState().multiAssetsResultByKey[key].rows,
+    ).toEqual([]);
+    expect(
+      useTokenAssetsIndexStore.getState().multiAssetsAvailabilityByKey[key],
+    ).toBe('ready');
+    expect(useTokenIndexStore.getState().addressTokenIds).toEqual({
+      [NORMALIZED_ADDRESS]: [],
+      [NORMALIZED_SECOND_ADDRESS]: [],
+    });
+  });
+
+  it('does not freeze a refreshed address while another Home address is unindexed', async () => {
+    const { key } = await restoreUnindexedHomeProjection();
+    prepareMultiAddressTokenAssetsProjection({
+      addresses: [SECOND_ADDRESS, ADDRESS],
+      tokenDisplayMode: 'byAddress',
+    });
+    const updated = createToken('updated-token', { usd_value: 30 });
+
+    tokenListStore.setState({
+      tokenListMap: { [NORMALIZED_ADDRESS]: [updated] },
+      sourceSnapshotReadyByAddress: { [NORMALIZED_ADDRESS]: true },
+    });
+    prepareMultiAddressTokenAssetsProjection({
+      addresses: [SECOND_ADDRESS, ADDRESS],
+      tokenDisplayMode: 'byAddress',
+    });
+
+    expect(
+      useTokenAssetsIndexStore.getState().multiAssetsResultByKey[key].rows,
+    ).toEqual([{ type: 'token', tokenId: buildTokenEntityId(updated) }]);
+    expect(
+      useTokenIndexStore.getState().addressTokenIds[NORMALIZED_SECOND_ADDRESS],
+    ).toBeUndefined();
+  });
+
+  it.each(['replace', 'empty'] as const)(
+    'retains the other restored address when one source publishes an authoritative %s snapshot',
+    async change => {
+      const first = createToken('cached-first', { usd_value: 20 });
+      const second = createToken('cached-second', {
+        owner_addr: NORMALIZED_SECOND_ADDRESS,
+        usd_value: 10,
+      });
+      const firstId = buildTokenEntityId(first);
+      const secondId = buildTokenEntityId(second);
+      const persisted = createPersistedHomeProjection(firstId);
+      mockedRestoreAssetProjection.mockResolvedValueOnce({
+        ...persisted,
+        rows: [
+          { type: 'token', id: firstId },
+          { type: 'token', id: secondId },
+        ],
+        metadata: {
+          ...persisted.metadata,
+          defaultVisibleTokenCount: 2,
+          segmentRowCounts: {
+            ...persisted.metadata.segmentRowCounts,
+            primary: 2,
+          },
+        },
+      } as never);
+      mockedTokenItemEntity.batchMultiAddressTokensByResourceIds.mockResolvedValueOnce(
+        [first, second] as never,
+      );
+      const key = prepareMultiAddressTokenAssetsProjection({
+        addresses: [ADDRESS, SECOND_ADDRESS],
+        tokenDisplayMode: 'byAddress',
+      });
+      await waitFor(
+        () =>
+          useTokenAssetsIndexStore.getState().multiAssetsResultByKey[key]?.rows
+            .length === 2,
+      );
+      await waitForNextTask();
+      const updated = createToken('new-first', { usd_value: 30 });
+      const observed: string[][] = [];
+      const unsubscribe = useTokenAssetsIndexStore.subscribe(state => {
+        observed.push(state.multiAssetsResultByKey[key].tokenIds);
+      });
+      try {
+        tokenListStore.setState({
+          tokenListMap: {
+            [NORMALIZED_ADDRESS]: change === 'empty' ? [] : [updated],
+          },
+          sourceSnapshotReadyByAddress: { [NORMALIZED_ADDRESS]: true },
+        });
+        const expected =
+          change === 'empty'
+            ? [secondId]
+            : [buildTokenEntityId(updated), secondId];
+        expect(
+          useTokenAssetsIndexStore.getState().multiAssetsResultByKey[key]
+            .tokenIds,
+        ).toEqual(expected);
+        expect(observed.every(ids => ids.includes(secondId))).toBe(true);
+        expect(tokenEntityResourceStore.getValue(firstId)).toBeUndefined();
+        expect(
+          useTokenIndexStore.getState().addressTokenIds[
+            NORMALIZED_SECOND_ADDRESS
+          ],
+        ).toBeUndefined();
+        expect(
+          tokenListStore.getState().tokenListMap[NORMALIZED_SECOND_ADDRESS],
+        ).toBeUndefined();
+        const otherScope = prepareMultiAddressTokenAssetsProjection({
+          addresses: [SECOND_ADDRESS],
+          tokenDisplayMode: 'byAddress',
+        });
+        expect(
+          useTokenAssetsIndexStore.getState().multiAssetsResultByKey[otherScope]
+            .rows,
+        ).toEqual([]);
+        // Removing A must not restore its former scene-only membership.
+        tokenListStore.setState({ tokenListMap: {} });
+        expect(
+          useTokenAssetsIndexStore.getState().multiAssetsResultByKey[key]
+            .tokenIds,
+        ).toEqual([secondId]);
+        notifySyncAbortHandlers('invalidate-partially-refreshed-scene');
+        tokenListStore.setState({
+          tokenListMap: { [NORMALIZED_ADDRESS]: [updated] },
+        });
+        expect(
+          useTokenAssetsIndexStore.getState().multiAssetsResultByKey[key]
+            .tokenIds,
+        ).toEqual([buildTokenEntityId(updated)]);
+        // The fallback is a scene-only display value, not another address's
+        // source snapshot. Once B explicitly clears, neither cached row returns.
+        tokenListStore.setState({
+          tokenListMap: {
+            [NORMALIZED_ADDRESS]: [],
+            [NORMALIZED_SECOND_ADDRESS]: [],
+          },
+          sourceSnapshotReadyByAddress: {
+            [NORMALIZED_ADDRESS]: true,
+            [NORMALIZED_SECOND_ADDRESS]: true,
+          },
+        });
+        expect(
+          useTokenAssetsIndexStore.getState().multiAssetsResultByKey[key].rows,
+        ).toEqual([]);
+      } finally {
+        unsubscribe();
+      }
+    },
+  );
+
+  it('updates the partial source while Home is inactive and catches up its display once', async () => {
+    const { key, result: restored } = await restoreUnindexedHomeProjection();
+    const scope = createStoreActivityScope({ active: true, label: 'home' });
+    let renderCount = 0;
+    const { result, unmount } = renderHook(
+      () => {
+        renderCount += 1;
+        return useActivityStore(
+          useTokenAssetsIndexStore,
+          state => state.multiAssetsResultByKey[key].segments.primary.rows,
+        );
+      },
+      {
+        wrapper: ({ children }: { children: ReactNode }) =>
+          React.createElement(StoreActivityProvider, { scope, children }),
+      },
+    );
+    try {
+      act(() => scope.setActive(false));
+      const inactiveRenderCount = renderCount;
+      const newToken = createToken('new-second', {
+        owner_addr: NORMALIZED_SECOND_ADDRESS,
+        usd_value: 10,
+      });
+      act(() => {
+        tokenListStore.setState({
+          tokenListMap: { [NORMALIZED_SECOND_ADDRESS]: [newToken] },
+          sourceSnapshotReadyByAddress: { [NORMALIZED_SECOND_ADDRESS]: true },
+        });
+      });
+      const latest =
+        useTokenAssetsIndexStore.getState().multiAssetsResultByKey[key];
+      expect(latest.tokenIds).toEqual([
+        ...restored.tokenIds,
+        buildTokenEntityId(newToken),
+      ]);
+      expect(result.current).toBe(restored.segments.primary.rows);
+      expect(renderCount).toBe(inactiveRenderCount);
+      act(() => scope.setActive(true));
+      expect(result.current).toBe(latest.segments.primary.rows);
+      expect(renderCount).toBe(inactiveRenderCount + 1);
+      expect(
+        tokenListStore.getState().tokenListMap[NORMALIZED_ADDRESS],
+      ).toBeUndefined();
+    } finally {
+      unmount();
+    }
+  });
+
+  it.each(['byAsset', 'bySymbol'] as const)(
+    'keeps all cached group members during a partial %s source update',
+    async tokenDisplayMode => {
+      const first = createToken('eth', { usd_value: 20, amount: 2 });
+      const second = createToken('eth', {
+        owner_addr: NORMALIZED_SECOND_ADDRESS,
+        usd_value: 10,
+        amount: 1,
+      });
+      const firstId = buildTokenEntityId(first);
+      const secondId = buildTokenEntityId(second);
+      const key = getMultiAssetsCacheKey(
+        [ADDRESS, SECOND_ADDRESS],
+        undefined,
+        undefined,
+        tokenDisplayMode,
+      );
+      const groupKey = tokenDisplayMode === 'byAsset' ? 'eth::eth' : 'eth';
+      const groupId = `${key}::primary::${groupKey}`;
+      mockedRestoreAssetProjection.mockResolvedValueOnce({
+        ...createPersistedHomeProjection(firstId),
+        rows: [{ type: 'token-group', id: groupId }],
+        groups: [{ id: groupId, memberIds: [firstId, secondId] }],
+      } as never);
+      mockedTokenItemEntity.batchMultiAddressTokensByResourceIds.mockResolvedValueOnce(
+        [first, second] as never,
+      );
+      prepareMultiAddressTokenAssetsProjection({
+        addresses: [ADDRESS, SECOND_ADDRESS],
+        tokenDisplayMode,
+      });
+      await waitFor(
+        () =>
+          useTokenAssetsIndexStore.getState().multiAssetsResultByKey[key]?.rows
+            .length === 1,
+      );
+      await waitForNextTask();
+      const updated = { ...first, amount: 4, usd_value: 40 };
+      tokenListStore.setState({
+        tokenListMap: { [NORMALIZED_ADDRESS]: [updated] },
+        sourceSnapshotReadyByAddress: { [NORMALIZED_ADDRESS]: true },
+      });
+      const row =
+        useTokenAssetsIndexStore.getState().multiAssetsResultByKey[key].rows[0];
+      expect(row.type).toBe('group');
+      expect(
+        tokenGroupResourceStore.getValue((row as { groupId: never }).groupId),
+      ).toMatchObject({
+        memberTokenIds: [firstId, secondId],
+        summary: { amount: 5, usd_value: 50 },
+      });
+      tokenListStore.setState({ tokenListMap: { [NORMALIZED_ADDRESS]: [] } });
+      const clearedRow =
+        useTokenAssetsIndexStore.getState().multiAssetsResultByKey[key].rows[0];
+      expect(
+        tokenGroupResourceStore.getValue(
+          (clearedRow as { groupId: never }).groupId,
+        ),
+      ).toMatchObject({
+        memberTokenIds: [secondId],
+        summary: { amount: 1, usd_value: 10 },
+      });
+    },
+  );
+
+  it.each(['success', 'missing', 'reject', 'cancel'] as const)(
+    'releases a staged %s reader without blocking live sources or resurrecting a refreshed owner',
+    async outcome => {
+      const first = createToken('first', { usd_value: 20 });
+      const second = createToken('second', {
+        owner_addr: NORMALIZED_SECOND_ADDRESS,
+        usd_value: 10,
+      });
+      const later = createToken('second-later', {
+        owner_addr: NORMALIZED_SECOND_ADDRESS,
+        is_core: null,
+        usd_value: 1,
+      });
+      const stale = createToken('first-later', { is_core: null, usd_value: 1 });
+      const ids = [first, second, later, stale].map(buildTokenEntityId);
+      const deferredEntities = deferred<ITokenItem[]>();
+      const persisted = createPersistedHomeProjection(ids[0]);
+      mockedRestoreAssetProjection.mockResolvedValueOnce({
+        ...persisted,
+        rows: ids.map(id => ({ type: 'token', id })),
+        metadata: {
+          ...persisted.metadata,
+          entityRestoreMode: 'staged-v1',
+          groupPrimaryTokenIds: {},
+          lowValueTokenPreviewLogoUrls: [],
+          lpLowValueTokenPreviewLogoUrls: [],
+          defaultVisibleTokenCount: 2,
+          additionalTokenCount: 2,
+          hasAdditionalTokens: true,
+          segmentRowCounts: {
+            ...persisted.metadata.segmentRowCounts,
+            primary: 2,
+            additionalDefault: 2,
+          },
+        },
+      } as never);
+      mockedTokenItemEntity.batchMultiAddressTokensByResourceIds
+        .mockResolvedValueOnce([first, second] as never)
+        .mockImplementationOnce(() => deferredEntities.promise as never);
+      const key = prepareMultiAddressTokenAssetsProjection({
+        addresses: [ADDRESS, SECOND_ADDRESS],
+        tokenDisplayMode: 'byAddress',
+      });
+      await waitFor(
+        () =>
+          useTokenAssetsIndexStore.getState().multiAssetsResultByKey[key]?.rows
+            .length === 4,
+      );
+      await waitForNextTask();
+      await waitFor(
+        () =>
+          mockedTokenItemEntity.batchMultiAddressTokensByResourceIds.mock.calls
+            .length === 2,
+      );
+      tokenListStore.setState({
+        tokenListMap: { [NORMALIZED_ADDRESS]: [] },
+        sourceSnapshotReadyByAddress: { [NORMALIZED_ADDRESS]: true },
+      });
+      expect(
+        useTokenAssetsIndexStore.getState().multiAssetsResultByKey[key]
+          .tokenIds,
+      ).toContain(ids[1]);
+      const updated = createToken('new-first', { usd_value: 30 });
+      if (outcome === 'cancel') {
+        notifySyncAbortHandlers('cancel-partial-address-restore');
+        tokenListStore.setState({
+          tokenListMap: { [NORMALIZED_ADDRESS]: [updated] },
+        });
+      }
+      if (outcome === 'reject') {
+        deferredEntities.reject(new Error('cached entity query failed'));
+      } else {
+        deferredEntities.resolve(outcome === 'missing' ? [] : [later, stale]);
+      }
+      if (outcome === 'success') {
+        await waitFor(
+          () => tokenEntityResourceStore.getValue(ids[2]) === later,
+        );
+      }
+      await waitForNextTask();
+      await waitForNextTask();
+      expect(tokenEntityResourceStore.getValue(ids[0])).toBeUndefined();
+      expect(tokenEntityResourceStore.getValue(ids[3])).toBeUndefined();
+      const remainingIds = outcome === 'success' ? [ids[1], ids[2]] : [ids[1]];
+      expect(
+        useTokenAssetsIndexStore.getState().multiAssetsResultByKey[key]
+          .tokenIds,
+      ).toEqual(
+        outcome === 'cancel' ? [buildTokenEntityId(updated)] : remainingIds,
+      );
+      if (outcome !== 'success') {
+        expect(tokenEntityResourceStore.getValue(ids[2])).toBeUndefined();
+      }
+      // A reader reaching a terminal state cannot freeze later structural
+      // updates, even if a cached B entity was missing or its query failed.
+      tokenListStore.setState({
+        tokenListMap: { [NORMALIZED_ADDRESS]: [updated] },
+      });
+      expect(
+        useTokenAssetsIndexStore.getState().multiAssetsResultByKey[key]
+          .tokenIds,
+      ).toEqual([
+        buildTokenEntityId(updated),
+        ...(outcome === 'cancel' ? [] : remainingIds),
+      ]);
+      expect(
+        tokenListStore.getState().tokenListMap[NORMALIZED_SECOND_ADDRESS],
+      ).toBeUndefined();
+      expect(
+        useTokenIndexStore.getState().addressTokenIds[
+          NORMALIZED_SECOND_ADDRESS
+        ],
+      ).toBeUndefined();
+    },
+  );
+
+  it.each(['empty', 'outdated'] as const)(
+    'retains a projection-only Home snapshot when a manual refresh receives an %s cache and then fails',
+    async cacheResult => {
+      const { key, visibleToken, visibleTokenId, expectedRows } =
+        await restoreHomeProjection();
+      const cachedTokens =
+        cacheResult === 'empty'
+          ? []
+          : [createToken('outdated-token', { usd_value: 30 })];
+      mockedQueryTokensCache.mockResolvedValueOnce(cachedTokens);
+      mockedUsedChainList.mockRejectedValueOnce(createHttpError(429) as never);
+
+      await tokenListStore.getState().batchGetTokenList([ADDRESS], true);
+
+      expect(
+        useTokenAssetsIndexStore.getState().multiAssetsResultByKey[key]?.rows,
+      ).toEqual(expectedRows);
+      expect(tokenEntityResourceStore.getValue(visibleTokenId)).toEqual(
+        visibleToken,
+      );
+      expect(tokenListStore.getState().isLoading).toBe(false);
+      expect(mockedSyncRemoteTokensForAddresses).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each(['chain-discovery', 'all-chains'] as const)(
+    'retains an expired Home projection after an empty cache and %s failure',
+    async failure => {
+      mockedQueryTokensCache.mockResolvedValueOnce([]);
+      if (failure === 'chain-discovery') {
+        mockedUsedChainList.mockRejectedValueOnce(createHttpError(429));
+      } else {
+        mockedRequestOpenApiWithChainId.mockRejectedValueOnce(
+          createHttpError(429),
+        );
+      }
+
+      await restoreHomeProjection(true);
+
+      expect(
+        mockedTokenItemEntity.batchMultiAddressTokens,
+      ).not.toHaveBeenCalled();
+      expect(mockedSyncRemoteTokensForAddresses).not.toHaveBeenCalled();
+      expect(tokenListStore.getState().isLoading).toBe(false);
+    },
+  );
+
+  it.each([
+    { tokenDisplayMode: 'byAddress' as const },
+    { chainServerId: 'eth', tokenDisplayMode: 'byAsset' as const },
+    { isLpTokenEnabled: true, tokenDisplayMode: 'bySymbol' as const },
+  ])(
+    'retains an expired $tokenDisplayMode projection through a later failed manual refresh without a projection key',
+    async projectionOptions => {
+      mockedQueryTokensCache
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([]);
+      mockedUsedChainList
+        .mockRejectedValueOnce(createHttpError(429))
+        .mockRejectedValueOnce(createHttpError(429));
+      const { key, expectedRows } = await restoreHomeProjection(
+        true,
+        projectionOptions,
+      );
+
+      await tokenListStore.getState().batchGetTokenList([ADDRESS], true);
+
+      expect(
+        useTokenAssetsIndexStore.getState().multiAssetsResultByKey[key]?.rows,
+      ).toEqual(expectedRows);
+      expect(
+        tokenListStore.getState().sourceSnapshotReadyByAddress[
+          NORMALIZED_ADDRESS
+        ],
+      ).toBeUndefined();
+      expect(
+        mockedTokenItemEntity.batchMultiAddressTokens,
+      ).not.toHaveBeenCalled();
+    },
+  );
+
+  it('retains failed-chain data when an expired projection is manually refreshed without its key', async () => {
+    mockedQueryTokensCache.mockResolvedValueOnce([]).mockResolvedValueOnce([]);
+    mockedUsedChainList.mockRejectedValueOnce(createHttpError(429));
+    const { visibleToken } = await restoreHomeProjection(true);
+    const freshArbitrumToken = createToken('fresh-arbitrum', {
+      chain: 'arb',
+      usd_value: 30,
+    });
+    mockedTokenItemEntity.batchMultiAddressTokens.mockResolvedValueOnce([
+      visibleToken,
+    ] as never);
+    mockedUsedChainList.mockResolvedValueOnce([
+      { id: 'eth' },
+      { id: 'arb' },
+    ] as never);
+    mockedRequestOpenApiWithChainId
+      .mockRejectedValueOnce(createHttpError(429))
+      .mockResolvedValueOnce([freshArbitrumToken]);
+
+    await tokenListStore.getState().batchGetTokenList([ADDRESS], true);
+
+    expect(tokenListStore.getState().tokenListMap[NORMALIZED_ADDRESS]).toEqual([
+      visibleToken,
+      freshArbitrumToken,
+    ]);
+    expect(mockedTokenItemEntity.batchMultiAddressTokens).toHaveBeenCalledTimes(
+      1,
+    );
+    expect(mockedTokenItemEntity.batchMultiAddressTokens).toHaveBeenCalledWith([
+      NORMALIZED_ADDRESS,
+    ]);
+    expect(mockedSyncRemoteTokensForAddresses).not.toHaveBeenCalled();
+  });
+
+  it('allows an authoritative empty result to replace an expired projection after a failed refresh', async () => {
+    mockedQueryTokensCache.mockResolvedValueOnce([]).mockResolvedValueOnce([]);
+    mockedUsedChainList.mockRejectedValueOnce(createHttpError(429));
+    const { key } = await restoreHomeProjection(true);
+    mockedRequestOpenApiWithChainId.mockResolvedValueOnce([]);
+
+    await tokenListStore.getState().batchGetTokenList([ADDRESS], true);
+
+    expect(
+      useTokenAssetsIndexStore.getState().multiAssetsResultByKey[key]?.rows,
+    ).toEqual([]);
+    expect(tokenListStore.getState().tokenListMap[NORMALIZED_ADDRESS]).toEqual(
+      [],
+    );
+    expect(mockedSyncRemoteTokensForAddresses).toHaveBeenCalledWith({
+      [NORMALIZED_ADDRESS]: [],
+    });
+  });
+
+  it('does not let another address inherit an expired projection cache guard', async () => {
+    mockedQueryTokensCache.mockResolvedValueOnce([]);
+    mockedUsedChainList.mockRejectedValueOnce(createHttpError(429));
+    const { key, expectedRows } = await restoreHomeProjection(true);
+    const secondToken = createToken('second-cached', {
+      owner_addr: NORMALIZED_SECOND_ADDRESS,
+      usd_value: 30,
+    });
+    mockedQueryTokensCache.mockResolvedValueOnce([secondToken]);
+    mockedUsedChainList.mockRejectedValueOnce(createHttpError(429));
+
+    await tokenListStore.getState().batchGetTokenList([SECOND_ADDRESS], true);
+
+    expect(
+      tokenListStore.getState().tokenListMap[NORMALIZED_SECOND_ADDRESS],
+    ).toEqual([secondToken]);
+    expect(
+      useTokenAssetsIndexStore.getState().multiAssetsResultByKey[key]?.rows,
+    ).toEqual(expectedRows);
+  });
+
+  it('does not retain a pre-reset projection when a new cache snapshot arrives', async () => {
+    mockedQueryTokensCache.mockResolvedValueOnce([]);
+    mockedUsedChainList.mockRejectedValueOnce(createHttpError(429));
+    const { key, visibleTokenId } = await restoreHomeProjection(true);
+    notifySyncAbortHandlers('clear-token-projection-cache');
+    const replacement = createToken('after-reset', { usd_value: 30 });
+    mockedQueryTokensCache.mockResolvedValueOnce([replacement]);
+    mockedUsedChainList.mockRejectedValueOnce(createHttpError(429));
+
+    await tokenListStore.getState().batchGetTokenList([ADDRESS], true);
+
+    expect(tokenListStore.getState().tokenListMap[NORMALIZED_ADDRESS]).toEqual([
+      replacement,
+    ]);
+    expect(
+      useTokenAssetsIndexStore.getState().multiAssetsResultByKey[key]?.rows,
+    ).toEqual([{ type: 'token', tokenId: buildTokenEntityId(replacement) }]);
+    expect(tokenEntityResourceStore.getValue(visibleTokenId)).toBeUndefined();
+  });
+
+  it('does not publish a persisted projection that resolves after a cache reset', async () => {
+    const staleToken = createToken('before-reset', { usd_value: 20 });
+    const staleTokenId = buildTokenEntityId(staleToken);
+    const pendingProjection =
+      deferred<ReturnType<typeof createPersistedHomeProjection>>();
+    mockedRestoreAssetProjection.mockReturnValueOnce(
+      pendingProjection.promise as never,
+    );
+    mockedTokenItemEntity.batchMultiAddressTokensByResourceIds.mockResolvedValue(
+      [staleToken] as never,
+    );
+    const key = prepareMultiAddressTokenAssetsProjection({
+      addresses: [ADDRESS],
+      tokenDisplayMode: 'byAddress',
+    });
+    notifySyncAbortHandlers('clear-token-projection-during-restore');
+    pendingProjection.resolve(createPersistedHomeProjection(staleTokenId));
+    await waitForNextTask();
+    mockedTokenItemEntity.batchMultiAddressTokensByResourceIds.mockResolvedValue(
+      [],
+    );
+
+    expect(
+      useTokenAssetsIndexStore.getState().multiAssetsResultByKey[key]?.rows,
+    ).toEqual([]);
+    expect(tokenEntityResourceStore.getValue(staleTokenId)).toBeUndefined();
+    expect(
+      mockedTokenItemEntity.batchMultiAddressTokensByResourceIds,
+    ).not.toHaveBeenCalled();
+  });
+
+  it('does not retain a projection after its store entries are cleared', async () => {
+    mockedQueryTokensCache.mockResolvedValueOnce([]);
+    mockedUsedChainList.mockRejectedValueOnce(createHttpError(429));
+    await restoreHomeProjection(true);
+    useTokenAssetsIndexStore.setState({
+      multiAssetsConfigByKey: {},
+      multiAssetsResultByKey: {},
+      multiAssetsAvailabilityByKey: {},
+    });
+    const replacement = createToken('after-store-clear', { usd_value: 30 });
+    mockedQueryTokensCache.mockResolvedValueOnce([replacement]);
+    mockedUsedChainList.mockRejectedValueOnce(createHttpError(429));
+
+    await tokenListStore.getState().batchGetTokenList([ADDRESS], true);
+
+    expect(tokenListStore.getState().tokenListMap[NORMALIZED_ADDRESS]).toEqual([
+      replacement,
+    ]);
+  });
+
+  it('does not publish restored entities that resolve after a cache reset', async () => {
+    const staleToken = createToken('before-entity-reset', { usd_value: 20 });
+    const staleTokenId = buildTokenEntityId(staleToken);
+    const pendingEntities = deferred<ITokenItem[]>();
+    mockedRestoreAssetProjection.mockResolvedValueOnce(
+      createPersistedHomeProjection(staleTokenId) as never,
+    );
+    mockedTokenItemEntity.batchMultiAddressTokensByResourceIds.mockReturnValueOnce(
+      pendingEntities.promise as never,
+    );
+    const key = prepareMultiAddressTokenAssetsProjection({
+      addresses: [ADDRESS],
+      tokenDisplayMode: 'byAddress',
+    });
+    await waitFor(
+      () =>
+        mockedTokenItemEntity.batchMultiAddressTokensByResourceIds.mock.calls
+          .length === 1,
+    );
+    notifySyncAbortHandlers('clear-token-projection-during-entity-restore');
+    pendingEntities.resolve([staleToken]);
+    await waitForNextTask();
+
+    expect(
+      useTokenAssetsIndexStore.getState().multiAssetsResultByKey[key]?.rows,
+    ).toEqual([]);
+    expect(tokenEntityResourceStore.getValue(staleTokenId)).toBeUndefined();
+  });
+
+  it('does not reuse a pre-reset restore request for a new projection read', async () => {
+    const staleToken = createToken('before-reset', { usd_value: 20 });
+    const replacement = createToken('after-reset', { usd_value: 30 });
+    const pendingOld =
+      deferred<ReturnType<typeof createPersistedHomeProjection>>();
+    const pendingNew =
+      deferred<ReturnType<typeof createPersistedHomeProjection>>();
+    mockedTokenItemEntity.isExpired.mockResolvedValue(false);
+    mockedRestoreAssetProjection
+      .mockReturnValueOnce(pendingOld.promise as never)
+      .mockReturnValueOnce(pendingNew.promise as never);
+    mockedTokenItemEntity.batchMultiAddressTokensByResourceIds.mockResolvedValueOnce(
+      [replacement] as never,
+    );
+    const key = prepareMultiAddressTokenAssetsProjection({
+      addresses: [ADDRESS],
+      tokenDisplayMode: 'byAddress',
+    });
+    notifySyncAbortHandlers('replace-token-projection-restore');
+    const refresh = tokenListStore
+      .getState()
+      .batchGetTokenList([ADDRESS], false, {
+        preferredMultiAssetsProjectionKey: key,
+      });
+    await waitForNextTask();
+    const restoreCallsBeforeOldCompletes =
+      mockedRestoreAssetProjection.mock.calls.length;
+    pendingOld.resolve(
+      createPersistedHomeProjection(buildTokenEntityId(staleToken)),
+    );
+    // Let the old request's finally run while its replacement is still pending.
+    await waitForNextTask();
+    pendingNew.resolve(
+      createPersistedHomeProjection(buildTokenEntityId(replacement)),
+    );
+    await refresh;
+
+    expect(restoreCallsBeforeOldCompletes).toBe(2);
+    expect(
+      useTokenAssetsIndexStore.getState().multiAssetsResultByKey[key]?.rows,
+    ).toEqual([{ type: 'token', tokenId: buildTokenEntityId(replacement) }]);
+    expect(
+      tokenEntityResourceStore.getValue(buildTokenEntityId(staleToken)),
+    ).toBeUndefined();
+  });
+
+  it('retains a restored single-address projection during a failed batch refresh', async () => {
+    const visibleToken = createToken('single-restored', { usd_value: 20 });
+    const visibleTokenId = buildTokenEntityId(visibleToken);
+    mockedRestoreAssetProjection.mockResolvedValueOnce(
+      createPersistedHomeProjection(visibleTokenId) as never,
+    );
+    mockedTokenItemEntity.batchMultiAddressTokensByResourceIds.mockResolvedValueOnce(
+      [visibleToken] as never,
+    );
+    const key = prepareSingleAddressTokenAssetsProjection({ address: ADDRESS });
+    await waitFor(
+      () =>
+        useTokenAssetsIndexStore.getState().singleAssetsResultByKey[key]?.rows
+          .length === 1,
+    );
+    mockedQueryTokensCache.mockResolvedValueOnce([]);
+    mockedUsedChainList.mockRejectedValueOnce(createHttpError(429));
+
+    await tokenListStore.getState().batchGetTokenList([ADDRESS], true);
+
+    expect(
+      useTokenAssetsIndexStore.getState().singleAssetsResultByKey[key]?.rows,
+    ).toEqual([{ type: 'token', tokenId: visibleTokenId }]);
+  });
+
+  it.each(['empty', 'updated'] as const)(
+    'replaces a projection-only Home snapshot with an authoritative %s response',
+    async remoteResult => {
+      const { key, expectedRows } = await restoreHomeProjection();
+      const remoteTokens =
+        remoteResult === 'empty'
+          ? []
+          : [createToken('updated-token', { usd_value: 30 })];
+      const chainDiscovery = deferred<Array<{ id: string }>>();
+      mockedQueryTokensCache.mockResolvedValueOnce([]);
+      mockedUsedChainList.mockReturnValueOnce(chainDiscovery.promise as never);
+      mockedRequestOpenApiWithChainId.mockResolvedValueOnce(remoteTokens);
+      const refresh = tokenListStore
+        .getState()
+        .batchGetTokenList([ADDRESS], true);
+      await waitFor(() => mockedUsedChainList.mock.calls.length === 1);
+      const rowsBeforeAuthoritativeResponse =
+        useTokenAssetsIndexStore.getState().multiAssetsResultByKey[key]?.rows;
+      chainDiscovery.resolve([{ id: 'eth' }]);
+      await refresh;
+
+      expect(rowsBeforeAuthoritativeResponse).toEqual(expectedRows);
+      expect(
+        useTokenAssetsIndexStore.getState().multiAssetsResultByKey[key]?.rows,
+      ).toEqual(
+        remoteTokens.map(token => ({
+          type: 'token',
+          tokenId: buildTokenEntityId(token),
+        })),
+      );
+      expect(
+        tokenListStore.getState().tokenListMap[NORMALIZED_ADDRESS],
+      ).toEqual(remoteTokens);
+      expect(mockedSyncRemoteTokensForAddresses).toHaveBeenCalledWith({
+        [NORMALIZED_ADDRESS]: remoteTokens,
+      });
+    },
+  );
+
+  it('accepts a cached snapshot for a new address without replacing another address projection', async () => {
+    const { key, expectedRows } = await restoreHomeProjection();
+    const secondToken = createToken('second-cached', {
+      owner_addr: NORMALIZED_SECOND_ADDRESS,
+      usd_value: 30,
+    });
+    mockedQueryTokensCache.mockResolvedValueOnce([secondToken]);
+    mockedUsedChainList.mockRejectedValueOnce(createHttpError(429) as never);
+
+    await tokenListStore.getState().batchGetTokenList([SECOND_ADDRESS], true);
+
+    expect(
+      tokenListStore.getState().tokenListMap[NORMALIZED_SECOND_ADDRESS],
+    ).toEqual([secondToken]);
+    expect(
+      useTokenAssetsIndexStore.getState().multiAssetsResultByKey[key]?.rows,
+    ).toEqual(expectedRows);
+  });
+
+  it('ignores an old-scope cached response after Home switches addresses', async () => {
+    const { key, expectedRows } = await restoreHomeProjection();
+    const oldCache = deferred<ITokenItem[]>();
+    const secondToken = createToken('second-cached', {
+      owner_addr: NORMALIZED_SECOND_ADDRESS,
+      usd_value: 30,
+    });
+    mockedQueryTokensCache
+      .mockReturnValueOnce(oldCache.promise)
+      .mockResolvedValueOnce([secondToken]);
+    mockedUsedChainList.mockRejectedValueOnce(createHttpError(429) as never);
+    const oldRefresh = tokenListStore
+      .getState()
+      .batchGetTokenList([ADDRESS], true);
+    await waitFor(() => mockedQueryTokensCache.mock.calls.length === 1);
+    await tokenListStore.getState().batchGetTokenList([SECOND_ADDRESS], true);
+    oldCache.resolve([]);
+    await oldRefresh;
+
+    expect(
+      useTokenAssetsIndexStore.getState().multiAssetsResultByKey[key]?.rows,
+    ).toEqual(expectedRows);
+    expect(
+      tokenListStore.getState().tokenListMap[NORMALIZED_SECOND_ADDRESS],
+    ).toEqual([secondToken]);
+    expect(tokenListStore.getState().isLoading).toBe(false);
+    expect(mockedUsedChainList).toHaveBeenCalledTimes(1);
+    expect(mockedUsedChainList).toHaveBeenCalledWith(NORMALIZED_SECOND_ADDRESS);
   });
 
   it('falls back to full local hydration when the Home projection is missing', async () => {

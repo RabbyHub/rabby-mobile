@@ -1,4 +1,5 @@
 import React, { useCallback } from 'react';
+import { RoundedFontStyles } from '@/core/utils/fonts';
 
 import { noop } from 'lodash';
 import { Pressable, View } from 'react-native';
@@ -39,7 +40,7 @@ const DisableEmodeOverviewModal = ({ onClose }: { onClose: () => void }) => {
       title: '',
       titleStyle: {
         marginTop: 0,
-        fontWeight: '900',
+        ...RoundedFontStyles.heavy,
       },
       sectionStyle: {
         marginTop: 8,

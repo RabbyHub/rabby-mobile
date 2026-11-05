@@ -4,7 +4,6 @@ import { StyleSheet, View, TouchableOpacity, TextStyle } from 'react-native';
 import { BottomSheetInput } from '@/components/Input';
 import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
-import { useAlias } from '@/hooks/alias';
 import IconEdit from '@/assets/icons/approval/editpen.svg';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
 import {
@@ -57,7 +56,7 @@ const AddressMemo = ({
   textStyle?: TextStyle;
 }) => {
   const alias = useApprovalAlias();
-  const addressAlias = alias.accountMap[address]?.alias;
+  const addressAlias = alias.accountMap[address.toLowerCase()]?.alias;
   const [visible, setVisible] = useState(false);
   const [inputText, setInputText] = useState(addressAlias || '');
   const [errorMessage, setErrorMessage] = useState('');

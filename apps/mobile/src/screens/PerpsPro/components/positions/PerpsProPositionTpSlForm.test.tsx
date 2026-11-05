@@ -813,16 +813,11 @@ describe('PerpsProPositionTpSlForm', () => {
 
     const amountInput = screen.getByTestId('perps-pro-position-tpsl-amount');
     fireEvent(amountInput, 'focus');
-    act(() =>
-      screen
-        .getByTestId('perps-pro-position-tpsl-amount-slider-section')
-        .props.onStartShouldSetResponderCapture(),
-    );
+    act(() => mockSliderProps.mock.lastCall?.[0].onSlidingStart(0));
     expect(mockAmountInputBlur).toHaveBeenCalledTimes(1);
     expect(keyboardDismiss).toHaveBeenCalledTimes(1);
 
     act(() => {
-      mockSliderProps.mock.lastCall?.[0].onSlidingStart(0);
       mockSliderProps.mock.lastCall?.[0].onValueChange(50);
       mockSliderProps.mock.lastCall?.[0].onSlidingComplete(50);
     });

@@ -9,6 +9,7 @@ import { useSafeSizes } from '@/hooks/useAppLayout';
 import { useUnmountedRef } from '@/hooks/common/useMount';
 import { SELF_HOST_BASE, SELF_HOST_BASE_PROD } from '@/utils/version';
 import { UpgradePromptDialog } from '@/components/Upgrade/UpgradePromptDialog';
+import { MODAL_GATE_IDS } from '@/utils/modalGate';
 import { APP_VERSIONS } from '@/constant';
 import { UPGRADE_PROMPT_URL } from '@/constant/upgradePrompt';
 import { parseMarkdown } from '@/components/Markdown/parseMarkdown';
@@ -339,7 +340,7 @@ export function MarkdownInWebViewInner() {
       </AutoLockView>
       {preview && (
         <UpgradePromptDialog
-          modalId="dev-upgrade-prompt-preview"
+          modalId={MODAL_GATE_IDS.devUpgradePromptPreview}
           visible
           remoteVersion={preview}
           onClose={closePreview}

@@ -220,10 +220,9 @@ export const PerpsProPositionTpSlForm: React.FC<{
       setPercent(0);
       setManualAmount('');
     }, [inputSource]);
-    const handleAmountSliderTouchCapture = useCallback(() => {
+    const dismissAmountInput = useCallback(() => {
       amountInputRef.current?.blur();
       Keyboard.dismiss();
-      return false;
     }, []);
 
     // A rounded quote prefill is presentation, not a new amount instruction.
@@ -623,9 +622,6 @@ export const PerpsProPositionTpSlForm: React.FC<{
               </View>
               <View
                 style={styles.slider}
-                onStartShouldSetResponderCapture={
-                  handleAmountSliderTouchCapture
-                }
                 testID="perps-pro-position-tpsl-amount-slider-section">
                 <PerpsProSlider
                   appearance="order-dialog"
@@ -634,7 +630,10 @@ export const PerpsProPositionTpSlForm: React.FC<{
                   maximumValue={100}
                   minimumValue={0}
                   onSlidingComplete={sliderHaptics.onSlidingComplete}
-                  onSlidingStart={sliderHaptics.onSlidingStart}
+                  onSlidingStart={value => {
+                    dismissAmountInput();
+                    sliderHaptics.onSlidingStart(value);
+                  }}
                   onValueChange={next => {
                     const roundedNext = Math.round(next);
                     sliderHaptics.onValueChange(roundedNext);
@@ -721,7 +720,7 @@ const getStyle = createGetStyles2024(
       borderBottomRightRadius: 12,
     },
     subpageCard: { borderTopLeftRadius: 12, borderTopRightRadius: 12 },
-    tabCard: { paddingTop: 20 },
+    tabCard: { borderTopLeftRadius: 12, borderTopRightRadius: 12 },
     addCard: { marginBottom: 0 },
     sides: { gap: 20 },
     positionModifySides: { gap: 36 },
@@ -749,15 +748,15 @@ const getStyle = createGetStyles2024(
     sideTitle: {
       color: colors2024['neutral-title-1'],
       fontFamily: 'SF Pro Rounded',
-      fontSize: 14,
-      fontWeight: '500',
-      lineHeight: 18,
+      fontSize: 16,
+      fontWeight: '700',
+      lineHeight: 20,
     },
     cancelText: {
       color: PERPS_PRO_DIALOG_TOKENS.actionBackground,
       fontFamily: 'SF Pro Rounded',
       fontSize: 14,
-      fontWeight: '500',
+      fontWeight: '700',
       lineHeight: 18,
     },
     inputShell: {

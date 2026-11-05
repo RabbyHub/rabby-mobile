@@ -1,10 +1,11 @@
-import RcIconEmpty from '@/assets/icons/custom-testnet/empty-cc.svg';
-import { AppColorsVariants } from '@/constant/theme';
-import { useThemeColors } from '@/hooks/theme';
-import React, { useMemo } from 'react';
-import { useTranslation } from 'react-i18next';
-import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
+import RcIconEmpty from '@/assets/icons/dapp/dapp-history-empty.svg';
+import RcIconEmptyDark from '@/assets/icons/dapp/dapp-history-empty-dark.svg';
 import { Text } from '@/components/Typography';
+import { useTheme2024 } from '@/hooks/theme';
+import { createGetStyles2024 } from '@/utils/styles';
+import React from 'react';
+import type { StyleProp, ViewStyle } from 'react-native';
+import { View } from 'react-native';
 
 export const Empty = ({
   description,
@@ -13,39 +14,28 @@ export const Empty = ({
   description: string;
   style?: StyleProp<ViewStyle>;
 }) => {
-  const { t } = useTranslation();
-  const colors = useThemeColors();
-  const styles = useMemo(() => getStyles(colors), [colors]);
+  const { styles, isLight } = useTheme2024({ getStyle });
 
   return (
     <View style={[styles.container, style]}>
-      <View style={styles.empty}>
-        <RcIconEmpty style={styles.image} color={colors['neutral-body']} />
-        <Text style={styles.desc}>{description}</Text>
-      </View>
+      {isLight ? <RcIconEmpty /> : <RcIconEmptyDark />}
+      <Text style={styles.desc}>{description}</Text>
     </View>
   );
 };
 
-const getStyles = (colors: AppColorsVariants) =>
-  StyleSheet.create({
-    container: {
-      height: '100%',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    empty: {
-      flexDirection: 'column',
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    desc: {
-      color: colors['neutral-body'],
-      fontSize: 14,
-      lineHeight: 17,
-    },
-    image: {
-      marginBottom: 12,
-    },
-  });
+const getStyle = createGetStyles2024(({ colors2024 }) => ({
+  container: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  desc: {
+    paddingTop: 21,
+    textAlign: 'center',
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 16,
+    lineHeight: 20,
+    color: colors2024['neutral-info'],
+  },
+}));

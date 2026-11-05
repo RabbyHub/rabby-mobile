@@ -146,10 +146,6 @@ export const PerpsProLeverageSheet: React.FC<{
       inputRef.current?.blur();
       Keyboard.dismiss();
     }, []);
-    const handleSliderTouchCapture = useCallback(() => {
-      dismissLeverageInput();
-      return false;
-    }, [dismissLeverageInput]);
 
     return (
       <AppBottomSheetModal
@@ -271,7 +267,6 @@ export const PerpsProLeverageSheet: React.FC<{
                 </Pressable>
               </View>
               <View
-                onStartShouldSetResponderCapture={handleSliderTouchCapture}
                 style={styles.sliderSection}
                 testID="perps-pro-leverage-slider-section">
                 <PerpsProSlider
@@ -281,7 +276,10 @@ export const PerpsProLeverageSheet: React.FC<{
                   maximumValue={safeMax}
                   minimumValue={1}
                   onSlidingComplete={sliderHaptics.onSlidingComplete}
-                  onSlidingStart={sliderHaptics.onSlidingStart}
+                  onSlidingStart={value => {
+                    dismissLeverageInput();
+                    sliderHaptics.onSlidingStart(value);
+                  }}
                   onValueChange={next => {
                     const roundedNext = Math.round(next);
                     sliderHaptics.onValueChange(roundedNext);

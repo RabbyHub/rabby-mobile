@@ -1,7 +1,6 @@
+import { RoundedFontStyles } from '@/core/utils/fonts';
 import type { AppColors2024Variants } from '@/constant/theme';
 import type { TextStyle, ViewStyle } from 'react-native';
-
-import { PERPS_PRO_FONT_FAMILY } from './perpsProVisual';
 
 export type PerpsProTintedTagTone = 'negative' | 'positive';
 
@@ -36,9 +35,8 @@ export const getPerpsProMetadataTagTextStyle = (
   colors2024: AppColors2024Variants,
 ): TextStyle => ({
   color: colors2024['neutral-foot'],
-  fontFamily: PERPS_PRO_FONT_FAMILY,
+  ...RoundedFontStyles.medium,
   fontSize: 12,
-  fontWeight: '500',
   lineHeight: 16,
 });
 
@@ -57,9 +55,8 @@ export const getPerpsProTintedTagTextStyle = (
   tone: PerpsProTintedTagTone,
 ): TextStyle => ({
   color: resolveToneColors(colors2024, tone).textColor,
-  fontFamily: PERPS_PRO_FONT_FAMILY,
+  ...RoundedFontStyles.medium,
   fontSize: 12,
-  fontWeight: '500',
   lineHeight: 16,
 });
 
@@ -79,8 +76,7 @@ export const getPerpsProSolidSideTagTextStyle = (
   colors2024: AppColors2024Variants,
 ): TextStyle => ({
   color: colors2024['neutral-InvertHighlight'],
-  fontFamily: PERPS_PRO_FONT_FAMILY,
+  ...RoundedFontStyles.bold,
   fontSize: 12,
-  fontWeight: '700',
   lineHeight: 16,
 });

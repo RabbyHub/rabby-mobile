@@ -2,7 +2,7 @@ import { RcIconGasAccountHeaderRight } from '@/assets/icons/gas-account';
 import { useGetBinaryMode, useTheme2024, useThemeColors } from '@/hooks/theme';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, View } from 'react-native';
+import { View } from 'react-native';
 import { Tip } from '@/components';
 import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 import {
@@ -98,12 +98,14 @@ export const GasAccountHeader: React.FC<{ showWithdraw: () => void }> = ({
             ) : null}
           </View>
         }>
-        <Pressable
+        <CustomTouchableOpacity
+          // Fabric native-stack headers need native gesture hit testing.
+          as="RNGHTouchableOpacity"
           style={styles.container}
           onPress={() => setVisible(true)}
           hitSlop={10}>
           <RcIconGasAccountHeaderRight />
-        </Pressable>
+        </CustomTouchableOpacity>
       </Tip>
     );
   }

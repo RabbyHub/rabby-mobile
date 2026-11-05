@@ -402,7 +402,13 @@
         "empty": {
           "title": "暫無交易記錄",
           "titleLastThreeMonths": "90 天內無交易紀錄",
+          "titleInLast90Days": "近 90 天無交易紀錄",
+          "titleNoTransactions": "暫無交易紀錄",
           "testnetNoHistory": "自訂代幣交易記錄不可用。"
+        },
+        "noMore": {
+          "title": "沒有更多交易紀錄",
+          "titleInLast90Days": "近 90 天沒有更多交易紀錄"
         },
         "CancelTxConfirmPopup": {
           "title": "清除本機待處理記錄",
@@ -1576,6 +1582,10 @@
       "title": "授權"
     },
     "singleHome": {
+      "tokenActions": {
+        "remove": "移除",
+        "removeFailed": "移除代幣失敗"
+      },
       "sectionHeader": {
         "Defi": "DeFi",
         "Nft": "NFT",
@@ -1720,6 +1730,13 @@
       "subtitle": "選擇錢包以接收您的加密資產。"
     },
     "tokenDetail": {
+      "removed": {
+        "restore": "還原已移除的代幣",
+        "restoreFailed": "還原代幣失敗",
+        "more": "更多",
+        "confirmTitle": "移除此代幣？",
+        "confirmDescription": "· 移除後，此代幣將不再顯示在您的投資組合中。\n· 您可以隨時在設定 >> 已移除的代幣中還原。"
+      },
       "excludeBalanceTipsButton": "知道了",
       "action": {
         "less": "更少",
@@ -1826,6 +1843,9 @@
       "customTestnetNotSupported": "不支援該鏈上的代幣"
     },
     "customTestnet": {
+      "screenTitle": "自訂網路",
+      "removeNetwork": "刪除 {{name}}",
+      "editTitle": "編輯自訂網路",
       "add": "新增自訂網路",
       "id": "ID",
       "empty": "無自訂網路",
@@ -1941,6 +1961,10 @@
       "verify-password-before-backup": "在備份之前驗證您的 Rabby 密碼"
     },
     "setting": {
+      "removedToken": {
+        "title": "已移除的代幣",
+        "description": "已移除的代幣將在您所有地址的投資組合中隱藏，但仍會計入餘額。"
+      },
       "followUs": "關注我們",
       "tou": "使用條款",
       "fingerPrint": "指紋",
@@ -2751,7 +2775,6 @@
         "gotItBtn": "我知道了",
         "sizeTips": "交易的總價值或數量，由保證金和槓桿決定。",
         "feeRabby": "Rabby Wallet",
-        "feeRabbyDiscount": "限時交易手續費折扣",
         "feeHyperliquid": "Hyperliquid",
         "feeDesc": "交易時會產生<1>交易手續費</1>和<2>建構者費用</2>。",
         "feeTitle": "費用",
@@ -2818,7 +2841,7 @@
         "desc": "你即將登出目前的永續合約帳戶，之後仍可使用此地址重新登入並恢復。"
       },
       "PerpsDepositCard": {
-        "availableToTrade": "可交易餘額：",
+        "availableToTrade": "可用：",
         "deposit": "入金",
         "swap": "兌換"
       },
@@ -2893,6 +2916,50 @@
       }
     },
     "perpsDetail": {
+      "simpleAccount": {
+        "margin": "保證金",
+        "averageEntry": "平均開倉價",
+        "estimatedLiquidationPrice": "預計強平價",
+        "estimatedLiquidationDistance": "預計強平距離",
+        "tpSl": "止盈/止損",
+        "takeProfitPrice": "止盈價格",
+        "stopLossPrice": "止損價格",
+        "funding": "資金費",
+        "nextFundingRate": "下一期資金費率",
+        "estimatedPnl": "預計盈虧",
+        "closePositionTitle": "平掉 {{coin}} 倉位",
+        "estimatedRealizedPnl": "預計已實現盈虧"
+      },
+      "simpleChart": {
+        "openInterest": "未平倉量",
+        "volume24h": "24h 成交量",
+        "intervalTitle": "K 線週期",
+        "intervalDescription": "每根 K 線代表所選時間週期。",
+        "minutes": "分鐘",
+        "hours": "小時",
+        "days": "天",
+        "open": "開市價",
+        "low": "最低價",
+        "high": "最高價",
+        "close": "收市價",
+        "time": "時間",
+        "change": "升跌額",
+        "changePercent": "升跌幅 (%)",
+        "averageEntry": "平均開倉價",
+        "takeProfit": "止賺",
+        "stopLoss": "止蝕",
+        "liquidation": "強制平倉價",
+        "all": "全部",
+        "source": "由 Hyperliquid 提供支援，價格圖表由 <tradingview>TradingView</tradingview> 提供。",
+        "resetChart": "重設圖表",
+        "backToLatest": "返回最新行情",
+        "switchToArea": "切換至面積圖",
+        "switchToCandle": "切換至陰陽燭圖",
+        "showVolume": "顯示 24 小時成交量",
+        "showOpenInterest": "顯示未平倉量",
+        "buy": "買入",
+        "sell": "賣出"
+      },
       "PerpEditLimitPriceTag": {
         "setLimitBuyPrice": "設定限價買入價",
         "setLimitSellPrice": "設定限價賣出價",
@@ -2921,7 +2988,7 @@
         "unrealizedPnl": "未實現盈虧",
         "marginMode": "保證金模式",
         "details": "詳細資料",
-        "fundingTipsBold": "這顯示自開倉以來已結算的資金費總額。<bold>綠色（正數）</bold>表示您從其他交易者處獲得資金費，<bold>紅色（負數）</bold>表示您向其他交易者支付的資金費成本。",
+        "fundingTipsBold": "這顯示自開倉以來已結算的資金費總額。<positive>綠色（正數）</positive>表示您從其他交易者處獲得資金費，<negative>紅色（負數）</negative>表示您向其他交易者支付的資金費成本。",
         "crossTips": "全倉保證金模式下，單個倉位的強平價格僅為估算值，僅供參考。"
       },
       "PerpsInfo": {
@@ -3423,6 +3490,7 @@
       "screenTitle": "連接錢包",
       "connectingToRabby": "正在連接到 Rabby",
       "pairingFailed": "WalletConnect 配對失敗。",
+      "proposalNotReceived": "WalletConnect 二維碼可能已失效，請重新整理後再試一次。",
       "connected": "連接成功，請返回 DApp。",
       "proposalExpired": "WalletConnect 連接請求已過期。",
       "pairingExpired": "WalletConnect 配對已過期。請重新整理 DApp QR Code 後重試。",

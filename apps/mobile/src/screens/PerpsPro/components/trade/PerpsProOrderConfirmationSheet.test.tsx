@@ -1,5 +1,6 @@
 import { PerpsProCheckboxIcon } from '../common/PerpsProCheckboxIcon';
 import { ThemeColors2024 } from '@/constant/theme';
+import { RoundedFontStyles } from '@/core/utils/fonts';
 jest.mock('@/core/apis/autoLock', () => ({ uiRefreshTimeout: jest.fn() }));
 
 import { fireEvent, render, screen } from '@testing-library/react-native';
@@ -296,9 +297,8 @@ describe.each(['light', 'dark'] as const)(
             backgroundColor: colors['neutral-bg-5'],
             borderRadius: 4,
             color: colors['neutral-foot'],
-            fontFamily: 'SF Pro Rounded',
+            ...RoundedFontStyles.medium,
             fontSize: 12,
-            fontWeight: '500',
             lineHeight: 16,
             maxWidth: 100,
             paddingHorizontal: 4,
@@ -357,9 +357,8 @@ describe.each(['light', 'dark'] as const)(
         backgroundColor: colors['neutral-bg-5'],
         borderRadius: 4,
         color: colors['neutral-foot'],
-        fontFamily: 'SF Pro Rounded',
+        ...RoundedFontStyles.medium,
         fontSize: 12,
-        fontWeight: '500',
         lineHeight: 16,
         paddingHorizontal: 4,
         paddingVertical: 1,
@@ -385,7 +384,7 @@ describe.each(['light', 'dark'] as const)(
         borderRadius: 4,
         color: colors['neutral-foot'],
         fontSize: 12,
-        fontWeight: '500',
+        ...RoundedFontStyles.medium,
         lineHeight: 16,
         paddingHorizontal: 4,
         paddingVertical: 1,

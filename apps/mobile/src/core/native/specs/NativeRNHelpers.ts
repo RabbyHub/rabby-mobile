@@ -20,6 +20,10 @@ export type NativeBuildInfo = {
 export interface Spec extends TurboModule {
   getConstants(): { buildInfo?: NativeBuildInfo };
   forceExitApp(): void;
+  measureViewRelativeTo(
+    anchorTag: number,
+    viewportTag: number,
+  ): Promise<{ x: number; y: number; width: number; height: number }>;
   androidTraceInstant(name: string): void;
   androidTraceBeginSection(name: string): void;
   androidTraceEndSection(): void;

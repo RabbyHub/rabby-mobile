@@ -8,6 +8,7 @@ import React, {
 import type { ListRenderItem, ViewStyle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 import { RefreshControl } from 'react-native-gesture-handler';
+import { CollapsibleRefreshControl } from '@/components/customized/ScrollViewLike/CollapsibleRefreshControl';
 
 import { navigateDeprecated } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -147,7 +148,7 @@ const NFTListInner = ({ onForeground, onRefresh }: Props) => {
   const focusedTab = useFocusedTab();
   const isFocused = focusedTab === 'nft';
 
-  useScrollToTopOnChainChange({
+  const suspendVisibleAnchor = useScrollToTopOnChainChange({
     chain: selectedChain,
     isCurrentTab: isFocused,
   });
@@ -405,7 +406,9 @@ const NFTListInner = ({ onForeground, onRefresh }: Props) => {
         windowSize={15}
         maxToRenderPerBatch={15}
         removeClippedSubviews={IS_ANDROID}
-        maintainVisibleContentPosition={{ minIndexForVisible: 0 }}
+        maintainVisibleContentPosition={
+          suspendVisibleAnchor ? undefined : { minIndexForVisible: 0 }
+        }
         // estimatedItemSize={ASSETS_ITEM_HEIGHT_NEW + ASSETS_SEPARATOR_HEIGHT}
         ItemSeparatorComponent={ListRenderSeparator}
         ListFooterComponent={ListRenderFooter}
@@ -413,7 +416,8 @@ const NFTListInner = ({ onForeground, onRefresh }: Props) => {
         showsHorizontalScrollIndicator={false}
         style={[styles.bgContainer, styles.list]}
         refreshControl={
-          <RefreshControl
+          <CollapsibleRefreshControl
+            as={RefreshControl}
             style={styles.bgContainer}
             onRefresh={async () => {
               setIsManualRefreshing(true);

@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { RoundedFontStyles } from '@/core/utils/fonts';
 
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleProp, View, ViewStyle } from 'react-native';
@@ -138,7 +139,7 @@ const ManageEmodeOverView: React.FC<{
       title: '',
       titleStyle: {
         marginTop: 0,
-        fontWeight: '900',
+        ...RoundedFontStyles.heavy,
       },
       sectionStyle: {
         marginTop: 8,

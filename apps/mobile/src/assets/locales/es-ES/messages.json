@@ -681,7 +681,13 @@
         "empty": {
           "title": "Aún no hay transacciones firmadas",
           "titleLastThreeMonths": "Sin historial de transacciones en 90 días",
+          "titleInLast90Days": "No hay transacciones en los últimos 90 días",
+          "titleNoTransactions": "No hay transacciones",
           "testnetNoHistory": "El historial de transacciones de tokens personalizados no está disponible."
+        },
+        "noMore": {
+          "title": "No hay más transacciones.",
+          "titleInLast90Days": "No hay más transacciones en los últimos 90 días."
         },
         "message": {
           "cancelSuccess": "Cancelado",
@@ -1711,6 +1717,10 @@
       }
     },
     "singleHome": {
+      "tokenActions": {
+        "remove": "Eliminar",
+        "removeFailed": "No se pudo eliminar el token"
+      },
       "sectionHeader": {
         "Nft": "NFT",
         "Token": "Token",
@@ -1728,6 +1738,9 @@
       }
     },
     "customTestnet": {
+      "screenTitle": "Red personalizada",
+      "removeNetwork": "Eliminar {{name}}",
+      "editTitle": "Editar red personalizada",
       "empty": "Sin red personalizada",
       "add": "Añadir red personalizada",
       "id": "ID",
@@ -1776,6 +1789,13 @@
       }
     },
     "tokenDetail": {
+      "removed": {
+        "restore": "Restaurar token eliminado",
+        "restoreFailed": "No se pudo restaurar el token",
+        "more": "Más",
+        "confirmTitle": "¿Eliminar este token?",
+        "confirmDescription": "· Este token dejará de aparecer en tu portfolio después de eliminarlo.\n· Puedes restaurarlo en cualquier momento en Configuración >> Tokens eliminados."
+      },
       "excludeBalanceTipsButton": "Entendido",
       "action": {
         "all": "Todo",
@@ -1882,6 +1902,10 @@
       "customTestnetNotSupported": "El token de esta red no es compatible"
     },
     "setting": {
+      "removedToken": {
+        "title": "Tokens eliminados",
+        "description": "Los tokens eliminados se ocultarán de tu portfolio en todas tus direcciones, pero seguirán incluidos en el cálculo de tu saldo."
+      },
       "feedback": "Comentarios",
       "screenTitle": "Configuración",
       "clearPending": "Borrar transacciones pendientes localmente",
@@ -2772,7 +2796,6 @@
         "feeHyperliquid": "Hyperliquid",
         "feeDesc": "Cuando los usuarios realizan transacciones, se aplican tanto las <1>comisiones de trading</1> como las <2>comisiones de builder</2>.",
         "feeRabby": "Rabby Wallet",
-        "feeRabbyDiscount": "Descuento por tiempo limitado en tarifas de trading",
         "amount": "Importe",
         "asset": "Activo",
         "action": "Acción"
@@ -2836,7 +2859,7 @@
         "desc": "Vas a cerrar sesión en la cuenta Perps actual. Puedes restaurarla en cualquier momento iniciando sesión de nuevo con esta dirección."
       },
       "PerpsDepositCard": {
-        "availableToTrade": "Disponible para comerciar:",
+        "availableToTrade": "Disponible:",
         "deposit": "Depósito",
         "swap": "Swap"
       },
@@ -2912,6 +2935,50 @@
       }
     },
     "perpsDetail": {
+      "simpleAccount": {
+        "margin": "Margen",
+        "averageEntry": "Precio medio de entrada",
+        "estimatedLiquidationPrice": "Precio de liq. estimado",
+        "estimatedLiquidationDistance": "Distancia de liq. estimada",
+        "tpSl": "TP/SL",
+        "takeProfitPrice": "Precio de toma de ganancias",
+        "stopLossPrice": "Precio de stop loss",
+        "funding": "Financiación",
+        "nextFundingRate": "Próxima tasa de financiación",
+        "estimatedPnl": "PnL estimado",
+        "closePositionTitle": "Cerrar posición de {{coin}}",
+        "estimatedRealizedPnl": "PnL realizado estimado"
+      },
+      "simpleChart": {
+        "openInterest": "Interés abierto",
+        "volume24h": "Volumen en 24 h",
+        "intervalTitle": "Intervalo de las velas",
+        "intervalDescription": "Cada vela representa el intervalo seleccionado.",
+        "minutes": "Minutos",
+        "hours": "Horas",
+        "days": "Días",
+        "open": "Apertura",
+        "low": "Mínimo",
+        "high": "Máximo",
+        "close": "Cierre",
+        "time": "Hora",
+        "change": "Variación",
+        "changePercent": "Variación (%)",
+        "averageEntry": "Precio medio de entrada",
+        "takeProfit": "Toma de beneficios",
+        "stopLoss": "Stop loss",
+        "liquidation": "Precio de liquidación",
+        "all": "TODO",
+        "source": "Servicio ofrecido por Hyperliquid. Gráfico de precios proporcionado por <tradingview>TradingView.</tradingview>",
+        "resetChart": "Restablecer el gráfico",
+        "backToLatest": "Volver a los datos más recientes",
+        "switchToArea": "Cambiar a gráfico de áreas",
+        "switchToCandle": "Cambiar a gráfico de velas",
+        "showVolume": "Mostrar volumen en 24 h",
+        "showOpenInterest": "Mostrar interés abierto",
+        "buy": "Compra",
+        "sell": "Venta"
+      },
       "PerpEditLimitPriceTag": {
         "setLimitBuyPrice": "Establecer Precio de Compra Límite",
         "setLimitSellPrice": "Establecer Precio de Venta Límite",
@@ -2940,7 +3007,7 @@
         "settings": "Ajustes",
         "unrealizedPnl": "PNL no realizado",
         "marginMode": "Modo Margen",
-        "fundingTipsBold": "Esto muestra el total de funding liquidado desde que se abrió la posición. Los valores <bold>verdes (positivos)</bold> significan que has recibido funding de otros traders, mientras que los valores <bold>rojos (negativos)</bold> son costes de funding que les has pagado.",
+        "fundingTipsBold": "Esto muestra el total de funding liquidado desde que se abrió la posición. Los valores <positive>verdes (positivos)</positive> significan que has recibido funding de otros traders, mientras que los valores <negative>rojos (negativos)</negative> son costes de funding que les has pagado.",
         "crossTips": "En el modo de Margen Cruzado, el precio de liquidación para una sola posición es una estimación solo para referencia."
       },
       "PerpsInfo": {
@@ -3442,6 +3509,7 @@
       "screenTitle": "Conectar cartera",
       "connectingToRabby": "Conectando a Rabby",
       "pairingFailed": "El emparejamiento de WalletConnect ha fallado.",
+      "proposalNotReceived": "Es posible que el código QR de WalletConnect haya caducado. Actualízalo e inténtalo de nuevo.",
       "connected": "Conectado correctamente. Vuelve a la DApp.",
       "proposalExpired": "La propuesta de WalletConnect ha caducado.",
       "pairingExpired": "El emparejamiento de WalletConnect ha caducado. Actualiza el código QR de la dapp e inténtalo de nuevo.",

@@ -7,8 +7,6 @@ import OneKeySVG from '@/assets/icons/wallet/onekey.svg';
 import KeystoneSVG from '@/assets/icons/wallet/keystone.svg';
 import { HardwareSVG } from '@/assets/icons/address';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
-import { matomoRequestEvent } from '@/utils/analytics';
-import { KEYRING_CATEGORY, KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { apiKeystone } from '@/core/apis';
 import { useImportKeystone } from '@/components/ConnectKeystone/useImportKeystone';
 import {
@@ -39,22 +37,11 @@ export const HardwareDeviceList = () => {
         }, 0);
       },
     });
-    matomoRequestEvent({
-      category: 'Import Address',
-      action: `Begin_Import_${KEYRING_CATEGORY.Hardware}`,
-      label: KEYRING_CLASS.HARDWARE.LEDGER,
-    });
   }, []);
 
   const goImport = useImportKeystone();
 
   const handleKeystone = React.useCallback(async () => {
-    matomoRequestEvent({
-      category: 'Import Address',
-      action: `Begin_Import_${KEYRING_CATEGORY.Hardware}`,
-      label: KEYRING_CLASS.HARDWARE.KEYSTONE,
-    });
-
     const isReady = await apiKeystone.isReady();
     if (isReady) {
       goImport();
@@ -87,11 +74,6 @@ export const HardwareDeviceList = () => {
           removeGlobalBottomSheetModal2024(id);
         }, 0);
       },
-    });
-    matomoRequestEvent({
-      category: 'Import Address',
-      action: `Begin_Import_${KEYRING_CATEGORY.Hardware}`,
-      label: KEYRING_CLASS.HARDWARE.ONEKEY,
     });
   }, []);
 

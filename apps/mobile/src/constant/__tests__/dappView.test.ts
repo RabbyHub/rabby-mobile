@@ -20,12 +20,7 @@ describe('dappView constants and helpers', () => {
 
   it('keeps webview protocol allowlists stable', () => {
     expect(protocolAllowList).toEqual(['about:', 'http:', 'https:']);
-    expect(trustedProtocolToDeeplink).toEqual([
-      'wc:',
-      'metamask:',
-      'ethereum:',
-      'dapp:',
-    ]);
+    expect(trustedProtocolToDeeplink).toEqual(['wc:', 'ethereum:', 'dapp:']);
   });
 
   it('checks direct protocols and URLs for webview-allowed protocols', () => {
@@ -66,6 +61,12 @@ describe('dappView constants and helpers', () => {
       message:
         'This website has been blocked from automatically opening an external application',
     });
+    expect(getAlertMessage('metamask:')).toEqual({
+      needAlert: true,
+      allowOpenLink: false,
+      message:
+        'This website has been blocked from automatically opening an external application',
+    });
   });
 
   it('opens supported external links through React Native Linking', async () => {
@@ -80,6 +81,39 @@ describe('dappView constants and helpers', () => {
 
     expect(canOpenURL).toHaveBeenCalledWith('https://rabby.io');
     expect(openURL).toHaveBeenCalledWith('https://rabby.io');
+  });
+
+  it('does not query or open external links when the caller is inactive', async () => {
+    const canOpenURL = jest.spyOn(Linking, 'canOpenURL');
+    const openURL = jest.spyOn(Linking, 'openURL');
+
+    await expect(
+      allowLinkOpen('metamask://wc', () => false),
+    ).resolves.toBeNull();
+
+    expect(canOpenURL).not.toHaveBeenCalled();
+    expect(openURL).not.toHaveBeenCalled();
+  });
+
+  it('rechecks caller activity after the native capability query resolves', async () => {
+    let isActive = true;
+    let resolveSupported!: (supported: boolean) => void;
+    const supported = new Promise<boolean>(resolve => {
+      resolveSupported = resolve;
+    });
+    const canOpenURL = jest
+      .spyOn(Linking, 'canOpenURL')
+      .mockReturnValueOnce(supported);
+    const openURL = jest.spyOn(Linking, 'openURL');
+
+    const opening = allowLinkOpen('metamask://wc', () => isActive);
+    expect(canOpenURL).toHaveBeenCalledWith('metamask://wc');
+
+    isActive = false;
+    resolveSupported(true);
+    await opening;
+
+    expect(openURL).not.toHaveBeenCalled();
   });
 
   it('warns when external links are unsupported or Linking throws', async () => {

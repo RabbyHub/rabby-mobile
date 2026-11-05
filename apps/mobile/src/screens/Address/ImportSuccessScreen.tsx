@@ -35,9 +35,7 @@ import type { RootStackParamsList } from '@/navigation-type';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RcIconRightCC } from '@/assets/icons/common';
 import { navigateDeprecated } from '@/utils/navigation';
-import { matomoRequestEvent } from '@/utils/analytics';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
-import { getKRCategoryByType } from '@/utils/transaction';
 import { Chain } from '@/constant/chains';
 import { GnosisSupportChainList } from './ImportSafeAddressScreen';
 import { apisHomeTabIndex } from '@/hooks/navigation';
@@ -173,12 +171,6 @@ export const ImportSuccessScreen = () => {
         aliasName: getContactAliasSnapshot(address)?.alias || '',
       })),
     );
-
-    matomoRequestEvent({
-      category: 'Import Address',
-      action: `Success_Import_${getKRCategoryByType(state.type)}`,
-      label: state.brandName,
-    });
   }, [state]);
 
   React.useEffect(() => {

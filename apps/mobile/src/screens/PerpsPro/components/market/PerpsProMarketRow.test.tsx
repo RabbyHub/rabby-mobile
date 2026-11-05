@@ -80,6 +80,8 @@ jest.mock('react-i18next', () => ({
 
 const { buildPerpsProMarketRowModel } =
   require('../../model/marketSelectorProjection') as typeof import('../../model/marketSelectorProjection');
+const { RoundedFontStyles } =
+  require('@/core/utils/fonts') as typeof import('@/core/utils/fonts');
 const {
   PerpsProMarketRow,
 }: typeof import('./PerpsProMarketRow') = require('./PerpsProMarketRow');
@@ -235,9 +237,8 @@ describe.each([true, false])('PerpsProMarketRow (iOS=%s)', isIOS => {
       backgroundColor: 'neutral-bg-5',
       borderRadius: 4,
       color: 'neutral-foot',
-      fontFamily: 'SF Pro Rounded',
+      ...RoundedFontStyles.medium,
       fontSize: 12,
-      fontWeight: '500',
       lineHeight: 16,
       maxWidth: 52,
       paddingHorizontal: 4,

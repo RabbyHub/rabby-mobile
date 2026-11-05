@@ -15,13 +15,11 @@ import { openapi } from '@/core/request';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { useTheme2024 } from '@/hooks/theme';
 import type { AbstractProject } from '@/screens/Home/types';
-import { getMarketTabToSwapPageAction } from '@/screens/Market/analytics';
 import { findChain, findChainByServerID } from '@/utils/chain';
 import { createGetStyles2024 } from '@/utils/styles';
 import { mergeTokenSecurityFields } from '@/utils/tokenSecurityFlags';
 import { CHAINS_ENUM } from '@debank/common';
 import { getFallbackAccountSnapshot } from '@/core/serviceApi/preference';
-import { matomoRequestEvent } from '@/utils/analytics';
 import { useRoute, useFocusEffect } from '@react-navigation/native';
 import { useMemoizedFn, useRequest } from 'ahooks';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -40,7 +38,6 @@ import type { TokenChartRef } from './components/TokenPriceChart';
 import { TokenPriceChart } from './components/TokenPriceChart';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { useTriggerTagAssets } from '../Home/hooks/refresh';
-import { apisAddressBalance } from '@/hooks/useCurrentBalance';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import type { KEYRING_TYPE } from '@rabby-wallet/keyring-utils/src/types';
 import type { GetRootScreenNavigationProps } from '@/navigation-type';
@@ -56,6 +53,11 @@ import {
   useTokenMarketInfo,
 } from './hook';
 import { RightMore } from './components/RightMore';
+import {
+  RemovedTokenNotice,
+  RestoreRemovedTokenActions,
+} from './components/RemovedToken';
+import { useRemovedTokens } from '@/hooks/useRemovedTokens';
 import HeaderBalanceCard from './components/HeaderBalanceCard';
 import { navigateDeprecated } from '@/utils/navigation';
 import { Tabs } from 'react-native-collapsible-tab-view';
@@ -134,7 +136,7 @@ export const RiskTokenTips = ({ isDanger }: { isDanger?: boolean }) => {
 export const TokenMarketInfoScreen = () => {
   const route =
     useRoute<GetRootScreenNavigationProps<'TokenMarketInfo'>['route']>();
-  const { token, account, tokenSelectType, from } = route.params || {};
+  const { token, account, tokenSelectType } = route.params || {};
   const { styles, isLight, colors2024 } = useTheme2024({
     getStyle,
   });
@@ -148,6 +150,11 @@ export const TokenMarketInfoScreen = () => {
   const isCustomTestnet = useMemo(() => {
     return token.chain && !!findChainByServerID(token.chain)?.isTestnet;
   }, [token]);
+  const isRemoved = useRemovedTokens(
+    state =>
+      !isCustomTestnet &&
+      state.isTokenRemoved({ chainId: token.chain, tokenId: token.id }),
+  );
 
   const finalAccount = useMemo(() => {
     return account || accounts[0] || getFallbackAccountSnapshot();
@@ -222,22 +229,10 @@ export const TokenMarketInfoScreen = () => {
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
 
   const getHeaderRight = useCallback(() => {
-    return isCustomTestnet ? null : (
-      <RightMore
-        token={token}
-        triggerUpdate={() =>
-          finalAccount?.address &&
-          apisAddressBalance.triggerUpdate({
-            address: finalAccount?.address,
-            force: false,
-            fromScene: 'TokenDetail',
-          })
-        }
-        isMultiAddress={false}
-        refreshTags={refreshTag}
-      />
+    return isCustomTestnet || isRemoved ? null : (
+      <RightMore token={token} refreshTags={refreshTag} />
     );
-  }, [isCustomTestnet, token, refreshTag, finalAccount?.address]);
+  }, [isCustomTestnet, isRemoved, token, refreshTag]);
 
   useFocusEffect(
     useCallback(() => {
@@ -290,26 +285,16 @@ export const TokenMarketInfoScreen = () => {
       await switchSceneCurrentAccount('MakeTransactionAbout', toAccount);
       // 关闭弹窗隐藏
       setIsFromBack(false);
-      const marketAction = from?.scene
-        ? getMarketTabToSwapPageAction(from.scene)
-        : null;
 
-      if (marketAction) {
-        matomoRequestEvent({
-          category: 'Rabby Market',
-          action: marketAction,
-        });
-      }
       navigation.push(RootNames.StackTransaction, {
         screen: account ? RootNames.SwapBridge : RootNames.MultiSwapBridge,
         params: {
           activeTab: 'swap',
           chainEnum: chain?.enum ?? CHAINS_ENUM.ETH,
           tokenId: token?.id,
-          type: tokenSelectType === 'swapTo' ? 'Buy' : type,
+          type,
           address,
           isFromSwap,
-          from,
         },
       });
     },
@@ -547,6 +532,11 @@ export const TokenMarketInfoScreen = () => {
         }}
       />
 
+      {isRemoved && (
+        <View style={styles.removedNoticeContainer}>
+          <RemovedTokenNotice />
+        </View>
+      )}
       <Tabs.Container
         renderTabBar={renderTabBar}
         tabBarHeight={TOKEN_MARKET_TAB_BAR_HEIGHT}
@@ -561,7 +551,7 @@ export const TokenMarketInfoScreen = () => {
               <RefreshControl
                 refreshing={false}
                 onRefresh={handleRefresh}
-                progressViewOffset={isAndroid ? TOKEN_MARKET_TAB_BAR_HEIGHT : 0}
+                progressViewOffset={TOKEN_MARKET_TAB_BAR_HEIGHT}
               />
             }
             style={styles.innerContainer}>
@@ -647,7 +637,7 @@ export const TokenMarketInfoScreen = () => {
               <RefreshControl
                 refreshing={false}
                 onRefresh={handleRefresh}
-                progressViewOffset={isAndroid ? TOKEN_MARKET_TAB_BAR_HEIGHT : 0}
+                progressViewOffset={TOKEN_MARKET_TAB_BAR_HEIGHT}
               />
             }
             style={styles.innerContainer}>
@@ -662,57 +652,83 @@ export const TokenMarketInfoScreen = () => {
           </ScrollView>
         </Tabs.Tab>
       </Tabs.Container>
-      <View
-        style={[
-          styles.buttonGroup,
-          { paddingBottom: getBottomButtonBottomOffset(safeOffBottom) },
-        ]}>
-        {isTransactionTo ? (
-          <Button
-            title={t('global.Confirm')}
-            height={BOTTOM_BUTTON_SINGLE_HEIGHT}
-            titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
-            containerStyle={StyleSheet.flatten([styles.btnContainer])}
-            onPress={() => {
-              if (isSwapTo) {
-                handleSwap('Buy', finalAccount?.address, finalAccount?.type);
-                return;
-              }
-              if (isBridgeTo) {
-                handleBridgeTo(finalAccount?.address, finalAccount?.type);
-                return;
-              }
-            }}
-            buttonStyle={styles.btnInnerContainer}
-          />
-        ) : (
-          <>
+      {isRemoved ? (
+        <RestoreRemovedTokenActions
+          token={token}
+          moreMenuActions={[
+            {
+              key: 'Buy',
+              title: t('page.tokenDetail.action.Buy'),
+              buttonType: 'ghost',
+              onPress: () =>
+                handleSwap('Buy', finalAccount?.address, finalAccount?.type),
+            },
+            {
+              key: 'Sell',
+              title: t('page.tokenDetail.action.Sell'),
+              buttonType: 'primary',
+              onPress: () =>
+                handleSwap('Sell', finalAccount?.address, finalAccount?.type),
+            },
+          ]}
+        />
+      ) : (
+        <View
+          style={[
+            styles.buttonGroup,
+            { paddingBottom: getBottomButtonBottomOffset(safeOffBottom) },
+          ]}>
+          {isTransactionTo ? (
             <Button
-              type="ghost"
-              title={t('page.tokenDetail.action.Buy')}
-              height={BOTTOM_BUTTON_DOUBLE_HEIGHT}
+              title={t('global.Confirm')}
+              height={BOTTOM_BUTTON_SINGLE_HEIGHT}
               titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
               containerStyle={StyleSheet.flatten([styles.btnContainer])}
-              buttonStyle={[styles.btnInnerContainer, styles.ghostBtn]}
-              onPress={() =>
-                handleSwap('Buy', finalAccount?.address, finalAccount?.type)
-              }
+              onPress={() => {
+                if (isSwapTo) {
+                  handleSwap('Buy', finalAccount?.address, finalAccount?.type);
+                  return;
+                }
+                if (isBridgeTo) {
+                  handleBridgeTo(finalAccount?.address, finalAccount?.type);
+                  return;
+                }
+              }}
+              buttonStyle={styles.btnInnerContainer}
             />
-            <View style={styles.btnContainer}>
+          ) : (
+            <>
               <Button
-                title={t('page.tokenDetail.action.Sell')}
+                type="ghost"
+                title={t('page.tokenDetail.action.Buy')}
                 height={BOTTOM_BUTTON_DOUBLE_HEIGHT}
                 titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
                 containerStyle={StyleSheet.flatten([styles.btnContainer])}
+                buttonStyle={[styles.btnInnerContainer, styles.ghostBtn]}
                 onPress={() =>
-                  handleSwap('Sell', finalAccount?.address, finalAccount?.type)
+                  handleSwap('Buy', finalAccount?.address, finalAccount?.type)
                 }
-                buttonStyle={styles.btnInnerContainer}
               />
-            </View>
-          </>
-        )}
-      </View>
+              <View style={styles.btnContainer}>
+                <Button
+                  title={t('page.tokenDetail.action.Sell')}
+                  height={BOTTOM_BUTTON_DOUBLE_HEIGHT}
+                  titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
+                  containerStyle={StyleSheet.flatten([styles.btnContainer])}
+                  onPress={() =>
+                    handleSwap(
+                      'Sell',
+                      finalAccount?.address,
+                      finalAccount?.type,
+                    )
+                  }
+                  buttonStyle={styles.btnInnerContainer}
+                />
+              </View>
+            </>
+          )}
+        </View>
+      )}
     </NormalScreenContainer2024>
   );
 };
@@ -723,6 +739,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
         ? colors2024['neutral-bg-0']
         : colors2024['neutral-bg-1'],
     },
+    removedNoticeContainer: { marginHorizontal: 12 },
     chartContainer: {
       backgroundColor: isLight
         ? colors2024['neutral-bg-1']

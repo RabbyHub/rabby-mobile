@@ -460,6 +460,9 @@ export const activeAndPersistAccountsByMnemonics = async (
   }
 
   await keyringServiceApi.persistAllKeyrings();
+  // Persistence updates the public account snapshot, but seed phrase groups
+  // also need the refreshed in-memory keyring membership before import finishes.
+  await keyringServiceApi.refreshMemStoreKeyrings();
 
   const _account = {
     address: accountsToImport[0].address,

@@ -900,7 +900,13 @@
         "empty": {
           "title": "ยังไม่มีการทำธุรกรรมที่เซ็นชื่อ",
           "titleLastThreeMonths": "ไม่มีประวัติการทำธุรกรรมใน 90 วัน",
+          "titleInLast90Days": "ไม่มีธุรกรรมในช่วง 90 วันที่ผ่านมา",
+          "titleNoTransactions": "ไม่มีธุรกรรม",
           "testnetNoHistory": "ไม่มีประวัติธุรกรรมของโทเค็นแบบกำหนดเอง"
+        },
+        "noMore": {
+          "title": "ไม่มีธุรกรรมเพิ่มเติม",
+          "titleInLast90Days": "ไม่มีธุรกรรมเพิ่มเติมในช่วง 90 วันที่ผ่านมา"
         },
         "CancelTxPopup": {
           "title": "ยกเลิกการทำธุรกรรม",
@@ -1692,6 +1698,10 @@
       "fixedModeTag": "โหมดคงที่"
     },
     "singleHome": {
+      "tokenActions": {
+        "remove": "ลบ",
+        "removeFailed": "ลบโทเค็นไม่สำเร็จ"
+      },
       "sectionHeader": {
         "Defi": "DeFi",
         "Token": "Token",
@@ -1801,6 +1811,9 @@
       "desc": "Rabby ไม่สามารถตรวจสอบความปลอดภัยของเครือข่ายที่กำหนดเองได้ กรุณาเพิ่มเฉพาะเครือข่ายที่เชื่อถือได้เท่านั้น"
     },
     "customTestnet": {
+      "screenTitle": "เครือข่ายที่กำหนดเอง",
+      "removeNetwork": "ลบ {{name}}",
+      "editTitle": "แก้ไขเครือข่ายที่กำหนดเอง",
       "currency": "สกุลเงิน",
       "id": "ID",
       "empty": "ไม่มีเครือข่ายที่กำหนดเอง",
@@ -1850,6 +1863,13 @@
     },
     "tokenDetail": {
       "excludeBalanceTipsButton": "เข้าใจแล้ว",
+      "removed": {
+        "restore": "กู้คืนโทเค็นที่ถูกลบ",
+        "restoreFailed": "กู้คืนโทเค็นไม่สำเร็จ",
+        "more": "เพิ่มเติม",
+        "confirmTitle": "ลบโทเค็นนี้หรือไม่?",
+        "confirmDescription": "· โทเค็นนี้จะไม่แสดงในพอร์ตของคุณอีกหลังจากลบ\n· คุณสามารถกู้คืนได้ทุกเมื่อใน การตั้งค่า >> โทเค็นที่ถูกลบ"
+      },
       "excludeBalanceTips": "สินทรัพย์นี้ถูกแยกออกจากยอดรวมของคุณเพื่อความแม่นยำ คุณสามารถแตะเพื่อดูรายละเอียดและเพิ่มเข้าไปได้หากต้องการ",
       "action": {
         "Sell": "ขาย",
@@ -1955,6 +1975,10 @@
       "customTestnetNotSupported": "ไม่รองรับโทเค็นบนเชนนี้"
     },
     "setting": {
+      "removedToken": {
+        "title": "โทเค็นที่ถูกลบ",
+        "description": "โทเค็นที่ถูกลบจะถูกซ่อนจากพอร์ตของคุณในทุกที่อยู่ แต่ยังคงรวมอยู่ในการคำนวณยอดคงเหลือ"
+      },
       "aboutUs": "เกี่ยวกับเรา",
       "modifyRPCURL": "แก้ไข RPC URL",
       "screenTitle": "การตั้งค่า",
@@ -2755,7 +2779,6 @@
         "sizeTips": "มูลค่าหรือปริมาณรวมของการเทรดของคุณ ซึ่งกำหนดโดยมาร์จิ้นและเลเวอเรจ.",
         "feeTitle": "ค่าธรรมเนียม",
         "feeRabby": "Rabby Wallet",
-        "feeRabbyDiscount": "ส่วนลดค่าธรรมเนียมการเทรดแบบจำกัดเวลา",
         "feeHyperliquid": "Hyperliquid",
         "feeDesc": "เมื่อผู้ใช้ทำการซื้อขาย จะมีทั้ง <1>ค่าธรรมเนียมการซื้อขาย</1> และ <2>ค่าธรรมเนียม Builder</2>",
         "amount": "จำนวน",
@@ -2822,7 +2845,7 @@
       },
       "PerpsDepositCard": {
         "deposit": "ฝากเงิน",
-        "availableToTrade": "พร้อมให้เทรด:",
+        "availableToTrade": "พร้อมใช้งาน:",
         "swap": "สวอป"
       },
       "PerpsAccountSelectorPopup": {
@@ -2896,6 +2919,50 @@
       }
     },
     "perpsDetail": {
+      "simpleAccount": {
+        "margin": "มาร์จิ้น",
+        "averageEntry": "ราคาเข้าเฉลี่ย",
+        "estimatedLiquidationPrice": "ราคาล้างพอร์ตโดยประมาณ",
+        "estimatedLiquidationDistance": "ระยะห่างจากการล้างพอร์ตโดยประมาณ",
+        "tpSl": "TP/SL",
+        "takeProfitPrice": "ราคาทำกำไร",
+        "stopLossPrice": "ราคาหยุดขาดทุน",
+        "funding": "ค่าฟันดิง",
+        "nextFundingRate": "อัตราฟันดิงครั้งถัดไป",
+        "estimatedPnl": "PNL โดยประมาณ",
+        "closePositionTitle": "ปิดโพซิชัน {{coin}}",
+        "estimatedRealizedPnl": "PNL ที่เกิดขึ้นจริงโดยประมาณ"
+      },
+      "simpleChart": {
+        "openInterest": "มูลค่าสัญญาคงค้าง",
+        "volume24h": "ปริมาณซื้อขาย 24 ชม.",
+        "intervalTitle": "ช่วงเวลาแท่งเทียน",
+        "intervalDescription": "แท่งเทียนแต่ละแท่งแสดงช่วงเวลาที่เลือก",
+        "minutes": "นาที",
+        "hours": "ชั่วโมง",
+        "days": "วัน",
+        "open": "ราคาเปิด",
+        "low": "ราคาต่ำสุด",
+        "high": "ราคาสูงสุด",
+        "close": "ราคาปิด",
+        "time": "เวลา",
+        "change": "การเปลี่ยนแปลง",
+        "changePercent": "การเปลี่ยนแปลง (%)",
+        "averageEntry": "ราคาเข้าเฉลี่ย",
+        "takeProfit": "ทำกำไร",
+        "stopLoss": "ตัดขาดทุน",
+        "liquidation": "ราคาบังคับปิดสถานะ",
+        "all": "ทั้งหมด",
+        "source": "ให้บริการโดย Hyperliquid กราฟราคาให้บริการโดย <tradingview>TradingView</tradingview>",
+        "resetChart": "รีเซ็ตกราฟ",
+        "backToLatest": "กลับไปยังข้อมูลล่าสุด",
+        "switchToArea": "เปลี่ยนเป็นกราฟพื้นที่",
+        "switchToCandle": "เปลี่ยนเป็นกราฟแท่งเทียน",
+        "showVolume": "แสดงปริมาณซื้อขาย 24 ชั่วโมง",
+        "showOpenInterest": "แสดงมูลค่าสัญญาคงค้าง",
+        "buy": "ซื้อ",
+        "sell": "ขาย"
+      },
       "PerpEditLimitPriceTag": {
         "setLimitBuyPrice": "ตั้งราคา Limit สำหรับซื้อ",
         "setLimitSellPrice": "ตั้งราคา Limit สำหรับขาย",
@@ -2924,7 +2991,7 @@
         "settings": "การตั้งค่า",
         "marginMode": "โหมดมาร์จิ้น",
         "unrealizedPnl": "PNL ที่ยังไม่เกิดขึ้นจริง",
-        "fundingTipsBold": "ส่วนนี้แสดงยอดค่าฟันดิงรวมที่ชำระแล้วตั้งแต่เปิดโพซิชัน ค่า <bold>สีเขียว (บวก)</bold> หมายถึงคุณได้รับค่าฟันดิงจากเทรดเดอร์อื่น ส่วนค่า <bold>สีแดง (ลบ)</bold> คือค่าฟันดิงที่คุณจ่ายให้พวกเขา",
+        "fundingTipsBold": "ส่วนนี้แสดงยอดค่าฟันดิงรวมที่ชำระแล้วตั้งแต่เปิดโพซิชัน ค่า <positive>สีเขียว (บวก)</positive> หมายถึงคุณได้รับค่าฟันดิงจากเทรดเดอร์อื่น ส่วนค่า <negative>สีแดง (ลบ)</negative> คือค่าฟันดิงที่คุณจ่ายให้พวกเขา",
         "crossTips": "ในโหมด Cross Margin ราคาชำระบัญชีของแต่ละโพซิชันเป็นเพียงค่าประมาณสำหรับอ้างอิง"
       },
       "PerpsInfo": {
@@ -3426,6 +3493,7 @@
       "screenTitle": "เชื่อมต่อวอลเล็ต",
       "connectingToRabby": "กำลังเชื่อมต่อกับ Rabby",
       "pairingFailed": "การจับคู่ WalletConnect ล้มเหลว",
+      "proposalNotReceived": "คิวอาร์โค้ด WalletConnect อาจหมดอายุแล้ว โปรดรีเฟรชแล้วลองอีกครั้ง",
       "connected": "เชื่อมต่อสำเร็จ โปรดกลับไปที่ DApp",
       "proposalExpired": "ข้อเสนอ WalletConnect หมดอายุแล้ว",
       "pairingExpired": "การจับคู่ WalletConnect หมดอายุแล้ว รีเฟรชคิวอาร์โค้ด dapp แล้วลองอีกครั้ง",

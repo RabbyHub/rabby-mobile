@@ -10,7 +10,6 @@ import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import { createGetStyles, createGetStyles2024 } from '@/utils/styles';
 import { useFindAccountByAddress } from '@/screens/Address/components/MultiAssets/hooks/share';
 import { perpsStore } from '@/hooks/perps/usePerpsStore';
-import { useShallow } from 'zustand/react/shallow';
 import type { Account } from '@/core/startupServices/preference';
 import type { AssetPosition } from '@rabby-wallet/hyperliquid-sdk';
 import { ClearinghouseState } from '@rabby-wallet/hyperliquid-sdk';
@@ -30,9 +29,12 @@ import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { navigateToPreferredPerps } from '@/hooks/perps/navigation/navigateToPreferredPerps';
 import { formatPerpsCoin, getFallbackCoinLogoUrl } from '@/utils/perps';
 import { SvgUri } from 'react-native-svg';
-import { matomoRequestEvent } from '@/utils/analytics';
 import { Text } from '@/components/Typography';
 import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
+import {
+  areHomePerpsPositionsEqual,
+  selectHomePerpsPositions,
+} from './positionSelector';
 
 const calculateMarkPrice = (position: AssetPosition['position']) => {
   const entryPxDecimals = position.entryPx?.split('.')[1]?.length || 2;
@@ -75,7 +77,7 @@ const CoinAvatar = ({ logo, size }: { logo: string; size: number }) => {
   );
 };
 
-const AssetPositionItem = ({
+const AssetPositionItemInner = ({
   item,
   onShowRiskPopup,
 }: {
@@ -105,10 +107,6 @@ const AssetPositionItem = ({
   const pnlText = `${isUp ? '+' : '-'}${formatUsdValue(absPnlUsd)}`;
 
   const handleHyperliquidPress = useCallback(() => {
-    matomoRequestEvent({
-      category: 'Rabby Perps',
-      action: 'Perps_CardToPerps',
-    });
     void navigateToPreferredPerps({
       account: item.account,
       canonicalMarket: coin,
@@ -210,6 +208,18 @@ const AssetPositionItem = ({
     </TouchableOpacity>
   );
 };
+
+const AssetPositionItem = React.memo(
+  AssetPositionItemInner,
+  (previous, next) =>
+    previous.item.account === next.item.account &&
+    previous.item.assetPositions === next.item.assetPositions &&
+    previous.item.logoUrl === next.item.logoUrl &&
+    previous.item.quoteAsset === next.item.quoteAsset &&
+    previous.item.displayName === next.item.displayName &&
+    previous.onShowRiskPopup === next.onShowRiskPopup,
+);
+AssetPositionItem.displayName = 'AssetPositionItem';
 
 // export const PerpsSingleAssetPosition: React.FC<{
 //   account?: Account | null;
@@ -338,13 +348,10 @@ const AssetPositionItem = ({
 
 export const PerpsMultiAssetPosition: React.FC = () => {
   const getAccountByAddress = useFindAccountByAddress();
-  const { clearinghouseStateMap, marketDataMap } = useActivityStore(
+  const { clearinghouseStateMap, marketMetadataByCoin } = useActivityStore(
     perpsStore,
-    useShallow(s => ({
-      clearinghouseStateMap: s.clearinghouseStateMap,
-      marketDataMap: s.marketDataMap,
-    })),
-    Object.is,
+    selectHomePerpsPositions,
+    areHomePerpsPositionsEqual,
     { storeLabel: 'home-overview-perps-positions' },
   );
   const [selectedPositionKey, setSelectedPositionKey] = useState<{
@@ -368,7 +375,8 @@ export const PerpsMultiAssetPosition: React.FC = () => {
       const assetPositions = clearinghouseState?.assetPositions || [];
       assetPositions.forEach(assetPosition => {
         const quoteAsset =
-          marketDataMap[assetPosition.position.coin]?.quoteAsset || 'USDC';
+          marketMetadataByCoin[assetPosition.position.coin]?.quoteAsset ||
+          'USDC';
         resList.push({
           account,
           quoteAsset,
@@ -376,10 +384,10 @@ export const PerpsMultiAssetPosition: React.FC = () => {
           // Meta can be missing while the boot fetch retries — fall back to
           // the bundled PNG, then HL's svg.
           logoUrl:
-            marketDataMap[assetPosition.position.coin]?.logoUrl ||
+            marketMetadataByCoin[assetPosition.position.coin]?.logoUrl ||
             getFallbackCoinLogoUrl(assetPosition.position.coin),
           displayName:
-            marketDataMap[assetPosition.position.coin]?.displayName ||
+            marketMetadataByCoin[assetPosition.position.coin]?.displayName ||
             assetPosition.position.coin,
         });
       });
@@ -391,7 +399,7 @@ export const PerpsMultiAssetPosition: React.FC = () => {
         Number(a.assetPositions.position.marginUsed)
       );
     });
-  }, [clearinghouseStateMap, getAccountByAddress, marketDataMap]);
+  }, [clearinghouseStateMap, getAccountByAddress, marketMetadataByCoin]);
 
   const riskPopupData = useMemo(() => {
     if (!selectedPositionKey) {
@@ -452,10 +460,6 @@ export const PerpsMultiAssetPosition: React.FC = () => {
 
   useEffect(() => {
     if (hasPosition && !hasLoggedEvent.current) {
-      matomoRequestEvent({
-        category: 'Rabby Perps',
-        action: 'Perps_ExistPosition',
-      });
       hasLoggedEvent.current = true;
     }
   }, [hasPosition]);
@@ -470,7 +474,7 @@ export const PerpsMultiAssetPosition: React.FC = () => {
               <AssetPositionItem
                 key={`${item.account.address}-${item.assetPositions.position.coin}`}
                 item={item}
-                onShowRiskPopup={() => handleShowRiskPopup(item)}
+                onShowRiskPopup={handleShowRiskPopup}
               />
             );
           })}

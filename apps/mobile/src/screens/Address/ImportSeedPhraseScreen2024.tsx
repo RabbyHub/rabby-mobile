@@ -36,8 +36,6 @@ import { FooterButtonScreenContainer } from '@/components2024/ScreenContainer/Fo
 import { useSetPasswordFirst } from '@/hooks/useLock';
 import { useImportAddressProc } from '@/hooks/address/useNewUser';
 import { useShowImportMoreAddressPopup } from '@/hooks/useShowImportMoreAddressPopup';
-import { setReportActionTs } from '@/core/serviceApi/preference';
-import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/utils/reportTimeoutAction';
 import {
   isNewlyInputTextSameWithContentFromClipboard,
   onPastedSensitiveData,
@@ -281,9 +279,6 @@ export const ImportSeedPhraseScreen2024 = () => {
         isFirstImportPassword: true,
       })
     ) {
-      void setReportActionTs(
-        REPORT_TIMEOUT_ACTION_KEY.IMPORT_SEED_PHRASE_CONFIRM,
-      ).catch(console.error);
       setConfirmCB(importSeedPhrase);
       return;
     }

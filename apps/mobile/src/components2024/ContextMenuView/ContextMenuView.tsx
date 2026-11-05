@@ -4,14 +4,15 @@
 import * as ContextMenu from '@rabby-wallet/zeego/context-menu';
 import { MenuTriggerProps } from '@rabby-wallet/zeego/menu';
 import type { ContextMenuContentProps } from '@radix-ui/react-context-menu';
-import { ImageSourcePropType, Platform } from 'react-native';
+import { ImageSourcePropType, Platform, View } from 'react-native';
 import { IS_ANDROID } from '@/core/native/utils';
 import { apisTheme } from '@/hooks/theme';
-import { useCallback, useRef } from 'react';
+import { memo, useCallback, useMemo, useRef } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { MenuComponentRef } from '@rabby-wallet/react-native-menu';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { runOnJS } from 'react-native-reanimated';
+import { useNativeMenuModalGate } from '@/utils/modalGate';
 // import { touchedFeedback } from '@/utils/touch';
 
 const IS_IOS_27_OR_ABOVE =
@@ -78,7 +79,7 @@ function renderMenuActions(config: MenuConfig) {
   });
 }
 
-export const ContextMenuView: React.FC<Props> = ({
+const ContextMenuViewInner = ({
   children,
   menuTitle,
   getMenuConfig,
@@ -88,22 +89,27 @@ export const ContextMenuView: React.FC<Props> = ({
   triggerProps,
   preViewBorderRadius = 30,
   androidLongPressDuration = 350,
-}) => {
+}: Props) => {
   const androidMenuViewRef = useRef<MenuComponentRef>(null);
+  const nativeMenuGateProps = useNativeMenuModalGate();
 
   const androidShowMenu = useCallback(() => {
     // touchedFeedback();
     androidMenuViewRef.current?.show();
   }, []);
 
-  const longPressGesture = Gesture.LongPress()
-    .minDuration(androidLongPressDuration)
-    .runOnJS(false)
-    .onStart(() => {
-      runOnJS(androidShowMenu)();
-    });
-
   const needUseGdOnAndroid = IS_ANDROID && triggerProps?.action === 'longPress';
+  const longPressGesture = useMemo(() => {
+    if (!needUseGdOnAndroid) {
+      return null;
+    }
+    return Gesture.LongPress()
+      .minDuration(androidLongPressDuration)
+      .runOnJS(false)
+      .onStart(() => {
+        runOnJS(androidShowMenu)();
+      });
+  }, [androidLongPressDuration, androidShowMenu, needUseGdOnAndroid]);
   const getDynamicMenuChildren = useCallback(
     () => renderMenuActions(getMenuConfig()),
     [getMenuConfig],
@@ -112,24 +118,29 @@ export const ContextMenuView: React.FC<Props> = ({
   const previewTheme = IS_IOS_27_OR_ABOVE
     ? apisTheme.getColors2024()
     : undefined;
+  const previewBackgroundColor = previewTheme
+    ? previewTheme.colors2024[
+        previewTheme.isLight ? 'neutral-bg-1' : 'neutral-bg-2'
+      ]
+    : undefined;
+  const iosProps = useMemo(
+    () => ({
+      previewConfig: {
+        borderRadius: preViewBorderRadius,
+        // iOS 27 can composite a transparent target against black during preview.
+        ...(previewBackgroundColor !== undefined && {
+          backgroundColor: previewBackgroundColor,
+        }),
+      },
+    }),
+    [preViewBorderRadius, previewBackgroundColor],
+  );
 
   return (
     <ContextMenu.Root
-      __unsafeIosProps={{
-        previewConfig: {
-          borderRadius: preViewBorderRadius,
-          // iOS 27 can composite a transparent target against black during
-          // the transition into the native context-menu preview.
-          ...(IS_IOS_27_OR_ABOVE
-            ? {
-                backgroundColor: previewTheme?.isLight
-                  ? previewTheme.colors2024['neutral-bg-1']
-                  : previewTheme?.colors2024['neutral-bg-2'],
-              }
-            : {}),
-        },
-      }}
-      androidMenuViewRef={androidMenuViewRef}>
+      __unsafeIosProps={iosProps}
+      androidMenuViewRef={androidMenuViewRef}
+      {...nativeMenuGateProps}>
       <ContextMenu.Trigger
         action="longPress"
         {...triggerProps}
@@ -138,9 +149,10 @@ export const ContextMenuView: React.FC<Props> = ({
           androidSuppressNativeLongPress: true,
           action: 'longPress',
         })}>
-        {needUseGdOnAndroid ? (
+        {longPressGesture ? (
           <GestureDetector gesture={longPressGesture}>
-            {children}
+            {/* Composite children may drop GestureDetector's collapsable prop. */}
+            <View collapsable={false}>{children}</View>
           </GestureDetector>
         ) : (
           children
@@ -158,3 +170,5 @@ export const ContextMenuView: React.FC<Props> = ({
     </ContextMenu.Root>
   );
 };
+
+export const ContextMenuView = memo(ContextMenuViewInner);

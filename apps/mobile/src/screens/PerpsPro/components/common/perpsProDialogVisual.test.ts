@@ -96,14 +96,13 @@ describe('Pro dialog font mapping', () => {
         });
         expect(styles.title).toMatchObject({
           fontFamily:
-            platform === 'ios' ? 'SF Pro Rounded' : 'SF-Pro-Rounded-Heavy',
+            platform === 'ios' ? 'ui-rounded' : 'SF-Pro-Rounded-Heavy',
         });
         expect(styles.buttonTitle).toMatchObject({
-          fontFamily:
-            platform === 'ios' ? 'SF Pro Rounded' : 'SF-Pro-Rounded-Bold',
+          fontFamily: platform === 'ios' ? 'ui-rounded' : 'SF-Pro-Rounded-Bold',
         });
         expect(styles.title.fontWeight).toBe(
-          platform === 'ios' ? '900' : undefined,
+          platform === 'ios' ? '800' : undefined,
         );
         expect(styles.buttonTitle.fontWeight).toBe(
           platform === 'ios' ? '700' : undefined,

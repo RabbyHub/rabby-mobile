@@ -103,7 +103,7 @@ describe('ensurePerpsActionApproval', () => {
         validUntil: Date.now() + 48 * 60 * 60 * 1000,
       },
     ]);
-    mockGetMaxBuilderFee.mockResolvedValue(10);
+    mockGetMaxBuilderFee.mockResolvedValue(100);
   });
 
   it('does not request a signature when remote agent and builder approvals are current', async () => {

@@ -18,15 +18,36 @@ export const enum FontWeightEnum {
 }
 
 export const FontNames = {
-  sf_pro: IS_IOS ? 'SF Pro' : 'Roboto',
-  sf_pro_rounded_bold: IS_IOS ? 'SFProRounded-Bold' : 'SF-Pro-Rounded-Bold',
-  sf_pro_rounded_regular: IS_IOS
-    ? 'SFProRounded-Regular'
-    : 'SF-Pro-Rounded-Regular',
-  sf_pro_rounded_medium: IS_IOS
-    ? 'SFProRounded-Medium'
-    : 'SF-Pro-Rounded-Medium',
-  sf_pro_rounded_heavy: IS_IOS ? 'SFProRounded-Heavy' : 'SF-Pro-Rounded-Heavy',
+  sf_pro: IS_IOS ? 'System' : 'Roboto',
+};
+
+// The business weight 900 means the bundled Heavy face, not system Black.
+// iOS uses Fabric's built-in ui-rounded support; this requires newArch.
+const RoundedFonts = {
+  [FontWeightEnum.normal]: { android: 'SF-Pro-Rounded-Regular', ios: '400' },
+  [FontWeightEnum.medium]: { android: 'SF-Pro-Rounded-Medium', ios: '500' },
+  [FontWeightEnum.bold]: { android: 'SF-Pro-Rounded-Bold', ios: '700' },
+  [FontWeightEnum.heavy]: { android: 'SF-Pro-Rounded-Heavy', ios: '800' },
+} as const;
+
+export function getRoundedFontStyle(
+  fontWeight?: TextStyle['fontWeight'],
+  platform: 'ios' | 'android' = IS_IOS ? 'ios' : 'android',
+): Pick<TextStyle, 'fontFamily' | 'fontWeight'> {
+  const face =
+    RoundedFonts[getFontWeightType(fontWeight).supertype] ||
+    RoundedFonts[FontWeightEnum.normal];
+  return platform === 'ios'
+    ? { fontFamily: 'ui-rounded', fontWeight: face.ios }
+    : { fontFamily: face.android, fontWeight: undefined };
+}
+
+// For raw styles, pass the complete family/weight pair rather than a font name.
+export const RoundedFontStyles = {
+  regular: getRoundedFontStyle('400'),
+  medium: getRoundedFontStyle('500'),
+  bold: getRoundedFontStyle('700'),
+  heavy: getRoundedFontStyle('900'),
 };
 /**
  * @description mutate fontFamily based on the input's fontFamily & fontWeight
@@ -110,12 +131,9 @@ export function getFontWeightType(fontWeight?: string | number) {
   return result;
 }
 
-const AllSoloWeightFonts = [
-  FontNames.sf_pro_rounded_bold,
-  FontNames.sf_pro_rounded_regular,
-  FontNames.sf_pro_rounded_medium,
-  FontNames.sf_pro_rounded_heavy,
-];
+const AllSoloWeightFonts: string[] = Object.values(RoundedFonts).map(
+  face => face.android,
+);
 type TextStyleInput = {
   fontWeight?: TextStyle['fontWeight'];
   fontFamily?: TextStyle['fontFamily'];

@@ -1,3 +1,5 @@
+import CloseEdit from '@/assets2024/icons/perps/PerpsSimpleAccount/limit-edit.svg';
+import { SIMPLE_ACCOUNT_COLORS } from './account/visual';
 import React, { useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -34,6 +36,7 @@ import {
 } from '@/constant/layout';
 
 interface Props {
+  variant?: 'close';
   coin: string;
   quoteAsset: string;
   markPrice: number;
@@ -53,6 +56,7 @@ const QUICK_OPTIONS: { label: string; pct: number | 'mid' }[] = [
 
 export const PerpEditLimitPriceTag: React.FC<Props> = ({
   coin,
+  variant,
   quoteAsset,
   markPrice,
   szDecimals,
@@ -157,17 +161,21 @@ export const PerpEditLimitPriceTag: React.FC<Props> = ({
   return (
     <>
       <TouchableOpacity
-        style={styles.tagContainer}
+        style={[styles.tagContainer, variant === 'close' && styles.closeTag]}
         onPress={() => {
           if (isPresentingRef.current) {
             return;
           }
           setModalVisible(true);
         }}>
-        <Text style={[styles.tagText]}>
+        <Text style={[styles.tagText, variant === 'close' && styles.closeText]}>
           {initLimitPrice ? `@ $${splitNumberByStep(initLimitPrice)}` : '-'}
         </Text>
-        <IconPerpEdit width={16} height={16} color={'#50D2C1'} />
+        {variant === 'close' ? (
+          <CloseEdit />
+        ) : (
+          <IconPerpEdit width={16} height={16} color={'#50D2C1'} />
+        )}
       </TouchableOpacity>
 
       <AppBottomSheetModal
@@ -245,6 +253,20 @@ export const PerpEditLimitPriceTag: React.FC<Props> = ({
 };
 
 const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
+  closeTag: {
+    minHeight: 20,
+    paddingVertical: 1,
+    paddingLeft: 12,
+    paddingRight: 6,
+    backgroundColor: SIMPLE_ACCOUNT_COLORS.limitBackground,
+  },
+  closeText: {
+    fontFamily: 'SF Pro Rounded',
+    fontWeight: '700',
+    fontSize: 14,
+    lineHeight: 18,
+    color: SIMPLE_ACCOUNT_COLORS.limit,
+  },
   tagContainer: {
     borderRadius: 100,
     backgroundColor: 'rgba(80, 210, 193, 0.12)',

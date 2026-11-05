@@ -1,10 +1,6 @@
 import React from 'react';
-import {
-  View,
-  ActivityIndicator,
-  RefreshControl,
-  Platform,
-} from 'react-native';
+import { View, ActivityIndicator, Platform } from 'react-native';
+import { CollapsibleRefreshControl } from '@/components/customized/ScrollViewLike/CollapsibleRefreshControl';
 
 import {
   ApprovalsTabView,
@@ -168,7 +164,7 @@ export default function ListByAssets() {
         onEndReached={onEndReached}
         onEndReachedThreshold={0.3}
         refreshControl={
-          <RefreshControl
+          <CollapsibleRefreshControl
             {...(isIOS && {
               progressViewOffset: -12,
             })}
@@ -204,8 +200,6 @@ const getStyle = createGetStyles2024(({ colors, colors2024 }) => {
     listContainer: {
       paddingTop: 20,
       paddingBottom: 0,
-      // repair top offset due to special contentInset in iOS
-      ...(isIOS && { marginTop: -ApprovalsLayouts.tabbarHeight }),
     },
     itemWrapper: {
       width: '100%',

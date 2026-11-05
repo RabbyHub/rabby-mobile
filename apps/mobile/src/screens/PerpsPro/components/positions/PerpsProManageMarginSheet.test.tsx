@@ -1,4 +1,5 @@
 import { ThemeColors2024 } from '@/constant/theme';
+import { RoundedFontStyles } from '@/core/utils/fonts';
 import { colord } from 'colord';
 import { PERPS_PRO_DIALOG_TOKENS } from '../common/perpsProDialogVisual';
 let mockThemeMode: 'light' | 'dark' | undefined;
@@ -303,11 +304,11 @@ describe('PerpsProManageMarginSheet', () => {
     mockThemeMode = undefined;
   });
 
-  it('matches the normal 564-point Figma geometry and dynamic market facts', () => {
+  it('matches the normal 578-point Figma geometry and dynamic market facts', () => {
     renderSheet();
 
     expect(screen.getByTestId('manage-margin-modal').props.snapPoints).toEqual([
-      564,
+      578,
     ]);
     expect(screen.getByTestId('manage-margin-modal').props).toMatchObject({
       android_keyboardInputMode: 'adjustPan',
@@ -327,7 +328,7 @@ describe('PerpsProManageMarginSheet', () => {
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-manage-margin-amount-card').props.style,
       ),
-    ).toMatchObject({ borderRadius: 12, height: 162, top: 168 });
+    ).toMatchObject({ borderRadius: 12, height: 162, top: 182 });
     expect(
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-manage-margin-amount-row').props.style,
@@ -370,7 +371,7 @@ describe('PerpsProManageMarginSheet', () => {
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-manage-margin-risk').props.style,
       ).top,
-    ).toBe(338);
+    ).toBe(352);
     expect(
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-manage-margin-footer').props.style,
@@ -398,9 +399,8 @@ describe('PerpsProManageMarginSheet', () => {
       StyleSheet.flatten(screen.getByText('xyz').props.style),
     ).toMatchObject({
       color: 'neutral-foot',
-      fontFamily: 'SF Pro Rounded',
+      ...RoundedFontStyles.medium,
       fontSize: 12,
-      fontWeight: '500',
       lineHeight: 16,
     });
 
@@ -467,7 +467,7 @@ describe('PerpsProManageMarginSheet', () => {
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-manage-margin-risk').props.style,
       ).top,
-    ).toBe(338);
+    ).toBe(352);
   });
 
   it('renders unavailable liquidation prices with double dashes', () => {

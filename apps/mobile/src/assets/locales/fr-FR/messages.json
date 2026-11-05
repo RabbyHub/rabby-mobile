@@ -461,7 +461,13 @@
         "empty": {
           "title": "Aucune transaction signée pour le moment",
           "titleLastThreeMonths": "Aucun historique de transactions depuis 90 jours",
+          "titleInLast90Days": "Aucune transaction au cours des 90 derniers jours",
+          "titleNoTransactions": "Aucune transaction",
           "testnetNoHistory": "L'historique des transactions du token personnalisé n'est pas disponible."
+        },
+        "noMore": {
+          "title": "Aucune autre transaction.",
+          "titleInLast90Days": "Aucune autre transaction au cours des 90 derniers jours."
         },
         "tips": {
           "canNotCancel": "Impossible d’accélérer ou d’annuler : il ne s’agit pas de la première transaction en attente",
@@ -1502,6 +1508,10 @@
       "subtitle": "Choisissez un portefeuille pour recevoir vos cryptos."
     },
     "singleHome": {
+      "tokenActions": {
+        "remove": "Supprimer",
+        "removeFailed": "Impossible de supprimer le token"
+      },
       "sectionHeader": {
         "Token": "Token",
         "Nft": "NFT",
@@ -1628,6 +1638,13 @@
       "title": "GasAccount"
     },
     "tokenDetail": {
+      "removed": {
+        "restore": "Restaurer le token supprimé",
+        "restoreFailed": "Impossible de restaurer le token",
+        "more": "Plus",
+        "confirmTitle": "Supprimer ce token ?",
+        "confirmDescription": "· Ce token n’apparaîtra plus dans votre portefeuille après sa suppression.\n· Vous pouvez le restaurer à tout moment dans Paramètres >> Tokens supprimés."
+      },
       "excludeBalanceTips": "Cet actif est exclu de votre solde total pour plus de précision. Vous pouvez le toucher pour voir les détails et l'inclure si vous le souhaitez.",
       "action": {
         "Buy": "Acheter",
@@ -1741,6 +1758,9 @@
       "alreadyClaimedXPoints": "Déjà réclamé : {{point}}"
     },
     "customTestnet": {
+      "screenTitle": "Réseau personnalisé",
+      "removeNetwork": "Supprimer {{name}}",
+      "editTitle": "Modifier le réseau personnalisé",
       "add": "Ajouter un réseau personnalisé",
       "currency": "Devise",
       "signTx": {
@@ -1789,6 +1809,10 @@
       }
     },
     "setting": {
+      "removedToken": {
+        "title": "Tokens supprimés",
+        "description": "Les tokens supprimés seront masqués dans votre portefeuille pour toutes vos adresses, mais resteront inclus dans le calcul de votre solde."
+      },
       "faceId": "Face ID",
       "policy": "Politique de confidentialité",
       "touchId": "Touch ID",
@@ -2590,7 +2614,6 @@
         "feeTitle": "Frais",
         "feeHyperliquid": "Hyperliquid",
         "feeRabby": "Rabby Wallet",
-        "feeRabbyDiscount": "Réduction des frais de trading pour une durée limitée",
         "feeDesc": "Lorsque les utilisateurs passent des ordres, des <1>frais de trading</1> et des <2>frais de builder</2> s’appliquent.",
         "amount": "Montant",
         "asset": "Actif",
@@ -2655,7 +2678,7 @@
         "desc": "Vous allez vous déconnecter du compte Perps actuel. Vous pourrez le restaurer à tout moment en vous reconnectant avec cette adresse."
       },
       "PerpsDepositCard": {
-        "availableToTrade": "Disponible à trader :",
+        "availableToTrade": "Disponible :",
         "deposit": "Dépôt",
         "swap": "Échanger"
       },
@@ -2731,6 +2754,50 @@
       }
     },
     "perpsDetail": {
+      "simpleAccount": {
+        "margin": "Marge",
+        "averageEntry": "Prix moyen d’entrée",
+        "estimatedLiquidationPrice": "Prix de liq. estimé",
+        "estimatedLiquidationDistance": "Écart de liq. estimé",
+        "tpSl": "TP/SL",
+        "takeProfitPrice": "Prix de prise de profit",
+        "stopLossPrice": "Prix de stop-loss",
+        "funding": "Financement",
+        "nextFundingRate": "Prochain taux de financement",
+        "estimatedPnl": "PnL estimé",
+        "closePositionTitle": "Fermer la position {{coin}}",
+        "estimatedRealizedPnl": "PnL réalisé estimé"
+      },
+      "simpleChart": {
+        "openInterest": "Positions ouvertes",
+        "volume24h": "Volume sur 24 h",
+        "intervalTitle": "Intervalle des bougies",
+        "intervalDescription": "Chaque bougie représente l’intervalle sélectionné.",
+        "minutes": "Minutes",
+        "hours": "Heures",
+        "days": "Jours",
+        "open": "Ouverture",
+        "low": "Plus bas",
+        "high": "Plus haut",
+        "close": "Clôture",
+        "time": "Heure",
+        "change": "Variation",
+        "changePercent": "Variation (%)",
+        "averageEntry": "Prix d’entrée moyen",
+        "takeProfit": "Prise de bénéfices",
+        "stopLoss": "Stop-loss",
+        "liquidation": "Prix de liquidation",
+        "all": "TOUT",
+        "source": "Service fourni par Hyperliquid. Graphique des prix fourni par <tradingview>TradingView.</tradingview>",
+        "resetChart": "Réinitialiser le graphique",
+        "backToLatest": "Revenir aux dernières données",
+        "switchToArea": "Passer au graphique en aires",
+        "switchToCandle": "Passer au graphique en chandeliers",
+        "showVolume": "Afficher le volume sur 24 h",
+        "showOpenInterest": "Afficher les positions ouvertes",
+        "buy": "Achat",
+        "sell": "Vente"
+      },
       "PerpEditLimitPriceTag": {
         "setLimitBuyPrice": "Définir le prix limite d'achat",
         "setLimitSellPrice": "Définir le prix limite de vente",
@@ -2759,7 +2826,7 @@
         "settings": "Paramètres",
         "details": "Détails",
         "marginMode": "Mode de marge",
-        "fundingTipsBold": "Cela affiche le total du funding réglé depuis l’ouverture de la position. Les valeurs <bold>vertes (positives)</bold> signifient que vous avez reçu du funding d’autres traders, tandis que les valeurs <bold>rouges (négatives)</bold> correspondent aux coûts de funding que vous leur avez payés.",
+        "fundingTipsBold": "Cela affiche le total du funding réglé depuis l’ouverture de la position. Les valeurs <positive>vertes (positives)</positive> signifient que vous avez reçu du funding d’autres traders, tandis que les valeurs <negative>rouges (négatives)</negative> correspondent aux coûts de funding que vous leur avez payés.",
         "crossTips": "En mode de marge croisée, le prix de liquidation d’une position unique est une estimation fournie à titre indicatif."
       },
       "PerpsInfo": {
@@ -3261,6 +3328,7 @@
       "screenTitle": "Connecter le portefeuille",
       "connectingToRabby": "Connexion à Rabby",
       "pairingFailed": "L'appairage WalletConnect a échoué.",
+      "proposalNotReceived": "Le QR code WalletConnect a peut-être expiré. Actualisez-le et réessayez.",
       "connected": "Connexion réussie. Veuillez retourner à la DApp.",
       "proposalExpired": "La proposition WalletConnect a expiré.",
       "pairingExpired": "L'appairage WalletConnect a expiré. Actualisez le code QR de la DApp et réessayez.",
