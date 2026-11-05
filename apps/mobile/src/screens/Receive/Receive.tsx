@@ -118,7 +118,6 @@ function ReceiveScreen(): JSX.Element {
         )}
         <CustomTouchableOpacity
           as="RNGHTouchableOpacity"
-          style={styles.headerIconEye}
           onPress={() => setShowName(e => !e)}>
           {showName ? (
             <RcIconEyeCC
@@ -140,7 +139,6 @@ function ReceiveScreen(): JSX.Element {
       styles.headerTitle,
       styles.walletIcon,
       styles.titleText,
-      styles.headerIconEye,
       showName,
       account?.type,
       account?.address,
@@ -408,18 +406,15 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexShrink: 1,
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 20,
-    lineHeight: 24,
-    fontWeight: '900',
+    fontSize: 18,
+    lineHeight: 22,
+    fontWeight: '700',
     flexWrap: 'nowrap',
   },
   walletIcon: {
-    width: 25,
-    height: 25,
+    width: 24,
+    height: 24,
     borderRadius: 7,
-  },
-  headerIconEye: {
-    marginLeft: 4,
   },
 }));
 
