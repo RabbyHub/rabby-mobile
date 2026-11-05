@@ -102,17 +102,20 @@ export function maskScreenshotFeedbackAddresses<T extends string | null>(
   ) as T;
 }
 
+/**
+ * Builds the diagnostics attached to a feedback message. Balances are never
+ * attached.
+ */
 export async function getScreenshotFeedbackExtra({
-  totalBalanceText,
   includeAddress,
 }: {
-  totalBalanceText: string;
   /**
-   * Addresses are attached only when the user explicitly opts in. Any other
-   * value leaves them out and masks addresses found in free-text fields.
+   * Addresses and their account types are attached only when the user
+   * explicitly opts in. Any other value leaves them out and masks addresses
+   * found in free-text fields.
    */
   includeAddress?: boolean;
-}): Promise<UserFeedbackItem['extra'] & object> {
+} = {}): Promise<UserFeedbackItem['extra'] & object> {
   const shouldIncludeAddress = includeAddress === true;
   const rawLatestErrors = runTryCatch(() =>
     JSON.stringify(latestErrorsRef.current),
@@ -150,7 +153,6 @@ export async function getScreenshotFeedbackExtra({
   const myCurrentAccount = getFallbackAccountSnapshot();
 
   return {
-    totalBalanceText,
     currentScreen: getLatestNavigationName(),
     appVersionText,
     appVersion,
@@ -159,9 +161,9 @@ export async function getScreenshotFeedbackExtra({
     applicationId: APPLICATION_ID,
     myCallableAddressCount,
     myUncallableAddressCount,
-    myFirstAddressType: myFirstCallableAccount?.type,
-    myCurrentAddressType: myCurrentAccount?.type,
     ...(shouldIncludeAddress && {
+      myFirstAddressType: myFirstCallableAccount?.type,
+      myCurrentAddressType: myCurrentAccount?.type,
       myFirstAddress: myFirstCallableAccount?.address,
       myCurrentAddress: myCurrentAccount?.address,
       mySceneAddresses: await runTryCatch(

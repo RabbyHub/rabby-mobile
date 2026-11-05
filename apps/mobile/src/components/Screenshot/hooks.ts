@@ -18,7 +18,6 @@ import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 import { useShallow } from 'zustand/react/shallow';
 import { zCreate } from '@/core/utils/reexports';
 import DeviceUtils from '@/core/utils/device';
-import { perfEvents } from '@/core/utils/perf';
 import {
   dismissOpenNativeMenus,
   getVisibleBlockingModalIds,
@@ -218,8 +217,6 @@ type FeedbackByScreenshotState = {
   uploadedImageUrl: string;
   /** Opt-in per report: off whenever the submit modal opens or closes. */
   includeAddress: boolean;
-
-  totalBalanceText: string;
 };
 function getDefaultValue(): FeedbackByScreenshotState {
   return {
@@ -230,8 +227,6 @@ function getDefaultValue(): FeedbackByScreenshotState {
     feedbackText: '',
     uploadedImageUrl: '',
     includeAddress: false,
-
-    totalBalanceText: '',
   };
 }
 export const SCREENSHOT_FEEDBACK_MAX_LENGTH = 301;
@@ -252,16 +247,6 @@ function setFeedbackByScreenshot(
     if (!changed) return prev;
 
     return newVal;
-  });
-}
-
-export function screenshotModalStartSyncNetworth() {
-  perfEvents.subscribe('SCENE_24H_BALANCE_UPDATED', ({ combinedData }) => {
-    const netWorth = combinedData.netWorth;
-    setFeedbackByScreenshot(prev => ({
-      ...prev,
-      totalBalanceText: netWorth,
-    }));
   });
 }
 
@@ -287,10 +272,6 @@ export function useFeedbackHistoryVisible() {
     feedbackHistoryRefreshKey,
     toggleFeedbackHistoryVisible,
   };
-}
-
-export function useScreenshotFeedbackTotalBalanceText() {
-  return feedbackByScreenshotStore(s => s.totalBalanceText);
 }
 
 export const toggleFeedbackHistoryVisible = (v?: boolean) => {
@@ -731,15 +712,11 @@ const closeSubmitModal = ({
   }));
 };
 
-export async function getScreenshotFeedbackExtraSafely(
-  totalBalanceText: string,
-  { includeAddress = false }: { includeAddress?: boolean } = {},
-) {
+export async function getScreenshotFeedbackExtraSafely({
+  includeAddress = false,
+}: { includeAddress?: boolean } = {}) {
   try {
-    return await getScreenshotFeedbackExtra({
-      totalBalanceText,
-      includeAddress,
-    });
+    return await getScreenshotFeedbackExtra({ includeAddress });
   } catch (error) {
     console.error('screenshot feedback extra error', error);
     return {};
@@ -747,14 +724,12 @@ export async function getScreenshotFeedbackExtraSafely(
 }
 
 export function useSubmitFeedbackOnScreenshot() {
-  const { lastScreenshot, totalBalanceText, includeAddress } =
-    feedbackByScreenshotStore(
-      useShallow(s => ({
-        lastScreenshot: s.lastScreenshot,
-        totalBalanceText: s.totalBalanceText,
-        includeAddress: s.includeAddress,
-      })),
-    );
+  const { lastScreenshot, includeAddress } = feedbackByScreenshotStore(
+    useShallow(s => ({
+      lastScreenshot: s.lastScreenshot,
+      includeAddress: s.includeAddress,
+    })),
+  );
 
   const { globalModalShown, feedbackText, uploadedImageUrl } =
     useFeedbackOnScreenshot();
@@ -782,10 +757,9 @@ export function useSubmitFeedbackOnScreenshot() {
           throw new Error('No screenshot available');
         }
 
-        const extraInfo = await getScreenshotFeedbackExtraSafely(
-          totalBalanceText,
-          { includeAddress },
-        );
+        const extraInfo = await getScreenshotFeedbackExtraSafely({
+          includeAddress,
+        });
         // console.debug('[debug] extraInfo', extraInfo);
 
         // TODO: report to sentry here, add extra fields here
@@ -805,7 +779,6 @@ export function useSubmitFeedbackOnScreenshot() {
     },
     [
       feedbackText,
-      totalBalanceText,
       includeAddress,
       uploadedImageUrl,
       lastScreenshot?.uri,
