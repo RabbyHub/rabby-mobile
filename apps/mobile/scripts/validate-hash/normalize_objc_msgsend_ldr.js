@@ -131,13 +131,37 @@ function removeFilePath(otoolSContent) {
  * identical, so normalize only the layout-dependent address operands.
  */
 function normalizeMachOLayoutNoise(otoolSContent) {
-  return otoolSContent
-    .replace(
-      /^([0-9a-f]+\tadrp\tx\d+, )-?\d+ ; 0x[0-9a-f]+$/gm,
-      (_, prefix) => `${prefix}0 ; 0x0`,
-    )
-    .replace(/#0x[0-9a-f]+( ; literal pool for:)/g, '#0x0$1')
-    .replace(/#0x[0-9a-f]+(\] ; literal pool symbol address:)/g, '#0x0$1');
+  const lines = otoolSContent.split('\n');
+
+  for (let i = 0; i < lines.length - 1; i += 1) {
+    const adrp = lines[i].match(
+      /^([0-9a-f]+\tadrp\t(x\d+), )-?\d+ ; 0x[0-9a-f]+$/,
+    );
+    if (!adrp) continue;
+
+    const next = lines[i + 1];
+    const adrpRegister = adrp[2];
+    const add = next.match(
+      /^([0-9a-f]+\tadd\tx\d+, (x\d+), #0x)[0-9a-f]+( ; literal pool for:.*)$/,
+    );
+    if (add && add[2] === adrpRegister) {
+      lines[i] = `${adrp[1]}0 ; 0x0`;
+      lines[i + 1] = `${add[1]}0${add[3]}`;
+      i += 1;
+      continue;
+    }
+
+    const ldr = next.match(
+      /^([0-9a-f]+\tldr\tx\d+, \[(x\d+), #0x)[0-9a-f]+(\] ; literal pool symbol address:.*)$/,
+    );
+    if (ldr && ldr[2] === adrpRegister) {
+      lines[i] = `${adrp[1]}0 ; 0x0`;
+      lines[i + 1] = `${ldr[1]}0${ldr[3]}`;
+      i += 1;
+    }
+  }
+
+  return lines.join('\n');
 }
 
 async function main() {

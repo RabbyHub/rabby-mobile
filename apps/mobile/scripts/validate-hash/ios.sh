@@ -87,22 +87,28 @@ run_ios_build_and_hash() {
     if ! file "$macho_path" | grep -q "Mach-O"; then
       continue
     fi
-    if ! otool -tV "$macho_path" >"$macho_path.s" 2>/dev/null; then
-      rm -f "$macho_path.s"
-      continue
-    fi
-    node "$SCRIPT_DIR/normalize_asm_paths.js" "$macho_path.s" \
-      --repo-root "$WORK_DIR" \
-      --repo-root-alt "$repo_root_alt" \
-      --developer-dir "$developer_dir" \
-      --export-dir "$export_dir"
-    if [ "$macho_path" = "$app_path/RabbyMobile" ] && [ -f "$link_map_path" ]; then
-      node "$SCRIPT_DIR/normalize_objc_msgsend_ldr.js" "$macho_path.s" "$link_map_path" >"$macho_path.asm"
-      rm -f "$macho_path.s"
+    if [ "$macho_path" = "$app_path/RabbyMobile" ]; then
+      if ! otool -tV "$macho_path" >"$macho_path.s" 2>/dev/null; then
+        rm -f "$macho_path.s"
+        continue
+      fi
+      node "$SCRIPT_DIR/normalize_asm_paths.js" "$macho_path.s" \
+        --repo-root "$WORK_DIR" \
+        --repo-root-alt "$repo_root_alt" \
+        --developer-dir "$developer_dir" \
+        --export-dir "$export_dir"
+      if [ -f "$link_map_path" ]; then
+        node "$SCRIPT_DIR/normalize_objc_msgsend_ldr.js" "$macho_path.s" "$link_map_path" >"$macho_path.asm"
+        rm -f "$macho_path.s"
+      else
+        mv "$macho_path.s" "$macho_path.asm"
+      fi
+      rm -f "$macho_path"
     else
-      mv "$macho_path.s" "$macho_path.asm"
+      # Keep the complete framework binary (load commands and all sections) in
+      # the hash; normalize only known volatile absolute paths in place.
+      node "$SCRIPT_DIR/normalize_macho_paths.js" "$macho_path"
     fi
-    rm -f "$macho_path"
   done < <(find "$app_path" -type f -print0)
 
   # Trim machine-related data from the assembly file
