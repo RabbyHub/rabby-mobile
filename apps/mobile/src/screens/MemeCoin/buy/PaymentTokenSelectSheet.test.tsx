@@ -1,5 +1,5 @@
 import React from 'react';
-import { fireEvent, render } from '@testing-library/react-native';
+import { act, fireEvent, render } from '@testing-library/react-native';
 import type { PaymentAsset } from '../engine/types';
 import type { BuySummary } from '../ui/helpers';
 import { PaymentTokenSelectSheet } from './PaymentTokenSelectSheet';
@@ -7,6 +7,8 @@ import { PaymentTokenSelectSheet } from './PaymentTokenSelectSheet';
 const mockPresent = jest.fn();
 const mockDismiss = jest.fn();
 let mockOnDismiss: (() => void) | undefined;
+let mockOnChange: ((index: number) => void) | undefined;
+let mockAnimationConfigs: unknown;
 
 jest.mock('@/components/customized/BottomSheet', () => {
   const { useImperativeHandle } = jest.requireActual('react');
@@ -15,12 +17,18 @@ jest.mock('@/components/customized/BottomSheet', () => {
       ref,
       children,
       onDismiss,
+      onChange,
+      animationConfigs,
     }: {
       ref: unknown;
       children: unknown;
       onDismiss?: () => void;
+      onChange?: (index: number) => void;
+      animationConfigs?: unknown;
     }) => {
       mockOnDismiss = onDismiss;
+      mockOnChange = onChange;
+      mockAnimationConfigs = animationConfigs;
       useImperativeHandle(ref, () => ({
         present: mockPresent,
         dismiss: mockDismiss,
@@ -129,6 +137,13 @@ describe('PaymentTokenSelectSheet', () => {
     expect(mockPresent).toHaveBeenCalledTimes(1);
     rerender(<PaymentTokenSelectSheet {...props} visible={false} />);
     expect(mockDismiss).toHaveBeenCalledTimes(1);
+  });
+
+  it('is already open on entry, and slides as usual after that', () => {
+    renderSheet();
+    expect(mockAnimationConfigs).toEqual({ duration: 0 });
+    act(() => mockOnChange?.(0));
+    expect(mockAnimationConfigs).toBeUndefined();
   });
 
   it('closes when the sheet is swiped away', () => {

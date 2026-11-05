@@ -31,18 +31,29 @@ const memes = [
 
 const renderCard = (allocationMode: AllocationMode) => {
   const onToggle = jest.fn();
+  const onChangeAmount = jest.fn();
   const utils = render(
     <BuyAmountCard
       amountText="100.00"
       amountUsd={100}
-      onChangeAmount={jest.fn()}
+      onChangeAmount={onChangeAmount}
       memes={memes}
       allocationMode={allocationMode}
       onToggleAllocationMode={onToggle}
     />,
   );
-  return { ...utils, onToggle };
+  return { ...utils, onToggle, onChangeAmount };
 };
+
+describe('BuyAmountCard amount', () => {
+  it('keeps at most two decimals while typing', () => {
+    const { getByText, getByDisplayValue, onChangeAmount } =
+      renderCard('marketCap');
+    fireEvent.press(getByText('$100'));
+    fireEvent.changeText(getByDisplayValue('100.00'), '12.345');
+    expect(onChangeAmount).toHaveBeenCalledWith('12.34');
+  });
+});
 
 describe('BuyAmountCard allocation', () => {
   it('lists each meme with its market cap share', () => {

@@ -1,11 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import {
-  FlatList,
-  Keyboard,
-  KeyboardAvoidingView,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { FlatList, Keyboard, KeyboardAvoidingView, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { Skeleton } from '@rneui/themed';
 import { useMemoizedFn } from 'ahooks';
@@ -45,10 +39,8 @@ import { toSellExecLegs } from '../engine/execLegs';
 import { tokenKey } from '../engine/keys';
 import {
   consumeMemeCoinHomeReset,
-  getMemeCoinHomeMode,
   pushMemeCoinBuy,
   pushMemeCoinExecute,
-  setMemeCoinHomeMode,
 } from '../navigation';
 import {
   DEFAULT_MAX_PRICE_IMPACT_PCT,
@@ -59,6 +51,7 @@ import {
 } from '../ui/helpers';
 import { getChainNativeToken } from '../ui/nativeToken';
 import {
+  dismissKeyboardThen,
   MemeCoinHomeBottomBar,
   useKeyboardVisible,
 } from './MemeCoinHomeBottomBar';
@@ -101,11 +94,7 @@ export const MemeCoinHomeScreen = () => {
   } = useMemeHoldings(address);
   const pnl = useMemePnl(address);
 
-  const [mode, setModeState] = useState<HomeMode>(getMemeCoinHomeMode);
-  const setMode = useCallback((next: HomeMode) => {
-    setMemeCoinHomeMode(next);
-    setModeState(next);
-  }, []);
+  const [mode, setMode] = useState<HomeMode>('market');
   const [keyword, setKeyword] = useState('');
   const [searching, setSearching] = useState(false);
   const [amountText, setAmountText] = useState('');
@@ -134,8 +123,7 @@ export const MemeCoinHomeScreen = () => {
   }, []);
 
   const cancelSelection = useCallback(() => {
-    Keyboard.dismiss();
-    clearSelection();
+    dismissKeyboardThen(clearSelection);
   }, [clearSelection]);
 
   useEffect(() => {
@@ -165,7 +153,7 @@ export const MemeCoinHomeScreen = () => {
       setSearching(false);
       clearSelection();
       refreshHoldings();
-    }, [clearSelection, refreshHoldings, setMode]),
+    }, [clearSelection, refreshHoldings]),
   );
 
   // Android pans the whole window by default (header slides off). The app is
@@ -249,14 +237,13 @@ export const MemeCoinHomeScreen = () => {
     setKeyword('');
     setSearching(false);
     clearSelection();
-  }, [clearSelection, mode, setMode]);
+  }, [clearSelection, mode]);
 
   const startSearch = useCallback(() => setSearching(true), []);
 
   const cancelSearch = useCallback(() => {
-    Keyboard.dismiss();
     setKeyword('');
-    setSearching(false);
+    dismissKeyboardThen(() => setSearching(false));
   }, []);
 
   const handleEndReached = useCallback(() => {
@@ -357,9 +344,7 @@ export const MemeCoinHomeScreen = () => {
   );
 
   const rightLabel =
-    selectedCount > 0
-      ? t('page.memeCoin.clear')
-      : mode === 'holdings'
+    mode === 'holdings'
       ? t('page.memeCoin.marketCapValue')
       : t('page.memeCoin.marketCap');
   // Figma drops the column label when a search finds nothing
@@ -387,19 +372,9 @@ export const MemeCoinHomeScreen = () => {
             ? t('page.memeCoin.marketTitle')
             : t('page.memeCoin.holdingsTitle')}
         </Text>
-        {selectedCount > 0 || !noSearchMatch ? (
-          <TouchableOpacity
-            disabled={selectedCount === 0}
-            onPress={clearSelection}
-            hitSlop={8}>
-            <Text
-              style={
-                selectedCount > 0 ? styles.sectionAction : styles.sectionLabel
-              }>
-              {rightLabel}
-            </Text>
-          </TouchableOpacity>
-        ) : null}
+        {noSearchMatch ? null : (
+          <Text style={styles.sectionLabel}>{rightLabel}</Text>
+        )}
       </View>
     </View>
   );
@@ -531,14 +506,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 18,
     fontWeight: '400',
     color: colors2024['neutral-secondary'],
-  },
-  sectionAction: {
-    paddingRight: 8,
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    lineHeight: 20,
-    fontWeight: '400',
-    color: colors2024['neutral-body'],
   },
   skeletonRow: {
     width: '100%',

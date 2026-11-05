@@ -70,10 +70,15 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     borderColor: colors2024[isLight ? 'orange-light-2' : 'orange-light-1'],
     backgroundColor: colors2024[isLight ? 'neutral-card-1' : 'neutral-bg-2'],
   },
+  // Whatever does not fit wraps onto a clipped second line, so narrow screens
+  // and long translations show fewer whole logos instead of covering the label.
   avatars: {
     flex: 1,
+    height: 36,
+    marginRight: 8,
     flexDirection: 'row',
-    alignItems: 'center',
+    flexWrap: 'wrap',
+    overflow: 'hidden',
   },
   avatarRing: {
     width: 36,

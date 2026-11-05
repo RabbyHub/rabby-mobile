@@ -2,10 +2,8 @@ import React from 'react';
 import { View } from 'react-native';
 import { Text, TextInput } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
-import { sanitizePerpsProDecimalEditingInput } from '@/utils/perpsPriceProtocol';
 import { createGetStyles2024 } from '@/utils/styles';
-
-const MAX_AMOUNT_DECIMALS = 2;
+import { sanitizeBuyAmountInput } from '../ui/helpers';
 
 export const BuyAmountField = ({
   amountText,
@@ -22,11 +20,7 @@ export const BuyAmountField = ({
         cursorColor={colors2024['brand-default']}
         selectionColor={colors2024['brand-default']}
         keyboardType="decimal-pad"
-        onChangeText={text =>
-          onChangeAmount(
-            sanitizePerpsProDecimalEditingInput(text, MAX_AMOUNT_DECIMALS),
-          )
-        }
+        onChangeText={text => onChangeAmount(sanitizeBuyAmountInput(text))}
         placeholder="0"
         placeholderTextColor={colors2024['neutral-info']}
         style={styles.input}
