@@ -57,6 +57,9 @@ export const buildFingerprint = (txs: Tx[]) =>
   txs
     .map(
       t =>
-        `${t.chainId}|${t.to || ''}|${t.value || ''}|${(t.data || '').length}`,
+        // calldata is not lowercased: that copies it, and a case-only mismatch only re-prefetches
+        `${t.chainId}|${(t.from || '').toLowerCase()}|${(
+          t.to || ''
+        ).toLowerCase()}|${t.value || ''}|${t.data || ''}`,
     )
     .join(';');
