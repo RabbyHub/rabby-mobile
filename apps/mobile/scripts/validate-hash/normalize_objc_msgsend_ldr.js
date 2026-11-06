@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-disable no-undef */
 
 const { Buffer } = require('node:buffer');
 const fs = require('fs');
