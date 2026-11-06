@@ -1,14 +1,19 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { StyleProp, TouchableOpacity, View, ViewStyle } from 'react-native';
 import {
   ExplainTxResponse,
+  PortfolioItem,
   Tx,
   WithdrawAction,
 } from '@rabby-wallet/rabby-api/dist/types';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { useDappAction } from './hook';
+import {
+  findTypedWithdrawAction,
+  useDappAction,
+  useDappActionRequest,
+} from './hook';
 import { sendRequest } from '@/core/apis/provider';
 import { toast } from '@/components2024/Toast';
 import { DappActionHeader } from './DappActionHeader';
@@ -39,7 +44,20 @@ const ActionButton = ({
   disabled,
 }: ActionButtonProps) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
-  const debounceOnPress = useMemo(() => debounce(onPress, 200), [onPress]);
+  const onPressRef = useRef(onPress);
+  onPressRef.current = () => {
+    if (!disabled) {
+      onPress();
+    }
+  };
+  const debounceOnPress = useMemo(
+    () =>
+      debounce(() => {
+        onPressRef.current();
+      }, 200),
+    [],
+  );
+  useEffect(() => () => debounceOnPress.cancel(), [debounceOnPress]);
   return (
     <TouchableOpacity
       style={[styles.button, style]}
@@ -54,6 +72,7 @@ const ActionButton = ({
 
 export const DappActions = ({
   data,
+  portfolio,
   chain,
   protocolLogo,
   currentAccount,
@@ -63,6 +82,7 @@ export const DappActions = ({
   disableAction,
 }: {
   data?: WithdrawAction[];
+  portfolio: PortfolioItem;
   chain?: string;
   protocolLogo?: string;
   currentAccount?: KeyringAccountWithAlias;
@@ -72,32 +92,20 @@ export const DappActions = ({
   disableAction?: boolean;
 }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
-  const withdrawAction = useMemo(
-    () =>
-      data?.find(
-        item =>
-          item.type === ActionType.Withdraw || item.type === ActionType.Queue,
-      ),
-    [data],
-  );
-  const claimAction = useMemo(
-    () => data?.find(item => item.type === ActionType.Claim),
-    [data],
-  );
-  const isQueueWithdraw = useMemo(
-    () => withdrawAction?.type === ActionType.Queue,
-    [withdrawAction?.type],
-  );
-
-  const { valid: showWithdraw, action: actionWithdraw } = useDappAction(
-    withdrawAction,
+  const { valid: showWithdraw, action } = useDappAction(
+    findTypedWithdrawAction(data, 'withdraw'),
     chain,
     currentAccount,
   );
-  const { valid: showClaim, action: actionClaim } = useDappAction(
-    claimAction,
+  const { valid: showClaim } = useDappAction(
+    findTypedWithdrawAction(data, 'claim'),
     chain,
     currentAccount,
+  );
+  const { pending, run } = useDappActionRequest(
+    portfolio,
+    currentAccount,
+    action,
   );
 
   const {
@@ -109,39 +117,27 @@ export const DappActions = ({
     account: currentAccount!,
   });
 
-  const setDisableSignBtn = useCallback(
-    (v: boolean) => {
-      updateConfig({ disableSignBtn: v });
+  const onPreExecChange = useCallback(
+    (r: ExplainTxResponse, isQueueWithdraw: boolean) => {
+      const hasReceivedAssets =
+        !!r.balance_change?.receive_nft_list?.length ||
+        !!r.balance_change?.receive_token_list?.length;
+      // Queue withdrawals do not receive assets immediately.
+      updateConfig({
+        disableSignBtn:
+          !r.pre_exec.success || (!isQueueWithdraw && !hasReceivedAssets),
+      });
     },
     [updateConfig],
-  );
-  const onPreExecChange = useCallback(
-    (r: ExplainTxResponse) => {
-      if (!r.pre_exec.success) {
-        setDisableSignBtn(true);
-        return;
-      }
-      if (
-        !r?.balance_change?.receive_nft_list?.length &&
-        !r?.balance_change?.receive_token_list?.length
-      ) {
-        // queue withdraw not need to check balance change
-        if (!isQueueWithdraw) {
-          setDisableSignBtn(true);
-          return;
-        }
-      }
-      setDisableSignBtn(false);
-    },
-    [isQueueWithdraw, setDisableSignBtn],
   );
   const canDirectSign = useMemo(() => {
     return isAccountSupportMiniApproval(currentAccount?.type || '');
   }, [currentAccount?.type]);
 
   const handleSubmit = useCallback(
-    async (action: () => Promise<Tx[]>, title?: string) => {
-      const txs = await action();
+    async (txs: Tx[], actionType: WithdrawAction['type']) => {
+      const isQueueWithdraw = actionType === ActionType.Queue;
+      const title = actionType === ActionType.Claim ? 'Claim' : 'Withdraw';
       if (!txs?.length) {
         return;
       }
@@ -162,7 +158,7 @@ export const DappActions = ({
             ),
             enableSecurityEngine: true,
             showSimulateChange: true,
-            onPreExecChange,
+            onPreExecChange: r => onPreExecChange(r, isQueueWithdraw),
             disableSignBtn: false,
             ga: {
               category: 'DappActions',
@@ -208,7 +204,6 @@ export const DappActions = ({
       chain,
       closeMiniSigner,
       currentAccount,
-      isQueueWithdraw,
       onPreExecChange,
       onRefresh,
       openUI,
@@ -225,25 +220,15 @@ export const DappActions = ({
       {showWithdraw && (
         <ActionButton
           text="Withdraw"
-          disabled={disableAction}
-          onPress={() => {
-            if (disableAction) {
-              return;
-            }
-            handleSubmit(actionWithdraw, 'Withdraw');
-          }}
+          disabled={disableAction || pending}
+          onPress={() => run('withdraw', handleSubmit)}
         />
       )}
       {showClaim && (
         <ActionButton
           text="Claim"
-          disabled={disableAction}
-          onPress={() => {
-            if (disableAction) {
-              return;
-            }
-            handleSubmit(actionClaim, 'Claim');
-          }}
+          disabled={disableAction || pending}
+          onPress={() => run('claim', handleSubmit)}
         />
       )}
     </View>
