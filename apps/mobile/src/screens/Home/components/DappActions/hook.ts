@@ -98,8 +98,13 @@ export const getMethodDesc = (fncName: string) => {
     return fncName;
   }
   const normalizedName = fncName.trim();
-  // 移除最后一个括号及其内容
-  return `function ${normalizedName.split(')(')[0] + ')'}`;
+  // 接口可能返回 `foo(uint256)` 或 `foo(uint256)()` 两种形式，
+  // 统一只保留第一段完整签名。
+  const [signature] = normalizedName.split(')(');
+  if (!signature.includes('(') || signature.endsWith(')')) {
+    return `function ${signature}`;
+  }
+  return `function ${signature})`;
 };
 
 export const parseActionAbi = (func: string) => {
