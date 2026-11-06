@@ -434,19 +434,23 @@ const PasswordInput = ({
     );
   }, [props.customIcon, props.iconColor, passwordVisible, colors2024]);
 
-  // Keep the prop object stable and pin the input traits. On iOS a secure field
-  // without an explicit content type is treated as a password field, so
-  // AutoFill re-applies its own keyboard layout while the user types and the
-  // keyboard visibly flickers between the password and the normal layout.
-  // oneTimeCode keeps the plain keyboard and disables that AutoFill path.
+  // Keep the prop object stable and pin the input traits. The flicker came from
+  // the same traits being re-applied on every keystroke (the sheet re-rendered
+  // per character), not from the password semantic itself; with a stable,
+  // uncontrolled input we can keep the password keyboard behaviour.
+  //
+  // Do NOT use `oneTimeCode` here: it tells iOS this is an SMS/OTP field, which
+  // drops the password AutoFill/Keychain treatment and the password keyboard
+  // appearance. `password` keeps that and still hides the predictive bar.
   const outerInputProps = props.inputProps;
   const mergedInputProps = React.useMemo(
     () => ({
       placeholderTextColor: colors2024['neutral-info'],
       ...outerInputProps,
       secureTextEntry: !passwordVisible,
-      textContentType: 'oneTimeCode' as const,
-      autoComplete: 'off' as const,
+      textContentType: passwordVisible
+        ? ('none' as const)
+        : ('password' as const),
       autoCorrect: false,
       spellCheck: false,
     }),
