@@ -1,17 +1,19 @@
-import type { CoreApi } from '@onekeyfe/hd-core';
+import type { CoreApi, UiResponseCorrelation } from '@onekeyfe/hd-core';
 
-export type ReceivePinParams =
+export type ReceivePinParams = (
   | {
       pin: string;
       switchOnDevice: false;
     }
   | {
       switchOnDevice: true;
-    };
+    }
+) & { responseCorrelation?: UiResponseCorrelation };
 
 export type ReceivePassphraseParams = {
   passphrase: string;
   switchOnDevice: boolean;
+  responseCorrelation?: UiResponseCorrelation;
 };
 
 export type OneKeyBridgeInterface = {
@@ -22,7 +24,7 @@ export type OneKeyBridgeInterface = {
   searchDevices: CoreApi['searchDevices'];
   getPassphraseState: CoreApi['getPassphraseState'];
   evmGetPublicKey: CoreApi['evmGetPublicKey'];
-  getFeatures: CoreApi['getFeatures'];
+  getDeviceState: CoreApi['getDeviceState'];
   receivePin: (params: ReceivePinParams) => void;
   receivePassphrase: (params: ReceivePassphraseParams) => void;
   cancel: CoreApi['cancel'];

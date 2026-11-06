@@ -103,6 +103,7 @@ export async function fixConnectId(address: string, connectId: string) {
 
 export async function searchDevices() {
   const keyring = await getOneKeyKeyring();
+  await keyring.init();
 
   let retryCount = 0;
   const MAX_RETRY_COUNT = 10;
