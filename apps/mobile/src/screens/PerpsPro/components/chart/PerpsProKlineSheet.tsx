@@ -20,7 +20,9 @@ import { SIMPLE_CHART_COLORS } from '@/screens/PerpsMarketDetail/components/char
 import { createGetStyles2024 } from '@/utils/styles';
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 import React, {
+  createContext,
   useCallback,
+  useContext,
   useEffect,
   useMemo,
   useRef,
@@ -43,10 +45,10 @@ import {
   PerpsProKlineToolbar,
 } from './PerpsProKlineToolbar';
 
-// Figma 86356:56301: handle row (10 + 4 + 20) above the 24px interval row.
-const PERPS_PRO_KLINE_HANDLE_AREA_HEIGHT = 34;
-export const PERPS_PRO_KLINE_HEADER_HEIGHT =
-  PERPS_PRO_KLINE_HANDLE_AREA_HEIGHT + PERPS_PRO_KLINE_TOOLBAR_HEIGHT;
+// Keep the existing panel and chart heights when enlarging interval targets.
+export const PERPS_PRO_KLINE_HEADER_HEIGHT = 58;
+const PERPS_PRO_KLINE_HANDLE_AREA_HEIGHT =
+  PERPS_PRO_KLINE_HEADER_HEIGHT - PERPS_PRO_KLINE_TOOLBAR_HEIGHT;
 const PERPS_PRO_KLINE_MIN_BOTTOM_PADDING = 16;
 const PERPS_PRO_KLINE_CHART_LEFT_INSET = 12;
 const PERPS_PRO_KLINE_RESET_SIZE = 20;
@@ -318,14 +320,26 @@ const PerpsProKlineChart: React.FC<{
   );
 };
 
-const PerpsProKlineHeader: React.FC<{
+type PerpsProKlineHeaderState = {
   disabled: boolean;
   interval: PerpsCandleDataInterval;
   onClose: () => void;
   onSelect: (interval: PerpsCandleDataInterval) => void;
-}> = React.memo(({ disabled, interval, onClose, onSelect }) => {
+};
+
+const PerpsProKlineHeaderContext =
+  createContext<PerpsProKlineHeaderState | null>(null);
+
+// BottomSheet renders handleComponent as a component type. Keep it stable so
+// changing the selected interval does not remount the horizontal scroll view.
+const PerpsProKlineHeader = React.memo(() => {
+  const state = useContext(PerpsProKlineHeaderContext);
   const { colors2024, styles: themedStyles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
+  if (!state) {
+    return null;
+  }
+  const { disabled, interval, onClose, onSelect } = state;
 
   return (
     <View style={themedStyles.header} testID="perps-pro-kline-header">
@@ -444,15 +458,13 @@ export const PerpsProKlineSheet: React.FC<{
   );
   const resetVisible =
     viewportState.marketKey === market.marketKey && viewportState.resetVisible;
-  const renderHeader = useCallback(
-    () => (
-      <PerpsProKlineHeader
-        disabled={!kline.hydrated}
-        interval={kline.interval}
-        onClose={onClose}
-        onSelect={kline.selectInterval}
-      />
-    ),
+  const headerState = useMemo<PerpsProKlineHeaderState>(
+    () => ({
+      disabled: !kline.hydrated,
+      interval: kline.interval,
+      onClose,
+      onSelect: kline.selectInterval,
+    }),
     [kline.hydrated, kline.interval, kline.selectInterval, onClose],
   );
 
@@ -483,49 +495,53 @@ export const PerpsProKlineSheet: React.FC<{
       pointerEvents={visible ? 'box-none' : 'none'}
       style={styles.retainedHost}
       testID="perps-pro-kline-retained-host">
-      <BottomSheet
-        activeOffsetY={[-8, 8]}
-        animateOnMount={false}
-        backgroundStyle={themedStyles.background}
-        enableContentPanningGesture={false}
-        enableDynamicSizing={false}
-        enableHandlePanningGesture
-        enablePanDownToClose
-        failOffsetX={[-8, 8]}
-        handleComponent={renderHeader}
-        index={initialIndex}
-        keyboardBehavior="extend"
-        onChange={handleSheetChange}
-        ref={sheetRef}
-        snapPoints={snapPoints}>
-        <BottomSheetView style={themedStyles.content}>
-          <PerpsProKlineChart
-            key={market.marketKey}
-            chartRef={chartRef}
-            feed={kline.feed}
-            interval={kline.interval}
-            market={market}
-            onLoadOlder={kline.loadOlder}
-            onViewportChange={handleViewportChange}
-            overlays={overlays}
-            visible={visible}
-          />
-          {resetVisible ? (
-            <Pressable
-              accessibilityLabel={t('page.perpsDetail.simpleChart.resetChart')}
-              accessibilityRole="button"
-              hitSlop={8}
-              onPress={handleResetViewport}
-              style={styles.resetButton}
-              testID="perps-pro-kline-reset">
-              <RcIconReset
-                height={PERPS_PRO_KLINE_RESET_SIZE}
-                width={PERPS_PRO_KLINE_RESET_SIZE}
-              />
-            </Pressable>
-          ) : null}
-        </BottomSheetView>
-      </BottomSheet>
+      <PerpsProKlineHeaderContext.Provider value={headerState}>
+        <BottomSheet
+          activeOffsetY={[-12, 12]}
+          animateOnMount={false}
+          backgroundStyle={themedStyles.background}
+          enableContentPanningGesture={false}
+          enableDynamicSizing={false}
+          enableHandlePanningGesture
+          enablePanDownToClose
+          failOffsetX={[-8, 8]}
+          handleComponent={PerpsProKlineHeader}
+          index={initialIndex}
+          keyboardBehavior="extend"
+          onChange={handleSheetChange}
+          ref={sheetRef}
+          snapPoints={snapPoints}>
+          <BottomSheetView style={themedStyles.content}>
+            <PerpsProKlineChart
+              key={market.marketKey}
+              chartRef={chartRef}
+              feed={kline.feed}
+              interval={kline.interval}
+              market={market}
+              onLoadOlder={kline.loadOlder}
+              onViewportChange={handleViewportChange}
+              overlays={overlays}
+              visible={visible}
+            />
+            {resetVisible ? (
+              <Pressable
+                accessibilityLabel={t(
+                  'page.perpsDetail.simpleChart.resetChart',
+                )}
+                accessibilityRole="button"
+                hitSlop={8}
+                onPress={handleResetViewport}
+                style={styles.resetButton}
+                testID="perps-pro-kline-reset">
+                <RcIconReset
+                  height={PERPS_PRO_KLINE_RESET_SIZE}
+                  width={PERPS_PRO_KLINE_RESET_SIZE}
+                />
+              </Pressable>
+            ) : null}
+          </BottomSheetView>
+        </BottomSheet>
+      </PerpsProKlineHeaderContext.Provider>
     </View>
   );
 };
