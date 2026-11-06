@@ -22,6 +22,7 @@ import SendScreen from '../Send/Send';
 import SendNFTScreen from '../SendNFT/SendNFT';
 
 import { HistoryDetailScreen } from '../Transaction/HistoryDetailScreen';
+import { BridgeDetailScreen } from '../Bridge/BridgeDetailScreen';
 import { HistoryLocalDetailScreen } from '../Transaction/HistoryLocalDetailScreen';
 import { TransactionNavigatorParamList } from '@/navigation-type';
 import ApprovalsScreen from '../Approvals';
@@ -270,6 +271,19 @@ export default function TransactionNavigator() {
             backgroundColor: !isLight
               ? colors2024?.['neutral-bg-1']
               : colors2024?.['neutral-bg-0'],
+          },
+        })}
+      />
+      <TransactionStack.Screen
+        name={RootNames.BridgeDetail}
+        component={BridgeDetailScreen}
+        options={mergeScreenOptions({
+          title: '',
+          headerTintColor: colors['neutral-title-1'],
+          headerStyle: {
+            backgroundColor: isLight
+              ? colors2024['neutral-bg-0']
+              : colors2024['neutral-bg-1'],
           },
         })}
       />
@@ -532,7 +546,7 @@ const getConvertDustHeaderStyle = createGetStyles2024(({ colors2024 }) => ({
 const transactionNavigatorStyles = StyleSheet.create({
   sendHeaderIconOffset: {
     transform: [
-      { translateX: NATIVE_BAR_ITEM_BACK_OFFSET_X },
+      { translateX: IS_IOS ? NATIVE_BAR_ITEM_BACK_OFFSET_X : 0 },
       { translateY: IS_IOS ? SEND_IOS_HEADER_ICON_OFFSET : 0 },
     ],
   },

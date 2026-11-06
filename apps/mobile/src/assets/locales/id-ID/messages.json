@@ -887,7 +887,42 @@
       "formChangedAmount": "Jumlahnya telah berubah, kemungkinan disebabkan oleh pengisian otomatis kata sandi dari keyboard sistem. Silakan tinjau dan masukkan kembali jumlah yang benar.",
       "formChangedTitle": "Form Diubah",
       "best-subtitle": "Penawaran terbaik ditentukan oleh kombinasi perkiraan biaya total (termasuk biaya Gas) dan kecepatan pengiriman.",
-      "swap-best-subtitle": "Penawaran terbaik ditentukan berdasarkan perkiraan biaya total terendah, termasuk nilai tukar dan biaya gas."
+      "swap-best-subtitle": "Penawaran terbaik ditentukan berdasarkan perkiraan biaya total terendah, termasuk nilai tukar dan biaya gas.",
+      "duration-sec": "{{duration}} dtk",
+      "duration-hour": "{{duration}} jam",
+      "duration-hour-min": "{{hours}} jam {{minutes}} menit",
+      "duration-day": "{{duration}} hari",
+      "duration-day-hour": "{{days}} hari {{hours}} jam",
+      "duration-day-min": "{{days}} hari {{minutes}} menit",
+      "duration-day-hour-min": "{{days}} hari {{hours}} jam {{minutes}} menit",
+      "status": {
+        "bridging": "Proses jembatan berlangsung,",
+        "bridged": "Di-bridge",
+        "historyTitle": "Riwayat Jembatan",
+        "today": "Hari ini",
+        "eta": "perkiraan waktu: {{time}}",
+        "stillBridging": "Proses jembatan masih berlangsung",
+        "delayed": "Jembatan terlambat",
+        "sourceFailed": "Jembatan gagal, {{token}} Anda tidak terkirim",
+        "tokenNotSent": "{{token}} Anda tidak terkirim",
+        "failed": "Gagal",
+        "bridgeFailed": "Jembatan gagal",
+        "refunded": "Dikembalikan",
+        "refundedIn": "Dikembalikan dalam {{token}}",
+        "contactSupport": "Hubungi Dukungan",
+        "viewDetails": "Lihat Detail",
+        "sendingFrom": "Mengirim dari {{chain}}",
+        "receivingOn": "Menerima di {{chain}}",
+        "processing": "Sedang diproses",
+        "queued": "Antrian",
+        "pending": "Menunggu",
+        "completed": "Selesai",
+        "refund": "Pengembalian dana",
+        "waiting": "menunggu transaksi di rantai tujuan",
+        "goBack": "Kembali",
+        "bridgeAgain": "Jembatani lagi",
+        "captureFailed": "Tidak dapat mengambil tangkapan layar. Silakan coba lagi."
+      }
     },
     "manageAddress": {
       "cancel": "Batal",
@@ -1938,6 +1973,7 @@
       "customNetworkTokenHeader": "Jaringan kustom yang ditambahkan"
     },
     "browser": {
+      "openInRabbyPerps": "Buka di Rabby Perps",
       "BrowserHeader": {
         "searchIos": "Cari Situs Web",
         "searchAndroid": "Cari DApp"
@@ -2259,8 +2295,7 @@
           }
         },
         "chart": {
-          "open": "Buka grafik",
-          "resetPriceScale": "Atur ulang skala harga grafik"
+          "open": "Buka grafik"
         },
         "account": {
           "disabledFrame": "Tindakan akun tidak tersedia pada tahap ini",

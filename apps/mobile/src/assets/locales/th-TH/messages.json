@@ -986,7 +986,42 @@
       "formChangedTitle": "ฟอร์มเปลี่ยนแล้ว",
       "formChangedAmount": "จำนวนเงินเปลี่ยนแปลง ซึ่งอาจเกิดจากการกรอกรหัสผ่านอัตโนมัติของแป้นพิมพ์ระบบ โปรดตรวจสอบและป้อนจำนวนที่ถูกต้องอีกครั้ง",
       "best-subtitle": "ข้อเสนอที่ดีที่สุดถูกกำหนดโดยการรวมกันของต้นทุนรวมโดยประมาณ (รวมค่า Gas) และความเร็วในการจัดส่ง",
-      "swap-best-subtitle": "คำเสนอราคาที่ดีที่สุดถูกกำหนดโดยต้นทุนรวมโดยประมาณที่ต่ำที่สุด รวมถึงอัตราแลกเปลี่ยนและค่าธรรมเนียม Gas"
+      "swap-best-subtitle": "คำเสนอราคาที่ดีที่สุดถูกกำหนดโดยต้นทุนรวมโดยประมาณที่ต่ำที่สุด รวมถึงอัตราแลกเปลี่ยนและค่าธรรมเนียม Gas",
+      "duration-sec": "{{duration}} วินาที",
+      "duration-hour": "{{duration}} ชม.",
+      "duration-hour-min": "{{hours}} ชม. {{minutes}} นาที",
+      "duration-day": "{{duration}} วัน",
+      "duration-day-hour": "{{days}} วัน {{hours}} ชม.",
+      "duration-day-min": "{{days}} วัน {{minutes}} นาที",
+      "duration-day-hour-min": "{{days}} วัน {{hours}} ชม. {{minutes}} นาที",
+      "status": {
+        "bridging": "กำลัง Bridge,",
+        "bridged": "Bridge สำเร็จ",
+        "historyTitle": "ประวัติ Bridge",
+        "today": "วันนี้",
+        "eta": "เวลาโดยประมาณ: {{time}}",
+        "stillBridging": "ยังอยู่ระหว่างการ Bridge",
+        "delayed": "Bridge ล่าช้า",
+        "sourceFailed": "Bridge ล้มเหลว ยังไม่ได้ส่ง {{token}} ของคุณ",
+        "tokenNotSent": "ยังไม่ได้ส่ง {{token}} ของคุณ",
+        "failed": "ล้มเหลว",
+        "bridgeFailed": "Bridge ล้มเหลว",
+        "refunded": "คืนเงินแล้ว",
+        "refundedIn": "คืนเงินเป็น {{token}}",
+        "contactSupport": "ติดต่อฝ่ายสนับสนุน",
+        "viewDetails": "ดูรายละเอียด",
+        "sendingFrom": "ส่งจาก {{chain}}",
+        "receivingOn": "การรับบน {{chain}}",
+        "processing": "กำลังดำเนินการ",
+        "queued": "รอต่อคิว",
+        "pending": "รอดำเนินการ",
+        "completed": "เสร็จสิ้น",
+        "refund": "คืนเงิน",
+        "waiting": "กำลังรอธุรกรรมบนเชนปลายทาง",
+        "goBack": "กลับ",
+        "bridgeAgain": "Bridge อีกครั้ง",
+        "captureFailed": "ไม่สามารถจับภาพหน้าจอได้ โปรดลองอีกครั้ง"
+      }
     },
     "dashboard": {
       "hd": {
@@ -2114,6 +2149,7 @@
       "customNetworkTokenHeader": "เครือข่ายที่กำหนดเองที่เพิ่มแล้ว"
     },
     "browser": {
+      "openInRabbyPerps": "เปิดใน Rabby Perps",
       "BrowserHeader": {
         "searchAndroid": "ค้นหา DApp",
         "searchIos": "ค้นหาเว็บไซต์"
@@ -2435,8 +2471,7 @@
           }
         },
         "chart": {
-          "open": "เปิดกราฟ",
-          "resetPriceScale": "รีเซ็ตสเกลราคาของกราฟ"
+          "open": "เปิดกราฟ"
         },
         "account": {
           "disabledFrame": "การดำเนินการบัญชีไม่พร้อมใช้งานในระยะนี้",

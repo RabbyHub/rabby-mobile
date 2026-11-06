@@ -1213,7 +1213,42 @@
       "formChangedTitle": "Formulario cambiado",
       "formChangedAmount": "La cantidad ha cambiado, posiblemente debido al autocompletado de la contraseña por parte del teclado del sistema. Revísala y vuelve a introducir la cantidad correcta.",
       "best-subtitle": "La mejor cotización se determina por una combinación del coste total estimado (incluidas las tarifas de Gas) y la velocidad de entrega.",
-      "swap-best-subtitle": "La mejor cotización se determina por el coste total estimado más bajo, incluidos el tipo de cambio y las comisiones de gas."
+      "swap-best-subtitle": "La mejor cotización se determina por el coste total estimado más bajo, incluidos el tipo de cambio y las comisiones de gas.",
+      "duration-sec": "{{duration}} s",
+      "duration-hour": "{{duration}} h",
+      "duration-hour-min": "{{hours}} h {{minutes}} min",
+      "duration-day": "{{duration}} d",
+      "duration-day-hour": "{{days}} d {{hours}} h",
+      "duration-day-min": "{{days}} d {{minutes}} min",
+      "duration-day-hour-min": "{{days}} d {{hours}} h {{minutes}} min",
+      "status": {
+        "bridging": "Bridge en curso,",
+        "bridged": "Bridge completado",
+        "historyTitle": "Historial de bridges",
+        "today": "Hoy",
+        "eta": "tiempo estimado: {{time}}",
+        "stillBridging": "Bridge aún en curso",
+        "delayed": "Bridge retrasado",
+        "sourceFailed": "El bridge falló. Tus {{token}} no se enviaron",
+        "tokenNotSent": "Tus {{token}} no se enviaron",
+        "failed": "Fallido",
+        "bridgeFailed": "Bridge fallido",
+        "refunded": "Reembolsado",
+        "refundedIn": "Reembolsado en {{token}}",
+        "contactSupport": "Contactar con soporte",
+        "viewDetails": "Ver detalles",
+        "sendingFrom": "Enviando desde {{chain}}",
+        "receivingOn": "Recepción en {{chain}}",
+        "processing": "Procesando",
+        "queued": "En cola",
+        "pending": "Pendiente",
+        "completed": "Completado",
+        "refund": "Reembolso",
+        "waiting": "Esperando la transacción de destino",
+        "goBack": "Volver",
+        "bridgeAgain": "Hacer bridge de nuevo",
+        "captureFailed": "No se pudo capturar la pantalla. Inténtalo de nuevo."
+      }
     },
     "newAddress": {
       "Quick": "Rápido",
@@ -2129,6 +2164,7 @@
       "customNetworkTokenHeader": "Redes personalizadas agregadas"
     },
     "browser": {
+      "openInRabbyPerps": "Abrir en Rabby Perps",
       "BrowserHeader": {
         "searchIos": "Buscar sitio web",
         "searchAndroid": "Buscar DApp"
@@ -2450,8 +2486,7 @@
           }
         },
         "chart": {
-          "open": "Abrir gráfico",
-          "resetPriceScale": "Restablecer la escala de precios del gráfico"
+          "open": "Abrir gráfico"
         },
         "account": {
           "disabledFrame": "Las acciones de la cuenta no están disponibles en esta fase",

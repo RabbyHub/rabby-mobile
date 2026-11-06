@@ -424,14 +424,15 @@ export default function UnlockScreen({
       POST_UNLOCK_WARMUP_DELAY_MS,
     );
   }, []);
-  const { isUnlocking, formik, shouldDisabled, checkUnlocked } = useUnlockForm(
-    navigation,
-    schedulePostUnlockWarmups,
-    {
-      skipBiometricsEnrollmentPrompt:
-        regressionScenario?.skipBiometricsEnrollmentPrompt,
-    },
-  );
+  const {
+    isUnlocking,
+    formik,
+    shouldDisabled: shouldDisabledByFormik,
+    checkUnlocked,
+  } = useUnlockForm(navigation, schedulePostUnlockWarmups, {
+    skipBiometricsEnrollmentPrompt:
+      regressionScenario?.skipBiometricsEnrollmentPrompt,
+  });
 
   useFocusEffect(
     useCallback(() => {
@@ -610,6 +611,23 @@ export default function UnlockScreen({
   });
 
   const passwordInputRef = React.useRef<TextInput>(null);
+  // Keep the typed password out of formik on every keystroke: a per-character
+  // field update re-renders the whole unlock screen (and its KeyboardAvoiding
+  // view), which makes the input jitter on small devices. The value is synced
+  // into formik right before submit, so validation is unchanged.
+  const passwordValueRef = React.useRef(formik.values.password);
+  const [hasPasswordInput, setHasPasswordInput] = React.useState(
+    Boolean(formik.values.password),
+  );
+  const submitWithTypedPassword = React.useCallback(() => {
+    void formik
+      .setFieldValue('password', passwordValueRef.current, false)
+      .then(() => formik.handleSubmit());
+  }, [formik]);
+  // formik only receives the password on submit now, so the momentary
+  // `values.password` is stale; drive the button from the typed value instead.
+  void shouldDisabledByFormik;
+  const shouldDisabled = !hasPasswordInput;
   const { onTouchInputAway } = useInputBlurOnTouchaway(passwordInputRef);
 
   const unlockWithBiometrics = useCallback(
@@ -1060,22 +1078,29 @@ export default function UnlockScreen({
                 inputStyle={styles.input}
                 iconColor={colors2024['neutral-title-1']}
                 inputProps={{
-                  value: formik.values.password,
+                  // Uncontrolled on purpose (see passwordValueRef above).
+                  defaultValue: formik.values.password,
                   secureTextEntry: true,
                   inputMode: 'text',
                   returnKeyType: 'done',
                   ...makeTestIDProps(E2E_ID.unlock.passwordInput),
                   placeholderTextColor: colors2024['neutral-foot'],
                   onChangeText(text) {
-                    formik.setFieldError('password', undefined);
-                    formik.setFieldValue('password', text);
+                    passwordValueRef.current = text;
+                    if (formik.errors.password) {
+                      formik.setFieldError('password', undefined);
+                    }
+                    const nextHasInput = Boolean(text);
+                    setHasPasswordInput(prev =>
+                      prev === nextHasInput ? prev : nextHasInput,
+                    );
                   },
                 }}
                 hasError={Boolean(formik.errors.password)}
                 tipText={formik.errors.password}
                 tipIcon={
                   !formik.errors.password &&
-                  formik.values.password && <YesIcon width={12} height={12} />
+                  hasPasswordInput && <YesIcon width={12} height={12} />
                 }
               />
               <View
@@ -1097,7 +1122,7 @@ export default function UnlockScreen({
                   onPress={evt => {
                     evt.stopPropagation();
                     cancelPendingBiometricUnlock();
-                    formik.handleSubmit();
+                    submitWithTypedPassword();
                     checkUnlocked();
                   }}
                 />

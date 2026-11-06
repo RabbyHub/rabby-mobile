@@ -890,7 +890,42 @@
       "formChangedTitle": "Форма изменена",
       "formChangedAmount": "Сумма изменилась, возможно, из-за автозаполнения пароля с клавиатуры системы. Пожалуйста, проверьте и введите правильную сумму.",
       "best-subtitle": "Лучшее предложение определяется сочетанием расчётной общей стоимости (включая комиссии за газ) и скорости доставки.",
-      "swap-best-subtitle": "Лучшее предложение определяется по минимальной расчётной общей стоимости с учётом курса обмена и комиссии за газ."
+      "swap-best-subtitle": "Лучшее предложение определяется по минимальной расчётной общей стоимости с учётом курса обмена и комиссии за газ.",
+      "duration-sec": "{{duration}} с",
+      "duration-hour": "{{duration}} ч",
+      "duration-hour-min": "{{hours}} ч {{minutes}} мин",
+      "duration-day": "{{duration}} д",
+      "duration-day-hour": "{{days}} д {{hours}} ч",
+      "duration-day-min": "{{days}} д {{minutes}} мин",
+      "duration-day-hour-min": "{{days}} д {{hours}} ч {{minutes}} мин",
+      "status": {
+        "bridging": "Кроссчейн-перевод выполняется,",
+        "bridged": "Переведено через мост",
+        "historyTitle": "История кроссчейн-переводов",
+        "today": "Сегодня",
+        "eta": "осталось примерно: {{time}}",
+        "stillBridging": "Кроссчейн-перевод ещё выполняется",
+        "delayed": "Кроссчейн-перевод задерживается",
+        "sourceFailed": "Кроссчейн-перевод не выполнен. Ваши {{token}} не отправлены",
+        "tokenNotSent": "Ваши {{token}} не отправлены",
+        "failed": "Не удалось",
+        "bridgeFailed": "Кроссчейн-перевод не выполнен",
+        "refunded": "Возвращено",
+        "refundedIn": "Возвращено в {{token}}",
+        "contactSupport": "Связаться с поддержкой",
+        "viewDetails": "Посмотреть детали",
+        "sendingFrom": "Отправка из {{chain}}",
+        "receivingOn": "Получение на {{chain}}",
+        "processing": "Обрабатывается",
+        "queued": "В очереди",
+        "pending": "Ожидает",
+        "completed": "Завершено",
+        "refund": "Возврат",
+        "waiting": "ожидание транзакции в сети назначения",
+        "goBack": "Назад",
+        "bridgeAgain": "Повторить кроссчейн-перевод",
+        "captureFailed": "Не удалось сделать снимок экрана. Повторите попытку."
+      }
     },
     "manageAddress": {
       "moreWallets": "Больше Кошельков",
@@ -2055,6 +2090,7 @@
       "customNetworkTokenHeader": "Добавленные пользовательские сети"
     },
     "browser": {
+      "openInRabbyPerps": "Открыть в Rabby Perps",
       "BrowserHeader": {
         "searchAndroid": "Поиск DApp",
         "searchIos": "Поиск сайта"
@@ -2376,8 +2412,7 @@
           }
         },
         "chart": {
-          "open": "Открыть график",
-          "resetPriceScale": "Сбросить масштаб цен на графике"
+          "open": "Открыть график"
         },
         "account": {
           "disabledFrame": "Действия с аккаунтом недоступны на этом этапе",

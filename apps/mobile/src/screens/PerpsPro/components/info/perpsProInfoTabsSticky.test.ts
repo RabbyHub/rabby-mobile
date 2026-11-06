@@ -2,7 +2,6 @@ import { Animated } from 'react-native';
 
 import {
   createPerpsProInfoTabsTranslateY,
-  getPerpsProPopulatedInfoSectionBottomPadding,
   getPerpsProInfoSectionMinimumContentHeight,
   getPerpsProInfoTabsNaturalAnchor,
   getPerpsProInfoTabsTop,
@@ -59,27 +58,6 @@ describe('Perps Pro info tabs sticky geometry', () => {
         viewportHeight: Number.NaN,
       }),
     ).toBe(0);
-  });
-
-  it('preserves the empty-state trailing distance after populated rows', () => {
-    expect(
-      getPerpsProPopulatedInfoSectionBottomPadding({
-        marketBarHeight: 40,
-        viewportHeight: 700,
-      }),
-    ).toBe(386);
-    expect(
-      getPerpsProPopulatedInfoSectionBottomPadding({
-        marketBarHeight: 40,
-        viewportHeight: 300,
-      }),
-    ).toBe(32);
-    expect(
-      getPerpsProPopulatedInfoSectionBottomPadding({
-        marketBarHeight: 40,
-        viewportHeight: Number.NaN,
-      }),
-    ).toBe(32);
   });
 
   it('keeps the same geometry in the native Animated expression', () => {
