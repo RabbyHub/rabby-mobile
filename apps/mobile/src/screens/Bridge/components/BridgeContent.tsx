@@ -79,7 +79,7 @@ import {
   shouldIgnoreAmountChangeInMaxMode,
 } from '@/utils/form';
 import { tokenAmountBn } from '@/screens/Swap/utils';
-import { buildTx as buildBridgeTx } from '@rabby-wallet/rabby-bridge';
+import { buildBridgeTx } from '../utils/bridgeSdk';
 import { useMiniSignerEffectPause } from '@/hooks/useMiniSignerEffectPause';
 import {
   hasQuotePollingPauseReason,
@@ -667,6 +667,8 @@ export const BridgeContent = ({
                   .toString(),
                 toChainId: toToken.chain,
                 toTokenId: toToken.id,
+                toTokenRawAmount:
+                  selectedBridgeQuote.to_token_raw_amount_hex_str,
                 slippage: new BigNumber(slippageState).div(100).toString(10),
                 quoteKey: selectedBridgeQuote.quote_key || {},
               },
@@ -847,6 +849,7 @@ export const BridgeContent = ({
               .toString(),
             toChainId: toToken.chain,
             toTokenId: toToken.id,
+            toTokenRawAmount: selectedBridgeQuote.to_token_raw_amount_hex_str,
             slippage: new BigNumber(slippageState).div(100).toString(10),
             quoteKey: selectedBridgeQuote.quote_key || {},
           },

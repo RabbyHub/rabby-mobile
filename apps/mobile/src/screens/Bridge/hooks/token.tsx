@@ -42,7 +42,7 @@ import { atom, useAtomValue, useSetAtom } from 'jotai';
 import { getQuotePollingResumeDelay } from '@/utils/quotePolling';
 import { isTokenMarketClosed } from '@/utils/token';
 import { isGasAccountDepositFlowActive } from '@/screens/GasAccount/utils/depositFlowRuntime';
-import { getQuoteList as getBridgeQuoteList } from '@rabby-wallet/rabby-bridge';
+import { getBridgeQuoteList } from '../utils/bridgeSdk';
 import { convert18RawToTokenRaw, isTempoChain } from '@/utils/tempo';
 import type { SelectedBridgeQuote } from '../types';
 import { createBridgeInitializationController } from '../bridgeInitialization';
