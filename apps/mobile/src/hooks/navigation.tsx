@@ -309,10 +309,6 @@ export function useBottomTabScreenConfig() {
   return { mergeBottomTabOptions2024 };
 }
 
-// Native bar button items carry the system leading inset; translate the content
-// back so it lines up with the page content edge (#1283).
-export const NATIVE_BAR_ITEM_BACK_OFFSET_X = -14;
-
 const styles = StyleSheet.create({
   backButtonStyle: {
     // width: 56,
@@ -324,16 +320,15 @@ const styles = StyleSheet.create({
   },
   // react-native-screens wraps a custom header subview in a centred wrapper on
   // iOS 26+, so margin/padding inside the view no longer shift the native bar
-  // button item and the icon sits too far right (#1283). Only native header
-  // items need this post-layout compensation; the JS-rendered custom headers
-  // keep `backButtonStyle` untouched.
+  // button item. A fixed translateX cannot be correct on every device (the item
+  // inset depends on the device/OS layout), so the bar item now keeps the
+  // system position and only gets a stable 24x24 content box.
   nativeBarItemBackButtonStyle: {
     width: 24,
     height: 24,
     justifyContent: 'center',
     marginLeft: 0,
     paddingLeft: 0,
-    transform: [{ translateX: NATIVE_BAR_ITEM_BACK_OFFSET_X }],
   },
 });
 
