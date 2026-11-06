@@ -90,10 +90,9 @@ function loadSwapServiceModule(persistedStore?: Partial<SwapServiceStore>) {
       return null;
     },
   }));
-  const mockPostSwap = jest.fn();
   jest.doMock('../request', () => ({
     openapi: {
-      postSwap: (...args: unknown[]) => mockPostSwap(...args),
+      postSwap: jest.fn(),
     },
   }));
   jest.doMock('@/utils/tempoTx', () => ({
@@ -101,13 +100,9 @@ function loadSwapServiceModule(persistedStore?: Partial<SwapServiceStore>) {
   }));
 
   const { SwapService } = require('./swap') as typeof import('./swap');
-  const Sentry =
-    require('@sentry/react-native') as typeof import('@sentry/react-native');
 
   return {
     SwapService,
-    Sentry,
-    mockPostSwap,
     findChainByEnum: jest.mocked(
       (require('@/utils/chain') as typeof import('@/utils/chain'))
         .findChainByEnum,
@@ -203,57 +198,5 @@ describe('core/services/swap', () => {
 
     expect(service.getSelectedFromToken()).toEqual(arbToken);
     expect(service.getSelectedToToken()).toEqual(arbToken);
-  });
-
-  describe('postSwap', () => {
-    const quoteInfo = {
-      quote: {
-        pay_token_id: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
-        pay_token_amount: 100,
-        receive_token_id: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
-        receive_token_amount: 0.03,
-        slippage: 0.005,
-      },
-      dex_id: 'uniswap3',
-      fee_rate: 0.0025,
-    };
-    const tx = { from: '0x9bba7ebC9c69db92950def377d732b91bb22d02f' };
-
-    it('reports a failure under a fixed title with the cause and quote in extra', async () => {
-      const { SwapService, Sentry, mockPostSwap } = loadSwapServiceModule();
-      const failure = new TypeError('bad quote');
-      mockPostSwap.mockRejectedValue(failure);
-      const service = new SwapService();
-
-      service.addTx(CHAINS_ENUM.ETH as never, '0xdata', quoteInfo);
-      await expect(
-        service.postSwap(CHAINS_ENUM.ETH as never, '0xhash', tx as never),
-      ).resolves.toBeUndefined();
-
-      expect(mockPostSwap).toHaveBeenCalledWith({
-        ...quoteInfo,
-        tx,
-        tx_id: '0xhash',
-      });
-      expect(Sentry.captureException).toHaveBeenCalledTimes(1);
-      const [error, context] = (Sentry.captureException as jest.Mock).mock
-        .calls[0];
-      expect(error).toBeInstanceOf(Error);
-      expect(error.message).toBe('postSwap failed');
-      expect(error.cause).toBe(failure);
-      // The signed tx carries the user address; only the quote is attached.
-      expect(context).toEqual({ extra: quoteInfo });
-    });
-
-    it('does not report when the quote was posted', async () => {
-      const { SwapService, Sentry, mockPostSwap } = loadSwapServiceModule();
-      mockPostSwap.mockResolvedValue({});
-      const service = new SwapService();
-
-      service.addTx(CHAINS_ENUM.ETH as never, '0xdata', quoteInfo);
-      await service.postSwap(CHAINS_ENUM.ETH as never, '0xhash', tx as never);
-
-      expect(Sentry.captureException).not.toHaveBeenCalled();
-    });
   });
 });

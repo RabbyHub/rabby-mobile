@@ -6,7 +6,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { createCustomNativeStackNavigator as createNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
 
-import { HeaderBackPressable, useStackScreenConfig } from '@/hooks/navigation';
+import {
+  HeaderBackPressable,
+  NATIVE_BAR_ITEM_BACK_OFFSET_X,
+  useStackScreenConfig,
+} from '@/hooks/navigation';
 import {
   RootNames,
   makeHeadersPresets,
@@ -127,6 +131,7 @@ export default function TransactionNavigator() {
   const renderSendHeaderLeft = React.useCallback(
     ({ tintColor }: { tintColor?: string }) => (
       <HeaderBackPressable
+        nativeBarItem
         tintColor={tintColor}
         style={transactionNavigatorStyles.sendHeaderIconOffset}
       />
@@ -577,6 +582,9 @@ const getConvertDustHeaderStyle = createGetStyles2024(({ colors2024 }) => ({
 
 const transactionNavigatorStyles = StyleSheet.create({
   sendHeaderIconOffset: {
-    transform: [{ translateY: IS_IOS ? SEND_IOS_HEADER_ICON_OFFSET : 0 }],
+    transform: [
+      { translateX: NATIVE_BAR_ITEM_BACK_OFFSET_X },
+      { translateY: IS_IOS ? SEND_IOS_HEADER_ICON_OFFSET : 0 },
+    ],
   },
 });
