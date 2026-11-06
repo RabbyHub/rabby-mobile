@@ -434,18 +434,30 @@ const PasswordInput = ({
     );
   }, [props.customIcon, props.iconColor, passwordVisible, colors2024]);
 
+  // Keep the prop object stable and pin the input traits. On iOS a secure field
+  // without an explicit content type is treated as a password field, so
+  // AutoFill re-applies its own keyboard layout while the user types and the
+  // keyboard visibly flickers between the password and the normal layout.
+  // oneTimeCode keeps the plain keyboard and disables that AutoFill path.
+  const outerInputProps = props.inputProps;
+  const mergedInputProps = React.useMemo(
+    () => ({
+      placeholderTextColor: colors2024['neutral-info'],
+      ...outerInputProps,
+      secureTextEntry: !passwordVisible,
+      textContentType: 'oneTimeCode' as const,
+      autoComplete: 'off' as const,
+      autoCorrect: false,
+      spellCheck: false,
+    }),
+    [colors2024, outerInputProps, passwordVisible],
+  );
+
   return (
     <NextInput
       {...props}
       containerStyle={[styles.inputContainer, props.containerStyle]}
-      inputProps={{
-        placeholderTextColor: colors2024['neutral-info'],
-        ...props.inputProps,
-        secureTextEntry: passwordVisible ? false : true,
-        // ...IS_ANDROID && {
-        //   keyboardType: passwordVisible ? 'visible-password' : 'default',
-        // },
-      }}
+      inputProps={mergedInputProps}
       ref={ref as any}
       customIcon={customIconProp}
     />
