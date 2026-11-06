@@ -60,6 +60,16 @@ build_adhoc() {
   export RABBY_MOBILE_BUILD_ENV="regression";
   cd $project_dir;
   sh ./ios/patches/override-xcconfig-release.sh;
+  if [ -n "$RABBY_MOBILE_SIGN_ONLY_ARCHIVE" ]; then
+    echo "[deploy-ios-adhoc] sign-only mode: exporting from $RABBY_MOBILE_SIGN_ONLY_ARCHIVE"
+    export ios_archive_path="$RABBY_MOBILE_SIGN_ONLY_ARCHIVE"
+    export RABBY_MOBILE_IOS_ARCHIVE_PATH="$RABBY_MOBILE_SIGN_ONLY_ARCHIVE"
+    export RABBY_MOBILE_IOS_SKIP_BUILD_ARCHIVE=true
+    export RABBY_MOBILE_SIGN_ONLY=true
+    prepare_ios_ruby_bundle || return $?
+    turbo_bundle_exec exec fastlane ios adhoc
+    return $?
+  fi
   export ios_archive_path="$project_dir/ios/Package/adhoc/RabbyMobile.xcarchive"
 
   prepare_ios_build_artifacts;
