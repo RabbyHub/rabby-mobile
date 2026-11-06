@@ -2259,8 +2259,7 @@
           }
         },
         "chart": {
-          "open": "Buka grafik",
-          "resetPriceScale": "Atur ulang skala harga grafik"
+          "open": "Buka grafik"
         },
         "account": {
           "disabledFrame": "Tindakan akun tidak tersedia pada tahap ini",

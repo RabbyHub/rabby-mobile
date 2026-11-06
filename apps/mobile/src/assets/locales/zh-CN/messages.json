@@ -2409,8 +2409,7 @@
           }
         },
         "chart": {
-          "open": "打开图表",
-          "resetPriceScale": "重置图表价格轴"
+          "open": "打开图表"
         },
         "account": {
           "disabledFrame": "当前阶段暂不支持账户操作",

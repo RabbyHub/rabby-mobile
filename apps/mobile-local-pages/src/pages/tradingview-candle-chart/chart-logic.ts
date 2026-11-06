@@ -190,7 +190,10 @@ export function formatProTooltipTime(
 ): string {
   return formatTime(
     time,
-    interval === '1d' || interval === '1w' || interval === '1M',
+    interval === '1d' ||
+      interval === '3d' ||
+      interval === '1w' ||
+      interval === '1M',
   );
 }
 

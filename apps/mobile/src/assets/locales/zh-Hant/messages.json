@@ -2431,8 +2431,7 @@
           }
         },
         "chart": {
-          "open": "開啟圖表",
-          "resetPriceScale": "重設圖表價格軸"
+          "open": "開啟圖表"
         },
         "account": {
           "disabledFrame": "目前階段暫不支援帳戶操作",

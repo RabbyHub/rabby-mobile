@@ -2450,8 +2450,7 @@
           }
         },
         "chart": {
-          "open": "Abrir gráfico",
-          "resetPriceScale": "Restablecer la escala de precios del gráfico"
+          "open": "Abrir gráfico"
         },
         "account": {
           "disabledFrame": "Las acciones de la cuenta no están disponibles en esta fase",

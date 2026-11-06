@@ -2376,8 +2376,7 @@
           }
         },
         "chart": {
-          "open": "Mở biểu đồ",
-          "resetPriceScale": "Đặt lại thang giá biểu đồ"
+          "open": "Mở biểu đồ"
         },
         "account": {
           "disabledFrame": "Các thao tác tài khoản không khả dụng trong giai đoạn này",

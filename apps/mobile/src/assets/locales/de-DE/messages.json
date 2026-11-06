@@ -2552,8 +2552,7 @@
           }
         },
         "chart": {
-          "open": "Chart öffnen",
-          "resetPriceScale": "Preisskala des Charts zurücksetzen"
+          "open": "Chart öffnen"
         },
         "account": {
           "disabledFrame": "Kontofunktionen sind in dieser Phase nicht verfügbar",
