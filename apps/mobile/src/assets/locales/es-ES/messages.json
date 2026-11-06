@@ -181,7 +181,8 @@
       },
       "alertText": "DApp de terceros: para problemas de uso, contacta con el soporte de la DApp. Rabby solo proporciona acceso de visualización.",
       "title": "Captura de pantalla para reportar un error",
-      "submitFailed": "Error al enviar."
+      "submitFailed": "Error al enviar.",
+      "includeAddress": "Compartir dirección para solucionar problemas"
     },
     "submitFeedbackSuccessModal": {
       "desc": "¡Enviado con éxito!"
