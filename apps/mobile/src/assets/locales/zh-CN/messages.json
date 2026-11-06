@@ -912,7 +912,7 @@
         "queued": "排队中",
         "pending": "待处理",
         "completed": "已完成",
-        "refund": "退还",
+        "refund": "已退还",
         "waiting": "等待目标链交易",
         "goBack": "返回",
         "bridgeAgain": "再次跨链",
