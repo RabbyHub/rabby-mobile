@@ -23,6 +23,8 @@ const mockSetPerpsProOverlays = jest.fn();
 const mockTradingViewProps = jest.fn();
 const mockUpdateCandleData = jest.fn();
 const mockToolbarProps = jest.fn();
+const mockToolbarMount = jest.fn();
+const mockToolbarUnmount = jest.fn();
 const mockUsePerpsProKline = jest.fn();
 
 let mockKlineState: Record<string, unknown>;
@@ -149,6 +151,7 @@ jest.mock('@gorhom/bottom-sheet', () => {
         return ReactModule.createElement(
           View,
           { testID: 'bottom-sheet' },
+          ReactModule.createElement(props.handleComponent),
           props.children,
         );
       },
@@ -184,12 +187,13 @@ jest.mock('./PerpsProKlineSkeleton', () => {
 jest.mock('./PerpsProKlineToolbar', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
-  const actual = jest.requireActual(
-    './PerpsProKlineToolbar',
-  ) as typeof import('./PerpsProKlineToolbar');
   return {
-    ...actual,
+    PERPS_PRO_KLINE_TOOLBAR_HEIGHT: 36,
     PerpsProKlineToolbar: (props: Record<string, unknown>) => {
+      ReactModule.useEffect(() => {
+        mockToolbarMount();
+        return mockToolbarUnmount;
+      }, []);
       mockToolbarProps(props);
       return ReactModule.createElement(View, { testID: 'kline-toolbar' });
     },
@@ -206,9 +210,6 @@ const PerpsProKlineSheet = (
     position?: PerpsPositionViewModel | null;
   },
 ) => <Sheet position={null} {...props} />;
-
-const renderHeader = () =>
-  render(mockModalProps.mock.calls.at(-1)?.[0].handleComponent());
 
 const market = {
   canonicalCoin: 'BTC',
@@ -252,6 +253,7 @@ describe('PerpsProKlineSheet', () => {
     const props = mockModalProps.mock.calls.at(-1)?.[0];
     expect(props).toMatchObject({
       animateOnMount: false,
+      activeOffsetY: [-12, 12],
       enableContentPanningGesture: false,
       enableHandlePanningGesture: true,
       enablePanDownToClose: true,
@@ -268,18 +270,42 @@ describe('PerpsProKlineSheet', () => {
       boxShadow: '0px -4px 16px 0px rgba(0, 0, 0, 0.1)',
     });
     expect(PERPS_PRO_KLINE_HEADER_HEIGHT).toBe(58);
+    expect(
+      screen.getByTestId('perps-pro-kline-header').props.style,
+    ).toMatchObject({
+      height: 58,
+      paddingTop: 22,
+    });
     expect(mockTradingViewProps.mock.calls.at(-1)?.[0]).toMatchObject({
       backGroundColor: 'neutral-bg-1',
       height: PERPS_PRO_KLINE_CHART_HEIGHT,
       variant: 'perps-pro',
     });
 
-    renderHeader();
     fireEvent.press(screen.getByTestId('perps-pro-kline-close'));
     expect(onClose).toHaveBeenCalledTimes(1);
 
     act(() => props.onChange(-1));
     expect(onClose).toHaveBeenCalledTimes(2);
+  });
+
+  it('updates header state without remounting the interval toolbar', () => {
+    const onClose = jest.fn();
+    const { rerender } = render(
+      <PerpsProKlineSheet enabled market={market} onClose={onClose} />,
+    );
+    mockKlineState = {
+      ...mockKlineState,
+      interval: '1h',
+      selectInterval: jest.fn(),
+    };
+    rerender(<PerpsProKlineSheet enabled market={market} onClose={onClose} />);
+    expect(mockToolbarMount).toHaveBeenCalledTimes(1);
+    expect(mockToolbarUnmount).not.toHaveBeenCalled();
+    expect(mockToolbarProps.mock.calls.at(-1)?.[0]).toMatchObject({
+      interval: '1h',
+      onSelect: mockKlineState.selectInterval,
+    });
   });
 
   it('closes and reopens through the sheet ref when visibility changes', () => {
