@@ -8,6 +8,9 @@ module.exports = {
       '<rootDir>/../../packages/service-keyring/test/react-native-quick-crypto.mock.js',
     '^@craftzdog/react-native-buffer$':
       '<rootDir>/../../packages/service-keyring/test/react-native-buffer.mock.js',
+    // rabby-bridge only declares an ESM export, so map around package exports.
+    '^@rabby-wallet/rabby-bridge$':
+      '<rootDir>/node_modules/@rabby-wallet/rabby-bridge/dist/index.js',
   },
   testPathIgnorePatterns: [
     '/node_modules/',
@@ -16,6 +19,6 @@ module.exports = {
     '<rootDir>/scripts/.*\\.test\\.cjs$',
   ],
   transformIgnorePatterns: [
-    'node_modules/(?!((jest-)?react-native|@react-native(-community)?|react-native-root-toast|react-native-root-siblings|react-native-walkthrough-tooltip|@rabby-wallet/rabby-security-engine|p-queue|p-timeout|eventemitter3)/)',
+    'node_modules/(?!((jest-)?react-native|@react-native(-community)?|react-native-root-toast|react-native-root-siblings|react-native-walkthrough-tooltip|@debank|@rabby-wallet/rabby-security-engine|@rabby-wallet/rabby-bridge|p-queue|p-timeout|eventemitter3)/)',
   ],
 };
