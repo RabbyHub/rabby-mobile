@@ -1,12 +1,12 @@
 /* eslint-disable react-native/no-inline-styles */
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { Button } from '@/components2024/Button';
+import { buttonTitleStyles } from '@/components2024/Button/buttonStyles';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import {
   BOTTOM_BUTTON_DOUBLE_HEIGHT,
   BOTTOM_BUTTON_GAP,
   BOTTOM_BUTTON_SINGLE_HEIGHT,
-  BOTTOM_BUTTON_TITLE_STYLE,
   BOTTOM_BUTTON_TOP_OFFSET,
   RootNames,
   getBottomButtonBottomOffset,
@@ -682,7 +682,7 @@ export const TokenMarketInfoScreen = () => {
             <Button
               title={t('global.Confirm')}
               height={BOTTOM_BUTTON_SINGLE_HEIGHT}
-              titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
+              titleStyle={buttonTitleStyles.single}
               containerStyle={StyleSheet.flatten([styles.btnContainer])}
               onPress={() => {
                 if (isSwapTo) {
@@ -702,7 +702,7 @@ export const TokenMarketInfoScreen = () => {
                 type="ghost"
                 title={t('page.tokenDetail.action.Buy')}
                 height={BOTTOM_BUTTON_DOUBLE_HEIGHT}
-                titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
+                titleStyle={buttonTitleStyles.double}
                 containerStyle={StyleSheet.flatten([styles.btnContainer])}
                 buttonStyle={[styles.btnInnerContainer, styles.ghostBtn]}
                 onPress={() =>
@@ -713,7 +713,7 @@ export const TokenMarketInfoScreen = () => {
                 <Button
                   title={t('page.tokenDetail.action.Sell')}
                   height={BOTTOM_BUTTON_DOUBLE_HEIGHT}
-                  titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
+                  titleStyle={buttonTitleStyles.double}
                   containerStyle={StyleSheet.flatten([styles.btnContainer])}
                   onPress={() =>
                     handleSwap(

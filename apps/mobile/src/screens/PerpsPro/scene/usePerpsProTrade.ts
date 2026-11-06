@@ -20,7 +20,9 @@ import {
   getPerpsRuntimeSnapshot,
 } from '@/hooks/perps/runtime/perpsRuntimeState';
 import {
+  ensureCurrentPerpPermission,
   getPerpsAccountRuntimeContext,
+  hasCurrentPerpPermission,
   isPerpsUserAbstractionReadyForAccount,
   perpsStore,
 } from '@/hooks/perps/usePerpsStore';
@@ -1726,7 +1728,7 @@ export const usePerpsProTrade = ({
       ) {
         return;
       }
-      if (!perpsStore.getState().hasPermission) {
+      if (!hasCurrentPerpPermission()) {
         showToast(t('page.perps.regionNotSupport'), 'error');
         setReview(null);
         return;
@@ -1770,7 +1772,7 @@ export const usePerpsProTrade = ({
       setPending(true);
       try {
         await ensurePerpsActionApproval(accountFacts.account);
-        if (!perpsStore.getState().hasPermission) {
+        if (!hasCurrentPerpPermission()) {
           showToast(t('page.perps.regionNotSupport'), 'error');
           setReview(null);
           return;
@@ -2013,7 +2015,7 @@ export const usePerpsProTrade = ({
       if (pendingRef.current || !tradeConfigurationReady) {
         return;
       }
-      if (!perpsStore.getState().hasPermission) {
+      if (!hasCurrentPerpPermission()) {
         showToast(t('page.perps.regionNotSupport'), 'error');
         setReview(null);
         return;
@@ -2174,7 +2176,11 @@ export const usePerpsProTrade = ({
         if (!tradeConfigurationReady) {
           return;
         }
-        if (!perpsStore.getState().hasPermission) {
+        const reviewAccount = perpsStore.getState().currentPerpsAccount;
+        if (
+          reviewAccount &&
+          !(await ensureCurrentPerpPermission(reviewAccount))
+        ) {
           showToast(t('page.perps.regionNotSupport'), 'error');
           return;
         }
@@ -2183,7 +2189,7 @@ export const usePerpsProTrade = ({
         const skip = await perpsServiceApi.getSkipPerpsProTradeConfirmation(
           orderType,
         );
-        if (!perpsStore.getState().hasPermission) {
+        if (!hasCurrentPerpPermission()) {
           showToast(t('page.perps.regionNotSupport'), 'error');
           return;
         }
@@ -2207,7 +2213,7 @@ export const usePerpsProTrade = ({
     if (!review || !tradeConfigurationReady) {
       return;
     }
-    if (!perpsStore.getState().hasPermission) {
+    if (!hasCurrentPerpPermission()) {
       showToast(t('page.perps.regionNotSupport'), 'error');
       setReview(null);
       return;

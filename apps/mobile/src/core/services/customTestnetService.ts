@@ -17,7 +17,9 @@ import {
 } from 'viem';
 import {
   estimateGas,
+  estimateMaxPriorityFeePerGas,
   getBalance,
+  getBlock,
   getGasPrice,
   getTransactionCount,
   getTransactionReceipt,
@@ -34,13 +36,17 @@ import { syncCustomTestnetStore } from '@/store/customTestnet';
 import { appStorage } from '../storage/mmkv';
 import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
 import type {
+  CustomTestnetEip1559Detection,
   CustomTestnetToken,
   CustomTestnetTokenBase,
   TestnetChain,
   TestnetChainBase,
 } from '@/types/customTestnet';
 import { withTimeoutFallback } from '@/utils/async';
-import { createTestnetChain } from '@/core/utils/customTestnetChain';
+import {
+  createTestnetChain,
+  createTestnetChainList,
+} from '@/core/utils/customTestnetChain';
 
 export type {
   CustomTestnetToken,
@@ -52,6 +58,8 @@ export type {
 export type CutsomTestnetServiceStore = {
   customTestnet: Record<string, TestnetChain>;
   customTokenList: CustomTestnetTokenBase[];
+  // detected from the chain itself, kept apart from the user-entered config
+  eip1559: Record<string, CustomTestnetEip1559Detection>;
 };
 
 const MAX = 4_294_967_295;
@@ -62,11 +70,28 @@ function getUniqueId(): number {
   return idCounter;
 }
 
+const EIP1559_RECHECK_INTERVAL = 24 * 60 * 60 * 1000;
+// an on-demand check falls back to the previous result after this
+const EIP1559_DETECT_TIMEOUT = 5000;
+
+// maxFeePerGas = baseFee * baseFeeMultiplier + tip * priorityFeeMultiplier
+const EIP1559_GAS_LEVELS = [
+  { level: 'slow', baseFeeMultiplier: 1.2, priorityFeeMultiplier: 1 },
+  { level: 'normal', baseFeeMultiplier: 1.5, priorityFeeMultiplier: 1 },
+  { level: 'fast', baseFeeMultiplier: 2, priorityFeeMultiplier: 1.5 },
+];
+
 export class CustomTestnetService extends StoreServiceBase<
   CutsomTestnetServiceStore,
   APP_STORE_NAMES.customTestnet
 > {
   chains: Record<string, Client> = {};
+
+  // one in-flight EIP-1559 check per network and RPC client
+  private eip1559Detecting = new Map<
+    number,
+    { client: Client; task: Promise<boolean> }
+  >();
 
   constructor(options?: StorageAdapaterOptions) {
     super();
@@ -85,6 +110,7 @@ export class CustomTestnetService extends StoreServiceBase<
       {
         customTestnet: {},
         customTokenList: [],
+        eip1559: {},
       },
       {
         storageAdapter: options?.storageAdapter,
@@ -94,11 +120,7 @@ export class CustomTestnetService extends StoreServiceBase<
       const client = createClientByChain(chain);
       this.chains[chain.id] = client;
     });
-    updateChainStore({
-      testnetList: Object.values(this.store.customTestnet).map(item => {
-        return createTestnetChain(item);
-      }),
-    });
+    this.syncChainList();
     this.syncStore();
   };
   add = async (chain: TestnetChainBase) => {
@@ -168,6 +190,10 @@ export class CustomTestnetService extends StoreServiceBase<
     this.chains[chain.id] = createClientByChain(chain);
     this.syncChainList();
     this.syncStore();
+    // the RPC may have changed, check it again
+    this.detectEip1559(chain.id).catch(e => {
+      console.error(e);
+    });
 
     return nextChain;
   };
@@ -178,8 +204,12 @@ export class CustomTestnetService extends StoreServiceBase<
       draft.customTokenList = draft.customTokenList.filter(item => {
         return item.chainId !== chainId;
       });
+      if (draft.eip1559) {
+        delete draft.eip1559[chainId];
+      }
     });
     delete this.chains[chainId];
+    this.eip1559Detecting.delete(+chainId);
     this.syncChainList();
     this.syncStore();
   };
@@ -189,11 +219,88 @@ export class CustomTestnetService extends StoreServiceBase<
   };
 
   getList = () => {
-    const list = Object.values(this.store.customTestnet).map(item => {
-      return createTestnetChain(item);
-    });
+    return createTestnetChainList(this.store.customTestnet, this.store.eip1559);
+  };
 
-    return list;
+  /**
+   * Checks the latest block for `baseFeePerGas` and records the result.
+   * A failed check keeps the previous result, since the RPC may only be down
+   * for now; a network that was never checked stays on legacy transactions.
+   */
+  private isEip1559Detected = (chainId: number) => {
+    return !!this.store.eip1559?.[chainId]?.supported;
+  };
+
+  detectEip1559 = (chainId: number): Promise<boolean> => {
+    const id = +chainId;
+    const client = this.getClient(id);
+    if (!client) {
+      return Promise.resolve(this.isEip1559Detected(id));
+    }
+    const pending = this.eip1559Detecting.get(id);
+    if (pending?.client === client) {
+      return pending.task;
+    }
+    const task = this._detectEip1559(id, client).finally(() => {
+      if (this.eip1559Detecting.get(id)?.task === task) {
+        this.eip1559Detecting.delete(id);
+      }
+    });
+    this.eip1559Detecting.set(id, { client, task });
+    return task;
+  };
+
+  private _detectEip1559 = async (chainId: number, client: Client) => {
+    let supported: boolean;
+    try {
+      const block = await getBlock(client);
+      supported = typeof block.baseFeePerGas === 'bigint';
+    } catch (e) {
+      console.error(e);
+      return this.isEip1559Detected(chainId);
+    }
+    const previous = this.isEip1559Detected(chainId);
+    // removed, or its RPC replaced, while the request was in flight
+    if (
+      !this.store.customTestnet[chainId] ||
+      this.getClient(chainId) !== client
+    ) {
+      return previous;
+    }
+    this.mutateStore(draft => {
+      draft.eip1559 = {
+        ...draft.eip1559,
+        [chainId]: {
+          supported,
+          checkedAt: Date.now(),
+        },
+      };
+    });
+    if (previous !== supported) {
+      this.syncChainList();
+    }
+    return supported;
+  };
+
+  /**
+   * Whether the network supports EIP-1559. A result checked in the last 24h
+   * is reused; otherwise the network is checked again, falling back to the
+   * previous result when the RPC is slow or down.
+   */
+  getEip1559Support = async (chainId: number) => {
+    const id = +chainId;
+    const detection = this.store.eip1559?.[id];
+    if (
+      detection &&
+      Date.now() - detection.checkedAt < EIP1559_RECHECK_INTERVAL
+    ) {
+      return detection.supported;
+    }
+    return withTimeoutFallback(
+      this.detectEip1559(id),
+      EIP1559_DETECT_TIMEOUT,
+      !!detection?.supported,
+    );
   };
 
   getTransactionReceipt = async ({
@@ -309,6 +416,85 @@ export class CustomTestnetService extends StoreServiceBase<
   };
 
   getGasMarket = async ({
+    chainId,
+    custom,
+    eip1559,
+  }: {
+    chainId: number;
+    custom?: number;
+    /**
+     * Whether the caller will sign a type-2 tx. Defaults to the network's
+     * EIP-1559 support.
+     */
+    eip1559?: boolean;
+  }): Promise<GasLevel[]> => {
+    const use1559 = eip1559 ?? (await this.getEip1559Support(chainId));
+    if (use1559) {
+      try {
+        return await this.getEip1559GasMarket({ chainId, custom });
+      } catch (e) {
+        console.error(e);
+        // still sent as type-2: custom networks are never downgraded to legacy
+        const levels = await this.getLegacyGasMarket({ chainId, custom });
+        return levels.map(item => ({ ...item, priority_price: item.price }));
+      }
+    }
+    return this.getLegacyGasMarket({ chainId, custom });
+  };
+
+  getEip1559GasMarket = async ({
+    chainId,
+    custom,
+  }: {
+    chainId: number;
+    custom?: number;
+  }) => {
+    const client = this.getClient(+chainId);
+    if (!client) {
+      throw new Error(`Invalid chainId: ${chainId}`);
+    }
+    // eth_maxPriorityFeePerGas, falling back to eth_gasPrice - baseFee
+    const [block, maxPriorityFeePerGas] = await Promise.all([
+      getBlock(client),
+      estimateMaxPriorityFeePerGas(client),
+    ]);
+    if (typeof block.baseFeePerGas !== 'bigint') {
+      throw new Error('Latest block has no baseFeePerGas');
+    }
+    const baseFee = new BigNumber(block.baseFeePerGas.toString());
+    const tip = new BigNumber(maxPriorityFeePerGas.toString());
+
+    const levels = EIP1559_GAS_LEVELS.map(item => {
+      const priorityPrice = tip
+        .multipliedBy(item.priorityFeeMultiplier)
+        .integerValue(BigNumber.ROUND_CEIL);
+      return {
+        level: item.level,
+        price: baseFee
+          .multipliedBy(item.baseFeeMultiplier)
+          .integerValue(BigNumber.ROUND_CEIL)
+          .plus(priorityPrice)
+          .toNumber(),
+        priority_price: priorityPrice.toNumber(),
+        base_fee: baseFee.toNumber(),
+        front_tx_count: 0,
+        estimated_seconds: 0,
+      };
+    });
+
+    return levels.concat([
+      {
+        level: 'custom',
+        price: custom || 0,
+        priority_price: Math.min(tip.toNumber(), custom || 0),
+        base_fee: baseFee.toNumber(),
+        front_tx_count: 0,
+        estimated_seconds: 0,
+      },
+    ]) as GasLevel[];
+  };
+
+  getLegacyGasMarket = async ({
     chainId,
     custom,
   }: {

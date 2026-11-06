@@ -49,12 +49,17 @@ export type SignerCtx = {
   };
   gasFeeTooHigh?: boolean;
   disabledProcess?: boolean;
+  // tx from/to hit the blocked-address list; signing must be refused
+  isBlocked?: boolean;
 } & PreparedContext;
 
 export const buildFingerprint = (txs: Tx[]) =>
   txs
     .map(
       t =>
-        `${t.chainId}|${t.to || ''}|${t.value || ''}|${(t.data || '').length}`,
+        // calldata is not lowercased: that copies it, and a case-only mismatch only re-prefetches
+        `${t.chainId}|${(t.from || '').toLowerCase()}|${(
+          t.to || ''
+        ).toLowerCase()}|${t.value || ''}|${t.data || ''}`,
     )
     .join(';');

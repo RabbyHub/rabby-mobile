@@ -16,6 +16,11 @@ import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
 import AutoLockView from '@/components/AutoLockView';
 import { MODAL_GATE_IDS } from '@/utils/modalGate';
 import { TrackedModal } from '@/components/Modal/TrackedModal';
+import { BlockedAddressDialog } from '@/components/Dialogs/BlockedAddressDialog';
+import {
+  hideBlockedAddressDialog,
+  useBlockedAddressDialogVisible,
+} from '@/components2024/MiniSignV2/state/blockedAddressDialog';
 
 /**
  * Renders the signing UI for a single SignatureManager instance.
@@ -167,6 +172,7 @@ const SignerPortalItem: React.FC = () => {
  */
 export const GlobalSignerPortal: React.FC = () => {
   const instances = useRegistryInstances();
+  const isBlockedDialogVisible = useBlockedAddressDialogVisible();
 
   return (
     <>
@@ -175,6 +181,10 @@ export const GlobalSignerPortal: React.FC = () => {
           <SignerPortalItem />
         </SignatureInstanceProvider>
       ))}
+      <BlockedAddressDialog
+        visible={isBlockedDialogVisible}
+        onConfirm={hideBlockedAddressDialog}
+      />
     </>
   );
 };

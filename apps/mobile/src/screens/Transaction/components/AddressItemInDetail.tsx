@@ -21,12 +21,14 @@ export type AddressItemInDetailProps = {
   address: string;
   accounts: KeyringAccountWithAlias[];
   disableNavigate?: boolean;
+  addressTextStyle?: React.ComponentProps<typeof Text>['style'];
 };
 
 export const AddressItemInDetail = ({
   address,
   accounts,
   disableNavigate: propDisableNavigate = false,
+  addressTextStyle,
 }: AddressItemInDetailProps) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
 
@@ -112,7 +114,7 @@ export const AddressItemInDetail = ({
               />
             ) : null}
           </View>
-          <DetailAddressText address={address} />
+          <DetailAddressText address={address} style={addressTextStyle} />
         </View>
       </TouchableOpacity>
     </View>

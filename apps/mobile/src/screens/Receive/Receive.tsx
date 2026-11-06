@@ -93,6 +93,12 @@ function ReceiveScreen(): JSX.Element {
   const needsBackupReminder = useBackupReminder(account);
   const offlineChainData = useOfflineChain();
   const txCount = rateGuideLastExposureState(state => state.txCount);
+  // Mirrors the render conditions of the two notices above the QR card.
+  const hasTopNotice =
+    needsBackupReminder ||
+    (txCount > 0 &&
+      !!offlineChainData.displayWillClosedChain &&
+      !!offlineChainData.offlineChainInfo);
 
   const headerTitle = useMemo(
     () => (
@@ -118,18 +124,17 @@ function ReceiveScreen(): JSX.Element {
         )}
         <CustomTouchableOpacity
           as="RNGHTouchableOpacity"
-          style={styles.headerIconEye}
           onPress={() => setShowName(e => !e)}>
           {showName ? (
             <RcIconEyeCC
-              width={20}
-              height={20}
+              width={16}
+              height={16}
               color={colors2024['neutral-title-1']}
             />
           ) : (
             <RcIconEyeCloseCC
-              width={20}
-              height={20}
+              width={16}
+              height={16}
               color={colors2024['neutral-title-1']}
             />
           )}
@@ -140,7 +145,6 @@ function ReceiveScreen(): JSX.Element {
       styles.headerTitle,
       styles.walletIcon,
       styles.titleText,
-      styles.headerIconEye,
       showName,
       account?.type,
       account?.address,
@@ -276,15 +280,21 @@ function ReceiveScreen(): JSX.Element {
             />
 
             {/* Original QR Card */}
-            <ReceiveAddressCard
-              account={account}
-              selectedChain={selectedChain}
-              onSelectChainChange={setSelectedChain}
-              safeChains={safeChains}
-              showAddress={showName}
-              showQr={!isShowWatchModeModal}
-              onCopy={handleCopy}
-            />
+            <View
+              style={[
+                styles.qrCardWrapper,
+                !hasTopNotice && styles.qrCardWrapperFirst,
+              ]}>
+              <ReceiveAddressCard
+                account={account}
+                selectedChain={selectedChain}
+                onSelectChainChange={setSelectedChain}
+                safeChains={safeChains}
+                showAddress={showName}
+                showQr={!isShowWatchModeModal}
+                onCopy={handleCopy}
+              />
+            </View>
           </View>
         </ScrollView>
 
@@ -356,6 +366,15 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     marginTop: 8,
     width: '100%',
   },
+  // 24 + 12 gives the design's 36px side gap for the QR card only.
+  qrCardWrapper: {
+    width: '100%',
+    paddingHorizontal: 12,
+  },
+  // Design gap between the header and the QR card when no notice is shown.
+  qrCardWrapperFirst: {
+    marginTop: 40,
+  },
   // Backup Reminder Card styles
   backupReminderCard: {
     marginHorizontal: 0,
@@ -401,18 +420,15 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexShrink: 1,
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 20,
-    lineHeight: 24,
-    fontWeight: '900',
+    fontSize: 18,
+    lineHeight: 22,
+    fontWeight: '700',
     flexWrap: 'nowrap',
   },
   walletIcon: {
-    width: 25,
-    height: 25,
+    width: 24,
+    height: 24,
     borderRadius: 7,
-  },
-  headerIconEye: {
-    marginLeft: 4,
   },
 }));
 
