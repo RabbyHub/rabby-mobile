@@ -61,6 +61,7 @@ import {
 } from '@/components/Screenshot/hooks';
 import { getVisibleBlockingModalIds, MODAL_GATE_IDS } from '@/utils/modalGate';
 import { TrackedModal } from '@/components/Modal/TrackedModal';
+import { Tip } from '@/components/Tip';
 import { SwitchAllowScreenshot } from '../Settings/components/SwitchAllowScreenshot';
 import { LabelScreenshotToReport } from '../Settings/components/SwitchScreenshotToReport';
 import { useAutoLockCountDown } from '../Settings/components/LockAbout';
@@ -113,6 +114,16 @@ export const makeNoop = () => () => {};
 function DevSwitchAboutScreenProtection() {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const [debugModalVisible, setDebugModalVisible] = useState(false);
+  const [reproTipVisible, setReproTipVisible] = useState(false);
+  const reproTipTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(
+    () => () => {
+      if (reproTipTimerRef.current) {
+        clearTimeout(reproTipTimerRef.current);
+      }
+    },
+    [],
+  );
 
   const { forceAllowScreenshot } = useExpScreenCapture();
   const switchAllowScreenshotRef = useRef<SwitchToggleType>(null);
@@ -225,6 +236,34 @@ function DevSwitchAboutScreenProtection() {
         <Text style={[styles.metaLabel, styles.devModalHint]}>
           iOS repro path: open Modal A, then open screenshot Modal B, close B,
           then close A.
+        </Text>
+
+        <Tip
+          isVisible={reproTipVisible}
+          onClose={() => setReproTipVisible(false)}
+          content="Ungated Tip. The screenshot modal opens in 1.5s."
+          placement="bottom">
+          <Button
+            title={'Open Tip -> Screenshot Modal'}
+            type="ghost"
+            height={48}
+            containerStyle={[styles.rowWrapper, { marginTop: 12 }]}
+            onPress={() => {
+              setReproTipVisible(true);
+              if (reproTipTimerRef.current) {
+                clearTimeout(reproTipTimerRef.current);
+              }
+              reproTipTimerRef.current = setTimeout(() => {
+                reproTipTimerRef.current = null;
+                debugShowSubmitFeedbackByScreenshotModal();
+              }, 1500);
+            }}
+          />
+        </Tip>
+
+        <Text style={[styles.metaLabel, styles.devModalHint]}>
+          Same as the sign page report: the screenshot modal must wait for the
+          Tip to close, then appear. The screen must stay tappable.
         </Text>
 
         <Button
