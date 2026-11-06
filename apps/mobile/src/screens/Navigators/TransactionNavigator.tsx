@@ -6,11 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { createCustomNativeStackNavigator as createNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
 
-import {
-  HeaderBackPressable,
-  NATIVE_BAR_ITEM_BACK_OFFSET_X,
-  useStackScreenConfig,
-} from '@/hooks/navigation';
+import { HeaderBackPressable, useStackScreenConfig } from '@/hooks/navigation';
 import {
   RootNames,
   makeHeadersPresets,
@@ -30,10 +26,6 @@ import ReceiveScreen from '../Receive/Receive';
 import SwapBridgeScreen from '../SwapBridge';
 import { renderSwapBridgeHeader } from '../SwapBridge/SwapBridgeHeader';
 import { ConvertDustScreen } from '../ConvertDust';
-import { MemeCoinBuyScreen } from '../MemeCoin/buy/MemeCoinBuyScreen';
-import { MemeCoinHeader } from '../MemeCoin/components/MemeCoinHeader';
-import { MemeCoinExecuteScreen } from '../MemeCoin/execute/MemeCoinExecuteScreen';
-import { MemeCoinHomeScreen } from '../MemeCoin/home/MemeCoinHomeScreen';
 import { GasAccountScreen } from '../GasAccount';
 import { ScreenHeaderAccountSwitcher } from '@/components/AccountSwitcher/OnScreenHeader';
 import { HeaderAccountSwitcher } from '@/components/AccountSwitcher/HeaderAccountSwitcher';
@@ -379,39 +371,6 @@ export default function TransactionNavigator() {
       />
 
       <TransactionStack.Screen
-        name={RootNames.MemeCoin}
-        component={MemeCoinHomeScreen}
-        options={mergeScreenOptions2024([
-          {
-            title: t('page.home.services.meme'),
-            header: () => <MemeCoinHeader />,
-          },
-        ])}
-      />
-
-      <TransactionStack.Screen
-        name={RootNames.MemeCoinBuy}
-        component={MemeCoinBuyScreen}
-        options={mergeScreenOptions2024([
-          {
-            title: t('page.home.services.meme'),
-            header: () => <MemeCoinHeader disableSwitch />,
-          },
-        ])}
-      />
-
-      <TransactionStack.Screen
-        name={RootNames.MemeCoinExecute}
-        component={MemeCoinExecuteScreen}
-        options={mergeScreenOptions2024([
-          {
-            title: t('page.home.services.meme'),
-            header: () => <MemeCoinHeader disableSwitch />,
-          },
-        ])}
-      />
-
-      <TransactionStack.Screen
         name={RootNames.GasAccount}
         component={GasAccountScreen}
         options={mergeScreenOptions({
@@ -582,9 +541,6 @@ const getConvertDustHeaderStyle = createGetStyles2024(({ colors2024 }) => ({
 
 const transactionNavigatorStyles = StyleSheet.create({
   sendHeaderIconOffset: {
-    transform: [
-      { translateX: IS_IOS ? NATIVE_BAR_ITEM_BACK_OFFSET_X : 0 },
-      { translateY: IS_IOS ? SEND_IOS_HEADER_ICON_OFFSET : 0 },
-    ],
+    transform: [{ translateY: IS_IOS ? SEND_IOS_HEADER_ICON_OFFSET : 0 }],
   },
 });
