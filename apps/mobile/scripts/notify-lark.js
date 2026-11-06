@@ -59,6 +59,7 @@ async function sendMessage({
   const platformName = platform
     .replace('android', 'Android')
     .replace('ios', 'iOS');
+  const isSignOnly = process.env.RABBY_MOBILE_SIGN_ONLY === 'true';
 
   let body = {
     timestamp: timeSec,
@@ -69,7 +70,9 @@ async function sendMessage({
     body.content = {
       post: {
         zh_cn: {
-          title: `⚠️ [${platformName}] Rabby Mobile 打包失败! `,
+          title: isSignOnly
+            ? `⚠️ [仅签名][${platformName}] Rabby Mobile 打包失败! `
+            : `⚠️ [${platformName}] Rabby Mobile 打包失败! `,
           content: [
             [
               {
@@ -119,12 +122,34 @@ async function sendMessage({
     content: {
       post: {
         zh_cn: {
-          title: `📱 [${platformName}] Rabby Mobile 预览包已生成 🚀 `,
+          title: isSignOnly
+            ? `🖊️ [仅签名][${platformName}] Rabby Mobile 预览包已生成 🚀 `
+            : `📱 [${platformName}] Rabby Mobile 预览包已生成 🚀 `,
           content: [
             platform === 'android' && [
               { tag: 'text', text: `下载链接: ` },
               { tag: 'a', href: downloadURL, text: downloadURL },
             ],
+            isSignOnly && [
+              {
+                tag: 'text',
+                text: `该预览包为仅签名打包，构建在本地完成。`,
+              },
+            ],
+            isSignOnly &&
+              process.env.RABBY_MOBILE_SIGN_ONLY_SOURCE_SHA && [
+                {
+                  tag: 'text',
+                  text: `Source: ${process.env.RABBY_MOBILE_SIGN_ONLY_SOURCE_SHA}`,
+                },
+              ],
+            isSignOnly &&
+              process.env.RABBY_MOBILE_SIGN_ONLY_SOURCE_DIRTY === 'true' && [
+                {
+                  tag: 'text',
+                  text: `注意: 本地产物构建时工作区包含未提交改动。`,
+                },
+              ],
             larkDriveURL && [
               { tag: 'text', text: `Lark Drive: ` },
               { tag: 'a', href: larkDriveURL, text: larkDriveURL },

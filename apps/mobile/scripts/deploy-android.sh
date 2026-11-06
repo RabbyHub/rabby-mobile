@@ -206,7 +206,12 @@ if [ $buildchannel == "appstore" ]; then
 else
   version_bundle_suffix=".apk"
   staging_dir_suffix=""
-  if [ $buildchannel == "selfhost-reg" ]; then
+  if [ -n "$RABBY_MOBILE_SIGN_ONLY_APK" ]; then
+    echo "[deploy-android] sign-only mode: using prebuilt signed APK $RABBY_MOBILE_SIGN_ONLY_APK"
+    export RABBY_MOBILE_SIGN_ONLY=true
+    export RABBY_MOBILE_BUILD_ENV="regression"
+    android_export_target="$RABBY_MOBILE_SIGN_ONLY_APK"
+  elif [ $buildchannel == "selfhost-reg" ]; then
     [ "$GHA_MOCK_BUILD_FAILED" == "true" ] && SKIP_BUILD=true
 
     android_export_target="$project_dir/android/app/build/outputs/apk/regression/app-regression.apk"
@@ -295,7 +300,7 @@ print_manual_upload_sentry_sourcemap() {
 }
 
 # only upload apk as template when it is not fast-built from a template
-if [ "$UPLOAD_TEMPLATE_APK" = "true" ] && [ "$FAST_BUILD_ENABLED" != "true" ] && [ $buildchannel = "selfhost-reg" ] && [ ! -z $RABBY_MOBILE_REG_PUB_DEPLOYMENT ]; then
+if [ -z "$RABBY_MOBILE_SIGN_ONLY_APK" ] && [ "$UPLOAD_TEMPLATE_APK" = "true" ] && [ "$FAST_BUILD_ENABLED" != "true" ] && [ $buildchannel = "selfhost-reg" ] && [ ! -z $RABBY_MOBILE_REG_PUB_DEPLOYMENT ]; then
   template_apk_s3_dir=$RABBY_MOBILE_REG_PUB_DEPLOYMENT/.templates/android;
   native_part_hash=$(collect_android_native_entries)
   echo "[deploy-android] will set apk $android_export_target to $template_apk_s3_dir/$native_part_hash.apk"
