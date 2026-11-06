@@ -123,7 +123,6 @@ export default function TransactionNavigator() {
   const renderSendHeaderLeft = React.useCallback(
     ({ tintColor }: { tintColor?: string }) => (
       <HeaderBackPressable
-        nativeBarItem
         tintColor={tintColor}
         style={transactionNavigatorStyles.sendHeaderIconOffset}
       />

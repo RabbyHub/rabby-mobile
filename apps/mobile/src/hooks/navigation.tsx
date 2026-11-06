@@ -132,13 +132,8 @@ export function navBack() {
 export function HeaderBackPressable({
   tintColor,
   style,
-  nativeBarItem = false,
   ...touchableProps
-}: Pick<NativeStackHeaderLeftProps, 'tintColor'> &
-  RNViewProps & {
-    /** Rendered as a native UIBarButtonItem (needs the item-inset compensation). */
-    nativeBarItem?: boolean;
-  }) {
+}: Pick<NativeStackHeaderLeftProps, 'tintColor'> & RNViewProps) {
   const themeMode = useGetBinaryMode();
   const { colors2024 } = apisTheme.getColors2024(themeMode);
   return (
@@ -146,11 +141,7 @@ export function HeaderBackPressable({
       // Native-stack header controls need native gesture arbitration on Fabric.
       as="RNGHTouchableOpacity"
       {...touchableProps}
-      style={[
-        styles.backButtonStyle,
-        nativeBarItem && IS_IOS && styles.nativeBarItemBackButtonStyle,
-        style,
-      ]}
+      style={[styles.backButtonStyle, style]}
       hitSlop={hitSlop}
       onPress={navBack}>
       <RcIconHeaderBack
@@ -165,12 +156,6 @@ export function HeaderBackPressable({
 type ScreenOptions = Omit<NativeStackNavigationOptions, 'headerTitleStyle'> & {
   headerTitleStyle: NativeStackNavigationOptions['headerTitleStyle'] & object;
 };
-
-const IOS_LIQUID_GLASS_HEADER_OPTIONS = {
-  headerLeftBackgroundVisible: false,
-  headerRightBackgroundVisible: false,
-} as const;
-
 export const useStackScreenConfig = () => {
   const appThemeMode = useGetBinaryMode();
 
@@ -183,7 +168,6 @@ export const useStackScreenConfig = () => {
       const screenOptions: ScreenOptions = {
         animation: IS_IOS ? 'slide_from_right' : 'none',
         animationDuration: 200,
-        ...IOS_LIQUID_GLASS_HEADER_OPTIONS,
         ...headerPresets.onlyTitle,
         headerTitleStyle: {
           ...(headerPresets.onlyTitle.headerTitleStyle as object),
@@ -195,10 +179,7 @@ export const useStackScreenConfig = () => {
         headerLeft: ({ tintColor }) => (
           <CustomTouchableOpacity
             as="RNGHTouchableOpacity"
-            style={[
-              styles.backButtonStyle,
-              IS_IOS && styles.nativeBarItemBackButtonStyle,
-            ]}
+            style={styles.backButtonStyle}
             hitSlop={24}
             onPress={navBack}>
             <RcIconHeaderBack
@@ -233,7 +214,6 @@ export const useStackScreenConfig = () => {
       const screenOptions: ScreenOptions = {
         animation: IS_IOS ? 'slide_from_right' : 'none',
         animationDuration: 200,
-        ...IOS_LIQUID_GLASS_HEADER_OPTIONS,
         ...headerPresets.onlyTitle,
         headerTitleStyle: {
           ...(headerPresets.onlyTitle.headerTitleStyle as object),
@@ -243,7 +223,7 @@ export const useStackScreenConfig = () => {
         },
         headerTintColor: colors2024['neutral-title-1'],
         headerLeft: ({ tintColor }) => (
-          <HeaderBackPressable tintColor={tintColor} nativeBarItem />
+          <HeaderBackPressable tintColor={tintColor} />
         ),
       };
 
@@ -317,18 +297,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     marginLeft: -16,
     paddingLeft: 16,
-  },
-  // react-native-screens wraps a custom header subview in a centred wrapper on
-  // iOS 26+, so margin/padding inside the view no longer shift the native bar
-  // button item. A fixed translateX cannot be correct on every device (the item
-  // inset depends on the device/OS layout), so the bar item now keeps the
-  // system position and only gets a stable 24x24 content box.
-  nativeBarItemBackButtonStyle: {
-    width: 24,
-    height: 24,
-    justifyContent: 'center',
-    marginLeft: 0,
-    paddingLeft: 0,
   },
 });
 
