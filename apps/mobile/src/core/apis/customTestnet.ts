@@ -1,4 +1,5 @@
 import { customTestnetServiceApi } from '@/core/serviceApi/customTestnet';
+import { disconnectDappsWithUnsupportedChain } from '@/core/serviceApi/dappUnsupportedChain';
 import type { CustomTestnetService } from '@/core/services/customTestnetService';
 import {
   getTransactionHistoryTransactions,
@@ -16,7 +17,10 @@ class ApiCustomTestnet {
     return customTestnetServiceApi.add(chain);
   };
   updateCustomTestnet = customTestnetServiceApi.update;
-  removeCustomTestnet = customTestnetServiceApi.remove;
+  removeCustomTestnet = async (chainId: number) => {
+    await customTestnetServiceApi.remove(chainId);
+    disconnectDappsWithUnsupportedChain();
+  };
   getCustomTestnetList = customTestnetServiceApi.getList;
 
   getCustomTestnetNonce = async ({
