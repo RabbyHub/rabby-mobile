@@ -136,7 +136,8 @@ export class SwapService extends StoreServiceBase<
 
       if (
         draft.selectedChain &&
-        !SWAP_SUPPORT_CHAINS.includes(draft.selectedChain)
+        (!SWAP_SUPPORT_CHAINS.includes(draft.selectedChain) ||
+          !findChainByEnum(draft.selectedChain))
       ) {
         draft.selectedChain = null;
         draft.selectedFromToken = undefined;
@@ -171,7 +172,8 @@ export class SwapService extends StoreServiceBase<
     this.mutateStore(draft => {
       if (
         draft.selectedChain &&
-        !SWAP_SUPPORT_CHAINS.includes(draft.selectedChain)
+        (!SWAP_SUPPORT_CHAINS.includes(draft.selectedChain) ||
+          !findChainByEnum(draft.selectedChain))
       ) {
         draft.selectedChain = null;
         draft.selectedFromToken = undefined;

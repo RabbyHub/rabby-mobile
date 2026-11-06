@@ -181,7 +181,8 @@
       },
       "alertText": "DApp de terceiros: para problemas de utilização, contacte o suporte da DApp. A Rabby fornece apenas acesso de visualização.",
       "title": "Captura de ecrã para comunicar um erro",
-      "submitFailed": "Falha ao submeter."
+      "submitFailed": "Falha ao submeter.",
+      "includeAddress": "Partilhar endereço para resolução de problemas"
     },
     "submitFeedbackSuccessModal": {
       "desc": "Enviado com sucesso!"
@@ -1780,8 +1781,8 @@
     },
     "receiveAddressList": {
       "selectChainTitle": "Selecionar rede",
-      "title": "Selecionar carteira",
-      "subtitle": "Escolha uma carteira para receber os seus criptoativos."
+      "title": "Selecionar carteira para receber",
+      "subtitle": "Escolha um endereço de carteira para receber os seus ativos."
     },
     "miniSignFooterBar": {
       "status": {

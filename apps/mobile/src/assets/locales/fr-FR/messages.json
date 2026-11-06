@@ -1505,7 +1505,7 @@
     "receiveAddressList": {
       "selectChainTitle": "Sélectionner le réseau",
       "title": "Sélectionner un portefeuille pour recevoir",
-      "subtitle": "Choisissez un portefeuille pour recevoir vos cryptos."
+      "subtitle": "Choisissez une adresse de portefeuille pour recevoir vos actifs."
     },
     "singleHome": {
       "tokenActions": {
@@ -3518,7 +3518,8 @@
       },
       "alertText": "DApp tierce : pour les problèmes d’utilisation, contactez le support de la DApp. Rabby fournit uniquement un accès en lecture.",
       "title": "Capture d'écran pour signaler un bug",
-      "submitFailed": "Échec de l'envoi."
+      "submitFailed": "Échec de l'envoi.",
+      "includeAddress": "Partager l'adresse pour le dépannage"
     },
     "submitFeedbackSuccessModal": {
       "desc": "Soumis avec succès !"

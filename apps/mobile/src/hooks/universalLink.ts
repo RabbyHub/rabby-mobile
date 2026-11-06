@@ -603,7 +603,7 @@ function dispatchWhenNavigationReady(
 
 function resetExistingHomeFlowToOverview() {
   const rootState = navigationRef.getRootState();
-  if (!canResetRootToHome(rootState)) {
+  if (!rootState || !canResetRootToHome(rootState)) {
     return false;
   }
 
@@ -649,6 +649,12 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
       const target = payload.target || 'home';
       runWhenNavigationReady(() => {
         const rootState = navigationRef.getRootState();
+        if (!rootState) {
+          // The newer @react-navigation typings allow a momentarily missing
+          // root state right after the container reports ready. There is
+          // nothing to route into (and no unlock state to inspect) yet.
+          return;
+        }
         const activeRootRoute = rootState.routes[rootState.index];
         if (activeRootRoute?.name === RootNames.Unlock) {
           UnlockUIManager.queueResetNaviOnTopOfHomeWhenUnlock(

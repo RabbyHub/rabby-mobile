@@ -1814,7 +1814,7 @@
     "receiveAddressList": {
       "selectChainTitle": "选择链",
       "title": "选择钱包接收",
-      "subtitle": "选择钱包以接收您的加密资产。"
+      "subtitle": "选择一个钱包地址来接收您的资产。"
     },
     "tokenDetail": {
       "removed": {
@@ -3599,7 +3599,8 @@
       },
       "alertText": "第三方 DApp：如遇使用问题，请联系 DApp 支持。Rabby 仅提供浏览功能。",
       "title": "截图报告问题",
-      "submitFailed": "提交失败。"
+      "submitFailed": "提交失败。",
+      "includeAddress": "分享地址以便排查问题"
     },
     "submitFeedbackSuccessModal": {
       "desc": "提交成功！"

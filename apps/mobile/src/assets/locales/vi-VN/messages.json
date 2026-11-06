@@ -1532,8 +1532,8 @@
     },
     "receiveAddressList": {
       "selectChainTitle": "Chọn chuỗi",
-      "title": "Chọn ví",
-      "subtitle": "Chọn ví để nhận crypto của bạn."
+      "title": "Chọn ví để nhận",
+      "subtitle": "Chọn một địa chỉ ví để nhận tài sản của bạn."
     },
     "miniSignFooterBar": {
       "status": {
@@ -3590,7 +3590,8 @@
       },
       "alertText": "DApp bên thứ ba: nếu gặp vấn đề sử dụng, vui lòng liên hệ bộ phận hỗ trợ DApp. Rabby chỉ cung cấp quyền truy cập xem.",
       "title": "Chụp màn hình để Báo cáo Lỗi",
-      "submitFailed": "Gửi thất bại."
+      "submitFailed": "Gửi thất bại.",
+      "includeAddress": "Chia sẻ địa chỉ để khắc phục sự cố"
     },
     "submitFeedbackSuccessModal": {
       "desc": "Gửi thành công!"

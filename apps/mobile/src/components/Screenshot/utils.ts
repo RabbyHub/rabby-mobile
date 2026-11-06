@@ -84,57 +84,86 @@ ErrorUtils.setGlobalHandler((error, isFatal) => {
   latestErrorsRef.current = list.sort((a, b) => b.time - a.time).slice(0, 50);
 });
 
+// Matches EVM addresses (40 hex) and longer hex strings such as tx hashes
+// (64 hex), since a tx hash also reveals its sender on-chain.
+const SCREENSHOT_FEEDBACK_ADDRESS_REGEX = /0x[0-9a-f]{40,}/gi;
+export const SCREENSHOT_FEEDBACK_MASKED_ADDRESS = '0x***';
+
+export function maskScreenshotFeedbackAddresses<T extends string | null>(
+  value: T,
+): T {
+  if (!value) {
+    return value;
+  }
+
+  return value.replace(
+    SCREENSHOT_FEEDBACK_ADDRESS_REGEX,
+    SCREENSHOT_FEEDBACK_MASKED_ADDRESS,
+  ) as T;
+}
+
+function isCallableAccount(account: Pick<Account, 'type'>) {
+  return (
+    account.type !== KEYRING_TYPE.WatchAddressKeyring &&
+    account.type !== KEYRING_TYPE.GnosisKeyring
+  );
+}
+
+/** The fields the user agrees to share by checking "Share address". */
+async function getScreenshotFeedbackAddressFields() {
+  const myAccountList = await getAllAccounts();
+  const myFirstCallableAccount = myAccountList.find(isCallableAccount);
+  const myCurrentAccount = getFallbackAccountSnapshot();
+
+  return {
+    myFirstAddressType: myFirstCallableAccount?.type,
+    myCurrentAddressType: myCurrentAccount?.type,
+    myFirstAddress: myFirstCallableAccount?.address,
+    myCurrentAddress: myCurrentAccount?.address,
+    mySceneAddresses: await runTryCatch(async () => await getSceneAddresses()),
+  };
+}
+
+/**
+ * Builds the diagnostics attached to a feedback message. Balances and address
+ * counts are never attached.
+ */
 export async function getScreenshotFeedbackExtra({
-  totalBalanceText,
+  includeAddress,
 }: {
-  totalBalanceText: string;
-}): Promise<UserFeedbackItem['extra'] & object> {
-  const latestErrors = runTryCatch(() =>
+  /**
+   * Addresses and their account types are attached only when the user
+   * explicitly opts in. Any other value leaves them out and masks addresses
+   * found in free-text fields.
+   */
+  includeAddress?: boolean;
+} = {}): Promise<UserFeedbackItem['extra'] & object> {
+  const shouldIncludeAddress = includeAddress === true;
+  const rawLatestErrors = runTryCatch(() =>
     JSON.stringify(latestErrorsRef.current),
   );
+  // Error payloads can carry addresses (RPC params, thrown objects).
+  const latestErrors = shouldIncludeAddress
+    ? rawLatestErrors
+    : maskScreenshotFeedbackAddresses(rawLatestErrors);
 
   const appVersionText = APP_VERSIONS.forFeedback;
   const appVersion = APP_VERSIONS.fromNative;
   const appBuildNumber = APP_VERSIONS.buildNumber;
   const appBuildRevision = BUILD_GIT_INFO.BUILD_GIT_HASH;
 
-  const myAccountList = await getAllAccounts();
-  let myFirstCallableAccount: Account | undefined;
-  const {
-    callables: myCallableAddressCount,
-    uncallables: myUncallableAddressCount,
-  } = myAccountList.reduce(
-    (acc, item) => {
-      if (
-        item.type !== KEYRING_TYPE.WatchAddressKeyring &&
-        item.type !== KEYRING_TYPE.GnosisKeyring
-      ) {
-        myFirstCallableAccount = myFirstCallableAccount || item;
-        acc.callables += 1;
-      } else {
-        acc.uncallables += 1;
-      }
-      return acc;
-    },
-    { callables: 0, uncallables: 0 },
-  );
-  const myCurrentAccount = getFallbackAccountSnapshot();
+  const addressFields = shouldIncludeAddress
+    ? await getScreenshotFeedbackAddressFields()
+    : null;
 
   return {
-    totalBalanceText,
     currentScreen: getLatestNavigationName(),
     appVersionText,
     appVersion,
     appBuildNumber,
     appBuildRevision,
     applicationId: APPLICATION_ID,
-    myCallableAddressCount,
-    myUncallableAddressCount,
-    myFirstAddress: myFirstCallableAccount?.address,
-    myFirstAddressType: myFirstCallableAccount?.type,
-    myCurrentAddress: myCurrentAccount?.address,
-    myCurrentAddressType: myCurrentAccount?.type,
-    mySceneAddresses: await runTryCatch(async () => await getSceneAddresses()),
+    ...addressFields,
 
     systemName: runTryCatch(() => DeviceInfo.getSystemName()),
     systemVersion: runTryCatch(() => DeviceInfo.getSystemVersion()),

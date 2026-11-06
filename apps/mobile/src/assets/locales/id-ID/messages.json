@@ -1804,7 +1804,7 @@
     "receiveAddressList": {
       "selectChainTitle": "Pilih Rantai",
       "title": "Pilih Dompet untuk Menerima",
-      "subtitle": "Pilih dompet untuk menerima kripto Anda."
+      "subtitle": "Pilih alamat dompet untuk menerima aset Anda."
     },
     "singleHome": {
       "tokenActions": {
@@ -3473,7 +3473,8 @@
       },
       "alertText": "DApp pihak ketiga: untuk masalah penggunaan, silakan hubungi dukungan DApp. Rabby hanya menyediakan akses melihat.",
       "title": "Tangkapan Layar untuk Melaporkan Bug",
-      "submitFailed": "Gagal mengirim."
+      "submitFailed": "Gagal mengirim.",
+      "includeAddress": "Bagikan alamat untuk pemecahan masalah"
     },
     "submitFeedbackSuccessModal": {
       "desc": "Dikirim Berhasil!"
