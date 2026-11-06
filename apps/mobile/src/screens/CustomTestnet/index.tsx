@@ -32,7 +32,7 @@ import {
   useCustomTestnetService,
   withCustomTestnetService,
 } from './customTestnetServiceDependencies';
-import { buttonTitleStyles } from './buttonStyles';
+import { buttonTitleStyles } from '@/components2024/Button/buttonStyles';
 
 type CustomTestnetListProps = {
   isEditing: boolean;

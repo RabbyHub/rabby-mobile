@@ -7,6 +7,7 @@ import { buildTempoTransaction } from '@/utils/tempo';
 import type { TempoTxCall } from '@/utils/tempo';
 
 const mockSubmitTxV2 = jest.fn();
+const mockIsBlockedAddress = jest.fn();
 const mockGetCustomTestnetClient = jest.fn();
 const mockHasCustomRPC = jest.fn();
 const mockGetDefaultRPC = jest.fn();
@@ -48,6 +49,11 @@ const ATTACKER_CHAIN = {
 };
 const KNOWN_CHAINS = [ETH_CHAIN, BSC_CHAIN, ATTACKER_CHAIN];
 
+jest.mock('i18next', () => ({
+  ...jest.requireActual('i18next'),
+  t: (key: string) => key,
+}));
+
 jest.mock('@/utils/chain', () => ({
   findChain: (...args: unknown[]) => mockFindChain(...args),
   findChainByEnum: (...args: unknown[]) => mockFindChainByEnum(...args),
@@ -75,6 +81,7 @@ jest.mock('@/constant', () => ({
 jest.mock('../request', () => ({
   openapi: {
     submitTxV2: (...args: unknown[]) => mockSubmitTxV2(...args),
+    isBlockedAddress: (...args: unknown[]) => mockIsBlockedAddress(...args),
   },
 }));
 
@@ -205,6 +212,7 @@ jest.mock('@/core/serviceApi/gasAccount', () => ({
 }));
 
 import providerController from './provider';
+import { clearBlockedAddressCache } from '../utils/blockedAddress';
 
 const DAPP_ORIGIN = 'https://attacker.example';
 
@@ -322,6 +330,71 @@ describe('provider.ethSendTransaction broadcast chain pinning', () => {
       request: jest.fn(async () => '0xattackerpushed'),
     });
     mockSubmitTxV2.mockResolvedValue({ tx_id: '0xabc' });
+    mockIsBlockedAddress.mockResolvedValue({ is_blocked: false });
+    clearBlockedAddressCache();
+  });
+
+  it('refuses to sign when the receiver is blocked', async () => {
+    mockIsBlockedAddress.mockImplementation(async (address: string) => ({
+      is_blocked: address === TX_PARAMS.to.toLowerCase(),
+    }));
+
+    await expect(
+      providerController.ethSendTransaction(makeOptions()),
+    ).rejects.toMatchObject({
+      message: 'common.dialogs.blockedTransaction.content',
+    });
+    expect(mockSignTransaction).not.toHaveBeenCalled();
+    expect(mockSubmitTxV2).not.toHaveBeenCalled();
+  });
+
+  it('refuses an ERC-20 transfer whose calldata receiver is blocked', async () => {
+    const receiver = '0x4444444444444444444444444444444444444444';
+    const data = `0xa9059cbb${receiver
+      .slice(2)
+      .padStart(64, '0')}${'1'.padStart(64, '0')}`;
+    mockIsBlockedAddress.mockImplementation(async (address: string) => ({
+      is_blocked: address === receiver,
+    }));
+
+    await expect(
+      providerController.ethSendTransaction(
+        makeOptions({
+          data: { params: [{ ...TX_PARAMS, data }] },
+          approvalRes: makeApprovalRes({ data }),
+        }),
+      ),
+    ).rejects.toMatchObject({
+      message: 'common.dialogs.blockedTransaction.content',
+    });
+    expect(mockSignTransaction).not.toHaveBeenCalled();
+  });
+
+  it('does not start signing before a slow lookup settles', async () => {
+    let settle: (res: { is_blocked: boolean }) => void = () => {};
+    const lookup = new Promise<{ is_blocked: boolean }>(resolve => {
+      settle = resolve;
+    });
+    mockIsBlockedAddress.mockReturnValue(lookup);
+
+    const result = providerController.ethSendTransaction(makeOptions());
+    await new Promise(resolve => setTimeout(resolve, 20));
+    expect(mockSignTransaction).not.toHaveBeenCalled();
+
+    settle({ is_blocked: true });
+    await expect(result).rejects.toMatchObject({
+      message: 'common.dialogs.blockedTransaction.content',
+    });
+    expect(mockSignTransaction).not.toHaveBeenCalled();
+  });
+
+  it('signs when a lookup fails and nothing is known to be blocked', async () => {
+    mockIsBlockedAddress.mockRejectedValue(new Error('network'));
+
+    await expect(
+      providerController.ethSendTransaction(makeOptions()),
+    ).resolves.toBe('0xabc');
+    expect(mockSignTransaction).toHaveBeenCalledTimes(1);
   });
 
   it('broadcasts on the approved chain when the dapp switched chains mid-approval', async () => {
@@ -557,3 +630,127 @@ describe.each([false, true])(
     );
   },
 );
+
+// Controller unit coverage for the 1559 legacy fallback: the transaction
+// factory and software keyring are real, the broadcast is not reached.
+describe('provider.ethSendTransaction EIP-1559 legacy fallback by network', () => {
+  const customNetwork = {
+    id: 31337,
+    enum: 'CUSTOM_31337',
+    serverId: 'custom_31337',
+    isTestnet: true,
+  };
+  const from = '0x7e5f4552091a69125d5dfcb7b8c2659029395bdf';
+  const keyring = new SimpleKeyring(['1'.padStart(64, '0')]);
+  const stopAfterSigning = new Error('stop before broadcast');
+
+  const request = (chainId: number, fees: Record<string, string>) => ({
+    from,
+    to: TX_PARAMS.to,
+    chainId,
+    data: '0x',
+    value: '0x0',
+    gas: '0x5208',
+    nonce: '0x0',
+    ...fees,
+  });
+
+  const signedTx = async (chainId: number, fees: Record<string, string>) => {
+    const txParams = request(chainId, fees);
+    await expect(
+      providerController.ethSendTransaction(
+        makeOptions({
+          data: { params: [txParams] },
+          account: { ...ACCOUNT, address: from },
+          approvalRes: { ...txParams },
+        }),
+      ),
+    ).rejects.toMatchObject({ message: stopAfterSigning.message });
+    return mockSignTransaction.mock.calls[0][1];
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockGetKeyringForAccount.mockResolvedValue(keyring);
+    mockGetSigningTx.mockResolvedValue({
+      rawTx: {},
+      explain: { pre_exec: { success: true }, calcSuccess: true },
+    });
+    mockUpdateSigningTx.mockResolvedValue(undefined);
+    mockProbeBestRPC.mockResolvedValue(undefined);
+    mockSignTransaction.mockRejectedValue(stopAfterSigning);
+  });
+
+  test('keeps a custom network tx with maxFee == tip as type-2', async () => {
+    mockFindChain.mockReturnValue(customNetwork);
+    mockFindChainByEnum.mockReturnValue(customNetwork);
+
+    const tx = await signedTx(customNetwork.id, {
+      maxFeePerGas: '0x3b9aca00',
+      maxPriorityFeePerGas: '0x3b9aca00',
+    });
+
+    expect(tx.type).toBe(2);
+    expect(tx.maxFeePerGas).toBe(1_000_000_000n);
+    expect(tx.maxPriorityFeePerGas).toBe(1_000_000_000n);
+  });
+
+  test('signs a custom network tx with maxFee > tip as type-2', async () => {
+    mockFindChain.mockReturnValue(customNetwork);
+    mockFindChainByEnum.mockReturnValue(customNetwork);
+
+    const tx = await signedTx(customNetwork.id, {
+      maxFeePerGas: '0x77359400',
+      maxPriorityFeePerGas: '0x3b9aca00',
+    });
+
+    expect(tx.type).toBe(2);
+    expect(tx.maxFeePerGas).toBe(2_000_000_000n);
+    expect(tx.maxPriorityFeePerGas).toBe(1_000_000_000n);
+  });
+
+  test('still downgrades an integrated network tx with maxFee == tip', async () => {
+    mockFindChain.mockReturnValue(ETH_CHAIN);
+    mockFindChainByEnum.mockReturnValue(ETH_CHAIN);
+
+    const tx = await signedTx(ETH_CHAIN.id, {
+      maxFeePerGas: '0x3b9aca00',
+      maxPriorityFeePerGas: '0x3b9aca00',
+    });
+
+    expect(tx.type).toBe(0);
+    expect(tx.gasPrice).toBe(1_000_000_000n);
+  });
+
+  test('downgrades when the chain cannot be found', async () => {
+    mockFindChain.mockReturnValue(null);
+    mockFindChainByEnum.mockReturnValue(null);
+
+    const tx = await signedTx(customNetwork.id, {
+      maxFeePerGas: '0x3b9aca00',
+      maxPriorityFeePerGas: '0x3b9aca00',
+    });
+
+    expect(tx.type).toBe(0);
+  });
+
+  test('rejects a custom network tx whose tip exceeds maxFee before signing', async () => {
+    mockFindChain.mockReturnValue(customNetwork);
+    mockFindChainByEnum.mockReturnValue(customNetwork);
+    const txParams = request(customNetwork.id, {
+      maxFeePerGas: '0x3b9aca00',
+      maxPriorityFeePerGas: '0x77359400',
+    });
+
+    await expect(
+      providerController.ethSendTransaction(
+        makeOptions({
+          data: { params: [txParams] },
+          account: { ...ACCOUNT, address: from },
+          approvalRes: { ...txParams },
+        }),
+      ),
+    ).rejects.toThrow('maxFeePerGas cannot be less than maxPriorityFeePerGas');
+    expect(mockSignTransaction).not.toHaveBeenCalled();
+  });
+});

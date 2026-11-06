@@ -69,8 +69,8 @@ import {
 import { useTranslation } from 'react-i18next';
 import ToAddressControl2024 from './components/ToAddressControl2024';
 import { TokenInfoPopup } from '../Swap/components/TokenInfoPopup';
-import { openapi } from '@/core/request';
 import { BlockedAddressDialog } from '@/components/Dialogs/BlockedAddressDialog';
+import { hasBlockedAddress } from '@/core/utils/blockedAddress';
 import FromAddressControl2024 from './components/FromAddressControl';
 import { getAddrDescWithCexLocalCacheSync } from '@/databases/hooks/cex';
 import { SendHeaderRight } from './SubScreens/SelectPolyScreen/HeaderRight';
@@ -824,6 +824,9 @@ function SendScreen({
           tokenId: targetToken?.id,
         });
         if (!isSessionActive()) return;
+        if (targetToken && !findChainByServerID(targetToken.chain)) {
+          targetToken = null;
+        }
       }
       if (!targetToken) {
         const orderedChainStartedAt = Date.now();
@@ -970,7 +973,7 @@ function SendScreen({
     try {
       const startedAt = Date.now();
       markSendScreenPerf('blocked_address_check_start');
-      const { is_blocked } = await openapi.isBlockedAddress(to);
+      const is_blocked = await hasBlockedAddress([to]);
       markSendScreenPerf('blocked_address_check_end', {
         elapsedMs: Date.now() - startedAt,
         isBlocked: is_blocked,
@@ -986,6 +989,15 @@ function SendScreen({
       console.error('checkIsAddressBlocked error', e);
     }
   }, []);
+
+  // The receiver can also change in-screen, and an ERC-20 receiver sits in
+  // calldata, where the sign-time from/to check never sees it.
+  useEffect(() => {
+    if (!isFocused || !isValidHexAddress(formValues.to as `0x${string}`)) {
+      return;
+    }
+    checkIsAddressBlocked(formValues.to);
+  }, [isFocused, formValues.to, checkIsAddressBlocked]);
 
   // Commit an already-known token identity before the first visible frame.
   // Missing metadata/recipient recommendations still follow the async path;

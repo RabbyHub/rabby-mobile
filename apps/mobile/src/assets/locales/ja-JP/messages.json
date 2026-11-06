@@ -1556,8 +1556,8 @@
     },
     "receiveAddressList": {
       "selectChainTitle": "チェーンを選択",
-      "title": "ウォレットを選択して受け取る",
-      "subtitle": "暗号資産を受け取るウォレットを選択してください。"
+      "title": "受け取るウォレットを選択",
+      "subtitle": "資産を受け取るウォレットアドレスを選択してください。"
     },
     "backupPrivateKey": {
       "clickToShow": "タップして秘密鍵を表示",
@@ -2310,8 +2310,7 @@
           }
         },
         "chart": {
-          "open": "チャートを開く",
-          "resetPriceScale": "チャートの価格スケールをリセット"
+          "open": "チャートを開く"
         },
         "account": {
           "disabledFrame": "このフェーズではアカウント操作を利用できません",
@@ -3646,7 +3645,8 @@
       },
       "alertText": "サードパーティ製DApp：利用上の問題はDAppのサポートへお問い合わせください。Rabbyは閲覧機能のみ提供します",
       "title": "スクリーンショットでバグを報告",
-      "submitFailed": "送信に失敗しました。"
+      "submitFailed": "送信に失敗しました。",
+      "includeAddress": "トラブルシューティングのためにアドレスを共有"
     },
     "submitFeedbackSuccessModal": {
       "desc": "送信しました！"

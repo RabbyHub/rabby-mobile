@@ -1803,8 +1803,8 @@
     },
     "receiveAddressList": {
       "selectChainTitle": "Zincir Seçin",
-      "title": "Cüzdan Seçin Almak İçin",
-      "subtitle": "Kripto almak için bir cüzdan seçin."
+      "title": "Almak İçin Cüzdan Seçin",
+      "subtitle": "Varlıklarınızı almak için bir cüzdan adresi seçin."
     },
     "singleHome": {
       "tokenActions": {
@@ -2260,8 +2260,7 @@
           }
         },
         "chart": {
-          "open": "Grafiği aç",
-          "resetPriceScale": "Grafik fiyat ölçeğini sıfırla"
+          "open": "Grafiği aç"
         },
         "account": {
           "disabledFrame": "Hesap işlemleri bu aşamada kullanılamıyor",
@@ -3474,7 +3473,8 @@
       },
       "alertText": "Üçüncü taraf DApp: kullanım sorunları için lütfen DApp desteğiyle iletişime geçin. Rabby yalnızca görüntüleme erişimi sağlar.",
       "title": "Hata Bildirmek için Ekran Görüntüsü",
-      "submitFailed": "Gönderim başarısız."
+      "submitFailed": "Gönderim başarısız.",
+      "includeAddress": "Sorun giderme için adresi paylaş"
     },
     "submitFeedbackSuccessModal": {
       "desc": "Başarıyla Gönderildi!"

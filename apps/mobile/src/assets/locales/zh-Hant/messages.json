@@ -1727,7 +1727,7 @@
     "receiveAddressList": {
       "selectChainTitle": "選擇鏈",
       "title": "選擇錢包以接收",
-      "subtitle": "選擇錢包以接收您的加密資產。"
+      "subtitle": "選擇一個錢包地址來接收您的資產。"
     },
     "tokenDetail": {
       "removed": {
@@ -2432,8 +2432,7 @@
           }
         },
         "chart": {
-          "open": "開啟圖表",
-          "resetPriceScale": "重設圖表價格軸"
+          "open": "開啟圖表"
         },
         "account": {
           "disabledFrame": "目前階段暫不支援帳戶操作",
@@ -3646,7 +3645,8 @@
       },
       "alertText": "第三方 DApp：如遇使用問題，請聯絡 DApp 支援。Rabby 僅提供瀏覽功能。",
       "title": "截圖回報問題",
-      "submitFailed": "提交失敗。"
+      "submitFailed": "提交失敗。",
+      "includeAddress": "分享地址以便排查問題"
     },
     "submitFeedbackSuccessModal": {
       "desc": "提交成功！"

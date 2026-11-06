@@ -14,8 +14,6 @@ import { attachSimplePriceAxis } from './perps-simple-axis';
 import { createSimpleNativePriceAxis } from './perps-simple-native-axis';
 import { formatTime, formatYTime } from './chart-logic';
 import {
-  avoidSimpleLabelOverlap,
-  layoutSimplePriceLabels,
   simpleDefaultRange,
   simpleFillMarkers,
   simpleHistoryShift,
@@ -24,6 +22,7 @@ import {
   simpleAreaRightEdgePrice,
 } from './perps-simple-logic';
 import { appendSimplePriceGuide } from './perps-simple-price-guide';
+import { renderPerpsPriceTags, type PerpsPriceTag } from './perps-price-tags';
 import type {
   CandleStick,
   SimpleChartMessage,
@@ -316,15 +315,7 @@ export function createSimpleChart(
             coordinateToPrice: y => series.coordinateToPrice(y),
           })
         : null;
-    const tags: Array<{
-      id: string;
-      price: number;
-      color: string;
-      background: string;
-      text: string;
-      title?: string;
-      outline?: boolean;
-    }> = [];
+    const tags: PerpsPriceTag[] = [];
     // Market price guides use the fixed accent, independently of candle direction.
     tags.push({
       id: 'latest',
@@ -363,6 +354,7 @@ export function createSimpleChart(
           background: config.colors.entryBackground,
           text: config.colors.entryText,
           title: config.labels.entry,
+          labelText: prices.entryPriceText,
         },
         {
           id: 'tp',
@@ -387,125 +379,17 @@ export function createSimpleChart(
           background: config.colors.liquidation,
           text: config.colors.contrast,
           title: config.labels.liq,
+          labelText: prices.liquidationPriceText,
         },
       ];
       for (const line of lines)
         if (Number.isFinite(line.price) && line.price! > 0)
           tags.push({ ...line, price: line.price! });
     }
-    const visibleTags = tags
-      .map(tag => ({ ...tag, y: series.priceToCoordinate(tag.price) }))
-      .filter(
-        tag =>
-          tag.y !== null &&
-          (tag.title === undefined || (tag.y >= 0 && tag.y <= paneHeight)),
-      );
     // Selection floats above the ordinary axis layout without moving its
     // labels. At the exact latest price, reuse that badge for the held value.
     const isSelectedTag = (id: string) =>
       id === 'selection' || (id === 'latest' && selected?.close === last.close);
-    const layoutTags = visibleTags.filter(tag => tag.id !== 'selection');
-    const latestIndex = layoutTags.findIndex(tag => tag.id === 'latest');
-    const layoutY = layoutSimplePriceLabels(
-      layoutTags.map(tag => tag.y!),
-      paneHeight,
-      latestIndex,
-    );
-    const tagY = visibleTags.map(tag =>
-      isSelectedTag(tag.id) ? tag.y! : layoutY[layoutTags.indexOf(tag)],
-    );
-    const titledTags = visibleTags.filter(tag => tag.title !== undefined);
-    const titleY = avoidSimpleLabelOverlap(
-      // 16px title sits 1px above its undisplaced reference line.
-      titledTags.map(tag => tag.y! - 9),
-      paneHeight,
-      18, // 16px text box plus 1px outside glyph stroke on each side.
-    );
-    // Append all labels, read their actual bounds together, then draw lines.
-    // No opaque full-axis row: only the 14px label covers chart content.
-    const labels = visibleTags.map((tag, i) => {
-      const label = document.createElement('span');
-      label.textContent =
-        tag.id === 'liquidation'
-          ? prices.liquidationPriceText ?? priceText(tag.price)
-          : tag.id === 'entry'
-          ? prices.entryPriceText ?? priceText(tag.price)
-          : priceText(tag.price);
-      label.dataset.simplePriceLabel = '';
-      label.dataset.priceKind = tag.id;
-      Object.assign(label.style, {
-        position: 'absolute',
-        right: '12px',
-        top: `${tagY[i] - 7}px`,
-        height: '14px',
-        padding: '0 3px',
-        borderRadius: '4px',
-        fontSize: '10px',
-        lineHeight: '14px',
-        fontVariantNumeric: 'tabular-nums',
-        textAlign: 'right',
-        color: isSelectedTag(tag.id)
-          ? config!.colors.selectionText ?? tag.text
-          : tag.text,
-        background: isSelectedTag(tag.id)
-          ? config!.colors.selectionBackground ?? tag.background
-          : tag.background,
-        boxShadow: tag.outline ? `inset 0 0 0 1px ${tag.color}` : 'none',
-        boxSizing: 'border-box',
-        whiteSpace: 'nowrap',
-        zIndex: isSelectedTag(tag.id) ? '4' : '2',
-      });
-      overlay.appendChild(label);
-      return label;
-    });
-    const titles = titledTags.map((tag, i) => {
-      const title = document.createElement('span');
-      // Separate stroke/fill layers preserve the glyph fill on older WebViews
-      // without depending on CSS paint-order support for text.
-      const outline = document.createElement('span');
-      outline.textContent = tag.title!;
-      outline.setAttribute('aria-hidden', 'true');
-      Object.assign(outline.style, {
-        position: 'absolute',
-        inset: '0',
-      });
-      outline.style.setProperty(
-        '-webkit-text-stroke',
-        `2px ${config!.colors.titleOutline ?? config!.colors.background}`,
-      );
-      const fill = document.createElement('span');
-      fill.textContent = tag.title!;
-      fill.style.position = 'relative';
-      title.append(outline, fill);
-      title.dataset.simplePriceTitle = tag.id;
-      Object.assign(title.style, {
-        position: 'absolute',
-        left: '1px', // Keep the outside stroke within the clipped plot overlay.
-        top: `${titleY[i] - 8}px`,
-        height: '16px',
-        color: tag.color,
-        fontSize: '10px',
-        lineHeight: '16px',
-        whiteSpace: 'nowrap',
-        zIndex: '2',
-      });
-      overlay.appendChild(title);
-      return title;
-    });
-    // Batch layout reads before writes. Tabular digits alone do not equalize
-    // values with different digit counts (for example 99.90 and 100.10).
-    const overlayWidth = overlay.getBoundingClientRect().width;
-    const labelWidth = Math.max(
-      0,
-      ...labels.map(label => label.getBoundingClientRect().width),
-    );
-    const titleWidths = titles.map(
-      title => title.getBoundingClientRect().width,
-    );
-    labels.forEach(label => {
-      label.style.width = `${labelWidth}px`;
-    });
-    const labelLeft = Math.max(0, overlayWidth - 12 - labelWidth);
     const selectedX = selected
       ? chart.timeScale().timeToCoordinate(selected.time as UTCTimestamp)
       : null;
@@ -521,49 +405,24 @@ export function createSimpleChart(
       selectedY <= paneHeight
         ? { x: selectedX, y: selectedY }
         : null;
-    visibleTags.forEach((tag, i) => {
-      const y = tag.y!;
-      if (y < 0 || y > paneHeight) return;
+    const { labelLeft } = renderPerpsPriceTags(overlay, {
+      tags,
+      paneHeight,
+      priceToCoordinate: price => series.priceToCoordinate(price),
+      priceText,
+      titleOutline: config.colors.titleOutline ?? config.colors.background,
+      isSelected: tag => isSelectedTag(tag.id),
+      selectionColors: {
+        background: config.colors.selectionBackground,
+        text: config.colors.selectionText,
+      },
       // The neutral crosshair owns overlapping market price guides. Position
       // guides keep their independent meaning even at the selected price.
-      if (
-        crosshair &&
+      skipGuide: tag =>
+        !!crosshair &&
         (tag.id === 'selection' ||
           (tag.id === 'latest' && tag.price === selected?.close) ||
-          (tag.id === 'viewport' && Math.abs(y - crosshair.y) < 0.5))
-      )
-        return;
-      const titleIndex = titledTags.indexOf(tag);
-      const displacedTitle =
-        titleIndex >= 0 && Math.abs(titleY[titleIndex] + 9 - y) > 0.5
-          ? {
-              right: titleWidths[titleIndex] + 2,
-              bottom: titleY[titleIndex] + 9,
-            }
-          : undefined;
-      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-      svg.dataset.simplePriceLine = '';
-      svg.dataset.priceKind = tag.id;
-      Object.assign(svg.style, {
-        position: 'absolute',
-        inset: '0',
-        width: '100%',
-        height: `${paneHeight}px`,
-        overflow: 'hidden',
-      });
-      appendSimplePriceGuide(
-        svg,
-        {
-          priceY: y,
-          labelX: labelLeft,
-          // Edge clamping affects the badge rectangle, never the market line.
-          labelY: tag.id === 'latest' ? y : tagY[i],
-          title: displacedTitle,
-        },
-        tag.color,
-        '4 2',
-      );
-      overlay.appendChild(svg);
+          (tag.id === 'viewport' && Math.abs(tag.y - crosshair.y) < 0.5)),
     });
     if (crosshair) {
       const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');

@@ -1872,8 +1872,8 @@
       "title": "Approvals"
     },
     "receiveAddressList": {
-      "title": "Select Wallet",
-      "subtitle": "Choose a wallet to receive your crypto.",
+      "title": "Select Wallet to Receive",
+      "subtitle": "Choose a wallet address to receive your assets.",
       "selectChainTitle": "Select Chain"
     },
     "singleHome": {
@@ -2347,8 +2347,7 @@
           }
         },
         "chart": {
-          "open": "Open chart",
-          "resetPriceScale": "Reset chart price scale"
+          "open": "Open chart"
         },
         "account": {
           "disabledFrame": "Account actions are not available in this phase",
@@ -3519,7 +3518,8 @@
       "switchArea": {
         "skipText": "Skip this popup for 1 day"
       },
-      "alertText": "Third-party DApp: for usage issues please contact DApp support. Rabby provides viewing access only"
+      "alertText": "Third-party DApp: for usage issues please contact DApp support. Rabby provides viewing access only",
+      "includeAddress": "Share address for troubleshooting"
     },
     "submitFeedbackSuccessModal": {
       "desc": "Submitted Successfully!"
