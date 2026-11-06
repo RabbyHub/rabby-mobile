@@ -20,7 +20,10 @@ import {
 } from '@/core/apis/lock';
 import { getPwdStatus } from './useLock';
 import {
+  UL_HOSTNAME,
   UL_MATCH_PREFIX,
+  UL_PATH_PREFIX,
+  UL_PROTOCOL,
   WALLETCONNECT_REDIRECT_PATH,
 } from '@/constant/universalLink';
 import type { RefLikeObject } from '@/utils/type';
@@ -96,6 +99,7 @@ type OnParseUrlAndProcessAction = (payload: {
     | 'debug-sync-all-history'
     | 'debug-db-sync-policy'
     | 'debug-lending'
+    | 'debug-open-target'
     | 'regression-scenario';
   target?: RabbyGoTarget;
   dappUrl?: string;
@@ -123,6 +127,7 @@ type OnParseUrlAndProcessAction = (payload: {
     action: 'open' | 'refresh' | 'probe';
     market?: string;
   };
+  debugOpenTarget?: RabbyGoTarget;
   regressionScenarioCommand?: RegressionScenarioCommand | null;
   regressionScenarioError?: string;
 }) => void;
@@ -380,6 +385,30 @@ function parseNonProductionMaintenanceLink(appLink: string) {
         action: action as 'open' | 'refresh' | 'probe',
         market: urlInfo.searchParams.get('market') || undefined,
       },
+    } satisfies Parameters<OnParseUrlAndProcessAction>[0];
+  }
+
+  // Non-production only: open one of the Rabby Go targets from a scripted
+  // build. `open-target` itself is a production action, so device automation
+  // must use this `_cmd` instead of reusing it.
+  if (rabbyGoCmd === 'debug-open-target' || target === 'debug-open-target') {
+    const rawTarget = urlInfo.searchParams.get('target');
+    if (
+      rawTarget !== 'perps' &&
+      rawTarget !== 'swap' &&
+      rawTarget !== 'bridge' &&
+      rawTarget !== 'home'
+    ) {
+      console.warn(
+        '[useUniversalLinkOnTop] Unknown debug-open-target target:',
+        rawTarget,
+      );
+      return null;
+    }
+
+    return {
+      type: 'debug-open-target',
+      debugOpenTarget: rawTarget,
     } satisfies Parameters<OnParseUrlAndProcessAction>[0];
   }
 
@@ -784,6 +813,17 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
             },
           );
         });
+      break;
+    case 'debug-open-target':
+      if (!isNonPublicProductionEnv || !payload.debugOpenTarget) {
+        return;
+      }
+      runWhenNavigationReady(() => {
+        if (!navigationRef.getRootState()) {
+          return;
+        }
+        void openRabbyGoTarget(payload.debugOpenTarget!);
+      }, `debug-open-${payload.debugOpenTarget}`);
       break;
     case 'regression-scenario':
       handleRegressionScenarioCommand(
