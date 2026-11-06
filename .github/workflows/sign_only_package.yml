@@ -56,6 +56,9 @@ jobs:
       NODE_OPTIONS: '--max_old_space_size=8192'
       CI: 'true'
       buildchannel: selfhost-reg
+      CONFIGURATION: release
+      TYPE: adhoc
+      RABBY_MOBILE_BUILD_ENV: regression
       REALLY_UPLOAD: 'true'
       SENTRY_DISABLE_AUTO_UPLOAD: 'true'
       RABBY_MOBILE_SIGN_ONLY: 'true'
@@ -151,6 +154,9 @@ jobs:
       NODE_OPTIONS: '--max_old_space_size=12288'
       XCODE_VER: '27.1'
       CI: 'true'
+      CONFIGURATION: release
+      TYPE: adhoc
+      RABBY_MOBILE_BUILD_ENV: regression
       REALLY_UPLOAD: 'true'
       SENTRY_DISABLE_AUTO_UPLOAD: 'true'
       RABBY_MOBILE_SIGN_ONLY: 'true'
