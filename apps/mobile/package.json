@@ -186,7 +186,7 @@
     "react-native-ble-plx": "3.5.1",
     "react-native-bundle-splitter": "^3.0.1",
     "react-native-cloud-storage": "^1.4.1",
-    "react-native-collapsible-tab-view": "^6.2.1",
+    "react-native-collapsible-tab-view": "patch:react-native-collapsible-tab-view@npm%3A8.0.1#~/.yarn/patches/react-native-collapsible-tab-view-npm-8.0.1-f10cd07909.patch",
     "react-native-compressor": "2.0.2",
     "react-native-device-info": "14.0.4",
     "react-native-dotenv": "^3.4.9",
