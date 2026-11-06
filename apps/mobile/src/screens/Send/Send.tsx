@@ -824,6 +824,9 @@ function SendScreen({
           tokenId: targetToken?.id,
         });
         if (!isSessionActive()) return;
+        if (targetToken && !findChainByServerID(targetToken.chain)) {
+          targetToken = null;
+        }
       }
       if (!targetToken) {
         const orderedChainStartedAt = Date.now();
