@@ -283,7 +283,8 @@
       },
       "alertText": "Drittanbieter-DApp: Wenden Sie sich bei Nutzungsproblemen bitte an den DApp-Support. Rabby bietet nur Anzeigezugriff.",
       "title": "Screenshot zur Fehlermeldung",
-      "submitFailed": "Fehler beim Einreichen."
+      "submitFailed": "Fehler beim Einreichen.",
+      "includeAddress": "Adresse zur Fehlerbehebung teilen"
     },
     "submitFeedbackSuccessModal": {
       "desc": "Erfolgreich eingereicht!"

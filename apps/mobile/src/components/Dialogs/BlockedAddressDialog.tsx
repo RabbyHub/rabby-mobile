@@ -1,11 +1,10 @@
-import RcIconCloseCC from '@/assets/icons/common/icon-close-cc.svg';
-import { Button } from '@/components';
-import { AppColorsVariants } from '@/constant/theme';
-import { useThemeColors } from '@/hooks/theme';
+import { Button } from '@/components2024/Button';
+import { useTheme2024 } from '@/hooks/theme';
+import { createGetStyles2024 } from '@/utils/styles';
 import { Dialog } from '@rneui/themed';
-import React, { useMemo } from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 import { Text } from '@/components/Typography';
 
 export const BlockedAddressDialog = ({
@@ -16,8 +15,7 @@ export const BlockedAddressDialog = ({
   onConfirm?(): void;
 }) => {
   const { t } = useTranslation();
-  const colors = useThemeColors();
-  const styles = useMemo(() => getStyles(colors), [colors]);
+  const { styles } = useTheme2024({ getStyle });
 
   return (
     <Dialog
@@ -25,79 +23,50 @@ export const BlockedAddressDialog = ({
       backdropStyle={styles.dialogMask}
       isVisible={visible}>
       <View>
-        <View style={styles.dialogHeader}>
-          <Text style={styles.dialogTitle}>
-            {t('common.dialogs.blockedTransaction.title')}
-          </Text>
-        </View>
-        <View style={styles.dialogBody}>
-          <Text style={styles.dialogContent}>
-            {t('common.dialogs.blockedTransaction.content')}
-          </Text>
-        </View>
-        <View style={styles.dialogFooter}>
-          <Button
-            type="primary"
-            onPress={onConfirm}
-            title={t('common.dialogs.blockedTransaction.button')}
-            containerStyle={styles.button}
-          />
-        </View>
+        <Text style={styles.dialogTitle}>
+          {t('common.dialogs.blockedTransaction.title')}
+        </Text>
+        <Text style={styles.dialogContent}>
+          {t('common.dialogs.blockedTransaction.content')}
+        </Text>
+        <Button
+          type="primary"
+          height={56}
+          onPress={onConfirm}
+          title={t('common.dialogs.blockedTransaction.button')}
+        />
       </View>
     </Dialog>
   );
 };
 
-const getStyles = (colors: AppColorsVariants) =>
-  StyleSheet.create({
-    dialog: {
-      borderRadius: 16,
-      padding: 0,
-      backgroundColor: colors['neutral-bg-1'],
-      width: 353,
-      maxWidth: '100%',
-    },
-    dialogMask: {
-      backgroundColor: 'rgba(0,0,0,0.4)',
-    },
-    dialogHeader: {
-      paddingHorizontal: 20,
-      paddingTop: 20,
-      marginBottom: 12,
-      position: 'relative',
-    },
-    closeIcon: {
-      position: 'absolute',
-      right: 20,
-      top: 24,
-      zIndex: 1,
-    },
-    dialogTitle: {
-      color: colors['neutral-title-1'],
-      fontSize: 20,
-      fontWeight: '500',
-      lineHeight: 24,
-      textAlign: 'center',
-    },
-    dialogBody: {
-      paddingHorizontal: 20,
-    },
-    dialogContent: {
-      color: colors['neutral-body'],
-      fontSize: 14,
-      lineHeight: 20,
-      fontWeight: '400',
-      textAlign: 'center',
-      marginBottom: 26,
-    },
-    dialogFooter: {
-      paddingHorizontal: 20,
-      paddingBottom: 20,
-      flexDirection: 'row',
-      gap: 12,
-      alignItems: 'center',
-    },
-    button: {
-      flex: 1,
-    },
-  });
+const getStyle = createGetStyles2024(({ colors2024 }) => ({
+  dialog: {
+    borderRadius: 20,
+    padding: 20,
+    backgroundColor: colors2024['neutral-bg-1'],
+    width: 353,
+    maxWidth: '100%',
+  },
+  dialogMask: {
+    backgroundColor: 'rgba(0,0,0,0.4)',
+  },
+  dialogTitle: {
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+    fontWeight: '900',
+    fontSize: 20,
+    lineHeight: 24,
+    textAlign: 'center',
+  },
+  dialogContent: {
+    marginTop: 12,
+    marginBottom: 24,
+    color: colors2024['neutral-body'],
+    fontFamily: 'SF Pro Rounded',
+    fontWeight: '500',
+    fontSize: 16,
+    lineHeight: 20,
+    textAlign: 'center',
+  },
+}));

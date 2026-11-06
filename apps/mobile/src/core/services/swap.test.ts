@@ -71,7 +71,7 @@ function loadSwapServiceModule(persistedStore?: Partial<SwapServiceStore>) {
     },
   }));
   jest.doMock('@/utils/chain', () => ({
-    findChainByEnum: (chain: string) => {
+    findChainByEnum: jest.fn((chain: string) => {
       if (chain === CHAINS_ENUM.ARBITRUM) {
         return { enum: CHAINS_ENUM.ARBITRUM, serverId: 'arb' };
       }
@@ -79,7 +79,7 @@ function loadSwapServiceModule(persistedStore?: Partial<SwapServiceStore>) {
         return { enum: CHAINS_ENUM.ETH, serverId: 'eth' };
       }
       return null;
-    },
+    }),
     findChainByServerID: (serverId: string) => {
       if (serverId === 'arb') {
         return { enum: CHAINS_ENUM.ARBITRUM, serverId: 'arb' };
@@ -103,12 +103,49 @@ function loadSwapServiceModule(persistedStore?: Partial<SwapServiceStore>) {
 
   return {
     SwapService,
+    findChainByEnum: jest.mocked(
+      (require('@/utils/chain') as typeof import('@/utils/chain'))
+        .findChainByEnum,
+    ),
   };
 }
 
 describe('core/services/swap', () => {
   afterEach(() => {
     jest.resetModules();
+  });
+
+  it('clears persisted selection when an SDK-supported chain is missing', () => {
+    const arbToken = makeToken('arb', 'arb-token');
+    const { SwapService, findChainByEnum } = loadSwapServiceModule({
+      selectedChain: CHAINS_ENUM.ARBITRUM as never,
+      selectedFromToken: arbToken,
+      selectedToToken: arbToken,
+    });
+    findChainByEnum.mockReturnValue(null);
+
+    const service = new SwapService();
+
+    expect(service.getSwap('selectedChain')).toBeNull();
+    expect(service.getSwap('selectedFromToken')).toBeUndefined();
+    expect(service.getSwap('selectedToToken')).toBeUndefined();
+  });
+
+  it('clears selection on read when the chain disappears after initialization', () => {
+    const arbToken = makeToken('arb', 'arb-token');
+    const { SwapService, findChainByEnum } = loadSwapServiceModule({
+      selectedChain: CHAINS_ENUM.ARBITRUM as never,
+      selectedFromToken: arbToken,
+      selectedToToken: arbToken,
+    });
+    const service = new SwapService();
+    expect(service.getSelectedChain()).toBe(CHAINS_ENUM.ARBITRUM);
+
+    findChainByEnum.mockReturnValue(null);
+
+    expect(service.getSelectedChain()).toBeNull();
+    expect(service.getSelectedFromToken()).toBeUndefined();
+    expect(service.getSelectedToToken()).toBeUndefined();
   });
 
   it('drops persisted selected tokens that do not belong to selectedChain', () => {
