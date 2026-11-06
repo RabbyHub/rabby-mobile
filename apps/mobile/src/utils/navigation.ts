@@ -111,9 +111,6 @@ export function naviPushWithUnderlay<
       return;
     }
     const state = navigationRef.getRootState();
-    if (!state) {
-      return;
-    }
     const top = state.routes[state.routes.length - 1];
     if (top?.name !== name) {
       return;
