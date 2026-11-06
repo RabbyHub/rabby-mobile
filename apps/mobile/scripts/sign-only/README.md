@@ -37,12 +37,15 @@ node scripts/sign-only/publish.mjs \
   --platform android \
   --file .sign-only/app-signonly-unsigned.apk \
   --source-sha "$(git rev-parse HEAD)" \
-  --trigger
+  --prepare
 ```
 
-Add `--notify-lark` to push the signed package to the CI/CD Lark group after
-signing. Without it, the package is signed and published to the regression CDN
-but no Lark message is sent.
+The command prints a `gh workflow run ...` command. Run that command yourself
+with your own GitHub identity; fe-opcode does not store a GitHub token or
+trigger workflows on your behalf. Add `--notify-lark` to generate inputs that
+push the signed package to the CI/CD Lark group after signing. Without it, the
+package is signed and published to the regression CDN but no Lark message is
+sent.
 
 The same flow is available from the `仅签名打包` page in the fe-opcode
 dashboard, including the Lark notification toggle.
