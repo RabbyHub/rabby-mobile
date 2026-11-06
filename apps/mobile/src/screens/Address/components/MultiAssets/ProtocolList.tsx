@@ -61,6 +61,8 @@ import {
 import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 import { useScrollToTopOnChainChange } from '@/hooks/useScrollToTopOnChainChange';
 import { resolveAssetProjectionViewState } from '@/store/assetProjectionAvailability';
+import { useDerivedValue } from 'react-native-reanimated';
+import { useValueFromSharedValue } from '@/hooks/reanimated';
 
 const MemoizedFullDefiRenderItem = React.memo(FullDefiRenderItem);
 const MemoizedEmptyAssets = React.memo(EmptyAssets);
@@ -678,6 +680,10 @@ export const ProtocolList = () => {
       return onRefresh();
     },
   });
+  // Keep the native visible anchor from pinning rows to a stale offset while
+  // RefreshPlaceholderIOS changes the list header height.
+  const svIsPullRefreshVisible = useDerivedValue(() => pullDistance.value > 0);
+  const isPullRefreshVisible = useValueFromSharedValue(svIsPullRefreshVisible);
 
   useEffect(() => {
     console.debug(
@@ -728,7 +734,8 @@ export const ProtocolList = () => {
         updateCellsBatchingPeriod={32}
         removeClippedSubviews={IS_ANDROID}
         {...(!IS_ANDROID &&
-          !suspendVisibleAnchor && {
+          !suspendVisibleAnchor &&
+          !isPullRefreshVisible && {
             maintainVisibleContentPosition: { minIndexForVisible: 0 },
           })}
         onLayout={onHighCardinalityListLayout}
