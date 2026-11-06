@@ -246,7 +246,7 @@ export function BridgeDetailScreen() {
                     openExternalUrl(detailUrl);
                   }
                 }}>
-                <Text style={[styles.metaValue, !!detailUrl && styles.hash]}>
+                <Text style={styles.metaValue}>
                   {ellipsisAddress(historyTxId)}
                 </Text>
                 {!!detailUrl && (
@@ -462,7 +462,6 @@ const getStyle = createGetStyles2024(
       textAlign: 'right',
     },
     hashRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-    hash: { textDecorationLine: 'underline' },
     footer: {
       paddingHorizontal: 20,
       paddingTop: BOTTOM_BUTTON_TOP_OFFSET,
