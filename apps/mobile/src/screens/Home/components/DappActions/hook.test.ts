@@ -29,7 +29,7 @@ const account = {
 const cachedAction = {
   type: 'withdraw',
   contract_id: '0x0000000000000000000000000000000000000002',
-  func: 'withdraw(uint256)',
+  func: 'withdraw(uint256)()',
   str_params: ['1'],
 } as WithdrawAction;
 const portfolio = {
@@ -93,7 +93,7 @@ it.each(
     [
       {
         ...portfolio,
-        withdraw_actions: [{ ...cachedAction, func: 'approve(uint256)' }],
+        withdraw_actions: [{ ...cachedAction, func: 'approve(uint256)()' }],
       },
     ],
   ].map(portfolio_item_list => ({ portfolio_item_list })),
