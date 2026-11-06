@@ -7,6 +7,7 @@ import { buildTempoTransaction } from '@/utils/tempo';
 import type { TempoTxCall } from '@/utils/tempo';
 
 const mockSubmitTxV2 = jest.fn();
+const mockIsBlockedAddress = jest.fn();
 const mockGetCustomTestnetClient = jest.fn();
 const mockHasCustomRPC = jest.fn();
 const mockGetDefaultRPC = jest.fn();
@@ -48,6 +49,11 @@ const ATTACKER_CHAIN = {
 };
 const KNOWN_CHAINS = [ETH_CHAIN, BSC_CHAIN, ATTACKER_CHAIN];
 
+jest.mock('i18next', () => ({
+  ...jest.requireActual('i18next'),
+  t: (key: string) => key,
+}));
+
 jest.mock('@/utils/chain', () => ({
   findChain: (...args: unknown[]) => mockFindChain(...args),
   findChainByEnum: (...args: unknown[]) => mockFindChainByEnum(...args),
@@ -75,6 +81,7 @@ jest.mock('@/constant', () => ({
 jest.mock('../request', () => ({
   openapi: {
     submitTxV2: (...args: unknown[]) => mockSubmitTxV2(...args),
+    isBlockedAddress: (...args: unknown[]) => mockIsBlockedAddress(...args),
   },
 }));
 
@@ -205,6 +212,7 @@ jest.mock('@/core/serviceApi/gasAccount', () => ({
 }));
 
 import providerController from './provider';
+import { clearBlockedAddressCache } from '../utils/blockedAddress';
 
 const DAPP_ORIGIN = 'https://attacker.example';
 
@@ -322,6 +330,71 @@ describe('provider.ethSendTransaction broadcast chain pinning', () => {
       request: jest.fn(async () => '0xattackerpushed'),
     });
     mockSubmitTxV2.mockResolvedValue({ tx_id: '0xabc' });
+    mockIsBlockedAddress.mockResolvedValue({ is_blocked: false });
+    clearBlockedAddressCache();
+  });
+
+  it('refuses to sign when the receiver is blocked', async () => {
+    mockIsBlockedAddress.mockImplementation(async (address: string) => ({
+      is_blocked: address === TX_PARAMS.to.toLowerCase(),
+    }));
+
+    await expect(
+      providerController.ethSendTransaction(makeOptions()),
+    ).rejects.toMatchObject({
+      message: 'common.dialogs.blockedTransaction.content',
+    });
+    expect(mockSignTransaction).not.toHaveBeenCalled();
+    expect(mockSubmitTxV2).not.toHaveBeenCalled();
+  });
+
+  it('refuses an ERC-20 transfer whose calldata receiver is blocked', async () => {
+    const receiver = '0x4444444444444444444444444444444444444444';
+    const data = `0xa9059cbb${receiver
+      .slice(2)
+      .padStart(64, '0')}${'1'.padStart(64, '0')}`;
+    mockIsBlockedAddress.mockImplementation(async (address: string) => ({
+      is_blocked: address === receiver,
+    }));
+
+    await expect(
+      providerController.ethSendTransaction(
+        makeOptions({
+          data: { params: [{ ...TX_PARAMS, data }] },
+          approvalRes: makeApprovalRes({ data }),
+        }),
+      ),
+    ).rejects.toMatchObject({
+      message: 'common.dialogs.blockedTransaction.content',
+    });
+    expect(mockSignTransaction).not.toHaveBeenCalled();
+  });
+
+  it('does not start signing before a slow lookup settles', async () => {
+    let settle: (res: { is_blocked: boolean }) => void = () => {};
+    const lookup = new Promise<{ is_blocked: boolean }>(resolve => {
+      settle = resolve;
+    });
+    mockIsBlockedAddress.mockReturnValue(lookup);
+
+    const result = providerController.ethSendTransaction(makeOptions());
+    await new Promise(resolve => setTimeout(resolve, 20));
+    expect(mockSignTransaction).not.toHaveBeenCalled();
+
+    settle({ is_blocked: true });
+    await expect(result).rejects.toMatchObject({
+      message: 'common.dialogs.blockedTransaction.content',
+    });
+    expect(mockSignTransaction).not.toHaveBeenCalled();
+  });
+
+  it('signs when a lookup fails and nothing is known to be blocked', async () => {
+    mockIsBlockedAddress.mockRejectedValue(new Error('network'));
+
+    await expect(
+      providerController.ethSendTransaction(makeOptions()),
+    ).resolves.toBe('0xabc');
+    expect(mockSignTransaction).toHaveBeenCalledTimes(1);
   });
 
   it('broadcasts on the approved chain when the dapp switched chains mid-approval', async () => {
