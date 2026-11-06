@@ -25,13 +25,10 @@ export default class OneKeyBridge implements OneKeyBridgeInterface {
   };
 
   private async doInit() {
-    const initialized = await HardwareBleSdk.init({
+    await HardwareBleSdk.init({
       debug: false,
       fetchConfig: true,
     });
-    if (!initialized) {
-      throw new Error('OneKey SDK initialization failed');
-    }
 
     HardwareBleSdk.on(UI_EVENT, e => {
       switch (e.type) {
@@ -71,23 +68,17 @@ export default class OneKeyBridge implements OneKeyBridgeInterface {
 
   evmGetPublicKey = HardwareBleSdk.evmGetPublicKey;
 
-  getDeviceState = HardwareBleSdk.getDeviceState;
+  getFeatures = HardwareBleSdk.getFeatures;
 
-  receivePin: OneKeyBridgeInterface['receivePin'] = data => {
+  receivePin = data => {
     HardwareBleSdk.uiResponse({
-      ...data.responseCorrelation,
       type: UI_RESPONSE.RECEIVE_PIN,
       payload: data.switchOnDevice ? '@@ONEKEY_INPUT_PIN_IN_DEVICE' : data.pin,
     });
   };
 
-  receivePassphrase: OneKeyBridgeInterface['receivePassphrase'] = ({
-    passphrase,
-    switchOnDevice,
-    responseCorrelation,
-  }) => {
+  receivePassphrase = ({ passphrase, switchOnDevice }) => {
     HardwareBleSdk.uiResponse({
-      ...responseCorrelation,
       type: UI_RESPONSE.RECEIVE_PASSPHRASE,
       payload: {
         value: passphrase,

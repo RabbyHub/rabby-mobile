@@ -101,10 +101,10 @@ export const ConnectOneKey: React.FC<{
   );
 
   React.useEffect(() => {
-    if (devices.length || error !== undefined) {
+    if (devices.length) {
       handleScanDone();
     }
-  }, [devices, error, handleScanDone]);
+  }, [devices, handleScanDone]);
 
   return (
     <AutoLockView as="View" style={{ height: '100%' }}>

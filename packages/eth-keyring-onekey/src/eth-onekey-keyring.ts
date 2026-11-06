@@ -119,6 +119,7 @@ class OneKeyKeyring extends EventEmitter {
     this.bridge = opts.bridge;
     this.accountDetails = {};
     this.deserialize(opts);
+    this.init();
   }
 
   init() {
@@ -168,13 +169,13 @@ class OneKeyKeyring extends EventEmitter {
     await this.init();
 
     const devicePromise = this._deviceConnectId
-      ? this.bridge.getDeviceState(this._deviceConnectId).then(res => {
+      ? this.bridge.getFeatures(this._deviceConnectId).then(res => {
           if (!res.success) {
             throw new Error(res.payload?.error || 'searchDevices failed');
           }
 
           return {
-            deviceId: res.payload.identity.deviceId,
+            deviceId: res.payload.device_id,
             connectId: this._deviceConnectId,
           };
         })
@@ -190,20 +191,11 @@ class OneKeyKeyring extends EventEmitter {
           return res.payload[0];
         });
 
-    return devicePromise.then(async device => {
+    return devicePromise.then(device => {
       if (!device) {
         throw new Error('no device');
       }
-      const { connectId } = device;
-      let { deviceId } = device;
-
-      if (connectId && !deviceId) {
-        const state = await this.bridge.getDeviceState(connectId);
-        if (!state.success) {
-          throw new Error(state.payload?.error || 'getDeviceState failed');
-        }
-        deviceId = state.payload.identity.deviceId;
-      }
+      const { deviceId, connectId } = device;
 
       if (!deviceId || !connectId) {
         throw new Error('no deviceId or connectId');

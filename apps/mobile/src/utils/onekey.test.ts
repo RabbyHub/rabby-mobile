@@ -46,7 +46,7 @@ function setupOneKeyEventsModule() {
     },
   }));
 
-  jest.doMock('@/core/serviceApi/appWin', () => ({
+  jest.doMock('@/core/services2024/appWin', () => ({
     apisAppWin2024: {
       createGlobalBottomSheetModal: mockCreateGlobalBottomSheetModal,
       removeGlobalBottomSheetModal: mockRemoveGlobalBottomSheetModal,
@@ -77,52 +77,9 @@ function setupOneKeyEventsModule() {
 describe('bindOneKeyEvents', () => {
   afterEach(() => {
     jest.dontMock('@/components2024/GlobalBottomSheetModal/types');
-    jest.dontMock('@/core/serviceApi/appWin');
+    jest.dontMock('@/core/services2024/appWin');
     jest.dontMock('./events');
   });
-
-  it('shows the Pro 2 PIN hint without sending a PIN acknowledgement', () => {
-    const {
-      bindOneKeyEvents,
-      eventBus,
-      EVENTS,
-      mockCreateGlobalBottomSheetModal,
-    } = setupOneKeyEventsModule();
-    const keyring = createKeyring();
-    bindOneKeyEvents(keyring);
-
-    eventBus.emit(EVENTS.ONEKEY.REQUEST_PIN, {
-      payload: { device: { connectId: 'connect-id' }, deviceOnly: true },
-    });
-
-    expect(mockCreateGlobalBottomSheetModal).toHaveBeenCalledTimes(1);
-    mockCreateGlobalBottomSheetModal.mock.calls[0][0].onConfirm('', true);
-    expect(keyring.bridge.receivePin).not.toHaveBeenCalled();
-  });
-
-  it.each(['REQUEST_PIN', 'REQUEST_PASSPHRASE'])(
-    'preserves response correlation for %s',
-    request => {
-      const { bindOneKeyEvents, eventBus, EVENTS } = setupOneKeyEventsModule();
-      const keyring = createKeyring();
-      const responseCorrelation = {
-        interactionId: 'interaction-id',
-        deviceId: 'correlation-device-id',
-      };
-      bindOneKeyEvents(keyring);
-      eventBus.emit(EVENTS.ONEKEY[request], {
-        payload: { device: { connectId: 'connect-id' }, responseCorrelation },
-      });
-
-      const receive =
-        request === 'REQUEST_PIN'
-          ? keyring.bridge.receivePin
-          : keyring.bridge.receivePassphrase;
-      expect(receive).toHaveBeenCalledWith(
-        expect.objectContaining({ responseCorrelation }),
-      );
-    },
-  );
 
   it('switches REQUEST_PASSPHRASE to device-side input and shows the waiting modal', () => {
     const {
@@ -343,13 +300,13 @@ describe('bindOneKeyEvents', () => {
     expect(keyring.bridge.cancel).toHaveBeenCalledWith('connect-id');
   });
 
-  it('binds events without eagerly initializing the SDK', () => {
+  it('binds each OneKey keyring instance once', () => {
     const { bindOneKeyEvents } = setupOneKeyEventsModule();
     const keyring = createKeyring();
 
     bindOneKeyEvents(keyring);
     bindOneKeyEvents(keyring);
 
-    expect(keyring.init).not.toHaveBeenCalled();
+    expect(keyring.init).toHaveBeenCalledTimes(1);
   });
 });
