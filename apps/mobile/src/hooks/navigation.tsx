@@ -132,8 +132,13 @@ export function navBack() {
 export function HeaderBackPressable({
   tintColor,
   style,
+  nativeBarItem = false,
   ...touchableProps
-}: Pick<NativeStackHeaderLeftProps, 'tintColor'> & RNViewProps) {
+}: Pick<NativeStackHeaderLeftProps, 'tintColor'> &
+  RNViewProps & {
+    /** Rendered as a native UIBarButtonItem (needs the item-inset compensation). */
+    nativeBarItem?: boolean;
+  }) {
   const themeMode = useGetBinaryMode();
   const { colors2024 } = apisTheme.getColors2024(themeMode);
   return (
@@ -141,7 +146,11 @@ export function HeaderBackPressable({
       // Native-stack header controls need native gesture arbitration on Fabric.
       as="RNGHTouchableOpacity"
       {...touchableProps}
-      style={[styles.backButtonStyle, style]}
+      style={[
+        styles.backButtonStyle,
+        nativeBarItem && styles.nativeBarItemBackButtonStyle,
+        style,
+      ]}
       hitSlop={hitSlop}
       onPress={navBack}>
       <RcIconHeaderBack
@@ -186,7 +195,10 @@ export const useStackScreenConfig = () => {
         headerLeft: ({ tintColor }) => (
           <CustomTouchableOpacity
             as="RNGHTouchableOpacity"
-            style={styles.backButtonStyle}
+            style={[
+              styles.backButtonStyle,
+              styles.nativeBarItemBackButtonStyle,
+            ]}
             hitSlop={24}
             onPress={navBack}>
             <RcIconHeaderBack
@@ -231,7 +243,7 @@ export const useStackScreenConfig = () => {
         },
         headerTintColor: colors2024['neutral-title-1'],
         headerLeft: ({ tintColor }) => (
-          <HeaderBackPressable tintColor={tintColor} />
+          <HeaderBackPressable tintColor={tintColor} nativeBarItem />
         ),
       };
 
@@ -305,6 +317,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     marginLeft: -16,
     paddingLeft: 16,
+  },
+  // react-native-screens wraps a custom header subview in a centred wrapper on
+  // iOS 26+, so margin/padding inside the view no longer shift the native bar
+  // button item and the icon sits too far right (#1283). Only native header
+  // items need this post-layout compensation; the JS-rendered custom headers
+  // keep `backButtonStyle` untouched.
+  nativeBarItemBackButtonStyle: {
+    width: 24,
+    height: 24,
+    justifyContent: 'center',
+    marginLeft: 0,
+    paddingLeft: 0,
+    transform: [{ translateX: -14 }],
   },
 });
 
