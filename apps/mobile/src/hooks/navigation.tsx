@@ -148,7 +148,7 @@ export function HeaderBackPressable({
       {...touchableProps}
       style={[
         styles.backButtonStyle,
-        nativeBarItem && styles.nativeBarItemBackButtonStyle,
+        nativeBarItem && IS_IOS && styles.nativeBarItemBackButtonStyle,
         style,
       ]}
       hitSlop={hitSlop}
@@ -197,7 +197,7 @@ export const useStackScreenConfig = () => {
             as="RNGHTouchableOpacity"
             style={[
               styles.backButtonStyle,
-              styles.nativeBarItemBackButtonStyle,
+              IS_IOS && styles.nativeBarItemBackButtonStyle,
             ]}
             hitSlop={24}
             onPress={navBack}>
@@ -309,6 +309,10 @@ export function useBottomTabScreenConfig() {
   return { mergeBottomTabOptions2024 };
 }
 
+// Native bar button items carry the system leading inset; translate the content
+// back so it lines up with the page content edge (#1283).
+export const NATIVE_BAR_ITEM_BACK_OFFSET_X = -14;
+
 const styles = StyleSheet.create({
   backButtonStyle: {
     // width: 56,
@@ -329,7 +333,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginLeft: 0,
     paddingLeft: 0,
-    transform: [{ translateX: -14 }],
+    transform: [{ translateX: NATIVE_BAR_ITEM_BACK_OFFSET_X }],
   },
 });
 
