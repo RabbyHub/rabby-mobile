@@ -583,7 +583,7 @@ const getConvertDustHeaderStyle = createGetStyles2024(({ colors2024 }) => ({
 const transactionNavigatorStyles = StyleSheet.create({
   sendHeaderIconOffset: {
     transform: [
-      { translateX: NATIVE_BAR_ITEM_BACK_OFFSET_X },
+      { translateX: IS_IOS ? NATIVE_BAR_ITEM_BACK_OFFSET_X : 0 },
       { translateY: IS_IOS ? SEND_IOS_HEADER_ICON_OFFSET : 0 },
     ],
   },
