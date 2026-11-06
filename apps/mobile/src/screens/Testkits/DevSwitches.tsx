@@ -1602,9 +1602,7 @@ function DevMock() {
           height={48}
           containerStyle={{ marginTop: 12 }}
           onPress={async () => {
-            const extraInfo = await getScreenshotFeedbackExtra({
-              totalBalanceText: 'testValue',
-            });
+            const extraInfo = await getScreenshotFeedbackExtra();
             console.debug('[debug] Feedback Extra Info:', extraInfo);
           }}
         />

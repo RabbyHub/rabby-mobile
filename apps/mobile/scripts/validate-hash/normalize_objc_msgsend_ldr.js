@@ -125,6 +125,103 @@ function removeFilePath(otoolSContent) {
   return otoolSContent?.replace(/literal pool for: \"\/Users\/[^\n]+/g, '');
 }
 
+function isControlFlowInstruction(line) {
+  return /^[0-9a-f]+\t(?:ret|b|br|cbz|cbnz|tbz|tbnz|b\.[a-z]+)\b/.test(
+    line,
+  );
+}
+
+/**
+ * Linker layout changes between otherwise identical builds can shift literal
+ * pool pages and their add/ldr offsets. The literal text and symbol names stay
+ * identical, so normalize only the layout-dependent address operands.
+ */
+function normalizeMachOLayoutNoise(otoolSContent) {
+  const lines = otoolSContent.split('\n');
+
+  for (let i = 0; i < lines.length - 1; i += 1) {
+    const adrp = lines[i].match(
+      /^([0-9a-f]+\tadrp\t(x\d+), )-?\d+ ; 0x[0-9a-f]+$/,
+    );
+    if (!adrp) continue;
+
+    const next = lines[i + 1];
+    const adrpRegister = adrp[2];
+    const add = next.match(
+      /^([0-9a-f]+\tadd\tx\d+, (x\d+), #0x)[0-9a-f]+( ; literal pool for:.*)$/,
+    );
+    if (add && add[2] === adrpRegister) {
+      lines[i] = `${adrp[1]}0 ; 0x0`;
+      lines[i + 1] = `${add[1]}0${add[3]}`;
+      i += 1;
+      continue;
+    }
+
+    const ldr = next.match(
+      /^([0-9a-f]+\tldr\tx\d+, \[(x\d+), #0x)[0-9a-f]+(\] ; literal pool symbol address:.*)$/,
+    );
+    if (ldr && ldr[2] === adrpRegister) {
+      lines[i] = `${adrp[1]}0 ; 0x0`;
+      lines[i + 1] = `${ldr[1]}0${ldr[3]}`;
+      i += 1;
+    }
+  }
+
+  for (let i = 0; i < lines.length; i += 1) {
+    if (!lines[i].includes('/cargo/registry/src/')) continue;
+
+    const literal = lines[i].match(/literal pool for: "(.*)"$/);
+    const literalLength = literal
+      ? Buffer.byteLength(literal[1], 'latin1')
+      : -1;
+    lines[i] = lines[i].replace(
+      /\/cargo\/registry\/src\/[^/]+\//g,
+      '/cargo/registry/src/__rabby_registry__/',
+    );
+    if (literalLength <= 0) {
+      continue;
+    }
+
+    // The cargo panic message stores its string length in a nearby
+    // `mov wN, #<len>`. Only normalize an immediate that exactly equals this
+    // literal's byte length; unrelated constants and argument setup stay.
+    const movAt = j => {
+      const mov = lines[j].match(
+        /^[0-9a-f]+\tmov\tw\d+, #0x([0-9a-f]+)$/,
+      );
+      return mov && parseInt(mov[1], 16) === literalLength ? j : -1;
+    };
+
+    let lengthMov = -1;
+    for (let j = i + 1; j <= Math.min(lines.length - 1, i + 6); j += 1) {
+      if (isControlFlowInstruction(lines[j])) break;
+      const found = movAt(j);
+      if (found >= 0) {
+        lengthMov = found;
+        break;
+      }
+    }
+    if (lengthMov < 0) {
+      for (let j = i - 1; j >= Math.max(0, i - 6); j -= 1) {
+        if (isControlFlowInstruction(lines[j])) break;
+        const found = movAt(j);
+        if (found >= 0) {
+          lengthMov = found;
+          break;
+        }
+      }
+    }
+    if (lengthMov >= 0) {
+      lines[lengthMov] = lines[lengthMov].replace(
+        /#0x[0-9a-f]+$/,
+        '#0x0',
+      );
+    }
+  }
+
+  return lines.join('\n');
+}
+
 async function main() {
   const args = process.argv.slice(2);
   let otoolSFilePath = null;
@@ -180,13 +277,17 @@ async function main() {
 
   const otoolSContentWithoutFilePath = removeFilePath(otoolSContent);
 
-  const result = normalizeOtoolFilePureString(
-    otoolSContentWithoutFilePath,
-    linkMapGotAddressStrings,
+  const result = normalizeMachOLayoutNoise(
+    normalizeOtoolFilePureString(
+      otoolSContentWithoutFilePath,
+      linkMapGotAddressStrings,
+    ),
   );
 
   console.log(result);
 }
+
+module.exports = { normalizeMachOLayoutNoise };
 
 if (require.main === module) {
   main().catch(err => {

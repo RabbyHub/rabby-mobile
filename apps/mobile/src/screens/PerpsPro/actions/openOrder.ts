@@ -8,6 +8,7 @@ import {
   fetchClearinghouseStateHttp,
   fetchPositionOpenOrdersHttp,
   getDexByCoin,
+  hasCurrentPerpPermission,
   perpsStore,
 } from '@/hooks/perps/usePerpsStore';
 import BigNumber from 'bignumber.js';
@@ -348,7 +349,7 @@ const defaultDependencies: PerpsProOpenOrderDependencies = {
   getCurrentDex: coin => getDexByCoin(coin),
   getLiveMidPrice: coin =>
     perpsStore.getState().marketDataMap[coin]?.midPx ?? null,
-  hasPermission: () => perpsStore.getState().hasPermission,
+  hasPermission: () => hasCurrentPerpPermission(),
   limitOrder: params => getExchange().limitOrderOpen(params),
   marketOrder: params => getExchange().marketOrderOpen(params),
   refreshClearinghouse: dex => fetchClearinghouseStateHttp(dex),

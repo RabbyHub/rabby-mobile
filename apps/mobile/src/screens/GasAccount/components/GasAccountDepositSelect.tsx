@@ -6,7 +6,7 @@ import { useGasAccountDepositAvailableTokens } from '@/screens/GasAccount/hooks/
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Platform, View } from 'react-native';
+import { InteractionManager, Platform, View } from 'react-native';
 import { Text } from '@/components/Typography';
 import {
   BOTTOM_BUTTON_GAP,
@@ -28,12 +28,28 @@ export const GasAccountDepositSelect: React.FC<{
   });
   const { bottom } = useSafeAreaInsets();
   const [showDisabledTip, setShowDisabledTip] = useState(false);
-  const { tokenDisabled } = useGasAccountDepositAvailableTokens(
-    minDepositPrice,
-    {
-      disableL2Deposit,
-    },
-  );
+  const {
+    tokenDisabled,
+    checkIsExpireAndUpdate,
+    refreshBridgeSupportTokenList,
+  } = useGasAccountDepositAvailableTokens(minDepositPrice, {
+    disableL2Deposit,
+  });
+
+  // The disabled state reads cached balances and support list; refresh them
+  // here because a disabled button never reaches the token form's refresh.
+  useEffect(() => {
+    const task = InteractionManager.runAfterInteractions(() => {
+      Promise.allSettled([
+        checkIsExpireAndUpdate(),
+        refreshBridgeSupportTokenList(),
+      ]);
+    });
+
+    return () => {
+      task.cancel();
+    };
+  }, [checkIsExpireAndUpdate, refreshBridgeSupportTokenList]);
 
   useEffect(() => {
     if (!tokenDisabled) {
