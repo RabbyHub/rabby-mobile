@@ -1556,8 +1556,8 @@
     },
     "receiveAddressList": {
       "selectChainTitle": "チェーンを選択",
-      "title": "ウォレットを選択して受け取る",
-      "subtitle": "暗号資産を受け取るウォレットを選択してください。"
+      "title": "受け取るウォレットを選択",
+      "subtitle": "資産を受け取るウォレットアドレスを選択してください。"
     },
     "backupPrivateKey": {
       "clickToShow": "タップして秘密鍵を表示",

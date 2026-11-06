@@ -1803,8 +1803,8 @@
     },
     "receiveAddressList": {
       "selectChainTitle": "Zincir Seçin",
-      "title": "Cüzdan Seçin Almak İçin",
-      "subtitle": "Kripto almak için bir cüzdan seçin."
+      "title": "Almak İçin Cüzdan Seçin",
+      "subtitle": "Varlıklarınızı almak için bir cüzdan adresi seçin."
     },
     "singleHome": {
       "tokenActions": {
