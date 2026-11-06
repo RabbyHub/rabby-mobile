@@ -619,6 +619,7 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
       cursor?: HistoryPageCursor | null; // page cursor
       maxTimeAt?: number;
       filterScamAndSmallTx?: boolean;
+      filterScamTx?: boolean;
       filterLendingHistory?: boolean;
     } = {},
     dataSource?: DataSource,
@@ -641,12 +642,14 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
         ninetyDaysAgo: maxTimeAt ?? ninetyDaysAgo,
       });
 
-    if (options.filterScamAndSmallTx) {
+    if (options.filterScamAndSmallTx || options.filterScamTx) {
       // filter scam tx
       queryBuilder = queryBuilder.andWhere('historyitem.is_scam = :is_scam', {
         is_scam: false,
       });
+    }
 
+    if (options.filterScamAndSmallTx) {
       queryBuilder = queryBuilder.andWhere(
         'historyitem.is_small_tx = :is_small_tx',
         {

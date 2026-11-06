@@ -4,9 +4,9 @@ import { CompareFee } from '@/components/RabbyFeePopup/CompareFee';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import {
   BOTTOM_BUTTON_SINGLE_HEIGHT,
-  BOTTOM_BUTTON_TITLE_STYLE,
   BOTTOM_BUTTON_TOP_OFFSET,
   getBottomButtonBottomOffset,
+  getBottomButtonCenteredTitleStyle,
   type RootNames,
 } from '@/constant/layout';
 import { DEX_WITH_WRAP, getChainDefaultToken } from '@/constant/swap';
@@ -122,6 +122,9 @@ import {
 const BOTTOM_BUTTON_HORIZONTAL_PADDING = 20;
 const SIGN_RISK_WARNING_RESERVE_HEIGHT = 26;
 const BUILD_SWAP_TXS_DEBOUNCE_MS = 500;
+const bottomButtonTitleStyle = getBottomButtonCenteredTitleStyle(
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
+);
 
 type SwapRouteProps = CompositeScreenProps<
   NativeStackScreenProps<
@@ -1765,7 +1768,7 @@ const Swap = ({
                   // refresh  risk check
                   key={`${refreshId}-${chain}-${payToken?.id}-${receiveToken?.id}-${payAmount}-${activeProvider?.quote?.tx?.data}-${isApprove}`}
                   height={BOTTOM_BUTTON_SINGLE_HEIGHT}
-                  titleStyle={styles.bottomButtonTitle}
+                  titleStyle={bottomButtonTitleStyle}
                   loading={miniSignLoading}
                   loadingType="circle"
                   showTextOnLoading
@@ -1798,7 +1801,7 @@ const Swap = ({
               ) : (
                 <Button
                   height={BOTTOM_BUTTON_SINGLE_HEIGHT}
-                  titleStyle={styles.bottomButtonTitle}
+                  titleStyle={bottomButtonTitleStyle}
                   onPress={() => {
                     if (!isSupportedChain && !externalDapps.length) {
                       return;
@@ -2100,9 +2103,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   riskWarning: {
     marginTop: 12,
     marginBottom: 12,
-  },
-  bottomButtonTitle: {
-    ...BOTTOM_BUTTON_TITLE_STYLE,
   },
   approveContainer: {
     flexDirection: 'row',
