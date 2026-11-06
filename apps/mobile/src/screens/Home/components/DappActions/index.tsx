@@ -60,12 +60,10 @@ const ActionButton = ({
   useEffect(() => () => debounceOnPress.cancel(), [debounceOnPress]);
   return (
     <TouchableOpacity
-      style={[styles.button, style]}
+      style={[styles.button, disabled && styles.buttonDisabled, style]}
       disabled={disabled}
       onPress={disabled ? undefined : debounceOnPress}>
-      <Text style={[styles.buttonText, disabled && styles.disabledText]}>
-        {text}
-      </Text>
+      <Text style={styles.buttonText}>{text}</Text>
     </TouchableOpacity>
   );
 };
@@ -261,7 +259,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
   },
-  disabledText: {
-    color: colors2024['neutral-secondary'],
+  buttonDisabled: {
+    opacity: 0.5,
   },
 }));
