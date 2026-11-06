@@ -91,8 +91,8 @@ export const getMethodDesc = (fncName: string) => {
     return fncName;
   }
   const normalizedName = fncName.trim();
-  // 移除最后一个括号及其内容
-  return `function ${normalizedName.split(')(')[0] + ')'}`;
+  // 部分接口会在参数列表后追加一段括号内容，只保留第一段完整签名。
+  return `function ${normalizedName.split(')(')[0]}`;
 };
 
 export const parseActionAbi = (func: string) => {
