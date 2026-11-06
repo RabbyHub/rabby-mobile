@@ -13,7 +13,7 @@ function parseArgs(argv) {
     token: '',
     sourceSha: '',
     sourceDirty: false,
-    trigger: false,
+    prepare: false,
     notifyLark: false,
   };
   for (let i = 0; i < argv.length; i += 1) {
@@ -37,8 +37,8 @@ function parseArgs(argv) {
       case '--source-dirty':
         result.sourceDirty = true;
         break;
-      case '--trigger':
-        result.trigger = true;
+      case '--prepare':
+        result.prepare = true;
         break;
       case '--notify-lark':
         result.notifyLark = true;
@@ -151,20 +151,18 @@ async function main() {
     `[sign-only] uploaded package id=${completed?.data?.id || data.package.id}`,
   );
 
-  if (args.trigger) {
-    const triggered = await requestJson(
-      `${baseUrl}/v1/api/sign-only-packages/${data.package.id}/sign`,
+  if (args.prepare) {
+    const prepared = await requestJson(
+      `${baseUrl}/v1/api/sign-only-packages/${data.package.id}/prepare-sign`,
       {
         method: 'POST',
         headers,
         body: JSON.stringify({ notifyLark: args.notifyLark }),
       },
     );
-    console.log(
-      `[sign-only] workflow: ${
-        triggered?.data?.workflowRunUrl || '(submitted)'
-      }`,
-    );
+    console.log(`[sign-only] workflow: ${prepared?.data?.workflowUrl || ''}`);
+    console.log('[sign-only] run this yourself with your GitHub identity:');
+    console.log(prepared?.data?.ghCommand || '');
   }
 }
 
