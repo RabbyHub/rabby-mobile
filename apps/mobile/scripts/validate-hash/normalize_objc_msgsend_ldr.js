@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-disable no-undef */
 
 const fs = require('fs');
 const path = require('path');
@@ -126,9 +127,7 @@ function removeFilePath(otoolSContent) {
 }
 
 function isControlFlowInstruction(line) {
-  return /^[0-9a-f]+\t(?:ret|b|br|cbz|cbnz|tbz|tbnz|b\.[a-z]+)\b/.test(
-    line,
-  );
+  return /^[0-9a-f]+\t(?:ret|b|br|cbz|cbnz|tbz|tbnz|b\.[a-z]+)\b/.test(line);
 }
 
 /**
@@ -186,9 +185,7 @@ function normalizeMachOLayoutNoise(otoolSContent) {
     // `mov wN, #<len>`. Only normalize an immediate that exactly equals this
     // literal's byte length; unrelated constants and argument setup stay.
     const movAt = j => {
-      const mov = lines[j].match(
-        /^[0-9a-f]+\tmov\tw\d+, #0x([0-9a-f]+)$/,
-      );
+      const mov = lines[j].match(/^[0-9a-f]+\tmov\tw\d+, #0x([0-9a-f]+)$/);
       return mov && parseInt(mov[1], 16) === literalLength ? j : -1;
     };
 
@@ -212,10 +209,7 @@ function normalizeMachOLayoutNoise(otoolSContent) {
       }
     }
     if (lengthMov >= 0) {
-      lines[lengthMov] = lines[lengthMov].replace(
-        /#0x[0-9a-f]+$/,
-        '#0x0',
-      );
+      lines[lengthMov] = lines[lengthMov].replace(/#0x[0-9a-f]+$/, '#0x0');
     }
   }
 
