@@ -2149,6 +2149,7 @@
       "customNetworkTokenHeader": "เครือข่ายที่กำหนดเองที่เพิ่มแล้ว"
     },
     "browser": {
+      "openInRabbyPerps": "เปิดใน Rabby Perps",
       "BrowserHeader": {
         "searchAndroid": "ค้นหา DApp",
         "searchIos": "ค้นหาเว็บไซต์"

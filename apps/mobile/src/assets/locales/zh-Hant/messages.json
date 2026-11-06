@@ -2145,6 +2145,7 @@
       "customNetworkTokenHeader": "已新增的自訂網路"
     },
     "browser": {
+      "openInRabbyPerps": "在 Rabby Perps 中開啟",
       "BrowserHeader": {
         "searchIos": "搜尋網站",
         "searchAndroid": "搜尋 DApp"

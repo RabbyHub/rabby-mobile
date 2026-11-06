@@ -1973,6 +1973,7 @@
       "customNetworkTokenHeader": "Eklenen özel ağlar"
     },
     "browser": {
+      "openInRabbyPerps": "Rabby Perps'te aç",
       "BrowserHeader": {
         "searchIos": "Web sitesi ara",
         "searchAndroid": "DApp Ara"

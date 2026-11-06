@@ -2090,6 +2090,7 @@
       "customNetworkTokenHeader": "Mạng tùy chỉnh đã thêm"
     },
     "browser": {
+      "openInRabbyPerps": "Mở trong Rabby Perps",
       "BrowserHeader": {
         "searchIos": "Tìm kiếm trang web",
         "searchAndroid": "Tìm kiếm DApp"

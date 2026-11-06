@@ -2120,6 +2120,7 @@
       "customNetworkTokenHeader": "已添加的自定义网络"
     },
     "browser": {
+      "openInRabbyPerps": "在 Rabby Perps 中打开",
       "BrowserHeader": {
         "searchIos": "搜索网站",
         "searchAndroid": "搜索 DApp"

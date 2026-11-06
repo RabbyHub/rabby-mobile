@@ -2090,6 +2090,7 @@
       "customNetworkTokenHeader": "Добавленные пользовательские сети"
     },
     "browser": {
+      "openInRabbyPerps": "Открыть в Rabby Perps",
       "BrowserHeader": {
         "searchAndroid": "Поиск DApp",
         "searchIos": "Поиск сайта"

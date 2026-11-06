@@ -2164,6 +2164,7 @@
       "customNetworkTokenHeader": "Redes personalizadas agregadas"
     },
     "browser": {
+      "openInRabbyPerps": "Abrir en Rabby Perps",
       "BrowserHeader": {
         "searchIos": "Buscar sitio web",
         "searchAndroid": "Buscar DApp"

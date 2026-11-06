@@ -70,7 +70,12 @@ export type RootStackParamsList = {
     | undefined;
   [RootNames.AccountTransaction]: NavigatorScreenParams<AccountNavigatorParamList>;
   [RootNames.StackSettings]: NavigatorScreenParams<SettingNavigatorParamList>;
-  [RootNames.StackTransaction]: NavigatorScreenParams<TransactionNavigatorParamList>;
+  [RootNames.StackTransaction]:
+    | (NavigatorScreenParams<TransactionNavigatorParamList> & {
+        /** One-shot Android browser handoff; consumed on native appearance. */
+        browserPerpsNavigationId?: number;
+      })
+    | undefined;
   [RootNames.StackAddress]: NavigatorScreenParams<AddressNavigatorParamList>;
   [RootNames.StackDapps]: NavigatorScreenParams<DappsNavigatorParamsList>;
   [RootNames.StackBrowser]: NavigatorScreenParams<BrowserNavigatorParamsList>;
