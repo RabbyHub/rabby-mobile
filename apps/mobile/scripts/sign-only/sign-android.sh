@@ -40,8 +40,14 @@ cleanup() {
 }
 trap cleanup EXIT
 
-printf '%s' "$RABBY_MOBILE_ANDROID_KEY_STORE" | openssl base64 -d -A > "$tmp_dir/upload.jks"
+printf '%s\n' "$RABBY_MOBILE_ANDROID_KEY_STORE" | base64 -d > "$tmp_dir/upload.jks"
 chmod 600 "$tmp_dir/upload.jks"
+echo "[sign-only] keystore bytes: $(wc -c < "$tmp_dir/upload.jks"), type: $(file -b "$tmp_dir/upload.jks" 2>/dev/null || echo unknown)"
+if ! keytool -list -keystore "$tmp_dir/upload.jks" -storepass "$RABBY_MOBILE_ANDROID_STORE_PASSWORD" >/dev/null 2>"$tmp_dir/keytool.err"; then
+  echo "[sign-only] keytool could not open the decoded keystore:" >&2
+  sed -n '1,5p' "$tmp_dir/keytool.err" >&2
+  exit 1
+fi
 
 "$zipalign" -f -p 4 "$input_path" "$tmp_dir/aligned.apk"
 "$apksigner" sign \

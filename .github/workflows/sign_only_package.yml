@@ -113,7 +113,13 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
         with:
-          packages: 'platform-tools;build-tools;35.0.0'
+          # The action forwards this input as a single sdkmanager argument,
+          # so only single-package names belong here. build-tools is
+          # installed explicitly in the next step.
+          packages: 'platform-tools'
+
+      - name: Install Android build-tools
+        run: sdkmanager --install 'build-tools;35.0.0'
 
       - name: Download unsigned APK
         env:
