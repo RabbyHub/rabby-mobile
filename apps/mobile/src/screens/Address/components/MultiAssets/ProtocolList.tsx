@@ -47,6 +47,7 @@ import { TabsFlatList } from '@/components/customized/react-native-collapsible-t
 import {
   pulldownRefreshSizes,
   RefreshPlaceholderIOS,
+  useSuspendedVisibleAnchor,
   setPulldownRefreshStage,
   usePulldownRefreshGesture,
   usePulldownRefreshStyles,
@@ -61,8 +62,6 @@ import {
 import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 import { useScrollToTopOnChainChange } from '@/hooks/useScrollToTopOnChainChange';
 import { resolveAssetProjectionViewState } from '@/store/assetProjectionAvailability';
-import { useDerivedValue } from 'react-native-reanimated';
-import { useValueFromSharedValue } from '@/hooks/reanimated';
 
 const MemoizedFullDefiRenderItem = React.memo(FullDefiRenderItem);
 const MemoizedEmptyAssets = React.memo(EmptyAssets);
@@ -682,8 +681,10 @@ export const ProtocolList = () => {
   });
   // Keep the native visible anchor from pinning rows to a stale offset while
   // RefreshPlaceholderIOS changes the list header height.
-  const svIsPullRefreshVisible = useDerivedValue(() => pullDistance.value > 0);
-  const isPullRefreshVisible = useValueFromSharedValue(svIsPullRefreshVisible);
+  // #1285: re-enabling the native visible anchor in the frame the placeholder
+  // collapses re-anchors the first row against the pre-collapse layout and
+  // leaves a transient blank at the top; wait for the layout to settle.
+  const isPullRefreshVisible = useSuspendedVisibleAnchor(pullDistance);
 
   useEffect(() => {
     console.debug(
