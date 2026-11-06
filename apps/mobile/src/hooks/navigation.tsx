@@ -185,6 +185,9 @@ export const useStackScreenConfig = () => {
         animationDuration: 200,
         ...IOS_LIQUID_GLASS_HEADER_OPTIONS,
         ...headerPresets.onlyTitle,
+        // Native bar button item: UIKit owns the layout (correct on every
+        // device) and hidesSharedBackground keeps the iOS 26 glass capsule off.
+        unstable_headerLeftItems: IS_IOS ? renderNativeBackItems : undefined,
         headerTitleStyle: {
           ...(headerPresets.onlyTitle.headerTitleStyle as object),
           color: colors['neutral-title-1'],
@@ -192,22 +195,8 @@ export const useStackScreenConfig = () => {
         },
         // headerTintColor: colors['neutral-bg-1'],
         headerTintColor: colors['neutral-title-1'],
-        headerLeft: ({ tintColor }) => (
-          <CustomTouchableOpacity
-            as="RNGHTouchableOpacity"
-            style={[
-              styles.backButtonStyle,
-              IS_IOS && styles.nativeBarItemBackButtonStyle,
-            ]}
-            hitSlop={24}
-            onPress={navBack}>
-            <RcIconHeaderBack
-              width={24}
-              height={24}
-              color={tintColor || colors['neutral-body']}
-            />
-          </CustomTouchableOpacity>
-        ),
+        // Use the system back item: UIKit owns its layout, so the position is
+        // correct on every device/OS without a JS-side magic offset.
       };
 
       const result = merge(
@@ -235,6 +224,7 @@ export const useStackScreenConfig = () => {
         animationDuration: 200,
         ...IOS_LIQUID_GLASS_HEADER_OPTIONS,
         ...headerPresets.onlyTitle,
+        unstable_headerLeftItems: IS_IOS ? renderNativeBackItems : undefined,
         headerTitleStyle: {
           ...(headerPresets.onlyTitle.headerTitleStyle as object),
           color: colors2024['neutral-title-1'],
@@ -242,9 +232,7 @@ export const useStackScreenConfig = () => {
           fontSize: 20,
         },
         headerTintColor: colors2024['neutral-title-1'],
-        headerLeft: ({ tintColor }) => (
-          <HeaderBackPressable tintColor={tintColor} nativeBarItem />
-        ),
+        // System back item (see above): no custom view, no offset.
       };
 
       const result = merge(
@@ -312,6 +300,25 @@ export function useBottomTabScreenConfig() {
 // Native bar button items carry the system leading inset; translate the content
 // back so it lines up with the page content edge (#1283).
 export const NATIVE_BAR_ITEM_BACK_OFFSET_X = -14;
+
+// NOTE: `unstable_headerLeftItems` is the native-stack bridge to RNScreens'
+// `headerLeftBarButtonItems`. It gives UIKit ownership of the bar item layout
+// (correct on every device) and lets us pass `hidesSharedBackground` to drop the
+// iOS 26 glass capsule. Re-check this prop name on every @react-navigation
+// upgrade; if it is renamed/removed, fall back to a custom headerLeft with a
+// device-independent layout rather than a fixed offset.
+const renderNativeBackItems: NonNullable<
+  NativeStackNavigationOptions['unstable_headerLeftItems']
+> = ({ tintColor }) => [
+  {
+    type: 'button',
+    label: '',
+    icon: { type: 'sfSymbol', name: 'chevron.left' },
+    tintColor,
+    hidesSharedBackground: true,
+    onPress: navBack,
+  },
+];
 
 const styles = StyleSheet.create({
   backButtonStyle: {

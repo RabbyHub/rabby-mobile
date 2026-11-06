@@ -6,11 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { createCustomNativeStackNavigator as createNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
 
-import {
-  HeaderBackPressable,
-  NATIVE_BAR_ITEM_BACK_OFFSET_X,
-  useStackScreenConfig,
-} from '@/hooks/navigation';
+import { HeaderBackPressable, useStackScreenConfig } from '@/hooks/navigation';
 import {
   RootNames,
   makeHeadersPresets,
@@ -59,7 +55,6 @@ const TransactionStack =
   createNativeStackNavigator<TransactionNavigatorParamList>();
 
 const CONVERT_DUST_HEADER_HEIGHT = 58;
-const SEND_IOS_HEADER_ICON_OFFSET = 6;
 const RegressionSendScreen = withRegressionScenario(SendScreen, {
   screen: 'Send',
 });
@@ -124,17 +119,6 @@ export default function TransactionNavigator() {
     innerDappStrategy === 'screen'
       ? PredictionScreenWithPreload
       : PredictionScreen;
-  const renderSendHeaderLeft = React.useCallback(
-    ({ tintColor }: { tintColor?: string }) => (
-      <HeaderBackPressable
-        nativeBarItem
-        tintColor={tintColor}
-        style={transactionNavigatorStyles.sendHeaderIconOffset}
-      />
-    ),
-    [],
-  );
-
   return (
     <TransactionStack.Navigator
       screenOptions={mergeScreenOptions({
@@ -154,7 +138,6 @@ export default function TransactionNavigator() {
             ...RoundedFontStyles.heavy,
             fontSize: 20,
           },
-          headerLeft: renderSendHeaderLeft,
         })}
       />
       <TransactionStack.Screen
@@ -167,7 +150,6 @@ export default function TransactionNavigator() {
             ...RoundedFontStyles.heavy,
             fontSize: 20,
           },
-          headerLeft: renderSendHeaderLeft,
         })}
       />
       <TransactionStack.Screen
@@ -542,12 +524,3 @@ const getConvertDustHeaderStyle = createGetStyles2024(({ colors2024 }) => ({
     minWidth: 0,
   },
 }));
-
-const transactionNavigatorStyles = StyleSheet.create({
-  sendHeaderIconOffset: {
-    transform: [
-      { translateX: IS_IOS ? NATIVE_BAR_ITEM_BACK_OFFSET_X : 0 },
-      { translateY: IS_IOS ? SEND_IOS_HEADER_ICON_OFFSET : 0 },
-    ],
-  },
-});
