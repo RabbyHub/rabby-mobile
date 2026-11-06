@@ -26,6 +26,7 @@ import { GestureDetector } from 'react-native-gesture-handler';
 import {
   pulldownRefreshSizes,
   RefreshPlaceholderIOS,
+  useSuspendedVisibleAnchor,
   setPulldownRefreshStage,
   usePulldownRefreshGesture,
   usePulldownRefreshStyles,
@@ -72,8 +73,6 @@ import type { KeyringAccountWithAlias } from '@/hooks/account';
 import { useScrollToTopOnChainChange } from '@/hooks/useScrollToTopOnChainChange';
 import { resolveAssetProjectionViewState } from '@/store/assetProjectionAvailability';
 import { useShallow } from 'zustand/react/shallow';
-import { useDerivedValue } from 'react-native-reanimated';
-import { useValueFromSharedValue } from '@/hooks/reanimated';
 
 const NFT_LIST_INITIAL_RENDER_COUNT = 10;
 const NFT_LIST_RENDER_BATCH_SIZE = 8;
@@ -504,8 +503,10 @@ const NFTListInner = () => {
   });
   // Keep the native visible anchor from pinning rows to a stale offset while
   // RefreshPlaceholderIOS changes the list header height.
-  const svIsPullRefreshVisible = useDerivedValue(() => pullDistance.value > 0);
-  const isPullRefreshVisible = useValueFromSharedValue(svIsPullRefreshVisible);
+  // #1285: re-enabling the native visible anchor in the frame the placeholder
+  // collapses re-anchors the first row against the pre-collapse layout and
+  // leaves a transient blank at the top; wait for the layout to settle.
+  const isPullRefreshVisible = useSuspendedVisibleAnchor(pullDistance);
 
   useEffect(() => {
     console.debug('[PulldownRefresh] NFTList isLoading changed', isLoading);
