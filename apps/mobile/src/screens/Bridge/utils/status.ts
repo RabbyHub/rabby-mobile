@@ -166,8 +166,5 @@ export function getBridgeHistoryPendingStatus({
   ) {
     return null;
   }
-  return progress.footer.kind === 'stillBridging' ||
-    progress.footer.kind === 'delayed'
-    ? 'pending'
-    : 'processing';
+  return progress.footer.kind === 'delayed' ? 'pending' : 'processing';
 }
