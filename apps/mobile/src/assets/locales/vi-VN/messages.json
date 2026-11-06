@@ -955,7 +955,42 @@
       "formChangedTitle": "Biểu mẫu đã thay đổi",
       "formChangedAmount": "Số tiền đã thay đổi, có thể do hệ thống bàn phím tự động điền mật khẩu. Vui lòng xem lại và nhập lại số tiền chính xác.",
       "best-subtitle": "Báo giá tốt nhất được xác định bởi sự kết hợp giữa tổng chi phí ước tính (bao gồm phí Gas) và tốc độ giao hàng.",
-      "swap-best-subtitle": "Được xác định bởi tổng chi phí ước tính thấp nhất bao gồm tỷ giá hối đoái và phí gas."
+      "swap-best-subtitle": "Được xác định bởi tổng chi phí ước tính thấp nhất bao gồm tỷ giá hối đoái và phí gas.",
+      "duration-sec": "{{duration}} giây",
+      "duration-hour": "{{duration}} giờ",
+      "duration-hour-min": "{{hours}} giờ {{minutes}} phút",
+      "duration-day": "{{duration}} ngày",
+      "duration-day-hour": "{{days}} ngày {{hours}} giờ",
+      "duration-day-min": "{{days}} ngày {{minutes}} phút",
+      "duration-day-hour-min": "{{days}} ngày {{hours}} giờ {{minutes}} phút",
+      "status": {
+        "bridging": "Đang chuyển qua cầu nối,",
+        "bridged": "Bridge hoàn tất",
+        "historyTitle": "Lịch sử cầu",
+        "today": "Hôm nay",
+        "eta": "thời gian dự kiến: {{time}}",
+        "stillBridging": "Vẫn đang chuyển qua cầu nối",
+        "delayed": "Cầu nối bị chậm trễ",
+        "sourceFailed": "Cầu nối thất bại, {{token}} của bạn chưa được gửi",
+        "tokenNotSent": "{{token}} của bạn chưa được gửi",
+        "failed": "Thất bại",
+        "bridgeFailed": "Cầu nối thất bại",
+        "refunded": "Đã hoàn trả",
+        "refundedIn": "Đã hoàn trả bằng {{token}}",
+        "contactSupport": "Liên hệ hỗ trợ",
+        "viewDetails": "Xem chi tiết",
+        "sendingFrom": "Gửi từ {{chain}}",
+        "receivingOn": "Nhận trên {{chain}}",
+        "processing": "Đang xử lý",
+        "queued": "Đang xếp hàng",
+        "pending": "Đang chờ xử lý",
+        "completed": "Đã hoàn thành",
+        "refund": "Hoàn trả",
+        "waiting": "đang chờ giao dịch trên chuỗi đích",
+        "goBack": "Quay lại",
+        "bridgeAgain": "Chuyển qua cầu nối lần nữa",
+        "captureFailed": "Không thể chụp màn hình. Vui lòng thử lại."
+      }
     },
     "manageAddress": {
       "moreWallets": "Thêm ví",
@@ -2055,6 +2090,7 @@
       "customNetworkTokenHeader": "Mạng tùy chỉnh đã thêm"
     },
     "browser": {
+      "openInRabbyPerps": "Mở trong Rabby Perps",
       "BrowserHeader": {
         "searchIos": "Tìm kiếm trang web",
         "searchAndroid": "Tìm kiếm DApp"
@@ -2376,8 +2412,7 @@
           }
         },
         "chart": {
-          "open": "Mở biểu đồ",
-          "resetPriceScale": "Đặt lại thang giá biểu đồ"
+          "open": "Mở biểu đồ"
         },
         "account": {
           "disabledFrame": "Các thao tác tài khoản không khả dụng trong giai đoạn này",

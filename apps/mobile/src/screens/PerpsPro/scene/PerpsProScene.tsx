@@ -41,6 +41,7 @@ import {
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Reanimated, { runOnUI, useSharedValue } from 'react-native-reanimated';
 
 import { PerpsProAccountAssetRow } from '../components/account/PerpsProAccountAssetRow';
@@ -51,7 +52,10 @@ import {
   PerpsProFundingOverlay,
   type PerpsProFundingMode,
 } from '../components/account/PerpsProFundingOverlay';
-import { PerpsProKlineSheet } from '../components/chart/PerpsProKlineSheet';
+import {
+  getPerpsProKlinePanelHeight,
+  PerpsProKlineSheet,
+} from '../components/chart/PerpsProKlineSheet';
 import { registerPerpsProKeyboardTradeScroll } from '../components/common/perpsProKeyboardSession';
 import { PerpsProEmptyState } from '../components/common/PerpsProEmptyState';
 import { PerpsProFieldExplanationProvider } from '../components/common/PerpsProFieldExplanationProvider';
@@ -79,10 +83,10 @@ import {
 } from '../components/info/usePerpsProInfoScrollBridge';
 import {
   createPerpsProInfoTabsTranslateY,
-  getPerpsProPopulatedInfoSectionBottomPadding,
   getPerpsProInfoSectionMinimumContentHeight,
   getPerpsProInfoTabsNaturalAnchor,
   PERPS_PRO_INFO_TABS_HEIGHT,
+  PERPS_PRO_INFO_SECTION_BOTTOM_PADDING,
   PERPS_PRO_INFO_SECTION_DIVIDER_HEIGHT,
   PERPS_PRO_INFO_TABS_PLACEHOLDER_HEIGHT,
 } from '../components/info/perpsProInfoTabsSticky';
@@ -357,6 +361,7 @@ export const PerpsProScene: React.FC<{
   const marketSelectorRef = useRef<PerpsProMarketSelectorHandle>(null);
   const infoPagerRef = useRef<PerpsProInfoPagerHandle>(null);
   const [klineOpen, setKlineOpen] = useState(false);
+  const safeAreaInsets = useSafeAreaInsets();
   const [klineActivated, setKlineActivated] = useState(false);
   const [appState, setAppState] = useState<AppStateStatus>(
     AppState.currentState,
@@ -409,9 +414,9 @@ export const PerpsProScene: React.FC<{
     const subscription = AppState.addEventListener('change', setAppState);
     return () => subscription.remove();
   }, []);
-  const openKline = useCallback(() => {
+  const toggleKline = useCallback(() => {
     setKlineActivated(true);
-    setKlineOpen(true);
+    setKlineOpen(open => !open);
   }, []);
   const closeKline = useCallback(() => setKlineOpen(false), []);
   const closeFundingOverlay = useCallback(() => setFundingOverlay(null), []);
@@ -747,53 +752,26 @@ export const PerpsProScene: React.FC<{
         : null,
     [infoTabsNaturalAnchor, scrollViewportHeight],
   );
-  const populatedInfoBottomPadding =
-    scrollViewportHeight > 0
-      ? getPerpsProPopulatedInfoSectionBottomPadding({
-          marketBarHeight: PERPS_PRO_MARKET_BAR_HEIGHT,
-          viewportHeight: scrollViewportHeight,
-        })
-      : null;
+  // The docked K-line covers the viewport bottom; keep every row reachable.
+  const klinePanelInset = klineOpen
+    ? getPerpsProKlinePanelHeight(safeAreaInsets.bottom)
+    : 0;
   const scrollContentStyles = useMemo<
     Record<PerpsProInfoTab, ViewStyle[]>
   >(() => {
-    const trailingStyle = (populated: boolean): ViewStyle => ({
-      paddingBottom:
-        populated && populatedInfoBottomPadding != null
-          ? populatedInfoBottomPadding
-          : 32,
-    });
-    return {
-      account: [
-        styles.scrollContent,
-        ...(scrollContentMinimumHeightStyle
-          ? [scrollContentMinimumHeightStyle]
-          : []),
-        trailingStyle(info.accountState === 'ready'),
-      ],
-      positions: [
-        styles.scrollContent,
-        ...(scrollContentMinimumHeightStyle
-          ? [scrollContentMinimumHeightStyle]
-          : []),
-        trailingStyle(info.positionCollectionPresentation === 'populated'),
-      ],
-      openOrders: [
-        styles.scrollContent,
-        ...(scrollContentMinimumHeightStyle
-          ? [scrollContentMinimumHeightStyle]
-          : []),
-        trailingStyle(info.openOrderCollectionPresentation === 'populated'),
-      ],
-    };
-  }, [
-    info.accountState,
-    info.openOrderCollectionPresentation,
-    info.positionCollectionPresentation,
-    populatedInfoBottomPadding,
-    scrollContentMinimumHeightStyle,
-    styles.scrollContent,
-  ]);
+    // Short tabs keep the one-page minimum; long tabs end a fixed gap below
+    // their last row.
+    const style: ViewStyle[] = [
+      styles.scrollContent,
+      ...(scrollContentMinimumHeightStyle
+        ? [scrollContentMinimumHeightStyle]
+        : []),
+      {
+        paddingBottom: PERPS_PRO_INFO_SECTION_BOTTOM_PADDING + klinePanelInset,
+      },
+    ];
+    return { account: style, positions: style, openOrders: style };
+  }, [klinePanelInset, scrollContentMinimumHeightStyle, styles.scrollContent]);
   const marketTranslateY = useMemo(
     () =>
       showRegionAlert
@@ -1363,7 +1341,8 @@ export const PerpsProScene: React.FC<{
   ) : (
     <PerpsProMarketBar
       market={scene.currentMarket}
-      onOpenKline={openKline}
+      klineOpen={klineOpen}
+      onToggleKline={toggleKline}
       onPress={openMarketSelector}
     />
   );
@@ -1517,19 +1496,20 @@ export const PerpsProScene: React.FC<{
         onConfirm={confirmUnifiedEnable}
       />
       {scene.currentMarket ? (
-        <PerpsProSheetNavigationBoundary
-          active={klineOpen}
-          dismiss={closeKline}>
-          <PerpsProKlineSheet
-            enabled={
-              klineActivated && scene.klineEnabled && appState === 'active'
-            }
-            market={scene.currentMarket}
-            onClose={closeKline}
-            preloadEnabled={scene.klineEnabled && appState === 'active'}
-            visible={klineOpen}
-          />
-        </PerpsProSheetNavigationBoundary>
+        // Docked panel, not a modal: page navigation stays available.
+        <PerpsProKlineSheet
+          enabled={
+            klineActivated && scene.klineEnabled && appState === 'active'
+          }
+          market={scene.currentMarket}
+          onClose={closeKline}
+          position={
+            info.allPositionsByCoin.get(scene.currentMarket.canonicalCoin) ??
+            null
+          }
+          preloadEnabled={scene.klineEnabled && appState === 'active'}
+          visible={klineOpen}
+        />
       ) : null}
       {fundingOverlay ? (
         <PerpsProSheetNavigationBoundary
@@ -1768,7 +1748,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   scrollContent: {
     backgroundColor: colors2024['neutral-bg-1'],
     flexGrow: 1,
-    paddingBottom: 32,
   },
   headerLeadInSpacer: { height: PERPS_PRO_HEADER_HEIGHT },
   marketLeadInSpacer: { height: PERPS_PRO_MARKET_BAR_HEIGHT },

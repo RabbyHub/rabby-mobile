@@ -120,6 +120,7 @@ export const WrapperDappActionsMemoItem = ({
       {!!actions?.length &&
         !item?._originPortfolio?.proxy_detail?.proxy_contract_id && (
           <DappActions
+            portfolio={item._originPortfolio}
             data={actions}
             chain={chain}
             protocolLogo={protocolLogo}

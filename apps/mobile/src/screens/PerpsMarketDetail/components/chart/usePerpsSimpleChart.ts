@@ -11,12 +11,11 @@ import type {
   SimpleChartFill,
   SimpleRangeCoverage,
 } from '@/components2024/TradingViewCandleChart/type';
+import type { SimpleChartPreference } from '@/constant/perpsSimpleChart';
 import {
-  DEFAULT_SIMPLE_CHART_PREFERENCE,
-  normalizeSimpleChartPreference,
-  type SimpleChartPreference,
-} from '@/constant/perpsSimpleChart';
-import { apisPerps } from '@/core/apis/perps';
+  updatePerpsChartPreference,
+  usePerpsChartPreference,
+} from '@/hooks/perps/candles/chartPreference';
 import { usePerpsCandleFeed } from '@/hooks/perps/candles/usePerpsCandleFeed';
 import { simplePriceText, toSimpleChartCandle } from './model';
 import { loadFirstDailyCandle } from './firstDailyCandle';
@@ -58,36 +57,12 @@ export function usePerpsSimpleChart({
     return () => sub.remove();
   }, []);
   const active = isFocused && foreground;
-  const [preference, setPreference] = useState<SimpleChartPreference>(
-    DEFAULT_SIMPLE_CHART_PREFERENCE,
+  // Shared with Pro: a manual interval from either mode shows in both; Pro
+  // ignores range views.
+  const { preference, hydrated } = usePerpsChartPreference();
+  const updatePreference = useMemoizedFn((value: SimpleChartPreference) =>
+    updatePerpsChartPreference(value),
   );
-  const [hydrated, setHydrated] = useState(false);
-  const userEdited = useRef(false);
-  const writes = useRef(Promise.resolve());
-  useEffect(() => {
-    let mounted = true;
-    void apisPerps
-      .getSimpleChartPreference()
-      .then(value => {
-        if (mounted && !userEdited.current)
-          setPreference(normalizeSimpleChartPreference(value));
-      })
-      .catch(error => console.error('[SimpleChart] read preference', error))
-      .finally(() => {
-        if (mounted) setHydrated(true);
-      });
-    return () => {
-      mounted = false;
-    };
-  }, []);
-  const updatePreference = useMemoizedFn((value: SimpleChartPreference) => {
-    const next = normalizeSimpleChartPreference(value);
-    userEdited.current = true;
-    setPreference(next);
-    writes.current = writes.current
-      .then(() => apisPerps.setSimpleChartPreference(next))
-      .catch(error => console.error('[SimpleChart] save preference', error));
-  });
   const feed = usePerpsCandleFeed({
     coin,
     interval: preference.interval,

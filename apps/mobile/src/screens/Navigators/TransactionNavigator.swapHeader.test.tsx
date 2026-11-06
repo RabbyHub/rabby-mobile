@@ -18,6 +18,9 @@ const mockScreens = new Map<string, CapturedScreen>();
 // Capture the real navigator's first screen configuration without mounting the
 // business screen. This is a component/config contract, not a native-stack or
 // iOS transition test: device coverage must still check the cold-entry arrow.
+jest.mock('../Bridge/BridgeDetailScreen', () => ({
+  BridgeDetailScreen: () => null,
+}));
 jest.mock('@/utils/CustomNativeStackNavigator', () => ({
   createCustomNativeStackNavigator: () => ({
     Navigator: ({ children }: React.PropsWithChildren) => children,

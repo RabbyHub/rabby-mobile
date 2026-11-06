@@ -22,6 +22,8 @@ import { useDapps } from '@/hooks/useDapps';
 import { toast } from '@/components2024/Toast';
 import { apisDapp } from '@/core/apis';
 import { withBrowserDappServices } from '@/hooks/browser/browserServiceDependencies';
+import { HyperliquidPerpsEntry } from './HyperliquidPerpsEntry';
+import { isHyperliquidAppUrl } from './hyperliquidPerpsAccount';
 
 const BrowserHandlerContent = () => {
   const { styles, isLight, colors2024 } = useTheme2024({
@@ -48,6 +50,7 @@ const BrowserHandlerContent = () => {
   });
 
   const [activeTabState] = useBrowserActiveTabState();
+  const showHyperliquidEntry = isHyperliquidAppUrl(activeTabState.url);
 
   const handleAction = useMemoizedFn(
     (
@@ -233,7 +236,12 @@ const BrowserHandlerContent = () => {
       {browserState.isShowBrowser &&
       !browserState.isShowSearch &&
       !browserState.isShowManage ? (
-        <View style={styles.handleComponent}>
+        <View
+          style={[
+            styles.handleComponent,
+            showHyperliquidEntry && styles.handleComponentWithEntry,
+          ]}>
+          {showHyperliquidEntry ? <HyperliquidPerpsEntry /> : null}
           <View style={styles.handleComponentContainer}>
             {activeTabState.isDapp ? (
               <>
@@ -339,6 +347,10 @@ const getStyle = createGetStyles2024(
         // clear a side camera/status-bar column, e.g. on iPhone Duo
         paddingRight: 10 + safeAreaInsets.right,
         height: HANDLE_HEIGHT + topGap,
+      },
+      handleComponentWithEntry: {
+        justifyContent: 'space-between',
+        paddingLeft: 15,
       },
       handleComponentContainer: {
         display: 'flex',
