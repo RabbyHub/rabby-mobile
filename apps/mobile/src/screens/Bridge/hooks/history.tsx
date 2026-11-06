@@ -1,25 +1,14 @@
-import {
-  useInfiniteScroll,
-  useInterval,
-  useMemoizedFn,
-  useRequest,
-} from 'ahooks';
+import { useInfiniteScroll, useMemoizedFn, useRequest } from 'ahooks';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { uniqBy } from 'lodash';
 import { openapi } from '@/core/request';
 import useAsync from 'react-use/lib/useAsync';
 import { atom, useAtom, useAtomValue, useSetAtom } from 'jotai';
-import type {
-  SwapTxHistoryItem,
-  BridgeTxHistoryItem,
-  TransactionGroup,
-} from '@/core/services/transactionHistory';
+import type { BridgeTxHistoryItem } from '@/core/services/transactionHistory';
 import { bridgeServiceApi } from '@/core/serviceApi/bridge';
 import { getTransactionHistoryRecentPendingSnapshot } from '@/core/serviceApi/transactionHistory';
-import { findChain } from '@/utils/chain';
 import type { BridgeHistory } from '@rabby-wallet/rabby-api/dist/types';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
-import { fetchRefreshLocalData } from '@/screens/Swap/hooks/history';
 import { useTransactionHistoryServiceReady } from '@/core/serviceApi/transactionHistoryHooks';
 
 const pendingCountAtom = atom(0);
@@ -65,7 +54,7 @@ export const fetchLocalBridgePendingTx = (address: string) => {
 export const usePollBridgePendingNumber = (timer = 10000, enabled = true) => {
   const transactionHistoryReady = useTransactionHistoryServiceReady();
   const [, setCount] = useAtom(pendingCountAtom);
-  const [pendingTxData, setPendingTxData] = useAtom(bridgeTxDataPendingAtom);
+  const [, setPendingTxData] = useAtom(bridgeTxDataPendingAtom);
   const [localPendingTxData, setLocalPendingTxData] =
     useState<BridgeTxHistoryItem | null>(null);
 
@@ -125,8 +114,11 @@ export const usePollBridgePendingNumber = (timer = 10000, enabled = true) => {
       const ts = data?.history_list
         ?.filter(item => item?.status !== 'pending')
         .sort((a, b) => b.create_at - a.create_at);
+      const latestCreateAt = ts?.[0]?.create_at;
       if (openModalTs) {
-        setBridgeHistoryRedDot(ts?.[0]?.create_at > openModalTs / 1000);
+        setBridgeHistoryRedDot(
+          latestCreateAt != null && latestCreateAt > openModalTs / 1000,
+        );
       } else {
         await bridgeServiceApi.setOpenBridgeHistoryTs(account.address);
       }
@@ -206,7 +198,7 @@ export const usePollBridgePendingNumber = (timer = 10000, enabled = true) => {
   };
 };
 
-export const useBridgeHistory = () => {
+export const useBridgeHistory = (enabled = true) => {
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'MakeTransactionAbout',
   });
@@ -217,12 +209,16 @@ export const useBridgeHistory = () => {
   const refreshBridgeListTx = React.useCallback(() => {
     setRefreshListTx(e => e + 1);
   }, []);
-  const isInBridge = true;
+  // 暂停请求和计时，保留已加载分页供恢复时继续使用。
+  const isInBridge = enabled;
 
   const getBridgeHistoryList = React.useCallback(
-    async (addr: string, start = 0, limit = 5) => {
+    async (address: string, start = 0, limit = 5) => {
+      if (!isInBridge || !address) {
+        return { list: [], last: undefined, totalCount: 0 };
+      }
       const data = await openapi.getBridgeHistoryList({
-        user_addr: addr,
+        user_addr: address,
         start: start,
         limit: limit,
         is_all: true,
@@ -233,7 +229,7 @@ export const useBridgeHistory = () => {
         totalCount: data?.total_cnt,
       };
     },
-    [],
+    [isInBridge],
   );
 
   const {
@@ -251,7 +247,7 @@ export const useBridgeHistory = () => {
         20,
       ),
     {
-      reloadDeps: [isInBridge],
+      reloadDeps: [addr],
       isNoMore(data) {
         if (data) {
           return data?.list.length >= data?.totalCount;
@@ -262,36 +258,37 @@ export const useBridgeHistory = () => {
     },
   );
 
+  // 恢复时立即刷新首页，并与已有分页合并。
   const { value } = useAsync(async () => {
-    if (addr) {
+    if (addr && isInBridge) {
       return getBridgeHistoryList(addr, 0, 20);
     }
-  }, [addr, refreshTxListCount]);
+  }, [addr, refreshTxListCount, isInBridge]);
 
   useEffect(() => {
-    if (value?.list) {
+    if (isInBridge && value?.list) {
       mutate(d => {
         if (!d) {
-          return;
+          return value;
         }
         return {
           last: d?.last,
           totalCount: d?.totalCount,
           list: uniqBy(
             [...(value.list || []), ...(d?.list || [])],
-            e => `${e.chain}-${e.detail_url}`,
+            e => `${e.from_token.chain}:${e.from_tx.tx_id.toLowerCase()}`,
           ),
         };
       });
     }
-  }, [mutate, value]);
+  }, [mutate, value, isInBridge]);
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
     if (
       !loading &&
       !loadingMore &&
-      txList?.list?.some(e => e.status !== 'completed') &&
+      txList?.list?.some(e => e.status === 'pending') &&
       isInBridge
     ) {
       timer = setTimeout(refreshBridgeListTx, 2000);

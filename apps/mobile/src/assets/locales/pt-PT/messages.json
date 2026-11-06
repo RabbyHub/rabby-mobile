@@ -1049,7 +1049,42 @@
       "formChangedTitle": "Formulário alterado",
       "formChangedAmount": "O montante foi alterado, possivelmente devido ao preenchimento automático da palavra-passe pelo teclado do sistema. Reveja e introduza novamente o montante correto.",
       "best-subtitle": "A melhor cotação é determinada por uma combinação do custo total estimado (incluindo taxas de Gas) e da velocidade de entrega.",
-      "swap-best-subtitle": "A melhor cotação é determinada pelo custo total estimado mais baixo, incluindo a taxa de câmbio e as taxas de gás."
+      "swap-best-subtitle": "A melhor cotação é determinada pelo custo total estimado mais baixo, incluindo a taxa de câmbio e as taxas de gás.",
+      "duration-sec": "{{duration}} s",
+      "duration-hour": "{{duration}} h",
+      "duration-hour-min": "{{hours}} h {{minutes}} min",
+      "duration-day": "{{duration}} d",
+      "duration-day-hour": "{{days}} d {{hours}} h",
+      "duration-day-min": "{{days}} d {{minutes}} min",
+      "duration-day-hour-min": "{{days}} d {{hours}} h {{minutes}} min",
+      "status": {
+        "bridging": "Transferência por ponte em curso,",
+        "bridged": "Transferido por bridge",
+        "historyTitle": "Histórico da ponte",
+        "today": "Hoje",
+        "eta": "tempo estimado: {{time}}",
+        "stillBridging": "Transferência por ponte ainda em curso",
+        "delayed": "Ponte atrasada",
+        "sourceFailed": "A ponte falhou. Os seus {{token}} não foram enviados",
+        "tokenNotSent": "Os seus {{token}} não foram enviados",
+        "failed": "Falhou",
+        "bridgeFailed": "Falha na ponte",
+        "refunded": "Reembolsado",
+        "refundedIn": "Reembolsado em {{token}}",
+        "contactSupport": "Contactar o suporte",
+        "viewDetails": "Ver detalhes",
+        "sendingFrom": "A enviar de {{chain}}",
+        "receivingOn": "A receber em {{chain}}",
+        "processing": "A processar",
+        "queued": "Em espera",
+        "pending": "Pendente",
+        "completed": "Concluído",
+        "refund": "Reembolso",
+        "waiting": "A aguardar a transação de destino",
+        "goBack": "Voltar",
+        "bridgeAgain": "Transferir por ponte novamente",
+        "captureFailed": "Não foi possível capturar o ecrã. Tente novamente."
+      }
     },
     "dashboard": {
       "hd": {
@@ -2552,8 +2587,7 @@
           }
         },
         "chart": {
-          "open": "Abrir gráfico",
-          "resetPriceScale": "Repor a escala de preços do gráfico"
+          "open": "Abrir gráfico"
         },
         "account": {
           "disabledFrame": "As ações da conta não estão disponíveis nesta fase",

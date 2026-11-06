@@ -802,7 +802,42 @@
       "formChangedTitle": "양식 변경됨",
       "formChangedAmount": "금액이 변경되었습니다. 시스템 키보드의 비밀번호 자동 완성으로 인한 것일 수 있습니다. 올바른 금액을 다시 확인하고 입력해 주세요.",
       "best-subtitle": "최선의 견적은 예상 총 비용(Gas 수수료 포함)과 전달 속도의 조합으로 결정됩니다.",
-      "swap-best-subtitle": "최적 견적은 환율과 가스비를 포함한 예상 총비용이 가장 낮은 항목으로 결정됩니다."
+      "swap-best-subtitle": "최적 견적은 환율과 가스비를 포함한 예상 총비용이 가장 낮은 항목으로 결정됩니다.",
+      "duration-sec": "{{duration}}초",
+      "duration-hour": "{{duration}}시간",
+      "duration-hour-min": "{{hours}}시간 {{minutes}}분",
+      "duration-day": "{{duration}}일",
+      "duration-day-hour": "{{days}}일 {{hours}}시간",
+      "duration-day-min": "{{days}}일 {{minutes}}분",
+      "duration-day-hour-min": "{{days}}일 {{hours}}시간 {{minutes}}분",
+      "status": {
+        "bridging": "브리지 진행 중,",
+        "bridged": "브리지 완료",
+        "historyTitle": "브리지 히스토리",
+        "today": "오늘",
+        "eta": "예상 소요 시간: {{time}}",
+        "stillBridging": "브리지 진행 중",
+        "delayed": "브리지 지연",
+        "sourceFailed": "브리지 실패, {{token}}이 전송되지 않았습니다",
+        "tokenNotSent": "{{token}}이 전송되지 않았습니다",
+        "failed": "실패했습니다",
+        "bridgeFailed": "브리지 실패",
+        "refunded": "환불됨",
+        "refundedIn": "{{token}}으로 환불됨",
+        "contactSupport": "지원팀에 문의",
+        "viewDetails": "상세 보기",
+        "sendingFrom": "{{chain}}에서 보내는 중",
+        "receivingOn": "{{chain}}에서 받기",
+        "processing": "처리 중",
+        "queued": "대기 중",
+        "pending": "대기 중",
+        "completed": "완료됨",
+        "refund": "환불",
+        "waiting": "대상 체인의 트랜잭션 대기 중",
+        "goBack": "돌아가기",
+        "bridgeAgain": "다시 브리지",
+        "captureFailed": "스크린샷을 캡처할 수 없습니다. 다시 시도해 주세요."
+      }
     },
     "manageAddress": {
       "moreWallets": "더 많은 지갑",
@@ -2259,8 +2294,7 @@
           }
         },
         "chart": {
-          "open": "차트 열기",
-          "resetPriceScale": "차트 가격 눈금 초기화"
+          "open": "차트 열기"
         },
         "account": {
           "disabledFrame": "현재 단계에서는 계정 기능을 사용할 수 없습니다",

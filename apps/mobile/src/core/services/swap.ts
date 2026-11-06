@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/react-native';
 import { DEX_ENUM } from '@rabby-wallet/rabby-swap';
 import { CHAINS_ENUM } from '@debank/common';
 import cloneDeep from 'lodash/cloneDeep';
@@ -336,6 +337,18 @@ export class SwapService extends StoreServiceBase<
         ...quoteInfo,
         tx,
         tx_id: hash,
+      }).catch(err => {
+        // The cause carries the error detail, and the ignore list still sees
+        // it through linked errors, without putting it in the title. Quote
+        // fields go in extra so beforeSend keeps the token ids readable;
+        // quoteInfo has no tx, so no user address rides along.
+        Sentry.captureException(new Error('postSwap failed', { cause: err }), {
+          extra: {
+            quote: quoteInfo.quote,
+            dex_id: quoteInfo.dex_id,
+            fee_rate: quoteInfo.fee_rate,
+          },
+        });
       });
     }
   };

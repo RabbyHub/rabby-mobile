@@ -971,7 +971,42 @@
       "formChangedTitle": "表單已更改",
       "formChangedAmount": "金額已變更，可能是由於系統鍵盤的密碼自動填充。請檢查並重新輸入正確的金額。",
       "best-subtitle": "最佳報價由預計總成本（含 Gas 費用）與到帳速度綜合決定。",
-      "swap-best-subtitle": "最佳報價由最低預估總成本決定，包括匯率與 Gas 費用。"
+      "swap-best-subtitle": "最佳報價由最低預估總成本決定，包括匯率與 Gas 費用。",
+      "duration-sec": "{{duration}} 秒",
+      "duration-hour": "{{duration}} 小時",
+      "duration-hour-min": "{{hours}} 小時 {{minutes}} 分鐘",
+      "duration-day": "{{duration}} 天",
+      "duration-day-hour": "{{days}} 天 {{hours}} 小時",
+      "duration-day-min": "{{days}} 天 {{minutes}} 分鐘",
+      "duration-day-hour-min": "{{days}} 天 {{hours}} 小時 {{minutes}} 分鐘",
+      "status": {
+        "bridging": "跨鏈中，",
+        "bridged": "已跨鏈",
+        "historyTitle": "跨鏈記錄",
+        "today": "今天",
+        "eta": "預計還需 {{time}}",
+        "stillBridging": "仍在跨鏈中",
+        "delayed": "跨鏈延遲",
+        "sourceFailed": "跨鏈失敗，你的 {{token}} 未發送",
+        "tokenNotSent": "你的 {{token}} 未發送",
+        "failed": "失敗",
+        "bridgeFailed": "跨鏈失敗",
+        "refunded": "已退還",
+        "refundedIn": "已退還為 {{token}}",
+        "contactSupport": "聯絡客服",
+        "viewDetails": "查看詳情",
+        "sendingFrom": "從 {{chain}} 發送",
+        "receivingOn": "在 {{chain}} 上接收",
+        "processing": "處理中",
+        "queued": "排隊中",
+        "pending": "待處理",
+        "completed": "完成",
+        "refund": "退還",
+        "waiting": "等待目標鏈交易",
+        "goBack": "返回",
+        "bridgeAgain": "再次跨鏈",
+        "captureFailed": "無法截圖，請重試。"
+      }
     },
     "signFooterBar": {
       "cancelConnection": "取消連接",
@@ -2431,8 +2466,7 @@
           }
         },
         "chart": {
-          "open": "開啟圖表",
-          "resetPriceScale": "重設圖表價格軸"
+          "open": "開啟圖表"
         },
         "account": {
           "disabledFrame": "目前階段暫不支援帳戶操作",
