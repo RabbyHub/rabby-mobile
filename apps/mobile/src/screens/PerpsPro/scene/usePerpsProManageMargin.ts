@@ -7,7 +7,9 @@ import {
 } from '@/hooks/perps/actions/updateIsolatedMargin';
 import {
   fetchClearinghouseStateHttp,
+  ensureCurrentPerpPermission,
   fetchSpotStateHttp,
+  hasCurrentPerpPermission,
   isPerpsUserAbstractionReadyForAccount,
   perpsStore,
   type PerpsState,
@@ -341,7 +343,6 @@ export const usePerpsProManageMargin = () => {
       return;
     }
     const openingAccount = perpsStore.getState().currentPerpsAccount;
-    const openingState = perpsStore.getState();
     if (
       !openingAccount ||
       getPerpsRuntimeIdentity(openingAccount) !== activeEditor.accountIdentity
@@ -350,13 +351,13 @@ export const usePerpsProManageMargin = () => {
       showToast(t('page.perps.pro.positions.marginContextChanged'), 'error');
       return;
     }
-    if (!openingState.hasPermission) {
-      showToast(t('page.perps.regionNotSupport'), 'error');
-      return;
-    }
     pendingRef.current = true;
     setPending(true);
     try {
+      if (!(await ensureCurrentPerpPermission(openingAccount))) {
+        showToast(t('page.perps.regionNotSupport'), 'error');
+        return;
+      }
       await ensurePerpsActionApproval(openingAccount as Account, {
         builderFee: false,
       });
@@ -392,7 +393,7 @@ export const usePerpsProManageMargin = () => {
         !account ||
         !market ||
         !position ||
-        !state.hasPermission ||
+        !hasCurrentPerpPermission(state) ||
         getPerpsRuntimeIdentity(account) !== activeEditor.accountIdentity ||
         position.leverage?.type !== 'isolated' ||
         !signedSize.isFinite() ||
@@ -401,7 +402,7 @@ export const usePerpsProManageMargin = () => {
       ) {
         resetEditor();
         showToast(
-          state.hasPermission
+          hasCurrentPerpPermission(state)
             ? t('page.perps.pro.positions.marginContextChanged')
             : t('page.perps.regionNotSupport'),
           'error',
