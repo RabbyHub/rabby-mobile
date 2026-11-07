@@ -36,7 +36,7 @@ def stamp_team_into_unsigned_archive(profile_name)
   return unless current.empty?
 
   require 'plist'
-  profiles = Dir[File.expand_path('~/Library/MobileDevice/Provisioning Profiles/*.mobileprovision')].sort_by { |f| -File.mtime(f) }
+  profiles = Dir[File.expand_path('~/Library/MobileDevice/Provisioning Profiles/*.mobileprovision')].sort_by { |f| File.mtime(f) }.reverse
   matched = nil
   profiles.each do |candidate|
     data = Plist.parse_xml(`security cms -D -i "#{candidate}" 2>/dev/null`)

@@ -95,6 +95,14 @@ jobs:
         with:
           ref: ${{ inputs.source_sha || github.sha }}
           fetch-depth: 1
+          # Sign-only runs never build from source, so checkout's default
+          # `git clean -ffdx` would only delete the warm node_modules / Pods /
+          # turbo-build state that the two build machines keep for feature
+          # test, costing about a minute per run with no benefit.
+          clean: false
+
+      - name: Reset the scripts this job executes
+        run: git clean -ffdx apps/mobile/scripts apps/mobile/fastlane .github/workflows
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -203,6 +211,14 @@ jobs:
         with:
           ref: ${{ inputs.source_sha || github.sha }}
           fetch-depth: 1
+          # Sign-only runs never build from source, so checkout's default
+          # `git clean -ffdx` would only delete the warm node_modules / Pods /
+          # turbo-build state that the two build machines keep for feature
+          # test, costing about a minute per run with no benefit.
+          clean: false
+
+      - name: Reset the scripts this job executes
+        run: git clean -ffdx apps/mobile/scripts apps/mobile/fastlane .github/workflows
 
       - name: Setup Xcode
         uses: maxim-lobanov/setup-xcode@v1
