@@ -13,9 +13,11 @@ ensure_mobile_node_runtime
 export buildchannel="selfhost-reg";
 export BUILD_TARGET_PLATFORM="ios";
 export RABBY_MOBILE_BUILD_ENV="regression";
-check_build_params;
-check_s3_params;
-checkout_s3_pub_deployment_params;
+if [ "$RABBY_MOBILE_IOS_BUILD_UNSIGNED" != "true" ]; then
+  check_build_params;
+  check_s3_params;
+  checkout_s3_pub_deployment_params;
+fi
 
 # make plist file
 cd $project_dir;
@@ -167,6 +169,33 @@ prepare_ios_native_deps() {
 
   turbo_prepare_cocoapods
 }
+
+# Sign-only local build: reuse the feature-test artifact preparation, then
+# archive without signing so the cloud machine can sign it.
+if [ "$RABBY_MOBILE_IOS_BUILD_UNSIGNED" == "true" ]; then
+  echo "[deploy-ios-adhoc] sign-only build: producing an unsigned archive"
+  export RABBY_MOBILE_SIGN_ONLY=true
+  export RABBY_MOBILE_BUILD_ENV="regression"
+  prepare_ios_build_artifacts || exit $?
+  prepare_ios_native_deps || exit $?
+  sh ./ios/patches/override-xcconfig-release.sh
+  unsigned_archive="${RABBY_MOBILE_IOS_UNSIGNED_ARCHIVE:-$project_dir/.sign-only/RabbyMobile.xcarchive}"
+  rm -rf "$unsigned_archive" "${unsigned_archive}.zip"
+  xcodebuild \
+    -workspace "$project_dir/ios/RabbyMobile.xcworkspace" \
+    -scheme RabbyMobileRegression \
+    -configuration Regression \
+    -destination 'generic/platform=iOS' \
+    -archivePath "$unsigned_archive" \
+    CODE_SIGNING_ALLOWED=NO \
+    CODE_SIGN_IDENTITY="" \
+    CODE_SIGNING_REQUIRED=NO \
+    archive || exit $?
+  (cd "$(dirname "$unsigned_archive")" && ditto -c -k --sequesterRsrc --keepParent "$(basename "$unsigned_archive")" "${unsigned_archive}.zip")
+  echo "[deploy-ios-adhoc] unsigned iOS archive: ${unsigned_archive}.zip"
+  shasum -a 256 "${unsigned_archive}.zip"
+  exit 0
+fi
 
 [ "$GHA_MOCK_BUILD_FAILED" == "true" ] && SKIP_BUILD=true
 

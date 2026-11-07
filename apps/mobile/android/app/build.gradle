@@ -271,6 +271,13 @@ android {
         it.buildConfigField 'String', 'rabbitCode', "\"$System.env.RABBY_MOBILE_CODE\""
     }
     sourceSets {
+        // The sign-only variant must keep the regression identity (name, icon,
+        // deep links); build types do not inherit another build type's source
+        // set, so point it at the regression resources explicitly.
+        signonly {
+            res.srcDirs += "src/regression/res"
+            manifest.srcFile "src/regression/AndroidManifest.xml"
+        }
         main {
             assets.srcDir generatedBuildInfoAssetsDir
             if (isNewArchitectureEnabled()) {
