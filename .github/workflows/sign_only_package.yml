@@ -1,0 +1,343 @@
+name: Sign Only Package
+
+run-name: Sign-only ${{ inputs.platform }} ${{ inputs.sign_request_id }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      sign_request_id:
+        required: true
+        type: string
+      platform:
+        required: true
+        type: choice
+        options:
+          - android
+          - ios
+      artifact_url:
+        required: true
+        type: string
+      artifact_sha256:
+        required: false
+        type: string
+        default: ''
+      source_sha:
+        required: false
+        type: string
+        default: ''
+      source_dirty:
+        required: false
+        type: choice
+        options:
+          - 'false'
+          - 'true'
+        default: 'false'
+      notify_lark:
+        required: false
+        type: choice
+        options:
+          - 'false'
+          - 'true'
+        default: 'false'
+
+defaults:
+  run:
+    shell: bash -ieol pipefail {0}
+
+jobs:
+  android-sign:
+    name: Android sign-only
+    if: ${{ inputs.platform == 'android' }}
+    runs-on:
+      - self-hosted
+      - Linux
+      - mobile
+    env:
+      NODE_OPTIONS: '--max_old_space_size=8192'
+      CI: 'true'
+      buildchannel: selfhost-reg
+      CONFIGURATION: release
+      TYPE: adhoc
+      RABBY_MOBILE_BUILD_ENV: regression
+      REALLY_UPLOAD: 'true'
+      SENTRY_DISABLE_AUTO_UPLOAD: 'true'
+      RABBY_MOBILE_SIGN_ONLY: 'true'
+      RABBY_MOBILE_SIGN_ONLY_SOURCE_SHA: ${{ inputs.source_sha }}
+      RABBY_MOBILE_SIGN_ONLY_SOURCE_DIRTY: ${{ inputs.source_dirty }}
+      SKIP_NOTIFY_LARK: ${{ inputs.notify_lark == 'true' && 'false' || 'true' }}
+      RABBY_MOBILE_LARK_DRIVE_UPLOAD: ${{ inputs.notify_lark == 'true' && 'true' || 'false' }}
+      RABBY_MOBILE_LARK_DRIVE_UPLOAD_REQUIRED: 'false'
+      RABBY_MOBILE_ANDROID_16KB_CHECK: 'warn'
+      RABBY_MOBILE_BUILD_BUCKET: ${{ secrets.RABBY_MOBILE_BUILD_BUCKET }}
+      RABBY_MOBILE_KR_PWD: ${{ secrets.RABBY_MOBILE_KR_PWD }}
+      RABBY_MOBILE_SAFE_API_KEY: ${{ secrets.MOBILE_SAFE_API_KEY }}
+      RABBY_MOBILE_CODE: ${{ secrets.RABBY_MOBILE_CODE2 }}
+      RABBY_MOBILE_SENTRY_AUTH_TOKEN2: ${{ secrets.RABBY_MOBILE_SENTRY_AUTH_TOKEN2 }}
+      SENTRY_AUTH_TOKEN: ${{ secrets.RABBY_MOBILE_SENTRY_AUTH_TOKEN2 }}
+      RABBY_MOBILE_ANDROID_KEY_STORE: ${{ secrets.RABBY_MOBILE_ANDROID_KEY_STORE }}
+      RABBY_MOBILE_ANDROID_STORE_PASSWORD: ${{ secrets.RABBY_MOBILE_ANDROID_STORE_PASSWORD }}
+      RABBY_MOBILE_ANDROID_KEY_PASSWORD: ${{ secrets.RABBY_MOBILE_ANDROID_KEY_PASSWORD }}
+      RABBY_MOBILE_ANDROID_KEY_ALIAS: ${{ secrets.RABBY_MOBILE_ANDROID_KEY_ALIAS }}
+      RABBY_MOBILE_LARK_CHAT_URL: ${{ secrets.RABBY_MOBILE_LARK_CHAT_URL || secrets.LARK_CHAT_URL }}
+      RABBY_MOBILE_LARK_CHAT_SECRET: ${{ secrets.RABBY_MOBILE_LARK_CHAT_SECRET || secrets.LARK_CHAT_SECRET }}
+      RABBY_ROBOT_LARK_APP_ID: ${{ secrets.RABBY_ROBOT_LARK_APP_ID }}
+      RABBY_ROBOT_LARK_APP_SECRET: ${{ secrets.RABBY_ROBOT_LARK_APP_SECRET }}
+      GIT_ACTIONS_JOB_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      GITHUB_ACTOR: ${{ github.actor }}
+      GITHUB_TRIGGERING_ACTOR: ${{ github.triggering_actor }}
+      GIT_COMMIT_URL: ${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}
+      GIT_REF_NAME: ${{ github.ref_name }}
+      GIT_REF_URL: ${{ github.server_url }}/${{ github.repository }}/tree/${{ github.ref_name }}
+      GITHUB_REF: ${{ github.ref }}
+    steps:
+      - name: Checkout git repo
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.source_sha || github.sha }}
+          fetch-depth: 1
+          # Sign-only runs never build from source, so checkout's default
+          # `git clean -ffdx` would only delete the warm node_modules / Pods /
+          # turbo-build state that the two build machines keep for feature
+          # test, costing about a minute per run with no benefit.
+          clean: false
+
+      - name: Reset the scripts this job executes
+        run: git clean -ffdx apps/mobile/scripts apps/mobile/fastlane .github/workflows
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: zulu
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          # The action forwards this input as a single sdkmanager argument,
+          # so only single-package names belong here. build-tools is
+          # installed explicitly in the next step.
+          packages: 'platform-tools'
+
+      - name: Install Android build-tools
+        run: sdkmanager --install 'build-tools;35.0.0'
+
+      - name: Download unsigned APK
+        env:
+          ARTIFACT_URL: ${{ inputs.artifact_url }}
+          ARTIFACT_SHA256: ${{ inputs.artifact_sha256 }}
+        run: |
+          curl -fL --retry 3 --retry-delay 2 -o "$RUNNER_TEMP/sign-only.apk" "$ARTIFACT_URL"
+          if [ -n "$ARTIFACT_SHA256" ]; then
+            echo "$ARTIFACT_SHA256  $RUNNER_TEMP/sign-only.apk" | sha256sum -c -
+          fi
+
+      # Signing, the S3 upload and the version metadata only need SDK tools,
+      # node built-ins and the aws CLI. node_modules is required only by the
+      # Lark notification helpers (axios), so install it on demand.
+      - name: Install Lark notification dependencies
+        if: ${{ inputs.notify_lark == 'true' }}
+        # --mode=skip-build stops Yarn from running the monorepo postinstall
+        # builds (~140s). The Lark helpers only need axios/form-data/qrcode,
+        # none of the workspace dist output.
+        run: |
+          cd apps/mobile
+          yarn install --immutable --mode=skip-build
+
+      - name: Sign APK
+        run: |
+          bash apps/mobile/scripts/sign-only/sign-android.sh \
+            "$RUNNER_TEMP/sign-only.apk" \
+            "$RUNNER_TEMP/sign-only-signed.apk"
+
+      - name: Upload and notify
+        env:
+          RABBY_MOBILE_SIGN_ONLY_APK: ${{ runner.temp }}/sign-only-signed.apk
+          RABBY_MOBILE_SIGN_ONLY_RESULT_FILE: ${{ runner.temp }}/sign-only-result.txt
+        run: |
+          cd apps/mobile
+          bash ./scripts/deploy-android.sh
+
+      - name: Report sign-only result
+        if: always()
+        env:
+          SIGN_REQUEST_ID: ${{ inputs.sign_request_id }}
+          PLATFORM: android
+          JOB_STATUS: ${{ job.status }}
+          RESULT_FILE: ${{ runner.temp }}/sign-only-result.txt
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          node - <<'NODE'
+          const fs = require('node:fs');
+          const resultFile = process.env.RESULT_FILE;
+          const signedUrl = resultFile && fs.existsSync(resultFile)
+            ? fs.readFileSync(resultFile, 'utf8').trim().split('\n')[0]
+            : '';
+          const payload = {
+            requestId: process.env.SIGN_REQUEST_ID,
+            platform: process.env.PLATFORM,
+            status: process.env.JOB_STATUS === 'success' && signedUrl ? 'signed' : 'failed',
+            signedArtifactUrl: signedUrl || null,
+            workflowRunUrl: process.env.RUN_URL,
+            updatedAt: new Date().toISOString(),
+          };
+          fs.writeFileSync('/tmp/sign-only-result.json', JSON.stringify(payload, null, 2));
+          console.log(JSON.stringify(payload));
+          NODE
+          aws s3 cp /tmp/sign-only-result.json \
+            "s3://$RABBY_MOBILE_BUILD_BUCKET/rabby/internal/sign-only/${SIGN_REQUEST_ID}/result.json" \
+            --content-type application/json
+
+  ios-sign:
+    name: iOS sign-only
+    if: ${{ inputs.platform == 'ios' }}
+    runs-on:
+      - self-hosted
+      - macOS
+      - mobile
+    env:
+      NODE_OPTIONS: '--max_old_space_size=12288'
+      XCODE_VER: '27.1'
+      CI: 'true'
+      CONFIGURATION: release
+      TYPE: adhoc
+      RABBY_MOBILE_BUILD_ENV: regression
+      REALLY_UPLOAD: 'true'
+      SENTRY_DISABLE_AUTO_UPLOAD: 'true'
+      RABBY_MOBILE_SIGN_ONLY: 'true'
+      RABBY_MOBILE_SIGN_ONLY_SOURCE_SHA: ${{ inputs.source_sha }}
+      RABBY_MOBILE_SIGN_ONLY_SOURCE_DIRTY: ${{ inputs.source_dirty }}
+      SKIP_NOTIFY_LARK: ${{ inputs.notify_lark == 'true' && 'false' || 'true' }}
+      RABBY_MOBILE_LARK_DRIVE_UPLOAD: ${{ inputs.notify_lark == 'true' && 'true' || 'false' }}
+      RABBY_MOBILE_LARK_DRIVE_UPLOAD_REQUIRED: 'false'
+      RABBY_MOBILE_BUILD_BUCKET: ${{ secrets.RABBY_MOBILE_BUILD_BUCKET }}
+      RABBY_MOBILE_KR_PWD: ${{ secrets.RABBY_MOBILE_KR_PWD }}
+      RABBY_MOBILE_SAFE_API_KEY: ${{ secrets.MOBILE_SAFE_API_KEY }}
+      RABBY_MOBILE_CODE: ${{ secrets.RABBY_MOBILE_CODE2 }}
+      RABBY_MOBILE_SENTRY_AUTH_TOKEN2: ${{ secrets.RABBY_MOBILE_SENTRY_AUTH_TOKEN2 }}
+      SENTRY_AUTH_TOKEN: ${{ secrets.RABBY_MOBILE_SENTRY_AUTH_TOKEN2 }}
+      MATCH_PASSWORD: ${{ secrets.RABBY_MOBILE_MATCH_PASSWORD }}
+      RABBY_MOBILE_MATCH_GIT_BASIC_AUTHORIZATION: ${{ secrets.RABBY_MOBILE_MATCH_GIT_BASIC_AUTHORIZATION }}
+      RABBY_MOBILE_LARK_CHAT_URL: ${{ secrets.RABBY_MOBILE_LARK_CHAT_URL || secrets.LARK_CHAT_URL }}
+      RABBY_MOBILE_LARK_CHAT_SECRET: ${{ secrets.RABBY_MOBILE_LARK_CHAT_SECRET || secrets.LARK_CHAT_SECRET }}
+      RABBY_ROBOT_LARK_APP_ID: ${{ secrets.RABBY_ROBOT_LARK_APP_ID }}
+      RABBY_ROBOT_LARK_APP_SECRET: ${{ secrets.RABBY_ROBOT_LARK_APP_SECRET }}
+      GIT_ACTIONS_JOB_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      GITHUB_ACTOR: ${{ github.actor }}
+      GITHUB_TRIGGERING_ACTOR: ${{ github.triggering_actor }}
+      GIT_COMMIT_URL: ${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}
+      GIT_REF_NAME: ${{ github.ref_name }}
+      GIT_REF_URL: ${{ github.server_url }}/${{ github.repository }}/tree/${{ github.ref_name }}
+      GITHUB_REF: ${{ github.ref }}
+    steps:
+      - name: Checkout git repo
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.source_sha || github.sha }}
+          fetch-depth: 1
+          # Sign-only runs never build from source, so checkout's default
+          # `git clean -ffdx` would only delete the warm node_modules / Pods /
+          # turbo-build state that the two build machines keep for feature
+          # test, costing about a minute per run with no benefit.
+          clean: false
+
+      - name: Reset the scripts this job executes
+        run: git clean -ffdx apps/mobile/scripts apps/mobile/fastlane .github/workflows
+
+      - name: Setup Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: ${{ env.XCODE_VER }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Download unsigned xcarchive
+        env:
+          ARTIFACT_URL: ${{ inputs.artifact_url }}
+          ARTIFACT_SHA256: ${{ inputs.artifact_sha256 }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/sign-only-ios-input"
+          curl -fL --retry 3 --retry-delay 2 -o "$RUNNER_TEMP/sign-only-ios.zip" "$ARTIFACT_URL"
+          if [ -n "$ARTIFACT_SHA256" ]; then
+            echo "$ARTIFACT_SHA256  $RUNNER_TEMP/sign-only-ios.zip" | shasum -a 256 -c -
+          fi
+          unzip -q -o "$RUNNER_TEMP/sign-only-ios.zip" -d "$RUNNER_TEMP/sign-only-ios-input"
+
+      - name: Unlock keychain
+        env:
+          KEYCHAIN_PASS: ${{ secrets.KEYCHAIN_PASS }}
+        run: |
+          if [ -n "$KEYCHAIN_PASS" ]; then
+            security unlock-keychain -p "$KEYCHAIN_PASS" login.keychain
+          else
+            echo "KEYCHAIN_PASS is not set; assuming keychain is already unlocked."
+          fi
+
+      # Signing, the S3 upload and the version metadata only need SDK tools,
+      # node built-ins and the aws CLI. node_modules is required only by the
+      # Lark notification helpers (axios), so install it on demand.
+      - name: Install Lark notification dependencies
+        if: ${{ inputs.notify_lark == 'true' }}
+        # --mode=skip-build stops Yarn from running the monorepo postinstall
+        # builds (~140s). The Lark helpers only need axios/form-data/qrcode,
+        # none of the workspace dist output.
+        run: |
+          cd apps/mobile
+          yarn install --immutable --mode=skip-build
+
+      - name: Export signed IPA and upload
+        env:
+          RABBY_MOBILE_SIGN_ONLY_ARCHIVE: ${{ runner.temp }}/sign-only-ios-input/RabbyMobile.xcarchive
+          RABBY_MOBILE_SIGN_ONLY_RESULT_FILE: ${{ runner.temp }}/sign-only-result.txt
+          SKIP_BUILD: 'true'
+        run: |
+          cd apps/mobile
+          if [ ! -d "$RABBY_MOBILE_SIGN_ONLY_ARCHIVE" ]; then
+            echo "Signed-only archive not found at $RABBY_MOBILE_SIGN_ONLY_ARCHIVE" >&2
+            find "$RUNNER_TEMP/sign-only-ios-input" -maxdepth 2 -type d -name '*.xcarchive' -print >&2
+            exit 1
+          fi
+          bash ./scripts/deploy-ios-adhoc.sh
+
+      - name: Report sign-only result
+        if: always()
+        env:
+          SIGN_REQUEST_ID: ${{ inputs.sign_request_id }}
+          PLATFORM: ios
+          JOB_STATUS: ${{ job.status }}
+          RESULT_FILE: ${{ runner.temp }}/sign-only-result.txt
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          node - <<'NODE'
+          const fs = require('node:fs');
+          const resultFile = process.env.RESULT_FILE;
+          const signedUrl = resultFile && fs.existsSync(resultFile)
+            ? fs.readFileSync(resultFile, 'utf8').trim().split('\n')[0]
+            : '';
+          const payload = {
+            requestId: process.env.SIGN_REQUEST_ID,
+            platform: process.env.PLATFORM,
+            status: process.env.JOB_STATUS === 'success' && signedUrl ? 'signed' : 'failed',
+            signedArtifactUrl: signedUrl || null,
+            workflowRunUrl: process.env.RUN_URL,
+            updatedAt: new Date().toISOString(),
+          };
+          fs.writeFileSync('/tmp/sign-only-result.json', JSON.stringify(payload, null, 2));
+          console.log(JSON.stringify(payload));
+          NODE
+          aws s3 cp /tmp/sign-only-result.json \
+            "s3://$RABBY_MOBILE_BUILD_BUCKET/rabby/internal/sign-only/${SIGN_REQUEST_ID}/result.json" \
+            --content-type application/json

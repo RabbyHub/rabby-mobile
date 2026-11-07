@@ -260,6 +260,12 @@ android {
             applicationIdSuffix ".regression"
             matchingFallbacks = ['release']
         }
+        // Unsigned regression-like variant used by the sign-only workflow.
+        signonly {
+            initWith regression
+            signingConfig null
+            matchingFallbacks = ['regression', 'release']
+        }
     }
     buildTypes.each {
         it.buildConfigField 'String', 'rabbitCode', "\"$System.env.RABBY_MOBILE_CODE\""

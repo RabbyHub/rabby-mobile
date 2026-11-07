@@ -60,6 +60,16 @@ build_adhoc() {
   export RABBY_MOBILE_BUILD_ENV="regression";
   cd $project_dir;
   sh ./ios/patches/override-xcconfig-release.sh;
+  if [ -n "$RABBY_MOBILE_SIGN_ONLY_ARCHIVE" ]; then
+    echo "[deploy-ios-adhoc] sign-only mode: exporting from $RABBY_MOBILE_SIGN_ONLY_ARCHIVE"
+    export ios_archive_path="$RABBY_MOBILE_SIGN_ONLY_ARCHIVE"
+    export RABBY_MOBILE_IOS_ARCHIVE_PATH="$RABBY_MOBILE_SIGN_ONLY_ARCHIVE"
+    export RABBY_MOBILE_IOS_SKIP_BUILD_ARCHIVE=true
+    export RABBY_MOBILE_SIGN_ONLY=true
+    prepare_ios_ruby_bundle || return $?
+    turbo_bundle_exec exec fastlane ios adhoc
+    return $?
+  fi
   export ios_archive_path="$project_dir/ios/Package/adhoc/RabbyMobile.xcarchive"
 
   prepare_ios_build_artifacts;
@@ -199,6 +209,12 @@ if [ "$REALLY_UPLOAD" == "true" ]; then
   aws s3 sync $NO_VERIFY_SSL_FLAG $deployment_local_dir $deployment_s3_dir/ --exclude '*' --include "*.json" --acl public-read --content-type application/json --exact-timestamps
   aws s3 sync $NO_VERIFY_SSL_FLAG $deployment_local_dir $deployment_s3_dir/ --exclude '*' --include "*.md" --acl public-read --content-type text/plain --exact-timestamps
 
+  # Sign-only runs report the published URL back through this file so the
+  # workflow can write result.json for the fe-opcode record.
+  if [ -n "${RABBY_MOBILE_SIGN_ONLY_RESULT_FILE:-}" ]; then
+    printf '%s\n' "$deployment_cdn_baseurl/rabbymobile.ipa" > "$RABBY_MOBILE_SIGN_ONLY_RESULT_FILE"
+  fi
+
   lark_drive_url=""
   if [ "$RABBY_MOBILE_LARK_DRIVE_UPLOAD" = "true" ] && [ "$SKIP_NOTIFY_LARK" != "true" ]; then
     echo "[deploy-ios-adhoc] upload IPA to Lark Drive..."
@@ -208,7 +224,11 @@ if [ "$REALLY_UPLOAD" == "true" ]; then
     fi
   fi
 
-  RABBY_MOBILE_LARK_DRIVE_URL="$lark_drive_url" node $script_dir/notify-lark.js "$manifest_plist_url" ios "$(ios_fast_build_enabled_value)"
+  if [ "$SKIP_NOTIFY_LARK" != "true" ]; then
+    RABBY_MOBILE_LARK_DRIVE_URL="$lark_drive_url" node $script_dir/notify-lark.js "$manifest_plist_url" ios "$(ios_fast_build_enabled_value)"
+  else
+    echo "[deploy-ios-adhoc] SKIP_NOTIFY_LARK=true, skip Lark notification."
+  fi
 fi
 
 [ -z $RABBY_MOBILE_CDN_FRONTEND_ID ] && RABBY_MOBILE_CDN_FRONTEND_ID="<DIST_ID>"
