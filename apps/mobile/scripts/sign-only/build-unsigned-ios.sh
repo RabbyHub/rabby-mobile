@@ -9,10 +9,39 @@ output_zip="${2:-${archive_path}.zip}"
 mkdir -p "$(dirname "$archive_path")"
 cd "$project_dir"
 
-if [ ! -d "$project_dir/ios/Pods" ]; then
-  echo "[sign-only] ios/Pods is missing; run 'yarn ios:installpod' first" >&2
-  exit 1
-fi
+# A stale Pods project (Manifest.lock older than Podfile.lock) makes Xcode
+# reject the archive with "IPHONEOS_DEPLOYMENT_TARGET ... is set to 12.4, but
+# the range of supported deployment target versions is 15.0 to 27.1.x", so
+# bring Pods in sync before building. No signing material is involved.
+ensure_ios_pods() {
+  local ios_dir="$project_dir/ios"
+
+  if [ -d "$ios_dir/Pods" ] && [ -f "$ios_dir/Pods/Manifest.lock" ] &&
+    [ -f "$ios_dir/Podfile.lock" ] && cmp -s "$ios_dir/Pods/Manifest.lock" "$ios_dir/Podfile.lock"; then
+    return 0
+  fi
+
+  if [ -d "$ios_dir/Pods" ]; then
+    echo "[sign-only] ios/Pods is out of date with Podfile.lock; running pod install..."
+    # CocoaPods does not always rewrite an existing Manifest.lock, so drop the
+    # generated copy and let the install recreate it from Podfile.lock.
+    find "$ios_dir/Pods" -maxdepth 1 -name Manifest.lock -delete
+  else
+    echo "[sign-only] ios/Pods is missing; running pod install..."
+  fi
+
+  (
+    cd "$ios_dir"
+    if [ -f "Gemfile" ]; then
+      bundle install
+      bundle exec pod install
+    else
+      pod install
+    fi
+  )
+}
+
+ensure_ios_pods
 
 rm -rf "$archive_path" "$output_zip"
 echo "[sign-only] building unsigned iOS archive..."
