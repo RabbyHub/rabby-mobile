@@ -66,6 +66,8 @@ build_adhoc() {
     export RABBY_MOBILE_IOS_ARCHIVE_PATH="$RABBY_MOBILE_SIGN_ONLY_ARCHIVE"
     export RABBY_MOBILE_IOS_SKIP_BUILD_ARCHIVE=true
     export RABBY_MOBILE_SIGN_ONLY=true
+    # Never re-upload an IPA left over from an earlier run.
+    rm -f "$ouput_dir/RabbyMobile.ipa"
     prepare_ios_ruby_bundle || return $?
     turbo_bundle_exec exec fastlane ios adhoc
     return $?
@@ -168,7 +170,7 @@ prepare_ios_native_deps() {
 
 [ "$GHA_MOCK_BUILD_FAILED" == "true" ] && SKIP_BUILD=true
 
-if [[ -z $SKIP_BUILD || ! -f $ouput_dir/RabbyMobile.ipa ]]; then
+if [[ -n "$RABBY_MOBILE_SIGN_ONLY_ARCHIVE" || -z $SKIP_BUILD || ! -f $ouput_dir/RabbyMobile.ipa ]]; then
   echo "[deploy-ios-adhoc] start build..."
   build_adhoc || exit $?
   echo "[deploy-ios-adhoc] finish build."
