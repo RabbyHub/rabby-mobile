@@ -338,25 +338,25 @@ echo "[deploy-android] start sync..."
 
 if [ "$REALLY_UPLOAD" == "true" ]; then
   echo "[deploy-android] will be backup at $backup_s3_dir (not public)"
-  aws s3 sync $deployment_local_dir $backup_s3_dir/ --exclude '*' --include "*.json" --acl authenticated-read --content-type application/json --exact-timestamps
-  aws s3 sync $deployment_local_dir $backup_s3_dir/ --exclude '*' --include "*.md" --acl authenticated-read --content-type text/plain --exact-timestamps
-  aws s3 sync $deployment_local_dir $backup_s3_dir/ --exclude '*' --include "*.txt" --acl authenticated-read --content-type text/plain --exact-timestamps
-  aws s3 sync $deployment_local_dir $backup_s3_dir/ --exclude '*' --include "*.apk" --acl authenticated-read --content-type application/vnd.android.package-archive --exact-timestamps
-  aws s3 sync $deployment_local_dir $backup_s3_dir/ --exclude '*' --include "*.aab" --acl authenticated-read --content-type application/x-authorware-bin --exact-timestamps
+  aws s3 sync $deployment_local_dir $backup_s3_dir/ --exclude '*' --include "*.json" --acl authenticated-read --content-type application/json --exact-timestamps || exit 1
+  aws s3 sync $deployment_local_dir $backup_s3_dir/ --exclude '*' --include "*.md" --acl authenticated-read --content-type text/plain --exact-timestamps || exit 1
+  aws s3 sync $deployment_local_dir $backup_s3_dir/ --exclude '*' --include "*.txt" --acl authenticated-read --content-type text/plain --exact-timestamps || exit 1
+  aws s3 sync $deployment_local_dir $backup_s3_dir/ --exclude '*' --include "*.apk" --acl authenticated-read --content-type application/vnd.android.package-archive --exact-timestamps || exit 1
+  aws s3 sync $deployment_local_dir $backup_s3_dir/ --exclude '*' --include "*.aab" --acl authenticated-read --content-type application/x-authorware-bin --exact-timestamps || exit 1
 
   if [ "$buildchannel" == 'selfhost-reg' ]; then
     echo "[deploy-android] will public at $staging_s3_dir, served as $staging_cdn_baseurl"
     [ -z "$CI" ] && echo "[deploy-android] open $apk_url to download"
-    aws s3 sync $backup_s3_dir/ $staging_s3_dir/ --acl $staging_acl --exact-timestamps
+    aws s3 sync $backup_s3_dir/ $staging_s3_dir/ --acl $staging_acl --exact-timestamps || exit 1
   else
     echo "[deploy-android] will public as $apk_url"
-    aws s3 sync $backup_s3_dir/ $release_s3_dir/ --exclude '*' --include "*.md" --acl public-read --content-type text/plain --exact-timestamps
+    aws s3 sync $backup_s3_dir/ $release_s3_dir/ --exclude '*' --include "*.md" --acl public-read --content-type text/plain --exact-timestamps || exit 1
   fi
 
   echo "";
   if [ $buildchannel != "appstore" ]; then
     echo "[deploy-android] to refresh the release($buildchannel), you could execute:"
-    echo "[deploy-android] aws s3 sync $backup_s3_dir/ $release_s3_dir/ --acl public-read"
+    echo "[deploy-android] aws s3 sync $backup_s3_dir/ $release_s3_dir/ --acl public-read" || exit 1
   else
     echo "[deploy-android] open directory and upload to google play store "
     echo "[deploy-android] you can find the .aab from $backup_s3_dir";
