@@ -162,6 +162,11 @@ jobs:
           RABBY_MOBILE_SIGN_ONLY_APK: ${{ runner.temp }}/sign-only-signed.apk
           RABBY_MOBILE_SIGN_ONLY_RESULT_FILE: ${{ runner.temp }}/sign-only-result.txt
         run: |
+          # The self-hosted runners use `bash -ieol`, so a stale value in the
+          # machine profile can shadow the workflow env; re-export the Lark
+          # credentials right before the deploy/notify step.
+          export RABBY_ROBOT_LARK_APP_ID='${{ secrets.RABBY_ROBOT_LARK_APP_ID }}'
+          export RABBY_ROBOT_LARK_APP_SECRET='${{ secrets.RABBY_ROBOT_LARK_APP_SECRET }}'
           cd apps/mobile
           bash ./scripts/deploy-android.sh
 
@@ -310,6 +315,10 @@ jobs:
             find "$RUNNER_TEMP/sign-only-ios-input" -maxdepth 2 -type d -name '*.xcarchive' -print >&2
             exit 1
           fi
+          # See the Android job: re-export so a stale machine-profile value
+          # cannot win over the workflow secrets.
+          export RABBY_ROBOT_LARK_APP_ID='${{ secrets.RABBY_ROBOT_LARK_APP_ID }}'
+          export RABBY_ROBOT_LARK_APP_SECRET='${{ secrets.RABBY_ROBOT_LARK_APP_SECRET }}'
           bash ./scripts/deploy-ios-adhoc.sh
 
       - name: Report sign-only result
