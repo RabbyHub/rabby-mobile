@@ -174,6 +174,7 @@ prepare_ios_native_deps() {
 # archive without signing so the cloud machine can sign it.
 if [ "$RABBY_MOBILE_IOS_BUILD_UNSIGNED" == "true" ]; then
   echo "[deploy-ios-adhoc] sign-only build: producing an unsigned archive"
+  cd "$project_dir"
   export RABBY_MOBILE_SIGN_ONLY=true
   export RABBY_MOBILE_BUILD_ENV="regression"
   prepare_ios_build_artifacts || exit $?
