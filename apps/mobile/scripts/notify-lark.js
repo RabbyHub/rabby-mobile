@@ -71,7 +71,7 @@ async function sendMessage({
       post: {
         zh_cn: {
           title: isSignOnly
-            ? `⚠️ [仅签名][${platformName}] Rabby Mobile 打包失败! `
+            ? `⚠️ [本地打包 · 云端仅签名][${platformName}] Rabby Mobile 签名失败! `
             : `⚠️ [${platformName}] Rabby Mobile 打包失败! `,
           content: [
             [
@@ -123,7 +123,7 @@ async function sendMessage({
       post: {
         zh_cn: {
           title: isSignOnly
-            ? `🖊️ [仅签名][${platformName}] Rabby Mobile 预览包已生成 🚀 `
+            ? `🖊️ [本地打包 · 云端仅签名][${platformName}] Rabby Mobile 预览包已生成 🚀 `
             : `📱 [${platformName}] Rabby Mobile 预览包已生成 🚀 `,
           content: [
             platform === 'android' && [
@@ -133,7 +133,7 @@ async function sendMessage({
             isSignOnly && [
               {
                 tag: 'text',
-                text: `该预览包为仅签名打包，构建在本地完成。`,
+                text: `本次产物由开发者本地编译（未签名），云端打包机只做签名与分发。`,
               },
             ],
             isSignOnly &&
