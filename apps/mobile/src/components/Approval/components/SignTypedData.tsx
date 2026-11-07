@@ -31,7 +31,11 @@ import {
 } from '../hooks/useActionSecurity';
 import { SecurityEngineError } from './SecurityEngine/SecurityEngineError';
 import { apiKeyring, apiProvider, apiSecurityEngine } from '@/core/apis';
-import { parseSignTypedDataMessage } from './SignTypedDataExplain/parseSignTypedDataMessage';
+import cloneDeep from 'lodash/cloneDeep';
+import {
+  normalizeTypedData,
+  parseSignTypedDataMessage,
+} from './SignTypedDataExplain/parseSignTypedDataMessage';
 import { getDappSnapshot } from '@/core/serviceApi/dapp';
 import { keyringServiceApi } from '@/core/serviceApi/keyring';
 import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
@@ -172,9 +176,10 @@ export const SignTypedData = ({
     useMemo(() => {
       if (!isSignTypedDataV1) {
         try {
-          const raw = JSON.parse(data[1]);
-          const normalized = normalizeTypeData(JSON.parse(data[1]));
-          return [normalized, raw];
+          const typedData = normalizeTypedData(JSON.parse(data[1]));
+          const displayData = cloneDeep(typedData);
+          const normalized = normalizeTypeData(typedData);
+          return [normalized, displayData];
         } catch (error) {
           console.error('parse signTypedData error: ', error);
           return [null, null];
