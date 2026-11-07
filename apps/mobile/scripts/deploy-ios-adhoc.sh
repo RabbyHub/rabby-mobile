@@ -182,6 +182,12 @@ if [ "$RABBY_MOBILE_IOS_BUILD_UNSIGNED" == "true" ]; then
   sh ./ios/patches/override-xcconfig-release.sh
   unsigned_archive="${RABBY_MOBILE_IOS_UNSIGNED_ARCHIVE:-$project_dir/.sign-only/RabbyMobile.xcarchive}"
   rm -rf "$unsigned_archive" "${unsigned_archive}.zip"
+  # `[Hermes] Replace Hermes for the right configuration` skips when this marker
+  # matches the current configuration, which leaves the Debug hermes framework
+  # inside a Release/Regression archive. That app crashes at JS init
+  # (EXC_BAD_ACCESS in Hermes on launch). Drop the marker so the phase runs and
+  # installs the Release hermes.
+  find "$project_dir/ios/Pods" -maxdepth 1 -name ".last_build_configuration" -delete 2>/dev/null
   xcodebuild \
     -workspace "$project_dir/ios/RabbyMobile.xcworkspace" \
     -scheme RabbyMobileRegression \
