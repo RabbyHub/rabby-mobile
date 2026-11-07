@@ -134,11 +134,14 @@ jobs:
       # Signing, the S3 upload and the version metadata only need SDK tools,
       # node built-ins and the aws CLI. node_modules is required only by the
       # Lark notification helpers (axios), so install it on demand.
-      - name: Install mobile dependencies (Lark notification only)
+      - name: Install Lark notification dependencies
         if: ${{ inputs.notify_lark == 'true' }}
+        # --mode=skip-build stops Yarn from running the monorepo postinstall
+        # builds (~140s). The Lark helpers only need axios/form-data/qrcode,
+        # none of the workspace dist output.
         run: |
           cd apps/mobile
-          bash ./scripts/ci/prepare-mobile-build.sh
+          yarn install --immutable --mode=skip-build
 
       - name: Sign APK
         run: |
@@ -239,11 +242,14 @@ jobs:
       # Signing, the S3 upload and the version metadata only need SDK tools,
       # node built-ins and the aws CLI. node_modules is required only by the
       # Lark notification helpers (axios), so install it on demand.
-      - name: Install mobile dependencies (Lark notification only)
+      - name: Install Lark notification dependencies
         if: ${{ inputs.notify_lark == 'true' }}
+        # --mode=skip-build stops Yarn from running the monorepo postinstall
+        # builds (~140s). The Lark helpers only need axios/form-data/qrcode,
+        # none of the workspace dist output.
         run: |
           cd apps/mobile
-          bash ./scripts/ci/prepare-mobile-build.sh
+          yarn install --immutable --mode=skip-build
 
       - name: Export signed IPA and upload
         env:
