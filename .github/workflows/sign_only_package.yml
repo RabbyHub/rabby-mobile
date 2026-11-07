@@ -131,11 +131,6 @@ jobs:
             echo "$ARTIFACT_SHA256  $RUNNER_TEMP/sign-only.apk" | sha256sum -c -
           fi
 
-      - name: Install mobile dependencies
-        run: |
-          cd apps/mobile
-          bash ./scripts/ci/prepare-mobile-build.sh
-
       - name: Sign APK
         run: |
           bash apps/mobile/scripts/sign-only/sign-android.sh \
@@ -221,11 +216,6 @@ jobs:
             echo "$ARTIFACT_SHA256  $RUNNER_TEMP/sign-only-ios.zip" | shasum -a 256 -c -
           fi
           unzip -q -o "$RUNNER_TEMP/sign-only-ios.zip" -d "$RUNNER_TEMP/sign-only-ios-input"
-
-      - name: Install mobile dependencies
-        run: |
-          cd apps/mobile
-          bash ./scripts/ci/prepare-mobile-build.sh
 
       - name: Unlock keychain
         env:
