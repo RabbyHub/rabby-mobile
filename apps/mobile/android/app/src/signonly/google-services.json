@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "809331497367",
+    "project_id": "rabby-mobile",
+    "storage_bucket": "rabby-mobile.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:809331497367:android:63dc21c447a4f454570cd2",
+        "android_client_info": {
+          "package_name": "com.debank.rabbymobile.regression"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "809331497367-hhietrsi4ani813o7evsqb7l30m6cs3n.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.debank.rabbymobile.regression",
+            "certificate_hash": "97012de2489807df048af2db9793230dd7397f2a"
+          }
+        },
+        {
+          "client_id": "809331497367-vv5g8gs5v7187a349pon5ggnsrgr7uuj.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAMKhIvBPa7XIKopsjpakUj78CrlD8fMPw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "809331497367-js92drkjmd7ihv23od98u4ri6tg25kjq.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "809331497367-85vtc15egvte1r5nc30dnno4l1ofbeqg.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.debank.rabby-mobile"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
