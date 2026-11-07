@@ -218,7 +218,11 @@ if [ "$REALLY_UPLOAD" == "true" ]; then
     fi
   fi
 
-  RABBY_MOBILE_LARK_DRIVE_URL="$lark_drive_url" node $script_dir/notify-lark.js "$manifest_plist_url" ios "$(ios_fast_build_enabled_value)"
+  if [ "$SKIP_NOTIFY_LARK" != "true" ]; then
+    RABBY_MOBILE_LARK_DRIVE_URL="$lark_drive_url" node $script_dir/notify-lark.js "$manifest_plist_url" ios "$(ios_fast_build_enabled_value)"
+  else
+    echo "[deploy-ios-adhoc] SKIP_NOTIFY_LARK=true, skip Lark notification."
+  fi
 fi
 
 [ -z $RABBY_MOBILE_CDN_FRONTEND_ID ] && RABBY_MOBILE_CDN_FRONTEND_ID="<DIST_ID>"

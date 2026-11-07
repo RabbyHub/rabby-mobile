@@ -131,6 +131,15 @@ jobs:
             echo "$ARTIFACT_SHA256  $RUNNER_TEMP/sign-only.apk" | sha256sum -c -
           fi
 
+      # Signing, the S3 upload and the version metadata only need SDK tools,
+      # node built-ins and the aws CLI. node_modules is required only by the
+      # Lark notification helpers (axios), so install it on demand.
+      - name: Install mobile dependencies (Lark notification only)
+        if: ${{ inputs.notify_lark == 'true' }}
+        run: |
+          cd apps/mobile
+          bash ./scripts/ci/prepare-mobile-build.sh
+
       - name: Sign APK
         run: |
           bash apps/mobile/scripts/sign-only/sign-android.sh \
@@ -226,6 +235,15 @@ jobs:
           else
             echo "KEYCHAIN_PASS is not set; assuming keychain is already unlocked."
           fi
+
+      # Signing, the S3 upload and the version metadata only need SDK tools,
+      # node built-ins and the aws CLI. node_modules is required only by the
+      # Lark notification helpers (axios), so install it on demand.
+      - name: Install mobile dependencies (Lark notification only)
+        if: ${{ inputs.notify_lark == 'true' }}
+        run: |
+          cd apps/mobile
+          bash ./scripts/ci/prepare-mobile-build.sh
 
       - name: Export signed IPA and upload
         env:
