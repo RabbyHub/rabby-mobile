@@ -105,7 +105,7 @@ function resolveSourceState(args) {
   const sha = args.sourceSha || gitOutput(['rev-parse', 'HEAD']);
   const dirty =
     args.sourceDirty === null
-      ? gitOutput(['status', '--porcelain']).length > 0
+      ? gitOutput(['status', '--porcelain', '--untracked-files=no']).length > 0
       : args.sourceDirty;
   return { sha, dirty };
 }
