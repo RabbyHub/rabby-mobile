@@ -209,6 +209,12 @@ if [ "$REALLY_UPLOAD" == "true" ]; then
   aws s3 sync $NO_VERIFY_SSL_FLAG $deployment_local_dir $deployment_s3_dir/ --exclude '*' --include "*.json" --acl public-read --content-type application/json --exact-timestamps
   aws s3 sync $NO_VERIFY_SSL_FLAG $deployment_local_dir $deployment_s3_dir/ --exclude '*' --include "*.md" --acl public-read --content-type text/plain --exact-timestamps
 
+  # Sign-only runs report the published URL back through this file so the
+  # workflow can write result.json for the fe-opcode record.
+  if [ -n "${RABBY_MOBILE_SIGN_ONLY_RESULT_FILE:-}" ]; then
+    printf '%s\n' "$deployment_cdn_baseurl/rabbymobile.ipa" > "$RABBY_MOBILE_SIGN_ONLY_RESULT_FILE"
+  fi
+
   lark_drive_url=""
   if [ "$RABBY_MOBILE_LARK_DRIVE_UPLOAD" = "true" ] && [ "$SKIP_NOTIFY_LARK" != "true" ]; then
     echo "[deploy-ios-adhoc] upload IPA to Lark Drive..."

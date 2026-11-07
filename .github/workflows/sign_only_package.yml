@@ -160,9 +160,40 @@ jobs:
       - name: Upload and notify
         env:
           RABBY_MOBILE_SIGN_ONLY_APK: ${{ runner.temp }}/sign-only-signed.apk
+          RABBY_MOBILE_SIGN_ONLY_RESULT_FILE: ${{ runner.temp }}/sign-only-result.txt
         run: |
           cd apps/mobile
           bash ./scripts/deploy-android.sh
+
+      - name: Report sign-only result
+        if: always()
+        env:
+          SIGN_REQUEST_ID: ${{ inputs.sign_request_id }}
+          PLATFORM: android
+          JOB_STATUS: ${{ job.status }}
+          RESULT_FILE: ${{ runner.temp }}/sign-only-result.txt
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          node - <<'NODE'
+          const fs = require('node:fs');
+          const resultFile = process.env.RESULT_FILE;
+          const signedUrl = resultFile && fs.existsSync(resultFile)
+            ? fs.readFileSync(resultFile, 'utf8').trim().split('\n')[0]
+            : '';
+          const payload = {
+            requestId: process.env.SIGN_REQUEST_ID,
+            platform: process.env.PLATFORM,
+            status: process.env.JOB_STATUS === 'success' && signedUrl ? 'signed' : 'failed',
+            signedArtifactUrl: signedUrl || null,
+            workflowRunUrl: process.env.RUN_URL,
+            updatedAt: new Date().toISOString(),
+          };
+          fs.writeFileSync('/tmp/sign-only-result.json', JSON.stringify(payload, null, 2));
+          console.log(JSON.stringify(payload));
+          NODE
+          aws s3 cp /tmp/sign-only-result.json \
+            "s3://$RABBY_MOBILE_BUILD_BUCKET/rabby/internal/sign-only/${SIGN_REQUEST_ID}/result.json" \
+            --content-type application/json
 
   ios-sign:
     name: iOS sign-only
@@ -270,6 +301,7 @@ jobs:
       - name: Export signed IPA and upload
         env:
           RABBY_MOBILE_SIGN_ONLY_ARCHIVE: ${{ runner.temp }}/sign-only-ios-input/RabbyMobile.xcarchive
+          RABBY_MOBILE_SIGN_ONLY_RESULT_FILE: ${{ runner.temp }}/sign-only-result.txt
           SKIP_BUILD: 'true'
         run: |
           cd apps/mobile
@@ -279,3 +311,33 @@ jobs:
             exit 1
           fi
           bash ./scripts/deploy-ios-adhoc.sh
+
+      - name: Report sign-only result
+        if: always()
+        env:
+          SIGN_REQUEST_ID: ${{ inputs.sign_request_id }}
+          PLATFORM: ios
+          JOB_STATUS: ${{ job.status }}
+          RESULT_FILE: ${{ runner.temp }}/sign-only-result.txt
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          node - <<'NODE'
+          const fs = require('node:fs');
+          const resultFile = process.env.RESULT_FILE;
+          const signedUrl = resultFile && fs.existsSync(resultFile)
+            ? fs.readFileSync(resultFile, 'utf8').trim().split('\n')[0]
+            : '';
+          const payload = {
+            requestId: process.env.SIGN_REQUEST_ID,
+            platform: process.env.PLATFORM,
+            status: process.env.JOB_STATUS === 'success' && signedUrl ? 'signed' : 'failed',
+            signedArtifactUrl: signedUrl || null,
+            workflowRunUrl: process.env.RUN_URL,
+            updatedAt: new Date().toISOString(),
+          };
+          fs.writeFileSync('/tmp/sign-only-result.json', JSON.stringify(payload, null, 2));
+          console.log(JSON.stringify(payload));
+          NODE
+          aws s3 cp /tmp/sign-only-result.json \
+            "s3://$RABBY_MOBILE_BUILD_BUCKET/rabby/internal/sign-only/${SIGN_REQUEST_ID}/result.json" \
+            --content-type application/json

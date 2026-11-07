@@ -340,6 +340,12 @@ if [ "$REALLY_UPLOAD" == "true" ]; then
   if [ ! -z $apk_url ]; then
     echo "[deploy-android] publish as $apk_name, with version.json"
 
+    # Sign-only runs report the published URL back through this file so the
+    # workflow can write result.json for the fe-opcode record.
+    if [ -n "${RABBY_MOBILE_SIGN_ONLY_RESULT_FILE:-}" ]; then
+      printf '%s\n' "$apk_url" > "$RABBY_MOBILE_SIGN_ONLY_RESULT_FILE"
+    fi
+
     lark_drive_url=""
     if [ "$RABBY_MOBILE_LARK_DRIVE_UPLOAD" = "true" ] && [ "$SKIP_NOTIFY_LARK" != "true" ]; then
       echo "[deploy-android] upload APK to Lark Drive..."
