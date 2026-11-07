@@ -192,6 +192,16 @@ if [ "$RABBY_MOBILE_IOS_BUILD_UNSIGNED" == "true" ]; then
     CODE_SIGN_IDENTITY="" \
     CODE_SIGNING_REQUIRED=NO \
     archive || exit $?
+  # An unsigned archive carries no entitlements, so the later gym export
+  # re-signs the app with the bare minimum (application-identifier/team-id) and
+  # features that need entitlements crash at launch. Ad-hoc sign the archive
+  # app with the Release entitlements so the export keeps them.
+  unsigned_app="$unsigned_archive/Products/Applications/RabbyMobile.app"
+  unsigned_entitlements="$project_dir/ios/RabbyMobile/RabbyMobileRelease.entitlements"
+  if [ -d "$unsigned_app" ] && [ -f "$unsigned_entitlements" ]; then
+    echo "[deploy-ios-adhoc] ad-hoc signing the unsigned archive with entitlements"
+    codesign --force --sign - --timestamp=none --entitlements "$unsigned_entitlements" "$unsigned_app" || exit $?
+  fi
   (cd "$(dirname "$unsigned_archive")" && ditto -c -k --sequesterRsrc --keepParent "$(basename "$unsigned_archive")" "${unsigned_archive}.zip")
   echo "[deploy-ios-adhoc] unsigned iOS archive: ${unsigned_archive}.zip"
   shasum -a 256 "${unsigned_archive}.zip"
