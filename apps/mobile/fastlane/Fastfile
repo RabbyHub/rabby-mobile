@@ -22,6 +22,38 @@ def ios_adhoc_skip_build_archive?
   ENV['RABBY_MOBILE_IOS_SKIP_BUILD_ARCHIVE'] == 'true'
 end
 
+# An archive built with CODE_SIGNING_ALLOWED=NO has an empty
+# ApplicationProperties.Team, and `xcodebuild -exportArchive` refuses it with
+# "No Team Found in Archive". Sign-only runs upload exactly such an archive, so
+# stamp the team id from the provisioning profile match just installed; the
+# export step then re-signs normally.
+def stamp_team_into_unsigned_archive(profile_name)
+  archive = ios_adhoc_archive_path
+  info_plist = File.join(archive, 'Info.plist')
+  return unless File.exist?(info_plist)
+
+  current = `/usr/libexec/PlistBuddy -c 'Print:ApplicationProperties:Team' "#{info_plist}" 2>/dev/null`.strip
+  return unless current.empty?
+
+  require 'plist'
+  profiles = Dir[File.expand_path('~/Library/MobileDevice/Provisioning Profiles/*.mobileprovision')].sort_by { |f| -File.mtime(f) }
+  matched = nil
+  profiles.each do |candidate|
+    data = Plist.parse_xml(`security cms -D -i "#{candidate}" 2>/dev/null`)
+    next if data.nil?
+    matched = data if data['Name'] == profile_name
+    break if matched
+  end
+  team_id = Array(matched && matched['TeamIdentifier']).first
+  if team_id.nil? || team_id.empty?
+    UI.important("Could not resolve a team id from installed provisioning profiles; export may fail")
+    return
+  end
+
+  `/usr/libexec/PlistBuddy -c 'Set:ApplicationProperties:Team #{team_id}' "#{info_plist}"`
+  UI.important("Stamped unsigned archive team: #{team_id}")
+end
+
 platform :ios do
   private_lane :load_app_store_connect_api_key_for_testflight do
     key_id = ENV["RABBY_MOBILE_ASC_API_KEY_ID"]
@@ -151,6 +183,10 @@ platform :ios do
   desc "Release for the iOS adhoc"
   lane :adhoc do
     prepare_apple_sign(type: 'adhoc')
+
+    if ios_adhoc_skip_build_archive?
+      stamp_team_into_unsigned_archive('RabbyMobileAdHocRegressionOpcode')
+    end
 
     gym(
       scheme: 'RabbyMobileRegression',
