@@ -16,9 +16,13 @@ FAST_BUILD_ENABLED=$(fast_build_enabled_value)
 UPLOAD_TEMPLATE_APK=${RABBY_MOBILE_UPLOAD_TEMPLATE_APK:-${FAST_BUILD_ENABLED}}
 export BUILD_TARGET_PLATFORM="android";
 export RABBY_MOBILE_BUILD_ENV="regression";
-check_build_params;
-check_s3_params;
-checkout_s3_pub_deployment_params;
+# A local sign-only build does not upload anything, so the S3/upload params
+# are not required.
+if [ "$RABBY_MOBILE_SIGN_ONLY_BUILD" != "true" ]; then
+  check_build_params;
+  check_s3_params;
+  checkout_s3_pub_deployment_params;
+fi
 
 cd $project_dir;
 
@@ -190,6 +194,27 @@ for changelog in "${possible_changelogs[@]}"; do
   fi
 done
 # ============ prepare changelogs :end ============== #
+
+# Sign-only local build: reuse the exact feature-test build preparation, then
+# stop with an unsigned APK instead of signing and uploading.
+if [ "$RABBY_MOBILE_SIGN_ONLY_BUILD" == "true" ]; then
+  echo "[deploy-android] sign-only build: producing an unsigned APK"
+  export RABBY_MOBILE_BUILD_ENV="regression"
+  export RABBY_MOBILE_SIGN_ONLY=true
+  prepare_android_build_artifacts || exit $?
+  ./android/gradlew -p ./android assembleSignonly --no-daemon -Porg.gradle.parallel=true || exit $?
+  sign_only_apk="$(find "$project_dir/android/app/build/outputs/apk/signonly" -type f -name '*.apk' | head -n 1)"
+  if [ -z "$sign_only_apk" ] || [ ! -f "$sign_only_apk" ]; then
+    echo "[deploy-android] unsigned APK not found under android/app/build/outputs/apk/signonly" >&2
+    exit 1
+  fi
+  sign_only_output="${RABBY_MOBILE_SIGN_ONLY_APK_OUT:-$project_dir/.sign-only/app-signonly-unsigned.apk}"
+  mkdir -p "$(dirname "$sign_only_output")"
+  cp "$sign_only_apk" "$sign_only_output"
+  echo "[deploy-android] unsigned Android APK: $sign_only_output"
+  shasum -a 256 "$sign_only_output"
+  exit 0
+fi
 
 echo "[deploy-android] start build..."
 if [ $buildchannel == "appstore" ]; then

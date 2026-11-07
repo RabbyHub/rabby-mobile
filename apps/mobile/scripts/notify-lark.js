@@ -70,9 +70,7 @@ async function sendMessage({
     body.content = {
       post: {
         zh_cn: {
-          title: isSignOnly
-            ? `⚠️ [本地打包 · 云端仅签名][${platformName}] Rabby Mobile 签名失败! `
-            : `⚠️ [${platformName}] Rabby Mobile 打包失败! `,
+          title: `⚠️ [${platformName}] Rabby Mobile 打包失败! `,
           content: [
             [
               {
@@ -96,6 +94,10 @@ async function sendMessage({
             triggers.length && [
               { tag: 'text', text: `Triggers: ` },
               { tag: 'text', text: triggers.join(', ') },
+            ],
+            isSignOnly && [{ tag: 'text', text: `---` }],
+            isSignOnly && [
+              { tag: 'text', text: `本次任务：本地构建 + 云端仅签名。` },
             ],
           ].filter(Boolean),
         },
@@ -122,34 +124,12 @@ async function sendMessage({
     content: {
       post: {
         zh_cn: {
-          title: isSignOnly
-            ? `🖊️ [本地打包 · 云端仅签名][${platformName}] Rabby Mobile 预览包已生成 🚀 `
-            : `📱 [${platformName}] Rabby Mobile 预览包已生成 🚀 `,
+          title: `📱 [${platformName}] Rabby Mobile 预览包已生成 🚀 `,
           content: [
             platform === 'android' && [
               { tag: 'text', text: `下载链接: ` },
               { tag: 'a', href: downloadURL, text: downloadURL },
             ],
-            isSignOnly && [
-              {
-                tag: 'text',
-                text: `本次产物由开发者本地编译（未签名），云端打包机只做签名与分发。`,
-              },
-            ],
-            isSignOnly &&
-              process.env.RABBY_MOBILE_SIGN_ONLY_SOURCE_SHA && [
-                {
-                  tag: 'text',
-                  text: `Source: ${process.env.RABBY_MOBILE_SIGN_ONLY_SOURCE_SHA}`,
-                },
-              ],
-            isSignOnly &&
-              process.env.RABBY_MOBILE_SIGN_ONLY_SOURCE_DIRTY === 'true' && [
-                {
-                  tag: 'text',
-                  text: `注意: 本地产物构建时工作区包含未提交改动。`,
-                },
-              ],
             larkDriveURL && [
               { tag: 'text', text: `Lark Drive: ` },
               { tag: 'a', href: larkDriveURL, text: larkDriveURL },
@@ -189,6 +169,24 @@ async function sendMessage({
               { tag: 'text', text: `Triggers: ` },
               { tag: 'text', text: triggers.join(', ') },
             ],
+            isSignOnly && [{ tag: 'text', text: `---` }],
+            isSignOnly && [
+              { tag: 'text', text: `本次任务：本地构建 + 云端仅签名。` },
+            ],
+            isSignOnly &&
+              process.env.RABBY_MOBILE_SIGN_ONLY_SOURCE_SHA && [
+                {
+                  tag: 'text',
+                  text: `Source: ${process.env.RABBY_MOBILE_SIGN_ONLY_SOURCE_SHA}`,
+                },
+              ],
+            isSignOnly &&
+              process.env.RABBY_MOBILE_SIGN_ONLY_SOURCE_DIRTY === 'true' && [
+                {
+                  tag: 'text',
+                  text: `注意: 本地产物构建时工作区包含未提交改动。`,
+                },
+              ],
           ].filter(Boolean),
         },
       },
