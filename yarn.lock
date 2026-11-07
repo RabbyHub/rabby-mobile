@@ -8598,6 +8598,20 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@metamask/eth-sig-util@patch:@metamask/eth-sig-util@npm%3A7.0.1#./.yarn/patches/@metamask-eth-sig-util-npm-7.0.1-rabby.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
+  version: 7.0.1
+  resolution: "@metamask/eth-sig-util@patch:@metamask/eth-sig-util@npm%3A7.0.1#./.yarn/patches/@metamask-eth-sig-util-npm-7.0.1-rabby.patch::version=7.0.1&hash=ba753c&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
+  dependencies:
+    "@ethereumjs/util": "npm:^8.1.0"
+    "@metamask/abi-utils": "npm:^2.0.2"
+    "@metamask/utils": "npm:^8.1.0"
+    ethereum-cryptography: "npm:^2.1.2"
+    tweetnacl: "npm:^1.0.3"
+    tweetnacl-util: "npm:^0.15.1"
+  checksum: 10/e60d17e8f5a85502ca3a22fb2a3719d51ef4328b401c08b724a40dda9f8de4ce9896204f836fec191e155cf07ad23d191b44c35f769bad6db109126ec940f2eb
+  languageName: node
+  linkType: hard
+
 "@metamask/json-rpc-engine@npm:^7.1.1, @metamask/json-rpc-engine@npm:^7.3.0, @metamask/json-rpc-engine@npm:^7.3.1":
   version: 7.3.1
   resolution: "@metamask/json-rpc-engine@npm:7.3.1::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40metamask%2Fjson-rpc-engine%2F-%2Fjson-rpc-engine-7.3.1.tgz"

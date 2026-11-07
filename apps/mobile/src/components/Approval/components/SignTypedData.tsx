@@ -49,7 +49,10 @@ import { toast } from '@/components2024/Toast';
 import { adjustV } from '@/utils/gnosis';
 import { useEnterPassphraseModal } from '@/hooks/useEnterPassphraseModal';
 import { TestnetTag } from './TestnetTag';
-import { normalizeTypeData } from './TypedDataActions/utils';
+import {
+  getNormalizeTypeDataVersion,
+  normalizeTypeData,
+} from './TypedDataActions/utils';
 import { CHAINS } from '@debank/common';
 import { ALIAS_ADDRESS } from '@/constant/gas';
 import { getTimeSpan } from '@/utils/time';
@@ -178,7 +181,10 @@ export const SignTypedData = ({
         try {
           const typedData = normalizeTypedData(JSON.parse(data[1]));
           const displayData = cloneDeep(typedData);
-          const normalized = normalizeTypeData(typedData);
+          const { typedData: normalized } = normalizeTypeData(
+            typedData,
+            getNormalizeTypeDataVersion(method),
+          );
           return [normalized, displayData];
         } catch (error) {
           console.error('parse signTypedData error: ', error);
@@ -186,7 +192,7 @@ export const SignTypedData = ({
         }
       }
       return [null, null];
-    }, [data, isSignTypedDataV1]);
+    }, [data, isSignTypedDataV1, method]);
 
   const chain = useMemo(() => {
     if (requestChainId) {
