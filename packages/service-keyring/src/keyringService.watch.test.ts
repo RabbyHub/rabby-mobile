@@ -324,6 +324,9 @@ describe('keyringService support eth-keyring-watch', () => {
           }
           return parsed.value;
         },
+        decryptWithDetail: async (currentPassword: string, payload: string) => ({
+          vault: await atomicEncryptor.decrypt(currentPassword, payload),
+        }),
       };
       const service = new KeyringService({
         encryptor: atomicEncryptor as any,
