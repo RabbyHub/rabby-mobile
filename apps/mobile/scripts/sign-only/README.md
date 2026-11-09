@@ -78,3 +78,22 @@ an authenticated `gh` (`gh auth login`).
 `workflow_dispatch` only works once `sign_only_package.yml` is on the default
 branch. Until then the script bakes the inputs into a temporary `test/*`
 branch, triggers the workflow's push path and deletes the branch afterwards.
+
+## Upload through a proxy
+
+`publish.mjs` PUTs the artifact directly to a presigned S3 URL. When the direct
+cross-border upload is too slow, route only that upload through an HTTP proxy:
+
+```bash
+node apps/mobile/scripts/sign-only/publish.mjs \
+  --platform android \
+  --file .sign-only/app-signonly-unsigned.apk \
+  --prepare --proxy http://127.0.0.1:7890
+
+# or for the one-shot command
+node apps/mobile/scripts/sign-only/one-shot.mjs \
+  --platform android --proxy http://127.0.0.1:7890
+```
+
+`OPFE_SIGN_ONLY_PROXY` works as the environment-variable equivalent. The proxy
+must accept HTTP `CONNECT`; credentials in the URL are supported.
