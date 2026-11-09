@@ -120,7 +120,6 @@ jest.mock('@/utils/perps', () => ({
 
 jest.mock('@/utils/navigation', () => ({ naviPush: jest.fn() }));
 
-jest.mock('@/utils/stats', () => ({ stats: { report: jest.fn() } }));
 
 jest.mock('@/core/serviceApi/perps', () => ({
   perpsServiceApi: { setInviteConfig: jest.fn().mockResolvedValue(undefined) },
@@ -128,7 +127,29 @@ jest.mock('@/core/serviceApi/perps', () => ({
 
 jest.mock('ahooks', () => ({
   useMemoizedFn: (fn: unknown) => fn,
-  useRequest: () => ({ data: false, mutate: jest.fn() }),
+  // The screen runs the invite check through `run`; keep the service live so
+  // the mocked checkPerpsReference is still exercised.
+  useRequest: (
+    service?: (...args: any[]) => Promise<unknown>,
+    options?: { onSuccess?: (result: unknown, args: any[]) => void },
+  ) => {
+    let canceled = false;
+    return {
+      data: false,
+      mutate: jest.fn(),
+      run: async (...args: any[]) => {
+        canceled = false;
+        const result = await service?.(...args);
+        if (!canceled) {
+          options?.onSuccess?.(result, args);
+        }
+        return result;
+      },
+      cancel: () => {
+        canceled = true;
+      },
+    };
+  },
 }));
 
 jest.mock('react-i18next', () => ({

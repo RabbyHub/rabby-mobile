@@ -1,9 +1,7 @@
-import { act, renderHook } from '@testing-library/react-native';
+import type { PerpsCandleDataInterval } from '@/constant/perps';
 
-import type { PerpsCandleInterval } from '@/constant/perps';
-
-const mockGetSelectedKlineInterval = jest.fn();
-const mockSetSelectedKlineInterval = jest.fn();
+const mockGetSimpleChartPreference = jest.fn();
+const mockSetSimpleChartPreference = jest.fn();
 const mockLoadPerpsCandleSourceSnapshot = jest.fn();
 const mockUsePerpsCandleFeed = jest.fn(
   ({
@@ -13,7 +11,7 @@ const mockUsePerpsCandleFeed = jest.fn(
   }: {
     coin: string;
     enabled: boolean;
-    interval: PerpsCandleInterval;
+    interval: PerpsCandleDataInterval;
   }) => ({
     candles: [],
     error: null,
@@ -26,8 +24,8 @@ const mockUsePerpsCandleFeed = jest.fn(
 
 jest.mock('@/core/apis/perps', () => ({
   apisPerps: {
-    getSelectedKlineInterval: mockGetSelectedKlineInterval,
-    setSelectedKlineInterval: mockSetSelectedKlineInterval,
+    getSimpleChartPreference: mockGetSimpleChartPreference,
+    setSimpleChartPreference: mockSetSimpleChartPreference,
   },
 }));
 
@@ -42,18 +40,14 @@ jest.mock('@/hooks/perps/candles/sourceSnapshot', () => ({
   loadPerpsCandleSourceSnapshot: mockLoadPerpsCandleSourceSnapshot,
 }));
 
-const { usePerpsProKline } =
-  require('./usePerpsProKline') as typeof import('./usePerpsProKline');
-
-const deferred = <T>() => {
-  let resolve!: (value: T | PromiseLike<T>) => void;
-  let reject!: (reason?: unknown) => void;
-  const promise = new Promise<T>((resolvePromise, rejectPromise) => {
-    resolve = resolvePromise;
-    reject = rejectPromise;
-  });
-  return { promise, reject, resolve };
-};
+// The shared preference store is module state: load a fresh registry
+// (React and the testing library included) for every test.
+type TestingLibrary = typeof import('@testing-library/react-native/pure');
+let act: TestingLibrary['act'];
+let cleanup: TestingLibrary['cleanup'];
+let renderHook: TestingLibrary['renderHook'];
+let usePerpsProKline: typeof import('./usePerpsProKline').usePerpsProKline;
+let usePerpsChartPreference: typeof import('@/hooks/perps/candles/chartPreference').usePerpsChartPreference;
 
 const flushPromises = async () => {
   await act(async () => {
@@ -63,10 +57,22 @@ const flushPromises = async () => {
 };
 
 describe('usePerpsProKline', () => {
+  afterEach(() => cleanup());
+
   beforeEach(() => {
     jest.clearAllMocks();
-    mockGetSelectedKlineInterval.mockResolvedValue('15m');
-    mockSetSelectedKlineInterval.mockResolvedValue(undefined);
+    jest.resetModules();
+    ({
+      act,
+      cleanup,
+      renderHook,
+    } = require('@testing-library/react-native/pure'));
+    ({ usePerpsProKline } = require('./usePerpsProKline'));
+    ({
+      usePerpsChartPreference,
+    } = require('@/hooks/perps/candles/chartPreference'));
+    mockGetSimpleChartPreference.mockResolvedValue(undefined);
+    mockSetSimpleChartPreference.mockResolvedValue(undefined);
     mockLoadPerpsCandleSourceSnapshot.mockImplementation(
       ({ coin, interval }: { coin: string; interval: string }) =>
         Promise.resolve({
@@ -89,7 +95,12 @@ describe('usePerpsProKline', () => {
   });
 
   it('hydrates the shared interval before enabling the candle feed', async () => {
-    mockGetSelectedKlineInterval.mockResolvedValueOnce('1M');
+    mockGetSimpleChartPreference.mockResolvedValueOnce({
+      version: 2,
+      style: 'candle',
+      range: null,
+      interval: '1M',
+    });
     const hook = renderHook(() =>
       usePerpsProKline({ coin: 'BTC', enabled: true }),
     );
@@ -121,46 +132,53 @@ describe('usePerpsProKline', () => {
     });
   });
 
-  it('serializes rapid interval writes and rolls back only the latest failure', async () => {
-    const firstWrite = deferred<void>();
-    const secondWrite = deferred<void>();
-    const consoleError = jest
-      .spyOn(console, 'error')
-      .mockImplementation(() => undefined);
-    mockSetSelectedKlineInterval
-      .mockReturnValueOnce(firstWrite.promise)
-      .mockReturnValueOnce(secondWrite.promise);
-    const hook = renderHook(() =>
+  it('writes a manual Simple interval that Simple observes immediately', async () => {
+    mockGetSimpleChartPreference.mockResolvedValue({
+      version: 2,
+      style: 'area',
+      range: '1D',
+      interval: '30m',
+    });
+    const pro = renderHook(() =>
       usePerpsProKline({ coin: 'BTC', enabled: true }),
     );
+    const simple = renderHook(() => usePerpsChartPreference());
     await flushPromises();
 
-    act(() => {
-      hook.result.current.selectInterval('5m');
-      hook.result.current.selectInterval('1h');
-    });
+    act(() => pro.result.current.selectInterval('5m'));
     await flushPromises();
 
-    expect(hook.result.current.interval).toBe('1h');
-    expect(mockSetSelectedKlineInterval).toHaveBeenCalledTimes(1);
-    expect(mockSetSelectedKlineInterval).toHaveBeenNthCalledWith(1, '5m');
-
-    firstWrite.resolve();
-    await flushPromises();
-    expect(mockSetSelectedKlineInterval).toHaveBeenNthCalledWith(2, '1h');
-
-    secondWrite.reject(new Error('write failed'));
-    await flushPromises();
-
-    expect(hook.result.current.interval).toBe('5m');
-    consoleError.mockRestore();
+    const next = { version: 2, style: 'area', range: null, interval: '5m' };
+    expect(pro.result.current.interval).toBe('5m');
+    expect(simple.result.current.preference).toEqual(next);
+    expect(mockSetSimpleChartPreference).toHaveBeenCalledWith(next);
   });
 
-  it('falls back to 15m when preference hydration fails', async () => {
+  it('keeps 15m over a Simple range view and ignores re-picking it', async () => {
+    mockGetSimpleChartPreference.mockResolvedValue({
+      version: 2,
+      style: 'candle',
+      range: '1W',
+      interval: '4h',
+    });
+    const pro = renderHook(() =>
+      usePerpsProKline({ coin: 'BTC', enabled: true }),
+    );
+    const simple = renderHook(() => usePerpsChartPreference());
+    await flushPromises();
+
+    expect(pro.result.current.interval).toBe('15m');
+    act(() => pro.result.current.selectInterval('15m'));
+    await flushPromises();
+    expect(mockSetSimpleChartPreference).not.toHaveBeenCalled();
+    expect(simple.result.current.preference.range).toBe('1W');
+  });
+
+  it('falls back to the Pro default when preference hydration fails', async () => {
     const consoleError = jest
       .spyOn(console, 'error')
       .mockImplementation(() => undefined);
-    mockGetSelectedKlineInterval.mockRejectedValueOnce(
+    mockGetSimpleChartPreference.mockRejectedValueOnce(
       new Error('read failed'),
     );
     const hook = renderHook(() =>
@@ -172,13 +190,6 @@ describe('usePerpsProKline', () => {
     expect(hook.result.current).toMatchObject({
       hydrated: true,
       interval: '15m',
-    });
-    expect(mockUsePerpsCandleFeed).toHaveBeenLastCalledWith({
-      coin: 'BTC',
-      enabled: true,
-      initialSourceCandles: expect.any(Array),
-      interval: '15m',
-      publicationEnabled: true,
     });
     consoleError.mockRestore();
   });
@@ -209,37 +220,5 @@ describe('usePerpsProKline', () => {
       identity: 'BTC:15m',
       status: 'ready',
     });
-  });
-
-  it('pauses publication independently of the live feed and preload lifecycle', async () => {
-    const hook = renderHook(
-      ({ publicationEnabled }) =>
-        usePerpsProKline({
-          coin: 'BTC',
-          enabled: true,
-          preloadEnabled: true,
-          publicationEnabled,
-        }),
-      { initialProps: { publicationEnabled: true } },
-    );
-    await flushPromises();
-    const preloadCalls = mockLoadPerpsCandleSourceSnapshot.mock.calls.length;
-
-    hook.rerender({ publicationEnabled: false });
-    expect(mockUsePerpsCandleFeed).toHaveBeenLastCalledWith({
-      coin: 'BTC',
-      enabled: true,
-      initialSourceCandles: expect.any(Array),
-      interval: '15m',
-      publicationEnabled: false,
-    });
-    hook.rerender({ publicationEnabled: true });
-    expect(mockUsePerpsCandleFeed).toHaveBeenLastCalledWith(
-      expect.objectContaining({ enabled: true, publicationEnabled: true }),
-    );
-    expect(mockLoadPerpsCandleSourceSnapshot).toHaveBeenCalledTimes(
-      preloadCalls,
-    );
-    expect(mockGetSelectedKlineInterval).toHaveBeenCalledTimes(1);
   });
 });

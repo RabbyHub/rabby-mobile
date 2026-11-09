@@ -180,9 +180,7 @@ describe('PerpsHeader', () => {
       backgroundColor: 'transparent',
       height: PERPS_HEADER_HEIGHT,
     });
-    expect(
-      screen.getByTestId('perps-header-background-mark').props,
-    ).toMatchObject({ height: 48, width: 61, pointerEvents: 'none' });
+    expect(screen.queryByTestId('perps-header-background-mark')).toBeNull();
     expect(screen.getByTestId('mode-switch').props).toMatchObject({
       activeMode: 'pro',
       disabled: false,

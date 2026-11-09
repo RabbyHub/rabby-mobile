@@ -28,7 +28,6 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 jest.mock('@/utils/perps', () => ({ getStatsReportSide: jest.fn() }));
-jest.mock('@/utils/stats', () => ({ stats: { report: jest.fn() } }));
 jest.mock('@/constant', () => ({ APP_VERSIONS: { fromNative: 'test' } }));
 jest.mock('./PerpsLimitOrderItem', () => ({
   PerpsLimitOrderItem: ({ onPress }: { onPress: () => void }) =>

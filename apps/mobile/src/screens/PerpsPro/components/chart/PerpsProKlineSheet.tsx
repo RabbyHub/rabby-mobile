@@ -8,11 +8,12 @@ import type {
   CandleStick,
 } from '@/components2024/TradingViewCandleChart/type';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
-import type { PerpsCandleInterval } from '@/constant/perps';
+import type { PerpsCandleDataInterval } from '@/constant/perps';
 import type {
   PerpsCandleFeedSnapshot,
   PerpsCandleHistoryLoadResult,
 } from '@/hooks/perps/candles/usePerpsCandleFeed';
+import RcIconReset from '@/assets2024/icons/perps/PerpsSimpleChart/reset.svg';
 import { useTheme2024 } from '@/hooks/theme';
 import { perpsStore } from '@/hooks/perps/usePerpsStore';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -28,7 +29,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { BackHandler, View } from 'react-native';
+import { BackHandler, Pressable, View } from 'react-native';
 
 import type { PerpsProMarketDescriptor } from '../../model/market';
 import { usePerpsProKline } from '../../scene/usePerpsProKline';
@@ -51,6 +52,9 @@ export const PERPS_PRO_KLINE_CONTENT_HEIGHT =
   PERPS_PRO_KLINE_FOOTER_HEIGHT;
 export const PERPS_PRO_KLINE_SHEET_HEIGHT =
   PERPS_PRO_KLINE_HANDLE_HEIGHT + PERPS_PRO_KLINE_CONTENT_HEIGHT;
+// Docked panel height used to reserve bottom padding in the list beneath it.
+export const getPerpsProKlinePanelHeight = (bottomInset: number) =>
+  PERPS_PRO_KLINE_SHEET_HEIGHT + Math.max(0, bottomInset);
 const PERPS_PRO_KLINE_INITIAL_VISIBLE_BARS = 40;
 const PERPS_PRO_KLINE_MA_PERIODS = [7, 25, 99] as const;
 
@@ -81,7 +85,7 @@ type KlineChartMarket = Pick<
 const PerpsProKlineChart: React.FC<{
   chartRef: React.RefObject<TradingViewChartRef | null>;
   feed: PerpsCandleFeedSnapshot;
-  interval: PerpsCandleInterval;
+  interval: PerpsCandleDataInterval;
   liveFeedEnabled: boolean;
   market: KlineChartMarket;
   onLoadOlder: () => Promise<PerpsCandleHistoryLoadResult>;
@@ -335,7 +339,7 @@ const PerpsProKlineChart: React.FC<{
         onChartError={handleChartError}
         onChartReady={handleChartReady}
         onDataApplied={handleDataApplied}
-        onPriceScaleAutoScaleChange={onPriceScaleAutoScaleChange}
+        onPerpsProViewportChange={onPriceScaleAutoScaleChange}
         onRequestOlderCandles={handleRequestOlderCandles}
         variant="perps-pro"
       />
@@ -425,7 +429,7 @@ export const PerpsProKlineSheet = React.memo(function PerpsProKlineSheet({
     [onClose, visible],
   );
   const handleResetPriceScale = useCallback(() => {
-    chartRef.current?.resetPriceScale();
+    chartRef.current?.resetPerpsProViewport();
   }, []);
   const handlePriceScaleAutoScaleChange = useCallback(
     (autoScale: boolean) => {
@@ -490,13 +494,22 @@ export const PerpsProKlineSheet = React.memo(function PerpsProKlineSheet({
         snapPoints={[PERPS_PRO_KLINE_SHEET_HEIGHT]}
         style={themedStyles.modal}>
         <BottomSheetView style={themedStyles.content}>
-          <PerpsProKlineToolbar
-            disabled={!kline.hydrated}
-            interval={kline.interval}
-            onResetPriceScale={handleResetPriceScale}
-            onSelect={kline.selectInterval}
-            showPriceScaleReset={!priceScaleAutoScale}
-          />
+          <View style={styles.toolbarRow}>
+            <PerpsProKlineToolbar
+              disabled={!kline.hydrated}
+              interval={kline.interval}
+              onSelect={kline.selectInterval}
+            />
+            {!priceScaleAutoScale ? (
+              <Pressable
+                accessibilityRole="button"
+                onPress={handleResetPriceScale}
+                style={styles.resetButton}
+                testID="perps-pro-kline-reset">
+                <RcIconReset width={18} height={18} />
+              </Pressable>
+            ) : null}
+          </View>
           <PerpsProKlineChart
             key={market.marketKey}
             chartRef={chartRef}
@@ -519,6 +532,16 @@ export const PerpsProKlineSheet = React.memo(function PerpsProKlineSheet({
 });
 
 const styles = {
+  toolbarRow: {
+    alignItems: 'center' as const,
+    flexDirection: 'row' as const,
+  },
+  resetButton: {
+    alignItems: 'center' as const,
+    height: 32,
+    justifyContent: 'center' as const,
+    width: 32,
+  },
   chartContainer: {
     height: PERPS_PRO_KLINE_CHART_HEIGHT,
     width: '100%' as const,
@@ -551,6 +574,16 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
     content: {
       backgroundColor: colors2024['neutral-bg-1'],
       height: PERPS_PRO_KLINE_CONTENT_HEIGHT,
+    },
+    toolbarRow: {
+      alignItems: 'center',
+      flexDirection: 'row',
+    },
+    resetButton: {
+      alignItems: 'center',
+      height: 32,
+      justifyContent: 'center',
+      width: 32,
     },
     footer: {
       backgroundColor: colors2024['neutral-bg-1'],

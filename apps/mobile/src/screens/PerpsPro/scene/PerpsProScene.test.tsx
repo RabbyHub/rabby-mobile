@@ -116,6 +116,10 @@ let mockTradeForm: {
   orderType: 'conditional' | 'limit' | 'market';
 } = { bboEnabled: false, orderType: 'market' };
 
+jest.mock('react-native-safe-area-context', () => ({
+  useSafeAreaInsets: () => ({ bottom: 34, left: 0, right: 0, top: 0 }),
+}));
+
 jest.mock('react-native-reanimated', () => {
   const ReactNative = require('react-native');
   const boundary =
@@ -496,6 +500,7 @@ jest.mock('../components/chart/PerpsProKlineSheet', () => {
   const ReactModule = require('react');
   const { Pressable } = require('react-native');
   return {
+    getPerpsProKlinePanelHeight: (bottomInset: number) => 344 + bottomInset,
     PerpsProKlineSheet: (props: {
       enabled: boolean;
       onClose: () => void;

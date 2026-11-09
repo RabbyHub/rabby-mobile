@@ -87,7 +87,6 @@ import {
   getPerpsProInfoSectionMinimumContentHeight,
   getPerpsProInfoTabsNaturalAnchor,
   PERPS_PRO_INFO_TABS_HEIGHT,
-  PERPS_PRO_INFO_SECTION_BOTTOM_PADDING,
   PERPS_PRO_INFO_SECTION_DIVIDER_HEIGHT,
   PERPS_PRO_INFO_TABS_PLACEHOLDER_HEIGHT,
   PERPS_PRO_INFO_SECTION_TOP_GAP,
@@ -403,9 +402,9 @@ export const PerpsProScene: React.FC<{
     const subscription = AppState.addEventListener('change', setAppState);
     return () => subscription.remove();
   }, []);
-  const toggleKline = useCallback(() => {
+  const openKline = useCallback(() => {
     setKlineActivated(true);
-    setKlineOpen(open => !open);
+    setKlineOpen(true);
   }, []);
   const closeKline = useCallback(() => setKlineOpen(false), []);
   const closeFundingOverlay = useCallback(() => setFundingOverlay(null), []);
@@ -1149,8 +1148,7 @@ export const PerpsProScene: React.FC<{
   ) : (
     <PerpsProMarketBar
       market={scene.currentMarket}
-      klineOpen={klineOpen}
-      onToggleKline={toggleKline}
+      onOpenKline={openKline}
       onPress={openMarketSelector}
     />
   );
