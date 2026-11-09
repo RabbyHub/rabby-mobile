@@ -150,9 +150,9 @@ function AccountSwitcherModalInDappWebViewImpl({
     '@ActiveDappWebViewModal',
   );
   const modalRef = useRef<AppBottomSheetModal>(null);
-  const { toggleShowSheetModal } = useSheetModals({
-    selectAddress: modalRef,
-  });
+  // stable for the same reason as in AccountSwitcherModal
+  const sheetModalRefs = useMemo(() => ({ selectAddress: modalRef }), []);
+  const { toggleShowSheetModal } = useSheetModals(sheetModalRefs);
 
   const { styles, colors2024 } = useTheme2024({
     getStyle: getModalInDappWebViewStyle,

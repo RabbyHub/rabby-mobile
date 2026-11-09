@@ -1,7 +1,10 @@
 import React from 'react';
 import { Keyboard, View } from 'react-native';
 import { render } from '@testing-library/react-native';
-import { AccountSwitcherModal } from './Modal';
+import {
+  AccountSwitcherModal,
+  AccountSwitcherModalInDappWebView,
+} from './Modal';
 
 const mockPresent = jest.fn();
 jest.mock('@/components/customized/BottomSheet', () => {
@@ -48,13 +51,31 @@ jest.mock('@/utils/styles', () => ({
   createGetStyles2024: (fn: unknown) => fn,
 }));
 
-describe('AccountSwitcherModal', () => {
+describe.each([
+  [
+    'AccountSwitcherModal',
+    () => <AccountSwitcherModal forScene="MakeTransactionAbout" />,
+  ],
+  [
+    'AccountSwitcherModalInDappWebView',
+    () => (
+      <AccountSwitcherModalInDappWebView
+        {...({ coreServices: { dappService: {} } } as any)}
+      />
+    ),
+  ],
+])('%s', (_name, renderSwitcher) => {
+  beforeEach(() => {
+    mockPresent.mockClear();
+  });
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
   it('closes the keyboard when it opens, not again on every re-render', () => {
     const dismiss = jest.spyOn(Keyboard, 'dismiss');
     const Screen = ({ tick }: { tick: number }) => (
-      <View testID={`tick-${tick}`}>
-        <AccountSwitcherModal forScene="MakeTransactionAbout" />
-      </View>
+      <View testID={`tick-${tick}`}>{renderSwitcher()}</View>
     );
     const { rerender } = render(<Screen tick={0} />);
     expect(dismiss).toHaveBeenCalledTimes(1);
