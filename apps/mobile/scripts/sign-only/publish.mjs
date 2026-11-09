@@ -17,6 +17,13 @@ const TOKEN_FILE = path.join(
   'sign-only-token',
 );
 
+let JSON_MODE = false;
+
+function log(...args) {
+  if (JSON_MODE) console.error(...args);
+  else console.log(...args);
+}
+
 function parseArgs(argv) {
   const result = {
     platform: '',
@@ -28,6 +35,7 @@ function parseArgs(argv) {
     prepare: false,
     notifyLark: false,
     force: false,
+    json: false,
   };
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
@@ -62,6 +70,9 @@ function parseArgs(argv) {
       case '--force':
         result.force = true;
         break;
+      case '--json':
+        result.json = true;
+        break;
       default:
         throw new Error(`Unknown argument: ${arg}`);
     }
@@ -78,6 +89,7 @@ function parseArgs(argv) {
     throw new Error('--platform must be android or ios');
   if (!result.file || !fs.existsSync(result.file))
     throw new Error('--file does not exist');
+  JSON_MODE = result.json;
   if (!result.token)
     throw new Error(
       `--token, OPFE_SIGN_ONLY_TOKEN or ${TOKEN_FILE} is required (create one in the opcode dashboard)`,
@@ -205,6 +217,22 @@ async function findPreviousSigned(args, headers, baseUrl, sourceSha) {
   }
 }
 
+function parseGhCommand(command) {
+  const repo = command.match(/--repo\s+'([^']+)'/)?.[1] || '';
+  const ref = command.match(/--ref\s+'([^']+)'/)?.[1] || '';
+  const inputs = {};
+  const pattern = /-f\s+([A-Za-z0-9_-]+)=('(?:[^']|'\\'')*'|\S+)/g;
+  let match;
+  while ((match = pattern.exec(command))) {
+    let value = match[2];
+    if (value.startsWith("'") && value.endsWith("'")) {
+      value = value.slice(1, -1).replace(/'\\''/g, "'");
+    }
+    inputs[match[1]] = value;
+  }
+  return { repo, ref, inputs };
+}
+
 async function main() {
   const args = parseArgs(process.argv.slice(2));
   const fileName = path.basename(args.file);
@@ -218,22 +246,20 @@ async function main() {
 
   const previous = await findPreviousSigned(args, headers, baseUrl, sourceSha);
   if (previous && !args.force) {
-    console.log('[sign-only] a signed package already exists for this commit:');
-    console.log(`  request : ${previous.requestId}`);
-    console.log(
-      `  signed  : ${previous.signedArtifactUrl || '(not recorded)'}`,
-    );
-    console.log(`  run     : ${previous.workflowRunUrl || '-'}`);
+    log('[sign-only] a signed package already exists for this commit:');
+    log(`  request : ${previous.requestId}`);
+    log(`  signed  : ${previous.signedArtifactUrl || '(not recorded)'}`);
+    log(`  run     : ${previous.workflowRunUrl || '-'}`);
     if (process.stdin.isTTY) {
       const answer = await ask(
         '[sign-only] build and sign again anyway? [y/N] ',
       );
       if (!['y', 'yes'].includes(answer)) {
-        console.log('[sign-only] keeping the existing signed package.');
+        log('[sign-only] keeping the existing signed package.');
         return;
       }
     } else {
-      console.log(
+      log(
         '[sign-only] non-interactive shell, continuing (use --force to skip this check).',
       );
     }
@@ -256,8 +282,8 @@ async function main() {
     throw new Error('Sign-only upload intent was not created');
   }
 
-  console.log(`[sign-only] request: ${data.package.requestId}`);
-  console.log(`[sign-only] uploading ${fileName} (${size} bytes)...`);
+  log(`[sign-only] request: ${data.package.requestId}`);
+  log(`[sign-only] uploading ${fileName} (${size} bytes)...`);
   await uploadFile(data.uploadUrl, args.file, data.requestHeaders || {}, size);
 
   const completed = await requestJson(
@@ -268,7 +294,7 @@ async function main() {
       body: JSON.stringify({ sha256 }),
     },
   );
-  console.log(
+  log(
     `[sign-only] uploaded package id=${completed?.data?.id || data.package.id}`,
   );
 
@@ -282,12 +308,32 @@ async function main() {
       body: JSON.stringify({ notifyLark: args.notifyLark }),
     },
   );
-  console.log(
-    `[sign-only] dashboard: ${baseUrl}/#/delivery/sign-only-packages`,
-  );
-  console.log(`[sign-only] workflow : ${prepared?.data?.workflowUrl || ''}`);
-  console.log('[sign-only] run this yourself with your GitHub identity:');
-  console.log(prepared?.data?.ghCommand || '');
+  log(`[sign-only] dashboard: ${baseUrl}/#/delivery/sign-only-packages`);
+  log(`[sign-only] workflow : ${prepared?.data?.workflowUrl || ''}`);
+  log('[sign-only] run this yourself with your GitHub identity:');
+  log(prepared?.data?.ghCommand || '');
+
+  if (args.json) {
+    const workflow = parseGhCommand(prepared?.data?.ghCommand || '');
+    console.log(
+      JSON.stringify({
+        platform: args.platform,
+        packageId: data.package.id,
+        requestId: data.package.requestId,
+        file: args.file,
+        notifyLark: args.notifyLark,
+        sourceSha: sourceSha || '',
+        sourceDirty,
+        workflow: {
+          url: prepared?.data?.workflowUrl || '',
+          ghCommand: prepared?.data?.ghCommand || '',
+          repo: workflow.repo,
+          ref: workflow.ref,
+          inputs: workflow.inputs,
+        },
+      }),
+    );
+  }
 }
 
 main().catch(error => {
