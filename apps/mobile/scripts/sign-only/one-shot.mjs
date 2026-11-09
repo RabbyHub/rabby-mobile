@@ -134,10 +134,21 @@ function resolveToken(args) {
 }
 
 function repoSlug() {
-  const remote = capture('git', ['remote', 'get-url', 'origin']);
-  const match = remote.match(/github\.com[:/]([^/]+)\/([^/]+?)(?:\.git)?$/);
-  if (!match) fail(`cannot parse GitHub repo from origin: ${remote}`);
-  return `${match[1]}/${match[2]}`;
+  try {
+    return capture('gh', [
+      'repo',
+      'view',
+      '--json',
+      'nameWithOwner',
+      '-q',
+      '.nameWithOwner',
+    ]);
+  } catch {
+    const remote = capture('git', ['remote', 'get-url', 'origin']);
+    const match = remote.replace(/\.git$/, '').match(/[:/]([^/:]+)\/([^/:]+)$/);
+    if (!match) fail(`cannot parse GitHub repo from origin: ${remote}`);
+    return `${match[1]}/${match[2]}`;
+  }
 }
 
 function sleep(ms) {
@@ -488,7 +499,6 @@ async function main() {
   const args = parseArgs(process.argv.slice(2));
   const rootDir = capture('git', ['rev-parse', '--show-toplevel']);
   const appDir = path.join(rootDir, 'apps', 'mobile');
-  const repo = repoSlug();
   const platforms =
     args.platform === 'all' ? ['android', 'ios'] : [args.platform];
 
@@ -496,6 +506,7 @@ async function main() {
   if (ghCheck.status !== 0) {
     fail('gh is not authenticated; run `gh auth login` first');
   }
+  const repo = repoSlug();
   try {
     execFileSync('git', ['cat-file', '-e', `HEAD:${WORKFLOW_PATH}`], {
       cwd: rootDir,
