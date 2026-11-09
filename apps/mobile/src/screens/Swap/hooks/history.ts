@@ -130,12 +130,8 @@ export const useSwapHistory = () => {
   };
 };
 
-export const swapPendingCountAtom = atom(0);
 export const swapPendingTxDataAtom = atom<SwapItem | null>(null);
 export const swapHistoryRedDotAtom = atom(false);
-export const useReadPendingCount = () => {
-  return useAtomValue(swapPendingCountAtom);
-};
 
 export const fetchLocalSwapPendingTx = (address: string) => {
   return getTransactionHistoryRecentPendingSnapshot(
@@ -166,14 +162,6 @@ export const fetchRefreshLocalData = (
   if (newData?.status !== 'pending') {
     return newData;
   }
-};
-
-export const usePendingTxData = () => {
-  return useAtomValue(swapPendingCountAtom);
-};
-
-export const useReadSwapHistoryRedDot = () => {
-  return useAtomValue(swapHistoryRedDotAtom);
 };
 
 export const useClearSwapHistoryRedDot = () => {

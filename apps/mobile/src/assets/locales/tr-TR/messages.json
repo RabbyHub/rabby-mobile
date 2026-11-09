@@ -3461,13 +3461,6 @@
         "authFailed": "Biyometrik kimlik doğrulama başarısız oldu"
       }
     },
-    "ReserveGasPopup": {
-      "instant": "Hızlı",
-      "doNotReserve": "Gas ayırma",
-      "normal": "Yavaş",
-      "title": "Gas Ayır",
-      "fast": "Normal"
-    },
     "NoLongerSupports": {
       "button": "Tamam",
       "title": "Mobil cüzdan adresleri artık desteklenmiyor.",

@@ -354,16 +354,6 @@ export function useSingleHomeLoading() {
   };
 }
 
-export function useSingleHomeNoAssetsValueOnChain() {
-  const { lcAddress } = useSingleHomeAddress();
-  const { balanceLoading } = useIsLoadingBalance(lcAddress);
-  const { evmBalance } = useAddressBalance(lcAddress);
-
-  return {
-    noAssetsValue: !balanceLoading && evmBalance === 0,
-  };
-}
-
 export function useSingleHomeHomeTopChart() {
   const { lcAddress } = useSingleHomeAddress();
   const { selectData } = useSingleHomeSelectData();

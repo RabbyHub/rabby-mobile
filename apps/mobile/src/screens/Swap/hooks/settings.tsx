@@ -20,16 +20,6 @@ const swapUnlimitedAllowanceAtom = createRaceSafeHydratedAtom({
 export const useSwapUnlimitedAllowance = () =>
   useAtom(swapUnlimitedAllowanceAtom);
 
-const swapSettingsVisibleAtom = atom(false);
-
-export const useSwapSettingsVisible = () => {
-  const [visible, setVisible] = useAtom(swapSettingsVisibleAtom);
-  return {
-    visible,
-    setVisible,
-  };
-};
-
 const swapSupportedDexList = atom<string[]>(Object.keys(DEX));
 
 swapSupportedDexList.onMount = setAtom => {
