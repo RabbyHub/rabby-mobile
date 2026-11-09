@@ -132,13 +132,8 @@ export function navBack() {
 export function HeaderBackPressable({
   tintColor,
   style,
-  nativeBarItem = false,
   ...touchableProps
-}: Pick<NativeStackHeaderLeftProps, 'tintColor'> &
-  RNViewProps & {
-    /** Rendered as a native UIBarButtonItem (needs the item-inset compensation). */
-    nativeBarItem?: boolean;
-  }) {
+}: Pick<NativeStackHeaderLeftProps, 'tintColor'> & RNViewProps) {
   const themeMode = useGetBinaryMode();
   const { colors2024 } = apisTheme.getColors2024(themeMode);
   return (
@@ -146,11 +141,7 @@ export function HeaderBackPressable({
       // Native-stack header controls need native gesture arbitration on Fabric.
       as="RNGHTouchableOpacity"
       {...touchableProps}
-      style={[
-        styles.backButtonStyle,
-        nativeBarItem && IS_IOS && styles.nativeBarItemBackButtonStyle,
-        style,
-      ]}
+      style={[styles.backButtonStyle, style]}
       hitSlop={hitSlop}
       onPress={navBack}>
       <RcIconHeaderBack
@@ -195,8 +186,26 @@ export const useStackScreenConfig = () => {
         },
         // headerTintColor: colors['neutral-bg-1'],
         headerTintColor: colors['neutral-title-1'],
-        // Use the system back item: UIKit owns its layout, so the position is
-        // correct on every device/OS without a JS-side magic offset.
+        // iOS uses the native bar button item above; Android keeps the custom
+        // headerLeft because `onlyTitle` sets headerBackVisible: false and the
+        // custom control also provides the navBack fallback on first routes.
+        ...(IS_IOS
+          ? {}
+          : {
+              headerLeft: ({ tintColor }: { tintColor?: string }) => (
+                <CustomTouchableOpacity
+                  as="RNGHTouchableOpacity"
+                  style={styles.backButtonStyle}
+                  hitSlop={24}
+                  onPress={navBack}>
+                  <RcIconHeaderBack
+                    width={24}
+                    height={24}
+                    color={tintColor || colors['neutral-body']}
+                  />
+                </CustomTouchableOpacity>
+              ),
+            }),
       };
 
       const result = merge(
@@ -232,7 +241,15 @@ export const useStackScreenConfig = () => {
           fontSize: 20,
         },
         headerTintColor: colors2024['neutral-title-1'],
-        // System back item (see above): no custom view, no offset.
+        // iOS uses the native bar button item above; Android keeps the custom
+        // back control for the same reasons as `mergeScreenOptions`.
+        ...(IS_IOS
+          ? {}
+          : {
+              headerLeft: ({ tintColor }: { tintColor?: string }) => (
+                <HeaderBackPressable tintColor={tintColor} />
+              ),
+            }),
       };
 
       const result = merge(
@@ -297,23 +314,31 @@ export function useBottomTabScreenConfig() {
   return { mergeBottomTabOptions2024 };
 }
 
-// Native bar button items carry the system leading inset; translate the content
-// back so it lines up with the page content edge (#1283).
-export const NATIVE_BAR_ITEM_BACK_OFFSET_X = -14;
-
 // NOTE: `unstable_headerLeftItems` is the native-stack bridge to RNScreens'
 // `headerLeftBarButtonItems`. It gives UIKit ownership of the bar item layout
 // (correct on every device) and lets us pass `hidesSharedBackground` to drop the
 // iOS 26 glass capsule. Re-check this prop name on every @react-navigation
 // upgrade; if it is renamed/removed, fall back to a custom headerLeft with a
 // device-independent layout rather than a fixed offset.
+// The native bar item's leading inset matches the custom header's (16pt), so
+// the only difference was the SF Symbol's own optical padding: it pushed the
+// glyph ~8pt right of the app icon. Use the same 24pt chevron artwork as the
+// JS header so both paths render at the same x on every device.
 const renderNativeBackItems: NonNullable<
   NativeStackNavigationOptions['unstable_headerLeftItems']
 > = ({ tintColor }) => [
   {
     type: 'button',
     label: '',
-    icon: { type: 'sfSymbol', name: 'chevron.left' },
+    // A 44x24 image (chevron drawn in the leading 24pt) keeps the standard
+    // 44pt tap target while making the glyph start at the item's leading edge,
+    // which is the same 16pt inset the JS header used. No offset needed.
+    icon: {
+      type: 'image',
+      source: require('@/assets/icons/header/back-cc-wide.png'),
+      tinted: true,
+    },
+    width: 44,
     tintColor,
     hidesSharedBackground: true,
     onPress: navBack,
@@ -328,19 +353,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     marginLeft: -16,
     paddingLeft: 16,
-  },
-  // react-native-screens wraps a custom header subview in a centred wrapper on
-  // iOS 26+, so margin/padding inside the view no longer shift the native bar
-  // button item and the icon sits too far right (#1283). Only native header
-  // items need this post-layout compensation; the JS-rendered custom headers
-  // keep `backButtonStyle` untouched.
-  nativeBarItemBackButtonStyle: {
-    width: 24,
-    height: 24,
-    justifyContent: 'center',
-    marginLeft: 0,
-    paddingLeft: 0,
-    transform: [{ translateX: NATIVE_BAR_ITEM_BACK_OFFSET_X }],
   },
 });
 

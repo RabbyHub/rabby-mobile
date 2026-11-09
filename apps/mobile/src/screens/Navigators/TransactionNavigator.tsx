@@ -48,7 +48,6 @@ import { PredictionScreenWithPreload } from '../InnerDapp/InnerDappPreloadScreen
 import { useInnerDappPreloadStrategy } from '@/config/innerDappPreloadStrategy';
 import { Text } from '@/components/Typography';
 import { createGetStyles2024 } from '@/utils/styles';
-import { IS_IOS } from '@/core/native/utils';
 import { withRegressionScenario } from '@/devtools/regressionScenarios/react';
 
 const TransactionStack =
