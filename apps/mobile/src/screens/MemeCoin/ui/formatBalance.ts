@@ -21,7 +21,7 @@ export const formatMemeBalanceUsd = (usd: number) => {
 export const formatMemePnlUsd = (usd: number) =>
   `${usd < 0 ? '' : '+'}${formatUsdValue(usd)}`;
 
-/** holding rows show a gray $0.00 for this, whichever way it went */
+/** holding rows and the balance card show a gray $0.00 for this, whichever way it went */
 export const isFlatMemePnl = (usd: number) => Math.abs(usd) < 0.01;
 
 /** drops zero cents only, as in Figma: $100 needed, Another $65.21 needed */
