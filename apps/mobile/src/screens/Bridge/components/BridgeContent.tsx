@@ -95,7 +95,6 @@ import {
   BOTTOM_BUTTON_SINGLE_HEIGHT,
   BOTTOM_BUTTON_TOP_OFFSET,
   getBottomButtonBottomOffset,
-  getBottomButtonCenteredTitleStyle,
   RootNames,
 } from '@/constant/layout';
 import type { GetNestedScreenRouteProp } from '@/navigation-type';
@@ -103,10 +102,6 @@ import {
   BridgePendingTransactionsController,
   type BridgePendingTransactionsControllerRef,
 } from './BridgePendingTransactionsController';
-
-const bottomButtonTitleStyle = getBottomButtonCenteredTitleStyle(
-  BOTTOM_BUTTON_SINGLE_HEIGHT,
-);
 
 /** Bridge form snapshot for validation during auth */
 export interface BridgeFormSnapshot {
@@ -1856,7 +1851,6 @@ export const BridgeContent = ({
                   ref={directSignBtnRef}
                   key={`${selectedBridgeQuote?.aggregator.id}-${selectedBridgeQuote?.bridge?.id}-${refreshId}`}
                   height={BOTTOM_BUTTON_SINGLE_HEIGHT}
-                  titleStyle={bottomButtonTitleStyle}
                   authTitle={t('page.whitelist.confirmPassword')}
                   title={t('global.confirm')}
                   loadingType="circle"
@@ -1890,7 +1884,7 @@ export const BridgeContent = ({
                   height={BOTTOM_BUTTON_SINGLE_HEIGHT}
                   onPress={handleConfirm}
                   title={btnText}
-                  titleStyle={[styles.btnTitle, bottomButtonTitleStyle]}
+                  titleStyle={styles.btnTitle}
                   loading={fetchingBridgeQuote}
                   disabled={
                     !isSupportedChain && externalDapps.length > 0
