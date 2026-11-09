@@ -49,3 +49,32 @@ sent.
 
 The same flow is available from the `仅签名打包` page in the fe-opcode
 dashboard, including the Lark notification toggle.
+
+## One-shot: build -> cloud sign -> Lark
+
+```bash
+yarn sign-only:full:android   # build + upload + trigger + wait
+yarn sign-only:full:ios       # macOS only; run `yarn ios:installpod` first
+yarn sign-only:full:all       # Android then iOS, sequential
+```
+
+The script:
+
+1. builds the unsigned package with the same preparation as feature test;
+2. uploads it to fe-opcode and prepares the signing request;
+3. triggers the `Sign Only Package` workflow with `notify_lark=true` (default);
+4. waits for the cloud signing job and prints the signed CDN URL.
+
+The Lark message is sent by the cloud workflow **after signing**, never by the
+local script. Invoke the script directly when passing flags:
+
+```bash
+node apps/mobile/scripts/sign-only/one-shot.mjs --platform android --no-notify-lark
+```
+
+Requirements: `OPFE_SIGN_ONLY_TOKEN` (or `~/.config/opfe/sign-only-token`) and
+an authenticated `gh` (`gh auth login`).
+
+`workflow_dispatch` only works once `sign_only_package.yml` is on the default
+branch. Until then the script bakes the inputs into a temporary `test/*`
+branch, triggers the workflow's push path and deletes the branch afterwards.
