@@ -95,6 +95,8 @@ jest.mock('@/components/AssetAvatar', () => ({ AssetAvatar: () => null }));
 jest.mock('@/assets2024/memecoin/check.svg', () => () => null);
 jest.mock('@/assets2024/memecoin/empty-meme-light.svg', () => () => null);
 jest.mock('@/assets2024/memecoin/empty-meme-dark.svg', () => () => null);
+jest.mock('@/assets2024/memecoin/empty-payment-light.svg', () => () => null);
+jest.mock('@/assets2024/memecoin/empty-payment-dark.svg', () => () => null);
 
 const eth: PaymentAsset = {
   id: '0xeth',
