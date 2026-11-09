@@ -9855,16 +9855,16 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@rabby-wallet/rabby-action@npm:0.1.16":
-  version: 0.1.16
-  resolution: "@rabby-wallet/rabby-action@npm:0.1.16"
+"@rabby-wallet/rabby-action@npm:0.1.17":
+  version: 0.1.17
+  resolution: "@rabby-wallet/rabby-action@npm:0.1.17"
   peerDependencies:
     "@debank/common": "*"
     "@rabby-wallet/rabby-api": "*"
     "@rabby-wallet/rabby-security-engine": "*"
     bignumber.js: "*"
     p-queue: ^7.3.0
-  checksum: 10/ebe77c61045e9b1857244f290f2a36f8d2521aa4a8aa88d5c168f67fc948cabde75c7f1fad6cb13aebebb6c888c4fa43c85e203115722309c254bee9e7b98e92
+  checksum: 10/624ed2af91f98bb1da4037fe7a2f173a37d631b5f338f69208c3bb478b83d47a106124556844ae98950da9924309841cdf993409424d2daeba36735457a21dbb
   languageName: node
   linkType: hard
 
@@ -9885,9 +9885,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rabby-wallet/rabby-api@npm:0.9.68":
-  version: 0.9.68
-  resolution: "@rabby-wallet/rabby-api@npm:0.9.68"
+"@rabby-wallet/rabby-api@npm:0.9.69":
+  version: 0.9.69
+  resolution: "@rabby-wallet/rabby-api@npm:0.9.69"
   dependencies:
     "@rabby-wallet/rabby-sign": "npm:0.4.0"
     axios: "npm:^0.27.2"
@@ -9898,7 +9898,7 @@ __metadata:
   peerDependencies:
     "@debank/common": ^0.3.9
     "@rabby-wallet/rabby-sign": ">= 0.3"
-  checksum: 10/ebd521de98c25fbc1f917569507c19228937df02e11535bd7924745f7eaf456d2728b71ddfbf902ee51956834dbc10456919e9d74d9a4dce0d1cd71b72d60642
+  checksum: 10/6f11464a6e028813098420304e0166c318fb2a29e9a9ffa130dd50830a0b4d8da11ea5ac115e838fb2af26fa37deadc59d00e9898f5bd602f7aeefbbbb3c6a09
   languageName: node
   linkType: hard
 
@@ -9921,13 +9921,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rabby-wallet/rabby-security-engine@npm:2.0.12":
-  version: 2.0.12
-  resolution: "@rabby-wallet/rabby-security-engine@npm:2.0.12"
+"@rabby-wallet/rabby-security-engine@npm:2.0.13":
+  version: 2.0.13
+  resolution: "@rabby-wallet/rabby-security-engine@npm:2.0.13"
   peerDependencies:
     "@debank/common": "*"
     "@rabby-wallet/rabby-api": "*"
-  checksum: 10/f2aaf2f992aedc1d3087dd721523a186c6b5c3d44b6c752ef839f11dbe2a22bafa6df606a72d3a5f585b79230185ad64660244bc423de4dce5a1b00bee342fb5
+  checksum: 10/f964c8a07a8fd3f5a0654643dc0fcdfce981de29192130b956916206b7a42b8c22581125e60994bc8bfe44eb1ee2fea6427c334837e7f8f2645f064f63ec3ae4
   languageName: node
   linkType: hard
 
@@ -9950,9 +9950,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rabby-wallet/rabby-swap@npm:0.0.92":
-  version: 0.0.92
-  resolution: "@rabby-wallet/rabby-swap@npm:0.0.92"
+"@rabby-wallet/rabby-swap@npm:0.0.93":
+  version: 0.0.93
+  resolution: "@rabby-wallet/rabby-swap@npm:0.0.93"
   dependencies:
     "@ethersproject/abi": "npm:^5.7.0"
     "@uniswap/universal-router-sdk": "npm:5.14.0"
@@ -9963,7 +9963,7 @@ __metadata:
   peerDependencies:
     "@debank/common": ">=0.3.60"
     "@rabby-wallet/rabby-api": ">=0.6.28"
-  checksum: 10/1ca7b6596ae7879a0db2b56f3b65ddeea7e8cf45024cc76d7fabb18b9c6236f630437f787efe53741febe623c2f5f96f9346f7762defc6b3199d16371df81ef7
+  checksum: 10/0816e5426f19a6b03f50c9b15f508aa07c705e0bbda1b59aba4acf00d17aaca5c304090abaadff3cc8217086ab685ee88fd2b16b0296f5b8f9b286c5389b8e09
   languageName: node
   linkType: hard
 
@@ -37855,13 +37855,13 @@ __metadata:
     "@rabby-wallet/hyperliquid-sdk": "npm:1.1.19"
     "@rabby-wallet/object-multiplex": "workspace:^"
     "@rabby-wallet/persist-store": "workspace:^"
-    "@rabby-wallet/rabby-action": "npm:0.1.16"
-    "@rabby-wallet/rabby-api": "npm:0.9.68"
+    "@rabby-wallet/rabby-action": "npm:0.1.17"
+    "@rabby-wallet/rabby-api": "npm:0.9.69"
     "@rabby-wallet/rabby-bridge": "npm:0.0.12"
     "@rabby-wallet/rabby-logger": "npm:0.3.1"
-    "@rabby-wallet/rabby-security-engine": "npm:2.0.12"
+    "@rabby-wallet/rabby-security-engine": "npm:2.0.13"
     "@rabby-wallet/rabby-sign-bvm": "npm:0.1.1"
-    "@rabby-wallet/rabby-swap": "npm:0.0.92"
+    "@rabby-wallet/rabby-swap": "npm:0.0.93"
     "@rabby-wallet/react-native-bootsplash": "workspace:^"
     "@rabby-wallet/react-native-fs": "workspace:^"
     "@rabby-wallet/react-native-ios-context-menu": "workspace:^"
@@ -39486,7 +39486,7 @@ __metadata:
 
 "react-native@patch:react-native@npm%3A0.81.6#./.yarn/patches/react-native-npm-0.81.6-e0b80aa8aa.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
   version: 0.81.6
-  resolution: "react-native@patch:react-native@npm%3A0.81.6#./.yarn/patches/react-native-npm-0.81.6-e0b80aa8aa.patch::version=0.81.6&hash=f78008&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
+  resolution: "react-native@patch:react-native@npm%3A0.81.6#./.yarn/patches/react-native-npm-0.81.6-e0b80aa8aa.patch::version=0.81.6&hash=000d55&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
   dependencies:
     "@jest/create-cache-key-function": "npm:^29.7.0"
     "@react-native/assets-registry": "npm:0.81.6"
@@ -39530,7 +39530,7 @@ __metadata:
       optional: true
   bin:
     react-native: cli.js
-  checksum: 10/67695ad43828c6836836b85373bcc48c406de6cbd6714872e6fd41e75625208bc03756030e40f20e5dfc12cb18220b74ba64c852870d485cca4006833ecb6b4e
+  checksum: 10/0f01ab3570f66baa341552c603df1fa280e0dc4329dae462a900ad33db9fa1bbf876332662ce54792ffe5c5d4d6448751c003112c99174c099503418899076b0
   languageName: node
   linkType: hard
 

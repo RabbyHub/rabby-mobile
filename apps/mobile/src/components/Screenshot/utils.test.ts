@@ -2,6 +2,8 @@ const mockGetItem = jest.fn();
 const mockGetGasAccountSig = jest.fn();
 const mockGetPendingHardwareAccount = jest.fn();
 const mockGetPerpsCurrentAccount = jest.fn();
+const mockGetAllAccounts = jest.fn();
+const mockGetFallbackAccountSnapshot = jest.fn();
 
 jest.mock('@/constant', () => ({
   APP_VERSIONS: {
@@ -40,7 +42,7 @@ jest.mock('react-native-device-info', () => ({
 }));
 
 jest.mock('@/core/apis/address', () => ({
-  getAllAccounts: jest.fn(async () => []),
+  getAllAccounts: (...args: unknown[]) => mockGetAllAccounts(...args),
 }));
 
 jest.mock('@/core/apis', () => ({
@@ -51,7 +53,8 @@ jest.mock('@/core/apis', () => ({
 }));
 
 jest.mock('@/core/serviceApi/preference', () => ({
-  getFallbackAccountSnapshot: jest.fn(() => null),
+  getFallbackAccountSnapshot: (...args: unknown[]) =>
+    mockGetFallbackAccountSnapshot(...args),
 }));
 
 jest.mock('@/core/serviceApi/gasAccount', () => ({
@@ -100,6 +103,8 @@ describe('Screenshot feedback utils', () => {
     mockGetGasAccountSig.mockReturnValue({});
     mockGetPendingHardwareAccount.mockReturnValue(undefined);
     mockGetPerpsCurrentAccount.mockResolvedValue(null);
+    mockGetAllAccounts.mockResolvedValue([]);
+    mockGetFallbackAccountSnapshot.mockReturnValue(null);
     mockGetItem.mockReturnValue({
       state: {
         GasAccount: {
@@ -145,6 +150,111 @@ describe('Screenshot feedback utils', () => {
 
     await expect(getSceneAddresses()).resolves.toMatchObject({
       GasAccount: '0xpendinghardware',
+    });
+  });
+
+  describe('address opt-in', () => {
+    const FIRST_ADDRESS = '0x' + 'a'.repeat(40);
+    const CURRENT_ADDRESS = '0x' + 'b'.repeat(40);
+    const WATCH_ADDRESS = '0x' + 'c'.repeat(40);
+    const TX_HASH = '0x' + 'd'.repeat(64);
+
+    const recordGlobalError = (error: unknown) => {
+      const handler = jest.mocked((global as any).ErrorUtils.setGlobalHandler)
+        .mock.calls[0][0];
+      handler(error, false);
+    };
+
+    beforeEach(() => {
+      mockGetAllAccounts.mockResolvedValue([
+        { address: WATCH_ADDRESS, type: 'Watch Address', brandName: 'Watch' },
+        { address: FIRST_ADDRESS, type: 'HD Key Tree', brandName: 'Rabby' },
+      ]);
+      mockGetFallbackAccountSnapshot.mockReturnValue({
+        address: CURRENT_ADDRESS,
+        type: 'Simple Key Pair',
+        brandName: 'Rabby',
+      });
+    });
+
+    it('leaves addresses and their types out unless the user opts in', async () => {
+      const { getScreenshotFeedbackExtra } = loadUtils();
+      recordGlobalError({
+        message: `send failed from ${FIRST_ADDRESS} in ${TX_HASH} on 0x38`,
+      });
+
+      const extra = await getScreenshotFeedbackExtra();
+
+      expect(extra).not.toHaveProperty('myFirstAddress');
+      expect(extra).not.toHaveProperty('myCurrentAddress');
+      expect(extra).not.toHaveProperty('mySceneAddresses');
+      expect(extra).not.toHaveProperty('myFirstAddressType');
+      expect(extra).not.toHaveProperty('myCurrentAddressType');
+      expect(extra).not.toHaveProperty('totalBalanceText');
+      expect(extra).not.toHaveProperty('myCallableAddressCount');
+      expect(extra).not.toHaveProperty('myUncallableAddressCount');
+      const serializedText = JSON.stringify(extra);
+      for (const accountType of ['HD Key Tree', 'Simple Key Pair']) {
+        expect(serializedText).not.toContain(accountType);
+      }
+      expect(mockGetItem).not.toHaveBeenCalled();
+      expect(mockGetPerpsCurrentAccount).not.toHaveBeenCalled();
+      expect(mockGetAllAccounts).not.toHaveBeenCalled();
+      expect(mockGetFallbackAccountSnapshot).not.toHaveBeenCalled();
+
+      const serialized = JSON.stringify(extra).toLowerCase();
+      for (const address of [FIRST_ADDRESS, CURRENT_ADDRESS, WATCH_ADDRESS]) {
+        expect(serialized).not.toContain(address.slice(2));
+      }
+      expect(extra.latestErrors).toContain('send failed from 0x*** in 0x***');
+      expect(extra.latestErrors).toContain('on 0x38');
+    });
+
+    it('does not treat a non-boolean value as consent', async () => {
+      const { getScreenshotFeedbackExtra } = loadUtils();
+
+      const extra = await getScreenshotFeedbackExtra({
+        includeAddress: 'true' as unknown as boolean,
+      });
+
+      expect(extra).not.toHaveProperty('myCurrentAddress');
+      expect(extra).not.toHaveProperty('myCurrentAddressType');
+    });
+
+    it('attaches addresses, their types and raw errors after the user opts in', async () => {
+      const { getScreenshotFeedbackExtra } = loadUtils();
+      recordGlobalError({ message: `send failed from ${FIRST_ADDRESS}` });
+
+      const extra = await getScreenshotFeedbackExtra({
+        includeAddress: true,
+      });
+
+      expect(extra).toMatchObject({
+        myFirstAddress: FIRST_ADDRESS,
+        myFirstAddressType: 'HD Key Tree',
+        myCurrentAddress: CURRENT_ADDRESS,
+        myCurrentAddressType: 'Simple Key Pair',
+        mySceneAddresses: expect.objectContaining({ Receive: '0xreceive' }),
+      });
+      expect(extra).not.toHaveProperty('totalBalanceText');
+      expect(extra).not.toHaveProperty('myCallableAddressCount');
+      expect(extra).not.toHaveProperty('myUncallableAddressCount');
+      expect(extra.latestErrors).toContain(FIRST_ADDRESS);
+    });
+  });
+
+  describe('maskScreenshotFeedbackAddresses', () => {
+    it('masks addresses and tx hashes but keeps short hex values', () => {
+      const { maskScreenshotFeedbackAddresses } = loadUtils();
+      const address = '0x' + 'AbCdEf0123'.repeat(4);
+      const txHash = '0x' + 'f'.repeat(64);
+
+      expect(
+        maskScreenshotFeedbackAddresses(
+          `to=${address}&hash=${txHash}&chainId=0x38&value=0x0`,
+        ),
+      ).toBe('to=0x***&hash=0x***&chainId=0x38&value=0x0');
+      expect(maskScreenshotFeedbackAddresses(null)).toBeNull();
     });
   });
 });

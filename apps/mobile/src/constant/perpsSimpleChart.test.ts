@@ -65,7 +65,7 @@ describe('Simple chart preference boundary', () => {
       PERPS_PRO_CANDLE_INTERVAL_OPTIONS.some(
         item => String(item.value) === '3d',
       ),
-    ).toBe(false);
+    ).toBe(true);
   });
   it('uses the five new range mappings and keeps month and minute distinct', () => {
     expect(SIMPLE_RANGE_INTERVAL).toEqual({

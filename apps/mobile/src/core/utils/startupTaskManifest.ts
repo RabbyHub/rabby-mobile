@@ -147,6 +147,18 @@ export const STARTUP_TASKS = {
     idleTimeoutMs: 5000,
     budgetMs: 450,
   }),
+  homeBridgeHistoryWarmup: defineStartupTask({
+    label: 'home.bridgeHistoryWarmup',
+    owner: 'home-history',
+    reason:
+      'warm bridge mappings for recent multi-address history after Home is idle so the history page renders bridge cards on first frame',
+    stage: 'homePostStartupIdle',
+    priority: 'low',
+    delayMs: 3000,
+    fallbackMs: 10000,
+    idleTimeoutMs: 5000,
+    budgetMs: 120,
+  }),
   homeReceiveAddressListWarmup: defineStartupTask({
     label: 'home.receiveAddressListWarmup',
     owner: 'home-receive',

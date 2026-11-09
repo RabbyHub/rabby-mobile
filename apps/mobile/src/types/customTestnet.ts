@@ -25,6 +25,12 @@ export interface TestnetChain extends TestnetChainBase {
   severity: number;
 }
 
+/** Detected from the chain itself, kept apart from the user-entered config. */
+export type CustomTestnetEip1559Detection = {
+  supported: boolean;
+  checkedAt: number;
+};
+
 export interface CustomTestnetTokenBase {
   id: string;
   chainId: number;

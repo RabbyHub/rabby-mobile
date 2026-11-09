@@ -108,6 +108,7 @@ import { FeedbackHistoryHost } from './components/Screenshot/FeedbackHistory/Glo
 import { setServiceRuntimeDiagnosticsContextProvider } from './core/serviceApi/serviceRuntimeDiagnostics';
 import { withRegressionScenario } from '@/devtools/regressionScenarios/react';
 import { createAutoUnlockPresentationPolicy } from '@/utils/autoUnlockPresentationPolicy';
+import { browserPerpsNavigation } from '@/hooks/browser/browserPerpsNavigation';
 
 const RootStack = createNativeStackNavigator<RootStackParamsList>();
 const AccountStack = createNativeStackNavigator<AccountNavigatorParamList>();
@@ -634,6 +635,15 @@ export default function AppNavigation() {
                 <RootStack.Screen
                   name={RootNames.StackTransaction}
                   component={TransactionNavigator}
+                  listeners={({ route, navigation }) => ({
+                    transitionEnd: event => {
+                      browserPerpsNavigation.onTransitionEnd({
+                        requestId: route.params?.browserPerpsNavigationId,
+                        closing: event.data.closing,
+                        isFocused: navigation.isFocused(),
+                      });
+                    },
+                  })}
                 />
                 <RootStack.Screen
                   name={RootNames.StackSettings}

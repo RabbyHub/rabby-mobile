@@ -185,9 +185,7 @@ export const KeystoneHardwareWaiting = ({
       }
     });
     emitSignComponentAmounted();
-    setTimeout(() => {
-      apiKeystone.acquireKeystoneMemStoreData();
-    }, 500);
+    apiKeystone.acquireKeystoneMemStoreData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

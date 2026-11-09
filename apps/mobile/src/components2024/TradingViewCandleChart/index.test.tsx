@@ -63,7 +63,7 @@ const TradingViewCandleChart = require('./index')
   .default as typeof import('./index').default;
 
 const markChartReady = ({
-  perpsProKlineProtocolVersion = 3,
+  perpsProKlineProtocolVersion = 4,
   supportsDataAppliedAck = true,
   perpsSimpleKlineProtocolVersion,
 }: {
@@ -263,7 +263,7 @@ describe('TradingViewCandleChart protocol compatibility', () => {
     expect(onChartError).toHaveBeenCalledTimes(1);
     expect(consoleError).toHaveBeenCalledWith(
       'TradingViewChart: Perps Pro K-line protocol mismatch',
-      { actualVersion: null, requiredVersion: 3 },
+      { actualVersion: null, requiredVersion: 4 },
     );
     consoleError.mockRestore();
   });
@@ -541,8 +541,24 @@ describe('TradingViewCandleChart protocol compatibility', () => {
     });
   });
 
-  it('resets only the ready Pro price scale through the additive bridge command', () => {
+  it('sends Pro viewport reset and overlays only once the chart is ready', () => {
     const chartRef = React.createRef<TradingViewChartRef>();
+    const overlays = {
+      colors: {
+        accent: '#23C0B0',
+        background: '#fff',
+        contrast: '#fff',
+        down: '#E85046',
+        entry: '#6A7587',
+        entryBackground: '#C5C5CF',
+        entryText: '#3E495E',
+        liquidation: '#FF9F0A',
+        up: '#36B16D',
+      },
+      lines: [
+        { id: 'entry', kind: 'entry' as const, price: 100, title: 'Entry' },
+      ],
+    };
     render(
       <TradingViewCandleChart
         ref={chartRef}
@@ -552,83 +568,63 @@ describe('TradingViewCandleChart protocol compatibility', () => {
     );
 
     act(() => {
-      chartRef.current?.resetPriceScale();
+      chartRef.current?.resetPerpsProViewport();
+      chartRef.current?.setPerpsProOverlays(overlays);
     });
-    expect(
-      mockSendMessage.mock.calls.some(
-        call => call[0].data?.type === 'RESET_PERPS_PRO_PRICE_SCALE',
-      ),
-    ).toBe(false);
+    expect(mockSendMessage).not.toHaveBeenCalled();
 
     markChartReady();
     act(() => {
-      chartRef.current?.resetPriceScale();
+      chartRef.current?.resetPerpsProViewport();
+      chartRef.current?.setPerpsProOverlays(overlays);
     });
     expect(mockSendMessage).toHaveBeenCalledWith({
       type: 'TRADINGVIEW_MESSAGE',
-      data: { type: 'RESET_PERPS_PRO_PRICE_SCALE' },
+      data: { type: 'RESET_PERPS_PRO_VIEWPORT' },
+    });
+    expect(mockSendMessage).toHaveBeenCalledWith({
+      type: 'TRADINGVIEW_MESSAGE',
+      data: { type: 'SET_PERPS_PRO_OVERLAYS', overlays },
     });
   });
 
-  it('publishes valid Pro price-scale state and ignores malformed values', () => {
-    const onPriceScaleAutoScaleChange = jest.fn();
-    render(
+  it('publishes valid Pro viewport state only to Pro consumers', () => {
+    const onPerpsProViewportChange = jest.fn();
+    const message = (resetVisible: unknown) => ({
+      nativeEvent: {
+        data: JSON.stringify({
+          type: 'PERPS_PRO_VIEWPORT_CHANGED',
+          resetVisible,
+        }),
+      },
+    });
+    const { rerender } = render(
       <TradingViewCandleChart
         height={184}
-        onPriceScaleAutoScaleChange={onPriceScaleAutoScaleChange}
+        onPerpsProViewportChange={onPerpsProViewportChange}
         variant="perps-pro"
       />,
     );
     markChartReady();
-    expect(onPriceScaleAutoScaleChange).toHaveBeenLastCalledWith(true);
+    expect(onPerpsProViewportChange).toHaveBeenLastCalledWith(false);
 
-    const props = mockLocalWebViewProps.mock.calls.at(-1)?.[0];
+    let props = mockLocalWebViewProps.mock.calls.at(-1)?.[0];
     act(() => {
-      props.onMessage({
-        nativeEvent: {
-          data: JSON.stringify({
-            type: 'PERPS_PRO_PRICE_SCALE_AUTO_SCALE_CHANGED',
-            autoScale: false,
-          }),
-        },
-      });
-      props.onMessage({
-        nativeEvent: {
-          data: JSON.stringify({
-            type: 'PERPS_PRO_PRICE_SCALE_AUTO_SCALE_CHANGED',
-            autoScale: 'false',
-          }),
-        },
-      });
+      props.onMessage(message(true));
+      props.onMessage(message('true'));
     });
+    expect(onPerpsProViewportChange).toHaveBeenCalledTimes(2);
+    expect(onPerpsProViewportChange).toHaveBeenLastCalledWith(true);
 
-    expect(onPriceScaleAutoScaleChange).toHaveBeenCalledTimes(2);
-    expect(onPriceScaleAutoScaleChange).toHaveBeenLastCalledWith(false);
-  });
-
-  it('does not publish Pro price-scale state to a legacy chart consumer', () => {
-    const onPriceScaleAutoScaleChange = jest.fn();
-    render(
+    rerender(
       <TradingViewCandleChart
         height={184}
-        onPriceScaleAutoScaleChange={onPriceScaleAutoScaleChange}
+        onPerpsProViewportChange={onPerpsProViewportChange}
       />,
     );
-    markChartReady({ perpsProKlineProtocolVersion: null });
-    const props = mockLocalWebViewProps.mock.calls.at(-1)?.[0];
-
-    act(() => {
-      props.onMessage({
-        nativeEvent: {
-          data: JSON.stringify({
-            type: 'PERPS_PRO_PRICE_SCALE_AUTO_SCALE_CHANGED',
-            autoScale: false,
-          }),
-        },
-      });
-    });
-
-    expect(onPriceScaleAutoScaleChange).not.toHaveBeenCalled();
+    props = mockLocalWebViewProps.mock.calls.at(-1)?.[0];
+    act(() => props.onMessage(message(false)));
+    expect(onPerpsProViewportChange).toHaveBeenCalledTimes(2);
   });
 
   it('does not expose the retired Perps Pro reference-price bridge', () => {

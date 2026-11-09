@@ -241,13 +241,17 @@ export const useBridge = (
 
   // 包装 switchToChain，更新初始化标记
   const wrappedSwitchToChain = useCallback(
-    (chain?: CHAINS_ENUM, resetToken?: boolean) => {
+    (chain?: CHAINS_ENUM, resetToken = true) => {
       if (chain) {
         isToChainInitializedRef.current = true;
       }
-      switchToChain(chain, resetToken);
+      switchToChain(chain, false);
+      if (resetToken) {
+        // 入口参数只用于预填，切链时直接选默认币，避免被旧 To 参数拦截。
+        setToToken(chain ? getChainDefaultToken(chain) : undefined);
+      }
     },
-    [switchToChain],
+    [setToToken, switchToChain],
   );
 
   useEffect(() => {
@@ -887,7 +891,7 @@ export const useBridge = (
                         .toString(),
                   toChainId: toToken.chain,
                   toTokenId: toToken.id,
-                  slippage: new BigNumber(slippageObj.slippageState || '1')
+                  slippage: new BigNumber(slippageObj.slippage)
                     .div(100)
                     .toString(10),
                   feeRate: Number(feeRate),

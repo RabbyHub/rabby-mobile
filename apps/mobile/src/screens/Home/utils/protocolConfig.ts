@@ -1,31 +1,11 @@
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
-import { RootNames } from '@/constant/layout';
-import { FC, useCallback, useMemo } from 'react';
-import AAVE3_ICON from '@/assets/icons/protocols/aave-icon-bg.svg';
+import { FC, useMemo } from 'react';
 import HYPERLIQUID_ICON from '@/assets/icons/protocols/hyper-icon-bg.svg';
 import { KeyringAccountWithAlias, useMyAccounts } from '@/hooks/account';
-import {
-  isSameAccount,
-  useSwitchSceneCurrentAccount,
-} from '@/hooks/accountsSwitcher';
-import {
-  isAave3Portfolio,
-  keyToMarketKey,
-  marketKeyToProtocolId,
-} from '@/screens/Lending/config/protocol';
+import { isSameAccount } from '@/hooks/accountsSwitcher';
 import { SvgProps } from 'react-native-svg';
 import { navigateToPreferredPerps } from '@/hooks/perps/navigation/navigateToPreferredPerps';
-import { useSelectedMarket } from '@/screens/Lending/hooks';
-import { clearLendingActionPopupState } from '@/screens/Lending/utils/actionPopup';
 import { IProtocolPortfolio } from '@/store/protocols';
-
-export { isAave3Portfolio, keyToMarketKey, marketKeyToProtocolId };
-
-export type TonTokenManageAction = (
-  account?: KeyringAccountWithAlias,
-  tokenAddress?: string,
-  direction?: 'supply' | 'borrow',
-) => void;
 
 export type TonManageAction = (
   account?: KeyringAccountWithAlias,
@@ -41,67 +21,14 @@ interface ProtocolConfigItemType {
     account?: KeyringAccountWithAlias | null,
   ) => boolean;
   onManage?: TonManageAction;
-  onTokenManage?: TonTokenManageAction;
 }
 
 export const useProtocolConfig = () => {
   const { navigation } = useSafeSetNavigationOptions();
-  const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
   const { accounts } = useMyAccounts({ disableAutoFetch: true });
-  const { setMarketKey } = useSelectedMarket();
-
-  const generateAAVEConfig = useCallback(
-    (key: string): ProtocolConfigItemType => {
-      const openLending = async (
-        account?: KeyringAccountWithAlias,
-        tokenAddress?: string,
-        direction?: 'supply' | 'borrow',
-        source?: string,
-      ) => {
-        const marketKey = keyToMarketKey[key];
-        if (account && marketKey) {
-          await switchSceneCurrentAccount('Lending', account);
-          setMarketKey(marketKey);
-        }
-        clearLendingActionPopupState();
-
-        navigation.navigate(RootNames.StackTransaction, {
-          screen: RootNames.Lending,
-          params: {
-            dappId: 'aave',
-            account,
-            tokenAddress,
-            direction,
-            source,
-          },
-        });
-      };
-
-      return {
-        icon: AAVE3_ICON,
-        bgColor1: 'rgba(147, 145, 247, 0.2)',
-        bgColor2: 'rgba(147, 145, 247, 0)',
-        showManage: (item, _account) => {
-          return item.name?.toLowerCase() === 'lending';
-        },
-        onManage: account => openLending(account),
-        onTokenManage: (account, tokenAddress, direction) =>
-          openLending(account, tokenAddress, direction, 'Portfolio Defi'),
-      };
-    },
-    [navigation, setMarketKey, switchSceneCurrentAccount],
-  );
-
-  const aave3Config = useMemo(() => {
-    return Object.entries(keyToMarketKey).reduce((acc, [key]) => {
-      acc[key] = generateAAVEConfig(key);
-      return acc;
-    }, {});
-  }, [generateAAVEConfig]);
 
   const config = useMemo((): Record<string, ProtocolConfigItemType> => {
     return {
-      ...aave3Config,
       hyperliquid: {
         icon: HYPERLIQUID_ICON,
         bgColor1: 'rgba(187, 235, 221, 0.2)',
@@ -161,7 +88,7 @@ export const useProtocolConfig = () => {
         },
       },
     };
-  }, [aave3Config, accounts, navigation]);
+  }, [accounts, navigation]);
   return {
     config,
   };

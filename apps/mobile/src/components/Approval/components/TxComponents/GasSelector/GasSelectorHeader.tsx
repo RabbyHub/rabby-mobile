@@ -116,7 +116,11 @@ interface GasSelectorProps {
   isHardware: boolean;
   isCancel: boolean;
   isSpeedUp: boolean;
-  gasCalcMethod: (price: number) => Promise<{
+  // gas is the level being priced, so a 1559 estimate can use its own tip
+  gasCalcMethod: (
+    price: number,
+    gas?: GasLevel | null,
+  ) => Promise<{
     gasCostUsd: BigNumber;
     gasCostAmount: BigNumber;
     maxGasCostAmount?: BigNumber;
@@ -277,6 +281,8 @@ export const GasSelectorHeader = ({
 
   const loadCustomGasData = useMemoizedFn(
     async (custom?: number): Promise<GasLevel | null> => {
+      // custom networks are unknown to the Rabby gas market API; the custom
+      // level keeps the base fee of the level selected before it
       if (chain?.isTestnet) {
         return null;
       }
@@ -343,9 +349,39 @@ export const GasSelectorHeader = ({
     }
   };
 
+  // Memoized: useExplainGas re-runs on every new method, and its result
+  // re-renders this component.
+  const explainSelectedGas = useCallback(
+    (price: number) =>
+      gasCalcMethod(
+        price,
+        selectedGas && {
+          ...selectedGas,
+          priority_price:
+            is1559 && maxPriorityFee !== undefined
+              ? Number(maxPriorityFee) * 1e9
+              : selectedGas.priority_price,
+        },
+      ),
+    [gasCalcMethod, selectedGas, is1559, maxPriorityFee],
+  );
+
+  const explainLevelGas = useMemo(() => {
+    const byLevel = (level: string) => (price: number) =>
+      gasCalcMethod(
+        price,
+        gasList.find(e => e.level === level),
+      );
+    return {
+      slow: byLevel('slow'),
+      normal: byLevel('normal'),
+      fast: byLevel('fast'),
+    };
+  }, [gasCalcMethod, gasList]);
+
   const modalExplainGas = useExplainGas({
     price: selectedGas?.price || 0,
-    method: gasCalcMethod,
+    method: explainSelectedGas,
     value: {
       gasCostAmount: new BigNumber(gas.gasCostAmount),
       gasCostUsd: new BigNumber(gas.gasCostUsd),
@@ -354,7 +390,7 @@ export const GasSelectorHeader = ({
 
   const gasSlowUsd = useExplainGas({
     price: gasList.find(e => e.level === 'slow')?.price || 0,
-    method: gasCalcMethod,
+    method: explainLevelGas.slow,
     value: {
       gasCostAmount: new BigNumber(gas.gasCostAmount),
       gasCostUsd: new BigNumber(gas.gasCostUsd),
@@ -363,7 +399,7 @@ export const GasSelectorHeader = ({
 
   const gasNormalUsd = useExplainGas({
     price: gasList.find(e => e.level === 'normal')?.price || 0,
-    method: gasCalcMethod,
+    method: explainLevelGas.normal,
     value: {
       gasCostAmount: new BigNumber(gas.gasCostAmount),
       gasCostUsd: new BigNumber(gas.gasCostUsd),
@@ -372,7 +408,7 @@ export const GasSelectorHeader = ({
 
   const gasFastUsd = useExplainGas({
     price: gasList.find(e => e.level === 'fast')?.price || 0,
-    method: gasCalcMethod,
+    method: explainLevelGas.fast,
     value: {
       gasCostAmount: new BigNumber(gas.gasCostAmount),
       gasCostUsd: new BigNumber(gas.gasCostUsd),
@@ -945,7 +981,8 @@ export const GasSelectorHeader = ({
     setModalVisible(false);
   };
 
-  const hasTip = isReal1559 && isHardware;
+  // custom networks never fall back to legacy, every 1559 tx is type-2
+  const hasTip = (isReal1559 || (is1559 && !!chain?.isTestnet)) && isHardware;
   const hasFee = is1559;
   const snapPoint = React.useMemo(() => {
     let v = 500 + (fixedMode ? 30 : 0);
@@ -1464,7 +1501,11 @@ export const GasSelectorHeader = ({
                   }>
                   <BottomSheetTextInput
                     style={styles.feeInput}
-                    value={maxPriorityFee?.toString()}
+                    // Stay controlled when cleared: with an undefined value
+                    // native keeps the last text, and the next key appends to it.
+                    value={
+                      maxPriorityFee === undefined ? '' : String(maxPriorityFee)
+                    }
                     onChange={e =>
                       handleMaxPriorityFeeChange(e.nativeEvent.text)
                     }

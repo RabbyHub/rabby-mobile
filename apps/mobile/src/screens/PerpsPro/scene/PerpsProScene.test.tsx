@@ -513,10 +513,15 @@ jest.mock('../components/open-orders/PerpsProOpenOrderCard', () => {
   };
 });
 
+jest.mock('react-native-safe-area-context', () => ({
+  useSafeAreaInsets: () => ({ bottom: 0, left: 0, right: 0, top: 0 }),
+}));
+
 jest.mock('../components/chart/PerpsProKlineSheet', () => {
   const ReactModule = require('react');
   const { Pressable } = require('react-native');
   return {
+    getPerpsProKlinePanelHeight: () => 302,
     PerpsProKlineSheet: (props: {
       enabled: boolean;
       onClose: () => void;
@@ -586,11 +591,11 @@ jest.mock('../components/market/PerpsProMarketBar', () => {
   return {
     PERPS_PRO_MARKET_BAR_HEIGHT: 40,
     PerpsProMarketBar: ({
-      onOpenKline,
       onPress,
+      onToggleKline,
     }: {
-      onOpenKline: () => void;
       onPress: () => void;
+      onToggleKline: () => void;
     }) =>
       ReactModule.createElement(
         ReactModule.Fragment,
@@ -600,7 +605,7 @@ jest.mock('../components/market/PerpsProMarketBar', () => {
           testID: 'market-bar',
         }),
         ReactModule.createElement(Pressable, {
-          onPress: onOpenKline,
+          onPress: onToggleKline,
           testID: 'kline-trigger',
         }),
       ),
@@ -2636,6 +2641,10 @@ describe('PerpsProScene market loading states', () => {
 
     fireEvent.press(screen.getByTestId('kline-trigger'));
     expect(mockKlineProps.mock.lastCall?.[0]).toMatchObject({ visible: true });
+
+    // The market icon toggles the docked panel closed again.
+    fireEvent.press(screen.getByTestId('kline-trigger'));
+    expect(mockKlineProps.mock.lastCall?.[0]).toMatchObject({ visible: false });
   });
 
   it('stops the retained Candle Feed while the app is in background', () => {
@@ -3036,7 +3045,7 @@ describe('PerpsProScene market loading states', () => {
     );
   });
 
-  it('preserves the empty-state trailing distance after populated account, position, and order rows', () => {
+  it('keeps a fixed trailing gap for populated and empty info tabs', () => {
     mockUsePerpsProScene.mockReturnValue(createSceneState());
     mockUsePerpsProInfoPanel.mockReturnValue(
       createInfoState({
@@ -3067,7 +3076,7 @@ describe('PerpsProScene market loading states', () => {
 
     expect(
       StyleSheet.flatten(scroll.props.contentContainerStyle),
-    ).toMatchObject({ minHeight: 1202, paddingBottom: 386 });
+    ).toMatchObject({ minHeight: 1202, paddingBottom: 36 });
 
     mockUsePerpsProInfoPanel.mockReturnValue(
       createInfoState({
@@ -3083,7 +3092,7 @@ describe('PerpsProScene market loading states', () => {
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-scroll').props.contentContainerStyle,
       ),
-    ).toMatchObject({ minHeight: 1202, paddingBottom: 386 });
+    ).toMatchObject({ minHeight: 1202, paddingBottom: 36 });
 
     mockUsePerpsProInfoPanel.mockReturnValue(
       createInfoState({
@@ -3099,7 +3108,7 @@ describe('PerpsProScene market loading states', () => {
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-scroll').props.contentContainerStyle,
       ),
-    ).toMatchObject({ minHeight: 1202, paddingBottom: 386 });
+    ).toMatchObject({ minHeight: 1202, paddingBottom: 36 });
 
     mockUsePerpsProInfoPanel.mockReturnValue(
       createInfoState({
@@ -3115,7 +3124,7 @@ describe('PerpsProScene market loading states', () => {
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-scroll').props.contentContainerStyle,
       ),
-    ).toMatchObject({ minHeight: 1202, paddingBottom: 32 });
+    ).toMatchObject({ minHeight: 1202, paddingBottom: 36 });
 
     mockUsePerpsProInfoPanel.mockReturnValue(
       createInfoState({
@@ -3130,7 +3139,7 @@ describe('PerpsProScene market loading states', () => {
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-scroll').props.contentContainerStyle,
       ),
-    ).toMatchObject({ minHeight: 1202, paddingBottom: 32 });
+    ).toMatchObject({ minHeight: 1202, paddingBottom: 36 });
   });
 
   it('closes the local funding overlay when the active account changes', () => {
