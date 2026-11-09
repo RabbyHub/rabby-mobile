@@ -3,6 +3,7 @@ import {
   resolvePerpsProDialogCardBackground,
   resolvePerpsProDialogFieldBackground,
 } from '../common/perpsProDialogVisual';
+import { getPerpsProListRowStyles } from '../common/perpsProListVisual';
 import { PerpsProDialogBackdrop } from '../common/PerpsProDialogBackdrop';
 import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
 import AutoLockView from '@/components/AutoLockView';
@@ -70,7 +71,8 @@ import {
 import { PerpsProOpenOrderEditInput } from './PerpsProOpenOrderEditInput';
 
 const MODAL_ID = 'perps-pro-conditional-order-edit';
-const SHEET_HEIGHT = 560;
+// 14pt entry/direction rows (+4) and 30pt summary rows (+20).
+const SHEET_HEIGHT = 584;
 const CONTENT_HEIGHT = SHEET_HEIGHT - 40;
 const SheetContent = IS_ANDROID ? BottomSheetScrollView : BottomSheetView;
 
@@ -539,49 +541,30 @@ const getStyle = createGetStyles2024(
       lineHeight: 18,
     },
     amountGroup: { gap: 10 },
-    summary: { gap: 8, marginTop: 8 },
-    summaryRow: {
-      alignItems: 'center',
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-    },
-    summaryLabel: {
-      color: colors2024['neutral-secondary'],
-      fontFamily: 'SF Pro Rounded',
-      fontSize: 12,
-      lineHeight: 16,
-    },
+    summary: { marginTop: 8 },
+    summaryRow: getPerpsProListRowStyles(colors2024).listRow,
+    summaryLabel: getPerpsProListRowStyles(colors2024).listLabel,
     summaryValue: {
       ...PERPS_PRO_NUMBER_STYLE,
-      color: colors2024['neutral-title-1'],
-      fontFamily: 'SF Pro Rounded',
-      fontSize: 12,
-      fontWeight: '500',
-      lineHeight: 16,
+      ...getPerpsProListRowStyles(colors2024).listValue,
       maxWidth: '64%',
       textAlign: 'right',
     },
     positiveValue: {
       ...PERPS_PRO_NUMBER_STYLE,
+      ...getPerpsProListRowStyles(colors2024).listValue,
       color: colors2024['green-default'],
-      fontFamily: 'SF Pro Rounded',
-      fontSize: 12,
-      fontWeight: '500',
-      lineHeight: 16,
     },
     negativeValue: {
       ...PERPS_PRO_NUMBER_STYLE,
+      ...getPerpsProListRowStyles(colors2024).listValue,
       color: colors2024['red-default'],
-      fontFamily: 'SF Pro Rounded',
-      fontSize: 12,
-      fontWeight: '500',
-      lineHeight: 16,
     },
     footer: {
       left: 20,
       position: 'absolute',
       right: 20,
-      top: 432,
+      top: 456,
     },
   }),
 );

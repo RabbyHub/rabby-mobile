@@ -147,12 +147,13 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     ...PERPS_PRO_ANDROID_SINGLE_LINE_INPUT_STYLE,
   },
   inputWithUnit: { paddingRight: 72 },
+  // Figma 86609:343156: field units are 16pt Bold.
   unit: {
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    fontWeight: '500',
-    lineHeight: 18,
+    fontSize: 16,
+    fontWeight: '700',
+    lineHeight: 20,
     position: 'absolute',
     right: 12,
   },

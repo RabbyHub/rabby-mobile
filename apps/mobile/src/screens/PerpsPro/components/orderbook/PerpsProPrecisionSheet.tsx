@@ -1,4 +1,5 @@
 import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
+import { PerpsProDialogOptionCheck } from '../common/PerpsProDialogOptionCheck';
 import { AppBottomSheetModal } from '@/components';
 import { Text } from '@/components/Typography';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
@@ -92,6 +93,7 @@ export const PerpsProPrecisionSheet: React.FC<{
               <Text style={styles.optionText}>
                 {formatPerpsProPrice(option.displayPrice, option.priceDecimals)}
               </Text>
+              <PerpsProDialogOptionCheck active={active} />
             </Pressable>
           );
         })}

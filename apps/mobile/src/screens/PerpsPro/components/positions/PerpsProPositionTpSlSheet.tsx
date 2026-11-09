@@ -962,12 +962,12 @@ const getStyle = createGetStyles2024(
     return {
       ...dialog,
       listPage: { flex: 1 },
-      listCard: { flex: 1, marginHorizontal: 16, marginTop: 8 },
+      listCard: { flex: 1, marginHorizontal: 12, marginTop: 8 },
       orderScroll: { flex: 1 },
       orderScrollContent: {
         paddingBottom: Math.max(12, safeAreaInsets.bottom),
       },
-      formTabs: { marginHorizontal: 16, marginTop: 8 },
+      formTabs: { marginHorizontal: 12, marginTop: 8 },
       tabRow: {
         alignItems: 'center',
         flexDirection: 'row',
@@ -975,7 +975,7 @@ const getStyle = createGetStyles2024(
         justifyContent: 'space-between',
         marginBottom: 8,
       },
-      tabs: { flexDirection: 'row', paddingLeft: 8 },
+      tabs: { flexDirection: 'row' },
       tab: {
         alignItems: 'center',
         borderRadius: 120,

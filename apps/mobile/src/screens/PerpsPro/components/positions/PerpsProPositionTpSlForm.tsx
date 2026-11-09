@@ -4,6 +4,7 @@ import {
   resolvePerpsProDialogFieldBackground,
   PERPS_PRO_DIALOG_TOKENS,
 } from '../common/perpsProDialogVisual';
+import { PerpsProSectionTitle } from '../common/PerpsProSectionTitle';
 import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
 import { Text, TextInput } from '@/components/Typography';
 import { Button } from '@/components2024/Button';
@@ -468,22 +469,14 @@ export const PerpsProPositionTpSlForm: React.FC<{
               return (
                 <View key={kind} style={styles.sideSection}>
                   <View style={styles.sideHeading}>
-                    <View style={styles.sideTitleRow}>
-                      <View
-                        style={
-                          kind === 'takeProfit'
-                            ? styles.takeProfitBar
-                            : styles.stopLossBar
-                        }
-                      />
-                      <Text style={styles.sideTitle}>
-                        {t(
-                          kind === 'takeProfit'
-                            ? 'page.perps.pro.positionTpsl.takeProfit'
-                            : 'page.perps.pro.positionTpsl.stopLoss',
-                        )}
-                      </Text>
-                    </View>
+                    <PerpsProSectionTitle
+                      tone={kind === 'takeProfit' ? 'positive' : 'negative'}>
+                      {t(
+                        kind === 'takeProfit'
+                          ? 'page.perps.pro.positionTpsl.takeProfit'
+                          : 'page.perps.pro.positionTpsl.stopLoss',
+                      )}
+                    </PerpsProSectionTitle>
                     {mode === 'position' &&
                     facts.existing &&
                     !facts.duplicate ? (
@@ -709,7 +702,7 @@ const getStyle = createGetStyles2024(
   ({ colors2024, isLight, safeAreaInsets }) => ({
     ...getPerpsProDialogActionStyles(colors2024),
     container: {
-      paddingHorizontal: 16,
+      paddingHorizontal: 12,
     },
     subpageContainer: { paddingTop: 8 },
     card: {
@@ -731,26 +724,6 @@ const getStyle = createGetStyles2024(
       alignItems: 'center',
       flexDirection: 'row',
       justifyContent: 'space-between',
-    },
-    sideTitleRow: { alignItems: 'center', flexDirection: 'row', gap: 6 },
-    takeProfitBar: {
-      backgroundColor: colors2024['green-default'],
-      borderRadius: 2,
-      height: 14,
-      width: 4,
-    },
-    stopLossBar: {
-      backgroundColor: colors2024['red-default'],
-      borderRadius: 2,
-      height: 14,
-      width: 4,
-    },
-    sideTitle: {
-      color: colors2024['neutral-title-1'],
-      fontFamily: 'SF Pro Rounded',
-      fontSize: 16,
-      fontWeight: '700',
-      lineHeight: 20,
     },
     cancelText: {
       color: PERPS_PRO_DIALOG_TOKENS.actionBackground,

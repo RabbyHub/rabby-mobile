@@ -4,6 +4,10 @@ import {
   PERPS_PRO_DIALOG_HEAVY_TEXT_STYLE,
   resolvePerpsProDialogCardBackground,
 } from '../common/perpsProDialogVisual';
+import {
+  getPerpsProListRowStyles,
+  PERPS_PRO_DIALOG_LIST_CARD_PADDING,
+} from '../common/perpsProListVisual';
 import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
 import { PerpsProCheckboxIcon } from '../common/PerpsProCheckboxIcon';
 import { PerpsProDialogBackdrop } from '../common/PerpsProDialogBackdrop';
@@ -116,7 +120,8 @@ export const PerpsProCloseConfirmationSheet: React.FC<{
         handleStyle={styles.handle}
         onDismiss={onClose}
         snapPoints={[
-          336 + styles.footer.paddingBottom - BOTTOM_BUTTON_BOTTOM_OFFSET,
+          // Three 30pt rows inside the 12/8-padded list card.
+          346 + styles.footer.paddingBottom - BOTTOM_BUTTON_BOTTOM_OFFSET,
         ]}
         style={styles.modal}>
         <BottomSheetView style={styles.sheetView}>
@@ -242,34 +247,19 @@ const getStyle = createGetStyles2024(
     sellText: { color: colors2024['red-default'] },
     details: {
       marginTop: 24,
-      gap: 10,
-      padding: 16,
+      ...PERPS_PRO_DIALOG_LIST_CARD_PADDING,
       borderRadius: 12,
       backgroundColor: resolvePerpsProDialogCardBackground(colors2024, isLight),
     },
-    detailRow: {
-      alignItems: 'center',
-      flexDirection: 'row',
-
-      justifyContent: 'space-between',
-    },
-    detailLabel: {
-      color: colors2024['neutral-secondary'],
-      fontFamily: 'SF Pro Rounded',
-      fontSize: 12,
-      lineHeight: 16,
-    },
+    detailRow: getPerpsProListRowStyles(colors2024).listRow,
+    detailLabel: getPerpsProListRowStyles(colors2024).listLabel,
     detailValue: {
       ...PERPS_PRO_NUMBER_STYLE,
+      ...getPerpsProListRowStyles(colors2024).listValue,
       flexShrink: 1,
       minWidth: 0,
       marginLeft: 12,
       textAlign: 'right',
-      color: colors2024['neutral-title-1'],
-      fontFamily: 'SF Pro Rounded',
-      fontWeight: '500',
-      fontSize: 12,
-      lineHeight: 16,
     },
     ...getPerpsProDialogCheckboxStyles(colors2024),
     footer: {

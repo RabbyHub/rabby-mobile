@@ -115,6 +115,23 @@ export const getPerpsProDialogStyles = (
     ...getPerpsProDialogActionStyles(colors),
   } as const);
 
+/** Input dialogs (Figma 86313:146099, 86609:303153) sit on a bg-1 sheet. */
+export const getPerpsProInputDialogStyles = (
+  colors: AppColors2024Variants,
+  bottomInset: number,
+  isLight: boolean | undefined,
+) => {
+  const dialog = getPerpsProDialogStyles(colors, bottomInset, isLight);
+  return {
+    ...dialog,
+    background: {
+      ...dialog.background,
+      backgroundColor: colors['neutral-bg-1'],
+    },
+    handle: { ...dialog.handle, backgroundColor: colors['neutral-bg-1'] },
+  } as const;
+};
+
 /** Shared primary action, opted in only by approved Pro dialogs. */
 export const getPerpsProDialogActionStyles = (_colors: AppColors2024Variants) =>
   ({

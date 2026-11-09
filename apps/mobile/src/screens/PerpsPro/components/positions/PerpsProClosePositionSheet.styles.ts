@@ -1,8 +1,10 @@
 import {
   getPerpsProDialogStyles,
+  PERPS_PRO_DIALOG_TOKENS,
   resolvePerpsProDialogCardBackground,
   resolvePerpsProDialogFieldBackground,
 } from '../common/perpsProDialogVisual';
+import { getPerpsProListRowStyles } from '../common/perpsProListVisual';
 import {
   BOTTOM_BUTTON_TOP_OFFSET,
   BOTTOM_BUTTON_BOTTOM_OFFSET,
@@ -17,6 +19,9 @@ import {
   getPerpsProTintedTagTextStyle,
 } from '../common/perpsProSemanticTagStyles';
 
+// Two 30pt summary rows (Figma 86609:344969) below the order controls.
+export const PERPS_PRO_CLOSE_POSITION_SHEET_HEIGHT = 584;
+
 export const getPerpsProClosePositionSheetStyles = createGetStyles2024(
   ({ colors2024, isLight, safeAreaInsets }) => ({
     ...getPerpsProDialogStyles(colors2024, safeAreaInsets.bottom, isLight),
@@ -26,7 +31,7 @@ export const getPerpsProClosePositionSheetStyles = createGetStyles2024(
       ...(IS_ANDROID
         ? {
             minHeight:
-              564 -
+              PERPS_PRO_CLOSE_POSITION_SHEET_HEIGHT -
               40 +
               getBottomButtonBottomOffset(safeAreaInsets.bottom) -
               BOTTOM_BUTTON_BOTTOM_OFFSET,
@@ -61,26 +66,9 @@ export const getPerpsProClosePositionSheetStyles = createGetStyles2024(
     shortTag: getPerpsProTintedTagContainerStyle(colors2024, 'negative'),
     longTagText: getPerpsProTintedTagTextStyle(colors2024, 'positive'),
     shortTagText: getPerpsProTintedTagTextStyle(colors2024, 'negative'),
-    priceSummaryRow: {
-      alignItems: 'center',
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      paddingVertical: 6,
-    },
-    priceSummaryLabel: {
-      color: colors2024['neutral-secondary'],
-      fontFamily: 'SF Pro Rounded',
-      fontSize: 13,
-      fontWeight: '500',
-      lineHeight: 18,
-    },
-    priceSummaryValue: {
-      color: colors2024['neutral-title-1'],
-      fontFamily: 'SF Pro Rounded',
-      fontWeight: '700',
-      fontSize: 14,
-      lineHeight: 18,
-    },
+    priceSummaryRow: getPerpsProListRowStyles(colors2024).listRow,
+    priceSummaryLabel: getPerpsProListRowStyles(colors2024).listLabel,
+    priceSummaryValue: getPerpsProListRowStyles(colors2024).listValue,
     form: {
       gap: 0,
       marginTop: 8,
@@ -156,8 +144,9 @@ export const getPerpsProClosePositionSheetStyles = createGetStyles2024(
       justifyContent: 'center',
       width: 100,
     },
+    // Figma 86609:344546: the order-type toggle uses the Pro action color.
     orderTypeText: {
-      color: colors2024['neutral-title-1'],
+      color: PERPS_PRO_DIALOG_TOKENS.actionBackground,
       fontFamily: 'SF Pro Rounded',
       fontSize: 14,
       fontWeight: '500',
@@ -194,47 +183,25 @@ export const getPerpsProClosePositionSheetStyles = createGetStyles2024(
     amountUnit: {
       color: colors2024['neutral-title-1'],
       fontFamily: 'SF Pro Rounded',
-      fontSize: 14,
-      fontWeight: '500',
-      lineHeight: 18,
+      fontSize: 16,
+      fontWeight: '700',
+      lineHeight: 20,
       position: 'absolute',
       right: 12,
     },
     summary: {
-      gap: 8,
       marginTop: 8,
     },
-    summaryRow: {
-      alignItems: 'center',
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-    },
-    summaryLabel: {
-      color: colors2024['neutral-secondary'],
-      fontFamily: 'SF Pro Rounded',
-      fontSize: 12,
-      lineHeight: 16,
-    },
-    summaryValue: {
-      color: colors2024['neutral-title-1'],
-      fontFamily: 'SF Pro Rounded',
-      fontWeight: '500',
-      fontSize: 12,
-      lineHeight: 16,
-    },
+    summaryRow: getPerpsProListRowStyles(colors2024).listRow,
+    summaryLabel: getPerpsProListRowStyles(colors2024).listLabel,
+    summaryValue: getPerpsProListRowStyles(colors2024).listValue,
     positiveValue: {
+      ...getPerpsProListRowStyles(colors2024).listValue,
       color: colors2024['green-default'],
-      fontFamily: 'SF Pro Rounded',
-      fontWeight: '500',
-      fontSize: 12,
-      lineHeight: 16,
     },
     negativeValue: {
+      ...getPerpsProListRowStyles(colors2024).listValue,
       color: colors2024['red-default'],
-      fontFamily: 'SF Pro Rounded',
-      fontWeight: '500',
-      fontSize: 12,
-      lineHeight: 16,
     },
     footer: {
       paddingHorizontal: 4,

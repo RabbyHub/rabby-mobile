@@ -59,7 +59,8 @@ import {
 import { PerpsProOpenOrderEditInput } from './PerpsProOpenOrderEditInput';
 
 const MODAL_ID = 'perps-pro-basic-order-edit';
-const SHEET_HEIGHT = 396;
+// Stacked header (+22) and 14pt direction row (+2), Figma 86609:343138.
+const SHEET_HEIGHT = 420;
 const CONTENT_HEIGHT = SHEET_HEIGHT - 40;
 const SheetContent = IS_ANDROID ? BottomSheetScrollView : BottomSheetView;
 
@@ -337,7 +338,7 @@ const getStyle = createGetStyles2024(
       left: 20,
       position: 'absolute',
       right: 20,
-      top: 268,
+      top: 292,
     },
   }),
 );
