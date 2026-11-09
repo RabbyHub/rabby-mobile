@@ -46,7 +46,10 @@
     "sign-only:android": "yarn workspace rabby-mobile sign-only:android",
     "sign-only:ios": "yarn workspace rabby-mobile sign-only:ios",
     "sign-only:upload:android": "yarn workspace rabby-mobile sign-only:upload:android",
-    "sign-only:upload:ios": "yarn workspace rabby-mobile sign-only:upload:ios"
+    "sign-only:upload:ios": "yarn workspace rabby-mobile sign-only:upload:ios",
+    "sign-only:full:android": "yarn workspace rabby-mobile sign-only:full:android",
+    "sign-only:full:ios": "yarn workspace rabby-mobile sign-only:full:ios",
+    "sign-only:full:all": "yarn workspace rabby-mobile sign-only:full:all"
   },
   "simple-git-hooks": {
     "pre-push": "yarn lint"
