@@ -3,6 +3,7 @@ import {
   formatMemeBalanceUsd,
   formatMemePnlUsd,
   formatUsdNoZeroCents,
+  isFlatMemePnl,
 } from './formatBalance';
 
 jest.mock('@/utils/number', () => ({
@@ -40,6 +41,16 @@ describe('formatMemePnlUsd', () => {
     [-3.1, '-$3.10'],
   ])('signs the amount: %p', (usd, expected) => {
     expect(formatMemePnlUsd(usd)).toBe(expected);
+  });
+});
+
+describe('isFlatMemePnl', () => {
+  it.each([0, 0.009, -0.009, 0.0001])('under a cent either way: %p', usd => {
+    expect(isFlatMemePnl(usd)).toBe(true);
+  });
+
+  it.each([0.01, -0.01, 3.1])('a cent or more: %p', usd => {
+    expect(isFlatMemePnl(usd)).toBe(false);
   });
 });
 
