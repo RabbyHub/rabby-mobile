@@ -6,8 +6,10 @@ import fs from 'node:fs';
 import os from 'node:os';
 import http from 'node:http';
 import https from 'node:https';
+import net from 'node:net';
 import path from 'node:path';
 import readline from 'node:readline';
+import tls from 'node:tls';
 
 const DEFAULT_SERVICE_URL = 'https://rabby-fe-opcode-service.dbkops.com';
 const TOKEN_FILE = path.join(
@@ -36,6 +38,7 @@ function parseArgs(argv) {
     notifyLark: false,
     force: false,
     json: false,
+    proxy: '',
   };
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
@@ -73,6 +76,9 @@ function parseArgs(argv) {
       case '--json':
         result.json = true;
         break;
+      case '--proxy':
+        result.proxy = argv[++i] || '';
+        break;
       default:
         throw new Error(`Unknown argument: ${arg}`);
     }
@@ -84,6 +90,7 @@ function parseArgs(argv) {
     DEFAULT_SERVICE_URL;
   result.token =
     result.token || process.env.OPFE_SIGN_ONLY_TOKEN || readTokenFile() || '';
+  result.proxy = result.proxy || process.env.OPFE_SIGN_ONLY_PROXY || '';
 
   if (!['android', 'ios'].includes(result.platform))
     throw new Error('--platform must be android or ios');
@@ -149,34 +156,134 @@ async function requestJson(url, options) {
   return payload;
 }
 
-function uploadFile(uploadUrl, filePath, headers, size) {
+function describeProxy(proxyUrl) {
+  try {
+    const parsed = new URL(proxyUrl);
+    return `${parsed.protocol}//${parsed.host}`;
+  } catch {
+    return '(invalid proxy)';
+  }
+}
+
+/**
+ * Establish an HTTP CONNECT tunnel to an https target. The returned socket is
+ * already TLS-wrapped and can be handed to https.request via createConnection.
+ */
+function createProxyTunnel(proxyUrl, targetUrl) {
   return new Promise((resolve, reject) => {
-    const url = new URL(uploadUrl);
-    const transport = url.protocol === 'http:' ? http : https;
-    const request = transport.request(
-      {
-        protocol: url.protocol,
-        hostname: url.hostname,
-        port: url.port || undefined,
-        path: `${url.pathname}${url.search}`,
-        method: 'PUT',
-        headers: { ...headers, 'Content-Length': size },
-      },
-      response => {
-        response.resume();
-        if (
-          response.statusCode &&
-          response.statusCode >= 200 &&
-          response.statusCode < 300
-        ) {
-          resolve();
-        } else {
-          reject(new Error(`Upload failed with HTTP ${response.statusCode}`));
-        }
-      },
-    );
-    request.on('error', reject);
-    fs.createReadStream(filePath).on('error', reject).pipe(request);
+    let proxy;
+    let target;
+    try {
+      proxy = new URL(proxyUrl);
+      target = new URL(targetUrl);
+    } catch {
+      reject(new Error(`Invalid proxy URL: ${proxyUrl}`));
+      return;
+    }
+    if (proxy.protocol !== 'http:') {
+      reject(new Error('--proxy currently supports http:// proxies only'));
+      return;
+    }
+    if (target.protocol !== 'https:') {
+      reject(new Error('--proxy can only tunnel https upload URLs'));
+      return;
+    }
+
+    const targetPort = target.port || '443';
+    const socket = net.connect({
+      host: proxy.hostname,
+      port: Number(proxy.port || '80'),
+    });
+    const fail = error => {
+      socket.destroy();
+      reject(error);
+    };
+    socket.once('error', fail);
+
+    let buffered = '';
+    const onData = chunk => {
+      buffered += chunk.toString('latin1');
+      const headerEnd = buffered.indexOf('\r\n\r\n');
+      if (headerEnd === -1) return;
+
+      socket.removeListener('data', onData);
+      const statusLine = buffered.slice(0, headerEnd).split('\r\n')[0];
+      const match = statusLine.match(/^HTTP\/1\.[01] (\d{3})/);
+      if (!match || Number(match[1]) !== 200) {
+        fail(new Error(`proxy CONNECT failed: ${statusLine}`));
+        return;
+      }
+
+      socket.removeListener('error', fail);
+      const tlsSocket = tls.connect({
+        socket,
+        servername: target.hostname,
+      });
+      tlsSocket.once('error', fail);
+      tlsSocket.once('secureConnect', () => {
+        tlsSocket.removeListener('error', fail);
+        resolve(tlsSocket);
+      });
+    };
+    socket.on('data', onData);
+
+    const lines = [
+      `CONNECT ${target.hostname}:${targetPort} HTTP/1.1`,
+      `Host: ${target.hostname}:${targetPort}`,
+    ];
+    if (proxy.username || proxy.password) {
+      const credentials = `${decodeURIComponent(
+        proxy.username,
+      )}:${decodeURIComponent(proxy.password)}`;
+      lines.push(
+        `Proxy-Authorization: Basic ${Buffer.from(credentials).toString(
+          'base64',
+        )}`,
+      );
+    }
+    socket.write(`${lines.join('\r\n')}\r\n\r\n`);
+  });
+}
+
+async function uploadFile(uploadUrl, filePath, headers, size, proxyUrl) {
+  const url = new URL(uploadUrl);
+  const transport = url.protocol === 'http:' ? http : https;
+  const options = {
+    protocol: url.protocol,
+    hostname: url.hostname,
+    port: url.port || undefined,
+    path: `${url.pathname}${url.search}`,
+    method: 'PUT',
+    headers: { ...headers, 'Content-Length': size },
+  };
+
+  let tunnel = null;
+  if (proxyUrl) {
+    log(`[sign-only] upload via proxy ${describeProxy(proxyUrl)}`);
+    tunnel = await createProxyTunnel(proxyUrl, uploadUrl);
+    options.agent = false;
+    options.createConnection = () => tunnel;
+  }
+
+  return new Promise((resolve, reject) => {
+    const fail = error => {
+      if (tunnel) tunnel.destroy();
+      reject(error);
+    };
+    const request = transport.request(options, response => {
+      response.resume();
+      if (
+        response.statusCode &&
+        response.statusCode >= 200 &&
+        response.statusCode < 300
+      ) {
+        resolve();
+      } else {
+        fail(new Error(`Upload failed with HTTP ${response.statusCode}`));
+      }
+    });
+    request.on('error', fail);
+    fs.createReadStream(filePath).on('error', fail).pipe(request);
   });
 }
 
@@ -284,7 +391,13 @@ async function main() {
 
   log(`[sign-only] request: ${data.package.requestId}`);
   log(`[sign-only] uploading ${fileName} (${size} bytes)...`);
-  await uploadFile(data.uploadUrl, args.file, data.requestHeaders || {}, size);
+  await uploadFile(
+    data.uploadUrl,
+    args.file,
+    data.requestHeaders || {},
+    size,
+    args.proxy,
+  );
 
   const completed = await requestJson(
     `${baseUrl}/v1/api/sign-only-packages/${data.package.id}/complete`,

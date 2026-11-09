@@ -69,6 +69,7 @@ function parseArgs(argv) {
     token: '',
     serviceUrl: '',
     json: false,
+    proxy: '',
   };
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
@@ -103,6 +104,9 @@ function parseArgs(argv) {
       case '--json':
         args.json = true;
         break;
+      case '--proxy':
+        args.proxy = argv[++i] || '';
+        break;
       default:
         fail(`Unknown argument: ${arg}`);
     }
@@ -118,6 +122,7 @@ function parseArgs(argv) {
     args.serviceUrl ||
     process.env.OPFE_SIGN_ONLY_SERVICE_URL ||
     DEFAULT_SERVICE_URL;
+  args.proxy = args.proxy || process.env.OPFE_SIGN_ONLY_PROXY || '';
   return args;
 }
 
@@ -192,6 +197,7 @@ function publish(platform, artifact, args, rootDir, appDir) {
   if (args.force) publishArgs.push('--force');
   if (args.token) publishArgs.push('--token', args.token);
   if (args.serviceUrl) publishArgs.push('--service-url', args.serviceUrl);
+  if (args.proxy) publishArgs.push('--proxy', args.proxy);
 
   const result = run(process.execPath, publishArgs, {
     cwd: rootDir,
