@@ -267,7 +267,7 @@ function bakeWorkflow(payload, branch, rootDir) {
   }
   text = text.replaceAll(
     "${{ inputs.notify_lark == 'true'",
-    "${{ (inputs.notify_lark || 'true') == 'true'",
+    `\${{ (inputs.notify_lark || '${inputs.notify_lark}') == 'true'`,
   );
   text = text.replaceAll(
     "${{ inputs.platform == 'android' }}",
