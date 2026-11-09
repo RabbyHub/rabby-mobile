@@ -3078,6 +3078,13 @@
       },
       "addressEditorBadge": {
         "nameUnknown": "Name the address"
+      },
+      "scanQrcode": {
+        "chooseFromGallery": "Choose from Gallery",
+        "noQrCode": "No QR code found in this image",
+        "multipleQrCodes": "Multiple QR codes found. Please choose an image with only one QR code",
+        "invalidAddress": "No valid address found in this QR code",
+        "readImageFailed": "Failed to read the image. Please try again"
       }
     },
     "Lending": {

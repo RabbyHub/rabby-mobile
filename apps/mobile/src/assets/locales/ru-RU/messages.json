@@ -3107,6 +3107,13 @@
       },
       "addressEditorBadge": {
         "nameUnknown": "Назовите адрес"
+      },
+      "scanQrcode": {
+        "chooseFromGallery": "Выбрать из галереи",
+        "noQrCode": "На этом изображении не найден QR-код",
+        "multipleQrCodes": "Найдено несколько QR-кодов. Выберите изображение только с одним QR-кодом",
+        "invalidAddress": "В этом QR-коде не найден действительный адрес",
+        "readImageFailed": "Не удалось прочитать изображение. Попробуйте ещё раз"
       }
     },
     "Lending": {
