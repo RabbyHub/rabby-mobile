@@ -253,3 +253,163 @@ describe('OneKeyKeyring signTypedData', () => {
     ).rejects.toThrow('signature doesnt match the right address');
   });
 });
+
+describe('OneKeyKeyring unlock wallet selection', () => {
+  const publicKey =
+    '0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798';
+
+  /**
+   * Create a keyring backed by a mocked V2 bridge.
+   *
+   * @param passphraseState - The wallet id returned by getPassphraseState.
+   * @param status - The device status returned by getDeviceState.
+   * @param status.passphraseProtection - Whether passphrase protection is on.
+   * @returns The mocked bridge and keyring.
+   */
+  function setup(
+    passphraseState?: string,
+    status?: { passphraseProtection?: boolean },
+  ) {
+    const bridge = createBridge();
+    bridge.init.mockResolvedValue(undefined);
+    bridge.searchDevices.mockResolvedValue({
+      success: true,
+      payload: [{ connectId: 'connect-id', deviceId: null }],
+    });
+    bridge.getDeviceState.mockResolvedValue({
+      success: true,
+      payload: {
+        protocol: 'V2',
+        identity: { deviceId: 'device-id' },
+        ...(status ? { status } : {}),
+      },
+    });
+    bridge.getPassphraseState.mockResolvedValue({
+      success: true,
+      payload: passphraseState,
+    });
+    bridge.evmGetPublicKey.mockResolvedValue({
+      success: true,
+      payload: { pub: publicKey, node: { chain_code: '11'.repeat(32) } },
+    });
+    const keyring = new OneKeyKeyring({ bridge });
+    return { bridge, keyring };
+  }
+
+  it('selects the standard wallet on a V2 device with passphrase protection off', async () => {
+    // Real Pro 2 firmware returns the standard-wallet session id
+    // (btc_test_address) even when passphrase protection is off.
+    const { bridge, keyring } = setup('bc1q-standard-wallet-session', {
+      passphraseProtection: false,
+    });
+
+    expect(await keyring.unlock()).toBe('just unlocked');
+    expect(bridge.getPassphraseState).toHaveBeenCalledTimes(1);
+    expect(bridge.getPassphraseState).toHaveBeenCalledWith('connect-id', {
+      useEmptyPassphrase: true,
+    });
+    expect(bridge.evmGetPublicKey).toHaveBeenCalledWith(
+      'connect-id',
+      'device-id',
+      expect.objectContaining({
+        passphraseState: undefined,
+        useEmptyPassphrase: true,
+      }),
+    );
+    expect(keyring.passphraseState).toBeUndefined();
+  });
+
+  it.each([
+    [{ error: 'Passphrase disabled', code: 999 }],
+    [{ error: 'Device not opened passphrase', code: 113 }],
+  ])(
+    'retries with the standard wallet when wallet selection fails with %p',
+    async failure => {
+      const { bridge, keyring } = setup('bc1q-standard-wallet-session');
+      bridge.getPassphraseState
+        .mockResolvedValueOnce({ success: false, payload: failure })
+        .mockResolvedValueOnce({
+          success: true,
+          payload: 'bc1q-standard-wallet-session',
+        });
+
+      expect(await keyring.unlock()).toBe('just unlocked');
+      expect(bridge.getPassphraseState).toHaveBeenNthCalledWith(
+        1,
+        'connect-id',
+        undefined,
+      );
+      expect(bridge.getPassphraseState).toHaveBeenNthCalledWith(
+        2,
+        'connect-id',
+        { useEmptyPassphrase: true },
+      );
+      expect(bridge.evmGetPublicKey).toHaveBeenCalledWith(
+        'connect-id',
+        'device-id',
+        expect.objectContaining({
+          passphraseState: undefined,
+          useEmptyPassphrase: true,
+        }),
+      );
+    },
+  );
+
+  it('keeps the hidden wallet passphraseState when passphrase protection is on', async () => {
+    const { bridge, keyring } = setup('hidden-wallet-token', {
+      passphraseProtection: true,
+    });
+
+    expect(await keyring.unlock()).toBe('just unlocked');
+    expect(bridge.getPassphraseState).toHaveBeenCalledWith(
+      'connect-id',
+      undefined,
+    );
+    expect(bridge.evmGetPublicKey).toHaveBeenCalledWith(
+      'connect-id',
+      'device-id',
+      expect.objectContaining({
+        passphraseState: 'hidden-wallet-token',
+        useEmptyPassphrase: false,
+      }),
+    );
+    expect(keyring.passphraseState).toBe('hidden-wallet-token');
+  });
+
+  it('rejects unlock failures with an Error that carries the device message', async () => {
+    const { bridge, keyring } = setup();
+    bridge.getPassphraseState.mockResolvedValue({
+      success: false,
+      payload: { error: 'Some wallet session failure', code: 800 },
+    });
+
+    const error = await keyring.unlock().catch((e: unknown) => e);
+    expect(error).toBeInstanceOf(Error);
+    expect((error as Error).message).toBe('Some wallet session failure');
+    expect(bridge.evmGetPublicKey).not.toHaveBeenCalled();
+  });
+
+  it('signs with the standard wallet after a passphrase-off unlock', async () => {
+    const { bridge, keyring } = setup('bc1q-standard-wallet-session', {
+      passphraseProtection: false,
+    });
+    await keyring.unlock();
+    const address = keyring._addressFromIndex('m', 0);
+    bridge.evmSignMessage.mockResolvedValue({
+      success: false,
+      payload: { error: 'stop here' },
+    });
+
+    await expect(keyring.signPersonalMessage(address, '0x01')).rejects.toThrow(
+      'stop here',
+    );
+    expect(bridge.evmSignMessage).toHaveBeenCalledWith(
+      'connect-id',
+      'device-id',
+      expect.objectContaining({
+        passphraseState: undefined,
+        useEmptyPassphrase: true,
+      }),
+    );
+  });
+});
