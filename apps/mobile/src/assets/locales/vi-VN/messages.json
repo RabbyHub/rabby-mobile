@@ -3496,13 +3496,6 @@
     }
   },
   "component": {
-    "ReserveGasPopup": {
-      "title": "Dự trữ gas",
-      "doNotReserve": "Không dự trữ Gas",
-      "fast": "Bình thường",
-      "normal": "Chậm",
-      "instant": "Nhanh"
-    },
     "TokenSelector": {
       "searchPlaceHolder1": "Tìm kiếm theo Tên / Địa chỉ",
       "searchPlaceHolder2": "Tìm kiếm Token",

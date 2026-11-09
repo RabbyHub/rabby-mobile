@@ -3645,13 +3645,6 @@
         "desc": "指紋認証またはFace IDでロックを解除してください"
       }
     },
-    "ReserveGasPopup": {
-      "title": "ガス代を確保",
-      "fast": "通常",
-      "instant": "速い",
-      "doNotReserve": "ガス代を確保しない",
-      "normal": "遅い"
-    },
     "externalSwapBrideDappPopup": {
       "bridgeOnDapp": "DAppでブリッジ",
       "thirdPartyDappToProceed": "サードパーティ製DAppを使用して続行してください",

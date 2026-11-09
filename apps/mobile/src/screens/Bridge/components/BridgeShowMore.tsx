@@ -90,7 +90,6 @@ const BridgeShowMore = ({
   amount,
   toAmount,
   quoteLoading,
-  slippageError,
   autoSlippage,
   isCustomSlippage,
   setAutoSlippage,

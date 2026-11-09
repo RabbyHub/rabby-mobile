@@ -3548,13 +3548,6 @@
         "cancel": "취소"
       }
     },
-    "ReserveGasPopup": {
-      "normal": "느림",
-      "fast": "보통",
-      "title": "가스 예약",
-      "instant": "빠름",
-      "doNotReserve": "Gas를 예약하지 마세요"
-    },
     "AuthenticationModals": {
       "processBiometrics": {
         "authFailed": "생체 인증 실패",

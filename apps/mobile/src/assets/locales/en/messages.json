@@ -3587,13 +3587,6 @@
         "desc": "Please use Fingerprint/FaceID to unlock"
       }
     },
-    "ReserveGasPopup": {
-      "title": "Reserve Gas",
-      "instant": "Fast",
-      "fast": "Normal",
-      "normal": "Slow",
-      "doNotReserve": "Don't reserve Gas"
-    },
     "NoLongerSupports": {
       "title": "Mobile wallet addresses are no longer supported",
       "desc": "The following addresses will be removed. You can still find them in the original wallet app. Import the seed phrase or private key to use them here.",

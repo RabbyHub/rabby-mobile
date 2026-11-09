@@ -6,18 +6,16 @@ import { uniqBy } from 'lodash';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import useAsync from 'react-use/lib/useAsync';
 import { refreshIdAtom } from './atom';
-import { useInterval, useMount, useRequest } from 'ahooks';
+import { useInterval, useRequest } from 'ahooks';
 import { swapServiceApi } from '@/core/serviceApi/swap';
 import {
   getTransactionHistoryRecentPendingSnapshot,
   getTransactionHistoryRecentTxSnapshot,
 } from '@/core/serviceApi/transactionHistory';
-import { findChain } from '@/utils/chain';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import type {
   SwapTxHistoryItem,
   SendTxHistoryItem,
-  TransactionGroup,
 } from '@/core/services/transactionHistory';
 import { useTransactionHistoryServiceReady } from '@/core/serviceApi/transactionHistoryHooks';
 const swapTxHistoryVisibleAtom = atom(false);
@@ -132,12 +130,8 @@ export const useSwapHistory = () => {
   };
 };
 
-export const swapPendingCountAtom = atom(0);
 export const swapPendingTxDataAtom = atom<SwapItem | null>(null);
 export const swapHistoryRedDotAtom = atom(false);
-export const useReadPendingCount = () => {
-  return useAtomValue(swapPendingCountAtom);
-};
 
 export const fetchLocalSwapPendingTx = (address: string) => {
   return getTransactionHistoryRecentPendingSnapshot(
@@ -170,14 +164,6 @@ export const fetchRefreshLocalData = (
   }
 };
 
-export const usePendingTxData = () => {
-  return useAtomValue(swapPendingCountAtom);
-};
-
-export const useReadSwapHistoryRedDot = () => {
-  return useAtomValue(swapHistoryRedDotAtom);
-};
-
 export const useClearSwapHistoryRedDot = () => {
   const setSwapHistoryRedDot = useSetAtom(swapHistoryRedDotAtom);
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
@@ -200,7 +186,6 @@ export const useClearSwapHistoryRedDot = () => {
 
 export const usePollSwapPendingNumber = (timer = 10000, enabled = true) => {
   const transactionHistoryReady = useTransactionHistoryServiceReady();
-  const [, setCount] = useAtom(swapPendingCountAtom);
   const [, setTxData] = useAtom(swapPendingTxDataAtom);
   const [localPendingTxData, setLocalPendingTxData] = useState<
     SwapTxHistoryItem | SendTxHistoryItem | null

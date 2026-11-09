@@ -61,7 +61,6 @@ const SwapTokenItemInner = (props: SwapTokenItemProps) => {
     value,
     onTokenChange,
     onValueChange,
-    excludeTokens,
     account,
     chainId,
     slider,
@@ -121,11 +120,11 @@ const SwapTokenItemInner = (props: SwapTokenItemProps) => {
   const bubbleRef = useRef<SliderBubbleHandle>(null);
   const sliderTrackRef = useRef<View>(null);
   const onSliderValueChange = useCallback(
-    (value: number) => {
+    (_value: number) => {
       // Move the bubble before the amount update. That update re-renders the
       // page, which is what left the bubble behind the finger.
-      bubbleRef.current?.setProgress(value);
-      onChangeSlider?.(value);
+      bubbleRef.current?.setProgress(_value);
+      onChangeSlider?.(_value);
     },
     [onChangeSlider],
   );

@@ -3476,13 +3476,6 @@
         "testnet": "Réseau personnalisé"
       }
     },
-    "ReserveGasPopup": {
-      "fast": "Normal",
-      "instant": "Rapide",
-      "title": "Réserver Gas",
-      "normal": "Lent",
-      "doNotReserve": "Ne pas réserver de Gas"
-    },
     "ModalPreviewNFTItem": {
       "FieldLabel": {
         "Collection": "Collection",

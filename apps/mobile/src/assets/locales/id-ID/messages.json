@@ -3468,13 +3468,6 @@
         "desc": "Gunakan sidik jari/Face ID untuk membuka kunci"
       }
     },
-    "ReserveGasPopup": {
-      "doNotReserve": "Jangan sisihkan Gas",
-      "normal": "Lambat",
-      "title": "Sisihkan Gas",
-      "fast": "Normal",
-      "instant": "Cepat"
-    },
     "NoLongerSupports": {
       "title": "Alamat dompet mobile tidak lagi didukung",
       "button": "Mengerti",

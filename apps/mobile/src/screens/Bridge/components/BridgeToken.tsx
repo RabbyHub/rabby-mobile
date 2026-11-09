@@ -11,7 +11,6 @@ import { useTranslation } from 'react-i18next';
 import type { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import BigNumber from 'bignumber.js';
 import { tokenAmountBn } from '@/screens/Swap/utils';
-import { useBridgeSupportedChains } from '../hooks';
 import { ChainInfo } from './ChainInfo';
 import BridgeToTokenSelect from './BridgeToTokenSelect';
 import { findChainByEnum } from '@/utils/chain';
@@ -48,7 +47,6 @@ const BridgeTokenInner = ({
   token,
   account,
   chain,
-  excludeChains,
   onChangeToken,
   onChangeChain,
   value,
@@ -60,7 +58,6 @@ const BridgeTokenInner = ({
   inSufficient,
   clickMaxBtnCount,
   isMaxRef,
-  handleMax,
   skeletonLoading,
   disabled,
   clearOnDisabled,
@@ -101,7 +98,6 @@ const BridgeTokenInner = ({
 )) => {
   const { t } = useTranslation();
 
-  const supportedChains = useBridgeSupportedChains();
   const { colors2024, styles } = useTheme2024({ getStyle });
 
   const isFromToken = type === 'from';
@@ -169,11 +165,11 @@ const BridgeTokenInner = ({
   const bubbleRef = useRef<SliderBubbleHandle>(null);
   const sliderTrackRef = useRef<View>(null);
   const onSliderValueChange = useCallback(
-    (value: number) => {
+    (_value: number) => {
       // Move the bubble before the amount update. That update re-renders the
       // page, which is what left the bubble behind the finger.
-      bubbleRef.current?.setProgress(value);
-      onChangeSlider?.(value);
+      bubbleRef.current?.setProgress(_value);
+      onChangeSlider?.(_value);
     },
     [onChangeSlider],
   );

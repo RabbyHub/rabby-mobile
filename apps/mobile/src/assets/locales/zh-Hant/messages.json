@@ -3591,13 +3591,6 @@
         "testnet": "自訂網路"
       }
     },
-    "ReserveGasPopup": {
-      "normal": "慢",
-      "fast": "正常",
-      "instant": "快速",
-      "doNotReserve": "不預留 Gas",
-      "title": "預留 Gas"
-    },
     "AuthenticationModals": {
       "processBiometrics": {
         "cancel": "取消",

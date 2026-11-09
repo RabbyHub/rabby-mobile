@@ -105,13 +105,6 @@
         "LastPrice": "Último preço"
       }
     },
-    "ReserveGasPopup": {
-      "doNotReserve": "Não reservar gas",
-      "fast": "Normal",
-      "instant": "Rápido",
-      "normal": "Lento",
-      "title": "Reservar Gas"
-    },
     "AuthenticationModals": {
       "biometrics": {
         "enable": "Introduza a palavra-passe\npara ativar {{ bioType }}",
