@@ -1,0 +1,305 @@
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { ScrollView, View } from 'react-native';
+import {
+  useNavigation,
+  usePreventRemove,
+  useRoute,
+} from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
+import { Text } from '@/components/Typography';
+import AuthButton from '@/components2024/AuthButton';
+import { Button } from '@/components2024/Button';
+import { buttonTitleStyles } from '@/components2024/Button/buttonStyles';
+import {
+  BOTTOM_BUTTON_GAP,
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
+  BOTTOM_BUTTON_TOP_OFFSET,
+  getBottomButtonBottomOffset,
+} from '@/constant/layout';
+import type { Account } from '@/core/startupServices/preference';
+import { useSafeSizes } from '@/hooks/useAppLayout';
+import { useTheme2024 } from '@/hooks/theme';
+import type {
+  GetNestedScreenRouteProp,
+  TransactionNavigatorParamList,
+} from '@/navigation-type';
+import { createGetStyles2024 } from '@/utils/styles';
+import { countFinishedLegs, isLegRetryable } from '../engine/displayStatus';
+import { useMemeTradeTask } from '../hooks/useMemeTradeTask';
+import { returnToMemeCoinHome } from '../navigation';
+import { getExecuteButtonState } from '../ui/helpers';
+import { useMemeCoinAccount } from '../ui/useMemeCoinAccount';
+import { ExecuteLegRow } from './ExecuteLegRow';
+import { ExitDialog } from './ExitDialog';
+
+type ExecuteParams = TransactionNavigatorParamList['MemeCoinExecute'];
+
+const MemeCoinExecuteContent = ({
+  account,
+  params,
+}: {
+  account: Account;
+  params: ExecuteParams;
+}) => {
+  const { mode, legs, maxPriceImpactPct, tokenLogos } = params;
+  const { t } = useTranslation();
+  const { styles } = useTheme2024({ getStyle });
+  const { safeOffHeader, safeOffBottom } = useSafeSizes();
+  const {
+    store,
+    start,
+    retry,
+    openExitDialog,
+    continueExecution,
+    stopAndExit,
+  } = useMemeTradeTask({ account, legs, maxPriceImpactPct });
+  const status = store(s => s.status);
+  const exitDialogOpen = store(s => s.exitDialogOpen);
+  const done = store(s => countFinishedLegs(s.states));
+  const retryCount = store(
+    s => legs.filter(leg => isLegRetryable(s.states[leg.key])).length,
+  );
+  const navigation = useNavigation();
+  const [leaving, setLeaving] = useState(false);
+  const pendingActionRef = useRef<
+    Parameters<typeof navigation.dispatch>[0] | null
+  >(null);
+
+  // Only user back (back button / Android back / iOS swipe) is taken over; any
+  // other navigation, e.g. the auto-lock reset to Unlock, goes through as on
+  // every other screen (unmounting stops the executor).
+  usePreventRemove(status !== 'idle' && !leaving, ({ data }) => {
+    const isUserBack =
+      data.action.type === 'GO_BACK' || data.action.type === 'POP';
+    if (isUserBack && store.getState().status === 'running') {
+      openExitDialog();
+      return;
+    }
+    pendingActionRef.current = isUserBack ? null : data.action;
+    setLeaving(true);
+  });
+
+  // Runs after the render that turned preventRemove off, so the dispatch is not intercepted.
+  useEffect(() => {
+    if (!leaving) {
+      return;
+    }
+    const pendingAction = pendingActionRef.current;
+    pendingActionRef.current = null;
+    if (pendingAction) {
+      navigation.dispatch(pendingAction);
+    } else {
+      returnToMemeCoinHome(mode);
+    }
+  }, [leaving, mode, navigation]);
+
+  const handleStop = useCallback(() => {
+    stopAndExit();
+    setLeaving(true);
+  }, [stopAndExit]);
+
+  const handleDone = useCallback(() => setLeaving(true), []);
+
+  const handleRetryLeg = useCallback((key: string) => retry([key]), [retry]);
+
+  const handleRetryAll = useCallback(
+    () => retry(legs.map(leg => leg.key)),
+    [legs, retry],
+  );
+
+  const buttonState = getExecuteButtonState(
+    status,
+    done,
+    legs.length,
+    retryCount > 0,
+  );
+
+  return (
+    <View style={[styles.screen, { paddingTop: safeOffHeader }]}>
+      <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
+        <View style={styles.titleRow}>
+          <View style={styles.titleLeft}>
+            <Text style={styles.title}>{t('page.memeCoin.execute.title')}</Text>
+            <Text style={styles.subtitle}>
+              {mode === 'buy'
+                ? t('page.memeCoin.execute.buySubtitleShort')
+                : t('page.memeCoin.execute.sellSubtitle')}
+            </Text>
+          </View>
+          {mode === 'sell' ? (
+            <Text style={styles.estReceipt}>
+              {t('page.memeCoin.execute.estReceipt')}
+            </Text>
+          ) : null}
+        </View>
+        {legs.map(leg => (
+          <ExecuteLegRow
+            key={leg.key}
+            leg={leg}
+            legs={legs}
+            mode={mode}
+            store={store}
+            tokenLogos={tokenLogos}
+            onRetry={handleRetryLeg}
+          />
+        ))}
+      </ScrollView>
+      <View
+        style={[
+          styles.bottomBar,
+          { paddingBottom: getBottomButtonBottomOffset(safeOffBottom) },
+        ]}>
+        {buttonState.kind === 'executing' ? (
+          <View pointerEvents="none">
+            <Button
+              type="ghost"
+              title={t('page.memeCoin.execute.progress', {
+                done: buttonState.done,
+                total: buttonState.total,
+              })}
+              height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+              titleStyle={buttonTitleStyles.single}
+              buttonStyle={styles.executingButton}
+              noShadow
+            />
+          </View>
+        ) : buttonState.kind === 'retry' ? (
+          <View style={styles.buttonRow}>
+            <Button
+              type="plain"
+              title={t('page.memeCoin.execute.back')}
+              height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+              titleStyle={buttonTitleStyles.single}
+              containerStyle={styles.backButton}
+              onPress={handleDone}
+              noShadow
+            />
+            <Button
+              type="primary"
+              title={t('page.memeCoin.execute.retryFailedTxns', {
+                count: retryCount,
+              })}
+              height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+              titleStyle={buttonTitleStyles.single}
+              containerStyle={styles.retryButton}
+              onPress={handleRetryAll}
+              noShadow
+            />
+          </View>
+        ) : buttonState.kind === 'start' ? (
+          <AuthButton
+            type="primary"
+            title={t('page.memeCoin.execute.confirm')}
+            authTitle={t('page.whitelist.confirmPassword')}
+            height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+            titleStyle={buttonTitleStyles.single}
+            onFinished={start}
+            syncUnlockTime
+            noShadow
+          />
+        ) : (
+          <Button
+            type="primary"
+            title={t('page.memeCoin.execute.done')}
+            height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+            titleStyle={buttonTitleStyles.single}
+            onPress={handleDone}
+            noShadow
+          />
+        )}
+      </View>
+      <ExitDialog
+        visible={exitDialogOpen}
+        onContinue={continueExecution}
+        onStop={handleStop}
+      />
+    </View>
+  );
+};
+
+export const MemeCoinExecuteScreen = () => {
+  const { styles } = useTheme2024({ getStyle });
+  const route =
+    useRoute<
+      GetNestedScreenRouteProp<
+        'TransactionNavigatorParamList',
+        'MemeCoinExecute'
+      >
+    >();
+  const { accountAddress, mode } = route.params;
+  const account = useMemeCoinAccount(accountAddress, () =>
+    returnToMemeCoinHome(mode),
+  );
+
+  if (!account) {
+    return <View style={styles.screen} />;
+  }
+  return <MemeCoinExecuteContent account={account} params={route.params} />;
+};
+
+const getStyle = createGetStyles2024(({ colors2024 }) => ({
+  screen: {
+    flex: 1,
+    backgroundColor: colors2024['neutral-bg-0'],
+  },
+  scroll: {
+    flex: 1,
+  },
+  content: {
+    paddingTop: 12,
+    paddingHorizontal: 12,
+    paddingBottom: 16,
+  },
+  titleRow: {
+    marginBottom: 8,
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
+  titleLeft: {
+    flex: 1,
+    minWidth: 0,
+    gap: 2,
+  },
+  title: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '900',
+    color: colors2024['neutral-title-1'],
+  },
+  subtitle: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '400',
+    color: colors2024['neutral-body'],
+  },
+  estReceipt: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '400',
+    color: colors2024['neutral-secondary'],
+  },
+  bottomBar: {
+    flexShrink: 0,
+    paddingTop: BOTTOM_BUTTON_TOP_OFFSET,
+    paddingHorizontal: 20,
+    backgroundColor: colors2024['neutral-bg-1'],
+  },
+  executingButton: {
+    backgroundColor: colors2024['brand-light-1'],
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    gap: BOTTOM_BUTTON_GAP,
+  },
+  backButton: {
+    width: 143,
+  },
+  retryButton: {
+    flex: 1,
+  },
+}));

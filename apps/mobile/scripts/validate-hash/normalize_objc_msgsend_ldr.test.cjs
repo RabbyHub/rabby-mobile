@@ -3,9 +3,7 @@
 const assert = require('node:assert/strict');
 const { test } = require('node:test');
 
-const {
-  normalizeMachOLayoutNoise,
-} = require('./normalize_objc_msgsend_ldr');
+const { normalizeMachOLayoutNoise } = require('./normalize_objc_msgsend_ldr');
 
 test('normalizes literal-pool adrp/add and adrp/ldr pairs consistently', () => {
   const first = [
@@ -55,10 +53,7 @@ test('does not normalize an adrp whose next instruction uses another base', () =
     '0000000000063658\tadd\tx1, x2, #0x3f9 ; literal pool for: "foo"',
   ].join('\n');
 
-  assert.match(
-    normalizeMachOLayoutNoise(input),
-    /adrp\tx0, 12263 ; 0x304a000/,
-  );
+  assert.match(normalizeMachOLayoutNoise(input), /adrp\tx0, 12263 ; 0x304a000/);
   assert.match(
     normalizeMachOLayoutNoise(input),
     /add\tx1, x2, #0x3f9 ; literal pool for: "foo"/,

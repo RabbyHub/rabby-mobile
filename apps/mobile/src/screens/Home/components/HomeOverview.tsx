@@ -11,6 +11,7 @@ import RcIconSendCC from '@/assets2024/icons/home/IconSendCC.svg';
 import RcIconSwapCC from '@/assets2024/icons/home/IconSwapCC.svg';
 import RcIconMarketCC from '@/assets2024/icons/home/IconMarketCC.svg';
 import RcIconConvertDustCC from '@/assets2024/icons/home/IconDustCC.svg';
+import RcIconMemeCoinCC from '@/assets2024/icons/home/IconMemeCoinCC.svg';
 
 import { RootNames } from '@/constant/layout';
 import { useRegressionScenarioComponentAction } from '@/devtools/regressionScenarios/react';
@@ -57,6 +58,7 @@ import { MultiHomeFeatTitle } from '@/constant/newStyle';
 import { currencyServiceApi } from '@/core/serviceApi/currency';
 import { storeApiAccounts, useMyAccounts } from '@/hooks/account';
 import { storeApiAccountsSwitcher } from '@/hooks/accountsSwitcher';
+import { refreshMemeHoldings } from '@/screens/MemeCoin/data/memeHoldingsStore';
 import { apisHomeTabIndex, useRabbyAppNavigation } from '@/hooks/navigation';
 import { navigateToPerpsHome } from '@/hooks/perps/navigation/navigateToPreferredPerps';
 import addressBalanceStore, {
@@ -116,6 +118,7 @@ import { HomeCenterArea } from '../components/HomeCenterArea';
 import { HomeDappDrawer } from '../components/HomeDappDrawer';
 import { HomePendingBadge } from '../components/HomePending';
 import { LendingHF } from '../components/LendingHF';
+import { MemeCoinBalance } from './MemeCoinBalance';
 import { MultiAddressHomeHeader } from '../components/MultiAddressHomeHeader';
 import { PerpsPnl } from '../components/PerpsPnl';
 import { PointsBadge } from '../../Points/components/PointsBadge';
@@ -854,6 +857,10 @@ function DeferredHomeMenuBadge({
     return <LendingHF />;
   }
 
+  if (el.key === MultiHomeFeatTitle.MemeCoin) {
+    return <MemeCoinBalance />;
+  }
+
   if (el.key === MultiHomeFeatTitle.GasAccount) {
     return <GasAccountMenuBadge />;
   }
@@ -959,9 +966,9 @@ export const HomeOverview = React.memo(() => {
           icon: RcIconPerps,
         },
         {
-          key: MultiHomeFeatTitle.Lending,
-          title: t('page.home.services.lending'),
-          icon: RcIconLending,
+          key: MultiHomeFeatTitle.MemeCoin,
+          title: t('page.home.services.meme'),
+          icon: RcIconMemeCoinCC,
         },
         {
           key: MultiHomeFeatTitle.GasAccount,
@@ -1001,6 +1008,11 @@ export const HomeOverview = React.memo(() => {
           title: t('page.home.services.convertDust'),
           icon: RcIconConvertDustCC,
         },
+        {
+          key: MultiHomeFeatTitle.Lending,
+          title: t('page.home.services.lending'),
+          icon: RcIconLending,
+        },
       ].filter(Boolean) as {
         key: MultiHomeFeatTitle;
         title: string;
@@ -1035,6 +1047,13 @@ export const HomeOverview = React.memo(() => {
     // update at background
     forceUpdateApprovalAlertCounts();
     apisLending.fetchLendingData();
+    // keep the wallet entry balance in sync with the account it shows
+    const memeAddress = storeApiAccountsSwitcher.getSceneAccountInfo({
+      forScene: 'MakeTransactionAbout',
+    }).finalSceneCurrentAccount?.address;
+    if (memeAddress) {
+      refreshMemeHoldings(memeAddress);
+    }
     const forceRefresh = true;
     void currencyServiceApi.syncCurrencyList(forceRefresh).catch(error => {
       console.error('[HomeOverview] refresh currency list failed', error);
@@ -1315,6 +1334,11 @@ export const HomeOverview = React.memo(() => {
           navigation.push(RootNames.StackTransaction, {
             screen: RootNames.ConvertDust,
             params: {},
+          });
+          break;
+        case MultiHomeFeatTitle.MemeCoin:
+          navigation.push(RootNames.StackTransaction, {
+            screen: RootNames.MemeCoin,
           });
           break;
         default:

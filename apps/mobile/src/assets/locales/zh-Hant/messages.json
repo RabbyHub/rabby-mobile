@@ -3470,7 +3470,7 @@
       "failReason": {
         "quoteUnavailable": "取得報價失敗",
         "gasCostTooHigh": "超過 Gas 費用限制",
-        "priceImpactTooHigh": "價格影響過高",
+        "priceImpactTooHigh": "價差過大",
         "transactionFailed": "交易失敗",
         "submitFailed": "提交交易失敗",
         "gasNotEnough": "Gas 不足"
