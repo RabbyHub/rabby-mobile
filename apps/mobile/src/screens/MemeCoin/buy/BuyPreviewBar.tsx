@@ -2,6 +2,7 @@ import React from 'react';
 import { View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components2024/Button';
+import { buttonTitleStyles } from '@/components2024/Button/buttonStyles';
 import {
   BOTTOM_BUTTON_SINGLE_HEIGHT,
   BOTTOM_BUTTON_TOP_OFFSET,
@@ -11,10 +12,7 @@ import { useSafeSizes } from '@/hooks/useAppLayout';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { MaxPriceImpactSelector } from '../components/MaxPriceImpactSelector';
-import {
-  MEME_BUTTON_DISABLED_TITLE_STYLE,
-  MEME_BUTTON_TITLE_STYLE,
-} from '../ui/buttonStyles';
+import { MEME_BUTTON_DISABLED_TITLE_STYLE } from '../ui/buttonStyles';
 import { formatUsdNoZeroCents } from '../ui/formatBalance';
 import type { BuySummary, MaxPriceImpactPct } from '../ui/helpers';
 
@@ -54,7 +52,7 @@ export const BuyPreviewBar = ({
             : t('page.memeCoin.buy.preview')
         }
         height={BOTTOM_BUTTON_SINGLE_HEIGHT}
-        titleStyle={MEME_BUTTON_TITLE_STYLE}
+        titleStyle={buttonTitleStyles.single}
         disabledTitleStyle={MEME_BUTTON_DISABLED_TITLE_STYLE}
         disabled={disabled}
         onPress={onPreview}

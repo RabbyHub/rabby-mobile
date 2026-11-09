@@ -3,6 +3,7 @@ import { Keyboard, TouchableOpacity, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { RcNextSearchCC } from '@/assets/icons/common';
 import { Button } from '@/components2024/Button';
+import { buttonTitleStyles } from '@/components2024/Button/buttonStyles';
 import { NextSearchBar } from '@/components2024/SearchBar';
 import {
   BOTTOM_BUTTON_GAP,
@@ -15,7 +16,6 @@ import { useSafeSizes } from '@/hooks/useAppLayout';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { MaxPriceImpactSelector } from '../components/MaxPriceImpactSelector';
-import { MEME_BUTTON_TITLE_STYLE } from '../ui/buttonStyles';
 import type { MaxPriceImpactPct } from '../ui/helpers';
 import { BuyAmountField } from './BuyAmountField';
 
@@ -49,7 +49,7 @@ const PlaceholderButton = ({ title }: { title: string }) => (
   <Button
     title={title}
     height={BOTTOM_BUTTON_SINGLE_HEIGHT}
-    titleStyle={MEME_BUTTON_TITLE_STYLE}
+    titleStyle={buttonTitleStyles.single}
     disabledTitleStyle={PLACEHOLDER_TITLE_STYLE}
     disabled
     noShadow
@@ -75,7 +75,7 @@ const ActionRow = ({
       <Button
         title={title}
         height={BOTTOM_BUTTON_SINGLE_HEIGHT}
-        titleStyle={MEME_BUTTON_TITLE_STYLE}
+        titleStyle={buttonTitleStyles.single}
         containerStyle={styles.actionMain}
         disabled={disabled}
         onPress={onPress}
@@ -85,7 +85,7 @@ const ActionRow = ({
       <Button
         title={t('page.memeCoin.cancel')}
         height={BOTTOM_BUTTON_SINGLE_HEIGHT}
-        titleStyle={MEME_BUTTON_TITLE_STYLE}
+        titleStyle={buttonTitleStyles.single}
         buttonStyle={styles.cancelButton}
         onPress={onCancel}
         type="plain"

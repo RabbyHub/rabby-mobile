@@ -5,6 +5,7 @@ import RcIconWarning from '@/assets2024/memecoin/warning.svg';
 import { TrackedModal } from '@/components/Modal/TrackedModal';
 import { Text } from '@/components/Typography';
 import { Button } from '@/components2024/Button';
+import { buttonTitleStyles } from '@/components2024/Button/buttonStyles';
 import {
   BOTTOM_BUTTON_DOUBLE_HEIGHT,
   BOTTOM_BUTTON_GAP,
@@ -12,7 +13,6 @@ import {
 import { useTheme2024 } from '@/hooks/theme';
 import { MODAL_GATE_IDS } from '@/utils/modalGate';
 import { createGetStyles2024 } from '@/utils/styles';
-import { MEME_BUTTON_TITLE_STYLE } from '../ui/buttonStyles';
 
 /** Android back and a tap on the mask both mean Continue. */
 export const ExitDialog = ({
@@ -56,7 +56,7 @@ export const ExitDialog = ({
               type="plain"
               title={t('page.memeCoin.execute.stopAndExit')}
               height={BOTTOM_BUTTON_DOUBLE_HEIGHT}
-              titleStyle={MEME_BUTTON_TITLE_STYLE}
+              titleStyle={buttonTitleStyles.double}
               containerStyle={styles.buttonContainer}
               onPress={onStop}
             />
@@ -64,7 +64,7 @@ export const ExitDialog = ({
               type="primary"
               title={t('page.memeCoin.execute.continue')}
               height={BOTTOM_BUTTON_DOUBLE_HEIGHT}
-              titleStyle={MEME_BUTTON_TITLE_STYLE}
+              titleStyle={buttonTitleStyles.double}
               containerStyle={styles.buttonContainer}
               onPress={onContinue}
             />

@@ -43,9 +43,9 @@ jest.mock('@/components2024/Button', () => {
 jest.mock('@/constant/layout', () => ({
   BOTTOM_BUTTON_GAP: 12,
   BOTTOM_BUTTON_SINGLE_HEIGHT: 52,
-  BOTTOM_BUTTON_TITLE_STYLE: {},
   BOTTOM_BUTTON_TOP_OFFSET: 12,
   getBottomButtonBottomOffset: () => 36,
+  getBottomButtonCenteredTitleStyle: () => ({}),
 }));
 jest.mock('@/core/native/utils', () => ({ IS_IOS: true }));
 jest.mock('@/hooks/useAppLayout', () => ({

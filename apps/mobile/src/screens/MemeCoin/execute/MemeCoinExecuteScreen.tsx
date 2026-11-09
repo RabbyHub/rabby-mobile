@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { Text } from '@/components/Typography';
 import AuthButton from '@/components2024/AuthButton';
 import { Button } from '@/components2024/Button';
+import { buttonTitleStyles } from '@/components2024/Button/buttonStyles';
 import {
   BOTTOM_BUTTON_GAP,
   BOTTOM_BUTTON_SINGLE_HEIGHT,
@@ -26,7 +27,6 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { countFinishedLegs, isLegRetryable } from '../engine/displayStatus';
 import { useMemeTradeTask } from '../hooks/useMemeTradeTask';
 import { returnToMemeCoinHome } from '../navigation';
-import { MEME_BUTTON_TITLE_STYLE } from '../ui/buttonStyles';
 import { getExecuteButtonState } from '../ui/helpers';
 import { useMemeCoinAccount } from '../ui/useMemeCoinAccount';
 import { ExecuteLegRow } from './ExecuteLegRow';
@@ -158,7 +158,7 @@ const MemeCoinExecuteContent = ({
                 total: buttonState.total,
               })}
               height={BOTTOM_BUTTON_SINGLE_HEIGHT}
-              titleStyle={MEME_BUTTON_TITLE_STYLE}
+              titleStyle={buttonTitleStyles.single}
               buttonStyle={styles.executingButton}
               noShadow
             />
@@ -169,7 +169,7 @@ const MemeCoinExecuteContent = ({
               type="plain"
               title={t('page.memeCoin.execute.back')}
               height={BOTTOM_BUTTON_SINGLE_HEIGHT}
-              titleStyle={MEME_BUTTON_TITLE_STYLE}
+              titleStyle={buttonTitleStyles.single}
               containerStyle={styles.backButton}
               onPress={handleDone}
               noShadow
@@ -180,7 +180,7 @@ const MemeCoinExecuteContent = ({
                 count: retryCount,
               })}
               height={BOTTOM_BUTTON_SINGLE_HEIGHT}
-              titleStyle={MEME_BUTTON_TITLE_STYLE}
+              titleStyle={buttonTitleStyles.single}
               containerStyle={styles.retryButton}
               onPress={handleRetryAll}
               noShadow
@@ -192,7 +192,7 @@ const MemeCoinExecuteContent = ({
             title={t('page.memeCoin.execute.confirm')}
             authTitle={t('page.whitelist.confirmPassword')}
             height={BOTTOM_BUTTON_SINGLE_HEIGHT}
-            titleStyle={MEME_BUTTON_TITLE_STYLE}
+            titleStyle={buttonTitleStyles.single}
             onFinished={start}
             syncUnlockTime
             noShadow
@@ -202,7 +202,7 @@ const MemeCoinExecuteContent = ({
             type="primary"
             title={t('page.memeCoin.execute.done')}
             height={BOTTOM_BUTTON_SINGLE_HEIGHT}
-            titleStyle={MEME_BUTTON_TITLE_STYLE}
+            titleStyle={buttonTitleStyles.single}
             onPress={handleDone}
             noShadow
           />

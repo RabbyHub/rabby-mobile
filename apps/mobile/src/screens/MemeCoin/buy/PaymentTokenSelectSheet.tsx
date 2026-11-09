@@ -12,6 +12,7 @@ import { useTranslation } from 'react-i18next';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { Text } from '@/components/Typography';
 import { Button } from '@/components2024/Button';
+import { buttonTitleStyles } from '@/components2024/Button/buttonStyles';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import {
   BOTTOM_BUTTON_SINGLE_HEIGHT,
@@ -24,10 +25,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { MemeEmptyState } from '../components/MemeEmptyState';
 import { tokenKey } from '../engine/keys';
 import type { PaymentAsset } from '../engine/types';
-import {
-  MEME_BUTTON_DISABLED_TITLE_STYLE,
-  MEME_BUTTON_TITLE_STYLE,
-} from '../ui/buttonStyles';
+import { MEME_BUTTON_DISABLED_TITLE_STYLE } from '../ui/buttonStyles';
 import { formatUsdNoZeroCents } from '../ui/formatBalance';
 import type { BuySummary } from '../ui/helpers';
 import {
@@ -172,7 +170,7 @@ export const PaymentTokenSelectSheet = ({
           <Button
             title={buttonTitle}
             height={BOTTOM_BUTTON_SINGLE_HEIGHT}
-            titleStyle={MEME_BUTTON_TITLE_STYLE}
+            titleStyle={buttonTitleStyles.single}
             disabledTitleStyle={MEME_BUTTON_DISABLED_TITLE_STYLE}
             disabled={summary.kind !== 'enough'}
             onPress={onClose}
