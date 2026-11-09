@@ -1243,7 +1243,7 @@
         "queued": "En cola",
         "pending": "Pendiente",
         "completed": "Completado",
-        "refund": "Reembolso",
+        "refund": "Reembolsado",
         "waiting": "Esperando la transacción de destino",
         "goBack": "Volver",
         "bridgeAgain": "Hacer bridge de nuevo",
