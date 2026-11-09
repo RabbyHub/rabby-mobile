@@ -17,7 +17,7 @@ diff --git a/package.json b/package.json
    },
    "packageManager": "yarn@1.22.19"
 diff --git a/android/src/main/java/com/reactnativecommunity/webview/RNCWebChromeClient.java b/android/src/main/java/com/reactnativecommunity/webview/RNCWebChromeClient.java
-index 07f73fd00a083ebf5a03bffaa7bbadbd1f648505..f9efa2311cbf387d6fb0bd5606f1197b4d3424c1 100644
+index 07f73fd00a083ebf5a03bffaa7bbadbd1f648505..c3cc086aa8e07e3cb062cd60429521279492304e 100644
 --- a/android/src/main/java/com/reactnativecommunity/webview/RNCWebChromeClient.java
 +++ b/android/src/main/java/com/reactnativecommunity/webview/RNCWebChromeClient.java
 @@ -7,6 +7,8 @@ import android.content.pm.PackageManager;
@@ -83,15 +83,22 @@ index 07f73fd00a083ebf5a03bffaa7bbadbd1f648505..f9efa2311cbf387d6fb0bd5606f1197b
  
      /*
       * - Permissions -
-@@ -144,30 +170,33 @@ public class RNCWebChromeClient extends WebChromeClient implements LifecycleEven
+@@ -144,74 +170,175 @@ public class RNCWebChromeClient extends WebChromeClient implements LifecycleEven
  
      @Override
      public void onPermissionRequest(final PermissionRequest request) {
--
-         grantedPermissions = new ArrayList<>();
++        // A hidden WebView (an inactive or closed browser tab) must never prompt over another screen.
++        if (!isWebViewVisibleToUser()) {
++            request.deny();
++            return;
++        }
  
+-        grantedPermissions = new ArrayList<>();
+-
+-        ArrayList<String> requestedAndroidPermissions = new ArrayList<>();
++        final ArrayList<String> alreadyGrantedResources = new ArrayList<>();
++        final ArrayList<String> requestedAndroidPermissions = new ArrayList<>();
 +        ArrayList<String> requestPermissionIdentifiers = new ArrayList<>();
-         ArrayList<String> requestedAndroidPermissions = new ArrayList<>();
          for (String requestedResource : request.getResources()) {
              String androidPermission = null;
  
@@ -101,12 +108,9 @@ index 07f73fd00a083ebf5a03bffaa7bbadbd1f648505..f9efa2311cbf387d6fb0bd5606f1197b
              } else if (requestedResource.equals(PermissionRequest.RESOURCE_VIDEO_CAPTURE)) {
                  androidPermission = Manifest.permission.CAMERA;
 -            } else if(requestedResource.equals(PermissionRequest.RESOURCE_PROTECTED_MEDIA_ID)) {
-+                requestPermissionIdentifiers.add("camera");
-+            } else if (requestedResource.equals(PermissionRequest.RESOURCE_PROTECTED_MEDIA_ID)) {
-                 if (mAllowsProtectedMedia) {
+-                if (mAllowsProtectedMedia) {
 -                  grantedPermissions.add(requestedResource);
-+                    grantedPermissions.add(requestedResource);
-                 } else {
+-                } else {
 -                  /**
 -                   * Legacy handling (Kept in case it was working under some conditions (given Android version or something))
 -                   *
@@ -116,20 +120,20 @@ index 07f73fd00a083ebf5a03bffaa7bbadbd1f648505..f9efa2311cbf387d6fb0bd5606f1197b
 -                   */
 -                  androidPermission = PermissionRequest.RESOURCE_PROTECTED_MEDIA_ID;
 -                }            }
-+                    /**
-+                     * Legacy handling (Kept in case it was working under some conditions (given Android version or something))
-+                     *
-+                     * Try to ask user to grant permission using Activity.requestPermissions
-+                     *
-+                     * Find more details here: https://github.com/react-native-webview/react-native-webview/pull/2732
-+                     */
-+                    androidPermission = PermissionRequest.RESOURCE_PROTECTED_MEDIA_ID;
-+                }
+-            // TODO: RESOURCE_MIDI_SYSEX, RESOURCE_PROTECTED_MEDIA_ID.
++                requestPermissionIdentifiers.add("camera");
++            } else if (requestedResource.equals(PermissionRequest.RESOURCE_PROTECTED_MEDIA_ID) && mAllowsProtectedMedia) {
++                alreadyGrantedResources.add(requestedResource);
 +            }
-             // TODO: RESOURCE_MIDI_SYSEX, RESOURCE_PROTECTED_MEDIA_ID.
++            // Other resources (protected media while allowsProtectedMedia is off, MIDI SysEx) have no
++            // Android runtime permission the user could grant, so they are left out of the grant.
              if (androidPermission != null) {
                  if (ContextCompat.checkSelfPermission(this.mWebView.getThemedReactContext(), androidPermission) == PackageManager.PERMISSION_GRANTED) {
-@@ -178,40 +207,128 @@ public class RNCWebChromeClient extends WebChromeClient implements LifecycleEven
+-                    grantedPermissions.add(requestedResource);
++                    alreadyGrantedResources.add(requestedResource);
+                 } else {
+                     requestedAndroidPermissions.add(androidPermission);
+                 }
              }
          }
  
@@ -137,43 +141,51 @@ index 07f73fd00a083ebf5a03bffaa7bbadbd1f648505..f9efa2311cbf387d6fb0bd5606f1197b
 -        if (requestedAndroidPermissions.isEmpty()) {
 -            request.grant(grantedPermissions.toArray(new String[0]));
 -            grantedPermissions = null;
--            return;
-+            // If all the permissions are already granted, send the response to the WebView synchronously
-+        if (!requestedAndroidPermissions.isEmpty()) {
-+            // Show the dialog and request the permissions
-+            this.showPermissionPrompt(
-+                "The app needs access to your " + TextUtils.join(" and ", requestPermissionIdentifiers) + ". Allow?",
-+                "Allow",
-+                new DialogInterface.OnClickListener() {
-+                    public void onClick(DialogInterface dialog, int which) {
-+                        permissionRequest = request;
-+                        requestPermissions(requestedAndroidPermissions);
-+                    }
-+                },
-+                "Don't allow",
-+                (DialogInterface.OnClickListener) (dialog, which) -> {
-+                    request.deny();
-+                }
-+            );
-+        } else if (!grantedPermissions.isEmpty()) {
-+            this.showPermissionPrompt(
-+                "The app needs access to your " + TextUtils.join(" and ", requestPermissionIdentifiers) + ". Allow?",
-+                "Allow",
-+                new DialogInterface.OnClickListener() {
-+                    public void onClick(DialogInterface dialog, int which) {
-+                        request.grant(grantedPermissions.toArray(new String[0]));
-+                    }
-+                },
-+                "Don't allow",
-+                (DialogInterface.OnClickListener) (dialog, which) -> {
-+                    request.deny();
-+                }
-+            );
++        // Nothing for the user to decide: grant what the props allow and deny the rest, without a prompt.
++        if (requestPermissionIdentifiers.isEmpty()) {
++            if (alreadyGrantedResources.isEmpty()) {
++                request.deny();
++            } else {
++                request.grant(alreadyGrantedResources.toArray(new String[0]));
++            }
+             return;
          }
-+    }
  
 -        // Otherwise, ask to Android System for native permissions asynchronously
--
++        this.showPermissionPrompt(
++            formatOriginForPrompt(request.getOrigin()) + " wants to use your " + TextUtils.join(" and ", requestPermissionIdentifiers) + ". Allow?",
++            "Allow",
++            (dialog, which) -> {
++                if (requestedAndroidPermissions.isEmpty()) {
++                    request.grant(alreadyGrantedResources.toArray(new String[0]));
++                    return;
++                }
++                // webviewPermissionsListener adds the newly granted resources and answers the request.
++                grantedPermissions = new ArrayList<>(alreadyGrantedResources);
++                permissionRequest = request;
++                requestPermissions(requestedAndroidPermissions);
++            },
++            "Don't allow",
++            (dialog, which) -> request.deny()
++        );
++    }
++
++    private boolean isWebViewVisibleToUser() {
++        if (mWebView.disableJsPromptLike || !mWebView.isShown()) {
++            return false;
++        }
++        android.graphics.Rect r = new android.graphics.Rect();
++        return mWebView.getGlobalVisibleRect(r) && r.width() > 0 && r.height() > 0;
++    }
++
++    private static String formatOriginForPrompt(@Nullable Uri origin) {
++        if (origin == null) {
++            return "This site";
++        }
++        String host = origin.getHost();
++        return TextUtils.isEmpty(host) ? origin.toString() : host;
++    }
+ 
 -        this.permissionRequest = request;
 +    private void runDelayed(Runnable function, long delayMillis) {
 +        Handler handler = new Handler();
@@ -211,6 +223,11 @@ index 07f73fd00a083ebf5a03bffaa7bbadbd1f648505..f9efa2311cbf387d6fb0bd5606f1197b
      @Override
      public void onGeolocationPermissionsShowPrompt(String origin, GeolocationPermissions.Callback callback) {
 -
++        // A hidden WebView (an inactive or closed browser tab) must never prompt over another screen.
++        if (!isWebViewVisibleToUser()) {
++            callback.invoke(origin, false, false);
++            return;
++        }
          if (ContextCompat.checkSelfPermission(this.mWebView.getThemedReactContext(), Manifest.permission.ACCESS_FINE_LOCATION)
                  != PackageManager.PERMISSION_GRANTED) {
 -
@@ -228,7 +245,7 @@ index 07f73fd00a083ebf5a03bffaa7bbadbd1f648505..f9efa2311cbf387d6fb0bd5606f1197b
          } else {
 -            callback.invoke(origin, true, false);
 +            this.showPermissionPrompt(
-+                "Allow this app to use your location?",
++                formatOriginForPrompt(origin == null ? null : Uri.parse(origin)) + " wants to use your location. Allow?",
 +                "Allow",
 +                (dialog, which) -> {
 +                    callback.invoke(origin, true, false);
