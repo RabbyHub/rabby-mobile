@@ -1,4 +1,3 @@
-import RcHeaderBackground from '@/assets2024/icons/perps/PerpsHeaderBackground.svg';
 import RcHeaderBack from '@/assets2024/icons/perps/PerpsHeaderBack.svg';
 import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 import type { PerpsViewMode } from '@/core/services/perpsService';
@@ -81,13 +80,6 @@ export const PerpsHeader: React.FC<PerpsHeaderProps> = React.memo(
             : null,
         ]}
         testID="perps-header">
-        <RcHeaderBackground
-          height={48}
-          width={61}
-          pointerEvents="none"
-          style={styles.backgroundMark}
-          testID="perps-header-background-mark"
-        />
         <View style={styles.left} testID="perps-header-left">
           <CustomTouchableOpacity
             as="RNGHTouchableOpacity"
@@ -157,11 +149,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   transparentHeader: {
     backgroundColor: 'transparent',
-  },
-  backgroundMark: {
-    left: 16,
-    position: 'absolute',
-    top: -2,
   },
   bottomDivider: {
     backgroundColor: colors2024['neutral-bg-5'],

@@ -176,6 +176,7 @@ jest.mock('@/hooks/perps/usePerpsStore', () => {
     selector(mockPerpsState);
   store.getState = () => mockPerpsState;
   return {
+    ensureCurrentPerpPermission: async () => mockPerpsState.hasPermission,
     fetchClearinghouseStateHttp: jest.fn(),
     fetchPositionOpenOrdersHttp: jest.fn(),
     getDexByCoin: jest.fn((coin: string) =>
@@ -188,6 +189,7 @@ jest.mock('@/hooks/perps/usePerpsStore', () => {
     }),
     isPerpsUserAbstractionReadyForAccount: (state: typeof mockPerpsState) =>
       state.userAbstractionReady,
+    hasCurrentPerpPermission: (state = mockPerpsState) => state.hasPermission,
     perpsStore: store,
   };
 });

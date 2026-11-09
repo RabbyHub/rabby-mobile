@@ -283,7 +283,8 @@
       },
       "alertText": "Drittanbieter-DApp: Wenden Sie sich bei Nutzungsproblemen bitte an den DApp-Support. Rabby bietet nur Anzeigezugriff.",
       "title": "Screenshot zur Fehlermeldung",
-      "submitFailed": "Fehler beim Einreichen."
+      "submitFailed": "Fehler beim Einreichen.",
+      "includeAddress": "Adresse zur Fehlerbehebung teilen"
     },
     "submitFeedbackSuccessModal": {
       "desc": "Erfolgreich eingereicht!"
@@ -1186,7 +1187,42 @@
       "formChangedTitle": "Formular geändert",
       "formChangedAmount": "Der Betrag hat sich geändert, möglicherweise aufgrund der automatischen Passwortausfüllung durch die Systemtastatur. Bitte überprüfen Sie den Betrag und geben Sie den richtigen Betrag erneut ein.",
       "best-subtitle": "Das beste Angebot wird durch eine Kombination aus geschätzten Gesamtkosten (einschließlich Gas-Gebühren) und Lieferungsgeschwindigkeit bestimmt.",
-      "swap-best-subtitle": "Das beste Angebot wird durch die niedrigsten geschätzten Gesamtkosten bestimmt, einschließlich des Wechselkurses und der Gasgebühren."
+      "swap-best-subtitle": "Das beste Angebot wird durch die niedrigsten geschätzten Gesamtkosten bestimmt, einschließlich des Wechselkurses und der Gasgebühren.",
+      "duration-sec": "{{duration}} s",
+      "duration-hour": "{{duration}} h",
+      "duration-hour-min": "{{hours}} h {{minutes}} min",
+      "duration-day": "{{duration}} T.",
+      "duration-day-hour": "{{days}} T. {{hours}} h",
+      "duration-day-min": "{{days}} T. {{minutes}} min",
+      "duration-day-hour-min": "{{days}} T. {{hours}} h {{minutes}} min",
+      "status": {
+        "bridging": "Bridge läuft,",
+        "bridged": "Überbrückt",
+        "historyTitle": "Bridge-Verlauf",
+        "today": "Heute",
+        "eta": "geschätzte Dauer: {{time}}",
+        "stillBridging": "Bridge läuft noch",
+        "delayed": "Bridge verzögert",
+        "sourceFailed": "Bridge fehlgeschlagen. Ihre {{token}} wurden nicht gesendet",
+        "tokenNotSent": "Ihre {{token}} wurden nicht gesendet",
+        "failed": "Fehlgeschlagen",
+        "bridgeFailed": "Bridge fehlgeschlagen",
+        "refunded": "Zurückerstattet",
+        "refundedIn": "In {{token}} zurückerstattet",
+        "contactSupport": "Support kontaktieren",
+        "viewDetails": "Details anzeigen",
+        "sendingFrom": "Senden von {{chain}}",
+        "receivingOn": "Empfang auf {{chain}}",
+        "processing": "Wird verarbeitet",
+        "queued": "In der Warteschlange",
+        "pending": "Ausstehend",
+        "completed": "Abgeschlossen",
+        "refund": "Rückerstattung",
+        "waiting": "Warten auf die Transaktion im Zielnetzwerk",
+        "goBack": "Zurück",
+        "bridgeAgain": "Erneut bridgen",
+        "captureFailed": "Screenshot konnte nicht erstellt werden. Bitte versuchen Sie es erneut."
+      }
     },
     "nextComponent": {
       "multiAddressHome": {
@@ -1798,8 +1834,8 @@
     },
     "receiveAddressList": {
       "selectChainTitle": "Netzwerk auswählen",
-      "title": "Wallet auswählen, um zu empfangen",
-      "subtitle": "Wählen Sie eine Wallet aus, um Ihre Krypto zu empfangen."
+      "title": "Wallet zum Empfangen auswählen",
+      "subtitle": "Wählen Sie eine Wallet-Adresse, um Ihre Assets zu empfangen."
     },
     "approvalsAddressList": {
       "title": "Genehmigungen"
@@ -2230,6 +2266,7 @@
       "customNetworkTokenHeader": "Hinzugefügte benutzerdefinierte Netzwerke"
     },
     "browser": {
+      "openInRabbyPerps": "In Rabby Perps öffnen",
       "BrowserHeader": {
         "searchIos": "Website durchsuchen",
         "searchAndroid": "Suche DApp"
@@ -2551,8 +2588,7 @@
           }
         },
         "chart": {
-          "open": "Chart öffnen",
-          "resetPriceScale": "Preisskala des Charts zurücksetzen"
+          "open": "Chart öffnen"
         },
         "account": {
           "disabledFrame": "Kontofunktionen sind in dieser Phase nicht verfügbar",

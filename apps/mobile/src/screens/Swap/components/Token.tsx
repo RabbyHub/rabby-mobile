@@ -247,7 +247,6 @@ const SwapTokenItemInner = (props: SwapTokenItemProps) => {
               onTokenChange={onTokenSelect}
               accountInScreen={account}
               chainId={chainId}
-              placeholder={t('page.swap.search-by-name-address')}
               searchPlaceholder={t(
                 'component.TokenSelector.searchPlaceHolder1',
               )}

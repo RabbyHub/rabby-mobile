@@ -7,12 +7,6 @@ import { navBack } from '@/hooks/navigation';
 import { PERPS_HEADER_HEIGHT } from '../constants';
 import { PerpsHeader } from './PerpsHeader';
 
-jest.mock('@/assets2024/icons/perps/PerpsHeaderBackground.svg', () => {
-  const ReactModule = require('react');
-  const { View } = require('react-native');
-  return (props: object) => ReactModule.createElement(View, props);
-});
-
 jest.mock('@/assets2024/icons/perps/PerpsHeaderBack.svg', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
@@ -112,12 +106,7 @@ describe('PerpsHeader', () => {
       height: 44,
       width: 24,
     });
-    expect(
-      screen.getByTestId('perps-header-background-mark').props,
-    ).toMatchObject({
-      height: 48,
-      width: 61,
-    });
+    expect(screen.queryByTestId('perps-header-background-mark')).toBeNull();
     expect(screen.getByTestId('mode-switch').props).toMatchObject({
       activeMode: 'simple',
       disabled: false,

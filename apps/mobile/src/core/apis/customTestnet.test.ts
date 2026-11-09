@@ -2,6 +2,8 @@ function loadCustomTestnetModule() {
   jest.resetModules();
 
   const mockAdd = jest.fn();
+  const mockRemove = jest.fn();
+  const mockDisconnectDappsWithUnsupportedChain = jest.fn();
   const mockGetTransactionCount = jest.fn();
   const mockGetNonceByChain = jest.fn();
   const mockGetChainListByIds = jest.fn();
@@ -36,10 +38,14 @@ function loadCustomTestnetModule() {
       getTransactionReceipt: jest.fn(),
       getTx: jest.fn(),
       hasToken: jest.fn(),
-      remove: jest.fn(),
+      remove: mockRemove,
       removeToken: jest.fn(),
       update: jest.fn(),
     },
+  }));
+  jest.doMock('@/core/serviceApi/dappUnsupportedChain', () => ({
+    disconnectDappsWithUnsupportedChain: (...args: unknown[]) =>
+      mockDisconnectDappsWithUnsupportedChain(...args),
   }));
   jest.doMock('@/core/serviceApi/transactionHistory', () => ({
     getTransactionHistoryTransactions: async () =>
@@ -55,6 +61,8 @@ function loadCustomTestnetModule() {
     apiCustomTestnet,
     mocks: {
       mockAdd,
+      mockDisconnectDappsWithUnsupportedChain,
+      mockRemove,
       mockFindChain,
       mockGetChainListByIds,
       mockGetNonceByChain,
@@ -67,6 +75,28 @@ function loadCustomTestnetModule() {
 describe('core/apis/customTestnet', () => {
   afterEach(() => {
     jest.resetModules();
+  });
+
+  it('disconnects the dapps on a custom network once it is removed', async () => {
+    const { apiCustomTestnet, mocks } = loadCustomTestnetModule();
+    let finishRemove!: () => void;
+    mocks.mockRemove.mockReturnValue(
+      new Promise<void>(resolve => {
+        finishRemove = resolve;
+      }),
+    );
+
+    const removing = apiCustomTestnet.removeCustomTestnet(9001);
+    expect(mocks.mockRemove).toHaveBeenCalledWith(9001);
+    expect(
+      mocks.mockDisconnectDappsWithUnsupportedChain,
+    ).not.toHaveBeenCalled();
+
+    finishRemove();
+    await removing;
+    expect(mocks.mockDisconnectDappsWithUnsupportedChain).toHaveBeenCalledTimes(
+      1,
+    );
   });
 
   it('uses the larger value between on-chain and local custom-testnet nonce', async () => {

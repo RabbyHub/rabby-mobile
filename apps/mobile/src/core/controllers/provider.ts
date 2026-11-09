@@ -20,6 +20,11 @@ import {
 } from '@metamask/eth-sig-util';
 import cloneDeep from 'lodash/cloneDeep';
 import { openapi } from '../request';
+import {
+  getTxAddressesToCheck,
+  hasBlockedAddress,
+} from '../utils/blockedAddress';
+import { t } from 'i18next';
 import { bridgeServiceApi } from '@/core/serviceApi/bridge';
 import { customRPCServiceApi } from '@/core/serviceApi/customRPC';
 import { customTestnetServiceApi } from '@/core/serviceApi/customTestnet';
@@ -755,6 +760,16 @@ class ProviderController extends BaseController {
     } = cloneDeep(options);
     const currentAccount = account;
     const keyring = await this._checkAddress(txParams.from, options);
+    // Started now, awaited right before signing, so it overlaps the tx build.
+    const isBlockedPromise = hasBlockedAddress([
+      txParams.from,
+      ...getTxAddressesToCheck(approvalRes),
+      ...(Array.isArray((approvalRes as any).calls)
+        ? (approvalRes as any).calls.flatMap((call: any) =>
+            getTxAddressesToCheck(call || {}),
+          )
+        : []),
+    ]);
     const isSend = !!txParams.isSend;
     const isSpeedUp = !!txParams.isSpeedUp;
     const isCancel = !!txParams.isCancel;
@@ -818,12 +833,17 @@ class ProviderController extends BaseController {
       throw new Error('not support 7702');
     }
 
+    // Custom networks pick the tx type from chain and keyring support alone,
+    // so an equal maxFee and tip stays type-2 there. Integrated chains keep
+    // the legacy fallback; a chain we cannot find is treated as integrated.
+    const isCustomNetwork = !!chainForTx?.isTestnet;
     if (
       is1559 &&
       approvalRes.maxFeePerGas === approvalRes.maxPriorityFeePerGas &&
       !eip7702Revoke &&
       !is7702 &&
-      !isTempoTx
+      !isTempoTx &&
+      !isCustomNetwork
     ) {
       // fallback to legacy transaction if maxFeePerGas is equal to maxPriorityFeePerGas
       approvalRes.gasPrice = approvalRes.maxFeePerGas;
@@ -957,6 +977,15 @@ class ProviderController extends BaseController {
     const shouldUseKeyringTempoSign =
       isTempoTx && isSimpleOrHdKeyringType(currentAccount.type);
     try {
+      // Every tx signing path (SignTx, mini sign, direct sendTransaction)
+      // lands here, so refuse blocked addresses before any keyring or device
+      // is asked. Inside the try so the UI gets the usual signing failure.
+      if (await isBlockedPromise) {
+        // Same text as the blocked dialog in SignTx / Send.
+        throw ethErrors.rpc.transactionRejected(
+          t('common.dialogs.blockedTransaction.content'),
+        );
+      }
       if (isTempoTx) {
         const typedApprovalRes = approvalRes as any;
         const shouldBackendSponsorTempo = isGasAccount || isGasLess;

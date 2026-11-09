@@ -46,6 +46,7 @@ import {
   type ViewStyle,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { runOnJS, runOnUI, useSharedValue } from 'react-native-reanimated';
 
 import { PerpsProAccountState } from '../components/account/PerpsProAccountState';
@@ -54,7 +55,10 @@ import {
   PerpsProFundingOverlay,
   type PerpsProFundingMode,
 } from '../components/account/PerpsProFundingOverlay';
-import { PerpsProKlineSheet } from '../components/chart/PerpsProKlineSheet';
+import {
+  getPerpsProKlinePanelHeight,
+  PerpsProKlineSheet,
+} from '../components/chart/PerpsProKlineSheet';
 import { registerPerpsProKeyboardTradeScroll } from '../components/common/perpsProKeyboardSession';
 import { PerpsProEmptyState } from '../components/common/PerpsProEmptyState';
 import { PerpsProFieldExplanationProvider } from '../components/common/PerpsProFieldExplanationProvider';
@@ -83,6 +87,7 @@ import {
   getPerpsProInfoSectionMinimumContentHeight,
   getPerpsProInfoTabsNaturalAnchor,
   PERPS_PRO_INFO_TABS_HEIGHT,
+  PERPS_PRO_INFO_SECTION_BOTTOM_PADDING,
   PERPS_PRO_INFO_SECTION_DIVIDER_HEIGHT,
   PERPS_PRO_INFO_TABS_PLACEHOLDER_HEIGHT,
   PERPS_PRO_INFO_SECTION_TOP_GAP,
@@ -349,6 +354,7 @@ export const PerpsProScene: React.FC<{
   }, [infoScrollBridge, sceneActive, scrollInfoToOffset]);
   const marketSelectorRef = useRef<PerpsProMarketSelectorHandle>(null);
   const [klineOpen, setKlineOpen] = useState(false);
+  const safeAreaInsets = useSafeAreaInsets();
   const [klineActivated, setKlineActivated] = useState(false);
   const [klineMounted, setKlineMounted] = useState(
     sceneActive && !!scene.currentMarket,
@@ -397,9 +403,9 @@ export const PerpsProScene: React.FC<{
     const subscription = AppState.addEventListener('change', setAppState);
     return () => subscription.remove();
   }, []);
-  const openKline = useCallback(() => {
+  const toggleKline = useCallback(() => {
     setKlineActivated(true);
-    setKlineOpen(true);
+    setKlineOpen(open => !open);
   }, []);
   const closeKline = useCallback(() => setKlineOpen(false), []);
   const closeFundingOverlay = useCallback(() => setFundingOverlay(null), []);
@@ -729,6 +735,10 @@ export const PerpsProScene: React.FC<{
           viewportHeight: scrollViewportHeight,
         })
       : null;
+  // The docked K-line covers the viewport bottom; keep every row reachable.
+  const klinePanelInset = klineOpen
+    ? getPerpsProKlinePanelHeight(safeAreaInsets.bottom)
+    : 0;
   const makeScrollContentStyle = useCallback(
     (populated: boolean): ViewStyle[] => [
       styles.scrollContent,
@@ -737,15 +747,16 @@ export const PerpsProScene: React.FC<{
         : []),
       {
         paddingBottom:
-          populated && populatedInfoBottomPadding != null
+          (populated && populatedInfoBottomPadding != null
             ? populatedInfoBottomPadding
-            : 32,
+            : 32) + klinePanelInset,
       },
     ],
     [
       styles.scrollContent,
       scrollContentMinimumHeightStyle,
       populatedInfoBottomPadding,
+      klinePanelInset,
     ],
   );
   const accountContentStyle = useMemo(
@@ -1138,7 +1149,8 @@ export const PerpsProScene: React.FC<{
   ) : (
     <PerpsProMarketBar
       market={scene.currentMarket}
-      onOpenKline={openKline}
+      klineOpen={klineOpen}
+      onToggleKline={toggleKline}
       onPress={openMarketSelector}
     />
   );
@@ -1600,6 +1612,5 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   scrollContent: {
     backgroundColor: colors2024['neutral-bg-1'],
     flexGrow: 1,
-    paddingBottom: 32,
   },
 }));

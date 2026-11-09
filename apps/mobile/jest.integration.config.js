@@ -13,10 +13,6 @@ module.exports = {
     '\\.svg$': '<rootDir>/jest.integration.svg.js',
     '^@rabby-wallet/biz-utils/dist/(.*)$':
       '<rootDir>/../../packages/biz-utils/src/$1',
-    '^react-native-quick-crypto$':
-      '<rootDir>/../../packages/service-keyring/test/react-native-quick-crypto.mock.js',
-    '^@craftzdog/react-native-buffer$':
-      '<rootDir>/../../packages/service-keyring/test/react-native-buffer.mock.js',
   },
   transformIgnorePatterns: [
     'node_modules/(?!((jest-)?react-native|@react-native(-community)?|@rneui|@debank|@rabby-wallet|nanoid|react-native-reanimated|react-native-animateable-text|react-native-root-toast|react-native-root-siblings|p-queue|p-timeout|eventemitter3)/)',

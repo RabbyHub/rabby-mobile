@@ -3,6 +3,7 @@ import type { Account } from '@/core/startupServices/preference';
 import {
   fetchClearinghouseStateHttp,
   getDexByCoin,
+  hasCurrentPerpPermission,
   perpsStore,
 } from '@/hooks/perps/usePerpsStore';
 import BigNumber from 'bignumber.js';
@@ -105,7 +106,7 @@ const getDefaultLiveContext = (
   return {
     account: state.currentPerpsAccount,
     dexId: getDexByCoin(coin),
-    hasPermission: state.hasPermission,
+    hasPermission: hasCurrentPerpPermission(state),
     position: position
       ? {
           leverageType: position.leverage?.type ?? null,
