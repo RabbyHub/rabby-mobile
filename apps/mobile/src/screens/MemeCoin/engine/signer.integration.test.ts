@@ -192,6 +192,7 @@ function installNetworkBoundary(
       };
     },
     gasLessTxsCheck: async () => ({ is_gasless: false }),
+    isBlockedAddress: async () => ({ is_blocked: false }),
     parseTx: async () => ({
       action: { type: 'integration_unknown', data: null },
       contract_call: null,
