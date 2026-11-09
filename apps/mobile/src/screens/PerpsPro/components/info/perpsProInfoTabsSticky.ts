@@ -2,7 +2,7 @@ import { Animated } from 'react-native';
 
 const ABSOLUTE_INTERPOLATION_BOUND = 100_000;
 
-export const PERPS_PRO_INFO_TABS_HEIGHT = 38;
+export const PERPS_PRO_INFO_TABS_HEIGHT = 44;
 export const PERPS_PRO_INFO_SECTION_TOP_GAP = 16;
 export const PERPS_PRO_INFO_SECTION_DIVIDER_HEIGHT = 6;
 export const PERPS_PRO_INFO_TABS_PLACEHOLDER_HEIGHT =

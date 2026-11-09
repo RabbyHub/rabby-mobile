@@ -1995,12 +1995,12 @@ describe('PerpsProScene market loading states', () => {
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-info-tabs-spacer').props.style,
       ),
-    ).toMatchObject({ height: 60 });
+    ).toMatchObject({ height: 66 });
     const infoTabsOverlayStyle = StyleSheet.flatten(
       screen.getByTestId('perps-pro-info-tabs-overlay').props.style,
     );
     expect(infoTabsOverlayStyle).toEqual(
-      expect.objectContaining({ height: 38 }),
+      expect.objectContaining({ height: 44 }),
     );
     const infoTabsTranslateY = infoTabsOverlayStyle?.transform?.[0]
       ?.translateY as unknown as number | { __getValue: () => number };
@@ -2029,12 +2029,12 @@ describe('PerpsProScene market loading states', () => {
       expect(StyleSheet.flatten(divider.props.style)).toMatchObject({
         backgroundColor: isLight ? 'neutral-bg-0' : 'neutral-bg-2',
         height: 6,
-        bottom: 38,
+        bottom: 44,
         left: 0,
         right: 0,
       });
       expect(StyleSheet.flatten(spacer.props.style)).toMatchObject({
-        height: 60,
+        height: 66,
       });
     },
   );
