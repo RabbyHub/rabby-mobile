@@ -112,7 +112,12 @@ export const PaymentTokenSelectSheet = ({
       />
     ));
   } else if (!assets.length) {
-    list = <MemeEmptyState text={t('page.memeCoin.buy.noAssets')} />;
+    list = (
+      <MemeEmptyState
+        text={t('page.memeCoin.buy.noAssets')}
+        illustration="payment"
+      />
+    );
   } else {
     list = assets.map(asset => {
       const key = tokenKey(asset);
@@ -200,6 +205,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexGrow: 0,
   },
   listContent: {
+    // lets the empty state centre itself in the list area
+    flexGrow: 1,
     paddingHorizontal: 12,
   },
   skeletonRow: {
