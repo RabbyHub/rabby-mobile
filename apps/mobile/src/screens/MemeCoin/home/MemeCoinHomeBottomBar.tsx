@@ -3,7 +3,6 @@ import { Keyboard, TouchableOpacity, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { RcNextSearchCC } from '@/assets/icons/common';
 import { Button } from '@/components2024/Button';
-import { buttonTitleStyles } from '@/components2024/Button/buttonStyles';
 import { NextSearchBar } from '@/components2024/SearchBar';
 import {
   BOTTOM_BUTTON_GAP,
@@ -49,7 +48,6 @@ const PlaceholderButton = ({ title }: { title: string }) => (
   <Button
     title={title}
     height={BOTTOM_BUTTON_SINGLE_HEIGHT}
-    titleStyle={buttonTitleStyles.single}
     disabledTitleStyle={PLACEHOLDER_TITLE_STYLE}
     disabled
     noShadow
@@ -75,7 +73,6 @@ const ActionRow = ({
       <Button
         title={title}
         height={BOTTOM_BUTTON_SINGLE_HEIGHT}
-        titleStyle={buttonTitleStyles.single}
         containerStyle={styles.actionMain}
         disabled={disabled}
         onPress={onPress}
@@ -85,7 +82,6 @@ const ActionRow = ({
       <Button
         title={t('page.memeCoin.cancel')}
         height={BOTTOM_BUTTON_SINGLE_HEIGHT}
-        titleStyle={buttonTitleStyles.single}
         buttonStyle={styles.cancelButton}
         onPress={onCancel}
         type="plain"

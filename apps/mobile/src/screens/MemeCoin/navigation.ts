@@ -36,9 +36,13 @@ export const returnToMemeCoinHome = (mode: 'buy' | 'sell') => {
   if (!navigationRef.isReady()) {
     return;
   }
+  const rootState = navigationRef.getRootState();
+  if (!rootState) {
+    return;
+  }
   homeResetPending = true;
   navigationRef.dispatch({
     ...StackActions.pop(mode === 'buy' ? 2 : 1),
-    target: navigationRef.getRootState().key,
+    target: rootState.key,
   });
 };
