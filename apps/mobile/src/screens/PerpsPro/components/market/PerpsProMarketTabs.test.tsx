@@ -78,6 +78,24 @@ const tabs = [
 const indicatorPosition = { value: 0 } as SharedValue<number>;
 
 describe('PerpsProMarketTabs', () => {
+  it('paints the Favorites star like the favorited row star', () => {
+    render(
+      <PerpsProMarketTabs
+        activeTab="favorites"
+        indicatorPosition={indicatorPosition}
+        onChange={jest.fn()}
+        tabs={[{ id: 'favorites', label: 'Favorites' }, ...tabs]}
+      />,
+    );
+    const favoritesTab = screen.getByTestId('perps-pro-market-tab-favorites');
+    expect(favoritesTab.props.accessibilityLabel).toBe('Favorites');
+    expect(
+      favoritesTab
+        .findAll(node => typeof node.props.color === 'string')
+        .map(node => node.props.color),
+    ).toEqual(expect.arrayContaining(['neutral-info', 'orange-default']));
+  });
+
   beforeEach(() => {
     jest.clearAllMocks();
     indicatorPosition.value = 0;

@@ -498,7 +498,7 @@ export const PerpsProMarketTabs: React.FC<{
               testID={`perps-pro-market-tab-${tab.id}`}>
               {tab.id === 'favorites' ? (
                 <PerpsProMarketFavoritesTabIcon
-                  activeColor={colors2024['neutral-title-1']}
+                  activeColor={colors2024['orange-default']}
                   inactiveColor={colors2024['neutral-info']}
                   index={index}
                   indicatorPosition={indicatorPosition}
