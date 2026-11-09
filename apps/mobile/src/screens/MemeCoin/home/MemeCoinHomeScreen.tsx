@@ -480,6 +480,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     backgroundColor: colors2024['neutral-bg-0'],
   },
   listContent: {
+    // lets the empty state centre itself in the space under the header
+    flexGrow: 1,
     paddingHorizontal: 12,
     paddingBottom: 16,
   },
