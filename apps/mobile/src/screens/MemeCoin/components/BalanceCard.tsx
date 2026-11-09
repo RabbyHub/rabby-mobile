@@ -9,7 +9,11 @@ import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import type { MemePnl, MemePnlPeriod } from '../data/types';
-import { formatMemeBalanceUsd, formatMemePnlUsd } from '../ui/formatBalance';
+import {
+  formatMemeBalanceUsd,
+  formatMemePnlUsd,
+  isFlatMemePnl,
+} from '../ui/formatBalance';
 import { MEME_PNL_CURVE_WIDTH, MemePnlCurve } from './MemePnlCurve';
 
 const GRADIENT_END_LIGHT = '#FEFAED';
@@ -45,6 +49,7 @@ export const BalanceCard = React.memo(function BalanceCard({
 
   const current = pnl?.periods[period];
   const isLoss = !!current && current.totalUsd < 0;
+  const isFlat = !!current && isFlatMemePnl(current.totalUsd);
 
   return (
     <View style={styles.card}>
@@ -84,9 +89,17 @@ export const BalanceCard = React.memo(function BalanceCard({
           numberOfLines={1}
           style={[
             styles.pnlValue,
-            !current ? styles.pnlNone : isLoss ? styles.pnlDown : styles.pnlUp,
+            !current || isFlat
+              ? styles.pnlNone
+              : isLoss
+              ? styles.pnlDown
+              : styles.pnlUp,
           ]}>
-          {current ? formatMemePnlUsd(current.totalUsd) : '--'}
+          {!current
+            ? '--'
+            : isFlat
+            ? '$0.00'
+            : formatMemePnlUsd(current.totalUsd)}
         </Text>
         <Text style={styles.pnlLabel}>{t(PERIOD_LABEL_KEYS[period])}</Text>
       </View>

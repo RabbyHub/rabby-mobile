@@ -123,8 +123,11 @@ export const MemeCoinHomeScreen = () => {
     setAmountText('');
   }, []);
 
+  // leaves search too: going back to the search bar would bring its keyboard up
   const cancelSelection = useCallback(() => {
     Keyboard.dismiss();
+    setKeyword('');
+    setSearching(false);
     clearSelection();
   }, [clearSelection]);
 
@@ -440,9 +443,8 @@ export const MemeCoinHomeScreen = () => {
         ListHeaderComponent={listHeader}
         ListEmptyComponent={listEmpty}
         contentContainerStyle={styles.listContent}
-        // Search results stay tappable with the keyboard up; with a selection the
-        // keyboard belongs to the amount field and a tap on the list only closes it.
-        keyboardShouldPersistTaps={selectedCount > 0 ? 'never' : 'handled'}
+        // with the keyboard up (search or amount), a tap on the list only closes it
+        keyboardShouldPersistTaps="never"
         keyboardDismissMode="on-drag"
         initialNumToRender={10}
         onEndReached={handleEndReached}

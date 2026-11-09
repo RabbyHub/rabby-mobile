@@ -6,7 +6,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import { formatPercentageKMB } from '@/screens/Market/utils/formatPercentageKMB';
 import { ellipsisAddress } from '@/utils/address';
 import { createGetStyles2024 } from '@/utils/styles';
-import { formatMemePnlUsd } from '../ui/formatBalance';
+import { formatMemePnlUsd, isFlatMemePnl } from '../ui/formatBalance';
 import { SelectedBadge } from './SelectedBadge';
 
 export const MEME_ROW_HEIGHT = 70;
@@ -58,16 +58,13 @@ export const MemeTokenRow = React.memo(function MemeTokenRow({
         <Text style={styles.value} numberOfLines={1}>
           {valueText}
         </Text>
-        {pnl !== undefined ? (
-          <Text
-            style={
-              pnl === null
-                ? styles.changeNone
-                : pnl < 0
-                ? styles.changeDown
-                : styles.changeUp
-            }>
-            {pnl === null ? '--' : formatMemePnlUsd(pnl)}
+        {pnl === null ? (
+          <Text style={styles.changeNone}>--</Text>
+        ) : pnl !== undefined && isFlatMemePnl(pnl) ? (
+          <Text style={styles.changeNone}>$0.00</Text>
+        ) : pnl !== undefined ? (
+          <Text style={pnl < 0 ? styles.changeDown : styles.changeUp}>
+            {formatMemePnlUsd(pnl)}
           </Text>
         ) : change24h === null ? (
           <Text style={styles.changeNone}>--</Text>
