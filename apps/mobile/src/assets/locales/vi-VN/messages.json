@@ -3105,6 +3105,13 @@
       },
       "addressEditorBadge": {
         "nameUnknown": "Đặt tên cho địa chỉ"
+      },
+      "scanQrcode": {
+        "chooseFromGallery": "Chọn từ thư viện ảnh",
+        "noQrCode": "Không tìm thấy mã QR trong hình ảnh này",
+        "multipleQrCodes": "Tìm thấy nhiều mã QR. Vui lòng chọn hình ảnh chỉ có một mã QR",
+        "invalidAddress": "Không tìm thấy địa chỉ hợp lệ trong mã QR này",
+        "readImageFailed": "Không thể đọc hình ảnh. Vui lòng thử lại"
       }
     },
     "Lending": {
@@ -3489,13 +3496,6 @@
     }
   },
   "component": {
-    "ReserveGasPopup": {
-      "title": "Dự trữ gas",
-      "doNotReserve": "Không dự trữ Gas",
-      "fast": "Bình thường",
-      "normal": "Chậm",
-      "instant": "Nhanh"
-    },
     "TokenSelector": {
       "searchPlaceHolder1": "Tìm kiếm theo Tên / Địa chỉ",
       "searchPlaceHolder2": "Tìm kiếm Token",

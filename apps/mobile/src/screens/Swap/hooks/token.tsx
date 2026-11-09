@@ -53,7 +53,7 @@ import {
 import { useSwapService } from '../swapServiceDependencies';
 import { mergeSwapQuoteBatch } from './quoteResultBatch';
 import { useSceneActiveAsync } from '@/screens/SwapBridge/hooks/useSceneActiveAsync';
-import { getRabbyFeeInfo, type SwapFeeRate } from './fee';
+import { getRabbyFeeInfo } from './fee';
 import { resolveSwapChainTokens } from './swapChainTokens';
 
 export const enableInsufficientQuote = true;
@@ -359,11 +359,6 @@ export const useSlippage = () => {
     isSlippageHigh,
   };
 };
-
-export interface FeeProps {
-  fee: SwapFeeRate;
-  symbol?: string;
-}
 
 export const useTokenPair = ({
   account,

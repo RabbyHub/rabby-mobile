@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo } from 'react';
-import { DisplayNftItem } from '../types';
 import { debounce } from 'lodash';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { useAppOrmSyncEvents } from '@/databases/sync/_event';
@@ -7,24 +6,6 @@ import type { CombineNFTItem } from './store';
 import nftListStore from '@/store/nfts';
 import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 import type { NftCollectionResourceValue } from '@/store/nftAssetsIndex';
-
-const EMPTY_NFT_LIST: DisplayNftItem[] = [];
-
-const useNftListForAddress = (addr?: string) => {
-  const normalizedAddr = addr?.toLowerCase();
-  return useActivityStore(
-    nftListStore,
-    useCallback(
-      s =>
-        normalizedAddr
-          ? s.nftsMap[normalizedAddr] || EMPTY_NFT_LIST
-          : EMPTY_NFT_LIST,
-      [normalizedAddr],
-    ),
-    Object.is,
-    { storeLabel: 'single-address-nfts' },
-  );
-};
 
 export const useSingleNftListController = (addr?: string, visible = true) => {
   const normalizedAddr = addr?.toLowerCase();
@@ -112,16 +93,6 @@ export const useSingleNftListController = (addr?: string, visible = true) => {
   return {
     isLoading,
     reload: fetchData,
-  };
-};
-
-export const useQueryNft = (addr?: string, visible = true) => {
-  const list = useNftListForAddress(addr);
-  const controller = useSingleNftListController(addr, visible);
-
-  return {
-    ...controller,
-    list,
   };
 };
 

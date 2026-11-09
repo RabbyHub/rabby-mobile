@@ -2998,6 +2998,13 @@
       },
       "addressEditorBadge": {
         "nameUnknown": "Nommez l'adresse"
+      },
+      "scanQrcode": {
+        "chooseFromGallery": "Choisir dans la galerie",
+        "noQrCode": "Aucun QR code trouvé dans cette image",
+        "multipleQrCodes": "Plusieurs QR codes trouvés. Veuillez choisir une image avec un seul QR code",
+        "invalidAddress": "Aucune adresse valide trouvée dans ce QR code",
+        "readImageFailed": "Impossible de lire l'image. Veuillez réessayer"
       }
     },
     "Lending": {
@@ -3468,13 +3475,6 @@
         "mainnet": "Réseau intégré",
         "testnet": "Réseau personnalisé"
       }
-    },
-    "ReserveGasPopup": {
-      "fast": "Normal",
-      "instant": "Rapide",
-      "title": "Réserver Gas",
-      "normal": "Lent",
-      "doNotReserve": "Ne pas réserver de Gas"
     },
     "ModalPreviewNFTItem": {
       "FieldLabel": {

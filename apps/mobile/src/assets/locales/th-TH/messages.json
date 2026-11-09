@@ -90,13 +90,6 @@
       "screenHeaderSubTitle_other": "{{count}} กระเป๋าเงิน",
       "screenHeaderSubTitle_one": "1 กระเป๋าเงิน"
     },
-    "ReserveGasPopup": {
-      "fast": "ปกติ",
-      "title": "สำรอง Gas",
-      "instant": "เร็ว",
-      "normal": "ช้า",
-      "doNotReserve": "อย่าสำรอง Gas"
-    },
     "Contact": {
       "EditModal": {
         "title": "แก้ไขหมายเหตุที่อยู่"
@@ -3164,6 +3157,13 @@
       },
       "addressEditorBadge": {
         "nameUnknown": "ตั้งชื่อที่อยู่"
+      },
+      "scanQrcode": {
+        "chooseFromGallery": "เลือกจากแกลเลอรี",
+        "noQrCode": "ไม่พบคิวอาร์โค้ดในรูปภาพนี้",
+        "multipleQrCodes": "พบคิวอาร์โค้ดหลายรายการ โปรดเลือกรูปภาพที่มีคิวอาร์โค้ดเพียงรายการเดียว",
+        "invalidAddress": "ไม่พบที่อยู่ที่ถูกต้องในคิวอาร์โค้ดนี้",
+        "readImageFailed": "อ่านรูปภาพไม่สำเร็จ โปรดลองอีกครั้ง"
       }
     },
     "Lending": {

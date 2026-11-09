@@ -2988,6 +2988,13 @@
       },
       "addressEditorBadge": {
         "nameUnknown": "주소 이름 지정"
+      },
+      "scanQrcode": {
+        "chooseFromGallery": "앨범에서 선택",
+        "noQrCode": "이 이미지에서 QR 코드를 찾을 수 없습니다",
+        "multipleQrCodes": "여러 개의 QR 코드가 발견되었습니다. QR 코드가 하나만 있는 이미지를 선택하세요",
+        "invalidAddress": "이 QR 코드에서 유효한 주소를 찾을 수 없습니다",
+        "readImageFailed": "이미지를 읽지 못했습니다. 다시 시도하세요"
       }
     },
     "Lending": {
@@ -3540,13 +3547,6 @@
         "proceed": "진행",
         "cancel": "취소"
       }
-    },
-    "ReserveGasPopup": {
-      "normal": "느림",
-      "fast": "보통",
-      "title": "가스 예약",
-      "instant": "빠름",
-      "doNotReserve": "Gas를 예약하지 마세요"
     },
     "AuthenticationModals": {
       "processBiometrics": {

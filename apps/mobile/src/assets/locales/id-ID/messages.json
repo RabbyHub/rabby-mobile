@@ -2988,6 +2988,13 @@
       },
       "addressEditorBadge": {
         "nameUnknown": "Beri nama alamat"
+      },
+      "scanQrcode": {
+        "chooseFromGallery": "Pilih dari Galeri",
+        "noQrCode": "Tidak ada kode QR di gambar ini",
+        "multipleQrCodes": "Ditemukan beberapa kode QR. Pilih gambar dengan satu kode QR saja",
+        "invalidAddress": "Tidak ada alamat valid di kode QR ini",
+        "readImageFailed": "Gagal membaca gambar. Silakan coba lagi"
       }
     },
     "Lending": {
@@ -3460,13 +3467,6 @@
         "notEnabled": "Biometrik tidak diaktifkan",
         "desc": "Gunakan sidik jari/Face ID untuk membuka kunci"
       }
-    },
-    "ReserveGasPopup": {
-      "doNotReserve": "Jangan sisihkan Gas",
-      "normal": "Lambat",
-      "title": "Sisihkan Gas",
-      "fast": "Normal",
-      "instant": "Cepat"
     },
     "NoLongerSupports": {
       "title": "Alamat dompet mobile tidak lagi didukung",

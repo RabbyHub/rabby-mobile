@@ -3135,6 +3135,13 @@
       },
       "addressEditorBadge": {
         "nameUnknown": "给地址命名"
+      },
+      "scanQrcode": {
+        "chooseFromGallery": "从相册选择",
+        "noQrCode": "图片中未识别到二维码",
+        "multipleQrCodes": "图片中包含多个二维码，请选择只有一个二维码的图片",
+        "invalidAddress": "二维码中未识别到有效地址",
+        "readImageFailed": "图片读取失败，请重试"
       }
     },
     "Lending": {
@@ -3591,13 +3598,6 @@
         "giftTips": "活跃用户 Gas 奖励",
         "noWithdrawableBalanceDescription": "你的 Gas 余额中有 {{amount}} 不可提现：\n1. Apple Pay / Google Pay\n2. Gas Rewards"
       }
-    },
-    "ReserveGasPopup": {
-      "title": "预留 Gas",
-      "instant": "快速",
-      "doNotReserve": "不预留 Gas",
-      "fast": "正常",
-      "normal": "慢"
     },
     "externalSwapBrideDappPopup": {
       "thirdPartyDappToProceed": "请使用第三方 DApp 继续操作",
