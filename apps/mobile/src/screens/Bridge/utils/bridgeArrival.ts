@@ -1,32 +1,42 @@
 import type { BridgeHistory } from '@rabby-wallet/rabby-api/dist/types';
-import { ONE_HOUR_MS } from '../constants';
+import type { BridgeTxHistoryItem } from '@/core/services/transactionHistory';
+import { findBridgeHistory, isStaleUnmatchedLocal } from './record';
+import { getBridgeStatus } from './status';
 
 export type BridgeArrivalResolution =
   | { type: 'pending' }
   | { type: 'notFoundTimeout' }
   | {
       type: 'settled';
-      status: 'allSuccess' | 'failed';
+      status: 'allSuccess' | 'fromFailed' | 'failed';
       bridgeTx: BridgeHistory;
     };
 
+/** Settles a local bridge record by the same rules as useBridgeRecord. */
 export const resolveBridgeArrival = (
   list: BridgeHistory[],
-  { hash, createdAt, now }: { hash: string; createdAt: number; now: number },
+  local: BridgeTxHistoryItem,
 ): BridgeArrivalResolution => {
-  const found = list.find(item => item.from_tx?.tx_id === hash);
-  if (!found) {
-    // tx create time is more than 60 minutes, treat as failed
-    return now - createdAt > ONE_HOUR_MS
+  const history = findBridgeHistory(list, {
+    chain: local.fromToken.chain,
+    hash: local.hash,
+    acceleratedHash: local.acceleratedHash,
+  });
+  if (!history) {
+    return isStaleUnmatchedLocal(local)
       ? { type: 'notFoundTimeout' }
       : { type: 'pending' };
   }
-  if (found.status === 'completed' || found.status === 'failed') {
-    return {
-      type: 'settled',
-      status: found.status === 'completed' ? 'allSuccess' : 'failed',
-      bridgeTx: found,
-    };
-  }
-  return { type: 'pending' };
+  const status = getBridgeStatus({ address: local.address, local, history });
+  const terminal =
+    status.scene === 'succeeded'
+      ? 'allSuccess'
+      : status.scene === 'sourceFailed'
+      ? 'fromFailed'
+      : status.failed
+      ? 'failed'
+      : undefined;
+  return terminal
+    ? { type: 'settled', status: terminal, bridgeTx: history }
+    : { type: 'pending' };
 };

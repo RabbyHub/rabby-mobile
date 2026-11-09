@@ -7,6 +7,7 @@ import {
 } from '@rabby-wallet/rabby-bridge';
 import { openapi } from '@/core/request';
 import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
+import type { BridgeTxHistoryItem } from '@/core/services/transactionHistory';
 import type { Account } from '@/core/startupServices/preference';
 import { buildBridgeToken } from '@/screens/Bridge/hooks/bridge';
 import type { SelectedBridgeQuote } from '@/screens/Bridge/types';
@@ -31,7 +32,7 @@ export const createBridgeRoute = ({ account }: { account: Account }) => {
     }
     return aggregatorsTask;
   };
-  const submittedAt = new Map<string, number>();
+  const submitted = new Map<string, BridgeTxHistoryItem>();
 
   const route: RouteAdapter = {
     async quote({ payToken, receiveToken, payAmount, slippagePct }) {
@@ -155,9 +156,7 @@ export const createBridgeRoute = ({ account }: { account: Account }) => {
           );
         },
         onBroadcast: async txHash => {
-          const createdAt = Date.now();
-          submittedAt.set(txHash, createdAt);
-          await transactionHistoryServiceApi.addBridgeTxHistory({
+          const local: BridgeTxHistoryItem = {
             address: account.address,
             fromChainId: findChainByServerID(payToken.chain)?.id || 0,
             toChainId: findChainByServerID(receiveToken.chain)?.id || 0,
@@ -169,9 +168,11 @@ export const createBridgeRoute = ({ account }: { account: Account }) => {
             toAmount: Number(best.to_token_amount || 0),
             status: 'pending',
             hash: txHash,
-            createdAt,
+            createdAt: Date.now(),
             estimatedDuration: best.duration || 0,
-          });
+          };
+          submitted.set(txHash, local);
+          await transactionHistoryServiceApi.addBridgeTxHistory(local);
         },
       };
     },
@@ -182,40 +183,36 @@ export const createBridgeRoute = ({ account }: { account: Account }) => {
     txHash,
     isCancelled,
   }) => {
-    const createdAt = submittedAt.get(txHash) ?? Date.now();
-    const fromChainId = findChainByServerID(leg.pay.chain)?.id || 0;
+    const local = submitted.get(txHash);
+    // only hashes this route broadcast are waited on
+    if (!local) {
+      return false;
+    }
     for (;;) {
       if (isCancelled()) {
         throw new ExecutionStoppedError();
       }
       const res = await openapi
-        .getBridgeHistoryList({
-          user_addr: account.address,
-          start: 0,
-          limit: Math.max(10, submittedAt.size + 10),
-          is_all: true,
-        })
+        .getBridgeHistoryListByTxIds({ from_tx_ids: [txHash] })
         .catch(() => null);
-      if (!res) {
+      // as on the Bridge page, a failed lookup never times the tx out
+      const list = res?.history_list;
+      if (!Array.isArray(list)) {
         await sleep(BRIDGE_ARRIVAL_POLL_INTERVAL_MS);
         continue;
       }
-      const resolution = resolveBridgeArrival(res.history_list || [], {
-        hash: txHash,
-        createdAt,
-        now: Date.now(),
-      });
+      const resolution = resolveBridgeArrival(list, local);
       if (resolution.type === 'notFoundTimeout') {
         await transactionHistoryServiceApi
-          .completeBridgeTxHistory(txHash, fromChainId, 'failed')
+          .completeBridgeTxHistory(local.hash, local.fromChainId, 'failed')
           .catch(() => undefined);
         return false;
       }
       if (resolution.type === 'settled') {
         await transactionHistoryServiceApi
           .completeBridgeTxHistory(
-            txHash,
-            fromChainId,
+            local.hash,
+            local.fromChainId,
             resolution.status,
             resolution.bridgeTx,
           )
