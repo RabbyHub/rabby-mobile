@@ -1,6 +1,6 @@
 import BigNumber from 'bignumber.js';
 import { sanitizePerpsProDecimalEditingInput } from '@/utils/perpsPriceProtocol';
-import type { MemeHolding } from '../data/types';
+import type { MemeHolding, MemePnlPoint } from '../data/types';
 import { AMOUNT_EPSILON } from '../engine/constants';
 import type { SellHolding } from '../engine/execLegs';
 import { tokenKey } from '../engine/keys';
@@ -149,3 +149,7 @@ export const formatAllocationPct = (ratio: number) => {
     ? '<1%'
     : `${pct.decimalPlaces(0).toString(10)}%`;
 };
+
+/** An account with no meme history gets one point, which draws no line. */
+export const toPnlCurvePoints = (points: MemePnlPoint[]) =>
+  points.length === 1 ? [points[0], points[0]] : points;

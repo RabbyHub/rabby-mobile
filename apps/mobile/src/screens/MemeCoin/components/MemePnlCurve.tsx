@@ -17,6 +17,7 @@ import { useChartTapCursor } from '@/screens/Perps/components/PerpsPortfolioChar
 import { createGetStyles2024 } from '@/utils/styles';
 import type { MemePnlPoint } from '../data/types';
 import { formatMemePnlUsd } from '../ui/formatBalance';
+import { toPnlCurvePoints } from '../ui/helpers';
 
 export const MEME_PNL_CURVE_WIDTH = 128;
 const CURVE_HEIGHT = 52;
@@ -174,10 +175,11 @@ export const MemePnlCurve = React.memo(function MemePnlCurve({
   points: MemePnlPoint[];
   color: string;
 }) {
-  const flat = points.every(point => point.value === 0);
+  const data = useMemo(() => toPnlCurvePoints(points), [points]);
+  const flat = data.every(point => point.value === 0);
   return (
-    <LineChart.Provider data={points} yRange={flat ? FLAT_Y_RANGE : undefined}>
-      <CurveBody points={points} color={color} flat={flat} />
+    <LineChart.Provider data={data} yRange={flat ? FLAT_Y_RANGE : undefined}>
+      <CurveBody points={data} color={color} flat={flat} />
     </LineChart.Provider>
   );
 });

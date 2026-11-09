@@ -11,6 +11,7 @@ import {
   parseBuyAmount,
   pickTokenLogos,
   sanitizeBuyAmountInput,
+  toPnlCurvePoints,
   toSellHoldings,
 } from './helpers';
 
@@ -242,5 +243,20 @@ describe('formatAllocationPct', () => {
     [0, '0%'],
   ])('formats %p as %p', (ratio, expected) => {
     expect(formatAllocationPct(ratio)).toBe(expected);
+  });
+});
+
+describe('toPnlCurvePoints', () => {
+  it('draws a single point, as an account with no history gets, as a flat line', () => {
+    const point = { timestamp: 1, value: 0 };
+    expect(toPnlCurvePoints([point])).toEqual([point, point]);
+  });
+
+  it('keeps a real curve as it is', () => {
+    const points = [
+      { timestamp: 1, value: 0 },
+      { timestamp: 2, value: 3 },
+    ];
+    expect(toPnlCurvePoints(points)).toBe(points);
   });
 });
