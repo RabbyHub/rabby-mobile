@@ -15,7 +15,7 @@ import {
   formatUsdValue,
 } from '@/utils/number';
 import BigNumber from 'bignumber.js';
-import { Slider } from '@rneui/themed';
+import { PerpsGestureSlider as Slider } from '@/components/perps/PerpsGestureSlider';
 
 import type { TokenSelectInst } from './TokenSelect';
 import TokenSelect from './TokenSelect';
@@ -194,7 +194,7 @@ const SwapTokenItemInner = (props: SwapTokenItemProps) => {
                 allowTouchTrack={!disabled}
                 disabled={disabled}
                 style={styles.sliderInner}
-                value={slider}
+                value={slider ?? 0}
                 onSlidingStart={onSlidingStart}
                 onValueChange={onSliderValueChange}
                 onSlidingComplete={onAfterChangeSlider}

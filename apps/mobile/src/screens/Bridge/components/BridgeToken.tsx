@@ -24,7 +24,7 @@ import {
 import TokenSelect from '@/screens/Swap/components/TokenSelect';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
-import { Slider } from '@rneui/themed';
+import { PerpsGestureSlider as Slider } from '@/components/perps/PerpsGestureSlider';
 import LinearGradient from 'react-native-linear-gradient';
 import RcIconWalletCC from '@/assets2024/icons/swap/wallet-cc.svg';
 import type { Account } from '@/core/startupServices/preference';
@@ -225,7 +225,7 @@ const BridgeTokenInner = ({
                 allowTouchTrack={!disabled}
                 disabled={disabled}
                 style={styles.sliderInner}
-                value={slider}
+                value={slider ?? 0}
                 onSlidingStart={onSlidingStart}
                 onValueChange={onSliderValueChange}
                 onSlidingComplete={onAfterChangeSlider}
