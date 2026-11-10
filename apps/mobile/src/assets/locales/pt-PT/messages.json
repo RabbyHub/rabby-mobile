@@ -2202,7 +2202,8 @@
       "emptyWhitelistContent": "Adicione endereços fidedignos à lista de permissões para fazer transferências rápidas sem voltar a confirmar",
       "SendHistory": "Histórico de envios",
       "dividerWatchOnlyWallets": "Endereços só de leitura",
-      "enterOrSearchAddress": "Introduzir ou pesquisar endereço"
+      "enterOrSearchAddress": "Introduzir ou pesquisar endereço",
+      "resolvingAddressName": "A procurar endereço..."
     },
     "confirmAddress": {
       "risks": {

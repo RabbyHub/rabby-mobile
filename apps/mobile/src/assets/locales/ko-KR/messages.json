@@ -1916,6 +1916,7 @@
       "emptyWhitelistContent": "안전한 주소를 화이트리스트에 추가하여 빠른 전송 - 다음번에는 확인이 필요하지 않습니다.",
       "SendHistory": "전송 내역",
       "enterOrSearchAddress": "주소 입력 또는 검색",
+      "resolvingAddressName": "주소 조회 중...",
       "dividerWatchOnlyWallets": "단순 조회 주소"
     },
     "confirmAddress": {

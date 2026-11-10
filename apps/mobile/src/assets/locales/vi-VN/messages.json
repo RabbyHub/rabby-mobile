@@ -2033,7 +2033,8 @@
       "emptyWhitelistTip": "Chưa có địa chỉ nào trong danh sách cho phép, ",
       "SendHistory": "Lịch sử gửi",
       "dividerWatchOnlyWallets": "Địa chỉ chỉ xem",
-      "enterOrSearchAddress": "Nhập hoặc tìm kiếm địa chỉ"
+      "enterOrSearchAddress": "Nhập hoặc tìm kiếm địa chỉ",
+      "resolvingAddressName": "Đang tìm địa chỉ..."
     },
     "confirmAddress": {
       "risks": {

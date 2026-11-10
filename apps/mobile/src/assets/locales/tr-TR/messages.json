@@ -651,7 +651,8 @@
       "emptyWhitelistContent": "Güvenilir adresleri hızlı transferler için beyaz listeye ekleyin—bir dahaki sefere onay gerekmez.",
       "SendHistory": "Gönderim Geçmişi",
       "dividerWatchOnlyWallets": "Sadece izleme adresleri",
-      "enterOrSearchAddress": "Adres Girin veya Ara"
+      "enterOrSearchAddress": "Adres Girin veya Ara",
+      "resolvingAddressName": "Adres aranıyor..."
     },
     "confirmAddress": {
       "risks": {

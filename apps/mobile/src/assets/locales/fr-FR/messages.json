@@ -1925,6 +1925,7 @@
       "emptyWhitelistContent": "Ajoutez des adresses de confiance à la liste d’autorisation pour des transferts rapides—pas de confirmation nécessaire la prochaine fois.",
       "SendHistory": "Historique des envois",
       "enterOrSearchAddress": "Entrer ou rechercher une adresse",
+      "resolvingAddressName": "Recherche de l'adresse...",
       "dividerWatchOnlyWallets": "Adresses en lecture seule"
     },
     "confirmAddress": {

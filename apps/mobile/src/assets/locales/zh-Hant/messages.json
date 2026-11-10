@@ -2088,7 +2088,8 @@
       "emptyWhitelistContent": "將受信任的地址新增到白名單中以進行快速轉帳——下次無需確認",
       "SendHistory": "轉帳記錄",
       "dividerWatchOnlyWallets": "只讀錢包",
-      "enterOrSearchAddress": "輸入或搜尋地址"
+      "enterOrSearchAddress": "輸入或搜尋地址",
+      "resolvingAddressName": "正在查詢地址..."
     },
     "confirmAddress": {
       "risks": {

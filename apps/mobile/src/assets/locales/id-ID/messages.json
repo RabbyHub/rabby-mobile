@@ -651,6 +651,7 @@
       "emptyWhitelistHeader": "Tambahkan Alamat Daftar Putih",
       "SendHistory": "Riwayat Pengiriman",
       "enterOrSearchAddress": "Masukkan atau Cari Alamat",
+      "resolvingAddressName": "Mencari alamat...",
       "dividerWatchOnlyWallets": "Alamat hanya untuk dilihat"
     },
     "confirmAddress": {

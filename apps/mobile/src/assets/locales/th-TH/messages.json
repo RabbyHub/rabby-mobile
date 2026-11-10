@@ -2085,7 +2085,8 @@
       "emptyWhitelistContent": "เพิ่มที่อยู่ที่เชื่อถือได้ไปยังบัญชีขาวเพื่อการโอนที่รวดเร็ว — ไม่จำเป็นต้องยืนยันในครั้งถัดไป",
       "SendHistory": "ประวัติการส่ง",
       "dividerWatchOnlyWallets": "ที่อยู่แบบดูเท่านั้น",
-      "enterOrSearchAddress": "กรอกหรือค้นหา ที่อยู่"
+      "enterOrSearchAddress": "กรอกหรือค้นหา ที่อยู่",
+      "resolvingAddressName": "กำลังค้นหาที่อยู่..."
     },
     "confirmAddress": {
       "risks": {

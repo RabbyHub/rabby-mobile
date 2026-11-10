@@ -1966,6 +1966,7 @@
       "emptyWhitelistTip": "まだホワイトリストに登録されたアドレスはありません。",
       "SendHistory": "送信履歴",
       "enterOrSearchAddress": "アドレスを入力または検索してください",
+      "resolvingAddressName": "アドレスを検索中...",
       "dividerWatchOnlyWallets": "監視専用アドレス"
     },
     "confirmAddress": {
