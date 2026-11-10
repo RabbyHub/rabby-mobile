@@ -4,7 +4,8 @@ import type { Account } from '@/core/startupServices/preference';
 import { createStoreActivityScope } from '@/core/state/storeActivity';
 import { StoreActivityProvider } from '@/hooks/storeActivity/StoreActivityProvider';
 import { perpsStore } from './usePerpsStore';
-import { usePerpsState } from './usePerpsState';
+import { usePerpsSimpleState, usePerpsState } from './usePerpsState';
+import { useSetPerpsPopupState } from '@/screens/Perps/hooks/usePerpsPopupState';
 
 // Component contract: retain the real hook, activity scope and Zustand
 // publication. Signing/runtime/network orchestration is outside this claim.
@@ -33,9 +34,6 @@ jest.mock('./actions/enableUnifiedAccount', () => ({
 }));
 jest.mock('./runtime/useEnsurePerpsRuntime', () => ({
   useEnsurePerpsRuntime: jest.fn(),
-}));
-jest.mock('@/screens/Perps/hooks/usePerpsPopupState', () => ({
-  usePerpsPopupState: () => [{}, jest.fn()],
 }));
 jest.mock('@react-navigation/native', () => ({ useIsFocused: () => true }));
 jest.mock('react-i18next', () => ({
@@ -67,6 +65,11 @@ describe('usePerpsState opt-in retained publication', () => {
       accountNeedApproveAgent: false,
       accountNeedApproveBuilderFee: false,
       favoriteMarkets: [],
+      isInitialized: true,
+      isLogin: true,
+      hasPermission: true,
+      currentClearinghouseState: null,
+      openOrders: [],
     });
   });
 
@@ -128,6 +131,89 @@ describe('usePerpsState opt-in retained publication', () => {
     });
     act(() => perpsStore.setState({ favoriteMarkets: ['BTC'] }));
     expect(result.current.favoriteMarkets).toEqual(['BTC']);
+    unmount();
+    scope.dispose();
+  });
+
+  it('does not publish unused Simple fields or setter-only popup updates', () => {
+    const rendered = jest.fn();
+    const { result } = renderHook(() => {
+      rendered();
+      return {
+        state: usePerpsSimpleState(),
+        setPopup: useSetPerpsPopupState(),
+      };
+    });
+    const count = rendered.mock.calls.length;
+    act(() =>
+      perpsStore.setState({
+        favoriteMarkets: ['BTC'],
+        perpFee: 0.002,
+        userFills: [],
+        userAccountHistory: [],
+        localLoadingHistory: [],
+      }),
+    );
+    act(() =>
+      result.current.setPopup(previous => ({
+        ...previous,
+        isShowLoginPopup: true,
+      })),
+    );
+    expect(rendered).toHaveBeenCalledTimes(count);
+    expect(result.current.state).not.toHaveProperty('favoriteMarkets');
+    expect(result.current.state).not.toHaveProperty('userFills');
+    expect(result.current.state).not.toHaveProperty('perpFee');
+    act(() => perpsStore.setState({ hasPermission: false }));
+    expect(result.current.state.hasPermission).toBe(false);
+    expect(rendered).toHaveBeenCalledTimes(count + 1);
+    act(() =>
+      result.current.setPopup(previous => ({
+        ...previous,
+        isShowLoginPopup: false,
+      })),
+    );
+  });
+
+  it('retains the Simple activity contract while identity and approvals stay live', () => {
+    const scope = createStoreActivityScope({ active: true });
+    const rendered = jest.fn();
+    const { result, unmount } = renderHook(
+      () => {
+        rendered();
+        return usePerpsSimpleState({
+          pauseInactivePublication: true,
+          legacyRuntimeContinuationEnabled: false,
+        });
+      },
+      {
+        wrapper: ({ children }) => (
+          <StoreActivityProvider scope={scope}>
+            {children}
+          </StoreActivityProvider>
+        ),
+      },
+    );
+    act(() => scope.setActive(false));
+    const count = rendered.mock.calls.length;
+    act(() => perpsStore.setState({ isLogin: false, hasPermission: false }));
+    act(() => perpsStore.setState({ isLogin: true }));
+    expect(rendered).toHaveBeenCalledTimes(count);
+    const account = { address: '0x456', type: 'watch' } as Account;
+    act(() =>
+      perpsStore.setState({
+        currentPerpsAccount: account,
+        accountNeedApproveBuilderFee: true,
+      }),
+    );
+    expect(result.current.currentPerpsAccount).toBe(account);
+    expect(result.current.accountNeedApproveBuilderFee).toBe(true);
+    expect(result.current.hasPermission).toBe(true);
+    const beforeCatchUp = rendered.mock.calls.length;
+    act(() => scope.setActive(true));
+    expect(result.current.hasPermission).toBe(false);
+    expect(result.current.isLogin).toBe(true);
+    expect(rendered).toHaveBeenCalledTimes(beforeCatchUp + 1);
     unmount();
     scope.dispose();
   });
