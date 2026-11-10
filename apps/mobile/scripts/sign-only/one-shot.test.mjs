@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { redactArgs } from './one-shot.mjs';
+import { redactArgs, resolveDispatchRef } from './one-shot.mjs';
 
 test('redacts a --token value from command error text', () => {
   assert.deepEqual(
@@ -29,4 +29,10 @@ test('leaves ordinary arguments untouched', () => {
     'workflow',
     'run',
   ]);
+});
+
+test('an explicit --workflow-ref wins over the prepared ref', () => {
+  assert.equal(resolveDispatchRef('tmp/20261112', 'develop'), 'tmp/20261112');
+  assert.equal(resolveDispatchRef('', 'tmp/20261112'), 'tmp/20261112');
+  assert.equal(resolveDispatchRef('', ''), 'develop');
 });
