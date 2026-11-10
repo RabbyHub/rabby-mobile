@@ -95,6 +95,24 @@ signing jobs run on shared self-hosted runners with a warm workspace; prefer
 moving them to an isolated runner if the machine is also used for untrusted
 feature-test builds.
 
+## Runner keychain
+
+The iOS job does not depend on the operator's login keychain. It creates a
+per-run keychain under `$RUNNER_TEMP`, imports the `match` certificate into it,
+sets the key partition list, and removes stale same-name provisioning profiles
+from both `~/Library/MobileDevice/Provisioning Profiles` and Xcode's
+`~/Library/Developer/Xcode/UserData/Provisioning Profiles` cache. The login
+keychain is hidden from codesign for the job and the original search list is
+restored afterwards. `macos_machine_location` selects `mobile` (default) or
+`mobile-local`.
+
+## Artifact download proxy
+
+The download step honors the `SIGN_ONLY_DOWNLOAD_PROXY` repository variable or
+the ambient `HTTPS_PROXY` / `HTTP_PROXY` / `ALL_PROXY` environment. It forces
+HTTP/1.1 and retries transient failures; use this on machines where a direct
+connection to `download.rabby.io` is slow or drops HTTP/2 streams.
+
 ## Upload through a proxy
 
 `publish.mjs` PUTs the artifact directly to a presigned S3 URL. When the direct

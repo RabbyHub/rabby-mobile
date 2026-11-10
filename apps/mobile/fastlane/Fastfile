@@ -149,6 +149,20 @@ platform :ios do
 
       # Main App: RabbyMobile
       match(**match_options)
+
+      # When match imports into a dedicated CI keychain, allow codesign to use
+      # the private key without a GUI authorization prompt. The password is
+      # passed as an argv element (no shell), so it is not logged.
+      keychain_name = ENV['MATCH_KEYCHAIN_NAME'].to_s
+      keychain_password = ENV['MATCH_KEYCHAIN_PASSWORD'].to_s
+      unless keychain_name.empty? || keychain_password.empty?
+        ok = system(
+          'security', 'set-key-partition-list',
+          '-S', 'apple-tool:,apple:,codesign:',
+          '-s', '-k', keychain_password, keychain_name
+        )
+        UI.user_error!('security set-key-partition-list failed') unless ok
+      end
     end
 
     # # App Extension: RabbyMobileNotification

@@ -38,6 +38,13 @@ on:
           - 'false'
           - 'true'
         default: 'false'
+      macos_machine_location:
+        required: false
+        type: choice
+        options:
+          - 'mobile'
+          - 'mobile-local'
+        default: 'mobile'
 
 # The job only needs to read the repository; signing credentials are passed as
 # step-scoped secrets below.
@@ -153,8 +160,16 @@ jobs:
         env:
           ARTIFACT_URL: ${{ inputs.artifact_url }}
           ARTIFACT_SHA256: ${{ inputs.artifact_sha256 }}
+          SIGN_ONLY_DOWNLOAD_PROXY: ${{ vars.SIGN_ONLY_DOWNLOAD_PROXY }}
         run: |
-          curl -fL --retry 3 --retry-delay 2 -o "$RUNNER_TEMP/sign-only.apk" "$ARTIFACT_URL"
+          if [ -n "${SIGN_ONLY_DOWNLOAD_PROXY:-}" ]; then
+            curl --http1.1 -fL --retry 5 --retry-delay 2 --connect-timeout 30 \
+              --proxy "$SIGN_ONLY_DOWNLOAD_PROXY" \
+              -o "$RUNNER_TEMP/sign-only.apk" "$ARTIFACT_URL"
+          else
+            curl --http1.1 -fL --retry 5 --retry-delay 2 --connect-timeout 30 \
+              -o "$RUNNER_TEMP/sign-only.apk" "$ARTIFACT_URL"
+          fi
           echo "$ARTIFACT_SHA256  $RUNNER_TEMP/sign-only.apk" | sha256sum -c -
 
       # Signing, the S3 upload and the version metadata only need SDK tools,
@@ -233,7 +248,7 @@ jobs:
     runs-on:
       - self-hosted
       - macOS
-      - mobile
+      - ${{ inputs.macos_machine_location || vars.RABBY_MOBILE_SIGN_ONLY_IOS_RUNNER || 'mobile' }}
     env:
       NODE_OPTIONS: '--max_old_space_size=12288'
       XCODE_VER: '27.1'
@@ -318,21 +333,27 @@ jobs:
         env:
           ARTIFACT_URL: ${{ inputs.artifact_url }}
           ARTIFACT_SHA256: ${{ inputs.artifact_sha256 }}
+          SIGN_ONLY_DOWNLOAD_PROXY: ${{ vars.SIGN_ONLY_DOWNLOAD_PROXY }}
         run: |
           mkdir -p "$RUNNER_TEMP/sign-only-ios-input"
-          curl -fL --retry 3 --retry-delay 2 -o "$RUNNER_TEMP/sign-only-ios.zip" "$ARTIFACT_URL"
+          if [ -n "${SIGN_ONLY_DOWNLOAD_PROXY:-}" ]; then
+            curl --http1.1 -fL --retry 5 --retry-delay 2 --connect-timeout 30 \
+              --proxy "$SIGN_ONLY_DOWNLOAD_PROXY" \
+              -o "$RUNNER_TEMP/sign-only-ios.zip" "$ARTIFACT_URL"
+          else
+            curl --http1.1 -fL --retry 5 --retry-delay 2 --connect-timeout 30 \
+              -o "$RUNNER_TEMP/sign-only-ios.zip" "$ARTIFACT_URL"
+          fi
           echo "$ARTIFACT_SHA256  $RUNNER_TEMP/sign-only-ios.zip" | shasum -a 256 -c -
           unzip -q -o "$RUNNER_TEMP/sign-only-ios.zip" -d "$RUNNER_TEMP/sign-only-ios-input"
 
-      - name: Unlock keychain
-        env:
-          KEYCHAIN_PASS: ${{ secrets.KEYCHAIN_PASS }}
+      - name: Prepare ephemeral signing keychain
         run: |
-          if [ -n "$KEYCHAIN_PASS" ]; then
-            security unlock-keychain -p "$KEYCHAIN_PASS" login.keychain
-          else
-            echo "KEYCHAIN_PASS is not set; assuming keychain is already unlocked."
-          fi
+          bash apps/mobile/scripts/sign-only/prepare-signing-keychain.sh \
+            "$RUNNER_TEMP/rabby-ci-signing.keychain-db" \
+            "$RUNNER_TEMP/sign-keychain.pass" \
+            "$RUNNER_TEMP/orig-user-keychains.txt" \
+            RabbyMobileAdHocRegressionOpcode
 
       # Signing, the S3 upload and the version metadata only need SDK tools,
       # node built-ins and the aws CLI. node_modules is required only by the
@@ -357,6 +378,8 @@ jobs:
           RABBY_MOBILE_LARK_CHAT_URL: ${{ secrets.RABBY_MOBILE_LARK_CHAT_URL || secrets.LARK_CHAT_URL }}
           RABBY_MOBILE_LARK_CHAT_SECRET: ${{ secrets.RABBY_MOBILE_LARK_CHAT_SECRET || secrets.LARK_CHAT_SECRET }}
         run: |
+          export MATCH_KEYCHAIN_NAME="$RUNNER_TEMP/rabby-ci-signing.keychain-db"
+          export MATCH_KEYCHAIN_PASSWORD="$(cat "$RUNNER_TEMP/sign-keychain.pass")"
           cd apps/mobile
           if [ ! -d "$RABBY_MOBILE_SIGN_ONLY_ARCHIVE" ]; then
             echo "Signed-only archive not found at $RABBY_MOBILE_SIGN_ONLY_ARCHIVE" >&2
@@ -368,6 +391,13 @@ jobs:
           export RABBY_ROBOT_LARK_APP_ID='${{ secrets.RABBY_ROBOT_LARK_APP_ID }}'
           export RABBY_ROBOT_LARK_APP_SECRET='${{ secrets.RABBY_ROBOT_LARK_APP_SECRET }}'
           bash ./scripts/deploy-ios-adhoc.sh
+
+      - name: Cleanup ephemeral signing keychain
+        if: always()
+        run: |
+          bash apps/mobile/scripts/sign-only/cleanup-signing-keychain.sh \
+            "$RUNNER_TEMP/rabby-ci-signing.keychain-db" \
+            "$RUNNER_TEMP/orig-user-keychains.txt"
 
       - name: Report sign-only result
         if: always()
