@@ -45,6 +45,13 @@ on:
           - 'mobile'
           - 'mobile-local'
         default: 'mobile-local'
+      android_machine_location:
+        required: false
+        type: choice
+        options:
+          - 'mobile'
+          - 'mobile-local'
+        default: 'mobile'
 
 # The job only needs to read the repository; signing credentials are passed as
 # step-scoped secrets below.
@@ -61,8 +68,8 @@ jobs:
     if: ${{ inputs.platform == 'android' }}
     runs-on:
       - self-hosted
-      - Linux
-      - mobile
+      - ${{ inputs.android_machine_location == 'mobile-local' && 'macOS' || 'Linux' }}
+      - ${{ inputs.android_machine_location || vars.RABBY_MOBILE_SIGN_ONLY_ANDROID_RUNNER || 'mobile' }}
     env:
       NODE_OPTIONS: '--max_old_space_size=8192'
       CI: 'true'
@@ -160,7 +167,7 @@ jobs:
         env:
           ARTIFACT_URL: ${{ inputs.artifact_url }}
           ARTIFACT_SHA256: ${{ inputs.artifact_sha256 }}
-          SIGN_ONLY_DOWNLOAD_PROXY: ${{ (inputs.macos_machine_location || vars.RABBY_MOBILE_SIGN_ONLY_IOS_RUNNER || 'mobile-local') == 'mobile-local' && vars.SIGN_ONLY_DOWNLOAD_PROXY || '' }}
+          SIGN_ONLY_DOWNLOAD_PROXY: ${{ (inputs.android_machine_location || vars.RABBY_MOBILE_SIGN_ONLY_ANDROID_RUNNER || 'mobile') == 'mobile-local' && vars.SIGN_ONLY_DOWNLOAD_PROXY || '' }}
         run: |
           if [ -n "${SIGN_ONLY_DOWNLOAD_PROXY:-}" ]; then
             curl --http1.1 -fL -C - --retry 5 --retry-delay 2 \
@@ -172,7 +179,12 @@ jobs:
               --connect-timeout 30 --speed-time 30 --speed-limit 1024 \
               -o "$RUNNER_TEMP/sign-only.apk" "$ARTIFACT_URL"
           fi
-          echo "$ARTIFACT_SHA256  $RUNNER_TEMP/sign-only.apk" | sha256sum -c -
+          # GNU coreutils on the Linux runner, BSD shasum on the macOS runner.
+          if command -v sha256sum >/dev/null 2>&1; then
+            echo "$ARTIFACT_SHA256  $RUNNER_TEMP/sign-only.apk" | sha256sum -c -
+          else
+            echo "$ARTIFACT_SHA256  $RUNNER_TEMP/sign-only.apk" | shasum -a 256 -c -
+          fi
 
       # Signing, the S3 upload and the version metadata only need SDK tools,
       # node built-ins and the aws CLI. node_modules is required only by the

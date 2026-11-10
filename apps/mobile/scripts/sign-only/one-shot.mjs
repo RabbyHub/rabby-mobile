@@ -16,6 +16,10 @@
  * instead of the ref that the fe-opcode prepare response suggests (currently
  * `develop`). Use it for the weekly `tmp/YYYYMMDD` release branch, which is
  * where the mobile-local sign-only wiring lands before it reaches `develop`.
+ *
+ * `--workflow-input key=value` appends or overrides workflow inputs, e.g.
+ * `--workflow-input android_machine_location=mobile-local` to sign Android on
+ * the macOS mobile-local runner.
  */
 
 import { execFileSync, spawnSync } from 'node:child_process';
@@ -115,6 +119,7 @@ function parseArgs(argv) {
     json: false,
     proxy: '',
     workflowRef: '',
+    workflowInputs: [],
   };
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
@@ -155,6 +160,9 @@ function parseArgs(argv) {
       case '--workflow-ref':
         args.workflowRef = argv[++i] || '';
         break;
+      case '--workflow-input':
+        args.workflowInputs.push(argv[++i] || '');
+        break;
       default:
         fail(`Unknown argument: ${arg}`);
     }
@@ -172,6 +180,11 @@ function parseArgs(argv) {
     DEFAULT_SERVICE_URL;
   args.proxy = args.proxy || process.env.OPFE_SIGN_ONLY_PROXY || '';
   assertWorkflowRef(args.workflowRef);
+  for (const pair of args.workflowInputs) {
+    if (!/^[A-Za-z0-9_-]+=/.test(pair)) {
+      fail(`--workflow-input must be key=value: ${pair}`);
+    }
+  }
   return args;
 }
 
@@ -298,7 +311,16 @@ export function resolveDispatchRef(workflowRef, payloadRef) {
   return workflowRef || payloadRef || 'develop';
 }
 
-function dispatchWorkflow(repo, payload, workflowRef = '') {
+export function mergeWorkflowInputs(inputs, extraInputs) {
+  const merged = { ...inputs };
+  for (const pair of extraInputs) {
+    const separator = pair.indexOf('=');
+    merged[pair.slice(0, separator)] = pair.slice(separator + 1);
+  }
+  return merged;
+}
+
+function dispatchWorkflow(repo, payload, workflowRef = '', extraInputs = []) {
   const workflow = payload.workflow;
   const ref = resolveDispatchRef(workflowRef, workflow.ref);
   const args = [
@@ -310,7 +332,8 @@ function dispatchWorkflow(repo, payload, workflowRef = '') {
     '--ref',
     ref,
   ];
-  for (const [key, value] of Object.entries(workflow.inputs)) {
+  const inputs = mergeWorkflowInputs(workflow.inputs, extraInputs);
+  for (const [key, value] of Object.entries(inputs)) {
     args.push('-f', `${key}=${value}`);
   }
   run('gh', args);
@@ -506,16 +529,26 @@ async function runPlatform(platform, args, rootDir, appDir, repo) {
 
   let trigger;
   if (args.trigger === 'dispatch') {
-    trigger = dispatchWorkflow(repo, payload, args.workflowRef);
+    trigger = dispatchWorkflow(
+      repo,
+      payload,
+      args.workflowRef,
+      args.workflowInputs,
+    );
   } else if (args.trigger === 'push') {
     const branch = `test/sign-only-${platform}-${Date.now().toString(36)}`;
     trigger = bakeWorkflow(payload, branch, rootDir);
   } else if (args.workflowRef) {
     // An explicit ref always means `workflow_dispatch`: that branch carries
     // its own workflow copy, so there is nothing to bake into a push branch.
-    trigger = dispatchWorkflow(repo, payload, args.workflowRef);
+    trigger = dispatchWorkflow(
+      repo,
+      payload,
+      args.workflowRef,
+      args.workflowInputs,
+    );
   } else if (hasDispatchableWorkflow(rootDir)) {
-    trigger = dispatchWorkflow(repo, payload);
+    trigger = dispatchWorkflow(repo, payload, '', args.workflowInputs);
   } else {
     const branch = `test/sign-only-${platform}-${Date.now().toString(36)}`;
     trigger = bakeWorkflow(payload, branch, rootDir);

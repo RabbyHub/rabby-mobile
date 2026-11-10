@@ -105,6 +105,22 @@ node apps/mobile/scripts/sign-only/one-shot.mjs --platform ios \
 `--workflow-ref` always uses `workflow_dispatch`, skips the temporary
 push-trigger branch, and keeps `--wait` polling on that branch.
 
+Pass any extra workflow input with a repeated `--workflow-input key=value`.
+For example, the Android job defaults to the Linux `mobile` runner; to re-sign
+the APK on the macOS `mobile-local` machine instead:
+
+```bash
+node apps/mobile/scripts/sign-only/one-shot.mjs --platform android \
+  --workflow-ref tmp/20261112 \
+  --workflow-input android_machine_location=mobile-local
+```
+
+`IOS` runs already default to `mobile-local` through `macos_machine_location`;
+the Android job keeps its Linux default unless `android_machine_location` is
+set to `mobile-local`. The macOS runner needs JDK 17 plus Android SDK
+`build-tools` (the workflow installs both), and uses `shasum` because macOS has
+no GNU `sha256sum`.
+
 Requirements: `OPFE_SIGN_ONLY_TOKEN` (or `~/.config/opfe/sign-only-token`) and
 an authenticated `gh` (`gh auth login`).
 
