@@ -11,15 +11,13 @@
  * `workflow_dispatch` only works once sign_only_package.yml is on the default
  * branch. Until then this script bakes the inputs into a temporary branch and
  * uses the workflow's push trigger, then deletes the branch.
- *
- * `--signing-machine mobile|mobile-local` selects the self-hosted macOS runner
- * used for the iOS signing job (default: mobile; mobile-local needs the runner's keychain password).
  */
 
 import { execFileSync, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 
 const WORKFLOW_PATH = '.github/workflows/sign_only_package.yml';
 const TOKEN_FILE = path.join(
@@ -38,6 +36,42 @@ function fail(message) {
   throw new Error(message);
 }
 
+function redactUrl(value) {
+  try {
+    const url = new URL(value);
+    if (url.username || url.password) {
+      return `${url.protocol}//<redacted>@${url.host}`;
+    }
+  } catch {
+    // Not a URL; leave the value untouched.
+  }
+  return value;
+}
+
+/**
+ * Render command arguments for error messages without leaking credentials.
+ * `--token` values are replaced and `--proxy` URLs lose any userinfo. Prefer
+ * passing secrets to child processes through the environment instead.
+ */
+export function redactArgs(args) {
+  const redacted = [];
+  for (let i = 0; i < args.length; i += 1) {
+    const arg = args[i];
+    if (arg === '--token' && i + 1 < args.length) {
+      redacted.push(arg, '<redacted>');
+      i += 1;
+      continue;
+    }
+    if (arg === '--proxy' && i + 1 < args.length) {
+      redacted.push(arg, redactUrl(args[i + 1]));
+      i += 1;
+      continue;
+    }
+    redacted.push(arg);
+  }
+  return redacted;
+}
+
 function run(command, args, options = {}) {
   const result = spawnSync(command, args, {
     stdio: options.capture ? ['ignore', 'pipe', 'inherit'] : 'inherit',
@@ -49,7 +83,9 @@ function run(command, args, options = {}) {
     fail(`${command} failed to start: ${result.error.message}`);
   }
   if (result.status !== 0) {
-    fail(`${command} ${args.join(' ')} exited with ${result.status}`);
+    fail(
+      `${command} ${redactArgs(args).join(' ')} exited with ${result.status}`,
+    );
   }
   return result;
 }
@@ -69,7 +105,6 @@ function parseArgs(argv) {
     wait: true,
     force: false,
     trigger: 'auto',
-    sourceClean: false,
     token: '',
     serviceUrl: '',
     json: false,
@@ -96,9 +131,6 @@ function parseArgs(argv) {
       case '--force':
         args.force = true;
         break;
-      case '--source-clean':
-        args.sourceClean = true;
-        break;
       case '--trigger':
         args.trigger = argv[++i] || '';
         break;
@@ -114,9 +146,6 @@ function parseArgs(argv) {
       case '--proxy':
         args.proxy = argv[++i] || '';
         break;
-      case '--signing-machine':
-        args.signingMachine = argv[++i] || '';
-        break;
       default:
         fail(`Unknown argument: ${arg}`);
     }
@@ -127,13 +156,6 @@ function parseArgs(argv) {
   }
   if (!['auto', 'dispatch', 'push'].includes(args.trigger)) {
     fail('--trigger must be auto, dispatch or push');
-  }
-  args.signingMachine =
-    args.signingMachine ||
-    process.env.OPFE_SIGN_ONLY_SIGNING_MACHINE ||
-    'mobile';
-  if (!['mobile', 'mobile-local'].includes(args.signingMachine)) {
-    fail('--signing-machine must be mobile or mobile-local');
   }
   args.serviceUrl =
     args.serviceUrl ||
@@ -212,16 +234,20 @@ function publish(platform, artifact, args, rootDir, appDir) {
   ];
   if (args.notifyLark) publishArgs.push('--notify-lark');
   if (args.force) publishArgs.push('--force');
-  if (args.sourceClean) publishArgs.push('--source-clean');
-  if (args.token) publishArgs.push('--token', args.token);
-  if (args.serviceUrl) publishArgs.push('--service-url', args.serviceUrl);
-  if (args.proxy) publishArgs.push('--proxy', args.proxy);
-  if (args.signingMachine)
-    publishArgs.push('--signing-machine', args.signingMachine);
+
+  // Hand credentials to the child through the environment so a failed upload
+  // can never echo them back through the command line in an error message.
+  const publishEnv = { ...process.env };
+  if (args.token) publishEnv.OPFE_SIGN_ONLY_TOKEN = args.token;
+  if (args.serviceUrl) {
+    publishEnv.OPFE_SIGN_ONLY_SERVICE_URL = args.serviceUrl;
+  }
+  if (args.proxy) publishEnv.OPFE_SIGN_ONLY_PROXY = args.proxy;
 
   const result = run(process.execPath, publishArgs, {
     cwd: rootDir,
     capture: true,
+    env: publishEnv,
   });
   const lines = result.stdout.trim().split('\n').filter(Boolean);
   const payload = JSON.parse(lines[lines.length - 1]);
@@ -285,12 +311,6 @@ function bakeWorkflow(payload, branch, rootDir) {
   text = text.replace('on:\n  workflow_dispatch:', pushBlock);
 
   const inputs = workflow.inputs;
-  text = text.replaceAll(
-    "${{ inputs.macos_machine_location || 'mobile' }}",
-    `\${{ inputs.macos_machine_location || '${
-      inputs.macos_machine_location || 'mobile'
-    }' }}`,
-  );
   for (const [key, value] of Object.entries(inputs)) {
     text = text.replaceAll(
       `\${{ inputs.${key} }}`,
@@ -570,7 +590,12 @@ async function main() {
   }
 }
 
-main().catch(error => {
-  console.error(`[one-shot] ${error.message}`);
-  process.exit(1);
-});
+const isDirectRun =
+  process.argv[1] &&
+  import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href;
+if (isDirectRun) {
+  main().catch(error => {
+    console.error(`[one-shot] ${error.message}`);
+    process.exit(1);
+  });
+}
