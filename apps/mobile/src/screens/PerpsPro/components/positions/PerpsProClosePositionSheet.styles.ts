@@ -1,5 +1,7 @@
 import {
   getPerpsProDialogStyles,
+  PERPS_PRO_DIALOG_FIELD,
+  PERPS_PRO_DIALOG_LABELED_FIELD,
   PERPS_PRO_DIALOG_TOKENS,
   resolvePerpsProDialogCardBackground,
   resolvePerpsProDialogFieldBackground,
@@ -19,8 +21,8 @@ import {
   getPerpsProTintedTagTextStyle,
 } from '../common/perpsProSemanticTagStyles';
 
-// Two 30pt summary rows (Figma 86609:344969) below the order controls.
-export const PERPS_PRO_CLOSE_POSITION_SHEET_HEIGHT = 584;
+// Figma 86609:344522: 46pt order controls, 56pt amount and 30pt summary rows.
+export const PERPS_PRO_CLOSE_POSITION_SHEET_HEIGHT = 606;
 
 export const getPerpsProClosePositionSheetStyles = createGetStyles2024(
   ({ colors2024, isLight, safeAreaInsets }) => ({
@@ -72,7 +74,8 @@ export const getPerpsProClosePositionSheetStyles = createGetStyles2024(
     form: {
       gap: 0,
       marginTop: 8,
-      padding: 16,
+      paddingHorizontal: 12,
+      paddingVertical: 16,
       borderRadius: 12,
       backgroundColor: resolvePerpsProDialogCardBackground(colors2024, isLight),
     },
@@ -84,7 +87,7 @@ export const getPerpsProClosePositionSheetStyles = createGetStyles2024(
       ),
       borderRadius: 6,
       flex: 1,
-      height: 40,
+      height: PERPS_PRO_DIALOG_FIELD.height,
       justifyContent: 'center',
       minWidth: 0,
       overflow: 'hidden',
@@ -107,20 +110,20 @@ export const getPerpsProClosePositionSheetStyles = createGetStyles2024(
       left: 12,
       lineHeight: 12,
       position: 'absolute',
-      top: 4,
+      top: PERPS_PRO_DIALOG_FIELD.labelTop,
       zIndex: 1,
     },
+    amountLabel: { top: PERPS_PRO_DIALOG_LABELED_FIELD.labelTop },
     priceInput: {
       color: colors2024['neutral-title-1'],
       fontFamily: 'SF Pro Rounded',
       fontSize: 14,
       fontWeight: '500',
-      height: 40,
+      height: PERPS_PRO_DIALOG_FIELD.height,
       lineHeight: 18,
-      paddingBottom: 0,
       paddingLeft: 12,
       paddingRight: 56,
-      paddingTop: 12,
+      ...PERPS_PRO_DIALOG_FIELD.inputPadding,
       ...PERPS_PRO_ANDROID_SINGLE_LINE_INPUT_STYLE,
     },
     priceUnit: {
@@ -140,7 +143,7 @@ export const getPerpsProClosePositionSheetStyles = createGetStyles2024(
       ),
       borderRadius: 6,
       flexDirection: 'row',
-      height: 40,
+      height: PERPS_PRO_DIALOG_FIELD.height,
       justifyContent: 'center',
       width: 100,
     },
@@ -160,7 +163,7 @@ export const getPerpsProClosePositionSheetStyles = createGetStyles2024(
         isLight,
       ),
       borderRadius: 6,
-      height: 40,
+      height: PERPS_PRO_DIALOG_LABELED_FIELD.height,
       justifyContent: 'center',
       overflow: 'hidden',
       position: 'relative',
@@ -170,13 +173,12 @@ export const getPerpsProClosePositionSheetStyles = createGetStyles2024(
       fontFamily: 'SF Pro Rounded',
       fontSize: 14,
       fontWeight: '500',
-      height: 40,
+      height: PERPS_PRO_DIALOG_LABELED_FIELD.height,
       includeFontPadding: false,
       lineHeight: 18,
-      paddingBottom: 0,
       paddingLeft: 12,
       paddingRight: 72,
-      paddingTop: 12,
+      ...PERPS_PRO_DIALOG_LABELED_FIELD.inputPadding,
       textAlignVertical: 'center',
       ...PERPS_PRO_ANDROID_SINGLE_LINE_INPUT_STYLE,
     },
@@ -189,6 +191,8 @@ export const getPerpsProClosePositionSheetStyles = createGetStyles2024(
       position: 'absolute',
       right: 12,
     },
+    // Keeps the 329pt order-dialog rail of Figma 86609:344570.
+    slider: { paddingHorizontal: 4 },
     summary: {
       marginTop: 8,
     },

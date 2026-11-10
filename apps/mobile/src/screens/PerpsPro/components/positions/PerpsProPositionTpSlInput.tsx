@@ -10,7 +10,10 @@ import {
   sanitizePerpsProPriceEditingInput,
   sanitizePerpsProPriceInput,
 } from '../../model/trade';
-import { resolvePerpsProDialogFieldBackground } from '../common/perpsProDialogVisual';
+import {
+  PERPS_PRO_DIALOG_FIELD,
+  resolvePerpsProDialogFieldBackground,
+} from '../common/perpsProDialogVisual';
 import RcSelectCaret from '@/assets2024/icons/perps/PerpsProTpSlSelectCaret.svg';
 import { PerpsProDecimalTextInput } from '../trade/PerpsProDecimalTextInput';
 import { PerpsProPositionTpSlBottomSheetTextInput } from './PerpsProPositionTpSlBottomSheetTextInput';
@@ -196,7 +199,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     flex: 1,
     flexDirection: 'row',
     gap: 4,
-    height: 40,
+    height: PERPS_PRO_DIALOG_FIELD.height,
     minWidth: 0,
     // Include the 1px validation border in the Figma 12px inset.
     paddingHorizontal: 11,
@@ -205,7 +208,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   invalidField: { borderColor: colors2024['red-default'] },
   inputArea: {
     flex: 1,
-    height: 40,
+    height: PERPS_PRO_DIALOG_FIELD.height,
     minWidth: 0,
     position: 'relative',
   },
@@ -218,7 +221,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     lineHeight: 12,
     position: 'absolute',
     right: 0,
-    top: 4,
+    top: PERPS_PRO_DIALOG_FIELD.labelTop,
   },
   centeredPlaceholder: {
     color: colors2024['neutral-secondary'],
@@ -229,7 +232,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     lineHeight: 18,
     position: 'absolute',
     right: 0,
-    top: 11,
+    // A lone 18pt line centered in the 46pt field (Figma 86609:305215).
+    top: (PERPS_PRO_DIALOG_FIELD.height - 18) / 2,
   },
   formattedValue: {
     ...PERPS_PRO_NUMBER_STYLE,
@@ -241,7 +245,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     lineHeight: 18,
     position: 'absolute',
     right: 0,
-    top: 18,
+    top: PERPS_PRO_DIALOG_FIELD.valueTop,
   },
   input: {
     ...PERPS_PRO_NUMBER_STYLE,
@@ -249,12 +253,11 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     fontWeight: '500',
-    height: 40,
+    height: PERPS_PRO_DIALOG_FIELD.height,
     includeFontPadding: false,
     lineHeight: 18,
-    paddingBottom: 0,
     paddingHorizontal: 0,
-    paddingTop: 12,
+    ...PERPS_PRO_DIALOG_FIELD.inputPadding,
     textAlignVertical: 'center',
   },
   // Android Fabric treats transparent black (ARGB 0) as an unset text color.
@@ -269,13 +272,13 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     left: 0,
     lineHeight: 18,
     position: 'absolute',
-    top: 18,
+    top: PERPS_PRO_DIALOG_FIELD.valueTop,
   },
   mode: {
     alignItems: 'center',
     flexDirection: 'row',
     gap: 4,
-    height: 40,
+    height: PERPS_PRO_DIALOG_FIELD.height,
     justifyContent: 'flex-end',
   },
   unit: {

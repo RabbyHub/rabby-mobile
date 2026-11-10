@@ -159,6 +159,32 @@ export const resolvePerpsProDialogFieldBackground = (
   isLight: boolean | undefined,
 ) => colors[isLight === false ? 'neutral-bg-5' : 'neutral-bg-0'];
 
+// A floating label (10/12) sits 2pt above the 14/18 value; the stack is
+// vertically centered in the field.
+const DIALOG_FIELD_LABEL_STACK_HEIGHT = 32;
+const DIALOG_FIELD_VALUE_LINE_HEIGHT = 18;
+const getDialogFieldLayout = (height: number) => {
+  const labelTop = (height - DIALOG_FIELD_LABEL_STACK_HEIGHT) / 2;
+  const valueTop = labelTop + 14;
+  return {
+    height,
+    labelTop,
+    valueTop,
+    // Paddings that place a single-line TextInput's value at valueTop.
+    inputPadding: {
+      paddingBottom: height - valueTop - DIALOG_FIELD_VALUE_LINE_HEIGHT,
+      paddingTop: valueTop,
+    },
+  } as const;
+};
+
+/** Dialog input fields: 46pt single-line or compact-label fields
+ * (Figma 86609:344544, 86609:347557) and 56pt labeled fields
+ * (Figma 86609:343152).
+ */
+export const PERPS_PRO_DIALOG_FIELD = getDialogFieldLayout(46);
+export const PERPS_PRO_DIALOG_LABELED_FIELD = getDialogFieldLayout(56);
+
 export const getPerpsProDialogCheckboxStyles = (
   colors: AppColors2024Variants,
 ) =>

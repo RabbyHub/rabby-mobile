@@ -521,7 +521,7 @@ export const PerpsProClosePositionSheet: React.FC<{
 
                 <View style={styles.amountGroup}>
                   <View style={styles.amountField}>
-                    <Text style={styles.floatingLabel}>
+                    <Text style={[styles.floatingLabel, styles.amountLabel]}>
                       {t('page.perps.pro.positions.amount')}
                     </Text>
                     <BottomSheetTextInput
@@ -566,25 +566,27 @@ export const PerpsProClosePositionSheet: React.FC<{
                       {displayUnit}
                     </Text>
                   </View>
-                  <PerpsProSlider
-                    appearance="order-dialog"
-                    maximumValue={100}
-                    minimumValue={0}
-                    onSlidingComplete={sliderHaptics.onSlidingComplete}
-                    onSlidingStart={sliderHaptics.onSlidingStart}
-                    onValueChange={value => {
-                      const roundedValue = Math.round(value);
-                      sliderHaptics.onValueChange(roundedValue);
-                      inputSourceRef.current = 'slider';
-                      discardNextSliderBackspaceChangeRef.current = false;
-                      setInputSource('slider');
-                      setPercent(roundedValue);
-                    }}
-                    pointCount={5}
-                    step={1}
-                    tone="neutral"
-                    value={sliderValue}
-                  />
+                  <View style={styles.slider}>
+                    <PerpsProSlider
+                      appearance="order-dialog"
+                      maximumValue={100}
+                      minimumValue={0}
+                      onSlidingComplete={sliderHaptics.onSlidingComplete}
+                      onSlidingStart={sliderHaptics.onSlidingStart}
+                      onValueChange={value => {
+                        const roundedValue = Math.round(value);
+                        sliderHaptics.onValueChange(roundedValue);
+                        inputSourceRef.current = 'slider';
+                        discardNextSliderBackspaceChangeRef.current = false;
+                        setInputSource('slider');
+                        setPercent(roundedValue);
+                      }}
+                      pointCount={5}
+                      step={1}
+                      tone="neutral"
+                      value={sliderValue}
+                    />
+                  </View>
                 </View>
 
                 <View
