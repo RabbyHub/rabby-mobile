@@ -39,6 +39,10 @@ import {
   resolveRootSceneRelease,
   validateRootSceneKeys,
 } from './rootScenePagerModel';
+import type {
+  RootScenePagerProbe,
+  RootScenePagerProbeEvent,
+} from './rootScenePagerProbe';
 
 export type RootScenePageContext = {
   /** Remains the source page until settlement, including during previews. */
@@ -67,6 +71,8 @@ export type RootSceneOverlayContext = {
 };
 
 export type RootScenePagerProps = {
+  /** Optional observer only; absent in ordinary/public app composition. */
+  probe?: RootScenePagerProbe;
   keys: readonly string[];
   /** A changed value is a command. Echoing onSettled does not animate again. */
   requestedKey: string;
@@ -214,13 +220,23 @@ export function RootScenePager(props: RootScenePagerProps) {
 
   const publish = useCallback(
     (epoch: number, command: number, next: Presentation, settled: boolean) => {
+      const observe = (event: RootScenePagerProbeEvent['event']) => {
+        try {
+          latest.current.probe?.onJS({ event, epoch, command, settled });
+        } catch {
+          // Diagnostics cannot block navigation.
+        }
+      };
+      observe('publish-received');
       if (
         !mounted.current ||
         command !== requestId.current ||
         epoch < lastPublishedEpoch.current
       ) {
+        observe('publish-rejected');
         return;
       }
+      observe('publish-accepted');
       lastPublishedEpoch.current = epoch;
       setPresentation(current =>
         current.key === next.key &&
@@ -242,6 +258,31 @@ export function RootScenePager(props: RootScenePagerProps) {
   );
 
   const transport = useMemo(() => {
+    const observer = props.probe;
+    const observe = (
+      event: RootScenePagerProbeEvent['event'],
+      origin: RootScenePagerProbeEvent['origin'],
+      fromEpoch?: number,
+    ) => {
+      'worklet';
+      if (!observer) {
+        return;
+      }
+      try {
+        observer.onUI({
+          event,
+          origin,
+          fromEpoch,
+          epoch: motion.value.epoch,
+          command: uiRequestId.value,
+          selected: motion.value.selected,
+          target: motion.value.target,
+          position: position.value,
+        });
+      } catch {
+        // Never change transport state on observer failure.
+      }
+    };
     const publishMoving = (target: number) => {
       'worklet';
       const range = getRootSceneVisibleRange(
@@ -265,7 +306,10 @@ export function RootScenePager(props: RootScenePagerProps) {
         false,
       );
     };
-    const complete = (epoch: number) => {
+    const complete = (
+      epoch: number,
+      origin: RootScenePagerProbeEvent['origin'],
+    ) => {
       'worklet';
       if (!uiMounted.value) {
         return;
@@ -278,6 +322,7 @@ export function RootScenePager(props: RootScenePagerProps) {
       motion.value = next;
       position.value = next.selected;
       visibleRange.value = '';
+      observe('ui-complete', origin);
       runOnJS(publish)(
         epoch,
         uiRequestId.value,
@@ -289,7 +334,9 @@ export function RootScenePager(props: RootScenePagerProps) {
         true,
       );
     };
-    const animate = () => {
+    const animate = (
+      origin: RootScenePagerProbeEvent['origin'] = 'gesture',
+    ) => {
       'worklet';
       if (
         !uiMounted.value ||
@@ -299,35 +346,55 @@ export function RootScenePager(props: RootScenePagerProps) {
         return;
       }
       const { target, epoch } = motion.value;
+      const animationCommand = uiRequestId.value;
       cancelAnimation(position);
+      observe('snap-start', origin);
       if (Math.abs(position.value - target) < 0.0001) {
-        complete(epoch);
+        complete(epoch, origin);
       } else {
         publishMoving(target);
         position.value = withTiming(target, { duration: 220 }, finished => {
           'worklet';
           if (finished) {
-            complete(epoch);
+            complete(epoch, origin);
+          } else if (observer) {
+            try {
+              observer.onUI({
+                event: 'snap-cancelled',
+                origin,
+                epoch,
+                command: animationCommand,
+              });
+            } catch {
+              // Cancelling an animation must remain independent of diagnostics.
+            }
           }
         });
       }
     };
-    const command = (index: number, id: number) => {
+    const command = (
+      index: number,
+      id: number,
+      origin: 'ui-command' | 'js-command' = 'js-command',
+    ) => {
       'worklet';
       if (!uiMounted.value) {
         return;
       }
       uiRequestId.value = id;
+      const fromEpoch = motion.value.epoch;
       // A same-endpoint command still acknowledges the current request id: the
       // preceding completion may be queued on JS and rejected by its old id.
       if (motion.value.phase === 'idle' && motion.value.selected === index) {
         motion.value = requestRootSceneTarget(motion.value, index);
-        complete(motion.value.epoch);
+        observe('command', origin, fromEpoch);
+        complete(motion.value.epoch, origin);
         return;
       }
       motion.value = requestRootSceneTarget(motion.value, index);
+      observe('command', origin, fromEpoch);
       if (motion.value.phase === 'snap') {
-        animate();
+        animate(origin);
       }
     };
     const down = () => {
@@ -361,6 +428,7 @@ export function RootScenePager(props: RootScenePagerProps) {
         return;
       }
       motion.value = { ...motion.value, phase: 'drag' };
+      observe('drag-start', 'gesture');
       update(translationX);
     };
     const end = (translationX: number, velocityX: number) => {
@@ -379,7 +447,9 @@ export function RootScenePager(props: RootScenePagerProps) {
         velocityX,
         keys.length,
       );
+      const fromEpoch = motion.value.epoch;
       motion.value = finishRootSceneTouch(motion.value, target);
+      observe('release', 'gesture', fromEpoch);
       touchEpoch.value = -1;
       animate();
     };
@@ -389,6 +459,7 @@ export function RootScenePager(props: RootScenePagerProps) {
         return;
       }
       const state = motion.value;
+      observe('finalize', 'finalize');
       if (
         state.phase === 'touch' &&
         state.queued === null &&
@@ -404,9 +475,9 @@ export function RootScenePager(props: RootScenePagerProps) {
       // Includes DOWN-only taps/vertical failures and cancelled ACTIVE gestures.
       motion.value = finishRootSceneTouch(motion.value, motion.value.target);
       touchEpoch.value = -1;
-      animate();
+      animate('finalize');
     };
-    return { animate, command, down, start, update, end, finalize };
+    return { animate, command, down, start, update, end, finalize, observe };
   }, [
     keys,
     motion,
@@ -417,6 +488,7 @@ export function RootScenePager(props: RootScenePagerProps) {
     uiRequestId,
     visibleRange,
     widthValue,
+    props.probe,
   ]);
 
   const ui = useMemo<RootScenePagerUI>(
@@ -439,7 +511,7 @@ export function RootScenePager(props: RootScenePagerProps) {
         // Keep the JS request fence while command() advances the motion epoch,
         // so interrupted snaps cannot commit and onSettled still echoes once.
         // In particular, never mirror position through requestedKey/React.
-        transport.command(index, uiRequestId.value);
+        transport.command(index, uiRequestId.value, 'ui-command');
       },
     }),
     [
@@ -490,7 +562,7 @@ export function RootScenePager(props: RootScenePagerProps) {
     if (previous.width === width && previous.keys === keys) {
       return;
     }
-    const { animate } = transport;
+    const { animate, observe } = transport;
     runOnUI(() => {
       'worklet';
       const state = motion.value;
@@ -517,7 +589,8 @@ export function RootScenePager(props: RootScenePagerProps) {
       position.value = nextSelected;
       widthValue.value = width;
       visibleRange.value = '';
-      animate();
+      observe('geometry', 'geometry', state.epoch);
+      animate('geometry');
     })();
   }, [
     keys,

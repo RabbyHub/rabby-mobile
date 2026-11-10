@@ -3,25 +3,20 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  RefreshControl,
-  ScrollView,
-  TouchableOpacity,
-  View,
-  type LayoutChangeEvent,
-} from 'react-native';
+import { RefreshControl, View, type LayoutChangeEvent } from 'react-native';
 import { useIsFocused } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '@/components2024/Button';
 import { PerpsAccountCard } from './components/PerpsAccountCard';
-import { useRabbyAppNavigation } from '@/hooks/navigation';
-import { usePerpsState } from '@/hooks/perps/usePerpsState';
-import RcIconBackTopCC from '@/assets2024/icons/perps/IconBackTopCC.svg';
-import { usePerpsPopupState } from './hooks/usePerpsPopupState';
+import { usePerpsSimpleState } from '@/hooks/perps/usePerpsState';
+import { useSetPerpsPopupState } from './hooks/usePerpsPopupState';
 import { useMemoizedFn, useRequest } from 'ahooks';
 import type { Account } from '@/core/startupServices/preference';
 import { usePerpsDeposit } from './hooks/usePerpsDeposit';
-import { PerpsMarketHomeList } from './components/PerpsMarketSection/PerpsMarketHomeList';
+import {
+  PerpsMarketHomeList,
+  type PerpsMarketHomeListRef,
+} from './components/PerpsMarketSection/PerpsMarketHomeList';
 import { PerpsPositionSection } from './components/PerpsPositionSection';
 import { PerpsLimitOrdersSection } from './components/PerpsLimitOrdersSection';
 import { PerpsPopupGroup } from './components/PerpsPopupGroup';
@@ -72,10 +67,9 @@ export const PerpsSimpleScreen: React.FC<PerpsSimpleScreenProps> = ({
   const tracedReadyRef = useRef(false);
   const { t } = useTranslation();
 
-  const { styles, isLight, colors2024 } = useTheme2024({ getStyle: getStyles });
+  const { styles, isLight } = useTheme2024({ getStyle: getStyles });
   const { bottom } = useSafeAreaInsets();
 
-  const navigation = useRabbyAppNavigation();
   const isFocused = useIsFocused();
   const active = sceneActive && isFocused;
 
@@ -84,20 +78,16 @@ export const PerpsSimpleScreen: React.FC<PerpsSimpleScreenProps> = ({
     currentPerpsAccount,
     isLogin,
     isInitialized,
-    userFills,
     logout,
     login,
     handleWithdraw,
     handleDeleteAgent,
     hasPermission,
     refreshData,
-    fetchMarketData,
-    perpFee,
 
     handleActionApproveStatus,
     handleSafeSetReference,
-    setInitialized,
-  } = usePerpsState({
+  } = usePerpsSimpleState({
     legacyRuntimeContinuationEnabled: active,
     pauseInactivePublication: true,
   });
@@ -121,10 +111,9 @@ export const PerpsSimpleScreen: React.FC<PerpsSimpleScreenProps> = ({
 
   const { handleCloseAllPositions, handleStableCoinOrder } = usePerpsPosition();
 
-  const [, setPopupState] = usePerpsPopupState();
+  const setPopupState = useSetPerpsPopupState();
 
-  const scrollViewRef = useRef<ScrollView>(null);
-  const [showBackToTop, setShowBackToTop] = useState(false);
+  const scrollViewRef = useRef<PerpsMarketHomeListRef>(null);
   const [selectedCoin, setSelectedCoin] = useState<string | null>(null);
 
   const handleLogin = useMemoizedFn(async (v: Account) => {
@@ -158,17 +147,8 @@ export const PerpsSimpleScreen: React.FC<PerpsSimpleScreenProps> = ({
     refreshData();
   });
 
-  const handleScroll = useMemoizedFn((event: any) => {
-    const scrollY = event.nativeEvent.contentOffset.y;
-    const shouldShow = scrollY > 200;
-    if (shouldShow !== showBackToTop) {
-      setShowBackToTop(shouldShow);
-    }
-  });
-
   const scrollToTop = useMemoizedFn(() => {
-    setShowBackToTop(false);
-    scrollViewRef.current?.scrollTo({ y: 0, animated: true });
+    scrollViewRef.current?.scrollToTop();
   });
 
   const handleHomeItemPress = useMemoizedFn((market: string) => {
@@ -298,41 +278,40 @@ export const PerpsSimpleScreen: React.FC<PerpsSimpleScreenProps> = ({
           <PerpsSkeletonLoader />
         ) : (
           <View style={styles.screenContainer}>
-            <ScrollView
+            <PerpsMarketHomeList
               ref={scrollViewRef}
+              onItemPress={handleHomeItemPress}
               style={styles.container}
               contentContainerStyle={styles.scrollContent}
-              showsVerticalScrollIndicator={false}
-              onScroll={handleScroll}
-              scrollEventThrottle={16}
               refreshControl={
                 <RefreshControl refreshing={false} onRefresh={onRefresh} />
-              }>
-              <PerpsAccountCard sceneActive={sceneActive} />
-              <PerpsPositionSection
-                handleShowRiskPopup={handleShowRiskPopup}
-                handleCloseRiskPopup={handleCloseRiskPopup}
-                positionAndOpenOrders={positionAndOpenOrders}
-                handleActionApproveStatus={handleActionApproveStatus}
-                onCloseAllPositions={async () => {
-                  const clearinghouseState =
-                    perpsStore.getState().currentClearinghouseState;
-                  if (!clearinghouseState) {
-                    return;
-                  }
-                  await handleCloseAllPositions(clearinghouseState);
-                }}
-              />
-              <PerpsLimitOrdersSection
-                isHome={true}
-                sceneActive={active}
-                positionAndOpenOrders={positionAndOpenOrders}
-                handleActionApproveStatus={handleActionApproveStatus}
-              />
-
-              <PerpsMarketHomeList onItemPress={handleHomeItemPress} />
-              <View style={styles.emptyPadding} />
-            </ScrollView>
+              }
+              listHeader={
+                <>
+                  <PerpsAccountCard sceneActive={sceneActive} />
+                  <PerpsPositionSection
+                    handleShowRiskPopup={handleShowRiskPopup}
+                    handleCloseRiskPopup={handleCloseRiskPopup}
+                    positionAndOpenOrders={positionAndOpenOrders}
+                    handleActionApproveStatus={handleActionApproveStatus}
+                    onCloseAllPositions={async () => {
+                      const clearinghouseState =
+                        perpsStore.getState().currentClearinghouseState;
+                      if (!clearinghouseState) {
+                        return;
+                      }
+                      await handleCloseAllPositions(clearinghouseState);
+                    }}
+                  />
+                  <PerpsLimitOrdersSection
+                    isHome={true}
+                    sceneActive={active}
+                    positionAndOpenOrders={positionAndOpenOrders}
+                    handleActionApproveStatus={handleActionApproveStatus}
+                  />
+                </>
+              }
+            />
 
             {hasPermission && isLogin && (
               <View
@@ -430,9 +409,6 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     paddingTop: BOTTOM_BUTTON_TOP_OFFSET,
     paddingHorizontal: 12,
     paddingBottom: 36,
-  },
-  emptyPadding: {
-    height: 40,
   },
   backToTopButton: {
     position: 'absolute',

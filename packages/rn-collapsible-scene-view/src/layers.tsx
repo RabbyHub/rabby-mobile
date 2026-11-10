@@ -62,6 +62,9 @@ NativeLayerView.displayName = 'NativeLayerView';
 /**
  * Collapses with the header: `translateY = -min(scrollY, headerHeight)` and
  * fades out over the same distance.
+ *
+ * A negative offset (iOS rubber-band at the top) moves the layer down with the
+ * content so the whole scene reads as one sheet instead of tearing apart.
  */
 export const CollapsibleHeaderLayer = ({
   nativeScrollY,
@@ -88,7 +91,8 @@ const NativeCollapsibleHeaderLayer = ({
           ? nativeScrollY.interpolate({
               inputRange: [0, headerHeight],
               outputRange: [1, 0],
-              extrapolate: 'clamp',
+              extrapolateLeft: 'clamp',
+              extrapolateRight: 'clamp',
             })
           : 1,
       transform: [
@@ -98,7 +102,9 @@ const NativeCollapsibleHeaderLayer = ({
               ? nativeScrollY.interpolate({
                   inputRange: [0, headerHeight],
                   outputRange: [0, -headerHeight],
-                  extrapolate: 'clamp',
+                  // Overscroll must translate the header down with the list.
+                  extrapolateLeft: 'extend',
+                  extrapolateRight: 'clamp',
                 })
               : 0,
         },
@@ -126,10 +132,12 @@ const WorkletCollapsibleHeaderLayer = ({
 }: LayerProps) => {
   const { headerHeight, scrollY } = useCollapsibleScene();
   const animatedStyle = useAnimatedStyle(() => {
-    const hidden = clamp(scrollY.value, 0, headerHeight);
+    const hidden = Math.min(scrollY.value, headerHeight);
+    const visible = headerHeight > 0 ? 1 - hidden / headerHeight : 1;
     return {
-      opacity: headerHeight > 0 ? 1 - hidden / headerHeight : 1,
-      transform: [{ translateY: hidden > 0 ? -hidden : 0 }],
+      opacity: clamp(visible, 0, 1),
+      // `-0` would fail style equality checks; keep the resting value exact.
+      transform: [{ translateY: hidden === 0 ? 0 : -hidden }],
     };
   }, [headerHeight]);
 
@@ -149,6 +157,9 @@ const WorkletCollapsibleHeaderLayer = ({
  *
  * `pinTop` defaults to 0 (the top edge). A layer that must stack below another
  * pinned layer passes that layer's bottom edge instead.
+ *
+ * Negative offsets (iOS rubber-band) translate below `baseTop` on purpose: the
+ * pinned layer has to travel with the content it covers until the list settles.
  */
 export const CollapsiblePinnedLayer = ({
   nativeScrollY,
@@ -180,7 +191,9 @@ const NativeCollapsiblePinnedLayer = ({
               ? nativeScrollY.interpolate({
                   inputRange: [0, baseTop - pinTop],
                   outputRange: [baseTop, pinTop],
-                  extrapolate: 'clamp',
+                  // Follow the rubber-band downwards; clamp once pinned.
+                  extrapolateLeft: 'extend',
+                  extrapolateRight: 'clamp',
                 })
               : pinTop,
         },
@@ -213,7 +226,7 @@ const WorkletCollapsiblePinnedLayer = ({
     () => ({
       transform: [
         {
-          translateY: Math.max(pinTop, baseTop - Math.max(scrollY.value, 0)),
+          translateY: Math.max(pinTop, baseTop - scrollY.value),
         },
       ],
     }),

@@ -68,20 +68,22 @@ const renderLayers = ({
 describe('scene native vertical presentation clock', () => {
   beforeEach(() => jest.clearAllMocks());
 
-  it('matches the clamp and pin formulas without sending the native value into worklets', () => {
+  it('matches the collapse/pin formulas and follows the rubber-band without sending the native value into worklets', () => {
     const nativeScrollY = new NativeAnimated.Value(0);
     render(renderLayers({ nativeScrollY }));
     expect(useAnimatedStyle).not.toHaveBeenCalled();
 
     for (const y of [-60, 0, 40, 80, 200, 350, 500]) {
       act(() => nativeScrollY.setValue(y));
-      const hidden = Math.min(Math.max(y, 0), 80);
+      // A negative offset is the iOS rubber-band: the whole scene travels
+      // down with the list instead of the chrome staying pinned.
+      const hidden = Math.min(y, 80);
       expect(screen.getByTestId('header')).toHaveStyle({
-        opacity: 1 - hidden / 80,
+        opacity: Math.min(1, Math.max(0, 1 - hidden / 80)),
         transform: [{ translateY: hidden === 0 ? 0 : -hidden }],
       });
       expect(screen.getByTestId('tabs')).toHaveStyle({
-        transform: [{ translateY: Math.max(50, 400 - Math.max(y, 0)) }],
+        transform: [{ translateY: Math.max(50, 400 - y) }],
       });
     }
   });

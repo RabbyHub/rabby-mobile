@@ -61,6 +61,11 @@ jest.mock('react-native-reanimated', () => ({
   measure: jest.fn(),
 }));
 jest.mock('react-native-animateable-text', () => require('react-native').Text);
+// This screen contract keeps the real Root pager but excludes opt-in diagnostics
+// and their native/file-logging dependencies, which have dedicated probe tests.
+jest.mock('@/devtools/pullRefreshProbe/usePerpsRootProbe', () =>
+  require('@/devtools/pullRefreshProbe/usePerpsRootProbe.prod'),
+);
 jest.mock('@/hooks/useRootPagerEnabled', () => ({
   useRootPagerEnabled: (focused: boolean) => focused,
 }));

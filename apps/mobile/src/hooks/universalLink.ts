@@ -100,6 +100,7 @@ type OnParseUrlAndProcessAction = (payload: {
     | 'debug-db-sync-policy'
     | 'debug-lending'
     | 'debug-open-target'
+    | 'debug-perps-account'
     | 'regression-scenario';
   target?: RabbyGoTarget;
   dappUrl?: string;
@@ -130,6 +131,11 @@ type OnParseUrlAndProcessAction = (payload: {
     market?: string;
   };
   debugOpenTarget?: RabbyGoTarget;
+  debugPerpsAccount?: {
+    action: 'state' | 'select';
+    address?: string;
+    open?: boolean;
+  };
   regressionScenarioCommand?: RegressionScenarioCommand | null;
   regressionScenarioError?: string;
 }) => void;
@@ -413,6 +419,32 @@ function parseNonProductionMaintenanceLink(appLink: string) {
     return {
       type: 'debug-open-target',
       debugOpenTarget: rawTarget,
+    } satisfies Parameters<OnParseUrlAndProcessAction>[0];
+  }
+
+  if (
+    rabbyGoCmd === 'debug-perps-account' ||
+    target === 'debug-perps-account'
+  ) {
+    const action = urlInfo.searchParams.get('action') || 'state';
+    if (!['state', 'select'].includes(action)) {
+      console.warn(
+        '[useUniversalLinkOnTop] Unknown Perps debug action:',
+        action,
+      );
+      return null;
+    }
+    const openRaw = urlInfo.searchParams.get('open');
+    return {
+      type: 'debug-perps-account',
+      debugPerpsAccount: {
+        action: action as 'state' | 'select',
+        address: urlInfo.searchParams.get('address') || undefined,
+        open:
+          openRaw === null
+            ? undefined
+            : ['1', 'true', 'yes', 'on'].includes(openRaw.toLowerCase()),
+      },
     } satisfies Parameters<OnParseUrlAndProcessAction>[0];
   }
 
@@ -828,6 +860,31 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
         }
         void openRabbyGoTarget(payload.debugOpenTarget!);
       }, `debug-open-${payload.debugOpenTarget}`);
+      break;
+    case 'debug-perps-account':
+      if (!isNonPublicProductionEnv || !payload.debugPerpsAccount) {
+        return;
+      }
+      void import('@/devtools/perpsDebugDeepLink')
+        .then(module =>
+          module.runNonProductionPerpsDebugCommand(payload.debugPerpsAccount!, {
+            openPerps: () => {
+              dispatchWhenNavigationReady(
+                StackActions.push(RootNames.StackTransaction, {
+                  screen: RootNames.Perps,
+                  params: { dappId: 'hyperliquid' },
+                }),
+                RootNames.Perps,
+              );
+            },
+          }),
+        )
+        .catch(error => {
+          console.error('[useUniversalLinkOnTop] Perps debug command failed', {
+            command: payload.debugPerpsAccount,
+            error,
+          });
+        });
       break;
     case 'regression-scenario':
       handleRegressionScenarioCommand(

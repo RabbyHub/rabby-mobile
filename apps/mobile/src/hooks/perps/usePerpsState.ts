@@ -18,7 +18,7 @@ import { useMemoizedFn } from 'ahooks';
 import { useCallback, useMemo, useRef } from 'react';
 import { apisPerps } from './../../core/apis/perps';
 import { miniSignTypedData } from '../useMiniSignTypedData';
-import type { PositionAndOpenOrder } from './usePerpsStore';
+import type { PerpsState } from './usePerpsStore';
 import {
   AccountSummary,
   apisPerpsStore,
@@ -33,13 +33,13 @@ import * as Sentry from '@sentry/react-native';
 import { minBy, uniqBy } from 'lodash';
 import { showToast } from './showToast';
 import { isPerpsBuilderFeeApproved } from './perpsBuilderFee';
-import { usePerpsPopupState } from '@/screens/Perps/hooks/usePerpsPopupState';
+import { useSetPerpsPopupState } from '@/screens/Perps/hooks/usePerpsPopupState';
 import { useTranslation } from 'react-i18next';
 import { sleep } from '@/utils/async';
 import { useShallow } from 'zustand/react/shallow';
+import { shallow } from 'zustand/shallow';
 import { useStoreWithEqualityFn } from 'zustand/traditional';
 import { useStoreActivityScope } from '@/hooks/storeActivity/StoreActivityProvider';
-import { usePerpsAccount } from './usePerpsAccount';
 import { ensureWalletUnlockedForAction } from '@/utils/walletUnlock';
 import { isUserCancelledSignature } from './perpsActionError';
 import { useIsFocused } from '@react-navigation/native';
@@ -49,6 +49,11 @@ import { isSamePerpsFundingAccount } from './funding/accountGuard';
 import { ensurePerpsActionApproval } from './actions/perpsActionApproval';
 import { setPerpsAgentUnifiedAccount } from './actions/setAgentUnifiedAccount';
 import { executeEnablePerpsUnifiedAccount } from './actions/enableUnifiedAccount';
+import {
+  createPerpsLegacyDisplaySelector,
+  createPerpsSimpleDisplaySelector,
+  type PerpsSimpleDisplayState,
+} from './perpsDisplaySelectors';
 
 type SignActionType = 'approveAgent' | 'approveBuilderFee';
 
@@ -58,14 +63,17 @@ interface SignAction {
   signature: string;
 }
 
-export const usePerpsState = (
-  options: {
-    legacyRuntimeContinuationEnabled?: boolean;
-    /** Opt-in publication gating for retained pages, not business runtime work. */
-    pauseInactivePublication?: boolean;
-  } = {},
+type PerpsStateOptions = {
+  legacyRuntimeContinuationEnabled?: boolean;
+  /** Opt-in publication gating for retained pages, not business runtime work. */
+  pauseInactivePublication?: boolean;
+};
+
+const usePerpsStateController = <Display extends PerpsSimpleDisplayState>(
+  options: PerpsStateOptions,
+  selectDisplay: (state: PerpsState) => Display,
 ) => {
-  const [popupSate, setPopupState] = usePerpsPopupState();
+  const setPopupState = useSetPerpsPopupState();
   const { t } = useTranslation();
   const isFocused = useIsFocused();
   const activityScope = useStoreActivityScope();
@@ -94,18 +102,8 @@ export const usePerpsState = (
     options.pauseInactivePublication
       ? activityScope.bindStore(perpsStore, 'perps-simple-state')
       : perpsStore,
-    useShallow(s => ({
-      isInitialized: s.isInitialized,
-      isLogin: s.isLogin,
-      hasPermission: s.hasPermission,
-      perpFee: s.perpFee,
-      userFills: s.userFills,
-      userAccountHistory: s.userAccountHistory,
-      localLoadingHistory: s.localLoadingHistory,
-      favoriteMarkets: s.favoriteMarkets,
-      openOrders: s.openOrders,
-      currentClearinghouseState: s.currentClearinghouseState,
-    })),
+    selectDisplay,
+    shallow,
   );
   const {
     currentPerpsAccount,
@@ -791,20 +789,6 @@ export const usePerpsState = (
     },
   );
 
-  const allDexsPositions = useMemo(() => {
-    const res = perpsState.currentClearinghouseState?.assetPositions || [];
-    return res;
-  }, [perpsState.currentClearinghouseState]);
-
-  const positionAndOpenOrders: PositionAndOpenOrder[] = useMemo(() => {
-    return allDexsPositions.map(position => ({
-      ...position,
-      openOrders: perpsState.openOrders.filter(
-        item => item.coin === position.position.coin,
-      ),
-    }));
-  }, [allDexsPositions, perpsState.openOrders]);
-
   const handleEnableUnifiedAccount = useMemoizedFn(async () => {
     const account = currentPerpsAccount;
     if (!account) {
@@ -836,18 +820,10 @@ export const usePerpsState = (
 
   return {
     // State
-    positionAndOpenOrders,
+    display: perpsState,
     currentPerpsAccount,
-    isLogin: perpsState.isLogin,
-    isInitialized: perpsState.isInitialized,
-    userFills: perpsState.userFills,
-    hasPermission: perpsState.hasPermission,
-    perpFee: perpsState.perpFee,
-    userAccountHistory: perpsState.userAccountHistory,
-    localLoadingHistory: perpsState.localLoadingHistory,
     accountNeedApproveAgent,
     accountNeedApproveBuilderFee,
-    favoriteMarkets: perpsState.favoriteMarkets,
     // Actions
     login,
     logout,
@@ -863,4 +839,35 @@ export const usePerpsState = (
     handleSafeSetUnifiedAccount,
     handleEnableUnifiedAccount,
   };
+};
+
+export const usePerpsState = (options: PerpsStateOptions = {}) => {
+  const selectDisplay = useMemo(createPerpsLegacyDisplaySelector, []);
+  const { display, ...controller } = usePerpsStateController(
+    options,
+    selectDisplay,
+  );
+  // Keep the legacy public shape; its raw subscription inputs stay private.
+  return {
+    ...controller,
+    positionAndOpenOrders: display.positionAndOpenOrders,
+    isLogin: display.isLogin,
+    isInitialized: display.isInitialized,
+    userFills: display.userFills,
+    hasPermission: display.hasPermission,
+    perpFee: display.perpFee,
+    userAccountHistory: display.userAccountHistory,
+    localLoadingHistory: display.localLoadingHistory,
+    favoriteMarkets: display.favoriteMarkets,
+  };
+};
+
+/** Simple owns flags/positions; histories, favorites and fees belong to leaves. */
+export const usePerpsSimpleState = (options: PerpsStateOptions = {}) => {
+  const selectDisplay = useMemo(createPerpsSimpleDisplaySelector, []);
+  const { display, ...controller } = usePerpsStateController(
+    options,
+    selectDisplay,
+  );
+  return { ...controller, ...display };
 };

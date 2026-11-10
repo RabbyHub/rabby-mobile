@@ -162,7 +162,8 @@ export const CollapsibleSceneProvider = ({
   );
 
   const saveActiveOffset = useCallback(() => {
-    offsetsRef.current[activeTabRef.current] = scrollY.value;
+    // A rubber-band offset is not a resumable position.
+    offsetsRef.current[activeTabRef.current] = Math.max(0, scrollY.value);
   }, [scrollY]);
 
   const getSavedOffset = useCallback(

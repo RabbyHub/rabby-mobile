@@ -1,9 +1,11 @@
 import { act, fireEvent, render, waitFor } from '@testing-library/react-native';
 import React from 'react';
-import { ScrollView } from 'react-native';
+import { RefreshControl, ScrollView } from 'react-native';
 import type { Account } from '@/core/startupServices/preference';
 import { checkPerpsReference } from '@/utils/perps';
 import { perpsServiceApi } from '@/core/serviceApi/perps';
+import { naviPush } from '@/utils/navigation';
+import { RootNames } from '@/constant/layout';
 import { PERPS_HEADER_HEIGHT } from '../PerpsShared/constants';
 
 import { PerpsSimpleScreen } from './PerpsSimpleScreen';
@@ -15,6 +17,9 @@ let mockIsInitialized = false;
 let mockCurrentAccount: Account | null = null;
 const mockUsePerpsState = jest.fn();
 const mockLimitOrdersSection = jest.fn();
+const mockMarketHomeList = jest.fn();
+const mockScrollToTop = jest.fn();
+const mockRefreshData = jest.fn();
 
 jest.mock('@/constant', () => ({ APP_VERSIONS: { fromNative: 'test' } }));
 
@@ -76,7 +81,7 @@ jest.mock('@/hooks/navigation', () => ({
 }));
 
 jest.mock('@/hooks/perps/usePerpsState', () => ({
-  usePerpsState: (options: unknown) => {
+  usePerpsSimpleState: (options: unknown) => {
     mockUsePerpsState(options);
     return {
       currentPerpsAccount: mockCurrentAccount,
@@ -92,7 +97,7 @@ jest.mock('@/hooks/perps/usePerpsState', () => ({
       logout: jest.fn(),
       perpFee: null,
       positionAndOpenOrders: [],
-      refreshData: jest.fn(),
+      refreshData: mockRefreshData,
       setInitialized: jest.fn(),
       userFills: [],
     };
@@ -120,35 +125,32 @@ jest.mock('@/utils/perps', () => ({
 
 jest.mock('@/utils/navigation', () => ({ naviPush: jest.fn() }));
 
-
 jest.mock('@/core/serviceApi/perps', () => ({
   perpsServiceApi: { setInviteConfig: jest.fn().mockResolvedValue(undefined) },
 }));
 
 jest.mock('ahooks', () => ({
   useMemoizedFn: (fn: unknown) => fn,
-  // The screen runs the invite check through `run`; keep the service live so
-  // the mocked checkPerpsReference is still exercised.
   useRequest: (
-    service?: (...args: any[]) => Promise<unknown>,
-    options?: { onSuccess?: (result: unknown, args: any[]) => void },
+    service: (...args: any[]) => Promise<unknown>,
+    options?: {
+      manual?: boolean;
+      onSuccess?: (data: unknown, params: any[]) => void;
+    },
   ) => {
-    let canceled = false;
-    return {
-      data: false,
-      mutate: jest.fn(),
-      run: async (...args: any[]) => {
-        canceled = false;
-        const result = await service?.(...args);
-        if (!canceled) {
-          options?.onSuccess?.(result, args);
-        }
-        return result;
-      },
-      cancel: () => {
-        canceled = true;
-      },
-    };
+    let cancelled = false;
+    const run = jest.fn(async (...args: any[]) => {
+      cancelled = false;
+      const result = await service(...args);
+      if (!cancelled) {
+        options?.onSuccess?.(result, args);
+      }
+      return result;
+    });
+    const cancel = jest.fn(() => {
+      cancelled = true;
+    });
+    return { data: false, mutate: jest.fn(), run, cancel };
   },
 }));
 
@@ -187,21 +189,63 @@ jest.mock('./components/PerpsPopupGroup', () => {
   };
 });
 
-jest.mock('./components/PerpsAccountCard', () => ({
-  PerpsAccountCard: () => null,
-}));
-jest.mock('./components/PerpsMarketSection/PerpsMarketHomeList', () => ({
-  PerpsMarketHomeList: () => null,
-}));
-jest.mock('./components/PerpsPositionSection', () => ({
-  PerpsPositionSection: () => null,
-}));
-jest.mock('./components/PerpsLimitOrdersSection', () => ({
-  PerpsLimitOrdersSection: (props: unknown) => {
-    mockLimitOrdersSection(props);
-    return null;
-  },
-}));
+jest.mock('./components/PerpsAccountCard', () => {
+  const ReactModule = require('react');
+  const { View } = require('react-native');
+  return {
+    PerpsAccountCard: () =>
+      ReactModule.createElement(View, { testID: 'simple-list-account' }),
+  };
+});
+jest.mock('./components/PerpsMarketSection/PerpsMarketHomeList', () => {
+  const ReactModule = require('react');
+  const { Pressable, View } = require('react-native');
+  // Screen composition contract only; the market suite retains real FlatList.
+  const PerpsMarketHomeList = ReactModule.forwardRef(
+    (
+      props: React.ComponentProps<
+        typeof import('./components/PerpsMarketSection/PerpsMarketHomeList').PerpsMarketHomeList
+      >,
+      ref: React.ForwardedRef<{ scrollToTop: () => void }>,
+    ) => {
+      mockMarketHomeList(props);
+      ReactModule.useImperativeHandle(
+        ref,
+        () => ({ scrollToTop: mockScrollToTop }),
+        [],
+      );
+      return ReactModule.createElement(
+        View,
+        { testID: 'simple-market-list' },
+        props.listHeader,
+        props.refreshControl,
+        ReactModule.createElement(Pressable, {
+          testID: 'simple-market-item',
+          onPress: () => props.onItemPress('ETH'),
+        }),
+      );
+    },
+  );
+  return { PerpsMarketHomeList };
+});
+jest.mock('./components/PerpsPositionSection', () => {
+  const ReactModule = require('react');
+  const { View } = require('react-native');
+  return {
+    PerpsPositionSection: () =>
+      ReactModule.createElement(View, { testID: 'simple-list-positions' }),
+  };
+});
+jest.mock('./components/PerpsLimitOrdersSection', () => {
+  const ReactModule = require('react');
+  const { View } = require('react-native');
+  return {
+    PerpsLimitOrdersSection: (props: unknown) => {
+      mockLimitOrdersSection(props);
+      return ReactModule.createElement(View, { testID: 'simple-list-orders' });
+    },
+  };
+});
 jest.mock('./components/PerpsRegionAlert', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
@@ -216,7 +260,7 @@ jest.mock('./components/PerpsRegionAlert', () => {
 });
 
 jest.mock('./hooks/usePerpsPopupState', () => ({
-  usePerpsPopupState: () => [{}, jest.fn()],
+  useSetPerpsPopupState: () => jest.fn(),
 }));
 jest.mock('./hooks/usePerpsDeposit', () => ({
   usePerpsDeposit: () => ({ handleDeposit: jest.fn() }),
@@ -311,7 +355,7 @@ describe('PerpsSimpleScreen', () => {
     expect(screen.getByTestId('perps-region-alert').props.topSpacing).toBe(8);
   });
 
-  it('retains the native list but does not host shared popups or check invitations in a preview', async () => {
+  it('retains the list host but does not host shared popups or check invitations in a preview', async () => {
     mockIsInitialized = true;
     mockCurrentAccount = {
       address: '0x123',
@@ -319,7 +363,8 @@ describe('PerpsSimpleScreen', () => {
     } as Account;
     const props = { isModeSwitching: false, onSwitchToPro: jest.fn() };
     const screen = render(<PerpsSimpleScreen {...props} sceneActive={false} />);
-    const scrollView = screen.UNSAFE_getByType(ScrollView);
+    const list = screen.getByTestId('simple-market-list');
+    expect(screen.UNSAFE_queryAllByType(ScrollView)).toHaveLength(0);
 
     expect(screen.queryByTestId('simple-popup-group')).toBeNull();
     expect(checkPerpsReference).not.toHaveBeenCalled();
@@ -333,7 +378,7 @@ describe('PerpsSimpleScreen', () => {
 
     screen.rerender(<PerpsSimpleScreen {...props} sceneActive />);
     await waitFor(() => expect(checkPerpsReference).toHaveBeenCalledTimes(1));
-    expect(screen.UNSAFE_getByType(ScrollView)).toBe(scrollView);
+    expect(screen.getByTestId('simple-market-list')).toBe(list);
     expect(screen.getByTestId('simple-popup-group')).toBeOnTheScreen();
     expect(mockLimitOrdersSection).toHaveBeenLastCalledWith(
       expect.objectContaining({ sceneActive: true }),
@@ -344,8 +389,61 @@ describe('PerpsSimpleScreen', () => {
     });
 
     screen.rerender(<PerpsSimpleScreen {...props} sceneActive={false} />);
-    expect(screen.UNSAFE_getByType(ScrollView)).toBe(scrollView);
+    expect(screen.getByTestId('simple-market-list')).toBe(list);
     expect(screen.queryByTestId('simple-popup-group')).toBeNull();
+  });
+
+  it('composes account, positions and orders in the market list header with refresh and scrolling', () => {
+    mockIsInitialized = true;
+    const screen = render(
+      <PerpsSimpleScreen isModeSwitching={false} onSwitchToPro={jest.fn()} />,
+    );
+    expect(screen.UNSAFE_queryAllByType(ScrollView)).toHaveLength(0);
+    expect(
+      screen.getAllByTestId(/^simple-list-/).map(node => node.props.testID),
+    ).toEqual([
+      'simple-list-account',
+      'simple-list-positions',
+      'simple-list-orders',
+    ]);
+    expect(mockMarketHomeList).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        listHeader: expect.anything(),
+        style: {},
+        contentContainerStyle: {},
+      }),
+    );
+    const refresh = screen.UNSAFE_getByType(RefreshControl);
+    expect(refresh.props.refreshing).toBe(false);
+    fireEvent(refresh, 'refresh');
+    expect(mockRefreshData).toHaveBeenCalledTimes(1);
+    expect(mockLimitOrdersSection).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        isHome: true,
+        sceneActive: true,
+      }),
+    );
+  });
+
+  it('scrolls the list to the top before opening the same selected market detail', () => {
+    mockIsInitialized = true;
+    const screen = render(
+      <PerpsSimpleScreen isModeSwitching={false} onSwitchToPro={jest.fn()} />,
+    );
+    fireEvent.press(screen.getByTestId('simple-market-item'));
+    expect(mockScrollToTop).toHaveBeenCalledTimes(1);
+    expect(naviPush).toHaveBeenCalledTimes(1);
+    expect(naviPush).toHaveBeenCalledWith(RootNames.StackTransaction, {
+      screen: RootNames.PerpsMarketDetail,
+      params: {
+        market: 'ETH',
+        fromSource: 'searchPerps',
+        showOpenPosition: true,
+      },
+    });
+    expect(mockScrollToTop.mock.invocationCallOrder[0]).toBeLessThan(
+      jest.mocked(naviPush).mock.invocationCallOrder[0],
+    );
   });
 
   it('cancels a pending invitation when hidden and checks again on activation', async () => {

@@ -451,7 +451,12 @@ function LinkedScenePagerOwner({
       motion.value = { ...current, epoch, edge, phase: 'snap', queued: null };
       fraction.value = 0;
       gestureActive.value = true;
-      runOnJS(began)(epoch, edge, scrollOffset.value, presentedHeight.value);
+      runOnJS(began)(
+        epoch,
+        edge,
+        Math.max(0, scrollOffset.value),
+        presentedHeight.value,
+      );
       snap(1);
     };
     const acknowledge = (epoch: number) => {
@@ -544,7 +549,7 @@ function LinkedScenePagerOwner({
           source.childIndex !== undefined &&
           touchY.value >= inset + headerHeight &&
           touchY.value < inset + (measured.value.heights[source.index] ?? 0);
-        capturedY.value = scrollOffset.value;
+        capturedY.value = Math.max(0, scrollOffset.value);
         capturedHeight.value = presentedHeight.value;
         const edge = interrupted.value
           ? current.edge

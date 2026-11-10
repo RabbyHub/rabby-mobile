@@ -44,6 +44,12 @@ export interface Spec extends TurboModule {
     fileUri: string,
     deleteAfterDecode: boolean,
   ): Promise<string[]>;
+
+  iosPullRefreshProbe(
+    command: string,
+    runId: string,
+    durationMs: number,
+  ): Promise<string>;
 }
 
 export default TurboModuleRegistry.get<Spec>('RNHelpers');
