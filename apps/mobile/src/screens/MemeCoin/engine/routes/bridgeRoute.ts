@@ -4,6 +4,8 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import {
   buildTx as buildBridgeTx,
   getQuoteList as getBridgeQuoteList,
+  isSupportedBridgeAggregator,
+  isSupportedBridgeChain,
 } from '@rabby-wallet/rabby-bridge';
 import { openapi } from '@/core/request';
 import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
@@ -17,9 +19,23 @@ import { getBestBridgeQuote } from '@/screens/Bridge/utils/bridgeQuote';
 import { getRabbyFeeInfo } from '@/screens/Swap/hooks/fee';
 import { sleep } from '@/utils/async';
 import { findChainByServerID } from '@/utils/chain';
-import { BRIDGE_ARRIVAL_POLL_INTERVAL_MS } from '../constants';
+import {
+  BRIDGE_ARRIVAL_POLL_INTERVAL_MS,
+  BRIDGE_QUOTE_BACKOFF,
+  BRIDGE_QUOTE_RATE,
+} from '../constants';
 import type { LegRunnerDeps, RouteAdapter } from '../legRunner';
 import { ExecutionStoppedError } from '../pauseGate';
+import {
+  createRateLimitBackoff,
+  createRateLimiter,
+  isTooManyRequests,
+  QuoteRateLimitedError,
+} from '../quoteRateLimit';
+
+// Module level: every run, and every retry, spends the same backend budget.
+const quoteLimiter = createRateLimiter(BRIDGE_QUOTE_RATE);
+const quoteBackoff = createRateLimitBackoff(BRIDGE_QUOTE_BACKOFF);
 
 export const createBridgeRoute = ({ account }: { account: Account }) => {
   let aggregatorsTask: Promise<BridgeAggregator[]> | undefined;
@@ -36,7 +52,12 @@ export const createBridgeRoute = ({ account }: { account: Account }) => {
 
   const route: RouteAdapter = {
     async quote({ payToken, receiveToken, payAmount, slippagePct }) {
-      const aggregators = await getAggregators().catch(() => []);
+      // getQuoteList rejects these without a request; keep them off the budget
+      const aggregators = (await getAggregators().catch(() => [])).filter(
+        ({ id }) =>
+          isSupportedBridgeAggregator(id) &&
+          isSupportedBridgeChain(id, payToken.chain),
+      );
       const payAmountText = payAmount.toString(10);
       const rawAmount = payAmount
         .times(new BigNumber(10).pow(payToken.decimals))
@@ -51,21 +72,24 @@ export const createBridgeRoute = ({ account }: { account: Account }) => {
         isWrapToken: false,
       });
 
+      await quoteBackoff.wait();
       const settled = await Promise.allSettled(
         aggregators.map(aggregator =>
-          getBridgeQuoteList(
-            aggregator.id,
-            {
-              userAddress: account.address,
-              fromChainId: payToken.chain,
-              fromTokenId: payToken.id,
-              fromTokenRawAmount: rawAmount,
-              toChainId: receiveToken.chain,
-              toTokenId: receiveToken.id,
-              slippage,
-              feeRate: Number(feeRate),
-            },
-            openapi,
+          quoteLimiter.schedule(() =>
+            getBridgeQuoteList(
+              aggregator.id,
+              {
+                userAddress: account.address,
+                fromChainId: payToken.chain,
+                fromTokenId: payToken.id,
+                fromTokenRawAmount: rawAmount,
+                toChainId: receiveToken.chain,
+                toTokenId: receiveToken.id,
+                slippage,
+                feeRate: Number(feeRate),
+              },
+              openapi,
+            ),
           ),
         ),
       );
@@ -73,8 +97,17 @@ export const createBridgeRoute = ({ account }: { account: Account }) => {
         .flatMap(r => (r.status === 'fulfilled' && r.value ? r.value : []))
         .filter(q => !!q?.bridge?.id && !!q.bridge.logo_url && !!q.bridge.name);
       if (!quotes.length) {
+        if (
+          settled.some(
+            r => r.status === 'rejected' && isTooManyRequests(r.reason),
+          )
+        ) {
+          quoteBackoff.onRateLimited();
+          throw new QuoteRateLimitedError();
+        }
         return null;
       }
+      quoteBackoff.onSuccess();
 
       const allowanceCache = new Map<string, Promise<string>>();
       const approvals = await Promise.allSettled(

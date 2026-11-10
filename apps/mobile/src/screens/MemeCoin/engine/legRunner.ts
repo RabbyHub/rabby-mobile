@@ -2,6 +2,7 @@ import BigNumber from 'bignumber.js';
 import type { TokenItem, Tx } from '@rabby-wallet/rabby-api/dist/types';
 import type { BroadcastResult, LegRunner } from './executor';
 import { ExecutionStoppedError, type PauseGate } from './pauseGate';
+import { QuoteRateLimitedError } from './quoteRateLimit';
 import type { HeadlessDirectSigner } from './signer';
 import type { ExecLeg, FailReason, LegKind } from './types';
 
@@ -130,12 +131,20 @@ export const createLegRunner = (deps: LegRunnerDeps): LegRunner => {
 
       await gate.wait();
       const slippagePct = deps.maxPriceImpactPct / 2;
-      const quote = await deps.routes[leg.kind].quote({
-        payToken,
-        receiveToken,
-        payAmount,
-        slippagePct,
-      });
+      let quote: RouteQuote | null;
+      try {
+        quote = await deps.routes[leg.kind].quote({
+          payToken,
+          receiveToken,
+          payAmount,
+          slippagePct,
+        });
+      } catch (error) {
+        if (error instanceof QuoteRateLimitedError) {
+          return fail('rateLimited');
+        }
+        throw error;
+      }
       if (!quote) {
         return fail('noQuote');
       }

@@ -80,6 +80,8 @@ export type FailReason =
   | 'gasTooHigh'
   | 'simulationFailed'
   | 'insufficientBalance'
+  /** the quote API answered 429 */
+  | 'rateLimited'
   /** bridge only: the source tx is mined, so the funds may still be on the way */
   | 'arrivalFailed'
   | 'failed';

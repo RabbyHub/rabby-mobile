@@ -3474,7 +3474,8 @@
         "exitDesc1": "Execution will stop. Unsubmitted transactions will not be processed.",
         "exitDesc2": "Submitted on-chain transactions cannot be undone and may still complete.",
         "stopAndExit": "Stop & Exit",
-        "continue": "Continue"
+        "continue": "Continue",
+        "tooManyRequests": "Too many requests. Try again later"
       }
     }
   },

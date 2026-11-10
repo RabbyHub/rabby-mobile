@@ -6,6 +6,7 @@ import {
   type RouteAdapter,
 } from './legRunner';
 import { createPauseGate, ExecutionStoppedError } from './pauseGate';
+import { QuoteRateLimitedError } from './quoteRateLimit';
 import type { ExecLeg } from './types';
 
 const token = (
@@ -169,6 +170,20 @@ describe('createLegRunner.prepareAndBroadcast', () => {
     await expect(
       t.runner.prepareAndBroadcast(leg(), createPauseGate()),
     ).resolves.toEqual({ ok: false, reason: 'noQuote' });
+  });
+
+  it('fails with rateLimited when the quote was rate limited', async () => {
+    const t = setup(
+      {},
+      {
+        quote: async () => {
+          throw new QuoteRateLimitedError();
+        },
+      },
+    );
+    await expect(
+      t.runner.prepareAndBroadcast(leg(), createPauseGate()),
+    ).resolves.toEqual({ ok: false, reason: 'rateLimited' });
   });
 
   it('fails with priceImpact when the quote loses at least half the max impact', async () => {
