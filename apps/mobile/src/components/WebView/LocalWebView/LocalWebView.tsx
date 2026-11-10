@@ -126,13 +126,10 @@ export const LocalWebView = ({
   ]);
 
   const { webviewSource } = useMemo(() => {
-    const localUri = IS_ANDROID
-      ? refAssetForLocalWebView(
-          stringUtils.ensurePrefix(entryPath, '/builtin-pages'),
-        ).rawPath
-      : refAssetForLocalWebView(
-          stringUtils.ensurePrefix(entryPath, '/builtin-pages'),
-        ).rawPath;
+    const { rawPath: localUri, fullPath: localFilePath } =
+      refAssetForLocalWebView(
+        stringUtils.ensurePrefix(entryPath, '/builtin-pages'),
+      );
 
     return {
       localUri,
@@ -149,10 +146,9 @@ export const LocalWebView = ({
               baseUrl: `${stringUtils.ensureSuffix(WEBVIEW_BASEURL, '/')}`,
             }
           : {
-              uri: `${WEBVIEW_BASEURL}${stringUtils.ensurePrefix(
-                entryPath,
-                '/builtin-pages',
-              )}`,
+              // WebKit checks the read grant lexically: avoid a double slash
+              // between the bundle directory and builtin-pages.
+              uri: localFilePath,
               baseUrl: WEBVIEW_BASEURL,
             },
     };
