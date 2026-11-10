@@ -130,6 +130,10 @@ const ApprovalScreenContainer: React.FC<{
     setNavigationOptions({
       headerTitle: getHeaderTitle,
       headerRight: getHeaderRight,
+      // The native back item reserves 44pt on the leading edge. Keep the
+      // wallet/alias title anchored right after it instead of centring the
+      // title view and letting the gap vary with the alias length.
+      headerTitleAlign: 'left',
       headerStyle: {
         backgroundColor: colors2024['neutral-bg-1'],
       },

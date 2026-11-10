@@ -51,7 +51,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   title: {
     gap: 8,
     flexDirection: 'row',
-    maxWidth: SCREEN_WIDTH - 100,
+    // Compensate the native back item's 44pt layout width so the wallet icon
+    // sits at the same leading edge as the old JS header.
+    marginLeft: -20,
+    maxWidth: SCREEN_WIDTH - 120,
   },
   titleText: {
     color: colors2024['neutral-title-1'],
