@@ -429,9 +429,13 @@ class OneKeyKeyring extends EventEmitter {
             // (btc_test_address). Passing it on a passphrase-off device makes
             // the SDK throw DeviceNotOpenedPassphrase (113), so the standard
             // wallet is represented by an empty passphraseState.
-            this.passphraseState = standardWallet
-              ? undefined
-              : passphraseState.payload || undefined;
+            this.passphraseState = await this._resolvePassphraseStateForImport({
+              connectId,
+              protocol: this._protocol,
+              passphraseState: standardWallet
+                ? undefined
+                : passphraseState.payload || undefined,
+            });
             return true;
           };
 
@@ -468,9 +472,12 @@ class OneKeyKeyring extends EventEmitter {
                 return;
               } else {
                 this.passphraseState =
-                  session.payload.walletType === 'standard'
-                    ? undefined
-                    : session.payload.passphraseState || undefined;
+                  await this._resolvePassphraseStateForImport({
+                    connectId,
+                    protocol: this._protocol,
+                    walletType: session.payload.walletType,
+                    passphraseState: session.payload.passphraseState,
+                  });
               }
             } catch (e) {
               if (
@@ -1073,6 +1080,70 @@ class OneKeyKeyring extends EventEmitter {
       console.log('Error while recovering the standard wallet session', e);
       return response;
     }
+  }
+
+  /**
+   * SDK 1.2.7 `openWalletSession({ mode: 'select-hidden' })` still reports
+   * walletType "hidden" when the user enters an empty passphrase on a Pro 2,
+   * and the passphraseState is the standard wallet's btc_test_address. Compare
+   * that identity with a useEmptyPassphrase probe and, if they match, treat the
+   * session as the standard wallet so the id is never persisted. The probe runs
+   * only for an ambiguous V2 session (hidden type + non-empty state). A failed
+   * probe keeps the hidden id so import can still proceed.
+   *
+   * @param options0 - The imported wallet session.
+   * @param options0.connectId - Device connect id used for the identity probe.
+   * @param options0.protocol - Hardware protocol reported by getDeviceState.
+   * @param options0.walletType - Wallet type reported by openWalletSession.
+   * @param options0.passphraseState - Wallet identity returned by the SDK.
+   * @returns The hidden wallet id, or undefined for the standard wallet.
+   */
+  private async _resolvePassphraseStateForImport({
+    connectId,
+    protocol,
+    walletType,
+    passphraseState,
+  }: {
+    connectId: string;
+    protocol?: string;
+    walletType?: 'standard' | 'hidden';
+    passphraseState?: string | null;
+  }): Promise<string | undefined> {
+    if (walletType === 'standard') {
+      return undefined;
+    }
+    const imported = passphraseState || undefined;
+    if (this._isEmptyPassphrase(imported)) {
+      return undefined;
+    }
+    if (protocol !== 'V2') {
+      return imported;
+    }
+    const standardIdentity = await this._getStandardWalletIdentity(connectId);
+    if (standardIdentity && standardIdentity === imported) {
+      return undefined;
+    }
+    return imported;
+  }
+
+  private async _getStandardWalletIdentity(
+    connectId: string,
+  ): Promise<string | undefined> {
+    try {
+      const result = await this.bridge.getPassphraseState(connectId, {
+        useEmptyPassphrase: true,
+      });
+      if (
+        result?.success &&
+        typeof result.payload === 'string' &&
+        result.payload
+      ) {
+        return result.payload;
+      }
+    } catch (e) {
+      console.log('failed to read OneKey standard wallet identity', e);
+    }
+    return undefined;
   }
 
   _isEmptyPassphrase(passphraseState: string | undefined | null): boolean {

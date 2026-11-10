@@ -342,10 +342,17 @@ describe('OneKeyKeyring unlock wallet selection', () => {
         ...(status ? { status } : {}),
       },
     });
-    bridge.getPassphraseState.mockResolvedValue({
-      success: true,
-      payload: passphraseState,
-    });
+    bridge.getPassphraseState.mockImplementation(
+      async (
+        _connectId: string,
+        params?: { useEmptyPassphrase?: boolean },
+      ) => ({
+        success: true,
+        payload: params?.useEmptyPassphrase
+          ? 'standard-wallet-id'
+          : passphraseState,
+      }),
+    );
     bridge.evmGetPublicKey.mockResolvedValue({
       success: true,
       payload: { pub: publicKey, node: { chain_code: '11'.repeat(32) } },
@@ -413,6 +420,9 @@ describe('OneKeyKeyring unlock wallet selection', () => {
     expect(bridge.openWalletSession).toHaveBeenCalledWith('connect-id', {
       mode: 'select-hidden',
     });
+    expect(bridge.getPassphraseState).toHaveBeenCalledWith('connect-id', {
+      useEmptyPassphrase: true,
+    });
     expect(bridge.evmGetPublicKey).toHaveBeenCalledWith(
       'connect-id',
       'device-id',
@@ -421,6 +431,60 @@ describe('OneKeyKeyring unlock wallet selection', () => {
         useEmptyPassphrase: false,
       }),
     );
+    expect(keyring.passphraseState).toBe('hidden-wallet-token');
+  });
+
+  it('treats an empty passphrase in select-hidden as the standard wallet', async () => {
+    const { bridge, keyring } = setup('standard-wallet-id', {
+      passphraseProtection: true,
+    });
+    mockOpenWalletSession(bridge).mockResolvedValue(
+      createSession('hidden', 'standard-wallet-id'),
+    );
+
+    expect(await keyring.unlock()).toBe('just unlocked');
+    expect(bridge.openWalletSession).toHaveBeenCalledWith('connect-id', {
+      mode: 'select-hidden',
+    });
+    expect(bridge.getPassphraseState).toHaveBeenCalledWith('connect-id', {
+      useEmptyPassphrase: true,
+    });
+    expect(keyring.passphraseState).toBeUndefined();
+    expect(bridge.evmGetPublicKey).toHaveBeenCalledWith(
+      'connect-id',
+      'device-id',
+      expect.objectContaining({
+        passphraseState: undefined,
+        useEmptyPassphrase: true,
+      }),
+    );
+  });
+
+  it('keeps a real hidden wallet whose passphraseState differs from the standard identity', async () => {
+    const { bridge, keyring } = setup('hidden-wallet-token', {
+      passphraseProtection: true,
+    });
+    mockOpenWalletSession(bridge).mockResolvedValue(
+      createSession('hidden', 'hidden-wallet-token'),
+    );
+
+    expect(await keyring.unlock()).toBe('just unlocked');
+    expect(bridge.getPassphraseState).toHaveBeenCalledWith('connect-id', {
+      useEmptyPassphrase: true,
+    });
+    expect(keyring.passphraseState).toBe('hidden-wallet-token');
+  });
+
+  it('keeps the hidden wallet when the standard-identity probe fails', async () => {
+    const { bridge, keyring } = setup('hidden-wallet-token', {
+      passphraseProtection: true,
+    });
+    mockOpenWalletSession(bridge).mockResolvedValue(
+      createSession('hidden', 'hidden-wallet-token'),
+    );
+    bridge.getPassphraseState.mockRejectedValueOnce(new Error('probe failed'));
+
+    expect(await keyring.unlock()).toBe('just unlocked');
     expect(keyring.passphraseState).toBe('hidden-wallet-token');
   });
 
