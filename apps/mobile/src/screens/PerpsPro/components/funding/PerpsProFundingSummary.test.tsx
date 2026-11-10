@@ -1,6 +1,8 @@
 import { act, render, screen } from '@testing-library/react-native';
 import React from 'react';
 import { StyleSheet } from 'react-native';
+import { createStoreActivityScope } from '@/core/state/storeActivity';
+import { StoreActivityProvider } from '@/hooks/storeActivity/StoreActivityProvider';
 
 jest.mock('@/components/Typography', () => ({
   Text: require('react-native').Text,
@@ -182,5 +184,154 @@ describe('PerpsProFundingSummary countdown publication', () => {
     expect(screen.getByText('--:--')).toBeTruthy();
     view.unmount();
     expect(jest.getTimerCount()).toBe(0);
+  });
+
+  it('does not start or publish timer ticks when initially mounted in an inactive scope', () => {
+    const scope = createStoreActivityScope({
+      active: false,
+      label: 'funding-test',
+    });
+    const onRender = jest.fn();
+    const startTimer = jest.spyOn(global, 'setInterval');
+    const view = render(
+      <StoreActivityProvider scope={scope}>
+        <React.Profiler id="hidden-countdown" onRender={onRender}>
+          {summary({ receivedAt: localNow, serverTime: 10.5 * hour })}
+        </React.Profiler>
+      </StoreActivityProvider>,
+    );
+    try {
+      expect(screen.getByText('00:30:00')).toBeTruthy();
+      expect(startTimer).not.toHaveBeenCalled();
+      expect(jest.getTimerCount()).toBe(0);
+      onRender.mockClear();
+      act(() => jest.advanceTimersByTime(5000));
+      expect(screen.getByText('00:30:00')).toBeTruthy();
+      expect(onRender).not.toHaveBeenCalled();
+    } finally {
+      view.unmount();
+      scope.dispose();
+    }
+  });
+
+  it('stops hidden ticks and immediately catches up across an hour when the real scope resumes', () => {
+    const scope = createStoreActivityScope({
+      active: true,
+      label: 'funding-test',
+    });
+    const onRender = jest.fn();
+    const view = render(
+      <StoreActivityProvider scope={scope}>
+        <React.Profiler id="retained-countdown" onRender={onRender}>
+          {summary({ receivedAt: localNow, serverTime: 11 * hour - 2000 })}
+        </React.Profiler>
+      </StoreActivityProvider>,
+    );
+    try {
+      expect(screen.getByText('00:00:02')).toBeTruthy();
+      act(() => jest.advanceTimersByTime(1000));
+      expect(screen.getByText('00:00:01')).toBeTruthy();
+      act(() => scope.setActive(false));
+      expect(jest.getTimerCount()).toBe(0);
+      onRender.mockClear();
+      act(() => jest.advanceTimersByTime(4000));
+      expect(onRender).not.toHaveBeenCalled();
+      expect(screen.getByText('00:00:01')).toBeTruthy();
+      // No parent rerender or timer advance: activity alone must render the
+      // current Date.now(), not replay elapsed ticks or wait another second.
+      act(() => scope.setActive(true));
+      expect(screen.getByText('00:59:57')).toBeTruthy();
+      expect(onRender).toHaveBeenCalledTimes(1);
+      expect(jest.getTimerCount()).toBe(1);
+      act(() => jest.advanceTimersByTime(1000));
+      expect(screen.getByText('00:59:56')).toBeTruthy();
+    } finally {
+      view.unmount();
+      scope.dispose();
+    }
+    expect(jest.getTimerCount()).toBe(0);
+  });
+
+  it('keeps one timer across repeated activation and removes it and its subscription on unmount', () => {
+    const scope = createStoreActivityScope({
+      active: false,
+      label: 'funding-test',
+    });
+    const onRender = jest.fn();
+    const view = render(
+      <StoreActivityProvider scope={scope}>
+        <React.Profiler id="toggle-countdown" onRender={onRender}>
+          {summary({ receivedAt: localNow, serverTime: 10.5 * hour })}
+        </React.Profiler>
+      </StoreActivityProvider>,
+    );
+    try {
+      for (let cycle = 0; cycle < 3; cycle++) {
+        act(() => scope.setActive(true));
+        act(() => scope.setActive(true));
+        expect(jest.getTimerCount()).toBe(1);
+        onRender.mockClear();
+        act(() => jest.advanceTimersByTime(1000));
+        expect(onRender).toHaveBeenCalledTimes(1);
+        act(() => scope.setActive(false));
+        act(() => scope.setActive(false));
+        expect(jest.getTimerCount()).toBe(0);
+      }
+      act(() => scope.setActive(true));
+      view.unmount();
+      expect(jest.getTimerCount()).toBe(0);
+      onRender.mockClear();
+      act(() => {
+        scope.setActive(false);
+        scope.setActive(true);
+        jest.advanceTimersByTime(5000);
+      });
+      expect(jest.getTimerCount()).toBe(0);
+      expect(onRender).not.toHaveBeenCalled();
+    } finally {
+      view.unmount();
+      scope.dispose();
+    }
+  });
+
+  it('retains null-clock behavior and uses the latest sample received while hidden on reactivation', () => {
+    const scope = createStoreActivityScope({
+      active: false,
+      label: 'funding-test',
+    });
+    const scopedSummary = (clock: PerpsServerClockSample | null) => (
+      <StoreActivityProvider scope={scope}>
+        {summary(clock)}
+      </StoreActivityProvider>
+    );
+    const view = render(scopedSummary(null));
+    try {
+      expect(screen.getByText('--:--')).toBeTruthy();
+      act(() => scope.setActive(true));
+      expect(jest.getTimerCount()).toBe(0);
+      view.rerender(
+        scopedSummary({ receivedAt: localNow, serverTime: 10.5 * hour }),
+      );
+      expect(jest.getTimerCount()).toBe(1);
+      act(() => scope.setActive(false));
+      view.rerender(scopedSummary(null));
+      expect(screen.getByText('--:--')).toBeTruthy();
+      expect(jest.getTimerCount()).toBe(0);
+      view.rerender(
+        scopedSummary({ receivedAt: localNow, serverTime: 14.75 * hour }),
+      );
+      expect(screen.getByText('00:15:00')).toBeTruthy();
+      expect(jest.getTimerCount()).toBe(0);
+      jest.setSystemTime(localNow + 5000);
+      act(() => scope.setActive(true));
+      expect(screen.getByText('00:14:55')).toBeTruthy();
+      expect(jest.getTimerCount()).toBe(1);
+      view.rerender(scopedSummary(null));
+      expect(screen.getByText('--:--')).toBeTruthy();
+      expect(jest.getTimerCount()).toBe(0);
+    } finally {
+      view.unmount();
+      scope.dispose();
+    }
   });
 });

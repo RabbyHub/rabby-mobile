@@ -3,11 +3,11 @@ import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
 import { View } from 'react-native';
 import { Text } from '@/components/Typography';
-import { MarketData } from '@/hooks/perps/usePerpsStore';
+import type { MarketData } from '@/hooks/perps/usePerpsStore';
 import { formatPerpsCoin } from '@/utils/perps';
 
 export const PerpsDisplayCoinName: React.FC<{
-  item?: MarketData;
+  item?: Pick<MarketData, 'displayName' | 'name' | 'quoteAsset'>;
   coin?: string;
 }> = ({ item, coin = '' }) => {
   const { styles } = useTheme2024({ getStyle });

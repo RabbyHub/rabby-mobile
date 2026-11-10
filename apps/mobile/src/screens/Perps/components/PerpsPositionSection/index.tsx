@@ -1,39 +1,77 @@
 import { RootNames } from '@/constant/layout';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
-import { perpsStore, PositionAndOpenOrder } from '@/hooks/perps/usePerpsStore';
+import { perpsStore } from '@/hooks/perps/usePerpsStore';
+import type { PositionAndOpenOrder } from '@/hooks/perps/usePerpsStore';
 import { useTheme2024 } from '@/hooks/theme';
 import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 import { createGetStyles2024 } from '@/utils/styles';
-import { sortBy } from 'lodash';
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, TouchableOpacity, View } from 'react-native';
 import { PerpsPositionItem } from './PerpsPositionItem';
 import { useMemoizedFn } from 'ahooks';
 import { Text } from '@/components/Typography';
-export const PerpsPositionSection: React.FC<{
+import {
+  createPerpsPositionMarketSelector,
+  getPerpsPositionRows,
+} from './perpsPositionDisplay';
+
+const PerpsPositionRow = React.memo(function PerpsPositionRow({
+  row,
+  onShowRiskPopup,
+}: {
+  row: PositionAndOpenOrder;
+  onShowRiskPopup: (coin: string) => void;
+}) {
+  const coin = row.position.coin;
+  const navigation = useRabbyAppNavigation();
+  const selectMarket = useMemo(
+    () => createPerpsPositionMarketSelector(coin),
+    [coin],
+  );
+  const marketData = useActivityStore(perpsStore, selectMarket, Object.is, {
+    storeLabel: 'perps-position-row',
+  });
+  const onPress = useMemoizedFn(() => {
+    // Position navigation deliberately differs from a market-list press:
+    // no scroll-to-top, fromSource, or showOpenPosition override.
+    navigation.push(RootNames.StackTransaction, {
+      screen: RootNames.PerpsMarketDetail,
+      params: { market: coin },
+    });
+  });
+
+  return (
+    <PerpsPositionItem
+      item={row.position}
+      openOrders={row.openOrders}
+      marketData={marketData}
+      onPress={onPress}
+      onShowRiskPopup={onShowRiskPopup}
+    />
+  );
+});
+
+type PerpsPositionSectionProps = {
   positionAndOpenOrders?: PositionAndOpenOrder[];
   handleShowRiskPopup: (coin: string) => void;
   handleCloseRiskPopup: () => void;
   handleActionApproveStatus: () => Promise<void>;
   onCloseAllPositions: () => Promise<void>;
-}> = ({
+};
+
+export const PerpsPositionSection = React.memo(function PerpsPositionSection({
   positionAndOpenOrders,
   handleShowRiskPopup,
-  handleCloseRiskPopup,
   handleActionApproveStatus,
   onCloseAllPositions,
-}) => {
+}: PerpsPositionSectionProps) {
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
-  const navigation = useRabbyAppNavigation();
-  const marketDataMap = useActivityStore(perpsStore, s => s.marketDataMap);
-  const list = useMemo(() => {
-    return sortBy(
-      positionAndOpenOrders || [],
-      item => -item.position.marginUsed,
-    );
-  }, [positionAndOpenOrders]);
+  const list = useMemo(
+    () => getPerpsPositionRows(positionAndOpenOrders),
+    [positionAndOpenOrders],
+  );
 
   const handleCloseAll = useMemoizedFn(async () => {
     await handleActionApproveStatus();
@@ -76,29 +114,17 @@ export const PerpsPositionSection: React.FC<{
         </TouchableOpacity>
       </View>
       <View style={styles.content}>
-        {list.map((item, index) => {
-          return (
-            <PerpsPositionItem
-              key={index}
-              item={item.position}
-              openOrders={item.openOrders}
-              marketData={marketDataMap[item.position.coin]}
-              onPress={() => {
-                navigation.push(RootNames.StackTransaction, {
-                  screen: RootNames.PerpsMarketDetail,
-                  params: {
-                    market: item.position.coin,
-                  },
-                });
-              }}
-              onShowRiskPopup={handleShowRiskPopup}
-            />
-          );
-        })}
+        {list.map(({ key, row }) => (
+          <PerpsPositionRow
+            key={key}
+            row={row}
+            onShowRiskPopup={handleShowRiskPopup}
+          />
+        ))}
       </View>
     </View>
   );
-};
+});
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {},
