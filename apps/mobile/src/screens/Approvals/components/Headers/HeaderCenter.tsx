@@ -7,6 +7,7 @@ import { KeyringAccountWithAlias } from '@/hooks/account';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { Text } from '@/components/Typography';
 import { ellipsisAddress } from '@/utils/address';
+import { IS_ANDROID } from '@/core/native/utils';
 
 interface IProps {
   isSearching?: boolean;
@@ -53,7 +54,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     // Compensate the native back item's 44pt layout width so the wallet icon
     // sits at the same leading edge as the old JS header.
-    marginLeft: -20,
+    marginLeft: IS_ANDROID ? 0 : -20,
     maxWidth: SCREEN_WIDTH - 120,
   },
   titleText: {

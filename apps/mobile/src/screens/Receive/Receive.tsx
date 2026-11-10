@@ -24,6 +24,7 @@ import { trigger } from 'react-native-haptic-feedback';
 import { default as RcIconMCopy } from '@/assets2024/icons/address/mcopy-cc.svg';
 import { FooterButtonGroup } from '@/components2024/FooterButtonGroup';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
+import { IS_ANDROID } from '@/core/native/utils';
 import { default as RcIconEyeCC } from '@/assets/icons/receive/eye-cc.svg';
 import { default as RcIconEyeCloseCC } from '@/assets/icons/receive/eye-close-cc.svg';
 import { useGnosisNetworks } from '@/hooks/gnosis/useGnosisNetworks';
@@ -156,9 +157,10 @@ function ReceiveScreen(): JSX.Element {
   useLayoutEffect(() => {
     setNavigationOptions({
       headerTitle: () => headerTitle,
-      // The wallet/alias title belongs to the leading edge. Centring it left a
-      // huge gap between the native back item and the wallet icon on iOS.
-      headerTitleAlign: 'left',
+      // The wallet/alias title belongs to the leading edge on iOS. Centring it
+      // left a huge gap between the native back item and the wallet icon.
+      // Android keeps the original centred header with the custom headerLeft.
+      headerTitleAlign: IS_ANDROID ? 'center' : 'left',
     });
   }, [setNavigationOptions, headerTitle]);
 
@@ -336,10 +338,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   headerTitle: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'flex-start',
+    justifyContent: IS_ANDROID ? 'center' : 'flex-start',
     gap: 4,
     // Compensate the native back item's 44pt layout width.
-    marginLeft: -20,
+    marginLeft: IS_ANDROID ? 0 : -20,
     maxWidth: SCREEN_WIDTH - 120,
   },
   screen: {
