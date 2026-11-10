@@ -13,7 +13,7 @@
  * uses the workflow's push trigger, then deletes the branch.
  *
  * `--signing-machine mobile|mobile-local` selects the self-hosted macOS runner
- * used for the iOS signing job (default: mobile-local).
+ * used for the iOS signing job (default: mobile; mobile-local needs the runner's keychain password).
  */
 
 import { execFileSync, spawnSync } from 'node:child_process';
@@ -131,7 +131,7 @@ function parseArgs(argv) {
   args.signingMachine =
     args.signingMachine ||
     process.env.OPFE_SIGN_ONLY_SIGNING_MACHINE ||
-    'mobile-local';
+    'mobile';
   if (!['mobile', 'mobile-local'].includes(args.signingMachine)) {
     fail('--signing-machine must be mobile or mobile-local');
   }
@@ -286,9 +286,9 @@ function bakeWorkflow(payload, branch, rootDir) {
 
   const inputs = workflow.inputs;
   text = text.replaceAll(
-    "${{ inputs.macos_machine_location || 'mobile-local' }}",
+    "${{ inputs.macos_machine_location || 'mobile' }}",
     `\${{ inputs.macos_machine_location || '${
-      inputs.macos_machine_location || 'mobile-local'
+      inputs.macos_machine_location || 'mobile'
     }' }}`,
   );
   for (const [key, value] of Object.entries(inputs)) {
