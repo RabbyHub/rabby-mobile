@@ -62,9 +62,6 @@ function parseArgs(argv) {
       case '--source-dirty':
         result.sourceDirty = true;
         break;
-      case '--source-clean':
-        result.sourceDirty = false;
-        break;
       case '--prepare':
         result.prepare = true;
         break;

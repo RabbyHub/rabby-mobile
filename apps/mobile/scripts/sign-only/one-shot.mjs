@@ -66,7 +66,6 @@ function parseArgs(argv) {
     wait: true,
     force: false,
     trigger: 'auto',
-    sourceClean: false,
     token: '',
     serviceUrl: '',
     json: false,
@@ -92,9 +91,6 @@ function parseArgs(argv) {
         break;
       case '--force':
         args.force = true;
-        break;
-      case '--source-clean':
-        args.sourceClean = true;
         break;
       case '--trigger':
         args.trigger = argv[++i] || '';
@@ -199,7 +195,6 @@ function publish(platform, artifact, args, rootDir, appDir) {
   ];
   if (args.notifyLark) publishArgs.push('--notify-lark');
   if (args.force) publishArgs.push('--force');
-  if (args.sourceClean) publishArgs.push('--source-clean');
   if (args.token) publishArgs.push('--token', args.token);
   if (args.serviceUrl) publishArgs.push('--service-url', args.serviceUrl);
   if (args.proxy) publishArgs.push('--proxy', args.proxy);

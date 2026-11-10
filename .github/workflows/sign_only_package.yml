@@ -39,6 +39,11 @@ on:
           - 'true'
         default: 'false'
 
+# The job only needs to read the repository; signing credentials are passed as
+# step-scoped secrets below.
+permissions:
+  contents: read
+
 defaults:
   run:
     shell: bash -ieol pipefail {0}
@@ -47,6 +52,9 @@ jobs:
   android-sign:
     name: Android sign-only
     if: ${{ inputs.platform == 'android' }}
+    # Requires the `sign-only` Environment to be configured with required
+    # reviewers, so an arbitrary dispatch cannot get an artifact signed.
+    environment: sign-only
     runs-on:
       - self-hosted
       - Linux
@@ -78,7 +86,10 @@ jobs:
       - name: Checkout git repo
         uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.source_sha || github.sha }}
+          # Run only the workflow's own scripts. `source_sha` is build
+          # metadata; never execute a caller-supplied commit with signing
+          # secrets.
+          ref: ${{ github.sha }}
           fetch-depth: 1
           # Sign-only runs never build from source, so checkout's default
           # `git clean -ffdx` would only delete the warm node_modules / Pods /
@@ -91,14 +102,19 @@ jobs:
 
       - name: Validate sign-only request
         env:
+          SIGN_REQUEST_ID: ${{ inputs.sign_request_id }}
           ARTIFACT_URL: ${{ inputs.artifact_url }}
           ARTIFACT_SHA256: ${{ inputs.artifact_sha256 }}
           SOURCE_DIRTY: ${{ inputs.source_dirty }}
         run: |
+          if ! printf '%s' "$SIGN_REQUEST_ID" | grep -Eq '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'; then
+            echo "sign_request_id must be a broker UUID" >&2
+            exit 1
+          fi
           case "$ARTIFACT_URL" in
-            https://download.rabby.io/internal/sign-only/*) ;;
+            "https://download.rabby.io/internal/sign-only/$SIGN_REQUEST_ID/"*) ;;
             *)
-              echo "artifact_url must be a sign-only broker URL" >&2
+              echo "artifact_url must point at this sign request's broker path" >&2
               exit 1
               ;;
           esac
@@ -172,11 +188,6 @@ jobs:
           RABBY_MOBILE_SIGN_ONLY_APK: ${{ runner.temp }}/sign-only-signed.apk
           RABBY_MOBILE_SIGN_ONLY_RESULT_FILE: ${{ runner.temp }}/sign-only-result.txt
           RABBY_MOBILE_BUILD_BUCKET: ${{ secrets.RABBY_MOBILE_BUILD_BUCKET }}
-          RABBY_MOBILE_KR_PWD: ${{ secrets.RABBY_MOBILE_KR_PWD }}
-          RABBY_MOBILE_SAFE_API_KEY: ${{ secrets.MOBILE_SAFE_API_KEY }}
-          RABBY_MOBILE_CODE: ${{ secrets.RABBY_MOBILE_CODE2 }}
-          RABBY_MOBILE_SENTRY_AUTH_TOKEN2: ${{ secrets.RABBY_MOBILE_SENTRY_AUTH_TOKEN2 }}
-          SENTRY_AUTH_TOKEN: ${{ secrets.RABBY_MOBILE_SENTRY_AUTH_TOKEN2 }}
           RABBY_MOBILE_LARK_CHAT_URL: ${{ secrets.RABBY_MOBILE_LARK_CHAT_URL || secrets.LARK_CHAT_URL }}
           RABBY_MOBILE_LARK_CHAT_SECRET: ${{ secrets.RABBY_MOBILE_LARK_CHAT_SECRET || secrets.LARK_CHAT_SECRET }}
         run: |
@@ -222,6 +233,9 @@ jobs:
   ios-sign:
     name: iOS sign-only
     if: ${{ inputs.platform == 'ios' }}
+    # Requires the `sign-only` Environment to be configured with required
+    # reviewers, so an arbitrary dispatch cannot get an artifact signed.
+    environment: sign-only
     runs-on:
       - self-hosted
       - macOS
@@ -252,7 +266,10 @@ jobs:
       - name: Checkout git repo
         uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.source_sha || github.sha }}
+          # Run only the workflow's own scripts. `source_sha` is build
+          # metadata; never execute a caller-supplied commit with signing
+          # secrets.
+          ref: ${{ github.sha }}
           fetch-depth: 1
           # Sign-only runs never build from source, so checkout's default
           # `git clean -ffdx` would only delete the warm node_modules / Pods /
@@ -265,14 +282,19 @@ jobs:
 
       - name: Validate sign-only request
         env:
+          SIGN_REQUEST_ID: ${{ inputs.sign_request_id }}
           ARTIFACT_URL: ${{ inputs.artifact_url }}
           ARTIFACT_SHA256: ${{ inputs.artifact_sha256 }}
           SOURCE_DIRTY: ${{ inputs.source_dirty }}
         run: |
+          if ! printf '%s' "$SIGN_REQUEST_ID" | grep -Eq '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'; then
+            echo "sign_request_id must be a broker UUID" >&2
+            exit 1
+          fi
           case "$ARTIFACT_URL" in
-            https://download.rabby.io/internal/sign-only/*) ;;
+            "https://download.rabby.io/internal/sign-only/$SIGN_REQUEST_ID/"*) ;;
             *)
-              echo "artifact_url must be a sign-only broker URL" >&2
+              echo "artifact_url must point at this sign request's broker path" >&2
               exit 1
               ;;
           esac
@@ -336,11 +358,6 @@ jobs:
           RABBY_MOBILE_SIGN_ONLY_RESULT_FILE: ${{ runner.temp }}/sign-only-result.txt
           SKIP_BUILD: 'true'
           RABBY_MOBILE_BUILD_BUCKET: ${{ secrets.RABBY_MOBILE_BUILD_BUCKET }}
-          RABBY_MOBILE_KR_PWD: ${{ secrets.RABBY_MOBILE_KR_PWD }}
-          RABBY_MOBILE_SAFE_API_KEY: ${{ secrets.MOBILE_SAFE_API_KEY }}
-          RABBY_MOBILE_CODE: ${{ secrets.RABBY_MOBILE_CODE2 }}
-          RABBY_MOBILE_SENTRY_AUTH_TOKEN2: ${{ secrets.RABBY_MOBILE_SENTRY_AUTH_TOKEN2 }}
-          SENTRY_AUTH_TOKEN: ${{ secrets.RABBY_MOBILE_SENTRY_AUTH_TOKEN2 }}
           MATCH_PASSWORD: ${{ secrets.RABBY_MOBILE_MATCH_PASSWORD }}
           RABBY_MOBILE_MATCH_GIT_BASIC_AUTHORIZATION: ${{ secrets.RABBY_MOBILE_MATCH_GIT_BASIC_AUTHORIZATION }}
           RABBY_MOBILE_LARK_CHAT_URL: ${{ secrets.RABBY_MOBILE_LARK_CHAT_URL || secrets.LARK_CHAT_URL }}
