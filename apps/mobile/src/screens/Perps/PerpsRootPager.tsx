@@ -16,6 +16,10 @@ import {
 
 import type { PerpsViewMode } from '@/core/services/perpsService';
 import { StoreActivityBoundary } from '@/hooks/storeActivity/StoreActivityBoundary';
+import {
+  usePerpsRootProbe,
+  PerpsRootProbeProfiler,
+} from '@/devtools/pullRefreshProbe/usePerpsRootProbe';
 import { useRootPagerEnabled } from '@/hooks/useRootPagerEnabled';
 import {
   getTopPerpsProSheetNavigationRegistration,
@@ -57,6 +61,7 @@ const RetainedMode = memo(function RetainedMode({
   focused,
   simpleProps,
   proProps,
+  onProfile,
 }: {
   mode: PerpsViewMode;
   context: RootScenePageContext;
@@ -64,6 +69,7 @@ const RetainedMode = memo(function RetainedMode({
   focused: boolean;
   simpleProps: PerpsSimpleScreenProps;
   proProps: PerpsProScreenProps;
+  onProfile?: React.ProfilerOnRenderCallback;
 }) {
   const [mounted, setMounted] = useState(context.visible);
   if (!mounted && (prewarm || context.visible)) {
@@ -96,7 +102,9 @@ const RetainedMode = memo(function RetainedMode({
         style={styles.container}
         pointerEvents={sceneActive && context.interactive ? 'auto' : 'none'}
         testID={`perps-root-business-${mode}`}>
-        {content}
+        <PerpsRootProbeProfiler page={mode} onRender={onProfile}>
+          {content}
+        </PerpsRootProbeProfiler>
       </View>
     </StoreActivityBoundary>
   ) : null;
@@ -111,6 +119,7 @@ export const PerpsRootPager = memo(function PerpsRootPager({
   simpleProps,
   proProps,
 }: Props) {
+  const probe = usePerpsRootProbe();
   const focused = useIsFocused();
   const baseEnabled = useRootPagerEnabled(focused);
   const [popupState] = usePerpsPopupState();
@@ -164,10 +173,15 @@ export const PerpsRootPager = memo(function PerpsRootPager({
       if (key !== 'simple' && key !== 'pro') {
         return;
       }
-      prepare(key);
-      settleMode(key);
+      probe.business?.('business-begin', key);
+      try {
+        prepare(key);
+        settleMode(key);
+      } finally {
+        probe.business?.('business-end', key);
+      }
     },
-    [settleMode, prepare],
+    [settleMode, prepare, probe],
   );
 
   const simple = useMemo(
@@ -235,6 +249,7 @@ export const PerpsRootPager = memo(function PerpsRootPager({
           focused={focused}
           simpleProps={simple}
           proProps={pro}
+          onProfile={probe.onRender}
         />
         {key === 'pro' ? (
           <PerpsProRootHeaderWash
@@ -243,12 +258,20 @@ export const PerpsRootPager = memo(function PerpsRootPager({
         ) : null}
       </View>
     ),
-    [focused, headerPresentation.backdropStyle, prewarm, pro, simple],
+    [
+      focused,
+      headerPresentation.backdropStyle,
+      prewarm,
+      pro,
+      simple,
+      probe.onRender,
+    ],
   );
 
   return (
     <View style={styles.container}>
       <RootScenePager
+        probe={probe.observer}
         keys={MODES}
         requestedKey={mode.requestedKey}
         onSettled={onSettled}

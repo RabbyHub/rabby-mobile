@@ -97,7 +97,10 @@ const selectUI = (
 ) => act(() => runOnUI(overlayUI(renderOverlay).select)(index));
 const flushJS = () => act(() => nativeBoundary.flushJS());
 
-function mount(renderOverlay?: RootScenePagerProps['renderOverlay']) {
+function mount(
+  renderOverlay?: RootScenePagerProps['renderOverlay'],
+  probe?: RootScenePagerProps['probe'],
+) {
   const onSettled = jest.fn();
   const props: RootScenePagerProps = {
     keys,
@@ -105,6 +108,7 @@ function mount(renderOverlay?: RootScenePagerProps['renderOverlay']) {
     onSettled,
     renderPage,
     renderOverlay,
+    probe,
     testID: 'overlay-fixture',
   };
   const result = render(<RootScenePager {...props} />);
@@ -121,6 +125,50 @@ afterEach(async () => {
 });
 
 describe('RootScenePager shared overlay component contract', () => {
+  it('observes UI settlement before deferred JS publication with release epochs', () => {
+    const probe = { onUI: jest.fn(), onJS: jest.fn() };
+    mount(createOverlay(), probe);
+    probe.onUI.mockClear();
+    probe.onJS.mockClear();
+    nativeBoundary.setJSNotificationsDeferred(true);
+    const gesture = beginDrag(-100);
+    act(() => gesture.handlers.onEnd(event(-180), true));
+    finish();
+    const release = probe.onUI.mock.calls
+      .map(([row]) => row)
+      .find(row => row.event === 'release');
+    const complete = probe.onUI.mock.calls
+      .map(([row]) => row)
+      .find(row => row.event === 'ui-complete');
+    expect(release.epoch).toBe(release.fromEpoch + 1);
+    expect(complete).toMatchObject({
+      epoch: release.epoch,
+      selected: 1,
+      origin: 'gesture',
+    });
+    expect(probe.onJS).not.toHaveBeenCalled();
+    flushJS();
+    expect(probe.onJS).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event: 'publish-accepted',
+        epoch: release.epoch,
+        settled: true,
+      }),
+    );
+  });
+
+  it('observer failures do not change successful navigation', () => {
+    const fail = () => {
+      throw new Error('observer-failure');
+    };
+    const overlay = createOverlay();
+    const { onSettled } = mount(overlay, { onUI: fail, onJS: fail });
+    selectUI(overlay, 1);
+    finish();
+    expect(onSettled).toHaveBeenCalledWith('pro');
+    expect(trackX()).toBe(-WIDTH);
+  });
+
   it('renders one non-translated overlay under the same gesture detector', () => {
     mount(createOverlay());
     const overlay = node('overlay');

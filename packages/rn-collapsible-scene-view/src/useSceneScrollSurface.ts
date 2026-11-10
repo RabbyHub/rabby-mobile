@@ -48,7 +48,11 @@ export const useSceneScrollSurface = ({
   const scrollHandler = useAnimatedScrollHandler(
     {
       onScroll: event => {
-        const offset = Math.max(0, event.contentOffset.y);
+        // Publish the raw offset: negative values are the iOS rubber-band and
+        // the scene layers translate with them so the chrome never tears away
+        // from the content it covers. Consumers that need a content offset
+        // clamp to zero themselves.
+        const offset = event.contentOffset.y;
         if (offset === lastReported.value) {
           return;
         }
