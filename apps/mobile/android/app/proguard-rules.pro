@@ -19,23 +19,25 @@
 #-keepclassmembers class fqcn.of.javascript.interface.for.webview {
 #   public *;
 #}
--dontwarn io.branch.**
-
 # JNA's Android AAR keeps desktop-only AWT entry points. WalletConnect Pay uses
 # JNA for UniFFI/native dispatch on Android, not for desktop window handles.
--dontwarn java.awt.**
+# Only the four classes that jna's Native$AWT actually references are
+# suppressed: any other AWT reference (for example from a future JNA version)
+# fails R8 instead of being silently hidden by a package wildcard.
+-dontwarn java.awt.Component
+-dontwarn java.awt.GraphicsEnvironment
+-dontwarn java.awt.HeadlessException
+-dontwarn java.awt.Window
 -keep class com.sun.jna.** { *; }
 
 # # keep screen capture callback
 # -keep class android.content.ScreenCaptureCallback { *; }
 
-# react native keychain https://github.com/oblador/react-native-keychain#proguard-rules
--keep class com.facebook.crypto.** {
-   *;
-}
-
-# Keep SQLite classes
--keep class io.liteglue.** { *; }
+# With the direct dependencies pinned (package.json exact versions), the
+# com.facebook.crypto (react-native-keychain <10) and io.liteglue
+# (react-native-sqlite-storage) keeps no longer match any class: R8's seed list
+# contains zero entries for them. They were removed so a future dependency that
+# reintroduces those packages is a visible change rather than a silent keep.
 
 # # react-native-svg https://github.com/react-native-svg/react-native-svg#problems-with-proguard
 # # https://github.com/software-mansion/react-native-svg/blob/main/android/proguard-rules.pro
