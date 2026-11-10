@@ -116,6 +116,13 @@ public class RNHelpersModule extends NativeRNHelpersSpec {
 
   @ReactMethod
   @Override
+  public void iosPullRefreshProbe(String command, String runId, double durationMs, Promise promise) {
+    // Keep the shared codegen contract without activating iOS diagnostics here.
+    promise.resolve("{\"schemaVersion\":1,\"status\":\"unsupported\",\"records\":[]}");
+  }
+
+  @ReactMethod
+  @Override
   public void androidTraceInstant(String name) {
     RabbyStartupTrace.instant(name);
   }

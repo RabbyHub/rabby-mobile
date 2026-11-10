@@ -177,3 +177,462 @@ diff --git a/React/Fabric/Mounting/ComponentViews/Modal/RCTModalHostViewComponen
  }
  
  - (void)updateProps:(const Props::Shared &)props oldProps:(const Props::Shared &)oldProps
+diff --git a/React/Fabric/Mounting/ComponentViews/ScrollView/RCTScrollViewComponentView.mm b/React/Fabric/Mounting/ComponentViews/ScrollView/RCTScrollViewComponentView.mm
+--- a/React/Fabric/Mounting/ComponentViews/ScrollView/RCTScrollViewComponentView.mm
++++ b/React/Fabric/Mounting/ComponentViews/ScrollView/RCTScrollViewComponentView.mm
+@@ -25,8 +25,240 @@
+ #import "RCTEnhancedScrollView.h"
+ #import "RCTFabricComponentsPlugins.h"
+ 
++#include <algorithm>
++#include <cmath>
++#include <vector>
++
+ using namespace facebook::react;
+ 
++// Temporary, explicitly armed QA #1130 instrumentation. Geometry only: no
++// labels, row data, addresses, arbitrary test IDs, console output, or file I/O.
++// The UI thread owns this fixed buffer and all reads/writes to its state.
++namespace {
++constexpr size_t kRabbyPullRefreshProbeCapacity = 32768;
++constexpr size_t kRabbyPullRefreshProbeDrainLimit = 64;
++
++enum class RabbyPullRefreshProbeEvent {
++  Prepare, AdjustBefore, AdjustAfter, Scroll, Snapshot, Display,
++  ContainerBefore, ContainerAfter, SizeBefore, SizeAfter
++};
++
++struct RabbyPullRefreshProbeSample {
++  uint64_t sequence;
++  double monotonicMs;
++  double unixMs;
++  uint64_t transactionNumber;
++  NSInteger viewTag;
++  NSInteger anchorTag;
++  NSInteger scopeId;
++  double displayTimestampMs;
++  double displayTargetTimestampMs;
++  double displayDurationMs;
++  CGPoint offset;
++  UIEdgeInsets inset;
++  UIEdgeInsets adjustedInset;
++  CGSize contentSize;
++  CGRect viewport;
++  CGRect headerFrame;
++  CGRect anchorFrame;
++  CGRect previousAnchorFrame;
++  CGFloat deltaY;
++  NSUInteger childCount;
++  NSInteger minIndexForVisible;
++  RabbyPullRefreshProbeEvent event;
++  bool headerPresent;
++  bool anchorPresent;
++  bool dragging;
++  bool tracking;
++  bool decelerating;
++  bool userTriggeredScrolling;
++  bool mvcpEnabled;
++  bool appActive;
++};
++
++// Allocate only when a non-production run is explicitly armed.
++std::vector<RabbyPullRefreshProbeSample> rabbyPullRefreshSamples;
++size_t rabbyPullRefreshReadIndex = 0;
++size_t rabbyPullRefreshCount = 0;
++uint64_t rabbyPullRefreshSequence = 0;
++uint64_t rabbyPullRefreshDropped = 0;
++bool rabbyPullRefreshActive = false;
++double rabbyPullRefreshStartedMonotonicMs = 0;
++double rabbyPullRefreshStartedUnixMs = 0;
++double rabbyPullRefreshExpiresMonotonicMs = 0;
++NSString *rabbyPullRefreshRunId = nil;
++__weak RCTScrollViewComponentView *rabbyPullRefreshTarget = nil;
++CADisplayLink *rabbyPullRefreshDisplayLink = nil;
++
++void RabbyPullRefreshProbeAppend(RabbyPullRefreshProbeSample sample)
++{
++  sample.sequence = ++rabbyPullRefreshSequence;
++  sample.unixMs = rabbyPullRefreshStartedUnixMs + sample.monotonicMs - rabbyPullRefreshStartedMonotonicMs;
++  size_t writeIndex = (rabbyPullRefreshReadIndex + rabbyPullRefreshCount) % kRabbyPullRefreshProbeCapacity;
++  rabbyPullRefreshSamples[writeIndex] = sample;
++  if (rabbyPullRefreshCount == kRabbyPullRefreshProbeCapacity) {
++    rabbyPullRefreshReadIndex = (rabbyPullRefreshReadIndex + 1) % kRabbyPullRefreshProbeCapacity;
++    rabbyPullRefreshDropped++;
++  } else {
++    rabbyPullRefreshCount++;
++  }
++}
++
++bool RabbyPullRefreshProbeAllowed()
++{
++  static bool allowed = [] {
++    NSString *bundleId = NSBundle.mainBundle.bundleIdentifier;
++    return [bundleId isEqualToString:@"com.debank.rabby-mobile-debug"] ||
++        [bundleId isEqualToString:@"com.debank.rabby-mobile-regression"];
++  }();
++  return allowed;
++}
++
++double RabbyPullRefreshProbeNowMs()
++{
++  return CACurrentMediaTime() * 1000.0;
++}
++
++bool RabbyPullRefreshProbeIsActive(double nowMs)
++{
++  if (!RabbyPullRefreshProbeAllowed() || !rabbyPullRefreshActive) {
++    return false;
++  }
++  if (nowMs >= rabbyPullRefreshExpiresMonotonicMs) {
++    rabbyPullRefreshActive = false;
++    [rabbyPullRefreshDisplayLink invalidate];
++    rabbyPullRefreshDisplayLink = nil;
++    return false;
++  }
++  return true;
++}
++
++NSString *RabbyPullRefreshProbeEventName(RabbyPullRefreshProbeEvent event)
++{
++  switch (event) {
++    case RabbyPullRefreshProbeEvent::Prepare:
++      return @"prepare";
++    case RabbyPullRefreshProbeEvent::AdjustBefore:
++      return @"adjust-before";
++    case RabbyPullRefreshProbeEvent::AdjustAfter:
++      return @"adjust-after";
++    case RabbyPullRefreshProbeEvent::Scroll:
++      return @"scroll";
++    case RabbyPullRefreshProbeEvent::Snapshot:
++      return @"snapshot";
++    case RabbyPullRefreshProbeEvent::Display:
++      return @"display";
++    case RabbyPullRefreshProbeEvent::ContainerBefore:
++      return @"container-before";
++    case RabbyPullRefreshProbeEvent::ContainerAfter:
++      return @"container-after";
++    case RabbyPullRefreshProbeEvent::SizeBefore:
++      return @"size-before";
++    case RabbyPullRefreshProbeEvent::SizeAfter:
++      return @"size-after";
++  }
++}
++
++id RabbyPullRefreshProbeNumber(double value)
++{
++  return std::isfinite(value) ? @(value) : NSNull.null;
++}
++
++NSDictionary *RabbyPullRefreshProbeRect(CGRect rect)
++{
++  return @{
++    @"x" : RabbyPullRefreshProbeNumber(rect.origin.x),
++    @"y" : RabbyPullRefreshProbeNumber(rect.origin.y),
++    @"width" : RabbyPullRefreshProbeNumber(rect.size.width),
++    @"height" : RabbyPullRefreshProbeNumber(rect.size.height),
++  };
++}
++
++NSDictionary *RabbyPullRefreshProbeInsets(UIEdgeInsets inset)
++{
++  return @{
++    @"top" : RabbyPullRefreshProbeNumber(inset.top),
++    @"left" : RabbyPullRefreshProbeNumber(inset.left),
++    @"bottom" : RabbyPullRefreshProbeNumber(inset.bottom),
++    @"right" : RabbyPullRefreshProbeNumber(inset.right),
++  };
++}
++
++NSDictionary *RabbyPullRefreshProbeSampleJSON(const RabbyPullRefreshProbeSample &sample)
++{
++  if (sample.event == RabbyPullRefreshProbeEvent::Display) {
++    return @{
++      @"sequence" : @(sample.sequence),
++      @"event" : @"display",
++      @"scopeId" : @0,
++      @"monotonicMs" : @(sample.monotonicMs),
++      @"unixMs" : @(sample.unixMs),
++      @"displayTimestampMs" : @(sample.displayTimestampMs),
++      @"displayTargetTimestampMs" : @(sample.displayTargetTimestampMs),
++      @"displayDurationMs" : @(sample.displayDurationMs),
++      @"appActive" : @(sample.appActive),
++    };
++  }
++  return @{
++    @"sequence" : @(sample.sequence),
++    @"event" : RabbyPullRefreshProbeEventName(sample.event),
++    @"monotonicMs" : @(sample.monotonicMs),
++    @"unixMs" : @(sample.unixMs),
++    @"transactionNumber" : @(sample.transactionNumber),
++    @"viewTag" : @(sample.viewTag),
++    @"anchorTag" : @(sample.anchorTag),
++    @"scopeId" : @(sample.scopeId),
++    @"offset" : @{
++      @"x" : RabbyPullRefreshProbeNumber(sample.offset.x),
++      @"y" : RabbyPullRefreshProbeNumber(sample.offset.y),
++    },
++    @"inset" : RabbyPullRefreshProbeInsets(sample.inset),
++    @"adjustedInset" : RabbyPullRefreshProbeInsets(sample.adjustedInset),
++    @"contentSize" : @{
++      @"width" : RabbyPullRefreshProbeNumber(sample.contentSize.width),
++      @"height" : RabbyPullRefreshProbeNumber(sample.contentSize.height),
++    },
++    @"viewport" : RabbyPullRefreshProbeRect(sample.viewport),
++    @"headerFrame" : RabbyPullRefreshProbeRect(sample.headerFrame),
++    @"anchorFrame" : RabbyPullRefreshProbeRect(sample.anchorFrame),
++    @"previousAnchorFrame" : RabbyPullRefreshProbeRect(sample.previousAnchorFrame),
++    @"deltaY" : RabbyPullRefreshProbeNumber(sample.deltaY),
++    @"childCount" : @(sample.childCount),
++    @"minIndexForVisible" : @(sample.minIndexForVisible),
++    @"headerPresent" : @(sample.headerPresent),
++    @"anchorPresent" : @(sample.anchorPresent),
++    @"dragging" : @(sample.dragging),
++    @"tracking" : @(sample.tracking),
++    @"decelerating" : @(sample.decelerating),
++    @"userTriggeredScrolling" : @(sample.userTriggeredScrolling),
++    @"mvcpEnabled" : @(sample.mvcpEnabled),
++  };
++}
++
++NSString *RabbyPullRefreshProbeReply(NSString *status, NSArray *samples, bool supported = true)
++{
++  NSDictionary *envelope = @{
++    @"schemaVersion" : @1,
++    @"supported" : @(supported),
++    @"status" : status,
++    @"runId" : rabbyPullRefreshRunId ?: @"",
++    @"active" : @(rabbyPullRefreshActive),
++    @"capacity" : @(kRabbyPullRefreshProbeCapacity),
++    @"startedMonotonicMs" : @(rabbyPullRefreshStartedMonotonicMs),
++    @"startedUnixMs" : @(rabbyPullRefreshStartedUnixMs),
++    @"expiresMonotonicMs" : @(rabbyPullRefreshExpiresMonotonicMs),
++    @"totalSamples" : @(rabbyPullRefreshSequence),
++    @"droppedSamples" : @(rabbyPullRefreshDropped),
++    @"remainingSamples" : @(rabbyPullRefreshCount),
++    @"hasMore" : @(rabbyPullRefreshCount > 0),
++    @"samples" : samples,
++  };
++  NSData *json = [NSJSONSerialization dataWithJSONObject:envelope options:0 error:nil];
++  return json ? [[NSString alloc] initWithData:json encoding:NSUTF8StringEncoding]
++              : @"{\"schemaVersion\":1,\"supported\":true,\"status\":\"serialization-error\",\"samples\":[]}";
++}
++} // namespace
++
+ static NSString *kOnScrollEvent = @"onScroll";
+ 
+ static NSString *kOnScrollEndEvent = @"onScrollEnded";
+@@ -89,6 +321,9 @@
+     RCTScrollableProtocol,
+     RCTEnhancedScrollViewOverridingDelegate>
+ 
++- (void)rabbyRecordPullRefreshProbe:(RabbyPullRefreshProbeEvent)event deltaY:(CGFloat)deltaY;
+++ (void)rabbyPullRefreshDisplayTick:(CADisplayLink *)displayLink;
++
+ @end
+ 
+ @implementation RCTScrollViewComponentView {
+@@ -112,8 +347,153 @@
+   __weak UIView *_firstVisibleView;
+ 
+   CGFloat _endDraggingSensitivityMultiplier;
++  uint64_t _rabbyPullRefreshTransactionNumber;
++  double _rabbyPullRefreshLastScrollSampleMs;
+ }
+ 
+++ (void)rabbyPullRefreshDisplayTick:(CADisplayLink *)displayLink
++{
++  const double nowMs = RabbyPullRefreshProbeNowMs();
++  if (!RabbyPullRefreshProbeIsActive(nowMs)) {
++    return;
++  }
++  // Display-synchronised main-thread callback timing, NOT presented-frame FPS.
++  // Do not request a different frame rate or allocate/serialize on this path.
++  RabbyPullRefreshProbeSample sample{};
++  sample.event = RabbyPullRefreshProbeEvent::Display;
++  sample.monotonicMs = nowMs;
++  sample.displayTimestampMs = displayLink.timestamp * 1000.0;
++  sample.displayTargetTimestampMs = displayLink.targetTimestamp * 1000.0;
++  sample.displayDurationMs = displayLink.duration * 1000.0;
++  sample.appActive = UIApplication.sharedApplication.applicationState == UIApplicationStateActive;
++  RabbyPullRefreshProbeAppend(sample);
++}
++
+++ (NSString *)rabbyPullRefreshProbe:(NSString *)command runId:(NSString *)runId durationMs:(double)durationMs
++{
++  if (![NSThread isMainThread] || !RabbyPullRefreshProbeAllowed()) {
++    return @"{\"schemaVersion\":1,\"supported\":false,\"status\":\"unsupported\",\"samples\":[]}";
++  }
++
++  double nowMs = RabbyPullRefreshProbeNowMs();
++  RabbyPullRefreshProbeIsActive(nowMs);
++  if ([command isEqualToString:@"start"]) {
++    // Run IDs are opaque diagnostic identifiers, never user-supplied payloads.
++    if (![runId isKindOfClass:NSString.class] || runId.length == 0 || runId.length > 96) {
++      return RabbyPullRefreshProbeReply(@"invalid-run-id", @[]);
++    }
++    for (NSUInteger i = 0; i < runId.length; i++) {
++      unichar c = [runId characterAtIndex:i];
++      bool alphanumeric = (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9');
++      if (!alphanumeric && (i == 0 || (c != '.' && c != '-' && c != '_'))) {
++        return RabbyPullRefreshProbeReply(@"invalid-run-id", @[]);
++      }
++    }
++    if (!std::isfinite(durationMs) || durationMs <= 0) {
++      return RabbyPullRefreshProbeReply(@"invalid-duration", @[]);
++    }
++    [rabbyPullRefreshDisplayLink invalidate];
++    rabbyPullRefreshSamples.resize(kRabbyPullRefreshProbeCapacity);
++    rabbyPullRefreshReadIndex = 0;
++    rabbyPullRefreshCount = 0;
++    rabbyPullRefreshSequence = 0;
++    rabbyPullRefreshDropped = 0;
++    rabbyPullRefreshStartedMonotonicMs = nowMs;
++    rabbyPullRefreshStartedUnixMs = NSDate.date.timeIntervalSince1970 * 1000.0;
++    rabbyPullRefreshExpiresMonotonicMs = nowMs + fmin(durationMs, 300000.0);
++    rabbyPullRefreshRunId = [runId copy];
++    rabbyPullRefreshTarget = nil;
++    rabbyPullRefreshActive = true;
++    rabbyPullRefreshDisplayLink = [CADisplayLink displayLinkWithTarget:self
++                                                            selector:@selector(rabbyPullRefreshDisplayTick:)];
++    [rabbyPullRefreshDisplayLink addToRunLoop:NSRunLoop.mainRunLoop forMode:NSRunLoopCommonModes];
++    return RabbyPullRefreshProbeReply(@"started", @[]);
++  }
++
++  if (![command isEqualToString:@"drain"] && ![command isEqualToString:@"stop"]) {
++    return RabbyPullRefreshProbeReply(@"invalid-command", @[]);
++  }
++  if (rabbyPullRefreshRunId == nil || ![rabbyPullRefreshRunId isEqualToString:runId]) {
++    return RabbyPullRefreshProbeReply(@"run-mismatch", @[]);
++  }
++
++  [rabbyPullRefreshTarget rabbyRecordPullRefreshProbe:RabbyPullRefreshProbeEvent::Snapshot deltaY:0];
++  if ([command isEqualToString:@"stop"]) {
++    rabbyPullRefreshActive = false;
++    [rabbyPullRefreshDisplayLink invalidate];
++    rabbyPullRefreshDisplayLink = nil;
++    return RabbyPullRefreshProbeReply(@"stopped", @[]);
++  }
++
++  size_t drainCount = std::min(rabbyPullRefreshCount, kRabbyPullRefreshProbeDrainLimit);
++  NSMutableArray *samples = [NSMutableArray arrayWithCapacity:drainCount];
++  for (size_t i = 0; i < drainCount; i++) {
++    const auto &sample = rabbyPullRefreshSamples[rabbyPullRefreshReadIndex];
++    [samples addObject:RabbyPullRefreshProbeSampleJSON(sample)];
++    rabbyPullRefreshReadIndex = (rabbyPullRefreshReadIndex + 1) % kRabbyPullRefreshProbeCapacity;
++    rabbyPullRefreshCount--;
++  }
++  return RabbyPullRefreshProbeReply(@"drained", samples);
++}
++
++- (void)rabbyRecordPullRefreshProbe:(RabbyPullRefreshProbeEvent)event deltaY:(CGFloat)deltaY
++{
++  if (!rabbyPullRefreshActive || !RabbyPullRefreshProbeAllowed() || ![NSThread isMainThread]) {
++    return;
++  }
++  double nowMs = RabbyPullRefreshProbeNowMs();
++  if (!RabbyPullRefreshProbeIsActive(nowMs) || !_props) {
++    return;
++  }
++  const auto &props = static_cast<const ScrollViewProps &>(*_props);
++  NSInteger scopeId = props.testId == "qa1130-home-token-list" ? 1
++      : props.testId == "qa1130-home-defi-list" ? 2
++      : props.testId == "qa1130-home-nft-list" ? 3 : 0;
++  if (scopeId == 0) {
++    return;
++  }
++  rabbyPullRefreshTarget = self;
++  if (event == RabbyPullRefreshProbeEvent::Scroll) {
++    if (nowMs - _rabbyPullRefreshLastScrollSampleMs < 50.0) {
++      return;
++    }
++    _rabbyPullRefreshLastScrollSampleMs = nowMs;
++  }
++
++  NSArray<UIView *> *contentSubviews = _contentView.subviews;
++  UIView *header = contentSubviews.firstObject;
++  UIView *anchor = _firstVisibleView;
++  RabbyPullRefreshProbeSample sample{};
++  sample.monotonicMs = nowMs;
++  sample.transactionNumber = _rabbyPullRefreshTransactionNumber;
++  sample.scopeId = scopeId;
++  sample.viewTag = self.tag;
++  sample.anchorTag = anchor.tag;
++  sample.offset = _scrollView.contentOffset;
++  sample.inset = _scrollView.contentInset;
++  sample.adjustedInset = _scrollView.adjustedContentInset;
++  sample.contentSize = _scrollView.contentSize;
++  sample.viewport = _scrollView.bounds;
++  sample.headerFrame = header.frame;
++  sample.anchorFrame = anchor.frame;
++  sample.previousAnchorFrame = _prevFirstVisibleFrame;
++  sample.deltaY = deltaY;
++  sample.childCount = contentSubviews.count;
++  sample.minIndexForVisible = props.maintainVisibleContentPosition
++      ? props.maintainVisibleContentPosition.value().minIndexForVisible
++      : -1;
++  sample.event = event;
++  sample.headerPresent = header != nil;
++  sample.anchorPresent = anchor != nil;
++  sample.dragging = _scrollView.dragging;
++  sample.tracking = _scrollView.tracking;
++  sample.decelerating = _scrollView.decelerating;
++  sample.userTriggeredScrolling = _isUserTriggeredScrolling;
++  sample.mvcpEnabled = props.maintainVisibleContentPosition.has_value();
++
++  RabbyPullRefreshProbeAppend(sample);
++}
++
+ + (RCTScrollViewComponentView *_Nullable)findScrollViewComponentViewForView:(UIView *)view
+ {
+   do {
+@@ -272,6 +652,9 @@
+ - (void)mountingTransactionWillMount:(const facebook::react::MountingTransaction &)transaction
+                 withSurfaceTelemetry:(const facebook::react::SurfaceTelemetry &)surfaceTelemetry
+ {
++  if (rabbyPullRefreshActive) {
++    _rabbyPullRefreshTransactionNumber = transaction.getNumber();
++  }
+   [self _prepareForMaintainVisibleScrollPosition];
+ }
+ 
+@@ -472,10 +855,14 @@
+   }
+ 
+   _contentSize = contentSize;
++  [self rabbyRecordPullRefreshProbe:RabbyPullRefreshProbeEvent::ContainerBefore deltaY:0];
+   _containerView.frame = CGRect{RCTCGPointFromPoint(data.contentBoundingRect.origin), contentSize};
++  [self rabbyRecordPullRefreshProbe:RabbyPullRefreshProbeEvent::ContainerAfter deltaY:0];
+ 
+   [self _preserveContentOffsetIfNeededWithBlock:^{
++    [self rabbyRecordPullRefreshProbe:RabbyPullRefreshProbeEvent::SizeBefore deltaY:0];
+     self->_scrollView.contentSize = contentSize;
++    [self rabbyRecordPullRefreshProbe:RabbyPullRefreshProbeEvent::SizeAfter deltaY:0];
+   }];
+ }
+ 
+@@ -667,6 +1054,7 @@
+ 
+ - (void)scrollViewDidScroll:(UIScrollView *)scrollView
+ {
++  [self rabbyRecordPullRefreshProbe:RabbyPullRefreshProbeEvent::Scroll deltaY:0];
+   auto scrollMetrics = [self _scrollViewMetrics];
+ 
+   [self _updateStateWithContentOffset];
+@@ -993,6 +1381,7 @@
+     if (hasNewView || ii == _contentView.subviews.count - 1) {
+       _prevFirstVisibleFrame = subview.frame;
+       _firstVisibleView = subview;
++      [self rabbyRecordPullRefreshProbe:RabbyPullRefreshProbeEvent::Prepare deltaY:0];
+       break;
+     }
+   }
+@@ -1027,7 +1416,9 @@
+     if (ABS(deltaY) > 0.5) {
+       CGFloat y = _scrollView.contentOffset.y;
+       [self _forceDispatchNextScrollEvent];
++      [self rabbyRecordPullRefreshProbe:RabbyPullRefreshProbeEvent::AdjustBefore deltaY:deltaY];
+       _scrollView.contentOffset = CGPointMake(_scrollView.contentOffset.x, _scrollView.contentOffset.y + deltaY);
++      [self rabbyRecordPullRefreshProbe:RabbyPullRefreshProbeEvent::AdjustAfter deltaY:deltaY];
+       if (autoscrollThreshold) {
+         // If the offset WAS within the threshold of the start, animate to the start.
+         if (y <= autoscrollThreshold.value()) {

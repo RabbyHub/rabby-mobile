@@ -57,6 +57,41 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(androidStopHermesSamplingProfiler) {
     return @NO;
 }
 
+RCT_EXPORT_METHOD(iosPullRefreshProbe:(NSString *)command
+                  runId:(NSString *)runId
+                  durationMs:(double)durationMs
+                  resolve:(RCTPromiseResolveBlock)resolve
+                  reject:(RCTPromiseRejectBlock)reject) {
+    (void)reject;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        NSString *unsupported = @"{\"schemaVersion\":1,\"supported\":false,\"status\":\"unsupported\",\"samples\":[]}";
+        NSString *bundleId = NSBundle.mainBundle.bundleIdentifier;
+        if (![bundleId isEqualToString:@"com.debank.rabby-mobile-debug"] &&
+            ![bundleId isEqualToString:@"com.debank.rabby-mobile-regression"]) {
+            resolve(unsupported);
+            return;
+        }
+
+        // The app must remain usable when the temporary RN instrumentation is
+        // absent. No hard link to a private Fabric implementation is required.
+        Class probeClass = NSClassFromString(@"RCTScrollViewComponentView");
+        SEL selector = NSSelectorFromString(@"rabbyPullRefreshProbe:runId:durationMs:");
+        if (probeClass == Nil || ![probeClass respondsToSelector:selector]) {
+            resolve(unsupported);
+            return;
+        }
+
+        @try {
+            using ProbeMethod = NSString *(*)(id, SEL, NSString *, NSString *, double);
+            ProbeMethod invoke = reinterpret_cast<ProbeMethod>([probeClass methodForSelector:selector]);
+            NSString *result = invoke(probeClass, selector, command, runId, durationMs);
+            resolve([result isKindOfClass:NSString.class] ? result : unsupported);
+        } @catch (__unused NSException *exception) {
+            resolve(unsupported);
+        }
+    });
+}
+
 RCT_EXPORT_METHOD(setSensitiveClipboard:(NSString *)text
                   resolver:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject) {

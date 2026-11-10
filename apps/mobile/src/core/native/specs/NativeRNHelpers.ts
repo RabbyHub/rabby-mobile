@@ -35,6 +35,11 @@ export interface Spec extends TurboModule {
   setSensitiveClipboard(text: string): Promise<void>;
   shareFile(options: ShareFileOptions): Promise<void>;
   iosExcludeFileFromBackup(filePath: string): Promise<boolean>;
+  iosPullRefreshProbe(
+    command: string,
+    runId: string,
+    durationMs: number,
+  ): Promise<string>;
 }
 
 export default TurboModuleRegistry.get<Spec>('RNHelpers');

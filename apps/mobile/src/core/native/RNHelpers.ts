@@ -1,5 +1,5 @@
-import { resolveNativeModule, wrapPlatformOnlyMethod } from './utils';
-import NativeRNHelpers from './specs/NativeRNHelpers';
+import { IS_IOS, resolveNativeModule, wrapPlatformOnlyMethod } from './utils';
+import NativeRNHelpers, { type Spec } from './specs/NativeRNHelpers';
 
 const { RNHelpers: nativeModule } = resolveNativeModule(
   'RNHelpers',
@@ -32,6 +32,31 @@ const RNHelpers = Object.freeze({
     platform: 'ios',
     fallbackFn: () => Promise.resolve(true),
   }),
+  async iosPullRefreshProbe(
+    command: string,
+    runId: string,
+    durationMs: number,
+  ): Promise<string> {
+    const unsupported =
+      '{"schemaVersion":1,"supported":false,"status":"unsupported","samples":[]}';
+    if (!IS_IOS) {
+      return unsupported;
+    }
+
+    // The diagnostic may run against a native binary without the temporary RN
+    // probe. Do not make normal screen/module loading depend on its presence.
+    try {
+      const probeModule = nativeModule as Partial<
+        Pick<Spec, 'iosPullRefreshProbe'>
+      >;
+      if (typeof probeModule.iosPullRefreshProbe !== 'function') {
+        return unsupported;
+      }
+      return await probeModule.iosPullRefreshProbe(command, runId, durationMs);
+    } catch {
+      return unsupported;
+    }
+  },
   // iosExcludeDirectoryFromBackup: wrapPlatformOnlyMethod({ method: nativeModule.iosExcludeDirectoryFromBackup, platform: 'ios', fallbackFn: () => Promise.resolve(true) }),
 });
 

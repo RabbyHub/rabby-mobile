@@ -49,12 +49,23 @@ describe('app-owned native peers in Jest', () => {
     rmdirSync(issuerDirectory);
   });
 
+  // A monorepo root can hoist a second copy of a native peer, and Jest's
+  // resolver falls back to `rootDir` ancestor paths, so an unmapped resolution
+  // is allowed to succeed. What must never happen is that it wins over the
+  // app-owned copy.
   it.each(peerSpecifiers)(
-    'cannot resolve %s without the app ownership mapping',
+    'resolves %s to the app-owned copy from an external issuer',
     specifier => {
-      expect(() => createResolver().resolveModule(issuer, specifier)).toThrow(
-        /Cannot find module/,
+      const config = appRequire(join(mobileRoot, 'jest.config.js')) as {
+        moduleNameMapper?: Mapper;
+      };
+      const resolved = createResolver(config.moduleNameMapper).resolveModule(
+        issuer,
+        specifier,
       );
+
+      expect(resolved).toBe(appRequire.resolve(specifier));
+      expect(resolved.startsWith(join(mobileRoot, 'node_modules'))).toBe(true);
     },
   );
 

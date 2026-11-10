@@ -1029,10 +1029,13 @@ export const TokenList = () => {
   const scrollY = useCurrentTabScrollY();
   const {
     panGestureRef,
+    probeListTestID,
     isRefreshing,
     svs: { pullDistance, svIsRefreshing, svIsManualRefreshing },
   } = usePulldownRefreshGesture({
     scrollViewYValue: scrollY,
+    probeScope: 'home-token-list',
+    probeLoading: isLoading,
     onJsPulldownRefresh: ctx => {
       ctx.svIsManualRefreshing.value = true;
       return onRefresh();
@@ -1069,6 +1072,7 @@ export const TokenList = () => {
   return (
     <GestureDetector gesture={panGestureRef.current}>
       <TokenProjectionSectionList
+        testID={probeListTestID}
         projectionKey={multiAssetsKey}
         scene="multi-address"
         sectionSpecs={sectionSpecs}
