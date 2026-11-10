@@ -33,7 +33,7 @@
     "!**/__mocks__"
   ],
   "dependencies": {
-    "@dominicstop/ts-event-emitter": "^1.1.0"
+    "@dominicstop/ts-event-emitter": "1.1.0"
   },
   "peerDependencies": {
     "react": "*",
