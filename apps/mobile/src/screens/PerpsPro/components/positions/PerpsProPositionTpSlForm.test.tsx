@@ -1162,7 +1162,7 @@ describe('PerpsProPositionTpSlForm', () => {
         screen.getByTestId('perps-pro-position-tpsl-form-inline-empty').props
           .style,
       ),
-    ).toMatchObject({ paddingHorizontal: 16 });
+    ).toMatchObject({ paddingHorizontal: 12 });
     expect(
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-position-tpsl-amount-section').props
@@ -1245,7 +1245,7 @@ describe('PerpsProPositionTpSlForm', () => {
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-position-tpsl-form-tab').props.style,
       ),
-    ).toMatchObject({ minHeight: 486, paddingHorizontal: 16 });
+    ).toMatchObject({ minHeight: 486, paddingHorizontal: 12 });
     expect(
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-position-tpsl-footer').props.style,

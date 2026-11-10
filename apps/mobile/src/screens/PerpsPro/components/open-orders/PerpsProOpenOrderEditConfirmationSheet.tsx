@@ -3,6 +3,10 @@ import {
   resolvePerpsProDialogCardBackground,
   getPerpsProDialogCheckboxStyles,
 } from '../common/perpsProDialogVisual';
+import {
+  getPerpsProListRowStyles,
+  PERPS_PRO_DIALOG_LIST_CARD_PADDING,
+} from '../common/perpsProListVisual';
 import { PerpsProDialogBackdrop } from '../common/PerpsProDialogBackdrop';
 import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
 import { PerpsProCheckboxIcon } from '../common/PerpsProCheckboxIcon';
@@ -86,7 +90,8 @@ export const PerpsProOpenOrderEditConfirmationSheet: React.FC<{
     const basic = review.category === 'basic';
     const triggerLimit = !basic && editor.order.editKind === 'triggerLimit';
     const sheetHeight =
-      (basic ? 336 : 362) +
+      // Stacked basic header and 30pt list rows (Figma 86609:343138).
+      (basic ? 368 : 376) +
       styles.content.paddingBottom -
       BOTTOM_BUTTON_BOTTOM_OFFSET;
     const baseSize = basic
@@ -136,7 +141,10 @@ export const PerpsProOpenOrderEditConfirmationSheet: React.FC<{
               }
             />
             <View style={styles.details}>
-              <PerpsProOpenOrderEditDirection order={editor.order} />
+              <PerpsProOpenOrderEditDirection
+                order={editor.order}
+                style={styles.detailRow}
+              />
               {basic ? (
                 <>
                   <DetailRow
@@ -262,29 +270,15 @@ const getStyle = createGetStyles2024(
     details: {
       backgroundColor: resolvePerpsProDialogCardBackground(colors2024, isLight),
       borderRadius: 12,
-      padding: 16,
-      gap: 10,
+      ...PERPS_PRO_DIALOG_LIST_CARD_PADDING,
       marginTop: 24,
     },
-    detailRow: {
-      alignItems: 'center',
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-    },
-    detailLabel: {
-      color: colors2024['neutral-secondary'],
-      fontFamily: 'SF Pro Rounded',
-      fontSize: 12,
-      lineHeight: 16,
-    },
+    detailRow: getPerpsProListRowStyles(colors2024).listRow,
+    detailLabel: getPerpsProListRowStyles(colors2024).listLabel,
     detailValue: {
       ...PERPS_PRO_NUMBER_STYLE,
-      color: colors2024['neutral-title-1'],
+      ...getPerpsProListRowStyles(colors2024).listValue,
       flexShrink: 1,
-      fontFamily: 'SF Pro Rounded',
-      fontSize: 12,
-      fontWeight: '500',
-      lineHeight: 16,
       marginLeft: 16,
       textAlign: 'right',
     },
@@ -295,10 +289,10 @@ const getStyle = createGetStyles2024(
       right: 20,
     },
     basicFooter: {
-      top: 208,
+      top: 240,
     },
     conditionalFooter: {
-      top: 234,
+      top: 248,
     },
   }),
 );

@@ -16,7 +16,7 @@ describe('Perps Pro info tabs sticky geometry', () => {
         tradeRowHeight: 424,
       }),
     ).toBe(542);
-    expect(PERPS_PRO_INFO_TABS_PLACEHOLDER_HEIGHT).toBe(60);
+    expect(PERPS_PRO_INFO_TABS_PLACEHOLDER_HEIGHT).toBe(66);
   });
 
   it('follows its list anchor until it reaches the moving Market bottom', () => {

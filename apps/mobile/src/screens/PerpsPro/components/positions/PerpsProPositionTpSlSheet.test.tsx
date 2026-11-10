@@ -545,7 +545,7 @@ describe('PerpsProPositionTpSlSheet', () => {
         StyleSheet.flatten(
           screen.getByTestId('perps-pro-position-tpsl-tabs').props.style,
         ),
-      ).toMatchObject({ flexDirection: 'row', paddingLeft: 8 });
+      ).toMatchObject({ flexDirection: 'row' });
       fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-add'));
       expectShell(797);
       fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-back'));
@@ -670,7 +670,7 @@ describe('PerpsProPositionTpSlSheet', () => {
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-position-tpsl-tabs').props.style,
       ),
-    ).toMatchObject({ flexDirection: 'row', paddingLeft: 8 });
+    ).toMatchObject({ flexDirection: 'row' });
     expect(
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-position-tpsl-add').props.style,
@@ -1302,7 +1302,7 @@ describe('PerpsProPositionTpSlSheet', () => {
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-position-tpsl-tabs').props.style,
       ),
-    ).toMatchObject({ flexDirection: 'row', paddingLeft: 8 });
+    ).toMatchObject({ flexDirection: 'row' });
   });
 
   it('switches from the list to the inline form after the final confirmed cancellation', () => {

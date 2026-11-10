@@ -27,6 +27,12 @@ import {
   type PerpsProTabIndicatorLayout,
 } from '../common/PerpsProTabIndicator';
 import { getPerpsProFontStyle } from '../common/perpsProVisual';
+import {
+  getPerpsProTabDividerColor,
+  getPerpsProTabIndicatorStyle,
+  getPerpsProTabTextStyle,
+  PERPS_PRO_TAB_TOKENS,
+} from '../common/perpsProTabVisual';
 import { PERPS_PRO_INFO_TABS_HEIGHT } from './perpsProInfoTabsSticky';
 import { PERPS_PRO_INFO_TABS } from './perpsProInfoTabOrder';
 
@@ -41,6 +47,7 @@ interface PerpsProInfoTabsProps {
   onChange: (tab: PerpsProInfoTab) => void;
 }
 
+const INFO_TAB_DIVIDER_BOTTOM = 2;
 const INFO_TAB_INACTIVE_FONT_STYLE = getPerpsProFontStyle(Platform.OS, '500');
 const INFO_TAB_ACTIVE_FONT_STYLE = getPerpsProFontStyle(Platform.OS, '700');
 
@@ -209,8 +216,8 @@ export const PerpsProInfoTabs: React.FC<PerpsProInfoTabsProps> = React.memo(
         if (!frame || frame.width <= 0) {
           return [];
         }
-        // Figma's round stroke caps extend 1.5px beyond each text edge.
-        layouts.push({ x: frame.x - 1.5, width: frame.width + 3 });
+        const cap = PERPS_PRO_TAB_TOKENS.indicatorCapInset;
+        layouts.push({ x: frame.x - cap, width: frame.width + cap * 2 });
       }
       return layouts;
     }, [tabFrames]);
@@ -225,6 +232,7 @@ export const PerpsProInfoTabs: React.FC<PerpsProInfoTabsProps> = React.memo(
 
     return (
       <View accessibilityRole="tablist" style={styles.container}>
+        <View pointerEvents="none" style={styles.divider} />
         {PERPS_PRO_INFO_TABS.map((tab, index) => {
           const selected = tab === activeTab;
           return (
@@ -289,8 +297,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
     alignItems: 'center',
     backgroundColor: colors2024['neutral-bg-1'],
-    borderBottomColor: colors2024['neutral-bg-5'],
-    borderBottomWidth: 1,
     flexDirection: 'row',
     gap: 16,
     height: PERPS_PRO_INFO_TABS_HEIGHT,
@@ -298,24 +304,26 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     overflow: 'hidden',
     position: 'relative',
   },
+  // Figma 86609:327462: the divider sits 2pt above the 44pt strip bottom.
+  // Paint it as a sibling so the indicator shares the strip's box.
+  divider: {
+    backgroundColor: getPerpsProTabDividerColor(colors2024),
+    bottom: INFO_TAB_DIVIDER_BOTTOM,
+    height: 1,
+    left: 0,
+    position: 'absolute',
+    right: 0,
+  },
   tab: {
     alignItems: 'center',
     height: '100%',
-    paddingTop: 8,
+    paddingTop: 12,
     position: 'relative',
   },
-  text: {
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    fontWeight: '500',
-    lineHeight: 18,
-  },
+  text: getPerpsProTabTextStyle(colors2024),
   indicator: {
-    backgroundColor: colors2024['neutral-body'],
-    borderRadius: 1.5,
-    bottom: -0.5,
-    height: 3,
+    ...getPerpsProTabIndicatorStyle(),
+    bottom: PERPS_PRO_TAB_TOKENS.indicatorBottom + INFO_TAB_DIVIDER_BOTTOM,
   },
   history: {
     alignItems: 'center',

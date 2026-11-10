@@ -43,6 +43,7 @@ import {
   getPerpsProTintedTagContainerStyle,
   getPerpsProTintedTagTextStyle,
 } from '../common/perpsProSemanticTagStyles';
+import { getPerpsProInfoCardStyle } from '../common/perpsProListVisual';
 import { usePerpsProFieldExplanation } from '../common/PerpsProFieldExplanationContext';
 import {
   resolvePerpsProPositionMetricCollision,
@@ -731,12 +732,15 @@ export const PerpsProPositionCard: React.FC<{
 
 PerpsProPositionCard.displayName = 'PerpsProPositionCard';
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+// Figma 86609:329983: 12pt-inset cards, 12pt apart; metric values 13/16.
+const METRIC_VALUE_GAP = 6;
+
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   row: {
-    gap: 12,
-    marginLeft: 16,
-    marginRight: 14,
-    paddingBottom: 20,
+    ...getPerpsProInfoCardStyle(colors2024, isLight),
+    gap: 8,
+    marginBottom: 12,
+    marginHorizontal: 12,
   },
   titleRow: {
     alignItems: 'center',
@@ -857,7 +861,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     height: 16,
   },
   metricValueSpacer: {
-    height: 20,
+    height: METRIC_VALUE_GAP + 16,
   },
   rightMetricLabelOverlay: {
     alignItems: 'flex-end',
@@ -894,16 +898,16 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '500',
     lineHeight: 16,
-    marginTop: 4,
+    marginTop: METRIC_VALUE_GAP,
   },
   marginValueRow: {
     alignItems: 'center',
     flexDirection: 'row',
     gap: 4,
-    marginTop: 4,
+    marginTop: METRIC_VALUE_GAP,
   },
   marginValue: {
     ...PERPS_PRO_NUMBER_STYLE,
@@ -911,7 +915,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     minWidth: 0,
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '500',
     lineHeight: 16,
   },
@@ -993,22 +997,24 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   actions: {
     flexDirection: 'row',
     gap: 8,
+    paddingBottom: 4,
+    paddingTop: 8,
   },
   action: {
     alignItems: 'center',
-    backgroundColor: colors2024['neutral-bg-2'],
+    backgroundColor: colors2024['neutral-bg-5'],
     borderRadius: 6,
     flex: 1,
     justifyContent: 'center',
-    minHeight: 34,
+    minHeight: 32,
     paddingHorizontal: 8,
-    paddingVertical: 8,
+    paddingVertical: 4,
   },
   actionPressed: {
     opacity: 0.8,
   },
   actionText: {
-    color: colors2024['neutral-title-1'],
+    color: colors2024['neutral-body'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     fontWeight: '700',

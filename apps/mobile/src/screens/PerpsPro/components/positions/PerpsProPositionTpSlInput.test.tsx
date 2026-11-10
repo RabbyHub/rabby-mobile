@@ -70,7 +70,7 @@ describe('PerpsProPositionTpSlInput', () => {
       StyleSheet.flatten(screen.getByTestId('field-field').props.style),
     ).toMatchObject({
       gap: 4,
-      height: 40,
+      height: 46,
       paddingHorizontal: 11,
       paddingRight: 7,
     });
@@ -81,7 +81,7 @@ describe('PerpsProPositionTpSlInput', () => {
       fontSize: 10,
       fontWeight: '500',
       lineHeight: 12,
-      top: 4,
+      top: 7,
     });
     expect(screen.getByText('63,870.7')).toBeTruthy();
     expect(
@@ -93,7 +93,7 @@ describe('PerpsProPositionTpSlInput', () => {
       fontSize: 14,
       fontWeight: '500',
       lineHeight: 18,
-      top: 18,
+      top: 21,
     });
     expect(screen.getByTestId('field-caret').props).toMatchObject({
       height: 16,
@@ -125,7 +125,7 @@ describe('PerpsProPositionTpSlInput', () => {
 
     expect(
       StyleSheet.flatten(screen.getByTestId('field-placeholder').props.style),
-    ).toMatchObject({ fontSize: 14, lineHeight: 18, top: 11 });
+    ).toMatchObject({ fontSize: 14, lineHeight: 18, top: 14 });
 
     rerender(
       <PerpsProPositionTpSlInput

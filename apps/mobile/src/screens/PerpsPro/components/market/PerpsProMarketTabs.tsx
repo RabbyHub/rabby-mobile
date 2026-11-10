@@ -1,3 +1,4 @@
+import RcMarketTabFavorite from '@/assets2024/icons/perps/PerpsProMarketTabFavorite.svg';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, {
@@ -30,6 +31,12 @@ import {
   type PerpsProTabIndicatorLayout,
 } from '../common/PerpsProTabIndicator';
 import { getPerpsProFontStyle } from '../common/perpsProVisual';
+import {
+  getPerpsProTabDividerColor,
+  getPerpsProTabIndicatorStyle,
+  getPerpsProTabTextStyle,
+  PERPS_PRO_TAB_TOKENS,
+} from '../common/perpsProTabVisual';
 
 type MarketTabItem = Readonly<{
   id: PerpsProMarketTab;
@@ -45,8 +52,13 @@ type MarketTabScrollPosition = Readonly<{
 
 const MARKET_TAB_MEDIUM_FONT_STYLE = getPerpsProFontStyle(Platform.OS, '500');
 const MARKET_TAB_BOLD_FONT_STYLE = getPerpsProFontStyle(Platform.OS, '700');
-const MARKET_TAB_GAP = 16;
-const MARKET_TAB_PADDING = 16;
+// Figma 86609:237010: 42pt strip, 12pt top inset, 14pt gaps, 20pt insets.
+const MARKET_TAB_GAP = 14;
+const MARKET_TAB_PADDING = 20;
+const MARKET_TAB_HEIGHT = 42;
+const MARKET_TAB_PADDING_TOP = 12;
+const MARKET_FAVORITES_ICON_WIDTH = 21;
+const MARKET_FAVORITES_ICON_HEIGHT = 20;
 
 type MarketTabLayout = Readonly<{
   frames: MarketTabFrames;
@@ -147,7 +159,7 @@ export const usePerpsProMarketTabLayout = ({
     for (const tab of tabs) {
       const width = widths.get(tab.id)!;
       frames[tab.id] = {
-        height: 34,
+        height: MARKET_TAB_HEIGHT,
         width,
         x: PixelRatio.roundToNearestPixel(x),
         y: 0,
@@ -228,6 +240,69 @@ const PerpsProMarketTabLabel: React.FC<{
 );
 
 PerpsProMarketTabLabel.displayName = 'PerpsProMarketTabLabel';
+
+// Figma 86609:237011 replaces the Favorites label with a fixed 21x20 star.
+const PerpsProMarketFavoritesTabIcon: React.FC<{
+  activeColor: string;
+  inactiveColor: string;
+  index: number;
+  indicatorPosition: SharedValue<number>;
+  tabCount: number;
+}> = React.memo(
+  ({ activeColor, inactiveColor, index, indicatorPosition, tabCount }) => {
+    const activeAnimatedStyle = useAnimatedStyle(() => {
+      const maximumIndex = Math.max(0, tabCount - 1);
+      const rawPosition = Number.isFinite(indicatorPosition.value)
+        ? indicatorPosition.value
+        : 0;
+      const visualIndex = Math.round(
+        Math.max(0, Math.min(maximumIndex, rawPosition)),
+      );
+      return { opacity: visualIndex === index ? 1 : 0 };
+    }, [index, indicatorPosition, tabCount]);
+
+    return (
+      <View style={favoritesIconStyles.container}>
+        <RcMarketTabFavorite
+          color={inactiveColor}
+          height={FAVORITES_STAR_HEIGHT}
+          width={FAVORITES_STAR_WIDTH}
+        />
+        <Animated.View
+          style={[favoritesIconStyles.activeLayer, activeAnimatedStyle]}>
+          <RcMarketTabFavorite
+            color={activeColor}
+            height={FAVORITES_STAR_HEIGHT}
+            width={FAVORITES_STAR_WIDTH}
+          />
+        </Animated.View>
+      </View>
+    );
+  },
+);
+
+PerpsProMarketFavoritesTabIcon.displayName = 'PerpsProMarketFavoritesTabIcon';
+
+const FAVORITES_STAR_WIDTH = 17.83;
+const FAVORITES_STAR_HEIGHT = 17.12;
+
+const favoritesIconStyles = {
+  container: {
+    alignItems: 'center' as const,
+    height: MARKET_FAVORITES_ICON_HEIGHT,
+    justifyContent: 'center' as const,
+    width: MARKET_FAVORITES_ICON_WIDTH,
+  },
+  activeLayer: {
+    alignItems: 'center' as const,
+    bottom: 0,
+    justifyContent: 'center' as const,
+    left: 0,
+    position: 'absolute' as const,
+    right: 0,
+    top: 0,
+  },
+};
 
 const labelStyles = {
   container: {
@@ -346,9 +421,8 @@ export const PerpsProMarketTabs: React.FC<{
         return [];
       }
       layouts.push({
-        // Include the 1.5pt round cap beyond each end of the text.
-        width: frame.width + 3,
-        x: frame.x - 1.5,
+        width: frame.width + PERPS_PRO_TAB_TOKENS.indicatorCapInset * 2,
+        x: frame.x - PERPS_PRO_TAB_TOKENS.indicatorCapInset,
       });
     }
     return layouts;
@@ -412,6 +486,7 @@ export const PerpsProMarketTabs: React.FC<{
           return (
             <Pressable
               key={tab.id}
+              accessibilityLabel={tab.label}
               accessibilityRole="tab"
               accessibilityState={{ selected: active }}
               onLayout={event => {
@@ -421,15 +496,25 @@ export const PerpsProMarketTabs: React.FC<{
               onPress={() => onChange(tab.id)}
               style={styles.tab}
               testID={`perps-pro-market-tab-${tab.id}`}>
-              <PerpsProMarketTabLabel
-                activeColor={colors2024['neutral-title-1']}
-                index={index}
-                inactiveColor={colors2024['neutral-secondary']}
-                indicatorPosition={indicatorPosition}
-                label={tab.label}
-                style={styles.text}
-                tabCount={tabs.length}
-              />
+              {tab.id === 'favorites' ? (
+                <PerpsProMarketFavoritesTabIcon
+                  activeColor={colors2024['orange-default']}
+                  inactiveColor={colors2024['neutral-info']}
+                  index={index}
+                  indicatorPosition={indicatorPosition}
+                  tabCount={tabs.length}
+                />
+              ) : (
+                <PerpsProMarketTabLabel
+                  activeColor={colors2024['neutral-title-1']}
+                  index={index}
+                  inactiveColor={colors2024['neutral-secondary']}
+                  indicatorPosition={indicatorPosition}
+                  label={tab.label}
+                  style={styles.text}
+                  tabCount={tabs.length}
+                />
+              )}
             </Pressable>
           );
         })}
@@ -445,15 +530,25 @@ export const PerpsProMarketTabs: React.FC<{
             importantForAccessibility="no-hide-descendants"
             pointerEvents="none"
             style={styles.extraMeasure}>
-            <NativeText
-              numberOfLines={1}
-              onLayout={event =>
-                onMeasure?.(measureTab.id, event.nativeEvent.layout.width)
-              }
-              style={[styles.text, labelStyles.measureText]}
-              testID="perps-pro-market-tab-extra-measure">
-              {measureTab.label}
-            </NativeText>
+            {measureTab.id === 'favorites' ? (
+              <View
+                onLayout={event =>
+                  onMeasure?.(measureTab.id, event.nativeEvent.layout.width)
+                }
+                style={favoritesIconStyles.container}
+                testID="perps-pro-market-tab-extra-measure"
+              />
+            ) : (
+              <NativeText
+                numberOfLines={1}
+                onLayout={event =>
+                  onMeasure?.(measureTab.id, event.nativeEvent.layout.width)
+                }
+                style={[styles.text, labelStyles.measureText]}
+                testID="perps-pro-market-tab-extra-measure">
+                {measureTab.label}
+              </NativeText>
+            )}
           </View>
         ) : null}
       </GestureHandlerScrollView>
@@ -465,13 +560,13 @@ PerpsProMarketTabs.displayName = 'PerpsProMarketTabs';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
-    height: 38,
-    marginTop: 16,
+    height: MARKET_TAB_HEIGHT,
+    marginTop: 14,
   },
   // A ScrollView border clips the underline to its padding box on Android.
-  // Paint the divider behind it without reducing the 38pt scroll viewport.
+  // Paint the divider behind it without reducing the scroll viewport.
   divider: {
-    backgroundColor: colors2024['neutral-bg-5'],
+    backgroundColor: getPerpsProTabDividerColor(colors2024),
     bottom: 0,
     height: 1,
     left: 0,
@@ -480,13 +575,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   scroll: {
     flexGrow: 0,
-    height: 38,
+    height: MARKET_TAB_HEIGHT,
   },
   content: {
     gap: MARKET_TAB_GAP,
     paddingHorizontal: MARKET_TAB_PADDING,
     position: 'relative',
-    height: 38,
+    height: MARKET_TAB_HEIGHT,
   },
   extraMeasure: {
     flexDirection: 'row',
@@ -495,21 +590,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   tab: {
     alignItems: 'center',
-    height: 34,
+    height: MARKET_TAB_HEIGHT,
     paddingHorizontal: 0,
-    paddingTop: 8,
+    paddingTop: MARKET_TAB_PADDING_TOP,
   },
-  text: {
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    fontWeight: '500',
-    lineHeight: 18,
-  },
-  indicator: {
-    backgroundColor: colors2024['neutral-body'],
-    borderRadius: 1.5,
-    bottom: -0.5,
-    height: 3,
-  },
+  text: getPerpsProTabTextStyle(colors2024),
+  indicator: getPerpsProTabIndicatorStyle(),
 }));

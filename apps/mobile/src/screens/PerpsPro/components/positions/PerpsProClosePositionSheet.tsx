@@ -1,6 +1,7 @@
 import { PERPS_PRO_INPUT_COLOR_PROPS } from '../common/perpsProInputVisual';
 import RcOrderTypeSwitch from '@/assets2024/icons/perps/PerpsProCloseOrderTypeSwitch.svg';
 import { PerpsProDialogBackdrop } from '../common/PerpsProDialogBackdrop';
+import { PERPS_PRO_DIALOG_TOKENS } from '../common/perpsProDialogVisual';
 import AutoLockView from '@/components/AutoLockView';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { Text, TextInput } from '@/components/Typography';
@@ -67,7 +68,10 @@ import { usePerpsProKeyboardInput } from '../common/usePerpsProKeyboardInput';
 import { PerpsProInputAccessory } from '../common/PerpsProInputAccessory';
 import { PerpsProDecimalTextInput } from '../trade/PerpsProDecimalTextInput';
 import { PerpsProCloseMarketTag } from './PerpsProCloseMarketTag';
-import { getPerpsProClosePositionSheetStyles } from './PerpsProClosePositionSheet.styles';
+import {
+  getPerpsProClosePositionSheetStyles,
+  PERPS_PRO_CLOSE_POSITION_SHEET_HEIGHT,
+} from './PerpsProClosePositionSheet.styles';
 
 const PerpsProCloseBottomSheetTextInput = React.forwardRef<
   TextInput,
@@ -84,7 +88,7 @@ const PerpsProCloseBottomSheetTextInput = React.forwardRef<
 PerpsProCloseBottomSheetTextInput.displayName =
   'PerpsProCloseBottomSheetTextInput';
 
-const SHEET_HEIGHT = 564;
+const SHEET_HEIGHT = PERPS_PRO_CLOSE_POSITION_SHEET_HEIGHT;
 const SheetContent = IS_ANDROID ? BottomSheetScrollView : BottomSheetView;
 
 const calculateEstimatedPnl = (
@@ -507,7 +511,7 @@ export const PerpsProClosePositionSheet: React.FC<{
                       {t(`page.perps.pro.positions.${orderType}`)}
                     </Text>
                     <RcOrderTypeSwitch
-                      color={colors2024['neutral-secondary']}
+                      color={PERPS_PRO_DIALOG_TOKENS.actionBackground}
                       height={10}
                       style={styles.orderTypeSwitch}
                       width={11}
@@ -517,7 +521,7 @@ export const PerpsProClosePositionSheet: React.FC<{
 
                 <View style={styles.amountGroup}>
                   <View style={styles.amountField}>
-                    <Text style={styles.floatingLabel}>
+                    <Text style={[styles.floatingLabel, styles.amountLabel]}>
                       {t('page.perps.pro.positions.amount')}
                     </Text>
                     <BottomSheetTextInput
@@ -562,25 +566,27 @@ export const PerpsProClosePositionSheet: React.FC<{
                       {displayUnit}
                     </Text>
                   </View>
-                  <PerpsProSlider
-                    appearance="order-dialog"
-                    maximumValue={100}
-                    minimumValue={0}
-                    onSlidingComplete={sliderHaptics.onSlidingComplete}
-                    onSlidingStart={sliderHaptics.onSlidingStart}
-                    onValueChange={value => {
-                      const roundedValue = Math.round(value);
-                      sliderHaptics.onValueChange(roundedValue);
-                      inputSourceRef.current = 'slider';
-                      discardNextSliderBackspaceChangeRef.current = false;
-                      setInputSource('slider');
-                      setPercent(roundedValue);
-                    }}
-                    pointCount={5}
-                    step={1}
-                    tone="neutral"
-                    value={sliderValue}
-                  />
+                  <View style={styles.slider}>
+                    <PerpsProSlider
+                      appearance="order-dialog"
+                      maximumValue={100}
+                      minimumValue={0}
+                      onSlidingComplete={sliderHaptics.onSlidingComplete}
+                      onSlidingStart={sliderHaptics.onSlidingStart}
+                      onValueChange={value => {
+                        const roundedValue = Math.round(value);
+                        sliderHaptics.onValueChange(roundedValue);
+                        inputSourceRef.current = 'slider';
+                        discardNextSliderBackspaceChangeRef.current = false;
+                        setInputSource('slider');
+                        setPercent(roundedValue);
+                      }}
+                      pointCount={5}
+                      step={1}
+                      tone="neutral"
+                      value={sliderValue}
+                    />
+                  </View>
                 </View>
 
                 <View

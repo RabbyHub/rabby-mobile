@@ -44,7 +44,6 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Reanimated, { runOnUI, useSharedValue } from 'react-native-reanimated';
 
-import { PerpsProAccountAssetRow } from '../components/account/PerpsProAccountAssetRow';
 import { PerpsProAccountState } from '../components/account/PerpsProAccountState';
 import { PerpsProAccountSummary } from '../components/account/PerpsProAccountSummary';
 import { PerpsProTransferSheet } from '../components/account/PerpsProTransferSheet';
@@ -125,11 +124,11 @@ import { PerpsProOrderConfirmationSheet } from '../components/trade/PerpsProOrde
 import { PerpsProTradeForm } from '../components/trade/PerpsProTradeForm';
 import { PerpsProTradeScrollBridge } from '../components/trade/PerpsProTradeScrollBridge';
 import { resolvePerpsProTradeAddFundsAction } from '../model/addFunds';
-import type { PerpsAccountAssetRow } from '../model/account';
 import {
   getPerpsProColumnLayout,
   PERPS_PRO_MAIN_COLUMN_HEIGHT,
 } from '../model/layout';
+import type { PerpsAccountViewModel } from '../model/account';
 import type { PerpsOpenOrderViewModel } from '../model/openOrder';
 import { isRelevantOpenOrderEditPosition } from '../model/openOrderEdit';
 import type { PerpsPositionViewModel } from '../model/position';
@@ -159,8 +158,11 @@ type PerpsProSceneRow =
       state: Exclude<PerpsProAccountPanelState, 'ready'>;
       type: 'account-state';
     }
-  | { key: 'account-summary'; type: 'account-summary' }
-  | { asset: PerpsAccountAssetRow; key: string; type: 'account-asset' }
+  | {
+      account: PerpsAccountViewModel;
+      key: 'account-summary';
+      type: 'account-summary';
+    }
   | { key: 'positions-controls'; type: 'positions-controls' }
   | { key: 'positions-empty'; type: 'positions-empty' }
   | { key: string; position: PerpsPositionViewModel; type: 'position' }
@@ -901,14 +903,12 @@ export const PerpsProScene: React.FC<{
   const rowsByTab = useMemo<Record<PerpsProInfoTab, PerpsProSceneRow[]>>(() => {
     const accountRows: PerpsProSceneRow[] = [];
     if (info.accountState === 'ready') {
-      accountRows.push({ key: 'account-summary', type: 'account-summary' });
-      accountRows.push(
-        ...info.account.assets.map(asset => ({
-          asset,
-          key: `account-asset:${asset.key}`,
-          type: 'account-asset' as const,
-        })),
-      );
+      // Asset rows render inside the summary card (Figma 86609:327475).
+      accountRows.push({
+        account: info.account,
+        key: 'account-summary',
+        type: 'account-summary',
+      });
     } else {
       accountRows.push({
         key: 'account-state',
@@ -1092,17 +1092,11 @@ export const PerpsProScene: React.FC<{
         case 'account-summary':
           return (
             <PerpsProAccountSummary
-              account={info.account}
+              account={item.account}
               onDeposit={openDeposit}
-              onWithdraw={openWithdraw}
-            />
-          );
-        case 'account-asset':
-          return (
-            <PerpsProAccountAssetRow
-              asset={item.asset}
               onSwap={openSwap}
               onTransfer={transfer.open}
+              onWithdraw={openWithdraw}
             />
           );
         case 'positions-controls':

@@ -277,9 +277,8 @@ describe.each(['light', 'dark'] as const)(
         .find(node => StyleSheet.flatten(node.props.style)?.width === 202);
       expect(inputCard).toBeDefined();
       const cardStyle = StyleSheet.flatten(inputCard?.props.style);
-      expect(cardStyle.backgroundColor).toBe(
-        colors[mode === 'light' ? 'neutral-bg-1' : 'neutral-bg-2'],
-      );
+      // Figma 86609:303158: bg-5 field on the bg-1 input dialog.
+      expect(cardStyle.backgroundColor).toBe(colors['neutral-bg-5']);
       expect(cardStyle.backgroundColor).not.toBe(
         StyleSheet.flatten(
           screen.getByTestId('leverage-sheet').props.backgroundStyle,
@@ -289,7 +288,7 @@ describe.each(['light', 'dark'] as const)(
         StyleSheet.flatten(
           screen.getByTestId('perps-pro-leverage-increment').props.style,
         ).backgroundColor,
-      ).toBe(colors['neutral-bg-5']);
+      ).toBe(colors['neutral-line']);
       expect(
         StyleSheet.flatten(screen.getByText('Adjust Leverage').props.style),
       ).toMatchObject({

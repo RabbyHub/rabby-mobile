@@ -12,6 +12,7 @@ import {
   PERPS_PRO_DIALOG_TOKENS,
   resolvePerpsProDialogCardBackground,
 } from '../common/perpsProDialogVisual';
+import { PerpsProSectionTitle } from '../common/PerpsProSectionTitle';
 import { PerpsProDottedUnderlineText } from '../common/PerpsProDottedUnderlineText';
 import { PerpsProPositionTpSlCancelAction } from './PerpsProPositionTpSlCancelAction';
 
@@ -98,22 +99,14 @@ export const PerpsProPositionTpSlOrderList: React.FC<{
                 key={kind}
                 style={index < groups.length - 1 ? styles.dividedGroup : null}>
                 <View style={styles.groupHeading}>
-                  <View style={styles.groupTitle}>
-                    <View
-                      style={
-                        kind === 'takeProfit'
-                          ? styles.takeProfitBar
-                          : styles.stopLossBar
-                      }
-                    />
-                    <Text style={styles.groupTitleText}>
-                      {t(
-                        kind === 'takeProfit'
-                          ? 'page.perps.pro.positionTpsl.takeProfit'
-                          : 'page.perps.pro.positionTpsl.stopLoss',
-                      )}
-                    </Text>
-                  </View>
+                  <PerpsProSectionTitle
+                    tone={kind === 'takeProfit' ? 'positive' : 'negative'}>
+                    {t(
+                      kind === 'takeProfit'
+                        ? 'page.perps.pro.positionTpsl.takeProfit'
+                        : 'page.perps.pro.positionTpsl.stopLoss',
+                    )}
+                  </PerpsProSectionTitle>
                   {scope === 'partial' ? (
                     <Text style={styles.coverage}>
                       {t('page.perps.pro.positionTpsl.positionSizeCoverage', {
@@ -403,26 +396,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     flexDirection: 'row',
     height: 20,
     justifyContent: 'space-between',
-  },
-  groupTitle: { alignItems: 'center', flexDirection: 'row', gap: 6 },
-  takeProfitBar: {
-    backgroundColor: colors2024['green-default'],
-    borderRadius: 2,
-    height: 14,
-    width: 4,
-  },
-  stopLossBar: {
-    backgroundColor: colors2024['red-default'],
-    borderRadius: 2,
-    height: 14,
-    width: 4,
-  },
-  groupTitleText: {
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    fontWeight: '700',
-    lineHeight: 20,
   },
   coverage: {
     ...PERPS_PRO_NUMBER_STYLE,
