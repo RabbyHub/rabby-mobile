@@ -9210,11 +9210,11 @@ __metadata:
 
 "@onekeyfe/react-native-ble-utils@patch:@onekeyfe/react-native-ble-utils@npm%3A0.1.9#~/.yarn/patches/@onekeyfe-react-native-ble-utils-npm-0.1.9-thread-safety.patch":
   version: 0.1.9
-  resolution: "@onekeyfe/react-native-ble-utils@patch:@onekeyfe/react-native-ble-utils@npm%3A0.1.9#~/.yarn/patches/@onekeyfe-react-native-ble-utils-npm-0.1.9-thread-safety.patch::version=0.1.9&hash=8e7196"
+  resolution: "@onekeyfe/react-native-ble-utils@patch:@onekeyfe/react-native-ble-utils@npm%3A0.1.9#~/.yarn/patches/@onekeyfe-react-native-ble-utils-npm-0.1.9-thread-safety.patch::version=0.1.9&hash=ca57e5"
   peerDependencies:
     react: "*"
     react-native: "*"
-  checksum: 10/b429d1f53ec609971e4ebfbc098000f3760339e8529d7309b55c4714c27bd63ff5631cffa95b47040685cfd4b16f40799ee5bd22649c43b34dfcc2a82968a6a3
+  checksum: 10/7cbd428e5b8e7bcc7e49c4497cf55af9f98ef34218da1465c042f3440fec1608b1709c15f23cc2ed4ce028a4cc32c20e3f8cde7b6ba776e44e8abee6244b3a4f
   languageName: node
   linkType: hard
 
