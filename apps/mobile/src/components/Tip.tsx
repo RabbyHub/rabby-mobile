@@ -110,6 +110,14 @@ const TipBase = <T extends PressableComponent = 'RNPressable'>({
   const { colors, styles } = useThemeStyles(getStyle);
 
   const { on, turnOn, turnOff } = useSwitch();
+  const hasContent =
+    typeof content === 'string' ? content.trim().length > 0 : !!content;
+
+  useEffect(() => {
+    if (!hasContent) {
+      turnOff();
+    }
+  }, [hasContent, turnOff]);
 
   useEffect(() => {
     destroyListeners.add(turnOff);
@@ -173,6 +181,9 @@ const TipBase = <T extends PressableComponent = 'RNPressable'>({
   const onPress = pressableProps?.onPress;
   const handleOnPress = useCallback<PressableComProps<T>['onPress'] & object>(
     evt => {
+      if (!hasContent) {
+        return;
+      }
       if (typeof onPress === 'function') {
         onPress?.({ event: evt, turnOn, turnOff });
         return;
@@ -180,12 +191,11 @@ const TipBase = <T extends PressableComponent = 'RNPressable'>({
 
       turnOn();
     },
-    [onPress, turnOff, turnOn],
+    [hasContent, onPress, turnOff, turnOn],
   );
 
   const tooltipNode = (
     <Tooltip
-      isVisible={on}
       placement="top"
       backgroundColor={'transparent'}
       measureAnchor={measureAnchor}
@@ -196,6 +206,7 @@ const TipBase = <T extends PressableComponent = 'RNPressable'>({
       arrowSize={_arrowSize}
       modalComponent={modalGateId ? TipModalWithGate : modalComponent}
       {...rest}
+      isVisible={hasContent && (rest.isVisible ?? on)}
       contentStyle={StyleSheet.flatten([
         styles.tooltipContent,
         contentStyle,
@@ -210,6 +221,7 @@ const TipBase = <T extends PressableComponent = 'RNPressable'>({
         <PressableComponent
           hitSlop={10}
           {...pressableProps}
+          disabled={!hasContent || pressableProps?.disabled}
           // @ts-expect-error
           style={StyleSheet.flatten([pressableProps?.style])}
           // @ts-expect-error
