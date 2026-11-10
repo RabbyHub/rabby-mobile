@@ -156,6 +156,9 @@ function ReceiveScreen(): JSX.Element {
   useLayoutEffect(() => {
     setNavigationOptions({
       headerTitle: () => headerTitle,
+      // The wallet/alias title belongs to the leading edge. Centring it left a
+      // huge gap between the native back item and the wallet icon on iOS.
+      headerTitleAlign: 'left',
     });
   }, [setNavigationOptions, headerTitle]);
 
@@ -333,9 +336,11 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   headerTitle: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     gap: 4,
-    maxWidth: SCREEN_WIDTH - 100,
+    // Compensate the native back item's 44pt layout width.
+    marginLeft: -20,
+    maxWidth: SCREEN_WIDTH - 120,
   },
   screen: {
     backgroundColor: colors2024['neutral-bg-0'],
