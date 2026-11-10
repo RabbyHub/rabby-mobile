@@ -55,10 +55,7 @@ import {
   PerpsProFundingOverlay,
   type PerpsProFundingMode,
 } from '../components/account/PerpsProFundingOverlay';
-import {
-  getPerpsProKlinePanelHeight,
-  PerpsProKlineSheet,
-} from '../components/chart/PerpsProKlineSheet';
+import { PerpsProKlineSheet } from '../components/chart/PerpsProKlineSheet';
 import { registerPerpsProKeyboardTradeScroll } from '../components/common/perpsProKeyboardSession';
 import { PerpsProEmptyState } from '../components/common/PerpsProEmptyState';
 import { PerpsProFieldExplanationProvider } from '../components/common/PerpsProFieldExplanationProvider';
@@ -734,10 +731,6 @@ export const PerpsProScene: React.FC<{
           viewportHeight: scrollViewportHeight,
         })
       : null;
-  // The docked K-line covers the viewport bottom; keep every row reachable.
-  const klinePanelInset = klineOpen
-    ? getPerpsProKlinePanelHeight(safeAreaInsets.bottom)
-    : 0;
   const makeScrollContentStyle = useCallback(
     (populated: boolean): ViewStyle[] => [
       styles.scrollContent,
@@ -745,17 +738,19 @@ export const PerpsProScene: React.FC<{
         ? [scrollContentMinimumHeightStyle]
         : []),
       {
+        // The docked K-line is an overlay; changing this padding when it opens
+        // or closes reflows the list (closing it shifted the Account tab and
+        // revealed a row that was out of view). Keep the padding stable.
         paddingBottom:
-          (populated && populatedInfoBottomPadding != null
+          populated && populatedInfoBottomPadding != null
             ? populatedInfoBottomPadding
-            : 32) + klinePanelInset,
+            : 32,
       },
     ],
     [
       styles.scrollContent,
       scrollContentMinimumHeightStyle,
       populatedInfoBottomPadding,
-      klinePanelInset,
     ],
   );
   const accountContentStyle = useMemo(
