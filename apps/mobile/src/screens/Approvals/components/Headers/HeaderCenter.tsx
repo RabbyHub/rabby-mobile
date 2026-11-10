@@ -7,7 +7,7 @@ import { KeyringAccountWithAlias } from '@/hooks/account';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { Text } from '@/components/Typography';
 import { ellipsisAddress } from '@/utils/address';
-import { IS_ANDROID } from '@/core/native/utils';
+import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 
 interface IProps {
   isSearching?: boolean;
@@ -20,7 +20,9 @@ interface IProps {
 export const HeaderCenter = (props: IProps) => {
   const { styles } = useTheme2024({ getStyle });
   return (
-    <View style={[props.isSearching && styles.container]}>
+    <View
+      pointerEvents="box-none"
+      style={[styles.header, props.isSearching && styles.headerSearching]}>
       {props.isSearching ? (
         <TopSearch value={props.inputValue} onChange={props.inputOnChange} />
       ) : (
@@ -44,18 +46,33 @@ export const HeaderCenter = (props: IProps) => {
 };
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
+const HEADER_CONTENT_WIDTH = SCREEN_WIDTH - 100;
+// The native title container is not centred on the screen: iOS lays it out
+// after the leading back item (+65pt including the bar inset), Android ends it
+// short of the trailing action (-20pt). Reserve the missing space on the
+// opposite edge so the inner centring box is symmetric about the screen centre.
+const HEADER_SIDE_RESERVE = IS_IOS
+  ? { paddingRight: 65 }
+  : IS_ANDROID
+  ? { paddingLeft: 20 }
+  : {};
+
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
-  container: {
-    marginLeft: 8,
-    width: '100%',
+  header: {
+    width: HEADER_CONTENT_WIDTH,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...HEADER_SIDE_RESERVE,
+  },
+  headerSearching: {
+    flexDirection: 'row',
   },
   title: {
     gap: 8,
     flexDirection: 'row',
-    // Compensate the native back item's 44pt layout width so the wallet icon
-    // sits at the same leading edge as the old JS header.
-    marginLeft: IS_ANDROID ? 0 : -20,
-    maxWidth: SCREEN_WIDTH - 120,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 1,
   },
   titleText: {
     color: colors2024['neutral-title-1'],
@@ -63,6 +80,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontSize: 20,
     fontFamily: 'SF Pro Rounded',
     lineHeight: 24,
+    textAlign: 'center',
     flexShrink: 1,
   },
   walletIcon: {

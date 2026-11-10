@@ -13,7 +13,10 @@ export const HeaderRight = (props: IProps) => {
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   return (
-    <CustomTouchableOpacity as="RNGHTouchableOpacity" onPress={props.onTap}>
+    <CustomTouchableOpacity
+      as="RNGHTouchableOpacity"
+      style={styles.button}
+      onPress={props.onTap}>
       {props.isSearching ? (
         <Text style={styles.text}>{t('global.cancel')}</Text>
       ) : (
@@ -23,6 +26,12 @@ export const HeaderRight = (props: IProps) => {
   );
 };
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
+  // Keep the trailing action the same minimum width as the native back item.
+  button: {
+    minWidth: 44,
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+  },
   text: {
     fontFamily: 'SF Pro Rounded',
     fontSize: 16,
