@@ -47,6 +47,12 @@ push the signed package to the CI/CD Lark group after signing. Without it, the
 package is signed and published to the regression CDN but no Lark message is
 sent.
 
+The signing workflow only accepts artifacts whose SHA-256 matches the value
+recorded by fe-opcode, only downloads from the sign-only broker URL, and
+refuses packages built from a dirty source tree. Pass `--source-clean` to
+`publish.mjs` / `one-shot.mjs` only when you intentionally build from a dirty
+tree.
+
 The same flow is available from the `仅签名打包` page in the fe-opcode
 dashboard, including the Lark notification toggle.
 
@@ -97,3 +103,9 @@ node apps/mobile/scripts/sign-only/one-shot.mjs \
 
 `OPFE_SIGN_ONLY_PROXY` works as the environment-variable equivalent. The proxy
 must accept HTTP `CONNECT`; credentials in the URL are supported.
+
+Run the proxy upload test with:
+
+```bash
+yarn sign-only:test
+```
