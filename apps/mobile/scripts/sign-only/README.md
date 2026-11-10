@@ -103,8 +103,8 @@ sets the key partition list, and removes stale same-name provisioning profiles
 from both `~/Library/MobileDevice/Provisioning Profiles` and Xcode's
 `~/Library/Developer/Xcode/UserData/Provisioning Profiles` cache. The login
 keychain is hidden from codesign for the job and the original search list is
-restored afterwards. `macos_machine_location` selects `mobile` (default) or
-`mobile-local`.
+restored afterwards. `macos_machine_location` selects `mobile-local` (default)
+or `mobile`.
 
 ## Artifact download proxy
 

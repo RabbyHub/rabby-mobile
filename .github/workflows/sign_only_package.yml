@@ -44,7 +44,7 @@ on:
         options:
           - 'mobile'
           - 'mobile-local'
-        default: 'mobile'
+        default: 'mobile-local'
 
 # The job only needs to read the repository; signing credentials are passed as
 # step-scoped secrets below.
@@ -163,11 +163,13 @@ jobs:
           SIGN_ONLY_DOWNLOAD_PROXY: ${{ vars.SIGN_ONLY_DOWNLOAD_PROXY }}
         run: |
           if [ -n "${SIGN_ONLY_DOWNLOAD_PROXY:-}" ]; then
-            curl --http1.1 -fL --retry 5 --retry-delay 2 --connect-timeout 30 \
+            curl --http1.1 -fL -C - --retry 5 --retry-delay 2 \
+              --connect-timeout 30 --speed-time 30 --speed-limit 1024 \
               --proxy "$SIGN_ONLY_DOWNLOAD_PROXY" \
               -o "$RUNNER_TEMP/sign-only.apk" "$ARTIFACT_URL"
           else
-            curl --http1.1 -fL --retry 5 --retry-delay 2 --connect-timeout 30 \
+            curl --http1.1 -fL -C - --retry 5 --retry-delay 2 \
+              --connect-timeout 30 --speed-time 30 --speed-limit 1024 \
               -o "$RUNNER_TEMP/sign-only.apk" "$ARTIFACT_URL"
           fi
           echo "$ARTIFACT_SHA256  $RUNNER_TEMP/sign-only.apk" | sha256sum -c -
@@ -248,7 +250,7 @@ jobs:
     runs-on:
       - self-hosted
       - macOS
-      - ${{ inputs.macos_machine_location || vars.RABBY_MOBILE_SIGN_ONLY_IOS_RUNNER || 'mobile' }}
+      - ${{ inputs.macos_machine_location || vars.RABBY_MOBILE_SIGN_ONLY_IOS_RUNNER || 'mobile-local' }}
     env:
       NODE_OPTIONS: '--max_old_space_size=12288'
       XCODE_VER: '27.1'
@@ -337,11 +339,13 @@ jobs:
         run: |
           mkdir -p "$RUNNER_TEMP/sign-only-ios-input"
           if [ -n "${SIGN_ONLY_DOWNLOAD_PROXY:-}" ]; then
-            curl --http1.1 -fL --retry 5 --retry-delay 2 --connect-timeout 30 \
+            curl --http1.1 -fL -C - --retry 5 --retry-delay 2 \
+              --connect-timeout 30 --speed-time 30 --speed-limit 1024 \
               --proxy "$SIGN_ONLY_DOWNLOAD_PROXY" \
               -o "$RUNNER_TEMP/sign-only-ios.zip" "$ARTIFACT_URL"
           else
-            curl --http1.1 -fL --retry 5 --retry-delay 2 --connect-timeout 30 \
+            curl --http1.1 -fL -C - --retry 5 --retry-delay 2 \
+              --connect-timeout 30 --speed-time 30 --speed-limit 1024 \
               -o "$RUNNER_TEMP/sign-only-ios.zip" "$ARTIFACT_URL"
           fi
           echo "$ARTIFACT_SHA256  $RUNNER_TEMP/sign-only-ios.zip" | shasum -a 256 -c -
