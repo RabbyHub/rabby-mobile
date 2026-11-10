@@ -11,6 +11,11 @@
  * `workflow_dispatch` only works once sign_only_package.yml is on the default
  * branch. Until then this script bakes the inputs into a temporary branch and
  * uses the workflow's push trigger, then deletes the branch.
+ *
+ * `--workflow-ref <branch>` dispatches that branch's copy of the workflow
+ * instead of the ref that the fe-opcode prepare response suggests (currently
+ * `develop`). Use it for the weekly `tmp/YYYYMMDD` release branch, which is
+ * where the mobile-local sign-only wiring lands before it reaches `develop`.
  */
 
 import { execFileSync, spawnSync } from 'node:child_process';
@@ -109,6 +114,7 @@ function parseArgs(argv) {
     serviceUrl: '',
     json: false,
     proxy: '',
+    workflowRef: '',
   };
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
@@ -146,6 +152,9 @@ function parseArgs(argv) {
       case '--proxy':
         args.proxy = argv[++i] || '';
         break;
+      case '--workflow-ref':
+        args.workflowRef = argv[++i] || '';
+        break;
       default:
         fail(`Unknown argument: ${arg}`);
     }
@@ -162,7 +171,19 @@ function parseArgs(argv) {
     process.env.OPFE_SIGN_ONLY_SERVICE_URL ||
     DEFAULT_SERVICE_URL;
   args.proxy = args.proxy || process.env.OPFE_SIGN_ONLY_PROXY || '';
+  assertWorkflowRef(args.workflowRef);
   return args;
+}
+
+function assertWorkflowRef(ref) {
+  if (!ref) return;
+  const invalid =
+    ref.startsWith('-') ||
+    ref.includes('..') ||
+    ref.endsWith('/') ||
+    ref.endsWith('.lock') ||
+    !/^[A-Za-z0-9._/-]+$/.test(ref);
+  if (invalid) fail(`--workflow-ref is not a valid branch name: ${ref}`);
 }
 
 function resolveToken(args) {
@@ -273,9 +294,13 @@ function hasDispatchableWorkflow(rootDir) {
   }
 }
 
-function dispatchWorkflow(repo, payload) {
+export function resolveDispatchRef(workflowRef, payloadRef) {
+  return workflowRef || payloadRef || 'develop';
+}
+
+function dispatchWorkflow(repo, payload, workflowRef = '') {
   const workflow = payload.workflow;
-  const ref = workflow.ref || 'develop';
+  const ref = resolveDispatchRef(workflowRef, workflow.ref);
   const args = [
     'workflow',
     'run',
@@ -481,16 +506,23 @@ async function runPlatform(platform, args, rootDir, appDir, repo) {
 
   let trigger;
   if (args.trigger === 'dispatch') {
-    trigger = dispatchWorkflow(repo, payload);
+    trigger = dispatchWorkflow(repo, payload, args.workflowRef);
   } else if (args.trigger === 'push') {
     const branch = `test/sign-only-${platform}-${Date.now().toString(36)}`;
     trigger = bakeWorkflow(payload, branch, rootDir);
+  } else if (args.workflowRef) {
+    // An explicit ref always means `workflow_dispatch`: that branch carries
+    // its own workflow copy, so there is nothing to bake into a push branch.
+    trigger = dispatchWorkflow(repo, payload, args.workflowRef);
   } else if (hasDispatchableWorkflow(rootDir)) {
     trigger = dispatchWorkflow(repo, payload);
   } else {
     const branch = `test/sign-only-${platform}-${Date.now().toString(36)}`;
     trigger = bakeWorkflow(payload, branch, rootDir);
   }
+  console.log(
+    `[one-shot] ${platform}: triggering ${trigger.event} on ${trigger.branch}`,
+  );
 
   const workflowRun = await waitForRun({
     repo,

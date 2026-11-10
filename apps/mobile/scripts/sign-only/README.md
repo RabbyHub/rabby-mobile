@@ -47,6 +47,22 @@ push the signed package to the CI/CD Lark group after signing. Without it, the
 package is signed and published to the regression CDN but no Lark message is
 sent.
 
+The prepare response suggests `--ref 'develop'`, because that is where the
+workflow is registered. When the workflow copy you want to run only exists on
+another branch — for example the weekly `tmp/YYYYMMDD` release branch, which is
+where the mobile-local sign-only runner wiring lands first — pass the branch to
+`--workflow-ref`:
+
+```bash
+node scripts/sign-only/publish.mjs \
+  --platform ios \
+  --file .sign-only/RabbyMobile.xcarchive.zip \
+  --prepare --workflow-ref tmp/20261112
+```
+
+The printed command and the `--json` payload's `workflow.ref` then point at
+that branch.
+
 The workflow only downloads from the sign-only broker path for the same sign
 request, requires the SHA-256 passed to the workflow to match the downloaded
 artifact, and refuses packages marked as built from a dirty source tree. The
@@ -78,6 +94,16 @@ local script. Invoke the script directly when passing flags:
 ```bash
 node apps/mobile/scripts/sign-only/one-shot.mjs --platform android --no-notify-lark
 ```
+
+To dispatch a release branch's workflow copy instead of `develop`:
+
+```bash
+node apps/mobile/scripts/sign-only/one-shot.mjs --platform ios \
+  --workflow-ref tmp/20261112
+```
+
+`--workflow-ref` always uses `workflow_dispatch`, skips the temporary
+push-trigger branch, and keeps `--wait` polling on that branch.
 
 Requirements: `OPFE_SIGN_ONLY_TOKEN` (or `~/.config/opfe/sign-only-token`) and
 an authenticated `gh` (`gh auth login`).
