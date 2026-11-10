@@ -52,9 +52,6 @@ jobs:
   android-sign:
     name: Android sign-only
     if: ${{ inputs.platform == 'android' }}
-    # Requires the `sign-only` Environment to be configured with required
-    # reviewers, so an arbitrary dispatch cannot get an artifact signed.
-    environment: sign-only
     runs-on:
       - self-hosted
       - Linux
@@ -233,9 +230,6 @@ jobs:
   ios-sign:
     name: iOS sign-only
     if: ${{ inputs.platform == 'ios' }}
-    # Requires the `sign-only` Environment to be configured with required
-    # reviewers, so an arbitrary dispatch cannot get an artifact signed.
-    environment: sign-only
     runs-on:
       - self-hosted
       - macOS

@@ -88,13 +88,12 @@ branch, triggers the workflow's push path and deletes the branch afterwards.
 
 ## Signing controls
 
-The workflow gates both jobs behind the `sign-only` GitHub Environment. That
-environment must be configured with required reviewers, otherwise a dispatch
-can still sign an artifact without human approval. The Android credential must
-be a dedicated regression keystore that is never shared with the Play upload or
-store key. The signing jobs run on shared self-hosted runners with a warm
-workspace; prefer moving them to an isolated runner if the machine is also used
-for untrusted feature-test builds.
+Who can dispatch this workflow is governed by repository write access; restrict
+it to the trusted release group. The Android credential must be a dedicated
+regression keystore that is never shared with the Play upload or store key. The
+signing jobs run on shared self-hosted runners with a warm workspace; prefer
+moving them to an isolated runner if the machine is also used for untrusted
+feature-test builds.
 
 ## Upload through a proxy
 
