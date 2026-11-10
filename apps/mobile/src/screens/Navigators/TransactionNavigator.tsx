@@ -137,6 +137,9 @@ export default function TransactionNavigator() {
         component={RegressionSendScreen}
         options={mergeScreenOptions({
           title: 'Send',
+          unstable_headerRightItems: IS_IOS
+            ? () => [{ type: 'spacing', spacing: 44 }]
+            : undefined,
           headerTitleStyle: {
             color: colors2024['neutral-title-1'],
             ...RoundedFontStyles.heavy,
@@ -149,6 +152,9 @@ export default function TransactionNavigator() {
         component={RegressionMultiSendScreen}
         options={mergeScreenOptions({
           title: 'Send',
+          unstable_headerRightItems: IS_IOS
+            ? () => [{ type: 'spacing', spacing: 44 }]
+            : undefined,
           headerTitleStyle: {
             color: colors2024['neutral-title-1'],
             ...RoundedFontStyles.heavy,
@@ -161,6 +167,9 @@ export default function TransactionNavigator() {
         component={SendNFTScreen}
         options={mergeScreenOptions({
           title: 'Send',
+          unstable_headerRightItems: IS_IOS
+            ? () => [{ type: 'spacing', spacing: 44 }]
+            : undefined,
           headerTitleStyle: {
             color: colors2024['neutral-title-1'],
             ...RoundedFontStyles.heavy,
@@ -173,6 +182,9 @@ export default function TransactionNavigator() {
         component={RegressionReceiveScreen}
         options={mergeScreenOptions({
           title: 'Receive',
+          unstable_headerRightItems: IS_IOS
+            ? () => [{ type: 'spacing', spacing: 44 }]
+            : undefined,
           headerTitleStyle: {
             color: colors2024['neutral-title-1'],
             ...RoundedFontStyles.heavy,
