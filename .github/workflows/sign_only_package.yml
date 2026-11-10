@@ -159,10 +159,28 @@ jobs:
       - name: Use preinstalled JDK 17 and Android SDK (mobile-local)
         if: ${{ inputs.android_machine_location == 'mobile-local' }}
         run: |
-          java_home=/Library/Java/JavaVirtualMachines/jdk-17.jdk/Contents/Home
-          android_sdk=/Users/Shared/Library/Android/sdk
-          test -x "$java_home/bin/keytool"
-          test -x "$android_sdk/build-tools/35.0.0/apksigner"
+          java_home="$(/usr/libexec/java_home -v 17 2>/dev/null || true)"
+          if [ -z "$java_home" ] || [ ! -x "$java_home/bin/keytool" ]; then
+            echo "JDK 17 not found via /usr/libexec/java_home -v 17" >&2
+            exit 1
+          fi
+          android_sdk="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-}}"
+          for candidate in "$android_sdk" "$HOME/Library/Android/sdk" /Users/Shared/Library/Android/sdk; do
+            if [ -n "$candidate" ] && [ -d "$candidate/build-tools" ]; then
+              android_sdk="$candidate"
+              break
+            fi
+          done
+          if [ -z "$android_sdk" ] || [ ! -d "$android_sdk/build-tools" ]; then
+            echo "Android SDK/build-tools not found on this runner" >&2
+            exit 1
+          fi
+          build_tools="$(find "$android_sdk/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -n 1)"
+          if [ ! -x "$build_tools/apksigner" ] || [ ! -x "$build_tools/zipalign" ]; then
+            echo "zipalign/apksigner missing under $build_tools" >&2
+            exit 1
+          fi
+          echo "Using JDK $java_home and Android build-tools $build_tools"
           {
             echo "JAVA_HOME=$java_home"
             echo "ANDROID_HOME=$android_sdk"
@@ -171,7 +189,7 @@ jobs:
           {
             echo "$java_home/bin"
             echo "$android_sdk/platform-tools"
-            echo "$android_sdk/build-tools/35.0.0"
+            echo "$build_tools"
           } >> "$GITHUB_PATH"
 
       - name: Setup Android SDK
