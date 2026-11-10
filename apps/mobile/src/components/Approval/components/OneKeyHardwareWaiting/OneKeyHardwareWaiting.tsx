@@ -30,6 +30,8 @@ import useAsync from 'react-use/lib/useAsync';
 import { useUnmount } from 'ahooks';
 import { Text } from '@/components/Typography';
 import { useRetryMinPending } from '@/components/Approval/hooks/useRetryMinPending';
+import { apiOneKey } from '@/core/apis';
+import { getOneKeyErrorMessage } from '@/utils/onekeyError';
 
 interface ApprovalParams {
   address: string;
@@ -114,13 +116,27 @@ export const OneKeyHardwareWaiting = ({
 
   const cancelRef = useRef(false);
 
+  // Mirrors connectStatus for the unmount handler.
+  const waitingOnDeviceRef = useRef(true);
+
+  const releaseDevice = () => {
+    // The device may still show the confirmation screen; release it so it
+    // does not stay busy for the next request.
+    if (waitingOnDeviceRef.current) {
+      waitingOnDeviceRef.current = false;
+      apiOneKey.cancel();
+    }
+  };
+
   const handleCancel = () => {
     cancelRef.current = true;
+    releaseDevice();
     rejectApproval('user cancel');
   };
 
   useUnmount(() => {
     if (!cancelRef.current) {
+      releaseDevice();
       rejectApproval('user cancel');
     }
   });
@@ -240,7 +256,9 @@ export const OneKeyHardwareWaiting = ({
         );
         afterMinPending(() => {
           setConnectStatus(APPROVAL_STATUS_MAP.FAILED);
-          setErrorMessage(data.errorMsg);
+          setErrorMessage(
+            getOneKeyErrorMessage(data.errorMsg, t) || data.errorMsg,
+          );
         });
       }
     });
@@ -278,6 +296,10 @@ export const OneKeyHardwareWaiting = ({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [signFinishedData, isClickDone]);
+
+  React.useEffect(() => {
+    waitingOnDeviceRef.current = connectStatus === APPROVAL_STATUS_MAP.WAITING;
+  }, [connectStatus]);
 
   React.useEffect(() => {
     setVisible(true);

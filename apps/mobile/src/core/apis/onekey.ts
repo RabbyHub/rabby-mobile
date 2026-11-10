@@ -4,6 +4,7 @@ import type { OneKeyKeyring } from '@/core/keyring-bridge/onekey/onekey-keyring'
 import { keyringServiceApi } from '@/core/serviceApi/keyring';
 import { preferenceServiceApi } from '@/core/serviceApi/preference';
 import { bindOneKeyEvents } from '@/utils/onekey';
+import { getOneKeyErrorCode, isOneKeyBleSetupError } from '@/utils/onekeyError';
 import HardwareBleSdk from '@onekeyfe/hd-ble-sdk';
 import { DEVICE } from '@onekeyfe/hd-core';
 import { atom, useAtom } from 'jotai';
@@ -101,27 +102,68 @@ export async function fixConnectId(address: string, connectId: string) {
   return;
 }
 
-export async function searchDevices() {
+type SearchDevicesResult = Awaited<
+  ReturnType<OneKeyKeyring['bridge']['searchDevices']>
+>;
+
+/**
+ * Scan for OneKey devices over BLE.
+ *
+ * Each SDK scan is one short window (about 3s). Scan again while nothing is
+ * found or the scan failed for a transient reason, but stop right away on
+ * Bluetooth setup errors (off, no permission, location services off,
+ * unsupported) since scanning again cannot fix them, and when the caller no
+ * longer wants the result (e.g. the sheet was closed).
+ */
+export async function searchDevices({
+  maxAttempts = 8,
+  retryDelayMs = 1000,
+  shouldStop,
+}: {
+  maxAttempts?: number;
+  retryDelayMs?: number;
+  shouldStop?: () => boolean;
+} = {}): Promise<SearchDevicesResult> {
   const keyring = await getOneKeyKeyring();
   await keyring.init();
 
-  let retryCount = 0;
-  const MAX_RETRY_COUNT = 10;
-  const pollScan = () => {
-    return keyring.bridge.searchDevices().then(res => {
-      if (!res.success) {
-        if (retryCount >= MAX_RETRY_COUNT) {
-          return res;
-        }
-        retryCount++;
-        return new Promise(resolve => setTimeout(resolve, 1000)).then(pollScan);
-      }
+  let res = await keyring.bridge.searchDevices();
+  for (let attempt = 1; attempt < maxAttempts; attempt++) {
+    if (shouldStop?.()) {
+      break;
+    }
+    if (res.success && res.payload.length > 0) {
+      break;
+    }
+    if (!res.success && isOneKeyBleSetupError(getOneKeyErrorCode(res))) {
+      break;
+    }
+    await new Promise(resolve => setTimeout(resolve, retryDelayMs));
+    if (shouldStop?.()) {
+      break;
+    }
+    res = await keyring.bridge.searchDevices();
+  }
 
-      return res;
-    });
-  };
+  return res;
+}
 
-  return pollScan();
+/**
+ * Release the device from whatever it is waiting for (PIN, passphrase,
+ * on-device confirmation) so the next request does not hit "device busy".
+ * Safe to call when nothing is pending.
+ */
+export async function cancel() {
+  const keyring = await getOneKeyKeyring();
+  const connectId = keyring.connectId || keyring._deviceConnectId;
+  if (!connectId) {
+    return;
+  }
+  try {
+    await keyring.bridge.cancel(connectId);
+  } catch (e) {
+    console.warn('[OneKey] cancel failed', e);
+  }
 }
 
 export async function setDeviceConnectId(deviceConnectId: string) {

@@ -3,11 +3,16 @@ function setupApiOneKeyModule() {
 
   const mockKeyring = {
     init: jest.fn(async () => undefined),
+    connectId: null as string | null,
+    _deviceConnectId: undefined as string | undefined,
     bridge: {
-      searchDevices: jest.fn(async () => ({
-        success: true,
-        payload: [],
-      })),
+      searchDevices: jest.fn(
+        async (): Promise<any> => ({
+          success: true,
+          payload: [],
+        }),
+      ),
+      cancel: jest.fn(),
     },
     getAccountInfo: jest.fn(() => ({
       connectId: 'connect-id',
@@ -122,7 +127,7 @@ describe('core/apis/onekey', () => {
     const { searchDevices, mockKeyring, mockBindOneKeyEvents } =
       setupApiOneKeyModule();
 
-    await searchDevices();
+    await searchDevices({ maxAttempts: 1 });
 
     expect(mockBindOneKeyEvents).toHaveBeenCalledWith(mockKeyring);
     expect(mockKeyring.bridge.searchDevices).toHaveBeenCalled();
@@ -131,7 +136,9 @@ describe('core/apis/onekey', () => {
   it('waits for SDK initialization before scanning and retries a failed initialization', async () => {
     const { searchDevices, mockKeyring } = setupApiOneKeyModule();
     mockKeyring.init.mockRejectedValueOnce(new Error('Initialization failed'));
-    await expect(searchDevices()).rejects.toThrow('Initialization failed');
+    await expect(searchDevices({ maxAttempts: 1 })).rejects.toThrow(
+      'Initialization failed',
+    );
     expect(mockKeyring.bridge.searchDevices).not.toHaveBeenCalled();
 
     let ready!: () => void;
@@ -141,7 +148,7 @@ describe('core/apis/onekey', () => {
           ready = resolve;
         }),
     );
-    const scan = searchDevices();
+    const scan = searchDevices({ maxAttempts: 1 });
     await Promise.resolve();
     await Promise.resolve();
     expect(mockKeyring.bridge.searchDevices).not.toHaveBeenCalled();
@@ -174,5 +181,110 @@ describe('core/apis/onekey', () => {
     expect(mockKeyring.setAccountToUnlock).toHaveBeenCalledWith('0');
     expect(mockAddNewAccount).toHaveBeenCalledWith(mockKeyring);
     expect(mockInitCurrentAccount).toHaveBeenCalled();
+  });
+
+  describe('searchDevices', () => {
+    const device = { connectId: 'ble-1', name: 'Pro 2 ABCD' };
+
+    it('scans again while nothing is found and stops at the first hit', async () => {
+      const { searchDevices, mockKeyring } = setupApiOneKeyModule();
+      mockKeyring.bridge.searchDevices
+        .mockResolvedValueOnce({ success: true, payload: [] })
+        .mockResolvedValueOnce({ success: true, payload: [device] });
+
+      const res = await searchDevices({ retryDelayMs: 0 });
+
+      expect(res).toEqual({ success: true, payload: [device] });
+      expect(mockKeyring.bridge.searchDevices).toHaveBeenCalledTimes(2);
+    });
+
+    it('gives up with an empty list after maxAttempts', async () => {
+      const { searchDevices, mockKeyring } = setupApiOneKeyModule();
+
+      const res = await searchDevices({ maxAttempts: 3, retryDelayMs: 0 });
+
+      expect(res).toEqual({ success: true, payload: [] });
+      expect(mockKeyring.bridge.searchDevices).toHaveBeenCalledTimes(3);
+    });
+
+    it('retries a transient scan error', async () => {
+      const { searchDevices, mockKeyring } = setupApiOneKeyModule();
+      mockKeyring.bridge.searchDevices
+        .mockResolvedValueOnce({
+          success: false,
+          payload: { code: 700, error: 'BLE scan error' },
+        })
+        .mockResolvedValueOnce({ success: true, payload: [device] });
+
+      const res = await searchDevices({ retryDelayMs: 0 });
+
+      expect(res.success).toBe(true);
+      expect(mockKeyring.bridge.searchDevices).toHaveBeenCalledTimes(2);
+    });
+
+    it.each([701, 702, 712, 721, 722])(
+      'does not keep scanning on Bluetooth setup error %i',
+      async code => {
+        const { searchDevices, mockKeyring } = setupApiOneKeyModule();
+        mockKeyring.bridge.searchDevices.mockResolvedValue({
+          success: false,
+          payload: { code, error: 'setup' },
+        });
+
+        const res = await searchDevices({ retryDelayMs: 0 });
+
+        expect(res).toEqual({
+          success: false,
+          payload: { code, error: 'setup' },
+        });
+        expect(mockKeyring.bridge.searchDevices).toHaveBeenCalledTimes(1);
+      },
+    );
+
+    it('stops scanning once the caller no longer wants results', async () => {
+      const { searchDevices, mockKeyring } = setupApiOneKeyModule();
+      let stopped = false;
+      mockKeyring.bridge.searchDevices.mockImplementation(async () => {
+        stopped = true;
+        return { success: true, payload: [] };
+      });
+
+      await searchDevices({ retryDelayMs: 0, shouldStop: () => stopped });
+
+      expect(mockKeyring.bridge.searchDevices).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('cancel', () => {
+    it('cancels the active connectId', async () => {
+      const { cancel, mockKeyring } = setupApiOneKeyModule();
+      mockKeyring.connectId = 'active';
+      mockKeyring._deviceConnectId = 'selected';
+
+      await cancel();
+
+      expect(mockKeyring.bridge.cancel).toHaveBeenCalledWith('active');
+    });
+
+    it('falls back to the selected device before unlock', async () => {
+      const { cancel, mockKeyring } = setupApiOneKeyModule();
+      mockKeyring._deviceConnectId = 'selected';
+
+      await cancel();
+
+      expect(mockKeyring.bridge.cancel).toHaveBeenCalledWith('selected');
+    });
+
+    it('is a no-op without a device and never throws', async () => {
+      const { cancel, mockKeyring } = setupApiOneKeyModule();
+      await cancel();
+      expect(mockKeyring.bridge.cancel).not.toHaveBeenCalled();
+
+      mockKeyring.connectId = 'active';
+      mockKeyring.bridge.cancel.mockImplementation(() => {
+        throw new Error('boom');
+      });
+      await expect(cancel()).resolves.toBeUndefined();
+    });
   });
 });
