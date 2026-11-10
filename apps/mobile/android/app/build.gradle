@@ -260,11 +260,24 @@ android {
             applicationIdSuffix ".regression"
             matchingFallbacks = ['release']
         }
+        // Unsigned regression-like variant used by the sign-only workflow.
+        signonly {
+            initWith regression
+            signingConfig null
+            matchingFallbacks = ['regression', 'release']
+        }
     }
     buildTypes.each {
         it.buildConfigField 'String', 'rabbitCode', "\"$System.env.RABBY_MOBILE_CODE\""
     }
     sourceSets {
+        // The sign-only variant must keep the regression identity (name, icon,
+        // deep links); build types do not inherit another build type's source
+        // set, so point it at the regression resources explicitly.
+        signonly {
+            res.srcDirs += "src/regression/res"
+            manifest.srcFile "src/regression/AndroidManifest.xml"
+        }
         main {
             assets.srcDir generatedBuildInfoAssetsDir
             if (isNewArchitectureEnabled()) {
@@ -282,6 +295,16 @@ android {
 tasks.configureEach {
     if (name == "preBuild" || (name.startsWith("merge") && name.endsWith("Assets"))) {
         dependsOn(generateRabbyBuildInfo)
+    }
+}
+
+// The signonly build type reuses the regression identity, but the Google
+// Services plugin resolves google-services.json by the literal build-type
+// name. Point the signonly task at the already-tracked regression file instead
+// of committing a second plaintext copy of the same client configuration.
+gradle.projectsEvaluated {
+    tasks.matching { it.name == "processSignonlyGoogleServices" }.configureEach {
+        it.googleServicesJsonFiles.set([file("src/regression/google-services.json")])
     }
 }
 
