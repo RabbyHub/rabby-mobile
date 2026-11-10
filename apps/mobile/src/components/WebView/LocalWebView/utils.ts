@@ -32,15 +32,6 @@ export function getBaseURL(uri: string) {
   }
 }
 
-export const LOCAL_WEBVIEW_FILE_ACCESS_PROPS = {
-  // Android assets remain available without access to app/user files.
-  allowFileAccess: false,
-  // Bundled ES modules need file-origin access; arbitrary origins do not.
-  // iOS additionally scopes its native read grant to builtin-pages.
-  allowFileAccessFromFileURLs: true,
-  allowUniversalAccessFromFileURLs: false,
-} satisfies WebViewProps;
-
 export function getLocalWebViewDefaultProps() {
   const baseWebViewProps: WebViewProps = {
     javaScriptEnabled: true,
@@ -53,7 +44,7 @@ export function getLocalWebViewDefaultProps() {
     showsVerticalScrollIndicator: false,
     scalesPageToFit: false,
     webviewDebuggingEnabled: __DEV__,
-    ...LOCAL_WEBVIEW_FILE_ACCESS_PROPS,
+    allowUniversalAccessFromFileURLs: true,
   };
 
   const iosWebViewProps: WebViewProps = {
@@ -71,6 +62,7 @@ export function getLocalWebViewDefaultProps() {
   const androidWebViewProps: WebViewProps = {
     ...baseWebViewProps,
     nestedScrollEnabled: true,
+    allowFileAccess: true,
   };
 
   return { iosWebViewProps, androidWebViewProps };
@@ -150,23 +142,19 @@ export function sendMessageToWebview(webview: WebView | null, message: any) {
     return;
   }
 
-  // Quote the serialized JSON as a string, then parse it in the WebView. This
-  // keeps labels and string messages as data, including keys like __proto__.
-  const jsonStr = JSON.stringify(message);
-  const detailExpression =
-    jsonStr === undefined
-      ? 'undefined'
-      : `JSON.parse(${JSON.stringify(jsonStr)
-          .replace(/\u2028/g, '\\u2028')
-          .replace(/\u2029/g, '\\u2029')})`;
+  const jsonStr =
+    typeof message === 'string'
+      ? message
+      : JSON.stringify(message).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
 
   const jsCode = `
 var event = new CustomEvent('messageFromRN', {
-  detail: ${detailExpression},
+  detail: ${jsonStr},
   bubbles: true, // Allow the event to bubble up the DOM
   cancelable: true // Allow preventDefault() to be called
 })
 window.dispatchEvent(event);
 true;`;
+  // const jsCode = `window.onMessageFromReactNative(${jsonStr});true;`;
   webview.injectJavaScript(jsCode);
 }

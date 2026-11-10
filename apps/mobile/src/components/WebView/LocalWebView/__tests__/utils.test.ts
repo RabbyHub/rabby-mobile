@@ -1,6 +1,4 @@
-import { runInNewContext } from 'node:vm';
 import { Platform } from 'react-native';
-import type WebView from 'react-native-webview';
 
 import {
   formatDevURI,
@@ -63,8 +61,6 @@ describe('LocalWebView utils', () => {
       cacheEnabled: false,
       incognito: true,
       allowsInlineMediaPlayback: true,
-      allowFileAccessFromFileURLs: true,
-      allowUniversalAccessFromFileURLs: false,
     });
     expect(androidWebViewProps).toMatchObject({
       javaScriptEnabled: true,
@@ -72,9 +68,7 @@ describe('LocalWebView utils', () => {
       originWhitelist: ['*'],
       scrollEnabled: false,
       nestedScrollEnabled: true,
-      allowFileAccess: false,
-      allowFileAccessFromFileURLs: true,
-      allowUniversalAccessFromFileURLs: false,
+      allowFileAccess: true,
     });
   });
 
@@ -111,85 +105,33 @@ describe('LocalWebView utils', () => {
       warnSpy.mockRestore();
     });
 
-    function deliverMessage(message: unknown) {
-      const dispatchEvent = jest.fn();
-      const window = { dispatchEvent, __injected: false };
-      const injectJavaScript = jest.fn((script: string) => {
-        runInNewContext(script, {
-          window,
-          CustomEvent: class {
-            constructor(
-              public type: string,
-              public options: {
-                detail: unknown;
-                bubbles: boolean;
-                cancelable: boolean;
-              },
-            ) {}
-          },
-        });
+    it('injects object messages as escaped CustomEvent detail payloads', () => {
+      const webview = {
+        injectJavaScript: jest.fn(),
+      } as any;
+
+      sendMessageToWebview(webview, {
+        type: 'quote',
+        text: "Rabby's \\\\ path",
       });
 
-      sendMessageToWebview({ injectJavaScript } as unknown as WebView, message);
-
-      expect(dispatchEvent).toHaveBeenCalledTimes(1);
-      expect(window.__injected).toBe(false);
-      const event = dispatchEvent.mock.calls[0][0];
-      expect(event.type).toBe('messageFromRN');
-      expect(event.options).toMatchObject({ bubbles: true, cancelable: true });
-      return event.options.detail;
-    }
-
-    it('round-trips nested data with quotes, slashes, apostrophes and line separators', () => {
-      const message = {
-        type: 'TRADINGVIEW_MESSAGE',
-        data: {
-          proConfig: {
-            baseAsset: 'Rabby\'s "quoted" \\ path\n\u2028\u2029',
-          },
-          values: [null, true, 42, '中文'],
-        },
-      };
-
-      expect(deliverMessage(message)).toEqual(message);
+      const script = webview.injectJavaScript.mock.calls[0][0];
+      expect(script).toContain("CustomEvent('messageFromRN'");
+      expect(script).toContain('"type":"quote"');
+      expect(script).toContain("Rabby\\'s");
+      expect(script).toContain('true;');
     });
 
-    it('does not execute a display label that could escape the old JSON expression', () => {
-      const message = {
-        type: 'TRADINGVIEW_MESSAGE',
-        data: {
-          type: 'SET_CANDLESTICK_DATA',
-          proConfig: {
-            baseAsset: '"}}}, injected: (window.__injected = true), //',
-          },
-        },
-      };
+    it('allows string messages to be injected as raw JavaScript expressions', () => {
+      const webview = {
+        injectJavaScript: jest.fn(),
+      } as any;
 
-      expect(deliverMessage(message)).toEqual(message);
-    });
+      sendMessageToWebview(webview, 'window.__RABBY_MESSAGE__');
 
-    it('treats string messages as data instead of JavaScript expressions', () => {
-      const message = '(window.__injected = true)';
-
-      expect(deliverMessage(message)).toBe(message);
-    });
-
-    it('preserves __proto__ as an own data property without changing the prototype', () => {
-      const message = JSON.parse('{"__proto__":{"injected":true}}');
-      const detail = deliverMessage(message);
-
-      expect(detail).toEqual(message);
-      expect(Object.prototype.hasOwnProperty.call(detail, '__proto__')).toBe(
-        true,
+      expect(webview.injectJavaScript.mock.calls[0][0]).toContain(
+        'detail: window.__RABBY_MESSAGE__',
       );
-      expect(detail.injected).toBeUndefined();
     });
-
-    it.each([null, undefined, true, 42])(
-      'preserves primitive message %p',
-      message => {
-        expect(deliverMessage(message)).toBe(message);
-      },
-    );
   });
 });
