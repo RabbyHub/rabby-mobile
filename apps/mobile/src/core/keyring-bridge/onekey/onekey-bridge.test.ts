@@ -5,6 +5,7 @@ function setupOneKeyBridgeModule() {
   const mockOn = jest.fn();
   const mockEmit = jest.fn();
   const mockUiResponse = jest.fn();
+  const mockOpenWalletSession = jest.fn();
 
   jest.doMock('@onekeyfe/hd-ble-sdk', () => ({
     __esModule: true,
@@ -16,6 +17,7 @@ function setupOneKeyBridgeModule() {
       evmSignTypedData: jest.fn(),
       searchDevices: jest.fn(),
       getPassphraseState: jest.fn(),
+      openWalletSession: mockOpenWalletSession,
       evmGetPublicKey: jest.fn(),
       getDeviceState: jest.fn(),
       uiResponse: mockUiResponse,
@@ -64,6 +66,7 @@ function setupOneKeyBridgeModule() {
     mockOn,
     mockEmit,
     mockUiResponse,
+    mockOpenWalletSession,
   };
 }
 
@@ -84,6 +87,13 @@ describe('OneKeyBridge', () => {
     expect(mockOn).not.toHaveBeenCalled();
     await expect(bridge.init()).resolves.toBeUndefined();
     expect(mockOn).toHaveBeenCalledTimes(1);
+  });
+
+  it('wires the SDK wallet-session API to the bridge', () => {
+    const { OneKeyBridge, mockOpenWalletSession } = setupOneKeyBridgeModule();
+    const bridge = new OneKeyBridge();
+
+    expect(bridge.openWalletSession).toBe(mockOpenWalletSession);
   });
 
   it('echoes the SDK correlation when responding to device-side PIN and passphrase requests', () => {

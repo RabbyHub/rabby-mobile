@@ -1,6 +1,7 @@
-import OneKeyKeyring from './eth-onekey-keyring';
 import * as sigUtil from 'eth-sig-util';
 import * as ethUtil from 'ethereumjs-util';
+
+import OneKeyKeyring from './eth-onekey-keyring';
 
 const SIGNING_PRIVATE_KEY = Buffer.from('1'.repeat(64), 'hex');
 const SIGNING_ADDRESS = ethUtil.toChecksumAddress(
@@ -11,7 +12,18 @@ const OTHER_ADDRESS = ethUtil.toChecksumAddress(
     ethUtil.privateToAddress(Buffer.from('2'.repeat(64), 'hex')),
   ),
 );
+const SIGNING_PUBLIC_KEY = ethUtil
+  .privateToPublic(SIGNING_PRIVATE_KEY)
+  .toString('hex');
+const OTHER_PUBLIC_KEY = ethUtil
+  .privateToPublic(Buffer.from('2'.repeat(64), 'hex'))
+  .toString('hex');
 
+/**
+ * Build a mocked OneKey bridge.
+ *
+ * @returns The mocked bridge.
+ */
 function createBridge() {
   return {
     init: jest.fn(),
@@ -20,6 +32,7 @@ function createBridge() {
     evmSignTypedData: jest.fn(),
     searchDevices: jest.fn(),
     getPassphraseState: jest.fn(),
+    openWalletSession: undefined,
     evmGetPublicKey: jest.fn(),
     getDeviceState: jest.fn(),
     receivePin: jest.fn(),
@@ -29,6 +42,25 @@ function createBridge() {
   } as any;
 }
 
+/**
+ * Opt a mocked bridge into the optional wallet-session API.
+ *
+ * @param bridge - The mocked bridge.
+ * @returns The session mock.
+ */
+function mockOpenWalletSession(bridge: ReturnType<typeof createBridge>) {
+  // The bridge interface declares the session API as optional; tests opt in
+  // per case so the legacy getPassphraseState fallback stays covered.
+  // eslint-disable-next-line jest/prefer-spy-on
+  bridge.openWalletSession = jest.fn();
+  return bridge.openWalletSession as jest.Mock;
+}
+
+/**
+ * Build typed data with a null domain field.
+ *
+ * @returns Invalid typed data.
+ */
 function createTypedDataWithNullDomainValue() {
   return {
     types: {
@@ -69,6 +101,11 @@ function createTypedDataWithNullDomainValue() {
   };
 }
 
+/**
+ * Build valid EIP-712 typed data.
+ *
+ * @returns Typed data.
+ */
 function createValidTypedData() {
   return {
     types: {
@@ -95,10 +132,24 @@ function createValidTypedData() {
   };
 }
 
+/**
+ * Strip a 0x prefix from a hex string.
+ *
+ * @param value - The hex string.
+ * @returns The unprefixed hex.
+ */
 function stripHexPrefix(value: string) {
   return value.startsWith('0x') ? value.slice(2) : value;
 }
 
+/**
+ * Prepare an already-unlocked keyring for signing tests.
+ *
+ * @param args - The test fixtures.
+ * @param args.bridge - The mocked bridge.
+ * @param args.address - The account address.
+ * @returns The keyring.
+ */
 function prepareUnlockedKeyring({
   bridge,
   address = SIGNING_ADDRESS,
@@ -148,7 +199,7 @@ describe('OneKeyKeyring signTypedData', () => {
 
     resolveInit();
 
-    await expect(devicePromise).resolves.toEqual({
+    expect(await devicePromise).toStrictEqual({
       connectId: 'connect-id',
       deviceId: 'device-id',
     });
@@ -169,7 +220,7 @@ describe('OneKeyKeyring signTypedData', () => {
       });
       const keyring = new OneKeyKeyring({ bridge });
 
-      await expect(keyring.trySearchDevice()).resolves.toEqual({
+      expect(await keyring.trySearchDevice()).toStrictEqual({
         connectId: 'connect-id',
         deviceId: 'device-id',
       });
@@ -225,9 +276,11 @@ describe('OneKeyKeyring signTypedData', () => {
     });
     const keyring = prepareUnlockedKeyring({ bridge });
 
-    await expect(
-      keyring.signTypedData(SIGNING_ADDRESS, typedData, { version: 'V4' }),
-    ).resolves.toBe(signature);
+    expect(
+      await keyring.signTypedData(SIGNING_ADDRESS, typedData, {
+        version: 'V4',
+      }),
+    ).toBe(signature);
   });
 
   it('rejects typed-data signatures recovered from a different account', async () => {
@@ -264,22 +317,27 @@ describe('OneKeyKeyring unlock wallet selection', () => {
    * @param passphraseState - The wallet id returned by getPassphraseState.
    * @param status - The device status returned by getDeviceState.
    * @param status.passphraseProtection - Whether passphrase protection is on.
+   * @param options - Protocol and discovery identity overrides.
+   * @param options.protocol - The protocol reported by getDeviceState.
+   * @param options.deviceId - The identity returned by searchDevices.
    * @returns The mocked bridge and keyring.
    */
   function setup(
     passphraseState?: string,
     status?: { passphraseProtection?: boolean },
+    options: { protocol?: 'V1' | 'V2'; deviceId?: string | null } = {},
   ) {
+    const { protocol = 'V2', deviceId = null } = options;
     const bridge = createBridge();
     bridge.init.mockResolvedValue(undefined);
     bridge.searchDevices.mockResolvedValue({
       success: true,
-      payload: [{ connectId: 'connect-id', deviceId: null }],
+      payload: [{ connectId: 'connect-id', deviceId }],
     });
     bridge.getDeviceState.mockResolvedValue({
       success: true,
       payload: {
-        protocol: 'V2',
+        protocol,
         identity: { deviceId: 'device-id' },
         ...(status ? { status } : {}),
       },
@@ -295,6 +353,208 @@ describe('OneKeyKeyring unlock wallet selection', () => {
     const keyring = new OneKeyKeyring({ bridge });
     return { bridge, keyring };
   }
+
+  /**
+   * Build a successful openWalletSession response.
+   *
+   * @param walletType - The wallet selected by the user.
+   * @param walletPassphraseState - The hidden wallet id.
+   * @returns The mocked SDK response.
+   */
+  function createSession(
+    walletType: 'standard' | 'hidden',
+    walletPassphraseState: string | null,
+  ) {
+    return {
+      success: true,
+      payload: {
+        protocol: 'V2',
+        deviceId: 'device-id',
+        resumed: false,
+        walletType,
+        passphraseState: walletPassphraseState,
+      },
+    };
+  }
+
+  it('does not store a passphrase state when openWalletSession opens the standard wallet', async () => {
+    const { bridge, keyring } = setup(undefined, {
+      passphraseProtection: true,
+    });
+    mockOpenWalletSession(bridge).mockResolvedValue(
+      createSession('standard', null),
+    );
+
+    expect(await keyring.unlock()).toBe('just unlocked');
+    expect(bridge.openWalletSession).toHaveBeenCalledWith('connect-id', {
+      mode: 'select-hidden',
+    });
+    expect(bridge.getPassphraseState).not.toHaveBeenCalled();
+    expect(bridge.evmGetPublicKey).toHaveBeenCalledWith(
+      'connect-id',
+      'device-id',
+      expect.objectContaining({
+        passphraseState: undefined,
+        useEmptyPassphrase: true,
+      }),
+    );
+    expect(keyring.passphraseState).toBeUndefined();
+  });
+
+  it('stores the hidden wallet passphrase state from openWalletSession', async () => {
+    const { bridge, keyring } = setup(undefined, {
+      passphraseProtection: true,
+    });
+    mockOpenWalletSession(bridge).mockResolvedValue(
+      createSession('hidden', 'hidden-wallet-token'),
+    );
+
+    expect(await keyring.unlock()).toBe('just unlocked');
+    expect(bridge.openWalletSession).toHaveBeenCalledWith('connect-id', {
+      mode: 'select-hidden',
+    });
+    expect(bridge.evmGetPublicKey).toHaveBeenCalledWith(
+      'connect-id',
+      'device-id',
+      expect.objectContaining({
+        passphraseState: 'hidden-wallet-token',
+        useEmptyPassphrase: false,
+      }),
+    );
+    expect(keyring.passphraseState).toBe('hidden-wallet-token');
+  });
+
+  it('opens the standard wallet directly when passphrase protection is off', async () => {
+    const { bridge, keyring } = setup(undefined, {
+      passphraseProtection: false,
+    });
+    mockOpenWalletSession(bridge).mockResolvedValue(
+      createSession('standard', null),
+    );
+
+    expect(await keyring.unlock()).toBe('just unlocked');
+    expect(bridge.openWalletSession).toHaveBeenCalledTimes(1);
+    expect(bridge.openWalletSession).toHaveBeenCalledWith('connect-id', {
+      mode: 'standard',
+    });
+    expect(keyring.passphraseState).toBeUndefined();
+  });
+
+  it('retries openWalletSession with the standard wallet after a passphrase-disabled error', async () => {
+    const { bridge, keyring } = setup(undefined, {
+      passphraseProtection: true,
+    });
+    mockOpenWalletSession(bridge)
+      .mockResolvedValueOnce({
+        success: false,
+        payload: { code: 113, error: 'Passphrase disabled' },
+      })
+      .mockResolvedValueOnce(createSession('standard', null));
+
+    expect(await keyring.unlock()).toBe('just unlocked');
+    expect(bridge.openWalletSession).toHaveBeenNthCalledWith(1, 'connect-id', {
+      mode: 'select-hidden',
+    });
+    expect(bridge.openWalletSession).toHaveBeenNthCalledWith(2, 'connect-id', {
+      mode: 'standard',
+    });
+    expect(bridge.evmGetPublicKey).toHaveBeenCalledWith(
+      'connect-id',
+      'device-id',
+      expect.objectContaining({
+        passphraseState: undefined,
+        useEmptyPassphrase: true,
+      }),
+    );
+    expect(keyring.passphraseState).toBeUndefined();
+  });
+
+  it('rejects openWalletSession failures with the device error', async () => {
+    const { bridge, keyring } = setup(undefined, {
+      passphraseProtection: true,
+    });
+    mockOpenWalletSession(bridge).mockResolvedValue({
+      success: false,
+      payload: { code: 800, error: 'Device disconnected' },
+    });
+
+    await expect(keyring.unlock()).rejects.toThrow('Device disconnected');
+    expect(bridge.evmGetPublicKey).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    [{ error: 'OneKey action not supported', code: 404 }],
+    [{ error: 'Method not found', code: 'MethodNotAllowed' }],
+  ])(
+    'falls back to getPassphraseState when openWalletSession is unsupported (%p)',
+    async failure => {
+      const { bridge, keyring } = setup('hidden-wallet-token', {
+        passphraseProtection: true,
+      });
+      mockOpenWalletSession(bridge).mockResolvedValue({
+        success: false,
+        payload: failure,
+      });
+
+      expect(await keyring.unlock()).toBe('just unlocked');
+      expect(bridge.getPassphraseState).toHaveBeenCalledWith(
+        'connect-id',
+        undefined,
+      );
+      expect(keyring.passphraseState).toBe('hidden-wallet-token');
+    },
+  );
+
+  it('falls back to getPassphraseState when openWalletSession throws unsupported', async () => {
+    const { bridge, keyring } = setup('hidden-wallet-token', {
+      passphraseProtection: true,
+    });
+    const unsupported = new Error('OneKey action not supported');
+    (unsupported as { code?: string }).code = 'MethodNotAllowed';
+    mockOpenWalletSession(bridge).mockRejectedValue(unsupported);
+
+    expect(await keyring.unlock()).toBe('just unlocked');
+    expect(bridge.getPassphraseState).toHaveBeenCalledWith(
+      'connect-id',
+      undefined,
+    );
+    expect(keyring.passphraseState).toBe('hidden-wallet-token');
+  });
+
+  it('keeps using getPassphraseState on Protocol V1 even when openWalletSession exists', async () => {
+    const { bridge, keyring } = setup(
+      'hidden-wallet-token',
+      { passphraseProtection: true },
+      { protocol: 'V1' },
+    );
+    mockOpenWalletSession(bridge);
+
+    expect(await keyring.unlock()).toBe('just unlocked');
+    expect(bridge.openWalletSession).not.toHaveBeenCalled();
+    expect(bridge.getPassphraseState).toHaveBeenCalledWith(
+      'connect-id',
+      undefined,
+    );
+    expect(keyring.passphraseState).toBe('hidden-wallet-token');
+  });
+
+  it('reads passphrase protection when discovery already returned a deviceId', async () => {
+    const { bridge, keyring } = setup(
+      undefined,
+      { passphraseProtection: false },
+      { deviceId: 'device-id' },
+    );
+    mockOpenWalletSession(bridge).mockResolvedValue(
+      createSession('standard', null),
+    );
+
+    expect(await keyring.unlock()).toBe('just unlocked');
+    expect(bridge.getDeviceState).toHaveBeenCalledTimes(1);
+    expect(bridge.openWalletSession).toHaveBeenCalledWith('connect-id', {
+      mode: 'standard',
+    });
+    expect(keyring.passphraseState).toBeUndefined();
+  });
 
   it('selects the standard wallet on a V2 device with passphrase protection off', async () => {
     // Real Pro 2 firmware returns the standard-wallet session id
@@ -406,6 +666,213 @@ describe('OneKeyKeyring unlock wallet selection', () => {
     expect(bridge.evmSignMessage).toHaveBeenCalledWith(
       'connect-id',
       'device-id',
+      expect.objectContaining({
+        passphraseState: undefined,
+        useEmptyPassphrase: true,
+      }),
+    );
+  });
+});
+
+describe('OneKeyKeyring signPersonalMessage', () => {
+  it('accepts a lowercase SDK address for the same account', async () => {
+    const bridge = createBridge();
+    bridge.evmSignMessage.mockResolvedValue({
+      success: true,
+      payload: {
+        address: SIGNING_ADDRESS.toLowerCase(),
+        signature: 'beef',
+      },
+    });
+    const keyring = prepareUnlockedKeyring({ bridge });
+
+    expect(await keyring.signPersonalMessage(SIGNING_ADDRESS, '0x01')).toBe(
+      '0xbeef',
+    );
+  });
+
+  it('rejects a signature from a different account', async () => {
+    const bridge = createBridge();
+    bridge.evmSignMessage.mockResolvedValue({
+      success: true,
+      payload: {
+        address: OTHER_ADDRESS,
+        signature: 'beef',
+      },
+    });
+    const keyring = prepareUnlockedKeyring({ bridge });
+
+    await expect(
+      keyring.signPersonalMessage(SIGNING_ADDRESS, '0x01'),
+    ).rejects.toThrow('signature doesnt match the right address');
+  });
+});
+
+describe('OneKeyKeyring passphrase recovery on signing', () => {
+  const disabled = {
+    success: false,
+    payload: { code: 113, error: 'Device not opened passphrase' },
+  };
+
+  /**
+   * Prepare an unlocked keyring bound to a stale hidden-wallet session.
+   *
+   * @returns The mocked bridge and keyring.
+   */
+  function prepareStaleHiddenSession() {
+    const bridge = createBridge();
+    const keyring = prepareUnlockedKeyring({ bridge });
+    keyring.connectId = 'connect-id';
+    keyring.deviceId = 'device-id';
+    keyring.passphraseState = 'stale-wallet-state';
+    bridge.evmGetPublicKey.mockResolvedValue({
+      success: true,
+      payload: {
+        pub: SIGNING_PUBLIC_KEY,
+        node: { chain_code: '11'.repeat(32) },
+      },
+    });
+    return { bridge, keyring };
+  }
+
+  it('retries personal-sign once with the standard wallet when it owns the account', async () => {
+    const { bridge, keyring } = prepareStaleHiddenSession();
+    bridge.evmSignMessage
+      .mockResolvedValueOnce(disabled)
+      .mockResolvedValueOnce({
+        success: true,
+        payload: { address: SIGNING_ADDRESS, signature: 'beef' },
+      });
+
+    expect(await keyring.signPersonalMessage(SIGNING_ADDRESS, '0x01')).toBe(
+      '0xbeef',
+    );
+
+    expect(bridge.evmGetPublicKey).toHaveBeenCalledWith(
+      'connect-id',
+      'device-id',
+      expect.objectContaining({
+        path: "m/44'/60'/0'/0/0",
+        showOnOneKey: false,
+        chainId: 1,
+        useEmptyPassphrase: true,
+      }),
+    );
+    expect(bridge.evmSignMessage).toHaveBeenCalledTimes(2);
+    expect(bridge.evmSignMessage.mock.calls[0][2]).toStrictEqual(
+      expect.objectContaining({
+        path: "m/44'/60'/0'/0/0",
+        passphraseState: 'stale-wallet-state',
+        useEmptyPassphrase: false,
+      }),
+    );
+    expect(bridge.evmSignMessage.mock.calls[1][2]).toStrictEqual(
+      expect.objectContaining({
+        path: "m/44'/60'/0'/0/0",
+        passphraseState: undefined,
+        useEmptyPassphrase: true,
+      }),
+    );
+    expect(keyring.passphraseState).toBeUndefined();
+  });
+
+  it('does not recover after the user cancels the signing request', async () => {
+    const { bridge, keyring } = prepareStaleHiddenSession();
+    bridge.evmSignMessage.mockResolvedValue({
+      success: false,
+      payload: { code: 803, error: 'Action cancelled by user' },
+    });
+
+    await expect(
+      keyring.signPersonalMessage(SIGNING_ADDRESS, '0x01'),
+    ).rejects.toThrow('Action cancelled by user');
+
+    expect(bridge.evmGetPublicKey).not.toHaveBeenCalled();
+    expect(bridge.evmSignMessage).toHaveBeenCalledTimes(1);
+    expect(keyring.passphraseState).toBe('stale-wallet-state');
+  });
+
+  it('surfaces the original 113 error when a hidden wallet owns the account', async () => {
+    const { bridge, keyring } = prepareStaleHiddenSession();
+    bridge.evmGetPublicKey.mockResolvedValue({
+      success: true,
+      payload: {
+        pub: OTHER_PUBLIC_KEY,
+        node: { chain_code: '11'.repeat(32) },
+      },
+    });
+    bridge.evmSignMessage.mockResolvedValue(disabled);
+
+    await expect(
+      keyring.signPersonalMessage(SIGNING_ADDRESS, '0x01'),
+    ).rejects.toThrow('Device not opened passphrase');
+
+    expect(bridge.evmSignMessage).toHaveBeenCalledTimes(1);
+    expect(keyring.passphraseState).toBe('stale-wallet-state');
+  });
+
+  it('retries typed-data signing once with the standard wallet', async () => {
+    const { bridge, keyring } = prepareStaleHiddenSession();
+    const typedData = createValidTypedData();
+    const signature = sigUtil.signTypedData_v4(SIGNING_PRIVATE_KEY, {
+      data: typedData as any,
+    });
+    bridge.evmSignTypedData
+      .mockResolvedValueOnce(disabled)
+      .mockResolvedValueOnce({
+        success: true,
+        payload: { signature: stripHexPrefix(signature) },
+      });
+
+    expect(
+      await keyring.signTypedData(SIGNING_ADDRESS, typedData, {
+        version: 'V4',
+      }),
+    ).toBe(signature);
+
+    expect(bridge.evmSignTypedData).toHaveBeenCalledTimes(2);
+    expect(bridge.evmSignTypedData.mock.calls[1][2]).toStrictEqual(
+      expect.objectContaining({
+        passphraseState: undefined,
+        useEmptyPassphrase: true,
+      }),
+    );
+    expect(keyring.passphraseState).toBeUndefined();
+  });
+
+  it('retries transaction signing once with the standard wallet', async () => {
+    const { bridge, keyring } = prepareStaleHiddenSession();
+    const transaction = {
+      getChainId: () => 1,
+      to: Buffer.from('11'.repeat(20), 'hex'),
+      value: Buffer.alloc(0),
+      data: Buffer.alloc(0),
+      nonce: Buffer.alloc(0),
+      gasLimit: Buffer.from('5208', 'hex'),
+      gasPrice: Buffer.from('01', 'hex'),
+    };
+    const signedTransaction = {
+      getSenderAddress: () => Buffer.from(SIGNING_ADDRESS.slice(2), 'hex'),
+    };
+    const handleSigning = jest.fn().mockReturnValue(signedTransaction);
+    bridge.evmSignTransaction
+      .mockResolvedValueOnce(disabled)
+      .mockResolvedValueOnce({
+        success: true,
+        payload: { v: '1b', r: '11', s: '22' },
+      });
+
+    expect(
+      await keyring._signTransaction(
+        SIGNING_ADDRESS,
+        1,
+        transaction,
+        handleSigning,
+      ),
+    ).toBe(signedTransaction);
+
+    expect(bridge.evmSignTransaction).toHaveBeenCalledTimes(2);
+    expect(bridge.evmSignTransaction.mock.calls[1][2]).toStrictEqual(
       expect.objectContaining({
         passphraseState: undefined,
         useEmptyPassphrase: true,
