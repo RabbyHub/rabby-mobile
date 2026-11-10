@@ -12,6 +12,7 @@ import { usePerpsLatestTrade } from '@/hooks/perps/subscriptions/usePerpsLatestT
 import React, {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -23,6 +24,7 @@ import {
   type PerpsProOrderBookPriceSelectionSource,
 } from '../components/orderbook/PerpsProOrderBook';
 import type { PerpsProMarket } from '../model/market';
+import type { PerpsServerClockSample } from '../model/funding';
 import type { PerpsProOrderBookPriceIntent } from '../model/orderBookPriceIntent';
 import type { PerpsProTradeAmountUnit } from '../model/trade';
 import {
@@ -34,6 +36,7 @@ export const PERPS_PRO_ORDER_BOOK_RECONNECT_GRACE_MS =
   PERPS_FAST_L2_DISPLAY_CACHE_MS;
 
 export const PerpsProRealtimeOrderBook: React.FC<{
+  sceneActive?: boolean;
   amountUnit?: PerpsProTradeAmountUnit;
   enabled: boolean;
   height?: number;
@@ -48,7 +51,9 @@ export const PerpsProRealtimeOrderBook: React.FC<{
   publicationEnabled?: boolean;
   selectedTickOption: PerpsTickOption | null;
   tickOptions: PerpsTickOption[];
-}> = ({
+  viewportVisible?: boolean;
+}> = React.memo(function PerpsProRealtimeOrderBook({
+  sceneActive = true,
   amountUnit = 'quote',
   enabled,
   height,
@@ -60,8 +65,15 @@ export const PerpsProRealtimeOrderBook: React.FC<{
   publicationEnabled = enabled,
   selectedTickOption,
   tickOptions,
-}) => {
+  viewportVisible = true,
+}) {
   const [fundingDetailOpen, setFundingDetailOpen] = useState(false);
+  const sceneActiveRef = useRef(sceneActive);
+  sceneActiveRef.current = sceneActive;
+  // A visible funding sheet still needs feed clock samples, but cannot reopen
+  // publication while the owning scene is inactive or backgrounded.
+  const displayPublicationEnabled =
+    publicationEnabled && (viewportVisible || fundingDetailOpen);
   const precisionIntentGenerationRef = useRef(0);
   const marketIdentityRef = useRef(market.marketKey);
   if (marketIdentityRef.current !== market.marketKey) {
@@ -72,12 +84,12 @@ export const PerpsProRealtimeOrderBook: React.FC<{
     coin: market.canonicalCoin,
     enabled,
     precision,
-    publicationEnabled,
+    publicationEnabled: displayPublicationEnabled,
   });
   const latestTrade = usePerpsLatestTrade({
     coin: market.canonicalCoin,
     enabled,
-    publicationEnabled,
+    publicationEnabled: displayPublicationEnabled,
   });
   const priceSelectionStateRef = useRef({
     bookIdentity: fastL2.identity,
@@ -93,24 +105,94 @@ export const PerpsProRealtimeOrderBook: React.FC<{
     latestTradeStatus: latestTrade.status,
     marketKey: market.marketKey,
   };
-  const displayBook = fastL2.book;
-  const displayLatestTrade = latestTrade.trade;
+  const serverTime = Math.max(
+    fastL2.book?.time ?? 0,
+    latestTrade.trade?.time ?? 0,
+  );
+  // The clock is part of this feed snapshot, not a second React update after
+  // every book/trade publication. Keep its receive time stable between ticks.
+  const currentServerClock = useMemo(
+    () =>
+      Number.isFinite(serverTime) && serverTime > 0
+        ? {
+            marketKey: market.marketKey,
+            receivedAt: Date.now(),
+            serverTime,
+          }
+        : null,
+    [market.marketKey, serverTime],
+  );
+  // Retained Root previews may paint the last successful exact-market view,
+  // but never publish it back to a feed or turn its disabled state into ready.
+  // Keep only one committed presentation; a market/precision change drops it.
+  const presentationKey = JSON.stringify([
+    market.marketKey,
+    market.canonicalCoin,
+    precision?.nSigFigs ?? null,
+    precision?.mantissa ?? null,
+  ]);
+  const retainedPresentation = useRef<{
+    key: string;
+    book: typeof fastL2.book;
+    trade: typeof latestTrade.trade;
+    clock: PerpsServerClockSample | null;
+  } | null>(null);
+  useLayoutEffect(() => {
+    const previous =
+      retainedPresentation.current?.key === presentationKey
+        ? retainedPresentation.current
+        : null;
+    const bookReady =
+      sceneActive &&
+      enabled &&
+      fastL2.status === 'ready' &&
+      fastL2.book?.coin === market.canonicalCoin;
+    const tradeReady =
+      sceneActive &&
+      enabled &&
+      latestTrade.status === 'ready' &&
+      latestTrade.trade?.coin === market.canonicalCoin;
+    retainedPresentation.current = {
+      key: presentationKey,
+      book: bookReady ? fastL2.book : previous?.book ?? null,
+      trade: tradeReady ? latestTrade.trade : previous?.trade ?? null,
+      clock:
+        bookReady || tradeReady ? currentServerClock : previous?.clock ?? null,
+    };
+  }, [
+    currentServerClock,
+    enabled,
+    fastL2.book,
+    fastL2.status,
+    latestTrade.status,
+    latestTrade.trade,
+    market.canonicalCoin,
+    presentationKey,
+    sceneActive,
+  ]);
+  const preview =
+    !sceneActive && retainedPresentation.current?.key === presentationKey
+      ? retainedPresentation.current
+      : null;
+  const displayBook = preview ? preview.book : fastL2.book;
+  const displayLatestTrade = preview ? preview.trade : latestTrade.trade;
+  const displayClock = preview ? preview.clock : currentServerClock;
   const processedBook = useMemo(
     () => processPerpsOrderBook(displayBook),
     [displayBook],
   );
-  const serverTime = Math.max(
-    displayBook?.time ?? 0,
-    displayLatestTrade?.time ?? 0,
-  );
-  const [serverClock, setServerClock] = useState<{
-    marketKey: string;
-    receivedAt: number;
-    serverTime: number;
-  } | null>(null);
+  const openFundingDetail = useCallback(() => {
+    if (sceneActiveRef.current) {
+      setFundingDetailOpen(true);
+    }
+  }, []);
+  const closeFundingDetail = useCallback(() => setFundingDetailOpen(false), []);
 
   const startPrecisionIntent = useCallback(
     (option: PerpsTickOption) => {
+      if (!sceneActiveRef.current) {
+        return;
+      }
       if (
         option.nSigFigs === selectedTickOption?.nSigFigs &&
         option.mantissa === selectedTickOption.mantissa
@@ -130,6 +212,9 @@ export const PerpsProRealtimeOrderBook: React.FC<{
   );
   const selectTickOptionWithSnapshot = useCallback(
     (option: PerpsTickOption) => {
+      if (!sceneActiveRef.current) {
+        return;
+      }
       if (
         option.nSigFigs === selectedTickOption?.nSigFigs &&
         option.mantissa === selectedTickOption.mantissa
@@ -149,6 +234,7 @@ export const PerpsProRealtimeOrderBook: React.FC<{
         timeoutMs: PERPS_BOOK_ATOMIC_SWITCH_BUDGET_MS,
       }).then(() => {
         if (
+          sceneActiveRef.current &&
           generation === precisionIntentGenerationRef.current &&
           marketIdentityRef.current === marketKey
         ) {
@@ -168,6 +254,13 @@ export const PerpsProRealtimeOrderBook: React.FC<{
     setFundingDetailOpen(false);
   }, [market.marketKey]);
 
+  useLayoutEffect(() => {
+    if (!sceneActive) {
+      precisionIntentGenerationRef.current += 1;
+      setFundingDetailOpen(false);
+    }
+  }, [sceneActive]);
+
   useEffect(
     () => () => {
       precisionIntentGenerationRef.current += 1;
@@ -175,22 +268,6 @@ export const PerpsProRealtimeOrderBook: React.FC<{
     [],
   );
 
-  useEffect(() => {
-    if (!Number.isFinite(serverTime) || serverTime <= 0) {
-      setServerClock(current =>
-        current?.marketKey === market.marketKey ? null : current,
-      );
-      return;
-    }
-    setServerClock({
-      marketKey: market.marketKey,
-      receivedAt: Date.now(),
-      serverTime,
-    });
-  }, [market.marketKey, serverTime]);
-
-  const currentServerClock =
-    serverClock?.marketKey === market.marketKey ? serverClock : null;
   const selectCurrentBookPrice = useCallback(
     (
       price: string | null,
@@ -199,6 +276,7 @@ export const PerpsProRealtimeOrderBook: React.FC<{
     ) => {
       const current = priceSelectionStateRef.current;
       if (
+        sceneActiveRef.current &&
         source.type === 'book' &&
         source.marketKey === current.marketKey &&
         current.bookStatus === 'ready' &&
@@ -217,6 +295,7 @@ export const PerpsProRealtimeOrderBook: React.FC<{
     ) => {
       const current = priceSelectionStateRef.current;
       if (
+        sceneActiveRef.current &&
         source.type === 'latestTrade' &&
         source.marketKey === current.marketKey &&
         current.latestTradeStatus === 'ready' &&
@@ -231,6 +310,7 @@ export const PerpsProRealtimeOrderBook: React.FC<{
   return (
     <>
       <PerpsProOrderBook
+        sceneActive={sceneActive}
         amountUnit={amountUnit}
         book={processedBook}
         bookIdentity={fastL2.identity}
@@ -240,31 +320,31 @@ export const PerpsProRealtimeOrderBook: React.FC<{
         latestTrade={displayLatestTrade}
         latestTradeIdentity={latestTrade.identity}
         market={market}
-        onOpenFunding={() => setFundingDetailOpen(true)}
+        onOpenFunding={openFundingDetail}
         onPrecisionIntentStart={startPrecisionIntent}
         onSelectBookPrice={
-          onSelectPrice && fastL2.status === 'ready'
+          sceneActive && onSelectPrice && fastL2.status === 'ready'
             ? selectCurrentBookPrice
             : undefined
         }
         onSelectLatestTradePrice={
-          onSelectPrice && latestTrade.status === 'ready'
+          sceneActive && onSelectPrice && latestTrade.status === 'ready'
             ? selectCurrentLatestTradePrice
             : undefined
         }
         onSelectTickOption={selectTickOptionWithSnapshot}
         onSelectPriceIntentStart={onSelectPriceIntentStart}
         selectedTickOption={selectedTickOption}
-        serverClock={currentServerClock}
+        serverClock={displayClock}
         tickOptions={tickOptions}
       />
-      {fundingDetailOpen ? (
+      {sceneActive && fundingDetailOpen ? (
         <PerpsProFundingDetailSheet
           market={market}
-          onClose={() => setFundingDetailOpen(false)}
+          onClose={closeFundingDetail}
           serverClock={currentServerClock}
         />
       ) : null}
     </>
   );
-};
+});

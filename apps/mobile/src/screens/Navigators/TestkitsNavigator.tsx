@@ -20,6 +20,8 @@ import {
   DevUIAnimatedTextAndView,
   DevUIBuiltInPages,
   DevUIComponents2024ShowCase,
+  DevUISwipableSubScreen,
+  DevUIRootSubScreen,
   DevUIWalletConnect,
   DevUIDapps,
   DevUIFontShowCase,
@@ -76,6 +78,14 @@ export function TestkitsNavigator() {
       <Stack.Screen
         name={RootNames.DevUIComponents2024ShowCase}
         component={DevUIComponents2024ShowCase}
+      />
+      <Stack.Screen
+        name={RootNames.DevUISwipableSubScreen}
+        component={DevUISwipableSubScreen}
+      />
+      <Stack.Screen
+        name={RootNames.DevUIRootSubScreen}
+        component={DevUIRootSubScreen}
       />
       <Stack.Screen
         name={RootNames.DevUISafeSvgMedia}

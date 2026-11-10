@@ -39,7 +39,11 @@ const windowYToScreenY = (y: number) =>
   y + (Platform.OS === 'android' ? StatusBar.currentHeight ?? 0 : 0);
 
 /** Kept outside the realtime Scene: only this leaf observes keyboard/focus UI. */
-export const PerpsProKeyboardAccessory = () => {
+export const PerpsProKeyboardAccessory = ({
+  sceneActive = true,
+}: {
+  sceneActive?: boolean;
+}) => {
   // The app's BottomSheetModalProvider owns a dynamically named PortalHost.
   // An unnamed Portal targets "root", which that provider never renders.
   const { hostName } = useBottomSheetModalInternal();
@@ -64,7 +68,7 @@ export const PerpsProKeyboardAccessory = () => {
   const [hostY, setHostY] = useState<number | null>(null);
   const overlayRef = useRef<View>(null);
   const dimensions = useWindowDimensions();
-  const enabled = routeFocused && foreground;
+  const enabled = sceneActive && routeFocused && foreground;
   useLayoutEffect(() => {
     perpsProKeyboardSession.setEnabled(enabled);
   }, [enabled]);

@@ -19,10 +19,17 @@ import { AppState, type AppStateStatus } from 'react-native';
  */
 export const useActiveAssetSubscription = (
   coin: string,
-  options: { enabled?: boolean; trackContextFreshness?: boolean } = {},
+  options: {
+    enabled?: boolean;
+    /** Keep account data without subscribing this consumer to market ticks. */
+    contextEnabled?: boolean;
+    trackContextFreshness?: boolean;
+  } = {},
 ) => {
   const enabled = options.enabled ?? true;
-  const trackContextFreshness = options.trackContextFreshness ?? false;
+  const contextEnabled = options.contextEnabled ?? true;
+  const trackContextFreshness =
+    contextEnabled && (options.trackContextFreshness ?? false);
   const currentAddress = perpsStore(
     state => state.currentPerpsAccount?.address,
   );
@@ -60,7 +67,7 @@ export const useActiveAssetSubscription = (
 
   const seedCurrentContext = useMemoizedFn(() => {
     setActiveAssetCtx(null);
-    if (trackContextFreshness) setDisplayContext(null);
+    setDisplayContext(null);
     const address = perpsStore.getState().currentPerpsAccount?.address;
     setActiveAssetData(
       address ? readActiveAssetDataFromCache(coinRef.current, address) : null,
@@ -78,8 +85,9 @@ export const useActiveAssetSubscription = (
     const sdk = apisPerps.getPerpsSDK();
     if (trackContextFreshness) {
       const invalidate = () => {
-        if (subscription === contextSubscription.current)
+        if (subscription === contextSubscription.current) {
           setDisplayContext(null);
+        }
       };
       sdk.ws.on('close', invalidate);
       sdk.ws.on('reconnecting', invalidate);
@@ -88,20 +96,23 @@ export const useActiveAssetSubscription = (
         sdk.ws.off('reconnecting', invalidate);
       };
     }
-    unsubCtxRef.current = sdk.ws.subscribeToActiveAssetCtx(
-      coinRef.current,
-      data => {
-        if (coinRef.current === data.coin) {
-          setActiveAssetCtx(data.ctx);
+    if (contextEnabled) {
+      unsubCtxRef.current = sdk.ws.subscribeToActiveAssetCtx(
+        coinRef.current,
+        data => {
           if (
-            trackContextFreshness &&
-            subscription === contextSubscription.current
+            subscription !== contextSubscription.current ||
+            coinRef.current !== data.coin
           ) {
+            return;
+          }
+          setActiveAssetCtx(data.ctx);
+          if (trackContextFreshness) {
             setDisplayContext({ coin: data.coin, ctx: data.ctx });
           }
-        }
-      },
-    ).unsubscribe;
+        },
+      ).unsubscribe;
+    }
 
     const address = perpsStore.getState().currentPerpsAccount?.address;
     if (!address) {
@@ -135,6 +146,7 @@ export const useActiveAssetSubscription = (
     coin,
     currentAddress,
     enabled,
+    contextEnabled,
     trackContextFreshness,
     subscribeAll,
     unsubscribeAll,
@@ -145,8 +157,9 @@ export const useActiveAssetSubscription = (
     const subscription = AppState.addEventListener(
       'change',
       (nextAppState: AppStateStatus) => {
-        if (trackContextFreshness && nextAppState !== 'active')
+        if (trackContextFreshness && nextAppState !== 'active') {
           setDisplayContext(null);
+        }
         if (
           enabled &&
           appStateRef.match(/inactive|background/) &&
@@ -185,8 +198,10 @@ export const useActiveAssetSubscription = (
   });
 
   return {
-    activeAssetCtx,
-    displayAssetCtx: trackContextFreshness
+    activeAssetCtx: contextEnabled ? activeAssetCtx : null,
+    displayAssetCtx: !contextEnabled
+      ? null
+      : trackContextFreshness
       ? enabled && displayContext?.coin === coin
         ? displayContext.ctx
         : null

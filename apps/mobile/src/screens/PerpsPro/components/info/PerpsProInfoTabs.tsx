@@ -10,12 +10,14 @@ import {
   Animated,
   Easing,
   Platform,
-  Pressable,
   View,
   type LayoutChangeEvent,
   type StyleProp,
   type TextStyle,
 } from 'react-native';
+// The strip moves via NativeAnimated; native hit testing follows its actual
+// transform without writing delayed JS scroll positions back into Fabric.
+import { Pressable } from 'react-native-gesture-handler';
 import { useTranslation } from 'react-i18next';
 import Reanimated, {
   useAnimatedStyle,
@@ -231,7 +233,10 @@ export const PerpsProInfoTabs: React.FC<PerpsProInfoTabsProps> = React.memo(
     };
 
     return (
-      <View accessibilityRole="tablist" style={styles.container}>
+      <View
+        accessibilityRole="tablist"
+        pointerEvents="box-none"
+        style={styles.container}>
         <View pointerEvents="none" style={styles.divider} />
         {PERPS_PRO_INFO_TABS.map((tab, index) => {
           const selected = tab === activeTab;

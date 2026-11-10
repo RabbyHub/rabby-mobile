@@ -5,7 +5,6 @@ import { PixelRatio, StyleSheet, View } from 'react-native';
 import type { StyleProp, TextStyle } from 'react-native';
 
 import {
-  ACCOUNT_VALUE_FONT_SIZE,
   ACCOUNT_VALUE_LINE_HEIGHT,
   resolveAccountValueFit,
 } from './perpsProAccountValueSizing';
@@ -22,15 +21,7 @@ type Props = {
 export const PerpsProAccountValue = React.memo(
   ({ value, style, testID, align = 'left' }: Props) => {
     const pixelRatio = PixelRatio.get();
-    const flatStyle = StyleSheet.flatten(style);
-    // The caller's style sets the largest size and the reserved line box.
-    const baseFontSize = flatStyle?.fontSize ?? ACCOUNT_VALUE_FONT_SIZE;
-    const lineHeight = flatStyle?.lineHeight ?? ACCOUNT_VALUE_LINE_HEIGHT;
-    const measureStyle = getMeasureTextStyle(flatStyle);
-    const slotStyle = useMemo(
-      () => [styles.slot, { height: lineHeight }],
-      [lineHeight],
-    );
+    const measureStyle = getMeasureTextStyle(StyleSheet.flatten(style));
     // Account amounts use tabular digits. A cents/tick update with the same
     // separators and sign has identical width; reuse its verified measurement
     // instead of hiding and measuring the live amount on every update.
@@ -57,11 +48,11 @@ export const PerpsProAccountValue = React.memo(
       widths: AccountValueWidths;
     }>(() => ({ session, widths: {} }));
     const widths = measurement.session === session ? measurement.widths : {};
-    const fit = resolveAccountValueFit(width, widths, pixelRatio, baseFontSize);
+    const fit = resolveAccountValueFit(width, widths, pixelRatio);
 
     return (
       <View
-        style={slotStyle}
+        style={styles.slot}
         testID={`${testID}-slot`}
         onLayout={event => {
           const nextWidth = event.nativeEvent.layout.width;
@@ -134,7 +125,7 @@ export const PerpsProAccountValue = React.memo(
 PerpsProAccountValue.displayName = 'PerpsProAccountValue';
 
 const styles = StyleSheet.create({
-  slot: { alignSelf: 'stretch' },
+  slot: { alignSelf: 'stretch', height: ACCOUNT_VALUE_LINE_HEIGHT },
   visible: { opacity: 1 },
   hidden: { opacity: 0 },
   // Like AutoShrinkAmountText: measure the complete formatted value outside

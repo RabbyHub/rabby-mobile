@@ -13,20 +13,19 @@ export function resolveAccountValueFit(
   availableWidth: number,
   widths: AccountValueWidths,
   pixelRatio: number,
-  baseFontSize: number = ACCOUNT_VALUE_FONT_SIZE,
 ) {
-  const baseWidth = widths[baseFontSize];
+  const baseWidth = widths[ACCOUNT_VALUE_FONT_SIZE];
   const availablePixels = Math.floor(availableWidth * pixelRatio);
   if (!baseWidth || availablePixels <= 0) {
     return {
-      fontSize: baseFontSize,
-      measureFontSize: baseFontSize,
+      fontSize: ACCOUNT_VALUE_FONT_SIZE,
+      measureFontSize: ACCOUNT_VALUE_FONT_SIZE,
       ready: false,
     };
   }
 
   let largestFit = 0;
-  let smallestOverflow = baseFontSize + 1;
+  let smallestOverflow = ACCOUNT_VALUE_FONT_SIZE + 1;
   for (const [size, width] of Object.entries(widths)) {
     if (width == null) {
       continue;
@@ -50,7 +49,7 @@ export function resolveAccountValueFit(
   const estimate = getFittingFontSize({
     availableWidth: availablePixels / pixelRatio,
     textWidthAtBaseFontSize: baseWidth,
-    baseFontSize,
+    baseFontSize: ACCOUNT_VALUE_FONT_SIZE,
     minFontSize: MIN_FONT_SIZE,
     fontSizeStep: 1,
   });

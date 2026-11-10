@@ -24,6 +24,7 @@ import TokenSelect from '@/screens/Swap/components/TokenSelect';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { PerpsGestureSlider as Slider } from '@/components/perps/PerpsGestureSlider';
+import { RootScenePagerGestureBlock } from '@rabby-wallet/rn-collapsible-scene-view';
 import LinearGradient from 'react-native-linear-gradient';
 import RcIconWalletCC from '@/assets2024/icons/swap/wallet-cc.svg';
 import type { Account } from '@/core/startupServices/preference';
@@ -211,7 +212,7 @@ const BridgeTokenInner = ({
           // supportChains={supportedChains}
         />
         {isFromToken && !hiddenSlider && (
-          <View style={styles.sliderContainer}>
+          <RootScenePagerGestureBlock style={styles.sliderContainer}>
             <View
               ref={sliderTrackRef}
               collapsable={false}
@@ -249,7 +250,7 @@ const BridgeTokenInner = ({
               visible={isSliderBubbleVisible}
             />
             <Text style={styles.sliderValue}>{slider}%</Text>
-          </View>
+          </RootScenePagerGestureBlock>
         )}
       </View>
 

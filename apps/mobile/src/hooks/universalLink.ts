@@ -107,6 +107,8 @@ type OnParseUrlAndProcessAction = (payload: {
   testkitScreen?:
     | typeof RootNames.DevCapabilityFile
     | typeof RootNames.DevUIAnimatedTextAndView
+    | typeof RootNames.DevUISwipableSubScreen
+    | typeof RootNames.DevUIRootSubScreen
     | typeof RootNames.DevUISafeSvgMedia
     | typeof RootNames.DebugLogViewer
     | typeof RootNames.StartupPerformanceLogViewer
@@ -135,6 +137,8 @@ type OnParseUrlAndProcessAction = (payload: {
 const NON_PRODUCTION_TESTKIT_SCREENS = {
   DevCapabilityFile: RootNames.DevCapabilityFile,
   DevUIAnimatedTextAndView: RootNames.DevUIAnimatedTextAndView,
+  DevUISwipableSubScreen: RootNames.DevUISwipableSubScreen,
+  DevUIRootSubScreen: RootNames.DevUIRootSubScreen,
   DevUISafeSvgMedia: RootNames.DevUISafeSvgMedia,
   DebugLogViewer: RootNames.DebugLogViewer,
   StartupPerformanceLogViewer: RootNames.StartupPerformanceLogViewer,

@@ -1,5 +1,3 @@
-import RcIconClose from '@/assets2024/icons/perps/PerpsProKline/close.svg';
-import RcIconReset from '@/assets2024/icons/perps/PerpsSimpleChart/reset.svg';
 import TradingViewCandleChart, {
   type CandleDataApplied,
   type OlderCandlesRequest,
@@ -8,34 +6,35 @@ import TradingViewCandleChart, {
 import type {
   CandleData,
   CandleStick,
-  PerpsProOverlays,
 } from '@/components2024/TradingViewCandleChart/type';
+import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import type { PerpsCandleDataInterval } from '@/constant/perps';
 import type {
   PerpsCandleFeedSnapshot,
   PerpsCandleHistoryLoadResult,
 } from '@/hooks/perps/candles/usePerpsCandleFeed';
+import RcIconReset from '@/assets2024/icons/perps/PerpsSimpleChart/reset.svg';
 import { useTheme2024 } from '@/hooks/theme';
-import { SIMPLE_CHART_COLORS } from '@/screens/PerpsMarketDetail/components/chart/visual';
+import { perpsStore } from '@/hooks/perps/usePerpsStore';
 import { createGetStyles2024 } from '@/utils/styles';
-import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
+import BottomSheet, {
+  BottomSheetBackdrop,
+  type BottomSheetBackdropProps,
+  BottomSheetView,
+} from '@gorhom/bottom-sheet';
 import React, {
-  createContext,
   useCallback,
-  useContext,
   useEffect,
   useMemo,
   useRef,
   useState,
 } from 'react';
-import { useTranslation } from 'react-i18next';
 import { BackHandler, Pressable, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { buildPerpsProKlineOverlayLines } from '../../model/klineOverlay';
-import type { PerpsProMarket } from '../../model/market';
-import type { PerpsPositionViewModel } from '../../model/position';
+import type { PerpsProMarketDescriptor } from '../../model/market';
 import { usePerpsProKline } from '../../scene/usePerpsProKline';
+import { selectPerpsProMarketData } from '../../scene/usePerpsProLiveMarket';
+import { getPerpsProBottomSheetChromeStyles } from '../common/perpsProVisual';
 import {
   PERPS_PRO_KLINE_CHART_HEIGHT,
   PerpsProKlineSkeleton,
@@ -45,21 +44,17 @@ import {
   PerpsProKlineToolbar,
 } from './PerpsProKlineToolbar';
 
-// Keep the existing panel and chart heights when enlarging interval targets.
-export const PERPS_PRO_KLINE_HEADER_HEIGHT = 58;
-const PERPS_PRO_KLINE_HANDLE_AREA_HEIGHT =
-  PERPS_PRO_KLINE_HEADER_HEIGHT - PERPS_PRO_KLINE_TOOLBAR_HEIGHT;
-const PERPS_PRO_KLINE_MIN_BOTTOM_PADDING = 16;
-const PERPS_PRO_KLINE_CHART_LEFT_INSET = 12;
-const PERPS_PRO_KLINE_RESET_SIZE = 20;
-// Reset sits in the time-axis row, right of the last tick (Figma x355 y264).
-const PERPS_PRO_KLINE_RESET_RIGHT = 18;
-const PERPS_PRO_KLINE_RESET_TOP = 206;
-
-export const getPerpsProKlinePanelHeight = (bottomInset: number) =>
-  PERPS_PRO_KLINE_HEADER_HEIGHT +
+export const PERPS_PRO_KLINE_HANDLE_HEIGHT = 40;
+export const PERPS_PRO_KLINE_FOOTER_HEIGHT = 40;
+export const PERPS_PRO_KLINE_CONTENT_HEIGHT =
+  PERPS_PRO_KLINE_TOOLBAR_HEIGHT +
   PERPS_PRO_KLINE_CHART_HEIGHT +
-  Math.max(PERPS_PRO_KLINE_MIN_BOTTOM_PADDING, bottomInset);
+  PERPS_PRO_KLINE_FOOTER_HEIGHT;
+export const PERPS_PRO_KLINE_SHEET_HEIGHT =
+  PERPS_PRO_KLINE_HANDLE_HEIGHT + PERPS_PRO_KLINE_CONTENT_HEIGHT;
+// Docked panel height used to reserve bottom padding in the list beneath it.
+export const getPerpsProKlinePanelHeight = (bottomInset: number) =>
+  PERPS_PRO_KLINE_SHEET_HEIGHT + Math.max(0, bottomInset);
 const PERPS_PRO_KLINE_INITIAL_VISIBLE_BARS = 40;
 const PERPS_PRO_KLINE_MA_PERIODS = [7, 25, 99] as const;
 
@@ -82,33 +77,45 @@ const getPriceDecimals = (decimals: number) => {
     : 2;
 };
 
+type KlineChartMarket = Pick<
+  PerpsProMarketDescriptor,
+  'canonicalCoin' | 'displayBase' | 'quoteAsset'
+> & { priceDecimals: number };
+
 const PerpsProKlineChart: React.FC<{
   chartRef: React.RefObject<TradingViewChartRef | null>;
   feed: PerpsCandleFeedSnapshot;
   interval: PerpsCandleDataInterval;
-  market: PerpsProMarket;
+  liveFeedEnabled: boolean;
+  market: KlineChartMarket;
   onLoadOlder: () => Promise<PerpsCandleHistoryLoadResult>;
-  onViewportChange: (resetVisible: boolean) => void;
-  overlays: PerpsProOverlays;
+  onPriceScaleAutoScaleChange: (autoScale: boolean) => void;
+  publicationEnabled: boolean;
   visible: boolean;
-}> = ({
+}> = React.memo(function PerpsProKlineChart({
   chartRef,
   feed,
   interval,
+  liveFeedEnabled,
   market,
   onLoadOlder,
-  onViewportChange,
-  overlays,
+  onPriceScaleAutoScaleChange,
+  publicationEnabled,
   visible,
-}) => {
+}) {
   const { colors2024 } = useTheme2024();
   const lastSentRef = useRef<{
     identity: string;
+    publicationEpoch: number;
     readyVersion: number;
     revision: number;
   } | null>(null);
   const revisionRef = useRef(0);
   const lastClearedIdentityRef = useRef<string | null>(null);
+  const pausedPublicationRef = useRef<{
+    epoch: number;
+    identity: string;
+  } | null>(null);
   const [readyVersion, setReadyVersion] = useState(0);
   const [displayedSnapshot, setDisplayedSnapshot] = useState<{
     identity: string;
@@ -120,7 +127,7 @@ const PerpsProKlineChart: React.FC<{
     () => feed.candles.map(toChartCandle),
     [feed.candles],
   );
-  const priceDecimals = getPriceDecimals(market.marketData.pxDecimals);
+  const priceDecimals = market.priceDecimals;
   const chartData = useMemo<CandleData>(
     () => ({
       candles,
@@ -172,6 +179,25 @@ const PerpsProKlineChart: React.FC<{
   }, []);
 
   useEffect(() => {
+    const publicationEpoch = feed.publicationEpoch ?? 0;
+    if (!publicationEnabled) {
+      pausedPublicationRef.current = {
+        epoch: publicationEpoch,
+        identity: feed.identity,
+      };
+      return;
+    }
+    const paused = pausedPublicationRef.current;
+    if (
+      liveFeedEnabled &&
+      paused?.identity === feed.identity &&
+      paused.epoch === publicationEpoch
+    ) {
+      // Visibility reaches the host before the feed's resume effect. Do not
+      // resend the retained snapshot in that intermediate render.
+      return;
+    }
+    pausedPublicationRef.current = null;
     if (
       readyVersion === 0 ||
       chartFailed ||
@@ -181,10 +207,15 @@ const PerpsProKlineChart: React.FC<{
       return;
     }
     const previous = lastSentRef.current;
+    const resumedSameChart =
+      previous?.identity === feed.identity &&
+      previous.readyVersion === readyVersion &&
+      previous.publicationEpoch !== publicationEpoch;
     const canUpdateRealtime =
       feed.updateType === 'realtime' &&
       previous?.identity === feed.identity &&
-      previous.readyVersion === readyVersion;
+      previous.readyVersion === readyVersion &&
+      !resumedSameChart;
     const latestCandle = candles[candles.length - 1];
     if (canUpdateRealtime && latestCandle) {
       chartRef.current?.updateCandleData(latestCandle);
@@ -197,13 +228,14 @@ const PerpsProKlineChart: React.FC<{
       revisionRef.current = revision;
       lastSentRef.current = {
         identity: feed.identity,
+        publicationEpoch,
         readyVersion,
         revision,
       };
       chart.setData({
         ...chartData,
         identity: feed.identity,
-        ...(feed.updateType === 'history'
+        ...(feed.updateType === 'history' || resumedSameChart
           ? { preserveVisibleRange: true }
           : {}),
         revision,
@@ -212,6 +244,7 @@ const PerpsProKlineChart: React.FC<{
     }
     lastSentRef.current = {
       identity: feed.identity,
+      publicationEpoch,
       readyVersion,
       revision: previous?.revision ?? revisionRef.current,
     };
@@ -221,8 +254,11 @@ const PerpsProKlineChart: React.FC<{
     chartFailed,
     chartRef,
     feed.identity,
+    feed.publicationEpoch,
     feed.status,
     feed.updateType,
+    liveFeedEnabled,
+    publicationEnabled,
     readyVersion,
   ]);
 
@@ -283,14 +319,6 @@ const PerpsProKlineChart: React.FC<{
     chartRef.current?.clearCrosshair();
   }, [chartRef, visible]);
 
-  // A reloaded WebView starts without overlays; resend on every ready.
-  useEffect(() => {
-    if (readyVersion === 0 || chartFailed) {
-      return;
-    }
-    chartRef.current?.setPerpsProOverlays(overlays);
-  }, [chartFailed, chartRef, overlays, readyVersion]);
-
   const showSkeleton =
     chartFailed ||
     readyVersion === 0 ||
@@ -311,129 +339,87 @@ const PerpsProKlineChart: React.FC<{
         onChartError={handleChartError}
         onChartReady={handleChartReady}
         onDataApplied={handleDataApplied}
-        onPerpsProViewportChange={onViewportChange}
+        onPerpsProViewportChange={onPriceScaleAutoScaleChange}
         onRequestOlderCandles={handleRequestOlderCandles}
         variant="perps-pro"
       />
       {showSkeleton ? <PerpsProKlineSkeleton overlay /> : null}
     </View>
   );
-};
-
-type PerpsProKlineHeaderState = {
-  disabled: boolean;
-  interval: PerpsCandleDataInterval;
-  onClose: () => void;
-  onSelect: (interval: PerpsCandleDataInterval) => void;
-};
-
-const PerpsProKlineHeaderContext =
-  createContext<PerpsProKlineHeaderState | null>(null);
-
-// BottomSheet renders handleComponent as a component type. Keep it stable so
-// changing the selected interval does not remount the horizontal scroll view.
-const PerpsProKlineHeader = React.memo(() => {
-  const state = useContext(PerpsProKlineHeaderContext);
-  const { colors2024, styles: themedStyles } = useTheme2024({ getStyle });
-  const { t } = useTranslation();
-  if (!state) {
-    return null;
-  }
-  const { disabled, interval, onClose, onSelect } = state;
-
-  return (
-    <View style={themedStyles.header} testID="perps-pro-kline-header">
-      <View style={themedStyles.indicator} />
-      <Pressable
-        accessibilityLabel={t('global.closeButton')}
-        accessibilityRole="button"
-        hitSlop={8}
-        onPress={onClose}
-        style={themedStyles.closeButton}
-        testID="perps-pro-kline-close">
-        <RcIconClose
-          color={colors2024['neutral-secondary']}
-          height={20}
-          width={20}
-        />
-      </Pressable>
-      <PerpsProKlineToolbar
-        disabled={disabled}
-        interval={interval}
-        onSelect={onSelect}
-      />
-    </View>
-  );
 });
 
-PerpsProKlineHeader.displayName = 'PerpsProKlineHeader';
-
-/**
- * Docked, non-modal K-line panel. The page above stays scrollable and
- * interactive; only the header (handle + intervals) drags the panel closed.
- */
-export const PerpsProKlineSheet: React.FC<{
+type PerpsProKlineSheetProps = {
   enabled: boolean;
-  market: PerpsProMarket;
+  market: PerpsProMarketDescriptor;
   onClose: () => void;
-  position: PerpsPositionViewModel | null;
   preloadEnabled?: boolean;
+  publicationEnabled?: boolean;
   visible?: boolean;
-}> = ({
+};
+
+export const PerpsProKlineSheet = React.memo(function PerpsProKlineSheet({
   enabled,
   market,
   onClose,
-  position,
   preloadEnabled = enabled,
+  publicationEnabled = true,
   visible = true,
-}) => {
-  const chartRef = useRef<TradingViewChartRef>(null);
+}: PerpsProKlineSheetProps) {
   const sheetRef = useRef<BottomSheet>(null);
-  // `index` only seeds the mount position: the library's index-prop path
-  // (snapToIndex) cannot reach -1, so later changes go through the ref.
-  const [initialIndex] = useState(visible ? 0 : -1);
-  const [viewportState, setViewportState] = useState({
+  const chartRef = useRef<TradingViewChartRef>(null);
+  const [priceScaleState, setPriceScaleState] = useState({
+    autoScale: true,
     marketKey: market.marketKey,
-    resetVisible: false,
   });
-  const { bottom: bottomInset } = useSafeAreaInsets();
-  const { colors2024, styles: themedStyles } = useTheme2024({ getStyle });
-  const { t } = useTranslation();
+  const { colors2024, styles: themedStyles } = useTheme2024({
+    getStyle,
+  });
   const kline = usePerpsProKline({
     coin: market.canonicalCoin,
     enabled,
     preloadEnabled,
+    publicationEnabled,
   });
-  const panelHeight = getPerpsProKlinePanelHeight(bottomInset);
-  const snapPoints = useMemo(() => [panelHeight], [panelHeight]);
-  // Position objects are rebuilt on every account tick (PnL); only a change
-  // of the drawn guides should reach the WebView.
-  const overlayLinesKey = JSON.stringify(
-    buildPerpsProKlineOverlayLines(position, {
-      entry: t('page.perpsDetail.simpleChart.averageEntry'),
-      liquidation: t('page.perpsDetail.simpleChart.liquidation'),
-      stopLoss: t('page.perpsDetail.simpleChart.stopLoss'),
-      takeProfit: t('page.perpsDetail.simpleChart.takeProfit'),
-    }),
+  const priceDecimals = perpsStore(state =>
+    getPriceDecimals(
+      selectPerpsProMarketData(state, market.canonicalCoin)?.pxDecimals ?? 2,
+    ),
   );
-  const overlays = useMemo<PerpsProOverlays>(
+  // Chart precision follows metadata, not every market price tick.
+  const chartMarket = useMemo<KlineChartMarket>(
     () => ({
-      colors: {
-        accent: SIMPLE_CHART_COLORS.accent,
-        background: colors2024['neutral-bg-1'],
-        contrast: colors2024['neutral-InvertHighlight'],
-        down: SIMPLE_CHART_COLORS.down,
-        entry: colors2024['neutral-foot'],
-        entryBackground: colors2024['neutral-info'],
-        entryText: colors2024['neutral-body'],
-        liquidation: colors2024['orange-default'],
-        up: SIMPLE_CHART_COLORS.up,
-      },
-      lines: JSON.parse(overlayLinesKey),
+      canonicalCoin: market.canonicalCoin,
+      displayBase: market.displayBase,
+      priceDecimals,
+      quoteAsset: market.quoteAsset,
     }),
-    [colors2024, overlayLinesKey],
+    [
+      market.canonicalCoin,
+      market.displayBase,
+      priceDecimals,
+      market.quoteAsset,
+    ],
+  );
+  const bottomSheetProps = useMemo(
+    () =>
+      makeBottomSheetProps({
+        colors: colors2024,
+        linearGradientType: 'bg1',
+      }),
+    [colors2024],
   );
 
+  const renderBackdrop = useCallback(
+    (props: BottomSheetBackdropProps) => (
+      <BottomSheetBackdrop
+        {...props}
+        appearsOnIndex={0}
+        disappearsOnIndex={-1}
+        pressBehavior="close"
+      />
+    ),
+    [],
+  );
   const handleSheetChange = useCallback(
     (index: number) => {
       if (index === -1 && visible) {
@@ -442,36 +428,32 @@ export const PerpsProKlineSheet: React.FC<{
     },
     [onClose, visible],
   );
-  const handleResetViewport = useCallback(() => {
+  const handleResetPriceScale = useCallback(() => {
     chartRef.current?.resetPerpsProViewport();
   }, []);
-  const handleViewportChange = useCallback(
-    (resetVisible: boolean) => {
-      setViewportState(previous =>
-        previous.marketKey === market.marketKey &&
-        previous.resetVisible === resetVisible
-          ? previous
-          : { marketKey: market.marketKey, resetVisible },
-      );
+  const handlePriceScaleAutoScaleChange = useCallback(
+    (autoScale: boolean) => {
+      setPriceScaleState(previous => {
+        if (
+          previous.marketKey === market.marketKey &&
+          previous.autoScale === autoScale
+        ) {
+          return previous;
+        }
+        return { autoScale, marketKey: market.marketKey };
+      });
     },
     [market.marketKey],
   );
-  const resetVisible =
-    viewportState.marketKey === market.marketKey && viewportState.resetVisible;
-  const headerState = useMemo<PerpsProKlineHeaderState>(
-    () => ({
-      disabled: !kline.hydrated,
-      interval: kline.interval,
-      onClose,
-      onSelect: kline.selectInterval,
-    }),
-    [kline.hydrated, kline.interval, kline.selectInterval, onClose],
-  );
+  const priceScaleAutoScale =
+    priceScaleState.marketKey === market.marketKey
+      ? priceScaleState.autoScale
+      : true;
 
   useEffect(() => {
-    if (visible) {
-      sheetRef.current?.snapToIndex(0);
-    } else {
+    if (!visible) {
+      // Keep the retained chart mounted, but explicitly close the native sheet.
+      // Its index=-1 prop handles initial placement, not a reliable close command.
       sheetRef.current?.close();
     }
   }, [visible]);
@@ -495,68 +477,74 @@ export const PerpsProKlineSheet: React.FC<{
       pointerEvents={visible ? 'box-none' : 'none'}
       style={styles.retainedHost}
       testID="perps-pro-kline-retained-host">
-      <PerpsProKlineHeaderContext.Provider value={headerState}>
-        <BottomSheet
-          activeOffsetY={[-12, 12]}
-          animateOnMount={false}
-          backgroundStyle={themedStyles.background}
-          enableContentPanningGesture={false}
-          enableDynamicSizing={false}
-          enableHandlePanningGesture
-          enablePanDownToClose
-          failOffsetX={[-8, 8]}
-          handleComponent={PerpsProKlineHeader}
-          index={initialIndex}
-          keyboardBehavior="extend"
-          onChange={handleSheetChange}
-          ref={sheetRef}
-          snapPoints={snapPoints}>
-          <BottomSheetView style={themedStyles.content}>
-            <PerpsProKlineChart
-              key={market.marketKey}
-              chartRef={chartRef}
-              feed={kline.feed}
+      <BottomSheet
+        {...bottomSheetProps}
+        ref={sheetRef}
+        animateOnMount={false}
+        backdropComponent={renderBackdrop}
+        backgroundStyle={themedStyles.background}
+        enableContentPanningGesture={false}
+        enableDynamicSizing={false}
+        enableHandlePanningGesture
+        enablePanDownToClose
+        handleIndicatorStyle={themedStyles.handleIndicator}
+        handleStyle={themedStyles.handle}
+        index={visible ? 0 : -1}
+        onChange={handleSheetChange}
+        snapPoints={[PERPS_PRO_KLINE_SHEET_HEIGHT]}
+        style={themedStyles.modal}>
+        <BottomSheetView style={themedStyles.content}>
+          <View style={styles.toolbarRow}>
+            <PerpsProKlineToolbar
+              disabled={!kline.hydrated}
               interval={kline.interval}
-              market={market}
-              onLoadOlder={kline.loadOlder}
-              onViewportChange={handleViewportChange}
-              overlays={overlays}
-              visible={visible}
+              onSelect={kline.selectInterval}
             />
-            {resetVisible ? (
+            {!priceScaleAutoScale ? (
               <Pressable
-                accessibilityLabel={t(
-                  'page.perpsDetail.simpleChart.resetChart',
-                )}
                 accessibilityRole="button"
-                hitSlop={8}
-                onPress={handleResetViewport}
+                onPress={handleResetPriceScale}
                 style={styles.resetButton}
                 testID="perps-pro-kline-reset">
-                <RcIconReset
-                  height={PERPS_PRO_KLINE_RESET_SIZE}
-                  width={PERPS_PRO_KLINE_RESET_SIZE}
-                />
+                <RcIconReset width={18} height={18} />
               </Pressable>
             ) : null}
-          </BottomSheetView>
-        </BottomSheet>
-      </PerpsProKlineHeaderContext.Provider>
+          </View>
+          <PerpsProKlineChart
+            key={market.marketKey}
+            chartRef={chartRef}
+            feed={kline.feed}
+            interval={kline.interval}
+            liveFeedEnabled={enabled}
+            market={chartMarket}
+            onLoadOlder={kline.loadOlder}
+            onPriceScaleAutoScaleChange={handlePriceScaleAutoScaleChange}
+            publicationEnabled={
+              publicationEnabled || (!enabled && preloadEnabled)
+            }
+            visible={visible}
+          />
+          <View style={themedStyles.footer} testID="perps-pro-kline-footer" />
+        </BottomSheetView>
+      </BottomSheet>
     </View>
   );
-};
+});
 
 const styles = {
-  chartContainer: {
-    height: PERPS_PRO_KLINE_CHART_HEIGHT,
-    marginLeft: PERPS_PRO_KLINE_CHART_LEFT_INSET,
+  toolbarRow: {
+    alignItems: 'center' as const,
+    flexDirection: 'row' as const,
   },
   resetButton: {
-    height: PERPS_PRO_KLINE_RESET_SIZE,
-    position: 'absolute' as const,
-    right: PERPS_PRO_KLINE_RESET_RIGHT,
-    top: PERPS_PRO_KLINE_RESET_TOP,
-    width: PERPS_PRO_KLINE_RESET_SIZE,
+    alignItems: 'center' as const,
+    height: 32,
+    justifyContent: 'center' as const,
+    width: 32,
+  },
+  chartContainer: {
+    height: PERPS_PRO_KLINE_CHART_HEIGHT,
+    width: '100%' as const,
   },
   retainedHost: {
     bottom: 0,
@@ -568,38 +556,38 @@ const styles = {
   },
 };
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
-  // Figma 86356:56301: 24px top corners and a soft upward shadow; the
-  // background owns the shadow so nothing clips it.
-  background: {
-    backgroundColor: colors2024['neutral-bg-1'],
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    boxShadow: '0px -4px 16px 0px rgba(0, 0, 0, 0.1)',
-  },
-  header: {
-    height: PERPS_PRO_KLINE_HEADER_HEIGHT,
-    paddingTop: PERPS_PRO_KLINE_HANDLE_AREA_HEIGHT,
-  },
-  indicator: {
-    alignSelf: 'center',
-    backgroundColor: colors2024['neutral-sheet-handle'],
-    borderRadius: 2,
-    height: 4,
-    position: 'absolute',
-    top: 10,
-    width: 50,
-  },
-  closeButton: {
-    height: 20,
-    position: 'absolute',
-    right: 16,
-    top: 10,
-    width: 20,
-    zIndex: 1,
-  },
-  content: {
-    backgroundColor: colors2024['neutral-bg-1'],
-    flex: 1,
-  },
-}));
+const getStyle = createGetStyles2024(({ colors2024 }) => {
+  const chrome = getPerpsProBottomSheetChromeStyles(colors2024);
+
+  return {
+    ...chrome,
+    modal: {
+      ...chrome.modal,
+      borderBottomLeftRadius: 0,
+      borderBottomRightRadius: 0,
+    },
+    background: {
+      ...chrome.background,
+      borderBottomLeftRadius: 0,
+      borderBottomRightRadius: 0,
+    },
+    content: {
+      backgroundColor: colors2024['neutral-bg-1'],
+      height: PERPS_PRO_KLINE_CONTENT_HEIGHT,
+    },
+    toolbarRow: {
+      alignItems: 'center',
+      flexDirection: 'row',
+    },
+    resetButton: {
+      alignItems: 'center',
+      height: 32,
+      justifyContent: 'center',
+      width: 32,
+    },
+    footer: {
+      backgroundColor: colors2024['neutral-bg-1'],
+      height: PERPS_PRO_KLINE_FOOTER_HEIGHT,
+    },
+  };
+});
