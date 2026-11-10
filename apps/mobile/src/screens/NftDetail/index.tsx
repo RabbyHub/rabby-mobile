@@ -1,7 +1,13 @@
 /* eslint-disable react-native/no-inline-styles */
 import React, { useCallback, useEffect, useMemo } from 'react';
 import dayjs from 'dayjs';
-import { StyleSheet, View, ScrollView } from 'react-native';
+import {
+  Dimensions,
+  StyleSheet,
+  View,
+  ScrollView,
+  type ViewStyle,
+} from 'react-native';
 import BigNumber from 'bignumber.js';
 import { getCHAIN_ID_LIST } from '@/constant/projectLists';
 import { useTheme2024 } from '@/hooks/theme';
@@ -21,6 +27,7 @@ import { useRoute } from '@react-navigation/native';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import type { GetRootScreenRouteProp } from '@/navigation-type';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
+import { IS_IOS } from '@/core/native/utils';
 import { ellipsisOverflowedText } from '@/utils/text';
 import { createGetStyles2024 } from '@/utils/styles';
 import { Button } from '@/components2024/Button';
@@ -115,7 +122,9 @@ export const NFTDetailScreen = () => {
   React.useEffect(() => {
     setNavigationOptions({
       headerTitle: TokenDetailHeaderArea,
-      headerTitleAlign: 'center',
+      // The image+name row is left-aligned: the title starts right after the
+      // native back item's own slot instead of being centred in the bar.
+      headerTitleAlign: 'left',
     });
   }, [TokenDetailHeaderArea, setNavigationOptions]);
 
@@ -414,6 +423,10 @@ export const NFTDetailScreen = () => {
   );
 };
 
+const HEADER_ROW_WIDTH: ViewStyle['width'] = IS_IOS
+  ? Dimensions.get('window').width - 65
+  : '100%';
+
 const getStyle = createGetStyles2024(
   ({ colors2024, colors, safeAreaInsets }) => ({
     screenRoot: {
@@ -466,9 +479,10 @@ const getStyle = createGetStyles2024(
       marginBottom: 0,
     },
     headerArea: {
-      width: '100%',
+      // Fill the native title container; the row content is left-aligned so
+      // the avatar follows the back button's own slot.
+      width: HEADER_ROW_WIDTH,
       height: 'auto',
-      marginLeft: 8,
       display: 'flex',
       flexDirection: 'row',
       gap: 8,

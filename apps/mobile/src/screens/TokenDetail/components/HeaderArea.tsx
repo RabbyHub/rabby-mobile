@@ -16,6 +16,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import { NavigationContext, useFocusEffect } from '@react-navigation/native';
+import { IS_IOS } from '@/core/native/utils';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -41,7 +42,14 @@ import { Button } from '@/components2024/Button';
 import { MODAL_GATE_IDS } from '@/utils/modalGate';
 import { BOTTOM_BUTTON_DOUBLE_HEIGHT } from '@/constant/layout';
 
-const screenWidth = Dimensions.get('window').width;
+const SCREEN_WIDTH = Dimensions.get('window').width;
+// iOS reserves ~65pt for the native back item (44pt item + bar inset/spacing),
+// so the title row is sized to the remaining width and its content flows from
+// the left, right after the back button.
+const HEADER_ROW_WIDTH: ViewStyle['width'] = IS_IOS
+  ? SCREEN_WIDTH - 65
+  : '100%';
+
 interface Props {
   token: ITokenItem;
   style?: StyleProp<ViewStyle>;
@@ -229,12 +237,15 @@ const getStyles = createGetStyles2024(({ isLight, colors2024 }) => ({
   copyConfirmButtonTitle: {
     fontSize: 20,
   },
+  // The header title row fills the native title container. iOS lays the title
+  // view out in the space left over by the bar items, so an explicitly sized
+  // row (screen minus the leading back-item slot) starts right after the back
+  // button and lets the content flow from the left.
   root: {
-    width: screenWidth - 140,
+    width: HEADER_ROW_WIDTH,
   },
   container: {
-    width: screenWidth - 100,
-    marginLeft: 0,
+    width: '100%',
     display: 'flex',
     flexDirection: 'column',
   },
