@@ -83,7 +83,7 @@ const ActionRow = ({
         type="primary"
       />
       <Button
-        title={t('page.memeCoin.cancel')}
+        title={t('global.Cancel')}
         height={BOTTOM_BUTTON_SINGLE_HEIGHT}
         titleStyle={buttonTitleStyles.single}
         buttonStyle={styles.cancelButton}
