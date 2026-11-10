@@ -12,8 +12,13 @@ import { buildDexSwap } from '@/screens/Swap/hooks/swap';
 import { getSwapQuoteScore } from '@/screens/Swap/hooks/token';
 import { isSwapWrapToken } from '@/screens/Swap/utils';
 import { findChainByServerID } from '@/utils/chain';
+import { QUOTE_RATE } from '../constants';
 import type { RouteAdapter } from '../legRunner';
+import { createRateLimiter } from '../quoteRateLimit';
 import { fetchDexQuotesIsolated, type GetDexQuote } from './dexQuotes';
+
+// Module level: legs on different chains share the per-IP limit.
+const quoteLimiter = createRateLimiter(QUOTE_RATE);
 
 export const createSwapRoute = ({
   account,
@@ -61,7 +66,8 @@ export const createSwapRoute = ({
         account,
       },
       deps: {
-        getDexQuote,
+        // each call sends one /v1/wallet/swap_quote first
+        getDexQuote: params => quoteLimiter.schedule(() => getDexQuote(params)),
         getRecommendNonce,
         getGasMarket: chainServerId =>
           gasMarketV2({ chainId: chainServerId }, account),

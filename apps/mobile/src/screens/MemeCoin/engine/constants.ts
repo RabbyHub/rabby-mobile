@@ -29,3 +29,7 @@ export const AUTO_RETRY_REASONS: readonly FailReason[] = [
 export const MAX_AUTO_RETRIES = 2;
 
 export const AUTO_RETRY_DELAY_MS = 1500;
+
+// /v2/bridge/quote_list and /v1/wallet/swap_quote each allow 10/second, counted
+// separately; a little room is left for network jitter.
+export const QUOTE_RATE = { limit: 10, windowMs: 1100 };
