@@ -17,6 +17,7 @@ import { execFileSync, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 
 const WORKFLOW_PATH = '.github/workflows/sign_only_package.yml';
 const TOKEN_FILE = path.join(
@@ -35,6 +36,42 @@ function fail(message) {
   throw new Error(message);
 }
 
+function redactUrl(value) {
+  try {
+    const url = new URL(value);
+    if (url.username || url.password) {
+      return `${url.protocol}//<redacted>@${url.host}`;
+    }
+  } catch {
+    // Not a URL; leave the value untouched.
+  }
+  return value;
+}
+
+/**
+ * Render command arguments for error messages without leaking credentials.
+ * `--token` values are replaced and `--proxy` URLs lose any userinfo. Prefer
+ * passing secrets to child processes through the environment instead.
+ */
+export function redactArgs(args) {
+  const redacted = [];
+  for (let i = 0; i < args.length; i += 1) {
+    const arg = args[i];
+    if (arg === '--token' && i + 1 < args.length) {
+      redacted.push(arg, '<redacted>');
+      i += 1;
+      continue;
+    }
+    if (arg === '--proxy' && i + 1 < args.length) {
+      redacted.push(arg, redactUrl(args[i + 1]));
+      i += 1;
+      continue;
+    }
+    redacted.push(arg);
+  }
+  return redacted;
+}
+
 function run(command, args, options = {}) {
   const result = spawnSync(command, args, {
     stdio: options.capture ? ['ignore', 'pipe', 'inherit'] : 'inherit',
@@ -46,7 +83,9 @@ function run(command, args, options = {}) {
     fail(`${command} failed to start: ${result.error.message}`);
   }
   if (result.status !== 0) {
-    fail(`${command} ${args.join(' ')} exited with ${result.status}`);
+    fail(
+      `${command} ${redactArgs(args).join(' ')} exited with ${result.status}`,
+    );
   }
   return result;
 }
@@ -195,13 +234,20 @@ function publish(platform, artifact, args, rootDir, appDir) {
   ];
   if (args.notifyLark) publishArgs.push('--notify-lark');
   if (args.force) publishArgs.push('--force');
-  if (args.token) publishArgs.push('--token', args.token);
-  if (args.serviceUrl) publishArgs.push('--service-url', args.serviceUrl);
-  if (args.proxy) publishArgs.push('--proxy', args.proxy);
+
+  // Hand credentials to the child through the environment so a failed upload
+  // can never echo them back through the command line in an error message.
+  const publishEnv = { ...process.env };
+  if (args.token) publishEnv.OPFE_SIGN_ONLY_TOKEN = args.token;
+  if (args.serviceUrl) {
+    publishEnv.OPFE_SIGN_ONLY_SERVICE_URL = args.serviceUrl;
+  }
+  if (args.proxy) publishEnv.OPFE_SIGN_ONLY_PROXY = args.proxy;
 
   const result = run(process.execPath, publishArgs, {
     cwd: rootDir,
     capture: true,
+    env: publishEnv,
   });
   const lines = result.stdout.trim().split('\n').filter(Boolean);
   const payload = JSON.parse(lines[lines.length - 1]);
@@ -544,7 +590,12 @@ async function main() {
   }
 }
 
-main().catch(error => {
-  console.error(`[one-shot] ${error.message}`);
-  process.exit(1);
-});
+const isDirectRun =
+  process.argv[1] &&
+  import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href;
+if (isDirectRun) {
+  main().catch(error => {
+    console.error(`[one-shot] ${error.message}`);
+    process.exit(1);
+  });
+}
