@@ -5,6 +5,14 @@ run-name: Sign-only ${{ inputs.platform }} ${{ inputs.sign_request_id }}
 on:
   workflow_dispatch:
     inputs:
+      macos_machine_location:
+        description: 'macOS runner used for the iOS signing job'
+        required: false
+        type: choice
+        options:
+          - 'mobile-local'
+          - 'mobile'
+        default: 'mobile-local'
       sign_request_id:
         required: true
         type: string
@@ -233,7 +241,7 @@ jobs:
     runs-on:
       - self-hosted
       - macOS
-      - mobile
+      - ${{ inputs.macos_machine_location || 'mobile-local' }}
     env:
       NODE_OPTIONS: '--max_old_space_size=12288'
       XCODE_VER: '27.1'

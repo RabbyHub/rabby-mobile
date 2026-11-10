@@ -11,6 +11,9 @@
  * `workflow_dispatch` only works once sign_only_package.yml is on the default
  * branch. Until then this script bakes the inputs into a temporary branch and
  * uses the workflow's push trigger, then deletes the branch.
+ *
+ * `--signing-machine mobile|mobile-local` selects the self-hosted macOS runner
+ * used for the iOS signing job (default: mobile-local).
  */
 
 import { execFileSync, spawnSync } from 'node:child_process';
@@ -107,6 +110,9 @@ function parseArgs(argv) {
       case '--proxy':
         args.proxy = argv[++i] || '';
         break;
+      case '--signing-machine':
+        args.signingMachine = argv[++i] || '';
+        break;
       default:
         fail(`Unknown argument: ${arg}`);
     }
@@ -117,6 +123,13 @@ function parseArgs(argv) {
   }
   if (!['auto', 'dispatch', 'push'].includes(args.trigger)) {
     fail('--trigger must be auto, dispatch or push');
+  }
+  args.signingMachine =
+    args.signingMachine ||
+    process.env.OPFE_SIGN_ONLY_SIGNING_MACHINE ||
+    'mobile-local';
+  if (!['mobile', 'mobile-local'].includes(args.signingMachine)) {
+    fail('--signing-machine must be mobile or mobile-local');
   }
   args.serviceUrl =
     args.serviceUrl ||
@@ -198,6 +211,8 @@ function publish(platform, artifact, args, rootDir, appDir) {
   if (args.token) publishArgs.push('--token', args.token);
   if (args.serviceUrl) publishArgs.push('--service-url', args.serviceUrl);
   if (args.proxy) publishArgs.push('--proxy', args.proxy);
+  if (args.signingMachine)
+    publishArgs.push('--signing-machine', args.signingMachine);
 
   const result = run(process.execPath, publishArgs, {
     cwd: rootDir,
@@ -265,6 +280,12 @@ function bakeWorkflow(payload, branch, rootDir) {
   text = text.replace('on:\n  workflow_dispatch:', pushBlock);
 
   const inputs = workflow.inputs;
+  text = text.replaceAll(
+    "${{ inputs.macos_machine_location || 'mobile-local' }}",
+    `\${{ inputs.macos_machine_location || '${
+      inputs.macos_machine_location || 'mobile-local'
+    }' }}`,
+  );
   for (const [key, value] of Object.entries(inputs)) {
     text = text.replaceAll(
       `\${{ inputs.${key} }}`,
