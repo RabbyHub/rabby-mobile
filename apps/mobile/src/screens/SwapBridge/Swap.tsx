@@ -997,6 +997,11 @@ const Swap = ({
     return ['', ''];
   }, [activeProvider?.name, isWrapToken, t, receiveToken?.logo_url]);
 
+  const footerTipContent =
+    !isSupportedChain && externalDapps.length < 1
+      ? t('component.externalSwapBrideDappPopup.noDapps')
+      : undefined;
+
   const riskConfirmKey = useMemo(
     () =>
       [
@@ -1745,11 +1750,9 @@ const Swap = ({
             },
           ]}>
           <Tip
-            content={
-              !isSupportedChain && externalDapps.length < 1
-                ? t('component.externalSwapBrideDappPopup.noDapps')
-                : undefined
-            }>
+            noPressable={!footerTipContent}
+            isVisible={footerTipContent ? undefined : false}
+            content={footerTipContent}>
             <View>
               {showRiskConfirm ? (
                 <SignRiskWarning
