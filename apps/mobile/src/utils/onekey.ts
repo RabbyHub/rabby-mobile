@@ -20,7 +20,12 @@ const ONLY_IN_DEVICE = true;
 
 let pinModalId: MODAL_ID | null = null;
 let passphraseModalId: MODAL_ID | null = null;
-const boundOneKeyKeyrings = new WeakSet<object>();
+let activeOneKeyKeyring: OneKeyKeyring | null = null;
+let oneKeyEventsBound = false;
+
+function currentOneKeyKeyring() {
+  return activeOneKeyKeyring as OneKeyKeyring;
+}
 
 function removeOneKeyModal(modalId: MODAL_ID | null) {
   if (!modalId) {
@@ -122,13 +127,18 @@ function createPassphraseModal(
   );
 }
 
+/**
+ * The eventBus listeners are global, so bind them once and route every
+ * request to the most recently bound keyring. Binding them per keyring
+ * instance answered each PIN / passphrase request once per instance.
+ */
 export function bindOneKeyEvents(keyring: KeyringInstance | OneKeyKeyring) {
-  const oneKeyKeyring = keyring as unknown as OneKeyKeyring;
+  activeOneKeyKeyring = keyring as unknown as OneKeyKeyring;
 
-  if (boundOneKeyKeyrings.has(oneKeyKeyring)) {
+  if (oneKeyEventsBound) {
     return;
   }
-  boundOneKeyKeyrings.add(oneKeyKeyring);
+  oneKeyEventsBound = true;
 
   eventBus.on(EVENT_ONEKEY_CLOSE_UI_PIN_WINDOW, closeDeviceInputModals);
   eventBus.on(EVENT_ONEKEY_REQUEST_BUTTON, closeDeviceInputModals);
@@ -143,7 +153,7 @@ export function bindOneKeyEvents(keyring: KeyringInstance | OneKeyKeyring) {
     if (ONLY_IN_DEVICE) {
       if (!pinModalId) {
         createPinModal(
-          oneKeyKeyring,
+          currentOneKeyKeyring(),
           connectId,
           MODAL_NAMES.ONEKEY_TEMP_PIN_OR_PASSPHRASE,
           responseCorrelation,
@@ -154,7 +164,7 @@ export function bindOneKeyEvents(keyring: KeyringInstance | OneKeyKeyring) {
       if (deviceOnly) {
         return;
       }
-      oneKeyKeyring.bridge.receivePin({
+      currentOneKeyKeyring().bridge.receivePin({
         switchOnDevice: true,
         ...(responseCorrelation ? { responseCorrelation } : {}),
       });
@@ -166,7 +176,7 @@ export function bindOneKeyEvents(keyring: KeyringInstance | OneKeyKeyring) {
     }
 
     createPinModal(
-      oneKeyKeyring,
+      currentOneKeyKeyring(),
       connectId,
       MODAL_NAMES.ONEKEY_INPUT_PIN,
       responseCorrelation,
@@ -181,14 +191,14 @@ export function bindOneKeyEvents(keyring: KeyringInstance | OneKeyKeyring) {
     if (ONLY_IN_DEVICE) {
       if (!passphraseModalId) {
         createPassphraseModal(
-          oneKeyKeyring,
+          currentOneKeyKeyring(),
           connectId,
           MODAL_NAMES.ONEKEY_TEMP_PIN_OR_PASSPHRASE,
           responseCorrelation,
         );
       }
 
-      oneKeyKeyring.bridge.receivePassphrase({
+      currentOneKeyKeyring().bridge.receivePassphrase({
         passphrase: '',
         switchOnDevice: true,
         ...(responseCorrelation ? { responseCorrelation } : {}),
@@ -201,7 +211,7 @@ export function bindOneKeyEvents(keyring: KeyringInstance | OneKeyKeyring) {
     }
 
     createPassphraseModal(
-      oneKeyKeyring,
+      currentOneKeyKeyring(),
       connectId,
       MODAL_NAMES.ONEKEY_INPUT_PASSPHRASE,
       responseCorrelation,
@@ -216,7 +226,7 @@ export function bindOneKeyEvents(keyring: KeyringInstance | OneKeyKeyring) {
     }
 
     createPassphraseModal(
-      oneKeyKeyring,
+      currentOneKeyKeyring(),
       connectId,
       MODAL_NAMES.ONEKEY_TEMP_PIN_OR_PASSPHRASE,
     );

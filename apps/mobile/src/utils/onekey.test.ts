@@ -352,4 +352,24 @@ describe('bindOneKeyEvents', () => {
 
     expect(keyring.init).not.toHaveBeenCalled();
   });
+
+  it('binds the global listeners once and answers for the latest keyring', () => {
+    const { bindOneKeyEvents, eventBus, EVENTS } = setupOneKeyEventsModule();
+    const first = createKeyring();
+    const second = createKeyring();
+
+    bindOneKeyEvents(first);
+    bindOneKeyEvents(first);
+    bindOneKeyEvents(second);
+
+    expect(eventBus.listenerCount(EVENTS.ONEKEY.REQUEST_PIN)).toBe(1);
+    expect(eventBus.listenerCount(EVENTS.ONEKEY.REQUEST_PASSPHRASE)).toBe(1);
+
+    eventBus.emit(EVENTS.ONEKEY.REQUEST_PASSPHRASE, {
+      payload: { device: { connectId: 'connect-id' } },
+    });
+
+    expect(first.bridge.receivePassphrase).not.toHaveBeenCalled();
+    expect(second.bridge.receivePassphrase).toHaveBeenCalledTimes(1);
+  });
 });

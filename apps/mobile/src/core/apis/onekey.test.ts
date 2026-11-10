@@ -287,4 +287,76 @@ describe('core/apis/onekey', () => {
       await expect(cancel()).resolves.toBeUndefined();
     });
   });
+
+  describe('device subscriptions', () => {
+    function getSdkHandlers() {
+      const sdk = require('@onekeyfe/hd-ble-sdk').default;
+      const handler = (event: string) =>
+        sdk.on.mock.calls.filter(([name]: [string]) => name === event);
+      return { sdk, handler };
+    }
+    const flush = () => new Promise(resolve => setImmediate(resolve));
+
+    it('subscribes to SDK device events only once', () => {
+      const { startSubscribeOnekeyDevices } = setupApiOneKeyModule();
+      startSubscribeOnekeyDevices();
+      startSubscribeOnekeyDevices();
+      const { handler } = getSdkHandlers();
+      expect(handler('CONNECT')).toHaveLength(1);
+      expect(handler('DISCONNECT')).toHaveLength(1);
+    });
+
+    it('cleans up the keyring when its own device disconnects', async () => {
+      const { startSubscribeOnekeyDevices, mockKeyring } =
+        setupApiOneKeyModule();
+      mockKeyring.connectId = 'current-device';
+      startSubscribeOnekeyDevices();
+      const disconnect = getSdkHandlers().handler('DISCONNECT')[0][1];
+
+      disconnect({ device: { connectId: 'current-device' } });
+      await flush();
+
+      expect(mockKeyring.cleanUp).toHaveBeenCalledTimes(1);
+    });
+
+    it('matches the device by path or the selected connect id', async () => {
+      const { startSubscribeOnekeyDevices, mockKeyring } =
+        setupApiOneKeyModule();
+      mockKeyring._deviceConnectId = 'selected-device';
+      startSubscribeOnekeyDevices();
+      const disconnect = getSdkHandlers().handler('DISCONNECT')[0][1];
+
+      disconnect({ device: { connectId: null, path: 'selected-device' } });
+      await flush();
+
+      expect(mockKeyring.cleanUp).toHaveBeenCalledTimes(1);
+    });
+
+    it.each([
+      ['another device', { device: { connectId: 'other-device' } }],
+      ['an event without a device', {}],
+      ['an event without ids', { device: {} }],
+    ])('keeps the keyring state on %s', async (_name, payload) => {
+      const { startSubscribeOnekeyDevices, mockKeyring } =
+        setupApiOneKeyModule();
+      mockKeyring.connectId = 'current-device';
+      startSubscribeOnekeyDevices();
+      const disconnect = getSdkHandlers().handler('DISCONNECT')[0][1];
+
+      disconnect(payload);
+      await flush();
+
+      expect(mockKeyring.cleanUp).not.toHaveBeenCalled();
+    });
+
+    it('does not clean up when the keyring has no device yet', () => {
+      const { isCurrentOneKeyDevice } = setupApiOneKeyModule();
+      expect(
+        isCurrentOneKeyDevice(
+          { connectId: 'any' },
+          { connectId: null, _deviceConnectId: undefined },
+        ),
+      ).toBe(false);
+    });
+  });
 });

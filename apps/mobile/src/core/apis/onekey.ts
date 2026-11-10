@@ -46,7 +46,41 @@ export function useOneKeyDevices() {
   };
 }
 
+let onekeyDevicesSubscribed = false;
+
+type DisconnectedDevice = {
+  connectId?: string | null;
+  path?: string | null;
+} | null;
+
+/**
+ * Whether a disconnected device is the one the keyring is using. Only that
+ * device's disconnect may reset the keyring; another OneKey dropping off (or
+ * an event without a device) must not wipe the unlocked state.
+ */
+export function isCurrentOneKeyDevice(
+  device: DisconnectedDevice | undefined,
+  keyring: Pick<OneKeyKeyring, 'connectId' | '_deviceConnectId'>,
+) {
+  const ids = [device?.connectId, device?.path].filter(Boolean);
+  const current = [keyring.connectId, keyring._deviceConnectId].filter(Boolean);
+  return ids.some(id => current.includes(id));
+}
+
+async function cleanUpIfCurrentDevice(device: DisconnectedDevice | undefined) {
+  const keyring = await getOneKeyKeyring();
+  if (!isCurrentOneKeyDevice(device, keyring)) {
+    return;
+  }
+  return keyring.cleanUp();
+}
+
 export function startSubscribeOnekeyDevices() {
+  if (onekeyDevicesSubscribed) {
+    return;
+  }
+  onekeyDevicesSubscribed = true;
+
   HardwareBleSdk.on(DEVICE.CONNECT, payload => {
     setDevices(prev => {
       if (prev.find(d => d.connectId === payload?.device?.connectId)) {
@@ -56,7 +90,9 @@ export function startSubscribeOnekeyDevices() {
     });
   });
   HardwareBleSdk.on(DEVICE.DISCONNECT, payload => {
-    cleanUp();
+    cleanUpIfCurrentDevice(payload?.device).catch(e => {
+      console.warn('[OneKey] disconnect cleanup failed', e);
+    });
     setDevices(prev =>
       prev.filter(d => d.connectId !== payload?.device?.connectId),
     );
