@@ -2107,6 +2107,7 @@
       "emptyWhitelistContent": "Añade direcciones de confianza a la lista de permisos para hacer transferencias rápidas; la próxima vez no necesitarás confirmación",
       "SendHistory": "Historial de Envíos",
       "enterOrSearchAddress": "Introducir o Buscar Dirección",
+      "resolvingAddressName": "Buscando dirección...",
       "dividerWatchOnlyWallets": "Direcciones de solo visualización"
     },
     "confirmAddress": {
