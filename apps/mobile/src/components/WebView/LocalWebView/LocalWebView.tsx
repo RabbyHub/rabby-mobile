@@ -24,6 +24,7 @@ import {
   formatDevURI,
   getBaseURL,
   getLocalWebViewDefaultProps,
+  LOCAL_WEBVIEW_FILE_ACCESS_PROPS,
   makeRuntimeInfo,
   sendMessageToWebview,
 } from './utils';
@@ -233,8 +234,13 @@ export const LocalWebView = ({
       {...(IS_IOS
         ? getLocalWebViewDefaultProps().iosWebViewProps
         : getLocalWebViewDefaultProps().androidWebViewProps)}
-      onShouldStartLoadWithRequest={onShouldStartLoadWithRequest}
       {...webviewProps}
+      {...LOCAL_WEBVIEW_FILE_ACCESS_PROPS}
+      onShouldStartLoadWithRequest={onShouldStartLoadWithRequest}
+      // Limit WKWebView's native read grant to bundled page resources.
+      allowingReadAccessToURL={
+        IS_IOS ? `${WEBVIEW_BASEURL}builtin-pages/` : undefined
+      }
       onLayout={event => {
         const { width, height } = event.nativeEvent.layout;
         setWindowInfo({ width, height });
