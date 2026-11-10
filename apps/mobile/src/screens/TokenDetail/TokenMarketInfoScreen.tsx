@@ -218,6 +218,7 @@ export const TokenMarketInfoScreen = () => {
   const getHeaderTitle = useCallback(() => {
     return (
       <TokenDetailHeaderArea
+        inlineBack
         key={finalAccount?.address}
         token={token}
         showCopyIcon
@@ -247,6 +248,11 @@ export const TokenMarketInfoScreen = () => {
       headerTitle: getHeaderTitle,
       headerRight: getHeaderRight,
       headerTitleAlign: 'left',
+      headerBackVisible: false,
+      headerLeft: () => null,
+      // mergeScreenOptions installs a native back bar item on iOS; clear it so
+      // only the row's own back button is rendered.
+      unstable_headerLeftItems: () => [],
     });
   }, [setNavigationOptions, getHeaderRight, getHeaderTitle]);
 

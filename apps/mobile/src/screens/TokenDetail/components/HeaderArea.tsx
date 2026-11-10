@@ -19,6 +19,7 @@ import { NavigationContext, useFocusEffect } from '@react-navigation/native';
 import { IS_IOS } from '@/core/native/utils';
 
 import { useTheme2024 } from '@/hooks/theme';
+import { HeaderBackPressable } from '@/hooks/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
 
 import { AssetAvatar } from '@/components';
@@ -61,6 +62,7 @@ interface Props {
   rootStyle?: StyleProp<ViewStyle>;
   disableRefresh?: boolean;
   showCopyIcon?: boolean;
+  inlineBack?: boolean;
 }
 export const TokenDetailHeaderArea: React.FC<Props> = ({
   token,
@@ -73,8 +75,9 @@ export const TokenDetailHeaderArea: React.FC<Props> = ({
   rootStyle,
   disableRefresh = false,
   showCopyIcon = false,
+  inlineBack = false,
 }) => {
-  const { styles } = useTheme2024({ getStyle: getStyles });
+  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { refreshing } = useAssetsRefreshing();
   const { t } = useTranslation();
   const [copyConfirmVisible, setCopyConfirmVisible] = useState(false);
@@ -124,6 +127,12 @@ export const TokenDetailHeaderArea: React.FC<Props> = ({
     <View style={[styles.root, rootStyle]}>
       <View style={[styles.container, style]}>
         <View style={styles.token}>
+          {inlineBack ? (
+            <HeaderBackPressable
+              style={styles.inlineBack}
+              tintColor={colors2024['neutral-title-1']}
+            />
+          ) : null}
           <AssetAvatar
             logo={token?.logo_url}
             // style={mediaStyle}
@@ -256,6 +265,15 @@ const getStyles = createGetStyles2024(({ isLight, colors2024 }) => ({
     flexShrink: 1,
     minWidth: 0,
     gap: 8,
+  },
+  inlineBack: {
+    marginLeft: 0,
+    paddingLeft: 0,
+    width: 24,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
   },
   lpTokenIconContainer: {
     marginLeft: 0,

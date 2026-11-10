@@ -236,6 +236,7 @@ const TokenDetailContent = () => {
   const getHeaderTitle = useCallback(() => {
     return (
       <TokenDetailHeaderArea
+        inlineBack
         key={effectiveAccount?.address}
         tokenSize={33}
         chainSize={15}
@@ -286,6 +287,11 @@ const TokenDetailContent = () => {
       headerTitle: getHeaderTitle,
       headerRight: getHeaderRight,
       headerTitleAlign: 'left',
+      headerBackVisible: false,
+      headerLeft: () => null,
+      // mergeScreenOptions installs a native back bar item on iOS; clear it so
+      // only the row's own back button is rendered.
+      unstable_headerLeftItems: () => [],
     });
   }, [setNavigationOptions, getHeaderRight, getHeaderTitle]);
 
