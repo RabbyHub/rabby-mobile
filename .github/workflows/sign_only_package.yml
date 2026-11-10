@@ -160,7 +160,7 @@ jobs:
         env:
           ARTIFACT_URL: ${{ inputs.artifact_url }}
           ARTIFACT_SHA256: ${{ inputs.artifact_sha256 }}
-          SIGN_ONLY_DOWNLOAD_PROXY: ${{ vars.SIGN_ONLY_DOWNLOAD_PROXY }}
+          SIGN_ONLY_DOWNLOAD_PROXY: ${{ (inputs.macos_machine_location || vars.RABBY_MOBILE_SIGN_ONLY_IOS_RUNNER || 'mobile-local') == 'mobile-local' && vars.SIGN_ONLY_DOWNLOAD_PROXY || '' }}
         run: |
           if [ -n "${SIGN_ONLY_DOWNLOAD_PROXY:-}" ]; then
             curl --http1.1 -fL -C - --retry 5 --retry-delay 2 \
@@ -335,7 +335,7 @@ jobs:
         env:
           ARTIFACT_URL: ${{ inputs.artifact_url }}
           ARTIFACT_SHA256: ${{ inputs.artifact_sha256 }}
-          SIGN_ONLY_DOWNLOAD_PROXY: ${{ vars.SIGN_ONLY_DOWNLOAD_PROXY }}
+          SIGN_ONLY_DOWNLOAD_PROXY: ${{ (inputs.macos_machine_location || vars.RABBY_MOBILE_SIGN_ONLY_IOS_RUNNER || 'mobile-local') == 'mobile-local' && vars.SIGN_ONLY_DOWNLOAD_PROXY || '' }}
         run: |
           mkdir -p "$RUNNER_TEMP/sign-only-ios-input"
           if [ -n "${SIGN_ONLY_DOWNLOAD_PROXY:-}" ]; then
