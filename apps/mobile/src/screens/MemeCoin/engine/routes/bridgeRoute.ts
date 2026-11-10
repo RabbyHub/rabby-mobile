@@ -19,23 +19,13 @@ import { getBestBridgeQuote } from '@/screens/Bridge/utils/bridgeQuote';
 import { getRabbyFeeInfo } from '@/screens/Swap/hooks/fee';
 import { sleep } from '@/utils/async';
 import { findChainByServerID } from '@/utils/chain';
-import {
-  BRIDGE_ARRIVAL_POLL_INTERVAL_MS,
-  BRIDGE_QUOTE_BACKOFF,
-  BRIDGE_QUOTE_RATE,
-} from '../constants';
+import { BRIDGE_ARRIVAL_POLL_INTERVAL_MS, QUOTE_RATE } from '../constants';
 import type { LegRunnerDeps, RouteAdapter } from '../legRunner';
 import { ExecutionStoppedError } from '../pauseGate';
-import {
-  createRateLimitBackoff,
-  createRateLimiter,
-  isTooManyRequests,
-  QuoteRateLimitedError,
-} from '../quoteRateLimit';
+import { createRateLimiter } from '../quoteRateLimit';
 
-// Module level: every run, and every retry, spends the same backend budget.
-const quoteLimiter = createRateLimiter(BRIDGE_QUOTE_RATE);
-const quoteBackoff = createRateLimitBackoff(BRIDGE_QUOTE_BACKOFF);
+// Module level: legs on different chains, and every run, share the backend limit.
+const quoteLimiter = createRateLimiter(QUOTE_RATE);
 
 export const createBridgeRoute = ({ account }: { account: Account }) => {
   let aggregatorsTask: Promise<BridgeAggregator[]> | undefined;
@@ -72,7 +62,6 @@ export const createBridgeRoute = ({ account }: { account: Account }) => {
         isWrapToken: false,
       });
 
-      await quoteBackoff.wait();
       const settled = await Promise.allSettled(
         aggregators.map(aggregator =>
           quoteLimiter.schedule(() =>
@@ -97,17 +86,8 @@ export const createBridgeRoute = ({ account }: { account: Account }) => {
         .flatMap(r => (r.status === 'fulfilled' && r.value ? r.value : []))
         .filter(q => !!q?.bridge?.id && !!q.bridge.logo_url && !!q.bridge.name);
       if (!quotes.length) {
-        if (
-          settled.some(
-            r => r.status === 'rejected' && isTooManyRequests(r.reason),
-          )
-        ) {
-          quoteBackoff.onRateLimited();
-          throw new QuoteRateLimitedError();
-        }
         return null;
       }
-      quoteBackoff.onSuccess();
 
       const allowanceCache = new Map<string, Promise<string>>();
       const approvals = await Promise.allSettled(

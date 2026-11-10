@@ -1,8 +1,4 @@
-import {
-  createRateLimitBackoff,
-  createRateLimiter,
-  isTooManyRequests,
-} from './quoteRateLimit';
+import { createRateLimiter } from './quoteRateLimit';
 
 const createClock = () => {
   let time = 0;
@@ -69,63 +65,4 @@ describe('createRateLimiter', () => {
     ).rejects.toThrow('boom');
     await expect(limiter.schedule(async () => 'ok')).resolves.toBe('ok');
   });
-});
-
-describe('createRateLimitBackoff', () => {
-  const setup = () => {
-    const clock = createClock();
-    const backoff = createRateLimitBackoff({
-      baseMs: 15000,
-      maxMs: 60000,
-      ...clock,
-    });
-    return { clock, backoff };
-  };
-
-  it('does not wait before anything was rate limited', async () => {
-    const { clock, backoff } = setup();
-    await backoff.wait();
-    expect(clock.sleeps).toEqual([]);
-  });
-
-  it('doubles the wait after each 429, up to the cap', async () => {
-    const { clock, backoff } = setup();
-    for (let i = 0; i < 4; i++) {
-      backoff.onRateLimited();
-      await backoff.wait();
-    }
-    expect(clock.sleeps).toEqual([15000, 30000, 60000, 60000]);
-  });
-
-  it('counts the wait from the 429, so time already passed is not waited again', async () => {
-    const { clock, backoff } = setup();
-    backoff.onRateLimited();
-    clock.advance(10000);
-    await backoff.wait();
-    expect(clock.sleeps).toEqual([5000]);
-  });
-
-  it('starts over after a success', async () => {
-    const { clock, backoff } = setup();
-    backoff.onRateLimited();
-    backoff.onRateLimited();
-    backoff.onSuccess();
-    await backoff.wait();
-    backoff.onRateLimited();
-    await backoff.wait();
-    expect(clock.sleeps).toEqual([15000]);
-  });
-});
-
-describe('isTooManyRequests', () => {
-  it('matches an HTTP 429 response', () => {
-    expect(isTooManyRequests({ response: { status: 429 } })).toBe(true);
-  });
-
-  it.each([{ response: { status: 500 } }, new Error('429'), null, undefined])(
-    'ignores anything else: %p',
-    error => {
-      expect(isTooManyRequests(error)).toBe(false);
-    },
-  );
 });

@@ -15,7 +15,6 @@ export const FAIL_REASON_I18N_KEY: Record<FailReason, string> = {
   gasTooHigh: 'page.convertDust.failReason.gasCostTooHigh',
   simulationFailed: 'page.signTx.swap.simulationFailed',
   insufficientBalance: 'page.swap.insufficient-balance',
-  rateLimited: 'page.memeCoin.execute.tooManyRequests',
   arrivalFailed: 'global.failed',
   failed: 'global.failed',
 };
@@ -31,10 +30,6 @@ export const MAX_AUTO_RETRIES = 2;
 
 export const AUTO_RETRY_DELAY_MS = 1500;
 
-// Backend limits, with a little room for network jitter:
-// /v2/bridge/quote_list 30/minute, /v1/wallet/swap_quote 10/second per IP.
-export const BRIDGE_QUOTE_RATE = { limit: 30, windowMs: 61 * 1000 };
-export const SWAP_QUOTE_RATE = { limit: 10, windowMs: 1100 };
-
-/** bridge quotes after a 429: 15s, 30s, then 60s from the last 429 */
-export const BRIDGE_QUOTE_BACKOFF = { baseMs: 15 * 1000, maxMs: 60 * 1000 };
+// /v2/bridge/quote_list and /v1/wallet/swap_quote each allow 10/second, counted
+// separately; a little room is left for network jitter.
+export const QUOTE_RATE = { limit: 10, windowMs: 1100 };

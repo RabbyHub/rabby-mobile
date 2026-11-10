@@ -399,7 +399,6 @@ describe('auto retry', () => {
     'gasNotEnough',
     'gasTooHigh',
     'insufficientBalance',
-    'rateLimited',
     'failed',
   ] as const)('does not retry %s', async reason => {
     const t = setupAttempts([{ ok: false, reason }, ok]);

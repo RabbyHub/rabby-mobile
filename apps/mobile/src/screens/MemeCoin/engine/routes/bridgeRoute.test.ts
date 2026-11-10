@@ -49,24 +49,18 @@ const quoteParams = {
   slippagePct: 2.5,
 };
 
-// Fresh modules per test: the limiter and backoff live at module level. The
-// error class comes from the same fresh registry, so instanceof still holds.
+// Fresh modules per test: the limiter lives at module level.
 const loadRoute = () => {
-  let loaded: {
-    route: ReturnType<
-      typeof import('./bridgeRoute').createBridgeRoute
-    >['route'];
-    RateLimitedError: typeof import('../quoteRateLimit').QuoteRateLimitedError;
-  };
+  let route: ReturnType<
+    typeof import('./bridgeRoute').createBridgeRoute
+  >['route'];
   jest.isolateModules(() => {
     const { createBridgeRoute } = require('./bridgeRoute');
-    loaded = {
-      route: createBridgeRoute({ account: { address: '0xme' } as Account })
-        .route,
-      RateLimitedError: require('../quoteRateLimit').QuoteRateLimitedError,
-    };
+    route = createBridgeRoute({
+      account: { address: '0xme' } as Account,
+    }).route;
   });
-  return loaded!;
+  return route!;
 };
 
 describe('bridge route quote', () => {
@@ -86,50 +80,39 @@ describe('bridge route quote', () => {
 
   it('only asks the aggregators that support the pay chain', async () => {
     mockGetQuoteList.mockResolvedValue([]);
-    await loadRoute().route.quote(quoteParams);
+    await loadRoute().quote(quoteParams);
     expect(mockGetQuoteList.mock.calls.map(call => call[0])).toEqual([
       'lifi',
       'relay',
     ]);
   });
 
-  it('is rate limited when nothing came back and a request got 429', async () => {
+  it('has no quote when every request failed, 429 included', async () => {
     mockGetQuoteList
       .mockRejectedValueOnce(tooManyRequests)
-      .mockResolvedValueOnce([]);
-    const { route, RateLimitedError } = loadRoute();
-    await expect(route.quote(quoteParams)).rejects.toBeInstanceOf(
-      RateLimitedError,
-    );
-  });
-
-  it('has no quote when the requests failed for other reasons', async () => {
-    mockGetQuoteList.mockRejectedValue(new Error('timeout'));
-    await expect(loadRoute().route.quote(quoteParams)).resolves.toBeNull();
+      .mockRejectedValueOnce(new Error('timeout'));
+    await expect(loadRoute().quote(quoteParams)).resolves.toBeNull();
   });
 
   it('uses what came back even if another aggregator got 429', async () => {
     mockGetQuoteList
       .mockRejectedValueOnce(tooManyRequests)
       .mockResolvedValueOnce([bridgeQuote]);
-    const quote = await loadRoute().route.quote(quoteParams);
+    const quote = await loadRoute().quote(quoteParams);
     expect(quote?.receiveAmount.toString()).toBe('1');
   });
 
-  it('holds the next quote for 15s after a 429', async () => {
-    const { route, RateLimitedError } = loadRoute();
-    mockGetQuoteList.mockRejectedValue(tooManyRequests);
-    await expect(route.quote(quoteParams)).rejects.toBeInstanceOf(
-      RateLimitedError,
+  it('sends at most 10 quote requests per 1.1s across quotes running at once', async () => {
+    mockGetAggregatorList.mockResolvedValue(
+      ['lifi', 'socket', 'relay', 'across', 'bungee'].map(id => ({ id })),
     );
-
-    mockGetQuoteList.mockReset();
-    mockGetQuoteList.mockResolvedValue([bridgeQuote]);
-    const next = route.quote(quoteParams);
-    await jest.advanceTimersByTimeAsync(14999);
-    expect(mockGetQuoteList).not.toHaveBeenCalled();
+    mockGetQuoteList.mockResolvedValue([]);
+    const route = loadRoute();
+    const quotes = Promise.all([0, 1, 2].map(() => route.quote(quoteParams)));
+    await jest.advanceTimersByTimeAsync(1099);
+    expect(mockGetQuoteList).toHaveBeenCalledTimes(10);
     await jest.advanceTimersByTimeAsync(1);
-    await expect(next).resolves.not.toBeNull();
-    expect(mockGetQuoteList).toHaveBeenCalledTimes(2);
+    await quotes;
+    expect(mockGetQuoteList).toHaveBeenCalledTimes(15);
   });
 });

@@ -12,13 +12,13 @@ import { buildDexSwap } from '@/screens/Swap/hooks/swap';
 import { getSwapQuoteScore } from '@/screens/Swap/hooks/token';
 import { isSwapWrapToken } from '@/screens/Swap/utils';
 import { findChainByServerID } from '@/utils/chain';
-import { SWAP_QUOTE_RATE } from '../constants';
+import { QUOTE_RATE } from '../constants';
 import type { RouteAdapter } from '../legRunner';
 import { createRateLimiter } from '../quoteRateLimit';
 import { fetchDexQuotesIsolated, type GetDexQuote } from './dexQuotes';
 
 // Module level: legs on different chains share the per-IP limit.
-const quoteLimiter = createRateLimiter(SWAP_QUOTE_RATE);
+const quoteLimiter = createRateLimiter(QUOTE_RATE);
 
 export const createSwapRoute = ({
   account,
