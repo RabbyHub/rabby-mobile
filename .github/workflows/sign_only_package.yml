@@ -10,9 +10,9 @@ on:
         required: false
         type: choice
         options:
-          - 'mobile-local'
           - 'mobile'
-        default: 'mobile-local'
+          - 'mobile-local'
+        default: 'mobile'
       sign_request_id:
         required: true
         type: string
@@ -241,7 +241,7 @@ jobs:
     runs-on:
       - self-hosted
       - macOS
-      - ${{ inputs.macos_machine_location || 'mobile-local' }}
+      - ${{ inputs.macos_machine_location || 'mobile' }}
     env:
       NODE_OPTIONS: '--max_old_space_size=12288'
       XCODE_VER: '27.1'

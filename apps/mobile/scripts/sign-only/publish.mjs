@@ -95,7 +95,7 @@ function parseArgs(argv) {
   result.signingMachine =
     result.signingMachine ||
     process.env.OPFE_SIGN_ONLY_SIGNING_MACHINE ||
-    'mobile-local';
+    'mobile';
   if (!['mobile', 'mobile-local'].includes(result.signingMachine))
     throw new Error('--signing-machine must be mobile or mobile-local');
 
