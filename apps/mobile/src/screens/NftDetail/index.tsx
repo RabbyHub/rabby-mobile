@@ -1,8 +1,7 @@
 /* eslint-disable react-native/no-inline-styles */
 import React, { useCallback, useEffect, useMemo } from 'react';
 import dayjs from 'dayjs';
-import { Dimensions, StyleSheet, View, ScrollView } from 'react-native';
-import { IS_IOS } from '@/core/native/utils';
+import { StyleSheet, View, ScrollView } from 'react-native';
 import BigNumber from 'bignumber.js';
 import { getCHAIN_ID_LIST } from '@/constant/projectLists';
 import { useTheme2024 } from '@/hooks/theme';
@@ -415,8 +414,6 @@ export const NFTDetailScreen = () => {
   );
 };
 
-const SCREEN_WIDTH = Dimensions.get('window').width;
-
 const getStyle = createGetStyles2024(
   ({ colors2024, colors, safeAreaInsets }) => ({
     screenRoot: {
@@ -469,17 +466,9 @@ const getStyle = createGetStyles2024(
       marginBottom: 0,
     },
     headerArea: {
-      // iOS: a fixed, symmetric box so the icon+name group centres on screen
-      // (the native title container starts after the leading back item, hence
-      // the trailing reserve). Android keeps the original full-width layout.
-      ...(IS_IOS
-        ? {
-            width: SCREEN_WIDTH - 100,
-            justifyContent: 'center' as const,
-            paddingRight: 65,
-          }
-        : { width: '100%' as const, marginLeft: 8 }),
+      width: '100%',
       height: 'auto',
+      marginLeft: 8,
       display: 'flex',
       flexDirection: 'row',
       gap: 8,
