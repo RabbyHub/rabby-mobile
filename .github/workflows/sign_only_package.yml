@@ -18,9 +18,8 @@ on:
         required: true
         type: string
       artifact_sha256:
-        required: false
+        required: true
         type: string
-        default: ''
       source_sha:
         required: false
         type: string
@@ -68,20 +67,6 @@ jobs:
       RABBY_MOBILE_LARK_DRIVE_UPLOAD: ${{ inputs.notify_lark == 'true' && 'true' || 'false' }}
       RABBY_MOBILE_LARK_DRIVE_UPLOAD_REQUIRED: 'false'
       RABBY_MOBILE_ANDROID_16KB_CHECK: 'warn'
-      RABBY_MOBILE_BUILD_BUCKET: ${{ secrets.RABBY_MOBILE_BUILD_BUCKET }}
-      RABBY_MOBILE_KR_PWD: ${{ secrets.RABBY_MOBILE_KR_PWD }}
-      RABBY_MOBILE_SAFE_API_KEY: ${{ secrets.MOBILE_SAFE_API_KEY }}
-      RABBY_MOBILE_CODE: ${{ secrets.RABBY_MOBILE_CODE2 }}
-      RABBY_MOBILE_SENTRY_AUTH_TOKEN2: ${{ secrets.RABBY_MOBILE_SENTRY_AUTH_TOKEN2 }}
-      SENTRY_AUTH_TOKEN: ${{ secrets.RABBY_MOBILE_SENTRY_AUTH_TOKEN2 }}
-      RABBY_MOBILE_ANDROID_KEY_STORE: ${{ secrets.RABBY_MOBILE_ANDROID_KEY_STORE }}
-      RABBY_MOBILE_ANDROID_STORE_PASSWORD: ${{ secrets.RABBY_MOBILE_ANDROID_STORE_PASSWORD }}
-      RABBY_MOBILE_ANDROID_KEY_PASSWORD: ${{ secrets.RABBY_MOBILE_ANDROID_KEY_PASSWORD }}
-      RABBY_MOBILE_ANDROID_KEY_ALIAS: ${{ secrets.RABBY_MOBILE_ANDROID_KEY_ALIAS }}
-      RABBY_MOBILE_LARK_CHAT_URL: ${{ secrets.RABBY_MOBILE_LARK_CHAT_URL || secrets.LARK_CHAT_URL }}
-      RABBY_MOBILE_LARK_CHAT_SECRET: ${{ secrets.RABBY_MOBILE_LARK_CHAT_SECRET || secrets.LARK_CHAT_SECRET }}
-      RABBY_ROBOT_LARK_APP_ID: ${{ secrets.RABBY_ROBOT_LARK_APP_ID }}
-      RABBY_ROBOT_LARK_APP_SECRET: ${{ secrets.RABBY_ROBOT_LARK_APP_SECRET }}
       GIT_ACTIONS_JOB_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
       GITHUB_ACTOR: ${{ github.actor }}
       GITHUB_TRIGGERING_ACTOR: ${{ github.triggering_actor }}
@@ -103,6 +88,28 @@ jobs:
 
       - name: Reset the scripts this job executes
         run: git clean -ffdx apps/mobile/scripts apps/mobile/fastlane .github/workflows
+
+      - name: Validate sign-only request
+        env:
+          ARTIFACT_URL: ${{ inputs.artifact_url }}
+          ARTIFACT_SHA256: ${{ inputs.artifact_sha256 }}
+          SOURCE_DIRTY: ${{ inputs.source_dirty }}
+        run: |
+          case "$ARTIFACT_URL" in
+            https://download.rabby.io/internal/sign-only/*) ;;
+            *)
+              echo "artifact_url must be a sign-only broker URL" >&2
+              exit 1
+              ;;
+          esac
+          if [ -z "$ARTIFACT_SHA256" ]; then
+            echo "artifact_sha256 is required" >&2
+            exit 1
+          fi
+          if [ "$SOURCE_DIRTY" = "true" ]; then
+            echo "refusing to sign a package built from a dirty source tree" >&2
+            exit 1
+          fi
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -135,9 +142,7 @@ jobs:
           ARTIFACT_SHA256: ${{ inputs.artifact_sha256 }}
         run: |
           curl -fL --retry 3 --retry-delay 2 -o "$RUNNER_TEMP/sign-only.apk" "$ARTIFACT_URL"
-          if [ -n "$ARTIFACT_SHA256" ]; then
-            echo "$ARTIFACT_SHA256  $RUNNER_TEMP/sign-only.apk" | sha256sum -c -
-          fi
+          echo "$ARTIFACT_SHA256  $RUNNER_TEMP/sign-only.apk" | sha256sum -c -
 
       # Signing, the S3 upload and the version metadata only need SDK tools,
       # node built-ins and the aws CLI. node_modules is required only by the
@@ -152,6 +157,11 @@ jobs:
           yarn install --immutable --mode=skip-build
 
       - name: Sign APK
+        env:
+          RABBY_MOBILE_ANDROID_KEY_STORE: ${{ secrets.RABBY_MOBILE_ANDROID_KEY_STORE }}
+          RABBY_MOBILE_ANDROID_STORE_PASSWORD: ${{ secrets.RABBY_MOBILE_ANDROID_STORE_PASSWORD }}
+          RABBY_MOBILE_ANDROID_KEY_PASSWORD: ${{ secrets.RABBY_MOBILE_ANDROID_KEY_PASSWORD }}
+          RABBY_MOBILE_ANDROID_KEY_ALIAS: ${{ secrets.RABBY_MOBILE_ANDROID_KEY_ALIAS }}
         run: |
           bash apps/mobile/scripts/sign-only/sign-android.sh \
             "$RUNNER_TEMP/sign-only.apk" \
@@ -161,6 +171,14 @@ jobs:
         env:
           RABBY_MOBILE_SIGN_ONLY_APK: ${{ runner.temp }}/sign-only-signed.apk
           RABBY_MOBILE_SIGN_ONLY_RESULT_FILE: ${{ runner.temp }}/sign-only-result.txt
+          RABBY_MOBILE_BUILD_BUCKET: ${{ secrets.RABBY_MOBILE_BUILD_BUCKET }}
+          RABBY_MOBILE_KR_PWD: ${{ secrets.RABBY_MOBILE_KR_PWD }}
+          RABBY_MOBILE_SAFE_API_KEY: ${{ secrets.MOBILE_SAFE_API_KEY }}
+          RABBY_MOBILE_CODE: ${{ secrets.RABBY_MOBILE_CODE2 }}
+          RABBY_MOBILE_SENTRY_AUTH_TOKEN2: ${{ secrets.RABBY_MOBILE_SENTRY_AUTH_TOKEN2 }}
+          SENTRY_AUTH_TOKEN: ${{ secrets.RABBY_MOBILE_SENTRY_AUTH_TOKEN2 }}
+          RABBY_MOBILE_LARK_CHAT_URL: ${{ secrets.RABBY_MOBILE_LARK_CHAT_URL || secrets.LARK_CHAT_URL }}
+          RABBY_MOBILE_LARK_CHAT_SECRET: ${{ secrets.RABBY_MOBILE_LARK_CHAT_SECRET || secrets.LARK_CHAT_SECRET }}
         run: |
           # The self-hosted runners use `bash -ieol`, so a stale value in the
           # machine profile can shadow the workflow env; re-export the Lark
@@ -178,6 +196,7 @@ jobs:
           JOB_STATUS: ${{ job.status }}
           RESULT_FILE: ${{ runner.temp }}/sign-only-result.txt
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          RABBY_MOBILE_BUILD_BUCKET: ${{ secrets.RABBY_MOBILE_BUILD_BUCKET }}
         run: |
           node - <<'NODE'
           const fs = require('node:fs');
@@ -222,18 +241,6 @@ jobs:
       SKIP_NOTIFY_LARK: ${{ inputs.notify_lark == 'true' && 'false' || 'true' }}
       RABBY_MOBILE_LARK_DRIVE_UPLOAD: ${{ inputs.notify_lark == 'true' && 'true' || 'false' }}
       RABBY_MOBILE_LARK_DRIVE_UPLOAD_REQUIRED: 'false'
-      RABBY_MOBILE_BUILD_BUCKET: ${{ secrets.RABBY_MOBILE_BUILD_BUCKET }}
-      RABBY_MOBILE_KR_PWD: ${{ secrets.RABBY_MOBILE_KR_PWD }}
-      RABBY_MOBILE_SAFE_API_KEY: ${{ secrets.MOBILE_SAFE_API_KEY }}
-      RABBY_MOBILE_CODE: ${{ secrets.RABBY_MOBILE_CODE2 }}
-      RABBY_MOBILE_SENTRY_AUTH_TOKEN2: ${{ secrets.RABBY_MOBILE_SENTRY_AUTH_TOKEN2 }}
-      SENTRY_AUTH_TOKEN: ${{ secrets.RABBY_MOBILE_SENTRY_AUTH_TOKEN2 }}
-      MATCH_PASSWORD: ${{ secrets.RABBY_MOBILE_MATCH_PASSWORD }}
-      RABBY_MOBILE_MATCH_GIT_BASIC_AUTHORIZATION: ${{ secrets.RABBY_MOBILE_MATCH_GIT_BASIC_AUTHORIZATION }}
-      RABBY_MOBILE_LARK_CHAT_URL: ${{ secrets.RABBY_MOBILE_LARK_CHAT_URL || secrets.LARK_CHAT_URL }}
-      RABBY_MOBILE_LARK_CHAT_SECRET: ${{ secrets.RABBY_MOBILE_LARK_CHAT_SECRET || secrets.LARK_CHAT_SECRET }}
-      RABBY_ROBOT_LARK_APP_ID: ${{ secrets.RABBY_ROBOT_LARK_APP_ID }}
-      RABBY_ROBOT_LARK_APP_SECRET: ${{ secrets.RABBY_ROBOT_LARK_APP_SECRET }}
       GIT_ACTIONS_JOB_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
       GITHUB_ACTOR: ${{ github.actor }}
       GITHUB_TRIGGERING_ACTOR: ${{ github.triggering_actor }}
@@ -256,6 +263,28 @@ jobs:
       - name: Reset the scripts this job executes
         run: git clean -ffdx apps/mobile/scripts apps/mobile/fastlane .github/workflows
 
+      - name: Validate sign-only request
+        env:
+          ARTIFACT_URL: ${{ inputs.artifact_url }}
+          ARTIFACT_SHA256: ${{ inputs.artifact_sha256 }}
+          SOURCE_DIRTY: ${{ inputs.source_dirty }}
+        run: |
+          case "$ARTIFACT_URL" in
+            https://download.rabby.io/internal/sign-only/*) ;;
+            *)
+              echo "artifact_url must be a sign-only broker URL" >&2
+              exit 1
+              ;;
+          esac
+          if [ -z "$ARTIFACT_SHA256" ]; then
+            echo "artifact_sha256 is required" >&2
+            exit 1
+          fi
+          if [ "$SOURCE_DIRTY" = "true" ]; then
+            echo "refusing to sign a package built from a dirty source tree" >&2
+            exit 1
+          fi
+
       - name: Setup Xcode
         uses: maxim-lobanov/setup-xcode@v1
         with:
@@ -276,9 +305,7 @@ jobs:
         run: |
           mkdir -p "$RUNNER_TEMP/sign-only-ios-input"
           curl -fL --retry 3 --retry-delay 2 -o "$RUNNER_TEMP/sign-only-ios.zip" "$ARTIFACT_URL"
-          if [ -n "$ARTIFACT_SHA256" ]; then
-            echo "$ARTIFACT_SHA256  $RUNNER_TEMP/sign-only-ios.zip" | shasum -a 256 -c -
-          fi
+          echo "$ARTIFACT_SHA256  $RUNNER_TEMP/sign-only-ios.zip" | shasum -a 256 -c -
           unzip -q -o "$RUNNER_TEMP/sign-only-ios.zip" -d "$RUNNER_TEMP/sign-only-ios-input"
 
       - name: Unlock keychain
@@ -308,6 +335,16 @@ jobs:
           RABBY_MOBILE_SIGN_ONLY_ARCHIVE: ${{ runner.temp }}/sign-only-ios-input/RabbyMobile.xcarchive
           RABBY_MOBILE_SIGN_ONLY_RESULT_FILE: ${{ runner.temp }}/sign-only-result.txt
           SKIP_BUILD: 'true'
+          RABBY_MOBILE_BUILD_BUCKET: ${{ secrets.RABBY_MOBILE_BUILD_BUCKET }}
+          RABBY_MOBILE_KR_PWD: ${{ secrets.RABBY_MOBILE_KR_PWD }}
+          RABBY_MOBILE_SAFE_API_KEY: ${{ secrets.MOBILE_SAFE_API_KEY }}
+          RABBY_MOBILE_CODE: ${{ secrets.RABBY_MOBILE_CODE2 }}
+          RABBY_MOBILE_SENTRY_AUTH_TOKEN2: ${{ secrets.RABBY_MOBILE_SENTRY_AUTH_TOKEN2 }}
+          SENTRY_AUTH_TOKEN: ${{ secrets.RABBY_MOBILE_SENTRY_AUTH_TOKEN2 }}
+          MATCH_PASSWORD: ${{ secrets.RABBY_MOBILE_MATCH_PASSWORD }}
+          RABBY_MOBILE_MATCH_GIT_BASIC_AUTHORIZATION: ${{ secrets.RABBY_MOBILE_MATCH_GIT_BASIC_AUTHORIZATION }}
+          RABBY_MOBILE_LARK_CHAT_URL: ${{ secrets.RABBY_MOBILE_LARK_CHAT_URL || secrets.LARK_CHAT_URL }}
+          RABBY_MOBILE_LARK_CHAT_SECRET: ${{ secrets.RABBY_MOBILE_LARK_CHAT_SECRET || secrets.LARK_CHAT_SECRET }}
         run: |
           cd apps/mobile
           if [ ! -d "$RABBY_MOBILE_SIGN_ONLY_ARCHIVE" ]; then
@@ -329,6 +366,7 @@ jobs:
           JOB_STATUS: ${{ job.status }}
           RESULT_FILE: ${{ runner.temp }}/sign-only-result.txt
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          RABBY_MOBILE_BUILD_BUCKET: ${{ secrets.RABBY_MOBILE_BUILD_BUCKET }}
         run: |
           node - <<'NODE'
           const fs = require('node:fs');

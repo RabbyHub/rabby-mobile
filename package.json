@@ -49,7 +49,8 @@
     "sign-only:upload:ios": "yarn workspace rabby-mobile sign-only:upload:ios",
     "sign-only:full:android": "yarn workspace rabby-mobile sign-only:full:android",
     "sign-only:full:ios": "yarn workspace rabby-mobile sign-only:full:ios",
-    "sign-only:full:all": "yarn workspace rabby-mobile sign-only:full:all"
+    "sign-only:full:all": "yarn workspace rabby-mobile sign-only:full:all",
+    "sign-only:test": "yarn workspace rabby-mobile sign-only:test"
   },
   "simple-git-hooks": {
     "pre-push": "yarn lint"

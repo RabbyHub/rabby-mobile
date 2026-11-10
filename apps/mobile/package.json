@@ -68,7 +68,8 @@
     "sign-only:upload:ios": "node ./scripts/sign-only/publish.mjs --platform ios --file .sign-only/RabbyMobile.xcarchive.zip --prepare",
     "sign-only:full:android": "node ./scripts/sign-only/one-shot.mjs --platform android",
     "sign-only:full:ios": "node ./scripts/sign-only/one-shot.mjs --platform ios",
-    "sign-only:full:all": "node ./scripts/sign-only/one-shot.mjs --platform all"
+    "sign-only:full:all": "node ./scripts/sign-only/one-shot.mjs --platform all",
+    "sign-only:test": "node --test ./scripts/sign-only/publish.test.mjs"
   },
   "resolutions": {
     "@gorhom/bottom-sheet": "patch:@gorhom/bottom-sheet@npm:5.2.8#../../.yarn/patches/@gorhom-bottom-sheet-npm-5.2.8-1ad4b8f529.patch",

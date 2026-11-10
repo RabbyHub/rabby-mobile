@@ -10,6 +10,7 @@ import net from 'node:net';
 import path from 'node:path';
 import readline from 'node:readline';
 import tls from 'node:tls';
+import { pathToFileURL } from 'node:url';
 
 const DEFAULT_SERVICE_URL = 'https://rabby-fe-opcode-service.dbkops.com';
 const TOKEN_FILE = path.join(
@@ -169,7 +170,7 @@ function describeProxy(proxyUrl) {
  * Establish an HTTP CONNECT tunnel to an https target. The returned socket is
  * already TLS-wrapped and can be handed to https.request via createConnection.
  */
-function createProxyTunnel(proxyUrl, targetUrl) {
+export function createProxyTunnel(proxyUrl, targetUrl) {
   return new Promise((resolve, reject) => {
     let proxy;
     let target;
@@ -245,7 +246,7 @@ function createProxyTunnel(proxyUrl, targetUrl) {
   });
 }
 
-async function uploadFile(uploadUrl, filePath, headers, size, proxyUrl) {
+export async function uploadFile(uploadUrl, filePath, headers, size, proxyUrl) {
   const url = new URL(uploadUrl);
   const transport = url.protocol === 'http:' ? http : https;
   const options = {
@@ -261,8 +262,12 @@ async function uploadFile(uploadUrl, filePath, headers, size, proxyUrl) {
   if (proxyUrl) {
     log(`[sign-only] upload via proxy ${describeProxy(proxyUrl)}`);
     tunnel = await createProxyTunnel(proxyUrl, uploadUrl);
-    options.agent = false;
-    options.createConnection = () => tunnel;
+    // Do not use `agent: false`: that creates a one-off HTTPS Agent which
+    // opens its own direct socket and ignores a request-level
+    // createConnection. Give the Agent itself the tunnel instead.
+    const agent = new https.Agent({ keepAlive: false });
+    agent.createConnection = () => tunnel;
+    options.agent = agent;
   }
 
   return new Promise((resolve, reject) => {
@@ -449,7 +454,12 @@ async function main() {
   }
 }
 
-main().catch(error => {
-  console.error(`[sign-only] ${error.message}`);
-  process.exit(1);
-});
+const isDirectRun =
+  process.argv[1] &&
+  import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href;
+if (isDirectRun) {
+  main().catch(error => {
+    console.error(`[sign-only] ${error.message}`);
+    process.exit(1);
+  });
+}
