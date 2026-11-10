@@ -2996,7 +2996,7 @@ describe('PerpsProScene market loading states', () => {
   });
 
   it.each(['android', 'ios'] as const)(
-    'commits a tab press only after %s UI-animation completion',
+    'commits a tab press immediately and never sweeps the page in between (%s)',
     platform => {
       Object.defineProperty(Platform, 'OS', {
         configurable: true,
@@ -3010,15 +3010,9 @@ describe('PerpsProScene market loading states', () => {
       const list = getInfoList();
       const accountRows = getInfoList('account');
       fireEvent.press(screen.getByTestId('perps-pro-info-tab-openOrders'));
-      expect(nativeBoundary.animations()).toHaveLength(1);
-      expect(persist).not.toHaveBeenCalled();
-      expect(
-        screen.getByTestId('perps-pro-info-tab-account').props
-          .accessibilityState,
-      ).toEqual({ selected: true });
-      physicalPageScroll(getInfoLeaf('openOrders').index);
-      expect(persist).not.toHaveBeenCalled();
-      pageState('idle');
+      // A press is a cut: nothing is animated, so the Open Orders page in
+      // between never becomes visible.
+      expect(nativeBoundary.animations()).toHaveLength(0);
       expect(persist.mock.calls).toEqual([['openOrders']]);
       expect(getInfoList()).toBe(list);
       expect(getInfoList('account')).toBe(accountRows);
@@ -3050,37 +3044,11 @@ describe('PerpsProScene market loading states', () => {
     fireEvent.press(screen.getByTestId('perps-pro-info-tab-openOrders'));
     fireEvent.press(screen.getByTestId('perps-pro-info-tab-account'));
     fireEvent.press(screen.getByTestId('perps-pro-info-tab-positions'));
-    expect(nativeBoundary.animations()).toHaveLength(1);
-    expect(persist).not.toHaveBeenCalled();
-    settleInfoPage('openOrders');
-    expect(nativeBoundary.animations()).toHaveLength(1);
-    expect(nativeBoundary.animationHistory()).toHaveLength(2);
-    settleInfoPage('positions');
+    // Every press commits on its own; the last one wins and nothing animates.
+    expect(nativeBoundary.animations()).toHaveLength(0);
+    expect(persist.mock.calls.at(-1)).toEqual(['positions']);
     expect(getInfoList()).toBe(list);
     expect(infoTabs.map(tab => getInfoList(tab))).toEqual(retainedLists);
-    expect(
-      screen.getByTestId('perps-pro-positions-controls'),
-    ).toBeOnTheScreen();
-    expect(screen.queryByTestId('perps-pro-open-orders-controls')).toBeNull();
-    expect(
-      screen.getByTestId('perps-pro-info-tab-positions').props
-        .accessibilityState,
-    ).toEqual({ selected: true });
-    expect(
-      screen.UNSAFE_getByType(PerpsProTabIndicator).props.position.value,
-    ).toBe(0);
-    fireEvent.press(screen.getByTestId('perps-pro-info-tab-account'));
-    settleInfoPage('account');
-    expect(getInfoList()).toBe(list);
-    expect(infoTabs.map(tab => getInfoList(tab))).toEqual(retainedLists);
-    expect(persist.mock.calls).toEqual([
-      ['openOrders'],
-      ['positions'],
-      ['account'],
-    ]);
-    expect(
-      screen.UNSAFE_getByType(PerpsProTabIndicator).props.position.value,
-    ).toBe(2);
   });
 
   it('commits native row swipes through the same preference owner without native commands', () => {

@@ -108,15 +108,25 @@ export const PerpsProInfoSingleList = <Row extends { key: string }>({
       scrollToOffset: (offset, animated) =>
         pagerRef.current?.scrollToOffset(offset, animated),
       selectPath: path => pagerRef.current?.selectPath(path),
+      jumpPath: path => pagerRef.current?.jumpPath(path),
+      jumpTab: key => pagerRef.current?.jumpTab(key),
       // Parent navigation preserves the category. The pager also remembers it
       // for gesture entry; an explicit tab command uses the business selection.
-      selectTab: key =>
-        pagerRef.current?.selectPath({
+      // A tab press is a cut, not a swipe: jump straight to the target so the
+      // presentation never sweeps across the page in between.
+      selectTab: key => {
+        const path = {
           key,
           ...(key === 'openOrders'
             ? { childKey: openOrders.controls.category }
             : {}),
-        }),
+        };
+        if (pagerRef.current?.jumpPath) {
+          pagerRef.current.jumpPath(path);
+          return;
+        }
+        pagerRef.current?.selectPath(path);
+      },
     }),
     [openOrders.controls.category],
   );

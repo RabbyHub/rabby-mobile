@@ -60,6 +60,9 @@ export type LinkedSceneGroupContext = {
 export type LinkedScenePagerHandle = {
   selectPath: (path: LinkedScenePath) => void;
   selectTab: (key: string) => void;
+  /** Cut straight to a path: no sweep across the pages in between. */
+  jumpPath: (path: LinkedScenePath) => void;
+  jumpTab: (key: string) => void;
 };
 
 export type LinkedScenePagerProps = {
@@ -459,6 +462,48 @@ function LinkedScenePagerOwner({
       );
       snap(1);
     };
+    // Tapping a tab must not sweep the presentation across every page between
+    // the source and the target (the intermediate page becomes visible). Commit
+    // the target directly: no transition frame is published, so `began` never
+    // mounts the pages in between.
+    const jump = (path: LinkedScenePath) => {
+      'worklet';
+      if (!uiMounted.value) {
+        return;
+      }
+      const current = motion.value;
+      if (widthValue.value <= 0) {
+        motion.value = { ...current, queued: path };
+        return;
+      }
+      if (
+        current.phase === 'idle' &&
+        linkedScenePhysicalKey(current.settled) ===
+          linkedScenePhysicalKey(path)
+      ) {
+        return;
+      }
+      const epoch = current.epoch + 1;
+      cancelAnimation(fraction);
+      pausedSnap.value = null;
+      fraction.value = 0;
+      gestureActive.value = true;
+      motion.value = {
+        ...current,
+        epoch,
+        edge: null,
+        phase: 'commit',
+        settled: path,
+        // Same bookkeeping as `complete`: a child-level target is remembered so
+        // the next gesture returns to it.
+        remembered:
+          path.childKey === undefined
+            ? current.remembered
+            : { ...current.remembered, [path.key]: path.childKey },
+        queued: null,
+      };
+      runOnJS(finished)(epoch, path);
+    };
     const acknowledge = (epoch: number) => {
       'worklet';
       const current = motion.value;
@@ -490,6 +535,7 @@ function LinkedScenePagerOwner({
     };
     return {
       request,
+      jump,
       acknowledge,
       flush: () => {
         'worklet';
@@ -704,10 +750,21 @@ function LinkedScenePagerOwner({
     },
     [transport],
   );
+  const jumpPath = useCallback(
+    (path: LinkedScenePath) => {
+      runOnUI(transport.jump)(path);
+    },
+    [transport],
+  );
   React.useImperativeHandle(
     props.ref,
-    () => ({ selectPath, selectTab: key => selectPath({ key }) }),
-    [selectPath],
+    () => ({
+      selectPath,
+      selectTab: key => selectPath({ key }),
+      jumpPath,
+      jumpTab: key => jumpPath({ key }),
+    }),
+    [jumpPath, selectPath],
   );
   const previous = useRef(linkedScenePhysicalKey(props.activePath));
   useEffect(() => {

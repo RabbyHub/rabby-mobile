@@ -80,6 +80,8 @@ export function LinkedScenePagerList({
         outerRef.current?.scrollToOffset(offset, animated),
       selectTab: key => pagerRef.current?.selectTab(key),
       selectPath: path => pagerRef.current?.selectPath(path),
+      jumpTab: key => pagerRef.current?.jumpTab(key),
+      jumpPath: path => pagerRef.current?.jumpPath(path),
     }),
     [],
   );
