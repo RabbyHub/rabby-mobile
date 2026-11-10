@@ -28,9 +28,9 @@
     "menu"
   ],
   "dependencies": {
-    "@radix-ui/react-context-menu": "^2.0.1",
-    "@radix-ui/react-dropdown-menu": "^2.0.1",
-    "sf-symbols-typescript": "^2.0.0"
+    "@radix-ui/react-context-menu": "2.2.2",
+    "@radix-ui/react-dropdown-menu": "2.1.2",
+    "sf-symbols-typescript": "2.0.0"
   },
   "peerDependencies": {
     "@rabby-wallet/react-native-ios-context-menu": "*",
