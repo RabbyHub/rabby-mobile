@@ -80,6 +80,9 @@ function parseArgs(argv) {
       case '--proxy':
         result.proxy = argv[++i] || '';
         break;
+      case '--signing-machine':
+        result.signingMachine = argv[++i] || '';
+        break;
       default:
         throw new Error(`Unknown argument: ${arg}`);
     }
@@ -92,6 +95,12 @@ function parseArgs(argv) {
   result.token =
     result.token || process.env.OPFE_SIGN_ONLY_TOKEN || readTokenFile() || '';
   result.proxy = result.proxy || process.env.OPFE_SIGN_ONLY_PROXY || '';
+  result.signingMachine =
+    result.signingMachine ||
+    process.env.OPFE_SIGN_ONLY_SIGNING_MACHINE ||
+    'mobile-local';
+  if (!['mobile', 'mobile-local'].includes(result.signingMachine))
+    throw new Error('--signing-machine must be mobile or mobile-local');
 
   if (!['android', 'ios'].includes(result.platform))
     throw new Error('--platform must be android or ios');
@@ -433,6 +442,10 @@ async function main() {
 
   if (args.json) {
     const workflow = parseGhCommand(prepared?.data?.ghCommand || '');
+    workflow.inputs = {
+      ...workflow.inputs,
+      macos_machine_location: args.signingMachine,
+    };
     console.log(
       JSON.stringify({
         platform: args.platform,
@@ -442,6 +455,7 @@ async function main() {
         notifyLark: args.notifyLark,
         sourceSha: sourceSha || '',
         sourceDirty,
+        signingMachine: args.signingMachine,
         workflow: {
           url: prepared?.data?.workflowUrl || '',
           ghCommand: prepared?.data?.ghCommand || '',
