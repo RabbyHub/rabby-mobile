@@ -195,8 +195,26 @@ export const useStackScreenConfig = () => {
         },
         // headerTintColor: colors['neutral-bg-1'],
         headerTintColor: colors['neutral-title-1'],
-        // Use the system back item: UIKit owns its layout, so the position is
-        // correct on every device/OS without a JS-side magic offset.
+        // iOS uses the native bar button item above; Android keeps the custom
+        // headerLeft because `onlyTitle` sets headerBackVisible: false and the
+        // custom control also provides the navBack fallback on first routes.
+        ...(IS_IOS
+          ? {}
+          : {
+              headerLeft: ({ tintColor }: { tintColor?: string }) => (
+                <CustomTouchableOpacity
+                  as="RNGHTouchableOpacity"
+                  style={styles.backButtonStyle}
+                  hitSlop={24}
+                  onPress={navBack}>
+                  <RcIconHeaderBack
+                    width={24}
+                    height={24}
+                    color={tintColor || colors['neutral-body']}
+                  />
+                </CustomTouchableOpacity>
+              ),
+            }),
       };
 
       const result = merge(
@@ -232,7 +250,15 @@ export const useStackScreenConfig = () => {
           fontSize: 20,
         },
         headerTintColor: colors2024['neutral-title-1'],
-        // System back item (see above): no custom view, no offset.
+        // iOS uses the native bar button item above; Android keeps the custom
+        // back control for the same reasons as `mergeScreenOptions`.
+        ...(IS_IOS
+          ? {}
+          : {
+              headerLeft: ({ tintColor }: { tintColor?: string }) => (
+                <HeaderBackPressable tintColor={tintColor} />
+              ),
+            }),
       };
 
       const result = merge(
