@@ -1,3 +1,4 @@
+import { TransactionFactory } from '@ethereumjs/tx';
 import * as sigUtil from 'eth-sig-util';
 import * as ethUtil from 'ethereumjs-util';
 
@@ -175,7 +176,190 @@ function prepareUnlockedKeyring({
   return keyring;
 }
 
+describe('OneKeyKeyring SDK error propagation', () => {
+  it.each([
+    {
+      payload: { code: 105, error: 'Device not found' },
+      message: 'Device not found',
+    },
+    { payload: { code: 0 }, message: 'searchDevices failed' },
+  ])(
+    'preserves searchDevices failure $payload',
+    async ({ payload, message }) => {
+      const bridge = createBridge();
+      bridge.searchDevices.mockResolvedValue({ success: false, payload });
+      const keyring = new OneKeyKeyring({ bridge });
+
+      const failure = keyring.unlock();
+      await expect(failure).rejects.toBeInstanceOf(Error);
+      await expect(failure).rejects.toMatchObject({
+        message,
+        code: payload.code,
+      });
+    },
+  );
+
+  it.each([true, false])(
+    'preserves getDeviceState failure with a preset connection: %s',
+    async presetConnection => {
+      const bridge = createBridge();
+      bridge.searchDevices.mockResolvedValue({
+        success: true,
+        payload: [{ connectId: 'connect-id', deviceId: null }],
+      });
+      bridge.getDeviceState.mockResolvedValue({
+        success: false,
+        payload: { code: 117, error: 'Device busy' },
+      });
+      const keyring = new OneKeyKeyring({ bridge });
+      if (presetConnection) {
+        keyring.setDeviceConnectId('connect-id');
+      }
+
+      await expect(keyring.unlock()).rejects.toMatchObject({
+        message: 'Device busy',
+        code: 117,
+      });
+    },
+  );
+
+  it.each([
+    {
+      rejection: { message: 'Pairing failed', code: 709 },
+      message: 'Pairing failed',
+      code: 709,
+    },
+    {
+      rejection: { message: 'Pairing failed', errorCode: 715 },
+      message: 'Pairing failed',
+      code: 715,
+    },
+    {
+      rejection: { error: 'Pairing failed', code: 718 },
+      message: '{"error":"Pairing failed","code":718}',
+      code: 718,
+    },
+  ])(
+    'preserves codes on rejected objects: $rejection',
+    async ({ rejection, message, code }) => {
+      const bridge = createBridge();
+      bridge.init.mockRejectedValue(rejection);
+      const keyring = new OneKeyKeyring({ bridge });
+
+      const failure = keyring.unlock();
+      await expect(failure).rejects.toBeInstanceOf(Error);
+      await expect(failure).rejects.toMatchObject({ message, code });
+    },
+  );
+
+  it('preserves evmSignTransaction failure through signTransaction', async () => {
+    const bridge = createBridge();
+    bridge.evmSignTransaction.mockResolvedValue({
+      success: false,
+      payload: { code: 801, error: 'PIN invalid' },
+    });
+    const keyring = prepareUnlockedKeyring({ bridge });
+
+    await expect(
+      keyring.signTransaction(
+        SIGNING_ADDRESS,
+        TransactionFactory.fromTxData({}),
+      ),
+    ).rejects.toMatchObject({ message: 'PIN invalid', code: 801 });
+  });
+
+  it('preserves evmSignMessage failure', async () => {
+    const bridge = createBridge();
+    bridge.evmSignMessage.mockResolvedValue({
+      success: false,
+      payload: { code: 802, error: 'Action cancelled' },
+    });
+    const keyring = prepareUnlockedKeyring({ bridge });
+
+    await expect(
+      keyring.signPersonalMessage(SIGNING_ADDRESS, '0x01'),
+    ).rejects.toMatchObject({ message: 'Action cancelled', code: 802 });
+  });
+
+  it.each(['unlock', 'evmSignMessage', 'evmSignTypedData'])(
+    'keeps a rejected Error with code from %s',
+    async method => {
+      const bridge = createBridge();
+      const keyring = prepareUnlockedKeyring({ bridge });
+      const error = Object.assign(new Error('Device busy'), { code: 117 });
+      if (method === 'unlock') {
+        jest.spyOn(keyring, 'unlock').mockRejectedValue(error);
+      } else {
+        bridge[method].mockRejectedValue(error);
+      }
+
+      const failure =
+        method === 'evmSignTypedData'
+          ? keyring.signTypedData(SIGNING_ADDRESS, createValidTypedData(), {
+              version: 'V4',
+            })
+          : keyring.signPersonalMessage(SIGNING_ADDRESS, '0x01');
+      await expect(failure).rejects.toBe(error);
+    },
+  );
+});
+
 describe('OneKeyKeyring signTypedData', () => {
+  it('preserves ordinary SDK failures without EIP712 JSON wrapping', async () => {
+    const bridge = createBridge();
+    bridge.evmSignTypedData.mockResolvedValue({
+      success: false,
+      payload: { code: 803, error: 'Action cancelled by user' },
+    });
+    const keyring = prepareUnlockedKeyring({ bridge });
+
+    await expect(
+      keyring.signTypedData(SIGNING_ADDRESS, createValidTypedData(), {
+        version: 'V4',
+      }),
+    ).rejects.toMatchObject({ message: 'Action cancelled by user', code: 803 });
+  });
+
+  it.each([
+    {
+      code: 1,
+      error: 'EIP712Domain unsupported',
+      expectedCode: 'EIP712_DOMAIN_NOT_SUPPORT',
+      errorMsg: 'EIP712Domain unsupported',
+    },
+    {
+      code: 1,
+      error: 'EIP712 disabled',
+      expectedCode: 'EIP712_BLIND_SIGN_DISABLED',
+      errorMsg: 'EIP712 disabled',
+    },
+    {
+      code: 'Failure_UnexpectedMessage',
+      error: 'Unexpected message',
+      expectedCode: 'EIP712_FIRMWARE_NOT_SUPPORT',
+      errorMsg: 'Not supported on this device',
+    },
+  ])(
+    'keeps the existing $expectedCode JSON message',
+    async ({ code, error, expectedCode, errorMsg }) => {
+      const bridge = createBridge();
+      bridge.evmSignTypedData.mockResolvedValue({
+        success: false,
+        payload: { code, error },
+      });
+      const keyring = prepareUnlockedKeyring({ bridge });
+
+      await expect(
+        keyring.signTypedData(SIGNING_ADDRESS, createValidTypedData(), {
+          version: 'V4',
+        }),
+      ).rejects.toMatchObject({
+        message: JSON.stringify({ code: expectedCode, errorMsg }),
+        code,
+      });
+    },
+  );
+
   it('waits for bridge initialization before probing a device', async () => {
     const bridge = createBridge();
     let resolveInit!: () => void;
@@ -542,8 +726,24 @@ describe('OneKeyKeyring unlock wallet selection', () => {
       payload: { code: 800, error: 'Device disconnected' },
     });
 
-    await expect(keyring.unlock()).rejects.toThrow('Device disconnected');
+    await expect(keyring.unlock()).rejects.toMatchObject({
+      message: 'Device disconnected',
+      code: 800,
+    });
     expect(bridge.evmGetPublicKey).not.toHaveBeenCalled();
+  });
+
+  it('preserves evmGetPublicKey failure during unlock', async () => {
+    const { bridge, keyring } = setup();
+    bridge.evmGetPublicKey.mockResolvedValue({
+      success: false,
+      payload: { code: 801, error: 'PIN invalid' },
+    });
+
+    await expect(keyring.unlock()).rejects.toMatchObject({
+      message: 'PIN invalid',
+      code: 801,
+    });
   });
 
   it.each([
@@ -710,6 +910,7 @@ describe('OneKeyKeyring unlock wallet selection', () => {
     const error = await keyring.unlock().catch((e: unknown) => e);
     expect(error).toBeInstanceOf(Error);
     expect((error as Error).message).toBe('Some wallet session failure');
+    expect(error).toHaveProperty('code', 800);
     expect(bridge.evmGetPublicKey).not.toHaveBeenCalled();
   });
 

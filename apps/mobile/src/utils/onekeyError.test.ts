@@ -22,6 +22,16 @@ describe('utils/onekeyError', () => {
     expect(getOneKeyErrorCode('105')).toBe(105);
   });
 
+  it('prefers a carried code over the message text', () => {
+    // "Device interrupted" alone is ambiguous (107 vs 109); the code is not.
+    expect(
+      getOneKeyErrorCode({ code: 109, message: 'Device interrupted' }),
+    ).toBe(109);
+    expect(
+      getOneKeyErrorMessage({ code: 117, message: 'Pin cancelled' }, t),
+    ).toBe('page.newAddress.onekey.error.deviceBusy');
+  });
+
   it('falls back to the default SDK message when the code was lost', () => {
     expect(getOneKeyErrorCode(new Error('Error: Device is busy'))).toBe(117);
     expect(getOneKeyErrorCode('Pin cancelled')).toBe(802);

@@ -257,7 +257,12 @@ export const OneKeyHardwareWaiting = ({
         afterMinPending(() => {
           setConnectStatus(APPROVAL_STATUS_MAP.FAILED);
           setErrorMessage(
-            getOneKeyErrorMessage(data.errorMsg, t) || data.errorMsg,
+            getOneKeyErrorMessage(
+              data.errorCode !== undefined
+                ? { code: data.errorCode, message: data.errorMsg }
+                : data.errorMsg,
+              t,
+            ) || data.errorMsg,
           );
         });
       }

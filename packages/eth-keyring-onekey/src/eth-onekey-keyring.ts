@@ -39,15 +39,46 @@ function toError(e: unknown): Error {
   if (typeof e === 'string') {
     return new Error(e);
   }
-  const message = (e as { message?: unknown } | null)?.message;
+  const payload = e as {
+    message?: unknown;
+    code?: unknown;
+    errorCode?: unknown;
+  } | null;
+  const message = payload?.message;
+  let error: Error;
   if (typeof message === 'string' && message) {
-    return new Error(message);
+    error = new Error(message);
+  } else {
+    try {
+      error = new Error(JSON.stringify(e) ?? 'Unknown error');
+    } catch {
+      error = new Error('Unknown error');
+    }
   }
-  try {
-    return new Error(JSON.stringify(e) ?? 'Unknown error');
-  } catch {
-    return new Error('Unknown error');
+  const code = payload?.code ?? payload?.errorCode;
+  if (code !== undefined) {
+    Object.assign(error, { code });
   }
+  return error;
+}
+
+/**
+ * Preserve the SDK error code alongside its existing message.
+ *
+ * @param payload - The failed SDK response payload.
+ * @param payload.error - The SDK error message.
+ * @param payload.code - The SDK error code.
+ * @param fallbackMessage - The message used when the SDK provides none.
+ * @returns An Error carrying the SDK code when present.
+ */
+function sdkError(
+  payload: { error?: string; code?: unknown } | undefined,
+  fallbackMessage: string,
+): Error {
+  return toError({
+    message: payload?.error || fallbackMessage,
+    code: payload?.code,
+  });
 }
 
 /**
@@ -303,7 +334,7 @@ class OneKeyKeyring extends EventEmitter {
     const devicePromise = this._deviceConnectId
       ? this.bridge.getDeviceState(this._deviceConnectId).then(res => {
           if (!res.success) {
-            throw new Error(res.payload?.error || 'searchDevices failed');
+            throw sdkError(res.payload, 'searchDevices failed');
           }
           deviceStateRead = true;
           this._passphraseProtection = readPassphraseProtection(res.payload);
@@ -316,7 +347,7 @@ class OneKeyKeyring extends EventEmitter {
         })
       : this.bridge.searchDevices().then(res => {
           if (!res.success) {
-            throw new Error(res.payload?.error || 'searchDevices failed');
+            throw sdkError(res.payload, 'searchDevices failed');
           }
 
           if (res.payload.length <= 0) {
@@ -343,7 +374,7 @@ class OneKeyKeyring extends EventEmitter {
           // A known deviceId is enough to continue; the unlock flow can still
           // fall back to the standard wallet when wallet selection fails.
           if (!deviceId) {
-            throw new Error(state.payload?.error || 'getDeviceState failed');
+            throw sdkError(state.payload, 'getDeviceState failed');
           }
         } else {
           deviceStateRead = true;
@@ -421,7 +452,7 @@ class OneKeyKeyring extends EventEmitter {
             }
             if (!passphraseState.success) {
               reject(
-                passphraseState.payload?.error || 'getPassphraseState failed',
+                sdkError(passphraseState.payload, 'getPassphraseState failed'),
               );
               return false;
             }
@@ -468,7 +499,7 @@ class OneKeyKeyring extends EventEmitter {
                   return;
                 }
               } else if (!session.success) {
-                reject(session.payload?.error || 'openWalletSession failed');
+                reject(sdkError(session.payload, 'openWalletSession failed'));
                 return;
               } else {
                 this.passphraseState =
@@ -514,12 +545,12 @@ class OneKeyKeyring extends EventEmitter {
                 );
                 resolve('just unlocked');
               } else {
-                reject(res.payload?.error || 'getPublicKey failed');
+                reject(sdkError(res.payload, 'getPublicKey failed'));
               }
             });
         })
         .catch(e => {
-          reject(new Error((e && e.toString()) || 'Unknown error'));
+          reject(toError(e));
         });
     });
   }
@@ -710,7 +741,7 @@ class OneKeyKeyring extends EventEmitter {
           );
         })
         .catch(e => {
-          reject(new Error((e && e.toString()) || 'Unknown error'));
+          reject(toError(e));
         });
     });
   }
@@ -769,7 +800,7 @@ class OneKeyKeyring extends EventEmitter {
 
         return newOrMutatedTx;
       }
-      throw new Error((res.payload && res.payload.error) || 'Unknown error');
+      throw sdkError(res.payload, 'Unknown error');
     });
   }
 
@@ -811,17 +842,12 @@ class OneKeyKeyring extends EventEmitter {
                     // eslint-disable-next-line promise/no-multiple-resolved
                     resolve(signature);
                   } else {
-                    reject(
-                      new Error(
-                        (response.payload && response.payload.error) ||
-                          'Unknown error',
-                      ),
-                    );
+                    reject(sdkError(response.payload, 'Unknown error'));
                   }
                 })
                 .catch(e => {
                   console.log('Error while trying to sign a message ', e);
-                  reject(new Error((e && e.toString()) || 'Unknown error'));
+                  reject(toError(e));
                 });
               // This is necessary to avoid popup collision
               // between the unlock & sign trezor popups
@@ -831,7 +857,7 @@ class OneKeyKeyring extends EventEmitter {
         })
         .catch(e => {
           console.log('Error while trying to sign a message ', e);
-          reject(new Error((e && e.toString()) || 'Unknown error'));
+          reject(toError(e));
         });
     });
   }
@@ -968,21 +994,22 @@ class OneKeyKeyring extends EventEmitter {
                         errorMsg = 'Not supported on this device';
                       }
 
-                      const error = new Error(
-                        JSON.stringify({
-                          code,
-                          errorMsg,
-                        }),
-                      );
+                      const error = sdkError(response.payload, 'Unknown error');
+                      if (
+                        typeof code === 'string' &&
+                        code.startsWith('EIP712_')
+                      ) {
+                        error.message = JSON.stringify({ code, errorMsg });
+                      }
                       reject(error);
                     }
                   })
                   .catch(e => {
                     console.log('Error while trying to sign a message ', e);
-                    reject(new Error((e && e.toString()) || 'Unknown error'));
+                    reject(toError(e));
                   });
               } catch (e: any) {
-                reject(new Error((e && e.toString()) || 'Unknown error'));
+                reject(toError(e));
               }
               // This is necessary to avoid popup collision
               // between the unlock & sign trezor popups
@@ -992,7 +1019,7 @@ class OneKeyKeyring extends EventEmitter {
         })
         .catch(e => {
           console.log('Error while trying to sign a message ', e);
-          reject(new Error((e && e.toString()) || 'Unknown error'));
+          reject(toError(e));
         });
     });
   }
