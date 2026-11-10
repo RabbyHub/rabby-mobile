@@ -236,7 +236,6 @@ const TokenDetailContent = () => {
   const getHeaderTitle = useCallback(() => {
     return (
       <TokenDetailHeaderArea
-        style={{ marginLeft: isAndroid ? 0 : -50 }}
         key={effectiveAccount?.address}
         tokenSize={33}
         chainSize={15}
