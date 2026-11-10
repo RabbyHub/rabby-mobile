@@ -17,6 +17,9 @@ import { Text } from '@/components/Typography';
 
 export type AsssetKey = 'token' | 'defi' | 'nft';
 
+/** Number of chain icons the filter pill reserves space for. */
+const CHAIN_ICON_SLOTS = 3;
+
 export const ChainSelector = ({
   top3Chains,
   onChainClick,
@@ -32,7 +35,6 @@ export const ChainSelector = ({
     serverId: chainServerId || null,
   });
   const { styles, colors2024 } = useTheme2024({ getStyle });
-  const visibleChains = (top3Chains ?? []).slice(0, 3);
 
   return chainInfo?.id ? (
     <View style={StyleSheet.flatten([styles.chainContainer, style])}>
@@ -51,20 +53,28 @@ export const ChainSelector = ({
       style={StyleSheet.flatten([styles.chainContainer, style])}
       onPress={() => onChainClick?.(false)}>
       <View style={styles.chainIconsContainer}>
-        {visibleChains.map((chainId, index) => (
-          <View
-            key={chainId}
-            style={StyleSheet.flatten([
-              styles.chainIconContainer,
-              { marginLeft: index === 0 ? 0 : -8 },
-            ])}>
-            <ChainIconImage
-              containerStyle={styles.chainIcon}
-              size={18}
-              chainEnum={findChainByServerID(chainId)?.enum}
-            />
-          </View>
-        ))}
+        {/* Always keep three icon slots so the pill does not shift when the
+            projection fills the real chain icons in. */}
+        {Array.from({ length: CHAIN_ICON_SLOTS }).map((_, index) => {
+          const chainId = top3Chains?.[index];
+          return (
+            <View
+              key={chainId || `chain-placeholder-${index}`}
+              style={StyleSheet.flatten([
+                styles.chainIconContainer,
+                !chainId && styles.chainIconPlaceholder,
+                { marginLeft: index === 0 ? 0 : -8 },
+              ])}>
+              {chainId ? (
+                <ChainIconImage
+                  containerStyle={styles.chainIcon}
+                  size={18}
+                  chainEnum={findChainByServerID(chainId)?.enum}
+                />
+              ) : null}
+            </View>
+          );
+        })}
       </View>
       <Text style={styles.countChain}>All</Text>
       <ArrowRightSVG
@@ -124,5 +134,8 @@ const getStyle = createGetStyles2024(ctx => ({
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  chainIconPlaceholder: {
+    backgroundColor: 'transparent',
   },
 }));
