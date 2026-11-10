@@ -95,7 +95,7 @@ jobs:
       GITHUB_REF: ${{ github.ref }}
     steps:
       - name: Checkout git repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3
         with:
           # Run only the workflow's own scripts. `source_sha` is build
           # metadata; never execute a caller-supplied commit with signing
@@ -139,7 +139,7 @@ jobs:
           fi
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@3235b876344d2a9aa001b8d1453c930bba69e610 # v3
         with:
           node-version: 22
 
@@ -147,13 +147,36 @@ jobs:
         run: corepack enable
 
       - name: Setup Java
-        uses: actions/setup-java@v4
+        if: ${{ inputs.android_machine_location != 'mobile-local' }}
+        uses: actions/setup-java@17f84c3641ba7b8f6deff6309fc4c864478f5d62 # v3
         with:
           distribution: zulu
           java-version: '17'
 
+      # The macOS mobile-local runner already has JDK 17 and Android SDK
+      # build-tools 35 installed. Reuse them instead of downloading ~400 MB of
+      # JDK + commandline-tools + build-tools through the proxy every run.
+      - name: Use preinstalled JDK 17 and Android SDK (mobile-local)
+        if: ${{ inputs.android_machine_location == 'mobile-local' }}
+        run: |
+          java_home=/Library/Java/JavaVirtualMachines/jdk-17.jdk/Contents/Home
+          android_sdk=/Users/Shared/Library/Android/sdk
+          test -x "$java_home/bin/keytool"
+          test -x "$android_sdk/build-tools/35.0.0/apksigner"
+          {
+            echo "JAVA_HOME=$java_home"
+            echo "ANDROID_HOME=$android_sdk"
+            echo "ANDROID_SDK_ROOT=$android_sdk"
+          } >> "$GITHUB_ENV"
+          {
+            echo "$java_home/bin"
+            echo "$android_sdk/platform-tools"
+            echo "$android_sdk/build-tools/35.0.0"
+          } >> "$GITHUB_PATH"
+
       - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+        if: ${{ inputs.android_machine_location != 'mobile-local' }}
+        uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3
         with:
           # The action forwards this input as a single sdkmanager argument,
           # so only single-package names belong here. build-tools is
@@ -161,6 +184,7 @@ jobs:
           packages: 'platform-tools'
 
       - name: Install Android build-tools
+        if: ${{ inputs.android_machine_location != 'mobile-local' }}
         run: sdkmanager --install 'build-tools;35.0.0'
 
       - name: Download unsigned APK
@@ -287,7 +311,7 @@ jobs:
       GITHUB_REF: ${{ github.ref }}
     steps:
       - name: Checkout git repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3
         with:
           # Run only the workflow's own scripts. `source_sha` is build
           # metadata; never execute a caller-supplied commit with signing
@@ -331,12 +355,12 @@ jobs:
           fi
 
       - name: Setup Xcode
-        uses: maxim-lobanov/setup-xcode@v1
+        uses: maxim-lobanov/setup-xcode@ed7a3b1fda3918c0306d1b724322adc0b8cc0a90 # v1
         with:
           xcode-version: ${{ env.XCODE_VER }}
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@3235b876344d2a9aa001b8d1453c930bba69e610 # v3
         with:
           node-version: 22
 
