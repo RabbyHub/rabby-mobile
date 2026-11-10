@@ -20,11 +20,11 @@ import React, {
 import { useTranslation } from 'react-i18next';
 import { View, Pressable, ScrollView, Dimensions } from 'react-native';
 import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
+import { IS_IOS } from '@/core/native/utils';
 import { trigger } from 'react-native-haptic-feedback';
 import { default as RcIconMCopy } from '@/assets2024/icons/address/mcopy-cc.svg';
 import { FooterButtonGroup } from '@/components2024/FooterButtonGroup';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
-import { IS_ANDROID } from '@/core/native/utils';
 import { default as RcIconEyeCC } from '@/assets/icons/receive/eye-cc.svg';
 import { default as RcIconEyeCloseCC } from '@/assets/icons/receive/eye-close-cc.svg';
 import { useGnosisNetworks } from '@/hooks/gnosis/useGnosisNetworks';
@@ -157,10 +157,9 @@ function ReceiveScreen(): JSX.Element {
   useLayoutEffect(() => {
     setNavigationOptions({
       headerTitle: () => headerTitle,
-      // The wallet/alias title belongs to the leading edge on iOS. Centring it
-      // left a huge gap between the native back item and the wallet icon.
-      // Android keeps the original centred header with the custom headerLeft.
-      headerTitleAlign: IS_ANDROID ? 'center' : 'left',
+      // The wallet/alias group is centred in its own container on both
+      // platforms; the row itself reserves even space on both sides.
+      headerTitleAlign: 'center',
     });
   }, [setNavigationOptions, headerTitle]);
 
@@ -338,11 +337,11 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   headerTitle: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: IS_ANDROID ? 'center' : 'flex-start',
+    justifyContent: 'center',
     gap: 4,
-    // Compensate the native back item's 44pt layout width.
-    marginLeft: IS_ANDROID ? 0 : -20,
-    maxWidth: SCREEN_WIDTH - 120,
+    width: SCREEN_WIDTH - 100,
+    // Same native-container correction as the Approvals header.
+    ...(IS_IOS ? { paddingRight: 65 } : {}),
   },
   screen: {
     backgroundColor: colors2024['neutral-bg-0'],
