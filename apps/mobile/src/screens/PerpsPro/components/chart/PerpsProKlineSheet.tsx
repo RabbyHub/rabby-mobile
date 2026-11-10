@@ -534,7 +534,9 @@ export const PerpsProKlineSheet = React.memo(function PerpsProKlineSheet({
 const styles = {
   toolbarRow: {
     alignItems: 'center' as const,
+    alignSelf: 'stretch' as const,
     flexDirection: 'row' as const,
+    width: '100%' as const,
   },
   resetButton: {
     alignItems: 'center' as const,
