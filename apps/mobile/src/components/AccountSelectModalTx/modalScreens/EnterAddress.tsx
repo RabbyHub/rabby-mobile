@@ -72,10 +72,8 @@ const ScreenPanelEnterAddress = ({
   }, []);
   const [loading, setLoading] = useState(false);
   // Only ever describes the current input: late results of earlier inputs are dropped.
-  const { ensResult, isResolvingName, isNameNotFound } = useEnsInputResolver(
-    input,
-    { parseAddress: parseInputAddress },
-  );
+  const { ensResult, isPending, isResolvingName, isNameNotFound } =
+    useEnsInputResolver(input, { parseAddress: parseInputAddress });
   const error =
     submitError ?? (isNameNotFound ? INPUT_ERROR.INVALID_ADDRESS : undefined);
 
@@ -83,9 +81,8 @@ const ScreenPanelEnterAddress = ({
     () => isValidAddress(input as `0x${string}`),
     [input],
   );
-  const hasError =
-    !!input && !isValidAddr && !ensResult?.addr && !isResolvingName;
-  const disableConfirm = !input || hasError || isResolvingName;
+  const hasError = !!input && !isValidAddr && !ensResult?.addr && !isPending;
+  const disableConfirm = !input || hasError || isPending;
 
   const { sortedAccounts, fetchSortedAccounts } = useSortedAccounts();
   const { isAddrOnWhitelist, findAccountWithoutBalance } =
