@@ -236,10 +236,6 @@ const TokenDetailContent = () => {
   const getHeaderTitle = useCallback(() => {
     return (
       <TokenDetailHeaderArea
-        // Left-aligned right after the back item's natural slot: fill the
-        // native title container instead of the old fixed-width box (whose
-        // centred layout used to be pulled left with a negative offset).
-        rootStyle={styles.headerTitleRoot}
         key={effectiveAccount?.address}
         tokenSize={33}
         chainSize={15}
@@ -248,7 +244,7 @@ const TokenDetailContent = () => {
         showCopyIcon
       />
     );
-  }, [effectiveAccount?.address, token, styles.headerTitleRoot]);
+  }, [effectiveAccount?.address, token]);
 
   const handleOpenTokenMarketInfo = useCallback(() => {
     navigateDeprecated(RootNames.TokenMarketInfo, {
@@ -534,9 +530,6 @@ export const TokenDetailScreen = () => {
 const getStyle = createGetStyles2024(ctx => {
   const { colors2024, isLight } = ctx;
   return {
-    // Header title fills the native title container so the token avatar starts
-    // right after the back item's reserved slot.
-    headerTitleRoot: { width: '100%' },
     rootScreenContainer: {
       backgroundColor: isLight
         ? colors2024['neutral-bg-0']
