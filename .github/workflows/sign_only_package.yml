@@ -146,6 +146,19 @@ jobs:
       - name: Enable Corepack
         run: corepack enable
 
+      # Keep the normal tool downloads, but on mobile-local they are capped at
+      # one minute. If a proxy path stalls, the fallback step below switches to
+      # the JDK/SDK already installed on the machine instead of failing.
+      - name: Setup Java (mobile-local, 1 min cap)
+        id: setup_java_download
+        if: ${{ inputs.android_machine_location == 'mobile-local' }}
+        continue-on-error: true
+        timeout-minutes: 1
+        uses: actions/setup-java@17f84c3641ba7b8f6deff6309fc4c864478f5d62 # v3
+        with:
+          distribution: zulu
+          java-version: '17'
+
       - name: Setup Java
         if: ${{ inputs.android_machine_location != 'mobile-local' }}
         uses: actions/setup-java@17f84c3641ba7b8f6deff6309fc4c864478f5d62 # v3
@@ -153,11 +166,42 @@ jobs:
           distribution: zulu
           java-version: '17'
 
-      # The macOS mobile-local runner already has JDK 17 and Android SDK
-      # build-tools 35 installed. Reuse them instead of downloading ~400 MB of
-      # JDK + commandline-tools + build-tools through the proxy every run.
-      - name: Use preinstalled JDK 17 and Android SDK (mobile-local)
+      - name: Setup Android SDK (mobile-local, 1 min cap)
+        id: setup_android_download
         if: ${{ inputs.android_machine_location == 'mobile-local' }}
+        continue-on-error: true
+        timeout-minutes: 1
+        uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3
+        with:
+          # The action forwards this input as a single sdkmanager argument,
+          # so only single-package names belong here. build-tools is
+          # installed explicitly in the next step.
+          packages: 'platform-tools'
+
+      - name: Setup Android SDK
+        if: ${{ inputs.android_machine_location != 'mobile-local' }}
+        uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3
+        with:
+          # The action forwards this input as a single sdkmanager argument,
+          # so only single-package names belong here. build-tools is
+          # installed explicitly in the next step.
+          packages: 'platform-tools'
+
+      - name: Install Android build-tools (mobile-local, 1 min cap)
+        id: install_build_tools_download
+        if: ${{ inputs.android_machine_location == 'mobile-local' && steps.setup_android_download.outcome == 'success' }}
+        continue-on-error: true
+        timeout-minutes: 1
+        run: sdkmanager --install 'build-tools;35.0.0'
+
+      - name: Install Android build-tools
+        if: ${{ inputs.android_machine_location != 'mobile-local' }}
+        run: sdkmanager --install 'build-tools;35.0.0'
+
+      # Fallback when any capped download above failed or timed out: use the
+      # JDK 17 and Android SDK build-tools that are already installed here.
+      - name: Fall back to preinstalled JDK 17 and Android SDK (mobile-local)
+        if: ${{ inputs.android_machine_location == 'mobile-local' && (steps.setup_java_download.outcome != 'success' || steps.setup_android_download.outcome != 'success' || steps.install_build_tools_download.outcome != 'success') }}
         run: |
           java_home="$(/usr/libexec/java_home -v 17 2>/dev/null || true)"
           if [ -z "$java_home" ] || [ ! -x "$java_home/bin/keytool" ]; then
@@ -191,19 +235,6 @@ jobs:
             echo "$android_sdk/platform-tools"
             echo "$build_tools"
           } >> "$GITHUB_PATH"
-
-      - name: Setup Android SDK
-        if: ${{ inputs.android_machine_location != 'mobile-local' }}
-        uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3
-        with:
-          # The action forwards this input as a single sdkmanager argument,
-          # so only single-package names belong here. build-tools is
-          # installed explicitly in the next step.
-          packages: 'platform-tools'
-
-      - name: Install Android build-tools
-        if: ${{ inputs.android_machine_location != 'mobile-local' }}
-        run: sdkmanager --install 'build-tools;35.0.0'
 
       - name: Download unsigned APK
         env:
