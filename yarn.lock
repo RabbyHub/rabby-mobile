@@ -37969,7 +37969,7 @@ __metadata:
     react-native-bundle-splitter: "npm:^3.0.1"
     react-native-bundle-visualizer: "npm:3.1.0"
     react-native-cloud-storage: "npm:^1.4.1"
-    react-native-collapsible-tab-view: "npm:^6.2.1"
+    react-native-collapsible-tab-view: "patch:react-native-collapsible-tab-view@npm%3A8.0.1#~/.yarn/patches/react-native-collapsible-tab-view-npm-8.0.1-f10cd07909.patch"
     react-native-compressor: "npm:2.0.2"
     react-native-device-info: "npm:14.0.4"
     react-native-dotenv: "npm:^3.4.9"
@@ -38547,9 +38547,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-collapsible-tab-view@npm:6.2.1":
-  version: 6.2.1
-  resolution: "react-native-collapsible-tab-view@npm:6.2.1"
+"react-native-collapsible-tab-view@npm:8.0.1":
+  version: 8.0.1
+  resolution: "react-native-collapsible-tab-view@npm:8.0.1"
   dependencies:
     use-deep-compare: "npm:^1.1.0"
   peerDependencies:
@@ -38557,17 +38557,17 @@ __metadata:
     react: "*"
     react-native: "*"
     react-native-pager-view: "*"
-    react-native-reanimated: ">=2.15.0"
+    react-native-reanimated: ">=3.8.1"
   peerDependenciesMeta:
     "@shopify/flash-list":
       optional: true
-  checksum: 10/6782afb6c2f831fb3a2a60517fac165a8f48c7d43baa1390b0a5500072b8a85159712f0e46c874c7461873a1f5b7da334645b0488104d5fcf1fab17d94ce3ac3
+  checksum: 10/9dc34159359952623374c879e40e387a09e53181980a970319853b153e430a7d9f81ba3bc8cd78a8423fc875b532db376b6183f988c9178ad863c3dc2c3646bd
   languageName: node
   linkType: hard
 
-"react-native-collapsible-tab-view@patch:react-native-collapsible-tab-view@npm%3A6.2.1#./.yarn/patches/react-native-collapsible-tab-view-npm-6.2.1-a5b5774731.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
-  version: 6.2.1
-  resolution: "react-native-collapsible-tab-view@patch:react-native-collapsible-tab-view@npm%3A6.2.1#./.yarn/patches/react-native-collapsible-tab-view-npm-6.2.1-a5b5774731.patch::version=6.2.1&hash=9a13ba&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
+"react-native-collapsible-tab-view@patch:react-native-collapsible-tab-view@npm%3A8.0.1#~/.yarn/patches/react-native-collapsible-tab-view-npm-8.0.1-f10cd07909.patch":
+  version: 8.0.1
+  resolution: "react-native-collapsible-tab-view@patch:react-native-collapsible-tab-view@npm%3A8.0.1#~/.yarn/patches/react-native-collapsible-tab-view-npm-8.0.1-f10cd07909.patch::version=8.0.1&hash=c2e2d1"
   dependencies:
     use-deep-compare: "npm:^1.1.0"
   peerDependencies:
@@ -38575,11 +38575,11 @@ __metadata:
     react: "*"
     react-native: "*"
     react-native-pager-view: "*"
-    react-native-reanimated: ">=2.15.0"
+    react-native-reanimated: ">=3.8.1"
   peerDependenciesMeta:
     "@shopify/flash-list":
       optional: true
-  checksum: 10/b1a44b2350f3b2189309d7b8954e566088eb800f6ff223edf7bf6217a7b6c8cb8300431f06971fc1acf811f8c2c0f0ab9a99e17743c44b4a1fcb782665661d46
+  checksum: 10/705fee926365ca9bd11ef68bba7a3e34b05da8bd3541e7c256b09407d2f2f1f3a9a671d7a27fe2c1d5a660a81235cb0d22e923a72fb39843867c89c3b5ab6fb4
   languageName: node
   linkType: hard
 

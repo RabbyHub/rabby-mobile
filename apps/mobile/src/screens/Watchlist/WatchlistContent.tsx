@@ -345,7 +345,6 @@ export function WatchlistContent({
         <Tabs.ScrollView
           showsHorizontalScrollIndicator={false}
           showsVerticalScrollIndicator={false}
-          tvParallaxProperties={undefined}
           horizontal={false}
           nestedScrollEnabled={false}
           style={styles.scrollView}

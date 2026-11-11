@@ -1,10 +1,6 @@
 // patch from file:///./../../../../node_modules/react-native-collapsible-tab-view/src/ScrollView.tsx
 
 import React, { type Ref } from 'react';
-import {
-  ScrollViewProps as RNScrollViewProps,
-  ScrollView as RNScrollView,
-} from 'react-native';
 import Animated from 'react-native-reanimated';
 import { ScrollView as RNGHScrollView } from 'react-native-gesture-handler';
 
@@ -12,8 +8,6 @@ import {
   useAfterMountEffect,
   useChainCallback,
   useCollapsibleStyle,
-  useConvertAnimatedToValue,
-  // useScrollHandlerY,
   useSharedAnimatedRef,
   useTabNameContext,
   useTabsContext,
@@ -21,18 +15,13 @@ import {
 } from 'react-native-collapsible-tab-view/src/hooks';
 import { ScrollHandlerProps, useScrollHandlerY } from './hooks';
 
-// const AnimatedScrollView = Animated.createAnimatedComponent<RNScrollViewProps>(RNScrollView);
-// const FinalScrollView = AnimatedScrollView;
-// type FinalScrollViewProps = RNScrollViewProps;
-// type FinalScrolViewType = RNScrollView;
-
 type RNGHScrollViewProps = React.ComponentProps<typeof RNGHScrollView>;
 const AnimatedRNGHScrollView =
   Animated.createAnimatedComponent<RNGHScrollViewProps>(RNGHScrollView);
 
 const FinalScrollView = AnimatedRNGHScrollView;
 type FinalScrollViewProps = RNGHScrollViewProps;
-type FinalScrolViewType = RNGHScrollView;
+type FinalScrollViewType = RNGHScrollView;
 
 /**
  * Used as a memo to prevent rerendering too often when the context changes.
@@ -43,7 +32,7 @@ const ScrollViewMemo = React.memo(
     ref,
     ...props
   }: React.PropsWithChildren<FinalScrollViewProps> & {
-    ref?: Ref<FinalScrolViewType>;
+    ref?: Ref<FinalScrollViewType>;
   }) => {
     return <FinalScrollView ref={ref} {...props} />;
   },
@@ -52,7 +41,7 @@ const ScrollViewMemo = React.memo(
 export type TabsScrollViewProps = React.PropsWithChildren<
   Omit<FinalScrollViewProps, 'onScroll'>
 > &
-  ScrollHandlerProps & { ref?: Ref<FinalScrolViewType> };
+  ScrollHandlerProps & { ref?: Ref<FinalScrollViewType> };
 
 /**
  * Use like a regular ScrollView.
@@ -73,7 +62,7 @@ export function TabsScrollView({
   ...rest
 }: TabsScrollViewProps) {
   const name = useTabNameContext();
-  const innerRef = useSharedAnimatedRef<FinalScrolViewType>(ref ?? null);
+  const innerRef = useSharedAnimatedRef<FinalScrollViewType>(ref ?? null);
   const { setRef, contentInset } = useTabsContext();
   const {
     style: _style,
@@ -120,16 +109,14 @@ export function TabsScrollView({
     [progressViewOffset, refreshControl],
   );
 
-  const contentInsetValue = useConvertAnimatedToValue(contentInset);
-
   const memoContentInset = React.useMemo(
-    () => ({ top: contentInsetValue }),
-    [contentInsetValue],
+    () => ({ top: contentInset }),
+    [contentInset],
   );
 
   const memoContentOffset = React.useMemo(
-    () => ({ x: 0, y: -contentInsetValue }),
-    [contentInsetValue],
+    () => ({ x: 0, y: -contentInset }),
+    [contentInset],
   );
 
   const memoContentContainerStyle = React.useMemo(

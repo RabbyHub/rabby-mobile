@@ -1,0 +1,27 @@
+diff --git a/lib/typescript/src/types.d.ts b/lib/typescript/src/types.d.ts
+index 7a739fc0950b60a3919e83a5576db4e1fd6bcd67..fcf28543f450962377aa44403fe59b247befd4ff 100644
+--- a/lib/typescript/src/types.d.ts
++++ b/lib/typescript/src/types.d.ts
+@@ -18,7 +18,7 @@ export type TabBarProps<T extends TabName = TabName> = {
+     focusedTab: SharedValue<T>;
+     tabNames: T[];
+     index: SharedValue<number>;
+-    containerRef: React.RefObject<ContainerRef>;
++    containerRef: React.RefObject<ContainerRef | null>;
+     onTabPress: (name: T) => void;
+     tabProps: TabsWithProps<T>;
+     /**
+diff --git a/src/types.ts b/src/types.ts
+index 00fbafc9288e17dcd49f5f05076d314afceea3ac..77ab082620cbd261934a5440a07cc4245b722ab5 100644
+--- a/src/types.ts
++++ b/src/types.ts
+@@ -41,7 +41,8 @@ export type TabBarProps<T extends TabName = TabName> = {
+   focusedTab: SharedValue<T>
+   tabNames: T[]
+   index: SharedValue<number>
+-  containerRef: React.RefObject<ContainerRef>
++  // React 19 refs (including Reanimated refs) are null before mount.
++  containerRef: React.RefObject<ContainerRef | null>
+   onTabPress: (name: T) => void
+   tabProps: TabsWithProps<T>
+ 
