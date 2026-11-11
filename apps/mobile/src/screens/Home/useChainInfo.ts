@@ -114,6 +114,16 @@ export function useTop3Chains() {
   return useCreationWithShallowCompare(() => top3Chains, [top3Chains]);
 }
 
+/** Chain count of the current projection; 0 once it settles with no assets. */
+export function useChainLength() {
+  return useActivityStore(
+    chainStaticsStore,
+    state => state.computedResult.chainLength,
+    Object.is,
+    { storeLabel: 'home-chain-stats' },
+  );
+}
+
 export const otherStore = zCreate(() => {
   return {
     selectedChainItem: undefined as ChainListItem | undefined,

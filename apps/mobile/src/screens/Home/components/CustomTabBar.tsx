@@ -36,6 +36,7 @@ import {
   setSelectChainItem,
   useChainStatsLoading,
   useSelectedChainItem,
+  useChainLength,
   useTop3Chains,
 } from '../useChainInfo';
 import {
@@ -284,7 +285,7 @@ const indicatorStyles = createGetStyles2024(
   },
 );
 function SideChainSelector() {
-  const { isLight, colors2024 } = useTheme2024();
+  const { styles, isLight, colors2024 } = useTheme2024({ getStyle: getStyles });
   // Cold start: show the selector's loading state until the aggregate balance
   // load settles, instead of an empty pill that only fills in seconds later
   // (QA 1157).
@@ -342,18 +343,26 @@ function SideChainSelector() {
   );
 
   const top3Chains = useTop3Chains();
+  const chainLength = useChainLength();
+  const loading = loadBalanceFromApiStage === 'loading' || chainStatsLoading;
 
-  // Render the filter even before the chain projection is ready: the sheet
-  // falls back to the full mainnet chain list, and waiting here left the
-  // control blank for seconds (QA 1145).
+  // Render the filter while the projection is pending (QA 1145), but once it
+  // settles with no chain assets there is nothing to filter: hide the pill
+  // (QA 1197). The slot itself must stay in the row, otherwise the three tabs
+  // expand into the space the filter occupied.
+  const hidden = !loading && chainLength === 0;
+
   return (
-    <ChainSelector
-      // top3Chains={chainAssets.map(item => item.chain).slice(0, 3)}
-      top3Chains={top3Chains}
-      onChainClick={handleOnChainClick}
-      chainServerId={selectedChainItem?.chain}
-      loading={loadBalanceFromApiStage === 'loading' || chainStatsLoading}
-    />
+    <View
+      pointerEvents={hidden ? 'none' : 'auto'}
+      style={hidden ? styles.chainSelectorHidden : undefined}>
+      <ChainSelector
+        top3Chains={top3Chains}
+        onChainClick={handleOnChainClick}
+        chainServerId={selectedChainItem?.chain}
+        loading={loading}
+      />
+    </View>
   );
 }
 
@@ -518,6 +527,10 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   },
   hideInnerIndicator: {
     height: 0,
+  },
+  // Keep the slot (so the tabs do not grow) while hiding the empty filter.
+  chainSelectorHidden: {
+    opacity: 0,
   },
   tabBar: {},
   contentContainerStyle: {

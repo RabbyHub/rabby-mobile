@@ -1,3 +1,5 @@
+import React from 'react';
+
 import { useCallback, useEffect, useRef } from 'react';
 import { View } from 'react-native';
 import {
@@ -75,13 +77,15 @@ function SideChainSelector({
   }
 
   return (
-    <ChainSelector
-      key={top3Chains.join(',')}
-      top3Chains={top3Chains}
-      onChainClick={onChainClick}
-      chainServerId={chain}
-      loading={balanceLoading || isLoadingCurve || chainStatsLoading}
-    />
+    <>
+      <ChainSelector
+        key={top3Chains.join(',')}
+        top3Chains={top3Chains}
+        onChainClick={onChainClick}
+        chainServerId={chain}
+        loading={balanceLoading || isLoadingCurve || chainStatsLoading}
+      />
+    </>
   );
 }
 
