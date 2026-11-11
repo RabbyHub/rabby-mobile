@@ -15,7 +15,6 @@ import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { findChainByServerID } from '@/utils/chain';
 import { Text } from '@/components/Typography';
 import { CustomSkeleton } from '@/components2024/CustomSkeleton';
-import { useDebugChainSelectorLoading } from '@/utils/debugChainSelectorLoading';
 
 /** Number of chain icons the filter pill reserves space for. */
 const CHAIN_ICON_SLOTS = 3;
@@ -41,12 +40,7 @@ export const ChainSelector = ({
     serverId: chainServerId || null,
   });
   const { styles, colors2024 } = useTheme2024({ getStyle });
-  const debugForcedLoading = useDebugChainSelectorLoading();
-  const forcedSkeleton = __DEV__ && debugForcedLoading;
-  const isLoading = loading || forcedSkeleton;
-  // Dev probe: also drop the already-known chains so the skeleton is visible on
-  // a fully loaded page (`target=chainLoading` on the debug deep link).
-  const icons = forcedSkeleton ? [] : top3Chains;
+  const isLoading = loading;
 
   return chainInfo?.id ? (
     <View style={StyleSheet.flatten([styles.chainContainer, style])}>
@@ -68,7 +62,7 @@ export const ChainSelector = ({
         {/* Always keep three icon slots so the pill does not shift when the
             projection fills the real chain icons in. */}
         {Array.from({ length: CHAIN_ICON_SLOTS }).map((_, index) => {
-          const chainId = icons?.[index];
+          const chainId = top3Chains?.[index];
           return (
             <View
               key={chainId || `chain-placeholder-${index}`}

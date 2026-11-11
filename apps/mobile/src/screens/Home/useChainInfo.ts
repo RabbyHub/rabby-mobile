@@ -30,6 +30,11 @@ import {
   recordSingleAddressChainProjection,
   type SingleAddressChainProjectionSource,
 } from './singleAddressChainDiagnostics';
+import {
+  isDebugChainStatsForced,
+  registerDebugChainStatsApplier,
+  useDebugChainStatsForced,
+} from './debugChainStats';
 
 type FinalInfo = SingleAddressChainInfo;
 const chainStaticsStore = zCreate<FinalInfo>(() => ({
@@ -55,8 +60,42 @@ function setFinalInfo(valOrFunc: UpdaterOrPartials<FinalInfo>) {
 }
 
 const debounceComputeChainList = debounce(() => {
+  // Dev probe (QA 1157): keep the pinned empty-projection state until released.
+  if (isDebugChainStatsForced()) {
+    return;
+  }
   setFinalInfo(computeChainsListV2(getSelectedBalanceAddressesSnapshot()));
 }, 100);
+
+/**
+ * Dev-only helper behind `target=chainLoading`: toggles a real "projection
+ * pending, no chains yet" state. Releasing recomputes immediately so the page
+ * recovers without a restart.
+ */
+function applyDebugChainStatsForced(forced: boolean) {
+  if (forced) {
+    // Drop both projections so every consumer (multi-address tab bar and the
+    // per-address single-home hooks) really sees "no chains yet".
+    setAddressChainInfo({});
+    setFinalInfo(prev => ({
+      ...prev,
+      computedResult: { chainAssets: [], chainLength: 0, top3Chains: [] },
+    }));
+  } else {
+    getSelectedBalanceAddressesSnapshot().forEach(address =>
+      apisAddrChainStatics.syncAddress(address),
+    );
+    debounceComputeChainList();
+  }
+}
+
+registerDebugChainStatsApplier(applyDebugChainStatsForced);
+
+/** `true` while the chain projection has not produced a result yet. */
+export function useChainStatsLoading() {
+  const forced = useDebugChainStatsForced();
+  return __DEV__ && forced;
+}
 
 export function getComputedChainInfo() {
   const baseInfo = chainStaticsStore.getState();
@@ -156,6 +195,11 @@ function updateAddressChainDomains(updates: AddressChainDomainUpdate[]) {
   if (!updates.length) {
     return false;
   }
+  // Dev probe (QA 1157): the pinned state must not be refilled by incremental
+  // token/portfolio/NFT updates either.
+  if (isDebugChainStatsForced()) {
+    return false;
+  }
   let changed = false;
   setAddressChainInfo(previousState => {
     const nextState = applyAddressChainDomainUpdates(previousState, updates);
@@ -171,6 +215,10 @@ function projectAddressChainDomains(options: {
   inputCount: number;
   makeUpdates: () => AddressChainDomainUpdate[];
 }) {
+  // Dev probe (QA 1157): keep the pinned empty-projection state.
+  if (isDebugChainStatsForced()) {
+    return false;
+  }
   const startedAt = nowForSingleAddressChainProjection();
   const updates = options.makeUpdates();
   const projectedAt = nowForSingleAddressChainProjection();
