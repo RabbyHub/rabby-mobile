@@ -37,6 +37,7 @@ import {
   useChainStatsLoading,
   useSelectedChainItem,
   useChainLength,
+  useChainProjectionReady,
   useTop3Chains,
 } from '../useChainInfo';
 import {
@@ -344,7 +345,13 @@ function SideChainSelector() {
 
   const top3Chains = useTop3Chains();
   const chainLength = useChainLength();
-  const loading = loadBalanceFromApiStage === 'loading' || chainStatsLoading;
+  const projectionReady = useChainProjectionReady();
+  // Identical loading state for every address; only the settled outcome differs
+  // (chains -> keep the filter, none -> hide the pill, keep the slot).
+  const loading =
+    !projectionReady ||
+    loadBalanceFromApiStage === 'loading' ||
+    chainStatsLoading;
 
   // Render the filter while the projection is pending (QA 1145), but once it
   // settles with no chain assets there is nothing to filter: hide the pill

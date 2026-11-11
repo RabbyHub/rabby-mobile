@@ -66,7 +66,19 @@ const debounceComputeChainList = debounce(() => {
     return;
   }
   setFinalInfo(computeChainsListV2(getSelectedBalanceAddressesSnapshot()));
+  if (!chainProjectionState.getState().hasComputed) {
+    chainProjectionState.setState({ hasComputed: true });
+  }
 }, 100);
+
+/**
+ * `hasComputed === false` until the aggregate chain projection has produced its
+ * first result. Consumers must treat that window as loading, not as "no chains"
+ * (an empty store and a settled-empty projection look the same otherwise).
+ */
+const chainProjectionState = zCreate<{ hasComputed: boolean }>(() => ({
+  hasComputed: false,
+}));
 
 /**
  * Dev-only helper behind `target=chainLoading`: toggles a real "projection
@@ -121,6 +133,27 @@ export function useChainLength() {
     state => state.computedResult.chainLength,
     Object.is,
     { storeLabel: 'home-chain-stats' },
+  );
+}
+
+/** `false` until the aggregate projection has produced its first result. */
+export function useChainProjectionReady() {
+  return useActivityStore(
+    chainProjectionState,
+    state => state.hasComputed,
+    Object.is,
+    { storeLabel: 'home-chain-stats-ready' },
+  );
+}
+
+/** `false` until this address's projection has produced its first result. */
+export function useAddrChainProjectionReady(address?: string) {
+  const addr = address?.toLowerCase();
+  return useActivityStore(
+    addrChainStaticsStore,
+    state => (addr ? !!state[addr] : false),
+    Object.is,
+    { storeLabel: 'single-address-chain-stats-ready' },
   );
 }
 

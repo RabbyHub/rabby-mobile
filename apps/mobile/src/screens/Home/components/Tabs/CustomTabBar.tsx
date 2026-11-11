@@ -34,7 +34,10 @@ import { EndBg, useHomeBackgroundOpacity } from '../BgComponents';
 import { createGetStyles2024 } from '@/utils/styles';
 import { prepareSingleAddressTokenAssetsProjection } from '@/store/tokens';
 import { shouldShowChainSelector } from './chainSelectorVisibility';
-import { useChainStatsLoading } from '../../useChainInfo';
+import {
+  useAddrChainProjectionReady,
+  useChainStatsLoading,
+} from '../../useChainInfo';
 
 const disableInnerIndicator = {
   height: 0,
@@ -65,12 +68,15 @@ function SideChainSelector({
     }
   }, [currentAddress]);
 
+  const projectionReady = useAddrChainProjectionReady(currentAddress);
+  const pending =
+    !projectionReady || balanceLoading || isLoadingCurve || chainStatsLoading;
+
   if (
     !shouldShowChainSelector({
       currentAddress,
       chainLength,
-      balanceLoading: balanceLoading || chainStatsLoading,
-      isLoadingCurve,
+      pending,
     })
   ) {
     return null;
@@ -83,7 +89,7 @@ function SideChainSelector({
         top3Chains={top3Chains}
         onChainClick={onChainClick}
         chainServerId={chain}
-        loading={balanceLoading || isLoadingCurve || chainStatsLoading}
+        loading={pending}
       />
     </>
   );
