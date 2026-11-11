@@ -69,7 +69,7 @@
     "sign-only:full:android": "node ./scripts/sign-only/one-shot.mjs --platform android",
     "sign-only:full:ios": "node ./scripts/sign-only/one-shot.mjs --platform ios",
     "sign-only:full:all": "node ./scripts/sign-only/one-shot.mjs --platform all",
-    "sign-only:test": "node --test ./scripts/sign-only/publish.test.mjs"
+    "sign-only:test": "node --test ./scripts/sign-only/publish.test.mjs ./scripts/sign-only/one-shot.test.mjs"
   },
   "resolutions": {
     "@gorhom/bottom-sheet": "patch:@gorhom/bottom-sheet@npm:5.2.8#../../.yarn/patches/@gorhom-bottom-sheet-npm-5.2.8-1ad4b8f529.patch",
@@ -127,7 +127,7 @@
     "@rabby-wallet/rabby-logger": "0.3.1",
     "@rabby-wallet/rabby-security-engine": "2.0.13",
     "@rabby-wallet/rabby-sign-bvm": "0.1.1",
-    "@rabby-wallet/rabby-swap": "0.0.93",
+    "@rabby-wallet/rabby-swap": "0.0.94-alpha.0",
     "@rabby-wallet/react-native-bootsplash": "workspace:^",
     "@rabby-wallet/react-native-fs": "workspace:^",
     "@rabby-wallet/react-native-ios-context-menu": "workspace:^",

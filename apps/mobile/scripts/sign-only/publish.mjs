@@ -40,6 +40,7 @@ function parseArgs(argv) {
     force: false,
     json: false,
     proxy: '',
+    workflowRef: '',
   };
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
@@ -62,9 +63,6 @@ function parseArgs(argv) {
       case '--source-dirty':
         result.sourceDirty = true;
         break;
-      case '--source-clean':
-        result.sourceDirty = false;
-        break;
       case '--prepare':
         result.prepare = true;
         break;
@@ -79,6 +77,9 @@ function parseArgs(argv) {
         break;
       case '--proxy':
         result.proxy = argv[++i] || '';
+        break;
+      case '--workflow-ref':
+        result.workflowRef = argv[++i] || '';
         break;
       default:
         throw new Error(`Unknown argument: ${arg}`);
@@ -102,6 +103,17 @@ function parseArgs(argv) {
     throw new Error(
       `--token, OPFE_SIGN_ONLY_TOKEN or ${TOKEN_FILE} is required (create one in the opcode dashboard)`,
     );
+  if (
+    result.workflowRef &&
+    (result.workflowRef.startsWith('-') ||
+      result.workflowRef.includes('..') ||
+      result.workflowRef.endsWith('/') ||
+      !/^[A-Za-z0-9._/-]+$/.test(result.workflowRef))
+  ) {
+    throw new Error(
+      `--workflow-ref is not a valid branch name: ${result.workflowRef}`,
+    );
+  }
   return result;
 }
 
@@ -345,6 +357,18 @@ function parseGhCommand(command) {
   return { repo, ref, inputs };
 }
 
+/**
+ * Replace the ref in the prepared `gh workflow run` command so a tmp release
+ * branch's workflow copy can be dispatched instead of the default branch.
+ */
+export function withWorkflowRef(command, ref) {
+  if (!command || !ref) return command;
+  if (/--ref\s+'[^']*'/.test(command)) {
+    return command.replace(/--ref\s+'[^']*'/, `--ref '${ref}'`);
+  }
+  return command.replace(/(gh\s+workflow\s+run\s+\S+)/, `$1 --ref '${ref}'`);
+}
+
 async function main() {
   const args = parseArgs(process.argv.slice(2));
   const fileName = path.basename(args.file);
@@ -428,11 +452,16 @@ async function main() {
   );
   log(`[sign-only] dashboard: ${baseUrl}/#/delivery/sign-only-packages`);
   log(`[sign-only] workflow : ${prepared?.data?.workflowUrl || ''}`);
+  const workflow = parseGhCommand(prepared?.data?.ghCommand || '');
+  const workflowRef = args.workflowRef || workflow.ref;
+  const ghCommand = withWorkflowRef(
+    prepared?.data?.ghCommand || '',
+    args.workflowRef,
+  );
   log('[sign-only] run this yourself with your GitHub identity:');
-  log(prepared?.data?.ghCommand || '');
+  log(ghCommand);
 
   if (args.json) {
-    const workflow = parseGhCommand(prepared?.data?.ghCommand || '');
     console.log(
       JSON.stringify({
         platform: args.platform,
@@ -444,9 +473,9 @@ async function main() {
         sourceDirty,
         workflow: {
           url: prepared?.data?.workflowUrl || '',
-          ghCommand: prepared?.data?.ghCommand || '',
+          ghCommand,
           repo: workflow.repo,
-          ref: workflow.ref,
+          ref: workflowRef,
           inputs: workflow.inputs,
         },
       }),

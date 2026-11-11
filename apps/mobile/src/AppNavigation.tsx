@@ -50,6 +50,10 @@ import {
   TokenMarketInfoScreen,
 } from '@/perfs/loadables/screens';
 import UnlockScreen from '@/screens/Unlock/Unlock';
+import {
+  TokenDetailHeaderRight,
+  TokenDetailHeaderTitle,
+} from '@/screens/TokenDetail/components/HeaderArea';
 import SetupWallet from '@/screens/Address/SetupWallet';
 import SelectImportMethod from '@/screens/Address/SelectImportMethod';
 import ImportRabbyWallet from '@/screens/Address/ImportRabbyWallet';
@@ -738,7 +742,13 @@ export default function AppNavigation() {
                     component={NFTDetailScreen}
                     options={mergeScreenOptions({
                       headerShown: true,
-                      headerTitleAlign: 'center',
+                      // QA 1343: the detail rows draw their own back button.
+                      // Hide the native one from the first frame so the push
+                      // transition cannot show it (and a shifted title) first.
+                      headerTitleAlign: 'left',
+                      headerBackVisible: false,
+                      headerLeft: () => null,
+                      unstable_headerLeftItems: () => [],
                       headerTitle: '',
                       headerStyle: {
                         // backgroundColor: colors['neutral-bg-2'],
@@ -749,15 +759,48 @@ export default function AppNavigation() {
                   <RootStack.Screen
                     name={RootNames.TokenDetail}
                     component={TokenDetailScreen}
-                    options={mergeScreenOptions({
-                      headerShown: true,
-                      headerTitleAlign: 'left',
-                      headerTitle: '',
-                      headerStyle: {
-                        // backgroundColor: colors['neutral-bg-2'],
-                        backgroundColor: 'transparent',
-                      },
-                    })}
+                    options={({ route }) =>
+                      mergeScreenOptions({
+                        headerShown: true,
+                        headerTitleAlign: 'left',
+                        // QA 1343: the title row renders its own back button,
+                        // so the native item must not exist even for the first
+                        // frame of the push transition.
+                        headerBackVisible: false,
+                        headerLeft: () => null,
+                        unstable_headerLeftItems: () => [],
+                        // Build the row from route params so token detail and
+                        // token market detail render the same header from the
+                        // first frame, with no layout shift between them.
+                        headerTitle: () => (
+                          <TokenDetailHeaderTitle
+                            token={
+                              (route.params as { token?: any } | undefined)
+                                ?.token
+                            }
+                          />
+                        ),
+                        headerRight: () => (
+                          <TokenDetailHeaderRight
+                            token={
+                              (route.params as { token?: any } | undefined)
+                                ?.token
+                            }
+                            isCustomTestnetToken={
+                              (
+                                route.params as
+                                  | { isCustomTestnetToken?: boolean }
+                                  | undefined
+                              )?.isCustomTestnetToken
+                            }
+                          />
+                        ),
+                        headerStyle: {
+                          // backgroundColor: colors['neutral-bg-2'],
+                          backgroundColor: 'transparent',
+                        },
+                      })
+                    }
                     getId={({ params }) => {
                       const idStr = [
                         params.token.id,
@@ -772,15 +815,42 @@ export default function AppNavigation() {
                   <RootStack.Screen
                     name={RootNames.TokenMarketInfo}
                     component={TokenMarketInfoScreen}
-                    options={mergeScreenOptions({
-                      headerShown: true,
-                      headerTitleAlign: 'left',
-                      headerTitle: '',
-                      headerStyle: {
-                        // backgroundColor: colors['neutral-bg-2'],
-                        backgroundColor: 'transparent',
-                      },
-                    })}
+                    options={({ route }) =>
+                      mergeScreenOptions({
+                        headerShown: true,
+                        headerTitleAlign: 'left',
+                        headerBackVisible: false,
+                        headerLeft: () => null,
+                        unstable_headerLeftItems: () => [],
+                        headerTitle: () => (
+                          <TokenDetailHeaderTitle
+                            token={
+                              (route.params as { token?: any } | undefined)
+                                ?.token
+                            }
+                          />
+                        ),
+                        headerRight: () => (
+                          <TokenDetailHeaderRight
+                            token={
+                              (route.params as { token?: any } | undefined)
+                                ?.token
+                            }
+                            isCustomTestnetToken={
+                              (
+                                route.params as
+                                  | { isCustomTestnetToken?: boolean }
+                                  | undefined
+                              )?.isCustomTestnetToken
+                            }
+                          />
+                        ),
+                        headerStyle: {
+                          // backgroundColor: colors['neutral-bg-2'],
+                          backgroundColor: 'transparent',
+                        },
+                      })
+                    }
                     getId={({ params }) => {
                       const idStr = [
                         params.token.id,

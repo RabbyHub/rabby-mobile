@@ -11,12 +11,22 @@
  * `workflow_dispatch` only works once sign_only_package.yml is on the default
  * branch. Until then this script bakes the inputs into a temporary branch and
  * uses the workflow's push trigger, then deletes the branch.
+ *
+ * `--workflow-ref <branch>` dispatches that branch's copy of the workflow
+ * instead of the ref that the fe-opcode prepare response suggests (currently
+ * `develop`). Use it for the weekly `tmp/YYYYMMDD` release branch, which is
+ * where the mobile-local sign-only wiring lands before it reaches `develop`.
+ *
+ * `--workflow-input key=value` appends or overrides workflow inputs, e.g.
+ * `--workflow-input android_machine_location=mobile-local` to sign Android on
+ * the macOS mobile-local runner.
  */
 
 import { execFileSync, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 
 const WORKFLOW_PATH = '.github/workflows/sign_only_package.yml';
 const TOKEN_FILE = path.join(
@@ -35,6 +45,42 @@ function fail(message) {
   throw new Error(message);
 }
 
+function redactUrl(value) {
+  try {
+    const url = new URL(value);
+    if (url.username || url.password) {
+      return `${url.protocol}//<redacted>@${url.host}`;
+    }
+  } catch {
+    // Not a URL; leave the value untouched.
+  }
+  return value;
+}
+
+/**
+ * Render command arguments for error messages without leaking credentials.
+ * `--token` values are replaced and `--proxy` URLs lose any userinfo. Prefer
+ * passing secrets to child processes through the environment instead.
+ */
+export function redactArgs(args) {
+  const redacted = [];
+  for (let i = 0; i < args.length; i += 1) {
+    const arg = args[i];
+    if (arg === '--token' && i + 1 < args.length) {
+      redacted.push(arg, '<redacted>');
+      i += 1;
+      continue;
+    }
+    if (arg === '--proxy' && i + 1 < args.length) {
+      redacted.push(arg, redactUrl(args[i + 1]));
+      i += 1;
+      continue;
+    }
+    redacted.push(arg);
+  }
+  return redacted;
+}
+
 function run(command, args, options = {}) {
   const result = spawnSync(command, args, {
     stdio: options.capture ? ['ignore', 'pipe', 'inherit'] : 'inherit',
@@ -46,7 +92,9 @@ function run(command, args, options = {}) {
     fail(`${command} failed to start: ${result.error.message}`);
   }
   if (result.status !== 0) {
-    fail(`${command} ${args.join(' ')} exited with ${result.status}`);
+    fail(
+      `${command} ${redactArgs(args).join(' ')} exited with ${result.status}`,
+    );
   }
   return result;
 }
@@ -66,11 +114,12 @@ function parseArgs(argv) {
     wait: true,
     force: false,
     trigger: 'auto',
-    sourceClean: false,
     token: '',
     serviceUrl: '',
     json: false,
     proxy: '',
+    workflowRef: '',
+    workflowInputs: [],
   };
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
@@ -93,9 +142,6 @@ function parseArgs(argv) {
       case '--force':
         args.force = true;
         break;
-      case '--source-clean':
-        args.sourceClean = true;
-        break;
       case '--trigger':
         args.trigger = argv[++i] || '';
         break;
@@ -110,6 +156,12 @@ function parseArgs(argv) {
         break;
       case '--proxy':
         args.proxy = argv[++i] || '';
+        break;
+      case '--workflow-ref':
+        args.workflowRef = argv[++i] || '';
+        break;
+      case '--workflow-input':
+        args.workflowInputs.push(argv[++i] || '');
         break;
       default:
         fail(`Unknown argument: ${arg}`);
@@ -127,7 +179,24 @@ function parseArgs(argv) {
     process.env.OPFE_SIGN_ONLY_SERVICE_URL ||
     DEFAULT_SERVICE_URL;
   args.proxy = args.proxy || process.env.OPFE_SIGN_ONLY_PROXY || '';
+  assertWorkflowRef(args.workflowRef);
+  for (const pair of args.workflowInputs) {
+    if (!/^[A-Za-z0-9_-]+=/.test(pair)) {
+      fail(`--workflow-input must be key=value: ${pair}`);
+    }
+  }
   return args;
+}
+
+function assertWorkflowRef(ref) {
+  if (!ref) return;
+  const invalid =
+    ref.startsWith('-') ||
+    ref.includes('..') ||
+    ref.endsWith('/') ||
+    ref.endsWith('.lock') ||
+    !/^[A-Za-z0-9._/-]+$/.test(ref);
+  if (invalid) fail(`--workflow-ref is not a valid branch name: ${ref}`);
 }
 
 function resolveToken(args) {
@@ -199,14 +268,20 @@ function publish(platform, artifact, args, rootDir, appDir) {
   ];
   if (args.notifyLark) publishArgs.push('--notify-lark');
   if (args.force) publishArgs.push('--force');
-  if (args.sourceClean) publishArgs.push('--source-clean');
-  if (args.token) publishArgs.push('--token', args.token);
-  if (args.serviceUrl) publishArgs.push('--service-url', args.serviceUrl);
-  if (args.proxy) publishArgs.push('--proxy', args.proxy);
+
+  // Hand credentials to the child through the environment so a failed upload
+  // can never echo them back through the command line in an error message.
+  const publishEnv = { ...process.env };
+  if (args.token) publishEnv.OPFE_SIGN_ONLY_TOKEN = args.token;
+  if (args.serviceUrl) {
+    publishEnv.OPFE_SIGN_ONLY_SERVICE_URL = args.serviceUrl;
+  }
+  if (args.proxy) publishEnv.OPFE_SIGN_ONLY_PROXY = args.proxy;
 
   const result = run(process.execPath, publishArgs, {
     cwd: rootDir,
     capture: true,
+    env: publishEnv,
   });
   const lines = result.stdout.trim().split('\n').filter(Boolean);
   const payload = JSON.parse(lines[lines.length - 1]);
@@ -232,9 +307,22 @@ function hasDispatchableWorkflow(rootDir) {
   }
 }
 
-function dispatchWorkflow(repo, payload) {
+export function resolveDispatchRef(workflowRef, payloadRef) {
+  return workflowRef || payloadRef || 'develop';
+}
+
+export function mergeWorkflowInputs(inputs, extraInputs) {
+  const merged = { ...inputs };
+  for (const pair of extraInputs) {
+    const separator = pair.indexOf('=');
+    merged[pair.slice(0, separator)] = pair.slice(separator + 1);
+  }
+  return merged;
+}
+
+function dispatchWorkflow(repo, payload, workflowRef = '', extraInputs = []) {
   const workflow = payload.workflow;
-  const ref = workflow.ref || 'develop';
+  const ref = resolveDispatchRef(workflowRef, workflow.ref);
   const args = [
     'workflow',
     'run',
@@ -244,7 +332,8 @@ function dispatchWorkflow(repo, payload) {
     '--ref',
     ref,
   ];
-  for (const [key, value] of Object.entries(workflow.inputs)) {
+  const inputs = mergeWorkflowInputs(workflow.inputs, extraInputs);
+  for (const [key, value] of Object.entries(inputs)) {
     args.push('-f', `${key}=${value}`);
   }
   run('gh', args);
@@ -440,16 +529,33 @@ async function runPlatform(platform, args, rootDir, appDir, repo) {
 
   let trigger;
   if (args.trigger === 'dispatch') {
-    trigger = dispatchWorkflow(repo, payload);
+    trigger = dispatchWorkflow(
+      repo,
+      payload,
+      args.workflowRef,
+      args.workflowInputs,
+    );
   } else if (args.trigger === 'push') {
     const branch = `test/sign-only-${platform}-${Date.now().toString(36)}`;
     trigger = bakeWorkflow(payload, branch, rootDir);
+  } else if (args.workflowRef) {
+    // An explicit ref always means `workflow_dispatch`: that branch carries
+    // its own workflow copy, so there is nothing to bake into a push branch.
+    trigger = dispatchWorkflow(
+      repo,
+      payload,
+      args.workflowRef,
+      args.workflowInputs,
+    );
   } else if (hasDispatchableWorkflow(rootDir)) {
-    trigger = dispatchWorkflow(repo, payload);
+    trigger = dispatchWorkflow(repo, payload, '', args.workflowInputs);
   } else {
     const branch = `test/sign-only-${platform}-${Date.now().toString(36)}`;
     trigger = bakeWorkflow(payload, branch, rootDir);
   }
+  console.log(
+    `[one-shot] ${platform}: triggering ${trigger.event} on ${trigger.branch}`,
+  );
 
   const workflowRun = await waitForRun({
     repo,
@@ -549,7 +655,12 @@ async function main() {
   }
 }
 
-main().catch(error => {
-  console.error(`[one-shot] ${error.message}`);
-  process.exit(1);
-});
+const isDirectRun =
+  process.argv[1] &&
+  import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href;
+if (isDirectRun) {
+  main().catch(error => {
+    console.error(`[one-shot] ${error.message}`);
+    process.exit(1);
+  });
+}

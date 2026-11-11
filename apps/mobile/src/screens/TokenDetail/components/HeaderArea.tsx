@@ -16,8 +16,10 @@ import {
   StyleSheet,
 } from 'react-native';
 import { NavigationContext, useFocusEffect } from '@react-navigation/native';
+import { IS_IOS } from '@/core/native/utils';
 
 import { useTheme2024 } from '@/hooks/theme';
+import { HeaderBackPressable } from '@/hooks/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
 
 import { AssetAvatar } from '@/components';
@@ -30,6 +32,9 @@ import { trigger } from 'react-native-haptic-feedback';
 import { toastCopyAddressSuccess } from '@/components/AddressViewer/CopyAddress';
 import { findChain } from '@/utils/chain';
 import { ITokenItem } from '@/store/tokens';
+import { useRemovedTokens } from '@/hooks/useRemovedTokens';
+import { useTriggerTagAssets } from '@/screens/Home/hooks/refresh';
+import { RightMore } from './RightMore';
 import { isLpToken } from '@/utils/lpToken';
 import LpTokenIcon from '@/screens/Home/components/LpTokenIcon';
 import { useTranslation } from 'react-i18next';
@@ -41,7 +46,22 @@ import { Button } from '@/components2024/Button';
 import { MODAL_GATE_IDS } from '@/utils/modalGate';
 import { BOTTOM_BUTTON_DOUBLE_HEIGHT } from '@/constant/layout';
 
-const screenWidth = Dimensions.get('window').width;
+const SCREEN_WIDTH = Dimensions.get('window').width;
+// iOS reserves ~65pt for the native back item (44pt item + bar inset/spacing),
+// so the title row is sized to the remaining width and its content flows from
+// the left, right after the back button.
+const HEADER_ROW_WIDTH: ViewStyle['width'] = IS_IOS
+  ? SCREEN_WIDTH - 65
+  : '100%';
+
+// Fixed width for the header-right slot so hiding the menu never re-flows the row.
+const RIGHT_SLOT_STYLE = {
+  width: 24,
+  height: 24,
+  alignItems: 'center',
+  justifyContent: 'center',
+} as const;
+
 interface Props {
   token: ITokenItem;
   style?: StyleProp<ViewStyle>;
@@ -53,6 +73,7 @@ interface Props {
   rootStyle?: StyleProp<ViewStyle>;
   disableRefresh?: boolean;
   showCopyIcon?: boolean;
+  inlineBack?: boolean;
 }
 export const TokenDetailHeaderArea: React.FC<Props> = ({
   token,
@@ -65,8 +86,9 @@ export const TokenDetailHeaderArea: React.FC<Props> = ({
   rootStyle,
   disableRefresh = false,
   showCopyIcon = false,
+  inlineBack = false,
 }) => {
-  const { styles } = useTheme2024({ getStyle: getStyles });
+  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { refreshing } = useAssetsRefreshing();
   const { t } = useTranslation();
   const [copyConfirmVisible, setCopyConfirmVisible] = useState(false);
@@ -116,6 +138,12 @@ export const TokenDetailHeaderArea: React.FC<Props> = ({
     <View style={[styles.root, rootStyle]}>
       <View style={[styles.container, style]}>
         <View style={styles.token}>
+          {inlineBack ? (
+            <HeaderBackPressable
+              style={styles.inlineBack}
+              tintColor={colors2024['neutral-title-1']}
+            />
+          ) : null}
           <AssetAvatar
             logo={token?.logo_url}
             // style={mediaStyle}
@@ -188,6 +216,68 @@ export const TokenDetailHeaderArea: React.FC<Props> = ({
   );
 };
 
+/**
+ * Header title shared by the token detail and token market detail routes.
+ *
+ * The two routes are the same page as far as the user is concerned, so the
+ * back chevron, avatar and symbol must be laid out at exactly the same place in
+ * both. Pushing from one to the other then reads as a normal page transition
+ * instead of the header jumping (QA 1343). Pass the token through `options` so
+ * the row also exists on the first frame of the push.
+ */
+export const TokenDetailHeaderTitle = ({ token }: { token?: ITokenItem }) => (
+  <TokenDetailHeaderArea
+    inlineBack
+    tokenSize={33}
+    chainSize={15}
+    borderChain
+    token={token as ITokenItem}
+    showCopyIcon
+  />
+);
+
+/**
+ * Header right slot shared by the token detail and token market detail routes.
+ *
+ * The slot keeps the same width even when the menu is hidden, so the title row
+ * (and with it the back chevron and avatar) never shifts when the "..." action
+ * appears. It is mounted from the navigator options, so the slot already exists
+ * on the first frame of the push (QA 1343).
+ */
+export const TokenDetailHeaderRight = ({
+  token,
+  isCustomTestnetToken = false,
+}: {
+  token?: ITokenItem;
+  isCustomTestnetToken?: boolean;
+}) => {
+  const { tokenRefresh, singleTokenRefresh } = useTriggerTagAssets();
+  const isTestnet = useMemo(() => {
+    if (!token?.chain) return false;
+    return !!findChain({ serverId: token.chain })?.isTestnet;
+  }, [token?.chain]);
+  const isRemoved = useRemovedTokens(state =>
+    token?.chain && token?.id
+      ? !isCustomTestnetToken &&
+        !isTestnet &&
+        state.isTokenRemoved({ chainId: token.chain, tokenId: token.id })
+      : false,
+  );
+  const refreshTags = useCallback(() => {
+    singleTokenRefresh();
+    tokenRefresh();
+  }, [singleTokenRefresh, tokenRefresh]);
+  const showMore = !!token && !isCustomTestnetToken && !isTestnet && !isRemoved;
+
+  return (
+    <View style={RIGHT_SLOT_STYLE}>
+      {showMore ? (
+        <RightMore token={token as ITokenItem} refreshTags={refreshTags} />
+      ) : null}
+    </View>
+  );
+};
+
 function CopyConfirmModal({
   onClose,
   ...props
@@ -229,12 +319,15 @@ const getStyles = createGetStyles2024(({ isLight, colors2024 }) => ({
   copyConfirmButtonTitle: {
     fontSize: 20,
   },
+  // The header title row fills the native title container. iOS lays the title
+  // view out in the space left over by the bar items, so an explicitly sized
+  // row (screen minus the leading back-item slot) starts right after the back
+  // button and lets the content flow from the left.
   root: {
-    width: screenWidth - 140,
+    width: HEADER_ROW_WIDTH,
   },
   container: {
-    width: screenWidth - 100,
-    marginLeft: 0,
+    width: '100%',
     display: 'flex',
     flexDirection: 'column',
   },
@@ -245,6 +338,15 @@ const getStyles = createGetStyles2024(({ isLight, colors2024 }) => ({
     flexShrink: 1,
     minWidth: 0,
     gap: 8,
+  },
+  inlineBack: {
+    marginLeft: 0,
+    paddingLeft: 0,
+    width: 24,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
   },
   lpTokenIconContainer: {
     marginLeft: 0,

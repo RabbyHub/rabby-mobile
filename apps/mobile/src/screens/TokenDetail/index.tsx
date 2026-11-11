@@ -1,5 +1,4 @@
 /* eslint-disable react-native/no-inline-styles */
-import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { apiCustomTestnet } from '@/core/apis';
 import { openapi } from '@/core/request';
@@ -18,7 +17,6 @@ import {
   View,
 } from 'react-native';
 import { TokenDetailHeaderArea } from './components/HeaderArea';
-import { useTriggerTagAssets } from '../Home/hooks/refresh';
 import { formatPrice } from '@/utils/number';
 import { GetRootScreenNavigationProps } from '@/navigation-type';
 import { TokenDetailHistoryList } from './components/HistoryList';
@@ -27,7 +25,6 @@ import BalanceOverview from './components/BalanceOverview';
 import { useSingleTokenBalance } from './hook';
 import { RootNames } from '@/constant/layout';
 import { navigateDeprecated } from '@/utils/navigation';
-import { RightMore } from './components/RightMore';
 import { useSetAtom } from 'jotai';
 import { TokenDetailBottomBtns } from './components/BottomBtns';
 import { RemovedTokenNotice } from './components/RemovedToken';
@@ -130,8 +127,6 @@ const TokenDetailContent = () => {
     ? currentAccount
     : account || currentAccount;
 
-  const { setNavigationOptions } = useSafeSetNavigationOptions();
-
   const fetchBaseTokenInfo = useCallback(async () => {
     if (isCustomTestnetToken) {
       const chainItem = findChainByServerID(token.chain);
@@ -226,27 +221,6 @@ const TokenDetailContent = () => {
     token.id,
   ]);
 
-  const { tokenRefresh, singleTokenRefresh } = useTriggerTagAssets();
-
-  const refreshTag = useCallback(() => {
-    singleTokenRefresh();
-    tokenRefresh();
-  }, [singleTokenRefresh, tokenRefresh]);
-
-  const getHeaderTitle = useCallback(() => {
-    return (
-      <TokenDetailHeaderArea
-        style={{ marginLeft: isAndroid ? 0 : -50 }}
-        key={effectiveAccount?.address}
-        tokenSize={33}
-        chainSize={15}
-        borderChain
-        token={token}
-        showCopyIcon
-      />
-    );
-  }, [effectiveAccount?.address, token]);
-
   const handleOpenTokenMarketInfo = useCallback(() => {
     navigateDeprecated(RootNames.TokenMarketInfo, {
       ...route.params,
@@ -254,14 +228,6 @@ const TokenDetailContent = () => {
       account: effectiveAccount,
     });
   }, [baseTokenInfo, effectiveAccount, route.params, token]);
-
-  const getHeaderRight = useCallback(() => {
-    if (isCustomTestnetToken || isRemoved) {
-      return null;
-    }
-
-    return <RightMore token={token} refreshTags={refreshTag} />;
-  }, [isCustomTestnetToken, isRemoved, refreshTag, token]);
 
   useFocusEffect(
     useCallback(() => {
@@ -281,14 +247,6 @@ const TokenDetailContent = () => {
       setIsFromBack,
     ]),
   );
-
-  React.useEffect(() => {
-    setNavigationOptions({
-      headerTitle: getHeaderTitle,
-      headerRight: getHeaderRight,
-      headerTitleAlign: 'left',
-    });
-  }, [setNavigationOptions, getHeaderRight, getHeaderTitle]);
 
   const {
     amountSum,

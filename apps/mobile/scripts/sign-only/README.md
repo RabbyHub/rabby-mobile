@@ -1,6 +1,6 @@
 # Sign-only packages
 
-Build an unsigned package locally, upload it to the fe-opcode private artifact
+Build an unsigned package locally, upload it to the fe-opcode artifact
 broker, then let the `Sign Only Package` GitHub Actions workflow perform only
 the signing, CDN publish and optional Lark notification.
 
@@ -47,11 +47,28 @@ push the signed package to the CI/CD Lark group after signing. Without it, the
 package is signed and published to the regression CDN but no Lark message is
 sent.
 
-The signing workflow only accepts artifacts whose SHA-256 matches the value
-recorded by fe-opcode, only downloads from the sign-only broker URL, and
-refuses packages built from a dirty source tree. Pass `--source-clean` to
-`publish.mjs` / `one-shot.mjs` only when you intentionally build from a dirty
-tree.
+The prepare response suggests `--ref 'develop'`, because that is where the
+workflow is registered. When the workflow copy you want to run only exists on
+another branch — for example the weekly `tmp/YYYYMMDD` release branch, which is
+where the mobile-local sign-only runner wiring lands first — pass the branch to
+`--workflow-ref`:
+
+```bash
+node scripts/sign-only/publish.mjs \
+  --platform ios \
+  --file .sign-only/RabbyMobile.xcarchive.zip \
+  --prepare --workflow-ref tmp/20261112
+```
+
+The printed command and the `--json` payload's `workflow.ref` then point at
+that branch.
+
+The workflow only downloads from the sign-only broker path for the same sign
+request, requires the SHA-256 passed to the workflow to match the downloaded
+artifact, and refuses packages marked as built from a dirty source tree. The
+dirty flag is best-effort build metadata, not an attestation: `publish.mjs`
+always reports the real `git status` result, so only trigger signing from
+reviewed commits.
 
 The same flow is available from the `仅签名打包` page in the fe-opcode
 dashboard, including the Lark notification toggle.
@@ -78,12 +95,65 @@ local script. Invoke the script directly when passing flags:
 node apps/mobile/scripts/sign-only/one-shot.mjs --platform android --no-notify-lark
 ```
 
+To dispatch a release branch's workflow copy instead of `develop`:
+
+```bash
+node apps/mobile/scripts/sign-only/one-shot.mjs --platform ios \
+  --workflow-ref tmp/20261112
+```
+
+`--workflow-ref` always uses `workflow_dispatch`, skips the temporary
+push-trigger branch, and keeps `--wait` polling on that branch.
+
+Pass any extra workflow input with a repeated `--workflow-input key=value`.
+For example, the Android job defaults to the Linux `mobile` runner; to re-sign
+the APK on the macOS `mobile-local` machine instead:
+
+```bash
+node apps/mobile/scripts/sign-only/one-shot.mjs --platform android \
+  --workflow-ref tmp/20261112 \
+  --workflow-input android_machine_location=mobile-local
+```
+
+`IOS` runs already default to `mobile-local` through `macos_machine_location`;
+the Android job keeps its Linux default unless `android_machine_location` is
+set to `mobile-local`. The macOS runner needs JDK 17 plus Android SDK
+`build-tools` (the workflow installs both), and uses `shasum` because macOS has
+no GNU `sha256sum`.
+
 Requirements: `OPFE_SIGN_ONLY_TOKEN` (or `~/.config/opfe/sign-only-token`) and
 an authenticated `gh` (`gh auth login`).
 
 `workflow_dispatch` only works once `sign_only_package.yml` is on the default
 branch. Until then the script bakes the inputs into a temporary `test/*`
 branch, triggers the workflow's push path and deletes the branch afterwards.
+
+## Signing controls
+
+Who can dispatch this workflow is governed by repository write access; restrict
+it to the trusted release group. The Android credential must be a dedicated
+regression keystore that is never shared with the Play upload or store key. The
+signing jobs run on shared self-hosted runners with a warm workspace; prefer
+moving them to an isolated runner if the machine is also used for untrusted
+feature-test builds.
+
+## Runner keychain
+
+The iOS job does not depend on the operator's login keychain. It creates a
+per-run keychain under `$RUNNER_TEMP`, imports the `match` certificate into it,
+sets the key partition list, and removes stale same-name provisioning profiles
+from both `~/Library/MobileDevice/Provisioning Profiles` and Xcode's
+`~/Library/Developer/Xcode/UserData/Provisioning Profiles` cache. The login
+keychain is hidden from codesign for the job and the original search list is
+restored afterwards. `macos_machine_location` selects `mobile-local` (default)
+or `mobile`.
+
+## Artifact download proxy
+
+The download step honors the `SIGN_ONLY_DOWNLOAD_PROXY` repository variable or
+the ambient `HTTPS_PROXY` / `HTTP_PROXY` / `ALL_PROXY` environment. It forces
+HTTP/1.1 and retries transient failures; use this on machines where a direct
+connection to `download.rabby.io` is slow or drops HTTP/2 streams.
 
 ## Upload through a proxy
 

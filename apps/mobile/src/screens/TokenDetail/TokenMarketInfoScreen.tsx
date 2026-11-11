@@ -36,7 +36,6 @@ import { TokenDetailHeaderArea } from './components/HeaderArea';
 import type { TokenChartRef } from './components/TokenPriceChart';
 import { TokenPriceChart } from './components/TokenPriceChart';
 import { useSafeSizes } from '@/hooks/useAppLayout';
-import { useTriggerTagAssets } from '../Home/hooks/refresh';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import type { KEYRING_TYPE } from '@rabby-wallet/keyring-utils/src/types';
 import type { GetRootScreenNavigationProps } from '@/navigation-type';
@@ -51,7 +50,6 @@ import {
   useSingleTokenBalance,
   useTokenMarketInfo,
 } from './hook';
-import { RightMore } from './components/RightMore';
 import {
   RemovedTokenNotice,
   RestoreRemovedTokenActions,
@@ -159,7 +157,7 @@ export const TokenMarketInfoScreen = () => {
     return account || accounts[0] || getFallbackAccountSnapshot();
   }, [account, accounts]);
 
-  const { navigation, setNavigationOptions } = useSafeSetNavigationOptions();
+  const { navigation } = useSafeSetNavigationOptions();
 
   const {
     data: tokenWithAmount,
@@ -207,31 +205,7 @@ export const TokenMarketInfoScreen = () => {
     },
   );
 
-  const { tokenRefresh, singleTokenRefresh } = useTriggerTagAssets();
-
-  const refreshTag = useCallback(() => {
-    singleTokenRefresh();
-    tokenRefresh();
-  }, [singleTokenRefresh, tokenRefresh]);
-
-  const getHeaderTitle = useCallback(() => {
-    return (
-      <TokenDetailHeaderArea
-        style={{ marginLeft: isAndroid ? 0 : -50 }}
-        key={finalAccount?.address}
-        token={token}
-        showCopyIcon
-      />
-    );
-  }, [finalAccount?.address, token]);
-
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
-
-  const getHeaderRight = useCallback(() => {
-    return isCustomTestnet || isRemoved ? null : (
-      <RightMore token={token} refreshTags={refreshTag} />
-    );
-  }, [isCustomTestnet, isRemoved, token, refreshTag]);
 
   useFocusEffect(
     useCallback(() => {
@@ -241,14 +215,6 @@ export const TokenMarketInfoScreen = () => {
       };
     }, [setIsFromBack]),
   );
-
-  React.useEffect(() => {
-    setNavigationOptions({
-      headerTitle: getHeaderTitle,
-      headerRight: getHeaderRight,
-      headerTitleAlign: 'left',
-    });
-  }, [setNavigationOptions, getHeaderRight, getHeaderTitle]);
 
   const isFromSwap =
     !!tokenSelectType && ['swapTo', 'swapFrom'].includes(tokenSelectType);

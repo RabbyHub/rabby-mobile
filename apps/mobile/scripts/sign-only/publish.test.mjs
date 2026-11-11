@@ -7,7 +7,25 @@ import os from 'node:os';
 import path from 'node:path';
 import { after, before, test } from 'node:test';
 
-import { uploadFile } from './publish.mjs';
+import { uploadFile, withWorkflowRef } from './publish.mjs';
+
+test('rewrites the --ref of a prepared gh workflow command', () => {
+  const command =
+    "gh workflow run sign_only_package.yml --repo 'RabbyHub/rabby-mobile' " +
+    "--ref 'develop' -f sign_request_id=abc";
+  assert.equal(
+    withWorkflowRef(command, 'tmp/20261112'),
+    "gh workflow run sign_only_package.yml --repo 'RabbyHub/rabby-mobile' " +
+      "--ref 'tmp/20261112' -f sign_request_id=abc",
+  );
+});
+
+test('inserts --ref when the prepared command has none', () => {
+  assert.equal(
+    withWorkflowRef('gh workflow run sign_only_package.yml -f a=b', 'tmp/x'),
+    "gh workflow run sign_only_package.yml --ref 'tmp/x' -f a=b",
+  );
+});
 
 const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'sign-only-proxy-test-'));
 const keyPath = path.join(tmpDir, 'key.pem');
