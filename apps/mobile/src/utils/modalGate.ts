@@ -19,6 +19,7 @@ export const MODAL_GATE_IDS = {
   accountSelectSheet: 'account-select-sheet',
   miniSignDirectOverlay: 'mini-sign-direct-overlay',
   debugReproModalA: 'debug-repro-modal-a',
+  debugReproInvisibleModal: 'debug-repro-invisible-modal',
   aliasNameEdit: 'alias-name-edit',
   qrCode: 'qr-code',
   duplicateAddress: 'duplicate-address',

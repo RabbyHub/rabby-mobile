@@ -115,6 +115,7 @@ function DevSwitchAboutScreenProtection() {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const [debugModalVisible, setDebugModalVisible] = useState(false);
   const [reproTipVisible, setReproTipVisible] = useState(false);
+  const [invisibleModalVisible, setInvisibleModalVisible] = useState(false);
   const reproTipTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(
     () => () => {
@@ -267,6 +268,22 @@ function DevSwitchAboutScreenProtection() {
         </Text>
 
         <Button
+          title={'Open Invisible Modal'}
+          type="ghost"
+          height={48}
+          containerStyle={[styles.rowWrapper, { marginTop: 12 }]}
+          onPress={() => {
+            setInvisibleModalVisible(true);
+          }}
+        />
+
+        <Text style={[styles.metaLabel, styles.devModalHint]}>
+          Opens a transparent Modal whose only content has opacity 0, like a Tip
+          that never finished measuring. On iOS the first tap anywhere must
+          close it.
+        </Text>
+
+        <Button
           title={'Log Blocking Modals'}
           type="ghost"
           height={48}
@@ -285,6 +302,21 @@ function DevSwitchAboutScreenProtection() {
           exist; expand it for the ids.
         </Text>
       </View>
+
+      <TrackedModal
+        modalId={MODAL_GATE_IDS.debugReproInvisibleModal}
+        visible={invisibleModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => {
+          setInvisibleModalVisible(false);
+        }}>
+        <View style={styles.devInvisibleModalContent}>
+          <Text style={styles.devModalTitle}>
+            This text has opacity 0 and must never be seen.
+          </Text>
+        </View>
+      </TrackedModal>
 
       <TrackedModal
         modalId={MODAL_GATE_IDS.debugReproModalA}
@@ -1860,6 +1892,13 @@ const getStyles = createGetStyles2024(ctx =>
       fontSize: 14,
       lineHeight: 20,
       color: ctx.colors2024['neutral-foot'],
+    },
+    devInvisibleModalContent: {
+      flex: 1,
+      opacity: 0,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: 'rgba(0,0,0,0.48)',
     },
     devModalMask: {
       flex: 1,

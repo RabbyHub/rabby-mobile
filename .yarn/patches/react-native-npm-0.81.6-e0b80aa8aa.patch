@@ -38,17 +38,194 @@ index 7d8f8e64fc0f53a730da8d3ffa4a7c1f85a53f28..aa26f6200e896d6c8b4453f4a7bab693
 diff --git a/React/Fabric/Mounting/ComponentViews/Modal/RCTModalHostViewComponentView.mm b/React/Fabric/Mounting/ComponentViews/Modal/RCTModalHostViewComponentView.mm
 --- a/React/Fabric/Mounting/ComponentViews/Modal/RCTModalHostViewComponentView.mm
 +++ b/React/Fabric/Mounting/ComponentViews/Modal/RCTModalHostViewComponentView.mm
-@@ -106,6 +106,9 @@
+@@ -8,6 +8,7 @@
+ #import "RCTModalHostViewComponentView.h"
+ 
+ #import <React/RCTBridge+Private.h>
++#import <React/RCTLog.h>
+ #import <React/RCTModalManager.h>
+ #import <React/UIView+React.h>
+ #import <react/renderer/components/FBReactNativeSpec/EventEmitters.h>
+@@ -94,8 +95,106 @@
+   return {orientation};
+ }
+ 
+-@interface RCTModalHostViewComponentView () <RCTFabricModalHostViewControllerDelegate>
++// Rabby patch: dead modal guard.
++//
++// A presented Modal blocks every touch on the screen below it. If it renders
++// nothing visible (no content, a fully transparent view, or an opacity-0
++// layer such as a tooltip that never finished measuring), the user sees the
++// app but cannot touch it, and there is nothing on screen to close it with.
++// When such a modal is tapped, ask JS to close it the way Android back or a
++// sheet swipe does (`onRequestClose`). Modals that show anything, and modals
++// that do not handle `onRequestClose`, behave exactly as before.
+ 
++static const NSUInteger RabbyDeadModalMaxDepth = 64;
++static const NSUInteger RabbyDeadModalStuckTapCount = 3;
++
++static BOOL RabbyColorIsVisible(CGColorRef color)
++{
++  return color != NULL && CGColorGetAlpha(color) >= 0.01;
++}
++
++// Whether the layer, or any of its sublayers that do not back a subview,
++// draws something.
++static BOOL RabbyLayerPaints(CALayer *layer, NSUInteger depth)
++{
++  if (depth > RabbyDeadModalMaxDepth) {
++    return YES;
++  }
++  if (layer.hidden || layer.opacity < 0.01) {
++    return NO;
++  }
++  if (layer.contents || RabbyColorIsVisible(layer.backgroundColor)) {
++    return YES;
++  }
++  if (layer.borderWidth > 0 && RabbyColorIsVisible(layer.borderColor)) {
++    return YES;
++  }
++  if (layer.shadowOpacity >= 0.01 && RabbyColorIsVisible(layer.shadowColor)) {
++    return YES;
++  }
++  if ([layer isKindOfClass:[CAShapeLayer class]]) {
++    CAShapeLayer *shape = (CAShapeLayer *)layer;
++    if (shape.path &&
++        (RabbyColorIsVisible(shape.fillColor) || (shape.lineWidth > 0 && RabbyColorIsVisible(shape.strokeColor)))) {
++      return YES;
++    }
++  } else if (![layer isMemberOfClass:[CALayer class]]) {
++    // Gradient, text, video, replicator and other special layers: assume they
++    // draw something.
++    return YES;
++  }
++  for (CALayer *sublayer in layer.sublayers) {
++    if ([sublayer.delegate isKindOfClass:[UIView class]]) {
++      // Checked together with its view.
++      continue;
++    }
++    if (RabbyLayerPaints(sublayer, depth + 1)) {
++      return YES;
++    }
++  }
++  return NO;
++}
++
++static BOOL RabbyViewHasVisibleContent(UIView *view, UIView *root, NSUInteger depth)
++{
++  if (depth > RabbyDeadModalMaxDepth) {
++    // Unusually deep: do not guess.
++    return YES;
++  }
++  if (view.hidden || view.alpha < 0.01) {
++    return NO;
++  }
++  if ([NSStringFromClass([view class]) hasPrefix:@"RCTDebuggingOverlay"]) {
++    // Dev-only React DevTools highlight layer. It draws nothing unless an
++    // element is being inspected.
++    return NO;
++  }
++
++  CGRect frameInRoot = [view convertRect:view.bounds toView:root];
++  BOOL isOnScreen = !CGRectIsEmpty(CGRectIntersection(frameInRoot, root.bounds));
++  if (isOnScreen) {
++    BOOL isPlainContainer = [view isMemberOfClass:[RCTViewComponentView class]] || [view isMemberOfClass:[UIView class]];
++    if (!isPlainContainer) {
++      // Text, images, inputs, native and third-party views: assume visible.
++      return YES;
++    }
++    if (RabbyLayerPaints(view.layer, 0)) {
++      return YES;
++    }
++  } else if (view.clipsToBounds) {
++    return NO;
++  }
++
++  for (UIView *subview in view.subviews) {
++    if (RabbyViewHasVisibleContent(subview, root, depth + 1)) {
++      return YES;
++    }
++  }
++  return NO;
++}
++
++@interface RCTModalHostViewComponentView () <RCTFabricModalHostViewControllerDelegate, UIGestureRecognizerDelegate>
++
+ @property (nonatomic, weak) UIView *accessibilityFocusedView;
+ 
+ @end
+@@ -106,6 +205,11 @@
    BOOL _shouldAnimatePresentation;
    BOOL _shouldPresent;
    BOOL _isPresented;
 +  // Rabby patch: a `visible` modal whose presentation UIKit has not accepted yet.
 +  BOOL _rabbyIsPresentationPending;
 +  BOOL _rabbyIsPresentRetryScheduled;
++  // Rabby patch: taps on this modal while it showed nothing visible.
++  NSUInteger _rabbyDeadTapCount;
  }
  
  - (instancetype)initWithFrame:(CGRect)frame
-@@ -146,25 +149,93 @@
+@@ -127,10 +231,58 @@
+     _viewController.modalTransitionStyle = UIModalTransitionStyleCoverVertical;
+     _viewController.delegate = self;
+     _viewController.modalInPresentation = YES;
++
++    // Rabby patch: observe taps for the dead modal guard without taking them
++    // from React Native's touch handler.
++    UITapGestureRecognizer *deadTapRecognizer =
++        [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(rabby_handleTapInModal:)];
++    deadTapRecognizer.cancelsTouchesInView = NO;
++    deadTapRecognizer.delaysTouchesBegan = NO;
++    deadTapRecognizer.delaysTouchesEnded = NO;
++    deadTapRecognizer.delegate = self;
++    [_viewController.view addGestureRecognizer:deadTapRecognizer];
+   }
+   return _viewController;
+ }
+ 
++// Rabby patch: see the dead modal guard comment at the top of this file.
++- (void)rabby_handleTapInModal:(UITapGestureRecognizer *)recognizer
++{
++  if (recognizer.state != UIGestureRecognizerStateRecognized || !_isPresented || !_shouldPresent) {
++    return;
++  }
++  RCTFabricModalHostViewController *viewController = _viewController;
++  if (!viewController || !viewController.view.window || viewController.isBeingPresented ||
++      viewController.isBeingDismissed) {
++    return;
++  }
++  if (RabbyViewHasVisibleContent(viewController.view, viewController.view, 0)) {
++    _rabbyDeadTapCount = 0;
++    return;
++  }
++
++  _rabbyDeadTapCount += 1;
++  if (_rabbyDeadTapCount == RabbyDeadModalStuckTapCount) {
++    // JS did not close it: the user is probably stuck behind this modal.
++    RCTLogWarn(
++        @"[Rabby] A presented Modal with no visible content is still blocking touches after %lu taps. "
++        @"Its onRequestClose did not hide it.",
++        (unsigned long)_rabbyDeadTapCount);
++    [[NSNotificationCenter defaultCenter] postNotificationName:@"RabbyModalHostDeadModalStuck" object:self];
++  }
++
++  auto eventEmitter = [self modalEventEmitter];
++  if (eventEmitter) {
++    eventEmitter->onRequestClose({});
++  }
++}
++
++- (BOOL)gestureRecognizer:(__unused UIGestureRecognizer *)gestureRecognizer
++    shouldRecognizeSimultaneouslyWithGestureRecognizer:(__unused UIGestureRecognizer *)otherGestureRecognizer
++{
++  return YES;
++}
++
+ - (void)presentViewController:(UIViewController *)modalViewController
+                      animated:(BOOL)animated
+                    completion:(void (^)(void))completion
+@@ -146,25 +298,94 @@
    [modalViewController dismissViewControllerAnimated:animated completion:completion];
  }
  
@@ -96,16 +273,6 @@ diff --git a/React/Fabric/Mounting/ComponentViews/Modal/RCTModalHostViewComponen
    if (shouldBePresented) {
 -    [self saveAccessibilityFocusedView];
 -    self.viewController.presentationController.delegate = self;
--
--    _isPresented = YES;
--    [self presentViewController:self.viewController
--                       animated:_shouldAnimatePresentation
--                     completion:^{
--                       auto eventEmitter = [self modalEventEmitter];
--                       if (eventEmitter) {
--                         eventEmitter->onShow(ModalHostViewEventEmitter::OnShow{});
--                       }
--                     }];
 +    UIViewController *presenter = [self reactViewController];
 +    if (presenter && presenter.presentedViewController == self.viewController) {
 +      // UIKit presented it after all.
@@ -116,8 +283,18 @@ diff --git a/React/Fabric/Mounting/ComponentViews/Modal/RCTModalHostViewComponen
 +    } else {
 +      [self saveAccessibilityFocusedView];
 +      self.viewController.presentationController.delegate = self;
-+
+ 
+-    _isPresented = YES;
+-    [self presentViewController:self.viewController
+-                       animated:_shouldAnimatePresentation
+-                     completion:^{
+-                       auto eventEmitter = [self modalEventEmitter];
+-                       if (eventEmitter) {
+-                         eventEmitter->onShow(ModalHostViewEventEmitter::OnShow{});
+-                       }
+-                     }];
 +      _isPresented = YES;
++      _rabbyDeadTapCount = 0;
 +      [self presentViewController:self.viewController
 +                         animated:_shouldAnimatePresentation
 +                       completion:^{
@@ -154,7 +331,7 @@ diff --git a/React/Fabric/Mounting/ComponentViews/Modal/RCTModalHostViewComponen
    if (shouldBeHidden) {
      _isPresented = NO;
      // To animate dismissal of view controller, snapshot of
-@@ -200,6 +271,14 @@
+@@ -200,6 +421,14 @@
  
  #pragma mark - UIView methods
  
@@ -169,11 +346,12 @@ diff --git a/React/Fabric/Mounting/ComponentViews/Modal/RCTModalHostViewComponen
  - (void)didMoveToWindow
  {
    [super didMoveToWindow];
-@@ -258,6 +337,7 @@
+@@ -258,6 +487,8 @@
    _viewController = nil;
    _isPresented = NO;
    _shouldPresent = NO;
 +  _rabbyIsPresentationPending = NO;
++  _rabbyDeadTapCount = 0;
  }
  
  - (void)updateProps:(const Props::Shared &)props oldProps:(const Props::Shared &)oldProps

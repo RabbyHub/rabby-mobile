@@ -40,6 +40,35 @@ order predictable, but a missing gate no longer freezes the app.
 
 Dev repro: Regression Switches → "Open Tip -> Screenshot Modal".
 
+### Dead Modal Guard (iOS)
+
+A presented `Modal` blocks every touch below it. When it renders nothing
+visible, the user sees the app but cannot touch it, and nothing on screen can
+close it. Known causes:
+
+- `react-native-walkthrough-tooltip` keeps its container at `opacity: 0` until
+  the content is measured. A `Tip` with empty content never finishes, and UIKit
+  skips views with `alpha < 0.01` during hit testing, so the tooltip's
+  "tap background to close" never fires (#2359).
+- A fully transparent overlay left on screen by a business state that never
+  resets.
+
+The `react-native` patch watches taps on every presented RN `Modal` (it does
+not take them from React Native). On a tap, if nothing in the modal is visible
+(no view with a visible background, border, shadow or layer contents; text,
+images and native views always count as visible), it emits `onRequestClose`,
+the same event Android back sends. The `Modal` owner decides what happens:
+
+- `Tip`, RNEUI `Overlay` and most `TrackedModal`s close.
+- Intentional invisible blockers that do not handle `onRequestClose` (for
+  example `miniSignDirectOverlay`) stay up. They need their own timeout.
+
+After 3 such taps on the same modal, the patch logs a warning (a LogBox warning
+in dev) and posts the `RabbyModalHostDeadModalStuck` notification.
+
+Dev repro: Regression Switches → "Open Invisible Modal". The first tap
+anywhere must close it.
+
 ## Foundation Added
 
 - `src/utils/modalGate.ts`
