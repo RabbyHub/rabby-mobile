@@ -154,8 +154,10 @@ export function navBack() {
 export function HeaderBackButton({
   tintColor,
   style,
+  hitSlop: hitSlopProp,
   ...touchableProps
-}: Pick<NativeStackHeaderLeftProps, 'tintColor'> & RNViewProps) {
+}: Pick<NativeStackHeaderLeftProps, 'tintColor'> &
+  RNViewProps & { hitSlop?: typeof hitSlop }) {
   const themeMode = useGetBinaryMode();
   const { colors2024 } = apisTheme.getColors2024(themeMode);
   return (
@@ -164,7 +166,7 @@ export function HeaderBackButton({
       as="RNGHTouchableOpacity"
       {...touchableProps}
       style={[styles.headerBackButtonStyle, style]}
-      hitSlop={hitSlop}
+      hitSlop={hitSlopProp ?? hitSlop}
       onPress={navBack}>
       <RcIconHeaderBack
         width={24}

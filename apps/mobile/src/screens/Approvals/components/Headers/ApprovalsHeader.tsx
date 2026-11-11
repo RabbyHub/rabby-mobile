@@ -44,7 +44,10 @@ export const ApprovalsHeader = ({ account }: { account?: Account | null }) => {
       <View style={styles.row}>
         <View
           style={[styles.backSlot, isSearching && styles.backSlotSearching]}>
-          <HeaderBackButton tintColor={colors2024['neutral-title-1']} />
+          <HeaderBackButton
+            style={styles.backButtonTouch}
+            tintColor={colors2024['neutral-title-1']}
+          />
         </View>
         <View style={[styles.center, isSearching && styles.centerSearching]}>
           {isSearching ? (
@@ -99,7 +102,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   // left edge (16pt).
   backSlot: {
     width: 44,
-    height: 24,
+    // Fill the header row vertically: a 24pt-tall tap target is far below the
+    // 44pt minimum and reads as "does not respond" in QA.
+    height: HEADER_CONTENT_HEIGHT,
     alignItems: 'flex-start',
     justifyContent: 'center',
     flexShrink: 0,
@@ -108,6 +113,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   // leading slot shrinks to the glyph box.
   backSlotSearching: {
     width: 24,
+  },
+  // The icon stays 24x24; only the touch box grows to the slot.
+  backButtonTouch: {
+    width: '100%',
+    height: '100%',
+    alignItems: 'flex-start',
+    justifyContent: 'center',
   },
   center: {
     flex: 1,
@@ -144,6 +156,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   rightSlot: {
     minWidth: 44,
+    height: HEADER_CONTENT_HEIGHT,
     alignItems: 'flex-end',
     justifyContent: 'center',
     flexShrink: 0,
