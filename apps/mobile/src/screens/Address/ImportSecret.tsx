@@ -36,7 +36,7 @@ import { ensureWalletUnlockedForAction } from '@/utils/walletUnlock';
 import { IS_ANDROID } from '@/core/native/utils';
 import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 import { atom, useAtom } from 'jotai';
-import { HeaderBackPressable } from '@/hooks/navigation';
+import { HeaderBackButton } from '@/hooks/navigation';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 /** Toast position at the top of screen */
@@ -482,7 +482,7 @@ const ImportSecretHeaderToggle = () => {
 
   return (
     <View style={styles.headerRow}>
-      <HeaderBackPressable
+      <HeaderBackButton
         style={styles.headerBack}
         tintColor={colors2024['neutral-title-1']}
       />
