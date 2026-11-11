@@ -667,6 +667,75 @@ describe('OneKeyKeyring unlock wallet selection', () => {
     },
   );
 
+  it.each(
+    ['pro2', 'neo'].flatMap(deviceType =>
+      [true, false].map(unlockedAttachPin => ({
+        deviceType,
+        unlockedAttachPin,
+      })),
+    ),
+  )(
+    'refreshes the V2 $deviceType status after select-hidden with unlockedAttachPin=$unlockedAttachPin',
+    async ({ deviceType, unlockedAttachPin }) => {
+      const { bridge, keyring } = setup(
+        undefined,
+        { passphraseProtection: true, unlocked: false },
+        { deviceType },
+      );
+      mockOpenWalletSession(bridge).mockImplementation(async () => {
+        bridge.getDeviceState.mockResolvedValue({
+          success: true,
+          payload: { status: { unlocked: true, unlockedAttachPin } },
+        });
+        return createSession('hidden', 'hidden-wallet-token');
+      });
+
+      expect(await keyring.unlock()).toBe('just unlocked');
+      expect(bridge.openWalletSession).toHaveBeenCalledTimes(1);
+      expect(bridge.openWalletSession).toHaveBeenCalledWith('connect-id', {
+        mode: 'select-hidden',
+      });
+      expect(bridge.getDeviceState).toHaveBeenCalledTimes(2);
+      expect(bridge.getDeviceState).toHaveBeenNthCalledWith(2, 'connect-id');
+      expect(bridge.getPassphraseState.mock.calls).toMatchObject(
+        unlockedAttachPin ? [] : [['connect-id', { useEmptyPassphrase: true }]],
+      );
+      expect(keyring.passphraseState).toBe('hidden-wallet-token');
+    },
+  );
+
+  it.each([false, true])(
+    'keeps the hidden wallet after a failed status refresh (throws=%p) and failed probe',
+    async throws => {
+      const { bridge, keyring } = setup(undefined, {
+        passphraseProtection: true,
+        unlocked: false,
+      });
+      mockOpenWalletSession(bridge).mockImplementation(async () => {
+        if (throws) {
+          bridge.getDeviceState.mockRejectedValue(new Error('refresh failed'));
+        } else {
+          bridge.getDeviceState.mockResolvedValue({
+            success: false,
+            payload: { code: 800, error: 'refresh failed' },
+          });
+        }
+        return createSession('hidden', 'hidden-wallet-token');
+      });
+      bridge.getPassphraseState.mockRejectedValueOnce(
+        new Error('probe failed'),
+      );
+
+      expect(await keyring.unlock()).toBe('just unlocked');
+      expect(bridge.getDeviceState).toHaveBeenCalledTimes(2);
+      expect(bridge.getPassphraseState).toHaveBeenCalledTimes(1);
+      expect(bridge.getPassphraseState).toHaveBeenCalledWith('connect-id', {
+        useEmptyPassphrase: true,
+      });
+      expect(keyring.passphraseState).toBe('hidden-wallet-token');
+    },
+  );
+
   it('does not store a passphrase state when openWalletSession opens the standard wallet', async () => {
     const { bridge, keyring } = setup(undefined, {
       passphraseProtection: true,
