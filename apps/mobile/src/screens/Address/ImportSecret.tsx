@@ -8,7 +8,13 @@ import { useScanner } from '../Scanner/ScannerScreen';
 import PasteButton from '@/components2024/PasteButton';
 import { NextInput } from '@/components2024/Form/Input';
 import { createGetStyles2024 } from '@/utils/styles';
-import { Keyboard, Pressable, TouchableOpacity, View } from 'react-native';
+import {
+  Dimensions,
+  Keyboard,
+  Pressable,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { validateAndCleanPrivateKey } from '@/core/apis/privateKey';
 import { apiPrivateKey, apiMnemonic } from '@/core/apis';
 import { validateAndCleanMnemonic } from '@/core/apis/mnemonic';
@@ -29,14 +35,21 @@ import { makeTestIDProps } from '@/utils/makeTestIDProps';
 import { ensureWalletUnlockedForAction } from '@/utils/walletUnlock';
 import { IS_ANDROID } from '@/core/native/utils';
 import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
+import { atom, useAtom } from 'jotai';
+import { HeaderBackPressable } from '@/hooks/navigation';
 
 /** Toast position at the top of screen */
 const TOAST_POSITION_TOP = 30;
+const SCREEN_WIDTH = Dimensions.get('window').width;
 
 // Android needs touch-start dismissal without Pressable claiming the swipe.
 const Container = IS_ANDROID ? View : Pressable;
 
-type TabType = 'seedPhrase' | 'privateKey';
+export type TabType = 'seedPhrase' | 'privateKey';
+
+// The header is declared once in the navigator options, so the selected tab must
+// live outside the screen body (declarative header contract; QA 1344).
+export const importSecretTabAtom = atom<TabType>('seedPhrase');
 
 type ScreenProps = NativeStackScreenProps<RootStackParamsList, 'ImportSecret'>;
 
@@ -50,9 +63,13 @@ export const ImportSecret = ({ route }: ScreenProps) => {
   const { initialTab, flow } = route.params ?? {};
   const isInAppFlow = flow === 'in_app';
 
-  const [activeTab, setActiveTab] = React.useState<TabType>(
-    initialTab ?? 'seedPhrase',
-  );
+  const [activeTab, setActiveTab] = useAtom(importSecretTabAtom);
+  React.useEffect(() => {
+    if (initialTab) {
+      setActiveTab(initialTab);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const pagerRef = useRef<PagerView>(null);
 
   // Seed phrase state
@@ -66,14 +83,13 @@ export const ImportSecret = ({ route }: ScreenProps) => {
 
   const scanner = useScanner();
 
-  // Clear errors when switching tabs
-  const handleTabChange = React.useCallback((tab: TabType) => {
-    Keyboard.dismiss();
-    setActiveTab(tab);
+  // The header toggle writes the shared atom, so keep the pager and the error
+  // state in sync with it here.
+  React.useEffect(() => {
+    pagerRef.current?.setPage(activeTab === 'seedPhrase' ? 0 : 1);
     setMnemonicError(undefined);
     setPrivateKeyError(undefined);
-    pagerRef.current?.setPage(tab === 'seedPhrase' ? 0 : 1);
-  }, []);
+  }, [activeTab]);
 
   // Handle input change
   const handleInputChange = React.useCallback((tab: TabType, text: string) => {
@@ -184,49 +200,6 @@ export const ImportSecret = ({ route }: ScreenProps) => {
   const handleCreateNewWallet = React.useCallback(() => {
     navigation.navigate(RootNames.SetupWallet);
   }, [navigation]);
-
-  // Tab toggle component for header
-  const TabToggle = useCallback(() => {
-    return (
-      <View style={styles.tabContainer}>
-        <CustomTouchableOpacity
-          as="RNGHTouchableOpacity"
-          activeOpacity={1}
-          style={[styles.tab, activeTab === 'seedPhrase' && styles.tabActive]}
-          onPress={() => handleTabChange('seedPhrase')}>
-          <Text
-            style={[
-              styles.tabText,
-              activeTab === 'seedPhrase' && styles.tabTextActive,
-            ]}>
-            {t('page.manageAddress.seed-phrase')}
-          </Text>
-        </CustomTouchableOpacity>
-        <CustomTouchableOpacity
-          as="RNGHTouchableOpacity"
-          activeOpacity={1}
-          style={[styles.tab, activeTab === 'privateKey' && styles.tabActive]}
-          onPress={() => handleTabChange('privateKey')}
-          {...makeTestIDProps(E2E_ID.onboarding.privateKeyTab)}>
-          <Text
-            style={[
-              styles.tabText,
-              activeTab === 'privateKey' && styles.tabTextActive,
-            ]}>
-            {t('page.manageAddress.private-key')}
-          </Text>
-        </CustomTouchableOpacity>
-      </View>
-    );
-  }, [activeTab, handleTabChange, styles, t]);
-
-  // Set custom header with tabs
-  useEffect(() => {
-    navigation.setOptions({
-      headerTitle: TabToggle,
-      headerTitleAlign: 'center',
-    });
-  }, [navigation, TabToggle]);
 
   // Handle confirm button - navigate based on flow type
   const handleConfirmImpl = React.useCallback(async () => {
@@ -483,6 +456,61 @@ export const ImportSecret = ({ route }: ScreenProps) => {
   );
 };
 
+/**
+ * Header title for the import-secret screen, declared once in the navigator
+ * options (declarative header contract).
+ *
+ * The row draws its own back button and centres the segmented toggle between two
+ * equal slots, so on a narrow device (iPhone SE, QA 1344) the toggle stays
+ * centred instead of being pushed right by the native back-item inset.
+ */
+export const ImportSecretHeaderToggle = () => {
+  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+  const { t } = useTranslation();
+  const [activeTab, setActiveTab] = useAtom(importSecretTabAtom);
+
+  return (
+    <View style={styles.headerRow}>
+      <HeaderBackPressable
+        style={styles.headerBack}
+        tintColor={colors2024['neutral-title-1']}
+      />
+      <View style={styles.headerToggleArea}>
+        <View style={styles.tabContainer}>
+          <CustomTouchableOpacity
+            as="RNGHTouchableOpacity"
+            activeOpacity={1}
+            style={[styles.tab, activeTab === 'seedPhrase' && styles.tabActive]}
+            onPress={() => setActiveTab('seedPhrase')}>
+            <Text
+              style={[
+                styles.tabText,
+                activeTab === 'seedPhrase' && styles.tabTextActive,
+              ]}>
+              {t('page.manageAddress.seed-phrase')}
+            </Text>
+          </CustomTouchableOpacity>
+          <CustomTouchableOpacity
+            as="RNGHTouchableOpacity"
+            activeOpacity={1}
+            style={[styles.tab, activeTab === 'privateKey' && styles.tabActive]}
+            onPress={() => setActiveTab('privateKey')}
+            {...makeTestIDProps(E2E_ID.onboarding.privateKeyTab)}>
+            <Text
+              style={[
+                styles.tabText,
+                activeTab === 'privateKey' && styles.tabTextActive,
+              ]}>
+              {t('page.manageAddress.private-key')}
+            </Text>
+          </CustomTouchableOpacity>
+        </View>
+      </View>
+      <View style={styles.headerSpacer} />
+    </View>
+  );
+};
+
 const getStyles = createGetStyles2024(ctx => ({
   screen: {
     backgroundColor: ctx.colors2024['neutral-bg-1'],
@@ -510,6 +538,28 @@ const getStyles = createGetStyles2024(ctx => ({
   topContent: {
     alignItems: 'center',
     width: '100%',
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: SCREEN_WIDTH - 32,
+  },
+  headerBack: {
+    width: 24,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  headerToggleArea: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerSpacer: {
+    width: 24,
+    height: 24,
+    flexShrink: 0,
   },
   tabContainer: {
     flexDirection: 'row',

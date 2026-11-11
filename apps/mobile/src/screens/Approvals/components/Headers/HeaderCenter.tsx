@@ -53,9 +53,9 @@ export const HeaderCenter = (props: IProps) => {
 };
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
-// Leading bar inset (16) + our 24pt back button + 8pt gap + trailing action
-// slot (44) + right inset (16).
-const HEADER_CONTENT_WIDTH = SCREEN_WIDTH - 16 - 24 - 8 - 44 - 16;
+// Same row width as the token detail header: the space left after the bar
+// inset/back slot, so `[back][8][content]` starts right after the chevron.
+const HEADER_CONTENT_WIDTH = SCREEN_WIDTH - 65;
 const BACK_BUTTON_SLOT = 24 + 8;
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
@@ -63,20 +63,18 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: HEADER_CONTENT_WIDTH,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
   },
-  // Absolute so the wallet/alias title stays centred in the row.
   inlineBack: {
-    position: 'absolute',
-    left: 0,
     width: 24,
     height: 24,
     alignItems: 'center',
     justifyContent: 'center',
+    flexShrink: 0,
   },
   searchArea: {
     flex: 1,
-    marginLeft: BACK_BUTTON_SLOT,
+    marginLeft: 8,
     flexDirection: 'row',
     alignItems: 'center',
   },
@@ -86,6 +84,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 1,
+    flex: 1,
+    marginLeft: 8,
   },
   titleText: {
     color: colors2024['neutral-title-1'],
