@@ -14,9 +14,16 @@ import {
   PERPS_PRO_DIALOG_FIELD,
   resolvePerpsProDialogFieldBackground,
 } from '../common/perpsProDialogVisual';
+import { resolvePerpsProFittedFontSize } from '../common/perpsProFitFontSize';
+import { PerpsProTextWidthProbe } from '../common/PerpsProTextWidthProbe';
 import RcSelectCaret from '@/assets2024/icons/perps/PerpsProTpSlSelectCaret.svg';
 import { PerpsProDecimalTextInput } from '../trade/PerpsProDecimalTextInput';
 import { PerpsProPositionTpSlBottomSheetTextInput } from './PerpsProPositionTpSlBottomSheetTextInput';
+
+const FLOATING_LABEL_FONT_SIZE = 10;
+const FLOATING_LABEL_MIN_FONT_SIZE = 8;
+const PLACEHOLDER_FONT_SIZE = 14;
+const PLACEHOLDER_MIN_FONT_SIZE = 10;
 
 const withThousandsSeparators = (value: string) => {
   const [integer = '', fraction] = value.split('.');
@@ -66,6 +73,23 @@ export const PerpsProPositionTpSlInput: React.FC<{
       }
     }, [registerKeyboardRevealInput]);
     const [focused, setFocused] = useState(false);
+    // Long translations must shrink on one line instead of wrapping onto the
+    // value row.
+    const [inputAreaWidth, setInputAreaWidth] = useState(0);
+    const [labelWidth, setLabelWidth] = useState(0);
+    const [placeholderWidth, setPlaceholderWidth] = useState(0);
+    const labelFontSize = resolvePerpsProFittedFontSize({
+      availableWidth: inputAreaWidth,
+      baseFontSize: FLOATING_LABEL_FONT_SIZE,
+      minFontSize: FLOATING_LABEL_MIN_FONT_SIZE,
+      naturalWidth: labelWidth,
+    });
+    const placeholderFontSize = resolvePerpsProFittedFontSize({
+      availableWidth: inputAreaWidth,
+      baseFontSize: PLACEHOLDER_FONT_SIZE,
+      minFontSize: PLACEHOLDER_MIN_FONT_SIZE,
+      naturalWidth: placeholderWidth,
+    });
     const normalizePriceValue = React.useCallback(
       (nextValue: string) =>
         sanitizePerpsProPriceEditingInput(nextValue, priceSzDecimals ?? 0),
@@ -93,6 +117,7 @@ export const PerpsProPositionTpSlInput: React.FC<{
         <Pressable
           accessible={false}
           disabled={disabled || (IS_IOS && focused)}
+          onLayout={event => setInputAreaWidth(event.nativeEvent.layout.width)}
           onPress={() => {
             if (!focused) {
               inputRef.current?.focus();
@@ -100,17 +125,39 @@ export const PerpsProPositionTpSlInput: React.FC<{
           }}
           style={styles.inputArea}
           testID={`${testID}-focus-proxy`}>
+          <PerpsProTextWidthProbe
+            onWidth={setLabelWidth}
+            style={styles.floatingLabel}
+            text={label}
+          />
+          <PerpsProTextWidthProbe
+            onWidth={setPlaceholderWidth}
+            style={styles.centeredPlaceholder}
+            text={placeholder}
+          />
           {showFloatingLabel ? (
             <Text
+              numberOfLines={1}
               pointerEvents="none"
-              style={styles.floatingLabel}
+              style={[
+                styles.floatingLabel,
+                labelFontSize !== FLOATING_LABEL_FONT_SIZE && {
+                  fontSize: labelFontSize,
+                },
+              ]}
               testID={`${testID}-label`}>
               {label}
             </Text>
           ) : (
             <Text
+              numberOfLines={1}
               pointerEvents="none"
-              style={styles.centeredPlaceholder}
+              style={[
+                styles.centeredPlaceholder,
+                placeholderFontSize !== PLACEHOLDER_FONT_SIZE && {
+                  fontSize: placeholderFontSize,
+                },
+              ]}
               testID={`${testID}-placeholder`}>
               {placeholder}
             </Text>
@@ -215,7 +262,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   floatingLabel: {
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 10,
+    fontSize: FLOATING_LABEL_FONT_SIZE,
     fontWeight: '500',
     left: 0,
     lineHeight: 12,
@@ -226,7 +273,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   centeredPlaceholder: {
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
+    fontSize: PLACEHOLDER_FONT_SIZE,
     fontWeight: '400',
     left: 0,
     lineHeight: 18,
