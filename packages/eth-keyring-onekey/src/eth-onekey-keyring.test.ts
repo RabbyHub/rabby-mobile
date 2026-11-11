@@ -1,6 +1,7 @@
 import { TransactionFactory } from '@ethereumjs/tx';
 import * as sigUtil from 'eth-sig-util';
 import * as ethUtil from 'ethereumjs-util';
+import HDKey from 'hdkey';
 
 import OneKeyKeyring from './eth-onekey-keyring';
 
@@ -28,6 +29,7 @@ const OTHER_PUBLIC_KEY = ethUtil
 function createBridge() {
   return {
     init: jest.fn(),
+    initSession: jest.fn(),
     evmSignTransaction: jest.fn(),
     evmSignMessage: jest.fn(),
     evmSignTypedData: jest.fn(),
@@ -506,6 +508,7 @@ describe('OneKeyKeyring unlock wallet selection', () => {
    * @param options - Protocol and discovery identity overrides.
    * @param options.protocol - The protocol reported by getDeviceState.
    * @param options.deviceId - The identity returned by searchDevices.
+   * @param options.deviceType - The model reported by getDeviceState.
    * @returns The mocked bridge and keyring.
    */
   function setup(
@@ -515,9 +518,13 @@ describe('OneKeyKeyring unlock wallet selection', () => {
       unlocked?: boolean;
       unlockedAttachPin?: boolean;
     },
-    options: { protocol?: 'V1' | 'V2'; deviceId?: string | null } = {},
+    options: {
+      protocol?: 'V1' | 'V2';
+      deviceId?: string | null;
+      deviceType?: string;
+    } = {},
   ) {
-    const { protocol = 'V2', deviceId = null } = options;
+    const { protocol = 'V2', deviceId = null, deviceType } = options;
     const bridge = createBridge();
     bridge.init.mockResolvedValue(undefined);
     bridge.searchDevices.mockResolvedValue({
@@ -528,7 +535,8 @@ describe('OneKeyKeyring unlock wallet selection', () => {
       success: true,
       payload: {
         protocol,
-        identity: { deviceId: 'device-id' },
+        identity: { deviceId: 'device-id', deviceType },
+        features: { onekey_device_type: deviceType?.toUpperCase() },
         ...(status ? { status } : {}),
       },
     });
@@ -574,25 +582,32 @@ describe('OneKeyKeyring unlock wallet selection', () => {
     };
   }
 
-  it('follows the original getPassphraseState flow on an unlocked V2 main wallet', async () => {
-    const { bridge, keyring } = setup('hidden-wallet-token', {
-      passphraseProtection: true,
-      unlocked: true,
-      unlockedAttachPin: false,
-    });
-    mockOpenWalletSession(bridge).mockResolvedValue(
-      createSession('hidden', 'hidden-wallet-token'),
-    );
+  it.each(['pro2', 'neo'])(
+    'follows the original getPassphraseState flow on an unlocked V2 %s main wallet',
+    async deviceType => {
+      const { bridge, keyring } = setup(
+        'hidden-wallet-token',
+        {
+          passphraseProtection: true,
+          unlocked: true,
+          unlockedAttachPin: false,
+        },
+        { deviceType },
+      );
+      mockOpenWalletSession(bridge).mockResolvedValue(
+        createSession('hidden', 'hidden-wallet-token'),
+      );
 
-    expect(await keyring.unlock()).toBe('just unlocked');
-    expect(bridge.openWalletSession).not.toHaveBeenCalled();
-    expect(bridge.getPassphraseState).toHaveBeenNthCalledWith(
-      1,
-      'connect-id',
-      undefined,
-    );
-    expect(keyring.passphraseState).toBe('hidden-wallet-token');
-  });
+      expect(await keyring.unlock()).toBe('just unlocked');
+      expect(bridge.openWalletSession).not.toHaveBeenCalled();
+      expect(bridge.getPassphraseState).toHaveBeenNthCalledWith(
+        1,
+        'connect-id',
+        undefined,
+      );
+      expect(keyring.passphraseState).toBe('hidden-wallet-token');
+    },
+  );
 
   it('treats an empty passphrase from the original flow as the standard wallet on V2', async () => {
     const { bridge, keyring } = setup('standard-wallet-id', {
@@ -609,25 +624,33 @@ describe('OneKeyKeyring unlock wallet selection', () => {
     expect(keyring.passphraseState).toBeUndefined();
   });
 
-  it.each([
-    ['locked', { unlocked: false }],
-    [
-      'unlocked with an attach PIN',
-      { unlocked: true, unlockedAttachPin: true },
-    ],
-    ['of unknown lock state', {}],
-  ])(
-    'opens the V2 wallet with select-hidden when the device is %s',
-    async (_label, lockStatus) => {
-      const { bridge, keyring } = setup('hidden-wallet-token', {
-        passphraseProtection: true,
-        ...lockStatus,
-      });
+  it.each(
+    ['pro2', 'neo'].flatMap(deviceType => [
+      { deviceType, label: 'locked', lockStatus: { unlocked: false } },
+      {
+        deviceType,
+        label: 'unlocked with an attach PIN',
+        lockStatus: { unlocked: true, unlockedAttachPin: true },
+      },
+      { deviceType, label: 'of unknown lock state', lockStatus: {} },
+    ]),
+  )(
+    'opens the V2 $deviceType wallet with select-hidden when the device is $label',
+    async ({ deviceType, lockStatus }) => {
+      const { bridge, keyring } = setup(
+        'hidden-wallet-token',
+        {
+          passphraseProtection: true,
+          ...lockStatus,
+        },
+        { deviceType },
+      );
       mockOpenWalletSession(bridge).mockResolvedValue(
         createSession('hidden', 'hidden-wallet-token'),
       );
 
       expect(await keyring.unlock()).toBe('just unlocked');
+      expect(bridge.openWalletSession).toHaveBeenCalledTimes(1);
       expect(bridge.openWalletSession).toHaveBeenCalledWith('connect-id', {
         mode: 'select-hidden',
       });
@@ -790,21 +813,128 @@ describe('OneKeyKeyring unlock wallet selection', () => {
     expect(keyring.passphraseState).toBe('hidden-wallet-token');
   });
 
-  it('opens the standard wallet directly when passphrase protection is off', async () => {
-    const { bridge, keyring } = setup(undefined, {
-      passphraseProtection: false,
-    });
-    mockOpenWalletSession(bridge).mockResolvedValue(
-      createSession('standard', null),
-    );
+  it.each(['pro2', 'neo'])(
+    'opens the %s standard wallet directly when passphrase protection is off',
+    async deviceType => {
+      const { bridge, keyring } = setup(
+        undefined,
+        {
+          passphraseProtection: false,
+        },
+        { deviceType },
+      );
+      mockOpenWalletSession(bridge).mockResolvedValue(
+        createSession('standard', null),
+      );
 
-    expect(await keyring.unlock()).toBe('just unlocked');
-    expect(bridge.openWalletSession).toHaveBeenCalledTimes(1);
-    expect(bridge.openWalletSession).toHaveBeenCalledWith('connect-id', {
-      mode: 'standard',
-    });
-    expect(keyring.passphraseState).toBeUndefined();
-  });
+      expect(await keyring.unlock()).toBe('just unlocked');
+      expect(bridge.openWalletSession).toHaveBeenCalledTimes(1);
+      expect(bridge.openWalletSession).toHaveBeenCalledWith('connect-id', {
+        mode: 'standard',
+      });
+      expect(keyring.passphraseState).toBeUndefined();
+    },
+  );
+
+  it.each(['pro2', 'neo'])(
+    'imports BIP44 accounts from an attach-PIN-unlocked V2 %s and signs without reopening the session',
+    async deviceType => {
+      const { bridge, keyring } = setup(
+        undefined,
+        {
+          passphraseProtection: true,
+          unlocked: true,
+          unlockedAttachPin: true,
+        },
+        { deviceType },
+      );
+      mockOpenWalletSession(bridge).mockResolvedValue(
+        createSession('hidden', 'attach-pin-wallet-token'),
+      );
+      const wallet = HDKey.fromMasterSeed(
+        Buffer.from('11'.repeat(32), 'hex'),
+      ).derive("m/44'/60'/0'/0");
+      bridge.evmGetPublicKey.mockResolvedValue({
+        success: true,
+        payload: {
+          pub: wallet.publicKey.toString('hex'),
+          node: { chain_code: wallet.chainCode.toString('hex') },
+        },
+      });
+
+      const accounts: string[] = await keyring.addAccounts(2);
+      expect(accounts).toStrictEqual(
+        [0, 1].map(index =>
+          ethUtil.toChecksumAddress(
+            ethUtil.bufferToHex(
+              ethUtil.publicToAddress(
+                wallet.derive(`m/${index}`).publicKey,
+                true,
+              ),
+            ),
+          ),
+        ),
+      );
+      for (const [index, address] of accounts.entries()) {
+        expect(keyring.accountDetails[address]).toStrictEqual(
+          expect.objectContaining({
+            hdPath: `m/44'/60'/0'/0/${index}`,
+            hdPathType: 'BIP44',
+            index,
+          }),
+        );
+      }
+      expect(keyring.passphraseState).toBe('attach-pin-wallet-token');
+
+      const signature = sigUtil.personalSign(wallet.derive('m/1').privateKey, {
+        data: '0x01',
+      });
+      bridge.evmSignMessage.mockResolvedValue({
+        success: true,
+        payload: { address: accounts[1], signature: stripHexPrefix(signature) },
+      });
+
+      expect(await keyring.signPersonalMessage(accounts[1], '0x01')).toBe(
+        signature,
+      );
+      expect(bridge.evmSignMessage).toHaveBeenCalledTimes(1);
+      expect(bridge.evmSignMessage).toHaveBeenCalledWith(
+        'connect-id',
+        'device-id',
+        {
+          path: "m/44'/60'/0'/0/1",
+          messageHex: '01',
+          passphraseState: 'attach-pin-wallet-token',
+          useEmptyPassphrase: false,
+        },
+      );
+      expect(bridge.openWalletSession).toHaveBeenCalledTimes(1);
+      expect(bridge.openWalletSession).toHaveBeenCalledWith('connect-id', {
+        mode: 'select-hidden',
+      });
+      expect(bridge.initSession).not.toHaveBeenCalled();
+      expect(bridge.getDeviceState).toHaveBeenCalledTimes(1);
+      expect(bridge.getPassphraseState).toHaveBeenCalledTimes(1);
+      expect(bridge.getPassphraseState).toHaveBeenCalledWith('connect-id', {
+        useEmptyPassphrase: true,
+      });
+      expect(bridge.evmGetPublicKey).toHaveBeenCalledTimes(1);
+      expect(bridge.evmGetPublicKey).toHaveBeenCalledWith(
+        'connect-id',
+        'device-id',
+        {
+          path: "m/44'/60'/0'/0",
+          showOnOneKey: false,
+          chainId: 1,
+          passphraseState: 'attach-pin-wallet-token',
+          useEmptyPassphrase: false,
+        },
+      );
+      expect(bridge.receivePin).not.toHaveBeenCalled();
+      expect(bridge.receivePassphrase).not.toHaveBeenCalled();
+      expect(keyring.passphraseState).toBe('attach-pin-wallet-token');
+    },
+  );
 
   it('retries openWalletSession with the standard wallet after a passphrase-disabled error', async () => {
     const { bridge, keyring } = setup(undefined, {
