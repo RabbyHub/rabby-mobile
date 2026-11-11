@@ -106,6 +106,7 @@ type OnParseUrlAndProcessAction = (payload: {
     | 'debug-db-sync-policy'
     | 'debug-lending'
     | 'debug-open-target'
+    | 'debug-set-language'
     | 'regression-scenario';
   target?: RabbyGoTarget;
   dappUrl?: string;
@@ -136,6 +137,8 @@ type OnParseUrlAndProcessAction = (payload: {
   debugOpenTarget?: DebugOpenTarget;
   debugOpenTargetChain?: string;
   debugOpenTargetTab?: 'seedPhrase' | 'privateKey';
+  /** Non-production only: force the app language, e.g. `pt-BR`. */
+  debugLanguage?: string;
   debugChainStatsLoading?: boolean;
   debugChainStatsLoadingForMs?: number;
   debugChainStatsLoadingOff?: boolean;
@@ -153,7 +156,8 @@ type DebugOpenTarget =
   | 'singleHome'
   | 'homeAssets'
   | 'approvals'
-  | 'importSecret';
+  | 'importSecret'
+  | 'importMethods';
 
 const NON_PRODUCTION_TESTKIT_SCREENS = {
   DevCapabilityFile: RootNames.DevCapabilityFile,
@@ -428,7 +432,8 @@ function parseNonProductionMaintenanceLink(appLink: string) {
       rawTarget === 'singleHome' ||
       rawTarget === 'homeAssets' ||
       rawTarget === 'approvals' ||
-      rawTarget === 'importSecret';
+      rawTarget === 'importSecret' ||
+      rawTarget === 'importMethods';
     if (!isRabbyGoTarget && !isDebugScreenTarget) {
       console.warn(
         '[useUniversalLinkOnTop] Unknown debug-open-target target:',
@@ -466,6 +471,22 @@ function parseNonProductionMaintenanceLink(appLink: string) {
       debugChainStatsLoadingOff:
         urlInfo.searchParams.get('chainLoading') === '0' ||
         urlInfo.searchParams.get('chainLoading') === 'false',
+    } satisfies Parameters<OnParseUrlAndProcessAction>[0];
+  }
+
+  // Non-production only: force the UI language so layout bugs that only show up
+  // with a long translation (QA 1352) can be reproduced without changing the
+  // device settings. `?_cmd=debug-set-language&lang=pt-BR`.
+  if (rabbyGoCmd === 'debug-set-language' || target === 'debug-set-language') {
+    const lang =
+      urlInfo.searchParams.get('lang') || urlInfo.searchParams.get('language');
+    if (!lang) {
+      console.warn('[useUniversalLinkOnTop] debug-set-language needs ?lang=');
+      return null;
+    }
+    return {
+      type: 'debug-set-language',
+      debugLanguage: lang,
     } satisfies Parameters<OnParseUrlAndProcessAction>[0];
   }
 
@@ -959,8 +980,23 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
           } as any);
           return;
         }
+        if (target === 'importMethods') {
+          navigateDeprecated(RootNames.StackAddress, {
+            screen: RootNames.ImportMethods,
+            params: {},
+          } as any);
+          return;
+        }
         void openRabbyGoTarget(target);
       }, `debug-open-${payload.debugOpenTarget}`);
+      break;
+    case 'debug-set-language':
+      if (!isNonPublicProductionEnv || !payload.debugLanguage) {
+        return;
+      }
+      void import('@/hooks/lang').then(({ setAppLanguage }) =>
+        setAppLanguage(payload.debugLanguage!),
+      );
       break;
     case 'regression-scenario':
       handleRegressionScenarioCommand(
