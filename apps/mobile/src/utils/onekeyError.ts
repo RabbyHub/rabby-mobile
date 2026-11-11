@@ -8,6 +8,7 @@ export const ONEKEY_ERROR_CODE = {
   DeviceNotFound: 105,
   DeviceInterruptedFromOutside: 107,
   DeviceInterruptedFromUser: 109,
+  DeviceNotOpenedPassphrase: 113,
   DeviceBusy: 117,
   CallMethodNeedUpgradeFirmware: 407,
   NewFirmwareForceUpdate: 414,
@@ -37,6 +38,7 @@ const C = ONEKEY_ERROR_CODE;
 // left out on purpose: 107 (outside) and 109 (user) share that text.
 const SDK_MESSAGE_LIST: Array<[number, string]> = [
   [C.DeviceNotFound, 'Device not found'],
+  [C.DeviceNotOpenedPassphrase, 'Device not opened passphrase'],
   [C.DeviceBusy, 'Device is busy'],
   [C.CallMethodNeedUpgradeFirmware, 'Call method need upgrade firmware'],
   [C.NewFirmwareForceUpdate, 'new firmware has been released, please update'],
@@ -137,10 +139,25 @@ export function isOneKeyUserCancelError(code?: number) {
   );
 }
 
+/** iOS uses 701 for both a powered-off radio and missing Bluetooth access. */
+export function isOneKeyPermissionError(
+  code: number | undefined,
+  isIOS: boolean,
+  bluetoothPermission?: string,
+) {
+  return (
+    code === C.BleLocationError ||
+    (isIOS &&
+      code === C.BlePermissionError &&
+      (bluetoothPermission === 'denied' || bluetoothPermission === 'blocked'))
+  );
+}
+
 type TFunc = (key: string, options?: any) => string;
 
 const ERROR_I18N_KEY: Record<number, string> = {
   [C.DeviceNotFound]: 'deviceNotFound',
+  [C.DeviceNotOpenedPassphrase]: 'passphraseDisabled',
   [C.DeviceInterruptedFromOutside]: 'disconnected',
   [C.BleDeviceDisconnected]: 'disconnected',
   [C.BleTimeoutError]: 'disconnected',

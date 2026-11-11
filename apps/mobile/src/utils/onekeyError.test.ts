@@ -2,6 +2,7 @@ import {
   getOneKeyErrorCode,
   getOneKeyErrorMessage,
   isOneKeyBleSetupError,
+  isOneKeyPermissionError,
   isOneKeyUserCancelError,
 } from './onekeyError';
 
@@ -35,6 +36,7 @@ describe('utils/onekeyError', () => {
   it('falls back to the default SDK message when the code was lost', () => {
     expect(getOneKeyErrorCode(new Error('Error: Device is busy'))).toBe(117);
     expect(getOneKeyErrorCode('Pin cancelled')).toBe(802);
+    expect(getOneKeyErrorCode('Device not opened passphrase')).toBe(113);
     expect(getOneKeyErrorCode('Action cancelled by user on call queue')).toBe(
       822,
     );
@@ -55,6 +57,9 @@ describe('utils/onekeyError', () => {
   });
 
   it('maps codes to OneKey i18n messages', () => {
+    expect(getOneKeyErrorMessage(113, t)).toBe(
+      'page.newAddress.onekey.error.passphraseDisabled',
+    );
     expect(getOneKeyErrorMessage(117, t)).toBe(
       'page.newAddress.onekey.error.deviceBusy',
     );
@@ -75,4 +80,24 @@ describe('utils/onekeyError', () => {
     expect([802, 803, 822, 109].every(isOneKeyUserCancelError)).toBe(true);
     expect(isOneKeyUserCancelError(107)).toBe(false);
   });
+
+  it.each([
+    [701, true, 'denied', true],
+    [701, true, 'blocked', true],
+    [701, true, 'unavailable', false],
+    [701, true, 'granted', false],
+    [701, true, 'limited', false],
+    [701, true, undefined, false],
+    [701, false, 'denied', false],
+    [701, false, 'blocked', false],
+    [701, false, 'unavailable', false],
+    [702, true, undefined, true],
+    [702, false, undefined, true],
+    [721, true, 'denied', false],
+  ])(
+    'classifies permission errors for code %s, iOS %s, status %s',
+    (code, isIOS, permission, expected) => {
+      expect(isOneKeyPermissionError(code, isIOS, permission)).toBe(expected);
+    },
+  );
 });

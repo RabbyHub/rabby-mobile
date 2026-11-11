@@ -1257,6 +1257,7 @@
           "deviceNotFound": "OneKey not found. Make sure it is unlocked, Bluetooth is on and it is close to your phone.",
           "disconnected": "OneKey disconnected. Keep it unlocked and close to your phone, then try again.",
           "deviceBusy": "OneKey is busy with another request. Finish or cancel it on the device, then try again.",
+          "passphraseDisabled": "Passphrase is turned off on the device. Turn it on, or re-import this wallet.",
           "firmwareTooOld": "Your OneKey firmware is too old. Update it with the OneKey app, then try again.",
           "bluetoothOff": "Bluetooth is off. Turn on Bluetooth and try again.",
           "bluetoothPermission": "Rabby does not have permission to use Bluetooth. Allow Bluetooth (or Location on Android 11 and earlier) for Rabby in Settings, then try again.",

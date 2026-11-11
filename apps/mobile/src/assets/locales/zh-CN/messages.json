@@ -1312,6 +1312,7 @@
           "deviceNotFound": "未找到 OneKey。请确认设备已解锁、蓝牙已开启，并靠近手机。",
           "disconnected": "OneKey 已断开连接。请保持设备解锁并靠近手机后重试。",
           "deviceBusy": "OneKey 正在处理其他请求。请在设备上完成或取消后重试。",
+          "passphraseDisabled": "设备未开启 Passphrase。请在设备上开启，或重新导入该钱包。",
           "firmwareTooOld": "OneKey 固件版本过低。请使用 OneKey App 升级后重试。",
           "bluetoothOff": "蓝牙未开启。请打开蓝牙后重试。",
           "bluetoothPermission": "Rabby 没有蓝牙权限。请在系统设置中为 Rabby 允许蓝牙（Android 11 及以下为定位）权限后重试。",

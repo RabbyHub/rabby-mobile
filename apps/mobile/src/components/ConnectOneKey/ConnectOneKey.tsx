@@ -7,6 +7,7 @@ import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { useAtom } from 'jotai';
 import React from 'react';
 import { Linking } from 'react-native';
+import { check, PERMISSIONS } from 'react-native-permissions';
 import { useTranslation } from 'react-i18next';
 import { toast } from '@/components2024/Toast';
 import {
@@ -14,7 +15,9 @@ import {
   getOneKeyErrorCode,
   getOneKeyErrorMessage,
   isOneKeyUserCancelError,
+  isOneKeyPermissionError,
 } from '@/utils/onekeyError';
+import { IS_IOS } from '@/core/native/utils';
 import { settingAtom } from '../HDSetting/MainContainer';
 import { BluetoothPermissionScreen } from './BluetoothPermissionScreen';
 import { NotFoundDeviceScreen } from './NotFoundDeviceScreen';
@@ -40,6 +43,27 @@ export const ConnectOneKey: React.FC<{
   // the device has to be released.
   const connectingRef = React.useRef(false);
   const unmountedRef = React.useRef(false);
+  const [bluetoothPermission, setBluetoothPermission] =
+    React.useState<string>();
+  const errorCode = getOneKeyErrorCode(error);
+
+  React.useEffect(() => {
+    setBluetoothPermission(undefined);
+    if (!IS_IOS || errorCode !== ONEKEY_ERROR_CODE.BlePermissionError) {
+      return;
+    }
+    let cancelled = false;
+    check(PERMISSIONS.IOS.BLUETOOTH)
+      .then(permission => {
+        if (!cancelled) {
+          setBluetoothPermission(permission);
+        }
+      })
+      .catch(console.error);
+    return () => {
+      cancelled = true;
+    };
+  }, [error, errorCode]);
 
   const { showImportMorePopup } = useShowImportMoreAddressPopup();
 
@@ -136,8 +160,11 @@ export const ConnectOneKey: React.FC<{
     [importFirstAddress, onSelectDeviceId, t],
   );
 
-  const isPermissionError =
-    getOneKeyErrorCode(error) === ONEKEY_ERROR_CODE.BleLocationError;
+  const isPermissionError = isOneKeyPermissionError(
+    errorCode,
+    IS_IOS,
+    bluetoothPermission,
+  );
 
   return (
     <AutoLockView as="View" style={{ height: '100%' }}>
@@ -163,8 +190,10 @@ export const ConnectOneKey: React.FC<{
         <NotFoundDeviceScreen
           titleText={t('page.newAddress.onekey.ble.title')}
           descriptionText={
-            getOneKeyErrorMessage(error, t) ||
-            t('page.newAddress.onekey.error.scanFailed')
+            isPermissionError
+              ? t('page.newAddress.onekey.error.bluetoothPermission')
+              : getOneKeyErrorMessage(error, t) ||
+                t('page.newAddress.onekey.error.scanFailed')
           }
           footerButtonText={
             isPermissionError

@@ -141,19 +141,21 @@ export const OneKeyHardwareWaiting = ({
     }
   });
 
-  const [isRetrying, setIsRetrying] = React.useState(false);
+  const retryingRef = useRef(false);
 
   const { markRetryStarted, afterMinPending } = useRetryMinPending();
 
   const handleRetry = async (showToast = true) => {
-    if (isRetrying) {
-      return;
-    }
     if (connectStatus === APPROVAL_STATUS_MAP.SUBMITTING) {
       toast.success(t('page.signFooterBar.ledger.resubmited'));
       return;
     }
-    setIsRetrying(true);
+    // One hardware sign at a time: a second tap while the device is still
+    // working would start another sign (device busy / double confirm).
+    if (retryingRef.current || connectStatus === APPROVAL_STATUS_MAP.WAITING) {
+      return;
+    }
+    retryingRef.current = true;
 
     setConnectStatus(APPROVAL_STATUS_MAP.WAITING);
     markRetryStarted();
@@ -181,7 +183,6 @@ export const OneKeyHardwareWaiting = ({
     if (showToast) {
       toast.success(t('page.signFooterBar.ledger.resent'));
     }
-    setIsRetrying(false);
   };
 
   const init = async () => {
@@ -206,6 +207,7 @@ export const OneKeyHardwareWaiting = ({
       }
     }
     eventBus.addListener(EVENTS.COMMON_HARDWARE.REJECTED, async data => {
+      retryingRef.current = false;
       setErrorMessage(data);
       setConnectStatus(APPROVAL_STATUS_MAP.REJECTED);
     });
@@ -213,6 +215,7 @@ export const OneKeyHardwareWaiting = ({
       setConnectStatus(APPROVAL_STATUS_MAP.SUBMITTING);
     });
     eventBus.addListener(EVENTS.SIGN_FINISHED, async data => {
+      retryingRef.current = false;
       if (data.success) {
         cancelRef.current = true;
         let sig = data.data;
@@ -304,6 +307,9 @@ export const OneKeyHardwareWaiting = ({
 
   React.useEffect(() => {
     waitingOnDeviceRef.current = connectStatus === APPROVAL_STATUS_MAP.WAITING;
+    if (connectStatus !== APPROVAL_STATUS_MAP.WAITING) {
+      retryingRef.current = false;
+    }
   }, [connectStatus]);
 
   React.useEffect(() => {
