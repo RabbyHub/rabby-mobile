@@ -72,7 +72,10 @@ import {
 import { IS_IOS } from '@/core/native/utils';
 import { parseKeychainVersionDeepLinkValue } from '@/core/apis/keychainVersionShared';
 import RNHelpers from '@/core/native/RNHelpers';
-import { toggleDebugChainStatsForced } from '@/screens/Home/debugChainStats';
+import {
+  forceDebugChainStatsFor,
+  toggleDebugChainStatsForced,
+} from '@/screens/Home/debugChainStats';
 import { apisSingleHome } from '@/screens/Home/hooks/singleHome';
 
 const nextAppLinkRef = {
@@ -134,6 +137,8 @@ type OnParseUrlAndProcessAction = (payload: {
   debugOpenTargetChain?: string;
   debugOpenTargetTab?: 'seedPhrase' | 'privateKey';
   debugChainStatsLoading?: boolean;
+  debugChainStatsLoadingForMs?: number;
+  debugChainStatsLoadingOff?: boolean;
   regressionScenarioCommand?: RegressionScenarioCommand | null;
   regressionScenarioError?: string;
 }) => void;
@@ -448,6 +453,19 @@ function parseNonProductionMaintenanceLink(appLink: string) {
       debugChainStatsLoading:
         urlInfo.searchParams.get('chainLoading') === '1' ||
         urlInfo.searchParams.get('chainLoading') === 'true',
+      // `chainLoading=3000` pins for 3s then releases, so the skeleton ->
+      // loaded transition can be observed.
+      debugChainStatsLoadingForMs: (function () {
+        const raw = urlInfo.searchParams.get('chainLoading');
+        if (!raw) {
+          return undefined;
+        }
+        const ms = Number(raw);
+        return Number.isFinite(ms) && ms > 0 ? ms : undefined;
+      })(),
+      debugChainStatsLoadingOff:
+        urlInfo.searchParams.get('chainLoading') === '0' ||
+        urlInfo.searchParams.get('chainLoading') === 'false',
     } satisfies Parameters<OnParseUrlAndProcessAction>[0];
   }
 
@@ -897,8 +915,12 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
         }
         // Optional modifier on any debug target: pin the chain projection in
         // its "loading, no chains yet" state before navigating (QA 1157).
-        if (payload.debugChainStatsLoading) {
-          toggleDebugChainStatsForced();
+        if (payload.debugChainStatsLoadingForMs) {
+          forceDebugChainStatsFor(payload.debugChainStatsLoadingForMs);
+        } else if (payload.debugChainStatsLoading) {
+          toggleDebugChainStatsForced(true);
+        } else if (payload.debugChainStatsLoadingOff) {
+          toggleDebugChainStatsForced(false);
         }
         if (target === 'homeAssets') {
           apisHomeTabIndex.setTabIndex(1, true);

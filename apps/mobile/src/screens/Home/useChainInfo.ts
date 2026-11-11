@@ -33,6 +33,7 @@ import {
 import {
   isDebugChainStatsForced,
   registerDebugChainStatsApplier,
+  setDebugChainStatsForced,
   useDebugChainStatsForced,
 } from './debugChainStats';
 
