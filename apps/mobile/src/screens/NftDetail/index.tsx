@@ -117,7 +117,7 @@ export const NFTDetailScreen = () => {
     );
   });
 
-  React.useEffect(() => {
+  React.useLayoutEffect(() => {
     setNavigationOptions({
       headerTitle: TokenDetailHeaderArea,
       // The row renders its own back button so the avatar always follows it

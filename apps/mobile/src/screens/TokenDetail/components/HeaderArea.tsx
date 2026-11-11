@@ -32,6 +32,9 @@ import { trigger } from 'react-native-haptic-feedback';
 import { toastCopyAddressSuccess } from '@/components/AddressViewer/CopyAddress';
 import { findChain } from '@/utils/chain';
 import { ITokenItem } from '@/store/tokens';
+import { useRemovedTokens } from '@/hooks/useRemovedTokens';
+import { useTriggerTagAssets } from '@/screens/Home/hooks/refresh';
+import { RightMore } from './RightMore';
 import { isLpToken } from '@/utils/lpToken';
 import LpTokenIcon from '@/screens/Home/components/LpTokenIcon';
 import { useTranslation } from 'react-i18next';
@@ -50,6 +53,14 @@ const SCREEN_WIDTH = Dimensions.get('window').width;
 const HEADER_ROW_WIDTH: ViewStyle['width'] = IS_IOS
   ? SCREEN_WIDTH - 65
   : '100%';
+
+// Fixed width for the header-right slot so hiding the menu never re-flows the row.
+const RIGHT_SLOT_STYLE = {
+  width: 24,
+  height: 24,
+  alignItems: 'center',
+  justifyContent: 'center',
+} as const;
 
 interface Props {
   token: ITokenItem;
@@ -201,6 +212,68 @@ export const TokenDetailHeaderArea: React.FC<Props> = ({
           </View>
         </CopyConfirmModal>
       )}
+    </View>
+  );
+};
+
+/**
+ * Header title shared by the token detail and token market detail routes.
+ *
+ * The two routes are the same page as far as the user is concerned, so the
+ * back chevron, avatar and symbol must be laid out at exactly the same place in
+ * both. Pushing from one to the other then reads as a normal page transition
+ * instead of the header jumping (QA 1343). Pass the token through `options` so
+ * the row also exists on the first frame of the push.
+ */
+export const TokenDetailHeaderTitle = ({ token }: { token?: ITokenItem }) => (
+  <TokenDetailHeaderArea
+    inlineBack
+    tokenSize={33}
+    chainSize={15}
+    borderChain
+    token={token as ITokenItem}
+    showCopyIcon
+  />
+);
+
+/**
+ * Header right slot shared by the token detail and token market detail routes.
+ *
+ * The slot keeps the same width even when the menu is hidden, so the title row
+ * (and with it the back chevron and avatar) never shifts when the "..." action
+ * appears. It is mounted from the navigator options, so the slot already exists
+ * on the first frame of the push (QA 1343).
+ */
+export const TokenDetailHeaderRight = ({
+  token,
+  isCustomTestnetToken = false,
+}: {
+  token?: ITokenItem;
+  isCustomTestnetToken?: boolean;
+}) => {
+  const { tokenRefresh, singleTokenRefresh } = useTriggerTagAssets();
+  const isTestnet = useMemo(() => {
+    if (!token?.chain) return false;
+    return !!findChain({ serverId: token.chain })?.isTestnet;
+  }, [token?.chain]);
+  const isRemoved = useRemovedTokens(state =>
+    token?.chain && token?.id
+      ? !isCustomTestnetToken &&
+        !isTestnet &&
+        state.isTokenRemoved({ chainId: token.chain, tokenId: token.id })
+      : false,
+  );
+  const refreshTags = useCallback(() => {
+    singleTokenRefresh();
+    tokenRefresh();
+  }, [singleTokenRefresh, tokenRefresh]);
+  const showMore = !!token && !isCustomTestnetToken && !isTestnet && !isRemoved;
+
+  return (
+    <View style={RIGHT_SLOT_STYLE}>
+      {showMore ? (
+        <RightMore token={token as ITokenItem} refreshTags={refreshTags} />
+      ) : null}
     </View>
   );
 };
