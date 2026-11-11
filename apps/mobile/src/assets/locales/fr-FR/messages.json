@@ -865,7 +865,7 @@
         "signWarning": "Je comprends l'alerte et je souhaite continuer"
       },
       "price-impact": "Impact sur le prix",
-      "no-quote-found": "Aucun devis trouvé. Veuillez essayer d'autres paires de tokens.",
+      "no-quote-found": "Aucun devis trouvé.",
       "no-quote": "Pas de devis",
       "bridgeTo": "Passerelle vers",
       "approve-and-bridge": "Approuver et effectuer le bridge",

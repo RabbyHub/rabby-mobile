@@ -944,7 +944,7 @@
       "From": "來自",
       "price-impact": "價格影響",
       "loss-tips": "您正在損失 {{usd}}。請嘗試不同的金額。",
-      "no-quote-found": "未找到報價。請嘗試其他代幣對。",
+      "no-quote-found": "未找到報價。",
       "To": "至",
       "bridged": "已發起跨鏈",
       "gasFeeTooHight": "Gas 費用高於正常水平。只有在您希望繼續時才可確認。",
