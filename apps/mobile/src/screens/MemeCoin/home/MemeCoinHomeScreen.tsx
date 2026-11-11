@@ -54,6 +54,7 @@ import {
   MemeCoinHomeBottomBar,
   useKeyboardVisible,
 } from './MemeCoinHomeBottomBar';
+import { useInterceptUserBack } from './useInterceptUserBack';
 
 type HomeMode = 'market' | 'holdings';
 
@@ -242,6 +243,9 @@ export const MemeCoinHomeScreen = () => {
     setSearching(false);
     clearSelection();
   }, [clearSelection, mode]);
+
+  // holdings sits one level under the market
+  useInterceptUserBack(mode === 'holdings', switchMode);
 
   const startSearch = useCallback(() => setSearching(true), []);
 
