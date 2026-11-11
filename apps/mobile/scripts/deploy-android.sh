@@ -205,6 +205,8 @@ if [ "$RABBY_MOBILE_SIGN_ONLY_BUILD" == "true" ]; then
   echo "[deploy-android] sign-only build: producing an unsigned APK"
   export RABBY_MOBILE_BUILD_ENV="regression"
   export RABBY_MOBILE_SIGN_ONLY=true
+  load_env_var_from_candidate_files RABBY_MOBILE_CODE || true
+  validate_rabbit_code || exit 1
   prepare_android_build_artifacts || exit $?
   ./android/gradlew -p ./android assembleSignonly --no-daemon -Porg.gradle.parallel=true || exit $?
   sign_only_apk="$(find "$project_dir/android/app/build/outputs/apk/signonly" -type f -name '*.apk' | head -n 1)"
@@ -215,6 +217,10 @@ if [ "$RABBY_MOBILE_SIGN_ONLY_BUILD" == "true" ]; then
   sign_only_output="${RABBY_MOBILE_SIGN_ONLY_APK_OUT:-$project_dir/.sign-only/app-signonly-unsigned.apk}"
   mkdir -p "$(dirname "$sign_only_output")"
   cp "$sign_only_apk" "$sign_only_output"
+  if ! unzip -p "$sign_only_apk" 'classes*.dex' 2>/dev/null | strings | grep -Fq "$RABBY_MOBILE_CODE"; then
+    echo "[deploy-android] RABBY_MOBILE_CODE was not injected into the unsigned APK" >&2
+    exit 1
+  fi
   echo "[deploy-android] unsigned Android APK: $sign_only_output"
   shasum -a 256 "$sign_only_output"
   exit 0

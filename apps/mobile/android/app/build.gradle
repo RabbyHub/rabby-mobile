@@ -267,8 +267,32 @@ android {
             matchingFallbacks = ['regression', 'release']
         }
     }
-    buildTypes.each {
-        it.buildConfigField 'String', 'rabbitCode', "\"$System.env.RABBY_MOBILE_CODE\""
+    def requestedTasks = gradle.startParameter.taskNames.join(' ').toLowerCase()
+    def packagingRequested = requestedTasks.contains('assemble') ||
+            requestedTasks.contains('bundle') ||
+            requestedTasks.contains('install')
+    buildTypes.each { buildType ->
+        def rabbitCode = (System.getenv('RABBY_MOBILE_CODE') ?: '').trim()
+        def invalidRabbitCode = !rabbitCode ||
+                rabbitCode == 'null' ||
+                rabbitCode == 'undefined' ||
+                (rabbitCode == 'RABBY_MOBILE_CODE_DEV' && System.getenv('APP_ENV') != 'hashing')
+        if (buildType.name == 'debug') {
+            // Local debug builds keep the documented DEV fallback.
+            if (invalidRabbitCode) {
+                rabbitCode = 'RABBY_MOBILE_CODE_DEV'
+            }
+        } else if (invalidRabbitCode) {
+            if (packagingRequested) {
+                throw new GradleException(
+                        "RABBY_MOBILE_CODE is missing or invalid for '${buildType.name}'; " +
+                                "export the real value before building."
+                )
+            }
+            // IDE sync / help / configuration-only tasks must not bake a package.
+            rabbitCode = 'RABBY_MOBILE_CODE_DEV'
+        }
+        buildType.buildConfigField 'String', 'rabbitCode', "\"${rabbitCode}\""
     }
     sourceSets {
         // The sign-only variant must keep the regression identity (name, icon,
