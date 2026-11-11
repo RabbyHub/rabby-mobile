@@ -21,6 +21,7 @@ import { toast } from '@/components2024/Toast';
 import { IS_IOS } from '@/core/native/utils';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { useTheme2024 } from '@/hooks/theme';
+import { useHandleBackPressClosable } from '@/hooks/useAppGesture';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import type { Account } from '@/types/account';
 import { isAccountSupportDirectSign } from '@/utils/account';
@@ -62,7 +63,6 @@ import {
   useKeyboardVisible,
 } from './MemeCoinHomeBottomBar';
 import { useEdgeSwipeBack } from '../ui/useEdgeSwipeBack';
-import { useInterceptUserBack } from './useInterceptUserBack';
 
 type HomeMode = 'market' | 'holdings';
 
@@ -254,8 +254,18 @@ export const MemeCoinHomeScreen = () => {
     clearSelection();
   }, [clearSelection, mode]);
 
-  // holdings sits one level under the market
-  useInterceptUserBack(mode === 'holdings', switchMode);
+  // Holdings sits one level under the market: Android back and the iOS edge
+  // swipe return there, while the header arrow still leaves the page.
+  const { onHardwareBackHandler } = useHandleBackPressClosable(
+    useCallback(() => {
+      if (mode !== 'holdings') {
+        return true;
+      }
+      switchMode();
+      return false;
+    }, [mode, switchMode]),
+  );
+  useFocusEffect(onHardwareBackHandler);
   const swipeBackToMarket = useEdgeSwipeBack(mode === 'holdings', switchMode);
 
   const startSearch = useCallback(() => setSearching(true), []);
