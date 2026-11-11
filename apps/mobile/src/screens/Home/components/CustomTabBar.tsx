@@ -385,19 +385,38 @@ function SideChainSelector() {
   // settles with no chain assets there is nothing to filter: hide the pill
   // (QA 1197). The slot itself must stay in the row, otherwise the three tabs
   // expand into the space the filter occupied.
-  const hidden = !loading && chainLength === 0;
+  //
+  // Hysteresis: a fast start can momentarily look "settled at 0" between two
+  // projection updates. Holding the visible state for a short grace period and
+  // cross-fading absorbs that blip instead of flashing hidden -> visible.
+  const shouldHide = !loading && chainLength === 0;
+  const [hidden, setHidden] = React.useState(shouldHide);
+  const opacity = useSharedValue(shouldHide ? 0 : 1);
+
+  React.useEffect(() => {
+    if (!shouldHide) {
+      setHidden(false);
+      return undefined;
+    }
+    const timer = setTimeout(() => setHidden(true), 300);
+    return () => clearTimeout(timer);
+  }, [shouldHide]);
+
+  React.useEffect(() => {
+    opacity.value = withTiming(hidden ? 0 : 1, { duration: 180 });
+  }, [hidden, opacity]);
+
+  const fadeStyle = useAnimatedStyle(() => ({ opacity: opacity.value }));
 
   return (
-    <View
-      pointerEvents={hidden ? 'none' : 'auto'}
-      style={hidden ? styles.chainSelectorHidden : undefined}>
+    <Animated.View pointerEvents={hidden ? 'none' : 'auto'} style={fadeStyle}>
       <ChainSelector
         top3Chains={top3Chains}
         onChainClick={handleOnChainClick}
         chainServerId={selectedChainItem?.chain}
         loading={loading}
       />
-    </View>
+    </Animated.View>
   );
 }
 
