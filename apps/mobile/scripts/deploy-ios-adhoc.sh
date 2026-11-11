@@ -22,7 +22,11 @@ verify_ios_ipa_rabbit_code() {
   actual=$(/usr/libexec/PlistBuddy -c 'Print :rabbit_code' "$tmp_dir/Payload/RabbyMobile.app/Info.plist" 2>/dev/null || true)
   rm -rf "$tmp_dir"
   if [ "$actual" != "$expected" ]; then
-    echo "[deploy-ios-adhoc] RABBY_MOBILE_CODE mismatch in IPA (got '${actual:-<missing>}')" >&2
+    if [ -z "$actual" ]; then
+      echo "[deploy-ios-adhoc] RABBY_MOBILE_CODE mismatch in IPA (value missing)" >&2
+    else
+      echo "[deploy-ios-adhoc] RABBY_MOBILE_CODE mismatch in IPA (length ${#actual} != expected ${#expected})" >&2
+    fi
     return 1
   fi
   return 0
@@ -229,7 +233,11 @@ if [ "$RABBY_MOBILE_IOS_BUILD_UNSIGNED" == "true" ]; then
   (cd "$(dirname "$unsigned_archive")" && ditto -c -k --sequesterRsrc --keepParent "$(basename "$unsigned_archive")" "${unsigned_archive}.zip")
   unsigned_rabbit_code=$(print_ios_rabbit_code "$unsigned_archive" 2>/dev/null || true)
   if [ "$unsigned_rabbit_code" != "$RABBY_MOBILE_CODE" ]; then
-    echo "[deploy-ios-adhoc] RABBY_MOBILE_CODE mismatch in unsigned archive (got '${unsigned_rabbit_code:-<missing>}')" >&2
+    if [ -z "$unsigned_rabbit_code" ]; then
+      echo "[deploy-ios-adhoc] RABBY_MOBILE_CODE mismatch in unsigned archive (value missing)" >&2
+    else
+      echo "[deploy-ios-adhoc] RABBY_MOBILE_CODE mismatch in unsigned archive (length ${#unsigned_rabbit_code} != expected ${#RABBY_MOBILE_CODE})" >&2
+    fi
     exit 1
   fi
   echo "[deploy-ios-adhoc] unsigned iOS archive: ${unsigned_archive}.zip"

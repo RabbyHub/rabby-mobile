@@ -283,7 +283,12 @@ android {
                 rabbitCode = 'RABBY_MOBILE_CODE_DEV'
             }
         } else if (invalidRabbitCode) {
-            if (packagingRequested) {
+            // Only the build type actually being packaged has to fail. A plain
+            // `./gradlew assembleDebug` configures every build type, so keying
+            // this off `packagingRequested` alone broke local debug builds.
+            def packagingThisBuildType =
+                    packagingRequested && requestedTasks.contains(buildType.name.toLowerCase())
+            if (packagingThisBuildType) {
                 throw new GradleException(
                         "RABBY_MOBILE_CODE is missing or invalid for '${buildType.name}'; " +
                                 "export the real value before building."
