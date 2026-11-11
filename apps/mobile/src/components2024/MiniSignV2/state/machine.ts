@@ -76,6 +76,16 @@ export const signatureReducer = (
         ctx: normalizeMiniSignGasState(action.ctx),
       };
 
+    case 'END_DIRECT':
+      // A direct signing ended without a result. Leave direct mode, so the
+      // transparent touch-blocking overlay cannot outlive it.
+      if (state.ctx?.mode !== 'direct') return state;
+      return {
+        ...state,
+        status: state.status === 'signing' ? 'ready' : state.status,
+        ctx: { ...state.ctx, mode: 'ui' },
+      };
+
     case 'SEND_START': {
       if (state.fingerprint !== action.fingerprint) return state;
       const nextCtx = state.ctx

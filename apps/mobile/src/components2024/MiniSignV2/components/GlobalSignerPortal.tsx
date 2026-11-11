@@ -21,6 +21,32 @@ import {
   hideBlockedAddressDialog,
   useBlockedAddressDialogVisible,
 } from '@/components2024/MiniSignV2/state/blockedAddressDialog';
+import {
+  DIRECT_OVERLAY_MAX_MS,
+  getDirectOverlayPhase,
+  type DirectOverlayPhase,
+} from '@/components2024/MiniSignV2/state/directOverlay';
+
+/** Whether to show the direct overlay: only while its phase is within its time limit. */
+function useDirectOverlayVisible(phase: DirectOverlayPhase | null) {
+  const [expired, setExpired] = useState(false);
+
+  useEffect(() => {
+    setExpired(false);
+    if (!phase) {
+      return;
+    }
+    const timer = setTimeout(() => {
+      console.warn(
+        `[MiniSign] direct overlay was still up after ${DIRECT_OVERLAY_MAX_MS[phase]}ms of ${phase}; hiding it`,
+      );
+      setExpired(true);
+    }, DIRECT_OVERLAY_MAX_MS[phase]);
+    return () => clearTimeout(timer);
+  }, [phase]);
+
+  return !!phase && !expired;
+}
 
 /**
  * Renders the signing UI for a single SignatureManager instance.
@@ -90,8 +116,9 @@ const SignerPortalItem: React.FC = () => {
     }
   }, [config?.account, state.status, ctx?.txs.length]);
 
-  const showDirectTransparentOverlay =
-    ctx?.mode === 'direct' && status !== 'ready' && status !== 'error';
+  const showDirectTransparentOverlay = useDirectOverlayVisible(
+    getDirectOverlayPhase(state),
+  );
 
   if (!config?.account || state.status === 'idle' || !ctx?.txs.length) {
     return null;
