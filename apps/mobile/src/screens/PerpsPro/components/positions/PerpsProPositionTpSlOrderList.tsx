@@ -1,5 +1,4 @@
 import { formatPositionTpSlSignedValue } from '../../utils/positionTpSlFormatting';
-import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
 import RcIconAdd from '@/assets2024/icons/perps/PerpsProTpSlAdd.svg';
 import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
@@ -398,7 +397,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     justifyContent: 'space-between',
   },
   coverage: {
-    ...PERPS_PRO_NUMBER_STYLE,
     flexShrink: 1,
     minWidth: 0,
     marginLeft: 8,
@@ -453,7 +451,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     lineHeight: 16,
   },
   orderMetricValue: {
-    ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 12,
@@ -462,7 +459,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     marginTop: 4,
   },
   positiveMetricValue: {
-    ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['green-default'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 12,
@@ -471,7 +467,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     marginTop: 4,
   },
   negativeMetricValue: {
-    ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['red-default'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 12,
@@ -480,7 +475,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     marginTop: 4,
   },
   takeProfitValue: {
-    ...PERPS_PRO_NUMBER_STYLE,
     flexShrink: 1,
     minWidth: 0,
     color: colors2024['green-default'],
@@ -490,7 +484,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     lineHeight: 18,
   },
   stopLossValue: {
-    ...PERPS_PRO_NUMBER_STYLE,
     flexShrink: 1,
     minWidth: 0,
     color: colors2024['red-default'],

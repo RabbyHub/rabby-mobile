@@ -7,7 +7,6 @@ import {
 import { getPerpsProListRowStyles } from '../common/perpsProListVisual';
 import { PerpsProSectionTitle } from '../common/PerpsProSectionTitle';
 import { PerpsProDialogBackdrop } from '../common/PerpsProDialogBackdrop';
-import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
 import { PerpsProCheckboxIcon } from '../common/PerpsProCheckboxIcon';
 import AutoLockView from '@/components/AutoLockView';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
@@ -380,18 +379,15 @@ const getStyle = createGetStyles2024(
       detailRow: rows.listRow,
       detailLabel: rows.listLabel,
       detailValue: {
-        ...PERPS_PRO_NUMBER_STYLE,
         ...rows.listValue,
         maxWidth: '64%',
         textAlign: 'right',
       },
       positiveValue: {
-        ...PERPS_PRO_NUMBER_STYLE,
         ...rows.listValue,
         color: colors2024['green-default'],
       },
       negativeValue: {
-        ...PERPS_PRO_NUMBER_STYLE,
         ...rows.listValue,
         color: colors2024['red-default'],
       },

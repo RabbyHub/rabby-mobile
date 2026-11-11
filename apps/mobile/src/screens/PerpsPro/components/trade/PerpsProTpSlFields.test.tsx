@@ -620,12 +620,9 @@ describe('PerpsProTpSlFields', () => {
       const visibleLine = screen.getByTestId('perps-pro-tpsl-tooltip-buy-line');
       expect(visibleLine.props.adjustsFontSizeToFit).toBeUndefined();
       expect(tooltipMeasure().props.adjustsFontSizeToFit).toBeUndefined();
-      expect(StyleSheet.flatten(visibleLine.props.style).fontVariant).toEqual([
-        'tabular-nums',
-      ]);
-      expect(
-        StyleSheet.flatten(tooltipMeasure().props.style).fontVariant,
-      ).toEqual(['tabular-nums']);
+      expect(StyleSheet.flatten(tooltipMeasure().props.style).fontVariant).toBe(
+        StyleSheet.flatten(visibleLine.props.style).fontVariant,
+      );
       fireEvent(tooltipMeasure(), 'textLayout', textLayoutEvent(145, 160));
       expect(tooltipWidth()).toBe(176);
 

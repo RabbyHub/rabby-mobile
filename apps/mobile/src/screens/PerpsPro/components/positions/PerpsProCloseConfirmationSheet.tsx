@@ -8,7 +8,6 @@ import {
   getPerpsProListRowStyles,
   PERPS_PRO_DIALOG_LIST_CARD_PADDING,
 } from '../common/perpsProListVisual';
-import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
 import { PerpsProCheckboxIcon } from '../common/PerpsProCheckboxIcon';
 import { PerpsProDialogBackdrop } from '../common/PerpsProDialogBackdrop';
 import AutoLockView from '@/components/AutoLockView';
@@ -254,7 +253,6 @@ const getStyle = createGetStyles2024(
     detailRow: getPerpsProListRowStyles(colors2024).listRow,
     detailLabel: getPerpsProListRowStyles(colors2024).listLabel,
     detailValue: {
-      ...PERPS_PRO_NUMBER_STYLE,
       ...getPerpsProListRowStyles(colors2024).listValue,
       flexShrink: 1,
       minWidth: 0,

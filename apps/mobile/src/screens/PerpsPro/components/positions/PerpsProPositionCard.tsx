@@ -958,7 +958,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     minWidth: 0,
   },
   takeProfit: {
-    ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['green-default'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 12,
@@ -966,7 +965,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     lineHeight: 16,
   },
   stopLoss: {
-    ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['red-default'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 12,
@@ -974,7 +972,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     lineHeight: 16,
   },
   partialTpSlCount: {
-    ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 12,
