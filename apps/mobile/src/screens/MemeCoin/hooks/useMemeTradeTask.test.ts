@@ -113,6 +113,51 @@ describe('useMemeTradeTask manual retry', () => {
     await act(async () => void (await flush()));
   });
 
+  it('asks Continue / Stop when the app leaves the foreground mid-run, and stays paused', async () => {
+    let onAppState: (state: string) => void = () => undefined;
+    jest.spyOn(AppState, 'addEventListener').mockImplementation(((
+      _type: string,
+      listener: (state: string) => void,
+    ) => {
+      onAppState = listener;
+      return { remove: jest.fn() };
+    }) as typeof AppState.addEventListener);
+    holds.a = deferred();
+    prepareResults.a = [ok];
+    prepareResults.b = [ok];
+    const { hook, state, settle } = setup([leg('a'), leg('b')]);
+    act(() => hook.result.current.start());
+    await settle();
+
+    act(() => onAppState('background'));
+    expect(state().exitDialogOpen).toBe(true);
+
+    act(() => onAppState('active'));
+    holds.a.release();
+    await settle();
+    // the chain's next leg waits behind the dialog
+    expect(prepareCalls).toEqual(['a']);
+
+    act(() => hook.result.current.continueExecution());
+    await settle();
+    expect(prepareCalls).toEqual(['a', 'b']);
+    expect(state().status).toBe('finished');
+  });
+
+  it('leaves the dialog closed when the app goes to the background before Start', () => {
+    let onAppState: (state: string) => void = () => undefined;
+    jest.spyOn(AppState, 'addEventListener').mockImplementation(((
+      _type: string,
+      listener: (state: string) => void,
+    ) => {
+      onAppState = listener;
+      return { remove: jest.fn() };
+    }) as typeof AppState.addEventListener);
+    const { state } = setup([leg('a')]);
+    act(() => onAppState('background'));
+    expect(state().exitDialogOpen).toBe(false);
+  });
+
   it('ignores retry for a leg that has not failed', async () => {
     holds.a = deferred();
     prepareResults.a = [failed];
