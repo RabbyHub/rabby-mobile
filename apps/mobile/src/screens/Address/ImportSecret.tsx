@@ -560,9 +560,13 @@ const getStyles = createGetStyles2024(ctx => ({
     paddingHorizontal: 16,
   },
   headerBack: {
-    width: 24,
-    height: 24,
-    alignItems: 'center',
+    // 44x44 tap target: the icon stays 24x24 at the left edge of the box and the
+    // box spills 20pt into the free space to its right. `marginRight: -20`
+    // cancels that spill so the centred tab pill keeps its exact position.
+    width: 44,
+    height: 44,
+    marginRight: -20,
+    alignItems: 'flex-start',
     justifyContent: 'center',
     flexShrink: 0,
   },

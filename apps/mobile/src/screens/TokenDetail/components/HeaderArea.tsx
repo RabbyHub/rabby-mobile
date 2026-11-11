@@ -57,9 +57,11 @@ const HEADER_ROW_WIDTH: ViewStyle['width'] = IS_IOS
 
 // Fixed width for the header-right slot so hiding the menu never re-flows the row.
 const RIGHT_SLOT_STYLE = {
-  width: 24,
-  height: 24,
-  alignItems: 'center',
+  width: '100%',
+  // Fill the header row: the trailing action's tap target must be at least the
+  // row height, not just the 24pt icon (QA 1328 tap-area rule).
+  height: '100%',
+  alignItems: 'flex-end',
   justifyContent: 'center',
 } as const;
 
@@ -320,7 +322,13 @@ export const TokenDetailHeader = ({
     <View style={[styles.headerOuter, { paddingTop: insets.top }]}>
       <View style={styles.headerRow}>
         <View style={styles.headerBackSlot}>
-          <HeaderBackButton tintColor={colors2024['neutral-title-1']} />
+          <HeaderBackButton
+            style={[styles.headerBackTouch]}
+            // The box already fills the row height and the free space on the
+            // left; keep the default 10pt slop from reaching into the logo.
+            hitSlop={{ left: 0, right: 0, top: 0, bottom: 0 }}
+            tintColor={colors2024['neutral-title-1']}
+          />
         </View>
         <View style={styles.headerContent}>
           <TokenDetailHeaderArea
@@ -355,17 +363,33 @@ const getHeaderStyles = createGetStyles2024(() => ({
   },
   headerBackSlot: {
     width: 24,
-    height: 24,
-    alignItems: 'center',
+    // The icon stays 24x24; the tap target fills the row height.
+    height: TOKEN_HEADER_CONTENT_HEIGHT,
+    alignItems: 'flex-start',
     justifyContent: 'center',
     flexShrink: 0,
+  },
+  // Fill the row height and everything to the left of the icon, stopping at the
+  // icon's right edge because the logo follows immediately (QA 1328 rule).
+  // `marginLeft: -TOKEN_HEADER_HORIZONTAL_INSET` keeps the row layout intact.
+  headerBackTouch: {
+    width: 24 + TOKEN_HEADER_HORIZONTAL_INSET,
+    height: '100%',
+    marginLeft: -TOKEN_HEADER_HORIZONTAL_INSET,
+    alignItems: 'flex-end',
+    justifyContent: 'center',
   },
   headerContent: {
     flex: 1,
     minWidth: 0,
   },
   headerRightSlot: {
-    width: 24,
+    // 44x48 tap target: the slot spills 20pt into the free space on its left and
+    // `marginLeft: -20` keeps the row layout unchanged, so the `...` icon stays
+    // on the content's right edge.
+    width: 44,
+    marginLeft: -20,
+    height: TOKEN_HEADER_CONTENT_HEIGHT,
     alignItems: 'flex-end',
     justifyContent: 'center',
     flexShrink: 0,
