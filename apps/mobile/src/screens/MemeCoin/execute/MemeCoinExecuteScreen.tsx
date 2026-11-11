@@ -6,6 +6,7 @@ import {
   useRoute,
 } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
+import { GestureDetector } from 'react-native-gesture-handler';
 import { Text } from '@/components/Typography';
 import AuthButton from '@/components2024/AuthButton';
 import { Button } from '@/components2024/Button';
@@ -29,6 +30,7 @@ import { useMemeTradeTask } from '../hooks/useMemeTradeTask';
 import { MEME_BOTTOM_BAR_SHADOW } from '../ui/bottomBarShadow';
 import { returnToMemeCoinHome } from '../navigation';
 import { getExecuteButtonState } from '../ui/helpers';
+import { useEdgeSwipeBack } from '../ui/useEdgeSwipeBack';
 import { useMemeCoinAccount } from '../ui/useMemeCoinAccount';
 import { ExecuteLegRow } from './ExecuteLegRow';
 import { ExitDialog } from './ExitDialog';
@@ -69,19 +71,29 @@ const MemeCoinExecuteContent = ({
     Parameters<typeof navigation.dispatch>[0] | null
   >(null);
 
-  // Only user back (back button / Android back / iOS swipe) is taken over; any
-  // other navigation, e.g. the auto-lock reset to Unlock, goes through as on
-  // every other screen (unmounting stops the executor).
-  usePreventRemove(status !== 'idle' && !leaving, ({ data }) => {
-    const isUserBack =
-      data.action.type === 'GO_BACK' || data.action.type === 'POP';
-    if (isUserBack && store.getState().status === 'running') {
+  const guardBack = status !== 'idle' && !leaving;
+
+  const handleUserBack = useCallback(() => {
+    if (store.getState().status === 'running') {
       openExitDialog();
       return;
     }
-    pendingActionRef.current = isUserBack ? null : data.action;
+    pendingActionRef.current = null;
+    setLeaving(true);
+  }, [openExitDialog, store]);
+
+  // Only user back (back button / Android back / iOS swipe) is taken over; any
+  // other navigation, e.g. the auto-lock reset to Unlock, goes through as on
+  // every other screen (unmounting stops the executor).
+  usePreventRemove(guardBack, ({ data }) => {
+    if (data.action.type === 'GO_BACK' || data.action.type === 'POP') {
+      handleUserBack();
+      return;
+    }
+    pendingActionRef.current = data.action;
     setLeaving(true);
   });
+  const swipeBack = useEdgeSwipeBack(guardBack, handleUserBack);
 
   // Runs after the render that turned preventRemove off, so the dispatch is not intercepted.
   useEffect(() => {
@@ -120,34 +132,42 @@ const MemeCoinExecuteContent = ({
 
   return (
     <View style={[styles.screen, { paddingTop: safeOffHeader }]}>
-      <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
-        <View style={styles.titleRow}>
-          <View style={styles.titleLeft}>
-            <Text style={styles.title}>{t('page.memeCoin.execute.title')}</Text>
-            <Text style={styles.subtitle}>
-              {mode === 'buy'
-                ? t('page.memeCoin.execute.buySubtitleShort')
-                : t('page.memeCoin.execute.sellSubtitle')}
-            </Text>
-          </View>
-          {mode === 'sell' ? (
-            <Text style={styles.estReceipt}>
-              {t('page.memeCoin.execute.estReceipt')}
-            </Text>
-          ) : null}
+      <GestureDetector gesture={swipeBack}>
+        <View style={styles.scroll}>
+          <ScrollView
+            style={styles.scroll}
+            contentContainerStyle={styles.content}>
+            <View style={styles.titleRow}>
+              <View style={styles.titleLeft}>
+                <Text style={styles.title}>
+                  {t('page.memeCoin.execute.title')}
+                </Text>
+                <Text style={styles.subtitle}>
+                  {mode === 'buy'
+                    ? t('page.memeCoin.execute.buySubtitleShort')
+                    : t('page.memeCoin.execute.sellSubtitle')}
+                </Text>
+              </View>
+              {mode === 'sell' ? (
+                <Text style={styles.estReceipt}>
+                  {t('page.memeCoin.execute.estReceipt')}
+                </Text>
+              ) : null}
+            </View>
+            {legs.map(leg => (
+              <ExecuteLegRow
+                key={leg.key}
+                leg={leg}
+                legs={legs}
+                mode={mode}
+                store={store}
+                tokenLogos={tokenLogos}
+                onRetry={handleRetryLeg}
+              />
+            ))}
+          </ScrollView>
         </View>
-        {legs.map(leg => (
-          <ExecuteLegRow
-            key={leg.key}
-            leg={leg}
-            legs={legs}
-            mode={mode}
-            store={store}
-            tokenLogos={tokenLogos}
-            onRetry={handleRetryLeg}
-          />
-        ))}
-      </ScrollView>
+      </GestureDetector>
       <View
         style={[
           styles.bottomBar,

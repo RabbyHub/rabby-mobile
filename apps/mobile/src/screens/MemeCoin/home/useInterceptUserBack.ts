@@ -2,9 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigation, usePreventRemove } from '@react-navigation/native';
 
 /**
- * While `active`, user back (back button / Android back / iOS swipe) calls
- * `onBack` instead of leaving. Any other navigation, e.g. the auto-lock reset
- * to Unlock, goes through.
+ * While `active`, user back (back button / Android back) calls `onBack`
+ * instead of leaving. Any other navigation, e.g. the auto-lock reset to
+ * Unlock, goes through.
  */
 export const useInterceptUserBack = (active: boolean, onBack: () => void) => {
   const navigation = useNavigation();

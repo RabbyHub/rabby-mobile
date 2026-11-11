@@ -7,6 +7,7 @@ import {
   View,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
+import { GestureDetector } from 'react-native-gesture-handler';
 import { Skeleton } from '@rneui/themed';
 import { useMemoizedFn } from 'ahooks';
 import { useTranslation } from 'react-i18next';
@@ -60,6 +61,7 @@ import {
   MemeCoinHomeBottomBar,
   useKeyboardVisible,
 } from './MemeCoinHomeBottomBar';
+import { useEdgeSwipeBack } from '../ui/useEdgeSwipeBack';
 import { useInterceptUserBack } from './useInterceptUserBack';
 
 type HomeMode = 'market' | 'holdings';
@@ -254,6 +256,7 @@ export const MemeCoinHomeScreen = () => {
 
   // holdings sits one level under the market
   useInterceptUserBack(mode === 'holdings', switchMode);
+  const swipeBackToMarket = useEdgeSwipeBack(mode === 'holdings', switchMode);
 
   const startSearch = useCallback(() => setSearching(true), []);
 
@@ -455,27 +458,31 @@ export const MemeCoinHomeScreen = () => {
     <KeyboardAvoidingView
       style={[styles.screen, { paddingTop: safeOffHeader }]}
       behavior={IS_IOS || keyboardVisible ? 'padding' : undefined}>
-      <FlatList
-        data={rows}
-        keyExtractor={keyExtractor}
-        renderItem={renderItem}
-        extraData={selectedSet}
-        ListHeaderComponent={listHeader}
-        ListEmptyComponent={listEmpty}
-        contentContainerStyle={styles.listContent}
-        // with the keyboard up (search or amount), a tap on the list only closes it
-        keyboardShouldPersistTaps="never"
-        keyboardDismissMode="on-drag"
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={handlePullRefresh}
+      <GestureDetector gesture={swipeBackToMarket}>
+        <View style={styles.listArea}>
+          <FlatList
+            data={rows}
+            keyExtractor={keyExtractor}
+            renderItem={renderItem}
+            extraData={selectedSet}
+            ListHeaderComponent={listHeader}
+            ListEmptyComponent={listEmpty}
+            contentContainerStyle={styles.listContent}
+            // with the keyboard up (search or amount), a tap on the list only closes it
+            keyboardShouldPersistTaps="never"
+            keyboardDismissMode="on-drag"
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={handlePullRefresh}
+              />
+            }
+            initialNumToRender={10}
+            onEndReached={handleEndReached}
+            onEndReachedThreshold={0.5}
           />
-        }
-        initialNumToRender={10}
-        onEndReached={handleEndReached}
-        onEndReachedThreshold={0.5}
-      />
+        </View>
+      </GestureDetector>
       <MemeCoinHomeBottomBar
         mode={mode}
         selectedCount={selectedCount}
@@ -506,6 +513,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   screen: {
     flex: 1,
     backgroundColor: colors2024['neutral-bg-0'],
+  },
+  listArea: {
+    flex: 1,
   },
   listContent: {
     // lets the empty state centre itself in the space under the header
