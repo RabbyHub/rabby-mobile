@@ -137,6 +137,19 @@ export function navBack() {
  * must use this instead of the deprecated `HeaderBackPressable`, otherwise the
  * compensation margin below silently shrinks the leading slot and pulls centred
  * sibling content off the screen centre (QA 1344).
+ *
+ * Where the compensation came from: `HeaderBackPressable` was written for
+ * controls hosted by a native header element, where iOS 26 +
+ * react-native-screens stop applying the system bar-item inset (#1283). It
+ * compensates from the inside (`marginLeft: -16` + `paddingLeft: 16`), which is
+ * only correct while the host supplies that same 16pt leading inset. In a JS
+ * header the negative margin has no such inset to cancel: the slot collapses
+ * from 24pt to 8pt and everything after it shifts.
+ *
+ * If this control is ever dropped into a host that does (or does not) provide a
+ * bar-item inset, compensate at the call site - pass `style` (a
+ * `marginLeft`/`paddingLeft`) or wrap it in a sized slot - and never re-add the
+ * inset inside the component itself.
  */
 export function HeaderBackButton({
   tintColor,
