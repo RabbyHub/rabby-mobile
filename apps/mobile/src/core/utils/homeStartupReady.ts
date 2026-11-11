@@ -4,6 +4,7 @@ import { zCreate, zMutative } from '@/core/utils/reexports';
 import { traceAndroidInstant } from './androidTrace';
 import { isNonProductionDiagnosticsEnabled } from './diagnosticEnv';
 import { markStartupRuntimePhase } from '@/startup/runtimeDiagnostics';
+import { markFirstContentFrame } from './startupKpi';
 
 const HOME_CRITICAL_READY_DELAY_MS = 32;
 const HOME_POST_STARTUP_DEFER_MS = 450;
@@ -43,6 +44,9 @@ function traceHomeStartup(event: string, data: Record<string, unknown> = {}) {
   }
 
   console.info(`[RabbyUnlockPerf:home] ${event}`, data);
+  if (event === 'home_post_startup_ready_callback_now') {
+    markFirstContentFrame('home');
+  }
   traceAndroidInstant(`home.${event}`, data);
 }
 
