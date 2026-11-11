@@ -50,6 +50,8 @@ export const E2E_ID = {
   },
   settings: {
     uiPlayground: 'e2e.settings.ui-playground',
+    dataAnalysisInfo: 'e2e.settings.data-analysis.info',
+    dataAnalysisInfoConfirm: 'e2e.settings.data-analysis.info.confirm',
   },
   send: {
     screen: 'e2e.send.screen',
