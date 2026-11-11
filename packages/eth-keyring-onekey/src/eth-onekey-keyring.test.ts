@@ -704,6 +704,48 @@ describe('OneKeyKeyring unlock wallet selection', () => {
     },
   );
 
+  it.each(
+    ['pro2', 'neo'].flatMap(deviceType =>
+      [false, true].flatMap(throws =>
+        [822, 802, 803, undefined].map(code => ({ deviceType, throws, code })),
+      ),
+    ),
+  )(
+    'rejects a cancelled V2 $deviceType status refresh (throws=$throws, code=$code) without probing the standard wallet',
+    async ({ deviceType, throws, code }) => {
+      const message =
+        code === undefined ? 'Action cancelled' : 'Refresh interrupted';
+      const { bridge, keyring } = setup(
+        undefined,
+        { passphraseProtection: true, unlocked: false },
+        { deviceType },
+      );
+      mockOpenWalletSession(bridge).mockImplementation(async () => {
+        if (throws) {
+          bridge.getDeviceState.mockRejectedValue(
+            Object.assign(new Error(message), { code }),
+          );
+        } else {
+          bridge.getDeviceState.mockResolvedValue({
+            success: false,
+            payload: { code, error: message },
+          });
+        }
+        return createSession('hidden', 'hidden-wallet-token');
+      });
+
+      await expect(keyring.unlock()).rejects.toMatchObject({
+        message,
+        ...(code === undefined ? {} : { code }),
+      });
+      expect(bridge.getDeviceState).toHaveBeenCalledTimes(2);
+      expect(bridge.getPassphraseState).not.toHaveBeenCalledWith('connect-id', {
+        useEmptyPassphrase: true,
+      });
+      expect(bridge.evmGetPublicKey).not.toHaveBeenCalled();
+    },
+  );
+
   it.each([false, true])(
     'keeps the hidden wallet after a failed status refresh (throws=%p) and failed probe',
     async throws => {

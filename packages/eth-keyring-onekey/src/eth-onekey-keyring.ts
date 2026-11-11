@@ -1211,11 +1211,18 @@ class OneKeyKeyring extends EventEmitter {
     }
     try {
       const state = await this.bridge.getDeviceState(connectId);
+      if (!state.success && isCancelledError(state.payload)) {
+        throw sdkError(state.payload, 'getDeviceState cancelled');
+      }
       if (state.success && state.payload.status?.unlockedAttachPin === true) {
         return imported;
       }
     } catch (e) {
-      // If refresh fails, still try the probe so import can proceed as before.
+      const error = toError(e);
+      if (isCancelledError(error)) {
+        throw error;
+      }
+      // On non-cancel refresh failures, still try the probe as before.
       console.log('failed to refresh OneKey attach-PIN status', e);
     }
     const standardIdentity = await this._getStandardWalletIdentity(connectId);
