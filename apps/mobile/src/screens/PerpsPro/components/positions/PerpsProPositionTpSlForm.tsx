@@ -9,6 +9,7 @@ import { PerpsProSectionTitle } from '../common/PerpsProSectionTitle';
 import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
 import { Text, TextInput } from '@/components/Typography';
 import { Button } from '@/components2024/Button';
+import { PERPS_MINI_USD_VALUE } from '@/constant/perps';
 import {
   BOTTOM_BUTTON_SINGLE_HEIGHT,
   BOTTOM_BUTTON_TOP_OFFSET,
@@ -36,7 +37,10 @@ import {
   type PerpsPositionTpSlFormTriggerValidation,
 } from '../../model/positionTpSl';
 import { resolvePerpsProCloseSize } from '../../model/positionAction';
-import type { PerpsProTradeAmountUnit } from '../../model/trade';
+import {
+  resolvePerpsProMinimumOrderAmount,
+  type PerpsProTradeAmountUnit,
+} from '../../model/trade';
 import { formatPerpsProDecimal, formatPerpsProPrice } from '../../utils/format';
 import { PerpsProDecimalTextInput } from '../trade/PerpsProDecimalTextInput';
 import { PerpsProTpSlModeSheet } from '../trade/PerpsProTpSlModeSheet';
@@ -275,9 +279,18 @@ export const PerpsProPositionTpSlForm: React.FC<{
         ? null
         : validatePartialPositionTpSlAmount({
             amount: partialSize || '',
+            markPrice,
             positionSize: position.baseSize,
             szDecimals: market.szDecimals,
           });
+    const minimumAmount =
+      amountValidation?.kind === 'belowMinimum'
+        ? resolvePerpsProMinimumOrderAmount({
+            minimumQuoteAmount: PERPS_MINI_USD_VALUE,
+            price: markPrice || '',
+            szDecimals: market.szDecimals,
+          })
+        : null;
     const visibleKinds: PerpsPositionTpSlKind[] =
       mode === 'modify' && initialOrder
         ? [initialOrder.kind]
@@ -659,6 +672,11 @@ export const PerpsProPositionTpSlForm: React.FC<{
                 )}{' '}
                 {amountUnit === 'base' ? market.displayBase : market.quoteAsset}
               </Text>
+              {minimumAmount ? (
+                <Text style={styles.warningText}>
+                  {`Minimum amount is ${minimumAmount.displayQuoteAmount}`}
+                </Text>
+              ) : null}
             </View>
           ) : null}
         </View>

@@ -115,6 +115,26 @@ describe('Perps Pro position TP/SL model', () => {
     },
   );
 
+  it.each([
+    ['0.09999', '100', 'belowMinimum'],
+    ['0.1', '100', 'valid'],
+    ['0.1', '99.99', 'belowMinimum'],
+    ['0.101', '100', 'valid'],
+    ['0.1', null, 'invalid'],
+  ] as const)(
+    'checks the normalized fixed size %s against Mark %s',
+    (amount, markPrice, kind) => {
+      expect(
+        validatePartialPositionTpSlAmount({
+          amount,
+          markPrice,
+          positionSize: '1',
+          szDecimals: 3,
+        }).kind,
+      ).toBe(kind);
+    },
+  );
+
   it('classifies active full and fixed-size orders but excludes children-first attached duplicates', () => {
     const result = collect([
       order({ oid: 1 }),
@@ -357,6 +377,7 @@ describe('Perps Pro position TP/SL model', () => {
     expect(
       validatePartialPositionTpSlAmount({
         amount: '1',
+        markPrice: '100',
         positionSize: '1',
         szDecimals: 3,
       }),
@@ -364,6 +385,7 @@ describe('Perps Pro position TP/SL model', () => {
     expect(
       validatePartialPositionTpSlAmount({
         amount: '1.001',
+        markPrice: '100',
         positionSize: '1',
         szDecimals: 3,
       }),

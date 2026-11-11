@@ -409,7 +409,7 @@ describe('position TP/SL input source integration', () => {
   it('preserves the submitted quantity and PnL through list, repeated Modify and a new PnL target', async () => {
     const precisionMarket = {
       ...market,
-      markPrice: '84076',
+      markPrice: '160076',
       pxDecimals: 1,
       szDecimals: 5,
     };
@@ -527,6 +527,13 @@ describe('position TP/SL input source integration', () => {
       screen.getByTestId('perps-pro-position-tpsl-takeProfit-hint'),
     ).toHaveTextContent(/\+33\.00/);
     fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-review'));
+    expect(onReview).not.toHaveBeenCalled();
+    expect(placements).toEqual([]);
+    fireEvent.changeText(
+      screen.getByTestId('perps-pro-position-tpsl-amount'),
+      '11.21',
+    );
+    fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-review'));
     expect(onReview.mock.lastCall?.[0].legs[0]).toMatchObject({
       size: '0.00007',
       triggerPrice: '555148',
@@ -563,7 +570,7 @@ describe('position TP/SL input source integration', () => {
       );
       await act(async () => {});
       const amount = screen.getByTestId('perps-pro-position-tpsl-amount');
-      expect(amount.props.value).toBe('5.88');
+      expect(amount.props.value).toBe('11.2');
       fireEvent(amount, 'focus');
       fireEvent(amount, 'blur');
       expect(screen.getByTestId('perps-pro-position-tpsl-amount')).toBe(amount);

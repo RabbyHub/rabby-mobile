@@ -1,5 +1,6 @@
 import type { OpenOrder } from '@rabby-wallet/hyperliquid-sdk';
 import BigNumber from 'bignumber.js';
+import { meetsPerpsMinimumOrderNotional } from '@/utils/perpsOrderNotional';
 
 import {
   isPerpsProPriceProtocolValid,
@@ -602,14 +603,17 @@ export const validatePositionTpSlTrigger = ({
 
 export type PerpsPositionTpSlAmountValidation =
   | { kind: 'invalid' }
+  | { kind: 'belowMinimum' }
   | { kind: 'valid'; normalized: string };
 
 export const validatePartialPositionTpSlAmount = ({
   amount,
+  markPrice,
   positionSize,
   szDecimals,
 }: {
   amount: string;
+  markPrice: string | null;
   positionSize: string;
   szDecimals: number;
 }): PerpsPositionTpSlAmountValidation => {
@@ -620,6 +624,7 @@ export const validatePartialPositionTpSlAmount = ({
     szDecimals < 0 ||
     !requested?.gt(0) ||
     !position?.gt(0) ||
+    !finiteDecimal(markPrice)?.gt(0) ||
     requested.gt(position)
   ) {
     return { kind: 'invalid' };
@@ -629,6 +634,9 @@ export const validatePartialPositionTpSlAmount = ({
     .toFixed();
   if (new BigNumber(normalized).lte(0)) {
     return { kind: 'invalid' };
+  }
+  if (!meetsPerpsMinimumOrderNotional(normalized, markPrice)) {
+    return { kind: 'belowMinimum' };
   }
   return { kind: 'valid', normalized };
 };
