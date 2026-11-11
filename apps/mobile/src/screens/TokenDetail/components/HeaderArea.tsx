@@ -16,6 +16,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import { NavigationContext, useFocusEffect } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { IS_IOS } from '@/core/native/utils';
 
 import { useTheme2024 } from '@/hooks/theme';
@@ -74,6 +75,8 @@ interface Props {
   disableRefresh?: boolean;
   showCopyIcon?: boolean;
   inlineBack?: boolean;
+  /** Render as a plain full-width row (used inside the custom header). */
+  embedded?: boolean;
 }
 export const TokenDetailHeaderArea: React.FC<Props> = ({
   token,
@@ -87,6 +90,7 @@ export const TokenDetailHeaderArea: React.FC<Props> = ({
   disableRefresh = false,
   showCopyIcon = false,
   inlineBack = false,
+  embedded = false,
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { refreshing } = useAssetsRefreshing();
@@ -135,7 +139,7 @@ export const TokenDetailHeaderArea: React.FC<Props> = ({
   );
 
   return (
-    <View style={[styles.root, rootStyle]}>
+    <View style={[styles.root, embedded && styles.rootEmbedded, rootStyle]}>
       <View style={[styles.container, style]}>
         <View style={styles.token}>
           {inlineBack ? (
@@ -289,6 +293,85 @@ function CopyConfirmModal({
   return <TrackedModal {...props} onRequestClose={onClose} />;
 }
 
+// Fixed insets for the custom header row; the content row begins at the page
+// content's left edge, so the back glyph and the logo land at the same place on
+// every device instead of inheriting the native title-slot origin (QA 1343).
+const TOKEN_HEADER_HORIZONTAL_INSET = 14;
+const TOKEN_HEADER_CONTENT_HEIGHT = 48;
+
+/**
+ * Fully custom header for the token detail and token market detail routes.
+ *
+ * The navigator owns it from the first descriptor. Leading/middle/trailing
+ * areas are laid out by us with fixed widths, so changing the centre content
+ * (loading, account switch, more-menu visibility) never moves the back button.
+ */
+export const TokenDetailHeader = ({
+  token,
+  isCustomTestnetToken = false,
+}: {
+  token?: ITokenItem;
+  isCustomTestnetToken?: boolean;
+}) => {
+  const { styles, colors2024 } = useTheme2024({ getStyle: getHeaderStyles });
+  const insets = useSafeAreaInsets();
+
+  return (
+    <View style={[styles.headerOuter, { paddingTop: insets.top }]}>
+      <View style={styles.headerRow}>
+        <View style={styles.headerBackSlot}>
+          <HeaderBackPressable tintColor={colors2024['neutral-title-1']} />
+        </View>
+        <View style={styles.headerContent}>
+          <TokenDetailHeaderArea
+            embedded
+            token={token as ITokenItem}
+            tokenSize={33}
+            chainSize={15}
+            borderChain
+            showCopyIcon
+          />
+        </View>
+        <View style={styles.headerRightSlot}>
+          <TokenDetailHeaderRight
+            token={token}
+            isCustomTestnetToken={isCustomTestnetToken}
+          />
+        </View>
+      </View>
+    </View>
+  );
+};
+
+const getHeaderStyles = createGetStyles2024(() => ({
+  headerOuter: {
+    backgroundColor: 'transparent',
+  },
+  headerRow: {
+    height: TOKEN_HEADER_CONTENT_HEIGHT,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: TOKEN_HEADER_HORIZONTAL_INSET,
+  },
+  headerBackSlot: {
+    width: 24,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  headerContent: {
+    flex: 1,
+    minWidth: 0,
+  },
+  headerRightSlot: {
+    width: 24,
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+}));
+
 const getStyles = createGetStyles2024(({ isLight, colors2024 }) => ({
   copyConfirmOverlay: {
     flex: 1,
@@ -325,6 +408,9 @@ const getStyles = createGetStyles2024(({ isLight, colors2024 }) => ({
   // button and lets the content flow from the left.
   root: {
     width: HEADER_ROW_WIDTH,
+  },
+  rootEmbedded: {
+    width: '100%',
   },
   container: {
     width: '100%',
