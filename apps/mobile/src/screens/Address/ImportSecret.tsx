@@ -35,7 +35,8 @@ import { makeTestIDProps } from '@/utils/makeTestIDProps';
 import { ensureWalletUnlockedForAction } from '@/utils/walletUnlock';
 import { IS_ANDROID } from '@/core/native/utils';
 import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
-import { atom, useAtom } from 'jotai';
+import { zCreate } from '@/core/utils/reexports';
+import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 import { HeaderBackButton } from '@/hooks/navigation';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -50,7 +51,18 @@ export type TabType = 'seedPhrase' | 'privateKey';
 
 // The header is declared once in the navigator options, so the selected tab must
 // live outside the screen body (declarative header contract; QA 1344).
-export const importSecretTabAtom = atom<TabType>('seedPhrase');
+// Zustand is the project's state solution going forward; jotai is deprecated.
+const importSecretTabStore = zCreate<{ tab: TabType }>(() => ({
+  tab: 'seedPhrase',
+}));
+
+const useImportSecretTab = () =>
+  useActivityStore(importSecretTabStore, state => state.tab, Object.is, {
+    storeLabel: 'import-secret-tab',
+  });
+
+const setImportSecretTab = (tab: TabType) =>
+  importSecretTabStore.setState({ tab });
 
 type ScreenProps = NativeStackScreenProps<RootStackParamsList, 'ImportSecret'>;
 
@@ -64,7 +76,8 @@ export const ImportSecret = ({ route }: ScreenProps) => {
   const { initialTab, flow } = route.params ?? {};
   const isInAppFlow = flow === 'in_app';
 
-  const [activeTab, setActiveTab] = useAtom(importSecretTabAtom);
+  const activeTab = useImportSecretTab();
+  const setActiveTab = setImportSecretTab;
   React.useEffect(() => {
     if (initialTab) {
       setActiveTab(initialTab);
@@ -478,7 +491,8 @@ export const ImportSecretHeader = () => {
 const ImportSecretHeaderToggle = () => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
-  const [activeTab, setActiveTab] = useAtom(importSecretTabAtom);
+  const activeTab = useImportSecretTab();
+  const setActiveTab = setImportSecretTab;
 
   return (
     <View style={styles.headerRow}>

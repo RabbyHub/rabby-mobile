@@ -1,6 +1,5 @@
 import React from 'react';
 import { View } from 'react-native';
-import { useAtom } from 'jotai';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 
@@ -14,8 +13,8 @@ import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { TopSearch } from '../TopSearch';
 import { HeaderRight } from './HeaderRight';
 import {
-  approvalsSearchKwAtom,
-  approvalsSearchingAtom,
+  setApprovalsHeaderState,
+  useApprovalsHeaderState,
 } from '../../useApprovalsPage';
 
 // Native nav-bar height; the search pill is 46pt so the row is slightly taller.
@@ -36,8 +35,12 @@ const HEADER_HORIZONTAL_INSET = 16;
 export const ApprovalsHeader = ({ account }: { account?: Account | null }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const insets = useSafeAreaInsets();
-  const [searchKw, setSearchKw] = useAtom(approvalsSearchKwAtom);
-  const [isSearching, setIsSearching] = useAtom(approvalsSearchingAtom);
+  const searchKw = useApprovalsHeaderState(state => state.searchKw);
+  const isSearching = useApprovalsHeaderState(state => state.isSearching);
+  const setSearchKw = (value: string) =>
+    setApprovalsHeaderState({ searchKw: value });
+  const setIsSearching = (value: boolean) =>
+    setApprovalsHeaderState({ isSearching: value });
 
   return (
     <View style={[styles.outer, { paddingTop: insets.top }]}>
@@ -78,7 +81,7 @@ export const ApprovalsHeader = ({ account }: { account?: Account | null }) => {
               if (isSearching) {
                 setSearchKw('');
               }
-              setIsSearching(prev => !prev);
+              setIsSearching(!isSearching);
             }}
           />
         </View>
