@@ -53,6 +53,7 @@ export const useMemeTradeTask = ({
   const { getDexQuote } = useQuoteMethods();
   const [supportedDexList] = useSwapSupportedDexList();
   const executorRef = useRef<MemeTradeExecutor | null>(null);
+  const getMaxPriceImpactPct = useMemoizedFn(() => maxPriceImpactPct);
 
   const lifecycle = useMemo(
     () =>
@@ -69,7 +70,7 @@ export const useMemeTradeTask = ({
       account,
       getDexQuote,
       supportedDexList,
-      maxPriceImpactPct,
+      getMaxPriceImpactPct,
     });
     store.setState({ status: 'running' });
     const executor = createMemeTradeExecutor(runLegs, createLegRunner(deps), {

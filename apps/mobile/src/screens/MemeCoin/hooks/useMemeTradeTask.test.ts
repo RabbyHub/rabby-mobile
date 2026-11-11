@@ -92,6 +92,27 @@ describe('useMemeTradeTask manual retry', () => {
     mockCreateDeps.mockImplementation(() => ({ deps: {}, dispose: jest.fn() }));
   });
 
+  it('gives a running leg the max price impact selected last', async () => {
+    holds.a = deferred();
+    prepareResults.a = [ok];
+    const account = {} as Parameters<typeof useMemeTradeTask>[0]['account'];
+    const legs = [leg('a')];
+    const hook = renderHook(
+      ({ maxPriceImpactPct }) =>
+        useMemeTradeTask({ account, legs, maxPriceImpactPct }),
+      { initialProps: { maxPriceImpactPct: 5 } },
+    );
+    act(() => hook.result.current.start());
+    const { getMaxPriceImpactPct } = mockCreateDeps.mock.calls[0][0];
+    expect(getMaxPriceImpactPct()).toBe(5);
+
+    hook.rerender({ maxPriceImpactPct: 20 });
+    expect(getMaxPriceImpactPct()).toBe(20);
+
+    holds.a.release();
+    await act(async () => void (await flush()));
+  });
+
   it('ignores retry for a leg that has not failed', async () => {
     holds.a = deferred();
     prepareResults.a = [failed];

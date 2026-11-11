@@ -63,7 +63,7 @@ const setup = (
     ...routeOver,
   };
   const deps: LegRunnerDeps = {
-    maxPriceImpactPct: 5,
+    getMaxPriceImpactPct: () => 5,
     routes: { swap: route, bridge: route },
     getToken: async (_chain, id) => tokens[id],
     isNativeToken: (_chain, id) => id === 'eth',
@@ -88,14 +88,14 @@ const setup = (
 };
 
 describe('createLegRunner.prepareAndBroadcast', () => {
-  it('quotes the planned USD amount with half the max price impact as slippage, then signs', async () => {
+  it('quotes the planned USD amount with the max price impact as slippage, then signs', async () => {
     const t = setup();
     await expect(
       t.runner.prepareAndBroadcast(leg(), createPauseGate()),
     ).resolves.toEqual({ ok: true, txHash: '0xmain' });
     const quoteArgs = (t.route.quote as jest.Mock).mock.calls[0][0];
     expect(quoteArgs.payAmount.toNumber()).toBe(25);
-    expect(quoteArgs.slippagePct).toBe(2.5);
+    expect(quoteArgs.slippagePct).toBe(5);
     expect(t.signer.prefetch).toHaveBeenCalledWith(TXS);
     expect(t.signer.openDirect).toHaveBeenCalledWith(TXS);
     expect(t.signer.close).toHaveBeenCalled();
@@ -171,12 +171,12 @@ describe('createLegRunner.prepareAndBroadcast', () => {
     ).resolves.toEqual({ ok: false, reason: 'noQuote' });
   });
 
-  it('fails with priceImpact when the quote loses at least half the max impact', async () => {
+  it('fails with priceImpact when the quote loses at least the max impact', async () => {
     const lossy = setup(
       {},
       {
         quote: async ({ payAmount }) => ({
-          receiveAmount: payAmount.times(2 * 0.97),
+          receiveAmount: payAmount.times(2 * 0.95),
           build: async () => TXS,
         }),
       },
@@ -188,13 +188,33 @@ describe('createLegRunner.prepareAndBroadcast', () => {
       {},
       {
         quote: async ({ payAmount }) => ({
-          receiveAmount: payAmount.times(2 * 0.98),
+          receiveAmount: payAmount.times(2 * 0.96),
           build: async () => TXS,
         }),
       },
     );
     await expect(
       fine.runner.prepareAndBroadcast(leg(), createPauseGate()),
+    ).resolves.toMatchObject({ ok: true });
+  });
+
+  it('uses the max price impact selected when the leg is quoted', async () => {
+    let maxImpact = 1;
+    const t = setup(
+      { getMaxPriceImpactPct: () => maxImpact },
+      {
+        quote: async ({ payAmount }) => ({
+          receiveAmount: payAmount.times(2 * 0.95),
+          build: async () => TXS,
+        }),
+      },
+    );
+    await expect(
+      t.runner.prepareAndBroadcast(leg(), createPauseGate()),
+    ).resolves.toEqual({ ok: false, reason: 'priceImpact' });
+    maxImpact = 20;
+    await expect(
+      t.runner.prepareAndBroadcast(leg(), createPauseGate()),
     ).resolves.toMatchObject({ ok: true });
   });
 

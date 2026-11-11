@@ -27,19 +27,19 @@ export const createProductionLegRunnerDeps = ({
   account,
   getDexQuote,
   supportedDexList,
-  maxPriceImpactPct,
+  getMaxPriceImpactPct,
 }: {
   account: Account;
   getDexQuote: GetDexQuote;
   supportedDexList: string[];
-  maxPriceImpactPct: number;
+  getMaxPriceImpactPct(): number;
 }): { deps: LegRunnerDeps; dispose(): void } => {
   assertMemeTradeAccount(account);
   const signers = new Map<string, HeadlessDirectSigner>();
   const bridge = createBridgeRoute({ account });
 
   const deps: LegRunnerDeps = {
-    maxPriceImpactPct,
+    getMaxPriceImpactPct,
     routes: {
       swap: createSwapRoute({ account, getDexQuote, supportedDexList }),
       bridge: bridge.route,
