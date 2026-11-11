@@ -37,7 +37,7 @@ import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
 
 import { openapi, testOpenapi } from '@/core/request';
 import { approvalUtils } from '@rabby-wallet/biz-utils';
-import { atom, useAtom, useAtomValue } from 'jotai';
+import { atom, useAtom, useAtomValue, useSetAtom } from 'jotai';
 import type { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { useSheetModals } from '@/hooks/useSheetModal';
 import {
@@ -59,6 +59,13 @@ export const FILTER_TYPES = {
   assets: 'assets',
   EIP7702: 'EIP7702',
 } as const;
+
+// The header is configured once in the navigator options (declarative header
+// contract), so the search state it drives has to live outside the screen body.
+export const approvalsFilterTypeAtom =
+  atom<keyof typeof FILTER_TYPES>('contract');
+export const approvalsSearchKwAtom = atom('');
+export const approvalsSearchingAtom = atom(false);
 
 const SAFE_LEVEL: Record<string, string> = {
   safe: 'safe',
@@ -177,11 +184,20 @@ export function useApprovalsPageOnTop(options: {
   account: Account | null;
 }) {
   const { account: currentAccount } = options;
-  const [filterType, setFilterType] = useState<keyof typeof FILTER_TYPES>(
-    __DEV__ ? 'contract' : 'contract',
-  );
+  const [filterType, setFilterType] = useAtom(approvalsFilterTypeAtom);
+  const [searchKw, setSearchKw] = useAtom(approvalsSearchKwAtom);
+  const setSearching = useSetAtom(approvalsSearchingAtom);
 
-  const [searchKw, setSearchKw] = useState('');
+  // Leaving the page must not keep a stale query or an open search field for
+  // the next visit; both header and body read the same atoms.
+  React.useEffect(
+    () => () => {
+      setSearchKw('');
+      setSearching(false);
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
 
   const debouncedSkContract = useDebouncedValue(searchKw, 250);
   const debouncedSkAssets = useDebouncedValue(searchKw, 250);
