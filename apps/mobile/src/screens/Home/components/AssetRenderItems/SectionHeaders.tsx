@@ -14,6 +14,8 @@ import ChainFilterItem from '@/components/Token/ChainFilterItem';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { findChainByServerID } from '@/utils/chain';
 import { Text } from '@/components/Typography';
+import { CustomSkeleton } from '@/components2024/CustomSkeleton';
+import { useDebugChainSelectorLoading } from '@/utils/debugChainSelectorLoading';
 
 /** Number of chain icons the filter pill reserves space for. */
 const CHAIN_ICON_SLOTS = 3;
@@ -22,16 +24,29 @@ export const ChainSelector = ({
   onChainClick,
   chainServerId,
   style,
+  loading = false,
 }: {
   chainServerId?: string;
   top3Chains?: string[];
   onChainClick?: (clear: boolean) => void;
   style?: StyleProp<ViewStyle>;
+  /**
+   * The chain projection is still being built. Render skeleton icons instead of
+   * an empty pill so a cold start shows a loading state rather than a control
+   * that looks broken until the logos arrive (QA 1157).
+   */
+  loading?: boolean;
 }) => {
   const chainInfo = useFindChain({
     serverId: chainServerId || null,
   });
   const { styles, colors2024 } = useTheme2024({ getStyle });
+  const debugForcedLoading = useDebugChainSelectorLoading();
+  const forcedSkeleton = __DEV__ && debugForcedLoading;
+  const isLoading = loading || forcedSkeleton;
+  // Dev probe: also drop the already-known chains so the skeleton is visible on
+  // a fully loaded page (`target=chainLoading` on the debug deep link).
+  const icons = forcedSkeleton ? [] : top3Chains;
 
   return chainInfo?.id ? (
     <View style={StyleSheet.flatten([styles.chainContainer, style])}>
@@ -53,7 +68,7 @@ export const ChainSelector = ({
         {/* Always keep three icon slots so the pill does not shift when the
             projection fills the real chain icons in. */}
         {Array.from({ length: CHAIN_ICON_SLOTS }).map((_, index) => {
-          const chainId = top3Chains?.[index];
+          const chainId = icons?.[index];
           return (
             <View
               key={chainId || `chain-placeholder-${index}`}
@@ -67,6 +82,13 @@ export const ChainSelector = ({
                   containerStyle={styles.chainIcon}
                   size={18}
                   chainEnum={findChainByServerID(chainId)?.enum}
+                />
+              ) : isLoading ? (
+                <CustomSkeleton
+                  circle
+                  width={18}
+                  height={18}
+                  style={styles.chainIconSkeleton}
                 />
               ) : null}
             </View>
@@ -134,5 +156,8 @@ const getStyle = createGetStyles2024(ctx => ({
   },
   chainIconPlaceholder: {
     backgroundColor: 'transparent',
+  },
+  chainIconSkeleton: {
+    backgroundColor: ctx.colors2024['neutral-line'],
   },
 }));
