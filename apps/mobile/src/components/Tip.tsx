@@ -56,6 +56,20 @@ type TipProps<T extends PressableComponent> = Omit<TooltipProps, 'content'> & {
 
 const destroyListeners = new Set<() => void>();
 
+/**
+ * Many call sites pass `cond ? text : undefined` and wrap a button. With no
+ * content there is nothing to show, so the Tip must neither open (an empty
+ * tooltip is an invisible full-screen Modal) nor take taps from its children.
+ */
+export function hasTipContent(
+  content: TipProps<PressableComponent>['content'],
+) {
+  if (typeof content === 'string') {
+    return content.trim().length > 0;
+  }
+  return content !== null && content !== undefined;
+}
+
 const TipModalGateContext = React.createContext<{
   modalGateId: ModalGateId;
   modalGateBlocking: boolean;
@@ -110,6 +124,13 @@ const TipBase = <T extends PressableComponent = 'RNPressable'>({
   const { colors, styles } = useThemeStyles(getStyle);
 
   const { on, turnOn, turnOff } = useSwitch();
+  const hasContent = hasTipContent(content);
+
+  useEffect(() => {
+    if (!hasContent) {
+      turnOff();
+    }
+  }, [hasContent, turnOff]);
 
   useEffect(() => {
     destroyListeners.add(turnOff);
@@ -173,6 +194,9 @@ const TipBase = <T extends PressableComponent = 'RNPressable'>({
   const onPress = pressableProps?.onPress;
   const handleOnPress = useCallback<PressableComProps<T>['onPress'] & object>(
     evt => {
+      if (!hasContent) {
+        return;
+      }
       if (typeof onPress === 'function') {
         onPress?.({ event: evt, turnOn, turnOff });
         return;
@@ -180,12 +204,11 @@ const TipBase = <T extends PressableComponent = 'RNPressable'>({
 
       turnOn();
     },
-    [onPress, turnOff, turnOn],
+    [hasContent, onPress, turnOff, turnOn],
   );
 
   const tooltipNode = (
     <Tooltip
-      isVisible={on}
       placement="top"
       backgroundColor={'transparent'}
       measureAnchor={measureAnchor}
@@ -196,6 +219,7 @@ const TipBase = <T extends PressableComponent = 'RNPressable'>({
       arrowSize={_arrowSize}
       modalComponent={modalGateId ? TipModalWithGate : modalComponent}
       {...rest}
+      isVisible={hasContent && (rest.isVisible ?? on)}
       contentStyle={StyleSheet.flatten([
         styles.tooltipContent,
         contentStyle,
@@ -210,6 +234,9 @@ const TipBase = <T extends PressableComponent = 'RNPressable'>({
         <PressableComponent
           hitSlop={10}
           {...pressableProps}
+          // Without content, let taps reach the children (a disabled button
+          // must not open an empty tooltip).
+          disabled={!hasContent || !!pressableProps?.disabled}
           // @ts-expect-error
           style={StyleSheet.flatten([pressableProps?.style])}
           // @ts-expect-error
