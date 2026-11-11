@@ -20,7 +20,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { IS_IOS } from '@/core/native/utils';
 
 import { useTheme2024 } from '@/hooks/theme';
-import { HeaderBackPressable } from '@/hooks/navigation';
+import { HeaderBackButton } from '@/hooks/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
 
 import { AssetAvatar } from '@/components';
@@ -143,7 +143,7 @@ export const TokenDetailHeaderArea: React.FC<Props> = ({
       <View style={[styles.container, style]}>
         <View style={styles.token}>
           {inlineBack ? (
-            <HeaderBackPressable
+            <HeaderBackButton
               style={styles.inlineBack}
               tintColor={colors2024['neutral-title-1']}
             />
@@ -320,7 +320,7 @@ export const TokenDetailHeader = ({
     <View style={[styles.headerOuter, { paddingTop: insets.top }]}>
       <View style={styles.headerRow}>
         <View style={styles.headerBackSlot}>
-          <HeaderBackPressable tintColor={colors2024['neutral-title-1']} />
+          <HeaderBackButton tintColor={colors2024['neutral-title-1']} />
         </View>
         <View style={styles.headerContent}>
           <TokenDetailHeaderArea

@@ -129,6 +129,45 @@ export function navBack() {
   }
 }
 
+/**
+ * Header back control with no baked-in layout compensation.
+ *
+ * Renders a plain 24x24 icon box, so whoever renders the header row owns every
+ * inset explicitly. Screens that draw their own header (`header: () => ...`)
+ * must use this instead of the deprecated `HeaderBackPressable`, otherwise the
+ * compensation margin below silently shrinks the leading slot and pulls centred
+ * sibling content off the screen centre (QA 1344).
+ */
+export function HeaderBackButton({
+  tintColor,
+  style,
+  ...touchableProps
+}: Pick<NativeStackHeaderLeftProps, 'tintColor'> & RNViewProps) {
+  const themeMode = useGetBinaryMode();
+  const { colors2024 } = apisTheme.getColors2024(themeMode);
+  return (
+    <CustomTouchableOpacity
+      // Native-stack header controls need native gesture arbitration on Fabric.
+      as="RNGHTouchableOpacity"
+      {...touchableProps}
+      style={[styles.headerBackButtonStyle, style]}
+      hitSlop={hitSlop}
+      onPress={navBack}>
+      <RcIconHeaderBack
+        width={24}
+        height={24}
+        color={tintColor || colors2024['neutral-body']}
+      />
+    </CustomTouchableOpacity>
+  );
+}
+
+/**
+ * @deprecated Bakes a native-bar-item inset compensation into the control
+ * (`marginLeft: -16` + `paddingLeft: 16`). Kept only for controls hosted by a
+ * native header element (Android `headerLeft`). Any screen that renders its own
+ * header row must use `HeaderBackButton` and apply its own container/padding.
+ */
 export function HeaderBackPressable({
   tintColor,
   style,
@@ -359,6 +398,13 @@ const renderNativeBackItems: NonNullable<
 ];
 
 const styles = StyleSheet.create({
+  // Plain icon box for JS-rendered custom headers; the caller aligns it.
+  headerBackButtonStyle: {
+    width: 24,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   backButtonStyle: {
     // width: 56,
     // height: 56,
