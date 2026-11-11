@@ -170,13 +170,17 @@ export const createLegRunner = (deps: LegRunnerDeps): LegRunner => {
       }
       return result;
     },
-    waitForReceipt: (leg, txHash, gate) =>
+    waitForReceipt: (leg, txHash, gate, isAbandoned) =>
       deps.waitForTxCompleted({
         hash: txHash,
         chainServerId: leg.pay.chain,
-        isCancelled: gate.isStopped,
+        isCancelled: () => gate.isStopped() || !!isAbandoned?.(),
       }),
-    waitForArrival: (leg, txHash, gate) =>
-      deps.waitForBridgeArrival({ leg, txHash, isCancelled: gate.isStopped }),
+    waitForArrival: (leg, txHash, gate, isAbandoned) =>
+      deps.waitForBridgeArrival({
+        leg,
+        txHash,
+        isCancelled: () => gate.isStopped() || !!isAbandoned?.(),
+      }),
   };
 };

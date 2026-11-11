@@ -239,6 +239,15 @@ function drain() {
     });
 }
 
+/**
+ * The last answer for one tx: undefined until a lookup for it has succeeded,
+ * null when that lookup found no bridge record.
+ */
+export function peekBridgeHistory(query: BridgeHistoryQuery) {
+  const entry = cache.peek(queryKey(query));
+  return entry ? entry.history : undefined;
+}
+
 export function prefetchBridgeHistory(queries: BridgeHistoryQuery[]) {
   for (const query of queries) {
     enqueue(query, false, PREFETCH_PRIORITY);

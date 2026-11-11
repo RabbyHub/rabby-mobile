@@ -17,7 +17,14 @@ import { getBridgeQuoteApproval } from '@/screens/Bridge/utils/bridgeApproval';
 import { resolveBridgeArrival } from '@/screens/Bridge/utils/bridgeArrival';
 import { getBestBridgeQuote } from '@/screens/Bridge/utils/bridgeQuote';
 import { getRabbyFeeInfo } from '@/screens/Swap/hooks/fee';
-import { sleep } from '@/utils/async';
+import {
+  peekBridgeHistory,
+  subscribeBridgeHistory,
+} from '@/screens/Transaction/bridgeHistoryLookup';
+import {
+  historyTxKey,
+  shouldPollPendingBridge,
+} from '@/screens/Transaction/utils/bridgeHistory';
 import { findChainByServerID } from '@/utils/chain';
 import { BRIDGE_ARRIVAL_POLL_INTERVAL_MS, QUOTE_RATE } from '../constants';
 import type { LegRunnerDeps, RouteAdapter } from '../legRunner';
@@ -191,7 +198,7 @@ export const createBridgeRoute = ({ account }: { account: Account }) => {
     },
   };
 
-  const waitForArrival: LegRunnerDeps['waitForBridgeArrival'] = async ({
+  const waitForArrival: LegRunnerDeps['waitForBridgeArrival'] = ({
     leg,
     txHash,
     isCancelled,
@@ -199,47 +206,90 @@ export const createBridgeRoute = ({ account }: { account: Account }) => {
     const local = submitted.get(txHash);
     // only hashes this route broadcast are waited on
     if (!local) {
-      return false;
+      return Promise.resolve(false);
     }
-    for (;;) {
-      if (isCancelled()) {
-        throw new ExecutionStoppedError();
-      }
-      const res = await openapi
-        .getBridgeHistoryListByTxIds({ from_tx_ids: [txHash] })
-        .catch(() => null);
-      // as on the Bridge page, a failed lookup never times the tx out
-      const list = res?.history_list;
-      if (!Array.isArray(list)) {
-        await sleep(BRIDGE_ARRIVAL_POLL_INTERVAL_MS);
-        continue;
-      }
-      const resolution = resolveBridgeArrival(list, local);
-      if (resolution.type === 'notFoundTimeout') {
-        await transactionHistoryServiceApi
-          .completeBridgeTxHistory(local.hash, local.fromChainId, 'failed')
-          .catch(() => undefined);
-        return false;
-      }
-      if (resolution.type === 'settled') {
-        await transactionHistoryServiceApi
-          .completeBridgeTxHistory(
-            local.hash,
-            local.fromChainId,
-            resolution.status,
-            resolution.bridgeTx,
-          )
-          .catch(() => undefined);
-        return (
-          resolution.status === 'allSuccess' &&
-          isSameAddress(
-            resolution.bridgeTx.to_actual_token?.id || '',
-            leg.receive.id,
-          )
+    const query = { chain: local.fromToken.chain, hash: txHash };
+    const key = historyTxKey(query.chain, query.hash);
+
+    return new Promise<boolean>((resolve, reject) => {
+      let finished = false;
+      // The same lookup as the Bridge and history pages: every watched tx in the
+      // app shares one batched, paced request.
+      const subscription = subscribeBridgeHistory(() => check(), []);
+      const timer = setInterval(() => {
+        check();
+        if (finished) {
+          return;
+        }
+        // the lookup re-polls only records it has found and still treats as fresh
+        const found = peekBridgeHistory(query);
+        if (!found || !shouldPollPendingBridge(found)) {
+          subscription.refresh();
+        }
+      }, BRIDGE_ARRIVAL_POLL_INTERVAL_MS);
+
+      const finish = (settle: () => void) => {
+        finished = true;
+        clearInterval(timer);
+        subscription.dispose();
+        settle();
+      };
+
+      const check = () => {
+        if (finished) {
+          return;
+        }
+        if (isCancelled()) {
+          finish(() => reject(new ExecutionStoppedError()));
+          return;
+        }
+        const history = peekBridgeHistory(query);
+        // as on the Bridge page, only an answered lookup can time the tx out
+        if (history === undefined) {
+          return;
+        }
+        const resolution = resolveBridgeArrival(
+          history ? [history] : [],
+          local,
         );
-      }
-      await sleep(BRIDGE_ARRIVAL_POLL_INTERVAL_MS);
-    }
+        if (resolution.type === 'notFoundTimeout') {
+          finish(() =>
+            transactionHistoryServiceApi
+              .completeBridgeTxHistory(local.hash, local.fromChainId, 'failed')
+              .catch(() => undefined)
+              .then(() => resolve(false)),
+          );
+          return;
+        }
+        if (resolution.type === 'settled') {
+          finish(() =>
+            transactionHistoryServiceApi
+              .completeBridgeTxHistory(
+                local.hash,
+                local.fromChainId,
+                resolution.status,
+                resolution.bridgeTx,
+              )
+              .catch(() => undefined)
+              .then(() =>
+                resolve(
+                  resolution.status === 'allSuccess' &&
+                    isSameAddress(
+                      resolution.bridgeTx.to_actual_token?.id || '',
+                      leg.receive.id,
+                    ),
+                ),
+              ),
+          );
+        }
+      };
+
+      subscription.update({
+        queries: [query],
+        transactionKeys: new Set([key]),
+        pollableKeys: new Set([key]),
+      });
+    });
   };
 
   return { route, waitForArrival };

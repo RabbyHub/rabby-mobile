@@ -46,17 +46,26 @@ const setup = (legs: ExecLeg[]) => {
     return map.get(key)!;
   };
   const calls: string[] = [];
+  const abandoned = new Map<string, () => boolean>();
+  // resolving it stands for "the receipt has been missing for a while"
+  const watchGate = deferred<void>();
   const runner: LegRunner = {
     prepareAndBroadcast: leg => {
       calls.push(`prepare:${leg.key}`);
       return get(prepare, leg.key).promise;
     },
-    waitForReceipt: leg => {
+    waitForReceipt: (leg, _hash, _gate, isAbandoned) => {
       calls.push(`receipt:${leg.key}`);
+      if (isAbandoned) {
+        abandoned.set(`receipt:${leg.key}`, isAbandoned);
+      }
       return get(receipt, leg.key).promise;
     },
-    waitForArrival: leg => {
+    waitForArrival: (leg, _hash, _gate, isAbandoned) => {
       calls.push(`arrival:${leg.key}`);
+      if (isAbandoned) {
+        abandoned.set(`arrival:${leg.key}`, isAbandoned);
+      }
       return get(arrival, leg.key).promise;
     },
   };
@@ -73,11 +82,16 @@ const setup = (legs: ExecLeg[]) => {
         finished += 1;
       },
     },
-    { retryDelay: () => Promise.resolve() },
+    {
+      retryDelay: () => Promise.resolve(),
+      arrivalWatchDelay: () => watchGate.promise,
+    },
   );
   return {
     executor,
     calls,
+    isAbandoned: (call: string) => abandoned.get(call)?.() ?? false,
+    receiptMissingForAWhile: () => watchGate.resolve(),
     states,
     finished: () => finished,
     prepare: (k: string) => get(prepare, k),
@@ -479,6 +493,112 @@ describe('bridge arrival failure', () => {
       failReason: 'arrivalFailed',
       txHash: '0xb',
     });
+  });
+
+  it('waits on the receipt alone at first', async () => {
+    const t = setup([leg('a1', 'eth', 'bridge')]);
+    t.executor.start();
+    await flush();
+    t.prepare('a1').resolve({ ok: true, txHash: '0xb' });
+    await flush();
+    expect(t.calls).toEqual(['prepare:a1', 'receipt:a1']);
+  });
+
+  it('settles from the bridge when the receipt stays missing, and frees the chain', async () => {
+    const t = setup([leg('a1', 'eth', 'bridge'), leg('a2', 'eth')]);
+    t.executor.start();
+    await flush();
+    t.prepare('a1').resolve({ ok: true, txHash: '0xb' });
+    await flush();
+    t.receiptMissingForAWhile();
+    await flush();
+    expect(t.calls).toContain('arrival:a1');
+    expect(t.calls).not.toContain('prepare:a2');
+
+    t.arrival('a1').resolve(true);
+    await flush();
+    expect(t.states.a1).toEqual({ phase: 'success', txHash: '0xb' });
+    expect(t.isAbandoned('receipt:a1')).toBe(true);
+    expect(t.calls).toContain('prepare:a2');
+
+    t.prepare('a2').resolve({ ok: true, txHash: '0xs' });
+    await flush();
+    t.receipt('a2').resolve(true);
+    await flush();
+    expect(t.finished()).toBe(1);
+  });
+
+  it('fails from the bridge when it fails before the receipt comes back', async () => {
+    const t = setup([leg('a1', 'eth', 'bridge')]);
+    t.executor.start();
+    await flush();
+    t.prepare('a1').resolve({ ok: true, txHash: '0xb' });
+    await flush();
+    t.receiptMissingForAWhile();
+    await flush();
+    t.arrival('a1').resolve(false);
+    await flush();
+    expect(t.states.a1).toEqual({
+      phase: 'failed',
+      failReason: 'arrivalFailed',
+      txHash: '0xb',
+    });
+    expect(t.finished()).toBe(1);
+  });
+
+  it('keeps the bridge watch it already started once the receipt comes back', async () => {
+    const t = setup([leg('a1', 'eth', 'bridge')]);
+    t.executor.start();
+    await flush();
+    t.prepare('a1').resolve({ ok: true, txHash: '0xb' });
+    await flush();
+    t.receiptMissingForAWhile();
+    await flush();
+    t.receipt('a1').resolve(true);
+    await flush();
+    expect(t.states.a1.phase).toBe('arriving');
+    expect(t.calls.filter(c => c === 'arrival:a1')).toHaveLength(1);
+    expect(t.isAbandoned('arrival:a1')).toBe(false);
+
+    t.arrival('a1').resolve(true);
+    await flush();
+    expect(t.states.a1.phase).toBe('success');
+    expect(t.finished()).toBe(1);
+  });
+
+  it('fails a reverted source tx after the bridge watch started, and drops the watch', async () => {
+    const t = setup([leg('a1', 'eth', 'bridge')]);
+    t.executor.start();
+    await flush();
+    t.prepare('a1').resolve({ ok: true, txHash: '0xb' });
+    await flush();
+    t.receiptMissingForAWhile();
+    await flush();
+    t.receipt('a1').resolve(false);
+    await flush();
+    expect(t.states.a1).toEqual({
+      phase: 'failed',
+      failReason: 'failed',
+      txHash: '0xb',
+    });
+    expect(t.isAbandoned('arrival:a1')).toBe(true);
+    expect(t.finished()).toBe(1);
+  });
+
+  it('cancels a leg stopped while both waits run', async () => {
+    const t = setup([leg('a1', 'eth', 'bridge')]);
+    t.executor.start();
+    await flush();
+    t.prepare('a1').resolve({ ok: true, txHash: '0xb' });
+    await flush();
+    t.receiptMissingForAWhile();
+    await flush();
+    t.executor.stop();
+    t.receipt('a1').reject(new ExecutionStoppedError());
+    t.arrival('a1').reject(new ExecutionStoppedError());
+    await flush();
+    expect(t.states.a1).toEqual({ phase: 'cancelled', txHash: '0xb' });
+    expect(t.finished()).toBe(1);
   });
 
   it('keeps failed for a reverted source tx and never retries it', async () => {

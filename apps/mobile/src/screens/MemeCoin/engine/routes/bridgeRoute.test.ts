@@ -4,6 +4,14 @@ import type { Account } from '@/core/startupServices/preference';
 
 const mockGetQuoteList = jest.fn();
 const mockGetAggregatorList = jest.fn();
+const mockResolveArrival = jest.fn();
+const mockCompleteBridgeTx = jest.fn(async () => undefined);
+const mockLookup = {
+  subscription: { update: jest.fn(), refresh: jest.fn(), dispose: jest.fn() },
+  onChange: undefined as undefined | (() => void),
+  /** chain:hash -> the lookup's last answer (null: answered, nothing found) */
+  answers: new Map<string, unknown>(),
+};
 
 jest.mock('@rabby-wallet/rabby-bridge', () => ({
   buildTx: jest.fn(),
@@ -15,7 +23,19 @@ jest.mock('@/core/request', () => ({
   openapi: { getBridgeAggregatorList: () => mockGetAggregatorList() },
 }));
 jest.mock('@/core/serviceApi/transactionHistory', () => ({
-  transactionHistoryServiceApi: {},
+  transactionHistoryServiceApi: {
+    addBridgeTxHistory: async () => undefined,
+    completeBridgeTxHistory: (...args: unknown[]) =>
+      mockCompleteBridgeTx(...args),
+  },
+}));
+jest.mock('@/screens/Transaction/bridgeHistoryLookup', () => ({
+  subscribeBridgeHistory: (onChange: () => void) => {
+    mockLookup.onChange = onChange;
+    return mockLookup.subscription;
+  },
+  peekBridgeHistory: (query: { chain: string; hash: string }) =>
+    mockLookup.answers.get(`${query.chain}:${query.hash}`),
 }));
 jest.mock('@/screens/Bridge/hooks/bridge', () => ({
   buildBridgeToken: jest.fn(),
@@ -24,7 +44,7 @@ jest.mock('@/screens/Bridge/utils/bridgeApproval', () => ({
   getBridgeQuoteApproval: async () => ({}),
 }));
 jest.mock('@/screens/Bridge/utils/bridgeArrival', () => ({
-  resolveBridgeArrival: jest.fn(),
+  resolveBridgeArrival: (...args: unknown[]) => mockResolveArrival(...args),
 }));
 jest.mock('@/screens/Bridge/utils/bridgeQuote', () => ({
   getBestBridgeQuote: (list: unknown[]) =>
@@ -33,12 +53,13 @@ jest.mock('@/screens/Bridge/utils/bridgeQuote', () => ({
 jest.mock('@/screens/Swap/hooks/fee', () => ({
   getRabbyFeeInfo: () => ({ feeRate: '0' }),
 }));
-jest.mock('@/utils/async', () => ({ sleep: jest.fn() }));
 jest.mock('@/utils/chain', () => ({ findChainByServerID: () => undefined }));
 
 const tooManyRequests = { response: { status: 429 } };
 const bridgeQuote = {
   to_token_amount: '1',
+  duration: 60,
+  aggregator: { id: 'lifi' },
   bridge: { id: 'b', logo_url: 'logo', name: 'B' },
 };
 
@@ -49,19 +70,22 @@ const quoteParams = {
   slippagePct: 2.5,
 };
 
-// Fresh modules per test: the limiter lives at module level.
-const loadRoute = () => {
-  let route: ReturnType<
-    typeof import('./bridgeRoute').createBridgeRoute
-  >['route'];
+// Fresh modules per test: the limiter lives at module level. The error class
+// comes from the same fresh registry, so instanceof still holds.
+const loadBridgeRoute = () => {
+  let loaded: ReturnType<typeof import('./bridgeRoute').createBridgeRoute> & {
+    StoppedError: typeof import('../pauseGate').ExecutionStoppedError;
+  };
   jest.isolateModules(() => {
     const { createBridgeRoute } = require('./bridgeRoute');
-    route = createBridgeRoute({
-      account: { address: '0xme' } as Account,
-    }).route;
+    loaded = {
+      ...createBridgeRoute({ account: { address: '0xme' } as Account }),
+      StoppedError: require('../pauseGate').ExecutionStoppedError,
+    };
   });
-  return route!;
+  return loaded!;
 };
+const loadRoute = () => loadBridgeRoute().route;
 
 describe('bridge route quote', () => {
   beforeEach(() => {
@@ -114,5 +138,105 @@ describe('bridge route quote', () => {
     await jest.advanceTimersByTimeAsync(1);
     await quotes;
     expect(mockGetQuoteList).toHaveBeenCalledTimes(15);
+  });
+});
+
+describe('bridge route arrival', () => {
+  const key = 'arb:0xhash';
+  const leg = {
+    key: 'l',
+    kind: 'bridge',
+    pay: { id: 'usdc', chain: 'arb', symbol: 'USDC' },
+    receive: { id: 'pepe', chain: 'base', symbol: 'PEPE' },
+    amountUsd: 10,
+    payAll: false,
+  } as const;
+
+  const broadcast = async () => {
+    mockGetQuoteList.mockResolvedValue([bridgeQuote]);
+    const loaded = loadBridgeRoute();
+    const quote = await loaded.route.quote(quoteParams);
+    await quote!.onBroadcast!('0xhash');
+    return loaded;
+  };
+
+  beforeEach(() => {
+    jest.useFakeTimers();
+    mockGetQuoteList.mockReset();
+    mockGetAggregatorList.mockResolvedValue([{ id: 'lifi' }]);
+    mockResolveArrival.mockReset();
+    mockCompleteBridgeTx.mockClear();
+    mockLookup.subscription.update.mockClear();
+    mockLookup.subscription.refresh.mockClear();
+    mockLookup.subscription.dispose.mockClear();
+    mockLookup.answers.clear();
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  it('watches the bridge through the shared lookup and settles when it completes', async () => {
+    const { waitForArrival } = await broadcast();
+    const arrived = waitForArrival({
+      leg,
+      txHash: '0xhash',
+      isCancelled: () => false,
+    });
+    expect(mockLookup.subscription.update).toHaveBeenCalledWith({
+      queries: [{ chain: 'arb', hash: '0xhash' }],
+      transactionKeys: new Set([key]),
+      pollableKeys: new Set([key]),
+    });
+
+    const bridgeTx = { to_actual_token: { id: 'pepe' } };
+    mockLookup.answers.set(key, { status: 'completed' });
+    mockResolveArrival.mockReturnValue({
+      type: 'settled',
+      status: 'allSuccess',
+      bridgeTx,
+    });
+    mockLookup.onChange!();
+    await expect(arrived).resolves.toBe(true);
+    expect(mockCompleteBridgeTx).toHaveBeenCalledWith(
+      '0xhash',
+      0,
+      'allSuccess',
+      bridgeTx,
+    );
+    expect(mockLookup.subscription.dispose).toHaveBeenCalled();
+  });
+
+  it('asks again while nothing is found, and times out only on an answered lookup', async () => {
+    const { waitForArrival } = await broadcast();
+    const arrived = waitForArrival({
+      leg,
+      txHash: '0xhash',
+      isCancelled: () => false,
+    });
+    await jest.advanceTimersByTimeAsync(3000);
+    expect(mockLookup.subscription.refresh).toHaveBeenCalledTimes(1);
+    expect(mockResolveArrival).not.toHaveBeenCalled();
+
+    mockLookup.answers.set(key, null);
+    mockResolveArrival.mockReturnValue({ type: 'notFoundTimeout' });
+    await jest.advanceTimersByTimeAsync(3000);
+    await expect(arrived).resolves.toBe(false);
+    expect(mockCompleteBridgeTx).toHaveBeenCalledWith('0xhash', 0, 'failed');
+  });
+
+  it('stops and lets go of the lookup once cancelled', async () => {
+    const { waitForArrival, StoppedError } = await broadcast();
+    let cancelled = false;
+    const arrived = waitForArrival({
+      leg,
+      txHash: '0xhash',
+      isCancelled: () => cancelled,
+    });
+    const settled = expect(arrived).rejects.toBeInstanceOf(StoppedError);
+    cancelled = true;
+    await jest.advanceTimersByTimeAsync(3000);
+    await settled;
+    expect(mockLookup.subscription.dispose).toHaveBeenCalled();
   });
 });

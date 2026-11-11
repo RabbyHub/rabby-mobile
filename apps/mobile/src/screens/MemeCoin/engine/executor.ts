@@ -6,6 +6,7 @@ import {
 import {
   AUTO_RETRY_DELAY_MS,
   AUTO_RETRY_REASONS,
+  BRIDGE_ARRIVAL_WATCH_DELAY_MS,
   MAX_AUTO_RETRIES,
 } from './constants';
 import type { ExecLeg, FailReason, LegState } from './types';
@@ -17,17 +18,22 @@ export type BroadcastResult =
 export type LegRunner = {
   /** refresh → quote → checks → build → prefetch → sign/broadcast; calls gate.wait() before each step */
   prepareAndBroadcast(leg: ExecLeg, gate: PauseGate): Promise<BroadcastResult>;
-  /** true when the source-chain tx is mined successfully; no timeout (D5) */
+  /**
+   * true when the source-chain tx is mined successfully; no timeout (D5).
+   * Throws ExecutionStoppedError once stopped or `isAbandoned` turns true.
+   */
   waitForReceipt(
     leg: ExecLeg,
     txHash: string,
     gate: PauseGate,
+    isAbandoned?: () => boolean,
   ): Promise<boolean>;
-  /** bridge only: true when the target meme arrived */
+  /** bridge only: true when the target meme arrived; same stop rule as waitForReceipt */
   waitForArrival(
     leg: ExecLeg,
     txHash: string,
     gate: PauseGate,
+    isAbandoned?: () => boolean,
   ): Promise<boolean>;
 };
 
@@ -47,17 +53,31 @@ export type MemeTradeExecutor = {
 
 export type ExecutorOptions = {
   retryDelay?: (ms: number) => Promise<void>;
+  /** how long a bridge leg waits on its receipt alone before also watching the bridge */
+  arrivalWatchDelay?: (ms: number) => Promise<void>;
 };
 
 const defaultRetryDelay = (ms: number) =>
   new Promise<void>(resolve => setTimeout(resolve, ms));
+
+type Outcome<T> = { ok: true; value: T } | { ok: false; error: unknown };
+
+/** never rejects, so an abandoned wait cannot surface as an unhandled rejection */
+const outcomeOf = <T>(task: Promise<T>): Promise<Outcome<T>> =>
+  task.then(
+    value => ({ ok: true, value }),
+    error => ({ ok: false, error }),
+  );
 
 /** `legs` must already be in execution order (amount desc, D16). */
 export const createMemeTradeExecutor = (
   legs: ExecLeg[],
   runner: LegRunner,
   callbacks: ExecutorCallbacks,
-  { retryDelay = defaultRetryDelay }: ExecutorOptions = {},
+  {
+    retryDelay = defaultRetryDelay,
+    arrivalWatchDelay = defaultRetryDelay,
+  }: ExecutorOptions = {},
 ): MemeTradeExecutor => {
   const gate = createPauseGate();
   const chainTails = new Map<string, Promise<void>>();
@@ -122,6 +142,10 @@ export const createMemeTradeExecutor = (
       const hash = result.txHash;
       txHash = hash;
       setState(leg.key, { phase: 'confirming', txHash: hash });
+      if (leg.kind === 'bridge') {
+        await settleBridgeSource(leg, hash);
+        return;
+      }
       if (!(await runner.waitForReceipt(leg, hash, gate))) {
         setState(leg.key, {
           phase: 'failed',
@@ -130,32 +154,89 @@ export const createMemeTradeExecutor = (
         });
         return;
       }
-      if (leg.kind === 'swap') {
-        setState(leg.key, { phase: 'success', txHash: hash });
-        return;
-      }
-      setState(leg.key, { phase: 'arriving', txHash: hash });
-      unsettled += 1;
-      runner
-        .waitForArrival(leg, hash, gate)
-        .then(
-          arrived =>
-            setState(
-              leg.key,
-              arrived
-                ? { phase: 'success', txHash: hash }
-                : {
-                    phase: 'failed',
-                    failReason: 'arrivalFailed',
-                    txHash: hash,
-                  },
-            ),
-          error => settleError(leg.key, error, hash, 'arrivalFailed'),
-        )
-        .then(settleOne);
+      setState(leg.key, { phase: 'success', txHash: hash });
     } catch (error) {
       settleError(leg.key, error, txHash);
     }
+  };
+
+  const setArrivalState = (key: string, hash: string, arrived: boolean) =>
+    setState(
+      key,
+      arrived
+        ? { phase: 'success', txHash: hash }
+        : { phase: 'failed', failReason: 'arrivalFailed', txHash: hash },
+    );
+
+  /**
+   * Resolves once the source side is known, which frees the chain queue. A
+   * receipt that is still missing after a while no longer blocks the leg: the
+   * bridge status then runs alongside it, and a finished bridge settles the leg,
+   * as the source tx must have been mined for it to finish. Throws like runLeg.
+   */
+  const settleBridgeSource = async (leg: ExecLeg, hash: string) => {
+    let legDone = false;
+    const isAbandoned = () => legDone;
+    const receipt = outcomeOf(
+      runner.waitForReceipt(leg, hash, gate, isAbandoned),
+    );
+    let arrival: Promise<Outcome<boolean>> | undefined;
+    const watchArrival = () =>
+      (arrival ??= outcomeOf(
+        runner.waitForArrival(leg, hash, gate, isAbandoned),
+      ));
+
+    const fromReceipt = (outcome: Outcome<boolean>) =>
+      ({ source: 'receipt', outcome } as const);
+    let first:
+      | ReturnType<typeof fromReceipt>
+      | { source: 'arrival'; outcome: Outcome<boolean> }
+      | { source: 'watch' } = await Promise.race([
+      receipt.then(fromReceipt),
+      arrivalWatchDelay(BRIDGE_ARRIVAL_WATCH_DELAY_MS).then(
+        () => ({ source: 'watch' } as const),
+      ),
+    ]);
+    if (first.source === 'watch') {
+      first = await Promise.race([
+        receipt.then(fromReceipt),
+        watchArrival().then(outcome => ({
+          source: 'arrival' as const,
+          outcome,
+        })),
+      ]);
+    }
+
+    if (!first.outcome.ok) {
+      legDone = true;
+      throw first.outcome.error;
+    }
+    if (first.source === 'arrival') {
+      legDone = true;
+      setArrivalState(leg.key, hash, first.outcome.value);
+      return;
+    }
+    if (!first.outcome.value) {
+      legDone = true;
+      setState(leg.key, {
+        phase: 'failed',
+        failReason: 'failed',
+        txHash: hash,
+      });
+      return;
+    }
+
+    setState(leg.key, { phase: 'arriving', txHash: hash });
+    unsettled += 1;
+    watchArrival()
+      .then(outcome => {
+        if (outcome.ok) {
+          setArrivalState(leg.key, hash, outcome.value);
+        } else {
+          settleError(leg.key, outcome.error, hash, 'arrivalFailed');
+        }
+      })
+      .then(settleOne);
   };
 
   const runQueuedLeg = async (leg: ExecLeg) => {
