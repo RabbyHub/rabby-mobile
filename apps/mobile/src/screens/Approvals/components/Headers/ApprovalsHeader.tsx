@@ -46,7 +46,7 @@ export const ApprovalsHeader = ({ account }: { account?: Account | null }) => {
           style={[styles.backSlot, isSearching && styles.backSlotSearching]}>
           <HeaderBackPressable tintColor={colors2024['neutral-title-1']} />
         </View>
-        <View style={styles.center}>
+        <View style={[styles.center, isSearching && styles.centerSearching]}>
           {isSearching ? (
             <TopSearch value={searchKw} onChange={setSearchKw} />
           ) : (
@@ -114,6 +114,12 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     marginHorizontal: 8,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  // `center` is a column container, so `alignItems: center` gives the search
+  // pill its intrinsic width instead of letting it fill the middle. Stretch it
+  // while searching so the pill keeps the same side gaps on every screen width.
+  centerSearching: {
+    alignItems: 'stretch',
   },
   title: {
     flexDirection: 'row',

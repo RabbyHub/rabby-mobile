@@ -50,16 +50,13 @@ import {
   TokenMarketInfoScreen,
 } from '@/perfs/loadables/screens';
 import UnlockScreen from '@/screens/Unlock/Unlock';
-import {
-  TokenDetailHeaderRight,
-  TokenDetailHeaderTitle,
-} from '@/screens/TokenDetail/components/HeaderArea';
+import { TokenDetailHeader } from '@/screens/TokenDetail/components/HeaderArea';
 import SetupWallet from '@/screens/Address/SetupWallet';
 import SelectImportMethod from '@/screens/Address/SelectImportMethod';
 import ImportRabbyWallet from '@/screens/Address/ImportRabbyWallet';
 import {
   ImportSecret,
-  ImportSecretHeaderToggle,
+  ImportSecretHeader,
 } from '@/screens/Address/ImportSecret';
 import MoreImportMethods from '@/screens/Address/MoreImportMethods';
 import SelectAddMethod from '@/screens/Address/SelectAddMethod';
@@ -693,13 +690,9 @@ export default function AppNavigation() {
                   options={mergeScreenOptions2024([
                     {
                       headerShown: true,
-                      // Declarative header: the row owns its own back button so
-                      // the toggle stays centred on narrow devices (QA 1344).
-                      headerTitleAlign: 'left',
-                      headerBackVisible: false,
-                      headerLeft: () => null,
-                      unstable_headerLeftItems: () => [],
-                      headerTitle: () => <ImportSecretHeaderToggle />,
+                      // Fully custom header: fixed leading/trailing slots keep
+                      // the segmented toggle centred on every device (QA 1344).
+                      header: () => <ImportSecretHeader />,
                     },
                   ])}
                 />
@@ -782,25 +775,20 @@ export default function AppNavigation() {
                         // Build the row from route params so token detail and
                         // token market detail render the same header from the
                         // first frame, with no layout shift between them.
-                        headerTitle: () => (
-                          <TokenDetailHeaderTitle
-                            token={
-                              (route.params as { token?: any } | undefined)
-                                ?.token
-                            }
-                          />
-                        ),
-                        headerRight: () => (
-                          <TokenDetailHeaderRight
+                        // Custom header: fixed leading/middle/trailing slots
+                        // owned by us, so the row does not depend on the
+                        // native title-slot origin (QA 1343).
+                        header: () => (
+                          <TokenDetailHeader
                             token={
                               (route.params as { token?: any } | undefined)
                                 ?.token
                             }
                             isCustomTestnetToken={
                               (
-                                route.params as
-                                  | { isCustomTestnetToken?: boolean }
-                                  | undefined
+                                route.params as {
+                                  isCustomTestnetToken?: boolean;
+                                }
                               )?.isCustomTestnetToken
                             }
                           />
@@ -832,25 +820,20 @@ export default function AppNavigation() {
                         headerBackVisible: false,
                         headerLeft: () => null,
                         unstable_headerLeftItems: () => [],
-                        headerTitle: () => (
-                          <TokenDetailHeaderTitle
-                            token={
-                              (route.params as { token?: any } | undefined)
-                                ?.token
-                            }
-                          />
-                        ),
-                        headerRight: () => (
-                          <TokenDetailHeaderRight
+                        // Custom header: fixed leading/middle/trailing slots
+                        // owned by us, so the row does not depend on the
+                        // native title-slot origin (QA 1343).
+                        header: () => (
+                          <TokenDetailHeader
                             token={
                               (route.params as { token?: any } | undefined)
                                 ?.token
                             }
                             isCustomTestnetToken={
                               (
-                                route.params as
-                                  | { isCustomTestnetToken?: boolean }
-                                  | undefined
+                                route.params as {
+                                  isCustomTestnetToken?: boolean;
+                                }
                               )?.isCustomTestnetToken
                             }
                           />
