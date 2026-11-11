@@ -14,7 +14,10 @@ import { perpsStore, type MarketData } from '@/hooks/perps/usePerpsStore';
 import type { PerpsProMarketDescriptor } from '../../model/market';
 
 const mockModalProps = jest.fn();
+const mockModalDismiss = jest.fn();
+const mockModalPresent = jest.fn();
 const mockSheetClose = jest.fn();
+const mockSnapToIndex = jest.fn();
 const mockClearCrosshair = jest.fn();
 const mockChartMount = jest.fn();
 const mockChartUnmount = jest.fn();
@@ -65,7 +68,15 @@ jest.mock('react-native-gesture-handler', () => ({
     },
     Tap: () => {
       const tap: Record<string, jest.Mock> = {};
-      for (const name of ['enabled','maxDistance','onBegin','onStart','onEnd','onFinalize','onTouchesDown']) {
+      for (const name of [
+        'enabled',
+        'maxDistance',
+        'onBegin',
+        'onStart',
+        'onEnd',
+        'onFinalize',
+        'onTouchesDown',
+      ]) {
         (tap as any)[name] = jest.fn(() => tap);
       }
       return tap;
@@ -156,10 +167,13 @@ jest.mock('@gorhom/bottom-sheet', () => {
   const { View } = require('react-native');
   return {
     __esModule: true,
-    default: ReactModule.forwardRef(
+    BottomSheetModal: ReactModule.forwardRef(
       (props: Record<string, unknown>, ref: React.Ref<unknown>) => {
         ReactModule.useImperativeHandle(ref, () => ({
           close: mockSheetClose,
+          dismiss: mockModalDismiss,
+          present: mockModalPresent,
+          snapToIndex: mockSnapToIndex,
         }));
         mockModalProps(props);
         return ReactModule.createElement(
@@ -306,6 +320,7 @@ describe('PerpsProKlineSheet', () => {
     expect(props).toMatchObject({
       animateOnMount: false,
       enableContentPanningGesture: false,
+      enableDismissOnClose: false,
       enableDynamicSizing: false,
       enableHandlePanningGesture: true,
       enablePanDownToClose: true,
@@ -511,6 +526,33 @@ describe('PerpsProKlineSheet', () => {
     // animation completion; the latter is verified on the device.
     expect(mockChartMount).toHaveBeenCalledTimes(1);
     expect(mockChartUnmount).not.toHaveBeenCalled();
+  });
+
+  it('presents the modal once and keeps its portal mounted while closed', () => {
+    const element = (visible: boolean) => (
+      <PerpsProKlineSheet
+        enabled
+        market={market}
+        onClose={jest.fn()}
+        visible={visible}
+      />
+    );
+    const view = render(element(true));
+
+    expect(mockModalPresent).toHaveBeenCalledTimes(1);
+    expect(mockModalDismiss).not.toHaveBeenCalled();
+
+    view.rerender(element(false));
+    expect(mockModalPresent).toHaveBeenCalledTimes(1);
+    expect(mockSheetClose).toHaveBeenCalledTimes(1);
+    expect(mockModalDismiss).not.toHaveBeenCalled();
+
+    view.rerender(element(true));
+    expect(mockModalPresent).toHaveBeenCalledTimes(1);
+    expect(mockModalDismiss).not.toHaveBeenCalled();
+
+    view.unmount();
+    expect(mockModalDismiss).toHaveBeenCalledTimes(1);
   });
 
   it('retains the native host with all Root-inactive gates off and releases Back handling', () => {

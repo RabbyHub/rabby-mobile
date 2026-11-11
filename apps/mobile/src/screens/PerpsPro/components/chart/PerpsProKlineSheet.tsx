@@ -17,14 +17,17 @@ import RcIconReset from '@/assets2024/icons/perps/PerpsSimpleChart/reset.svg';
 import { useTheme2024 } from '@/hooks/theme';
 import { perpsStore } from '@/hooks/perps/usePerpsStore';
 import { createGetStyles2024 } from '@/utils/styles';
-import BottomSheet, {
+import {
+  BottomSheetModal,
   BottomSheetBackdrop,
   type BottomSheetBackdropProps,
   BottomSheetView,
 } from '@gorhom/bottom-sheet';
+import type { BottomSheetModalMethods } from '@gorhom/bottom-sheet/src/types';
 import React, {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -365,7 +368,8 @@ export const PerpsProKlineSheet = React.memo(function PerpsProKlineSheet({
   publicationEnabled = true,
   visible = true,
 }: PerpsProKlineSheetProps) {
-  const sheetRef = useRef<BottomSheet>(null);
+  const sheetRef = useRef<BottomSheetModalMethods>(null);
+  const presentedRef = useRef(false);
   const chartRef = useRef<TradingViewChartRef>(null);
   const [priceScaleState, setPriceScaleState] = useState({
     autoScale: true,
@@ -450,10 +454,25 @@ export const PerpsProKlineSheet = React.memo(function PerpsProKlineSheet({
       ? priceScaleState.autoScale
       : true;
 
+  // Present the modal once even while hidden. BottomSheetModal only mounts its
+  // portal after present(), so this keeps the expensive chart prewarmed while
+  // index=-1 keeps the panel off-screen. Subsequent opens/closes are driven by
+  // the same index prop used by the previous inline BottomSheet.
+  useLayoutEffect(() => {
+    const modal = sheetRef.current;
+    if (!presentedRef.current) {
+      presentedRef.current = true;
+      modal?.present();
+    }
+    return () => {
+      presentedRef.current = false;
+      modal?.dismiss();
+    };
+  }, []);
+
   useEffect(() => {
     if (!visible) {
       // Keep the retained chart mounted, but explicitly close the native sheet.
-      // Its index=-1 prop handles initial placement, not a reliable close command.
       sheetRef.current?.close();
     }
   }, [visible]);
@@ -477,13 +496,14 @@ export const PerpsProKlineSheet = React.memo(function PerpsProKlineSheet({
       pointerEvents={visible ? 'box-none' : 'none'}
       style={styles.retainedHost}
       testID="perps-pro-kline-retained-host">
-      <BottomSheet
+      <BottomSheetModal
         {...bottomSheetProps}
         ref={sheetRef}
         animateOnMount={false}
         backdropComponent={renderBackdrop}
         backgroundStyle={themedStyles.background}
         enableContentPanningGesture={false}
+        enableDismissOnClose={false}
         enableDynamicSizing={false}
         enableHandlePanningGesture
         enablePanDownToClose
@@ -526,7 +546,7 @@ export const PerpsProKlineSheet = React.memo(function PerpsProKlineSheet({
           />
           <View style={themedStyles.footer} testID="perps-pro-kline-footer" />
         </BottomSheetView>
-      </BottomSheet>
+      </BottomSheetModal>
     </View>
   );
 });
