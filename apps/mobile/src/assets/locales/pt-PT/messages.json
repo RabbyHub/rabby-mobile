@@ -1003,7 +1003,7 @@
       "loss-tips": "Está a perder {{usd}}. Tente um valor diferente.",
       "To": "Para",
       "approve-and-bridge": "Aprovar e fazer bridge",
-      "no-quote-found": "Nenhuma cotação encontrada. Por favor, tente outros pares de tokens.",
+      "no-quote-found": "Nenhuma cotação encontrada.",
       "showMore": {
         "title": "Mostrar mais",
         "source": "Origem do bridge",

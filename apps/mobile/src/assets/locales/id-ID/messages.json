@@ -846,7 +846,7 @@
       "est-difference": "Perk. Selisih:",
       "title": "Bridge",
       "loss-tips": "Anda kehilangan {{usd}}. Coba jumlah yang berbeda.",
-      "no-quote-found": "Penawaran tidak ditemukan. Coba pasangan token lain.",
+      "no-quote-found": "Penawaran tidak ditemukan.",
       "price-impact": "Dampak Harga",
       "bridgeFrom": "Bridge Dari",
       "From": "Dari",

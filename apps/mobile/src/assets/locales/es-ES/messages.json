@@ -1176,7 +1176,7 @@
       "no-quote": "Sin cotización",
       "est-payment": "Pago estimado:",
       "no-route-found": "No se encontró ruta",
-      "no-quote-found": "No se encontró ninguna cotización. Prueba con otros pares de tokens.",
+      "no-quote-found": "No se encontró ninguna cotización.",
       "loss-tips": "Está perdiendo {{usd}}. Intente con una cantidad diferente.",
       "duration": "{{duration}} min",
       "price-impact": "Impacto en el precio",

@@ -925,7 +925,7 @@
       "loss-tips": "Bạn đang mất {{usd}}. Thử một số tiền khác.",
       "Select": "Chọn",
       "est-receiving": "Ước tính sẽ nhận:",
-      "no-quote-found": "Không tìm thấy báo giá. Vui lòng thử cặp token khác.",
+      "no-quote-found": "Không tìm thấy báo giá.",
       "best": "Tốt nhất",
       "no-route-found": "Không tìm thấy tuyến đường",
       "via-bridge": "thông qua {{bridge}}",

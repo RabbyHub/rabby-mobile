@@ -996,7 +996,7 @@
       "via-bridge": "{{bridge}}経由",
       "need-to-approve-token-before-bridge": "ブリッジの前にトークンを承認する必要があります。",
       "approve-and-bridge": "承認してブリッジする",
-      "no-quote-found": "見積が見つかりません。他のトークンペアをお試しください。",
+      "no-quote-found": "見積が見つかりません。",
       "duration": "{{duration}} 分",
       "the-following-bridge-route-are-found": "以下のレートを発見",
       "no-route-found": "ルートが見つかりません",

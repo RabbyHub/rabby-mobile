@@ -953,7 +953,7 @@
       "est-difference": "ประมาณการความแตกต่าง:",
       "history": "ประวัติ Bridge",
       "est-payment": "ประมาณการจ่าย:",
-      "no-quote-found": "ไม่มีการเสนอราคา กรุณาลองคู่โทเค็นอื่น",
+      "no-quote-found": "ไม่มีการเสนอราคา",
       "bridged": "เริ่ม Bridge แล้ว",
       "gasFeeTooHight": "ค่าแก๊สสูงกว่าปกติ โปรดยืนยันหากคุณต้องการดำเนินการต่อ",
       "pendingItem": {
