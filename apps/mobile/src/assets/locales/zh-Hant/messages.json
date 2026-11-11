@@ -1284,11 +1284,8 @@
     "createPassword": {
       "confirmRequired": "請確認密碼",
       "passwordMinTip": "至少需包含 8 個字元",
-      "and": "和",
       "confirmPasswordPlaceholder": "確認密碼",
-      "termOfUse": "使用條款",
       "ConfirmPassword": "確認密碼",
-      "agreeToTerms": "我已閱讀並同意",
       "confirmTitle": "確認密碼",
       "Newpassword": "新密碼",
       "phoneNotSupport": "您的手機不支援{{ bioType }}",
@@ -1305,7 +1302,6 @@
       "passwordRequired": "請輸入密碼",
       "setUpSuccess": "密碼設定成功",
       "subTitle": "此密碼用於解鎖錢包並加密本機資料，無法找回。若密碼遺失，你需要重設並重新匯入錢包。",
-      "PrivacyPolicy": "隱私政策",
       "dataAnalysisDesc": "分享匿名使用資料以協助改善 Rabby。收集的資料不會與你或你的帳戶關聯。你可以隨時在設定中變更。",
       "agreeByContinuing": "繼續即表示你同意<terms>使用條款</terms>並知悉<privacy>隱私政策</privacy>。"
     },
