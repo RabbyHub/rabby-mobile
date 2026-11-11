@@ -1154,8 +1154,6 @@
       "no-quote-found": "Kein Angebot gefunden. Bitte versuchen Sie es mit anderen Token-Paaren.",
       "approve-and-bridge": "Genehmigen und bridgen",
       "best": "Beste",
-      "bridge-from": "Bridge von",
-      "for-available-quote": "für ein verfügbares Angebot",
       "est-receiving": "Geschätzter Empfang:",
       "via-bridge": "über {{bridge}}",
       "need-to-approve-token-before-bridge": "Token muss vor dem Bridge-Vorgang genehmigt werden",

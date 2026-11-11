@@ -921,12 +921,10 @@
     },
     "bridge": {
       "title": "跨鏈",
-      "bridge-from": "跨鏈轉出自",
       "the-following-bridge-route-are-found": "找到以下費率",
       "approve-and-bridge": "授權並跨鏈",
       "best": "最優",
       "no-quote": "無報價",
-      "for-available-quote": "取得可用報價",
       "est-receiving": "預計接收：",
       "via-bridge": "透過 {{bridge}}",
       "Select": "選擇",

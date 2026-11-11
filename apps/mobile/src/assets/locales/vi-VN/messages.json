@@ -904,7 +904,6 @@
       "quotes": "Báo giá"
     },
     "bridge": {
-      "for-available-quote": "để có báo giá khả dụng",
       "no-quote": "Không có báo giá",
       "history": "Lịch sử Bridge",
       "price-impact": "Tác động giá",
@@ -914,7 +913,6 @@
       "To": "Đến",
       "est-difference": "Ước tính chênh lệch:",
       "approve-and-bridge": "Phê duyệt và Bridge",
-      "bridge-from": "Bridge từ",
       "est-payment": "Thanh toán ước tính:",
       "need-to-approve-token-before-bridge": "Cần phê duyệt token trước khi bridge",
       "bridgeFrom": "Cầu từ",

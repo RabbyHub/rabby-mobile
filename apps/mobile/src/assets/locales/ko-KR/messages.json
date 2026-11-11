@@ -752,7 +752,6 @@
     },
     "bridge": {
       "bridgeTo": "브리지 도착지",
-      "bridge-from": "브리지 출발지",
       "est-difference": "추정 차이:",
       "history": "브리지 히스토리",
       "no-quote": "견적 없음",
@@ -771,7 +770,6 @@
       "est-payment": "예상 결제:",
       "approve-and-bridge": "승인 및 브리지",
       "need-to-approve-token-before-bridge": "브리지 전에 토큰을 승인해야 합니다",
-      "for-available-quote": "사용 가능한 견적에 대해",
       "loss-tips": "{{usd}} 잃고 있습니다. 다른 금액을 시도해 보세요.",
       "no-quote-found": "견적을 찾을 수 없습니다. 다른 토큰 쌍을 시도해 주세요.",
       "no-route-found": "경로를 찾을 수 없습니다.",

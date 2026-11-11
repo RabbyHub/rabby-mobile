@@ -1186,8 +1186,6 @@
       "no-quote-found": "No se encontró ninguna cotización. Prueba con otros pares de tokens.",
       "loss-tips": "Está perdiendo {{usd}}. Intente con una cantidad diferente.",
       "duration": "{{duration}} min",
-      "for-available-quote": "para una cotización disponible",
-      "bridge-from": "Origen del bridge",
       "price-impact": "Impacto en el precio",
       "From": "Desde",
       "bridged": "Bridge iniciado",
