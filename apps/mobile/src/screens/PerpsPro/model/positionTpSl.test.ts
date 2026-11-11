@@ -47,6 +47,74 @@ const collect = (
   );
 
 describe('Perps Pro position TP/SL model', () => {
+  it.each([
+    ['long', 'takeProfit'],
+    ['long', 'stopLoss'],
+    ['short', 'takeProfit'],
+    ['short', 'stopLoss'],
+  ] as const)(
+    'rounds %s %s sub-tick PnL to entry and reports the executable PnL',
+    (direction, kind) => {
+      const context = {
+        direction,
+        kind,
+        entryPrice: '0.094616',
+        szDecimals: 0,
+        size: '70772338',
+      };
+      for (const pnl of ['0', '0.01']) {
+        const triggerPrice = calculatePositionTpSlTriggerFromPnl({
+          ...context,
+          pnl,
+        });
+        expect(triggerPrice).toBe('0.094616');
+        expect(
+          calculatePositionTpSlEstimatedPnl({ ...context, triggerPrice }),
+        ).toBe('0');
+      }
+      expect(
+        calculatePositionTpSlTriggerFromRoi({
+          ...context,
+          leverage: 3,
+          roiPercent: '0',
+        }),
+      ).toBe('0.094616');
+      expect(
+        calculatePositionTpSlTriggerFromPnl({ ...context, pnl: '' }),
+      ).toBeNull();
+    },
+  );
+
+  it.each([
+    ['long', '110', 'stopLoss'],
+    ['long', '90', 'takeProfit'],
+    ['short', '90', 'stopLoss'],
+    ['short', '110', 'takeProfit'],
+  ] as const)(
+    'allows only the Mark-valid break-even side for %s at %s',
+    (direction, markPrice, validKind) => {
+      for (const kind of ['takeProfit', 'stopLoss'] as const) {
+        const input = {
+          direction,
+          kind,
+          markPrice,
+          triggerPrice: '100',
+          inputSource: 'mode' as const,
+          rawMagnitude: '0',
+          liquidationPrice: null,
+          szDecimals: 2,
+        };
+        expect(validateFullPositionTpSlFormTrigger(input).kind).toBe(
+          kind === validKind ? 'valid' : 'invalid',
+        );
+        expect(
+          validateFullPositionTpSlFormTrigger({ ...input, markPrice: '100' })
+            .kind,
+        ).toBe('invalid');
+      }
+    },
+  );
+
   it('classifies active full and fixed-size orders but excludes children-first attached duplicates', () => {
     const result = collect([
       order({ oid: 1 }),
@@ -355,7 +423,7 @@ describe('Perps Pro position TP/SL model', () => {
         rawMagnitude: '0',
         triggerPrice: '',
       }),
-    ).toBe(false);
+    ).toBe(true);
     expect(
       isPositionTpSlModeTriggerUnavailable({
         inputSource: 'mode',

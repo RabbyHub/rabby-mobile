@@ -3,7 +3,7 @@ import BigNumber from 'bignumber.js';
 
 import {
   isPerpsProPriceProtocolValid,
-  normalizePerpsProCalculatedPrice,
+  roundPerpsProTpSlPrice,
 } from '@/utils/perpsPriceProtocol';
 
 import type { PerpsOpenOrderTopology } from './openOrderTopology';
@@ -361,7 +361,7 @@ export const calculatePositionTpSlTriggerFromRoi = ({
   const roi = finiteDecimal(roiPercent);
   if (
     !entry?.gt(0) ||
-    !roi?.gt(0) ||
+    !roi?.gte(0) ||
     !Number.isFinite(leverage) ||
     leverage <= 0 ||
     !Number.isSafeInteger(szDecimals) ||
@@ -378,7 +378,7 @@ export const calculatePositionTpSlTriggerFromRoi = ({
   if (!trigger.gt(0)) {
     return null;
   }
-  return normalizePerpsProCalculatedPrice(trigger, szDecimals);
+  return roundPerpsProTpSlPrice(trigger, szDecimals);
 };
 
 export const calculatePositionTpSlTriggerFromPnl = ({
@@ -401,7 +401,7 @@ export const calculatePositionTpSlTriggerFromPnl = ({
   const amount = finiteDecimal(size);
   if (
     !entry?.gt(0) ||
-    !targetPnl?.gt(0) ||
+    !targetPnl?.gte(0) ||
     !amount?.gt(0) ||
     !Number.isSafeInteger(szDecimals) ||
     szDecimals < 0
@@ -416,7 +416,7 @@ export const calculatePositionTpSlTriggerFromPnl = ({
   if (!trigger.gt(0)) {
     return null;
   }
-  return normalizePerpsProCalculatedPrice(trigger, szDecimals);
+  return roundPerpsProTpSlPrice(trigger, szDecimals);
 };
 
 export type PerpsPositionTpSlTriggerValidation =
@@ -456,7 +456,7 @@ export const isPositionTpSlModeTriggerUnavailable = ({
   const trigger = finiteDecimal(triggerPrice);
   return (
     inputSource === 'mode' &&
-    !!magnitude?.gt(0) &&
+    !!magnitude?.gte(0) &&
     (!triggerPrice.trim() || !trigger?.gt(0))
   );
 };

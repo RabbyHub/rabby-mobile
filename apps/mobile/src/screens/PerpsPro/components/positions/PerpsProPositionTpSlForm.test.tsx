@@ -241,6 +241,52 @@ const precisionModifyProps = () => {
 };
 
 describe('PerpsProPositionTpSlForm', () => {
+  it.each([
+    ['add', 'pnl'],
+    ['modify', 'pnl'],
+    ['position', 'pnl'],
+    ['add', 'roi'],
+    ['modify', 'roi'],
+    ['position', 'roi'],
+  ] as const)(
+    'accepts explicit break-even in %s %s while empty remains unset',
+    (mode, inputMode) => {
+      mockPositionModes.sl = inputMode;
+      const input = props();
+      render(
+        <PerpsProPositionTpSlForm
+          {...input}
+          markPrice="110"
+          mode={mode}
+          position={position()}
+          initialOrder={mode === 'modify' ? order('stopLoss', 7, '90') : null}
+        />,
+      );
+      const field = screen.getByTestId(
+        'perps-pro-position-tpsl-stopLoss-mode-input',
+      );
+      fireEvent.changeText(field, '0');
+      expect(
+        screen.getByTestId('perps-pro-position-tpsl-stopLoss-price').props
+          .value,
+      ).toBe('100');
+      expect(mockTransProps.mock.lastCall?.[0].values).toMatchObject({
+        pnl: '0.00',
+        roi: '0.00',
+      });
+      fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-review'));
+      expect(input.onReview.mock.lastCall?.[0].legs[0]).toMatchObject({
+        kind: 'stopLoss',
+        triggerPrice: '100',
+      });
+      fireEvent.changeText(field, '');
+      expect(
+        screen.getByTestId('perps-pro-position-tpsl-review').props
+          .accessibilityState.disabled,
+      ).toBe(true);
+    },
+  );
+
   it.each(['add', 'modify', 'position'] as const)(
     'opts in only the Android %s TP/SL fields, leaving Amount and iOS alone',
     mode => {
