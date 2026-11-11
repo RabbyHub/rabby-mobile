@@ -57,7 +57,10 @@ import {
 import SetupWallet from '@/screens/Address/SetupWallet';
 import SelectImportMethod from '@/screens/Address/SelectImportMethod';
 import ImportRabbyWallet from '@/screens/Address/ImportRabbyWallet';
-import { ImportSecret } from '@/screens/Address/ImportSecret';
+import {
+  ImportSecret,
+  ImportSecretHeaderToggle,
+} from '@/screens/Address/ImportSecret';
 import MoreImportMethods from '@/screens/Address/MoreImportMethods';
 import SelectAddMethod from '@/screens/Address/SelectAddMethod';
 import Backup from '@/screens/Address/Backup';
@@ -690,6 +693,13 @@ export default function AppNavigation() {
                   options={mergeScreenOptions2024([
                     {
                       headerShown: true,
+                      // Declarative header: the row owns its own back button so
+                      // the toggle stays centred on narrow devices (QA 1344).
+                      headerTitleAlign: 'left',
+                      headerBackVisible: false,
+                      headerLeft: () => null,
+                      unstable_headerLeftItems: () => [],
+                      headerTitle: () => <ImportSecretHeaderToggle />,
                     },
                   ])}
                 />
