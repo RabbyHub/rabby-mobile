@@ -33,7 +33,11 @@ printf '%s\n' "$KEYCHAIN_PASS" > "$PASSWORD_FILE"
 security list-keychains -d user \
   | sed -e 's/^[[:space:]]*"//' -e 's/"$//' \
   > "$ORIG_LIST_FILE"
-security list-keychains -d user -s "$KEYCHAIN_PATH"
+# Keep the System keychain in the search list: it holds the Apple WWDR
+# intermediate CA certificates. With only the ephemeral keychain listed,
+# fastlane cannot find them and tries to download/install the WWDR itself,
+# which fails on the mobile-local runner ("Could not install WWDR certificate").
+security list-keychains -d user -s "$KEYCHAIN_PATH" /Library/Keychains/System.keychain
 
 if [ -n "$TARGET_PROFILE" ]; then
   python3 - "$TARGET_PROFILE" <<'PY'
