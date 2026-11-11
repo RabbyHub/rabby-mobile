@@ -34,12 +34,13 @@ export function markFirstContentFrame(route: Route) {
   if (reported) return;
   reported = true;
   const jsMs = Math.round(now() - jsT0);
-  // logger.info goes through the same channel as the RabbyUnlockPerf markers,
-  // which are proven to survive in release/regression packages.
-  logger.info(`[StartupKpi] first_content_frame js_ms=${jsMs} route=${route}`);
+  // Native first: Log.i("RabbyStartupKpi", ...) reaches logcat without going
+  // through the JS logging pipeline, so the marker survives any JS log
+  // stripping and is the authoritative signal.
   try {
     StartupKpi?.markFirstContentFrame(route);
   } catch {
     // Native module is optional (iOS / unit tests).
   }
+  logger.info(`[StartupKpi] first_content_frame js_ms=${jsMs} route=${route}`);
 }
