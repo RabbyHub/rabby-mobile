@@ -22,10 +22,7 @@ import { BridgeDetailScreen } from '../Bridge/BridgeDetailScreen';
 import { HistoryLocalDetailScreen } from '../Transaction/HistoryLocalDetailScreen';
 import { TransactionNavigatorParamList } from '@/navigation-type';
 import ApprovalsScreen from '../Approvals';
-import {
-  ApprovalsHeaderRight,
-  ApprovalsHeaderTitle,
-} from '../Approvals/components/Headers/ApprovalsHeader';
+import { ApprovalsHeader } from '../Approvals/components/Headers/ApprovalsHeader';
 import ReceiveScreen from '../Receive/Receive';
 import SwapBridgeScreen from '../SwapBridge';
 import { renderSwapBridgeHeader } from '../SwapBridge/SwapBridgeHeader';
@@ -347,18 +344,13 @@ export default function TransactionNavigator() {
             // being replaced from the screen's mount effect. The row draws its
             // own back button so the search field starts right after it
             // (QA 1328), and its search state lives in shared atoms.
-            headerTitleAlign: 'left',
-            headerBackVisible: false,
-            headerLeft: () => null,
-            unstable_headerLeftItems: () => [],
-            headerTitle: () => (
-              <ApprovalsHeaderTitle
+            header: () => (
+              <ApprovalsHeader
                 account={
                   (route.params as { account?: any } | undefined)?.account
                 }
               />
             ),
-            headerRight: () => <ApprovalsHeaderRight />,
           })
         }
       />
