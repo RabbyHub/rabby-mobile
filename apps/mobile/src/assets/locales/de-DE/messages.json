@@ -1731,11 +1731,7 @@
       "gnosisChainScrollDesc": "– Diese Wallet wurde in {{count}} Netzwerken bereitgestellt –"
     },
     "createPassword": {
-      "PrivacyPolicy": "Datenschutzerklärung",
       "Newpassword": "Passwort eingeben",
-      "agreeToTerms": "Ich habe die folgenden Dokumente gelesen und stimme ihnen zu:",
-      "termOfUse": "Nutzungsbedingungen",
-      "and": "und",
       "confirmPasswordPlaceholder": "Passwort bestätigen",
       "settingUp": "Passwort einrichten",
       "passwordMinTip": "Muss mindestens 8 Zeichen lang sein",

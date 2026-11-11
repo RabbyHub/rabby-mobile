@@ -1656,10 +1656,7 @@
       }
     },
     "createPassword": {
-      "PrivacyPolicy": "política de privacidade",
       "confirmTitle": "Confirmar palavra-passe",
-      "and": "e",
-      "agreeToTerms": "Li e concordo com os",
       "enable": "Ativar {{ bioType }}",
       "Newpassword": "Introduzir palavra-passe",
       "settingUp": "A configurar a palavra-passe",
@@ -1668,7 +1665,6 @@
       "passwordMinTip": "Deve ter pelo menos 8 caracteres",
       "biometricsFail": "Falha ao ativar biometria",
       "confirmRequired": "Por favor, confirme a palavra-passe",
-      "termOfUse": "termos",
       "passwordPlaceholder": "A palavra-passe deve ter pelo menos 8 caracteres",
       "confirmPasswordPlaceholder": "Confirmar palavra-passe",
       "confirmError": "As palavras-passe não coincidem",

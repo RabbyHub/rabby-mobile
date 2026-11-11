@@ -1,11 +1,15 @@
 import React, { useCallback, useMemo } from 'react';
-import { Pressable, View } from 'react-native';
+import { View } from 'react-native';
 import * as Yup from 'yup';
-import { Trans, useTranslation } from 'react-i18next';
+import { useTranslation } from 'react-i18next';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { NextInput } from '@/components2024/Form/Input';
 import { Button } from '@/components2024/Button';
+import {
+  AgreementNotice,
+  DataAnalysisCard,
+} from '@/components2024/OnboardingConsent';
 import {
   getFormikErrorsCount,
   useAppFormik,
@@ -17,7 +21,6 @@ import { Text } from '@/components/Typography';
 import YesIcon from '@/assets2024/icons/common/check.svg';
 import RcIconKeychainFaceIdCC from '@/assets2024/icons/common/fack_id.svg';
 import RcIconKeychainFingerprintCC from '@/assets2024/icons/common/fingerprint.svg';
-import { useShowUserAgreementLikeModal } from '@/screens/ManagePassword/components/UserAgreementLikeModalInner2024';
 import { APP_TEST_PWD } from '@/constant';
 import { E2E_ID } from '@/constant/e2e';
 import {
@@ -26,20 +29,6 @@ import {
   BOTTOM_BUTTON_WITH_ICON_TITLE_STYLE,
 } from '@/constant/layout';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
-
-// The design's compact switch: a 28.8 x 16 track with a 12.8 knob, i.e. the
-// default 43.2 x 24 switch at two-thirds scale.
-const COMPACT_SWITCH_PROPS = {
-  circleSize: 16,
-  barHeight: 16,
-  circleBorderWidth: 1.6,
-  switchWidthMultiplier: 1.8,
-  switchLeftPx: 2.5,
-  switchRightPx: 2.5,
-} as const;
-// The compact switch is too small to hit reliably, so its whole title row
-// toggles it. The slop stays inside the card's 12pt padding.
-const DATA_ANALYSIS_HIT_SLOP = { top: 12, left: 12, right: 12, bottom: 4 };
 
 const INIT_FORM_DATA = __DEV__
   ? {
@@ -118,7 +107,6 @@ export const PasswordForm: React.FC<PasswordFormProps> = ({
   const [showPasswordFallback, setShowPasswordFallback] = React.useState(false);
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
-  const { viewTermsOfUse, viewPrivacyPolicy } = useShowUserAgreementLikeModal();
 
   const {
     computed: { defaultTypeLabel, couldSetupBiometrics, isFaceID },
@@ -327,69 +315,19 @@ export const PasswordForm: React.FC<PasswordFormProps> = ({
       {/* Spacer pushes the data analysis card down to the footer */}
       <View style={styles.spacer} />
 
-      <View style={styles.dataAnalysisCard}>
-        {/* Not one accessibility element: the switch keeps its own role and test ID */}
-        <Pressable
-          accessible={false}
-          style={styles.dataAnalysisHeader}
-          hitSlop={DATA_ANALYSIS_HIT_SLOP}
-          onPress={() => {
-            formik.setFieldValue(
-              'enableDataAnalysis',
-              !formik.values.enableDataAnalysis,
-              true,
-            );
-          }}>
-          <Text style={styles.dataAnalysisTitle}>
-            {t('page.setting.dataAnalysis')}
-          </Text>
-          <AppSwitch2024
-            {...COMPACT_SWITCH_PROPS}
-            value={formik.values.enableDataAnalysis}
-            {...makeTestIDProps(
-              E2E_ID.onboarding.setPasswordDataAnalysis,
-              formik.values.enableDataAnalysis
-                ? E2E_ID.onboarding.setPasswordDataAnalysisOn
-                : E2E_ID.onboarding.setPasswordDataAnalysisOff,
-            )}
-            onValueChange={value => {
-              formik.setFieldValue('enableDataAnalysis', value, true);
-            }}
-          />
-        </Pressable>
-        <Text style={styles.dataAnalysisDesc}>
-          {t('page.createPassword.dataAnalysisDesc')}
-        </Text>
-      </View>
+      <DataAnalysisCard
+        style={styles.dataAnalysisCard}
+        value={formik.values.enableDataAnalysis}
+        onValueChange={value => {
+          formik.setFieldValue('enableDataAnalysis', value, true);
+        }}
+      />
     </View>
   );
 
   const footer = (
     <View style={styles.footer}>
-      <Text style={styles.agreementText}>
-        <Trans
-          i18nKey="page.createPassword.agreeByContinuing"
-          t={t}
-          components={{
-            terms: (
-              <Text
-                key="terms"
-                style={styles.agreementLinkText}
-                suppressHighlighting
-                onPress={viewTermsOfUse}
-              />
-            ),
-            privacy: (
-              <Text
-                key="privacy"
-                style={styles.agreementLinkText}
-                suppressHighlighting
-                onPress={viewPrivacyPolicy}
-              />
-            ),
-          }}
-        />
-      </Text>
+      <AgreementNotice />
 
       <Button
         disabled={shouldDisabled}
@@ -501,46 +439,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   dataAnalysisCard: {
     marginTop: 24,
-    padding: 12,
-    borderRadius: 12,
-    backgroundColor: colors2024['neutral-bg-5'],
-    gap: 8,
-  },
-  dataAnalysisHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 12,
-  },
-  dataAnalysisTitle: {
-    flex: 1,
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '700',
-    fontFamily: 'SF Pro Rounded',
-    color: colors2024['neutral-title-1'],
-  },
-  dataAnalysisDesc: {
-    fontSize: 13,
-    lineHeight: 16,
-    fontWeight: '400',
-    fontFamily: 'SF Pro Rounded',
-    color: colors2024['neutral-secondary'],
   },
   footer: {
     width: '100%',
     gap: 12,
-  },
-  agreementText: {
-    fontSize: 12,
-    lineHeight: 16,
-    fontWeight: '400',
-    fontFamily: 'SF Pro Rounded',
-    color: colors2024['neutral-secondary'],
-    textAlign: 'center',
-  },
-  agreementLinkText: {
-    color: colors2024['brand-default'],
   },
   spacer: {
     flex: 1,

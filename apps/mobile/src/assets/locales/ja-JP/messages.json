@@ -1857,10 +1857,7 @@
       }
     },
     "createPassword": {
-      "and": "と",
       "confirmPasswordPlaceholder": "パスワードを確認",
-      "termOfUse": "利用規約",
-      "PrivacyPolicy": "プライバシーポリシー",
       "settingUp": "パスワードの設定",
       "passwordMinTip": "最低8文字以上必要です",
       "enable": "{{ bioType }} を有効にする",
@@ -1874,7 +1871,6 @@
       "subTitle": "このパスワードはウォレットのロック解除と、このデバイス上のデータの暗号化に使用されます。パスワードは復元できません。紛失した場合は、リセットしてウォレットを再インポートする必要があります。",
       "passwordMin": "パスワードは8文字以上である必要があります。",
       "passwordRequired": "パスワードを入力してください",
-      "agreeToTerms": "私は、以下を読み、同意します",
       "passwordPlaceholder": "パスワードは8文字以上でなければなりません。",
       "confirmModalDesc": "パスワードを適切に保管してください。一度失われた場合、Rabbyでは変更や回復ができません。",
       "setWallet": "ウォレットを設定",

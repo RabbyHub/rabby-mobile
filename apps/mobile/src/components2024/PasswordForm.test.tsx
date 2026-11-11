@@ -223,10 +223,9 @@ describe('PasswordForm data analysis toggle', () => {
     });
   });
 
-  it('opens the agreements from the consent notice without a checkbox gate', () => {
+  it('opens the agreements from the consent notice', () => {
     render(<PasswordForm onSubmit={jest.fn()} />);
 
-    expect(screen.queryByTestId(onboarding.setPasswordAgreement)).toBeNull();
     fireEvent.press(screen.getByText('Terms of Use'));
     expect(mockViewTermsOfUse).toHaveBeenCalledTimes(1);
     expect(mockViewPrivacyPolicy).not.toHaveBeenCalled();
