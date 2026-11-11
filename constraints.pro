@@ -30,3 +30,19 @@ gen_enforced_dependency(WorkspaceCwd, DependencyIdent, 'workspace:^', Dependency
 gen_enforced_dependency(WorkspaceCwd, DependencyIdent, null, 'devDependencies') :-
   workspace_has_dependency(WorkspaceCwd, DependencyIdent, DependencyRange, 'dependencies'),
   workspace_has_dependency(WorkspaceCwd, DependencyIdent, DependencyRange, 'devDependencies').
+
+% Direct dependency ranges must be exact. Peel the two range prefixes that
+% `yarn add` historically wrote, so `yarn constraints --fix` can replace them
+% with the bare version. scripts/check-pinned-dependencies.js additionally
+% validates aliases, patches, optional dependencies, and non-workspace input
+% manifests such as tpl/sample-package. peerDependencies keep consumer-facing
+% semver ranges by design.
+range_prefix(Range, ExactVersion) :-
+  atom_concat('^', ExactVersion, Range).
+range_prefix(Range, ExactVersion) :-
+  atom_concat('~', ExactVersion, Range).
+
+gen_enforced_dependency(WorkspaceCwd, DependencyIdent, ExactVersion, DependencyType) :-
+  workspace_has_dependency(WorkspaceCwd, DependencyIdent, DependencyRange, DependencyType),
+  DependencyType \= 'peerDependencies',
+  range_prefix(DependencyRange, ExactVersion).
