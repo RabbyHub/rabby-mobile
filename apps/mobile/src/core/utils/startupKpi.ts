@@ -1,4 +1,5 @@
 import { NativeModules } from 'react-native';
+import { logger } from '@/utils/logger';
 
 type Route = 'unlock' | 'home';
 
@@ -33,7 +34,9 @@ export function markFirstContentFrame(route: Route) {
   if (reported) return;
   reported = true;
   const jsMs = Math.round(now() - jsT0);
-  console.info(`[StartupKpi] first_content_frame js_ms=${jsMs} route=${route}`);
+  // logger.info goes through the same channel as the RabbyUnlockPerf markers,
+  // which are proven to survive in release/regression packages.
+  logger.info(`[StartupKpi] first_content_frame js_ms=${jsMs} route=${route}`);
   try {
     StartupKpi?.markFirstContentFrame(route);
   } catch {
