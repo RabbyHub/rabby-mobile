@@ -4,7 +4,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Block } from './Block';
 
-// Component contract for the optional row description. Theme, the touchable
+// Component contract for the optional label suffix. Theme, the touchable
 // wrapper and icons are replaced; the real row layout rules stay under test.
 jest.mock('@/assets/icons/settings/icon-arrow-right.svg', () => ({
   __esModule: true,
@@ -48,34 +48,33 @@ function getRowStyle() {
 }
 
 describe('Settings Block.Item', () => {
-  it('keeps the fixed single-line row when there is no description', () => {
+  it('renders the label alone on the fixed single-line row', () => {
     render(<Block.Item label="Currency" rightNode={rightNode} />);
 
-    expect(screen.getByText('Currency').props.numberOfLines).toBe(1);
+    const label = screen.getByText('Currency');
+    expect(label.props.numberOfLines).toBe(1);
+    expect(StyleSheet.flatten(label.props.style).flexShrink).toBeUndefined();
     expect(getRowStyle()).toMatchObject({ height: 52, alignItems: 'center' });
   });
 
-  it('grows with its content and top-aligns when a description is set', () => {
+  it('keeps a label suffix on the row and lets a long label give way to it', () => {
     render(
       <Block.Item
         label="Help improve Rabby"
-        description="Share anonymous usage data."
+        labelSuffix={<View testID="label-info-icon" />}
         rightNode={rightNode}
       />,
     );
 
-    // The description reads as secondary text, not as a second label.
-    expect(
-      StyleSheet.flatten(
-        screen.getByText('Share anonymous usage data.').props.style,
-      ),
-    ).toMatchObject({ color: 'neutral-secondary', fontSize: 12 });
-    expect(screen.getByText('Help improve Rabby').props.numberOfLines).toBe(2);
-    expect(getRowStyle()).toMatchObject({
-      height: 'auto',
-      minHeight: 52,
-      alignItems: 'flex-start',
+    const label = screen.getByText('Help improve Rabby');
+    // Still one line: the label shrinks and truncates instead of pushing the
+    // suffix out of the row.
+    expect(label.props.numberOfLines).toBe(1);
+    expect(StyleSheet.flatten(label.props.style)).toMatchObject({
+      flexShrink: 1,
     });
+    expect(screen.getByTestId('label-info-icon')).toBeTruthy();
+    expect(getRowStyle()).toMatchObject({ height: 52, alignItems: 'center' });
     expect(screen.getByTestId('setting-row-switch')).toBeTruthy();
   });
 });
