@@ -339,13 +339,13 @@ const getStyles = createGetStyles2024(({ isLight, colors2024 }) => ({
     minWidth: 0,
     // Production keeps the avatar ~4pt from the symbol; the back button cancels
     // the same gap with a negative margin so the glyph keeps its ~7pt gap.
-    gap: 6,
+    gap: 10,
   },
   inlineBack: {
     // QA 1343: the glyph's left ink has to line up with the page content's left
     // edge (~20pt), and the logo follows ~7pt after the glyph like production.
     marginLeft: 0,
-    marginRight: -6,
+    marginRight: -10,
     paddingLeft: 0,
     width: 24,
     height: 24,
