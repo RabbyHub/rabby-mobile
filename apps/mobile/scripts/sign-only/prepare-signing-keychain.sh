@@ -39,6 +39,16 @@ security list-keychains -d user \
 # which fails on the mobile-local runner ("Could not install WWDR certificate").
 security list-keychains -d user -s "$KEYCHAIN_PATH" /Library/Keychains/System.keychain
 
+# fastlane's match looks the WWDR intermediates up in the first keychain of the
+# user search list (this ephemeral one) and falls back to downloading them from
+# apple.com, which fails on the mobile-local runner. Copy the CA certificates
+# that already exist in the System keychain instead.
+WWDR_PEM="$(mktemp -t wwdr)"
+if security find-certificate -a -c "Apple Worldwide Developer Relations" -p /Library/Keychains/System.keychain > "$WWDR_PEM" 2>/dev/null && [ -s "$WWDR_PEM" ]; then
+  security import "$WWDR_PEM" -k "$KEYCHAIN_PATH" -T /usr/bin/codesign >/dev/null 2>&1 || true
+fi
+rm -f "$WWDR_PEM"
+
 if [ -n "$TARGET_PROFILE" ]; then
   python3 - "$TARGET_PROFILE" <<'PY'
 import glob, os, plistlib, subprocess, sys
