@@ -72,6 +72,8 @@ import {
 import { IS_IOS } from '@/core/native/utils';
 import { parseKeychainVersionDeepLinkValue } from '@/core/apis/keychainVersionShared';
 import RNHelpers from '@/core/native/RNHelpers';
+import { toggleDebugChainSelectorLoading } from '@/utils/debugChainSelectorLoading';
+import { apisSingleHome } from '@/screens/Home/hooks/singleHome';
 
 const nextAppLinkRef = {
   current: '' as string,
@@ -141,6 +143,9 @@ type DebugOpenTarget =
   | RabbyGoTarget
   | 'tokenDetail'
   | 'tokenMarketDetail'
+  | 'chainLoading'
+  | 'singleHome'
+  | 'homeAssets'
   | 'approvals'
   | 'importSecret';
 
@@ -413,6 +418,9 @@ function parseNonProductionMaintenanceLink(appLink: string) {
     const isDebugScreenTarget =
       rawTarget === 'tokenDetail' ||
       rawTarget === 'tokenMarketDetail' ||
+      rawTarget === 'chainLoading' ||
+      rawTarget === 'singleHome' ||
+      rawTarget === 'homeAssets' ||
       rawTarget === 'approvals' ||
       rawTarget === 'importSecret';
     if (!isRabbyGoTarget && !isDebugScreenTarget) {
@@ -881,6 +889,27 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
           navigateDeprecated(RootNames.TokenMarketInfo, {
             token: makeTokenFromChain(chain),
           } as any);
+          return;
+        }
+        if (target === 'homeAssets') {
+          toggleDebugChainSelectorLoading(true);
+          apisHomeTabIndex.setTabIndex(1, true);
+          return;
+        }
+        if (target === 'singleHome') {
+          const account = getFallbackAccountSnapshot();
+          if (!account) {
+            return;
+          }
+          apisSingleHome.navigateToSingleHome(account as any);
+          return;
+        }
+        if (target === 'chainLoading') {
+          const forced = toggleDebugChainSelectorLoading();
+          console.log(
+            '[debug-open-target] chain selector loading forced:',
+            forced,
+          );
           return;
         }
         if (target === 'approvals') {

@@ -32,6 +32,7 @@ import { EndBg, useHomeBackgroundOpacity } from '../BgComponents';
 import { createGetStyles2024 } from '@/utils/styles';
 import { prepareSingleAddressTokenAssetsProjection } from '@/store/tokens';
 import { shouldShowChainSelector } from './chainSelectorVisibility';
+import { useDebugChainSelectorLoading } from '@/utils/debugChainSelectorLoading';
 
 const disableInnerIndicator = {
   height: 0,
@@ -48,6 +49,9 @@ function SideChainSelector({
   const { top3Chains } = useAddrTop3Chains(currentAddress);
   const { chainLength } = useAddrChainLength(currentAddress);
   const { balanceLoading, isLoadingCurve } = useSingleHomeLoading();
+  // Dev-only: keep the pill visible with the forced loading state so the
+  // skeleton can be reviewed on any address (QA 1157).
+  const debugForcedLoading = useDebugChainSelectorLoading();
 
   // The chain stats store only recomputes on token/defi/nft store changes. On
   // app restart or address switch the stores can already hold the cached data
@@ -63,7 +67,7 @@ function SideChainSelector({
     !shouldShowChainSelector({
       currentAddress,
       chainLength,
-      balanceLoading,
+      balanceLoading: balanceLoading || (__DEV__ && debugForcedLoading),
       isLoadingCurve,
     })
   ) {
@@ -76,6 +80,9 @@ function SideChainSelector({
       top3Chains={top3Chains}
       onChainClick={onChainClick}
       chainServerId={chain}
+      loading={
+        balanceLoading || isLoadingCurve || (__DEV__ && debugForcedLoading)
+      }
     />
   );
 }
