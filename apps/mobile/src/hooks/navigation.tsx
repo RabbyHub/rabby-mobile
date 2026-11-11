@@ -230,9 +230,6 @@ export const useStackScreenConfig = () => {
         animationDuration: 200,
         ...IOS_LIQUID_GLASS_HEADER_OPTIONS,
         ...headerPresets.onlyTitle,
-        // Native bar button item: UIKit owns the layout (correct on every
-        // device) and hidesSharedBackground keeps the iOS 26 glass capsule off.
-        unstable_headerLeftItems: IS_IOS ? renderNativeBackItems : undefined,
         headerTitleStyle: {
           ...(headerPresets.onlyTitle.headerTitleStyle as object),
           color: colors['neutral-title-1'],
@@ -240,26 +237,23 @@ export const useStackScreenConfig = () => {
         },
         // headerTintColor: colors['neutral-bg-1'],
         headerTintColor: colors['neutral-title-1'],
-        // iOS uses the native bar button item above; Android keeps the custom
-        // headerLeft because `onlyTitle` sets headerBackVisible: false and the
-        // custom control also provides the navBack fallback on first routes.
-        ...(IS_IOS
-          ? {}
-          : {
-              headerLeft: ({ tintColor }: { tintColor?: string }) => (
-                <CustomTouchableOpacity
-                  as="RNGHTouchableOpacity"
-                  style={styles.backButtonStyle}
-                  hitSlop={24}
-                  onPress={navBack}>
-                  <RcIconHeaderBack
-                    width={24}
-                    height={24}
-                    color={tintColor || colors['neutral-body']}
-                  />
-                </CustomTouchableOpacity>
-              ),
-            }),
+        // `onlyTitle` hides the native back item, so both platforms render this
+        // control. develop pins @react-navigation/native-stack 7.3.26 (#2339),
+        // which has no `unstable_headerLeftItems`; a JS `headerLeft` is the only
+        // path that renders on that pin, so keep it as the single source.
+        headerLeft: ({ tintColor }: { tintColor?: string }) => (
+          <CustomTouchableOpacity
+            as="RNGHTouchableOpacity"
+            style={styles.backButtonStyle}
+            hitSlop={24}
+            onPress={navBack}>
+            <RcIconHeaderBack
+              width={24}
+              height={24}
+              color={tintColor || colors['neutral-body']}
+            />
+          </CustomTouchableOpacity>
+        ),
       };
 
       const result = merge(
@@ -287,7 +281,6 @@ export const useStackScreenConfig = () => {
         animationDuration: 200,
         ...IOS_LIQUID_GLASS_HEADER_OPTIONS,
         ...headerPresets.onlyTitle,
-        unstable_headerLeftItems: IS_IOS ? renderNativeBackItems : undefined,
         headerTitleStyle: {
           ...(headerPresets.onlyTitle.headerTitleStyle as object),
           color: colors2024['neutral-title-1'],
@@ -295,15 +288,11 @@ export const useStackScreenConfig = () => {
           fontSize: 20,
         },
         headerTintColor: colors2024['neutral-title-1'],
-        // iOS uses the native bar button item above; Android keeps the custom
-        // back control for the same reasons as `mergeScreenOptions`.
-        ...(IS_IOS
-          ? {}
-          : {
-              headerLeft: ({ tintColor }: { tintColor?: string }) => (
-                <HeaderBackPressable tintColor={tintColor} />
-              ),
-            }),
+        // Same single JS path as `mergeScreenOptions`: native-stack 7.3.26 has
+        // no `unstable_headerLeftItems`.
+        headerLeft: ({ tintColor }: { tintColor?: string }) => (
+          <HeaderBackPressable tintColor={tintColor} />
+        ),
       };
 
       const result = merge(
@@ -367,37 +356,6 @@ export function useBottomTabScreenConfig() {
 
   return { mergeBottomTabOptions2024 };
 }
-
-// NOTE: `unstable_headerLeftItems` is the native-stack bridge to RNScreens'
-// `headerLeftBarButtonItems`. It gives UIKit ownership of the bar item layout
-// (correct on every device) and lets us pass `hidesSharedBackground` to drop the
-// iOS 26 glass capsule. Re-check this prop name on every @react-navigation
-// upgrade; if it is renamed/removed, fall back to a custom headerLeft with a
-// device-independent layout rather than a fixed offset.
-// The native bar item's leading inset matches the custom header's (16pt), so
-// the only difference was the SF Symbol's own optical padding: it pushed the
-// glyph ~8pt right of the app icon. Use the same 24pt chevron artwork as the
-// JS header so both paths render at the same x on every device.
-const renderNativeBackItems: NonNullable<
-  NativeStackNavigationOptions['unstable_headerLeftItems']
-> = ({ tintColor }) => [
-  {
-    type: 'button',
-    label: '',
-    // A 44x24 image (chevron drawn in the leading 24pt) keeps the standard
-    // 44pt tap target while making the glyph start at the item's leading edge,
-    // which is the same 16pt inset the JS header used. No offset needed.
-    icon: {
-      type: 'image',
-      source: require('@/assets/icons/header/back-cc-wide.png'),
-      tinted: true,
-    },
-    width: 44,
-    tintColor,
-    hidesSharedBackground: true,
-    onPress: navBack,
-  },
-];
 
 const styles = StyleSheet.create({
   // Plain icon box for JS-rendered custom headers; the caller aligns it.
