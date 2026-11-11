@@ -19,6 +19,8 @@ module.exports = {
     '<rootDir>/scripts/.*\\.test\\.(cjs|mjs)$',
   ],
   transformIgnorePatterns: [
-    'node_modules/(?!((jest-)?react-native|@react-native(-community)?|react-native-root-toast|react-native-root-siblings|react-native-walkthrough-tooltip|@debank|@rabby-wallet/rabby-security-engine|@rabby-wallet/rabby-bridge|p-queue|p-timeout|eventemitter3)/)',
+    // `rabby-api` and `rabby-action` ship ESM-only `dist/*.js`, so tests that
+    // render a screen reaching them must transform those packages too.
+    'node_modules/(?!((jest-)?react-native|@react-native(-community)?|react-native-root-toast|react-native-root-siblings|react-native-walkthrough-tooltip|@debank|@rabby-wallet/rabby-security-engine|@rabby-wallet/rabby-bridge|@rabby-wallet/rabby-api|@rabby-wallet/rabby-action|p-queue|p-timeout|eventemitter3)/)',
   ],
 };
