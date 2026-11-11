@@ -345,7 +345,7 @@ const getStyles = createGetStyles2024(({ isLight, colors2024 }) => ({
     // QA 1343: the glyph's left ink has to line up with the page content's left
     // edge (~20pt), and the logo follows ~7pt after the glyph like production.
     marginLeft: 0,
-    marginRight: -7,
+    marginRight: -6,
     paddingLeft: 0,
     width: 24,
     height: 24,
