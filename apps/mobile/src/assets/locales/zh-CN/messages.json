@@ -3484,7 +3484,6 @@
       },
       "execute": {
         "title": "执行",
-        "buySubtitle": "同链交易依次执行，不同链并行执行。",
         "buySubtitleShort": "同链依次执行，不同链并行。",
         "sellSubtitle": "所得资金保留在各自链上",
         "estReceipt": "预计到账(USD)",

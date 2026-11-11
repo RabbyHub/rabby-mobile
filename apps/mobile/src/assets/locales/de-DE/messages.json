@@ -3630,7 +3630,6 @@
       },
       "execute": {
         "title": "Ausführen",
-        "buySubtitle": "Transaktionen im selben Netzwerk laufen nacheinander, in verschiedenen Netzwerken parallel.",
         "buySubtitleShort": "Pro Netzwerk nacheinander, netzwerkübergreifend parallel.",
         "sellSubtitle": "Erlöse verbleiben im jeweiligen Netzwerk",
         "estReceipt": "Geschätzter Erhalt(USD)",

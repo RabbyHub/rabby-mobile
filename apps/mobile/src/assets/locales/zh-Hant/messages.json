@@ -3509,7 +3509,6 @@
       },
       "execute": {
         "title": "執行",
-        "buySubtitle": "同鏈交易依序執行，不同鏈並行執行。",
         "buySubtitleShort": "同鏈依序執行，不同鏈並行。",
         "sellSubtitle": "所得資金保留在各自鏈上",
         "estReceipt": "預計到帳(USD)",

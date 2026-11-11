@@ -3337,7 +3337,6 @@
       },
       "execute": {
         "title": "실행",
-        "buySubtitle": "같은 체인의 거래는 순서대로, 다른 체인의 거래는 병렬로 실행됩니다.",
         "buySubtitleShort": "체인별로 순서대로, 체인 간에는 병렬로 실행됩니다.",
         "sellSubtitle": "판매 대금은 각 체인에 남습니다",
         "estReceipt": "예상 수령액(USD)",

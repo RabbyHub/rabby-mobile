@@ -3454,7 +3454,6 @@
       },
       "execute": {
         "title": "Thực hiện",
-        "buySubtitle": "Giao dịch trên cùng chuỗi chạy lần lượt; trên các chuỗi khác nhau chạy song song.",
         "buySubtitleShort": "Lần lượt trên mỗi chuỗi, song song giữa các chuỗi.",
         "sellSubtitle": "Số tiền thu được vẫn ở trên từng chuỗi tương ứng",
         "estReceipt": "Nhận ước tính(USD)",

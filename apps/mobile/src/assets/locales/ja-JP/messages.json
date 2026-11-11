@@ -3387,7 +3387,6 @@
       },
       "execute": {
         "title": "実行",
-        "buySubtitle": "同じチェーンの取引は順番に、異なるチェーンの取引は並行して実行されます。",
         "buySubtitleShort": "チェーンごとに順番に、チェーン間は並行して実行します。",
         "sellSubtitle": "売却代金はそれぞれのチェーンに残ります",
         "estReceipt": "推定受取額(USD)",

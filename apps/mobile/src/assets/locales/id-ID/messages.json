@@ -3337,7 +3337,6 @@
       },
       "execute": {
         "title": "Eksekusi",
-        "buySubtitle": "Transaksi di rantai yang sama berjalan satu per satu; di rantai berbeda berjalan paralel.",
         "buySubtitleShort": "Berurutan per rantai, paralel antar-rantai.",
         "sellSubtitle": "Hasil penjualan tetap berada di rantai masing-masing",
         "estReceipt": "Perkiraan diterima(USD)",

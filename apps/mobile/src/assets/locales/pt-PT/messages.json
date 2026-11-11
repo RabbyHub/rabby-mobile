@@ -3631,7 +3631,6 @@
       },
       "execute": {
         "title": "Executar",
-        "buySubtitle": "As transações na mesma rede são executadas uma de cada vez; em redes diferentes, em paralelo.",
         "buySubtitleShort": "Por ordem em cada rede, em paralelo entre redes.",
         "sellSubtitle": "Os valores recebidos ficam nas respetivas redes",
         "estReceipt": "Receção est.(USD)",

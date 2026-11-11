@@ -3455,7 +3455,6 @@
       },
       "execute": {
         "title": "Execute",
-        "buySubtitle": "Trades on the same chain run one by one; different chains run in parallel.",
         "buySubtitleShort": "Runs in order per chain, in parallel across chains.",
         "sellSubtitle": "Proceeds remain on respective chains",
         "estReceipt": "Est. receipt(USD)",

@@ -3347,7 +3347,6 @@
       },
       "execute": {
         "title": "Exécution",
-        "buySubtitle": "Les transactions d'un même réseau s'exécutent l'une après l'autre ; celles de réseaux différents s'exécutent en parallèle.",
         "buySubtitleShort": "Dans l'ordre sur chaque réseau, en parallèle entre les réseaux.",
         "sellSubtitle": "Les produits restent sur leurs réseaux respectifs",
         "estReceipt": "Réception est.(USD)",
