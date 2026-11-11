@@ -240,6 +240,10 @@ function MainListBlocks() {
         state.hideBackIcon
           ? {
               headerLeft: () => null,
+              // The shared iOS options install a native bar button item, which
+              // takes precedence over `headerLeft`; clear it too so the first
+              // import password flow cannot navigate back before completing.
+              unstable_headerLeftItems: () => [],
             }
           : {},
       ),

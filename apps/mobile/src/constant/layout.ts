@@ -146,6 +146,7 @@ export const RootNames = {
   StackTestkits: 'StackTestkits',
   DevUIFontShowCase: 'DevUIFontShowCase',
   DevUIAnimatedTextAndView: 'DevUIAnimatedTextAndView',
+  DevUIAutoFitTitlePlayground: 'DevUIAutoFitTitlePlayground',
   DevUIFormShowCase: 'DevUIFormShowCase',
   DevUIAccountShowCase: 'DevUIAccountShowCase',
   DevUIComponents2024ShowCase: 'DevUIComponents2024ShowCase',
@@ -395,6 +396,7 @@ function makeScreenSpecConfig() {
       // StackTestkits
       [RootNames.DevUIFontShowCase]: bg1Default2024Conf,
       [RootNames.DevUIAnimatedTextAndView]: bg1Default2024Conf,
+      [RootNames.DevUIAutoFitTitlePlayground]: bg1Default2024Conf,
       [RootNames.DevUIFormShowCase]: bg1Default2024Conf,
       [RootNames.DevUIAccountShowCase]: bg1Default2024Conf,
       [RootNames.DevUIComponents2024ShowCase]: bg1Default2024Conf,

@@ -131,6 +131,12 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   // pill its intrinsic width instead of letting it fill the middle. Stretch it
   // while searching so the pill keeps the same side gaps on every screen width.
   centerSearching: {
+    // `TopSearch`'s pill is `flex: 1`. With the default column axis that flex
+    // applies to the height of a height-less container, so Yoga collapsed the
+    // pill to 0pt and the hidden-overflow input became untappable. A row axis
+    // makes the flex resolve against the width instead and the pill keeps its
+    // intrinsic height.
+    flexDirection: 'row',
     alignItems: 'stretch',
   },
   title: {

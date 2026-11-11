@@ -751,6 +751,7 @@ export default function AppNavigation() {
                       headerTitleAlign: 'left',
                       headerBackVisible: false,
                       headerLeft: () => null,
+                      unstable_headerLeftItems: () => [],
                       headerTitle: '',
                       headerStyle: {
                         // backgroundColor: colors['neutral-bg-2'],
@@ -770,6 +771,7 @@ export default function AppNavigation() {
                         // frame of the push transition.
                         headerBackVisible: false,
                         headerLeft: () => null,
+                        unstable_headerLeftItems: () => [],
                         // Build the row from route params so token detail and
                         // token market detail render the same header from the
                         // first frame, with no layout shift between them.
@@ -817,6 +819,7 @@ export default function AppNavigation() {
                         headerTitleAlign: 'left',
                         headerBackVisible: false,
                         headerLeft: () => null,
+                        unstable_headerLeftItems: () => [],
                         // Custom header: fixed leading/middle/trailing slots
                         // owned by us, so the row does not depend on the
                         // native title-slot origin (QA 1343).

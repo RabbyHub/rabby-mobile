@@ -114,6 +114,7 @@ type OnParseUrlAndProcessAction = (payload: {
   testkitScreen?:
     | typeof RootNames.DevCapabilityFile
     | typeof RootNames.DevUIAnimatedTextAndView
+    | typeof RootNames.DevUIAutoFitTitlePlayground
     | typeof RootNames.DevUISafeSvgMedia
     | typeof RootNames.DebugLogViewer
     | typeof RootNames.StartupPerformanceLogViewer
@@ -162,6 +163,7 @@ type DebugOpenTarget =
 const NON_PRODUCTION_TESTKIT_SCREENS = {
   DevCapabilityFile: RootNames.DevCapabilityFile,
   DevUIAnimatedTextAndView: RootNames.DevUIAnimatedTextAndView,
+  DevUIAutoFitTitlePlayground: RootNames.DevUIAutoFitTitlePlayground,
   DevUISafeSvgMedia: RootNames.DevUISafeSvgMedia,
   DebugLogViewer: RootNames.DebugLogViewer,
   StartupPerformanceLogViewer: RootNames.StartupPerformanceLogViewer,
