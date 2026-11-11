@@ -1882,7 +1882,9 @@
       "setWallet": "ウォレットを設定",
       "biometricsFail": "生体認証を有効にできませんでした",
       "confirmRequired": "パスワードを確認してください",
-      "ConfirmPassword": "パスワードを確認"
+      "ConfirmPassword": "パスワードを確認",
+      "dataAnalysisDesc": "匿名の利用データを共有して、Rabby の改善にご協力ください。収集されたデータがお客様やお客様のアカウントに関連付けられることはありません。この設定は「設定」からいつでも変更できます。",
+      "agreeByContinuing": "続行することで、<terms>利用規約</terms>に同意し、<privacy>プライバシーポリシー</privacy>を確認したものとみなされます。"
     },
     "setting": {
       "removedToken": {
@@ -1919,7 +1921,8 @@
       "searchCurrency": "通貨を検索",
       "currency": "通貨",
       "screenshotReportSwitch": "スクリーンショットでバグを報告",
-      "dataAnalysis": "データ分析",
+      "dataAnalysis": "Rabby の改善に協力する",
+      "dataAnalysisDesc": "匿名の利用データを共有して、Rabby の改善にご協力ください。収集されたデータがお客様やお客様のアカウントに関連付けられることはありません。",
       "bugReportChat": "チャットでフィードバックを送信",
       "features": "機能",
       "manageWallets": "ウォレットを管理"

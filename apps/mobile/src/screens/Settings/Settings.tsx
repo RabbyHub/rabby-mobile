@@ -832,6 +832,7 @@ function SettingsBlocks() {
           },
           {
             label: t('page.setting.dataAnalysis'),
+            description: t('page.setting.dataAnalysisDesc'),
             icon: RcDataAnalysis,
             onPress: () => {
               toggleDataAnalysisRef?.current?.toggle();

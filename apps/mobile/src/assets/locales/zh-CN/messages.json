@@ -1554,7 +1554,9 @@
       "setWallet": "设置钱包",
       "termOfUse": "使用条款",
       "agree": "我已阅读并同意<1/> <2>使用条款</2>",
-      "confirmTitle": "确认密码"
+      "confirmTitle": "确认密码",
+      "dataAnalysisDesc": "分享匿名使用数据以帮助改进 Rabby。收集的数据不会与您或您的账户关联。您可以随时在设置中更改。",
+      "agreeByContinuing": "继续即表示您同意<terms>使用条款</terms>并知悉<privacy>隐私政策</privacy>。"
     },
     "safeQueue": {
       "replaceBtn": "替换",
@@ -2016,7 +2018,8 @@
       "currency": "货币",
       "searchCurrency": "搜索货币",
       "screenshotReportSwitch": "截图报告问题",
-      "dataAnalysis": "数据分析",
+      "dataAnalysis": "帮助改进 Rabby",
+      "dataAnalysisDesc": "分享匿名使用数据以帮助改进 Rabby。收集的数据不会与您或您的账户关联。",
       "bugReportChat": "通过聊天分享反馈",
       "features": "功能",
       "manageWallets": "管理钱包"

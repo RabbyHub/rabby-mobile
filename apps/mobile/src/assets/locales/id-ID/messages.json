@@ -1544,7 +1544,9 @@
       "ConfirmPassword": "Konfirmasi kata sandi",
       "title": "Atur Kata Sandi",
       "passwordMin": "Kata sandi harus memiliki panjang minimal 8 karakter",
-      "passwordPlaceholder": "Kata sandi harus memiliki panjang setidaknya 8 karakter"
+      "passwordPlaceholder": "Kata sandi harus memiliki panjang setidaknya 8 karakter",
+      "dataAnalysisDesc": "Bagikan data penggunaan anonim untuk membantu meningkatkan Rabby. Data yang dikumpulkan tidak dikaitkan dengan Anda atau akun Anda. Anda dapat mengubahnya kapan saja di Pengaturan.",
+      "agreeByContinuing": "Dengan melanjutkan, Anda menyetujui <terms>Syarat Penggunaan</terms> dan mengakui <privacy>Kebijakan Privasi</privacy>."
     },
     "importSafe": {
       "error": {
@@ -1918,7 +1920,8 @@
       "searchCurrency": "Cari Mata Uang",
       "screenshotReportSwitch": "Ambil tangkapan layar untuk melaporkan bug",
       "currency": "Mata Uang",
-      "dataAnalysis": "Analisis Data",
+      "dataAnalysis": "Bantu tingkatkan Rabby",
+      "dataAnalysisDesc": "Bagikan data penggunaan anonim untuk membantu meningkatkan Rabby. Data yang dikumpulkan tidak dikaitkan dengan Anda atau akun Anda.",
       "bugReportChat": "Bagikan Umpan Balik melalui Obrolan",
       "features": "Fitur",
       "manageWallets": "Kelola Dompet"

@@ -1697,7 +1697,9 @@
       "passwordPlaceholder": "La contraseña debe tener al menos 8 caracteres.",
       "confirmModalDesc": "Guarda bien tu contraseña. Si la pierdes, Rabby no podrá cambiarla ni recuperarla.",
       "setWallet": "Configurar cartera",
-      "biometricsFail": "Error al habilitar la autenticación biométrica"
+      "biometricsFail": "Error al habilitar la autenticación biométrica",
+      "dataAnalysisDesc": "Comparte datos de uso anónimos para ayudar a mejorar Rabby. Los datos recopilados no se asocian contigo ni con tu cuenta. Puedes cambiarlo en cualquier momento en Configuración.",
+      "agreeByContinuing": "Al continuar, aceptas los <terms>Términos de Uso</terms> y reconoces la <privacy>Política de Privacidad</privacy>."
     },
     "approvalsAddressList": {
       "title": "Aprobaciones"
@@ -1972,7 +1974,8 @@
       "searchCurrency": "Buscar moneda",
       "currency": "Moneda",
       "screenshotReportSwitch": "Captura de pantalla para informar un error",
-      "dataAnalysis": "Análisis de datos",
+      "dataAnalysis": "Ayuda a mejorar Rabby",
+      "dataAnalysisDesc": "Comparte datos de uso anónimos para ayudar a mejorar Rabby. Los datos recopilados no se asocian contigo ni con tu cuenta.",
       "bugReportChat": "Compartir comentarios por chat",
       "features": "Funciones",
       "manageWallets": "Gestionar carteras"
