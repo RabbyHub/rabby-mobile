@@ -42,7 +42,15 @@
     "test:integration": "yarn workspace rabby-mobile test:integration:ci",
     "test:mergeVault": "yarn workspace @rabby-wallet/service-keyring  test:mergeVault",
     "test:verbose": "yarn workspaces foreach --parallel --verbose run test:verbose",
-    "update-readme-content": "ts-node scripts/update-readme-content.ts"
+    "update-readme-content": "ts-node scripts/update-readme-content.ts",
+    "sign-only:android": "yarn workspace rabby-mobile sign-only:android",
+    "sign-only:ios": "yarn workspace rabby-mobile sign-only:ios",
+    "sign-only:upload:android": "yarn workspace rabby-mobile sign-only:upload:android",
+    "sign-only:upload:ios": "yarn workspace rabby-mobile sign-only:upload:ios",
+    "sign-only:full:android": "yarn workspace rabby-mobile sign-only:full:android",
+    "sign-only:full:ios": "yarn workspace rabby-mobile sign-only:full:ios",
+    "sign-only:full:all": "yarn workspace rabby-mobile sign-only:full:all",
+    "sign-only:test": "yarn workspace rabby-mobile sign-only:test"
   },
   "simple-git-hooks": {
     "pre-push": "yarn lint"
