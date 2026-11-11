@@ -178,7 +178,9 @@ export const PerpsProTradeAmountSlider: React.FC<{
             pointerEvents="none"
             style={[styles.tooltip, tooltipStyle]}
             testID="perps-pro-trade-amount-slider-tooltip">
-            <Text style={styles.tooltipText}>{Math.round(value)}%</Text>
+            <Text numberOfLines={1} style={styles.tooltipText}>
+              {Math.round(value)}%
+            </Text>
           </Animated.View>
         </View>
       ) : null}
@@ -280,7 +282,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     justifyContent: 'center',
     width: TRADE_SLIDER_TOOLTIP_WIDTH,
     left: 0,
-    paddingHorizontal: 4,
+    // No horizontal padding: "100%" needs about 28pt, which is all a 4pt
+    // inset leaves, so wider system digits wrapped it onto a second line.
     position: 'absolute',
     top: -18,
     zIndex: 4,
