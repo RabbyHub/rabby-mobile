@@ -7,7 +7,7 @@ import { KeyringAccountWithAlias } from '@/hooks/account';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { Text } from '@/components/Typography';
 import { ellipsisAddress } from '@/utils/address';
-import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
+import { HeaderBackPressable } from '@/hooks/navigation';
 
 interface IProps {
   isSearching?: boolean;
@@ -18,13 +18,20 @@ interface IProps {
   currentAccount?: KeyringAccountWithAlias | null;
 }
 export const HeaderCenter = (props: IProps) => {
-  const { styles } = useTheme2024({ getStyle });
+  const { styles, colors2024 } = useTheme2024({ getStyle });
   return (
-    <View
-      pointerEvents="box-none"
-      style={[styles.header, props.isSearching && styles.headerSearching]}>
+    <View pointerEvents="box-none" style={styles.header}>
+      {/* The row draws its own back button (same pattern as the token detail
+          header) so the search field can start right after it on every device
+          instead of inheriting the native iOS 26 back-item inset. QA 1328. */}
+      <HeaderBackPressable
+        style={styles.inlineBack}
+        tintColor={colors2024['neutral-title-1']}
+      />
       {props.isSearching ? (
-        <TopSearch value={props.inputValue} onChange={props.inputOnChange} />
+        <View style={styles.searchArea}>
+          <TopSearch value={props.inputValue} onChange={props.inputOnChange} />
+        </View>
       ) : (
         <View style={styles.title}>
           <WalletIcon
@@ -46,26 +53,32 @@ export const HeaderCenter = (props: IProps) => {
 };
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
-const HEADER_CONTENT_WIDTH = SCREEN_WIDTH - 100;
-// The native title container is not centred on the screen: iOS lays it out
-// after the leading back item (+65pt including the bar inset), Android ends it
-// short of the trailing action (-20pt). Reserve the missing space on the
-// opposite edge so the inner centring box is symmetric about the screen centre.
-const HEADER_SIDE_RESERVE = IS_IOS
-  ? { paddingRight: 65 }
-  : IS_ANDROID
-  ? { paddingLeft: 20 }
-  : {};
+// Leading bar inset (16) + our 24pt back button + 8pt gap + trailing action
+// slot (44) + right inset (16).
+const HEADER_CONTENT_WIDTH = SCREEN_WIDTH - 16 - 24 - 8 - 44 - 16;
+const BACK_BUTTON_SLOT = 24 + 8;
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   header: {
     width: HEADER_CONTENT_WIDTH,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    ...HEADER_SIDE_RESERVE,
   },
-  headerSearching: {
+  // Absolute so the wallet/alias title stays centred in the row.
+  inlineBack: {
+    position: 'absolute',
+    left: 0,
+    width: 24,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  searchArea: {
+    flex: 1,
+    marginLeft: BACK_BUTTON_SLOT,
     flexDirection: 'row',
+    alignItems: 'center',
   },
   title: {
     gap: 8,
