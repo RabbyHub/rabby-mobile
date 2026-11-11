@@ -42,7 +42,7 @@ export const MaxPriceImpactSelector = ({
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -59,7 +59,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     padding: 2,
     borderRadius: 10,
-    backgroundColor: colors2024['neutral-bg-0'],
+    // dark bg-0 is the bottom bar's own colour, which would hide the track
+    backgroundColor: colors2024[isLight ? 'neutral-bg-0' : 'neutral-bg-2'],
   },
   segment: {
     width: 60,

@@ -3427,7 +3427,6 @@
       "holdingsTitle": "Holdings",
       "marketCap": "Market Cap",
       "valuePnl": "Value / PnL",
-      "cancel": "cancel",
       "searchMarket": "Search Meme Market",
       "noMatch": "No matching Memes",
       "noHoldings": "No holdings yet",
@@ -3461,7 +3460,6 @@
       },
       "execute": {
         "title": "Execute",
-        "buySubtitle": "Trades on the same chain run one by one; different chains run in parallel.",
         "buySubtitleShort": "Runs in order per chain, in parallel across chains.",
         "sellSubtitle": "Proceeds remain on respective chains",
         "estReceipt": "Est. receipt(USD)",

@@ -53,6 +53,7 @@ export const useMemeTradeTask = ({
   const { getDexQuote } = useQuoteMethods();
   const [supportedDexList] = useSwapSupportedDexList();
   const executorRef = useRef<MemeTradeExecutor | null>(null);
+  const getMaxPriceImpactPct = useMemoizedFn(() => maxPriceImpactPct);
 
   const lifecycle = useMemo(
     () =>
@@ -69,7 +70,7 @@ export const useMemeTradeTask = ({
       account,
       getDexQuote,
       supportedDexList,
-      maxPriceImpactPct,
+      getMaxPriceImpactPct,
     });
     store.setState({ status: 'running' });
     const executor = createMemeTradeExecutor(runLegs, createLegRunner(deps), {
@@ -106,13 +107,23 @@ export const useMemeTradeTask = ({
     }
   });
 
+  const openExitDialog = useMemoizedFn(() => {
+    store.setState({ exitDialogOpen: true });
+    lifecycle.setExitDialogOpen(true);
+  });
+
   useEffect(() => {
     lifecycle.setAppActive(AppState.currentState === 'active');
-    const subscription = AppState.addEventListener('change', state =>
-      lifecycle.setAppActive(state === 'active'),
-    );
+    const subscription = AppState.addEventListener('change', state => {
+      // As in Convert Dust: leaving the app mid-run comes back to Continue / Stop
+      // instead of resuming on its own.
+      if (state !== 'active' && store.getState().status === 'running') {
+        openExitDialog();
+      }
+      lifecycle.setAppActive(state === 'active');
+    });
     return () => subscription.remove();
-  }, [lifecycle]);
+  }, [lifecycle, openExitDialog, store]);
 
   useEffect(() => {
     let timer: ReturnType<typeof setInterval> | undefined;
@@ -143,11 +154,6 @@ export const useMemeTradeTask = ({
     },
     [],
   );
-
-  const openExitDialog = useMemoizedFn(() => {
-    store.setState({ exitDialogOpen: true });
-    lifecycle.setExitDialogOpen(true);
-  });
 
   const continueExecution = useMemoizedFn(() => {
     store.setState({ exitDialogOpen: false });

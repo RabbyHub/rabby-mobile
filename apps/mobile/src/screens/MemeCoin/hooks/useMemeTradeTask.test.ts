@@ -92,6 +92,72 @@ describe('useMemeTradeTask manual retry', () => {
     mockCreateDeps.mockImplementation(() => ({ deps: {}, dispose: jest.fn() }));
   });
 
+  it('gives a running leg the max price impact selected last', async () => {
+    holds.a = deferred();
+    prepareResults.a = [ok];
+    const account = {} as Parameters<typeof useMemeTradeTask>[0]['account'];
+    const legs = [leg('a')];
+    const hook = renderHook(
+      ({ maxPriceImpactPct }) =>
+        useMemeTradeTask({ account, legs, maxPriceImpactPct }),
+      { initialProps: { maxPriceImpactPct: 5 } },
+    );
+    act(() => hook.result.current.start());
+    const { getMaxPriceImpactPct } = mockCreateDeps.mock.calls[0][0];
+    expect(getMaxPriceImpactPct()).toBe(5);
+
+    hook.rerender({ maxPriceImpactPct: 20 });
+    expect(getMaxPriceImpactPct()).toBe(20);
+
+    holds.a.release();
+    await act(async () => void (await flush()));
+  });
+
+  it('asks Continue / Stop when the app leaves the foreground mid-run, and stays paused', async () => {
+    let onAppState: (state: string) => void = () => undefined;
+    jest.spyOn(AppState, 'addEventListener').mockImplementation(((
+      _type: string,
+      listener: (state: string) => void,
+    ) => {
+      onAppState = listener;
+      return { remove: jest.fn() };
+    }) as typeof AppState.addEventListener);
+    holds.a = deferred();
+    prepareResults.a = [ok];
+    prepareResults.b = [ok];
+    const { hook, state, settle } = setup([leg('a'), leg('b')]);
+    act(() => hook.result.current.start());
+    await settle();
+
+    act(() => onAppState('background'));
+    expect(state().exitDialogOpen).toBe(true);
+
+    act(() => onAppState('active'));
+    holds.a.release();
+    await settle();
+    // the chain's next leg waits behind the dialog
+    expect(prepareCalls).toEqual(['a']);
+
+    act(() => hook.result.current.continueExecution());
+    await settle();
+    expect(prepareCalls).toEqual(['a', 'b']);
+    expect(state().status).toBe('finished');
+  });
+
+  it('leaves the dialog closed when the app goes to the background before Start', () => {
+    let onAppState: (state: string) => void = () => undefined;
+    jest.spyOn(AppState, 'addEventListener').mockImplementation(((
+      _type: string,
+      listener: (state: string) => void,
+    ) => {
+      onAppState = listener;
+      return { remove: jest.fn() };
+    }) as typeof AppState.addEventListener);
+    const { state } = setup([leg('a')]);
+    act(() => onAppState('background'));
+    expect(state().exitDialogOpen).toBe(false);
+  });
+
   it('ignores retry for a leg that has not failed', async () => {
     holds.a = deferred();
     prepareResults.a = [failed];

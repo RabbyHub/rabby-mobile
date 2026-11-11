@@ -22,8 +22,8 @@ export type RouteAdapter = {
 };
 
 export type LegRunnerDeps = {
-  /** user-selected max price impact in percent: 1 / 5 / 20 */
-  maxPriceImpactPct: number;
+  /** user-selected, in percent: 1 / 5 / 20; read at each quote as the execute page can change it */
+  getMaxPriceImpactPct(): number;
   routes: Record<LegKind, RouteAdapter>;
   getToken(chainServerId: string, tokenId: string): Promise<TokenItem>;
   isNativeToken(chainServerId: string, tokenId: string): boolean;
@@ -129,7 +129,8 @@ export const createLegRunner = (deps: LegRunnerDeps): LegRunner => {
       }
 
       await gate.wait();
-      const slippagePct = deps.maxPriceImpactPct / 2;
+      // half for the quote's price impact, half for on-chain slippage: the total stays within the max
+      const slippagePct = deps.getMaxPriceImpactPct() / 2;
       const quote = await deps.routes[leg.kind].quote({
         payToken,
         receiveToken,

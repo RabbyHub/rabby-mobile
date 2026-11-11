@@ -63,7 +63,7 @@ const setup = (
     ...routeOver,
   };
   const deps: LegRunnerDeps = {
-    maxPriceImpactPct: 5,
+    getMaxPriceImpactPct: () => 5,
     routes: { swap: route, bridge: route },
     getToken: async (_chain, id) => tokens[id],
     isNativeToken: (_chain, id) => id === 'eth',
@@ -195,6 +195,26 @@ describe('createLegRunner.prepareAndBroadcast', () => {
     );
     await expect(
       fine.runner.prepareAndBroadcast(leg(), createPauseGate()),
+    ).resolves.toMatchObject({ ok: true });
+  });
+
+  it('uses the max price impact selected when the leg is quoted', async () => {
+    let maxImpact = 1;
+    const t = setup(
+      { getMaxPriceImpactPct: () => maxImpact },
+      {
+        quote: async ({ payAmount }) => ({
+          receiveAmount: payAmount.times(2 * 0.95),
+          build: async () => TXS,
+        }),
+      },
+    );
+    await expect(
+      t.runner.prepareAndBroadcast(leg(), createPauseGate()),
+    ).resolves.toEqual({ ok: false, reason: 'priceImpact' });
+    maxImpact = 20;
+    await expect(
+      t.runner.prepareAndBroadcast(leg(), createPauseGate()),
     ).resolves.toMatchObject({ ok: true });
   });
 

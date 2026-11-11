@@ -23,8 +23,10 @@ import type {
   TransactionNavigatorParamList,
 } from '@/navigation-type';
 import { createGetStyles2024 } from '@/utils/styles';
+import { MaxPriceImpactSelector } from '../components/MaxPriceImpactSelector';
 import { countFinishedLegs, isLegRetryable } from '../engine/displayStatus';
 import { useMemeTradeTask } from '../hooks/useMemeTradeTask';
+import { MEME_BOTTOM_BAR_SHADOW } from '../ui/bottomBarShadow';
 import { returnToMemeCoinHome } from '../navigation';
 import { getExecuteButtonState } from '../ui/helpers';
 import { useMemeCoinAccount } from '../ui/useMemeCoinAccount';
@@ -40,7 +42,10 @@ const MemeCoinExecuteContent = ({
   account: Account;
   params: ExecuteParams;
 }) => {
-  const { mode, legs, maxPriceImpactPct, tokenLogos } = params;
+  const { mode, legs, tokenLogos } = params;
+  const [maxPriceImpactPct, setMaxPriceImpactPct] = useState(
+    params.maxPriceImpactPct,
+  );
   const { t } = useTranslation();
   const { styles } = useTheme2024({ getStyle });
   const { safeOffHeader, safeOffBottom } = useSafeSizes();
@@ -148,6 +153,10 @@ const MemeCoinExecuteContent = ({
           styles.bottomBar,
           { paddingBottom: getBottomButtonBottomOffset(safeOffBottom) },
         ]}>
+        <MaxPriceImpactSelector
+          value={maxPriceImpactPct}
+          onChange={setMaxPriceImpactPct}
+        />
         {buttonState.kind === 'executing' ? (
           <View pointerEvents="none">
             <Button
@@ -231,7 +240,7 @@ export const MemeCoinExecuteScreen = () => {
   return <MemeCoinExecuteContent account={account} params={route.params} />;
 };
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   screen: {
     flex: 1,
     backgroundColor: colors2024['neutral-bg-0'],
@@ -281,7 +290,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexShrink: 0,
     paddingTop: BOTTOM_BUTTON_TOP_OFFSET,
     paddingHorizontal: 20,
+    gap: 16,
     backgroundColor: colors2024['neutral-bg-1'],
+    boxShadow: MEME_BOTTOM_BAR_SHADOW[isLight ? 'light' : 'dark'],
   },
   executingButton: {
     backgroundColor: colors2024['brand-light-1'],

@@ -87,7 +87,7 @@ describe('MemeCoinHomeBottomBar', () => {
     'cancels the selection in %s mode, even with Buy disabled',
     mode => {
       const { getByText, onCancelSelection } = renderBar({ mode });
-      fireEvent.press(getByText('page.memeCoin.cancel'));
+      fireEvent.press(getByText('global.Cancel'));
       expect(onCancelSelection).toHaveBeenCalledTimes(1);
     },
   );
@@ -96,7 +96,7 @@ describe('MemeCoinHomeBottomBar', () => {
     'has no cancel without a selection in %s mode',
     mode => {
       const { queryByText } = renderBar({ mode, selectedCount: 0 });
-      expect(queryByText('page.memeCoin.cancel')).toBeNull();
+      expect(queryByText('global.Cancel')).toBeNull();
     },
   );
 
