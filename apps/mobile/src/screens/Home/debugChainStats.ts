@@ -16,6 +16,8 @@ import { zCreate } from '@/core/utils/reexports';
  * by the components that read the projection. Nothing outside development reads
  * it.
  */
+// Kept deliberately dependency-free: the deep-link handler imports this module,
+// and pulling the projection/storage layers in here creates import cycles.
 const debugChainStatsForcedStore = zCreate<{ forced: boolean }>(() => ({
   forced: false,
 }));
@@ -30,17 +32,48 @@ let applier: Applier | null = null;
  */
 export function registerDebugChainStatsApplier(fn: Applier) {
   applier = fn;
+  // A persisted pin must be applied on the first render after a restart.
+  if (debugChainStatsForcedStore.getState().forced) {
+    fn(true);
+  }
 }
 
 /** Dev-only: flip the pinned state and let the projection clear/rebuild. */
-export function toggleDebugChainStatsForced() {
+export function toggleDebugChainStatsForced(next?: boolean) {
   if (!__DEV__) {
     return false;
   }
-  const forced = !debugChainStatsForcedStore.getState().forced;
+  const forced =
+    typeof next === 'boolean'
+      ? next
+      : !debugChainStatsForcedStore.getState().forced;
   debugChainStatsForcedStore.setState({ forced });
   applier?.(forced);
   return forced;
+}
+
+let releaseTimer: ReturnType<typeof setTimeout> | null = null;
+
+/**
+ * Pin the state for `ms` and release automatically, so the
+ * `skeleton -> real chain icons` transition can be observed end to end.
+ */
+export function forceDebugChainStatsFor(ms: number) {
+  if (!__DEV__) {
+    return false;
+  }
+  if (releaseTimer) {
+    clearTimeout(releaseTimer);
+    releaseTimer = null;
+  }
+  toggleDebugChainStatsForced(true);
+  if (ms > 0) {
+    releaseTimer = setTimeout(() => {
+      releaseTimer = null;
+      toggleDebugChainStatsForced(false);
+    }, ms);
+  }
+  return true;
 }
 
 export function isDebugChainStatsForced() {
