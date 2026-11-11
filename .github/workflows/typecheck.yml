@@ -52,6 +52,9 @@ jobs:
       - name: Install dependencies
         run: yarn install --immutable
 
+      - name: Check workspace dependency constraints
+        run: yarn constraints
+
       - name: Check direct dependency versions
         run: node scripts/check-pinned-dependencies.js
 
