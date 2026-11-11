@@ -194,11 +194,15 @@ const TipBase = <T extends PressableComponent = 'RNPressable'>({
   const onPress = pressableProps?.onPress;
   const handleOnPress = useCallback<PressableComProps<T>['onPress'] & object>(
     evt => {
-      if (!hasContent) {
-        return;
-      }
       if (typeof onPress === 'function') {
         onPress?.({ event: evt, turnOn, turnOff });
+        return;
+      }
+
+      // Nothing to show: do not mount an invisible full-screen tooltip. The
+      // press itself already happened above, so a button that carries an empty
+      // tip keeps working.
+      if (!hasContent) {
         return;
       }
 
@@ -234,9 +238,9 @@ const TipBase = <T extends PressableComponent = 'RNPressable'>({
         <PressableComponent
           hitSlop={10}
           {...pressableProps}
-          // Without content, let taps reach the children (a disabled button
-          // must not open an empty tooltip).
-          disabled={!hasContent || !!pressableProps?.disabled}
+          // Keep the caller's disabled state only: clearing it for empty
+          // content used to drop the button's own onPress.
+          disabled={!!pressableProps?.disabled}
           // @ts-expect-error
           style={StyleSheet.flatten([pressableProps?.style])}
           // @ts-expect-error

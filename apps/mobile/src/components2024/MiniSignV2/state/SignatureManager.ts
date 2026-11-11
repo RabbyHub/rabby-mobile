@@ -82,6 +82,11 @@ export class SignatureManager {
     this.instanceId = instanceId ?? `sig-${++nextInstanceId}`;
   }
 
+  /** Leave direct mode and drop the transparent blocker (overlay timeout). */
+  public endDirectOverlay() {
+    this.dispatch({ type: 'END_DIRECT' });
+  }
+
   private dispatch(action: SignatureAction) {
     const next = signatureReducer(this.state, action);
     if (next === this.state) return;
