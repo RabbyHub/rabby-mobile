@@ -104,6 +104,12 @@ public class RNHelpersModule extends NativeRNHelpersSpec {
 
   @ReactMethod
   @Override
+  public void iosSetScrollEdgeEffectsHidden(double viewTag, boolean hidden) {
+    // iOS-only UIScrollView appearance.
+  }
+
+  @ReactMethod
+  @Override
   public void measureViewRelativeTo(double anchorTag, double viewportTag, Promise promise) {
     NativeViewGeometry.measureRelativeTo(reactContext, (int) anchorTag, (int) viewportTag, promise);
   }

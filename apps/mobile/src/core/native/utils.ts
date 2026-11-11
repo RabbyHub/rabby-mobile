@@ -50,6 +50,7 @@ interface NativeModulesStatic {
       METRO_CACHE_ENABLED?: boolean;
     };
     forceExitApp(): void;
+    iosSetScrollEdgeEffectsHidden?(viewTag: number, hidden: boolean): void;
     measureViewRelativeTo(
       anchorTag: number,
       viewportTag: number,

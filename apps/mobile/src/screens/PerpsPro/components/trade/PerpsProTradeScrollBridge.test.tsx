@@ -1,9 +1,18 @@
 import { act, render, screen } from '@testing-library/react-native';
 import React from 'react';
-import { Platform, View } from 'react-native';
+import { Platform, ScrollView, View } from 'react-native';
 
 const mockScrollTo = jest.fn();
+const mockSetScrollEdgeEffectsHidden = jest.fn();
 let mockScrollHandlers: Record<string, (event: any) => void> = {};
+
+jest.mock('@/core/native/RNHelpers', () => ({
+  __esModule: true,
+  default: {
+    iosSetScrollEdgeEffectsHidden: (...args: unknown[]) =>
+      mockSetScrollEdgeEffectsHidden(...args),
+  },
+}));
 
 jest.mock('react-native-reanimated', () => {
   const ReactModule = require('react');
@@ -71,7 +80,10 @@ describe('PerpsProTradeScrollBridge', () => {
   afterAll(() => setPlatform(initialPlatform as 'android' | 'ios'));
 
   it('keeps the iOS Trade under its existing native vertical scroll owner', () => {
-    render(
+    const nativeTag = jest
+      .spyOn(ScrollView.prototype, 'getScrollableNode')
+      .mockReturnValue(42);
+    const { unmount } = render(
       <PerpsProTradeScrollBridge controller={createController()} height={520}>
         <View testID="trade-content" />
       </PerpsProTradeScrollBridge>,
@@ -83,6 +95,10 @@ describe('PerpsProTradeScrollBridge', () => {
     expect(bridge.props.scrollEnabled).toBe(true);
     expect(bridge.props.scrollEventThrottle).toBe(16);
     expect(screen.getAllByTestId('trade-content')).toHaveLength(1);
+    expect(mockSetScrollEdgeEffectsHidden).toHaveBeenLastCalledWith(42, true);
+    unmount();
+    expect(mockSetScrollEdgeEffectsHidden).toHaveBeenLastCalledWith(42, false);
+    nativeTag.mockRestore();
   });
 
   it('uses a stationary keyboard responder instead of a proxy ScrollView on Android', () => {
@@ -100,6 +116,7 @@ describe('PerpsProTradeScrollBridge', () => {
     expect(bridge.props.contentContainerStyle).toBeUndefined();
     expect(bridge.props.onScroll).toBeUndefined();
     expect(screen.getAllByTestId('trade-content')).toHaveLength(1);
+    expect(mockSetScrollEdgeEffectsHidden).not.toHaveBeenCalled();
   });
 
   it('mirrors native proxy deltas to the active list and stops a stale session', () => {
