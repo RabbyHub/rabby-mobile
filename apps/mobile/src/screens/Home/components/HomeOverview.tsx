@@ -58,7 +58,10 @@ import { MultiHomeFeatTitle } from '@/constant/newStyle';
 import { currencyServiceApi } from '@/core/serviceApi/currency';
 import { storeApiAccounts, useMyAccounts } from '@/hooks/account';
 import { storeApiAccountsSwitcher } from '@/hooks/accountsSwitcher';
-import { refreshMemeHoldings } from '@/screens/MemeCoin/data/memeHoldingsStore';
+import {
+  refreshMemeHoldings,
+  refreshMemeHoldingsIfStale,
+} from '@/screens/MemeCoin/data/memeHoldingsStore';
 import { apisHomeTabIndex, useRabbyAppNavigation } from '@/hooks/navigation';
 import { navigateToPerpsHome } from '@/hooks/perps/navigation/navigateToPreferredPerps';
 import addressBalanceStore, {
@@ -173,6 +176,13 @@ import { withAnimatedTickerRefreshNudge } from '@/components/Animated/RefreshNud
 
 function couldDoRefresh() {
   return apisHomeTabIndex.isHomeAtFirstTab();
+}
+
+/** the account the Memecoin entry shows */
+function getMemeEntryAddress() {
+  return storeApiAccountsSwitcher.getSceneAccountInfo({
+    forScene: 'MakeTransactionAbout',
+  }).finalSceneCurrentAccount?.address;
 }
 
 function cancelStartupTaskHandle(
@@ -799,6 +809,10 @@ function HomeOverviewPostStartupEffects({
       }
 
       triggerApprovalAlertCounts(HOME_REFRESH_INTERVAL);
+      const memeAddress = getMemeEntryAddress();
+      if (memeAddress) {
+        refreshMemeHoldingsIfStale(memeAddress, HOME_REFRESH_INTERVAL);
+      }
       // // leave here to measure perf impact
       // isNonPublicProductionEnv && apisLending.fetchLendingData({ persistOnly: true });
     }, [triggerUpdate]),
@@ -1048,9 +1062,7 @@ export const HomeOverview = React.memo(() => {
     forceUpdateApprovalAlertCounts();
     apisLending.fetchLendingData();
     // keep the wallet entry balance in sync with the account it shows
-    const memeAddress = storeApiAccountsSwitcher.getSceneAccountInfo({
-      forScene: 'MakeTransactionAbout',
-    }).finalSceneCurrentAccount?.address;
+    const memeAddress = getMemeEntryAddress();
     if (memeAddress) {
       refreshMemeHoldings(memeAddress);
     }

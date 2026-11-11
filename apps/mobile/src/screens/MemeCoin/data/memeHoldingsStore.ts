@@ -3,7 +3,11 @@ import { zCreate } from '@/core/utils/reexports';
 import { toMemeHolding } from './market';
 import type { MemeHolding } from './types';
 
-type MemeHoldingsEntry = { holdings: MemeHolding[]; totalUsd: number };
+type MemeHoldingsEntry = {
+  holdings: MemeHolding[];
+  totalUsd: number;
+  fetchedAt: number;
+};
 
 type MemeHoldingsState = {
   /** keyed by lowercase address */
@@ -40,6 +44,7 @@ export const refreshMemeHoldings = (address: string) => {
             [key]: {
               holdings: res.positions.map(toMemeHolding),
               totalUsd: res.total_usd_value,
+              fetchedAt: Date.now(),
             },
           },
         })),
@@ -51,6 +56,18 @@ export const refreshMemeHoldings = (address: string) => {
     inflight.set(key, task);
   }
   return task;
+};
+
+/** For passive triggers such as Home regaining focus; a load that never succeeded is always retried. */
+export const refreshMemeHoldingsIfStale = (
+  address: string,
+  maxAgeMs: number,
+) => {
+  const entry =
+    useMemeHoldingsStore.getState().byAddress[address.toLowerCase()];
+  if (!entry || Date.now() - entry.fetchedAt >= maxAgeMs) {
+    refreshMemeHoldings(address);
+  }
 };
 
 const EMPTY_HOLDINGS: MemeHolding[] = [];

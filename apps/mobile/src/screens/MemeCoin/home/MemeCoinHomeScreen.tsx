@@ -1,5 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { FlatList, Keyboard, KeyboardAvoidingView, View } from 'react-native';
+import {
+  FlatList,
+  Keyboard,
+  KeyboardAvoidingView,
+  RefreshControl,
+  View,
+} from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { Skeleton } from '@rneui/themed';
 import { useMemoizedFn } from 'ahooks';
@@ -99,6 +105,7 @@ export const MemeCoinHomeScreen = () => {
   const [mode, setMode] = useState<HomeMode>('market');
   const [keyword, setKeyword] = useState('');
   const [searching, setSearching] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [amountText, setAmountText] = useState('');
   const amountUsd = parseBuyAmount(amountText);
   // market picks are snapshots: search results are not in the paged list
@@ -136,12 +143,13 @@ export const MemeCoinHomeScreen = () => {
     refreshMemeMarket();
   }, []);
 
-  const refreshHoldings = useCallback(() => {
-    if (address) {
-      refreshMemeHoldings(address);
-      refreshMemePnl(address);
-    }
-  }, [address]);
+  const refreshHoldings = useCallback(
+    () =>
+      address
+        ? Promise.all([refreshMemeHoldings(address), refreshMemePnl(address)])
+        : Promise.resolve(),
+    [address],
+  );
 
   useEffect(() => {
     clearSelection();
@@ -254,6 +262,14 @@ export const MemeCoinHomeScreen = () => {
     setKeyword('');
     setSearching(false);
   }, []);
+
+  const handlePullRefresh = useCallback(() => {
+    setRefreshing(true);
+    Promise.all([
+      refreshHoldings(),
+      mode === 'market' && !hasKeyword ? refreshMemeMarket() : undefined,
+    ]).finally(() => setRefreshing(false));
+  }, [hasKeyword, mode, refreshHoldings]);
 
   const handleEndReached = useCallback(() => {
     if (mode !== 'market') {
@@ -450,6 +466,12 @@ export const MemeCoinHomeScreen = () => {
         // with the keyboard up (search or amount), a tap on the list only closes it
         keyboardShouldPersistTaps="never"
         keyboardDismissMode="on-drag"
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handlePullRefresh}
+          />
+        }
         initialNumToRender={10}
         onEndReached={handleEndReached}
         onEndReachedThreshold={0.5}
