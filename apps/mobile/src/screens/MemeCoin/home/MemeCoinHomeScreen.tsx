@@ -61,7 +61,8 @@ import {
   MemeCoinHomeBottomBar,
   useKeyboardVisible,
 } from './MemeCoinHomeBottomBar';
-import { useEdgeSwipeBack, useInterceptUserBack } from './useInterceptUserBack';
+import { useEdgeSwipeBack } from '../ui/useEdgeSwipeBack';
+import { useInterceptUserBack } from './useInterceptUserBack';
 
 type HomeMode = 'market' | 'holdings';
 
