@@ -1,3 +1,5 @@
+import React from 'react';
+
 import { useCallback, useEffect, useRef } from 'react';
 import { View } from 'react-native';
 import {
@@ -32,7 +34,10 @@ import { EndBg, useHomeBackgroundOpacity } from '../BgComponents';
 import { createGetStyles2024 } from '@/utils/styles';
 import { prepareSingleAddressTokenAssetsProjection } from '@/store/tokens';
 import { shouldShowChainSelector } from './chainSelectorVisibility';
-import { useChainStatsLoading } from '../../useChainInfo';
+import {
+  useAddrChainProjectionReady,
+  useChainStatsLoading,
+} from '../../useChainInfo';
 
 const disableInnerIndicator = {
   height: 0,
@@ -63,25 +68,30 @@ function SideChainSelector({
     }
   }, [currentAddress]);
 
-  if (
-    !shouldShowChainSelector({
-      currentAddress,
-      chainLength,
-      balanceLoading: balanceLoading || chainStatsLoading,
-      isLoadingCurve,
-    })
-  ) {
+  const projectionReady = useAddrChainProjectionReady(currentAddress);
+  const pending =
+    !projectionReady || balanceLoading || isLoadingCurve || chainStatsLoading;
+
+  const visible = shouldShowChainSelector({
+    currentAddress,
+    chainLength,
+    pending,
+  });
+
+  if (!visible) {
     return null;
   }
 
   return (
-    <ChainSelector
-      key={top3Chains.join(',')}
-      top3Chains={top3Chains}
-      onChainClick={onChainClick}
-      chainServerId={chain}
-      loading={balanceLoading || isLoadingCurve || chainStatsLoading}
-    />
+    <>
+      <ChainSelector
+        key={top3Chains.join(',')}
+        top3Chains={top3Chains}
+        onChainClick={onChainClick}
+        chainServerId={chain}
+        loading={pending}
+      />
+    </>
   );
 }
 

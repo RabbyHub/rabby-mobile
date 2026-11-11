@@ -106,6 +106,7 @@ type OnParseUrlAndProcessAction = (payload: {
     | 'debug-db-sync-policy'
     | 'debug-lending'
     | 'debug-open-target'
+    | 'debug-create-address'
     | 'debug-set-language'
     | 'regression-scenario';
   target?: RabbyGoTarget;
@@ -140,6 +141,8 @@ type OnParseUrlAndProcessAction = (payload: {
   debugOpenTargetTab?: 'seedPhrase' | 'privateKey';
   /** Non-production only: force the app language, e.g. `pt-BR`. */
   debugLanguage?: string;
+  /** Non-production only: address seeded by `debug-create-address`. */
+  debugAddress?: string;
   debugChainStatsLoading?: boolean;
   debugChainStatsLoadingForMs?: number;
   debugChainStatsLoadingOff?: boolean;
@@ -489,6 +492,20 @@ function parseNonProductionMaintenanceLink(appLink: string) {
     return {
       type: 'debug-set-language',
       debugLanguage: lang,
+    } satisfies Parameters<OnParseUrlAndProcessAction>[0];
+  }
+
+  // Non-production only: seed an empty address so "no assets yet" states can be
+  // reproduced without walking the onboarding flow (QA 1197).
+  // `?_cmd=debug-create-address&address=0x...`
+  if (
+    rabbyGoCmd === 'debug-create-address' ||
+    target === 'debug-create-address'
+  ) {
+    const address = urlInfo.searchParams.get('address') || undefined;
+    return {
+      type: 'debug-create-address',
+      debugAddress: address,
     } satisfies Parameters<OnParseUrlAndProcessAction>[0];
   }
 
@@ -999,6 +1016,46 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
       void import('@/hooks/lang').then(({ setAppLanguage }) =>
         setAppLanguage(payload.debugLanguage!),
       );
+      break;
+    case 'debug-create-address':
+      if (!isNonPublicProductionEnv) {
+        return;
+      }
+      void (async () => {
+        try {
+          // Same data mutations as the onboarding UI, in the same order:
+          // the create-seed-phrase page prepares the wallet, then the
+          // set-password / create-address pages submit it (password, keyring,
+          // persisted accounts, backup reminder). No direct keyring shortcut.
+          const { prepareWalletCreation, completeWalletCreation } =
+            await import('@/hooks/address/useSetupWallet');
+          const { REGRESSION_DEFAULT_PASSWORD } = await import(
+            '@/devtools/regressionScenarios/credentials.nonprod'
+          );
+          const { toast } = await import('@/components2024/Toast');
+          const { default: accountStore } = await import('@/store/account');
+
+          const prepared = await prepareWalletCreation({ mode: 'create' });
+          await completeWalletCreation(prepared, {
+            password: REGRESSION_DEFAULT_PASSWORD,
+            confirmPassword: REGRESSION_DEFAULT_PASSWORD,
+            checked: true,
+            enableBiometrics: false,
+          });
+          await accountStore.fetchAccounts({ force: true });
+          toast.success(`debug address created: ${prepared.address || ''}`);
+          apisHomeTabIndex.setTabIndex(1, true);
+        } catch (error) {
+          console.warn(
+            '[useUniversalLinkOnTop] debug-create-address failed',
+            error,
+          );
+          const { Alert } = await import('react-native');
+          Alert.alert('debug-create-address failed', String(error));
+          const { toast } = await import('@/components2024/Toast');
+          toast.show(`create-address failed: ${String(error)}`);
+        }
+      })();
       break;
     case 'regression-scenario':
       handleRegressionScenarioCommand(
