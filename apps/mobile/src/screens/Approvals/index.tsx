@@ -132,9 +132,13 @@ const ApprovalScreenContainer: React.FC<{
     setNavigationOptions({
       headerTitle: getHeaderTitle,
       headerRight: getHeaderRight,
-      // The wallet/alias group is centred in its own container (see
-      // HeaderCenter) on both platforms.
-      headerTitleAlign: 'center',
+      // QA 1328: HeaderCenter draws its own back button and lays the search
+      // field out right after it, so the title area must start at the leading
+      // edge and the native back item must not be rendered at all.
+      headerTitleAlign: 'left',
+      headerBackVisible: false,
+      headerLeft: () => null,
+      unstable_headerLeftItems: () => [],
       headerStyle: {
         backgroundColor: colors2024['neutral-bg-1'],
       },
