@@ -140,6 +140,7 @@ type OnParseUrlAndProcessAction = (payload: {
 type DebugOpenTarget =
   | RabbyGoTarget
   | 'tokenDetail'
+  | 'tokenMarketDetail'
   | 'approvals'
   | 'importSecret';
 
@@ -411,6 +412,7 @@ function parseNonProductionMaintenanceLink(appLink: string) {
       rawTarget === 'home';
     const isDebugScreenTarget =
       rawTarget === 'tokenDetail' ||
+      rawTarget === 'tokenMarketDetail' ||
       rawTarget === 'approvals' ||
       rawTarget === 'importSecret';
     if (!isRabbyGoTarget && !isDebugScreenTarget) {
@@ -862,6 +864,22 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
           navigateDeprecated(RootNames.TokenDetail, {
             token: makeTokenFromChain(chain),
             isSingleAddress: true,
+          } as any);
+          return;
+        }
+        if (target === 'tokenMarketDetail') {
+          const chain = findChain({
+            serverId: payload.debugOpenTargetChain || 'eth',
+          });
+          if (!chain) {
+            console.warn(
+              '[useUniversalLinkOnTop] unknown chain for tokenMarketDetail:',
+              payload.debugOpenTargetChain,
+            );
+            return;
+          }
+          navigateDeprecated(RootNames.TokenMarketInfo, {
+            token: makeTokenFromChain(chain),
           } as any);
           return;
         }
