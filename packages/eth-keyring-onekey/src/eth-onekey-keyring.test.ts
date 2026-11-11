@@ -501,6 +501,8 @@ describe('OneKeyKeyring unlock wallet selection', () => {
    * @param passphraseState - The wallet id returned by getPassphraseState.
    * @param status - The device status returned by getDeviceState.
    * @param status.passphraseProtection - Whether passphrase protection is on.
+   * @param status.unlocked - Whether the device is unlocked.
+   * @param status.unlockedAttachPin - Whether an attach PIN unlocked it.
    * @param options - Protocol and discovery identity overrides.
    * @param options.protocol - The protocol reported by getDeviceState.
    * @param options.deviceId - The identity returned by searchDevices.
@@ -508,7 +510,11 @@ describe('OneKeyKeyring unlock wallet selection', () => {
    */
   function setup(
     passphraseState?: string,
-    status?: { passphraseProtection?: boolean },
+    status?: {
+      passphraseProtection?: boolean;
+      unlocked?: boolean;
+      unlockedAttachPin?: boolean;
+    },
     options: { protocol?: 'V1' | 'V2'; deviceId?: string | null } = {},
   ) {
     const { protocol = 'V2', deviceId = null } = options;
@@ -567,6 +573,70 @@ describe('OneKeyKeyring unlock wallet selection', () => {
       },
     };
   }
+
+  it('follows the original getPassphraseState flow on an unlocked V2 main wallet', async () => {
+    const { bridge, keyring } = setup('hidden-wallet-token', {
+      passphraseProtection: true,
+      unlocked: true,
+      unlockedAttachPin: false,
+    });
+    mockOpenWalletSession(bridge).mockResolvedValue(
+      createSession('hidden', 'hidden-wallet-token'),
+    );
+
+    expect(await keyring.unlock()).toBe('just unlocked');
+    expect(bridge.openWalletSession).not.toHaveBeenCalled();
+    expect(bridge.getPassphraseState).toHaveBeenNthCalledWith(
+      1,
+      'connect-id',
+      undefined,
+    );
+    expect(keyring.passphraseState).toBe('hidden-wallet-token');
+  });
+
+  it('treats an empty passphrase from the original flow as the standard wallet on V2', async () => {
+    const { bridge, keyring } = setup('standard-wallet-id', {
+      passphraseProtection: true,
+      unlocked: true,
+      unlockedAttachPin: false,
+    });
+    mockOpenWalletSession(bridge).mockResolvedValue(
+      createSession('hidden', 'hidden-wallet-token'),
+    );
+
+    expect(await keyring.unlock()).toBe('just unlocked');
+    expect(bridge.openWalletSession).not.toHaveBeenCalled();
+    expect(keyring.passphraseState).toBeUndefined();
+  });
+
+  it.each([
+    ['locked', { unlocked: false }],
+    [
+      'unlocked with an attach PIN',
+      { unlocked: true, unlockedAttachPin: true },
+    ],
+    ['of unknown lock state', {}],
+  ])(
+    'opens the V2 wallet with select-hidden when the device is %s',
+    async (_label, lockStatus) => {
+      const { bridge, keyring } = setup('hidden-wallet-token', {
+        passphraseProtection: true,
+        ...lockStatus,
+      });
+      mockOpenWalletSession(bridge).mockResolvedValue(
+        createSession('hidden', 'hidden-wallet-token'),
+      );
+
+      expect(await keyring.unlock()).toBe('just unlocked');
+      expect(bridge.openWalletSession).toHaveBeenCalledWith('connect-id', {
+        mode: 'select-hidden',
+      });
+      expect(bridge.getPassphraseState).not.toHaveBeenCalledWith(
+        'connect-id',
+        undefined,
+      );
+    },
+  );
 
   it('does not store a passphrase state when openWalletSession opens the standard wallet', async () => {
     const { bridge, keyring } = setup(undefined, {

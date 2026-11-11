@@ -160,6 +160,19 @@ function readPassphraseProtection(payload: unknown): boolean | undefined {
 }
 
 /**
+ * Whether getDeviceState reports the device unlocked with its main PIN.
+ *
+ * @param payload - The getDeviceState payload.
+ * @returns True only when the device is unlocked and not via an attach PIN.
+ */
+function readMainWalletUnlocked(payload: unknown): boolean {
+  const status = (
+    payload as { status?: { unlocked?: unknown; unlockedAttachPin?: unknown } }
+  )?.status;
+  return status?.unlocked === true && status?.unlockedAttachPin === false;
+}
+
+/**
  * Read the transport protocol from a getDeviceState payload.
  *
  * @param payload - The getDeviceState payload.
@@ -271,6 +284,9 @@ class OneKeyKeyring extends EventEmitter {
   /** Last protocol read from getDeviceState, if any. */
   private _protocol: 'V1' | 'V2' | undefined = undefined;
 
+  /** Whether the last getDeviceState showed the main PIN wallet unlocked. */
+  private _mainWalletUnlocked = false;
+
   accountDetails: Record<string, AccountDetail>;
 
   bridge!: OneKeyBridgeInterface;
@@ -344,6 +360,7 @@ class OneKeyKeyring extends EventEmitter {
           deviceStateRead = true;
           this._passphraseProtection = readPassphraseProtection(res.payload);
           this._protocol = readProtocol(res.payload);
+          this._mainWalletUnlocked = readMainWalletUnlocked(res.payload);
 
           return {
             deviceId: res.payload.identity.deviceId,
@@ -385,6 +402,7 @@ class OneKeyKeyring extends EventEmitter {
           deviceStateRead = true;
           this._passphraseProtection = readPassphraseProtection(state.payload);
           this._protocol = readProtocol(state.payload);
+          this._mainWalletUnlocked = readMainWalletUnlocked(state.payload);
           deviceId = deviceId || state.payload.identity.deviceId;
         }
       }
@@ -416,6 +434,7 @@ class OneKeyKeyring extends EventEmitter {
       };
       this._passphraseProtection = undefined;
       this._protocol = undefined;
+      this._mainWalletUnlocked = false;
       this.trySearchDevice()
         .then(async ({ deviceId, connectId }) => {
           if (
@@ -475,12 +494,21 @@ class OneKeyKeyring extends EventEmitter {
             return true;
           };
 
+          // Follow Rabby's original flow on every device:
+          // getPassphraseState() resumes the wallet the device already has
+          // open and otherwise asks for the passphrase on the device. A Pro 2
+          // (Protocol V2) uses openWalletSession only where that call cannot:
+          // passphrase off (standard wallet), and a locked device or an
+          // attach-PIN session (the device must accept any PIN).
           const { openWalletSession } = this.bridge;
-          if (this._protocol === 'V2' && openWalletSession) {
-            // Protocol V2 (Pro 2): open the wallet explicitly. A standard
-            // wallet must not keep any wallet id, otherwise turning
-            // passphrase protection off later makes every signature fail
-            // with DeviceNotOpenedPassphrase (113) until re-import.
+          if (
+            this._protocol === 'V2' &&
+            openWalletSession &&
+            (this._passphraseProtection === false || !this._mainWalletUnlocked)
+          ) {
+            // A standard wallet must not keep any wallet id, otherwise
+            // turning passphrase protection off later makes every signature
+            // fail with DeviceNotOpenedPassphrase (113) until re-import.
             try {
               const mode =
                 this._passphraseProtection === false
