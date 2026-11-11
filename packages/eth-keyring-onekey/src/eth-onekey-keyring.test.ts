@@ -605,6 +605,12 @@ describe('OneKeyKeyring unlock wallet selection', () => {
         'connect-id',
         undefined,
       );
+      expect(bridge.getPassphraseState).toHaveBeenNthCalledWith(
+        2,
+        'connect-id',
+        { useEmptyPassphrase: true },
+      );
+      expect(bridge.getPassphraseState).toHaveBeenCalledTimes(2);
       expect(keyring.passphraseState).toBe('hidden-wallet-token');
     },
   );
@@ -914,10 +920,7 @@ describe('OneKeyKeyring unlock wallet selection', () => {
       });
       expect(bridge.initSession).not.toHaveBeenCalled();
       expect(bridge.getDeviceState).toHaveBeenCalledTimes(1);
-      expect(bridge.getPassphraseState).toHaveBeenCalledTimes(1);
-      expect(bridge.getPassphraseState).toHaveBeenCalledWith('connect-id', {
-        useEmptyPassphrase: true,
-      });
+      expect(bridge.getPassphraseState).not.toHaveBeenCalled();
       expect(bridge.evmGetPublicKey).toHaveBeenCalledTimes(1);
       expect(bridge.evmGetPublicKey).toHaveBeenCalledWith(
         'connect-id',
@@ -932,6 +935,30 @@ describe('OneKeyKeyring unlock wallet selection', () => {
       );
       expect(bridge.receivePin).not.toHaveBeenCalled();
       expect(bridge.receivePassphrase).not.toHaveBeenCalled();
+      expect(keyring.passphraseState).toBe('attach-pin-wallet-token');
+    },
+  );
+
+  it.each(['pro2', 'neo'])(
+    'keeps the attach-PIN session on V2 %s without a standard-wallet probe when openWalletSession is unavailable',
+    async deviceType => {
+      const { bridge, keyring } = setup(
+        'attach-pin-wallet-token',
+        {
+          passphraseProtection: true,
+          unlocked: true,
+          unlockedAttachPin: true,
+        },
+        { deviceType },
+      );
+      keyring.setDeviceConnectId('connect-id');
+
+      expect(await keyring.unlock()).toBe('just unlocked');
+      expect(bridge.getPassphraseState).toHaveBeenCalledTimes(1);
+      expect(bridge.getPassphraseState).toHaveBeenCalledWith(
+        'connect-id',
+        undefined,
+      );
       expect(keyring.passphraseState).toBe('attach-pin-wallet-token');
     },
   );

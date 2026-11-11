@@ -287,6 +287,9 @@ class OneKeyKeyring extends EventEmitter {
   /** Whether the last getDeviceState showed the main PIN wallet unlocked. */
   private _mainWalletUnlocked = false;
 
+  /** Whether the last getDeviceState reported an attach-PIN session. */
+  private _unlockedAttachPin = false;
+
   accountDetails: Record<string, AccountDetail>;
 
   bridge!: OneKeyBridgeInterface;
@@ -361,6 +364,8 @@ class OneKeyKeyring extends EventEmitter {
           this._passphraseProtection = readPassphraseProtection(res.payload);
           this._protocol = readProtocol(res.payload);
           this._mainWalletUnlocked = readMainWalletUnlocked(res.payload);
+          this._unlockedAttachPin =
+            res.payload.status?.unlockedAttachPin === true;
 
           return {
             deviceId: res.payload.identity.deviceId,
@@ -403,6 +408,8 @@ class OneKeyKeyring extends EventEmitter {
           this._passphraseProtection = readPassphraseProtection(state.payload);
           this._protocol = readProtocol(state.payload);
           this._mainWalletUnlocked = readMainWalletUnlocked(state.payload);
+          this._unlockedAttachPin =
+            state.payload.status?.unlockedAttachPin === true;
           deviceId = deviceId || state.payload.identity.deviceId;
         }
       }
@@ -435,6 +442,7 @@ class OneKeyKeyring extends EventEmitter {
       this._passphraseProtection = undefined;
       this._protocol = undefined;
       this._mainWalletUnlocked = false;
+      this._unlockedAttachPin = false;
       this.trySearchDevice()
         .then(async ({ deviceId, connectId }) => {
           if (
@@ -487,6 +495,7 @@ class OneKeyKeyring extends EventEmitter {
             this.passphraseState = await this._resolvePassphraseStateForImport({
               connectId,
               protocol: this._protocol,
+              unlockedAttachPin: this._unlockedAttachPin,
               passphraseState: standardWallet
                 ? undefined
                 : passphraseState.payload || undefined,
@@ -539,6 +548,7 @@ class OneKeyKeyring extends EventEmitter {
                   await this._resolvePassphraseStateForImport({
                     connectId,
                     protocol: this._protocol,
+                    unlockedAttachPin: this._unlockedAttachPin,
                     walletType: session.payload.walletType,
                     passphraseState: session.payload.passphraseState,
                   });
@@ -1164,12 +1174,14 @@ class OneKeyKeyring extends EventEmitter {
    * and the passphraseState is the standard wallet's btc_test_address. Compare
    * that identity with a useEmptyPassphrase probe and, if they match, treat the
    * session as the standard wallet so the id is never persisted. The probe runs
-   * only for an ambiguous V2 session (hidden type + non-empty state). A failed
-   * probe keeps the hidden id so import can still proceed, unless cancelled.
+   * only for an ambiguous V2 session (hidden type + non-empty state). Skip
+   * attach-PIN sessions because the probe would prompt for the Main PIN. A
+   * failed probe keeps the hidden id so import can proceed, unless cancelled.
    *
    * @param options0 - The imported wallet session.
    * @param options0.connectId - Device connect id used for the identity probe.
    * @param options0.protocol - Hardware protocol reported by getDeviceState.
+   * @param options0.unlockedAttachPin - Whether an attach PIN unlocked the device.
    * @param options0.walletType - Wallet type reported by openWalletSession.
    * @param options0.passphraseState - Wallet identity returned by the SDK.
    * @returns The hidden wallet id, or undefined for the standard wallet.
@@ -1177,11 +1189,13 @@ class OneKeyKeyring extends EventEmitter {
   private async _resolvePassphraseStateForImport({
     connectId,
     protocol,
+    unlockedAttachPin,
     walletType,
     passphraseState,
   }: {
     connectId: string;
     protocol?: string;
+    unlockedAttachPin?: boolean;
     walletType?: 'standard' | 'hidden';
     passphraseState?: string | null;
   }): Promise<string | undefined> {
@@ -1192,7 +1206,7 @@ class OneKeyKeyring extends EventEmitter {
     if (this._isEmptyPassphrase(imported)) {
       return undefined;
     }
-    if (protocol !== 'V2') {
+    if (protocol !== 'V2' || unlockedAttachPin === true) {
       return imported;
     }
     const standardIdentity = await this._getStandardWalletIdentity(connectId);
