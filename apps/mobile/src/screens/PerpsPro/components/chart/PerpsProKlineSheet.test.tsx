@@ -8,8 +8,6 @@ import {
 import React from 'react';
 import { BackHandler } from 'react-native';
 
-import { ThemeColors2024 } from '@/constant/theme';
-
 import { perpsStore, type MarketData } from '@/hooks/perps/usePerpsStore';
 import type { PerpsProMarketDescriptor } from '../../model/market';
 
@@ -54,6 +52,11 @@ jest.mock('@/components/Typography', () => {
 
 jest.mock(
   '@/assets2024/icons/perps/PerpsSimpleChart/reset.svg',
+  () => require('react-native').View,
+);
+
+jest.mock(
+  '@/assets2024/icons/perps/PerpsProKline/close.svg',
   () => require('react-native').View,
 );
 
@@ -162,6 +165,11 @@ jest.mock('@/utils/styles', () => ({
   createGetStyles2024: (getStyle: unknown) => getStyle,
 }));
 
+jest.mock('react-native-safe-area-context', () => ({
+  ...jest.requireActual('react-native-safe-area-context'),
+  useSafeAreaInsets: () => ({ bottom: 0, left: 0, right: 0, top: 0 }),
+}));
+
 jest.mock('@gorhom/bottom-sheet', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
@@ -176,11 +184,15 @@ jest.mock('@gorhom/bottom-sheet', () => {
           snapToIndex: mockSnapToIndex,
         }));
         mockModalProps(props);
-        return ReactModule.createElement(
-          View,
-          { testID: 'bottom-sheet' },
+        const HandleComponent = props.handleComponent as
+          | React.ComponentType
+          | undefined;
+        return ReactModule.createElement(View, { testID: 'bottom-sheet' }, [
+          HandleComponent
+            ? ReactModule.createElement(HandleComponent, { key: 'handle' })
+            : null,
           props.children,
-        );
+        ]);
       },
     ),
     BottomSheetBackdrop: (props: Record<string, unknown>) =>
@@ -241,8 +253,7 @@ jest.mock('./PerpsProKlineToolbar', () => {
 
 const {
   PERPS_PRO_KLINE_CONTENT_HEIGHT,
-  PERPS_PRO_KLINE_FOOTER_HEIGHT,
-  PERPS_PRO_KLINE_HANDLE_HEIGHT,
+  PERPS_PRO_KLINE_HEADER_HEIGHT,
   PERPS_PRO_KLINE_SHEET_HEIGHT,
   PerpsProKlineSheet,
 } = require('./PerpsProKlineSheet') as typeof import('./PerpsProKlineSheet');
@@ -334,29 +345,17 @@ describe('PerpsProKlineSheet', () => {
       borderTopLeftRadius: 32,
       borderTopRightRadius: 32,
     });
-    expect(props.handleStyle).toMatchObject({
-      height: 40,
-      paddingBottom: 27,
-      paddingTop: 9,
-    });
-    expect(props.handleIndicatorStyle).toMatchObject({
-      backgroundColor: ThemeColors2024.light['neutral-sheet-handle'],
-      height: 4,
-      width: 40,
-    });
     expect({
       chart: PERPS_PRO_KLINE_CHART_HEIGHT,
       content: PERPS_PRO_KLINE_CONTENT_HEIGHT,
-      footer: PERPS_PRO_KLINE_FOOTER_HEIGHT,
-      handle: PERPS_PRO_KLINE_HANDLE_HEIGHT,
+      header: PERPS_PRO_KLINE_HEADER_HEIGHT,
       sheet: PERPS_PRO_KLINE_SHEET_HEIGHT,
       toolbar: PERPS_PRO_KLINE_TOOLBAR_HEIGHT,
     }).toEqual({
       chart: 228,
-      content: 304,
-      footer: 40,
-      handle: 40,
-      sheet: 344,
+      content: 228,
+      header: 58,
+      sheet: 302,
       toolbar: 36,
     });
     expect(
@@ -364,11 +363,9 @@ describe('PerpsProKlineSheet', () => {
     ).toMatchObject({
       height: PERPS_PRO_KLINE_CONTENT_HEIGHT,
     });
-    expect(
-      screen.getByTestId('perps-pro-kline-footer').props.style,
-    ).toMatchObject({
-      height: PERPS_PRO_KLINE_FOOTER_HEIGHT,
-    });
+    expect(screen.getByTestId('perps-pro-kline-header')).toBeTruthy();
+    expect(screen.getByTestId('perps-pro-kline-close')).toBeTruthy();
+    expect(screen.queryByTestId('perps-pro-kline-footer')).toBeNull();
     expect(mockTradingViewProps.mock.calls.at(-1)?.[0]).toMatchObject({
       backGroundColor: 'neutral-bg-1',
       height: PERPS_PRO_KLINE_CHART_HEIGHT,
@@ -384,6 +381,14 @@ describe('PerpsProKlineSheet', () => {
     });
 
     act(() => props.onChange(-1));
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('closes from the header close button', () => {
+    const onClose = jest.fn();
+    render(<PerpsProKlineSheet enabled market={market} onClose={onClose} />);
+
+    fireEvent.press(screen.getByTestId('perps-pro-kline-close'));
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
