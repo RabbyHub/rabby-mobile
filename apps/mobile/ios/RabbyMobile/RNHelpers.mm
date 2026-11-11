@@ -95,7 +95,9 @@ static void RNHelpersRemoveTemporaryFile(NSURL *fileURL) {
     [[NSFileManager defaultManager] removeItemAtPath:filePath error:nil];
 }
 
-@implementation RNHelpers
+@implementation RNHelpers {
+    NSMutableDictionary<NSNumber *, NSDictionary *> *_scrollEdgeEffects;
+}
 
 @synthesize viewRegistry_DEPRECATED = _viewRegistry_DEPRECATED;
 
@@ -124,6 +126,46 @@ RCT_EXPORT_MODULE();
 }
 
 #pragma mark - Public API
+RCT_EXPORT_METHOD(iosSetScrollEdgeEffectsHidden:(double)viewTag hidden:(BOOL)hidden) {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        if (@available(iOS 26.0, *)) {
+            NSNumber *tag = @(viewTag);
+            if (!hidden) {
+                // The React tag may already be unregistered at unmount. Restore
+                // the saved instance so Fabric cannot recycle the override.
+                NSDictionary *saved = self->_scrollEdgeEffects[tag];
+                UIScrollView *scrollView = saved[@"view"];
+                scrollView.topEdgeEffect.hidden = [saved[@"top"] boolValue];
+                scrollView.bottomEdgeEffect.hidden = [saved[@"bottom"] boolValue];
+                [self->_scrollEdgeEffects removeObjectForKey:tag];
+                return;
+            }
+            if (self->_scrollEdgeEffects[tag] != nil) return;
+            UIView *view = [self.viewRegistry_DEPRECATED viewForReactTag:tag];
+            UIScrollView *scrollView = [view isKindOfClass:UIScrollView.class] ? (UIScrollView *)view : nil;
+            // Both Paper and Fabric host the UIScrollView directly inside the
+            // tagged React view. Do not traverse into nested product lists.
+            if (scrollView == nil) {
+                for (UIView *child in view.subviews) {
+                    if ([child isKindOfClass:UIScrollView.class]) {
+                        scrollView = (UIScrollView *)child;
+                        break;
+                    }
+                }
+            }
+            if (scrollView == nil) return;
+            if (self->_scrollEdgeEffects == nil) self->_scrollEdgeEffects = [NSMutableDictionary new];
+            self->_scrollEdgeEffects[tag] = @{
+                @"view": scrollView,
+                @"top": @(scrollView.topEdgeEffect.isHidden),
+                @"bottom": @(scrollView.bottomEdgeEffect.isHidden),
+            };
+            scrollView.topEdgeEffect.hidden = YES;
+            scrollView.bottomEdgeEffect.hidden = YES;
+        }
+    });
+}
+
 RCT_EXPORT_METHOD(measureViewRelativeTo:(double)anchorTag
                   viewportTag:(double)viewportTag
                   resolver:(RCTPromiseResolveBlock)resolve

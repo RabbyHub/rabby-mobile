@@ -65,6 +65,11 @@ let mockTradeForm: {
   orderType: 'conditional' | 'limit' | 'market';
 } = { bboEnabled: false, orderType: 'market' };
 
+jest.mock('@/core/native/RNHelpers', () => ({
+  __esModule: true,
+  default: { iosSetScrollEdgeEffectsHidden: jest.fn() },
+}));
+
 jest.mock('react-native-pager-view', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');

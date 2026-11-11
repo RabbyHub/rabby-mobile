@@ -4,7 +4,7 @@ import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import BigNumber from 'bignumber.js';
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import {
@@ -13,6 +13,8 @@ import {
 } from '../common/perpsProDialogVisual';
 import { PerpsProSectionTitle } from '../common/PerpsProSectionTitle';
 import { PerpsProDottedUnderlineText } from '../common/PerpsProDottedUnderlineText';
+import { resolvePerpsProFittedFontSize } from '../common/perpsProFitFontSize';
+import { PerpsProTextWidthProbe } from '../common/PerpsProTextWidthProbe';
 import { PerpsProPositionTpSlCancelAction } from './PerpsProPositionTpSlCancelAction';
 
 import type { PerpsPositionViewModel } from '../../model/position';
@@ -237,6 +239,27 @@ const OrderRow: React.FC<{
     size: scope === 'position' ? position.baseSize : order.remainingSize,
     triggerPrice: order.triggerPrice,
   });
+  const priceLabel = t('page.perps.pro.positions.price');
+  const unfilledLabel = `${t(
+    'page.perps.pro.positionTpsl.unfilledAmount',
+  )} (${amountAsset})`;
+  // The right label is anchored at its natural width and may borrow the
+  // middle column's free space, but must stop before the middle label.
+  const [metricsWidth, setMetricsWidth] = useState(0);
+  const [priceLabelWidth, setPriceLabelWidth] = useState(0);
+  const [unfilledLabelWidth, setUnfilledLabelWidth] = useState(0);
+  const middleColumnX =
+    (metricsWidth - ORDER_METRIC_GAP * 2) / 3 + ORDER_METRIC_GAP;
+  const unfilledLabelMaxWidth =
+    metricsWidth > 0 && priceLabelWidth > 0
+      ? metricsWidth - middleColumnX - priceLabelWidth - ORDER_METRIC_GAP
+      : 0;
+  const unfilledLabelFontSize = resolvePerpsProFittedFontSize({
+    availableWidth: unfilledLabelMaxWidth,
+    baseFontSize: ORDER_METRIC_LABEL_FONT_SIZE,
+    minFontSize: ORDER_METRIC_LABEL_MIN_FONT_SIZE,
+    naturalWidth: unfilledLabelWidth,
+  });
 
   return (
     <View
@@ -255,7 +278,19 @@ const OrderRow: React.FC<{
           {formatPerpsProPrice(order.triggerPrice, market.pxDecimals)}
         </Text>
       </View>
-      <View style={styles.orderMetrics}>
+      <View
+        onLayout={event => setMetricsWidth(event.nativeEvent.layout.width)}
+        style={styles.orderMetrics}>
+        <PerpsProTextWidthProbe
+          onWidth={setPriceLabelWidth}
+          style={styles.orderMetricLabel}
+          text={priceLabel}
+        />
+        <PerpsProTextWidthProbe
+          onWidth={setUnfilledLabelWidth}
+          style={styles.orderMetricLabel}
+          text={unfilledLabel}
+        />
         <OrderMetric
           flex={1}
           label={
@@ -271,14 +306,20 @@ const OrderRow: React.FC<{
         />
         <OrderMetric
           flex={1}
-          label={t('page.perps.pro.positions.price')}
+          label={priceLabel}
           value={t('page.perps.pro.positions.market')}
         />
         <OrderMetric
           flex={1}
-          label={`${t(
-            'page.perps.pro.positionTpsl.unfilledAmount',
-          )} (${amountAsset})`}
+          label={unfilledLabel}
+          labelFit={
+            unfilledLabelFontSize === ORDER_METRIC_LABEL_FONT_SIZE
+              ? undefined
+              : {
+                  fontSize: unfilledLabelFontSize,
+                  maxWidth: unfilledLabelMaxWidth,
+                }
+          }
           textAlign="right"
           testID={`perps-pro-position-tpsl-order-${order.oid}-unfilled`}
           value={
@@ -317,11 +358,20 @@ const OrderRow: React.FC<{
 const OrderMetric: React.FC<{
   flex: number;
   label: React.ReactNode;
+  labelFit?: { fontSize: number; maxWidth: number };
   testID?: string;
   textAlign?: 'left' | 'right';
   tone?: 'negative' | 'neutral' | 'positive';
   value: string;
-}> = ({ flex, label, testID, textAlign = 'left', tone = 'neutral', value }) => {
+}> = ({
+  flex,
+  label,
+  labelFit,
+  testID,
+  textAlign = 'left',
+  tone = 'neutral',
+  value,
+}) => {
   const { styles } = useTheme2024({ getStyle });
   return (
     <View
@@ -337,6 +387,7 @@ const OrderMetric: React.FC<{
           style={[
             styles.orderMetricLabel,
             textAlign === 'right' && styles.orderMetricRightLabel,
+            labelFit,
           ]}
           testID={testID ? `${testID}-label` : undefined}>
           {label}
@@ -360,6 +411,10 @@ const OrderMetric: React.FC<{
     </View>
   );
 };
+
+const ORDER_METRIC_GAP = 8;
+const ORDER_METRIC_LABEL_FONT_SIZE = 12;
+const ORDER_METRIC_LABEL_MIN_FONT_SIZE = 10;
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   list: {
@@ -420,7 +475,11 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontSize: 12,
     lineHeight: 16,
   },
-  orderMetrics: { flexDirection: 'row', gap: 8, marginTop: 8 },
+  orderMetrics: {
+    flexDirection: 'row',
+    gap: ORDER_METRIC_GAP,
+    marginTop: 8,
+  },
   orderMetric: { height: 36, minWidth: 0 },
   orderMetricRight: {
     alignItems: 'flex-end',
@@ -447,7 +506,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   orderMetricLabel: {
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 12,
+    fontSize: ORDER_METRIC_LABEL_FONT_SIZE,
     lineHeight: 16,
   },
   orderMetricValue: {

@@ -25,6 +25,8 @@ import {
   PerpsProTabIndicator,
   type PerpsProTabIndicatorLayout,
 } from '../common/PerpsProTabIndicator';
+import { resolvePerpsProFittedFontSize } from '../common/perpsProFitFontSize';
+import { PerpsProTextWidthProbe } from '../common/PerpsProTextWidthProbe';
 import { getPerpsProFontStyle } from '../common/perpsProVisual';
 import {
   getPerpsProTabDividerColor,
@@ -47,6 +49,10 @@ interface PerpsProInfoTabsProps {
 }
 
 const INFO_TAB_DIVIDER_BOTTOM = 2;
+const INFO_TAB_GAP = 16;
+const INFO_TAB_PADDING_HORIZONTAL = 16;
+const INFO_TAB_HISTORY_SIZE = 24;
+const INFO_TAB_MIN_FONT_SIZE = 12;
 const INFO_TAB_INACTIVE_FONT_STYLE = getPerpsProFontStyle(Platform.OS, '500');
 const INFO_TAB_ACTIVE_FONT_STYLE = getPerpsProFontStyle(Platform.OS, '700');
 
@@ -134,6 +140,37 @@ const labelStyles = {
     top: 0,
   },
 };
+
+// Measures the bold layer: it is the one that sizes each tab.
+const PerpsProInfoTabLabelProbe: React.FC<{
+  label: string;
+  onWidth: React.Dispatch<
+    React.SetStateAction<Partial<Record<PerpsProInfoTab, number>>>
+  >;
+  style: TextStyle;
+  tab: PerpsProInfoTab;
+}> = React.memo(({ label, onWidth, style, tab }) => {
+  const probeStyle = React.useMemo(
+    () => [style, INFO_TAB_ACTIVE_FONT_STYLE],
+    [style],
+  );
+  const handleWidth = React.useCallback(
+    (width: number) =>
+      onWidth(previous =>
+        previous[tab] === width ? previous : { ...previous, [tab]: width },
+      ),
+    [onWidth, tab],
+  );
+  return (
+    <PerpsProTextWidthProbe
+      onWidth={handleWidth}
+      style={probeStyle}
+      text={label}
+    />
+  );
+});
+
+PerpsProInfoTabLabelProbe.displayName = 'PerpsProInfoTabLabelProbe';
 
 const PerpsProPendingHistoryIcon: React.FC<{ count: number }> = ({ count }) => {
   const { styles } = useTheme2024({ getStyle });
@@ -229,9 +266,54 @@ export const PerpsProInfoTabs: React.FC<PerpsProInfoTabsProps> = React.memo(
       )} ${openOrdersCount}`,
     };
 
+    // Long translations would push the history button out of the strip, so
+    // all labels shrink together until the row fits.
+    const [containerWidth, setContainerWidth] = React.useState(0);
+    const [labelWidths, setLabelWidths] = React.useState<
+      Partial<Record<PerpsProInfoTab, number>>
+    >({});
+    const baseFontSize = styles.text.fontSize;
+    const fontSize = React.useMemo(() => {
+      let naturalWidth = 0;
+      for (const tab of PERPS_PRO_INFO_TABS) {
+        const width = labelWidths[tab];
+        if (!width) {
+          return baseFontSize;
+        }
+        naturalWidth += width;
+      }
+      return resolvePerpsProFittedFontSize({
+        availableWidth:
+          containerWidth -
+          INFO_TAB_PADDING_HORIZONTAL * 2 -
+          INFO_TAB_GAP * PERPS_PRO_INFO_TABS.length -
+          INFO_TAB_HISTORY_SIZE,
+        baseFontSize,
+        minFontSize: INFO_TAB_MIN_FONT_SIZE,
+        naturalWidth,
+      });
+    }, [baseFontSize, containerWidth, labelWidths]);
+    const textStyle = React.useMemo(
+      () =>
+        fontSize === baseFontSize ? styles.text : [styles.text, { fontSize }],
+      [baseFontSize, fontSize, styles.text],
+    );
+
     return (
-      <View accessibilityRole="tablist" style={styles.container}>
+      <View
+        accessibilityRole="tablist"
+        onLayout={event => setContainerWidth(event.nativeEvent.layout.width)}
+        style={styles.container}>
         <View pointerEvents="none" style={styles.divider} />
+        {PERPS_PRO_INFO_TABS.map(tab => (
+          <PerpsProInfoTabLabelProbe
+            key={tab}
+            label={labels[tab]}
+            onWidth={setLabelWidths}
+            style={styles.text}
+            tab={tab}
+          />
+        ))}
         {PERPS_PRO_INFO_TABS.map((tab, index) => {
           const selected = tab === activeTab;
           return (
@@ -250,7 +332,7 @@ export const PerpsProInfoTabs: React.FC<PerpsProInfoTabsProps> = React.memo(
                 index={index}
                 label={labels[tab]}
                 position={indicatorPosition}
-                style={styles.text}
+                style={textStyle}
                 testID={`perps-pro-info-tab-label-${tab}`}
               />
             </Pressable>
@@ -297,9 +379,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
     backgroundColor: colors2024['neutral-bg-1'],
     flexDirection: 'row',
-    gap: 16,
+    gap: INFO_TAB_GAP,
     height: PERPS_PRO_INFO_TABS_HEIGHT,
-    paddingHorizontal: 16,
+    paddingHorizontal: INFO_TAB_PADDING_HORIZONTAL,
     overflow: 'hidden',
     position: 'relative',
   },
@@ -326,10 +408,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   history: {
     alignItems: 'center',
-    height: 24,
+    height: INFO_TAB_HISTORY_SIZE,
     justifyContent: 'center',
     marginLeft: 'auto',
-    width: 24,
+    width: INFO_TAB_HISTORY_SIZE,
   },
   pendingIcon: {
     alignItems: 'center',

@@ -354,7 +354,8 @@ describe('PerpsProInfoTabs', () => {
     const accountLabels = screen.getAllByText('Account', {
       includeHiddenElements: true,
     });
-    expect(accountLabels).toHaveLength(2);
+    // Two visible layers plus the hidden width probe.
+    expect(accountLabels).toHaveLength(3);
     expect(
       accountLabels.map(label => StyleSheet.flatten(label.props.style)),
     ).toEqual(

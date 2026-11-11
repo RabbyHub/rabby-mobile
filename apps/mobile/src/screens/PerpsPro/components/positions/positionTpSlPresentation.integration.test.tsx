@@ -409,7 +409,7 @@ describe('position TP/SL input source integration', () => {
   it('preserves the submitted quantity and PnL through list, repeated Modify and a new PnL target', async () => {
     const precisionMarket = {
       ...market,
-      markPrice: '84076',
+      markPrice: '160076',
       pxDecimals: 1,
       szDecimals: 5,
     };
@@ -527,9 +527,16 @@ describe('position TP/SL input source integration', () => {
       screen.getByTestId('perps-pro-position-tpsl-takeProfit-hint'),
     ).toHaveTextContent(/\+33\.00/);
     fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-review'));
+    expect(onReview).not.toHaveBeenCalled();
+    expect(placements).toEqual([]);
+    fireEvent.changeText(
+      screen.getByTestId('perps-pro-position-tpsl-amount'),
+      '11.21',
+    );
+    fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-review'));
     expect(onReview.mock.lastCall?.[0].legs[0]).toMatchObject({
       size: '0.00007',
-      triggerPrice: '555140',
+      triggerPrice: '555148',
     });
     await executeDraft();
     add.unmount();
@@ -563,7 +570,7 @@ describe('position TP/SL input source integration', () => {
       );
       await act(async () => {});
       const amount = screen.getByTestId('perps-pro-position-tpsl-amount');
-      expect(amount.props.value).toBe('5.88');
+      expect(amount.props.value).toBe('11.2');
       fireEvent(amount, 'focus');
       fireEvent(amount, 'blur');
       expect(screen.getByTestId('perps-pro-position-tpsl-amount')).toBe(amount);
@@ -595,7 +602,7 @@ describe('position TP/SL input source integration', () => {
     expect(
       placements.map(({ size, triggerPx }) => ({ size, triggerPx })),
     ).toEqual([
-      { size: '0.00007', triggerPx: '555140' },
+      { size: '0.00007', triggerPx: '555148' },
       { size: '0.00007', triggerPx: '512290' },
     ]);
     expect(cancellations).toEqual([7]);
@@ -886,14 +893,14 @@ describe('position TP/SL input source integration', () => {
     // Raw mode input is a target; its protocol-normalized price remains canonical.
     fireEvent.changeText(screen.getByTestId(pnlId), '0.02');
     expect(screen.getByTestId(pnlId).props.value).toBe('0.02');
-    expect(screen.getByTestId(triggerId).props.value).toBe('86318');
+    expect(screen.getByTestId(triggerId).props.value).toBe('86319');
     fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-review'));
     act(() => jest.advanceTimersByTime(20));
     expect(onReview).toHaveBeenCalledWith(
       expect.objectContaining({
         legs: [
           expect.objectContaining({
-            triggerPrice: '86318',
+            triggerPrice: '86319',
             replaceOid: 7,
             size: '0.00014',
           }),
