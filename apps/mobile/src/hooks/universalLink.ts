@@ -34,7 +34,8 @@ import {
 } from '@/core/walletconnect';
 import { isNonPublicProductionEnv } from '@/constant';
 import { RootNames } from '@/constant/layout';
-import { navigationRef } from '@/utils/navigation';
+import { navigateDeprecated, navigationRef } from '@/utils/navigation';
+import { findChain, makeTokenFromChain } from '@/utils/chain';
 import { dropAppDataSourceAndQuitApp } from '@/databases/imports';
 import {
   abortAllSyncTasks,
@@ -127,10 +128,20 @@ type OnParseUrlAndProcessAction = (payload: {
     action: 'open' | 'refresh' | 'probe';
     market?: string;
   };
-  debugOpenTarget?: RabbyGoTarget;
+  debugOpenTarget?: DebugOpenTarget;
+  debugOpenTargetChain?: string;
+  debugOpenTargetTab?: 'seedPhrase' | 'privateKey';
   regressionScenarioCommand?: RegressionScenarioCommand | null;
   regressionScenarioError?: string;
 }) => void;
+
+// Non-production automation targets that reuse the existing `_cmd` entry
+// instead of shipping another debug route.
+type DebugOpenTarget =
+  | RabbyGoTarget
+  | 'tokenDetail'
+  | 'approvals'
+  | 'importSecret';
 
 const NON_PRODUCTION_TESTKIT_SCREENS = {
   DevCapabilityFile: RootNames.DevCapabilityFile,
@@ -393,12 +404,16 @@ function parseNonProductionMaintenanceLink(appLink: string) {
   // must use this `_cmd` instead of reusing it.
   if (rabbyGoCmd === 'debug-open-target' || target === 'debug-open-target') {
     const rawTarget = urlInfo.searchParams.get('target');
-    if (
-      rawTarget !== 'perps' &&
-      rawTarget !== 'swap' &&
-      rawTarget !== 'bridge' &&
-      rawTarget !== 'home'
-    ) {
+    const isRabbyGoTarget =
+      rawTarget === 'perps' ||
+      rawTarget === 'swap' ||
+      rawTarget === 'bridge' ||
+      rawTarget === 'home';
+    const isDebugScreenTarget =
+      rawTarget === 'tokenDetail' ||
+      rawTarget === 'approvals' ||
+      rawTarget === 'importSecret';
+    if (!isRabbyGoTarget && !isDebugScreenTarget) {
       console.warn(
         '[useUniversalLinkOnTop] Unknown debug-open-target target:',
         rawTarget,
@@ -408,7 +423,17 @@ function parseNonProductionMaintenanceLink(appLink: string) {
 
     return {
       type: 'debug-open-target',
-      debugOpenTarget: rawTarget,
+      debugOpenTarget: rawTarget as DebugOpenTarget,
+      debugOpenTargetChain:
+        urlInfo.searchParams.get('chain') || urlInfo.searchParams.get('symbol')
+          ? urlInfo.searchParams.get('chain') ||
+            urlInfo.searchParams.get('symbol') ||
+            undefined
+          : undefined,
+      debugOpenTargetTab:
+        urlInfo.searchParams.get('tab') === 'privateKey'
+          ? 'privateKey'
+          : 'seedPhrase',
     } satisfies Parameters<OnParseUrlAndProcessAction>[0];
   }
 
@@ -822,7 +847,42 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
         if (!navigationRef.getRootState()) {
           return;
         }
-        void openRabbyGoTarget(payload.debugOpenTarget!);
+        const target = payload.debugOpenTarget!;
+        if (target === 'tokenDetail') {
+          const chain = findChain({
+            serverId: payload.debugOpenTargetChain || 'eth',
+          });
+          if (!chain) {
+            console.warn(
+              '[useUniversalLinkOnTop] unknown chain for tokenDetail:',
+              payload.debugOpenTargetChain,
+            );
+            return;
+          }
+          navigateDeprecated(RootNames.TokenDetail, {
+            token: makeTokenFromChain(chain),
+            isSingleAddress: true,
+          } as any);
+          return;
+        }
+        if (target === 'approvals') {
+          const account = getFallbackAccountSnapshot();
+          if (!account) {
+            return;
+          }
+          navigateDeprecated(RootNames.StackTransaction, {
+            screen: RootNames.Approvals,
+            params: { account },
+          } as any);
+          return;
+        }
+        if (target === 'importSecret') {
+          navigateDeprecated(RootNames.ImportSecret, {
+            initialTab: payload.debugOpenTargetTab,
+          } as any);
+          return;
+        }
+        void openRabbyGoTarget(target);
       }, `debug-open-${payload.debugOpenTarget}`);
       break;
     case 'regression-scenario':

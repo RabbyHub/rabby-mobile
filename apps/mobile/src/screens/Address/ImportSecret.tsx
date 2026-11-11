@@ -37,6 +37,7 @@ import { IS_ANDROID } from '@/core/native/utils';
 import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 import { atom, useAtom } from 'jotai';
 import { HeaderBackPressable } from '@/hooks/navigation';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 /** Toast position at the top of screen */
 const TOAST_POSITION_TOP = 30;
@@ -464,7 +465,17 @@ export const ImportSecret = ({ route }: ScreenProps) => {
  * equal slots, so on a narrow device (iPhone SE, QA 1344) the toggle stays
  * centred instead of being pushed right by the native back-item inset.
  */
-export const ImportSecretHeaderToggle = () => {
+export const ImportSecretHeader = () => {
+  const { styles } = useTheme2024({ getStyle: getStyles });
+  const insets = useSafeAreaInsets();
+  return (
+    <View style={[styles.headerOuter, { paddingTop: insets.top }]}>
+      <ImportSecretHeaderToggle />
+    </View>
+  );
+};
+
+const ImportSecretHeaderToggle = () => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useAtom(importSecretTabAtom);
@@ -539,10 +550,14 @@ const getStyles = createGetStyles2024(ctx => ({
     alignItems: 'center',
     width: '100%',
   },
+  headerOuter: {
+    backgroundColor: ctx.colors2024['neutral-bg-1'],
+  },
   headerRow: {
+    height: 44,
     flexDirection: 'row',
     alignItems: 'center',
-    width: SCREEN_WIDTH - 32,
+    paddingHorizontal: 16,
   },
   headerBack: {
     width: 24,
