@@ -129,7 +129,8 @@ export const createLegRunner = (deps: LegRunnerDeps): LegRunner => {
       }
 
       await gate.wait();
-      const slippagePct = deps.getMaxPriceImpactPct();
+      // half for the quote's price impact, half for on-chain slippage: the total stays within the max
+      const slippagePct = deps.getMaxPriceImpactPct() / 2;
       const quote = await deps.routes[leg.kind].quote({
         payToken,
         receiveToken,

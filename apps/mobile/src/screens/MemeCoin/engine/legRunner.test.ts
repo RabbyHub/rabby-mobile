@@ -88,14 +88,14 @@ const setup = (
 };
 
 describe('createLegRunner.prepareAndBroadcast', () => {
-  it('quotes the planned USD amount with the max price impact as slippage, then signs', async () => {
+  it('quotes the planned USD amount with half the max price impact as slippage, then signs', async () => {
     const t = setup();
     await expect(
       t.runner.prepareAndBroadcast(leg(), createPauseGate()),
     ).resolves.toEqual({ ok: true, txHash: '0xmain' });
     const quoteArgs = (t.route.quote as jest.Mock).mock.calls[0][0];
     expect(quoteArgs.payAmount.toNumber()).toBe(25);
-    expect(quoteArgs.slippagePct).toBe(5);
+    expect(quoteArgs.slippagePct).toBe(2.5);
     expect(t.signer.prefetch).toHaveBeenCalledWith(TXS);
     expect(t.signer.openDirect).toHaveBeenCalledWith(TXS);
     expect(t.signer.close).toHaveBeenCalled();
@@ -171,12 +171,12 @@ describe('createLegRunner.prepareAndBroadcast', () => {
     ).resolves.toEqual({ ok: false, reason: 'noQuote' });
   });
 
-  it('fails with priceImpact when the quote loses at least the max impact', async () => {
+  it('fails with priceImpact when the quote loses at least half the max impact', async () => {
     const lossy = setup(
       {},
       {
         quote: async ({ payAmount }) => ({
-          receiveAmount: payAmount.times(2 * 0.95),
+          receiveAmount: payAmount.times(2 * 0.97),
           build: async () => TXS,
         }),
       },
@@ -188,7 +188,7 @@ describe('createLegRunner.prepareAndBroadcast', () => {
       {},
       {
         quote: async ({ payAmount }) => ({
-          receiveAmount: payAmount.times(2 * 0.96),
+          receiveAmount: payAmount.times(2 * 0.98),
           build: async () => TXS,
         }),
       },
