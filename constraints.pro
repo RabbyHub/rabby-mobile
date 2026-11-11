@@ -46,3 +46,42 @@ gen_enforced_dependency(WorkspaceCwd, DependencyIdent, ExactVersion, DependencyT
   workspace_has_dependency(WorkspaceCwd, DependencyIdent, DependencyRange, DependencyType),
   DependencyType \= 'peerDependencies',
   range_prefix(DependencyRange, ExactVersion).
+
+% Runtime dependencies share one version within a theme. Themes are assigned
+% by workspace family, not by an allow-list of dependencies: react-native and
+% shared packages are bundled into the mobile app, web apps are evaluated
+% separately, and repository tooling has its own scope. A new packages/*
+% workspace joins the mobile theme automatically; a new apps/* workspace joins
+% tooling unless it is explicitly classified as mobile or web.
+workspace_theme('.', 'tooling').
+workspace_theme('apps/dev-console-cra', 'web').
+workspace_theme('apps/mobile-local-pages', 'web').
+workspace_theme('packages/rozenite-resource-flow-plugin', 'web').
+workspace_theme('apps/mobile', 'mobile').
+workspace_theme(WorkspaceCwd, 'mobile') :-
+  atom_concat('packages/', _, WorkspaceCwd),
+  WorkspaceCwd \= 'packages/rozenite-resource-flow-plugin'.
+workspace_theme(WorkspaceCwd, 'tooling') :-
+  atom_concat('apps/', _, WorkspaceCwd),
+  WorkspaceCwd \= 'apps/dev-console-cra',
+  WorkspaceCwd \= 'apps/mobile-local-pages',
+  WorkspaceCwd \= 'apps/mobile'.
+
+theme_dependency_versions(Theme, DependencyIdent, Pairs) :-
+  findall(WorkspaceCwd-DependencyRange, (
+    workspace(WorkspaceCwd),
+    workspace_theme(WorkspaceCwd, Theme),
+    workspace_has_dependency(WorkspaceCwd, DependencyIdent, DependencyRange, 'dependencies')
+  ), Pairs).
+
+% Pick the lexicographically first workspace in the theme as canonical. The
+% mobile app therefore wins for mobile dependencies, and dev-console-cra wins
+% for web dependencies that it uses.
+theme_dependency_first_range(Theme, DependencyIdent, DependencyRange) :-
+  theme_dependency_versions(Theme, DependencyIdent, Pairs),
+  sort(Pairs, [_-DependencyRange|_]).
+
+gen_enforced_dependency(WorkspaceCwd, DependencyIdent, DependencyRange, 'dependencies') :-
+  workspace_theme(WorkspaceCwd, Theme),
+  workspace_has_dependency(WorkspaceCwd, DependencyIdent, _, 'dependencies'),
+  theme_dependency_first_range(Theme, DependencyIdent, DependencyRange).

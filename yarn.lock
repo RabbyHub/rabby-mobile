@@ -8326,16 +8326,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@metamask/abi-utils@npm:^2.0.2":
-  version: 2.0.4
-  resolution: "@metamask/abi-utils@npm:2.0.4"
-  dependencies:
-    "@metamask/superstruct": "npm:^3.1.0"
-    "@metamask/utils": "npm:^9.0.0"
-  checksum: 10/3d32d42c6e98fc4719b2b53597e573764b80936c7cc31d884c87729c4c4f74a30e93096db87aaa7cbcec9d3bb7d22b1adfc98a8bcb4c7c2f17bfbddaa4367d34
-  languageName: node
-  linkType: hard
-
 "@metamask/auto-changelog@npm:3.4.4":
   version: 3.4.4
   resolution: "@metamask/auto-changelog@npm:3.4.4::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40metamask%2Fauto-changelog%2F-%2Fauto-changelog-3.4.4.tgz"
@@ -8542,20 +8532,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@metamask/eth-sig-util@npm:7.0.1":
-  version: 7.0.1
-  resolution: "@metamask/eth-sig-util@npm:7.0.1"
-  dependencies:
-    "@ethereumjs/util": "npm:^8.1.0"
-    "@metamask/abi-utils": "npm:^2.0.2"
-    "@metamask/utils": "npm:^8.1.0"
-    ethereum-cryptography: "npm:^2.1.2"
-    tweetnacl: "npm:^1.0.3"
-    tweetnacl-util: "npm:^0.15.1"
-  checksum: 10/e2aa3f0ad4db75b872705863a502414e17cd72d70c8b2a3f49c700ee237c428919161f345d42c6d00c5267fe87909ec021dee601cc02cb65bab04db2ec771997
-  languageName: node
-  linkType: hard
-
 "@metamask/eth-sig-util@npm:8.2.0":
   version: 8.2.0
   resolution: "@metamask/eth-sig-util@npm:8.2.0"
@@ -8692,23 +8668,6 @@ __metadata:
     semver: "npm:^7.3.8"
     superstruct: "npm:^1.0.3"
   checksum: 10/f6a1cf9a2ddbdb9840ed3d93d961d3f7c3feb532361c84a3e54c88034d9a3149a11773948631a25c2b0355712848a6e0b226ad432844703e1f498e9602920879
-  languageName: node
-  linkType: hard
-
-"@metamask/utils@npm:^9.0.0":
-  version: 9.3.0
-  resolution: "@metamask/utils@npm:9.3.0"
-  dependencies:
-    "@ethereumjs/tx": "npm:^4.2.0"
-    "@metamask/superstruct": "npm:^3.1.0"
-    "@noble/hashes": "npm:^1.3.1"
-    "@scure/base": "npm:^1.1.3"
-    "@types/debug": "npm:^4.1.7"
-    debug: "npm:^4.3.4"
-    pony-cause: "npm:^2.1.10"
-    semver: "npm:^7.5.4"
-    uuid: "npm:^9.0.1"
-  checksum: 10/ed6648cd973bbf3b4eb0e862903b795a99d27784c820e19f62f0bc0ddf353e98c2858d7e9aaebc0249a586391b344e35b9249d13c08e3ea0c74b23dc1c6b1558
   languageName: node
   linkType: hard
 
@@ -9490,11 +9449,11 @@ __metadata:
     "@debank/common": "npm:0.3.60"
     "@metamask/auto-changelog": "npm:3.4.4"
     "@rabby-wallet/base-utils": "workspace:^"
-    "@rabby-wallet/rabby-api": "npm:0.9.39"
+    "@rabby-wallet/rabby-api": "npm:0.9.69"
     "@types/jest": "npm:27.5.2"
     "@types/node": "npm:20.14.9"
     "@types/sinon": "npm:9.0.11"
-    bignumber.js: "npm:bignumber.js@9.1.2"
+    bignumber.js: "npm:9.1.2"
     deepmerge: "npm:4.3.1"
     jest: "npm:27.5.1"
     sinon: "npm:9.2.4"
@@ -9788,7 +9747,7 @@ __metadata:
     deepmerge: "npm:4.3.1"
     jest: "npm:27.5.1"
     once: "npm:1.4.0"
-    readable-stream: "npm:3.6.2"
+    readable-stream: "npm:4.7.0"
     sinon: "npm:9.2.4"
     ts-jest: "npm:27.1.5"
     typedoc: "npm:0.24.8"
@@ -9846,7 +9805,7 @@ __metadata:
     jest-it-up: "npm:2.2.0"
     prettier: "npm:2.8.8"
     prettier-plugin-packagejson: "npm:2.4.9"
-    readable-stream: "npm:3.6.2"
+    readable-stream: "npm:4.7.0"
     rimraf: "npm:3.0.2"
     ts-jest: "npm:26.5.6"
     typescript: "npm:4.4.4"
@@ -9863,23 +9822,6 @@ __metadata:
     bignumber.js: "*"
     p-queue: ^7.3.0
   checksum: 10/624ed2af91f98bb1da4037fe7a2f173a37d631b5f338f69208c3bb478b83d47a106124556844ae98950da9924309841cdf993409424d2daeba36735457a21dbb
-  languageName: node
-  linkType: hard
-
-"@rabby-wallet/rabby-api@npm:0.9.39":
-  version: 0.9.39
-  resolution: "@rabby-wallet/rabby-api@npm:0.9.39"
-  dependencies:
-    "@rabby-wallet/rabby-sign": "npm:0.4.0"
-    axios: "npm:^0.27.2"
-    axios-rate-limit: "npm:^1.3.0"
-    eth-rpc-errors: "npm:^4.0.3"
-    lodash: "npm:^4.17.21"
-    qss: "npm:^2.0.3"
-  peerDependencies:
-    "@debank/common": ^0.3.9
-    "@rabby-wallet/rabby-sign": ">= 0.3"
-  checksum: 10/020b77e95a65a21d4deb6719d83e5ff53159eaf23731d9dcdea76d77b3a38ba17aafc9e153aadfc3716aa88fd5aee46804e40bae886a048c5c3bb2d74cefb71b
   languageName: node
   linkType: hard
 
@@ -10053,7 +9995,7 @@ __metadata:
     deepmerge: "npm:4.3.1"
     jest: "npm:27.5.1"
     pump: "npm:3.0.0"
-    readable-stream: "npm:4.5.2"
+    readable-stream: "npm:4.7.0"
     stream-browserify: "npm:3.0.0"
     ts-jest: "npm:27.1.5"
     ts-loader: "npm:9.5.2"
@@ -10178,7 +10120,7 @@ __metadata:
     json-rpc-middleware-stream: "npm:5.0.1"
     prettier: "npm:2.8.8"
     prettier-plugin-packagejson: "npm:2.4.9"
-    readable-stream: "npm:3.6.2"
+    readable-stream: "npm:4.7.0"
     rimraf: "npm:3.0.2"
     ts-jest: "npm:28.0.8"
     ts-node: "npm:10.9.2"
@@ -19743,7 +19685,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"bignumber.js@npm:^9.1.2, bignumber.js@npm:bignumber.js@9.1.2":
+"bignumber.js@npm:^9.1.2":
   version: 9.1.2
   resolution: "bignumber.js@npm:9.1.2::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Fbignumber.js%2F-%2Fbignumber.js-9.1.2.tgz"
   checksum: 10/d89b8800a987225d2c00dcbf8a69dc08e92aa0880157c851c287b307d31ceb2fc2acb0c62c3e3a3d42b6c5fcae9b004035f13eb4386e56d529d7edac18d5c9d8
@@ -23112,7 +23054,7 @@ __metadata:
     less-loader: "npm:6.2.0"
     react: "npm:19.1.4"
     react-app-rewired: "npm:2.2.1"
-    react-dom: "npm:19.2.4"
+    react-dom: "npm:19.1.4"
     react-scripts: "npm:5.0.1"
     stylelint: "npm:13.13.1"
     stylelint-config-standard: "npm:20.0.0"
@@ -37824,7 +37766,7 @@ __metadata:
     "@ledgerhq/react-native-hw-transport-ble": "npm:6.40.2"
     "@metamask/abi-utils": "npm:3.0.0"
     "@metamask/browser-passworder": "npm:6.0.0"
-    "@metamask/eth-sig-util": "npm:7.0.1"
+    "@metamask/eth-sig-util": "npm:8.2.0"
     "@metamask/utils": "npm:8.2.1"
     "@ngraveio/bc-ur": "npm:1.1.6"
     "@noble/hashes": "npm:1.4.0"
@@ -37922,7 +37864,7 @@ __metadata:
     babel-plugin-module-resolver: "npm:5.0.0"
     babel-plugin-transform-define: "npm:2.1.4"
     babel-plugin-transform-remove-console: "npm:6.9.4"
-    bignumber.js: "npm:bignumber.js@9.1.2"
+    bignumber.js: "npm:9.1.2"
     clsx: "npm:2.1.0"
     colord: "npm:2.9.3"
     cross-env: "npm:7.0.3"
@@ -38033,7 +37975,7 @@ __metadata:
     readable-stream: "npm:4.7.0"
     reflect-metadata: "npm:0.1.13"
     rimraf: "npm:3.0.2"
-    semver: "npm:7.5.4"
+    semver: "npm:7.6.2"
     styled-components: "npm:6.5.3"
     through2: "npm:2.0.5"
     tldts: "npm:7.0.10"
@@ -38299,17 +38241,6 @@ __metadata:
   peerDependencies:
     react: ^19.1.4
   checksum: 10/977507ad270e3feac19fccbf8a9a0301e978ca7ceef1812c499899085cdd58207834483fdc9d3ca0bce2c67f48d3406e7da6b234b55e9fbc502c1bb04d141e43
-  languageName: node
-  linkType: hard
-
-"react-dom@npm:19.2.4":
-  version: 19.2.4
-  resolution: "react-dom@npm:19.2.4"
-  dependencies:
-    scheduler: "npm:^0.27.0"
-  peerDependencies:
-    react: ^19.2.4
-  checksum: 10/ec17721a8cb131bc33480a9f738bc5bbfe4bd11b11cf69f3f473605346578a329ad26ceef6ef0761ea67a4b455803407dd7ed4ba3d8a5abd2cee8c32d221e498
   languageName: node
   linkType: hard
 
@@ -39859,30 +39790,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"readable-stream@npm:3.6.2, readable-stream@npm:^3.0.6, readable-stream@npm:^3.1.1, readable-stream@npm:^3.4.0, readable-stream@npm:^3.5.0, readable-stream@npm:^3.6.0, readable-stream@npm:^3.6.2":
-  version: 3.6.2
-  resolution: "readable-stream@npm:3.6.2::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Freadable-stream%2F-%2Freadable-stream-3.6.2.tgz"
-  dependencies:
-    inherits: "npm:^2.0.3"
-    string_decoder: "npm:^1.1.1"
-    util-deprecate: "npm:^1.0.1"
-  checksum: 10/d9e3e53193adcdb79d8f10f2a1f6989bd4389f5936c6f8b870e77570853561c362bee69feca2bbb7b32368ce96a85504aa4cedf7cf80f36e6a9de30d64244048
-  languageName: node
-  linkType: hard
-
-"readable-stream@npm:4.5.2":
-  version: 4.5.2
-  resolution: "readable-stream@npm:4.5.2::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Freadable-stream%2F-%2Freadable-stream-4.5.2.tgz"
-  dependencies:
-    abort-controller: "npm:^3.0.0"
-    buffer: "npm:^6.0.3"
-    events: "npm:^3.3.0"
-    process: "npm:^0.11.10"
-    string_decoder: "npm:^1.3.0"
-  checksum: 10/01b128a559c5fd76a898495f858cf0a8839f135e6a69e3409f986e88460134791657eb46a2ff16826f331682a3c4d0c5a75cef5e52ef259711021ba52b1c2e82
-  languageName: node
-  linkType: hard
-
 "readable-stream@npm:4.7.0, readable-stream@npm:^4.5.2":
   version: 4.7.0
   resolution: "readable-stream@npm:4.7.0"
@@ -39908,6 +39815,17 @@ __metadata:
     string_decoder: "npm:~1.1.1"
     util-deprecate: "npm:~1.0.1"
   checksum: 10/8500dd3a90e391d6c5d889256d50ec6026c059fadee98ae9aa9b86757d60ac46fff24fafb7a39fa41d54cb39d8be56cc77be202ebd4cd8ffcf4cb226cbaa40d4
+  languageName: node
+  linkType: hard
+
+"readable-stream@npm:^3.0.6, readable-stream@npm:^3.1.1, readable-stream@npm:^3.4.0, readable-stream@npm:^3.5.0, readable-stream@npm:^3.6.0, readable-stream@npm:^3.6.2":
+  version: 3.6.2
+  resolution: "readable-stream@npm:3.6.2::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Freadable-stream%2F-%2Freadable-stream-3.6.2.tgz"
+  dependencies:
+    inherits: "npm:^2.0.3"
+    string_decoder: "npm:^1.1.1"
+    util-deprecate: "npm:^1.0.1"
+  checksum: 10/d9e3e53193adcdb79d8f10f2a1f6989bd4389f5936c6f8b870e77570853561c362bee69feca2bbb7b32368ce96a85504aa4cedf7cf80f36e6a9de30d64244048
   languageName: node
   linkType: hard
 
@@ -41010,13 +40928,6 @@ __metadata:
   version: 0.25.0
   resolution: "scheduler@npm:0.25.0"
   checksum: 10/e661e38503ab29a153429a99203fefa764f28b35c079719eb5efdd2c1c1086522f6653d8ffce388209682c23891a6d1d32fa6badf53c35fb5b9cd0c55ace42de
-  languageName: node
-  linkType: hard
-
-"scheduler@npm:^0.27.0":
-  version: 0.27.0
-  resolution: "scheduler@npm:0.27.0"
-  checksum: 10/eab3c3a8373195173e59c147224fc30dabe6dd453f248f5e610e8458512a5a2ee3a06465dc400ebfe6d35c9f5b7f3bb6b2e41c88c86fd177c25a73e7286a1e06
   languageName: node
   linkType: hard
 
