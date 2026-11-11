@@ -3,7 +3,7 @@ import { View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Text } from '@/components/Typography';
+import { AutoFitHeaderTitle } from '@/components/AutoFitHeaderTitle';
 import { HeaderBackButton } from '@/hooks/navigation';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -39,13 +39,10 @@ export const ImportMethodsHeader = () => {
           />
         </View>
         <View style={styles.center}>
-          <Text
-            numberOfLines={1}
-            ellipsizeMode="tail"
-            style={styles.title}
-            accessibilityRole="header">
-            {t('screens.addressStackTitle.ImportMethods')}
-          </Text>
+          <AutoFitHeaderTitle
+            text={t('screens.addressStackTitle.ImportMethods')}
+            textStyle={styles.title}
+          />
         </View>
         {/* Reserved trailing slot: keeps the title centred on the screen, the
             same way a real trailing action would. */}
@@ -92,11 +89,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexShrink: 0,
   },
   title: {
-    maxWidth: '100%',
     color: colors2024['neutral-title-1'],
-    fontWeight: '900',
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 20,
-    textAlign: 'center',
   },
 }));

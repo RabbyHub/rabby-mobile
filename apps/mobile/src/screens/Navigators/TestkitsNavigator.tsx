@@ -18,6 +18,7 @@ import {
   DevSwitches,
   DevUIAccountShowCase,
   DevUIAnimatedTextAndView,
+  DevUIAutoFitTitlePlayground,
   DevUIBuiltInPages,
   DevUIComponents2024ShowCase,
   DevUIWalletConnect,
@@ -60,6 +61,10 @@ export function TestkitsNavigator() {
       <Stack.Screen
         name={RootNames.DevUIAnimatedTextAndView}
         component={DevUIAnimatedTextAndView}
+      />
+      <Stack.Screen
+        name={RootNames.DevUIAutoFitTitlePlayground}
+        component={DevUIAutoFitTitlePlayground}
       />
       <Stack.Screen
         name={RootNames.DevUIFontShowCase}
