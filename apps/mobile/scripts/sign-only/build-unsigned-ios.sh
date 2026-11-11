@@ -9,6 +9,10 @@ archive_path="${1:-$project_dir/.sign-only/RabbyMobile.xcarchive}"
 
 cd "$project_dir"
 
+. "$project_dir/scripts/fns.sh" --source-only
+load_env_var_from_candidate_files RABBY_MOBILE_CODE || true
+validate_rabbit_code || exit 1
+
 RABBY_MOBILE_IOS_BUILD_UNSIGNED=true \
 RABBY_MOBILE_IOS_UNSIGNED_ARCHIVE="$archive_path" \
 RABBY_MOBILE_BUILD_ENV="${RABBY_MOBILE_BUILD_ENV:-regression}" \

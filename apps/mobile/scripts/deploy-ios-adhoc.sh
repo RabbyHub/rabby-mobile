@@ -10,6 +10,24 @@ project_dir=$(dirname $script_dir)
 
 ensure_mobile_node_runtime
 
+verify_ios_ipa_rabbit_code() {
+  local ipa="$1"
+  local expected="$2"
+  local tmp_dir actual
+  tmp_dir=$(mktemp -d "${TMPDIR:-/tmp}/rabby-ipa-check.XXXXXX") || return 1
+  if ! unzip -q "$ipa" -d "$tmp_dir"; then
+    rm -rf "$tmp_dir"
+    return 1
+  fi
+  actual=$(/usr/libexec/PlistBuddy -c 'Print :rabbit_code' "$tmp_dir/Payload/RabbyMobile.app/Info.plist" 2>/dev/null || true)
+  rm -rf "$tmp_dir"
+  if [ "$actual" != "$expected" ]; then
+    echo "[deploy-ios-adhoc] RABBY_MOBILE_CODE mismatch in IPA (got '${actual:-<missing>}')" >&2
+    return 1
+  fi
+  return 0
+}
+
 export buildchannel="selfhost-reg";
 export BUILD_TARGET_PLATFORM="ios";
 export RABBY_MOBILE_BUILD_ENV="regression";
@@ -209,6 +227,11 @@ if [ "$RABBY_MOBILE_IOS_BUILD_UNSIGNED" == "true" ]; then
     codesign --force --sign - --timestamp=none --entitlements "$unsigned_entitlements" "$unsigned_app" || exit $?
   fi
   (cd "$(dirname "$unsigned_archive")" && ditto -c -k --sequesterRsrc --keepParent "$(basename "$unsigned_archive")" "${unsigned_archive}.zip")
+  unsigned_rabbit_code=$(print_ios_rabbit_code "$unsigned_archive" 2>/dev/null || true)
+  if [ "$unsigned_rabbit_code" != "$RABBY_MOBILE_CODE" ]; then
+    echo "[deploy-ios-adhoc] RABBY_MOBILE_CODE mismatch in unsigned archive (got '${unsigned_rabbit_code:-<missing>}')" >&2
+    exit 1
+  fi
   echo "[deploy-ios-adhoc] unsigned iOS archive: ${unsigned_archive}.zip"
   shasum -a 256 "${unsigned_archive}.zip"
   exit 0
@@ -226,6 +249,10 @@ if [[ ! -f $ouput_dir/RabbyMobile.ipa || "$GHA_MOCK_BUILD_FAILED" == "true" ]]; 
   echo "[deploy-ios-adhoc] ⚠️ build failed! No $ouput_dir/RabbyMobile.ipa found";
   node $script_dir/notify-lark.js "FAILED" ios
   exit 1;
+fi
+
+if [ -n "${RABBY_MOBILE_CODE:-}" ]; then
+  verify_ios_ipa_rabbit_code "$ouput_dir/RabbyMobile.ipa" "$RABBY_MOBILE_CODE" || exit 1
 fi
 
 file_date=$(date -r $ouput_dir/RabbyMobile.ipa '+%Y%m%d_%H%M%S')

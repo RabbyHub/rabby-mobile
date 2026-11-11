@@ -435,6 +435,14 @@ jobs:
           fi
           echo "$ARTIFACT_SHA256  $RUNNER_TEMP/sign-only-ios.zip" | shasum -a 256 -c -
           unzip -q -o "$RUNNER_TEMP/sign-only-ios.zip" -d "$RUNNER_TEMP/sign-only-ios-input"
+          rabbit_plist=$(find "$RUNNER_TEMP/sign-only-ios-input" -path '*.app/Info.plist' -print -quit)
+          rabbit_code=$(/usr/libexec/PlistBuddy -c 'Print :rabbit_code' "$rabbit_plist" 2>/dev/null || true)
+          case "$rabbit_code" in
+            ''|null|undefined|RABBY_MOBILE_CODE_DEV)
+              echo "artifact has an invalid rabbit_code ('${rabbit_code:-<missing>}')" >&2
+              exit 1
+              ;;
+          esac
 
       - name: Prepare ephemeral signing keychain
         run: |
