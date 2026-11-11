@@ -872,8 +872,6 @@
       "price-impact": "Price Impact",
       "From": "From",
       "bridgeFrom": "Bridge From",
-      "bridge-from": "Bridge from",
-      "for-available-quote": "for an available quote",
       "To": "To",
       "Select": "Select",
       "no-quote-found": "No quote found. Please try other token pairs.",

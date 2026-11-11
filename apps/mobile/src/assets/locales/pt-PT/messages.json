@@ -991,7 +991,6 @@
       "delete-title": "Eliminar carteira"
     },
     "bridge": {
-      "bridge-from": "Bridge de",
       "price-impact": "Impacto no preço",
       "no-quote": "Sem cotação",
       "est-payment": "Pagamento estimado:",
@@ -1000,7 +999,6 @@
       "est-receiving": "Montante estimado a receber:",
       "via-bridge": "via {{bridge}}",
       "From": "De",
-      "for-available-quote": "para uma cotação disponível",
       "history": "Histórico de bridges",
       "loss-tips": "Está a perder {{usd}}. Tente um valor diferente.",
       "To": "Para",

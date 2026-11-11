@@ -857,10 +857,8 @@
       "title": "Bridge",
       "Select": "Sélectionner",
       "loss-tips": "Vous perdez {{usd}}. Essayez un montant différent.",
-      "for-available-quote": "pour un devis disponible",
       "From": "De",
       "est-receiving": "Réception estimée :",
-      "bridge-from": "Bridge depuis",
       "showMore": {
         "source": "Source du bridge",
         "title": "Afficher plus",

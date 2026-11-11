@@ -849,8 +849,6 @@
       "price-impact": "Fiyat Etkisi",
       "bridgeFrom": "Köprüden",
       "est-payment": "Tahmini Ödeme:",
-      "for-available-quote": "mevcut teklif için",
-      "bridge-from": "Bridge kaynağı",
       "no-quote-found": "Teklif bulunamadı. Lütfen başka token çiftleri deneyin.",
       "title": "Köprü",
       "the-following-bridge-route-are-found": "Aşağıdaki oranlar bulundu",

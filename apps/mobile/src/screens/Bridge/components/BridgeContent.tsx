@@ -32,7 +32,7 @@ import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
 import BridgeToken from './BridgeToken';
 import BridgeSwitchBtn from './BridgeSwitchBtn';
 import { findChainByEnum, findChainByServerID } from '@/utils/chain';
-import BridgeShowMore, { RecommendFromToken } from './BridgeShowMore';
+import BridgeShowMore from './BridgeShowMore';
 import { tokenPriceImpact, useBridge } from '../hooks/token';
 import { SWAP_FEE_RATE } from '@/screens/Swap/hooks/fee';
 import { Button } from '@/components2024/Button';
@@ -376,9 +376,6 @@ export const BridgeContent = ({
     handleAmountChange,
     feeRate,
     feeTier,
-
-    recommendFromToken,
-    fillRecommendFromToken,
 
     inSufficient,
 
@@ -1274,8 +1271,7 @@ export const BridgeContent = ({
     !quoteLoading &&
     !quoteList?.length;
   const showStickyInfo = !!fromToken && !!toToken && !noQuote;
-  const hideBridgeProgress =
-    amountAvailable || !!selectedBridgeQuote || !!recommendFromToken;
+  const hideBridgeProgress = amountAvailable || !!selectedBridgeQuote;
   const showClosedMarketTip =
     (!!fromToken || !!toToken) && quoteBlockedByClosedMarket;
 
@@ -1785,34 +1781,25 @@ export const BridgeContent = ({
                   )}
                   {noQuote && (
                     <>
-                      {recommendFromToken ? (
-                        <RecommendFromToken
-                          token={recommendFromToken}
-                          onOk={fillRecommendFromToken}
+                      <Text style={styles.noRecoomedTokenText}>
+                        {t('page.bridge.no-quote-found')}
+                      </Text>
+                      <View style={{ marginHorizontal: 24, marginTop: 12 }}>
+                        <BridgeSlippage
+                          value={slippage}
+                          displaySlippage={slippage}
+                          onChange={handleSlippageChange}
+                          autoSlippage={autoSlippage}
+                          isCustomSlippage={isCustomSlippage}
+                          setAutoSlippage={setAutoSlippage}
+                          setIsCustomSlippage={setIsCustomSlippage}
+                          type="bridge"
+                          loading={quoteLoading}
+                          onOptionsOpenChange={
+                            setSlippageOptionsQuoteRefreshPaused
+                          }
                         />
-                      ) : (
-                        <>
-                          <Text style={styles.noRecoomedTokenText}>
-                            {t('page.bridge.no-quote-found')}
-                          </Text>
-                          <View style={{ marginHorizontal: 24, marginTop: 12 }}>
-                            <BridgeSlippage
-                              value={slippage}
-                              displaySlippage={slippage}
-                              onChange={handleSlippageChange}
-                              autoSlippage={autoSlippage}
-                              isCustomSlippage={isCustomSlippage}
-                              setAutoSlippage={setAutoSlippage}
-                              setIsCustomSlippage={setIsCustomSlippage}
-                              type="bridge"
-                              loading={quoteLoading}
-                              onOptionsOpenChange={
-                                setSlippageOptionsQuoteRefreshPaused
-                              }
-                            />
-                          </View>
-                        </>
-                      )}
+                      </View>
                     </>
                   )}
                 </View>
