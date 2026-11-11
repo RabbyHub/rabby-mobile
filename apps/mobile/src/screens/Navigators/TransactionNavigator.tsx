@@ -3,6 +3,7 @@ import 'react-native-gesture-handler';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { IS_IOS } from '@/core/native/utils';
 
 import { createCustomNativeStackNavigator as createNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
 
@@ -53,7 +54,6 @@ import { PredictionScreenWithPreload } from '../InnerDapp/InnerDappPreloadScreen
 import { useInnerDappPreloadStrategy } from '@/config/innerDappPreloadStrategy';
 import { Text } from '@/components/Typography';
 import { createGetStyles2024 } from '@/utils/styles';
-import { IS_IOS } from '@/core/native/utils';
 import { withRegressionScenario } from '@/devtools/regressionScenarios/react';
 
 const TransactionStack =

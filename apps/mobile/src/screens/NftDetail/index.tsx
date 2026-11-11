@@ -128,7 +128,6 @@ export const NFTDetailScreen = () => {
       headerLeft: () => null,
       // mergeScreenOptions installs a native back bar item on iOS; clear it so
       // only the row's own back button is rendered.
-      unstable_headerLeftItems: () => [],
     });
   }, [TokenDetailHeaderArea, setNavigationOptions]);
 
