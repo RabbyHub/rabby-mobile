@@ -72,13 +72,13 @@ function SideChainSelector({
   const pending =
     !projectionReady || balanceLoading || isLoadingCurve || chainStatsLoading;
 
-  if (
-    !shouldShowChainSelector({
-      currentAddress,
-      chainLength,
-      pending,
-    })
-  ) {
+  const visible = shouldShowChainSelector({
+    currentAddress,
+    chainLength,
+    pending,
+  });
+
+  if (!visible) {
     return null;
   }
 

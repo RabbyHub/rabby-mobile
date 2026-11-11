@@ -29,7 +29,10 @@ import {
 import { useTheme2024 } from '@/hooks/theme';
 import { useMeasureLayoutForHomeGuidanceMultipleTabs } from '@/components2024/Animations/HomeGuidanceMultipleTabs';
 import { ChainSelector } from '@/screens/Home/components/AssetRenderItems/SectionHeaders';
-import { addressBalanceStore } from '@/store/balance';
+import { addressBalanceStore, balanceAccountsStore } from '@/store/balance';
+import tokenStore from '@/store/tokens';
+import { hasConfirmedAssetProjectionSources } from '@/store/assetProjectionAvailability';
+import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 import {
   getComputedChainInfo,
   getSelectChainItem,
@@ -348,8 +351,33 @@ function SideChainSelector() {
   const projectionReady = useChainProjectionReady();
   // Identical loading state for every address; only the settled outcome differs
   // (chains -> keep the filter, none -> hide the pill, keep the slot).
+  const hasResolvedSelection = balanceAccountsStore(
+    state => state.hasResolvedSelection,
+  );
+  const isAnyBalanceLoading = balanceAccountsStore(
+    state => state.isAnyBalanceLoadingWithoutValue,
+  );
+  const selectedAddresses = balanceAccountsStore(
+    state => state.selectedAddresses,
+  );
+  const sourceSnapshotReady = useActivityStore(
+    tokenStore,
+    state => state.sourceSnapshotReadyByAddress,
+    Object.is,
+    { storeLabel: 'token-source-snapshot-ready' },
+  );
+  // True until every selected address's token source snapshot is confirmed.
+  // The aggregate page does not populate `isLoadingByAddress`, so that flag can
+  // never close this window.
+  const tokensLoading = !hasConfirmedAssetProjectionSources(
+    selectedAddresses,
+    sourceSnapshotReady,
+  );
   const loading =
     !projectionReady ||
+    !hasResolvedSelection ||
+    isAnyBalanceLoading ||
+    tokensLoading ||
     loadBalanceFromApiStage === 'loading' ||
     chainStatsLoading;
 
