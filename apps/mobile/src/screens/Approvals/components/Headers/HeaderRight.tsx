@@ -9,6 +9,7 @@ interface IProps {
   isSearching?: boolean;
   onTap?: () => void;
 }
+
 export const HeaderRight = (props: IProps) => {
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
@@ -29,6 +30,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   // Keep the trailing action the same minimum width as the native back item.
   button: {
     minWidth: 44,
+    // Fill the header row so the tap target is 44x48 instead of 44x24.
+    height: '100%',
     alignItems: 'flex-end',
     justifyContent: 'center',
   },

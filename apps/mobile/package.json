@@ -61,7 +61,15 @@
     "vbundle:android": "react-native-bundle-visualizer --platform=android --entry-file=./index.js",
     "vbundle:ios": "react-native-bundle-visualizer --platform=ios --entry-file=./index.js",
     "verify:local-pages": "node ./scripts/verify-local-page-assets.cjs",
-    "postversion": "react-native-version --never-amend"
+    "postversion": "react-native-version --never-amend",
+    "sign-only:android": "bash ./scripts/sign-only/build-unsigned-android.sh && node ./scripts/sign-only/publish.mjs --platform android --file .sign-only/app-signonly-unsigned.apk --prepare",
+    "sign-only:ios": "bash ./scripts/sign-only/build-unsigned-ios.sh && node ./scripts/sign-only/publish.mjs --platform ios --file .sign-only/RabbyMobile.xcarchive.zip --prepare",
+    "sign-only:upload:android": "node ./scripts/sign-only/publish.mjs --platform android --file .sign-only/app-signonly-unsigned.apk --prepare",
+    "sign-only:upload:ios": "node ./scripts/sign-only/publish.mjs --platform ios --file .sign-only/RabbyMobile.xcarchive.zip --prepare",
+    "sign-only:full:android": "node ./scripts/sign-only/one-shot.mjs --platform android",
+    "sign-only:full:ios": "node ./scripts/sign-only/one-shot.mjs --platform ios",
+    "sign-only:full:all": "node ./scripts/sign-only/one-shot.mjs --platform all",
+    "sign-only:test": "node --test ./scripts/sign-only/publish.test.mjs"
   },
   "resolutions": {
     "@gorhom/bottom-sheet": "patch:@gorhom/bottom-sheet@npm:5.2.8#../../.yarn/patches/@gorhom-bottom-sheet-npm-5.2.8-1ad4b8f529.patch",

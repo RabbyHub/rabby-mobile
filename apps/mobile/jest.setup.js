@@ -1,5 +1,18 @@
 /* eslint-env jest */
 
+// `src/constant/index.ts` reads NativeModules.RNVersionCheck.packageName at
+// import time, so any suite that renders a real screen needs a stub.
+{
+  const { NativeModules } = require('react-native');
+  if (!NativeModules.RNVersionCheck) {
+    NativeModules.RNVersionCheck = {
+      packageName: 'com.debank.rabby-mobile',
+      versionName: '0.0.0',
+      buildNumber: '0',
+    };
+  }
+}
+
 const createScope = () => ({
   setTag: jest.fn(),
   setTags: jest.fn(),

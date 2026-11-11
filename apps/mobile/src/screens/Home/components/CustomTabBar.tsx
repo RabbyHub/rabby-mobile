@@ -29,11 +29,18 @@ import {
 import { useTheme2024 } from '@/hooks/theme';
 import { useMeasureLayoutForHomeGuidanceMultipleTabs } from '@/components2024/Animations/HomeGuidanceMultipleTabs';
 import { ChainSelector } from '@/screens/Home/components/AssetRenderItems/SectionHeaders';
+import { addressBalanceStore, balanceAccountsStore } from '@/store/balance';
+import tokenStore from '@/store/tokens';
+import { hasConfirmedAssetProjectionSources } from '@/store/assetProjectionAvailability';
+import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 import {
   getComputedChainInfo,
   getSelectChainItem,
   setSelectChainItem,
+  useChainStatsLoading,
   useSelectedChainItem,
+  useChainLength,
+  useChainProjectionReady,
   useTop3Chains,
 } from '../useChainInfo';
 import {
@@ -282,7 +289,13 @@ const indicatorStyles = createGetStyles2024(
   },
 );
 function SideChainSelector() {
-  const { isLight, colors2024 } = useTheme2024();
+  const { styles, isLight, colors2024 } = useTheme2024({ getStyle: getStyles });
+  // Cold start: show the selector's loading state until the aggregate balance
+  // load settles, instead of an empty pill that only fills in seconds later
+  // (QA 1157).
+  const { loadBalanceFromApiStage } =
+    addressBalanceStore.useLoadBalanceFromApiStage();
+  const chainStatsLoading = useChainStatsLoading();
 
   const chainSelectModalRef = useRef<
     ReturnType<typeof createGlobalBottomSheetModal2024> | undefined
@@ -334,17 +347,76 @@ function SideChainSelector() {
   );
 
   const top3Chains = useTop3Chains();
+  const chainLength = useChainLength();
+  const projectionReady = useChainProjectionReady();
+  // Identical loading state for every address; only the settled outcome differs
+  // (chains -> keep the filter, none -> hide the pill, keep the slot).
+  const hasResolvedSelection = balanceAccountsStore(
+    state => state.hasResolvedSelection,
+  );
+  const isAnyBalanceLoading = balanceAccountsStore(
+    state => state.isAnyBalanceLoadingWithoutValue,
+  );
+  const selectedAddresses = balanceAccountsStore(
+    state => state.selectedAddresses,
+  );
+  const sourceSnapshotReady = useActivityStore(
+    tokenStore,
+    state => state.sourceSnapshotReadyByAddress,
+    Object.is,
+    { storeLabel: 'token-source-snapshot-ready' },
+  );
+  // True until every selected address's token source snapshot is confirmed.
+  // The aggregate page does not populate `isLoadingByAddress`, so that flag can
+  // never close this window.
+  const tokensLoading = !hasConfirmedAssetProjectionSources(
+    selectedAddresses,
+    sourceSnapshotReady,
+  );
+  const loading =
+    !projectionReady ||
+    !hasResolvedSelection ||
+    isAnyBalanceLoading ||
+    tokensLoading ||
+    loadBalanceFromApiStage === 'loading' ||
+    chainStatsLoading;
 
-  // Render the filter even before the chain projection is ready: the sheet
-  // falls back to the full mainnet chain list, and waiting here left the
-  // control blank for seconds (QA 1145).
+  // Render the filter while the projection is pending (QA 1145), but once it
+  // settles with no chain assets there is nothing to filter: hide the pill
+  // (QA 1197). The slot itself must stay in the row, otherwise the three tabs
+  // expand into the space the filter occupied.
+  //
+  // Hysteresis: a fast start can momentarily look "settled at 0" between two
+  // projection updates. Holding the visible state for a short grace period and
+  // cross-fading absorbs that blip instead of flashing hidden -> visible.
+  const shouldHide = !loading && chainLength === 0;
+  const [hidden, setHidden] = React.useState(shouldHide);
+  const opacity = useSharedValue(shouldHide ? 0 : 1);
+
+  React.useEffect(() => {
+    if (!shouldHide) {
+      setHidden(false);
+      return undefined;
+    }
+    const timer = setTimeout(() => setHidden(true), 300);
+    return () => clearTimeout(timer);
+  }, [shouldHide]);
+
+  React.useEffect(() => {
+    opacity.value = withTiming(hidden ? 0 : 1, { duration: 180 });
+  }, [hidden, opacity]);
+
+  const fadeStyle = useAnimatedStyle(() => ({ opacity: opacity.value }));
+
   return (
-    <ChainSelector
-      // top3Chains={chainAssets.map(item => item.chain).slice(0, 3)}
-      top3Chains={top3Chains}
-      onChainClick={handleOnChainClick}
-      chainServerId={selectedChainItem?.chain}
-    />
+    <Animated.View pointerEvents={hidden ? 'none' : 'auto'} style={fadeStyle}>
+      <ChainSelector
+        top3Chains={top3Chains}
+        onChainClick={handleOnChainClick}
+        chainServerId={selectedChainItem?.chain}
+        loading={loading}
+      />
+    </Animated.View>
   );
 }
 
@@ -509,6 +581,10 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   },
   hideInnerIndicator: {
     height: 0,
+  },
+  // Keep the slot (so the tabs do not grow) while hiding the empty filter.
+  chainSelectorHidden: {
+    opacity: 0,
   },
   tabBar: {},
   contentContainerStyle: {

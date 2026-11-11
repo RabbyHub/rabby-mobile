@@ -118,3 +118,6 @@ tsconfig.typecheck.temp.json
 
 /worker-dist/
 tsconfig.worker.tsbuildinfo
+
+# Local unsigned artifacts produced by scripts/sign-only/build-unsigned-*.sh
+.sign-only/

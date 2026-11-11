@@ -16,10 +16,11 @@ import {
   StyleSheet,
 } from 'react-native';
 import { NavigationContext, useFocusEffect } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { IS_IOS } from '@/core/native/utils';
 
 import { useTheme2024 } from '@/hooks/theme';
-import { HeaderBackPressable } from '@/hooks/navigation';
+import { HeaderBackButton } from '@/hooks/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
 
 import { AssetAvatar } from '@/components';
@@ -32,6 +33,9 @@ import { trigger } from 'react-native-haptic-feedback';
 import { toastCopyAddressSuccess } from '@/components/AddressViewer/CopyAddress';
 import { findChain } from '@/utils/chain';
 import { ITokenItem } from '@/store/tokens';
+import { useRemovedTokens } from '@/hooks/useRemovedTokens';
+import { useTriggerTagAssets } from '@/screens/Home/hooks/refresh';
+import { RightMore } from './RightMore';
 import { isLpToken } from '@/utils/lpToken';
 import LpTokenIcon from '@/screens/Home/components/LpTokenIcon';
 import { useTranslation } from 'react-i18next';
@@ -51,6 +55,16 @@ const HEADER_ROW_WIDTH: ViewStyle['width'] = IS_IOS
   ? SCREEN_WIDTH - 65
   : '100%';
 
+// Fixed width for the header-right slot so hiding the menu never re-flows the row.
+const RIGHT_SLOT_STYLE = {
+  width: '100%',
+  // Fill the header row: the trailing action's tap target must be at least the
+  // row height, not just the 24pt icon (QA 1328 tap-area rule).
+  height: '100%',
+  alignItems: 'flex-end',
+  justifyContent: 'center',
+} as const;
+
 interface Props {
   token: ITokenItem;
   style?: StyleProp<ViewStyle>;
@@ -63,6 +77,8 @@ interface Props {
   disableRefresh?: boolean;
   showCopyIcon?: boolean;
   inlineBack?: boolean;
+  /** Render as a plain full-width row (used inside the custom header). */
+  embedded?: boolean;
 }
 export const TokenDetailHeaderArea: React.FC<Props> = ({
   token,
@@ -76,6 +92,7 @@ export const TokenDetailHeaderArea: React.FC<Props> = ({
   disableRefresh = false,
   showCopyIcon = false,
   inlineBack = false,
+  embedded = false,
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { refreshing } = useAssetsRefreshing();
@@ -124,11 +141,11 @@ export const TokenDetailHeaderArea: React.FC<Props> = ({
   );
 
   return (
-    <View style={[styles.root, rootStyle]}>
+    <View style={[styles.root, embedded && styles.rootEmbedded, rootStyle]}>
       <View style={[styles.container, style]}>
         <View style={styles.token}>
           {inlineBack ? (
-            <HeaderBackPressable
+            <HeaderBackButton
               style={styles.inlineBack}
               tintColor={colors2024['neutral-title-1']}
             />
@@ -205,6 +222,68 @@ export const TokenDetailHeaderArea: React.FC<Props> = ({
   );
 };
 
+/**
+ * Header title shared by the token detail and token market detail routes.
+ *
+ * The two routes are the same page as far as the user is concerned, so the
+ * back chevron, avatar and symbol must be laid out at exactly the same place in
+ * both. Pushing from one to the other then reads as a normal page transition
+ * instead of the header jumping (QA 1343). Pass the token through `options` so
+ * the row also exists on the first frame of the push.
+ */
+export const TokenDetailHeaderTitle = ({ token }: { token?: ITokenItem }) => (
+  <TokenDetailHeaderArea
+    inlineBack
+    tokenSize={33}
+    chainSize={15}
+    borderChain
+    token={token as ITokenItem}
+    showCopyIcon
+  />
+);
+
+/**
+ * Header right slot shared by the token detail and token market detail routes.
+ *
+ * The slot keeps the same width even when the menu is hidden, so the title row
+ * (and with it the back chevron and avatar) never shifts when the "..." action
+ * appears. It is mounted from the navigator options, so the slot already exists
+ * on the first frame of the push (QA 1343).
+ */
+export const TokenDetailHeaderRight = ({
+  token,
+  isCustomTestnetToken = false,
+}: {
+  token?: ITokenItem;
+  isCustomTestnetToken?: boolean;
+}) => {
+  const { tokenRefresh, singleTokenRefresh } = useTriggerTagAssets();
+  const isTestnet = useMemo(() => {
+    if (!token?.chain) return false;
+    return !!findChain({ serverId: token.chain })?.isTestnet;
+  }, [token?.chain]);
+  const isRemoved = useRemovedTokens(state =>
+    token?.chain && token?.id
+      ? !isCustomTestnetToken &&
+        !isTestnet &&
+        state.isTokenRemoved({ chainId: token.chain, tokenId: token.id })
+      : false,
+  );
+  const refreshTags = useCallback(() => {
+    singleTokenRefresh();
+    tokenRefresh();
+  }, [singleTokenRefresh, tokenRefresh]);
+  const showMore = !!token && !isCustomTestnetToken && !isTestnet && !isRemoved;
+
+  return (
+    <View style={RIGHT_SLOT_STYLE}>
+      {showMore ? (
+        <RightMore token={token as ITokenItem} refreshTags={refreshTags} />
+      ) : null}
+    </View>
+  );
+};
+
 function CopyConfirmModal({
   onClose,
   ...props
@@ -215,6 +294,107 @@ function CopyConfirmModal({
 
   return <TrackedModal {...props} onRequestClose={onClose} />;
 }
+
+// Fixed insets for the custom header row; the content row begins at the page
+// content's left edge, so the back glyph and the logo land at the same place on
+// every device instead of inheriting the native title-slot origin (QA 1343).
+const TOKEN_HEADER_HORIZONTAL_INSET = 14;
+const TOKEN_HEADER_CONTENT_HEIGHT = 48;
+
+/**
+ * Fully custom header for the token detail and token market detail routes.
+ *
+ * The navigator owns it from the first descriptor. Leading/middle/trailing
+ * areas are laid out by us with fixed widths, so changing the centre content
+ * (loading, account switch, more-menu visibility) never moves the back button.
+ */
+export const TokenDetailHeader = ({
+  token,
+  isCustomTestnetToken = false,
+}: {
+  token?: ITokenItem;
+  isCustomTestnetToken?: boolean;
+}) => {
+  const { styles, colors2024 } = useTheme2024({ getStyle: getHeaderStyles });
+  const insets = useSafeAreaInsets();
+
+  return (
+    <View style={[styles.headerOuter, { paddingTop: insets.top }]}>
+      <View style={styles.headerRow}>
+        <View style={styles.headerBackSlot}>
+          <HeaderBackButton
+            style={[styles.headerBackTouch]}
+            // The box already fills the row height and the free space on the
+            // left; keep the default 10pt slop from reaching into the logo.
+            hitSlop={{ left: 0, right: 0, top: 0, bottom: 0 }}
+            tintColor={colors2024['neutral-title-1']}
+          />
+        </View>
+        <View style={styles.headerContent}>
+          <TokenDetailHeaderArea
+            embedded
+            token={token as ITokenItem}
+            tokenSize={33}
+            chainSize={15}
+            borderChain
+            showCopyIcon
+          />
+        </View>
+        <View style={styles.headerRightSlot}>
+          <TokenDetailHeaderRight
+            token={token}
+            isCustomTestnetToken={isCustomTestnetToken}
+          />
+        </View>
+      </View>
+    </View>
+  );
+};
+
+const getHeaderStyles = createGetStyles2024(() => ({
+  headerOuter: {
+    backgroundColor: 'transparent',
+  },
+  headerRow: {
+    height: TOKEN_HEADER_CONTENT_HEIGHT,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: TOKEN_HEADER_HORIZONTAL_INSET,
+  },
+  headerBackSlot: {
+    width: 24,
+    // The icon stays 24x24; the tap target fills the row height.
+    height: TOKEN_HEADER_CONTENT_HEIGHT,
+    alignItems: 'flex-start',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  // Fill the row height and everything to the left of the icon, stopping at the
+  // icon's right edge because the logo follows immediately (QA 1328 rule).
+  // `marginLeft: -TOKEN_HEADER_HORIZONTAL_INSET` keeps the row layout intact.
+  headerBackTouch: {
+    width: 24 + TOKEN_HEADER_HORIZONTAL_INSET,
+    height: '100%',
+    marginLeft: -TOKEN_HEADER_HORIZONTAL_INSET,
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+  },
+  headerContent: {
+    flex: 1,
+    minWidth: 0,
+  },
+  headerRightSlot: {
+    // 44x48 tap target: the slot spills 20pt into the free space on its left and
+    // `marginLeft: -20` keeps the row layout unchanged, so the `...` icon stays
+    // on the content's right edge.
+    width: 44,
+    marginLeft: -20,
+    height: TOKEN_HEADER_CONTENT_HEIGHT,
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+}));
 
 const getStyles = createGetStyles2024(({ isLight, colors2024 }) => ({
   copyConfirmOverlay: {
@@ -253,6 +433,9 @@ const getStyles = createGetStyles2024(({ isLight, colors2024 }) => ({
   root: {
     width: HEADER_ROW_WIDTH,
   },
+  rootEmbedded: {
+    width: '100%',
+  },
   container: {
     width: '100%',
     display: 'flex',
@@ -264,10 +447,15 @@ const getStyles = createGetStyles2024(({ isLight, colors2024 }) => ({
     alignItems: 'center',
     flexShrink: 1,
     minWidth: 0,
+    // Production keeps the avatar ~4pt from the symbol; the back button cancels
+    // the same gap with a negative margin so the glyph keeps its ~7pt gap.
     gap: 8,
   },
   inlineBack: {
+    // QA 1343: the glyph's left ink has to line up with the page content's left
+    // edge (~20pt), and the logo follows ~7pt after the glyph like production.
     marginLeft: 0,
+    marginRight: -6,
     paddingLeft: 0,
     width: 24,
     height: 24,

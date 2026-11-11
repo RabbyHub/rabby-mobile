@@ -50,10 +50,14 @@ import {
   TokenMarketInfoScreen,
 } from '@/perfs/loadables/screens';
 import UnlockScreen from '@/screens/Unlock/Unlock';
+import { TokenDetailHeader } from '@/screens/TokenDetail/components/HeaderArea';
 import SetupWallet from '@/screens/Address/SetupWallet';
 import SelectImportMethod from '@/screens/Address/SelectImportMethod';
 import ImportRabbyWallet from '@/screens/Address/ImportRabbyWallet';
-import { ImportSecret } from '@/screens/Address/ImportSecret';
+import {
+  ImportSecret,
+  ImportSecretHeader,
+} from '@/screens/Address/ImportSecret';
 import MoreImportMethods from '@/screens/Address/MoreImportMethods';
 import SelectAddMethod from '@/screens/Address/SelectAddMethod';
 import Backup from '@/screens/Address/Backup';
@@ -686,6 +690,9 @@ export default function AppNavigation() {
                   options={mergeScreenOptions2024([
                     {
                       headerShown: true,
+                      // Fully custom header: fixed leading/trailing slots keep
+                      // the segmented toggle centred on every device (QA 1344).
+                      header: () => <ImportSecretHeader />,
                     },
                   ])}
                 />
@@ -738,7 +745,13 @@ export default function AppNavigation() {
                     component={NFTDetailScreen}
                     options={mergeScreenOptions({
                       headerShown: true,
-                      headerTitleAlign: 'center',
+                      // QA 1343: the detail rows draw their own back button.
+                      // Hide the native one from the first frame so the push
+                      // transition cannot show it (and a shifted title) first.
+                      headerTitleAlign: 'left',
+                      headerBackVisible: false,
+                      headerLeft: () => null,
+                      unstable_headerLeftItems: () => [],
                       headerTitle: '',
                       headerStyle: {
                         // backgroundColor: colors['neutral-bg-2'],
@@ -749,15 +762,43 @@ export default function AppNavigation() {
                   <RootStack.Screen
                     name={RootNames.TokenDetail}
                     component={TokenDetailScreen}
-                    options={mergeScreenOptions({
-                      headerShown: true,
-                      headerTitleAlign: 'left',
-                      headerTitle: '',
-                      headerStyle: {
-                        // backgroundColor: colors['neutral-bg-2'],
-                        backgroundColor: 'transparent',
-                      },
-                    })}
+                    options={({ route }) =>
+                      mergeScreenOptions({
+                        headerShown: true,
+                        headerTitleAlign: 'left',
+                        // QA 1343: the title row renders its own back button,
+                        // so the native item must not exist even for the first
+                        // frame of the push transition.
+                        headerBackVisible: false,
+                        headerLeft: () => null,
+                        unstable_headerLeftItems: () => [],
+                        // Build the row from route params so token detail and
+                        // token market detail render the same header from the
+                        // first frame, with no layout shift between them.
+                        // Custom header: fixed leading/middle/trailing slots
+                        // owned by us, so the row does not depend on the
+                        // native title-slot origin (QA 1343).
+                        header: () => (
+                          <TokenDetailHeader
+                            token={
+                              (route.params as { token?: any } | undefined)
+                                ?.token
+                            }
+                            isCustomTestnetToken={
+                              (
+                                route.params as {
+                                  isCustomTestnetToken?: boolean;
+                                }
+                              )?.isCustomTestnetToken
+                            }
+                          />
+                        ),
+                        headerStyle: {
+                          // backgroundColor: colors['neutral-bg-2'],
+                          backgroundColor: 'transparent',
+                        },
+                      })
+                    }
                     getId={({ params }) => {
                       const idStr = [
                         params.token.id,
@@ -772,15 +813,37 @@ export default function AppNavigation() {
                   <RootStack.Screen
                     name={RootNames.TokenMarketInfo}
                     component={TokenMarketInfoScreen}
-                    options={mergeScreenOptions({
-                      headerShown: true,
-                      headerTitleAlign: 'left',
-                      headerTitle: '',
-                      headerStyle: {
-                        // backgroundColor: colors['neutral-bg-2'],
-                        backgroundColor: 'transparent',
-                      },
-                    })}
+                    options={({ route }) =>
+                      mergeScreenOptions({
+                        headerShown: true,
+                        headerTitleAlign: 'left',
+                        headerBackVisible: false,
+                        headerLeft: () => null,
+                        unstable_headerLeftItems: () => [],
+                        // Custom header: fixed leading/middle/trailing slots
+                        // owned by us, so the row does not depend on the
+                        // native title-slot origin (QA 1343).
+                        header: () => (
+                          <TokenDetailHeader
+                            token={
+                              (route.params as { token?: any } | undefined)
+                                ?.token
+                            }
+                            isCustomTestnetToken={
+                              (
+                                route.params as {
+                                  isCustomTestnetToken?: boolean;
+                                }
+                              )?.isCustomTestnetToken
+                            }
+                          />
+                        ),
+                        headerStyle: {
+                          // backgroundColor: colors['neutral-bg-2'],
+                          backgroundColor: 'transparent',
+                        },
+                      })
+                    }
                     getId={({ params }) => {
                       const idStr = [
                         params.token.id,

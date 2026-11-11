@@ -11849,7 +11849,7 @@ __metadata:
 
 "@react-navigation/bottom-tabs@npm:7.21.0":
   version: 7.21.0
-  resolution: "@react-navigation/bottom-tabs@npm:7.21.0"
+  resolution: "@react-navigation/bottom-tabs@npm:7.21.0::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40react-navigation%2Fbottom-tabs%2F-%2Fbottom-tabs-7.21.0.tgz"
   dependencies:
     "@react-navigation/elements": "npm:^2.9.45"
     color: "npm:^4.2.3"
@@ -11866,7 +11866,7 @@ __metadata:
 
 "@react-navigation/core@npm:^7.24.0":
   version: 7.24.0
-  resolution: "@react-navigation/core@npm:7.24.0"
+  resolution: "@react-navigation/core@npm:7.24.0::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40react-navigation%2Fcore%2F-%2Fcore-7.24.0.tgz"
   dependencies:
     "@react-navigation/routers": "npm:^7.6.5"
     escape-string-regexp: "npm:^4.0.0"
@@ -11882,7 +11882,7 @@ __metadata:
 
 "@react-navigation/elements@npm:^2.9.45":
   version: 2.9.45
-  resolution: "@react-navigation/elements@npm:2.9.45"
+  resolution: "@react-navigation/elements@npm:2.9.45::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40react-navigation%2Felements%2F-%2Felements-2.9.45.tgz"
   dependencies:
     color: "npm:^4.2.3"
     use-latest-callback: "npm:^0.2.4"
@@ -11902,7 +11902,7 @@ __metadata:
 
 "@react-navigation/native-stack@npm:7.21.0":
   version: 7.21.0
-  resolution: "@react-navigation/native-stack@npm:7.21.0"
+  resolution: "@react-navigation/native-stack@npm:7.21.0::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40react-navigation%2Fnative-stack%2F-%2Fnative-stack-7.21.0.tgz"
   dependencies:
     "@react-navigation/elements": "npm:^2.9.45"
     color: "npm:^4.2.3"
@@ -11920,7 +11920,7 @@ __metadata:
 
 "@react-navigation/native@npm:7.5.1":
   version: 7.5.1
-  resolution: "@react-navigation/native@npm:7.5.1"
+  resolution: "@react-navigation/native@npm:7.5.1::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40react-navigation%2Fnative%2F-%2Fnative-7.5.1.tgz"
   dependencies:
     "@react-navigation/core": "npm:^7.24.0"
     escape-string-regexp: "npm:^4.0.0"
@@ -11937,7 +11937,7 @@ __metadata:
 
 "@react-navigation/routers@npm:^7.6.5":
   version: 7.6.5
-  resolution: "@react-navigation/routers@npm:7.6.5"
+  resolution: "@react-navigation/routers@npm:7.6.5::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40react-navigation%2Frouters%2F-%2Frouters-7.6.5.tgz"
   dependencies:
     nanoid: "npm:^3.3.11"
   checksum: 10/cccd470c9ed9f25727f7708be47adb2720e0f667ae1e337163f7fb08f64351d5d921cc7c5cb162bb2c3b8a24dcb19a291a9d14fa85b3b774ff5491bbc71e8e8c
@@ -39111,7 +39111,7 @@ __metadata:
 
 "react-native-screens@npm:4.22.0":
   version: 4.22.0
-  resolution: "react-native-screens@npm:4.22.0"
+  resolution: "react-native-screens@npm:4.22.0::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Freact-native-screens%2F-%2Freact-native-screens-4.22.0.tgz"
   dependencies:
     react-freeze: "npm:^1.0.0"
     warn-once: "npm:^0.1.0"
@@ -41449,7 +41449,7 @@ __metadata:
 
 "sf-symbols-typescript@npm:^2.1.0":
   version: 2.2.0
-  resolution: "sf-symbols-typescript@npm:2.2.0"
+  resolution: "sf-symbols-typescript@npm:2.2.0::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Fsf-symbols-typescript%2F-%2Fsf-symbols-typescript-2.2.0.tgz"
   checksum: 10/8623e148bf86151692d3ccb3149122c091b256162a39f4c4f78472811ffe92e3c77a83841a7381a5dc0bc6505ebb73e7ca8901cb077004872d7ee1cb4e5be9d4
   languageName: node
   linkType: hard
@@ -42291,7 +42291,7 @@ __metadata:
 
 "standard-navigation@npm:^0.0.8":
   version: 0.0.8
-  resolution: "standard-navigation@npm:0.0.8"
+  resolution: "standard-navigation@npm:0.0.8::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Fstandard-navigation%2F-%2Fstandard-navigation-0.0.8.tgz"
   peerDependencies:
     react: "*"
   checksum: 10/06f45f2a7dacf88e42ac675b6ae33efd30bb3d81d44e5470d2ea9eb206bf6d5fb2c1546c75c463034a98c6761f099be933d8813ed6d581196854c65946d35bb9

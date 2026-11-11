@@ -129,6 +129,60 @@ export function navBack() {
   }
 }
 
+/**
+ * Header back control with no baked-in layout compensation.
+ *
+ * Renders a plain 24x24 icon box, so whoever renders the header row owns every
+ * inset explicitly. Screens that draw their own header (`header: () => ...`)
+ * must use this instead of the deprecated `HeaderBackPressable`, otherwise the
+ * compensation margin below silently shrinks the leading slot and pulls centred
+ * sibling content off the screen centre (QA 1344).
+ *
+ * Where the compensation came from: `HeaderBackPressable` was written for
+ * controls hosted by a native header element, where iOS 26 +
+ * react-native-screens stop applying the system bar-item inset (#1283). It
+ * compensates from the inside (`marginLeft: -16` + `paddingLeft: 16`), which is
+ * only correct while the host supplies that same 16pt leading inset. In a JS
+ * header the negative margin has no such inset to cancel: the slot collapses
+ * from 24pt to 8pt and everything after it shifts.
+ *
+ * If this control is ever dropped into a host that does (or does not) provide a
+ * bar-item inset, compensate at the call site - pass `style` (a
+ * `marginLeft`/`paddingLeft`) or wrap it in a sized slot - and never re-add the
+ * inset inside the component itself.
+ */
+export function HeaderBackButton({
+  tintColor,
+  style,
+  hitSlop: hitSlopProp,
+  ...touchableProps
+}: Pick<NativeStackHeaderLeftProps, 'tintColor'> &
+  RNViewProps & { hitSlop?: typeof hitSlop }) {
+  const themeMode = useGetBinaryMode();
+  const { colors2024 } = apisTheme.getColors2024(themeMode);
+  return (
+    <CustomTouchableOpacity
+      // Native-stack header controls need native gesture arbitration on Fabric.
+      as="RNGHTouchableOpacity"
+      {...touchableProps}
+      style={[styles.headerBackButtonStyle, style]}
+      hitSlop={hitSlopProp ?? hitSlop}
+      onPress={navBack}>
+      <RcIconHeaderBack
+        width={24}
+        height={24}
+        color={tintColor || colors2024['neutral-body']}
+      />
+    </CustomTouchableOpacity>
+  );
+}
+
+/**
+ * @deprecated Bakes a native-bar-item inset compensation into the control
+ * (`marginLeft: -16` + `paddingLeft: 16`). Kept only for controls hosted by a
+ * native header element (Android `headerLeft`). Any screen that renders its own
+ * header row must use `HeaderBackButton` and apply its own container/padding.
+ */
 export function HeaderBackPressable({
   tintColor,
   style,
@@ -346,6 +400,13 @@ const renderNativeBackItems: NonNullable<
 ];
 
 const styles = StyleSheet.create({
+  // Plain icon box for JS-rendered custom headers; the caller aligns it.
+  headerBackButtonStyle: {
+    width: 24,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   backButtonStyle: {
     // width: 56,
     // height: 56,

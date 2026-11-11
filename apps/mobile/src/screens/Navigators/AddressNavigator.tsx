@@ -50,6 +50,7 @@ import { SyncExtensionAccountSuccessfulScreen } from '../SyncExtension/SyncExten
 import PointsScreen from '../Points';
 import { APP_TEST_PASSWORD } from '@/constant';
 import { withRegressionScenario } from '@/devtools/regressionScenarios/react';
+import { ImportMethodsHeader } from '../Address/ImportMethodsHeader';
 
 const AddressStack = createNativeStackNavigator<AddressNavigatorParamList>();
 const RegressionSyncExtensionPasswordScreen = withRegressionScenario(
@@ -234,7 +235,11 @@ export function AddressNavigator() {
         component={ImportMethods}
         options={mergeScreenOptions2024([
           {
-            headerTitle: t('screens.addressStackTitle.ImportMethods'),
+            headerShown: true,
+            // Fully custom header: a long translation used to overflow the
+            // native title slot (QA 1352), so the row now owns the leading
+            // slot and truncates the title inside the content width.
+            header: () => <ImportMethodsHeader />,
             title: t('screens.addressStackTitle.ImportMethods'),
             headerTintColor: colors['neutral-title-1'],
             headerTitleStyle: styles.headerTitleText,
