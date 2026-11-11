@@ -38,13 +38,18 @@ export const ImportMethodsHeader = () => {
             tintColor={colors2024['neutral-title-1']}
           />
         </View>
-        <Text
-          numberOfLines={1}
-          ellipsizeMode="tail"
-          style={styles.title}
-          accessibilityRole="header">
-          {t('screens.addressStackTitle.ImportMethods')}
-        </Text>
+        <View style={styles.center}>
+          <Text
+            numberOfLines={1}
+            ellipsizeMode="tail"
+            style={styles.title}
+            accessibilityRole="header">
+            {t('screens.addressStackTitle.ImportMethods')}
+          </Text>
+        </View>
+        {/* Reserved trailing slot: keeps the title centred on the screen, the
+            same way a real trailing action would. */}
+        <View style={styles.rightSlot} />
       </View>
     </View>
   );
@@ -75,13 +80,23 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'flex-start',
     justifyContent: 'center',
   },
-  title: {
+  center: {
     flex: 1,
-    marginLeft: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginHorizontal: 8,
+  },
+  rightSlot: {
+    width: 44,
+    height: HEADER_CONTENT_HEIGHT,
+    flexShrink: 0,
+  },
+  title: {
+    maxWidth: '100%',
     color: colors2024['neutral-title-1'],
     fontWeight: '900',
     fontFamily: 'SF Pro Rounded',
     fontSize: 20,
-    textAlign: 'left',
+    textAlign: 'center',
   },
 }));
