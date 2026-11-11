@@ -72,7 +72,7 @@ import {
 import { IS_IOS } from '@/core/native/utils';
 import { parseKeychainVersionDeepLinkValue } from '@/core/apis/keychainVersionShared';
 import RNHelpers from '@/core/native/RNHelpers';
-import { toggleDebugChainSelectorLoading } from '@/utils/debugChainSelectorLoading';
+import { toggleDebugChainStatsForced } from '@/screens/Home/debugChainStats';
 import { apisSingleHome } from '@/screens/Home/hooks/singleHome';
 
 const nextAppLinkRef = {
@@ -133,6 +133,7 @@ type OnParseUrlAndProcessAction = (payload: {
   debugOpenTarget?: DebugOpenTarget;
   debugOpenTargetChain?: string;
   debugOpenTargetTab?: 'seedPhrase' | 'privateKey';
+  debugChainStatsLoading?: boolean;
   regressionScenarioCommand?: RegressionScenarioCommand | null;
   regressionScenarioError?: string;
 }) => void;
@@ -444,6 +445,9 @@ function parseNonProductionMaintenanceLink(appLink: string) {
         urlInfo.searchParams.get('tab') === 'privateKey'
           ? 'privateKey'
           : 'seedPhrase',
+      debugChainStatsLoading:
+        urlInfo.searchParams.get('chainLoading') === '1' ||
+        urlInfo.searchParams.get('chainLoading') === 'true',
     } satisfies Parameters<OnParseUrlAndProcessAction>[0];
   }
 
@@ -891,8 +895,12 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
           } as any);
           return;
         }
+        // Optional modifier on any debug target: pin the chain projection in
+        // its "loading, no chains yet" state before navigating (QA 1157).
+        if (payload.debugChainStatsLoading) {
+          toggleDebugChainStatsForced();
+        }
         if (target === 'homeAssets') {
-          toggleDebugChainSelectorLoading(true);
           apisHomeTabIndex.setTabIndex(1, true);
           return;
         }
@@ -905,7 +913,7 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
           return;
         }
         if (target === 'chainLoading') {
-          const forced = toggleDebugChainSelectorLoading();
+          const forced = toggleDebugChainStatsForced();
           console.log(
             '[debug-open-target] chain selector loading forced:',
             forced,

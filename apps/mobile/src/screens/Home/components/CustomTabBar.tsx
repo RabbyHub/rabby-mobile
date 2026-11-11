@@ -34,6 +34,7 @@ import {
   getComputedChainInfo,
   getSelectChainItem,
   setSelectChainItem,
+  useChainStatsLoading,
   useSelectedChainItem,
   useTop3Chains,
 } from '../useChainInfo';
@@ -289,6 +290,7 @@ function SideChainSelector() {
   // (QA 1157).
   const { loadBalanceFromApiStage } =
     addressBalanceStore.useLoadBalanceFromApiStage();
+  const chainStatsLoading = useChainStatsLoading();
 
   const chainSelectModalRef = useRef<
     ReturnType<typeof createGlobalBottomSheetModal2024> | undefined
@@ -350,7 +352,7 @@ function SideChainSelector() {
       top3Chains={top3Chains}
       onChainClick={handleOnChainClick}
       chainServerId={selectedChainItem?.chain}
-      loading={loadBalanceFromApiStage === 'loading'}
+      loading={loadBalanceFromApiStage === 'loading' || chainStatsLoading}
     />
   );
 }
