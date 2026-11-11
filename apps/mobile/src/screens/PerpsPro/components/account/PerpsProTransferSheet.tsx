@@ -81,6 +81,11 @@ export const PerpsProTransferSheet: React.FC<{
     () => new BigNumber(available || 0),
     [available],
   );
+  // Floored, not rounded: a rounded-up balance reads as an amount the account
+  // cannot actually transfer.
+  const displayedAvailable = availableValue
+    .decimalPlaces(2, BigNumber.ROUND_DOWN)
+    .toFixed();
   const amountValue = useMemo(() => new BigNumber(amount || 0), [amount]);
   const hasAvailable = availableValue.isFinite() && availableValue.gt(0);
   const valid =
@@ -150,7 +155,7 @@ export const PerpsProTransferSheet: React.FC<{
                 </Text>
                 <Text style={styles.balance}>{`${t(
                   'page.perps.pro.account.balance',
-                )}:${formatPerpsProDecimal(available, 2)} USDC`}</Text>
+                )}:${formatPerpsProDecimal(displayedAvailable, 2)} USDC`}</Text>
               </View>
               <View
                 style={styles.amountField}
