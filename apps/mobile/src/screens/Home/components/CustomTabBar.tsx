@@ -29,6 +29,7 @@ import {
 import { useTheme2024 } from '@/hooks/theme';
 import { useMeasureLayoutForHomeGuidanceMultipleTabs } from '@/components2024/Animations/HomeGuidanceMultipleTabs';
 import { ChainSelector } from '@/screens/Home/components/AssetRenderItems/SectionHeaders';
+import { addressBalanceStore } from '@/store/balance';
 import {
   getComputedChainInfo,
   getSelectChainItem,
@@ -283,6 +284,11 @@ const indicatorStyles = createGetStyles2024(
 );
 function SideChainSelector() {
   const { isLight, colors2024 } = useTheme2024();
+  // Cold start: show the selector's loading state until the aggregate balance
+  // load settles, instead of an empty pill that only fills in seconds later
+  // (QA 1157).
+  const { loadBalanceFromApiStage } =
+    addressBalanceStore.useLoadBalanceFromApiStage();
 
   const chainSelectModalRef = useRef<
     ReturnType<typeof createGlobalBottomSheetModal2024> | undefined
@@ -344,6 +350,7 @@ function SideChainSelector() {
       top3Chains={top3Chains}
       onChainClick={handleOnChainClick}
       chainServerId={selectedChainItem?.chain}
+      loading={loadBalanceFromApiStage === 'loading'}
     />
   );
 }

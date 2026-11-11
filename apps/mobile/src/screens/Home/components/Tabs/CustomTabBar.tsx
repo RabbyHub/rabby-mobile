@@ -1,4 +1,4 @@
-import { useCallback, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { View } from 'react-native';
 import {
   MaterialTabBar,
@@ -7,12 +7,18 @@ import {
   useCurrentTabScrollY,
 } from 'react-native-collapsible-tab-view';
 import { useAnimatedReaction, withTiming } from 'react-native-reanimated';
-import { getAddrChainInfo, useAddrTop3Chains } from '../../useChainInfo';
+import {
+  apisAddrChainStatics,
+  getAddrChainInfo,
+  useAddrChainLength,
+  useAddrTop3Chains,
+} from '../../useChainInfo';
 import { ChainSelector } from '../AssetRenderItems/SectionHeaders';
 import {
   apisSingleHome,
   useSingleHomeAddress,
   useSingleHomeChain,
+  useSingleHomeLoading,
 } from '../../hooks/singleHome';
 import {
   createGlobalBottomSheetModal2024,
@@ -25,6 +31,8 @@ import { ChainListItem } from '@/components2024/SelectChainWithDistribute';
 import { EndBg, useHomeBackgroundOpacity } from '../BgComponents';
 import { createGetStyles2024 } from '@/utils/styles';
 import { prepareSingleAddressTokenAssetsProjection } from '@/store/tokens';
+import { shouldShowChainSelector } from './chainSelectorVisibility';
+import { useChainStatsLoading } from '../../useChainInfo';
 
 const disableInnerIndicator = {
   height: 0,
@@ -39,12 +47,40 @@ function SideChainSelector({
 }) {
   const { currentAddress } = useSingleHomeAddress();
   const { top3Chains } = useAddrTop3Chains(currentAddress);
+  const { chainLength } = useAddrChainLength(currentAddress);
+  const { balanceLoading, isLoadingCurve } = useSingleHomeLoading();
+  // Dev-only pinned projection (QA 1157) also implies "balance still loading",
+  // which is what keeps the pill visible on a real cold start.
+  const chainStatsLoading = useChainStatsLoading();
+
+  // The chain stats store only recomputes on token/defi/nft store changes. On
+  // app restart or address switch the stores can already hold the cached data
+  // before this module subscribes, so seed the projection from the current
+  // snapshot explicitly (QA 1157).
+  useEffect(() => {
+    if (currentAddress) {
+      apisAddrChainStatics.syncAddress(currentAddress);
+    }
+  }, [currentAddress]);
+
+  if (
+    !shouldShowChainSelector({
+      currentAddress,
+      chainLength,
+      balanceLoading: balanceLoading || chainStatsLoading,
+      isLoadingCurve,
+    })
+  ) {
+    return null;
+  }
+
   return (
     <ChainSelector
       key={top3Chains.join(',')}
       top3Chains={top3Chains}
       onChainClick={onChainClick}
       chainServerId={chain}
+      loading={balanceLoading || isLoadingCurve || chainStatsLoading}
     />
   );
 }
