@@ -1,4 +1,3 @@
-import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
 import RcIconEdit from '@/assets2024/icons/perps/PerpsProEdit.svg';
 import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
@@ -346,7 +345,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   buyText: getPerpsProTintedTagTextStyle(colors2024, 'positive'),
   sellText: getPerpsProTintedTagTextStyle(colors2024, 'negative'),
   time: {
-    ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 12,
@@ -366,7 +364,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     width: 32,
   },
   progressText: {
-    ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro',
     fontSize: 10,
@@ -411,7 +408,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   detailRow: getPerpsProListRowStyles(colors2024).listRow,
   label: getPerpsProListRowStyles(colors2024).listLabel,
   detailValue: {
-    ...PERPS_PRO_NUMBER_STYLE,
     ...getPerpsProListRowStyles(colors2024).listValue,
     flexShrink: 1,
     marginLeft: 12,

@@ -86,7 +86,6 @@ import {
   getPerpsProInfoTabsNaturalAnchor,
   PERPS_PRO_INFO_TABS_HEIGHT,
   PERPS_PRO_INFO_SECTION_BOTTOM_PADDING,
-  PERPS_PRO_INFO_SECTION_DIVIDER_HEIGHT,
   PERPS_PRO_INFO_TABS_PLACEHOLDER_HEIGHT,
 } from '../components/info/perpsProInfoTabsSticky';
 import {
@@ -884,9 +883,8 @@ export const PerpsProScene: React.FC<{
             active
               ? 'perps-pro-info-tabs-spacer'
               : `perps-pro-info-tabs-spacer-${tab}`
-          }>
-          <View pointerEvents="none" style={styles.infoSectionDivider} />
-        </View>
+          }
+        />
       </View>
     ),
     [
@@ -894,7 +892,6 @@ export const PerpsProScene: React.FC<{
       showRegionAlert,
       styles.headerLeadInSpacer,
       styles.infoTabsSpacer,
-      styles.infoSectionDivider,
       styles.marketLeadInSpacer,
       tradeLeadInSpacerStyle,
     ],
@@ -1677,7 +1674,7 @@ export const PerpsProScene: React.FC<{
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
+const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
     flex: 1,
     overflow: 'hidden',
@@ -1724,14 +1721,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     zIndex: 1,
   },
   infoTabsSpacer: { height: PERPS_PRO_INFO_TABS_PLACEHOLDER_HEIGHT },
-  infoSectionDivider: {
-    backgroundColor: colors2024[isLight ? 'neutral-bg-0' : 'neutral-bg-2'],
-    bottom: PERPS_PRO_INFO_TABS_HEIGHT,
-    height: PERPS_PRO_INFO_SECTION_DIVIDER_HEIGHT,
-    left: 0,
-    position: 'absolute',
-    right: 0,
-  },
   scroll: {
     bottom: 0,
     left: 0,

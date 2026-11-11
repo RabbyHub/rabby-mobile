@@ -1,6 +1,5 @@
 import { getRoundedFontStyle } from '@/core/utils/fonts';
 import { Text } from '@/components/Typography';
-import { PERPS_PRO_NUMBER_STYLE } from '@/screens/PerpsPro/components/common/perpsProNumberText';
 import { useTheme2024 } from '@/hooks/theme';
 import { PerpsProDottedUnderlineText } from '@/screens/PerpsPro/components/common/PerpsProDottedUnderlineText';
 import {
@@ -130,7 +129,6 @@ export const PerpsProHistoryRowLayout: React.FC<{
 };
 
 const value = (color: string) => ({
-  ...PERPS_PRO_NUMBER_STYLE,
   color,
   flexShrink: 1,
   ...getRoundedFontStyle('700'),
@@ -186,7 +184,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     marginLeft: 12,
   },
   time: {
-    ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['neutral-secondary'],
     fontFamily: PERPS_PRO_FONT_FAMILY,
     fontSize: 12,

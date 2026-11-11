@@ -808,7 +808,6 @@ const getStyle = createGetStyles2024(
       justifyContent: 'space-between',
     },
     duplicateOrderPrice: {
-      ...PERPS_PRO_NUMBER_STYLE,
       flexShrink: 1,
       minWidth: 0,
       marginRight: 8,
@@ -833,7 +832,6 @@ const getStyle = createGetStyles2024(
     },
     amountAvailable: {
       marginTop: 8,
-      ...PERPS_PRO_NUMBER_STYLE,
       color: colors2024['neutral-foot'],
       fontFamily: 'SF Pro Rounded',
       fontSize: 12,

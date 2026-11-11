@@ -1,4 +1,3 @@
-import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
 import { PerpsProDialogOptionCheck } from '../common/PerpsProDialogOptionCheck';
 import { AppBottomSheetModal } from '@/components';
 import { Text } from '@/components/Typography';
@@ -113,7 +112,7 @@ const getStyle = createGetStyles2024(
       ...dialog,
       sheetContent: { gap: 8, paddingHorizontal: 16, paddingTop: 8 },
       groupingTitle: { ...dialog.title, marginBottom: 16 },
-      optionText: { ...PERPS_PRO_NUMBER_STYLE, ...dialog.label },
+      optionText: dialog.label,
     };
   },
 );

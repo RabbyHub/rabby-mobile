@@ -88,9 +88,7 @@ export const PerpsProOpenOrderEditInput: React.FC<{
             numberOfLines={1}
             style={[styles.label, compact && styles.compactLabel]}>
             <Text style={styles.labelTitle}>{label} </Text>
-            {currentValue ? (
-              <Text style={PERPS_PRO_NUMBER_STYLE}>{`(${currentValue})`}</Text>
-            ) : null}
+            {currentValue ? `(${currentValue})` : null}
           </Text>
         ) : null}
         <PerpsProDecimalTextInput
@@ -198,7 +196,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     right: 12,
   },
   disabledText: {
-    ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,

@@ -272,7 +272,6 @@ describe('PerpsProHistoryRowView Trade, Transaction and Funding', () => {
     expect(amount.props.numberOfLines).toBeUndefined();
     expect(amount.props.ellipsizeMode).toBeUndefined();
     expect(StyleSheet.flatten(amount.props.style)).toMatchObject({
-      fontVariant: ['tabular-nums'],
       flexShrink: 1,
     });
     expect(

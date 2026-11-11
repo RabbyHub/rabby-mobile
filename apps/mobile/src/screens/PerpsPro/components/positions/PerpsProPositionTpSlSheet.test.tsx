@@ -992,7 +992,6 @@ describe('PerpsProPositionTpSlSheet', () => {
     });
     expect(StyleSheet.flatten(value.props.style).left).toBeUndefined();
     expect(StyleSheet.flatten(value.props.style)).toMatchObject({
-      fontVariant: ['tabular-nums'],
       flexShrink: 0,
       position: 'absolute',
       right: 0,
