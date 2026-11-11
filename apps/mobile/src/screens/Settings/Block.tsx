@@ -55,6 +55,7 @@ type GenerateNodeCtx = {
 
 function BlockItem({
   label,
+  description,
   icon,
   rightTextNode,
   rightNode,
@@ -67,6 +68,11 @@ function BlockItem({
   accessibilityLabel,
 }: React.PropsWithChildren<{
   label?: React.ReactNode;
+  /**
+   * Secondary text under the label. The row then grows with its content and
+   * top-aligns the icon, label and right node instead of the fixed height.
+   */
+  description?: React.ReactNode;
   icon?: React.ReactNode | React.FC<SvgProps>;
   rightTextNode?: React.ReactNode | ((ctx: GenerateNodeCtx) => React.ReactNode);
   rightNode?: React.ReactNode | ((ctx: GenerateNodeCtx) => React.ReactNode);
@@ -81,16 +87,22 @@ function BlockItem({
     getStyle: getBlockItemStyles,
   });
 
+  const hasDescription = !!description;
+
   children = children || (
-    <Text
-      numberOfLines={1}
-      style={{
-        color: colors['neutral-body'],
-        fontSize: 16,
-        ...RoundedFontStyles.bold,
-      }}>
-      {label}
-    </Text>
+    <>
+      <Text
+        numberOfLines={hasDescription ? 2 : 1}
+        style={{
+          color: colors['neutral-body'],
+          fontSize: 16,
+          lineHeight: hasDescription ? 20 : undefined,
+          ...RoundedFontStyles.bold,
+        }}>
+        {label}
+      </Text>
+      {hasDescription && <Text style={styles.description}>{description}</Text>}
+    </>
   );
 
   const MaybeIconEle = icon as React.FC<SvgProps>;
@@ -141,21 +153,35 @@ function BlockItem({
     <TouchableView
       {...makeTestIDProps(testID ?? null, accessibilityLabel ?? null)}
       // disabled={disabled}
-      style={[styles.container, { opacity: disabled ? 0.6 : 1 }]}
+      style={[
+        styles.container,
+        hasDescription && styles.containerWithDescription,
+        { opacity: disabled ? 0.6 : 1 },
+      ]}
       disabled={disabled ? !onDisabledPress : !onPress}
       onPress={evt => (disabled ? onDisabledPress?.(evt) : onPress?.(evt))}>
       {/* left area */}
-      <View style={styles.leftArea}>
+      <View
+        style={[
+          styles.leftArea,
+          hasDescription && styles.leftAreaWithDescription,
+        ]}>
         <View>{iconNode || null}</View>
         <View style={styles.leftTextArea}>{children}</View>
       </View>
       {/* right area */}
-      <View style={styles.rightArea}>{rightNode || null}</View>
+      <View
+        style={[
+          styles.rightArea,
+          hasDescription && styles.rightAreaWithDescription,
+        ]}>
+        {rightNode || null}
+      </View>
     </TouchableView>
   );
 }
 
-const getBlockItemStyles = createGetStyles2024(colors => {
+const getBlockItemStyles = createGetStyles2024(({ colors2024 }) => {
   return {
     container: {
       flexDirection: 'row',
@@ -189,9 +215,35 @@ const getBlockItemStyles = createGetStyles2024(colors => {
       // ...makeDebugBorder(),
     },
     defaultRightText: {
-      color: colors['neutral-title-1'],
+      color: colors2024['neutral-title-1'],
       fontWeight: '400',
       fontSize: 14,
+    },
+    // Rows with a description keep the single-line rhythm for their first
+    // line (20pt label / 24pt switch centered in 52pt) and grow downwards.
+    containerWithDescription: {
+      height: 'auto',
+      minHeight: 52,
+      alignItems: 'flex-start',
+      paddingTop: 14,
+      paddingBottom: 16,
+    },
+    leftAreaWithDescription: {
+      height: 'auto',
+      alignItems: 'flex-start',
+      paddingTop: 2,
+      marginRight: 12,
+    },
+    rightAreaWithDescription: {
+      height: 'auto',
+    },
+    description: {
+      marginTop: 4,
+      color: colors2024['neutral-secondary'],
+      fontFamily: 'SF Pro Rounded',
+      fontWeight: '400',
+      fontSize: 12,
+      lineHeight: 16,
     },
   };
 });
@@ -203,6 +255,7 @@ export type SettingConfBlock = {
   items: Pick<
     React.ComponentProps<typeof BlockItem>,
     | 'label'
+    | 'description'
     | 'icon'
     | 'onPress'
     | 'rightTextNode'

@@ -1681,7 +1681,9 @@
       "agree": "Li e concordo com os<1/> <2>Termos de Utilização</2>",
       "confirmModalDesc": "Guarde a sua palavra-passe em segurança. Se a perder, a Rabby não poderá alterá-la nem recuperá-la.",
       "setWallet": "Configurar carteira",
-      "ConfirmPassword": "Confirmar palavra-passe"
+      "ConfirmPassword": "Confirmar palavra-passe",
+      "dataAnalysisDesc": "Partilhe dados de utilização anónimos para ajudar a melhorar a Rabby. Os dados recolhidos não são associados a si nem à sua conta. Pode alterar esta opção em qualquer altura nas Definições.",
+      "agreeByContinuing": "Ao continuar, concorda com os <terms>Termos de Utilização</terms> e toma conhecimento da <privacy>Política de Privacidade</privacy>."
     },
     "ethSign": {
       "alert": "Assinar com 'eth_sign' pode causar a perda de ativos. Para sua segurança, a Rabby não suporta este método."
@@ -2067,7 +2069,8 @@
       "currency": "Moeda",
       "searchCurrency": "Pesquisar moeda",
       "screenshotReportSwitch": "Captura de ecrã para comunicar um erro",
-      "dataAnalysis": "Análise de dados",
+      "dataAnalysis": "Ajudar a melhorar a Rabby",
+      "dataAnalysisDesc": "Partilhe dados de utilização anónimos para ajudar a melhorar a Rabby. Os dados recolhidos não são associados a si nem à sua conta.",
       "bugReportChat": "Partilhar feedback através do chat",
       "features": "Funcionalidades",
       "manageWallets": "Gerir carteiras"

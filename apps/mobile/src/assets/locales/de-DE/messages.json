@@ -1756,7 +1756,9 @@
       "agree": "Ich habe die <1/><2>Nutzungsbedingungen</2> gelesen und stimme diesen zu.",
       "confirmModalDesc": "Bitte bewahren Sie Ihr Passwort ordnungsgemäß auf. Einmal verloren, kann es von Rabby weder geändert noch wiederhergestellt werden.",
       "setWallet": "Wallet einrichten",
-      "subTitle": "Dieses Passwort entsperrt Ihre Wallet und verschlüsselt Ihre Daten auf diesem Gerät. Es kann nicht wiederhergestellt werden. Wenn Sie es verlieren, müssen Sie die Wallet zurücksetzen und erneut importieren."
+      "subTitle": "Dieses Passwort entsperrt Ihre Wallet und verschlüsselt Ihre Daten auf diesem Gerät. Es kann nicht wiederhergestellt werden. Wenn Sie es verlieren, müssen Sie die Wallet zurücksetzen und erneut importieren.",
+      "dataAnalysisDesc": "Teilen Sie anonyme Nutzungsdaten, um Rabby zu verbessern. Die erfassten Daten werden weder mit Ihnen noch mit Ihrem Konto verknüpft. Sie können dies jederzeit in den Einstellungen ändern.",
+      "agreeByContinuing": "Indem Sie fortfahren, stimmen Sie den <terms>Nutzungsbedingungen</terms> zu und nehmen die <privacy>Datenschutzerklärung</privacy> zur Kenntnis."
     },
     "backupPrivateKey": {
       "clickToShow": "Klicken, um privaten Schlüssel anzuzeigen",
@@ -2094,7 +2096,8 @@
       "currency": "Währung",
       "searchCurrency": "Währung suchen",
       "screenshotReportSwitch": "Screenshot, um einen Fehler zu melden",
-      "dataAnalysis": "Datenanalyse",
+      "dataAnalysis": "Rabby verbessern helfen",
+      "dataAnalysisDesc": "Teilen Sie anonyme Nutzungsdaten, um Rabby zu verbessern. Die erfassten Daten werden weder mit Ihnen noch mit Ihrem Konto verknüpft.",
       "bugReportChat": "Feedback per Chat teilen",
       "features": "Funktionen",
       "manageWallets": "Wallets verwalten"
