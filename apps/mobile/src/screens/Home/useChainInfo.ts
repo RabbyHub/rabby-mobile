@@ -150,8 +150,8 @@ export function useChainProjectionReady() {
 export function useAddrChainProjectionReady(address?: string) {
   const addr = address?.toLowerCase();
   return useActivityStore(
-    addrChainStaticsStore,
-    state => (addr ? !!state[addr] : false),
+    addrChainProjectionState,
+    state => (addr ? state.completed[addr] === true : false),
     Object.is,
     { storeLabel: 'single-address-chain-stats-ready' },
   );
@@ -190,6 +190,40 @@ export function setSelectChainItem(
 }
 
 const addrChainStaticsStore = zCreate<Record<string, FinalInfo>>(() => ({}));
+
+/**
+ * Addresses whose chain projection has run at least once.
+ *
+ * `addrChainStaticsStore[address]` is absent for an address whose token,
+ * portfolio and NFT domains are all empty (`applyAddressChainDomainUpdates`
+ * skips publishing an unchanged empty info), so readiness cannot be derived
+ * from the entry's existence: a fresh empty address would stay "pending"
+ * forever and never hide the filter (QA 1197).
+ */
+const addrChainProjectionState = zCreate<{
+  completed: Record<string, true>;
+}>(() => ({ completed: {} }));
+
+function markAddrChainProjectionCompleted(addresses: string[]) {
+  if (!addresses.length) {
+    return;
+  }
+  const completed = addrChainProjectionState.getState().completed;
+  let nextCompleted = completed;
+  addresses.forEach(address => {
+    const normalized = address.toLowerCase();
+    if (nextCompleted[normalized]) {
+      return;
+    }
+    if (nextCompleted === completed) {
+      nextCompleted = { ...completed };
+    }
+    nextCompleted[normalized] = true;
+  });
+  if (nextCompleted !== completed) {
+    addrChainProjectionState.setState({ completed: nextCompleted });
+  }
+}
 function setAddressChainInfo(
   valOrFunc: UpdaterOrPartials<Record<string, FinalInfo>>,
 ) {
@@ -267,6 +301,7 @@ function projectAddressChainDomains(options: {
   const updates = options.makeUpdates();
   const projectedAt = nowForSingleAddressChainProjection();
   const changed = updateAddressChainDomains(updates);
+  markAddrChainProjectionCompleted(options.addresses);
   const publishedAt = nowForSingleAddressChainProjection();
 
   recordSingleAddressChainProjection({

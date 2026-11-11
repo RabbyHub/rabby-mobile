@@ -37,7 +37,9 @@ import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
 
 import { openapi, testOpenapi } from '@/core/request';
 import { approvalUtils } from '@rabby-wallet/biz-utils';
-import { atom, useAtom, useAtomValue, useSetAtom } from 'jotai';
+import { atom, useAtom, useAtomValue } from 'jotai';
+import { zCreate } from '@/core/utils/reexports';
+import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 import type { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { useSheetModals } from '@/hooks/useSheetModal';
 import {
@@ -62,10 +64,29 @@ export const FILTER_TYPES = {
 
 // The header is configured once in the navigator options (declarative header
 // contract), so the search state it drives has to live outside the screen body.
-export const approvalsFilterTypeAtom =
-  atom<keyof typeof FILTER_TYPES>('contract');
-export const approvalsSearchKwAtom = atom('');
-export const approvalsSearchingAtom = atom(false);
+// Zustand is the project's state solution going forward; jotai is deprecated.
+type ApprovalsHeaderState = {
+  filterType: keyof typeof FILTER_TYPES;
+  searchKw: string;
+  isSearching: boolean;
+};
+
+const approvalsHeaderStore = zCreate<ApprovalsHeaderState>(() => ({
+  filterType: 'contract',
+  searchKw: '',
+  isSearching: false,
+}));
+
+export const useApprovalsHeaderState = <T>(
+  selector: (state: ApprovalsHeaderState) => T,
+) =>
+  useActivityStore(approvalsHeaderStore, selector, Object.is, {
+    storeLabel: 'approvals-header',
+  });
+
+export const setApprovalsHeaderState = (
+  partial: Partial<ApprovalsHeaderState>,
+) => approvalsHeaderStore.setState(partial);
 
 const SAFE_LEVEL: Record<string, string> = {
   safe: 'safe',
@@ -184,9 +205,14 @@ export function useApprovalsPageOnTop(options: {
   account: Account | null;
 }) {
   const { account: currentAccount } = options;
-  const [filterType, setFilterType] = useAtom(approvalsFilterTypeAtom);
-  const [searchKw, setSearchKw] = useAtom(approvalsSearchKwAtom);
-  const setSearching = useSetAtom(approvalsSearchingAtom);
+  const filterType = useApprovalsHeaderState(state => state.filterType);
+  const searchKw = useApprovalsHeaderState(state => state.searchKw);
+  const setFilterType = (value: ApprovalsHeaderState['filterType']) =>
+    setApprovalsHeaderState({ filterType: value });
+  const setSearchKw = (value: string) =>
+    setApprovalsHeaderState({ searchKw: value });
+  const setSearching = (value: boolean) =>
+    setApprovalsHeaderState({ isSearching: value });
 
   // Leaving the page must not keep a stale query or an open search field for
   // the next visit; both header and body read the same atoms.

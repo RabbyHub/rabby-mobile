@@ -3,8 +3,7 @@ import { shouldShowChainSelector } from './chainSelectorVisibility';
 const base = {
   currentAddress: '0xabc',
   chainLength: 0,
-  balanceLoading: false,
-  isLoadingCurve: false,
+  pending: false,
 };
 
 describe('shouldShowChainSelector', () => {
@@ -17,20 +16,15 @@ describe('shouldShowChainSelector', () => {
     );
   });
 
-  it('keeps the filter while the initial load is running (QA 1145)', () => {
-    expect(shouldShowChainSelector({ ...base, balanceLoading: true })).toBe(
-      true,
-    );
-    expect(shouldShowChainSelector({ ...base, isLoadingCurve: true })).toBe(
-      true,
-    );
+  it('keeps the filter (loading) while the projection is pending (QA 1145)', () => {
+    expect(shouldShowChainSelector({ ...base, pending: true })).toBe(true);
   });
 
-  it('hides the filter for a loaded address with no assets (QA 1197)', () => {
+  it('hides the filter for a settled address with no assets (QA 1197)', () => {
     expect(shouldShowChainSelector(base)).toBe(false);
   });
 
-  it('shows the filter for a loaded address with assets', () => {
+  it('shows the filter for a settled address with assets', () => {
     expect(shouldShowChainSelector({ ...base, chainLength: 2 })).toBe(true);
   });
 });
