@@ -22,6 +22,7 @@ import { BridgeDetailScreen } from '../Bridge/BridgeDetailScreen';
 import { HistoryLocalDetailScreen } from '../Transaction/HistoryLocalDetailScreen';
 import { TransactionNavigatorParamList } from '@/navigation-type';
 import ApprovalsScreen from '../Approvals';
+import { ApprovalsHeader } from '../Approvals/components/Headers/ApprovalsHeader';
 import ReceiveScreen from '../Receive/Receive';
 import SwapBridgeScreen from '../SwapBridge';
 import { renderSwapBridgeHeader } from '../SwapBridge/SwapBridgeHeader';
@@ -335,10 +336,23 @@ export default function TransactionNavigator() {
       <TransactionStack.Screen
         name={RootNames.Approvals}
         component={ApprovalsScreen}
-        options={mergeScreenOptions({
-          title: t('page.approvals.title'),
-          ...headerPresets.withBgCard2_2024,
-        })}
+        options={({ route }) =>
+          mergeScreenOptions({
+            title: t('page.approvals.title'),
+            ...headerPresets.withBgCard2_2024,
+            // Declarative header contract: the slots are fixed here instead of
+            // being replaced from the screen's mount effect. The row draws its
+            // own back button so the search field starts right after it
+            // (QA 1328), and its search state lives in shared atoms.
+            header: () => (
+              <ApprovalsHeader
+                account={
+                  (route.params as { account?: any } | undefined)?.account
+                }
+              />
+            ),
+          })
+        }
       />
 
       <TransactionStack.Screen
