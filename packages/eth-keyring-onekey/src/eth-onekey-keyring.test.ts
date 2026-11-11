@@ -672,6 +672,54 @@ describe('OneKeyKeyring unlock wallet selection', () => {
     expect(keyring.passphraseState).toBe('hidden-wallet-token');
   });
 
+  it.each([822, 802, 803, undefined])(
+    'rejects a cancelled standard-identity probe (code %p)',
+    async code => {
+      const message =
+        code === undefined ? 'Action cancelled' : 'Probe interrupted';
+      for (const throws of [false, true]) {
+        const { bridge, keyring } = setup('hidden-wallet-token', {
+          passphraseProtection: true,
+        });
+        mockOpenWalletSession(bridge).mockResolvedValue(
+          createSession('hidden', 'hidden-wallet-token'),
+        );
+        if (throws) {
+          bridge.getPassphraseState.mockRejectedValueOnce(
+            Object.assign(new Error(message), { code }),
+          );
+        } else {
+          bridge.getPassphraseState.mockResolvedValueOnce({
+            success: false,
+            payload: { code, error: message },
+          });
+        }
+
+        await expect(keyring.unlock()).rejects.toMatchObject({
+          message,
+          ...(code === undefined ? {} : { code }),
+        });
+        expect(bridge.evmGetPublicKey).not.toHaveBeenCalled();
+      }
+    },
+  );
+
+  it('keeps the hidden wallet when the standard-identity probe returns another failure', async () => {
+    const { bridge, keyring } = setup('hidden-wallet-token', {
+      passphraseProtection: true,
+    });
+    mockOpenWalletSession(bridge).mockResolvedValue(
+      createSession('hidden', 'hidden-wallet-token'),
+    );
+    bridge.getPassphraseState.mockResolvedValueOnce({
+      success: false,
+      payload: { code: 800, error: 'probe failed' },
+    });
+
+    expect(await keyring.unlock()).toBe('just unlocked');
+    expect(keyring.passphraseState).toBe('hidden-wallet-token');
+  });
+
   it('opens the standard wallet directly when passphrase protection is off', async () => {
     const { bridge, keyring } = setup(undefined, {
       passphraseProtection: false,
@@ -940,20 +988,67 @@ describe('OneKeyKeyring unlock wallet selection', () => {
 });
 
 describe('OneKeyKeyring signPersonalMessage', () => {
-  it('accepts a lowercase SDK address for the same account', async () => {
+  it.each(['0x01', '00ff', '0xe4bda0e5a5bd'])(
+    'accepts a lowercase SDK address and a signature over the exact bytes of %s',
+    async message => {
+      const bridge = createBridge();
+      const signature = sigUtil.personalSign(SIGNING_PRIVATE_KEY, {
+        data: ethUtil.addHexPrefix(message),
+      });
+      bridge.evmSignMessage.mockResolvedValue({
+        success: true,
+        payload: {
+          address: SIGNING_ADDRESS.toLowerCase(),
+          signature: stripHexPrefix(signature),
+        },
+      });
+      const keyring = prepareUnlockedKeyring({ bridge });
+
+      expect(await keyring.signPersonalMessage(SIGNING_ADDRESS, message)).toBe(
+        signature,
+      );
+      expect(bridge.evmSignMessage.mock.calls[0][2].messageHex).toBe(
+        stripHexPrefix(message),
+      );
+    },
+  );
+
+  it('rejects a different signer even when the SDK reports the expected address', async () => {
     const bridge = createBridge();
+    const signature = sigUtil.personalSign(Buffer.from('2'.repeat(64), 'hex'), {
+      data: '0x01',
+    });
     bridge.evmSignMessage.mockResolvedValue({
       success: true,
       payload: {
-        address: SIGNING_ADDRESS.toLowerCase(),
-        signature: 'beef',
+        address: SIGNING_ADDRESS,
+        signature: stripHexPrefix(signature),
       },
     });
     const keyring = prepareUnlockedKeyring({ bridge });
 
-    expect(await keyring.signPersonalMessage(SIGNING_ADDRESS, '0x01')).toBe(
-      '0xbeef',
-    );
+    await expect(
+      keyring.signPersonalMessage(SIGNING_ADDRESS, '0x01'),
+    ).rejects.toThrow('signature doesnt match the right address');
+  });
+
+  it('rejects a signature over different message bytes', async () => {
+    const bridge = createBridge();
+    const signature = sigUtil.personalSign(SIGNING_PRIVATE_KEY, {
+      data: '0x02',
+    });
+    bridge.evmSignMessage.mockResolvedValue({
+      success: true,
+      payload: {
+        address: SIGNING_ADDRESS,
+        signature: stripHexPrefix(signature),
+      },
+    });
+    const keyring = prepareUnlockedKeyring({ bridge });
+
+    await expect(
+      keyring.signPersonalMessage(SIGNING_ADDRESS, '0x01'),
+    ).rejects.toThrow('signature doesnt match the right address');
   });
 
   it('rejects a signature from a different account', async () => {
@@ -970,6 +1065,33 @@ describe('OneKeyKeyring signPersonalMessage', () => {
     await expect(
       keyring.signPersonalMessage(SIGNING_ADDRESS, '0x01'),
     ).rejects.toThrow('signature doesnt match the right address');
+  });
+});
+
+describe('OneKeyKeyring forgetDevice', () => {
+  it('clears accounts and the stored device and wallet session', async () => {
+    const keyring = prepareUnlockedKeyring({ bridge: createBridge() });
+    keyring.connectId = 'connect-id';
+    keyring._deviceConnectId = 'connect-id';
+    keyring.deviceId = 'device-id';
+    keyring.passphraseState = 'hidden-wallet-token';
+    keyring.page = 2;
+    keyring.unlockedAccount = 3;
+    keyring.paths = { [SIGNING_ADDRESS]: 0 };
+    keyring.hdk.publicKey = Buffer.from(`04${SIGNING_PUBLIC_KEY}`, 'hex');
+
+    keyring.forgetDevice();
+
+    expect(await keyring.getAccounts()).toStrictEqual([]);
+    expect(keyring.accountDetails).toStrictEqual({});
+    expect(keyring.paths).toStrictEqual({});
+    expect(keyring.hdk.publicKey).toBeNull();
+    expect(keyring.page).toBe(0);
+    expect(keyring.unlockedAccount).toBe(0);
+    expect(keyring.passphraseState).toBeUndefined();
+    expect(keyring.deviceId).toBeNull();
+    expect(keyring.connectId).toBeNull();
+    expect(keyring._deviceConnectId).toBeUndefined();
   });
 });
 
@@ -1002,15 +1124,21 @@ describe('OneKeyKeyring passphrase recovery on signing', () => {
 
   it('retries personal-sign once with the standard wallet when it owns the account', async () => {
     const { bridge, keyring } = prepareStaleHiddenSession();
+    const signature = sigUtil.personalSign(SIGNING_PRIVATE_KEY, {
+      data: '0x01',
+    });
     bridge.evmSignMessage
       .mockResolvedValueOnce(disabled)
       .mockResolvedValueOnce({
         success: true,
-        payload: { address: SIGNING_ADDRESS, signature: 'beef' },
+        payload: {
+          address: SIGNING_ADDRESS,
+          signature: stripHexPrefix(signature),
+        },
       });
 
     expect(await keyring.signPersonalMessage(SIGNING_ADDRESS, '0x01')).toBe(
-      '0xbeef',
+      signature,
     );
 
     expect(bridge.evmGetPublicKey).toHaveBeenCalledWith(

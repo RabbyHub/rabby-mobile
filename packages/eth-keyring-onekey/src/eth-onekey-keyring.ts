@@ -130,15 +130,20 @@ function isUnsupportedWalletSessionError(payload?: {
  * @param payload - The failed SDK response payload.
  * @param payload.code - The SDK error code.
  * @param payload.error - The SDK error message.
+ * @param payload.message - The thrown Error message.
  * @returns True when signing must not self-heal or retry.
  */
-function isCancelledError(payload?: { code?: unknown; error?: unknown }) {
+function isCancelledError(payload?: {
+  code?: unknown;
+  error?: unknown;
+  message?: unknown;
+}) {
   const code = payload?.code;
   return (
     code === 802 ||
     code === 803 ||
     code === 822 ||
-    /action cancelled/iu.test(String(payload?.error ?? ''))
+    /action cancelled/iu.test(String(payload?.error ?? payload?.message ?? ''))
   );
 }
 
@@ -810,6 +815,7 @@ class OneKeyKeyring extends EventEmitter {
 
   // For personal_sign, we need to prefix the message:
   signPersonalMessage(withAccount: string, message: string): Promise<any> {
+    const messageHex = ethUtil.stripHexPrefix(message);
     return new Promise((resolve, reject) => {
       this.unlock()
         .then(status => {
@@ -826,7 +832,7 @@ class OneKeyKeyring extends EventEmitter {
                 params =>
                   this.bridge.evmSignMessage(this.connectId!, this.deviceId!, {
                     path: this._pathFromAddress(withAccount),
-                    messageHex: ethUtil.stripHexPrefix(message),
+                    messageHex,
                     ...params,
                   }),
               )
@@ -839,6 +845,16 @@ class OneKeyKeyring extends EventEmitter {
                       return;
                     }
                     const signature = `0x${response.payload.signature}`;
+                    const addressSignedWith = sigUtil.recoverPersonalSignature({
+                      data: ethUtil.addHexPrefix(messageHex),
+                      sig: signature,
+                    });
+                    if (!isSameAddress(addressSignedWith, withAccount)) {
+                      reject(
+                        new Error('signature doesnt match the right address'),
+                      );
+                      return;
+                    }
                     // eslint-disable-next-line promise/no-multiple-resolved
                     resolve(signature);
                   } else {
@@ -1030,6 +1046,11 @@ class OneKeyKeyring extends EventEmitter {
 
   forgetDevice(): void {
     this.accounts = [];
+    this.accountDetails = {};
+    this.passphraseState = undefined;
+    this.deviceId = null;
+    this.connectId = null;
+    this._deviceConnectId = undefined;
     this.hdk = new HDKey();
     this.page = 0;
     this.unlockedAccount = 0;
@@ -1116,7 +1137,7 @@ class OneKeyKeyring extends EventEmitter {
    * that identity with a useEmptyPassphrase probe and, if they match, treat the
    * session as the standard wallet so the id is never persisted. The probe runs
    * only for an ambiguous V2 session (hidden type + non-empty state). A failed
-   * probe keeps the hidden id so import can still proceed.
+   * probe keeps the hidden id so import can still proceed, unless cancelled.
    *
    * @param options0 - The imported wallet session.
    * @param options0.connectId - Device connect id used for the identity probe.
@@ -1160,6 +1181,9 @@ class OneKeyKeyring extends EventEmitter {
       const result = await this.bridge.getPassphraseState(connectId, {
         useEmptyPassphrase: true,
       });
+      if (result && !result.success && isCancelledError(result.payload)) {
+        throw sdkError(result.payload, 'getPassphraseState cancelled');
+      }
       if (
         result?.success &&
         typeof result.payload === 'string' &&
@@ -1168,6 +1192,10 @@ class OneKeyKeyring extends EventEmitter {
         return result.payload;
       }
     } catch (e) {
+      const error = toError(e);
+      if (isCancelledError(error)) {
+        throw error;
+      }
       console.log('failed to read OneKey standard wallet identity', e);
     }
     return undefined;
