@@ -1036,12 +1036,15 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
           const { default: accountStore } = await import('@/store/account');
 
           const prepared = await prepareWalletCreation({ mode: 'create' });
+          // `PasswordFormValues` differs between stacks (develop still has
+          // `checked`, tmp carries `enableDataAnalysis`); pass the fields the
+          // submit path reads and let the call site stay version-agnostic.
           await completeWalletCreation(prepared, {
             password: REGRESSION_DEFAULT_PASSWORD,
             confirmPassword: REGRESSION_DEFAULT_PASSWORD,
             checked: true,
             enableBiometrics: false,
-          });
+          } as any);
           await accountStore.fetchAccounts({ force: true });
           toast.success(`debug address created: ${prepared.address || ''}`);
           apisHomeTabIndex.setTabIndex(1, true);
