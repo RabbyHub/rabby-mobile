@@ -16,6 +16,7 @@ import { useSafeSizes } from '@/hooks/useAppLayout';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { MaxPriceImpactSelector } from '../components/MaxPriceImpactSelector';
+import { MEME_BOTTOM_BAR_SHADOW } from '../ui/bottomBarShadow';
 import type { MaxPriceImpactPct } from '../ui/helpers';
 import { BuyAmountField } from './BuyAmountField';
 
@@ -210,10 +211,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     paddingHorizontal: 20,
     gap: 16,
     backgroundColor: colors2024['neutral-bg-1'],
-    shadowColor: isLight ? '#4B4E62' : '#6F759F',
-    shadowOpacity: 0.12,
-    shadowRadius: 15,
-    shadowOffset: { width: 0, height: 0 },
+    boxShadow: MEME_BOTTOM_BAR_SHADOW[isLight ? 'light' : 'dark'],
   },
   actionRow: {
     flexDirection: 'row',

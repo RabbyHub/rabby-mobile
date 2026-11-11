@@ -27,6 +27,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { MaxPriceImpactSelector } from '../components/MaxPriceImpactSelector';
 import { countFinishedLegs, isLegRetryable } from '../engine/displayStatus';
 import { useMemeTradeTask } from '../hooks/useMemeTradeTask';
+import { MEME_BOTTOM_BAR_SHADOW } from '../ui/bottomBarShadow';
 import { returnToMemeCoinHome } from '../navigation';
 import { getExecuteButtonState } from '../ui/helpers';
 import { useMemeCoinAccount } from '../ui/useMemeCoinAccount';
@@ -245,7 +246,7 @@ export const MemeCoinExecuteScreen = () => {
   return <MemeCoinExecuteContent account={account} params={route.params} />;
 };
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   screen: {
     flex: 1,
     backgroundColor: colors2024['neutral-bg-0'],
@@ -297,6 +298,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     paddingHorizontal: 20,
     gap: 16,
     backgroundColor: colors2024['neutral-bg-1'],
+    boxShadow: MEME_BOTTOM_BAR_SHADOW[isLight ? 'light' : 'dark'],
   },
   executingButton: {
     backgroundColor: colors2024['brand-light-1'],
