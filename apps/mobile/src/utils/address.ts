@@ -59,3 +59,14 @@ export function isStrictHexString(value: unknown): value is Hex {
   }
   return false;
 }
+
+/**
+ * Canonical key for address-indexed maps: trims user input, normalises the
+ * `0X` prefix (via toLowerCase) and lowercases the hex body.
+ *
+ * Used by stores that key records by address (e.g. Rabby Points signatures) so
+ * that read, write and delete always agree on the same key.
+ */
+export function normalizeAddressKey(address: string): string {
+  return `${address}`.trim().toLowerCase();
+}
