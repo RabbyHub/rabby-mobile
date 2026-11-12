@@ -1,7 +1,5 @@
 /* eslint-env jest */
 
-require('react-native-gesture-handler/jestSetup');
-
 // `src/constant/index.ts` reads NativeModules.RNVersionCheck.packageName at
 // import time, so any suite that renders a real screen needs a stub.
 {
