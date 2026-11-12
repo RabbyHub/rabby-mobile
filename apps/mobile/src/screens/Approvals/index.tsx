@@ -24,10 +24,6 @@ import {
 } from './useEIP7702Approvals';
 import BottomSheetApprovalContract from './components/BottomSheetApprovalContract';
 import BottomSheetApprovalAsset from './components/BottomSheetApprovalAsset';
-import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
-import { HeaderRight } from './components/Headers/HeaderRight';
-import { HeaderCenter } from './components/Headers/HeaderCenter';
-import { ellipsisAddress } from '@/utils/address';
 import { CustomMaterialTabBar } from '@/components2024/CustomTabs/CustomMaterialTabBar';
 import type { Account } from '@/core/startupServices/preference';
 import { useRoute } from '@react-navigation/native';
@@ -39,9 +35,7 @@ const ApprovalScreenContainer: React.FC<{
   account: Account;
 }> = ({ account: currentAccount }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
-  const { setNavigationOptions } = useSafeSetNavigationOptions();
-  const { filterType, setFilterType, searchKw, setSearchKw } =
-    useApprovalsPage();
+  const { filterType, setFilterType } = useApprovalsPage();
   const { totalCount: eip7702TotalCount } = useEIP7702Approvals();
 
   const { t } = useTranslation();
@@ -88,61 +82,12 @@ const ApprovalScreenContainer: React.FC<{
     ],
   );
 
-  const [isSearching, setIsSearching] = React.useState(false);
   const eip7702Label = React.useMemo(() => {
     if (!eip7702TotalCount) {
       return 'EIP-7702';
     }
     return `EIP-7702 (${eip7702TotalCount})`;
   }, [eip7702TotalCount]);
-
-  const getHeaderTitle = React.useCallback(() => {
-    return (
-      <HeaderCenter
-        textTitle={
-          currentAccount?.address
-            ? currentAccount?.aliasName ||
-              ellipsisAddress(currentAccount.address)
-            : 'Approvals'
-        }
-        type={filterType}
-        inputValue={searchKw}
-        inputOnChange={setSearchKw}
-        isSearching={isSearching}
-        currentAccount={currentAccount}
-      />
-    );
-  }, [currentAccount, filterType, isSearching, searchKw, setSearchKw]);
-
-  const getHeaderRight = React.useCallback(() => {
-    return (
-      <HeaderRight
-        isSearching={isSearching}
-        onTap={() => {
-          if (isSearching) {
-            setSearchKw('');
-          }
-          setIsSearching(pre => !pre);
-        }}
-      />
-    );
-  }, [isSearching, setSearchKw]);
-
-  React.useEffect(() => {
-    setNavigationOptions({
-      headerTitle: getHeaderTitle,
-      headerRight: getHeaderRight,
-      headerStyle: {
-        backgroundColor: colors2024['neutral-bg-1'],
-      },
-    });
-  }, [
-    setNavigationOptions,
-    getHeaderTitle,
-    currentAccount?.aliasName,
-    colors2024,
-    getHeaderRight,
-  ]);
 
   if (!currentAccount?.address) {
     return null;

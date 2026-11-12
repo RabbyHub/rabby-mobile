@@ -24,6 +24,16 @@ jest.mock('@react-navigation/native', () => {
     },
   };
 });
+// The header row renders a back control from the app-wide navigation module,
+// which pulls native-only modules (RNVersionCheck, navigation container ref).
+// This suite only covers the token row and the copy-confirm blur contract, so
+// stub that module the same way the other header suites do.
+jest.mock('@/hooks/navigation', () => ({
+  HeaderBackButton: () => null,
+}));
+// The header-right menu pulls in animated primitives that this RN preset does
+// not transform; the suite never renders it.
+jest.mock('./RightMore', () => ({ RightMore: () => null }));
 jest.mock('@/hooks/theme', () => ({
   useTheme2024: () => ({ styles: {} }),
 }));
