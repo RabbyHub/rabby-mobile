@@ -4,12 +4,12 @@ import type { PerpsViewMode } from '@/core/services/perpsService';
 import { navBack } from '@/hooks/navigation';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import React from 'react';
+import React, { type ReactNode } from 'react';
 import { View } from 'react-native';
 
 import { PERPS_HEADER_HEIGHT } from '../constants';
 import { PerpsAccountTrigger } from './PerpsAccountTrigger';
-import { PerpsModeSwitch } from './PerpsModeSwitch';
+import { PerpsModeSwitch, type PerpsHeaderMode } from './PerpsModeSwitch';
 
 export type PerpsHeaderProps = {
   accountAddress?: string;
@@ -17,13 +17,17 @@ export type PerpsHeaderProps = {
   accountExpanded?: boolean;
   accountLabel?: string | null;
   accountTriggerVariant?: 'compact' | 'wallet' | 'wallet-icon';
-  activeMode: PerpsViewMode;
+  activeMode: PerpsHeaderMode;
   extendProHitAreaRight?: boolean;
   isModeSwitching: boolean;
   onPressAccount?: () => void;
   onPressInMode?: (viewMode: PerpsViewMode) => void;
   onPressOutMode?: (viewMode: PerpsViewMode) => void;
   onSelectMode: (viewMode: PerpsViewMode) => void;
+  /** Shows the Spot tab and opens the spot screens when tapped. */
+  onSelectSpot?: () => void;
+  /** Right-side content when the screen has no account trigger. */
+  rightAccessory?: ReactNode;
   showBottomDivider: boolean;
   showProNewBadge?: boolean;
 };
@@ -46,6 +50,8 @@ export const PerpsHeader: React.FC<PerpsHeaderProps> = React.memo(
     onPressInMode,
     onPressOutMode,
     onSelectMode,
+    onSelectSpot,
+    rightAccessory,
     showBottomDivider,
     showProNewBadge = false,
   }) => {
@@ -79,6 +85,7 @@ export const PerpsHeader: React.FC<PerpsHeaderProps> = React.memo(
               onPressInMode={onPressInMode}
               onPressOutMode={onPressOutMode}
               onSelectMode={onSelectMode}
+              onSelectSpot={onSelectSpot}
               showProNewBadge={showProNewBadge}
             />
           </View>
@@ -92,7 +99,9 @@ export const PerpsHeader: React.FC<PerpsHeaderProps> = React.memo(
             onPress={onPressAccount}
             variant={accountTriggerVariant}
           />
-        ) : null}
+        ) : (
+          rightAccessory ?? null
+        )}
         {showBottomDivider ? (
           <View
             pointerEvents="none"
