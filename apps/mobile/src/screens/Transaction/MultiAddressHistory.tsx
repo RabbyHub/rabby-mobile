@@ -495,6 +495,11 @@ function HistoryContent({
   }, [sceneCurrentAccountDepKey, isSceneUsingAllAccounts]);
 
   const batchFetchDataFromDbUpsert = useMemoizedFn(async () => {
+    // An API-backed list shows no DB rows, and reloading it here would resume
+    // from its paging cursor and replace the list with the next page.
+    if (isNeedFetchFromApi) {
+      return;
+    }
     dbLastCursorRef.current = null;
     reloadAsync();
   });
