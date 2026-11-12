@@ -1375,7 +1375,7 @@ describe('PerpsProPositionTpSlSheet', () => {
     visible: true,
   });
 
-  it('offers Close All only for partial orders and reports their remaining count while canceling', () => {
+  it('offers Cancel All only for partial orders and reports their remaining count while canceling', () => {
     const partial = [
       order(1, '110', '0.5', 'partial'),
       order(2, '120', '0.5', 'partial'),
@@ -1385,7 +1385,7 @@ describe('PerpsProPositionTpSlSheet', () => {
       ...makeSheetProps([...partial, full]),
       defaultTab: 'partial' as const,
     };
-    const label = 'page.perps.pro.positions.closeAll';
+    const label = 'page.perps.pro.openOrders.cancelAll';
     const view = render(<PerpsProPositionTpSlSheet {...props} />);
     fireEvent.press(screen.getByLabelText(label));
     expect(props.onCancelAllOrders).toHaveBeenCalledWith(partial);

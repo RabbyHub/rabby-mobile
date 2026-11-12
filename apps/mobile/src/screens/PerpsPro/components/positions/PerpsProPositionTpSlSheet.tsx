@@ -641,12 +641,12 @@ export const PerpsProPositionTpSlSheet: React.FC<{
             />
             <PerpsProPositionTpSlCancelAction
               disabled={interactionLocked || cancelingOids.length > 0}
-              label={t('page.perps.pro.positions.closeAll')}
+              label={t('page.perps.pro.openOrders.cancelAll')}
               loading={cancelAllOids !== null}
               remainingCount={remainingCancelCount}
               onPress={() => onCancelAllOrders(partialOrders)}
-              style={styles.closeAllButton}
-              textStyle={styles.closeAllText}
+              style={styles.cancelAllButton}
+              textStyle={styles.cancelAllText}
             />
           </View>
         ) : null}
@@ -1002,7 +1002,7 @@ const getStyle = createGetStyles2024(
         marginBottom: 8,
       },
       listActions: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-      closeAllButton: {
+      cancelAllButton: {
         alignItems: 'center',
         justifyContent: 'center',
         backgroundColor: colors2024['neutral-bg-5'],
@@ -1010,7 +1010,7 @@ const getStyle = createGetStyles2024(
         borderRadius: 6,
         paddingHorizontal: 8,
       },
-      closeAllText: {
+      cancelAllText: {
         color: colors2024['neutral-title-1'],
         fontFamily: 'SF Pro Rounded',
         fontSize: 12,
