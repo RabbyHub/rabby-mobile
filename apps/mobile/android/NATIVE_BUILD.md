@@ -52,3 +52,26 @@ Third-party modules would need the same launcher injected per module.
 ccache only pays off when the CMake build tree is gone but the cache is not
 (fresh worktree, `gradlew clean`, branch switch); on ordinary incremental builds
 AGP's own up-to-date checks already skip the compile.
+
+## iOS ccache (same idea, different lane)
+
+`RABBY_MOBILE_POD_USE_CACHE=true` makes the Podfile pass `:ccache_enabled` to
+React Native, which points `CC`/`CXX` at RN's `ccache-clang*.sh` wrappers.
+
+Two things had to be fixed for that to actually cache:
+
+1. the wrappers `exec "$CCACHE_BINARY" clang`, and `CCACHE_BINARY` is only a
+   build setting on the Pod targets, so `build-ios-simulator.sh` now exports it
+   for the whole build (before that the wrapper silently ran plain clang: 2285
+   compiles, 0 ccache calls);
+2. `scripts/ci/ensure-ccache.sh` guarantees a ccache binary exists — local one
+   when it is new enough, otherwise the pinned bundle from
+   `s3://<bucket>/_private/toolchains/ccache/4.14.3/<platform>.tar.gz`
+   (sha256 checked). Strict by default in CI, `RABBY_MOBILE_CCACHE_STRICT=false`
+   to build without it.
+
+Measured locally on a simulator Regression build: 2284/2285 compile calls go
+through ccache; the second build against the same DerivedData root hit 50% with
+a 5m35s -> 3m33s wall time. Hits need a stable DerivedData path: forcing a new
+`--derived-data-root` per run changes `-fdebug-prefix-map`/`-ivfsstatcache`
+arguments and misses everything, even with a warm cache.
