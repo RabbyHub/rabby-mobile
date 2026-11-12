@@ -60,6 +60,7 @@ import {
 } from '@/screens/Address/ImportSecret';
 import MoreImportMethods from '@/screens/Address/MoreImportMethods';
 import SelectAddMethod from '@/screens/Address/SelectAddMethod';
+import { SelectAddMethodHeader } from '@/screens/Address/SelectAddMethodHeader';
 import Backup from '@/screens/Address/Backup';
 import BiometricsStubModal from './components/AuthenticationModal/BiometricsStubModal';
 import { ScreenshotFeedbackHost } from './components/Screenshot/SubmitFeedback/GlobalHost';
@@ -714,9 +715,11 @@ export default function AppNavigation() {
                   options={mergeScreenOptions2024([
                     {
                       headerShown: true,
-                      headerTitle: t(
-                        'page.nextComponent.addAddress.selectAddMethod',
-                      ),
+                      // Production keeps this title left-aligned next to the
+                      // back control; the native header centred the long pt-BR
+                      // translation and pushed it past the trailing edge
+                      // (QA 1352).
+                      header: () => <SelectAddMethodHeader />,
                     },
                   ])}
                 />

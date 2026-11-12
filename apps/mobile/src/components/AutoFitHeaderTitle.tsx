@@ -20,6 +20,8 @@ export type AutoFitHeaderTitleProps = {
   /** Extra text style (colour, family, weight); size/lineHeight are owned here. */
   textStyle?: StyleProp<TextStyle>;
   containerStyle?: StyleProp<ViewStyle>;
+  /** Horizontal alignment inside the slot. Defaults to the centred header row. */
+  align?: 'left' | 'center';
   /** Debug hook: reports what the measuring pass saw. */
   onMeasure?: (info: {
     stage: Stage;
@@ -49,6 +51,7 @@ export const AutoFitHeaderTitle = ({
   text,
   textStyle,
   containerStyle,
+  align = 'center',
   onMeasure,
 }: AutoFitHeaderTitleProps) => {
   const [stage, setStage] = React.useState<Stage>('base');
@@ -75,17 +78,14 @@ export const AutoFitHeaderTitle = ({
   const isCompact = stage === 'compact';
   const fontSize = isCompact ? COMPACT_FONT_SIZE : BASE_FONT_SIZE;
   const lineHeight = isCompact ? COMPACT_LINE_HEIGHT : BASE_LINE_HEIGHT;
+  const textAlign = align === 'left' ? 'left' : 'center';
 
   return (
     <View style={[styles.container, containerStyle]}>
       <Text
         numberOfLines={isCompact ? 2 : 1}
         ellipsizeMode="tail"
-        style={[
-          styles.title,
-          textStyle,
-          { fontSize, lineHeight, textAlign: 'center' },
-        ]}
+        style={[styles.title, textStyle, { fontSize, lineHeight, textAlign }]}
         accessibilityRole="header">
         {text}
       </Text>
@@ -103,7 +103,7 @@ export const AutoFitHeaderTitle = ({
           {
             fontSize: BASE_FONT_SIZE,
             lineHeight: BASE_LINE_HEIGHT,
-            textAlign: 'center',
+            textAlign,
           },
         ]}
         accessible={false}
