@@ -472,7 +472,25 @@ const config = {
         };
       }
 
-      return context.resolveRequest(context, moduleName, platform);
+      const resolved = context.resolveRequest(context, moduleName, platform);
+
+      // bignumber.js >= 11 `browser` field is a global-only IIFE (no exports),
+      // which breaks `@trezor/utils` (`BN.clone`). Use its CJS build instead.
+      if (
+        moduleName === 'bignumber.js' &&
+        resolved.type === 'sourceFile' &&
+        /[\\/]bignumber\.js[\\/]dist[\\/]bignumber\.js$/.test(resolved.filePath)
+      ) {
+        return {
+          ...resolved,
+          filePath: resolved.filePath.replace(
+            /bignumber\.js$/,
+            'bignumber.cjs',
+          ),
+        };
+      }
+
+      return resolved;
     },
   },
   watchFolders: [
