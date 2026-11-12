@@ -161,18 +161,6 @@ function parseKdfVersion(value: unknown): KdfVersion {
   return value;
 }
 
-function getUnversionedKdfCandidates(): KeyDerivationOptions[] {
-  // A test build from before version metadata existed may already have written
-  // the newer KDF. Keep this bounded to registered versions and try them in
-  // strength order; never guess an unregistered algorithm.
-  return Object.values(KDF_REGISTRY)
-    .sort(
-      (left, right) =>
-        KDF_VERSION_RANK[left.version] - KDF_VERSION_RANK[right.version],
-    )
-    .map(cloneKdfOptions);
-}
-
 function resolvePayloadKdfCandidates(
   encryptedData: Pick<EncryptedData, 'kdf' | 'keyMetadata'>,
 ): KeyDerivationOptions[] {
@@ -182,7 +170,9 @@ function resolvePayloadKdfCandidates(
   if (encryptedData.keyMetadata !== undefined) {
     return [parseLegacyKeyMetadata(encryptedData.keyMetadata)];
   }
-  return getUnversionedKdfCandidates();
+  // Original payloads always used 5k; stronger writes carry KDF metadata.
+  // A failed password check must not trigger a speculative 600k derivation.
+  return [cloneKdfOptions(LEGACY_DERIVATION_OPTIONS)];
 }
 
 function resolveExportedKdfOptions(

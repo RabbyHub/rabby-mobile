@@ -360,7 +360,30 @@ describe('keyring KDF policy and vault upgrade integration', () => {
     }
   });
 
-  it('recognizes an unversioned 600k vault and records its version', async () => {
+  it('does not probe 600k or rewrite credentials when legacy password checks fail', async () => {
+    const { state } = await createFixture();
+    state.booted = stripKdfMetadata(state.booted!);
+    const { service, commits, readDurable } = openService(state, {
+      encryptor: legacyEncryptor,
+    });
+    jest.mocked(Aes.pbkdf2).mockClear();
+
+    // Both startup classification reads use this password-check boundary.
+    for (let index = 0; index < 2; index += 1) {
+      await expect(
+        service.verifyPassword('incorrect built-in probe'),
+      ).rejects.toThrow();
+    }
+
+    expect(jest.mocked(Aes.pbkdf2).mock.calls.map(call => call[2])).toEqual([
+      5000, 5000,
+    ]);
+    expect(service.isUnlocked()).toBe(false);
+    expect(commits).toEqual([]);
+    expect(readDurable()).toEqual(state);
+  });
+
+  it('rejects unversioned 600k credentials without guessing or rewriting them', async () => {
     const { state } = await createFixture({
       vaultEncryptor: upgradedEncryptor,
       bootedEncryptor: upgradedEncryptor,
@@ -373,19 +396,15 @@ describe('keyring KDF policy and vault upgrade integration', () => {
       { encryptor: legacyEncryptor },
     );
 
-    await service.submitPassword(password);
-
-    const persisted = readDurable();
-    expect(commits).toHaveLength(1);
+    jest.mocked(Aes.pbkdf2).mockClear();
+    await expect(service.submitPassword(password)).rejects.toThrow();
+    expect(jest.mocked(Aes.pbkdf2).mock.calls.map(call => call[2])).toEqual([
+      5000,
+    ]);
+    expect(service.isUnlocked()).toBe(false);
+    expect(commits).toEqual([]);
     expect(readCheckpoint()).toEqual(before);
-    for (const field of ['vault', 'booted'] as const) {
-      const originalEnvelope = JSON.parse(before[field]!);
-      const persistedEnvelope = JSON.parse(persisted[field]!);
-      expect(persistedEnvelope.kdf?.version).toBe('20261022');
-      expect(persistedEnvelope.cipher).toBe(originalEnvelope.cipher);
-      expect(persistedEnvelope.iv).toBe(originalEnvelope.iv);
-      expect(persistedEnvelope.salt).toBe(originalEnvelope.salt);
-    }
+    expect(readDurable()).toEqual(before);
   });
 
   it('upgrades previous keyMetadata to the registered version without re-encrypting', async () => {
@@ -802,7 +821,7 @@ describe('keyring KDF policy and vault upgrade integration', () => {
   it('does not stamp the earlier resolved version onto a replaced unversioned vault', async () => {
     const { state, rawVault } = await createFixture();
     const replacement = stripKdfMetadata(
-      await upgradedEncryptor.encrypt(password, rawVault),
+      await legacyEncryptor.encrypt(password, rawVault),
     );
     const { service, commits } = openService(state, {
       encryptor: upgradedEncryptor,
@@ -816,8 +835,8 @@ describe('keyring KDF policy and vault upgrade integration', () => {
 
     const persisted = service.store.getState().vault!;
     expect(persisted).toBe(replacement);
-    // The replacement is a 600k envelope; stamping the earlier 5k version onto
-    // it would make every later password unlock derive the wrong key.
+    // The replacement belongs to another writer. Even with the same KDF, its
+    // metadata must not be repaired using an earlier envelope's result.
     expect(JSON.parse(persisted).kdf).toBeUndefined();
     await expect(
       upgradedEncryptor.decrypt(password, persisted),
