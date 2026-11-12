@@ -1,32 +1,16 @@
 import { Linking } from 'react-native';
-import TrezorConnect, {
-  BLOCKCHAIN_EVENT,
-  DEVICE_EVENT,
-  TRANSPORT_EVENT,
-} from '@trezor/connect-mobile';
-import { toast } from '@/components2024/Toast';
+import TrezorConnect from '@trezor/connect-mobile';
+import { urlUtils } from '@rabby-wallet/base-utils';
 
-const trezorOnEvent = () => {
-  TrezorConnect.on(DEVICE_EVENT, event => {
-    toast.info(`TrezorConnect event: ${JSON.stringify(event)}`);
-    console.debug('TrezorConnect event', event);
-  });
-
-  TrezorConnect.on(BLOCKCHAIN_EVENT, event => {
-    toast.info(`TrezorConnect BLOCKCHAIN_EVENT: ${JSON.stringify(event)}`);
-    console.debug('TrezorConnect BLOCKCHAIN_EVENT', event);
-  });
-
-  TrezorConnect.on(TRANSPORT_EVENT, event => {
-    toast.info(`TrezorConnect TRANSPORT_EVENT: ${JSON.stringify(event)}`);
-    console.debug('TrezorConnect TRANSPORT_EVENT', event);
-  });
-};
+export const TREZOR_CALLBACK_PATH_NAME = 'connect-trezor';
 
 export const startSubscribeTrezorConnectOnUrl = () => {
-  trezorOnEvent();
-
   const subscription = Linking.addEventListener('url', event => {
+    // only forward Trezor return links, other deeplinks must not settle pending Trezor requests
+    const pathname = urlUtils.safeParseURL(event.url)?.pathname;
+    if (!pathname?.endsWith(`/${TREZOR_CALLBACK_PATH_NAME}`)) {
+      return;
+    }
     TrezorConnect.handleDeeplink(event.url);
   });
 
