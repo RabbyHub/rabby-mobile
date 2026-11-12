@@ -115,6 +115,22 @@ fi
 turbo_prepare_ruby_bundle
 turbo_prepare_cocoapods
 
+# React Native writes its codegen output into ios/build/generated/ios during
+# `pod install`. That directory is gitignored, and turbo_prepare_cocoapods
+# returns early on a cache hit, so a checkout (or a cached Pods layer) that lost
+# it fails later with e.g.
+#   error: .../ios/build/generated/ios/NitroModulesSpec/NitroModulesSpec.h:
+#   No such file or directory (in target 'ReactCodegen')
+# Regenerate whenever the directory is missing or empty.
+generated_ios_dir="$project_dir/ios/build/generated/ios"
+if [ ! -d "$generated_ios_dir" ] || [ -z "$(find "$generated_ios_dir" -name '*.h' -maxdepth 3 2>/dev/null | head -1)" ]; then
+  turbo_log 'ios codegen output missing; re-running pod install'
+  ( cd "$project_dir/ios" && turbo_bundle_pod install ) || {
+    echo '[ios-simulator] pod install for codegen failed' >&2
+    exit 1
+  }
+fi
+
 # Preserve ordinary 64-character variant directories, but namespace the hash
 # by Simulator SDK/config/CPU/checkout so a device archive cannot reuse it.
 sim_sdk_version="$(xcrun --sdk iphonesimulator --show-sdk-version)"
