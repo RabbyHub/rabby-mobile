@@ -2,6 +2,60 @@
 #!/bin/bash
 # iOS 专属构建和哈希逻辑
 
+# Installs the pods pinned by the committed Podfile.lock.
+#
+# `--deployment` is intentionally not used: it also rejects upstream podspec
+# metadata edits such as a version being deprecated on trunk, which change
+# SPEC CHECKSUMS without changing what gets built. verify_installed_podfile_lock
+# enforces the lockfile contract afterwards instead.
+#
+# The first attempt uses the local spec index so only missing podspecs are
+# fetched from the CDN. Later attempts refresh trunk, covering a stale index
+# and transient CDN failures.
+install_pods_for_validation() {
+  local committed_podfile_lock="$1"
+  local podfile_lock="$2"
+  local build_log_file="$3"
+  local max_attempts=3
+  local attempt=1
+  local repo_update_flag=""
+
+  while [ "$attempt" -le "$max_attempts" ]; do
+    # Each attempt resolves from the committed lockfile, never from a lockfile
+    # a previous failed attempt may have rewritten.
+    cp "$committed_podfile_lock" "$podfile_lock"
+    echo -e "\n--- pod install attempt $attempt/$max_attempts ${repo_update_flag} at $(date) ---\n" >>"$build_log_file"
+    # shellcheck disable=SC2086 # empty flag must expand to nothing
+    if RCT_NEW_ARCH_ENABLED="${RCT_NEW_ARCH_ENABLED:-1}" bundle exec pod install $repo_update_flag --allow-root >>"$build_log_file" 2>&1; then
+      return 0
+    fi
+    if [ "$attempt" -lt "$max_attempts" ]; then
+      echo "[warn] pod install attempt $attempt failed; retrying with --repo-update" >>"$build_log_file"
+      sleep $((attempt * 15))
+    fi
+    repo_update_flag="--repo-update"
+    attempt=$((attempt + 1))
+  done
+  return 1
+}
+
+# Compares the Podfile.lock written by pod install with the committed one.
+# Only checksum changes caused by an upstream deprecation are accepted; see
+# verify_podfile_lock.rb for the exact rule.
+verify_installed_podfile_lock() {
+  local committed_podfile_lock="$1"
+  local podfile_lock="$2"
+  local build_log_file="$3"
+  local output
+  local status=0
+
+  output=$(bundle exec ruby "$SCRIPT_DIR/verify_podfile_lock.rb" "$committed_podfile_lock" "$podfile_lock" 2>&1) || status=$?
+  printf '\n--- Podfile.lock verification at %s ---\n%s\n' "$(date)" "$output" >>"$build_log_file"
+  # Surface accepted deprecations and failures on the console as well.
+  printf '%s\n' "$output" | grep -E '^\[(warn|error)\]' >&2 || true
+  return "$status"
+}
+
 run_ios_build_and_hash() {
   echo ""
   echo "================================================="
@@ -20,14 +74,21 @@ run_ios_build_and_hash() {
   rm -rf ~/Library/Developer/Xcode/DerivedData/RabbyMobile-* "$PROJECT_DIR/ios/Package" "$PROJECT_DIR/ios/build" "$PROJECT_DIR/ios/DerivedData"
 
   cd "$PROJECT_DIR/ios"
+  local podfile_lock="$PROJECT_DIR/ios/Podfile.lock"
+  local committed_podfile_lock="$export_dir/Podfile.lock.committed"
+  cp "$podfile_lock" "$committed_podfile_lock"
+
   # A fresh validation checkout has no Pods yet; deintegrate can fail there.
   # Keep its output for diagnosis and continue to the actual pod install.
   if ! bundle exec pod deintegrate >>"$build_log_file" 2>&1; then
     echo "[warn] pod deintegrate failed; continuing to pod install" >>"$build_log_file"
   fi
-  RCT_NEW_ARCH_ENABLED="${RCT_NEW_ARCH_ENABLED:-1}" bundle exec pod install --deployment --repo-update --allow-root >>"$build_log_file" 2>&1
-  if [ $? -ne 0 ]; then
+  if ! install_pods_for_validation "$committed_podfile_lock" "$podfile_lock" "$build_log_file"; then
     echo "❌ Pods 安装失败，请检查日志: $build_log_file"
+    exit 1
+  fi
+  if ! verify_installed_podfile_lock "$committed_podfile_lock" "$podfile_lock" "$build_log_file"; then
+    echo "❌ Podfile.lock 与提交版本不一致，请检查日志: $build_log_file"
     exit 1
   fi
 
