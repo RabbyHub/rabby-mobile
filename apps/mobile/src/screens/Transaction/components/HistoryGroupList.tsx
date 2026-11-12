@@ -290,7 +290,11 @@ export const HistoryList = ({
         onVisibleItemsChange ? onViewableItemsChanged : undefined
       }
       scrollEventThrottle={scrollEventThrottle}
-      removeClippedSubviews={true}
+      // Android: React Native turns clipping off by itself once a list has
+      // sticky headers. Doing that on a mounted list drops the rows that are
+      // clipped at that moment and the next insert crashes, so pinned dates
+      // start with it off rather than switch when the first rows arrive.
+      removeClippedSubviews={!(isStickyDate && Platform.OS === 'android')}
       ListFooterComponent={
         loadingMore ? (
           <>

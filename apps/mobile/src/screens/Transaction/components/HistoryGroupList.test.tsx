@@ -1,10 +1,11 @@
 import React from 'react';
-import { FlatList, View } from 'react-native';
+import { FlatList, Platform, View } from 'react-native';
 import { render, screen } from '@testing-library/react-native';
 import type { HistoryDisplayItem } from '@/types/history';
 import { HistoryList } from './HistoryGroupList';
 
-// Component coverage: the list footer, empty-state and date-row contracts only;
+// Component coverage: the list footer, empty-state, date-row and clipping
+// contracts only;
 // rows, skeletons and the empty illustration are presentation stubs.
 jest.mock('../utils/bridgeHistory', () => ({
   isBridgeHistoryRow: (item: { kind?: string } | null | undefined) =>
@@ -181,5 +182,52 @@ describe('HistoryList date rows', () => {
     });
 
     expect(onVisibleItemsChange).toHaveBeenCalledWith(twoDays);
+  });
+});
+
+// React Native switches clipping off natively once an Android list has sticky
+// headers, and that switch on a mounted list loses rows and crashes.
+describe('HistoryList subview clipping', () => {
+  const clipping = () =>
+    screen.UNSAFE_getByType(FlatList).props.removeClippedSubviews;
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('is off on Android before the first pinned date arrives, and stays off', () => {
+    jest.replaceProperty(Platform, 'OS', 'android');
+    const { rerender } = render(
+      <HistoryList list={[]} firstFetchDone stickyDateBackgroundColor="#fff" />,
+    );
+    expect(clipping()).toBe(false);
+
+    rerender(
+      <HistoryList
+        list={twoDays}
+        firstFetchDone
+        stickyDateBackgroundColor="#fff"
+      />,
+    );
+    expect(clipping()).toBe(false);
+  });
+
+  it('stays on for Android lists without pinned dates', () => {
+    jest.replaceProperty(Platform, 'OS', 'android');
+    render(<HistoryList list={twoDays} firstFetchDone />);
+
+    expect(clipping()).toBe(true);
+  });
+
+  it('stays on for iOS, where pinned dates do not switch it', () => {
+    render(
+      <HistoryList
+        list={twoDays}
+        firstFetchDone
+        stickyDateBackgroundColor="#fff"
+      />,
+    );
+
+    expect(clipping()).toBe(true);
   });
 });
