@@ -23,7 +23,9 @@ import {
   formatPerpsProVariableDecimal,
 } from '../../utils/format';
 import {
+  getPerpsProDialogCheckboxStyles,
   getPerpsProDialogStyles,
+  getPerpsProConfirmationFooterStyle,
   resolvePerpsProDialogCardBackground,
   PERPS_PRO_DIALOG_HEAVY_TEXT_STYLE,
 } from '../common/perpsProDialogVisual';
@@ -32,11 +34,7 @@ import {
   PERPS_PRO_DIALOG_LIST_CARD_PADDING,
 } from '../common/perpsProListVisual';
 import { PerpsProDialogBackdrop } from '../common/PerpsProDialogBackdrop';
-import {
-  BOTTOM_BUTTON_SINGLE_HEIGHT,
-  BOTTOM_BUTTON_TOP_OFFSET,
-  getBottomButtonBottomOffset,
-} from '@/constant/layout';
+import { BOTTOM_BUTTON_SINGLE_HEIGHT } from '@/constant/layout';
 import {
   getPerpsProMetadataTagContainerStyle,
   getPerpsProMetadataTagTextStyle,
@@ -381,24 +379,7 @@ const getStyle = createGetStyles2024(
       marginLeft: 12,
       textAlign: 'right',
     },
-    checkboxRow: {
-      justifyContent: 'center',
-      alignItems: 'center',
-      flexDirection: 'row',
-      gap: 4,
-      marginTop: 8,
-    },
-    checkboxText: {
-      color: colors2024['neutral-foot'],
-      flexShrink: 1,
-      fontFamily: 'SF Pro Rounded',
-      fontSize: 12,
-      lineHeight: 16,
-    },
-    footer: {
-      paddingHorizontal: 4,
-      paddingBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
-      paddingTop: BOTTOM_BUTTON_TOP_OFFSET * 2,
-    },
+    ...getPerpsProDialogCheckboxStyles(colors2024),
+    footer: getPerpsProConfirmationFooterStyle(safeAreaInsets.bottom),
   }),
 );

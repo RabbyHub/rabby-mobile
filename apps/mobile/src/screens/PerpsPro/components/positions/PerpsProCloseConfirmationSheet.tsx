@@ -1,5 +1,6 @@
 import {
   getPerpsProDialogStyles,
+  getPerpsProConfirmationFooterStyle,
   getPerpsProDialogCheckboxStyles,
   PERPS_PRO_DIALOG_HEAVY_TEXT_STYLE,
   resolvePerpsProDialogCardBackground,
@@ -17,9 +18,7 @@ import { Button } from '@/components2024/Button';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import {
   BOTTOM_BUTTON_SINGLE_HEIGHT,
-  BOTTOM_BUTTON_TOP_OFFSET,
   BOTTOM_BUTTON_BOTTOM_OFFSET,
-  getBottomButtonBottomOffset,
 } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -119,8 +118,8 @@ export const PerpsProCloseConfirmationSheet: React.FC<{
         handleStyle={styles.handle}
         onDismiss={onClose}
         snapPoints={[
-          // Three 30pt rows inside the 12/8-padded list card.
-          346 + styles.footer.paddingBottom - BOTTOM_BUTTON_BOTTOM_OFFSET,
+          // Three 30pt rows, 12pt card insets and 24/12pt checkbox gaps.
+          354 + styles.footer.paddingBottom - BOTTOM_BUTTON_BOTTOM_OFFSET,
         ]}
         style={styles.modal}>
         <BottomSheetView style={styles.sheetView}>
@@ -239,14 +238,15 @@ const getStyle = createGetStyles2024(
     direction: {
       fontFamily: 'SF Pro Rounded',
       fontWeight: '700',
-      fontSize: 12,
-      lineHeight: 16,
+      fontSize: 14,
+      lineHeight: 18,
     },
     buyText: { color: colors2024['green-default'] },
     sellText: { color: colors2024['red-default'] },
     details: {
       marginTop: 24,
       ...PERPS_PRO_DIALOG_LIST_CARD_PADDING,
+      paddingBottom: 12,
       borderRadius: 12,
       backgroundColor: resolvePerpsProDialogCardBackground(colors2024, isLight),
     },
@@ -260,11 +260,6 @@ const getStyle = createGetStyles2024(
       textAlign: 'right',
     },
     ...getPerpsProDialogCheckboxStyles(colors2024),
-    footer: {
-      paddingHorizontal: 4,
-      marginTop: 'auto',
-      paddingBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
-      paddingTop: BOTTOM_BUTTON_TOP_OFFSET * 2,
-    },
+    footer: getPerpsProConfirmationFooterStyle(safeAreaInsets.bottom),
   }),
 );

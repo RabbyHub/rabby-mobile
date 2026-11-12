@@ -776,12 +776,12 @@ const getStyle = createGetStyles2024(
     amountPlaceholder: {
       color: colors2024['neutral-info'],
       fontFamily: 'SF Pro Rounded',
-      fontSize: 10,
+      fontSize: 16,
       fontWeight: '500',
       left: 12,
-      lineHeight: 12,
+      lineHeight: 20,
       position: 'absolute',
-      top: (PERPS_PRO_DIALOG_LABELED_FIELD.height - 12) / 2,
+      top: (PERPS_PRO_DIALOG_LABELED_FIELD.height - 20) / 2,
     },
     input: {
       ...PERPS_PRO_NUMBER_STYLE,

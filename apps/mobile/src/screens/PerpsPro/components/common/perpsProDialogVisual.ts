@@ -3,6 +3,7 @@ import type { AppColors2024Variants } from '@/constant/theme';
 import { colord } from 'colord';
 import {
   BOTTOM_BUTTON_TITLE_STYLE,
+  BOTTOM_BUTTON_TOP_OFFSET,
   getBottomButtonBottomOffset,
 } from '@/constant/layout';
 import { getPerpsProBottomSheetChromeStyles } from './perpsProVisual';
@@ -194,7 +195,7 @@ export const getPerpsProDialogCheckboxStyles = (
       justifyContent: 'center',
       flexDirection: 'row',
       gap: 4,
-      marginTop: 8,
+      marginTop: 24,
       minHeight: 20,
     },
     checkboxText: {
@@ -204,4 +205,11 @@ export const getPerpsProDialogCheckboxStyles = (
       fontSize: 12,
       lineHeight: 16,
     },
+  } as const);
+
+export const getPerpsProConfirmationFooterStyle = (safeAreaBottom: number) =>
+  ({
+    paddingHorizontal: 4,
+    paddingTop: BOTTOM_BUTTON_TOP_OFFSET,
+    paddingBottom: getBottomButtonBottomOffset(safeAreaBottom),
   } as const);
