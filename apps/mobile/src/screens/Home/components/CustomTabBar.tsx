@@ -28,7 +28,10 @@ import {
 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { useMeasureLayoutForHomeGuidanceMultipleTabs } from '@/components2024/Animations/HomeGuidanceMultipleTabs';
-import { ChainSelector } from '@/screens/Home/components/AssetRenderItems/SectionHeaders';
+import {
+  CHAIN_SELECTOR_SLOT_WIDTH,
+  ChainSelector,
+} from '@/screens/Home/components/AssetRenderItems/SectionHeaders';
 import { addressBalanceStore, balanceAccountsStore } from '@/store/balance';
 import tokenStore from '@/store/tokens';
 import { hasConfirmedAssetProjectionSources } from '@/store/assetProjectionAvailability';
@@ -409,7 +412,9 @@ function SideChainSelector() {
   const fadeStyle = useAnimatedStyle(() => ({ opacity: opacity.value }));
 
   return (
-    <Animated.View pointerEvents={hidden ? 'none' : 'auto'} style={fadeStyle}>
+    <Animated.View
+      pointerEvents={hidden ? 'none' : 'auto'}
+      style={[fadeStyle, styles.chainSelectorSlot]}>
       <ChainSelector
         top3Chains={top3Chains}
         onChainClick={handleOnChainClick}
@@ -585,6 +590,12 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   // Keep the slot (so the tabs do not grow) while hiding the empty filter.
   chainSelectorHidden: {
     opacity: 0,
+  },
+  chainSelectorSlot: {
+    width: CHAIN_SELECTOR_SLOT_WIDTH,
+    flexShrink: 0,
+    alignItems: 'flex-end',
+    justifyContent: 'center',
   },
   tabBar: {},
   contentContainerStyle: {
