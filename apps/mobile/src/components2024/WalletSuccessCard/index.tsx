@@ -13,6 +13,7 @@ import Lottie, { AnimationObject } from 'lottie-react-native';
 import { Text } from '@/components';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
+import { RoundedFontStyles } from '@/core/utils/fonts';
 import { AddressCard } from '../AddressCard';
 import DefaultAnimation from '@/assets2024/animations/animation-create-success.min.json';
 
@@ -246,9 +247,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
   },
   titleText: {
-    fontFamily: 'SF Pro Rounded',
+    // Match the baseline Heavy (800), not Rounded Black (QA 1388).
+    ...RoundedFontStyles.heavy,
     fontSize: 20,
-    fontWeight: '900',
     color: colors2024['neutral-title-1'],
     textAlign: 'center',
   },
