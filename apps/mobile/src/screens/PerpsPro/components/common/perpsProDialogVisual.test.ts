@@ -102,10 +102,10 @@ describe('Pro dialog font mapping', () => {
           fontFamily: platform === 'ios' ? 'ui-rounded' : 'SF-Pro-Rounded-Bold',
         });
         expect(styles.title.fontWeight).toBe(
-          platform === 'ios' ? '800' : undefined,
+          platform === 'ios' ? '800' : 'normal',
         );
         expect(styles.buttonTitle.fontWeight).toBe(
-          platform === 'ios' ? '700' : undefined,
+          platform === 'ios' ? '700' : 'normal',
         );
       });
     },
