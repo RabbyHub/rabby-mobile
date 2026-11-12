@@ -70,8 +70,16 @@ Two things had to be fixed for that to actually cache:
    (sha256 checked). Strict by default in CI, `RABBY_MOBILE_CCACHE_STRICT=false`
    to build without it.
 
-Measured locally on a simulator Regression build: 2284/2285 compile calls go
-through ccache; the second build against the same DerivedData root hit 50% with
-a 5m35s -> 3m33s wall time. Hits need a stable DerivedData path: forcing a new
-`--derived-data-root` per run changes `-fdebug-prefix-map`/`-ivfsstatcache`
-arguments and misses everything, even with a warm cache.
+Measured on simulator Regression builds, first run (cold) vs second run against
+the same DerivedData root:
+
+| machine | compile calls via ccache | 2nd-run hits | wall time |
+| --- | --- | --- | --- |
+| Mac Studio (local) | 2284 / 2285 | 252 / 504 (50%) | 5m35s -> 3m33s |
+| Mac mini M4 (.60) | 2284 / 2285 | 252 / 2536 (10%) | 5mxx -> 3m24s |
+
+Hits need a stable DerivedData path: forcing a new `--derived-data-root` per run
+changes `-fdebug-prefix-map`/`-ivfsstatcache` arguments and misses everything,
+even with a warm cache. The remaining misses on the second run come from targets
+whose compile flags carry a per-session value; tightening that is follow-up
+work, not a wiring problem.
