@@ -39,6 +39,19 @@ who renders the icon, not by where it sits in the header:
    that UIKit, not us, positions. Measured: 25.0pt on iOS 26.1 and 31.3pt on
    iOS 27 for `chevron.left`, versus 23.7pt for the xcasset artwork.
 
+## Alignment principle
+
+- The back control hugs the **leading edge of the page's main content**, and a
+  trailing control hugs its **trailing edge** — i.e. they follow the content's
+  horizontal padding (commonly 20pt), not the system bar-item inset.
+- Exception: when the main content does not hug the edge (centred card,
+  full-bleed image, edge-to-edge list), keep the system default position instead
+  of forcing the control to the screen edge.
+- The title is always **screen-centred**. On a native stack, achieve that with a
+  custom header row (`[leading slot][flex:1 centred title][trailing slot]`) —
+  not with the native `headerTitle` container, whose centre depends on the
+  neighbouring bar items.
+
 ## Standard back button
 
 - Source of truth: `apps/mobile/src/hooks/navigation.tsx` →
