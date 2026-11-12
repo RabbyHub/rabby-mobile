@@ -218,16 +218,6 @@ describe('single-address no-assets view state', () => {
       },
     ],
     [
-      'a cached zero balance is being refreshed',
-      {
-        balanceFlow: {
-          hasValue: true,
-          isLoading: true,
-          hasError: false,
-        },
-      },
-    ],
-    [
       'the no-assets evidence is loading',
       {
         noAssetsDecision: {
@@ -243,6 +233,19 @@ describe('single-address no-assets view state', () => {
         ...patch,
       }),
     ).toBe('pending');
+  });
+
+  it('keeps the receive prompt while a cached zero balance refreshes', () => {
+    expect(
+      resolveSingleAddressAssetViewState({
+        ...settledZeroAssets,
+        balanceFlow: {
+          hasValue: true,
+          isLoading: true,
+          hasError: false,
+        },
+      }),
+    ).toBe('receive');
   });
 
   it.each([

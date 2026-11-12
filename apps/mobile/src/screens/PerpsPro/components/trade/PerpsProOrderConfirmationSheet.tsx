@@ -23,16 +23,18 @@ import {
   formatPerpsProVariableDecimal,
 } from '../../utils/format';
 import {
+  getPerpsProDialogCheckboxStyles,
   getPerpsProDialogStyles,
+  getPerpsProConfirmationFooterStyle,
   resolvePerpsProDialogCardBackground,
   PERPS_PRO_DIALOG_HEAVY_TEXT_STYLE,
 } from '../common/perpsProDialogVisual';
-import { PerpsProDialogBackdrop } from '../common/PerpsProDialogBackdrop';
 import {
-  BOTTOM_BUTTON_SINGLE_HEIGHT,
-  BOTTOM_BUTTON_TOP_OFFSET,
-  getBottomButtonBottomOffset,
-} from '@/constant/layout';
+  getPerpsProListRowStyles,
+  PERPS_PRO_DIALOG_LIST_CARD_PADDING,
+} from '../common/perpsProListVisual';
+import { PerpsProDialogBackdrop } from '../common/PerpsProDialogBackdrop';
+import { BOTTOM_BUTTON_SINGLE_HEIGHT } from '@/constant/layout';
 import {
   getPerpsProMetadataTagContainerStyle,
   getPerpsProMetadataTagTextStyle,
@@ -126,10 +128,10 @@ export const PerpsProOrderConfirmationSheet: React.FC<{
         <BottomSheetView>
           <AutoLockView style={styles.container}>
             <View style={styles.header}>
+              <Text numberOfLines={1} style={styles.symbol}>
+                {reviewFacts.displayPair}
+              </Text>
               <View style={styles.assetRow}>
-                <Text numberOfLines={1} style={styles.symbol}>
-                  {reviewFacts.displayPair}
-                </Text>
                 {reviewFacts.sourceTag ? (
                   <Text
                     numberOfLines={1}
@@ -328,7 +330,8 @@ const getStyle = createGetStyles2024(
       paddingHorizontal: 16,
       paddingTop: 8,
     },
-    header: { alignItems: 'center' },
+    // Figma 86313:149956: tags sit 4pt below the pair.
+    header: { alignItems: 'center', gap: 4 },
     assetRow: {
       alignItems: 'center',
       flexDirection: 'row',
@@ -358,57 +361,25 @@ const getStyle = createGetStyles2024(
     details: {
       backgroundColor: resolvePerpsProDialogCardBackground(colors2024, isLight),
       borderRadius: 12,
-      padding: 16,
-      gap: 10,
+      ...PERPS_PRO_DIALOG_LIST_CARD_PADDING,
       marginTop: 24,
     },
     tpSlDetails: {
       backgroundColor: resolvePerpsProDialogCardBackground(colors2024, isLight),
       borderRadius: 12,
-      padding: 16,
-      gap: 10,
+      ...PERPS_PRO_DIALOG_LIST_CARD_PADDING,
       marginTop: 8,
     },
-    detailRow: {
-      alignItems: 'center',
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-    },
-    detailLabel: {
-      color: colors2024['neutral-secondary'],
-      fontFamily: 'SF Pro Rounded',
-      fontSize: 12,
-      lineHeight: 16,
-    },
+    detailRow: getPerpsProListRowStyles(colors2024).listRow,
+    detailLabel: getPerpsProListRowStyles(colors2024).listLabel,
     detailValue: {
       ...PERPS_PRO_NUMBER_STYLE,
-      color: colors2024['neutral-title-1'],
+      ...getPerpsProListRowStyles(colors2024).listValue,
       flexShrink: 1,
-      fontFamily: 'SF Pro Rounded',
-      fontSize: 12,
-      fontWeight: '500',
-      lineHeight: 16,
       marginLeft: 12,
       textAlign: 'right',
     },
-    checkboxRow: {
-      justifyContent: 'center',
-      alignItems: 'center',
-      flexDirection: 'row',
-      gap: 4,
-      marginTop: 8,
-    },
-    checkboxText: {
-      color: colors2024['neutral-foot'],
-      flexShrink: 1,
-      fontFamily: 'SF Pro Rounded',
-      fontSize: 12,
-      lineHeight: 16,
-    },
-    footer: {
-      paddingHorizontal: 4,
-      paddingBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
-      paddingTop: BOTTOM_BUTTON_TOP_OFFSET * 2,
-    },
+    ...getPerpsProDialogCheckboxStyles(colors2024),
+    footer: getPerpsProConfirmationFooterStyle(safeAreaInsets.bottom),
   }),
 );

@@ -24,19 +24,19 @@ echo "[RabbyMobileBuild] NODE_BINARY is $NODE_BINARY"
 
 echo "[RabbyMobileBuild] customize build environment vars"
 echo "[RabbyMobileBuild] CONFIGURATION is $CONFIGURATION"
-load_env_var_from_candidate_files RABBY_MOBILE_CODE
+load_env_var_from_candidate_files RABBY_MOBILE_CODE || true
 if [[ "$CONFIGURATION" == "Release" ]]; then
   [ -z $RABBY_MOBILE_BUILD_ENV ] && export RABBY_MOBILE_BUILD_ENV="production"
   [ -z $buildchannel ] && export buildchannel="appstore"
-  if [ -z $RABBY_MOBILE_CODE ]; then
-    echo "[RabbyMobileBuild] no RABBY_MOBILE_CODE set, abort bundle"
+  if ! validate_rabbit_code; then
+    echo "[RabbyMobileBuild] invalid RABBY_MOBILE_CODE, abort bundle"
     exit 1;
   fi
 fi
 if [[ "$CONFIGURATION" == "Regression" ]]; then
   [ -z $RABBY_MOBILE_BUILD_ENV ] && export RABBY_MOBILE_BUILD_ENV="regression"
-  if [ -z $RABBY_MOBILE_CODE ]; then
-    echo "[RabbyMobileBuild] no RABBY_MOBILE_CODE set, abort bundle"
+  if ! validate_rabbit_code; then
+    echo "[RabbyMobileBuild] invalid RABBY_MOBILE_CODE, abort bundle"
     exit 1;
   fi
 fi

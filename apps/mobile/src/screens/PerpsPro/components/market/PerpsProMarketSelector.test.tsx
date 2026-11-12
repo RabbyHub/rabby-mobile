@@ -20,6 +20,12 @@ let mockLanguage = 'en-US';
 
 const mockUiRefreshTimeout = jest.fn();
 
+jest.mock('@/assets2024/icons/perps/PerpsProMarketTabFavorite.svg', () => {
+  const ReactModule = require('react');
+  const { View } = require('react-native');
+  return (props: object) => ReactModule.createElement(View, props);
+});
+
 jest.mock('@/core/apis/autoLock', () => ({
   uiRefreshTimeout: mockUiRefreshTimeout,
 }));
@@ -808,7 +814,7 @@ describe('PerpsProMarketSelector', () => {
 
     fireEvent(screen.getByTestId('market-search'), 'focus');
     expect(
-      screen.queryByText('page.perps.pro.marketSelector.favorites'),
+      screen.queryByLabelText('page.perps.pro.marketSelector.favorites'),
     ).toBeNull();
     expect(screen.queryByTestId('perps-pro-market-pager')).toBeNull();
     expect(getLatestMarketListProps('search').renderProfile).toBe('active');
@@ -989,7 +995,7 @@ describe('PerpsProMarketSelector', () => {
     fireEvent.press(screen.getByTestId('perps-pro-market-sort-name'));
     fireEvent.press(screen.getByTestId('perps-pro-market-sort-name'));
     fireEvent.press(
-      screen.getByText('page.perps.pro.marketSelector.favorites'),
+      screen.getByLabelText('page.perps.pro.marketSelector.favorites'),
     );
     fireEvent(screen.getByTestId('market-search'), 'focus');
     expect(
@@ -1010,7 +1016,7 @@ describe('PerpsProMarketSelector', () => {
       ).map(market => market.displayPair),
     ).toEqual(['ETHUSDC', 'BTCUSDC', 'SOLUSDC']);
     expect(
-      screen.queryByText('page.perps.pro.marketSelector.favorites'),
+      screen.queryByLabelText('page.perps.pro.marketSelector.favorites'),
     ).toBeNull();
     expect(screen.queryByTestId('perps-pro-market-column-header')).toBeNull();
     expect(screen.queryByTestId('perps-pro-market-sort-name')).toBeNull();
@@ -1053,7 +1059,7 @@ describe('PerpsProMarketSelector', () => {
     );
 
     expect(
-      screen.queryByText('page.perps.pro.marketSelector.favorites'),
+      screen.queryByLabelText('page.perps.pro.marketSelector.favorites'),
     ).toBeNull();
     emptyFavoritesRender.unmount();
 
@@ -1066,7 +1072,7 @@ describe('PerpsProMarketSelector', () => {
       />,
     );
     expect(
-      screen.queryByText('page.perps.pro.marketSelector.favorites'),
+      screen.queryByLabelText('page.perps.pro.marketSelector.favorites'),
     ).toBeNull();
     staleFavoritesRender.unmount();
 
@@ -1079,7 +1085,7 @@ describe('PerpsProMarketSelector', () => {
       />,
     );
     fireEvent.press(
-      screen.getByText('page.perps.pro.marketSelector.favorites'),
+      screen.getByLabelText('page.perps.pro.marketSelector.favorites'),
     );
     fireEvent(screen.getByTestId('market-search'), 'focus');
     fireEvent.changeText(screen.getByTestId('market-search'), 'eth');
@@ -1092,7 +1098,7 @@ describe('PerpsProMarketSelector', () => {
       getRowsFromListProps(marketListProps).map(market => market.displayPair),
     ).toEqual(['BTCUSDC']);
     expect(
-      screen.getByText('page.perps.pro.marketSelector.favorites'),
+      screen.getByLabelText('page.perps.pro.marketSelector.favorites'),
     ).toBeTruthy();
     expect(marketListProps.searchMode).toBe(false);
     expect(screen.getByTestId('perps-pro-market-column-header')).toBeTruthy();
@@ -1117,6 +1123,7 @@ describe('PerpsProMarketSelector', () => {
     };
     // Reanimated computes the initial style during render, before layout effects.
     // Capture that output so an eventual correction cannot hide a wrong first frame.
+    // Favorites renders an icon, so only the text tabs carry font styles.
     const expectFirstHighlight = (count: number, selected: number) => {
       const styles = mockAnimatedStyles.mock.calls
         .map(([style]) => style)
@@ -1175,7 +1182,7 @@ describe('PerpsProMarketSelector', () => {
           // This unit Store fake does not publish; rerender supplies its new snapshot.
           view.rerender(renderSelector());
           const expectedIndex = index + (favorites.length ? 1 : 0);
-          expectFirstHighlight(favorites.length ? 4 : 3, expectedIndex);
+          expectFirstHighlight(3, index);
           expect(getPosition()).not.toBe(previousPosition);
           expect(getPosition().value).toBe(expectedIndex);
           expect(
@@ -1225,7 +1232,7 @@ describe('PerpsProMarketSelector', () => {
         mockAnimatedStyles.mockClear();
         fireEvent.press(screen.getByTestId('market-search-cancel'));
         const expectedIndex = hadFavorites ? 1 : 2;
-        expectFirstHighlight(hadFavorites ? 3 : 4, expectedIndex);
+        expectFirstHighlight(3, 1);
         expect(getPosition()).not.toBe(previousPosition);
         expect(getPosition().value).toBe(expectedIndex);
         expect(getLatestMarketListProps('category-a').renderProfile).toBe(
@@ -1249,7 +1256,7 @@ describe('PerpsProMarketSelector', () => {
       mockLanguage = 'de-DE';
       mockAnimatedStyles.mockClear();
       view.rerender(renderSelector());
-      expectFirstHighlight(4, 1);
+      expectFirstHighlight(3, 0);
       expect(getPosition()).toBe(position);
       expect(position.value).toBe(1.4);
       windowWidth = 430;
@@ -1265,8 +1272,8 @@ describe('PerpsProMarketSelector', () => {
     });
 
     it.each([
-      [200, 150, 64],
-      [300, 50, 0],
+      [200, 152, 68],
+      [300, 52, 0],
     ])(
       'mounts the first-favorite strip at its final offset with a visible underline (viewport=%s)',
       (viewport, addedOffset, removedOffset) => {
@@ -1293,11 +1300,11 @@ describe('PerpsProMarketSelector', () => {
           .map(([style]) => style)
           .find(style => 'left' in style && 'opacity' in style);
         expect(firstUnderline).toMatchObject({
-          left: 242.5,
+          left: 240.5,
           width: 93,
           opacity: 1,
         });
-        expectFirstHighlight(4, 3);
+        expectFirstHighlight(3, 2);
         expect(getPosition().value).toBe(3);
         expect(getPosition()).not.toBe(oldPosition);
         expect(mockPagerSetPage).not.toHaveBeenCalled();
@@ -1338,7 +1345,7 @@ describe('PerpsProMarketSelector', () => {
       });
       expect(
         screen.getByTestId('perps-pro-market-tabs').props.contentOffset,
-      ).toEqual({ x: 150, y: 0 });
+      ).toEqual({ x: 152, y: 0 });
       expect(getPosition().value).toBe(3);
     });
   });
@@ -1418,7 +1425,7 @@ describe('PerpsProMarketSelector', () => {
     expect(headerStyle).toEqual(
       expect.objectContaining({
         height: 44,
-        marginTop: -4,
+        marginTop: -6,
       }),
     );
 

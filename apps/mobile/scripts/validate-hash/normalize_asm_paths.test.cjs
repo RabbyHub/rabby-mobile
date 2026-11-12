@@ -19,11 +19,10 @@ test('normalizes Xcode developer paths from different installs', () => {
       '/tmp/validate-rabby-mobile-abc123/apps/mobile/validation_exports_20261105-120000',
   });
 
-  assert.equal(
-    (output.match(/\/__rabby_xcode_developer__/g) || []).length,
-    2,
+  assert.equal((output.match(/\/__rabby_xcode_developer__/g) || []).length, 2);
+  assert.ok(
+    !output.includes('/Applications/Xcode-26.3.0.app/Contents/Developer'),
   );
-  assert.ok(!output.includes('/Applications/Xcode-26.3.0.app/Contents/Developer'));
   assert.ok(!output.includes('/Applications/Xcode.app/Contents/Developer'));
 });
 

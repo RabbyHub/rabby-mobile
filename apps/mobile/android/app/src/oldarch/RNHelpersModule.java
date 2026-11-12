@@ -12,10 +12,18 @@ import android.os.PersistableBundle;
 import androidx.annotation.NonNull;
 import androidx.core.content.FileProvider;
 
+import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.ReadableMap;
+import com.facebook.react.bridge.WritableArray;
+
+import com.google.mlkit.vision.barcode.BarcodeScanner;
+import com.google.mlkit.vision.barcode.BarcodeScannerOptions;
+import com.google.mlkit.vision.barcode.BarcodeScanning;
+import com.google.mlkit.vision.barcode.common.Barcode;
+import com.google.mlkit.vision.common.InputImage;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -28,11 +36,14 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class RNHelpersModule extends SimplePackageSpec {
   public static final String NAME = "RNHelpers";
+  private static final int MAX_QR_CODE_PAYLOADS = 10;
   private final ReactApplicationContext reactContext;
 
   public RNHelpersModule(ReactApplicationContext reactContext) {
@@ -248,6 +259,56 @@ public class RNHelpersModule extends SimplePackageSpec {
     }
   }
 
+  @ReactMethod
+  public void decodeQRCodeFromImageFile(String fileUri, boolean deleteAfterDecode, Promise promise) {
+    Uri uri = Uri.parse(fileUri);
+    InputImage image;
+    try {
+      image = InputImage.fromFilePath(reactContext, uri);
+    } catch (IOException | RuntimeException error) {
+      if (deleteAfterDecode) {
+        deleteCachedFile(uri);
+      }
+      promise.reject("E_QRCODE_READ_IMAGE", "Failed to read image");
+      return;
+    }
+
+    BarcodeScanner scanner = BarcodeScanning.getClient(
+      new BarcodeScannerOptions.Builder()
+        .setBarcodeFormats(Barcode.FORMAT_QR_CODE)
+        .build()
+    );
+    scanner.process(image)
+      .addOnCompleteListener(task -> {
+        scanner.close();
+        if (deleteAfterDecode) {
+          deleteCachedFile(uri);
+        }
+
+        if (!task.isSuccessful()) {
+          promise.reject("E_QRCODE_DECODE", "Failed to decode QR code");
+          return;
+        }
+
+        Set<String> payloads = new LinkedHashSet<>();
+        for (Barcode barcode : task.getResult()) {
+          String payload = barcode.getRawValue();
+          if (payload != null && !payload.isEmpty()) {
+            payloads.add(payload);
+          }
+          if (payloads.size() >= MAX_QR_CODE_PAYLOADS) {
+            break;
+          }
+        }
+
+        WritableArray result = Arguments.createArray();
+        for (String payload : payloads) {
+          result.pushString(payload);
+        }
+        promise.resolve(result);
+      });
+  }
+
   private void copyFile(File sourceFile, File targetFile) throws IOException {
     if (targetFile.exists() && !targetFile.delete()) {
       throw new IOException("Failed to overwrite staged share file: " + targetFile.getAbsolutePath());
@@ -265,6 +326,24 @@ public class RNHelpersModule extends SimplePackageSpec {
       }
 
       outputStream.flush();
+    }
+  }
+
+  // Only remove files inside this app's cache directory, e.g. the copy
+  // react-native-image-picker writes after the user picks a photo.
+  private void deleteCachedFile(Uri uri) {
+    if (!"file".equals(uri.getScheme()) || uri.getPath() == null) {
+      return;
+    }
+
+    try {
+      String cachePath = reactContext.getCacheDir().getCanonicalPath() + File.separator;
+      File file = new File(uri.getPath()).getCanonicalFile();
+      if (file.getPath().startsWith(cachePath) && file.isFile()) {
+        file.delete();
+      }
+    } catch (IOException ignored) {
+      // Cache files are also cleaned by the system when storage is low.
     }
   }
 }

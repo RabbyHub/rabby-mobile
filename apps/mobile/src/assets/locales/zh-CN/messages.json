@@ -833,14 +833,12 @@
     "bridge": {
       "Select": "选择",
       "no-quote": "无报价",
-      "bridge-from": "跨链转出自",
       "est-receiving": "预计接收：",
       "To": "至",
       "approve-and-bridge": "授权并跨链",
-      "for-available-quote": "获取可用报价",
       "From": "来自",
       "the-following-bridge-route-are-found": "找到以下费率",
-      "no-quote-found": "未找到报价。请尝试其他代币对。",
+      "no-quote-found": "未找到报价。",
       "est-payment": "预计付款：",
       "duration": "{{duration}} 分钟",
       "showMore": {
@@ -912,7 +910,7 @@
         "queued": "排队中",
         "pending": "待处理",
         "completed": "已完成",
-        "refund": "退还",
+        "refund": "已退还",
         "waiting": "等待目标链交易",
         "goBack": "返回",
         "bridgeAgain": "再次跨链",
@@ -1534,9 +1532,7 @@
       "setUpSuccess": "密码设置成功",
       "confirmPasswordPlaceholder": "确认密码",
       "biometricsFail": "启用生物识别失败",
-      "agreeToTerms": "我已阅读并同意",
       "confirmRequired": "请确认密码",
-      "PrivacyPolicy": "隐私政策",
       "enable": "启用{{ bioType }}",
       "passwordRequired": "请输入密码",
       "title": "设置密码",
@@ -1545,16 +1541,16 @@
       "passwordMinTip": "至少需包含 8 个字符",
       "phoneNotSupport": "您的手机不支持{{ bioType }}",
       "passwordMin": "密码长度必须至少为 8 个字符。",
-      "and": "和",
       "settingUp": "设置密码",
       "ConfirmPassword": "确认密码",
       "passwordPlaceholder": "密码长度必须至少为 8 个字符",
       "confirmError": "密码不匹配",
       "confirmModalDesc": "请妥善保存您的密码。一旦丢失，Rabby 无法更改或找回。",
       "setWallet": "设置钱包",
-      "termOfUse": "使用条款",
       "agree": "我已阅读并同意<1/> <2>使用条款</2>",
-      "confirmTitle": "确认密码"
+      "confirmTitle": "确认密码",
+      "dataAnalysisDesc": "分享匿名使用数据以帮助改进 Rabby。收集的数据不会与您或您的账户关联。您可以随时在设置中更改。",
+      "agreeByContinuing": "继续即表示您同意<terms>使用条款</terms>并知悉<privacy>隐私政策</privacy>。"
     },
     "safeQueue": {
       "replaceBtn": "替换",
@@ -2016,7 +2012,8 @@
       "currency": "货币",
       "searchCurrency": "搜索货币",
       "screenshotReportSwitch": "截图报告问题",
-      "dataAnalysis": "数据分析",
+      "dataAnalysis": "帮助改进 Rabby",
+      "dataAnalysisDesc": "分享匿名使用数据以帮助改进 Rabby。收集的数据不会与您或您的账户关联。",
       "bugReportChat": "通过聊天分享反馈",
       "features": "功能",
       "manageWallets": "管理钱包"
@@ -2063,7 +2060,8 @@
       "emptyWhitelistContent": "将受信任的地址添加到白名单以实现快速转账——下次无需确认",
       "SendHistory": "转账记录",
       "dividerWatchOnlyWallets": "仅查看钱包",
-      "enterOrSearchAddress": "输入或搜索地址"
+      "enterOrSearchAddress": "输入或搜索地址",
+      "resolvingAddressName": "正在查询地址..."
     },
     "confirmAddress": {
       "risks": {
@@ -3135,6 +3133,13 @@
       },
       "addressEditorBadge": {
         "nameUnknown": "给地址命名"
+      },
+      "scanQrcode": {
+        "chooseFromGallery": "从相册选择",
+        "noQrCode": "图片中未识别到二维码",
+        "multipleQrCodes": "图片中包含多个二维码，请选择只有一个二维码的图片",
+        "invalidAddress": "二维码中未识别到有效地址",
+        "readImageFailed": "图片读取失败，请重试"
       }
     },
     "Lending": {
@@ -3441,11 +3446,77 @@
     "batchRevoke": {
       "title": "批量撤销"
     },
+    "memeCoin": {
+      "holdingsEntry": "持仓",
+      "pnlPeriod24h": "24h",
+      "pnlPeriodAll": "全部",
+      "pnlTipLabel": "PnL",
+      "backToMarket": "返回 Meme 市场",
+      "marketTitle": "Meme 市场",
+      "holdingsTitle": "持仓",
+      "marketCap": "市值",
+      "valuePnl": "价值 / PnL",
+      "searchMarket": "搜索 Meme 市场",
+      "noMatch": "没有匹配的 Meme",
+      "noHoldings": "暂无持仓",
+      "loadFailed": "加载失败，点击重试",
+      "buyN": "买入 {{count}} 个 Meme",
+      "buyN_one": "买入 {{count}} 个 Meme",
+      "sellN": "卖出 {{count}} 个 Meme",
+      "sellN_one": "卖出 {{count}} 个 Meme",
+      "selectToBuy": "选择要买入的 Meme",
+      "selectToSell": "选择要卖出的 Meme",
+      "maxPriceImpact": "最大价差",
+      "unsupportedAddressType": "不支持该地址类型",
+      "accountChanged": "地址已变更，请重新开始",
+      "addressSwitchUnsupported": "此页面不支持切换地址。",
+      "buy": {
+        "amount": "买入金额",
+        "allocation": "分配",
+        "byMarketCap": "按市值",
+        "equalSplit": "平均分配",
+        "estPayment": "预计支付 {{amount}}",
+        "needed": "还需 {{amount}}",
+        "anotherNeeded": "仍需 {{amount}}",
+        "preview": "预览",
+        "paymentTokens": "支付代币",
+        "selectTokens": "选择代币",
+        "selectPaymentAssets": "选择用于支付的资产",
+        "estPaymentLabel": "预计支付",
+        "noPaymentToken": "未选择支付代币",
+        "confirm": "确认",
+        "noAssets": "没有可用资产"
+      },
+      "execute": {
+        "title": "执行",
+        "buySubtitleShort": "同链依次执行，不同链并行。",
+        "sellSubtitle": "所得资金保留在各自链上",
+        "estReceipt": "预计到账(USD)",
+        "statusPending": "等待中",
+        "statusPendingPrevious": "等待同链上一笔交易完成",
+        "statusExecuting": "执行中",
+        "statusSuccessful": "成功",
+        "confirm": "确认",
+        "back": "返回",
+        "retryFailedTxns": "重试 {{count}} 笔失败交易",
+        "retryFailedTxns_one": "重试 {{count}} 笔失败交易",
+        "progress": "执行中 · 已完成 {{done}}/{{total}}",
+        "done": "完成",
+        "exitTitle": "取消执行并返回？",
+        "exitDesc1": "执行将停止，未提交的交易不会继续处理。",
+        "exitDesc2": "已提交到链上的交易无法撤销，仍可能完成。",
+        "stopAndExit": "停止并退出",
+        "continue": "继续",
+        "failReason": {
+          "buildFailed": "构建交易失败"
+        }
+      }
+    },
     "convertDust": {
       "failReason": {
         "quoteUnavailable": "获取报价失败",
         "gasCostTooHigh": "超过 Gas 费用上限",
-        "priceImpactTooHigh": "价格影响过高",
+        "priceImpactTooHigh": "价差过大",
         "transactionFailed": "交易失败",
         "submitFailed": "提交交易失败",
         "gasNotEnough": "Gas 不足"
@@ -3591,13 +3662,6 @@
         "giftTips": "活跃用户 Gas 奖励",
         "noWithdrawableBalanceDescription": "你的 Gas 余额中有 {{amount}} 不可提现：\n1. Apple Pay / Google Pay\n2. Gas Rewards"
       }
-    },
-    "ReserveGasPopup": {
-      "title": "预留 Gas",
-      "instant": "快速",
-      "doNotReserve": "不预留 Gas",
-      "fast": "正常",
-      "normal": "慢"
     },
     "externalSwapBrideDappPopup": {
       "thirdPartyDappToProceed": "请使用第三方 DApp 继续操作",

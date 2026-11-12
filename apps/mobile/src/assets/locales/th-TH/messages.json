@@ -90,13 +90,6 @@
       "screenHeaderSubTitle_other": "{{count}} กระเป๋าเงิน",
       "screenHeaderSubTitle_one": "1 กระเป๋าเงิน"
     },
-    "ReserveGasPopup": {
-      "fast": "ปกติ",
-      "title": "สำรอง Gas",
-      "instant": "เร็ว",
-      "normal": "ช้า",
-      "doNotReserve": "อย่าสำรอง Gas"
-    },
     "Contact": {
       "EditModal": {
         "title": "แก้ไขหมายเหตุที่อยู่"
@@ -938,10 +931,8 @@
       "no-route-found": "ไม่พบเส้นทาง",
       "best": "ดีที่สุด",
       "bridgeFrom": "บริดจ์จาก",
-      "for-available-quote": "สำหรับการเสนอราคาที่มีอยู่",
       "approve-and-bridge": "อนุมัติและบริดจ์",
       "est-receiving": "ประมาณการรับ:",
-      "bridge-from": "Bridge จาก",
       "bridgeTo": "บริดจ์ไปยัง",
       "price-impact": "ผลกระทบต่อราคา",
       "Select": "เลือก",
@@ -962,7 +953,7 @@
       "est-difference": "ประมาณการความแตกต่าง:",
       "history": "ประวัติ Bridge",
       "est-payment": "ประมาณการจ่าย:",
-      "no-quote-found": "ไม่มีการเสนอราคา กรุณาลองคู่โทเค็นอื่น",
+      "no-quote-found": "ไม่มีการเสนอราคา",
       "bridged": "เริ่ม Bridge แล้ว",
       "gasFeeTooHight": "ค่าแก๊สสูงกว่าปกติ โปรดยืนยันหากคุณต้องการดำเนินการต่อ",
       "pendingItem": {
@@ -1016,7 +1007,7 @@
         "queued": "รอต่อคิว",
         "pending": "รอดำเนินการ",
         "completed": "เสร็จสิ้น",
-        "refund": "คืนเงิน",
+        "refund": "คืนเงินแล้ว",
         "waiting": "กำลังรอธุรกรรมบนเชนปลายทาง",
         "goBack": "กลับ",
         "bridgeAgain": "Bridge อีกครั้ง",
@@ -1649,12 +1640,9 @@
       "alert": "คีย์ส่วนตัวนี้เป็นหลักฐานสำหรับสินทรัพย์ของคุณ กรุณาอย่าทำหายหรือเปิดเผยให้ผู้อื่นทราบ มิฉะนั้นคุณอาจสูญเสียสินทรัพย์ของคุณไปตลอดกาล กรุณาดูในสภาพแวดล้อมที่ปลอดภัยและเก็บรักษาไว้ให้ดี"
     },
     "createPassword": {
-      "and": "และ",
       "Newpassword": "ป้อนรหัสผ่าน",
       "passwordRequired": "กรุณาใส่รหัสผ่าน",
-      "PrivacyPolicy": "นโยบายความเป็นส่วนตัว",
       "ConfirmPassword": "ยืนยันรหัสผ่าน",
-      "termOfUse": "ข้อกำหนดการใช้งาน",
       "confirmRequired": "โปรดยืนยันรหัสผ่าน",
       "biometricsFail": "เปิดใช้ข้อมูลชีวมิติไม่สำเร็จ",
       "confirmPasswordPlaceholder": "ยืนยันรหัสผ่าน",
@@ -1669,10 +1657,11 @@
       "passwordMin": "รหัสผ่านต้องมีความยาวอย่างน้อย 8 ตัวอักษร",
       "subTitle": "รหัสผ่านนี้ใช้ปลดล็อกกระเป๋าเงินและเข้ารหัสข้อมูลบนอุปกรณ์นี้ โดยไม่สามารถกู้คืนรหัสผ่านได้ หากสูญหาย คุณจะต้องรีเซ็ตและนำเข้ากระเป๋าเงินอีกครั้ง",
       "agree": "ฉันได้อ่านและยอมรับ<1/> <2>ข้อกำหนดการใช้งาน</2>",
-      "agreeToTerms": "ฉันได้อ่านและยอมรับ",
       "enable": "เปิดใช้งาน {{ bioType }}",
       "confirmError": "รหัสผ่านไม่ตรงกัน",
-      "setUpSuccess": "ตั้งรหัสผ่านเรียบร้อยแล้ว"
+      "setUpSuccess": "ตั้งรหัสผ่านเรียบร้อยแล้ว",
+      "dataAnalysisDesc": "แชร์ข้อมูลการใช้งานแบบไม่ระบุตัวตนเพื่อช่วยปรับปรุง Rabby ข้อมูลที่เก็บรวบรวมจะไม่เชื่อมโยงกับคุณหรือบัญชีของคุณ คุณสามารถเปลี่ยนได้ทุกเมื่อในการตั้งค่า",
+      "agreeByContinuing": "เมื่อดำเนินการต่อ แสดงว่าคุณยอมรับ<terms>ข้อกำหนดการใช้งาน</terms>และรับทราบ<privacy>นโยบายความเป็นส่วนตัว</privacy>"
     },
     "backupSeedPhrase": {
       "showQrCode": "แสดงรหัส QR",
@@ -2045,7 +2034,8 @@
       "screenshotReportSwitch": "ถ่ายภาพหน้าจอเพื่อรายงานข้อบกพร่อง",
       "currency": "สกุลเงิน",
       "searchCurrency": "ค้นหาสกุลเงิน",
-      "dataAnalysis": "การวิเคราะห์ข้อมูล",
+      "dataAnalysis": "ช่วยปรับปรุง Rabby",
+      "dataAnalysisDesc": "แชร์ข้อมูลการใช้งานแบบไม่ระบุตัวตนเพื่อช่วยปรับปรุง Rabby ข้อมูลที่เก็บรวบรวมจะไม่เชื่อมโยงกับคุณหรือบัญชีของคุณ",
       "bugReportChat": "ส่งข้อเสนอแนะผ่านแชต",
       "features": "ฟีเจอร์",
       "manageWallets": "จัดการกระเป๋าเงิน"
@@ -2092,7 +2082,8 @@
       "emptyWhitelistContent": "เพิ่มที่อยู่ที่เชื่อถือได้ไปยังบัญชีขาวเพื่อการโอนที่รวดเร็ว — ไม่จำเป็นต้องยืนยันในครั้งถัดไป",
       "SendHistory": "ประวัติการส่ง",
       "dividerWatchOnlyWallets": "ที่อยู่แบบดูเท่านั้น",
-      "enterOrSearchAddress": "กรอกหรือค้นหา ที่อยู่"
+      "enterOrSearchAddress": "กรอกหรือค้นหา ที่อยู่",
+      "resolvingAddressName": "กำลังค้นหาที่อยู่..."
     },
     "confirmAddress": {
       "risks": {
@@ -3164,6 +3155,13 @@
       },
       "addressEditorBadge": {
         "nameUnknown": "ตั้งชื่อที่อยู่"
+      },
+      "scanQrcode": {
+        "chooseFromGallery": "เลือกจากแกลเลอรี",
+        "noQrCode": "ไม่พบคิวอาร์โค้ดในรูปภาพนี้",
+        "multipleQrCodes": "พบคิวอาร์โค้ดหลายรายการ โปรดเลือกรูปภาพที่มีคิวอาร์โค้ดเพียงรายการเดียว",
+        "invalidAddress": "ไม่พบที่อยู่ที่ถูกต้องในคิวอาร์โค้ดนี้",
+        "readImageFailed": "อ่านรูปภาพไม่สำเร็จ โปรดลองอีกครั้ง"
       }
     },
     "Lending": {
@@ -3469,6 +3467,72 @@
     },
     "batchRevoke": {
       "title": "เพิกถอนเป็นชุด"
+    },
+    "memeCoin": {
+      "holdingsEntry": "สินทรัพย์ที่ถือ",
+      "pnlPeriod24h": "24h",
+      "pnlPeriodAll": "ทั้งหมด",
+      "pnlTipLabel": "PnL",
+      "backToMarket": "กลับไปที่ตลาด Meme",
+      "marketTitle": "ตลาด Meme",
+      "holdingsTitle": "สินทรัพย์ที่ถือ",
+      "marketCap": "มูลค่าตลาด",
+      "valuePnl": "มูลค่า / PnL",
+      "searchMarket": "ค้นหาในตลาด Meme",
+      "noMatch": "ไม่พบ Meme ที่ตรงกัน",
+      "noHoldings": "ยังไม่มีสินทรัพย์ที่ถือ",
+      "loadFailed": "โหลดไม่สำเร็จ แตะเพื่อลองใหม่",
+      "buyN": "ซื้อ {{count}} Meme",
+      "buyN_one": "ซื้อ {{count}} Meme",
+      "sellN": "ขาย {{count}} Meme",
+      "sellN_one": "ขาย {{count}} Meme",
+      "selectToBuy": "เลือก Meme ที่จะซื้อ",
+      "selectToSell": "เลือก Meme ที่จะขาย",
+      "maxPriceImpact": "ผลกระทบต่อราคาสูงสุด",
+      "unsupportedAddressType": "ไม่รองรับประเภทที่อยู่นี้",
+      "accountChanged": "ที่อยู่มีการเปลี่ยนแปลง โปรดเริ่มใหม่",
+      "addressSwitchUnsupported": "ไม่สามารถสลับที่อยู่ในหน้านี้ได้",
+      "buy": {
+        "amount": "จำนวนเงินที่ซื้อ",
+        "allocation": "การจัดสรร",
+        "byMarketCap": "ตามมูลค่าตลาด",
+        "equalSplit": "แบ่งเท่ากัน",
+        "estPayment": "ชำระโดยประมาณ {{amount}}",
+        "needed": "ต้องการ {{amount}}",
+        "anotherNeeded": "ต้องการเพิ่มอีก {{amount}}",
+        "preview": "ดูตัวอย่าง",
+        "paymentTokens": "โทเค็นสำหรับชำระ",
+        "selectTokens": "เลือกโทเค็น",
+        "selectPaymentAssets": "เลือกสินทรัพย์สำหรับชำระ",
+        "estPaymentLabel": "ชำระโดยประมาณ",
+        "noPaymentToken": "ยังไม่ได้เลือกโทเค็นสำหรับชำระ",
+        "confirm": "ยืนยัน",
+        "noAssets": "ไม่มีสินทรัพย์ที่ใช้ได้"
+      },
+      "execute": {
+        "title": "ดำเนินการ",
+        "buySubtitleShort": "ทำตามลำดับในแต่ละเชน และทำพร้อมกันระหว่างเชน",
+        "sellSubtitle": "เงินที่ได้จะอยู่บนเชนของแต่ละรายการ",
+        "estReceipt": "ได้รับโดยประมาณ(USD)",
+        "statusPending": "รอดำเนินการ",
+        "statusPendingPrevious": "รอธุรกรรมก่อนหน้าบนเชนเดียวกัน",
+        "statusExecuting": "กำลังดำเนินการ",
+        "statusSuccessful": "สำเร็จ",
+        "confirm": "ยืนยัน",
+        "back": "ย้อนกลับ",
+        "retryFailedTxns": "ลองธุรกรรมที่ล้มเหลว {{count}} รายการอีกครั้ง",
+        "retryFailedTxns_one": "ลองธุรกรรมที่ล้มเหลว {{count}} รายการอีกครั้ง",
+        "progress": "กำลังดำเนินการ · เสร็จสิ้น {{done}}/{{total}}",
+        "done": "เสร็จสิ้น",
+        "exitTitle": "ยกเลิกการดำเนินการและกลับไปหรือไม่?",
+        "exitDesc1": "การดำเนินการจะหยุดลง ธุรกรรมที่ยังไม่ได้ส่งจะไม่ถูกดำเนินการ",
+        "exitDesc2": "ธุรกรรมที่ส่งขึ้นเชนแล้วไม่สามารถยกเลิกได้ และอาจยังเสร็จสมบูรณ์",
+        "stopAndExit": "หยุดและออก",
+        "continue": "ดำเนินการต่อ",
+        "failReason": {
+          "buildFailed": "ไม่สามารถสร้างธุรกรรม"
+        }
+      }
     },
     "convertDust": {
       "failReason": {

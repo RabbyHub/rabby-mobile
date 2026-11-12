@@ -30,6 +30,12 @@ import {
   recordSingleAddressChainProjection,
   type SingleAddressChainProjectionSource,
 } from './singleAddressChainDiagnostics';
+import {
+  isDebugChainStatsForced,
+  registerDebugChainStatsApplier,
+  setDebugChainStatsForced,
+  useDebugChainStatsForced,
+} from './debugChainStats';
 
 type FinalInfo = SingleAddressChainInfo;
 const chainStaticsStore = zCreate<FinalInfo>(() => ({
@@ -55,8 +61,54 @@ function setFinalInfo(valOrFunc: UpdaterOrPartials<FinalInfo>) {
 }
 
 const debounceComputeChainList = debounce(() => {
+  // Dev probe (QA 1157): keep the pinned empty-projection state until released.
+  if (isDebugChainStatsForced()) {
+    return;
+  }
   setFinalInfo(computeChainsListV2(getSelectedBalanceAddressesSnapshot()));
+  if (!chainProjectionState.getState().hasComputed) {
+    chainProjectionState.setState({ hasComputed: true });
+  }
 }, 100);
+
+/**
+ * `hasComputed === false` until the aggregate chain projection has produced its
+ * first result. Consumers must treat that window as loading, not as "no chains"
+ * (an empty store and a settled-empty projection look the same otherwise).
+ */
+const chainProjectionState = zCreate<{ hasComputed: boolean }>(() => ({
+  hasComputed: false,
+}));
+
+/**
+ * Dev-only helper behind `target=chainLoading`: toggles a real "projection
+ * pending, no chains yet" state. Releasing recomputes immediately so the page
+ * recovers without a restart.
+ */
+function applyDebugChainStatsForced(forced: boolean) {
+  if (forced) {
+    // Drop both projections so every consumer (multi-address tab bar and the
+    // per-address single-home hooks) really sees "no chains yet".
+    setAddressChainInfo({});
+    setFinalInfo(prev => ({
+      ...prev,
+      computedResult: { chainAssets: [], chainLength: 0, top3Chains: [] },
+    }));
+  } else {
+    getSelectedBalanceAddressesSnapshot().forEach(address =>
+      apisAddrChainStatics.syncAddress(address),
+    );
+    debounceComputeChainList();
+  }
+}
+
+registerDebugChainStatsApplier(applyDebugChainStatsForced);
+
+/** `true` while the chain projection has not produced a result yet. */
+export function useChainStatsLoading() {
+  const forced = useDebugChainStatsForced();
+  return __DEV__ && forced;
+}
 
 export function getComputedChainInfo() {
   const baseInfo = chainStaticsStore.getState();
@@ -72,6 +124,37 @@ export function useTop3Chains() {
   );
 
   return useCreationWithShallowCompare(() => top3Chains, [top3Chains]);
+}
+
+/** Chain count of the current projection; 0 once it settles with no assets. */
+export function useChainLength() {
+  return useActivityStore(
+    chainStaticsStore,
+    state => state.computedResult.chainLength,
+    Object.is,
+    { storeLabel: 'home-chain-stats' },
+  );
+}
+
+/** `false` until the aggregate projection has produced its first result. */
+export function useChainProjectionReady() {
+  return useActivityStore(
+    chainProjectionState,
+    state => state.hasComputed,
+    Object.is,
+    { storeLabel: 'home-chain-stats-ready' },
+  );
+}
+
+/** `false` until this address's projection has produced its first result. */
+export function useAddrChainProjectionReady(address?: string) {
+  const addr = address?.toLowerCase();
+  return useActivityStore(
+    addrChainProjectionState,
+    state => (addr ? state.completed[addr] === true : false),
+    Object.is,
+    { storeLabel: 'single-address-chain-stats-ready' },
+  );
 }
 
 export const otherStore = zCreate(() => {
@@ -107,6 +190,40 @@ export function setSelectChainItem(
 }
 
 const addrChainStaticsStore = zCreate<Record<string, FinalInfo>>(() => ({}));
+
+/**
+ * Addresses whose chain projection has run at least once.
+ *
+ * `addrChainStaticsStore[address]` is absent for an address whose token,
+ * portfolio and NFT domains are all empty (`applyAddressChainDomainUpdates`
+ * skips publishing an unchanged empty info), so readiness cannot be derived
+ * from the entry's existence: a fresh empty address would stay "pending"
+ * forever and never hide the filter (QA 1197).
+ */
+const addrChainProjectionState = zCreate<{
+  completed: Record<string, true>;
+}>(() => ({ completed: {} }));
+
+function markAddrChainProjectionCompleted(addresses: string[]) {
+  if (!addresses.length) {
+    return;
+  }
+  const completed = addrChainProjectionState.getState().completed;
+  let nextCompleted = completed;
+  addresses.forEach(address => {
+    const normalized = address.toLowerCase();
+    if (nextCompleted[normalized]) {
+      return;
+    }
+    if (nextCompleted === completed) {
+      nextCompleted = { ...completed };
+    }
+    nextCompleted[normalized] = true;
+  });
+  if (nextCompleted !== completed) {
+    addrChainProjectionState.setState({ completed: nextCompleted });
+  }
+}
 function setAddressChainInfo(
   valOrFunc: UpdaterOrPartials<Record<string, FinalInfo>>,
 ) {
@@ -156,6 +273,11 @@ function updateAddressChainDomains(updates: AddressChainDomainUpdate[]) {
   if (!updates.length) {
     return false;
   }
+  // Dev probe (QA 1157): the pinned state must not be refilled by incremental
+  // token/portfolio/NFT updates either.
+  if (isDebugChainStatsForced()) {
+    return false;
+  }
   let changed = false;
   setAddressChainInfo(previousState => {
     const nextState = applyAddressChainDomainUpdates(previousState, updates);
@@ -171,10 +293,15 @@ function projectAddressChainDomains(options: {
   inputCount: number;
   makeUpdates: () => AddressChainDomainUpdate[];
 }) {
+  // Dev probe (QA 1157): keep the pinned empty-projection state.
+  if (isDebugChainStatsForced()) {
+    return false;
+  }
   const startedAt = nowForSingleAddressChainProjection();
   const updates = options.makeUpdates();
   const projectedAt = nowForSingleAddressChainProjection();
   const changed = updateAddressChainDomains(updates);
+  markAddrChainProjectionCompleted(options.addresses);
   const publishedAt = nowForSingleAddressChainProjection();
 
   recordSingleAddressChainProjection({

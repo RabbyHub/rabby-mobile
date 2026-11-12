@@ -2,13 +2,14 @@ import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
-import { View } from 'react-native';
+import { View, type StyleProp, type ViewStyle } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import type { PerpsProLeverageConfiguration } from '../../model/leverage';
 import type { PerpsOpenOrderViewModel } from '../../model/openOrder';
 import type { PerpsProOpenOrderEditMarketSnapshot } from '../../model/openOrderEdit';
 import { PERPS_PRO_DIALOG_HEAVY_TEXT_STYLE } from '../common/perpsProDialogVisual';
+import { getPerpsProListRowStyles } from '../common/perpsProListVisual';
 import {
   getPerpsProMetadataTagContainerStyle,
   getPerpsProMetadataTagTextStyle,
@@ -20,19 +21,30 @@ export const PerpsProOpenOrderEditHeader: React.FC<{
 }> = React.memo(({ market, leverageConfiguration }) => {
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
+  const sourceTag = market.sourceTag ? (
+    <View style={styles.sourceTag} testID="perps-pro-open-order-edit-source">
+      <Text style={styles.sourceText}>{market.sourceTag}</Text>
+    </View>
+  ) : null;
+  const pair = (
+    <Text numberOfLines={1} style={styles.pair}>
+      {market.displayPair}
+    </Text>
+  );
+  if (!leverageConfiguration) {
+    return (
+      <View style={styles.pairRow}>
+        {pair}
+        {sourceTag}
+      </View>
+    );
+  }
+  // Figma 86609:343140: tags move below the pair when leverage is shown.
   return (
-    <View style={styles.pairRow}>
-      <Text numberOfLines={1} style={styles.pair}>
-        {market.displayPair}
-      </Text>
-      {market.sourceTag ? (
-        <View
-          style={styles.sourceTag}
-          testID="perps-pro-open-order-edit-source">
-          <Text style={styles.sourceText}>{market.sourceTag}</Text>
-        </View>
-      ) : null}
-      {leverageConfiguration ? (
+    <View style={styles.stackedHeader}>
+      {pair}
+      <View style={styles.tagRow}>
+        {sourceTag}
         <View
           style={styles.sourceTag}
           testID="perps-pro-open-order-edit-leverage">
@@ -45,7 +57,7 @@ export const PerpsProOpenOrderEditHeader: React.FC<{
             {leverageConfiguration.value}x
           </Text>
         </View>
-      ) : null}
+      </View>
     </View>
   );
 });
@@ -54,7 +66,8 @@ PerpsProOpenOrderEditHeader.displayName = 'PerpsProOpenOrderEditHeader';
 
 export const PerpsProOpenOrderEditDirection: React.FC<{
   order: PerpsOpenOrderViewModel;
-}> = React.memo(({ order }) => {
+  style?: StyleProp<ViewStyle>;
+}> = React.memo(({ order, style }) => {
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const buy = order.side === 'buy';
@@ -71,7 +84,7 @@ export const PerpsProOpenOrderEditDirection: React.FC<{
             : 'page.perps.pro.openOrders.sell',
         )}`;
   return (
-    <View style={styles.directionRow}>
+    <View style={[styles.directionRow, style]}>
       <Text style={styles.directionLabel}>
         {t('page.perps.pro.trade.direction')}
       </Text>
@@ -93,6 +106,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     gap: 4,
     minHeight: 24,
   },
+  stackedHeader: { alignItems: 'center', gap: 4 },
+  tagRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 4,
+    justifyContent: 'center',
+  },
   pair: {
     ...PERPS_PRO_DIALOG_HEAVY_TEXT_STYLE,
     color: colors2024['neutral-title-1'],
@@ -111,20 +131,12 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
-  directionLabel: {
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 12,
-    lineHeight: 16,
-  },
+  directionLabel: getPerpsProListRowStyles(colors2024).listLabel,
   directionValue: {
+    ...getPerpsProListRowStyles(colors2024).listValue,
     flexShrink: 1,
     marginLeft: 12,
     textAlign: 'right',
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 12,
-    fontWeight: '700',
-    lineHeight: 16,
   },
   buyText: { color: colors2024['green-default'] },
   sellText: { color: colors2024['red-default'] },

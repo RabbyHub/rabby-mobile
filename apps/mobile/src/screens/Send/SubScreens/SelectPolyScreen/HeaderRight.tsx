@@ -13,7 +13,10 @@ import {
 } from '../../hooks/useSendPendingCount';
 import { useFocusEffect } from '@react-navigation/native';
 
-const SEND_IOS_HEADER_ICON_OFFSET = 6;
+// The iOS 26 native header lays the bar items out itself; the legacy 6pt
+// downward nudge is no longer needed and pushed the history icon below the
+// title's optical centre.
+const SEND_IOS_HEADER_ICON_OFFSET = 0;
 
 interface IProps {
   isForMultipleAddress?: boolean;

@@ -5,6 +5,26 @@ export const signatureReducer = (
   state: SignatureFlowState,
   action: SignatureAction,
 ): SignatureFlowState => {
+  const next = reduceSignatureState(state, action);
+  // Direct mode exists only to block input while work is in flight. Any
+  // terminal state must leave it, otherwise the (now hidden) overlay state and
+  // the flow state disagree and the next render can bring the blocker back.
+  if (
+    next.ctx?.mode === 'direct' &&
+    (next.status === 'idle' ||
+      next.status === 'prefetch_failure' ||
+      next.status === 'completed' ||
+      next.status === 'error')
+  ) {
+    return { ...next, ctx: { ...next.ctx, mode: 'ui' } };
+  }
+  return next;
+};
+
+const reduceSignatureState = (
+  state: SignatureFlowState,
+  action: SignatureAction,
+): SignatureFlowState => {
   switch (action.type) {
     case 'RESET':
       return { status: 'idle' };
@@ -74,6 +94,16 @@ export const signatureReducer = (
       return {
         ...state,
         ctx: normalizeMiniSignGasState(action.ctx),
+      };
+
+    case 'END_DIRECT':
+      // A direct signing ended without a result. Leave direct mode, so the
+      // transparent touch-blocking overlay cannot outlive it.
+      if (state.ctx?.mode !== 'direct') return state;
+      return {
+        ...state,
+        status: state.status === 'signing' ? 'ready' : state.status,
+        ctx: { ...state.ctx, mode: 'ui' },
       };
 
     case 'SEND_START': {

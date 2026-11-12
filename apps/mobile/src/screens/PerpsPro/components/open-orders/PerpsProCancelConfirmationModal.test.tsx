@@ -89,7 +89,7 @@ describe('PerpsProCancelConfirmationModal', () => {
           .style,
       ),
     ).toMatchObject({
-      color: 'neutral-body',
+      color: 'neutral-secondary',
       fontSize: 16,
       lineHeight: 20,
       textAlign: 'left',
@@ -97,7 +97,7 @@ describe('PerpsProCancelConfirmationModal', () => {
     const buttons = screen.getAllByRole('button');
     for (const button of buttons) {
       expect(StyleSheet.flatten(button.props.style)).toMatchObject({
-        height: 40,
+        height: 48,
         borderRadius: 10,
       });
     }

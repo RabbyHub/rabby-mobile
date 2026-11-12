@@ -20,6 +20,7 @@ import React, {
 import { useTranslation } from 'react-i18next';
 import { View, Pressable, ScrollView, Dimensions } from 'react-native';
 import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
+import { IS_IOS } from '@/core/native/utils';
 import { trigger } from 'react-native-haptic-feedback';
 import { default as RcIconMCopy } from '@/assets2024/icons/address/mcopy-cc.svg';
 import { FooterButtonGroup } from '@/components2024/FooterButtonGroup';
@@ -156,6 +157,9 @@ function ReceiveScreen(): JSX.Element {
   useLayoutEffect(() => {
     setNavigationOptions({
       headerTitle: () => headerTitle,
+      // The wallet/alias group is centred in its own container on both
+      // platforms; the row itself reserves even space on both sides.
+      headerTitleAlign: 'center',
     });
   }, [setNavigationOptions, headerTitle]);
 
@@ -335,7 +339,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 4,
-    maxWidth: SCREEN_WIDTH - 100,
+    width: SCREEN_WIDTH - 100,
+    // Same native-container correction as the Approvals header.
+    ...(IS_IOS ? { paddingRight: 65 } : {}),
   },
   screen: {
     backgroundColor: colors2024['neutral-bg-0'],

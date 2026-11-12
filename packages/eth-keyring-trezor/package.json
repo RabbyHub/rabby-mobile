@@ -33,21 +33,21 @@
   "dependencies": {
     "@ethereumjs/tx": "5.4.0",
     "@ethereumjs/util": "9.1.0",
-    "@metamask/eth-sig-util": "^8.2.0",
+    "@metamask/eth-sig-util": "8.2.0",
     "@trezor/connect-plugin-ethereum": "9.1.2-beta.1",
-    "ethereumjs-util": "^7.1.5",
-    "hdkey": "^2.1.0"
+    "ethereumjs-util": "7.1.5",
+    "hdkey": "2.1.0"
   },
   "devDependencies": {
-    "@metamask/auto-changelog": "^3.4.3",
-    "@types/hdkey": "^2.0.3",
-    "@types/jest": "^27.4.1",
-    "@types/node": "^20.14.8",
-    "deepmerge": "^4.2.2",
-    "jest": "^27.5.1",
-    "ts-jest": "^27.1.4",
-    "typedoc": "^0.24.8",
-    "typedoc-plugin-missing-exports": "^2.0.0",
+    "@metamask/auto-changelog": "3.4.4",
+    "@types/hdkey": "2.0.3",
+    "@types/jest": "27.5.2",
+    "@types/node": "20.14.9",
+    "deepmerge": "4.3.1",
+    "jest": "27.5.1",
+    "ts-jest": "27.1.5",
+    "typedoc": "0.24.8",
+    "typedoc-plugin-missing-exports": "2.1.0",
     "typescript": "5.7.3"
   },
   "peerDependencies": {

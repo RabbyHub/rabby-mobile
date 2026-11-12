@@ -27,6 +27,7 @@ import { Media } from '@/components/Media';
 import { IconDefaultNFT } from '@/assets/icons/nft';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
+import { makeHistoryDetailColors } from './detailColors';
 import { HistoryItemCateType } from './type';
 import { ChainIconFastImage } from '@/components/Chain/ChainIconImage';
 
@@ -76,7 +77,10 @@ export const HistoryItemIcon = ({
             <AssetAvatar logo={singeToken?.logo_url} size={singleSize} />
           )}
           <ChainIconFastImage
-            style={styles.tokenChainIcon}
+            style={[
+              styles.tokenChainIcon,
+              isInDetail && styles.tokenChainIconInDetail,
+            ]}
             size={20}
             chainServerId={singeToken.chain}
           />
@@ -179,5 +183,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
       ? colors2024['neutral-bg-2']
       : colors2024['neutral-bg-1'],
     borderRadius: 1000,
+  },
+  tokenChainIconInDetail: {
+    borderColor: makeHistoryDetailColors({ isLight, colors2024 }).card,
   },
 }));

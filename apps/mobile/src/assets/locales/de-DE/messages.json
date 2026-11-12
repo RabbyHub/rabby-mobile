@@ -225,13 +225,6 @@
       "erc1155Tips": "Ihr Guthaben beträgt {{amount}}",
       "erc721Tips": "Pro Sendung kann jeweils nur ein NFT des ERC 721 gesendet werden."
     },
-    "ReserveGasPopup": {
-      "fast": "Normal",
-      "title": "Gas reservieren",
-      "instant": "Schnell",
-      "doNotReserve": "Kein Gas reservieren",
-      "normal": "Langsam"
-    },
     "NoLongerSupports": {
       "button": "Verstanden",
       "desc": "Die folgenden Adressen werden entfernt. Sie finden sie weiterhin in der ursprünglichen Wallet-App. Importieren Sie die Seed-Phrase oder den privaten Schlüssel, um sie hier zu verwenden.",
@@ -1151,11 +1144,9 @@
       "the-following-bridge-route-are-found": "Folgende Kurse gefunden",
       "title": "Bridge",
       "price-impact": "Preisauswirkung",
-      "no-quote-found": "Kein Angebot gefunden. Bitte versuchen Sie es mit anderen Token-Paaren.",
+      "no-quote-found": "Kein Angebot gefunden.",
       "approve-and-bridge": "Genehmigen und bridgen",
       "best": "Beste",
-      "bridge-from": "Bridge von",
-      "for-available-quote": "für ein verfügbares Angebot",
       "est-receiving": "Geschätzter Empfang:",
       "via-bridge": "über {{bridge}}",
       "need-to-approve-token-before-bridge": "Token muss vor dem Bridge-Vorgang genehmigt werden",
@@ -1217,7 +1208,7 @@
         "queued": "In der Warteschlange",
         "pending": "Ausstehend",
         "completed": "Abgeschlossen",
-        "refund": "Rückerstattung",
+        "refund": "Zurückerstattet",
         "waiting": "Warten auf die Transaktion im Zielnetzwerk",
         "goBack": "Zurück",
         "bridgeAgain": "Erneut bridgen",
@@ -1740,11 +1731,7 @@
       "gnosisChainScrollDesc": "– Diese Wallet wurde in {{count}} Netzwerken bereitgestellt –"
     },
     "createPassword": {
-      "PrivacyPolicy": "Datenschutzerklärung",
       "Newpassword": "Passwort eingeben",
-      "agreeToTerms": "Ich habe die folgenden Dokumente gelesen und stimme ihnen zu:",
-      "termOfUse": "Nutzungsbedingungen",
-      "and": "und",
       "confirmPasswordPlaceholder": "Passwort bestätigen",
       "settingUp": "Passwort einrichten",
       "passwordMinTip": "Muss mindestens 8 Zeichen lang sein",
@@ -1763,7 +1750,9 @@
       "agree": "Ich habe die <1/><2>Nutzungsbedingungen</2> gelesen und stimme diesen zu.",
       "confirmModalDesc": "Bitte bewahren Sie Ihr Passwort ordnungsgemäß auf. Einmal verloren, kann es von Rabby weder geändert noch wiederhergestellt werden.",
       "setWallet": "Wallet einrichten",
-      "subTitle": "Dieses Passwort entsperrt Ihre Wallet und verschlüsselt Ihre Daten auf diesem Gerät. Es kann nicht wiederhergestellt werden. Wenn Sie es verlieren, müssen Sie die Wallet zurücksetzen und erneut importieren."
+      "subTitle": "Dieses Passwort entsperrt Ihre Wallet und verschlüsselt Ihre Daten auf diesem Gerät. Es kann nicht wiederhergestellt werden. Wenn Sie es verlieren, müssen Sie die Wallet zurücksetzen und erneut importieren.",
+      "dataAnalysisDesc": "Teilen Sie anonyme Nutzungsdaten, um Rabby zu verbessern. Die erfassten Daten werden weder mit Ihnen noch mit Ihrem Konto verknüpft. Sie können dies jederzeit in den Einstellungen ändern.",
+      "agreeByContinuing": "Indem Sie fortfahren, stimmen Sie den <terms>Nutzungsbedingungen</terms> zu und nehmen die <privacy>Datenschutzerklärung</privacy> zur Kenntnis."
     },
     "backupPrivateKey": {
       "clickToShow": "Klicken, um privaten Schlüssel anzuzeigen",
@@ -2101,7 +2090,8 @@
       "currency": "Währung",
       "searchCurrency": "Währung suchen",
       "screenshotReportSwitch": "Screenshot, um einen Fehler zu melden",
-      "dataAnalysis": "Datenanalyse",
+      "dataAnalysis": "Rabby verbessern helfen",
+      "dataAnalysisDesc": "Teilen Sie anonyme Nutzungsdaten, um Rabby zu verbessern. Die erfassten Daten werden weder mit Ihnen noch mit Ihrem Konto verknüpft.",
       "bugReportChat": "Feedback per Chat teilen",
       "features": "Funktionen",
       "manageWallets": "Wallets verwalten"
@@ -2209,7 +2199,8 @@
       "emptyWhitelistContent": "Fügen Sie vertrauenswürdige Adressen zur Zulassungsliste für schnelle Überweisungen hinzu – beim nächsten Mal ist keine Bestätigung erforderlich",
       "SendHistory": "Sendeverlauf",
       "dividerWatchOnlyWallets": "Watch-Only-Adressen",
-      "enterOrSearchAddress": "Adresse eingeben oder suchen"
+      "enterOrSearchAddress": "Adresse eingeben oder suchen",
+      "resolvingAddressName": "Adresse wird gesucht..."
     },
     "confirmAddress": {
       "risks": {
@@ -3281,6 +3272,13 @@
       },
       "addressEditorBadge": {
         "nameUnknown": "Benennen Sie die Adresse"
+      },
+      "scanQrcode": {
+        "chooseFromGallery": "Aus Galerie auswählen",
+        "noQrCode": "Kein QR-Code in diesem Bild gefunden",
+        "multipleQrCodes": "Mehrere QR-Codes gefunden. Bitte wähle ein Bild mit nur einem QR-Code",
+        "invalidAddress": "Keine gültige Adresse in diesem QR-Code gefunden",
+        "readImageFailed": "Bild konnte nicht gelesen werden. Bitte versuche es erneut"
       }
     },
     "Lending": {
@@ -3586,6 +3584,72 @@
     },
     "batchRevoke": {
       "title": "Batch-Widerruf"
+    },
+    "memeCoin": {
+      "holdingsEntry": "Bestände",
+      "pnlPeriod24h": "24h",
+      "pnlPeriodAll": "Alle",
+      "pnlTipLabel": "PnL",
+      "backToMarket": "Zurück zum Meme-Markt",
+      "marketTitle": "Meme-Markt",
+      "holdingsTitle": "Bestände",
+      "marketCap": "Marktkapitalisierung",
+      "valuePnl": "Wert / PnL",
+      "searchMarket": "Meme-Markt durchsuchen",
+      "noMatch": "Keine passenden Memes",
+      "noHoldings": "Noch keine Bestände",
+      "loadFailed": "Laden fehlgeschlagen. Zum Wiederholen tippen",
+      "buyN": "{{count}} Memes kaufen",
+      "buyN_one": "{{count}} Meme kaufen",
+      "sellN": "{{count}} Memes verkaufen",
+      "sellN_one": "{{count}} Meme verkaufen",
+      "selectToBuy": "Memes zum Kaufen auswählen",
+      "selectToSell": "Memes zum Verkaufen auswählen",
+      "maxPriceImpact": "Max. Preisauswirkung",
+      "unsupportedAddressType": "Adresstyp wird nicht unterstützt",
+      "accountChanged": "Adresse geändert. Bitte erneut starten",
+      "addressSwitchUnsupported": "Auf dieser Seite kann die Adresse nicht gewechselt werden.",
+      "buy": {
+        "amount": "Kaufbetrag",
+        "allocation": "Aufteilung",
+        "byMarketCap": "Nach Marktkapitalisierung",
+        "equalSplit": "Gleichmäßig",
+        "estPayment": "Geschätzte Zahlung {{amount}}",
+        "needed": "{{amount}} benötigt",
+        "anotherNeeded": "Weitere {{amount}} benötigt",
+        "preview": "Vorschau",
+        "paymentTokens": "Zahlungstoken",
+        "selectTokens": "Token auswählen",
+        "selectPaymentAssets": "Assets zur Zahlung auswählen",
+        "estPaymentLabel": "Geschätzte Zahlung",
+        "noPaymentToken": "Kein Zahlungstoken ausgewählt",
+        "confirm": "Bestätigen",
+        "noAssets": "Keine verfügbaren Assets"
+      },
+      "execute": {
+        "title": "Ausführen",
+        "buySubtitleShort": "Pro Netzwerk nacheinander, netzwerkübergreifend parallel.",
+        "sellSubtitle": "Erlöse verbleiben im jeweiligen Netzwerk",
+        "estReceipt": "Geschätzter Erhalt(USD)",
+        "statusPending": "Ausstehend",
+        "statusPendingPrevious": "Wartet auf die vorherige Transaktion im selben Netzwerk",
+        "statusExecuting": "Wird ausgeführt",
+        "statusSuccessful": "Erfolgreich",
+        "confirm": "Bestätigen",
+        "back": "Zurück",
+        "retryFailedTxns": "{{count}} fehlgeschlagene Transaktionen wiederholen",
+        "retryFailedTxns_one": "{{count}} fehlgeschlagene Transaktion wiederholen",
+        "progress": "Wird ausgeführt · {{done}}/{{total}} abgeschlossen",
+        "done": "Fertig",
+        "exitTitle": "Ausführung abbrechen und zurückgehen?",
+        "exitDesc1": "Die Ausführung wird gestoppt. Nicht übermittelte Transaktionen werden nicht verarbeitet.",
+        "exitDesc2": "Bereits on-chain übermittelte Transaktionen können nicht rückgängig gemacht werden und werden möglicherweise trotzdem abgeschlossen.",
+        "stopAndExit": "Stoppen & Beenden",
+        "continue": "Fortfahren",
+        "failReason": {
+          "buildFailed": "Transaktion konnte nicht erstellt werden"
+        }
+      }
     },
     "convertDust": {
       "failReason": {
