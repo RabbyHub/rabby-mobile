@@ -2,11 +2,15 @@ name: Android Startup KPI
 
 # Measures the Android cold-start KPI that `am start -W TotalTime` cannot see:
 # time from native process start to the first user-visible surface (unlock or
-# Home). Runs on a mobile-local runner with a physically connected device.
+# Home).
 #
-# Provide one APK to record a data point, or two APKs to compare them back to
-# back on the same device in the same run (A/B). A package that never emits the
-# marker is reported as INVALID - that is a broken measurement, never a
+# The default target is a pinned Pixel 7 / API 35 emulator, created on demand,
+# because a measurement device has to be available on every run and stay
+# identical between runs. A physical device can be selected instead with
+# `runner_target=physical`.
+#
+# A package that never emits the marker is reported as INVALID: that is a
+# broken measurement (wrong APK, fresh install stuck on onboarding), never a
 # "no difference" result.
 
 on:
@@ -40,8 +44,29 @@ on:
           - '5'
           - '7'
         default: '5'
+      runner_target:
+        description: 'Measure on the pinned emulator or on a physical device'
+        required: true
+        type: choice
+        options:
+          - emulator
+          - physical
+        default: emulator
       device_serial:
-        description: 'adb serial (empty = first connected device)'
+        description: 'physical only: adb serial (empty = first connected device)'
+        required: false
+        type: string
+        default: ''
+      emulator_avd:
+        description: 'emulator only: AVD name'
+        required: false
+        type: string
+        default: 'rabby-startup-pixel7-api35'
+      seed_apk_url:
+        description: >-
+          Optional APK used only to create the wallet state (must support
+          _cmd=debug-create-address and be signed like the measured APKs).
+          Without it a fresh install lands on onboarding and the run is INVALID.
         required: false
         type: string
         default: ''
@@ -60,27 +85,30 @@ defaults:
   run:
     shell: bash -euo pipefail {0}
 
-# One device, one measurement at a time.
+# One measurement device, one run at a time.
 concurrency:
   group: rabby-android-startup-kpi-device
   cancel-in-progress: false
 
 jobs:
   measure:
-    name: Measure cold start on device
+    name: Measure cold start
     runs-on:
       - self-hosted
       - macOS
       - ARM64
       - mobile-local
-    timeout-minutes: 45
+    timeout-minutes: 60
     env:
       APK_URL: ${{ inputs.apk_url }}
       APK_LABEL: ${{ inputs.apk_label }}
       BASELINE_APK_URL: ${{ inputs.baseline_apk_url }}
       BASELINE_APK_LABEL: ${{ inputs.baseline_apk_label }}
       RUNS: ${{ inputs.runs }}
-      DEVICE_SERIAL: ${{ inputs.device_serial }}
+      RUNNER_TARGET: ${{ inputs.runner_target }}
+      DEVICE_SERIAL_INPUT: ${{ inputs.device_serial }}
+      AVD_NAME: ${{ inputs.emulator_avd }}
+      SEED_APK_URL: ${{ inputs.seed_apk_url }}
       PACKAGE_NAME: ${{ inputs.package_name }}
 
     steps:
@@ -91,16 +119,16 @@ jobs:
 
       - name: Check tooling
         run: |
-          export PATH="$PATH:$HOME/Library/Android/sdk/platform-tools"
-          command -v adb
+          command -v adb || true
           adb version
           adb devices
+          sdk="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-$HOME/Library/Android/sdk}}"
+          echo "ANDROID_SDK_ROOT=$sdk" >> "$GITHUB_ENV"
           # runner.* is not available in job-level env, so resolve it here.
           echo "RESULT_FILE=$RUNNER_TEMP/startup-kpi-result.json" >> "$GITHUB_ENV"
 
       - name: Download packages
         run: |
-          set -euo pipefail
           work="$RUNNER_TEMP/startup-kpi"
           rm -rf "$work"
           mkdir -p "$work"
@@ -126,43 +154,89 @@ jobs:
           label="${APK_LABEL:-$(basename "${APK_URL%%\?*}")}"
           label="${label%.apk}"
           fetch "$APK_URL" "$label" "$work/$label.apk"
+          echo "APK_MAIN=$work/$label.apk" >> "$GITHUB_ENV"
 
           if [ -n "${BASELINE_APK_URL}" ]; then
             baseline_label="${BASELINE_APK_LABEL:-$(basename "${BASELINE_APK_URL%%\?*}")}"
             baseline_label="${baseline_label%.apk}"
             fetch "$BASELINE_APK_URL" "$baseline_label" "$work/$baseline_label.apk"
+            echo "APK_BASELINE=$work/$baseline_label.apk" >> "$GITHUB_ENV"
           fi
 
-          {
-            echo "APK_MAIN=$work/$label.apk"
-            if [ -n "${BASELINE_APK_URL}" ]; then
-              echo "APK_BASELINE=$work/$baseline_label.apk"
-            fi
-          } >> "$GITHUB_ENV"
+          if [ -n "${SEED_APK_URL}" ]; then
+            fetch "$SEED_APK_URL" "seed" "$work/seed.apk"
+            echo "APK_SEED=$work/seed.apk" >> "$GITHUB_ENV"
+          fi
 
-      - name: Prepare device
+      - name: Boot emulator
+        if: ${{ inputs.runner_target == 'emulator' }}
+        env:
+          EMULATOR_LOG: ${{ runner.temp }}/startup-kpi-emulator.log
         run: |
-          export PATH="$PATH:$HOME/Library/Android/sdk/platform-tools"
-          serial="${DEVICE_SERIAL:-$(adb devices | awk '$2 == "device" { print $1; exit }')}"
+          bash apps/mobile/scripts/startup-kpi/emulator.sh ensure
+          bash apps/mobile/scripts/startup-kpi/emulator.sh boot
+          bash apps/mobile/scripts/startup-kpi/emulator.sh wait
+          echo "DEVICE_SERIAL=emulator-5554" >> "$GITHUB_ENV"
+
+      - name: Resolve physical device
+        if: ${{ inputs.runner_target == 'physical' }}
+        run: |
+          serial="${DEVICE_SERIAL_INPUT:-$(adb devices | awk '$2 == "device" { print $1; exit }')}"
           if [ -z "$serial" ]; then
             echo "no connected android device" >&2
             exit 1
           fi
           echo "DEVICE_SERIAL=$serial" >> "$GITHUB_ENV"
-          # Best effort: a locked/sleeping device changes the measured surface.
-          adb -s "$serial" shell input keyevent KEYCODE_WAKEUP || true
-          adb -s "$serial" shell wm dismiss-keyguard || true
-          adb -s "$serial" shell settings put global stay_on_while_plugged_in 3 || true
-          echo "device=$serial"
+
+      - name: Prepare device
+        run: |
+          # A locked/sleeping device changes the measured surface.
+          adb -s "$DEVICE_SERIAL" shell input keyevent KEYCODE_WAKEUP || true
+          adb -s "$DEVICE_SERIAL" shell wm dismiss-keyguard || true
+          adb -s "$DEVICE_SERIAL" shell settings put global stay_on_while_plugged_in 3 || true
+          # Animation scales change what "first content frame" looks like.
+          for scale in window_animation_scale transition_animation_scale animator_duration_scale; do
+            adb -s "$DEVICE_SERIAL" shell settings put global "$scale" 0 || true
+          done
+          echo "device=$DEVICE_SERIAL"
+
+      - name: Seed wallet state
+        if: ${{ inputs.seed_apk_url != '' }}
+        run: |
+          adb -s "$DEVICE_SERIAL" install -r "$APK_SEED" || {
+            echo "seed APK could not be installed over the current data; it must be signed like the measured APKs" >&2
+            exit 1
+          }
+          adb -s "$DEVICE_SERIAL" shell am force-stop "$PACKAGE_NAME"
+          adb -s "$DEVICE_SERIAL" shell am start -n "$PACKAGE_NAME/com.debank.rabbymobile.MainActivity"
+          # Wait for the JS bundle before sending the debug command.
+          for _ in $(seq 1 30); do
+            sleep 2
+            adb -s "$DEVICE_SERIAL" logcat -d | grep -q 'Running "RabbyMobile"' && break
+          done
+          adb -s "$DEVICE_SERIAL" logcat -c
+          adb -s "$DEVICE_SERIAL" shell \
+            "am start -a android.intent.action.VIEW -d 'rabbygo://go.rabby.io/mobile/debug-create-address?_cmd=debug-create-address' -n $PACKAGE_NAME/com.debank.rabbymobile.MainActivity"
+          # The creation result is only surfaced as a toast, so verify it the
+          # way the measurement sees it: a cold start must leave onboarding.
+          sleep 20
+          adb -s "$DEVICE_SERIAL" shell am force-stop "$PACKAGE_NAME"
+          sleep 3
+          adb -s "$DEVICE_SERIAL" shell am start -n "$PACKAGE_NAME/com.debank.rabbymobile.MainActivity" >/dev/null
+          sleep 15
+          adb -s "$DEVICE_SERIAL" shell uiautomator dump /sdcard/startup-kpi-seed.xml >/dev/null 2>&1 || true
+          if adb -s "$DEVICE_SERIAL" shell cat /sdcard/startup-kpi-seed.xml | grep -q 'Welcome to'; then
+            echo "seed step failed: the app still shows onboarding, so the measured runs would be INVALID" >&2
+            exit 1
+          fi
+          adb -s "$DEVICE_SERIAL" shell am force-stop "$PACKAGE_NAME"
+          sleep 2
 
       - name: Collect startup KPI
         id: collect
         run: |
-          export PATH="$PATH:$HOME/Library/Android/sdk/platform-tools"
           args=(--apk "$APK_MAIN" --json "$RESULT_FILE" --runs "$RUNS" --pkg "$PACKAGE_NAME")
-          if [ -n "${DEVICE_SERIAL:-}" ]; then
-            args+=(--device "$DEVICE_SERIAL")
-          fi
+          args+=(--device "$DEVICE_SERIAL")
           if [ -n "${APK_BASELINE:-}" ]; then
             args+=(--apk "$APK_BASELINE")
           fi
@@ -173,7 +247,18 @@ jobs:
           {
             echo '### Android startup KPI'
             echo '```'
-            [ -f "$RESULT_FILE" ] && node -e 'const r=require(process.env.RESULT_FILE);for(const p of r.packages||[]){console.log(p.result==="OK"?`${p.label}: ${p.contentMedianMs}ms (${p.contentMinMs}-${p.contentMaxMs}) route ${JSON.stringify(p.routes)}`: `${p.label}: INVALID`)}' || true
+            if [ -f "$RESULT_FILE" ]; then
+              RESULT_FILE="$RESULT_FILE" node -e '
+                const r = require(process.env.RESULT_FILE);
+                for (const p of r.packages || []) {
+                  console.log(
+                    p.result === "OK"
+                      ? `${p.label}: ${p.contentMedianMs}ms (${p.contentMinMs}-${p.contentMaxMs}) route ${JSON.stringify(p.routes)}`
+                      : `${p.label}: INVALID`,
+                  );
+                }
+              '
+            fi
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
           exit "$status"
@@ -192,6 +277,11 @@ jobs:
             exit 0
           fi
           node apps/mobile/scripts/startup-kpi/notify-lark.js
+
+      - name: Stop emulator
+        if: ${{ always() && inputs.runner_target == 'emulator' }}
+        run: |
+          adb -s emulator-5554 emu kill || true
 
       - name: Upload result
         if: always()
