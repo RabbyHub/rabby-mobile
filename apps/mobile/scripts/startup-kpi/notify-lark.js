@@ -195,7 +195,9 @@ async function main() {
     content: {
       post: {
         zh_cn: {
-          title: '[Android] Rabby Mobile cold-start KPI',
+          title: `[${
+            result.platform === 'ios-simulator' ? 'iOS' : 'Android'
+          }] Rabby Mobile cold-start KPI`,
           content,
         },
       },
