@@ -255,6 +255,27 @@ describe('createLegRunner.prepareAndBroadcast', () => {
     expect(t.deps.waitForTxCompleted).toHaveBeenCalledTimes(1);
   });
 
+  it('refreshes the auto-lock right before each signing step', async () => {
+    const events: string[] = [];
+    const t = setup({
+      isTwoStepChain: () => true,
+      refreshAutoLock: jest.fn(() => {
+        events.push('refresh');
+      }),
+    });
+    t.signer.openDirect
+      .mockImplementationOnce(async () => {
+        events.push('sign');
+        return ['0xa'];
+      })
+      .mockImplementationOnce(async () => {
+        events.push('sign');
+        return ['0xmain'];
+      });
+    await t.runner.prepareAndBroadcast(leg(), createPauseGate());
+    expect(events).toEqual(['refresh', 'sign', 'refresh', 'sign']);
+  });
+
   it('keeps the quote while paused and continues from there on resume', async () => {
     const gate = createPauseGate();
     const build = jest.fn(async () => TXS);

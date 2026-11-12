@@ -9,8 +9,6 @@ export const BRIDGE_ARRIVAL_POLL_INTERVAL_MS = 3 * 1000;
 /** a bridge receipt still missing after this also watches the bridge status */
 export const BRIDGE_ARRIVAL_WATCH_DELAY_MS = 30 * 1000;
 
-export const AUTO_LOCK_REFRESH_INTERVAL_MS = 60 * 1000;
-
 export const FAIL_REASON_I18N_KEY: Record<FailReason, string> = {
   noQuote: 'page.swap.no-quote-found',
   priceImpact: 'page.convertDust.failReason.priceImpactTooHigh',
