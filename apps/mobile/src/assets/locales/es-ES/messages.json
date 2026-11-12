@@ -51,13 +51,6 @@
         "cancel": "Cancelar"
       }
     },
-    "ReserveGasPopup": {
-      "normal": "Lento",
-      "doNotReserve": "No reservar Gas",
-      "title": "Reserva Gas",
-      "instant": "Rápido",
-      "fast": "Normal"
-    },
     "AuthenticationModal": {
       "passwordPlaceholder": "Introduce la contraseña para confirmar"
     },

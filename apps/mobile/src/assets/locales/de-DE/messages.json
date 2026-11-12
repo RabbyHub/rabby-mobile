@@ -225,13 +225,6 @@
       "erc1155Tips": "Ihr Guthaben beträgt {{amount}}",
       "erc721Tips": "Pro Sendung kann jeweils nur ein NFT des ERC 721 gesendet werden."
     },
-    "ReserveGasPopup": {
-      "fast": "Normal",
-      "title": "Gas reservieren",
-      "instant": "Schnell",
-      "doNotReserve": "Kein Gas reservieren",
-      "normal": "Langsam"
-    },
     "NoLongerSupports": {
       "button": "Verstanden",
       "desc": "Die folgenden Adressen werden entfernt. Sie finden sie weiterhin in der ursprünglichen Wallet-App. Importieren Sie die Seed-Phrase oder den privaten Schlüssel, um sie hier zu verwenden.",

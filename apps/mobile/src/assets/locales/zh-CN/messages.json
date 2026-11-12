@@ -3593,13 +3593,6 @@
         "noWithdrawableBalanceDescription": "你的 Gas 余额中有 {{amount}} 不可提现：\n1. Apple Pay / Google Pay\n2. Gas Rewards"
       }
     },
-    "ReserveGasPopup": {
-      "title": "预留 Gas",
-      "instant": "快速",
-      "doNotReserve": "不预留 Gas",
-      "fast": "正常",
-      "normal": "慢"
-    },
     "externalSwapBrideDappPopup": {
       "thirdPartyDappToProceed": "请使用第三方 DApp 继续操作",
       "bridgeOnDapp": "在 DApp 上跨链",

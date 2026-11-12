@@ -3,7 +3,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { uniqBy } from 'lodash';
 import { openapi } from '@/core/request';
 import useAsync from 'react-use/lib/useAsync';
-import { atom, useAtom, useAtomValue, useSetAtom } from 'jotai';
+import { atom, useAtom, useSetAtom } from 'jotai';
 import type { BridgeTxHistoryItem } from '@/core/services/transactionHistory';
 import { bridgeServiceApi } from '@/core/serviceApi/bridge';
 import { getTransactionHistoryRecentPendingSnapshot } from '@/core/serviceApi/transactionHistory';
@@ -14,14 +14,6 @@ import { useTransactionHistoryServiceReady } from '@/core/serviceApi/transaction
 const pendingCountAtom = atom(0);
 const bridgeTxDataPendingAtom = atom<BridgeHistory | null>(null);
 export const bridgeHistoryRedDotAtom = atom(false);
-
-export const useReadBridgePendingCount = () => {
-  return useAtomValue(pendingCountAtom);
-};
-
-export const useReadBridgeHistoryRedDot = () => {
-  return useAtomValue(bridgeHistoryRedDotAtom);
-};
 
 export const useClearBridgeHistoryRedDot = () => {
   const setBridgeHistoryRedDot = useSetAtom(bridgeHistoryRedDotAtom);

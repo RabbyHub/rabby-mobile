@@ -12,7 +12,7 @@ import BigNumber from 'bignumber.js';
 import { useSetAtom } from 'jotai';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Animated, Easing, TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 import {
   getSwapQuoteScore,
   TDexQuoteData,
@@ -286,7 +286,7 @@ export const Quotes = ({
 };
 
 export const QuoteList = (props: QuotesProps) => {
-  const { visible, onClose, loading } = props;
+  const { visible, onClose } = props;
   const bottomRef = useRef<BottomSheetModalMethods>(null);
   const presentedRef = useRef(false);
 
@@ -319,30 +319,6 @@ export const QuoteList = (props: QuotesProps) => {
     colors2024, // colors
     isLight,
   } = useTheme2024({ getStyle });
-
-  const spinValue = useRef(new Animated.Value(0)).current;
-  const spin = spinValue.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '360deg'],
-  });
-
-  useEffect(() => {
-    if (!visible || !loading) {
-      spinValue.resetAnimation();
-      return;
-    }
-
-    const animation = Animated.loop(
-      Animated.timing(spinValue, {
-        toValue: 1,
-        duration: 1600,
-        easing: Easing.linear,
-        useNativeDriver: true,
-      }),
-    );
-    animation.start();
-    return () => animation.stop();
-  }, [loading, spinValue, visible]);
 
   return (
     <AppBottomSheetModal
