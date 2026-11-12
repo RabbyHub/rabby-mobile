@@ -128,6 +128,13 @@ sim_derived_root="${sim_derived_root:-$RABBY_MOBILE_TURBO_LOCAL_CACHE_ROOT/ios-d
 sim_derived_data="$sim_derived_root/$sim_cache_key"
 mkdir -p "$sim_derived_data"
 
+# `hermes-engine`'s "[Hermes] Replace Hermes for the right configuration" phase
+# is skipped when Pods/.last_build_configuration already matches, so a warm Pods
+# directory keeps the Debug hermes framework and a Regression build segfaults at
+# JS init (HermesRuntimeImpl::debugJavaScript, EXC_BAD_ACCESS at 0x17). Drop the
+# marker so the phase re-runs and installs the Release hermes.
+find "$project_dir/ios/Pods" -maxdepth 1 -name ".last_build_configuration" -delete 2>/dev/null || true
+
 xcodebuild build \
   -workspace "$project_dir/ios/RabbyMobile.xcworkspace" \
   -scheme RabbyMobileRegression -configuration Regression \
