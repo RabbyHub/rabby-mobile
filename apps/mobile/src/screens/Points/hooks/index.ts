@@ -13,7 +13,6 @@ export type AccountPoints = Account & Partial<PointInfo>;
 
 type PointsStore = {
   points: Record<string, PointInfo>;
-  badge: number;
 };
 
 const AddrPointsQueue = new PQueue({
@@ -32,16 +31,13 @@ export const FILTER_ACCOUNT_TYPES = [KEYRING_CLASS.WATCH, KEYRING_CLASS.GNOSIS];
 
 const pointsStore = zCreate<PointsStore>(() => ({
   points: {},
-  badge: 0,
 }));
 
 function updatePoint(id: string, data: PointInfo) {
   pointsStore.setState(prev => {
     const prevPoint = prev.points[id];
-    const prevClaimed = prevPoint?.claimed_points ?? 0;
-    const nextClaimed = data?.claimed_points ?? 0;
 
-    if (prevPoint === data && prevClaimed === nextClaimed) {
+    if (prevPoint === data) {
       return prev;
     }
 
@@ -51,7 +47,6 @@ function updatePoint(id: string, data: PointInfo) {
         ...prev.points,
         [id]: { ...data, pointLoading: false },
       },
-      badge: prev.badge - prevClaimed + nextClaimed,
     };
   });
 }
@@ -175,9 +170,4 @@ export const useGetRabbyPoints = () => {
   }, [points, accounts]);
 
   return accountsWithPoints;
-};
-
-export const usePointsBadge = () => {
-  useGetRabbyPoints();
-  return pointsStore(s => s.badge);
 };

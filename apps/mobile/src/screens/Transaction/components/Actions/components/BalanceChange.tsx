@@ -26,6 +26,7 @@ import { useTokenDetailSheetModalOnApprovals } from '@/components/TokenDetailPop
 import { RootNames } from '@/constant/layout';
 import { naviPush } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
+import { makeHistoryDetailColors } from '../../detailColors';
 import { useMemoizedFn } from 'ahooks';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import type { Account } from '@/core/startupServices/preference';
@@ -326,9 +327,7 @@ const getStyle = createGetStyles2024(({ colors, colors2024, isLight }) => {
       paddingVertical: 16,
       paddingLeft: 16,
       paddingRight: 12,
-      backgroundColor: !isLight
-        ? colors2024['neutral-bg-2']
-        : colors2024['neutral-bg-1'],
+      backgroundColor: makeHistoryDetailColors({ isLight, colors2024 }).card,
       borderRadius: 16,
     },
     tokenBalanceChangeHeader: {
@@ -422,9 +421,7 @@ const getStyle = createGetStyles2024(({ colors, colors2024, isLight }) => {
       width: 14,
       height: 14,
       borderWidth: 1,
-      borderColor: !isLight
-        ? colors2024['neutral-bg-2']
-        : colors2024['neutral-bg-1'],
+      borderColor: makeHistoryDetailColors({ isLight, colors2024 }).card,
       borderRadius: 1000,
     },
   };

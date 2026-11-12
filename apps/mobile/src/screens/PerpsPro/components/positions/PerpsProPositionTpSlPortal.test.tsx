@@ -236,6 +236,7 @@ describe('PerpsProPositionTpSlSheet portal integration', () => {
             coveredByReview={false}
             defaultTab="partial"
             market={market}
+            onCancelAllOrders={jest.fn()}
             onCancelOrder={jest.fn()}
             onClose={jest.fn()}
             onReview={jest.fn()}

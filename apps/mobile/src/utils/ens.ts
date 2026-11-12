@@ -1,5 +1,6 @@
 import { requestETHRpc } from '@/core/apis/provider';
 import { findChain } from '@/utils/chain';
+import { isPossibleEnsName } from '@/utils/ensName';
 import { createPublicClient, custom } from 'viem';
 import { mainnet } from 'viem/chains';
 import { normalize } from 'viem/ens';
@@ -24,7 +25,7 @@ export const resolveEnsAddressByName = async (
   name: string,
 ): Promise<{ addr: string; name: string } | null> => {
   const input = name?.trim();
-  if (!input) {
+  if (!input || !isPossibleEnsName(input)) {
     return null;
   }
 

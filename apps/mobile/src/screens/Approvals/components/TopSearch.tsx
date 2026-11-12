@@ -1,5 +1,4 @@
 import { useRef } from 'react';
-import { Dimensions } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { useTranslation } from 'react-i18next';
@@ -7,8 +6,8 @@ import { useInputBlurOnTouchaway } from '@/components/Form/hooks';
 import { SearchInput } from '@/components/Form/SearchInput';
 import { ApprovalsLayouts } from '../layout';
 import { TextInput } from '@/components/Typography';
+import { IS_ANDROID } from '@/core/native/utils';
 
-const screenWidth = Dimensions.get('window').width;
 export function TopSearch({
   value,
   onChange,
@@ -24,12 +23,7 @@ export function TopSearch({
 
   return (
     <SearchInput
-      containerStyle={[
-        styles.searchInputContainer,
-        {
-          width: screenWidth - 130,
-        },
-      ]}
+      containerStyle={styles.searchInputContainer}
       searchIconStyle={styles.searchIconStyle}
       clearable
       inputStyle={styles.inputStyle}
@@ -50,13 +44,20 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontWeight: '700',
     fontSize: 17,
     flex: 1,
-    height: ApprovalsLayouts.searchBarHeight,
     color: colors2024['neutral-body'],
-    textAlignVertical: 'center',
+    // Let the fixed-height pill centre the single-line input by its own font
+    // metrics. Setting an explicit input height made the iOS placeholder sit a
+    // few points below the icon once the field gained focus.
+    includeFontPadding: false,
     paddingHorizontal: 0,
     paddingVertical: 0,
   },
   searchInputContainer: {
+    flex: 1,
+    // The trailing bar item is a text "Cancel" on Android, which is wider than
+    // the search icon it replaces. Keep a little breathing room so the rounded
+    // field never touches it.
+    marginRight: IS_ANDROID ? 8 : 0,
     borderRadius: 30,
     borderWidth: 0,
     backgroundColor: colors2024['neutral-bg-2'],

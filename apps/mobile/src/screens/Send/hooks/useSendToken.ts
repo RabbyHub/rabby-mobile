@@ -439,14 +439,6 @@ function resetScreenState() {
   }));
 }
 
-export function useSendTokenScreenState() {
-  const sendTokenScreenState = useStore(sendTokenScreenStateStore);
-
-  return {
-    sendTokenScreenState,
-  };
-}
-
 export function useSendTokenScreenStateSelector<T>(
   selector: (state: SendScreenState) => T,
 ) {
@@ -2503,10 +2495,6 @@ function useSendTokenInternalStoreApi() {
     React.useContext(SendTokenInternalStoreContext) ||
     defaultSendTokenInternalStore
   );
-}
-
-export function useSendTokenInternalContext() {
-  return useStore(useSendTokenInternalStoreApi());
 }
 
 export function useSendTokenInternalSelector<T>(

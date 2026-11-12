@@ -857,17 +857,15 @@
       "title": "Bridge",
       "Select": "Sélectionner",
       "loss-tips": "Vous perdez {{usd}}. Essayez un montant différent.",
-      "for-available-quote": "pour un devis disponible",
       "From": "De",
       "est-receiving": "Réception estimée :",
-      "bridge-from": "Bridge depuis",
       "showMore": {
         "source": "Source du bridge",
         "title": "Afficher plus",
         "signWarning": "Je comprends l'alerte et je souhaite continuer"
       },
       "price-impact": "Impact sur le prix",
-      "no-quote-found": "Aucun devis trouvé. Veuillez essayer d'autres paires de tokens.",
+      "no-quote-found": "Aucun devis trouvé.",
       "no-quote": "Pas de devis",
       "bridgeTo": "Passerelle vers",
       "approve-and-bridge": "Approuver et effectuer le bridge",
@@ -933,7 +931,7 @@
         "queued": "En attente",
         "pending": "En attente",
         "completed": "Terminé",
-        "refund": "Remboursement",
+        "refund": "Remboursé",
         "waiting": "En attente sur la chaîne cible",
         "goBack": "Retour",
         "bridgeAgain": "Effectuer un nouveau bridge",
@@ -1493,17 +1491,14 @@
     },
     "createPassword": {
       "enable": "Activer {{ bioType }}",
-      "PrivacyPolicy": "Politique de confidentialité",
       "passwordRequired": "Veuillez saisir le mot de passe",
       "confirmRequired": "Veuillez confirmer le mot de passe",
       "setUpSuccess": "Configuration du mot de passe réussie",
       "confirmPasswordPlaceholder": "Confirmer le mot de passe",
       "Newpassword": "Saisir le mot de passe",
-      "and": "et",
       "passwordMinTip": "Doit comporter au moins 8 caractères",
       "confirmError": "Les mots de passe ne correspondent pas.",
       "passwordMin": "Le mot de passe doit comporter au moins 8 caractères.",
-      "agreeToTerms": "J'ai lu et j'accepte les",
       "ConfirmPassword": "Confirmez le mot de passe",
       "phoneNotSupport": "Votre téléphone ne prend pas en charge {{ bioType }}",
       "settingUp": "Configuration du mot de passe",
@@ -1511,11 +1506,12 @@
       "biometricsFail": "Échec de l’activation de la biométrie",
       "title": "Définir le mot de passe",
       "subTitle": "Ce mot de passe déverrouille votre portefeuille et chiffre vos données sur cet appareil. Il ne peut pas être récupéré. Si vous le perdez, vous devrez réinitialiser puis réimporter votre portefeuille.",
-      "termOfUse": "Conditions d'utilisation",
       "confirmTitle": "Confirmer le mot de passe",
       "agree": "J'ai lu et j'accepte les<1/> <2>Conditions d'utilisation</2>",
       "confirmModalDesc": "Veuillez conserver votre mot de passe correctement. Une fois perdu, il ne peut pas être modifié ni récupéré par Rabby.",
-      "setWallet": "Configurer le portefeuille"
+      "setWallet": "Configurer le portefeuille",
+      "dataAnalysisDesc": "Partagez des données d'utilisation anonymes pour aider à améliorer Rabby. Les données collectées ne sont associées ni à vous ni à votre compte. Vous pouvez modifier ce choix à tout moment dans les Paramètres.",
+      "agreeByContinuing": "En continuant, vous acceptez les <terms>Conditions d'utilisation</terms> et prenez acte de la <privacy>Politique de confidentialité</privacy>."
     },
     "miniSignFooterBar": {
       "status": {
@@ -1878,7 +1874,8 @@
       "searchCurrency": "Rechercher une devise",
       "screenshotReportSwitch": "Capture d'écran pour signaler un bug",
       "currency": "Monnaie",
-      "dataAnalysis": "Analyse des données",
+      "dataAnalysis": "Aider à améliorer Rabby",
+      "dataAnalysisDesc": "Partagez des données d'utilisation anonymes pour aider à améliorer Rabby. Les données collectées ne sont associées ni à vous ni à votre compte.",
       "bugReportChat": "Partager vos commentaires via le chat",
       "features": "Fonctionnalités",
       "manageWallets": "Gérer les portefeuilles"
@@ -1925,6 +1922,7 @@
       "emptyWhitelistContent": "Ajoutez des adresses de confiance à la liste d’autorisation pour des transferts rapides—pas de confirmation nécessaire la prochaine fois.",
       "SendHistory": "Historique des envois",
       "enterOrSearchAddress": "Entrer ou rechercher une adresse",
+      "resolvingAddressName": "Recherche de l'adresse...",
       "dividerWatchOnlyWallets": "Adresses en lecture seule"
     },
     "confirmAddress": {
@@ -2998,6 +2996,13 @@
       },
       "addressEditorBadge": {
         "nameUnknown": "Nommez l'adresse"
+      },
+      "scanQrcode": {
+        "chooseFromGallery": "Choisir dans la galerie",
+        "noQrCode": "Aucun QR code trouvé dans cette image",
+        "multipleQrCodes": "Plusieurs QR codes trouvés. Veuillez choisir une image avec un seul QR code",
+        "invalidAddress": "Aucune adresse valide trouvée dans ce QR code",
+        "readImageFailed": "Impossible de lire l'image. Veuillez réessayer"
       }
     },
     "Lending": {
@@ -3304,6 +3309,72 @@
     "batchRevoke": {
       "title": "Révocation par lot"
     },
+    "memeCoin": {
+      "holdingsEntry": "avoirs",
+      "pnlPeriod24h": "24h",
+      "pnlPeriodAll": "Tout",
+      "pnlTipLabel": "PnL",
+      "backToMarket": "Retour au marché des memes",
+      "marketTitle": "Marché des memes",
+      "holdingsTitle": "Avoirs",
+      "marketCap": "Capitalisation boursière",
+      "valuePnl": "Valeur / PnL",
+      "searchMarket": "Rechercher sur le marché des memes",
+      "noMatch": "Aucun meme correspondant",
+      "noHoldings": "Aucun avoir pour le moment",
+      "loadFailed": "Échec du chargement. Touchez pour réessayer",
+      "buyN": "Acheter {{count}} memes",
+      "buyN_one": "Acheter {{count}} meme",
+      "sellN": "Vendre {{count}} memes",
+      "sellN_one": "Vendre {{count}} meme",
+      "selectToBuy": "Sélectionnez des memes à acheter",
+      "selectToSell": "Sélectionnez des memes à vendre",
+      "maxPriceImpact": "Impact max. sur le prix",
+      "unsupportedAddressType": "Type d'adresse non pris en charge",
+      "accountChanged": "L'adresse a changé. Veuillez recommencer",
+      "addressSwitchUnsupported": "Le changement d'adresse n'est pas possible sur cette page.",
+      "buy": {
+        "amount": "Montant d'achat",
+        "allocation": "Répartition",
+        "byMarketCap": "Par capitalisation",
+        "equalSplit": "Parts égales",
+        "estPayment": "Paiement est. {{amount}}",
+        "needed": "{{amount}} manquants",
+        "anotherNeeded": "Encore {{amount}} nécessaires",
+        "preview": "Aperçu",
+        "paymentTokens": "Tokens de paiement",
+        "selectTokens": "Sélectionner des tokens",
+        "selectPaymentAssets": "Sélectionnez les actifs de paiement",
+        "estPaymentLabel": "Paiement est.",
+        "noPaymentToken": "Aucun token de paiement sélectionné",
+        "confirm": "Confirmer",
+        "noAssets": "Aucun actif disponible"
+      },
+      "execute": {
+        "title": "Exécution",
+        "buySubtitleShort": "Dans l'ordre sur chaque réseau, en parallèle entre les réseaux.",
+        "sellSubtitle": "Les produits restent sur leurs réseaux respectifs",
+        "estReceipt": "Réception est.(USD)",
+        "statusPending": "En attente",
+        "statusPendingPrevious": "En attente de la transaction précédente sur le même réseau",
+        "statusExecuting": "En cours",
+        "statusSuccessful": "Réussie",
+        "confirm": "Confirmer",
+        "back": "Retour",
+        "retryFailedTxns": "Réessayer {{count}} transactions échouées",
+        "retryFailedTxns_one": "Réessayer {{count}} transaction échouée",
+        "progress": "En cours · {{done}}/{{total}} terminées",
+        "done": "Terminé",
+        "exitTitle": "Annuler l'exécution et revenir ?",
+        "exitDesc1": "L'exécution sera arrêtée. Les transactions non soumises ne seront pas traitées.",
+        "exitDesc2": "Les transactions déjà soumises on-chain ne peuvent pas être annulées et pourraient tout de même aboutir.",
+        "stopAndExit": "Arrêter et quitter",
+        "continue": "Continuer",
+        "failReason": {
+          "buildFailed": "Échec de la création de la transaction"
+        }
+      }
+    },
     "convertDust": {
       "failReason": {
         "quoteUnavailable": "Échec de la récupération du devis",
@@ -3468,13 +3539,6 @@
         "mainnet": "Réseau intégré",
         "testnet": "Réseau personnalisé"
       }
-    },
-    "ReserveGasPopup": {
-      "fast": "Normal",
-      "instant": "Rapide",
-      "title": "Réserver Gas",
-      "normal": "Lent",
-      "doNotReserve": "Ne pas réserver de Gas"
     },
     "ModalPreviewNFTItem": {
       "FieldLabel": {

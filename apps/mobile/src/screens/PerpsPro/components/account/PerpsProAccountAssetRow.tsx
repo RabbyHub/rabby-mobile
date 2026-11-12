@@ -94,12 +94,8 @@ PerpsProAccountAssetRow.displayName = 'PerpsProAccountAssetRow';
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   assetRow: {
     alignItems: 'center',
-    backgroundColor: colors2024['neutral-bg-1'],
-    borderTopLeftRadius: 8,
-    borderTopRightRadius: 8,
     flexDirection: 'row',
     gap: 16,
-    marginHorizontal: 16,
     minHeight: 62,
     paddingLeft: 4,
     paddingVertical: 12,
@@ -154,7 +150,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,
-    fontWeight: '400',
+    fontWeight: '500',
     lineHeight: 18,
   },
   usdValue: {
@@ -178,7 +174,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: 68,
   },
   assetActionText: {
-    color: colors2024['neutral-body'],
+    color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     fontWeight: '700',

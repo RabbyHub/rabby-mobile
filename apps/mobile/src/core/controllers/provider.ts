@@ -53,6 +53,7 @@ import { transactionWatcherServiceApi } from '@/core/serviceApi/transactionWatch
 // } from 'background/service';
 // import { Session } from 'background/service/session';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import type { Tx, TxPushType } from '@rabby-wallet/rabby-api/dist/types';
 import RpcCache from '../utils/rpcCache';
 // import Wallet from '../wallet';
@@ -759,6 +760,14 @@ class ProviderController extends BaseController {
       account,
     } = cloneDeep(options);
     const currentAccount = account;
+    if (
+      !isSameAddress(txParams.from, approvalRes.from) ||
+      Number(txParams.chainId) !== Number(approvalRes.chainId)
+    ) {
+      throw ethErrors.rpc.invalidParams(
+        'approved transaction does not match request',
+      );
+    }
     const keyring = await this._checkAddress(txParams.from, options);
     // Started now, awaited right before signing, so it overlaps the tx build.
     const isBlockedPromise = hasBlockedAddress([

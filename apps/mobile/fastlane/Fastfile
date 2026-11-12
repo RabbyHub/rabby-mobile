@@ -22,6 +22,26 @@ def ios_adhoc_skip_build_archive?
   ENV['RABBY_MOBILE_IOS_SKIP_BUILD_ARCHIVE'] == 'true'
 end
 
+# Sign-only runs export from an archive built with CODE_SIGNING_ALLOWED=NO.
+# That archive has no ApplicationProperties.Team, and `xcodebuild
+# -exportArchive` then aborts with "No Team Found in Archive" unless the export
+# options carry the team id. Resolve it from the provisioning profile fastlane
+# match just installed, or from RABBY_MOBILE_APPLE_TEAM_ID when provided.
+def resolved_apple_team_id(profile_name)
+  from_env = ENV['RABBY_MOBILE_APPLE_TEAM_ID'].to_s.strip
+  return from_env unless from_env.empty?
+
+  require 'plist'
+  profiles = Dir[File.expand_path('~/Library/MobileDevice/Provisioning Profiles/*.mobileprovision')].sort_by { |f| File.mtime(f) }.reverse
+  profiles.each do |candidate|
+    data = Plist.parse_xml(`security cms -D -i "#{candidate}" 2>/dev/null`)
+    next if data.nil? || data['Name'] != profile_name
+    team_id = Array(data['TeamIdentifier']).first
+    return team_id unless team_id.nil? || team_id.empty?
+  end
+  nil
+end
+
 platform :ios do
   private_lane :load_app_store_connect_api_key_for_testflight do
     key_id = ENV["RABBY_MOBILE_ASC_API_KEY_ID"]
@@ -129,6 +149,20 @@ platform :ios do
 
       # Main App: RabbyMobile
       match(**match_options)
+
+      # When match imports into a dedicated CI keychain, allow codesign to use
+      # the private key without a GUI authorization prompt. The password is
+      # passed as an argv element (no shell), so it is not logged.
+      keychain_name = ENV['MATCH_KEYCHAIN_NAME'].to_s
+      keychain_password = ENV['MATCH_KEYCHAIN_PASSWORD'].to_s
+      unless keychain_name.empty? || keychain_password.empty?
+        ok = system(
+          'security', 'set-key-partition-list',
+          '-S', 'apple-tool:,apple:,codesign:',
+          '-s', '-k', keychain_password, keychain_name
+        )
+        UI.user_error!('security set-key-partition-list failed') unless ok
+      end
     end
 
     # # App Extension: RabbyMobileNotification
@@ -152,6 +186,30 @@ platform :ios do
   lane :adhoc do
     prepare_apple_sign(type: 'adhoc')
 
+    export_options = {
+      method: 'ad-hoc',
+      signingStyle: 'manual',
+      provisioningProfiles: {
+        "com.debank.rabby-mobile-regression": "RabbyMobileAdHocRegressionOpcode",
+        # "com.debank.rabby-mobile-regression.RabbyMobileNotification": "RabbyMobileWildcardAdHocRegression"
+      },
+      manifest: {
+        appURL: "https://download.rabby.io/downloads/wallet-mobile/ios/rabbymobile.ipa",
+        displayImageURL: "https://download.rabby.io/downloads/wallet-mobile/ios/icon_57x57@57w.png",
+        fullSizeImageURL: "https://download.rabby.io/downloads/wallet-mobile/ios/icon_512x512@512w.png",
+      }
+    }
+
+    if ios_adhoc_skip_build_archive?
+      team_id = resolved_apple_team_id('RabbyMobileAdHocRegressionOpcode')
+      if team_id
+        UI.important("Sign-only export uses team id #{team_id}")
+        export_options[:teamID] = team_id
+      else
+        UI.important("No team id resolved; xcodebuild -exportArchive may fail with 'No Team Found in Archive'")
+      end
+    end
+
     gym(
       scheme: 'RabbyMobileRegression',
       workspace: './ios/RabbyMobile.xcworkspace',
@@ -170,19 +228,7 @@ platform :ios do
       skip_package_pkg: true,
       export_method: 'ad-hoc',
       # export_method: 'release-testing',
-      export_options: {
-        method: 'ad-hoc',
-        signingStyle: 'manual',
-        provisioningProfiles: {
-          "com.debank.rabby-mobile-regression": "RabbyMobileAdHocRegressionOpcode",
-          # "com.debank.rabby-mobile-regression.RabbyMobileNotification": "RabbyMobileWildcardAdHocRegression"
-        },
-        manifest: {
-          appURL: "https://download.rabby.io/downloads/wallet-mobile/ios/rabbymobile.ipa",
-          displayImageURL: "https://download.rabby.io/downloads/wallet-mobile/ios/icon_57x57@57w.png",
-          fullSizeImageURL: "https://download.rabby.io/downloads/wallet-mobile/ios/icon_512x512@512w.png",
-        }
-      })
+      export_options: export_options)
 
     # # shell executeb on ./fastlane directory, add `sh "pwd"` below to check it
     # sh "/usr/libexec/PlistBuddy -c \"Set:items:0:metadata:title Rabby Wallet\" ../ios/Package/adhoc/manifest.plist"

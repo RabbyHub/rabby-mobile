@@ -2,13 +2,11 @@ import { Animated } from 'react-native';
 
 const ABSOLUTE_INTERPOLATION_BOUND = 100_000;
 
-export const PERPS_PRO_INFO_TABS_HEIGHT = 38;
-export const PERPS_PRO_INFO_SECTION_TOP_GAP = 16;
-export const PERPS_PRO_INFO_SECTION_DIVIDER_HEIGHT = 6;
+export const PERPS_PRO_INFO_TABS_HEIGHT = 44;
+// Figma 86609:348308: the tabs follow the trade row after 20pt, no divider.
+export const PERPS_PRO_INFO_SECTION_TOP_GAP = 20;
 export const PERPS_PRO_INFO_TABS_PLACEHOLDER_HEIGHT =
-  PERPS_PRO_INFO_SECTION_TOP_GAP +
-  PERPS_PRO_INFO_SECTION_DIVIDER_HEIGHT +
-  PERPS_PRO_INFO_TABS_HEIGHT;
+  PERPS_PRO_INFO_SECTION_TOP_GAP + PERPS_PRO_INFO_TABS_HEIGHT;
 export const PERPS_PRO_INFO_SECTION_BOTTOM_PADDING = 36;
 
 export const getPerpsProInfoTabsNaturalAnchor = ({
@@ -17,11 +15,7 @@ export const getPerpsProInfoTabsNaturalAnchor = ({
 }: {
   leadInHeight: number;
   tradeRowHeight: number;
-}) =>
-  leadInHeight +
-  tradeRowHeight +
-  PERPS_PRO_INFO_SECTION_TOP_GAP +
-  PERPS_PRO_INFO_SECTION_DIVIDER_HEIGHT;
+}) => leadInHeight + tradeRowHeight + PERPS_PRO_INFO_SECTION_TOP_GAP;
 
 export const getPerpsProInfoSectionMinimumContentHeight = ({
   infoTabsNaturalAnchor,
