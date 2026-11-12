@@ -25,6 +25,7 @@ import {
   useInterval,
   useMemoizedFn,
   useRequest,
+  useUpdateEffect,
 } from 'ahooks';
 import PQueue from 'p-queue';
 import { last, orderBy, debounce } from 'lodash';
@@ -478,7 +479,9 @@ function HistoryContent({
     },
   });
 
-  useEffect(() => {
+  // Account changes only: useInfiniteScroll already loads on mount, and the
+  // API path sets isReady before this would first run.
+  useUpdateEffect(() => {
     if (isReady.current) {
       if (!isNeedFetchFromApi) {
         setFirstFetchDone(false);
@@ -491,7 +494,6 @@ function HistoryContent({
       }
       historyListRef.current?.scrollToTop();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sceneCurrentAccountDepKey, isSceneUsingAllAccounts]);
 
   const batchFetchDataFromDbUpsert = useMemoizedFn(async () => {
