@@ -62,14 +62,13 @@ on:
         required: false
         type: string
         default: 'rabby-startup-pixel7-api35'
-      seed_apk_url:
+      settle_seconds:
         description: >-
-          Optional APK used only to create the wallet state (must support
-          _cmd=debug-create-address and be signed like the measured APKs).
-          Without it a fresh install lands on onboarding and the run is INVALID.
+          Idle time after seeding, so the imported accounts can fetch and
+          persist their data before the cold starts are measured.
         required: false
         type: string
-        default: ''
+        default: '35'
       package_name:
         description: 'Application id'
         required: false
@@ -108,7 +107,7 @@ jobs:
       RUNNER_TARGET: ${{ inputs.runner_target }}
       DEVICE_SERIAL_INPUT: ${{ inputs.device_serial }}
       AVD_NAME: ${{ inputs.emulator_avd }}
-      SEED_APK_URL: ${{ inputs.seed_apk_url }}
+      SETTLE_SECONDS: ${{ inputs.settle_seconds }}
       PACKAGE_NAME: ${{ inputs.package_name }}
 
     steps:
@@ -163,11 +162,6 @@ jobs:
             echo "APK_BASELINE=$work/$baseline_label.apk" >> "$GITHUB_ENV"
           fi
 
-          if [ -n "${SEED_APK_URL}" ]; then
-            fetch "$SEED_APK_URL" "seed" "$work/seed.apk"
-            echo "APK_SEED=$work/seed.apk" >> "$GITHUB_ENV"
-          fi
-
       - name: Boot emulator
         if: ${{ inputs.runner_target == 'emulator' }}
         env:
@@ -202,35 +196,26 @@ jobs:
           done
           echo "device=$DEVICE_SERIAL"
 
-      - name: Seed wallet state
-        if: ${{ inputs.seed_apk_url != '' }}
+      - name: Seed device state
         run: |
-          adb -s "$DEVICE_SERIAL" install -r "$APK_SEED" || {
-            echo "seed APK could not be installed over the current data; it must be signed like the measured APKs" >&2
-            exit 1
-          }
-          adb -s "$DEVICE_SERIAL" shell am force-stop "$PACKAGE_NAME"
-          adb -s "$DEVICE_SERIAL" shell am start -n "$PACKAGE_NAME/com.debank.rabbymobile.MainActivity"
-          # Wait for the JS bundle before sending the debug command.
-          for _ in $(seq 1 30); do
-            sleep 2
-            adb -s "$DEVICE_SERIAL" logcat -d | grep -q 'Running "RabbyMobile"' && break
-          done
-          adb -s "$DEVICE_SERIAL" logcat -c
-          adb -s "$DEVICE_SERIAL" shell \
-            "am start -a android.intent.action.VIEW -d 'rabbygo://go.rabby.io/mobile/debug-create-address?_cmd=debug-create-address' -n $PACKAGE_NAME/com.debank.rabbymobile.MainActivity"
-          # The creation result is only surfaced as a toast, so verify it the
-          # way the measurement sees it: a cold start must leave onboarding.
-          sleep 20
-          adb -s "$DEVICE_SERIAL" shell am force-stop "$PACKAGE_NAME"
-          sleep 3
-          adb -s "$DEVICE_SERIAL" shell am start -n "$PACKAGE_NAME/com.debank.rabbymobile.MainActivity" >/dev/null
-          sleep 15
-          adb -s "$DEVICE_SERIAL" shell uiautomator dump /sdcard/startup-kpi-seed.xml >/dev/null 2>&1 || true
-          if adb -s "$DEVICE_SERIAL" shell cat /sdcard/startup-kpi-seed.xml | grep -q 'Welcome to'; then
-            echo "seed step failed: the app still shows onboarding, so the measured runs would be INVALID" >&2
-            exit 1
+          # Machine-local only: the key list never enters the repo or secrets.
+          # The runner user keeps it at this path (created once by hand).
+          accounts_file="${RABBY_KPI_TEST_ACCOUNTS_FILE:-$HOME/.rabby-kpi/test-accounts.txt}"
+
+          # The measured package carries the seeding deeplinks, so it has to be
+          # installed before the state can be built.
+          adb -s "$DEVICE_SERIAL" install -r "$APK_MAIN"
+          bash apps/mobile/scripts/startup-kpi/seed-device.sh ensure-address \
+            --device "$DEVICE_SERIAL" --pkg "$PACKAGE_NAME"
+
+          if [ -f "$accounts_file" ]; then
+            bash apps/mobile/scripts/startup-kpi/seed-device.sh import-accounts \
+              --device "$DEVICE_SERIAL" --pkg "$PACKAGE_NAME" \
+              --file "$accounts_file" --settle "$SETTLE_SECONDS"
+          else
+            echo "::warning::no test-account list at $accounts_file; measuring without imported accounts"
           fi
+
           adb -s "$DEVICE_SERIAL" shell am force-stop "$PACKAGE_NAME"
           sleep 2
 
