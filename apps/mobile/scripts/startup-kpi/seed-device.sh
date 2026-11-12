@@ -42,63 +42,109 @@ done
 
 [ -n "$DEVICE" ] || usage
 
-deep_link() {
-  # $1 = device path (optional)
-  local path="$1" url
-  # Always drive the command through `_cmd`: the path prefix differs per build
-  # type (/mobile-debug/, /mobile-regression/, /mobile/), the command does not.
-  if [ -n "$path" ]; then
-    url="rabbygo://go.rabby.io/mobile/debug-import-test-accounts?_cmd=debug-import-test-accounts&path=$path"
-  else
-    url="rabbygo://go.rabby.io/mobile/debug-create-address?_cmd=debug-create-address"
-  fi
-  # Quote for the device shell, or everything after '&' would be dropped.
-  adb -s "$DEVICE" shell \
-    "am start -a android.intent.action.VIEW -d '$url' -n $PACKAGE/com.debank.rabbymobile.MainActivity" \
-    >/dev/null 2>&1
+adb_shell() { adb -s "$DEVICE" shell "$@"; }
+
+start_app() {
+  # Clear first: the JS-ready check below must see this launch, not the
+  # previous session's line still sitting in the log buffer.
+  adb -s "$DEVICE" shell am force-stop "$PACKAGE"
+  adb -s "$DEVICE" logcat -c
+  adb -s "$DEVICE" shell am start -n "$PACKAGE/com.debank.rabbymobile.MainActivity" >/dev/null 2>&1
 }
 
 wait_for_js() {
   local i
-  for i in $(seq 1 30); do
+  for i in $(seq 1 45); do
     adb -s "$DEVICE" logcat -d | grep -q 'Running "RabbyMobile"' && return 0
     sleep 2
   done
   return 1
 }
 
-onboarding_visible() {
-  adb -s "$DEVICE" shell uiautomator dump /sdcard/startup-kpi-onboarding.xml >/dev/null 2>&1 || true
-  adb -s "$DEVICE" shell cat /sdcard/startup-kpi-onboarding.xml 2>/dev/null | grep -q 'Welcome to'
+send_link() {
+  # Always drive the command through `_cmd`: the path prefix differs per build
+  # type (/mobile-debug/, /mobile-regression/, /mobile/), the command does not.
+  adb -s "$DEVICE" shell \
+    "am start -a android.intent.action.VIEW -d '$1' -n $PACKAGE/com.debank.rabbymobile.MainActivity" \
+    >/dev/null 2>&1
+}
+
+# run_with_retry <logcat marker> <url> [attempts]
+run_with_retry() {
+  local marker="$1" url="$2" attempts="${3:-3}" a i
+  for a in $(seq 1 "$attempts"); do
+    adb -s "$DEVICE" logcat -c
+    send_link "$url"
+    for i in $(seq 1 30); do
+      sleep 2
+      if adb -s "$DEVICE" logcat -d | grep -q "$marker"; then
+        return 0
+      fi
+    done
+  done
+  return 1
+}
+
+# 0 = onboarding is on screen, 1 = some other screen, 2 = could not tell.
+onboarding_state() {
+  adb_shell rm -f /sdcard/startup-kpi-onboarding.xml >/dev/null 2>&1 || true
+  adb_shell uiautomator dump /sdcard/startup-kpi-onboarding.xml >/dev/null 2>&1 || true
+  local dump
+  dump=$(adb_shell cat /sdcard/startup-kpi-onboarding.xml 2>/dev/null)
+  case "$dump" in
+    *"<hierarchy"*) ;;
+    *) return 2 ;;
+  esac
+  case "$dump" in
+    *"Welcome to"*) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+create_address() {
+  start_app
+  wait_for_js || { echo "app JS never started" >&2; return 1; }
+  # Give the universal-link handler a moment to mount before the intent lands.
+  sleep 4
+  if run_with_retry '\[debug-create-address\] done' \
+    'rabbygo://go.rabby.io/mobile/debug-create-address?_cmd=debug-create-address'; then
+    echo "create-address done"
+    return 0
+  fi
+  echo "create-address did not report completion" >&2
+  return 1
 }
 
 case "$CMD" in
   ensure-address)
-    # A wiped device boots into onboarding; a physical device that already has
-    # a wallet must not get a second one.
-    if ! onboarding_visible; then
-      echo "wallet already present, skipping create-address"
-      exit 0
-    fi
-    exec "$0" create-address --device "$DEVICE" --pkg "$PACKAGE"
+    # A wiped device boots into onboarding; a device that already has a wallet
+    # must not get a second one. The app has to be running to tell them apart.
+    start_app
+    wait_for_js || { echo "app JS never started" >&2; exit 1; }
+    sleep 3
+
+    state=2
+    for _ in $(seq 1 10); do
+      onboarding_state
+      state=$?
+      [ "$state" != "2" ] && break
+      sleep 2
+    done
+
+    case "$state" in
+      0) create_address ;;
+      1)
+        echo "wallet already present, skipping create-address"
+        ;;
+      *)
+        echo "could not read the UI to decide whether the device is seeded" >&2
+        exit 1
+        ;;
+    esac
     ;;
 
   create-address)
-    # The workflow installs the package before seeding.
-    adb -s "$DEVICE" shell am force-stop "$PACKAGE"
-    adb -s "$DEVICE" shell am start -n "$PACKAGE/com.debank.rabbymobile.MainActivity" >/dev/null 2>&1
-    wait_for_js || { echo "app JS never started" >&2; exit 1; }
-    adb -s "$DEVICE" logcat -c
-    deep_link ""
-    for _ in $(seq 1 60); do
-      sleep 2
-      if adb -s "$DEVICE" logcat -d | grep -q '\[debug-create-address\] done'; then
-        echo "create-address done"
-        exit 0
-      fi
-    done
-    echo "create-address did not report completion" >&2
-    exit 1
+    create_address
     ;;
 
   import-accounts)
@@ -109,27 +155,24 @@ case "$CMD" in
     device_dir="/sdcard/Android/data/$PACKAGE/files"
     device_path="$device_dir/kpi-test-accounts.txt"
 
-    adb -s "$DEVICE" shell mkdir -p "$device_dir" >/dev/null 2>&1 || true
+    adb_shell mkdir -p "$device_dir" >/dev/null 2>&1 || true
     if ! adb -s "$DEVICE" push "$ACCOUNTS_FILE" "$device_path" >/dev/null 2>&1; then
       echo "could not push the account list to $device_path" >&2
       exit 1
     fi
 
-    adb -s "$DEVICE" shell am force-stop "$PACKAGE"
-    adb -s "$DEVICE" shell am start -n "$PACKAGE/com.debank.rabbymobile.MainActivity" >/dev/null 2>&1
+    start_app
     wait_for_js || { echo "app JS never started" >&2; exit 1; }
-    adb -s "$DEVICE" logcat -c
-    deep_link "$device_path"
+    sleep 3
 
-    deadline=$((SECONDS + WAIT_S))
     done_line=""
-    while [ $SECONDS -lt $deadline ]; do
+    if run_with_retry '\[debug-import-test-accounts\] done' \
+      "rabbygo://go.rabby.io/mobile/debug-import-test-accounts?_cmd=debug-import-test-accounts&path=$device_path"; then
       done_line=$(adb -s "$DEVICE" logcat -d | grep -o '\[debug-import-test-accounts\] done.*' | tail -1)
-      [ -n "$done_line" ] && break
-      sleep 3
-    done
+    fi
+
     # Always drop the pushed copy; the app also deletes it after reading.
-    adb -s "$DEVICE" shell rm -f "$device_path" >/dev/null 2>&1 || true
+    adb_shell rm -f "$device_path" >/dev/null 2>&1 || true
 
     if [ -z "$done_line" ]; then
       echo "import did not report completion" >&2
