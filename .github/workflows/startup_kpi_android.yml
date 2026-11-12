@@ -82,7 +82,6 @@ jobs:
       RUNS: ${{ inputs.runs }}
       DEVICE_SERIAL: ${{ inputs.device_serial }}
       PACKAGE_NAME: ${{ inputs.package_name }}
-      RESULT_FILE: ${{ runner.temp }}/startup-kpi-result.json
 
     steps:
       - name: Checkout git repo
@@ -96,6 +95,8 @@ jobs:
           command -v adb
           adb version
           adb devices
+          # runner.* is not available in job-level env, so resolve it here.
+          echo "RESULT_FILE=$RUNNER_TEMP/startup-kpi-result.json" >> "$GITHUB_ENV"
 
       - name: Download packages
         run: |
