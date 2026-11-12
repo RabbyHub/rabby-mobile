@@ -110,13 +110,17 @@ function buildLines(result) {
           item.commitOnDevelop === false ? ' (NOT on develop)' : ''
         }`
       : '';
+    const extras = [];
+    if (item.fullyDrawnMedianMs != null) {
+      extras.push(`fully-drawn ${item.fullyDrawnMedianMs}ms`);
+    }
+    if (item.totalMedianMs != null) {
+      extras.push(`splash TotalTime ${item.totalMedianMs}ms`);
+    }
+    extras.push(`route ${routes}`);
     lines.push(
       `${item.label}: startup median ${item.contentMedianMs}ms ` +
-        `(${item.contentMinMs}-${item.contentMaxMs}) · ` +
-        `fully-drawn ${
-          item.fullyDrawnMedianMs != null ? `${item.fullyDrawnMedianMs}ms` : 'n/a'
-        } · ` +
-        `splash TotalTime ${item.totalMedianMs}ms · route ${routes}${commit}`,
+        `(${item.contentMinMs}-${item.contentMaxMs}) · ${extras.join(' · ')}${commit}`,
     );
   }
 
@@ -150,7 +154,9 @@ function buildLines(result) {
   }
 
   lines.push(
-    'authoritative metric: native first_content_frame (process start → unlock/home); splash TotalTime is shown for reference only.',
+    result.platform === 'ios-simulator'
+      ? 'authoritative metric: native first_content_frame (process start → unlock/home) on an iOS Simulator.'
+      : 'authoritative metric: native first_content_frame (process start → unlock/home); splash TotalTime is shown for reference only.',
   );
   return lines;
 }
