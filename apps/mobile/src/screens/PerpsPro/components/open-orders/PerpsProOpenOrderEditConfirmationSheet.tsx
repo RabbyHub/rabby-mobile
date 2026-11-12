@@ -1,5 +1,6 @@
 import {
   getPerpsProDialogStyles,
+  getPerpsProConfirmationFooterStyle,
   resolvePerpsProDialogCardBackground,
   getPerpsProDialogCheckboxStyles,
 } from '../common/perpsProDialogVisual';
@@ -90,7 +91,7 @@ export const PerpsProOpenOrderEditConfirmationSheet: React.FC<{
     const triggerLimit = !basic && editor.order.editKind === 'triggerLimit';
     const sheetHeight =
       // Stacked basic header and 30pt list rows (Figma 86609:343138).
-      (basic ? 368 : 376) +
+      (basic ? 372 : 380) +
       styles.content.paddingBottom -
       BOTTOM_BUTTON_BOTTOM_OFFSET;
     const baseSize = basic
@@ -214,10 +215,7 @@ export const PerpsProOpenOrderEditConfirmationSheet: React.FC<{
               </Text>
             </Pressable>
             <View
-              style={[
-                styles.footer,
-                basic ? styles.basicFooter : styles.conditionalFooter,
-              ]}
+              style={styles.footer}
               testID="perps-pro-open-order-edit-confirmation-footer">
               <Button
                 buttonStyle={[styles.button, pending && styles.buttonDisabled]}
@@ -281,16 +279,6 @@ const getStyle = createGetStyles2024(
       textAlign: 'right',
     },
     ...getPerpsProDialogCheckboxStyles(colors2024),
-    footer: {
-      left: 20,
-      position: 'absolute',
-      right: 20,
-    },
-    basicFooter: {
-      top: 240,
-    },
-    conditionalFooter: {
-      top: 248,
-    },
+    footer: getPerpsProConfirmationFooterStyle(safeAreaInsets.bottom),
   }),
 );

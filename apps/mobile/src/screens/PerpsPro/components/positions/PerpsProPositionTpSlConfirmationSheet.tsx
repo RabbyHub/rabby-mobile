@@ -2,6 +2,7 @@ import { formatPositionTpSlSignedValue } from '../../utils/positionTpSlFormattin
 import {
   getPerpsProDialogCheckboxStyles,
   getPerpsProDialogStyles,
+  getPerpsProConfirmationFooterStyle,
   resolvePerpsProDialogCardBackground,
 } from '../common/perpsProDialogVisual';
 import { getPerpsProListRowStyles } from '../common/perpsProListVisual';
@@ -13,10 +14,7 @@ import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { Text } from '@/components/Typography';
 import { Button } from '@/components2024/Button';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
-import {
-  BOTTOM_BUTTON_SINGLE_HEIGHT,
-  getBottomButtonBottomOffset,
-} from '@/constant/layout';
+import { BOTTOM_BUTTON_SINGLE_HEIGHT } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useRegisterBlockingModal } from '@/utils/modalGate';
@@ -392,11 +390,7 @@ const getStyle = createGetStyles2024(
         color: colors2024['red-default'],
       },
       ...getPerpsProDialogCheckboxStyles(colors2024),
-      footer: {
-        paddingHorizontal: 4,
-        paddingBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
-        paddingTop: 24,
-      },
+      footer: getPerpsProConfirmationFooterStyle(safeAreaInsets.bottom),
     };
   },
 );

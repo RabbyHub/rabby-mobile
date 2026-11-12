@@ -331,6 +331,7 @@ describe('position TP/SL input source integration', () => {
         confirmedCancelledOids: [],
         defaultTab: 'position',
         market,
+        onCancelAllOrders: jest.fn(),
         onCancelOrder: jest.fn(),
         onClose: jest.fn(),
         onCloseReview: jest.fn(),
@@ -480,6 +481,7 @@ describe('position TP/SL input source integration', () => {
       cancelingOids: [],
       markPrice: precisionMarket.markPrice,
       market: precisionMarket,
+      onCancelAllOrders: jest.fn(),
       onCancelOrder: jest.fn(),
       onReview,
       pending: false,
@@ -640,6 +642,7 @@ describe('position TP/SL input source integration', () => {
           confirmedCancelledOids: [],
           defaultTab: 'partial',
           market,
+          onCancelAllOrders: jest.fn(),
           onCancelOrder: jest.fn(),
           onClose: jest.fn(),
           onCloseReview: jest.fn(),
@@ -766,6 +769,7 @@ describe('position TP/SL input source integration', () => {
       confirmedCancelledOids: [],
       defaultTab: 'partial',
       market,
+      onCancelAllOrders: jest.fn(),
       onCancelOrder: jest.fn(),
       onClose: jest.fn(),
       onCloseReview: jest.fn(),
@@ -864,6 +868,7 @@ describe('position TP/SL input source integration', () => {
         market={{ ...market, szDecimals: 5, pxDecimals: 0 }}
         mode="modify"
         presentation="subpage"
+        onCancelAllOrders={jest.fn()}
         onCancelOrder={jest.fn()}
         onReview={onReview}
         pending={false}
@@ -923,6 +928,7 @@ describe('position TP/SL input source integration', () => {
           market={market}
           mode={scope === 'partial' ? 'modify' : 'position'}
           presentation={scope === 'partial' ? 'subpage' : 'position-modify'}
+          onCancelAllOrders={jest.fn()}
           onCancelOrder={jest.fn()}
           onReview={onReview}
           pending={false}

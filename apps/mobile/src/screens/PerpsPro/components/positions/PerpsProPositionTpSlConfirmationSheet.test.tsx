@@ -397,7 +397,7 @@ describe('PerpsProPositionTpSlConfirmationSheet', () => {
           ).toMatchObject({
             paddingHorizontal: 4,
             paddingBottom: 36,
-            paddingTop: 24,
+            paddingTop: 12,
           });
           expect(
             screen.getByTestId('tpsl-confirmation-backdrop').props,
@@ -458,7 +458,7 @@ describe('PerpsProPositionTpSlConfirmationSheet', () => {
       );
       expect(StyleSheet.flatten(checkbox.props.style)).toMatchObject({
         justifyContent: 'center',
-        marginTop: 8,
+        marginTop: 24,
         minHeight: 20,
         gap: 4,
       });
@@ -617,6 +617,6 @@ describe('PerpsProPositionTpSlConfirmationSheet', () => {
         screen.getByTestId('perps-pro-position-tpsl-confirmation-footer').props
           .style,
       ),
-    ).toMatchObject({ paddingBottom: 36, paddingTop: 24 });
+    ).toMatchObject({ paddingBottom: 36, paddingTop: 12 });
   });
 });

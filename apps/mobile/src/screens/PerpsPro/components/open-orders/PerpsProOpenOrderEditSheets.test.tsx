@@ -905,7 +905,7 @@ describe('Perps Pro open order edit sheets', () => {
   });
 
   it.each([false, true])(
-    'covers the editor with a 368px Basic confirmation and Pro checkbox (checked=%s)',
+    'covers the editor with a 372px Basic confirmation and Pro checkbox (checked=%s)',
     skipConfirmation => {
       const onToggle = jest.fn();
       const review = {
@@ -945,24 +945,24 @@ describe('Perps Pro open order edit sheets', () => {
         StyleSheet.flatten(screen.getByRole('checkbox').props.style),
       ).toMatchObject({
         justifyContent: 'center',
-        marginTop: 8,
+        marginTop: 24,
         minHeight: 20,
       });
       expect(mockModalProps).toHaveBeenLastCalledWith(
-        expect.objectContaining({ snapPoints: [368] }),
+        expect.objectContaining({ snapPoints: [372] }),
       );
       expect(
         StyleSheet.flatten(
           screen.getByTestId('perps-pro-open-order-edit-confirmation-content')
             .props.style,
         ),
-      ).toMatchObject({ height: 328, paddingHorizontal: 16, paddingTop: 8 });
+      ).toMatchObject({ height: 332, paddingHorizontal: 16, paddingTop: 8 });
       expect(
         StyleSheet.flatten(
           screen.getByTestId('perps-pro-open-order-edit-confirmation-footer')
             .props.style,
         ),
-      ).toMatchObject({ top: 240 });
+      ).toMatchObject({ paddingTop: 12, paddingBottom: 36 });
       expect(
         StyleSheet.flatten(
           screen.getByText('page.perps.pro.trade.buyLong').props.style,
@@ -996,7 +996,7 @@ describe('Perps Pro open order edit sheets', () => {
     },
   );
 
-  it('keeps the root sheet mounted and non-dismissible under the 376px Conditional confirmation', () => {
+  it('keeps the root sheet mounted and non-dismissible under the 380px Conditional confirmation', () => {
     const { unmount } = render(
       <PerpsProConditionalOrderEditSheet
         coveredByReview
@@ -1061,14 +1061,14 @@ describe('Perps Pro open order edit sheets', () => {
       />,
     );
     expect(mockModalProps).toHaveBeenLastCalledWith(
-      expect.objectContaining({ snapPoints: [376] }),
+      expect.objectContaining({ snapPoints: [380] }),
     );
     expect(
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-open-order-edit-confirmation-footer')
           .props.style,
       ),
-    ).toMatchObject({ top: 248 });
+    ).toMatchObject({ paddingTop: 12, paddingBottom: 36 });
     expect(
       StyleSheet.flatten(
         screen.getByText('Take Profit Market / page.perps.pro.openOrders.sell')

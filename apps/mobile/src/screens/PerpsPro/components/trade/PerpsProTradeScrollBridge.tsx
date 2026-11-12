@@ -11,7 +11,6 @@ import Reanimated, {
   useAnimatedScrollHandler,
   useSharedValue,
 } from 'react-native-reanimated';
-import RNHelpers from '@/core/native/RNHelpers';
 
 import {
   getPerpsProInfoBridgeOffset,
@@ -132,18 +131,7 @@ const PerpsProNativeTradeScrollBridge: React.FC<
     const attachment = attachNativeEvent(scrollView, 'onScroll', [
       { nativeEvent: { contentOffset: { y: nativeProxyOffset } } },
     ]);
-    const tag = scrollView.getScrollableNode();
-    if (typeof tag === 'number') {
-      // This proxy stays at a synthetic offset even when the product is at
-      // the top; UIKit's scroll-edge effect must not use that offset.
-      RNHelpers.iosSetScrollEdgeEffectsHidden(tag, true);
-    }
-    return () => {
-      attachment.detach();
-      if (typeof tag === 'number') {
-        RNHelpers.iosSetScrollEdgeEffectsHidden(tag, false);
-      }
-    };
+    return () => attachment.detach();
   }, [nativeProxyOffset, scrollRef]);
 
   const tradeStyle = useMemo(

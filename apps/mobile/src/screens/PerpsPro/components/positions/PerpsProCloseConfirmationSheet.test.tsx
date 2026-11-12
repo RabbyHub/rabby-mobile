@@ -204,15 +204,15 @@ describe('PerpsProCloseConfirmationSheet', () => {
 
     expect(
       screen.getByTestId('close-confirmation-sheet').props.snapPoints,
-    ).toEqual([346]);
+    ).toEqual([354]);
     expect(screen.getByText('BTCUSDC')).toBeTruthy();
     expect(
       StyleSheet.flatten(screen.getByText('Sell / Short').props.style),
     ).toMatchObject({
       color: 'red-default',
-      fontSize: 12,
+      fontSize: 14,
       fontWeight: '700',
-      lineHeight: 16,
+      lineHeight: 18,
     });
     expect(screen.getByText('61,000 USDC')).toBeTruthy();
     expect(screen.getByText('0.5000 BTC')).toBeTruthy();
@@ -252,9 +252,9 @@ describe('PerpsProCloseConfirmationSheet', () => {
       StyleSheet.flatten(screen.getByText('Buy / Long').props.style),
     ).toMatchObject({
       color: 'green-default',
-      fontSize: 12,
+      fontSize: 14,
       fontWeight: '700',
-      lineHeight: 16,
+      lineHeight: 18,
     });
   });
 
@@ -279,7 +279,7 @@ describe('PerpsProCloseConfirmationSheet', () => {
 
       expect(
         screen.getByTestId('close-confirmation-sheet').props.snapPoints,
-      ).toEqual([346]);
+      ).toEqual([354]);
       expect(screen.getByText('Market Price')).toBeTruthy();
       expect(
         screen.getByText("Don't show this Market Close confirmation again."),

@@ -11,12 +11,6 @@ const buildInfo =
 
 const RNHelpers = Object.freeze({
   forceExitApp: nativeModule.forceExitApp,
-  iosSetScrollEdgeEffectsHidden: wrapPlatformOnlyMethod({
-    // Appearance-only capability: older native bundles can safely omit it.
-    method: nativeModule.iosSetScrollEdgeEffectsHidden ?? (() => undefined),
-    platform: 'ios',
-    fallbackFn: () => undefined,
-  }),
   measureViewRelativeTo: nativeModule.measureViewRelativeTo,
   buildInfo,
   setSensitiveClipboard: nativeModule.setSensitiveClipboard,

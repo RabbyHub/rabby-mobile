@@ -36,6 +36,7 @@ import {
   getPerpsProTabIndicatorStyle,
   getPerpsProTabTextStyle,
   PERPS_PRO_TAB_TOKENS,
+  PERPS_MARKET_TAB_LAYOUT,
 } from '../common/perpsProTabVisual';
 
 type MarketTabItem = Readonly<{
@@ -53,10 +54,12 @@ type MarketTabScrollPosition = Readonly<{
 const MARKET_TAB_MEDIUM_FONT_STYLE = getPerpsProFontStyle(Platform.OS, '500');
 const MARKET_TAB_BOLD_FONT_STYLE = getPerpsProFontStyle(Platform.OS, '700');
 // Figma 86609:237010: 42pt strip, 12pt top inset, 14pt gaps, 20pt insets.
-const MARKET_TAB_GAP = 14;
-const MARKET_TAB_PADDING = 20;
-const MARKET_TAB_HEIGHT = 42;
-const MARKET_TAB_PADDING_TOP = 12;
+const {
+  gap: MARKET_TAB_GAP,
+  paddingHorizontal: MARKET_TAB_PADDING,
+  height: MARKET_TAB_HEIGHT,
+  paddingTop: MARKET_TAB_PADDING_TOP,
+} = PERPS_MARKET_TAB_LAYOUT;
 const MARKET_FAVORITES_ICON_WIDTH = 21;
 const MARKET_FAVORITES_ICON_HEIGHT = 20;
 
