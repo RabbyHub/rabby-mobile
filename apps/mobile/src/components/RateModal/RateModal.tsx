@@ -78,6 +78,7 @@ export function RateModal() {
       visible={rateModalShown}
       transparent
       animationType="fade"
+      onRequestClose={closeModal}
       style={styles.modalComp}>
       <View style={styles.modalMask}>
         <KeyboardAvoidingView behavior={IS_IOS ? 'padding' : 'height'}>

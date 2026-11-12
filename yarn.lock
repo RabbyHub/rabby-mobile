@@ -39379,13 +39379,13 @@ __metadata:
 
 "react-native-walkthrough-tooltip@patch:react-native-walkthrough-tooltip@npm%3A1.6.0#~/.yarn/patches/react-native-walkthrough-tooltip-npm-1.6.0-73250df042.patch":
   version: 1.6.0
-  resolution: "react-native-walkthrough-tooltip@patch:react-native-walkthrough-tooltip@npm%3A1.6.0%3A%3A__archiveUrl=https%253A%252F%252Fregistry.npmjs.org%252Freact-native-walkthrough-tooltip%252F-%252Freact-native-walkthrough-tooltip-1.6.0.tgz#~/.yarn/patches/react-native-walkthrough-tooltip-npm-1.6.0-73250df042.patch::version=1.6.0&hash=12174b"
+  resolution: "react-native-walkthrough-tooltip@patch:react-native-walkthrough-tooltip@npm%3A1.6.0%3A%3A__archiveUrl=https%253A%252F%252Fregistry.npmjs.org%252Freact-native-walkthrough-tooltip%252F-%252Freact-native-walkthrough-tooltip-1.6.0.tgz#~/.yarn/patches/react-native-walkthrough-tooltip-npm-1.6.0-73250df042.patch::version=1.6.0&hash=879b23"
   dependencies:
     prop-types: "npm:^15.6.1"
     react-fast-compare: "npm:^2.0.4"
   peerDependencies:
     "@types/react": ">=16.8.24"
-  checksum: 10/cc4e965a04d6f693954086ae191a6b98ffd4c3e80dc6bb73f1667e3701b0a49f900c7c5ebdf2432b84549c59d65561ec55ec604745792d990ca2f6a2530ebc51
+  checksum: 10/b0d3db06a44381733fef0469ee8969928586e952393cadc7f3b58952f657cf60a0fd6692328d2793747875d2827118f1717c0fc7603bab4234d50607d25e80bc
   languageName: node
   linkType: hard
 

@@ -40,6 +40,37 @@ order predictable, but a missing gate no longer freezes the app.
 
 Dev repro: Regression Switches → "Open Tip -> Screenshot Modal".
 
+## Invisible Modals (JS Rules)
+
+A presented `Modal` blocks every touch below it. If it shows nothing, the user
+sees the app but cannot touch it, and nothing on screen can close it. The
+native fix above does not cover this: the modal is on screen, just empty.
+Every `Modal` must therefore follow these rules:
+
+- **Never present without content.** Gate `visible` on the data the content
+  needs (`visible && !!data`), not only on a flag. Example: `QrCodeModal`.
+- **A `Tip` without content does nothing.** Many screens wrap a button in
+  `<Tip content={cond ? text : undefined}>`. Tapping the disabled button used
+  to open an empty tooltip (Swap: tap the grey Confirm with no amount, and the
+  page freezes). `Tip` now ignores empty content: it never opens, and taps go
+  straight to its children.
+- **Do not hide the tap-to-close layer with `opacity: 0`.** iOS skips views with
+  `alpha < 0.01` during hit testing, so a hidden backdrop cannot receive the
+  tap that closes it. `react-native-walkthrough-tooltip` did this until its
+  content was measured; a `Tip` whose content never measured (empty content)
+  froze the Swap page. The library patch now hides only the tooltip itself and
+  keeps the container tappable, so every `Tip` closes on the next tap.
+- **An intentionally invisible blocker must be bounded.** The MiniSign direct
+  overlay is shown only for an allow-list of in-flight states (`prefetching`,
+  `signing`; see `MiniSignV2/state/directOverlay.ts`), never by exclusion, and
+  hides itself after a time limit. `SignatureManager` leaves direct mode
+  whenever it rejects the caller.
+- **Pass `onRequestClose`** whenever the modal has a close or cancel control,
+  so Android back does the same thing.
+
+Dev repro: Regression Switches → "Open Empty Tip". The next tap anywhere must
+close it.
+
 ## Foundation Added
 
 - `src/utils/modalGate.ts`
