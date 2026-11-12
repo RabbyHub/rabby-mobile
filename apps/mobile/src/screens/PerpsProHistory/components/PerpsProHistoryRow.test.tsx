@@ -155,11 +155,10 @@ describe('PerpsProHistoryRowView Trade, Transaction and Funding', () => {
         screen.getByTestId('perps-pro-history-trade-200-BTC-A-9').props.style,
       ),
     ).toMatchObject({
-      backgroundColor: 'neutral-card-1',
+      backgroundColor: 'neutral-bg-1',
       borderRadius: 12,
-      marginHorizontal: 16,
-      paddingHorizontal: 12,
-      paddingVertical: 16,
+      marginHorizontal: 12,
+      padding: 12,
     });
     expect(
       StyleSheet.flatten(
@@ -273,7 +272,6 @@ describe('PerpsProHistoryRowView Trade, Transaction and Funding', () => {
     expect(amount.props.numberOfLines).toBeUndefined();
     expect(amount.props.ellipsizeMode).toBeUndefined();
     expect(StyleSheet.flatten(amount.props.style)).toMatchObject({
-      fontVariant: ['tabular-nums'],
       flexShrink: 1,
     });
     expect(

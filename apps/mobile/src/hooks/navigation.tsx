@@ -129,6 +129,60 @@ export function navBack() {
   }
 }
 
+/**
+ * Header back control with no baked-in layout compensation.
+ *
+ * Renders a plain 24x24 icon box, so whoever renders the header row owns every
+ * inset explicitly. Screens that draw their own header (`header: () => ...`)
+ * must use this instead of the deprecated `HeaderBackPressable`, otherwise the
+ * compensation margin below silently shrinks the leading slot and pulls centred
+ * sibling content off the screen centre (QA 1344).
+ *
+ * Where the compensation came from: `HeaderBackPressable` was written for
+ * controls hosted by a native header element, where iOS 26 +
+ * react-native-screens stop applying the system bar-item inset (#1283). It
+ * compensates from the inside (`marginLeft: -16` + `paddingLeft: 16`), which is
+ * only correct while the host supplies that same 16pt leading inset. In a JS
+ * header the negative margin has no such inset to cancel: the slot collapses
+ * from 24pt to 8pt and everything after it shifts.
+ *
+ * If this control is ever dropped into a host that does (or does not) provide a
+ * bar-item inset, compensate at the call site - pass `style` (a
+ * `marginLeft`/`paddingLeft`) or wrap it in a sized slot - and never re-add the
+ * inset inside the component itself.
+ */
+export function HeaderBackButton({
+  tintColor,
+  style,
+  hitSlop: hitSlopProp,
+  ...touchableProps
+}: Pick<NativeStackHeaderLeftProps, 'tintColor'> &
+  RNViewProps & { hitSlop?: typeof hitSlop }) {
+  const themeMode = useGetBinaryMode();
+  const { colors2024 } = apisTheme.getColors2024(themeMode);
+  return (
+    <CustomTouchableOpacity
+      // Native-stack header controls need native gesture arbitration on Fabric.
+      as="RNGHTouchableOpacity"
+      {...touchableProps}
+      style={[styles.headerBackButtonStyle, style]}
+      hitSlop={hitSlopProp ?? hitSlop}
+      onPress={navBack}>
+      <RcIconHeaderBack
+        width={24}
+        height={24}
+        color={tintColor || colors2024['neutral-body']}
+      />
+    </CustomTouchableOpacity>
+  );
+}
+
+/**
+ * @deprecated Bakes a native-bar-item inset compensation into the control
+ * (`marginLeft: -16` + `paddingLeft: 16`). Kept only for controls hosted by a
+ * native header element (Android `headerLeft`). Any screen that renders its own
+ * header row must use `HeaderBackButton` and apply its own container/padding.
+ */
 export function HeaderBackPressable({
   tintColor,
   style,
@@ -156,6 +210,12 @@ export function HeaderBackPressable({
 type ScreenOptions = Omit<NativeStackNavigationOptions, 'headerTitleStyle'> & {
   headerTitleStyle: NativeStackNavigationOptions['headerTitleStyle'] & object;
 };
+
+const IOS_LIQUID_GLASS_HEADER_OPTIONS = {
+  headerLeftBackgroundVisible: false,
+  headerRightBackgroundVisible: false,
+} as const;
+
 export const useStackScreenConfig = () => {
   const appThemeMode = useGetBinaryMode();
 
@@ -168,7 +228,11 @@ export const useStackScreenConfig = () => {
       const screenOptions: ScreenOptions = {
         animation: IS_IOS ? 'slide_from_right' : 'none',
         animationDuration: 200,
+        ...IOS_LIQUID_GLASS_HEADER_OPTIONS,
         ...headerPresets.onlyTitle,
+        // Native bar button item: UIKit owns the layout (correct on every
+        // device) and hidesSharedBackground keeps the iOS 26 glass capsule off.
+        unstable_headerLeftItems: IS_IOS ? renderNativeBackItems : undefined,
         headerTitleStyle: {
           ...(headerPresets.onlyTitle.headerTitleStyle as object),
           color: colors['neutral-title-1'],
@@ -176,19 +240,26 @@ export const useStackScreenConfig = () => {
         },
         // headerTintColor: colors['neutral-bg-1'],
         headerTintColor: colors['neutral-title-1'],
-        headerLeft: ({ tintColor }) => (
-          <CustomTouchableOpacity
-            as="RNGHTouchableOpacity"
-            style={styles.backButtonStyle}
-            hitSlop={24}
-            onPress={navBack}>
-            <RcIconHeaderBack
-              width={24}
-              height={24}
-              color={tintColor || colors['neutral-body']}
-            />
-          </CustomTouchableOpacity>
-        ),
+        // iOS uses the native bar button item above; Android keeps the custom
+        // headerLeft because `onlyTitle` sets headerBackVisible: false and the
+        // custom control also provides the navBack fallback on first routes.
+        ...(IS_IOS
+          ? {}
+          : {
+              headerLeft: ({ tintColor }: { tintColor?: string }) => (
+                <CustomTouchableOpacity
+                  as="RNGHTouchableOpacity"
+                  style={styles.backButtonStyle}
+                  hitSlop={24}
+                  onPress={navBack}>
+                  <RcIconHeaderBack
+                    width={24}
+                    height={24}
+                    color={tintColor || colors['neutral-body']}
+                  />
+                </CustomTouchableOpacity>
+              ),
+            }),
       };
 
       const result = merge(
@@ -214,7 +285,9 @@ export const useStackScreenConfig = () => {
       const screenOptions: ScreenOptions = {
         animation: IS_IOS ? 'slide_from_right' : 'none',
         animationDuration: 200,
+        ...IOS_LIQUID_GLASS_HEADER_OPTIONS,
         ...headerPresets.onlyTitle,
+        unstable_headerLeftItems: IS_IOS ? renderNativeBackItems : undefined,
         headerTitleStyle: {
           ...(headerPresets.onlyTitle.headerTitleStyle as object),
           color: colors2024['neutral-title-1'],
@@ -222,9 +295,15 @@ export const useStackScreenConfig = () => {
           fontSize: 20,
         },
         headerTintColor: colors2024['neutral-title-1'],
-        headerLeft: ({ tintColor }) => (
-          <HeaderBackPressable tintColor={tintColor} />
-        ),
+        // iOS uses the native bar button item above; Android keeps the custom
+        // back control for the same reasons as `mergeScreenOptions`.
+        ...(IS_IOS
+          ? {}
+          : {
+              headerLeft: ({ tintColor }: { tintColor?: string }) => (
+                <HeaderBackPressable tintColor={tintColor} />
+              ),
+            }),
       };
 
       const result = merge(
@@ -289,7 +368,47 @@ export function useBottomTabScreenConfig() {
   return { mergeBottomTabOptions2024 };
 }
 
+// NOTE: `unstable_headerLeftItems` is the native-stack bridge to RNScreens'
+// `headerLeftBarButtonItems`. It gives UIKit ownership of the bar item layout
+// (correct on every device) and lets us pass `hidesSharedBackground` to drop the
+// iOS 26 glass capsule. Re-check this prop name on every @react-navigation
+// upgrade; if it is renamed/removed, fall back to a custom headerLeft with a
+// device-independent layout rather than a fixed offset.
+// The native bar item's leading inset matches the custom header's (16pt), so
+// the only difference was the SF Symbol's own optical padding: it pushed the
+// glyph ~8pt right of the app icon. Use the same 24pt chevron artwork as the
+// JS header so both paths render at the same x on every device.
+const renderNativeBackItems: NonNullable<
+  NativeStackNavigationOptions['unstable_headerLeftItems']
+> = ({ tintColor }) => [
+  {
+    type: 'button',
+    label: '',
+    // A 44x24 image (chevron drawn in the leading 24pt) keeps the standard
+    // 44pt tap target while making the glyph start at the item's leading edge,
+    // which is the same 16pt inset the JS header used. No offset needed.
+    // Keep the PNG alpha anti-aliased: a hard 0/255 alpha export makes UIKit
+    // render the diagonal stroke with visible stair-steps (QA 1359).
+    icon: {
+      type: 'image',
+      source: require('@/assets/icons/header/back-cc-wide.png'),
+      tinted: true,
+    },
+    width: 44,
+    tintColor,
+    hidesSharedBackground: true,
+    onPress: navBack,
+  },
+];
+
 const styles = StyleSheet.create({
+  // Plain icon box for JS-rendered custom headers; the caller aligns it.
+  headerBackButtonStyle: {
+    width: 24,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   backButtonStyle: {
     // width: 56,
     // height: 56,

@@ -32,20 +32,20 @@
   },
   "dependencies": {
     "@keystonehq/base-eth-keyring": "0.15.1",
-    "@keystonehq/hw-app-eth": "^0.3.2",
+    "@keystonehq/hw-app-eth": "0.3.2",
     "@keystonehq/metamask-airgapped-keyring": "0.15.2",
-    "ethereumjs-util": "^7.1.5"
+    "ethereumjs-util": "7.1.5"
   },
   "devDependencies": {
-    "@metamask/auto-changelog": "^3.4.3",
-    "@types/jest": "^27.4.1",
-    "@types/node": "^20.14.8",
-    "@types/w3c-web-usb": "^1.0.10",
-    "deepmerge": "^4.2.2",
-    "jest": "^27.5.1",
-    "ts-jest": "^27.1.4",
-    "typedoc": "^0.24.8",
-    "typedoc-plugin-missing-exports": "^2.0.0",
+    "@metamask/auto-changelog": "3.4.4",
+    "@types/jest": "27.5.2",
+    "@types/node": "20.14.9",
+    "@types/w3c-web-usb": "1.0.10",
+    "deepmerge": "4.3.1",
+    "jest": "27.5.1",
+    "ts-jest": "27.1.5",
+    "typedoc": "0.24.8",
+    "typedoc-plugin-missing-exports": "2.1.0",
     "typescript": "5.7.3"
   },
   "engines": {

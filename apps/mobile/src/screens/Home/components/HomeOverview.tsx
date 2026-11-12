@@ -24,11 +24,7 @@ import {
 import { fetchTop5TokensForAllAccountsOnce } from '@/components/AccountSwitcher/hooks';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { clearLendingActionPopupState } from '@/screens/Lending/utils/actionPopup';
-import {
-  createGetStyles2024,
-  makeDebugBorder,
-  makeDevOnlyStyle,
-} from '@/utils/styles';
+import { createGetStyles2024 } from '@/utils/styles';
 import { StackActions, useFocusEffect } from '@react-navigation/native';
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import type { ScrollView, ViewProps } from 'react-native';
@@ -112,7 +108,6 @@ import { deleteLongTimeCurveCache } from '@/utils/24balanceCurveCache';
 import { deleteLongTime24hBalanceCache } from '@/utils/24hBalanceCache';
 import useTokenList from '@/store/tokens';
 import useProtocol from '@/store/protocols';
-import { colord } from 'colord';
 import { isTabsSwiping } from '../../Address/components/MultiAssets/hooks';
 import { BrowserOrPerpsPosition } from './BrowserOrPerpsPosition';
 import { GasAccountBadge } from '../../GasAccount/components/GasAccountBadge';
@@ -124,7 +119,6 @@ import { LendingHF } from '../components/LendingHF';
 import { MemeCoinBalance } from './MemeCoinBalance';
 import { MultiAddressHomeHeader } from '../components/MultiAddressHomeHeader';
 import { PerpsPnl } from '../components/PerpsPnl';
-import { PointsBadge } from '../../Points/components/PointsBadge';
 import {
   refreshSuccessAndFailList,
   resetFetchHistoryTxCount,
@@ -146,13 +140,11 @@ import { useCurrentTabScrollY } from 'react-native-collapsible-tab-view';
 import type { ScrollHandlerProps } from '@/components/customized/react-native-collapsible-tab-view/hooks';
 import { triggerImpact } from '@/utils/common';
 import type { WorkletFunction } from 'react-native-reanimated/lib/typescript/commonTypes';
-import { SharedValue } from 'react-native-reanimated/lib/typescript/commonTypes';
-import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
+import { IS_ANDROID } from '@/core/native/utils';
 import {
   HOME_TOP_HEADER_SIZES,
   SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING,
 } from '@/constant/home';
-import { useInnerDappSelection } from '@/hooks/useInnerDappSelection';
 import { NewTag } from './NewTag';
 import { useHomeFeatureNewTag } from '../hooks/useHomeFeatureNewTag';
 import { useDismissConvertDustBanner } from '../hooks/useConvertDustBanner';
@@ -377,7 +369,7 @@ const usePulldownRefreshGesture = <T extends ScrollView | RNGHScrollView>({
       //   event.nativeEvent,
       // );
     }, []),
-    onScroll: useCallback<ScrollHandlerProps['onScroll'] & object>(event => {
+    onScroll: useCallback<ScrollHandlerProps['onScroll'] & object>(() => {
       // console.debug(
       //   '[onScrollHandlers] onScroll:: event.nativeEvent',
       //   event.nativeEvent,
@@ -385,7 +377,7 @@ const usePulldownRefreshGesture = <T extends ScrollView | RNGHScrollView>({
     }, []),
     onAnimatedScrollEndDrag: useCallback<
       ScrollHandlerProps['onAnimatedScrollEndDrag'] & object
-    >(event => {
+    >(() => {
       // console.debug(
       //   '[onScrollHandlers] onAnimatedScrollEndDrag:: event.nativeEvent',
       //   event.nativeEvent,
@@ -516,9 +508,6 @@ const usePulldownRefreshGesture = <T extends ScrollView | RNGHScrollView>({
 };
 
 const getStyle = createGetStyles2024(
-  {
-    reanimatedStyles: {},
-  },
   ({ colors2024, isLight, safeAreaInsets }) => ({
     main: {
       height: '100%',
@@ -929,7 +918,7 @@ function GasAccountMenuBadge() {
 export const HomeOverview = React.memo(() => {
   const navigation = useRabbyAppNavigation();
   const { t } = useTranslation();
-  const { styles, reanimatedStyles, colors2024, isLight } = useTheme2024({
+  const { styles, colors2024, isLight } = useTheme2024({
     getStyle,
   });
   const dismissConvertDustBanner = useDismissConvertDustBanner();

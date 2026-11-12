@@ -38,10 +38,10 @@ if [ -z "$configuration_name" ]; then
   exit 0
 fi
 
-load_env_var_from_candidate_files RABBY_MOBILE_CODE
+load_env_var_from_candidate_files RABBY_MOBILE_CODE || true
 
-if [ -z "$RABBY_MOBILE_CODE" ]; then
-  echo "[RabbyMobileBuild] no RABBY_MOBILE_CODE set for $configuration_name, abort bundle"
+if ! validate_rabbit_code; then
+  echo "[RabbyMobileBuild] abort $configuration_name bundle: invalid RABBY_MOBILE_CODE"
   exit 1;
 fi
 

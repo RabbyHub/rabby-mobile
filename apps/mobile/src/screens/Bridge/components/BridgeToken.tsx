@@ -11,7 +11,6 @@ import { useTranslation } from 'react-i18next';
 import type { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import BigNumber from 'bignumber.js';
 import { tokenAmountBn } from '@/screens/Swap/utils';
-import { useBridgeSupportedChains } from '../hooks';
 import { ChainInfo } from './ChainInfo';
 import BridgeToTokenSelect from './BridgeToTokenSelect';
 import { findChainByEnum } from '@/utils/chain';
@@ -24,7 +23,7 @@ import {
 import TokenSelect from '@/screens/Swap/components/TokenSelect';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
-import { Slider } from '@rneui/themed';
+import { PerpsGestureSlider as Slider } from '@/components/perps/PerpsGestureSlider';
 import LinearGradient from 'react-native-linear-gradient';
 import RcIconWalletCC from '@/assets2024/icons/swap/wallet-cc.svg';
 import type { Account } from '@/core/startupServices/preference';
@@ -48,7 +47,6 @@ const BridgeTokenInner = ({
   token,
   account,
   chain,
-  excludeChains,
   onChangeToken,
   onChangeChain,
   value,
@@ -60,9 +58,9 @@ const BridgeTokenInner = ({
   inSufficient,
   clickMaxBtnCount,
   isMaxRef,
-  handleMax,
   skeletonLoading,
   disabled,
+  sceneActive = true,
   clearOnDisabled,
   slider,
   onChangeSlider,
@@ -85,6 +83,7 @@ const BridgeTokenInner = ({
   inSufficient?: boolean;
   skeletonLoading?: boolean;
   disabled?: boolean;
+  sceneActive?: boolean;
   clearOnDisabled?: boolean;
   slider?: number;
   onChangeSlider?: (value: number, syncAmount?: boolean) => void;
@@ -101,7 +100,6 @@ const BridgeTokenInner = ({
 )) => {
   const { t } = useTranslation();
 
-  const supportedChains = useBridgeSupportedChains();
   const { colors2024, styles } = useTheme2024({ getStyle });
 
   const isFromToken = type === 'from';
@@ -169,11 +167,11 @@ const BridgeTokenInner = ({
   const bubbleRef = useRef<SliderBubbleHandle>(null);
   const sliderTrackRef = useRef<View>(null);
   const onSliderValueChange = useCallback(
-    (value: number) => {
+    (_value: number) => {
       // Move the bubble before the amount update. That update re-renders the
       // page, which is what left the bubble behind the finger.
-      bubbleRef.current?.setProgress(value);
-      onChangeSlider?.(value);
+      bubbleRef.current?.setProgress(_value);
+      onChangeSlider?.(_value);
     },
     [onChangeSlider],
   );
@@ -214,7 +212,8 @@ const BridgeTokenInner = ({
           // excludeChains={excludeChains}
           // supportChains={supportedChains}
         />
-        {isFromToken && !hiddenSlider && (
+        {/* Unmount native gestures before Fabric recycles the hidden scene. */}
+        {isFromToken && !hiddenSlider && sceneActive && (
           <View style={styles.sliderContainer}>
             <View
               ref={sliderTrackRef}
@@ -225,7 +224,7 @@ const BridgeTokenInner = ({
                 allowTouchTrack={!disabled}
                 disabled={disabled}
                 style={styles.sliderInner}
-                value={slider}
+                value={slider ?? 0}
                 onSlidingStart={onSlidingStart}
                 onValueChange={onSliderValueChange}
                 onSlidingComplete={onAfterChangeSlider}

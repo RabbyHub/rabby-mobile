@@ -52,7 +52,7 @@ describe('PerpsProOpenOrderEditInput', () => {
     ).toEqual(focusedStyle);
     expect(focusedStyle).toMatchObject({
       fontSize: 14,
-      height: 40,
+      height: 56,
       includeFontPadding: false,
       textAlignVertical: 'center',
     });

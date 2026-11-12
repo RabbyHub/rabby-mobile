@@ -21,6 +21,9 @@ const mockScreens = new Map<string, CapturedScreen>();
 jest.mock('../Bridge/BridgeDetailScreen', () => ({
   BridgeDetailScreen: () => null,
 }));
+jest.mock('@/screens/Approvals/components/Headers/ApprovalsHeader', () => ({
+  ApprovalsHeader: () => null,
+}));
 jest.mock('@/utils/CustomNativeStackNavigator', () => ({
   createCustomNativeStackNavigator: () => ({
     Navigator: ({ children }: React.PropsWithChildren) => children,
@@ -42,6 +45,7 @@ jest.mock('@react-navigation/native', () => ({
 }));
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
+  initReactI18next: { type: '3rdParty', init: () => undefined },
 }));
 jest.mock('@/core/native/utils', () => ({ IS_IOS: true, IS_ANDROID: false }));
 jest.mock('@/hooks/theme', () => ({

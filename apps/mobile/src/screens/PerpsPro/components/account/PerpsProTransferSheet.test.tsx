@@ -185,9 +185,9 @@ describe('PerpsProTransferSheet', () => {
       const style = StyleSheet.flatten(input.props.style);
       expect(style).toMatchObject({
         fontFamily:
-          platform === 'android' ? 'SF-Pro-Rounded-Heavy' : 'ui-rounded',
-        fontSize: 36,
-        height: 82,
+          platform === 'android' ? 'SF-Pro-Rounded-Bold' : 'ui-rounded',
+        fontSize: 28,
+        height: 76,
         padding: 0,
       });
       if (platform === 'android') {
@@ -197,8 +197,8 @@ describe('PerpsProTransferSheet', () => {
           textAlignVertical: 'center',
         });
       } else {
-        expect(style.lineHeight).toBe(42);
-        expect(style.fontWeight).toBe('800');
+        expect(style.lineHeight).toBe(36);
+        expect(style.fontWeight).toBe('700');
         expect(style.includeFontPadding).toBeUndefined();
         expect(style.textAlignVertical).toBeUndefined();
       }
@@ -241,7 +241,7 @@ describe('PerpsProTransferSheet', () => {
       enablePanDownToClose: true,
       keyboardBehavior: 'interactive',
       keyboardBlurBehavior: 'restore',
-      snapPoints: [490],
+      snapPoints: [504],
     });
     expect(
       screen.getByTestId('transfer-sheet').props.backdropComponent({}).props
@@ -257,7 +257,7 @@ describe('PerpsProTransferSheet', () => {
     );
     expect(
       screen.getByTestId('perps-pro-transfer-usdc-icon').props,
-    ).toMatchObject({ height: 24, width: 24 });
+    ).toMatchObject({ height: 26, width: 26 });
 
     fireEvent.changeText(screen.getByTestId('perps-pro-transfer-amount'), '2');
     expect(screen.getByTestId('transfer-confirm').props.isDisabled).toBe(false);

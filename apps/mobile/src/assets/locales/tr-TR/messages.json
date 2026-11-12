@@ -651,7 +651,8 @@
       "emptyWhitelistContent": "Güvenilir adresleri hızlı transferler için beyaz listeye ekleyin—bir dahaki sefere onay gerekmez.",
       "SendHistory": "Gönderim Geçmişi",
       "dividerWatchOnlyWallets": "Sadece izleme adresleri",
-      "enterOrSearchAddress": "Adres Girin veya Ara"
+      "enterOrSearchAddress": "Adres Girin veya Ara",
+      "resolvingAddressName": "Adres aranıyor..."
     },
     "confirmAddress": {
       "risks": {
@@ -848,9 +849,7 @@
       "price-impact": "Fiyat Etkisi",
       "bridgeFrom": "Köprüden",
       "est-payment": "Tahmini Ödeme:",
-      "for-available-quote": "mevcut teklif için",
-      "bridge-from": "Bridge kaynağı",
-      "no-quote-found": "Teklif bulunamadı. Lütfen başka token çiftleri deneyin.",
+      "no-quote-found": "Teklif bulunamadı.",
       "title": "Köprü",
       "the-following-bridge-route-are-found": "Aşağıdaki oranlar bulundu",
       "est-receiving": "Tahmini Alım:",
@@ -917,7 +916,7 @@
         "queued": "Sıralı",
         "pending": "Bekleyen",
         "completed": "Tamamlandı",
-        "refund": "İade",
+        "refund": "İade Edildi",
         "waiting": "hedef ağdaki işlem bekleniyor",
         "goBack": "Geri Dön",
         "bridgeAgain": "Tekrar köprüle",
@@ -1532,9 +1531,7 @@
       "title": "Şifre Belirle",
       "enable": "{{ bioType }}'yi Etkinleştir",
       "passwordPlaceholder": "Parola en az 8 karakter uzunluğunda olmalıdır.",
-      "and": "ve",
       "ConfirmPassword": "Şifreyi doğrula",
-      "termOfUse": "Kullanım Şartları",
       "biometricsFail": "Biyometrik kimlik doğrulama etkinleştirme başarısız oldu",
       "confirmModalDesc": "Lütfen şifrenizi düzgün bir şekilde saklayın. Bir kez kaybolduğunda, Rabby tarafından değiştirilemez veya kurtarılamaz.",
       "setWallet": "Cüzdanı Ayarla",
@@ -1543,8 +1540,8 @@
       "subTitle": "Bu şifre cüzdanınızın kilidini açar ve bu cihazdaki verilerinizi şifreler. Şifre kurtarılamaz. Kaybederseniz sıfırlayıp cüzdanınızı yeniden içe aktarmanız gerekir.",
       "Newpassword": "Yeni şifre",
       "agree": "Okudum ve <1/> <2>Kullanım Şartları</2> ile aynı fikirdeyim.",
-      "agreeToTerms": "Konsoktum ve kabul ediyorum.",
-      "PrivacyPolicy": "Gizlilik Politikası"
+      "dataAnalysisDesc": "Rabby'yi geliştirmeye yardımcı olmak için anonim kullanım verilerini paylaşın. Toplanan veriler sizinle veya hesabınızla ilişkilendirilmez. Bunu istediğiniz zaman Ayarlar'dan değiştirebilirsiniz.",
+      "agreeByContinuing": "Devam ederek <terms>Kullanım Şartları</terms> belgesini kabul etmiş ve <privacy>Gizlilik Politikası</privacy> belgesini okumuş sayılırsınız."
     },
     "importSafe": {
       "error": {
@@ -1918,7 +1915,8 @@
       "currency": "Para Birimi",
       "searchCurrency": "Para Araştırması",
       "screenshotReportSwitch": "Hata bildirmek için ekran görüntüsü alın",
-      "dataAnalysis": "Veri Analizi",
+      "dataAnalysis": "Rabby'yi geliştirmeye yardım edin",
+      "dataAnalysisDesc": "Rabby'yi geliştirmeye yardımcı olmak için anonim kullanım verilerini paylaşın. Toplanan veriler sizinle veya hesabınızla ilişkilendirilmez.",
       "bugReportChat": "Sohbet Üzerinden Geri Bildirim Paylaş",
       "features": "Özellikler",
       "manageWallets": "Cüzdanları Yönet"
@@ -2988,6 +2986,13 @@
       },
       "addressEditorBadge": {
         "nameUnknown": "Adres adını belirtin"
+      },
+      "scanQrcode": {
+        "chooseFromGallery": "Galeriden Seç",
+        "noQrCode": "Bu görselde QR kod bulunamadı",
+        "multipleQrCodes": "Birden fazla QR kod bulundu. Lütfen yalnızca bir QR kod içeren bir görsel seçin",
+        "invalidAddress": "Bu QR kodda geçerli bir adres bulunamadı",
+        "readImageFailed": "Görsel okunamadı. Lütfen tekrar deneyin"
       }
     },
     "Lending": {
@@ -3526,13 +3531,6 @@
         "notEnabled": "Biyometrik özelliği etkinleştirilmemiştir.",
         "authFailed": "Biyometrik kimlik doğrulama başarısız oldu"
       }
-    },
-    "ReserveGasPopup": {
-      "instant": "Hızlı",
-      "doNotReserve": "Gas ayırma",
-      "normal": "Yavaş",
-      "title": "Gas Ayır",
-      "fast": "Normal"
     },
     "NoLongerSupports": {
       "button": "Tamam",

@@ -2,11 +2,28 @@ import {
   getPerpsProPriceInputMaxDecimals,
   isPerpsProPriceProtocolValid,
   normalizePerpsProCalculatedPrice,
+  roundPerpsProTpSlPrice,
   sanitizePerpsProPriceEditingInput,
   sanitizePerpsProPriceInput,
 } from './perpsPriceProtocol';
 
 describe('Perps price protocol', () => {
+  it.each([
+    ['0.0946159998587', 0, '0.094616'],
+    ['0.0946160001413', 0, '0.094616'],
+    ['0.1234499', 2, '0.1234'],
+    ['0.12345', 2, '0.1235'],
+    ['99999.9', 0, '100000'],
+    ['111111.9', 5, '111112'],
+    ['111111', 5, '111111'],
+    ['0.0000004', 0, null],
+  ])(
+    'rounds TP/SL %s once to the nearest legal tick',
+    (price, szDecimals, expected) => {
+      expect(roundPerpsProTpSlPrice(price, szDecimals)).toBe(expected);
+    },
+  );
+
   it.each([
     [0, 6],
     [1, 5],

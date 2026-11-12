@@ -8,6 +8,7 @@ import {
 } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
+import { makeHistoryDetailColors } from '../../detailColors';
 import { Skeleton } from '@rneui/themed';
 import React, { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -84,9 +85,7 @@ const getStyle = createGetStyles2024(
       paddingTop: 16,
       paddingHorizontal: 20,
       paddingBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
-      backgroundColor: !isLight
-        ? colors2024['neutral-bg-2']
-        : colors2024['neutral-bg-1'],
+      backgroundColor: makeHistoryDetailColors({ isLight, colors2024 }).card,
     },
     cardHeader: {
       display: 'flex',

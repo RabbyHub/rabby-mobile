@@ -985,7 +985,6 @@
       },
       "est-difference": "推定差異：",
       "est-payment": "予想支払い:",
-      "for-available-quote": "利用可能な見積もりを取得",
       "est-receiving": "受取予定：",
       "loss-tips": "{{usd}} を失っています。別の金額をお試しください。",
       "no-quote": "見積もりなし",
@@ -994,11 +993,10 @@
       "title": "ブリッジ",
       "bridgeFrom": "からブリッジ",
       "history": "ブリッジ履歴",
-      "bridge-from": "ブリッジ元",
       "via-bridge": "{{bridge}}経由",
       "need-to-approve-token-before-bridge": "ブリッジの前にトークンを承認する必要があります。",
       "approve-and-bridge": "承認してブリッジする",
-      "no-quote-found": "見積が見つかりません。他のトークンペアをお試しください。",
+      "no-quote-found": "見積が見つかりません。",
       "duration": "{{duration}} 分",
       "the-following-bridge-route-are-found": "以下のレートを発見",
       "no-route-found": "ルートが見つかりません",
@@ -1057,7 +1055,7 @@
         "queued": "キューに入れられた",
         "pending": "保留中",
         "completed": "完了",
-        "refund": "返金",
+        "refund": "返金済み",
         "waiting": "送信先チェーンのトランザクションを待機中",
         "goBack": "戻る",
         "bridgeAgain": "再度ブリッジ",
@@ -1859,10 +1857,7 @@
       }
     },
     "createPassword": {
-      "and": "と",
       "confirmPasswordPlaceholder": "パスワードを確認",
-      "termOfUse": "利用規約",
-      "PrivacyPolicy": "プライバシーポリシー",
       "settingUp": "パスワードの設定",
       "passwordMinTip": "最低8文字以上必要です",
       "enable": "{{ bioType }} を有効にする",
@@ -1876,13 +1871,14 @@
       "subTitle": "このパスワードはウォレットのロック解除と、このデバイス上のデータの暗号化に使用されます。パスワードは復元できません。紛失した場合は、リセットしてウォレットを再インポートする必要があります。",
       "passwordMin": "パスワードは8文字以上である必要があります。",
       "passwordRequired": "パスワードを入力してください",
-      "agreeToTerms": "私は、以下を読み、同意します",
       "passwordPlaceholder": "パスワードは8文字以上でなければなりません。",
       "confirmModalDesc": "パスワードを適切に保管してください。一度失われた場合、Rabbyでは変更や回復ができません。",
       "setWallet": "ウォレットを設定",
       "biometricsFail": "生体認証を有効にできませんでした",
       "confirmRequired": "パスワードを確認してください",
-      "ConfirmPassword": "パスワードを確認"
+      "ConfirmPassword": "パスワードを確認",
+      "dataAnalysisDesc": "匿名の利用データを共有して、Rabby の改善にご協力ください。収集されたデータがお客様やお客様のアカウントに関連付けられることはありません。この設定は「設定」からいつでも変更できます。",
+      "agreeByContinuing": "続行することで、<terms>利用規約</terms>に同意し、<privacy>プライバシーポリシー</privacy>を確認したものとみなされます。"
     },
     "setting": {
       "removedToken": {
@@ -1919,7 +1915,8 @@
       "searchCurrency": "通貨を検索",
       "currency": "通貨",
       "screenshotReportSwitch": "スクリーンショットでバグを報告",
-      "dataAnalysis": "データ分析",
+      "dataAnalysis": "Rabby の改善に協力する",
+      "dataAnalysisDesc": "匿名の利用データを共有して、Rabby の改善にご協力ください。収集されたデータがお客様やお客様のアカウントに関連付けられることはありません。",
       "bugReportChat": "チャットでフィードバックを送信",
       "features": "機能",
       "manageWallets": "ウォレットを管理"
@@ -1966,6 +1963,7 @@
       "emptyWhitelistTip": "まだホワイトリストに登録されたアドレスはありません。",
       "SendHistory": "送信履歴",
       "enterOrSearchAddress": "アドレスを入力または検索してください",
+      "resolvingAddressName": "アドレスを検索中...",
       "dividerWatchOnlyWallets": "監視専用アドレス"
     },
     "confirmAddress": {
@@ -3038,6 +3036,13 @@
       },
       "addressEditorBadge": {
         "nameUnknown": "アドレスに名前を付けてください"
+      },
+      "scanQrcode": {
+        "chooseFromGallery": "アルバムから選択",
+        "noQrCode": "この画像にQRコードが見つかりません",
+        "multipleQrCodes": "複数のQRコードが見つかりました。QRコードが1つだけの画像を選択してください",
+        "invalidAddress": "このQRコードに有効なアドレスが見つかりません",
+        "readImageFailed": "画像を読み込めませんでした。もう一度お試しください"
       }
     },
     "Lending": {
@@ -3703,13 +3708,6 @@
         "title": "生体認証",
         "desc": "指紋認証またはFace IDでロックを解除してください"
       }
-    },
-    "ReserveGasPopup": {
-      "title": "ガス代を確保",
-      "fast": "通常",
-      "instant": "速い",
-      "doNotReserve": "ガス代を確保しない",
-      "normal": "遅い"
     },
     "externalSwapBrideDappPopup": {
       "bridgeOnDapp": "DAppでブリッジ",

@@ -116,6 +116,9 @@ function TpSlEditorModal({
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         enabled={Platform.OS === 'ios'}>
         <TouchableOpacity
+          // The overlay wraps the card: press feedback would dim the whole
+          // editor right before the native fade-out starts.
+          activeOpacity={1}
           style={legacyModalStyles.modalOverlay}
           onPress={props.onRequestClose}>
           {children}
@@ -335,13 +338,11 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
 
   React.useEffect(() => {
     if (!modalVisible) {
+      // The draft stays intact while the editor fades out; the next open
+      // resets it.
       cancel();
-      // Leave the position draft intact until the Portal finishes fading.
-      if (variant !== 'position') {
-        resetDraft();
-      }
     }
-  }, [cancel, modalVisible, resetDraft, variant]);
+  }, [cancel, modalVisible]);
 
   const handleQuickOptionPress = useMemoizedFn((pct: number) => {
     setActiveOption(pct);
@@ -433,7 +434,7 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
               toast.error(t('page.perps.PerpsAutoCloseModal.noPosition'));
               return;
             }
-            if (variant === 'position') resetDraft();
+            resetDraft();
             setModalVisible(true);
           } finally {
             pressInFlight.current = false;

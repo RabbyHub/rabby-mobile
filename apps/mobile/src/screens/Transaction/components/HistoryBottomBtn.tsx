@@ -16,6 +16,7 @@ import { findAccountByPriority } from '@/utils/account';
 import { findChain, findChainByServerID } from '@/utils/chain';
 import { naviPush } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
+import { makeHistoryDetailColors } from './detailColors';
 import { CHAINS_ENUM } from '@debank/common';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils/src/types';
@@ -204,9 +205,7 @@ const getStyle = createGetStyles2024(
       paddingTop: 12,
       paddingHorizontal: 20,
       paddingBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
-      backgroundColor: !isLight
-        ? colors2024['neutral-bg-2']
-        : colors2024['neutral-bg-1'],
+      backgroundColor: makeHistoryDetailColors({ isLight, colors2024 }).footer,
       position: 'relative',
       flexShrink: 0,
       width: '100%',

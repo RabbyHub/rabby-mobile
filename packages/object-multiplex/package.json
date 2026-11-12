@@ -31,22 +31,22 @@
     "test:watch": "jest --watch"
   },
   "dependencies": {
-    "once": "^1.4.0",
-    "readable-stream": "^3.6.2"
+    "once": "1.4.0",
+    "readable-stream": "3.6.2"
   },
   "devDependencies": {
-    "@metamask/auto-changelog": "^3.4.3",
-    "@types/jest": "^27.4.1",
-    "@types/node": "^20.14.8",
-    "@types/once": "^1.4.0",
+    "@metamask/auto-changelog": "3.4.4",
+    "@types/jest": "27.5.2",
+    "@types/node": "20.14.9",
+    "@types/once": "1.4.4",
     "@types/readable-stream": "4.0.0",
-    "@types/sinon": "^9.0.10",
-    "deepmerge": "^4.2.2",
-    "jest": "^27.5.1",
-    "sinon": "^9.2.4",
-    "ts-jest": "^27.1.4",
-    "typedoc": "^0.24.8",
-    "typedoc-plugin-missing-exports": "^2.0.0",
+    "@types/sinon": "9.0.11",
+    "deepmerge": "4.3.1",
+    "jest": "27.5.1",
+    "sinon": "9.2.4",
+    "ts-jest": "27.1.5",
+    "typedoc": "0.24.8",
+    "typedoc-plugin-missing-exports": "2.1.0",
     "typescript": "5.7.3"
   },
   "engines": {

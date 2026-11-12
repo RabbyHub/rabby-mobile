@@ -1,4 +1,4 @@
-import { PERPS_BUILDER_INFO } from '@/constant/perps';
+import { PERPS_BUILDER_INFO, PERPS_MINI_USD_VALUE } from '@/constant/perps';
 import { apisPerps } from '@/core/apis/perps';
 import type { Account } from '@/core/startupServices/preference';
 import {
@@ -11,6 +11,7 @@ import type { OpenOrder } from '@rabby-wallet/hyperliquid-sdk';
 import BigNumber from 'bignumber.js';
 
 import { isPerpsProPriceProtocolValid } from '@/utils/perpsPriceProtocol';
+import { meetsPerpsMinimumOrderNotional } from '@/utils/perpsOrderNotional';
 
 import { isSamePerpsActionAccount } from './accountGuard';
 import { isPerpsActionUserCancelled } from './actionError';
@@ -198,6 +199,12 @@ export const buildPerpsPositionTpSlCommand = ({
       (!size || new BigNumber(size).gt(positionSize))
     ) {
       throw new Error('Invalid partial Position TP/SL amount');
+    }
+    if (
+      scope === 'partial' &&
+      !meetsPerpsMinimumOrderNotional(size, markPrice)
+    ) {
+      throw new Error(`Minimum amount is ${PERPS_MINI_USD_VALUE}`);
     }
     const expectedTriggerPrice = finiteDecimal(leg.expectedOrder?.triggerPrice);
     const expectedOrder = leg.expectedOrder
@@ -414,6 +421,25 @@ const hasCurrentContext = (
   isSamePerpsActionAccount(dependencies.getCurrentAccount(), command.account) &&
   !!getLivePosition(command, dependencies);
 
+const getLiveAmountError = (
+  command: PerpsPositionTpSlCommand,
+  leg: PerpsPositionTpSlCommandLeg,
+  dependencies: PositionTpSlDependencies,
+) => {
+  // Position TP/SL has a dynamic whole-position size (wire sz=0).
+  if (command.scope === 'position') return null;
+  const liveSize = getLivePosition(command, dependencies);
+  if (!liveSize || !leg.size || liveSize.lt(leg.size)) {
+    return 'Position size changed before TP/SL creation';
+  }
+  return meetsPerpsMinimumOrderNotional(
+    leg.size,
+    dependencies.getLiveMark(command.coin),
+  )
+    ? null
+    : `Minimum amount is ${PERPS_MINI_USD_VALUE}`;
+};
+
 const hasValidLiveTriggers = (
   command: PerpsPositionTpSlCommand,
   dependencies: PositionTpSlDependencies,
@@ -458,7 +484,8 @@ export const executePerpsPositionTpSl = async (
 ): Promise<PerpsPositionTpSlResult> => {
   if (
     !hasCurrentContext(command, dependencies) ||
-    !hasValidLiveTriggers(command, dependencies)
+    !hasValidLiveTriggers(command, dependencies) ||
+    command.legs.some(leg => getLiveAmountError(command, leg, dependencies))
   ) {
     return { kind: 'staleContext', legs: [] };
   }
@@ -492,7 +519,10 @@ export const executePerpsPositionTpSl = async (
   for (let index = 0; index < command.legs.length; index += 1) {
     const leg = command.legs[index]!;
     const result = results[index]!;
-    if (!hasCurrentContext(command, dependencies)) {
+    if (
+      !hasCurrentContext(command, dependencies) ||
+      getLiveAmountError(command, leg, dependencies)
+    ) {
       contextChanged = true;
       break;
     }
@@ -535,10 +565,9 @@ export const executePerpsPositionTpSl = async (
         (item.leg.replaceOid === null || item.result.cancel === 'success'),
     )
     .filter(item => {
-      if (command.scope !== 'partial') return true;
-      const liveSize = getLivePosition(command, dependencies);
-      if (!liveSize || !item.leg.size || liveSize.lt(item.leg.size)) {
-        item.result.error = 'Position size changed before TP/SL creation';
+      const error = getLiveAmountError(command, item.leg, dependencies);
+      if (error) {
+        item.result.error = error;
         return false;
       }
       return true;
@@ -585,6 +614,16 @@ export const executePerpsPositionTpSl = async (
 
   if (command.scope === 'partial') {
     for (const item of creatableIndexes) {
+      const amountError = getLiveAmountError(command, item.leg, dependencies);
+      if (
+        !hasCurrentContext(command, dependencies) ||
+        !hasValidLiveTriggers(command, dependencies) ||
+        amountError
+      ) {
+        item.result.error = amountError || undefined;
+        contextChanged = true;
+        break;
+      }
       createAttempted = true;
       try {
         const response = await dependencies.placePartial({
