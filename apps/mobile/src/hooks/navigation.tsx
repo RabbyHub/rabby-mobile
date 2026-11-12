@@ -385,7 +385,7 @@ const renderNativeBackItems: NonNullable<
   // (16pt vs 22pt), so the same artwork lands left of the JS header pages on
   // iOS 26 (QA 1360: iPhone 15 / iOS 26.5). Pad the artwork by that delta on
   // iOS 26 only; iOS 27 keeps the original 44pt canvas.
-  const isIOS26 = Platform.OS === 'ios' && Platform.Version < 27;
+  const isIOS26 = Platform.OS === 'ios' && Number(Platform.Version) < 27;
 
   return [
     {
@@ -399,7 +399,11 @@ const renderNativeBackItems: NonNullable<
       icon: {
         type: 'xcasset',
         name: isIOS26 ? 'HeaderBackChevronIOS26' : 'HeaderBackChevron',
-      },
+        // react-native-screens supports `xcasset` icons (it declares the type
+        // itself); @react-navigation/native-stack's re-declared PlatformIconIOS
+        // lags behind and only lists imageSource/sfSymbol, so the runtime-valid
+        // shape needs a cast here.
+      } as any,
       width: isIOS26 ? 50 : 44,
       tintColor,
       hidesSharedBackground: true,
