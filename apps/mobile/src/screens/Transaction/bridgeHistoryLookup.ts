@@ -24,7 +24,10 @@ type Task = { query: BridgeHistoryQuery; priority: number };
 type Request = { tasks: Task[]; controller: AbortController };
 
 // 仅缓存接口原始记录和成功空结果，不持久化到账 hash 的反向映射。
-const cache = new LRUCache<string, { history: BridgeHistory | null }>({
+const cache = new LRUCache<
+  string,
+  { history: BridgeHistory | null; answeredAt: number }
+>({
   max: 2000,
 });
 const subscribers = new Set<Subscriber>();
@@ -216,6 +219,7 @@ function drain() {
         const history = received.get(key) || old || null;
         cache.set(key, {
           history: isEqual(old, history) ? old ?? null : history,
+          answeredAt: Date.now(),
         });
       }
       for (const subscriber of subscribers) {
@@ -240,12 +244,12 @@ function drain() {
 }
 
 /**
- * The last answer for one tx: undefined until a lookup for it has succeeded,
- * null when that lookup found no bridge record.
+ * The last successful answer for one tx, undefined until there is one; history
+ * is null when no bridge record was found. A failed lookup leaves it as it was,
+ * so answeredAt tells how fresh it is.
  */
 export function peekBridgeHistory(query: BridgeHistoryQuery) {
-  const entry = cache.peek(queryKey(query));
-  return entry ? entry.history : undefined;
+  return cache.peek(queryKey(query));
 }
 
 export function prefetchBridgeHistory(queries: BridgeHistoryQuery[]) {
