@@ -13,16 +13,14 @@ const HEADER_CONTENT_HEIGHT = 48;
 const HEADER_HORIZONTAL_INSET = 16;
 
 /**
- * Left-aligned JS header for the first screens of the add-wallet flow (QA 1352).
+ * Centred JS header for the first screens of the add-wallet flow (QA 1352).
  *
- * On iOS the native header centres a long translation, so titles such as
- * "Selecionar método para adicionar" and "Restaure a sua carteira Rabby" ran
- * past the trailing edge and looked pushed to the right. Production keeps these
- * titles left-aligned in the slot right after the back control, so this row
- * reproduces that layout and lets AutoFitHeaderTitle shrink only when the
- * translation cannot fit on one base-size line.
+ * The title occupies a centred slot with equal leading/trailing slots, matching
+ * the rest of the 4.22 header work. AutoFitHeaderTitle owns the long-translation
+ * behaviour: it measures the real glyphs and shrinks to the compact two-line
+ * layout only when the base-size title cannot fit.
  */
-export const AutoFitLeftHeader = ({ title }: { title: string }) => {
+export const AutoFitCenterHeader = ({ title }: { title: string }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const insets = useSafeAreaInsets();
 
@@ -36,12 +34,10 @@ export const AutoFitLeftHeader = ({ title }: { title: string }) => {
           />
         </View>
         <View style={styles.titleArea}>
-          <AutoFitHeaderTitle
-            align="left"
-            text={title}
-            textStyle={styles.title}
-          />
+          <AutoFitHeaderTitle text={title} textStyle={styles.title} />
         </View>
+        {/* Equal trailing slot keeps the title centred on the screen. */}
+        <View style={styles.rightSlot} />
       </View>
     </View>
   );
@@ -57,13 +53,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
     paddingHorizontal: HEADER_HORIZONTAL_INSET,
   },
-  // 44pt tap target whose visible 24pt chevron sits at the content edge. The
-  // negative margin cancels the box's extra 20pt so the title starts at the
-  // same x as production, not after a full 44pt slot.
+  // 44pt tap target whose visible 24pt chevron sits at the content edge.
   backSlot: {
     width: 44,
     height: HEADER_CONTENT_HEIGHT,
-    marginRight: -20,
     alignItems: 'flex-start',
     justifyContent: 'center',
     flexShrink: 0,
@@ -76,7 +69,16 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   titleArea: {
     flex: 1,
+    // Let AutoFitHeaderTitle measure the same width the visible title uses.
+    // The inner Text still centres its glyphs via textAlign.
+    alignItems: 'stretch',
     justifyContent: 'center',
+    marginHorizontal: 8,
+  },
+  rightSlot: {
+    width: 44,
+    height: HEADER_CONTENT_HEIGHT,
+    flexShrink: 0,
   },
   title: {
     color: colors2024['neutral-title-1'],

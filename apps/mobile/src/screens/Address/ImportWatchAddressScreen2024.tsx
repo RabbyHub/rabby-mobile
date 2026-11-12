@@ -56,10 +56,8 @@ export const ImportWatchAddressScreen2024 = () => {
   }, []);
   const scanner = useScanner();
   // Only ever describes the current input: late results of earlier inputs are dropped.
-  const { ensResult, isResolvingName, isNameNotFound } = useEnsInputResolver(
-    input,
-    { parseAddress: parseInputAddress },
-  );
+  const { ensResult, isPending, isResolvingName, isNameNotFound } =
+    useEnsInputResolver(input, { parseAddress: parseInputAddress });
   const error =
     submitError ?? (isNameNotFound ? INPUT_ERROR.INVALID_ADDRESS : undefined);
 
@@ -132,7 +130,7 @@ export const ImportWatchAddressScreen2024 = () => {
       buttonProps={{
         title: t('global.Confirm'),
         onPress: handleDone,
-        disabled: !input || !!error || isResolvingName,
+        disabled: !input || !!error || isPending,
         ...makeTestIDProps(E2E_ID.home.watchAddressSubmit),
       }}
       style={styles.screen}

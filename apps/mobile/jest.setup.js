@@ -29,6 +29,36 @@ jest.mock('@react-native-community/netinfo', () =>
   require('@react-native-community/netinfo/jest/netinfo-mock.js'),
 );
 
+// Native-only modules that are pulled in through shared re-exports. They are
+// absent from the Jest runtime, so keep their import-time side effects out of
+// every test suite instead of making each test re-declare the same mocks.
+jest.mock('react-native-haptic-feedback', () => ({
+  trigger: jest.fn(),
+}));
+
+jest.mock('react-native-aes-crypto', () => ({
+  __esModule: true,
+  default: {
+    randomKey: jest.fn(async () => 'mock-random-key'),
+    pbkdf2: jest.fn(async () => 'mock-derived-key'),
+    encrypt: jest.fn(async () => 'mock-cipher'),
+    decrypt: jest.fn(async () => 'mock-plaintext'),
+  },
+}));
+
+jest.mock('@/core/native/RNHelpers', () => ({
+  __esModule: true,
+  default: {
+    forceExitApp: jest.fn(),
+    measureViewRelativeTo: jest.fn(),
+    buildInfo: {},
+    setSensitiveClipboard: jest.fn(),
+    moveTaskToBack: jest.fn(),
+    shareFile: jest.fn(),
+    iosExcludeFileFromBackup: jest.fn(),
+  },
+}));
+
 jest.mock('react-native-mmkv', () => {
   const stores = new Map();
 

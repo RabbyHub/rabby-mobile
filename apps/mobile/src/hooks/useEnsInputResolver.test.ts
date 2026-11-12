@@ -91,6 +91,7 @@ describe('useEnsInputResolver', () => {
 
     expect(result.current).toEqual({
       ensResult: { addr: ADDR_A, name: 'jan.eth' },
+      isPending: false,
       isResolvingName: false,
       isNameNotFound: false,
     });
@@ -105,8 +106,52 @@ describe('useEnsInputResolver', () => {
 
     expect(result.current).toEqual({
       ensResult: null,
+      isPending: false,
       isResolvingName: false,
       isNameNotFound: true,
+    });
+  });
+
+  it('does not look up an input that cannot be a name', async () => {
+    const { result } = renderResolver('hongb');
+
+    expect(result.current).toEqual({
+      ensResult: null,
+      isPending: true,
+      isResolvingName: false,
+      isNameNotFound: false,
+    });
+
+    await flushDebounce();
+
+    expect(mockResolveName).not.toHaveBeenCalled();
+    expect(mockResolveAddress).not.toHaveBeenCalled();
+    expect(result.current).toEqual({
+      ensResult: null,
+      isPending: false,
+      isResolvingName: false,
+      isNameNotFound: true,
+    });
+  });
+
+  it('starts looking up once the input becomes a possible name', async () => {
+    const pending = queueLookups(mockResolveName);
+    const { result, rerender } = renderResolver('hongb');
+    await flushDebounce();
+    expect(result.current.isNameNotFound).toBe(true);
+
+    rerender({ input: 'hongb.eth' });
+    expect(result.current.isNameNotFound).toBe(false);
+    expect(result.current.isResolvingName).toBe(true);
+    await flushDebounce();
+
+    expect(mockResolveName).toHaveBeenCalledTimes(1);
+    expect(mockResolveName).toHaveBeenCalledWith('hongb.eth');
+    await settle(pending.get('hongb.eth'), { addr: ADDR_A, name: 'hongb.eth' });
+
+    expect(result.current.ensResult).toEqual({
+      addr: ADDR_A,
+      name: 'hongb.eth',
     });
   });
 
@@ -204,6 +249,7 @@ describe('useEnsInputResolver', () => {
 
     expect(result.current).toEqual({
       ensResult: { addr: ADDR_A, name: 'alice.eth' },
+      isPending: false,
       isResolvingName: false,
       isNameNotFound: false,
     });
@@ -218,6 +264,7 @@ describe('useEnsInputResolver', () => {
     expect(mockResolveAddress).not.toHaveBeenCalled();
     expect(result.current).toEqual({
       ensResult: null,
+      isPending: false,
       isResolvingName: false,
       isNameNotFound: false,
     });
