@@ -6,45 +6,94 @@ import { LedgerHDPathType } from '@rabby-wallet/eth-keyring-ledger/dist/utils';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { useAtom } from 'jotai';
 import React from 'react';
+import { Linking } from 'react-native';
+import { check, PERMISSIONS } from 'react-native-permissions';
+import { useTranslation } from 'react-i18next';
+import { toast } from '@/components2024/Toast';
+import {
+  ONEKEY_ERROR_CODE,
+  getOneKeyErrorCode,
+  getOneKeyErrorMessage,
+  isOneKeyUserCancelError,
+  isOneKeyPermissionError,
+} from '@/utils/onekeyError';
+import { IS_IOS } from '@/core/native/utils';
 import { settingAtom } from '../HDSetting/MainContainer';
 import { BluetoothPermissionScreen } from './BluetoothPermissionScreen';
 import { NotFoundDeviceScreen } from './NotFoundDeviceScreen';
 import { ScanDeviceScreen } from './ScanDeviceScreen';
 import { SelectDeviceScreen } from './SelectDeviceScreen';
 import { useOneKeyImport } from '@/hooks/onekey/useOneKeyImport';
-import { ConnectDeviceScreen } from './ConnectDeviceScreen';
-import { eventBus, EVENTS } from '@/utils/events';
 import AutoLockView from '../AutoLockView';
 import { useShowImportMoreAddressPopup } from '@/hooks/useShowImportMoreAddressPopup';
-import { makeDebugBorder } from '@/utils/styles';
 
 export const ConnectOneKey: React.FC<{
   onDone?: () => void;
   onSelectDeviceId?: (id: string) => void | Promise<void>;
   deviceId?: string;
 }> = ({ onDone, onSelectDeviceId, deviceId }) => {
+  const { t } = useTranslation();
   const [_2, setSetting] = useAtom(settingAtom);
   const [currentScreen, setCurrentScreen] = React.useState<
-    'scan' | 'select' | 'ble' | 'notfound' | 'connect'
+    'scan' | 'select' | 'ble' | 'notfound' | 'error'
   >('ble');
-  const notfoundTimerRef = React.useRef<any>(null);
-  const { devices, startScan, error, cleanDevices } = useOneKeyImport();
+  const { devices, startScan, stopScan, error, status } = useOneKeyImport();
+  // True while a device is selected and we wait for it (unlock, PIN,
+  // passphrase, address import). Guards double taps and tells unmount that
+  // the device has to be released.
+  const connectingRef = React.useRef(false);
+  const unmountedRef = React.useRef(false);
+  const [bluetoothPermission, setBluetoothPermission] =
+    React.useState<string>();
+  const errorCode = getOneKeyErrorCode(error);
+
+  React.useEffect(() => {
+    setBluetoothPermission(undefined);
+    if (!IS_IOS || errorCode !== ONEKEY_ERROR_CODE.BlePermissionError) {
+      return;
+    }
+    let cancelled = false;
+    check(PERMISSIONS.IOS.BLUETOOTH)
+      .then(permission => {
+        if (!cancelled) {
+          setBluetoothPermission(permission);
+        }
+      })
+      .catch(console.error);
+    return () => {
+      cancelled = true;
+    };
+  }, [error, errorCode]);
 
   const { showImportMorePopup } = useShowImportMoreAddressPopup();
 
   const handleBleNext = React.useCallback(async () => {
     setCurrentScreen('scan');
     startScan();
-
-    // notfoundTimerRef.current = setTimeout(() => {
-    //   setCurrentScreen('notfound');
-    // }, 5000);
   }, [startScan]);
 
-  const handleScanDone = React.useCallback(() => {
-    setCurrentScreen('select');
-    clearTimeout(notfoundTimerRef.current);
-  }, []);
+  React.useEffect(() => {
+    if (status === 'found') {
+      setCurrentScreen('select');
+    } else if (status === 'notFound') {
+      setCurrentScreen('notfound');
+    } else if (status === 'error') {
+      setCurrentScreen('error');
+    }
+  }, [status]);
+
+  React.useEffect(() => {
+    unmountedRef.current = false;
+    return () => {
+      unmountedRef.current = true;
+      stopScan();
+      if (connectingRef.current) {
+        // The sheet was closed while the device was still waiting for the
+        // user (PIN, passphrase, confirmation): release it.
+        apiOneKey.cancel();
+      }
+    };
+  }, [stopScan]);
 
   const importFirstAddress = React.useCallback(async () => {
     const address = await apiOneKey.importFirstAddress({});
@@ -65,12 +114,6 @@ export const ConnectOneKey: React.FC<{
         startNumber: 1,
         hdPath: LedgerHDPathType.BIP44,
       });
-      // navigateDeprecated(RootNames.StackAddress, {
-      //   screen: RootNames.ImportMoreAddress,
-      //   params: {
-      //     type: KEYRING_TYPE.OneKeyKeyring,
-      //   },
-      // });
       showImportMorePopup({
         type: KEYRING_TYPE.OneKeyKeyring,
         brandName: KEYRING_CLASS.HARDWARE.ONEKEY,
@@ -81,30 +124,47 @@ export const ConnectOneKey: React.FC<{
 
   const handleSelectDevice = React.useCallback(
     async ({ id }) => {
-      await apiOneKey.setDeviceConnectId(id);
-
-      if (onSelectDeviceId) {
-        await onSelectDeviceId(id);
+      if (connectingRef.current) {
         return;
       }
-
+      connectingRef.current = true;
       try {
+        await apiOneKey.setDeviceConnectId(id);
+
+        if (onSelectDeviceId) {
+          await onSelectDeviceId(id);
+          return;
+        }
+
         await apiOneKey.unlockDevice();
         await importFirstAddress();
-      } catch (e) {
+      } catch (e: any) {
         console.error('OneKey import error', e);
+        if (unmountedRef.current) {
+          // Closed by the user; the failure is just our own cancel.
+          return;
+        }
+        if (!isOneKeyUserCancelError(getOneKeyErrorCode(e))) {
+          toast.show(
+            getOneKeyErrorMessage(e, t) ||
+              e?.message ||
+              t('page.newAddress.onekey.error.disconnected'),
+          );
+        }
         setCurrentScreen('select');
+      } finally {
+        connectingRef.current = false;
       }
     },
 
-    [importFirstAddress, onSelectDeviceId],
+    [importFirstAddress, onSelectDeviceId, t],
   );
 
-  React.useEffect(() => {
-    if (devices.length) {
-      handleScanDone();
-    }
-  }, [devices, handleScanDone]);
+  const isPermissionError = isOneKeyPermissionError(
+    errorCode,
+    IS_IOS,
+    bluetoothPermission,
+  );
 
   return (
     <AutoLockView as="View" style={{ height: '100%' }}>
@@ -120,8 +180,31 @@ export const ConnectOneKey: React.FC<{
           currentDeviceId={deviceId}
         />
       )}
-      {currentScreen === 'notfound' && <NotFoundDeviceScreen />}
-      {currentScreen === 'connect' && <ConnectDeviceScreen />}
+      {currentScreen === 'notfound' && (
+        <NotFoundDeviceScreen
+          footerButtonText={t('page.newAddress.onekey.notFound.retry')}
+          onFooterButton={handleBleNext}
+        />
+      )}
+      {currentScreen === 'error' && (
+        <NotFoundDeviceScreen
+          titleText={t('page.newAddress.onekey.ble.title')}
+          descriptionText={
+            isPermissionError
+              ? t('page.newAddress.onekey.error.bluetoothPermission')
+              : getOneKeyErrorMessage(error, t) ||
+                t('page.newAddress.onekey.error.scanFailed')
+          }
+          footerButtonText={
+            isPermissionError
+              ? t('page.newAddress.onekey.error.openSettings')
+              : t('page.newAddress.onekey.notFound.retry')
+          }
+          onFooterButton={
+            isPermissionError ? () => Linking.openSettings() : handleBleNext
+          }
+        />
+      )}
     </AutoLockView>
   );
 };

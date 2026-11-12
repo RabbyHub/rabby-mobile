@@ -1326,7 +1326,8 @@
         },
         "notFound": {
           "title": "未找到设备",
-          "description": "开启蓝牙并解锁 OneKey"
+          "description": "开启蓝牙并解锁 OneKey",
+          "retry": "重新搜索"
         },
         "connect": {
           "title": "连接中",
@@ -1341,6 +1342,23 @@
           "title": "输入 PIN",
           "onDevice": "在设备上输入 PIN 码",
           "description": "根据设备屏幕上显示的数字布局输入 PIN 码。"
+        },
+        "error": {
+          "deviceNotFound": "未找到 OneKey。请确认设备已解锁、蓝牙已开启，并靠近手机。",
+          "disconnected": "OneKey 已断开连接。请保持设备解锁并靠近手机后重试。",
+          "deviceBusy": "OneKey 正在处理其他请求。请在设备上完成或取消后重试。",
+          "passphraseDisabled": "设备未开启 Passphrase。请在设备上开启，或重新导入该钱包。",
+          "firmwareTooOld": "OneKey 固件版本过低。请使用 OneKey App 升级后重试。",
+          "bluetoothOff": "蓝牙未开启。请打开蓝牙后重试。",
+          "bluetoothPermission": "Rabby 没有蓝牙权限。请在系统设置中为 Rabby 允许蓝牙（Android 11 及以下为定位）权限后重试。",
+          "locationServicesDisabled": "定位服务已关闭。搜索蓝牙设备需要开启定位服务。",
+          "bluetoothUnsupported": "此手机不支持蓝牙。",
+          "scanFailed": "蓝牙搜索失败，请重试。",
+          "pairingFailed": "蓝牙配对失败。请在手机和 OneKey 上确认配对请求后重试。",
+          "pairingInvalid": "蓝牙配对信息已失效。请在手机蓝牙设置中忽略 OneKey 后重新配对。",
+          "pinInvalid": "PIN 码错误，请重试。",
+          "cancelled": "请求已取消。",
+          "openSettings": "打开设置"
         }
       },
       "seedPhrase": {

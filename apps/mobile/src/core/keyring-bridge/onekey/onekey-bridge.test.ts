@@ -1,9 +1,11 @@
 function setupOneKeyBridgeModule() {
   jest.resetModules();
 
-  const mockInit = jest.fn(async () => undefined);
+  const mockInit = jest.fn(async () => true);
   const mockOn = jest.fn();
   const mockEmit = jest.fn();
+  const mockUiResponse = jest.fn();
+  const mockOpenWalletSession = jest.fn();
 
   jest.doMock('@onekeyfe/hd-ble-sdk', () => ({
     __esModule: true,
@@ -15,9 +17,10 @@ function setupOneKeyBridgeModule() {
       evmSignTypedData: jest.fn(),
       searchDevices: jest.fn(),
       getPassphraseState: jest.fn(),
+      openWalletSession: mockOpenWalletSession,
       evmGetPublicKey: jest.fn(),
-      getFeatures: jest.fn(),
-      uiResponse: jest.fn(),
+      getDeviceState: jest.fn(),
+      uiResponse: mockUiResponse,
       cancel: jest.fn(),
       dispose: jest.fn(),
     },
@@ -62,6 +65,8 @@ function setupOneKeyBridgeModule() {
     mockInit,
     mockOn,
     mockEmit,
+    mockUiResponse,
+    mockOpenWalletSession,
   };
 }
 
@@ -70,6 +75,52 @@ describe('OneKeyBridge', () => {
     jest.dontMock('@onekeyfe/hd-ble-sdk');
     jest.dontMock('@onekeyfe/hd-core');
     jest.dontMock('@/utils/events');
+  });
+
+  it('rejects failed SDK initialization and retries without registering a stale listener', async () => {
+    const { OneKeyBridge, mockInit, mockOn } = setupOneKeyBridgeModule();
+    mockInit.mockResolvedValueOnce(false);
+    const bridge = new OneKeyBridge();
+    await expect(bridge.init()).rejects.toThrow(
+      'OneKey SDK initialization failed',
+    );
+    expect(mockOn).not.toHaveBeenCalled();
+    await expect(bridge.init()).resolves.toBeUndefined();
+    expect(mockOn).toHaveBeenCalledTimes(1);
+  });
+
+  it('wires the SDK wallet-session API to the bridge', () => {
+    const { OneKeyBridge, mockOpenWalletSession } = setupOneKeyBridgeModule();
+    const bridge = new OneKeyBridge();
+
+    expect(bridge.openWalletSession).toBe(mockOpenWalletSession);
+  });
+
+  it('echoes the SDK correlation when responding to device-side PIN and passphrase requests', () => {
+    const { OneKeyBridge, mockUiResponse } = setupOneKeyBridgeModule();
+    const bridge = new OneKeyBridge();
+    const responseCorrelation = {
+      interactionId: 'interaction-id',
+      deviceId: 'correlation-device-id',
+    };
+
+    bridge.receivePin({ switchOnDevice: true, responseCorrelation });
+    expect(mockUiResponse).toHaveBeenLastCalledWith({
+      ...responseCorrelation,
+      type: 'RECEIVE_PIN',
+      payload: '@@ONEKEY_INPUT_PIN_IN_DEVICE',
+    });
+
+    bridge.receivePassphrase({
+      passphrase: '',
+      switchOnDevice: true,
+      responseCorrelation,
+    });
+    expect(mockUiResponse).toHaveBeenLastCalledWith({
+      ...responseCorrelation,
+      type: 'RECEIVE_PASSPHRASE',
+      payload: { value: '', passphraseOnDevice: true, save: true },
+    });
   });
 
   it('initializes SDK listeners once and forwards device-side passphrase events', async () => {

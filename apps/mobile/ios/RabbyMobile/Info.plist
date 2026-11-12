@@ -78,9 +78,9 @@
 		</dict>
 	</dict>
 	<key>NSBluetoothAlwaysUsageDescription</key>
-	<string>This allows Rabby to find and pair a Ledger Nano X</string>
+	<string>This allows Rabby to find and pair Bluetooth hardware wallets such as Ledger Nano X and OneKey</string>
 	<key>NSBluetoothPeripheralUsageDescription</key>
-	<string>This allows Rabby to find and pair a Ledger Nano X</string>
+	<string>This allows Rabby to find and pair Bluetooth hardware wallets such as Ledger Nano X and OneKey</string>
 	<key>NSCameraUsageDescription</key>
 	<string>$(PRODUCT_NAME) needs camera access to scan QR codes.</string>
 	<key>NSFaceIDUsageDescription</key>
