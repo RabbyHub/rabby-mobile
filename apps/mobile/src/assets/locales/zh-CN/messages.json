@@ -3466,7 +3466,7 @@
       "sellN_one": "卖出 {{count}} 个 Meme",
       "selectToBuy": "选择要买入的 Meme",
       "selectToSell": "选择要卖出的 Meme",
-      "maxPriceImpact": "最大价格影响",
+      "maxPriceImpact": "最大价差",
       "unsupportedAddressType": "不支持该地址类型",
       "accountChanged": "地址已变更，请重新开始",
       "addressSwitchUnsupported": "此页面不支持切换地址。",

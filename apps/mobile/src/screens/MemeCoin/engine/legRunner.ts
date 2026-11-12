@@ -88,6 +88,9 @@ export const createLegRunner = (deps: LegRunnerDeps): LegRunner => {
         await gate.wait();
         await signer.prefetch(groups[i]);
         await gate.wait();
+        // Only signing keeps the wallet unlocked, so waits on a slow tx cannot
+        // hold off the auto-lock forever.
+        deps.refreshAutoLock();
         const hashes = await signer.openDirect(groups[i]);
         txHash = hashes[hashes.length - 1] || '';
         if (!txHash) {
@@ -118,7 +121,6 @@ export const createLegRunner = (deps: LegRunnerDeps): LegRunner => {
   return {
     async prepareAndBroadcast(leg, gate) {
       await gate.wait();
-      deps.refreshAutoLock();
       const [payToken, receiveToken] = await Promise.all([
         deps.getToken(leg.pay.chain, leg.pay.id),
         deps.getToken(leg.receive.chain, leg.receive.id),
@@ -170,13 +172,17 @@ export const createLegRunner = (deps: LegRunnerDeps): LegRunner => {
       }
       return result;
     },
-    waitForReceipt: (leg, txHash, gate) =>
+    waitForReceipt: (leg, txHash, gate, isAbandoned) =>
       deps.waitForTxCompleted({
         hash: txHash,
         chainServerId: leg.pay.chain,
-        isCancelled: gate.isStopped,
+        isCancelled: () => gate.isStopped() || !!isAbandoned?.(),
       }),
-    waitForArrival: (leg, txHash, gate) =>
-      deps.waitForBridgeArrival({ leg, txHash, isCancelled: gate.isStopped }),
+    waitForArrival: (leg, txHash, gate, isAbandoned) =>
+      deps.waitForBridgeArrival({
+        leg,
+        txHash,
+        isCancelled: () => gate.isStopped() || !!isAbandoned?.(),
+      }),
   };
 };

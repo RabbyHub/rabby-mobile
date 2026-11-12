@@ -1,12 +1,10 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { AppState } from 'react-native';
 import { useMemoizedFn } from 'ahooks';
-import { uiRefreshTimeout } from '@/core/apis/autoLock';
 import type { Account } from '@/core/startupServices/preference';
 import { zCreate } from '@/core/utils/reexports';
 import { useQuoteMethods } from '@/screens/Swap/hooks/quote';
 import { useSwapSupportedDexList } from '@/screens/Swap/hooks/settings';
-import { AUTO_LOCK_REFRESH_INTERVAL_MS } from '../engine/constants';
 import { createProductionLegRunnerDeps } from '../engine/deps';
 import {
   createMemeTradeExecutor,
@@ -124,27 +122,6 @@ export const useMemeTradeTask = ({
     });
     return () => subscription.remove();
   }, [lifecycle, openExitDialog, store]);
-
-  useEffect(() => {
-    let timer: ReturnType<typeof setInterval> | undefined;
-    const apply = (status: MemeTradeTaskStatus) => {
-      if (status === 'running' && !timer) {
-        timer = setInterval(uiRefreshTimeout, AUTO_LOCK_REFRESH_INTERVAL_MS);
-      }
-      if (status !== 'running' && timer) {
-        clearInterval(timer);
-        timer = undefined;
-      }
-    };
-    apply(store.getState().status);
-    const unsubscribe = store.subscribe(s => apply(s.status));
-    return () => {
-      unsubscribe();
-      if (timer) {
-        clearInterval(timer);
-      }
-    };
-  }, [store]);
 
   // Only stop here: a leg already inside openDirect finishes broadcasting (spec §5.6);
   // signers are released by onFinished once every leg has settled.

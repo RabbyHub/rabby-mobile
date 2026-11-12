@@ -41,8 +41,9 @@ export const useEdgeSwipeBack = (active: boolean, onBack: () => void) => {
         .activeOffsetX(12)
         .failOffsetY([-12, 12])
         .runOnJS(true)
-        .onEnd(event => {
-          if (isEdgeSwipeBack(event)) {
+        // onEnd also runs when an active swipe is cancelled or fails
+        .onEnd((event, success) => {
+          if (success && isEdgeSwipeBack(event)) {
             onBack();
           }
         }),

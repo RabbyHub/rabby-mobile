@@ -1,5 +1,6 @@
 import { AppState } from 'react-native';
 import { act, renderHook } from '@testing-library/react-native';
+import { uiRefreshTimeout } from '@/core/apis/autoLock';
 import { getLegDisplayStatuses } from '../engine/displayStatus';
 import type { BroadcastResult, LegRunner } from '../engine/executor';
 import type { ExecLeg } from '../engine/types';
@@ -111,6 +112,27 @@ describe('useMemeTradeTask manual retry', () => {
 
     holds.a.release();
     await act(async () => void (await flush()));
+  });
+
+  it('leaves the auto-lock alone while a run is waiting', async () => {
+    holds.a = deferred();
+    prepareResults.a = [ok];
+    const { hook, state, settle } = setup([leg('a')]);
+    jest.useFakeTimers();
+    try {
+      act(() => hook.result.current.start());
+      expect(state().status).toBe('running');
+
+      act(() => {
+        jest.advanceTimersByTime(10 * 60 * 1000);
+      });
+      expect(uiRefreshTimeout).not.toHaveBeenCalled();
+    } finally {
+      jest.useRealTimers();
+    }
+    holds.a.release();
+    await settle();
+    expect(state().status).toBe('finished');
   });
 
   it('asks Continue / Stop when the app leaves the foreground mid-run, and stays paused', async () => {

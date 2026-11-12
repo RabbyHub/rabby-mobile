@@ -1,5 +1,13 @@
 import 'react-native-gesture-handler/jestSetup';
-import { renderHook } from '@testing-library/react-native';
+import { createElement } from 'react';
+import { View } from 'react-native';
+import { render, renderHook } from '@testing-library/react-native';
+import {
+  GestureDetector,
+  State,
+  type PanGesture,
+} from 'react-native-gesture-handler';
+import { fireGestureHandler } from 'react-native-gesture-handler/jest-utils';
 import { isEdgeSwipeBack, useEdgeSwipeBack } from './useEdgeSwipeBack';
 
 const mockRootSetOptions = jest.fn();
@@ -52,6 +60,30 @@ describe('useEdgeSwipeBack', () => {
     mockIsIOS = false;
     renderHook(() => useEdgeSwipeBack(true, jest.fn()));
     expect(mockRootSetOptions).not.toHaveBeenCalled();
+  });
+
+  it('goes back only when the swipe ends, not when it is cancelled or fails', () => {
+    const onBack = jest.fn();
+    let gesture!: ReturnType<typeof useEdgeSwipeBack>;
+    // events only reach a gesture attached to a detector
+    const Harness = () => {
+      gesture = useEdgeSwipeBack(true, onBack);
+      return createElement(GestureDetector, { gesture }, createElement(View));
+    };
+    render(createElement(Harness));
+    const swipe = (last: State) =>
+      fireGestureHandler<PanGesture>(gesture, [
+        { state: State.BEGAN, translationX: 0 },
+        { state: State.ACTIVE, translationX: 80 },
+        { state: last, translationX: 80 },
+      ]);
+
+    swipe(State.CANCELLED);
+    swipe(State.FAILED);
+    expect(onBack).not.toHaveBeenCalled();
+
+    swipe(State.END);
+    expect(onBack).toHaveBeenCalledTimes(1);
   });
 
   it('counts a long or fast swipe from the edge as back', () => {
