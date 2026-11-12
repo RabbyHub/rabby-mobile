@@ -15,7 +15,10 @@ import {
   useAddrChainLength,
   useAddrTop3Chains,
 } from '../../useChainInfo';
-import { ChainSelector } from '../AssetRenderItems/SectionHeaders';
+import {
+  CHAIN_SELECTOR_SLOT_WIDTH,
+  ChainSelector,
+} from '../AssetRenderItems/SectionHeaders';
 import {
   apisSingleHome,
   useSingleHomeAddress,
@@ -50,6 +53,7 @@ function SideChainSelector({
   onChainClick?: React.ComponentProps<typeof ChainSelector>['onChainClick'];
   chain?: string;
 }) {
+  const { styles } = useTheme2024({ getStyle: getTabItemStyle });
   const { currentAddress } = useSingleHomeAddress();
   const { top3Chains } = useAddrTop3Chains(currentAddress);
   const { chainLength } = useAddrChainLength(currentAddress);
@@ -78,20 +82,18 @@ function SideChainSelector({
     pending,
   });
 
-  if (!visible) {
-    return null;
-  }
-
   return (
-    <>
-      <ChainSelector
-        key={top3Chains.join(',')}
-        top3Chains={top3Chains}
-        onChainClick={onChainClick}
-        chainServerId={chain}
-        loading={pending}
-      />
-    </>
+    <View style={styles.chainSelectorSlot}>
+      {visible ? (
+        <ChainSelector
+          key={top3Chains.join(',')}
+          top3Chains={top3Chains}
+          onChainClick={onChainClick}
+          chainServerId={chain}
+          loading={pending}
+        />
+      ) : null}
+    </View>
   );
 }
 
@@ -235,6 +237,12 @@ const getTabItemStyle = createGetStyles2024(() => {
     },
     indicator: {
       height: 0,
+    },
+    chainSelectorSlot: {
+      width: CHAIN_SELECTOR_SLOT_WIDTH,
+      flexShrink: 0,
+      alignItems: 'flex-end',
+      justifyContent: 'center',
     },
   };
 });
