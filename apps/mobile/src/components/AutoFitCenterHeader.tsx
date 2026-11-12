@@ -6,10 +6,13 @@ import { AutoFitHeaderTitle } from '@/components/AutoFitHeaderTitle';
 import { HeaderBackButton } from '@/hooks/navigation';
 import { useTheme2024 } from '@/hooks/theme';
 import { IS_IOS } from '@/core/native/utils';
+import { ScreenLayouts } from '@/constant/layout';
 import { createGetStyles2024 } from '@/utils/styles';
 
-// Matches the row height used by the other JS-owned headers in this stack.
-const HEADER_CONTENT_HEIGHT = 48;
+// Match the container's header offset (`ScreenLayouts.headerAreaHeight`), so a
+// custom header row lands exactly where the native header + safeOffHeader pair
+// did and the content does not gain extra top padding.
+const HEADER_CONTENT_HEIGHT = ScreenLayouts.headerAreaHeight;
 // iOS mirrors the native bar item width; Android only needs the 24pt chevron,
 // and the extra 20pt per side is what kept English titles from fitting at the
 // base 20pt font (QA 1384 follow-up: Android shrank the title to 16pt).
