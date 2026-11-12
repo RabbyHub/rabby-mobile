@@ -129,7 +129,9 @@ const styles = {
     justifyContent: 'center',
   } as ViewStyle,
   title: {
-    fontWeight: '900',
+    // Match the online header's Rounded Heavy (800). 900 is Rounded Black and
+    // reads noticeably bolder on Android (QA 1388).
+    fontWeight: '800',
     fontFamily: 'SF Pro Rounded',
   } as TextStyle,
   measure: {
