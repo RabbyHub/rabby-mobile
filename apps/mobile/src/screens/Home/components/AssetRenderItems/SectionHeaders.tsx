@@ -16,8 +16,14 @@ import { findChainByServerID } from '@/utils/chain';
 import { Text } from '@/components/Typography';
 import { CustomSkeleton } from '@/components2024/CustomSkeleton';
 
-/** Number of chain icons the filter pill reserves space for. */
-const CHAIN_ICON_SLOTS = 3;
+/**
+ * Width reserved by the Home tab row for the chain filter. The selector itself
+ * stays content-sized so it also works in the Send token sheet, but Home keeps
+ * this slot fixed so the tab labels do not reflow while the projection loads.
+ * 96pt covers three 20pt icon slots (the two trailing slots overlap by 8pt),
+ * the horizontal padding, the "All" label and the 16pt arrow.
+ */
+export const CHAIN_SELECTOR_SLOT_WIDTH = 96;
 export const ChainSelector = ({
   top3Chains,
   onChainClick,
@@ -41,6 +47,7 @@ export const ChainSelector = ({
   });
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const isLoading = loading;
+  const visibleChains = (top3Chains ?? []).slice(0, 3);
 
   return chainInfo?.id ? (
     <View style={StyleSheet.flatten([styles.chainContainer, style])}>
@@ -59,35 +66,30 @@ export const ChainSelector = ({
       style={StyleSheet.flatten([styles.chainContainer, style])}
       onPress={() => onChainClick?.(false)}>
       <View style={styles.chainIconsContainer}>
-        {/* Always keep three icon slots so the pill does not shift when the
-            projection fills the real chain icons in. */}
-        {Array.from({ length: CHAIN_ICON_SLOTS }).map((_, index) => {
-          const chainId = top3Chains?.[index];
-          return (
-            <View
-              key={chainId || `chain-placeholder-${index}`}
-              style={StyleSheet.flatten([
-                styles.chainIconContainer,
-                !chainId && styles.chainIconPlaceholder,
-                { marginLeft: index === 0 ? 0 : -8 },
-              ])}>
-              {chainId ? (
-                <ChainIconImage
-                  containerStyle={styles.chainIcon}
-                  size={18}
-                  chainEnum={findChainByServerID(chainId)?.enum}
-                />
-              ) : isLoading ? (
-                <CustomSkeleton
-                  circle
-                  width={18}
-                  height={18}
-                  style={styles.chainIconSkeleton}
-                />
-              ) : null}
-            </View>
-          );
-        })}
+        {visibleChains.map((chainId, index) => (
+          <View
+            key={chainId}
+            style={StyleSheet.flatten([
+              styles.chainIconContainer,
+              { marginLeft: index === 0 ? 0 : -8 },
+            ])}>
+            <ChainIconImage
+              containerStyle={styles.chainIcon}
+              size={18}
+              chainEnum={findChainByServerID(chainId)?.enum}
+            />
+          </View>
+        ))}
+        {isLoading && !visibleChains.length ? (
+          <View style={styles.chainIconContainer}>
+            <CustomSkeleton
+              circle
+              width={18}
+              height={18}
+              style={styles.chainIconSkeleton}
+            />
+          </View>
+        ) : null}
       </View>
       <Text style={styles.countChain}>All</Text>
       <ArrowRightSVG
@@ -147,9 +149,6 @@ const getStyle = createGetStyles2024(ctx => ({
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  chainIconPlaceholder: {
-    backgroundColor: 'transparent',
   },
   chainIconSkeleton: {
     backgroundColor: ctx.colors2024['neutral-line'],

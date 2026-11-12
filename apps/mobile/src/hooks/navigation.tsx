@@ -387,6 +387,8 @@ const renderNativeBackItems: NonNullable<
     // A 44x24 image (chevron drawn in the leading 24pt) keeps the standard
     // 44pt tap target while making the glyph start at the item's leading edge,
     // which is the same 16pt inset the JS header used. No offset needed.
+    // Keep the PNG alpha anti-aliased: a hard 0/255 alpha export makes UIKit
+    // render the diagonal stroke with visible stair-steps (QA 1359).
     icon: {
       type: 'image',
       source: require('@/assets/icons/header/back-cc-wide.png'),
