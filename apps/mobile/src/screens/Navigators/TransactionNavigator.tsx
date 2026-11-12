@@ -230,12 +230,17 @@ export default function TransactionNavigator() {
         options={{
           title: 'Transactions',
           headerTitle: ctx => {
+            // The native back item is wider than the old JS header button, so
+            // UIKit lays this title container out ~12pt right of the screen
+            // centre (QA 1360). Pull the content back.
             return (
-              <ScreenHeaderAccountSwitcher
-                forScene="History"
-                titleText={ctx.children}
-                disableSwitch
-              />
+              <View style={{ transform: [{ translateX: -12 }] }}>
+                <ScreenHeaderAccountSwitcher
+                  forScene="History"
+                  titleText={ctx.children}
+                  disableSwitch
+                />
+              </View>
             );
           },
           headerStyle: {
