@@ -1645,6 +1645,7 @@ const Swap = ({
               <View style={styles.swapTokenCard}>
                 <SwapTokenItem
                   disabled={!isSupportedChain}
+                  sceneActive={sceneActive}
                   inSufficient={inSufficient}
                   slider={slider}
                   onChangeSlider={onChangeSlider}

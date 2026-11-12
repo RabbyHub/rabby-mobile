@@ -1702,6 +1702,7 @@ export const BridgeContent = ({
             <View style={styles.cardContainer}>
               <BridgeToken
                 type="from"
+                sceneActive={sceneActive}
                 slider={slider}
                 onChangeSlider={onChangeSlider}
                 disabled={!isSupportedChain}

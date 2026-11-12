@@ -53,6 +53,7 @@ interface SwapTokenItemProps {
   currentQuote?: QuoteProvider;
   skeletonLoading?: boolean;
   disabled?: boolean;
+  sceneActive?: boolean;
 }
 const SwapTokenItemInner = (props: SwapTokenItemProps) => {
   const {
@@ -70,6 +71,7 @@ const SwapTokenItemInner = (props: SwapTokenItemProps) => {
     currentQuote,
     skeletonLoading,
     disabled,
+    sceneActive = true,
   } = props;
   const { t } = useTranslation();
 
@@ -182,7 +184,8 @@ const SwapTokenItemInner = (props: SwapTokenItemProps) => {
         <Text style={styles.subTitle}>
           {isFrom ? t('page.swap.from') : t('page.swap.to')}
         </Text>
-        {isFrom && (
+        {/* Unmount native gestures before Fabric recycles the hidden scene. */}
+        {isFrom && sceneActive && (
           <View style={styles.sliderContainer}>
             <View
               ref={sliderTrackRef}
