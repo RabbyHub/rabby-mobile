@@ -59,6 +59,7 @@ async function sendMessage({
   const platformName = platform
     .replace('android', 'Android')
     .replace('ios', 'iOS');
+  const isSignOnly = process.env.RABBY_MOBILE_SIGN_ONLY === 'true';
 
   let body = {
     timestamp: timeSec,
@@ -93,6 +94,10 @@ async function sendMessage({
             triggers.length && [
               { tag: 'text', text: `Triggers: ` },
               { tag: 'text', text: triggers.join(', ') },
+            ],
+            isSignOnly && [{ tag: 'text', text: `---` }],
+            isSignOnly && [
+              { tag: 'text', text: `本次任务：本地构建 + 云端仅签名。` },
             ],
           ].filter(Boolean),
         },
@@ -164,6 +169,24 @@ async function sendMessage({
               { tag: 'text', text: `Triggers: ` },
               { tag: 'text', text: triggers.join(', ') },
             ],
+            isSignOnly && [{ tag: 'text', text: `---` }],
+            isSignOnly && [
+              { tag: 'text', text: `本次任务：本地构建 + 云端仅签名。` },
+            ],
+            isSignOnly &&
+              process.env.RABBY_MOBILE_SIGN_ONLY_SOURCE_SHA && [
+                {
+                  tag: 'text',
+                  text: `Source: ${process.env.RABBY_MOBILE_SIGN_ONLY_SOURCE_SHA}`,
+                },
+              ],
+            isSignOnly &&
+              process.env.RABBY_MOBILE_SIGN_ONLY_SOURCE_DIRTY === 'true' && [
+                {
+                  tag: 'text',
+                  text: `注意: 本地产物构建时工作区包含未提交改动。`,
+                },
+              ],
           ].filter(Boolean),
         },
       },

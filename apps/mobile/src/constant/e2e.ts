@@ -10,7 +10,9 @@ export const E2E_ID = {
     setPasswordBiometrics: 'e2e.onboarding.set-password.biometrics',
     setPasswordBiometricsOn: 'e2e.onboarding.set-password.biometrics.on',
     setPasswordBiometricsOff: 'e2e.onboarding.set-password.biometrics.off',
-    setPasswordAgreement: 'e2e.onboarding.set-password.agreement',
+    setPasswordDataAnalysis: 'e2e.onboarding.set-password.data-analysis',
+    setPasswordDataAnalysisOn: 'e2e.onboarding.set-password.data-analysis.on',
+    setPasswordDataAnalysisOff: 'e2e.onboarding.set-password.data-analysis.off',
     setPasswordSubmit: 'e2e.onboarding.set-password.submit',
     importSuccessPrimary: 'e2e.onboarding.import-success.primary',
   },
@@ -48,6 +50,8 @@ export const E2E_ID = {
   },
   settings: {
     uiPlayground: 'e2e.settings.ui-playground',
+    dataAnalysisInfo: 'e2e.settings.data-analysis.info',
+    dataAnalysisInfoConfirm: 'e2e.settings.data-analysis.info.confirm',
   },
   send: {
     screen: 'e2e.send.screen',

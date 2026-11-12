@@ -832,7 +832,7 @@
         "queued": "대기 중",
         "pending": "대기 중",
         "completed": "완료됨",
-        "refund": "환불",
+        "refund": "환불됨",
         "waiting": "대상 체인의 트랜잭션 대기 중",
         "goBack": "돌아가기",
         "bridgeAgain": "다시 브리지",
@@ -1260,16 +1260,12 @@
     },
     "createPassword": {
       "confirmError": "비밀번호가 일치하지 않습니다.",
-      "PrivacyPolicy": "개인정보 처리방침",
-      "and": "그리고",
       "Newpassword": "비밀번호 입력",
       "ConfirmPassword": "비밀번호 확인",
       "biometricsFail": "생체 인증 활성화 실패",
       "settingUp": "비밀번호 설정",
-      "agreeToTerms": "다음을 읽고 동의합니다",
       "confirmPasswordPlaceholder": "비밀번호 확인",
       "title": "비밀번호 설정",
-      "termOfUse": "이용 약관",
       "passwordMin": "비밀번호는 최소 8자 이상이어야 합니다.",
       "phoneNotSupport": "고객님의 휴대전화는 {{ bioType }}를 지원하지 않습니다",
       "enable": "{{ bioType }} 활성화",
@@ -1282,7 +1278,9 @@
       "agree": "저는 <1/> <2>이용약관</2>을 읽고 동의합니다.",
       "passwordPlaceholder": "비밀번호는 최소 8자 이상이어야 합니다.",
       "confirmModalDesc": "귀하의 비밀번호를 적절히 보관하십시오. 한 번 잃어버리면 Rabby에서는 변경하거나 복구할 수 없습니다.",
-      "setWallet": "지갑 설정"
+      "setWallet": "지갑 설정",
+      "dataAnalysisDesc": "익명 사용 데이터를 공유하여 Rabby 개선에 도움을 주세요. 수집된 데이터는 사용자 또는 사용자의 계정과 연결되지 않습니다. 설정에서 언제든지 변경할 수 있습니다.",
+      "agreeByContinuing": "계속 진행하면 <terms>이용 약관</terms>에 동의하고 <privacy>개인정보 처리방침</privacy>을 확인한 것으로 간주됩니다."
     },
     "backupSeedPhrase": {
       "qrCodePopupTitle": "QR 코드",
@@ -1869,7 +1867,8 @@
       "currency": "통화",
       "screenshotReportSwitch": "버그 보고를 위한 스크린샷",
       "searchCurrency": "통화 검색",
-      "dataAnalysis": "데이터 분석",
+      "dataAnalysis": "Rabby 개선에 참여하기",
+      "dataAnalysisDesc": "익명 사용 데이터를 공유하여 Rabby 개선에 도움을 주세요. 수집된 데이터는 사용자 또는 사용자의 계정과 연결되지 않습니다.",
       "bugReportChat": "채팅으로 피드백 보내기",
       "features": "기능",
       "manageWallets": "지갑 관리"
@@ -1916,6 +1915,7 @@
       "emptyWhitelistContent": "안전한 주소를 화이트리스트에 추가하여 빠른 전송 - 다음번에는 확인이 필요하지 않습니다.",
       "SendHistory": "전송 내역",
       "enterOrSearchAddress": "주소 입력 또는 검색",
+      "resolvingAddressName": "주소 조회 중...",
       "dividerWatchOnlyWallets": "단순 조회 주소"
     },
     "confirmAddress": {
@@ -3540,13 +3540,6 @@
         "proceed": "진행",
         "cancel": "취소"
       }
-    },
-    "ReserveGasPopup": {
-      "normal": "느림",
-      "fast": "보통",
-      "title": "가스 예약",
-      "instant": "빠름",
-      "doNotReserve": "Gas를 예약하지 마세요"
     },
     "AuthenticationModals": {
       "processBiometrics": {

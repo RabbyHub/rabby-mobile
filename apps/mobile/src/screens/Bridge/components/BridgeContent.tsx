@@ -73,11 +73,7 @@ import { Text } from '@/components/Typography';
 import { MarketClosedTip } from '@/components/Token/MarketClosedTip';
 import { storeApiExpSettingData } from '@/hooks/appSettings';
 import type { FormAmountMode } from '@/utils/form';
-import {
-  FormValuesOnSubmit,
-  createAmountComparer,
-  shouldIgnoreAmountChangeInMaxMode,
-} from '@/utils/form';
+import { FormValuesOnSubmit, createAmountComparer } from '@/utils/form';
 import { tokenAmountBn } from '@/screens/Swap/utils';
 import { buildTx as buildBridgeTx } from '@rabby-wallet/rabby-bridge';
 import { useMiniSignerEffectPause } from '@/hooks/useMiniSignerEffectPause';
@@ -624,7 +620,6 @@ export const BridgeContent = ({
   const {
     isSupportedChain,
     data: externalDapps,
-    loading: externalDappsLoading,
     openTab: _openTab,
   } = useExternalSwapBridgeDapps(chains, 'bridge', sceneActive);
   const openTab = useMemoizedFn((url: string) => {

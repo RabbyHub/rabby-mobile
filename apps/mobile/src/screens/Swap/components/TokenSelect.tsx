@@ -650,7 +650,7 @@ const TokenSelect = ({
     </>
   );
 };
-const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
+const getStyle = createGetStyles2024(({ colors2024 }) => ({
   wrapper: {
     borderRadius: 100,
     // TODO: backgroundColor: colors2024['neutral-card-2'],

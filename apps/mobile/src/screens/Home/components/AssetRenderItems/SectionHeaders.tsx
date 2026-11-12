@@ -15,8 +15,6 @@ import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { findChainByServerID } from '@/utils/chain';
 import { Text } from '@/components/Typography';
 
-export type AsssetKey = 'token' | 'defi' | 'nft';
-
 export const ChainSelector = ({
   top3Chains,
   onChainClick,

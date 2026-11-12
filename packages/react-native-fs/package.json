@@ -22,8 +22,8 @@
   "author": "Johannes Lumpe <johannes@lum.pe> (https://github.com/johanneslumpe)",
   "license": "MIT",
   "dependencies": {
-    "base-64": "^0.1.0",
-    "utf8": "^3.0.0"
+    "base-64": "0.1.0",
+    "utf8": "3.0.0"
   },
   "peerDependencies": {
     "react-native": "*",
