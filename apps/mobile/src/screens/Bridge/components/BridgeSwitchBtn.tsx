@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useMemo, useRef, useState } from 'react';
+import React, { FC, useEffect, useMemo, useRef } from 'react';
 import {
   Animated,
   Easing,
@@ -43,16 +43,7 @@ const BridgeSwitchBtn: FC<BridgeSwitchBtnProps> = ({
   style,
   ...others
 }) => {
-  const [isPressed, setIsPressed] = useState(false);
   const { colors2024, isLight } = useTheme2024();
-
-  const handlePressIn = () => {
-    setIsPressed(true);
-  };
-
-  const handlePressOut = () => {
-    setIsPressed(false);
-  };
 
   const handlePress = () => {
     if (onPress) {
@@ -62,8 +53,6 @@ const BridgeSwitchBtn: FC<BridgeSwitchBtnProps> = ({
 
   return (
     <TouchableOpacity
-      onPressIn={handlePressIn}
-      onPressOut={handlePressOut}
       onPress={handlePress}
       style={[styles.button, style]}
       {...others}>

@@ -29,6 +29,7 @@ import type { Account } from '@/core/startupServices/preference';
 import { useRoute } from '@react-navigation/native';
 import type { GetNestedScreenRouteProp } from '@/navigation-type';
 const isAndroid = Platform.OS === 'android';
+const TAB_BAR_BORDER_WIDTH = 0.5;
 
 const ApprovalScreenContainer: React.FC<{
   account: Account;
@@ -60,8 +61,8 @@ const ApprovalScreenContainer: React.FC<{
     props => (
       <CustomMaterialTabBar
         {...props}
-        scrollEnabled={false}
         style={styles.tabBarWrap}
+        contentContainerStyle={styles.tabBarContent}
         indicatorStyle={styles.indicator}
         tabStyle={styles.tabBar}
         TabItemComponent={renderTabItem}
@@ -76,6 +77,7 @@ const ApprovalScreenContainer: React.FC<{
       styles.indicator,
       styles.label,
       styles.tabBar,
+      styles.tabBarContent,
       styles.tabBarWrap,
     ],
   );
@@ -184,13 +186,19 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     borderColor: colors2024['neutral-line'],
   },
   tabBar: {
-    height: ApprovalsLayouts.tabbarHeight,
-    backgroundColor: colors2024['neutral-bg-1'],
-    borderBottomWidth: 0.5,
-    borderColor: colors2024['neutral-line'],
+    // Tabs are sized by their labels now, so the bottom line lives on the
+    // scroll container; keep the whole bar at tabbarHeight.
+    height: ApprovalsLayouts.tabbarHeight - TAB_BAR_BORDER_WIDTH,
+    paddingHorizontal: 0,
   },
   tabBarWrap: {
     backgroundColor: colors2024['neutral-bg-1'],
+    borderBottomWidth: TAB_BAR_BORDER_WIDTH,
+    borderColor: colors2024['neutral-line'],
+  },
+  tabBarContent: {
+    paddingHorizontal: 16,
+    columnGap: 20,
   },
   label: {
     fontSize: 16,

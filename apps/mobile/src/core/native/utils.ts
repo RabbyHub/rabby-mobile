@@ -73,6 +73,10 @@ interface NativeModulesStatic {
      * @param filePath
      */
     iosExcludeFileFromBackup?(filePath: string): Promise<boolean>;
+    decodeQRCodeFromImageFile(
+      fileUri: string,
+      deleteAfterDecode: boolean,
+    ): Promise<string[]>;
     // /**
     //  * @description try to set a directory's files(including files in subdirectories) to not be backed up by iCloud
     //  */

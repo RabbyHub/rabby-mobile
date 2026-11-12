@@ -40,6 +40,7 @@ import {
   RcManageWallet,
 } from '@/assets/icons/settings';
 import RcFooterLogo from '@/assets/icons/settings/footer-logo.svg';
+import RcIconInfoFillCC from '@/assets2024/icons/common/info-fill-cc.svg';
 
 import {
   APP_RUNTIME_ENV,
@@ -50,6 +51,7 @@ import {
   IS_METRO_CACHE_ENABLED,
 } from '@/constant/env';
 import { E2E_ID } from '@/constant/e2e';
+import { makeTestIDProps } from '@/utils/makeTestIDProps';
 import { isNonPublicProductionEnv, NEED_DEVSETTINGBLOCKS } from '@/constant';
 import { RootNames } from '@/constant/layout';
 import {
@@ -138,6 +140,7 @@ import { abortAllSyncTasks } from '@/databases/sync/_task';
 import { resetUpdateHistoryTime } from '@/hooks/historyTokenDict';
 import { sendRequest } from '@/core/apis/sendRequest';
 import { ClearPendingPopup } from './components/ClearPendingPopup';
+import { DataAnalysisInfoPopup } from './components/DataAnalysisInfoPopup';
 import { RemovedTokenSettingItem } from './components/RemovedTokenSettingItem';
 import { OpenApiPopup } from './components/OpenApiPopup';
 import {
@@ -515,12 +518,17 @@ function ClearAppCacheSettingItem() {
   );
 }
 
+// The info icon is 14pt wide; the slop gives it a usable touch target without
+// reaching the row's switch.
+const DATA_ANALYSIS_INFO_HIT_SLOP = { top: 12, bottom: 12, left: 8, right: 12 };
+
 function SettingsBlocks() {
   const { colors, styles, isLight, colors2024 } = useTheme2024({
     getStyle: getStyles,
   });
 
   const [isShowClearPendingPopup, setIsShowClearPendingPopup] = useState(false);
+  const [isShowDataAnalysisInfo, setIsShowDataAnalysisInfo] = useState(false);
 
   const { shouldRedirectToSetPasswordBefore } = useSetPasswordFirst();
   // const selectAutolockTimeRef = useRef<BottomSheetModal>(null);
@@ -832,6 +840,16 @@ function SettingsBlocks() {
           },
           {
             label: t('page.setting.dataAnalysis'),
+            labelSuffix: (
+              <TouchableOpacity
+                hitSlop={DATA_ANALYSIS_INFO_HIT_SLOP}
+                onPress={() => {
+                  setIsShowDataAnalysisInfo(true);
+                }}
+                {...makeTestIDProps(E2E_ID.settings.dataAnalysisInfo)}>
+                <RcIconInfoFillCC color={colors2024['neutral-info']} />
+              </TouchableOpacity>
+            ),
             icon: RcDataAnalysis,
             onPress: () => {
               toggleDataAnalysisRef?.current?.toggle();
@@ -1000,6 +1018,13 @@ function SettingsBlocks() {
         }}
         onConfirm={() => {
           setIsShowClearPendingPopup(false);
+        }}
+      />
+
+      <DataAnalysisInfoPopup
+        visible={isShowDataAnalysisInfo}
+        onClose={() => {
+          setIsShowDataAnalysisInfo(false);
         }}
       />
 

@@ -269,8 +269,6 @@ export const useBridge = (
 
   const slippageObj = useBridgeSlippage();
 
-  const [recommendFromToken, setRecommendFromToken] = useState<TokenItem>();
-
   const [selectedBridgeQuote, setOriSelectedBridgeQuote] = useState<
     SelectedBridgeQuote | undefined
   >();
@@ -751,27 +749,6 @@ export const useBridge = (
     handleSlider100,
   ]);
 
-  const fillRecommendFromToken = useCallback(() => {
-    if (recommendFromToken) {
-      const targetChain = findChainByServerID(recommendFromToken?.chain);
-      if (targetChain) {
-        wrappedSwitchFromChain(targetChain.enum, false);
-        setFromToken(recommendFromToken);
-        setAmount('');
-        setSlider(0);
-        setUseSlider(false);
-        setIsDraggingSlider(false);
-      }
-    }
-  }, [
-    recommendFromToken,
-    wrappedSwitchFromChain,
-    setFromToken,
-    setSlider,
-    setUseSlider,
-    setIsDraggingSlider,
-  ]);
-
   const fetchIdRef = useRef(0);
   const pendingQuoteUpdatesRef = useRef(new Map<string, SelectedBridgeQuote>());
   const quoteFlushFrameRef = useRef<number | null>(null);
@@ -909,26 +886,19 @@ export const useBridge = (
           };
         };
 
-        const getQUoteV2 = async (alternativeToken?: TokenItem) =>
+        const getQUoteV2 = async () =>
           await Promise.allSettled(
             aggregatorsList.map(async bridgeAggregator => {
               const data = await getBridgeQuoteList(
                 bridgeAggregator.id,
                 {
                   userAddress,
-                  fromChainId: alternativeToken?.chain || fromToken.chain,
-                  fromTokenId: alternativeToken?.id || fromToken.id,
-                  fromTokenRawAmount: alternativeToken
-                    ? new BigNumber(amount)
-                        .times(fromToken.price)
-                        .div(alternativeToken.price)
-                        .times(10 ** alternativeToken.decimals)
-                        .toFixed(0, 1)
-                        .toString()
-                    : new BigNumber(amount)
-                        .times(10 ** fromToken.decimals)
-                        .toFixed(0, 1)
-                        .toString(),
+                  fromChainId: fromToken.chain,
+                  fromTokenId: fromToken.id,
+                  fromTokenRawAmount: new BigNumber(amount)
+                    .times(10 ** fromToken.decimals)
+                    .toFixed(0, 1)
+                    .toString(),
                   toChainId: toToken.chain,
                   toTokenId: toToken.id,
                   slippage: new BigNumber(slippageObj.slippage)
@@ -939,16 +909,6 @@ export const useBridge = (
                 openapi,
               ).catch(() => undefined);
 
-              if (alternativeToken) {
-                if (
-                  data &&
-                  data?.length &&
-                  currentFetchId === fetchIdRef.current
-                ) {
-                  setRecommendFromToken(alternativeToken);
-                  return;
-                }
-              }
               if (data && currentFetchId === fetchIdRef.current) {
                 originData.push(...data);
               }
@@ -1001,27 +961,6 @@ export const useBridge = (
           setPending(false);
 
           if (data.length < 1) {
-            try {
-              const res = await openapi.getRecommendFromToken({
-                user_addr: userAddress,
-                from_chain_id: fromToken.chain,
-                from_token_id: fromToken.id,
-                from_token_amount: new BigNumber(amount)
-                  .times(10 ** fromToken.decimals)
-                  .toFixed(0, 1)
-                  .toString(),
-                to_chain_id: toToken.chain,
-                to_token_id: toToken.id,
-              });
-              if (res?.token_list?.[0]) {
-                await getQUoteV2(res?.token_list?.[0]);
-              } else {
-                setRecommendFromToken(undefined);
-              }
-            } catch (error) {
-              setRecommendFromToken(undefined);
-            }
-
             setSelectedBridgeQuote(undefined);
           }
         }
@@ -1054,7 +993,6 @@ export const useBridge = (
     cancelPendingQuoteFlush();
     setQuoteRequestId(fetchIdRef.current);
     setQuotesList([]);
-    setRecommendFromToken(undefined);
     setSelectedBridgeQuote(undefined);
     setPending(false);
   }, [
@@ -1383,14 +1321,12 @@ export const useBridge = (
 
   useEffect(() => {
     setQuotesList([]);
-    setRecommendFromToken(undefined);
     setSelectedBridgeQuote(undefined);
   }, [fromToken?.id, toToken?.id, fromChain, toChain, setSelectedBridgeQuote]);
 
   useEffect(() => {
     if (active && !canRequestQuote) {
       setQuotesList([]);
-      setRecommendFromToken(undefined);
       setSelectedBridgeQuote(undefined);
     }
   }, [active, canRequestQuote, setSelectedBridgeQuote]);
@@ -1398,7 +1334,6 @@ export const useBridge = (
   useEffect(() => {
     if (!enableInsufficientQuote || !amount || Number(amount) === 0) {
       setQuotesList([]);
-      setRecommendFromToken(undefined);
       setSelectedBridgeQuote(undefined);
     }
   }, [amount, setSelectedBridgeQuote]);
@@ -1467,9 +1402,6 @@ export const useBridge = (
     setToToken,
     switchToChain: wrappedSwitchToChain,
     switchToken,
-
-    recommendFromToken,
-    fillRecommendFromToken,
 
     inSufficient,
     inSufficientCanGetQuote,

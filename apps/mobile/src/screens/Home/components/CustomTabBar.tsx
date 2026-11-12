@@ -5,13 +5,9 @@ import {
   Pressable,
   ViewStyle,
 } from 'react-native';
-import {
-  MaterialTabBar,
-  MaterialTabItem,
-  useFocusedTab,
-} from 'react-native-collapsible-tab-view';
+import { MaterialTabBar } from 'react-native-collapsible-tab-view';
 
-import React, { useCallback, useLayoutEffect, useRef } from 'react';
+import React, { useCallback, useRef } from 'react';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -19,13 +15,8 @@ import Animated, {
   interpolate,
   AnimatedStyle,
   Extrapolation,
-  isWorkletFunction,
 } from 'react-native-reanimated';
-import {
-  createGetStyles2024,
-  makeDebugBorder,
-  makeDevOnlyStyle,
-} from '@/utils/styles';
+import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { useMeasureLayoutForHomeGuidanceMultipleTabs } from '@/components2024/Animations/HomeGuidanceMultipleTabs';
 import {
@@ -55,7 +46,6 @@ import { ChainListItem } from '@/components2024/SelectChainWithDistribute';
 import { useTranslation } from 'react-i18next';
 import { useHomeDrawerOpacityStyle } from '../hooks/useHomeDrawerAnimate';
 import { HOME_TOP_HEADER_SIZES } from '@/constant/home';
-import { useValueFromSharedValue } from '@/hooks/reanimated';
 import {
   apisHomeTabIndex,
   HomeTabName,
@@ -464,8 +454,6 @@ function AssetsTabBar() {
     };
   });
 
-  const focusedTab = useValueFromSharedValue(apisHomeTabIndex.svTabName);
-
   return (
     <Animated.View
       // pointerEvents={focusedTab === HomeTabName.overview ? 'none' : 'auto'}
@@ -570,7 +558,7 @@ export const HomeCustomMaterialTabBar = ({}: Partial<
   );
 };
 
-const getStyles = createGetStyles2024(({ colors2024 }) => ({
+const getStyles = createGetStyles2024(() => ({
   container: {
     position: 'absolute',
     top: HOME_TOP_HEADER_SIZES.headerHeight,

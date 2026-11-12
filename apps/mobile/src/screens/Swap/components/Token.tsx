@@ -15,7 +15,7 @@ import {
   formatUsdValue,
 } from '@/utils/number';
 import BigNumber from 'bignumber.js';
-import { Slider } from '@rneui/themed';
+import { PerpsGestureSlider as Slider } from '@/components/perps/PerpsGestureSlider';
 
 import type { TokenSelectInst } from './TokenSelect';
 import TokenSelect from './TokenSelect';
@@ -53,6 +53,7 @@ interface SwapTokenItemProps {
   currentQuote?: QuoteProvider;
   skeletonLoading?: boolean;
   disabled?: boolean;
+  sceneActive?: boolean;
 }
 const SwapTokenItemInner = (props: SwapTokenItemProps) => {
   const {
@@ -61,7 +62,6 @@ const SwapTokenItemInner = (props: SwapTokenItemProps) => {
     value,
     onTokenChange,
     onValueChange,
-    excludeTokens,
     account,
     chainId,
     slider,
@@ -71,6 +71,7 @@ const SwapTokenItemInner = (props: SwapTokenItemProps) => {
     currentQuote,
     skeletonLoading,
     disabled,
+    sceneActive = true,
   } = props;
   const { t } = useTranslation();
 
@@ -121,11 +122,11 @@ const SwapTokenItemInner = (props: SwapTokenItemProps) => {
   const bubbleRef = useRef<SliderBubbleHandle>(null);
   const sliderTrackRef = useRef<View>(null);
   const onSliderValueChange = useCallback(
-    (value: number) => {
+    (_value: number) => {
       // Move the bubble before the amount update. That update re-renders the
       // page, which is what left the bubble behind the finger.
-      bubbleRef.current?.setProgress(value);
-      onChangeSlider?.(value);
+      bubbleRef.current?.setProgress(_value);
+      onChangeSlider?.(_value);
     },
     [onChangeSlider],
   );
@@ -183,7 +184,8 @@ const SwapTokenItemInner = (props: SwapTokenItemProps) => {
         <Text style={styles.subTitle}>
           {isFrom ? t('page.swap.from') : t('page.swap.to')}
         </Text>
-        {isFrom && (
+        {/* Unmount native gestures before Fabric recycles the hidden scene. */}
+        {isFrom && sceneActive && (
           <View style={styles.sliderContainer}>
             <View
               ref={sliderTrackRef}
@@ -194,7 +196,7 @@ const SwapTokenItemInner = (props: SwapTokenItemProps) => {
                 allowTouchTrack={!disabled}
                 disabled={disabled}
                 style={styles.sliderInner}
-                value={slider}
+                value={slider ?? 0}
                 onSlidingStart={onSlidingStart}
                 onValueChange={onSliderValueChange}
                 onSlidingComplete={onAfterChangeSlider}

@@ -51,13 +51,6 @@
         "cancel": "Cancelar"
       }
     },
-    "ReserveGasPopup": {
-      "normal": "Lento",
-      "doNotReserve": "No reservar Gas",
-      "title": "Reserva Gas",
-      "instant": "Rápido",
-      "fast": "Normal"
-    },
     "AuthenticationModal": {
       "passwordPlaceholder": "Introduce la contraseña para confirmar"
     },
@@ -1183,11 +1176,9 @@
       "no-quote": "Sin cotización",
       "est-payment": "Pago estimado:",
       "no-route-found": "No se encontró ruta",
-      "no-quote-found": "No se encontró ninguna cotización. Prueba con otros pares de tokens.",
+      "no-quote-found": "No se encontró ninguna cotización.",
       "loss-tips": "Está perdiendo {{usd}}. Intente con una cantidad diferente.",
       "duration": "{{duration}} min",
-      "for-available-quote": "para una cotización disponible",
-      "bridge-from": "Origen del bridge",
       "price-impact": "Impacto en el precio",
       "From": "Desde",
       "bridged": "Bridge iniciado",
@@ -1243,7 +1234,7 @@
         "queued": "En cola",
         "pending": "Pendiente",
         "completed": "Completado",
-        "refund": "Reembolso",
+        "refund": "Reembolsado",
         "waiting": "Esperando la transacción de destino",
         "goBack": "Volver",
         "bridgeAgain": "Hacer bridge de nuevo",
@@ -1675,9 +1666,7 @@
     },
     "createPassword": {
       "Newpassword": "Introducir contraseña",
-      "and": "y",
       "confirmRequired": "Por favor confirma la contraseña",
-      "termOfUse": "Términos de Uso",
       "title": "Establecer Contraseña",
       "setUpSuccess": "Configuración de contraseña exitosa",
       "phoneNotSupport": "Tu teléfono no es compatible con {{ bioType }}",
@@ -1691,13 +1680,13 @@
       "subTitle": "Esta contraseña desbloquea tu cartera y cifra tus datos en este dispositivo. No se puede recuperar. Si la pierdes, tendrás que restablecer y volver a importar tu cartera.",
       "passwordMin": "La contraseña debe tener al menos 8 caracteres",
       "confirmTitle": "Confirmar contraseña",
-      "PrivacyPolicy": "Política de Privacidad",
       "agree": "He leído y acepto los<1/> <2>Términos de Uso</2>",
-      "agreeToTerms": "He leído y estoy de acuerdo con los",
       "passwordPlaceholder": "La contraseña debe tener al menos 8 caracteres.",
       "confirmModalDesc": "Guarda bien tu contraseña. Si la pierdes, Rabby no podrá cambiarla ni recuperarla.",
       "setWallet": "Configurar cartera",
-      "biometricsFail": "Error al habilitar la autenticación biométrica"
+      "biometricsFail": "Error al habilitar la autenticación biométrica",
+      "dataAnalysisDesc": "Comparte datos de uso anónimos para ayudar a mejorar Rabby. Los datos recopilados no se asocian contigo ni con tu cuenta. Puedes cambiarlo en cualquier momento en Configuración.",
+      "agreeByContinuing": "Al continuar, aceptas los <terms>Términos de Uso</terms> y reconoces la <privacy>Política de Privacidad</privacy>."
     },
     "approvalsAddressList": {
       "title": "Aprobaciones"
@@ -1972,7 +1961,8 @@
       "searchCurrency": "Buscar moneda",
       "currency": "Moneda",
       "screenshotReportSwitch": "Captura de pantalla para informar un error",
-      "dataAnalysis": "Análisis de datos",
+      "dataAnalysis": "Ayuda a mejorar Rabby",
+      "dataAnalysisDesc": "Comparte datos de uso anónimos para ayudar a mejorar Rabby. Los datos recopilados no se asocian contigo ni con tu cuenta.",
       "bugReportChat": "Compartir comentarios por chat",
       "features": "Funciones",
       "manageWallets": "Gestionar carteras"
@@ -2107,6 +2097,7 @@
       "emptyWhitelistContent": "Añade direcciones de confianza a la lista de permisos para hacer transferencias rápidas; la próxima vez no necesitarás confirmación",
       "SendHistory": "Historial de Envíos",
       "enterOrSearchAddress": "Introducir o Buscar Dirección",
+      "resolvingAddressName": "Buscando dirección...",
       "dividerWatchOnlyWallets": "Direcciones de solo visualización"
     },
     "confirmAddress": {
@@ -3180,6 +3171,13 @@
       },
       "addressEditorBadge": {
         "nameUnknown": "Nombrar la dirección"
+      },
+      "scanQrcode": {
+        "chooseFromGallery": "Elegir de la galería",
+        "noQrCode": "No se encontró ningún código QR en esta imagen",
+        "multipleQrCodes": "Se encontraron varios códigos QR. Elige una imagen con un solo código QR",
+        "invalidAddress": "No se encontró una dirección válida en este código QR",
+        "readImageFailed": "No se pudo leer la imagen. Inténtalo de nuevo"
       }
     },
     "Lending": {

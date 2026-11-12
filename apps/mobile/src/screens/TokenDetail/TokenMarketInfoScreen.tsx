@@ -1,7 +1,6 @@
 /* eslint-disable react-native/no-inline-styles */
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { Button } from '@/components2024/Button';
-import { buttonTitleStyles } from '@/components2024/Button/buttonStyles';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import {
   BOTTOM_BUTTON_DOUBLE_HEIGHT,
@@ -648,7 +647,6 @@ export const TokenMarketInfoScreen = () => {
             <Button
               title={t('global.Confirm')}
               height={BOTTOM_BUTTON_SINGLE_HEIGHT}
-              titleStyle={buttonTitleStyles.single}
               containerStyle={StyleSheet.flatten([styles.btnContainer])}
               onPress={() => {
                 if (isSwapTo) {
@@ -668,7 +666,6 @@ export const TokenMarketInfoScreen = () => {
                 type="ghost"
                 title={t('page.tokenDetail.action.Buy')}
                 height={BOTTOM_BUTTON_DOUBLE_HEIGHT}
-                titleStyle={buttonTitleStyles.double}
                 containerStyle={StyleSheet.flatten([styles.btnContainer])}
                 buttonStyle={[styles.btnInnerContainer, styles.ghostBtn]}
                 onPress={() =>
@@ -679,7 +676,6 @@ export const TokenMarketInfoScreen = () => {
                 <Button
                   title={t('page.tokenDetail.action.Sell')}
                   height={BOTTOM_BUTTON_DOUBLE_HEIGHT}
-                  titleStyle={buttonTitleStyles.double}
                   containerStyle={StyleSheet.flatten([styles.btnContainer])}
                   onPress={() =>
                     handleSwap(

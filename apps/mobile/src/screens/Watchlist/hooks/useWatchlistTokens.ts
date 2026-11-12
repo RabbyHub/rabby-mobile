@@ -2,13 +2,7 @@ import type { IManageToken } from '@/core/startupServices/preference';
 import type { TokenDetailWithPriceCurve } from '@rabby-wallet/rabby-api/dist/types';
 import { openapi } from '@/core/request';
 import { atom, useAtom } from 'jotai';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useAtomValue } from 'jotai';
-import {
-  sortWatchlistTokens,
-  watchlistChangeSortAtom,
-  watchlistTokenSortAtom,
-} from '../sort';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { getWatchlistTopCache } from '../cache';
 import { getDisplayUserTokenSettings } from '@/hooks/useTokenSettings';
 
@@ -111,25 +105,4 @@ export const useWatchlistTokens = (onBeforeRefresh?: () => void) => {
     hasData,
     loading,
   };
-};
-
-export const useWatchListTokenBadge = () => {
-  const { handleFetchTokens, data } = useWatchlistTokens();
-  const tokenSort = useAtomValue(watchlistTokenSortAtom);
-  const changeSort = useAtomValue(watchlistChangeSortAtom);
-  const sortedTokens = useMemo(
-    () => sortWatchlistTokens(data, tokenSort, changeSort),
-    [changeSort, data, tokenSort],
-  );
-
-  const last3Token = useMemo(
-    () => (sortedTokens.length >= 3 ? sortedTokens.slice(0, 3) : sortedTokens),
-    [sortedTokens],
-  );
-
-  useEffect(() => {
-    handleFetchTokens();
-  }, [handleFetchTokens]);
-
-  return last3Token;
 };

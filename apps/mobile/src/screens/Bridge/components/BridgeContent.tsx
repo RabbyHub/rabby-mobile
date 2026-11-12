@@ -32,7 +32,7 @@ import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
 import BridgeToken from './BridgeToken';
 import BridgeSwitchBtn from './BridgeSwitchBtn';
 import { findChainByEnum, findChainByServerID } from '@/utils/chain';
-import BridgeShowMore, { RecommendFromToken } from './BridgeShowMore';
+import BridgeShowMore from './BridgeShowMore';
 import { tokenPriceImpact, useBridge } from '../hooks/token';
 import { SWAP_FEE_RATE } from '@/screens/Swap/hooks/fee';
 import { Button } from '@/components2024/Button';
@@ -73,11 +73,7 @@ import { Text } from '@/components/Typography';
 import { MarketClosedTip } from '@/components/Token/MarketClosedTip';
 import { storeApiExpSettingData } from '@/hooks/appSettings';
 import type { FormAmountMode } from '@/utils/form';
-import {
-  FormValuesOnSubmit,
-  createAmountComparer,
-  shouldIgnoreAmountChangeInMaxMode,
-} from '@/utils/form';
+import { FormValuesOnSubmit, createAmountComparer } from '@/utils/form';
 import { tokenAmountBn } from '@/screens/Swap/utils';
 import { buildTx as buildBridgeTx } from '@rabby-wallet/rabby-bridge';
 import { useMiniSignerEffectPause } from '@/hooks/useMiniSignerEffectPause';
@@ -95,7 +91,6 @@ import {
   BOTTOM_BUTTON_SINGLE_HEIGHT,
   BOTTOM_BUTTON_TOP_OFFSET,
   getBottomButtonBottomOffset,
-  getBottomButtonCenteredTitleStyle,
   RootNames,
 } from '@/constant/layout';
 import type { GetNestedScreenRouteProp } from '@/navigation-type';
@@ -103,10 +98,6 @@ import {
   BridgePendingTransactionsController,
   type BridgePendingTransactionsControllerRef,
 } from './BridgePendingTransactionsController';
-
-const bottomButtonTitleStyle = getBottomButtonCenteredTitleStyle(
-  BOTTOM_BUTTON_SINGLE_HEIGHT,
-);
 
 /** Bridge form snapshot for validation during auth */
 export interface BridgeFormSnapshot {
@@ -386,9 +377,6 @@ export const BridgeContent = ({
     feeRate,
     feeTier,
 
-    recommendFromToken,
-    fillRecommendFromToken,
-
     inSufficient,
 
     openQuotesList,
@@ -624,7 +612,6 @@ export const BridgeContent = ({
   const {
     isSupportedChain,
     data: externalDapps,
-    loading: externalDappsLoading,
     openTab: _openTab,
   } = useExternalSwapBridgeDapps(chains, 'bridge', sceneActive);
   const openTab = useMemoizedFn((url: string) => {
@@ -1284,8 +1271,7 @@ export const BridgeContent = ({
     !quoteLoading &&
     !quoteList?.length;
   const showStickyInfo = !!fromToken && !!toToken && !noQuote;
-  const hideBridgeProgress =
-    amountAvailable || !!selectedBridgeQuote || !!recommendFromToken;
+  const hideBridgeProgress = amountAvailable || !!selectedBridgeQuote;
   const showClosedMarketTip =
     (!!fromToken || !!toToken) && quoteBlockedByClosedMarket;
 
@@ -1716,6 +1702,7 @@ export const BridgeContent = ({
             <View style={styles.cardContainer}>
               <BridgeToken
                 type="from"
+                sceneActive={sceneActive}
                 slider={slider}
                 onChangeSlider={onChangeSlider}
                 disabled={!isSupportedChain}
@@ -1795,34 +1782,25 @@ export const BridgeContent = ({
                   )}
                   {noQuote && (
                     <>
-                      {recommendFromToken ? (
-                        <RecommendFromToken
-                          token={recommendFromToken}
-                          onOk={fillRecommendFromToken}
+                      <Text style={styles.noRecoomedTokenText}>
+                        {t('page.bridge.no-quote-found')}
+                      </Text>
+                      <View style={{ marginHorizontal: 24, marginTop: 12 }}>
+                        <BridgeSlippage
+                          value={slippage}
+                          displaySlippage={slippage}
+                          onChange={handleSlippageChange}
+                          autoSlippage={autoSlippage}
+                          isCustomSlippage={isCustomSlippage}
+                          setAutoSlippage={setAutoSlippage}
+                          setIsCustomSlippage={setIsCustomSlippage}
+                          type="bridge"
+                          loading={quoteLoading}
+                          onOptionsOpenChange={
+                            setSlippageOptionsQuoteRefreshPaused
+                          }
                         />
-                      ) : (
-                        <>
-                          <Text style={styles.noRecoomedTokenText}>
-                            {t('page.bridge.no-quote-found')}
-                          </Text>
-                          <View style={{ marginHorizontal: 24, marginTop: 12 }}>
-                            <BridgeSlippage
-                              value={slippage}
-                              displaySlippage={slippage}
-                              onChange={handleSlippageChange}
-                              autoSlippage={autoSlippage}
-                              isCustomSlippage={isCustomSlippage}
-                              setAutoSlippage={setAutoSlippage}
-                              setIsCustomSlippage={setIsCustomSlippage}
-                              type="bridge"
-                              loading={quoteLoading}
-                              onOptionsOpenChange={
-                                setSlippageOptionsQuoteRefreshPaused
-                              }
-                            />
-                          </View>
-                        </>
-                      )}
+                      </View>
                     </>
                   )}
                 </View>
@@ -1856,7 +1834,6 @@ export const BridgeContent = ({
                   ref={directSignBtnRef}
                   key={`${selectedBridgeQuote?.aggregator.id}-${selectedBridgeQuote?.bridge?.id}-${refreshId}`}
                   height={BOTTOM_BUTTON_SINGLE_HEIGHT}
-                  titleStyle={bottomButtonTitleStyle}
                   authTitle={t('page.whitelist.confirmPassword')}
                   title={t('global.confirm')}
                   loadingType="circle"
@@ -1890,7 +1867,7 @@ export const BridgeContent = ({
                   height={BOTTOM_BUTTON_SINGLE_HEIGHT}
                   onPress={handleConfirm}
                   title={btnText}
-                  titleStyle={[styles.btnTitle, bottomButtonTitleStyle]}
+                  titleStyle={styles.btnTitle}
                   loading={fetchingBridgeQuote}
                   disabled={
                     !isSupportedChain && externalDapps.length > 0

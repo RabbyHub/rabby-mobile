@@ -11,7 +11,6 @@ import type {
   TxAllHistoryResult,
   TxHistoryResult,
 } from '@rabby-wallet/rabby-api/dist/types';
-import { SwapTradeList } from '@rabby-wallet/rabby-api/dist/types';
 import { ProtocolItemEntity } from '../entities/portocolItem';
 import {
   EMPTY_NFT_ITEM,
@@ -19,7 +18,7 @@ import {
   EMPTY_TOKEN_ITEM,
 } from '@/constant/assets';
 import { BalanceEntity } from '../entities/balance';
-import { batchSaveWithPQueueAndTransaction, BeforeEmitFn } from './_task';
+import { batchSaveWithPQueueAndTransaction } from './_task';
 import { appOrmEvents } from './_event';
 import { BuyItemEntity } from '../entities/buyItem';
 import { CexEntity } from '../entities/cex';
@@ -736,7 +735,7 @@ export async function syncRemoteNFTs(address: string, _nfts: NFTItem[]) {
       await NFTItemEntity.cleanupStaleNFTs(address, syncTimestamp);
     },
   })
-    .then(({ taskSignal, taskKey, queueCompleted }) => {
+    .then(({ taskKey, queueCompleted }) => {
       if (queueCompleted) {
         console.debug(`[${taskKey}] batch upsert tasks completed`);
       } else {
@@ -779,7 +778,7 @@ export async function syncRemoteProtocols(
       await ProtocolItemEntity.cleanupStaleProtocols(address, syncTimestamp);
     },
   })
-    .then(({ taskSignal, taskKey, queueCompleted }) => {
+    .then(({ taskKey, queueCompleted }) => {
       if (queueCompleted) {
         console.debug(`[${taskKey}] batch upsert tasks completed`);
       } else {

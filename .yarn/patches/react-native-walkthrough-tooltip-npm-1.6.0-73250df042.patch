@@ -62,7 +62,29 @@ diff --git a/src/geom.js b/src/geom.js
 diff --git a/src/styles.js b/src/styles.js
 --- a/src/styles.js
 +++ b/src/styles.js
-@@ -38,7 +38,7 @@
+@@ -1,14 +1,18 @@
+ import { StyleSheet } from 'react-native';
+ 
+ const styles = StyleSheet.create({
++  // The container must stay hit-testable in every state: it carries the
++  // "tap outside to close" handler, and iOS skips views with alpha < 0.01
++  // during hit testing. Hide only its children until they are measured,
++  // otherwise a tooltip that never measures (for example empty content)
++  // leaves an invisible Modal that cannot be closed.
+   container: {
+     ...StyleSheet.absoluteFillObject,
+-    opacity: 0,
+     backgroundColor: 'transparent',
+     zIndex: 500,
+   },
+-  containerVisible: {
+-    opacity: 1,
++  hiddenUntilMeasured: {
++    opacity: 0,
+   },
+   background: {
+     ...StyleSheet.absoluteFillObject,
+@@ -38,7 +42,7 @@
    },
  });
  
@@ -71,7 +93,7 @@ diff --git a/src/styles.js b/src/styles.js
    switch (placement) {
      case 'bottom':
        return '180deg';
-@@ -130,7 +130,7 @@
+@@ -130,7 +134,7 @@
    }
  };
  
@@ -80,7 +102,7 @@ diff --git a/src/styles.js b/src/styles.js
    const {
      adjustedContentSize,
      displayInsets,
-@@ -148,10 +148,12 @@
+@@ -148,10 +152,12 @@
      height > 0 && { height }, // ignore special case of -1 with center placement (and 0 when not yet measured)
      width > 0 && { width }, // ignore special case of -1 with center placement (and 0 when not yet measured)
      ownProps.contentStyle,
@@ -95,6 +117,40 @@ diff --git a/src/styles.js b/src/styles.js
  
    const arrowStyle = [
      styles.arrow,
+@@ -160,6 +166,9 @@
+     ownProps.arrowStyle,
+   ];
+ 
++  const isMeasured = adjustedContentSize.width !== 0 && measurementsFinished;
++  const revealStyle = isMeasured ? null : styles.hiddenUntilMeasured;
++
+   return {
+     arrowStyle: [...arrowStyle, getArrowRotation(arrowStyle, placement)],
+     backgroundStyle: [
+@@ -172,18 +181,15 @@
+         paddingBottom: displayInsets.bottom,
+         backgroundColor,
+       },
++      revealStyle,
+     ],
+     containerStyle: [
+       styles.container,
+-      StyleSheet.compose(
+-        adjustedContentSize.width !== 0 &&
+-          measurementsFinished &&
+-          styles.containerVisible,
+-        topAdjustment !== 0 && {
+-          top: topAdjustment,
+-        },
+-      ),
++      topAdjustment !== 0 && {
++        top: topAdjustment,
++      },
+     ],
++    revealStyle,
+     contentStyle,
+     tooltipStyle: [
+       StyleSheet.compose(
 diff --git a/src/tooltip.js b/src/tooltip.js
 --- a/src/tooltip.js
 +++ b/src/tooltip.js
@@ -182,7 +238,9 @@ diff --git a/src/tooltip.js b/src/tooltip.js
      this.setState(
        {
          childRect: rect,
-@@ -266,6 +275,76 @@
+@@ -264,8 +273,78 @@
+     );
+   };
  
 +  onModalShow = () => {
 +    if (!this.props.measureAnchor || !this.props.isVisible) return;
@@ -259,7 +317,7 @@ diff --git a/src/tooltip.js b/src/tooltip.js
        if (!this.isMeasuringChild) {
          this.isMeasuringChild = true;
          if (
-@@ -276,7 +335,7 @@
+@@ -276,7 +355,7 @@
              (x, y, width, height, pageX, pageY) => {
                const childRect = new Rect(pageX, pageY, width, height);
                if (
@@ -268,7 +326,7 @@ diff --git a/src/tooltip.js b/src/tooltip.js
                ) {
                  this.onChildMeasurementComplete(childRect);
                } else {
-@@ -304,13 +363,8 @@
+@@ -304,13 +383,8 @@
  
    computeGeometry = () => {
      const { arrowSize, childContentSpacing } = this.props;
@@ -284,7 +342,7 @@ diff --git a/src/tooltip.js b/src/tooltip.js
  
      const options = {
        displayInsets,
-@@ -349,7 +403,10 @@
+@@ -349,7 +423,10 @@
        }
      }
  
@@ -296,7 +354,24 @@ diff --git a/src/tooltip.js b/src/tooltip.js
  
      this.setState({
        tooltipOrigin,
-@@ -429,7 +486,20 @@
+@@ -360,7 +437,7 @@
+     });
+   };
+ 
+-  renderChildInTooltip = () => {
++  renderChildInTooltip = (revealStyle) => {
+     let { height, width, x, y } = this.state.childRect;
+ 
+     if (this.props.horizontalAdjustment) {
+@@ -389,6 +466,7 @@
+               justifyContent: 'center',
+             },
+             this.props.childrenWrapperStyle,
++            revealStyle,
+           ]}
+         >
+           {this.props.children}
+@@ -429,7 +507,20 @@
          onPress={onPressBackground}
          accessible={this.props.accessible}
        >
@@ -318,7 +393,16 @@ diff --git a/src/tooltip.js b/src/tooltip.js
            <View style={[generatedStyles.backgroundStyle]}>
              <View style={generatedStyles.tooltipStyle}>
                {hasChildren ? <View style={generatedStyles.arrowStyle} /> : null}
-@@ -455,12 +525,8 @@
+@@ -447,7 +538,7 @@
+             </View>
+           </View>
+           {hasChildren && this.props.showChildInTooltip
+-            ? this.renderChildInTooltip()
++            ? this.renderChildInTooltip(generatedStyles.revealStyle)
+             : null}
+         </View>
+       </TouchableWithoutFeedback>
+@@ -455,12 +546,8 @@
    };
  
    render() {
@@ -333,7 +417,7 @@ diff --git a/src/tooltip.js b/src/tooltip.js
  
      const hasChildren = React.Children.count(children) > 0;
      const showTooltip = isVisible && !this.state.waitingForInteractions;
-@@ -472,6 +551,7 @@
+@@ -472,6 +559,7 @@
            <ModalComponent
              transparent
              visible={showTooltip}
@@ -341,7 +425,7 @@ diff --git a/src/tooltip.js b/src/tooltip.js
              onRequestClose={this.props.onClose}
              supportedOrientations={this.props.supportedOrientations}
            >
-@@ -483,6 +559,7 @@
+@@ -483,6 +571,7 @@
          {hasChildren ? (
            <View
              ref={this.childWrapper}

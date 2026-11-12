@@ -35,21 +35,21 @@
     "@ledgerhq/hw-transport": "6.35.2",
     "@rabby-wallet/base-utils": "workspace:^",
     "@rabby-wallet/keyring-utils": "workspace:^",
-    "eth-sig-util": "^3.0.1",
-    "ethereumjs-util": "^7.1.2"
+    "eth-sig-util": "3.0.1",
+    "ethereumjs-util": "7.1.5"
   },
   "devDependencies": {
     "@ethereumjs/tx": "5.4.0",
     "@ledgerhq/types-cryptoassets": "7.36.0",
     "@ledgerhq/types-devices": "6.31.0",
-    "@metamask/auto-changelog": "^3.4.3",
-    "@types/jest": "^27.4.1",
-    "@types/node": "^20.14.8",
-    "deepmerge": "^4.2.2",
-    "jest": "^27.5.1",
-    "ts-jest": "^27.1.4",
-    "typedoc": "^0.24.8",
-    "typedoc-plugin-missing-exports": "^2.0.0",
+    "@metamask/auto-changelog": "3.4.4",
+    "@types/jest": "27.5.2",
+    "@types/node": "20.14.9",
+    "deepmerge": "4.3.1",
+    "jest": "27.5.1",
+    "ts-jest": "27.1.5",
+    "typedoc": "0.24.8",
+    "typedoc-plugin-missing-exports": "2.1.0",
     "typescript": "5.7.3"
   },
   "peerDependencies": {

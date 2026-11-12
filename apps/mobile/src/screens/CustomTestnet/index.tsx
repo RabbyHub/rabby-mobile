@@ -32,8 +32,6 @@ import {
   useCustomTestnetService,
   withCustomTestnetService,
 } from './customTestnetServiceDependencies';
-import { buttonTitleStyles } from '@/components2024/Button/buttonStyles';
-
 type CustomTestnetListProps = {
   isEditing: boolean;
   refreshVersion: number;
@@ -210,7 +208,6 @@ export function CustomTestnetScreen(): JSX.Element {
           <Button
             title={t('page.customTestnet.add')}
             height={BOTTOM_BUTTON_SINGLE_HEIGHT}
-            titleStyle={buttonTitleStyles.single}
             onPress={handleAddClick}
           />
         </View>

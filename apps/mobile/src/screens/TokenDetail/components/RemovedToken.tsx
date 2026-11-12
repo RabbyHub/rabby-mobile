@@ -6,7 +6,6 @@ import { useTranslation } from 'react-i18next';
 import RcMore from '@/assets/icons/home/more-cc.svg';
 import { Text } from '@/components/Typography';
 import { Button } from '@/components2024/Button';
-import { buttonTitleStyles } from '@/components2024/Button/buttonStyles';
 import { TokenMoreSheet, type TokenMoreAction } from './TokenMoreSheet';
 import { toast } from '@/components2024/Toast';
 import {
@@ -65,7 +64,6 @@ export function RestoreRemovedTokenActions({
           type="primary"
           title={t('page.tokenDetail.removed.restore')}
           height={BOTTOM_BUTTON_SINGLE_HEIGHT}
-          titleStyle={buttonTitleStyles.single}
           containerStyle={styles.restoreContainer}
           buttonStyle={styles.restoreButton}
           loading={restoring}

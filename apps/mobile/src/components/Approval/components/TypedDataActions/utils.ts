@@ -2,9 +2,12 @@ import i18n from '@/utils/i18n';
 import { ParsedTypedDataActionData } from '@rabby-wallet/rabby-action';
 import { getActionTypeText as getTransactionActionTypeText } from '../Actions/utils';
 import { decodeSingle, encodeSingle } from '@metamask/abi-utils';
-import BigNumber from 'bignumber.js';
-import { filterPrimaryType } from '../SignTypedDataExplain/parseSignTypedDataMessage';
-import { bytesToHex } from '@ethereumjs/util';
+import {
+  TypedDataUtils,
+  SignTypedDataVersion,
+  type MessageTypes,
+  type TypedMessage,
+} from '@metamask/eth-sig-util';
 
 export const getActionTypeText = (data: ParsedTypedDataActionData | null) => {
   const { t } = i18n;
@@ -67,96 +70,144 @@ export const getActionTypeText = (data: ParsedTypedDataActionData | null) => {
   return t('page.signTx.unknownAction');
 };
 
-export function normalizeTypeData(data: {
+type TypedDataPayload = {
   primaryType: string;
   types: Record<string, any>;
   domain: Record<string, any>;
   message: Record<string, any>;
-}) {
+};
+
+export type NormalizeTypeDataVersion =
+  | SignTypedDataVersion.V3
+  | SignTypedDataVersion.V4;
+
+export type NormalizeTypeDataFailure = {
+  reason: 'field' | 'digest';
+  path: string;
+  type: string;
+  error?: unknown;
+};
+
+const ARRAY_TYPE_REG = /^(.*)\[\d*\]$/;
+
+export const getNormalizeTypeDataVersion = (
+  method: string,
+): NormalizeTypeDataVersion =>
+  /v3$/i.test(method) ? SignTypedDataVersion.V3 : SignTypedDataVersion.V4;
+
+export function normalizeTypeData(
+  data: TypedDataPayload,
+  version: NormalizeTypeDataVersion,
+): { typedData: TypedDataPayload; failures: NormalizeTypeDataFailure[] } {
+  const types = Object.assign({ EIP712Domain: [] }, data.types);
+  const failures: NormalizeTypeDataFailure[] = [];
+
+  const normalizeAtom = (value: any, type: string, name: string) => {
+    if (type.startsWith('bytes')) {
+      return value;
+    }
+    const [, encodedValue] = TypedDataUtils.encodeField(
+      types,
+      name,
+      type,
+      value,
+      version,
+    );
+    const encoded = encodeSingle(
+      type,
+      type === 'string' ? value : encodedValue,
+    );
+    const decoded = decodeSingle(type, encoded);
+    if (type === 'bool') {
+      if (decoded === 0n) return false;
+      if (decoded === 1n) return true;
+    }
+    if (
+      type.startsWith('uint') ||
+      type.startsWith('int') ||
+      type.startsWith('ufixed') ||
+      type.startsWith('fixed')
+    ) {
+      return (decoded as bigint).toString();
+    }
+    return decoded;
+  };
+
+  const normalizeStruct = (value: any, type: string, path: string) => {
+    const normalized: Record<string, any> = {};
+    for (const field of types[type]) {
+      const fieldValue = value[field.name];
+      if (version === SignTypedDataVersion.V3 && fieldValue === undefined) {
+        continue;
+      }
+      normalized[field.name] = normalizeValue(
+        fieldValue,
+        field.type,
+        field.name,
+        `${path}.${field.name}`,
+      );
+    }
+    return normalized;
+  };
+
+  const normalizeValue = (
+    value: any,
+    type: string,
+    name: string,
+    path: string,
+  ): any => {
+    try {
+      if (types[type] !== undefined) {
+        if (value === null || value === undefined) return value;
+        return normalizeStruct(value, type, path);
+      }
+      const arrayMatch = ARRAY_TYPE_REG.exec(type);
+      if (arrayMatch) {
+        return (value as any[]).map((item, i) =>
+          normalizeValue(item, arrayMatch[1], name, `${path}[${i}]`),
+        );
+      }
+      return normalizeAtom(value, type, name);
+    } catch (error) {
+      failures.push({ reason: 'field', path, type, error });
+      return value;
+    }
+  };
+
+  const typedData = {
+    ...data,
+    domain: normalizeValue(data.domain, 'EIP712Domain', 'domain', 'domain'),
+    message: normalizeValue(
+      data.message,
+      data.primaryType,
+      'message',
+      'message',
+    ),
+  };
+
+  const hash = (payload: TypedDataPayload) =>
+    TypedDataUtils.eip712Hash(
+      payload as TypedMessage<MessageTypes>,
+      version,
+    ).toString('hex');
+  let originalHash: string | undefined;
   try {
-    return parseSignTypedData(data);
+    originalHash = hash(data);
   } catch (e) {
-    return data;
+    // The signer rejects it as well.
   }
-}
-function parseSignTypedData(typedData: {
-  primaryType: string;
-  types: Record<string, any>;
-  domain: Record<string, any>;
-  message: Record<string, any>;
-}) {
-  const { domain, message, types, primaryType } = typedData;
-
-  function parseAndDecode(data: any, dataType: string) {
-    if (dataType.endsWith('[]')) {
-      const elementType = dataType.slice(0, -2);
-      const decodedArray: any[] = [];
-      for (const element of data) {
-        decodedArray.push(parseAndDecode(element, elementType));
-      }
-      return decodedArray;
-    } else if (types[dataType]) {
-      for (const field of types[dataType]) {
-        const { name, type } = field;
-        data[name] = parseAndDecode(data[name], type);
-      }
-      return data;
-    } else {
-      if (dataType.startsWith('bytes')) {
-        // bytes type is complex and no need to normalize
-        return data;
-      }
-
-      const encodedBuffer = encodeSingle(dataType, data);
-      let encodedHexValue = bytesToHex(encodedBuffer);
-      switch (dataType) {
-        case 'address':
-          encodedHexValue = bytesToHex(encodedBuffer.slice(12));
-          break;
-        case 'bool':
-          if (new BigNumber(encodedHexValue).eq(0)) {
-            return false;
-          } else if (new BigNumber(encodedHexValue).eq(1)) {
-            return true;
-          }
-          break;
-        default:
-        // NOTHING
-      }
-      if (
-        dataType.startsWith('uint') ||
-        dataType.startsWith('int') ||
-        dataType.startsWith('ufixed') ||
-        dataType.startsWith('fixed')
-      ) {
-        return new BigNumber(encodedHexValue).toFixed();
-      }
-      if (dataType === 'string') {
-        return decodeSingle('string', encodedBuffer);
-      }
-
-      return encodedHexValue;
+  if (originalHash !== undefined) {
+    const digestFailure = {
+      reason: 'digest' as const,
+      path: '',
+      type: String(data.primaryType),
+    };
+    try {
+      if (hash(typedData) !== originalHash) failures.push(digestFailure);
+    } catch (error) {
+      failures.push({ ...digestFailure, error });
     }
   }
 
-  for (const { name, type } of types.EIP712Domain) {
-    domain[name] = parseAndDecode(domain[name], type);
-  }
-
-  typedData.message = parseAndDecode(message, primaryType);
-
-  // Filter out the fields that are not part of the primary type
-  typedData.message = filterPrimaryType({
-    primaryType,
-    types,
-    message: typedData.message,
-  });
-
-  typedData.domain = filterPrimaryType({
-    primaryType: 'EIP712Domain',
-    types,
-    message: domain,
-  });
-
-  return typedData;
+  return { typedData, failures };
 }

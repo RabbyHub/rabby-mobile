@@ -82,6 +82,11 @@ export class SignatureManager {
     this.instanceId = instanceId ?? `sig-${++nextInstanceId}`;
   }
 
+  /** Leave direct mode and drop the transparent blocker (overlay timeout). */
+  public endDirectOverlay() {
+    this.dispatch({ type: 'END_DIRECT' });
+  }
+
   private dispatch(action: SignatureAction) {
     const next = signatureReducer(this.state, action);
     if (next === this.state) return;
@@ -695,6 +700,9 @@ export class SignatureManager {
     const fingerprint = this.getFingerprint(request.txs);
     this.bindManualGasMethodToFingerprint(fingerprint);
     const resultPromise = this.createResultPromise();
+    // When this method throws, the caller never receives `resultPromise`. Keep
+    // its rejection from surfacing as an unhandled one.
+    resultPromise.catch(() => undefined);
     if (this.state.status === 'prefetch_failure') {
       this.rejectPending(MINI_SIGN_ERROR.PREFETCH_FAILURE);
       return resultPromise;
@@ -891,6 +899,7 @@ export class SignatureManager {
     }
     this.clearRunState();
     this.removeSigningTx();
+    this.dispatch({ type: 'END_DIRECT' });
   }
 }
 
