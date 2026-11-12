@@ -11,6 +11,7 @@ import RcIconSendCC from '@/assets2024/icons/home/IconSendCC.svg';
 import RcIconSwapCC from '@/assets2024/icons/home/IconSwapCC.svg';
 import RcIconMarketCC from '@/assets2024/icons/home/IconMarketCC.svg';
 import RcIconConvertDustCC from '@/assets2024/icons/home/IconDustCC.svg';
+import RcIconMemeCoinCC from '@/assets2024/icons/home/IconMemeCoinCC.svg';
 
 import { RootNames } from '@/constant/layout';
 import { useRegressionScenarioComponentAction } from '@/devtools/regressionScenarios/react';
@@ -23,11 +24,7 @@ import {
 import { fetchTop5TokensForAllAccountsOnce } from '@/components/AccountSwitcher/hooks';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { clearLendingActionPopupState } from '@/screens/Lending/utils/actionPopup';
-import {
-  createGetStyles2024,
-  makeDebugBorder,
-  makeDevOnlyStyle,
-} from '@/utils/styles';
+import { createGetStyles2024 } from '@/utils/styles';
 import { StackActions, useFocusEffect } from '@react-navigation/native';
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import type { ScrollView, ViewProps } from 'react-native';
@@ -57,6 +54,10 @@ import { MultiHomeFeatTitle } from '@/constant/newStyle';
 import { currencyServiceApi } from '@/core/serviceApi/currency';
 import { storeApiAccounts, useMyAccounts } from '@/hooks/account';
 import { storeApiAccountsSwitcher } from '@/hooks/accountsSwitcher';
+import {
+  refreshMemeHoldings,
+  refreshMemeHoldingsIfStale,
+} from '@/screens/MemeCoin/data/memeHoldingsStore';
 import { apisHomeTabIndex, useRabbyAppNavigation } from '@/hooks/navigation';
 import { navigateToPerpsHome } from '@/hooks/perps/navigation/navigateToPreferredPerps';
 import addressBalanceStore, {
@@ -107,7 +108,6 @@ import { deleteLongTimeCurveCache } from '@/utils/24balanceCurveCache';
 import { deleteLongTime24hBalanceCache } from '@/utils/24hBalanceCache';
 import useTokenList from '@/store/tokens';
 import useProtocol from '@/store/protocols';
-import { colord } from 'colord';
 import { isTabsSwiping } from '../../Address/components/MultiAssets/hooks';
 import { BrowserOrPerpsPosition } from './BrowserOrPerpsPosition';
 import { GasAccountBadge } from '../../GasAccount/components/GasAccountBadge';
@@ -116,9 +116,9 @@ import { HomeCenterArea } from '../components/HomeCenterArea';
 import { HomeDappDrawer } from '../components/HomeDappDrawer';
 import { HomePendingBadge } from '../components/HomePending';
 import { LendingHF } from '../components/LendingHF';
+import { MemeCoinBalance } from './MemeCoinBalance';
 import { MultiAddressHomeHeader } from '../components/MultiAddressHomeHeader';
 import { PerpsPnl } from '../components/PerpsPnl';
-import { PointsBadge } from '../../Points/components/PointsBadge';
 import {
   refreshSuccessAndFailList,
   resetFetchHistoryTxCount,
@@ -140,13 +140,11 @@ import { useCurrentTabScrollY } from 'react-native-collapsible-tab-view';
 import type { ScrollHandlerProps } from '@/components/customized/react-native-collapsible-tab-view/hooks';
 import { triggerImpact } from '@/utils/common';
 import type { WorkletFunction } from 'react-native-reanimated/lib/typescript/commonTypes';
-import { SharedValue } from 'react-native-reanimated/lib/typescript/commonTypes';
-import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
+import { IS_ANDROID } from '@/core/native/utils';
 import {
   HOME_TOP_HEADER_SIZES,
   SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING,
 } from '@/constant/home';
-import { useInnerDappSelection } from '@/hooks/useInnerDappSelection';
 import { NewTag } from './NewTag';
 import { useHomeFeatureNewTag } from '../hooks/useHomeFeatureNewTag';
 import { useDismissConvertDustBanner } from '../hooks/useConvertDustBanner';
@@ -170,6 +168,13 @@ import { withAnimatedTickerRefreshNudge } from '@/components/Animated/RefreshNud
 
 function couldDoRefresh() {
   return apisHomeTabIndex.isHomeAtFirstTab();
+}
+
+/** the account the Memecoin entry shows */
+function getMemeEntryAddress() {
+  return storeApiAccountsSwitcher.getSceneAccountInfo({
+    forScene: 'MakeTransactionAbout',
+  }).finalSceneCurrentAccount?.address;
 }
 
 function cancelStartupTaskHandle(
@@ -364,7 +369,7 @@ const usePulldownRefreshGesture = <T extends ScrollView | RNGHScrollView>({
       //   event.nativeEvent,
       // );
     }, []),
-    onScroll: useCallback<ScrollHandlerProps['onScroll'] & object>(event => {
+    onScroll: useCallback<ScrollHandlerProps['onScroll'] & object>(() => {
       // console.debug(
       //   '[onScrollHandlers] onScroll:: event.nativeEvent',
       //   event.nativeEvent,
@@ -372,7 +377,7 @@ const usePulldownRefreshGesture = <T extends ScrollView | RNGHScrollView>({
     }, []),
     onAnimatedScrollEndDrag: useCallback<
       ScrollHandlerProps['onAnimatedScrollEndDrag'] & object
-    >(event => {
+    >(() => {
       // console.debug(
       //   '[onScrollHandlers] onAnimatedScrollEndDrag:: event.nativeEvent',
       //   event.nativeEvent,
@@ -503,9 +508,6 @@ const usePulldownRefreshGesture = <T extends ScrollView | RNGHScrollView>({
 };
 
 const getStyle = createGetStyles2024(
-  {
-    reanimatedStyles: {},
-  },
   ({ colors2024, isLight, safeAreaInsets }) => ({
     main: {
       height: '100%',
@@ -796,6 +798,10 @@ function HomeOverviewPostStartupEffects({
       }
 
       triggerApprovalAlertCounts(HOME_REFRESH_INTERVAL);
+      const memeAddress = getMemeEntryAddress();
+      if (memeAddress) {
+        refreshMemeHoldingsIfStale(memeAddress, HOME_REFRESH_INTERVAL);
+      }
       // // leave here to measure perf impact
       // isNonPublicProductionEnv && apisLending.fetchLendingData({ persistOnly: true });
     }, [triggerUpdate]),
@@ -854,6 +860,10 @@ function DeferredHomeMenuBadge({
     return <LendingHF />;
   }
 
+  if (el.key === MultiHomeFeatTitle.MemeCoin) {
+    return <MemeCoinBalance />;
+  }
+
   if (el.key === MultiHomeFeatTitle.GasAccount) {
     return <GasAccountMenuBadge />;
   }
@@ -908,7 +918,7 @@ function GasAccountMenuBadge() {
 export const HomeOverview = React.memo(() => {
   const navigation = useRabbyAppNavigation();
   const { t } = useTranslation();
-  const { styles, reanimatedStyles, colors2024, isLight } = useTheme2024({
+  const { styles, colors2024, isLight } = useTheme2024({
     getStyle,
   });
   const dismissConvertDustBanner = useDismissConvertDustBanner();
@@ -959,9 +969,9 @@ export const HomeOverview = React.memo(() => {
           icon: RcIconPerps,
         },
         {
-          key: MultiHomeFeatTitle.Lending,
-          title: t('page.home.services.lending'),
-          icon: RcIconLending,
+          key: MultiHomeFeatTitle.MemeCoin,
+          title: t('page.home.services.meme'),
+          icon: RcIconMemeCoinCC,
         },
         {
           key: MultiHomeFeatTitle.GasAccount,
@@ -1001,6 +1011,11 @@ export const HomeOverview = React.memo(() => {
           title: t('page.home.services.convertDust'),
           icon: RcIconConvertDustCC,
         },
+        {
+          key: MultiHomeFeatTitle.Lending,
+          title: t('page.home.services.lending'),
+          icon: RcIconLending,
+        },
       ].filter(Boolean) as {
         key: MultiHomeFeatTitle;
         title: string;
@@ -1035,6 +1050,11 @@ export const HomeOverview = React.memo(() => {
     // update at background
     forceUpdateApprovalAlertCounts();
     apisLending.fetchLendingData();
+    // keep the wallet entry balance in sync with the account it shows
+    const memeAddress = getMemeEntryAddress();
+    if (memeAddress) {
+      refreshMemeHoldings(memeAddress);
+    }
     const forceRefresh = true;
     void currencyServiceApi.syncCurrencyList(forceRefresh).catch(error => {
       console.error('[HomeOverview] refresh currency list failed', error);
@@ -1315,6 +1335,11 @@ export const HomeOverview = React.memo(() => {
           navigation.push(RootNames.StackTransaction, {
             screen: RootNames.ConvertDust,
             params: {},
+          });
+          break;
+        case MultiHomeFeatTitle.MemeCoin:
+          navigation.push(RootNames.StackTransaction, {
+            screen: RootNames.MemeCoin,
           });
           break;
         default:

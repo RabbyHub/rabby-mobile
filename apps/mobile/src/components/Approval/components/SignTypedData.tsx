@@ -31,7 +31,11 @@ import {
 } from '../hooks/useActionSecurity';
 import { SecurityEngineError } from './SecurityEngine/SecurityEngineError';
 import { apiKeyring, apiProvider, apiSecurityEngine } from '@/core/apis';
-import { parseSignTypedDataMessage } from './SignTypedDataExplain/parseSignTypedDataMessage';
+import cloneDeep from 'lodash/cloneDeep';
+import {
+  normalizeTypedData,
+  parseSignTypedDataMessage,
+} from './SignTypedDataExplain/parseSignTypedDataMessage';
 import { getDappSnapshot } from '@/core/serviceApi/dapp';
 import { keyringServiceApi } from '@/core/serviceApi/keyring';
 import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
@@ -45,7 +49,10 @@ import { toast } from '@/components2024/Toast';
 import { adjustV } from '@/utils/gnosis';
 import { useEnterPassphraseModal } from '@/hooks/useEnterPassphraseModal';
 import { TestnetTag } from './TestnetTag';
-import { normalizeTypeData } from './TypedDataActions/utils';
+import {
+  getNormalizeTypeDataVersion,
+  normalizeTypeData,
+} from './TypedDataActions/utils';
 import { CHAINS } from '@debank/common';
 import { ALIAS_ADDRESS } from '@/constant/gas';
 import { getTimeSpan } from '@/utils/time';
@@ -172,16 +179,20 @@ export const SignTypedData = ({
     useMemo(() => {
       if (!isSignTypedDataV1) {
         try {
-          const raw = JSON.parse(data[1]);
-          const normalized = normalizeTypeData(JSON.parse(data[1]));
-          return [normalized, raw];
+          const typedData = normalizeTypedData(JSON.parse(data[1]));
+          const displayData = cloneDeep(typedData);
+          const { typedData: normalized } = normalizeTypeData(
+            typedData,
+            getNormalizeTypeDataVersion(method),
+          );
+          return [normalized, displayData];
         } catch (error) {
           console.error('parse signTypedData error: ', error);
           return [null, null];
         }
       }
       return [null, null];
-    }, [data, isSignTypedDataV1]);
+    }, [data, isSignTypedDataV1, method]);
 
   const chain = useMemo(() => {
     if (requestChainId) {

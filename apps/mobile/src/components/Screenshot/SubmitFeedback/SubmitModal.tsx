@@ -158,6 +158,11 @@ export function ScreenshotFeedbackSubmitModal() {
       visible={globalModalShown}
       transparent
       animationType="fade"
+      onRequestClose={() => {
+        if (!isSubmitting) {
+          closeSubmitModal({ skipInNext1Day });
+        }
+      }}
       style={styles.modalComp}>
       <View style={[styles.maskExtra, styles.maskBg]} />
 

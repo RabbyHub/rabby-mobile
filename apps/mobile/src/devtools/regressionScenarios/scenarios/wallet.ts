@@ -203,8 +203,8 @@ async function prepareWalletFixture(
       await completeWalletCreation(prepared, {
         password: REGRESSION_DEFAULT_PASSWORD,
         confirmPassword: REGRESSION_DEFAULT_PASSWORD,
-        checked: true,
         enableBiometrics: false,
+        enableDataAnalysis: true,
       });
       importedCount += 1;
     } else if (secret.mode === 'importPrivateKey') {
@@ -216,8 +216,8 @@ async function prepareWalletFixture(
       await completeWalletCreation(prepared, {
         password: REGRESSION_DEFAULT_PASSWORD,
         confirmPassword: REGRESSION_DEFAULT_PASSWORD,
-        checked: true,
         enableBiometrics: false,
+        enableDataAnalysis: true,
       });
       importedCount += 1;
     }
@@ -249,8 +249,8 @@ async function runWalletCreate(context: RegressionScenarioExecutionContext) {
     await completeWalletCreation(prepared, {
       password: REGRESSION_DEFAULT_PASSWORD,
       confirmPassword: REGRESSION_DEFAULT_PASSWORD,
-      checked: true,
       enableBiometrics: false,
+      enableDataAnalysis: true,
     });
   } else {
     await addKeyringAndactiveAndPersistAccounts(

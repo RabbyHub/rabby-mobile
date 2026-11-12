@@ -227,6 +227,7 @@ const TX_PARAMS = {
   to: '0x2222222222222222222222222222222222222222',
   data: '0x',
   value: '0x0',
+  chainId: 1,
 };
 
 const makeApprovalRes = (overrides: Record<string, unknown> = {}) => ({
@@ -332,6 +333,23 @@ describe('provider.ethSendTransaction broadcast chain pinning', () => {
     mockSubmitTxV2.mockResolvedValue({ tx_id: '0xabc' });
     mockIsBlockedAddress.mockResolvedValue({ is_blocked: false });
     clearBlockedAddressCache();
+  });
+
+  it.each([
+    ['from', { from: '0x3333333333333333333333333333333333333333' }],
+    ['chainId', { chainId: BSC_CHAIN.id }],
+  ])('rejects a changed approved %s before signing', async (_field, change) => {
+    await expect(
+      providerController.ethSendTransaction(
+        makeOptions({ approvalRes: makeApprovalRes(change) }),
+      ),
+    ).rejects.toMatchObject({
+      code: -32602,
+      message: 'approved transaction does not match request',
+    });
+    expect(mockGetKeyringForAccount).not.toHaveBeenCalled();
+    expect(mockSignTransaction).not.toHaveBeenCalled();
+    expect(mockSubmitTxV2).not.toHaveBeenCalled();
   });
 
   it('refuses to sign when the receiver is blocked', async () => {

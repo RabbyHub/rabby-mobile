@@ -197,11 +197,61 @@ const SparklineChart = ({
 };
 
 /**
- * Expanded chart body. Lives inside LineChart.Provider so it can drive the
- * cursor shared values for the tap interaction: a single tap snaps the
- * cursor to the nearest point and auto-hides it after 2s (a long-press still
- * works as the continuous cursor). The clip wrapper keeps the crosshair dot
- * from bleeding past the chart bounds at the edges.
+ * Must run inside LineChart.Provider, to drive the cursor shared values: a
+ * single tap snaps the cursor to the nearest point and auto-hides it after 2s
+ * (a long-press still works as the continuous cursor).
+ */
+export const useChartTapCursor = ({
+  disabled,
+  pointCount,
+  plotWidth,
+  inset,
+}: {
+  disabled: boolean;
+  pointCount: number;
+  plotWidth: number;
+  /** left offset of the plot inside the pressable */
+  inset: number;
+}) => {
+  const { currentX, currentIndex, isActive } = LineChart.useChart();
+  const tapTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(
+    undefined,
+  );
+  useEffect(() => () => clearTimeout(tapTimerRef.current), []);
+
+  return (locationX: number) => {
+    if (disabled || pointCount < 2 || plotWidth <= 0) {
+      return;
+    }
+    // Same x mapping as wagmi's path: WITHOUT an xDomain it spaces points
+    // EVENLY BY INDEX (timestamps are ignored), scaleLinear [0, len-1] ->
+    // [0, plotWidth]. A timestamp-based mapping drifts wherever the sampling
+    // interval is irregular — worst at both ends of the day series.
+    // locationX is relative to the pressable, so drop the plot's inset.
+    const step = plotWidth / (pointCount - 1);
+    const nearest = Math.min(
+      Math.max(Math.round((locationX - inset) / step), 0),
+      pointCount - 1,
+    );
+    const snappedX = nearest * step;
+    currentIndex.value = nearest;
+    currentX.value = snappedX;
+    isActive.value = true;
+    clearTimeout(tapTimerRef.current);
+    tapTimerRef.current = setTimeout(() => {
+      // Skip the auto-hide if a long-press has moved the cursor meanwhile.
+      if (Math.abs(currentX.value - snappedX) < 0.5) {
+        isActive.value = false;
+        currentIndex.value = -1;
+      }
+    }, 2_000);
+  };
+};
+
+/**
+ * Expanded chart body. Lives inside LineChart.Provider so it can use the tap
+ * cursor. The clip wrapper keeps the crosshair dot from bleeding past the
+ * chart bounds at the edges.
  */
 const ExpandedChartBody = ({
   points,
@@ -219,13 +269,14 @@ const ExpandedChartBody = ({
   cursorLineColor: string;
 }) => {
   const { styles } = useTheme2024({ getStyle });
-  const { currentX, currentIndex, isActive } = LineChart.useChart();
-  const tapTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(
-    undefined,
-  );
-  useEffect(() => () => clearTimeout(tapTimerRef.current), []);
 
   const plotWidth = Math.max(width - CURSOR_INSET * 2, 0);
+  const handleTap = useChartTapCursor({
+    disabled: isEmpty,
+    pointCount: points.length,
+    plotWidth,
+    inset: CURSOR_INSET,
+  });
 
   // Draw-on effect: the clip window sweeps left -> right, revealing the line
   // and its gradient. The parent keys this component by period, so every
@@ -245,34 +296,6 @@ const ExpandedChartBody = ({
     }),
     [width],
   );
-
-  const handleTap = (locationX: number) => {
-    if (isEmpty || points.length < 2 || plotWidth <= 0) {
-      return;
-    }
-    // Same x mapping as wagmi's path: WITHOUT an xDomain it spaces points
-    // EVENLY BY INDEX (timestamps are ignored), scaleLinear [0, len-1] ->
-    // [0, plotWidth]. A timestamp-based mapping drifts wherever the sampling
-    // interval is irregular — worst at both ends of the day series.
-    // locationX is relative to the pressable, so drop the plot's inset.
-    const step = plotWidth / (points.length - 1);
-    const nearest = Math.min(
-      Math.max(Math.round((locationX - CURSOR_INSET) / step), 0),
-      points.length - 1,
-    );
-    const snappedX = nearest * step;
-    currentIndex.value = nearest;
-    currentX.value = snappedX;
-    isActive.value = true;
-    clearTimeout(tapTimerRef.current);
-    tapTimerRef.current = setTimeout(() => {
-      // Skip the auto-hide if a long-press has moved the cursor meanwhile.
-      if (Math.abs(currentX.value - snappedX) < 0.5) {
-        isActive.value = false;
-        currentIndex.value = -1;
-      }
-    }, 2_000);
-  };
 
   return (
     <Pressable onPress={e => handleTap(e.nativeEvent.locationX)}>

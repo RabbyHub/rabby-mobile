@@ -7,23 +7,30 @@ import React from 'react';
 import { Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
-import type { PerpsAccountViewModel } from '../../model/account';
+import type {
+  PerpsAccountAssetRow,
+  PerpsAccountViewModel,
+} from '../../model/account';
 import { formatPerpsProUsdValue } from '../../utils/format';
 import { PerpsProDottedUnderlineText } from '../common/PerpsProDottedUnderlineText';
+import { PerpsProAccountAssetRow } from './PerpsProAccountAssetRow';
 import { PerpsProAccountValue } from './PerpsProAccountValue';
 
-// Approved Account-only colors, matching Simple Account in both themes.
-const ACCOUNT_ACTION_COLOR = '#23C0B0';
-const ACCOUNT_ACTION_BACKGROUND = 'rgba(80, 210, 193, 0.1)';
+// Figma 86609:327475: one card holds the summary, actions and asset rows.
+const ACCOUNT_CARD_SHADOW = '0px 5px 20px 0px rgba(0, 0, 0, 0.06)';
 
 interface PerpsProAccountSummaryProps {
-  account: Pick<PerpsAccountViewModel, 'primaryValue' | 'unrealizedPnl'>;
+  account: Pick<PerpsAccountViewModel, 'primaryValue' | 'unrealizedPnl'> & {
+    assets?: PerpsAccountAssetRow[];
+  };
   onDeposit: () => void;
+  onSwap?: (coin: PerpsAccountAssetRow['coin']) => void;
+  onTransfer?: (asset: PerpsAccountAssetRow) => void;
   onWithdraw: () => void;
 }
 
 export const PerpsProAccountSummary: React.FC<PerpsProAccountSummaryProps> =
-  React.memo(({ account, onDeposit, onWithdraw }) => {
+  React.memo(({ account, onDeposit, onSwap, onTransfer, onWithdraw }) => {
     const { styles } = useTheme2024({ getStyle });
     const { t } = useTranslation();
     const { showPortfolioBreakdown } = useShowPerpsPortfolioBreakdown();
@@ -96,24 +103,42 @@ export const PerpsProAccountSummary: React.FC<PerpsProAccountSummaryProps> =
             </Text>
           </Pressable>
         </View>
+        <View style={styles.divider} />
+        {account.assets?.length && onSwap && onTransfer ? (
+          <View>
+            {account.assets?.map(asset => (
+              <PerpsProAccountAssetRow
+                asset={asset}
+                key={asset.key}
+                onSwap={onSwap}
+                onTransfer={onTransfer}
+              />
+            ))}
+          </View>
+        ) : null}
       </View>
     );
   });
 
 PerpsProAccountSummary.displayName = 'PerpsProAccountSummary';
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   container: {
-    gap: 12,
-    marginHorizontal: 16,
-    marginTop: 16,
-    paddingBottom: 16,
+    backgroundColor:
+      colors2024[isLight === false ? 'neutral-bg-2' : 'neutral-bg-1'],
+    borderRadius: 14,
+    gap: 8,
+    marginHorizontal: 12,
+    marginTop: 12,
+    paddingBottom: 8,
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    ...(isLight === false ? null : { boxShadow: ACCOUNT_CARD_SHADOW }),
   },
   summary: {
     gap: 12,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: 4,
   },
   summaryColumn: {
     flex: 1,
@@ -124,43 +149,43 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'flex-end',
   },
   label: {
-    color: colors2024['neutral-body'],
+    color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,
-    fontWeight: '400',
+    fontWeight: '500',
     lineHeight: 18,
   },
   primaryValue: {
     ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '700',
-    lineHeight: 22,
+    lineHeight: 20,
   },
   value: {
     ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '700',
-    lineHeight: 22,
+    lineHeight: 20,
   },
   positiveValue: {
     ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['green-default'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '700',
-    lineHeight: 22,
+    lineHeight: 20,
   },
   negativeValue: {
     ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['red-default'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '700',
-    lineHeight: 22,
+    lineHeight: 20,
   },
   actions: {
     flexDirection: 'row',
@@ -168,17 +193,22 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   action: {
     alignItems: 'center',
-    backgroundColor: ACCOUNT_ACTION_BACKGROUND,
+    backgroundColor: colors2024['neutral-bg-5'],
     borderRadius: 8,
     flex: 1,
     height: 36,
     justifyContent: 'center',
   },
   actionText: {
-    color: ACCOUNT_ACTION_COLOR,
+    color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '700',
-    lineHeight: 20,
+    lineHeight: 18,
+  },
+  divider: {
+    backgroundColor: colors2024['neutral-bg-5'],
+    height: 1,
+    marginTop: 8,
   },
 }));

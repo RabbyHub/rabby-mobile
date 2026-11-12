@@ -271,11 +271,53 @@ android {
             applicationIdSuffix ".regression"
             matchingFallbacks = ['release']
         }
+        // Unsigned regression-like variant used by the sign-only workflow.
+        signonly {
+            initWith regression
+            signingConfig null
+            matchingFallbacks = ['regression', 'release']
+        }
     }
-    buildTypes.each {
-        it.buildConfigField 'String', 'rabbitCode', "\"$System.env.RABBY_MOBILE_CODE\""
+    def requestedTasks = gradle.startParameter.taskNames.join(' ').toLowerCase()
+    def packagingRequested = requestedTasks.contains('assemble') ||
+            requestedTasks.contains('bundle') ||
+            requestedTasks.contains('install')
+    buildTypes.each { buildType ->
+        def rabbitCode = (System.getenv('RABBY_MOBILE_CODE') ?: '').trim()
+        def invalidRabbitCode = !rabbitCode ||
+                rabbitCode == 'null' ||
+                rabbitCode == 'undefined' ||
+                (rabbitCode == 'RABBY_MOBILE_CODE_DEV' && System.getenv('APP_ENV') != 'hashing')
+        if (buildType.name == 'debug') {
+            // Local debug builds keep the documented DEV fallback.
+            if (invalidRabbitCode) {
+                rabbitCode = 'RABBY_MOBILE_CODE_DEV'
+            }
+        } else if (invalidRabbitCode) {
+            // Only the build type actually being packaged has to fail. A plain
+            // `./gradlew assembleDebug` configures every build type, so keying
+            // this off `packagingRequested` alone broke local debug builds.
+            def packagingThisBuildType =
+                    packagingRequested && requestedTasks.contains(buildType.name.toLowerCase())
+            if (packagingThisBuildType) {
+                throw new GradleException(
+                        "RABBY_MOBILE_CODE is missing or invalid for '${buildType.name}'; " +
+                                "export the real value before building."
+                )
+            }
+            // IDE sync / help / configuration-only tasks must not bake a package.
+            rabbitCode = 'RABBY_MOBILE_CODE_DEV'
+        }
+        buildType.buildConfigField 'String', 'rabbitCode', "\"${rabbitCode}\""
     }
     sourceSets {
+        // The sign-only variant must keep the regression identity (name, icon,
+        // deep links); build types do not inherit another build type's source
+        // set, so point it at the regression resources explicitly.
+        signonly {
+            res.srcDirs += "src/regression/res"
+            manifest.srcFile "src/regression/AndroidManifest.xml"
+        }
         main {
             assets.srcDir generatedBuildInfoAssetsDir
             if (isNewArchitectureEnabled()) {
@@ -293,6 +335,16 @@ android {
 tasks.configureEach {
     if (name == "preBuild" || (name.startsWith("merge") && name.endsWith("Assets"))) {
         dependsOn(generateRabbyBuildInfo)
+    }
+}
+
+// The signonly build type reuses the regression identity, but the Google
+// Services plugin resolves google-services.json by the literal build-type
+// name. Point the signonly task at the already-tracked regression file instead
+// of committing a second plaintext copy of the same client configuration.
+gradle.projectsEvaluated {
+    tasks.matching { it.name == "processSignonlyGoogleServices" }.configureEach {
+        it.googleServicesJsonFiles.set([file("src/regression/google-services.json")])
     }
 }
 

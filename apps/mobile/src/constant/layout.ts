@@ -7,7 +7,7 @@ import {
   ThemeColors2024,
 } from './theme';
 import { IS_ANDROID } from '@/core/native/utils';
-import { Dimensions, type TextStyle } from 'react-native';
+import { Dimensions } from 'react-native';
 
 export const BOTTOM_BUTTON_BOTTOM_OFFSET = 36;
 export const BOTTOM_BUTTON_TOP_OFFSET = 12;
@@ -17,26 +17,13 @@ export const BOTTOM_BUTTON_COMPACT_HEIGHT = 36;
 export const BOTTOM_BUTTON_DOUBLE_HEIGHT = 48;
 export const BOTTOM_BUTTON_TEXT_SIZE = 18;
 export const BOTTOM_BUTTON_TEXT_LINE_HEIGHT = 22;
-// 标题样式故意不带 lineHeight：components2024/Button 在传了 height 时默认把
-// 行高设为按钮高度（中文字体垂直居中需要）。非 Button 的 Text 需要固定行高时
-// 用 BOTTOM_BUTTON_TEXT_LINE_HEIGHT
+// 标题样式不带 lineHeight。Button 在传入 height 时自己居中：iOS 用
+// BOTTOM_BUTTON_TEXT_LINE_HEIGHT，Android 不设行高。非 Button 的 Text 需要
+// 固定行高时用 BOTTOM_BUTTON_TEXT_LINE_HEIGHT。
 export const BOTTOM_BUTTON_TITLE_STYLE = {
   fontSize: BOTTOM_BUTTON_TEXT_SIZE,
   fontWeight: '700',
 } as const;
-// 保留 undefined 以覆盖 Button 默认行高，不能放入会清除 undefined 的主题样式工厂。
-export const getBottomButtonCenteredTitleStyle = (
-  height: number,
-): TextStyle => ({
-  ...BOTTOM_BUTTON_TITLE_STYLE,
-  lineHeight: IS_ANDROID ? undefined : BOTTOM_BUTTON_TEXT_LINE_HEIGHT,
-  paddingVertical: 0,
-  ...(IS_ANDROID && {
-    height: height - 2,
-    includeFontPadding: false,
-    textAlignVertical: 'center' as const,
-  }),
-});
 export const BOTTOM_BUTTON_COMPACT_TITLE_STYLE = {
   fontSize: 16,
   fontWeight: '500',
@@ -159,6 +146,7 @@ export const RootNames = {
   StackTestkits: 'StackTestkits',
   DevUIFontShowCase: 'DevUIFontShowCase',
   DevUIAnimatedTextAndView: 'DevUIAnimatedTextAndView',
+  DevUIAutoFitTitlePlayground: 'DevUIAutoFitTitlePlayground',
   DevUIFormShowCase: 'DevUIFormShowCase',
   DevUIAccountShowCase: 'DevUIAccountShowCase',
   DevUIComponents2024ShowCase: 'DevUIComponents2024ShowCase',
@@ -206,6 +194,9 @@ export const RootNames = {
   MultiAddressHistory: 'MultiAddressHistory',
   LendingHistory: 'LendingHistory',
   ConvertDust: 'ConvertDust',
+  MemeCoin: 'MemeCoin',
+  MemeCoinBuy: 'MemeCoinBuy',
+  MemeCoinExecute: 'MemeCoinExecute',
   GasAccount: 'GasAccount',
   Perps: 'Perps',
   PerpsMarketList: 'PerpsMarketList',
@@ -407,6 +398,7 @@ function makeScreenSpecConfig() {
       // StackTestkits
       [RootNames.DevUIFontShowCase]: bg1Default2024Conf,
       [RootNames.DevUIAnimatedTextAndView]: bg1Default2024Conf,
+      [RootNames.DevUIAutoFitTitlePlayground]: bg1Default2024Conf,
       [RootNames.DevUIFormShowCase]: bg1Default2024Conf,
       [RootNames.DevUIAccountShowCase]: bg1Default2024Conf,
       [RootNames.DevUIComponents2024ShowCase]: bg1Default2024Conf,
@@ -452,6 +444,9 @@ function makeScreenSpecConfig() {
       [RootNames.MultiAddressHistory]: historyPageConf,
       [RootNames.LendingHistory]: bg1Default2024Conf,
       [RootNames.ConvertDust]: bg1Default2024Conf,
+      [RootNames.MemeCoin]: transparentDefault2024Conf,
+      [RootNames.MemeCoinBuy]: transparentDefault2024Conf,
+      [RootNames.MemeCoinExecute]: transparentDefault2024Conf,
       [RootNames.GasAccount]: transparentDefault2024Conf,
       [RootNames.Perps]: transparentDefault2024Conf,
       [RootNames.PerpsMarketList]: bg1Default2024Conf,

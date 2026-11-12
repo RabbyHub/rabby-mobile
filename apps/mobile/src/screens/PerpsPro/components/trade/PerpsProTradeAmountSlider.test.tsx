@@ -77,14 +77,14 @@ describe('PerpsProTradeAmountSlider haptics', () => {
       accessible: false,
       fill: 'neutral-bg-1',
       stroke: 'neutral-title-1',
-      height: 13,
-      width: 13,
+      height: 12,
+      width: 12,
       pointerEvents: 'none',
     });
     expect(StyleSheet.flatten(slider.props.thumbStyle)).toMatchObject({
       backgroundColor: 'transparent',
-      height: 13,
-      width: 13,
+      height: 12,
+      width: 12,
     });
     expect(slider.props.progressValue).toEqual({ value: 25 });
   });

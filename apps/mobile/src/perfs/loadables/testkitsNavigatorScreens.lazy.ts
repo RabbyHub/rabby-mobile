@@ -8,6 +8,13 @@ export const DevUIAnimatedTextAndView = registerAppScreen<
   name: TESTKITS_PRELOAD_SCREENS.DevUIAnimatedTextAndView,
 });
 
+export const DevUIAutoFitTitlePlayground = registerAppScreen<
+  typeof import('@/screens/Testkits/DevUIAutoFitTitlePlayground').default
+>({
+  loader: () => import('@/screens/Testkits/DevUIAutoFitTitlePlayground'),
+  name: TESTKITS_PRELOAD_SCREENS.DevUIAutoFitTitlePlayground,
+});
+
 export const DevUIFontShowCase = registerAppScreen<
   typeof import('@/screens/Testkits/DevUIFontShowCase').default
 >({

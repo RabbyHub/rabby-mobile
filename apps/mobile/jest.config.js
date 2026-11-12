@@ -11,6 +11,9 @@ module.exports = {
       '<rootDir>/node_modules/react-native-reanimated$1',
     '^react-native-gesture-handler(/.*)?$':
       '<rootDir>/node_modules/react-native-gesture-handler$1',
+    // The package exposes only "." in package.json; Metro resolves this deep
+    // import, while Jest enforces package exports.
+    '^@rabby-wallet/biz-utils/(.*)$': '<rootDir>/../../packages/biz-utils/$1',
     // @scure/bip39's patch require()s these. Unit tests never load the native modules.
     '^react-native-quick-crypto$':
       '<rootDir>/../../packages/service-keyring/test/react-native-quick-crypto.mock.js',
@@ -24,9 +27,11 @@ module.exports = {
     '/node_modules/',
     '\\.integration\\.test\\.[jt]sx?$',
     // Build-script contracts use node:test and the project's Ruby toolchain.
-    '<rootDir>/scripts/.*\\.test\\.cjs$',
+    '<rootDir>/scripts/.*\\.test\\.(cjs|mjs)$',
   ],
   transformIgnorePatterns: [
-    'node_modules/(?!((jest-)?react-native|@react-native(-community)?|@rneui/base|react-native-size-matters|react-native-root-toast|react-native-root-siblings|react-native-walkthrough-tooltip|@debank|@rabby-wallet/rabby-security-engine|@rabby-wallet/rabby-bridge|p-queue|p-timeout|eventemitter3)/)',
+    // `rabby-api` and `rabby-action` ship ESM-only `dist/*.js`, so tests that
+    // render a screen reaching them must transform those packages too.
+    'node_modules/(?!((jest-)?react-native|@react-native(-community)?|@rneui/base|react-native-size-matters|react-native-root-toast|react-native-root-siblings|react-native-walkthrough-tooltip|@debank|@rabby-wallet/rabby-security-engine|@rabby-wallet/rabby-bridge|@rabby-wallet/rabby-api|@rabby-wallet/rabby-action|p-queue|p-timeout|eventemitter3)/)',
   ],
 };

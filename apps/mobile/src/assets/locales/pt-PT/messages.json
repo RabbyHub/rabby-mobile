@@ -105,13 +105,6 @@
         "LastPrice": "Último preço"
       }
     },
-    "ReserveGasPopup": {
-      "doNotReserve": "Não reservar gas",
-      "fast": "Normal",
-      "instant": "Rápido",
-      "normal": "Lento",
-      "title": "Reservar Gas"
-    },
     "AuthenticationModals": {
       "biometrics": {
         "enable": "Introduza a palavra-passe\npara ativar {{ bioType }}",
@@ -998,7 +991,6 @@
       "delete-title": "Eliminar carteira"
     },
     "bridge": {
-      "bridge-from": "Bridge de",
       "price-impact": "Impacto no preço",
       "no-quote": "Sem cotação",
       "est-payment": "Pagamento estimado:",
@@ -1007,12 +999,11 @@
       "est-receiving": "Montante estimado a receber:",
       "via-bridge": "via {{bridge}}",
       "From": "De",
-      "for-available-quote": "para uma cotação disponível",
       "history": "Histórico de bridges",
       "loss-tips": "Está a perder {{usd}}. Tente um valor diferente.",
       "To": "Para",
       "approve-and-bridge": "Aprovar e fazer bridge",
-      "no-quote-found": "Nenhuma cotação encontrada. Por favor, tente outros pares de tokens.",
+      "no-quote-found": "Nenhuma cotação encontrada.",
       "showMore": {
         "title": "Mostrar mais",
         "source": "Origem do bridge",
@@ -1079,7 +1070,7 @@
         "queued": "Em espera",
         "pending": "Pendente",
         "completed": "Concluído",
-        "refund": "Reembolso",
+        "refund": "Reembolsado",
         "waiting": "A aguardar a transação de destino",
         "goBack": "Voltar",
         "bridgeAgain": "Transferir por ponte novamente",
@@ -1665,10 +1656,7 @@
       }
     },
     "createPassword": {
-      "PrivacyPolicy": "política de privacidade",
       "confirmTitle": "Confirmar palavra-passe",
-      "and": "e",
-      "agreeToTerms": "Li e concordo com os",
       "enable": "Ativar {{ bioType }}",
       "Newpassword": "Introduzir palavra-passe",
       "settingUp": "A configurar a palavra-passe",
@@ -1677,7 +1665,6 @@
       "passwordMinTip": "Deve ter pelo menos 8 caracteres",
       "biometricsFail": "Falha ao ativar biometria",
       "confirmRequired": "Por favor, confirme a palavra-passe",
-      "termOfUse": "termos",
       "passwordPlaceholder": "A palavra-passe deve ter pelo menos 8 caracteres",
       "confirmPasswordPlaceholder": "Confirmar palavra-passe",
       "confirmError": "As palavras-passe não coincidem",
@@ -1688,7 +1675,9 @@
       "agree": "Li e concordo com os<1/> <2>Termos de Utilização</2>",
       "confirmModalDesc": "Guarde a sua palavra-passe em segurança. Se a perder, a Rabby não poderá alterá-la nem recuperá-la.",
       "setWallet": "Configurar carteira",
-      "ConfirmPassword": "Confirmar palavra-passe"
+      "ConfirmPassword": "Confirmar palavra-passe",
+      "dataAnalysisDesc": "Partilhe dados de utilização anónimos para ajudar a melhorar a Rabby. Os dados recolhidos não são associados a si nem à sua conta. Pode alterar esta opção em qualquer altura nas Definições.",
+      "agreeByContinuing": "Ao continuar, concorda com os <terms>Termos de Utilização</terms> e toma conhecimento da <privacy>Política de Privacidade</privacy>."
     },
     "ethSign": {
       "alert": "Assinar com 'eth_sign' pode causar a perda de ativos. Para sua segurança, a Rabby não suporta este método."
@@ -2074,7 +2063,8 @@
       "currency": "Moeda",
       "searchCurrency": "Pesquisar moeda",
       "screenshotReportSwitch": "Captura de ecrã para comunicar um erro",
-      "dataAnalysis": "Análise de dados",
+      "dataAnalysis": "Ajudar a melhorar a Rabby",
+      "dataAnalysisDesc": "Partilhe dados de utilização anónimos para ajudar a melhorar a Rabby. Os dados recolhidos não são associados a si nem à sua conta.",
       "bugReportChat": "Partilhar feedback através do chat",
       "features": "Funcionalidades",
       "manageWallets": "Gerir carteiras"
@@ -2209,7 +2199,8 @@
       "emptyWhitelistContent": "Adicione endereços fidedignos à lista de permissões para fazer transferências rápidas sem voltar a confirmar",
       "SendHistory": "Histórico de envios",
       "dividerWatchOnlyWallets": "Endereços só de leitura",
-      "enterOrSearchAddress": "Introduzir ou pesquisar endereço"
+      "enterOrSearchAddress": "Introduzir ou pesquisar endereço",
+      "resolvingAddressName": "A procurar endereço..."
     },
     "confirmAddress": {
       "risks": {
@@ -3282,6 +3273,13 @@
       },
       "addressEditorBadge": {
         "nameUnknown": "Nome o endereço"
+      },
+      "scanQrcode": {
+        "chooseFromGallery": "Escolher da galeria",
+        "noQrCode": "Nenhum código QR encontrado nesta imagem",
+        "multipleQrCodes": "Foram encontrados vários códigos QR. Escolha uma imagem com apenas um código QR",
+        "invalidAddress": "Nenhum endereço válido encontrado neste código QR",
+        "readImageFailed": "Não foi possível ler a imagem. Tente novamente"
       }
     },
     "Lending": {
@@ -3587,6 +3585,72 @@
     },
     "batchRevoke": {
       "title": "Revogação em lote"
+    },
+    "memeCoin": {
+      "holdingsEntry": "participações",
+      "pnlPeriod24h": "24h",
+      "pnlPeriodAll": "Todos",
+      "pnlTipLabel": "PnL",
+      "backToMarket": "Voltar ao mercado de memes",
+      "marketTitle": "Mercado de memes",
+      "holdingsTitle": "Participações",
+      "marketCap": "Capitalização de mercado",
+      "valuePnl": "Valor / PnL",
+      "searchMarket": "Pesquisar no mercado de memes",
+      "noMatch": "Nenhum meme correspondente",
+      "noHoldings": "Ainda sem participações",
+      "loadFailed": "Falha ao carregar. Toque para tentar novamente",
+      "buyN": "Comprar {{count}} memes",
+      "buyN_one": "Comprar {{count}} meme",
+      "sellN": "Vender {{count}} memes",
+      "sellN_one": "Vender {{count}} meme",
+      "selectToBuy": "Selecione memes para comprar",
+      "selectToSell": "Selecione memes para vender",
+      "maxPriceImpact": "Impacto máx. no preço",
+      "unsupportedAddressType": "Tipo de endereço não suportado",
+      "accountChanged": "O endereço mudou. Comece novamente",
+      "addressSwitchUnsupported": "Não é possível mudar de endereço nesta página.",
+      "buy": {
+        "amount": "Montante de compra",
+        "allocation": "Alocação",
+        "byMarketCap": "Por capitalização",
+        "equalSplit": "Divisão igual",
+        "estPayment": "Pagamento est. {{amount}}",
+        "needed": "Faltam {{amount}}",
+        "anotherNeeded": "Faltam mais {{amount}}",
+        "preview": "Pré-visualizar",
+        "paymentTokens": "Tokens de pagamento",
+        "selectTokens": "Selecionar tokens",
+        "selectPaymentAssets": "Selecione os ativos para pagamento",
+        "estPaymentLabel": "Pagamento est.",
+        "noPaymentToken": "Nenhum token de pagamento selecionado",
+        "confirm": "Confirmar",
+        "noAssets": "Sem ativos disponíveis"
+      },
+      "execute": {
+        "title": "Executar",
+        "buySubtitleShort": "Por ordem em cada rede, em paralelo entre redes.",
+        "sellSubtitle": "Os valores recebidos ficam nas respetivas redes",
+        "estReceipt": "Receção est.(USD)",
+        "statusPending": "Pendente",
+        "statusPendingPrevious": "A aguardar a transação anterior na mesma rede",
+        "statusExecuting": "A executar",
+        "statusSuccessful": "Concluída",
+        "confirm": "Confirmar",
+        "back": "Voltar",
+        "retryFailedTxns": "Repetir {{count}} transações falhadas",
+        "retryFailedTxns_one": "Repetir {{count}} transação falhada",
+        "progress": "A executar · {{done}}/{{total}} concluídas",
+        "done": "Concluído",
+        "exitTitle": "Cancelar a execução e voltar?",
+        "exitDesc1": "A execução será interrompida. As transações não submetidas não serão processadas.",
+        "exitDesc2": "As transações já submetidas na rede não podem ser anuladas e poderão ainda ser concluídas.",
+        "stopAndExit": "Parar e sair",
+        "continue": "Continuar",
+        "failReason": {
+          "buildFailed": "Falha ao criar a transação"
+        }
+      }
     },
     "convertDust": {
       "failReason": {

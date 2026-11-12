@@ -1581,25 +1581,53 @@ const resetAccountState = () => {
   }));
 };
 
-const fetchUserFillHistory = async () => {
-  const sdk = apisPerps.getPerpsSDK();
+let userFillHistoryRequest: {
+  address: string;
+  promise: Promise<void>;
+} | null = null;
+
+// Login and the WS snapshot both ask for the same history; share the request
+// while it is in flight.
+const fetchUserFillHistory = (): Promise<void> => {
   const expectedAddress = perpsStore.getState().currentPerpsAccount?.address;
   if (!expectedAddress) {
-    return;
+    return Promise.resolve();
   }
-  try {
-    const res = await sdk.info.getUserFills();
-    // Account switched during the await — drop the response.
-    if (!isCurrentPerpsAccountAddress(expectedAddress)) {
-      return;
+  if (
+    userFillHistoryRequest &&
+    isSameAddress(userFillHistoryRequest.address, expectedAddress)
+  ) {
+    return userFillHistoryRequest.promise;
+  }
+  const request = async () => {
+    try {
+      // Bind the request to THIS address: the SDK default is its
+      // masterAddress, which a login branch that skips initAccount never sets.
+      const res = await apisPerps
+        .getPerpsSDK()
+        .info.getUserFills(expectedAddress);
+      // Account switched during the await — drop the response.
+      if (!isCurrentPerpsAccountAddress(expectedAddress)) {
+        return;
+      }
+      setPerpsState(prev => ({
+        ...prev,
+        userFills: reconcileHttpFills(
+          res as unknown as WsFill[],
+          prev.userFills,
+        ),
+      }));
+    } catch (error) {
+      console.error('Failed to fetch user fill history:', error);
     }
-    setPerpsState(prev => ({
-      ...prev,
-      userFills: reconcileHttpFills(res as unknown as WsFill[], prev.userFills),
-    }));
-  } catch (error) {
-    console.error('Failed to fetch user fill history:', error);
-  }
+  };
+  const promise = request().finally(() => {
+    if (userFillHistoryRequest?.promise === promise) {
+      userFillHistoryRequest = null;
+    }
+  });
+  userFillHistoryRequest = { address: expectedAddress, promise };
+  return promise;
 };
 
 const addUserFills = (payload: {
@@ -3007,6 +3035,9 @@ export const usePerpsStore = () => {
       };
     });
     fetchUserHistoricalOrders();
+    // The WS snapshot only carries recent fills and a reused stream sends
+    // none at all, so the history must not wait for it.
+    void fetchUserFillHistory();
     if (!canReuseSubscription) {
       subscribeToUserData(account);
     } else {
@@ -3035,13 +3066,21 @@ export const usePerpsStore = () => {
   );
 
   const fetchUserHistoricalOrders = useMemoizedFn(async () => {
+    const expectedAddress = perpsStore.getState().currentPerpsAccount?.address;
+    if (!expectedAddress) {
+      return;
+    }
     try {
       const sdk = apisPerps.getPerpsSDK();
       const res = await sdk.info.getUserHistoricalOrders(
-        undefined, // use sdk inner address
+        expectedAddress,
         Date.now() - 1000 * 60 * 60 * 24 * 7, // 7 days ago
         0,
       );
+      // Account switched during the await — drop the response.
+      if (!isCurrentPerpsAccountAddress(expectedAddress)) {
+        return;
+      }
       const listOrderTpOrSl = {} as Record<string, 'tp' | 'sl'>;
       res.forEach(item => {
         if (item.status !== 'triggered') {

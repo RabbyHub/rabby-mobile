@@ -38,7 +38,6 @@ import { navigateDeprecated } from '@/utils/navigation';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { createGetStyles2024 } from '@/utils/styles';
 import { Text } from '@/components/Typography';
-import { buttonTitleStyles } from '@/components2024/Button/buttonStyles';
 
 type Props = {
   isEdit?: boolean;
@@ -204,14 +203,12 @@ export const EditCustomTestnetPopup = ({
                   onPress={onCancel}
                   title={t('global.cancel')}
                   height={BOTTOM_BUTTON_DOUBLE_HEIGHT}
-                  titleStyle={buttonTitleStyles.double}
                   type="plain"
                   containerStyle={styles.btnContainer}
                 />
                 <Button
                   title={t('global.confirm')}
                   height={BOTTOM_BUTTON_DOUBLE_HEIGHT}
-                  titleStyle={buttonTitleStyles.double}
                   onPress={handleSubmit}
                   loading={loading}
                   containerStyle={styles.btnContainer}

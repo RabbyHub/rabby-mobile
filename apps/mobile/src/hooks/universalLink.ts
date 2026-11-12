@@ -34,7 +34,8 @@ import {
 } from '@/core/walletconnect';
 import { isNonPublicProductionEnv } from '@/constant';
 import { RootNames } from '@/constant/layout';
-import { navigationRef } from '@/utils/navigation';
+import { navigateDeprecated, navigationRef } from '@/utils/navigation';
+import { findChain, makeTokenFromChain } from '@/utils/chain';
 import { dropAppDataSourceAndQuitApp } from '@/databases/imports';
 import {
   abortAllSyncTasks,
@@ -71,6 +72,11 @@ import {
 import { IS_IOS } from '@/core/native/utils';
 import { parseKeychainVersionDeepLinkValue } from '@/core/apis/keychainVersionShared';
 import RNHelpers from '@/core/native/RNHelpers';
+import {
+  forceDebugChainStatsFor,
+  toggleDebugChainStatsForced,
+} from '@/screens/Home/debugChainStats';
+import { apisSingleHome } from '@/screens/Home/hooks/singleHome';
 
 const nextAppLinkRef = {
   current: '' as string,
@@ -101,6 +107,8 @@ type OnParseUrlAndProcessAction = (payload: {
     | 'debug-lending'
     | 'debug-open-target'
     | 'debug-perps-account'
+    | 'debug-create-address'
+    | 'debug-set-language'
     | 'regression-scenario';
   target?: RabbyGoTarget;
   dappUrl?: string;
@@ -110,6 +118,7 @@ type OnParseUrlAndProcessAction = (payload: {
     | typeof RootNames.DevUIAnimatedTextAndView
     | typeof RootNames.DevUISwipableSubScreen
     | typeof RootNames.DevUIRootSubScreen
+    | typeof RootNames.DevUIAutoFitTitlePlayground
     | typeof RootNames.DevUISafeSvgMedia
     | typeof RootNames.DebugLogViewer
     | typeof RootNames.StartupPerformanceLogViewer
@@ -130,7 +139,16 @@ type OnParseUrlAndProcessAction = (payload: {
     action: 'open' | 'refresh' | 'probe';
     market?: string;
   };
-  debugOpenTarget?: RabbyGoTarget;
+  debugOpenTarget?: DebugOpenTarget;
+  debugOpenTargetChain?: string;
+  debugOpenTargetTab?: 'seedPhrase' | 'privateKey';
+  /** Non-production only: force the app language, e.g. `pt-BR`. */
+  debugLanguage?: string;
+  /** Non-production only: address seeded by `debug-create-address`. */
+  debugAddress?: string;
+  debugChainStatsLoading?: boolean;
+  debugChainStatsLoadingForMs?: number;
+  debugChainStatsLoadingOff?: boolean;
   debugPerpsAccount?: {
     action: 'state' | 'select';
     address?: string;
@@ -140,11 +158,25 @@ type OnParseUrlAndProcessAction = (payload: {
   regressionScenarioError?: string;
 }) => void;
 
+// Non-production automation targets that reuse the existing `_cmd` entry
+// instead of shipping another debug route.
+type DebugOpenTarget =
+  | RabbyGoTarget
+  | 'tokenDetail'
+  | 'tokenMarketDetail'
+  | 'chainLoading'
+  | 'singleHome'
+  | 'homeAssets'
+  | 'approvals'
+  | 'importSecret'
+  | 'importMethods';
+
 const NON_PRODUCTION_TESTKIT_SCREENS = {
   DevCapabilityFile: RootNames.DevCapabilityFile,
   DevUIAnimatedTextAndView: RootNames.DevUIAnimatedTextAndView,
   DevUISwipableSubScreen: RootNames.DevUISwipableSubScreen,
   DevUIRootSubScreen: RootNames.DevUIRootSubScreen,
+  DevUIAutoFitTitlePlayground: RootNames.DevUIAutoFitTitlePlayground,
   DevUISafeSvgMedia: RootNames.DevUISafeSvgMedia,
   DebugLogViewer: RootNames.DebugLogViewer,
   StartupPerformanceLogViewer: RootNames.StartupPerformanceLogViewer,
@@ -403,12 +435,21 @@ function parseNonProductionMaintenanceLink(appLink: string) {
   // must use this `_cmd` instead of reusing it.
   if (rabbyGoCmd === 'debug-open-target' || target === 'debug-open-target') {
     const rawTarget = urlInfo.searchParams.get('target');
-    if (
-      rawTarget !== 'perps' &&
-      rawTarget !== 'swap' &&
-      rawTarget !== 'bridge' &&
-      rawTarget !== 'home'
-    ) {
+    const isRabbyGoTarget =
+      rawTarget === 'perps' ||
+      rawTarget === 'swap' ||
+      rawTarget === 'bridge' ||
+      rawTarget === 'home';
+    const isDebugScreenTarget =
+      rawTarget === 'tokenDetail' ||
+      rawTarget === 'tokenMarketDetail' ||
+      rawTarget === 'chainLoading' ||
+      rawTarget === 'singleHome' ||
+      rawTarget === 'homeAssets' ||
+      rawTarget === 'approvals' ||
+      rawTarget === 'importSecret' ||
+      rawTarget === 'importMethods';
+    if (!isRabbyGoTarget && !isDebugScreenTarget) {
       console.warn(
         '[useUniversalLinkOnTop] Unknown debug-open-target target:',
         rawTarget,
@@ -418,7 +459,63 @@ function parseNonProductionMaintenanceLink(appLink: string) {
 
     return {
       type: 'debug-open-target',
-      debugOpenTarget: rawTarget,
+      debugOpenTarget: rawTarget as DebugOpenTarget,
+      debugOpenTargetChain:
+        urlInfo.searchParams.get('chain') || urlInfo.searchParams.get('symbol')
+          ? urlInfo.searchParams.get('chain') ||
+            urlInfo.searchParams.get('symbol') ||
+            undefined
+          : undefined,
+      debugOpenTargetTab:
+        urlInfo.searchParams.get('tab') === 'privateKey'
+          ? 'privateKey'
+          : 'seedPhrase',
+      debugChainStatsLoading:
+        urlInfo.searchParams.get('chainLoading') === '1' ||
+        urlInfo.searchParams.get('chainLoading') === 'true',
+      // `chainLoading=3000` pins for 3s then releases, so the skeleton ->
+      // loaded transition can be observed.
+      debugChainStatsLoadingForMs: (function () {
+        const raw = urlInfo.searchParams.get('chainLoading');
+        if (!raw) {
+          return undefined;
+        }
+        const ms = Number(raw);
+        return Number.isFinite(ms) && ms > 0 ? ms : undefined;
+      })(),
+      debugChainStatsLoadingOff:
+        urlInfo.searchParams.get('chainLoading') === '0' ||
+        urlInfo.searchParams.get('chainLoading') === 'false',
+    } satisfies Parameters<OnParseUrlAndProcessAction>[0];
+  }
+
+  // Non-production only: force the UI language so layout bugs that only show up
+  // with a long translation (QA 1352) can be reproduced without changing the
+  // device settings. `?_cmd=debug-set-language&lang=pt-BR`.
+  if (rabbyGoCmd === 'debug-set-language' || target === 'debug-set-language') {
+    const lang =
+      urlInfo.searchParams.get('lang') || urlInfo.searchParams.get('language');
+    if (!lang) {
+      console.warn('[useUniversalLinkOnTop] debug-set-language needs ?lang=');
+      return null;
+    }
+    return {
+      type: 'debug-set-language',
+      debugLanguage: lang,
+    } satisfies Parameters<OnParseUrlAndProcessAction>[0];
+  }
+
+  // Non-production only: seed an empty address so "no assets yet" states can be
+  // reproduced without walking the onboarding flow (QA 1197).
+  // `?_cmd=debug-create-address&address=0x...`
+  if (
+    rabbyGoCmd === 'debug-create-address' ||
+    target === 'debug-create-address'
+  ) {
+    const address = urlInfo.searchParams.get('address') || undefined;
+    return {
+      type: 'debug-create-address',
+      debugAddress: address,
     } satisfies Parameters<OnParseUrlAndProcessAction>[0];
   }
 
@@ -668,7 +765,7 @@ function dispatchWhenNavigationReady(
 
 function resetExistingHomeFlowToOverview() {
   const rootState = navigationRef.getRootState();
-  if (!canResetRootToHome(rootState)) {
+  if (!rootState || !canResetRootToHome(rootState)) {
     return false;
   }
 
@@ -714,6 +811,12 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
       const target = payload.target || 'home';
       runWhenNavigationReady(() => {
         const rootState = navigationRef.getRootState();
+        if (!rootState) {
+          // The newer @react-navigation typings allow a momentarily missing
+          // root state right after the container reports ready. There is
+          // nothing to route into (and no unlock state to inspect) yet.
+          return;
+        }
         const activeRootRoute = rootState.routes[rootState.index];
         if (activeRootRoute?.name === RootNames.Unlock) {
           UnlockUIManager.queueResetNaviOnTopOfHomeWhenUnlock(
@@ -852,7 +955,94 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
         if (!navigationRef.getRootState()) {
           return;
         }
-        void openRabbyGoTarget(payload.debugOpenTarget!);
+        const target = payload.debugOpenTarget!;
+        if (target === 'tokenDetail') {
+          const chain = findChain({
+            serverId: payload.debugOpenTargetChain || 'eth',
+          });
+          if (!chain) {
+            console.warn(
+              '[useUniversalLinkOnTop] unknown chain for tokenDetail:',
+              payload.debugOpenTargetChain,
+            );
+            return;
+          }
+          navigateDeprecated(RootNames.TokenDetail, {
+            token: makeTokenFromChain(chain),
+            isSingleAddress: true,
+          } as any);
+          return;
+        }
+        if (target === 'tokenMarketDetail') {
+          const chain = findChain({
+            serverId: payload.debugOpenTargetChain || 'eth',
+          });
+          if (!chain) {
+            console.warn(
+              '[useUniversalLinkOnTop] unknown chain for tokenMarketDetail:',
+              payload.debugOpenTargetChain,
+            );
+            return;
+          }
+          navigateDeprecated(RootNames.TokenMarketInfo, {
+            token: makeTokenFromChain(chain),
+          } as any);
+          return;
+        }
+        // Optional modifier on any debug target: pin the chain projection in
+        // its "loading, no chains yet" state before navigating (QA 1157).
+        if (payload.debugChainStatsLoadingForMs) {
+          forceDebugChainStatsFor(payload.debugChainStatsLoadingForMs);
+        } else if (payload.debugChainStatsLoading) {
+          toggleDebugChainStatsForced(true);
+        } else if (payload.debugChainStatsLoadingOff) {
+          toggleDebugChainStatsForced(false);
+        }
+        if (target === 'homeAssets') {
+          apisHomeTabIndex.setTabIndex(1, true);
+          return;
+        }
+        if (target === 'singleHome') {
+          const account = getFallbackAccountSnapshot();
+          if (!account) {
+            return;
+          }
+          apisSingleHome.navigateToSingleHome(account as any);
+          return;
+        }
+        if (target === 'chainLoading') {
+          const forced = toggleDebugChainStatsForced();
+          console.log(
+            '[debug-open-target] chain selector loading forced:',
+            forced,
+          );
+          return;
+        }
+        if (target === 'approvals') {
+          const account = getFallbackAccountSnapshot();
+          if (!account) {
+            return;
+          }
+          navigateDeprecated(RootNames.StackTransaction, {
+            screen: RootNames.Approvals,
+            params: { account },
+          } as any);
+          return;
+        }
+        if (target === 'importSecret') {
+          navigateDeprecated(RootNames.ImportSecret, {
+            initialTab: payload.debugOpenTargetTab,
+          } as any);
+          return;
+        }
+        if (target === 'importMethods') {
+          navigateDeprecated(RootNames.StackAddress, {
+            screen: RootNames.ImportMethods,
+            params: {},
+          } as any);
+          return;
+        }
+        void openRabbyGoTarget(target);
       }, `debug-open-${payload.debugOpenTarget}`);
       break;
     case 'debug-perps-account':
@@ -879,6 +1069,57 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
             error,
           });
         });
+      break;
+    case 'debug-set-language':
+      if (!isNonPublicProductionEnv || !payload.debugLanguage) {
+        return;
+      }
+      void import('@/hooks/lang').then(({ setAppLanguage }) =>
+        setAppLanguage(payload.debugLanguage!),
+      );
+      break;
+    case 'debug-create-address':
+      if (!isNonPublicProductionEnv) {
+        return;
+      }
+      void (async () => {
+        try {
+          // Same data mutations as the onboarding UI, in the same order:
+          // the create-seed-phrase page prepares the wallet, then the
+          // set-password / create-address pages submit it (password, keyring,
+          // persisted accounts, backup reminder). No direct keyring shortcut.
+          const { prepareWalletCreation, completeWalletCreation } =
+            await import('@/hooks/address/useSetupWallet');
+          const { REGRESSION_DEFAULT_PASSWORD } = await import(
+            '@/devtools/regressionScenarios/credentials.nonprod'
+          );
+          const { toast } = await import('@/components2024/Toast');
+          const { default: accountStore } = await import('@/store/account');
+
+          const prepared = await prepareWalletCreation({ mode: 'create' });
+          // `PasswordFormValues` differs between stacks (develop still has
+          // `checked`, tmp carries `enableDataAnalysis`); pass the fields the
+          // submit path reads and let the call site stay version-agnostic.
+          await completeWalletCreation(prepared, {
+            password: REGRESSION_DEFAULT_PASSWORD,
+            confirmPassword: REGRESSION_DEFAULT_PASSWORD,
+            checked: true,
+            enableBiometrics: false,
+          } as any);
+          await accountStore.fetchAccounts({ force: true });
+          toast.success(`debug address created: ${prepared.address || ''}`);
+          apisHomeTabIndex.setTabIndex(1, true);
+        } catch (error) {
+          console.warn(
+            '[useUniversalLinkOnTop] debug-create-address failed',
+            error,
+          );
+          const { Alert } = await import('react-native');
+          Alert.alert('debug-create-address failed', String(error));
+          const { toast } = await import('@/components2024/Toast');
+          toast.show(`create-address failed: ${String(error)}`);
+        }
+      })();
       break;
     case 'regression-scenario':
       handleRegressionScenarioCommand(

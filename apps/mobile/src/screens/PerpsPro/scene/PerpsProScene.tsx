@@ -1478,10 +1478,12 @@ export const PerpsProScene: React.FC<{
             {positionTpSl.editor ? (
               <PerpsProPositionTpSlSheets
                 amountUnit={positionTpSl.editor.amountUnit}
+                cancelAllOids={positionTpSl.cancelAllOids}
                 cancelingOids={positionTpSl.cancelingOids}
                 confirmedCancelledOids={positionTpSl.confirmedCancelledOids}
                 defaultTab={positionTpSl.editor.defaultTab}
                 market={positionTpSl.editor.market}
+                onCancelAllOrders={positionTpSl.cancelAllOrders}
                 onCancelOrder={positionTpSl.cancelOrder}
                 onClose={positionTpSl.close}
                 onReview={positionTpSl.requestReview}

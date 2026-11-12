@@ -10,10 +10,20 @@ import {
   sanitizePerpsProPriceEditingInput,
   sanitizePerpsProPriceInput,
 } from '../../model/trade';
-import { resolvePerpsProDialogFieldBackground } from '../common/perpsProDialogVisual';
+import {
+  PERPS_PRO_DIALOG_FIELD,
+  resolvePerpsProDialogFieldBackground,
+} from '../common/perpsProDialogVisual';
+import { resolvePerpsProFittedFontSize } from '../common/perpsProFitFontSize';
+import { PerpsProTextWidthProbe } from '../common/PerpsProTextWidthProbe';
 import RcSelectCaret from '@/assets2024/icons/perps/PerpsProTpSlSelectCaret.svg';
 import { PerpsProDecimalTextInput } from '../trade/PerpsProDecimalTextInput';
 import { PerpsProPositionTpSlBottomSheetTextInput } from './PerpsProPositionTpSlBottomSheetTextInput';
+
+const FLOATING_LABEL_FONT_SIZE = 10;
+const FLOATING_LABEL_MIN_FONT_SIZE = 8;
+const PLACEHOLDER_FONT_SIZE = 14;
+const PLACEHOLDER_MIN_FONT_SIZE = 10;
 
 const withThousandsSeparators = (value: string) => {
   const [integer = '', fraction] = value.split('.');
@@ -63,6 +73,23 @@ export const PerpsProPositionTpSlInput: React.FC<{
       }
     }, [registerKeyboardRevealInput]);
     const [focused, setFocused] = useState(false);
+    // Long translations must shrink on one line instead of wrapping onto the
+    // value row.
+    const [inputAreaWidth, setInputAreaWidth] = useState(0);
+    const [labelWidth, setLabelWidth] = useState(0);
+    const [placeholderWidth, setPlaceholderWidth] = useState(0);
+    const labelFontSize = resolvePerpsProFittedFontSize({
+      availableWidth: inputAreaWidth,
+      baseFontSize: FLOATING_LABEL_FONT_SIZE,
+      minFontSize: FLOATING_LABEL_MIN_FONT_SIZE,
+      naturalWidth: labelWidth,
+    });
+    const placeholderFontSize = resolvePerpsProFittedFontSize({
+      availableWidth: inputAreaWidth,
+      baseFontSize: PLACEHOLDER_FONT_SIZE,
+      minFontSize: PLACEHOLDER_MIN_FONT_SIZE,
+      naturalWidth: placeholderWidth,
+    });
     const normalizePriceValue = React.useCallback(
       (nextValue: string) =>
         sanitizePerpsProPriceEditingInput(nextValue, priceSzDecimals ?? 0),
@@ -90,6 +117,7 @@ export const PerpsProPositionTpSlInput: React.FC<{
         <Pressable
           accessible={false}
           disabled={disabled || (IS_IOS && focused)}
+          onLayout={event => setInputAreaWidth(event.nativeEvent.layout.width)}
           onPress={() => {
             if (!focused) {
               inputRef.current?.focus();
@@ -97,17 +125,39 @@ export const PerpsProPositionTpSlInput: React.FC<{
           }}
           style={styles.inputArea}
           testID={`${testID}-focus-proxy`}>
+          <PerpsProTextWidthProbe
+            onWidth={setLabelWidth}
+            style={styles.floatingLabel}
+            text={label}
+          />
+          <PerpsProTextWidthProbe
+            onWidth={setPlaceholderWidth}
+            style={styles.centeredPlaceholder}
+            text={placeholder}
+          />
           {showFloatingLabel ? (
             <Text
+              numberOfLines={1}
               pointerEvents="none"
-              style={styles.floatingLabel}
+              style={[
+                styles.floatingLabel,
+                labelFontSize !== FLOATING_LABEL_FONT_SIZE && {
+                  fontSize: labelFontSize,
+                },
+              ]}
               testID={`${testID}-label`}>
               {label}
             </Text>
           ) : (
             <Text
+              numberOfLines={1}
               pointerEvents="none"
-              style={styles.centeredPlaceholder}
+              style={[
+                styles.centeredPlaceholder,
+                placeholderFontSize !== PLACEHOLDER_FONT_SIZE && {
+                  fontSize: placeholderFontSize,
+                },
+              ]}
               testID={`${testID}-placeholder`}>
               {placeholder}
             </Text>
@@ -196,7 +246,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     flex: 1,
     flexDirection: 'row',
     gap: 4,
-    height: 40,
+    height: PERPS_PRO_DIALOG_FIELD.height,
     minWidth: 0,
     // Include the 1px validation border in the Figma 12px inset.
     paddingHorizontal: 11,
@@ -205,31 +255,32 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   invalidField: { borderColor: colors2024['red-default'] },
   inputArea: {
     flex: 1,
-    height: 40,
+    height: PERPS_PRO_DIALOG_FIELD.height,
     minWidth: 0,
     position: 'relative',
   },
   floatingLabel: {
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 10,
+    fontSize: FLOATING_LABEL_FONT_SIZE,
     fontWeight: '500',
     left: 0,
     lineHeight: 12,
     position: 'absolute',
     right: 0,
-    top: 4,
+    top: PERPS_PRO_DIALOG_FIELD.labelTop,
   },
   centeredPlaceholder: {
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
+    fontSize: PLACEHOLDER_FONT_SIZE,
     fontWeight: '400',
     left: 0,
     lineHeight: 18,
     position: 'absolute',
     right: 0,
-    top: 11,
+    // A lone 18pt line centered in the 46pt field (Figma 86609:305215).
+    top: (PERPS_PRO_DIALOG_FIELD.height - 18) / 2,
   },
   formattedValue: {
     ...PERPS_PRO_NUMBER_STYLE,
@@ -241,7 +292,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     lineHeight: 18,
     position: 'absolute',
     right: 0,
-    top: 18,
+    top: PERPS_PRO_DIALOG_FIELD.valueTop,
   },
   input: {
     ...PERPS_PRO_NUMBER_STYLE,
@@ -249,12 +300,11 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     fontWeight: '500',
-    height: 40,
+    height: PERPS_PRO_DIALOG_FIELD.height,
     includeFontPadding: false,
     lineHeight: 18,
-    paddingBottom: 0,
     paddingHorizontal: 0,
-    paddingTop: 12,
+    ...PERPS_PRO_DIALOG_FIELD.inputPadding,
     textAlignVertical: 'center',
   },
   // Android Fabric treats transparent black (ARGB 0) as an unset text color.
@@ -269,13 +319,13 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     left: 0,
     lineHeight: 18,
     position: 'absolute',
-    top: 18,
+    top: PERPS_PRO_DIALOG_FIELD.valueTop,
   },
   mode: {
     alignItems: 'center',
     flexDirection: 'row',
     gap: 4,
-    height: 40,
+    height: PERPS_PRO_DIALOG_FIELD.height,
     justifyContent: 'flex-end',
   },
   unit: {

@@ -115,6 +115,7 @@ function DevSwitchAboutScreenProtection() {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const [debugModalVisible, setDebugModalVisible] = useState(false);
   const [reproTipVisible, setReproTipVisible] = useState(false);
+  const [emptyTipVisible, setEmptyTipVisible] = useState(false);
   const reproTipTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(
     () => () => {
@@ -264,6 +265,27 @@ function DevSwitchAboutScreenProtection() {
         <Text style={[styles.metaLabel, styles.devModalHint]}>
           Same as the sign page report: the screenshot modal must wait for the
           Tip to close, then appear. The screen must stay tappable.
+        </Text>
+
+        <Tip
+          isVisible={emptyTipVisible}
+          onClose={() => setEmptyTipVisible(false)}
+          content={<View />}
+          placement="bottom">
+          <Button
+            title={'Open Empty Tip'}
+            type="ghost"
+            height={48}
+            containerStyle={[styles.rowWrapper, { marginTop: 12 }]}
+            onPress={() => {
+              setEmptyTipVisible(true);
+            }}
+          />
+        </Tip>
+
+        <Text style={[styles.metaLabel, styles.devModalHint]}>
+          Opens a Tip whose content has no size, so it never becomes visible.
+          The next tap anywhere must close it. The screen must stay tappable.
         </Text>
 
         <Button

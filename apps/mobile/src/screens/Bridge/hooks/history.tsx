@@ -3,7 +3,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { uniqBy } from 'lodash';
 import { openapi } from '@/core/request';
 import useAsync from 'react-use/lib/useAsync';
-import { atom, useAtom, useAtomValue, useSetAtom } from 'jotai';
+import { atom, useAtom, useSetAtom } from 'jotai';
 import type { BridgeTxHistoryItem } from '@/core/services/transactionHistory';
 import { bridgeServiceApi } from '@/core/serviceApi/bridge';
 import { getTransactionHistoryRecentPendingSnapshot } from '@/core/serviceApi/transactionHistory';
@@ -14,14 +14,6 @@ import { useTransactionHistoryServiceReady } from '@/core/serviceApi/transaction
 const pendingCountAtom = atom(0);
 const bridgeTxDataPendingAtom = atom<BridgeHistory | null>(null);
 export const bridgeHistoryRedDotAtom = atom(false);
-
-export const useReadBridgePendingCount = () => {
-  return useAtomValue(pendingCountAtom);
-};
-
-export const useReadBridgeHistoryRedDot = () => {
-  return useAtomValue(bridgeHistoryRedDotAtom);
-};
 
 export const useClearBridgeHistoryRedDot = () => {
   const setBridgeHistoryRedDot = useSetAtom(bridgeHistoryRedDotAtom);
@@ -198,6 +190,11 @@ export const usePollBridgePendingNumber = (timer = 10000, enabled = true) => {
   };
 };
 
+const BRIDGE_HISTORY_PAGE_SIZE = 20;
+
+const bridgeHistoryKey = (item: BridgeHistory) =>
+  `${item.from_token.chain}:${item.from_tx.tx_id.toLowerCase()}`;
+
 export const useBridgeHistory = (enabled = true) => {
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'MakeTransactionAbout',
@@ -213,9 +210,14 @@ export const useBridgeHistory = (enabled = true) => {
   const isInBridge = enabled;
 
   const getBridgeHistoryList = React.useCallback(
-    async (address: string, start = 0, limit = 5) => {
+    async (address: string, start = 0, limit = BRIDGE_HISTORY_PAGE_SIZE) => {
       if (!isInBridge || !address) {
-        return { list: [], last: undefined, totalCount: 0 };
+        return {
+          list: [] as BridgeHistory[],
+          last: undefined,
+          totalCount: 0,
+          nextStart: start,
+        };
       }
       const data = await openapi.getBridgeHistoryList({
         user_addr: address,
@@ -227,6 +229,9 @@ export const useBridgeHistory = (enabled = true) => {
         list: data?.history_list,
         last: data,
         totalCount: data?.total_cnt,
+        // 后端按数据库行 offset，返回前会丢掉无法展示的行。
+        // 下一页必须按本次请求的行数推进，不能用已经展示的条数。
+        nextStart: start + limit,
       };
     },
     [isInBridge],
@@ -240,19 +245,28 @@ export const useBridgeHistory = (enabled = true) => {
     noMore,
     mutate,
   } = useInfiniteScroll(
-    d =>
-      getBridgeHistoryList(
+    async d => {
+      const page = await getBridgeHistoryList(
         addr,
-        d?.list?.length && d?.list?.length > 1 ? d?.list?.length : 0,
-        20,
-      ),
+        d?.nextStart ?? 0,
+        BRIDGE_HISTORY_PAGE_SIZE,
+      );
+      if (!d?.list?.length || !page.list?.length) {
+        return page;
+      }
+      const seen = new Set(d.list.map(bridgeHistoryKey));
+      return {
+        ...page,
+        list: page.list.filter(item => !seen.has(bridgeHistoryKey(item))),
+      };
+    },
     {
       reloadDeps: [addr],
       isNoMore(data) {
-        if (data) {
-          return data?.list.length >= data?.totalCount;
+        if (!data || typeof data.totalCount !== 'number') {
+          return !data;
         }
-        return true;
+        return (data.nextStart ?? 0) >= data.totalCount;
       },
       manual: !isInBridge || !addr,
     },
@@ -261,7 +275,7 @@ export const useBridgeHistory = (enabled = true) => {
   // 恢复时立即刷新首页，并与已有分页合并。
   const { value } = useAsync(async () => {
     if (addr && isInBridge) {
-      return getBridgeHistoryList(addr, 0, 20);
+      return getBridgeHistoryList(addr, 0, BRIDGE_HISTORY_PAGE_SIZE);
     }
   }, [addr, refreshTxListCount, isInBridge]);
 
@@ -273,10 +287,11 @@ export const useBridgeHistory = (enabled = true) => {
         }
         return {
           last: d?.last,
-          totalCount: d?.totalCount,
+          totalCount: value.totalCount ?? d?.totalCount,
+          nextStart: d.nextStart,
           list: uniqBy(
             [...(value.list || []), ...(d?.list || [])],
-            e => `${e.from_token.chain}:${e.from_tx.tx_id.toLowerCase()}`,
+            bridgeHistoryKey,
           ),
         };
       });

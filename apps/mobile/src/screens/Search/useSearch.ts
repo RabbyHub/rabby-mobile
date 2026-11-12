@@ -1,6 +1,6 @@
 import { useDebounce } from 'ahooks';
 import { useEffect, useRef, useState } from 'react';
-import { CombineNFTItem, CombineTokensItem } from '../Home/hooks/store';
+import { CombineTokensItem } from '../Home/hooks/store';
 import { openapi } from '@/core/request';
 import { ITokenItem } from '@/store/tokens';
 import { tokenItemToITokenItem } from '@/utils/token';
@@ -31,25 +31,6 @@ export const filterTokens = (
     return [tokenSymbolLower, tokenAddressLower].some(i =>
       i.includes(filterTextLower),
     );
-  });
-};
-
-export const filterNfts = (nfts: CombineNFTItem[], filterText?: string) => {
-  if (!filterText) {
-    return nfts;
-  }
-  return nfts.filter(nft => {
-    const nftNameLower = nft.name?.toLowerCase() || '';
-    // const nftChainLower = nft.chain?.toLowerCase() || '';
-    // const nftContractIdLower = nft.contract_id?.toLowerCase() || '';
-    // const nftContractNameLower = nft.contract_name?.toLowerCase() || '';
-    const filterTextLower = filterText?.toLowerCase() || '';
-    return [
-      nftNameLower,
-      // nftChainLower,
-      // nftContractIdLower,
-      // nftContractNameLower,
-    ].some(i => i.includes(filterTextLower));
   });
 };
 
