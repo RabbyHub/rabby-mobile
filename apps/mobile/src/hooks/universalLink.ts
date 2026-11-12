@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect } from 'react';
 import RNFS from '@rabby-wallet/react-native-fs';
-import { Linking } from 'react-native';
+import { Linking, NativeModules } from 'react-native';
 import { StackActions } from '@react-navigation/native';
 import { t } from 'i18next';
 import {
@@ -949,8 +949,56 @@ const handleAppLink = async (url: string, isInit = false) => {
   }
 };
 
+/**
+ * Non-production automation only.
+ *
+ * A simulator runner cannot open our URL scheme without the iOS "Open in
+ * ...?" system prompt (and `simctl` cannot dismiss it), so the same debug
+ * deeplinks can be passed at launch instead:
+ *
+ *   xcrun simctl launch <udid> <bundle> -rabby-deeplink "<url>"
+ *
+ * Production packages ignore this entirely.
+ */
+function collectLaunchArgumentDeeplinks(): string[] {
+  if (!isNonPublicProductionEnv) {
+    return [];
+  }
+
+  const args = (
+    NativeModules.StartupKpi as { rabbyLaunchArguments?: unknown } | undefined
+  )?.rabbyLaunchArguments;
+
+  if (!Array.isArray(args)) {
+    return [];
+  }
+
+  const urls: string[] = [];
+  for (let index = 0; index < args.length - 1; index += 1) {
+    if (
+      args[index] === '-rabby-deeplink' &&
+      typeof args[index + 1] === 'string'
+    ) {
+      urls.push(args[index + 1] as string);
+    }
+  }
+  return urls;
+}
+
 export function useUniversalLinkOnTop() {
   useMount(() => {
+    // Delayed so navigation and the keyring state are ready, and so several
+    // launch-argument deeplinks run one after another.
+    collectLaunchArgumentDeeplinks().forEach((url, index) => {
+      setTimeout(() => {
+        console.debug(
+          '[useUniversalLinkOnTop] Launch argument link:',
+          sanitizeLinkForLogging(url),
+        );
+        void handleAppLink(url);
+      }, 2000 + index * 2000);
+    });
+
     Linking.getInitialURL().then(url => {
       if (url) {
         console.debug(

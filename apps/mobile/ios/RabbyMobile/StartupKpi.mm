@@ -62,6 +62,17 @@ RCT_EXPORT_MODULE();
   return NO;
 }
 
+// Non-production automation bridge: the simulator cannot open a custom URL
+// scheme without the system "Open in ...?" prompt, so a runner delivers the
+// same debug deeplinks as launch arguments instead:
+//
+//   xcrun simctl launch <udid> <bundle> -rabby-deeplink "rabbygo-regression://..."
+//
+// The JS side only consumes these when the package is non-production.
+- (NSDictionary *)constantsToExport {
+  return @{@"rabbyLaunchArguments" : NSProcessInfo.processInfo.arguments ?: @[]};
+}
+
 RCT_EXPORT_METHOD(markFirstContentFrame : (NSString *)route) {
   if (_reported) {
     return;
