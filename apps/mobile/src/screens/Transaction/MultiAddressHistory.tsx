@@ -101,7 +101,7 @@ function HistoryContent({
   const dbFetchLoadingRef = useRef<boolean>(false);
   const hasMoreMap = useRef<Record<string, boolean>>({});
   const [isShowAll, setIsShowAll] = useState(false);
-  const { styles } = useTheme2024({ getStyle });
+  const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const [dbData, setDbData] = useState<HistoryDisplayItem[]>([]);
   const {
     isSceneUsingAllAccounts,
@@ -734,6 +734,10 @@ function HistoryContent({
           refreshLoading={isNeedFetchFromApi && loading}
           isForMultipleAddress={isForMultipleAddress}
           account={isSceneUsingAllAccounts ? null : finalSceneCurrentAccount}
+          stickyDateBackgroundColor={makeTxPageBackgroundColors({
+            isLight,
+            colors2024,
+          })}
           noMoreText={
             noMore
               ? isNeedFetchFromApi
