@@ -23,6 +23,7 @@ import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 
 import { requestKeyring } from '@/core/apis/keyring';
 import { verifyPasswordOrUnlock } from '@/core/apis/lock';
+import { markAutomation } from '@/core/utils/automationMarker';
 import { REGRESSION_DEFAULT_PASSWORD } from './regressionScenarios/credentials.nonprod';
 
 const PRIVATE_KEY_PATTERN = /^(0x)?[0-9a-fA-F]{64}$/;
@@ -183,14 +184,14 @@ export async function runTestAccountsImport(options: { path: string }) {
     );
   }
 
-  // Single machine-readable line the runner waits for.
-  console.log(
-    `${marker} done imported=${imported} privateKeys=${
-      privateKeyEntries.length
-    } mnemonics=${
-      mnemonicEntries.length
-    } rejected=${rejected} failed=${failed} elapsedMs=${
-      Date.now() - startedAt
-    }`,
-  );
+  // Single machine-readable line the runner waits for. `console.log` reaches
+  // logcat on Android but is dropped by release-like iOS builds, so the same
+  // summary is mirrored into the native log as well.
+  const summary = `imported=${imported} privateKeys=${
+    privateKeyEntries.length
+  } mnemonics=${
+    mnemonicEntries.length
+  } rejected=${rejected} failed=${failed} elapsedMs=${Date.now() - startedAt}`;
+  markAutomation('debug-import-test-accounts.done', summary);
+  console.log(`${marker} done ${summary}`);
 }

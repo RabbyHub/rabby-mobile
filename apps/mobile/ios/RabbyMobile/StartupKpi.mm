@@ -73,6 +73,24 @@ RCT_EXPORT_MODULE();
   return @{@"rabbyLaunchArguments" : NSProcessInfo.processInfo.arguments ?: @[]};
 }
 
+static os_log_t RabbyAutomationLog(void) {
+  static os_log_t log;
+  static dispatch_once_t onceToken;
+  dispatch_once(&onceToken, ^{
+    log = os_log_create("com.debank.rabby.automation", "marker");
+  });
+  return log;
+}
+
+// Device automation: release-like builds drop console.log, so JS-side "done"
+// markers are mirrored here for the seeding scripts to read.
+RCT_EXPORT_METHOD(logMarker : (NSString *)name detail : (NSString *)detail) {
+  os_log(RabbyAutomationLog(),
+         "automation_marker name=%{public}@ detail=%{public}@",
+         name ?: @"unknown",
+         detail ?: @"");
+}
+
 RCT_EXPORT_METHOD(markFirstContentFrame : (NSString *)route) {
   if (_reported) {
     return;

@@ -7,25 +7,40 @@
 # trustworthy source: the file name of a package proves nothing.
 #
 # usage: apk-info.sh --apk <file.apk> [--json <out.json>]
+#        apk-info.sh --app <RabbyMobile.app|RabbyMobile-simulator.zip> [--json <out.json>]
 # prints JSON on stdout:
 #   {"apk":"...","commit":"cbe7765f","commitTime":"...","buildTime":"...","committer":"...","readable":true}
 set -u
 
 APK=""
+APP=""
 JSON_OUT=""
 
 while [ $# -gt 0 ]; do
   case "$1" in
     --apk) APK="$2"; shift 2 ;;
+    --app) APP="$2"; shift 2 ;;
     --json) JSON_OUT="$2"; shift 2 ;;
     *) echo "unknown arg: $1" >&2; exit 64 ;;
   esac
 done
 
-[ -n "$APK" ] || { echo "--apk is required" >&2; exit 64; }
-[ -f "$APK" ] || { echo "apk not found: $APK" >&2; exit 66; }
+[ -n "$APK" ] || [ -n "$APP" ] || { echo "--apk or --app is required" >&2; exit 64; }
 
-RAW=$(unzip -p "$APK" assets/rabby-build-info.json 2>/dev/null || true)
+if [ -n "$APP" ]; then
+  # iOS: the same build info file sits at the bundle root.
+  [ -e "$APP" ] || { echo "app not found: $APP" >&2; exit 66; }
+  APK="$APP"
+  if [ -d "$APP" ]; then
+    RAW=$(cat "$APP/rabby-build-info.json" 2>/dev/null || true)
+  else
+    RAW=$(unzip -p "$APP" 'RabbyMobile.app/rabby-build-info.json' 2>/dev/null \
+      || unzip -p "$APP" '*rabby-build-info.json' 2>/dev/null || true)
+  fi
+else
+  [ -f "$APK" ] || { echo "apk not found: $APK" >&2; exit 66; }
+  RAW=$(unzip -p "$APK" assets/rabby-build-info.json 2>/dev/null || true)
+fi
 
 if [ -z "$RAW" ]; then
   RESULT=$(APK_PATH="$APK" node -e '

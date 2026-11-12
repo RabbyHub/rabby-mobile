@@ -8,6 +8,7 @@ import {
   isKeyringUnlockedSnapshot,
 } from '@/core/serviceApi/keyring';
 import { urlUtils } from '@rabby-wallet/base-utils';
+import { markAutomation } from '@/core/utils/automationMarker';
 import { browserApis } from './browser/useBrowser';
 import useMount from 'react-use/lib/useMount';
 import { toastWithIcon } from '@/components2024/Toast';
@@ -840,6 +841,7 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
             enableBiometrics: false,
           } as any);
           await accountStore.fetchAccounts({ force: true });
+          markAutomation('debug-create-address.done', prepared.address || '');
           console.log(
             `[debug-create-address] done address=${prepared.address || ''}`,
           );
