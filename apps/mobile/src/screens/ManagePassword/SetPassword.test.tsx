@@ -16,10 +16,11 @@ import SetPasswordScreen from './SetPassword';
 
 // Screen contract for the set-password page reached from Settings: the real
 // form state, validation schema and consent card run for real. Navigation, the
-// lock API, the preference write, the confirm dialog and leaf visual
-// components are controlled boundaries.
+// lock API, the stored preference and its write, the confirm dialog and leaf
+// visual components are controlled boundaries.
 const mockSetTrackingOptOut = jest.fn();
 const mockSetupWalletPassword = jest.fn();
+let mockStoredOptOut = true;
 
 // The constant barrel reads native modules at import time. The dev password
 // prefills both fields, so the form is valid without typing.
@@ -160,6 +161,9 @@ jest.mock('@/core/serviceApi/preference', () => ({
   setUserBehaviorTrackingOptOutSync: (...args: unknown[]) =>
     mockSetTrackingOptOut(...args),
 }));
+jest.mock('@/utils/trackingOptOut', () => ({
+  getUserBehaviorTrackingOptOut: () => mockStoredOptOut,
+}));
 jest.mock('@/hooks/theme', () => {
   const makeColors = () =>
     new Proxy({}, { get: (_target, key) => String(key) });
@@ -217,19 +221,39 @@ beforeAll(async () => {
 
 beforeEach(() => {
   jest.clearAllMocks();
+  mockStoredOptOut = true;
   // Stop after the preference write: a failed password setup ends the submit.
   mockSetupWalletPassword.mockResolvedValue({ error: 'stop here' });
 });
 
 describe('ManagePassword SetPassword data analysis toggle', () => {
-  it('offers the toggle, on by default', () => {
+  it('starts off when the Settings switch is off', () => {
+    mockStoredOptOut = true;
     render(<SetPasswordScreen />);
 
     expect(screen.getByText('Help improve Rabby')).toBeTruthy();
+    expect(getDataAnalysisSwitch().props.value).toBe(false);
+  });
+
+  it('starts on when the Settings switch is on', () => {
+    mockStoredOptOut = false;
+    render(<SetPasswordScreen />);
+
     expect(getDataAnalysisSwitch().props.value).toBe(true);
   });
 
-  it('opts the user in when the toggle is left on', async () => {
+  it('leaves an opted-out user opted out when the toggle is untouched', async () => {
+    mockStoredOptOut = true;
+    render(<SetPasswordScreen />);
+
+    await submitAndConfirm();
+
+    expect(mockSetTrackingOptOut).toHaveBeenCalledTimes(1);
+    expect(mockSetTrackingOptOut).toHaveBeenCalledWith(true);
+  });
+
+  it('leaves an opted-in user opted in when the toggle is untouched', async () => {
+    mockStoredOptOut = false;
     render(<SetPasswordScreen />);
 
     await submitAndConfirm();
@@ -238,15 +262,16 @@ describe('ManagePassword SetPassword data analysis toggle', () => {
     expect(mockSetTrackingOptOut).toHaveBeenCalledWith(false);
   });
 
-  it('keeps the user opted out when the toggle is turned off', async () => {
+  it('saves the new choice when the user turns the toggle on', async () => {
+    mockStoredOptOut = true;
     render(<SetPasswordScreen />);
 
     await act(async () => {
-      getDataAnalysisSwitch().props.onValueChange(false);
+      getDataAnalysisSwitch().props.onValueChange(true);
     });
     await submitAndConfirm();
 
     expect(mockSetTrackingOptOut).toHaveBeenCalledTimes(1);
-    expect(mockSetTrackingOptOut).toHaveBeenCalledWith(true);
+    expect(mockSetTrackingOptOut).toHaveBeenCalledWith(false);
   });
 });

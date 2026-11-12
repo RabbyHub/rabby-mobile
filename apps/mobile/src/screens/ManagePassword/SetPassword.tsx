@@ -38,20 +38,11 @@ import { IS_IOS } from '@/core/native/utils';
 import type { TextInput } from '@/components/Typography';
 import { Text } from '@/components/Typography';
 import { setUserBehaviorTrackingOptOutSync } from '@/core/serviceApi/preference';
+import { getUserBehaviorTrackingOptOut } from '@/utils/trackingOptOut';
 
 const INIT_FORM_DATA = __DEV__
-  ? {
-      password: APP_TEST_PWD,
-      confirmPassword: APP_TEST_PWD,
-      checked: true,
-      enableDataAnalysis: true,
-    }
-  : {
-      password: '',
-      confirmPassword: '',
-      checked: true,
-      enableDataAnalysis: true,
-    };
+  ? { password: APP_TEST_PWD, confirmPassword: APP_TEST_PWD, checked: true }
+  : { password: '', confirmPassword: '', checked: true };
 
 const LAYOUTS = {
   footerButtonHeight: 52,
@@ -68,6 +59,11 @@ const LAYOUTS = {
 
 function useSetupPasswordForm() {
   const { t } = useTranslation();
+  // Users reach this page from Settings, where the same switch lives, so the
+  // card starts from what they see there instead of an onboarding default.
+  const [initialEnableDataAnalysis] = React.useState(
+    () => !getUserBehaviorTrackingOptOut(),
+  );
   const yupSchema = React.useMemo(() => {
     const passSchema = Yup.string()
       .default(INIT_FORM_DATA.password)
@@ -90,13 +86,9 @@ function useSetupPasswordForm() {
               ),
         }),
       checked: Yup.boolean().default(INIT_FORM_DATA.checked).oneOf([true]),
-      // On by default, like the other first-password screens, whatever the
-      // Settings switch currently says.
-      enableDataAnalysis: Yup.boolean().default(
-        INIT_FORM_DATA.enableDataAnalysis,
-      ),
+      enableDataAnalysis: Yup.boolean().default(initialEnableDataAnalysis),
     });
-  }, [t]);
+  }, [t, initialEnableDataAnalysis]);
 
   const navigation = useRabbyAppNavigation();
   const route =
@@ -117,8 +109,8 @@ function useSetupPasswordForm() {
 
       if (getFormikErrorsCount(errors)) return;
 
-      // The toggle is the user's explicit choice: persist it either way so a
-      // declined toggle is never left at an opted-in default.
+      // Persist the card's value either way: untouched, it writes back the
+      // current setting; changed, it is the user's new choice.
       setUserBehaviorTrackingOptOutSync(!values.enableDataAnalysis);
 
       const toastHide = toastWithIcon(() => (
