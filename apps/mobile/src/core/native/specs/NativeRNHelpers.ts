@@ -20,7 +20,6 @@ export type NativeBuildInfo = {
 export interface Spec extends TurboModule {
   getConstants(): { buildInfo?: NativeBuildInfo };
   forceExitApp(): void;
-  iosSetScrollEdgeEffectsHidden(viewTag: number, hidden: boolean): void;
   measureViewRelativeTo(
     anchorTag: number,
     viewportTag: number,
