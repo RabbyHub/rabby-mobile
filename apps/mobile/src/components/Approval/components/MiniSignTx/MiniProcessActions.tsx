@@ -15,7 +15,6 @@ const getStyles2024 = createGetStyles2024(({ colors2024 }) => ({
     height: 56,
     borderColor: colors2024['brand-default'],
     borderWidth: 1,
-    borderRadius: 100,
   },
   buttonText: {
     // color: colors2024['neutral-InvertHighlight'],
