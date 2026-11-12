@@ -205,9 +205,13 @@ jobs:
           if [ -n "${RABBY_KPI_TEST_ACCOUNTS:-}" ]; then
             accounts_file="$RUNNER_TEMP/kpi-test-accounts.txt"
             ( umask 077; printf '%b\n' "$RABBY_KPI_TEST_ACCOUNTS" > "$accounts_file" )
-            echo "test-account list from the runner env: $(grep -c . "$accounts_file") entries"
           elif [ -z "$accounts_file" ] && [ -f "$HOME/.rabby-kpi/test-accounts.txt" ]; then
             accounts_file="$HOME/.rabby-kpi/test-accounts.txt"
+          fi
+          if [ -n "$accounts_file" ] && [ -f "$accounts_file" ]; then
+            echo "test-account list: $accounts_file ($(grep -c . "$accounts_file") entries)"
+          else
+            echo "test-account list: none"
           fi
 
           # The measured package carries the seeding deeplinks, so it has to be
