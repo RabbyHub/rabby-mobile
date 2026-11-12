@@ -172,6 +172,8 @@ jobs:
         if: ${{ inputs.runner_target == 'emulator' }}
         env:
           EMULATOR_LOG: ${{ runner.temp }}/startup-kpi-emulator.log
+          # Every comparison must start from the same emulator state.
+          WIPE: '1'
         run: |
           bash apps/mobile/scripts/startup-kpi/emulator.sh ensure
           bash apps/mobile/scripts/startup-kpi/emulator.sh boot

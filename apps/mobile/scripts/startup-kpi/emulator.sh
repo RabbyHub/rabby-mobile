@@ -22,7 +22,10 @@ AVD_NAME=${AVD_NAME:-rabby-startup-pixel7-api35}
 IMAGE_PKG=${IMAGE_PKG:-system-images;android-$API;google_apis;arm64-v8a}
 PORT=${PORT:-5554}
 SERIAL="emulator-$PORT"
-BOOT_TIMEOUT_S=${BOOT_TIMEOUT_S:-180}
+BOOT_TIMEOUT_S=${BOOT_TIMEOUT_S:-240}
+# WIPE=1 boots a factory-clean userdata. CI uses it so every comparison starts
+# from the same state; a locally kept wallet is then re-seeded by the workflow.
+WIPE=${WIPE:-0}
 
 sdk_root() {
   if [ -n "${ANDROID_SDK_ROOT:-}" ] && [ -d "$ANDROID_SDK_ROOT/emulator" ]; then
@@ -78,10 +81,12 @@ cmd_boot() {
   # Detach into its own session when `setsid` exists so a process-group kill of
   # the calling step cannot take the emulator down mid-measurement. Where it
   # does not exist (macOS) plain nohup is enough for the CI runner.
-  local launcher=()
+  local launcher=() wipe=()
   command -v setsid >/dev/null 2>&1 && launcher=(setsid)
+  [ "$WIPE" = "1" ] && wipe=(-wipe-data)
   nohup ${launcher[@]+"${launcher[@]}"} "$EMULATOR" -avd "$AVD_NAME" -port "$PORT" \
     -no-window -no-audio -no-boot-anim -no-snapshot \
+    ${wipe[@]+"${wipe[@]}"} \
     -gpu host -camera-back none -camera-front none \
     >"${EMULATOR_LOG:-/tmp/rabby-startup-kpi-emulator.log}" 2>&1 &
   log "pid $!"
