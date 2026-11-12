@@ -3,7 +3,6 @@ import type { ReactNode } from 'react';
 import React, { useCallback, useMemo } from 'react';
 import BigNumber from 'bignumber.js';
 import RcIconSwitchArrow from '@/assets2024/icons/history/IconSwitchArrow.svg';
-import RcIconSingleArrow from '@/assets2024/icons/history/IconSingleArrow.svg';
 import { View, TouchableOpacity } from 'react-native';
 import { AssetAvatar } from '@/components';
 import type {
@@ -16,6 +15,8 @@ import { IconDefaultNFT } from '@/assets/icons/nft';
 import { useTheme2024 } from '@/hooks/theme';
 import { RcIconRightCC } from '@/assets/icons/common';
 import { createGetStyles2024 } from '@/utils/styles';
+import { makeHistoryDetailColors } from './detailColors';
+import { HistoryDetailArrow } from './HistoryDetailArrow';
 import { formatTokenAmount } from '@/utils/number';
 import { HistoryItemIcon } from './HistoryItemIcon';
 import { getTokenSymbol, tokenItemToITokenItem } from '@/utils/token';
@@ -66,7 +67,7 @@ const TokenItemInlist = ({
   token: TokenItem | NFTItem;
 }) => {
   const { t } = useTranslation();
-  const { styles, colors2024 } = useTheme2024({ getStyle });
+  const { styles } = useTheme2024({ getStyle });
 
   return (
     <TouchableOpacity onPress={() => hanldePress(token, isNft)}>
@@ -129,11 +130,7 @@ const TokenItemInlist = ({
             amount={amount}
             style={styles.tokenPriceText}
           />
-          <RcIconSingleArrow
-            width={20}
-            height={20}
-            color={colors2024['neutral-bg-2']}
-          />
+          <HistoryDetailArrow size={20} />
         </View>
       </View>
     </TouchableOpacity>
@@ -154,7 +151,7 @@ export const HistoryTokenList = ({
   extra,
 }: ItemProps) => {
   const { t } = useTranslation();
-  const { styles, colors2024 } = useTheme2024({ getStyle });
+  const { styles } = useTheme2024({ getStyle });
 
   const isFail = useMemo(() => status !== 1, [status]);
   const handlePress = useCallback(
@@ -270,11 +267,7 @@ export const HistoryTokenList = ({
                   alignItems: 'center',
                   width: 32,
                 }}>
-                <RcIconSingleArrow
-                  width={26}
-                  height={26}
-                  color={colors2024['neutral-bg-2']}
-                />
+                <HistoryDetailArrow />
               </View>
             </View>
           </TouchableOpacity>
@@ -360,11 +353,7 @@ export const HistoryTokenList = ({
                         alignItems: 'center',
                         width: 26,
                       }}>
-                      <RcIconSingleArrow
-                        width={26}
-                        height={26}
-                        color={colors2024['neutral-bg-2']}
-                      />
+                      <HistoryDetailArrow />
                     </View>
                   </View>
                 </TouchableOpacity>
@@ -442,11 +431,7 @@ export const HistoryTokenList = ({
                         alignItems: 'center',
                         width: 26,
                       }}>
-                      <RcIconSingleArrow
-                        width={26}
-                        height={26}
-                        color={colors2024['neutral-bg-2']}
-                      />
+                      <HistoryDetailArrow />
                     </View>
                   </View>
                 </TouchableOpacity>
@@ -564,9 +549,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     flexDirection: 'column',
     position: 'relative',
 
-    backgroundColor: !isLight
-      ? colors2024['neutral-bg-2']
-      : colors2024['neutral-bg-1'],
+    backgroundColor: makeHistoryDetailColors({ isLight, colors2024 }).card,
     borderRadius: 16,
     padding: 16,
   },
@@ -617,9 +600,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   card: {
     width: '100%',
-    backgroundColor: !isLight
-      ? colors2024['neutral-bg-2']
-      : colors2024['neutral-bg-1'],
+    backgroundColor: makeHistoryDetailColors({ isLight, colors2024 }).card,
     borderRadius: 16,
   },
   singleBox: {
@@ -642,9 +623,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   mutliBox: {
     width: '100%',
-    backgroundColor: !isLight
-      ? colors2024['neutral-bg-2']
-      : colors2024['neutral-bg-1'],
+    backgroundColor: makeHistoryDetailColors({ isLight, colors2024 }).card,
     justifyContent: 'center',
     alignContent: 'center',
     borderRadius: 16,
@@ -704,9 +683,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     width: 20,
     height: 20,
     borderWidth: 1,
-    borderColor: !isLight
-      ? colors2024['neutral-bg-2']
-      : colors2024['neutral-bg-1'],
+    borderColor: makeHistoryDetailColors({ isLight, colors2024 }).card,
     borderRadius: 1000,
   },
 }));

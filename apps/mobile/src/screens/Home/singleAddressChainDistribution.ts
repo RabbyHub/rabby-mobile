@@ -43,15 +43,19 @@ export const makeSingleAddressChainInfo = (): SingleAddressChainInfo => ({
 export const computeTokenChainAssets = (tokens: ITokenItem[]) => {
   const chainUnit: ChainAssetsUnit = {};
   tokens.forEach(token => {
-    if (!token.chain) {
+    // A chain only counts when it actually holds value. Creating an entry for
+    // every token made an empty address look like it had chains (QA 1197), so
+    // the chain filter stayed on screen with nothing to filter.
+    if (!token.chain || !token.is_core) {
       return;
     }
-    chainUnit[token.chain] = chainUnit[token.chain] || new BigNumber(0);
-    if (token.is_core) {
-      chainUnit[token.chain] = chainUnit[token.chain].plus(
-        token.usd_value || 0,
-      );
+    const value = new BigNumber(token.usd_value || 0);
+    if (value.lte(0)) {
+      return;
     }
+    chainUnit[token.chain] = (chainUnit[token.chain] || new BigNumber(0)).plus(
+      value,
+    );
   });
   return chainUnit;
 };

@@ -1,6 +1,5 @@
 import { getRoundedFontStyle } from '@/core/utils/fonts';
 import { Text } from '@/components/Typography';
-import { PERPS_PRO_NUMBER_STYLE } from '@/screens/PerpsPro/components/common/perpsProNumberText';
 import { useTheme2024 } from '@/hooks/theme';
 import { PerpsProDottedUnderlineText } from '@/screens/PerpsPro/components/common/PerpsProDottedUnderlineText';
 import {
@@ -9,6 +8,10 @@ import {
   getPerpsProSolidSideTagContainerStyle,
   getPerpsProSolidSideTagTextStyle,
 } from '@/screens/PerpsPro/components/common/perpsProSemanticTagStyles';
+import {
+  getPerpsProInfoCardStyle,
+  getPerpsProListRowStyles,
+} from '@/screens/PerpsPro/components/common/perpsProListVisual';
 import { PERPS_PRO_FONT_FAMILY } from '@/screens/PerpsPro/components/common/perpsProVisual';
 import { formatPerpsProTime } from '@/screens/PerpsPro/utils/format';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -125,31 +128,28 @@ export const PerpsProHistoryRowLayout: React.FC<{
   );
 };
 
-const value = (color: string, fontWeight: '400' | '500' = '400') => ({
-  ...PERPS_PRO_NUMBER_STYLE,
+const value = (color: string) => ({
   color,
   flexShrink: 1,
-  ...getRoundedFontStyle(fontWeight),
-  fontSize: 12,
-  lineHeight: 16,
+  ...getRoundedFontStyle('700'),
+  fontSize: 14,
+  lineHeight: 18,
   marginLeft: 16,
   textAlign: 'right' as const,
 });
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+// Figma 86313:138628.
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   row: {
-    backgroundColor: colors2024['neutral-card-1'],
-    borderRadius: 12,
-    gap: 8,
-    marginHorizontal: 16,
-    paddingHorizontal: 12,
-    paddingVertical: 16,
+    ...getPerpsProInfoCardStyle(colors2024, isLight),
+    gap: 10,
+    marginHorizontal: 12,
   },
   meta: {
     gap: 8,
   },
   header: {
-    alignItems: 'center',
+    alignItems: 'flex-start',
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
@@ -184,7 +184,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     marginLeft: 12,
   },
   time: {
-    ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['neutral-secondary'],
     fontFamily: PERPS_PRO_FONT_FAMILY,
     fontSize: 12,
@@ -208,23 +207,11 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontWeight: '500',
     lineHeight: 16,
   },
-  details: {
-    gap: 8,
-  },
-  detailRow: {
-    alignItems: 'flex-start',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    minHeight: 16,
-  },
-  label: {
-    color: colors2024['neutral-secondary'],
-    fontFamily: PERPS_PRO_FONT_FAMILY,
-    fontSize: 12,
-    lineHeight: 16,
-  },
+  details: {},
+  detailRow: getPerpsProListRowStyles(colors2024).listRow,
+  label: getPerpsProListRowStyles(colors2024).listLabel,
   neutralValue: value(colors2024['neutral-title-1']),
-  positiveValue: value(colors2024['green-default'], '500'),
-  negativeValue: value(colors2024['red-default'], '500'),
-  infoValue: value(colors2024['neutral-info'], '500'),
+  positiveValue: value(colors2024['green-default']),
+  negativeValue: value(colors2024['red-default']),
+  infoValue: value(colors2024['neutral-info']),
 }));

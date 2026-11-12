@@ -24,6 +24,7 @@ import {
   formatDevURI,
   getBaseURL,
   getLocalWebViewDefaultProps,
+  LOCAL_WEBVIEW_FILE_ACCESS_PROPS,
   makeRuntimeInfo,
   sendMessageToWebview,
 } from './utils';
@@ -125,13 +126,10 @@ export const LocalWebView = ({
   ]);
 
   const { webviewSource } = useMemo(() => {
-    const localUri = IS_ANDROID
-      ? refAssetForLocalWebView(
-          stringUtils.ensurePrefix(entryPath, '/builtin-pages'),
-        ).rawPath
-      : refAssetForLocalWebView(
-          stringUtils.ensurePrefix(entryPath, '/builtin-pages'),
-        ).rawPath;
+    const { rawPath: localUri, fullPath: localFilePath } =
+      refAssetForLocalWebView(
+        stringUtils.ensurePrefix(entryPath, '/builtin-pages'),
+      );
 
     return {
       localUri,
@@ -148,10 +146,9 @@ export const LocalWebView = ({
               baseUrl: `${stringUtils.ensureSuffix(WEBVIEW_BASEURL, '/')}`,
             }
           : {
-              uri: `${WEBVIEW_BASEURL}${stringUtils.ensurePrefix(
-                entryPath,
-                '/builtin-pages',
-              )}`,
+              // WebKit checks the read grant lexically: avoid a double slash
+              // between the bundle directory and builtin-pages.
+              uri: localFilePath,
               baseUrl: WEBVIEW_BASEURL,
             },
     };
@@ -233,8 +230,13 @@ export const LocalWebView = ({
       {...(IS_IOS
         ? getLocalWebViewDefaultProps().iosWebViewProps
         : getLocalWebViewDefaultProps().androidWebViewProps)}
-      onShouldStartLoadWithRequest={onShouldStartLoadWithRequest}
       {...webviewProps}
+      {...LOCAL_WEBVIEW_FILE_ACCESS_PROPS}
+      onShouldStartLoadWithRequest={onShouldStartLoadWithRequest}
+      // Limit WKWebView's native read grant to bundled page resources.
+      allowingReadAccessToURL={
+        IS_IOS ? `${WEBVIEW_BASEURL}builtin-pages/` : undefined
+      }
       onLayout={event => {
         const { width, height } = event.nativeEvent.layout;
         setWindowInfo({ width, height });

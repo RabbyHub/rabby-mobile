@@ -164,6 +164,7 @@ export function DevModalDevServer() {
       visible={visible}
       transparent
       animationType="fade"
+      onRequestClose={handleClose}
       style={styles.modalComp}>
       <AutoLockView style={styles.modalMask}>
         <KeyboardAvoidingView behavior={IS_IOS ? 'padding' : 'height'}>

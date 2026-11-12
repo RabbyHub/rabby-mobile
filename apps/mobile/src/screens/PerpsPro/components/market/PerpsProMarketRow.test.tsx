@@ -184,7 +184,7 @@ describe.each([true, false])('PerpsProMarketRow (iOS=%s)', isIOS => {
       expect.objectContaining({
         alignItems: 'center',
         height: 60,
-        paddingHorizontal: 16,
+        paddingHorizontal: 20,
         paddingVertical: 10,
       }),
     );
@@ -195,7 +195,7 @@ describe.each([true, false])('PerpsProMarketRow (iOS=%s)', isIOS => {
         ).props.style,
       ),
     ).toEqual(
-      expect.objectContaining({ height: 32, marginRight: 6, width: 16 }),
+      expect.objectContaining({ height: 32, marginLeft: 8, width: 16 }),
     );
     expect(screen.getByTestId('favorite-star-empty').props).toEqual(
       expect.objectContaining({
@@ -215,8 +215,8 @@ describe.each([true, false])('PerpsProMarketRow (iOS=%s)', isIOS => {
     expect(screen.getByText('ALPHAUSDC').props.style).toEqual(
       expect.objectContaining({
         fontFamily: 'SF Pro Rounded',
-        fontSize: 16,
-        fontWeight: '500',
+        fontSize: 15,
+        fontWeight: '700',
         lineHeight: 20,
       }),
     );
@@ -250,16 +250,16 @@ describe.each([true, false])('PerpsProMarketRow (iOS=%s)', isIOS => {
     expect(screen.getByText('Alpha').props.style).toEqual(
       expect.objectContaining({
         flexShrink: 1,
-        fontSize: 12,
-        fontWeight: '400',
+        fontSize: 13,
+        fontWeight: '500',
         lineHeight: 16,
       }),
     );
     expect(screen.getByText('1.20M').props.style).toEqual(
       expect.objectContaining({
         flexShrink: 0,
-        fontSize: 12,
-        fontWeight: '400',
+        fontSize: 13,
+        fontWeight: '500',
         lineHeight: 16,
       }),
     );

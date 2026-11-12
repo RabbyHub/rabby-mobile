@@ -1,7 +1,6 @@
 /* eslint-disable react-native/no-inline-styles */
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { Button } from '@/components2024/Button';
-import { buttonTitleStyles } from '@/components2024/Button/buttonStyles';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import {
   BOTTOM_BUTTON_DOUBLE_HEIGHT,
@@ -37,7 +36,6 @@ import { TokenDetailHeaderArea } from './components/HeaderArea';
 import type { TokenChartRef } from './components/TokenPriceChart';
 import { TokenPriceChart } from './components/TokenPriceChart';
 import { useSafeSizes } from '@/hooks/useAppLayout';
-import { useTriggerTagAssets } from '../Home/hooks/refresh';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import type { KEYRING_TYPE } from '@rabby-wallet/keyring-utils/src/types';
 import type { GetRootScreenNavigationProps } from '@/navigation-type';
@@ -52,7 +50,6 @@ import {
   useSingleTokenBalance,
   useTokenMarketInfo,
 } from './hook';
-import { RightMore } from './components/RightMore';
 import {
   RemovedTokenNotice,
   RestoreRemovedTokenActions,
@@ -160,7 +157,7 @@ export const TokenMarketInfoScreen = () => {
     return account || accounts[0] || getFallbackAccountSnapshot();
   }, [account, accounts]);
 
-  const { navigation, setNavigationOptions } = useSafeSetNavigationOptions();
+  const { navigation } = useSafeSetNavigationOptions();
 
   const {
     data: tokenWithAmount,
@@ -208,31 +205,7 @@ export const TokenMarketInfoScreen = () => {
     },
   );
 
-  const { tokenRefresh, singleTokenRefresh } = useTriggerTagAssets();
-
-  const refreshTag = useCallback(() => {
-    singleTokenRefresh();
-    tokenRefresh();
-  }, [singleTokenRefresh, tokenRefresh]);
-
-  const getHeaderTitle = useCallback(() => {
-    return (
-      <TokenDetailHeaderArea
-        style={{ marginLeft: isAndroid ? 0 : -30 }}
-        key={finalAccount?.address}
-        token={token}
-        showCopyIcon
-      />
-    );
-  }, [finalAccount?.address, token]);
-
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
-
-  const getHeaderRight = useCallback(() => {
-    return isCustomTestnet || isRemoved ? null : (
-      <RightMore token={token} refreshTags={refreshTag} />
-    );
-  }, [isCustomTestnet, isRemoved, token, refreshTag]);
 
   useFocusEffect(
     useCallback(() => {
@@ -242,14 +215,6 @@ export const TokenMarketInfoScreen = () => {
       };
     }, [setIsFromBack]),
   );
-
-  React.useEffect(() => {
-    setNavigationOptions({
-      headerTitle: getHeaderTitle,
-      headerRight: getHeaderRight,
-      headerTitleAlign: 'left',
-    });
-  }, [setNavigationOptions, getHeaderRight, getHeaderTitle]);
 
   const isFromSwap =
     !!tokenSelectType && ['swapTo', 'swapFrom'].includes(tokenSelectType);
@@ -682,7 +647,6 @@ export const TokenMarketInfoScreen = () => {
             <Button
               title={t('global.Confirm')}
               height={BOTTOM_BUTTON_SINGLE_HEIGHT}
-              titleStyle={buttonTitleStyles.single}
               containerStyle={StyleSheet.flatten([styles.btnContainer])}
               onPress={() => {
                 if (isSwapTo) {
@@ -702,7 +666,6 @@ export const TokenMarketInfoScreen = () => {
                 type="ghost"
                 title={t('page.tokenDetail.action.Buy')}
                 height={BOTTOM_BUTTON_DOUBLE_HEIGHT}
-                titleStyle={buttonTitleStyles.double}
                 containerStyle={StyleSheet.flatten([styles.btnContainer])}
                 buttonStyle={[styles.btnInnerContainer, styles.ghostBtn]}
                 onPress={() =>
@@ -713,7 +676,6 @@ export const TokenMarketInfoScreen = () => {
                 <Button
                   title={t('page.tokenDetail.action.Sell')}
                   height={BOTTOM_BUTTON_DOUBLE_HEIGHT}
-                  titleStyle={buttonTitleStyles.double}
                   containerStyle={StyleSheet.flatten([styles.btnContainer])}
                   onPress={() =>
                     handleSwap(

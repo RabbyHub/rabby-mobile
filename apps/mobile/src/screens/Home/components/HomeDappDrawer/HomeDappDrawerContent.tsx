@@ -98,10 +98,6 @@ const dappTabAtom = atomByMMKV<TabKey>(DAPP_ACTIVE_TAB_STORAGE_KEY, 'all', {
   getOnInit: true,
 });
 
-export const dappRemindAtom = atomByMMKV<boolean>('@dapp.remind', true, {
-  getOnInit: true,
-});
-
 const useDappTab = ({
   hasBookmarks,
   bookmarksHydrated,

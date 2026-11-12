@@ -490,36 +490,40 @@ const ChartHeader = React.memo(
             hitSlop={10}
             pressRetentionOffset={10}
             style={styles.changeSection}>
-            {isHidden ? (
-              <Text style={{ color: colors2024['neutral-title-1'] }}>***</Text>
-            ) : (
-              <>
-                <AnimateableText
-                  style={lossStyleProps}
-                  animatedProps={percentChangeAnimatedProps}
-                />
-                <AnimateableText
-                  style={styles.changeTime}
-                  animatedProps={dateTimeAnimatedProps}
-                />
-                <View style={styles.percentChangeContainer}>
-                  <AnimatedSVG
-                    style={animatedSvgStyle}
-                    width={16}
-                    height={16}
-                    viewBox="0 0 24 24"
-                    fill="none">
-                    <AnimatedPath
-                      d="M8.4 4.80005L15.6 12L8.4 19.2"
-                      strokeWidth={2}
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      animatedProps={arrowStrokeProps}
-                    />
-                  </AnimatedSVG>
-                </View>
-              </>
-            )}
+            {/* The whole row (percent + 24h + arrow) is the touch target; the
+                animated texts must not swallow the press. */}
+            <View pointerEvents="none" style={styles.changeRowContent}>
+              {isHidden ? (
+                <Text style={styles.changeHidden}>***</Text>
+              ) : (
+                <>
+                  <AnimateableText
+                    style={lossStyleProps}
+                    animatedProps={percentChangeAnimatedProps}
+                  />
+                  <AnimateableText
+                    style={styles.changeTime}
+                    animatedProps={dateTimeAnimatedProps}
+                  />
+                  <View style={styles.percentChangeContainer}>
+                    <AnimatedSVG
+                      style={animatedSvgStyle}
+                      width={16}
+                      height={16}
+                      viewBox="0 0 24 24"
+                      fill="none">
+                      <AnimatedPath
+                        d="M8.4 4.80005L15.6 12L8.4 19.2"
+                        strokeWidth={2}
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        animatedProps={arrowStrokeProps}
+                      />
+                    </AnimatedSVG>
+                  </View>
+                </>
+              )}
+            </View>
           </Pressable>
         )}
       </Animated.View>
@@ -555,10 +559,25 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontFamily: 'SF Pro Rounded',
   },
   changeSection: {
+    // Same height for the shown row and the hidden `***` placeholder so the
+    // card cannot jump between hide/show (QA 1175).
+    height: 18,
     flexDirection: 'row',
     gap: 2,
     alignItems: 'center',
     justifyContent: 'flex-start',
+  },
+  changeRowContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+  },
+  changeHidden: {
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '700',
+    fontFamily: 'SF Pro Rounded',
+    color: colors2024['neutral-title-1'],
   },
   changePercent: {
     fontSize: 14,
@@ -596,11 +615,13 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     opacity: 0.2,
   },
   netWorthContainer: {
+    // Fixed height: the ticker swaps font sizes by character count, and the
+    // hidden value (`******`) is shorter than a real balance. Without this the
+    // card grows while that transition renders (QA 1175).
+    height: 42,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    // ...makeDebugBorder('orange'),
-    lineHeight: 42,
   },
   netWorthTextContainer: {
     flex: 1,
