@@ -5,7 +5,6 @@ import RcIconWarning from '@/assets2024/memecoin/warning.svg';
 import { TrackedModal } from '@/components/Modal/TrackedModal';
 import { Text } from '@/components/Typography';
 import { Button } from '@/components2024/Button';
-import { buttonTitleStyles } from '@/components2024/Button/buttonStyles';
 import {
   BOTTOM_BUTTON_DOUBLE_HEIGHT,
   BOTTOM_BUTTON_GAP,
@@ -56,7 +55,6 @@ export const ExitDialog = ({
               type="plain"
               title={t('page.memeCoin.execute.stopAndExit')}
               height={BOTTOM_BUTTON_DOUBLE_HEIGHT}
-              titleStyle={buttonTitleStyles.double}
               containerStyle={styles.buttonContainer}
               onPress={onStop}
             />
@@ -64,7 +62,6 @@ export const ExitDialog = ({
               type="primary"
               title={t('page.memeCoin.execute.continue')}
               height={BOTTOM_BUTTON_DOUBLE_HEIGHT}
-              titleStyle={buttonTitleStyles.double}
               containerStyle={styles.buttonContainer}
               onPress={onContinue}
             />

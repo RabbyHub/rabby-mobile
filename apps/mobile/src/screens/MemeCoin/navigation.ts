@@ -33,12 +33,15 @@ export const pushMemeCoinExecute = (
  * routes above the home (Buy + Execute) and the sell flow one (Execute).
  */
 export const returnToMemeCoinHome = (mode: 'buy' | 'sell') => {
-  if (!navigationRef.isReady()) {
+  const rootKey = navigationRef.isReady()
+    ? navigationRef.getRootState()?.key
+    : undefined;
+  if (!rootKey) {
     return;
   }
   homeResetPending = true;
   navigationRef.dispatch({
     ...StackActions.pop(mode === 'buy' ? 2 : 1),
-    target: navigationRef.getRootState().key,
+    target: rootKey,
   });
 };

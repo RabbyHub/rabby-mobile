@@ -42,7 +42,6 @@ jest.mock('@/constant/layout', () => ({
   BOTTOM_BUTTON_SINGLE_HEIGHT: 52,
   BOTTOM_BUTTON_TOP_OFFSET: 12,
   getBottomButtonBottomOffset: () => 36,
-  getBottomButtonCenteredTitleStyle: () => ({}),
 }));
 jest.mock('@/hooks/useAppLayout', () => ({
   useSafeSizes: () => ({ safeOffBottom: 0 }),
