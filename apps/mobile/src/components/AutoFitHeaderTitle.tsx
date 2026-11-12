@@ -4,6 +4,7 @@ import { View } from 'react-native';
 import type { TextLayoutEventData, NativeSyntheticEvent } from 'react-native';
 
 import { Text } from '@/components/Typography';
+import { RoundedFontStyles } from '@/core/utils/fonts';
 
 // Base typography used by the header rows in this app.
 const BASE_FONT_SIZE = 20;
@@ -128,12 +129,11 @@ const styles = {
     alignSelf: 'stretch',
     justifyContent: 'center',
   } as ViewStyle,
-  title: {
-    // Match the online header's Rounded Heavy (800). 900 is Rounded Black and
-    // reads noticeably bolder on Android (QA 1388).
-    fontWeight: '800',
-    fontFamily: 'SF Pro Rounded',
-  } as TextStyle,
+  // This object is not passed through `createGetStyles2024`/`mutateStyles`,
+  // so it must use the resolved Android file name (SF-Pro-Rounded-Heavy). A raw
+  // 'SF Pro Rounded' + fontWeight 800 fell back to a synthetic face on Android
+  // and rendered differently from the baseline header (QA 1387/1388).
+  title: { ...RoundedFontStyles.heavy } as TextStyle,
   measure: {
     position: 'absolute',
     left: 0,
