@@ -833,14 +833,12 @@
     "bridge": {
       "Select": "选择",
       "no-quote": "无报价",
-      "bridge-from": "跨链转出自",
       "est-receiving": "预计接收：",
       "To": "至",
       "approve-and-bridge": "授权并跨链",
-      "for-available-quote": "获取可用报价",
       "From": "来自",
       "the-following-bridge-route-are-found": "找到以下费率",
-      "no-quote-found": "未找到报价。请尝试其他代币对。",
+      "no-quote-found": "未找到报价。",
       "est-payment": "预计付款：",
       "duration": "{{duration}} 分钟",
       "showMore": {

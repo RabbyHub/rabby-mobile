@@ -857,17 +857,15 @@
       "title": "Bridge",
       "Select": "Sélectionner",
       "loss-tips": "Vous perdez {{usd}}. Essayez un montant différent.",
-      "for-available-quote": "pour un devis disponible",
       "From": "De",
       "est-receiving": "Réception estimée :",
-      "bridge-from": "Bridge depuis",
       "showMore": {
         "source": "Source du bridge",
         "title": "Afficher plus",
         "signWarning": "Je comprends l'alerte et je souhaite continuer"
       },
       "price-impact": "Impact sur le prix",
-      "no-quote-found": "Aucun devis trouvé. Veuillez essayer d'autres paires de tokens.",
+      "no-quote-found": "Aucun devis trouvé.",
       "no-quote": "Pas de devis",
       "bridgeTo": "Passerelle vers",
       "approve-and-bridge": "Approuver et effectuer le bridge",

@@ -904,7 +904,6 @@
       "quotes": "Báo giá"
     },
     "bridge": {
-      "for-available-quote": "để có báo giá khả dụng",
       "no-quote": "Không có báo giá",
       "history": "Lịch sử Bridge",
       "price-impact": "Tác động giá",
@@ -914,7 +913,6 @@
       "To": "Đến",
       "est-difference": "Ước tính chênh lệch:",
       "approve-and-bridge": "Phê duyệt và Bridge",
-      "bridge-from": "Bridge từ",
       "est-payment": "Thanh toán ước tính:",
       "need-to-approve-token-before-bridge": "Cần phê duyệt token trước khi bridge",
       "bridgeFrom": "Cầu từ",
@@ -927,7 +925,7 @@
       "loss-tips": "Bạn đang mất {{usd}}. Thử một số tiền khác.",
       "Select": "Chọn",
       "est-receiving": "Ước tính sẽ nhận:",
-      "no-quote-found": "Không tìm thấy báo giá. Vui lòng thử cặp token khác.",
+      "no-quote-found": "Không tìm thấy báo giá.",
       "best": "Tốt nhất",
       "no-route-found": "Không tìm thấy tuyến đường",
       "via-bridge": "thông qua {{bridge}}",
