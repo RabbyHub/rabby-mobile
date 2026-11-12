@@ -940,7 +940,7 @@
         "queued": "Queued",
         "pending": "Pending",
         "completed": "Completed",
-        "refund": "Refund",
+        "refund": "Refunded",
         "waiting": "Waiting for destination",
         "goBack": "Go back",
         "bridgeAgain": "Bridge again",

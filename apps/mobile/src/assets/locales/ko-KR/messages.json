@@ -832,7 +832,7 @@
         "queued": "대기 중",
         "pending": "대기 중",
         "completed": "완료됨",
-        "refund": "환불",
+        "refund": "환불됨",
         "waiting": "대상 체인의 트랜잭션 대기 중",
         "goBack": "돌아가기",
         "bridgeAgain": "다시 브리지",

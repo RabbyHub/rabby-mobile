@@ -1001,7 +1001,7 @@
         "queued": "排隊中",
         "pending": "待處理",
         "completed": "完成",
-        "refund": "退還",
+        "refund": "已退還",
         "waiting": "等待目標鏈交易",
         "goBack": "返回",
         "bridgeAgain": "再次跨鏈",

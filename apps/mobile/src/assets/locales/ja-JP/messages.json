@@ -1057,7 +1057,7 @@
         "queued": "キューに入れられた",
         "pending": "保留中",
         "completed": "完了",
-        "refund": "返金",
+        "refund": "返金済み",
         "waiting": "送信先チェーンのトランザクションを待機中",
         "goBack": "戻る",
         "bridgeAgain": "再度ブリッジ",
