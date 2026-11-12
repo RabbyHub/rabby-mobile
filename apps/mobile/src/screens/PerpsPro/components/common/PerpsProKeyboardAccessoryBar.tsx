@@ -14,7 +14,6 @@ import Svg, {
 } from 'react-native-svg';
 
 import { PERPS_PRO_KEYBOARD_ACCESSORY_HEIGHT } from './perpsProKeyboardSession';
-import { PERPS_PRO_NUMBER_STYLE } from './perpsProNumberText';
 
 const consumeTouch = () => true;
 // Approved Figma 83992:157364 colors, scoped to this accessory.
@@ -178,7 +177,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     overflow: 'hidden',
   },
   minimum: {
-    ...PERPS_PRO_NUMBER_STYLE,
     position: 'absolute',
     left: 16,
     right: 80,

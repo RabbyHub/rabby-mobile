@@ -554,7 +554,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: 104,
   },
   precisionTriggerText: {
-    ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['neutral-title-1'],
     flex: 1,
     fontFamily: 'SF Pro Rounded',

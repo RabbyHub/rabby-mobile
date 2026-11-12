@@ -44,7 +44,6 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Reanimated, { runOnUI, useSharedValue } from 'react-native-reanimated';
 
-import { PerpsProAccountAssetRow } from '../components/account/PerpsProAccountAssetRow';
 import { PerpsProAccountState } from '../components/account/PerpsProAccountState';
 import { PerpsProAccountSummary } from '../components/account/PerpsProAccountSummary';
 import { PerpsProTransferSheet } from '../components/account/PerpsProTransferSheet';
@@ -87,7 +86,6 @@ import {
   getPerpsProInfoTabsNaturalAnchor,
   PERPS_PRO_INFO_TABS_HEIGHT,
   PERPS_PRO_INFO_SECTION_BOTTOM_PADDING,
-  PERPS_PRO_INFO_SECTION_DIVIDER_HEIGHT,
   PERPS_PRO_INFO_TABS_PLACEHOLDER_HEIGHT,
 } from '../components/info/perpsProInfoTabsSticky';
 import {
@@ -125,11 +123,11 @@ import { PerpsProOrderConfirmationSheet } from '../components/trade/PerpsProOrde
 import { PerpsProTradeForm } from '../components/trade/PerpsProTradeForm';
 import { PerpsProTradeScrollBridge } from '../components/trade/PerpsProTradeScrollBridge';
 import { resolvePerpsProTradeAddFundsAction } from '../model/addFunds';
-import type { PerpsAccountAssetRow } from '../model/account';
 import {
   getPerpsProColumnLayout,
   PERPS_PRO_MAIN_COLUMN_HEIGHT,
 } from '../model/layout';
+import type { PerpsAccountViewModel } from '../model/account';
 import type { PerpsOpenOrderViewModel } from '../model/openOrder';
 import { isRelevantOpenOrderEditPosition } from '../model/openOrderEdit';
 import type { PerpsPositionViewModel } from '../model/position';
@@ -159,8 +157,11 @@ type PerpsProSceneRow =
       state: Exclude<PerpsProAccountPanelState, 'ready'>;
       type: 'account-state';
     }
-  | { key: 'account-summary'; type: 'account-summary' }
-  | { asset: PerpsAccountAssetRow; key: string; type: 'account-asset' }
+  | {
+      account: PerpsAccountViewModel;
+      key: 'account-summary';
+      type: 'account-summary';
+    }
   | { key: 'positions-controls'; type: 'positions-controls' }
   | { key: 'positions-empty'; type: 'positions-empty' }
   | { key: string; position: PerpsPositionViewModel; type: 'position' }
@@ -882,9 +883,8 @@ export const PerpsProScene: React.FC<{
             active
               ? 'perps-pro-info-tabs-spacer'
               : `perps-pro-info-tabs-spacer-${tab}`
-          }>
-          <View pointerEvents="none" style={styles.infoSectionDivider} />
-        </View>
+          }
+        />
       </View>
     ),
     [
@@ -892,7 +892,6 @@ export const PerpsProScene: React.FC<{
       showRegionAlert,
       styles.headerLeadInSpacer,
       styles.infoTabsSpacer,
-      styles.infoSectionDivider,
       styles.marketLeadInSpacer,
       tradeLeadInSpacerStyle,
     ],
@@ -901,14 +900,12 @@ export const PerpsProScene: React.FC<{
   const rowsByTab = useMemo<Record<PerpsProInfoTab, PerpsProSceneRow[]>>(() => {
     const accountRows: PerpsProSceneRow[] = [];
     if (info.accountState === 'ready') {
-      accountRows.push({ key: 'account-summary', type: 'account-summary' });
-      accountRows.push(
-        ...info.account.assets.map(asset => ({
-          asset,
-          key: `account-asset:${asset.key}`,
-          type: 'account-asset' as const,
-        })),
-      );
+      // Asset rows render inside the summary card (Figma 86609:327475).
+      accountRows.push({
+        account: info.account,
+        key: 'account-summary',
+        type: 'account-summary',
+      });
     } else {
       accountRows.push({
         key: 'account-state',
@@ -1092,17 +1089,11 @@ export const PerpsProScene: React.FC<{
         case 'account-summary':
           return (
             <PerpsProAccountSummary
-              account={info.account}
+              account={item.account}
               onDeposit={openDeposit}
-              onWithdraw={openWithdraw}
-            />
-          );
-        case 'account-asset':
-          return (
-            <PerpsProAccountAssetRow
-              asset={item.asset}
               onSwap={openSwap}
               onTransfer={transfer.open}
+              onWithdraw={openWithdraw}
             />
           );
         case 'positions-controls':
@@ -1619,10 +1610,12 @@ export const PerpsProScene: React.FC<{
       {positionTpSl.editor ? (
         <PerpsProPositionTpSlSheets
           amountUnit={positionTpSl.editor.amountUnit}
+          cancelAllOids={positionTpSl.cancelAllOids}
           cancelingOids={positionTpSl.cancelingOids}
           confirmedCancelledOids={positionTpSl.confirmedCancelledOids}
           defaultTab={positionTpSl.editor.defaultTab}
           market={positionTpSl.editor.market}
+          onCancelAllOrders={positionTpSl.cancelAllOrders}
           onCancelOrder={positionTpSl.cancelOrder}
           onClose={positionTpSl.close}
           onReview={positionTpSl.requestReview}
@@ -1683,7 +1676,7 @@ export const PerpsProScene: React.FC<{
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
+const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
     flex: 1,
     overflow: 'hidden',
@@ -1730,14 +1723,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     zIndex: 1,
   },
   infoTabsSpacer: { height: PERPS_PRO_INFO_TABS_PLACEHOLDER_HEIGHT },
-  infoSectionDivider: {
-    backgroundColor: colors2024[isLight ? 'neutral-bg-0' : 'neutral-bg-2'],
-    bottom: PERPS_PRO_INFO_TABS_HEIGHT,
-    height: PERPS_PRO_INFO_SECTION_DIVIDER_HEIGHT,
-    left: 0,
-    position: 'absolute',
-    right: 0,
-  },
   scroll: {
     bottom: 0,
     left: 0,

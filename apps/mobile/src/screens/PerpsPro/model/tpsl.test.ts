@@ -49,7 +49,7 @@ describe('Perps Pro TP/SL model', () => {
         price: new BigNumber('111111.9'),
         szDecimals: 5,
       }),
-    ).toBe('111110');
+    ).toBe('111112');
   });
 
   it('creates independent Price drafts without enabling attachment', () => {
@@ -62,6 +62,42 @@ describe('Perps Pro TP/SL model', () => {
       enabled: false,
       sl: { mode: 'roi', rawMagnitude: '' },
       tp: { mode: 'pnl', rawMagnitude: '' },
+    });
+  });
+
+  it.each(['pnl', 'roi'] as const)(
+    'keeps zero %s invalid for opening attachments',
+    mode => {
+      const result = evaluate({
+        draft: {
+          enabled: true,
+          sl: { mode, rawMagnitude: '0' },
+          tp: { mode: 'price', rawMagnitude: '' },
+        },
+      });
+      expect(result.errors).toContainEqual({ code: 'invalidInput', leg: 'sl' });
+    },
+  );
+
+  it('does not force a sub-tick opening target one tick away from entry', () => {
+    const result = evaluate({
+      baseSize: '70772338',
+      draft: {
+        enabled: true,
+        sl: { mode: 'pnl', rawMagnitude: '0.01' },
+        tp: { mode: 'price', rawMagnitude: '' },
+      },
+      expectedEntryPrice: '0.094616',
+      liquidationPrice: null,
+      szDecimals: 0,
+    });
+    expect(result.sl).toMatchObject({
+      triggerPrice: '0.094616',
+      estimatedPnl: '0',
+    });
+    expect(result.errors).toContainEqual({
+      code: 'invalidDirection',
+      leg: 'sl',
     });
   });
 
@@ -132,7 +168,7 @@ describe('Perps Pro TP/SL model', () => {
     };
 
     expect(previewPerpsProTpSlLeg({ ...input, side: 'buy' })).toMatchObject({
-      triggerPrice: '1348.9',
+      triggerPrice: '1349',
     });
     expect(previewPerpsProTpSlLeg({ ...input, side: 'sell' })).toBeNull();
   });

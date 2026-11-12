@@ -9,14 +9,14 @@ import {
 } from './perpsProInfoTabsSticky';
 
 describe('Perps Pro info tabs sticky geometry', () => {
-  it('preserves the 16px natural gap and 6px section divider after the trade row', () => {
+  it('anchors the tabs 20px after the trade row without a divider', () => {
     expect(
       getPerpsProInfoTabsNaturalAnchor({
         leadInHeight: 96,
         tradeRowHeight: 424,
       }),
-    ).toBe(542);
-    expect(PERPS_PRO_INFO_TABS_PLACEHOLDER_HEIGHT).toBe(60);
+    ).toBe(540);
+    expect(PERPS_PRO_INFO_TABS_PLACEHOLDER_HEIGHT).toBe(64);
   });
 
   it('follows its list anchor until it reaches the moving Market bottom', () => {

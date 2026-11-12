@@ -409,6 +409,169 @@ describe('usePerpsProPositionTpSl', () => {
     expect(hook.result.current.cancelingOids).toEqual([]);
   });
 
+  const liveOrder = (oid: number, overrides = {}) => ({
+    coin: 'BTC',
+    oid,
+    side: 'A',
+    reduceOnly: true,
+    isTrigger: true,
+    orderType: 'Take Profit Market',
+    triggerPx: '110',
+    sz: '0.5',
+    origSz: '0.5',
+    timestamp: 1,
+    ...overrides,
+  });
+
+  it('batches only the clicked active partial orders and rechecks after approval', async () => {
+    const state = mockGetState();
+    const child = liveOrder(14);
+    state.openOrders = [
+      liveOrder(7),
+      liveOrder(8),
+      liveOrder(9, { isPositionTpsl: true }),
+      liveOrder(10, { coin: 'xyz:BTC' }),
+      liveOrder(11, { side: 'B' }),
+      liveOrder(12, { isTrigger: false }),
+      liveOrder(13, { reduceOnly: false }),
+      child,
+      liveOrder(15, { isTrigger: false, children: [child] }),
+    ];
+    let approve!: () => void;
+    mockEnsureApproval.mockReturnValueOnce(
+      new Promise<void>(resolve => {
+        approve = resolve;
+      }),
+    );
+    mockExecuteCancel.mockResolvedValue({
+      kind: 'success',
+      items: [{ coin: 'BTC', oid: 7, status: 'success' }],
+    });
+    const hook = renderHook(() => usePerpsProPositionTpSl('account-a', 'base'));
+    act(() => hook.result.current.open(position, 'partial'));
+    const clicked = state.openOrders.map((item: { oid: number }) => ({
+      ...order,
+      oid: item.oid,
+    }));
+    let request!: Promise<void>;
+    act(() => {
+      request = hook.result.current.cancelAllOrders(clicked);
+    });
+    expect(hook.result.current.cancelAllOids).toEqual([7, 8]);
+    await act(async () => {
+      await hook.result.current.cancelAllOrders(clicked);
+    });
+    expect(mockEnsureApproval).toHaveBeenCalledTimes(1);
+    // One target disappeared and a new order arrived while approval was open.
+    state.openOrders = [liveOrder(7), liveOrder(16)];
+    await act(async () => {
+      approve();
+      await request;
+    });
+    expect(mockExecuteCancel).toHaveBeenCalledTimes(1);
+    expect(mockExecuteCancel.mock.lastCall?.[0].orders).toEqual([
+      { coin: 'BTC', oid: 7 },
+    ]);
+    expect(hook.result.current.confirmedCancelledOids).toEqual([7]);
+    expect(hook.result.current.cancelAllOids).toBeNull();
+    expect(hook.result.current.pending).toBe(false);
+  });
+
+  it('removes acknowledged successes immediately and retries only remaining failures', async () => {
+    mockGetState().openOrders = [liveOrder(7), liveOrder(8)];
+    mockExecuteCancel
+      .mockResolvedValueOnce({
+        kind: 'partial',
+        items: [
+          { coin: 'BTC', oid: 7, status: 'success' },
+          { coin: 'BTC', oid: 8, status: 'failed', error: 'retry' },
+        ],
+      })
+      .mockResolvedValueOnce({
+        kind: 'success',
+        items: [{ coin: 'BTC', oid: 8, status: 'success' }],
+      });
+    const hook = renderHook(() => usePerpsProPositionTpSl('account-a', 'base'));
+    const clicked = [order, { ...order, oid: 8 }];
+    act(() => hook.result.current.open(position, 'partial'));
+    await act(async () => {
+      await hook.result.current.cancelAllOrders(clicked);
+    });
+    expect(hook.result.current.confirmedCancelledOids).toEqual([7]);
+    expect(mockShowToast).toHaveBeenLastCalledWith(
+      'page.perps.pro.openOrders.cancelPartial',
+      'error',
+    );
+    await act(async () => {
+      await hook.result.current.cancelAllOrders(clicked);
+    });
+    expect(mockExecuteCancel.mock.lastCall?.[0].orders).toEqual([
+      { coin: 'BTC', oid: 8 },
+    ]);
+    expect(hook.result.current.confirmedCancelledOids).toEqual([7, 8]);
+  });
+
+  it.each(['approval', 'request'] as const)(
+    'isolates an old account cancellation settling during %s',
+    async phase => {
+      mockGetState().openOrders = [liveOrder(7)];
+      let finish!: (result?: unknown) => void;
+      const deferred = new Promise(resolve => {
+        finish = resolve;
+      });
+      if (phase === 'approval')
+        mockEnsureApproval.mockReturnValueOnce(deferred);
+      else mockExecuteCancel.mockReturnValueOnce(deferred);
+      const hook = renderHook(
+        ({ identity }) => usePerpsProPositionTpSl(identity, 'base'),
+        {
+          initialProps: { identity: 'account-a' },
+        },
+      );
+      act(() => hook.result.current.open(position, 'partial'));
+      let request!: Promise<void>;
+      await act(async () => {
+        request = hook.result.current.cancelAllOrders([order]);
+      });
+      hook.rerender({ identity: 'account-b' });
+      mockGetState().currentPerpsAccount = {
+        ...account,
+        address: '0x2222222222222222222222222222222222222222',
+      };
+      act(() => hook.result.current.open(position, 'partial'));
+      let finishNew!: () => void;
+      mockEnsureApproval.mockReturnValueOnce(
+        new Promise<void>(resolve => {
+          finishNew = resolve;
+        }),
+      );
+      let nextRequest!: Promise<void>;
+      act(() => {
+        nextRequest = hook.result.current.cancelAllOrders([order]);
+      });
+      await act(async () => {
+        finish({
+          kind: 'success',
+          items: [{ coin: 'BTC', oid: 7, status: 'success' }],
+        });
+        await request;
+      });
+      expect(hook.result.current.pending).toBe(true);
+      expect(hook.result.current.cancelAllOids).toEqual([7]);
+      expect(hook.result.current.confirmedCancelledOids).toEqual([]);
+      expect(mockShowToast).not.toHaveBeenCalled();
+      if (phase === 'approval')
+        expect(mockExecuteCancel).not.toHaveBeenCalled();
+      // Finish without a second request: its target has since disappeared.
+      mockGetState().openOrders = [];
+      await act(async () => {
+        finishNew();
+        await nextRequest;
+      });
+      expect(hook.result.current.pending).toBe(false);
+    },
+  );
+
   it('ignores a completed Toast from an editor that was already closed', async () => {
     mockExecuteCancel.mockResolvedValue({
       items: [{ coin: 'BTC', oid: 7, status: 'success' }],

@@ -1,18 +1,20 @@
 import { formatPositionTpSlSignedValue } from '../../utils/positionTpSlFormatting';
-import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
 import RcIconAdd from '@/assets2024/icons/perps/PerpsProTpSlAdd.svg';
 import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import BigNumber from 'bignumber.js';
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import {
   PERPS_PRO_DIALOG_TOKENS,
   resolvePerpsProDialogCardBackground,
 } from '../common/perpsProDialogVisual';
+import { PerpsProSectionTitle } from '../common/PerpsProSectionTitle';
 import { PerpsProDottedUnderlineText } from '../common/PerpsProDottedUnderlineText';
+import { resolvePerpsProFittedFontSize } from '../common/perpsProFitFontSize';
+import { PerpsProTextWidthProbe } from '../common/PerpsProTextWidthProbe';
 import { PerpsProPositionTpSlCancelAction } from './PerpsProPositionTpSlCancelAction';
 
 import type { PerpsPositionViewModel } from '../../model/position';
@@ -98,22 +100,14 @@ export const PerpsProPositionTpSlOrderList: React.FC<{
                 key={kind}
                 style={index < groups.length - 1 ? styles.dividedGroup : null}>
                 <View style={styles.groupHeading}>
-                  <View style={styles.groupTitle}>
-                    <View
-                      style={
-                        kind === 'takeProfit'
-                          ? styles.takeProfitBar
-                          : styles.stopLossBar
-                      }
-                    />
-                    <Text style={styles.groupTitleText}>
-                      {t(
-                        kind === 'takeProfit'
-                          ? 'page.perps.pro.positionTpsl.takeProfit'
-                          : 'page.perps.pro.positionTpsl.stopLoss',
-                      )}
-                    </Text>
-                  </View>
+                  <PerpsProSectionTitle
+                    tone={kind === 'takeProfit' ? 'positive' : 'negative'}>
+                    {t(
+                      kind === 'takeProfit'
+                        ? 'page.perps.pro.positionTpsl.takeProfit'
+                        : 'page.perps.pro.positionTpsl.stopLoss',
+                    )}
+                  </PerpsProSectionTitle>
                   {scope === 'partial' ? (
                     <Text style={styles.coverage}>
                       {t('page.perps.pro.positionTpsl.positionSizeCoverage', {
@@ -245,6 +239,27 @@ const OrderRow: React.FC<{
     size: scope === 'position' ? position.baseSize : order.remainingSize,
     triggerPrice: order.triggerPrice,
   });
+  const priceLabel = t('page.perps.pro.positions.price');
+  const unfilledLabel = `${t(
+    'page.perps.pro.positionTpsl.unfilledAmount',
+  )} (${amountAsset})`;
+  // The right label is anchored at its natural width and may borrow the
+  // middle column's free space, but must stop before the middle label.
+  const [metricsWidth, setMetricsWidth] = useState(0);
+  const [priceLabelWidth, setPriceLabelWidth] = useState(0);
+  const [unfilledLabelWidth, setUnfilledLabelWidth] = useState(0);
+  const middleColumnX =
+    (metricsWidth - ORDER_METRIC_GAP * 2) / 3 + ORDER_METRIC_GAP;
+  const unfilledLabelMaxWidth =
+    metricsWidth > 0 && priceLabelWidth > 0
+      ? metricsWidth - middleColumnX - priceLabelWidth - ORDER_METRIC_GAP
+      : 0;
+  const unfilledLabelFontSize = resolvePerpsProFittedFontSize({
+    availableWidth: unfilledLabelMaxWidth,
+    baseFontSize: ORDER_METRIC_LABEL_FONT_SIZE,
+    minFontSize: ORDER_METRIC_LABEL_MIN_FONT_SIZE,
+    naturalWidth: unfilledLabelWidth,
+  });
 
   return (
     <View
@@ -263,7 +278,19 @@ const OrderRow: React.FC<{
           {formatPerpsProPrice(order.triggerPrice, market.pxDecimals)}
         </Text>
       </View>
-      <View style={styles.orderMetrics}>
+      <View
+        onLayout={event => setMetricsWidth(event.nativeEvent.layout.width)}
+        style={styles.orderMetrics}>
+        <PerpsProTextWidthProbe
+          onWidth={setPriceLabelWidth}
+          style={styles.orderMetricLabel}
+          text={priceLabel}
+        />
+        <PerpsProTextWidthProbe
+          onWidth={setUnfilledLabelWidth}
+          style={styles.orderMetricLabel}
+          text={unfilledLabel}
+        />
         <OrderMetric
           flex={1}
           label={
@@ -279,14 +306,20 @@ const OrderRow: React.FC<{
         />
         <OrderMetric
           flex={1}
-          label={t('page.perps.pro.positions.price')}
+          label={priceLabel}
           value={t('page.perps.pro.positions.market')}
         />
         <OrderMetric
           flex={1}
-          label={`${t(
-            'page.perps.pro.positionTpsl.unfilledAmount',
-          )} (${amountAsset})`}
+          label={unfilledLabel}
+          labelFit={
+            unfilledLabelFontSize === ORDER_METRIC_LABEL_FONT_SIZE
+              ? undefined
+              : {
+                  fontSize: unfilledLabelFontSize,
+                  maxWidth: unfilledLabelMaxWidth,
+                }
+          }
           textAlign="right"
           testID={`perps-pro-position-tpsl-order-${order.oid}-unfilled`}
           value={
@@ -325,11 +358,20 @@ const OrderRow: React.FC<{
 const OrderMetric: React.FC<{
   flex: number;
   label: React.ReactNode;
+  labelFit?: { fontSize: number; maxWidth: number };
   testID?: string;
   textAlign?: 'left' | 'right';
   tone?: 'negative' | 'neutral' | 'positive';
   value: string;
-}> = ({ flex, label, testID, textAlign = 'left', tone = 'neutral', value }) => {
+}> = ({
+  flex,
+  label,
+  labelFit,
+  testID,
+  textAlign = 'left',
+  tone = 'neutral',
+  value,
+}) => {
   const { styles } = useTheme2024({ getStyle });
   return (
     <View
@@ -345,6 +387,7 @@ const OrderMetric: React.FC<{
           style={[
             styles.orderMetricLabel,
             textAlign === 'right' && styles.orderMetricRightLabel,
+            labelFit,
           ]}
           testID={testID ? `${testID}-label` : undefined}>
           {label}
@@ -369,6 +412,10 @@ const OrderMetric: React.FC<{
   );
 };
 
+const ORDER_METRIC_GAP = 8;
+const ORDER_METRIC_LABEL_FONT_SIZE = 12;
+const ORDER_METRIC_LABEL_MIN_FONT_SIZE = 10;
+
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   list: {
     padding: 16,
@@ -381,7 +428,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     borderRadius: 6,
     flexDirection: 'row',
     gap: 4,
-    height: 30,
+    height: 26,
     justifyContent: 'center',
     paddingHorizontal: 6,
   },
@@ -404,28 +451,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     height: 20,
     justifyContent: 'space-between',
   },
-  groupTitle: { alignItems: 'center', flexDirection: 'row', gap: 6 },
-  takeProfitBar: {
-    backgroundColor: colors2024['green-default'],
-    borderRadius: 2,
-    height: 14,
-    width: 4,
-  },
-  stopLossBar: {
-    backgroundColor: colors2024['red-default'],
-    borderRadius: 2,
-    height: 14,
-    width: 4,
-  },
-  groupTitleText: {
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    fontWeight: '700',
-    lineHeight: 20,
-  },
   coverage: {
-    ...PERPS_PRO_NUMBER_STYLE,
     flexShrink: 1,
     minWidth: 0,
     marginLeft: 8,
@@ -449,7 +475,11 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontSize: 12,
     lineHeight: 16,
   },
-  orderMetrics: { flexDirection: 'row', gap: 8, marginTop: 8 },
+  orderMetrics: {
+    flexDirection: 'row',
+    gap: ORDER_METRIC_GAP,
+    marginTop: 8,
+  },
   orderMetric: { height: 36, minWidth: 0 },
   orderMetricRight: {
     alignItems: 'flex-end',
@@ -476,11 +506,10 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   orderMetricLabel: {
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 12,
+    fontSize: ORDER_METRIC_LABEL_FONT_SIZE,
     lineHeight: 16,
   },
   orderMetricValue: {
-    ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 12,
@@ -489,7 +518,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     marginTop: 4,
   },
   positiveMetricValue: {
-    ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['green-default'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 12,
@@ -498,7 +526,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     marginTop: 4,
   },
   negativeMetricValue: {
-    ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['red-default'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 12,
@@ -507,7 +534,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     marginTop: 4,
   },
   takeProfitValue: {
-    ...PERPS_PRO_NUMBER_STYLE,
     flexShrink: 1,
     minWidth: 0,
     color: colors2024['green-default'],
@@ -517,7 +543,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     lineHeight: 18,
   },
   stopLossValue: {
-    ...PERPS_PRO_NUMBER_STYLE,
     flexShrink: 1,
     minWidth: 0,
     color: colors2024['red-default'],

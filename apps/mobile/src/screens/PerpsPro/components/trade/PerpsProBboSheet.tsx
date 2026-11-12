@@ -9,6 +9,7 @@ import { Pressable, View } from 'react-native';
 
 import type { PerpsProBboStrategy } from '../../model/bbo';
 import { getPerpsProDialogStyles } from '../common/perpsProDialogVisual';
+import { PerpsProDialogOptionCheck } from '../common/PerpsProDialogOptionCheck';
 import { PerpsProDialogBackdrop } from '../common/PerpsProDialogBackdrop';
 import { usePerpsProSheetNavigationRegistration } from '../common/perpsProSheetNavigationRegistry';
 
@@ -71,6 +72,7 @@ export const PerpsProBboSheet: React.FC<{
                   ]}
                   testID={`perps-pro-bbo-${option.value}`}>
                   <Text style={styles.label}>{option.label}</Text>
+                  <PerpsProDialogOptionCheck active={active} />
                 </Pressable>
               );
             })}
