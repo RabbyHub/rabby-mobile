@@ -428,7 +428,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     borderRadius: 6,
     flexDirection: 'row',
     gap: 4,
-    height: 30,
+    height: 26,
     justifyContent: 'center',
     paddingHorizontal: 6,
   },
