@@ -1,6 +1,5 @@
 import React from 'react';
 import { View } from 'react-native';
-import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AutoFitHeaderTitle } from '@/components/AutoFitHeaderTitle';
@@ -14,18 +13,18 @@ const HEADER_CONTENT_HEIGHT = 48;
 const HEADER_HORIZONTAL_INSET = 16;
 
 /**
- * Header row for the "select add method" screen (QA 1352).
+ * Left-aligned JS header for the first screens of the add-wallet flow (QA 1352).
  *
- * On iOS the native header centres a long translation, so the pt-BR title ran
- * past the trailing edge and looked pushed to the right. Production keeps this
- * title left-aligned in the slot right after the back control, so this row
+ * On iOS the native header centres a long translation, so titles such as
+ * "Selecionar método para adicionar" and "Restaure a sua carteira Rabby" ran
+ * past the trailing edge and looked pushed to the right. Production keeps these
+ * titles left-aligned in the slot right after the back control, so this row
  * reproduces that layout and lets AutoFitHeaderTitle shrink only when the
  * translation cannot fit on one base-size line.
  */
-export const SelectAddMethodHeader = () => {
+export const AutoFitLeftHeader = ({ title }: { title: string }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const insets = useSafeAreaInsets();
-  const { t } = useTranslation();
 
   return (
     <View style={[styles.outer, { paddingTop: insets.top }]}>
@@ -39,7 +38,7 @@ export const SelectAddMethodHeader = () => {
         <View style={styles.titleArea}>
           <AutoFitHeaderTitle
             align="left"
-            text={t('page.nextComponent.addAddress.selectAddMethod')}
+            text={title}
             textStyle={styles.title}
           />
         </View>

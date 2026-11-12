@@ -51,6 +51,7 @@ import PointsScreen from '../Points';
 import { APP_TEST_PASSWORD } from '@/constant';
 import { withRegressionScenario } from '@/devtools/regressionScenarios/react';
 import { ImportMethodsHeader } from '../Address/ImportMethodsHeader';
+import { AutoFitLeftHeader } from '@/components/AutoFitLeftHeader';
 
 const AddressStack = createNativeStackNavigator<AddressNavigatorParamList>();
 const RegressionSyncExtensionPasswordScreen = withRegressionScenario(
@@ -184,13 +185,12 @@ export function AddressNavigator() {
         name={RootNames.ImportHardwareAddress}
         component={ImportHardwareAddressScreen}
         options={mergeScreenOptions({
-          headerTitle: t('screens.addressStackTitle.ImportHardwareAddress'),
-          title: t('screens.addressStackTitle.ImportHardwareAddress'),
-          headerTintColor: colors2024['neutral-title-1'],
-          headerTitleStyle: styles.headerTitleText,
-          headerStyle: {
-            backgroundColor: colors2024['neutral-bg-1'],
-          },
+          // Same native-title overflow as SelectAddMethod (QA 1352).
+          header: () => (
+            <AutoFitLeftHeader
+              title={t('screens.addressStackTitle.ImportHardwareAddress')}
+            />
+          ),
         })}
       />
       <AddressStack.Screen
@@ -221,13 +221,12 @@ export function AddressNavigator() {
         name={RootNames.ImportWatchAddress2024}
         component={ImportWatchAddressScreen2024}
         options={mergeScreenOptions({
-          headerTitle: t('screens.addressStackTitle.ImportWatchAddress2024'),
-          title: t('screens.addressStackTitle.ImportWatchAddress2024'),
-          headerTintColor: colors2024['neutral-title-1'],
-          headerStyle: {
-            backgroundColor: colors2024['neutral-bg-1'],
-          },
-          headerTitleStyle: styles.headerTitleText,
+          // Same native-title overflow as SelectAddMethod (QA 1352).
+          header: () => (
+            <AutoFitLeftHeader
+              title={t('screens.addressStackTitle.ImportWatchAddress2024')}
+            />
+          ),
         })}
       />
       <AddressStack.Screen
@@ -257,13 +256,12 @@ export function AddressNavigator() {
         name={RootNames.ImportSafeAddress2024}
         component={ImportSafeAddressScreen2024}
         options={mergeScreenOptions({
-          headerTitle: t('screens.addressStackTitle.ImportSafeAddress2024'),
-          title: t('screens.addressStackTitle.ImportSafeAddress2024'),
-          headerTintColor: colors2024['neutral-title-1'],
-          headerStyle: {
-            backgroundColor: colors2024['neutral-bg-1'],
-          },
-          headerTitleStyle: styles.headerTitleText,
+          // Same native-title overflow as SelectAddMethod (QA 1352).
+          header: () => (
+            <AutoFitLeftHeader
+              title={t('screens.addressStackTitle.ImportSafeAddress2024')}
+            />
+          ),
         })}
       />
       <AddressStack.Screen
