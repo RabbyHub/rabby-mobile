@@ -3133,6 +3133,13 @@
       },
       "addressEditorBadge": {
         "nameUnknown": "给地址命名"
+      },
+      "scanQrcode": {
+        "chooseFromGallery": "从相册选择",
+        "noQrCode": "图片中未识别到二维码",
+        "multipleQrCodes": "图片中包含多个二维码，请选择只有一个二维码的图片",
+        "invalidAddress": "二维码中未识别到有效地址",
+        "readImageFailed": "图片读取失败，请重试"
       }
     },
     "Lending": {

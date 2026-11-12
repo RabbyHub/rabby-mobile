@@ -3036,6 +3036,13 @@
       },
       "addressEditorBadge": {
         "nameUnknown": "アドレスに名前を付けてください"
+      },
+      "scanQrcode": {
+        "chooseFromGallery": "アルバムから選択",
+        "noQrCode": "この画像にQRコードが見つかりません",
+        "multipleQrCodes": "複数のQRコードが見つかりました。QRコードが1つだけの画像を選択してください",
+        "invalidAddress": "このQRコードに有効なアドレスが見つかりません",
+        "readImageFailed": "画像を読み込めませんでした。もう一度お試しください"
       }
     },
     "Lending": {

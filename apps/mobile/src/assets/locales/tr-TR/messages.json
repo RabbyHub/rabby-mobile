@@ -2986,6 +2986,13 @@
       },
       "addressEditorBadge": {
         "nameUnknown": "Adres adını belirtin"
+      },
+      "scanQrcode": {
+        "chooseFromGallery": "Galeriden Seç",
+        "noQrCode": "Bu görselde QR kod bulunamadı",
+        "multipleQrCodes": "Birden fazla QR kod bulundu. Lütfen yalnızca bir QR kod içeren bir görsel seçin",
+        "invalidAddress": "Bu QR kodda geçerli bir adres bulunamadı",
+        "readImageFailed": "Görsel okunamadı. Lütfen tekrar deneyin"
       }
     },
     "Lending": {

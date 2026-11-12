@@ -3273,6 +3273,13 @@
       },
       "addressEditorBadge": {
         "nameUnknown": "Nome o endereço"
+      },
+      "scanQrcode": {
+        "chooseFromGallery": "Escolher da galeria",
+        "noQrCode": "Nenhum código QR encontrado nesta imagem",
+        "multipleQrCodes": "Foram encontrados vários códigos QR. Escolha uma imagem com apenas um código QR",
+        "invalidAddress": "Nenhum endereço válido encontrado neste código QR",
+        "readImageFailed": "Não foi possível ler a imagem. Tente novamente"
       }
     },
     "Lending": {

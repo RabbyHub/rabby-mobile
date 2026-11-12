@@ -3158,6 +3158,13 @@
       },
       "addressEditorBadge": {
         "nameUnknown": "命名地址"
+      },
+      "scanQrcode": {
+        "chooseFromGallery": "從相簿選擇",
+        "noQrCode": "圖片中未辨識到 QR 碼",
+        "multipleQrCodes": "圖片中包含多個 QR 碼，請選擇只有一個 QR 碼的圖片",
+        "invalidAddress": "QR 碼中未辨識到有效地址",
+        "readImageFailed": "圖片讀取失敗，請重試"
       }
     },
     "Lending": {

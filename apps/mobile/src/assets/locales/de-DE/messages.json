@@ -3272,6 +3272,13 @@
       },
       "addressEditorBadge": {
         "nameUnknown": "Benennen Sie die Adresse"
+      },
+      "scanQrcode": {
+        "chooseFromGallery": "Aus Galerie auswählen",
+        "noQrCode": "Kein QR-Code in diesem Bild gefunden",
+        "multipleQrCodes": "Mehrere QR-Codes gefunden. Bitte wähle ein Bild mit nur einem QR-Code",
+        "invalidAddress": "Keine gültige Adresse in diesem QR-Code gefunden",
+        "readImageFailed": "Bild konnte nicht gelesen werden. Bitte versuche es erneut"
       }
     },
     "Lending": {
