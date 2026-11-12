@@ -23,7 +23,7 @@ import {
 import TokenSelect from '@/screens/Swap/components/TokenSelect';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
-import { Slider } from '@rneui/themed';
+import { PerpsGestureSlider as Slider } from '@/components/perps/PerpsGestureSlider';
 import LinearGradient from 'react-native-linear-gradient';
 import RcIconWalletCC from '@/assets2024/icons/swap/wallet-cc.svg';
 import type { Account } from '@/core/startupServices/preference';
@@ -60,6 +60,7 @@ const BridgeTokenInner = ({
   isMaxRef,
   skeletonLoading,
   disabled,
+  sceneActive = true,
   clearOnDisabled,
   slider,
   onChangeSlider,
@@ -82,6 +83,7 @@ const BridgeTokenInner = ({
   inSufficient?: boolean;
   skeletonLoading?: boolean;
   disabled?: boolean;
+  sceneActive?: boolean;
   clearOnDisabled?: boolean;
   slider?: number;
   onChangeSlider?: (value: number, syncAmount?: boolean) => void;
@@ -210,7 +212,8 @@ const BridgeTokenInner = ({
           // excludeChains={excludeChains}
           // supportChains={supportedChains}
         />
-        {isFromToken && !hiddenSlider && (
+        {/* Unmount native gestures before Fabric recycles the hidden scene. */}
+        {isFromToken && !hiddenSlider && sceneActive && (
           <View style={styles.sliderContainer}>
             <View
               ref={sliderTrackRef}
@@ -221,7 +224,7 @@ const BridgeTokenInner = ({
                 allowTouchTrack={!disabled}
                 disabled={disabled}
                 style={styles.sliderInner}
-                value={slider}
+                value={slider ?? 0}
                 onSlidingStart={onSlidingStart}
                 onValueChange={onSliderValueChange}
                 onSlidingComplete={onAfterChangeSlider}
