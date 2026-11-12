@@ -261,6 +261,7 @@ describe('RNEncryptor KDF version registry', () => {
     await expect(
       new RNEncryptor().decrypt(password, JSON.stringify(encrypted)),
     ).resolves.toEqual(vault);
+    expect(Aes.pbkdf2).toHaveBeenCalledTimes(1);
     expect(Aes.pbkdf2).toHaveBeenCalledWith(
       password,
       salt,
@@ -290,25 +291,49 @@ describe('RNEncryptor KDF version registry', () => {
     );
   });
 
-  it('tries registered versions for an unversioned 600k payload', async () => {
+  it.each(['decrypt', 'decryptWithDetail'] as const)(
+    'does not retry a wrong legacy password at 600k through %s',
+    async method => {
+      const encrypted = {
+        cipher: fixtures[0].encrypted.cipher,
+        iv,
+        salt,
+      };
+      const encryptor = new RNEncryptor({
+        keyDerivationOptions: DERIVATION_OPTIONS_OWASP2023,
+      });
+
+      await expect(
+        encryptor[method]('incorrect password', JSON.stringify(encrypted)),
+      ).rejects.toThrow();
+      expect(Aes.pbkdf2).toHaveBeenCalledTimes(1);
+      expect(Aes.pbkdf2).toHaveBeenCalledWith(
+        'incorrect password',
+        salt,
+        5000,
+        256,
+        'sha256',
+      );
+    },
+  );
+
+  it('does not infer 600k from an unversioned payload', async () => {
     const encrypted = {
       cipher: fixtures[1].encrypted.cipher,
       iv: fixtures[1].encrypted.iv,
       salt: fixtures[1].encrypted.salt,
     };
-    const detail = await new RNEncryptor().decryptWithDetail(
+    await expect(
+      new RNEncryptor().decryptWithDetail(password, JSON.stringify(encrypted)),
+    ).rejects.toThrow();
+    expect(Aes.pbkdf2).toHaveBeenCalledTimes(1);
+    expect(Aes.pbkdf2).toHaveBeenCalledWith(
       password,
-      JSON.stringify(encrypted),
+      salt,
+      5000,
+      256,
+      'sha256',
     );
-
-    expect(detail.vault).toEqual(vault);
-    expect(detail.kdfVersion).toBe(KDF_VERSION_PBKDF2_600000);
-    expect(
-      jest
-        .mocked(Aes.pbkdf2)
-        .mock.calls.slice(0, 2)
-        .map(call => call[2]),
-    ).toEqual([5000, 600000]);
   });
 
   it.each(fixtures)(
