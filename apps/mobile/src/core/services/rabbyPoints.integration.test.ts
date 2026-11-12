@@ -50,6 +50,22 @@ describe('RabbyPoints signature persistence', () => {
     expect(service.getStoreSnapshot().signatures).toEqual({});
   });
 
+  it('normalises whitespace and the 0X prefix before keying', () => {
+    const service = new RabbyPointsService({
+      storageAdapter: createStorage(),
+    });
+
+    service.setSignature(' 0XAbC ', 'fixture-signature');
+    expect(service.getStoreSnapshot().signatures).toEqual({
+      '0xabc': 'fixture-signature',
+    });
+    expect(service.getSignature('0xAbC')).toBe('fixture-signature');
+
+    service.clearSignatureByAddr(' 0XABC ');
+
+    expect(service.getStoreSnapshot().signatures).toEqual({});
+  });
+
   it('persists removal of one address without clearing another address', () => {
     const storageAdapter = createStorage({
       signatures: {
