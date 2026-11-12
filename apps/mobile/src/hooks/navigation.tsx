@@ -397,11 +397,8 @@ const renderNativeBackItems: NonNullable<
       // Keep the PNG alpha anti-aliased: a hard 0/255 alpha export makes UIKit
       // render the diagonal stroke with visible stair-steps (QA 1359).
       icon: {
-        type: 'image',
-        source: isIOS26
-          ? require('@/assets/icons/header/back-cc-wide-ios26.png')
-          : require('@/assets/icons/header/back-cc-wide.png'),
-        tinted: true,
+        type: 'xcasset',
+        name: isIOS26 ? 'HeaderBackChevronIOS26' : 'HeaderBackChevron',
       },
       width: isIOS26 ? 50 : 44,
       tintColor,
