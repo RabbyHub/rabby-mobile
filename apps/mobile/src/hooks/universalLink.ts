@@ -100,6 +100,8 @@ type OnParseUrlAndProcessAction = (payload: {
     | 'debug-db-sync-policy'
     | 'debug-lending'
     | 'debug-open-target'
+    | 'debug-create-address'
+    | 'debug-import-test-accounts'
     | 'regression-scenario';
   target?: RabbyGoTarget;
   dappUrl?: string;
@@ -128,6 +130,8 @@ type OnParseUrlAndProcessAction = (payload: {
     market?: string;
   };
   debugOpenTarget?: RabbyGoTarget;
+  /** Device path of the test-account list read by the import command. */
+  debugImportAccountsPath?: string;
   regressionScenarioCommand?: RegressionScenarioCommand | null;
   regressionScenarioError?: string;
 }) => void;
@@ -409,6 +413,37 @@ function parseNonProductionMaintenanceLink(appLink: string) {
     return {
       type: 'debug-open-target',
       debugOpenTarget: rawTarget,
+    } satisfies Parameters<OnParseUrlAndProcessAction>[0];
+  }
+
+  // Non-production only: seed the account set the cold-start KPI measures.
+  // The list itself is never in the URL - only the device path of the file
+  // the runner pushed - so private keys stay out of logcat.
+  if (
+    rabbyGoCmd === 'debug-create-address' ||
+    target === 'debug-create-address'
+  ) {
+    return {
+      type: 'debug-create-address',
+    } satisfies Parameters<OnParseUrlAndProcessAction>[0];
+  }
+
+  if (
+    rabbyGoCmd === 'debug-import-test-accounts' ||
+    target === 'debug-import-test-accounts'
+  ) {
+    const path =
+      urlInfo.searchParams.get('path') || urlInfo.searchParams.get('file');
+    if (!path) {
+      console.warn(
+        '[useUniversalLinkOnTop] debug-import-test-accounts requires ?path=<device file>',
+      );
+      return null;
+    }
+
+    return {
+      type: 'debug-import-test-accounts',
+      debugImportAccountsPath: path,
     } satisfies Parameters<OnParseUrlAndProcessAction>[0];
   }
 
@@ -777,6 +812,58 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
       break;
     case 'debug-db-sync-policy':
       void applyDebugDbSyncPolicyFromLink(payload.debugDbSyncPolicy);
+      break;
+    case 'debug-create-address':
+      if (!isNonPublicProductionEnv) {
+        return;
+      }
+      void (async () => {
+        try {
+          // Same data mutations as the onboarding UI, in the same order: the
+          // create-seed-phrase page prepares the wallet, then the
+          // set-password / create-address pages submit it (password, keyring,
+          // persisted accounts, backup reminder). No direct keyring shortcut.
+          const { prepareWalletCreation, completeWalletCreation } =
+            await import('@/hooks/address/useSetupWallet');
+          const { REGRESSION_DEFAULT_PASSWORD } = await import(
+            '@/devtools/regressionScenarios/credentials.nonprod'
+          );
+          const { default: accountStore } = await import('@/store/account');
+
+          const prepared = await prepareWalletCreation({ mode: 'create' });
+          // `PasswordFormValues` differs between stacks; pass the fields the
+          // submit path reads and let the call site stay version-agnostic.
+          await completeWalletCreation(prepared, {
+            password: REGRESSION_DEFAULT_PASSWORD,
+            confirmPassword: REGRESSION_DEFAULT_PASSWORD,
+            checked: true,
+            enableBiometrics: false,
+          } as any);
+          await accountStore.fetchAccounts({ force: true });
+          console.log(
+            `[debug-create-address] done address=${prepared.address || ''}`,
+          );
+        } catch (error) {
+          console.error('[debug-create-address] failed', error);
+        }
+      })();
+      break;
+    case 'debug-import-test-accounts':
+      if (!isNonPublicProductionEnv || !payload.debugImportAccountsPath) {
+        return;
+      }
+      void import('@/devtools/testAccountsImport')
+        .then(module =>
+          module.runTestAccountsImport({
+            path: payload.debugImportAccountsPath!,
+          }),
+        )
+        .catch(error => {
+          console.error(
+            '[useUniversalLinkOnTop] debug-import-test-accounts failed:',
+            error,
+          );
+        });
       break;
     case 'debug-lending':
       if (!isNonPublicProductionEnv || !payload.debugLending) {
