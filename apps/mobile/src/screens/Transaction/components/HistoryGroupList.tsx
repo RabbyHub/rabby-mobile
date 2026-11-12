@@ -19,6 +19,7 @@ import {
 import { RefreshControl } from 'react-native-gesture-handler';
 import { HistoryItem } from './HistoryItem';
 import { SkeletonCard } from './SkeletonCard';
+import { renderStickyRowScrollView } from './StickyRowScrollView';
 import { TransactionItem } from '@/screens/TransactionRecord/components/TransactionItem2025';
 import type { TransactionGroup } from '@/core/services/transactionHistory';
 import type { HistoryDisplayItem } from '@/types/history';
@@ -257,6 +258,9 @@ export const HistoryList = ({
       data={rows}
       renderItem={renderItem}
       stickyHeaderIndices={stickyHeaderIndices}
+      renderScrollComponent={
+        isStickyDate ? renderStickyRowScrollView : undefined
+      }
       windowSize={5}
       initialNumToRender={Math.min(rows.length, 20)}
       ListEmptyComponent={

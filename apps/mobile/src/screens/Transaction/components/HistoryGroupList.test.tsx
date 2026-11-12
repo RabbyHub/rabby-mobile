@@ -149,6 +149,24 @@ describe('HistoryList date rows', () => {
     );
   });
 
+  it('swaps in the scroll view that tracks pinned rows only when pinning', () => {
+    const { rerender } = render(<HistoryList list={twoDays} firstFetchDone />);
+    expect(
+      screen.UNSAFE_getByType(FlatList).props.renderScrollComponent,
+    ).toBeUndefined();
+
+    rerender(
+      <HistoryList
+        list={twoDays}
+        firstFetchDone
+        stickyDateBackgroundColor="#fff"
+      />,
+    );
+    expect(
+      screen.UNSAFE_getByType(FlatList).props.renderScrollComponent,
+    ).toEqual(expect.any(Function));
+  });
+
   it('skips the list header when pinning the dates', () => {
     render(
       <HistoryList
