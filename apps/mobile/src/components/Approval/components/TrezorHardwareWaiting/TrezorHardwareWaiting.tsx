@@ -14,17 +14,11 @@ import { StyleSheet, View } from 'react-native';
 import TrezorSVG from '@/assets/icons/wallet/trezor.svg';
 import type { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
-import { stats } from '@/utils/stats';
-import {
-  KEYRING_CATEGORY_MAP,
-  KEYRING_CLASS,
-} from '@rabby-wallet/keyring-utils';
-import { matomoRequestEvent } from '@/utils/analytics';
 import { adjustV } from '@/utils/gnosis';
 import { apisSafe } from '@/core/apis/safe';
 import { emitSignComponentAmounted } from '@/core/utils/signEvent';
-import { findChain } from '@/utils/chain';
 import { Text } from '@/components/Typography';
+import { useRetryMinPending } from '@/components/Approval/hooks/useRetryMinPending';
 
 interface ApprovalParams {
   address: string;
@@ -90,9 +84,6 @@ export const TrezorHardwareWaiting = ({
     APPROVAL_STATUS_MAP.WAITING,
   );
   const [getApproval, resolveApproval, rejectApproval] = useApproval();
-  const chain = findChain({
-    id: params.chainId || 1,
-  })!;
   const { t } = useTranslation();
   const [isSignText, setIsSignText] = React.useState(false);
   const [result, setResult] = React.useState('');
@@ -110,17 +101,23 @@ export const TrezorHardwareWaiting = ({
     rejectApproval('user cancel');
   };
 
+  const { markRetryStarted, afterMinPending } = useRetryMinPending();
+
   const handleRetry = async (showToast = true) => {
     if (connectStatus === APPROVAL_STATUS_MAP.SUBMITTING) {
       toast.success(t('page.signFooterBar.ledger.resubmited'));
       return;
     }
     setConnectStatus(APPROVAL_STATUS_MAP.WAITING);
-    await notificationServiceApi.callCurrentRequestDeferFn();
+    markRetryStarted();
+    // Fire and forget: this resolves only when signing ends, and a failed
+    // attempt is reported through SIGN_FINISHED instead.
+    void notificationServiceApi
+      .callCurrentRequestDeferFn()
+      .catch(console.error);
     if (showToast) {
       toast.success(t('page.signFooterBar.ledger.resent'));
     }
-    emitSignComponentAmounted();
   };
 
   const init = async () => {
@@ -142,27 +139,7 @@ export const TrezorHardwareWaiting = ({
           setErrorMessage(t('page.signFooterBar.qrcode.failedToGetExplain'));
           return;
         }
-
-        const explain = signingTx.explain;
-
-        stats.report('signTransaction', {
-          type: account.brandName,
-          chainId: chain.serverId,
-          category: KEYRING_CATEGORY_MAP[account.type],
-          preExecSuccess: explain
-            ? explain?.calcSuccess && explain?.pre_exec?.success
-            : true,
-          createdBy: params?.$ctx?.ga ? 'rabby' : 'dapp',
-          source: params?.$ctx?.ga?.source || '',
-          trigger: params?.$ctx?.ga?.trigger || '',
-        });
       }
-    } else {
-      stats.report('startSignText', {
-        type: account.brandName,
-        category: KEYRING_CATEGORY_MAP[account.type],
-        method: params?.extra?.signTextMethod,
-      });
     }
     eventBus.addListener(EVENTS.COMMON_HARDWARE.REJECTED, async data => {
       setErrorMessage(data);
@@ -204,12 +181,6 @@ export const TrezorHardwareWaiting = ({
           return;
         }
 
-        matomoRequestEvent({
-          category: 'Transaction',
-          action: 'Submit',
-          label: KEYRING_CLASS.HARDWARE.TREZOR,
-        });
-
         setSignFinishedData({
           data: sig,
           approvalId: approval.id,
@@ -218,8 +189,10 @@ export const TrezorHardwareWaiting = ({
         Sentry.captureException(
           new Error('Trezor sign error: ' + JSON.stringify(data)),
         );
-        setConnectStatus(APPROVAL_STATUS_MAP.FAILED);
-        setErrorMessage(data.errorMsg);
+        afterMinPending(() => {
+          setConnectStatus(APPROVAL_STATUS_MAP.FAILED);
+          setErrorMessage(data.errorMsg);
+        });
       }
     });
 

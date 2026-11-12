@@ -24,10 +24,7 @@ import { Keyboard, Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { PerpsProSlider } from '../common/PerpsProSlider';
-import {
-  getPerpsProDialogStyles,
-  resolvePerpsProDialogCardBackground,
-} from '../common/perpsProDialogVisual';
+import { getPerpsProInputDialogStyles } from '../common/perpsProDialogVisual';
 import { PerpsProDialogBackdrop } from '../common/PerpsProDialogBackdrop';
 import RcLeverageMinus from '@/assets2024/icons/perps/PerpsProLeverageMinus.svg';
 import RcLeveragePlus from '@/assets2024/icons/perps/PerpsProLeveragePlus.svg';
@@ -146,10 +143,6 @@ export const PerpsProLeverageSheet: React.FC<{
       inputRef.current?.blur();
       Keyboard.dismiss();
     }, []);
-    const handleSliderTouchCapture = useCallback(() => {
-      dismissLeverageInput();
-      return false;
-    }, [dismissLeverageInput]);
 
     return (
       <AppBottomSheetModal
@@ -161,7 +154,7 @@ export const PerpsProLeverageSheet: React.FC<{
         ref={modalRef}
         {...makeBottomSheetProps({
           colors: colors2024,
-          linearGradientType: 'bg0',
+          linearGradientType: 'bg1',
         })}
         backdropComponent={PerpsProDialogBackdrop}
         backgroundStyle={styles.background}
@@ -271,7 +264,6 @@ export const PerpsProLeverageSheet: React.FC<{
                 </Pressable>
               </View>
               <View
-                onStartShouldSetResponderCapture={handleSliderTouchCapture}
                 style={styles.sliderSection}
                 testID="perps-pro-leverage-slider-section">
                 <PerpsProSlider
@@ -281,7 +273,10 @@ export const PerpsProLeverageSheet: React.FC<{
                   maximumValue={safeMax}
                   minimumValue={1}
                   onSlidingComplete={sliderHaptics.onSlidingComplete}
-                  onSlidingStart={sliderHaptics.onSlidingStart}
+                  onSlidingStart={value => {
+                    dismissLeverageInput();
+                    sliderHaptics.onSlidingStart(value);
+                  }}
                   onValueChange={next => {
                     const roundedNext = Math.round(next);
                     sliderHaptics.onValueChange(roundedNext);
@@ -324,7 +319,7 @@ PerpsProLeverageSheet.displayName = 'PerpsProLeverageSheet';
 
 const getStyle = createGetStyles2024(
   ({ colors2024, isLight, safeAreaInsets }) => ({
-    ...getPerpsProDialogStyles(colors2024, safeAreaInsets.bottom, isLight),
+    ...getPerpsProInputDialogStyles(colors2024, safeAreaInsets.bottom, isLight),
     sheetView: { height: '100%' },
     scrollContent: { flexGrow: 1 },
     container: {
@@ -353,7 +348,8 @@ const getStyle = createGetStyles2024(
     inputRow: {
       alignSelf: 'center',
       alignItems: 'center',
-      backgroundColor: resolvePerpsProDialogCardBackground(colors2024, isLight),
+      // Figma 86609:303158: bg-5 field with line-colored step buttons.
+      backgroundColor: colors2024['neutral-bg-5'],
       borderRadius: 12,
       flexDirection: 'row',
       height: 54,
@@ -364,7 +360,7 @@ const getStyle = createGetStyles2024(
     },
     stepButton: {
       alignItems: 'center',
-      backgroundColor: colors2024['neutral-bg-5'],
+      backgroundColor: colors2024['neutral-line'],
       borderRadius: 6,
       height: 32,
       width: 32,

@@ -17,8 +17,10 @@ import {
   useNavigationBuilder,
 } from '@react-navigation/native';
 import * as React from 'react';
+import { Platform } from 'react-native';
 
 import { CustomStackRouter } from './CustomStackRouter';
+import { createRoundedNativeStackTitleAdapter } from './roundedNativeStackTitle';
 import { getScreenContentBackgroundColor } from '@/constant/layout';
 
 import {
@@ -89,6 +91,27 @@ function NativeStackNavigator({
       UNSTABLE_router,
     });
 
+  const adaptRoundedTitle = React.useMemo(
+    () => createRoundedNativeStackTitleAdapter(Platform.OS),
+    [],
+  );
+  // Adapt the final options after Screen.options/setOptions have been merged,
+  // including descriptors created on demand for preloaded routes.
+  const roundedDescriptors = React.useMemo(
+    () =>
+      Object.fromEntries(
+        Object.entries(descriptors).map(([key, descriptor]) => [
+          key,
+          adaptRoundedTitle(descriptor),
+        ]),
+      ),
+    [adaptRoundedTitle, descriptors],
+  );
+  const describeWithRoundedTitle = React.useCallback<typeof describe>(
+    (...args) => adaptRoundedTitle(describe(...args)),
+    [adaptRoundedTitle, describe],
+  );
+
   React.useEffect(
     () =>
       // @ts-expect-error: there may not be a tab navigator in parent
@@ -121,8 +144,8 @@ function NativeStackNavigator({
         {...rest}
         state={state}
         navigation={navigation}
-        descriptors={descriptors}
-        describe={describe}
+        descriptors={roundedDescriptors}
+        describe={describeWithRoundedTitle}
       />
     </NavigationContent>
   );

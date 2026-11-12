@@ -114,12 +114,9 @@ jest.mock('@/core/utils/startupDiagnostics', () => ({
 
 jest.mock('@/utils/perps', () => ({
   checkPerpsReference: jest.fn(),
-  getStatsReportSide: jest.fn(),
 }));
 
 jest.mock('@/utils/navigation', () => ({ naviPush: jest.fn() }));
-
-jest.mock('@/utils/stats', () => ({ stats: { report: jest.fn() } }));
 
 jest.mock('ahooks', () => ({
   useMemoizedFn: (fn: unknown) => fn,

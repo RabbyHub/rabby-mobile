@@ -13,6 +13,7 @@ import {
   Platform,
   StyleSheet,
   type AppStateStatus,
+  type LayoutChangeEvent,
 } from 'react-native';
 
 let mockIsLight = true;
@@ -69,14 +70,26 @@ jest.mock('react-native-pager-view', () => {
   const { View } = require('react-native');
   return ReactModule.forwardRef(
     (
-      { children, ...props }: { children: React.ReactNode },
+      {
+        children,
+        onLayout,
+        ...props
+      }: {
+        children: React.ReactNode;
+        onLayout?: (event: LayoutChangeEvent) => void;
+      },
       ref: React.Ref<unknown>,
     ) => {
       ReactModule.useImperativeHandle(ref, () => ({
         setPage: mockInfoPagerSetPage,
         setPageWithoutAnimation: mockInfoPagerSetPageWithoutAnimation,
       }));
-      return ReactModule.createElement(View, props, children);
+      ReactModule.useEffect(() => {
+        onLayout?.({
+          nativeEvent: { layout: { width: 393, height: 600, x: 0, y: 0 } },
+        } as LayoutChangeEvent);
+      }, []);
+      return ReactModule.createElement(View, { ...props, onLayout }, children);
     },
   );
 });
@@ -272,7 +285,24 @@ jest.mock('react-native-gesture-handler', () => {
     return manualGesture;
   });
   return {
-    Gesture: { Manual: () => manualGesture, Pan: () => panGesture },
+    Gesture: {
+      Manual: () => manualGesture,
+      Pan: () => panGesture,
+      Tap: () => {
+        const tap: Record<string, jest.Mock> = {};
+        for (const method of [
+          'maxDistance',
+          'runOnJS',
+          'onBegin',
+          'onEnd',
+          'onFinalize',
+        ]) {
+          tap[method] = jest.fn(() => tap);
+        }
+        return tap;
+      },
+      Exclusive: (...gestures: unknown[]) => gestures,
+    },
     GestureDetector: ({ children }: { children: React.ReactNode }) => children,
   };
 });
@@ -320,7 +350,6 @@ jest.mock(
   '@/screens/PerpsShared/components/PerpsPortfolioBreakdownExplanation',
   () => ({
     useShowPerpsPortfolioBreakdown: () => ({
-      hasNonPerpsAssets: false,
       showPortfolioBreakdown: jest.fn(),
     }),
   }),
@@ -484,10 +513,15 @@ jest.mock('../components/open-orders/PerpsProOpenOrderCard', () => {
   };
 });
 
+jest.mock('react-native-safe-area-context', () => ({
+  useSafeAreaInsets: () => ({ bottom: 0, left: 0, right: 0, top: 0 }),
+}));
+
 jest.mock('../components/chart/PerpsProKlineSheet', () => {
   const ReactModule = require('react');
   const { Pressable } = require('react-native');
   return {
+    getPerpsProKlinePanelHeight: () => 302,
     PerpsProKlineSheet: (props: {
       enabled: boolean;
       onClose: () => void;
@@ -557,11 +591,11 @@ jest.mock('../components/market/PerpsProMarketBar', () => {
   return {
     PERPS_PRO_MARKET_BAR_HEIGHT: 40,
     PerpsProMarketBar: ({
-      onOpenKline,
       onPress,
+      onToggleKline,
     }: {
-      onOpenKline: () => void;
       onPress: () => void;
+      onToggleKline: () => void;
     }) =>
       ReactModule.createElement(
         ReactModule.Fragment,
@@ -571,7 +605,7 @@ jest.mock('../components/market/PerpsProMarketBar', () => {
           testID: 'market-bar',
         }),
         ReactModule.createElement(Pressable, {
-          onPress: onOpenKline,
+          onPress: onToggleKline,
           testID: 'kline-trigger',
         }),
       ),
@@ -1935,7 +1969,7 @@ describe('PerpsProScene market loading states', () => {
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-scroll').props.contentContainerStyle,
       ),
-    ).toMatchObject({ minHeight: 1202 });
+    ).toMatchObject({ minHeight: 1200 });
     expect(
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-header-lead-in-spacer').props.style,
@@ -1961,12 +1995,12 @@ describe('PerpsProScene market loading states', () => {
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-info-tabs-spacer').props.style,
       ),
-    ).toMatchObject({ height: 60 });
+    ).toMatchObject({ height: 64 });
     const infoTabsOverlayStyle = StyleSheet.flatten(
       screen.getByTestId('perps-pro-info-tabs-overlay').props.style,
     );
     expect(infoTabsOverlayStyle).toEqual(
-      expect.objectContaining({ height: 38 }),
+      expect.objectContaining({ height: 44 }),
     );
     const infoTabsTranslateY = infoTabsOverlayStyle?.transform?.[0]
       ?.translateY as unknown as number | { __getValue: () => number };
@@ -1974,36 +2008,12 @@ describe('PerpsProScene market loading states', () => {
       typeof infoTabsTranslateY === 'number'
         ? infoTabsTranslateY
         : infoTabsTranslateY.__getValue(),
-    ).toBe(542);
+    ).toBe(540);
+    expect(
+      screen.getByTestId('perps-pro-info-tabs-spacer').children,
+    ).toHaveLength(0);
     expect(screen.getAllByTestId('perps-pro-info-tab-account')).toHaveLength(1);
   });
-
-  it.each([true, false])(
-    'keeps the six-point section divider distinct with isLight=%s',
-    isLight => {
-      mockIsLight = isLight;
-      mockUsePerpsProScene.mockReturnValue(createSceneState());
-      render(
-        <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
-      );
-      const spacer = screen.getByTestId('perps-pro-info-tabs-spacer');
-      const divider = spacer.children[0];
-      if (typeof divider === 'string') {
-        throw new Error('Missing section divider');
-      }
-      expect(divider.props.pointerEvents).toBe('none');
-      expect(StyleSheet.flatten(divider.props.style)).toMatchObject({
-        backgroundColor: isLight ? 'neutral-bg-0' : 'neutral-bg-2',
-        height: 6,
-        bottom: 38,
-        left: 0,
-        right: 0,
-      });
-      expect(StyleSheet.flatten(spacer.props.style)).toMatchObject({
-        height: 60,
-      });
-    },
-  );
 
   it('uses one Android scene gesture owner and a shared Trade offset', () => {
     Object.defineProperty(Platform, 'OS', {
@@ -2607,6 +2617,10 @@ describe('PerpsProScene market loading states', () => {
 
     fireEvent.press(screen.getByTestId('kline-trigger'));
     expect(mockKlineProps.mock.lastCall?.[0]).toMatchObject({ visible: true });
+
+    // The market icon toggles the docked panel closed again.
+    fireEvent.press(screen.getByTestId('kline-trigger'));
+    expect(mockKlineProps.mock.lastCall?.[0]).toMatchObject({ visible: false });
   });
 
   it('stops the retained Candle Feed while the app is in background', () => {
@@ -3007,7 +3021,7 @@ describe('PerpsProScene market loading states', () => {
     );
   });
 
-  it('preserves the empty-state trailing distance after populated account, position, and order rows', () => {
+  it('keeps a fixed trailing gap for populated and empty info tabs', () => {
     mockUsePerpsProScene.mockReturnValue(createSceneState());
     mockUsePerpsProInfoPanel.mockReturnValue(
       createInfoState({
@@ -3038,7 +3052,7 @@ describe('PerpsProScene market loading states', () => {
 
     expect(
       StyleSheet.flatten(scroll.props.contentContainerStyle),
-    ).toMatchObject({ minHeight: 1202, paddingBottom: 386 });
+    ).toMatchObject({ minHeight: 1200, paddingBottom: 36 });
 
     mockUsePerpsProInfoPanel.mockReturnValue(
       createInfoState({
@@ -3054,7 +3068,7 @@ describe('PerpsProScene market loading states', () => {
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-scroll').props.contentContainerStyle,
       ),
-    ).toMatchObject({ minHeight: 1202, paddingBottom: 386 });
+    ).toMatchObject({ minHeight: 1200, paddingBottom: 36 });
 
     mockUsePerpsProInfoPanel.mockReturnValue(
       createInfoState({
@@ -3070,7 +3084,7 @@ describe('PerpsProScene market loading states', () => {
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-scroll').props.contentContainerStyle,
       ),
-    ).toMatchObject({ minHeight: 1202, paddingBottom: 386 });
+    ).toMatchObject({ minHeight: 1200, paddingBottom: 36 });
 
     mockUsePerpsProInfoPanel.mockReturnValue(
       createInfoState({
@@ -3086,7 +3100,7 @@ describe('PerpsProScene market loading states', () => {
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-scroll').props.contentContainerStyle,
       ),
-    ).toMatchObject({ minHeight: 1202, paddingBottom: 32 });
+    ).toMatchObject({ minHeight: 1200, paddingBottom: 36 });
 
     mockUsePerpsProInfoPanel.mockReturnValue(
       createInfoState({
@@ -3101,7 +3115,7 @@ describe('PerpsProScene market loading states', () => {
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-scroll').props.contentContainerStyle,
       ),
-    ).toMatchObject({ minHeight: 1202, paddingBottom: 32 });
+    ).toMatchObject({ minHeight: 1200, paddingBottom: 36 });
   });
 
   it('closes the local funding overlay when the active account changes', () => {

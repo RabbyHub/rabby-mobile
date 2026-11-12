@@ -10,12 +10,36 @@ project_dir=$(dirname $script_dir)
 
 ensure_mobile_node_runtime
 
+verify_ios_ipa_rabbit_code() {
+  local ipa="$1"
+  local expected="$2"
+  local tmp_dir actual
+  tmp_dir=$(mktemp -d "${TMPDIR:-/tmp}/rabby-ipa-check.XXXXXX") || return 1
+  if ! unzip -q "$ipa" -d "$tmp_dir"; then
+    rm -rf "$tmp_dir"
+    return 1
+  fi
+  actual=$(/usr/libexec/PlistBuddy -c 'Print :rabbit_code' "$tmp_dir/Payload/RabbyMobile.app/Info.plist" 2>/dev/null || true)
+  rm -rf "$tmp_dir"
+  if [ "$actual" != "$expected" ]; then
+    if [ -z "$actual" ]; then
+      echo "[deploy-ios-adhoc] RABBY_MOBILE_CODE mismatch in IPA (value missing)" >&2
+    else
+      echo "[deploy-ios-adhoc] RABBY_MOBILE_CODE mismatch in IPA (length ${#actual} != expected ${#expected})" >&2
+    fi
+    return 1
+  fi
+  return 0
+}
+
 export buildchannel="selfhost-reg";
 export BUILD_TARGET_PLATFORM="ios";
 export RABBY_MOBILE_BUILD_ENV="regression";
-check_build_params;
-check_s3_params;
-checkout_s3_pub_deployment_params;
+if [ "$RABBY_MOBILE_IOS_BUILD_UNSIGNED" != "true" ]; then
+  check_build_params;
+  check_s3_params;
+  checkout_s3_pub_deployment_params;
+fi
 
 # make plist file
 cd $project_dir;
@@ -60,6 +84,18 @@ build_adhoc() {
   export RABBY_MOBILE_BUILD_ENV="regression";
   cd $project_dir;
   sh ./ios/patches/override-xcconfig-release.sh;
+  if [ -n "$RABBY_MOBILE_SIGN_ONLY_ARCHIVE" ]; then
+    echo "[deploy-ios-adhoc] sign-only mode: exporting from $RABBY_MOBILE_SIGN_ONLY_ARCHIVE"
+    export ios_archive_path="$RABBY_MOBILE_SIGN_ONLY_ARCHIVE"
+    export RABBY_MOBILE_IOS_ARCHIVE_PATH="$RABBY_MOBILE_SIGN_ONLY_ARCHIVE"
+    export RABBY_MOBILE_IOS_SKIP_BUILD_ARCHIVE=true
+    export RABBY_MOBILE_SIGN_ONLY=true
+    # Never re-upload an IPA left over from an earlier run.
+    rm -f "$ouput_dir/RabbyMobile.ipa"
+    prepare_ios_ruby_bundle || return $?
+    turbo_bundle_exec exec fastlane ios adhoc
+    return $?
+  fi
   export ios_archive_path="$project_dir/ios/Package/adhoc/RabbyMobile.xcarchive"
 
   prepare_ios_build_artifacts;
@@ -97,7 +133,7 @@ build_adhoc() {
   fi
 
   if turbo_build_enabled; then
-    turbo_prepare_ios_derived_data;
+    turbo_prepare_ios_derived_data || return $?
   fi
 
   if [ "$SENTRY_DISABLE_AUTO_UPLOAD" == "true" ]; then
@@ -119,10 +155,10 @@ prepare_ios_ruby_bundle() {
 }
 
 prepare_ios_build_artifacts() {
-  turbo_prepare_js_dependencies;
+  turbo_prepare_js_dependencies || return $?
 
   if turbo_build_enabled; then
-    ios_build_artifacts_key=$(turbo_compute_ios_build_artifacts_key)
+    ios_build_artifacts_key=$(turbo_compute_ios_build_artifacts_key) || return $?
   fi
 
   if turbo_build_enabled && turbo_ios_build_artifacts_ready "$ios_build_artifacts_key"; then
@@ -156,9 +192,62 @@ prepare_ios_native_deps() {
   turbo_prepare_cocoapods
 }
 
+# Sign-only local build: reuse the feature-test artifact preparation, then
+# archive without signing so the cloud machine can sign it.
+if [ "$RABBY_MOBILE_IOS_BUILD_UNSIGNED" == "true" ]; then
+  echo "[deploy-ios-adhoc] sign-only build: producing an unsigned archive"
+  cd "$project_dir"
+  export RABBY_MOBILE_SIGN_ONLY=true
+  export RABBY_MOBILE_BUILD_ENV="regression"
+  prepare_ios_build_artifacts || exit $?
+  prepare_ios_native_deps || exit $?
+  sh ./ios/patches/override-xcconfig-release.sh
+  unsigned_archive="${RABBY_MOBILE_IOS_UNSIGNED_ARCHIVE:-$project_dir/.sign-only/RabbyMobile.xcarchive}"
+  rm -rf "$unsigned_archive" "${unsigned_archive}.zip"
+  # `[Hermes] Replace Hermes for the right configuration` skips when this marker
+  # matches the current configuration, which leaves the Debug hermes framework
+  # inside a Release/Regression archive. That app crashes at JS init
+  # (EXC_BAD_ACCESS in Hermes on launch). Drop the marker so the phase runs and
+  # installs the Release hermes.
+  find "$project_dir/ios/Pods" -maxdepth 1 -name ".last_build_configuration" -delete 2>/dev/null
+  xcodebuild \
+    -workspace "$project_dir/ios/RabbyMobile.xcworkspace" \
+    -scheme RabbyMobileRegression \
+    -configuration Regression \
+    -destination 'generic/platform=iOS' \
+    -archivePath "$unsigned_archive" \
+    CODE_SIGNING_ALLOWED=NO \
+    CODE_SIGN_IDENTITY="" \
+    CODE_SIGNING_REQUIRED=NO \
+    archive || exit $?
+  # An unsigned archive carries no entitlements, so the later gym export
+  # re-signs the app with the bare minimum (application-identifier/team-id) and
+  # features that need entitlements crash at launch. Ad-hoc sign the archive
+  # app with the Release entitlements so the export keeps them.
+  unsigned_app="$unsigned_archive/Products/Applications/RabbyMobile.app"
+  unsigned_entitlements="$project_dir/ios/RabbyMobile/RabbyMobileRelease.entitlements"
+  if [ -d "$unsigned_app" ] && [ -f "$unsigned_entitlements" ]; then
+    echo "[deploy-ios-adhoc] ad-hoc signing the unsigned archive with entitlements"
+    codesign --force --sign - --timestamp=none --entitlements "$unsigned_entitlements" "$unsigned_app" || exit $?
+  fi
+  (cd "$(dirname "$unsigned_archive")" && ditto -c -k --sequesterRsrc --keepParent "$(basename "$unsigned_archive")" "${unsigned_archive}.zip")
+  unsigned_rabbit_code=$(print_ios_rabbit_code "$unsigned_archive" 2>/dev/null || true)
+  if [ "$unsigned_rabbit_code" != "$RABBY_MOBILE_CODE" ]; then
+    if [ -z "$unsigned_rabbit_code" ]; then
+      echo "[deploy-ios-adhoc] RABBY_MOBILE_CODE mismatch in unsigned archive (value missing)" >&2
+    else
+      echo "[deploy-ios-adhoc] RABBY_MOBILE_CODE mismatch in unsigned archive (length ${#unsigned_rabbit_code} != expected ${#RABBY_MOBILE_CODE})" >&2
+    fi
+    exit 1
+  fi
+  echo "[deploy-ios-adhoc] unsigned iOS archive: ${unsigned_archive}.zip"
+  shasum -a 256 "${unsigned_archive}.zip"
+  exit 0
+fi
+
 [ "$GHA_MOCK_BUILD_FAILED" == "true" ] && SKIP_BUILD=true
 
-if [[ -z $SKIP_BUILD || ! -f $ouput_dir/RabbyMobile.ipa ]]; then
+if [[ -n "$RABBY_MOBILE_SIGN_ONLY_ARCHIVE" || -z $SKIP_BUILD || ! -f $ouput_dir/RabbyMobile.ipa ]]; then
   echo "[deploy-ios-adhoc] start build..."
   build_adhoc || exit $?
   echo "[deploy-ios-adhoc] finish build."
@@ -168,6 +257,10 @@ if [[ ! -f $ouput_dir/RabbyMobile.ipa || "$GHA_MOCK_BUILD_FAILED" == "true" ]]; 
   echo "[deploy-ios-adhoc] ⚠️ build failed! No $ouput_dir/RabbyMobile.ipa found";
   node $script_dir/notify-lark.js "FAILED" ios
   exit 1;
+fi
+
+if [ -n "${RABBY_MOBILE_CODE:-}" ]; then
+  verify_ios_ipa_rabbit_code "$ouput_dir/RabbyMobile.ipa" "$RABBY_MOBILE_CODE" || exit 1
 fi
 
 file_date=$(date -r $ouput_dir/RabbyMobile.ipa '+%Y%m%d_%H%M%S')
@@ -193,11 +286,17 @@ echo ""
 if [ "$REALLY_UPLOAD" == "true" ]; then
   [ "$DISABLE_AWS_CLI_HTTPS_VALIDATION" == "true" ] && NO_VERIFY_SSL_FLAG="--no-verify-ssl"
   echo "[deploy-ios-adhoc] start sync to $deployment_s3_dir..."
-  aws s3 sync $NO_VERIFY_SSL_FLAG $deployment_local_dir $deployment_s3_dir/ --exclude '*' --include "*.ipa" --acl public-read --content-type application/octet-stream --exact-timestamps
-  aws s3 sync $NO_VERIFY_SSL_FLAG $deployment_local_dir $deployment_s3_dir/ --exclude '*' --include "*.plist" --acl public-read --content-type application/x-plist --exact-timestamps
-  aws s3 sync $NO_VERIFY_SSL_FLAG $deployment_local_dir $deployment_s3_dir/ --exclude '*' --include "*.png" --acl public-read --content-type image/png --exact-timestamps
-  aws s3 sync $NO_VERIFY_SSL_FLAG $deployment_local_dir $deployment_s3_dir/ --exclude '*' --include "*.json" --acl public-read --content-type application/json --exact-timestamps
-  aws s3 sync $NO_VERIFY_SSL_FLAG $deployment_local_dir $deployment_s3_dir/ --exclude '*' --include "*.md" --acl public-read --content-type text/plain --exact-timestamps
+  aws s3 sync $NO_VERIFY_SSL_FLAG $deployment_local_dir $deployment_s3_dir/ --exclude '*' --include "*.ipa" --acl public-read --content-type application/octet-stream --exact-timestamps || exit 1
+  aws s3 sync $NO_VERIFY_SSL_FLAG $deployment_local_dir $deployment_s3_dir/ --exclude '*' --include "*.plist" --acl public-read --content-type application/x-plist --exact-timestamps || exit 1
+  aws s3 sync $NO_VERIFY_SSL_FLAG $deployment_local_dir $deployment_s3_dir/ --exclude '*' --include "*.png" --acl public-read --content-type image/png --exact-timestamps || exit 1
+  aws s3 sync $NO_VERIFY_SSL_FLAG $deployment_local_dir $deployment_s3_dir/ --exclude '*' --include "*.json" --acl public-read --content-type application/json --exact-timestamps || exit 1
+  aws s3 sync $NO_VERIFY_SSL_FLAG $deployment_local_dir $deployment_s3_dir/ --exclude '*' --include "*.md" --acl public-read --content-type text/plain --exact-timestamps || exit 1
+
+  # Sign-only runs report the published URL back through this file so the
+  # workflow can write result.json for the fe-opcode record.
+  if [ -n "${RABBY_MOBILE_SIGN_ONLY_RESULT_FILE:-}" ]; then
+    printf '%s\n' "$deployment_cdn_baseurl/rabbymobile.ipa" > "$RABBY_MOBILE_SIGN_ONLY_RESULT_FILE"
+  fi
 
   lark_drive_url=""
   if [ "$RABBY_MOBILE_LARK_DRIVE_UPLOAD" = "true" ] && [ "$SKIP_NOTIFY_LARK" != "true" ]; then
@@ -208,7 +307,11 @@ if [ "$REALLY_UPLOAD" == "true" ]; then
     fi
   fi
 
-  RABBY_MOBILE_LARK_DRIVE_URL="$lark_drive_url" node $script_dir/notify-lark.js "$manifest_plist_url" ios "$(ios_fast_build_enabled_value)"
+  if [ "$SKIP_NOTIFY_LARK" != "true" ]; then
+    RABBY_MOBILE_LARK_DRIVE_URL="$lark_drive_url" node $script_dir/notify-lark.js "$manifest_plist_url" ios "$(ios_fast_build_enabled_value)"
+  else
+    echo "[deploy-ios-adhoc] SKIP_NOTIFY_LARK=true, skip Lark notification."
+  fi
 fi
 
 [ -z $RABBY_MOBILE_CDN_FRONTEND_ID ] && RABBY_MOBILE_CDN_FRONTEND_ID="<DIST_ID>"

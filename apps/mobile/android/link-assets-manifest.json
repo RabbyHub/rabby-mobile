@@ -2,24 +2,8 @@
   "migIndex": 1,
   "data": [
     {
-      "path": "assets/fonts/SF-Pro-Rounded-Bold.otf",
-      "sha1": "cdd39cc963a7fb3093abd2cfaa4340a42bd4ebf1"
-    },
-    {
-      "path": "assets/fonts/SF-Pro-Rounded-Heavy.otf",
-      "sha1": "1fcebff6d74754c73a3333344aab894fd953b6c2"
-    },
-    {
-      "path": "assets/fonts/SF-Pro-Rounded-Medium.otf",
-      "sha1": "cb9b87e13f1dae7302b892436538873085eb2d66"
-    },
-    {
-      "path": "assets/fonts/SF-Pro-Rounded-Regular.otf",
-      "sha1": "5fb4e36094c38db08a95bde5e075dc0efaf50039"
-    },
-    {
       "path": "assets/custom/InpageBridgeWeb3.js",
-      "sha1": "db3683cc9bb58f249090e93633686b182f8ffd06"
+      "sha1": "375f55a444f24b8259ec5397b35fc1e3f1cec2f3"
     },
     {
       "path": "assets/custom/e1789a3f58159a0b7c06ac86c1596058.min.js",
@@ -28,6 +12,42 @@
     {
       "path": "assets/custom/vconsole.min.js",
       "sha1": "cc79a9522ef457188c18283228b2b8759b7faf1e"
+    },
+    {
+      "path": "assets/fonts/SF-Pro-Rounded-Black.otf",
+      "sha1": "6994721818eed5d7f9d801644f11477b33a2b602"
+    },
+    {
+      "path": "assets/fonts/SF-Pro-Rounded-Bold.otf",
+      "sha1": "8cbd8d71486cf6f178ca48b76068308456424c5e"
+    },
+    {
+      "path": "assets/fonts/SF-Pro-Rounded-Heavy.otf",
+      "sha1": "5b4e8066632a4db352880b792b5556078acb5c33"
+    },
+    {
+      "path": "assets/fonts/SF-Pro-Rounded-Light.otf",
+      "sha1": "410ea8aec907b7d53e2dd77cbfeaf43b580646be"
+    },
+    {
+      "path": "assets/fonts/SF-Pro-Rounded-Medium.otf",
+      "sha1": "a03dfa5af7eff849f79d43538dc1486bb78b2651"
+    },
+    {
+      "path": "assets/fonts/SF-Pro-Rounded-Regular.otf",
+      "sha1": "c953a184fd09f17c831bb8100ccbad451804c1b8"
+    },
+    {
+      "path": "assets/fonts/SF-Pro-Rounded-Semibold.otf",
+      "sha1": "a8261469485c1fbea18a9fedd1c1735d5efc7a03"
+    },
+    {
+      "path": "assets/fonts/SF-Pro-Rounded-Thin.otf",
+      "sha1": "15b7f8d974ce9534bc2383864eadf09b76a67aba"
+    },
+    {
+      "path": "assets/fonts/SF-Pro-Rounded-Ultralight.otf",
+      "sha1": "af629d861df8e65129b71d6e0949519723c710f1"
     }
   ]
 }

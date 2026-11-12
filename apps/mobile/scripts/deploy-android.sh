@@ -16,9 +16,17 @@ FAST_BUILD_ENABLED=$(fast_build_enabled_value)
 UPLOAD_TEMPLATE_APK=${RABBY_MOBILE_UPLOAD_TEMPLATE_APK:-${FAST_BUILD_ENABLED}}
 export BUILD_TARGET_PLATFORM="android";
 export RABBY_MOBILE_BUILD_ENV="regression";
-check_build_params;
-check_s3_params;
-checkout_s3_pub_deployment_params;
+# A local sign-only build does not upload anything; a cloud sign-only run only
+# re-signs a prebuilt APK and uploads it to the CDN. Neither path publishes to
+# Google Play, so the Play credentials (RABBY_MOBILE_CODE / KR_PWD) are not
+# required. The S3/CDN params still are.
+if [ "$RABBY_MOBILE_SIGN_ONLY_BUILD" != "true" ]; then
+  if [ -z "$RABBY_MOBILE_SIGN_ONLY_APK" ]; then
+    check_build_params;
+  fi
+  check_s3_params;
+  checkout_s3_pub_deployment_params;
+fi
 
 cd $project_dir;
 
@@ -85,7 +93,7 @@ prepare_android_build_artifacts() {
   turbo_prepare_ruby_bundle || return $?
 
   if turbo_build_enabled; then
-    android_build_artifacts_key=$(turbo_compute_android_build_artifacts_key)
+    android_build_artifacts_key=$(turbo_compute_android_build_artifacts_key) || return $?
 
     if turbo_android_build_artifacts_ready "$android_build_artifacts_key"; then
       turbo_log "android build artifacts already up to date"
@@ -191,6 +199,33 @@ for changelog in "${possible_changelogs[@]}"; do
 done
 # ============ prepare changelogs :end ============== #
 
+# Sign-only local build: reuse the exact feature-test build preparation, then
+# stop with an unsigned APK instead of signing and uploading.
+if [ "$RABBY_MOBILE_SIGN_ONLY_BUILD" == "true" ]; then
+  echo "[deploy-android] sign-only build: producing an unsigned APK"
+  export RABBY_MOBILE_BUILD_ENV="regression"
+  export RABBY_MOBILE_SIGN_ONLY=true
+  load_env_var_from_candidate_files RABBY_MOBILE_CODE || true
+  validate_rabbit_code || exit 1
+  prepare_android_build_artifacts || exit $?
+  ./android/gradlew -p ./android assembleSignonly --no-daemon -Porg.gradle.parallel=true || exit $?
+  sign_only_apk="$(find "$project_dir/android/app/build/outputs/apk/signonly" -type f -name '*.apk' | head -n 1)"
+  if [ -z "$sign_only_apk" ] || [ ! -f "$sign_only_apk" ]; then
+    echo "[deploy-android] unsigned APK not found under android/app/build/outputs/apk/signonly" >&2
+    exit 1
+  fi
+  sign_only_output="${RABBY_MOBILE_SIGN_ONLY_APK_OUT:-$project_dir/.sign-only/app-signonly-unsigned.apk}"
+  mkdir -p "$(dirname "$sign_only_output")"
+  cp "$sign_only_apk" "$sign_only_output"
+  if ! unzip -p "$sign_only_apk" 'classes*.dex' 2>/dev/null | strings | grep -Fq "$RABBY_MOBILE_CODE"; then
+    echo "[deploy-android] RABBY_MOBILE_CODE was not injected into the unsigned APK" >&2
+    exit 1
+  fi
+  echo "[deploy-android] unsigned Android APK: $sign_only_output"
+  shasum -a 256 "$sign_only_output"
+  exit 0
+fi
+
 echo "[deploy-android] start build..."
 if [ $buildchannel == "appstore" ]; then
   google_play_warn_if_version_code_not_ahead "$android_version_code" "" "Android appstore build preflight"
@@ -206,7 +241,12 @@ if [ $buildchannel == "appstore" ]; then
 else
   version_bundle_suffix=".apk"
   staging_dir_suffix=""
-  if [ $buildchannel == "selfhost-reg" ]; then
+  if [ -n "$RABBY_MOBILE_SIGN_ONLY_APK" ]; then
+    echo "[deploy-android] sign-only mode: using prebuilt signed APK $RABBY_MOBILE_SIGN_ONLY_APK"
+    export RABBY_MOBILE_SIGN_ONLY=true
+    export RABBY_MOBILE_BUILD_ENV="regression"
+    android_export_target="$RABBY_MOBILE_SIGN_ONLY_APK"
+  elif [ $buildchannel == "selfhost-reg" ]; then
     [ "$GHA_MOCK_BUILD_FAILED" == "true" ] && SKIP_BUILD=true
 
     android_export_target="$project_dir/android/app/build/outputs/apk/regression/app-regression.apk"
@@ -295,7 +335,7 @@ print_manual_upload_sentry_sourcemap() {
 }
 
 # only upload apk as template when it is not fast-built from a template
-if [ "$UPLOAD_TEMPLATE_APK" = "true" ] && [ "$FAST_BUILD_ENABLED" != "true" ] && [ $buildchannel = "selfhost-reg" ] && [ ! -z $RABBY_MOBILE_REG_PUB_DEPLOYMENT ]; then
+if [ -z "$RABBY_MOBILE_SIGN_ONLY_APK" ] && [ "$UPLOAD_TEMPLATE_APK" = "true" ] && [ "$FAST_BUILD_ENABLED" != "true" ] && [ $buildchannel = "selfhost-reg" ] && [ ! -z $RABBY_MOBILE_REG_PUB_DEPLOYMENT ]; then
   template_apk_s3_dir=$RABBY_MOBILE_REG_PUB_DEPLOYMENT/.templates/android;
   native_part_hash=$(collect_android_native_entries)
   echo "[deploy-android] will set apk $android_export_target to $template_apk_s3_dir/$native_part_hash.apk"
@@ -308,25 +348,25 @@ echo "[deploy-android] start sync..."
 
 if [ "$REALLY_UPLOAD" == "true" ]; then
   echo "[deploy-android] will be backup at $backup_s3_dir (not public)"
-  aws s3 sync $deployment_local_dir $backup_s3_dir/ --exclude '*' --include "*.json" --acl authenticated-read --content-type application/json --exact-timestamps
-  aws s3 sync $deployment_local_dir $backup_s3_dir/ --exclude '*' --include "*.md" --acl authenticated-read --content-type text/plain --exact-timestamps
-  aws s3 sync $deployment_local_dir $backup_s3_dir/ --exclude '*' --include "*.txt" --acl authenticated-read --content-type text/plain --exact-timestamps
-  aws s3 sync $deployment_local_dir $backup_s3_dir/ --exclude '*' --include "*.apk" --acl authenticated-read --content-type application/vnd.android.package-archive --exact-timestamps
-  aws s3 sync $deployment_local_dir $backup_s3_dir/ --exclude '*' --include "*.aab" --acl authenticated-read --content-type application/x-authorware-bin --exact-timestamps
+  aws s3 sync $deployment_local_dir $backup_s3_dir/ --exclude '*' --include "*.json" --acl authenticated-read --content-type application/json --exact-timestamps || exit 1
+  aws s3 sync $deployment_local_dir $backup_s3_dir/ --exclude '*' --include "*.md" --acl authenticated-read --content-type text/plain --exact-timestamps || exit 1
+  aws s3 sync $deployment_local_dir $backup_s3_dir/ --exclude '*' --include "*.txt" --acl authenticated-read --content-type text/plain --exact-timestamps || exit 1
+  aws s3 sync $deployment_local_dir $backup_s3_dir/ --exclude '*' --include "*.apk" --acl authenticated-read --content-type application/vnd.android.package-archive --exact-timestamps || exit 1
+  aws s3 sync $deployment_local_dir $backup_s3_dir/ --exclude '*' --include "*.aab" --acl authenticated-read --content-type application/x-authorware-bin --exact-timestamps || exit 1
 
   if [ "$buildchannel" == 'selfhost-reg' ]; then
     echo "[deploy-android] will public at $staging_s3_dir, served as $staging_cdn_baseurl"
     [ -z "$CI" ] && echo "[deploy-android] open $apk_url to download"
-    aws s3 sync $backup_s3_dir/ $staging_s3_dir/ --acl $staging_acl --exact-timestamps
+    aws s3 sync $backup_s3_dir/ $staging_s3_dir/ --acl $staging_acl --exact-timestamps || exit 1
   else
     echo "[deploy-android] will public as $apk_url"
-    aws s3 sync $backup_s3_dir/ $release_s3_dir/ --exclude '*' --include "*.md" --acl public-read --content-type text/plain --exact-timestamps
+    aws s3 sync $backup_s3_dir/ $release_s3_dir/ --exclude '*' --include "*.md" --acl public-read --content-type text/plain --exact-timestamps || exit 1
   fi
 
   echo "";
   if [ $buildchannel != "appstore" ]; then
     echo "[deploy-android] to refresh the release($buildchannel), you could execute:"
-    echo "[deploy-android] aws s3 sync $backup_s3_dir/ $release_s3_dir/ --acl public-read"
+    echo "[deploy-android] aws s3 sync $backup_s3_dir/ $release_s3_dir/ --acl public-read" || exit 1
   else
     echo "[deploy-android] open directory and upload to google play store "
     echo "[deploy-android] you can find the .aab from $backup_s3_dir";
@@ -334,6 +374,12 @@ if [ "$REALLY_UPLOAD" == "true" ]; then
 
   if [ ! -z $apk_url ]; then
     echo "[deploy-android] publish as $apk_name, with version.json"
+
+    # Sign-only runs report the published URL back through this file so the
+    # workflow can write result.json for the fe-opcode record.
+    if [ -n "${RABBY_MOBILE_SIGN_ONLY_RESULT_FILE:-}" ]; then
+      printf '%s\n' "$apk_url" > "$RABBY_MOBILE_SIGN_ONLY_RESULT_FILE"
+    fi
 
     lark_drive_url=""
     if [ "$RABBY_MOBILE_LARK_DRIVE_UPLOAD" = "true" ] && [ "$SKIP_NOTIFY_LARK" != "true" ]; then

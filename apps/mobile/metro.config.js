@@ -16,6 +16,7 @@ const {
   isLegacyReactNativeArchitecture,
   resolveReactNativeArchitecture,
 } = require('./scripts/react-native-architecture.cjs');
+const { resolveCryptoModule } = require('./scripts/crypto-architecture.cjs');
 
 const withI18nLivePreview = config => {
   if (!['1', 'true'].includes(process.env.I18N_LIVE_PREVIEW || '')) {
@@ -71,9 +72,11 @@ const babelTransformEnvironmentKeys = [
   'NODE_ENV',
   'RABBY_MOBILE_BUILD_CHANNEL',
   'RABBY_MOBILE_BUILD_ENV',
+  'RABBY_MOBILE_CODE',
   'RABBY_MOBILE_E2E_SILENT_LOGS',
   'RABBY_MOBILE_FE_SERVICE_URL',
   'RABBY_MOBILE_KR_PWD',
+  'RABBY_MOBILE_SAFE_API_KEY',
   'RABBY_MOBILE_MODULE_LOADING_MODE',
   'RABBY_STARTUP_PROFILER_DEFER_WORKER',
   'RABBY_MOBILE_WALLETCONNECT_PROJECT_ID',
@@ -87,6 +90,7 @@ const babelTransformInputFiles = [
   path.resolve(projectRoot, 'package.json'),
   path.resolve(projectRoot, 'scripts/loadables-aliases.generated.cjs'),
   path.resolve(projectRoot, 'scripts/react-native-architecture.cjs'),
+  path.resolve(projectRoot, 'scripts/crypto-architecture.cjs'),
   path.resolve(workspaceRoot, 'package.json'),
   path.resolve(workspaceRoot, 'yarn.lock'),
   ...fs
@@ -259,15 +263,6 @@ const resolverSourceAliasCandidates = new Map([
     ],
   ],
   ['p-queue', ['p-queue/dist/index.js']],
-  [
-    'react-native-quick-crypto',
-    [
-      // Match the package's React Native entry; our CryptoKey polyfill patch
-      // is applied to this build.
-      'react-native-quick-crypto/lib/module/index.js',
-      'react-native-quick-crypto/lib/commonjs/index.js',
-    ],
-  ],
 ]);
 const resolveSourceFileAlias = moduleName => {
   const relativeCandidates = resolverSourceAliasCandidates.get(moduleName);
@@ -433,11 +428,18 @@ const config = {
     extraNodeModules: {
       ...require('node-libs-react-native'),
       assert: require.resolve('assert'),
-      crypto: require.resolve('react-native-quick-crypto'),
       stream: require.resolve('readable-stream'),
       'react-native': path.resolve(projectRoot, 'node_modules/react-native'),
     },
     resolveRequest: (context, moduleName, platform) => {
+      const cryptoModule = resolveCryptoModule(moduleName, {
+        architecture: reactNativeArchitecture,
+        projectRoot,
+      });
+      if (cryptoModule) {
+        return { filePath: cryptoModule, type: 'sourceFile' };
+      }
+
       const legacyMMKVModule = resolveLegacyMMKVModule(moduleName);
       if (legacyMMKVModule) {
         return {

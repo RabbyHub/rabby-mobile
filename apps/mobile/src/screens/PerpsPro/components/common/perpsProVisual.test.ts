@@ -61,7 +61,7 @@ describe('Perps Pro visual contract', () => {
 
   it('maps raw text styles to the platform-specific rounded font face', () => {
     expect(getPerpsProFontStyle('ios', '500')).toEqual({
-      fontFamily: PERPS_PRO_FONT_FAMILY,
+      fontFamily: 'ui-rounded',
       fontWeight: '500',
     });
     expect(getPerpsProFontStyle('android', '400')).toEqual({
@@ -73,11 +73,11 @@ describe('Perps Pro visual contract', () => {
       fontWeight: undefined,
     });
     expect(getPerpsProFontStyle('android', '600')).toEqual({
-      fontFamily: 'SF-Pro-Rounded-Bold',
+      fontFamily: 'SF-Pro-Rounded-Semibold',
       fontWeight: undefined,
     });
     expect(getPerpsProFontStyle('android', '900')).toEqual({
-      fontFamily: 'SF-Pro-Rounded-Heavy',
+      fontFamily: 'SF-Pro-Rounded-Black',
       fontWeight: undefined,
     });
   });
@@ -94,7 +94,7 @@ describe('Perps Pro visual contract', () => {
       fontWeight: undefined,
     });
     expect(getPerpsProTradeControlMediumTextStyle('ios')).toEqual({
-      fontFamily: PERPS_PRO_FONT_FAMILY,
+      fontFamily: 'ui-rounded',
       fontWeight: '500',
     });
     expect(

@@ -12,7 +12,7 @@ import BigNumber from 'bignumber.js';
 import { useSetAtom } from 'jotai';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Animated, Easing, TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 import {
   getSwapQuoteScore,
   TDexQuoteData,
@@ -119,6 +119,7 @@ export const Quotes = ({
           <DexQuoteItemOld
             inSufficient={inSufficient}
             preExecResult={dex?.preExecResult}
+            isSdkPass={dex?.isSdkPass}
             quote={dex?.data}
             name={dex?.name}
             isBestQuote
@@ -175,6 +176,7 @@ export const Quotes = ({
               key={name}
               inSufficient={inSufficient}
               preExecResult={params.preExecResult}
+              isSdkPass={params.isSdkPass}
               quote={data as unknown as any}
               name={name}
               isBestQuote={idx === 0}
@@ -263,6 +265,7 @@ export const Quotes = ({
               onlyShowErrorQuote
               inSufficient={inSufficient}
               preExecResult={params.preExecResult}
+              isSdkPass={params.isSdkPass}
               quote={data as unknown as any}
               name={name}
               isBestQuote={idx === 0}
@@ -283,7 +286,7 @@ export const Quotes = ({
 };
 
 export const QuoteList = (props: QuotesProps) => {
-  const { visible, onClose, loading } = props;
+  const { visible, onClose } = props;
   const bottomRef = useRef<BottomSheetModalMethods>(null);
   const presentedRef = useRef(false);
 
@@ -316,30 +319,6 @@ export const QuoteList = (props: QuotesProps) => {
     colors2024, // colors
     isLight,
   } = useTheme2024({ getStyle });
-
-  const spinValue = useRef(new Animated.Value(0)).current;
-  const spin = spinValue.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '360deg'],
-  });
-
-  useEffect(() => {
-    if (!visible || !loading) {
-      spinValue.resetAnimation();
-      return;
-    }
-
-    const animation = Animated.loop(
-      Animated.timing(spinValue, {
-        toValue: 1,
-        duration: 1600,
-        easing: Easing.linear,
-        useNativeDriver: true,
-      }),
-    );
-    animation.start();
-    return () => animation.stop();
-  }, [loading, spinValue, visible]);
 
   return (
     <AppBottomSheetModal
@@ -424,7 +403,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     marginTop: 14,
     fontSize: 20,
     lineHeight: 24,
-    fontWeight: '800',
+    fontWeight: '900',
     fontFamily: 'SF Pro Rounded',
     textAlign: 'center',
     color: colors2024['neutral-title-1'],

@@ -16,7 +16,13 @@ import {
   View,
   ViewStyle,
 } from 'react-native';
-import { CandleData, CandleStick } from './type';
+import {
+  CandleData,
+  CandleStick,
+  type PerpsProOverlays,
+  type SimpleChartMessage,
+  type SimpleChartEvent,
+} from './type';
 import { openExternalUrl } from '@/core/utils/linking';
 import { useAppLanguage } from '@/hooks/lang';
 import { useTranslation } from 'react-i18next';
@@ -29,13 +35,16 @@ import {
 interface ChartProps {
   height: number;
   onChartReady?: () => void;
+  onChartLoading?: () => void;
   onChartError?: () => void;
   onDataApplied?: (data: CandleDataApplied) => void;
-  onPriceScaleAutoScaleChange?: (autoScale: boolean) => void;
+  /** Pro reset button: visible after the user pans, zooms or drags the price axis. */
+  onPerpsProViewportChange?: (resetVisible: boolean) => void;
   onRequestOlderCandles?: (request: OlderCandlesRequest) => void;
   style?: StyleProp<ViewStyle>;
   backGroundColor?: string;
-  variant?: 'perps-pro';
+  variant?: 'perps-pro' | 'perps-simple';
+  onSimpleEvent?: (event: SimpleChartEvent) => void;
 }
 
 export type CandleDataApplied = {
@@ -56,17 +65,21 @@ interface TPSLPriceLines {
 }
 
 export interface TradingViewChartRef {
+  reloadSimple: () => void;
+  sendSimpleMessage: (message: SimpleChartMessage) => void;
   clearCrosshair: () => void;
   completeOlderCandlesRequest: (
     request: OlderCandlesRequest & { outcome: 'exhausted' | 'retry' },
   ) => void;
-  resetPriceScale: () => void;
+  resetPerpsProViewport: () => void;
   setData: (data: CandleData) => void;
+  setPerpsProOverlays: (overlays: PerpsProOverlays) => void;
   updateCandleData: (data: CandleStick) => void;
   updateTPSLPriceLines: (data: TPSLPriceLines) => void;
 }
 
-const PERPS_PRO_KLINE_PROTOCOL_VERSION = 3;
+const PERPS_PRO_KLINE_PROTOCOL_VERSION = 4;
+const PERPS_SIMPLE_KLINE_PROTOCOL_VERSION = 5;
 const PERPS_PRO_KLINE_PROTOCOL_ERROR =
   'Perps Pro K-line resource protocol mismatch';
 
@@ -120,9 +133,11 @@ const TradingViewCandleChart = ({
   style,
   height,
   onChartReady,
+  onChartLoading,
+  onSimpleEvent,
   onChartError,
   onDataApplied,
-  onPriceScaleAutoScaleChange,
+  onPerpsProViewportChange,
   onRequestOlderCandles,
   backGroundColor,
   variant,
@@ -134,7 +149,7 @@ const TradingViewCandleChart = ({
   const [isChartReady, setIsChartReady] = React.useState(false);
   const explicitSurfaceStyle = useMemo(
     () =>
-      variant === 'perps-pro' && backGroundColor
+      variant && backGroundColor
         ? { backgroundColor: backGroundColor }
         : undefined,
     [backGroundColor, variant],
@@ -263,6 +278,27 @@ const TradingViewCandleChart = ({
           case 'CHART_READY': {
             cancelPendingLegacyApplied();
             if (
+              variant === 'perps-simple' &&
+              message.capabilities?.perpsSimpleKlineProtocolVersion !==
+                PERPS_SIMPLE_KLINE_PROTOCOL_VERSION
+            ) {
+              setIsChartReady(false);
+              if (
+                !protocolReloadAttemptedRef.current &&
+                localWebViewRef.current?.reload
+              ) {
+                protocolReloadAttemptedRef.current = true;
+                onChartLoading?.();
+                localWebViewRef.current.reload();
+              } else {
+                setWebViewError(
+                  'Perps Simple K-line resource protocol mismatch',
+                );
+                onChartError?.();
+              }
+              break;
+            }
+            if (
               variant === 'perps-pro' &&
               (!Number.isInteger(
                 message.capabilities?.perpsProKlineProtocolVersion,
@@ -272,7 +308,7 @@ const TradingViewCandleChart = ({
             ) {
               supportsDataAppliedAckRef.current = false;
               setIsChartReady(false);
-              onPriceScaleAutoScaleChange?.(true);
+              onPerpsProViewportChange?.(false);
               if (
                 !protocolReloadAttemptedRef.current &&
                 typeof localWebViewRef.current?.reload === 'function'
@@ -301,11 +337,14 @@ const TradingViewCandleChart = ({
               message.capabilities?.candleDataAppliedAck === true;
             setIsChartReady(true);
             if (variant === 'perps-pro') {
-              onPriceScaleAutoScaleChange?.(true);
+              onPerpsProViewportChange?.(false);
             }
             onChartReady?.();
             break;
           }
+          case 'PERPS_SIMPLE_EVENT':
+            if (variant === 'perps-simple') onSimpleEvent?.(message);
+            break;
           case 'ATTR_LOGO_CLICK':
             openExternalUrl('https://www.tradingview.com');
             break;
@@ -332,12 +371,12 @@ const TradingViewCandleChart = ({
               });
             }
             break;
-          case 'PERPS_PRO_PRICE_SCALE_AUTO_SCALE_CHANGED':
+          case 'PERPS_PRO_VIEWPORT_CHANGED':
             if (
               variant === 'perps-pro' &&
-              typeof message.autoScale === 'boolean'
+              typeof message.resetVisible === 'boolean'
             ) {
-              onPriceScaleAutoScaleChange?.(message.autoScale);
+              onPerpsProViewportChange?.(message.resetVisible);
             }
             break;
           default:
@@ -353,10 +392,12 @@ const TradingViewCandleChart = ({
     [
       cancelPendingLegacyApplied,
       onChartReady,
+      onChartLoading,
       onChartError,
       onDataApplied,
-      onPriceScaleAutoScaleChange,
+      onPerpsProViewportChange,
       onRequestOlderCandles,
+      onSimpleEvent,
       variant,
     ],
   );
@@ -369,7 +410,7 @@ const TradingViewCandleChart = ({
       cancelPendingLegacyApplied();
       setWebViewError(errorDescription);
       if (variant === 'perps-pro') {
-        onPriceScaleAutoScaleChange?.(true);
+        onPerpsProViewportChange?.(false);
       }
       onChartError?.();
       console.error('WebView error:', event.nativeEvent);
@@ -377,7 +418,7 @@ const TradingViewCandleChart = ({
     [
       cancelPendingLegacyApplied,
       onChartError,
-      onPriceScaleAutoScaleChange,
+      onPerpsProViewportChange,
       variant,
     ],
   );
@@ -474,17 +515,36 @@ const TradingViewCandleChart = ({
     });
   }, [isChartReady]);
 
-  const handleResetPriceScale = useCallback(() => {
+  const handleResetPerpsProViewport = useCallback(() => {
     if (variant !== 'perps-pro' || !isChartReady || !localWebViewRef.current) {
       return;
     }
     localWebViewRef.current.sendMessage?.({
       type: 'TRADINGVIEW_MESSAGE',
       data: {
-        type: 'RESET_PERPS_PRO_PRICE_SCALE',
+        type: 'RESET_PERPS_PRO_VIEWPORT',
       },
     });
   }, [isChartReady, variant]);
+  const handleSetPerpsProOverlays = useCallback(
+    (overlays: PerpsProOverlays) => {
+      if (
+        variant !== 'perps-pro' ||
+        !isChartReady ||
+        !localWebViewRef.current
+      ) {
+        return;
+      }
+      localWebViewRef.current.sendMessage?.({
+        type: 'TRADINGVIEW_MESSAGE',
+        data: {
+          type: 'SET_PERPS_PRO_OVERLAYS',
+          overlays,
+        },
+      });
+    },
+    [isChartReady, variant],
+  );
 
   const handleCompleteOlderCandlesRequest = useCallback(
     (request: OlderCandlesRequest & { outcome: 'exhausted' | 'retry' }) => {
@@ -502,17 +562,41 @@ const TradingViewCandleChart = ({
     [isChartReady],
   );
 
+  const sendSimpleMessage = useCallback(
+    (message: SimpleChartMessage) => {
+      if (variant !== 'perps-simple' || !isChartReady) return;
+      localWebViewRef.current?.sendMessage?.({
+        type: 'TRADINGVIEW_MESSAGE',
+        data: message,
+      });
+    },
+    [isChartReady, variant],
+  );
+
   useImperativeHandle(ref, () => ({
+    reloadSimple: () => {
+      if (variant !== 'perps-simple') return;
+      setWebViewError(null);
+      setIsChartReady(false);
+      protocolReloadAttemptedRef.current = false;
+      protocolErrorReportedRef.current = false;
+      onChartLoading?.();
+      localWebViewRef.current?.reload();
+    },
+    sendSimpleMessage,
     clearCrosshair: handleClearCrosshair,
     completeOlderCandlesRequest: handleCompleteOlderCandlesRequest,
-    resetPriceScale: handleResetPriceScale,
+    resetPerpsProViewport: handleResetPerpsProViewport,
     setData: handleSetData,
+    setPerpsProOverlays: handleSetPerpsProOverlays,
     updateCandleData: handleUpdateCandleData,
     updateTPSLPriceLines: handleUpdateTPSLPriceLines,
   }));
 
   // Remount WebView when app returns to foreground after being background for 30+ seconds
   const [webViewKey, setWebViewKey] = React.useState(0);
+  const activeWebViewKey = useRef(webViewKey);
+  activeWebViewKey.current = webViewKey;
   useEffect(() => {
     let appStateRef = AppState.currentState;
     let backgroundTimestamp = 0;
@@ -530,17 +614,25 @@ const TradingViewCandleChart = ({
           supportsDataAppliedAckRef.current = false;
           protocolReloadAttemptedRef.current = false;
           protocolErrorReportedRef.current = false;
+          if (variant === 'perps-simple') {
+            onChartLoading?.();
+          }
           setWebViewKey(k => k + 1);
           setIsChartReady(false);
           if (variant === 'perps-pro') {
-            onPriceScaleAutoScaleChange?.(true);
+            onPerpsProViewportChange?.(false);
           }
         }
         appStateRef = nextAppState;
       },
     );
     return () => subscription.remove();
-  }, [cancelPendingLegacyApplied, onPriceScaleAutoScaleChange, variant]);
+  }, [
+    cancelPendingLegacyApplied,
+    onChartLoading,
+    onPerpsProViewportChange,
+    variant,
+  ]);
 
   if (webViewError) {
     if (variant === 'perps-pro') {
@@ -562,6 +654,9 @@ const TradingViewCandleChart = ({
     );
   }
 
+  // Reset Simple readiness at explicit reload/remount sites above. Android's
+  // native onLoadStart can arrive after CHART_READY through a different queue;
+  // using it to invalidate readiness would leave a loaded chart waiting forever.
   return (
     <View
       style={[
@@ -575,7 +670,13 @@ const TradingViewCandleChart = ({
         ref={localWebViewRef}
         entryPath="/pages/tradingview-candle-chart.html"
         webviewSize={{ height }}
-        onMessage={handleWebViewMessage}
+        onMessage={event => {
+          if (
+            variant !== 'perps-simple' ||
+            activeWebViewKey.current === webViewKey
+          )
+            handleWebViewMessage(event);
+        }}
         onError={handleWebViewError}
         backGroundColor={backGroundColor}
         style={explicitSurfaceStyle}

@@ -58,6 +58,7 @@ import { TabsSectionList } from '@/components/customized/react-native-collapsibl
 import {
   pulldownRefreshSizes,
   RefreshPlaceholderIOS,
+  useSuspendedVisibleAnchor,
   setPulldownRefreshStage,
   usePulldownRefreshGesture,
   usePulldownRefreshStyles,
@@ -76,6 +77,8 @@ import { apiCustomTestnet } from '@/core/apis';
 import { toast } from '@/components2024/Toast';
 import { useRegressionScenario } from '@/devtools/regressionScenarios/react';
 import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
+import { TokenRowContextMenu } from '@/screens/Home/components/TokenRowContextMenu';
+import { createRemoveTokenConfirmPopup } from '@/components2024/RemoveTokenConfirmPopup';
 import { IS_ANDROID } from '@/core/native/utils';
 import { beginAssetDataLoadDiagnostic } from '@/core/utils/assetDataLoadDiagnostics';
 import { formatNetworth } from '@/utils/math';
@@ -101,7 +104,17 @@ const TOKEN_LIST_RENDER_BATCH_SIZE = 6;
 const TOKEN_LIST_WINDOW_SIZE = 7;
 const TOKEN_LIST_BATCHING_PERIOD_MS = 32;
 
-const TokenResourceRow = React.memo(
+type TokenResourceRowProps = {
+  row: TokenAssetsIndexRow;
+  tokenDisplayMode: string;
+  getAccountByAddress(address?: string): KeyringAccountWithAlias | undefined;
+  onTokenPress(token: ITokenItem): void;
+  onGroupPress(group: TokenGroupResourceValue): void;
+  style?: ViewStyle;
+  hideChainLogo?: boolean;
+};
+
+const TokenResourceRowContent = React.memo(
   ({
     row,
     tokenDisplayMode,
@@ -110,15 +123,8 @@ const TokenResourceRow = React.memo(
     onGroupPress,
     style,
     hideChainLogo,
-  }: {
-    row: TokenAssetsIndexRow;
-    tokenDisplayMode: string;
-    getAccountByAddress(address?: string): KeyringAccountWithAlias | undefined;
-    onTokenPress(token: ITokenItem): void;
-    onGroupPress(group: TokenGroupResourceValue): void;
-    style?: ViewStyle;
-    hideChainLogo?: boolean;
-  }) => {
+    hasContextMenu,
+  }: TokenResourceRowProps & { hasContextMenu: boolean }) => {
     const tokenId = row.type === 'token' ? row.tokenId : undefined;
     const groupId = row.type === 'group' ? row.groupId : undefined;
     const token = useActivityStore(
@@ -157,6 +163,7 @@ const TokenResourceRow = React.memo(
     return (
       <MemoizedTokenRow
         data={data}
+        hasContextMenu={hasContextMenu}
         onTokenPress={handlePress}
         logoSize={40}
         style={style}
@@ -165,6 +172,39 @@ const TokenResourceRow = React.memo(
         account={account}
         scene="portfolio"
       />
+    );
+  },
+);
+
+const TokenResourceRow = React.memo(
+  ({
+    onRemoveToken,
+    ...rowProps
+  }: TokenResourceRowProps & {
+    onRemoveToken(token: ITokenItem): void;
+  }) => {
+    const hasContextMenu =
+      rowProps.tokenDisplayMode === 'byAddress' ||
+      rowProps.tokenDisplayMode === 'byAsset';
+    const content = (
+      <TokenResourceRowContent {...rowProps} hasContextMenu={hasContextMenu} />
+    );
+    if (!hasContextMenu) {
+      return content;
+    }
+    // The menu shell has no balance/group subscription; the child owns those updates.
+    return rowProps.row.type === 'group' ? (
+      <TokenRowContextMenu
+        groupId={rowProps.row.groupId}
+        onRemoveToken={onRemoveToken}>
+        {content}
+      </TokenRowContextMenu>
+    ) : (
+      <TokenRowContextMenu
+        tokenId={rowProps.row.tokenId}
+        onRemoveToken={onRemoveToken}>
+        {content}
+      </TokenRowContextMenu>
     );
   },
 );
@@ -262,7 +302,7 @@ export const TokenList = () => {
 
   const { isFocused, isFocusing } = useIsFocusedCurrentTab(TabName.token);
 
-  useScrollToTopOnChainChange({
+  const suspendVisibleAnchor = useScrollToTopOnChainChange({
     chain,
     isCurrentTab: isFocusing,
   });
@@ -327,11 +367,12 @@ export const TokenList = () => {
     useTokenAssetsIndexStore,
     useShallow(state => {
       const result =
-        state.multiAssetsResultByKey[multiAssetsKey] ||
+        state.multiDisplayAssetsResultByKey[multiAssetsKey] ||
         EMPTY_TOKEN_ASSETS_INDEX_RESULT;
       return {
-        availability:
-          state.multiAssetsAvailabilityByKey[multiAssetsKey] || 'unresolved',
+        availability: state.multiDisplayAssetsResultByKey[multiAssetsKey]
+          ? state.multiAssetsAvailabilityByKey[multiAssetsKey] || 'unresolved'
+          : 'unresolved',
         additionalCoreUsdValue: result.additionalCoreUsdValue,
         lowValueTokenPreviewLogoUrls: result.lowValueTokenPreviewLogoUrls,
         lpLowValueTokenPreviewLogoUrls: result.lpLowValueTokenPreviewLogoUrls,
@@ -880,6 +921,7 @@ export const TokenList = () => {
                 getAccountByAddress={getAccountByAddress}
                 onTokenPress={handleTokenPress}
                 onGroupPress={handleGroupPress}
+                onRemoveToken={createRemoveTokenConfirmPopup}
                 style={styles.renderItemWrapper}
                 hideChainLogo={tokenDisplayMode === 'bySymbol'}
               />
@@ -996,6 +1038,14 @@ export const TokenList = () => {
       return onRefresh();
     },
   });
+  // RefreshPlaceholderIOS changes the list header height throughout the pull
+  // and its closing animation. Keeping the native visible anchor enabled while
+  // that header shrinks anchors the first token row to a stale offset, leaving
+  // a large blank area above short token lists.
+  // #1285: re-enabling the native visible anchor in the frame the placeholder
+  // collapses re-anchors the first row against the pre-collapse layout and
+  // leaves a transient blank at the top; wait for the layout to settle.
+  const isPullRefreshVisible = useSuspendedVisibleAnchor(pullDistance);
 
   useEffect(() => {
     console.debug('[PulldownRefresh] TokenList isLoading changed', isLoading);
@@ -1061,7 +1111,11 @@ export const TokenList = () => {
         maxToRenderPerBatch={TOKEN_LIST_RENDER_BATCH_SIZE}
         updateCellsBatchingPeriod={TOKEN_LIST_BATCHING_PERIOD_MS}
         removeClippedSubviews={IS_ANDROID}
-        maintainVisibleContentPosition={{ minIndexForVisible: 0 }}
+        maintainVisibleContentPosition={
+          suspendVisibleAnchor || isPullRefreshVisible
+            ? undefined
+            : { minIndexForVisible: 0 }
+        }
       />
     </GestureDetector>
   );

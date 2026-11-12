@@ -26,6 +26,7 @@ import { GestureDetector } from 'react-native-gesture-handler';
 import {
   pulldownRefreshSizes,
   RefreshPlaceholderIOS,
+  useSuspendedVisibleAnchor,
   setPulldownRefreshStage,
   usePulldownRefreshGesture,
   usePulldownRefreshStyles,
@@ -193,7 +194,7 @@ const NFTListInner = () => {
   const getAccountByAddress = useFindAccountByAddress(myTop10Accounts);
   const { isFocused, isFocusing } = useIsFocusedCurrentTab(TabName.nft);
 
-  useScrollToTopOnChainChange({
+  const suspendVisibleAnchor = useScrollToTopOnChainChange({
     chain,
     isCurrentTab: isFocusing,
   });
@@ -500,6 +501,12 @@ const NFTListInner = () => {
       return onRefresh();
     },
   });
+  // Keep the native visible anchor from pinning rows to a stale offset while
+  // RefreshPlaceholderIOS changes the list header height.
+  // #1285: re-enabling the native visible anchor in the frame the placeholder
+  // collapses re-anchors the first row against the pre-collapse layout and
+  // leaves a transient blank at the top; wait for the layout to settle.
+  const isPullRefreshVisible = useSuspendedVisibleAnchor(pullDistance);
 
   useEffect(() => {
     console.debug('[PulldownRefresh] NFTList isLoading changed', isLoading);
@@ -543,7 +550,11 @@ const NFTListInner = () => {
         maxToRenderPerBatch={NFT_LIST_RENDER_BATCH_SIZE}
         updateCellsBatchingPeriod={NFT_LIST_BATCHING_PERIOD_MS}
         removeClippedSubviews={IS_ANDROID}
-        maintainVisibleContentPosition={{ minIndexForVisible: 0 }}
+        maintainVisibleContentPosition={
+          suspendVisibleAnchor || isPullRefreshVisible
+            ? undefined
+            : { minIndexForVisible: 0 }
+        }
         ItemSeparatorComponent={ListRenderSeparator}
         ListHeaderComponent={
           <RefreshPlaceholderIOS

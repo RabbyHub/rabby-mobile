@@ -53,7 +53,7 @@ const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
     marginTop: 14,
     fontSize: 20,
     lineHeight: 24,
-    fontWeight: '800',
+    fontWeight: '900',
     fontFamily: 'SF Pro Rounded',
     color: colors2024['neutral-title-1'],
     textAlign: 'center',
@@ -114,13 +114,8 @@ interface QuotesProps {
   currentSelectedQuote?: SelectedBridgeQuote;
 }
 
-export const Quotes = ({
-  list,
-  activeName,
-  inSufficient,
-  ...other
-}: QuotesProps) => {
-  const { styles, colors2024, colors } = useTheme2024({ getStyle });
+export const Quotes = ({ list, inSufficient, ...other }: QuotesProps) => {
+  const { styles, colors } = useTheme2024({ getStyle });
 
   const { t } = useTranslation();
 
@@ -199,7 +194,7 @@ export const QuoteList = (props: QuotesProps) => {
   const { visible, onClose } = props;
   const refresh = useSetRefreshId();
 
-  const { styles, colors2024, colors, isLight } = useTheme2024({ getStyle });
+  const { styles, colors2024, isLight } = useTheme2024({ getStyle });
 
   const bottomRef = useRef<BottomSheetModalMethods>(null);
 

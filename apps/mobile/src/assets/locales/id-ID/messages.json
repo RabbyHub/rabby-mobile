@@ -527,7 +527,13 @@
         "empty": {
           "title": "Tidak ada riwayat Transaksi",
           "titleLastThreeMonths": "Tidak ada riwayat Transaksi dalam 90 Hari",
+          "titleInLast90Days": "Tidak ada transaksi dalam 90 hari terakhir",
+          "titleNoTransactions": "Tidak ada transaksi",
           "testnetNoHistory": "Riwayat transaksi token kustom tidak tersedia."
+        },
+        "noMore": {
+          "title": "Tidak ada transaksi lagi.",
+          "titleInLast90Days": "Tidak ada transaksi lagi dalam 90 hari terakhir."
         },
         "common": {
           "pendingDetail": "Detail Tertunda"
@@ -645,6 +651,7 @@
       "emptyWhitelistHeader": "Tambahkan Alamat Daftar Putih",
       "SendHistory": "Riwayat Pengiriman",
       "enterOrSearchAddress": "Masukkan atau Cari Alamat",
+      "resolvingAddressName": "Mencari alamat...",
       "dividerWatchOnlyWallets": "Alamat hanya untuk dilihat"
     },
     "confirmAddress": {
@@ -838,15 +845,13 @@
       "est-receiving": "Perk. Diterima:",
       "est-difference": "Perk. Selisih:",
       "title": "Bridge",
-      "for-available-quote": "untuk penawaran yang tersedia",
       "loss-tips": "Anda kehilangan {{usd}}. Coba jumlah yang berbeda.",
-      "no-quote-found": "Penawaran tidak ditemukan. Coba pasangan token lain.",
+      "no-quote-found": "Penawaran tidak ditemukan.",
       "price-impact": "Dampak Harga",
       "bridgeFrom": "Bridge Dari",
       "From": "Dari",
       "history": "Riwayat Jembatan",
       "no-quote": "Tidak ada penawaran",
-      "bridge-from": "Bridge dari",
       "To": "Untuk",
       "est-payment": "Perk. Pembayaran:",
       "the-following-bridge-route-are-found": "Ditemukan tarif berikut",
@@ -881,7 +886,42 @@
       "formChangedAmount": "Jumlahnya telah berubah, kemungkinan disebabkan oleh pengisian otomatis kata sandi dari keyboard sistem. Silakan tinjau dan masukkan kembali jumlah yang benar.",
       "formChangedTitle": "Form Diubah",
       "best-subtitle": "Penawaran terbaik ditentukan oleh kombinasi perkiraan biaya total (termasuk biaya Gas) dan kecepatan pengiriman.",
-      "swap-best-subtitle": "Penawaran terbaik ditentukan berdasarkan perkiraan biaya total terendah, termasuk nilai tukar dan biaya gas."
+      "swap-best-subtitle": "Penawaran terbaik ditentukan berdasarkan perkiraan biaya total terendah, termasuk nilai tukar dan biaya gas.",
+      "duration-sec": "{{duration}} dtk",
+      "duration-hour": "{{duration}} jam",
+      "duration-hour-min": "{{hours}} jam {{minutes}} menit",
+      "duration-day": "{{duration}} hari",
+      "duration-day-hour": "{{days}} hari {{hours}} jam",
+      "duration-day-min": "{{days}} hari {{minutes}} menit",
+      "duration-day-hour-min": "{{days}} hari {{hours}} jam {{minutes}} menit",
+      "status": {
+        "bridging": "Proses jembatan berlangsung,",
+        "bridged": "Di-bridge",
+        "historyTitle": "Riwayat Jembatan",
+        "today": "Hari ini",
+        "eta": "perkiraan waktu: {{time}}",
+        "stillBridging": "Proses jembatan masih berlangsung",
+        "delayed": "Jembatan terlambat",
+        "sourceFailed": "Jembatan gagal, {{token}} Anda tidak terkirim",
+        "tokenNotSent": "{{token}} Anda tidak terkirim",
+        "failed": "Gagal",
+        "bridgeFailed": "Jembatan gagal",
+        "refunded": "Dikembalikan",
+        "refundedIn": "Dikembalikan dalam {{token}}",
+        "contactSupport": "Hubungi Dukungan",
+        "viewDetails": "Lihat Detail",
+        "sendingFrom": "Mengirim dari {{chain}}",
+        "receivingOn": "Menerima di {{chain}}",
+        "processing": "Sedang diproses",
+        "queued": "Antrian",
+        "pending": "Menunggu",
+        "completed": "Selesai",
+        "refund": "Dikembalikan",
+        "waiting": "menunggu transaksi di rantai tujuan",
+        "goBack": "Kembali",
+        "bridgeAgain": "Jembatani lagi",
+        "captureFailed": "Tidak dapat mengambil tangkapan layar. Silakan coba lagi."
+      }
     },
     "manageAddress": {
       "cancel": "Batal",
@@ -1207,7 +1247,8 @@
         },
         "scan": {
           "title": "Pindai Keystone untuk Terhubung",
-          "description": "Pindai kode QR di dompet Keystone Anda"
+          "description": "Pindai kode QR di dompet Keystone Anda",
+          "invalidQRCode": "Kode QR tidak valid. Silakan pindai kode QR sinkronisasi dompet perangkat keras."
         }
       },
       "hd": {
@@ -1482,27 +1523,25 @@
       "subTitle": "Kata sandi ini membuka kunci dompet Anda dan mengenkripsi data di perangkat ini. Kata sandi tidak dapat dipulihkan. Jika hilang, Anda harus mengatur ulang lalu mengimpor ulang dompet.",
       "setUpSuccess": "Setel Kata Sandi Berhasil",
       "settingUp": "Mengatur kata sandi",
-      "and": "dan",
       "confirmTitle": "Konfirmasi kata sandi",
       "passwordRequired": "Silakan masukkan Kata Sandi",
       "phoneNotSupport": "Ponsel Anda tidak mendukung {{ bioType }}",
       "enable": "Aktifkan {{ bioType }}",
       "confirmError": "Kata sandi tidak cocok",
-      "PrivacyPolicy": "Kebijakan Privasi",
       "confirmPasswordPlaceholder": "Konfirmasi kata sandi",
       "confirmRequired": "Silakan Konfirmasi Kata Sandi",
       "biometricsFail": "Aktifkan biometrik gagal",
       "passwordMinTip": "Harus setidaknya 8 karakter",
-      "termOfUse": "Syarat Penggunaan",
       "Newpassword": "Kata sandi baru",
       "agree": "Saya telah membaca dan setuju dengan<1/> <2>Ketentuan Penggunaan</2>",
-      "agreeToTerms": "Saya telah membaca dan setuju dengan",
       "confirmModalDesc": "Silakan simpan kata sandi Anda dengan baik. Setelah hilang, kata sandi tidak dapat diubah atau dipulihkan oleh Rabby.",
       "setWallet": "Atur Dompet",
       "ConfirmPassword": "Konfirmasi kata sandi",
       "title": "Atur Kata Sandi",
       "passwordMin": "Kata sandi harus memiliki panjang minimal 8 karakter",
-      "passwordPlaceholder": "Kata sandi harus memiliki panjang setidaknya 8 karakter"
+      "passwordPlaceholder": "Kata sandi harus memiliki panjang setidaknya 8 karakter",
+      "dataAnalysisDesc": "Bagikan data penggunaan anonim untuk membantu meningkatkan Rabby. Data yang dikumpulkan tidak dikaitkan dengan Anda atau akun Anda. Anda dapat mengubahnya kapan saja di Pengaturan.",
+      "agreeByContinuing": "Dengan melanjutkan, Anda menyetujui <terms>Syarat Penggunaan</terms> dan mengakui <privacy>Kebijakan Privasi</privacy>."
     },
     "importSafe": {
       "error": {
@@ -1523,6 +1562,9 @@
       "alreadyClaimedXPoints": "Sudah diklaim: {{point}}"
     },
     "customTestnet": {
+      "screenTitle": "Jaringan Kustom",
+      "removeNetwork": "Hapus {{name}}",
+      "editTitle": "Edit Jaringan Kustom",
       "CustomTestnetForm": {
         "id": "ID Rantai",
         "rpcUrl": "RPC URL",
@@ -1676,6 +1718,13 @@
       "title": "GasAccount"
     },
     "tokenDetail": {
+      "removed": {
+        "restore": "Pulihkan token yang dihapus",
+        "restoreFailed": "Gagal memulihkan token",
+        "more": "Lebih banyak",
+        "confirmTitle": "Hapus token ini?",
+        "confirmDescription": "· Token ini tidak akan lagi muncul di Portofolio Anda setelah dihapus.\n· Anda dapat memulihkannya kapan saja melalui Pengaturan >> Token yang Dihapus."
+      },
       "action": {
         "all": "Semua",
         "less": "Kurang",
@@ -1777,6 +1826,7 @@
       "price": "Harga",
       "headerTokenValueText": "Nilai Token",
       "copyCA": "Alamat kontrak token telah disalin",
+      "copyCAWarning": "Ini adalah alamat kontrak token.\nTidak dapat digunakan untuk menerima aset.",
       "wallet": "Dompet",
       "customTestnetNotSupported": "Token pada rantai ini tidak didukung"
     },
@@ -1786,9 +1836,13 @@
     "receiveAddressList": {
       "selectChainTitle": "Pilih Rantai",
       "title": "Pilih Dompet untuk Menerima",
-      "subtitle": "Pilih dompet untuk menerima kripto Anda."
+      "subtitle": "Pilih alamat dompet untuk menerima aset Anda."
     },
     "singleHome": {
+      "tokenActions": {
+        "remove": "Hapus",
+        "removeFailed": "Gagal menghapus token"
+      },
       "sectionHeader": {
         "Token": "Token",
         "Defi": "DeFi",
@@ -1827,6 +1881,10 @@
       }
     },
     "setting": {
+      "removedToken": {
+        "title": "Token yang Dihapus",
+        "description": "Token yang dihapus akan disembunyikan dari Portofolio di semua alamat Anda, tetapi tetap disertakan dalam perhitungan saldo Anda."
+      },
       "followUs": "Ikuti Kami",
       "touchId": "Touch ID",
       "faceId": "Face ID",
@@ -1857,7 +1915,8 @@
       "searchCurrency": "Cari Mata Uang",
       "screenshotReportSwitch": "Ambil tangkapan layar untuk melaporkan bug",
       "currency": "Mata Uang",
-      "dataAnalysis": "Analisis Data",
+      "dataAnalysis": "Bantu tingkatkan Rabby",
+      "dataAnalysisDesc": "Bagikan data penggunaan anonim untuk membantu meningkatkan Rabby. Data yang dikumpulkan tidak dikaitkan dengan Anda atau akun Anda.",
       "bugReportChat": "Bagikan Umpan Balik melalui Obrolan",
       "features": "Fitur",
       "manageWallets": "Kelola Dompet"
@@ -1912,6 +1971,7 @@
       "customNetworkTokenHeader": "Jaringan kustom yang ditambahkan"
     },
     "browser": {
+      "openInRabbyPerps": "Buka di Rabby Perps",
       "BrowserHeader": {
         "searchIos": "Cari Situs Web",
         "searchAndroid": "Cari DApp"
@@ -2233,8 +2293,7 @@
           }
         },
         "chart": {
-          "open": "Buka grafik",
-          "resetPriceScale": "Atur ulang skala harga grafik"
+          "open": "Buka grafik"
         },
         "account": {
           "disabledFrame": "Tindakan akun tidak tersedia pada tahap ini",
@@ -2377,12 +2436,14 @@
           "positionAmount": "Ukuran Posisi",
           "estimatedPnl": "Estimasi PnL",
           "skipLimitConfirmation": "Jangan tampilkan lagi konfirmasi ganda untuk Order Limit",
+          "skipMarketCloseConfirmation": "Jangan tampilkan lagi konfirmasi penutupan posisi dengan order pasar ini.",
           "closeSubmitted": "Order penutupan dikirim",
           "closeFailed": "Gagal menutup posisi",
           "minimumCloseAmount": "Jumlah penutupan minimum adalah $10",
           "closeContextChanged": "Posisi atau akun telah berubah. Tinjau kembali."
         },
         "positionTpsl": {
+          "skipConfirmation": "Jangan tampilkan lagi konfirmasi TP/SL ini.",
           "addButton": "Tambah TP/SL",
           "addTitle": "Tambah TP/SL",
           "cancelFailed": "Gagal membatalkan order TP/SL",
@@ -2393,6 +2454,7 @@
           "duplicatePositionOrders": "Ada beberapa order TP/SL Posisi di sisi ini. Batalkan satu per satu atau perbarui sebelum mengubahnya.",
           "estimatedLiquidation": "Estimasi Harga Likuidasi",
           "estimatedPnl": "Estimasi PnL",
+          "estimatedPnlDescription": "Estimasi PnL <2>{{pnl}} {{quoteAsset}}(ROI: {{roi}}%)</2>",
           "estimatedPnlShort": "Estimasi PnL",
           "invalidOrder": "Tinjau harga dan jumlah TP/SL",
           "invalidTrigger": "Harga pemicu tidak valid untuk Harga Acuan terbaru",
@@ -2574,7 +2636,6 @@
         "sizeTips": "Nilai total atau jumlah perdagangan Anda, ditentukan oleh margin dan leverage.",
         "gotItBtn": "Saya mengerti",
         "feeRabby": "Rabby Wallet",
-        "feeRabbyDiscount": "Diskon biaya trading untuk waktu terbatas",
         "feeTitle": "Biaya",
         "feeHyperliquid": "Hyperliquid",
         "feeDesc": "Saat pengguna melakukan perdagangan, <1>biaya trading</1> dan <2>biaya builder</2> akan berlaku.",
@@ -2642,7 +2703,7 @@
       },
       "PerpsDepositCard": {
         "deposit": "Setor",
-        "availableToTrade": "Tersedia untuk diperdagangkan:",
+        "availableToTrade": "Tersedia:",
         "swap": "Tukar"
       },
       "PerpsAccountSelectorPopup": {
@@ -2716,6 +2777,50 @@
       }
     },
     "perpsDetail": {
+      "simpleAccount": {
+        "margin": "Margin",
+        "averageEntry": "Harga masuk rata-rata",
+        "estimatedLiquidationPrice": "Estimasi harga likuidasi",
+        "estimatedLiquidationDistance": "Estimasi jarak likuidasi",
+        "tpSl": "TP/SL",
+        "takeProfitPrice": "Harga ambil untung",
+        "stopLossPrice": "Harga hentikan rugi",
+        "funding": "Pendanaan",
+        "nextFundingRate": "Tingkat Pendanaan Berikutnya",
+        "estimatedPnl": "Estimasi PNL",
+        "closePositionTitle": "Tutup Posisi {{coin}}",
+        "estimatedRealizedPnl": "Estimasi PNL Terealisasi"
+      },
+      "simpleChart": {
+        "openInterest": "Open interest",
+        "volume24h": "Volume 24 jam",
+        "intervalTitle": "Interval lilin",
+        "intervalDescription": "Setiap lilin mewakili interval waktu yang dipilih.",
+        "minutes": "Menit",
+        "hours": "Jam",
+        "days": "Hari",
+        "open": "Harga buka",
+        "low": "Terendah",
+        "high": "Tertinggi",
+        "close": "Harga tutup",
+        "time": "Waktu",
+        "change": "Perubahan",
+        "changePercent": "Perubahan (%)",
+        "averageEntry": "Harga masuk rata-rata",
+        "takeProfit": "Ambil untung",
+        "stopLoss": "Stop loss",
+        "liquidation": "Harga likuidasi",
+        "all": "SEMUA",
+        "source": "Didukung oleh Hyperliquid. Grafik harga disediakan oleh <tradingview>TradingView.</tradingview>",
+        "resetChart": "Atur ulang grafik",
+        "backToLatest": "Kembali ke data terbaru",
+        "switchToArea": "Beralih ke grafik area",
+        "switchToCandle": "Beralih ke grafik lilin",
+        "showVolume": "Tampilkan volume 24 jam",
+        "showOpenInterest": "Tampilkan open interest",
+        "buy": "Beli",
+        "sell": "Jual"
+      },
       "PerpEditLimitPriceTag": {
         "setLimitBuyPrice": "Atur Harga Limit Beli",
         "setLimitSellPrice": "Atur Harga Limit Jual",
@@ -2744,7 +2849,7 @@
         "details": "Rincian",
         "settings": "Pengaturan",
         "marginMode": "Mode Margin",
-        "fundingTipsBold": "Ini menampilkan total funding yang telah diselesaikan sejak posisi dibuka. Nilai <bold>hijau (positif)</bold> berarti Anda menerima funding dari trader lain, sedangkan nilai <bold>merah (negatif)</bold> adalah biaya funding yang Anda bayarkan kepada mereka.",
+        "fundingTipsBold": "Ini menampilkan total funding yang telah diselesaikan sejak posisi dibuka. Nilai <positive>hijau (positif)</positive> berarti Anda menerima funding dari trader lain, sedangkan nilai <negative>merah (negatif)</negative> adalah biaya funding yang Anda bayarkan kepada mereka.",
         "crossTips": "Dalam mode Cross Margin, harga likuidasi untuk satu posisi adalah estimasi hanya untuk referensi."
       },
       "PerpsInfo": {
@@ -2881,6 +2986,13 @@
       },
       "addressEditorBadge": {
         "nameUnknown": "Beri nama alamat"
+      },
+      "scanQrcode": {
+        "chooseFromGallery": "Pilih dari Galeri",
+        "noQrCode": "Tidak ada kode QR di gambar ini",
+        "multipleQrCodes": "Ditemukan beberapa kode QR. Pilih gambar dengan satu kode QR saja",
+        "invalidAddress": "Tidak ada alamat valid di kode QR ini",
+        "readImageFailed": "Gagal membaca gambar. Silakan coba lagi"
       }
     },
     "Lending": {
@@ -3187,6 +3299,72 @@
     "batchRevoke": {
       "title": "Pencabutan Massal"
     },
+    "memeCoin": {
+      "holdingsEntry": "kepemilikan",
+      "pnlPeriod24h": "24h",
+      "pnlPeriodAll": "Semua",
+      "pnlTipLabel": "PnL",
+      "backToMarket": "Kembali ke Pasar Meme",
+      "marketTitle": "Pasar Meme",
+      "holdingsTitle": "Kepemilikan",
+      "marketCap": "Kapitalisasi Pasar",
+      "valuePnl": "Nilai / PnL",
+      "searchMarket": "Cari di Pasar Meme",
+      "noMatch": "Tidak ada Meme yang cocok",
+      "noHoldings": "Belum ada kepemilikan",
+      "loadFailed": "Gagal memuat. Ketuk untuk mencoba lagi",
+      "buyN": "Beli {{count}} Meme",
+      "buyN_one": "Beli {{count}} Meme",
+      "sellN": "Jual {{count}} Meme",
+      "sellN_one": "Jual {{count}} Meme",
+      "selectToBuy": "Pilih meme untuk dibeli",
+      "selectToSell": "Pilih meme untuk dijual",
+      "maxPriceImpact": "Dampak Harga Maks.",
+      "unsupportedAddressType": "Jenis alamat tidak didukung",
+      "accountChanged": "Alamat berubah. Silakan mulai lagi",
+      "addressSwitchUnsupported": "Alamat tidak dapat diganti di halaman ini.",
+      "buy": {
+        "amount": "Jumlah Pembelian",
+        "allocation": "Alokasi",
+        "byMarketCap": "Berdasarkan Kap. Pasar",
+        "equalSplit": "Bagi Rata",
+        "estPayment": "Perkiraan Pembayaran {{amount}}",
+        "needed": "Butuh {{amount}}",
+        "anotherNeeded": "Butuh {{amount}} lagi",
+        "preview": "Pratinjau",
+        "paymentTokens": "Token Pembayaran",
+        "selectTokens": "Pilih Token",
+        "selectPaymentAssets": "Pilih aset untuk pembayaran",
+        "estPaymentLabel": "Perkiraan Pembayaran",
+        "noPaymentToken": "Belum ada token pembayaran yang dipilih",
+        "confirm": "Konfirmasi",
+        "noAssets": "Tidak ada aset yang tersedia"
+      },
+      "execute": {
+        "title": "Eksekusi",
+        "buySubtitleShort": "Berurutan per rantai, paralel antar-rantai.",
+        "sellSubtitle": "Hasil penjualan tetap berada di rantai masing-masing",
+        "estReceipt": "Perkiraan diterima(USD)",
+        "statusPending": "Menunggu",
+        "statusPendingPrevious": "Menunggu transaksi sebelumnya di rantai yang sama",
+        "statusExecuting": "Mengeksekusi",
+        "statusSuccessful": "Berhasil",
+        "confirm": "Konfirmasi",
+        "back": "Kembali",
+        "retryFailedTxns": "Coba lagi {{count}} transaksi gagal",
+        "retryFailedTxns_one": "Coba lagi {{count}} transaksi gagal",
+        "progress": "Mengeksekusi · {{done}}/{{total}} Selesai",
+        "done": "Selesai",
+        "exitTitle": "Batalkan eksekusi dan kembali?",
+        "exitDesc1": "Eksekusi akan dihentikan. Transaksi yang belum dikirim tidak akan diproses.",
+        "exitDesc2": "Transaksi yang sudah dikirim ke rantai tidak dapat dibatalkan dan mungkin tetap selesai.",
+        "stopAndExit": "Hentikan & Keluar",
+        "continue": "Lanjutkan",
+        "failReason": {
+          "buildFailed": "Gagal membuat transaksi"
+        }
+      }
+    },
     "convertDust": {
       "failReason": {
         "quoteUnavailable": "Gagal mengambil kutipan",
@@ -3246,6 +3424,7 @@
       "screenTitle": "Hubungkan Dompet",
       "connectingToRabby": "Menghubungkan ke Rabby",
       "pairingFailed": "Penyandingan WalletConnect gagal.",
+      "proposalNotReceived": "Kode QR WalletConnect mungkin sudah kedaluwarsa. Muat ulang lalu coba lagi.",
       "connected": "Berhasil terhubung. Silakan kembali ke DApp.",
       "proposalExpired": "Proposal WalletConnect kedaluwarsa.",
       "pairingExpired": "Penyandingan WalletConnect kedaluwarsa. Muat ulang kode QR dapp dan coba lagi.",
@@ -3353,13 +3532,6 @@
         "desc": "Gunakan sidik jari/Face ID untuk membuka kunci"
       }
     },
-    "ReserveGasPopup": {
-      "doNotReserve": "Jangan sisihkan Gas",
-      "normal": "Lambat",
-      "title": "Sisihkan Gas",
-      "fast": "Normal",
-      "instant": "Cepat"
-    },
     "NoLongerSupports": {
       "title": "Alamat dompet mobile tidak lagi didukung",
       "button": "Mengerti",
@@ -3400,7 +3572,8 @@
       },
       "alertText": "DApp pihak ketiga: untuk masalah penggunaan, silakan hubungi dukungan DApp. Rabby hanya menyediakan akses melihat.",
       "title": "Tangkapan Layar untuk Melaporkan Bug",
-      "submitFailed": "Gagal mengirim."
+      "submitFailed": "Gagal mengirim.",
+      "includeAddress": "Bagikan alamat untuk pemecahan masalah"
     },
     "submitFeedbackSuccessModal": {
       "desc": "Dikirim Berhasil!"
@@ -3457,7 +3630,8 @@
     "time": {
       "mins": "{{t}} menit",
       "hour": "{{t}} jam",
-      "hours": "{{t}} jam"
+      "hours": "{{t}} jam",
+      "ago": "{{time}} yang lalu"
     },
     "themeMode": {
       "option_Dark": "Gelap",
@@ -3551,7 +3725,8 @@
     "SavedSeedPhrase": "Saya telah menyimpan frasa benih",
     "from": "Dari",
     "to": "Ke",
-    "copiedSuccessfully": "Berhasil disalin"
+    "copiedSuccessfully": "Berhasil disalin",
+    "failed": "Gagal"
   },
   "background": {
     "error": {

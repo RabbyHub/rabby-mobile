@@ -10,6 +10,7 @@ import {
   ViewStyle,
 } from 'react-native';
 import Animated, {
+  useDerivedValue,
   AnimatedStyle,
   Easing,
   Extrapolate,
@@ -26,7 +27,7 @@ import {
   HOME_TOP_HEADER_SIZES,
   SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING,
 } from '@/constant/home';
-import { useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Gesture } from 'react-native-gesture-handler';
 import { triggerImpact } from '@/utils/common';
 import { useMemoizedFn } from 'ahooks';
@@ -49,6 +50,34 @@ const AnimatedActivityIndicator =
   Animated.createAnimatedComponent(ActivityIndicator);
 
 // type IOSPulldownRefreshType = boolean | 'manual';
+
+/**
+ * Latch the native visible-content anchor off once a pull-to-refresh starts.
+ *
+ * #2302 disabled `maintainVisibleContentPosition` while the iOS refresh
+ * placeholder changes height, but re-enabled it as soon as the pull distance
+ * reached zero. That re-enable re-anchors the first row against the pre-collapse
+ * layout: the list first settles at the right position and then jumps down by
+ * the collapsed header height, leaving a blank band that only clears on the next
+ * user scroll (#1285).
+ *
+ * Once suspended, keep it suspended for the lifetime of the list: the anchor is
+ * only useful when rows are prepended, and these lists replace their dataset on
+ * refresh rather than prepending into it.
+ */
+export function useSuspendedVisibleAnchor(pullDistance: SharedValue<number>) {
+  const svIsPullRefreshVisible = useDerivedValue(() => pullDistance.value > 0);
+  const isPullRefreshVisible = useValueFromSharedValue(svIsPullRefreshVisible);
+  const [suspended, setSuspended] = useState(isPullRefreshVisible);
+
+  useEffect(() => {
+    if (isPullRefreshVisible) {
+      setSuspended(true);
+    }
+  }, [isPullRefreshVisible]);
+
+  return suspended;
+}
 
 export function useIOSPulldownRefreshStates() {
   const pullDistance = useSharedValue(0);
@@ -80,7 +109,19 @@ export const usePulldownRefreshGesture = <
     useIOSPulldownRefreshStates();
 
   const onJsPulldownRefresh = useMemoizedFn(async () => {
-    await prop_onJsPulldownRefresh?.({ svIsManualRefreshing });
+    try {
+      await prop_onJsPulldownRefresh?.({ svIsManualRefreshing });
+    } finally {
+      // Completing the gesture's request must not depend on a consumer
+      // observing a separate loading-state transition.
+      setPulldownRefreshStage({
+        state: 'finished',
+        svIsRefreshing,
+        svIsManualRefreshing,
+        pullDistance,
+        indicatorSpaceHeight: pulldownRefreshSizes.homeHeaderHeight,
+      });
+    }
   });
 
   const startValues = useSharedValue({
@@ -92,6 +133,7 @@ export const usePulldownRefreshGesture = <
     Gesture.Pan()
       .shouldCancelWhenOutside(false)
       .activeOffsetY([-8, 8])
+      .failOffsetX([-24, 24])
       .maxPointers(1)
       .onStart(event => {
         startValues.value.startedAtTop = scrollViewYValue.value <= 5;
@@ -112,7 +154,10 @@ export const usePulldownRefreshGesture = <
           }
         }
       })
-      .onEnd(() => {
+      .onEnd((_event, success) => {
+        // An ACTIVE gesture cancelled by navigation or another handler still
+        // reaches onEnd. Only a completed pull should start a refresh.
+        if (!success) return;
         pullRefresh: {
           const hasImpactOnPanup = startValues.value.hasImpactOnPanup;
           if (
@@ -144,6 +189,20 @@ export const usePulldownRefreshGesture = <
             startValues.value.hasImpactOnPanup = false;
           }
         }
+      })
+      .onFinalize(() => {
+        // Reset failed/cancelled pulls, including those that never activated,
+        // without interrupting an already pending refresh.
+        if (!svIsRefreshing.value) {
+          setPulldownRefreshStage({
+            state: 'finished',
+            svIsRefreshing,
+            svIsManualRefreshing,
+            pullDistance,
+            indicatorSpaceHeight: pulldownRefreshSizes.homeHeaderHeight,
+          });
+        }
+        startValues.value.hasImpactOnPanup = false;
       }),
   );
 
@@ -176,7 +235,6 @@ export const usePulldownRefreshStyles = ({
   indicatorSpaceHeight,
   pullDistanceMaxValue = 56,
 }: HooksInputs) => {
-  const scrHeight = Dimensions.get('screen').height;
   const { pullDistance, svIsRefreshing, svIsManualRefreshing } = states;
 
   // rotate deg based on pullDistance, max rotate 360deg
@@ -196,6 +254,9 @@ export const usePulldownRefreshStyles = ({
     return {
       height: interpolate(
         pullDistance.value,
+        // Keep overpull visible while dragging. The refreshing stage animates
+        // back to indicatorSpaceHeight on release; capping here at that height
+        // would pin the list before activation and hide the rebound animation.
         [0, scrHeight * 0.5 - HOME_TOP_HEADER_SIZES.tabInnerHomeTopOffset],
         [0, scrHeight * 0.5 - HOME_TOP_HEADER_SIZES.tabInnerHomeTopOffset],
         Extrapolate.CLAMP,

@@ -46,11 +46,9 @@ import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHisto
 import {
   CUSTOM_HISTORY_ACTION,
   CUSTOM_HISTORY_TITLE_TYPE,
-  LendingReportType,
-  LendingSignType,
 } from '@/screens/Transaction/components/type';
 import { useRefreshHistoryId } from '../../hooks';
-import { APP_VERSIONS, INTERNAL_REQUEST_SESSION } from '@/constant';
+import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import { apiProvider } from '@/core/apis';
 import { Button } from '@/components2024/Button';
 import { MINI_SIGN_ERROR } from '@/components2024/MiniSignV2/state/SignatureManager';
@@ -75,7 +73,6 @@ import {
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import type { IAvailableRepayToken } from '../RepayTokenModal';
-import { stats } from '@/utils/stats';
 import { isZeroAmount } from '../../utils/number';
 import { Text } from '@/components/Typography';
 import { switchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
@@ -94,7 +91,6 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
   reserve,
   userSummary,
   onClose,
-  source,
 }) => {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
   const [_amount, setAmount] = useState<string | undefined>(undefined);
@@ -496,10 +492,6 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
           throw new Error('no txs');
         }
         let results: string[] = [];
-        const signType =
-          canShowDirectSubmit && !forceFullSign
-            ? LendingSignType.Simplified
-            : LendingSignType.Full;
         if (canShowDirectSubmit && !forceFullSign) {
           try {
             results = await openDirect({
@@ -549,34 +541,6 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
           );
         }
 
-        const poolReserve = formattedPoolReservesAndIncentives.find(item =>
-          isSameAddress(item.underlyingAsset, reserve.underlyingAsset),
-        );
-        const usdValue = poolReserve
-          ? new BigNumber(amount || '0')
-              .multipliedBy(
-                BigNumber(
-                  poolReserve.formattedPriceInMarketReferenceCurrency || '0',
-                ),
-              )
-              .toString()
-          : '0';
-
-        stats.report('aaveInternalTx', {
-          tx_type: isAtTokenRepay
-            ? LendingReportType.RepayWithAToken
-            : LendingReportType.Repay,
-          chain: chainInfo?.serverId || '',
-          tx_id: txId || '',
-          user_addr: currentAccount.address || '',
-          address_type: currentAccount.type || '',
-          usd_value: usdValue,
-          create_at: Date.now(),
-          app_version: APP_VERSIONS.fromNative || '0',
-          signType,
-          ...(source ? { source } : {}),
-        });
-
         refresh();
         toast.success(
           `${t('page.Lending.repayDetail.actions')} ${t(
@@ -599,15 +563,10 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
       txsForMiniApproval,
       amount,
       canShowDirectSubmit,
-      formattedPoolReservesAndIncentives,
-      isAtTokenRepay,
-      chainInfo?.serverId,
       refresh,
       t,
       onClose,
       openDirect,
-      reserve.underlyingAsset,
-      source,
       buildTransactions,
     ],
   );
@@ -886,7 +845,6 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
   reserve,
   userSummary,
   onClose,
-  source,
 }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
@@ -1036,14 +994,12 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
           reserve={reserve}
           userSummary={userSummary}
           onClose={onClose}
-          source={source}
         />
       ) : repayToken ? (
         <RepayWithCollateral
           onClose={onClose}
           repayToken={repayToken}
           defaultCollateralToken={defaultCollateralToken}
-          source={source}
         />
       ) : null}
     </AutoLockView>

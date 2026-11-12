@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import dayjs from 'dayjs';
 import { Dimensions, StyleSheet, TextStyle, View } from 'react-native';
 import BigNumber from 'bignumber.js';
@@ -8,9 +8,9 @@ import { useThemeColors, useThemeStyles } from '@/hooks/theme';
 import { Button, Text } from '@/components';
 import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
 import { Media } from '@/components/Media';
-import { IconDefaultNFT, IconNumberNFT } from '@/assets/icons/nft';
+import { IconDefaultNFT } from '@/assets/icons/nft';
 import { CHAINS_ENUM } from '@/constant/chains';
-import { createGetStyles, makeDebugBorder } from '@/utils/styles';
+import { createGetStyles } from '@/utils/styles';
 import AutoLockView from '@/components/AutoLockView';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { useTranslation } from 'react-i18next';
@@ -43,8 +43,6 @@ const LAYOUT = {
 };
 
 function FooterComponent({
-  collectionName,
-  token,
   onPressSend,
 }: Pick<NFTDetailPopupProps, 'collectionName' | 'token'> & {
   onPressSend: () => void;
@@ -119,7 +117,7 @@ export const NFTDetailPopupInner = ({
   collectionName,
 }: NFTDetailPopupProps) => {
   const { t } = useTranslation();
-  const { colors, styles } = useThemeStyles(getStyle);
+  const { styles } = useThemeStyles(getStyle);
 
   const price = useMemo(() => {
     if (token.usd_price) {
@@ -248,7 +246,7 @@ const getStyle = createGetStyles(colors => ({
   nftCount: {
     color: colors['neutral-title2'],
     fontSize: 15,
-    fontWeight: '600',
+    fontWeight: '500',
   },
   details: {
     width: '100%',
@@ -261,7 +259,7 @@ const getStyle = createGetStyles(colors => ({
   title: {
     color: colors['neutral-title-1'],
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '500',
   },
   subtitle: {
     flexDirection: 'row',

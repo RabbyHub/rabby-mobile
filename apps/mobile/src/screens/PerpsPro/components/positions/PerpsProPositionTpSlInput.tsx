@@ -1,18 +1,29 @@
 import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
 import { Text, TextInput } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
+import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import { createGetStyles2024 } from '@/utils/styles';
-import React, { useState } from 'react';
+import React, { useLayoutEffect, useState } from 'react';
 import { Pressable, View } from 'react-native';
 
 import {
   sanitizePerpsProPriceEditingInput,
   sanitizePerpsProPriceInput,
 } from '../../model/trade';
-import { resolvePerpsProFieldBackground } from '../common/perpsProVisual';
-import { PerpsProSelectCaret } from '../common/PerpsProSelectCaret';
+import {
+  PERPS_PRO_DIALOG_FIELD,
+  resolvePerpsProDialogFieldBackground,
+} from '../common/perpsProDialogVisual';
+import { resolvePerpsProFittedFontSize } from '../common/perpsProFitFontSize';
+import { PerpsProTextWidthProbe } from '../common/PerpsProTextWidthProbe';
+import RcSelectCaret from '@/assets2024/icons/perps/PerpsProTpSlSelectCaret.svg';
 import { PerpsProDecimalTextInput } from '../trade/PerpsProDecimalTextInput';
 import { PerpsProPositionTpSlBottomSheetTextInput } from './PerpsProPositionTpSlBottomSheetTextInput';
+
+const FLOATING_LABEL_FONT_SIZE = 10;
+const FLOATING_LABEL_MIN_FONT_SIZE = 8;
+const PLACEHOLDER_FONT_SIZE = 14;
+const PLACEHOLDER_MIN_FONT_SIZE = 10;
 
 const withThousandsSeparators = (value: string) => {
   const [integer = '', fraction] = value.split('.');
@@ -27,11 +38,13 @@ export const PerpsProPositionTpSlInput: React.FC<{
   disabled: boolean;
   invalid?: boolean;
   label: string;
+  placeholder?: string;
   maxDecimals: number;
   negative?: boolean;
   onChangeText: (value: string) => void;
   onPressMode?: () => void;
   priceSzDecimals?: number;
+  registerKeyboardRevealInput?: (input: TextInput) => (() => void) | undefined;
   testID: string;
   unit?: string;
   value: string;
@@ -41,18 +54,42 @@ export const PerpsProPositionTpSlInput: React.FC<{
     disabled,
     invalid = false,
     label,
+    placeholder = label,
     maxDecimals,
     negative = false,
     onChangeText,
     onPressMode,
     priceSzDecimals,
+    registerKeyboardRevealInput,
     testID,
     unit,
     value,
   }) => {
     const { colors2024, styles } = useTheme2024({ getStyle });
     const inputRef = React.useRef<TextInput>(null);
+    useLayoutEffect(() => {
+      if (IS_ANDROID && inputRef.current) {
+        return registerKeyboardRevealInput?.(inputRef.current);
+      }
+    }, [registerKeyboardRevealInput]);
     const [focused, setFocused] = useState(false);
+    // Long translations must shrink on one line instead of wrapping onto the
+    // value row.
+    const [inputAreaWidth, setInputAreaWidth] = useState(0);
+    const [labelWidth, setLabelWidth] = useState(0);
+    const [placeholderWidth, setPlaceholderWidth] = useState(0);
+    const labelFontSize = resolvePerpsProFittedFontSize({
+      availableWidth: inputAreaWidth,
+      baseFontSize: FLOATING_LABEL_FONT_SIZE,
+      minFontSize: FLOATING_LABEL_MIN_FONT_SIZE,
+      naturalWidth: labelWidth,
+    });
+    const placeholderFontSize = resolvePerpsProFittedFontSize({
+      availableWidth: inputAreaWidth,
+      baseFontSize: PLACEHOLDER_FONT_SIZE,
+      minFontSize: PLACEHOLDER_MIN_FONT_SIZE,
+      naturalWidth: placeholderWidth,
+    });
     const normalizePriceValue = React.useCallback(
       (nextValue: string) =>
         sanitizePerpsProPriceEditingInput(nextValue, priceSzDecimals ?? 0),
@@ -71,11 +108,16 @@ export const PerpsProPositionTpSlInput: React.FC<{
 
     return (
       <View
-        style={[styles.field, invalid ? styles.invalidField : null]}
+        style={[
+          styles.field,
+          onPressMode ? styles.modeField : null,
+          invalid ? styles.invalidField : null,
+        ]}
         testID={`${testID}-field`}>
         <Pressable
           accessible={false}
-          disabled={disabled}
+          disabled={disabled || (IS_IOS && focused)}
+          onLayout={event => setInputAreaWidth(event.nativeEvent.layout.width)}
           onPress={() => {
             if (!focused) {
               inputRef.current?.focus();
@@ -83,19 +125,41 @@ export const PerpsProPositionTpSlInput: React.FC<{
           }}
           style={styles.inputArea}
           testID={`${testID}-focus-proxy`}>
+          <PerpsProTextWidthProbe
+            onWidth={setLabelWidth}
+            style={styles.floatingLabel}
+            text={label}
+          />
+          <PerpsProTextWidthProbe
+            onWidth={setPlaceholderWidth}
+            style={styles.centeredPlaceholder}
+            text={placeholder}
+          />
           {showFloatingLabel ? (
             <Text
+              numberOfLines={1}
               pointerEvents="none"
-              style={styles.floatingLabel}
+              style={[
+                styles.floatingLabel,
+                labelFontSize !== FLOATING_LABEL_FONT_SIZE && {
+                  fontSize: labelFontSize,
+                },
+              ]}
               testID={`${testID}-label`}>
               {label}
             </Text>
           ) : (
             <Text
+              numberOfLines={1}
               pointerEvents="none"
-              style={styles.centeredPlaceholder}
+              style={[
+                styles.centeredPlaceholder,
+                placeholderFontSize !== PLACEHOLDER_FONT_SIZE && {
+                  fontSize: placeholderFontSize,
+                },
+              ]}
               testID={`${testID}-placeholder`}>
-              {label}
+              {placeholder}
             </Text>
           )}
           {!focused && value ? (
@@ -118,8 +182,9 @@ export const PerpsProPositionTpSlInput: React.FC<{
           <PerpsProDecimalTextInput
             accessibilityLabel={accessibilityLabel}
             editable={!disabled}
+            caretHidden={IS_ANDROID ? !focused : undefined}
             focusCursorAtEnd
-            focusCursorAtEndMode="initialFocus"
+            focusCursorAtEndMode="nativeFocus"
             inputComponent={PerpsProPositionTpSlBottomSheetTextInput}
             maxFontSizeMultiplier={1.2}
             maxDecimals={maxDecimals}
@@ -156,7 +221,9 @@ export const PerpsProPositionTpSlInput: React.FC<{
             <Text numberOfLines={1} style={styles.unit}>
               {unit}
             </Text>
-            <PerpsProSelectCaret
+            <RcSelectCaret
+              width={16}
+              height={16}
               color={colors2024['neutral-secondary']}
               testID={`${testID}-caret`}
             />
@@ -172,48 +239,48 @@ PerpsProPositionTpSlInput.displayName = 'PerpsProPositionTpSlInput';
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   field: {
     alignItems: 'center',
-    backgroundColor: resolvePerpsProFieldBackground({
-      darkBackground: colors2024['neutral-bg-2'],
-      isLight,
-    }),
+    backgroundColor: resolvePerpsProDialogFieldBackground(colors2024, isLight),
     borderRadius: 6,
     borderColor: 'transparent',
     borderWidth: 1,
     flex: 1,
     flexDirection: 'row',
     gap: 4,
-    height: 40,
+    height: PERPS_PRO_DIALOG_FIELD.height,
     minWidth: 0,
-    paddingHorizontal: 8,
+    // Include the 1px validation border in the Figma 12px inset.
+    paddingHorizontal: 11,
   },
+  modeField: { paddingRight: 7 },
   invalidField: { borderColor: colors2024['red-default'] },
   inputArea: {
     flex: 1,
-    height: 40,
+    height: PERPS_PRO_DIALOG_FIELD.height,
     minWidth: 0,
     position: 'relative',
   },
   floatingLabel: {
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 10,
+    fontSize: FLOATING_LABEL_FONT_SIZE,
     fontWeight: '500',
     left: 0,
     lineHeight: 12,
     position: 'absolute',
     right: 0,
-    top: 4,
+    top: PERPS_PRO_DIALOG_FIELD.labelTop,
   },
   centeredPlaceholder: {
-    color: colors2024['neutral-info'],
+    color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    fontWeight: '500',
+    fontSize: PLACEHOLDER_FONT_SIZE,
+    fontWeight: '400',
     left: 0,
     lineHeight: 18,
     position: 'absolute',
     right: 0,
-    top: 11,
+    // A lone 18pt line centered in the 46pt field (Figma 86609:305215).
+    top: (PERPS_PRO_DIALOG_FIELD.height - 18) / 2,
   },
   formattedValue: {
     ...PERPS_PRO_NUMBER_STYLE,
@@ -225,7 +292,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     lineHeight: 18,
     position: 'absolute',
     right: 0,
-    top: 18,
+    top: PERPS_PRO_DIALOG_FIELD.valueTop,
   },
   input: {
     ...PERPS_PRO_NUMBER_STYLE,
@@ -233,15 +300,16 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     fontWeight: '500',
-    height: 40,
+    height: PERPS_PRO_DIALOG_FIELD.height,
     includeFontPadding: false,
     lineHeight: 18,
-    paddingBottom: 0,
     paddingHorizontal: 0,
-    paddingTop: 12,
+    ...PERPS_PRO_DIALOG_FIELD.inputPadding,
     textAlignVertical: 'center',
   },
-  hiddenInput: { color: 'transparent' },
+  // Android Fabric treats transparent black (ARGB 0) as an unset text color.
+  // Keep alpha zero with nonzero RGB, preserving the native view's opacity.
+  hiddenInput: { color: IS_ANDROID ? 'rgba(255,255,255,0)' : 'transparent' },
   inputWithNegative: { paddingLeft: 9 },
   negativePrefix: {
     color: colors2024['neutral-title-1'],
@@ -251,13 +319,13 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     left: 0,
     lineHeight: 18,
     position: 'absolute',
-    top: 18,
+    top: PERPS_PRO_DIALOG_FIELD.valueTop,
   },
   mode: {
     alignItems: 'center',
     flexDirection: 'row',
     gap: 4,
-    height: 40,
+    height: PERPS_PRO_DIALOG_FIELD.height,
     justifyContent: 'flex-end',
   },
   unit: {

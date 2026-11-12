@@ -83,6 +83,11 @@ class ApisPerps {
   setHasClosedLearnMoreCard = (value: boolean) =>
     perpsServiceApi.setHasClosedLearnMoreCard(value);
   getHasClosedLearnMoreCard = () => perpsServiceApi.getHasClosedLearnMoreCard();
+  getSimpleChartPreference = () => perpsServiceApi.getSimpleChartPreference();
+  setSimpleChartPreference = (
+    value: Parameters<typeof perpsServiceApi.setSimpleChartPreference>[0],
+  ) => perpsServiceApi.setSimpleChartPreference(value);
+
   setSelectedKlineInterval = (
     value: Parameters<typeof perpsServiceApi.setSelectedKlineInterval>[0],
   ) => perpsServiceApi.setSelectedKlineInterval(value);

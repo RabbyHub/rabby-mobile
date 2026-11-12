@@ -24,7 +24,6 @@ import { QuoteList } from './BridgeQuotes';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { openapi } from '@/core/request';
 import pRetry from 'p-retry';
-import { stats } from '@/utils/stats';
 import { bridgeToken, buildBridgeToken } from '../hooks/bridge';
 import { toast } from '@/components2024/Toast';
 import { useMemoizedFn, useRequest } from 'ahooks';
@@ -33,7 +32,7 @@ import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
 import BridgeToken from './BridgeToken';
 import BridgeSwitchBtn from './BridgeSwitchBtn';
 import { findChainByEnum, findChainByServerID } from '@/utils/chain';
-import BridgeShowMore, { RecommendFromToken } from './BridgeShowMore';
+import BridgeShowMore from './BridgeShowMore';
 import { tokenPriceImpact, useBridge } from '../hooks/token';
 import { SWAP_FEE_RATE } from '@/screens/Swap/hooks/fee';
 import { Button } from '@/components2024/Button';
@@ -57,8 +56,6 @@ import { BridgePendingTxItem } from './PendingTxItem';
 import { last } from 'lodash';
 import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
 import type { BridgeTxHistoryItem } from '@/core/services/transactionHistory';
-import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
-import { matomoRequestEvent } from '@/utils/analytics';
 import type { DirectSignBtnMethods } from '@/components2024/DirectSignBtn';
 import { DirectSignBtn } from '@/components2024/DirectSignBtn';
 import { useMiniSigner } from '@/hooks/useSigner';
@@ -76,11 +73,7 @@ import { Text } from '@/components/Typography';
 import { MarketClosedTip } from '@/components/Token/MarketClosedTip';
 import { storeApiExpSettingData } from '@/hooks/appSettings';
 import type { FormAmountMode } from '@/utils/form';
-import {
-  FormValuesOnSubmit,
-  createAmountComparer,
-  shouldIgnoreAmountChangeInMaxMode,
-} from '@/utils/form';
+import { FormValuesOnSubmit, createAmountComparer } from '@/utils/form';
 import { tokenAmountBn } from '@/screens/Swap/utils';
 import { buildTx as buildBridgeTx } from '@rabby-wallet/rabby-bridge';
 import { useMiniSignerEffectPause } from '@/hooks/useMiniSignerEffectPause';
@@ -96,7 +89,6 @@ import {
 import { useRegressionScenario } from '@/devtools/regressionScenarios/react';
 import {
   BOTTOM_BUTTON_SINGLE_HEIGHT,
-  BOTTOM_BUTTON_TITLE_STYLE,
   BOTTOM_BUTTON_TOP_OFFSET,
   getBottomButtonBottomOffset,
   RootNames,
@@ -193,12 +185,10 @@ function isSameRegressionTokenId(left?: string | null, right?: string | null) {
 const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
   screen: {
     backgroundColor: colors2024['neutral-bg-1'],
-    overflow: 'visible',
   },
   container: {
     flex: 1,
     paddingTop: 16,
-    overflow: 'visible',
   },
   noRecoomedTokenText: {
     fontSize: 14,
@@ -286,7 +276,7 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
   input: {
     paddingRight: 10,
     fontSize: 20,
-    fontWeight: '600',
+    fontWeight: '500',
     position: 'relative',
     flex: 1,
     color: colors['neutral-title-1'],
@@ -311,9 +301,6 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
   },
   riskWarning: {
     marginBottom: BOTTOM_BUTTON_TOP_OFFSET,
-  },
-  bottomButtonTitle: {
-    ...BOTTOM_BUTTON_TITLE_STYLE,
   },
   marketClosedTip: {
     marginHorizontal: 24,
@@ -389,9 +376,6 @@ export const BridgeContent = ({
     handleAmountChange,
     feeRate,
     feeTier,
-
-    recommendFromToken,
-    fillRecommendFromToken,
 
     inSufficient,
 
@@ -628,19 +612,10 @@ export const BridgeContent = ({
   const {
     isSupportedChain,
     data: externalDapps,
-    loading: externalDappsLoading,
     openTab: _openTab,
   } = useExternalSwapBridgeDapps(chains, 'bridge', sceneActive);
   const openTab = useMemoizedFn((url: string) => {
     _openTab(url);
-    const origin = safeGetOrigin(url);
-    if (origin) {
-      matomoRequestEvent({
-        category: 'Websites Usage',
-        action: 'Website_Visit_Other',
-        label: origin,
-      });
-    }
   });
   const [externalDappOpen, setExternalDappOpen] = useState(false);
 
@@ -680,23 +655,13 @@ export const BridgeContent = ({
                   .toString(),
                 toChainId: toToken.chain,
                 toTokenId: toToken.id,
-                slippage: new BigNumber(slippageState).div(100).toString(10),
+                slippage: new BigNumber(slippage).div(100).toString(10),
                 quoteKey: selectedBridgeQuote.quote_key || {},
               },
               openapi,
             ),
           { retries: 1 },
         );
-        stats.report('bridgeQuoteResult', {
-          aggregatorIds: selectedBridgeQuote.aggregator.id,
-          bridgeId: selectedBridgeQuote.bridge_id,
-          fromChainId: fromToken.chain,
-          fromTokenId: fromToken.id,
-          toTokenId: toToken.id,
-          toChainId: toToken.chain,
-          status: tx ? 'success' : 'fail',
-          payAmount: amount,
-        });
         const addBridgeTxHistoryObj = {
           address: currentAccount?.address!,
           fromChainId: findChainByServerID(fromToken?.chain || '')?.id || 0,
@@ -772,16 +737,6 @@ export const BridgeContent = ({
               ),
           ),
         );
-        stats.report('bridgeQuoteResult', {
-          aggregatorIds: selectedBridgeQuote.aggregator.id,
-          bridgeId: selectedBridgeQuote.bridge_id,
-          fromChainId: fromToken.chain,
-          fromTokenId: fromToken.id,
-          toTokenId: toToken.id,
-          toChainId: toToken.chain,
-          status: 'fail',
-          payAmount: amount,
-        });
         console.log(error);
       } finally {
         setReloadTxRefreshPaused(false);
@@ -880,21 +835,11 @@ export const BridgeContent = ({
               .toString(),
             toChainId: toToken.chain,
             toTokenId: toToken.id,
-            slippage: new BigNumber(slippageState).div(100).toString(10),
+            slippage: new BigNumber(slippage).div(100).toString(10),
             quoteKey: selectedBridgeQuote.quote_key || {},
           },
           openapi,
         );
-        stats.report('bridgeQuoteResult', {
-          aggregatorIds: selectedBridgeQuote.aggregator.id,
-          bridgeId: selectedBridgeQuote.bridge_id,
-          fromChainId: fromToken.chain,
-          fromTokenId: fromToken.id,
-          toTokenId: toToken.id,
-          toChainId: toToken.chain,
-          status: tx ? 'success' : 'fail',
-          payAmount: amount,
-        });
 
         if (
           expectedBuildKey &&
@@ -934,7 +879,7 @@ export const BridgeContent = ({
               tx: tx,
               rabby_fee: selectedBridgeQuote.rabby_fee.usd_value,
               fee_rate: Number(feeRate),
-              slippage: new BigNumber(slippageState).div(100).toNumber(),
+              slippage: new BigNumber(slippage).div(100).toNumber(),
               duration: selectedBridgeQuote.duration,
             },
             account: currentAccount,
@@ -966,16 +911,6 @@ export const BridgeContent = ({
               ),
           ),
         );
-        stats.report('bridgeQuoteResult', {
-          aggregatorIds: selectedBridgeQuote.aggregator.id,
-          bridgeId: selectedBridgeQuote.bridge_id,
-          fromChainId: fromToken.chain,
-          fromTokenId: fromToken.id,
-          toTokenId: toToken.id,
-          toChainId: toToken.chain,
-          status: 'fail',
-          payAmount: amount,
-        });
         console.debug(error);
       }
     }
@@ -1276,7 +1211,7 @@ export const BridgeContent = ({
             toChainId: findChainByServerID(toToken?.chain || '')?.id || 0,
             fromToken: fromToken!,
             toToken: toToken!,
-            slippage: new BigNumber(slippageState).div(100).toNumber(),
+            slippage: new BigNumber(slippage).div(100).toNumber(),
             fromAmount: Number(amount),
             dexId: selectedBridgeQuote?.aggregator.id!,
             toAmount: Number(selectedBridgeQuote?.to_token_amount || 0),
@@ -1335,12 +1270,8 @@ export const BridgeContent = ({
     Number(amount) > 0 &&
     !quoteLoading &&
     !quoteList?.length;
-  const [bridgeProgressVisible, setBridgeProgressVisible] = useState(false);
-  const showStickyInfo =
-    !!fromToken &&
-    !!toToken &&
-    !noQuote &&
-    !(bridgeProgressVisible && !amountAvailable);
+  const showStickyInfo = !!fromToken && !!toToken && !noQuote;
+  const hideBridgeProgress = amountAvailable || !!selectedBridgeQuote;
   const showClosedMarketTip =
     (!!fromToken || !!toToken) && quoteBlockedByClosedMarket;
 
@@ -1616,6 +1547,10 @@ export const BridgeContent = ({
 
   const showRiskTips =
     isSlippageHigh || isSlippageLow || showLoss || miniSignGasFeeTooHigh;
+  const footerTipContent =
+    !isSupportedChain && externalDapps.length < 1
+      ? t('component.externalSwapBrideDappPopup.noDapps')
+      : undefined;
   const showRiskConfirm = showRiskTips && !btnDisabled && !miniSignLoading;
   const [riskChecked, setRiskChecked] = useState(false);
   const riskConfirmKey = useMemo(
@@ -1687,6 +1622,43 @@ export const BridgeContent = ({
     [setSlippage, setSlippageChanged],
   );
 
+  const stickyInfo = showStickyInfo ? (
+    <BridgeShowMore
+      insufficient={inSufficient}
+      duration={selectedBridgeQuote?.duration}
+      supportDirectSign={canShowDirectSubmit}
+      openFeePopup={openFeePopup}
+      sourceName={selectedBridgeQuote?.aggregator.name || ''}
+      sourceLogo={selectedBridgeQuote?.aggregator.logo_url || ''}
+      slippage={slippageState}
+      displaySlippage={slippage}
+      onSlippageChange={handleSlippageChange}
+      fromToken={fromToken}
+      toToken={toToken}
+      amount={amount || 0}
+      toAmount={selectedBridgeQuote?.to_token_amount}
+      openQuotesList={openQuotesList}
+      quoteLoading={quoteLoading}
+      slippageError={isSlippageHigh || isSlippageLow}
+      autoSlippage={autoSlippage}
+      isCustomSlippage={isCustomSlippage}
+      setAutoSlippage={setAutoSlippage}
+      setIsCustomSlippage={setIsCustomSlippage}
+      type="bridge"
+      isRabbyFeeFree={feeRate === SWAP_FEE_RATE.FREE}
+      isRabbyFeeHalf={feeRate === SWAP_FEE_RATE.HALF}
+      isBestQuote={
+        !!bestQuoteId &&
+        !!selectedBridgeQuote &&
+        bestQuoteId?.aggregatorId === selectedBridgeQuote.aggregator.id &&
+        bestQuoteId?.bridgeId === selectedBridgeQuote.bridge_id
+      }
+      onDepositPopupVisibleChange={setDepositQuoteRefreshPaused}
+      onSlippageOptionsOpenChange={setSlippageOptionsQuoteRefreshPaused}
+      onGasSettingsOpenChange={setGasSettingsQuoteRefreshPaused}
+    />
+  ) : null;
+
   const footerBottomOffset = getBottomButtonBottomOffset(bottom);
   const footerReserveHeight =
     BOTTOM_BUTTON_TOP_OFFSET +
@@ -1712,6 +1684,7 @@ export const BridgeContent = ({
           <AccountSwitcherModal forScene="MakeTransactionAbout" inScreen />
         )}
         <BridgePendingTransactionsController
+          isForMultipleAddress={isForMultipleAddress}
           ref={pendingTransactionsRef}
           disableHeaderRight={disableHeaderRight}
           enabled={sceneActive}
@@ -1729,6 +1702,7 @@ export const BridgeContent = ({
             <View style={styles.cardContainer}>
               <BridgeToken
                 type="from"
+                sceneActive={sceneActive}
                 slider={slider}
                 onChangeSlider={onChangeSlider}
                 disabled={!isSupportedChain}
@@ -1795,91 +1769,45 @@ export const BridgeContent = ({
             </View>
           ) : null}
 
-          <View>
-            {showStickyInfo && (
-              <BridgeShowMore
-                insufficient={inSufficient}
-                duration={selectedBridgeQuote?.duration}
-                supportDirectSign={canShowDirectSubmit}
-                openFeePopup={openFeePopup}
-                sourceName={selectedBridgeQuote?.aggregator.name || ''}
-                sourceLogo={selectedBridgeQuote?.aggregator.logo_url || ''}
-                slippage={slippageState}
-                displaySlippage={slippage}
-                onSlippageChange={handleSlippageChange}
-                fromToken={fromToken}
-                toToken={toToken}
-                amount={amount || 0}
-                toAmount={selectedBridgeQuote?.to_token_amount}
-                openQuotesList={openQuotesList}
-                quoteLoading={quoteLoading}
-                slippageError={isSlippageHigh || isSlippageLow}
-                autoSlippage={autoSlippage}
-                isCustomSlippage={isCustomSlippage}
-                setAutoSlippage={setAutoSlippage}
-                setIsCustomSlippage={setIsCustomSlippage}
-                type="bridge"
-                isRabbyFeeFree={feeRate === SWAP_FEE_RATE.FREE}
-                isRabbyFeeHalf={feeRate === SWAP_FEE_RATE.HALF}
-                isBestQuote={
-                  !!bestQuoteId &&
-                  !!selectedBridgeQuote &&
-                  bestQuoteId?.aggregatorId ===
-                    selectedBridgeQuote.aggregator.id &&
-                  bestQuoteId?.bridgeId === selectedBridgeQuote.bridge_id
-                }
-                onDepositPopupVisibleChange={setDepositQuoteRefreshPaused}
-                onSlippageOptionsOpenChange={
-                  setSlippageOptionsQuoteRefreshPaused
-                }
-                onGasSettingsOpenChange={setGasSettingsQuoteRefreshPaused}
-              />
-            )}
-            {showClosedMarketTip && (
-              <MarketClosedTip style={styles.marketClosedTip} />
-            )}
-            {noQuote && (
+          <BridgePendingTxItem
+            userAddress={currentAccount?.address || ''}
+            enabled={sceneActive}
+            hidden={hideBridgeProgress}>
+            {card => (
               <>
-                {recommendFromToken ? (
-                  <RecommendFromToken
-                    token={recommendFromToken}
-                    onOk={fillRecommendFromToken}
-                  />
-                ) : (
-                  <>
-                    <Text style={styles.noRecoomedTokenText}>
-                      {t('page.bridge.no-quote-found')}
-                    </Text>
-                    <View style={{ marginHorizontal: 24, marginTop: 12 }}>
-                      <BridgeSlippage
-                        value={slippage}
-                        displaySlippage={slippage}
-                        onChange={handleSlippageChange}
-                        autoSlippage={autoSlippage}
-                        isCustomSlippage={isCustomSlippage}
-                        setAutoSlippage={setAutoSlippage}
-                        setIsCustomSlippage={setIsCustomSlippage}
-                        type="bridge"
-                        loading={quoteLoading}
-                        onOptionsOpenChange={
-                          setSlippageOptionsQuoteRefreshPaused
-                        }
-                      />
-                    </View>
-                  </>
-                )}
+                <View>
+                  {card ? null : stickyInfo}
+                  {showClosedMarketTip && (
+                    <MarketClosedTip style={styles.marketClosedTip} />
+                  )}
+                  {noQuote && (
+                    <>
+                      <Text style={styles.noRecoomedTokenText}>
+                        {t('page.bridge.no-quote-found')}
+                      </Text>
+                      <View style={{ marginHorizontal: 24, marginTop: 12 }}>
+                        <BridgeSlippage
+                          value={slippage}
+                          displaySlippage={slippage}
+                          onChange={handleSlippageChange}
+                          autoSlippage={autoSlippage}
+                          isCustomSlippage={isCustomSlippage}
+                          setAutoSlippage={setAutoSlippage}
+                          setIsCustomSlippage={setIsCustomSlippage}
+                          type="bridge"
+                          loading={quoteLoading}
+                          onOptionsOpenChange={
+                            setSlippageOptionsQuoteRefreshPaused
+                          }
+                        />
+                      </View>
+                    </>
+                  )}
+                </View>
+                {card}
               </>
             )}
-          </View>
-          {!amountAvailable &&
-            !selectedBridgeQuote &&
-            !recommendFromToken &&
-            currentAccount?.address && (
-              <BridgePendingTxItem
-                userAddress={currentAccount.address}
-                onDisplayChange={setBridgeProgressVisible}
-              />
-            )}
+          </BridgePendingTxItem>
         </KeyboardAwareScrollView>
 
         <View
@@ -1890,11 +1818,9 @@ export const BridgeContent = ({
             },
           ]}>
           <Tip
-            content={
-              !isSupportedChain && externalDapps.length < 1
-                ? t('component.externalSwapBrideDappPopup.noDapps')
-                : undefined
-            }>
+            noPressable={!footerTipContent}
+            isVisible={footerTipContent ? undefined : false}
+            content={footerTipContent}>
             <View>
               {showRiskConfirm ? (
                 <SignRiskWarning
@@ -1908,7 +1834,6 @@ export const BridgeContent = ({
                   ref={directSignBtnRef}
                   key={`${selectedBridgeQuote?.aggregator.id}-${selectedBridgeQuote?.bridge?.id}-${refreshId}`}
                   height={BOTTOM_BUTTON_SINGLE_HEIGHT}
-                  titleStyle={styles.bottomButtonTitle}
                   authTitle={t('page.whitelist.confirmPassword')}
                   title={t('global.confirm')}
                   loadingType="circle"
@@ -1942,7 +1867,7 @@ export const BridgeContent = ({
                   height={BOTTOM_BUTTON_SINGLE_HEIGHT}
                   onPress={handleConfirm}
                   title={btnText}
-                  titleStyle={[styles.btnTitle, styles.bottomButtonTitle]}
+                  titleStyle={styles.btnTitle}
                   loading={fetchingBridgeQuote}
                   disabled={
                     !isSupportedChain && externalDapps.length > 0

@@ -62,7 +62,8 @@ jest.mock('@/core/utils/featureActivationDiagnostics', () => ({
 
 import { RootNames } from '@/constant/layout';
 import type { Account } from '@/core/startupServices/preference';
-import { apisSingleHome } from './singleHome';
+import { act, renderHook } from '@testing-library/react-native';
+import { apisSingleHome, useSingleHomeNavigationCleanup } from './singleHome';
 
 const account = {
   address: '0x1111111111111111111111111111111111111111',
@@ -72,10 +73,15 @@ const account = {
 
 describe('single address navigation', () => {
   beforeEach(() => {
+    apisSingleHome.clearCurrentAccount(
+      mockNavigateDeprecated.mock.lastCall?.[1].params.navigationId,
+    );
+    apisSingleHome.clearCurrentAccount(
+      mockResetNavigationOnTopOfHome.mock.lastCall?.[1].params.navigationId,
+    );
     mockNavigateDeprecated.mockClear();
     mockResetNavigationOnTopOfHome.mockClear();
     mockMarkFeatureActivation.mockClear();
-    apisSingleHome.clearCurrentAccount();
   });
 
   it('prepares the account and dispatches navigation synchronously', () => {
@@ -86,7 +92,7 @@ describe('single address navigation', () => {
       RootNames.SingleAddressStack,
       {
         screen: RootNames.SingleAddressHome,
-        params: { account },
+        params: { account, navigationId: expect.any(Number) },
       },
     );
     expect(mockMarkFeatureActivation).toHaveBeenNthCalledWith(
@@ -108,8 +114,77 @@ describe('single address navigation', () => {
       RootNames.SingleAddressStack,
       {
         screen: RootNames.SingleAddressHome,
-        params: { account },
+        params: { account, navigationId: expect.any(Number) },
       },
     );
+  });
+
+  it.each([false, true])(
+    'ignores the old screen cleanup after a new navigation (same address: %s)',
+    sameAddress => {
+      apisSingleHome.navigateToSingleHome(account);
+      const oldNavigationId =
+        mockNavigateDeprecated.mock.lastCall?.[1].params.navigationId;
+      const importedAccount = sameAddress
+        ? account
+        : { ...account, address: '0x2222222222222222222222222222222222222222' };
+
+      apisSingleHome.navigateToSingleHome(importedAccount, { replace: true });
+      const newNavigationId =
+        mockResetNavigationOnTopOfHome.mock.lastCall?.[1].params.navigationId;
+      apisSingleHome.clearCurrentAccount(oldNavigationId);
+
+      expect(apisSingleHome.getCurrentAccount()).toBe(importedAccount);
+      expect(newNavigationId).toEqual(expect.any(Number));
+      expect(newNavigationId).not.toBe(oldNavigationId);
+
+      apisSingleHome.clearCurrentAccount(newNavigationId);
+      expect(apisSingleHome.getCurrentAccount()).toBeNull();
+    },
+  );
+
+  it('does not let an ownerless legacy screen clear the current navigation', () => {
+    apisSingleHome.navigateToSingleHome(account);
+    apisSingleHome.clearCurrentAccount(undefined);
+    expect(apisSingleHome.getCurrentAccount()).toBe(account);
+  });
+
+  it('updates cleanup ownership when a mounted route switches account', () => {
+    apisSingleHome.navigateToSingleHome(account);
+    const oldNavigationId =
+      mockNavigateDeprecated.mock.lastCall?.[1].params.navigationId;
+    const screen = renderHook(
+      ({ navigationId }) => useSingleHomeNavigationCleanup(navigationId),
+      { initialProps: { navigationId: oldNavigationId } },
+    );
+    const nextAccount = {
+      ...account,
+      address: '0x3333333333333333333333333333333333333333',
+    };
+    act(() => apisSingleHome.navigateToSingleHome(nextAccount));
+    const nextId =
+      mockNavigateDeprecated.mock.lastCall?.[1].params.navigationId;
+
+    screen.rerender({ navigationId: nextId });
+    expect(apisSingleHome.getCurrentAccount()).toBe(nextAccount);
+
+    screen.unmount();
+    expect(apisSingleHome.getCurrentAccount()).toBeNull();
+  });
+
+  it('preserves the new mounted route when the replaced route unmounts late', () => {
+    apisSingleHome.navigateToSingleHome(account);
+    const oldId = mockNavigateDeprecated.mock.lastCall?.[1].params.navigationId;
+    const oldScreen = renderHook(() => useSingleHomeNavigationCleanup(oldId));
+
+    act(() => apisSingleHome.navigateToSingleHome(account, { replace: true }));
+    const newId =
+      mockResetNavigationOnTopOfHome.mock.lastCall?.[1].params.navigationId;
+    const newScreen = renderHook(() => useSingleHomeNavigationCleanup(newId));
+    oldScreen.unmount();
+    expect(apisSingleHome.getCurrentAccount()).toBe(account);
+
+    newScreen.unmount();
+    expect(apisSingleHome.getCurrentAccount()).toBeNull();
   });
 });

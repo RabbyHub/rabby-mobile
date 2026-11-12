@@ -18,15 +18,49 @@ export const enum FontWeightEnum {
 }
 
 export const FontNames = {
-  sf_pro: IS_IOS ? 'SF Pro' : 'Roboto',
-  sf_pro_rounded_bold: IS_IOS ? 'SFProRounded-Bold' : 'SF-Pro-Rounded-Bold',
-  sf_pro_rounded_regular: IS_IOS
-    ? 'SFProRounded-Regular'
-    : 'SF-Pro-Rounded-Regular',
-  sf_pro_rounded_medium: IS_IOS
-    ? 'SFProRounded-Medium'
-    : 'SF-Pro-Rounded-Medium',
-  sf_pro_rounded_heavy: IS_IOS ? 'SFProRounded-Heavy' : 'SF-Pro-Rounded-Heavy',
+  sf_pro: IS_IOS ? 'System' : 'Roboto',
+};
+
+// All nine bundled weights now resolve to their exact Android font file.
+// Business 900 is Black; use RoundedFontStyles.heavy (800) when the previous
+// Heavy face is intended. iOS uses Fabric's built-in ui-rounded support; this
+// requires newArch.
+const RoundedFonts = {
+  [FontWeightEnum.thin]: { android: 'SF-Pro-Rounded-Thin', ios: '100' },
+  [FontWeightEnum.ultraLight]: {
+    android: 'SF-Pro-Rounded-Ultralight',
+    ios: '200',
+  },
+  [FontWeightEnum.light]: { android: 'SF-Pro-Rounded-Light', ios: '300' },
+  [FontWeightEnum.normal]: { android: 'SF-Pro-Rounded-Regular', ios: '400' },
+  [FontWeightEnum.medium]: { android: 'SF-Pro-Rounded-Medium', ios: '500' },
+  [FontWeightEnum.semiBold]: {
+    android: 'SF-Pro-Rounded-Semibold',
+    ios: '600',
+  },
+  [FontWeightEnum.bold]: { android: 'SF-Pro-Rounded-Bold', ios: '700' },
+  [FontWeightEnum.extraBold]: { android: 'SF-Pro-Rounded-Heavy', ios: '800' },
+  [FontWeightEnum.heavy]: { android: 'SF-Pro-Rounded-Black', ios: '900' },
+} as const;
+
+export function getRoundedFontStyle(
+  fontWeight?: TextStyle['fontWeight'],
+  platform: 'ios' | 'android' = IS_IOS ? 'ios' : 'android',
+): Pick<TextStyle, 'fontFamily' | 'fontWeight'> {
+  const face =
+    RoundedFonts[getFontWeightType(fontWeight).supertype] ||
+    RoundedFonts[FontWeightEnum.normal];
+  return platform === 'ios'
+    ? { fontFamily: 'ui-rounded', fontWeight: face.ios }
+    : { fontFamily: face.android, fontWeight: undefined };
+}
+
+// For raw styles, pass the complete family/weight pair rather than a font name.
+export const RoundedFontStyles = {
+  regular: getRoundedFontStyle('400'),
+  medium: getRoundedFontStyle('500'),
+  bold: getRoundedFontStyle('700'),
+  heavy: getRoundedFontStyle('800'),
 };
 /**
  * @description mutate fontFamily based on the input's fontFamily & fontWeight
@@ -59,50 +93,35 @@ export function getFontWeightType(fontWeight?: string | number) {
     result.finalFontWeight = FontWeightEnum.heavy;
   } else if (
     ['ultrabold', 'extrabold'].includes(fwStr) ||
-    fontWeightNumber > FontWeightEnum.heavy - 100
+    fontWeightNumber >= 800
   ) {
-    result.supertype = FontWeightEnum.bold;
+    result.supertype = FontWeightEnum.extraBold;
     result.finalFontWeight = FontWeightEnum.extraBold;
-  } else if (
-    ['bold'].includes(fwStr) ||
-    fontWeightNumber > FontWeightEnum.bold - 100
-  ) {
+  } else if (['bold'].includes(fwStr) || fontWeightNumber >= 700) {
     result.supertype = FontWeightEnum.bold;
     result.finalFontWeight = FontWeightEnum.bold;
   } else if (
     ['semibold', 'demibold'].includes(fwStr) ||
-    fontWeightNumber > FontWeightEnum.semiBold - 100
+    fontWeightNumber >= 600
   ) {
-    result.supertype = FontWeightEnum.bold;
+    result.supertype = FontWeightEnum.semiBold;
     result.finalFontWeight = FontWeightEnum.semiBold;
-  } else if (
-    ['medium'].includes(fwStr) ||
-    fontWeightNumber > FontWeightEnum.medium - 100
-  ) {
+  } else if (['medium'].includes(fwStr) || fontWeightNumber >= 500) {
     result.supertype = FontWeightEnum.medium;
     result.finalFontWeight = FontWeightEnum.medium;
-  } else if (
-    ['normal', 'regular'].includes(fwStr) ||
-    fontWeightNumber > FontWeightEnum.normal - 100
-  ) {
+  } else if (['normal', 'regular'].includes(fwStr) || fontWeightNumber >= 400) {
     result.supertype = FontWeightEnum.normal;
     result.finalFontWeight = FontWeightEnum.normal;
-  } else if (
-    ['light'].includes(fwStr) ||
-    fontWeightNumber > FontWeightEnum.light - 100
-  ) {
+  } else if (['light'].includes(fwStr) || fontWeightNumber >= 300) {
     result.supertype = FontWeightEnum.light;
     result.finalFontWeight = FontWeightEnum.light;
   } else if (
     ['extralight', 'ultralight'].includes(fwStr) ||
-    fontWeightNumber > FontWeightEnum.extraLight - 100
+    fontWeightNumber >= 200
   ) {
-    result.supertype = FontWeightEnum.light;
+    result.supertype = FontWeightEnum.ultraLight;
     result.finalFontWeight = FontWeightEnum.extraLight;
-  } else if (
-    ['thin', 'hairline'].includes(fwStr) ||
-    fontWeightNumber > FontWeightEnum.thin - 100
-  ) {
+  } else if (['thin', 'hairline'].includes(fwStr) || fontWeightNumber >= 100) {
     result.supertype = FontWeightEnum.thin;
     result.finalFontWeight = FontWeightEnum.thin;
   }
@@ -110,18 +129,15 @@ export function getFontWeightType(fontWeight?: string | number) {
   return result;
 }
 
-const AllSoloWeightFonts = [
-  FontNames.sf_pro_rounded_bold,
-  FontNames.sf_pro_rounded_regular,
-  FontNames.sf_pro_rounded_medium,
-  FontNames.sf_pro_rounded_heavy,
-];
+const AllSoloWeightFonts: string[] = Object.values(RoundedFonts).map(
+  face => face.android,
+);
 type TextStyleInput = {
   fontWeight?: TextStyle['fontWeight'];
   fontFamily?: TextStyle['fontFamily'];
 } & (StyleProp<
   Pick<TextStyle, 'fontFamily' | 'fontSize' | 'fontWeight'> & {
-    color?: string;
+    color?: TextStyle['color'];
   }
 > &
   object);

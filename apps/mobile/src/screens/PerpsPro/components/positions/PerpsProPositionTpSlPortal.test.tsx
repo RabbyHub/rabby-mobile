@@ -2,14 +2,28 @@ import { fireEvent, render, screen } from '@testing-library/react-native';
 import { PortalProvider } from '@gorhom/portal';
 import React from 'react';
 
+jest.mock('@/assets2024/icons/perps/PerpsProTpSlAdd.svg', () => {
+  const ReactModule = require('react');
+  const { View: NativeView } = require('react-native');
+  return (props: object) => ReactModule.createElement(NativeView, props);
+});
+jest.mock('react-native-linear-gradient', () => require('react-native').View);
+jest.mock('react-native-gesture-handler', () => ({
+  State: { ACTIVE: 4 },
+}));
+
 jest.mock('@/core/apis/autoLock', () => ({ uiRefreshTimeout: jest.fn() }));
 
 jest.mock('react-native-reanimated', () => {
   const ReactModule = require('react');
   return {
+    default: { View: require('react-native').View },
+    __esModule: true,
+    useAnimatedStyle: (fn: () => unknown) => fn(),
     runOnJS: (callback: (...args: unknown[]) => unknown) => callback,
     useAnimatedReaction: jest.fn(),
     useSharedValue: (value: unknown) => ReactModule.useRef({ value }).current,
+    useAnimatedRef: () => ReactModule.useRef(null),
   };
 });
 
@@ -44,7 +58,18 @@ jest.mock('@/components/customized/BottomSheet', () => {
 });
 
 jest.mock('@gorhom/bottom-sheet', () => ({
-  BottomSheetScrollView: require('react-native').View,
+  BottomSheetScrollView: require('react').forwardRef(
+    ({ children, ...props }: any, ref: any) => {
+      require('react').useImperativeHandle(ref, () => ({
+        scrollTo: jest.fn(),
+      }));
+      return require('react').createElement(
+        require('react-native').View,
+        props,
+        children,
+      );
+    },
+  ),
 }));
 
 jest.mock('react-native-safe-area-context', () => ({
@@ -211,6 +236,7 @@ describe('PerpsProPositionTpSlSheet portal integration', () => {
             coveredByReview={false}
             defaultTab="partial"
             market={market}
+            onCancelAllOrders={jest.fn()}
             onCancelOrder={jest.fn()}
             onClose={jest.fn()}
             onReview={jest.fn()}

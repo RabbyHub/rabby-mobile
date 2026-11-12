@@ -1,9 +1,10 @@
 import type { OpenOrder } from '@rabby-wallet/hyperliquid-sdk';
 import BigNumber from 'bignumber.js';
+import { meetsPerpsMinimumOrderNotional } from '@/utils/perpsOrderNotional';
 
 import {
   isPerpsProPriceProtocolValid,
-  normalizePerpsProCalculatedPrice,
+  roundPerpsProTpSlPrice,
 } from '@/utils/perpsPriceProtocol';
 
 import type { PerpsOpenOrderTopology } from './openOrderTopology';
@@ -70,6 +71,16 @@ export interface PerpsPositionTpSlMarketSnapshot {
 const finiteDecimal = (value: unknown): BigNumber | null => {
   const result = new BigNumber((value as string | number | undefined) ?? NaN);
   return result.isFinite() ? result : null;
+};
+
+export const getPositionTpSlValueTone = (
+  value: string | null,
+): 'negative' | 'neutral' | 'positive' => {
+  const decimal = finiteDecimal(value);
+  if (!decimal || decimal.isZero()) {
+    return 'neutral';
+  }
+  return decimal.gt(0) ? 'positive' : 'negative';
 };
 
 const positiveDecimal = (value: unknown): string | null => {
@@ -351,7 +362,7 @@ export const calculatePositionTpSlTriggerFromRoi = ({
   const roi = finiteDecimal(roiPercent);
   if (
     !entry?.gt(0) ||
-    !roi?.gt(0) ||
+    !roi?.gte(0) ||
     !Number.isFinite(leverage) ||
     leverage <= 0 ||
     !Number.isSafeInteger(szDecimals) ||
@@ -368,7 +379,7 @@ export const calculatePositionTpSlTriggerFromRoi = ({
   if (!trigger.gt(0)) {
     return null;
   }
-  return normalizePerpsProCalculatedPrice(trigger, szDecimals);
+  return roundPerpsProTpSlPrice(trigger, szDecimals);
 };
 
 export const calculatePositionTpSlTriggerFromPnl = ({
@@ -391,7 +402,7 @@ export const calculatePositionTpSlTriggerFromPnl = ({
   const amount = finiteDecimal(size);
   if (
     !entry?.gt(0) ||
-    !targetPnl?.gt(0) ||
+    !targetPnl?.gte(0) ||
     !amount?.gt(0) ||
     !Number.isSafeInteger(szDecimals) ||
     szDecimals < 0
@@ -406,7 +417,7 @@ export const calculatePositionTpSlTriggerFromPnl = ({
   if (!trigger.gt(0)) {
     return null;
   }
-  return normalizePerpsProCalculatedPrice(trigger, szDecimals);
+  return roundPerpsProTpSlPrice(trigger, szDecimals);
 };
 
 export type PerpsPositionTpSlTriggerValidation =
@@ -446,7 +457,7 @@ export const isPositionTpSlModeTriggerUnavailable = ({
   const trigger = finiteDecimal(triggerPrice);
   return (
     inputSource === 'mode' &&
-    !!magnitude?.gt(0) &&
+    !!magnitude?.gte(0) &&
     (!triggerPrice.trim() || !trigger?.gt(0))
   );
 };
@@ -592,14 +603,17 @@ export const validatePositionTpSlTrigger = ({
 
 export type PerpsPositionTpSlAmountValidation =
   | { kind: 'invalid' }
+  | { kind: 'belowMinimum' }
   | { kind: 'valid'; normalized: string };
 
 export const validatePartialPositionTpSlAmount = ({
   amount,
+  markPrice,
   positionSize,
   szDecimals,
 }: {
   amount: string;
+  markPrice: string | null;
   positionSize: string;
   szDecimals: number;
 }): PerpsPositionTpSlAmountValidation => {
@@ -610,6 +624,7 @@ export const validatePartialPositionTpSlAmount = ({
     szDecimals < 0 ||
     !requested?.gt(0) ||
     !position?.gt(0) ||
+    !finiteDecimal(markPrice)?.gt(0) ||
     requested.gt(position)
   ) {
     return { kind: 'invalid' };
@@ -619,6 +634,9 @@ export const validatePartialPositionTpSlAmount = ({
     .toFixed();
   if (new BigNumber(normalized).lte(0)) {
     return { kind: 'invalid' };
+  }
+  if (!meetsPerpsMinimumOrderNotional(normalized, markPrice)) {
+    return { kind: 'belowMinimum' };
   }
   return { kind: 'valid', normalized };
 };

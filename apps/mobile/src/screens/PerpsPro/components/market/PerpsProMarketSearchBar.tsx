@@ -5,7 +5,7 @@ import RcNextSearchCC from '@/assets/icons/common/next-search-cc.svg';
 import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
+import { PerpsProBottomSheetTextInput } from '../common/PerpsProBottomSheetTextInput';
 import React, {
   forwardRef,
   useCallback,
@@ -27,6 +27,7 @@ import { useTranslation } from 'react-i18next';
 
 import { resolvePerpsProEmptyInputSelection } from '../common/perpsProInputSelection';
 import { usePerpsProKeyboardInput } from '../common/usePerpsProKeyboardInput';
+import { PerpsProInputAccessory } from '../common/PerpsProInputAccessory';
 import { PerpsProNativeSearchInput } from './PerpsProNativeSearchInput';
 
 export type PerpsProMarketSearchBarHandle = {
@@ -52,7 +53,7 @@ const PerpsProMarketSearchBarComponent = forwardRef<
   const nativeInputRef =
     useRef<React.ElementRef<typeof PerpsProNativeSearchInput>>(null);
   const bottomSheetInputRef =
-    useRef<React.ElementRef<typeof BottomSheetTextInput>>(null);
+    useRef<React.ElementRef<typeof PerpsProBottomSheetTextInput>>(null);
   const {
     onFocus: onKeyboardFocus,
     onBlur: onKeyboardBlur,
@@ -166,7 +167,7 @@ const PerpsProMarketSearchBarComponent = forwardRef<
               ref={nativeInputRef}
             />
           ) : (
-            <BottomSheetTextInput
+            <PerpsProBottomSheetTextInput
               {...commonInputProps}
               ref={bottomSheetInputRef}
               selection={
@@ -177,6 +178,7 @@ const PerpsProMarketSearchBarComponent = forwardRef<
               value={value}
             />
           )}
+          <PerpsProInputAccessory nativeID={inputAccessoryViewID} />
         </View>
         {!isResting && value ? (
           <TouchableOpacity
@@ -227,7 +229,9 @@ const PerpsProMarketSearchBarComponent = forwardRef<
           onPress={handleCancel}
           style={styles.cancel}
           testID="market-search-cancel">
-          <Text style={styles.cancelText}>{t('global.Cancel')}</Text>
+          <Text numberOfLines={1} style={styles.cancelText}>
+            {t('global.Cancel')}
+          </Text>
         </Pressable>
       ) : null}
     </View>
@@ -313,11 +317,13 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontWeight: '500',
     lineHeight: 20,
   },
+  // Size to the label so wider renders never wrap "Cancel".
   cancel: {
     alignItems: 'center',
+    flexShrink: 0,
     height: 46,
     justifyContent: 'center',
-    width: 49,
+    minWidth: 49,
   },
   cancelText: {
     color: colors2024['neutral-foot'],

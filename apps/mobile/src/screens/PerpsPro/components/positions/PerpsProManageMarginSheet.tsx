@@ -22,6 +22,7 @@ import {
   getPerpsProDialogStyles,
   resolvePerpsProDialogCardBackground,
 } from '../common/perpsProDialogVisual';
+import { getPerpsProListRowStyles } from '../common/perpsProListVisual';
 import { PerpsProDialogBackdrop } from '../common/PerpsProDialogBackdrop';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -42,7 +43,8 @@ import {
 } from './PerpsProManageMarginAmountRow';
 import { PerpsProManageMarginSlider } from './PerpsProManageMarginSlider';
 
-const SHEET_HEIGHT = 564;
+// Figma 86609:345863: 110 + 162 + 76pt cards with 12pt gaps.
+const SHEET_HEIGHT = 580;
 const CONTENT_HEIGHT = SHEET_HEIGHT - 40;
 
 const formatManageMarginLiquidationPrice = (
@@ -217,25 +219,25 @@ export const PerpsProManageMarginSheet: React.FC<{
                   </Text>
                 </View>
               </View>
-              <View style={styles.priceGroup}>
-                <View style={styles.factRow}>
-                  <Text style={styles.factLabel}>
+              <View>
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>
                     {t('page.perps.pro.positions.entry')} (
                     {displayView.quoteAsset})
                   </Text>
-                  <Text style={styles.factValueRounded}>
+                  <Text style={styles.infoValue}>
                     {formatPerpsProPrice(
                       displayView.entryPrice,
                       displayView.pxDecimals,
                     )}
                   </Text>
                 </View>
-                <View style={styles.factRow}>
-                  <Text style={styles.factLabel}>
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>
                     {t('page.perps.pro.positions.mark')} (
                     {displayView.quoteAsset})
                   </Text>
-                  <Text style={styles.factValue}>
+                  <Text style={styles.infoValue}>
                     {formatPerpsProPrice(
                       displayView.markPrice,
                       displayView.pxDecimals,
@@ -369,9 +371,11 @@ const getStyle = createGetStyles2024(
     infoCard: {
       backgroundColor: resolvePerpsProDialogCardBackground(colors2024, isLight),
       borderRadius: 12,
-      padding: 16,
+      paddingBottom: 8,
+      paddingHorizontal: 12,
+      paddingTop: 12,
       gap: 10,
-      height: 104,
+      height: 110,
       left: 16,
       right: 16,
       top: 56,
@@ -408,41 +412,29 @@ const getStyle = createGetStyles2024(
     },
     longText: getPerpsProTintedTagTextStyle(colors2024, 'positive'),
     shortText: getPerpsProTintedTagTextStyle(colors2024, 'negative'),
-    priceGroup: { gap: 10 },
-    factRow: {
-      alignItems: 'center',
-      flexDirection: 'row',
+    infoRow: {
+      ...getPerpsProListRowStyles(colors2024).listRow,
       gap: 8,
-      height: 16,
-      justifyContent: 'space-between',
     },
-    factLabel: {
-      color: colors2024['neutral-secondary'],
-      fontFamily: 'SF Pro Rounded',
-      fontSize: 12,
-      lineHeight: 16,
+    infoLabel: getPerpsProListRowStyles(colors2024).listLabel,
+    infoValue: {
+      ...PERPS_PRO_NUMBER_STYLE,
+      ...getPerpsProListRowStyles(colors2024).listValue,
+      flexShrink: 1,
+      minWidth: 0,
+      textAlign: 'right',
     },
+    factRow: {
+      ...getPerpsProListRowStyles(colors2024).listRow,
+      gap: 8,
+    },
+    factLabel: getPerpsProListRowStyles(colors2024).listLabel,
     factValue: {
       ...PERPS_PRO_NUMBER_STYLE,
+      ...getPerpsProListRowStyles(colors2024).listValue,
       flexShrink: 1,
       minWidth: 0,
       textAlign: 'right',
-      color: colors2024['neutral-title-1'],
-      fontFamily: 'SF Pro Rounded',
-      fontSize: 12,
-      fontWeight: '500',
-      lineHeight: 16,
-    },
-    factValueRounded: {
-      ...PERPS_PRO_NUMBER_STYLE,
-      flexShrink: 1,
-      minWidth: 0,
-      textAlign: 'right',
-      color: colors2024['neutral-title-1'],
-      fontFamily: 'SF Pro Rounded',
-      fontSize: 12,
-      fontWeight: '500',
-      lineHeight: 16,
     },
     configureLabel: {
       color: colors2024['neutral-title-1'],
@@ -462,13 +454,13 @@ const getStyle = createGetStyles2024(
       lineHeight: 16,
     },
     amountCard: {
-      backgroundColor: resolvePerpsProDialogCardBackground(colors2024, isLight),
+      backgroundColor: colors2024['neutral-bg-5'],
       borderRadius: 12,
       height: 162,
       left: 16,
       position: 'absolute',
       right: 16,
-      top: 168,
+      top: 178,
     },
     minimumValue: {
       ...PERPS_PRO_NUMBER_STYLE,
@@ -514,13 +506,13 @@ const getStyle = createGetStyles2024(
     riskGroup: {
       backgroundColor: resolvePerpsProDialogCardBackground(colors2024, isLight),
       borderRadius: 12,
-      padding: 16,
-      height: 74,
-      gap: 10,
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+      height: 76,
       left: 16,
       position: 'absolute',
       right: 16,
-      top: 338,
+      top: 352,
     },
     riskValue: {
       alignItems: 'center',

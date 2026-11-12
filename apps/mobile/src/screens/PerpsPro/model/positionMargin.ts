@@ -44,9 +44,7 @@ export const formatPositionMarginTarget = (
   roundingMode: BigNumber.RoundingMode = BigNumber.ROUND_HALF_UP,
 ): string | null => {
   const result = nonNegativeDecimal(value);
-  return result
-    ? trimFixedDecimal(result.toFixed(TARGET_DECIMALS, roundingMode))
-    : null;
+  return result ? result.toFixed(TARGET_DECIMALS, roundingMode) : null;
 };
 
 export interface PositionMarginAvailableInput {

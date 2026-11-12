@@ -1,13 +1,8 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import {
-  View,
-  StyleProp,
-  ViewStyle,
-  TouchableOpacity,
-  Keyboard,
-} from 'react-native';
+import { View, StyleProp, ViewStyle, Keyboard } from 'react-native';
+import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 import { IS_IOS } from '@/core/native/utils';
 import RcIconSwapHistory from '@/assets2024/icons/common/IconHistoryCC.svg';
 import { SendHistory } from './SendHistory';
@@ -18,7 +13,10 @@ import {
 } from '../../hooks/useSendPendingCount';
 import { useFocusEffect } from '@react-navigation/native';
 
-const SEND_IOS_HEADER_ICON_OFFSET = 6;
+// The iOS 26 native header lays the bar items out itself; the legacy 6pt
+// downward nudge is no longer needed and pushed the history icon below the
+// title's optical centre.
+const SEND_IOS_HEADER_ICON_OFFSET = 0;
 
 interface IProps {
   isForMultipleAddress?: boolean;
@@ -57,11 +55,14 @@ export const SendHeaderRight = ({
   return (
     <>
       <View style={[styles.container, styles.headerIconOffset, style]}>
-        <TouchableOpacity onPress={openHistory} style={styles.iconContainer}>
+        <CustomTouchableOpacity
+          as="RNGHTouchableOpacity"
+          onPress={openHistory}
+          style={styles.iconContainer}>
           <RcIconSwapHistory color={colors2024['neutral-body']} />
           {/* not very accurate */}
           {/* {Boolean(isShowDot) && <View style={styles.greenDot} />} */}
-        </TouchableOpacity>
+        </CustomTouchableOpacity>
       </View>
 
       <SendHistory

@@ -1,5 +1,18 @@
 /* eslint-env jest */
 
+// `src/constant/index.ts` reads NativeModules.RNVersionCheck.packageName at
+// import time, so any suite that renders a real screen needs a stub.
+{
+  const { NativeModules } = require('react-native');
+  if (!NativeModules.RNVersionCheck) {
+    NativeModules.RNVersionCheck = {
+      packageName: 'com.debank.rabby-mobile',
+      versionName: '0.0.0',
+      buildNumber: '0',
+    };
+  }
+}
+
 const createScope = () => ({
   setTag: jest.fn(),
   setTags: jest.fn(),
@@ -15,6 +28,36 @@ const createScope = () => ({
 jest.mock('@react-native-community/netinfo', () =>
   require('@react-native-community/netinfo/jest/netinfo-mock.js'),
 );
+
+// Native-only modules that are pulled in through shared re-exports. They are
+// absent from the Jest runtime, so keep their import-time side effects out of
+// every test suite instead of making each test re-declare the same mocks.
+jest.mock('react-native-haptic-feedback', () => ({
+  trigger: jest.fn(),
+}));
+
+jest.mock('react-native-aes-crypto', () => ({
+  __esModule: true,
+  default: {
+    randomKey: jest.fn(async () => 'mock-random-key'),
+    pbkdf2: jest.fn(async () => 'mock-derived-key'),
+    encrypt: jest.fn(async () => 'mock-cipher'),
+    decrypt: jest.fn(async () => 'mock-plaintext'),
+  },
+}));
+
+jest.mock('@/core/native/RNHelpers', () => ({
+  __esModule: true,
+  default: {
+    forceExitApp: jest.fn(),
+    measureViewRelativeTo: jest.fn(),
+    buildInfo: {},
+    setSensitiveClipboard: jest.fn(),
+    moveTaskToBack: jest.fn(),
+    shareFile: jest.fn(),
+    iosExcludeFileFromBackup: jest.fn(),
+  },
+}));
 
 jest.mock('react-native-mmkv', () => {
   const stores = new Map();
@@ -102,6 +145,10 @@ jest.mock('@sentry/react-native', () => {
     captureEvent: jest.fn(() => 'mock-event-id'),
     addBreadcrumb: jest.fn(),
     addIntegration: jest.fn(),
+    breadcrumbsIntegration: jest.fn(options => ({
+      name: 'Breadcrumbs',
+      options,
+    })),
     configureScope: jest.fn(callback => {
       if (typeof callback === 'function') {
         callback(scope);

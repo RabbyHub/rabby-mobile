@@ -33,7 +33,7 @@ const getStyles = (colors: AppColorsVariants) =>
     title: {
       marginTop: 4,
       fontSize: 15,
-      fontWeight: '600',
+      fontWeight: '500',
       color: colors['blue-light-1'],
       textAlign: 'center',
     },

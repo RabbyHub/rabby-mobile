@@ -24,19 +24,19 @@ echo "[RabbyMobileBuild] NODE_BINARY is $NODE_BINARY"
 
 echo "[RabbyMobileBuild] customize build environment vars"
 echo "[RabbyMobileBuild] CONFIGURATION is $CONFIGURATION"
-load_env_var_from_candidate_files RABBY_MOBILE_CODE
+load_env_var_from_candidate_files RABBY_MOBILE_CODE || true
 if [[ "$CONFIGURATION" == "Release" ]]; then
   [ -z $RABBY_MOBILE_BUILD_ENV ] && export RABBY_MOBILE_BUILD_ENV="production"
   [ -z $buildchannel ] && export buildchannel="appstore"
-  if [ -z $RABBY_MOBILE_CODE ]; then
-    echo "[RabbyMobileBuild] no RABBY_MOBILE_CODE set, abort bundle"
+  if ! validate_rabbit_code; then
+    echo "[RabbyMobileBuild] invalid RABBY_MOBILE_CODE, abort bundle"
     exit 1;
   fi
 fi
 if [[ "$CONFIGURATION" == "Regression" ]]; then
   [ -z $RABBY_MOBILE_BUILD_ENV ] && export RABBY_MOBILE_BUILD_ENV="regression"
-  if [ -z $RABBY_MOBILE_CODE ]; then
-    echo "[RabbyMobileBuild] no RABBY_MOBILE_CODE set, abort bundle"
+  if ! validate_rabbit_code; then
+    echo "[RabbyMobileBuild] invalid RABBY_MOBILE_CODE, abort bundle"
     exit 1;
   fi
 fi
@@ -230,6 +230,37 @@ fi
 [ ! -z $DO_POD_INSTALL ] && bundle install && bundle exec pod install;
 echo "[RabbyMobileBuild] customize build environment vars finished."
 
+# sentry-cli loads the nearest .env (apps/mobile/.env) into its own process
+# env by default, and the Metro bundle it starts inherits that env.
+# react-native-dotenv ranks process env above every dotenv file, so .env
+# would silently override .env.production in Release builds.
+# Set SENTRY_LOAD_DOTENV=1 to opt back in.
+export SENTRY_LOAD_DOTENV="${SENTRY_LOAD_DOTENV:-0}"
+echo "[RabbyMobileBuild] SENTRY_LOAD_DOTENV is $SENTRY_LOAD_DOTENV"
+
 /bin/sh -c "$WITH_ENVIRONMENT $SENTRY_XCODE"
+
+# react-native-xcode.sh writes ip.txt from the build machine's current
+# en0..en8 IP. That IP is stale as soon as the developer changes networks.
+# Prefer the explicit dev-server host from .env/.env.local; otherwise keep a
+# stable mDNS host for Debug device builds.
+if [[ "$CONFIGURATION" == *Debug* ]] && [[ "$PLATFORM_NAME" == *iphoneos* ]]; then
+  load_env_var_from_candidate_files DEV_SERVER_HOSTNAME || true
+  metro_host="${DEV_SERVER_HOSTNAME:-${RCT_PACKAGER_HOSTNAME:-}}"
+  if [ -z "$metro_host" ]; then
+    local_host_name="$(scutil --get LocalHostName 2>/dev/null || true)"
+    if [ -n "$local_host_name" ]; then
+      metro_host="${local_host_name}.local"
+    fi
+  fi
+  if [ -n "$metro_host" ]; then
+    metro_ip_file="$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/ip.txt"
+    mkdir -p "$(dirname "$metro_ip_file")"
+    printf '%s\n' "$metro_host" > "$metro_ip_file"
+    echo "[RabbyMobileBuild] wrote stable Metro host to $metro_ip_file: $metro_host"
+  else
+    echo "[RabbyMobileBuild] unable to resolve a stable Metro host; leaving ip.txt unchanged"
+  fi
+fi
 
 echo "[RabbyMobileBuild] finish bundle with sentry build."

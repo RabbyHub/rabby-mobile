@@ -1,5 +1,5 @@
-import { matomoRequestEvent } from '@/utils/analytics';
 import { customTestnetServiceApi } from '@/core/serviceApi/customTestnet';
+import { disconnectDappsWithUnsupportedChain } from '@/core/serviceApi/dappUnsupportedChain';
 import type { CustomTestnetService } from '@/core/services/customTestnetService';
 import {
   getTransactionHistoryTransactions,
@@ -13,26 +13,14 @@ import { openapi } from '../request';
 class ApiCustomTestnet {
   addCustomTestnet = async (
     chain: Parameters<CustomTestnetService['add']>[0],
-    ctx?: {
-      ga?: {
-        source?: string;
-      };
-    },
   ) => {
-    const source = ctx?.ga?.source || 'setting';
-
-    const res = await customTestnetServiceApi.add(chain);
-    if (!('error' in res)) {
-      matomoRequestEvent({
-        category: 'Custom Network',
-        action: 'Success Add Network',
-        label: `${source}_${String(chain.id)}`,
-      });
-    }
-    return res;
+    return customTestnetServiceApi.add(chain);
   };
   updateCustomTestnet = customTestnetServiceApi.update;
-  removeCustomTestnet = customTestnetServiceApi.remove;
+  removeCustomTestnet = async (chainId: number) => {
+    await customTestnetServiceApi.remove(chainId);
+    disconnectDappsWithUnsupportedChain();
+  };
   getCustomTestnetList = customTestnetServiceApi.getList;
 
   getCustomTestnetNonce = async ({
@@ -58,6 +46,8 @@ class ApiCustomTestnet {
   getCustomTestnetGasPrice = customTestnetServiceApi.getGasPrice;
 
   getCustomTestnetGasMarket = customTestnetServiceApi.getGasMarket;
+
+  getCustomTestnetEip1559Support = customTestnetServiceApi.getEip1559Support;
 
   getCustomTestnetToken = customTestnetServiceApi.getToken;
   removeCustomTestnetToken = customTestnetServiceApi.removeToken;

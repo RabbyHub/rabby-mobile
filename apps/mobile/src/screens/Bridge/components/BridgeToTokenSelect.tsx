@@ -234,7 +234,7 @@ const BridgeToTokenSelect = ({
   }, [chainId]);
 
   const { t } = useTranslation();
-  const { styles, colors2024 } = useTheme2024({ getStyle });
+  const { styles } = useTheme2024({ getStyle });
   const [_, setLongPressToken] = useLongPressTokenAtom();
 
   const handleTokenChange = useMemoizedFn(async (tokenItem?: TokenItem) => {
@@ -384,7 +384,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   selectText: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
     color: colors2024['neutral-title-1'],
   },

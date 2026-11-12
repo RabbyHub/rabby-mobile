@@ -19,7 +19,13 @@ run_ios_build_and_hash() {
   echo "⏳ 清理环境、安装 Pods 并执行构建..."
   rm -rf ~/Library/Developer/Xcode/DerivedData/RabbyMobile-* "$PROJECT_DIR/ios/Package" "$PROJECT_DIR/ios/build" "$PROJECT_DIR/ios/DerivedData"
 
-  cd "$PROJECT_DIR/ios" && bundle exec pod deintegrate &>/dev/null && RCT_NEW_ARCH_ENABLED=0 bundle exec pod install --deployment --repo-update --allow-root >>"$build_log_file" 2>&1
+  cd "$PROJECT_DIR/ios"
+  # A fresh validation checkout has no Pods yet; deintegrate can fail there.
+  # Keep its output for diagnosis and continue to the actual pod install.
+  if ! bundle exec pod deintegrate >>"$build_log_file" 2>&1; then
+    echo "[warn] pod deintegrate failed; continuing to pod install" >>"$build_log_file"
+  fi
+  RCT_NEW_ARCH_ENABLED="${RCT_NEW_ARCH_ENABLED:-1}" bundle exec pod install --deployment --repo-update --allow-root >>"$build_log_file" 2>&1
   if [ $? -ne 0 ]; then
     echo "❌ Pods 安装失败，请检查日志: $build_log_file"
     exit 1
@@ -46,24 +52,65 @@ run_ios_build_and_hash() {
   # 范式化 .app 包内容
   echo "⏳ 对构建产物进行范式化处理..."
 
-  if [ -f "$app_path/Assets.car" ]; then
-    xcrun assetutil --info "$app_path/Assets.car" >"$app_path/Assets.car.json"
+  # Normalize every asset catalog, including framework catalogs.
+  while IFS= read -r -d '' assets_car; do
+    xcrun assetutil --info "$assets_car" >"$assets_car.json"
     # 生成日期会不一样
-    sed -i '' -e 's/"Timestamp" : [0-9]*/"Timestamp" : 0/' "$app_path/Assets.car.json"
+    sed -i '' -e 's/"Timestamp" : [0-9]*/"Timestamp" : 0/' "$assets_car.json"
     # 版本号不同
-    sed -i '' -e 's/"DumpToolVersion" : .*/"DumpToolVersion" : 0,/' "$app_path/Assets.car.json"
+    sed -i '' -e 's/"DumpToolVersion" : .*/"DumpToolVersion" : 0,/' "$assets_car.json"
     # "Authoring Tool": "@(#)PROGRAM:CoreThemeDefinition  PROJECT:CoreThemeDefinition-611  [IIO-2661.3.6]", 版本号会不一样
-    sed -i '' -e 's/"Authoring Tool" : .*/"Authoring Tool" : "",/' "$app_path/Assets.car.json"
+    sed -i '' -e 's/"Authoring Tool" : .*/"Authoring Tool" : "",/' "$assets_car.json"
     # CoreUI 记录的是 assetutil/CoreUI 工具版本，系统补丁版本不同也可能变化
-    sed -i '' -e 's/"AssetStorageVersion" : .*/"AssetStorageVersion" : "",/' "$app_path/Assets.car.json"
-    sed -i '' -e 's/"CoreUIVersion" : [0-9]*/"CoreUIVersion" : 0/' "$app_path/Assets.car.json"
-    sed -i '' -e 's/"MainVersion" : "@(#)PROGRAM:CoreUI  PROJECT:CoreUI-[^"]*"/"MainVersion" : "@(#)PROGRAM:CoreUI  PROJECT:CoreUI-0"/' "$app_path/Assets.car.json"
-    rm -f "$app_path/Assets.car"
-  fi
+    sed -i '' -e 's/"AssetStorageVersion" : .*/"AssetStorageVersion" : "",/' "$assets_car.json"
+    sed -i '' -e 's/"CoreUIVersion" : [0-9]*/"CoreUIVersion" : 0/' "$assets_car.json"
+    sed -i '' -e 's/"MainVersion" : "@(#)PROGRAM:CoreUI  PROJECT:CoreUI-[^"]*"/"MainVersion" : "@(#)PROGRAM:CoreUI  PROJECT:CoreUI-0"/' "$assets_car.json"
+    rm -f "$assets_car"
+  done < <(find "$app_path" -name Assets.car -type f -print0)
 
-  otool -tV "$app_path/RabbyMobile" >"$app_path/RabbyMobile.s"
-  node "$SCRIPT_DIR/normalize_objc_msgsend_ldr.js" "$app_path/RabbyMobile.s" "$PROJECT_DIR/ios/LinkMap.txt" >"$app_path/RabbyMobile.asm"
-  rm -f "$app_path/RabbyMobile" "$app_path/RabbyMobile.s"
+  # Xcode may be installed as /Applications/Xcode.app or
+  # /Applications/Xcode-<version>.app. Both the selection path and paths
+  # embedded in Mach-O text sections must be normalized before hashing.
+  local developer_dir
+  developer_dir="${DEVELOPER_DIR:-$(xcode-select -p)}"
+  local repo_root_alt=""
+  case "$WORK_DIR" in
+    /tmp/*) repo_root_alt="/private$WORK_DIR" ;;
+    /private/tmp/*) repo_root_alt="${WORK_DIR#/private}" ;;
+  esac
+  local link_map_path="$PROJECT_DIR/ios/LinkMap.txt"
+
+  # Replace every Mach-O file with its normalized `otool -tV` text. This
+  # mirrors the release hashcheck contract and also removes volatile paths
+  # from framework binaries such as OpenSSL.framework/OpenSSL.
+  while IFS= read -r -d '' macho_path; do
+    if ! file "$macho_path" | grep -q "Mach-O"; then
+      continue
+    fi
+    if [ "$macho_path" = "$app_path/RabbyMobile" ]; then
+      if ! otool -tV "$macho_path" >"$macho_path.s" 2>/dev/null; then
+        rm -f "$macho_path.s"
+        continue
+      fi
+      node "$SCRIPT_DIR/normalize_asm_paths.js" "$macho_path.s" \
+        --repo-root "$WORK_DIR" \
+        --repo-root-alt "$repo_root_alt" \
+        --developer-dir "$developer_dir" \
+        --export-dir "$export_dir"
+      if [ -f "$link_map_path" ]; then
+        node "$SCRIPT_DIR/normalize_objc_msgsend_ldr.js" "$macho_path.s" "$link_map_path" >"$macho_path.asm"
+        rm -f "$macho_path.s"
+      else
+        mv "$macho_path.s" "$macho_path.asm"
+      fi
+      rm -f "$macho_path"
+    else
+      # Keep the complete framework binary (load commands and all sections) in
+      # the hash. Require the pinned framework binary to embed the canonical
+      # Xcode path; otherwise a rebuilt framework fails closed.
+      node "$SCRIPT_DIR/check_macho_paths.js" "$macho_path" || exit 1
+    fi
+  done < <(find "$app_path" -type f -print0)
 
   # Trim machine-related data from the assembly file
   fields_remove=(
@@ -89,8 +136,12 @@ run_ios_build_and_hash() {
   local bundle_hash=$(shasum -a 256 "$app_path/main.jsbundle" | awk '{print $1}')
 
   # 导出产物和报告
-  rsync -a "$app_path/RabbyMobile.asm" "$export_dir/RabbyMobile.asm"
-  rsync -a "$app_path/Assets.car.json" "$export_dir/Assets.car.json"
+  if [ -f "$app_path/RabbyMobile.asm" ]; then
+    rsync -a "$app_path/RabbyMobile.asm" "$export_dir/RabbyMobile.asm"
+  fi
+  if [ -f "$app_path/Assets.car.json" ]; then
+    rsync -a "$app_path/Assets.car.json" "$export_dir/Assets.car.json"
+  fi
   rsync -a "$app_path/main.jsbundle" "$export_dir/main.jsbundle_ios"
   mv "$PROJECT_DIR/ios/LinkMap.txt" "$export_dir/LinkMap.txt"
 

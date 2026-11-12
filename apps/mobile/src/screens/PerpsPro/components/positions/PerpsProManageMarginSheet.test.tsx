@@ -1,4 +1,5 @@
 import { ThemeColors2024 } from '@/constant/theme';
+import { RoundedFontStyles } from '@/core/utils/fonts';
 import { colord } from 'colord';
 import { PERPS_PRO_DIALOG_TOKENS } from '../common/perpsProDialogVisual';
 let mockThemeMode: 'light' | 'dark' | undefined;
@@ -289,10 +290,13 @@ describe('PerpsProManageMarginSheet', () => {
         .map(view => StyleSheet.flatten(view.props.style))
         .filter(style => style?.borderRadius === 12);
       expect(cards).toHaveLength(3);
+      // Figma 86609:345881: the editable margin card is bg-5.
+      expect(cards.map(card => card.backgroundColor)).toEqual([
+        colors[mode === 'light' ? 'neutral-bg-1' : 'neutral-bg-2'],
+        colors['neutral-bg-5'],
+        colors[mode === 'light' ? 'neutral-bg-1' : 'neutral-bg-2'],
+      ]);
       for (const card of cards) {
-        expect(card.backgroundColor).toBe(
-          colors[mode === 'light' ? 'neutral-bg-1' : 'neutral-bg-2'],
-        );
         expect(card.backgroundColor).not.toBe(background);
       }
     },
@@ -303,11 +307,11 @@ describe('PerpsProManageMarginSheet', () => {
     mockThemeMode = undefined;
   });
 
-  it('matches the normal 564-point Figma geometry and dynamic market facts', () => {
+  it('matches the normal 580-point Figma geometry and dynamic market facts', () => {
     renderSheet();
 
     expect(screen.getByTestId('manage-margin-modal').props.snapPoints).toEqual([
-      564,
+      580,
     ]);
     expect(screen.getByTestId('manage-margin-modal').props).toMatchObject({
       android_keyboardInputMode: 'adjustPan',
@@ -327,7 +331,7 @@ describe('PerpsProManageMarginSheet', () => {
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-manage-margin-amount-card').props.style,
       ),
-    ).toMatchObject({ borderRadius: 12, height: 162, top: 168 });
+    ).toMatchObject({ borderRadius: 12, height: 162, top: 178 });
     expect(
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-manage-margin-amount-row').props.style,
@@ -370,7 +374,7 @@ describe('PerpsProManageMarginSheet', () => {
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-manage-margin-risk').props.style,
       ).top,
-    ).toBe(338);
+    ).toBe(352);
     expect(
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-manage-margin-footer').props.style,
@@ -398,9 +402,8 @@ describe('PerpsProManageMarginSheet', () => {
       StyleSheet.flatten(screen.getByText('xyz').props.style),
     ).toMatchObject({
       color: 'neutral-foot',
-      fontFamily: 'SF Pro Rounded',
+      ...RoundedFontStyles.medium,
       fontSize: 12,
-      fontWeight: '500',
       lineHeight: 16,
     });
 
@@ -467,7 +470,7 @@ describe('PerpsProManageMarginSheet', () => {
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-manage-margin-risk').props.style,
       ).top,
-    ).toBe(338);
+    ).toBe(352);
   });
 
   it('renders unavailable liquidation prices with double dashes', () => {
@@ -665,7 +668,7 @@ describe('PerpsProManageMarginSheet', () => {
         StyleSheet.flatten(sheet.props.backgroundStyle).backgroundColor,
       ).toBe(colors['neutral-bg-0']);
       expect(StyleSheet.flatten(card.props.style).backgroundColor).toBe(
-        colors[mode === 'light' ? 'neutral-bg-1' : 'neutral-bg-2'],
+        colors['neutral-bg-5'],
       );
       expect(StyleSheet.flatten(card.props.style).backgroundColor).not.toBe(
         StyleSheet.flatten(sheet.props.backgroundStyle).backgroundColor,

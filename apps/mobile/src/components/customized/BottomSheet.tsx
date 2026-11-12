@@ -18,6 +18,7 @@ import { createGetStyles, makeDebugBorder } from '@/utils/styles';
 import { IS_IOS } from '@/core/native/utils';
 import AppBottomSheetBackdrop from '../patches/BottomSheetBackdrop';
 import { perfEvents } from '@/core/utils/perf';
+import { cleanSpecialSoloWeightFont } from '@/core/utils/fonts';
 import { Text } from '@/components/Typography';
 
 export const getBottomSheetHandleStyles = (colors: AppColorsVariants) => {
@@ -51,8 +52,12 @@ export const AppBottomSheetModalTitle: React.FC<{
 }> = ({ title, style }) => {
   const colors = useThemeColors();
   const styles = useMemo(() => getBottomSheetHandleStyles(colors), [colors]);
+  const titleStyle = useMemo(
+    () => cleanSpecialSoloWeightFont(StyleSheet.flatten([styles.title, style])),
+    [styles.title, style],
+  );
 
-  return <Text style={[styles.title, style]}>{title}</Text>;
+  return <Text style={titleStyle}>{title}</Text>;
 };
 
 type onChangeArgsType = Parameters<BottomSheetModalProps['onChange'] & object>;

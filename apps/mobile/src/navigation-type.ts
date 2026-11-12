@@ -6,6 +6,7 @@ import type {
 } from '@react-navigation/native';
 
 import type { Account, KeyringAccountWithAlias } from '@/types/account';
+import type { ExecLeg, MemeTarget } from '@/screens/MemeCoin/engine/types';
 import {} from '@react-navigation/bottom-tabs';
 
 import type { RootNames } from './constant/layout';
@@ -37,13 +38,6 @@ import type { ITokenItem } from './types/assets';
  * https://reactnavigation.org/docs/typescript/
  */
 
-export type FromSceneParam = {
-  scene: string;
-  id?: string;
-  chain?: string;
-  symbol?: string;
-};
-
 export type SwapBridgeTab = 'swap' | 'bridge';
 
 export type SwapBridgeParams = {
@@ -57,7 +51,6 @@ export type SwapBridgeParams = {
   isSwapToTokenDetail?: boolean;
   isFromSwap?: boolean;
   isFromCopyTrading?: boolean;
-  from?: FromSceneParam;
   toChainEnum?: CHAINS_ENUM;
   toTokenId?: TokenItem['id'];
 };
@@ -78,7 +71,12 @@ export type RootStackParamsList = {
     | undefined;
   [RootNames.AccountTransaction]: NavigatorScreenParams<AccountNavigatorParamList>;
   [RootNames.StackSettings]: NavigatorScreenParams<SettingNavigatorParamList>;
-  [RootNames.StackTransaction]: NavigatorScreenParams<TransactionNavigatorParamList>;
+  [RootNames.StackTransaction]:
+    | (NavigatorScreenParams<TransactionNavigatorParamList> & {
+        /** One-shot Android browser handoff; consumed on native appearance. */
+        browserPerpsNavigationId?: number;
+      })
+    | undefined;
   [RootNames.StackAddress]: NavigatorScreenParams<AddressNavigatorParamList>;
   [RootNames.StackDapps]: NavigatorScreenParams<DappsNavigatorParamsList>;
   [RootNames.StackBrowser]: NavigatorScreenParams<BrowserNavigatorParamsList>;
@@ -132,7 +130,6 @@ export type RootStackParamsList = {
     unHold?: boolean;
     isSwapToTokenDetail?: boolean;
     tokenSelectType?: import('@/components/Token/TokenSelectorSheetModal').TokenSelectType;
-    from?: FromSceneParam;
   };
 };
 
@@ -178,6 +175,7 @@ type TestKitsNavigatorParamsList = {
   [RootNames.DevUIFormShowCase]?: {};
   [RootNames.DevUIAccountShowCase]?: {};
   [RootNames.DevUIComponents2024ShowCase]?: {};
+  [RootNames.DevUISafeSvgMedia]?: {};
   [RootNames.DevUIScreenContainerShowCase]?: {};
   [RootNames.DevUIDapps]?: {};
   [RootNames.DevDataSQLite]?: {};
@@ -212,10 +210,7 @@ export type AddressNavigatorParamList = {
   // [RootNames.MultiAddressHome]?: {};
   [RootNames.CreateNewAddress]?: {
     noSetupPassword?: boolean;
-    useCurrentSeed?: boolean;
-    mnemonics?: string;
     title?: string;
-    accounts?: string[];
     isFirstCreate?: boolean;
   };
   [RootNames.SetPassword2024]?: {
@@ -253,8 +248,7 @@ export type AddressNavigatorParamList = {
     isFirstCreate?: boolean;
     type: KEYRING_TYPE;
     supportChainList?: Chain[];
-    mnemonics?: string;
-    passphrase?: string;
+    mnemonicsVaultId?: string;
     keyringId?: number;
     alias?: string;
     isExistedKR?: boolean;
@@ -268,12 +262,13 @@ export type AddressNavigatorParamList = {
     isFirstCreate?: boolean;
     type: KEYRING_TYPE;
     supportChainList?: Chain[];
-    mnemonics?: string;
-    passphrase?: string;
+    mnemonicsVaultId?: string;
     keyringId?: number;
     alias?: string;
     isExistedKR?: boolean;
     showBackup?: boolean;
+    /** Follow-up imports can show their result without replaying the entrance. */
+    skipSuccessAnimation?: boolean;
   };
   [RootNames.ImportWatchAddress]?: {};
   [RootNames.ImportSafeAddress]?: {};
@@ -286,8 +281,7 @@ export type AddressNavigatorParamList = {
   [RootNames.ImportMoreAddress]?: {
     type: KEYRING_TYPE;
     brand?: string;
-    mnemonics?: string;
-    passphrase?: string;
+    mnemonicsVaultId?: string;
     keyringId?: number;
     isExistedKR?: boolean;
   };
@@ -302,7 +296,7 @@ export type AddressNavigatorParamList = {
   [RootNames.CreateMnemonicBackup]?: {};
   [RootNames.CreateMnemonicVerify]?: {};
   [RootNames.BackupPrivateKey]?: {
-    data: string;
+    privateKeyVaultId: string;
   };
   [RootNames.RestoreFromCloud]?: {};
   [RootNames.WatchAddressList]?: {};
@@ -321,11 +315,13 @@ export type AccountNavigatorParamList = {
 
 export type SingleAddressNavigatorParamList = {
   [RootNames.SingleAddressHome]: {
-    // account: Account;
+    account?: Account;
+    navigationId?: number;
   };
 };
 
 export type TransactionNavigatorParamList = {
+  [RootNames.BridgeDetail]: import('./screens/Bridge/utils/statusTypes').BridgeRecordData;
   [RootNames.History]?: {};
   [RootNames.MultiAddressHistory]?: {
     isInTokenDetail?: boolean;
@@ -397,6 +393,23 @@ export type TransactionNavigatorParamList = {
     disableAccountSwitch?: boolean;
     fromHomeConvertDustBanner?: boolean;
   };
+  [RootNames.MemeCoin]?: undefined;
+  [RootNames.MemeCoinBuy]: {
+    accountAddress: string;
+    /** entered on the home; still editable on the preview page */
+    amountUsd: number;
+    /** snapshot at confirm time; marketCap drives the allocation */
+    memes: Array<MemeTarget & { logoUrl: string }>;
+  };
+  [RootNames.MemeCoinExecute]: {
+    accountAddress: string;
+    mode: 'buy' | 'sell';
+    /** frozen at confirm time, already in execution order */
+    legs: ExecLeg[];
+    maxPriceImpactPct: 1 | 5 | 20;
+    /** tokenKey -> logo url, display only */
+    tokenLogos: Record<string, string>;
+  };
   [RootNames.GasAccount]?: {};
   [RootNames.BatchRevoke]: {
     revokeList: ApprovalSpenderItemToBeRevoked[];
@@ -438,10 +451,6 @@ export type TransactionNavigatorParamList = {
     autoFocus?: boolean;
   };
   [RootNames.Lending]?: {
-    tokenAddress?: string;
-    direction?: 'supply' | 'borrow';
-    source?: string;
-    account?: KeyringAccountWithAlias;
     dappId?: string;
   };
   [RootNames.Prediction]?: {};

@@ -69,8 +69,8 @@ import {
 import { useTranslation } from 'react-i18next';
 import ToAddressControl2024 from './components/ToAddressControl2024';
 import { TokenInfoPopup } from '../Swap/components/TokenInfoPopup';
-import { openapi } from '@/core/request';
 import { BlockedAddressDialog } from '@/components/Dialogs/BlockedAddressDialog';
+import { hasBlockedAddress } from '@/core/utils/blockedAddress';
 import FromAddressControl2024 from './components/FromAddressControl';
 import { getAddrDescWithCexLocalCacheSync } from '@/databases/hooks/cex';
 import { SendHeaderRight } from './SubScreens/SelectPolyScreen/HeaderRight';
@@ -104,7 +104,10 @@ import {
   ensureFeatureActivation,
   markFeatureActivation,
 } from '@/core/utils/featureActivationDiagnostics';
-import { getInitialDisplayToken } from './initialDisplayToken';
+import {
+  getInitialDisplayToken,
+  getInitialSendTokenDisplaySnapshot,
+} from './initialDisplayToken';
 
 const AnimatedKeyboardAwareScrollView = Animated.createAnimatedComponent(
   KeyboardAwareScrollView,
@@ -575,7 +578,7 @@ function SendScreen({
     hasSelectedGasLevel: !!screenState.selectedGasLevel,
   });
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!currentAccount || !isFocused) {
       return;
     }
@@ -767,8 +770,15 @@ function SendScreen({
       initialTokenCommitGuardRef.current();
     if (!isSessionActive()) return;
 
-    let targetToken: TokenItem | null = null;
     const { chainItem: latestChainItem, currentToken } = getSendChainToken();
+    let targetToken = getInitialSendTokenDisplaySnapshot({
+      accountAddress: currentAccount?.address || '',
+      params: navParams,
+      fallbackToken: currentToken,
+    });
+    markSendScreenPerf('initial_display_token_snapshot', {
+      available: !!targetToken,
+    });
 
     if (
       navParams &&
@@ -801,7 +811,7 @@ function SendScreen({
         ...EMPTY_TOKEN_ITEM,
       };
       target && apiSendToken.setChainEnum(target.enum);
-    } else {
+    } else if (!targetToken) {
       if (currentAccount?.address) {
         const lastTokenStartedAt = Date.now();
         markSendScreenPerf('last_time_send_token_start');
@@ -814,6 +824,9 @@ function SendScreen({
           tokenId: targetToken?.id,
         });
         if (!isSessionActive()) return;
+        if (targetToken && !findChainByServerID(targetToken.chain)) {
+          targetToken = null;
+        }
       }
       if (!targetToken) {
         const orderedChainStartedAt = Date.now();
@@ -960,7 +973,7 @@ function SendScreen({
     try {
       const startedAt = Date.now();
       markSendScreenPerf('blocked_address_check_start');
-      const { is_blocked } = await openapi.isBlockedAddress(to);
+      const is_blocked = await hasBlockedAddress([to]);
       markSendScreenPerf('blocked_address_check_end', {
         elapsedMs: Date.now() - startedAt,
         isBlocked: is_blocked,
@@ -977,7 +990,19 @@ function SendScreen({
     }
   }, []);
 
+  // The receiver can also change in-screen, and an ERC-20 receiver sits in
+  // calldata, where the sign-time from/to check never sees it.
   useEffect(() => {
+    if (!isFocused || !isValidHexAddress(formValues.to as `0x${string}`)) {
+      return;
+    }
+    checkIsAddressBlocked(formValues.to);
+  }, [isFocused, formValues.to, checkIsAddressBlocked]);
+
+  // Commit an already-known token identity before the first visible frame.
+  // Missing metadata/recipient recommendations still follow the async path;
+  // no balance, gas, or submission-readiness gate is bypassed.
+  useLayoutEffect(() => {
     const loadState = initialTokenLoadRef.current;
     markSendScreenPerf('init_effect_commit', {
       inited: screenState.inited,

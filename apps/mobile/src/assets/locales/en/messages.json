@@ -549,7 +549,13 @@
         "empty": {
           "title": "No Transaction history",
           "titleLastThreeMonths": "No Transaction history in 90 Days",
+          "titleInLast90Days": "No transactions in the last 90 days",
+          "titleNoTransactions": "No transactions",
           "testnetNoHistory": "Custom token transaction history not available."
+        },
+        "noMore": {
+          "title": "No more transactions.",
+          "titleInLast90Days": "No more transactions in the last 90 days."
         },
         "common": {
           "pendingDetail": "Pending detail"
@@ -655,6 +661,7 @@
     },
     "sendPoly": {
       "enterOrSearchAddress": "Enter or Search Address",
+      "resolvingAddressName": "Looking up address...",
       "emptyWhitelistHeader": "Add Whitelist Address",
       "emptyWhitelistContent": "Add trusted addresses to whitelist for fast transfers—no confirmation needed next time",
       "emptyWhitelistTip": "No whitelisted addresses yet, ",
@@ -865,11 +872,9 @@
       "price-impact": "Price Impact",
       "From": "From",
       "bridgeFrom": "Bridge From",
-      "bridge-from": "Bridge from",
-      "for-available-quote": "for an available quote",
       "To": "To",
       "Select": "Select",
-      "no-quote-found": "No quote found. Please try other token pairs.",
+      "no-quote-found": "No quote found.",
       "no-quote": "No Quote",
       "title": "Bridge",
       "history": "Bridge history",
@@ -879,6 +884,13 @@
       "need-to-approve-token-before-bridge": "Need to approve token before bridge",
       "via-bridge": "via {{bridge}}",
       "duration": "{{duration}} min",
+      "duration-sec": "{{duration}} s",
+      "duration-hour": "{{duration}} h",
+      "duration-hour-min": "{{hours}} h {{minutes}} min",
+      "duration-day": "{{duration}} d",
+      "duration-day-hour": "{{days}} d {{hours}} h",
+      "duration-day-min": "{{days}} d {{minutes}} min",
+      "duration-day-hour-min": "{{days}} d {{hours}} h {{minutes}} min",
       "best": "Best",
       "best-subtitle": "The best quote is determined by a combination of estimated total cost (including gas fees) and delivery speed.",
       "swap-best-subtitle": "The best quote is determined by the lowest estimated total cost, including the exchange rate and gas fees.",
@@ -903,6 +915,34 @@
         "longTimeNoReceive": "Network is busy. This may take longer than usual. Please wait patiently.",
         "receivingTo": "Receiving on {{chain}}",
         "estimatedTime": "Estimated time"
+      },
+      "status": {
+        "bridging": "Bridging,",
+        "bridged": "Bridged",
+        "historyTitle": "Bridge History",
+        "today": "Today",
+        "eta": "ETA: {{time}}",
+        "stillBridging": "Still Bridging",
+        "delayed": "Bridge Delayed",
+        "sourceFailed": "Bridge Failed, Your {{token}} not sent",
+        "tokenNotSent": "Your {{token}} not sent",
+        "failed": "Failed",
+        "bridgeFailed": "Bridge Failed",
+        "refunded": "Refunded",
+        "refundedIn": "Refunded in {{token}}",
+        "contactSupport": "Contact Support",
+        "viewDetails": "View Details",
+        "sendingFrom": "Sending from {{chain}}",
+        "receivingOn": "Receiving on {{chain}}",
+        "processing": "Processing",
+        "queued": "Queued",
+        "pending": "Pending",
+        "completed": "Completed",
+        "refund": "Refunded",
+        "waiting": "Waiting for destination",
+        "goBack": "Go back",
+        "bridgeAgain": "Bridge again",
+        "captureFailed": "Unable to capture screenshot. Please try again."
       }
     },
     "manageAddress": {
@@ -1254,7 +1294,8 @@
         },
         "scan": {
           "title": "Scan Keystone to Connect",
-          "description": "Scan the QR-code on your Keystone wallet"
+          "description": "Scan the QR-code on your Keystone wallet",
+          "invalidQRCode": "Invalid QR code. Please scan the sync QR code of the hardware wallet."
         }
       },
       "hd": {
@@ -1406,6 +1447,7 @@
       "screenTitle": "Connect Wallet",
       "connectingToRabby": "Connecting to Rabby",
       "pairingFailed": "WalletConnect pairing failed.",
+      "proposalNotReceived": "WalletConnect QR code may have expired. Please refresh it and try again.",
       "connected": "Connected successfully. Please return to the Dapp.",
       "proposalExpired": "WalletConnect proposal expired.",
       "pairingExpired": "WalletConnect pairing expired. Refresh the dapp QR code and try again.",
@@ -1532,11 +1574,7 @@
       "settingUp": "Setting up password",
       "setUpSuccess": "Setup Password Successfully",
       "Newpassword": "Enter password",
-      "and": "and",
       "enable": "Enable {{ bioType }}",
-      "agreeToTerms": "I've read and agree to the",
-      "termOfUse": "terms",
-      "PrivacyPolicy": "privacy policy",
       "phoneNotSupport": "Your phone does not support {{ bioType }}",
       "ConfirmPassword": "Confirm password",
       "biometricsFail": "Enable biometrics fail",
@@ -1552,7 +1590,9 @@
       "agree": "I have read and agree to the<1/> <2>Terms of Use</2>",
       "confirmTitle": "Confirm password",
       "confirmModalDesc": "Please store your password properly. Once lost, it cannot be changed or recovered by Rabby.",
-      "setWallet": "Set Wallet"
+      "setWallet": "Set Wallet",
+      "dataAnalysisDesc": "Share anonymous usage data to help improve Rabby. Collected data is not associated with you or your account. You can change this anytime in Settings.",
+      "agreeByContinuing": "By continuing, you agree to the <terms>Terms of Use</terms>\nand acknowledge the <privacy>Privacy Policy</privacy>"
     },
     "importSafe": {
       "title": "Add Safe address",
@@ -1576,6 +1616,9 @@
       "ClaimComing": "Claim coming!"
     },
     "customTestnet": {
+      "screenTitle": "Custom Network",
+      "removeNetwork": "Delete {{name}}",
+      "editTitle": "Edit Custom Network",
       "desc": "Rabby cannot verify the security of custom networks. Please add trusted networks only.",
       "add": "Add Custom Network",
       "empty": "No Custom Network",
@@ -1739,6 +1782,13 @@
       "ShowMore": "Show more",
       "Fold": "Fold",
       "customTestnetNotSupported": "The token on this chain is not supported",
+      "removed": {
+        "restore": "Restore removed token",
+        "restoreFailed": "Failed to restore token",
+        "more": "More",
+        "confirmTitle": "Remove this token?",
+        "confirmDescription": "· This token will no longer appear in your Portfolio after removal.\n· You can restore it anytime in Settings >> Removed Tokens."
+      },
       "TokenName": "Token Name",
       "Price": "Price",
       "HoldingValue": "Holding Value",
@@ -1769,6 +1819,7 @@
       "excludeBalanceTipsButton": "I Got It.",
       "price": "Price",
       "copyCA": "Token contract address copied",
+      "copyCAWarning": "This is a token contract address,\nCannot be used to receive assets.",
       "tabs": {
         "marketData": "Market data",
         "tokenSecurity": "Token Security"
@@ -1853,11 +1904,15 @@
       "title": "Approvals"
     },
     "receiveAddressList": {
-      "title": "Select Wallet",
-      "subtitle": "Choose a wallet to receive your crypto.",
+      "title": "Select Wallet to Receive",
+      "subtitle": "Choose a wallet address to receive your assets.",
       "selectChainTitle": "Select Chain"
     },
     "singleHome": {
+      "tokenActions": {
+        "remove": "Remove",
+        "removeFailed": "Failed to remove token"
+      },
       "sectionHeader": {
         "Defi": "DeFi",
         "Nft": "NFT",
@@ -1910,6 +1965,10 @@
       "modifyRPCURL": "Modify RPC URL",
       "themeMode": "Theme Mode",
       "clearPending": "Clear Pending Locally",
+      "removedToken": {
+        "title": "Removed Tokens",
+        "description": "Removed tokens will be hidden from your Portfolio across all your addresses, but still included in your balance calculation."
+      },
       "aboutUs": "About Us",
       "currentVersion": "Current Version",
       "feedback": "Feedback",
@@ -1928,7 +1987,8 @@
       "currency": "Currency",
       "searchCurrency": "Search Currency",
       "transactionNotification": "Txn notifications (Beta)",
-      "dataAnalysis": "Data Analysis",
+      "dataAnalysis": "Help improve Rabby",
+      "dataAnalysisDesc": "Share anonymous usage data to help improve Rabby. Collected data is not associated with you or your account.",
       "bugReportChat": "Share Feedback via Chat",
       "features": "Features",
       "manageWallets": "Manage Wallets"
@@ -1980,6 +2040,7 @@
       "customNetworkTokenHeader": "Added custom networks"
     },
     "browser": {
+      "openInRabbyPerps": "Open in Rabby Perps",
       "BrowserHeader": {
         "searchIos": "Search Website",
         "searchAndroid": "Search DApp"
@@ -2319,8 +2380,7 @@
           }
         },
         "chart": {
-          "open": "Open chart",
-          "resetPriceScale": "Reset chart price scale"
+          "open": "Open chart"
         },
         "account": {
           "disabledFrame": "Account actions are not available in this phase",
@@ -2411,7 +2471,6 @@
           "loadingMore": "Loading more history"
         },
         "positions": {
-          "__skip_translation": ["skipMarketCloseConfirmation"],
           "empty": "You have no positions",
           "closeAll": "Close All",
           "closeAllConfirmTitle": "Confirm Close All Positions",
@@ -2471,6 +2530,7 @@
           "closeContextChanged": "Position or account changed. Please review again."
         },
         "positionTpsl": {
+          "skipConfirmation": "Don't show this TP/SL confirmation again.",
           "addButton": "Add TP/SL",
           "addTitle": "Add TP/SL",
           "cancelFailed": "Failed to cancel TP/SL order",
@@ -2502,6 +2562,7 @@
           "takeProfit": "Take Profit",
           "takeProfitTrigger": "TP Trigger",
           "triggeredByMark": "Triggered by Mark",
+          "estimatedPnlDescription": "Estimated PnL <2>{{pnl}} {{quoteAsset}}(ROI: {{roi}}%)</2>",
           "triggerDescription": "When <1>Mark Price</1> reaches <1>{{trigger}} {{quoteAsset}}</1>, it will trigger a <1>Market</1> order. Estimated PnL will be <2>{{pnl}} {{quoteAsset}}(ROI: {{roi}}%)</2>",
           "triggerPrice": "Trigger Price",
           "unavailable": "Position TP/SL is temporarily unavailable",
@@ -2659,8 +2720,7 @@
         "feeTitle": "Fee",
         "feeDesc": "When users place trades, both\n<1>trading fees</1> and <2>builder fees</2> apply.",
         "feeHyperliquid": "Hyperliquid",
-        "feeRabby": "Rabby Wallet",
-        "feeRabbyDiscount": "Limited-time trading fee discount"
+        "feeRabby": "Rabby Wallet"
       },
       "PerpsAutoCloseModal": {
         "noPosition": "You must input margin first.",
@@ -2756,7 +2816,7 @@
         "logout": "Log out"
       },
       "PerpsDepositCard": {
-        "availableToTrade": "Available to trade: ",
+        "availableToTrade": "Available: ",
         "deposit": "Deposit",
         "swap": "Swap"
       },
@@ -2804,6 +2864,50 @@
       }
     },
     "perpsDetail": {
+      "simpleAccount": {
+        "margin": "Margin",
+        "averageEntry": "Avg. Entry",
+        "estimatedLiquidationPrice": "Est. Liq. Price",
+        "estimatedLiquidationDistance": "Est. Liq. Distance",
+        "tpSl": "TP/SL",
+        "takeProfitPrice": "Take Profit Price",
+        "stopLossPrice": "Stop Loss Price",
+        "funding": "Funding",
+        "nextFundingRate": "Next Funding Rate",
+        "estimatedPnl": "Est.PNL",
+        "closePositionTitle": "Close {{coin}} Position",
+        "estimatedRealizedPnl": "Est. Realized PNL"
+      },
+      "simpleChart": {
+        "openInterest": "Open interest",
+        "volume24h": "24h volume",
+        "intervalTitle": "Candle interval",
+        "intervalDescription": "Each candle represents the selected interval.",
+        "minutes": "Minutes",
+        "hours": "Hours",
+        "days": "Days",
+        "open": "Open",
+        "low": "Low",
+        "high": "High",
+        "close": "Close",
+        "time": "Time",
+        "change": "Change",
+        "changePercent": "Change (%)",
+        "averageEntry": "Avg. entry",
+        "takeProfit": "Take profit",
+        "stopLoss": "Stop loss",
+        "liquidation": "Liquidation",
+        "all": "ALL",
+        "source": "Powered by Hyperliquid. Price chart powered by <tradingview>TradingView.</tradingview>",
+        "resetChart": "Reset chart",
+        "backToLatest": "Back to latest",
+        "switchToArea": "Switch to area chart",
+        "switchToCandle": "Switch to candlestick chart",
+        "showVolume": "Show 24h volume",
+        "showOpenInterest": "Show open interest",
+        "buy": "Buy",
+        "sell": "Sell"
+      },
       "PerpsPosition": {
         "title": "Position",
         "unrealizedPnl": "Unrealized PNL",
@@ -2823,7 +2927,7 @@
         "entryPrice": "Entry Price",
         "tpPrice": "Take-Profit Price",
         "slPrice": "Stop-Loss Price",
-        "fundingTipsBold": "This shows your total funding settled since the position was opened. <bold>Green (positive)</bold> values mean you’ve earned from other traders, while <bold>Red (negative)</bold> values are funding costs you've paid to them.",
+        "fundingTipsBold": "This shows your total funding settled since the position was opened. <positive>Green (positive)</positive> values mean you’ve earned from other traders, while <negative>Red (negative)</negative> values are funding costs you've paid to them.",
         "sizeTips": "The total value or quantity of your trade, set by margin and leverage."
       },
       "PerpMarginModePopup": {
@@ -2972,6 +3076,13 @@
       },
       "addressEditorBadge": {
         "nameUnknown": "Name the address"
+      },
+      "scanQrcode": {
+        "chooseFromGallery": "Choose from Gallery",
+        "noQrCode": "No QR code found in this image",
+        "multipleQrCodes": "Multiple QR codes found. Please choose an image with only one QR code",
+        "invalidAddress": "No valid address found in this QR code",
+        "readImageFailed": "Failed to read the image. Please try again"
       }
     },
     "Lending": {
@@ -3305,6 +3416,72 @@
     },
     "batchRevoke": {
       "title": "Batch Revoke"
+    },
+    "memeCoin": {
+      "holdingsEntry": "holdings",
+      "pnlPeriod24h": "24h",
+      "pnlPeriodAll": "All",
+      "pnlTipLabel": "PnL",
+      "backToMarket": "Back to Meme Market",
+      "marketTitle": "Meme Market",
+      "holdingsTitle": "Holdings",
+      "marketCap": "Market Cap",
+      "valuePnl": "Value / PnL",
+      "searchMarket": "Search Meme Market",
+      "noMatch": "No matching Memes",
+      "noHoldings": "No holdings yet",
+      "loadFailed": "Failed to load. Tap to retry",
+      "buyN": "Buy {{count}} Memes",
+      "buyN_one": "Buy {{count}} Meme",
+      "sellN": "Sell {{count}} Memes",
+      "sellN_one": "Sell {{count}} Meme",
+      "selectToBuy": "Select memes to buy",
+      "selectToSell": "Select memes to sell",
+      "maxPriceImpact": "Max Price Impact",
+      "unsupportedAddressType": "Address type not supported",
+      "accountChanged": "Address changed. Please start again",
+      "addressSwitchUnsupported": "Address switching isn't supported on this page.",
+      "buy": {
+        "amount": "Buy Amount",
+        "allocation": "Allocation",
+        "byMarketCap": "By Market Cap",
+        "equalSplit": "Equal Split",
+        "estPayment": "Est. Payment {{amount}}",
+        "needed": "{{amount}} needed",
+        "anotherNeeded": "Another {{amount}} needed",
+        "preview": "Preview",
+        "paymentTokens": "Payment Tokens",
+        "selectTokens": "Select Tokens",
+        "selectPaymentAssets": "Select assets for payment",
+        "estPaymentLabel": "Est. Payment",
+        "noPaymentToken": "No payment token selected",
+        "confirm": "Confirm",
+        "noAssets": "No available assets"
+      },
+      "execute": {
+        "title": "Execute",
+        "buySubtitleShort": "Runs in order per chain, in parallel across chains.",
+        "sellSubtitle": "Proceeds remain on respective chains",
+        "estReceipt": "Est. receipt(USD)",
+        "statusPending": "Pending",
+        "statusPendingPrevious": "Pending previous transaction on the same chain",
+        "statusExecuting": "Executing",
+        "statusSuccessful": "Successful",
+        "confirm": "Confirm",
+        "back": "Back",
+        "retryFailedTxns": "Retry {{count}} failed txns",
+        "retryFailedTxns_one": "Retry {{count}} failed txn",
+        "progress": "Executing · {{done}}/{{total}} Completed",
+        "done": "Done",
+        "exitTitle": "Cancel execution and go back?",
+        "exitDesc1": "Execution will stop. Unsubmitted transactions will not be processed.",
+        "exitDesc2": "Submitted on-chain transactions cannot be undone and may still complete.",
+        "stopAndExit": "Stop & Exit",
+        "continue": "Continue",
+        "failReason": {
+          "buildFailed": "Failed to build transaction"
+        }
+      }
     }
   },
   "component": {
@@ -3409,13 +3586,6 @@
         "desc": "Please use Fingerprint/FaceID to unlock"
       }
     },
-    "ReserveGasPopup": {
-      "title": "Reserve Gas",
-      "instant": "Fast",
-      "fast": "Normal",
-      "normal": "Slow",
-      "doNotReserve": "Don't reserve Gas"
-    },
     "NoLongerSupports": {
       "title": "Mobile wallet addresses are no longer supported",
       "desc": "The following addresses will be removed. You can still find them in the original wallet app. Import the seed phrase or private key to use them here.",
@@ -3447,7 +3617,8 @@
       "switchArea": {
         "skipText": "Skip this popup for 1 day"
       },
-      "alertText": "Third-party DApp: for usage issues please contact DApp support. Rabby provides viewing access only"
+      "alertText": "Third-party DApp: for usage issues please contact DApp support. Rabby provides viewing access only",
+      "includeAddress": "Share address for troubleshooting"
     },
     "submitFeedbackSuccessModal": {
       "desc": "Submitted Successfully!"
@@ -3553,7 +3724,8 @@
     "time": {
       "hour": "{{t}} hour",
       "hours": "{{t}} hours",
-      "mins": "{{t}} mins"
+      "mins": "{{t}} mins",
+      "ago": "{{time}} ago"
     },
     "Unknown": "Unknown",
     "themeMode": {
@@ -3613,7 +3785,8 @@
       }
     },
     "from": "From",
-    "to": "To"
+    "to": "To",
+    "failed": "Failed"
   },
   "background": {
     "error": {

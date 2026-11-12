@@ -1,4 +1,4 @@
-import BigNumber from 'bignumber.js';
+import { formatPositionTpSlMagnitude } from '../../utils/positionTpSlFormatting';
 import { useCallback, useEffect, useState } from 'react';
 
 import type { PerpsProPositionTpSlMode } from '@/core/services/perpsService';
@@ -30,13 +30,6 @@ type SideInputCalculationContext = {
   szDecimals: number;
 };
 
-const formatDerivedMagnitude = (value: string | null) => {
-  const decimal = new BigNumber(value ?? Number.NaN);
-  return decimal.isFinite()
-    ? decimal.abs().decimalPlaces(2, BigNumber.ROUND_DOWN).toFixed()
-    : '';
-};
-
 const calculateModeMagnitude = (
   mode: PerpsProPositionTpSlMode,
   triggerPrice: string,
@@ -46,7 +39,7 @@ const calculateModeMagnitude = (
     return '';
   }
   if (mode === 'pnl') {
-    return formatDerivedMagnitude(
+    return formatPositionTpSlMagnitude(
       calculatePositionTpSlEstimatedPnl({
         direction: context.direction,
         entryPrice: context.entryPrice,
@@ -55,7 +48,7 @@ const calculateModeMagnitude = (
       }),
     );
   }
-  return formatDerivedMagnitude(
+  return formatPositionTpSlMagnitude(
     calculatePositionTpSlRoi({
       direction: context.direction,
       entryPrice: context.entryPrice,
@@ -143,6 +136,7 @@ export const usePerpsProPositionTpSlFormInputs = ({
   initialTakeProfit,
   leverage,
   preferredModes,
+  resetKeys,
   sideSize,
   szDecimals,
 }: {
@@ -153,6 +147,7 @@ export const usePerpsProPositionTpSlFormInputs = ({
   initialTakeProfit: string;
   leverage: number;
   preferredModes: Record<'sl' | 'tp', PerpsProPositionTpSlMode>;
+  resetKeys?: Record<'sl' | 'tp', string>;
   sideSize: string | null;
   szDecimals: number;
 }) => {
@@ -181,6 +176,34 @@ export const usePerpsProPositionTpSlFormInputs = ({
       createContext('stopLoss', initialSize),
     ),
   );
+
+  const [previousResetKeys, setPreviousResetKeys] = useState(resetKeys);
+  if (
+    previousResetKeys?.tp !== resetKeys?.tp ||
+    previousResetKeys?.sl !== resetKeys?.sl
+  ) {
+    // Adjust before children commit: live order facts and their draft must
+    // agree in the same render. A peer cancellation must not reset this leg.
+    setPreviousResetKeys(resetKeys);
+    if (previousResetKeys?.tp !== resetKeys?.tp) {
+      setTakeProfit(
+        createSideInputDraft(
+          preferredModes.tp,
+          initialTakeProfit,
+          createContext('takeProfit', initialSize),
+        ),
+      );
+    }
+    if (previousResetKeys?.sl !== resetKeys?.sl) {
+      setStopLoss(
+        createSideInputDraft(
+          preferredModes.sl,
+          initialStopLoss,
+          createContext('stopLoss', initialSize),
+        ),
+      );
+    }
+  }
 
   useEffect(() => {
     setTakeProfit(current =>

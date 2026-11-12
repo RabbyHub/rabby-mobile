@@ -98,10 +98,6 @@ const dappTabAtom = atomByMMKV<TabKey>(DAPP_ACTIVE_TAB_STORAGE_KEY, 'all', {
   getOnInit: true,
 });
 
-export const dappRemindAtom = atomByMMKV<boolean>('@dapp.remind', true, {
-  getOnInit: true,
-});
-
 const useDappTab = ({
   hasBookmarks,
   bookmarksHydrated,
@@ -492,7 +488,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       fontFamily: 'SF Pro Rounded',
       fontSize: 18,
       lineHeight: 20,
-      fontWeight: '800',
+      fontWeight: '900',
     },
     edit: {
       color: colors2024['neutral-body'],

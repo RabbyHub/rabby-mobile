@@ -7,7 +7,10 @@ import React, {
 } from 'react';
 
 import { makeTxPageBackgroundColors } from '@/constant/layout';
-import { HistoryItemEntity } from '@/databases/entities/historyItem';
+import {
+  HistoryItemEntity,
+  type HistoryPageCursor,
+} from '@/databases/entities/historyItem';
 import { openapi } from '@/core/request';
 import {
   getTransactionHistoryListSnapshot,
@@ -24,11 +27,11 @@ import {
   useRequest,
 } from 'ahooks';
 import PQueue from 'p-queue';
-import { last, unionBy, orderBy, debounce } from 'lodash';
+import { last, orderBy, debounce } from 'lodash';
 import { View } from 'react-native';
 import { useRoute } from '@react-navigation/native';
 import type { TxHistoryResult } from '@rabby-wallet/rabby-api/dist/types';
-import { HistoryList } from './components/HistoryGroupList';
+import { BridgeAwareHistoryList } from './components/BridgeAwareHistoryList';
 import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
 import { BottomSheetModalTokenDetail } from '@/components/TokenDetailPopup/BottomSheetModalTokenDetail';
 import { useGeneralTokenDetailSheetModal } from '@/components/TokenDetailPopup/hooks';
@@ -94,7 +97,7 @@ function HistoryContent({
   const { t } = useTranslation();
   const isReady = useRef(false);
   const lastMap = useRef<Record<string, number>>({});
-  const dbLastCursorRef = useRef<number>(0);
+  const dbLastCursorRef = useRef<HistoryPageCursor | null>(null);
   const dbFetchLoadingRef = useRef<boolean>(false);
   const hasMoreMap = useRef<Record<string, boolean>>({});
   const [isShowAll, setIsShowAll] = useState(false);
@@ -165,7 +168,7 @@ function HistoryContent({
         nextCursor,
       } = await HistoryItemEntity.getHistoryItemsPaginated(addresses, {
         pageSize: 20,
-        lastTimeAt: dbLastCursorRef.current,
+        cursor: dbLastCursorRef.current,
         filterScamAndSmallTx: isFilter,
       });
 
@@ -180,12 +183,12 @@ function HistoryContent({
         } as HistoryDisplayItem;
       });
 
-      if (dbLastCursorRef.current === 0) {
+      if (dbLastCursorRef.current === null) {
         setDbData(list);
       } else {
         setDbData(prev => mergeDataWithDeduplication(prev, list, 'back'));
       }
-      dbLastCursorRef.current = nextCursor || 0;
+      dbLastCursorRef.current = nextCursor ?? null;
       dbFetchLoadingRef.current = false;
       setFirstFetchDone(true);
       return { list, hasMore };
@@ -276,7 +279,7 @@ function HistoryContent({
 
     try {
       const [res, transactions] = await Promise.all([
-        openapi.listTxHisotry({
+        openapi.listTxHistory({
           id: address,
           start_time: startTime,
           page_count: HISTORY_API_PAGE_COUNT,
@@ -368,18 +371,22 @@ function HistoryContent({
       ...(isTestnet
         ? completeds
         : completeds.filter(item => {
+            const localTx = item.maxGasTx;
+            if (!localTx) {
+              return false;
+            }
             const isSynced =
               !!rawDataList?.list.find(tx => {
                 return (
-                  tx.id === item.maxGasTx.hash &&
+                  tx.id === localTx.hash &&
                   findChainByServerID(tx.chain)?.id === item.chainId
                 );
               }) || item.isSynced;
 
             if (isSynced && !item.isSynced) {
-              void transactionHistoryServiceApi
+              transactionHistoryServiceApi
                 .updateTx({
-                  ...item.maxGasTx,
+                  ...localTx,
                   isSynced: true,
                 })
                 .catch(error => {
@@ -420,7 +427,7 @@ function HistoryContent({
     if (isNeedFetchFromApi) {
       reloadAsync();
     } else {
-      dbLastCursorRef.current = 0;
+      dbLastCursorRef.current = null;
       isSceneUsingAllAccounts
         ? syncTop10History(myTop10Addresses, true)
         : syncSingleAddress(finalSceneCurrentAccount?.address.toLowerCase()!);
@@ -450,6 +457,7 @@ function HistoryContent({
     loadMore,
     noMore,
     reloadAsync,
+    mutate,
     cancel,
   } = useInfiniteScroll(() => batchFetchData(), {
     isNoMore: d => (d ? !d.hasMore : false),
@@ -474,7 +482,7 @@ function HistoryContent({
     if (isReady.current) {
       if (!isNeedFetchFromApi) {
         setFirstFetchDone(false);
-        dbLastCursorRef.current = 0;
+        dbLastCursorRef.current = null;
         reloadAsync();
         runFetchLocalTx();
       } else {
@@ -487,7 +495,7 @@ function HistoryContent({
   }, [sceneCurrentAccountDepKey, isSceneUsingAllAccounts]);
 
   const batchFetchDataFromDbUpsert = useMemoizedFn(async () => {
-    dbLastCursorRef.current = 0;
+    dbLastCursorRef.current = null;
     reloadAsync();
   });
 
@@ -535,7 +543,7 @@ function HistoryContent({
     hasConsumedLocalStatusRef.current = true;
     const list = getTransactionHistorySucceedListSnapshot();
     setHistorySuccessList(list);
-    void transactionHistoryServiceApi
+    transactionHistoryServiceApi
       .clearSuccessAndFailList(
         isForMultipleAddress ? undefined : currentAddress,
       )
@@ -593,8 +601,9 @@ function HistoryContent({
         handleSwitchShowAll={value => {
           historyListRef.current?.scrollToTop();
           if (!isNeedFetchFromApi) {
-            dbLastCursorRef.current = 0;
-            batchFetchDataFromDb(value);
+            dbLastCursorRef.current = null;
+            // this refetch bypasses useInfiniteScroll, keep its noMore in sync
+            batchFetchDataFromDb(value).then(mutate);
           }
         }}
       />
@@ -605,6 +614,7 @@ function HistoryContent({
     setIsShowAll,
     isNeedFetchFromApi,
     batchFetchDataFromDb,
+    mutate,
   ]);
 
   const { setNavigationOptions } = useSafeSetNavigationOptions();
@@ -684,22 +694,35 @@ function HistoryContent({
     );
 
     // filter out groups that are the same as the recent transactions
+    // completed groups can only be deduped after the first page arrives
     const uniqueGroups =
       groups?.filter(
         group =>
+          !!group.maxGasTx &&
+          (group.isPending || firstFetchDone) &&
           !recentTxKeys.has(
             `${group.address.toLowerCase()}-${group.maxGasTx.hash}`,
           ),
       ) || [];
     return [...(uniqueGroups || []), ...(displayList || [])];
-  }, [groups, displayList]);
+  }, [groups, displayList, firstFetchDone]);
 
   return (
     // eslint-disable-next-line react-native/no-inline-styles
     <View style={{ paddingTop: 0, position: 'relative', height: '100%' }}>
       <>
         <TransactionAlert pendingTxs={groups?.filter(item => item.isPending)} />
-        <HistoryList
+        <BridgeAwareHistoryList
+          bridgeEnabled={!isTestnet && !isInTokenDetail}
+          accounts={accountList}
+          scopeKey={`${sceneCurrentAccountDepKey}:${
+            isSceneUsingAllAccounts
+              ? myTop10Addresses
+                  .map(address => address.toLowerCase())
+                  .sort()
+                  .join(',')
+              : 'single'
+          }`}
           ref={historyListRef}
           historySuccessList={historySuccessList}
           list={combinedList}
@@ -711,6 +734,13 @@ function HistoryContent({
           refreshLoading={isNeedFetchFromApi && loading}
           isForMultipleAddress={isForMultipleAddress}
           account={isSceneUsingAllAccounts ? null : finalSceneCurrentAccount}
+          noMoreText={
+            noMore
+              ? isNeedFetchFromApi
+                ? t('page.activities.signedTx.noMore.title')
+                : t('page.activities.signedTx.noMore.titleInLast90Days')
+              : undefined
+          }
           loadMore={() => {
             // avoid exec multi times loadMore
             if (loadingMore || noMore) {
@@ -846,7 +876,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     marginLeft: 4,
     fontFamily: 'SF Pro Rounded',
     fontSize: 20,
-    fontWeight: '800',
+    fontWeight: '900',
     lineHeight: 24,
     color: colors2024['neutral-title-1'],
   },

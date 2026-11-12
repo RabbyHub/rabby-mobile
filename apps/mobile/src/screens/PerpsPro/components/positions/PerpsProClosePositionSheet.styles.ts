@@ -1,8 +1,12 @@
 import {
   getPerpsProDialogStyles,
+  PERPS_PRO_DIALOG_FIELD,
+  PERPS_PRO_DIALOG_LABELED_FIELD,
+  PERPS_PRO_DIALOG_TOKENS,
   resolvePerpsProDialogCardBackground,
   resolvePerpsProDialogFieldBackground,
 } from '../common/perpsProDialogVisual';
+import { getPerpsProListRowStyles } from '../common/perpsProListVisual';
 import {
   BOTTOM_BUTTON_TOP_OFFSET,
   BOTTOM_BUTTON_BOTTOM_OFFSET,
@@ -17,6 +21,9 @@ import {
   getPerpsProTintedTagTextStyle,
 } from '../common/perpsProSemanticTagStyles';
 
+// Figma 86609:344522: 46pt order controls, 56pt amount and 30pt summary rows.
+export const PERPS_PRO_CLOSE_POSITION_SHEET_HEIGHT = 606;
+
 export const getPerpsProClosePositionSheetStyles = createGetStyles2024(
   ({ colors2024, isLight, safeAreaInsets }) => ({
     ...getPerpsProDialogStyles(colors2024, safeAreaInsets.bottom, isLight),
@@ -26,7 +33,7 @@ export const getPerpsProClosePositionSheetStyles = createGetStyles2024(
       ...(IS_ANDROID
         ? {
             minHeight:
-              550 -
+              PERPS_PRO_CLOSE_POSITION_SHEET_HEIGHT -
               40 +
               getBottomButtonBottomOffset(safeAreaInsets.bottom) -
               BOTTOM_BUTTON_BOTTOM_OFFSET,
@@ -39,11 +46,17 @@ export const getPerpsProClosePositionSheetStyles = createGetStyles2024(
     positionHeader: {
       backgroundColor: resolvePerpsProDialogCardBackground(colors2024, isLight),
       borderRadius: 12,
-      gap: 10,
       marginTop: 24,
-      padding: 16,
+      paddingBottom: 12,
+      paddingHorizontal: 16,
+      paddingTop: 16,
     },
-    pairRow: { alignItems: 'center', flexDirection: 'row', gap: 4 },
+    pairRow: {
+      alignItems: 'center',
+      flexDirection: 'row',
+      gap: 4,
+      marginBottom: 10,
+    },
     pair: {
       color: colors2024['neutral-title-1'],
       fontFamily: 'SF Pro Rounded',
@@ -55,28 +68,14 @@ export const getPerpsProClosePositionSheetStyles = createGetStyles2024(
     shortTag: getPerpsProTintedTagContainerStyle(colors2024, 'negative'),
     longTagText: getPerpsProTintedTagTextStyle(colors2024, 'positive'),
     shortTagText: getPerpsProTintedTagTextStyle(colors2024, 'negative'),
-    priceSummaryRow: {
-      alignItems: 'center',
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-    },
-    priceSummaryLabel: {
-      color: colors2024['neutral-secondary'],
-      fontFamily: 'SF Pro Rounded',
-      fontSize: 12,
-      lineHeight: 16,
-    },
-    priceSummaryValue: {
-      color: colors2024['neutral-title-1'],
-      fontFamily: 'SF Pro Rounded',
-      fontWeight: '500',
-      fontSize: 12,
-      lineHeight: 16,
-    },
+    priceSummaryRow: getPerpsProListRowStyles(colors2024).listRow,
+    priceSummaryLabel: getPerpsProListRowStyles(colors2024).listLabel,
+    priceSummaryValue: getPerpsProListRowStyles(colors2024).listValue,
     form: {
       gap: 0,
       marginTop: 8,
-      padding: 16,
+      paddingHorizontal: 12,
+      paddingVertical: 16,
       borderRadius: 12,
       backgroundColor: resolvePerpsProDialogCardBackground(colors2024, isLight),
     },
@@ -88,7 +87,7 @@ export const getPerpsProClosePositionSheetStyles = createGetStyles2024(
       ),
       borderRadius: 6,
       flex: 1,
-      height: 40,
+      height: PERPS_PRO_DIALOG_FIELD.height,
       justifyContent: 'center',
       minWidth: 0,
       overflow: 'hidden',
@@ -111,20 +110,20 @@ export const getPerpsProClosePositionSheetStyles = createGetStyles2024(
       left: 12,
       lineHeight: 12,
       position: 'absolute',
-      top: 4,
+      top: PERPS_PRO_DIALOG_FIELD.labelTop,
       zIndex: 1,
     },
+    amountLabel: { top: PERPS_PRO_DIALOG_LABELED_FIELD.labelTop },
     priceInput: {
       color: colors2024['neutral-title-1'],
       fontFamily: 'SF Pro Rounded',
       fontSize: 14,
       fontWeight: '500',
-      height: 40,
+      height: PERPS_PRO_DIALOG_FIELD.height,
       lineHeight: 18,
-      paddingBottom: 0,
       paddingLeft: 12,
       paddingRight: 56,
-      paddingTop: 12,
+      ...PERPS_PRO_DIALOG_FIELD.inputPadding,
       ...PERPS_PRO_ANDROID_SINGLE_LINE_INPUT_STYLE,
     },
     priceUnit: {
@@ -144,12 +143,13 @@ export const getPerpsProClosePositionSheetStyles = createGetStyles2024(
       ),
       borderRadius: 6,
       flexDirection: 'row',
-      height: 40,
+      height: PERPS_PRO_DIALOG_FIELD.height,
       justifyContent: 'center',
       width: 100,
     },
+    // Figma 86609:344546: the order-type toggle uses the Pro action color.
     orderTypeText: {
-      color: colors2024['neutral-title-1'],
+      color: PERPS_PRO_DIALOG_TOKENS.actionBackground,
       fontFamily: 'SF Pro Rounded',
       fontSize: 14,
       fontWeight: '500',
@@ -163,7 +163,7 @@ export const getPerpsProClosePositionSheetStyles = createGetStyles2024(
         isLight,
       ),
       borderRadius: 6,
-      height: 40,
+      height: PERPS_PRO_DIALOG_LABELED_FIELD.height,
       justifyContent: 'center',
       overflow: 'hidden',
       position: 'relative',
@@ -173,60 +173,39 @@ export const getPerpsProClosePositionSheetStyles = createGetStyles2024(
       fontFamily: 'SF Pro Rounded',
       fontSize: 14,
       fontWeight: '500',
-      height: 40,
+      height: PERPS_PRO_DIALOG_LABELED_FIELD.height,
       includeFontPadding: false,
       lineHeight: 18,
-      paddingBottom: 0,
       paddingLeft: 12,
       paddingRight: 72,
-      paddingTop: 12,
+      ...PERPS_PRO_DIALOG_LABELED_FIELD.inputPadding,
       textAlignVertical: 'center',
       ...PERPS_PRO_ANDROID_SINGLE_LINE_INPUT_STYLE,
     },
     amountUnit: {
       color: colors2024['neutral-title-1'],
       fontFamily: 'SF Pro Rounded',
-      fontSize: 14,
-      fontWeight: '500',
-      lineHeight: 18,
+      fontSize: 16,
+      fontWeight: '700',
+      lineHeight: 20,
       position: 'absolute',
       right: 12,
     },
+    // Keeps the 329pt order-dialog rail of Figma 86609:344570.
+    slider: { paddingHorizontal: 4 },
     summary: {
-      gap: 8,
       marginTop: 8,
     },
-    summaryRow: {
-      alignItems: 'center',
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-    },
-    summaryLabel: {
-      color: colors2024['neutral-secondary'],
-      fontFamily: 'SF Pro Rounded',
-      fontSize: 12,
-      lineHeight: 16,
-    },
-    summaryValue: {
-      color: colors2024['neutral-title-1'],
-      fontFamily: 'SF Pro Rounded',
-      fontWeight: '500',
-      fontSize: 12,
-      lineHeight: 16,
-    },
+    summaryRow: getPerpsProListRowStyles(colors2024).listRow,
+    summaryLabel: getPerpsProListRowStyles(colors2024).listLabel,
+    summaryValue: getPerpsProListRowStyles(colors2024).listValue,
     positiveValue: {
+      ...getPerpsProListRowStyles(colors2024).listValue,
       color: colors2024['green-default'],
-      fontFamily: 'SF Pro Rounded',
-      fontWeight: '500',
-      fontSize: 12,
-      lineHeight: 16,
     },
     negativeValue: {
+      ...getPerpsProListRowStyles(colors2024).listValue,
       color: colors2024['red-default'],
-      fontFamily: 'SF Pro Rounded',
-      fontWeight: '500',
-      fontSize: 12,
-      lineHeight: 16,
     },
     footer: {
       paddingHorizontal: 4,

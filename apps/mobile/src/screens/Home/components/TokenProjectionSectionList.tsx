@@ -74,8 +74,8 @@ export function TokenProjectionSectionList<TExtra>({
     useShallow(state => {
       const result = projectionKey
         ? scene === 'single-address'
-          ? state.singleAssetsResultByKey[projectionKey]
-          : state.multiAssetsResultByKey[projectionKey]
+          ? state.singleDisplayAssetsResultByKey[projectionKey]
+          : state.multiDisplayAssetsResultByKey[projectionKey]
         : undefined;
       const segments = (result || EMPTY_TOKEN_ASSETS_INDEX_RESULT).segments;
       return segmentKeys.map(segmentKey => segments[segmentKey].rows);

@@ -2,9 +2,19 @@ import type { StorageAdapater } from '@rabby-wallet/persist-store';
 
 // These integration tests intentionally construct the real business services.
 /* eslint-disable no-runtime-service-imports */
+import { PreferenceService } from '@/core/startupServices/preference';
 import { RabbyPointsService } from '@/core/services/rabbyPoints';
 import { WhitelistService } from '@/core/services/whitelist';
 /* eslint-enable no-runtime-service-imports */
+
+jest.mock('@react-native-firebase/analytics', () => ({
+  __esModule: true,
+  default: () => ({
+    logEvent: jest.fn(),
+    logScreenView: jest.fn(),
+    setAnalyticsCollectionEnabled: jest.fn(async () => undefined),
+  }),
+}));
 
 function createSerializedMemoryStorage() {
   const values = new Map<string, string>();
@@ -42,6 +52,40 @@ async function flushMicrotasks() {
 }
 
 describe('persisted business service lifecycle integration', () => {
+  it('persists the half-hidden migration and preserves a later choice to show balances', async () => {
+    const { storage, seed } = createSerializedMemoryStorage();
+    seed('preference', { balanceHideType: 'HALF_HIDE' });
+
+    const firstService = new PreferenceService({ storageAdapter: storage });
+    expect(firstService.getPreference('balanceHideType')).toBe('HIDE');
+    await flushMicrotasks();
+    expect(storage.getItem('preference').balanceHideType).toBe('HIDE');
+
+    const reconstructedService = new PreferenceService({
+      storageAdapter: storage,
+    });
+    expect(reconstructedService.getPreference('balanceHideType')).toBe('HIDE');
+    reconstructedService.setPreference({ balanceHideType: 'SHOW' });
+    await flushMicrotasks();
+
+    const thirdService = new PreferenceService({ storageAdapter: storage });
+    expect(thirdService.getPreference('balanceHideType')).toBe('SHOW');
+  });
+
+  it.each(['SHOW', 'HIDE', undefined] as const)(
+    'preserves an existing %s balance preference or the default',
+    async balanceHideType => {
+      const { storage, seed } = createSerializedMemoryStorage();
+      seed('preference', balanceHideType ? { balanceHideType } : {});
+
+      const service = new PreferenceService({ storageAdapter: storage });
+      expect(service.getPreference('balanceHideType')).toBe(
+        balanceHideType ?? 'SHOW',
+      );
+      await flushMicrotasks();
+    },
+  );
+
   it('coalesces writes and reconstructs a new service from persisted state', async () => {
     const { storage, getWriteCount } = createSerializedMemoryStorage();
     const firstService = new RabbyPointsService({

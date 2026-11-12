@@ -10,6 +10,7 @@ import * as Values from './components/Values';
 import ViewMore from './components/ViewMore';
 import { SecurityListItem } from './components/SecurityListItem';
 import { SubCol, SubRow, SubTable } from './components/SubTable';
+import { AddressMemoRow } from './components/AddressMemoRow';
 import { Chain } from '@/constant/chains';
 import { View } from 'react-native';
 import useCommonStyle from '../../hooks/useCommonStyle';
@@ -88,16 +89,7 @@ const TransferOwner = ({
           </Row>
         </Col>
         <SubTable target={addressRef}>
-          <SubCol>
-            <SubRow isTitle>
-              <Text style={commonStyle.subRowTitleText}>
-                {t('page.signTx.addressNote')}
-              </Text>
-            </SubRow>
-            <SubRow>
-              <Values.AddressMemo address={actionData.to} />
-            </SubRow>
-          </SubCol>
+          <AddressMemoRow address={actionData.to} />
           {requireData.receiver && (
             <SubCol>
               <SubRow isTitle>

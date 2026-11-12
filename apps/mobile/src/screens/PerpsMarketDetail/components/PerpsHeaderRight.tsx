@@ -1,6 +1,6 @@
 /* eslint-disable react-native/no-inline-styles */
 import { TouchableOpacity } from 'react-native';
-import RcIconFavorite from '@/assets2024/icons/home/favorite.svg';
+import RcIconFavorite from '@/assets2024/icons/perps/PerpsSimpleAccount/favorite.svg';
 import { useTheme2024 } from '@/hooks/theme';
 import { useCallback, useMemo } from 'react';
 import {
@@ -37,10 +37,10 @@ export const PerpsHeaderRight: React.FC<Props> = ({ marketName }) => {
   return (
     <TouchableOpacity onPress={handlePress}>
       <RcIconFavorite
-        width={22}
-        height={21}
+        width={24}
+        height={24}
         color={
-          isFavorite ? colors2024['orange-default'] : colors2024['neutral-info']
+          isFavorite ? colors2024['orange-default'] : colors2024['neutral-line']
         }
       />
     </TouchableOpacity>

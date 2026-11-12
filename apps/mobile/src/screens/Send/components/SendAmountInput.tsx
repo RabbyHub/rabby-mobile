@@ -89,21 +89,20 @@ function useLoadTokenList({
   const internalInputRef = useRef<TextInput>(null);
   const tokenInputRef =
     ref && typeof ref === 'object' && 'current' in ref ? ref : internalInputRef;
-  const [tokenSelectorVisible, setTokenSelectorVisible] = useState(false);
-
   const handleCurrentTokenChange = useCallback(
     (token: TokenItem) => {
       onTokenChange?.(token);
-      setTokenSelectorVisible(false);
-      tokenInputRef.current?.focus();
     },
-    [onTokenChange, tokenInputRef],
+    [onTokenChange],
   );
+  const handleTokenSelectionClosed = useCallback(() => {
+    tokenInputRef.current?.focus();
+  }, [tokenInputRef]);
 
   return {
     tokenInputRef,
-    tokenSelectorVisible,
     handleCurrentTokenChange,
+    handleTokenSelectionClosed,
   };
 }
 
@@ -267,11 +266,14 @@ export const SendAmountInput = ({
   ref?: Ref<TextInput>;
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
-  const { tokenInputRef, tokenSelectorVisible, handleCurrentTokenChange } =
-    useLoadTokenList({
-      onTokenChange,
-      ref,
-    });
+  const {
+    tokenInputRef,
+    handleCurrentTokenChange,
+    handleTokenSelectionClosed,
+  } = useLoadTokenList({
+    onTokenChange,
+    ref,
+  });
   const unitTextRef = useRef<{
     setNativeProps?: (nativeProps: object) => void;
   } | null>(null);
@@ -304,10 +306,10 @@ export const SendAmountInput = ({
   }, [value]);
 
   useLayoutEffect(() => {
-    if (amountFocus && !tokenSelectorVisible) {
+    if (amountFocus) {
       tokenInputRef.current?.focus();
     }
-  }, [amountFocus, tokenSelectorVisible, tokenInputRef]);
+  }, [amountFocus, tokenInputRef]);
 
   const Linear = useCallback(() => {
     return (
@@ -947,6 +949,7 @@ export const SendAmountInput = ({
               token={token}
               disableItemCheck={disableItemCheck}
               onTokenChange={handleCurrentTokenChange}
+              onTokenSelectionClosed={handleTokenSelectionClosed}
               type="send"
               placeholder={placeholder}
               supportChains={[]}

@@ -8,8 +8,15 @@ import {
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import type { SharedValue } from 'react-native-reanimated';
+import { RoundedFontStyles } from '@/core/utils/fonts';
 
 const mockScrollTo = jest.fn();
+
+jest.mock('@/assets2024/icons/perps/PerpsProMarketTabFavorite.svg', () => {
+  const ReactModule = require('react');
+  const { View } = require('react-native');
+  return (props: object) => ReactModule.createElement(View, props);
+});
 
 jest.mock('@/components/Typography', () => ({
   Text: require('react-native').Text,
@@ -71,6 +78,24 @@ const tabs = [
 const indicatorPosition = { value: 0 } as SharedValue<number>;
 
 describe('PerpsProMarketTabs', () => {
+  it('paints the Favorites star like the favorited row star', () => {
+    render(
+      <PerpsProMarketTabs
+        activeTab="favorites"
+        indicatorPosition={indicatorPosition}
+        onChange={jest.fn()}
+        tabs={[{ id: 'favorites', label: 'Favorites' }, ...tabs]}
+      />,
+    );
+    const favoritesTab = screen.getByTestId('perps-pro-market-tab-favorites');
+    expect(favoritesTab.props.accessibilityLabel).toBe('Favorites');
+    expect(
+      favoritesTab
+        .findAll(node => typeof node.props.color === 'string')
+        .map(node => node.props.color),
+    ).toEqual(expect.arrayContaining(['neutral-info', 'orange-default']));
+  });
+
   beforeEach(() => {
     jest.clearAllMocks();
     indicatorPosition.value = 0;
@@ -326,12 +351,12 @@ describe('PerpsProMarketTabs', () => {
         screen.getByTestId('perps-pro-market-tabs-container').props.style,
       ),
     ).toMatchObject({
-      height: 38,
-      marginTop: 16,
+      height: 42,
+      marginTop: 14,
     });
     const scroll = screen.getByTestId('perps-pro-market-tabs');
     const scrollStyle = StyleSheet.flatten(scroll.props.style);
-    expect(scrollStyle.height).toBe(38);
+    expect(scrollStyle.height).toBe(42);
     expect(scrollStyle.borderBottomWidth ?? 0).toBe(0);
     const divider = screen.getByTestId('perps-pro-market-tabs-divider');
     expect(divider.props.pointerEvents).toBe('none');
@@ -353,14 +378,13 @@ describe('PerpsProMarketTabs', () => {
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-market-tab-all').props.style,
       ),
-    ).toMatchObject({ height: 34, paddingHorizontal: 0, paddingTop: 8 });
+    ).toMatchObject({ height: 42, paddingHorizontal: 0, paddingTop: 12 });
     expect(
       StyleSheet.flatten(screen.getByText('All').props.style),
     ).toMatchObject({
-      fontFamily: 'SF Pro Rounded',
-      fontSize: 14,
-      fontWeight: '700',
-      lineHeight: 18,
+      ...RoundedFontStyles.bold,
+      fontSize: 16,
+      lineHeight: 20,
     });
     expect(
       StyleSheet.flatten(
@@ -369,8 +393,8 @@ describe('PerpsProMarketTabs', () => {
         }).props.style,
       ),
     ).toMatchObject({
-      backgroundColor: 'neutral-body',
-      bottom: -0.5,
+      backgroundColor: '#23C0B0',
+      bottom: 0.5,
       height: 3,
       left: 13.5,
       width: 43,
@@ -639,7 +663,7 @@ describe('usePerpsProMarketTabLayout', () => {
     expect(result.current.initialLayout).toBe(ready);
     rerender({ ...initialProps, tabs: candidates });
     expect(result.current.initialLayout).toMatchObject({
-      contentWidth: 254,
+      contentWidth: 258,
       frames: { indices: { x: 148, width: 90 } },
     });
   });

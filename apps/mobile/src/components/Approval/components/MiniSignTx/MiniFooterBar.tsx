@@ -1,3 +1,4 @@
+import { RoundedFontStyles } from '@/core/utils/fonts';
 import type { Chain } from '@/constant/chains';
 import { RootNames } from '@/constant/layout';
 import { SecurityEngineLevel } from '@/constant/security';
@@ -482,10 +483,9 @@ export const MiniFooterBar: React.FC<Props> = ({
                   <Text
                     style={{
                       color: colors2024['neutral-secondary'],
-                      fontFamily: 'SF Pro Rounded',
+                      ...RoundedFontStyles.medium,
                       fontSize: 14,
                       fontStyle: 'normal',
-                      fontWeight: '500',
                       lineHeight: 18,
                     }}>
                     {t('global.check')}

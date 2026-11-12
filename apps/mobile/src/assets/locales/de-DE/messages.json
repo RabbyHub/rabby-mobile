@@ -66,7 +66,8 @@
     "time": {
       "hour": "{{t}} Stunde",
       "mins": "{{t}} Min.",
-      "hours": "{{t}} Stunden"
+      "hours": "{{t}} Stunden",
+      "ago": "vor {{time}}"
     },
     "refresh": "Aktualisieren",
     "copied": "Kopiert",
@@ -142,7 +143,8 @@
     "SavedSeedPhrase": "Ich habe die Seed-Phrase gespeichert.",
     "from": "Von",
     "to": "An",
-    "copiedSuccessfully": "Erfolgreich kopiert"
+    "copiedSuccessfully": "Erfolgreich kopiert",
+    "failed": "Fehlgeschlagen"
   },
   "component": {
     "accountSwitcher": {
@@ -223,13 +225,6 @@
       "erc1155Tips": "Ihr Guthaben beträgt {{amount}}",
       "erc721Tips": "Pro Sendung kann jeweils nur ein NFT des ERC 721 gesendet werden."
     },
-    "ReserveGasPopup": {
-      "fast": "Normal",
-      "title": "Gas reservieren",
-      "instant": "Schnell",
-      "doNotReserve": "Kein Gas reservieren",
-      "normal": "Langsam"
-    },
     "NoLongerSupports": {
       "button": "Verstanden",
       "desc": "Die folgenden Adressen werden entfernt. Sie finden sie weiterhin in der ursprünglichen Wallet-App. Importieren Sie die Seed-Phrase oder den privaten Schlüssel, um sie hier zu verwenden.",
@@ -281,7 +276,8 @@
       },
       "alertText": "Drittanbieter-DApp: Wenden Sie sich bei Nutzungsproblemen bitte an den DApp-Support. Rabby bietet nur Anzeigezugriff.",
       "title": "Screenshot zur Fehlermeldung",
-      "submitFailed": "Fehler beim Einreichen."
+      "submitFailed": "Fehler beim Einreichen.",
+      "includeAddress": "Adresse zur Fehlerbehebung teilen"
     },
     "submitFeedbackSuccessModal": {
       "desc": "Erfolgreich eingereicht!"
@@ -449,7 +445,13 @@
         "empty": {
           "title": "Noch keine signierten Transaktionen",
           "titleLastThreeMonths": "Keine Transaktionshistorie in 90 Tagen",
+          "titleInLast90Days": "Keine Transaktionen in den letzten 90 Tagen",
+          "titleNoTransactions": "Keine Transaktionen",
           "testnetNoHistory": "Transaktionsverlauf für benutzerdefinierte Token nicht verfügbar."
+        },
+        "noMore": {
+          "title": "Keine weiteren Transaktionen.",
+          "titleInLast90Days": "Keine weiteren Transaktionen in den letzten 90 Tagen."
         },
         "common": {
           "pendingDetail": "Ausstehende Details"
@@ -1142,11 +1144,9 @@
       "the-following-bridge-route-are-found": "Folgende Kurse gefunden",
       "title": "Bridge",
       "price-impact": "Preisauswirkung",
-      "no-quote-found": "Kein Angebot gefunden. Bitte versuchen Sie es mit anderen Token-Paaren.",
+      "no-quote-found": "Kein Angebot gefunden.",
       "approve-and-bridge": "Genehmigen und bridgen",
       "best": "Beste",
-      "bridge-from": "Bridge von",
-      "for-available-quote": "für ein verfügbares Angebot",
       "est-receiving": "Geschätzter Empfang:",
       "via-bridge": "über {{bridge}}",
       "need-to-approve-token-before-bridge": "Token muss vor dem Bridge-Vorgang genehmigt werden",
@@ -1178,7 +1178,42 @@
       "formChangedTitle": "Formular geändert",
       "formChangedAmount": "Der Betrag hat sich geändert, möglicherweise aufgrund der automatischen Passwortausfüllung durch die Systemtastatur. Bitte überprüfen Sie den Betrag und geben Sie den richtigen Betrag erneut ein.",
       "best-subtitle": "Das beste Angebot wird durch eine Kombination aus geschätzten Gesamtkosten (einschließlich Gas-Gebühren) und Lieferungsgeschwindigkeit bestimmt.",
-      "swap-best-subtitle": "Das beste Angebot wird durch die niedrigsten geschätzten Gesamtkosten bestimmt, einschließlich des Wechselkurses und der Gasgebühren."
+      "swap-best-subtitle": "Das beste Angebot wird durch die niedrigsten geschätzten Gesamtkosten bestimmt, einschließlich des Wechselkurses und der Gasgebühren.",
+      "duration-sec": "{{duration}} s",
+      "duration-hour": "{{duration}} h",
+      "duration-hour-min": "{{hours}} h {{minutes}} min",
+      "duration-day": "{{duration}} T.",
+      "duration-day-hour": "{{days}} T. {{hours}} h",
+      "duration-day-min": "{{days}} T. {{minutes}} min",
+      "duration-day-hour-min": "{{days}} T. {{hours}} h {{minutes}} min",
+      "status": {
+        "bridging": "Bridge läuft,",
+        "bridged": "Überbrückt",
+        "historyTitle": "Bridge-Verlauf",
+        "today": "Heute",
+        "eta": "geschätzte Dauer: {{time}}",
+        "stillBridging": "Bridge läuft noch",
+        "delayed": "Bridge verzögert",
+        "sourceFailed": "Bridge fehlgeschlagen. Ihre {{token}} wurden nicht gesendet",
+        "tokenNotSent": "Ihre {{token}} wurden nicht gesendet",
+        "failed": "Fehlgeschlagen",
+        "bridgeFailed": "Bridge fehlgeschlagen",
+        "refunded": "Zurückerstattet",
+        "refundedIn": "In {{token}} zurückerstattet",
+        "contactSupport": "Support kontaktieren",
+        "viewDetails": "Details anzeigen",
+        "sendingFrom": "Senden von {{chain}}",
+        "receivingOn": "Empfang auf {{chain}}",
+        "processing": "Wird verarbeitet",
+        "queued": "In der Warteschlange",
+        "pending": "Ausstehend",
+        "completed": "Abgeschlossen",
+        "refund": "Zurückerstattet",
+        "waiting": "Warten auf die Transaktion im Zielnetzwerk",
+        "goBack": "Zurück",
+        "bridgeAgain": "Erneut bridgen",
+        "captureFailed": "Screenshot konnte nicht erstellt werden. Bitte versuchen Sie es erneut."
+      }
     },
     "nextComponent": {
       "multiAddressHome": {
@@ -1417,7 +1452,8 @@
       "keystone": {
         "scan": {
           "title": "Keystone scannen, um zu verbinden",
-          "description": "Scannen Sie den QR-Code auf Ihrem Keystone-Wallet."
+          "description": "Scannen Sie den QR-Code auf Ihrem Keystone-Wallet.",
+          "invalidQRCode": "Ungültiger QR-Code. Bitte scannen Sie den Synchronisierungs-QR-Code der Hardware-Wallet."
         },
         "camera": {
           "description": "Kamerazugriff aktivieren und Ihren Keystone scannen",
@@ -1695,11 +1731,7 @@
       "gnosisChainScrollDesc": "– Diese Wallet wurde in {{count}} Netzwerken bereitgestellt –"
     },
     "createPassword": {
-      "PrivacyPolicy": "Datenschutzerklärung",
       "Newpassword": "Passwort eingeben",
-      "agreeToTerms": "Ich habe die folgenden Dokumente gelesen und stimme ihnen zu:",
-      "termOfUse": "Nutzungsbedingungen",
-      "and": "und",
       "confirmPasswordPlaceholder": "Passwort bestätigen",
       "settingUp": "Passwort einrichten",
       "passwordMinTip": "Muss mindestens 8 Zeichen lang sein",
@@ -1718,7 +1750,9 @@
       "agree": "Ich habe die <1/><2>Nutzungsbedingungen</2> gelesen und stimme diesen zu.",
       "confirmModalDesc": "Bitte bewahren Sie Ihr Passwort ordnungsgemäß auf. Einmal verloren, kann es von Rabby weder geändert noch wiederhergestellt werden.",
       "setWallet": "Wallet einrichten",
-      "subTitle": "Dieses Passwort entsperrt Ihre Wallet und verschlüsselt Ihre Daten auf diesem Gerät. Es kann nicht wiederhergestellt werden. Wenn Sie es verlieren, müssen Sie die Wallet zurücksetzen und erneut importieren."
+      "subTitle": "Dieses Passwort entsperrt Ihre Wallet und verschlüsselt Ihre Daten auf diesem Gerät. Es kann nicht wiederhergestellt werden. Wenn Sie es verlieren, müssen Sie die Wallet zurücksetzen und erneut importieren.",
+      "dataAnalysisDesc": "Teilen Sie anonyme Nutzungsdaten, um Rabby zu verbessern. Die erfassten Daten werden weder mit Ihnen noch mit Ihrem Konto verknüpft. Sie können dies jederzeit in den Einstellungen ändern.",
+      "agreeByContinuing": "Indem Sie fortfahren, stimmen Sie den <terms>Nutzungsbedingungen</terms> zu und nehmen die <privacy>Datenschutzerklärung</privacy> zur Kenntnis."
     },
     "backupPrivateKey": {
       "clickToShow": "Klicken, um privaten Schlüssel anzuzeigen",
@@ -1767,6 +1801,10 @@
       "transactionSpeed": "Transaktionsgeschwindigkeit"
     },
     "singleHome": {
+      "tokenActions": {
+        "remove": "Entfernen",
+        "removeFailed": "Token konnte nicht entfernt werden"
+      },
       "sectionHeader": {
         "Nft": "NFT",
         "Token": "Token",
@@ -1785,8 +1823,8 @@
     },
     "receiveAddressList": {
       "selectChainTitle": "Netzwerk auswählen",
-      "title": "Wallet auswählen, um zu empfangen",
-      "subtitle": "Wählen Sie eine Wallet aus, um Ihre Krypto zu empfangen."
+      "title": "Wallet zum Empfangen auswählen",
+      "subtitle": "Wählen Sie eine Wallet-Adresse, um Ihre Assets zu empfangen."
     },
     "approvalsAddressList": {
       "title": "Genehmigungen"
@@ -1905,6 +1943,13 @@
       }
     },
     "tokenDetail": {
+      "removed": {
+        "restore": "Entfernten Token wiederherstellen",
+        "restoreFailed": "Token konnte nicht wiederhergestellt werden",
+        "more": "Mehr",
+        "confirmTitle": "Diesen Token entfernen?",
+        "confirmDescription": "· Dieser Token wird nach dem Entfernen nicht mehr in Ihrem Portfolio angezeigt.\n· Sie können ihn jederzeit unter Einstellungen >> Entfernte Tokens wiederherstellen."
+      },
       "excludeBalanceTipsButton": "Verstanden",
       "excludeBalanceTips": "Dieser Vermögenswert wird für die Genauigkeit von Ihrem Gesamtguthaben ausgeschlossen. Sie können darauf tippen, um Details anzuzeigen und ihn bei Bedarf einzubeziehen.",
       "action": {
@@ -2006,10 +2051,15 @@
       "headerTokenValueText": "Token-Wert",
       "headerBalanceText": "Guthaben",
       "copyCA": "Token-Vertrag-Adresse kopiert",
+      "copyCAWarning": "Dies ist eine Token-Vertragsadresse.\nSie kann nicht zum Empfang von Vermögenswerten verwendet werden.",
       "wallet": "Wallet",
       "customTestnetNotSupported": "Der Token auf diesem Netzwerk wird nicht unterstützt"
     },
     "setting": {
+      "removedToken": {
+        "title": "Entfernte Tokens",
+        "description": "Entfernte Tokens werden für alle Ihre Adressen in Ihrem Portfolio ausgeblendet, aber weiterhin bei der Berechnung Ihres Guthabens berücksichtigt."
+      },
       "currentVersion": "Aktuelle Version",
       "modifyRPCURL": "RPC-URL ändern",
       "feedback": "Rückmeldung",
@@ -2040,7 +2090,8 @@
       "currency": "Währung",
       "searchCurrency": "Währung suchen",
       "screenshotReportSwitch": "Screenshot, um einen Fehler zu melden",
-      "dataAnalysis": "Datenanalyse",
+      "dataAnalysis": "Rabby verbessern helfen",
+      "dataAnalysisDesc": "Teilen Sie anonyme Nutzungsdaten, um Rabby zu verbessern. Die erfassten Daten werden weder mit Ihnen noch mit Ihrem Konto verknüpft.",
       "bugReportChat": "Feedback per Chat teilen",
       "features": "Funktionen",
       "manageWallets": "Wallets verwalten"
@@ -2059,6 +2110,9 @@
       "fixedModeTag": "Fester Modus"
     },
     "customTestnet": {
+      "screenTitle": "Benutzerdefiniertes Netzwerk",
+      "removeNetwork": "{{name}} löschen",
+      "editTitle": "Benutzerdefiniertes Netzwerk bearbeiten",
       "currency": "Währung",
       "add": "Benutzerdefiniertes Netzwerk hinzufügen",
       "empty": "Kein benutzerdefiniertes Netzwerk",
@@ -2145,7 +2199,8 @@
       "emptyWhitelistContent": "Fügen Sie vertrauenswürdige Adressen zur Zulassungsliste für schnelle Überweisungen hinzu – beim nächsten Mal ist keine Bestätigung erforderlich",
       "SendHistory": "Sendeverlauf",
       "dividerWatchOnlyWallets": "Watch-Only-Adressen",
-      "enterOrSearchAddress": "Adresse eingeben oder suchen"
+      "enterOrSearchAddress": "Adresse eingeben oder suchen",
+      "resolvingAddressName": "Adresse wird gesucht..."
     },
     "confirmAddress": {
       "risks": {
@@ -2202,6 +2257,7 @@
       "customNetworkTokenHeader": "Hinzugefügte benutzerdefinierte Netzwerke"
     },
     "browser": {
+      "openInRabbyPerps": "In Rabby Perps öffnen",
       "BrowserHeader": {
         "searchIos": "Website durchsuchen",
         "searchAndroid": "Suche DApp"
@@ -2523,8 +2579,7 @@
           }
         },
         "chart": {
-          "open": "Chart öffnen",
-          "resetPriceScale": "Preisskala des Charts zurücksetzen"
+          "open": "Chart öffnen"
         },
         "account": {
           "disabledFrame": "Kontofunktionen sind in dieser Phase nicht verfügbar",
@@ -2667,12 +2722,14 @@
           "positionAmount": "Positionsmenge",
           "estimatedPnl": "Geschätzter PnL",
           "skipLimitConfirmation": "Doppelte Bestätigung für Limit-Orders nicht erneut anzeigen.",
+          "skipMarketCloseConfirmation": "Diese Bestätigung zum Schließen einer Position per Marktorder nicht erneut anzeigen.",
           "closeSubmitted": "Schließungsorder übermittelt",
           "closeFailed": "Position konnte nicht geschlossen werden",
           "minimumCloseAmount": "Mindestbetrag zum Schließen: 10 $",
           "closeContextChanged": "Position oder Konto haben sich geändert. Prüfen Sie die Angaben erneut."
         },
         "positionTpsl": {
+          "skipConfirmation": "Diese TP/SL-Bestätigung nicht erneut anzeigen.",
           "addButton": "TP/SL hinzufügen",
           "addTitle": "TP/SL hinzufügen",
           "cancelFailed": "TP/SL-Order konnte nicht storniert werden",
@@ -2683,6 +2740,7 @@
           "duplicatePositionOrders": "Auf dieser Seite bestehen mehrere Positions-TP/SL-Orders. Stornieren Sie sie einzeln oder aktualisieren Sie vor einer Änderung.",
           "estimatedLiquidation": "Geschätzter Liquidationspreis",
           "estimatedPnl": "Geschätzter PnL",
+          "estimatedPnlDescription": "Geschätzter PnL <2>{{pnl}} {{quoteAsset}}(ROI: {{roi}}%)</2>",
           "estimatedPnlShort": "Geschätzter PnL",
           "invalidOrder": "Prüfen Sie TP/SL-Preis und -Menge",
           "invalidTrigger": "Der Auslösepreis ist für den aktuellen Markpreis ungültig",
@@ -2866,7 +2924,6 @@
         "feeHyperliquid": "Hyperliquid",
         "feeTitle": "Gebühr",
         "feeRabby": "Rabby Wallet",
-        "feeRabbyDiscount": "Zeitlich begrenzter Rabatt auf Handelsgebühren",
         "feeDesc": "Wenn Benutzer Trades platzieren, gelten sowohl <1>Handelsgebühren</1> als auch <2>Builder-Gebühren</2>.",
         "amount": "Betrag",
         "asset": "Vermögenswert",
@@ -2932,7 +2989,7 @@
       },
       "PerpsDepositCard": {
         "deposit": "Einzahlen",
-        "availableToTrade": "Verfügbar zum Handel:",
+        "availableToTrade": "Verfügbar:",
         "swap": "Tauschen"
       },
       "PerpsAccountSelectorPopup": {
@@ -3006,6 +3063,50 @@
       }
     },
     "perpsDetail": {
+      "simpleAccount": {
+        "margin": "Margin",
+        "averageEntry": "Ø Einstiegspreis",
+        "estimatedLiquidationPrice": "Gesch. Liq.-Preis",
+        "estimatedLiquidationDistance": "Gesch. Liq.-Abstand",
+        "tpSl": "TP/SL",
+        "takeProfitPrice": "Take-Profit-Preis",
+        "stopLossPrice": "Stop-Loss-Preis",
+        "funding": "Finanzierung",
+        "nextFundingRate": "Nächste Funding-Rate",
+        "estimatedPnl": "Gesch. PnL",
+        "closePositionTitle": "{{coin}}-Position schließen",
+        "estimatedRealizedPnl": "Gesch. realisierter PnL"
+      },
+      "simpleChart": {
+        "openInterest": "Offene Kontrakte",
+        "volume24h": "24h-Volumen",
+        "intervalTitle": "Kerzenintervall",
+        "intervalDescription": "Jede Kerze stellt das gewählte Zeitintervall dar.",
+        "minutes": "Minuten",
+        "hours": "Stunden",
+        "days": "Tage",
+        "open": "Eröffnung",
+        "low": "Tief",
+        "high": "Hoch",
+        "close": "Schluss",
+        "time": "Zeit",
+        "change": "Änderung",
+        "changePercent": "Änderung (%)",
+        "averageEntry": "Ø Einstiegspreis",
+        "takeProfit": "Take-Profit",
+        "stopLoss": "Stop-Loss",
+        "liquidation": "Liquidationspreis",
+        "all": "ALLE",
+        "source": "Bereitgestellt von Hyperliquid. Kurschart bereitgestellt von <tradingview>TradingView.</tradingview>",
+        "resetChart": "Chart zurücksetzen",
+        "backToLatest": "Zu den neuesten Daten",
+        "switchToArea": "Zum Flächenchart wechseln",
+        "switchToCandle": "Zum Kerzenchart wechseln",
+        "showVolume": "24h-Volumen anzeigen",
+        "showOpenInterest": "Offene Kontrakte anzeigen",
+        "buy": "Kauf",
+        "sell": "Verkauf"
+      },
       "PerpEditLimitPriceTag": {
         "setLimitBuyPrice": "Limit-Kaufpreis festlegen",
         "setLimitSellPrice": "Limit-Verkaufspreis festlegen",
@@ -3034,7 +3135,7 @@
         "settings": "Einstellungen",
         "unrealizedPnl": "Unrealisierter PNL",
         "details": "Details",
-        "fundingTipsBold": "Dies zeigt die seit Eröffnung der Position abgerechneten Funding-Gebühren insgesamt. <bold>Grüne (positive)</bold> Werte bedeuten, dass Sie Funding von anderen Tradern erhalten haben, während <bold>rote (negative)</bold> Werte Funding-Kosten sind, die Sie gezahlt haben.",
+        "fundingTipsBold": "Dies zeigt die seit Eröffnung der Position abgerechneten Funding-Gebühren insgesamt. <positive>Grüne (positive)</positive> Werte bedeuten, dass Sie Funding von anderen Tradern erhalten haben, während <negative>rote (negative)</negative> Werte Funding-Kosten sind, die Sie gezahlt haben.",
         "crossTips": "Im Cross-Margin-Modus ist der Liquidationspreis einer einzelnen Position nur ein Schätzwert zur Orientierung."
       },
       "PerpsInfo": {
@@ -3171,6 +3272,13 @@
       },
       "addressEditorBadge": {
         "nameUnknown": "Benennen Sie die Adresse"
+      },
+      "scanQrcode": {
+        "chooseFromGallery": "Aus Galerie auswählen",
+        "noQrCode": "Kein QR-Code in diesem Bild gefunden",
+        "multipleQrCodes": "Mehrere QR-Codes gefunden. Bitte wähle ein Bild mit nur einem QR-Code",
+        "invalidAddress": "Keine gültige Adresse in diesem QR-Code gefunden",
+        "readImageFailed": "Bild konnte nicht gelesen werden. Bitte versuche es erneut"
       }
     },
     "Lending": {
@@ -3477,6 +3585,72 @@
     "batchRevoke": {
       "title": "Batch-Widerruf"
     },
+    "memeCoin": {
+      "holdingsEntry": "Bestände",
+      "pnlPeriod24h": "24h",
+      "pnlPeriodAll": "Alle",
+      "pnlTipLabel": "PnL",
+      "backToMarket": "Zurück zum Meme-Markt",
+      "marketTitle": "Meme-Markt",
+      "holdingsTitle": "Bestände",
+      "marketCap": "Marktkapitalisierung",
+      "valuePnl": "Wert / PnL",
+      "searchMarket": "Meme-Markt durchsuchen",
+      "noMatch": "Keine passenden Memes",
+      "noHoldings": "Noch keine Bestände",
+      "loadFailed": "Laden fehlgeschlagen. Zum Wiederholen tippen",
+      "buyN": "{{count}} Memes kaufen",
+      "buyN_one": "{{count}} Meme kaufen",
+      "sellN": "{{count}} Memes verkaufen",
+      "sellN_one": "{{count}} Meme verkaufen",
+      "selectToBuy": "Memes zum Kaufen auswählen",
+      "selectToSell": "Memes zum Verkaufen auswählen",
+      "maxPriceImpact": "Max. Preisauswirkung",
+      "unsupportedAddressType": "Adresstyp wird nicht unterstützt",
+      "accountChanged": "Adresse geändert. Bitte erneut starten",
+      "addressSwitchUnsupported": "Auf dieser Seite kann die Adresse nicht gewechselt werden.",
+      "buy": {
+        "amount": "Kaufbetrag",
+        "allocation": "Aufteilung",
+        "byMarketCap": "Nach Marktkapitalisierung",
+        "equalSplit": "Gleichmäßig",
+        "estPayment": "Geschätzte Zahlung {{amount}}",
+        "needed": "{{amount}} benötigt",
+        "anotherNeeded": "Weitere {{amount}} benötigt",
+        "preview": "Vorschau",
+        "paymentTokens": "Zahlungstoken",
+        "selectTokens": "Token auswählen",
+        "selectPaymentAssets": "Assets zur Zahlung auswählen",
+        "estPaymentLabel": "Geschätzte Zahlung",
+        "noPaymentToken": "Kein Zahlungstoken ausgewählt",
+        "confirm": "Bestätigen",
+        "noAssets": "Keine verfügbaren Assets"
+      },
+      "execute": {
+        "title": "Ausführen",
+        "buySubtitleShort": "Pro Netzwerk nacheinander, netzwerkübergreifend parallel.",
+        "sellSubtitle": "Erlöse verbleiben im jeweiligen Netzwerk",
+        "estReceipt": "Geschätzter Erhalt(USD)",
+        "statusPending": "Ausstehend",
+        "statusPendingPrevious": "Wartet auf die vorherige Transaktion im selben Netzwerk",
+        "statusExecuting": "Wird ausgeführt",
+        "statusSuccessful": "Erfolgreich",
+        "confirm": "Bestätigen",
+        "back": "Zurück",
+        "retryFailedTxns": "{{count}} fehlgeschlagene Transaktionen wiederholen",
+        "retryFailedTxns_one": "{{count}} fehlgeschlagene Transaktion wiederholen",
+        "progress": "Wird ausgeführt · {{done}}/{{total}} abgeschlossen",
+        "done": "Fertig",
+        "exitTitle": "Ausführung abbrechen und zurückgehen?",
+        "exitDesc1": "Die Ausführung wird gestoppt. Nicht übermittelte Transaktionen werden nicht verarbeitet.",
+        "exitDesc2": "Bereits on-chain übermittelte Transaktionen können nicht rückgängig gemacht werden und werden möglicherweise trotzdem abgeschlossen.",
+        "stopAndExit": "Stoppen & Beenden",
+        "continue": "Fortfahren",
+        "failReason": {
+          "buildFailed": "Transaktion konnte nicht erstellt werden"
+        }
+      }
+    },
     "convertDust": {
       "failReason": {
         "quoteUnavailable": "Angebotsabruf fehlgeschlagen",
@@ -3536,6 +3710,7 @@
       "screenTitle": "Wallet verbinden",
       "connectingToRabby": "Verbindung zu Rabby wird hergestellt",
       "pairingFailed": "WalletConnect-Kopplung fehlgeschlagen.",
+      "proposalNotReceived": "Der WalletConnect-QR-Code ist möglicherweise abgelaufen. Bitte aktualisiere ihn und versuche es erneut.",
       "connected": "Erfolgreich verbunden. Bitte kehren Sie zur DApp zurück.",
       "proposalExpired": "WalletConnect-Anfrage abgelaufen.",
       "pairingExpired": "WalletConnect-Kopplung abgelaufen. Aktualisieren Sie den DApp-QR-Code und versuchen Sie es erneut.",

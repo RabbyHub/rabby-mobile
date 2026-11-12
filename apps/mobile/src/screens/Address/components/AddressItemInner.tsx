@@ -308,7 +308,7 @@ export const getStyles = (colors: AppColorsVariants) => {
     },
     title: {
       fontSize: 15,
-      fontWeight: '600',
+      fontWeight: '500',
       maxWidth: '100%',
       color: colors['neutral-title-1'],
       // ...makeDebugBorder('red'),

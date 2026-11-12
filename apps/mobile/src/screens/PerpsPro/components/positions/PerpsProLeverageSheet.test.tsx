@@ -1,4 +1,5 @@
 import { ThemeColors2024 } from '@/constant/theme';
+import { RoundedFontStyles } from '@/core/utils/fonts';
 import { colord } from 'colord';
 import { PERPS_PRO_DIALOG_TOKENS } from '../common/perpsProDialogVisual';
 jest.mock('@/assets2024/icons/perps/PerpsProLeveragePlus.svg', () => {
@@ -220,7 +221,10 @@ describe.each(['light', 'dark'] as const)(
         screen.getByTestId('perps-pro-leverage-input'),
         '12',
       );
-      act(() => show({ endCoordinates: { height: 300, screenY: 500 } }));
+      act(() => {
+        perpsProKeyboardSession.setAndroidKeyboardVisible(true);
+        show({ endCoordinates: { height: 300, screenY: 500 } });
+      });
       expect(screen.getByTestId('leverage-sheet').props.snapPoints).toEqual([
         410,
       ]);
@@ -273,9 +277,8 @@ describe.each(['light', 'dark'] as const)(
         .find(node => StyleSheet.flatten(node.props.style)?.width === 202);
       expect(inputCard).toBeDefined();
       const cardStyle = StyleSheet.flatten(inputCard?.props.style);
-      expect(cardStyle.backgroundColor).toBe(
-        colors[mode === 'light' ? 'neutral-bg-1' : 'neutral-bg-2'],
-      );
+      // Figma 86609:303158: bg-5 field on the bg-1 input dialog.
+      expect(cardStyle.backgroundColor).toBe(colors['neutral-bg-5']);
       expect(cardStyle.backgroundColor).not.toBe(
         StyleSheet.flatten(
           screen.getByTestId('leverage-sheet').props.backgroundStyle,
@@ -285,13 +288,12 @@ describe.each(['light', 'dark'] as const)(
         StyleSheet.flatten(
           screen.getByTestId('perps-pro-leverage-increment').props.style,
         ).backgroundColor,
-      ).toBe(colors['neutral-bg-5']);
+      ).toBe(colors['neutral-line']);
       expect(
         StyleSheet.flatten(screen.getByText('Adjust Leverage').props.style),
       ).toMatchObject({
-        fontFamily: 'SF Pro Rounded',
+        ...RoundedFontStyles.heavy,
         fontSize: 20,
-        fontWeight: '900',
         lineHeight: 24,
       });
       expect(
@@ -360,7 +362,7 @@ describe.each(['light', 'dark'] as const)(
       ).toMatchObject({ paddingTop: 24, paddingBottom: 36 });
     });
 
-    it('blurs the leverage input before the slider handles a touch', () => {
+    it('blurs the leverage input when native sliding starts without a JS responder capture', () => {
       render(
         <PerpsProLeverageSheet
           currentLeverage={20}
@@ -372,15 +374,11 @@ describe.each(['light', 'dark'] as const)(
         />,
       );
 
-      expect(
-        screen
-          .getByTestId('perps-pro-leverage-slider-section')
-          .props.onStartShouldSetResponderCapture({ nativeEvent: {} }),
-      ).toBe(false);
+      fireEvent(screen.getByTestId('leverage-slider'), 'slidingStart', 20);
 
       expect(mockBottomSheetInputBlur).toHaveBeenCalledTimes(1);
       expect(mockKeyboardDismiss).toHaveBeenCalledTimes(1);
-      expect(mockSliderHapticStart).not.toHaveBeenCalled();
+      expect(mockSliderHapticStart).toHaveBeenCalledWith(20);
       expect(mockSliderHapticValueChange).not.toHaveBeenCalled();
     });
 
@@ -690,8 +688,7 @@ it.each(['android', 'ios'] as const)(
       }).props.style,
     );
     expect(inputStyle).toMatchObject({
-      fontFamily:
-        platform === 'android' ? 'SF-Pro-Rounded-Bold' : 'SF Pro Rounded',
+      fontFamily: platform === 'android' ? 'SF-Pro-Rounded-Bold' : 'ui-rounded',
       fontSize: 36,
       fontVariant: ['tabular-nums'],
       height: platform === 'android' ? 54 : 42,

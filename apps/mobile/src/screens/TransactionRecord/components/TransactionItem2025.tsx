@@ -1,6 +1,5 @@
 /* eslint-disable react-native/no-inline-styles */
 import type { TransactionGroup } from '@/core/services/transactionHistory';
-import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import type {
   ApproveAction,
   ApproveNFTAction,
@@ -8,7 +7,6 @@ import type {
   SendAction,
   TokenItem,
 } from '@rabby-wallet/rabby-api/dist/types';
-import { GasLevel } from '@rabby-wallet/rabby-api/dist/types';
 import { useTranslation } from 'react-i18next';
 import { TouchableOpacity, View } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -21,11 +19,8 @@ import type {
   SendRequireData,
   SwapRequireData,
 } from '@rabby-wallet/rabby-action';
-import { ParsedTransactionActionData } from '@rabby-wallet/rabby-action';
-import TokenLabel from '@/screens/Transaction/components/TokenLabel';
 import { getTokenSymbol } from '@/utils/token';
 import { ellipsisOverflowedText } from '@/utils/text';
-import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { RootNames } from '@/constant/layout';
 import { TxStatusItem } from '@/screens/Transaction/components/TxStatusItem';
 import { getAliasName } from '@/core/apis/contact';
@@ -61,7 +56,6 @@ export const TransactionItem = ({
   historySuccessList,
   data,
   canCancel,
-  onRefresh,
   isForMultipleAddress,
   isInSendHistory,
   onPressItem,
@@ -72,7 +66,7 @@ export const TransactionItem = ({
 }: {
   historySuccessList?: string[];
   isForMultipleAddress?: boolean;
-  getCexInfoByAddress?: (address: string) => ProjectItem;
+  getCexInfoByAddress?: (address: string) => ProjectItem | undefined;
   data: TransactionGroup;
   canCancel?: boolean;
   onRefresh?: () => void;
@@ -84,14 +78,11 @@ export const TransactionItem = ({
 }) => {
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
-  const isCanceled =
-    data.isCompleted &&
-    isSameAddress(data?.maxGasTx?.rawTx?.from, data?.maxGasTx?.rawTx?.to);
   const [showSuccess, setShowSuccess] = useState(false);
   const isShowSuccess = useMemo(
     () =>
       historySuccessList?.includes(
-        `${data.maxGasTx.address}-${data.maxGasTx.hash}` || '',
+        `${data.maxGasTx?.address}-${data.maxGasTx?.hash}` || '',
       ) || showSuccess,
     [data.maxGasTx, historySuccessList, showSuccess],
   );
@@ -161,8 +152,6 @@ export const TransactionItem = ({
       } = balance_change;
       const noNft =
         receive_nft_list?.length === 0 && send_nft_list?.length === 0;
-      const noToken =
-        receive_token_list?.length === 0 && send_token_list?.length === 0;
       const noSend =
         send_token_list?.length === 0 && send_nft_list?.length === 0;
       const noReceive =

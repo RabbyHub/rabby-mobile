@@ -84,7 +84,10 @@ const DestinationChainInner = ({
   const ChainItem = React.useCallback(
     ({ item }: { item: RechargeChainItem }) => {
       const disabled = !item.withdraw_limit;
-      const chainInfo = findChainByServerID(item.chain_id)!;
+      const chainInfo = findChainByServerID(item.chain_id);
+      if (!chainInfo) {
+        return null;
+      }
       return (
         <TouchableOpacity
           disabled={disabled}
@@ -184,6 +187,13 @@ export const DestinationChain = ({
 
   const [visible, setVisible] = React.useState(false);
 
+  // Server may still return chains that are offline locally; drop them.
+  const supportedList = useMemo(
+    () => list?.filter(item => findChainByServerID(item.chain_id)),
+    [list],
+  );
+  const chainInfo = chain ? findChainByServerID(chain.chain_id) : null;
+
   const handleSelect = React.useCallback(
     (selectedChain: RechargeChainItem) => {
       onChainSelect(selectedChain);
@@ -198,15 +208,10 @@ export const DestinationChain = ({
         style={styles.fullWidth}
         title=""
         content={
-          chain ? (
+          chainInfo ? (
             <View style={styles.chainBox}>
-              <AssetAvatar
-                logo={findChainByServerID(chain.chain_id)!.logo}
-                size={24}
-              />
-              <Text style={styles.text}>
-                {findChainByServerID(chain.chain_id)!.name}
-              </Text>
+              <AssetAvatar logo={chainInfo.logo} size={24} />
+              <Text style={styles.text}>{chainInfo.name}</Text>
             </View>
           ) : (
             <Text style={styles.text}>
@@ -215,12 +220,12 @@ export const DestinationChain = ({
           )
         }
         onPress={() => {
-          if (list?.length) {
+          if (supportedList?.length) {
             setVisible(true);
           }
         }}
       />
-      {list && (
+      {supportedList && (
         <BottomSheetWrapper
           visible={visible}
           onClose={() => {
@@ -230,7 +235,7 @@ export const DestinationChain = ({
             linearGradientType: 'linear',
             colors: colors2024,
           })}>
-          <DestinationChainInner onSelect={handleSelect} list={list} />
+          <DestinationChainInner onSelect={handleSelect} list={supportedList} />
         </BottomSheetWrapper>
       )}
     </>
@@ -353,7 +358,9 @@ const RecipientAddressInnerPopup = ({
       })}
       enableDynamicSizing
       maxDynamicContentSize={maxHeight}>
-      <BottomSheetScrollView style={styles.scrollMinHeight}>
+      <BottomSheetScrollView
+        style={styles.scrollMinHeight}
+        contentContainerStyle={styles.scrollContent}>
         <LinearGradient
           colors={[colors2024['neutral-bg-1'], colors2024['neutral-bg-3']]}
           locations={[0.0745, 0.2242]}
@@ -363,12 +370,14 @@ const RecipientAddressInnerPopup = ({
           <Text style={[styles.title, styles.contentTitle]}>
             {t('page.gasAccount.withdrawPopup.selectRecipientAddress')}
           </Text>
-          <View style={styles.headerRow}>
-            <Text style={styles.helpText}>
+          <View style={[styles.headerRow, styles.recipientHeaderRow]}>
+            <Text style={[styles.helpText, styles.recipientHeaderText]}>
               {t('page.gasAccount.withdrawPopup.recipientAddress')}
             </Text>
-            <View style={styles.help}>
-              <Text style={styles.helpText}>
+            <View style={[styles.help, styles.recipientLimitHeader]}>
+              <Text
+                style={[styles.helpText, styles.recipientLimitHeaderText]}
+                numberOfLines={1}>
                 {t('page.gasAccount.withdrawPopup.withdrawalLimit')}
               </Text>
               <Pressable onPress={tips}>
@@ -531,6 +540,24 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     marginBottom: 6,
     paddingHorizontal: 6,
   },
+  recipientHeaderRow: {
+    gap: 12,
+    paddingHorizontal: 16,
+  },
+  recipientHeaderText: {
+    flex: 1,
+    minWidth: 0,
+  },
+  recipientLimitHeader: {
+    flexShrink: 0,
+    justifyContent: 'flex-end',
+    maxWidth: '50%',
+    minWidth: 112,
+  },
+  recipientLimitHeaderText: {
+    flexShrink: 1,
+    minWidth: 0,
+  },
 
   help: {
     flexDirection: 'row',
@@ -617,16 +644,19 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
 
   shadowSelected: {
+    alignSelf: 'stretch',
     borderColor: colors2024['neutral-line'],
     borderRadius: 12,
-    padding: 6,
     marginBottom: 12,
     backgroundColor: colors2024['neutral-bg-1'],
   },
   innerRow: {
-    backgroundColor: colors2024['neutral-bg-1'],
-    padding: 16,
+    alignSelf: 'stretch',
+    minWidth: 0,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
     flexDirection: 'row',
+    gap: 12,
     justifyContent: 'space-between',
     alignItems: 'center',
     borderColor: colors2024['neutral-line'],
@@ -637,6 +667,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
 
   innerWalletRow: {
+    flex: 1,
+    minWidth: 0,
     flexDirection: 'row',
     gap: 8,
     alignItems: 'center',
@@ -647,11 +679,15 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     borderRadius: 12,
   },
   walletNameContainer: {
+    minWidth: 0,
+    flexShrink: 1,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
   },
   innerName: {
+    flexShrink: 1,
+    minWidth: 0,
     fontSize: 16,
     fontWeight: '500',
     lineHeight: 20,
@@ -672,6 +708,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     color: colors2024['neutral-title-1'],
   },
   limit: {
+    minWidth: 92,
+    flexShrink: 0,
+    textAlign: 'right',
     fontSize: 17,
     fontWeight: '700',
     lineHeight: 22,
@@ -698,21 +737,27 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 20,
   },
   accountContainer: {
-    width: '70%',
+    flex: 1,
+    minWidth: 0,
   },
   fullWidth: {
     width: '100%',
   },
   innerWalletInfo: {
+    flex: 1,
+    minWidth: 0,
     gap: 4,
-    flexShrink: 1,
   },
   scrollMinHeight: {
     minHeight: 364,
   },
+  scrollContent: {
+    minHeight: 364,
+    flexGrow: 1,
+  },
   contentGradient: {
-    flex: 1,
-    paddingHorizontal: 20,
+    flexGrow: 1,
+    alignSelf: 'stretch',
     position: 'relative',
   },
   contentTitle: {
@@ -721,6 +766,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   flex1: {
     flex: 1,
+    alignSelf: 'stretch',
+    paddingHorizontal: 16,
   },
   floatBottomSpacer: {
     height: 130,

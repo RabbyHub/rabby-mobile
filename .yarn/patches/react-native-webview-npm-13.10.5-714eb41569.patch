@@ -1,5 +1,23 @@
+diff --git a/package.json b/package.json
+--- a/package.json
++++ b/package.json
+@@ -95,6 +95,14 @@
+     "jsSrcsDir": "./src",
+     "android": {
+       "javaPackageName": "com.reactnativecommunity.webview"
++    },
++    "ios": {
++      "componentProvider": {
++        "RNCWebView": "RNCWebView"
++      },
++      "modulesProvider": {
++        "RNCWebViewModule": "RNCWebViewModule"
++      }
+     }
+   },
+   "packageManager": "yarn@1.22.19"
 diff --git a/android/src/main/java/com/reactnativecommunity/webview/RNCWebChromeClient.java b/android/src/main/java/com/reactnativecommunity/webview/RNCWebChromeClient.java
-index 07f73fd00a083ebf5a03bffaa7bbadbd1f648505..f9efa2311cbf387d6fb0bd5606f1197b4d3424c1 100644
+index 07f73fd00a083ebf5a03bffaa7bbadbd1f648505..c3cc086aa8e07e3cb062cd60429521279492304e 100644
 --- a/android/src/main/java/com/reactnativecommunity/webview/RNCWebChromeClient.java
 +++ b/android/src/main/java/com/reactnativecommunity/webview/RNCWebChromeClient.java
 @@ -7,6 +7,8 @@ import android.content.pm.PackageManager;
@@ -65,15 +83,22 @@ index 07f73fd00a083ebf5a03bffaa7bbadbd1f648505..f9efa2311cbf387d6fb0bd5606f1197b
  
      /*
       * - Permissions -
-@@ -144,30 +170,33 @@ public class RNCWebChromeClient extends WebChromeClient implements LifecycleEven
+@@ -144,74 +170,175 @@ public class RNCWebChromeClient extends WebChromeClient implements LifecycleEven
  
      @Override
      public void onPermissionRequest(final PermissionRequest request) {
--
-         grantedPermissions = new ArrayList<>();
++        // A hidden WebView (an inactive or closed browser tab) must never prompt over another screen.
++        if (!isWebViewVisibleToUser()) {
++            request.deny();
++            return;
++        }
  
+-        grantedPermissions = new ArrayList<>();
+-
+-        ArrayList<String> requestedAndroidPermissions = new ArrayList<>();
++        final ArrayList<String> alreadyGrantedResources = new ArrayList<>();
++        final ArrayList<String> requestedAndroidPermissions = new ArrayList<>();
 +        ArrayList<String> requestPermissionIdentifiers = new ArrayList<>();
-         ArrayList<String> requestedAndroidPermissions = new ArrayList<>();
          for (String requestedResource : request.getResources()) {
              String androidPermission = null;
  
@@ -83,12 +108,9 @@ index 07f73fd00a083ebf5a03bffaa7bbadbd1f648505..f9efa2311cbf387d6fb0bd5606f1197b
              } else if (requestedResource.equals(PermissionRequest.RESOURCE_VIDEO_CAPTURE)) {
                  androidPermission = Manifest.permission.CAMERA;
 -            } else if(requestedResource.equals(PermissionRequest.RESOURCE_PROTECTED_MEDIA_ID)) {
-+                requestPermissionIdentifiers.add("camera");
-+            } else if (requestedResource.equals(PermissionRequest.RESOURCE_PROTECTED_MEDIA_ID)) {
-                 if (mAllowsProtectedMedia) {
+-                if (mAllowsProtectedMedia) {
 -                  grantedPermissions.add(requestedResource);
-+                    grantedPermissions.add(requestedResource);
-                 } else {
+-                } else {
 -                  /**
 -                   * Legacy handling (Kept in case it was working under some conditions (given Android version or something))
 -                   *
@@ -98,20 +120,20 @@ index 07f73fd00a083ebf5a03bffaa7bbadbd1f648505..f9efa2311cbf387d6fb0bd5606f1197b
 -                   */
 -                  androidPermission = PermissionRequest.RESOURCE_PROTECTED_MEDIA_ID;
 -                }            }
-+                    /**
-+                     * Legacy handling (Kept in case it was working under some conditions (given Android version or something))
-+                     *
-+                     * Try to ask user to grant permission using Activity.requestPermissions
-+                     *
-+                     * Find more details here: https://github.com/react-native-webview/react-native-webview/pull/2732
-+                     */
-+                    androidPermission = PermissionRequest.RESOURCE_PROTECTED_MEDIA_ID;
-+                }
+-            // TODO: RESOURCE_MIDI_SYSEX, RESOURCE_PROTECTED_MEDIA_ID.
++                requestPermissionIdentifiers.add("camera");
++            } else if (requestedResource.equals(PermissionRequest.RESOURCE_PROTECTED_MEDIA_ID) && mAllowsProtectedMedia) {
++                alreadyGrantedResources.add(requestedResource);
 +            }
-             // TODO: RESOURCE_MIDI_SYSEX, RESOURCE_PROTECTED_MEDIA_ID.
++            // Other resources (protected media while allowsProtectedMedia is off, MIDI SysEx) have no
++            // Android runtime permission the user could grant, so they are left out of the grant.
              if (androidPermission != null) {
                  if (ContextCompat.checkSelfPermission(this.mWebView.getThemedReactContext(), androidPermission) == PackageManager.PERMISSION_GRANTED) {
-@@ -178,40 +207,128 @@ public class RNCWebChromeClient extends WebChromeClient implements LifecycleEven
+-                    grantedPermissions.add(requestedResource);
++                    alreadyGrantedResources.add(requestedResource);
+                 } else {
+                     requestedAndroidPermissions.add(androidPermission);
+                 }
              }
          }
  
@@ -119,43 +141,51 @@ index 07f73fd00a083ebf5a03bffaa7bbadbd1f648505..f9efa2311cbf387d6fb0bd5606f1197b
 -        if (requestedAndroidPermissions.isEmpty()) {
 -            request.grant(grantedPermissions.toArray(new String[0]));
 -            grantedPermissions = null;
--            return;
-+            // If all the permissions are already granted, send the response to the WebView synchronously
-+        if (!requestedAndroidPermissions.isEmpty()) {
-+            // Show the dialog and request the permissions
-+            this.showPermissionPrompt(
-+                "The app needs access to your " + TextUtils.join(" and ", requestPermissionIdentifiers) + ". Allow?",
-+                "Allow",
-+                new DialogInterface.OnClickListener() {
-+                    public void onClick(DialogInterface dialog, int which) {
-+                        permissionRequest = request;
-+                        requestPermissions(requestedAndroidPermissions);
-+                    }
-+                },
-+                "Don't allow",
-+                (DialogInterface.OnClickListener) (dialog, which) -> {
-+                    request.deny();
-+                }
-+            );
-+        } else if (!grantedPermissions.isEmpty()) {
-+            this.showPermissionPrompt(
-+                "The app needs access to your " + TextUtils.join(" and ", requestPermissionIdentifiers) + ". Allow?",
-+                "Allow",
-+                new DialogInterface.OnClickListener() {
-+                    public void onClick(DialogInterface dialog, int which) {
-+                        request.grant(grantedPermissions.toArray(new String[0]));
-+                    }
-+                },
-+                "Don't allow",
-+                (DialogInterface.OnClickListener) (dialog, which) -> {
-+                    request.deny();
-+                }
-+            );
++        // Nothing for the user to decide: grant what the props allow and deny the rest, without a prompt.
++        if (requestPermissionIdentifiers.isEmpty()) {
++            if (alreadyGrantedResources.isEmpty()) {
++                request.deny();
++            } else {
++                request.grant(alreadyGrantedResources.toArray(new String[0]));
++            }
+             return;
          }
-+    }
  
 -        // Otherwise, ask to Android System for native permissions asynchronously
--
++        this.showPermissionPrompt(
++            formatOriginForPrompt(request.getOrigin()) + " wants to use your " + TextUtils.join(" and ", requestPermissionIdentifiers) + ". Allow?",
++            "Allow",
++            (dialog, which) -> {
++                if (requestedAndroidPermissions.isEmpty()) {
++                    request.grant(alreadyGrantedResources.toArray(new String[0]));
++                    return;
++                }
++                // webviewPermissionsListener adds the newly granted resources and answers the request.
++                grantedPermissions = new ArrayList<>(alreadyGrantedResources);
++                permissionRequest = request;
++                requestPermissions(requestedAndroidPermissions);
++            },
++            "Don't allow",
++            (dialog, which) -> request.deny()
++        );
++    }
++
++    private boolean isWebViewVisibleToUser() {
++        if (mWebView.disableJsPromptLike || !mWebView.isShown()) {
++            return false;
++        }
++        android.graphics.Rect r = new android.graphics.Rect();
++        return mWebView.getGlobalVisibleRect(r) && r.width() > 0 && r.height() > 0;
++    }
++
++    private static String formatOriginForPrompt(@Nullable Uri origin) {
++        if (origin == null) {
++            return "This site";
++        }
++        String host = origin.getHost();
++        return TextUtils.isEmpty(host) ? origin.toString() : host;
++    }
+ 
 -        this.permissionRequest = request;
 +    private void runDelayed(Runnable function, long delayMillis) {
 +        Handler handler = new Handler();
@@ -193,6 +223,11 @@ index 07f73fd00a083ebf5a03bffaa7bbadbd1f648505..f9efa2311cbf387d6fb0bd5606f1197b
      @Override
      public void onGeolocationPermissionsShowPrompt(String origin, GeolocationPermissions.Callback callback) {
 -
++        // A hidden WebView (an inactive or closed browser tab) must never prompt over another screen.
++        if (!isWebViewVisibleToUser()) {
++            callback.invoke(origin, false, false);
++            return;
++        }
          if (ContextCompat.checkSelfPermission(this.mWebView.getThemedReactContext(), Manifest.permission.ACCESS_FINE_LOCATION)
                  != PackageManager.PERMISSION_GRANTED) {
 -
@@ -210,7 +245,7 @@ index 07f73fd00a083ebf5a03bffaa7bbadbd1f648505..f9efa2311cbf387d6fb0bd5606f1197b
          } else {
 -            callback.invoke(origin, true, false);
 +            this.showPermissionPrompt(
-+                "Allow this app to use your location?",
++                formatOriginForPrompt(origin == null ? null : Uri.parse(origin)) + " wants to use your location. Allow?",
 +                "Allow",
 +                (dialog, which) -> {
 +                    callback.invoke(origin, true, false);
@@ -986,7 +1021,7 @@ index ba9adf749d3874b74952a8f7d7044d939672a6b3..3bc7975e654fba288e1307f4556be53c
  @property (nonatomic, assign) BOOL bounces;
  @property (nonatomic, assign) BOOL mediaPlaybackRequiresUserAction;
 diff --git a/apple/RNCWebViewImpl.m b/apple/RNCWebViewImpl.m
-index 77abeafb502f717550434a286d2611380949157b..6e61e5d57e0569b2e6e865d2069b6c6d4308e014 100644
+index 77abeafb502f717550434a286d2611380949157b..3267d7a5616a13a3654711b0ce2c771032141e90 100644
 --- a/apple/RNCWebViewImpl.m
 +++ b/apple/RNCWebViewImpl.m
 @@ -25,6 +25,301 @@
@@ -1365,7 +1400,7 @@ index 77abeafb502f717550434a286d2611380949157b..6e61e5d57e0569b2e6e865d2069b6c6d
 -#if !TARGET_OS_OSX
 -  UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"" message:message preferredStyle:UIAlertControllerStyleAlert];
 -  [alert addAction:[UIAlertAction actionWithTitle:@"Ok" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-+  if(_disablePromptDuringLoading || _disableJsPromptLike) {
++  if(_disablePromptDuringLoading || ![self isWebViewVisibleToUser]) {
      completionHandler();
 -  }]];
 -  [[self topViewController] presentViewController:alert animated:YES completion:NULL];
@@ -1390,7 +1425,7 @@ index 77abeafb502f717550434a286d2611380949157b..6e61e5d57e0569b2e6e865d2069b6c6d
   * confirm
   */
  - (void)webView:(WKWebView *)webView runJavaScriptConfirmPanelWithMessage:(NSString *)message initiatedByFrame:(WKFrameInfo *)frame completionHandler:(void (^)(BOOL))completionHandler{
-+  if(_disablePromptDuringLoading || _disableJsPromptLike) {
++  if(_disablePromptDuringLoading || ![self isWebViewVisibleToUser]) {
 +    completionHandler(nil);
 +    return ;
 +  }
@@ -1412,7 +1447,7 @@ index 77abeafb502f717550434a286d2611380949157b..6e61e5d57e0569b2e6e865d2069b6c6d
   * prompt
   */
  - (void)webView:(WKWebView *)webView runJavaScriptTextInputPanelWithPrompt:(NSString *)prompt defaultText:(NSString *)defaultText initiatedByFrame:(WKFrameInfo *)frame completionHandler:(void (^)(NSString *))completionHandler{
-+  if(_disablePromptDuringLoading || _disableJsPromptLike) {
++  if(_disablePromptDuringLoading || ![self isWebViewVisibleToUser]) {
 +    completionHandler(nil);
 +    return ;
 +  }
@@ -1436,7 +1471,7 @@ index 77abeafb502f717550434a286d2611380949157b..6e61e5d57e0569b2e6e865d2069b6c6d
      completionHandler(nil);
    }];
    [alert addAction:cancelAction];
-@@ -1253,21 +1598,21 @@ - (void)                         webView:(WKWebView *)webView
+@@ -1253,23 +1598,61 @@ - (void)                         webView:(WKWebView *)webView
    requestMediaCapturePermissionForOrigin:(WKSecurityOrigin *)origin
                          initiatedByFrame:(WKFrameInfo *)frame
                                      type:(WKMediaCaptureType)type
@@ -1447,15 +1482,12 @@ index 77abeafb502f717550434a286d2611380949157b..6e61e5d57e0569b2e6e865d2069b6c6d
 -    } else {
 -      WKPermissionDecision decision = _mediaCapturePermissionGrantType == RNCWebViewPermissionGrantType_GrantIfSameHost_ElsePrompt ? WKPermissionDecisionPrompt : WKPermissionDecisionDeny;
 -      decisionHandler(decision);
--    }
--  } else if (_mediaCapturePermissionGrantType == RNCWebViewPermissionGrantType_Deny) {
--    decisionHandler(WKPermissionDecisionDeny);
--  } else if (_mediaCapturePermissionGrantType == RNCWebViewPermissionGrantType_Grant) {
--    decisionHandler(WKPermissionDecisionGrant);
--  } else {
--    decisionHandler(WKPermissionDecisionPrompt);
--  }
 +                         decisionHandler:(void (^)(WKPermissionDecision decision))decisionHandler API_AVAILABLE(ios(15.0)) {
++   // A hidden WebView (an inactive tab, or any tab while the browser is closed) must never prompt over another screen.
++   if (![self isWebViewVisibleToUser]) {
++     decisionHandler(WKPermissionDecisionDeny);
++     return;
++   }
 +   if (_mediaCapturePermissionGrantType == RNCWebViewPermissionGrantType_GrantIfSameHost_ElsePrompt || _mediaCapturePermissionGrantType == RNCWebViewPermissionGrantType_GrantIfSameHost_ElseDeny) {
 +     if ([origin.host isEqualToString:webView.URL.host]) {
 +       decisionHandler(WKPermissionDecisionGrant);
@@ -1470,10 +1502,52 @@ index 77abeafb502f717550434a286d2611380949157b..6e61e5d57e0569b2e6e865d2069b6c6d
 +   } else {
 +     decisionHandler(WKPermissionDecisionPrompt);
 +   }
++}
++#endif
++
++/**
++ * Whether the user can see this WebView. Inactive tabs set disableJsPromptLike. The active tab of a
++ * closed browser sheet stays in the window but is moved off screen, so it fails the geometry check.
++ */
++- (BOOL)isWebViewVisibleToUser
++{
++  if (_disableJsPromptLike) {
++    return NO;
++  }
++#if !TARGET_OS_OSX
++  UIView *view = _webView;
++  UIWindow *window = view.window;
++  if (view == nil || window == nil || window.hidden) {
++    return NO;
++  }
++  CGRect visibleRect = view.bounds;
++  for (UIView *current = view; current != window; current = current.superview) {
++    if (current.hidden || current.alpha <= 0.01) {
++      return NO;
++    }
++    UIView *parent = current.superview;
++    visibleRect = [current convertRect:visibleRect toView:parent];
++    if (parent.clipsToBounds || parent == window) {
++      visibleRect = CGRectIntersection(visibleRect, parent.bounds);
++    }
++    if (CGRectIsEmpty(visibleRect)) {
++      return NO;
+     }
+-  } else if (_mediaCapturePermissionGrantType == RNCWebViewPermissionGrantType_Deny) {
+-    decisionHandler(WKPermissionDecisionDeny);
+-  } else if (_mediaCapturePermissionGrantType == RNCWebViewPermissionGrantType_Grant) {
+-    decisionHandler(WKPermissionDecisionGrant);
+-  } else {
+-    decisionHandler(WKPermissionDecisionPrompt);
+   }
++#endif // !TARGET_OS_OSX
++  return YES;
  }
- #endif
+-#endif
  
-@@ -1336,6 +1681,7 @@ - (void)                  webView:(WKWebView *)webView
+ #if !TARGET_OS_OSX
+ /**
+@@ -1336,6 +1719,7 @@ - (void)                  webView:(WKWebView *)webView
                          NSMutableDictionary<NSString *, id> *event = [self baseEvent];
                          [event addEntriesFromDictionary: @{
                              @"url": (request.URL).absoluteString,
@@ -1481,7 +1555,7 @@ index 77abeafb502f717550434a286d2611380949157b..6e61e5d57e0569b2e6e865d2069b6c6d
                              @"navigationType": navigationTypes[@(navigationType)]
                          }];
                          self->_onLoadingStart(event);
-@@ -1354,6 +1700,7 @@ - (void)                  webView:(WKWebView *)webView
+@@ -1354,6 +1738,7 @@ - (void)                  webView:(WKWebView *)webView
          }
          [event addEntriesFromDictionary: @{
              @"url": (request.URL).absoluteString,
@@ -1489,7 +1563,7 @@ index 77abeafb502f717550434a286d2611380949157b..6e61e5d57e0569b2e6e865d2069b6c6d
              @"navigationType": navigationTypes[@(navigationType)],
              @"isTopFrame": @(isTopFrame),
              @"hasTargetFrame": @(hasTargetFrame),
-@@ -1370,6 +1717,7 @@ - (void)                  webView:(WKWebView *)webView
+@@ -1370,6 +1755,7 @@ - (void)                  webView:(WKWebView *)webView
              NSMutableDictionary<NSString *, id> *event = [self baseEvent];
              [event addEntriesFromDictionary: @{
                  @"url": (request.URL).absoluteString,
@@ -1497,7 +1571,7 @@ index 77abeafb502f717550434a286d2611380949157b..6e61e5d57e0569b2e6e865d2069b6c6d
                  @"navigationType": navigationTypes[@(navigationType)]
              }];
              _onLoadingStart(event);
-@@ -1535,6 +1883,7 @@ - (void)webView:(WKWebView *)webView
+@@ -1535,6 +1921,7 @@ - (void)webView:(WKWebView *)webView
    }
  
    if (_onLoadingFinish) {
@@ -1505,7 +1579,7 @@ index 77abeafb502f717550434a286d2611380949157b..6e61e5d57e0569b2e6e865d2069b6c6d
      _onLoadingFinish([self baseEvent]);
    }
  }
-@@ -1667,8 +2016,9 @@ - (void)setBounces:(BOOL)bounces
+@@ -1667,8 +2054,9 @@ - (void)setBounces:(BOOL)bounces
  
  - (void)setInjectedJavaScript:(NSString *)source {
    _injectedJavaScript = source;
@@ -1516,7 +1590,7 @@ index 77abeafb502f717550434a286d2611380949157b..6e61e5d57e0569b2e6e865d2069b6c6d
                                                                    injectionTime:WKUserScriptInjectionTimeAtDocumentEnd
                                                                 forMainFrameOnly:_injectedJavaScriptForMainFrameOnly];
  
-@@ -1677,6 +2027,11 @@ - (void)setInjectedJavaScript:(NSString *)source {
+@@ -1677,6 +2065,11 @@ - (void)setInjectedJavaScript:(NSString *)source {
    }
  }
  
@@ -1528,7 +1602,7 @@ index 77abeafb502f717550434a286d2611380949157b..6e61e5d57e0569b2e6e865d2069b6c6d
  - (void)setInjectedJavaScriptObject:(NSString *)source
  {
    self.injectedObjectJsonScript = [
-@@ -1706,8 +2061,9 @@ - (void)setEnableApplePay:(BOOL)enableApplePay {
+@@ -1706,8 +2099,9 @@ - (void)setEnableApplePay:(BOOL)enableApplePay {
  
  - (void)setInjectedJavaScriptBeforeContentLoaded:(NSString *)source {
    _injectedJavaScriptBeforeContentLoaded = source;
@@ -1539,7 +1613,7 @@ index 77abeafb502f717550434a286d2611380949157b..6e61e5d57e0569b2e6e865d2069b6c6d
                                                                      injectionTime:WKUserScriptInjectionTimeAtDocumentStart
                                                                   forMainFrameOnly:_injectedJavaScriptBeforeContentLoadedForMainFrameOnly];
  
-@@ -1716,6 +2072,11 @@ - (void)setInjectedJavaScriptBeforeContentLoaded:(NSString *)source {
+@@ -1716,6 +2110,11 @@ - (void)setInjectedJavaScriptBeforeContentLoaded:(NSString *)source {
    }
  }
  

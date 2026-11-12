@@ -8,6 +8,13 @@ export const DevUIAnimatedTextAndView = registerAppScreen<
   name: TESTKITS_PRELOAD_SCREENS.DevUIAnimatedTextAndView,
 });
 
+export const DevUIAutoFitTitlePlayground = registerAppScreen<
+  typeof import('@/screens/Testkits/DevUIAutoFitTitlePlayground').default
+>({
+  loader: () => import('@/screens/Testkits/DevUIAutoFitTitlePlayground'),
+  name: TESTKITS_PRELOAD_SCREENS.DevUIAutoFitTitlePlayground,
+});
+
 export const DevUIFontShowCase = registerAppScreen<
   typeof import('@/screens/Testkits/DevUIFontShowCase').default
 >({
@@ -34,6 +41,13 @@ export const DevUIComponents2024ShowCase = registerAppScreen<
 >({
   loader: () => import('@/screens/Testkits/DevUIComponents2024ShowCase'),
   name: TESTKITS_PRELOAD_SCREENS.DevUIComponents2024ShowCase,
+});
+
+export const DevUISafeSvgMedia = registerAppScreen<
+  typeof import('@/screens/Testkits/DevUISafeSvgMedia').default
+>({
+  loader: () => import('@/screens/Testkits/DevUISafeSvgMedia'),
+  name: TESTKITS_PRELOAD_SCREENS.DevUISafeSvgMedia,
 });
 
 export const DevUIToast = registerAppScreen<

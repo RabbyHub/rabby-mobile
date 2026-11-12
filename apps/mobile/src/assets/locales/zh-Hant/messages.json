@@ -82,7 +82,8 @@
     "time": {
       "hour": "{{t}} 小時",
       "mins": "{{t}} 分鐘",
-      "hours": "{{t}} 小時"
+      "hours": "{{t}} 小時",
+      "ago": "{{time}}前"
     },
     "ok": "OK",
     "themeMode": {
@@ -151,7 +152,8 @@
     "SavedSeedPhrase": "我已儲存助記詞",
     "from": "從",
     "to": "至",
-    "copiedSuccessfully": "複製成功"
+    "copiedSuccessfully": "複製成功",
+    "failed": "失敗"
   },
   "background": {
     "transactionWatcher": {
@@ -400,7 +402,13 @@
         "empty": {
           "title": "暫無交易記錄",
           "titleLastThreeMonths": "90 天內無交易紀錄",
+          "titleInLast90Days": "近 90 天無交易紀錄",
+          "titleNoTransactions": "暫無交易紀錄",
           "testnetNoHistory": "自訂代幣交易記錄不可用。"
+        },
+        "noMore": {
+          "title": "沒有更多交易紀錄",
+          "titleInLast90Days": "近 90 天沒有更多交易紀錄"
         },
         "CancelTxConfirmPopup": {
           "title": "清除本機待處理記錄",
@@ -913,12 +921,10 @@
     },
     "bridge": {
       "title": "跨鏈",
-      "bridge-from": "跨鏈轉出自",
       "the-following-bridge-route-are-found": "找到以下費率",
       "approve-and-bridge": "授權並跨鏈",
       "best": "最優",
       "no-quote": "無報價",
-      "for-available-quote": "取得可用報價",
       "est-receiving": "預計接收：",
       "via-bridge": "透過 {{bridge}}",
       "Select": "選擇",
@@ -938,7 +944,7 @@
       "From": "來自",
       "price-impact": "價格影響",
       "loss-tips": "您正在損失 {{usd}}。請嘗試不同的金額。",
-      "no-quote-found": "未找到報價。請嘗試其他代幣對。",
+      "no-quote-found": "未找到報價。",
       "To": "至",
       "bridged": "已發起跨鏈",
       "gasFeeTooHight": "Gas 費用高於正常水平。只有在您希望繼續時才可確認。",
@@ -963,7 +969,42 @@
       "formChangedTitle": "表單已更改",
       "formChangedAmount": "金額已變更，可能是由於系統鍵盤的密碼自動填充。請檢查並重新輸入正確的金額。",
       "best-subtitle": "最佳報價由預計總成本（含 Gas 費用）與到帳速度綜合決定。",
-      "swap-best-subtitle": "最佳報價由最低預估總成本決定，包括匯率與 Gas 費用。"
+      "swap-best-subtitle": "最佳報價由最低預估總成本決定，包括匯率與 Gas 費用。",
+      "duration-sec": "{{duration}} 秒",
+      "duration-hour": "{{duration}} 小時",
+      "duration-hour-min": "{{hours}} 小時 {{minutes}} 分鐘",
+      "duration-day": "{{duration}} 天",
+      "duration-day-hour": "{{days}} 天 {{hours}} 小時",
+      "duration-day-min": "{{days}} 天 {{minutes}} 分鐘",
+      "duration-day-hour-min": "{{days}} 天 {{hours}} 小時 {{minutes}} 分鐘",
+      "status": {
+        "bridging": "跨鏈中，",
+        "bridged": "已跨鏈",
+        "historyTitle": "跨鏈記錄",
+        "today": "今天",
+        "eta": "預計還需 {{time}}",
+        "stillBridging": "仍在跨鏈中",
+        "delayed": "跨鏈延遲",
+        "sourceFailed": "跨鏈失敗，你的 {{token}} 未發送",
+        "tokenNotSent": "你的 {{token}} 未發送",
+        "failed": "失敗",
+        "bridgeFailed": "跨鏈失敗",
+        "refunded": "已退還",
+        "refundedIn": "已退還為 {{token}}",
+        "contactSupport": "聯絡客服",
+        "viewDetails": "查看詳情",
+        "sendingFrom": "從 {{chain}} 發送",
+        "receivingOn": "在 {{chain}} 上接收",
+        "processing": "處理中",
+        "queued": "排隊中",
+        "pending": "待處理",
+        "completed": "完成",
+        "refund": "已退還",
+        "waiting": "等待目標鏈交易",
+        "goBack": "返回",
+        "bridgeAgain": "再次跨鏈",
+        "captureFailed": "無法截圖，請重試。"
+      }
     },
     "signFooterBar": {
       "cancelConnection": "取消連接",
@@ -1241,11 +1282,8 @@
     "createPassword": {
       "confirmRequired": "請確認密碼",
       "passwordMinTip": "至少需包含 8 個字元",
-      "and": "和",
       "confirmPasswordPlaceholder": "確認密碼",
-      "termOfUse": "使用條款",
       "ConfirmPassword": "確認密碼",
-      "agreeToTerms": "我已閱讀並同意",
       "confirmTitle": "確認密碼",
       "Newpassword": "新密碼",
       "phoneNotSupport": "您的手機不支援{{ bioType }}",
@@ -1262,7 +1300,8 @@
       "passwordRequired": "請輸入密碼",
       "setUpSuccess": "密碼設定成功",
       "subTitle": "此密碼用於解鎖錢包並加密本機資料，無法找回。若密碼遺失，你需要重設並重新匯入錢包。",
-      "PrivacyPolicy": "隱私政策"
+      "dataAnalysisDesc": "分享匿名使用資料以協助改善 Rabby。收集的資料不會與你或你的帳戶關聯。你可以隨時在設定中變更。",
+      "agreeByContinuing": "繼續即表示你同意<terms>使用條款</terms>並知悉<privacy>隱私政策</privacy>。"
     },
     "safeQueue": {
       "replaceBtn": "替換",
@@ -1350,7 +1389,8 @@
         },
         "scan": {
           "title": "掃描 Keystone 以連接",
-          "description": "掃描您 Keystone 錢包上的 QR 碼"
+          "description": "掃描您 Keystone 錢包上的 QR 碼",
+          "invalidQRCode": "QR 碼無效。請掃描硬體錢包的同步 QR 碼。"
         }
       },
       "privateKey": {
@@ -1573,6 +1613,10 @@
       "title": "授權"
     },
     "singleHome": {
+      "tokenActions": {
+        "remove": "移除",
+        "removeFailed": "移除代幣失敗"
+      },
       "sectionHeader": {
         "Defi": "DeFi",
         "Nft": "NFT",
@@ -1714,9 +1758,16 @@
     "receiveAddressList": {
       "selectChainTitle": "選擇鏈",
       "title": "選擇錢包以接收",
-      "subtitle": "選擇錢包以接收您的加密資產。"
+      "subtitle": "選擇一個錢包地址來接收您的資產。"
     },
     "tokenDetail": {
+      "removed": {
+        "restore": "還原已移除的代幣",
+        "restoreFailed": "還原代幣失敗",
+        "more": "更多",
+        "confirmTitle": "移除此代幣？",
+        "confirmDescription": "· 移除後，此代幣將不再顯示在您的投資組合中。\n· 您可以隨時在設定 >> 已移除的代幣中還原。"
+      },
       "excludeBalanceTipsButton": "知道了",
       "action": {
         "less": "更少",
@@ -1818,10 +1869,14 @@
       "headerBalanceText": "餘額",
       "headerTokenValueText": "代幣價值",
       "copyCA": "代幣合約地址已複製",
+      "copyCAWarning": "這是代幣合約地址，\n不能用於接收資產。",
       "wallet": "錢包",
       "customTestnetNotSupported": "不支援該鏈上的代幣"
     },
     "customTestnet": {
+      "screenTitle": "自訂網路",
+      "removeNetwork": "刪除 {{name}}",
+      "editTitle": "編輯自訂網路",
       "add": "新增自訂網路",
       "id": "ID",
       "empty": "無自訂網路",
@@ -1937,6 +1992,10 @@
       "verify-password-before-backup": "在備份之前驗證您的 Rabby 密碼"
     },
     "setting": {
+      "removedToken": {
+        "title": "已移除的代幣",
+        "description": "已移除的代幣將在您所有地址的投資組合中隱藏，但仍會計入餘額。"
+      },
       "followUs": "關注我們",
       "tou": "使用條款",
       "fingerPrint": "指紋",
@@ -1967,7 +2026,8 @@
       "searchCurrency": "搜尋貨幣",
       "currency": "貨幣",
       "screenshotReportSwitch": "截圖回報問題",
-      "dataAnalysis": "資料分析",
+      "dataAnalysis": "協助改善 Rabby",
+      "dataAnalysisDesc": "分享匿名使用資料以協助改善 Rabby。收集的資料不會與你或你的帳戶關聯。",
       "bugReportChat": "透過聊天分享回饋",
       "features": "功能",
       "manageWallets": "管理錢包"
@@ -2025,7 +2085,8 @@
       "emptyWhitelistContent": "將受信任的地址新增到白名單中以進行快速轉帳——下次無需確認",
       "SendHistory": "轉帳記錄",
       "dividerWatchOnlyWallets": "只讀錢包",
-      "enterOrSearchAddress": "輸入或搜尋地址"
+      "enterOrSearchAddress": "輸入或搜尋地址",
+      "resolvingAddressName": "正在查詢地址..."
     },
     "confirmAddress": {
       "risks": {
@@ -2082,6 +2143,7 @@
       "customNetworkTokenHeader": "已新增的自訂網路"
     },
     "browser": {
+      "openInRabbyPerps": "在 Rabby Perps 中開啟",
       "BrowserHeader": {
         "searchIos": "搜尋網站",
         "searchAndroid": "搜尋 DApp"
@@ -2403,8 +2465,7 @@
           }
         },
         "chart": {
-          "open": "開啟圖表",
-          "resetPriceScale": "重設圖表價格軸"
+          "open": "開啟圖表"
         },
         "account": {
           "disabledFrame": "目前階段暫不支援帳戶操作",
@@ -2547,12 +2608,14 @@
           "positionAmount": "持倉數量",
           "estimatedPnl": "預計 PnL",
           "skipLimitConfirmation": "不再顯示限價單的二次確認",
+          "skipMarketCloseConfirmation": "不再顯示市價平倉確認視窗",
           "closeSubmitted": "平倉訂單已提交",
           "closeFailed": "平倉失敗",
           "minimumCloseAmount": "最低平倉金額為 $10",
           "closeContextChanged": "持倉或帳戶已變更，請重新檢查。"
         },
         "positionTpsl": {
+          "skipConfirmation": "不再顯示 TP/SL 確認視窗",
           "addButton": "新增 TP/SL",
           "addTitle": "新增 TP/SL",
           "cancelFailed": "取消 TP/SL 訂單失敗",
@@ -2563,6 +2626,7 @@
           "duplicatePositionOrders": "此方向存在多個持倉 TP/SL 訂單。請逐筆取消，或更新後再修改。",
           "estimatedLiquidation": "預計強平價格",
           "estimatedPnl": "預計 PnL",
+          "estimatedPnlDescription": "預計 PnL <2>{{pnl}} {{quoteAsset}}(ROI: {{roi}}%)</2>",
           "estimatedPnlShort": "預計 PnL",
           "invalidOrder": "請檢查 TP/SL 價格和數量",
           "invalidTrigger": "依最新標記價格判斷，此觸發價格無效",
@@ -2744,7 +2808,6 @@
         "gotItBtn": "我知道了",
         "sizeTips": "交易的總價值或數量，由保證金和槓桿決定。",
         "feeRabby": "Rabby Wallet",
-        "feeRabbyDiscount": "限時交易手續費折扣",
         "feeHyperliquid": "Hyperliquid",
         "feeDesc": "交易時會產生<1>交易手續費</1>和<2>建構者費用</2>。",
         "feeTitle": "費用",
@@ -2811,7 +2874,7 @@
         "desc": "你即將登出目前的永續合約帳戶，之後仍可使用此地址重新登入並恢復。"
       },
       "PerpsDepositCard": {
-        "availableToTrade": "可交易餘額：",
+        "availableToTrade": "可用：",
         "deposit": "入金",
         "swap": "兌換"
       },
@@ -2886,6 +2949,50 @@
       }
     },
     "perpsDetail": {
+      "simpleAccount": {
+        "margin": "保證金",
+        "averageEntry": "平均開倉價",
+        "estimatedLiquidationPrice": "預計強平價",
+        "estimatedLiquidationDistance": "預計強平距離",
+        "tpSl": "止盈/止損",
+        "takeProfitPrice": "止盈價格",
+        "stopLossPrice": "止損價格",
+        "funding": "資金費",
+        "nextFundingRate": "下一期資金費率",
+        "estimatedPnl": "預計盈虧",
+        "closePositionTitle": "平掉 {{coin}} 倉位",
+        "estimatedRealizedPnl": "預計已實現盈虧"
+      },
+      "simpleChart": {
+        "openInterest": "未平倉量",
+        "volume24h": "24h 成交量",
+        "intervalTitle": "K 線週期",
+        "intervalDescription": "每根 K 線代表所選時間週期。",
+        "minutes": "分鐘",
+        "hours": "小時",
+        "days": "天",
+        "open": "開市價",
+        "low": "最低價",
+        "high": "最高價",
+        "close": "收市價",
+        "time": "時間",
+        "change": "升跌額",
+        "changePercent": "升跌幅 (%)",
+        "averageEntry": "平均開倉價",
+        "takeProfit": "止賺",
+        "stopLoss": "止蝕",
+        "liquidation": "強制平倉價",
+        "all": "全部",
+        "source": "由 Hyperliquid 提供支援，價格圖表由 <tradingview>TradingView</tradingview> 提供。",
+        "resetChart": "重設圖表",
+        "backToLatest": "返回最新行情",
+        "switchToArea": "切換至面積圖",
+        "switchToCandle": "切換至陰陽燭圖",
+        "showVolume": "顯示 24 小時成交量",
+        "showOpenInterest": "顯示未平倉量",
+        "buy": "買入",
+        "sell": "賣出"
+      },
       "PerpEditLimitPriceTag": {
         "setLimitBuyPrice": "設定限價買入價",
         "setLimitSellPrice": "設定限價賣出價",
@@ -2914,7 +3021,7 @@
         "unrealizedPnl": "未實現盈虧",
         "marginMode": "保證金模式",
         "details": "詳細資料",
-        "fundingTipsBold": "這顯示自開倉以來已結算的資金費總額。<bold>綠色（正數）</bold>表示您從其他交易者處獲得資金費，<bold>紅色（負數）</bold>表示您向其他交易者支付的資金費成本。",
+        "fundingTipsBold": "這顯示自開倉以來已結算的資金費總額。<positive>綠色（正數）</positive>表示您從其他交易者處獲得資金費，<negative>紅色（負數）</negative>表示您向其他交易者支付的資金費成本。",
         "crossTips": "全倉保證金模式下，單個倉位的強平價格僅為估算值，僅供參考。"
       },
       "PerpsInfo": {
@@ -3051,6 +3158,13 @@
       },
       "addressEditorBadge": {
         "nameUnknown": "命名地址"
+      },
+      "scanQrcode": {
+        "chooseFromGallery": "從相簿選擇",
+        "noQrCode": "圖片中未辨識到 QR 碼",
+        "multipleQrCodes": "圖片中包含多個 QR 碼，請選擇只有一個 QR 碼的圖片",
+        "invalidAddress": "QR 碼中未辨識到有效地址",
+        "readImageFailed": "圖片讀取失敗，請重試"
       }
     },
     "Lending": {
@@ -3357,11 +3471,77 @@
     "batchRevoke": {
       "title": "批量撤銷"
     },
+    "memeCoin": {
+      "holdingsEntry": "持倉",
+      "pnlPeriod24h": "24h",
+      "pnlPeriodAll": "全部",
+      "pnlTipLabel": "PnL",
+      "backToMarket": "返回 Meme 市場",
+      "marketTitle": "Meme 市場",
+      "holdingsTitle": "持倉",
+      "marketCap": "市值",
+      "valuePnl": "價值 / PnL",
+      "searchMarket": "搜尋 Meme 市場",
+      "noMatch": "沒有符合的 Meme",
+      "noHoldings": "尚無持倉",
+      "loadFailed": "載入失敗，點擊重試",
+      "buyN": "買入 {{count}} 個 Meme",
+      "buyN_one": "買入 {{count}} 個 Meme",
+      "sellN": "賣出 {{count}} 個 Meme",
+      "sellN_one": "賣出 {{count}} 個 Meme",
+      "selectToBuy": "選擇要買入的 Meme",
+      "selectToSell": "選擇要賣出的 Meme",
+      "maxPriceImpact": "最大價差",
+      "unsupportedAddressType": "不支援此地址類型",
+      "accountChanged": "地址已變更，請重新開始",
+      "addressSwitchUnsupported": "此頁面不支援切換地址。",
+      "buy": {
+        "amount": "買入金額",
+        "allocation": "分配",
+        "byMarketCap": "按市值",
+        "equalSplit": "平均分配",
+        "estPayment": "預計支付 {{amount}}",
+        "needed": "還需 {{amount}}",
+        "anotherNeeded": "仍需 {{amount}}",
+        "preview": "預覽",
+        "paymentTokens": "支付代幣",
+        "selectTokens": "選擇代幣",
+        "selectPaymentAssets": "選擇用於支付的資產",
+        "estPaymentLabel": "預計支付",
+        "noPaymentToken": "未選擇支付代幣",
+        "confirm": "確認",
+        "noAssets": "沒有可用資產"
+      },
+      "execute": {
+        "title": "執行",
+        "buySubtitleShort": "同鏈依序執行，不同鏈並行。",
+        "sellSubtitle": "所得資金保留在各自鏈上",
+        "estReceipt": "預計到帳(USD)",
+        "statusPending": "等待中",
+        "statusPendingPrevious": "等待同鏈上一筆交易完成",
+        "statusExecuting": "執行中",
+        "statusSuccessful": "成功",
+        "confirm": "確認",
+        "back": "返回",
+        "retryFailedTxns": "重試 {{count}} 筆失敗交易",
+        "retryFailedTxns_one": "重試 {{count}} 筆失敗交易",
+        "progress": "執行中 · 已完成 {{done}}/{{total}}",
+        "done": "完成",
+        "exitTitle": "取消執行並返回？",
+        "exitDesc1": "執行將停止，未提交的交易不會繼續處理。",
+        "exitDesc2": "已提交到鏈上的交易無法撤銷，仍可能完成。",
+        "stopAndExit": "停止並退出",
+        "continue": "繼續",
+        "failReason": {
+          "buildFailed": "構建交易失敗"
+        }
+      }
+    },
     "convertDust": {
       "failReason": {
         "quoteUnavailable": "取得報價失敗",
         "gasCostTooHigh": "超過 Gas 費用限制",
-        "priceImpactTooHigh": "價格影響過高",
+        "priceImpactTooHigh": "價差過大",
         "transactionFailed": "交易失敗",
         "submitFailed": "提交交易失敗",
         "gasNotEnough": "Gas 不足"
@@ -3416,6 +3596,7 @@
       "screenTitle": "連接錢包",
       "connectingToRabby": "正在連接到 Rabby",
       "pairingFailed": "WalletConnect 配對失敗。",
+      "proposalNotReceived": "WalletConnect 二維碼可能已失效，請重新整理後再試一次。",
       "connected": "連接成功，請返回 DApp。",
       "proposalExpired": "WalletConnect 連接請求已過期。",
       "pairingExpired": "WalletConnect 配對已過期。請重新整理 DApp QR Code 後重試。",
@@ -3473,13 +3654,6 @@
         "mainnet": "整合網路",
         "testnet": "自訂網路"
       }
-    },
-    "ReserveGasPopup": {
-      "normal": "慢",
-      "fast": "正常",
-      "instant": "快速",
-      "doNotReserve": "不預留 Gas",
-      "title": "預留 Gas"
     },
     "AuthenticationModals": {
       "processBiometrics": {
@@ -3570,7 +3744,8 @@
       },
       "alertText": "第三方 DApp：如遇使用問題，請聯絡 DApp 支援。Rabby 僅提供瀏覽功能。",
       "title": "截圖回報問題",
-      "submitFailed": "提交失敗。"
+      "submitFailed": "提交失敗。",
+      "includeAddress": "分享地址以便排查問題"
     },
     "submitFeedbackSuccessModal": {
       "desc": "提交成功！"

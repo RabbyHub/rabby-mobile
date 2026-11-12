@@ -15,12 +15,12 @@ import { TabName } from 'react-native-collapsible-tab-view/lib/typescript/src/ty
 import { DropDownMenuView } from '@/components2024/DropDownMenu';
 import { RcIconAddPlusCircle, ReactIconHome } from '@/assets2024/icons/browser';
 import { useBrowserHistory } from '@/hooks/browser/useBrowserHistory';
-import { matomoRequestEvent } from '@/utils/analytics';
 import { useAppState } from '@react-native-community/hooks';
-import { atom, useAtom } from 'jotai';
 import { Text } from '@/components/Typography';
 
-export const activeTabAtom = atom('favorites');
+// The manage sheet is only opened from the tab-count button, so every open
+// starts on the Tab segment instead of restoring the last selection.
+const INITIAL_ACTIVE_TAB = 'tab';
 
 export function BrowserManage(): JSX.Element {
   const { styles, colors2024, isLight } = useTheme2024({
@@ -35,7 +35,7 @@ export function BrowserManage(): JSX.Element {
   const { openTab, setPartialBrowserState, closeAllTabs } = useBrowser();
   const { removeAllBrowserHistory } = useBrowserHistory();
 
-  const [activeTab, setActiveTab] = useAtom(activeTabAtom);
+  const [activeTab, setActiveTab] = useState<string>(INITIAL_ACTIVE_TAB);
   const { t } = useTranslation();
   const [isShowDelete, setIsShowDelete] = useState(false);
 
@@ -77,11 +77,6 @@ export function BrowserManage(): JSX.Element {
     setPartialBrowserState({
       isShowManage: false,
       isShowBrowser: false,
-    });
-    matomoRequestEvent({
-      category: 'Websites Usage',
-      action: `Website_Exit`,
-      label: 'Click Home',
     });
   });
 

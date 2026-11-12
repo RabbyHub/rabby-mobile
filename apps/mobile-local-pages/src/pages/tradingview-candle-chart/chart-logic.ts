@@ -108,7 +108,7 @@ export function getPerpsProLatestCandleClose(
 export const PERPS_PRO_CROSSHAIR_LABEL_LAYOUT = {
   borderRadius: 6,
   fontSize: 12,
-  fontWeight: 510,
+  fontWeight: 500,
   lineHeight: 16,
   paddingHorizontal: 6,
   paddingVertical: 4,
@@ -190,7 +190,10 @@ export function formatProTooltipTime(
 ): string {
   return formatTime(
     time,
-    interval === '1d' || interval === '1w' || interval === '1M',
+    interval === '1d' ||
+      interval === '3d' ||
+      interval === '1w' ||
+      interval === '1M',
   );
 }
 

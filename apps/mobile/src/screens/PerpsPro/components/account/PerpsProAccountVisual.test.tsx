@@ -3,7 +3,6 @@ import React from 'react';
 import { StyleSheet } from 'react-native';
 
 const mockShowPortfolioBreakdown = jest.fn();
-let mockHasNonPerpsAssets = true;
 let mockIsLight = true;
 
 jest.mock('@/assets2024/icons/perps/IconUSDC.svg', () => {
@@ -45,7 +44,6 @@ jest.mock(
   '@/screens/PerpsShared/components/PerpsPortfolioBreakdownExplanation',
   () => ({
     useShowPerpsPortfolioBreakdown: () => ({
-      hasNonPerpsAssets: mockHasNonPerpsAssets,
       showPortfolioBreakdown: mockShowPortfolioBreakdown,
     }),
   }),
@@ -104,7 +102,6 @@ const spotUsdc = {
 describe('Perps Pro account visual contract', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockHasNonPerpsAssets = true;
     mockIsLight = true;
   });
 
@@ -134,21 +131,24 @@ describe('Perps Pro account visual contract', () => {
 
     const summary = screen.getByTestId('perps-pro-account-summary');
     const summaryStyle = StyleSheet.flatten(summary.props.style);
+    // Figma 86609:327475: one raised card for the summary and asset rows.
     expect(summaryStyle).toMatchObject({
-      gap: 12,
-      marginHorizontal: 16,
-      marginTop: 16,
-      paddingBottom: 16,
+      backgroundColor: 'neutral-bg-1',
+      borderRadius: 14,
+      gap: 8,
+      marginHorizontal: 12,
+      marginTop: 12,
+      paddingBottom: 8,
+      paddingHorizontal: 16,
+      paddingTop: 16,
     });
-    expect(summaryStyle.backgroundColor).toBeUndefined();
     expect(summaryStyle.borderWidth).toBeUndefined();
-    expect(summaryStyle.borderRadius).toBeUndefined();
     const summaryRow = summary.children[0] as {
       props: { style?: object };
     };
-    expect(StyleSheet.flatten(summaryRow.props.style)).toMatchObject({
-      paddingHorizontal: 4,
-    });
+    expect(
+      StyleSheet.flatten(summaryRow.props.style).paddingHorizontal,
+    ).toBeUndefined();
     expect(
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-account-portfolio-column').props.style,
@@ -173,9 +173,9 @@ describe('Perps Pro account visual contract', () => {
       expect(
         StyleSheet.flatten(screen.getByText(label).props.style),
       ).toMatchObject({
-        color: '#3e495e',
+        color: 'neutral-secondary',
         fontSize: 14,
-        fontWeight: '400',
+        fontWeight: '500',
         lineHeight: 18,
       });
     }
@@ -198,7 +198,7 @@ describe('Perps Pro account visual contract', () => {
       for (const label of ['Deposit', 'Withdraw']) {
         const button = screen.getByRole('button', { name: label });
         expect(StyleSheet.flatten(button.props.style)).toMatchObject({
-          backgroundColor: 'rgba(80, 210, 193, 0.1)',
+          backgroundColor: 'neutral-bg-5',
           borderRadius: 8,
           flex: 1,
           height: 36,
@@ -206,10 +206,10 @@ describe('Perps Pro account visual contract', () => {
         expect(
           StyleSheet.flatten(screen.getByText(label).props.style),
         ).toMatchObject({
-          color: '#23C0B0',
-          fontSize: 16,
+          color: 'neutral-title-1',
+          fontSize: 14,
           fontWeight: '700',
-          lineHeight: 20,
+          lineHeight: 18,
         });
         fireEvent.press(button);
       }
@@ -241,9 +241,9 @@ describe('Perps Pro account visual contract', () => {
       expect(text.props.numberOfLines).toBe(1);
       expect(StyleSheet.flatten(text.props.style)).toMatchObject({
         fontVariant: ['tabular-nums'],
-        fontSize: 18,
+        fontSize: 16,
         fontWeight: '700',
-        lineHeight: 22,
+        lineHeight: 20,
       });
       expect(
         StyleSheet.flatten(
@@ -282,11 +282,10 @@ describe('Perps Pro account visual contract', () => {
     },
   );
 
-  it('hides the breakdown trigger when the account has no non-Perps assets', () => {
-    mockHasNonPerpsAssets = false;
+  it('hides the breakdown trigger only when every asset is zero', () => {
     render(
       <PerpsProAccountSummary
-        account={account}
+        account={{ ...account, primaryValue: '0' }}
         onDeposit={jest.fn()}
         onWithdraw={jest.fn()}
       />,
@@ -327,12 +326,8 @@ describe('Perps Pro account visual contract', () => {
     const rowStyle = StyleSheet.flatten(assetRow.props.style);
     expect(rowStyle).toMatchObject({
       alignItems: 'center',
-      backgroundColor: 'neutral-bg-1',
-      borderTopLeftRadius: 8,
-      borderTopRightRadius: 8,
       flexDirection: 'row',
       gap: 16,
-      marginHorizontal: 16,
       minHeight: 62,
       paddingLeft: 4,
       paddingVertical: 12,
@@ -390,7 +385,7 @@ describe('Perps Pro account visual contract', () => {
     expect(
       StyleSheet.flatten(screen.getByText('Transfer').props.style),
     ).toMatchObject({
-      color: '#3e495e',
+      color: 'neutral-title-1',
       fontSize: 14,
       fontWeight: '700',
       lineHeight: 18,

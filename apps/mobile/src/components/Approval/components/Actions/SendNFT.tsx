@@ -16,6 +16,7 @@ import { SecurityListItem } from './components/SecurityListItem';
 import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine';
 import useCommonStyle from '../../hooks/useCommonStyle';
 import { SubCol, SubRow, SubTable } from './components/SubTable';
+import { AddressMemoRow } from './components/AddressMemoRow';
 import { ALIAS_ADDRESS } from '@/constant/gas';
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import { Text } from '@/components/Typography';
@@ -126,19 +127,10 @@ const SendNFT = ({
           </Row>
         </Col>
         <SubTable target={sendNftAddressRef}>
-          <SubCol>
-            <SubRow isTitle>
-              <Text style={commonStyle.subRowTitleText}>
-                {t('page.signTx.addressNote')}
-              </Text>
-            </SubRow>
-            <SubRow>
-              <Values.AddressMemo
-                textStyle={commonStyle.subRowText}
-                address={actionData.to}
-              />
-            </SubRow>
-          </SubCol>
+          <AddressMemoRow
+            textStyle={commonStyle.subRowText}
+            address={actionData.to}
+          />
           {!!requireData.contract && (
             <SubCol>
               <SubRow isTitle>

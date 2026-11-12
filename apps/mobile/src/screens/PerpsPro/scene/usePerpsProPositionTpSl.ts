@@ -23,8 +23,9 @@ import BigNumber from 'bignumber.js';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { reportPerpsProPositionTpSlHistory } from '../analytics/manualTradeHistory';
 import { buildPerpsProMarketDescriptor } from '../model/market';
+import { buildPerpsOpenOrderTopology } from '../model/openOrderTopology';
+import { collectActivePositionTpSlOrders } from '../model/positionTpSl';
 import type { PerpsPositionViewModel } from '../model/position';
 import type {
   PerpsPositionTpSlDraft,
@@ -91,6 +92,7 @@ export const usePerpsProPositionTpSl = (
   const [submissionPending, setSubmissionPending] = useState(false);
   const [skipConfirmation, setSkipConfirmation] = useState(false);
   const [cancelingOids, setCancelingOids] = useState<number[]>([]);
+  const [cancelAllOids, setCancelAllOids] = useState<number[] | null>(null);
   const [confirmedCancelledOids, setConfirmedCancelledOids] = useState<
     number[]
   >([]);
@@ -106,6 +108,7 @@ export const usePerpsProPositionTpSl = (
     setSubmissionPending(false);
     setSkipConfirmation(false);
     setCancelingOids([]);
+    setCancelAllOids(null);
     setConfirmedCancelledOids([]);
     setSettlement(null);
     pendingRef.current = false;
@@ -206,10 +209,6 @@ export const usePerpsProPositionTpSl = (
       try {
         await ensurePerpsActionApproval(editorSnapshot.account);
         const result = await executePerpsPositionTpSl(command);
-        reportPerpsProPositionTpSlHistory(command, result, {
-          leverage: editorSnapshot.position.leverage,
-          marginMode: editorSnapshot.position.marginMode,
-        });
         const hasMutation = result.legs.some(
           leg => leg.cancel === 'success' || leg.create === 'success',
         );
@@ -480,7 +479,163 @@ export const usePerpsProPositionTpSl = (
     [cancelingOids, editor, t],
   );
 
+  const cancelAllOrders = useCallback(
+    async (orders: readonly PerpsPositionTpSlOrderViewModel[]) => {
+      if (!editor || pendingRef.current || cancelingOids.length > 0) return;
+      const editorSession = editorSessionRef.current;
+      const requestedOids = new Set(
+        orders
+          .filter(
+            order =>
+              order.scope === 'partial' &&
+              !confirmedCancelledOids.includes(order.oid),
+          )
+          .map(order => order.oid),
+      );
+      const getTargets = () => {
+        const state = perpsStore.getState();
+        const livePosition = getLivePosition(editor.position.coin);
+        if (
+          !isSamePerpsActionAccount(
+            state.currentPerpsAccount,
+            editor.account,
+          ) ||
+          livePosition?.direction !== editor.position.direction
+        ) {
+          return null;
+        }
+        return collectActivePositionTpSlOrders(
+          editor.position.coin,
+          editor.position.direction,
+          buildPerpsOpenOrderTopology(state.openOrders),
+        ).filter(
+          order => order.scope === 'partial' && requestedOids.has(order.oid),
+        );
+      };
+      const targets = getTargets();
+      if (!targets) {
+        showToast(t('page.perps.pro.positionTpsl.contextChanged'), 'error');
+        return;
+      }
+      if (!targets.length) return;
+      // Freeze the click's eligible set. Approval must never expand its scope.
+      requestedOids.clear();
+      targets.forEach(order => requestedOids.add(order.oid));
+      const targetOids = targets.map(order => order.oid);
+      pendingRef.current = true;
+      setPending(true);
+      setCancelingOids(targetOids);
+      setCancelAllOids(targetOids);
+      try {
+        await ensurePerpsActionApproval(editor.account, { builderFee: false });
+        if (editorSessionRef.current !== editorSession) return;
+        const liveTargets = getTargets();
+        if (!liveTargets) {
+          showToast(t('page.perps.pro.positionTpsl.contextChanged'), 'error');
+          return;
+        }
+        if (!liveTargets.length) return;
+        setCancelAllOids(liveTargets.map(order => order.oid));
+        const command = buildPerpsCancelOrdersCommand(
+          editor.account,
+          liveTargets.map(order => ({
+            coin: editor.position.coin,
+            oid: order.oid,
+          })),
+        );
+        const result = await executePerpsCancelOrders(command);
+        if (editorSessionRef.current !== editorSession) return;
+        if (result.kind === 'staleContext') {
+          showToast(t('page.perps.pro.positionTpsl.contextChanged'), 'error');
+          setEditor(null);
+          return;
+        }
+        if (result.failureReason === 'userCancelled') return;
+        const successful = result.items.filter(
+          item => item.status === 'success',
+        );
+        if (successful.length) {
+          setConfirmedCancelledOids(current => [
+            ...new Set([...current, ...successful.map(item => item.oid)]),
+          ]);
+        }
+        if (result.refreshError) {
+          Sentry.captureException(
+            new Error(
+              `Position TP/SL cancel refresh failed: ${result.refreshError}`,
+            ),
+          );
+        }
+        if (result.kind === 'success') {
+          showToast(
+            t('page.perps.pro.openOrders.cancelAllSuccess', {
+              count: successful.length,
+            }),
+            'success',
+          );
+          return;
+        }
+        if (result.kind === 'partial') {
+          showToast(
+            t('page.perps.pro.openOrders.cancelPartial', {
+              success: successful.length,
+              failed: liveTargets.length - successful.length,
+            }),
+            'error',
+          );
+          return;
+        }
+        const message = result.items[0]?.error || '';
+        if (
+          (message && (await judgeIsUserAgentIsExpired(message))) ||
+          judgeIsBuilderFeeNeedApprove(message)
+        )
+          return;
+        if (editorSessionRef.current === editorSession) {
+          showToast(t('page.perps.pro.positionTpsl.cancelFailed'), 'error');
+        }
+      } catch (error) {
+        if (
+          editorSessionRef.current !== editorSession ||
+          isPerpsActionUserCancelled(error)
+        )
+          return;
+        const message = error instanceof Error ? error.message : String(error);
+        if (
+          (await judgeIsUserAgentIsExpired(message)) ||
+          judgeIsBuilderFeeNeedApprove(message)
+        )
+          return;
+        if (editorSessionRef.current !== editorSession) return;
+        showToast(
+          t(
+            message === 'Perps account changed'
+              ? 'page.perps.pro.positionTpsl.contextChanged'
+              : 'page.perps.pro.positionTpsl.cancelFailed',
+          ),
+          'error',
+        );
+        Sentry.captureException(
+          error instanceof Error ? error : new Error(message),
+          {
+            extra: { scene: 'Perps Pro cancel all position TP/SL' },
+          },
+        );
+      } finally {
+        if (editorSessionRef.current === editorSession) {
+          pendingRef.current = false;
+          setPending(false);
+          setCancelingOids([]);
+          setCancelAllOids(null);
+        }
+      }
+    },
+    [cancelingOids, confirmedCancelledOids, editor, t],
+  );
+
   return {
+    cancelAllOrders,
+    cancelAllOids,
     cancelOrder,
     cancelingOids,
     confirmedCancelledOids,

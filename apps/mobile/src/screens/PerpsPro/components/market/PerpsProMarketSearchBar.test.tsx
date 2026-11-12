@@ -85,12 +85,12 @@ jest.mock('react-i18next', () => ({
   }),
 }));
 
-jest.mock('@gorhom/bottom-sheet', () => {
+jest.mock('../common/PerpsProBottomSheetTextInput', () => {
   const ReactModule = require('react');
   const { TextInput } = require('react-native');
 
   return {
-    BottomSheetTextInput: ReactModule.forwardRef(
+    PerpsProBottomSheetTextInput: ReactModule.forwardRef(
       (props: Record<string, unknown>, ref: React.Ref<unknown>) => {
         mockBottomSheetInputProps(props);
         ReactModule.useImperativeHandle(ref, () => ({
@@ -213,7 +213,15 @@ describe('PerpsProMarketSearchBar', () => {
     fireEvent.press(screen.getByTestId('perps-pro-market-search-focus-mask'));
     expect(mockFocus).toHaveBeenCalledTimes(1);
     expect(onFocusChange).toHaveBeenCalledWith(true);
-    expect(screen.getByTestId('market-search-cancel')).toBeTruthy();
+    const cancel = screen.getByTestId('market-search-cancel');
+    expect(StyleSheet.flatten(cancel.props.style)).toMatchObject({
+      flexShrink: 0,
+      minWidth: 49,
+    });
+    expect(StyleSheet.flatten(cancel.props.style).width).toBeUndefined();
+    expect(
+      cancel.findAll(node => node.props.numberOfLines === 1).length,
+    ).toBeGreaterThan(0);
     expect(
       screen.getByTestId('perps-pro-market-search-active-placeholder'),
     ).toBeTruthy();

@@ -292,7 +292,7 @@ function DevUIFormShowCase(): JSX.Element {
               </Text>
               <Text style={{ marginBottom: 12 }}>
                 Provide `customIcon` on Right-Bottom, the wrapper of icon is
-                positioned <Text style={{ fontWeight: 'bold' }}>absolute</Text>,
+                positioned <Text style={{ fontWeight: '700' }}>absolute</Text>,
                 so you can change its position by changing `top`, `right`,
                 `bottom`, `left` property
               </Text>

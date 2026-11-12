@@ -77,6 +77,7 @@ type DuplexDefs = {
     receive: {
       type: 'TRADINGVIEW_MESSAGE';
       data:
+        | import('../pages/tradingview-candle-chart/types').SimpleChartMessage
         | {
             type: 'SET_CANDLESTICK_DATA';
             data: Array<TradingViewCandlestickData>;
@@ -106,7 +107,11 @@ type DuplexDefs = {
             type: 'CLEAR_CROSSHAIR';
           }
         | {
-            type: 'RESET_PERPS_PRO_PRICE_SCALE';
+            type: 'RESET_PERPS_PRO_VIEWPORT';
+          }
+        | {
+            type: 'SET_PERPS_PRO_OVERLAYS';
+            overlays: import('../pages/tradingview-candle-chart/types').PerpsProOverlays;
           }
         | {
             type: 'COMPLETE_OLDER_CANDLES_REQUEST';
@@ -174,8 +179,13 @@ type DuplexDefs = {
         candleDataAppliedAck?: boolean;
         olderCandleRequest?: boolean;
         perpsProKlineProtocolVersion?: number;
+        perpsSimpleKlineProtocolVersion?: number;
       };
     };
+    receive: never;
+  };
+  TradingView_Simple: {
+    post: import('../pages/tradingview-candle-chart/types').SimpleChartEvent;
     receive: never;
   };
   TradingView_CandleDataApplied: {
@@ -186,10 +196,10 @@ type DuplexDefs = {
     };
     receive: never;
   };
-  TradingView_PerpsProPriceScaleAutoScaleChanged: {
+  TradingView_PerpsProViewportChanged: {
     post: {
-      type: 'PERPS_PRO_PRICE_SCALE_AUTO_SCALE_CHANGED';
-      autoScale: boolean;
+      type: 'PERPS_PRO_VIEWPORT_CHANGED';
+      resetVisible: boolean;
     };
     receive: never;
   };

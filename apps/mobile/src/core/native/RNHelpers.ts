@@ -11,7 +11,10 @@ const buildInfo =
 
 const RNHelpers = Object.freeze({
   forceExitApp: nativeModule.forceExitApp,
+  measureViewRelativeTo: nativeModule.measureViewRelativeTo,
   buildInfo,
+  setSensitiveClipboard: nativeModule.setSensitiveClipboard,
+  decodeQRCodeFromImageFile: nativeModule.decodeQRCodeFromImageFile,
   moveTaskToBack: wrapPlatformOnlyMethod({
     method: nativeModule.moveTaskToBack,
     platform: 'android',

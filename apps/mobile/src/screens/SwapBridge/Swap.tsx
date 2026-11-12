@@ -4,20 +4,14 @@ import { CompareFee } from '@/components/RabbyFeePopup/CompareFee';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import {
   BOTTOM_BUTTON_SINGLE_HEIGHT,
-  BOTTOM_BUTTON_TITLE_STYLE,
   BOTTOM_BUTTON_TOP_OFFSET,
   getBottomButtonBottomOffset,
   type RootNames,
 } from '@/constant/layout';
 import { DEX_WITH_WRAP, getChainDefaultToken } from '@/constant/swap';
 import { swapServiceApi } from '@/core/serviceApi/swap';
-import { setReportActionTs } from '@/core/serviceApi/preference';
 import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
 import { useTheme2024 } from '@/hooks/theme';
-import {
-  getMarketTabActionPrefix,
-  getMarketTabCreateSwapTxAction,
-} from '@/screens/Market/analytics';
 import { findChainByEnum, findChainByServerID } from '@/utils/chain';
 import { createGetStyles2024 } from '@/utils/styles';
 import { CHAINS, CHAINS_ENUM } from '@debank/common';
@@ -77,7 +71,6 @@ import type {
   TransactionNavigatorParamList,
 } from '@/navigation-type';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/utils/reportTimeoutAction';
 import {
   ExternalSwapBridgeDappTips,
   SwapBridgeDappPopup,
@@ -90,8 +83,6 @@ import { ApprovePendingTxItem } from '../Swap/components/PendingTxItem';
 import { toast } from '@/components2024/Toast';
 import { last } from 'lodash';
 import type { SwapTxHistoryItem } from '@/core/services/transactionHistory';
-import { matomoRequestEvent } from '@/utils/analytics';
-import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { useTwoStepSwap } from '../Swap/hooks/twoStepSwap';
 import type { DirectSignBtnMethods } from '@/components2024/DirectSignBtn';
 import { DirectSignBtn } from '@/components2024/DirectSignBtn';
@@ -106,8 +97,6 @@ import {
 } from '@/components2024/MiniSignV2/state/signatureGuardFlags';
 import { buildFingerprint } from '@/components2024/MiniSignV2/domain/ctx';
 import { MarketClosedTip } from '@/components/Token/MarketClosedTip';
-import { APP_VERSIONS } from '@/constant';
-import { stats } from '@/utils/stats';
 import { Text } from '@/components/Typography';
 import { storeApiExpSettingData } from '@/hooks/appSettings';
 import type { FormAmountMode } from '@/utils/form';
@@ -395,14 +384,6 @@ const Swap = ({
   } = useExternalSwapBridgeDapps(chain, 'swap', sceneActive);
   const openTab = useMemoizedFn((url: string) => {
     _openTab(url);
-    const origin = safeGetOrigin(url);
-    if (origin) {
-      matomoRequestEvent({
-        category: 'Websites Usage',
-        action: 'Website_Visit_Other',
-        label: origin,
-      });
-    }
   });
 
   // ===== 路由入参与场景初始化 =====
@@ -421,9 +402,6 @@ const Swap = ({
       return;
     }
     initialActivationHandledRef.current = true;
-    setReportActionTs(REPORT_TIMEOUT_ACTION_KEY.CLICK_GO_SWAP_SERVICE).catch(
-      console.error,
-    );
 
     if (!navState?.chainEnum) {
       return;
@@ -601,22 +579,6 @@ const Swap = ({
   }, []);
 
   // ===== 交易构建 =====
-  const currentIsCopyTrading = useMemo(() => {
-    if (navState?.type === 'Sell') {
-      return (
-        navState?.isFromCopyTrading &&
-        payToken?.id === navState?.tokenId &&
-        chain === navState.chainEnum
-      );
-    }
-
-    return (
-      navState?.isFromCopyTrading &&
-      receiveToken?.id === navState?.tokenId &&
-      chain === navState.chainEnum
-    );
-  }, [navState, receiveToken?.id, chain, payToken?.id]);
-
   const gotoSwap = useMemoizedFn(async () => {
     if (!inSufficient && payToken && receiveToken && activeProvider?.quote) {
       try {
@@ -629,10 +591,6 @@ const Swap = ({
               (activeProvider?.quote.toTokenDecimals || receiveToken.decimals),
           )
           .toNumber();
-        const payTokenUsdValue =
-          typeof payAmount === 'string' && payToken?.price
-            ? (Number(payAmount || 0) * Number(payToken.price || 0)).toString()
-            : '';
         const addSwapTxHistoryObj = {
           chainId: findChainByEnum(chain)?.id || 0,
           address: currentAccount?.address!,
@@ -644,10 +602,6 @@ const Swap = ({
           dexId: activeProvider?.name || 'WrapToken',
           createdAt: Date.now(),
           status: 'pending' as SwapTxHistoryItem['status'],
-          isFromCopyTrading: currentIsCopyTrading,
-          copyTradingExtra: {
-            type: navState?.type || 'Buy',
-          },
         };
         await dexSwap(
           {
@@ -678,9 +632,6 @@ const Swap = ({
               fee_rate: Number(feeRate),
             },
             account: currentAccount!,
-            from: navState?.from,
-            payUsdValue: payTokenUsdValue || '',
-            dexId: activeProvider?.name || '',
           },
           {
             ga: {
@@ -1208,10 +1159,6 @@ const Swap = ({
             dexId: activeProvider?.name || 'WrapToken',
             createdAt,
             status: 'pending',
-            isFromCopyTrading: currentIsCopyTrading,
-            copyTradingExtra: {
-              type: navState?.type || 'Buy',
-            },
           });
           reportBroadcastSuccessRef.current({
             txHash,
@@ -1226,51 +1173,6 @@ const Swap = ({
             pendingTransactionsRef.current?.refreshRemote();
           }, 1000);
           pendingTransactionsRef.current?.refreshLocal();
-          const marketTab = navState?.from?.scene
-            ? getMarketTabActionPrefix(navState.from.scene)
-            : null;
-          const createSwapTxAction = navState?.from?.scene
-            ? getMarketTabCreateSwapTxAction(navState.from.scene)
-            : null;
-
-          if (marketTab && createSwapTxAction) {
-            const payTokenUsdValue =
-              typeof payAmount === 'string' && payToken?.price
-                ? (
-                    Number(payAmount || 0) * Number(payToken.price || 0)
-                  ).toString()
-                : '';
-            stats.report('memecoinSwapTx', {
-              chain: chainServerId,
-              tx_id: txHash,
-              dex_id: activeProvider?.name || '',
-              market_tab: marketTab,
-              meme_chain: navState?.from?.chain || '',
-              meme_ca: navState?.from?.id || '',
-              meme_symbol: navState?.from?.symbol || '',
-              user_addr: currentAccount?.address || '',
-              pay_token_usd_value: payTokenUsdValue,
-              create_at: createdAt,
-              address_type: currentAccount?.type || '',
-              app_version: APP_VERSIONS.fromNative || '0',
-            });
-            matomoRequestEvent({
-              category: 'Rabby Market',
-              action: createSwapTxAction,
-            });
-          }
-          setReportActionTs(REPORT_TIMEOUT_ACTION_KEY.CLICK_SWAP_TO_CONFIRM, {
-            chain: chainServerId,
-          }).catch(console.error);
-          if (currentIsCopyTrading) {
-            matomoRequestEvent({
-              category: 'CopyTrading',
-              action:
-                navState?.type === 'Sell'
-                  ? 'CopyTrading_SellCreateSwap'
-                  : 'CopyTrading_BuyCreateSwap',
-            });
-          }
         }
       } catch (error: any) {
         console.log('swap mini sign error', error);
@@ -1296,9 +1198,6 @@ const Swap = ({
     } else {
       gotoSwap();
     }
-    setReportActionTs(REPORT_TIMEOUT_ACTION_KEY.CLICK_SWAP_OR_APPROVE_BTN, {
-      chain: chainServerId,
-    }).catch(console.error);
   });
   const saveSwapFormSnapshot = useMemoizedFn(() => {
     formValuesRef.current.save(buildFormSnapshot());
@@ -1741,6 +1640,7 @@ const Swap = ({
               <View style={styles.swapTokenCard}>
                 <SwapTokenItem
                   disabled={!isSupportedChain}
+                  sceneActive={sceneActive}
                   inSufficient={inSufficient}
                   slider={slider}
                   onChangeSlider={onChangeSlider}
@@ -1865,7 +1765,6 @@ const Swap = ({
                   // refresh  risk check
                   key={`${refreshId}-${chain}-${payToken?.id}-${receiveToken?.id}-${payAmount}-${activeProvider?.quote?.tx?.data}-${isApprove}`}
                   height={BOTTOM_BUTTON_SINGLE_HEIGHT}
-                  titleStyle={styles.bottomButtonTitle}
                   loading={miniSignLoading}
                   loadingType="circle"
                   showTextOnLoading
@@ -1898,7 +1797,6 @@ const Swap = ({
               ) : (
                 <Button
                   height={BOTTOM_BUTTON_SINGLE_HEIGHT}
-                  titleStyle={styles.bottomButtonTitle}
                   onPress={() => {
                     if (!isSupportedChain && !externalDapps.length) {
                       return;
@@ -2200,9 +2098,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   riskWarning: {
     marginTop: 12,
     marginBottom: 12,
-  },
-  bottomButtonTitle: {
-    ...BOTTOM_BUTTON_TITLE_STYLE,
   },
   approveContainer: {
     flexDirection: 'row',

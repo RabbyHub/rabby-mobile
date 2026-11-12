@@ -37,6 +37,7 @@ import {
 
 /** @deprecated import from '../layout' directly */
 export { ApprovalsLayouts };
+export { ApprovalsTabView } from './ApprovalsTabView';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -54,40 +55,6 @@ export function getScrollableSectionHeight(options?: {
     A.searchBarHeight -
     A.searchBarMarginOffset * 2 -
     (isAndroid ? 0 : A.contentInsetTopOffset + A.tabbarHeight)
-  );
-}
-
-export function ApprovalsTabView<T extends React.ComponentType<any>>({
-  children,
-  ViewComponent = View,
-  innerStyle,
-  ...props
-}: React.PropsWithChildren<
-  RNViewProps & {
-    ViewComponent?: T;
-    innerStyle?: RNViewProps['style'];
-  } & React.ComponentProps<T>
->) {
-  const {
-    safeSizeInfo: { safeSizes },
-  } = useApprovalsPage();
-  const { safeOffBottom } = useSafeSizes();
-
-  return (
-    <ViewComponent
-      {...props}
-      style={[
-        props?.style,
-        {
-          paddingTop: ApprovalsLayouts.tabbarHeight,
-          paddingBottom:
-            safeSizes.bottomAreaHeight + (isAndroid ? safeOffBottom : 0),
-        },
-      ]}>
-      <View style={[{ height: '100%', width: '100%' }, innerStyle]}>
-        {children}
-      </View>
-    </ViewComponent>
   );
 }
 

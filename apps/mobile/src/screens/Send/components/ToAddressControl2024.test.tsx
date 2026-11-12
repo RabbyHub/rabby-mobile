@@ -1,19 +1,32 @@
 import React from 'react';
 import { Image } from 'react-native';
-import { act, render, screen, waitFor } from '@testing-library/react-native';
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react-native';
 import type { Cex, ProjectItem } from '@rabby-wallet/rabby-api/dist/types';
+import { ellipsisAddress } from '@/utils/address';
 
 const mockGetCexWithLocalCache = jest.fn();
+const mockHandleFieldChange = jest.fn();
 let mockSupportedCexList: ProjectItem[] = [];
 let mockAddrDesc: any;
 let mockToAccount: any;
+let mockToAddress = '';
+let mockSelectAccountProps: any;
 
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 
 jest.mock('@/components/AccountSelectModalTx/SelectAccountSheetModal', () => ({
-  SheetModalSelectAccountSend: () => null,
+  SheetModalSelectAccountSend: (props: any) => {
+    mockSelectAccountProps = props;
+    return null;
+  },
 }));
 
 jest.mock('@/components2024/AddressItem/AddressItem', () => {
@@ -45,11 +58,15 @@ jest.mock('@/utils/styles', () => ({
 
 jest.mock('@/components2024/Card', () => {
   const ReactModule = require('react');
-  const { View } = require('react-native');
+  const { Pressable } = require('react-native');
 
   return {
-    Card: ({ children }: any) =>
-      ReactModule.createElement(View, null, children),
+    Card: ({ children, onPress }: any) =>
+      ReactModule.createElement(
+        Pressable,
+        { testID: 'recipient-card', onPress },
+        children,
+      ),
   };
 });
 
@@ -90,6 +107,10 @@ jest.mock('@/hooks/alias', () => ({
   useAlias2: () => ({ adderssAlias: '' }),
 }));
 
+// Keep makeAccountObject real; its unrelated account-list re-exports are not
+// part of this component's presentation contract.
+jest.mock('@/core/apis/account', () => ({}));
+
 jest.mock('../icons/unknown-address-avatar-cc.svg', () => () => null);
 jest.mock('../icons', () => ({ RcIconTipRightCC: () => null }));
 
@@ -98,11 +119,13 @@ jest.mock('@/components/Icons/CaretArrowIconCC', () => ({
 }));
 
 jest.mock('../hooks/useSendToken', () => ({
+  useSendTokenFormValuesSelector: (selector: any) =>
+    selector({ to: mockToAddress }),
   useSendTokenScreenStateSelector: (selector: any) =>
     selector({ toAddrDesc: mockAddrDesc }),
   useSendTokenInternalShallowSelector: (selector: any) =>
     selector({
-      callbacks: { handleFieldChange: jest.fn() },
+      callbacks: { handleFieldChange: mockHandleFieldChange },
       computed: {
         toAccount: mockToAccount,
         toAddressPositiveTips: {},
@@ -260,5 +283,72 @@ describe('ToAddressControl2024 CEX avatar', () => {
 
     expect(view.UNSAFE_queryAllByType(Image)).toHaveLength(0);
     expect(screen.getByTestId('wallet-icon')).toBeTruthy();
+  });
+});
+
+// Component render contract. Provider publication and native transition timing
+// still need the real Send screen/device; the store inputs are controlled here.
+describe('ToAddressControl2024 initial recipient presentation', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockSupportedCexList = [];
+    mockToAccount = null;
+    mockToAddress = '';
+    mockAddrDesc = undefined;
+    mockSelectAccountProps = undefined;
+    mockGetCexWithLocalCache.mockResolvedValue(undefined);
+  });
+
+  it.each(['', otherAddress])(
+    'renders the To section from form address %j before derived state arrives',
+    async toAddress => {
+      mockToAddress = toAddress;
+      render(<ToAddressControl2024 />);
+
+      expect(screen.getByTestId('send-to-section')).toBeTruthy();
+      expect(screen.getByText('page.sendToken.To')).toBeTruthy();
+      expect(
+        screen.getAllByText(
+          toAddress
+            ? ellipsisAddress(toAddress)
+            : 'page.sendToken.sectionTo.selectPlaceholder',
+        ).length,
+      ).toBeGreaterThan(0);
+      expect(mockHandleFieldChange).not.toHaveBeenCalled();
+      await act(async () => {});
+    },
+  );
+
+  it('lets the enriched derived account take over without hiding the section', async () => {
+    mockToAddress = otherAddress;
+    const view = render(<ToAddressControl2024 />);
+    expect(screen.getByTestId('send-to-section')).toBeTruthy();
+    mockToAccount = {
+      ...makeAccount(otherAddress),
+      aliasName: 'Imported wallet',
+    };
+
+    view.rerender(<ToAddressControl2024 style={{ marginTop: 16 }} />);
+
+    expect(screen.getByTestId('send-to-section')).toBeTruthy();
+    expect(screen.getByText('Imported wallet')).toBeTruthy();
+    expect(mockHandleFieldChange).not.toHaveBeenCalled();
+    await act(async () => {});
+  });
+
+  it('preserves the account selector callback while derived state is pending', () => {
+    render(<ToAddressControl2024 />);
+    fireEvent.press(screen.getByTestId('recipient-card'), {
+      stopPropagation: jest.fn(),
+    });
+    expect(mockSelectAccountProps.visible).toBe(true);
+
+    act(() =>
+      mockSelectAccountProps.onSelectAccount(makeAccount(otherAddress)),
+    );
+
+    expect(mockHandleFieldChange).toHaveBeenCalledTimes(1);
+    expect(mockHandleFieldChange).toHaveBeenCalledWith('to', otherAddress);
+    expect(mockSelectAccountProps.visible).toBe(false);
   });
 });

@@ -59,6 +59,9 @@ export function parseRabbyGoTargetAction(appLink: string) {
     !urlInfo ||
     !isAllowedUniversalLinkUrl(urlInfo) ||
     !urlInfo.pathname.startsWith(UL_MATCH_PREFIX) ||
+    // Trezor owns this return link. Treating its missing target as Home
+    // resets the import flow before the hardware request can finish.
+    urlInfo.pathname === `${UL_MATCH_PREFIX}connect-trezor` ||
     (rabbyGoCmd && rabbyGoCmd !== 'open-home')
   ) {
     return null;

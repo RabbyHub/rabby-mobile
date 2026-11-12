@@ -85,13 +85,19 @@ export function WalletConnectModalHost() {
       return;
     }
 
-    modalIdsRef.current.loading = createGlobalBottomSheetModal2024({
+    const id = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.WALLETCONNECT_PAIRING,
       singletonKey: WALLETCONNECT_PAIRING_SINGLETON_KEY,
       bottomSheetModalProps: {
-        enablePanDownToClose: false,
+        // user-dismissed loading must not block the next pairing's loading
+        onDismiss: () => {
+          if (modalIdsRef.current.loading === id) {
+            modalIdsRef.current.loading = null;
+          }
+        },
       },
     });
+    modalIdsRef.current.loading = id;
   }, []);
 
   const openConnect = useCallback(

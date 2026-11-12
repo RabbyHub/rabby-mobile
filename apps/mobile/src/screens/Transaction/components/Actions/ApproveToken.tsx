@@ -1,9 +1,10 @@
 /* eslint-disable react-native/no-inline-styles */
-import RcIconSingleArrow from '@/assets2024/icons/history/IconSingleArrow.svg';
 import { useTheme2024 } from '@/hooks/theme';
 import { findChain } from '@/utils/chain';
 import { formatTokenAmount, formatUsdValue } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
+import { makeHistoryDetailColors } from '../detailColors';
+import { HistoryDetailArrow } from '../HistoryDetailArrow';
 import { getTokenSymbol, tokenItemToITokenItem } from '@/utils/token';
 import type { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import React, { useMemo } from 'react';
@@ -48,7 +49,7 @@ export const ApproveToken: React.FC<Props> = ({
   isSingleAddress,
   account,
 }) => {
-  const { styles, colors2024 } = useTheme2024({ getStyle });
+  const { styles } = useTheme2024({ getStyle });
 
   const { t } = useTranslation();
   const {
@@ -171,11 +172,7 @@ export const ApproveToken: React.FC<Props> = ({
                 </View>
               </View>
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <RcIconSingleArrow
-                  width={26}
-                  height={26}
-                  color={colors2024['neutral-bg-2']}
-                />
+                <HistoryDetailArrow />
               </View>
             </View>
           </TouchableOpacity>
@@ -234,9 +231,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   card: {
     width: '100%',
-    backgroundColor: !isLight
-      ? colors2024['neutral-bg-2']
-      : colors2024['neutral-bg-1'],
+    backgroundColor: makeHistoryDetailColors({ isLight, colors2024 }).card,
     borderRadius: 16,
   },
   singleBox: {
@@ -250,7 +245,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 20,
     lineHeight: 24,
-    fontWeight: '800',
+    fontWeight: '700',
   },
   usdValue: {
     color: colors2024['neutral-secondary'],
@@ -264,9 +259,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   extraItem: {
     flexDirection: 'row',
     padding: 12,
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-2']
-      : colors2024['neutral-bg-1'],
+    backgroundColor: makeHistoryDetailColors({ isLight, colors2024 }).cardInner,
     borderRadius: 12,
     justifyContent: 'space-between',
     alignItems: 'flex-start',

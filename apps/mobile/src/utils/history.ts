@@ -5,9 +5,10 @@ import type {
 import type { TransactionHistoryItem } from '@/core/services/transactionHistory';
 import {
   GAS_ACCOUNT_RECEIVED_ADDRESS,
-  GAS_ACCOUNT_WITHDRAWED_ADDRESS,
+  GAS_ACCOUNT_WITHDRAWED_ADDRESSES,
   L2_DEPOSIT_ADDRESS_MAP,
 } from '@/constant/gas-account';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { HistoryItemCateType } from '@/types/history';
 import { findChain } from './chain';
 
@@ -68,7 +69,11 @@ export function getHistoryItemType(
   }
 
   if (receives?.length === 1 && sends?.length === 0) {
-    if (data.tx?.from_addr.toLowerCase() === GAS_ACCOUNT_WITHDRAWED_ADDRESS) {
+    if (
+      GAS_ACCOUNT_WITHDRAWED_ADDRESSES.some(addr =>
+        isSameAddress(data.tx?.from_addr ?? '', addr),
+      )
+    ) {
       return HistoryItemCateType.GAS_WITHDRAW;
     }
 

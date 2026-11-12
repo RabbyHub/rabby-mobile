@@ -360,13 +360,6 @@ export class DisplayedTokenWithOwner
   }
 }
 
-export function tokenItem2AbstractTokenWithOwner(
-  token: TokenItem,
-  account?: Account | null,
-) {
-  return new DisplayedTokenWithOwner(token, account);
-}
-
 export const customTestnetTokenToTokenItem = (
   token: CustomTestnetToken,
 ): TokenItem => {

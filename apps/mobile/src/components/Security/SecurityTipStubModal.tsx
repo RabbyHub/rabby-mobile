@@ -164,7 +164,7 @@ const getStyles = createGetStyles(colors => ({
   title: {
     fontSize: 20,
     color: colors['neutral-title1'],
-    fontWeight: '600',
+    fontWeight: '500',
     textAlign: 'center',
   },
   body: {

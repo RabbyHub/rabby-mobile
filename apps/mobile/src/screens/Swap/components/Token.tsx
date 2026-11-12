@@ -15,7 +15,7 @@ import {
   formatUsdValue,
 } from '@/utils/number';
 import BigNumber from 'bignumber.js';
-import { Slider } from '@rneui/themed';
+import { PerpsGestureSlider as Slider } from '@/components/perps/PerpsGestureSlider';
 
 import type { TokenSelectInst } from './TokenSelect';
 import TokenSelect from './TokenSelect';
@@ -26,11 +26,10 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import RcIconWalletCC from '@/assets2024/icons/swap/wallet-cc.svg';
-import { SliderBubblePortal } from './Slider';
+import { SliderBubblePortal, type SliderBubbleHandle } from './Slider';
 import type { Account } from '@/core/startupServices/preference';
 import { CustomSkeleton } from '@/components2024/CustomSkeleton';
 import usePrevious from 'react-use/lib/usePrevious';
-import { ITokenItem } from '@/store/tokens';
 import { Text } from '@/components/Typography';
 import {
   AutoShrinkAmountText,
@@ -54,6 +53,7 @@ interface SwapTokenItemProps {
   currentQuote?: QuoteProvider;
   skeletonLoading?: boolean;
   disabled?: boolean;
+  sceneActive?: boolean;
 }
 const SwapTokenItemInner = (props: SwapTokenItemProps) => {
   const {
@@ -62,7 +62,6 @@ const SwapTokenItemInner = (props: SwapTokenItemProps) => {
     value,
     onTokenChange,
     onValueChange,
-    excludeTokens,
     account,
     chainId,
     slider,
@@ -72,6 +71,7 @@ const SwapTokenItemInner = (props: SwapTokenItemProps) => {
     currentQuote,
     skeletonLoading,
     disabled,
+    sceneActive = true,
   } = props;
   const { t } = useTranslation();
 
@@ -119,7 +119,17 @@ const SwapTokenItemInner = (props: SwapTokenItemProps) => {
   );
 
   const [isSliderBubbleVisible, setIsSliderBubbleVisible] = useState(false);
-  const sliderThumbRef = useRef<View>(null);
+  const bubbleRef = useRef<SliderBubbleHandle>(null);
+  const sliderTrackRef = useRef<View>(null);
+  const onSliderValueChange = useCallback(
+    (_value: number) => {
+      // Move the bubble before the amount update. That update re-renders the
+      // page, which is what left the bubble behind the finger.
+      bubbleRef.current?.setProgress(_value);
+      onChangeSlider?.(_value);
+    },
+    [onChangeSlider],
+  );
 
   const onSlidingStart = useCallback(() => {
     if (!disabled) {
@@ -174,35 +184,42 @@ const SwapTokenItemInner = (props: SwapTokenItemProps) => {
         <Text style={styles.subTitle}>
           {isFrom ? t('page.swap.from') : t('page.swap.to')}
         </Text>
-        {isFrom && (
+        {/* Unmount native gestures before Fabric recycles the hidden scene. */}
+        {isFrom && sceneActive && (
           <View style={styles.sliderContainer}>
-            <Slider
-              key={`${token?.id}-${token?.chain}`}
-              allowTouchTrack={!disabled}
-              disabled={disabled}
-              style={styles.slider}
-              value={slider}
-              onSlidingStart={onSlidingStart}
-              onValueChange={onChangeSlider}
-              onSlidingComplete={onAfterChangeSlider}
-              minimumValue={0}
-              maximumValue={100}
-              minimumTrackTintColor={colors2024['brand-default']}
-              maximumTrackTintColor={colors2024['neutral-line']}
-              step={1}
-              thumbStyle={styles.thumbStyle}
-              thumbProps={{
-                children: (
-                  <View>
-                    <View ref={sliderThumbRef} style={styles.outerThumb}>
-                      <View style={styles.innerThumb} />
+            <View
+              ref={sliderTrackRef}
+              collapsable={false}
+              style={styles.slider}>
+              <Slider
+                key={`${token?.id}-${token?.chain}`}
+                allowTouchTrack={!disabled}
+                disabled={disabled}
+                style={styles.sliderInner}
+                value={slider ?? 0}
+                onSlidingStart={onSlidingStart}
+                onValueChange={onSliderValueChange}
+                onSlidingComplete={onAfterChangeSlider}
+                minimumValue={0}
+                maximumValue={100}
+                minimumTrackTintColor={colors2024['brand-default']}
+                maximumTrackTintColor={colors2024['neutral-line']}
+                step={1}
+                thumbStyle={styles.thumbStyle}
+                thumbProps={{
+                  children: (
+                    <View>
+                      <View style={styles.outerThumb}>
+                        <View style={styles.innerThumb} />
+                      </View>
                     </View>
-                  </View>
-                ),
-              }}
-            />
+                  ),
+                }}
+              />
+            </View>
             <SliderBubblePortal
-              anchorRef={sliderThumbRef}
+              ref={bubbleRef}
+              trackRef={sliderTrackRef}
               slide={slider || 0}
               visible={isSliderBubbleVisible}
             />
@@ -231,7 +248,6 @@ const SwapTokenItemInner = (props: SwapTokenItemProps) => {
               onTokenChange={onTokenSelect}
               accountInScreen={account}
               chainId={chainId}
-              placeholder={t('page.swap.search-by-name-address')}
               searchPlaceholder={t(
                 'component.TokenSelector.searchPlaceHolder1',
               )}
@@ -349,6 +365,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   slider: {
     width: 126,
+    height: 4,
+  },
+  sliderInner: {
+    width: '100%',
     height: 4,
   },
   sliderValue: {

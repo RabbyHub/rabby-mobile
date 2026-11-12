@@ -84,6 +84,8 @@ export const GnosisMessageQueueList = (props: {
   usefulChain: CHAINS_ENUM;
   pendingTxs?: SafeMessage[];
   loading?: boolean;
+  refreshing?: boolean;
+  onRefresh?(): void;
   reload?(): void;
   account: Account;
 }) => {
@@ -150,6 +152,8 @@ export const GnosisMessageQueueList = (props: {
   return (
     <View style={styles.container}>
       <FlatList
+        onRefresh={props.onRefresh}
+        refreshing={props.refreshing || false}
         data={list}
         style={styles.queueList}
         keyExtractor={item => item.messageHash}

@@ -14,6 +14,7 @@ import {
   type FlatListProps,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
+  type ViewToken,
 } from 'react-native';
 import { RefreshControl } from 'react-native-gesture-handler';
 import { HistoryItem } from './HistoryItem';
@@ -31,21 +32,24 @@ import { useGetCexList } from '../hook';
 import { useMemoizedFn } from 'ahooks';
 import { Text } from '@/components/Typography';
 import type { Account } from '@/types/account';
+import {
+  isBridgeHistoryRow,
+  type BridgeAwareHistoryItem,
+  type BridgeHistoryRow,
+} from '../utils/bridgeHistory';
 
 const isIOS = Platform.OS === 'ios';
 
 interface DisplayHistoryItem {
   isDateStart?: boolean;
   time: number;
-  data: HistoryDisplayItem | TransactionGroup;
+  data: BridgeAwareHistoryItem;
 }
 
 export type HistoryListHeaderComponent =
   FlatListProps<DisplayHistoryItem>['ListHeaderComponent'];
 
-function markFirstItems(
-  arr: (HistoryDisplayItem | TransactionGroup)[],
-): DisplayHistoryItem[] {
+function markFirstItems(arr: BridgeAwareHistoryItem[]): DisplayHistoryItem[] {
   if (arr.length === 0) {
     return [];
   }
@@ -53,9 +57,7 @@ function markFirstItems(
   const result: DisplayHistoryItem[] = [];
   let prevDateKey = '';
 
-  for (let i = 0; i < arr.length; i++) {
-    const item = arr[i];
-
+  for (const item of arr) {
     const time =
       'time_at' in item && item.time_at
         ? item.time_at * 1000
@@ -66,7 +68,7 @@ function markFirstItems(
     const date = new Date(time);
     const currentDateKey = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
 
-    const isDateStart = i === 0 || currentDateKey !== prevDateKey;
+    const isDateStart = result.length === 0 || currentDateKey !== prevDateKey;
 
     result.push({
       data: item,
@@ -96,17 +98,20 @@ export const HistoryList = ({
   isNeedFetchFromApi,
   appendBottom,
   moreLoadingLength = 1,
+  noMoreText,
   style,
   ListHeaderComponent,
   emptyComponent,
   onScroll,
   scrollEventThrottle,
+  renderBridgeItem,
+  onVisibleItemsChange,
   ref,
 }: {
   firstFetchDone?: boolean;
   historySuccessList?: string[];
   localTxList?: TransactionGroup[];
-  list: (HistoryDisplayItem | TransactionGroup)[];
+  list: BridgeAwareHistoryItem[];
   loading?: boolean;
   loadingMore?: boolean;
   refreshLoading?: boolean;
@@ -117,15 +122,23 @@ export const HistoryList = ({
   isNeedFetchFromApi?: boolean;
   appendBottom?: number;
   moreLoadingLength?: number;
+  /** shown under the last item once there is nothing left to load */
+  noMoreText?: string;
   style?: StyleProp<ViewStyle>;
   ListHeaderComponent?: HistoryListHeaderComponent;
   emptyComponent?: React.ReactElement | null;
   onScroll?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
   scrollEventThrottle?: number;
+  renderBridgeItem?: (row: BridgeHistoryRow) => React.ReactNode;
+  onVisibleItemsChange?: (items: BridgeAwareHistoryItem[]) => void;
   account?: Account | null;
   ref?: Ref<{ scrollToTop: () => void }>;
 }) => {
   const flatListRef = useRef<FlatList>(null);
+  const onViewableItemsChanged = useMemoizedFn(
+    ({ viewableItems }: { viewableItems: ViewToken<DisplayHistoryItem>[] }) =>
+      onVisibleItemsChange?.(viewableItems.map(({ item }) => item.data)),
+  );
 
   const scrollToTop = useCallback(() => {
     flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
@@ -160,26 +173,18 @@ export const HistoryList = ({
   }, [localTxList]);
 
   const renderItem = useMemoizedFn(({ item }: { item: DisplayHistoryItem }) => {
-    if ('project_item' in item.data) {
-      return (
-        <>
-          {item.isDateStart ? (
-            <Text
-              style={[
-                styles.date,
-                !isForMultipleAddress && styles.marginBottom,
-              ]}>
-              {formatTimestamp(item.time, t)}
-            </Text>
-          ) : null}
-          <HistoryItem
-            data={item.data}
-            isForMultipleAddress={isForMultipleAddress}
-            getCexInfoByAddress={getCexInfoByAddress}
-            onPress={onPresssItem}
-            account={account}
-          />
-        </>
+    let content: React.ReactNode;
+    if (isBridgeHistoryRow(item.data)) {
+      content = renderBridgeItem?.(item.data);
+    } else if ('project_item' in item.data) {
+      content = (
+        <HistoryItem
+          data={item.data}
+          isForMultipleAddress={isForMultipleAddress}
+          getCexInfoByAddress={getCexInfoByAddress}
+          onPress={onPresssItem}
+          account={account}
+        />
       );
     } else {
       // const canCancel =
@@ -195,29 +200,29 @@ export const HistoryList = ({
         minLocalTxNonceByChain[`${item.data.address}-${item.data.chainId}`] ===
         item.data.nonce;
 
-      return (
-        <>
-          {item.isDateStart ? (
-            <Text
-              style={[
-                styles.date,
-                !isForMultipleAddress && styles.marginBottom,
-              ]}>
-              {formatTimestamp(item.time, t)}
-            </Text>
-          ) : null}
-          <TransactionItem
-            getCexInfoByAddress={getCexInfoByAddress}
-            isForMultipleAddress={isForMultipleAddress}
-            historySuccessList={historySuccessList}
-            data={item.data}
-            canCancel={canCancel}
-            onRefresh={onRefresh}
-            account={account}
-          />
-        </>
+      content = (
+        <TransactionItem
+          getCexInfoByAddress={getCexInfoByAddress}
+          isForMultipleAddress={isForMultipleAddress}
+          historySuccessList={historySuccessList}
+          data={item.data}
+          canCancel={canCancel}
+          onRefresh={onRefresh}
+          account={account}
+        />
       );
     }
+    return (
+      <>
+        {item.isDateStart ? (
+          <Text
+            style={[styles.date, !isForMultipleAddress && styles.marginBottom]}>
+            {formatTimestamp(item.time, t)}
+          </Text>
+        ) : null}
+        {content}
+      </>
+    );
   });
 
   if (loading) {
@@ -244,8 +249,8 @@ export const HistoryList = ({
           <Empty
             title={
               isNeedFetchFromApi
-                ? t('page.activities.signedTx.empty.title')
-                : t('page.activities.signedTx.empty.titleLastThreeMonths')
+                ? t('page.activities.signedTx.empty.titleNoTransactions')
+                : t('page.activities.signedTx.empty.titleInLast90Days')
             }
           />
         ) : null
@@ -253,13 +258,18 @@ export const HistoryList = ({
       ListHeaderComponent={ListHeaderComponent}
       style={[styles.container, style]}
       keyExtractor={item =>
-        'id' in item.data
+        isBridgeHistoryRow(item.data)
+          ? item.data.key
+          : 'id' in item.data
           ? `${item.data.address}-${item.data.chain}-${item.data.id}`
-          : `${item.data.address}-${item.data.chainId}-${item.data.maxGasTx.hash}`
+          : `${item.data.address}-${item.data.chainId}-${item.data.maxGasTx?.hash}`
       }
       onEndReached={loadMore}
       onEndReachedThreshold={0.5}
       onScroll={onScroll}
+      onViewableItemsChanged={
+        onVisibleItemsChange ? onViewableItemsChanged : undefined
+      }
       scrollEventThrottle={scrollEventThrottle}
       removeClippedSubviews={true}
       ListFooterComponent={
@@ -270,7 +280,16 @@ export const HistoryList = ({
             })}
           </>
         ) : (
-          <View style={{ height: bottom + (appendBottom || 0) }} />
+          <>
+            {noMoreText && markedList.length ? (
+              <View style={styles.noMore}>
+                <View style={styles.noMoreLine} />
+                <Text style={styles.noMoreText}>{noMoreText}</Text>
+                <View style={styles.noMoreLine} />
+              </View>
+            ) : null}
+            <View style={{ height: bottom + (appendBottom || 0) }} />
+          </>
         )
       }
       refreshControl={
@@ -324,5 +343,27 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     marginBottom: 8,
     color: colors2024['neutral-secondary'],
     lineHeight: 18,
+  },
+  noMore: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingTop: 16,
+    // keep clear of the screen edge where the bottom inset is 0 (Android)
+    paddingBottom: 20,
+  },
+  noMoreLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: colors2024['neutral-line'],
+  },
+  noMoreText: {
+    flexShrink: 1,
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    fontWeight: '500',
+    lineHeight: 18,
+    textAlign: 'center',
+    color: colors2024['neutral-secondary'],
   },
 }));

@@ -7,10 +7,10 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
   ActivityIndicator,
-  TouchableOpacity,
+  ScrollView,
 } from 'react-native';
 import * as Yup from 'yup';
-import { RootNames } from '@/constant/layout';
+import { BOTTOM_BUTTON_TOP_OFFSET, RootNames } from '@/constant/layout';
 import { useFocusEffect, useRoute } from '@react-navigation/native';
 import type { GetNestedScreenRouteProp } from '@/navigation-type';
 import { useTranslation } from 'react-i18next';
@@ -19,14 +19,15 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { NextInput } from '@/components2024/Form/Input';
 import { ProgressBar } from '@/components2024/progressBar';
 import { Button } from '@/components2024/Button';
+import {
+  AgreementNotice,
+  DataAnalysisCard,
+} from '@/components2024/OnboardingConsent';
 import { apisLock } from '@/core/apis';
 import { APP_FEATURE_SWITCH, APP_TEST_PWD } from '@/constant';
 import { getFormikErrorsCount, useAppFormik } from '@/utils/patch';
 import { toast, toastWithIcon } from '@/components2024/Toast';
 import { useInputBlurOnTouchaway } from '@/components/Form/hooks';
-import { CheckBoxRect } from '@/components2024/CheckBox';
-import TouchableText from '@/components/Touchable/TouchableText';
-import { useShowUserAgreementLikeModal } from '../ManagePassword/components/UserAgreementLikeModalInner2024';
 import { AppSwitch2024 } from '@/components/customized/Switch2024';
 import { useBiometrics } from '@/hooks/biometrics';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
@@ -38,11 +39,7 @@ import {
 } from '@/hooks/address/useNewUser';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import type { AddressNavigatorParamList } from '@/navigation-type';
-import {
-  setReportActionTs,
-  setUserBehaviorTrackingOptOutSync,
-} from '@/core/serviceApi/preference';
-import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/utils/reportTimeoutAction';
+import { setUserBehaviorTrackingOptOutSync } from '@/core/serviceApi/preference';
 import type { TextInput } from '@/components/Typography';
 import { Text } from '@/components/Typography';
 import { E2E_ID } from '@/constant/e2e';
@@ -52,10 +49,15 @@ const INIT_FORM_DATA = __DEV__
   ? {
       password: APP_TEST_PWD,
       confirmPassword: APP_TEST_PWD,
-      checked: true,
+      enableDataAnalysis: true,
       switch: false,
     }
-  : { password: '', confirmPassword: '', checked: true, switch: false };
+  : {
+      password: '',
+      confirmPassword: '',
+      enableDataAnalysis: true,
+      switch: false,
+    };
 
 const DISABLE_SET_PASSWORD = !APP_FEATURE_SWITCH.customizePassword;
 
@@ -91,7 +93,9 @@ function useSetupPasswordForm(
               ),
         }),
       switch: Yup.boolean().default(couldSetupBiometrics),
-      checked: Yup.boolean().default(INIT_FORM_DATA.checked).oneOf([true]),
+      enableDataAnalysis: Yup.boolean().default(
+        INIT_FORM_DATA.enableDataAnalysis,
+      ),
     });
   }, [t, couldSetupBiometrics]);
 
@@ -112,7 +116,9 @@ function useSetupPasswordForm(
         return;
       }
 
-      setUserBehaviorTrackingOptOutSync(false);
+      // The toggle is the user's explicit choice: persist it either way so a
+      // declined toggle is never left at an opted-in default.
+      setUserBehaviorTrackingOptOutSync(!values.enableDataAnalysis);
 
       const toastHide = toastWithIcon(() => (
         <ActivityIndicator style={{ marginRight: 6 }} />
@@ -174,17 +180,11 @@ function useSetupPasswordForm(
         }
       } finally {
         toastHide();
-
-        void setReportActionTs(
-          REPORT_TIMEOUT_ACTION_KEY.SET_PASSWORD_DONE,
-        ).catch(console.error);
       }
     },
   });
 
-  const shouldDisabled =
-    !formik.values.checked ||
-    !!getFormikErrorsCount(formik.validateFormValues());
+  const shouldDisabled = !!getFormikErrorsCount(formik.validateFormValues());
 
   return { formik, shouldDisabled: shouldDisabled || DISABLE_SET_PASSWORD };
 }
@@ -192,7 +192,6 @@ function useSetupPasswordForm(
 function MainListBlocks() {
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
-  const { viewTermsOfUse, viewPrivacyPolicy } = useShowUserAgreementLikeModal();
   const route =
     useRoute<
       GetNestedScreenRouteProp<'AddressNavigatorParamList', 'SetPassword2024'>
@@ -241,6 +240,10 @@ function MainListBlocks() {
         state.hideBackIcon
           ? {
               headerLeft: () => null,
+              // The shared iOS options install a native bar button item, which
+              // takes precedence over `headerLeft`; clear it too so the first
+              // import password flow cannot navigate back before completing.
+              unstable_headerLeftItems: () => [],
             }
           : {},
       ),
@@ -272,13 +275,18 @@ function MainListBlocks() {
         onTouchInputAway();
       }}>
       <View style={[styles.container]}>
-        {(!state.hideProgress || state?.isFirstCreate) && (
-          <ProgressBar amount={3} currentCount={2} />
-        )}
-        <Text style={[styles.text]}>
-          {t('page.nextComponent.createNewAddress.passwordTopTips')}
-        </Text>
-        <View style={styles.bodyContainer}>
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          alwaysBounceVertical={false}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}>
+          {(!state.hideProgress || state?.isFirstCreate) && (
+            <ProgressBar amount={3} currentCount={2} />
+          )}
+          <Text style={[styles.text]}>
+            {t('page.nextComponent.createNewAddress.passwordTopTips')}
+          </Text>
           <View style={styles.formWrapper}>
             <View style={styles.inputHorizontalGroup}>
               <NextInput.Password
@@ -388,52 +396,26 @@ function MainListBlocks() {
                 />
               </View>
             </View>
-            <TouchableOpacity
-              style={styles.agreementWrapper}
-              {...makeTestIDProps(E2E_ID.onboarding.setPasswordAgreement)}
-              onPress={() => {
-                formik.setFieldValue('checked', !formik.values.checked, true);
-              }}>
-              <View style={styles.agreementCheckbox}>
-                <CheckBoxRect checked={formik.values.checked} />
-              </View>
-              <View style={styles.agreementTextWrapper}>
-                <Text style={styles.agreementText}>
-                  {t('page.createPassword.agreeToTerms')}{' '}
-                </Text>
-                <TouchableText
-                  style={styles.userAgreementTouchText}
-                  touchableProps={{ style: styles.userAgreementTouchable }}
-                  onPress={evt => {
-                    evt.stopPropagation();
-                    viewTermsOfUse();
-                  }}>
-                  {t('page.createPassword.termOfUse')}
-                </TouchableText>
-                <Text style={styles.agreementText}>
-                  {' ' + t('page.createPassword.and') + ' '}
-                </Text>
-                <TouchableText
-                  style={styles.userAgreementTouchText}
-                  touchableProps={{ style: styles.userAgreementTouchable }}
-                  onPress={evt => {
-                    evt.stopPropagation();
-                    viewPrivacyPolicy();
-                  }}>
-                  {t('page.createPassword.PrivacyPolicy')}
-                </TouchableText>
-              </View>
-            </TouchableOpacity>
+            <DataAnalysisCard
+              style={styles.dataAnalysisCard}
+              value={formik.values.enableDataAnalysis}
+              onValueChange={value => {
+                formik.setFieldValue('enableDataAnalysis', value, true);
+              }}
+            />
           </View>
+        </ScrollView>
+        <View style={styles.footer}>
+          <AgreementNotice />
+          <Button
+            disabled={shouldDisabled}
+            containerStyle={styles.btnContainer}
+            type="primary"
+            title={t('page.nextComponent.createNewAddress.Continue')}
+            onPress={handleContinue}
+            {...makeTestIDProps(E2E_ID.onboarding.setPasswordSubmit)}
+          />
         </View>
-        <Button
-          disabled={shouldDisabled}
-          containerStyle={styles.btnContainer}
-          type="primary"
-          title={t('page.nextComponent.createNewAddress.Continue')}
-          onPress={handleContinue}
-          {...makeTestIDProps(E2E_ID.onboarding.setPasswordSubmit)}
-        />
       </View>
     </TouchableWithoutFeedback>
   );
@@ -454,8 +436,6 @@ function SetPassword2024(): JSX.Element {
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   btnContainer: {
     width: '100%',
-    position: 'absolute',
-    bottom: 56,
   },
   inputStyle: {
     borderWidth: 0,
@@ -501,31 +481,38 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     opacity: 0.45,
   },
   container: {
-    height: '100%',
-    position: 'relative',
-    display: 'flex',
-    alignItems: 'center',
-    gap: 12,
+    flex: 1,
     paddingHorizontal: 20,
-    marginBottom: 20,
     backgroundColor: colors2024['neutral-bg-1'],
   },
-  bodyContainer: {
-    // backgroundColor: colors['neutral-bg2'],
-    flexShrink: 1,
-    height: '100%',
-    paddingHorizontal: 0,
-    paddingTop: 12,
-    paddingBottom: 24,
-    // ...makeDebugBorder()
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    alignItems: 'center',
+    gap: 12,
+    // With the footer's top padding this gives the card-to-notice distance
+    // of the SetupWallet design.
+    paddingBottom: 9,
   },
   formWrapper: {
     width: '100%',
-    height: '100%',
     paddingHorizontal: 10,
+    paddingTop: 12,
     flexDirection: 'column',
-    // justifyContent: 'space-between',
     alignItems: 'center',
+  },
+  dataAnalysisCard: {
+    alignSelf: 'stretch',
+    marginTop: 24,
+  },
+  // The button keeps the 56pt bottom offset shared by the other steps of the
+  // address flow (CreateNewAddress, AddressListScreenContainer).
+  footer: {
+    paddingTop: BOTTOM_BUTTON_TOP_OFFSET,
+    paddingBottom: 56,
+    gap: 12,
+    backgroundColor: colors2024['neutral-bg-1'],
   },
   inputHorizontalGroup: {
     width: 'auto',
@@ -541,50 +528,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     backgroundColor: colors2024['neutral-bg-1'],
     fontSize: 14,
   },
-  agreementWrapper: {
-    position: 'absolute',
-    bottom: 104,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'flex-start',
-    flexWrap: 'nowrap',
-    paddingHorizontal: 30,
-    width: '100%',
-  },
-  agreementCheckbox: {
-    marginRight: 6,
-    position: 'relative',
-  },
-  agreementTextWrapper: {
-    position: 'relative',
-    flexDirection: 'row',
-    justifyContent: 'flex-start',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-  },
-  agreementText: {
-    fontSize: 16,
-    lineHeight: 24,
-    fontWeight: '400',
-    fontFamily: 'SF Pro Rounded',
-    color: colors2024['neutral-body'],
-  },
-  userAgreementTouchText: {
-    fontSize: 16,
-    lineHeight: 24,
-    fontWeight: '400',
-    fontFamily: 'SF Pro Rounded',
-    color: colors2024['brand-default'],
-  },
-  userAgreementTouchable: {
-    padding: 0,
-    // position: 'relative',
-    // top: 0,
-    // ...makeDebugBorder(),
-  },
   headerTitleStyle: {
     color: colors2024['neutral-title-1'],
-    fontWeight: '800',
+    fontWeight: '900',
     fontSize: 20,
     fontFamily: 'SF Pro Rounded',
     lineHeight: 24,

@@ -43,7 +43,7 @@ const getConfirmSetPasswordModalStyles = createGetStyles(colors => {
     },
     modalTitle: {
       fontSize: 20,
-      fontWeight: '600',
+      fontWeight: '500',
       color: colors['neutral-title1'],
     },
     modalBody: {
@@ -96,7 +96,7 @@ const getConfirmSetPasswordModalStyles = createGetStyles(colors => {
     buttonTitle: {
       fontSize: 18,
       lineHeight: 22,
-      fontWeight: '600',
+      fontWeight: '500',
     },
     cancelTitleStyle: {},
     confirmTitleStyle: {},

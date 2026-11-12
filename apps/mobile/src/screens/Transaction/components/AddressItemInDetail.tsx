@@ -6,7 +6,6 @@ import { Text } from '@/components/Typography';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { getAliasName } from '@/core/apis/contact';
 import { KeyringAccountWithAlias } from '@/hooks/account';
-import { switchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { useTheme2024 } from '@/hooks/theme';
 import { apisSingleHome } from '@/screens/Home/hooks/singleHome';
 import { ellipsisAddress } from '@/utils/address';
@@ -16,17 +15,20 @@ import React, { useCallback, useMemo } from 'react';
 import { TouchableOpacity, View } from 'react-native';
 import FastImage from 'react-native-fast-image';
 import { useGetCexList } from '../hook';
+import { DetailAddressText } from './DetailAddressText';
 
 export type AddressItemInDetailProps = {
   address: string;
   accounts: KeyringAccountWithAlias[];
   disableNavigate?: boolean;
+  addressTextStyle?: React.ComponentProps<typeof Text>['style'];
 };
 
 export const AddressItemInDetail = ({
   address,
   accounts,
   disableNavigate: propDisableNavigate = false,
+  addressTextStyle,
 }: AddressItemInDetailProps) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
 
@@ -54,7 +56,6 @@ export const AddressItemInDetail = ({
       if (accountSelectCtx.isUnderContext) {
         accountSelectCtx.fnCloseModal();
       }
-      switchSceneCurrentAccount('HistoryDetail', account);
       apisSingleHome.navigateToSingleHome(account);
     }
   }, [account, accountSelectCtx]);
@@ -113,7 +114,7 @@ export const AddressItemInDetail = ({
               />
             ) : null}
           </View>
-          <Text style={styles.itemAddressText}>{address}</Text>
+          <DetailAddressText address={address} style={addressTextStyle} />
         </View>
       </TouchableOpacity>
     </View>
@@ -125,15 +126,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-  },
-  itemAddressText: {
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
-    textAlign: 'right',
-    width: 170,
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '400',
   },
   itemContentText: {
     color: colors2024['neutral-body'],

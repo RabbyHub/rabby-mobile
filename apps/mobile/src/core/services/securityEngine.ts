@@ -265,7 +265,9 @@ export class SecurityEngineService extends StoreServiceBase<
   };
 
   addAddressWhitelist = (address: string) => {
-    if (this.store.userData.addressWhitelist.includes(address)) return;
+    if (this.store.userData.addressWhitelist.includes(address.toLowerCase())) {
+      return;
+    }
 
     this.mutateStore(draft => {
       draft.userData.addressWhitelist.push(address.toLowerCase());
@@ -287,7 +289,9 @@ export class SecurityEngineService extends StoreServiceBase<
   };
 
   addAddressBlacklist = (address: string) => {
-    if (this.store.userData.addressBlacklist.includes(address)) return;
+    if (this.store.userData.addressBlacklist.includes(address.toLowerCase())) {
+      return;
+    }
 
     this.mutateStore(draft => {
       draft.userData.addressBlacklist.push(address.toLowerCase());

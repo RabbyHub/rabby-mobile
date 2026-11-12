@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo } from 'react';
-import { Platform, Pressable, View } from 'react-native';
+import { Platform, View } from 'react-native';
+import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 
 import { RcNextSearchCC } from '@/assets/icons/common';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
@@ -7,8 +8,6 @@ import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalSc
 import { RootNames } from '@/constant/layout';
 import { atomByMMKV } from '@/core/storage/mmkv';
 import { useTheme2024 } from '@/hooks/theme';
-import { getMarketTabViewAction } from '@/screens/Market/analytics';
-import { matomoRequestEvent } from '@/utils/analytics';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useAtom } from 'jotai';
 import { Tabs } from 'react-native-collapsible-tab-view';
@@ -81,7 +80,8 @@ export default function MarketScreen() {
 
   const renderHeaderRight = useCallback(
     () => (
-      <Pressable
+      <CustomTouchableOpacity
+        as="RNGHTouchableOpacity"
         hitSlop={10}
         style={styles.headerRight}
         onPress={() => {
@@ -95,7 +95,7 @@ export default function MarketScreen() {
           height={20}
           color={colors2024['neutral-title-1']}
         />
-      </Pressable>
+      </CustomTouchableOpacity>
     ),
     [colors2024, navigation, styles.headerRight],
   );
@@ -105,25 +105,6 @@ export default function MarketScreen() {
       headerRight: renderHeaderRight,
     });
   }, [renderHeaderRight, setNavigationOptions]);
-
-  useEffect(() => {
-    const action = getMarketTabViewAction(storedActiveTab);
-
-    if (!action) {
-      return;
-    }
-
-    const timer = setTimeout(() => {
-      matomoRequestEvent({
-        category: 'Rabby Market',
-        action,
-      });
-    }, 150);
-
-    return () => {
-      clearTimeout(timer);
-    };
-  }, [storedActiveTab]);
 
   const marketTabLabelMap = useMemo(
     () => ({
@@ -190,7 +171,6 @@ export default function MarketScreen() {
         index={index}
         indexDecimal={indexDecimal}
         text=""
-        style={styles.tabLabel}
         containerStyle={styles.watchlistLabelContainer}
         icon={
           <RcIconFavorite
@@ -205,7 +185,7 @@ export default function MarketScreen() {
         }
       />
     ),
-    [colors2024, styles.watchlistLabelContainer, styles.tabLabel],
+    [colors2024, styles.watchlistLabelContainer],
   );
 
   return (
@@ -239,7 +219,6 @@ export default function MarketScreen() {
             const renderCategoryLabel = ({ index, indexDecimal }) => (
               <CustomLabel
                 index={index}
-                style={styles.tabLabel}
                 containerStyle={styles.categoryLabelContainer}
                 indexDecimal={indexDecimal}
                 text={marketTabLabelMap[category.id] ?? category.name}
@@ -328,9 +307,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       height: TAB_BAR_HEIGHT,
       justifyContent: 'center',
       alignItems: 'center',
-    },
-    tabLabel: {
-      marginTop: 0,
     },
   };
 });

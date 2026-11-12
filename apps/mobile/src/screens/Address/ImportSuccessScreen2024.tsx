@@ -5,7 +5,6 @@ import {
 } from '@/core/serviceApi/contact';
 import {
   getFallbackAccountSnapshot,
-  setReportActionTs,
   setCurrentAccountSync,
 } from '@/core/serviceApi/preference';
 import { useTheme2024 } from '@/hooks/theme';
@@ -31,9 +30,7 @@ import { useAccounts } from '@/hooks/account';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import type { RootStackParamsList } from '@/navigation-type';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { matomoRequestEvent } from '@/utils/analytics';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
-import { getKRCategoryByType } from '@/utils/transaction';
 import { Button } from '@/components2024/Button';
 import { ellipsisAddress } from '@/utils/address';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -47,14 +44,11 @@ import {
 } from '@/constant/layout';
 import { GnosisSupportChainList } from './components/GnosisSupportChainList';
 import RcIconRightCC from '@/assets/icons/common/right-2-cc.svg';
-import {
-  createGlobalBottomSheetModal2024,
-  removeGlobalBottomSheetModal2024,
-} from '@/components2024/GlobalBottomSheetModal';
+import { createGlobalBottomSheetModal2024 } from '@/components2024/GlobalBottomSheetModal';
+import { dismissImportMoreAddressPopup } from '@/hooks/useShowImportMoreAddressPopup';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import addressBalanceStore from '@/store/balance';
 import { syncMultiAddressesHistory } from '@/databases/hooks/history';
-import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/utils/reportTimeoutAction';
 import useTokenList from '@/store/tokens';
 import usePortfolioList from '@/store/protocols';
 import { eventBus } from '@/utils/events';
@@ -64,6 +58,7 @@ import { isNonPublicProductionEnv } from '@/constant';
 import { useMount } from 'ahooks';
 import type { PerfAccountEventBusListeners } from '@/core/apis/account';
 import { accountEvents } from '@/core/apis/account';
+import * as SecretVault from '@/core/utils/secretVault';
 import type { AddressItem } from '@/components2024/WalletSuccessCard';
 import { WalletSuccessCard } from '@/components2024/WalletSuccessCard';
 import { E2E_ID } from '@/constant/e2e';
@@ -100,6 +95,22 @@ export const ImportSuccessScreen2024 = () => {
   if (!state) {
     throw new Error('[ImportSuccess2024] route.params is undefined');
   }
+
+  const mnemonicsPayloadRef = useRef<SecretVault.MnemonicsVaultPayload | null>(
+    null,
+  );
+  const mnemonicsPayloadFetchedRef = useRef(false);
+  useMount(() => {
+    if (mnemonicsPayloadFetchedRef.current) {
+      return;
+    }
+    mnemonicsPayloadFetchedRef.current = true;
+    if (state.mnemonicsVaultId) {
+      mnemonicsPayloadRef.current = SecretVault.retrieveMnemonicsPayload(
+        state.mnemonicsVaultId,
+      );
+    }
+  });
 
   useMount(() => {
     const addressList = (
@@ -152,12 +163,25 @@ export const ImportSuccessScreen2024 = () => {
     }
   });
 
+  const resolveImportAddresses = React.useCallback(() => {
+    const addresses = Array.isArray(state.address)
+      ? state.address
+      : [state.address];
+    return addresses.map(address => ({
+      address,
+      aliasName:
+        state.alias ||
+        getContactAliasSnapshot(address)?.alias ||
+        ellipsisAddress(address || '') ||
+        '',
+    }));
+  }, [state.address, state.alias]);
   const [importAddresses, setImportAddresses] = React.useState<
     {
       address: string;
       aliasName: string;
     }[]
-  >([]);
+  >(resolveImportAddresses);
 
   const saveFirstAddressAlias = React.useCallback(() => {
     return Promise.all(
@@ -183,10 +207,6 @@ export const ImportSuccessScreen2024 = () => {
     await saveFirstAddressAlias();
     Keyboard.dismiss();
 
-    void setReportActionTs(
-      REPORT_TIMEOUT_ACTION_KEY.ADD_NEW_ADDRESS_DONE,
-    ).catch(console.error);
-
     if (onlyFirstAccount) {
       apisSingleHome.navigateToSingleHome(onlyFirstAccount, { replace: true });
     } else {
@@ -201,22 +221,7 @@ export const ImportSuccessScreen2024 = () => {
     const addresses = Array.isArray(state?.address)
       ? state?.address
       : [state?.address];
-    setImportAddresses(
-      addresses.map(address => ({
-        address,
-        aliasName:
-          state?.alias ||
-          getContactAliasSnapshot(address)?.alias ||
-          ellipsisAddress(address || '') ||
-          '',
-      })),
-    );
-
-    matomoRequestEvent({
-      category: 'Import Address',
-      action: `Success_Import_${getKRCategoryByType(state?.type)}`,
-      label: state?.brandName,
-    });
+    setImportAddresses(resolveImportAddresses());
 
     addressBalanceStore.batchGetTotalBalance(addresses, true, {
       scene: 'ImportSuccess',
@@ -236,7 +241,7 @@ export const ImportSuccessScreen2024 = () => {
       syncMultiAddressesHistory(syncAddresses);
       eventBus.emit('PERPS_ADD_ADDRESSES', syncAddresses);
     }
-  }, [state, t]);
+  }, [state, t, resolveImportAddresses]);
   React.useEffect(() => {
     setTimeout(() => fetchAccounts(), 0);
   }, [fetchAccounts]);
@@ -273,22 +278,25 @@ export const ImportSuccessScreen2024 = () => {
 
     await saveFirstAddressAlias();
 
-    const params = {
-      type: state.type,
-      mnemonics: state.mnemonics,
-      passphrase: state.passphrase,
-      keyringId: state.keyringId,
-      brandName: state.brandName,
-    };
-
+    const mnemonicsPayload = mnemonicsPayloadRef.current;
     const firstAddr = importAddresses[0]?.address;
-    if (params.type === KEYRING_TYPE.HdKeyring && firstAddr) {
-      if (!params.mnemonics) {
+    if (state.type === KEYRING_TYPE.HdKeyring && firstAddr) {
+      if (!mnemonicsPayload) {
         throw new Error(
           '[ImportSuccessScreen2024] mnemonics is required for HdKeyring',
         );
       }
     }
+
+    const params = {
+      type: state.type,
+      mnemonicsVaultId: mnemonicsPayload
+        ? SecretVault.storeMnemonicsPayload(mnemonicsPayload)
+        : undefined,
+      keyringId: state.keyringId,
+      brandName: state.brandName,
+      skipSuccessAnimation: true,
+    };
 
     modalRef.current = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.IMPORT_MORE_ADDRESS,
@@ -298,11 +306,7 @@ export const ImportSuccessScreen2024 = () => {
           modalRef.current = undefined;
         },
       },
-      onCancel: () => {
-        if (modalRef.current) {
-          removeGlobalBottomSheetModal2024(modalRef.current);
-        }
-      },
+      onCancel: () => dismissImportMoreAddressPopup(modalRef.current),
     });
   };
 
@@ -328,7 +332,8 @@ export const ImportSuccessScreen2024 = () => {
     !shouldShowBackupButton &&
     (isHardwareWallet(state.type) ||
       state.isFirstImport ||
-      (!!state?.mnemonics && state.brandName === KEYRING_TYPE.HdKeyring));
+      (!!state?.mnemonicsVaultId &&
+        state.brandName === KEYRING_TYPE.HdKeyring));
 
   const addressItems: AddressItem[] = useMemo(
     () =>
@@ -347,6 +352,7 @@ export const ImportSuccessScreen2024 = () => {
       <View style={[styles.container, { paddingTop: top }]}>
         <WalletSuccessCard
           style={{ flex: 1 }}
+          autoPlay={!state.skipSuccessAnimation}
           title={
             onlyFirstAccount
               ? t(

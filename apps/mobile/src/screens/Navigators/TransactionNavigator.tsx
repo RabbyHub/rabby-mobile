@@ -1,7 +1,9 @@
+import { RoundedFontStyles } from '@/core/utils/fonts';
 import 'react-native-gesture-handler';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { IS_IOS } from '@/core/native/utils';
 
 import { createCustomNativeStackNavigator as createNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
 
@@ -17,12 +19,19 @@ import SendScreen from '../Send/Send';
 import SendNFTScreen from '../SendNFT/SendNFT';
 
 import { HistoryDetailScreen } from '../Transaction/HistoryDetailScreen';
+import { BridgeDetailScreen } from '../Bridge/BridgeDetailScreen';
 import { HistoryLocalDetailScreen } from '../Transaction/HistoryLocalDetailScreen';
 import { TransactionNavigatorParamList } from '@/navigation-type';
 import ApprovalsScreen from '../Approvals';
+import { ApprovalsHeader } from '../Approvals/components/Headers/ApprovalsHeader';
 import ReceiveScreen from '../Receive/Receive';
 import SwapBridgeScreen from '../SwapBridge';
+import { renderSwapBridgeHeader } from '../SwapBridge/SwapBridgeHeader';
 import { ConvertDustScreen } from '../ConvertDust';
+import { MemeCoinBuyScreen } from '../MemeCoin/buy/MemeCoinBuyScreen';
+import { MemeCoinHeader } from '../MemeCoin/components/MemeCoinHeader';
+import { MemeCoinExecuteScreen } from '../MemeCoin/execute/MemeCoinExecuteScreen';
+import { MemeCoinHomeScreen } from '../MemeCoin/home/MemeCoinHomeScreen';
 import { GasAccountScreen } from '../GasAccount';
 import { ScreenHeaderAccountSwitcher } from '@/components/AccountSwitcher/OnScreenHeader';
 import { HeaderAccountSwitcher } from '@/components/AccountSwitcher/HeaderAccountSwitcher';
@@ -32,25 +41,25 @@ import { BatchRevokeScreen } from '../BatchRevoke/BatchRevoke';
 import { useTranslation } from 'react-i18next';
 import { PerpsOriginScreen } from '../Perps/index';
 import { PerpsMarketDetailScreen } from '../PerpsMarketDetail';
+import { PerpsMarketDetailHeader } from '../PerpsMarketDetail/components/PerpsMarketDetailHeader';
 import { PerpsHistoryScreen } from '../PerpsHistory';
 import { PerpsProHistoryScreen } from '../PerpsProHistory';
 import { PerpsProHistoryHeader } from '../PerpsProHistory/components/PerpsProHistoryHeader';
 import { PerpsSearchScreen } from '../PerpsSearch';
 import LendingHistory from '../Lending/components/LendingHistory';
 import LendingScreen from '../Lending';
+import { renderLendingHeader } from '../Lending/components/LendingHeaderTitle';
 import PredictionScreen from '../Prediction';
 import { PredictionScreenWithPreload } from '../InnerDapp/InnerDappPreloadScreens';
 import { useInnerDappPreloadStrategy } from '@/config/innerDappPreloadStrategy';
 import { Text } from '@/components/Typography';
 import { createGetStyles2024 } from '@/utils/styles';
-import { IS_IOS } from '@/core/native/utils';
 import { withRegressionScenario } from '@/devtools/regressionScenarios/react';
 
 const TransactionStack =
   createNativeStackNavigator<TransactionNavigatorParamList>();
 
 const CONVERT_DUST_HEADER_HEIGHT = 58;
-const SEND_IOS_HEADER_ICON_OFFSET = 6;
 const RegressionSendScreen = withRegressionScenario(SendScreen, {
   screen: 'Send',
 });
@@ -115,16 +124,6 @@ export default function TransactionNavigator() {
     innerDappStrategy === 'screen'
       ? PredictionScreenWithPreload
       : PredictionScreen;
-  const renderSendHeaderLeft = React.useCallback(
-    ({ tintColor }: { tintColor?: string }) => (
-      <HeaderBackPressable
-        tintColor={tintColor}
-        style={transactionNavigatorStyles.sendHeaderIconOffset}
-      />
-    ),
-    [],
-  );
-
   return (
     <TransactionStack.Navigator
       screenOptions={mergeScreenOptions({
@@ -141,11 +140,9 @@ export default function TransactionNavigator() {
           title: 'Send',
           headerTitleStyle: {
             color: colors2024['neutral-title-1'],
-            fontWeight: '900',
-            fontFamily: 'SF Pro Rounded',
+            ...RoundedFontStyles.heavy,
             fontSize: 20,
           },
-          headerLeft: renderSendHeaderLeft,
         })}
       />
       <TransactionStack.Screen
@@ -155,11 +152,9 @@ export default function TransactionNavigator() {
           title: 'Send',
           headerTitleStyle: {
             color: colors2024['neutral-title-1'],
-            fontWeight: '900',
-            fontFamily: 'SF Pro Rounded',
+            ...RoundedFontStyles.heavy,
             fontSize: 20,
           },
-          headerLeft: renderSendHeaderLeft,
         })}
       />
       <TransactionStack.Screen
@@ -167,10 +162,12 @@ export default function TransactionNavigator() {
         component={SendNFTScreen}
         options={mergeScreenOptions({
           title: 'Send',
+          unstable_headerRightItems: IS_IOS
+            ? () => [{ type: 'spacing', spacing: 44 }]
+            : undefined,
           headerTitleStyle: {
             color: colors2024['neutral-title-1'],
-            fontWeight: '900',
-            fontFamily: 'SF Pro Rounded',
+            ...RoundedFontStyles.heavy,
             fontSize: 20,
           },
         })}
@@ -182,8 +179,7 @@ export default function TransactionNavigator() {
           title: 'Receive',
           headerTitleStyle: {
             color: colors2024['neutral-title-1'],
-            fontWeight: '900',
-            fontFamily: 'SF Pro Rounded',
+            ...RoundedFontStyles.heavy,
             fontSize: 20,
           },
         })}
@@ -217,8 +213,7 @@ export default function TransactionNavigator() {
           headerTintColor: colors['neutral-title-1'],
           headerTitleStyle: {
             fontSize: 20,
-            fontWeight: '900',
-            fontFamily: 'SF Pro Rounded',
+            ...RoundedFontStyles.heavy,
             color: colors['neutral-title-1'],
           },
           headerStyle: {
@@ -235,12 +230,17 @@ export default function TransactionNavigator() {
         options={{
           title: 'Transactions',
           headerTitle: ctx => {
+            // The native back item is wider than the old JS header button, so
+            // UIKit lays this title container out ~12pt right of the screen
+            // centre (QA 1360). Pull the content back.
             return (
-              <ScreenHeaderAccountSwitcher
-                forScene="History"
-                titleText={ctx.children}
-                disableSwitch
-              />
+              <View style={{ transform: [{ translateX: -12 }] }}>
+                <ScreenHeaderAccountSwitcher
+                  forScene="History"
+                  titleText={ctx.children}
+                  disableSwitch
+                />
+              </View>
             );
           },
           headerStyle: {
@@ -259,14 +259,26 @@ export default function TransactionNavigator() {
           headerTintColor: colors['neutral-title-1'],
           headerTitleStyle: {
             fontSize: 20,
-            fontWeight: '900',
-            fontFamily: 'SF Pro Rounded',
+            ...RoundedFontStyles.heavy,
             color: colors['neutral-title-1'],
           },
           headerStyle: {
             backgroundColor: !isLight
               ? colors2024?.['neutral-bg-1']
               : colors2024?.['neutral-bg-0'],
+          },
+        })}
+      />
+      <TransactionStack.Screen
+        name={RootNames.BridgeDetail}
+        component={BridgeDetailScreen}
+        options={mergeScreenOptions({
+          title: '',
+          headerTintColor: colors['neutral-title-1'],
+          headerStyle: {
+            backgroundColor: isLight
+              ? colors2024['neutral-bg-0']
+              : colors2024['neutral-bg-1'],
           },
         })}
       />
@@ -278,8 +290,7 @@ export default function TransactionNavigator() {
           headerTintColor: colors['neutral-title-1'],
           headerTitleStyle: {
             fontSize: 20,
-            fontWeight: '900',
-            fontFamily: 'SF Pro Rounded',
+            ...RoundedFontStyles.heavy,
             color: colors['neutral-title-1'],
           },
           headerStyle: {
@@ -305,7 +316,7 @@ export default function TransactionNavigator() {
         options={mergeScreenOptions2024([
           {
             title: '',
-            headerTitle: () => null,
+            header: renderSwapBridgeHeader,
           },
         ])}
       />
@@ -316,7 +327,7 @@ export default function TransactionNavigator() {
         options={mergeScreenOptions2024([
           {
             title: '',
-            headerTitle: () => null,
+            header: renderSwapBridgeHeader,
           },
         ])}
       />
@@ -324,10 +335,23 @@ export default function TransactionNavigator() {
       <TransactionStack.Screen
         name={RootNames.Approvals}
         component={ApprovalsScreen}
-        options={mergeScreenOptions({
-          title: t('page.approvals.title'),
-          ...headerPresets.withBgCard2_2024,
-        })}
+        options={({ route }) =>
+          mergeScreenOptions({
+            title: t('page.approvals.title'),
+            ...headerPresets.withBgCard2_2024,
+            // Declarative header contract: the slots are fixed here instead of
+            // being replaced from the screen's mount effect. The row draws its
+            // own back button so the search field starts right after it
+            // (QA 1328), and its search state lives in shared atoms.
+            header: () => (
+              <ApprovalsHeader
+                account={
+                  (route.params as { account?: any } | undefined)?.account
+                }
+              />
+            ),
+          })
+        }
       />
 
       <TransactionStack.Screen
@@ -359,6 +383,39 @@ export default function TransactionNavigator() {
       />
 
       <TransactionStack.Screen
+        name={RootNames.MemeCoin}
+        component={MemeCoinHomeScreen}
+        options={mergeScreenOptions2024([
+          {
+            title: t('page.home.services.meme'),
+            header: () => <MemeCoinHeader />,
+          },
+        ])}
+      />
+
+      <TransactionStack.Screen
+        name={RootNames.MemeCoinBuy}
+        component={MemeCoinBuyScreen}
+        options={mergeScreenOptions2024([
+          {
+            title: t('page.home.services.meme'),
+            header: () => <MemeCoinHeader disableSwitch />,
+          },
+        ])}
+      />
+
+      <TransactionStack.Screen
+        name={RootNames.MemeCoinExecute}
+        component={MemeCoinExecuteScreen}
+        options={mergeScreenOptions2024([
+          {
+            title: t('page.home.services.meme'),
+            header: () => <MemeCoinHeader disableSwitch />,
+          },
+        ])}
+      />
+
+      <TransactionStack.Screen
         name={RootNames.GasAccount}
         component={GasAccountScreen}
         options={mergeScreenOptions({
@@ -367,8 +424,7 @@ export default function TransactionNavigator() {
           headerTintColor: colors['neutral-title-1'],
           headerTitleStyle: {
             fontSize: 20,
-            fontWeight: '900',
-            fontFamily: 'SF Pro Rounded',
+            ...RoundedFontStyles.heavy,
             color: colors['neutral-title-1'],
           },
           headerStyle: {
@@ -390,8 +446,7 @@ export default function TransactionNavigator() {
           headerTintColor: colors['neutral-title-1'],
           headerTitleStyle: {
             fontSize: 20,
-            fontWeight: '900',
-            fontFamily: 'SF Pro Rounded',
+            ...RoundedFontStyles.heavy,
             color: colors['neutral-title-1'],
           },
         })}
@@ -400,17 +455,21 @@ export default function TransactionNavigator() {
       <TransactionStack.Screen
         name={RootNames.PerpsMarketDetail}
         component={PerpsMarketDetailScreen}
-        options={mergeScreenOptions({
-          // title: t('page.home.services.perpsMarketDetail'),
-          // ...headerPresets.withBgCard1_2024,
-          headerTintColor: colors['neutral-title-1'],
-          headerTitleStyle: {
-            fontSize: 20,
-            fontWeight: '900',
-            fontFamily: 'SF Pro Rounded',
-            color: colors['neutral-title-1'],
-          },
-        })}
+        options={({ route }) =>
+          mergeScreenOptions({
+            title: '',
+            header: () => (
+              <PerpsMarketDetailHeader market={route.params.market} />
+            ),
+            // ...headerPresets.withBgCard1_2024,
+            headerTintColor: colors['neutral-title-1'],
+            headerTitleStyle: {
+              fontSize: 20,
+              ...RoundedFontStyles.heavy,
+              color: colors['neutral-title-1'],
+            },
+          })
+        }
       />
 
       <TransactionStack.Screen
@@ -422,8 +481,7 @@ export default function TransactionNavigator() {
           headerTintColor: colors['neutral-title-1'],
           headerTitleStyle: {
             fontSize: 20,
-            fontWeight: '900',
-            fontFamily: 'SF Pro Rounded',
+            ...RoundedFontStyles.heavy,
             color: colors['neutral-title-1'],
           },
           headerStyle: {
@@ -457,24 +515,16 @@ export default function TransactionNavigator() {
         name={RootNames.Lending}
         component={LendingScreen}
         options={mergeScreenOptions({
-          title: t('page.home.services.lending'),
+          title: '',
           ...headerPresets.withBgCard1_2024,
-          headerTitle: ctx => {
-            return (
-              <ScreenHeaderAccountSwitcher
-                forScene="Lending"
-                titleText={ctx.children}
-              />
-            );
-          },
+          header: renderLendingHeader,
           headerTintColor: colors['neutral-title-1'],
           headerStyle: {
             backgroundColor: colors2024['neutral-bg-1'],
           },
           headerTitleStyle: {
             fontSize: 12,
-            fontWeight: '900',
-            fontFamily: 'SF Pro Rounded',
+            ...RoundedFontStyles.heavy,
             color: colors['neutral-title-1'],
           },
         })}
@@ -533,9 +583,3 @@ const getConvertDustHeaderStyle = createGetStyles2024(({ colors2024 }) => ({
     minWidth: 0,
   },
 }));
-
-const transactionNavigatorStyles = StyleSheet.create({
-  sendHeaderIconOffset: {
-    transform: [{ translateY: IS_IOS ? SEND_IOS_HEADER_ICON_OFFSET : 0 }],
-  },
-});

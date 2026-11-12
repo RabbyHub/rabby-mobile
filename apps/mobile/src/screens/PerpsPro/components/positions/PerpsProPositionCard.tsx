@@ -13,6 +13,7 @@ import {
   type TextLayoutEvent,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { Pressable as GesturePressable } from 'react-native-gesture-handler';
 
 import {
   calculateSignedLiquidationDistance,
@@ -42,6 +43,7 @@ import {
   getPerpsProTintedTagContainerStyle,
   getPerpsProTintedTagTextStyle,
 } from '../common/perpsProSemanticTagStyles';
+import { getPerpsProInfoCardStyle } from '../common/perpsProListVisual';
 import { usePerpsProFieldExplanation } from '../common/PerpsProFieldExplanationContext';
 import {
   resolvePerpsProPositionMetricCollision,
@@ -76,6 +78,14 @@ const useResponsiveMetricLayout = (measurementKey: string) => {
     expanded: false,
     key: measurementKey,
   });
+  // The expanded layout changes the column width, so re-measuring text while
+  // expanded feeds a different geometry back into the same collision check.
+  // On Fabric that oscillates between the compact and expanded layouts (the
+  // label/underline visibly flicker left-right). Keep the text measurements
+  // that produced the decision and only re-evaluate on layout/row changes.
+  const expandedRef = React.useRef(layoutState.expanded);
+  expandedRef.current =
+    layoutState.key === measurementKey ? layoutState.expanded : false;
 
   if (measurementsRef.current.key !== measurementKey) {
     measurementsRef.current = {
@@ -88,6 +98,14 @@ const useResponsiveMetricLayout = (measurementKey: string) => {
     (key: string, row: MetricRow, patch: MetricMeasurements) => {
       const currentMeasurements = measurementsRef.current;
       if (currentMeasurements.key !== key) {
+        return;
+      }
+      const isTextMeasurement =
+        'middleFirstLineWidth' in patch ||
+        'middleFirstLineX' in patch ||
+        'rightNaturalWidth' in patch ||
+        'rightWrapped' in patch;
+      if (expandedRef.current && isTextMeasurement) {
         return;
       }
 
@@ -178,7 +196,7 @@ const PositionAction: React.FC<{
   const { styles } = useTheme2024({ getStyle });
   const disabled = !onPress;
   return (
-    <Pressable
+    <GesturePressable
       accessibilityRole="button"
       accessibilityState={{ disabled }}
       disabled={disabled}
@@ -191,7 +209,7 @@ const PositionAction: React.FC<{
       <Text style={disabled ? styles.disabledActionText : styles.actionText}>
         {label}
       </Text>
-    </Pressable>
+    </GesturePressable>
   );
 };
 
@@ -635,7 +653,7 @@ export const PerpsProPositionCard: React.FC<{
           </View>
 
           {tpSlSummary.mode !== 'none' ? (
-            <Pressable
+            <GesturePressable
               accessibilityLabel={t('page.perps.pro.positions.tpsl')}
               accessibilityRole="button"
               accessibilityState={{ disabled: !onEditTpSl }}
@@ -684,7 +702,7 @@ export const PerpsProPositionCard: React.FC<{
                   />
                 </View>
               </View>
-            </Pressable>
+            </GesturePressable>
           ) : null}
         </View>
 
@@ -714,12 +732,15 @@ export const PerpsProPositionCard: React.FC<{
 
 PerpsProPositionCard.displayName = 'PerpsProPositionCard';
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+// Figma 86609:329983: 12pt-inset cards, 12pt apart; metric values 13/16.
+const METRIC_VALUE_GAP = 6;
+
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   row: {
-    gap: 12,
-    marginLeft: 16,
-    marginRight: 14,
-    paddingBottom: 20,
+    ...getPerpsProInfoCardStyle(colors2024, isLight),
+    gap: 8,
+    marginBottom: 12,
+    marginHorizontal: 12,
   },
   titleRow: {
     alignItems: 'center',
@@ -840,7 +861,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     height: 16,
   },
   metricValueSpacer: {
-    height: 20,
+    height: METRIC_VALUE_GAP + 16,
   },
   rightMetricLabelOverlay: {
     alignItems: 'flex-end',
@@ -877,16 +898,16 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '500',
     lineHeight: 16,
-    marginTop: 4,
+    marginTop: METRIC_VALUE_GAP,
   },
   marginValueRow: {
     alignItems: 'center',
     flexDirection: 'row',
     gap: 4,
-    marginTop: 4,
+    marginTop: METRIC_VALUE_GAP,
   },
   marginValue: {
     ...PERPS_PRO_NUMBER_STYLE,
@@ -894,7 +915,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     minWidth: 0,
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '500',
     lineHeight: 16,
   },
@@ -937,7 +958,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     minWidth: 0,
   },
   takeProfit: {
-    ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['green-default'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 12,
@@ -945,7 +965,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 16,
   },
   stopLoss: {
-    ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['red-default'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 12,
@@ -953,7 +972,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 16,
   },
   partialTpSlCount: {
-    ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 12,
@@ -976,25 +994,27 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   actions: {
     flexDirection: 'row',
     gap: 8,
+    paddingBottom: 4,
+    paddingTop: 8,
   },
   action: {
     alignItems: 'center',
-    backgroundColor: colors2024['neutral-bg-2'],
+    backgroundColor: colors2024['neutral-bg-5'],
     borderRadius: 6,
     flex: 1,
     justifyContent: 'center',
-    minHeight: 34,
+    minHeight: 32,
     paddingHorizontal: 8,
-    paddingVertical: 8,
+    paddingVertical: 4,
   },
   actionPressed: {
     opacity: 0.8,
   },
   actionText: {
-    color: colors2024['neutral-title-1'],
+    color: colors2024['neutral-body'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: '700',
     flexShrink: 1,
     lineHeight: 18,
     maxWidth: '100%',
@@ -1004,7 +1024,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: '700',
     flexShrink: 1,
     lineHeight: 18,
     maxWidth: '100%',

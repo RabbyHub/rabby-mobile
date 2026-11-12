@@ -12,6 +12,7 @@ import RcIconFavorite from '@/assets2024/icons/home/favorite.svg';
 import { Text } from '@/components/Typography';
 import { PerpsDisplayCoinName } from '../PerpsDisplayCoinName';
 import { PerpsRankBadge } from './PerpsRankBadge';
+import { preloadSimpleChart } from '@/hooks/perps/candles/preloadSimpleChart';
 const formatPct = (v: number) => `${(v * 100).toFixed(2)}%`;
 
 const PerpsMarketItemComponent: React.FC<{
@@ -34,7 +35,12 @@ const PerpsMarketItemComponent: React.FC<{
     : '-';
 
   return (
-    <TouchableOpacity onPress={onPress}>
+    <TouchableOpacity
+      onPressIn={() => preloadSimpleChart(item.name)}
+      onPress={() => {
+        preloadSimpleChart(item.name);
+        onPress?.();
+      }}>
       <View style={styles.card}>
         <View style={styles.logoWrap}>
           <AssetAvatar logo={item.logoUrl} logoStyle={styles.icon} size={40} />

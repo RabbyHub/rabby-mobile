@@ -2,10 +2,11 @@ function loadCustomTestnetModule() {
   jest.resetModules();
 
   const mockAdd = jest.fn();
+  const mockRemove = jest.fn();
+  const mockDisconnectDappsWithUnsupportedChain = jest.fn();
   const mockGetTransactionCount = jest.fn();
   const mockGetNonceByChain = jest.fn();
   const mockGetChainListByIds = jest.fn();
-  const mockMatomoRequestEvent = jest.fn();
   const mockFindChain = jest.fn();
 
   const transactionHistoryService = {
@@ -15,9 +16,6 @@ function loadCustomTestnetModule() {
     },
   };
 
-  jest.doMock('@/utils/analytics', () => ({
-    matomoRequestEvent: (...args: unknown[]) => mockMatomoRequestEvent(...args),
-  }));
   jest.doMock('@/utils/chain', () => ({
     findChain: (...args: unknown[]) => mockFindChain(...args),
   }));
@@ -40,10 +38,14 @@ function loadCustomTestnetModule() {
       getTransactionReceipt: jest.fn(),
       getTx: jest.fn(),
       hasToken: jest.fn(),
-      remove: jest.fn(),
+      remove: mockRemove,
       removeToken: jest.fn(),
       update: jest.fn(),
     },
+  }));
+  jest.doMock('@/core/serviceApi/dappUnsupportedChain', () => ({
+    disconnectDappsWithUnsupportedChain: (...args: unknown[]) =>
+      mockDisconnectDappsWithUnsupportedChain(...args),
   }));
   jest.doMock('@/core/serviceApi/transactionHistory', () => ({
     getTransactionHistoryTransactions: async () =>
@@ -59,11 +61,12 @@ function loadCustomTestnetModule() {
     apiCustomTestnet,
     mocks: {
       mockAdd,
+      mockDisconnectDappsWithUnsupportedChain,
+      mockRemove,
       mockFindChain,
       mockGetChainListByIds,
       mockGetNonceByChain,
       mockGetTransactionCount,
-      mockMatomoRequestEvent,
       transactionHistoryService,
     },
   };
@@ -74,52 +77,26 @@ describe('core/apis/customTestnet', () => {
     jest.resetModules();
   });
 
-  it('records the successful add-network analytics event with the request source', async () => {
+  it('disconnects the dapps on a custom network once it is removed', async () => {
     const { apiCustomTestnet, mocks } = loadCustomTestnetModule();
-    mocks.mockAdd.mockResolvedValue({
-      id: 9001,
-      name: 'Local Testnet',
-    });
+    let finishRemove!: () => void;
+    mocks.mockRemove.mockReturnValue(
+      new Promise<void>(resolve => {
+        finishRemove = resolve;
+      }),
+    );
 
-    await expect(
-      apiCustomTestnet.addCustomTestnet(
-        {
-          id: 9001,
-          name: 'Local Testnet',
-        } as never,
-        {
-          ga: {
-            source: 'dapp',
-          },
-        },
-      ),
-    ).resolves.toEqual({
-      id: 9001,
-      name: 'Local Testnet',
-    });
+    const removing = apiCustomTestnet.removeCustomTestnet(9001);
+    expect(mocks.mockRemove).toHaveBeenCalledWith(9001);
+    expect(
+      mocks.mockDisconnectDappsWithUnsupportedChain,
+    ).not.toHaveBeenCalled();
 
-    expect(mocks.mockMatomoRequestEvent).toHaveBeenCalledWith({
-      action: 'Success Add Network',
-      category: 'Custom Network',
-      label: 'dapp_9001',
-    });
-  });
-
-  it('does not record the success analytics event when add returns an error payload', async () => {
-    const { apiCustomTestnet, mocks } = loadCustomTestnetModule();
-    mocks.mockAdd.mockResolvedValue({
-      error: 'invalid rpc',
-    });
-
-    await expect(
-      apiCustomTestnet.addCustomTestnet({
-        id: 9001,
-      } as never),
-    ).resolves.toEqual({
-      error: 'invalid rpc',
-    });
-
-    expect(mocks.mockMatomoRequestEvent).not.toHaveBeenCalled();
+    finishRemove();
+    await removing;
+    expect(mocks.mockDisconnectDappsWithUnsupportedChain).toHaveBeenCalledTimes(
+      1,
+    );
   });
 
   it('uses the larger value between on-chain and local custom-testnet nonce', async () => {

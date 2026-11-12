@@ -39,12 +39,18 @@ const getHeaderAccountName = (
 export function HeaderAccountSwitcher({
   forScene,
   disableSwitch = false,
+  onDisabledPress,
   formatDefaultAliasAsAddress = false,
+  hideAccountName = false,
+  showCaretWhenDisabled = false,
   maxWidth = 180,
   style,
 }: AccountSwitcherAopProps<{
   disableSwitch?: boolean;
+  onDisabledPress?: () => void;
   formatDefaultAliasAsAddress?: boolean;
+  hideAccountName?: boolean;
+  showCaretWhenDisabled?: boolean;
   maxWidth?: number;
   style?: StyleProp<ViewStyle>;
 }>) {
@@ -84,9 +90,13 @@ export function HeaderAccountSwitcher({
     <View style={[styles.accountSelectorContainer, { maxWidth }, style]}>
       <View style={styles.accountSelectorWidthLimiter}>
         <TouchableOpacity
-          disabled={disableSwitch}
+          disabled={disableSwitch && !onDisabledPress}
           style={styles.accountSelector}
           onPress={() => {
+            if (disableSwitch) {
+              onDisabledPress?.();
+              return;
+            }
             const nextVisible = !isVisible;
             toggleSceneVisible(forScene, nextVisible);
             if (nextVisible) {
@@ -99,17 +109,23 @@ export function HeaderAccountSwitcher({
             type={finalSceneCurrentAccount.brandName}
             address={finalSceneCurrentAccount.address}
           />
-          <Text style={styles.accountName} numberOfLines={1}>
-            {accountName}
-          </Text>
-          {!disableSwitch && (
+          {!hideAccountName && (
+            <Text style={styles.accountName} numberOfLines={1}>
+              {accountName}
+            </Text>
+          )}
+          {(!disableSwitch || showCaretWhenDisabled) && (
             <CaretArrowIconCC
               dir="down"
               style={isVisible ? styles.reverseCaret : null}
               width={14}
               height={14}
               bgColor={colors2024['neutral-bg-5']}
-              lineColor={colors2024['neutral-title-1']}
+              lineColor={
+                disableSwitch
+                  ? colors2024['neutral-foot']
+                  : colors2024['neutral-title-1']
+              }
             />
           )}
         </TouchableOpacity>

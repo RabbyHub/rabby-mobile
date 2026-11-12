@@ -32,16 +32,21 @@ describe('singleAddressChainDistribution', () => {
     ]);
   });
 
-  it('preserves zero-value chains that only contain non-core tokens', () => {
+  it('ignores non-core and zero-value token chains', () => {
     const result = computeTokenChainAssets([
       {
         chain: 'eth',
         is_core: false,
         usd_value: 12,
       } as Parameters<typeof computeTokenChainAssets>[0][number],
+      {
+        chain: 'arb',
+        is_core: true,
+        usd_value: 0,
+      } as Parameters<typeof computeTokenChainAssets>[0][number],
     ]);
 
-    expect(result.eth.toNumber()).toBe(0);
+    expect(result).toEqual({});
   });
 
   it('updates one domain without mutating the previous store snapshot', () => {

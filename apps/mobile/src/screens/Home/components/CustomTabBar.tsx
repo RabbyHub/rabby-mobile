@@ -5,13 +5,9 @@ import {
   Pressable,
   ViewStyle,
 } from 'react-native';
-import {
-  MaterialTabBar,
-  MaterialTabItem,
-  useFocusedTab,
-} from 'react-native-collapsible-tab-view';
+import { MaterialTabBar } from 'react-native-collapsible-tab-view';
 
-import React, { useCallback, useLayoutEffect, useRef } from 'react';
+import React, { useCallback, useRef } from 'react';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -19,21 +15,26 @@ import Animated, {
   interpolate,
   AnimatedStyle,
   Extrapolation,
-  isWorkletFunction,
 } from 'react-native-reanimated';
-import {
-  createGetStyles2024,
-  makeDebugBorder,
-  makeDevOnlyStyle,
-} from '@/utils/styles';
+import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { useMeasureLayoutForHomeGuidanceMultipleTabs } from '@/components2024/Animations/HomeGuidanceMultipleTabs';
-import { ChainSelector } from '@/screens/Home/components/AssetRenderItems/SectionHeaders';
+import {
+  CHAIN_SELECTOR_SLOT_WIDTH,
+  ChainSelector,
+} from '@/screens/Home/components/AssetRenderItems/SectionHeaders';
+import { addressBalanceStore, balanceAccountsStore } from '@/store/balance';
+import tokenStore from '@/store/tokens';
+import { hasConfirmedAssetProjectionSources } from '@/store/assetProjectionAvailability';
+import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 import {
   getComputedChainInfo,
   getSelectChainItem,
   setSelectChainItem,
+  useChainStatsLoading,
   useSelectedChainItem,
+  useChainLength,
+  useChainProjectionReady,
   useTop3Chains,
 } from '../useChainInfo';
 import {
@@ -45,7 +46,6 @@ import { ChainListItem } from '@/components2024/SelectChainWithDistribute';
 import { useTranslation } from 'react-i18next';
 import { useHomeDrawerOpacityStyle } from '../hooks/useHomeDrawerAnimate';
 import { HOME_TOP_HEADER_SIZES } from '@/constant/home';
-import { useValueFromSharedValue } from '@/hooks/reanimated';
 import {
   apisHomeTabIndex,
   HomeTabName,
@@ -170,9 +170,11 @@ const Indicator = ({
 
 const indicatorMarginTop = 0;
 const indicatorHeight = HOME_TOP_HEADER_SIZES.headerIndicatorHeight;
-const leftHitSlopTop = 50;
+// Keep the indicator hit regions below the header's eye/action buttons.
+// Expanding 50pt upward overlaps those controls under Fabric hit testing.
+const leftHitSlopTop = 4;
 const leftHitSlopBottom = 4;
-const rightHitSlopTop = 50;
+const rightHitSlopTop = 4;
 const rightHitSlopBottom = 4;
 
 const indicatorStyles = createGetStyles2024(
@@ -279,10 +281,14 @@ const indicatorStyles = createGetStyles2024(
     };
   },
 );
-const PLACE_HOLDER_STYLE = { width: 90, height: 32 };
-
 function SideChainSelector() {
-  const { isLight, colors2024 } = useTheme2024();
+  const { styles, isLight, colors2024 } = useTheme2024({ getStyle: getStyles });
+  // Cold start: show the selector's loading state until the aggregate balance
+  // load settles, instead of an empty pill that only fills in seconds later
+  // (QA 1157).
+  const { loadBalanceFromApiStage } =
+    addressBalanceStore.useLoadBalanceFromApiStage();
+  const chainStatsLoading = useChainStatsLoading();
 
   const chainSelectModalRef = useRef<
     ReturnType<typeof createGlobalBottomSheetModal2024> | undefined
@@ -334,18 +340,78 @@ function SideChainSelector() {
   );
 
   const top3Chains = useTop3Chains();
+  const chainLength = useChainLength();
+  const projectionReady = useChainProjectionReady();
+  // Identical loading state for every address; only the settled outcome differs
+  // (chains -> keep the filter, none -> hide the pill, keep the slot).
+  const hasResolvedSelection = balanceAccountsStore(
+    state => state.hasResolvedSelection,
+  );
+  const isAnyBalanceLoading = balanceAccountsStore(
+    state => state.isAnyBalanceLoadingWithoutValue,
+  );
+  const selectedAddresses = balanceAccountsStore(
+    state => state.selectedAddresses,
+  );
+  const sourceSnapshotReady = useActivityStore(
+    tokenStore,
+    state => state.sourceSnapshotReadyByAddress,
+    Object.is,
+    { storeLabel: 'token-source-snapshot-ready' },
+  );
+  // True until every selected address's token source snapshot is confirmed.
+  // The aggregate page does not populate `isLoadingByAddress`, so that flag can
+  // never close this window.
+  const tokensLoading = !hasConfirmedAssetProjectionSources(
+    selectedAddresses,
+    sourceSnapshotReady,
+  );
+  const loading =
+    !projectionReady ||
+    !hasResolvedSelection ||
+    isAnyBalanceLoading ||
+    tokensLoading ||
+    loadBalanceFromApiStage === 'loading' ||
+    chainStatsLoading;
 
-  if (!top3Chains.length && !selectedChainItem) {
-    return <View style={PLACE_HOLDER_STYLE} />;
-  }
+  // Render the filter while the projection is pending (QA 1145), but once it
+  // settles with no chain assets there is nothing to filter: hide the pill
+  // (QA 1197). The slot itself must stay in the row, otherwise the three tabs
+  // expand into the space the filter occupied.
+  //
+  // Hysteresis: a fast start can momentarily look "settled at 0" between two
+  // projection updates. Holding the visible state for a short grace period and
+  // cross-fading absorbs that blip instead of flashing hidden -> visible.
+  const shouldHide = !loading && chainLength === 0;
+  const [hidden, setHidden] = React.useState(shouldHide);
+  const opacity = useSharedValue(shouldHide ? 0 : 1);
+
+  React.useEffect(() => {
+    if (!shouldHide) {
+      setHidden(false);
+      return undefined;
+    }
+    const timer = setTimeout(() => setHidden(true), 300);
+    return () => clearTimeout(timer);
+  }, [shouldHide]);
+
+  React.useEffect(() => {
+    opacity.value = withTiming(hidden ? 0 : 1, { duration: 180 });
+  }, [hidden, opacity]);
+
+  const fadeStyle = useAnimatedStyle(() => ({ opacity: opacity.value }));
 
   return (
-    <ChainSelector
-      // top3Chains={chainAssets.map(item => item.chain).slice(0, 3)}
-      top3Chains={top3Chains}
-      onChainClick={handleOnChainClick}
-      chainServerId={selectedChainItem?.chain}
-    />
+    <Animated.View
+      pointerEvents={hidden ? 'none' : 'auto'}
+      style={[fadeStyle, styles.chainSelectorSlot]}>
+      <ChainSelector
+        top3Chains={top3Chains}
+        onChainClick={handleOnChainClick}
+        chainServerId={selectedChainItem?.chain}
+        loading={loading}
+      />
+    </Animated.View>
   );
 }
 
@@ -388,8 +454,6 @@ function AssetsTabBar() {
     };
   });
 
-  const focusedTab = useValueFromSharedValue(apisHomeTabIndex.svTabName);
-
   return (
     <Animated.View
       // pointerEvents={focusedTab === HomeTabName.overview ? 'none' : 'auto'}
@@ -422,10 +486,15 @@ export const HomeCustomMaterialTabBar = ({}: Partial<
 >) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const indexDecimal = apisHomeTabIndex.svTabIndexDecimal;
+  const { tabsOpacity } = useHomeDrawerOpacityStyle();
 
+  // Keep the native sibling order stable while PagerView is settling. Changing
+  // zIndex here can detach/reinsert the pager under Fabric and stop its scroll.
+  // The transparent overlay must not consume touches outside its children.
   const containerStyle = useAnimatedStyle(() => {
     return {
-      zIndex: indexDecimal.value < 1 ? -1 : 10,
+      opacity: tabsOpacity.value,
+      pointerEvents: tabsOpacity.value < 0.1 ? 'none' : 'box-none',
     };
   });
 
@@ -441,13 +510,12 @@ export const HomeCustomMaterialTabBar = ({}: Partial<
     measureSecondaryIndicator();
   }, [measureSecondaryIndicator]);
 
-  const { opacityStyle } = useHomeDrawerOpacityStyle();
   // const winWidth = Dimensions.get('window').width;
   const { width: winWidth } = useWindowDimensions();
 
   return (
     <Animated.View
-      style={[styles.container, opacityStyle, containerStyle]}
+      style={[styles.container, containerStyle]}
       // ref={homeGuidanceMultipleTabsTargetViewRef}
       // onLayout={() => {
       //   measureTabBarWrapper();
@@ -490,7 +558,7 @@ export const HomeCustomMaterialTabBar = ({}: Partial<
   );
 };
 
-const getStyles = createGetStyles2024(({ colors2024 }) => ({
+const getStyles = createGetStyles2024(() => ({
   container: {
     position: 'absolute',
     top: HOME_TOP_HEADER_SIZES.headerHeight,
@@ -506,6 +574,16 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   },
   hideInnerIndicator: {
     height: 0,
+  },
+  // Keep the slot (so the tabs do not grow) while hiding the empty filter.
+  chainSelectorHidden: {
+    opacity: 0,
+  },
+  chainSelectorSlot: {
+    width: CHAIN_SELECTOR_SLOT_WIDTH,
+    flexShrink: 0,
+    alignItems: 'flex-end',
+    justifyContent: 'center',
   },
   tabBar: {},
   contentContainerStyle: {

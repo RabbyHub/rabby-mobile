@@ -33,3 +33,7 @@ export function isSwapWrapToken(
     getSwapNativeTokenAddress(chain),
   );
 }
+
+/** gasLimit reserved for paying gas when spending the native token ("Max") */
+export const getSwapGasReserveGasLimit = (chain: CHAINS_ENUM | string) =>
+  chain === CHAINS_ENUM.ETH ? 1000000 : 2000000;

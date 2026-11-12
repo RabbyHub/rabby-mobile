@@ -258,8 +258,28 @@ export type NativeFSDiagnosticEvent = {
   message: string;
 };
 
+export type SafeSvgVariant = 'thumbnail' | 'detail';
+export type SafeSvgResult =
+  | {
+      status: 'ready';
+      uri: string;
+      width: number;
+      height: number;
+      cacheHit: boolean;
+    }
+  | {
+      status: 'failed';
+      reason: string;
+    };
+
 export function installJSI(): boolean;
 export function isJSIAvailable(): boolean;
+export function isSafeSvgRasterizationAvailable(): boolean;
+export function resolveSvg(options: {
+  url: string;
+  variant?: SafeSvgVariant;
+}): Promise<SafeSvgResult>;
+export function clearSafeSvgCache(): Promise<void>;
 export function readFileBytes(filepath: string): Uint8Array;
 export function readBytes(
   filepath: string,

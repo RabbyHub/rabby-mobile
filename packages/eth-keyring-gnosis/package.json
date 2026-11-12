@@ -31,24 +31,24 @@
     "test:watch": "jest --watch"
   },
   "dependencies": {
-    "@rabby-wallet/gnosis-sdk": "1.4.9",
+    "@rabby-wallet/gnosis-sdk": "1.4.10",
     "@rabby-wallet/keyring-utils": "workspace:^",
     "@safe-global/protocol-kit": "5.0.3",
     "@safe-global/types-kit": "1.0.4",
     "bignumber.js": "9.1.2",
-    "ethereumjs-util": "^7.1.5",
-    "semver": "^7.6.2",
+    "ethereumjs-util": "7.1.5",
+    "semver": "7.6.2",
     "web3-utils": "1.7.0"
   },
   "devDependencies": {
-    "@metamask/auto-changelog": "^3.4.3",
-    "@types/jest": "^27.4.1",
-    "@types/node": "^20.14.8",
-    "deepmerge": "^4.2.2",
-    "jest": "^27.5.1",
-    "ts-jest": "^27.1.4",
-    "typedoc": "^0.24.8",
-    "typedoc-plugin-missing-exports": "^2.0.0",
+    "@metamask/auto-changelog": "3.4.4",
+    "@types/jest": "27.5.2",
+    "@types/node": "20.14.9",
+    "deepmerge": "4.3.1",
+    "jest": "27.5.1",
+    "ts-jest": "27.1.5",
+    "typedoc": "0.24.8",
+    "typedoc-plugin-missing-exports": "2.1.0",
     "typescript": "5.7.3"
   },
   "engines": {

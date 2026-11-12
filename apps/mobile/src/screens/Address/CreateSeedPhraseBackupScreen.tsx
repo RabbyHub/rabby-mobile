@@ -40,8 +40,6 @@ export const CreateSeedPhraseBackupScreen = () => {
     return seedPhrase?.split(' ') || [];
   }, [seedPhrase]);
 
-  console.log(words);
-
   return (
     <FooterButtonScreenContainer
       buttonText={"I've saved the phrase"}
@@ -59,6 +57,7 @@ export const CreateSeedPhraseBackupScreen = () => {
         onPress={() => copyAddressRef.current?.doCopy()}>
         <View style={styles.copy}>
           <CopyAddressIcon
+            sensitive
             ref={copyAddressRef}
             address={seedPhrase || ''}
             onToastSuccess={() => toast.success('Copied')}

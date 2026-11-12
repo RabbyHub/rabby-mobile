@@ -39,6 +39,33 @@ const getStyles = (colors: AppColorsVariants) =>
     },
   });
 
+const AnimatedQRCode = ({
+  urEncoder,
+  size,
+}: {
+  urEncoder: UREncoder;
+  size: number;
+}) => {
+  const [currentQRCode, setCurrentQRCode] = useState(() =>
+    urEncoder.nextPart(),
+  );
+
+  useEffect(() => {
+    if (urEncoder.fragmentsLength <= 1) {
+      return;
+    }
+    // Wait for each React commit before scheduling more QR work.
+    const id = setTimeout(() => {
+      setCurrentQRCode(urEncoder.nextPart());
+    }, 100);
+    return () => {
+      clearTimeout(id);
+    };
+  }, [currentQRCode, urEncoder]);
+
+  return <QRCode value={currentQRCode.toUpperCase()} size={size} />;
+};
+
 const Player = ({
   type,
   cbor,
@@ -54,16 +81,7 @@ const Player = ({
     () => new UREncoder(new UR(Buffer.from(cbor, 'hex'), type), 200),
     [cbor, type],
   );
-  const [currentQRCode, setCurrentQRCode] = useState(urEncoder.nextPart());
   const { t } = useTranslation();
-  useEffect(() => {
-    const id = setInterval(() => {
-      setCurrentQRCode(urEncoder.nextPart());
-    }, 100);
-    return () => {
-      clearInterval(id);
-    };
-  }, [urEncoder]);
 
   return (
     <View style={styles.root}>
@@ -77,8 +95,9 @@ const Player = ({
       </Text>
       <View style={styles.qrCodeContainer}>
         <View style={styles.qrCode}>
-          <QRCode
-            value={currentQRCode.toUpperCase()}
+          <AnimatedQRCode
+            key={`${type}:${cbor}`}
+            urEncoder={urEncoder}
             size={playerSize ?? 165}
           />
         </View>

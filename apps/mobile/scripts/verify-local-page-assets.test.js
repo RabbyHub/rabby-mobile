@@ -12,9 +12,12 @@ const CHART_BUNDLE = [
   'CHART_READY',
   'CANDLE_DATA_APPLIED',
   'REQUEST_OLDER_CANDLES',
-  'PERPS_PRO_PRICE_SCALE_AUTO_SCALE_CHANGED',
+  'PERPS_PRO_VIEWPORT_CHANGED',
   'candleDataAppliedAck',
   'perpsProKlineProtocolVersion',
+  'perpsSimpleKlineProtocolVersion',
+  'PERPS_SIMPLE_CHART',
+  'PERPS_SIMPLE_EVENT',
 ].join(' ');
 
 function writeFile(root, relativePath, content) {
@@ -31,12 +34,12 @@ function createFixture(repoDir) {
   writeFile(
     repoDir,
     'apps/mobile/src/components2024/TradingViewCandleChart/index.tsx',
-    'const PERPS_PRO_KLINE_PROTOCOL_VERSION = 1;',
+    'const PERPS_PRO_KLINE_PROTOCOL_VERSION = 1; const PERPS_SIMPLE_KLINE_PROTOCOL_VERSION = 1;',
   );
   writeFile(
     repoDir,
     'apps/mobile-local-pages/src/pages/tradingview-candle-chart/index.tsx',
-    'const PERPS_PRO_KLINE_PROTOCOL_VERSION = 1;',
+    'const PERPS_PRO_KLINE_PROTOCOL_VERSION = 1; const PERPS_SIMPLE_KLINE_PROTOCOL_VERSION = 1;',
   );
 
   const androidRoot = path.join(
@@ -86,6 +89,7 @@ describe('verify-local-page-assets', () => {
 
     expect(verifyLocalPageAssets(fixture.repoDir)).toEqual({
       protocolVersion: 1,
+      simpleProtocolVersion: 1,
     });
   });
 

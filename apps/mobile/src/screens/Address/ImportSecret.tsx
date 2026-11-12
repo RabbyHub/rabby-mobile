@@ -8,7 +8,13 @@ import { useScanner } from '../Scanner/ScannerScreen';
 import PasteButton from '@/components2024/PasteButton';
 import { NextInput } from '@/components2024/Form/Input';
 import { createGetStyles2024 } from '@/utils/styles';
-import { Keyboard, Pressable, TouchableOpacity, View } from 'react-native';
+import {
+  Dimensions,
+  Keyboard,
+  Pressable,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { validateAndCleanPrivateKey } from '@/core/apis/privateKey';
 import { apiPrivateKey, apiMnemonic } from '@/core/apis';
 import { validateAndCleanMnemonic } from '@/core/apis/mnemonic';
@@ -21,8 +27,6 @@ import { Text } from '@/components/Typography';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamsList } from '@/navigation-type';
-import { setReportActionTs } from '@/core/serviceApi/preference';
-import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/utils/reportTimeoutAction';
 import { useDuplicateAddressModal } from './components/DuplicateAddressModal';
 import { useShowImportMoreAddressPopup } from '@/hooks/useShowImportMoreAddressPopup';
 import * as SecretVault from '@/core/utils/secretVault';
@@ -30,14 +34,35 @@ import { E2E_ID } from '@/constant/e2e';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
 import { ensureWalletUnlockedForAction } from '@/utils/walletUnlock';
 import { IS_ANDROID } from '@/core/native/utils';
+import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
+import { zCreate } from '@/core/utils/reexports';
+import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
+import { HeaderBackButton } from '@/hooks/navigation';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 /** Toast position at the top of screen */
 const TOAST_POSITION_TOP = 30;
+const SCREEN_WIDTH = Dimensions.get('window').width;
 
 // Android needs touch-start dismissal without Pressable claiming the swipe.
 const Container = IS_ANDROID ? View : Pressable;
 
-type TabType = 'seedPhrase' | 'privateKey';
+export type TabType = 'seedPhrase' | 'privateKey';
+
+// The header is declared once in the navigator options, so the selected tab must
+// live outside the screen body (declarative header contract; QA 1344).
+// Zustand is the project's state solution going forward; jotai is deprecated.
+const importSecretTabStore = zCreate<{ tab: TabType }>(() => ({
+  tab: 'seedPhrase',
+}));
+
+const useImportSecretTab = () =>
+  useActivityStore(importSecretTabStore, state => state.tab, Object.is, {
+    storeLabel: 'import-secret-tab',
+  });
+
+const setImportSecretTab = (tab: TabType) =>
+  importSecretTabStore.setState({ tab });
 
 type ScreenProps = NativeStackScreenProps<RootStackParamsList, 'ImportSecret'>;
 
@@ -51,9 +76,14 @@ export const ImportSecret = ({ route }: ScreenProps) => {
   const { initialTab, flow } = route.params ?? {};
   const isInAppFlow = flow === 'in_app';
 
-  const [activeTab, setActiveTab] = React.useState<TabType>(
-    initialTab ?? 'seedPhrase',
-  );
+  const activeTab = useImportSecretTab();
+  const setActiveTab = setImportSecretTab;
+  React.useEffect(() => {
+    if (initialTab) {
+      setActiveTab(initialTab);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const pagerRef = useRef<PagerView>(null);
 
   // Seed phrase state
@@ -67,14 +97,13 @@ export const ImportSecret = ({ route }: ScreenProps) => {
 
   const scanner = useScanner();
 
-  // Clear errors when switching tabs
-  const handleTabChange = React.useCallback((tab: TabType) => {
-    Keyboard.dismiss();
-    setActiveTab(tab);
+  // The header toggle writes the shared atom, so keep the pager and the error
+  // state in sync with it here.
+  React.useEffect(() => {
+    pagerRef.current?.setPage(activeTab === 'seedPhrase' ? 0 : 1);
     setMnemonicError(undefined);
     setPrivateKeyError(undefined);
-    pagerRef.current?.setPage(tab === 'seedPhrase' ? 0 : 1);
-  }, []);
+  }, [activeTab]);
 
   // Handle input change
   const handleInputChange = React.useCallback((tab: TabType, text: string) => {
@@ -186,45 +215,6 @@ export const ImportSecret = ({ route }: ScreenProps) => {
     navigation.navigate(RootNames.SetupWallet);
   }, [navigation]);
 
-  // Tab toggle component for header
-  const TabToggle = useCallback(() => {
-    return (
-      <View style={styles.tabContainer}>
-        <Pressable
-          style={[styles.tab, activeTab === 'seedPhrase' && styles.tabActive]}
-          onPress={() => handleTabChange('seedPhrase')}>
-          <Text
-            style={[
-              styles.tabText,
-              activeTab === 'seedPhrase' && styles.tabTextActive,
-            ]}>
-            {t('page.manageAddress.seed-phrase')}
-          </Text>
-        </Pressable>
-        <Pressable
-          style={[styles.tab, activeTab === 'privateKey' && styles.tabActive]}
-          onPress={() => handleTabChange('privateKey')}
-          {...makeTestIDProps(E2E_ID.onboarding.privateKeyTab)}>
-          <Text
-            style={[
-              styles.tabText,
-              activeTab === 'privateKey' && styles.tabTextActive,
-            ]}>
-            {t('page.manageAddress.private-key')}
-          </Text>
-        </Pressable>
-      </View>
-    );
-  }, [activeTab, handleTabChange, styles, t]);
-
-  // Set custom header with tabs
-  useEffect(() => {
-    navigation.setOptions({
-      headerTitle: TabToggle,
-      headerTitleAlign: 'center',
-    });
-  }, [navigation, TabToggle]);
-
   // Handle confirm button - navigate based on flow type
   const handleConfirmImpl = React.useCallback(async () => {
     if (activeTab === 'seedPhrase') {
@@ -285,8 +275,10 @@ export const ImportSecret = ({ route }: ScreenProps) => {
                   brandName: KEYRING_CLASS.MNEMONIC,
                   isFirstImport: true,
                   address: [firstAddress?.[0].address],
-                  mnemonics: cleanedMnemonic,
-                  passphrase: '',
+                  mnemonicsVaultId: SecretVault.storeMnemonicsPayload({
+                    mnemonics: cleanedMnemonic,
+                    passphrase: '',
+                  }),
                   keyringId: keyringId || undefined,
                   isExistedKR,
                 },
@@ -299,8 +291,10 @@ export const ImportSecret = ({ route }: ScreenProps) => {
           showImportMorePopup({
             type: KEYRING_TYPE.HdKeyring,
             brandName: KEYRING_CLASS.MNEMONIC,
-            mnemonics: cleanedMnemonic,
-            passphrase: '',
+            mnemonicsVaultId: SecretVault.storeMnemonicsPayload({
+              mnemonics: cleanedMnemonic,
+              passphrase: '',
+            }),
             keyringId: keyringId || undefined,
           });
         } catch (error) {
@@ -321,9 +315,6 @@ export const ImportSecret = ({ route }: ScreenProps) => {
           seedPhraseVaultId: vaultId,
         });
       }
-      void setReportActionTs(
-        REPORT_TIMEOUT_ACTION_KEY.CLICK_IMPORT_SEED_PHRASE,
-      ).catch(console.error);
     } else {
       // Clean and validate private key
       let cleanedPrivateKey: string;
@@ -370,9 +361,6 @@ export const ImportSecret = ({ route }: ScreenProps) => {
           privateKeyVaultId: vaultId,
         });
       }
-      void setReportActionTs(
-        REPORT_TIMEOUT_ACTION_KEY.CLICK_IMPORT_PRIVATE_KEY,
-      ).catch(console.error);
     }
   }, [
     activeTab,
@@ -482,6 +470,72 @@ export const ImportSecret = ({ route }: ScreenProps) => {
   );
 };
 
+/**
+ * Header title for the import-secret screen, declared once in the navigator
+ * options (declarative header contract).
+ *
+ * The row draws its own back button and centres the segmented toggle between two
+ * equal slots, so on a narrow device (iPhone SE, QA 1344) the toggle stays
+ * centred instead of being pushed right by the native back-item inset.
+ */
+export const ImportSecretHeader = () => {
+  const { styles } = useTheme2024({ getStyle: getStyles });
+  const insets = useSafeAreaInsets();
+  return (
+    <View style={[styles.headerOuter, { paddingTop: insets.top }]}>
+      <ImportSecretHeaderToggle />
+    </View>
+  );
+};
+
+const ImportSecretHeaderToggle = () => {
+  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+  const { t } = useTranslation();
+  const activeTab = useImportSecretTab();
+  const setActiveTab = setImportSecretTab;
+
+  return (
+    <View style={styles.headerRow}>
+      <HeaderBackButton
+        style={styles.headerBack}
+        tintColor={colors2024['neutral-title-1']}
+      />
+      <View style={styles.headerToggleArea}>
+        <View style={styles.tabContainer}>
+          <CustomTouchableOpacity
+            as="RNGHTouchableOpacity"
+            activeOpacity={1}
+            style={[styles.tab, activeTab === 'seedPhrase' && styles.tabActive]}
+            onPress={() => setActiveTab('seedPhrase')}>
+            <Text
+              style={[
+                styles.tabText,
+                activeTab === 'seedPhrase' && styles.tabTextActive,
+              ]}>
+              {t('page.manageAddress.seed-phrase')}
+            </Text>
+          </CustomTouchableOpacity>
+          <CustomTouchableOpacity
+            as="RNGHTouchableOpacity"
+            activeOpacity={1}
+            style={[styles.tab, activeTab === 'privateKey' && styles.tabActive]}
+            onPress={() => setActiveTab('privateKey')}
+            {...makeTestIDProps(E2E_ID.onboarding.privateKeyTab)}>
+            <Text
+              style={[
+                styles.tabText,
+                activeTab === 'privateKey' && styles.tabTextActive,
+              ]}>
+              {t('page.manageAddress.private-key')}
+            </Text>
+          </CustomTouchableOpacity>
+        </View>
+      </View>
+      <View style={styles.headerSpacer} />
+    </View>
+  );
+};
+
 const getStyles = createGetStyles2024(ctx => ({
   screen: {
     backgroundColor: ctx.colors2024['neutral-bg-1'],
@@ -509,6 +563,36 @@ const getStyles = createGetStyles2024(ctx => ({
   topContent: {
     alignItems: 'center',
     width: '100%',
+  },
+  headerOuter: {
+    backgroundColor: ctx.colors2024['neutral-bg-1'],
+  },
+  headerRow: {
+    height: 44,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+  },
+  headerBack: {
+    // 44x44 tap target: the icon stays 24x24 at the left edge of the box and the
+    // box spills 20pt into the free space to its right. `marginRight: -20`
+    // cancels that spill so the centred tab pill keeps its exact position.
+    width: 44,
+    height: 44,
+    marginRight: -20,
+    alignItems: 'flex-start',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  headerToggleArea: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerSpacer: {
+    width: 24,
+    height: 24,
+    flexShrink: 0,
   },
   tabContainer: {
     flexDirection: 'row',

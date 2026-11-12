@@ -50,6 +50,10 @@ interface NativeModulesStatic {
       METRO_CACHE_ENABLED?: boolean;
     };
     forceExitApp(): void;
+    measureViewRelativeTo(
+      anchorTag: number,
+      viewportTag: number,
+    ): Promise<{ x: number; y: number; width: number; height: number }>;
     androidTraceInstant?(name: string): void;
     androidTraceBeginSection?(name: string): void;
     androidTraceEndSection?(): void;
@@ -57,6 +61,7 @@ interface NativeModulesStatic {
     androidTraceEndAsyncSection?(name: string, cookie: number): void;
     androidTraceCounter?(name: string, value: number): void;
     moveTaskToBack?(): Promise<boolean>;
+    setSensitiveClipboard(text: string): Promise<void>;
     shareFile?(options: {
       filePath: string;
       mimeType?: string;
@@ -68,6 +73,10 @@ interface NativeModulesStatic {
      * @param filePath
      */
     iosExcludeFileFromBackup?(filePath: string): Promise<boolean>;
+    decodeQRCodeFromImageFile(
+      fileUri: string,
+      deleteAfterDecode: boolean,
+    ): Promise<string[]>;
     // /**
     //  * @description try to set a directory's files(including files in subdirectories) to not be backed up by iCloud
     //  */

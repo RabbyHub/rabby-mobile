@@ -1,4 +1,5 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
+import RNFS from '@rabby-wallet/react-native-fs';
 import {
   Alert,
   Linking,
@@ -39,6 +40,7 @@ import {
   RcManageWallet,
 } from '@/assets/icons/settings';
 import RcFooterLogo from '@/assets/icons/settings/footer-logo.svg';
+import RcIconInfoFillCC from '@/assets2024/icons/common/info-fill-cc.svg';
 
 import {
   APP_RUNTIME_ENV,
@@ -49,6 +51,7 @@ import {
   IS_METRO_CACHE_ENABLED,
 } from '@/constant/env';
 import { E2E_ID } from '@/constant/e2e';
+import { makeTestIDProps } from '@/utils/makeTestIDProps';
 import { isNonPublicProductionEnv, NEED_DEVSETTINGBLOCKS } from '@/constant';
 import { RootNames } from '@/constant/layout';
 import {
@@ -137,6 +140,8 @@ import { abortAllSyncTasks } from '@/databases/sync/_task';
 import { resetUpdateHistoryTime } from '@/hooks/historyTokenDict';
 import { sendRequest } from '@/core/apis/sendRequest';
 import { ClearPendingPopup } from './components/ClearPendingPopup';
+import { DataAnalysisInfoPopup } from './components/DataAnalysisInfoPopup';
+import { RemovedTokenSettingItem } from './components/RemovedTokenSettingItem';
 import { OpenApiPopup } from './components/OpenApiPopup';
 import {
   getFallbackAccountSnapshot,
@@ -166,16 +171,6 @@ import {
 } from '@/hooks/appNotification';
 import type { SwitchToggleType } from '@/components/customized/Switch2024';
 import { AppSwitch2024 } from '@/components/customized/Switch2024';
-import type { SupportedLang } from '@/utils/i18n';
-import type { CurrencyItem } from '@rabby-wallet/rabby-api/dist/types';
-import {
-  trackSettingsCurrency,
-  trackSettingsFaceId,
-  trackSettingsLanguage,
-  trackSettingsLockTime,
-  trackSettingsScreenshotToBug,
-  trackSettingsTxNotification,
-} from '@/utils/analytics0331';
 import { Text } from '@/components/Typography';
 import { useAppSecurityChain } from '@/hooks/global';
 import { useToggleShowUnlockStatusBar } from '@/hooks/appSettings';
@@ -202,18 +197,11 @@ const CLEAR_APP_CACHE_EXIT_DELAY_MS = 2000;
 
 const isIOS = Platform.OS === 'ios';
 
-function TrackedTransactionNotificationSwitch() {
+function TransactionNotificationSwitch() {
   const { value } = useAppNotificationEnabled();
 
   const handleToggle = useCallback(async (nextEnabled: boolean) => {
-    const finalValue = await setEnableTransactionNofification(nextEnabled);
-    if (typeof finalValue !== 'boolean') {
-      return;
-    }
-
-    trackSettingsTxNotification(finalValue).catch(error => {
-      console.error('trackSettingsTxNotification failed', error);
-    });
+    await setEnableTransactionNofification(nextEnabled);
   }, []);
 
   return (
@@ -425,6 +413,7 @@ function ClearAppCacheSettingItem() {
     try {
       abortAllSyncTasks('clear-app-cache-ios');
       resetUpdateHistoryTime();
+      await RNFS.clearSafeSvgCache();
       await clearAppDataSource();
       Alert.alert(
         t('page.settingModal.clearAppCache.iOSToastTitle'),
@@ -452,6 +441,7 @@ function ClearAppCacheSettingItem() {
       await sleep(50);
       abortAllSyncTasks('clear-app-cache-android');
       resetUpdateHistoryTime();
+      await RNFS.clearSafeSvgCache();
       await dropAppDataSourceAndQuitApp({
         exitDelayMs: CLEAR_APP_CACHE_EXIT_DELAY_MS,
       });
@@ -528,12 +518,17 @@ function ClearAppCacheSettingItem() {
   );
 }
 
+// The info icon is 14pt wide; the slop gives it a usable touch target without
+// reaching the row's switch.
+const DATA_ANALYSIS_INFO_HIT_SLOP = { top: 12, bottom: 12, left: 8, right: 12 };
+
 function SettingsBlocks() {
   const { colors, styles, isLight, colors2024 } = useTheme2024({
     getStyle: getStyles,
   });
 
   const [isShowClearPendingPopup, setIsShowClearPendingPopup] = useState(false);
+  const [isShowDataAnalysisInfo, setIsShowDataAnalysisInfo] = useState(false);
 
   const { shouldRedirectToSetPasswordBefore } = useSetPasswordFirst();
   // const selectAutolockTimeRef = useRef<BottomSheetModal>(null);
@@ -622,54 +617,20 @@ function SettingsBlocks() {
   const { clearBrowserData } = useClearBrowserData();
 
   const { toggleScreenshotToReport } = useScreenshotToReportEnabled();
-  const handleBiometricsToggleSuccess = useCallback((enabled: boolean) => {
-    trackSettingsFaceId(enabled).catch(error => {
-      console.error('trackSettingsFaceId failed', error);
-    });
-  }, []);
-
   const handleTransactionNotificationToggle = useCallback(async () => {
     if (!APP_FEATURE_SWITCH.transactionNotification) {
       return;
     }
 
-    const finalValue = await setEnableTransactionNofification(prev => !prev);
-    if (typeof finalValue !== 'boolean') {
-      return;
-    }
-
-    trackSettingsTxNotification(finalValue).catch(error => {
-      console.error('trackSettingsTxNotification failed', error);
-    });
+    await setEnableTransactionNofification(prev => !prev);
   }, []);
 
   const handleScreenshotToBugToggle = useCallback(
     (enabled?: boolean) => {
-      const nextEnabled = toggleScreenshotToReport(enabled);
-      trackSettingsScreenshotToBug(nextEnabled).catch(error => {
-        console.error('trackSettingsScreenshotToBug failed', error);
-      });
+      toggleScreenshotToReport(enabled);
     },
     [toggleScreenshotToReport],
   );
-
-  const handleAutoLockSelect = useCallback((ms: number) => {
-    trackSettingsLockTime(ms).catch(error => {
-      console.error('trackSettingsLockTime failed', error);
-    });
-  }, []);
-
-  const handleLanguageSelect = useCallback((lang: SupportedLang) => {
-    trackSettingsLanguage(lang).catch(error => {
-      console.error('trackSettingsLanguage failed', error);
-    });
-  }, []);
-
-  const handleCurrencySelect = useCallback((item: CurrencyItem) => {
-    trackSettingsCurrency(item.code).catch(error => {
-      console.error('trackSettingsCurrency failed', error);
-    });
-  }, []);
 
   const allowAppLaunchLockToggle = useCallback(
     (nextEnabled: boolean) =>
@@ -753,7 +714,6 @@ function SettingsBlocks() {
             rightNode: (
               <SwitchBiometricsAuthentication
                 ref={switchBiometricsRef}
-                onToggleSuccess={handleBiometricsToggleSuccess}
                 onUnavailablePress={showBiometricsUnavailableToast}
               />
             ),
@@ -769,7 +729,7 @@ function SettingsBlocks() {
           {
             label: t('page.setting.transactionNotification'),
             icon: RcNotification,
-            rightNode: <TrackedTransactionNotificationSwitch />,
+            rightNode: <TransactionNotificationSwitch />,
             visible: APP_FEATURE_SWITCH.transactionNotification,
             onPress: () => {
               handleTransactionNotificationToggle();
@@ -846,6 +806,10 @@ function SettingsBlocks() {
           //   },
           // },
           {
+            key: 'removed-token',
+            render: () => <RemovedTokenSettingItem />,
+          },
+          {
             visible: SHOULD_SUPPORT_DARK_MODE,
             label: t('page.setting.themeMode'),
             icon: RcThemeMode,
@@ -859,15 +823,7 @@ function SettingsBlocks() {
           {
             label: t('page.setting.screenshotReportSwitch'),
             icon: RcScreenshotReport,
-            rightNode: (
-              <SwitchScreenshotToReport
-                onToggleSuccess={enabled => {
-                  trackSettingsScreenshotToBug(enabled).catch(error => {
-                    console.error('trackSettingsScreenshotToBug failed', error);
-                  });
-                }}
-              />
-            ),
+            rightNode: <SwitchScreenshotToReport />,
             onPress: () => {
               handleScreenshotToBugToggle();
             },
@@ -884,6 +840,16 @@ function SettingsBlocks() {
           },
           {
             label: t('page.setting.dataAnalysis'),
+            labelSuffix: (
+              <TouchableOpacity
+                hitSlop={DATA_ANALYSIS_INFO_HIT_SLOP}
+                onPress={() => {
+                  setIsShowDataAnalysisInfo(true);
+                }}
+                {...makeTestIDProps(E2E_ID.settings.dataAnalysisInfo)}>
+                <RcIconInfoFillCC color={colors2024['neutral-info']} />
+              </TouchableOpacity>
+            ),
             icon: RcDataAnalysis,
             onPress: () => {
               toggleDataAnalysisRef?.current?.toggle();
@@ -1055,14 +1021,18 @@ function SettingsBlocks() {
         }}
       />
 
-      <SelectAutolockTimeBottomSheetModal
-        ref={selectAutolockTimeRef}
-        onSelectTimeMs={handleAutoLockSelect}
+      <DataAnalysisInfoPopup
+        visible={isShowDataAnalysisInfo}
+        onClose={() => {
+          setIsShowDataAnalysisInfo(false);
+        }}
       />
 
-      <CurrentLanguageSelectorModal onSelectLanguage={handleLanguageSelect} />
+      <SelectAutolockTimeBottomSheetModal ref={selectAutolockTimeRef} />
 
-      <CurrencySelectorPopup onSelectCurrency={handleCurrencySelect} />
+      <CurrentLanguageSelectorModal />
+
+      <CurrencySelectorPopup />
     </>
   );
 }

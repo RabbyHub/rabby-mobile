@@ -112,6 +112,14 @@ describe('errorTxRetry', () => {
     ]);
   });
 
+  it('hints insufficient funds for scroll-style l1fee errors', () => {
+    expect(
+      getTxFailedResult(
+        'invalid transaction: insufficient funds for l1fee + gas * price + value',
+      ),
+    ).toEqual(['page.signTx.errorRetry.insufficient', false]);
+  });
+
   it('falls back to the original error text when no hint rule matches', () => {
     expect(getTxFailedResult('something custom happened')).toEqual([
       'something custom happened',

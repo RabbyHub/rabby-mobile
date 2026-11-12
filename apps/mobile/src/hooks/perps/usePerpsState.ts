@@ -5,7 +5,6 @@ import {
   HYPE_SEND_ASSET_TOKEN,
   HYPE_SEND_ASSET_TOKEN_MAP,
   PERPS_AGENT_NAME,
-  PERPS_BUILD_FEE,
   PERPS_BUILD_FEE_RECEIVE_ADDRESS,
   PERPS_REFERENCE_CODE,
 } from '@/constant/perps';
@@ -33,6 +32,7 @@ import {
 import * as Sentry from '@sentry/react-native';
 import { minBy, uniqBy } from 'lodash';
 import { showToast } from './showToast';
+import { isPerpsBuilderFeeApproved } from './perpsBuilderFee';
 import { usePerpsPopupState } from '@/screens/Perps/hooks/usePerpsPopupState';
 import { useTranslation } from 'react-i18next';
 import { sleep } from '@/utils/async';
@@ -263,7 +263,7 @@ export const usePerpsState = (
     const maxFee = await sdk.info.getMaxBuilderFee(
       PERPS_BUILD_FEE_RECEIVE_ADDRESS,
     );
-    if (!maxFee) {
+    if (!isPerpsBuilderFeeApproved(maxFee)) {
       const buildAction = sdk.exchange?.prepareApproveBuilderFee({
         builder: PERPS_BUILD_FEE_RECEIVE_ADDRESS,
       });
@@ -277,20 +277,20 @@ export const usePerpsState = (
     return signActions;
   });
 
-  const checkBuilderFee = useMemoizedFn(async address => {
+  const checkBuilderFee = useMemoizedFn(async () => {
     try {
       const sdk = apisPerps.getPerpsSDK();
       const res = await sdk.info.getMaxBuilderFee(
         PERPS_BUILD_FEE_RECEIVE_ADDRESS,
       );
-      if (!res) {
+      if (!isPerpsBuilderFeeApproved(res)) {
         setAccountNeedApproveBuilderFee(true);
       }
     } catch (error) {
       console.error('Failed to set builder fee:', error);
       Sentry.captureException(
         error instanceof Error ? error : new Error(String(error)),
-        { extra: { scene: 'PERPS set builder fee error', address } },
+        { extra: { scene: 'PERPS set builder fee error' } },
       );
     }
   });
@@ -301,7 +301,7 @@ export const usePerpsState = (
         .getPerpsSDK()
         .info.getMaxBuilderFee(PERPS_BUILD_FEE_RECEIVE_ADDRESS);
       setAccountNeedApproveAgent(false);
-      setAccountNeedApproveBuilderFee(!maxFee);
+      setAccountNeedApproveBuilderFee(!isPerpsBuilderFeeApproved(maxFee));
     } catch (e) {
       // best-effort; keep current flags
     }
@@ -411,7 +411,8 @@ export const usePerpsState = (
         );
         if (needDelete) {
           setAccountNeedApproveAgent(true);
-          !maxFee && setAccountNeedApproveBuilderFee(true);
+          !isPerpsBuilderFeeApproved(maxFee) &&
+            setAccountNeedApproveBuilderFee(true);
           return;
         }
 
@@ -419,7 +420,7 @@ export const usePerpsState = (
           setAccountNeedApproveAgent(true);
         }
 
-        if (!maxFee) {
+        if (!isPerpsBuilderFeeApproved(maxFee)) {
           setAccountNeedApproveBuilderFee(true);
         }
       } catch (e) {
@@ -428,9 +429,7 @@ export const usePerpsState = (
         Sentry.captureException(e instanceof Error ? e : new Error(String(e)), {
           extra: {
             scene: 'checkAccountApproveStatus failed',
-            address: account.address,
             accountType: account.type,
-            agentAddress,
           },
         });
       }
@@ -456,7 +455,8 @@ export const usePerpsState = (
         if (needDelete) {
           // 需要删除agent，且重新approve agent和builder fee
           setAccountNeedApproveAgent(true);
-          !maxFee && setAccountNeedApproveBuilderFee(true);
+          !isPerpsBuilderFeeApproved(maxFee) &&
+            setAccountNeedApproveBuilderFee(true);
           return;
         }
 
@@ -471,7 +471,7 @@ export const usePerpsState = (
           });
         }
 
-        if (!maxFee) {
+        if (!isPerpsBuilderFeeApproved(maxFee)) {
           const buildAction = sdk.exchange?.prepareApproveBuilderFee({
             builder: PERPS_BUILD_FEE_RECEIVE_ADDRESS,
           });
@@ -522,9 +522,7 @@ export const usePerpsState = (
         Sentry.captureException(e instanceof Error ? e : new Error(String(e)), {
           extra: {
             scene: 'ensure login approve sign failed',
-            address: account.address,
             accountType: account.type,
-            agentAddress,
           },
         });
       }
@@ -584,7 +582,6 @@ export const usePerpsState = (
           {
             extra: {
               scene: 'Failed to handle action approve status',
-              address: currentPerpsAccount?.address,
               accountType: currentPerpsAccount?.type,
             },
           },
@@ -679,7 +676,7 @@ export const usePerpsState = (
             PERPS_BUILD_FEE_RECEIVE_ADDRESS,
             account.address,
           );
-          if (maxFee) {
+          if (isPerpsBuilderFeeApproved(maxFee)) {
             setAccountNeedApproveBuilderFee(false);
           } else {
             const signActions: SignAction[] = [
@@ -725,7 +722,7 @@ export const usePerpsState = (
           await loginPerpsAccount(account);
           setAccountNeedApproveAgent(false);
           setAccountNeedApproveBuilderFee(false);
-          checkBuilderFee(account.address);
+          checkBuilderFee();
         } else {
           // 过期或者没sendApprove过，需要创建新的agent，同时签名
           await handleLoginWithSignApprove(account);
@@ -743,7 +740,6 @@ export const usePerpsState = (
         {
           extra: {
             scene: 'Failed to login Perps account',
-            address: account.address,
             accountType: account.type,
           },
         },

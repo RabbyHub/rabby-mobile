@@ -20,6 +20,10 @@ export type NativeBuildInfo = {
 export interface Spec extends TurboModule {
   getConstants(): { buildInfo?: NativeBuildInfo };
   forceExitApp(): void;
+  measureViewRelativeTo(
+    anchorTag: number,
+    viewportTag: number,
+  ): Promise<{ x: number; y: number; width: number; height: number }>;
   androidTraceInstant(name: string): void;
   androidTraceBeginSection(name: string): void;
   androidTraceEndSection(): void;
@@ -27,8 +31,18 @@ export interface Spec extends TurboModule {
   androidTraceEndAsyncSection(name: string, cookie: number): void;
   androidTraceCounter(name: string, value: number): void;
   moveTaskToBack(): Promise<boolean>;
+  setSensitiveClipboard(text: string): Promise<void>;
   shareFile(options: ShareFileOptions): Promise<void>;
   iosExcludeFileFromBackup(filePath: string): Promise<boolean>;
+  /**
+   * Decode QR codes from a local image file on device. When `deleteAfterDecode`
+   * is true, the file is removed afterwards only if it lives in the app's own
+   * temporary/cache directory.
+   */
+  decodeQRCodeFromImageFile(
+    fileUri: string,
+    deleteAfterDecode: boolean,
+  ): Promise<string[]>;
 }
 
 export default TurboModuleRegistry.get<Spec>('RNHelpers');

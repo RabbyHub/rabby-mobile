@@ -9,7 +9,7 @@ import { coerceNumber } from '@/utils/coerce';
 import { zustandByMMKV } from '@/core/storage/mmkv';
 import { APP_MMKV_WEAK_KEYS } from '@/core/storage/mmkvConstants';
 import { useRefState } from '@/hooks/common/useRefState';
-import { IS_ANDROID } from '@/core/native/utils';
+import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import { isNonPublicProductionEnv } from '@/constant';
 import { getScreenshotFeedbackExtra } from './utils';
 import { getGlobalScreenCapturable } from '@/hooks/native/security';
@@ -18,8 +18,8 @@ import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 import { useShallow } from 'zustand/react/shallow';
 import { zCreate } from '@/core/utils/reexports';
 import DeviceUtils from '@/core/utils/device';
-import { perfEvents } from '@/core/utils/perf';
 import {
+  dismissOpenNativeMenus,
   getVisibleBlockingModalIds,
   MODAL_GATE_IDS,
   subscribeModalGateDebugSnapshot,
@@ -32,11 +32,17 @@ type ScreenshotFeedbackStore = {
   viewedHomeTip: boolean;
   showFeedbackOnScreenshot_20250923: boolean | null;
   disableScreenshotToReportUntil: number; // timestamp
+  /**
+   * Last choice of the "share my addresses" checkbox, shared by the screenshot
+   * submit modal and the feedback chat. On until the user unchecks it.
+   */
+  includeAddress: boolean;
 };
 const getDefaultValueFeedback = (): ScreenshotFeedbackStore => ({
   viewedHomeTip: FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT,
   showFeedbackOnScreenshot_20250923: true,
   disableScreenshotToReportUntil: -1,
+  includeAddress: true,
 });
 const Keys = Object.keys(
   getDefaultValueFeedback(),
@@ -215,8 +221,6 @@ type FeedbackByScreenshotState = {
   feedbackHistoryRefreshKey: number;
   feedbackText: string;
   uploadedImageUrl: string;
-
-  totalBalanceText: string;
 };
 function getDefaultValue(): FeedbackByScreenshotState {
   return {
@@ -226,8 +230,6 @@ function getDefaultValue(): FeedbackByScreenshotState {
     feedbackHistoryRefreshKey: 0,
     feedbackText: '',
     uploadedImageUrl: '',
-
-    totalBalanceText: '',
   };
 }
 export const SCREENSHOT_FEEDBACK_MAX_LENGTH = 301;
@@ -248,16 +250,6 @@ function setFeedbackByScreenshot(
     if (!changed) return prev;
 
     return newVal;
-  });
-}
-
-export function screenshotModalStartSyncNetworth() {
-  perfEvents.subscribe('SCENE_24H_BALANCE_UPDATED', ({ combinedData }) => {
-    const netWorth = combinedData.netWorth;
-    setFeedbackByScreenshot(prev => ({
-      ...prev,
-      totalBalanceText: netWorth,
-    }));
   });
 }
 
@@ -283,10 +275,6 @@ export function useFeedbackHistoryVisible() {
     feedbackHistoryRefreshKey,
     toggleFeedbackHistoryVisible,
   };
-}
-
-export function useScreenshotFeedbackTotalBalanceText() {
-  return feedbackByScreenshotStore(s => s.totalBalanceText);
 }
 
 export const toggleFeedbackHistoryVisible = (v?: boolean) => {
@@ -430,12 +418,82 @@ const setLastScreenshot = (
         blockingModalIds,
       );
 
+    // Close an open native menu instead of waiting for the user to: the
+    // pending feedback opens once the menu has fully hidden.
+    if (blockingModalIds.includes(MODAL_GATE_IDS.nativeMenu)) {
+      dismissOpenNativeMenus();
+    }
+
     schedulePendingScreenshotFeedbackFlush();
     return;
   }
 
   setLastScreenshotNow(image, uploadNow);
 };
+
+let manualScreenshotInProgress = false;
+
+/** 主动截图并打开现有反馈流程，上传和提交由用户后续操作触发。 */
+export async function captureAndOpenScreenshotFeedback() {
+  // 截图执行中或反馈弹窗已打开时忽略重复点击。
+  if (
+    manualScreenshotInProgress ||
+    feedbackByScreenshotStore.getState().submitModalShown
+  ) {
+    return;
+  }
+  if (
+    !getGlobalScreenCapturable() ||
+    storeApiScreenshotReport.isScreenshotReportFree()
+  ) {
+    throw new Error('Screen capture is unavailable');
+  }
+  manualScreenshotInProgress = true;
+  let captureUri: string | undefined;
+  let releaseCapture: ((uri: string) => void) | undefined;
+  try {
+    const viewShot = await import('react-native-view-shot');
+    releaseCapture = viewShot.releaseCapture;
+    await appScreenshotFS.initializeBeforeCapture();
+    captureUri = await viewShot.captureScreen({
+      format: 'png',
+      result: 'tmpfile',
+    });
+    const dimensions = await new Promise<{ width: number; height: number }>(
+      (resolve, reject) =>
+        Image.getSize(
+          captureUri!,
+          (width, height) => resolve({ width, height }),
+          reject,
+        ),
+    );
+    const path = await appScreenshotFS.saveScreenshotFrom(captureUri, {
+      imageType: 'image/png',
+    });
+    if (!path) {
+      throw new Error('Screenshot could not be saved');
+    }
+    // 截图期间可能切入受保护页面，保存后再次校验并清理文件。
+    if (!getGlobalScreenCapturable()) {
+      await RNFS.unlink(AppScreenshotFS.normalizeLocalFilePath(path)).catch(
+        () => undefined,
+      );
+      throw new Error('Screen capture became unavailable');
+    }
+    setLastScreenshot(
+      Image.resolveAssetSource({
+        uri: AppScreenshotFS.normalizeImageUri(path, 'image/png'),
+        ...dimensions,
+      }),
+    );
+  } finally {
+    // 无论成功失败都释放临时截图并解除执行锁。
+    if (captureUri) {
+      releaseCapture?.(captureUri);
+    }
+    manualScreenshotInProgress = false;
+  }
+}
 
 export function debugShowSubmitFeedbackByScreenshotModal() {
   setLastScreenshot(
@@ -448,21 +506,45 @@ export function debugShowSubmitFeedbackByScreenshotModal() {
   );
 }
 
-if (IS_ANDROID && !FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT) {
-  RNScreenshotPrevent.startScreenCaptureDetection().then(() => {
-    console.debug(
-      '[info] RNScreenshotPrevent started screen capture detection on Android',
-    );
-  });
+type ScreenshotFeedbackConsumer = { acceptingFeedback: boolean };
+const screenshotFeedbackConsumers = new Set<ScreenshotFeedbackConsumer>();
+
+function ownsScreenshotFeedback(consumer: ScreenshotFeedbackConsumer) {
+  let owner: ScreenshotFeedbackConsumer | undefined;
+  for (const candidate of screenshotFeedbackConsumers) {
+    // A replacement may subscribe while an old native stop is pending. Only
+    // one listener may copy/delete the broadcast file. Prefer the latest live
+    // owner, otherwise retain one stopped owner's cleanup listener until ACK.
+    if (candidate.acceptingFeedback || !owner?.acceptingFeedback) {
+      owner = candidate;
+    }
+  }
+  return owner === consumer;
 }
 
-export function startSubscribeUserDidTakeScreenshot() {
+export async function startSubscribeUserDidTakeScreenshot() {
+  await appScreenshotFS.initializeBeforeCapture();
+
+  const consumer: ScreenshotFeedbackConsumer = { acceptingFeedback: true };
   const subscription = RNScreenshotPrevent.onUserDidTakeScreenshot(
     async params => {
-      if (!getShowFeedbackOnScreenshotCapture()) return;
-      if (!params?.captured) return;
+      if (IS_IOS && !ownsScreenshotFeedback(consumer)) {
+        return;
+      }
+      const eventAccepted =
+        consumer.acceptingFeedback &&
+        getShowFeedbackOnScreenshotCapture() &&
+        !!params?.captured &&
+        shouldToastFeedbackByScreenshot();
 
-      if (!shouldToastFeedbackByScreenshot()) return;
+      if (!eventAccepted) {
+        if (params?.path) {
+          await AppScreenshotFS.cleanupNativeScreenshotCaptureSource(
+            params.path,
+          );
+        }
+        return;
+      }
 
       const sizes = {
         height: coerceNumber(params?.height, 100),
@@ -480,6 +562,14 @@ export function startSubscribeUserDidTakeScreenshot() {
             imageType: params?.imageType,
           },
         );
+        if (!consumer.acceptingFeedback) {
+          if (inAppPath) {
+            await RNFS.unlink(
+              AppScreenshotFS.normalizeLocalFilePath(inAppPath),
+            ).catch(() => undefined);
+          }
+          return;
+        }
         const screenshotUri = inAppPath
           ? AppScreenshotFS.normalizeImageUri(
               inAppPath,
@@ -504,6 +594,12 @@ export function startSubscribeUserDidTakeScreenshot() {
           cleanupSource: true,
         });
         if (!inAppPath) return;
+        if (!consumer.acceptingFeedback) {
+          await RNFS.unlink(
+            AppScreenshotFS.normalizeLocalFilePath(inAppPath),
+          ).catch(() => undefined);
+          return;
+        }
 
         setLastScreenshot(
           Image.resolveAssetSource({
@@ -520,6 +616,43 @@ export function startSubscribeUserDidTakeScreenshot() {
     },
   );
 
+  if (IS_IOS) {
+    screenshotFeedbackConsumers.add(consumer);
+  }
+  if ((IS_ANDROID || IS_IOS) && !FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT) {
+    try {
+      await RNScreenshotPrevent.startScreenCaptureDetection();
+      console.debug(
+        '[info] RNScreenshotPrevent started screen capture detection',
+      );
+    } catch (error) {
+      consumer.acceptingFeedback = false;
+      screenshotFeedbackConsumers.delete(consumer);
+      subscription.remove();
+      throw error;
+    }
+  }
+
+  if (IS_IOS) {
+    let removalPromise: Promise<void> | undefined;
+    return {
+      remove: () => {
+        consumer.acceptingFeedback = false;
+        // Keep a cleanup consumer attached until native file capture has
+        // stopped. Late events are cleaned above without opening feedback.
+        // A repeated remove must not consume a newer subscription's demand.
+        if (!removalPromise) {
+          removalPromise =
+            RNScreenshotPrevent.stopScreenCaptureDetection().then(() => {
+              screenshotFeedbackConsumers.delete(consumer);
+              subscription.remove();
+            });
+        }
+        return removalPromise;
+      },
+    };
+  }
+
   return subscription;
 }
 
@@ -529,6 +662,31 @@ const onChangeFeedback = (feedback: string) => {
     feedbackText: feedback.slice(0, SCREENSHOT_FEEDBACK_MAX_LENGTH),
   }));
 };
+
+const setFeedbackIncludeAddress = (includeAddress: boolean) => {
+  setScreenshotFeedback(prev => ({
+    ...prev,
+    includeAddress,
+  }));
+};
+
+/**
+ * Checked by default. Only a saved `false`, written when the user unchecks the
+ * box, turns it off.
+ */
+const getFeedbackIncludeAddress = () =>
+  screenshotFeedbackStore.getState().includeAddress !== false;
+
+export function useScreenshotFeedbackIncludeAddress() {
+  const includeAddress = screenshotFeedbackStore(
+    s => s.includeAddress !== false,
+  );
+
+  return {
+    includeAddress,
+    setIncludeAddress: setFeedbackIncludeAddress,
+  };
+}
 
 export function useFeedbackOnScreenshot() {
   const { submitModalShown, feedbackText, uploadedImageUrl } =
@@ -564,11 +722,11 @@ const closeSubmitModal = ({
   }));
 };
 
-export async function getScreenshotFeedbackExtraSafely(
-  totalBalanceText: string,
-) {
+export async function getScreenshotFeedbackExtraSafely({
+  includeAddress = false,
+}: { includeAddress?: boolean } = {}) {
   try {
-    return await getScreenshotFeedbackExtra({ totalBalanceText });
+    return await getScreenshotFeedbackExtra({ includeAddress });
   } catch (error) {
     console.error('screenshot feedback extra error', error);
     return {};
@@ -576,12 +734,7 @@ export async function getScreenshotFeedbackExtraSafely(
 }
 
 export function useSubmitFeedbackOnScreenshot() {
-  const { lastScreenshot, totalBalanceText } = feedbackByScreenshotStore(
-    useShallow(s => ({
-      lastScreenshot: s.lastScreenshot,
-      totalBalanceText: s.totalBalanceText,
-    })),
-  );
+  const lastScreenshot = feedbackByScreenshotStore(s => s.lastScreenshot);
 
   const { globalModalShown, feedbackText, uploadedImageUrl } =
     useFeedbackOnScreenshot();
@@ -609,9 +762,10 @@ export function useSubmitFeedbackOnScreenshot() {
           throw new Error('No screenshot available');
         }
 
-        const extraInfo = await getScreenshotFeedbackExtraSafely(
-          totalBalanceText,
-        );
+        // Read at send time so the submit callback does not depend on it.
+        const extraInfo = await getScreenshotFeedbackExtraSafely({
+          includeAddress: getFeedbackIncludeAddress(),
+        });
         // console.debug('[debug] extraInfo', extraInfo);
 
         // TODO: report to sentry here, add extra fields here
@@ -631,7 +785,6 @@ export function useSubmitFeedbackOnScreenshot() {
     },
     [
       feedbackText,
-      totalBalanceText,
       uploadedImageUrl,
       lastScreenshot?.uri,
       isSubmittingRef,

@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo } from 'react';
-import { FlatList, Image, View } from 'react-native';
+import { FlatList, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
@@ -7,8 +7,9 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { MarketData } from '@/hooks/perps/usePerpsStore';
 import { formatPerpsCoin, formatPerpsDisplayName } from '@/utils/perps';
 import { PerpsMarketItem } from '../../Perps/components/PerpsMarketSection/PerpsMarketItem';
-import IconEmptyDefi from '@/assets2024/singleHome/empty-defi.png';
-import IconEmptyDefiDark from '@/assets2024/singleHome/empty-defi-dark.png';
+import IconEmpty from '@/assets2024/icons/perps/PerpsProEmptyLight.svg';
+import IconEmptyDark from '@/assets2024/icons/perps/PerpsProEmptyDark.svg';
+import { useSimpleChartPreload } from '@/hooks/perps/candles/useSimpleChartPreload';
 
 export const PerpsSearchFilteredList: React.FC<{
   query: string;
@@ -17,6 +18,8 @@ export const PerpsSearchFilteredList: React.FC<{
 }> = ({ query, marketData, onSelect }) => {
   const { styles, isLight } = useTheme2024({ getStyle });
   const { t } = useTranslation();
+  const EmptyIllustration = isLight ? IconEmpty : IconEmptyDark;
+  const onViewableItemsChanged = useSimpleChartPreload();
 
   const list = useMemo(() => {
     const q = query.trim().toUpperCase();
@@ -46,6 +49,7 @@ export const PerpsSearchFilteredList: React.FC<{
 
   return (
     <FlatList
+      onViewableItemsChanged={onViewableItemsChanged}
       style={styles.container}
       contentContainerStyle={styles.content}
       data={list}
@@ -54,8 +58,10 @@ export const PerpsSearchFilteredList: React.FC<{
       renderItem={renderItem}
       ListEmptyComponent={
         <View style={styles.empty}>
-          <Image
-            source={isLight ? IconEmptyDefi : IconEmptyDefiDark}
+          <EmptyIllustration
+            accessible={false}
+            width={163}
+            height={126}
             style={styles.emptyImage}
           />
           <Text style={styles.emptyText}>{t('page.perps.search.empty')}</Text>

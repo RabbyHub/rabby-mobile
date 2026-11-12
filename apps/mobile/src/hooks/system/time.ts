@@ -1,3 +1,4 @@
+import { RoundedFontStyles } from '@/core/utils/fonts';
 import { getTimeSpanByMs } from '@/utils/time';
 import { useInterval } from 'ahooks';
 import {
@@ -50,8 +51,7 @@ export function useRestCountDownLabel(options: {
   const countdownTextStyles = useAnimatedStyle(() => {
     return {
       fontSize: 16,
-      fontWeight: '400',
-      fontFamily: 'SF Pro Rounded',
+      ...RoundedFontStyles.regular,
       color:
         svDiffMs.value > 60 * 1e3
           ? colors2024['green-default']

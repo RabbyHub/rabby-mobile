@@ -24,7 +24,6 @@ import { addressUtils } from '@rabby-wallet/base-utils';
 import { useSwapSettings } from './settings';
 import type { QuoteProvider, TDexQuoteData } from './quote';
 import { useQuoteMethods } from './quote';
-import { stats } from '@/utils/stats';
 import { formatTokenAmountInput } from '@/utils/number';
 import { getTokenSymbol, isTokenMarketClosed } from '@/utils/token';
 import { useDebounceFn, useRequest } from 'ahooks';
@@ -34,7 +33,7 @@ import { useLowCreditState } from '../components/LowCreditModal';
 import { trigger } from 'react-native-haptic-feedback';
 import { apiProvider } from '@/core/apis';
 import { getGasTokenBalance } from '@/core/apis/transactions';
-import { isSwapWrapToken } from '../utils';
+import { getSwapGasReserveGasLimit, isSwapWrapToken } from '../utils';
 import { RequestRateLimiter } from './rateLimit';
 import { useFocusEffect } from '@react-navigation/native';
 import { eventBus, EVENTS } from '@/utils/events';
@@ -54,7 +53,8 @@ import {
 import { useSwapService } from '../swapServiceDependencies';
 import { mergeSwapQuoteBatch } from './quoteResultBatch';
 import { useSceneActiveAsync } from '@/screens/SwapBridge/hooks/useSceneActiveAsync';
-import { getRabbyFeeInfo, type SwapFeeRate } from './fee';
+import { getRabbyFeeInfo } from './fee';
+import { resolveSwapChainTokens } from './swapChainTokens';
 
 export const enableInsufficientQuote = true;
 
@@ -360,11 +360,6 @@ export const useSlippage = () => {
   };
 };
 
-export interface FeeProps {
-  fee: SwapFeeRate;
-  symbol?: string;
-}
-
 export const useTokenPair = ({
   account,
   active = true,
@@ -631,18 +626,17 @@ export const useTokenPair = ({
       handleChain(c, {
         markExplicitSelection: opts?.markExplicitSelection !== false,
       });
+      if (c === chain) {
+        return;
+      }
       if (!opts?.changeTo) {
-        setPayToken({
-          ...getChainDefaultToken(c),
-          ...(opts?.payTokenId ? { id: opts?.payTokenId } : {}),
+        const nextTokens = resolveSwapChainTokens({
+          chain: c,
+          payTokenId: opts?.payTokenId,
+          payUseBaseToken: opts?.payUseBaseToken,
         });
-        if (opts?.payUseBaseToken) {
-          setReceiveToken({
-            ...getChainDefaultToken(c),
-          });
-        } else {
-          setReceiveToken(undefined);
-        }
+        setPayToken(nextTokens.payToken);
+        setReceiveToken(nextTokens.receiveToken);
       } else {
         setReceiveToken({
           ...getChainDefaultToken(c),
@@ -660,7 +654,7 @@ export const useTokenPair = ({
       setSlider(0);
       setActiveProvider(undefined);
     },
-    [handleChain, setActiveProvider, setPayToken, setReceiveToken],
+    [chain, handleChain, setActiveProvider, setPayToken, setReceiveToken],
   );
 
   const switchSwapAgain = useCallback(
@@ -803,10 +797,7 @@ export const useTokenPair = ({
 
   const [passGasPrice, setUseGasPrice] = useState(false);
 
-  const gasLimit = useMemo(
-    () => (chain === CHAINS_ENUM.ETH ? 1000000 : 2000000),
-    [chain],
-  );
+  const gasLimit = useMemo(() => getSwapGasReserveGasLimit(chain), [chain]);
 
   const { value: gasList, loading: isGasMarketLoading } = useSceneActiveAsync(
     () =>
@@ -1338,7 +1329,6 @@ export const useTokenPair = ({
       return;
     }
     hasReportedSwapEntryRef.current = true;
-    stats.report('enterSwapDescPage', {});
   }, [active]);
 
   /* slider */

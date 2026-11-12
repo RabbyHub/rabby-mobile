@@ -1,12 +1,18 @@
 import { startSubscribeUserDidTakeScreenshot } from '@/components/Screenshot/hooks';
 
-let runtimeScreenshotFeedbackSubscriptionStarted = false;
+let runtimeScreenshotFeedbackSubscriptionPromise: Promise<void> | undefined;
 
 export function startSetupRuntimeScreenshotFeedbackSubscription() {
-  if (runtimeScreenshotFeedbackSubscriptionStarted) {
-    return;
+  if (!runtimeScreenshotFeedbackSubscriptionPromise) {
+    runtimeScreenshotFeedbackSubscriptionPromise =
+      startSubscribeUserDidTakeScreenshot().then(
+        () => undefined,
+        error => {
+          runtimeScreenshotFeedbackSubscriptionPromise = undefined;
+          throw error;
+        },
+      );
   }
-  runtimeScreenshotFeedbackSubscriptionStarted = true;
 
-  startSubscribeUserDidTakeScreenshot();
+  return runtimeScreenshotFeedbackSubscriptionPromise;
 }

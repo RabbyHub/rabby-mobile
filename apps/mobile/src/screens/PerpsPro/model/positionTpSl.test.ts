@@ -3,6 +3,7 @@ import type { OpenOrder } from '@rabby-wallet/hyperliquid-sdk';
 import { buildPerpsOpenOrderTopology } from './openOrderTopology';
 import {
   buildPositionTpSlSummary,
+  getPositionTpSlValueTone,
   calculatePartialTpSlCoverage,
   calculatePositionTpSlEstimatedPnl,
   calculatePositionTpSlRoi,
@@ -46,6 +47,94 @@ const collect = (
   );
 
 describe('Perps Pro position TP/SL model', () => {
+  it.each([
+    ['long', 'takeProfit'],
+    ['long', 'stopLoss'],
+    ['short', 'takeProfit'],
+    ['short', 'stopLoss'],
+  ] as const)(
+    'rounds %s %s sub-tick PnL to entry and reports the executable PnL',
+    (direction, kind) => {
+      const context = {
+        direction,
+        kind,
+        entryPrice: '0.094616',
+        szDecimals: 0,
+        size: '70772338',
+      };
+      for (const pnl of ['0', '0.01']) {
+        const triggerPrice = calculatePositionTpSlTriggerFromPnl({
+          ...context,
+          pnl,
+        });
+        expect(triggerPrice).toBe('0.094616');
+        expect(
+          calculatePositionTpSlEstimatedPnl({ ...context, triggerPrice }),
+        ).toBe('0');
+      }
+      expect(
+        calculatePositionTpSlTriggerFromRoi({
+          ...context,
+          leverage: 3,
+          roiPercent: '0',
+        }),
+      ).toBe('0.094616');
+      expect(
+        calculatePositionTpSlTriggerFromPnl({ ...context, pnl: '' }),
+      ).toBeNull();
+    },
+  );
+
+  it.each([
+    ['long', '110', 'stopLoss'],
+    ['long', '90', 'takeProfit'],
+    ['short', '90', 'stopLoss'],
+    ['short', '110', 'takeProfit'],
+  ] as const)(
+    'allows only the Mark-valid break-even side for %s at %s',
+    (direction, markPrice, validKind) => {
+      for (const kind of ['takeProfit', 'stopLoss'] as const) {
+        const input = {
+          direction,
+          kind,
+          markPrice,
+          triggerPrice: '100',
+          inputSource: 'mode' as const,
+          rawMagnitude: '0',
+          liquidationPrice: null,
+          szDecimals: 2,
+        };
+        expect(validateFullPositionTpSlFormTrigger(input).kind).toBe(
+          kind === validKind ? 'valid' : 'invalid',
+        );
+        expect(
+          validateFullPositionTpSlFormTrigger({ ...input, markPrice: '100' })
+            .kind,
+        ).toBe('invalid');
+      }
+    },
+  );
+
+  it.each([
+    ['0.09999', '100', 'belowMinimum'],
+    ['0.1', '100', 'valid'],
+    ['0.1', '99.99', 'belowMinimum'],
+    ['0.101', '100', 'valid'],
+    ['0.1', null, 'invalid'],
+  ] as const)(
+    'checks the normalized fixed size %s against Mark %s',
+    (amount, markPrice, kind) => {
+      expect(
+        validatePartialPositionTpSlAmount({
+          amount,
+          markPrice,
+          positionSize: '1',
+          szDecimals: 3,
+        }).kind,
+      ).toBe(kind);
+    },
+  );
+
   it('classifies active full and fixed-size orders but excludes children-first attached duplicates', () => {
     const result = collect([
       order({ oid: 1 }),
@@ -288,6 +377,7 @@ describe('Perps Pro position TP/SL model', () => {
     expect(
       validatePartialPositionTpSlAmount({
         amount: '1',
+        markPrice: '100',
         positionSize: '1',
         szDecimals: 3,
       }),
@@ -295,6 +385,7 @@ describe('Perps Pro position TP/SL model', () => {
     expect(
       validatePartialPositionTpSlAmount({
         amount: '1.001',
+        markPrice: '100',
         positionSize: '1',
         szDecimals: 3,
       }),
@@ -354,7 +445,7 @@ describe('Perps Pro position TP/SL model', () => {
         rawMagnitude: '0',
         triggerPrice: '',
       }),
-    ).toBe(false);
+    ).toBe(true);
     expect(
       isPositionTpSlModeTriggerUnavailable({
         inputSource: 'mode',
@@ -479,5 +570,22 @@ describe('Perps Pro position TP/SL model', () => {
         triggerPrice: '100000000000000000000000000000000000000',
       }).kind,
     ).toBe('valid');
+  });
+});
+
+describe('position TP/SL signed presentation', () => {
+  it.each([
+    ['10', 'positive'],
+    ['-10', 'negative'],
+    ['0.00001', 'positive'],
+    ['-0.00001', 'negative'],
+    ['0', 'neutral'],
+    ['-0', 'neutral'],
+    [null, 'neutral'],
+    ['', 'neutral'],
+    ['NaN', 'neutral'],
+    ['Infinity', 'neutral'],
+  ])('classifies %s as %s before display rounding', (value, expected) => {
+    expect(getPositionTpSlValueTone(value)).toBe(expected);
   });
 });

@@ -16,6 +16,43 @@ import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
 import AutoLockView from '@/components/AutoLockView';
 import { MODAL_GATE_IDS } from '@/utils/modalGate';
 import { TrackedModal } from '@/components/Modal/TrackedModal';
+import { BlockedAddressDialog } from '@/components/Dialogs/BlockedAddressDialog';
+import {
+  hideBlockedAddressDialog,
+  useBlockedAddressDialogVisible,
+} from '@/components2024/MiniSignV2/state/blockedAddressDialog';
+import {
+  DIRECT_OVERLAY_MAX_MS,
+  getDirectOverlayPhase,
+  type DirectOverlayPhase,
+} from '@/components2024/MiniSignV2/state/directOverlay';
+
+/** Whether to show the direct overlay: only while its phase is within its time limit. */
+function useDirectOverlayVisible(
+  phase: DirectOverlayPhase | null,
+  onExpire: () => void,
+) {
+  const [expired, setExpired] = useState(false);
+
+  useEffect(() => {
+    setExpired(false);
+    if (!phase) {
+      return;
+    }
+    const timer = setTimeout(() => {
+      console.warn(
+        `[MiniSign] direct overlay was still up after ${DIRECT_OVERLAY_MAX_MS[phase]}ms of ${phase}; hiding it`,
+      );
+      setExpired(true);
+      // Leave direct mode as well: hiding only the overlay leaves the flow in
+      // `mode: 'direct'` while signing may still be in flight.
+      onExpire();
+    }, DIRECT_OVERLAY_MAX_MS[phase]);
+    return () => clearTimeout(timer);
+  }, [onExpire, phase]);
+
+  return !!phase && !expired;
+}
 
 /**
  * Renders the signing UI for a single SignatureManager instance.
@@ -85,8 +122,13 @@ const SignerPortalItem: React.FC = () => {
     }
   }, [config?.account, state.status, ctx?.txs.length]);
 
-  const showDirectTransparentOverlay =
-    ctx?.mode === 'direct' && status !== 'ready' && status !== 'error';
+  const handleDirectOverlayExpired = useCallback(() => {
+    instance.endDirectOverlay();
+  }, [instance]);
+  const showDirectTransparentOverlay = useDirectOverlayVisible(
+    getDirectOverlayPhase(state),
+    handleDirectOverlayExpired,
+  );
 
   if (!config?.account || state.status === 'idle' || !ctx?.txs.length) {
     return null;
@@ -167,6 +209,7 @@ const SignerPortalItem: React.FC = () => {
  */
 export const GlobalSignerPortal: React.FC = () => {
   const instances = useRegistryInstances();
+  const isBlockedDialogVisible = useBlockedAddressDialogVisible();
 
   return (
     <>
@@ -175,6 +218,10 @@ export const GlobalSignerPortal: React.FC = () => {
           <SignerPortalItem />
         </SignatureInstanceProvider>
       ))}
+      <BlockedAddressDialog
+        visible={isBlockedDialogVisible}
+        onConfirm={hideBlockedAddressDialog}
+      />
     </>
   );
 };

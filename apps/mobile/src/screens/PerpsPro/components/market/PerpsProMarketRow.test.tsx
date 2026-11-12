@@ -80,6 +80,8 @@ jest.mock('react-i18next', () => ({
 
 const { buildPerpsProMarketRowModel } =
   require('../../model/marketSelectorProjection') as typeof import('../../model/marketSelectorProjection');
+const { RoundedFontStyles } =
+  require('@/core/utils/fonts') as typeof import('@/core/utils/fonts');
 const {
   PerpsProMarketRow,
 }: typeof import('./PerpsProMarketRow') = require('./PerpsProMarketRow');
@@ -182,7 +184,7 @@ describe.each([true, false])('PerpsProMarketRow (iOS=%s)', isIOS => {
       expect.objectContaining({
         alignItems: 'center',
         height: 60,
-        paddingHorizontal: 16,
+        paddingHorizontal: 20,
         paddingVertical: 10,
       }),
     );
@@ -193,7 +195,7 @@ describe.each([true, false])('PerpsProMarketRow (iOS=%s)', isIOS => {
         ).props.style,
       ),
     ).toEqual(
-      expect.objectContaining({ height: 32, marginRight: 6, width: 16 }),
+      expect.objectContaining({ height: 32, marginLeft: 8, width: 16 }),
     );
     expect(screen.getByTestId('favorite-star-empty').props).toEqual(
       expect.objectContaining({
@@ -213,8 +215,8 @@ describe.each([true, false])('PerpsProMarketRow (iOS=%s)', isIOS => {
     expect(screen.getByText('ALPHAUSDC').props.style).toEqual(
       expect.objectContaining({
         fontFamily: 'SF Pro Rounded',
-        fontSize: 16,
-        fontWeight: '500',
+        fontSize: 15,
+        fontWeight: '700',
         lineHeight: 20,
       }),
     );
@@ -235,9 +237,8 @@ describe.each([true, false])('PerpsProMarketRow (iOS=%s)', isIOS => {
       backgroundColor: 'neutral-bg-5',
       borderRadius: 4,
       color: 'neutral-foot',
-      fontFamily: 'SF Pro Rounded',
+      ...RoundedFontStyles.medium,
       fontSize: 12,
-      fontWeight: '500',
       lineHeight: 16,
       maxWidth: 52,
       paddingHorizontal: 4,
@@ -249,16 +250,16 @@ describe.each([true, false])('PerpsProMarketRow (iOS=%s)', isIOS => {
     expect(screen.getByText('Alpha').props.style).toEqual(
       expect.objectContaining({
         flexShrink: 1,
-        fontSize: 12,
-        fontWeight: '400',
+        fontSize: 13,
+        fontWeight: '500',
         lineHeight: 16,
       }),
     );
     expect(screen.getByText('1.20M').props.style).toEqual(
       expect.objectContaining({
         flexShrink: 0,
-        fontSize: 12,
-        fontWeight: '400',
+        fontSize: 13,
+        fontWeight: '500',
         lineHeight: 16,
       }),
     );

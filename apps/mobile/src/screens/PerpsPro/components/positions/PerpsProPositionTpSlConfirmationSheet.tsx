@@ -1,46 +1,76 @@
+import { formatPositionTpSlSignedValue } from '../../utils/positionTpSlFormatting';
 import {
   getPerpsProDialogCheckboxStyles,
   getPerpsProDialogStyles,
+  getPerpsProConfirmationFooterStyle,
+  resolvePerpsProDialogCardBackground,
 } from '../common/perpsProDialogVisual';
+import { getPerpsProListRowStyles } from '../common/perpsProListVisual';
+import { PerpsProSectionTitle } from '../common/PerpsProSectionTitle';
 import { PerpsProDialogBackdrop } from '../common/PerpsProDialogBackdrop';
-import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
 import { PerpsProCheckboxIcon } from '../common/PerpsProCheckboxIcon';
 import AutoLockView from '@/components/AutoLockView';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { Text } from '@/components/Typography';
 import { Button } from '@/components2024/Button';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
-import {
-  BOTTOM_BUTTON_SINGLE_HEIGHT,
-  getBottomButtonBottomOffset,
-} from '@/constant/layout';
+import { BOTTOM_BUTTON_SINGLE_HEIGHT } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useRegisterBlockingModal } from '@/utils/modalGate';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
 import BigNumber from 'bignumber.js';
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react';
 import { Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import type { PerpsPositionViewModel } from '../../model/position';
 import {
   calculatePositionTpSlEstimatedPnl,
+  getPositionTpSlValueTone,
   type PerpsPositionTpSlMarketSnapshot,
 } from '../../model/positionTpSl';
 import type { PerpsProTradeAmountUnit } from '../../model/trade';
 import type { PerpsProPositionTpSlReviewState } from '../../scene/usePerpsProPositionTpSl';
-import { formatPerpsProDecimal, formatPerpsProPrice } from '../../utils/format';
+import {
+  formatPerpsProPrice,
+  formatPerpsProVariableDecimal,
+} from '../../utils/format';
 import { usePerpsProSheetNavigationRegistration } from '../common/perpsProSheetNavigationRegistry';
 import { PerpsProDottedUnderlineText } from '../common/PerpsProDottedUnderlineText';
 import { usePerpsProFieldExplanation } from '../common/PerpsProFieldExplanationContext';
 
 const MODAL_ID = 'perps-pro-position-tpsl-confirmation';
 
+const formatPartialVolume = (
+  amount: string,
+  decimals: number,
+  size: string,
+  expectedPositionSize: string,
+) => {
+  const coverage = new BigNumber(size).dividedBy(expectedPositionSize);
+  const percentage = coverage.isFinite()
+    ? `${coverage.multipliedBy(100).toFixed(2, BigNumber.ROUND_HALF_UP)}%`
+    : '-';
+  const quantity = new BigNumber(amount).decimalPlaces(
+    decimals,
+    BigNumber.ROUND_HALF_UP,
+  );
+  return `${formatPerpsProVariableDecimal(quantity.toFixed())}(${percentage})`;
+};
+
 export const PerpsProPositionTpSlConfirmationSheet: React.FC<{
   amountUnit: PerpsProTradeAmountUnit;
   market: PerpsPositionTpSlMarketSnapshot;
   onClose: () => void;
+  onPresented?: () => void;
+  onDismissed?: () => void;
   onConfirm: () => void;
   onToggleSkipConfirmation: () => void;
   pending: boolean;
@@ -52,6 +82,8 @@ export const PerpsProPositionTpSlConfirmationSheet: React.FC<{
     amountUnit,
     market,
     onClose,
+    onPresented,
+    onDismissed,
     onConfirm,
     onToggleSkipConfirmation,
     pending,
@@ -59,6 +91,25 @@ export const PerpsProPositionTpSlConfirmationSheet: React.FC<{
     review,
     skipConfirmation,
   }) => {
+    const [retainedReview, setRetainedReview] =
+      useState<PerpsProPositionTpSlReviewState | null>(review);
+    const retainedDetails = useRef<{
+      amountUnit: PerpsProTradeAmountUnit;
+      market: PerpsPositionTpSlMarketSnapshot;
+      position: PerpsPositionViewModel;
+      skipConfirmation: boolean;
+    } | null>(null);
+    if (review)
+      retainedDetails.current = {
+        amountUnit,
+        market,
+        position,
+        skipConfirmation,
+      };
+    const displayedDetails = retainedDetails.current;
+    const displayedReview = review ?? retainedReview;
+    const closing = !review;
+    const interactionLocked = pending || closing;
     const modalRef = useRef<AppBottomSheetModal>(null);
     const { colors2024, styles } = useTheme2024({ getStyle });
     const { t } = useTranslation();
@@ -67,45 +118,54 @@ export const PerpsProPositionTpSlConfirmationSheet: React.FC<{
       (props: React.ComponentProps<typeof PerpsProDialogBackdrop>) => (
         <PerpsProDialogBackdrop
           {...props}
-          pressBehavior={pending ? 'none' : 'close'}
+          pressBehavior={interactionLocked ? 'none' : 'close'}
         />
       ),
-      [pending],
+      [interactionLocked],
     );
     usePerpsProSheetNavigationRegistration({
-      active: !!review,
+      active: !!displayedReview,
       dismiss: onClose,
-      dismissible: !pending,
+      dismissible: !interactionLocked,
     });
-    useRegisterBlockingModal(MODAL_ID, !!review);
+    useRegisterBlockingModal(MODAL_ID, !!displayedReview);
 
-    useEffect(() => {
+    useLayoutEffect(() => {
       if (review) {
-        modalRef.current?.present();
-      } else {
-        modalRef.current?.close();
+        setRetainedReview(review);
+        onPresented?.();
       }
+    }, [onPresented, review]);
+    useEffect(() => {
+      if (review) modalRef.current?.present();
+      else modalRef.current?.close();
     }, [review]);
+    const handleDismiss = useCallback(() => {
+      setRetainedReview(null);
+      retainedDetails.current = null;
+      // Programmatic close has already updated the controller. A native
+      // backdrop/pan dismissal still needs to close its current review.
+      if (review === displayedReview && review) onClose();
+      onDismissed?.();
+    }, [displayedReview, onClose, onDismissed, review]);
 
-    if (!review) {
-      return null;
-    }
-    const isPosition = review.command.scope === 'position';
+    if (!displayedReview || !displayedDetails) return null;
+    const isPosition = displayedReview.command.scope === 'position';
 
     return (
       <AppBottomSheetModal
         ref={modalRef}
         {...makeBottomSheetProps({
           colors: colors2024,
-          linearGradientType: 'bg1',
+          linearGradientType: 'bg0',
         })}
         backdropComponent={renderBackdrop}
         backgroundStyle={styles.background}
         enableDynamicSizing
-        enablePanDownToClose={!pending}
+        enablePanDownToClose={!interactionLocked}
         handleIndicatorStyle={styles.handleIndicator}
         handleStyle={styles.handle}
-        onDismiss={onClose}
+        onDismiss={handleDismiss}
         style={styles.modal}>
         <BottomSheetView>
           <AutoLockView style={styles.container}>
@@ -119,72 +179,73 @@ export const PerpsProPositionTpSlConfirmationSheet: React.FC<{
             <View style={styles.summary}>
               <DetailRow
                 label={t('page.perps.pro.positionTpsl.symbol')}
-                value={market.displayPair}
+                value={displayedDetails.market.displayPair}
               />
               <DetailRow
-                label={`${t('page.perps.pro.positions.entry')} (${
-                  market.quoteAsset
-                })`}
-                value={formatPerpsProPrice(
-                  position.entryPrice,
-                  market.pxDecimals,
-                )}
+                label={t('page.perps.pro.positions.entry')}
+                value={`${formatPerpsProPrice(
+                  displayedDetails.position.entryPrice,
+                  displayedDetails.market.pxDecimals,
+                )} ${displayedDetails.market.quoteAsset}`}
               />
             </View>
 
-            {review.command.legs.map(leg => {
+            {displayedReview.command.legs.map(leg => {
               const shouldBeAbove =
-                (position.direction === 'long' && leg.kind === 'takeProfit') ||
-                (position.direction === 'short' && leg.kind === 'stopLoss');
+                (displayedDetails.position.direction === 'long' &&
+                  leg.kind === 'takeProfit') ||
+                (displayedDetails.position.direction === 'short' &&
+                  leg.kind === 'stopLoss');
               const size = isPosition
-                ? review.command.expectedPositionSize
+                ? displayedReview.command.expectedPositionSize
                 : leg.size || '0';
               const estimatedPnl = calculatePositionTpSlEstimatedPnl({
-                direction: position.direction,
-                entryPrice: position.entryPrice,
+                direction: displayedDetails.position.direction,
+                entryPrice: displayedDetails.position.entryPrice,
                 size,
                 triggerPrice: leg.triggerPrice,
               });
               const displayAmount =
-                amountUnit === 'base'
+                displayedDetails.amountUnit === 'base'
                   ? size
                   : new BigNumber(size)
-                      .multipliedBy(review.markPrice)
+                      .multipliedBy(displayedReview.markPrice)
                       .toString();
               return (
                 <View key={leg.kind} style={styles.leg}>
-                  <Text
-                    style={
-                      leg.kind === 'takeProfit'
-                        ? styles.takeProfit
-                        : styles.stopLoss
-                    }>
+                  <PerpsProSectionTitle
+                    style={styles.legTitle}
+                    tone={leg.kind === 'takeProfit' ? 'positive' : 'negative'}>
                     {t(
                       leg.kind === 'takeProfit'
                         ? 'page.perps.pro.positionTpsl.takeProfit'
                         : 'page.perps.pro.positionTpsl.stopLoss',
                     )}
-                  </Text>
+                  </PerpsProSectionTitle>
                   <DetailRow
                     label={t('page.perps.pro.positionTpsl.triggerPrice')}
                     value={`Mark ${
                       shouldBeAbove ? '≥' : '≤'
                     } ${formatPerpsProPrice(
                       leg.triggerPrice,
-                      market.pxDecimals,
-                    )} ${market.quoteAsset}`}
+                      displayedDetails.market.pxDecimals,
+                    )} ${displayedDetails.market.quoteAsset}`}
                   />
                   {!isPosition ? (
                     <DetailRow
-                      label={t('page.perps.pro.positionTpsl.volume')}
-                      value={`${formatPerpsProDecimal(
+                      label={`${t('page.perps.pro.positionTpsl.volume')} (${
+                        displayedDetails.amountUnit === 'base'
+                          ? displayedDetails.market.displayBase
+                          : displayedDetails.market.quoteAsset
+                      })`}
+                      value={formatPartialVolume(
                         displayAmount,
-                        amountUnit === 'base' ? market.szDecimals : 2,
-                      )} ${
-                        amountUnit === 'base'
-                          ? market.displayBase
-                          : market.quoteAsset
-                      }`}
+                        displayedDetails.amountUnit === 'base'
+                          ? displayedDetails.market.szDecimals
+                          : 2,
+                        size,
+                        displayedReview.command.expectedPositionSize,
+                      )}
                     />
                   ) : null}
                   <DetailRow
@@ -198,10 +259,12 @@ export const PerpsProPositionTpSlConfirmationSheet: React.FC<{
                         {t('page.perps.pro.positionTpsl.estimatedPnl')}
                       </PerpsProDottedUnderlineText>
                     }
-                    tone={leg.kind === 'takeProfit' ? 'positive' : 'negative'}
-                    value={`${formatPerpsProDecimal(estimatedPnl, 2)} ${
-                      market.quoteAsset
-                    }`}
+                    tone={getPositionTpSlValueTone(estimatedPnl)}
+                    value={`${
+                      estimatedPnl == null
+                        ? '-'
+                        : formatPositionTpSlSignedValue(estimatedPnl)
+                    } ${displayedDetails.market.quoteAsset}`}
                   />
                 </View>
               );
@@ -210,16 +273,16 @@ export const PerpsProPositionTpSlConfirmationSheet: React.FC<{
             <Pressable
               accessibilityRole="checkbox"
               accessibilityState={{ checked: skipConfirmation }}
-              disabled={pending}
-              onPress={onToggleSkipConfirmation}
+              disabled={interactionLocked}
+              onPress={interactionLocked ? undefined : onToggleSkipConfirmation}
               style={styles.checkboxRow}
               testID="perps-pro-position-tpsl-skip-confirmation">
               <PerpsProCheckboxIcon
-                checked={skipConfirmation}
+                checked={displayedDetails.skipConfirmation}
                 checkColor={colors2024['neutral-InvertHighlight']}
               />
               <Text style={styles.checkboxText}>
-                {t('page.perps.pro.positions.skipLimitConfirmation')}
+                {t('page.perps.pro.positionTpsl.skipConfirmation')}
               </Text>
             </Pressable>
 
@@ -229,11 +292,11 @@ export const PerpsProPositionTpSlConfirmationSheet: React.FC<{
               <Button
                 buttonStyle={[styles.button, pending && styles.buttonDisabled]}
                 disabledTitleStyle={styles.buttonDisabledTitle}
-                disabled={pending}
+                disabled={interactionLocked}
                 height={BOTTOM_BUTTON_SINGLE_HEIGHT}
                 loading={pending}
                 loadingProps={{ color: styles.buttonDisabledTitle.color }}
-                onPress={onConfirm}
+                onPress={interactionLocked ? undefined : onConfirm}
                 testID="perps-pro-position-tpsl-confirm"
                 title={t('global.confirm')}
                 titleStyle={styles.buttonTitle}
@@ -284,86 +347,50 @@ const getStyle = createGetStyles2024(
       safeAreaInsets.bottom,
       isLight,
     );
-    // Keep the existing surface contrast with the TP/SL fields.
+    const rows = getPerpsProListRowStyles(colors2024);
     return {
       ...dialog,
-      background: {
-        ...dialog.background,
-        backgroundColor: colors2024['neutral-bg-1'],
-      },
-      handle: { ...dialog.handle, backgroundColor: colors2024['neutral-bg-1'] },
-      container: { paddingHorizontal: 16, paddingTop: 8 },
+      // Figma 86609:333458: 12pt content inset and 12pt card insets.
+      container: { paddingHorizontal: 12, paddingTop: 8 },
       summary: {
-        borderBottomColor: colors2024['neutral-bg-5'],
-        borderBottomWidth: 1,
-        gap: 8,
-        marginTop: 16,
-        paddingBottom: 12,
+        backgroundColor: resolvePerpsProDialogCardBackground(
+          colors2024,
+          isLight,
+        ),
+        borderRadius: 12,
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        marginTop: 24,
       },
       leg: {
-        borderBottomColor: colors2024['neutral-bg-5'],
-        borderBottomWidth: 1,
-        gap: 8,
-        marginTop: 16,
-        paddingBottom: 12,
+        backgroundColor: resolvePerpsProDialogCardBackground(
+          colors2024,
+          isLight,
+        ),
+        borderRadius: 12,
+        paddingBottom: 8,
+        paddingHorizontal: 12,
+        paddingTop: 12,
+        marginTop: 8,
       },
-      takeProfit: {
-        color: colors2024['neutral-title-1'],
-        fontFamily: 'SF Pro Rounded',
-        fontSize: 14,
-        fontWeight: '500',
-        lineHeight: 18,
-      },
-      stopLoss: {
-        color: colors2024['neutral-title-1'],
-        fontFamily: 'SF Pro Rounded',
-        fontSize: 14,
-        fontWeight: '500',
-        lineHeight: 18,
-      },
-      detailRow: {
-        alignItems: 'center',
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-      },
-      detailLabel: {
-        color: colors2024['neutral-secondary'],
-        fontFamily: 'SF Pro Rounded',
-        fontSize: 12,
-        lineHeight: 16,
-      },
+      legTitle: { marginBottom: 10 },
+      detailRow: rows.listRow,
+      detailLabel: rows.listLabel,
       detailValue: {
-        ...PERPS_PRO_NUMBER_STYLE,
-        color: colors2024['neutral-title-1'],
-        fontFamily: 'SF Pro Rounded',
-        fontSize: 12,
-        lineHeight: 16,
+        ...rows.listValue,
         maxWidth: '64%',
         textAlign: 'right',
       },
       positiveValue: {
-        ...PERPS_PRO_NUMBER_STYLE,
+        ...rows.listValue,
         color: colors2024['green-default'],
-        fontFamily: 'SF Pro Rounded',
-        fontSize: 12,
-        lineHeight: 16,
       },
       negativeValue: {
-        ...PERPS_PRO_NUMBER_STYLE,
+        ...rows.listValue,
         color: colors2024['red-default'],
-        fontFamily: 'SF Pro Rounded',
-        fontSize: 12,
-        lineHeight: 16,
       },
       ...getPerpsProDialogCheckboxStyles(colors2024),
-      footer: {
-        paddingHorizontal: 4,
-        paddingBottom: Math.max(
-          40,
-          getBottomButtonBottomOffset(safeAreaInsets.bottom),
-        ),
-        paddingTop: 24,
-      },
+      footer: getPerpsProConfirmationFooterStyle(safeAreaInsets.bottom),
     };
   },
 );

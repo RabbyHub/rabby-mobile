@@ -20,8 +20,12 @@ import {
   TokenItem,
 } from '@rabby-wallet/rabby-api/dist/types';
 import { BridgeSlippage } from './BridgeSlippage';
+import {
+  formatBridgeDuration,
+  getBridgeDurationColor,
+} from '../utils/duration';
 import { tokenPriceImpact } from '../hooks/token';
-import { AppSwitch, AssetAvatar } from '@/components';
+import { AppSwitch } from '@/components';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import RcIconBluePolygon from '@/assets2024/icons/bridge/IconBluePolygon.svg';
@@ -86,7 +90,6 @@ const BridgeShowMore = ({
   amount,
   toAmount,
   quoteLoading,
-  slippageError,
   autoSlippage,
   isCustomSlippage,
   setAutoSlippage,
@@ -186,16 +189,10 @@ const BridgeShowMore = ({
 
   const showSourceFallback = !!insufficient || !fromToken || !supportDirectSign;
 
-  const durationColor = useMemo(() => {
-    const mins = Math.ceil((duration || 0) / 60);
-    if (mins > 10) {
-      return colors2024['red-default'];
-    }
-    if (mins > 3) {
-      return colors2024['orange-default'];
-    }
-    return colors2024['brand-default'];
-  }, [duration, colors2024]);
+  const durationColor = useMemo(
+    () => getBridgeDurationColor(duration, colors2024),
+    [duration, colors2024],
+  );
 
   const QuoteContent = useMemo(
     () => (
@@ -268,12 +265,10 @@ const BridgeShowMore = ({
       const content = (
         <>
           {isBestQuote ? BestQuoteContent : QuoteContent}
-          {type === 'bridge' && duration ? (
+          {type === 'bridge' && (sourceLogo || sourceName) ? (
             <Text style={[styles.sourceName, { color: durationColor }]}>
               {' · '}
-              {t('page.bridge.duration', {
-                duration: Math.ceil(duration / 60),
-              })}
+              {formatBridgeDuration(duration, t)}
             </Text>
           ) : null}
           {showArrow && (sourceName || sourceLogo) ? (
@@ -1265,41 +1260,6 @@ function ListItem({
   );
 }
 
-export const RecommendFromToken = ({
-  token,
-  style,
-  onOk,
-}: {
-  token: TokenItem;
-  style?: object;
-  onOk: () => void;
-}) => {
-  const { styles } = useTheme2024({ getStyle });
-  const { t } = useTranslation();
-  return (
-    <View style={[styles.recommendFromToken, style]}>
-      <View style={styles.recommendTextWrapper}>
-        <Text style={styles.recommendText}>{t('page.bridge.bridge-from')}</Text>
-        <View style={styles.tokenContainer}>
-          <AssetAvatar
-            size={26}
-            chain={token.chain}
-            logo={token.logo_url}
-            chainSize={12}
-          />
-          <Text style={styles.tokenText}>{getTokenSymbol(token)}</Text>
-        </View>
-        <Text style={styles.recommendText}>
-          {t('page.bridge.for-available-quote')}
-        </Text>
-      </View>
-      <TouchableOpacity onPress={onOk} style={styles.okButton}>
-        <Text style={styles.okButtonText}>{t('global.ok')}</Text>
-      </TouchableOpacity>
-    </View>
-  );
-};
-
 const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
   container: { marginHorizontal: 24, marginTop: 10 },
   containerContent: {
@@ -1435,71 +1395,6 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
     lineHeight: 18,
     textDecorationLine: 'line-through',
   },
-  recommendFromToken: {
-    // flexDirection: 'row',
-    // height: 44,
-    alignItems: 'flex-end',
-    height: 122,
-    marginTop: 100,
-    marginHorizontal: 24,
-    paddingHorizontal: 12,
-    paddingVertical: 20,
-    borderRadius: 30,
-    borderWidth: 1,
-    borderColor: colors2024['neutral-line'],
-    // borderBlockColor: colors2024['neutral-line'],
-    backgroundColor: colors2024['neutral-bg-1'],
-    // alignItems: 'center',
-  },
-  recommendTextWrapper: {
-    flex: 1,
-    flexDirection: 'row',
-    width: '100%',
-    alignItems: 'center',
-  },
-  recommendText: {
-    fontSize: 14,
-    fontWeight: '700',
-    fontFamily: 'SF Pro Rounded',
-    lineHeight: 18,
-    color: colors2024['neutral-info'],
-  },
-  tokenContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginHorizontal: 6,
-    paddingVertical: 6,
-    paddingHorizontal: 8,
-    backgroundColor: colors2024['neutral-bg-4'],
-    borderRadius: 12,
-  },
-  tokenText: {
-    color: colors2024['neutral-title-1'],
-    marginLeft: 6,
-    fontSize: 16,
-    fontWeight: '700',
-    fontFamily: 'SF Pro Rounded',
-    lineHeight: 20,
-  },
-  okButton: {
-    backgroundColor: colors2024['brand-default'],
-    borderRadius: 100,
-    width: 77,
-    height: 36,
-    paddingVertical: 4,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 10,
-  },
-  okButtonText: {
-    fontSize: 16,
-    fontWeight: '700',
-    fontFamily: 'SF Pro Rounded',
-    lineHeight: 20,
-    color: colors2024['neutral-bg-1'],
-    marginRight: 4,
-  },
-
   quoteContainer: {
     flexDirection: 'row',
     alignItems: 'center',

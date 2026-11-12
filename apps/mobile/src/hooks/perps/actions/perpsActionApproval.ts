@@ -14,6 +14,7 @@ import {
 import { sleep } from '@/utils/async';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 
+import { isPerpsBuilderFeeApproved } from '../perpsBuilderFee';
 import { isSamePerpsActionAccount } from './accountGuard';
 import { setPerpsAgentUnifiedAccount } from './setAgentUnifiedAccount';
 import { signPerpsTypedDataActions } from './perpsTypedDataSignatures';
@@ -100,7 +101,7 @@ const fetchRemoteApprovalStatus = async ({
     agentExpired:
       !agent?.validUntil ||
       agent.validUntil < Date.now() + AGENT_EXPIRY_SAFETY_WINDOW_MS,
-    builderFeeApproved: !builderFee || !!maxBuilderFee,
+    builderFeeApproved: !builderFee || isPerpsBuilderFeeApproved(maxBuilderFee),
   };
   remoteApprovalStatusCache.set(key, { checkedAt: Date.now(), status });
   return status;
@@ -239,7 +240,7 @@ const runApproval = async (
     );
     remoteStatus = {
       agentExpired: false,
-      builderFeeApproved: !!maxBuilderFee,
+      builderFeeApproved: isPerpsBuilderFeeApproved(maxBuilderFee),
     };
     assertCurrentAccount(expectedAccount);
   }

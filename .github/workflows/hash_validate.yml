@@ -52,6 +52,11 @@ jobs:
           # cmdline-tools replaces the obsolete SDK Tools package.
           packages: 'platform-tools'
 
+      - name: Setup Rust toolchain for safe SVG rasterization
+        uses: dtolnay/rust-toolchain@e081816240890017053eacbb1bdf337761dc5582 # 1.95.0
+        with:
+          targets: aarch64-linux-android,armv7-linux-androideabi,i686-linux-android,x86_64-linux-android
+
       - name: Validate Android App
         id: generate_hash
         run: |
@@ -69,22 +74,24 @@ jobs:
           RABBY_MOBILE_SAFE_API_KEY: ${{ secrets.MOBILE_SAFE_API_KEY }}
 
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           path: apps/mobile/validation_exports_*
           name: android-build
           retention-days: 1
 
       - name: Clean logs
+        if: always()
         run: |
           rm -rf apps/mobile/validation_exports_*
 
   # --- Job 2: 构建 iOS ---
   build-ios:
     name: Build iOS & Generate Hash
-    runs-on: macos-26
+    runs-on: xcode-27
     env:
       NODE_OPTIONS: '--max_old_space_size=8192'
-      XCODE_VER: '26.3'
+      XCODE_VER: '27.1'
 
     outputs:
       ios_hash: ${{ steps.generate_hash.outputs.hash }}
@@ -116,6 +123,11 @@ jobs:
           which bundle
           bundle -v
 
+      - name: Setup Rust toolchain for safe SVG rasterization
+        uses: dtolnay/rust-toolchain@e081816240890017053eacbb1bdf337761dc5582 # 1.95.0
+        with:
+          targets: aarch64-apple-ios,aarch64-apple-ios-sim,x86_64-apple-ios
+
       - name: Validate iOS App
         id: generate_hash
         run: |
@@ -138,12 +150,14 @@ jobs:
           RABBY_MOBILE_SAFE_API_KEY: ${{ secrets.MOBILE_SAFE_API_KEY }}
 
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           path: apps/mobile/validation_exports_*
           name: ios-build
           retention-days: 1
 
       - name: Clean logs
+        if: always()
         run: |
           rm -rf apps/mobile/validation_exports_*
 
@@ -178,8 +192,8 @@ jobs:
           GIT_REF_NAME: ${{ github.ref_name }}
           GIT_REF_URL: ${{ github.server_url }}/${{ github.repository }}/tree/${{ github.ref_name }}
           GITHUB_REF: ${{ github.ref }}
-          RABBY_MOBILE_LARK_CHAT_URL: ${{ secrets.LARK_CHAT_URL }}
-          RABBY_MOBILE_LARK_CHAT_SECRET: ${{ secrets.LARK_CHAT_SECRET }}
+          RABBY_MOBILE_LARK_CHAT_URL: ${{ secrets.RABBY_MOBILE_LARK_CHAT_URL || secrets.LARK_CHAT_URL }}
+          RABBY_MOBILE_LARK_CHAT_SECRET: ${{ secrets.RABBY_MOBILE_LARK_CHAT_SECRET || secrets.LARK_CHAT_SECRET }}
           RABBY_ROBOT_LARK_APP_ID: ${{ secrets.RABBY_ROBOT_LARK_APP_ID }}
           RABBY_ROBOT_LARK_APP_SECRET: ${{ secrets.RABBY_ROBOT_LARK_APP_SECRET }}
 

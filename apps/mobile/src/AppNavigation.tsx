@@ -1,3 +1,4 @@
+import { RoundedFontStyles } from '@/core/utils/fonts';
 import { createCustomNativeStackNavigator as createNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
 import {
   DarkTheme,
@@ -22,7 +23,7 @@ import {
   UnlockUIManager,
   useStackScreenConfig,
 } from './hooks/navigation';
-import { analytics, matomoLogScreenView } from './utils/analytics';
+import { analytics } from './utils/analytics';
 
 import { AppStatusBar } from './components/AppStatusBar';
 import AutoLockView from './components/AutoLockView';
@@ -49,12 +50,17 @@ import {
   TokenMarketInfoScreen,
 } from '@/perfs/loadables/screens';
 import UnlockScreen from '@/screens/Unlock/Unlock';
+import { TokenDetailHeader } from '@/screens/TokenDetail/components/HeaderArea';
 import SetupWallet from '@/screens/Address/SetupWallet';
 import SelectImportMethod from '@/screens/Address/SelectImportMethod';
 import ImportRabbyWallet from '@/screens/Address/ImportRabbyWallet';
-import { ImportSecret } from '@/screens/Address/ImportSecret';
+import {
+  ImportSecret,
+  ImportSecretHeader,
+} from '@/screens/Address/ImportSecret';
 import MoreImportMethods from '@/screens/Address/MoreImportMethods';
 import SelectAddMethod from '@/screens/Address/SelectAddMethod';
+import { AutoFitCenterHeader } from '@/components/AutoFitCenterHeader';
 import Backup from '@/screens/Address/Backup';
 import BiometricsStubModal from './components/AuthenticationModal/BiometricsStubModal';
 import { ScreenshotFeedbackHost } from './components/Screenshot/SubmitFeedback/GlobalHost';
@@ -107,6 +113,7 @@ import { FeedbackHistoryHost } from './components/Screenshot/FeedbackHistory/Glo
 import { setServiceRuntimeDiagnosticsContextProvider } from './core/serviceApi/serviceRuntimeDiagnostics';
 import { withRegressionScenario } from '@/devtools/regressionScenarios/react';
 import { createAutoUnlockPresentationPolicy } from '@/utils/autoUnlockPresentationPolicy';
+import { browserPerpsNavigation } from '@/hooks/browser/browserPerpsNavigation';
 
 const RootStack = createNativeStackNavigator<RootStackParamsList>();
 const AccountStack = createNativeStackNavigator<AccountNavigatorParamList>();
@@ -268,10 +275,9 @@ const onStateChange: React.ComponentProps<
     onRouteChange(currentRouteName, previousRouteName);
 
     analytics.logScreenView({
-      screen_name: routeNameRef.current || '',
-      screen_class: routeNameRef.current || '',
+      screen_name: currentRouteName || '',
+      screen_class: currentRouteName || '',
     });
-    matomoLogScreenView({ name: currentRouteName! });
   }
   routeNameRef.current = currentRouteName;
 };
@@ -508,7 +514,6 @@ export default function AppNavigation() {
       screen_name: readyRootName,
       screen_class: readyRootName,
     });
-    matomoLogScreenView({ name: readyRootName });
   }, []);
 
   useDetermineExitAppOnPressBack();
@@ -576,8 +581,10 @@ export default function AppNavigation() {
                   component={HomeScreenNavigator}
                   options={{
                     ...RootAnimOptions,
-                    // Hidden Home state updates should not compete with the pushed screen.
-                    freezeOnBlur: true,
+                    // Home keeps animated pagers mounted across nested add-wallet
+                    // routes. Fabric freezing detaches their animated views, so
+                    // returning from a second pushed screen can leave Home blank.
+                    freezeOnBlur: false,
                   }}
                 />
                 <RootStack.Screen
@@ -633,6 +640,15 @@ export default function AppNavigation() {
                 <RootStack.Screen
                   name={RootNames.StackTransaction}
                   component={TransactionNavigator}
+                  listeners={({ route, navigation }) => ({
+                    transitionEnd: event => {
+                      browserPerpsNavigation.onTransitionEnd({
+                        requestId: route.params?.browserPerpsNavigationId,
+                        closing: event.data.closing,
+                        isFocused: navigation.isFocused(),
+                      });
+                    },
+                  })}
                 />
                 <RootStack.Screen
                   name={RootNames.StackSettings}
@@ -663,8 +679,13 @@ export default function AppNavigation() {
                   options={mergeScreenOptions2024([
                     {
                       headerShown: true,
-                      headerTitle: t(
-                        'page.newUserOnboarding.restoreWallet.title',
+                      // Same native-title overflow as SelectAddMethod (QA 1352).
+                      header: () => (
+                        <AutoFitCenterHeader
+                          title={t(
+                            'page.newUserOnboarding.restoreWallet.title',
+                          )}
+                        />
                       ),
                     },
                   ])}
@@ -675,6 +696,9 @@ export default function AppNavigation() {
                   options={mergeScreenOptions2024([
                     {
                       headerShown: true,
+                      // Fully custom header: fixed leading/trailing slots keep
+                      // the segmented toggle centred on every device (QA 1344).
+                      header: () => <ImportSecretHeader />,
                     },
                   ])}
                 />
@@ -684,8 +708,13 @@ export default function AppNavigation() {
                   options={mergeScreenOptions2024([
                     {
                       headerShown: true,
-                      headerTitle: t(
-                        'screens.addressStackTitle.MoreImportMethods',
+                      // Same native-title overflow as SelectAddMethod (QA 1352).
+                      header: () => (
+                        <AutoFitCenterHeader
+                          title={t(
+                            'screens.addressStackTitle.MoreImportMethods',
+                          )}
+                        />
                       ),
                     },
                   ])}
@@ -696,8 +725,16 @@ export default function AppNavigation() {
                   options={mergeScreenOptions2024([
                     {
                       headerShown: true,
-                      headerTitle: t(
-                        'page.nextComponent.addAddress.selectAddMethod',
+                      // Production keeps this title left-aligned next to the
+                      // back control; the native header centred the long pt-BR
+                      // translation and pushed it past the trailing edge
+                      // (QA 1352).
+                      header: () => (
+                        <AutoFitCenterHeader
+                          title={t(
+                            'page.nextComponent.addAddress.selectAddMethod',
+                          )}
+                        />
                       ),
                     },
                   ])}
@@ -727,7 +764,13 @@ export default function AppNavigation() {
                     component={NFTDetailScreen}
                     options={mergeScreenOptions({
                       headerShown: true,
-                      headerTitleAlign: 'center',
+                      // QA 1343: the detail rows draw their own back button.
+                      // Hide the native one from the first frame so the push
+                      // transition cannot show it (and a shifted title) first.
+                      headerTitleAlign: 'left',
+                      headerBackVisible: false,
+                      headerLeft: () => null,
+                      unstable_headerLeftItems: () => [],
                       headerTitle: '',
                       headerStyle: {
                         // backgroundColor: colors['neutral-bg-2'],
@@ -738,15 +781,43 @@ export default function AppNavigation() {
                   <RootStack.Screen
                     name={RootNames.TokenDetail}
                     component={TokenDetailScreen}
-                    options={mergeScreenOptions({
-                      headerShown: true,
-                      headerTitleAlign: 'left',
-                      headerTitle: '',
-                      headerStyle: {
-                        // backgroundColor: colors['neutral-bg-2'],
-                        backgroundColor: 'transparent',
-                      },
-                    })}
+                    options={({ route }) =>
+                      mergeScreenOptions({
+                        headerShown: true,
+                        headerTitleAlign: 'left',
+                        // QA 1343: the title row renders its own back button,
+                        // so the native item must not exist even for the first
+                        // frame of the push transition.
+                        headerBackVisible: false,
+                        headerLeft: () => null,
+                        unstable_headerLeftItems: () => [],
+                        // Build the row from route params so token detail and
+                        // token market detail render the same header from the
+                        // first frame, with no layout shift between them.
+                        // Custom header: fixed leading/middle/trailing slots
+                        // owned by us, so the row does not depend on the
+                        // native title-slot origin (QA 1343).
+                        header: () => (
+                          <TokenDetailHeader
+                            token={
+                              (route.params as { token?: any } | undefined)
+                                ?.token
+                            }
+                            isCustomTestnetToken={
+                              (
+                                route.params as {
+                                  isCustomTestnetToken?: boolean;
+                                }
+                              )?.isCustomTestnetToken
+                            }
+                          />
+                        ),
+                        headerStyle: {
+                          // backgroundColor: colors['neutral-bg-2'],
+                          backgroundColor: 'transparent',
+                        },
+                      })
+                    }
                     getId={({ params }) => {
                       const idStr = [
                         params.token.id,
@@ -761,15 +832,37 @@ export default function AppNavigation() {
                   <RootStack.Screen
                     name={RootNames.TokenMarketInfo}
                     component={TokenMarketInfoScreen}
-                    options={mergeScreenOptions({
-                      headerShown: true,
-                      headerTitleAlign: 'left',
-                      headerTitle: '',
-                      headerStyle: {
-                        // backgroundColor: colors['neutral-bg-2'],
-                        backgroundColor: 'transparent',
-                      },
-                    })}
+                    options={({ route }) =>
+                      mergeScreenOptions({
+                        headerShown: true,
+                        headerTitleAlign: 'left',
+                        headerBackVisible: false,
+                        headerLeft: () => null,
+                        unstable_headerLeftItems: () => [],
+                        // Custom header: fixed leading/middle/trailing slots
+                        // owned by us, so the row does not depend on the
+                        // native title-slot origin (QA 1343).
+                        header: () => (
+                          <TokenDetailHeader
+                            token={
+                              (route.params as { token?: any } | undefined)
+                                ?.token
+                            }
+                            isCustomTestnetToken={
+                              (
+                                route.params as {
+                                  isCustomTestnetToken?: boolean;
+                                }
+                              )?.isCustomTestnetToken
+                            }
+                          />
+                        ),
+                        headerStyle: {
+                          // backgroundColor: colors['neutral-bg-2'],
+                          backgroundColor: 'transparent',
+                        },
+                      })
+                    }
                     getId={({ params }) => {
                       const idStr = [
                         params.token.id,
@@ -794,8 +887,7 @@ export default function AppNavigation() {
                       headerTintColor: colors['neutral-title-2'],
                       headerTitleStyle: {
                         color: colors['neutral-title-2'],
-                        fontWeight: '900',
-                        fontFamily: 'SF Pro Rounded',
+                        ...RoundedFontStyles.heavy,
                       },
                     })}
                   />
@@ -849,7 +941,7 @@ function AccountNavigator() {
         },
         headerTitleStyle: {
           color: colors['neutral-title-1'],
-          fontWeight: 'normal',
+          fontWeight: '400',
         },
       })}>
       <AccountStack.Screen

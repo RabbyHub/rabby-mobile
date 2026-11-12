@@ -13,7 +13,8 @@ import { useTranslation } from 'react-i18next';
 import type { PerpsProCancelConfirmation } from '../../scene/usePerpsProCancelOrders';
 
 // Figma 84231:25827 uses compact modal actions, as does Close All Positions.
-const CANCEL_ACTION_HEIGHT = 40;
+// Figma 86609:313792: 48pt actions and a secondary-color message.
+const CANCEL_ACTION_HEIGHT = 48;
 
 export const PerpsProCancelConfirmationModal: React.FC<{
   confirmation: PerpsProCancelConfirmation | null;
@@ -135,7 +136,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: '100%',
   },
   message: {
-    color: colors2024['neutral-body'],
+    color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 16,
     lineHeight: 20,

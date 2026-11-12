@@ -58,8 +58,15 @@ jest.mock('@/utils/styles', () => ({
   createGetStyles2024: (getStyle: unknown) => getStyle,
 }));
 
-jest.mock('@rneui/themed', () => ({
-  Slider: (props: object) => {
+jest.mock('react-native-reanimated', () => ({
+  __esModule: true,
+  default: { View: require('react-native').View },
+  useAnimatedStyle: (factory: () => object) => factory(),
+  useSharedValue: (value: number) => ({ value }),
+}));
+
+jest.mock('@/components/perps/PerpsGestureSlider', () => ({
+  PerpsGestureSlider: (props: object) => {
     const ReactModule = require('react');
     const { View } = require('react-native');
     return ReactModule.createElement(View, {
@@ -167,28 +174,29 @@ describe('PerpsProTradeSkeleton', () => {
       backgroundColor: 'transparent',
       borderRadius: 0,
       borderWidth: 0,
-      height: 13,
-      width: 13,
+      height: 12,
+      width: 12,
     });
     expect(
-      screen.getByTestId('rne-slider').props.thumbProps.children.props,
+      screen.getByTestId('perps-pro-trade-amount-slider-thumb').props,
     ).toMatchObject({
       fill: 'neutral-bg-1',
       stroke: 'neutral-title-1',
-      height: 13,
-      width: 13,
+      height: 12,
+      width: 12,
     });
     expect(
       StyleSheet.flatten(
-        screen.getAllByTestId('perps-pro-trade-amount-slider-point')[0].props
-          .style,
+        screen.getAllByTestId('perps-pro-trade-amount-slider-point-active')[0]
+          .props.style,
       ),
     ).toMatchObject({
       backgroundColor: 'neutral-bg-1',
       borderColor: 'neutral-title-1',
-      borderWidth: 1,
-      height: 7,
-      width: 7,
+      opacity: 1,
+      borderWidth: 2,
+      height: 10,
+      width: 10,
     });
     expect(screen.getByLabelText('Amount(USDC)')).toBeTruthy();
     expect(screen.queryByTestId('perps-pro-trade-amount-minus')).toBeNull();

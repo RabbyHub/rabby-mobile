@@ -1,12 +1,13 @@
 import React, { useCallback, useEffect, useMemo } from 'react';
 import {
   StyleSheet,
+  findNodeHandle,
   View,
   PressableProps,
   type StyleProp,
   type TextStyle,
 } from 'react-native';
-import { Platform, StatusBar, Pressable } from 'react-native';
+import { Pressable } from 'react-native';
 import Tooltip, { TooltipProps } from 'react-native-walkthrough-tooltip';
 import { colord } from 'colord';
 import { useThemeStyles } from '@/hooks/theme';
@@ -15,6 +16,20 @@ import { AppColorsVariants } from '@/constant/theme';
 import { RNGHPressable, RNGHPressableProps } from './customized/reexports';
 import { Text } from '@/components/Typography';
 import { TrackedModal } from './Modal/TrackedModal';
+import type { ModalGateId } from '@/utils/modalGate';
+import RNHelpers from '@/core/native/RNHelpers';
+
+const measureAnchor: NonNullable<TooltipProps['measureAnchor']> = (
+  anchor,
+  viewport,
+) => {
+  const anchorTag = findNodeHandle(anchor);
+  const viewportTag = findNodeHandle(viewport);
+  if (anchorTag === null || viewportTag === null) {
+    return Promise.reject(new Error('Tooltip views are not mounted'));
+  }
+  return RNHelpers.measureViewRelativeTo(anchorTag, viewportTag);
+};
 
 type PressableComponent = 'RNPressable' | 'RNGHPressable';
 type PressableComProps<T extends PressableComponent> = T extends 'RNPressable'
@@ -34,15 +49,31 @@ type TipProps<T extends PressableComponent> = Omit<TooltipProps, 'content'> & {
     }) => void;
   };
   noPressable?: boolean;
-  modalGateId?: string;
+  modalGateId?: ModalGateId;
   modalGateBlocking?: boolean;
+  onModalDismiss?: () => void;
 };
 
 const destroyListeners = new Set<() => void>();
 
+/**
+ * Many call sites pass `cond ? text : undefined` and wrap a button. With no
+ * content there is nothing to show, so the Tip must neither open (an empty
+ * tooltip is an invisible full-screen Modal) nor take taps from its children.
+ */
+export function hasTipContent(
+  content: TipProps<PressableComponent>['content'],
+) {
+  if (typeof content === 'string') {
+    return content.trim().length > 0;
+  }
+  return content !== null && content !== undefined;
+}
+
 const TipModalGateContext = React.createContext<{
-  modalGateId: string;
+  modalGateId: ModalGateId;
   modalGateBlocking: boolean;
+  onModalDismiss?: () => void;
 } | null>(null);
 
 const TipModalWithGate = ({
@@ -59,7 +90,8 @@ const TipModalWithGate = ({
     <TrackedModal
       {...modalProps}
       modalId={modalGate.modalGateId}
-      blocking={modalGate.modalGateBlocking}>
+      blocking={modalGate.modalGateBlocking}
+      onDismiss={modalGate.onModalDismiss}>
       {children}
     </TrackedModal>
   );
@@ -85,12 +117,20 @@ const TipBase = <T extends PressableComponent = 'RNPressable'>({
   noPressable = false,
   modalGateId,
   modalGateBlocking = true,
+  onModalDismiss,
   modalComponent,
   ...rest
 }: TipProps<T>) => {
   const { colors, styles } = useThemeStyles(getStyle);
 
   const { on, turnOn, turnOff } = useSwitch();
+  const hasContent = hasTipContent(content);
+
+  useEffect(() => {
+    if (!hasContent) {
+      turnOff();
+    }
+  }, [hasContent, turnOff]);
 
   useEffect(() => {
     destroyListeners.add(turnOff);
@@ -145,9 +185,10 @@ const TipBase = <T extends PressableComponent = 'RNPressable'>({
         ? {
             modalGateId,
             modalGateBlocking,
+            onModalDismiss,
           }
         : null,
-    [modalGateBlocking, modalGateId],
+    [modalGateBlocking, modalGateId, onModalDismiss],
   );
 
   const onPress = pressableProps?.onPress;
@@ -158,27 +199,31 @@ const TipBase = <T extends PressableComponent = 'RNPressable'>({
         return;
       }
 
+      // Nothing to show: do not mount an invisible full-screen tooltip. The
+      // press itself already happened above, so a button that carries an empty
+      // tip keeps working.
+      if (!hasContent) {
+        return;
+      }
+
       turnOn();
     },
-    [onPress, turnOff, turnOn],
+    [hasContent, onPress, turnOff, turnOn],
   );
 
   const tooltipNode = (
     <Tooltip
-      isVisible={on}
       placement="top"
       backgroundColor={'transparent'}
-      topAdjustment={
-        Platform.OS === 'android' && StatusBar
-          ? -(StatusBar.currentHeight || 0)
-          : 0
-      }
+      measureAnchor={measureAnchor}
+      topAdjustment={0}
       onClose={turnOff}
       content={_content}
       showChildInTooltip={false}
       arrowSize={_arrowSize}
       modalComponent={modalGateId ? TipModalWithGate : modalComponent}
       {...rest}
+      isVisible={hasContent && (rest.isVisible ?? on)}
       contentStyle={StyleSheet.flatten([
         styles.tooltipContent,
         contentStyle,
@@ -193,6 +238,9 @@ const TipBase = <T extends PressableComponent = 'RNPressable'>({
         <PressableComponent
           hitSlop={10}
           {...pressableProps}
+          // Keep the caller's disabled state only: clearing it for empty
+          // content used to drop the button's own onPress.
+          disabled={!!pressableProps?.disabled}
           // @ts-expect-error
           style={StyleSheet.flatten([pressableProps?.style])}
           // @ts-expect-error

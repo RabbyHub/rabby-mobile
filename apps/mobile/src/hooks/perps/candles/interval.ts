@@ -1,4 +1,9 @@
-import { CANDLE_MENU_KEY_V2, type PerpsCandleInterval } from '@/constant/perps';
+import {
+  CANDLE_MENU_KEY_V2,
+  type PerpsCandleDataInterval,
+  type PerpsCandleInterval,
+} from '@/constant/perps';
+import { SIMPLE_INTERVAL_GROUPS } from '@/constant/perpsSimpleChart';
 
 const MINUTE_MS = 60 * 1000;
 const DAY_MS = 24 * 60 * MINUTE_MS;
@@ -8,7 +13,7 @@ const HISTORY_PAGE_CANDLE_COUNT = 1000;
 const MONTHLY_INITIAL_SOURCE_CANDLE_COUNT = 1240;
 
 const INTERVAL_DURATION_MS: Record<
-  Exclude<PerpsCandleInterval, '1w' | '1M'>,
+  Exclude<PerpsCandleDataInterval, '1w' | '1M'>,
   number
 > = {
   '1m': MINUTE_MS,
@@ -20,32 +25,27 @@ const INTERVAL_DURATION_MS: Record<
   '8h': 8 * 60 * MINUTE_MS,
   '12h': 12 * 60 * MINUTE_MS,
   '1d': DAY_MS,
+  '3d': 3 * DAY_MS,
 };
 
+// Same intervals and labels as the Simple interval sheet, so a manual
+// interval picked in either mode exists in the other.
 export const PERPS_PRO_CANDLE_INTERVAL_OPTIONS: ReadonlyArray<{
   label: string;
-  value: PerpsCandleInterval;
-}> = [
-  { label: '1m', value: '1m' },
-  { label: '5m', value: '5m' },
-  { label: '15m', value: '15m' },
-  { label: '30m', value: '30m' },
-  { label: '1H', value: '1h' },
-  { label: '4H', value: '4h' },
-  { label: '8H', value: '8h' },
-  { label: '12H', value: '12h' },
-  { label: '1D', value: '1d' },
-  { label: '1W', value: '1w' },
-  { label: '1M', value: '1M' },
-];
+  value: PerpsCandleDataInterval;
+}> = SIMPLE_INTERVAL_GROUPS.flatMap(group => group.values).map(value => ({
+  label:
+    value.endsWith('d') || value.endsWith('w') ? value.toUpperCase() : value,
+  value,
+}));
 
 export const getPerpsCandleSource = (
-  interval: PerpsCandleInterval,
+  interval: PerpsCandleDataInterval,
 ): {
   sourceCandleCount: number;
   maximumSourceCandleCount: number;
   historyPageCandleCount: number;
-  sourceInterval: Exclude<PerpsCandleInterval, '1w' | '1M'>;
+  sourceInterval: Exclude<PerpsCandleDataInterval, '1w' | '1M'>;
   sourceIntervalMs: number;
 } => {
   if (interval === '1w') {
@@ -76,7 +76,7 @@ export const getPerpsCandleSource = (
 };
 
 export const getPerpsCandleHistoryStartTime = (
-  interval: PerpsCandleInterval,
+  interval: PerpsCandleDataInterval,
   endTime: number,
 ) => {
   const { sourceCandleCount, sourceIntervalMs } =

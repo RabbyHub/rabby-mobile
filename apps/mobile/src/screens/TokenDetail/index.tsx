@@ -1,12 +1,11 @@
 /* eslint-disable react-native/no-inline-styles */
-import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { apiCustomTestnet } from '@/core/apis';
 import { openapi } from '@/core/request';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useRoute, useFocusEffect } from '@react-navigation/native';
-import { useDebounceFn, useRequest } from 'ahooks';
+import { useDebounceFn } from 'ahooks';
 import React, { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -18,24 +17,18 @@ import {
   View,
 } from 'react-native';
 import { TokenDetailHeaderArea } from './components/HeaderArea';
-import { useTriggerTagAssets } from '../Home/hooks/refresh';
-import { apisAddressBalance } from '@/hooks/useCurrentBalance';
 import { formatPrice } from '@/utils/number';
 import { GetRootScreenNavigationProps } from '@/navigation-type';
 import { TokenDetailHistoryList } from './components/HistoryList';
 import { isFromBackAtom } from '../Swap/hooks/atom';
 import BalanceOverview from './components/BalanceOverview';
 import { useSingleTokenBalance } from './hook';
-import {
-  BOTTOM_BUTTON_DOUBLE_HEIGHT,
-  BOTTOM_BUTTON_TOP_OFFSET,
-  RootNames,
-  getBottomButtonBottomOffset,
-} from '@/constant/layout';
+import { RootNames } from '@/constant/layout';
 import { navigateDeprecated } from '@/utils/navigation';
-import { RightMore } from './components/RightMore';
 import { useSetAtom } from 'jotai';
 import { TokenDetailBottomBtns } from './components/BottomBtns';
+import { RemovedTokenNotice } from './components/RemovedToken';
+import { useRemovedTokens } from '@/hooks/useRemovedTokens';
 import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
 import {
   ScreenSceneAccountProvider,
@@ -54,6 +47,11 @@ import { TokenDetailWalletCard } from './components/TokenDetailWalletCard';
 import { findChainByServerID } from '@/utils/chain';
 import { customTestnetTokenToTokenItem } from '@/utils/token';
 import { mergeTokenSecurityFields } from '@/utils/tokenSecurityFlags';
+import {
+  getTokenDetailRequestKey,
+  getTokenDetailBalanceStatus,
+  useTokenDetailTokenInfo,
+} from './useTokenDetailTokenInfo';
 export type { RelatedDeFiType, TokenFromAddressItem } from './types';
 
 const isAndroid = Platform.OS === 'android';
@@ -67,6 +65,7 @@ const TokenDetailContent = () => {
     account,
     tokenSelectType,
     isCustomTestnetToken = false,
+    needUseCacheToken = false,
   } = route.params || {};
   const fadeAnim = React.useRef(new Animated.Value(1)).current;
 
@@ -74,6 +73,11 @@ const TokenDetailContent = () => {
     getStyle,
   });
   const { t } = useTranslation();
+  const isRemoved = useRemovedTokens(
+    state =>
+      !isCustomTestnetToken &&
+      state.isTokenRemoved({ chainId: token.chain, tokenId: token.id }),
+  );
 
   const setIsFromBack = useSetAtom(isFromBackAtom);
 
@@ -123,8 +127,6 @@ const TokenDetailContent = () => {
     ? currentAccount
     : account || currentAccount;
 
-  const { setNavigationOptions } = useSafeSetNavigationOptions();
-
   const fetchBaseTokenInfo = useCallback(async () => {
     if (isCustomTestnetToken) {
       const chainItem = findChainByServerID(token.chain);
@@ -164,10 +166,27 @@ const TokenDetailContent = () => {
     } as ITokenItem;
   }, [effectiveAccount?.address, isCustomTestnetToken, token]);
 
-  const { data: baseTokenInfo, refreshAsync: refreshBaseTokenInfo } =
-    useRequest(fetchBaseTokenInfo, {
-      manual: true,
-    });
+  const {
+    tokenInfo: baseTokenInfo,
+    refreshAsync: refreshBaseTokenInfo,
+    initialLoading: baseTokenInitialLoading,
+  } = useTokenDetailTokenInfo({
+    requestKey: getTokenDetailRequestKey({
+      address: effectiveAccount?.address,
+      chain: token.chain,
+      tokenId: token.id,
+      isCustomTestnetToken,
+    }),
+    fetchToken: fetchBaseTokenInfo,
+  });
+  // History/search entry points pass amount: 0 as a placeholder, not as a
+  // fetched balance. Normal asset-list entries keep showing their real cache.
+  const balanceStatus = getTokenDetailBalanceStatus({
+    needUseCacheToken,
+    hasTokenInfo: !!baseTokenInfo,
+    initialLoading: baseTokenInitialLoading,
+    routeTokenAmount: token.amount,
+  });
   const [manualBaseTokenRefreshing, setManualBaseTokenRefreshing] =
     React.useState(false);
 
@@ -202,27 +221,6 @@ const TokenDetailContent = () => {
     token.id,
   ]);
 
-  const { tokenRefresh, singleTokenRefresh } = useTriggerTagAssets();
-
-  const refreshTag = useCallback(() => {
-    singleTokenRefresh();
-    tokenRefresh();
-  }, [singleTokenRefresh, tokenRefresh]);
-
-  const getHeaderTitle = useCallback(() => {
-    return (
-      <TokenDetailHeaderArea
-        style={{ marginLeft: isAndroid ? 0 : -30 }}
-        key={effectiveAccount?.address}
-        tokenSize={33}
-        chainSize={15}
-        borderChain
-        token={token}
-        showCopyIcon
-      />
-    );
-  }, [effectiveAccount?.address, token]);
-
   const handleOpenTokenMarketInfo = useCallback(() => {
     navigateDeprecated(RootNames.TokenMarketInfo, {
       ...route.params,
@@ -230,28 +228,6 @@ const TokenDetailContent = () => {
       account: effectiveAccount,
     });
   }, [baseTokenInfo, effectiveAccount, route.params, token]);
-
-  const getHeaderRight = useCallback(() => {
-    if (isCustomTestnetToken) {
-      return null;
-    }
-
-    return (
-      <RightMore
-        token={token}
-        triggerUpdate={() =>
-          effectiveAccount?.address &&
-          apisAddressBalance.triggerUpdate({
-            address: effectiveAccount?.address,
-            force: false,
-            fromScene: 'TokenDetail',
-          })
-        }
-        isMultiAddress={false}
-        refreshTags={refreshTag}
-      />
-    );
-  }, [effectiveAccount?.address, isCustomTestnetToken, refreshTag, token]);
 
   useFocusEffect(
     useCallback(() => {
@@ -271,14 +247,6 @@ const TokenDetailContent = () => {
       setIsFromBack,
     ]),
   );
-
-  React.useEffect(() => {
-    setNavigationOptions({
-      headerTitle: getHeaderTitle,
-      headerRight: getHeaderRight,
-      headerTitleAlign: 'left',
-    });
-  }, [setNavigationOptions, getHeaderRight, getHeaderTitle]);
 
   const {
     amountSum,
@@ -302,12 +270,17 @@ const TokenDetailContent = () => {
   const renderHeader = useCallback(() => {
     return (
       <View style={[styles.balanceOverviewContainer, styles.listHeader]}>
+        {isRemoved && <RemovedTokenNotice />}
         <AccountSwitcher
           forScene="TokenDetail"
           disableSwitch={isCustomTestnetToken}
         />
         <View style={styles.balanceOverviewContent}>
-          <BalanceOverview usdValue={usdValue} amount={amountSum || 0} />
+          <BalanceOverview
+            usdValue={usdValue}
+            amount={amountSum || 0}
+            status={balanceStatus}
+          />
           {!baseTokenInfo ? null : (
             <Pressable
               style={[
@@ -410,6 +383,7 @@ const TokenDetailContent = () => {
     );
   }, [
     amountSum,
+    balanceStatus,
     baseTokenInfo,
     colors2024,
     effectiveAccount,
@@ -417,6 +391,7 @@ const TokenDetailContent = () => {
     has24hChangeData,
     isCustomTestnetToken,
     is24hNoChange,
+    isRemoved,
     isLoss,
     percentChange,
     price,
@@ -483,14 +458,13 @@ const TokenDetailContent = () => {
         disableHistoryRequest={isCustomTestnetToken}
       />
 
-      <View style={styles.bottomContainer}>
-        <TokenDetailBottomBtns
-          token={token}
-          finalAccount={effectiveAccount}
-          tokenSelectType={tokenSelectType}
-          disableSwapBridge={isCustomTestnetToken}
-        />
-      </View>
+      <TokenDetailBottomBtns
+        token={token}
+        finalAccount={effectiveAccount}
+        tokenSelectType={tokenSelectType}
+        disableSwapBridge={isCustomTestnetToken}
+        isRemoved={isRemoved}
+      />
       <AccountSwitcherModal token={token} forScene="TokenDetail" inScreen />
     </NormalScreenContainer2024>
   );
@@ -513,7 +487,7 @@ export const TokenDetailScreen = () => {
 };
 
 const getStyle = createGetStyles2024(ctx => {
-  const { colors2024, isLight, safeAreaInsets } = ctx;
+  const { colors2024, isLight } = ctx;
   return {
     rootScreenContainer: {
       backgroundColor: isLight
@@ -534,18 +508,6 @@ const getStyle = createGetStyles2024(ctx => {
     },
     listHeader: {
       marginHorizontal: -12,
-    },
-    bottomContainer: {
-      width: '100%',
-      height:
-        BOTTOM_BUTTON_TOP_OFFSET +
-        BOTTOM_BUTTON_DOUBLE_HEIGHT +
-        getBottomButtonBottomOffset(safeAreaInsets.bottom),
-      backgroundColor: colors2024['neutral-bg-1'],
-      position: 'absolute',
-      bottom: 0,
-      left: 0,
-      right: 0,
     },
     balanceOverviewContent: {
       display: 'flex',
@@ -643,14 +605,14 @@ const getStyle = createGetStyles2024(ctx => {
       color: colors2024['neutral-title-1'],
       fontSize: 14,
       lineHeight: 18,
-      fontWeight: '800',
+      fontWeight: '900',
       fontFamily: 'SF Pro Rounded',
     },
     floatPriceChange: {
       color: colors2024['neutral-title-1'],
       fontSize: 14,
       lineHeight: 18,
-      fontWeight: '800',
+      fontWeight: '900',
       fontFamily: 'SF Pro Rounded',
     },
     noChangePriceChange: {

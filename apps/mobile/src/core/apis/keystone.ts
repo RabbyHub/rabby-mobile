@@ -137,17 +137,25 @@ export async function exportCurrentSignRequestIdIfExist() {
   return keyring.exportCurrentSignRequestIdIfExist();
 }
 
+const forwardedInteractions = new WeakSet();
+
 export async function acquireKeystoneMemStoreData() {
   const keyring = await getKeyring<KeystoneKeyring>(
     KEYRING_TYPE.KeystoneKeyring,
   );
 
-  keyring.getInteraction().once(MemStoreDataReady, request => {
-    eventBus.emit(EVENTS.QRHARDWARE.ACQUIRE_MEMSTORE_SUCCEED, {
-      request,
+  const interaction = keyring.getInteraction();
+  // The keyring also pushes MemStoreDataReady when a request is created later,
+  // so forward it once for the singleton interaction instead of per call.
+  if (!forwardedInteractions.has(interaction)) {
+    forwardedInteractions.add(interaction);
+    interaction.on(MemStoreDataReady, request => {
+      eventBus.emit(EVENTS.QRHARDWARE.ACQUIRE_MEMSTORE_SUCCEED, {
+        request,
+      });
     });
-  });
-  keyring.getInteraction().emit(AcquireMemeStoreData);
+  }
+  interaction.emit(AcquireMemeStoreData);
 }
 
 export async function submitQRHardwareSignature(

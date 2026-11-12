@@ -77,14 +77,14 @@ export const TokenItemContextMenu: React.FC<Props> = props => {
           : i18n.t('page.tokenDetail.action.favorite'),
         icon: isPinned
           ? isDarkTheme
-            ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_unfavorite_dark.png')
-            : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_unfavorite.png')
+            ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_favorite_dark.png')
+            : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_favorite.png')
           : isDarkTheme
-          ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_favorite_dark.png')
-          : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_favorite.png'),
+          ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_unfavorite_dark.png')
+          : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_unfavorite.png'),
         androidIconName: isPinned
-          ? 'ic_rabby_menu_token_unfavorite'
-          : 'ic_rabby_menu_token_favorite',
+          ? 'ic_rabby_menu_token_favorite'
+          : 'ic_rabby_menu_token_unfavorite',
         key: 'favorite',
         action() {
           handlePress();

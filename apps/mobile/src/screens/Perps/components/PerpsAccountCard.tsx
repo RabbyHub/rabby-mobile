@@ -14,6 +14,7 @@ import {
   AppState,
   ImageBackground,
   Pressable,
+  StyleSheet,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -86,8 +87,7 @@ export const PerpsAccountCard: React.FC = () => {
     accountValue,
     isUnifiedAccount,
   } = usePerpsAccount();
-  const { hasNonPerpsAssets, showPortfolioBreakdown } =
-    useShowPerpsPortfolioBreakdown();
+  const { showPortfolioBreakdown } = useShowPerpsPortfolioBreakdown();
 
   const currentAddress = useActivityStore(
     perpsStore,
@@ -249,6 +249,9 @@ export const PerpsAccountCard: React.FC = () => {
   }));
 
   const canExpandChart = !!portfolioData && !isPortfolioEmpty;
+  // Hidden only when every asset is zero (also covers not-logged-in / loading,
+  // where there is no value yet).
+  const canShowBreakdown = (displayValue ?? 0) > 0;
 
   const isNewUser = useMemo(() => {
     return (
@@ -280,27 +283,32 @@ export const PerpsAccountCard: React.FC = () => {
   return (
     <>
       <View style={styles.cardShadow}>
-        <LinearGradient
-          // Opaque composite of the design's white 90%->54% glass over the
-          // screen's bg0 (#F6F7F7) — deterministic regardless of what is
-          // rendered behind the card.
-          colors={
-            isLight
-              ? ['#FEFEFE', '#FAFBFB']
-              : [colors2024['neutral-bg-1'], colors2024['neutral-bg-1']]
-          }
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
+        <View
           style={styles.card}
           onLayout={e => setCardWidth(e.nativeEvent.layout.width)}>
+          <LinearGradient
+            // Opaque composite of the design's white 90%->54% glass over the
+            // screen's bg0 (#F6F7F7) — deterministic regardless of what is
+            // rendered behind the card.
+            colors={
+              isLight
+                ? ['#FEFEFE', '#FAFBFB']
+                : [colors2024['neutral-bg-1'], colors2024['neutral-bg-1']]
+            }
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            pointerEvents="none"
+            style={StyleSheet.absoluteFill}
+          />
           <View style={styles.upperSection}>
             <View style={styles.headerRow}>
               <View style={styles.headerLeft}>
                 <View style={styles.titleRow}>
                   {/* The breakdown sheet is reached by the dotted label
-                      itself; the label stays plain when there is nothing
-                      to break down. */}
-                  {hasNonPerpsAssets ? (
+                      itself. It also explains the account mode, so it shows
+                      even when spot / staking are empty; the label stays
+                      plain only when every asset is zero. */}
+                  {canShowBreakdown ? (
                     <PerpsProDottedUnderlineText
                       accessibilityLabel={portfolioValueLabel}
                       onPress={() => showPortfolioBreakdown(displayValue || 0)}
@@ -498,7 +506,7 @@ export const PerpsAccountCard: React.FC = () => {
               )}
             </View>
           </View>
-        </LinearGradient>
+        </View>
       </View>
       {showLearnMore && (
         <LinearGradient
@@ -571,10 +579,15 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
         }
       : null),
   },
+  // The border lives on a plain View. On the gradient itself the legacy
+  // interop also forwards border props to the native gradient layer, which
+  // paints a second, misaligned ring — visible with the translucent dark
+  // border.
   card: {
     borderRadius: 14,
     borderWidth: 2,
     borderColor: isLight ? '#FFFFFF' : 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: isLight ? '#FEFEFE' : colors2024['neutral-bg-1'],
     overflow: 'hidden',
   },
   upperSection: {
@@ -789,7 +802,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 20,
     lineHeight: 24,
-    fontWeight: '800',
+    fontWeight: '900',
     color: colors2024['neutral-title-1'],
   },
   learnDesc: {

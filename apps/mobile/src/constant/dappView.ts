@@ -39,12 +39,7 @@ export const parsePossibleURL = (_str: string) => {
  *
  * List of all trusted protocols for OS Linker to handle
  */
-export const trustedProtocolToDeeplink = [
-  'wc:',
-  'metamask:',
-  'ethereum:',
-  'dapp:',
-];
+export const trustedProtocolToDeeplink = ['wc:', 'ethereum:', 'dapp:'];
 
 /**
  * Returns translated warning message for the
@@ -99,9 +94,13 @@ export const getAlertMessage = (protocol: string) => {
  * @param url - String containing url
  * @returns Promise<any>
  */
-export const allowLinkOpen = (url: string) =>
-  Linking.canOpenURL(url)
+export const allowLinkOpen = (url: string, canOpen?: () => boolean) => {
+  if (canOpen && !canOpen()) return Promise.resolve(null);
+
+  return Linking.canOpenURL(url)
     .then(supported => {
+      // The originating tab may have been hidden while the native query ran.
+      if (canOpen && !canOpen()) return null;
       if (supported) {
         return Linking.openURL(url);
       }
@@ -111,3 +110,4 @@ export const allowLinkOpen = (url: string) =>
     .catch(e => {
       console.warn(`Error opening URL: ${e}`);
     });
+};

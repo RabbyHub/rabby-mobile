@@ -2,6 +2,7 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { findChain } from '@/utils/chain';
 import { createGetStyles2024 } from '@/utils/styles';
+import { makeHistoryDetailColors } from '../detailColors';
 import type { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import React, { useMemo } from 'react';
 import { ScrollView, TouchableOpacity, View } from 'react-native';
@@ -154,9 +155,7 @@ const getStyle = createGetStyles2024(
     },
     card: {
       width: '100%',
-      backgroundColor: !isLight
-        ? colors2024['neutral-bg-2']
-        : colors2024['neutral-bg-1'],
+      backgroundColor: makeHistoryDetailColors({ isLight, colors2024 }).card,
       borderRadius: 16,
     },
     singleBox: {
@@ -170,7 +169,7 @@ const getStyle = createGetStyles2024(
       fontFamily: 'SF Pro Rounded',
       fontSize: 20,
       lineHeight: 24,
-      fontWeight: '800',
+      fontWeight: '700',
     },
     usdValue: {
       color: colors2024['neutral-secondary'],
@@ -184,9 +183,8 @@ const getStyle = createGetStyles2024(
     extraItem: {
       flexDirection: 'row',
       padding: 12,
-      backgroundColor: isLight
-        ? colors2024['neutral-bg-2']
-        : colors2024['neutral-bg-1'],
+      backgroundColor: makeHistoryDetailColors({ isLight, colors2024 })
+        .cardInner,
       borderRadius: 12,
       justifyContent: 'space-between',
       alignItems: 'flex-start',

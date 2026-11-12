@@ -31,9 +31,6 @@ import RuleDrawer from './SecurityEngine/RuleDrawer';
 import Actions from './TextActions';
 import { useTheme2024 } from '@/hooks/theme';
 import { getStyles } from './SignTx/style';
-import { getKRCategoryByType } from '@/utils/transaction';
-import { matomoRequestEvent } from '@/utils/analytics';
-import { stats } from '@/utils/stats';
 import { useEnterPassphraseModal } from '@/hooks/useEnterPassphraseModal';
 import { CHAINS } from '@debank/common';
 import { getTimeSpan } from '@/utils/time';
@@ -52,7 +49,6 @@ import { Text } from '@/components/Typography';
 import type { ProviderRequestContext } from '@/core/controllers/type';
 import { tokenizeSignMessageText } from './signMessageTokenizer';
 import { useSignMessageAddressData } from './useSignMessageAddressData';
-import { addSignMessageOriginFallback } from './signMessageOrigin';
 import { SignMessageTagProvider } from './SignMessageHighlighter';
 
 interface SignTextProps {
@@ -186,40 +182,10 @@ export const SignText = ({
       origin: session.origin,
     });
   }, [signText, session, params.requestContext?.chainId]);
-  const isUnparsedAction = textActionData?.action === null;
 
   const isViewGnosisSafe = params?.$ctx?.isViewGnosisSafe;
 
-  const report = async (
-    action:
-      | 'createSignText'
-      | 'startSignText'
-      | 'cancelSignText'
-      | 'completeSignText',
-    extra?: Record<string, any>,
-  ) => {
-    if (!currentAccount) {
-      return;
-    }
-    matomoRequestEvent({
-      category: 'SignText',
-      action: action,
-      label: [
-        getKRCategoryByType(currentAccount.type),
-        currentAccount.brandName,
-      ].join('|'),
-      transport: 'beacon',
-    });
-    stats.report(action, {
-      type: currentAccount.brandName,
-      category: getKRCategoryByType(currentAccount.type),
-      method: 'personalSign',
-      ...extra,
-    });
-  };
-
   const handleCancel = () => {
-    report('cancelSignText');
     rejectApproval('User rejected the request.');
   };
 
@@ -254,20 +220,11 @@ export const SignText = ({
 
       return;
     }
-    report('startSignText');
     resolveApproval({});
   };
 
-  const withOriginFallback = (ctx: Parameters<typeof executeEngine>[0]) =>
-    addSignMessageOriginFallback(ctx, {
-      isUnparsedAction,
-      isInternalOrigin: session.origin === INTERNAL_REQUEST_ORIGIN,
-      message: signText,
-      origin: session.origin,
-    });
-
   const executeSecurityEngine = async () => {
-    const baseCtx = await formatSecurityEngineContext({
+    const ctx = await formatSecurityEngineContext({
       type: 'text',
       actionData: parsedActionData || ({} as any),
       origin: session.origin,
@@ -279,7 +236,7 @@ export const SignText = ({
         hasAddress: address => keyringServiceApi.hasAddress(address),
       },
     });
-    const result = await executeEngine(withOriginFallback(baseCtx));
+    const result = await executeEngine(ctx);
     setEngineResults(result);
   };
 
@@ -444,7 +401,7 @@ export const SignText = ({
       sender,
     });
     setParsedActionData(parsed);
-    const baseCtx = await formatSecurityEngineContext({
+    const ctx = await formatSecurityEngineContext({
       type: 'text',
       actionData: parsed,
       origin: params.session.origin,
@@ -456,7 +413,7 @@ export const SignText = ({
         hasAddress: address => keyringServiceApi.hasAddress(address),
       },
     });
-    const result = await executeEngine(withOriginFallback(baseCtx));
+    const result = await executeEngine(ctx);
     setEngineResults(result);
     setIsLoading(false);
   };
@@ -495,7 +452,6 @@ export const SignText = ({
   }, []);
 
   useEffect(() => {
-    report('createSignText');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

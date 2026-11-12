@@ -13,7 +13,6 @@ import { openapi } from '@/core/request';
 import { APP_URLS, APP_VERSIONS, APPLICATION_ID } from '@/constant';
 import { isNonPublicProductionEnv } from '@/constant';
 import { Platform } from 'react-native';
-import { matomoRequestEvent } from '@/utils/analytics';
 import { getDeviceInfoForFeedbackText } from '@/utils/deviceInfo';
 import { openExternalUrl } from '@/core/utils/linking';
 import {
@@ -25,6 +24,7 @@ import { runStartupTask } from '@/core/utils/startupScheduler';
 import { useShallow } from 'zustand/react/shallow';
 import { zCreate } from '@/core/utils/reexports';
 import { perfEvents } from '@/core/utils/perf';
+import { markRateGuideViewed } from './rateGuideState';
 
 const TX_COUNT_LIMIT = isNonPublicProductionEnv ? 1 : 3; // Minimum number of transactions before showing the rate guide
 const STAR_COUNT = 5;
@@ -172,12 +172,7 @@ export function useIncreaseTxCountOnAppTop({
 }
 
 const disableExposureRateGuide = () => {
-  setRateGuideLastExposure(prev => ({
-    ...getDefaultRateGuideLastExposure({
-      time: prev[VERSIONED_KEY]?.time,
-      userViewedRate: true,
-    }),
-  }));
+  setRateGuideLastExposure(prev => markRateGuideViewed(prev));
   setRateModalState(getDefaultValue());
 };
 
@@ -335,11 +330,6 @@ const pushRateDetails = async (params?: { userStar?: number }) => {
         text: feedbackContent,
         usage: 'rating',
       });
-      matomoRequestEvent({
-        category: 'Rate Rabby',
-        action: 'Rate_SubmitAdvice',
-        label: [userStar].join('|'),
-      });
     }
   } catch (error) {
     Sentry.captureException(error, {
@@ -355,11 +345,6 @@ const pushRateDetails = async (params?: { userStar?: number }) => {
 };
 
 const openAppRateUrl = () => {
-  matomoRequestEvent({
-    category: 'Rate Rabby',
-    action: 'Rate_JumpAppStore',
-    label: [rateModalStore.getState().userStar].join('|'),
-  });
   openExternalUrl(APP_URLS.RATE_URL);
 };
 

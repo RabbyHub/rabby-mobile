@@ -5,7 +5,7 @@ import { StyleSheet } from 'react-native';
 const mockDecimalProps = jest.fn();
 const mockInputFocus = jest.fn();
 
-jest.mock('@/assets2024/icons/perps/PerpsProPrecisionCaret.svg', () => {
+jest.mock('@/assets2024/icons/perps/PerpsProTpSlSelectCaret.svg', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
   return (props: object) => ReactModule.createElement(View, props);
@@ -26,6 +26,7 @@ jest.mock('@/hooks/theme', () => ({
 jest.mock('@/utils/styles', () => ({
   createGetStyles2024: (getStyle: unknown) => getStyle,
 }));
+jest.mock('react-native-reanimated', () => ({ runOnUI: jest.fn() }));
 jest.mock('../trade/PerpsProDecimalTextInput', () => {
   const ReactModule = require('react');
   const { TextInput } = require('react-native');
@@ -69,8 +70,9 @@ describe('PerpsProPositionTpSlInput', () => {
       StyleSheet.flatten(screen.getByTestId('field-field').props.style),
     ).toMatchObject({
       gap: 4,
-      height: 40,
-      paddingHorizontal: 8,
+      height: 46,
+      paddingHorizontal: 11,
+      paddingRight: 7,
     });
     expect(
       StyleSheet.flatten(screen.getByTestId('field-label').props.style),
@@ -79,7 +81,7 @@ describe('PerpsProPositionTpSlInput', () => {
       fontSize: 10,
       fontWeight: '500',
       lineHeight: 12,
-      top: 4,
+      top: 7,
     });
     expect(screen.getByText('63,870.7')).toBeTruthy();
     expect(
@@ -91,27 +93,19 @@ describe('PerpsProPositionTpSlInput', () => {
       fontSize: 14,
       fontWeight: '500',
       lineHeight: 18,
-      top: 18,
+      top: 21,
     });
-    expect(
-      StyleSheet.flatten(screen.getByTestId('field-caret').props.style),
-    ).toMatchObject({
-      height: 6,
-      width: 8,
+    expect(screen.getByTestId('field-caret').props).toMatchObject({
+      height: 16,
+      width: 16,
+      color: 'neutral-secondary',
     });
-    expect(screen.getByTestId('field-caret-glyph').props).toMatchObject({
-      height: 4,
-      width: 6,
-    });
-    expect(
-      StyleSheet.flatten(screen.getByTestId('field-caret-glyph').props.style),
-    ).toMatchObject({ transform: [{ rotate: '180deg' }] });
     expect(mockDecimalProps.mock.lastCall?.[0].inputComponent).toBe(
       PerpsProPositionTpSlBottomSheetTextInput,
     );
     expect(mockDecimalProps.mock.lastCall?.[0]).toMatchObject({
       focusCursorAtEnd: true,
-      focusCursorAtEndMode: 'initialFocus',
+      focusCursorAtEndMode: 'nativeFocus',
       pointerEvents: 'none',
     });
   });
@@ -131,7 +125,7 @@ describe('PerpsProPositionTpSlInput', () => {
 
     expect(
       StyleSheet.flatten(screen.getByTestId('field-placeholder').props.style),
-    ).toMatchObject({ fontSize: 14, lineHeight: 18, top: 11 });
+    ).toMatchObject({ fontSize: 14, lineHeight: 18, top: 14 });
 
     rerender(
       <PerpsProPositionTpSlInput
@@ -159,6 +153,17 @@ describe('PerpsProPositionTpSlInput', () => {
     expect(StyleSheet.flatten(screen.getByTestId('field').props.style)).toEqual(
       expect.objectContaining({ color: 'neutral-title-1' }),
     );
+
+    const input = screen.getByTestId('field');
+    fireEvent(input, 'blur');
+    expect(screen.getByTestId('field')).toBe(input);
+    expect(screen.getByText('1,234.5')).toBeTruthy();
+    expect(StyleSheet.flatten(input.props.style)).toMatchObject({
+      color: 'transparent',
+    });
+    expect(StyleSheet.flatten(input.props.style).opacity ?? 1).toBe(1);
+    expect(input.props.accessibilityLabel).toBe('ROI');
+    expect(input.props.pointerEvents).toBe('none');
   });
 
   it('shows a fixed negative sign for Stop Loss ROI/PnL magnitudes', () => {

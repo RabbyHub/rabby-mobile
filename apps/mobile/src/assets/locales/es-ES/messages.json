@@ -51,13 +51,6 @@
         "cancel": "Cancelar"
       }
     },
-    "ReserveGasPopup": {
-      "normal": "Lento",
-      "doNotReserve": "No reservar Gas",
-      "title": "Reserva Gas",
-      "instant": "Rápido",
-      "fast": "Normal"
-    },
     "AuthenticationModal": {
       "passwordPlaceholder": "Introduce la contraseña para confirmar"
     },
@@ -181,7 +174,8 @@
       },
       "alertText": "DApp de terceros: para problemas de uso, contacta con el soporte de la DApp. Rabby solo proporciona acceso de visualización.",
       "title": "Captura de pantalla para reportar un error",
-      "submitFailed": "Error al enviar."
+      "submitFailed": "Error al enviar.",
+      "includeAddress": "Compartir dirección para solucionar problemas"
     },
     "submitFeedbackSuccessModal": {
       "desc": "¡Enviado con éxito!"
@@ -681,7 +675,13 @@
         "empty": {
           "title": "Aún no hay transacciones firmadas",
           "titleLastThreeMonths": "Sin historial de transacciones en 90 días",
+          "titleInLast90Days": "No hay transacciones en los últimos 90 días",
+          "titleNoTransactions": "No hay transacciones",
           "testnetNoHistory": "El historial de transacciones de tokens personalizados no está disponible."
+        },
+        "noMore": {
+          "title": "No hay más transacciones.",
+          "titleInLast90Days": "No hay más transacciones en los últimos 90 días."
         },
         "message": {
           "cancelSuccess": "Cancelado",
@@ -1176,11 +1176,9 @@
       "no-quote": "Sin cotización",
       "est-payment": "Pago estimado:",
       "no-route-found": "No se encontró ruta",
-      "no-quote-found": "No se encontró ninguna cotización. Prueba con otros pares de tokens.",
+      "no-quote-found": "No se encontró ninguna cotización.",
       "loss-tips": "Está perdiendo {{usd}}. Intente con una cantidad diferente.",
       "duration": "{{duration}} min",
-      "for-available-quote": "para una cotización disponible",
-      "bridge-from": "Origen del bridge",
       "price-impact": "Impacto en el precio",
       "From": "Desde",
       "bridged": "Bridge iniciado",
@@ -1206,7 +1204,42 @@
       "formChangedTitle": "Formulario cambiado",
       "formChangedAmount": "La cantidad ha cambiado, posiblemente debido al autocompletado de la contraseña por parte del teclado del sistema. Revísala y vuelve a introducir la cantidad correcta.",
       "best-subtitle": "La mejor cotización se determina por una combinación del coste total estimado (incluidas las tarifas de Gas) y la velocidad de entrega.",
-      "swap-best-subtitle": "La mejor cotización se determina por el coste total estimado más bajo, incluidos el tipo de cambio y las comisiones de gas."
+      "swap-best-subtitle": "La mejor cotización se determina por el coste total estimado más bajo, incluidos el tipo de cambio y las comisiones de gas.",
+      "duration-sec": "{{duration}} s",
+      "duration-hour": "{{duration}} h",
+      "duration-hour-min": "{{hours}} h {{minutes}} min",
+      "duration-day": "{{duration}} d",
+      "duration-day-hour": "{{days}} d {{hours}} h",
+      "duration-day-min": "{{days}} d {{minutes}} min",
+      "duration-day-hour-min": "{{days}} d {{hours}} h {{minutes}} min",
+      "status": {
+        "bridging": "Bridge en curso,",
+        "bridged": "Bridge completado",
+        "historyTitle": "Historial de bridges",
+        "today": "Hoy",
+        "eta": "tiempo estimado: {{time}}",
+        "stillBridging": "Bridge aún en curso",
+        "delayed": "Bridge retrasado",
+        "sourceFailed": "El bridge falló. Tus {{token}} no se enviaron",
+        "tokenNotSent": "Tus {{token}} no se enviaron",
+        "failed": "Fallido",
+        "bridgeFailed": "Bridge fallido",
+        "refunded": "Reembolsado",
+        "refundedIn": "Reembolsado en {{token}}",
+        "contactSupport": "Contactar con soporte",
+        "viewDetails": "Ver detalles",
+        "sendingFrom": "Enviando desde {{chain}}",
+        "receivingOn": "Recepción en {{chain}}",
+        "processing": "Procesando",
+        "queued": "En cola",
+        "pending": "Pendiente",
+        "completed": "Completado",
+        "refund": "Reembolsado",
+        "waiting": "Esperando la transacción de destino",
+        "goBack": "Volver",
+        "bridgeAgain": "Hacer bridge de nuevo",
+        "captureFailed": "No se pudo capturar la pantalla. Inténtalo de nuevo."
+      }
     },
     "newAddress": {
       "Quick": "Rápido",
@@ -1318,7 +1351,8 @@
       "keystone": {
         "scan": {
           "title": "Escanear Keystone para conectar",
-          "description": "Escanea el código QR en tu monedero Keystone"
+          "description": "Escanea el código QR en tu monedero Keystone",
+          "invalidQRCode": "Código QR no válido. Escanea el código QR de sincronización de la cartera de hardware."
         },
         "camera": {
           "description": "Habilita el acceso a la cámara y escanea tu Keystone",
@@ -1632,9 +1666,7 @@
     },
     "createPassword": {
       "Newpassword": "Introducir contraseña",
-      "and": "y",
       "confirmRequired": "Por favor confirma la contraseña",
-      "termOfUse": "Términos de Uso",
       "title": "Establecer Contraseña",
       "setUpSuccess": "Configuración de contraseña exitosa",
       "phoneNotSupport": "Tu teléfono no es compatible con {{ bioType }}",
@@ -1648,21 +1680,21 @@
       "subTitle": "Esta contraseña desbloquea tu cartera y cifra tus datos en este dispositivo. No se puede recuperar. Si la pierdes, tendrás que restablecer y volver a importar tu cartera.",
       "passwordMin": "La contraseña debe tener al menos 8 caracteres",
       "confirmTitle": "Confirmar contraseña",
-      "PrivacyPolicy": "Política de Privacidad",
       "agree": "He leído y acepto los<1/> <2>Términos de Uso</2>",
-      "agreeToTerms": "He leído y estoy de acuerdo con los",
       "passwordPlaceholder": "La contraseña debe tener al menos 8 caracteres.",
       "confirmModalDesc": "Guarda bien tu contraseña. Si la pierdes, Rabby no podrá cambiarla ni recuperarla.",
       "setWallet": "Configurar cartera",
-      "biometricsFail": "Error al habilitar la autenticación biométrica"
+      "biometricsFail": "Error al habilitar la autenticación biométrica",
+      "dataAnalysisDesc": "Comparte datos de uso anónimos para ayudar a mejorar Rabby. Los datos recopilados no se asocian contigo ni con tu cuenta. Puedes cambiarlo en cualquier momento en Configuración.",
+      "agreeByContinuing": "Al continuar, aceptas los <terms>Términos de Uso</terms> y reconoces la <privacy>Política de Privacidad</privacy>."
     },
     "approvalsAddressList": {
       "title": "Aprobaciones"
     },
     "receiveAddressList": {
       "selectChainTitle": "Seleccionar red",
-      "title": "Seleccionar cartera",
-      "subtitle": "Elige una cartera para recibir tus criptoactivos."
+      "title": "Seleccionar cartera para recibir",
+      "subtitle": "Elige una dirección de cartera para recibir tus activos."
     },
     "sign": {
       "transactionSpeed": "Velocidad de Transacción"
@@ -1710,6 +1742,10 @@
       }
     },
     "singleHome": {
+      "tokenActions": {
+        "remove": "Eliminar",
+        "removeFailed": "No se pudo eliminar el token"
+      },
       "sectionHeader": {
         "Nft": "NFT",
         "Token": "Token",
@@ -1727,6 +1763,9 @@
       }
     },
     "customTestnet": {
+      "screenTitle": "Red personalizada",
+      "removeNetwork": "Eliminar {{name}}",
+      "editTitle": "Editar red personalizada",
       "empty": "Sin red personalizada",
       "add": "Añadir red personalizada",
       "id": "ID",
@@ -1775,6 +1814,13 @@
       }
     },
     "tokenDetail": {
+      "removed": {
+        "restore": "Restaurar token eliminado",
+        "restoreFailed": "No se pudo restaurar el token",
+        "more": "Más",
+        "confirmTitle": "¿Eliminar este token?",
+        "confirmDescription": "· Este token dejará de aparecer en tu portfolio después de eliminarlo.\n· Puedes restaurarlo en cualquier momento en Configuración >> Tokens eliminados."
+      },
       "excludeBalanceTipsButton": "Entendido",
       "action": {
         "all": "Todo",
@@ -1876,10 +1922,15 @@
       "price": "Precio",
       "headerBalanceText": "Saldo",
       "copyCA": "Dirección del contrato del token copiada",
+      "copyCAWarning": "Esta es la dirección del contrato de un token.\nNo se puede usar para recibir activos.",
       "wallet": "Cartera",
       "customTestnetNotSupported": "El token de esta red no es compatible"
     },
     "setting": {
+      "removedToken": {
+        "title": "Tokens eliminados",
+        "description": "Los tokens eliminados se ocultarán de tu portfolio en todas tus direcciones, pero seguirán incluidos en el cálculo de tu saldo."
+      },
       "feedback": "Comentarios",
       "screenTitle": "Configuración",
       "clearPending": "Borrar transacciones pendientes localmente",
@@ -1910,7 +1961,8 @@
       "searchCurrency": "Buscar moneda",
       "currency": "Moneda",
       "screenshotReportSwitch": "Captura de pantalla para informar un error",
-      "dataAnalysis": "Análisis de datos",
+      "dataAnalysis": "Ayuda a mejorar Rabby",
+      "dataAnalysisDesc": "Comparte datos de uso anónimos para ayudar a mejorar Rabby. Los datos recopilados no se asocian contigo ni con tu cuenta.",
       "bugReportChat": "Compartir comentarios por chat",
       "features": "Funciones",
       "manageWallets": "Gestionar carteras"
@@ -2045,6 +2097,7 @@
       "emptyWhitelistContent": "Añade direcciones de confianza a la lista de permisos para hacer transferencias rápidas; la próxima vez no necesitarás confirmación",
       "SendHistory": "Historial de Envíos",
       "enterOrSearchAddress": "Introducir o Buscar Dirección",
+      "resolvingAddressName": "Buscando dirección...",
       "dividerWatchOnlyWallets": "Direcciones de solo visualización"
     },
     "confirmAddress": {
@@ -2102,6 +2155,7 @@
       "customNetworkTokenHeader": "Redes personalizadas agregadas"
     },
     "browser": {
+      "openInRabbyPerps": "Abrir en Rabby Perps",
       "BrowserHeader": {
         "searchIos": "Buscar sitio web",
         "searchAndroid": "Buscar DApp"
@@ -2423,8 +2477,7 @@
           }
         },
         "chart": {
-          "open": "Abrir gráfico",
-          "resetPriceScale": "Restablecer la escala de precios del gráfico"
+          "open": "Abrir gráfico"
         },
         "account": {
           "disabledFrame": "Las acciones de la cuenta no están disponibles en esta fase",
@@ -2567,12 +2620,14 @@
           "positionAmount": "Cantidad de la posición",
           "estimatedPnl": "PnL estimado",
           "skipLimitConfirmation": "No volver a mostrar la doble confirmación para órdenes límite.",
+          "skipMarketCloseConfirmation": "No volver a mostrar esta confirmación de cierre a mercado.",
           "closeSubmitted": "Orden de cierre enviada",
           "closeFailed": "No se ha podido cerrar la posición",
           "minimumCloseAmount": "El importe mínimo de cierre es de 10 $",
           "closeContextChanged": "La posición o la cuenta han cambiado. Vuelve a revisarlo."
         },
         "positionTpsl": {
+          "skipConfirmation": "No volver a mostrar esta confirmación de TP/SL.",
           "addButton": "Añadir TP/SL",
           "addTitle": "Añadir TP/SL",
           "cancelFailed": "No se ha podido cancelar la orden TP/SL",
@@ -2583,6 +2638,7 @@
           "duplicatePositionOrders": "Existen varias órdenes TP/SL de posición en este lado. Cancélalas individualmente o actualiza antes de modificarlas.",
           "estimatedLiquidation": "Precio de liquidación est.",
           "estimatedPnl": "PnL estimado",
+          "estimatedPnlDescription": "PnL estimado <2>{{pnl}} {{quoteAsset}}(ROI: {{roi}}%)</2>",
           "estimatedPnlShort": "PnL est.",
           "invalidOrder": "Revisa el precio y la cantidad de TP/SL",
           "invalidTrigger": "El precio de activación no es válido para el precio de marca más reciente",
@@ -2767,7 +2823,6 @@
         "feeHyperliquid": "Hyperliquid",
         "feeDesc": "Cuando los usuarios realizan transacciones, se aplican tanto las <1>comisiones de trading</1> como las <2>comisiones de builder</2>.",
         "feeRabby": "Rabby Wallet",
-        "feeRabbyDiscount": "Descuento por tiempo limitado en tarifas de trading",
         "amount": "Importe",
         "asset": "Activo",
         "action": "Acción"
@@ -2831,7 +2886,7 @@
         "desc": "Vas a cerrar sesión en la cuenta Perps actual. Puedes restaurarla en cualquier momento iniciando sesión de nuevo con esta dirección."
       },
       "PerpsDepositCard": {
-        "availableToTrade": "Disponible para comerciar:",
+        "availableToTrade": "Disponible:",
         "deposit": "Depósito",
         "swap": "Swap"
       },
@@ -2907,6 +2962,50 @@
       }
     },
     "perpsDetail": {
+      "simpleAccount": {
+        "margin": "Margen",
+        "averageEntry": "Precio medio de entrada",
+        "estimatedLiquidationPrice": "Precio de liq. estimado",
+        "estimatedLiquidationDistance": "Distancia de liq. estimada",
+        "tpSl": "TP/SL",
+        "takeProfitPrice": "Precio de toma de ganancias",
+        "stopLossPrice": "Precio de stop loss",
+        "funding": "Financiación",
+        "nextFundingRate": "Próxima tasa de financiación",
+        "estimatedPnl": "PnL estimado",
+        "closePositionTitle": "Cerrar posición de {{coin}}",
+        "estimatedRealizedPnl": "PnL realizado estimado"
+      },
+      "simpleChart": {
+        "openInterest": "Interés abierto",
+        "volume24h": "Volumen en 24 h",
+        "intervalTitle": "Intervalo de las velas",
+        "intervalDescription": "Cada vela representa el intervalo seleccionado.",
+        "minutes": "Minutos",
+        "hours": "Horas",
+        "days": "Días",
+        "open": "Apertura",
+        "low": "Mínimo",
+        "high": "Máximo",
+        "close": "Cierre",
+        "time": "Hora",
+        "change": "Variación",
+        "changePercent": "Variación (%)",
+        "averageEntry": "Precio medio de entrada",
+        "takeProfit": "Toma de beneficios",
+        "stopLoss": "Stop loss",
+        "liquidation": "Precio de liquidación",
+        "all": "TODO",
+        "source": "Servicio ofrecido por Hyperliquid. Gráfico de precios proporcionado por <tradingview>TradingView.</tradingview>",
+        "resetChart": "Restablecer el gráfico",
+        "backToLatest": "Volver a los datos más recientes",
+        "switchToArea": "Cambiar a gráfico de áreas",
+        "switchToCandle": "Cambiar a gráfico de velas",
+        "showVolume": "Mostrar volumen en 24 h",
+        "showOpenInterest": "Mostrar interés abierto",
+        "buy": "Compra",
+        "sell": "Venta"
+      },
       "PerpEditLimitPriceTag": {
         "setLimitBuyPrice": "Establecer Precio de Compra Límite",
         "setLimitSellPrice": "Establecer Precio de Venta Límite",
@@ -2935,7 +3034,7 @@
         "settings": "Ajustes",
         "unrealizedPnl": "PNL no realizado",
         "marginMode": "Modo Margen",
-        "fundingTipsBold": "Esto muestra el total de funding liquidado desde que se abrió la posición. Los valores <bold>verdes (positivos)</bold> significan que has recibido funding de otros traders, mientras que los valores <bold>rojos (negativos)</bold> son costes de funding que les has pagado.",
+        "fundingTipsBold": "Esto muestra el total de funding liquidado desde que se abrió la posición. Los valores <positive>verdes (positivos)</positive> significan que has recibido funding de otros traders, mientras que los valores <negative>rojos (negativos)</negative> son costes de funding que les has pagado.",
         "crossTips": "En el modo de Margen Cruzado, el precio de liquidación para una sola posición es una estimación solo para referencia."
       },
       "PerpsInfo": {
@@ -3072,6 +3171,13 @@
       },
       "addressEditorBadge": {
         "nameUnknown": "Nombrar la dirección"
+      },
+      "scanQrcode": {
+        "chooseFromGallery": "Elegir de la galería",
+        "noQrCode": "No se encontró ningún código QR en esta imagen",
+        "multipleQrCodes": "Se encontraron varios códigos QR. Elige una imagen con un solo código QR",
+        "invalidAddress": "No se encontró una dirección válida en este código QR",
+        "readImageFailed": "No se pudo leer la imagen. Inténtalo de nuevo"
       }
     },
     "Lending": {
@@ -3378,6 +3484,72 @@
     "batchRevoke": {
       "title": "Revocación por lotes"
     },
+    "memeCoin": {
+      "holdingsEntry": "tenencias",
+      "pnlPeriod24h": "24h",
+      "pnlPeriodAll": "Todos",
+      "pnlTipLabel": "PnL",
+      "backToMarket": "Volver al mercado de memes",
+      "marketTitle": "Mercado de memes",
+      "holdingsTitle": "Tenencias",
+      "marketCap": "Capitalización de mercado",
+      "valuePnl": "Valor / PnL",
+      "searchMarket": "Buscar en el mercado de memes",
+      "noMatch": "No hay memes que coincidan",
+      "noHoldings": "Aún no tienes tenencias",
+      "loadFailed": "Error al cargar. Toca para reintentar",
+      "buyN": "Comprar {{count}} memes",
+      "buyN_one": "Comprar {{count}} meme",
+      "sellN": "Vender {{count}} memes",
+      "sellN_one": "Vender {{count}} meme",
+      "selectToBuy": "Selecciona memes para comprar",
+      "selectToSell": "Selecciona memes para vender",
+      "maxPriceImpact": "Impacto máx. en el precio",
+      "unsupportedAddressType": "Tipo de dirección no compatible",
+      "accountChanged": "La dirección ha cambiado. Vuelve a empezar",
+      "addressSwitchUnsupported": "No se puede cambiar de dirección en esta página.",
+      "buy": {
+        "amount": "Importe de compra",
+        "allocation": "Asignación",
+        "byMarketCap": "Por capitalización",
+        "equalSplit": "Reparto equitativo",
+        "estPayment": "Pago est. {{amount}}",
+        "needed": "Faltan {{amount}}",
+        "anotherNeeded": "Faltan otros {{amount}}",
+        "preview": "Vista previa",
+        "paymentTokens": "Tokens de pago",
+        "selectTokens": "Seleccionar tokens",
+        "selectPaymentAssets": "Selecciona activos para pagar",
+        "estPaymentLabel": "Pago est.",
+        "noPaymentToken": "No hay ningún token de pago seleccionado",
+        "confirm": "Confirmar",
+        "noAssets": "No hay activos disponibles"
+      },
+      "execute": {
+        "title": "Ejecutar",
+        "buySubtitleShort": "En orden dentro de cada red, en paralelo entre redes.",
+        "sellSubtitle": "Los fondos obtenidos permanecen en sus respectivas redes",
+        "estReceipt": "Recibido est.(USD)",
+        "statusPending": "Pendiente",
+        "statusPendingPrevious": "Esperando la transacción anterior en la misma red",
+        "statusExecuting": "Ejecutando",
+        "statusSuccessful": "Exitosa",
+        "confirm": "Confirmar",
+        "back": "Atrás",
+        "retryFailedTxns": "Reintentar {{count}} transacciones fallidas",
+        "retryFailedTxns_one": "Reintentar {{count}} transacción fallida",
+        "progress": "Ejecutando · {{done}}/{{total}} completadas",
+        "done": "Hecho",
+        "exitTitle": "¿Cancelar la ejecución y volver?",
+        "exitDesc1": "La ejecución se detendrá. Las transacciones no enviadas no se procesarán.",
+        "exitDesc2": "Las transacciones ya enviadas a la red no se pueden deshacer y podrían completarse.",
+        "stopAndExit": "Detener y salir",
+        "continue": "Continuar",
+        "failReason": {
+          "buildFailed": "Error al crear la transacción"
+        }
+      }
+    },
     "convertDust": {
       "failReason": {
         "quoteUnavailable": "Error al obtener la cotización",
@@ -3437,6 +3609,7 @@
       "screenTitle": "Conectar cartera",
       "connectingToRabby": "Conectando a Rabby",
       "pairingFailed": "El emparejamiento de WalletConnect ha fallado.",
+      "proposalNotReceived": "Es posible que el código QR de WalletConnect haya caducado. Actualízalo e inténtalo de nuevo.",
       "connected": "Conectado correctamente. Vuelve a la DApp.",
       "proposalExpired": "La propuesta de WalletConnect ha caducado.",
       "pairingExpired": "El emparejamiento de WalletConnect ha caducado. Actualiza el código QR de la dapp e inténtalo de nuevo.",
@@ -3481,7 +3654,8 @@
     "time": {
       "mins": "{{t}} min",
       "hour": "{{t}} hora",
-      "hours": "{{t}} horas"
+      "hours": "{{t}} horas",
+      "ago": "hace {{time}}"
     },
     "copied": "Copiado",
     "cancelButton": "Cancelar",
@@ -3552,7 +3726,8 @@
     "SavedSeedPhrase": "He guardado la frase semilla",
     "from": "Desde",
     "to": "Hacia",
-    "copiedSuccessfully": "Copiado con éxito"
+    "copiedSuccessfully": "Copiado con éxito",
+    "failed": "Fallido"
   },
   "bluetooth": {
     "powered_off_alert": {

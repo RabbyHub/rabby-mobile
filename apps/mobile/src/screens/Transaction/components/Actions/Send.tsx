@@ -1,13 +1,14 @@
 /* eslint-disable react-native/no-inline-styles */
-import RcIconSingleArrow from '@/assets2024/icons/history/IconSingleArrow.svg';
 import { useTheme2024 } from '@/hooks/theme';
 import { findChain } from '@/utils/chain';
 import { formatTokenAmount, formatUsdValue } from '@/utils/number';
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
+import { makeHistoryDetailColors } from '../detailColors';
+import { HistoryDetailArrow } from '../HistoryDetailArrow';
 import { getTokenSymbol, tokenItemToITokenItem } from '@/utils/token';
 import type { SendAction, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import React, { useMemo } from 'react';
-import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { ScrollView, TouchableOpacity, View } from 'react-native';
 
 import type { TransactionGroup } from '@/core/services/transactionHistory';
 
@@ -44,7 +45,6 @@ import {
   useAccountSelectModalCtx,
   useIsUnderAccountSelectModalContext,
 } from '@/components/AccountSelectModalTx/hooks';
-import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 import { BottomSheetScrollView, BottomSheetView } from '@gorhom/bottom-sheet';
 import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import { Text } from '@/components/Typography';
@@ -68,19 +68,8 @@ const SendContent: React.FC<Props> = ({
   onPressAddToWhitelistButton,
   account,
 }) => {
-  const { styles, colors2024 } = useTheme2024({ getStyle });
+  const { styles } = useTheme2024({ getStyle });
 
-  const { safeSizes } = useSafeAndroidBottomSizes({
-    inModalContainerPb:
-      SIZES.buttonHeight + SIZES.containerPb + SIZES.bottomContentBottom,
-    // inModalButtonContainerPt: SIZES.containerPt,
-    inModalButtonContainerHeight:
-      SIZES.containerPt +
-      SIZES.buttonHeight +
-      SIZES.containerPb +
-      SIZES.bottomContentBottom,
-    inModalButtonContainerBottom: SIZES.bottomContentBottom,
-  });
   const { t } = useTranslation();
   const { actionData, sendAmount, sendUsdValue, chain } = useMemo(() => {
     const maxGasTx = data.maxGasTx;
@@ -150,9 +139,6 @@ const SendContent: React.FC<Props> = ({
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[
           accountSelectCtx.isUnderContext && styles.inModalBsContainer,
-          accountSelectCtx.isUnderContext && {
-            paddingBottom: safeSizes.inModalContainerPb,
-          },
         ]}>
         <View style={styles.card}>
           <TouchableOpacity onPress={handleGotoTokenDetail}>
@@ -192,11 +178,7 @@ const SendContent: React.FC<Props> = ({
                   flexShrink: 0,
                   width: 26,
                 }}>
-                <RcIconSingleArrow
-                  width={26}
-                  height={26}
-                  color={colors2024['neutral-bg-2']}
-                />
+                <HistoryDetailArrow />
               </View>
             </View>
           </TouchableOpacity>
@@ -232,20 +214,11 @@ const SendContent: React.FC<Props> = ({
         </ActionDetailSection>
       </ViewComp>
       <View
-        style={[
+        style={
           accountSelectCtx.isUnderContext
-            ? StyleSheet.flatten([
-                styles.inModalButtonContainer,
-                {
-                  paddingTop: SIZES.containerPt,
-                  height: safeSizes.inModalButtonContainerHeight,
-                  bottom: IS_ANDROID
-                    ? safeSizes.inModalButtonContainerBottom
-                    : 0,
-                },
-              ])
-            : styles.buttonContainer,
-        ]}>
+            ? styles.inModalButtonContainer
+            : styles.buttonContainer
+        }>
         <View
           style={[
             accountSelectCtx.isUnderContext && styles.inModalButtonInner,
@@ -318,9 +291,11 @@ const SIZES = {
 
 const getStyle = createGetStyles2024(
   ({ colors2024, isLight, safeAreaInsets }) => ({
+    // The account select sheet already pads the Android system bar inset.
     inModalBsContainer: {
       // flexShrink: 1,
-      paddingBottom: SIZES.buttonHeight + 12,
+      paddingBottom:
+        SIZES.buttonHeight + SIZES.containerPb + SIZES.bottomContentBottom,
       justifyContent: 'flex-end',
     },
     ghostButton: {
@@ -410,9 +385,7 @@ const getStyle = createGetStyles2024(
     },
     card: {
       width: '100%',
-      backgroundColor: !isLight
-        ? colors2024['neutral-bg-2']
-        : colors2024['neutral-bg-1'],
+      backgroundColor: makeHistoryDetailColors({ isLight, colors2024 }).card,
       borderRadius: 16,
     },
     singleBox: {
@@ -426,7 +399,7 @@ const getStyle = createGetStyles2024(
       fontFamily: 'SF Pro Rounded',
       fontSize: 20,
       lineHeight: 24,
-      fontWeight: '800',
+      fontWeight: '700',
       maxWidth: '100%',
       ...(IS_ANDROID && {
         width: '75%',
@@ -436,9 +409,7 @@ const getStyle = createGetStyles2024(
       paddingTop: 12,
       paddingHorizontal: 20,
       paddingBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
-      backgroundColor: !isLight
-        ? colors2024['neutral-bg-2']
-        : colors2024['neutral-bg-1'],
+      backgroundColor: makeHistoryDetailColors({ isLight, colors2024 }).footer,
     },
     inModalButtonContainer: {
       backgroundColor: !isLight
@@ -452,8 +423,11 @@ const getStyle = createGetStyles2024(
       marginTop: 0,
       width: '100%',
       height:
-        SIZES.containerPt + SIZES.buttonHeight + SIZES.bottomContentBottom,
-      bottom: SIZES.bottomContentBottom,
+        SIZES.containerPt +
+        SIZES.buttonHeight +
+        SIZES.containerPb +
+        SIZES.bottomContentBottom,
+      bottom: 0,
       // ...makeDebugBorder(),
       paddingTop: SIZES.containerPt,
     },
@@ -466,9 +440,8 @@ const getStyle = createGetStyles2024(
     extraItem: {
       flexDirection: 'row',
       padding: 12,
-      backgroundColor: isLight
-        ? colors2024['neutral-bg-2']
-        : colors2024['neutral-bg-1'],
+      backgroundColor: makeHistoryDetailColors({ isLight, colors2024 })
+        .cardInner,
       borderRadius: 12,
       justifyContent: 'space-between',
       alignItems: 'flex-start',

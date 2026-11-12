@@ -70,7 +70,8 @@
     "time": {
       "hours": "{{t}} часов",
       "hour": "{{t}} час",
-      "mins": "{{t}} минут"
+      "mins": "{{t}} минут",
+      "ago": "{{time}} назад"
     },
     "appDescription": "Ваш основной кошелёк для Ethereum и EVM-сетей",
     "Deleted": "Удалено",
@@ -142,7 +143,8 @@
     "SavedSeedPhrase": "Я сохранил сид-фразу",
     "from": "От",
     "to": "Кому",
-    "copiedSuccessfully": "Успешно скопировано"
+    "copiedSuccessfully": "Успешно скопировано",
+    "failed": "Не удалось"
   },
   "page": {
     "getStart": {
@@ -364,7 +366,13 @@
         "empty": {
           "title": "Ещё нет подписанных транзакций",
           "titleLastThreeMonths": "Нет истории транзакций за 90 дней",
+          "titleInLast90Days": "Нет транзакций за последние 90 дней",
+          "titleNoTransactions": "Нет транзакций",
           "testnetNoHistory": "История транзакций пользовательского токена недоступна."
+        },
+        "noMore": {
+          "title": "Больше нет транзакций.",
+          "titleInLast90Days": "Больше нет транзакций за последние 90 дней."
         },
         "tips": {
           "canNotCancel": "Невозможно ускорить или отменить: это не первая ожидающая транзакция",
@@ -845,14 +853,12 @@
       "bridgeFrom": "Перевести из",
       "est-receiving": "Ожидаемое получение:",
       "loss-tips": "Вы теряете {{usd}}. Попробуйте другую сумму.",
-      "for-available-quote": "для доступной котировки",
-      "bridge-from": "Перевести из",
       "history": "История переводов через мост",
       "To": "Кому",
       "via-bridge": "через {{bridge}}",
       "duration": "{{duration}} мин",
       "the-following-bridge-route-are-found": "Найдены следующие курсы",
-      "no-quote-found": "Котировка не найдена. Пожалуйста, попробуйте другие пары токенов.",
+      "no-quote-found": "Котировка не найдена.",
       "showMore": {
         "source": "Источник моста",
         "title": "Показать больше",
@@ -882,7 +888,42 @@
       "formChangedTitle": "Форма изменена",
       "formChangedAmount": "Сумма изменилась, возможно, из-за автозаполнения пароля с клавиатуры системы. Пожалуйста, проверьте и введите правильную сумму.",
       "best-subtitle": "Лучшее предложение определяется сочетанием расчётной общей стоимости (включая комиссии за газ) и скорости доставки.",
-      "swap-best-subtitle": "Лучшее предложение определяется по минимальной расчётной общей стоимости с учётом курса обмена и комиссии за газ."
+      "swap-best-subtitle": "Лучшее предложение определяется по минимальной расчётной общей стоимости с учётом курса обмена и комиссии за газ.",
+      "duration-sec": "{{duration}} с",
+      "duration-hour": "{{duration}} ч",
+      "duration-hour-min": "{{hours}} ч {{minutes}} мин",
+      "duration-day": "{{duration}} д",
+      "duration-day-hour": "{{days}} д {{hours}} ч",
+      "duration-day-min": "{{days}} д {{minutes}} мин",
+      "duration-day-hour-min": "{{days}} д {{hours}} ч {{minutes}} мин",
+      "status": {
+        "bridging": "Кроссчейн-перевод выполняется,",
+        "bridged": "Переведено через мост",
+        "historyTitle": "История кроссчейн-переводов",
+        "today": "Сегодня",
+        "eta": "осталось примерно: {{time}}",
+        "stillBridging": "Кроссчейн-перевод ещё выполняется",
+        "delayed": "Кроссчейн-перевод задерживается",
+        "sourceFailed": "Кроссчейн-перевод не выполнен. Ваши {{token}} не отправлены",
+        "tokenNotSent": "Ваши {{token}} не отправлены",
+        "failed": "Не удалось",
+        "bridgeFailed": "Кроссчейн-перевод не выполнен",
+        "refunded": "Возвращено",
+        "refundedIn": "Возвращено в {{token}}",
+        "contactSupport": "Связаться с поддержкой",
+        "viewDetails": "Посмотреть детали",
+        "sendingFrom": "Отправка из {{chain}}",
+        "receivingOn": "Получение на {{chain}}",
+        "processing": "Обрабатывается",
+        "queued": "В очереди",
+        "pending": "Ожидает",
+        "completed": "Завершено",
+        "refund": "Возвращено",
+        "waiting": "ожидание транзакции в сети назначения",
+        "goBack": "Назад",
+        "bridgeAgain": "Повторить кроссчейн-перевод",
+        "captureFailed": "Не удалось сделать снимок экрана. Повторите попытку."
+      }
     },
     "manageAddress": {
       "moreWallets": "Больше Кошельков",
@@ -1157,7 +1198,8 @@
         },
         "scan": {
           "title": "Сканируйте Keystone для подключения",
-          "description": "Отсканируйте QR-код на вашем кошельке Keystone"
+          "description": "Отсканируйте QR-код на вашем кошельке Keystone",
+          "invalidQRCode": "Недействительный QR-код. Отсканируйте QR-код синхронизации аппаратного кошелька."
         }
       },
       "privateKey": {
@@ -1537,16 +1579,12 @@
       "connectWallet": "Подключить кошелек"
     },
     "createPassword": {
-      "and": "и",
       "Newpassword": "Новый пароль",
       "passwordRequired": "Пожалуйста, введите пароль",
-      "termOfUse": "Условия использования",
       "setUpSuccess": "Пароль успешно установлен",
-      "PrivacyPolicy": "Политика конфиденциальности",
       "subTitle": "Этот пароль разблокирует кошелёк и шифрует данные на этом устройстве. Восстановить его невозможно. Если вы его потеряете, потребуется выполнить сброс и повторно импортировать кошелёк.",
       "agree": "Я прочитал и согласен с<1/> <2>Условиями использования</2>",
       "biometricsFail": "Включение биометрии не удалось",
-      "agreeToTerms": "Я прочитал и согласен с",
       "passwordPlaceholder": "Пароль должен содержать не менее 8 символов.",
       "confirmPasswordPlaceholder": "Подтвердите пароль",
       "enable": "Включить {{ bioType }}",
@@ -1560,7 +1598,9 @@
       "setWallet": "Настроить кошелёк",
       "passwordMinTip": "Должно содержать не менее 8 символов",
       "settingUp": "Установка пароля",
-      "confirmTitle": "Подтвердите пароль"
+      "confirmTitle": "Подтвердите пароль",
+      "dataAnalysisDesc": "Делитесь анонимными данными об использовании, чтобы помочь улучшить Rabby. Собранные данные не связаны с вами или вашим аккаунтом. Вы можете изменить это в любой момент в Настройках.",
+      "agreeByContinuing": "Продолжая, вы соглашаетесь с <terms>Условиями использования</terms> и подтверждаете ознакомление с <privacy>Политикой конфиденциальности</privacy>."
     },
     "addToken": {
       "tokenCustomized": "Текущий токен уже был добавлен в пользовательские настройки",
@@ -1595,6 +1635,10 @@
       "title": "Подтверждения"
     },
     "singleHome": {
+      "tokenActions": {
+        "remove": "Удалить",
+        "removeFailed": "Не удалось удалить токен"
+      },
       "sectionHeader": {
         "Nft": "NFT",
         "Token": "Токен",
@@ -1624,9 +1668,12 @@
     "receiveAddressList": {
       "selectChainTitle": "Выберите сеть",
       "title": "Выберите кошелек для получения",
-      "subtitle": "Выберите кошелек для получения криптовалюты."
+      "subtitle": "Выберите адрес кошелька для получения активов."
     },
     "customTestnet": {
+      "screenTitle": "Пользовательская сеть",
+      "removeNetwork": "Удалить {{name}}",
+      "editTitle": "Редактировать пользовательскую сеть",
       "currency": "Валюта",
       "add": "Добавить Пользовательскую Сеть",
       "id": "ID",
@@ -1700,6 +1747,10 @@
       }
     },
     "setting": {
+      "removedToken": {
+        "title": "Удалённые токены",
+        "description": "Удалённые токены будут скрыты из вашего Портфолио для всех ваших адресов, но по-прежнему будут учитываться при расчёте баланса."
+      },
       "themeMode": "Режим темы",
       "followUs": "Подписывайтесь на нас",
       "tou": "Условия использования",
@@ -1730,7 +1781,8 @@
       "screenshotReportSwitch": "Скриншот для сообщения об ошибке",
       "currency": "Валюта",
       "searchCurrency": "Поиск валюты",
-      "dataAnalysis": "Анализ данных",
+      "dataAnalysis": "Помочь улучшить Rabby",
+      "dataAnalysisDesc": "Делитесь анонимными данными об использовании, чтобы помочь улучшить Rabby. Собранные данные не связаны с вами или вашим аккаунтом.",
       "bugReportChat": "Поделиться отзывом в чате",
       "features": "Функции",
       "manageWallets": "Управление кошельками"
@@ -1827,6 +1879,13 @@
       "title": "GasAccount"
     },
     "tokenDetail": {
+      "removed": {
+        "restore": "Восстановить удалённый токен",
+        "restoreFailed": "Не удалось восстановить токен",
+        "more": "Больше",
+        "confirmTitle": "Удалить этот токен?",
+        "confirmDescription": "· После удаления этот токен больше не будет отображаться в вашем Портфолио.\n· Вы можете восстановить его в любое время в разделе Настройки >> Удалённые токены."
+      },
       "excludeBalanceTipsButton": "Понятно",
       "excludeBalanceTips": "Этот актив исключен из вашего общего баланса для точности. Вы можете нажать на него, чтобы просмотреть детали и включить его, если хотите.",
       "action": {
@@ -1928,6 +1987,7 @@
       "headerTokenValueText": "Значение токена",
       "headerBalanceText": "Баланс",
       "copyCA": "Адрес контракта токена скопирован",
+      "copyCAWarning": "Это адрес контракта токена.\nЕго нельзя использовать для получения активов.",
       "wallet": "Кошелёк",
       "customTestnetNotSupported": "Токен в этой сети не поддерживается"
     },
@@ -1970,7 +2030,8 @@
       "emptyWhitelistTip": "В белом списке пока нет адресов, ",
       "SendHistory": "История отправлений",
       "dividerWatchOnlyWallets": "Адреса только для просмотра",
-      "enterOrSearchAddress": "Введите или найдите адрес"
+      "enterOrSearchAddress": "Введите или найдите адрес",
+      "resolvingAddressName": "Поиск адреса..."
     },
     "confirmAddress": {
       "risks": {
@@ -2027,6 +2088,7 @@
       "customNetworkTokenHeader": "Добавленные пользовательские сети"
     },
     "browser": {
+      "openInRabbyPerps": "Открыть в Rabby Perps",
       "BrowserHeader": {
         "searchAndroid": "Поиск DApp",
         "searchIos": "Поиск сайта"
@@ -2348,8 +2410,7 @@
           }
         },
         "chart": {
-          "open": "Открыть график",
-          "resetPriceScale": "Сбросить масштаб цен на графике"
+          "open": "Открыть график"
         },
         "account": {
           "disabledFrame": "Действия с аккаунтом недоступны на этом этапе",
@@ -2492,12 +2553,14 @@
           "positionAmount": "Объём позиции",
           "estimatedPnl": "Расчётный PnL",
           "skipLimitConfirmation": "Больше не показывать двойное подтверждение для лимитного ордера.",
+          "skipMarketCloseConfirmation": "Больше не показывать это подтверждение закрытия позиции по рынку.",
           "closeSubmitted": "Ордер на закрытие отправлен",
           "closeFailed": "Не удалось закрыть позицию",
           "minimumCloseAmount": "Минимальная сумма закрытия — $10",
           "closeContextChanged": "Позиция или аккаунт изменились. Проверьте ещё раз."
         },
         "positionTpsl": {
+          "skipConfirmation": "Больше не показывать это подтверждение TP/SL.",
           "addButton": "Добавить TP/SL",
           "addTitle": "Добавить TP/SL",
           "cancelFailed": "Не удалось отменить ордер TP/SL",
@@ -2508,6 +2571,7 @@
           "duplicatePositionOrders": "На этой стороне существует несколько ордеров TP/SL позиции. Отмените их по отдельности или обновите данные перед изменением.",
           "estimatedLiquidation": "Расчётная цена ликвидации",
           "estimatedPnl": "Расчётный PnL",
+          "estimatedPnlDescription": "Расчётный PnL <2>{{pnl}} {{quoteAsset}}(ROI: {{roi}}%)</2>",
           "estimatedPnlShort": "Расчётный PnL",
           "invalidOrder": "Проверьте цену и объём TP/SL",
           "invalidTrigger": "Цена срабатывания недействительна для последней цены маркировки",
@@ -2691,7 +2755,6 @@
         "feeHyperliquid": "Hyperliquid",
         "feeTitle": "Комиссия",
         "feeRabby": "Rabby Wallet",
-        "feeRabbyDiscount": "Ограниченная по времени скидка на торговую комиссию",
         "feeDesc": "При совершении сделок взимаются <1>торговая комиссия</1> и <2>комиссия билдера</2>.",
         "amount": "Сумма",
         "asset": "Актив",
@@ -2757,7 +2820,7 @@
       },
       "PerpsDepositCard": {
         "deposit": "Депозит",
-        "availableToTrade": "Доступно для торговли:",
+        "availableToTrade": "Доступно:",
         "swap": "Обмен"
       },
       "PerpsAccountSelectorPopup": {
@@ -2833,6 +2896,50 @@
       }
     },
     "perpsDetail": {
+      "simpleAccount": {
+        "margin": "Маржа",
+        "averageEntry": "Средняя цена входа",
+        "estimatedLiquidationPrice": "Расч. цена ликв.",
+        "estimatedLiquidationDistance": "Расч. расстояние до ликв.",
+        "tpSl": "TP/SL",
+        "takeProfitPrice": "Цена тейк-профита",
+        "stopLossPrice": "Цена стоп-лосса",
+        "funding": "Фандинг",
+        "nextFundingRate": "Следующая ставка фандинга",
+        "estimatedPnl": "Расч. PnL",
+        "closePositionTitle": "Закрыть позицию {{coin}}",
+        "estimatedRealizedPnl": "Расч. реализованный PnL"
+      },
+      "simpleChart": {
+        "openInterest": "Открытый интерес",
+        "volume24h": "Объём за 24 ч",
+        "intervalTitle": "Интервал свечей",
+        "intervalDescription": "Каждая свеча соответствует выбранному интервалу.",
+        "minutes": "Минуты",
+        "hours": "Часы",
+        "days": "Дни",
+        "open": "Открытие",
+        "low": "Минимум",
+        "high": "Максимум",
+        "close": "Закрытие",
+        "time": "Время",
+        "change": "Изменение",
+        "changePercent": "Изменение (%)",
+        "averageEntry": "Ср. цена входа",
+        "takeProfit": "Тейк-профит",
+        "stopLoss": "Стоп-лосс",
+        "liquidation": "Цена ликвидации",
+        "all": "ВСЁ",
+        "source": "Работает на базе Hyperliquid. График цены предоставлен <tradingview>TradingView.</tradingview>",
+        "resetChart": "Сбросить график",
+        "backToLatest": "К последним данным",
+        "switchToArea": "Переключить на график с областями",
+        "switchToCandle": "Переключить на свечной график",
+        "showVolume": "Показать объём за 24 часа",
+        "showOpenInterest": "Показать открытый интерес",
+        "buy": "Покупка",
+        "sell": "Продажа"
+      },
       "PerpEditLimitPriceTag": {
         "setLimitBuyPrice": "Установить лимитную цену покупки",
         "setLimitSellPrice": "Установить лимитную цену продажи",
@@ -2861,7 +2968,7 @@
         "unrealizedPnl": "Нереализованная прибыль и убыток",
         "marginMode": "Режим маржи",
         "details": "Детали",
-        "fundingTipsBold": "Здесь показан общий фандинг, рассчитанный с момента открытия позиции. <bold>Зеленые (положительные)</bold> значения означают, что вы получили фандинг от других трейдеров, а <bold>красные (отрицательные)</bold> значения — это уплаченные вами расходы на фандинг.",
+        "fundingTipsBold": "Здесь показан общий фандинг, рассчитанный с момента открытия позиции. <positive>Зеленые (положительные)</positive> значения означают, что вы получили фандинг от других трейдеров, а <negative>красные (отрицательные)</negative> значения — это уплаченные вами расходы на фандинг.",
         "crossTips": "В режиме кросс-маржи цена ликвидации отдельной позиции является лишь ориентировочной оценкой."
       },
       "PerpsInfo": {
@@ -2998,6 +3105,13 @@
       },
       "addressEditorBadge": {
         "nameUnknown": "Назовите адрес"
+      },
+      "scanQrcode": {
+        "chooseFromGallery": "Выбрать из галереи",
+        "noQrCode": "На этом изображении не найден QR-код",
+        "multipleQrCodes": "Найдено несколько QR-кодов. Выберите изображение только с одним QR-кодом",
+        "invalidAddress": "В этом QR-коде не найден действительный адрес",
+        "readImageFailed": "Не удалось прочитать изображение. Попробуйте ещё раз"
       }
     },
     "Lending": {
@@ -3304,6 +3418,72 @@
     "batchRevoke": {
       "title": "Пакетный отзыв"
     },
+    "memeCoin": {
+      "holdingsEntry": "активы",
+      "pnlPeriod24h": "24h",
+      "pnlPeriodAll": "Все",
+      "pnlTipLabel": "PnL",
+      "backToMarket": "Назад к рынку мемов",
+      "marketTitle": "Рынок мемов",
+      "holdingsTitle": "Активы",
+      "marketCap": "Рыночная капитализация",
+      "valuePnl": "Стоимость / PnL",
+      "searchMarket": "Поиск на рынке мемов",
+      "noMatch": "Нет подходящих мемов",
+      "noHoldings": "Пока нет активов",
+      "loadFailed": "Не удалось загрузить. Нажмите, чтобы повторить",
+      "buyN": "Купить мемы: {{count}}",
+      "buyN_one": "Купить мемы: {{count}}",
+      "sellN": "Продать мемы: {{count}}",
+      "sellN_one": "Продать мемы: {{count}}",
+      "selectToBuy": "Выберите мемы для покупки",
+      "selectToSell": "Выберите мемы для продажи",
+      "maxPriceImpact": "Макс. влияние на цену",
+      "unsupportedAddressType": "Тип адреса не поддерживается",
+      "accountChanged": "Адрес изменён. Начните заново",
+      "addressSwitchUnsupported": "На этой странице нельзя сменить адрес.",
+      "buy": {
+        "amount": "Сумма покупки",
+        "allocation": "Распределение",
+        "byMarketCap": "По капитализации",
+        "equalSplit": "Поровну",
+        "estPayment": "Ориент. оплата {{amount}}",
+        "needed": "Не хватает {{amount}}",
+        "anotherNeeded": "Нужно ещё {{amount}}",
+        "preview": "Предпросмотр",
+        "paymentTokens": "Токены для оплаты",
+        "selectTokens": "Выбрать токены",
+        "selectPaymentAssets": "Выберите активы для оплаты",
+        "estPaymentLabel": "Ориент. оплата",
+        "noPaymentToken": "Токен для оплаты не выбран",
+        "confirm": "Подтвердить",
+        "noAssets": "Нет доступных активов"
+      },
+      "execute": {
+        "title": "Выполнение",
+        "buySubtitleShort": "По очереди в каждой цепочке, параллельно между цепочками.",
+        "sellSubtitle": "Средства остаются в соответствующих цепочках",
+        "estReceipt": "Ориент. получение(USD)",
+        "statusPending": "В ожидании",
+        "statusPendingPrevious": "Ожидание предыдущей транзакции в этой цепочке",
+        "statusExecuting": "Выполняется",
+        "statusSuccessful": "Успешно",
+        "confirm": "Подтвердить",
+        "back": "Назад",
+        "retryFailedTxns": "Повторить неудачные транзакции: {{count}}",
+        "retryFailedTxns_one": "Повторить неудачные транзакции: {{count}}",
+        "progress": "Выполняется · завершено {{done}}/{{total}}",
+        "done": "Готово",
+        "exitTitle": "Отменить выполнение и вернуться?",
+        "exitDesc1": "Выполнение будет остановлено. Неотправленные транзакции не будут обработаны.",
+        "exitDesc2": "Отправленные в блокчейн транзакции нельзя отменить, и они ещё могут завершиться.",
+        "stopAndExit": "Остановить и выйти",
+        "continue": "Продолжить",
+        "failReason": {
+          "buildFailed": "Не удалось создать транзакцию"
+        }
+      }
+    },
     "convertDust": {
       "failReason": {
         "quoteUnavailable": "Не удалось получить котировку",
@@ -3363,6 +3543,7 @@
       "screenTitle": "Подключить кошелек",
       "connectingToRabby": "Подключение к Rabby",
       "pairingFailed": "Сопряжение WalletConnect не удалось.",
+      "proposalNotReceived": "QR-код WalletConnect, возможно, устарел. Обновите его и попробуйте снова.",
       "connected": "Успешно подключено. Вернитесь в DApp.",
       "proposalExpired": "Предложение WalletConnect истекло.",
       "pairingExpired": "Сопряжение WalletConnect истекло. Обновите QR-код dapp и попробуйте снова.",
@@ -3412,13 +3593,6 @@
     "NFTNumberInput": {
       "erc721Tips": "Одновременно можно отправить только один NFT стандарта ERC 721.",
       "erc1155Tips": "Ваш баланс составляет {{amount}}"
-    },
-    "ReserveGasPopup": {
-      "title": "Резерв газа",
-      "fast": "Нормальный",
-      "instant": "Быстрый",
-      "doNotReserve": "Не резервировать газ",
-      "normal": "Медленно"
     },
     "Contact": {
       "EditModal": {
@@ -3517,7 +3691,8 @@
       },
       "alertText": "Сторонний DApp: по вопросам использования обращайтесь в поддержку DApp. Rabby предоставляет только доступ для просмотра.",
       "title": "Скриншот для сообщения об ошибке",
-      "submitFailed": "Не удалось отправить."
+      "submitFailed": "Не удалось отправить.",
+      "includeAddress": "Поделиться адресом для диагностики проблем"
     },
     "submitFeedbackSuccessModal": {
       "desc": "Отправлено успешно!"

@@ -1,4 +1,3 @@
-import type { ComponentProps } from 'react';
 import React, {
   useState,
   useEffect,
@@ -16,7 +15,6 @@ import {
   DeferredTokenSelectorSheetModal,
   type TokenSelectorSheetModal,
 } from '@/components/Token';
-import type { ITokenCheck } from '@/components/Token/TokenSelectorSheetModal';
 import { useTokenSelectorModalVisible } from '@/components/Token/TokenSelectorSheetModal';
 import {
   getTokenSymbol,
@@ -30,12 +28,8 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { AssetAvatar } from '@/components';
 import { ellipsisOverflowedText } from '@/utils/text';
-import type { CHAINS_ENUM } from '@debank/common';
 import type { Account } from '@/core/startupServices/preference';
 import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
-import { useScreenSceneAccountContext } from '@/hooks/accountsSwitcher';
-import { RootNames } from '@/constant/layout';
-import { isWatchOrSafeAccount } from '@/utils/account';
 import { useLongPressTokenAtom } from '../hooks';
 import { useMemoizedFn, useUnmount } from 'ahooks';
 import { useFocusEffect } from '@react-navigation/native';
@@ -52,32 +46,14 @@ import { isAddress } from 'viem';
 import { Text } from '@/components/Typography';
 import { useRegressionScenarioComponentAction } from '@/devtools/regressionScenarios/react';
 
-interface TokenSelectProps {
+type SwapToTokenSelectProps = {
   token?: TokenItem;
-  onChange?(amount: string): void;
   onTokenChange(token: TokenItem): void;
   accountInScreen?: Account | null;
   chainId: string;
-  excludeTokens?: ITokenItem['id'][];
-  type?: ComponentProps<typeof TokenSelectorSheetModal>['type'];
-  disableItemCheck?: ITokenCheck;
-  placeholder?: string;
-  hideChainIcon?: boolean;
-  value?: string;
-  loading?: boolean;
-  tokenRender?:
-    | (({
-        token,
-        openTokenModal,
-      }: {
-        token?: ITokenItem;
-        openTokenModal: () => void;
-      }) => React.ReactNode)
-    | React.ReactNode;
-  supportChains?: CHAINS_ENUM[];
   searchPlaceholder?: string;
-}
-const defaultExcludeTokens = [];
+  ref?: Ref<TokenSelectInst>;
+};
 
 type QueryConditions = {
   keyword: string;
@@ -89,19 +65,12 @@ export type TokenSelectInst = {
 };
 const SwapToTokenSelect = ({
   token,
-  onChange,
   onTokenChange,
   accountInScreen,
   chainId,
-  excludeTokens = defaultExcludeTokens,
-  type = 'send',
-  placeholder,
-  supportChains,
   searchPlaceholder,
-  disableItemCheck,
-  style,
   ref,
-}: TokenSelectProps & RNViewProps & { ref?: Ref<TokenSelectInst> }) => {
+}: SwapToTokenSelectProps) => {
   const [_queryConds, setQueryConds] = useState<QueryConditions>({
     keyword: '',
     account: accountInScreen,
@@ -272,14 +241,13 @@ const SwapToTokenSelect = ({
     React.ComponentProps<typeof TokenSelectorSheetModal>['onConfirm']
   >(
     t => {
-      onChange && onChange('');
       onTokenChange(t);
       // Close the modal without triggering state update
       // The state update will be handled by handleTokenSelectorClose (via onCancel)
       // when the modal finishes closing, which avoids a race condition
       setTokenSelectorVisible(false, { noTriggerRerender: true });
     },
-    [onChange, onTokenChange, setTokenSelectorVisible],
+    [onTokenChange, setTokenSelectorVisible],
   );
 
   const handleTokenSelectorClose = useCallback(() => {
@@ -354,23 +322,6 @@ const SwapToTokenSelect = ({
     return tokensWithPinStatus;
   }, [availableToken, favoriteFilterValue, favoriteTokens, pinedQueue]);
 
-  const { forScene, ofScreen } = useScreenSceneAccountContext();
-  const allowClearAccountFilter = useMemo(() => {
-    if (
-      queryConds.keyword ||
-      !currentAccount?.type ||
-      isWatchOrSafeAccount(currentAccount?.type)
-    ) {
-      return false;
-    }
-
-    return (
-      forScene === 'MakeTransactionAbout' &&
-      RootNames.MultiSwapBridge === ofScreen &&
-      (type === 'bridgeFrom' || type === 'swapFrom')
-    );
-  }, [queryConds.keyword, currentAccount?.type, forScene, ofScreen, type]);
-
   const handleTokenChange = useMemoizedFn(async (tokenItem?: TokenItem) => {
     if (!tokenItem || !tokenItem.id) {
       return;
@@ -422,7 +373,7 @@ const SwapToTokenSelect = ({
         onPress={handleSelectToken}
         onLongPress={handleLongPressToken}
         ref={tokenPressRef}>
-        <View style={[styles.wrapper, style]}>
+        <View style={styles.wrapper}>
           {token ? (
             <>
               <View style={styles.token}>
@@ -430,7 +381,7 @@ const SwapToTokenSelect = ({
                   size={26}
                   chain={token.chain}
                   logo={token.logo_url}
-                  chainSize={type === 'send' ? 12 : 0}
+                  chainSize={0}
                 />
                 <Text numberOfLines={1} style={styles.tokenSymbol}>
                   {ellipsisOverflowedText(getTokenSymbol(token), 5)}
@@ -461,14 +412,10 @@ const SwapToTokenSelect = ({
         favoriteFilterValue={favoriteFilterValue}
         onFavoriteFilterChange={setFavoriteFilterValue}
         type="swapTo"
-        disableItemCheck={disableItemCheck}
         selectToken={token}
-        placeholder={placeholder}
-        displayAccountFilter={allowClearAccountFilter}
         filterAccount={queryConds.account}
         chainServerId={queryConds.chainServerId}
         disabledTips={'Not supported'}
-        supportChains={supportChains}
         hideChainFilter={true}
         showTestNetSwitch={false}
       />

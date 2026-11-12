@@ -1,6 +1,9 @@
 const {
   isLegacyReactNativeArchitecture,
 } = require('./scripts/react-native-architecture.cjs');
+const {
+  getCryptoNativeDependencies,
+} = require('./scripts/crypto-architecture.cjs');
 
 const isLegacyArchitecture = isLegacyReactNativeArchitecture();
 
@@ -8,14 +11,17 @@ const isLegacyArchitecture = isLegacyReactNativeArchitecture();
  * @type {import('@react-native-community/cli-types').Config}
  */
 module.exports = {
-  assets: ['./assets/fonts', './assets/custom'],
+  // Apple system fonts are resolved by UIKit on iOS, never bundled (ITMS-91182).
+  assets: ['./assets/custom'],
   iosAssets: [
     // './assets/android/builtin-pages'
   ],
   androidAssets: [
+    './assets/fonts',
     // './assets/ios/builtin-pages'
   ],
   dependencies: {
+    ...getCryptoNativeDependencies(isLegacyArchitecture ? 'legacy' : 'new'),
     'react-native-mmkv': isLegacyArchitecture
       ? { platforms: { android: null, ios: null } }
       : {},

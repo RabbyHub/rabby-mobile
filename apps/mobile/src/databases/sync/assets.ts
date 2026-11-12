@@ -11,7 +11,6 @@ import type {
   TxAllHistoryResult,
   TxHistoryResult,
 } from '@rabby-wallet/rabby-api/dist/types';
-import { SwapTradeList } from '@rabby-wallet/rabby-api/dist/types';
 import { ProtocolItemEntity } from '../entities/portocolItem';
 import {
   EMPTY_NFT_ITEM,
@@ -19,7 +18,7 @@ import {
   EMPTY_TOKEN_ITEM,
 } from '@/constant/assets';
 import { BalanceEntity } from '../entities/balance';
-import { batchSaveWithPQueueAndTransaction, BeforeEmitFn } from './_task';
+import { batchSaveWithPQueueAndTransaction } from './_task';
 import { appOrmEvents } from './_event';
 import { BuyItemEntity } from '../entities/buyItem';
 import { CexEntity } from '../entities/cex';
@@ -609,10 +608,11 @@ const updateSwapFailHistoryItem = (
     }
   }
 };
+/** Write fetched history rows. Resolves true once every batch is in the DB. */
 export async function syncRemoteHistory(
   address: string,
   res: TxAllHistoryResult | TxHistoryResult,
-) {
+): Promise<boolean> {
   try {
     console.debug(
       'syncRemoteHistory history_list.length',
@@ -665,38 +665,37 @@ export async function syncRemoteHistory(
     //   console.error('TokenItemEntity.save err', err);
     //   throw err;
     // });
-    await batchSaveWithPQueueAndTransaction(HistoryItemEntity, historyItems, {
-      owner_addr: address,
-      taskFor: 'all-history',
-      batchSize: 200,
-      concurrency: 1,
-      delayBetweenTasks: 1.5 * 1e3,
-      noNeedAbort: true,
-      beforeEmit: ctx => {
-        if (ctx.taskFor === 'all-history') {
-          setTimeout(() => {
-            setHistoryLoading?.(prev => ({
-              ...prev,
-              [ctx.owner_addr]: false,
-            }));
-          }, 2000);
-        }
+    // wait for the rows to land: the caller only records the sync once they did
+    const { taskKey, queueCompleted } = await batchSaveWithPQueueAndTransaction(
+      HistoryItemEntity,
+      historyItems,
+      {
+        owner_addr: address,
+        taskFor: 'all-history',
+        batchSize: 200,
+        concurrency: 1,
+        delayBetweenTasks: 1.5 * 1e3,
+        noNeedAbort: true,
+        waitTaskDoneReturn: true,
+        beforeEmit: ctx => {
+          if (ctx.taskFor === 'all-history') {
+            setTimeout(() => {
+              setHistoryLoading?.(prev => ({
+                ...prev,
+                [ctx.owner_addr]: false,
+              }));
+            }, 2000);
+          }
+        },
       },
-    }).then(({ taskSignal, taskKey }) => {
-      if (taskSignal.aborted) {
-        console.warn(`[${taskKey}] Batch upsertion was aborted.`);
-      } else {
-        console.debug(`[${taskKey}] batch upsert tasks created`);
-      }
-    });
-
-    console.debug('syncRemoteHistory batchSaveWithPQueueAndTransaction done');
-    return {
-      address,
-      history_list: history_list,
-    };
+    );
+    if (!queueCompleted) {
+      console.warn(`[${taskKey}] Batch upsertion was aborted.`);
+    }
+    return queueCompleted;
   } catch (e) {
     console.error('syncRemoteHistory', e);
+    return false;
   }
 }
 
@@ -736,7 +735,7 @@ export async function syncRemoteNFTs(address: string, _nfts: NFTItem[]) {
       await NFTItemEntity.cleanupStaleNFTs(address, syncTimestamp);
     },
   })
-    .then(({ taskSignal, taskKey, queueCompleted }) => {
+    .then(({ taskKey, queueCompleted }) => {
       if (queueCompleted) {
         console.debug(`[${taskKey}] batch upsert tasks completed`);
       } else {
@@ -779,7 +778,7 @@ export async function syncRemoteProtocols(
       await ProtocolItemEntity.cleanupStaleProtocols(address, syncTimestamp);
     },
   })
-    .then(({ taskSignal, taskKey, queueCompleted }) => {
+    .then(({ taskKey, queueCompleted }) => {
       if (queueCompleted) {
         console.debug(`[${taskKey}] batch upsert tasks completed`);
       } else {

@@ -20,6 +20,11 @@ import {
 } from '@metamask/eth-sig-util';
 import cloneDeep from 'lodash/cloneDeep';
 import { openapi } from '../request';
+import {
+  getTxAddressesToCheck,
+  hasBlockedAddress,
+} from '../utils/blockedAddress';
+import { t } from 'i18next';
 import { bridgeServiceApi } from '@/core/serviceApi/bridge';
 import { customRPCServiceApi } from '@/core/serviceApi/customRPC';
 import { customTestnetServiceApi } from '@/core/serviceApi/customTestnet';
@@ -30,11 +35,8 @@ import {
   isInternalDappSnapshot,
   updateDappSync,
 } from '@/core/serviceApi/dapp';
+import { gasAccountServiceApi } from '@/core/serviceApi/gasAccount';
 import { keyringServiceApi } from '@/core/serviceApi/keyring';
-import {
-  getNotificationStatsDataSnapshot,
-  setNotificationStatsDataSync,
-} from '@/core/serviceApi/notification';
 import { broadcastSessionEventSync } from '@/core/serviceApi/session';
 import { swapServiceApi } from '@/core/serviceApi/swap';
 import { transactionBroadcastWatcherServiceApi } from '@/core/serviceApi/transactionBroadcastWatcher';
@@ -50,10 +52,8 @@ import { transactionWatcherServiceApi } from '@/core/serviceApi/transactionWatch
 //   notificationService,
 // } from 'background/service';
 // import { Session } from 'background/service/session';
-import {
-  KEYRING_CATEGORY_MAP,
-  KEYRING_TYPE,
-} from '@rabby-wallet/keyring-utils';
+import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import type { Tx, TxPushType } from '@rabby-wallet/rabby-api/dist/types';
 import RpcCache from '../utils/rpcCache';
 // import Wallet from '../wallet';
@@ -69,9 +69,6 @@ import { eventBus, EVENTS } from '@/utils/events';
 import { BroadcastEvent } from '@/constant/event';
 import { createDappBySession } from '@/core/utils/createDappBySession';
 import { INTERNAL_REQUEST_ORIGIN, INTERNAL_REQUEST_SESSION } from '@/constant';
-import { matomoRequestEvent } from '@/utils/analytics';
-import { stats } from '@/utils/stats';
-import type { StatsData } from '../services/notification';
 import { ethers } from 'ethers';
 import { getGlobalProvider } from '../apis/globalProvider';
 import { bytesToHex } from '@ethereumjs/util';
@@ -81,13 +78,16 @@ import { PENDGING_TIME } from '@/constant/expireTime';
 import { isString } from 'lodash';
 import { updateExpiredTime } from '@/databases/sync/utils';
 import { assertProviderRequest } from '../utils/assertProviderRequest';
+import {
+  findShadowedBuiltinType,
+  parseTypedDataJson,
+} from '../utils/typedDataTypes';
 import type { ProviderRequest } from './type';
 import { hexToNumber, isAddress, toHex } from 'viem';
 import { getProviderRequestChain } from './requestContext';
 import { Transaction as ViemTempoTransaction } from 'viem/tempo';
 import { add0x } from '@/utils/address';
 import { removeLeadingZeroes } from '@/utils/7702';
-import { handleGasAccountLoginSuccess } from '@/utils/gasAccountAnalytics';
 import type { TempoTxCall, TxWithTempoExtras } from '@/utils/tempo';
 import {
   buildTempoTransaction,
@@ -96,37 +96,6 @@ import {
 // import eventBus from '@/eventBus';
 
 const SIGN_TIMEOUT = 100;
-
-const reportSignText = (params: {
-  method: string;
-  account: Account;
-  success: boolean;
-}) => {
-  const { method, account, success } = params;
-  matomoRequestEvent({
-    category: 'SignText',
-    action: 'completeSignText',
-    label: [
-      KEYRING_CATEGORY_MAP[account.type],
-      account.brandName,
-      success,
-    ].join('|'),
-  });
-  stats.report('completeSignText', {
-    type: account.brandName,
-    category: KEYRING_CATEGORY_MAP[account.type],
-    method,
-    success,
-  });
-};
-
-const setStatsDataWithExistingSignMethod = (statsData: StatsData) => {
-  const signMethod = getNotificationStatsDataSnapshot()?.signMethod;
-  if (signMethod) {
-    statsData.signMethod = signMethod;
-  }
-  setNotificationStatsDataSync(statsData);
-};
 
 const covertToHex = (data: Buffer | bigint) => {
   if (typeof data === 'bigint') {
@@ -213,30 +182,31 @@ const normalizeSerializedTxHex = (serializedTx?: string) => {
   return normalized as `0x${string}`;
 };
 
-const normalizeTempoCalls = (params: {
-  approvalRes: TxWithTempoExtras<ApprovalRes>;
-  txParams: Record<string, any>;
-}): TempoTxCall[] => {
-  const { approvalRes, txParams } = params;
-  const tempoTx = buildTempoTransaction(
-    {
-      ...txParams,
-      ...approvalRes,
-      to: approvalRes.to ?? txParams.to,
-      data:
-        typeof approvalRes.data !== 'undefined'
-          ? approvalRes.data
-          : txParams.data,
-      value:
-        typeof approvalRes.value !== 'undefined'
-          ? approvalRes.value
-          : txParams.value,
-      calls: (approvalRes as any).calls ?? txParams.calls,
-    } as any,
-    { stripTopLevelData: true, forceTempoType: true },
-  );
+const normalizeTempoCalls = (
+  approvalRes: TxWithTempoExtras<ApprovalRes>,
+): TempoTxCall[] => {
+  let rawCalls = approvalRes.calls;
+  if (!Array.isArray(rawCalls) || !rawCalls.length) {
+    const hasTopLevelCall = [
+      approvalRes.to,
+      approvalRes.data,
+      approvalRes.value,
+    ].some(value => value != null && value !== '');
+    if (!hasTopLevelCall) {
+      throw new Error('tempo transaction has no approved calls');
+    }
+    rawCalls = [approvalRes];
+  }
 
-  return (tempoTx.calls || []) as TempoTxCall[];
+  // Missing call fields must stay missing after approval.
+  return rawCalls.map(
+    call =>
+      omitUndefined({
+        to: call?.to,
+        data: call?.data,
+        value: normalizeHexValue(call?.value),
+      }) as TempoTxCall,
+  );
 };
 
 const toTempoRpcQuantity = (value: unknown) => {
@@ -498,11 +468,21 @@ const signTypedDataVlidation = (
     session,
     account,
   } = req;
-  let jsonData;
+  let parsed: ReturnType<typeof parseTypedDataJson>;
   try {
-    jsonData = JSON.parse(data);
+    parsed = parseTypedDataJson(data);
   } catch (e) {
     throw ethErrors.rpc.invalidParams('data is not a validate JSON string');
+  }
+  if (parsed.hasProtoKey) {
+    throw ethErrors.rpc.invalidParams('data should not contain __proto__ key');
+  }
+  const jsonData = parsed.json;
+  const shadowedType = findShadowedBuiltinType(jsonData?.types);
+  if (shadowedType) {
+    throw ethErrors.rpc.invalidParams(
+      `types should not redefine built-in type: ${shadowedType}`,
+    );
   }
   if (!isInternalDappSnapshot(session.origin)) {
     const currentChain =
@@ -780,7 +760,25 @@ class ProviderController extends BaseController {
       account,
     } = cloneDeep(options);
     const currentAccount = account;
+    if (
+      !isSameAddress(txParams.from, approvalRes.from) ||
+      Number(txParams.chainId) !== Number(approvalRes.chainId)
+    ) {
+      throw ethErrors.rpc.invalidParams(
+        'approved transaction does not match request',
+      );
+    }
     const keyring = await this._checkAddress(txParams.from, options);
+    // Started now, awaited right before signing, so it overlaps the tx build.
+    const isBlockedPromise = hasBlockedAddress([
+      txParams.from,
+      ...getTxAddressesToCheck(approvalRes),
+      ...(Array.isArray((approvalRes as any).calls)
+        ? (approvalRes as any).calls.flatMap((call: any) =>
+            getTxAddressesToCheck(call || {}),
+          )
+        : []),
+    ]);
     const isSend = !!txParams.isSend;
     const isSpeedUp = !!txParams.isSpeedUp;
     const isCancel = !!txParams.isCancel;
@@ -800,7 +798,6 @@ class ProviderController extends BaseController {
     const eip7702RevokeAuthorization =
       options?.data?.$ctx?.eip7702RevokeAuthorization || [];
 
-    let signedTransactionSuccess = false;
     delete txParams.isSend;
     delete approvalRes.isSend;
     delete approvalRes.isSwap;
@@ -845,12 +842,17 @@ class ProviderController extends BaseController {
       throw new Error('not support 7702');
     }
 
+    // Custom networks pick the tx type from chain and keyring support alone,
+    // so an equal maxFee and tip stays type-2 there. Integrated chains keep
+    // the legacy fallback; a chain we cannot find is treated as integrated.
+    const isCustomNetwork = !!chainForTx?.isTestnet;
     if (
       is1559 &&
       approvalRes.maxFeePerGas === approvalRes.maxPriorityFeePerGas &&
       !eip7702Revoke &&
       !is7702 &&
-      !isTempoTx
+      !isTempoTx &&
+      !isCustomNetwork
     ) {
       // fallback to legacy transaction if maxFeePerGas is equal to maxPriorityFeePerGas
       approvalRes.gasPrice = approvalRes.maxFeePerGas;
@@ -978,41 +980,27 @@ class ProviderController extends BaseController {
         .catch(() => undefined);
     }
 
-    const statsData: StatsData = {
-      signed: false,
-      signedSuccess: false,
-      submit: false,
-      submitSuccess: false,
-      type: currentAccount.brandName,
-      chainId: chainItem?.serverId || '',
-      category: KEYRING_CATEGORY_MAP[currentAccount.type],
-      preExecSuccess: cacheExplain
-        ? cacheExplain.pre_exec?.success && cacheExplain.calcSuccess
-        : true,
-      createdBy: options?.data?.$ctx?.ga ? 'rabby' : 'dapp',
-      source: options?.data?.$ctx?.ga?.source || '',
-      trigger: options?.data?.$ctx?.ga?.trigger || '',
-      reported: false,
-    };
-
     let signedTx;
     let tempoSerializedRawTx: `0x${string}` | undefined;
-    const tempoCalls = isTempoTx
-      ? normalizeTempoCalls({
-          approvalRes,
-          txParams: txParams as Record<string, any>,
-        })
-      : undefined;
+    const tempoCalls = isTempoTx ? normalizeTempoCalls(approvalRes) : undefined;
     const shouldUseKeyringTempoSign =
       isTempoTx && isSimpleOrHdKeyringType(currentAccount.type);
     try {
+      // Every tx signing path (SignTx, mini sign, direct sendTransaction)
+      // lands here, so refuse blocked addresses before any keyring or device
+      // is asked. Inside the try so the UI gets the usual signing failure.
+      if (await isBlockedPromise) {
+        // Same text as the blocked dialog in SignTx / Send.
+        throw ethErrors.rpc.transactionRejected(
+          t('common.dialogs.blockedTransaction.content'),
+        );
+      }
       if (isTempoTx) {
         const typedApprovalRes = approvalRes as any;
         const shouldBackendSponsorTempo = isGasAccount || isGasLess;
         const normalizedFeePayerSignature = normalizeTempoSecp256k1Signature(
           typedApprovalRes.feePayerSignature,
         );
-        const normalizedTxValue = normalizeHexValue(approvalRes.value);
         const normalizedTempoGas = approvalRes.gas || approvalRes.gasLimit;
         const has1559FeeFields =
           typeof approvalRes.maxFeePerGas !== 'undefined' ||
@@ -1022,12 +1010,6 @@ class ProviderController extends BaseController {
             chainId: Number(approvalRes.chainId),
             type: '0x76',
             from: txParams.from,
-            to: approvalRes.to ?? (txParams as any).to,
-            data:
-              typeof approvalRes.data !== 'undefined'
-                ? approvalRes.data
-                : (txParams as any).data,
-            value: normalizedTxValue as string | number | bigint | undefined,
             calls: tempoCalls,
             gas: normalizedTempoGas,
             gasPrice: has1559FeeFields ? undefined : approvalRes.gasPrice,
@@ -1108,9 +1090,6 @@ class ProviderController extends BaseController {
         // ||
         // currentAccount.type === KEYRING_TYPE.CoboArgusKeyring
       ) {
-        signedTransactionSuccess = true;
-        statsData.signed = true;
-        statsData.signedSuccess = true;
         return;
       }
 
@@ -1120,17 +1099,6 @@ class ProviderController extends BaseController {
         pushType?: TxPushType;
       }) => {
         const { hash, reqId, pushType = 'default' } = info;
-        if (
-          options?.data?.$ctx?.stats?.afterSign?.length &&
-          Array.isArray(options?.data?.$ctx?.stats?.afterSign)
-        ) {
-          options.data.$ctx.stats.afterSign.forEach(({ name, params }) => {
-            if (name && params) {
-              stats.report(name, params);
-            }
-          });
-        }
-
         const { r, s, v, ...other } = approvalRes;
         if (hash) {
           void swapServiceApi.postSwap(chain, hash, other).catch(error => {
@@ -1141,8 +1109,6 @@ class ProviderController extends BaseController {
           });
         }
 
-        statsData.submit = true;
-        statsData.submitSuccess = true;
         // if (isSend) {
         //   pageStateCacheService.clear();
         // }
@@ -1221,29 +1187,6 @@ class ProviderController extends BaseController {
         // }
       };
       const onTransactionSubmitFailed = (e: any) => {
-        if (
-          options?.data?.$ctx?.stats?.afterSign?.length &&
-          Array.isArray(options?.data?.$ctx?.stats?.afterSign)
-        ) {
-          options.data.$ctx.stats.afterSign.forEach(({ name, params }) => {
-            if (name && params) {
-              stats.report(name, params);
-            }
-          });
-        }
-
-        stats.report('submitTransaction', {
-          type: currentAccount.brandName,
-          chainId: chainItem?.serverId || '',
-          category: KEYRING_CATEGORY_MAP[currentAccount.type],
-          success: false,
-          preExecSuccess: cacheExplain
-            ? cacheExplain.pre_exec?.success && cacheExplain.calcSuccess
-            : true,
-          createdBy: options?.data?.$ctx?.ga ? 'rabby' : 'dapp',
-          source: options?.data?.$ctx?.ga?.source || '',
-          trigger: options?.data?.$ctx?.ga?.trigger || '',
-        });
         if (!isSpeedUp && !isCancel) {
           // transactionHistoryService.addSubmitFailedTransaction(
           //   {
@@ -1259,7 +1202,6 @@ class ProviderController extends BaseController {
           // );
         }
         const errMsg = e.details || e.message || JSON.stringify(e);
-        setStatsDataWithExistingSignMethod(statsData);
         throw new Error(errMsg);
       };
 
@@ -1268,14 +1210,6 @@ class ProviderController extends BaseController {
           hash: signedTx,
           pushType: 'default',
         });
-        if (
-          currentAccount.type === KEYRING_TYPE.WalletConnectKeyring
-          // || currentAccount.type === KEYRING_TYPE.CoinbaseKeyring
-        ) {
-          statsData.signed = true;
-          statsData.signedSuccess = true;
-        }
-        setStatsDataWithExistingSignMethod(statsData);
         return signedTx;
       }
 
@@ -1302,9 +1236,6 @@ class ProviderController extends BaseController {
       //     );
       //   }
       // }
-      signedTransactionSuccess = true;
-      statsData.signed = true;
-      statsData.signedSuccess = true;
       eventBus.emit(EVENTS.TX_SUBMITTING, {});
       try {
         validateGasPriceRange(approvalRes);
@@ -1475,12 +1406,11 @@ class ProviderController extends BaseController {
               adoptBE7702Params();
               const res = await openapi.submitTxV2(params);
               if (res.access_token) {
-                handleGasAccountLoginSuccess(
-                  res.access_token,
-                  currentAccount,
-                ).catch(error => {
-                  console.error('[handleGasAccountLoginSuccess] failed', error);
-                });
+                gasAccountServiceApi
+                  .setGasAccountSig(res.access_token, currentAccount)
+                  .catch(error => {
+                    console.error('[gasAccount] save login sig failed', error);
+                  });
 
                 eventBus.emit(EVENTS.AUTO_LOGIN_GAS_ACCOUNT, null);
               }
@@ -1494,7 +1424,6 @@ class ProviderController extends BaseController {
               onTransactionSubmitFailed(new Error('Submit tx failed'));
             } else {
               await onTransactionCreated({ hash, reqId, pushType });
-              setStatsDataWithExistingSignMethod(statsData);
             }
           }
         } else {
@@ -1519,7 +1448,6 @@ class ProviderController extends BaseController {
             params: [rawTx as any],
           });
           await onTransactionCreated({ hash, reqId, pushType });
-          setNotificationStatsDataSync(statsData);
         }
 
         return hash;
@@ -1528,11 +1456,6 @@ class ProviderController extends BaseController {
         onTransactionSubmitFailed(e);
       }
     } catch (e) {
-      if (!signedTransactionSuccess) {
-        statsData.signed = true;
-        statsData.signedSuccess = false;
-      }
-      setStatsDataWithExistingSignMethod(statsData);
       if ('details' in (e as any)) {
         throw new Error((e as any).details);
       } else {
@@ -1594,36 +1517,22 @@ class ProviderController extends BaseController {
     ) {
       return approvalRes;
     }
-    try {
-      const [string, from] = data.params;
-      const hex = isHexString(string) ? string : stringToHex(string);
-      const keyring = await this._checkAddress(from, req);
-      const result = await keyringServiceApi.signPersonalMessage(
-        keyring,
-        { data: hex, from },
-        approvalRes?.extra,
-      );
-      // TODO
-      // signTextHistoryService.createHistory({
-      //   address: from,
-      //   text: string,
-      //   origin: session.origin,
-      //   type: 'personalSign',
-      // });
-      reportSignText({
-        account: currentAccount,
-        method: 'personalSign',
-        success: true,
-      });
-      return result;
-    } catch (e) {
-      reportSignText({
-        account: currentAccount,
-        method: 'personalSign',
-        success: false,
-      });
-      throw e;
-    }
+    const [string, from] = data.params;
+    const hex = isHexString(string) ? string : stringToHex(string);
+    const keyring = await this._checkAddress(from, req);
+    const result = await keyringServiceApi.signPersonalMessage(
+      keyring,
+      { data: hex, from },
+      approvalRes?.extra,
+    );
+    // TODO
+    // signTextHistoryService.createHistory({
+    //   address: from,
+    //   text: string,
+    //   origin: session.origin,
+    //   type: 'personalSign',
+    // });
+    return result;
   };
 
   @Reflect.metadata('PRIVATE', true)
@@ -1676,37 +1585,23 @@ class ProviderController extends BaseController {
     ) {
       return approvalRes;
     }
-    try {
-      const result = await this._signTypedData(
-        {
-          from,
-          data,
-          version: 'V1',
-          extra: approvalRes?.extra,
-        },
-        req,
-      );
-      // TODO
-      // signTextHistoryService.createHistory({
-      //   address: from,
-      //   text: data,
-      //   origin: session.origin,
-      //   type: 'ethSignTypedData',
-      // });
-      reportSignText({
-        account: currentAccount,
-        method: 'ethSignTypedData',
-        success: true,
-      });
-      return result;
-    } catch (e) {
-      reportSignText({
-        account: currentAccount,
-        method: 'ethSignTypedData',
-        success: false,
-      });
-      throw e;
-    }
+    const result = await this._signTypedData(
+      {
+        from,
+        data,
+        version: 'V1',
+        extra: approvalRes?.extra,
+      },
+      req,
+    );
+    // TODO
+    // signTextHistoryService.createHistory({
+    //   address: from,
+    //   text: data,
+    //   origin: session.origin,
+    //   type: 'ethSignTypedData',
+    // });
+    return result;
   };
 
   @Reflect.metadata('APPROVAL', ['SignTypedData', v1SignTypedDataVlidation])
@@ -1726,36 +1621,22 @@ class ProviderController extends BaseController {
     ) {
       return approvalRes;
     }
-    try {
-      const result = await this._signTypedData(
-        {
-          from,
-          data,
-          version: 'V1',
-          extra: approvalRes?.extra,
-        },
-        req,
-      );
-      // signTextHistoryService.createHistory({
-      //   address: from,
-      //   text: data,
-      //   origin: session.origin,
-      //   type: 'ethSignTypedDataV1',
-      // });
-      reportSignText({
-        account: currentAccount,
-        method: 'ethSignTypedDataV1',
-        success: true,
-      });
-      return result;
-    } catch (e) {
-      reportSignText({
-        account: currentAccount,
-        method: 'ethSignTypedDataV1',
-        success: false,
-      });
-      throw e;
-    }
+    const result = await this._signTypedData(
+      {
+        from,
+        data,
+        version: 'V1',
+        extra: approvalRes?.extra,
+      },
+      req,
+    );
+    // signTextHistoryService.createHistory({
+    //   address: from,
+    //   text: data,
+    //   origin: session.origin,
+    //   type: 'ethSignTypedDataV1',
+    // });
+    return result;
   };
 
   @Reflect.metadata('APPROVAL', ['SignTypedData', signTypedDataVlidation])
@@ -1775,36 +1656,22 @@ class ProviderController extends BaseController {
     ) {
       return approvalRes;
     }
-    try {
-      const result = await this._signTypedData(
-        {
-          from,
-          data,
-          version: 'V3',
-          extra: approvalRes?.extra,
-        },
-        req,
-      );
-      // signTextHistoryService.createHistory({
-      //   address: from,
-      //   text: data,
-      //   origin: session.origin,
-      //   type: 'ethSignTypedDataV3',
-      // });
-      reportSignText({
-        account: currentAccount,
-        method: 'ethSignTypedDataV3',
-        success: true,
-      });
-      return result;
-    } catch (e) {
-      reportSignText({
-        account: currentAccount,
-        method: 'ethSignTypedDataV3',
-        success: false,
-      });
-      throw e;
-    }
+    const result = await this._signTypedData(
+      {
+        from,
+        data,
+        version: 'V3',
+        extra: approvalRes?.extra,
+      },
+      req,
+    );
+    // signTextHistoryService.createHistory({
+    //   address: from,
+    //   text: data,
+    //   origin: session.origin,
+    //   type: 'ethSignTypedDataV3',
+    // });
+    return result;
   };
 
   @Reflect.metadata('APPROVAL', ['SignTypedData', signTypedDataVlidation])
@@ -1824,36 +1691,22 @@ class ProviderController extends BaseController {
     ) {
       return approvalRes;
     }
-    try {
-      const result = await this._signTypedData(
-        {
-          from,
-          data,
-          version: 'V4',
-          extra: approvalRes?.extra,
-        },
-        req,
-      );
-      // signTextHistoryService.createHistory({
-      //   address: from,
-      //   text: data,
-      //   origin: session.origin,
-      //   type: 'ethSignTypedDataV4',
-      // });
-      reportSignText({
-        account: currentAccount,
-        method: 'ethSignTypedDataV4',
-        success: true,
-      });
-      return result;
-    } catch (e) {
-      reportSignText({
-        account: currentAccount,
-        method: 'ethSignTypedDataV4',
-        success: false,
-      });
-      throw e;
-    }
+    const result = await this._signTypedData(
+      {
+        from,
+        data,
+        version: 'V4',
+        extra: approvalRes?.extra,
+      },
+      req,
+    );
+    // signTextHistoryService.createHistory({
+    //   address: from,
+    //   text: data,
+    //   origin: session.origin,
+    //   type: 'ethSignTypedDataV4',
+    // });
+    return result;
   };
 
   @Reflect.metadata('APPROVAL', [
@@ -2135,18 +1988,15 @@ class ProviderController extends BaseController {
 
   personalEcRecover = ({
     data: {
-      params: [data, sig, extra = {}],
+      params: [data, signature],
     },
   }: {
     data: {
-      params: [string, string, any];
+      params: [string, string];
     };
   }) => {
-    return recoverPersonalSignature({
-      ...extra,
-      data,
-      sig,
-    });
+    // @metamask/eth-sig-util >= 4 reads `signature`; the legacy `sig` key throws
+    return recoverPersonalSignature({ data, signature });
   };
 
   @Reflect.metadata('SAFE', true)

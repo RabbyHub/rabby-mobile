@@ -90,48 +90,128 @@ describe('Perps Pro layout model', () => {
     ).toBe(716);
   });
 
-  it('uses the Figma list and form top offsets for Position TP/SL', () => {
-    expect(
-      getPerpsProPositionTpSlSnapPoint({
-        page: 'list',
-        topInset: 47,
-        windowHeight: 852,
-      }),
-    ).toBe(732);
-    expect(
-      getPerpsProPositionTpSlSnapPoint({
-        page: 'form',
-        topInset: 47,
-        windowHeight: 852,
-      }),
-    ).toBe(718);
-    expect(
-      getPerpsProPositionTpSlSnapPoint({
-        page: 'form',
-        topInset: 150,
-        windowHeight: 852,
-      }),
-    ).toBe(686);
-  });
+  it.each([
+    [852, 59, 785],
+    [874, 62, 804],
+    [932, 59, 865],
+    [667, 20, 639],
+    [500, 47, 445],
+    [852, 150, 694],
+    [20, 59, 0],
+    [Number.NaN, 59, 0],
+    [852, Number.NaN, 844],
+  ])(
+    'keeps list, form and Add equally above the market bar at height %s and inset %s',
+    (windowHeight, topInset, height) => {
+      for (const page of ['list', 'form', 'add'] as const) {
+        for (const formBottomPaddingExtra of [0, 34]) {
+          expect(
+            getPerpsProPositionTpSlSnapPoint({
+              page,
+              formBottomPaddingExtra,
+              topInset,
+              windowHeight,
+            }),
+          ).toBe(height);
+        }
+      }
+    },
+  );
 
-  it('reserves the exact remaining 718px sheet height for every TP/SL form presentation', () => {
+  it('reserves the exact remaining 782px sheet height for every TP/SL form presentation', () => {
     expect(
       getPerpsProPositionTpSlFormMinimumHeight({
         presentation: 'subpage',
-        snapPoint: 718,
+        snapPoint: 782,
       }),
-    ).toBe(508);
+    ).toBe(538);
     expect(
       getPerpsProPositionTpSlFormMinimumHeight({
         presentation: 'tab',
-        snapPoint: 718,
+        snapPoint: 782,
       }),
     ).toBe(486);
     expect(
       getPerpsProPositionTpSlFormMinimumHeight({
         presentation: 'inline-empty',
-        snapPoint: 718,
+        snapPoint: 782,
       }),
-    ).toBe(482);
+    ).toBe(486);
+  });
+  it.each([
+    ['modify', 622],
+    ['position-modify', 616],
+  ] as const)('sizes the %s page to its approved content', (page, height) => {
+    expect(
+      getPerpsProPositionTpSlSnapPoint({
+        page,
+        topInset: 47,
+        windowHeight: 852,
+      }),
+    ).toBe(height);
+    expect(
+      getPerpsProPositionTpSlSnapPoint({
+        page,
+        topInset: 47,
+        windowHeight: 500,
+      }),
+    ).toBe(437);
+  });
+  it.each([
+    ['subpage', 782, 538],
+    ['subpage', 622, 378],
+    ['position-modify', 616, 372],
+  ] as const)(
+    'preserves the %s form budget at height %s after moving the header outside scrolling',
+    (presentation, snapPoint, minimumHeight) => {
+      expect(
+        getPerpsProPositionTpSlFormMinimumHeight({ presentation, snapPoint }),
+      ).toBe(minimumHeight);
+      expect(
+        getPerpsProPositionTpSlFormMinimumHeight({
+          presentation,
+          snapPoint: snapPoint + 34,
+        }),
+      ).toBe(minimumHeight + 34);
+      expect(
+        getPerpsProPositionTpSlFormMinimumHeight({
+          presentation,
+          snapPoint: 437,
+        }),
+      ).toBe(193);
+    },
+  );
+  it('preserves modify heights and their actual form bottom-padding increment', () => {
+    for (const [page, base] of [
+      ['modify', 622],
+      ['position-modify', 616],
+    ] as const) {
+      expect(
+        getPerpsProPositionTpSlSnapPoint({
+          page,
+          formBottomPaddingExtra: 24,
+          topInset: 24,
+          windowHeight: 900,
+        }),
+      ).toBe(base + 24);
+      expect(
+        getPerpsProPositionTpSlSnapPoint({
+          page,
+          formBottomPaddingExtra: 34,
+          topInset: 47,
+          windowHeight: 680,
+        }),
+      ).toBe(617);
+    }
+    for (const extra of [-10, Number.NaN, Number.POSITIVE_INFINITY]) {
+      expect(
+        getPerpsProPositionTpSlSnapPoint({
+          page: 'modify',
+          formBottomPaddingExtra: extra,
+          topInset: 24,
+          windowHeight: 900,
+        }),
+      ).toBe(622);
+    }
   });
 });

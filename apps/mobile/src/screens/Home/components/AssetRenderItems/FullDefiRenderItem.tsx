@@ -13,14 +13,10 @@ import { useBrowser } from '@/hooks/browser/useBrowser';
 import { navigateToPreferredPerps } from '@/hooks/perps/navigation/navigateToPreferredPerps';
 import { isAppChain } from '../../utils/appchain';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
-import { matomoRequestEvent } from '@/utils/analytics';
 import { AssetAvatar } from '@/components/AssetAvatar';
 import { ellipsisOverflowedText } from '@/utils/text';
 import { AccountOverview } from '../AccountOverview';
-import {
-  isAave3Portfolio,
-  useProtocolConfig,
-} from '../../utils/protocolConfig';
+import { useProtocolConfig } from '../../utils/protocolConfig';
 import JumpIconCC from '@/assets2024/icons/home/jump-cc.svg';
 import { resetFetchHistoryTxCount } from '../../hooks/history';
 import { setRefreshHistoryId } from '../../SingleHomeRightArea';
@@ -28,7 +24,11 @@ import { ensureDappServiceReady, patchDappsSync } from '@/core/serviceApi/dapp';
 import { CHAINS_ENUM } from '@debank/common';
 import { findChain } from '@/utils/chain';
 import RcExpandCC from '@/assets/icons/home/defi-expand.svg';
-import { isBlacklistMethod, isWhitelistSpender } from '../DappActions/hook';
+import {
+  parseActionAbi,
+  isBlacklistMethodName,
+  isWhitelistSpender,
+} from '../DappActions/hook';
 import type { IProtocolItem, IProtocolPortfolio } from '@/store/protocols';
 import { formatUsdValue } from '@/utils/number';
 import useProtocols from '@/store/protocols';
@@ -96,13 +96,6 @@ export const FullDefiRenderItem = ({
           console.error('[FullDefiRenderItem] persist dapp failed', error);
         }
         openTab(data?.site_url);
-        if (origin) {
-          matomoRequestEvent({
-            category: 'Websites Usage',
-            action: 'Website_Visit_Defi Detail',
-            label: origin,
-          });
-        }
       }
     }
   }, [
@@ -182,15 +175,6 @@ export const FullDefiRenderItem = ({
       }
     }
 
-    const isAave3 = isAave3Portfolio(data?.id);
-    const isLending = data._portfolios.some(
-      item => item.name?.toLowerCase() === 'lending',
-    );
-    // 这个是内置 lending 的withdraw入口，直接跳转到 lending 页面的
-    if (isAave3 && isLending) {
-      result.add('Withdraw');
-    }
-
     for (let i = 0; i < data._portfolios.length; i++) {
       if (result.size >= 3 || !data.chain) {
         break; // 最多只有 3 个标签，发现标签足够就不需要再继续遍历下去了
@@ -199,19 +183,27 @@ export const FullDefiRenderItem = ({
       const actions = item?._originPortfolio?.withdraw_actions || [];
       for (let k = 0; k < actions.length; k++) {
         const action = actions[k];
+        if (!action) {
+          continue;
+        }
         if (
-          action?.need_approve?.to &&
-          !isWhitelistSpender(action.need_approve?.to, data.chain)
+          action.need_approve?.to &&
+          !isWhitelistSpender(action.need_approve.to, data.chain)
         ) {
           continue; // 需要 approve 但不在白名单内，直接跳过
         }
-        if (action?.func && isBlacklistMethod(action?.func)) {
+        try {
+          const abi = parseActionAbi(action.func);
+          if (isBlacklistMethodName(abi.name)) {
+            continue;
+          }
+        } catch (error) {
           continue;
         }
-        if (action?.type && ['withdraw', 'queue'].includes(action?.type)) {
+        if (['withdraw', 'queue'].includes(action.type)) {
           result.add('Withdraw');
         }
-        if (action?.type === 'claim') {
+        if (action.type === 'claim') {
           result.add('Claim');
         }
       }
@@ -326,7 +318,6 @@ export const FullDefiRenderItem = ({
               item={item}
               chain={data?.chain}
               protocolLogo={data?.logo}
-              protocolName={data?.name}
               onRefresh={handleRefresh}
               address={account.address}
               addressType={account.type}
@@ -336,12 +327,6 @@ export const FullDefiRenderItem = ({
                 config?.[data.id]?.showManage &&
                 config[data.id]?.showManage?.(item, account)
                   ? config[data.id]?.onManage
-                  : undefined
-              }
-              tokenManageAction={
-                config?.[data.id]?.showManage &&
-                config[data.id]?.showManage?.(item, account)
-                  ? config[data.id]?.onTokenManage
                   : undefined
               }
               key={`${item.id}-${account.address}-${item.netWorth}`}

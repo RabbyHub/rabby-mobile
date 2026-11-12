@@ -5,6 +5,7 @@ import React, {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useSyncExternalStore,
   type PropsWithChildren,
 } from 'react';
@@ -13,6 +14,7 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { FullWindowOverlay } from 'react-native-screens';
 
 import {
+  beginPerpsProSheetBackTap,
   getPerpsProSheetNavigationVersion,
   getTopPerpsProSheetNavigationRegistration,
   requestDismissPerpsProSheet,
@@ -46,19 +48,39 @@ const useRegistryVersion = () =>
 export const PerpsProSheetGlobalEdgeTarget = () => {
   useRegistryVersion();
   const registration = getTopPerpsProSheetNavigationRegistration();
-  const edgeGesture = useMemo(
-    () =>
-      Gesture.Pan()
-        .activeOffsetX(12)
-        .failOffsetY([-12, 12])
-        .runOnJS(true)
-        .onEnd(event => {
-          if (registration && shouldDismissPerpsProSheetFromEdge(event)) {
-            requestDismissPerpsProSheet(registration, 'edge');
-          }
-        }),
-    [registration],
-  );
+  const backTap = useRef<ReturnType<typeof beginPerpsProSheetBackTap>>(null);
+  useEffect(() => () => backTap.current?.cancel(), [registration]);
+  const edgeGesture = useMemo(() => {
+    const pan = Gesture.Pan()
+      .activeOffsetX(12)
+      .failOffsetY([-12, 12])
+      .runOnJS(true)
+      .onEnd(event => {
+        if (registration && shouldDismissPerpsProSheetFromEdge(event)) {
+          requestDismissPerpsProSheet(registration, 'edge');
+        }
+      });
+    const tap = Gesture.Tap()
+      .maxDistance(12)
+      .runOnJS(true)
+      .onBegin(event => {
+        backTap.current?.cancel();
+        backTap.current = beginPerpsProSheetBackTap(registration, event);
+      })
+      .onEnd((event, success) => {
+        if (success) {
+          backTap.current?.finish(event);
+        } else {
+          backTap.current?.cancel();
+        }
+      })
+      .onFinalize((_event, success) => {
+        if (!success) {
+          backTap.current?.cancel();
+        }
+      });
+    return Gesture.Exclusive(pan, tap);
+  }, [registration]);
 
   if (!IS_IOS || !registration?.edgeDismissibleRef.current) return null;
   return (

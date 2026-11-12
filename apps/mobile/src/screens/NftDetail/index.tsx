@@ -1,7 +1,7 @@
 /* eslint-disable react-native/no-inline-styles */
 import React, { useCallback, useEffect, useMemo } from 'react';
 import dayjs from 'dayjs';
-import { StyleSheet, View, ScrollView } from 'react-native';
+import { Dimensions, StyleSheet, View, ScrollView } from 'react-native';
 import BigNumber from 'bignumber.js';
 import { getCHAIN_ID_LIST } from '@/constant/projectLists';
 import { useTheme2024 } from '@/hooks/theme';
@@ -21,6 +21,7 @@ import { useRoute } from '@react-navigation/native';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import type { GetRootScreenRouteProp } from '@/navigation-type';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
+import { HeaderBackPressable } from '@/hooks/navigation';
 import { ellipsisOverflowedText } from '@/utils/text';
 import { createGetStyles2024 } from '@/utils/styles';
 import { Button } from '@/components2024/Button';
@@ -68,12 +69,15 @@ export const NFTDetailScreen = () => {
   type NonListType = Exclude<typeof token, TokenItem[]>;
 
   const chain = getCHAIN_ID_LIST().get((token as NonListType).chain);
-  const isSvgURL = (token as NonListType)?.content?.endsWith('.svg');
   const iconUri = chain?.logo;
 
   const TokenDetailHeaderArea = useMemoizedFn(() => {
     return (
       <View style={styles.headerArea}>
+        <HeaderBackPressable
+          style={styles.headerBack}
+          tintColor={colors2024['neutral-title-1']}
+        />
         <View style={styles.avator}>
           <View
             style={StyleSheet.flatten([
@@ -86,8 +90,8 @@ export const NFTDetailScreen = () => {
             <Media
               failedPlaceholder={<IconDefaultNFT width="100%" height="100%" />}
               type="image_url"
-              src={isSvgURL ? '' : (token as NFTItem)?.thumbnail_url}
-              thumbnail={isSvgURL ? '' : (token as NFTItem)?.thumbnail_url}
+              src={(token as NFTItem)?.thumbnail_url}
+              thumbnail={(token as NFTItem)?.thumbnail_url}
               mediaStyle={styles.imagesAvatar}
               style={styles.imagesAvatar}
               playIconSize={36}
@@ -113,10 +117,18 @@ export const NFTDetailScreen = () => {
     );
   });
 
-  React.useEffect(() => {
+  React.useLayoutEffect(() => {
     setNavigationOptions({
       headerTitle: TokenDetailHeaderArea,
-      headerTitleAlign: 'center',
+      // The row renders its own back button so the avatar always follows it
+      // with the same gap on every device; the native item reserves much more
+      // space than the glyph on iOS 26.
+      headerTitleAlign: 'left',
+      headerBackVisible: false,
+      headerLeft: () => null,
+      // mergeScreenOptions installs a native back bar item on iOS; clear it so
+      // only the row's own back button is rendered.
+      unstable_headerLeftItems: () => [],
     });
   }, [TokenDetailHeaderArea, setNavigationOptions]);
 
@@ -303,15 +315,18 @@ export const NFTDetailScreen = () => {
           {type && aliasName
             ? renderAccountHeader(type, aliasName, address)
             : null}
-          <Media
-            failedPlaceholder={<IconDefaultNFT width={'100%'} height={360} />}
-            type={iToken?.content_type}
-            src={iToken?.content}
-            style={styles.images}
-            mediaStyle={styles.innerImages}
-            playable={true}
-            poster={iToken?.content}
-          />
+          <View style={styles.imageContainer}>
+            <Media
+              failedPlaceholder={<IconDefaultNFT width={'100%'} height={360} />}
+              type={iToken?.content_type}
+              src={iToken?.content}
+              safeSvgVariant="detail"
+              style={styles.images}
+              mediaStyle={styles.innerImages}
+              playable={true}
+              poster={iToken?.content}
+            />
+          </View>
           <View style={styles.bottom}>
             <View style={styles.titleView}>
               <Text style={styles.title} numberOfLines={1}>
@@ -412,6 +427,8 @@ export const NFTDetailScreen = () => {
   );
 };
 
+const SCREEN_WIDTH = Dimensions.get('window').width;
+
 const getStyle = createGetStyles2024(
   ({ colors2024, colors, safeAreaInsets }) => ({
     screenRoot: {
@@ -464,13 +481,21 @@ const getStyle = createGetStyles2024(
       marginBottom: 0,
     },
     headerArea: {
-      width: '100%',
+      // Full row: our own back button + avatar + name, laid out from 16pt.
+      width: SCREEN_WIDTH - 32,
       height: 'auto',
-      marginLeft: 8,
       display: 'flex',
       flexDirection: 'row',
       gap: 8,
       alignItems: 'center',
+    },
+    headerBack: {
+      marginLeft: 0,
+      paddingLeft: 0,
+      width: 24,
+      height: 24,
+      alignItems: 'center',
+      justifyContent: 'center',
     },
     tokenSymbol: {
       flexShrink: 1,
@@ -512,11 +537,16 @@ const getStyle = createGetStyles2024(
       height: '100%',
       borderRadius: 8,
     },
+    imageContainer: {
+      width: '100%',
+      // Keep page spacing outside Media so its absolute loading layer and
+      // normal-flow image/fallback share the same content bounds.
+      paddingHorizontal: 16,
+    },
     images: {
       width: '100%',
       height: 360,
       // flex: 1,
-      paddingHorizontal: 16,
       borderRadius: 0,
       resizeMode: 'cover',
       backgroundColor: 'transparent',

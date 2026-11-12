@@ -86,9 +86,11 @@ export async function preloadHomeShortcutNavigators() {
 export const TESTKITS_PRELOAD_SCREENS: { [P in AppRootName]?: P } = {
   [RootNames.DevUIFontShowCase]: 'DevUIFontShowCase',
   [RootNames.DevUIAnimatedTextAndView]: 'DevUIAnimatedTextAndView',
+  [RootNames.DevUIAutoFitTitlePlayground]: 'DevUIAutoFitTitlePlayground',
   [RootNames.DevUIFormShowCase]: 'DevUIFormShowCase',
   [RootNames.DevUIAccountShowCase]: 'DevUIAccountShowCase',
   [RootNames.DevUIComponents2024ShowCase]: 'DevUIComponents2024ShowCase',
+  [RootNames.DevUISafeSvgMedia]: 'DevUISafeSvgMedia',
   [RootNames.DevUIScreenContainerShowCase]: 'DevUIScreenContainerShowCase',
   [RootNames.DevUIToast]: 'DevUIToast',
   [RootNames.DevUINotifications]: 'DevUINotifications',

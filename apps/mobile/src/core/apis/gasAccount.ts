@@ -166,7 +166,7 @@ export const topUpGasAccount = async ({
 export const afterTopUpGasAccount = async ({
   to: _to,
   chainServerId,
-  tokenId: _tokenId,
+  tokenId,
   rawAmount: _rawAmount,
   amount,
   tx,
@@ -208,17 +208,15 @@ export const afterTopUpGasAccount = async ({
       nonce: nonce! - 1,
     });
   } else {
-    Sentry.captureException(
-      new Error(
-        'topUp GasAccount tx failed, params: ' +
-          JSON.stringify({
-            userAddr: account.address,
-            gasAccount: accountId,
-            chain: chainServerId,
-            amount,
-          }),
-      ),
-    );
+    // Params go in extra, not the message: beforeSend keeps a token id only
+    // in a structured field, and a fixed title groups one issue.
+    Sentry.captureException(new Error('topUp GasAccount tx failed'), {
+      extra: {
+        chain: chainServerId,
+        tokenId,
+        amount,
+      },
+    });
   }
 };
 

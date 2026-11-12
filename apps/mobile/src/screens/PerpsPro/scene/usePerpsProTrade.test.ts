@@ -50,8 +50,6 @@ const mockMarketOrderOpen = jest.fn(async () => ({
   },
   status: 'ok',
 }));
-const mockReportAttachedOrderHistory = jest.fn();
-const mockReportOpenOrderHistory = jest.fn();
 const mockShowToast = jest.fn();
 const mockSetTpSlMode = jest.fn(async () => undefined);
 const mockCalLiquidationPrice = jest.fn((..._args: unknown[]) => 50);
@@ -178,6 +176,7 @@ jest.mock('@/hooks/perps/usePerpsStore', () => {
     selector(mockPerpsState);
   store.getState = () => mockPerpsState;
   return {
+    ensureCurrentPerpPermission: async () => mockPerpsState.hasPermission,
     fetchClearinghouseStateHttp: jest.fn(),
     fetchPositionOpenOrdersHttp: jest.fn(),
     getDexByCoin: jest.fn((coin: string) =>
@@ -190,6 +189,7 @@ jest.mock('@/hooks/perps/usePerpsStore', () => {
     }),
     isPerpsUserAbstractionReadyForAccount: (state: typeof mockPerpsState) =>
       state.userAbstractionReady,
+    hasCurrentPerpPermission: (state = mockPerpsState) => state.hasPermission,
     perpsStore: store,
   };
 });
@@ -214,13 +214,6 @@ jest.mock('@/utils/perps', () => ({
     marginMode: unknown,
     onlyIsolated: boolean,
   ) => marginMode || (onlyIsolated ? 'strictIsolated' : 'normal'),
-}));
-
-jest.mock('../analytics/manualTradeHistory', () => ({
-  reportPerpsProAttachedOrderHistory: (...args: unknown[]) =>
-    mockReportAttachedOrderHistory(...args),
-  reportPerpsProOpenOrderHistory: (...args: unknown[]) =>
-    mockReportOpenOrderHistory(...args),
 }));
 
 jest.mock('../model/marketLiquidationProjection', () => {
@@ -860,21 +853,6 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
 
     expect(mockLimitOrderOpen).toHaveBeenCalledWith(
       expect.objectContaining({ limitPx: '102', tif: 'Gtc' }),
-    );
-    expect(mockReportOpenOrderHistory).toHaveBeenCalledWith(
-      expect.objectContaining({
-        execution: expect.objectContaining({
-          kind: 'limit',
-          limitPrice: '102',
-        }),
-        orderType: 'limit',
-      }),
-      {
-        acceptance: 'resting',
-        oid: 2,
-        price: '102',
-        size: '1.01',
-      },
     );
   });
 
@@ -1840,24 +1818,6 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     expect(mockExecuteAttached).toHaveBeenCalledWith(
       expect.objectContaining({ type: 'openOrderWithAttachedTpSl' }),
       expect.any(Function),
-    );
-    expect(mockReportAttachedOrderHistory).toHaveBeenCalledWith(
-      expect.objectContaining({
-        parent: expect.objectContaining({ side: 'buy' }),
-      }),
-      {
-        acceptance: 'filled',
-        oid: 1,
-        price: '101',
-        size: '1.01',
-      },
-      [
-        {
-          acceptance: 'resting',
-          oid: 2,
-          role: 'takeProfit',
-        },
-      ],
     );
     expect(mockEnsureApproval).not.toHaveBeenCalled();
     expect(mockGetPerpsSdk).not.toHaveBeenCalled();

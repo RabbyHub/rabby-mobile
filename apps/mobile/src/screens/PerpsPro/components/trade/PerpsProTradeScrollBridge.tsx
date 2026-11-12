@@ -1,10 +1,14 @@
-import React, { useMemo, type PropsWithChildren } from 'react';
-import { Platform, ScrollView, type ViewStyle } from 'react-native';
+import React, {
+  useEffect,
+  useMemo,
+  useRef,
+  type PropsWithChildren,
+} from 'react';
+import { Animated, Platform, ScrollView, type ViewStyle } from 'react-native';
 import Reanimated, {
   scrollTo,
   useAnimatedRef,
   useAnimatedScrollHandler,
-  useAnimatedStyle,
   useSharedValue,
 } from 'react-native-reanimated';
 
@@ -17,6 +21,15 @@ import {
 const PERPS_PRO_TRADE_SCROLL_BRIDGE_ANCHOR = 100_000;
 const PERPS_PRO_TRADE_SCROLL_BRIDGE_SETTLE_VELOCITY = 0.01;
 
+// Exported by both Animated implementations but missing from RN's typings.
+const { attachNativeEvent } = Animated as unknown as {
+  attachNativeEvent: (
+    viewRef: unknown,
+    eventName: string,
+    argMapping: ReadonlyArray<unknown>,
+  ) => { detach: () => void };
+};
+
 type PerpsProTradeScrollBridgeProps = PropsWithChildren<{
   controller: PerpsProInfoScrollBridgeController;
   enabled?: boolean;
@@ -27,7 +40,13 @@ const PerpsProNativeTradeScrollBridge: React.FC<
   PerpsProTradeScrollBridgeProps
 > = ({ children, controller, enabled = true, height }) => {
   const scrollRef = useAnimatedRef<Reanimated.ScrollView>();
-  const proxyOffset = useSharedValue(PERPS_PRO_TRADE_SCROLL_BRIDGE_ANCHOR);
+  // The counter-translation must land in the same frame as UIKit's
+  // contentOffset. Native-driven Animated events are applied synchronously from
+  // scrollViewDidScroll; a Reanimated style can be deferred behind a concurrent
+  // React commit on Fabric, which shows the Trade content shaking.
+  const nativeProxyOffset = useRef(
+    new Animated.Value(PERPS_PRO_TRADE_SCROLL_BRIDGE_ANCHOR),
+  ).current;
   const lastProxyOffset = useSharedValue(PERPS_PRO_TRADE_SCROLL_BRIDGE_ANCHOR);
   const targetOffset = useSharedValue(0);
   const sessionEpoch = useSharedValue(-1);
@@ -36,7 +55,6 @@ const PerpsProNativeTradeScrollBridge: React.FC<
   const settle = () => {
     'worklet';
     sessionActive.value = false;
-    proxyOffset.value = PERPS_PRO_TRADE_SCROLL_BRIDGE_ANCHOR;
     lastProxyOffset.value = PERPS_PRO_TRADE_SCROLL_BRIDGE_ANCHOR;
     scrollTo(scrollRef, 0, PERPS_PRO_TRADE_SCROLL_BRIDGE_ANCHOR, false);
   };
@@ -50,7 +68,6 @@ const PerpsProNativeTradeScrollBridge: React.FC<
       const index = controller.activeIndex.value;
       const target = controller.targets[index];
       const offset = event.contentOffset.y;
-      proxyOffset.value = offset;
       lastProxyOffset.value = offset;
       if (!target) {
         sessionActive.value = false;
@@ -74,7 +91,6 @@ const PerpsProNativeTradeScrollBridge: React.FC<
     },
     onScroll: event => {
       const offset = event.contentOffset.y;
-      proxyOffset.value = offset;
       if (!sessionActive.value) {
         lastProxyOffset.value = offset;
         return;
@@ -107,13 +123,30 @@ const PerpsProNativeTradeScrollBridge: React.FC<
     },
   });
 
-  const tradeStyle = useAnimatedStyle(() => ({
-    transform: [
-      {
-        translateY: proxyOffset.value - PERPS_PRO_TRADE_SCROLL_BRIDGE_ANCHOR,
-      },
-    ],
-  }));
+  useEffect(() => {
+    const scrollView = scrollRef.current;
+    if (!scrollView) {
+      return;
+    }
+    const attachment = attachNativeEvent(scrollView, 'onScroll', [
+      { nativeEvent: { contentOffset: { y: nativeProxyOffset } } },
+    ]);
+    return () => attachment.detach();
+  }, [nativeProxyOffset, scrollRef]);
+
+  const tradeStyle = useMemo(
+    () => ({
+      transform: [
+        {
+          translateY: Animated.subtract(
+            nativeProxyOffset,
+            PERPS_PRO_TRADE_SCROLL_BRIDGE_ANCHOR,
+          ),
+        },
+      ],
+    }),
+    [nativeProxyOffset],
+  );
   const contentContainerStyle = useMemo<ViewStyle>(
     () => ({
       minHeight: PERPS_PRO_TRADE_SCROLL_BRIDGE_ANCHOR * 2 + height,
@@ -136,7 +169,7 @@ const PerpsProNativeTradeScrollBridge: React.FC<
       showsVerticalScrollIndicator={false}
       style={{ height }}
       testID="perps-pro-trade-scroll-bridge">
-      <Reanimated.View style={tradeStyle}>{children}</Reanimated.View>
+      <Animated.View style={tradeStyle}>{children}</Animated.View>
     </Reanimated.ScrollView>
   );
 };
