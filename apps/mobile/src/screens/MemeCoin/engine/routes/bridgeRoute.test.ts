@@ -1,6 +1,7 @@
 import BigNumber from 'bignumber.js';
 import type { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import type { Account } from '@/core/startupServices/preference';
+import { ONE_HOUR_MS } from '@/screens/Bridge/constants';
 
 const mockGetQuoteList = jest.fn();
 const mockGetAggregatorList = jest.fn();
@@ -9,7 +10,7 @@ const mockCompleteBridgeTx = jest.fn(async () => undefined);
 const mockLookup = {
   subscription: { update: jest.fn(), refresh: jest.fn(), dispose: jest.fn() },
   onChange: undefined as undefined | (() => void),
-  /** chain:hash -> the lookup's last answer (null: answered, nothing found) */
+  /** chain:hash -> the lookup's last successful answer (history null: nothing found) */
   answers: new Map<string, unknown>(),
 };
 
@@ -152,6 +153,8 @@ describe('bridge route arrival', () => {
     payAll: false,
   } as const;
 
+  const answer = (history: unknown) => ({ history, answeredAt: Date.now() });
+
   const broadcast = async () => {
     mockGetQuoteList.mockResolvedValue([bridgeQuote]);
     const loaded = loadBridgeRoute();
@@ -190,7 +193,7 @@ describe('bridge route arrival', () => {
     });
 
     const bridgeTx = { to_actual_token: { id: 'pepe' } };
-    mockLookup.answers.set(key, { status: 'completed' });
+    mockLookup.answers.set(key, answer({ status: 'completed' }));
     mockResolveArrival.mockReturnValue({
       type: 'settled',
       status: 'allSuccess',
@@ -207,19 +210,30 @@ describe('bridge route arrival', () => {
     expect(mockLookup.subscription.dispose).toHaveBeenCalled();
   });
 
-  it('asks again while nothing is found, and times out only on an answered lookup', async () => {
+  it('times out only on an empty answer from after the hour, not on an older one kept through failed lookups', async () => {
     const { waitForArrival } = await broadcast();
+    let settled = false;
     const arrived = waitForArrival({
       leg,
       txHash: '0xhash',
       isCancelled: () => false,
     });
+    arrived.then(() => {
+      settled = true;
+    });
     await jest.advanceTimersByTimeAsync(3000);
     expect(mockLookup.subscription.refresh).toHaveBeenCalledTimes(1);
     expect(mockResolveArrival).not.toHaveBeenCalled();
 
-    mockLookup.answers.set(key, null);
+    // not indexed on the first answer, and every lookup after it fails
+    mockLookup.answers.set(key, answer(null));
     mockResolveArrival.mockReturnValue({ type: 'notFoundTimeout' });
+    await jest.advanceTimersByTimeAsync(ONE_HOUR_MS + 3000);
+    expect(settled).toBe(false);
+    expect(mockCompleteBridgeTx).not.toHaveBeenCalled();
+
+    // a lookup that succeeds after the hour and still finds nothing ends it
+    mockLookup.answers.set(key, answer(null));
     await jest.advanceTimersByTimeAsync(3000);
     await expect(arrived).resolves.toBe(false);
     expect(mockCompleteBridgeTx).toHaveBeenCalledWith('0xhash', 0, 'failed');

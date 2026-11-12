@@ -12,6 +12,7 @@ import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHisto
 import type { BridgeTxHistoryItem } from '@/core/services/transactionHistory';
 import type { Account } from '@/core/startupServices/preference';
 import { buildBridgeToken } from '@/screens/Bridge/hooks/bridge';
+import { ONE_HOUR_MS } from '@/screens/Bridge/constants';
 import type { SelectedBridgeQuote } from '@/screens/Bridge/types';
 import { getBridgeQuoteApproval } from '@/screens/Bridge/utils/bridgeApproval';
 import { resolveBridgeArrival } from '@/screens/Bridge/utils/bridgeArrival';
@@ -222,7 +223,7 @@ export const createBridgeRoute = ({ account }: { account: Account }) => {
           return;
         }
         // the lookup re-polls only records it has found and still treats as fresh
-        const found = peekBridgeHistory(query);
+        const found = peekBridgeHistory(query)?.history;
         if (!found || !shouldPollPendingBridge(found)) {
           subscription.refresh();
         }
@@ -243,13 +244,19 @@ export const createBridgeRoute = ({ account }: { account: Account }) => {
           finish(() => reject(new ExecutionStoppedError()));
           return;
         }
-        const history = peekBridgeHistory(query);
-        // as on the Bridge page, only an answered lookup can time the tx out
-        if (history === undefined) {
+        const answer = peekBridgeHistory(query);
+        // As on the Bridge page, only a lookup answered after the hour can time
+        // the tx out. An older empty answer, kept while later lookups fail, only
+        // means the bridge was not indexed yet.
+        if (
+          !answer ||
+          (!answer.history &&
+            answer.answeredAt - local.createdAt <= ONE_HOUR_MS)
+        ) {
           return;
         }
         const resolution = resolveBridgeArrival(
-          history ? [history] : [],
+          answer.history ? [answer.history] : [],
           local,
         );
         if (resolution.type === 'notFoundTimeout') {
