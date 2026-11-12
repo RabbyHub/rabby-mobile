@@ -1,0 +1,201 @@
+name: Android Startup KPI
+
+# Measures the Android cold-start KPI that `am start -W TotalTime` cannot see:
+# time from native process start to the first user-visible surface (unlock or
+# Home). Runs on a mobile-local runner with a physically connected device.
+#
+# Provide one APK to record a data point, or two APKs to compare them back to
+# back on the same device in the same run (A/B). A package that never emits the
+# marker is reported as INVALID - that is a broken measurement, never a
+# "no difference" result.
+
+on:
+  workflow_dispatch:
+    inputs:
+      apk_url:
+        description: 'APK to measure (HTTPS URL)'
+        required: true
+        type: string
+      apk_label:
+        description: 'Label for apk_url (defaults to the file name)'
+        required: false
+        type: string
+        default: ''
+      baseline_apk_url:
+        description: 'Optional second APK to compare against (HTTPS URL)'
+        required: false
+        type: string
+        default: ''
+      baseline_apk_label:
+        description: 'Label for baseline_apk_url (defaults to the file name)'
+        required: false
+        type: string
+        default: ''
+      runs:
+        description: 'Cold starts per package'
+        required: true
+        type: choice
+        options:
+          - '3'
+          - '5'
+          - '7'
+        default: '5'
+      device_serial:
+        description: 'adb serial (empty = first connected device)'
+        required: false
+        type: string
+        default: ''
+      package_name:
+        description: 'Application id'
+        required: false
+        type: string
+        default: 'com.debank.rabbymobile.regression'
+      notify_lark:
+        description: 'Push the result to the mobile Lark chat'
+        required: true
+        type: boolean
+        default: true
+
+defaults:
+  run:
+    shell: bash -euo pipefail {0}
+
+# One device, one measurement at a time.
+concurrency:
+  group: rabby-android-startup-kpi-device
+  cancel-in-progress: false
+
+jobs:
+  measure:
+    name: Measure cold start on device
+    runs-on:
+      - self-hosted
+      - macOS
+      - ARM64
+      - mobile-local
+    timeout-minutes: 45
+    env:
+      APK_URL: ${{ inputs.apk_url }}
+      APK_LABEL: ${{ inputs.apk_label }}
+      BASELINE_APK_URL: ${{ inputs.baseline_apk_url }}
+      BASELINE_APK_LABEL: ${{ inputs.baseline_apk_label }}
+      RUNS: ${{ inputs.runs }}
+      DEVICE_SERIAL: ${{ inputs.device_serial }}
+      PACKAGE_NAME: ${{ inputs.package_name }}
+      RESULT_FILE: ${{ runner.temp }}/startup-kpi-result.json
+
+    steps:
+      - name: Checkout git repo
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          clean: false
+
+      - name: Check tooling
+        run: |
+          export PATH="$PATH:$HOME/Library/Android/sdk/platform-tools"
+          command -v adb
+          adb version
+          adb devices
+
+      - name: Download packages
+        run: |
+          set -euo pipefail
+          work="$RUNNER_TEMP/startup-kpi"
+          rm -rf "$work"
+          mkdir -p "$work"
+
+          fetch() {
+            # fetch <url> <label> <output-path>
+            local url="$1" label="$2" out="$3"
+            case "$url" in
+              https://*) ;;
+              *) echo "only https:// package URLs are accepted" >&2; exit 1 ;;
+            esac
+            if [ -e "$out" ]; then
+              echo "duplicate label '$(basename "$out" .apk)' - pass distinct labels" >&2
+              exit 1
+            fi
+            curl --fail --location --silent --show-error --retry 3 \
+              --proto '=https' --tlsv1.2 "$url" --output "$out"
+            test -s "$out"
+            unzip -tq "$out" >/dev/null
+            echo "downloaded ${label} -> $out"
+          }
+
+          label="${APK_LABEL:-$(basename "${APK_URL%%\?*}")}"
+          label="${label%.apk}"
+          fetch "$APK_URL" "$label" "$work/$label.apk"
+
+          if [ -n "${BASELINE_APK_URL}" ]; then
+            baseline_label="${BASELINE_APK_LABEL:-$(basename "${BASELINE_APK_URL%%\?*}")}"
+            baseline_label="${baseline_label%.apk}"
+            fetch "$BASELINE_APK_URL" "$baseline_label" "$work/$baseline_label.apk"
+          fi
+
+          {
+            echo "APK_MAIN=$work/$label.apk"
+            if [ -n "${BASELINE_APK_URL}" ]; then
+              echo "APK_BASELINE=$work/$baseline_label.apk"
+            fi
+          } >> "$GITHUB_ENV"
+
+      - name: Prepare device
+        run: |
+          export PATH="$PATH:$HOME/Library/Android/sdk/platform-tools"
+          serial="${DEVICE_SERIAL:-$(adb devices | awk '$2 == "device" { print $1; exit }')}"
+          if [ -z "$serial" ]; then
+            echo "no connected android device" >&2
+            exit 1
+          fi
+          echo "DEVICE_SERIAL=$serial" >> "$GITHUB_ENV"
+          # Best effort: a locked/sleeping device changes the measured surface.
+          adb -s "$serial" shell input keyevent KEYCODE_WAKEUP || true
+          adb -s "$serial" shell wm dismiss-keyguard || true
+          adb -s "$serial" shell settings put global stay_on_while_plugged_in 3 || true
+          echo "device=$serial"
+
+      - name: Collect startup KPI
+        id: collect
+        run: |
+          export PATH="$PATH:$HOME/Library/Android/sdk/platform-tools"
+          args=(--apk "$APK_MAIN" --json "$RESULT_FILE" --runs "$RUNS" --pkg "$PACKAGE_NAME")
+          if [ -n "${DEVICE_SERIAL:-}" ]; then
+            args+=(--device "$DEVICE_SERIAL")
+          fi
+          if [ -n "${APK_BASELINE:-}" ]; then
+            args+=(--apk "$APK_BASELINE")
+          fi
+
+          status=0
+          bash apps/mobile/scripts/startup-kpi/collect.sh "${args[@]}" || status=$?
+          echo "collect_exit=$status" >> "$GITHUB_OUTPUT"
+          {
+            echo '### Android startup KPI'
+            echo '```'
+            [ -f "$RESULT_FILE" ] && node -e 'const r=require(process.env.RESULT_FILE);for(const p of r.packages||[]){console.log(p.result==="OK"?`${p.label}: ${p.contentMedianMs}ms (${p.contentMinMs}-${p.contentMaxMs}) route ${JSON.stringify(p.routes)}`: `${p.label}: INVALID`)}' || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit "$status"
+
+      - name: Report to Lark
+        if: ${{ always() && inputs.notify_lark }}
+        env:
+          RABBY_STARTUP_KPI_RESULT_FILE: ${{ runner.temp }}/startup-kpi-result.json
+          RABBY_MOBILE_LARK_CHAT_URL: ${{ secrets.RABBY_MOBILE_LARK_CHAT_URL || secrets.LARK_CHAT_URL }}
+          RABBY_MOBILE_LARK_CHAT_SECRET: ${{ secrets.RABBY_MOBILE_LARK_CHAT_SECRET || secrets.LARK_CHAT_SECRET }}
+          GIT_ACTIONS_JOB_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          GIT_REF_NAME: ${{ github.ref_name }}
+        run: |
+          if [ ! -f "$RABBY_STARTUP_KPI_RESULT_FILE" ]; then
+            echo "no result file; skipping Lark report"
+            exit 0
+          fi
+          node apps/mobile/scripts/startup-kpi/notify-lark.js
+
+      - name: Upload result
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: startup-kpi-result
+          path: ${{ runner.temp }}/startup-kpi-result.json
+          if-no-files-found: warn
