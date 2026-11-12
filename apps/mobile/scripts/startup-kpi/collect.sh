@@ -15,8 +15,9 @@
 # user-visible surface, so the number would not mean anything. The script fails
 # instead of reporting a misleading "no difference".
 #
-# usage: collect.sh --apk a.apk [--apk b.apk] [--device <serial>|auto]
-#                   [--pkg <applicationId>] [--runs 5] [--wait 8] [--json out.json]
+# usage: collect.sh --apk a.apk [--label name] [--apk b.apk [--label name]]
+#                   [--device <serial>|auto] [--pkg <applicationId>]
+#                   [--runs 5] [--wait 8] [--json out.json]
 set -u
 
 export PATH="$PATH:$HOME/Library/Android/sdk/platform-tools"
@@ -24,12 +25,15 @@ PKG=${PKG:-com.debank.rabbymobile.regression}
 RUNS=${RUNS:-5}
 WAIT_S=${WAIT_S:-8}
 apks=()
+apk_labels=()
 device=""
 json_out=""
 
 while [ $# -gt 0 ]; do
   case "$1" in
-    --apk) apks+=("$2"); shift 2 ;;
+    --apk) apks+=("$2"); apk_labels+=(""); shift 2 ;;
+    # Names the package just given by --apk (default: the file name).
+    --label) apk_labels[$((${#apk_labels[@]} - 1))]="$2"; shift 2 ;;
     --device) device="$2"; shift 2 ;;
     --pkg) PKG="$2"; shift 2 ;;
     --runs) RUNS="$2"; shift 2 ;;
@@ -54,8 +58,9 @@ maxof() { printf '%s\n' "$@" | sort -n | tail -1; }
 json_packages=""
 overall_status=0
 
-for apk in "${apks[@]}"; do
-  label=$(basename "$apk" .apk)
+for idx in "${!apks[@]}"; do
+  apk="${apks[$idx]}"
+  label="${apk_labels[$idx]:-$(basename "$apk" .apk)}"
   echo "=== $label ==="
   if ! adb -s "$device" install -r "$apk" >/dev/null 2>&1; then
     echo "  install failed for $apk" >&2

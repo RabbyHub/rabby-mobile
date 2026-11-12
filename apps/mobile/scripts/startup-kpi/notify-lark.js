@@ -105,11 +105,18 @@ function buildLines(result) {
     const routes = Object.entries(item.routes || {})
       .map(([route, count]) => `${route}×${count}`)
       .join(', ');
+    const commit = item.commit
+      ? ` · commit ${item.commit}${
+          item.commitOnDevelop === false ? ' (NOT on develop)' : ''
+        }`
+      : '';
     lines.push(
       `${item.label}: startup median ${item.contentMedianMs}ms ` +
         `(${item.contentMinMs}-${item.contentMaxMs}) · ` +
-        `fully-drawn ${item.fullyDrawnMedianMs ?? 'n/a'}ms · ` +
-        `splash TotalTime ${item.totalMedianMs}ms · route ${routes}`,
+        `fully-drawn ${
+          item.fullyDrawnMedianMs != null ? `${item.fullyDrawnMedianMs}ms` : 'n/a'
+        } · ` +
+        `splash TotalTime ${item.totalMedianMs}ms · route ${routes}${commit}`,
     );
   }
 
@@ -123,6 +130,15 @@ function buildLines(result) {
           slower.contentMedianMs,
           preferred.contentMedianMs,
         ).trim()}`,
+    );
+  }
+
+  // Only the baseline is required to come from develop; a candidate may
+  // legitimately be a feature branch.
+  const baseline = measured[0];
+  if (baseline && baseline.commitOnDevelop === false) {
+    lines.push(
+      `WARNING: baseline ${baseline.label} was built from ${baseline.commit}, which is not in develop - treat it as a feature-branch comparison, not a shipping baseline.`,
     );
   }
 
