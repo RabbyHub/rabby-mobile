@@ -10,7 +10,8 @@
 #                       [--bundle <id>] [--runs 5] [--wait 10] [--json out.json]
 set -u
 
-PACKAGE=${PACKAGE:-com.debank.rabbymobile.regression}
+# iOS regression bundle id (the Android package uses dots; iOS uses hyphens).
+PACKAGE=${PACKAGE:-com.debank.rabby-mobile-regression}
 RUNS=${RUNS:-5}
 WAIT_S=${WAIT_S:-10}
 SUBSYSTEM=${SUBSYSTEM:-com.debank.rabby.startupkpi}
@@ -58,18 +59,15 @@ for idx in "${!apps[@]}"; do
   for i in $(seq 1 "$RUNS"); do
     xcrun simctl terminate "$device" "$PACKAGE" >/dev/null 2>&1 || true
     sleep 3
-    logfile=$(mktemp -t rabby-startup-kpi-ios)
-    # Start the stream before launching so the first line cannot be missed.
-    xcrun simctl spawn "$device" log stream --style compact \
-      --predicate "subsystem == \"$SUBSYSTEM\"" > "$logfile" 2>/dev/null &
-    stream_pid=$!
-    sleep 2
+    # `log stream` loses its buffer when the process is signalled, so read the
+    # unified log for the exact window of this launch instead.
+    started_at=$(date "+%Y-%m-%d %H:%M:%S")
     xcrun simctl launch "$device" "$PACKAGE" >/dev/null 2>&1
     sleep "$WAIT_S"
-    kill "$stream_pid" >/dev/null 2>&1 || true
-    wait "$stream_pid" 2>/dev/null || true
 
-    line=$(grep -o 'first_content_frame native_ms=[0-9-]* route=[a-z]*' "$logfile" | head -1)
+    line=$(xcrun simctl spawn "$device" log show --start "$started_at" \
+      --style compact --predicate "subsystem == \"$SUBSYSTEM\"" 2>/dev/null \
+      | grep -o 'first_content_frame native_ms=[0-9-]* route=[a-z]*' | head -1)
     if [ -z "$line" ]; then
       echo "  run$i INVALID (no first_content_frame marker; app never reached unlock/home)"
       invalid=$((invalid + 1))
