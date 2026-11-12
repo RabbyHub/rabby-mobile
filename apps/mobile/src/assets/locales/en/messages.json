@@ -1576,11 +1576,7 @@
       "settingUp": "Setting up password",
       "setUpSuccess": "Setup Password Successfully",
       "Newpassword": "Enter password",
-      "and": "and",
       "enable": "Enable {{ bioType }}",
-      "agreeToTerms": "I've read and agree to the",
-      "termOfUse": "terms",
-      "PrivacyPolicy": "privacy policy",
       "phoneNotSupport": "Your phone does not support {{ bioType }}",
       "ConfirmPassword": "Confirm password",
       "biometricsFail": "Enable biometrics fail",
@@ -1596,7 +1592,9 @@
       "agree": "I have read and agree to the<1/> <2>Terms of Use</2>",
       "confirmTitle": "Confirm password",
       "confirmModalDesc": "Please store your password properly. Once lost, it cannot be changed or recovered by Rabby.",
-      "setWallet": "Set Wallet"
+      "setWallet": "Set Wallet",
+      "dataAnalysisDesc": "Share anonymous usage data to help improve Rabby. Collected data is not associated with you or your account. You can change this anytime in Settings.",
+      "agreeByContinuing": "By continuing, you agree to the <terms>Terms of Use</terms>\nand acknowledge the <privacy>Privacy Policy</privacy>"
     },
     "importSafe": {
       "title": "Add Safe address",
@@ -1991,7 +1989,8 @@
       "currency": "Currency",
       "searchCurrency": "Search Currency",
       "transactionNotification": "Txn notifications (Beta)",
-      "dataAnalysis": "Data Analysis",
+      "dataAnalysis": "Help improve Rabby",
+      "dataAnalysisDesc": "Share anonymous usage data to help improve Rabby. Collected data is not associated with you or your account.",
       "bugReportChat": "Share Feedback via Chat",
       "features": "Features",
       "manageWallets": "Manage Wallets"

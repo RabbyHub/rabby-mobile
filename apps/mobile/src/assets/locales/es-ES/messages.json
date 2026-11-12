@@ -1668,9 +1668,7 @@
     },
     "createPassword": {
       "Newpassword": "Introducir contraseña",
-      "and": "y",
       "confirmRequired": "Por favor confirma la contraseña",
-      "termOfUse": "Términos de Uso",
       "title": "Establecer Contraseña",
       "setUpSuccess": "Configuración de contraseña exitosa",
       "phoneNotSupport": "Tu teléfono no es compatible con {{ bioType }}",
@@ -1684,13 +1682,13 @@
       "subTitle": "Esta contraseña desbloquea tu cartera y cifra tus datos en este dispositivo. No se puede recuperar. Si la pierdes, tendrás que restablecer y volver a importar tu cartera.",
       "passwordMin": "La contraseña debe tener al menos 8 caracteres",
       "confirmTitle": "Confirmar contraseña",
-      "PrivacyPolicy": "Política de Privacidad",
       "agree": "He leído y acepto los<1/> <2>Términos de Uso</2>",
-      "agreeToTerms": "He leído y estoy de acuerdo con los",
       "passwordPlaceholder": "La contraseña debe tener al menos 8 caracteres.",
       "confirmModalDesc": "Guarda bien tu contraseña. Si la pierdes, Rabby no podrá cambiarla ni recuperarla.",
       "setWallet": "Configurar cartera",
-      "biometricsFail": "Error al habilitar la autenticación biométrica"
+      "biometricsFail": "Error al habilitar la autenticación biométrica",
+      "dataAnalysisDesc": "Comparte datos de uso anónimos para ayudar a mejorar Rabby. Los datos recopilados no se asocian contigo ni con tu cuenta. Puedes cambiarlo en cualquier momento en Configuración.",
+      "agreeByContinuing": "Al continuar, aceptas los <terms>Términos de Uso</terms> y reconoces la <privacy>Política de Privacidad</privacy>."
     },
     "approvalsAddressList": {
       "title": "Aprobaciones"
@@ -1965,7 +1963,8 @@
       "searchCurrency": "Buscar moneda",
       "currency": "Moneda",
       "screenshotReportSwitch": "Captura de pantalla para informar un error",
-      "dataAnalysis": "Análisis de datos",
+      "dataAnalysis": "Ayuda a mejorar Rabby",
+      "dataAnalysisDesc": "Comparte datos de uso anónimos para ayudar a mejorar Rabby. Los datos recopilados no se asocian contigo ni con tu cuenta.",
       "bugReportChat": "Compartir comentarios por chat",
       "features": "Funciones",
       "manageWallets": "Gestionar carteras"

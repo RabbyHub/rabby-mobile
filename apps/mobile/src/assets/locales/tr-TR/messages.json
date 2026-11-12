@@ -1533,9 +1533,7 @@
       "title": "Şifre Belirle",
       "enable": "{{ bioType }}'yi Etkinleştir",
       "passwordPlaceholder": "Parola en az 8 karakter uzunluğunda olmalıdır.",
-      "and": "ve",
       "ConfirmPassword": "Şifreyi doğrula",
-      "termOfUse": "Kullanım Şartları",
       "biometricsFail": "Biyometrik kimlik doğrulama etkinleştirme başarısız oldu",
       "confirmModalDesc": "Lütfen şifrenizi düzgün bir şekilde saklayın. Bir kez kaybolduğunda, Rabby tarafından değiştirilemez veya kurtarılamaz.",
       "setWallet": "Cüzdanı Ayarla",
@@ -1544,8 +1542,8 @@
       "subTitle": "Bu şifre cüzdanınızın kilidini açar ve bu cihazdaki verilerinizi şifreler. Şifre kurtarılamaz. Kaybederseniz sıfırlayıp cüzdanınızı yeniden içe aktarmanız gerekir.",
       "Newpassword": "Yeni şifre",
       "agree": "Okudum ve <1/> <2>Kullanım Şartları</2> ile aynı fikirdeyim.",
-      "agreeToTerms": "Konsoktum ve kabul ediyorum.",
-      "PrivacyPolicy": "Gizlilik Politikası"
+      "dataAnalysisDesc": "Rabby'yi geliştirmeye yardımcı olmak için anonim kullanım verilerini paylaşın. Toplanan veriler sizinle veya hesabınızla ilişkilendirilmez. Bunu istediğiniz zaman Ayarlar'dan değiştirebilirsiniz.",
+      "agreeByContinuing": "Devam ederek <terms>Kullanım Şartları</terms> belgesini kabul etmiş ve <privacy>Gizlilik Politikası</privacy> belgesini okumuş sayılırsınız."
     },
     "importSafe": {
       "error": {
@@ -1919,7 +1917,8 @@
       "currency": "Para Birimi",
       "searchCurrency": "Para Araştırması",
       "screenshotReportSwitch": "Hata bildirmek için ekran görüntüsü alın",
-      "dataAnalysis": "Veri Analizi",
+      "dataAnalysis": "Rabby'yi geliştirmeye yardım edin",
+      "dataAnalysisDesc": "Rabby'yi geliştirmeye yardımcı olmak için anonim kullanım verilerini paylaşın. Toplanan veriler sizinle veya hesabınızla ilişkilendirilmez.",
       "bugReportChat": "Sohbet Üzerinden Geri Bildirim Paylaş",
       "features": "Özellikler",
       "manageWallets": "Cüzdanları Yönet"
