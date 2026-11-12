@@ -38,7 +38,8 @@ export default function BiometricsStubModal() {
       modalId={MODAL_GATE_IDS.biometricsStub}
       visible={shouldShowStubModal}
       transparent
-      animationType="fade">
+      animationType="fade"
+      onRequestClose={abortBiometricsVerification}>
       <TouchableOpacity
         style={styles.overlay}
         onPress={() => {

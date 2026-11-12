@@ -933,7 +933,7 @@
         "queued": "En attente",
         "pending": "En attente",
         "completed": "Terminé",
-        "refund": "Remboursement",
+        "refund": "Remboursé",
         "waiting": "En attente sur la chaîne cible",
         "goBack": "Retour",
         "bridgeAgain": "Effectuer un nouveau bridge",
@@ -1493,17 +1493,14 @@
     },
     "createPassword": {
       "enable": "Activer {{ bioType }}",
-      "PrivacyPolicy": "Politique de confidentialité",
       "passwordRequired": "Veuillez saisir le mot de passe",
       "confirmRequired": "Veuillez confirmer le mot de passe",
       "setUpSuccess": "Configuration du mot de passe réussie",
       "confirmPasswordPlaceholder": "Confirmer le mot de passe",
       "Newpassword": "Saisir le mot de passe",
-      "and": "et",
       "passwordMinTip": "Doit comporter au moins 8 caractères",
       "confirmError": "Les mots de passe ne correspondent pas.",
       "passwordMin": "Le mot de passe doit comporter au moins 8 caractères.",
-      "agreeToTerms": "J'ai lu et j'accepte les",
       "ConfirmPassword": "Confirmez le mot de passe",
       "phoneNotSupport": "Votre téléphone ne prend pas en charge {{ bioType }}",
       "settingUp": "Configuration du mot de passe",
@@ -1511,11 +1508,12 @@
       "biometricsFail": "Échec de l’activation de la biométrie",
       "title": "Définir le mot de passe",
       "subTitle": "Ce mot de passe déverrouille votre portefeuille et chiffre vos données sur cet appareil. Il ne peut pas être récupéré. Si vous le perdez, vous devrez réinitialiser puis réimporter votre portefeuille.",
-      "termOfUse": "Conditions d'utilisation",
       "confirmTitle": "Confirmer le mot de passe",
       "agree": "J'ai lu et j'accepte les<1/> <2>Conditions d'utilisation</2>",
       "confirmModalDesc": "Veuillez conserver votre mot de passe correctement. Une fois perdu, il ne peut pas être modifié ni récupéré par Rabby.",
-      "setWallet": "Configurer le portefeuille"
+      "setWallet": "Configurer le portefeuille",
+      "dataAnalysisDesc": "Partagez des données d'utilisation anonymes pour aider à améliorer Rabby. Les données collectées ne sont associées ni à vous ni à votre compte. Vous pouvez modifier ce choix à tout moment dans les Paramètres.",
+      "agreeByContinuing": "En continuant, vous acceptez les <terms>Conditions d'utilisation</terms> et prenez acte de la <privacy>Politique de confidentialité</privacy>."
     },
     "miniSignFooterBar": {
       "status": {
@@ -1878,7 +1876,8 @@
       "searchCurrency": "Rechercher une devise",
       "screenshotReportSwitch": "Capture d'écran pour signaler un bug",
       "currency": "Monnaie",
-      "dataAnalysis": "Analyse des données",
+      "dataAnalysis": "Aider à améliorer Rabby",
+      "dataAnalysisDesc": "Partagez des données d'utilisation anonymes pour aider à améliorer Rabby. Les données collectées ne sont associées ni à vous ni à votre compte.",
       "bugReportChat": "Partager vos commentaires via le chat",
       "features": "Fonctionnalités",
       "manageWallets": "Gérer les portefeuilles"
@@ -1925,6 +1924,7 @@
       "emptyWhitelistContent": "Ajoutez des adresses de confiance à la liste d’autorisation pour des transferts rapides—pas de confirmation nécessaire la prochaine fois.",
       "SendHistory": "Historique des envois",
       "enterOrSearchAddress": "Entrer ou rechercher une adresse",
+      "resolvingAddressName": "Recherche de l'adresse...",
       "dividerWatchOnlyWallets": "Adresses en lecture seule"
     },
     "confirmAddress": {
@@ -3468,13 +3468,6 @@
         "mainnet": "Réseau intégré",
         "testnet": "Réseau personnalisé"
       }
-    },
-    "ReserveGasPopup": {
-      "fast": "Normal",
-      "instant": "Rapide",
-      "title": "Réserver Gas",
-      "normal": "Lent",
-      "doNotReserve": "Ne pas réserver de Gas"
     },
     "ModalPreviewNFTItem": {
       "FieldLabel": {

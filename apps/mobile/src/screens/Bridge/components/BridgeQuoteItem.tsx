@@ -36,7 +36,7 @@ interface QuoteItemProps extends SelectedBridgeQuote {
 
 export const BridgeQuoteItem: React.FC<QuoteItemProps> = props => {
   const { currentSelectedQuote, ...others } = props;
-  const { styles, colors, colors2024 } = useTheme2024({ getStyle });
+  const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const openBridgeQuote = useSetQuoteVisible();
 

@@ -56,6 +56,20 @@ type TipProps<T extends PressableComponent> = Omit<TooltipProps, 'content'> & {
 
 const destroyListeners = new Set<() => void>();
 
+/**
+ * Many call sites pass `cond ? text : undefined` and wrap a button. With no
+ * content there is nothing to show, so the Tip must neither open (an empty
+ * tooltip is an invisible full-screen Modal) nor take taps from its children.
+ */
+export function hasTipContent(
+  content: TipProps<PressableComponent>['content'],
+) {
+  if (typeof content === 'string') {
+    return content.trim().length > 0;
+  }
+  return content !== null && content !== undefined;
+}
+
 const TipModalGateContext = React.createContext<{
   modalGateId: ModalGateId;
   modalGateBlocking: boolean;
@@ -110,8 +124,7 @@ const TipBase = <T extends PressableComponent = 'RNPressable'>({
   const { colors, styles } = useThemeStyles(getStyle);
 
   const { on, turnOn, turnOff } = useSwitch();
-  const hasContent =
-    typeof content === 'string' ? content.trim().length > 0 : !!content;
+  const hasContent = hasTipContent(content);
 
   useEffect(() => {
     if (!hasContent) {
@@ -181,11 +194,15 @@ const TipBase = <T extends PressableComponent = 'RNPressable'>({
   const onPress = pressableProps?.onPress;
   const handleOnPress = useCallback<PressableComProps<T>['onPress'] & object>(
     evt => {
-      if (!hasContent) {
-        return;
-      }
       if (typeof onPress === 'function') {
         onPress?.({ event: evt, turnOn, turnOff });
+        return;
+      }
+
+      // Nothing to show: do not mount an invisible full-screen tooltip. The
+      // press itself already happened above, so a button that carries an empty
+      // tip keeps working.
+      if (!hasContent) {
         return;
       }
 
@@ -221,7 +238,9 @@ const TipBase = <T extends PressableComponent = 'RNPressable'>({
         <PressableComponent
           hitSlop={10}
           {...pressableProps}
-          disabled={!hasContent || pressableProps?.disabled}
+          // Keep the caller's disabled state only: clearing it for empty
+          // content used to drop the button's own onPress.
+          disabled={!!pressableProps?.disabled}
           // @ts-expect-error
           style={StyleSheet.flatten([pressableProps?.style])}
           // @ts-expect-error

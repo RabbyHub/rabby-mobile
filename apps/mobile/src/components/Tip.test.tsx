@@ -64,7 +64,7 @@ describe.each(['RNPressable', 'RNGHPressable'] as const)('Tip using %s', as => {
       fireEvent.press(view.getByTestId('tip-trigger'));
       fireEvent.press(view.getByTestId('child-action'));
 
-      expect(onPress).not.toHaveBeenCalled();
+      expect(onPress).toHaveBeenCalledTimes(1);
       expect(onChildPress).toHaveBeenCalledTimes(1);
       expect(view.getByTestId('tip-trigger')).toHaveStyle({
         width: 172,

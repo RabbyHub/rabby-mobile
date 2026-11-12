@@ -1001,7 +1001,7 @@
         "queued": "排隊中",
         "pending": "待處理",
         "completed": "完成",
-        "refund": "退還",
+        "refund": "已退還",
         "waiting": "等待目標鏈交易",
         "goBack": "返回",
         "bridgeAgain": "再次跨鏈",
@@ -1284,11 +1284,8 @@
     "createPassword": {
       "confirmRequired": "請確認密碼",
       "passwordMinTip": "至少需包含 8 個字元",
-      "and": "和",
       "confirmPasswordPlaceholder": "確認密碼",
-      "termOfUse": "使用條款",
       "ConfirmPassword": "確認密碼",
-      "agreeToTerms": "我已閱讀並同意",
       "confirmTitle": "確認密碼",
       "Newpassword": "新密碼",
       "phoneNotSupport": "您的手機不支援{{ bioType }}",
@@ -1305,7 +1302,8 @@
       "passwordRequired": "請輸入密碼",
       "setUpSuccess": "密碼設定成功",
       "subTitle": "此密碼用於解鎖錢包並加密本機資料，無法找回。若密碼遺失，你需要重設並重新匯入錢包。",
-      "PrivacyPolicy": "隱私政策"
+      "dataAnalysisDesc": "分享匿名使用資料以協助改善 Rabby。收集的資料不會與你或你的帳戶關聯。你可以隨時在設定中變更。",
+      "agreeByContinuing": "繼續即表示你同意<terms>使用條款</terms>並知悉<privacy>隱私政策</privacy>。"
     },
     "safeQueue": {
       "replaceBtn": "替換",
@@ -2030,7 +2028,8 @@
       "searchCurrency": "搜尋貨幣",
       "currency": "貨幣",
       "screenshotReportSwitch": "截圖回報問題",
-      "dataAnalysis": "資料分析",
+      "dataAnalysis": "協助改善 Rabby",
+      "dataAnalysisDesc": "分享匿名使用資料以協助改善 Rabby。收集的資料不會與你或你的帳戶關聯。",
       "bugReportChat": "透過聊天分享回饋",
       "features": "功能",
       "manageWallets": "管理錢包"
@@ -2088,7 +2087,8 @@
       "emptyWhitelistContent": "將受信任的地址新增到白名單中以進行快速轉帳——下次無需確認",
       "SendHistory": "轉帳記錄",
       "dividerWatchOnlyWallets": "只讀錢包",
-      "enterOrSearchAddress": "輸入或搜尋地址"
+      "enterOrSearchAddress": "輸入或搜尋地址",
+      "resolvingAddressName": "正在查詢地址..."
     },
     "confirmAddress": {
       "risks": {
@@ -3583,13 +3583,6 @@
         "mainnet": "整合網路",
         "testnet": "自訂網路"
       }
-    },
-    "ReserveGasPopup": {
-      "normal": "慢",
-      "fast": "正常",
-      "instant": "快速",
-      "doNotReserve": "不預留 Gas",
-      "title": "預留 Gas"
     },
     "AuthenticationModals": {
       "processBiometrics": {
