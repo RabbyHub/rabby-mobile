@@ -3471,7 +3471,10 @@
         "exitDesc1": "Quá trình thực hiện sẽ dừng. Các giao dịch chưa gửi sẽ không được xử lý.",
         "exitDesc2": "Các giao dịch đã gửi lên chuỗi không thể hoàn tác và vẫn có thể hoàn tất.",
         "stopAndExit": "Dừng & Thoát",
-        "continue": "Tiếp tục"
+        "continue": "Tiếp tục",
+        "failReason": {
+          "buildFailed": "Tạo giao dịch thất bại"
+        }
       }
     },
     "convertDust": {

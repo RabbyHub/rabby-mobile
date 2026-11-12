@@ -3354,7 +3354,10 @@
         "exitDesc1": "실행이 중지됩니다. 제출되지 않은 거래는 처리되지 않습니다.",
         "exitDesc2": "온체인에 제출된 거래는 취소할 수 없으며 완료될 수 있습니다.",
         "stopAndExit": "중지 후 나가기",
-        "continue": "계속"
+        "continue": "계속",
+        "failReason": {
+          "buildFailed": "트랜잭션 생성 실패"
+        }
       }
     },
     "convertDust": {

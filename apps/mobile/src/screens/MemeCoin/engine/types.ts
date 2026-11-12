@@ -80,6 +80,8 @@ export type FailReason =
   | 'gasTooHigh'
   | 'simulationFailed'
   | 'insufficientBalance'
+  /** the backend could not turn the quote into a transaction */
+  | 'buildFailed'
   /** bridge only: the source tx is mined, so the funds may still be on the way */
   | 'arrivalFailed'
   | 'failed';

@@ -3404,7 +3404,10 @@
         "exitDesc1": "実行は停止します。未送信の取引は処理されません。",
         "exitDesc2": "オンチェーンに送信済みの取引は取り消せず、完了する可能性があります。",
         "stopAndExit": "停止して終了",
-        "continue": "続ける"
+        "continue": "続ける",
+        "failReason": {
+          "buildFailed": "トランザクションの作成に失敗しました"
+        }
       }
     },
     "convertDust": {

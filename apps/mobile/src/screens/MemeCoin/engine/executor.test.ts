@@ -385,17 +385,19 @@ describe('auto retry', () => {
   };
   const ok: BroadcastResult = { ok: true, txHash: '0x1' };
 
-  it.each(['simulationFailed', 'noQuote', 'priceImpact'] as const)(
-    'retries %s until it succeeds',
-    async reason => {
-      const t = setupAttempts([{ ok: false, reason }, ok]);
-      t.executor.start();
-      await flush();
-      expect(t.calls()).toBe(2);
-      expect(t.delays).toEqual([1500]);
-      expect(t.states.a1).toEqual({ phase: 'success', txHash: '0x1' });
-    },
-  );
+  it.each([
+    'simulationFailed',
+    'noQuote',
+    'priceImpact',
+    'buildFailed',
+  ] as const)('retries %s until it succeeds', async reason => {
+    const t = setupAttempts([{ ok: false, reason }, ok]);
+    t.executor.start();
+    await flush();
+    expect(t.calls()).toBe(2);
+    expect(t.delays).toEqual([1500]);
+    expect(t.states.a1).toEqual({ phase: 'success', txHash: '0x1' });
+  });
 
   it('gives up after two retries and keeps the last reason', async () => {
     const fail: BroadcastResult = { ok: false, reason: 'simulationFailed' };

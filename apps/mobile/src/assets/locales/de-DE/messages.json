@@ -3647,7 +3647,10 @@
         "exitDesc1": "Die Ausführung wird gestoppt. Nicht übermittelte Transaktionen werden nicht verarbeitet.",
         "exitDesc2": "Bereits on-chain übermittelte Transaktionen können nicht rückgängig gemacht werden und werden möglicherweise trotzdem abgeschlossen.",
         "stopAndExit": "Stoppen & Beenden",
-        "continue": "Fortfahren"
+        "continue": "Fortfahren",
+        "failReason": {
+          "buildFailed": "Transaktion konnte nicht erstellt werden"
+        }
       }
     },
     "convertDust": {

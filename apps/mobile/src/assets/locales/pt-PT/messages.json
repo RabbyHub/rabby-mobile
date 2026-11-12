@@ -3648,7 +3648,10 @@
         "exitDesc1": "A execução será interrompida. As transações não submetidas não serão processadas.",
         "exitDesc2": "As transações já submetidas na rede não podem ser anuladas e poderão ainda ser concluídas.",
         "stopAndExit": "Parar e sair",
-        "continue": "Continuar"
+        "continue": "Continuar",
+        "failReason": {
+          "buildFailed": "Falha ao criar a transação"
+        }
       }
     },
     "convertDust": {

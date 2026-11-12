@@ -3501,7 +3501,10 @@
         "exitDesc1": "执行将停止，未提交的交易不会继续处理。",
         "exitDesc2": "已提交到链上的交易无法撤销，仍可能完成。",
         "stopAndExit": "停止并退出",
-        "continue": "继续"
+        "continue": "继续",
+        "failReason": {
+          "buildFailed": "构建交易失败"
+        }
       }
     },
     "convertDust": {

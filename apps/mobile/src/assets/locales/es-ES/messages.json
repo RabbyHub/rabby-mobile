@@ -3546,7 +3546,10 @@
         "exitDesc1": "La ejecución se detendrá. Las transacciones no enviadas no se procesarán.",
         "exitDesc2": "Las transacciones ya enviadas a la red no se pueden deshacer y podrían completarse.",
         "stopAndExit": "Detener y salir",
-        "continue": "Continuar"
+        "continue": "Continuar",
+        "failReason": {
+          "buildFailed": "Error al crear la transacción"
+        }
       }
     },
     "convertDust": {

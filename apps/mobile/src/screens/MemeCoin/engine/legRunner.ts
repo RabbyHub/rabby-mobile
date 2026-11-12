@@ -48,6 +48,12 @@ export type LegRunnerDeps = {
 
 const fail = (reason: FailReason): BroadcastResult => ({ ok: false, reason });
 
+/** build_tx also simulates the tx and says so in its message when that fails */
+const classifyBuildError = (error: unknown): FailReason =>
+  error instanceof Error && error.message.startsWith('simulate tx failed')
+    ? 'simulationFailed'
+    : 'buildFailed';
+
 const tokenBalance = (token: TokenItem) =>
   new BigNumber(token.raw_amount_hex_str || 0, 16).div(
     new BigNumber(10).pow(token.decimals),
@@ -161,7 +167,15 @@ export const createLegRunner = (deps: LegRunnerDeps): LegRunner => {
       }
 
       await gate.wait();
-      const txs = await quote.build();
+      let txs: Tx[] | undefined;
+      try {
+        txs = await quote.build();
+      } catch (error) {
+        if (error instanceof ExecutionStoppedError) {
+          throw error;
+        }
+        return fail(classifyBuildError(error));
+      }
       if (!txs?.length) {
         return fail('failed');
       }

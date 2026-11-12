@@ -233,6 +233,34 @@ describe('createLegRunner.prepareAndBroadcast', () => {
     ).resolves.toEqual({ ok: false, reason: 'failed' });
   });
 
+  it.each([
+    ['build tx failed, refresh quote list and try again', 'buildFailed'],
+    ['Invalid bridge router for lifi on op', 'buildFailed'],
+    [
+      'simulate tx failed, refresh quote list and try again',
+      'simulationFailed',
+    ],
+  ] as const)(
+    'fails before signing when the build throws "%s"',
+    async (message, reason) => {
+      const t = setup(
+        {},
+        {
+          quote: async ({ payAmount }) => ({
+            receiveAmount: payAmount.times(2),
+            build: async () => {
+              throw new Error(message);
+            },
+          }),
+        },
+      );
+      await expect(
+        t.runner.prepareAndBroadcast(leg(), createPauseGate()),
+      ).resolves.toEqual({ ok: false, reason });
+      expect(t.signer.openDirect).not.toHaveBeenCalled();
+    },
+  );
+
   it('maps sign errors and always closes the signer', async () => {
     const t = setup();
     t.signer.openDirect.mockRejectedValueOnce('Gas not enough');

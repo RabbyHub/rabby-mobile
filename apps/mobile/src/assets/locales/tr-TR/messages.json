@@ -3354,7 +3354,10 @@
         "exitDesc1": "Yürütme durdurulacak. Gönderilmemiş işlemler işlenmeyecek.",
         "exitDesc2": "Zincire gönderilmiş işlemler geri alınamaz ve yine de tamamlanabilir.",
         "stopAndExit": "Durdur ve Çık",
-        "continue": "Devam et"
+        "continue": "Devam et",
+        "failReason": {
+          "buildFailed": "İşlem oluşturulamadı"
+        }
       }
     },
     "convertDust": {

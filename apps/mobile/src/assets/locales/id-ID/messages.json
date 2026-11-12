@@ -3354,7 +3354,10 @@
         "exitDesc1": "Eksekusi akan dihentikan. Transaksi yang belum dikirim tidak akan diproses.",
         "exitDesc2": "Transaksi yang sudah dikirim ke rantai tidak dapat dibatalkan dan mungkin tetap selesai.",
         "stopAndExit": "Hentikan & Keluar",
-        "continue": "Lanjutkan"
+        "continue": "Lanjutkan",
+        "failReason": {
+          "buildFailed": "Gagal membuat transaksi"
+        }
       }
     },
     "convertDust": {

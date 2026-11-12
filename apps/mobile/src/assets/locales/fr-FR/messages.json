@@ -3364,7 +3364,10 @@
         "exitDesc1": "L'exécution sera arrêtée. Les transactions non soumises ne seront pas traitées.",
         "exitDesc2": "Les transactions déjà soumises on-chain ne peuvent pas être annulées et pourraient tout de même aboutir.",
         "stopAndExit": "Arrêter et quitter",
-        "continue": "Continuer"
+        "continue": "Continuer",
+        "failReason": {
+          "buildFailed": "Échec de la création de la transaction"
+        }
       }
     },
     "convertDust": {
