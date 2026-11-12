@@ -5,10 +5,15 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AutoFitHeaderTitle } from '@/components/AutoFitHeaderTitle';
 import { HeaderBackButton } from '@/hooks/navigation';
 import { useTheme2024 } from '@/hooks/theme';
+import { IS_IOS } from '@/core/native/utils';
 import { createGetStyles2024 } from '@/utils/styles';
 
 // Matches the row height used by the other JS-owned headers in this stack.
 const HEADER_CONTENT_HEIGHT = 48;
+// iOS mirrors the native bar item width; Android only needs the 24pt chevron,
+// and the extra 20pt per side is what kept English titles from fitting at the
+// base 20pt font (QA 1384 follow-up: Android shrank the title to 16pt).
+const HEADER_SIDE_SLOT_WIDTH = IS_IOS ? 44 : 24;
 // The cards below start at this inset, so the back control aligns with them.
 const HEADER_HORIZONTAL_INSET = 16;
 
@@ -58,7 +63,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   // 44pt tap target whose visible 24pt chevron sits at the content edge.
   backSlot: {
-    width: 44,
+    width: HEADER_SIDE_SLOT_WIDTH,
     height: HEADER_CONTENT_HEIGHT,
     alignItems: 'flex-start',
     justifyContent: 'center',
@@ -79,7 +84,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     marginHorizontal: 8,
   },
   rightSlot: {
-    width: 44,
+    width: HEADER_SIDE_SLOT_WIDTH,
     height: HEADER_CONTENT_HEIGHT,
     flexShrink: 0,
   },
