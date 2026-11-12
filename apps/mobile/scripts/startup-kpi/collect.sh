@@ -48,16 +48,24 @@ for apk in "${apks[@]}"; do
     t=$(adb -s "$device" shell "am start -W -n $PKG/com.debank.rabbymobile.MainActivity" 2>/dev/null | tr -d '\r' | awk '/TotalTime/{print $2}')
     sleep "$WAIT_S"
     log=$(adb -s "$device" logcat -d 2>/dev/null)
-    f=$(printf '%s\n' "$log" | grep -oE 'first_content_frame js_ms=[0-9]+ route=[a-z]+' | head -1)
+    # Native marker is authoritative: it is emitted from the native module and
+    # measures from Process.getStartElapsedRealtime(), so bundle load is
+    # included. The JS marker is kept as a fallback for builds without it.
+    f=$(printf '%s\n' "$log" | grep -oE 'RabbyStartupKpi: first_content_frame native_ms=[0-9]+ route=[a-z]+' | head -1)
+    src=native
+    if [ -z "$f" ]; then
+      f=$(printf '%s\n' "$log" | grep -oE '\[StartupKpi\] first_content_frame js_ms=[0-9]+ route=[a-z]+' | head -1)
+      src=js
+    fi
     d=$(printf '%s\n' "$log" | grep -oE 'Fully drawn [^:]*: \+[0-9]+ms' | grep -oE '[0-9]+ms' | tr -d 'ms' | head -1)
     if [ -z "$f" ]; then
       echo "  run$i INVALID (no first_content_frame marker; app never reached unlock/home)"
       invalid=$((invalid+1)); continue
     fi
-    ms=$(printf '%s' "$f" | sed -E 's/.*js_ms=([0-9]+).*/\1/')
+    ms=$(printf '%s' "$f" | sed -E 's/.*(native_ms|js_ms)=([0-9]+).*/\2/')
     rt=$(printf '%s' "$f" | sed -E 's/.*route=([a-z]+).*/\1/')
     totals+=("$t"); frames+=("$ms"); routes+=("$rt"); [ -n "$d" ] && drawn+=("$d")
-    echo "  run$i total=${t}ms content=${ms}ms route=$rt${d:+ fully_drawn=${d}ms}"
+    echo "  run$i total=${t}ms content=${ms}ms(${src}) route=$rt${d:+ fully_drawn=${d}ms}"
   done
 
   if [ ${#frames[@]} -eq 0 ]; then
