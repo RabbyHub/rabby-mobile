@@ -51,7 +51,7 @@ import PointsScreen from '../Points';
 import { APP_TEST_PASSWORD } from '@/constant';
 import { withRegressionScenario } from '@/devtools/regressionScenarios/react';
 import { ImportMethodsHeader } from '../Address/ImportMethodsHeader';
-import { AutoFitLeftHeader } from '@/components/AutoFitLeftHeader';
+import { AutoFitCenterHeader } from '@/components/AutoFitCenterHeader';
 
 const AddressStack = createNativeStackNavigator<AddressNavigatorParamList>();
 const RegressionSyncExtensionPasswordScreen = withRegressionScenario(
@@ -187,7 +187,7 @@ export function AddressNavigator() {
         options={mergeScreenOptions({
           // Same native-title overflow as SelectAddMethod (QA 1352).
           header: () => (
-            <AutoFitLeftHeader
+            <AutoFitCenterHeader
               title={t('screens.addressStackTitle.ImportHardwareAddress')}
             />
           ),
@@ -223,7 +223,7 @@ export function AddressNavigator() {
         options={mergeScreenOptions({
           // Same native-title overflow as SelectAddMethod (QA 1352).
           header: () => (
-            <AutoFitLeftHeader
+            <AutoFitCenterHeader
               title={t('screens.addressStackTitle.ImportWatchAddress2024')}
             />
           ),
@@ -258,7 +258,7 @@ export function AddressNavigator() {
         options={mergeScreenOptions({
           // Same native-title overflow as SelectAddMethod (QA 1352).
           header: () => (
-            <AutoFitLeftHeader
+            <AutoFitCenterHeader
               title={t('screens.addressStackTitle.ImportSafeAddress2024')}
             />
           ),

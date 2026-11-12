@@ -83,7 +83,10 @@ export const AutoFitHeaderTitle = ({
   return (
     <View style={[styles.container, containerStyle]}>
       <Text
-        numberOfLines={isCompact ? 2 : 1}
+        // Keep two lines available in both stages. The measuring pass decides
+        // whether the compact font is needed; a long translation must never be
+        // reduced to a single clipped line before that decision settles.
+        numberOfLines={2}
         ellipsizeMode="tail"
         style={[styles.title, textStyle, { fontSize, lineHeight, textAlign }]}
         accessibilityRole="header">
