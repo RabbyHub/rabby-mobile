@@ -4,12 +4,6 @@ export type EncryptorDecryptDetail = {
   vault: any;
   exportedKeyString?: string;
   salt?: string;
-  kdfVersion?: string;
-};
-
-export type EncryptorEncryptDetail = {
-  vault: string;
-  exportedKeyString: string;
 };
 
 export type EncryptorAdapter = {
@@ -23,22 +17,6 @@ export type EncryptorAdapter = {
     encryptedVault: string,
     exportedKeyString: string,
   ) => Promise<any>;
-  /** True when the stored KDF is at least as strong as the write policy. */
-  isVaultUpdated?: (encryptedString: string) => boolean;
-  encryptWithDetail?: (
-    password: string,
-    object: any,
-  ) => Promise<EncryptorEncryptDetail>;
-  encryptKeyringState?: (
-    password: string,
-    object: any,
-    currentEncryptedString?: string,
-  ) => Promise<string>;
-  /** Add explicit KDF metadata without re-encrypting a legacy payload. */
-  normalizeKdfMetadata?: (
-    encryptedString: string,
-    resolvedVersion?: string,
-  ) => string | null;
 };
 
 export const nodeEncryptor = {
