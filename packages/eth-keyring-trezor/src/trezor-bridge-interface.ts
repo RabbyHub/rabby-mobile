@@ -1,11 +1,12 @@
-// @ts-expect-error lack type
 import type TrezorConnect from '@trezor/connect-mobile';
 
 export type TrezorBridgeInterface = {
   model: string;
   isDeviceConnected: boolean;
   connectDevices: Set<string>;
-  init: (typeof TrezorConnect)['init'];
+  init: (
+    config?: Partial<Parameters<(typeof TrezorConnect)['init']>[0]>,
+  ) => ReturnType<(typeof TrezorConnect)['init']> | void;
   dispose: () => void;
   getPublicKey: (typeof TrezorConnect)['getPublicKey'];
   ethereumSignTransaction: (typeof TrezorConnect)['ethereumSignTransaction'];

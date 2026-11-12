@@ -1,6 +1,4 @@
-import type {
-  TypedTransaction,
-} from '@ethereumjs/tx';
+import type { TypedTransaction } from '@ethereumjs/tx';
 import type { KeyringAccount, KeyringTypeName } from './types';
 
 export type KeyringSerializedData<T = any> = {
@@ -54,7 +52,11 @@ export declare class KeyringIntf {
 
   signPersonalMessage(address: string, message: string): Promise<void | string>;
 
-  signTypedData(address: string, data: any, options?: { version?: string }): Promise<void>;
+  signTypedData(
+    address: string,
+    data: any,
+    options?: { version?: string },
+  ): Promise<string | void>;
 
   /* ===================== optional members ===================== */
 

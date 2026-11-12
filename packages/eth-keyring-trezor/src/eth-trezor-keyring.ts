@@ -69,6 +69,24 @@ type AccountDetail = {
   index: number;
 };
 
+/**
+ * Trezor Connect v10 reports failures as `{ success: false, error }` where error is
+ * a string or `{ message, code }`; deeplink paths may nest it under `payload`.
+ */
+function getTrezorErrorMessage(response: any): string {
+  for (const c of [
+    response?.error,
+    response?.payload?.error,
+    response?.payload?.message,
+    response?.payload,
+  ]) {
+    if (typeof c === 'string' && c) return c;
+    if (typeof c?.message === 'string' && c.message) return c.message;
+    if (typeof c?.error === 'string' && c.error) return c.error;
+  }
+  return 'Unknown error';
+}
+
 class TrezorKeyring {
   static type = keyringType;
 
@@ -210,17 +228,22 @@ class TrezorKeyring {
           hdPaths.push(this._getPathForIndex(i));
         }
       }
-      const bundle = hdPaths.map(path => ({ path, coin: 'ETH' }));
+      const bundle = hdPaths.map(path => ({ path, coin: 'eth' as const }));
 
       this.bridge
         .getPublicKey({
           bundle,
         })
-        // @ts-expect-error fix any type
         .then(response => {
           if (response.success) {
-            // @ts-expect-error fix any type
-            response.payload.forEach(item => {
+            // bundle request returns an array payload, but the v10 types are not narrowed by `bundle`
+            (
+              response.payload as unknown as {
+                publicKey: string;
+                chainCode: string;
+                serializedPath: string;
+              }[]
+            ).forEach(item => {
               const hdk = new HDKey();
               hdk.publicKey = Buffer.from(item.publicKey, 'hex');
               hdk.chainCode = Buffer.from(item.chainCode, 'hex');
@@ -230,12 +253,11 @@ class TrezorKeyring {
           } else {
             reject(
               new Error(
-                (response.payload && response.payload.error) || 'Unknown error',
+                getTrezorErrorMessage(response),
               ),
             );
           }
         })
-        // @ts-expect-error fix any type
         .catch(e => {
           reject(new Error((e && e.toString()) || 'Unknown error'));
         });
@@ -481,7 +503,7 @@ class TrezorKeyring {
         return newOrMutatedTx;
       }
       throw new Error(
-        (response.payload && response.payload.error) || 'Unknown error',
+        getTrezorErrorMessage(response),
       );
     } catch (e: any) {
       console.log('_signTransaction error', e?.toString());
@@ -511,7 +533,7 @@ class TrezorKeyring {
         return signature;
       }
       throw new Error(
-        (response.payload && response.payload.error) || 'Unknown error',
+        getTrezorErrorMessage(response),
       );
     } catch (e: any) {
       throw new Error((e && e.toString()) || 'Unknown error');
@@ -564,7 +586,7 @@ class TrezorKeyring {
     }
 
     throw new Error(
-      (response.payload && response.payload.error) || 'Unknown error',
+      getTrezorErrorMessage(response),
     );
   }
 

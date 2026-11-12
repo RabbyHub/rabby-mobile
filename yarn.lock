@@ -9557,6 +9557,7 @@ __metadata:
     "@ethereumjs/util": "npm:9.1.0"
     "@metamask/auto-changelog": "npm:3.4.4"
     "@metamask/eth-sig-util": "npm:8.2.0"
+    "@trezor/connect-mobile": "npm:10.0.1"
     "@trezor/connect-plugin-ethereum": "npm:9.1.2-beta.1"
     "@types/hdkey": "npm:2.0.3"
     "@types/jest": "npm:27.5.2"
@@ -9570,6 +9571,7 @@ __metadata:
     typedoc-plugin-missing-exports: "npm:2.1.0"
     typescript: "npm:5.7.3"
   peerDependencies:
+    "@trezor/connect-mobile": 10.0.1
     "@trezor/connect-plugin-ethereum": 9.1.2-beta.1
   languageName: unknown
   linkType: soft
