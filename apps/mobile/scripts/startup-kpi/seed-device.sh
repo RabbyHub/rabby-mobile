@@ -112,6 +112,7 @@ create_address() {
     return 0
   fi
   echo "create-address did not report completion" >&2
+  echo "  hint: the package must be built from a branch that carries the debug-create-address deeplink (tmp after the KPI merge, or develop once merged)" >&2
   return 1
 }
 
