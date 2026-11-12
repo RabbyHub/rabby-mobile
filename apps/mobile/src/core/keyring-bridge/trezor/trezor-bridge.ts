@@ -20,8 +20,8 @@ export default class TrezorBridge implements TrezorBridgeInterface {
         // for local development purposes. for production, leave it undefined to use the default value.
         // connectSrc: appIsDev
         //   ? 'trezorsuitelite://connect'
-        //   : 'https://connect.trezor.io/9/',
-        connectSrc: 'https://connect.trezor.io/9/',
+        //   : 'https://connect.trezor.io/10/',
+        connectSrc: 'https://connect.trezor.io/10/',
 
         deeplinkOpen: async url => {
           console.debug('deeplinkOpen', url);
