@@ -2063,7 +2063,8 @@
       "emptyWhitelistContent": "将受信任的地址添加到白名单以实现快速转账——下次无需确认",
       "SendHistory": "转账记录",
       "dividerWatchOnlyWallets": "仅查看钱包",
-      "enterOrSearchAddress": "输入或搜索地址"
+      "enterOrSearchAddress": "输入或搜索地址",
+      "resolvingAddressName": "正在查询地址..."
     },
     "confirmAddress": {
       "risks": {

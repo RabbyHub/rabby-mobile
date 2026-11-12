@@ -661,6 +661,7 @@
     },
     "sendPoly": {
       "enterOrSearchAddress": "Enter or Search Address",
+      "resolvingAddressName": "Looking up address...",
       "emptyWhitelistHeader": "Add Whitelist Address",
       "emptyWhitelistContent": "Add trusted addresses to whitelist for fast transfers—no confirmation needed next time",
       "emptyWhitelistTip": "No whitelisted addresses yet, ",

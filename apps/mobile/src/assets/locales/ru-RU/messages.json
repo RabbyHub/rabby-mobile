@@ -2033,7 +2033,8 @@
       "emptyWhitelistTip": "В белом списке пока нет адресов, ",
       "SendHistory": "История отправлений",
       "dividerWatchOnlyWallets": "Адреса только для просмотра",
-      "enterOrSearchAddress": "Введите или найдите адрес"
+      "enterOrSearchAddress": "Введите или найдите адрес",
+      "resolvingAddressName": "Поиск адреса..."
     },
     "confirmAddress": {
       "risks": {
