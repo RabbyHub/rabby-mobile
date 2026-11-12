@@ -63,6 +63,7 @@ const BridgeTokenInner = ({
   handleMax,
   skeletonLoading,
   disabled,
+  sceneActive = true,
   clearOnDisabled,
   slider,
   onChangeSlider,
@@ -85,6 +86,7 @@ const BridgeTokenInner = ({
   inSufficient?: boolean;
   skeletonLoading?: boolean;
   disabled?: boolean;
+  sceneActive?: boolean;
   clearOnDisabled?: boolean;
   slider?: number;
   onChangeSlider?: (value: number, syncAmount?: boolean) => void;
@@ -214,7 +216,8 @@ const BridgeTokenInner = ({
           // excludeChains={excludeChains}
           // supportChains={supportedChains}
         />
-        {isFromToken && !hiddenSlider && (
+        {/* Unmount native gestures before Fabric recycles the hidden scene. */}
+        {isFromToken && !hiddenSlider && sceneActive && (
           <View style={styles.sliderContainer}>
             <View
               ref={sliderTrackRef}
