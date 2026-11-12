@@ -1,4 +1,5 @@
 import '@exodus/patch-broken-hermes-typed-arrays';
+import './core/utils/startupKpi';
 import { setJSExceptionHandler } from 'react-native-exception-handler';
 import { logger } from '@/utils/logger';
 import './perfs/bundle-splitter-analysis';

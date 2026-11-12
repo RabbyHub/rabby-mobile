@@ -37,6 +37,7 @@ import {
 } from '@/core/utils/featureActivationDiagnostics';
 import { useFeatureActivationDiagnostics } from '@/hooks/useFeatureActivationDiagnostics';
 import { ScreenStoreActivityProvider } from '@/hooks/storeActivity/ScreenStoreActivityProvider';
+import { markFirstContentFrame } from '@/core/utils/startupKpi';
 
 function SingleAddressActivationProbe({
   currentAddress,
@@ -149,6 +150,9 @@ function SingleAddressHomeContent(): JSX.Element {
 }
 
 function SingleAddressHome(): JSX.Element {
+  React.useEffect(() => {
+    markFirstContentFrame('home');
+  }, []);
   return (
     <ScreenStoreActivityProvider label="single-address">
       <SingleAddressHomeContent />

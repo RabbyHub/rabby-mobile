@@ -108,6 +108,7 @@ type OnParseUrlAndProcessAction = (payload: {
     | 'debug-open-target'
     | 'debug-create-address'
     | 'debug-set-language'
+    | 'debug-import-test-accounts'
     | 'regression-scenario';
   target?: RabbyGoTarget;
   dappUrl?: string;
@@ -146,6 +147,8 @@ type OnParseUrlAndProcessAction = (payload: {
   debugChainStatsLoading?: boolean;
   debugChainStatsLoadingForMs?: number;
   debugChainStatsLoadingOff?: boolean;
+  /** Device path of the test-account list read by the import command. */
+  debugImportAccountsPath?: string;
   regressionScenarioCommand?: RegressionScenarioCommand | null;
   regressionScenarioError?: string;
 }) => void;
@@ -506,6 +509,28 @@ function parseNonProductionMaintenanceLink(appLink: string) {
     return {
       type: 'debug-create-address',
       debugAddress: address,
+    } satisfies Parameters<OnParseUrlAndProcessAction>[0];
+  }
+
+  // Non-production only: seed the account set the cold-start KPI measures.
+  // The list itself is never in the URL - only the device path of the file
+  // the runner pushed - so private keys stay out of logcat.
+  if (
+    rabbyGoCmd === 'debug-import-test-accounts' ||
+    target === 'debug-import-test-accounts'
+  ) {
+    const path =
+      urlInfo.searchParams.get('path') || urlInfo.searchParams.get('file');
+    if (!path) {
+      console.warn(
+        '[useUniversalLinkOnTop] debug-import-test-accounts requires ?path=<device file>',
+      );
+      return null;
+    }
+
+    return {
+      type: 'debug-import-test-accounts',
+      debugImportAccountsPath: path,
     } satisfies Parameters<OnParseUrlAndProcessAction>[0];
   }
 
@@ -881,6 +906,23 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
     case 'debug-db-sync-policy':
       void applyDebugDbSyncPolicyFromLink(payload.debugDbSyncPolicy);
       break;
+    case 'debug-import-test-accounts':
+      if (!isNonPublicProductionEnv || !payload.debugImportAccountsPath) {
+        return;
+      }
+      void import('@/devtools/testAccountsImport')
+        .then(module =>
+          module.runTestAccountsImport({
+            path: payload.debugImportAccountsPath!,
+          }),
+        )
+        .catch(error => {
+          console.error(
+            '[useUniversalLinkOnTop] debug-import-test-accounts failed:',
+            error,
+          );
+        });
+      break;
     case 'debug-lending':
       if (!isNonPublicProductionEnv || !payload.debugLending) {
         return;
@@ -1046,6 +1088,9 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
             enableBiometrics: false,
           } as any);
           await accountStore.fetchAccounts({ force: true });
+          console.log(
+            `[debug-create-address] done address=${prepared.address || ''}`,
+          );
           toast.success(`debug address created: ${prepared.address || ''}`);
           apisHomeTabIndex.setTabIndex(1, true);
         } catch (error) {
