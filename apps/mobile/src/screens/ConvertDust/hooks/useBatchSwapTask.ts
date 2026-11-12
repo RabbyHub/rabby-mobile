@@ -1,7 +1,6 @@
 import type { Account } from '@/core/startupServices/preference';
 import { DEX } from '@/constant/swap';
-import { eventBus, EVENTS } from '@/utils/events';
-import { getRpcTxReceipt } from '@/core/utils/tx';
+import { waitForTxCompleted } from '@/utils/waitForTxCompleted';
 import { useMiniSigner } from '@/hooks/useSigner';
 import type { findChain } from '@/utils/chain';
 import type { Chain, CHAINS_ENUM } from '@debank/common';
@@ -30,7 +29,6 @@ import { MINI_SIGN_ERROR } from '@/components2024/MiniSignV2/state/SignatureMana
 export { FailedCode } from '@/utils/sendTransaction';
 
 const TASK_CANCELLED_ERROR_NAME = 'BatchSwapTaskCancelled';
-const TX_RECEIPT_POLL_INTERVAL = 5000;
 const TX_RECEIPT_TIMEOUT = 60 * 1000;
 
 const getTokenRawAmount = (token: TokenItem) =>
@@ -47,108 +45,6 @@ const createTaskCancelledError = () => {
     TASK_CANCELLED_ERROR_NAME,
     'Batch swap task cancelled',
   );
-};
-
-const waitForTxCompleted = async ({
-  hash,
-  chainServerId,
-  isTaskCancelled,
-}: {
-  hash: string;
-  chainServerId: string;
-  isTaskCancelled?: () => boolean;
-}) => {
-  return await new Promise((resolve, reject) => {
-    let timer: ReturnType<typeof setTimeout> | null = null;
-    let timeoutTimer: ReturnType<typeof setTimeout> | null = null;
-    let isSettled = false;
-    let isChecking = false;
-
-    const cleanup = () => {
-      isSettled = true;
-      eventBus.removeListener(EVENTS.TX_COMPLETED, handler);
-      if (timer) {
-        clearTimeout(timer);
-        timer = null;
-      }
-      if (timeoutTimer) {
-        clearTimeout(timeoutTimer);
-        timeoutTimer = null;
-      }
-    };
-
-    const rejectWithCleanup = (error: Error) => {
-      cleanup();
-      reject(error);
-    };
-
-    const rejectIfCancelled = () => {
-      if (!isTaskCancelled?.()) {
-        return false;
-      }
-
-      rejectWithCleanup(createTaskCancelledError());
-      return true;
-    };
-
-    const scheduleNextCheck = () => {
-      if (isSettled || timer) {
-        return;
-      }
-
-      timer = setTimeout(() => {
-        timer = null;
-        checkReceipt();
-      }, TX_RECEIPT_POLL_INTERVAL);
-    };
-
-    const checkReceipt = async () => {
-      if (isSettled || isChecking || rejectIfCancelled()) {
-        return;
-      }
-
-      try {
-        isChecking = true;
-        const res = await getRpcTxReceipt(chainServerId, hash);
-        isChecking = false;
-
-        if (isSettled || rejectIfCancelled()) {
-          return;
-        }
-
-        if (res.code !== 0) {
-          scheduleNextCheck();
-          return;
-        }
-
-        cleanup();
-
-        if (res.status) {
-          resolve(true);
-        } else {
-          reject(new Error('tx failed'));
-        }
-      } catch (error) {
-        isChecking = false;
-        if (isSettled || rejectIfCancelled()) {
-          return;
-        }
-        scheduleNextCheck();
-      }
-    };
-
-    const handler = (res: { hash?: string }) => {
-      if (res?.hash === hash) {
-        checkReceipt();
-      }
-    };
-
-    timeoutTimer = setTimeout(() => {
-      rejectWithCleanup(new Error('tx receipt timeout'));
-    }, TX_RECEIPT_TIMEOUT);
-    eventBus.addListener(EVENTS.TX_COMPLETED, handler);
-    checkReceipt();
-  });
 };
 
 export const getActiveProvider = async ({
@@ -592,6 +488,8 @@ export const useBatchSwapTask = (options: {
                     hash: result.txHash,
                     chainServerId: options.chain.serverId,
                     isTaskCancelled,
+                    createCancelledError: createTaskCancelledError,
+                    timeoutMs: TX_RECEIPT_TIMEOUT,
                   });
                 } catch (e) {
                   if ((e as any)?.name === TASK_CANCELLED_ERROR_NAME) {
