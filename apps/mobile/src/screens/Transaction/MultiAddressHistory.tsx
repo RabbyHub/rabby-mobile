@@ -38,6 +38,8 @@ import { useGeneralTokenDetailSheetModal } from '@/components/TokenDetailPopup/h
 import type { TransactionGroup } from '@/core/services/transactionHistory';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
+import { HeaderBackButton } from '@/hooks/navigation';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { toast } from '@/components2024/Toast';
@@ -618,6 +620,7 @@ function HistoryContent({
   ]);
 
   const { setNavigationOptions } = useSafeSetNavigationOptions();
+  const insets = useSafeAreaInsets();
 
   const getHeaderTitle = useCallback(() => {
     return (
@@ -640,6 +643,44 @@ function HistoryContent({
     );
   }, [tokenItem, isForMultipleAddress, styles.titleText, styles.headerTitle]);
 
+  // Render the whole header row ourselves so the title is centred by layout.
+  // The native-stack title container starts after the native back item, which
+  // shifted the title right by an amount that depended on the screen width and
+  // the trailing control (QA 1384).
+  const getHeaderRow = useCallback(() => {
+    return (
+      <View
+        style={[
+          styles.headerRow,
+          { paddingTop: insets.top, height: HEADER_ROW_HEIGHT + insets.top },
+        ]}>
+        <View style={styles.headerSideSlot}>
+          <HeaderBackButton style={styles.headerBackTouch} />
+        </View>
+        <View style={styles.headerCenter}>
+          {isInTokenDetail && tokenItem ? (
+            getHeaderTitle()
+          ) : (
+            <ScreenHeaderAccountSwitcher
+              forScene={isForMultipleAddress ? 'MultiHistory' : 'History'}
+              titleText="Transactions"
+              disableSwitch
+            />
+          )}
+        </View>
+        <View style={styles.headerSideSlot}>{getHeaderRight()}</View>
+      </View>
+    );
+  }, [
+    insets.top,
+    styles,
+    getHeaderTitle,
+    getHeaderRight,
+    isInTokenDetail,
+    tokenItem,
+    isForMultipleAddress,
+  ]);
+
   React.useEffect(() => {
     if (isInTokenDetail && tokenItem) {
       setNavigationOptions({
@@ -648,11 +689,11 @@ function HistoryContent({
       });
     } else {
       setNavigationOptions({
-        headerRight: getHeaderRight,
+        header: getHeaderRow,
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [setNavigationOptions, getHeaderTitle, getHeaderRight]);
+  }, [setNavigationOptions, getHeaderTitle, getHeaderRight, getHeaderRow]);
 
   const ensureCurrentIsLoading = useMemo(() => {
     if (isNeedFetchFromApi) {
@@ -799,9 +840,34 @@ const HistoryScreen = ({ isForMultipleAddress = true }) => {
   );
 };
 
+const HEADER_ROW_HEIGHT = 44;
+
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   container: {
     backgroundColor: makeTxPageBackgroundColors({ isLight, colors2024 }),
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    backgroundColor: makeTxPageBackgroundColors({ isLight, colors2024 }),
+  },
+  headerSideSlot: {
+    width: 44,
+    height: HEADER_ROW_HEIGHT,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerBackTouch: {
+    width: 44,
+    height: HEADER_ROW_HEIGHT,
+    alignItems: 'flex-start',
+    justifyContent: 'center',
+  },
+  headerCenter: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   menuContainer: {
     elevation: 5,
