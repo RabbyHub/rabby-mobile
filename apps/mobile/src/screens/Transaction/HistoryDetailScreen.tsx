@@ -173,15 +173,19 @@ function HistoryDetailScreen(): JSX.Element {
   }, [account, accounts, data.address]);
 
   const getHeaderTitle = React.useCallback(() => {
+    // The native back item is wider than the old JS header button, so UIKit
+    // lays this title container out right of the screen centre (QA 1360).
     return (
-      <ScreenHeaderAccountTitle
-        account={currentAccount}
-        titleText={
-          <HistoryHeaderTitle>
-            {title || t('page.transactions.itemTitle.Default')}
-          </HistoryHeaderTitle>
-        }
-      />
+      <View style={{ transform: [{ translateX: -12 }] }}>
+        <ScreenHeaderAccountTitle
+          account={currentAccount}
+          titleText={
+            <HistoryHeaderTitle>
+              {title || t('page.transactions.itemTitle.Default')}
+            </HistoryHeaderTitle>
+          }
+        />
+      </View>
     );
   }, [currentAccount, title, t]);
 

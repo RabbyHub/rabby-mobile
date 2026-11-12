@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo } from 'react';
-import { Alert, AppState, StyleSheet } from 'react-native';
+import { Alert, AppState, Platform, StyleSheet } from 'react-native';
 import { debounce, get, merge } from 'lodash';
 
 import type {
@@ -380,26 +380,37 @@ export function useBottomTabScreenConfig() {
 // JS header so both paths render at the same x on every device.
 const renderNativeBackItems: NonNullable<
   NativeStackNavigationOptions['unstable_headerLeftItems']
-> = ({ tintColor }) => [
-  {
-    type: 'button',
-    label: '',
-    // A 44x24 image (chevron drawn in the leading 24pt) keeps the standard
-    // 44pt tap target while making the glyph start at the item's leading edge,
-    // which is the same 16pt inset the JS header used. No offset needed.
-    // Keep the PNG alpha anti-aliased: a hard 0/255 alpha export makes UIKit
-    // render the diagonal stroke with visible stair-steps (QA 1359).
-    icon: {
-      type: 'image',
-      source: require('@/assets/icons/header/back-cc-wide.png'),
-      tinted: true,
+> = ({ tintColor }) => {
+  // iOS 26 hands the native bar item a ~6pt smaller leading inset than iOS 27
+  // (16pt vs 22pt), so the same artwork lands left of the JS header pages on
+  // iOS 26 (QA 1360: iPhone 15 / iOS 26.5). Pad the artwork by that delta on
+  // iOS 26 only; iOS 27 keeps the original 44pt canvas.
+  const isIOS26 = Platform.OS === 'ios' && Number(Platform.Version) < 27;
+
+  return [
+    {
+      type: 'button',
+      label: '',
+      // A 44x24 image (chevron drawn in the leading 24pt) keeps the standard
+      // 44pt tap target while making the glyph start at the item's leading edge,
+      // which is the same 16pt inset the JS header used. No offset needed.
+      // Keep the PNG alpha anti-aliased: a hard 0/255 alpha export makes UIKit
+      // render the diagonal stroke with visible stair-steps (QA 1359).
+      icon: {
+        type: 'xcasset',
+        name: isIOS26 ? 'HeaderBackChevronIOS26' : 'HeaderBackChevron',
+        // react-native-screens supports `xcasset` icons (it declares the type
+        // itself); @react-navigation/native-stack's re-declared PlatformIconIOS
+        // lags behind and only lists imageSource/sfSymbol, so the runtime-valid
+        // shape needs a cast here.
+      } as any,
+      width: isIOS26 ? 50 : 44,
+      tintColor,
+      hidesSharedBackground: true,
+      onPress: navBack,
     },
-    width: 44,
-    tintColor,
-    hidesSharedBackground: true,
-    onPress: navBack,
-  },
-];
+  ];
+};
 
 const styles = StyleSheet.create({
   // Plain icon box for JS-rendered custom headers; the caller aligns it.

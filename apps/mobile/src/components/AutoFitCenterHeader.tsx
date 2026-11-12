@@ -45,7 +45,10 @@ export const AutoFitCenterHeader = ({ title }: { title: string }) => {
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   outer: {
-    backgroundColor: colors2024['neutral-bg-1'],
+    // The screens using this header are drawn on neutral-bg-0 and the native
+    // header is transparent; an opaque bg-1 strip here showed up as an extra
+    // white header band (QA 1352 follow-up).
+    backgroundColor: 'transparent',
   },
   row: {
     height: HEADER_CONTENT_HEIGHT,
