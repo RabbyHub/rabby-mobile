@@ -94,6 +94,17 @@ export type LinkedScenePagerProps = {
    * routes to the adjacent parent, as if the parent had no children.
    */
   childSwipeEnabled?: boolean;
+  /**
+   * Every leaf owns its own full-viewport vertical surface (a real scroll
+   * view) instead of rows retained inside one outer scroll host. The pager
+   * then always fills the viewport and no page needs a retained-layout inset.
+   */
+  fillViewport?: boolean;
+  /**
+   * Rendered inside the pager viewport, above the page track. Overlays placed
+   * here keep native hit testing inside the same gesture area as the pages.
+   */
+  overlay?: React.ReactNode;
   testID?: string;
   ref?: React.Ref<LinkedScenePagerHandle>;
 };
@@ -276,7 +287,7 @@ function LinkedScenePagerOwner({
   const settledIndex = model.leaves.findIndex(
     leaf => leaf.physicalKey === linkedScenePhysicalKey(settled),
   );
-  const { pagerHeight, pageTopInsets } = resolveRetainedPagerLayout({
+  const retainedLayout = resolveRetainedPagerLayout({
     pageHeights: heights,
     settledIndex: transition?.sourceIndex ?? settledIndex,
     viewportHeight: props.viewportHeight,
@@ -286,6 +297,14 @@ function LinkedScenePagerOwner({
     transitionScrollY: transition?.scrollY ?? null,
     transitionPagerHeight: transition?.pagerHeight,
   });
+  // Own-surface pages are already scrolled to the shared offset by their own
+  // scroll host, so they must never receive a retained-layout inset.
+  const pagerHeight = props.fillViewport
+    ? props.viewportHeight
+    : retainedLayout.pagerHeight;
+  const pageTopInsets = props.fillViewport
+    ? model.leaves.map(() => 0)
+    : retainedLayout.pageTopInsets;
 
   useLayoutEffect(() => {
     widthValue.value = width;
@@ -959,6 +978,7 @@ function LinkedScenePagerOwner({
             />
           ))}
         </Animated.View>
+        {props.overlay}
       </View>
     </GestureDetector>
   );

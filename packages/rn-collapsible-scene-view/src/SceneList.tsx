@@ -13,6 +13,7 @@ import {
 import Animated, { type AnimatedRef } from 'react-native-reanimated';
 
 import { type SceneTabKey } from './context';
+import { useNativeScrollMirror } from './useNativeScrollMirror';
 import {
   useSceneScrollSurface,
   type SceneScrollSurfaceHandle,
@@ -23,16 +24,6 @@ const AnimatedFlatList = Animated.createAnimatedComponent(
 ) as unknown as React.ComponentType<
   FlatListProps<any> & { ref?: React.Ref<FlatList<any>> }
 >;
-
-// This is a public runtime API (also used by RN's own sticky headers), but
-// React Native 0.81's legacy Animated typings do not declare it yet.
-const nativeAnimated = NativeAnimated as typeof NativeAnimated & {
-  attachNativeEvent: (
-    target: unknown,
-    eventName: 'onScroll',
-    mapping: { nativeEvent: { contentOffset: { y: NativeAnimated.Value } } }[],
-  ) => { detach: () => void };
-};
 
 export type SceneListHandle<ItemT> = SceneScrollSurfaceHandle & {
   scrollToOffset: (offset: number, animated?: boolean) => void;
@@ -103,49 +94,15 @@ export const SceneList = <ItemT,>({
   });
   const listInstance = React.useRef<FlatList<ItemT> | null>(null);
   const attachedRef = React.useRef(resolvedRef);
-  const nativeScrollValue = React.useRef(nativeScrollY);
-  const nativeScrollAttachment = React.useRef<{
-    target: unknown;
-    value: NativeAnimated.Value;
-    detach: () => void;
-  } | null>(null);
-  const syncNativeScrollAttachment = React.useCallback(
-    (instance: FlatList<ItemT> | null, value?: NativeAnimated.Value) => {
-      const target = instance?.getNativeScrollRef() ?? null;
-      const previous = nativeScrollAttachment.current;
-      if (previous?.target === target && previous?.value === value) {
-        return;
-      }
-      previous?.detach();
-      nativeScrollAttachment.current = null;
-      if (target && value) {
-        const attachment = nativeAnimated.attachNativeEvent(
-          target,
-          'onScroll',
-          [{ nativeEvent: { contentOffset: { y: value } } }],
-        );
-        nativeScrollAttachment.current = { ...attachment, target, value };
-      }
-    },
-    [],
-  );
+  const nativeScroll = useNativeScrollMirror(nativeScrollY);
   const setNativeListRef = React.useCallback(
     (instance: FlatList<ItemT> | null) => {
       listInstance.current = instance;
       attachedRef.current(instance as never);
-      syncNativeScrollAttachment(instance, nativeScrollValue.current);
+      nativeScroll.sync(instance);
     },
-    [syncNativeScrollAttachment],
+    [nativeScroll],
   );
-
-  React.useLayoutEffect(() => {
-    nativeScrollValue.current = nativeScrollY;
-    syncNativeScrollAttachment(listInstance.current, nativeScrollY);
-    return () => {
-      nativeScrollAttachment.current?.detach();
-      nativeScrollAttachment.current = null;
-    };
-  }, [nativeScrollY, syncNativeScrollAttachment]);
 
   React.useLayoutEffect(() => {
     if (attachedRef.current === resolvedRef) {

@@ -14,7 +14,7 @@ import {
   ViewStyle,
   TextStyle,
 } from 'react-native';
-import { useCurrentTabScrollY } from 'react-native-collapsible-tab-view';
+import { useCollapsibleScene } from '@rabby-wallet/rn-collapsible-scene-view';
 import { useShallow } from 'zustand/shallow';
 
 import { ASSETS_ITEM_HEIGHT_NEW, RootNames } from '@/constant/layout';
@@ -54,7 +54,8 @@ import {
   HOME_TOP_HEADER_SIZES,
   SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING,
 } from '@/constant/home';
-import { TabsSectionList } from '@/components/customized/react-native-collapsible-tab-view/SectionList';
+import { SceneSectionList } from '@/components/RetainedScenePagerList/SceneSurfaces';
+import { getHomeSceneContentInset } from '@/screens/Home/components/scene/homeSceneLayout';
 import {
   pulldownRefreshSizes,
   RefreshPlaceholderIOS,
@@ -82,7 +83,7 @@ import { createRemoveTokenConfirmPopup } from '@/components2024/RemoveTokenConfi
 import { IS_ANDROID } from '@/core/native/utils';
 import { beginAssetDataLoadDiagnostic } from '@/core/utils/assetDataLoadDiagnostics';
 import { formatNetworth } from '@/utils/math';
-import { useScrollToTopOnChainChange } from '@/hooks/useScrollToTopOnChainChange';
+import { useSceneScrollToTopOnChainChange } from '@/hooks/useScrollToTopOnChainChange';
 import {
   TokenProjectionSectionList,
   type TokenProjectionSection,
@@ -302,7 +303,7 @@ export const TokenList = () => {
 
   const { isFocused, isFocusing } = useIsFocusedCurrentTab(TabName.token);
 
-  const suspendVisibleAnchor = useScrollToTopOnChainChange({
+  const suspendVisibleAnchor = useSceneScrollToTopOnChainChange({
     chain,
     isCurrentTab: isFocusing,
   });
@@ -1026,7 +1027,7 @@ export const TokenList = () => {
     return item.type;
   }, []);
 
-  const scrollY = useCurrentTabScrollY();
+  const { scrollY } = useCollapsibleScene();
   const {
     panGestureRef,
     isRefreshing,
@@ -1072,12 +1073,11 @@ export const TokenList = () => {
         projectionKey={multiAssetsKey}
         scene="multi-address"
         sectionSpecs={sectionSpecs}
-        ListComponent={TabsSectionList}
+        ListComponent={SceneSectionList}
         storeLabel="home-multi-assets-token-section-list"
-        style={[
-          styles.container,
-          pulldownRefreshReturns.scrollableStyle.container,
-        ]}
+        sceneTabKey={TabName.token}
+        sceneContentInsetTop={getHomeSceneContentInset(TabName.token)}
+        style={styles.container}
         contentContainerStyle={[
           styles.list,
           pulldownRefreshReturns.scrollableStyle.list,
@@ -1092,7 +1092,6 @@ export const TokenList = () => {
         // ListFooterComponent={ListRenderFooter}
         bounces={false}
         overScrollMode={'never'}
-        scrollEventThrottle={16}
         simultaneousHandlers={[panGestureRef]}
         {...(!SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING && {
           refreshControl: (

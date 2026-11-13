@@ -2,6 +2,7 @@ export {
   CollapsibleSceneProvider,
   useCollapsibleSceneController,
   useCollapsibleScene,
+  useMaybeCollapsibleScene,
   type CollapsibleSceneController,
   type CollapsibleSceneContextValue,
   type SceneTabKey,
@@ -23,6 +24,14 @@ export {
   type SceneScrollViewHandle,
   type SceneScrollViewProps,
 } from './SceneScrollView';
+export {
+  useSceneScrollSurface,
+  type SceneScrollSurfaceHandle,
+} from './useSceneScrollSurface';
+export {
+  useNativeScrollMirror,
+  type NativeScrollMirrorHandle,
+} from './useNativeScrollMirror';
 export {
   ScenePager,
   ScenePagerItem,

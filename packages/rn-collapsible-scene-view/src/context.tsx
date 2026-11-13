@@ -83,6 +83,8 @@ export type CollapsibleSceneContextValue = {
   scrollY: SharedValue<number>;
   /** Current tab key, kept in a shared value for worklets. */
   activeTabIndex: SharedValue<number>;
+  /** Settled tab key, for JS-side consumers. */
+  activeTab: SceneTabKey;
   tabs: readonly SceneTabKey[];
   reportScroll: (tab: SceneTabKey, offset: number) => void;
   saveActiveOffset: () => void;
@@ -108,6 +110,13 @@ export const useCollapsibleScene = () => {
   }
   return context;
 };
+
+/**
+ * Optional variant for shared leaves that can also render outside a scene
+ * (e.g. the same card is used by a legacy collapsible-tab-view screen).
+ */
+export const useMaybeCollapsibleScene = () =>
+  useContext(CollapsibleSceneContext);
 
 export const CollapsibleSceneProvider = ({
   activeTab,
@@ -229,6 +238,7 @@ export const CollapsibleSceneProvider = ({
 
   const value = useMemo(
     () => ({
+      activeTab,
       activeTabIndex,
       getSavedOffset,
       headerHeight,
@@ -242,6 +252,7 @@ export const CollapsibleSceneProvider = ({
       tabs,
     }),
     [
+      activeTab,
       activeTabIndex,
       getSavedOffset,
       headerHeight,

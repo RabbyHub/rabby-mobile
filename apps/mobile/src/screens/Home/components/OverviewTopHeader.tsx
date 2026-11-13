@@ -190,16 +190,10 @@ export function TabsTopHeader(): JSX.Element {
     }
   }, [data.isLoss, previousLoading, scene24hLoading]);
 
-  const { opacityStyle, pullPercent } = useHomeDrawerOpacityStyle();
+  // The header is a scene overlay now: it collapses with the shared scene
+  // offset and only fades while the dapp drawer is pulled up.
+  const { opacityStyle } = useHomeDrawerOpacityStyle();
 
-  const headerStyle = useAnimatedStyle(() => ({
-    height: interpolate(
-      pullPercent.value,
-      [0, -100],
-      [HOME_TOP_HEADER_SIZES.topHeaderHeight, 0],
-      Extrapolate.CLAMP,
-    ),
-  }));
   const totalBalanceStyle = useAnimatedStyle(() => {
     const netWorthProgress = interpolate(
       apisHomeTabIndex.svTabIndexDecimal.value,
@@ -226,7 +220,7 @@ export function TabsTopHeader(): JSX.Element {
   });
 
   return (
-    <Animated.View style={[styles.headerBox, opacityStyle, headerStyle]}>
+    <Animated.View style={[styles.headerBox, opacityStyle]}>
       <View style={styles.leftBox}>
         <Animated.View
           pointerEvents={focusedTab === HomeTabName.overview ? 'auto' : 'none'}

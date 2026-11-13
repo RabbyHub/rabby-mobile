@@ -1,5 +1,6 @@
 import React from 'react';
 import {
+  Animated as NativeAnimated,
   type LayoutChangeEvent,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
@@ -11,6 +12,7 @@ import {
 import Animated, { type AnimatedRef } from 'react-native-reanimated';
 
 import { type SceneTabKey } from './context';
+import { useNativeScrollMirror } from './useNativeScrollMirror';
 import {
   useSceneScrollSurface,
   type SceneScrollSurfaceHandle,
@@ -30,6 +32,8 @@ export type SceneScrollViewProps = {
   contentInsetTop: number;
   keyboardShouldPersistTaps?: ScrollViewProps['keyboardShouldPersistTaps'];
   nativeRef?: AnimatedRef<any>;
+  /** Optional native event clock for overlays, independent of worklet state. */
+  nativeScrollY?: NativeAnimated.Value;
   onLayout?: (event: LayoutChangeEvent) => void;
   onMomentumScrollEnd?: (
     event: NativeSyntheticEvent<NativeScrollEvent>,
@@ -54,6 +58,7 @@ export const SceneScrollView = ({
   contentInsetTop,
   keyboardShouldPersistTaps,
   nativeRef,
+  nativeScrollY,
   onLayout,
   onMomentumScrollEnd,
   onContentSizeChange,
@@ -68,6 +73,14 @@ export const SceneScrollView = ({
     nativeRef,
     tabKey,
   });
+  const nativeScroll = useNativeScrollMirror(nativeScrollY);
+  const setScrollViewRef = React.useCallback(
+    (instance: ScrollView | null) => {
+      resolvedRef(instance as never);
+      nativeScroll.sync(instance);
+    },
+    [nativeScroll, resolvedRef],
+  );
 
   React.useImperativeHandle(ref, () => ({ scrollTo }), [scrollTo]);
 
@@ -84,7 +97,7 @@ export const SceneScrollView = ({
       onScroll={scrollHandler}
       onScrollBeginDrag={onScrollBeginDrag}
       onScrollEndDrag={onScrollEndDrag}
-      ref={resolvedRef as never}
+      ref={setScrollViewRef as never}
       scrollEnabled={scrollEnabled}
       scrollEventThrottle={16}
       showsVerticalScrollIndicator={false}

@@ -560,13 +560,8 @@ export const HomeCustomMaterialTabBar = ({}: Partial<
 
 const getStyles = createGetStyles2024(() => ({
   container: {
-    position: 'absolute',
-    top: HOME_TOP_HEADER_SIZES.headerHeight,
-    left: 0,
-    right: 0,
     paddingHorizontal: 0,
     maxHeight: HOME_TOP_HEADER_SIZES.tabItemLineHeight,
-    zIndex: 10,
     // ...makeDevOnlyStyle({
     //   backgroundColor: colors2024['neutral-foot'],
     // }),

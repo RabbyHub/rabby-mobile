@@ -27,7 +27,7 @@ import { clearLendingActionPopupState } from '@/screens/Lending/utils/actionPopu
 import { createGetStyles2024 } from '@/utils/styles';
 import { StackActions, useFocusEffect } from '@react-navigation/native';
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
-import type { ScrollView, ViewProps } from 'react-native';
+import type { ScrollView, ScrollViewProps, ViewProps } from 'react-native';
 import {
   Dimensions,
   StyleSheet,
@@ -58,7 +58,11 @@ import {
   refreshMemeHoldings,
   refreshMemeHoldingsIfStale,
 } from '@/screens/MemeCoin/data/memeHoldingsStore';
-import { apisHomeTabIndex, useRabbyAppNavigation } from '@/hooks/navigation';
+import {
+  apisHomeTabIndex,
+  HomeTabName,
+  useRabbyAppNavigation,
+} from '@/hooks/navigation';
 import { navigateToPerpsHome } from '@/hooks/perps/navigation/navigateToPreferredPerps';
 import addressBalanceStore, {
   balanceAccountsStore,
@@ -125,8 +129,8 @@ import {
   useHomeHistoryCount,
   useHomePendingTxCount,
 } from '../hooks/history';
-import type { TabsScrollViewProps } from '@/components/customized/react-native-collapsible-tab-view/ScrollView';
-import { TabsScrollView } from '@/components/customized/react-native-collapsible-tab-view/ScrollView';
+import { SceneScrollViewSurface } from '@/components/RetainedScenePagerList/SceneSurfaces';
+import { getHomeSceneContentInset } from './scene/homeSceneLayout';
 import type { RNGHScrollView } from '@/components/customized/reexports';
 import { RNGHRefreshControl } from '@/components/customized/reexports';
 import {
@@ -136,8 +140,7 @@ import {
   SCROLLABLE_STATUS,
   THRESHOLD_PERCENT,
 } from '../hooks/useHomeDrawerAnimate';
-import { useCurrentTabScrollY } from 'react-native-collapsible-tab-view';
-import type { ScrollHandlerProps } from '@/components/customized/react-native-collapsible-tab-view/hooks';
+import { useCollapsibleScene } from '@rabby-wallet/rn-collapsible-scene-view';
 import { triggerImpact } from '@/utils/common';
 import type { WorkletFunction } from 'react-native-reanimated/lib/typescript/commonTypes';
 import { IS_ANDROID } from '@/core/native/utils';
@@ -251,10 +254,10 @@ function hasOverThreshold() {
 const tabsScrollHandlers = {
   onContentSizeChange: ((_, height) => {
     scrollViewContentHeight.value = height;
-  }) as TabsScrollViewProps['onContentSizeChange'] & object,
+  }) as ScrollViewProps['onContentSizeChange'] & object,
   onLayout: (event => {
     scrollViewLayoutHeight.value = event.nativeEvent.layout.height;
-  }) as TabsScrollViewProps['onLayout'] & object,
+  }) as ScrollViewProps['onLayout'] & object,
 };
 
 const swipeUpViewHandlers = {
@@ -276,7 +279,7 @@ const usePulldownRefreshGesture = <T extends ScrollView | RNGHScrollView>({
   onJsPulldownRefresh?: OnRefreshOnJs;
 } = {}) => {
   const scrollableRef = useAnimatedRef<T>();
-  const scrollY = useCurrentTabScrollY();
+  const { scrollY } = useCollapsibleScene();
 
   const scrollableStatus = useSharedValue<SCROLLABLE_STATUS>(
     SCROLLABLE_STATUS.UNLOCKED,
@@ -358,32 +361,6 @@ const usePulldownRefreshGesture = <T extends ScrollView | RNGHScrollView>({
     },
     [scrollToEnd],
   );
-
-  const onScrollHandlers = {
-    onAnimatedScrollBeginDrag: useCallback<
-      ScrollHandlerProps['onAnimatedScrollBeginDrag'] & object
-    >(() => {
-      // // leave here for debug on some android devices
-      // console.debug(
-      //   '[onScrollHandlers] onAnimatedScrollBeginDrag:: event.nativeEvent',
-      //   event.nativeEvent,
-      // );
-    }, []),
-    onScroll: useCallback<ScrollHandlerProps['onScroll'] & object>(() => {
-      // console.debug(
-      //   '[onScrollHandlers] onScroll:: event.nativeEvent',
-      //   event.nativeEvent,
-      // );
-    }, []),
-    onAnimatedScrollEndDrag: useCallback<
-      ScrollHandlerProps['onAnimatedScrollEndDrag'] & object
-    >(() => {
-      // console.debug(
-      //   '[onScrollHandlers] onAnimatedScrollEndDrag:: event.nativeEvent',
-      //   event.nativeEvent,
-      // );
-    }, []),
-  };
 
   const startValues = useSharedValue({
     startedAtTop: scrollY.value <= 5,
@@ -495,8 +472,6 @@ const usePulldownRefreshGesture = <T extends ScrollView | RNGHScrollView>({
 
   return {
     panGestureRef,
-
-    onScrollHandlers,
     uiOnScrollBack,
     scrollableRef,
 
@@ -1369,7 +1344,6 @@ export const HomeOverview = React.memo(() => {
   );
 
   const {
-    onScrollHandlers,
     uiOnScrollBack,
     scrollableRef,
     panGestureRef,
@@ -1411,22 +1385,16 @@ export const HomeOverview = React.memo(() => {
       <HomeOverviewDeferredStartupGate triggerUpdate={triggerUpdate} />
       <Animated.View style={[styles.main, mainStyle]}>
         <GestureDetector gesture={panGestureRef.current}>
-          <TabsScrollView
-            ref={scrollableRef}
-            showsVerticalScrollIndicator={false}
-            style={[styles.scroll, { flex: undefined }]}
+          <SceneScrollViewSurface
+            nativeRef={scrollableRef}
+            tabKey={HomeTabName.overview}
+            contentInsetTop={getHomeSceneContentInset(HomeTabName.overview)}
+            style={styles.scroll}
             contentContainerStyle={[styles.scrollContainer]}
             bounces={false}
             overScrollMode={'never'}
-            scrollEventThrottle={16}
             onContentSizeChange={tabsScrollHandlers.onContentSizeChange}
             onLayout={tabsScrollHandlers.onLayout}
-            onAnimatedScrollBeginDrag={
-              onScrollHandlers.onAnimatedScrollBeginDrag
-            }
-            onAnimatedScrollEndDrag={onScrollHandlers.onAnimatedScrollEndDrag}
-            onScroll={onScrollHandlers.onScroll}
-            // scrollableEnabled={scrollableEnabled}
             simultaneousHandlers={[panGestureRef]}
             {...(!SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING && {
               refreshControl: (
@@ -1474,7 +1442,7 @@ export const HomeOverview = React.memo(() => {
                 </View>
               </View>
             </Animated.View>
-          </TabsScrollView>
+          </SceneScrollViewSurface>
         </GestureDetector>
       </Animated.View>
       <DeferredHomeDappDrawer onScrollBack={uiOnScrollBack} />

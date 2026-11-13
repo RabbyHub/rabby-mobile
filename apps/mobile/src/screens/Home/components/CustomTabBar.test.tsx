@@ -147,14 +147,11 @@ jest.mock('./Tabs/CustomLabel', () => {
 });
 
 function getOverlayStyle() {
+  // The scene's pinned layer owns the absolute offset and zIndex; this
+  // component only owns fading and hit testing.
   const overlay = screen.UNSAFE_getAllByType(View).find(node => {
     const style = StyleSheet.flatten(node.props.style);
-    return (
-      style?.position === 'absolute' &&
-      style.top === HOME_TOP_HEADER_SIZES.headerHeight &&
-      style.left === 0 &&
-      style.right === 0
-    );
+    return style?.maxHeight === HOME_TOP_HEADER_SIZES.tabItemLineHeight;
   });
   expect(overlay).toBeDefined();
   return StyleSheet.flatten(overlay!.props.style);
@@ -178,7 +175,7 @@ describe('HomeCustomMaterialTabBar presentation contract', () => {
     homeDrawerAnimateMutable.tabsOpacity.value = 1;
   });
 
-  it('keeps the overlay at one zIndex across Overview and asset pages', () => {
+  it('keeps one stable container across Overview and asset pages', () => {
     const view = render(<HomeCustomMaterialTabBar />);
 
     for (const index of [0, 0.5, 1, 2, 3, 1, 0.5, 0]) {
@@ -186,7 +183,6 @@ describe('HomeCustomMaterialTabBar presentation contract', () => {
       view.rerender(<HomeCustomMaterialTabBar />);
 
       expect(getOverlayStyle()).toMatchObject({
-        zIndex: 10,
         opacity: 1,
         pointerEvents: 'box-none',
       });
@@ -215,7 +211,6 @@ describe('HomeCustomMaterialTabBar presentation contract', () => {
         view.rerender(<HomeCustomMaterialTabBar />);
 
         expect(getOverlayStyle()).toMatchObject({
-          zIndex: 10,
           opacity,
           pointerEvents: opacity < 0.1 ? 'none' : 'box-none',
         });

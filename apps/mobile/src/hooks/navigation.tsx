@@ -40,7 +40,6 @@ import {
 } from '@/core/utils/store';
 import { RefLikeObject } from '@/utils/type';
 import { perfEvents } from '@/core/utils/perf';
-import type { CollapsibleRef } from 'react-native-collapsible-tab-view';
 import { autoLockEvent } from '@/core/apis/autoLock';
 import { notificationEvents } from '@/core/notifications/data';
 import {
@@ -463,7 +462,18 @@ export const TabbarLabels: {
   [HomeTabName.defi]: { index: 2, label: 'DeFi' },
   [HomeTabName.nft]: { index: 3, label: 'NFT' },
 };
-const homeTabScrollerRef = React.createRef<CollapsibleRef<string>>();
+/**
+ * Imperative handle the home scene registers so existing call sites
+ * (`setTabIndex`, deep links, regression actions) can jump between the
+ * horizontally linked home tabs without knowing the pager implementation.
+ */
+export type HomeTabPagerHandle = {
+  getCurrentIndex: () => number;
+  setIndex: (index: number) => void;
+};
+const homeTabScrollerRef: { current: HomeTabPagerHandle | null } = {
+  current: null,
+};
 // const tabIndexRef: RefLikeObject<number> = { current: 0 };
 const tabIndexSvs = {
   current: 0,
@@ -496,13 +506,14 @@ export const apisHomeTabIndex = {
   },
   setTabIndex(val: number, processJump = false) {
     'worklet';
-    if (processJump) {
-      homeTabScrollerRef.current?.setIndex(val);
-    } else {
+    tabIndexSvs.current = val;
+    if (!processJump) {
       tabIndexSvs.svIndexDecimal.value = val;
-      tabIndexSvs.current = val;
       runOnJS(() => tabIndexStore.setState({ tabIndex: val }))();
     }
+    // The scene pager owns the visible page. Jumping to the page that is
+    // already settled is a no-op, so this stays safe for commit notifications.
+    homeTabScrollerRef.current?.setIndex(val);
   },
 };
 
