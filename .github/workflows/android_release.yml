@@ -118,6 +118,13 @@ jobs:
         with:
           targets: aarch64-linux-android,armv7-linux-androideabi,i686-linux-android,x86_64-linux-android
 
+      - name: Ensure ccache
+        env:
+          RABBY_MOBILE_BUILD_BUCKET: ${{ secrets.RABBY_MOBILE_BUILD_BUCKET }}
+        run: |
+          # Managed ccache: uses a local binary when present, otherwise installs
+          # the pinned bundle published under s3://<bucket>/_private/toolchains/ccache.
+          bash apps/mobile/scripts/ci/ensure-ccache.sh
       - name: Install & Build app
         run: |
           cd apps/mobile;
