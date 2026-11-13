@@ -11,18 +11,13 @@ import {
   View,
   type LayoutChangeEvent,
 } from 'react-native';
-import {
-  useAnimatedReaction,
-  useAnimatedStyle,
-  useSharedValue,
-} from 'react-native-reanimated';
+import { useAnimatedReaction, useSharedValue } from 'react-native-reanimated';
 import Animated from 'react-native-reanimated';
 import { useIsFocused } from '@react-navigation/native';
 import {
   CollapsibleSceneProvider,
   LinkedScenePager,
   useCollapsibleSceneController,
-  useCollapsibleScene,
   type LinkedScenePage,
   type LinkedScenePageContext,
   type LinkedScenePagerHandle,
@@ -33,10 +28,8 @@ import { apisHomeTabIndex, HomeTabName } from '@/hooks/navigation';
 import { RenderActivityBoundary } from '@/hooks/storeActivity/RenderActivityBoundary';
 import { isTabsSwiping } from '@/screens/Address/components/MultiAssets/hooks';
 import { useRegressionScenario } from '@/devtools/regressionScenarios/react';
-import { useTheme2024 } from '@/hooks/theme';
 
 import {
-  getHomeSceneContentInset,
   HOME_SCENE_CONTENT_TOP,
   HOME_SCENE_HEADER_HEIGHT,
   HOME_SCENE_TAB_BAR_HEIGHT,
@@ -60,11 +53,17 @@ export function HomeSceneContainer({
   pages,
   tabBar,
   header,
+  chromeBackdrop,
   onTabSelected,
 }: {
   pages: Record<HomeTabName, React.ReactNode>;
   tabBar: React.ReactNode;
   header: React.ReactNode;
+  /**
+   * Painted behind the fixed chrome. List rows scroll underneath the header
+   * and tab strip, so this has to stay opaque (screen gradient + top image).
+   */
+  chromeBackdrop?: React.ReactNode;
   onTabSelected?: (index: number) => void;
 }) {
   const isScreenFocused = useIsFocused();
@@ -226,7 +225,14 @@ export function HomeSceneContainer({
                   pointerEvents="box-none"
                   style={styles.tabBarLayer}
                   testID="home-scene-tab-bar">
-                  <PinnedTabBarSurface />
+                  {chromeBackdrop ? (
+                    <View
+                      pointerEvents="none"
+                      style={styles.tabBarSurface}
+                      testID="home-scene-chrome-backdrop">
+                      {chromeBackdrop}
+                    </View>
+                  ) : null}
                   {tabBar}
                 </View>
                 <View
@@ -297,29 +303,6 @@ function HomeScenePage({
   );
 }
 
-/**
- * Once the tab strip pins, rows scroll underneath it: fade in a matching
- * surface so the chrome never sits directly on top of list content.
- */
-function PinnedTabBarSurface() {
-  const { colors2024 } = useTheme2024();
-  const { headerHeight, scrollY } = useCollapsibleScene();
-  const fadeStyle = useAnimatedStyle(() => {
-    const range = Math.max(headerHeight, 1);
-    return { opacity: Math.min(Math.max(scrollY.value / range, 0), 1) };
-  }, [headerHeight]);
-  return (
-    <Animated.View
-      pointerEvents="none"
-      style={[
-        styles.tabBarSurface,
-        { backgroundColor: colors2024['neutral-bg-1'] },
-        fadeStyle,
-      ]}
-    />
-  );
-}
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -342,6 +325,7 @@ const styles = StyleSheet.create({
   tabBarSurface: {
     bottom: 0,
     left: 0,
+    overflow: 'hidden',
     position: 'absolute',
     right: 0,
     top: -HOME_SCENE_TAB_BAR_TOP,

@@ -2,10 +2,12 @@ import { useTheme2024 } from '@/hooks/theme';
 import { autoLoginGasAccountIfNeeded } from '@/utils/autoLoginGasAccount';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useFocusEffect } from '@react-navigation/native';
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import { View } from 'react-native';
 
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
+import { useSafeSizes } from '@/hooks/useAppLayout';
+import { HomeChromeBackdrop } from './components/scene/HomeChromeBackdrop';
 import * as apisAccount from '@/core/apis/account';
 import {
   resetHomeStartupReady,
@@ -320,8 +322,28 @@ function MultiAddressHome(): JSX.Element {
   const { styles, colors2024, isLight } = useTheme2024({
     getStyle,
   });
+  const { safeOffHeader } = useSafeSizes();
   const isLoss = useHome24hProjection(state => !!state.value?.isLoss);
   useRendererDetect({ name: 'MultiAddressHome' });
+
+  const bgImageSource = useMemo(
+    () =>
+      isLoss
+        ? require('@/assets2024/singleHome/loss-home.png')
+        : require('@/assets2024/singleHome/up-home.png'),
+    [isLoss],
+  );
+  const linearProp = useMemo(
+    () => ({
+      colors: isLight
+        ? [colors2024['neutral-bg-1'], colors2024['neutral-bg-2']]
+        : [colors2024['neutral-bg-1'], colors2024['neutral-bg-1']],
+      locations: [0, 1],
+      start: { x: 0.5, y: 0 },
+      end: { x: 0.5, y: 0.26 },
+    }),
+    [colors2024, isLight],
+  );
 
   useEffect(() => {
     apisHomeTabIndex.setTabIndex(0);
@@ -331,26 +353,23 @@ function MultiAddressHome(): JSX.Element {
     <NormalScreenContainer2024
       type="linear"
       noHeader
-      bgImageSource={
-        isLoss
-          ? require('@/assets2024/singleHome/loss-home.png')
-          : require('@/assets2024/singleHome/up-home.png')
-      }
-      linearProp={{
-        colors: isLight
-          ? [colors2024['neutral-bg-1'], colors2024['neutral-bg-2']]
-          : [colors2024['neutral-bg-1'], colors2024['neutral-bg-1']],
-        locations: [0, 1],
-        start: { x: 0.5, y: 0 },
-        end: { x: 0.5, y: 0.26 },
-      }}
+      bgImageSource={bgImageSource}
+      linearProp={linearProp}
       overwriteStyle={styles.screenContainer}>
       <View
         style={[styles.paddingContainer]}
         onTouchStart={() => {
           setIsFoldMultiChart(true);
         }}>
-        <TabsMultiAssets />
+        <TabsMultiAssets
+          chromeBackdrop={
+            <HomeChromeBackdrop
+              gradient={linearProp}
+              imageHeight={safeOffHeader + 150}
+              imageSource={bgImageSource}
+            />
+          }
+        />
       </View>
 
       <HomeStartupReadyScheduler />

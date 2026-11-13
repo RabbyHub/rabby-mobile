@@ -14,7 +14,9 @@ import { TokenList } from './TokenList';
 import { HomeOverview } from '@/screens/Home/components/HomeOverview';
 import { HomeSceneContainer } from '@/screens/Home/components/scene/HomeSceneContainer';
 
-interface TabMultiAssetsProps {}
+interface TabMultiAssetsProps {
+  chromeBackdrop?: React.ReactNode;
+}
 
 export { HomeTabName as TabName } from '@/hooks/navigation';
 
@@ -74,7 +76,9 @@ function scheduleReadableAccountStoreWarmupForTab(idx: number) {
   });
 }
 
-export const TabsMultiAssets: React.FC<TabMultiAssetsProps> = () => {
+export const TabsMultiAssets: React.FC<TabMultiAssetsProps> = ({
+  chromeBackdrop,
+}) => {
   useRendererDetect({ name: 'TabsMultiAssets' });
 
   const pages = React.useMemo(
@@ -89,6 +93,7 @@ export const TabsMultiAssets: React.FC<TabMultiAssetsProps> = () => {
 
   return (
     <HomeSceneContainer
+      chromeBackdrop={chromeBackdrop}
       header={<TabsTopHeader />}
       onTabSelected={scheduleReadableAccountStoreWarmupForTab}
       pages={pages}
