@@ -52,18 +52,57 @@ export const splitTrackDelta = ({
  * Where the track comes to rest after the finger lifts.
  *
  * - `free`: park exactly where the finger left it (any intermediate position);
- * - `snap`: nearest page, biased by the release velocity so a flick advances
- *   even when the finger stopped short of half a page.
+ * - `snap`: at most one page away from the page the gesture started on. The
+ *   displacement decides the direction; the release velocity only breaks the
+ *   "did not travel half a page" case, and never adds distance. A slow drag
+ *   that stops short of half a page returns to where it started.
+ *
+ * `start` must be the discrete page the gesture began on. Keeping the target
+ * relative to it is what makes one gesture authoritative: a fast flick can
+ * advance one page, never two, and an interrupted settle cannot shift the
+ * baseline to a fractional page.
  */
+/** Pages per second that turn a short drag into a one-page flick. */
+export const SETTLE_FLICK_VELOCITY_PAGES = 1;
+
+export const resolveSettleIntent = ({
+  delta,
+  velocityPages,
+}: {
+  /** Signed travel from the gesture's origin page, in pages. */
+  delta: number;
+  velocityPages: number;
+}): number => {
+  'worklet';
+  if (delta >= 0.5) {
+    return 1;
+  }
+  if (delta <= -0.5) {
+    return -1;
+  }
+  const velocity = finite(velocityPages, 0);
+  if (Math.abs(velocity) < SETTLE_FLICK_VELOCITY_PAGES) {
+    return 0;
+  }
+  // A flick only advances when it does not contradict the drag itself.
+  if (delta !== 0 && Math.sign(delta) !== Math.sign(velocity)) {
+    return 0;
+  }
+  return velocity > 0 ? 1 : -1;
+};
+
 export const resolveSettleTarget = ({
   mode,
   position,
   range,
+  start,
   velocityPages,
 }: {
   mode: LinkedTrackSettleMode;
   position: number;
   range: TrackRange;
+  /** Discrete page the current gesture started on. */
+  start: number;
   /** Release velocity in pages per second. */
   velocityPages: number;
 }): number => {
@@ -72,8 +111,12 @@ export const resolveSettleTarget = ({
   if (mode === 'free') {
     return resting;
   }
-  const projected = resting + finite(velocityPages, 0) * 0.18;
-  return clampTrackPosition(Math.round(projected), range);
+  const origin = clampTrackPosition(Math.round(finite(start, 0)), range);
+  const intent = resolveSettleIntent({
+    delta: resting - origin,
+    velocityPages,
+  });
+  return clampTrackPosition(origin + intent, range);
 };
 
 /** Nearest whole page, for bookkeeping (active tab / activity) only. */

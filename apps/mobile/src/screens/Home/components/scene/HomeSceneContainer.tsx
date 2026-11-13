@@ -201,7 +201,10 @@ export function HomeSceneContainer({
       activeTabRef.current = next;
       setActiveTab(next);
       const index = tabIndex(next);
-      apisHomeTabIndex.setTabIndex(index);
+      // The pager already settled here; only publish the index. Calling
+      // setTabIndex would command the same pager again from its own commit
+      // callback, which can overwrite a newer drag or settle.
+      apisHomeTabIndex.publishSettledIndex(index);
       onTabSelected?.(index);
     },
     [onTabSelected],

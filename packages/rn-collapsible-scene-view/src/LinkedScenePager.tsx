@@ -172,6 +172,12 @@ type DragState = {
   startChild: number;
   startRoot: number;
   startX: number;
+  /**
+   * Last non-zero x velocity observed during the drag. Used as a fallback
+   * when the release sample is 0 (fingers often pause for a frame or two
+   * before lifting, which hides a fast flick from `onEnd`).
+   */
+  lastVelocityX: number;
 };
 
 type RetainedTransition = {
@@ -266,6 +272,8 @@ function LinkedScenePagerOwner({
   const { gestureActive, indicatorPosition, scrollOffset, settleMode } = props;
   const widthValue = useSharedValue(width);
   const rootTrack = useSharedValue(rootIndexOf(model, initial.key));
+  /** Target of the in-flight settle animation, -1 when the track is at rest. */
+  const settlingRoot = useSharedValue(-1);
   const childTracks = useSharedValue<Record<string, number>>(
     initialChildTracks(model, remembered.current, initial),
   );
@@ -277,6 +285,7 @@ function LinkedScenePagerOwner({
     startChild: 0,
     startRoot: 0,
     startX: 0,
+    lastVelocityX: 0,
   });
   const pageRange = useMemo<TrackRange>(
     () => ({ end: Math.max(model.roots.length - 1, 0), start: 0 }),
@@ -336,7 +345,8 @@ function LinkedScenePagerOwner({
     indicatorPosition.value = rootIndexOf(model, initial.key);
   }, [gestureActive, indicatorPosition, initial.key, model]);
 
-  const commit = useCallback(() => {
+  const commitRootIndex = useCallback(
+    (nextRootIndex: number) => {
     if (!mounted.current) {
       return;
     }
@@ -344,7 +354,7 @@ function LinkedScenePagerOwner({
       0,
       Math.min(
         model.roots.length - 1,
-        Math.round(rootTrack.value),
+        Math.round(nextRootIndex),
       ),
     );
     const root = model.roots[rootIndex];
@@ -378,7 +388,9 @@ function LinkedScenePagerOwner({
     if (changed) {
       latestProps.current.onPathChange(path);
     }
-  }, [childTracks, gestureActive, model, rootTrack]);
+    },
+    [childTracks, gestureActive, model],
+  );
 
   const beginRetainedTransition = useCallback(
     (scrollY: number, height: number) => {
@@ -395,7 +407,12 @@ function LinkedScenePagerOwner({
   }, []);
 
   const transport = useMemo(() => {
-    const settle = (axis: DragAxis, rootKey: string, velocityPages: number) => {
+    const settle = (
+      axis: DragAxis,
+      rootKey: string,
+      velocityPages: number,
+      start: number,
+    ) => {
       'worklet';
       if (axis === 'child') {
         const root = model.roots.find(item => item.key === rootKey);
@@ -411,17 +428,18 @@ function LinkedScenePagerOwner({
           mode: settleMode ?? 'snap',
           position: current,
           range,
+          start,
           velocityPages,
         });
         if (Math.abs(target - current) < 0.0001) {
-          runOnJS(commit)();
+          runOnJS(commitRootIndex)(target);
           return;
         }
         childTracks.value = {
           ...childTracks.value,
           [rootKey]: withTiming(target, { duration: 180 }, finished => {
             if (finished) {
-              runOnJS(commit)();
+              runOnJS(commitRootIndex)(target);
             }
           }),
         };
@@ -432,15 +450,19 @@ function LinkedScenePagerOwner({
         mode: settleMode ?? 'snap',
         position: current,
         range: pageRange,
+        start,
         velocityPages,
       });
+      settlingRoot.value = target;
       if (Math.abs(target - current) < 0.0001) {
-        runOnJS(commit)();
+        settlingRoot.value = -1;
+        runOnJS(commitRootIndex)(target);
         return;
       }
       rootTrack.value = withTiming(target, { duration: 180 }, finished => {
         if (finished) {
-          runOnJS(commit)();
+          settlingRoot.value = -1;
+          runOnJS(commitRootIndex)(target);
         }
       });
     };
@@ -450,37 +472,60 @@ function LinkedScenePagerOwner({
       if (widthValue.value <= 0) {
         return;
       }
+      // A finger always takes over from a discrete page. Finishing an
+      // in-flight settle at its target keeps the baseline authoritative: the
+      // new gesture can never inherit a fractional mid-animation position.
+      cancelAnimation(rootTrack);
+      const interruptedTarget = settlingRoot.value;
+      const trackAtRest =
+        interruptedTarget >= 0
+          ? interruptedTarget
+          : Math.round(rootTrack.value);
       const rootIndex = Math.max(
         0,
         Math.min(
           model.roots.length - 1,
-          Math.round(rootTrack.value),
+          Math.round(trackAtRest),
         ),
       );
+      rootTrack.value = rootIndex;
+      settlingRoot.value = -1;
       const root = model.roots[rootIndex];
       const childEligible =
         childSwipeEnabled &&
         root.leaves.length > 1 &&
         touchY >= (headers[root.key] ?? 0);
+      const childTrack = childTracks.value[root.key] ?? 0;
+      const childOrigin = Math.round(childTrack);
+      if (childEligible && childOrigin !== childTrack) {
+        childTracks.value = {
+          ...childTracks.value,
+          [root.key]: childOrigin,
+        };
+      }
       drag.value = {
         active: true,
         axis: childEligible ? 'child' : 'root',
         done: false,
         rootKey: root.key,
-        startChild: childTracks.value[root.key] ?? 0,
+        startChild: childOrigin,
         startRoot: rootTrack.value,
         startX: translationX,
+        lastVelocityX: 0,
       };
       gestureActive.value = true;
       runOnJS(publishDragFloor)(rootIndex);
       runOnJS(beginRetainedTransition)(scrollOffset.value, presentedHeight.value);
     };
 
-    const update = (translationX: number) => {
+    const update = (translationX: number, velocityX: number) => {
       'worklet';
       const current = drag.value;
       if (!current.active || widthValue.value <= 0) {
         return;
+      }
+      if (velocityX !== 0) {
+        drag.value = { ...current, lastVelocityX: velocityX };
       }
       const delta = -(translationX - current.startX) / widthValue.value;
       if (current.axis === 'child') {
@@ -492,9 +537,15 @@ function LinkedScenePagerOwner({
           end: Math.max(root.leaves.length - 1, 0),
           start: 0,
         };
+        // One gesture may move at most one child page; beyond that the parent
+        // track takes over, which is also what a nested swipe should feel like.
+        const gestureRange: TrackRange = {
+          end: Math.min(range.end, current.startChild + 1),
+          start: Math.max(range.start, current.startChild - 1),
+        };
         const { overflow, position } = splitTrackDelta({
           delta,
-          range,
+          range: gestureRange,
           start: current.startChild,
         });
         childTracks.value = { ...childTracks.value, [root.key]: position };
@@ -506,9 +557,16 @@ function LinkedScenePagerOwner({
         );
         return;
       }
+      // The drag itself is bounded to one page either side of the page the
+      // gesture began on, so the visible travel and the settle target always
+      // describe the same single-page intent.
+      const gestureRange: TrackRange = {
+        end: Math.min(pageRange.end, current.startRoot + 1),
+        start: Math.max(pageRange.start, current.startRoot - 1),
+      };
       rootTrack.value = clampTrackPosition(
         current.startRoot + delta,
-        pageRange,
+        gestureRange,
       );
     };
 
@@ -519,10 +577,13 @@ function LinkedScenePagerOwner({
         return;
       }
       drag.value = { ...current, done: true };
+      const releaseVelocityX =
+        velocityX !== 0 ? velocityX : current.lastVelocityX;
       settle(
         current.axis,
         current.rootKey,
-        -velocityX / widthValue.value,
+        -releaseVelocityX / widthValue.value,
+        current.axis === 'child' ? current.startChild : current.startRoot,
       );
     };
 
@@ -534,7 +595,12 @@ function LinkedScenePagerOwner({
       }
       drag.value = { ...current, active: false };
       if (!current.done) {
-        settle(current.axis, current.rootKey, 0);
+        settle(
+          current.axis,
+          current.rootKey,
+          0,
+          current.axis === 'child' ? current.startChild : current.startRoot,
+        );
       }
     };
 
@@ -543,7 +609,7 @@ function LinkedScenePagerOwner({
     beginRetainedTransition,
     childSwipeEnabled,
     childTracks,
-    commit,
+    commitRootIndex,
     drag,
     gestureActive,
     headers,
@@ -553,6 +619,7 @@ function LinkedScenePagerOwner({
     publishDragFloor,
     rootTrack,
     scrollOffset,
+    settlingRoot,
     settleMode,
     widthValue,
   ]);
@@ -574,9 +641,19 @@ function LinkedScenePagerOwner({
 
   const settleFromCurrent = useCallback(
     (path: LinkedScenePath) => {
+      // While the finger owns the track, only the gesture may write it.
+      if (drag.value.active) {
+        return;
+      }
       const rootIndex = rootIndexOf(model, path.key);
+      if (settlingRoot.value === rootIndex) {
+        // Already animating to that page; writing the track here would only
+        // cancel the animation.
+        return;
+      }
       cancelAnimation(rootTrack);
       rootTrack.value = rootIndex;
+      settlingRoot.value = -1;
       const childIndex = childIndexOf(model, path);
       if (childIndex !== undefined) {
         const root = model.roots[rootIndex];
@@ -585,13 +662,17 @@ function LinkedScenePagerOwner({
           [root.key]: childIndex,
         };
       }
-      commit();
+      commitRootIndex(rootIndex);
     },
-    [childTracks, commit, model, rootTrack],
+    [childTracks, commitRootIndex, drag, model, rootTrack, settlingRoot],
   );
 
   const selectPath = useCallback(
     (path: LinkedScenePath) => {
+      // A programmatic jump must never fight an active drag.
+      if (drag.value.active) {
+        return;
+      }
       const resolved = resolveLinkedScenePath(model, path, remembered.current);
       const rootIndex = rootIndexOf(model, resolved.key);
       const childIndex = childIndexOf(model, resolved);
@@ -600,13 +681,23 @@ function LinkedScenePagerOwner({
         childTracks.value = { ...childTracks.value, [root.key]: childIndex };
       }
       gestureActive.value = true;
+      settlingRoot.value = rootIndex;
       rootTrack.value = withTiming(rootIndex, { duration: 200 }, finished => {
         if (finished) {
-          runOnJS(commit)();
+          settlingRoot.value = -1;
+          runOnJS(commitRootIndex)(rootIndex);
         }
       });
     },
-    [childTracks, commit, gestureActive, model, rootTrack],
+    [
+      childTracks,
+      commitRootIndex,
+      drag,
+      gestureActive,
+      model,
+      rootTrack,
+      settlingRoot,
+    ],
   );
 
   const jumpPath = useCallback(
@@ -671,7 +762,7 @@ function LinkedScenePagerOwner({
         })
         .onUpdate(event => {
           'worklet';
-          transport.update(event.translationX);
+          transport.update(event.translationX, event.velocityX);
         })
         .onEnd((event, success) => {
           'worklet';

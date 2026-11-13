@@ -515,6 +515,17 @@ export const apisHomeTabIndex = {
     // already settled is a no-op, so this stays safe for commit notifications.
     homeTabScrollerRef.current?.setIndex(val);
   },
+  /**
+   * Report a page the pager already settled on. This must never command the
+   * pager: doing so from the pager's own commit callback re-enters the gesture
+   * track and can overwrite an in-flight settle or drag.
+   */
+  publishSettledIndex(val: number) {
+    'worklet';
+    tabIndexSvs.current = val;
+    tabIndexSvs.svIndexDecimal.value = val;
+    runOnJS(() => tabIndexStore.setState({ tabIndex: val }))();
+  },
 };
 
 export function resetNavigationTo(

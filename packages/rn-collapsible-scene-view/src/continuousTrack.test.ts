@@ -53,6 +53,7 @@ describe('resolveSettleTarget', () => {
         mode: 'free',
         position: 0.42,
         range: page(0, 3),
+        start: 0,
         velocityPages: 4,
       }),
     ).toBe(0.42);
@@ -64,6 +65,7 @@ describe('resolveSettleTarget', () => {
         mode: 'snap',
         position: 0.3,
         range: page(0, 3),
+        start: 0,
         velocityPages: 3,
       }),
     ).toBe(1);
@@ -75,6 +77,7 @@ describe('resolveSettleTarget', () => {
         mode: 'snap',
         position: 0.3,
         range: page(0, 3),
+        start: 0,
         velocityPages: 0,
       }),
     ).toBe(0);
@@ -83,6 +86,7 @@ describe('resolveSettleTarget', () => {
         mode: 'snap',
         position: 0.6,
         range: page(0, 3),
+        start: 0,
         velocityPages: 0,
       }),
     ).toBe(1);
@@ -94,6 +98,7 @@ describe('resolveSettleTarget', () => {
         mode: 'snap',
         position: 0.99,
         range: page(0, 1),
+        start: 0,
         velocityPages: 20,
       }),
     ).toBe(1);
@@ -102,7 +107,66 @@ describe('resolveSettleTarget', () => {
         mode: 'snap',
         position: 0.01,
         range: page(0, 1),
+        start: 1,
         velocityPages: -20,
+      }),
+    ).toBe(0);
+  });
+
+  it('never advances more than one page, however fast the flick', () => {
+    // The old formula projected velocity * 0.18 pages and could skip a tab
+    // (e.g. 0.31 + 9.26 * 0.18 => 2).
+    expect(
+      resolveSettleTarget({
+        mode: 'snap',
+        position: 0.2,
+        range: page(0, 3),
+        start: 0,
+        velocityPages: 60,
+      }),
+    ).toBe(1);
+    expect(
+      resolveSettleTarget({
+        mode: 'snap',
+        position: 2.8,
+        range: page(0, 3),
+        start: 3,
+        velocityPages: -60,
+      }),
+    ).toBe(2);
+  });
+
+  it('uses the gesture origin, not a fractional mid-flight value', () => {
+    // A settle interrupted at 1.86 must not make the next gesture able to
+    // land on 3; it starts from the page it was already committed to.
+    expect(
+      resolveSettleTarget({
+        mode: 'snap',
+        position: 2.3,
+        range: page(0, 3),
+        start: 2,
+        velocityPages: 9,
+      }),
+    ).toBe(3);
+    expect(
+      resolveSettleTarget({
+        mode: 'snap',
+        position: 1.9,
+        range: page(0, 3),
+        start: 2,
+        velocityPages: 9,
+      }),
+    ).toBe(2);
+  });
+
+  it('does not advance when the release velocity contradicts the drag', () => {
+    expect(
+      resolveSettleTarget({
+        mode: 'snap',
+        position: 0.2,
+        range: page(0, 3),
+        start: 0,
+        velocityPages: -6,
       }),
     ).toBe(0);
   });
