@@ -184,7 +184,7 @@ const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: BOTTOM_BUTTON_TEXT_SIZE,
     fontStyle: 'normal',
-    fontWeight: '900',
+    fontWeight: '800',
     lineHeight: 24,
     marginTop: 12,
   },

@@ -1202,7 +1202,7 @@ const getStyle = createGetStyles2024(ctx => {
       fontSize: 36,
       paddingVertical: 0,
       lineHeight: 42,
-      fontWeight: '900',
+      fontWeight: '800',
       color: colors2024['neutral-title-1'],
       flex: 1,
       textAlign: 'right',
@@ -1225,7 +1225,7 @@ const getStyle = createGetStyles2024(ctx => {
       fontFamily: 'SF Pro Rounded',
       fontSize: 36,
       lineHeight: 42,
-      fontWeight: '900',
+      fontWeight: '800',
       color: colors2024['neutral-title-1'],
     },
     title: {
@@ -1233,7 +1233,7 @@ const getStyle = createGetStyles2024(ctx => {
       fontSize: 20,
       lineHeight: 24,
       marginTop: 12,
-      fontWeight: '900',
+      fontWeight: '800',
       color: colors2024['neutral-title-1'],
       marginBottom: 6,
       textAlign: 'center',
@@ -1521,7 +1521,7 @@ const getStyle = createGetStyles2024(ctx => {
     orderTypeToggleText: {
       fontSize: 16,
       lineHeight: 20,
-      fontWeight: '900',
+      fontWeight: '800',
       color: colors2024['neutral-title-1'],
       fontFamily: 'SF Pro Rounded',
     },
@@ -1535,7 +1535,7 @@ const getStyle = createGetStyles2024(ctx => {
     marginLabel: {
       fontSize: 20,
       lineHeight: 24,
-      fontWeight: '900',
+      fontWeight: '800',
       // marginBottom: 4,
       color: '#50D2C1',
       fontFamily: 'SF Pro Rounded',
@@ -1557,7 +1557,7 @@ const getStyle = createGetStyles2024(ctx => {
     marginTitle: {
       fontSize: 20,
       lineHeight: 24,
-      fontWeight: '900',
+      fontWeight: '800',
       color: colors2024['neutral-title-1'],
       fontFamily: 'SF Pro Rounded',
     },

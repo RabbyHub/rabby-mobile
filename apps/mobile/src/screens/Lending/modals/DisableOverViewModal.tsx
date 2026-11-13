@@ -166,7 +166,7 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   headerTitle: {
     fontSize: 20,
-    fontWeight: '900',
+    fontWeight: '800',
     textAlign: 'center',
     lineHeight: 28,
     color: ctx.colors2024['neutral-title-1'],
