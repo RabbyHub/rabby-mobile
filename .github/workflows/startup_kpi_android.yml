@@ -100,7 +100,10 @@ concurrency:
 jobs:
   measure:
     name: Measure cold start
-    environment: startup-kpi-measurement
+    # workflow_dispatch only, and mobile-local is reserved for private/trusted
+    # triggers after the CI migration. Package authenticity is enforced by the
+    # SHA-256/host/bucket checks in the download step instead of an
+    # environment approval gate.
     runs-on:
       - self-hosted
       - macOS
