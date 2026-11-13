@@ -76,11 +76,15 @@ linkStyle default opacity:0.5
   service_keyring(["@rabby-wallet/service-keyring"]);
   zeego(["@rabby-wallet/zeego"]);
   dev_console_cra --> rn_webview_bridge;
+  rabby_mobile --> base_utils;
   rabby_mobile --> biz_utils;
   rabby_mobile --> eth_keyring_gnosis;
+  rabby_mobile --> eth_keyring_keystone;
   rabby_mobile --> eth_keyring_ledger;
   rabby_mobile --> eth_keyring_onekey;
+  rabby_mobile --> eth_keyring_trezor;
   rabby_mobile --> eth_keyring_watch;
+  rabby_mobile --> keyring_utils;
   rabby_mobile --> object_multiplex;
   rabby_mobile --> persist_store;
   rabby_mobile --> react_native_bootsplash;
@@ -88,6 +92,7 @@ linkStyle default opacity:0.5
   rabby_mobile --> react_native_ios_context_menu;
   rabby_mobile --> react_native_keychain_9;
   rabby_mobile --> react_native_menu;
+  rabby_mobile --> rn_webview_bridge;
   rabby_mobile --> rozenite_resource_flow_plugin;
   rabby_mobile --> service_address;
   rabby_mobile --> service_keyring;
