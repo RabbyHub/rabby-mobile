@@ -11,13 +11,6 @@ export const HOME_SCENE_TAB_BAR_TOP = HOME_TOP_HEADER_SIZES.headerHeight;
 export const HOME_SCENE_TAB_BAR_HEIGHT =
   HOME_TOP_HEADER_SIZES.tabItemLineHeight;
 
-/**
- * Breathing room between the tab labels and the first visible list row. The
- * chrome backdrop extends this far below the tab strip, and the asset pages
- * reserve the same space in their content inset.
- */
-export const HOME_SCENE_TAB_BAR_BOTTOM_GAP = 12;
-
 export const HOME_SCENE_TABS: readonly HomeTabName[] = [
   HomeTabName.overview,
   HomeTabName.token,
@@ -38,9 +31,7 @@ export function getHomeSceneContentInset(tab: HomeTabName) {
     );
   }
   return (
-    HOME_SCENE_HEADER_HEIGHT +
-    HOME_TOP_HEADER_SIZES.scrollableListTopOffset +
-    HOME_SCENE_TAB_BAR_BOTTOM_GAP
+    HOME_SCENE_HEADER_HEIGHT + HOME_TOP_HEADER_SIZES.scrollableListTopOffset
   );
 }
 
