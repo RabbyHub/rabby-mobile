@@ -50,9 +50,12 @@ export function getRoundedFontStyle(
   const face =
     RoundedFonts[getFontWeightType(fontWeight).supertype] ||
     RoundedFonts[FontWeightEnum.normal];
+  // Android: the exact file already encodes the weight, so force 'normal'.
+  // `undefined` would let a preset `fontWeight` (e.g. the header preset's '500')
+  // survive lodash merges and make RN synthesise a different face (QA 1388).
   return platform === 'ios'
     ? { fontFamily: 'ui-rounded', fontWeight: face.ios }
-    : { fontFamily: face.android, fontWeight: undefined };
+    : { fontFamily: face.android, fontWeight: 'normal' };
 }
 
 // For raw styles, pass the complete family/weight pair rather than a font name.
@@ -149,7 +152,9 @@ export function cleanSpecialSoloWeightFont<T extends TextStyleInput>(
   if (input.fontFamily && AllSoloWeightFonts.includes(input.fontFamily)) {
     return {
       ...input,
-      fontWeight: undefined,
+      // 'normal' (not undefined): merges must be able to replace a stale preset
+      // weight such as the header preset's '500' (QA 1388).
+      fontWeight: 'normal',
     };
   }
 
