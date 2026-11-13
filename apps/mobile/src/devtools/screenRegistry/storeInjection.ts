@@ -54,6 +54,17 @@ const STORE_LOADERS: Record<string, { load: StoreLoader; label: string }> = {
     label: 'addressBalance',
     load: async () => (await import('@/store/balance')).default,
   },
+  // Per-address 24h balance: `valueMap[address].total_usd_value` is the
+  // previous-day value the Home card compares the current balance against.
+  addressBalance24h: {
+    label: 'addressBalance24h',
+    load: async () => (await import('@/store/balance24h')).balance24hStore,
+  },
+  // Per-address 24h curve used for the change percentage.
+  addressCurve24h: {
+    label: 'addressCurve24h',
+    load: async () => (await import('@/store/curve24h')).addressCurve24hStore,
+  },
   // Home balance card (scene totals): `combinedData.Home = { netWorth, ... }`.
   scene24hBalance: {
     label: 'scene24hBalance',
