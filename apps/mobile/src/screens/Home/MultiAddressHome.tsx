@@ -27,6 +27,7 @@ import { storeApiAccounts } from '@/hooks/account';
 import { STARTUP_TASKS } from '@/core/utils/startupTaskManifest';
 import { scheduleStartupTask } from '@/core/utils/startupScheduler';
 import { markHomeContentReady } from '@/core/utils/homeStartupMilestones';
+import { markFirstContentFrame } from '@/core/utils/startupKpi';
 import {
   useHome24hProjection,
   useHomeContentReadinessProjection,
@@ -317,6 +318,9 @@ function HomePostStartupEffects() {
 }
 
 function MultiAddressHome(): JSX.Element {
+  React.useEffect(() => {
+    markFirstContentFrame('home');
+  }, []);
   const { styles, colors2024, isLight } = useTheme2024({
     getStyle,
   });

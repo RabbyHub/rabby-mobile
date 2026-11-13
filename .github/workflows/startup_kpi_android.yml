@@ -1,0 +1,434 @@
+name: Android Startup KPI
+
+# Measures the Android cold-start KPI that `am start -W TotalTime` cannot see:
+# time from native process start to the first user-visible surface (unlock or
+# Home), from a wiped device with a freshly imported account set.
+#
+# Two packages are required: a baseline and a candidate. The baseline's commit
+# is read from the APK itself (`assets/rabby-build-info.json`); if that commit
+# is not in `develop` the run only warns, because a deliberate feature-branch
+# comparison is still valid - it just is not a baseline for what ships.
+#
+# Package sources: an allowlisted https:// host, or a key in
+# RABBY_MOBILE_BUILD_BUCKET. Every downloaded package must match the SHA-256
+# passed as an input before it is installed on the measurement device.
+#
+# A package that never emits the marker is reported as INVALID: that is a
+# broken measurement (wrong APK, seeding unsupported), never a "no difference".
+
+on:
+  workflow_dispatch:
+    inputs:
+      base_apk:
+        description: 'Baseline APK: https URL, s3://bucket/key, or bucket-relative path'
+        required: true
+        type: string
+      candidate_apk:
+        description: 'Candidate APK: https URL, s3://bucket/key, or bucket-relative path'
+        required: true
+        type: string
+      base_sha256:
+        description: 'Required SHA-256 of base_apk'
+        required: true
+        type: string
+      candidate_sha256:
+        description: 'Required SHA-256 of candidate_apk'
+        required: true
+        type: string
+      base_label:
+        description: 'Label for base_apk (defaults to the file name)'
+        required: false
+        type: string
+        default: ''
+      candidate_label:
+        description: 'Label for candidate_apk (defaults to the file name)'
+        required: false
+        type: string
+        default: ''
+      runs:
+        description: 'Cold starts per package'
+        required: true
+        type: choice
+        options:
+          - '3'
+          - '5'
+          - '7'
+        default: '5'
+      runner_target:
+        description: 'Measure on the pinned emulator or on a physical device'
+        required: true
+        type: choice
+        options:
+          - emulator
+          - physical
+        default: emulator
+      device_serial:
+        description: 'physical only: adb serial (empty = first connected device)'
+        required: false
+        type: string
+        default: ''
+      emulator_avd:
+        description: 'emulator only: AVD name'
+        required: false
+        type: string
+        default: 'rabby-startup-pixel7-api35'
+      settle_seconds:
+        description: 'Idle time after seeding, so imported accounts can fetch and persist'
+        required: false
+        type: string
+        default: '35'
+      package_name:
+        description: 'Application id'
+        required: false
+        type: string
+        default: 'com.debank.rabbymobile.regression'
+      notify_lark:
+        description: 'Push the result to the mobile Lark chat'
+        required: true
+        type: boolean
+        default: true
+
+defaults:
+  run:
+    shell: bash -euo pipefail {0}
+
+# One measurement device, one run at a time.
+concurrency:
+  group: rabby-android-startup-kpi-device
+  cancel-in-progress: false
+
+jobs:
+  measure:
+    name: Measure cold start
+    # workflow_dispatch only, and mobile-local is reserved for private/trusted
+    # triggers after the CI migration. Package authenticity is enforced by the
+    # SHA-256/host/bucket checks in the download step instead of an
+    # environment approval gate.
+    runs-on:
+      - self-hosted
+      - macOS
+      - ARM64
+      - mobile-local
+    timeout-minutes: 60
+    env:
+      BASE_APK_SOURCE: ${{ inputs.base_apk }}
+      CANDIDATE_APK_SOURCE: ${{ inputs.candidate_apk }}
+      BASE_APK_SHA256: ${{ inputs.base_sha256 }}
+      CANDIDATE_APK_SHA256: ${{ inputs.candidate_sha256 }}
+      BASE_LABEL: ${{ inputs.base_label }}
+      CANDIDATE_LABEL: ${{ inputs.candidate_label }}
+      RUNS: ${{ inputs.runs }}
+      RUNNER_TARGET: ${{ inputs.runner_target }}
+      DEVICE_SERIAL_INPUT: ${{ inputs.device_serial }}
+      AVD_NAME: ${{ inputs.emulator_avd }}
+      SETTLE_SECONDS: ${{ inputs.settle_seconds }}
+      PACKAGE_NAME: ${{ inputs.package_name }}
+      RABBY_MOBILE_BUILD_BUCKET: ${{ secrets.RABBY_MOBILE_BUILD_BUCKET }}
+
+    steps:
+      - name: Checkout git repo
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          # Full history: the baseline commit check is an ancestry query.
+          fetch-depth: 0
+          clean: false
+
+      - name: Check tooling
+        run: |
+          command -v adb || true
+          adb version
+          adb devices
+          sdk="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-$HOME/Library/Android/sdk}}"
+          echo "ANDROID_SDK_ROOT=$sdk" >> "$GITHUB_ENV"
+          # runner.* is not available in job-level env, so resolve it here.
+          echo "RESULT_FILE=$RUNNER_TEMP/startup-kpi-result.json" >> "$GITHUB_ENV"
+          git fetch --no-tags origin \
+            '+refs/heads/develop:refs/remotes/origin/develop' || true
+          git rev-parse --verify --quiet origin/develop >/dev/null || echo "::warning::origin/develop is unavailable; the baseline commit check will be inconclusive"
+
+      - name: Validate inputs
+        run: |
+          case "$PACKAGE_NAME" in
+            com.debank.rabbymobile|com.debank.rabbymobile.debug|com.debank.rabbymobile.regression) ;;
+            *)
+              echo "unsupported package_name: $PACKAGE_NAME" >&2
+              exit 1
+              ;;
+          esac
+          for value in "$BASE_APK_SHA256" "$CANDIDATE_APK_SHA256"; do
+            if ! printf '%s' "$value" | grep -Eq '^[0-9a-fA-F]{64}$'; then
+              echo "package sha256 inputs must be 64 hex characters" >&2
+              exit 1
+            fi
+          done
+
+      - name: Download packages
+        run: |
+          work="$RUNNER_TEMP/startup-kpi"
+          rm -rf "$work"
+          mkdir -p "$work"
+
+          host_allowed() {
+            local host
+            host="$(node -e 'try { console.log(new URL(process.argv[1]).hostname) } catch (error) { process.exit(1) }' "$1")" || return 1
+            case "$host" in
+              download.rabby.io|github.com|objects.githubusercontent.com|*.githubusercontent.com) return 0 ;;
+              *) return 1 ;;
+            esac
+          }
+
+          fetch() {
+            # fetch <source> <label> <output-path> <expected-sha256>
+            local source="$1" label="$2" out="$3" expected="$4" final_url actual
+            case "$source" in
+              https://*)
+                host_allowed "$source" || {
+                  echo "download host is not allowlisted: $source" >&2
+                  exit 1
+                }
+                final_url="$(curl --fail --location --max-redirs 5 --silent \
+                  --show-error --retry 3 --proto '=https' --proto-redir '=https' \
+                  --tlsv1.2 --write-out '%{url_effective}' \
+                  "$source" --output "$out")"
+                host_allowed "$final_url" || {
+                  echo "redirect host is not allowlisted: $final_url" >&2
+                  exit 1
+                }
+                ;;
+              s3://*)
+                if [ -z "${RABBY_MOBILE_BUILD_BUCKET:-}" ] || \
+                  [ "${source#s3://$RABBY_MOBILE_BUILD_BUCKET/}" = "$source" ]; then
+                  echo "only s3://$RABBY_MOBILE_BUILD_BUCKET/... sources are allowed" >&2
+                  exit 1
+                fi
+                aws s3 cp "$source" "$out" --only-show-errors
+                ;;
+              *)
+                if [ -z "${RABBY_MOBILE_BUILD_BUCKET:-}" ]; then
+                  echo "relative S3 path given but RABBY_MOBILE_BUILD_BUCKET is not configured" >&2
+                  exit 1
+                fi
+                aws s3 cp "s3://$RABBY_MOBILE_BUILD_BUCKET/${source#/}" "$out" --only-show-errors
+                ;;
+            esac
+            test -s "$out"
+            unzip -tq "$out" >/dev/null
+            actual="$(shasum -a 256 "$out" | awk '{print $1}')"
+            if [ "$actual" != "$expected" ]; then
+              echo "sha256 mismatch for $label (expected $expected, got $actual)" >&2
+              exit 1
+            fi
+            echo "downloaded ${label} from ${source} (sha256 ${actual})"
+          }
+
+          base_label="${BASE_LABEL:-$(basename "${BASE_APK_SOURCE%%\?*}")}"
+          base_label="$(printf '%s' "${base_label%.apk}" | tr ' ' '-')"
+          fetch "$BASE_APK_SOURCE" "$base_label" "$work/base.apk" "$BASE_APK_SHA256"
+
+          candidate_label="${CANDIDATE_LABEL:-$(basename "${CANDIDATE_APK_SOURCE%%\?*}")}"
+          candidate_label="$(printf '%s' "${candidate_label%.apk}" | tr ' ' '-')"
+          if [ "$candidate_label" = "$base_label" ]; then
+            candidate_label="${candidate_label}-candidate"
+          fi
+          fetch "$CANDIDATE_APK_SOURCE" "$candidate_label" "$work/candidate.apk" "$CANDIDATE_APK_SHA256"
+
+          {
+            echo "APK_BASE=$work/base.apk"
+            echo "APK_CANDIDATE=$work/candidate.apk"
+            echo "LABEL_BASE=$base_label"
+            echo "LABEL_CANDIDATE=$candidate_label"
+          } >> "$GITHUB_ENV"
+
+      - name: Boot emulator
+        if: ${{ inputs.runner_target == 'emulator' }}
+        env:
+          EMULATOR_LOG: ${{ runner.temp }}/startup-kpi-emulator.log
+          # Every comparison must start from the same emulator state.
+          WIPE: '1'
+        run: |
+          bash apps/mobile/scripts/startup-kpi/emulator.sh ensure
+          bash apps/mobile/scripts/startup-kpi/emulator.sh boot
+          bash apps/mobile/scripts/startup-kpi/emulator.sh wait
+          echo "DEVICE_SERIAL=emulator-5554" >> "$GITHUB_ENV"
+
+      - name: Resolve physical device
+        if: ${{ inputs.runner_target == 'physical' }}
+        run: |
+          serial="${DEVICE_SERIAL_INPUT:-$(adb devices | awk '$2 == "device" { print $1; exit }')}"
+          if [ -z "$serial" ]; then
+            echo "no connected android device" >&2
+            exit 1
+          fi
+          echo "DEVICE_SERIAL=$serial" >> "$GITHUB_ENV"
+
+      - name: Prepare device
+        run: |
+          # A locked/sleeping device changes the measured surface.
+          adb -s "$DEVICE_SERIAL" shell input keyevent KEYCODE_WAKEUP || true
+          adb -s "$DEVICE_SERIAL" shell wm dismiss-keyguard || true
+          adb -s "$DEVICE_SERIAL" shell settings put global stay_on_while_plugged_in 3 || true
+          # Animation scales change what "first content frame" looks like.
+          for scale in window_animation_scale transition_animation_scale animator_duration_scale; do
+            adb -s "$DEVICE_SERIAL" shell settings put global "$scale" 0 || true
+          done
+          echo "device=$DEVICE_SERIAL"
+
+      - name: Read package commits
+        run: |
+          bash apps/mobile/scripts/startup-kpi/apk-info.sh --apk "$APK_BASE" \
+            --json "$RUNNER_TEMP/apk-base.json"
+          bash apps/mobile/scripts/startup-kpi/apk-info.sh --apk "$APK_CANDIDATE" \
+            --json "$RUNNER_TEMP/apk-candidate.json"
+
+          base_commit=$(node -e 'const i=require(process.argv[1]);process.stdout.write(i.commit||"")' "$RUNNER_TEMP/apk-base.json")
+          candidate_commit=$(node -e 'const i=require(process.argv[1]);process.stdout.write(i.commit||"")' "$RUNNER_TEMP/apk-candidate.json")
+
+          if [ -z "$base_commit" ]; then
+            echo "::warning::the baseline APK carries no build commit; the baseline cannot be checked against develop"
+            echo '{"commit":null,"resolved":null,"onDevelop":null,"reason":"no-build-info"}' > "$RUNNER_TEMP/base-develop.json"
+          else
+            bash apps/mobile/scripts/startup-kpi/commit-on-develop.sh \
+              --commit "$base_commit" > "$RUNNER_TEMP/base-develop.json" || true
+          fi
+
+          if [ -n "$candidate_commit" ]; then
+            bash apps/mobile/scripts/startup-kpi/commit-on-develop.sh \
+              --commit "$candidate_commit" > "$RUNNER_TEMP/candidate-develop.json" || true
+          else
+            echo '{"commit":null,"resolved":null,"onDevelop":null,"reason":"no-build-info"}' > "$RUNNER_TEMP/candidate-develop.json"
+          fi
+
+          on_develop=$(node -e 'const i=require(process.argv[1]);process.stdout.write(String(i.onDevelop))' "$RUNNER_TEMP/base-develop.json")
+          echo "baseline commit: ${base_commit:-unknown} (on develop: $on_develop)"
+          echo "candidate commit: ${candidate_commit:-unknown}"
+          if [ "$on_develop" = "false" ]; then
+            echo "::warning::the baseline APK was built from a commit that is not in develop ($base_commit) - treat it as a feature-branch comparison, not a shipping baseline"
+          elif [ "$on_develop" = "null" ]; then
+            echo "::warning::could not decide whether the baseline commit ($base_commit) is in develop"
+          fi
+
+      - name: Seed device state
+        run: |
+          # Machine-local only: the key list lives in the runner's own .env
+          # (newlines escaped as \n) or a 0600 file next to the runner.
+          # Explicit path first: an inline value only works when the runner
+          # loads .env without shell escaping (ours does escape, which turns a
+          # multi-line value into one line).
+          accounts_file="${RABBY_KPI_TEST_ACCOUNTS_FILE:-}"
+          if [ ! -f "$accounts_file" ] && [ -n "${RABBY_KPI_TEST_ACCOUNTS:-}" ]; then
+            accounts_file="$RUNNER_TEMP/kpi-test-accounts.txt"
+            ( umask 077; printf '%b\n' "$RABBY_KPI_TEST_ACCOUNTS" > "$accounts_file" )
+          fi
+          if [ ! -f "$accounts_file" ] && [ -f "$HOME/.rabby-kpi/test-accounts.txt" ]; then
+            accounts_file="$HOME/.rabby-kpi/test-accounts.txt"
+          fi
+          if [ -n "$accounts_file" ] && [ -f "$accounts_file" ]; then
+            echo "test-account list: $accounts_file ($(grep -c . "$accounts_file") entries)"
+          else
+            echo "test-account list: none"
+          fi
+
+          # The measured packages carry the seeding deeplinks, so the baseline
+          # has to be installed before the state can be built.
+          adb -s "$DEVICE_SERIAL" install -r "$APK_BASE"
+          bash apps/mobile/scripts/startup-kpi/seed-device.sh ensure-address \
+            --device "$DEVICE_SERIAL" --pkg "$PACKAGE_NAME"
+
+          if [ -f "$accounts_file" ]; then
+            bash apps/mobile/scripts/startup-kpi/seed-device.sh import-accounts \
+              --device "$DEVICE_SERIAL" --pkg "$PACKAGE_NAME" \
+              --file "$accounts_file" --settle "$SETTLE_SECONDS"
+          else
+            echo "::warning::no test-account list at $accounts_file; measuring without imported accounts"
+          fi
+
+          adb -s "$DEVICE_SERIAL" shell am force-stop "$PACKAGE_NAME"
+          sleep 2
+
+      - name: Collect startup KPI
+        id: collect
+        run: |
+          status=0
+          bash apps/mobile/scripts/startup-kpi/collect.sh \
+            --apk "$APK_BASE" --label "$LABEL_BASE" \
+            --apk "$APK_CANDIDATE" --label "$LABEL_CANDIDATE" \
+            --device "$DEVICE_SERIAL" --runs "$RUNS" --pkg "$PACKAGE_NAME" \
+            --json "$RESULT_FILE" || status=$?
+          echo "collect_exit=$status" >> "$GITHUB_OUTPUT"
+
+          if [ -f "$RESULT_FILE" ]; then
+            BASE_INFO="$RUNNER_TEMP/apk-base.json" \
+            CANDIDATE_INFO="$RUNNER_TEMP/apk-candidate.json" \
+            BASE_DEV="$RUNNER_TEMP/base-develop.json" \
+            CANDIDATE_DEV="$RUNNER_TEMP/candidate-develop.json" \
+            node -e '
+              const fs = require("fs");
+              const result = JSON.parse(fs.readFileSync(process.env.RESULT_FILE, "utf8"));
+              const base = JSON.parse(fs.readFileSync(process.env.BASE_INFO, "utf8"));
+              const candidate = JSON.parse(fs.readFileSync(process.env.CANDIDATE_INFO, "utf8"));
+              const baseDev = JSON.parse(fs.readFileSync(process.env.BASE_DEV, "utf8"));
+              const candidateDev = JSON.parse(fs.readFileSync(process.env.CANDIDATE_DEV, "utf8"));
+              const annotate = (entry, info, dev) => {
+                if (!entry) return;
+                entry.commit = info.commit || null;
+                entry.commitTime = info.commitTime || null;
+                entry.committer = info.committer || null;
+                entry.commitOnDevelop = dev.onDevelop === undefined ? null : dev.onDevelop;
+              };
+              annotate(result.packages?.[0], base, baseDev);
+              annotate(result.packages?.[1], candidate, candidateDev);
+              fs.writeFileSync(process.env.RESULT_FILE, JSON.stringify(result, null, 2) + "\n");
+            '
+
+            {
+              echo '### Android startup KPI'
+              echo '```'
+              node -e '
+                const r = require(process.env.RESULT_FILE);
+                for (const p of r.packages || []) {
+                  const commit = p.commit ? ` commit ${p.commit}${p.commitOnDevelop === false ? " (NOT on develop)" : ""}` : "";
+                  console.log(
+                    p.result === "OK"
+                      ? `${p.label}: ${p.contentMedianMs}ms (${p.contentMinMs}-${p.contentMaxMs}) route ${JSON.stringify(p.routes)}${commit}`
+                      : `${p.label}: INVALID${commit}`,
+                  );
+                }
+              '
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+          exit "$status"
+
+      - name: Report to Lark
+        if: ${{ always() && inputs.notify_lark }}
+        env:
+          RABBY_STARTUP_KPI_RESULT_FILE: ${{ runner.temp }}/startup-kpi-result.json
+          RABBY_MOBILE_LARK_CHAT_URL: ${{ secrets.RABBY_MOBILE_LARK_CHAT_URL || secrets.LARK_CHAT_URL }}
+          RABBY_MOBILE_LARK_CHAT_SECRET: ${{ secrets.RABBY_MOBILE_LARK_CHAT_SECRET || secrets.LARK_CHAT_SECRET }}
+          GIT_ACTIONS_JOB_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          GIT_REF_NAME: ${{ github.ref_name }}
+        run: |
+          if [ ! -f "$RABBY_STARTUP_KPI_RESULT_FILE" ]; then
+            echo "no result file; skipping Lark report"
+            exit 0
+          fi
+          node apps/mobile/scripts/startup-kpi/notify-lark.js
+
+      - name: Stop emulator
+        if: ${{ always() && inputs.runner_target == 'emulator' }}
+        run: |
+          adb -s emulator-5554 emu kill || true
+
+      - name: Upload result
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: startup-kpi-result
+          path: |
+            ${{ runner.temp }}/startup-kpi-result.json
+            ${{ runner.temp }}/apk-base.json
+            ${{ runner.temp }}/apk-candidate.json
+            ${{ runner.temp }}/base-develop.json
+            ${{ runner.temp }}/candidate-develop.json
+          if-no-files-found: warn
