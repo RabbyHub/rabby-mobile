@@ -96,6 +96,9 @@ const createEdge = (
  * @param options0.direction - Next child/root is positive, previous is negative.
  * @param options0.pagingMode - Flat child-first or precise content routing.
  * @param options0.childEligible - Whether the gesture began in child content.
+ * @param options0.childSwipeEnabled - When false, a drag routes straight to
+ * the adjacent parent, as if the current parent owned no child pages. Child
+ * selection then stays a click/command interaction only.
  * @param options0.remembered - Last selected child by root key.
  * @returns One available visual edge, or null at the selected track boundary.
  */
@@ -105,16 +108,19 @@ export const resolveLinkedPresentationGestureEdge = ({
   direction,
   pagingMode,
   childEligible,
+  childSwipeEnabled = true,
   remembered,
 }: LinkedPresentationResolution & {
   direction: -1 | 1;
   pagingMode: LinkedScenePagingMode;
   childEligible: boolean;
+  childSwipeEnabled?: boolean;
 }): LinkedPresentationEdge | null => {
   'worklet';
 
   const from = resolveLeaf(model, fromPath, remembered);
   if (
+    childSwipeEnabled &&
     (pagingMode === 'flat' || childEligible) &&
     from.childIndex !== undefined
   ) {
