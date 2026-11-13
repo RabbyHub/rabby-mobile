@@ -41,6 +41,7 @@ export const homeDrawerAnimateMutable = {
   scrollViewContentHeight: makeMutable(0),
   scrollViewLayoutHeight: makeMutable(0),
   swipeUpHintHeight: makeMutable(0),
+  debugSceneScrollY: makeMutable(-1),
 };
 
 export function getScrollContainerPb(bottomInset: number) {

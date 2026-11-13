@@ -5,6 +5,7 @@ import { Text } from '@/components/Typography';
 import { isNonPublicProductionEnv } from '@/constant';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { apisHomeTabIndex, useHomeTabIndex } from '@/hooks/navigation';
+import { homeDrawerAnimateMutable } from '@/screens/Home/hooks/useHomeDrawerAnimate';
 
 import {
   getHomePagerDebugSnapshot,
@@ -53,6 +54,11 @@ export function HomePagerDebugPanel() {
   }
 
   const track = Number.isFinite(live.track) ? live.track.toFixed(2) : '--';
+  const drawerContentH = homeDrawerAnimateMutable.scrollViewContentHeight.value;
+  const drawerLayoutH = homeDrawerAnimateMutable.scrollViewLayoutHeight.value;
+  const drawerTranslateY = homeDrawerAnimateMutable.translateY.value;
+  const drawerPull = homeDrawerAnimateMutable.pullPercent.value;
+  const drawerExpanded = homeDrawerAnimateMutable.isExpanded.value;
   const svIndex = apisHomeTabIndex.svTabIndexDecimal.value;
   const svName = apisHomeTabIndex.svTabName.value;
   const { counters } = snapshot;
@@ -87,6 +93,13 @@ export function HomePagerDebugPanel() {
               settles {counters.settles} · commits {counters.commits} · skip{' '}
               {counters.skipped} · ign-jump {counters.ignoredJumps} · back{' '}
               {counters.backwards}
+            </Text>
+            <Text style={styles.counters} numberOfLines={1}>
+              sceneY{' '}
+              {homeDrawerAnimateMutable.debugSceneScrollY.value.toFixed(0)} ·
+              content {Math.round(drawerContentH)} · layout{' '}
+              {Math.round(drawerLayoutH)} · ty {Math.round(drawerTranslateY)} ·
+              pull {drawerPull.toFixed(1)} · exp {String(drawerExpanded)}
             </Text>
             {snapshot.events.slice(0, MAX_ROWS).map(event => (
               <Text

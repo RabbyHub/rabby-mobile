@@ -25,6 +25,7 @@ import { fetchTop5TokensForAllAccountsOnce } from '@/components/AccountSwitcher/
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { clearLendingActionPopupState } from '@/screens/Lending/utils/actionPopup';
 import { createGetStyles2024 } from '@/utils/styles';
+import { isNonPublicProductionEnv } from '@/constant';
 import { StackActions, useFocusEffect } from '@react-navigation/native';
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import type { ScrollView, ScrollViewProps, ViewProps } from 'react-native';
@@ -331,6 +332,17 @@ const usePulldownRefreshGesture = <T extends ScrollView | RNGHScrollView>({
       remove();
     };
   }, [svIsRefreshing, pullDistance, svIsManualRefreshing]);
+
+  // Diagnostics for the non-production pager panel: publish the scene offset so
+  // the panel can show why the pull-up drawer gate did or did not open.
+  useAnimatedReaction(
+    () => scrollY.value,
+    value => {
+      if (isNonPublicProductionEnv) {
+        homeDrawerAnimateMutable.debugSceneScrollY.value = value;
+      }
+    },
+  );
 
   useAnimatedReaction(
     () => translateY.value,
