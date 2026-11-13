@@ -54,6 +54,45 @@ export type LinkedSceneGroupContext = {
   selectChild: (key: string) => void;
 };
 
+/** Non-production only: discrete pager transitions for debug panels. */
+export type LinkedSceneDiagnosticEvent =
+  | {
+      type: 'begin';
+      start: number;
+      track: number;
+      snappedFrom: number | null;
+      touchY: number;
+    }
+  | {
+      type: 'end';
+      axis: DragAxis;
+      start: number;
+      position: number;
+      translationX: number;
+      velocityPages: number;
+      velocityX: number;
+    }
+  | {
+      type: 'settle';
+      axis: DragAxis;
+      start: number;
+      position: number;
+      target: number;
+      velocityPages: number;
+    }
+  | {
+      type: 'commit';
+      rootIndex: number;
+      childIndex: number | undefined;
+      changed: boolean;
+    }
+  | {
+      type: 'jump';
+      requested: number;
+      applied: boolean;
+      reason?: 'drag-active' | 'already-settling';
+    };
+
 export type LinkedScenePagerHandle = {
   selectPath: (path: LinkedScenePath) => void;
   selectTab: (key: string) => void;
@@ -110,6 +149,8 @@ export type LinkedScenePagerProps = {
    * here keep native hit testing inside the same gesture area as the pages.
    */
   overlay?: React.ReactNode;
+  /** Non-production only; called on discrete gesture/settle transitions. */
+  onDiagnosticEvent?: (event: LinkedSceneDiagnosticEvent) => void;
   testID?: string;
   ref?: React.Ref<LinkedScenePagerHandle>;
 };
@@ -268,6 +309,16 @@ function LinkedScenePagerOwner({
   const latestProps = useRef(props);
   latestProps.current = props;
   settledRef.current = settled;
+  const diagnosticsRef = useRef(props.onDiagnosticEvent);
+  diagnosticsRef.current = props.onDiagnosticEvent;
+  const emitDiagnostic = useCallback((event: LinkedSceneDiagnosticEvent) => {
+    diagnosticsRef.current?.(event);
+  }, []);
+  // Keeps the worklet emit hops out of the hot path when no panel is open.
+  const diagnosticsEnabled = useSharedValue(!!props.onDiagnosticEvent);
+  useEffect(() => {
+    diagnosticsEnabled.value = !!props.onDiagnosticEvent;
+  }, [diagnosticsEnabled, props.onDiagnosticEvent]);
 
   const { gestureActive, indicatorPosition, scrollOffset, settleMode } = props;
   const widthValue = useSharedValue(width);
@@ -382,6 +433,12 @@ function LinkedScenePagerOwner({
         ? current
         : path,
     );
+    diagnosticsRef.current?.({
+      type: 'commit',
+      rootIndex,
+      childIndex,
+      changed,
+    });
     setDragFloor(null);
     setRetainedTransition(null);
     gestureActive.value = false;
@@ -431,6 +488,16 @@ function LinkedScenePagerOwner({
           start,
           velocityPages,
         });
+        if (diagnosticsEnabled.value) {
+          runOnJS(emitDiagnostic)({
+            type: 'settle',
+            axis: 'child',
+            start,
+            position: current,
+            target,
+            velocityPages,
+          });
+        }
         if (Math.abs(target - current) < 0.0001) {
           runOnJS(commitRootIndex)(target);
           return;
@@ -453,6 +520,16 @@ function LinkedScenePagerOwner({
         start,
         velocityPages,
       });
+      if (diagnosticsEnabled.value) {
+        runOnJS(emitDiagnostic)({
+          type: 'settle',
+          axis: 'root',
+          start,
+          position: current,
+          target,
+          velocityPages,
+        });
+      }
       settlingRoot.value = target;
       if (Math.abs(target - current) < 0.0001) {
         settlingRoot.value = -1;
@@ -475,6 +552,7 @@ function LinkedScenePagerOwner({
       // A finger always takes over from a discrete page. Finishing an
       // in-flight settle at its target keeps the baseline authoritative: the
       // new gesture can never inherit a fractional mid-animation position.
+      const trackBefore = rootTrack.value;
       cancelAnimation(rootTrack);
       const interruptedTarget = settlingRoot.value;
       const trackAtRest =
@@ -490,6 +568,16 @@ function LinkedScenePagerOwner({
       );
       rootTrack.value = rootIndex;
       settlingRoot.value = -1;
+      if (diagnosticsEnabled.value) {
+        runOnJS(emitDiagnostic)({
+          type: 'begin',
+          start: rootIndex,
+          track: rootIndex,
+          snappedFrom:
+            Math.abs(trackBefore - rootIndex) > 0.001 ? trackBefore : null,
+          touchY,
+        });
+      }
       const root = model.roots[rootIndex];
       const childEligible =
         childSwipeEnabled &&
@@ -579,6 +667,21 @@ function LinkedScenePagerOwner({
       drag.value = { ...current, done: true };
       const releaseVelocityX =
         velocityX !== 0 ? velocityX : current.lastVelocityX;
+      if (diagnosticsEnabled.value) {
+        runOnJS(emitDiagnostic)({
+          type: 'end',
+          axis: current.axis,
+          start:
+            current.axis === 'child' ? current.startChild : current.startRoot,
+          position:
+            current.axis === 'child'
+              ? childTracks.value[current.rootKey] ?? 0
+              : rootTrack.value,
+          translationX,
+          velocityPages: -releaseVelocityX / widthValue.value,
+          velocityX: releaseVelocityX,
+        });
+      }
       settle(
         current.axis,
         current.rootKey,
@@ -610,7 +713,9 @@ function LinkedScenePagerOwner({
     childSwipeEnabled,
     childTracks,
     commitRootIndex,
+    diagnosticsEnabled,
     drag,
+    emitDiagnostic,
     gestureActive,
     headers,
     model,
@@ -643,14 +748,31 @@ function LinkedScenePagerOwner({
     (path: LinkedScenePath) => {
       // While the finger owns the track, only the gesture may write it.
       if (drag.value.active) {
+        diagnosticsRef.current?.({
+          type: 'jump',
+          requested: rootIndexOf(model, path.key),
+          applied: false,
+          reason: 'drag-active',
+        });
         return;
       }
       const rootIndex = rootIndexOf(model, path.key);
       if (settlingRoot.value === rootIndex) {
         // Already animating to that page; writing the track here would only
         // cancel the animation.
+        diagnosticsRef.current?.({
+          type: 'jump',
+          requested: rootIndex,
+          applied: false,
+          reason: 'already-settling',
+        });
         return;
       }
+      diagnosticsRef.current?.({
+        type: 'jump',
+        requested: rootIndex,
+        applied: true,
+      });
       cancelAnimation(rootTrack);
       rootTrack.value = rootIndex;
       settlingRoot.value = -1;
@@ -671,10 +793,21 @@ function LinkedScenePagerOwner({
     (path: LinkedScenePath) => {
       // A programmatic jump must never fight an active drag.
       if (drag.value.active) {
+        diagnosticsRef.current?.({
+          type: 'jump',
+          requested: rootIndexOf(model, path.key),
+          applied: false,
+          reason: 'drag-active',
+        });
         return;
       }
       const resolved = resolveLinkedScenePath(model, path, remembered.current);
       const rootIndex = rootIndexOf(model, resolved.key);
+      diagnosticsRef.current?.({
+        type: 'jump',
+        requested: rootIndex,
+        applied: true,
+      });
       const childIndex = childIndexOf(model, resolved);
       if (childIndex !== undefined) {
         const root = model.roots[rootIndex];

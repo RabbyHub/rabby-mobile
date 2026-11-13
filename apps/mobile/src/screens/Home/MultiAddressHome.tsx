@@ -25,6 +25,7 @@ import { setIsFoldMultiChart } from '../Address/components/MultiAssets/RenderRow
 import { TabsMultiAssets } from '../Address/components/MultiAssets/TabsMultiAssets';
 import { useInitDetectDBAssets } from '../Search/useAssets';
 import { TmpHomeRefresher } from './components/TmpHomeRefresher';
+import { HomePagerDebugPanel } from './components/scene/HomePagerDebugPanel';
 import { storeApiAccounts } from '@/hooks/account';
 import { STARTUP_TASKS } from '@/core/utils/startupTaskManifest';
 import { scheduleStartupTask } from '@/core/utils/startupScheduler';
@@ -376,6 +377,7 @@ function MultiAddressHome(): JSX.Element {
       <HomeContentReadyScheduler />
       <HomeReadableAccountStoresBootstrap />
       <HomePostStartupEffects />
+      <HomePagerDebugPanel />
 
       <TmpHomeRefresher />
     </NormalScreenContainer2024>

@@ -42,6 +42,12 @@ import {
   HOME_SCENE_TAB_BAR_TOP,
   HOME_SCENE_TABS,
 } from './homeSceneLayout';
+import {
+  bindHomePagerDebugLive,
+  recordHomePagerCommittedPage,
+  recordHomePagerDebugEvent,
+  useToggleHomePagerDebugPanel,
+} from './homePagerDiagnostics';
 
 const SCENE_PAGES: readonly LinkedScenePage[] = HOME_SCENE_TABS.map(key => ({
   key,
@@ -78,6 +84,77 @@ export function HomeSceneContainer({
   const indicatorPosition = useSharedValue(0);
   const gestureActive = useSharedValue(false);
   const { width: winWidth, height: winHeight } = useWindowDimensions();
+  const { showHomePagerDebugPanel } = useToggleHomePagerDebugPanel();
+
+  const handlePagerDiagnostic = useCallback(
+    (
+      event: Parameters<
+        NonNullable<
+          React.ComponentProps<typeof LinkedScenePager>['onDiagnosticEvent']
+        >
+      >[0],
+    ) => {
+      if (event.type === 'begin') {
+        recordHomePagerDebugEvent(
+          'begin',
+          `begin start=${event.start}${
+            event.snappedFrom !== null
+              ? ` snap ${event.snappedFrom.toFixed(2)}→${event.start}`
+              : ''
+          }`,
+        );
+        return;
+      }
+      if (event.type === 'end') {
+        recordHomePagerDebugEvent(
+          'end',
+          `end ${event.axis} pos=${event.position.toFixed(2)} start=${
+            event.start
+          } Δ=${(event.position - event.start).toFixed(
+            2,
+          )} v=${event.velocityPages.toFixed(2)}`,
+        );
+        return;
+      }
+      if (event.type === 'settle') {
+        recordHomePagerDebugEvent(
+          'settle',
+          `settle ${event.axis} pos=${event.position.toFixed(2)} start=${
+            event.start
+          } Δ=${(event.position - event.start).toFixed(2)} → ${
+            event.target
+          } v=${event.velocityPages.toFixed(2)}`,
+        );
+        return;
+      }
+      if (event.type === 'commit') {
+        recordHomePagerDebugEvent(
+          'commit',
+          `commit → ${event.rootIndex}${
+            event.childIndex === undefined ? '' : `/${event.childIndex}`
+          }${event.changed ? '' : ' (same)'}`,
+        );
+        recordHomePagerCommittedPage(event.rootIndex);
+        return;
+      }
+      recordHomePagerDebugEvent(
+        event.applied ? 'jump' : 'jump-ignored',
+        `jump req=${event.requested} ${
+          event.applied ? 'applied' : `ignored(${event.reason})`
+        }`,
+      );
+    },
+    [],
+  );
+
+  React.useEffect(
+    () =>
+      bindHomePagerDebugLive({
+        track: indicatorPosition,
+        gesturing: gestureActive,
+      }),
+    [gestureActive, indicatorPosition],
+  );
 
   const [activeTab, setActiveTab] = useState<HomeTabName>(HomeTabName.overview);
   const activeTabRef = useRef<HomeTabName>(HomeTabName.overview);
@@ -244,6 +321,9 @@ export function HomeSceneContainer({
             fillViewport
             gestureActive={gestureActive}
             indicatorPosition={indicatorPosition}
+            onDiagnosticEvent={
+              showHomePagerDebugPanel ? handlePagerDiagnostic : undefined
+            }
             onPathChange={handlePathChange}
             pages={SCENE_PAGES}
             settleMode="snap"

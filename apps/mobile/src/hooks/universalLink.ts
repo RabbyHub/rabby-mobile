@@ -161,7 +161,8 @@ type DebugOpenTarget =
   | 'homeAssets'
   | 'approvals'
   | 'importSecret'
-  | 'importMethods';
+  | 'importMethods'
+  | 'homePagerPanel';
 
 const NON_PRODUCTION_TESTKIT_SCREENS = {
   DevCapabilityFile: RootNames.DevCapabilityFile,
@@ -438,7 +439,8 @@ function parseNonProductionMaintenanceLink(appLink: string) {
       rawTarget === 'homeAssets' ||
       rawTarget === 'approvals' ||
       rawTarget === 'importSecret' ||
-      rawTarget === 'importMethods';
+      rawTarget === 'importMethods' ||
+      rawTarget === 'homePagerPanel';
     if (!isRabbyGoTarget && !isDebugScreenTarget) {
       console.warn(
         '[useUniversalLinkOnTop] Unknown debug-open-target target:',
@@ -1004,6 +1006,19 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
             screen: RootNames.ImportMethods,
             params: {},
           } as any);
+          return;
+        }
+        if (target === 'homePagerPanel') {
+          void import(
+            '@/screens/Home/components/scene/homePagerDiagnostics'
+          ).then(module => {
+            const enabled = module.setHomePagerDebugPanelEnabled(true);
+            console.log(
+              '[debug-open-target] home pager panel enabled:',
+              enabled,
+            );
+          });
+          void openRabbyGoTarget('home');
           return;
         }
         void openRabbyGoTarget(target);
