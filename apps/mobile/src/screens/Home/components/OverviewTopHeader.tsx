@@ -88,6 +88,13 @@ const handleSwitchToTokenTab = (index: number, source: string) => {
 const FORM_BAND = 0.24;
 /** How far a form travels while it is fading in or out. */
 const FORM_SLIDE = 6;
+/**
+ * Width the right-hand history/clock anchor occupies: its 20dp icon plus the
+ * 16dp gap to the left-hand group. The left-hand forms are anchored this far
+ * from the right edge, so the anchor is shared by every asset tab instead of
+ * being re-laid-out (or re-mounted) whenever the left group changes.
+ */
+const ANCHOR_WIDTH = 36;
 
 function smoothstep(t: number) {
   'worklet';
@@ -274,6 +281,21 @@ export function TabsTopHeader(): JSX.Element {
       pointerEvents: opacity > 0.5 ? 'auto' : 'none',
     };
   });
+  // The history/clock is the same element in the token, defi and nft forms, so
+  // it is mounted once and only fades across the overview boundary. Moving
+  // between asset tabs never touches it.
+  const anchorStyle = useAnimatedStyle(() => {
+    const p = apisHomeTabIndex.svTabIndexDecimal.value;
+    const opacity = 1 - formOpacity(p, 0);
+    // Only the overview boundary moves it: on every asset tab the anchor is
+    // already fully shown, so its offset is exactly 0 and it cannot drift.
+    const away = 1 - opacity;
+    return {
+      opacity,
+      transform: [{ translateY: (p < 1 ? -1 : 1) * away * FORM_SLIDE }],
+      pointerEvents: opacity > 0.5 ? 'auto' : 'none',
+    };
+  });
 
   // The settings entry is part of two forms (overview and defi/nft), so it has
   // to exist twice. Keep the documented test id on the overview copy and give
@@ -392,12 +414,20 @@ export function TabsTopHeader(): JSX.Element {
             the form turns with the drag instead of waiting for the settle
             commit. Pointer events follow whichever form is more than half
             visible, so a faded-out form can never swallow a tap. */}
+        <Animated.View style={[styles.rightAnchorSlot, anchorStyle]}>
+          <MultiHeaderRightHistory />
+        </Animated.View>
         <Animated.View style={[styles.rightFormSlot, overviewFormStyle]}>
           <FeedbackHistoryHeaderEntry style={styles.feedbackEntry} />
           <AddressListScreenButton type="address" />
           {renderSettingsEntry(E2E_ID.home.settingsButton)}
         </Animated.View>
-        <Animated.View style={[styles.rightFormSlot, tokenFormStyle]}>
+        <Animated.View
+          style={[
+            styles.rightFormSlot,
+            styles.rightFormSlotAnchored,
+            tokenFormStyle,
+          ]}>
           <TouchableOpacity onPress={handleToggleTokenDisplayMode}>
             <View style={styles.displayModeButton}>
               <Text style={styles.displayModeText}>
@@ -406,12 +436,15 @@ export function TabsTopHeader(): JSX.Element {
               <IconPerpEdit color={colors2024['neutral-body']} />
             </View>
           </TouchableOpacity>
-          <MultiHeaderRightHistory style={styles.pendingHistoryBoxInOverview} />
         </Animated.View>
-        <Animated.View style={[styles.rightFormSlot, assetsFormStyle]}>
+        <Animated.View
+          style={[
+            styles.rightFormSlot,
+            styles.rightFormSlotAnchored,
+            assetsFormStyle,
+          ]}>
           <AddressListScreenButton type="address" />
           {renderSettingsEntry(E2E_ID.home.settingsButtonAssets)}
-          <MultiHeaderRightHistory style={styles.pendingHistoryBox} />
         </Animated.View>
       </Pressable>
     </Animated.View>
@@ -501,6 +534,16 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     justifyContent: 'flex-end',
     alignItems: 'center',
+  },
+  // Asset-tab forms sit to the left of the pinned anchor instead of at the edge.
+  rightFormSlotAnchored: {
+    right: ANCHOR_WIDTH,
+  },
+  // One instance, pinned to the right edge for every asset tab.
+  rightAnchorSlot: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'center',
+    alignItems: 'flex-end',
   },
   displayModeButton: {
     height: HeaderHeight,
