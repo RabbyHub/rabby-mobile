@@ -33,6 +33,7 @@ import { apisHomeTabIndex, HomeTabName } from '@/hooks/navigation';
 import { isNonPublicProductionEnv } from '@/constant';
 import { RenderActivityBoundary } from '@/hooks/storeActivity/RenderActivityBoundary';
 import { isTabsSwiping } from '@/screens/Address/components/MultiAssets/hooks';
+import { homeDrawerAnimateMutable } from '@/screens/Home/hooks/useHomeDrawerAnimate';
 import { useRegressionScenario } from '@/devtools/regressionScenarios/react';
 import { logger } from '@/utils/logger';
 
@@ -280,6 +281,14 @@ export function HomeSceneContainer({
     };
   }, [winWidth]);
 
+  // The opaque chrome replica only exists to sit behind the fixed header and
+  // tab strip. Once the dapp drawer is pulled up the drawer paints that area
+  // itself, so the replica has to fade out with the same value the header and
+  // the tab bar already use, otherwise it covers the drawer's top.
+  const chromeBackdropStyle = useAnimatedStyle(() => {
+    return { opacity: homeDrawerAnimateMutable.tabsOpacity.value };
+  });
+
   // Counter-translate the replica so it keeps matching the screen backdrop
   // while the clip window moves: only the visible band travels with the pager.
   const chromeExtensionContentStyle = useAnimatedStyle(() => {
@@ -353,15 +362,16 @@ export function HomeSceneContainer({
               <>
                 {chromeBackdrop ? (
                   <>
-                    <View
+                    <Animated.View
                       pointerEvents="none"
                       style={[
                         styles.chromeBackdropLayer,
                         { height: HOME_SCENE_CHROME_BOTTOM.overview },
+                        chromeBackdropStyle,
                       ]}
                       testID="home-scene-chrome-backdrop">
                       {chromeBackdrop}
-                    </View>
+                    </Animated.View>
                     <Animated.View
                       pointerEvents="none"
                       style={[
@@ -371,6 +381,7 @@ export function HomeSceneContainer({
                           height: chromeExtensionHeight,
                         },
                         chromeExtensionWindowStyle,
+                        chromeBackdropStyle,
                       ]}
                       testID="home-scene-chrome-backdrop-extension">
                       <Animated.View
