@@ -6,6 +6,7 @@ import {
   REGISTERED_SCREEN_IDS,
   type RegisteredScreenId,
 } from './screens.gen';
+import { resolveScreenFixture } from './screenFixtures';
 import { applyInjectedStore } from './storeInjection';
 
 export type { RegisteredScreenId };
@@ -44,6 +45,11 @@ export function openScreenById(
 
   const entry = SCREEN_REGISTRY[id];
   const chain = entry.chain;
+
+  // Fill the params the screen reads but the route type calls optional, then let
+  // explicit params win.
+  const paramsWithFixture = { ...resolveScreenFixture(id), ...params };
+  params = paramsWithFixture;
 
   // Requirement contract comes from src/navigation-type.ts, so a missing param
   // fails here with a readable message instead of throwing inside the screen.
