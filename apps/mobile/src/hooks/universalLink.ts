@@ -516,15 +516,6 @@ function parseNonProductionMaintenanceLink(appLink: string) {
   // The list itself is never in the URL - only the device path of the file
   // the runner pushed - so private keys stay out of logcat.
   if (
-    rabbyGoCmd === 'debug-create-address' ||
-    target === 'debug-create-address'
-  ) {
-    return {
-      type: 'debug-create-address',
-    } satisfies Parameters<OnParseUrlAndProcessAction>[0];
-  }
-
-  if (
     rabbyGoCmd === 'debug-import-test-accounts' ||
     target === 'debug-import-test-accounts'
   ) {
