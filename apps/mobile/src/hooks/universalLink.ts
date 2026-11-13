@@ -153,6 +153,7 @@ type OnParseUrlAndProcessAction = (payload: {
     params?: Record<string, unknown>;
     store?: Record<string, unknown>;
     list?: boolean;
+    push?: boolean;
   };
   regressionScenarioCommand?: RegressionScenarioCommand | null;
   regressionScenarioError?: string;
@@ -527,6 +528,9 @@ function parseNonProductionMaintenanceLink(appLink: string) {
         params: parseJsonParam('params'),
         store: parseJsonParam('store'),
         list: wantsList,
+        push: ['1', 'true', 'yes'].includes(
+          (urlInfo.searchParams.get('push') || '').toLowerCase(),
+        ),
       },
     } satisfies Parameters<OnParseUrlAndProcessAction>[0];
   }
@@ -1084,6 +1088,7 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
             screen: request.screen,
             params: request.params,
             store: request.store,
+            push: request.push,
           });
           console.log(
             `[debug-open-screen] screen=${request.screen} opened=${opened}`,

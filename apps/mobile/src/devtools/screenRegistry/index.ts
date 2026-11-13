@@ -1,4 +1,4 @@
-import { CommonActions } from '@react-navigation/native';
+import { CommonActions, StackActions } from '@react-navigation/native';
 
 import { navigationRef } from '@/utils/navigation';
 import {
@@ -35,6 +35,7 @@ export function listRegisteredScreens() {
 export function openScreenById(
   id: string,
   params: Record<string, unknown> = {},
+  options: { push?: boolean } = {},
 ) {
   if (!isRegisteredScreenId(id)) {
     console.warn(
@@ -76,17 +77,22 @@ export function openScreenById(
     return false;
   }
 
-  if (chain.length === 1) {
-    navigationRef.dispatch(CommonActions.navigate(chain[0], params));
-    return true;
-  }
-
   const [rootRoute, ...rest] = chain;
-  let nested: Record<string, unknown> = params;
+  let nested: Record<string, unknown> = paramsWithFixture;
   for (let index = rest.length - 1; index >= 0; index -= 1) {
     nested = { screen: rest[index], params: nested };
   }
-  navigationRef.dispatch(CommonActions.navigate(rootRoute, nested));
+
+  // `navigate` reuses an existing route; scenario steps rely on `push` so the
+  // same screen can be opened repeatedly with a fresh entry.
+  navigationRef.dispatch(
+    options.push
+      ? StackActions.push(rootRoute, rest.length ? nested : paramsWithFixture)
+      : CommonActions.navigate(
+          rootRoute,
+          rest.length ? nested : paramsWithFixture,
+        ),
+  );
   return true;
 }
 
@@ -94,6 +100,8 @@ export type OpenScreenRequest = {
   screen: string;
   params?: Record<string, unknown>;
   store?: Record<string, unknown>;
+  /** Push a new entry instead of reusing an existing route (scenario steps). */
+  push?: boolean;
 };
 
 /**
@@ -104,5 +112,7 @@ export async function openScreenForDebug(request: OpenScreenRequest) {
   if (request.store && Object.keys(request.store).length > 0) {
     await applyInjectedStore(request.store);
   }
-  return openScreenById(request.screen, request.params ?? {});
+  return openScreenById(request.screen, request.params ?? {}, {
+    push: request.push,
+  });
 }
