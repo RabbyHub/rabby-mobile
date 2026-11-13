@@ -26,6 +26,33 @@ export function listRegisteredScreens() {
 }
 
 /**
+ * Resolves once the root navigator is mounted, or after `timeoutMs`.
+ *
+ * A cold-start deeplink (`getInitialURL`) is delivered before the
+ * NavigationContainer mounts, especially on iOS. Polling `isReady()` keeps the
+ * debug entry points independent of the app's boot ordering.
+ */
+function waitForNavigationReady(timeoutMs = 15_000): Promise<boolean> {
+  if (navigationRef.isReady()) {
+    return Promise.resolve(true);
+  }
+  return new Promise(resolve => {
+    const startedAt = Date.now();
+    const poll = setInterval(() => {
+      if (navigationRef.isReady()) {
+        clearInterval(poll);
+        resolve(true);
+        return;
+      }
+      if (Date.now() - startedAt >= timeoutMs) {
+        clearInterval(poll);
+        resolve(false);
+      }
+    }, 100);
+  });
+}
+
+/**
  * Opens any navigator-registered screen directly.
  *
  * The registry records the route chain (root -> ... -> screen), so the whole
@@ -83,16 +110,34 @@ export function openScreenById(
     nested = { screen: rest[index], params: nested };
   }
 
-  // `navigate` reuses an existing route; scenario steps rely on `push` so the
-  // same screen can be opened repeatedly with a fresh entry.
-  navigationRef.dispatch(
-    options.push
-      ? StackActions.push(rootRoute, rest.length ? nested : paramsWithFixture)
-      : CommonActions.navigate(
-          rootRoute,
-          rest.length ? nested : paramsWithFixture,
-        ),
-  );
+  const openOnceReady = () => {
+    // `navigate` reuses an existing route; scenario steps rely on `push` so the
+    // same screen can be opened repeatedly with a fresh entry.
+    navigationRef.dispatch(
+      options.push
+        ? StackActions.push(rootRoute, rest.length ? nested : paramsWithFixture)
+        : CommonActions.navigate(
+            rootRoute,
+            rest.length ? nested : paramsWithFixture,
+          ),
+    );
+  };
+
+  if (!navigationRef.isReady()) {
+    // Cold-start deeplinks arrive before the navigation container mounts.
+    void waitForNavigationReady().then(ready => {
+      if (ready) {
+        openOnceReady();
+      } else {
+        console.warn(
+          `[screenRegistry] navigator never became ready; dropped "${id}"`,
+        );
+      }
+    });
+    return true;
+  }
+
+  openOnceReady();
   return true;
 }
 
