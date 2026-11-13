@@ -6,6 +6,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import { balanceAccountsStore } from '@/store/balance';
 import tokenListStore from '@/store/tokens';
+import { listInjectedStorePins } from '@/devtools/screenRegistry/storeInjection';
 
 /**
  * Non-production probe for screen-level prop injection.
@@ -16,6 +17,13 @@ import tokenListStore from '@/store/tokens';
  */
 function DevScreenInjectionProbe(props: Record<string, unknown>) {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+  // Re-render every 2s so a pinned store value can be confirmed to survive the
+  // app's own producers writing it back.
+  const [, forceTick] = React.useState(0);
+  React.useEffect(() => {
+    const timer = setInterval(() => forceTick(tick => tick + 1), 2000);
+    return () => clearInterval(timer);
+  }, []);
   const {
     navigation: _navigation,
     route,
@@ -35,6 +43,7 @@ function DevScreenInjectionProbe(props: Record<string, unknown>) {
     injectedProps: Object.fromEntries(
       Object.entries(rest).sort(([a], [b]) => a.localeCompare(b)),
     ),
+    pinnedStores: listInjectedStorePins(),
     storeSnapshots: {
       balanceAccounts: {
         totalBalance: balanceAccountsState.totalBalance,

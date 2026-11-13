@@ -9,7 +9,11 @@ import {
 import { resolveScreenFixture } from './screenFixtures';
 import { recordScreenOpenProbe } from './probe';
 import { withInjectedPropsParam } from './screenInjection';
-import { applyInjectedStore } from './storeInjection';
+import {
+  applyInjectedStore,
+  clearInjectedStorePins,
+  pinInjectedStore,
+} from './storeInjection';
 
 export type { RegisteredScreenId };
 export { REGISTERED_SCREEN_IDS, SCREEN_REGISTRY };
@@ -158,6 +162,10 @@ export type OpenScreenRequest = {
   /** Non-route props merged into the first mount of that screen (non-production only). */
   props?: Record<string, unknown>;
   store?: Record<string, unknown>;
+  /** Sticky store patch, re-applied after every producer write. */
+  storePin?: Record<string, unknown>;
+  /** Clears every active store pin before opening. */
+  storePinClear?: boolean;
   /** Push a new entry instead of reusing an existing route (scenario steps). */
   push?: boolean;
 };
@@ -167,8 +175,14 @@ export type OpenScreenRequest = {
  * applied before navigating so the screen mounts with the injected state.
  */
 export async function openScreenForDebug(request: OpenScreenRequest) {
+  if (request.storePinClear) {
+    clearInjectedStorePins();
+  }
   if (request.store && Object.keys(request.store).length > 0) {
     await applyInjectedStore(request.store);
+  }
+  if (request.storePin && Object.keys(request.storePin).length > 0) {
+    await pinInjectedStore(request.storePin);
   }
   return openScreenById(
     request.screen,

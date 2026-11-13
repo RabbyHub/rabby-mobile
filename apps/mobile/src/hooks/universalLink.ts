@@ -162,6 +162,9 @@ type OnParseUrlAndProcessAction = (payload: {
     params?: Record<string, unknown>;
     props?: Record<string, unknown>;
     store?: Record<string, unknown>;
+    /** Sticky store patch: re-applied whenever the store's producers write. */
+    storePin?: Record<string, unknown>;
+    storePinClear?: boolean;
     list?: boolean;
     push?: boolean;
   };
@@ -538,6 +541,10 @@ function parseNonProductionMaintenanceLink(appLink: string) {
         params: parseJsonParam('params'),
         props: parseJsonParam('props'),
         store: parseJsonParam('store'),
+        storePin: parseJsonParam('storePin'),
+        storePinClear: ['1', 'true', 'yes'].includes(
+          (urlInfo.searchParams.get('storePinClear') || '').toLowerCase(),
+        ),
         list: wantsList,
         push: ['1', 'true', 'yes'].includes(
           (urlInfo.searchParams.get('push') || '').toLowerCase(),
@@ -1129,6 +1136,8 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
             params: request.params,
             props: request.props,
             store: request.store,
+            storePin: request.storePin,
+            storePinClear: request.storePinClear,
             push: request.push,
           });
           console.log(
