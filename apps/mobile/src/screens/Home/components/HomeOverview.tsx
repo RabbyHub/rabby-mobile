@@ -384,7 +384,7 @@ const usePulldownRefreshGesture = <T extends ScrollView | RNGHScrollView>({
   // The drawer must not compete with the list's own scroll: the pan only
   // activates when the gesture cannot be a normal scroll (pulling up at the
   // very bottom, or pulling down at the very top for the iOS indicator).
-  const touchOrigin = useSharedValue({ y: 0 });
+  const touchOrigin = useSharedValue({ x: 0, y: 0 });
   const touchDecided = useSharedValue(false);
 
   const panGestureRef = useRef(
@@ -395,7 +395,7 @@ const usePulldownRefreshGesture = <T extends ScrollView | RNGHScrollView>({
       .onTouchesDown(event => {
         'worklet';
         const touch = event.allTouches[0];
-        touchOrigin.value = { y: touch ? touch.y : 0 };
+        touchOrigin.value = { x: touch ? touch.x : 0, y: touch ? touch.y : 0 };
         touchDecided.value = false;
       })
       .onTouchesMove((event, manager) => {
@@ -409,7 +409,21 @@ const usePulldownRefreshGesture = <T extends ScrollView | RNGHScrollView>({
           manager.fail();
           return;
         }
+        const deltaX = touch.x - touchOrigin.value.x;
         const deltaY = touch.y - touchOrigin.value.y;
+
+        // A horizontal drag belongs to the pager. Until this pan fails, iOS
+        // keeps the page's scroll view waiting on it, so a never-deciding pan
+        // also blocks the horizontal swipe. Decide early and get out of the way.
+        if (
+          Math.abs(deltaX) > 12 &&
+          Math.abs(deltaX) > Math.abs(deltaY) * 1.2
+        ) {
+          touchDecided.value = true;
+          manager.fail();
+          return;
+        }
+
         if (Math.abs(deltaY) < homeGestureConfs.activeY) {
           return;
         }
