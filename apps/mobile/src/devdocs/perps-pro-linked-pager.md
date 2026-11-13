@@ -42,6 +42,21 @@ belong to the Orders parent page, not to an independent floating follower.
 This lower pager is independent from the outer Simple / Pro `RootScenePager`.
 Lower-tab swipes never switch those sub-screens, including at an inner boundary.
 
+## Orders category swipe is off (2026-11-13)
+
+Product decision: only the parent Tabs (Positions / Orders / Account) keep the
+horizontal gesture. Basic / Conditional (and any later Orders pill such as
+TWAP) are click-only siblings.
+
+Implementation is one switch, not a second pager:
+`PerpsProInfoSingleList` passes `childSwipeEnabled={false}` to
+`LinkedScenePagerList`, which forwards it to `LinkedScenePager` and
+`resolveLinkedPresentationGestureEdge`. With it disabled, a drag that starts
+inside the Orders page resolves to the adjacent *parent* (Orders → Positions or
+Account) exactly as if Orders had no children; the child track, remembered
+category, pill animation and layout are unchanged. Do not reintroduce a
+gesture-only child route here without a new product decision.
+
 ## Simple / Pro root presentation
 
 The Perps route waits for the persisted `viewMode` to hydrate before mounting

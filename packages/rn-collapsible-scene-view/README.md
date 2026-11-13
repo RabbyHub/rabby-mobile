@@ -136,6 +136,10 @@ const pages = [
 - `pagingMode="nested"`: a gesture starting inside child content selects a
   sibling child; a gesture in the group header or outside child content selects
   a parent tab. The child boundary clamps rather than handing off automatically.
+- `childSwipeEnabled={false}` keeps the same two-level tree but makes sibling
+  children click-only: a drag always routes to the adjacent parent, as if the
+  parent owned no children. Parent tabs keep their gesture, and an explicit
+  child command (a pill/tab press) still animates the child track.
 
 Both modes use `activePath: {key, childKey?}`, `onPathChange`,
 `renderLeaf(path, context)`, and optional

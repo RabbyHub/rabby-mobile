@@ -3102,47 +3102,78 @@ describe('PerpsProScene market loading states', () => {
         .accessibilityState.selected,
     ).toBe(true);
     expect(screen.getByTestId('perps-pro-open-orders-empty')).toBeOnTheScreen();
-    pageState('dragging');
-    physicalPageScroll(1.6);
-    finishPhysicalPage();
+    // Basic / Conditional are click-only siblings now: the pill is the only
+    // way to change category, and a drag inside Orders is a parent transition.
+    const conditionalIndex = getInfoLeaf('openOrders', 'conditional').index;
+    const accountIndex = getInfoLeaf('account').index;
+    fireEvent.press(
+      screen.getByTestId('perps-pro-open-orders-tab-conditional'),
+    );
+    act(() => nativeBoundary.finishAnimations());
     expect(
       screen.getByTestId('perps-pro-open-orders-tab-conditional').props
         .accessibilityState.selected,
     ).toBe(true);
-    // The empty sibling remains a real stop in the reverse direction too.
+    expect(persist.mock.calls).toEqual([['openOrders']]);
+
     pageState('dragging');
-    physicalPageScroll(1.4);
+    physicalPageScroll(conditionalIndex + 0.6);
     expect(
       screen.UNSAFE_getByType(PerpsProTabIndicator).props.position.value,
-    ).toBe(1);
-    pageState('settling');
-    physicalPageScroll(1);
-    finishPhysicalPage(1);
+    ).toBeCloseTo(1.6);
+    finishPhysicalPage();
     expect(
-      screen.getByTestId('perps-pro-open-orders-tab-basic').props
+      screen.getByTestId('perps-pro-info-tab-account').props.accessibilityState,
+    ).toEqual({ selected: true });
+    expect(persist.mock.calls).toEqual([['openOrders'], ['account']]);
+
+    // Coming back restores the remembered category without sweeping through
+    // the sibling page.
+    pageState('dragging');
+    physicalPageScroll(accountIndex - 0.6);
+    expect(
+      screen.UNSAFE_getByType(PerpsProTabIndicator).props.position.value,
+    ).toBeCloseTo(1.4);
+    pageState('settling');
+    physicalPageScroll(accountIndex - 1);
+    finishPhysicalPage();
+    expect(
+      screen.getByTestId('perps-pro-info-tab-openOrders').props
+        .accessibilityState,
+    ).toEqual({ selected: true });
+    expect(
+      screen.getByTestId('perps-pro-open-orders-tab-conditional').props
         .accessibilityState.selected,
     ).toBe(true);
-    expect(screen.getByTestId('perps-pro-open-orders-empty')).toBeOnTheScreen();
-    expect(persist.mock.calls).toEqual([['openOrders']]);
+    expect(persist.mock.calls).toEqual([
+      ['openOrders'],
+      ['account'],
+      ['openOrders'],
+    ]);
+
+    // Boundary notifications are not intent; only settlement publishes.
     pageState('dragging');
-    pageScroll(0, 0.3);
+    physicalPageScroll(conditionalIndex - 0.7);
+    expect(persist.mock.calls).toEqual([
+      ['openOrders'],
+      ['account'],
+      ['openOrders'],
+    ]);
     pageState('settling');
-    pageScroll(0, 0);
-    expect(persist.mock.calls).toEqual([['openOrders']]);
-    pageScroll(0, 0);
-    pageState('idle');
-    expect(
-      screen.getByTestId('perps-pro-positions-controls'),
-    ).toBeOnTheScreen();
-    pageScroll(0, 0);
-    pageState('idle');
-    expect(persist.mock.calls).toEqual([['openOrders'], ['positions']]);
-    expect(getInfoList()).toBe(list);
-    expect(nativeBoundary.animations()).toHaveLength(0);
+    physicalPageScroll(conditionalIndex - 1);
+    finishPhysicalPage();
     expect(
       screen.getByTestId('perps-pro-info-tab-positions').props
         .accessibilityState,
     ).toEqual({ selected: true });
+    expect(persist.mock.calls).toEqual([
+      ['openOrders'],
+      ['account'],
+      ['openOrders'],
+      ['positions'],
+    ]);
+    expect(getInfoList()).toBe(list);
+    expect(nativeBoundary.animations()).toHaveLength(0);
     expect(
       screen.UNSAFE_getByType(PerpsProTabIndicator).props.position.value,
     ).toBe(0);

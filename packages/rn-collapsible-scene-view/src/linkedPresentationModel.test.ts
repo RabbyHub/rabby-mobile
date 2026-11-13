@@ -28,6 +28,7 @@ const gesture = (
   options: {
     pagingMode?: 'flat' | 'nested';
     childEligible?: boolean;
+    childSwipeEnabled?: boolean;
     remembered?: Readonly<Record<string, string>>;
   } = {},
 ) =>
@@ -37,6 +38,7 @@ const gesture = (
     direction,
     pagingMode: options.pagingMode ?? 'flat',
     childEligible: options.childEligible ?? false,
+    childSwipeEnabled: options.childSwipeEnabled,
     remembered: options.remembered,
   });
 
@@ -245,6 +247,29 @@ describe('linked presentation gesture routing', () => {
           childEligible: true,
         }),
       ).toBeNull();
+    }
+  });
+
+  it('disabled child swipes route straight to the adjacent parent', () => {
+    for (const pagingMode of ['flat', 'nested'] as const) {
+      const options = {
+        pagingMode,
+        childEligible: true,
+        childSwipeEnabled: false,
+        remembered: { orders: 'basic' },
+      } as const;
+      const forward = gesture(basic, 1, options)!;
+      expect(forward.scope).toBe('root');
+      expect(forward.fromPath).toStrictEqual(basic);
+      expect(forward.toPath).toStrictEqual(account);
+
+      const backward = gesture(conditional, -1, options)!;
+      expect(backward.scope).toBe('root');
+      expect(backward.toPath).toStrictEqual(positions);
+
+      // Re-entering Orders from either side still restores remembered child.
+      expect(gesture(positions, 1, options)?.toPath).toStrictEqual(basic);
+      expect(gesture(account, -1, options)?.toPath).toStrictEqual(basic);
     }
   });
 

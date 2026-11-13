@@ -88,6 +88,12 @@ export type LinkedScenePagerProps = {
   gestureActive: SharedValue<boolean>;
   activityEnabled: boolean;
   interactionEnabled?: boolean;
+  /**
+   * Whether a horizontal drag may move between sibling child pages. When
+   * false, the child track is presentation/click only and a drag always
+   * routes to the adjacent parent, as if the parent had no children.
+   */
+  childSwipeEnabled?: boolean;
   testID?: string;
   ref?: React.Ref<LinkedScenePagerHandle>;
 };
@@ -256,7 +262,12 @@ function LinkedScenePagerOwner({
   const startTranslation = useSharedValue(0);
   const capturedY = useSharedValue(0);
   const capturedHeight = useSharedValue(0);
-  const { gestureActive, indicatorPosition, scrollOffset } = props;
+  const {
+    gestureActive,
+    indicatorPosition,
+    scrollOffset,
+    childSwipeEnabled = true,
+  } = props;
   const minimum = getRetainedPagerMinimumPageHeight({
     viewportHeight: props.viewportHeight,
     tabHeight: props.pinnedHeight,
@@ -530,6 +541,7 @@ function LinkedScenePagerOwner({
         direction: translationX < 0 ? 1 : -1,
         pagingMode: mode,
         childEligible: childEligible.value,
+        childSwipeEnabled,
         remembered: current.remembered,
       });
     };
@@ -715,6 +727,7 @@ function LinkedScenePagerOwner({
     capturedHeight,
     capturedY,
     childEligible,
+    childSwipeEnabled,
     finished,
     fraction,
     gestureActive,

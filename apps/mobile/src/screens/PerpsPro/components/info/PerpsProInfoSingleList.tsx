@@ -68,6 +68,13 @@ type Props<Row extends { key: string }> = {
   renderItemByTab: Record<PerpsProInfoTab, ListRenderItem<Row>>;
   openOrders: PerpsProLinkedOrders<Row>;
   pagingMode?: LinkedScenePagingMode;
+  /**
+   * Basic / Conditional are click-only siblings. Product decision
+   * (2026-11-13): the sub-tab swipe is low-frequency and adds steps, so a drag
+   * inside Orders routes to the adjacent main tab instead of the sibling page.
+   * Parent tabs keep their gesture.
+   */
+  childSwipeEnabled?: boolean;
   rowStartOffset: number;
   scrollOffset: SharedValue<number>;
   style?: StyleProp<ViewStyle>;
@@ -94,6 +101,7 @@ export const PerpsProInfoSingleList = <Row extends { key: string }>({
   renderItemByTab,
   openOrders,
   pagingMode = 'flat',
+  childSwipeEnabled = false,
   rowStartOffset,
   scrollOffset,
   style,
@@ -220,6 +228,7 @@ export const PerpsProInfoSingleList = <Row extends { key: string }>({
       activePath={activePath}
       protectRootGesture
       pagingMode={pagingMode}
+      childSwipeEnabled={childSwipeEnabled}
       activityEnabled={activityEnabled}
       pinnedHeight={pinnedHeight}
       indicatorPosition={indicatorPosition}
