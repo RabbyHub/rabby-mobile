@@ -34,22 +34,20 @@ import { useCurrency } from '@/hooks/useCurrency';
 import { formatSmallCurrencyValueParts } from '@/utils/currency';
 import LoadingCircle from '@/components2024/RotateLoadingCircle';
 import Animated, {
-  Extrapolate,
-  interpolate,
+  clamp,
   useAnimatedStyle,
   useSharedValue,
 } from 'react-native-reanimated';
-import { apisHomeTabIndex, HomeTabName } from '@/hooks/navigation';
+import { apisHomeTabIndex } from '@/hooks/navigation';
 import IconPerpEdit from '@/assets2024/icons/perps/icon-switch-mode.svg';
 import useTokenList from '@/store/tokens';
 import { useHomeDrawerOpacityStyle } from '../hooks/useHomeDrawerAnimate';
 import { IS_ANDROID } from '@/core/native/utils';
 import { Text } from '@/components/Typography';
-import { makeTestIDProps } from '@/utils/makeTestIDProps';
+import { makeTestIDProps, type E2ETestID } from '@/utils/makeTestIDProps';
 import { useShallow } from 'zustand/react/shallow';
 import { MultiHeaderRightHistory } from '../MultiHeaderRightHistory';
 import RefreshNudgedTickerText from '@/components/Animated/RefreshNudgedTickerText';
-import { useValueFromSharedValue } from '@/hooks/reanimated';
 import {
   isHomeProjectionWaitingForValue,
   useHome24hProjection,
@@ -76,9 +74,61 @@ const handleSwitchToTokenTab = (index: number) => {
   apisHomeTabIndex.setTabIndex(index, true);
 };
 
-export function TabsTopHeader(): JSX.Element {
-  const focusedTab = useValueFromSharedValue(apisHomeTabIndex.svTabName);
+/**
+ * The header has three right-hand forms, one per landing tab:
+ * 0 = overview (feedback + address + settings)
+ * 1 = token (display-mode pill + history)
+ * 2 = defi / nft (address + settings + history)
+ *
+ * Each form crossfades inside a band centred on the 0.5-page mark where the
+ * pager decides which page wins, so the chrome turns with the finger instead
+ * of waiting for the settle commit. Adjacent forms always sum to 1, so the
+ * band never shows a blank or a double-exposed pair.
+ */
+const FORM_BAND = 0.24;
+/** How far a form travels while it is fading in or out. */
+const FORM_SLIDE = 6;
+/**
+ * Width the right-hand history/clock anchor occupies: its 20dp icon plus the
+ * 16dp gap to the left-hand group. The left-hand forms are anchored this far
+ * from the right edge, so the anchor is shared by every asset tab instead of
+ * being re-laid-out (or re-mounted) whenever the left group changes.
+ */
+const ANCHOR_WIDTH = 36;
 
+function smoothstep(t: number) {
+  'worklet';
+  return t * t * (3 - 2 * t);
+}
+
+function formOpacity(p: number, index: number) {
+  'worklet';
+  // defi and nft share one form: freeze the track at 2 so it never fades out.
+  const q = clamp(p, 0, 2);
+  const rise = smoothstep(
+    clamp((q - (index - 0.5 - FORM_BAND / 2)) / FORM_BAND, 0, 1),
+  );
+  const fall = smoothstep(
+    clamp((q - (index + 0.5 - FORM_BAND / 2)) / FORM_BAND, 0, 1),
+  );
+  // The eased flanks spend less time near 50/50, so the two forms never sit
+  // half-and-half over each other for long.
+  return rise * (1 - fall);
+}
+
+function formSlideY(p: number, index: number) {
+  'worklet';
+  // Zero whenever a form is settled, i.e. every element is back on its static
+  // line (the gear included). While the swap is in flight the form drifts a
+  // few dp: one vertical direction per swipe direction, so swiping right makes
+  // the incoming form come down from the top and the outgoing one leave
+  // downwards, and swiping left is the mirror image.
+  const d = p - index;
+  const away = 1 - formOpacity(p, index);
+  return (d < 0 ? -1 : 1) * away * FORM_SLIDE;
+}
+
+export function TabsTopHeader(): JSX.Element {
   const { balanceAvailability, totalBalance } = useHomeBalanceProjection(
     useShallow(state => ({
       balanceAvailability: state.availability,
@@ -119,14 +169,6 @@ export function TabsTopHeader(): JSX.Element {
   const { currency } = useCurrency();
   const tokenDisplayMode = useTokenList(s => s.tokenDisplayMode);
   const setTokenDisplayMode = useTokenList(s => s.setTokenDisplayMode);
-
-  const showRightArea = useMemo(() => {
-    return focusedTab !== HomeTabName.token;
-  }, [focusedTab]);
-
-  const InOverViewTab = useMemo(() => {
-    return focusedTab === HomeTabName.overview;
-  }, [focusedTab]);
 
   const tokenDisplayModeLabel = useMemo(() => {
     if (tokenDisplayMode === 'bySymbol') {
@@ -190,47 +232,100 @@ export function TabsTopHeader(): JSX.Element {
     }
   }, [data.isLoss, previousLoading, scene24hLoading]);
 
-  const { opacityStyle, pullPercent } = useHomeDrawerOpacityStyle();
+  // The header is a scene overlay now: it collapses with the shared scene
+  // offset and only fades while the dapp drawer is pulled up.
+  const { opacityStyle } = useHomeDrawerOpacityStyle();
 
-  const headerStyle = useAnimatedStyle(() => ({
-    height: interpolate(
-      pullPercent.value,
-      [0, -100],
-      [HOME_TOP_HEADER_SIZES.topHeaderHeight, 0],
-      Extrapolate.CLAMP,
-    ),
-  }));
+  // Left side: total-balance label on the overview, live balance from the first
+  // asset page on. Same band as the right-hand forms so both halves of the
+  // header turn at the same moment.
   const totalBalanceStyle = useAnimatedStyle(() => {
-    const netWorthProgress = interpolate(
-      apisHomeTabIndex.svTabIndexDecimal.value,
-      [0.62, 0.82],
-      [0, 1],
-      Extrapolate.CLAMP,
-    );
-
+    const opacity = formOpacity(apisHomeTabIndex.svTabIndexDecimal.value, 0);
     return {
-      opacity: 1 - netWorthProgress,
+      opacity,
+      pointerEvents: opacity > 0.5 ? 'auto' : 'none',
     };
   });
   const netWorthStyle = useAnimatedStyle(() => {
-    const netWorthProgress = interpolate(
-      apisHomeTabIndex.svTabIndexDecimal.value,
-      [0.62, 0.82],
-      [0, 1],
-      Extrapolate.CLAMP,
-    );
-
+    const opacity =
+      1 - formOpacity(apisHomeTabIndex.svTabIndexDecimal.value, 0);
     return {
-      opacity: netWorthProgress,
+      opacity,
+      pointerEvents: opacity > 0.5 ? 'auto' : 'none',
+    };
+  });
+  const overviewFormStyle = useAnimatedStyle(() => {
+    const p = apisHomeTabIndex.svTabIndexDecimal.value;
+    const opacity = formOpacity(p, 0);
+    return {
+      opacity,
+      transform: [{ translateY: formSlideY(p, 0) }],
+      pointerEvents: opacity > 0.5 ? 'auto' : 'none',
+    };
+  });
+  const tokenFormStyle = useAnimatedStyle(() => {
+    const p = apisHomeTabIndex.svTabIndexDecimal.value;
+    const opacity = formOpacity(p, 1);
+    return {
+      opacity,
+      transform: [{ translateY: formSlideY(p, 1) }],
+      pointerEvents: opacity > 0.5 ? 'auto' : 'none',
+    };
+  });
+  const assetsFormStyle = useAnimatedStyle(() => {
+    const p = apisHomeTabIndex.svTabIndexDecimal.value;
+    const opacity = formOpacity(p, 2);
+    return {
+      opacity,
+      transform: [{ translateY: formSlideY(p, 2) }],
+      pointerEvents: opacity > 0.5 ? 'auto' : 'none',
+    };
+  });
+  // The history/clock is the same element in the token, defi and nft forms, so
+  // it is mounted once and only fades across the overview boundary. Moving
+  // between asset tabs never touches it.
+  const anchorStyle = useAnimatedStyle(() => {
+    const p = apisHomeTabIndex.svTabIndexDecimal.value;
+    const opacity = 1 - formOpacity(p, 0);
+    // Only the overview boundary moves it: on every asset tab the anchor is
+    // already fully shown, so its offset is exactly 0 and it cannot drift.
+    const away = 1 - opacity;
+    return {
+      opacity,
+      transform: [{ translateY: (p < 1 ? -1 : 1) * away * FORM_SLIDE }],
+      pointerEvents: opacity > 0.5 ? 'auto' : 'none',
     };
   });
 
+  // The settings entry is part of two forms (overview and defi/nft), so it has
+  // to exist twice. Keep the documented test id on the overview copy and give
+  // the assets copy its own id instead of leaving two identical ids mounted.
+  const renderSettingsEntry = (testID: E2ETestID) => (
+    <Pressable
+      style={styles.settingEntry}
+      {...makeTestIDProps(testID)}
+      onPress={event => {
+        event?.stopPropagation?.();
+        navigation.navigateDeprecated(RootNames.StackSettings, {
+          screen: RootNames.Settings,
+          params: {},
+        });
+      }}>
+      <View style={styles.headerTouchableIcon}>
+        <RcIconSetting
+          width={20}
+          height={20}
+          color={colors2024['neutral-title-1']}
+        />
+        {remoteVersion.couldUpgrade && <View style={styles.redDot} />}
+      </View>
+    </Pressable>
+  );
+
   return (
-    <Animated.View style={[styles.headerBox, opacityStyle, headerStyle]}>
+    <Animated.View style={[styles.headerBox, opacityStyle]}>
       <View style={styles.leftBox}>
-        <Animated.View
-          pointerEvents={focusedTab === HomeTabName.overview ? 'auto' : 'none'}
-          style={[styles.leftContent, totalBalanceStyle]}>
+        <Animated.View style={[styles.leftContent, totalBalanceStyle]}>
           <Text style={styles.balanceTextBox}>
             {t('page.nextComponent.multiAddressHome.totalBalance')}
           </Text>
@@ -256,9 +351,7 @@ export function TabsTopHeader(): JSX.Element {
             <LoadingCircle />
           ) : null}
         </Animated.View>
-        <Animated.View
-          pointerEvents={focusedTab === HomeTabName.overview ? 'none' : 'auto'}
-          style={[styles.leftContent, netWorthStyle]}>
+        <Animated.View style={[styles.leftContent, netWorthStyle]}>
           <Pressable
             style={styles.netWorthPressable}
             onPress={() => handleSwitchToTokenTab(0)}>
@@ -307,55 +400,52 @@ export function TabsTopHeader(): JSX.Element {
         onPress={event => {
           // RNGH header buttons do not stop RN responder bubbling. Only the
           // empty header area should switch tabs, never Add Wallet / Feedback.
-          if (event.target === event.currentTarget) {
-            handleSwitchToTokenTab(1);
+          if (event.target !== event.currentTarget) {
+            return;
           }
+          // The finger owns the pager mid-swipe; never start a jump then.
+          const position = apisHomeTabIndex.svTabIndexDecimal.value;
+          if (position > 0.05 && position < 0.95) {
+            return;
+          }
+          handleSwitchToTokenTab(1);
         }}>
-        {showRightArea ? (
-          <>
-            {focusedTab === HomeTabName.overview ? (
-              <FeedbackHistoryHeaderEntry style={styles.feedbackEntry} />
-            ) : null}
-
-            <AddressListScreenButton type="address" />
-            <Pressable
-              style={styles.settingEntry}
-              {...makeTestIDProps(E2E_ID.home.settingsButton)}
-              onPress={event => {
-                event?.stopPropagation?.();
-                navigation.navigateDeprecated(RootNames.StackSettings, {
-                  screen: RootNames.Settings,
-                  params: {},
-                });
-              }}>
-              <View style={styles.headerTouchableIcon}>
-                <RcIconSetting
-                  width={20}
-                  height={20}
-                  color={colors2024['neutral-title-1']}
-                />
-                {remoteVersion.couldUpgrade && <View style={styles.redDot} />}
-              </View>
-            </Pressable>
-            {!InOverViewTab && (
-              <MultiHeaderRightHistory style={styles.pendingHistoryBox} />
-            )}
-          </>
-        ) : (
-          <>
-            <TouchableOpacity onPress={handleToggleTokenDisplayMode}>
-              <View style={styles.displayModeButton}>
-                <Text style={styles.displayModeText}>
-                  {tokenDisplayModeLabel}
-                </Text>
-                <IconPerpEdit color={colors2024['neutral-body']} />
-              </View>
-            </TouchableOpacity>
-            <MultiHeaderRightHistory
-              style={styles.pendingHistoryBoxInOverview}
-            />
-          </>
-        )}
+        {/* All three forms stay mounted and only animate opacity/translate, so
+            the form turns with the drag instead of waiting for the settle
+            commit. Pointer events follow whichever form is more than half
+            visible, so a faded-out form can never swallow a tap. */}
+        <Animated.View style={[styles.rightAnchorSlot, anchorStyle]}>
+          <MultiHeaderRightHistory />
+        </Animated.View>
+        <Animated.View style={[styles.rightFormSlot, overviewFormStyle]}>
+          <FeedbackHistoryHeaderEntry style={styles.feedbackEntry} />
+          <AddressListScreenButton type="address" />
+          {renderSettingsEntry(E2E_ID.home.settingsButton)}
+        </Animated.View>
+        <Animated.View
+          style={[
+            styles.rightFormSlot,
+            styles.rightFormSlotAnchored,
+            tokenFormStyle,
+          ]}>
+          <TouchableOpacity onPress={handleToggleTokenDisplayMode}>
+            <View style={styles.displayModeButton}>
+              <Text style={styles.displayModeText}>
+                {tokenDisplayModeLabel}
+              </Text>
+              <IconPerpEdit color={colors2024['neutral-body']} />
+            </View>
+          </TouchableOpacity>
+        </Animated.View>
+        <Animated.View
+          style={[
+            styles.rightFormSlot,
+            styles.rightFormSlotAnchored,
+            assetsFormStyle,
+          ]}>
+          <AddressListScreenButton type="address" />
+          {renderSettingsEntry(E2E_ID.home.settingsButtonAssets)}
+        </Animated.View>
       </Pressable>
     </Animated.View>
   );
@@ -428,8 +518,32 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     justifyContent: 'flex-end',
     alignItems: 'center',
     flex: 1,
+    // The forms are absolutely positioned inside this row, so the row has no
+    // in-flow content of its own. Stretch it to the header's height instead of
+    // letting it collapse: the forms then centre on the same line the single
+    // row used to centre on.
+    alignSelf: 'stretch',
     // position: 'relative',
     // ...makeDebugBorder(),
+  },
+  // Exactly the box the right-hand area already had: every form is laid out the
+  // same way the single row was laid out before, so a settled form sits on the
+  // original line. Only the swap in flight adds a small translate on top.
+  rightFormSlot: {
+    ...StyleSheet.absoluteFillObject,
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+  },
+  // Asset-tab forms sit to the left of the pinned anchor instead of at the edge.
+  rightFormSlotAnchored: {
+    right: ANCHOR_WIDTH,
+  },
+  // One instance, pinned to the right edge for every asset tab.
+  rightAnchorSlot: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'center',
+    alignItems: 'flex-end',
   },
   displayModeButton: {
     height: HeaderHeight,
