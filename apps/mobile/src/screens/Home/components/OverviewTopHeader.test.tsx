@@ -24,6 +24,8 @@ jest.mock('react-native-reanimated', () => ({
   default: { View: require('react-native').View },
   Extrapolate: { CLAMP: 'clamp' },
   interpolate: () => 0,
+  clamp: (value: number, lower: number, upper: number) =>
+    Math.min(Math.max(value, lower), upper),
   useAnimatedStyle: (callback: () => object) => callback(),
   useSharedValue: (value: unknown) =>
     require('react').useRef({ value }).current,

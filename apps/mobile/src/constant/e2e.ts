@@ -31,6 +31,9 @@ export const E2E_ID = {
   home: {
     addAddressButton: 'e2e.home.add-address.button',
     settingsButton: 'e2e.home.settings.button',
+    // The header keeps one settings entry per right-hand form; the asset-tab
+    // form needs its own id so both are uniquely addressable.
+    settingsButtonAssets: 'e2e.home.settings.button.assets',
     addAddressImportAddress: 'e2e.home.add-address.import-address',
     importMethodWatchAddress: 'e2e.home.import-method.watch-address',
     portfolioBalanceValue: 'e2e.home.portfolio.balance.value',
