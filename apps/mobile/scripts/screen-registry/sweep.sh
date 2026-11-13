@@ -12,7 +12,16 @@
 #   node scripts/gen-screen-registry.mjs && node -e "..."  # see README
 set -u
 export PATH=$PATH:$HOME/Library/Android/sdk/platform-tools
-DEV=${DEVICE:-$(adb devices | awk '$2=="device"{print $1; exit}')}
+if [ -z "${DEVICE:-}" ]; then
+  devices=$(adb devices | awk '$2=="device"{print $1}')
+  count=$(printf '%s\n' "$devices" | grep -c . || true)
+  if [ "$count" -gt 1 ]; then
+    echo "multiple devices attached; set DEVICE=<serial> (one of: $(printf '%s ' $devices))" >&2
+    exit 64
+  fi
+  DEVICE=$(printf '%s' "$devices" | head -1)
+fi
+DEV=$DEVICE
 PKG=${PKG:-com.debank.rabbymobile.debug}
 ACT=$PKG/com.debank.rabbymobile.MainActivity
 OUT=${OUT:-/tmp/screen-registry-sweep.txt}
@@ -53,13 +62,12 @@ while read -r id; do
   else
     {
       echo "$status $id"
-      [ -n "${err:-}" ] && echo "  error: $err"
-      echo "  error: ${err:-none}"
+      [ -n "${err:-}" ] && echo "  $err"
     } >> "$OUT"
     adb -s $DEV exec-out screencap -p </dev/null >"$SHOT_DIR/$id.png" 2>/dev/null || true
     printf '%s\n' "$log" >"$SHOT_DIR/$id.log" 2>/dev/null || true
   fi
 done < "$IDS"
-awk '{print $1}' "$OUT" | sort | uniq -c
+grep -oE '^(OK|NOLOG|REFUSED|OPEN_ERR)' "$OUT" | sort | uniq -c
 echo "--- non-OK:"
 grep -vE "^OK" "$OUT" | head -25
