@@ -72,6 +72,9 @@ export const SCREEN_PARAM_FIXTURES: Record<string, ScreenFixture> = {
   }),
 
   // History screens read the current address and optional token context.
+  // `HistoryLocalDetail` is intentionally not fixtured: it dereferences fields
+  // of a real `TransactionGroup` (address, tx list, ...) and a synthetic shape
+  // only moves the crash. Drive it with a real history record.
   History: ({ account }) => ({
     currentAddress: account?.address,
     isInTokenDetail: false,
