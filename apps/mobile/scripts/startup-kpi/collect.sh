@@ -73,7 +73,7 @@ for idx in "${!apks[@]}"; do
     adb -s "$device" shell am force-stop "$PKG"
     sleep 4
     adb -s "$device" logcat -c
-    t=$(adb -s "$device" shell "am start -W -n $PKG/com.debank.rabbymobile.MainActivity" 2>/dev/null | tr -d '\r' | awk '/TotalTime/{print $2}')
+    t=$(adb -s "$device" shell "am start -W -n '$PKG/com.debank.rabbymobile.MainActivity'" 2>/dev/null | tr -d '\r' | awk '/TotalTime/{print $2}')
     sleep "$WAIT_S"
     log=$(adb -s "$device" logcat -d 2>/dev/null)
     # Native marker is authoritative: it is emitted from the native module and

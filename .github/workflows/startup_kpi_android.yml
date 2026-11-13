@@ -9,8 +9,9 @@ name: Android Startup KPI
 # is not in `develop` the run only warns, because a deliberate feature-branch
 # comparison is still valid - it just is not a baseline for what ships.
 #
-# Package sources: a public https:// URL, an `s3://bucket/key` path, or a path
-# relative to RABBY_MOBILE_BUILD_BUCKET.
+# Package sources: an allowlisted https:// host, or a key in
+# RABBY_MOBILE_BUILD_BUCKET. Every downloaded package must match the SHA-256
+# passed as an input before it is installed on the measurement device.
 #
 # A package that never emits the marker is reported as INVALID: that is a
 # broken measurement (wrong APK, seeding unsupported), never a "no difference".
@@ -24,6 +25,14 @@ on:
         type: string
       candidate_apk:
         description: 'Candidate APK: https URL, s3://bucket/key, or bucket-relative path'
+        required: true
+        type: string
+      base_sha256:
+        description: 'Required SHA-256 of base_apk'
+        required: true
+        type: string
+      candidate_sha256:
+        description: 'Required SHA-256 of candidate_apk'
         required: true
         type: string
       base_label:
@@ -91,6 +100,7 @@ concurrency:
 jobs:
   measure:
     name: Measure cold start
+    environment: startup-kpi-measurement
     runs-on:
       - self-hosted
       - macOS
@@ -100,6 +110,8 @@ jobs:
     env:
       BASE_APK_SOURCE: ${{ inputs.base_apk }}
       CANDIDATE_APK_SOURCE: ${{ inputs.candidate_apk }}
+      BASE_APK_SHA256: ${{ inputs.base_sha256 }}
+      CANDIDATE_APK_SHA256: ${{ inputs.candidate_sha256 }}
       BASE_LABEL: ${{ inputs.base_label }}
       CANDIDATE_LABEL: ${{ inputs.candidate_label }}
       RUNS: ${{ inputs.runs }}
@@ -131,21 +143,61 @@ jobs:
             '+refs/heads/develop:refs/remotes/origin/develop' || true
           git rev-parse --verify --quiet origin/develop >/dev/null || echo "::warning::origin/develop is unavailable; the baseline commit check will be inconclusive"
 
+      - name: Validate inputs
+        run: |
+          case "$PACKAGE_NAME" in
+            com.debank.rabbymobile|com.debank.rabbymobile.debug|com.debank.rabbymobile.regression) ;;
+            *)
+              echo "unsupported package_name: $PACKAGE_NAME" >&2
+              exit 1
+              ;;
+          esac
+          for value in "$BASE_APK_SHA256" "$CANDIDATE_APK_SHA256"; do
+            if ! printf '%s' "$value" | grep -Eq '^[0-9a-fA-F]{64}$'; then
+              echo "package sha256 inputs must be 64 hex characters" >&2
+              exit 1
+            fi
+          done
+
       - name: Download packages
         run: |
           work="$RUNNER_TEMP/startup-kpi"
           rm -rf "$work"
           mkdir -p "$work"
 
+          host_allowed() {
+            local host
+            host="$(node -e 'try { console.log(new URL(process.argv[1]).hostname) } catch (error) { process.exit(1) }' "$1")" || return 1
+            case "$host" in
+              download.rabby.io|github.com|objects.githubusercontent.com|*.githubusercontent.com) return 0 ;;
+              *) return 1 ;;
+            esac
+          }
+
           fetch() {
-            # fetch <source> <label> <output-path>
-            local source="$1" label="$2" out="$3"
+            # fetch <source> <label> <output-path> <expected-sha256>
+            local source="$1" label="$2" out="$3" expected="$4" final_url actual
             case "$source" in
               https://*)
-                curl --fail --location --silent --show-error --retry 3 \
-                  --proto '=https' --tlsv1.2 "$source" --output "$out"
+                host_allowed "$source" || {
+                  echo "download host is not allowlisted: $source" >&2
+                  exit 1
+                }
+                final_url="$(curl --fail --location --max-redirs 5 --silent \
+                  --show-error --retry 3 --proto '=https' --proto-redir '=https' \
+                  --tlsv1.2 --write-out '%{url_effective}' \
+                  "$source" --output "$out")"
+                host_allowed "$final_url" || {
+                  echo "redirect host is not allowlisted: $final_url" >&2
+                  exit 1
+                }
                 ;;
               s3://*)
+                if [ -z "${RABBY_MOBILE_BUILD_BUCKET:-}" ] || \
+                  [ "${source#s3://$RABBY_MOBILE_BUILD_BUCKET/}" = "$source" ]; then
+                  echo "only s3://$RABBY_MOBILE_BUILD_BUCKET/... sources are allowed" >&2
+                  exit 1
+                fi
                 aws s3 cp "$source" "$out" --only-show-errors
                 ;;
               *)
@@ -158,19 +210,24 @@ jobs:
             esac
             test -s "$out"
             unzip -tq "$out" >/dev/null
-            echo "downloaded ${label} from ${source}"
+            actual="$(shasum -a 256 "$out" | awk '{print $1}')"
+            if [ "$actual" != "$expected" ]; then
+              echo "sha256 mismatch for $label (expected $expected, got $actual)" >&2
+              exit 1
+            fi
+            echo "downloaded ${label} from ${source} (sha256 ${actual})"
           }
 
           base_label="${BASE_LABEL:-$(basename "${BASE_APK_SOURCE%%\?*}")}"
           base_label="$(printf '%s' "${base_label%.apk}" | tr ' ' '-')"
-          fetch "$BASE_APK_SOURCE" "$base_label" "$work/base.apk"
+          fetch "$BASE_APK_SOURCE" "$base_label" "$work/base.apk" "$BASE_APK_SHA256"
 
           candidate_label="${CANDIDATE_LABEL:-$(basename "${CANDIDATE_APK_SOURCE%%\?*}")}"
           candidate_label="$(printf '%s' "${candidate_label%.apk}" | tr ' ' '-')"
           if [ "$candidate_label" = "$base_label" ]; then
             candidate_label="${candidate_label}-candidate"
           fi
-          fetch "$CANDIDATE_APK_SOURCE" "$candidate_label" "$work/candidate.apk"
+          fetch "$CANDIDATE_APK_SOURCE" "$candidate_label" "$work/candidate.apk" "$CANDIDATE_APK_SHA256"
 
           {
             echo "APK_BASE=$work/base.apk"

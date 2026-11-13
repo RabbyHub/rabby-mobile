@@ -4,7 +4,8 @@ name: iOS Startup KPI
 # content frame, from a freshly created simulator with imported test accounts.
 #
 # Packages are either prebuilt simulator bundles (.zip with RabbyMobile.app) at
-# a public https URL / S3 path, or built from a git ref by this workflow.
+# an allowlisted https host / the build bucket, or built from a git ref by this
+# workflow. Every downloaded package must match its SHA-256 input.
 # The baseline's commit is read from the app bundle itself and checked against
 # origin/develop; a baseline outside develop only warns.
 #
@@ -21,6 +22,16 @@ on:
         default: ''
       candidate_app:
         description: 'Candidate: https/s3 URL of RabbyMobile-simulator.zip, or empty to build from candidate_ref'
+        required: false
+        type: string
+        default: ''
+      base_sha256:
+        description: 'Required SHA-256 of base_app when base_app is provided'
+        required: false
+        type: string
+        default: ''
+      candidate_sha256:
+        description: 'Required SHA-256 of candidate_app when candidate_app is provided'
         required: false
         type: string
         default: ''
@@ -80,6 +91,7 @@ concurrency:
 jobs:
   measure:
     name: Measure cold start (simulator)
+    environment: startup-kpi-measurement
     runs-on:
       - self-hosted
       - macOS
@@ -90,6 +102,8 @@ jobs:
     env:
       BASE_APP_SOURCE: ${{ inputs.base_app }}
       CANDIDATE_APP_SOURCE: ${{ inputs.candidate_app }}
+      BASE_APP_SHA256: ${{ inputs.base_sha256 }}
+      CANDIDATE_APP_SHA256: ${{ inputs.candidate_sha256 }}
       BASE_REF: ${{ inputs.base_ref }}
       CANDIDATE_REF: ${{ inputs.candidate_ref }}
       RUNS: ${{ inputs.runs }}
@@ -126,18 +140,63 @@ jobs:
           corepack enable || true
           node --version
 
+      - name: Validate inputs
+        run: |
+          case "$PACKAGE_NAME" in
+            com.debank.rabby-mobile|com.debank.rabby-mobile-debug|com.debank.rabby-mobile-regression) ;;
+            *)
+              echo "unsupported package_name: $PACKAGE_NAME" >&2
+              exit 1
+              ;;
+          esac
+          if [ -n "$BASE_APP_SOURCE" ] && \
+            ! printf '%s' "$BASE_APP_SHA256" | grep -Eq '^[0-9a-fA-F]{64}$'; then
+            echo "base_sha256 is required when base_app is provided" >&2
+            exit 1
+          fi
+          if [ -n "$CANDIDATE_APP_SOURCE" ] && \
+            ! printf '%s' "$CANDIDATE_APP_SHA256" | grep -Eq '^[0-9a-fA-F]{64}$'; then
+            echo "candidate_sha256 is required when candidate_app is provided" >&2
+            exit 1
+          fi
+
       # ---------- package preparation ----------
       - name: Resolve packages
         id: packages
         run: |
+          host_allowed() {
+            local host
+            host="$(node -e 'try { console.log(new URL(process.argv[1]).hostname) } catch (error) { process.exit(1) }' "$1")" || return 1
+            case "$host" in
+              download.rabby.io|github.com|objects.githubusercontent.com|*.githubusercontent.com) return 0 ;;
+              *) return 1 ;;
+            esac
+          }
+
           fetch_zip() {
-            # fetch_zip <source> <output zip>
+            # fetch_zip <source> <output zip> <expected sha256>
+            local final_url actual
             case "$1" in
               https://*)
-                curl --fail --location --silent --show-error --retry 3 \
-                  --proto '=https' --tlsv1.2 "$1" --output "$2"
+                host_allowed "$1" || {
+                  echo "download host is not allowlisted: $1" >&2
+                  exit 1
+                }
+                final_url="$(curl --fail --location --max-redirs 5 --silent \
+                  --show-error --retry 3 --proto '=https' --proto-redir '=https' \
+                  --tlsv1.2 --write-out '%{url_effective}' \
+                  "$1" --output "$2")"
+                host_allowed "$final_url" || {
+                  echo "redirect host is not allowlisted: $final_url" >&2
+                  exit 1
+                }
                 ;;
               s3://*)
+                if [ -z "${RABBY_MOBILE_BUILD_BUCKET:-}" ] || \
+                  [ "${1#s3://$RABBY_MOBILE_BUILD_BUCKET/}" = "$1" ]; then
+                  echo "only s3://$RABBY_MOBILE_BUILD_BUCKET/... sources are allowed" >&2
+                  exit 1
+                fi
                 aws s3 cp "$1" "$2" --only-show-errors
                 ;;
               *)
@@ -150,10 +209,15 @@ jobs:
             esac
             test -s "$2"
             unzip -tq "$2" >/dev/null
+            actual="$(shasum -a 256 "$2" | awk '{print $1}')"
+            if [ "$actual" != "$3" ]; then
+              echo "sha256 mismatch for $1 (expected $3, got $actual)" >&2
+              exit 1
+            fi
           }
 
           if [ -n "${BASE_APP_SOURCE}" ]; then
-            fetch_zip "$BASE_APP_SOURCE" "$WORK/base.zip"
+            fetch_zip "$BASE_APP_SOURCE" "$WORK/base.zip" "$BASE_APP_SHA256"
             unzip -q "$WORK/base.zip" -d "$WORK/base"
             base_app=$(find "$WORK/base" -maxdepth 2 -name 'RabbyMobile.app' -type d | head -1)
             [ -n "$base_app" ] || { echo "base zip does not contain RabbyMobile.app" >&2; exit 1; }
@@ -162,7 +226,7 @@ jobs:
           fi
 
           if [ -n "${CANDIDATE_APP_SOURCE}" ]; then
-            fetch_zip "$CANDIDATE_APP_SOURCE" "$WORK/candidate.zip"
+            fetch_zip "$CANDIDATE_APP_SOURCE" "$WORK/candidate.zip" "$CANDIDATE_APP_SHA256"
             unzip -q "$WORK/candidate.zip" -d "$WORK/candidate"
             candidate_app=$(find "$WORK/candidate" -maxdepth 2 -name 'RabbyMobile.app' -type d | head -1)
             [ -n "$candidate_app" ] || { echo "candidate zip does not contain RabbyMobile.app" >&2; exit 1; }

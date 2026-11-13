@@ -49,7 +49,7 @@ start_app() {
   # previous session's line still sitting in the log buffer.
   adb -s "$DEVICE" shell am force-stop "$PACKAGE"
   adb -s "$DEVICE" logcat -c
-  adb -s "$DEVICE" shell am start -n "$PACKAGE/com.debank.rabbymobile.MainActivity" >/dev/null 2>&1
+  adb -s "$DEVICE" shell "am start -n '$PACKAGE/com.debank.rabbymobile.MainActivity'" >/dev/null 2>&1
 }
 
 wait_for_js() {
@@ -65,7 +65,7 @@ send_link() {
   # Always drive the command through `_cmd`: the path prefix differs per build
   # type (/mobile-debug/, /mobile-regression/, /mobile/), the command does not.
   adb -s "$DEVICE" shell \
-    "am start -a android.intent.action.VIEW -d '$1' -n $PACKAGE/com.debank.rabbymobile.MainActivity" \
+    "am start -a android.intent.action.VIEW -d '$1' -n '$PACKAGE/com.debank.rabbymobile.MainActivity'" \
     >/dev/null 2>&1
 }
 
