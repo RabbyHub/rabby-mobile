@@ -48,6 +48,12 @@ const STORE_LOADERS: Record<string, { load: StoreLoader; label: string }> = {
     label: 'tokenIndex',
     load: async () => (await import('@/store/tokens')).useTokenIndexStore,
   },
+  // Per-address balance that the Home card / asset header actually render:
+  // `valueMap[address] = { totalBalance, evmBalance, ... }`.
+  addressBalance: {
+    label: 'addressBalance',
+    load: async () => (await import('@/store/balance')).default,
+  },
   // Home balance card (scene totals): `combinedData.Home = { netWorth, ... }`.
   scene24hBalance: {
     label: 'scene24hBalance',
