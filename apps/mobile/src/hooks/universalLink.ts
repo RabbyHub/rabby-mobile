@@ -108,6 +108,7 @@ type OnParseUrlAndProcessAction = (payload: {
     | 'debug-open-target'
     | 'debug-create-address'
     | 'debug-set-language'
+    | 'debug-open-screen'
     | 'regression-scenario';
   target?: RabbyGoTarget;
   dappUrl?: string;
@@ -146,6 +147,13 @@ type OnParseUrlAndProcessAction = (payload: {
   debugChainStatsLoading?: boolean;
   debugChainStatsLoadingForMs?: number;
   debugChainStatsLoadingOff?: boolean;
+  /** Screen-level test entry: open any navigator-registered screen. */
+  debugOpenScreen?: {
+    screen?: string;
+    params?: Record<string, unknown>;
+    store?: Record<string, unknown>;
+    list?: boolean;
+  };
   regressionScenarioCommand?: RegressionScenarioCommand | null;
   regressionScenarioError?: string;
 }) => void;
@@ -476,6 +484,50 @@ function parseNonProductionMaintenanceLink(appLink: string) {
       debugChainStatsLoadingOff:
         urlInfo.searchParams.get('chainLoading') === '0' ||
         urlInfo.searchParams.get('chainLoading') === 'false',
+    } satisfies Parameters<OnParseUrlAndProcessAction>[0];
+  }
+
+  // Non-production only: open any screen a navigator actually registers,
+  // straight from a deeplink. `screen` must exist in the generated registry;
+  // the optional JSON `params` / `store` are injected before navigating.
+  if (rabbyGoCmd === 'debug-open-screen' || target === 'debug-open-screen') {
+    const rawScreen = urlInfo.searchParams.get('screen') || undefined;
+    const wantsList = ['1', 'true', 'yes'].includes(
+      (urlInfo.searchParams.get('list') || '').toLowerCase(),
+    );
+    const parseJsonParam = (key: string) => {
+      const raw = urlInfo.searchParams.get(key);
+      if (!raw) {
+        return undefined;
+      }
+      try {
+        const parsed = JSON.parse(raw);
+        return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+          ? (parsed as Record<string, unknown>)
+          : undefined;
+      } catch {
+        console.warn(
+          `[useUniversalLinkOnTop] debug-open-screen ignored invalid ${key} JSON`,
+        );
+        return undefined;
+      }
+    };
+
+    if (!rawScreen && !wantsList) {
+      console.warn(
+        '[useUniversalLinkOnTop] debug-open-screen requires ?screen=<id> (or ?list=1)',
+      );
+      return null;
+    }
+
+    return {
+      type: 'debug-open-screen',
+      debugOpenScreen: {
+        screen: rawScreen,
+        params: parseJsonParam('params'),
+        store: parseJsonParam('store'),
+        list: wantsList,
+      },
     } satisfies Parameters<OnParseUrlAndProcessAction>[0];
   }
 
@@ -1008,6 +1060,38 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
         }
         void openRabbyGoTarget(target);
       }, `debug-open-${payload.debugOpenTarget}`);
+      break;
+    case 'debug-open-screen':
+      if (!isNonPublicProductionEnv || !payload.debugOpenScreen) {
+        return;
+      }
+      void import('@/devtools/screenRegistry')
+        .then(async module => {
+          const request = payload.debugOpenScreen!;
+          if (request.list) {
+            console.log(
+              '[debug-open-screen] registered screens:',
+              JSON.stringify(module.listRegisteredScreens()),
+            );
+            if (!request.screen) {
+              return;
+            }
+          }
+          if (!request.screen) {
+            return;
+          }
+          const opened = await module.openScreenForDebug({
+            screen: request.screen,
+            params: request.params,
+            store: request.store,
+          });
+          console.log(
+            `[debug-open-screen] screen=${request.screen} opened=${opened}`,
+          );
+        })
+        .catch(error => {
+          console.error('[debug-open-screen] failed', error);
+        });
       break;
     case 'debug-set-language':
       if (!isNonPublicProductionEnv || !payload.debugLanguage) {
