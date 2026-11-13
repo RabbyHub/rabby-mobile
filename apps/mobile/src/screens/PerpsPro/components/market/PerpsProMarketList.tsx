@@ -10,9 +10,11 @@ import {
 import React, {
   forwardRef,
   useCallback,
+  useEffect,
   useImperativeHandle,
   useMemo,
   useRef,
+  type EffectCallback,
 } from 'react';
 import {
   type ListRenderItem,
@@ -69,6 +71,12 @@ type PerpsProMarketListProps = {
   pageTab: PerpsProMarketTab | 'search';
   renderProfile: PerpsProMarketListRenderProfile;
   searchMode: boolean;
+  /**
+   * The sheet can only track one scrollable. Mark the visible page so it is the
+   * only one registered with the bottom sheet; the rest keep their own scroll
+   * state without stealing the sheet's content-panning gesture.
+   */
+  isActive?: boolean;
 };
 
 const PerpsProMarketListComponent = forwardRef<
@@ -90,6 +98,7 @@ const PerpsProMarketListComponent = forwardRef<
       pageTab,
       renderProfile,
       searchMode,
+      isActive = true,
     },
     ref,
   ) => {
@@ -106,6 +115,19 @@ const PerpsProMarketListComponent = forwardRef<
       [currentMarketKey, favoriteSet],
     );
     const renderConfig = PERPS_PRO_MARKET_RENDER_PROFILES[renderProfile];
+
+    // `@gorhom/bottom-sheet` documents this hook for sheets that host several
+    // scrollables: it decides which list the sheet reads for scroll position and
+    // drag hand-off. Registering only the visible page keeps "list at top then
+    // keep dragging" working across tab switches without patching the library.
+    const focusHook = useCallback(
+      (effect: EffectCallback) => {
+        // eslint-disable-next-line react-hooks/rules-of-hooks -- gorhom calls
+        // this with a stable effect, mirroring its default `useEffect`.
+        useEffect(() => (isActive ? effect() : undefined), [isActive, effect]);
+      },
+      [isActive],
+    );
 
     const handleScrollPositionChange = useCallback(
       (event: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -179,6 +201,7 @@ const PerpsProMarketListComponent = forwardRef<
         ]}
         data={data}
         extraData={extraData}
+        focusHook={focusHook}
         getItemLayout={getItemLayout}
         initialNumToRender={renderConfig.initialNumToRender}
         keyboardShouldPersistTaps="handled"

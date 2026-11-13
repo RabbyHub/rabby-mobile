@@ -50,12 +50,12 @@ jest.mock('@gorhom/bottom-sheet', () => {
     BottomSheetFlatList: ReactModule.forwardRef(
       (props: Record<string, unknown>, ref: React.Ref<unknown>) => {
         mockBottomSheetFlatListProps(props);
+        // `focusHook` is consumed by the bottom sheet, not by FlatList.
+        const { focusHook: _focusHook, ...rest } = props;
         ReactModule.useImperativeHandle(ref, () => ({
           scrollToOffset: mockScrollToOffset,
         }));
-        return ReactModule.createElement(FlatList, {
-          ...props,
-        });
+        return ReactModule.createElement(FlatList, rest);
       },
     ),
   };
@@ -149,6 +149,18 @@ const projection = reconcilePerpsProMarketSelectorProjection(marketData);
 const slotOrders = buildPerpsProMarketSlotOrders(projection, 'all', [], '');
 const slots = slotOrders.name.asc;
 
+/** Mirrors how gorhom invokes `focusHook` (a hook that runs the effect). */
+const RegistrationProbe = ({
+  focusHook,
+  effect,
+}: {
+  focusHook: (effect: () => void | (() => void)) => void;
+  effect: () => void | (() => void);
+}) => {
+  focusHook(effect);
+  return null;
+};
+
 const renderMarketList = (
   data: typeof slots,
   ref?: React.Ref<PerpsProMarketListHandle>,
@@ -156,12 +168,14 @@ const renderMarketList = (
   marketDataStatus: import('@/hooks/perps/usePerpsStore').MarketDataStatus = 'success',
   currentMarketKey: string | null = null,
   renderProfile: PerpsProMarketListRenderProfile = 'active',
+  isActive = true,
 ) => (
   <PerpsProMarketList
     bottomInset={0}
     currentMarketKey={currentMarketKey}
     data={data}
     favoriteSet={new Set()}
+    isActive={isActive}
     marketDataStatus={marketDataStatus}
     onSelect={jest.fn()}
     onToggleFavorite={jest.fn()}
@@ -186,6 +200,50 @@ describe('PerpsProMarketList', () => {
     jest.useRealTimers();
   });
 
+  it('registers the sheet scrollable only for the visible page', () => {
+    const effect = jest.fn();
+    const focusHookOfLastRender = () => {
+      const calls = mockBottomSheetFlatListProps.mock.calls;
+      return calls[calls.length - 1][0].focusHook as (
+        effect: () => void | (() => void),
+      ) => void;
+    };
+
+    const hiddenList = render(
+      renderMarketList(
+        slots,
+        undefined,
+        false,
+        'success',
+        null,
+        'prepared',
+        false,
+      ),
+    );
+    const hiddenProbe = render(
+      <RegistrationProbe
+        effect={effect}
+        focusHook={focusHookOfLastRender()}
+      />,
+    );
+    expect(effect).not.toHaveBeenCalled();
+    hiddenProbe.unmount();
+    hiddenList.unmount();
+
+    const visibleList = render(
+      renderMarketList(slots, undefined, false, 'success', null, 'active', true),
+    );
+    const visibleProbe = render(
+      <RegistrationProbe
+        effect={effect}
+        focusHook={focusHookOfLastRender()}
+      />,
+    );
+    expect(effect).toHaveBeenCalledTimes(1);
+    visibleProbe.unmount();
+    visibleList.unmount();
+  });
+
   it('uses the active fill profile with stable slots and fixed layouts', () => {
     render(renderMarketList(slots));
 
@@ -205,7 +263,9 @@ describe('PerpsProMarketList', () => {
     });
     expect(props.keyExtractor(slots[17], 17)).toBe('slot:17');
     expect(props.ItemSeparatorComponent).toBeUndefined();
-    expect(props).not.toHaveProperty('focusHook');
+    // The visible page registers itself with the sheet; hidden preview pages do
+    // not (see the isActive gating below).
+    expect(props.focusHook).toEqual(expect.any(Function));
     expect(props).not.toHaveProperty('drawDistance');
     expect(props).not.toHaveProperty('maintainVisibleContentPosition');
     expect(props).not.toHaveProperty('onScroll');

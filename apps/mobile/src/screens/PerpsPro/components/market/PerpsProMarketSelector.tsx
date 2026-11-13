@@ -642,12 +642,13 @@ const PerpsProMarketSelectorComponent = forwardRef<
     return (
       <PerpsProMarketSelectorDismissProvider onDismiss={dismissSelector}>
         <AppBottomSheetModal
+          activeOffsetY={[-10, 10]}
           android_keyboardInputMode="adjustPan"
           backdropComponent={renderBackdrop}
           containerComponent={PerpsProMarketSelectorGestureContainer}
-          enableContentPanningGesture={false}
           enableDynamicSizing={false}
           enablePanDownToClose
+          failOffsetX={[-16, 16]}
           keyboardBehavior="extend"
           keyboardBlurBehavior="restore"
           onDismiss={handleDismiss}
@@ -679,6 +680,7 @@ const PerpsProMarketSelectorComponent = forwardRef<
                   currentMarketKey={currentMarketKey}
                   data={searchSlots}
                   favoriteSet={favoriteSet}
+                  isActive={isSearchMode}
                   marketDataStatus={marketDataStatus}
                   onPrefetch={onPrefetch}
                   onRealtimeIntentCancel={onRealtimeIntentCancel}
@@ -798,6 +800,7 @@ const PerpsProMarketSelectorComponent = forwardRef<
                                 currentMarketKey={currentMarketKey}
                                 data={slots}
                                 favoriteSet={favoriteSet}
+                                isActive={tab.id === resolvedActiveTab}
                                 marketDataStatus={marketDataStatus}
                                 onPrefetch={onPrefetch}
                                 onRealtimeIntentCancel={onRealtimeIntentCancel}
