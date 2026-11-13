@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react-native';
-import { StyleSheet, View } from 'react-native';
+import { Dimensions, StyleSheet, View } from 'react-native';
 import { HOME_TOP_HEADER_SIZES } from '@/constant/home';
 import { apisHomeTabIndex } from '@/hooks/navigation';
 import { homeDrawerAnimateMutable } from '../hooks/useHomeDrawerAnimate';
@@ -169,6 +169,21 @@ function getAssetsRowStyle() {
   return StyleSheet.flatten(row!.props.style);
 }
 
+function getAssetsRowShieldStyle() {
+  const shield = screen.UNSAFE_getAllByType(View).find(node => {
+    const style = StyleSheet.flatten(node.props.style);
+    return (
+      style?.position === 'absolute' &&
+      style?.top === 0 &&
+      style?.bottom === 0 &&
+      style?.left === 0 &&
+      style?.right === 0
+    );
+  });
+  expect(shield).toBeDefined();
+  return StyleSheet.flatten(shield!.props.style);
+}
+
 describe('HomeCustomMaterialTabBar presentation contract', () => {
   beforeEach(() => {
     apisHomeTabIndex.svTabIndexDecimal.value = 0;
@@ -218,15 +233,32 @@ describe('HomeCustomMaterialTabBar presentation contract', () => {
     },
   );
 
-  it('keeps asset-row hit testing disabled until the asset page is reached', () => {
+  it('slides the asset strip in from the right and only gates taps mid-flight', () => {
     const view = render(<HomeCustomMaterialTabBar />);
 
-    for (const index of [0, 0.5, 0.999, 1, 2, 0]) {
+    for (const index of [0, 0.5, 0.999, 1, 2, 3, 0]) {
       apisHomeTabIndex.svTabIndexDecimal.value = index;
       view.rerender(<HomeCustomMaterialTabBar />);
 
-      expect(getAssetsRowStyle().pointerEvents).toBe(
-        index < 1 ? 'none' : 'auto',
+      const progress = Math.min(Math.max(index, 0), 1);
+      // The strip is an independent layer; it rides in with the pager pages
+      // instead of fading below the header.
+      const translateX = getAssetsRowStyle().transform[0].translateX;
+      if (progress < 1) {
+        expect(translateX).toBeCloseTo(
+          (1 - progress) * Dimensions.get('window').width,
+          5,
+        );
+        expect(translateX).toBeGreaterThan(0);
+      } else {
+        expect(translateX).toBe(0);
+      }
+
+      // Mid-flight the band swallows taps so the scrolling rows underneath
+      // cannot switch tabs before the strip has arrived. Settled strips pass
+      // touches through; a near-settled float value must not stay armed.
+      expect(getAssetsRowShieldStyle().pointerEvents).toBe(
+        progress > 0.01 && progress < 0.99 ? 'auto' : 'none',
       );
     }
   });

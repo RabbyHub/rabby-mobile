@@ -426,58 +426,54 @@ const AssetsTabLabels = [
 function AssetsTabBar() {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const indexDecimal = apisHomeTabIndex.svTabIndexDecimal;
+  const { width: winWidth } = useWindowDimensions();
 
+  // The strip belongs to the assets pages: it rides in from the right at the
+  // same rate as the pager pages, so the tab row and the list below look like
+  // one sheet even though they are independent layers.
   const stylez = useAnimatedStyle(() => {
+    const progress = Math.min(Math.max(indexDecimal.value, 0), 1);
     return {
-      opacity: interpolate(
-        indexDecimal.value,
-        [0, 0.9, 0.99, 1],
-        [0, 0.1, 0.5, 1],
-        Extrapolation.CLAMP,
-      ),
-      translateY: interpolate(
-        indexDecimal.value,
-        [0, 0.5, 1],
-        [
-          -HOME_TOP_HEADER_SIZES.tabItemLineHeight,
-          -HOME_TOP_HEADER_SIZES.tabItemLineHeight / 2,
-          0,
-        ],
-        Extrapolation.CLAMP,
-      ),
+      transform: [{ translateX: (1 - progress) * winWidth }],
     };
-  });
+  }, [winWidth]);
 
-  const tabbarContainerStyle = useAnimatedStyle(() => {
+  // Until the strip has fully arrived, the band must swallow touches instead
+  // of letting them reach the rows scrolling underneath it. Only a settled
+  // strip is tappable. Use a small tolerance so a float settle value such as
+  // 0.999 does not keep the shield armed forever.
+  const shieldStyle = useAnimatedStyle(() => {
+    const progress = Math.min(Math.max(indexDecimal.value, 0), 1);
     return {
-      pointerEvents: indexDecimal.value < 1 ? 'none' : 'auto',
+      pointerEvents: progress > 0.01 && progress < 0.99 ? 'auto' : 'none',
     };
   });
 
   return (
-    <Animated.View
-      // pointerEvents={focusedTab === HomeTabName.overview ? 'none' : 'auto'}
-      style={[styles.portfolioContainer, stylez, tabbarContainerStyle]}>
-      {/* <CustomLabel.Slider indexDecimal={indexDecimal} /> */}
-      {AssetsTabLabels.map(({ index, label }) => {
-        const key = `tab-label-${index}`;
-        return (
-          <Pressable
-            key={key}
-            style={styles.assetTabItem}
-            onPress={() => {
-              apisHomeTabIndex.setTabIndex(index, true);
-            }}>
-            <CustomLabel
-              index={index}
-              indexDecimal={indexDecimal}
-              text={label}
-            />
-          </Pressable>
-        );
-      })}
-      <SideChainSelector />
-    </Animated.View>
+    <View style={styles.tabStripBand}>
+      <Animated.View style={[styles.portfolioContainer, stylez]}>
+        {/* <CustomLabel.Slider indexDecimal={indexDecimal} /> */}
+        {AssetsTabLabels.map(({ index, label }) => {
+          const key = `tab-label-${index}`;
+          return (
+            <Pressable
+              key={key}
+              style={styles.assetTabItem}
+              onPress={() => {
+                apisHomeTabIndex.setTabIndex(index, true);
+              }}>
+              <CustomLabel
+                index={index}
+                indexDecimal={indexDecimal}
+                text={label}
+              />
+            </Pressable>
+          );
+        })}
+        <SideChainSelector />
+      </Animated.View>
+      <Animated.View style={[styles.tabStripShield, shieldStyle]} />
+    </View>
   );
 }
 
@@ -586,6 +582,10 @@ const getStyles = createGetStyles2024(() => ({
     // display: 'flex',
     // justifyContent: 'flex-end',
   },
+  tabStripBand: {
+    position: 'relative',
+    width: '100%',
+  },
   portfolioContainer: {
     position: 'relative',
     paddingHorizontal: HOME_TOP_HEADER_SIZES.portfolioContainerPx,
@@ -601,5 +601,12 @@ const getStyles = createGetStyles2024(() => ({
   },
   assetTabItem: {
     paddingBottom: HOME_TOP_HEADER_SIZES.headerTabItemPaddingBottom,
+  },
+  tabStripShield: {
+    bottom: 0,
+    left: 0,
+    position: 'absolute',
+    right: 0,
+    top: 0,
   },
 }));
