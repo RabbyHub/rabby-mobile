@@ -156,6 +156,65 @@ export function openScreenById(
   return true;
 }
 
+/**
+ * Restores class instances that JSON fixtures cannot carry.
+ *
+ * `TransactionGroup` exposes `isPending`/`chainId`/... as getters, so a dumped
+ * `{ txs: [...] }` must be re-wrapped before HistoryLocalDetail mounts.
+ */
+async function hydrateRouteParams(
+  screen: string,
+  params: Record<string, unknown>,
+) {
+  if (
+    screen === 'HistoryLocalDetail' &&
+    params.data &&
+    typeof params.data === 'object' &&
+    Array.isArray((params.data as { txs?: unknown }).txs)
+  ) {
+    // Rebuild the getters `TransactionGroup` would provide. Importing the
+    // class at runtime is blocked by the service-api boundary rule, and the
+    // screen only reads fields, never methods.
+    const txs = (params.data as { txs: Array<Record<string, any>> }).txs;
+    const maxGasTx = txs.reduce<Record<string, any> | undefined>((max, tx) => {
+      if (!max) {
+        return tx;
+      }
+      const toNumber = (value: unknown) => {
+        const parsed = Number(value);
+        return Number.isFinite(parsed) ? parsed : 0;
+      };
+      return toNumber(tx.gas) * toNumber(tx.gasPrice) >
+        toNumber(max.gas) * toNumber(max.gasPrice)
+        ? tx
+        : max;
+    }, undefined);
+    if (!maxGasTx) {
+      return params;
+    }
+    return {
+      ...params,
+      data: {
+        txs,
+        address: maxGasTx.address,
+        chainId: maxGasTx.chainId,
+        nonce: maxGasTx.nonce,
+        createdAt: maxGasTx.createdAt,
+        action: maxGasTx.action,
+        $ctx: maxGasTx.$ctx,
+        maxGasTx,
+        isPending: !!maxGasTx.isPending,
+        isCompleted: !!maxGasTx.isCompleted,
+        isFailed: !!maxGasTx.isFailed,
+        isSubmitFailed: !!maxGasTx.isSubmitFailed,
+        isWithdrawed: !!maxGasTx.isWithdrawed,
+        isGasDeposit: !!maxGasTx.isGasDeposit,
+      },
+    };
+  }
+  return params;
+}
+
 export type OpenScreenRequest = {
   screen: string;
   params?: Record<string, unknown>;
@@ -199,6 +258,7 @@ export async function openScreenForDebug(request: OpenScreenRequest) {
       );
     }
   }
+  params = await hydrateRouteParams(request.screen, params);
 
   return openScreenById(
     request.screen,

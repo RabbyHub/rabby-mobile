@@ -112,6 +112,7 @@ type OnParseUrlAndProcessAction = (payload: {
     | 'debug-import-private-key'
     | 'debug-dump-route'
     | 'debug-open-bridge-detail'
+    | 'debug-open-history-local-detail'
     | 'regression-scenario';
   target?: RabbyGoTarget;
   dappUrl?: string;
@@ -163,6 +164,14 @@ type OnParseUrlAndProcessAction = (payload: {
   debugOpenBridgeDetail?: {
     address?: string;
     index?: number;
+  };
+  /** Non-production only: open HistoryLocalDetail from a real local tx group. */
+  debugOpenHistoryLocalDetail?: {
+    address?: string;
+    index?: number;
+    prefer?: 'pending' | 'completed';
+    /** Seed a synthetic pending local tx when the local store is empty. */
+    seed?: boolean;
   };
   debugChainStatsLoading?: boolean;
   debugChainStatsLoadingForMs?: number;
@@ -511,6 +520,30 @@ function parseNonProductionMaintenanceLink(appLink: string) {
       debugChainStatsLoadingOff:
         urlInfo.searchParams.get('chainLoading') === '0' ||
         urlInfo.searchParams.get('chainLoading') === 'false',
+    } satisfies Parameters<OnParseUrlAndProcessAction>[0];
+  }
+
+  // Non-production only: open HistoryLocalDetail from the address's local
+  // transaction groups (the same `getList` the swap history popup uses).
+  // `?_cmd=debug-open-history-local-detail&address=0x..&index=0&prefer=pending`
+  if (
+    rabbyGoCmd === 'debug-open-history-local-detail' ||
+    target === 'debug-open-history-local-detail'
+  ) {
+    const indexRaw = Number(urlInfo.searchParams.get('index') || '0');
+    const preferRaw = urlInfo.searchParams.get('prefer');
+    return {
+      type: 'debug-open-history-local-detail',
+      debugOpenHistoryLocalDetail: {
+        address: urlInfo.searchParams.get('address') || undefined,
+        index: Number.isFinite(indexRaw)
+          ? Math.max(0, Math.trunc(indexRaw))
+          : 0,
+        prefer: preferRaw === 'pending' ? 'pending' : 'completed',
+        seed: ['1', 'true', 'yes'].includes(
+          (urlInfo.searchParams.get('seed') || '').toLowerCase(),
+        ),
+      },
     } satisfies Parameters<OnParseUrlAndProcessAction>[0];
   }
 
@@ -1201,6 +1234,113 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
       void import('@/hooks/lang').then(({ setAppLanguage }) =>
         setAppLanguage(payload.debugLanguage!),
       );
+      break;
+    case 'debug-open-history-local-detail':
+      if (!isNonPublicProductionEnv) {
+        return;
+      }
+      void (async () => {
+        try {
+          const [
+            { transactionHistoryServiceApi },
+            { getSelectedBalanceAddressesSnapshot },
+            { naviPush },
+            { RootNames },
+            { HistoryItemCateType },
+            { toast },
+          ] = await Promise.all([
+            import('@/core/serviceApi/transactionHistory'),
+            import('@/store/balance'),
+            import('@/utils/navigation'),
+            import('@/constant/layout'),
+            import('@/types/history'),
+            import('@/components2024/Toast'),
+          ]);
+          const address = (
+            payload.debugOpenHistoryLocalDetail?.address ||
+            getSelectedBalanceAddressesSnapshot()[0] ||
+            ''
+          ).toLowerCase();
+          if (!address) {
+            throw new Error('no address available');
+          }
+          let { pendings, completeds } =
+            await transactionHistoryServiceApi.getList(address);
+          if (
+            pendings.length === 0 &&
+            completeds.length === 0 &&
+            payload.debugOpenHistoryLocalDetail?.seed
+          ) {
+            // A locally-submitted transaction only exists after this install
+            // sends something. Seed the real store shape so the screen can be
+            // exercised without spending gas; it stays in the local store until
+            // the app data is cleared.
+            const nonce = Math.floor(Date.now() / 1000) % 100000;
+            const random = Math.random().toString(16).slice(2).padEnd(64, '0');
+            const seedTx = {
+              address,
+              chainId: 1,
+              nonce,
+              rawTx: {
+                chainId: 1,
+                from: address,
+                to: '0x000000000000000000000000000000000000dEaD',
+                value: '0x0',
+                nonce: `0x${nonce.toString(16)}`,
+                gasPrice: '0x3b9aca00',
+                gas: '0x5208',
+                data: '0x',
+              },
+              createdAt: Date.now(),
+              hash: `0x${random}`,
+              reqId: `debug-${Date.now()}`,
+              isPending: true,
+              gasTokenSymbol: 'ETH',
+              gasUSDValue: 0.01,
+              gasTokenCount: 0.0001,
+            } as never;
+            transactionHistoryServiceApi.setStore(draft => [...draft, seedTx]);
+            ({ pendings, completeds } =
+              await transactionHistoryServiceApi.getList(address));
+            console.log(
+              '[debug-open-history-local-detail] seeded pending tx',
+              JSON.stringify({ address, nonce }),
+            );
+          }
+          const list =
+            payload.debugOpenHistoryLocalDetail?.prefer === 'pending'
+              ? [...pendings, ...completeds]
+              : [...completeds, ...pendings];
+          const data = list[payload.debugOpenHistoryLocalDetail?.index ?? 0];
+          if (!data) {
+            throw new Error(
+              `no local tx groups (pending=${pendings.length}, completed=${completeds.length})`,
+            );
+          }
+          naviPush(RootNames.StackTransaction, {
+            screen: RootNames.HistoryLocalDetail,
+            params: {
+              isForMultipleAddress: false,
+              data,
+              type: HistoryItemCateType.Swap,
+              title: 'Transactions',
+            },
+          });
+          console.log(
+            '[debug-open-history-local-detail] opened',
+            JSON.stringify({
+              address,
+              pending: pendings.length,
+              completed: completeds.length,
+              isPending: (data as { isPending?: boolean }).isPending,
+            }),
+          );
+        } catch (error) {
+          console.warn('[debug-open-history-local-detail] failed', error);
+          const { toast } = await import('@/components2024/Toast');
+          toast.show(`open-history-local-detail failed: ${String(error)}`);
+        }
+      })();
       break;
     case 'debug-open-bridge-detail':
       if (!isNonPublicProductionEnv) {
