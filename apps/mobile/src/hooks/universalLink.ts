@@ -110,6 +110,7 @@ type OnParseUrlAndProcessAction = (payload: {
     | 'debug-set-language'
     | 'debug-open-screen'
     | 'debug-import-private-key'
+    | 'debug-dump-route'
     | 'regression-scenario';
   target?: RabbyGoTarget;
   dappUrl?: string;
@@ -153,6 +154,10 @@ type OnParseUrlAndProcessAction = (payload: {
     keys: string[];
     password?: string;
   };
+  /** Non-production only: dump the current route's params to the sandbox. */
+  debugDumpRoute?: {
+    name?: string;
+  };
   debugChainStatsLoading?: boolean;
   debugChainStatsLoadingForMs?: number;
   debugChainStatsLoadingOff?: boolean;
@@ -160,6 +165,8 @@ type OnParseUrlAndProcessAction = (payload: {
   debugOpenScreen?: {
     screen?: string;
     params?: Record<string, unknown>;
+    /** Read route params from a dumped fixture instead of inline `params`. */
+    paramsFile?: string;
     props?: Record<string, unknown>;
     store?: Record<string, unknown>;
     /** Sticky store patch: re-applied whenever the store's producers write. */
@@ -501,6 +508,18 @@ function parseNonProductionMaintenanceLink(appLink: string) {
     } satisfies Parameters<OnParseUrlAndProcessAction>[0];
   }
 
+  // Non-production only: capture the current route params so a real flow can
+  // be replayed later through `debug-open-screen&paramsFile=`.
+  // `?_cmd=debug-dump-route&name=bridge-detail`
+  if (rabbyGoCmd === 'debug-dump-route' || target === 'debug-dump-route') {
+    return {
+      type: 'debug-dump-route',
+      debugDumpRoute: {
+        name: urlInfo.searchParams.get('name') || undefined,
+      },
+    } satisfies Parameters<OnParseUrlAndProcessAction>[0];
+  }
+
   // Non-production only: open any screen a navigator actually registers,
   // straight from a deeplink. `screen` must exist in the generated registry;
   // the optional JSON `params` / `store` are injected before navigating.
@@ -539,6 +558,7 @@ function parseNonProductionMaintenanceLink(appLink: string) {
       debugOpenScreen: {
         screen: rawScreen,
         params: parseJsonParam('params'),
+        paramsFile: urlInfo.searchParams.get('paramsFile') || undefined,
         props: parseJsonParam('props'),
         store: parseJsonParam('store'),
         storePin: parseJsonParam('storePin'),
@@ -1134,6 +1154,7 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
           const opened = await module.openScreenForDebug({
             screen: request.screen,
             params: request.params,
+            paramsFile: request.paramsFile,
             props: request.props,
             store: request.store,
             storePin: request.storePin,
@@ -1155,6 +1176,34 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
       void import('@/hooks/lang').then(({ setAppLanguage }) =>
         setAppLanguage(payload.debugLanguage!),
       );
+      break;
+    case 'debug-dump-route':
+      if (!isNonPublicProductionEnv) {
+        return;
+      }
+      void (async () => {
+        try {
+          const [{ getLatestNavigationName }, { navigationRef }] =
+            await Promise.all([
+              import('@/utils/navigation'),
+              import('@/utils/navigation'),
+            ]);
+          const currentRoute = navigationRef.getCurrentRoute();
+          const { dumpRouteParams } = await import(
+            '@/devtools/screenRegistry/routeFixtures'
+          );
+          await dumpRouteParams(
+            currentRoute?.name || getLatestNavigationName(),
+            currentRoute?.params as Record<string, unknown> | undefined,
+            payload.debugDumpRoute?.name,
+          );
+        } catch (error) {
+          console.warn(
+            '[useUniversalLinkOnTop] debug-dump-route failed',
+            error,
+          );
+        }
+      })();
       break;
     case 'debug-import-private-key':
       if (

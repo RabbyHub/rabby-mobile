@@ -159,6 +159,8 @@ export function openScreenById(
 export type OpenScreenRequest = {
   screen: string;
   params?: Record<string, unknown>;
+  /** Read route params from a `debug-dump-route` fixture (inline params win). */
+  paramsFile?: string;
   /** Non-route props merged into the first mount of that screen (non-production only). */
   props?: Record<string, unknown>;
   store?: Record<string, unknown>;
@@ -184,9 +186,23 @@ export async function openScreenForDebug(request: OpenScreenRequest) {
   if (request.storePin && Object.keys(request.storePin).length > 0) {
     await pinInjectedStore(request.storePin);
   }
+
+  let params = request.params ?? {};
+  if (request.paramsFile) {
+    try {
+      const { readRouteFixture } = await import('./routeFixtures');
+      params = { ...(await readRouteFixture(request.paramsFile)), ...params };
+    } catch (error) {
+      console.warn(
+        `[screenRegistry] paramsFile "${request.paramsFile}" could not be read; using inline params only`,
+        error,
+      );
+    }
+  }
+
   return openScreenById(
     request.screen,
-    withInjectedPropsParam(request.params ?? {}, request.props),
+    withInjectedPropsParam(params, request.props),
     {
       push: request.push,
       probe: true,
