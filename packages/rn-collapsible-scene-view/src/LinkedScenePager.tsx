@@ -91,6 +91,12 @@ export type LinkedSceneDiagnosticEvent =
       requested: number;
       applied: boolean;
       reason?: 'drag-active' | 'already-settling';
+      from?: number;
+    }
+  | {
+      type: 'mount';
+      rootIndex: number;
+      activeKey: string;
     };
 
 export type LinkedScenePagerHandle = {
@@ -325,6 +331,12 @@ function LinkedScenePagerOwner({
   const rootTrack = useSharedValue(rootIndexOf(model, initial.key));
   /** Target of the in-flight settle animation, -1 when the track is at rest. */
   const settlingRoot = useSharedValue(-1);
+  /**
+   * Who owns the in-flight animation: -1 none, 0 a gesture settle, 1 a
+   * programmatic jump. A new touch finishes a gesture settle at its target but
+   * takes a programmatic jump over from the nearest page.
+   */
+  const settlingSource = useSharedValue(-1);
   const childTracks = useSharedValue<Record<string, number>>(
     initialChildTracks(model, remembered.current, initial),
   );
@@ -394,6 +406,11 @@ function LinkedScenePagerOwner({
   useLayoutEffect(() => {
     gestureActive.value = false;
     indicatorPosition.value = rootIndexOf(model, initial.key);
+    diagnosticsRef.current?.({
+      type: 'mount',
+      rootIndex: rootIndexOf(model, initial.key),
+      activeKey: initial.key,
+    });
   }, [gestureActive, indicatorPosition, initial.key, model]);
 
   const commitRootIndex = useCallback(
@@ -531,14 +548,17 @@ function LinkedScenePagerOwner({
         });
       }
       settlingRoot.value = target;
+      settlingSource.value = 0;
       if (Math.abs(target - current) < 0.0001) {
         settlingRoot.value = -1;
+        settlingSource.value = -1;
         runOnJS(commitRootIndex)(target);
         return;
       }
       rootTrack.value = withTiming(target, { duration: 180 }, finished => {
         if (finished) {
           settlingRoot.value = -1;
+          settlingSource.value = -1;
           runOnJS(commitRootIndex)(target);
         }
       });
@@ -555,8 +575,9 @@ function LinkedScenePagerOwner({
       const trackBefore = rootTrack.value;
       cancelAnimation(rootTrack);
       const interruptedTarget = settlingRoot.value;
+      const interruptedSource = settlingSource.value;
       const trackAtRest =
-        interruptedTarget >= 0
+        interruptedTarget >= 0 && interruptedSource !== 1
           ? interruptedTarget
           : Math.round(rootTrack.value);
       const rootIndex = Math.max(
@@ -568,6 +589,7 @@ function LinkedScenePagerOwner({
       );
       rootTrack.value = rootIndex;
       settlingRoot.value = -1;
+      settlingSource.value = -1;
       if (diagnosticsEnabled.value) {
         runOnJS(emitDiagnostic)({
           type: 'begin',
@@ -725,6 +747,7 @@ function LinkedScenePagerOwner({
     rootTrack,
     scrollOffset,
     settlingRoot,
+    settlingSource,
     settleMode,
     widthValue,
   ]);
@@ -772,10 +795,12 @@ function LinkedScenePagerOwner({
         type: 'jump',
         requested: rootIndex,
         applied: true,
+        from: rootTrack.value,
       });
       cancelAnimation(rootTrack);
       rootTrack.value = rootIndex;
       settlingRoot.value = -1;
+      settlingSource.value = -1;
       const childIndex = childIndexOf(model, path);
       if (childIndex !== undefined) {
         const root = model.roots[rootIndex];
@@ -807,6 +832,7 @@ function LinkedScenePagerOwner({
         type: 'jump',
         requested: rootIndex,
         applied: true,
+        from: rootTrack.value,
       });
       const childIndex = childIndexOf(model, resolved);
       if (childIndex !== undefined) {
@@ -815,9 +841,11 @@ function LinkedScenePagerOwner({
       }
       gestureActive.value = true;
       settlingRoot.value = rootIndex;
+      settlingSource.value = 1;
       rootTrack.value = withTiming(rootIndex, { duration: 200 }, finished => {
         if (finished) {
           settlingRoot.value = -1;
+          settlingSource.value = -1;
           runOnJS(commitRootIndex)(rootIndex);
         }
       });
@@ -853,17 +881,11 @@ function LinkedScenePagerOwner({
     [jumpPath, selectPath],
   );
 
-  const previousControlledKey = useRef(linkedScenePhysicalKey(props.activePath));
-  useEffect(() => {
-    const nextKey = linkedScenePhysicalKey(props.activePath);
-    if (previousControlledKey.current === nextKey) {
-      return;
-    }
-    previousControlledKey.current = nextKey;
-    if (nextKey !== linkedScenePhysicalKey(settledRef.current)) {
-      selectPath(props.activePath);
-    }
-  }, [props.activePath, selectPath]);
+  // `activePath` is an initial/declarative hint only. Following it on every
+  // prop change created a second writer for the same track: a commit reported
+  // a page to the caller, the caller re-rendered with that page, and the
+  // follow effect could still fire after a newer gesture had taken over.
+  // Programmatic navigation uses `selectTab`/`jumpTab` explicitly instead.
   useEffect(() => {
     if (
       linkedScenePhysicalKey(initialRequest) !== linkedScenePhysicalKey(initial)

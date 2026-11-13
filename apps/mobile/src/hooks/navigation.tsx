@@ -519,11 +519,14 @@ export const apisHomeTabIndex = {
    * Report a page the pager already settled on. This must never command the
    * pager: doing so from the pager's own commit callback re-enters the gesture
    * track and can overwrite an in-flight settle or drag.
+   *
+   * It also must not write `svIndexDecimal` / `svTabName`: those are owned by
+   * the UI-thread track reaction. A JS write that lands one frame late is
+   * exactly what made the previous tab flash its highlight after a settle.
    */
   publishSettledIndex(val: number) {
     'worklet';
     tabIndexSvs.current = val;
-    tabIndexSvs.svIndexDecimal.value = val;
     runOnJS(() => tabIndexStore.setState({ tabIndex: val }))();
   },
 };

@@ -33,6 +33,7 @@ import { apisHomeTabIndex, HomeTabName } from '@/hooks/navigation';
 import { RenderActivityBoundary } from '@/hooks/storeActivity/RenderActivityBoundary';
 import { isTabsSwiping } from '@/screens/Address/components/MultiAssets/hooks';
 import { useRegressionScenario } from '@/devtools/regressionScenarios/react';
+import { logger } from '@/utils/logger';
 
 import {
   HOME_SCENE_CHROME_BOTTOM,
@@ -94,8 +95,21 @@ export function HomeSceneContainer({
         >
       >[0],
     ) => {
+      const emit = (
+        kind: Parameters<typeof recordHomePagerDebugEvent>[0],
+        text: string,
+      ) => {
+        recordHomePagerDebugEvent(kind, text);
+        // Also goes to the app log file, so a hand-driven session can be
+        // reviewed afterwards (files/applogs on the device).
+        logger.debug(`[home-pager] ${text}`);
+      };
+      if (event.type === 'mount') {
+        emit('mount', `mount root=${event.rootIndex} key=${event.activeKey}`);
+        return;
+      }
       if (event.type === 'begin') {
-        recordHomePagerDebugEvent(
+        emit(
           'begin',
           `begin start=${event.start}${
             event.snappedFrom !== null
@@ -106,7 +120,7 @@ export function HomeSceneContainer({
         return;
       }
       if (event.type === 'end') {
-        recordHomePagerDebugEvent(
+        emit(
           'end',
           `end ${event.axis} pos=${event.position.toFixed(2)} start=${
             event.start
@@ -117,7 +131,7 @@ export function HomeSceneContainer({
         return;
       }
       if (event.type === 'settle') {
-        recordHomePagerDebugEvent(
+        emit(
           'settle',
           `settle ${event.axis} pos=${event.position.toFixed(2)} start=${
             event.start
@@ -128,7 +142,7 @@ export function HomeSceneContainer({
         return;
       }
       if (event.type === 'commit') {
-        recordHomePagerDebugEvent(
+        emit(
           'commit',
           `commit → ${event.rootIndex}${
             event.childIndex === undefined ? '' : `/${event.childIndex}`
@@ -137,10 +151,14 @@ export function HomeSceneContainer({
         recordHomePagerCommittedPage(event.rootIndex);
         return;
       }
-      recordHomePagerDebugEvent(
+      emit(
         event.applied ? 'jump' : 'jump-ignored',
         `jump req=${event.requested} ${
-          event.applied ? 'applied' : `ignored(${event.reason})`
+          event.applied
+            ? `applied${
+                event.from === undefined ? '' : ` from=${event.from.toFixed(2)}`
+              }`
+            : `ignored(${event.reason})`
         }`,
       );
     },
