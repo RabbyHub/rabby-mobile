@@ -39,7 +39,36 @@ export const SCREEN_PARAM_FIXTURES: Record<string, ScreenFixture> = {
   BatchRevoke: ({ account }) => ({
     account: account ?? undefined,
     revokeList: [],
-    dataSource: 'approvals',
+    // `useBatchRevokeTask.init` calls `setList(dataSource)` and the list is
+    // rendered with `.filter`, so the source must be an array.
+    dataSource: [],
+  }),
+
+  // The import-success page keeps the freshly imported keyring in params.
+  ImportSuccess2024: ({ account }) => accountShape(account),
+
+  // History detail dereferences `data.tx` and `data.chain`; give it the
+  // smallest shape that renders without a real transaction.
+  HistoryDetail: ({ account }) => ({
+    account: account ?? undefined,
+    title: 'History',
+    isForMultipleAddress: false,
+    data: {
+      tx: {
+        status: 1,
+        from_addr: account?.address,
+        to_addr: account?.address,
+      },
+      chain: 'eth',
+      is_scam: false,
+      time_at: Math.floor(Date.now() / 1000),
+      // The screen reads `data.historyType` to pick which token list to use;
+      // without it the send branch indexes `data.receives[0]`.
+      historyType: 'send',
+      sends: [{ amount: 0 }],
+      receives: [],
+      status: 1,
+    },
   }),
 
   // History screens read the current address and optional token context.

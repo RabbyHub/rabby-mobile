@@ -19,7 +19,8 @@ set -u
 export PATH=$PATH:$HOME/Library/Android/sdk/platform-tools
 PKG_ANDROID=${PKG_ANDROID:-com.debank.rabbymobile.debug}
 PKG_IOS=${PKG_IOS:-com.debank.rabby-mobile-debug}
-PKG=${PKG:-$PKG_ANDROID}
+# PKG overrides the platform default below.
+[ -n "${PKG:-}" ] && PKG_ANDROID=$PKG && PKG_IOS=$PKG
 OUT=${OUT:-/tmp/screen-registry-sweep.txt}
 # Screenshots + per-screen logs for anything that is not OK, so a failure can be
 # inspected later instead of only being reported as an id.
@@ -103,26 +104,41 @@ sweep_android() {
 }
 
 sweep_ios() {
-  local id before file line i status probe_out
+  local id before file line i status probe_out attempt
   while read -r id; do
     [ -n "$id" ] || continue
-    before=$(ios_probe_lines)
-    xcrun simctl terminate "$DEVICE" "$PKG_IOS" >/dev/null 2>&1
-    sleep 1
-    xcrun simctl launch "$DEVICE" "$PKG_IOS" -rabby-deeplink "${URL_BASE}$id" >/dev/null 2>&1
     line=""
-    for i in $(seq 1 40); do
-      sleep 3
-      file=$(ios_probe_file) || continue
-      [ -f "$file" ] || continue
-      line=$(tail -n +$((before + 1)) "$file" | grep "screen=$id opened=" | tail -1)
+    # A launch can lose the Metro connection when the packager is busy and show
+    # the red "No script URL provided" screen; one retry covers that.
+    for attempt in 1 2; do
+      before=$(ios_probe_lines)
+      xcrun simctl terminate "$DEVICE" "$PKG_IOS" >/dev/null 2>&1
+      sleep 1
+      xcrun simctl launch "$DEVICE" "$PKG_IOS" -rabby-deeplink "${URL_BASE}$id" >/dev/null 2>&1
+      for i in $(seq 1 30); do
+        sleep 2
+        file=$(ios_probe_file) || continue
+        [ -f "$file" ] || continue
+        line=$(tail -n +$((before + 1)) "$file" | grep "screen=$id opened=" | tail -1)
+        [ -n "$line" ] && break
+      done
       [ -n "$line" ] && break
     done
     if [ -z "$line" ]; then
       status="NOLOG"
       xcrun simctl io "$DEVICE" screenshot "$SHOT_DIR/$id.png" >/dev/null 2>&1 || true
     elif echo "$line" | grep -q 'opened=true'; then
-      status="OK"
+      # A screen can mount and still throw while rendering; the error boundary
+      # reports that separately because the JS console is not readable here.
+      sleep 2
+      file=$(ios_probe_file) || true
+      if [ -n "${file:-}" ] && [ -f "$file" ] &&
+        tail -n +$((before + 1)) "$file" | grep -q "render-failed route=$id"; then
+        status="OPEN_ERR"
+        xcrun simctl io "$DEVICE" screenshot "$SHOT_DIR/$id.png" >/dev/null 2>&1 || true
+      else
+        status="OK"
+      fi
     else
       status="REFUSED"
       xcrun simctl io "$DEVICE" screenshot "$SHOT_DIR/$id.png" >/dev/null 2>&1 || true
@@ -153,7 +169,6 @@ record_result() {
 PLATFORM=$(detect_platform)
 echo "platform=$PLATFORM device=$DEVICE"
 if [ "$PLATFORM" = "ios" ]; then
-  PKG_IOS=${PKG:-$PKG_IOS}
   sweep_ios
 else
   sweep_android

@@ -28,6 +28,8 @@ import {
 import { registerRegressionScenarioComponentAction } from './componentActions.nonprod';
 import { claimRegressionScenarioAction } from './runtimeStore';
 import { makeScreenContext } from './screenContext';
+import { recordScreenRenderFailure } from '@/devtools/screenRegistry/probe';
+import { getLatestNavigationName } from '@/utils/navigation';
 
 const ScenarioContext = createContext<RegressionScenarioContext>(
   INACTIVE_REGRESSION_SCENARIO_CONTEXT,
@@ -71,6 +73,9 @@ class ScreenRenderErrorBoundary extends React.Component<
       error?.message,
       info?.componentStack?.split('\n').slice(0, 4).join(' | '),
     );
+    // iOS device sweeps cannot read the JS console, so record the failing
+    // route in the sandbox probe file the sweep host reads.
+    void recordScreenRenderFailure(getLatestNavigationName() || 'unknown');
   }
 
   render() {

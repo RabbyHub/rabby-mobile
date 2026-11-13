@@ -23,3 +23,19 @@ export function recordScreenOpenProbe(screenId: string, opened: boolean) {
     });
   return pending;
 }
+
+/**
+ * Records that a screen threw while rendering.
+ *
+ * Android sweeps detect this from the logcat TypeError; on iOS the error
+ * boundary has to report it itself or a crashed screen looks like a success.
+ */
+export function recordScreenRenderFailure(routeName: string) {
+  const line = `${Date.now()} render-failed route=${routeName}\n`;
+  pending = pending
+    .then(() => appendFile(PROBE_FILE, line, 'utf8'))
+    .catch(() => {
+      // Never let probe I/O change error handling.
+    });
+  return pending;
+}
