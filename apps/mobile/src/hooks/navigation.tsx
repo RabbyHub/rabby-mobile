@@ -40,6 +40,7 @@ import {
 } from '@/core/utils/store';
 import { RefLikeObject } from '@/utils/type';
 import { perfEvents } from '@/core/utils/perf';
+import { logger } from '@/utils/logger';
 import { autoLockEvent } from '@/core/apis/autoLock';
 import { notificationEvents } from '@/core/notifications/data';
 import {
@@ -504,13 +505,16 @@ export const apisHomeTabIndex = {
   isHomeAtFirstTab() {
     return tabIndexSvs.svIndexDecimal.value === 0;
   },
-  setTabIndex(val: number, processJump = false) {
-    'worklet';
+  setTabIndex(val: number, processJump = false, source = 'unknown') {
+    // Plain JS on purpose: taps must be able to flip the JS-owned header
+    // state synchronously, before the pager jump and the heavy page render.
     tabIndexSvs.current = val;
-    if (!processJump) {
-      tabIndexSvs.svIndexDecimal.value = val;
-      runOnJS(() => tabIndexStore.setState({ tabIndex: val }))();
+    if (tabIndexStore.getState().tabIndex !== val) {
+      tabIndexStore.setState({ tabIndex: val });
     }
+    logger.debug(
+      `[home-pager] request index=${val} source=${source} jump=${processJump}`,
+    );
     // The scene pager owns the visible page. Jumping to the page that is
     // already settled is a no-op, so this stays safe for commit notifications.
     homeTabScrollerRef.current?.setIndex(val);
@@ -525,9 +529,10 @@ export const apisHomeTabIndex = {
    * exactly what made the previous tab flash its highlight after a settle.
    */
   publishSettledIndex(val: number) {
-    'worklet';
     tabIndexSvs.current = val;
-    runOnJS(() => tabIndexStore.setState({ tabIndex: val }))();
+    if (tabIndexStore.getState().tabIndex !== val) {
+      tabIndexStore.setState({ tabIndex: val });
+    }
   },
 };
 

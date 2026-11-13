@@ -460,7 +460,7 @@ function AssetsTabBar() {
               key={key}
               style={styles.assetTabItem}
               onPress={() => {
-                apisHomeTabIndex.setTabIndex(index, true);
+                apisHomeTabIndex.setTabIndex(index, true, 'tab-strip');
               }}>
               <CustomLabel
                 index={index}
@@ -541,11 +541,11 @@ export const HomeCustomMaterialTabBar = ({}: Partial<
         secondaryIndicatorViewRef={secondaryIndicatorViewRef}
         handleMeasureSecondaryIndicator={handleMeasureSecondaryIndicator}
         onLeftPress={() => {
-          apisHomeTabIndex.setTabIndex(0, true);
+          apisHomeTabIndex.setTabIndex(0, true, 'indicator-left');
         }}
         onRightPress={() => {
           if (indexDecimal.value < 1) {
-            apisHomeTabIndex.setTabIndex(1, true);
+            apisHomeTabIndex.setTabIndex(1, true, 'indicator-right');
           }
         }}
       />

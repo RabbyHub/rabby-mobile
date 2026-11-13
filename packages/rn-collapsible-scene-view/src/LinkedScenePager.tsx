@@ -90,7 +90,7 @@ export type LinkedSceneDiagnosticEvent =
       type: 'jump';
       requested: number;
       applied: boolean;
-      reason?: 'drag-active' | 'already-settling';
+      reason?: 'drag-active' | 'already-settling' | 'same-page';
       from?: number;
     }
   | {
@@ -780,6 +780,19 @@ function LinkedScenePagerOwner({
         return;
       }
       const rootIndex = rootIndexOf(model, path.key);
+      if (
+        settlingRoot.value < 0 &&
+        rootIndex === rootIndexOf(model, settledRef.current.key)
+      ) {
+        // Already settled there; a redundant tap must not commit or animate.
+        diagnosticsRef.current?.({
+          type: 'jump',
+          requested: rootIndex,
+          applied: false,
+          reason: 'same-page',
+        });
+        return;
+      }
       if (settlingRoot.value === rootIndex) {
         // Already animating to that page; writing the track here would only
         // cancel the animation.
@@ -828,6 +841,18 @@ function LinkedScenePagerOwner({
       }
       const resolved = resolveLinkedScenePath(model, path, remembered.current);
       const rootIndex = rootIndexOf(model, resolved.key);
+      if (
+        settlingRoot.value < 0 &&
+        rootIndex === rootIndexOf(model, settledRef.current.key)
+      ) {
+        diagnosticsRef.current?.({
+          type: 'jump',
+          requested: rootIndex,
+          applied: false,
+          reason: 'same-page',
+        });
+        return;
+      }
       diagnosticsRef.current?.({
         type: 'jump',
         requested: rootIndex,

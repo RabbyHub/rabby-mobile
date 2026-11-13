@@ -30,6 +30,7 @@ import {
 } from '@rabby-wallet/rn-collapsible-scene-view';
 
 import { apisHomeTabIndex, HomeTabName } from '@/hooks/navigation';
+import { isNonPublicProductionEnv } from '@/constant';
 import { RenderActivityBoundary } from '@/hooks/storeActivity/RenderActivityBoundary';
 import { isTabsSwiping } from '@/screens/Address/components/MultiAssets/hooks';
 import { useRegressionScenario } from '@/devtools/regressionScenarios/react';
@@ -47,7 +48,6 @@ import {
   bindHomePagerDebugLive,
   recordHomePagerCommittedPage,
   recordHomePagerDebugEvent,
-  useToggleHomePagerDebugPanel,
 } from './homePagerDiagnostics';
 
 const SCENE_PAGES: readonly LinkedScenePage[] = HOME_SCENE_TABS.map(key => ({
@@ -85,7 +85,6 @@ export function HomeSceneContainer({
   const indicatorPosition = useSharedValue(0);
   const gestureActive = useSharedValue(false);
   const { width: winWidth, height: winHeight } = useWindowDimensions();
-  const { showHomePagerDebugPanel } = useToggleHomePagerDebugPanel();
 
   const handlePagerDiagnostic = useCallback(
     (
@@ -340,7 +339,7 @@ export function HomeSceneContainer({
             gestureActive={gestureActive}
             indicatorPosition={indicatorPosition}
             onDiagnosticEvent={
-              showHomePagerDebugPanel ? handlePagerDiagnostic : undefined
+              isNonPublicProductionEnv ? handlePagerDiagnostic : undefined
             }
             onPathChange={handlePathChange}
             pages={SCENE_PAGES}

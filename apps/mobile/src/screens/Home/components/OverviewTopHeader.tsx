@@ -39,7 +39,11 @@ import Animated, {
   useAnimatedStyle,
   useSharedValue,
 } from 'react-native-reanimated';
-import { apisHomeTabIndex, HomeTabName } from '@/hooks/navigation';
+import {
+  apisHomeTabIndex,
+  HomeTabName,
+  useHomeTabIndex,
+} from '@/hooks/navigation';
 import IconPerpEdit from '@/assets2024/icons/perps/icon-switch-mode.svg';
 import useTokenList from '@/store/tokens';
 import { useHomeDrawerOpacityStyle } from '../hooks/useHomeDrawerAnimate';
@@ -49,7 +53,7 @@ import { makeTestIDProps } from '@/utils/makeTestIDProps';
 import { useShallow } from 'zustand/react/shallow';
 import { MultiHeaderRightHistory } from '../MultiHeaderRightHistory';
 import RefreshNudgedTickerText from '@/components/Animated/RefreshNudgedTickerText';
-import { useValueFromSharedValue } from '@/hooks/reanimated';
+import { HOME_SCENE_TABS } from './scene/homeSceneLayout';
 import {
   isHomeProjectionWaitingForValue,
   useHome24hProjection,
@@ -72,12 +76,17 @@ const BALANCE_TICKER_FONT_SIZE = {
 >;
 
 const HeaderHeight = 30;
-const handleSwitchToTokenTab = (index: number) => {
-  apisHomeTabIndex.setTabIndex(index, true);
+const handleSwitchToTokenTab = (index: number, source: string) => {
+  apisHomeTabIndex.setTabIndex(index, true, source);
 };
 
 export function TabsTopHeader(): JSX.Element {
-  const focusedTab = useValueFromSharedValue(apisHomeTabIndex.svTabName);
+  // JS-owned state, updated synchronously by a tap and by the pager commit.
+  // The shared-value variant arrived one JS round-trip late (and could be
+  // delayed by the heavy list render after a tab switch), which made the
+  // right-hand header form lag by ~0.5-1s.
+  const { tabIndex } = useHomeTabIndex();
+  const focusedTab = HOME_SCENE_TABS[tabIndex] ?? HomeTabName.overview;
 
   const { balanceAvailability, totalBalance } = useHomeBalanceProjection(
     useShallow(state => ({
@@ -255,7 +264,7 @@ export function TabsTopHeader(): JSX.Element {
           style={[styles.leftContent, netWorthStyle]}>
           <Pressable
             style={styles.netWorthPressable}
-            onPress={() => handleSwitchToTokenTab(0)}>
+            onPress={() => handleSwitchToTokenTab(0, 'header-balance')}>
             {showBalanceLoadingWithoutLocal ? (
               <View style={styles.balanceLoadingBox}>
                 <LoadingCircle />
@@ -302,7 +311,7 @@ export function TabsTopHeader(): JSX.Element {
           // RNGH header buttons do not stop RN responder bubbling. Only the
           // empty header area should switch tabs, never Add Wallet / Feedback.
           if (event.target === event.currentTarget) {
-            handleSwitchToTokenTab(1);
+            handleSwitchToTokenTab(1, 'header-blank');
           }
         }}>
         {showRightArea ? (
