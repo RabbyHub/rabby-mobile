@@ -184,8 +184,8 @@ android {
         applicationId "com.debank.rabbymobile"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 100271
-        versionName "0.6.98"
+        versionCode 100273
+        versionName "0.6.99"
         missingDimensionStrategy "store", "play"
         ndk {
           abiFilters (*reactNativeArchitectures())
