@@ -16,6 +16,10 @@ DEV=${DEVICE:-$(adb devices | awk '$2=="device"{print $1; exit}')}
 PKG=${PKG:-com.debank.rabbymobile.debug}
 ACT=$PKG/com.debank.rabbymobile.MainActivity
 OUT=${OUT:-/tmp/screen-registry-sweep.txt}
+# Screenshots + per-screen logs for anything that is not OK, so a failure can be
+# inspected later instead of only being reported as an id.
+SHOT_DIR=${SHOT_DIR:-$(dirname "$OUT")/screen-registry-sweep-shots}
+mkdir -p "$SHOT_DIR"
 : > "$OUT"
 IDS=${IDS:?set IDS=<file with screen ids>}
 while read -r id; do
@@ -35,12 +39,25 @@ while read -r id; do
   log=$(adb -s $DEV logcat -d </dev/null)
   line=$(printf '%s\n' "$log" | grep -o "\[debug-open-screen\] screen=$id opened=[a-z]*" | tail -1)
   err=$(printf '%s\n' "$log" | grep -E "ReactNativeJS.*(TypeError|Cannot read|is not a function)" | tail -1 | cut -c1-110)
+  status=""
   if [ -z "$line" ]; then
-    echo "NOLOG   $id" >> "$OUT"
+    status="NOLOG"
   elif echo "$line" | grep -q 'opened=true'; then
-    if [ -n "$err" ]; then echo "OPEN_ERR $id :: $err" >> "$OUT"; else echo "OK      $id" >> "$OUT"; fi
+    if [ -n "$err" ]; then status="OPEN_ERR"; else status="OK"; fi
   else
-    echo "REFUSED $id" >> "$OUT"
+    status="REFUSED"
+  fi
+
+  if [ "$status" = "OK" ]; then
+    echo "OK      $id" >> "$OUT"
+  else
+    {
+      echo "$status $id"
+      [ -n "${err:-}" ] && echo "  error: $err"
+      echo "  error: ${err:-none}"
+    } >> "$OUT"
+    adb -s $DEV exec-out screencap -p </dev/null >"$SHOT_DIR/$id.png" 2>/dev/null || true
+    printf '%s\n' "$log" >"$SHOT_DIR/$id.log" 2>/dev/null || true
   fi
 done < "$IDS"
 awk '{print $1}' "$OUT" | sort | uniq -c
