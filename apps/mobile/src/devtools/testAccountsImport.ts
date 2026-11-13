@@ -20,11 +20,16 @@
  */
 import RNFS from '@rabby-wallet/react-native-fs';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import { Platform } from 'react-native';
 
 import { requestKeyring } from '@/core/apis/keyring';
 import { verifyPasswordOrUnlock } from '@/core/apis/lock';
 import { markAutomation } from '@/core/utils/automationMarker';
 import { REGRESSION_DEFAULT_PASSWORD } from './regressionScenarios/credentials.nonprod';
+import {
+  expectedTestAccountsPath,
+  isAllowedTestAccountsPath,
+} from './testAccountsPath';
 
 const PRIVATE_KEY_PATTERN = /^(0x)?[0-9a-fA-F]{64}$/;
 const MNEMONIC_WORD_COUNTS = new Set([12, 15, 18, 21, 24]);
@@ -32,6 +37,31 @@ const MNEMONIC_WORD_COUNTS = new Set([12, 15, 18, 21, 24]);
 export type TestAccountsEntry =
   | { kind: 'privateKey'; value: string; note: string }
   | { kind: 'mnemonic'; value: string; note: string };
+
+/**
+ * The runner can only drop the seed file in the app-owned directory:
+ * - iOS Simulator: `<app container>/Documents/kpi-test-accounts.txt`
+ * - Android:       `/sdcard/Android/data/<pkg>/files/kpi-test-accounts.txt`
+ *
+ * Never trust the deeplink path itself: an arbitrary app/page can open the
+ * scheme, and this command deletes the file after reading it.
+ */
+export function resolveTestAccountsPath(candidate?: string): string | null {
+  const baseDir =
+    Platform.OS === 'ios'
+      ? RNFS.DocumentDirectoryPath
+      : RNFS.ExternalDirectoryPath;
+  if (!baseDir) {
+    return null;
+  }
+  if (!candidate) {
+    return expectedTestAccountsPath(baseDir);
+  }
+  if (!isAllowedTestAccountsPath(candidate, baseDir)) {
+    return null;
+  }
+  return expectedTestAccountsPath(baseDir);
+}
 
 export function parseTestAccountsFile(raw: string): {
   entries: TestAccountsEntry[];
@@ -77,21 +107,36 @@ export async function runTestAccountsImport(options: { path: string }) {
   const startedAt = Date.now();
   const marker = '[debug-import-test-accounts]';
 
-  let raw: string;
+  const path = resolveTestAccountsPath(options.path);
+  if (!path) {
+    console.error(`${marker} rejected_path`);
+    return;
+  }
+
+  // Authenticate before touching the file: a link must not be able to read or
+  // delete anything while the wallet is still locked.
   try {
-    raw = await RNFS.readFile(options.path, 'utf8');
+    await verifyPasswordOrUnlock(REGRESSION_DEFAULT_PASSWORD);
   } catch (error) {
     console.error(
-      `${marker} read_failed path=${options.path} error=${
-        (error as Error)?.message || error
-      }`,
+      `${marker} unlock_failed error=${(error as Error)?.message || error}`,
+    );
+    return;
+  }
+
+  let raw: string;
+  try {
+    raw = await RNFS.readFile(path, 'utf8');
+  } catch (error) {
+    console.error(
+      `${marker} read_failed error=${(error as Error)?.message || error}`,
     );
     return;
   }
 
   // The file carries secrets; drop it as soon as it is in memory.
   try {
-    await RNFS.unlink(options.path);
+    await RNFS.unlink(path);
   } catch {
     // best effort
   }
@@ -106,15 +151,6 @@ export async function runTestAccountsImport(options: { path: string }) {
 
   let imported = 0;
   let failed = 0;
-
-  try {
-    await verifyPasswordOrUnlock(REGRESSION_DEFAULT_PASSWORD);
-  } catch (error) {
-    console.error(
-      `${marker} unlock_failed error=${(error as Error)?.message || error}`,
-    );
-    return;
-  }
 
   const { importPrivateKey } = await import('@/core/apis/privateKey');
   const { generateKeyringWithMnemonic, activeAndPersistAccountsByMnemonics } =
