@@ -195,6 +195,7 @@ type TestKitsNavigatorParamsList = {
   [RootNames.DevSwitches]?: {
     appLaunchLock?: boolean;
   };
+  [RootNames.DevScreenInjectionProbe]?: {};
   [RootNames.DevPerf]?: {};
   [RootNames.DebugLogViewer]?: {};
   [RootNames.StartupPerformanceLogViewer]?: {};

@@ -59,8 +59,10 @@ function extractScreens(source) {
       body.match(/name='(\w+)'/);
     if (!nameMatch) continue;
     const componentMatch =
-      body.match(/component=\{([A-Za-z_$][\w$]*)/) ||
-      body.match(/getComponent=\{\(\)\s*=>\s*([A-Za-z_$][\w$]*)/);
+      // `component={Foo}` or `component={withScreenPropsInjection(Foo)}`
+      body.match(
+        /component=\{(?:withScreenPropsInjection\()?([A-Za-z_$][\w$]*)/,
+      ) || body.match(/getComponent=\{\(\)\s*=>\s*([A-Za-z_$][\w$]*)/);
     screens.push({
       id: nameMatch[1],
       stack: stackName,

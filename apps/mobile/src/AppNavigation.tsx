@@ -1,3 +1,4 @@
+import { withScreenPropsInjection } from '@/devtools/screenRegistry/screenInjection';
 import { RoundedFontStyles } from '@/core/utils/fonts';
 import { createCustomNativeStackNavigator as createNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
 import {
@@ -578,11 +579,11 @@ export default function AppNavigation() {
                   initialRouteName={initialRouteName}>
                   <RootStack.Screen
                     name={RootNames.StackGetStarted}
-                    component={GetStartedNavigator}
+                    component={withScreenPropsInjection(GetStartedNavigator)}
                   />
                   <RootStack.Screen
                     name={RootNames.StackRoot}
-                    component={HomeScreenNavigator}
+                    component={withScreenPropsInjection(HomeScreenNavigator)}
                     options={{
                       ...RootAnimOptions,
                       // Home keeps animated pagers mounted across nested add-wallet
@@ -593,16 +594,16 @@ export default function AppNavigation() {
                   />
                   <RootStack.Screen
                     name={RootNames.StackHomeNonTab}
-                    component={HomeNonTabNavigator}
+                    component={withScreenPropsInjection(HomeNonTabNavigator)}
                     options={RootAnimOptions}
                   />
                   <RootStack.Screen
                     name={RootNames.SingleAddressStack}
-                    component={SingleAddressNavigator}
+                    component={withScreenPropsInjection(SingleAddressNavigator)}
                   />
                   <RootStack.Screen
                     name={RootNames.Unlock}
-                    component={RegressionUnlockScreen}
+                    component={withScreenPropsInjection(RegressionUnlockScreen)}
                     options={mergeScreenOptions({
                       title: '',
                       // another valid composition
@@ -622,7 +623,7 @@ export default function AppNavigation() {
                   />
                   <RootStack.Screen
                     name={RootNames.NotFound}
-                    component={NotFoundScreen}
+                    component={withScreenPropsInjection(NotFoundScreen)}
                     options={mergeScreenOptions({
                       title: 'Rabby Wallet',
                       headerShadowVisible: false,
@@ -635,15 +636,15 @@ export default function AppNavigation() {
                   />
                   <RootStack.Screen
                     name={RootNames.StackTestkits}
-                    component={TestkitsNavigator}
+                    component={withScreenPropsInjection(TestkitsNavigator)}
                   />
                   <RootStack.Screen
                     name={RootNames.AccountTransaction}
-                    component={AccountNavigator}
+                    component={withScreenPropsInjection(AccountNavigator)}
                   />
                   <RootStack.Screen
                     name={RootNames.StackTransaction}
-                    component={TransactionNavigator}
+                    component={withScreenPropsInjection(TransactionNavigator)}
                     listeners={({ route, navigation }) => ({
                       transitionEnd: event => {
                         browserPerpsNavigation.onTransitionEnd({
@@ -656,20 +657,20 @@ export default function AppNavigation() {
                   />
                   <RootStack.Screen
                     name={RootNames.StackSettings}
-                    component={SettingNavigator}
+                    component={withScreenPropsInjection(SettingNavigator)}
                   />
                   <RootStack.Screen
                     name={RootNames.StackAddress}
-                    component={AddressNavigator}
+                    component={withScreenPropsInjection(AddressNavigator)}
                   />
                   <RootStack.Screen
                     name={RootNames.SetupWallet}
-                    component={SetupWallet}
+                    component={withScreenPropsInjection(SetupWallet)}
                     options={{ headerShown: false }}
                   />
                   <RootStack.Screen
                     name={RootNames.SelectImportMethod}
-                    component={SelectImportMethod}
+                    component={withScreenPropsInjection(SelectImportMethod)}
                     options={mergeScreenOptions2024([
                       {
                         headerShown: true,
@@ -681,7 +682,7 @@ export default function AppNavigation() {
                   />
                   <RootStack.Screen
                     name={RootNames.ImportRabbyWallet}
-                    component={ImportRabbyWallet}
+                    component={withScreenPropsInjection(ImportRabbyWallet)}
                     options={mergeScreenOptions2024([
                       {
                         headerShown: true,
@@ -698,7 +699,7 @@ export default function AppNavigation() {
                   />
                   <RootStack.Screen
                     name={RootNames.ImportSecret}
-                    component={ImportSecret}
+                    component={withScreenPropsInjection(ImportSecret)}
                     options={mergeScreenOptions2024([
                       {
                         headerShown: true,
@@ -710,7 +711,7 @@ export default function AppNavigation() {
                   />
                   <RootStack.Screen
                     name={RootNames.MoreImportMethods}
-                    component={MoreImportMethods}
+                    component={withScreenPropsInjection(MoreImportMethods)}
                     options={mergeScreenOptions2024([
                       {
                         headerShown: true,
@@ -727,7 +728,7 @@ export default function AppNavigation() {
                   />
                   <RootStack.Screen
                     name={RootNames.SelectAddMethod}
-                    component={SelectAddMethod}
+                    component={withScreenPropsInjection(SelectAddMethod)}
                     options={mergeScreenOptions2024([
                       {
                         headerShown: true,
@@ -747,7 +748,7 @@ export default function AppNavigation() {
                   />
                   <RootStack.Screen
                     name={RootNames.Backup}
-                    component={Backup}
+                    component={withScreenPropsInjection(Backup)}
                     options={mergeScreenOptions2024([
                       {
                         headerShown: true,
@@ -759,7 +760,7 @@ export default function AppNavigation() {
                   />
                   <RootStack.Screen
                     name={RootNames.StackDapps}
-                    component={DappsNavigator}
+                    component={withScreenPropsInjection(DappsNavigator)}
                   />
                   <RootStack.Group
                     screenOptions={
@@ -769,7 +770,7 @@ export default function AppNavigation() {
                     }>
                     <RootStack.Screen
                       name={RootNames.NftDetail}
-                      component={NFTDetailScreen}
+                      component={withScreenPropsInjection(NFTDetailScreen)}
                       options={mergeScreenOptions({
                         headerShown: true,
                         // QA 1343: the detail rows draw their own back button.
@@ -788,7 +789,7 @@ export default function AppNavigation() {
                     />
                     <RootStack.Screen
                       name={RootNames.TokenDetail}
-                      component={TokenDetailScreen}
+                      component={withScreenPropsInjection(TokenDetailScreen)}
                       options={({ route }) =>
                         mergeScreenOptions({
                           headerShown: true,
@@ -839,7 +840,9 @@ export default function AppNavigation() {
                     />
                     <RootStack.Screen
                       name={RootNames.TokenMarketInfo}
-                      component={TokenMarketInfoScreen}
+                      component={withScreenPropsInjection(
+                        TokenMarketInfoScreen,
+                      )}
                       options={({ route }) =>
                         mergeScreenOptions({
                           headerShown: true,
@@ -884,7 +887,7 @@ export default function AppNavigation() {
                     />
                     <RootStack.Screen
                       name={RootNames.Scanner}
-                      component={ScannerScreen}
+                      component={withScreenPropsInjection(ScannerScreen)}
                       options={mergeScreenOptions({
                         title: 'Scan',
                         headerShadowVisible: false,
@@ -966,7 +969,7 @@ function AccountNavigator() {
       })}>
       <AccountStack.Screen
         name={RootNames.MyBundle}
-        component={MyBundleScreen}
+        component={withScreenPropsInjection(MyBundleScreen)}
         options={{
           title: 'My Bundle',
         }}

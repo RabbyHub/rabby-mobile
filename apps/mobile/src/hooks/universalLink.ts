@@ -160,6 +160,7 @@ type OnParseUrlAndProcessAction = (payload: {
   debugOpenScreen?: {
     screen?: string;
     params?: Record<string, unknown>;
+    props?: Record<string, unknown>;
     store?: Record<string, unknown>;
     list?: boolean;
     push?: boolean;
@@ -535,6 +536,7 @@ function parseNonProductionMaintenanceLink(appLink: string) {
       debugOpenScreen: {
         screen: rawScreen,
         params: parseJsonParam('params'),
+        props: parseJsonParam('props'),
         store: parseJsonParam('store'),
         list: wantsList,
         push: ['1', 'true', 'yes'].includes(
@@ -1125,6 +1127,7 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
           const opened = await module.openScreenForDebug({
             screen: request.screen,
             params: request.params,
+            props: request.props,
             store: request.store,
             push: request.push,
           });

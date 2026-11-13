@@ -8,6 +8,7 @@ import {
 } from './screens.gen';
 import { resolveScreenFixture } from './screenFixtures';
 import { recordScreenOpenProbe } from './probe';
+import { withInjectedPropsParam } from './screenInjection';
 import { applyInjectedStore } from './storeInjection';
 
 export type { RegisteredScreenId };
@@ -154,6 +155,8 @@ export function openScreenById(
 export type OpenScreenRequest = {
   screen: string;
   params?: Record<string, unknown>;
+  /** Non-route props merged into the first mount of that screen (non-production only). */
+  props?: Record<string, unknown>;
   store?: Record<string, unknown>;
   /** Push a new entry instead of reusing an existing route (scenario steps). */
   push?: boolean;
@@ -167,8 +170,12 @@ export async function openScreenForDebug(request: OpenScreenRequest) {
   if (request.store && Object.keys(request.store).length > 0) {
     await applyInjectedStore(request.store);
   }
-  return openScreenById(request.screen, request.params ?? {}, {
-    push: request.push,
-    probe: true,
-  });
+  return openScreenById(
+    request.screen,
+    withInjectedPropsParam(request.params ?? {}, request.props),
+    {
+      push: request.push,
+      probe: true,
+    },
+  );
 }
