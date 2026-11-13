@@ -3,7 +3,7 @@ import React from 'react';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import Animated, { clamp, useAnimatedStyle } from 'react-native-reanimated';
-import { StyleSheet, TextProps } from 'react-native';
+import { StyleSheet, TextProps, View } from 'react-native';
 import { ThemeColors2024 } from '@rabby-wallet/base-utils';
 import { HOME_TOP_HEADER_SIZES } from '@/constant/home';
 import { Text } from '@/components/Typography';
@@ -22,15 +22,30 @@ interface CustomLabelProps {
   style?: TextProps['style'];
 }
 
+const LABEL_WIDTH = 70;
+// Park the plate a hair past the label edge: at exactly `width` its antialiased
+// edge still touches the clip boundary and leaves a 1px seam.
+const PLATE_TRAVEL = LABEL_WIDTH + 1;
+
 /**
- * One tab label: a pill that fades in with the swipe and two stacked texts.
+ * One tab label. The active chip (black plate + white text) is a *moving,
+ * clipped* layer instead of a fading one:
  *
- * The weight is `1 - |index - track|`, so dragging between two tabs hands the
- * highlight over gradually ("swipe half way, each of them is half lit") instead
- * of flipping at the midpoint. Only `opacity` is animated: the text colour is
- * two static layers, because writing `color` from a worklet re-publishes a text
- * prop on the shadow tree every frame, which is what makes Fabric commits
- * expensive here.
+ *   container ── grey text (static)
+ *     └ mover (width = label, translateX = d * width, overflow hidden)
+ *          ├ black plate
+ *          └ white text (translateX = -d * width, i.e. pinned on screen)
+ *
+ * `d = track - index`, so dragging towards the next tab slides this tab's plate
+ * out to the right and the next tab's plate in from the left; both are clipped
+ * by their own label box, and the gap between labels stays empty, so the plate
+ * reads as if it passes behind the wall between them. The counter-translated
+ * white text keeps its glyphs in place and is only visible where the plate
+ * still covers them — the text turns back to the inactive colour exactly where
+ * the plate has left.
+ *
+ * Only `transform` is animated: no `color`, `backgroundColor`, width or text
+ * prop is written from the worklet.
  */
 const CustomLabel = ({
   index,
@@ -38,26 +53,24 @@ const CustomLabel = ({
   text,
   style,
 }: CustomLabelProps) => {
-  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+  const { styles } = useTheme2024({ getStyle: getStyles });
 
-  const pillStyle = useAnimatedStyle(() => {
-    const weight = clamp(1 - Math.abs(index - indexDecimal.value), 0, 1);
-    // Ease it so the pill only shows up close to its own tab.
-    return { opacity: weight * weight * (3 - 2 * weight) };
+  const moverStyle = useAnimatedStyle(() => {
+    const d = clamp(indexDecimal.value - index, -1, 1);
+    return { transform: [{ translateX: d * PLATE_TRAVEL }] };
   });
-  const activeTextStyle = useAnimatedStyle(() => {
-    return {
-      opacity: clamp(1 - Math.abs(index - indexDecimal.value), 0, 1),
-    };
+  const pinnedTextStyle = useAnimatedStyle(() => {
+    const d = clamp(indexDecimal.value - index, -1, 1);
+    return { transform: [{ translateX: -d * PLATE_TRAVEL }] };
   });
 
   return (
     <Animated.View style={styles.container}>
-      <Animated.View style={[styles.pill, pillStyle]} />
-      <Animated.View style={styles.labelStack}>
-        <Text style={[styles.label, styles.labelInactive, style]}>{text}</Text>
+      <Text style={[styles.label, styles.labelInactive, style]}>{text}</Text>
+      <Animated.View style={[styles.mover, moverStyle]}>
+        <View style={styles.plate} />
         <Animated.Text
-          style={[styles.label, styles.labelActive, style, activeTextStyle]}>
+          style={[styles.label, styles.labelActive, style, pinnedTextStyle]}>
           {text}
         </Animated.Text>
       </Animated.View>
@@ -74,23 +87,31 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     alignItems: 'center',
     justifyContent: 'center',
     height: HOME_TOP_HEADER_SIZES.headerTabItemHeight,
-    width: 70,
+    width: LABEL_WIDTH,
     paddingLeft: 8,
     paddingRight: 8,
     borderRadius: 8,
     overflow: 'hidden',
   },
-  pill: {
+  // Same box as the label, free to slide; clips both the plate and the text.
+  mover: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    width: LABEL_WIDTH,
+    height: HOME_TOP_HEADER_SIZES.headerTabItemHeight,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 8,
+    overflow: 'hidden',
+  },
+  plate: {
     ...StyleSheet.absoluteFillObject,
     borderRadius: 8,
     backgroundColor: isLight
       ? ThemeColors2024.dark['neutral-bg-1']
       : colors2024['neutral-bg-1'],
-  },
-  labelStack: {
-    position: 'relative',
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   label: {
     fontSize: 16,
@@ -104,7 +125,6 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     color: colors2024['neutral-secondary'],
   },
   labelActive: {
-    ...StyleSheet.absoluteFillObject,
     color: isLight
       ? ThemeColors2024.dark['neutral-title-1']
       : ThemeColors2024.light['neutral-title-1'],
