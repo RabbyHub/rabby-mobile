@@ -43,7 +43,7 @@ const getStyle = createGetStyles2024(() => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 11,
     lineHeight: 14,
-    fontWeight: '900',
+    fontWeight: '800',
     color: '#000000',
   },
 }));

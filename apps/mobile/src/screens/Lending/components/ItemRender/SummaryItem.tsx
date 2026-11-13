@@ -422,7 +422,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   extraLeftMore: {
     fontSize: 12,
     lineHeight: 16,
-    fontWeight: '900',
+    fontWeight: '800',
     fontFamily: 'SF Pro Rounded',
     color: colors2024['neutral-title-1'],
   },

@@ -168,7 +168,7 @@ const getStyle = createGetStyles2024(
     content: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 12 },
     title: {
       fontFamily: 'SF Pro Rounded',
-      fontWeight: '900',
+      fontWeight: '800',
       fontSize: 20,
       lineHeight: 24,
       textAlign: 'center',

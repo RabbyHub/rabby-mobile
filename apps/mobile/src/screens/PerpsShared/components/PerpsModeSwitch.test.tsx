@@ -48,7 +48,7 @@ describe('PerpsModeSwitch', () => {
     ).toMatchObject({
       fontFamily: 'SF Pro Rounded',
       fontSize: 20,
-      fontWeight: '900',
+      fontWeight: '800',
       includeFontPadding: false,
       lineHeight: 24,
     });

@@ -129,7 +129,7 @@ const styles = {
     justifyContent: 'center',
   } as ViewStyle,
   title: {
-    fontWeight: '900',
+    fontWeight: '800',
     fontFamily: 'SF Pro Rounded',
   } as TextStyle,
   measure: {

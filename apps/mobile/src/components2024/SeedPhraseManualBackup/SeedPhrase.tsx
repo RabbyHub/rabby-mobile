@@ -118,7 +118,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   title: {
     flexShrink: 0,
-    fontWeight: '900',
+    fontWeight: '800',
     fontSize: 20,
     lineHeight: 24,
     fontFamily: 'SF Pro Rounded',
@@ -318,7 +318,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 20,
     fontStyle: 'normal',
-    fontWeight: '900',
+    fontWeight: '800',
     lineHeight: 24,
     marginTop: 8,
   },

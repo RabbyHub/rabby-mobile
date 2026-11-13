@@ -207,7 +207,7 @@ const getStyle = createGetStyles2024(ctx => {
     },
     titleText: {
       fontFamily: 'SF Pro Rounded',
-      fontWeight: '900',
+      fontWeight: '800',
       lineHeight: 24,
       fontSize: 20,
       // Fabric/Android keeps the platform font padding on the title, which

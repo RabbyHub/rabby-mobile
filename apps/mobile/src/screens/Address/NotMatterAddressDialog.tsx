@@ -243,7 +243,7 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
   },
   listTitle: {
     fontSize: 20,
-    fontWeight: '900',
+    fontWeight: '800',
     textAlign: 'center',
     lineHeight: 24,
     fontFamily: 'SF Pro Rounded',
