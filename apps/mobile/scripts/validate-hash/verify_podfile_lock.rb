@@ -14,8 +14,10 @@
 # This check keeps the deployment contract and allows only that one edit:
 # - every lockfile section except SPEC CHECKSUMS must be identical;
 # - a changed checksum is accepted only for a trunk pod whose cached podspec
-#   hashes to the new checksum, declares the deprecation, and hashes to the
-#   committed checksum once the deprecation keys are removed.
+#   hashes to the new checksum, declares the deprecation, hashes to the
+#   committed checksum once whole lines holding exactly `"deprecated": true`
+#   or a plain `"deprecated_in_favor_of"` name are removed, and parses to the
+#   same podspec apart from those top-level keys.
 # Anything else fails closed.
 #
 # Usage:
@@ -32,8 +34,13 @@ require 'yaml'
 module PodfileLockVerifier
   CHECKSUMS_KEY = 'SPEC CHECKSUMS'
   TRUNK_REPO_KEY = 'trunk'
-  DEPRECATION_LINE = /^  "deprecated(?:_in_favor_of)?": [^\n]*,\n/.freeze
-  TRAILING_DEPRECATION_LINE = /,\n  "deprecated(?:_in_favor_of)?": [^\n]*\n(\}\n?)\z/.freeze
+  DEPRECATION_KEYS = %w[deprecated deprecated_in_favor_of].freeze
+  # A removable line holds exactly one deprecation entry with a constrained
+  # value and nothing else, so it cannot smuggle other keys (for example a
+  # duplicate "source", where the last occurrence wins when parsed).
+  DEPRECATION_ENTRY = %r{(?:"deprecated": true|"deprecated_in_favor_of": "[A-Za-z0-9_.+\-/]*")}.freeze
+  DEPRECATION_LINE = /^  #{DEPRECATION_ENTRY},\n/.freeze
+  TRAILING_DEPRECATION_LINE = /,\n  #{DEPRECATION_ENTRY}\n(\}\n?)\z/.freeze
 
   Result = Struct.new(:errors, :warnings)
 
@@ -79,7 +86,21 @@ module PodfileLockVerifier
 
   def deprecated?(text)
     spec = JSON.parse(text)
-    spec['deprecated'] == true || spec.key?('deprecated_in_favor_of')
+    spec.is_a?(Hash) && (spec['deprecated'] == true || spec.key?('deprecated_in_favor_of'))
+  rescue JSON::ParserError
+    false
+  end
+
+  # The stripped text already hashes to the committed checksum, so the removed
+  # lines are the only added bytes. This also requires them to have been
+  # top-level keys: a deprecation line placed inside a nested object (such as
+  # "source" or a subspec) would leave the parsed podspec otherwise different.
+  def deprecation_only_change?(text, stripped)
+    current = JSON.parse(text)
+    committed = JSON.parse(stripped)
+    return false unless current.is_a?(Hash) && committed.is_a?(Hash)
+
+    current.reject { |key, _| DEPRECATION_KEYS.include?(key) } == committed
   rescue JSON::ParserError
     false
   end
@@ -101,10 +122,15 @@ module PodfileLockVerifier
     end
     return "#{name} #{version}: podspec changed upstream without a deprecation (#{old_sum} -> #{new_sum})" unless deprecated?(text)
 
-    restored_sum = Digest::SHA1.hexdigest(strip_deprecation(text))
+    stripped = strip_deprecation(text)
+    restored_sum = Digest::SHA1.hexdigest(stripped)
     unless restored_sum == old_sum
       return "#{name} #{version}: podspec changed beyond the deprecation marker " \
              "(#{old_sum} -> #{new_sum}, #{restored_sum} without the marker)"
+    end
+    unless deprecation_only_change?(text, stripped)
+      return "#{name} #{version}: deprecation marker is not limited to top-level deprecation keys " \
+             "(#{old_sum} -> #{new_sum})"
     end
 
     nil

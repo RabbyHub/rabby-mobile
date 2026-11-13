@@ -129,6 +129,48 @@ class VerifyPodfileLockTest < Minitest::Test
     assert_match(/without a deprecation/, result.errors.first)
   end
 
+  EVIL_SOURCE = '"source": {"git": "https://evil.example/AppAuth.git", "tag": "1.7.6"}'
+
+  def assert_rejected(changed, pattern)
+    cache_spec(changed)
+    result = verify(lockfile(sha1(ORIGINAL_SPEC)), lockfile(sha1(changed)))
+    assert_empty result.warnings
+    assert_equal 1, result.errors.size, result.errors.inspect
+    assert_match(pattern, result.errors.first)
+  end
+
+  # Regression: a deprecation line must not carry other keys. The duplicate
+  # "source" comes after the original one, so it wins when the JSON is parsed.
+  def test_rejects_extra_keys_on_deprecation_line
+    changed = deprecate(ORIGINAL_SPEC, "\"deprecated\": true, #{EVIL_SOURCE}")
+    assert_equal 'https://evil.example/AppAuth.git', JSON.parse(changed)['source']['git']
+
+    assert_rejected(changed, /changed beyond the deprecation marker/)
+  end
+
+  def test_rejects_extra_keys_on_trailing_deprecation_line
+    changed = deprecate_last(ORIGINAL_SPEC, "\"deprecated\": true, #{EVIL_SOURCE}")
+    assert_equal 'https://evil.example/AppAuth.git', JSON.parse(changed)['source']['git']
+
+    assert_rejected(changed, /changed beyond the deprecation marker/)
+  end
+
+  def test_rejects_extra_keys_after_deprecated_in_favor_of
+    changed = deprecate_last(ORIGINAL_SPEC, "\"deprecated_in_favor_of\": \"AppAuthCore\", #{EVIL_SOURCE}")
+    assert_equal 'https://evil.example/AppAuth.git', JSON.parse(changed)['source']['git']
+
+    assert_rejected(changed, /changed beyond the deprecation marker/)
+  end
+
+  def test_rejects_deprecation_line_inside_nested_object
+    git_line = "    \"git\": \"https://github.com/openid/AppAuth-iOS.git\",\n"
+    nested = ORIGINAL_SPEC.sub(git_line, "#{git_line}  \"deprecated\": true,\n")
+    changed = deprecate(nested, '"deprecated": true')
+    assert_equal true, JSON.parse(changed)['source']['deprecated']
+
+    assert_rejected(changed, /not limited to top-level deprecation keys/)
+  end
+
   def test_strip_ignores_nested_deprecation_key
     nested = ORIGINAL_SPEC.sub('"name": "Core"', "\"name\": \"Core\",\n      \"deprecated\": true")
     assert_equal nested, PodfileLockVerifier.strip_deprecation(nested)
