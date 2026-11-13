@@ -664,7 +664,10 @@ function HistoryContent({
             <ScreenHeaderAccountSwitcher
               forScene={isForMultipleAddress ? 'MultiHistory' : 'History'}
               titleText="Transactions"
-              disableSwitch
+              // Only the single-address history has no switcher modal; the
+              // multi-address list must keep its caret and tap-to-switch
+              // behaviour (QA 1390).
+              disableSwitch={!isForMultipleAddress}
             />
           )}
         </View>
