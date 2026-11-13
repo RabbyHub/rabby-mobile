@@ -856,13 +856,21 @@ export const usePerpsProTrade = ({
       }),
     [hasCurrentPosition, hasOpenOrders, marginModeConstraint],
   );
+  // These actions consume market configuration, not ticker prices. Keep their
+  // identities stable across price updates so closed configuration sheets can
+  // bail out without retaining stale account, pending or leverage inputs.
+  const leverageMarketKey = market?.marketKey;
+  const leverageCoin = market?.canonicalCoin;
+  const marketMaxLeverage = market?.marketData.maxLeverage;
   const setMarginMode = useCallback(
     async (next: 'cross' | 'isolated') => {
       if (
         !tradeConfigurationReady ||
         !accountFacts.account ||
         !accountIdentity ||
-        !market ||
+        !leverageMarketKey ||
+        !leverageCoin ||
+        marketMaxLeverage == null ||
         leveragePending
       ) {
         return false;
@@ -882,17 +890,17 @@ export const usePerpsProTrade = ({
         return false;
       }
       dirtyConfigurationRef.current = true;
-      const expectedMarketKey = market.marketKey;
+      const expectedMarketKey = leverageMarketKey;
       const expectedAccountIdentity = accountIdentity;
       const success = await updateLeverageRequest({
         account: accountFacts.account,
         action: 'marginMode',
-        coin: market.canonicalCoin,
+        coin: leverageCoin,
         currentIsCross: marginMode === 'cross',
         currentLeverage: leverage,
         isCross: next === 'cross',
         leverage,
-        maxLeverage: market.marketData.maxLeverage,
+        maxLeverage: marketMaxLeverage,
       });
       if (!success) {
         dirtyConfigurationRef.current = false;
@@ -916,7 +924,7 @@ export const usePerpsProTrade = ({
         accountIdentity,
         leverage,
         marginMode: next,
-        marketKey: market.marketKey,
+        marketKey: leverageMarketKey,
       };
       dirtyConfigurationRef.current = false;
       return true;
@@ -929,7 +937,9 @@ export const usePerpsProTrade = ({
       leverageConfigurationScopeKey,
       marginMode,
       marginModeDisabledReason,
-      market,
+      leverageCoin,
+      leverageMarketKey,
+      marketMaxLeverage,
       t,
       tradeConfigurationReady,
       updateLeverageRequest,
@@ -940,17 +950,19 @@ export const usePerpsProTrade = ({
       if (
         !accountFacts.account ||
         !accountIdentity ||
-        !market ||
+        !leverageMarketKey ||
+        !leverageCoin ||
+        marketMaxLeverage == null ||
         leveragePending ||
         !tradeConfigurationReady
       ) {
         return false;
       }
-      const max = Math.max(1, market.marketData.maxLeverage);
+      const max = Math.max(1, marketMaxLeverage);
       const normalized = Math.min(max, Math.max(1, Math.round(next)));
       const success = await updateLeverageRequest({
         account: accountFacts.account,
-        coin: market.canonicalCoin,
+        coin: leverageCoin,
         currentIsCross: marginMode === 'cross',
         currentLeverage: leverage,
         isCross: marginMode === 'cross',
@@ -967,7 +979,7 @@ export const usePerpsProTrade = ({
         accountIdentity,
         leverage: normalized,
         marginMode,
-        marketKey: market.marketKey,
+        marketKey: leverageMarketKey,
       };
       dirtyConfigurationRef.current = false;
       return true;
@@ -979,7 +991,9 @@ export const usePerpsProTrade = ({
       leveragePending,
       leverageConfigurationScopeKey,
       marginMode,
-      market,
+      leverageCoin,
+      leverageMarketKey,
+      marketMaxLeverage,
       tradeConfigurationReady,
       updateLeverageRequest,
     ],

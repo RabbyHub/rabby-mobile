@@ -1363,7 +1363,11 @@ describe('PerpsProMarketSelector', () => {
       mockBottomSheetModalProps.mock.calls[
         mockBottomSheetModalProps.mock.calls.length - 1
       ][0];
-    expect(modalProps.enableContentPanningGesture).toBe(false);
+    // Content panning stays enabled so dragging the list past its top moves the
+    // sheet; vertical-only activation leaves horizontal tab swipes to the pager.
+    expect(modalProps.enableContentPanningGesture).not.toBe(false);
+    expect(modalProps.activeOffsetY).toEqual([-10, 10]);
+    expect(modalProps.failOffsetX).toEqual([-16, 16]);
     expect(modalProps.enablePanDownToClose).toBe(true);
     expect(modalProps.keyboardBehavior).toBe('extend');
     expect(modalProps.keyboardBlurBehavior).toBe('restore');

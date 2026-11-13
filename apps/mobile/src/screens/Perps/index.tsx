@@ -1,17 +1,23 @@
 import { useEnsurePerpsRuntime } from '@/hooks/perps/runtime/useEnsurePerpsRuntime';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { perpsStore } from '@/hooks/perps/usePerpsStore';
+import { perpsViewModeController } from '@/hooks/perps/viewMode/perpsViewModeController';
 import { useHideTipsPopup, useIsTipsPopupVisible } from '@/hooks/useTipsPopup';
 import { perpsServiceApi } from '@/core/serviceApi/perps';
 import { IS_IOS } from '@/core/native/utils';
 import { useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import type { LayoutChangeEvent } from 'react-native';
 
 import { RootNames } from '@/constant/layout';
 import type { TransactionNavigatorParamList } from '@/navigation-type';
-import { PerpsProScreen } from '../PerpsPro';
 import { PERPS_PORTFOLIO_BREAKDOWN_TIPS_OWNER } from '../PerpsShared/constants';
 import { buildPerpsProMarkets } from '../PerpsPro/model/market';
 import { resolveInitialPerpsProMarket } from '../PerpsPro/model/resolveInitialMarket';
@@ -19,7 +25,8 @@ import { getPerpsProMarketSession } from '../PerpsPro/session/perpsProMarketSess
 import { prefetchPerpsProZeroAddressLeverageBaseline } from '../PerpsPro/scene/perpsProZeroAddressLeverageBaseline';
 import { prewarmPerpsProEntryIntent } from '../PerpsPro/scene/perpsProEntryIntent';
 import { usePerpsViewMode } from './hooks/usePerpsViewMode';
-import { PerpsSimpleScreen } from './PerpsSimpleScreen';
+import { PerpsRootPager } from './PerpsRootPager';
+import { PerpsFundingHistoryOwner } from './PerpsFundingHistoryOwner';
 import { PerpsGuideEntryPopup } from './components/PerpsGuideEntryPopup';
 import type { PerpsRegionAlertLayout } from './components/PerpsRegionAlert';
 
@@ -32,8 +39,7 @@ export const PerpsOriginScreen = () => {
     >();
   const navigation = useRabbyAppNavigation();
   const fromSource = route.params?.fromSource;
-  const { hasVisitedPro, hydrated, savingMode, setViewMode, viewMode } =
-    usePerpsViewMode();
+  const { hasVisitedPro, hydrated, viewMode } = usePerpsViewMode();
   const marketDataStatus = perpsStore(state => state.marketDataStatus);
   const proIntentCancelRef = useRef<(() => void) | null>(null);
   const proIntentCommittedRef = useRef(false);
@@ -169,23 +175,16 @@ export const PerpsOriginScreen = () => {
 
   const switchToPro = useCallback(() => {
     hidePortfolioBreakdown();
+    // Preserve a press-in warmup, but never build all markets or start another
+    // warmup in the selection/settlement callback. Pro initializes its required
+    // data independently when active, including a cold swipe without press-in.
     proIntentCommittedRef.current = true;
-    if (!proIntentCancelRef.current) {
-      startProIntent();
-      proIntentCommittedRef.current = true;
-    }
-    setViewMode('pro').then(success => {
-      if (!success) {
-        cancelProIntent();
-      }
-    });
-  }, [cancelProIntent, hidePortfolioBreakdown, setViewMode, startProIntent]);
+  }, [hidePortfolioBreakdown]);
 
   const switchToSimple = useCallback(() => {
     hidePortfolioBreakdown();
     cancelProIntent();
-    setViewMode('simple');
-  }, [cancelProIntent, hidePortfolioBreakdown, setViewMode]);
+  }, [cancelProIntent, hidePortfolioBreakdown]);
 
   const captureRegionAlertLayout = useCallback((event: LayoutChangeEvent) => {
     const height = Math.ceil(event.nativeEvent.layout.height);
@@ -196,29 +195,42 @@ export const PerpsOriginScreen = () => {
     regionAlertLayoutRef.current = { height, width };
   }, []);
 
+  const simpleProps = useMemo(
+    () => ({
+      onPressInPro: handlePressInPro,
+      onPressOutPro: handlePressOutPro,
+      onRegionAlertLayout: captureRegionAlertLayout,
+      showProNewBadge: !hasVisitedPro,
+    }),
+    [
+      captureRegionAlertLayout,
+      handlePressInPro,
+      handlePressOutPro,
+      hasVisitedPro,
+    ],
+  );
+  // Capture the latest measured value when the host next updates; Pro can also
+  // measure its own region if the retained preview mounted before Simple did.
+  const regionLayout = regionAlertLayoutRef.current;
+  const proProps = useMemo(
+    () => ({ initialRegionAlertLayout: regionLayout }),
+    [regionLayout],
+  );
+
   if (!hydrated) {
     return null;
   }
 
-  if (viewMode === 'pro') {
-    return (
-      <PerpsProScreen
-        initialRegionAlertLayout={regionAlertLayoutRef.current}
-        isModeSwitching={savingMode !== null}
-        onSwitchToSimple={switchToSimple}
-      />
-    );
-  }
-
   return (
     <>
-      <PerpsSimpleScreen
-        isModeSwitching={savingMode !== null}
-        onPressInPro={handlePressInPro}
-        onPressOutPro={handlePressOutPro}
-        onRegionAlertLayout={captureRegionAlertLayout}
-        onSwitchToPro={switchToPro}
-        showProNewBadge={!hasVisitedPro}
+      <PerpsFundingHistoryOwner />
+      <PerpsRootPager
+        preferenceSource={perpsViewModeController}
+        presentationBlocked={showGuideEntryPopup || portfolioBreakdownVisible}
+        onPreparePro={switchToPro}
+        onPrepareSimple={switchToSimple}
+        simpleProps={simpleProps}
+        proProps={proProps}
       />
       <PerpsGuideEntryPopup
         visible={showGuideEntryPopup}

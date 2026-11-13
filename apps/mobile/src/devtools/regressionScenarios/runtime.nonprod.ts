@@ -3,6 +3,12 @@ import { getRenderActivityAuditDiagnosticsSnapshot } from '@/core/state/renderAc
 import { getFeatureActivationDiagnosticsSnapshot } from '@/core/utils/featureActivationDiagnostics';
 import { storeApiExpSettingData } from '@/hooks/appSettings';
 import { getAuthReadinessDiagnosticsSnapshot } from '@/core/utils/authReadinessDiagnostics';
+import {
+  flushPullRefreshProbe,
+  getPullRefreshProbeSnapshot,
+  startPullRefreshProbe,
+  stopPullRefreshProbe,
+} from '@/devtools/pullRefreshProbe/controller';
 
 import {
   getRegressionConfigureEnabled,
@@ -113,6 +119,7 @@ export function handleRegressionScenarioCommand(
     storeApiExpSettingData.setScreenE2EEnabled(enabled);
     setRegressionScenarioRuntimeEnabled(enabled);
     if (!enabled) {
+      void stopPullRefreshProbe('disabled');
       removeRegressionScenarioSession();
       clearRegressionScenarioRuntime();
     }
@@ -120,10 +127,32 @@ export function handleRegressionScenarioCommand(
     return true;
   }
 
+  const isHomeProbeCommand =
+    command.scenario === 'home-assets' &&
+    (!command.screen || command.screen === 'Home') &&
+    (command.action === 'open' || command.action === 'observe') &&
+    command.params.pullRefreshProbe === 'true';
+  const isPerpsProbeCommand =
+    command.scenario === 'perps-entry' &&
+    (!command.screen || command.screen === 'Perps') &&
+    (command.action === 'open' || command.action === 'observe') &&
+    command.params.perpsRootProbe === 'true';
+  const isProbeObservation =
+    command.action === 'observe' && (isHomeProbeCommand || isPerpsProbeCommand);
   const enabled = storeApiExpSettingData.getScreenE2EEnabled();
-  setRegressionScenarioRuntimeEnabled(enabled);
+  // A passive probe must not reactivate a previously armed coordinator command.
+  if (!isProbeObservation) {
+    setRegressionScenarioRuntimeEnabled(enabled);
+  }
 
   if (command.action === 'status') {
+    if (
+      enabled &&
+      (command.params.includePullRefreshProbe === 'true' ||
+        command.params.includePerpsRootProbe === 'true')
+    ) {
+      void flushPullRefreshProbe();
+    }
     const state = getRegressionScenarioRuntimeSnapshot();
     const includeEvents = command.params.includeEvents === 'true';
     const includeRenderActivityAudit =
@@ -187,11 +216,16 @@ export function handleRegressionScenarioCommand(
             }),
           }
         : {}),
+      ...(command.params.includePullRefreshProbe === 'true' ||
+      command.params.includePerpsRootProbe === 'true'
+        ? { pullRefreshProbe: getPullRefreshProbeSnapshot() }
+        : {}),
     });
     return true;
   }
 
   if (command.action === 'clear-session' || command.action === 'cancel') {
+    void stopPullRefreshProbe(command.action);
     if (command.action === 'cancel') {
       finishRegressionScenario('cancelled');
     } else {
@@ -218,6 +252,26 @@ export function handleRegressionScenarioCommand(
     return true;
   }
 
+  // Observe the real Home list only after the existing non-production,
+  // persistent opt-in and command-expiry gates. Never persist an armed probe.
+  if (isHomeProbeCommand) {
+    void startPullRefreshProbe({
+      runId: command.runId,
+      expiresAt: command.expiresAt,
+    });
+  }
+  if (isPerpsProbeCommand) {
+    void startPullRefreshProbe({
+      runId: command.runId,
+      expiresAt: command.expiresAt,
+      perpsRootProbe: true,
+    });
+  }
+  // `observe` records the current UI without preparation, navigation or session
+  // writes. Only `open` continues into the normal scenario coordinator.
+  if (isProbeObservation) {
+    return true;
+  }
   const session = makeSession(command);
   persistSessionIfNeeded(session);
   activateRegressionScenarioCommand(command, session);

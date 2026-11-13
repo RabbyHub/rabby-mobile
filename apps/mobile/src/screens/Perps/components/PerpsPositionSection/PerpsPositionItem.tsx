@@ -1,5 +1,5 @@
 import { AssetAvatar } from '@/components';
-import { MarketData, PositionAndOpenOrder } from '@/hooks/perps/usePerpsStore';
+import type { PositionAndOpenOrder } from '@/hooks/perps/usePerpsStore';
 import { useTheme2024 } from '@/hooks/theme';
 import { formatUsdValue, splitNumberByStep } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -7,38 +7,35 @@ import React, { useMemo } from 'react';
 import { TouchableOpacity, View } from 'react-native';
 import { DistanceToLiquidationTag } from './DistanceToLiquidationTag';
 import { useMemoizedFn } from 'ahooks';
-import { calculateDistanceToLiquidation } from './utils';
-import { OpenOrder } from '@rabby-wallet/hyperliquid-sdk';
+import type { OpenOrder } from '@rabby-wallet/hyperliquid-sdk';
 import { useTranslation } from 'react-i18next';
-import { formatPerpsCoin } from '@/utils/perps';
 import { Text } from '@/components/Typography';
 import { PerpsDisplayCoinName } from '../PerpsDisplayCoinName';
+import type { PerpsPositionMarketDisplay } from './perpsPositionDisplay';
 
-export const PerpsPositionItem: React.FC<{
+export const PerpsPositionItem = React.memo(function PerpsPositionItem({
+  item,
+  marketData,
+  onPress,
+  openOrders,
+  onShowRiskPopup,
+}: {
   item: PositionAndOpenOrder['position'];
-  marketData?: MarketData;
+  marketData?: PerpsPositionMarketDisplay;
   onPress(): void;
   openOrders: OpenOrder[];
   onShowRiskPopup: (coin: string) => void;
-}> = ({ item, marketData, onPress, openOrders, onShowRiskPopup }) => {
+}) {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
-  const {
-    coin,
-    leverage,
-    marginUsed,
-    unrealizedPnl,
-    returnOnEquity,
-    liquidationPx,
-    entryPx,
-  } = item;
+  const { coin, leverage, marginUsed, unrealizedPnl, liquidationPx, entryPx } =
+    item;
   const isUp = Number(unrealizedPnl) >= 0;
 
   const sign = isUp ? '+' : '-';
   const side =
     Number(liquidationPx || 0) < Number(entryPx || 0) ? 'Long' : 'Short';
   const absPnlUsd = Math.abs(Number(unrealizedPnl));
-  const absPnlPct = Math.abs(Number(returnOnEquity));
   const leverageType = item.leverage.type || 'isolated';
   const pnlText = `${sign}${formatUsdValue(absPnlUsd)}`;
   const logoUrl = marketData?.logoUrl || '';
@@ -171,7 +168,7 @@ export const PerpsPositionItem: React.FC<{
       )}
     </TouchableOpacity>
   );
-};
+});
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   card: {

@@ -20,6 +20,7 @@ export type NativeBuildInfo = {
 export interface Spec extends TurboModule {
   getConstants(): { buildInfo?: NativeBuildInfo };
   forceExitApp(): void;
+  androidStopHermesSamplingProfiler(): boolean;
   measureViewRelativeTo(
     anchorTag: number,
     viewportTag: number,
@@ -34,6 +35,11 @@ export interface Spec extends TurboModule {
   setSensitiveClipboard(text: string): Promise<void>;
   shareFile(options: ShareFileOptions): Promise<void>;
   iosExcludeFileFromBackup(filePath: string): Promise<boolean>;
+  iosPullRefreshProbe(
+    command: string,
+    runId: string,
+    durationMs: number,
+  ): Promise<string>;
   /**
    * Decode QR codes from a local image file on device. When `deleteAfterDecode`
    * is true, the file is removed afterwards only if it lives in the app's own

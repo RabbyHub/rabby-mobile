@@ -114,6 +114,7 @@ describe('usePerpsProKline', () => {
       enabled: false,
       initialSourceCandles: undefined,
       interval: '15m',
+      publicationEnabled: true,
     });
 
     await flushPromises();
@@ -127,6 +128,7 @@ describe('usePerpsProKline', () => {
       enabled: true,
       initialSourceCandles: expect.any(Array),
       interval: '1M',
+      publicationEnabled: true,
     });
   });
 
@@ -212,6 +214,7 @@ describe('usePerpsProKline', () => {
       enabled: false,
       initialSourceCandles: expect.any(Array),
       interval: '15m',
+      publicationEnabled: true,
     });
     expect(hook.result.current.feed).toMatchObject({
       identity: 'BTC:15m',

@@ -111,15 +111,14 @@ export const createPerpsViewModeController = (
     }
 
     const previousMode = snapshot.viewMode;
-    publish({
-      ...snapshot,
-      savingMode: viewMode,
-      error: null,
-    });
-
     const currentPromise = Promise.resolve()
       .then(() => dependencies.setPerpsViewMode(viewMode))
       .then(() => {
+        // A synchronous subscriber can request the next mode as soon as it
+        // observes savingMode=null. Release this exact flight before publishing.
+        if (saveFlight?.promise === currentPromise) {
+          saveFlight = null;
+        }
         publish({
           hydrated: true,
           hasVisitedPro: snapshot.hasVisitedPro || viewMode === 'pro',
@@ -131,6 +130,9 @@ export const createPerpsViewModeController = (
       })
       .catch(error => {
         console.error('[perpsViewMode] save failed', error);
+        if (saveFlight?.promise === currentPromise) {
+          saveFlight = null;
+        }
         publish({
           hydrated: true,
           hasVisitedPro: snapshot.hasVisitedPro,
@@ -149,6 +151,13 @@ export const createPerpsViewModeController = (
       target: viewMode,
       promise: currentPromise,
     };
+    // Install the flight before notifying subscribers; same-target reentrant
+    // requests must share this promise instead of starting a second write.
+    publish({
+      ...snapshot,
+      savingMode: viewMode,
+      error: null,
+    });
     return currentPromise;
   };
 

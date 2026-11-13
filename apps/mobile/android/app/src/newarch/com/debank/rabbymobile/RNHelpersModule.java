@@ -113,10 +113,23 @@ public class RNHelpersModule extends NativeRNHelpersSpec {
     android.os.Process.killProcess(android.os.Process.myPid());
   }
 
+  @ReactMethod(isBlockingSynchronousMethod = true)
+  @Override
+  public boolean androidStopHermesSamplingProfiler() {
+    return RabbyHermesProfiler.stopSampling();
+  }
+
   @ReactMethod
   @Override
   public void measureViewRelativeTo(double anchorTag, double viewportTag, Promise promise) {
     NativeViewGeometry.measureRelativeTo(reactContext, (int) anchorTag, (int) viewportTag, promise);
+  }
+
+  @ReactMethod
+  @Override
+  public void iosPullRefreshProbe(String command, String runId, double durationMs, Promise promise) {
+    // Keep the shared codegen contract without activating iOS diagnostics here.
+    promise.resolve("{\"schemaVersion\":1,\"status\":\"unsupported\",\"records\":[]}");
   }
 
   @ReactMethod

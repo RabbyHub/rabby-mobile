@@ -1,3 +1,4 @@
+import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
 import RcIconHistory from '@/assets2024/icons/perps/IconHistoryCC.svg';
 import RcIconPending from '@/assets2024/icons/home/pending.svg';
 import { Text } from '@/components/Typography';
@@ -9,12 +10,14 @@ import {
   Animated,
   Easing,
   Platform,
-  Pressable,
   View,
   type LayoutChangeEvent,
   type StyleProp,
   type TextStyle,
 } from 'react-native';
+// The strip moves via NativeAnimated; native hit testing follows its actual
+// transform without writing delayed JS scroll positions back into Fabric.
+import { Pressable } from 'react-native-gesture-handler';
 import { useTranslation } from 'react-i18next';
 import Reanimated, {
   useAnimatedStyle,
@@ -25,15 +28,7 @@ import {
   PerpsProTabIndicator,
   type PerpsProTabIndicatorLayout,
 } from '../common/PerpsProTabIndicator';
-import { resolvePerpsProFittedFontSize } from '../common/perpsProFitFontSize';
-import { PerpsProTextWidthProbe } from '../common/PerpsProTextWidthProbe';
 import { getPerpsProFontStyle } from '../common/perpsProVisual';
-import {
-  getPerpsProTabDividerColor,
-  getPerpsProTabIndicatorStyle,
-  getPerpsProTabTextStyle,
-  PERPS_PRO_TAB_TOKENS,
-} from '../common/perpsProTabVisual';
 import { PERPS_PRO_INFO_TABS_HEIGHT } from './perpsProInfoTabsSticky';
 import { PERPS_PRO_INFO_TABS } from './perpsProInfoTabOrder';
 
@@ -48,11 +43,6 @@ interface PerpsProInfoTabsProps {
   onChange: (tab: PerpsProInfoTab) => void;
 }
 
-const INFO_TAB_DIVIDER_BOTTOM = 2;
-const INFO_TAB_GAP = 16;
-const INFO_TAB_PADDING_HORIZONTAL = 16;
-const INFO_TAB_HISTORY_SIZE = 24;
-const INFO_TAB_MIN_FONT_SIZE = 12;
 const INFO_TAB_INACTIVE_FONT_STYLE = getPerpsProFontStyle(Platform.OS, '500');
 const INFO_TAB_ACTIVE_FONT_STYLE = getPerpsProFontStyle(Platform.OS, '700');
 
@@ -141,37 +131,6 @@ const labelStyles = {
   },
 };
 
-// Measures the bold layer: it is the one that sizes each tab.
-const PerpsProInfoTabLabelProbe: React.FC<{
-  label: string;
-  onWidth: React.Dispatch<
-    React.SetStateAction<Partial<Record<PerpsProInfoTab, number>>>
-  >;
-  style: TextStyle;
-  tab: PerpsProInfoTab;
-}> = React.memo(({ label, onWidth, style, tab }) => {
-  const probeStyle = React.useMemo(
-    () => [style, INFO_TAB_ACTIVE_FONT_STYLE],
-    [style],
-  );
-  const handleWidth = React.useCallback(
-    (width: number) =>
-      onWidth(previous =>
-        previous[tab] === width ? previous : { ...previous, [tab]: width },
-      ),
-    [onWidth, tab],
-  );
-  return (
-    <PerpsProTextWidthProbe
-      onWidth={handleWidth}
-      style={probeStyle}
-      text={label}
-    />
-  );
-});
-
-PerpsProInfoTabLabelProbe.displayName = 'PerpsProInfoTabLabelProbe';
-
 const PerpsProPendingHistoryIcon: React.FC<{ count: number }> = ({ count }) => {
   const { styles } = useTheme2024({ getStyle });
   const rotation = React.useRef(new Animated.Value(0)).current;
@@ -252,8 +211,8 @@ export const PerpsProInfoTabs: React.FC<PerpsProInfoTabsProps> = React.memo(
         if (!frame || frame.width <= 0) {
           return [];
         }
-        const cap = PERPS_PRO_TAB_TOKENS.indicatorCapInset;
-        layouts.push({ x: frame.x - cap, width: frame.width + cap * 2 });
+        // Figma's round stroke caps extend 1.5px beyond each text edge.
+        layouts.push({ x: frame.x - 1.5, width: frame.width + 3 });
       }
       return layouts;
     }, [tabFrames]);
@@ -266,54 +225,11 @@ export const PerpsProInfoTabs: React.FC<PerpsProInfoTabsProps> = React.memo(
       )} ${openOrdersCount}`,
     };
 
-    // Long translations would push the history button out of the strip, so
-    // all labels shrink together until the row fits.
-    const [containerWidth, setContainerWidth] = React.useState(0);
-    const [labelWidths, setLabelWidths] = React.useState<
-      Partial<Record<PerpsProInfoTab, number>>
-    >({});
-    const baseFontSize = styles.text.fontSize;
-    const fontSize = React.useMemo(() => {
-      let naturalWidth = 0;
-      for (const tab of PERPS_PRO_INFO_TABS) {
-        const width = labelWidths[tab];
-        if (!width) {
-          return baseFontSize;
-        }
-        naturalWidth += width;
-      }
-      return resolvePerpsProFittedFontSize({
-        availableWidth:
-          containerWidth -
-          INFO_TAB_PADDING_HORIZONTAL * 2 -
-          INFO_TAB_GAP * PERPS_PRO_INFO_TABS.length -
-          INFO_TAB_HISTORY_SIZE,
-        baseFontSize,
-        minFontSize: INFO_TAB_MIN_FONT_SIZE,
-        naturalWidth,
-      });
-    }, [baseFontSize, containerWidth, labelWidths]);
-    const textStyle = React.useMemo(
-      () =>
-        fontSize === baseFontSize ? styles.text : [styles.text, { fontSize }],
-      [baseFontSize, fontSize, styles.text],
-    );
-
     return (
       <View
         accessibilityRole="tablist"
-        onLayout={event => setContainerWidth(event.nativeEvent.layout.width)}
+        pointerEvents="box-none"
         style={styles.container}>
-        <View pointerEvents="none" style={styles.divider} />
-        {PERPS_PRO_INFO_TABS.map(tab => (
-          <PerpsProInfoTabLabelProbe
-            key={tab}
-            label={labels[tab]}
-            onWidth={setLabelWidths}
-            style={styles.text}
-            tab={tab}
-          />
-        ))}
         {PERPS_PRO_INFO_TABS.map((tab, index) => {
           const selected = tab === activeTab;
           return (
@@ -332,7 +248,7 @@ export const PerpsProInfoTabs: React.FC<PerpsProInfoTabsProps> = React.memo(
                 index={index}
                 label={labels[tab]}
                 position={indicatorPosition}
-                style={textStyle}
+                style={styles.text}
                 testID={`perps-pro-info-tab-label-${tab}`}
               />
             </Pressable>
@@ -378,40 +294,40 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
     alignItems: 'center',
     backgroundColor: colors2024['neutral-bg-1'],
+    borderBottomColor: colors2024['neutral-bg-5'],
+    borderBottomWidth: 1,
     flexDirection: 'row',
-    gap: INFO_TAB_GAP,
+    gap: 16,
     height: PERPS_PRO_INFO_TABS_HEIGHT,
-    paddingHorizontal: INFO_TAB_PADDING_HORIZONTAL,
+    paddingHorizontal: 16,
     overflow: 'hidden',
     position: 'relative',
-  },
-  // Figma 86609:327462: the divider sits 2pt above the 44pt strip bottom.
-  // Paint it as a sibling so the indicator shares the strip's box.
-  divider: {
-    backgroundColor: getPerpsProTabDividerColor(colors2024),
-    bottom: INFO_TAB_DIVIDER_BOTTOM,
-    height: 1,
-    left: 0,
-    position: 'absolute',
-    right: 0,
   },
   tab: {
     alignItems: 'center',
     height: '100%',
-    paddingTop: 12,
+    paddingTop: 8,
     position: 'relative',
   },
-  text: getPerpsProTabTextStyle(colors2024),
+  text: {
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    fontWeight: '500',
+    lineHeight: 18,
+  },
   indicator: {
-    ...getPerpsProTabIndicatorStyle(),
-    bottom: PERPS_PRO_TAB_TOKENS.indicatorBottom + INFO_TAB_DIVIDER_BOTTOM,
+    backgroundColor: colors2024['neutral-body'],
+    borderRadius: 1.5,
+    bottom: -0.5,
+    height: 3,
   },
   history: {
     alignItems: 'center',
-    height: INFO_TAB_HISTORY_SIZE,
+    height: 24,
     justifyContent: 'center',
     marginLeft: 'auto',
-    width: INFO_TAB_HISTORY_SIZE,
+    width: 24,
   },
   pendingIcon: {
     alignItems: 'center',
@@ -421,6 +337,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: 24,
   },
   pendingCount: {
+    ...PERPS_PRO_NUMBER_STYLE,
     width: '100%',
     color: colors2024['orange-default'],
     fontFamily: 'SF Pro Rounded',

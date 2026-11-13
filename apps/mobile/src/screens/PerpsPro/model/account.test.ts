@@ -17,6 +17,8 @@ import {
 } from '@/utils/perps';
 
 import {
+  buildPerpsAccountAssetKeys,
+  buildPerpsAccountControlState,
   buildPerpsAccountViewModel,
   computePerpsPortfolioValue,
   computeSpotPortfolioValue,
@@ -25,6 +27,7 @@ import {
   getSpotPriceDependencyKeys,
   getStakedHypeAmount,
   resolveSpotUsdcPrice,
+  type BuildPerpsAccountViewModelInput,
 } from './account';
 
 const summary = (accountValue: string) => ({
@@ -32,6 +35,270 @@ const summary = (accountValue: string) => ({
   totalMarginUsed: '0',
   totalNtlPos: '0',
   totalRawUsd: '0',
+});
+
+describe('Perps Pro account control projection', () => {
+  const modes = [
+    {
+      abstraction: 'default',
+      mode: 'standard',
+      ratio: '0.19999999998666666667',
+      value: '320',
+      changedValue: '330',
+    },
+    {
+      abstraction: 'unifiedAccount',
+      mode: 'unified',
+      ratio: '0.3',
+      value: '120',
+      changedValue: '130',
+    },
+    {
+      abstraction: 'portfolioMargin',
+      mode: 'portfolioMargin',
+      ratio: '0.2',
+      value: '120',
+      changedValue: '130',
+    },
+  ] as const;
+  const makeInput = (
+    userAbstraction: string,
+  ): BuildPerpsAccountViewModelInput => ({
+    clearinghouseState: formatAllDexsClearinghouseState([
+      [
+        '',
+        clearinghouse({
+          accountValue: '200',
+          crossAccountValue: '150',
+          maintenance: '30',
+          positions: [position({ coin: 'BTC', pnl: '10' })],
+          time: 1,
+          withdrawable: '120',
+        }),
+      ],
+    ]),
+    marketDataMap: {
+      BTC: { coin: 'BTC', dexId: '', quoteAsset: 'USDC' },
+    },
+    spotAssetCtxs: { '@10': { markPx: '2' } },
+    spotMeta,
+    spotState: formattedSpotState(),
+    userAbstraction,
+  });
+
+  it.each(modes)(
+    'keeps $mode controls unchanged across valid price ticks while valuation moves',
+    ({ abstraction, mode, ratio, value, changedValue }) => {
+      const input = makeInput(abstraction);
+      const original = JSON.stringify(input);
+      const control = buildPerpsAccountControlState(input);
+      const full = buildPerpsAccountViewModel(input);
+      expect(control).toEqual({
+        mode,
+        marginRatio: ratio,
+        hasUnresolvedDexes: false,
+        hasUnpricedNonZeroAssets: false,
+      });
+      expect(full.primaryValue).toBe(value);
+      expect(full.unrealizedPnl).toBe('10');
+      expect(getPerpsAccountMarginRatio(full)).toBe(ratio);
+      const changed = {
+        ...input,
+        spotAssetCtxs: { '@10': { markPx: '3' } },
+      };
+      expect(buildPerpsAccountControlState(changed)).toEqual(control);
+      expect(buildPerpsAccountViewModel(changed).primaryValue).toBe(
+        changedValue,
+      );
+      expect(buildPerpsAccountAssetKeys(input)).toEqual(
+        full.assets.map(asset => asset.key),
+      );
+      expect(buildPerpsAccountAssetKeys(changed)).toEqual(
+        buildPerpsAccountAssetKeys(input),
+      );
+      expect(JSON.stringify(input)).toBe(original);
+    },
+  );
+
+  it.each(
+    modes.flatMap(mode =>
+      [undefined, '0', '-1', 'NaN', 'Infinity'].map(markPx => ({
+        ...mode,
+        markPx,
+      })),
+    ),
+  )(
+    'publishes missing/invalid $markPx and recovery for $mode without changing risk',
+    ({ abstraction, ratio, markPx }) => {
+      const input = makeInput(abstraction);
+      const missing = {
+        ...input,
+        spotAssetCtxs: { '@10': { markPx } },
+      };
+      expect(buildPerpsAccountControlState(missing)).toMatchObject({
+        marginRatio: ratio,
+        hasUnresolvedDexes: false,
+        hasUnpricedNonZeroAssets: true,
+      });
+      expect(
+        buildPerpsAccountViewModel(missing).diagnostics.unpricedNonZeroAssets,
+      ).toEqual(['HYPE']);
+      expect(buildPerpsAccountControlState(input)).toMatchObject({
+        marginRatio: ratio,
+        hasUnpricedNonZeroAssets: false,
+      });
+    },
+  );
+
+  it.each(modes)(
+    'keeps staking-only HYPE availability live for $mode',
+    ({ abstraction }) => {
+      const input = makeInput(abstraction);
+      const usdc = input.spotState.rawBalances[0];
+      const staking = {
+        ...input,
+        spotState: {
+          ...input.spotState,
+          rawBalances: [usdc],
+          rawBalancesByToken: { 0: usdc },
+        },
+        stakingHype: '5',
+        spotAssetCtxs: {},
+      };
+      expect(
+        buildPerpsAccountControlState(staking).hasUnpricedNonZeroAssets,
+      ).toBe(true);
+      expect(
+        buildPerpsAccountViewModel(staking).diagnostics.unpricedNonZeroAssets,
+      ).toEqual(['HYPE']);
+      const priced = { ...staking, spotAssetCtxs: { '@10': { markPx: '40' } } };
+      expect(
+        buildPerpsAccountControlState(priced).hasUnpricedNonZeroAssets,
+      ).toBe(false);
+      expect(buildPerpsAccountViewModel(priced).primaryValue).toBe(
+        abstraction === 'default' ? '500' : '300',
+      );
+      expect(
+        buildPerpsAccountControlState({ ...staking, stakingHype: '0' })
+          .hasUnpricedNonZeroAssets,
+      ).toBe(false);
+    },
+  );
+
+  it.each(['default', 'unifiedAccount', 'portfolioMargin'])(
+    'uses the actual merge-token and quote-chain resolver in %s',
+    abstraction => {
+      const input = makeInput(abstraction);
+      const balances = formatSpotState({
+        balances: [
+          { coin: '+42', token: 42, total: '3', hold: '0', entryNtl: '0' },
+          { coin: 'BTC', token: 2, total: '2', hold: '0', entryNtl: '0' },
+        ],
+      });
+      const priced = {
+        ...input,
+        clearinghouseState: null,
+        spotState: balances,
+        spotAssetCtxs: {
+          '#42': { markPx: '7' },
+          '@11': { markPx: '4' },
+          '@10': { markPx: '2' },
+        },
+      };
+      expect(
+        buildPerpsAccountControlState(priced).hasUnpricedNonZeroAssets,
+      ).toBe(false);
+      expect(buildPerpsAccountViewModel(priced).primaryValue).toBe('37');
+      for (const key of ['#42', '@11', '@10']) {
+        const unpriced = {
+          ...priced,
+          spotAssetCtxs: { ...priced.spotAssetCtxs, [key]: { markPx: '0' } },
+        };
+        expect(
+          buildPerpsAccountControlState(unpriced).hasUnpricedNonZeroAssets,
+        ).toBe(true);
+        expect(
+          buildPerpsAccountViewModel(unpriced).diagnostics
+            .unpricedNonZeroAssets,
+        ).toEqual([key === '#42' ? '+42' : 'BTC']);
+      }
+    },
+  );
+
+  it('distinguishes unresolved DEX facts from invalid ratios and from missing prices', () => {
+    const input = makeInput('unifiedAccount');
+    const unresolved = {
+      ...input,
+      clearinghouseState: {
+        ...input.clearinghouseState!,
+        crossMaintByDex: { unknown: '30' },
+      },
+    };
+    expect(buildPerpsAccountControlState(unresolved)).toEqual({
+      mode: 'unified',
+      marginRatio: null,
+      hasUnresolvedDexes: true,
+      hasUnpricedNonZeroAssets: false,
+    });
+    const insufficient = {
+      ...input,
+      spotState: { ...input.spotState, rawBalancesByToken: {} },
+    };
+    expect(buildPerpsAccountControlState(insufficient)).toMatchObject({
+      marginRatio: null,
+      hasUnresolvedDexes: false,
+      hasUnpricedNonZeroAssets: false,
+    });
+    const invalidPm = {
+      ...makeInput('portfolioMargin'),
+      spotState: { ...input.spotState, portfolioMarginRatio: 'NaN' },
+    };
+    expect(buildPerpsAccountControlState(invalidPm)).toMatchObject({
+      marginRatio: null,
+      hasUnresolvedDexes: false,
+      hasUnpricedNonZeroAssets: false,
+    });
+    expect(buildPerpsAccountViewModel(invalidPm).diagnostics.complete).toBe(
+      true,
+    );
+  });
+
+  it.each(modes)(
+    'keeps diagnostic ordering and asset topology for $mode',
+    ({ abstraction }) => {
+      const input = makeInput(abstraction);
+      const balances = formatSpotState({
+        balances: [
+          { coin: 'HYPE', token: 1, total: '1', hold: '0', entryNtl: '0' },
+          { coin: 'HYPE', token: 1, total: '2', hold: '0', entryNtl: '0' },
+          { coin: 'USDH', token: 360, total: '5', hold: '0', entryNtl: '0' },
+          { coin: 'USDC', token: 0, total: '100', hold: '0', entryNtl: '0' },
+          { coin: 'USDT0', token: 268, total: '0', hold: '0', entryNtl: '0' },
+          { coin: 'USDE', token: 235, total: '-2', hold: '0', entryNtl: '0' },
+        ],
+      });
+      const missing = {
+        ...input,
+        spotState: balances,
+        spotAssetCtxs: {},
+        stakingHype: '5',
+      };
+      const full = buildPerpsAccountViewModel(missing);
+      expect(full.diagnostics.unpricedNonZeroAssets).toEqual(
+        abstraction === 'default'
+          ? ['HYPE', 'HYPE', 'USDH', 'USDE']
+          : ['HYPE', 'USDH', 'USDE'],
+      );
+      expect(buildPerpsAccountAssetKeys(missing)).toEqual(
+        abstraction === 'default'
+          ? ['spot:USDC', 'perps:USDC']
+          : ['unified:0', 'unified:268', 'unified:235'],
+      );
+      expect(buildPerpsAccountAssetKeys(missing)).toEqual(
+        full.assets.map(asset => asset.key),
+      );
+    },
+  );
 });
 
 const position = ({

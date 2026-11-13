@@ -147,6 +147,58 @@ describe('usePerpsProScene prepared market selection', () => {
     jest.restoreAllMocks();
   });
 
+  it('does not prepare or publish a retained preview until it is active', async () => {
+    const hook = renderHook(({ active }) => usePerpsProScene(active), {
+      initialProps: { active: false },
+    });
+    expect(mockPrepareSources).not.toHaveBeenCalled();
+    expect(mockSetSessionMarket).not.toHaveBeenCalled();
+    expect(hook.result.current.executionActive).toBe(false);
+    expect(hook.result.current.orderBookSubscriptionEnabled).toBe(false);
+    act(() =>
+      hook.result.current.startMarketRealtimeIntent(buildPerpsProMarket(sui)),
+    );
+    expect(mockPrewarmRealtimeIntent).not.toHaveBeenCalled();
+    await act(async () => {
+      expect(
+        await hook.result.current.selectMarket(buildPerpsProMarket(sui)),
+      ).toBe(false);
+    });
+    hook.rerender({ active: true });
+    await waitFor(() =>
+      expect(mockSetSessionMarket).toHaveBeenCalledWith('hyperliquid::BTC'),
+    );
+    hook.unmount();
+  });
+
+  it('cancels retained-page prewarm and rejects a preparation resolving after deactivation', async () => {
+    mockReadBaseline.mockReturnValue({ type: 'cross', value: 20 });
+    mockSelectedTickOption = { mantissa: null, nSigFigs: 5 };
+    const hook = renderHook(({ active }) => usePerpsProScene(active), {
+      initialProps: { active: true },
+    });
+    const pending = deferred<ReturnType<typeof preparedSources>>();
+    mockPrepareSources.mockReturnValueOnce(pending.promise);
+    let selection!: Promise<boolean>;
+    act(() => {
+      selection = hook.result.current.selectMarket(buildPerpsProMarket(sui));
+    });
+    hook.rerender({ active: false });
+    expect(mockCancelRealtimeIntent).toHaveBeenCalled();
+    expect(hook.result.current.executionActive).toBe(false);
+    expect(hook.result.current.fundingHistoryEnabled).toBe(false);
+    expect(hook.result.current.orderBookSubscriptionEnabled).toBe(false);
+    await act(async () => {
+      pending.resolve(preparedSources({ type: 'cross', value: 5 }));
+      expect(await selection).toBe(false);
+    });
+    expect(hook.result.current.currentMarket?.canonicalCoin).toBe('BTC');
+    expect(mockSetSessionMarket).not.toHaveBeenCalledWith('hyperliquid::SUI');
+    hook.rerender({ active: true });
+    expect(hook.result.current.currentMarket?.canonicalCoin).toBe('BTC');
+    expect(hook.result.current.orderBookSubscriptionEnabled).toBe(true);
+  });
+
   it('uses a prefetched initial baseline in the first visible market frame', () => {
     mockReadBaseline.mockReturnValue({ type: 'cross', value: 20 });
     const hook = renderHook(() => usePerpsProScene());
