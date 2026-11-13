@@ -15,6 +15,7 @@
  * usage:
  *   node scripts/gen-screen-registry.mjs [--check]
  */
+import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -83,12 +84,16 @@ function extractParamLists(source) {
     const body = sliceBalanced(source, bodyStart);
     if (!body) continue;
     for (const entry of splitTopLevel(body)) {
-      const head = entry.match(/^\s*(?:\[RootNames\.(\w+)\]|(\w+))\s*(\?)?\s*:/);
+      const head = entry.match(
+        /^\s*(?:\[RootNames\.(\w+)\]|(\w+))\s*(\?)?\s*:/,
+      );
       if (!head) continue;
       const route = head[1] || head[2];
       const entryOptional = Boolean(head[3]);
       const valueBody = entry.slice(head[0].length);
-      const keys = entryOptional ? { required: [], optional: [] } : topLevelKeys(valueBody);
+      const keys = entryOptional
+        ? { required: [], optional: [] }
+        : topLevelKeys(valueBody);
       result.set(route, keys);
     }
   }
@@ -159,6 +164,96 @@ function topLevelKeys(valueBody) {
   return { required, optional };
 }
 
+/** Maps the component identifiers imported by a navigator file to source files. */
+function importMapFor(file, source) {
+  const map = new Map();
+  const importRe =
+    /import\s+(?:type\s+)?(?:([\w$]+)\s*,?\s*)?(?:\{([\s\S]*?)\})?\s*from\s*['"]([^'"]+)['"]/g;
+  let match;
+  while ((match = importRe.exec(source))) {
+    const [, defaultName, namedRaw, spec] = match;
+    if (!spec.startsWith('.') && !spec.startsWith('@/')) continue;
+    const resolved = resolveImport(file, spec);
+    if (!resolved) continue;
+    if (defaultName) map.set(defaultName.trim(), resolved);
+    if (namedRaw) {
+      for (const part of namedRaw.split(',')) {
+        const named = part.trim().split(/\s+as\s+/);
+        if (!named.length) continue;
+        const imported = named[0].trim();
+        const local = (named[1] || named[0]).trim();
+        if (imported) map.set(local, resolved);
+      }
+    }
+  }
+  return map;
+}
+
+/** Follows `export { X } from '...'` / `export const X =` barrels one level. */
+function followBarrel(file, exportName) {
+  if (!file) return file;
+  let source;
+  try {
+    source = fs.readFileSync(file, 'utf8');
+  } catch {
+    return file;
+  }
+  const reExport = source.match(
+    new RegExp(
+      `export\\s*\\{[^}]*\\b${exportName}\\b[^}]*\\}\\s*from\\s*['"]([^'"]+)['"]`,
+    ),
+  );
+  if (reExport) {
+    const next = resolveImport(file, reExport[1]);
+    if (next && next !== file) return next;
+  }
+  return file;
+}
+
+function resolveImport(fromFile, spec) {
+  const base = spec.startsWith('@/')
+    ? path.join(appRoot, 'src', spec.slice(2))
+    : path.resolve(path.dirname(fromFile), spec);
+  const candidates = [
+    base,
+    `${base}.tsx`,
+    `${base}.ts`,
+    `${base}/index.tsx`,
+    `${base}/index.ts`,
+  ];
+  for (const candidate of candidates) {
+    if (fs.existsSync(candidate) && fs.statSync(candidate).isFile()) {
+      return candidate;
+    }
+  }
+  return null;
+}
+
+/** Params a screen actually reads: `params.x`, `route.params.x`, destructuring. */
+function usedParamsIn(file) {
+  if (!file) return [];
+  let source;
+  try {
+    source = fs.readFileSync(file, 'utf8');
+  } catch {
+    return [];
+  }
+  const used = new Set();
+  for (const match of source.matchAll(/params\s*\.\s*([A-Za-z_]\w*)/g)) {
+    used.add(match[1]);
+  }
+  for (const match of source.matchAll(
+    /(?:const|let)\s*\{([^}]*)\}\s*=\s*[\w.()\s]*params\b/g,
+  )) {
+    for (const part of match[1].split(',')) {
+      const key = part.trim().split(':')[0].trim();
+      if (/^[A-Za-z_]\w*$/.test(key)) used.add(key);
+    }
+  }
+  used.delete('params');
+  return [...used];
+}
+
 const navigationTypesSource = fs.readFileSync(
   path.join(appRoot, 'src/navigation-type.ts'),
   'utf8',
@@ -171,9 +266,15 @@ for (const file of navigatorFiles) {
   const name = navigatorExportName(source, file);
   const screens = extractScreens(source);
   if (!screens.length) continue;
+  const imports = importMapFor(file, source);
   navigators.set(name, {
     file: path.relative(appRoot, file),
-    screens,
+    screens: screens.map(screen => ({
+      ...screen,
+      sourceFile: screen.component
+        ? followBarrel(imports.get(screen.component) || null, screen.component)
+        : null,
+    })),
   });
 }
 
@@ -197,6 +298,7 @@ function walk(navigatorName, chain) {
   if (!entry) return;
   for (const screen of entry.screens) {
     const nextChain = [...chain, { name: navigatorName, route: screen.id }];
+    const usedParams = usedParamsIn(screen.sourceFile);
     const existing = registry.get(screen.id);
     if (!existing || nextChain.length < existing.chain.length) {
       registry.set(screen.id, {
@@ -208,6 +310,16 @@ function walk(navigatorName, chain) {
         chainNavigators: nextChain.map(item => item.name),
         params: routeParams.get(screen.id)?.required ?? [],
         optionalParams: routeParams.get(screen.id)?.optional ?? [],
+        usedParams,
+        // Params the screen dereferences that the route type marks optional (or
+        // does not declare at all): passing them is what keeps such a screen
+        // from throwing on `undefined`.
+        riskyParams: usedParams.filter(
+          key => !(routeParams.get(screen.id)?.required ?? []).includes(key),
+        ),
+        sourceFile: screen.sourceFile
+          ? path.relative(appRoot, screen.sourceFile)
+          : null,
       });
     }
     if (screen.component && byComponent.has(screen.component)) {
@@ -243,6 +355,12 @@ export type ScreenshotRegistryEntry = {
   params: string[];
   /** Top-level route params that are optional. */
   optionalParams: string[];
+  /** Params the screen source actually reads. */
+  usedParams: string[];
+  /** Read by the screen but declared optional: pass them to avoid crashes. */
+  riskyParams: string[];
+  /** Screen component source file, when it could be resolved. */
+  sourceFile: string | null;
 };
 
 export const SCREEN_REGISTRY = {
@@ -263,14 +381,45 @@ export const REGISTERED_SCREEN_IDS = Object.keys(
 ) as RegisteredScreenId[];
 `;
 
+function formatWithPrettier(content, targetPath) {
+  try {
+    execFileSync('npx', ['--no-install', 'prettier', '--write', targetPath], {
+      cwd: appRoot,
+      stdio: 'ignore',
+    });
+    return fs.readFileSync(targetPath, 'utf8');
+  } catch {
+    return content;
+  }
+}
+
 const rendered = `${body}`;
+if (process.argv.includes('--report')) {
+  const risky = sorted.filter(entry => entry.riskyParams.length > 0);
+  console.log(
+    `[screen-registry] ${risky.length} screens read params the route type does not require:`,
+  );
+  for (const entry of risky) {
+    console.log(
+      `  ${entry.id.padEnd(26)} ${entry.riskyParams.join(', ')}  (${
+        entry.sourceFile ?? 'unknown'
+      })`,
+    );
+  }
+  process.exit(0);
+}
+
 const checkOnly = process.argv.includes('--check');
 const existing = fs.existsSync(outFile)
   ? fs.readFileSync(outFile, 'utf8')
   : null;
 
 if (checkOnly) {
-  if (existing !== rendered) {
+  const tmpFile = path.join(appRoot, '.screens.gen.tmp.ts');
+  fs.writeFileSync(tmpFile, rendered);
+  const formatted = formatWithPrettier(rendered, tmpFile);
+  fs.rmSync(tmpFile, { force: true });
+  if (existing !== formatted) {
     console.error(
       '[screen-registry] screens.gen.ts is out of date; run `node scripts/gen-screen-registry.mjs`',
     );
@@ -282,6 +431,18 @@ if (checkOnly) {
 
 fs.mkdirSync(path.dirname(outFile), { recursive: true });
 fs.writeFileSync(outFile, rendered);
+formatWithPrettier(rendered, outFile);
+
+// Keep the generated file prettier-clean so `--check` compares like-for-like
+// even though lint-staged/formatters would rewrite it on commit.
+try {
+  execFileSync('npx', ['--no-install', 'prettier', '--write', outFile], {
+    cwd: appRoot,
+    stdio: 'ignore',
+  });
+} catch {
+  // prettier is optional (for example when running outside the repo install)
+}
 console.log(
   `[screen-registry] wrote ${sorted.length} screens to ${path.relative(
     appRoot,

@@ -19,2004 +19,1711 @@ export type ScreenshotRegistryEntry = {
   params: string[];
   /** Top-level route params that are optional. */
   optionalParams: string[];
+  /** Params the screen source actually reads. */
+  usedParams: string[];
+  /** Read by the screen but declared optional: pass them to avoid crashes. */
+  riskyParams: string[];
+  /** Screen component source file, when it could be resolved. */
+  sourceFile: string | null;
 };
 
 export const SCREEN_REGISTRY = {
-  "AccountTransaction": {
-    "id": "AccountTransaction",
-    "route": "AccountTransaction",
-    "navigator": "AppNavigation",
-    "file": "src/AppNavigation.tsx",
-    "chain": [
-      "AccountTransaction"
-    ],
-    "chainNavigators": [
-      "AppNavigation"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "AddMnemonic": {
-    "id": "AddMnemonic",
-    "route": "AddMnemonic",
-    "navigator": "AddressNavigator",
-    "file": "src/screens/Navigators/AddressNavigator.tsx",
-    "chain": [
-      "StackAddress",
-      "AddMnemonic"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "AddressNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "AddressDetail": {
-    "id": "AddressDetail",
-    "route": "AddressDetail",
-    "navigator": "AddressNavigator",
-    "file": "src/screens/Navigators/AddressNavigator.tsx",
-    "chain": [
-      "StackAddress",
-      "AddressDetail"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "AddressNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "ApprovalAddressList": {
-    "id": "ApprovalAddressList",
-    "route": "ApprovalAddressList",
-    "navigator": "AddressNavigator",
-    "file": "src/screens/Navigators/AddressNavigator.tsx",
-    "chain": [
-      "StackAddress",
-      "ApprovalAddressList"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "AddressNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "Approvals": {
-    "id": "Approvals",
-    "route": "Approvals",
-    "navigator": "TransactionNavigator",
-    "file": "src/screens/Navigators/TransactionNavigator.tsx",
-    "chain": [
-      "StackTransaction",
-      "Approvals"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "TransactionNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "Backup": {
-    "id": "Backup",
-    "route": "Backup",
-    "navigator": "AppNavigation",
-    "file": "src/AppNavigation.tsx",
-    "chain": [
-      "Backup"
-    ],
-    "chainNavigators": [
-      "AppNavigation"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "BackupMnemonic": {
-    "id": "BackupMnemonic",
-    "route": "BackupMnemonic",
-    "navigator": "AddressNavigator",
-    "file": "src/screens/Navigators/AddressNavigator.tsx",
-    "chain": [
-      "StackAddress",
-      "BackupMnemonic"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "AddressNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "BackupPrivateKey": {
-    "id": "BackupPrivateKey",
-    "route": "BackupPrivateKey",
-    "navigator": "AddressNavigator",
-    "file": "src/screens/Navigators/AddressNavigator.tsx",
-    "chain": [
-      "StackAddress",
-      "BackupPrivateKey"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "AddressNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "BatchRevoke": {
-    "id": "BatchRevoke",
-    "route": "BatchRevoke",
-    "navigator": "TransactionNavigator",
-    "file": "src/screens/Navigators/TransactionNavigator.tsx",
-    "chain": [
-      "StackTransaction",
-      "BatchRevoke"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "TransactionNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "BridgeDetail": {
-    "id": "BridgeDetail",
-    "route": "BridgeDetail",
-    "navigator": "TransactionNavigator",
-    "file": "src/screens/Navigators/TransactionNavigator.tsx",
-    "chain": [
-      "StackTransaction",
-      "BridgeDetail"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "TransactionNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "ConvertDust": {
-    "id": "ConvertDust",
-    "route": "ConvertDust",
-    "navigator": "TransactionNavigator",
-    "file": "src/screens/Navigators/TransactionNavigator.tsx",
-    "chain": [
-      "StackTransaction",
-      "ConvertDust"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "TransactionNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "CreateChooseBackup": {
-    "id": "CreateChooseBackup",
-    "route": "CreateChooseBackup",
-    "navigator": "AddressNavigator",
-    "file": "src/screens/Navigators/AddressNavigator.tsx",
-    "chain": [
-      "StackAddress",
-      "CreateChooseBackup"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "AddressNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "CreateMnemonic": {
-    "id": "CreateMnemonic",
-    "route": "CreateMnemonic",
-    "navigator": "AddressNavigator",
-    "file": "src/screens/Navigators/AddressNavigator.tsx",
-    "chain": [
-      "StackAddress",
-      "CreateMnemonic"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "AddressNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "CreateMnemonicBackup": {
-    "id": "CreateMnemonicBackup",
-    "route": "CreateMnemonicBackup",
-    "navigator": "AddressNavigator",
-    "file": "src/screens/Navigators/AddressNavigator.tsx",
-    "chain": [
-      "StackAddress",
-      "CreateMnemonicBackup"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "AddressNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "CreateMnemonicVerify": {
-    "id": "CreateMnemonicVerify",
-    "route": "CreateMnemonicVerify",
-    "navigator": "AddressNavigator",
-    "file": "src/screens/Navigators/AddressNavigator.tsx",
-    "chain": [
-      "StackAddress",
-      "CreateMnemonicVerify"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "AddressNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "CreateNewAddress": {
-    "id": "CreateNewAddress",
-    "route": "CreateNewAddress",
-    "navigator": "AddressNavigator",
-    "file": "src/screens/Navigators/AddressNavigator.tsx",
-    "chain": [
-      "StackAddress",
-      "CreateNewAddress"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "AddressNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "CreateSelectMethod": {
-    "id": "CreateSelectMethod",
-    "route": "CreateSelectMethod",
-    "navigator": "AddressNavigator",
-    "file": "src/screens/Navigators/AddressNavigator.tsx",
-    "chain": [
-      "StackAddress",
-      "CreateSelectMethod"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "AddressNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "CustomTestnet": {
-    "id": "CustomTestnet",
-    "route": "CustomTestnet",
-    "navigator": "SettingNavigator",
-    "file": "src/screens/Navigators/SettingsNavigator.tsx",
-    "chain": [
-      "StackSettings",
-      "CustomTestnet"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "SettingNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "Dapps": {
-    "id": "Dapps",
-    "route": "Dapps",
-    "navigator": "DappsNavigator",
-    "file": "src/screens/Navigators/DappsNavigator.tsx",
-    "chain": [
-      "StackDapps",
-      "Dapps"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "DappsNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "DappWebViewStubOnHome": {
-    "id": "DappWebViewStubOnHome",
-    "route": "DappWebViewStubOnHome",
-    "navigator": "HomeScreenNavigator",
-    "file": "src/screens/Navigators/rootNavigator.tsx",
-    "chain": [
-      "StackRoot",
-      "DappWebViewStubOnHome"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "HomeScreenNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "DebugLogViewer": {
-    "id": "DebugLogViewer",
-    "route": "DebugLogViewer",
-    "navigator": "TestkitsNavigator",
-    "file": "src/screens/Navigators/TestkitsNavigator.tsx",
-    "chain": [
-      "StackTestkits",
-      "DebugLogViewer"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "TestkitsNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "DevCapabilityFile": {
-    "id": "DevCapabilityFile",
-    "route": "DevCapabilityFile",
-    "navigator": "TestkitsNavigator",
-    "file": "src/screens/Navigators/TestkitsNavigator.tsx",
-    "chain": [
-      "StackTestkits",
-      "DevCapabilityFile"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "TestkitsNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "DevDataContactService": {
-    "id": "DevDataContactService",
-    "route": "DevDataContactService",
-    "navigator": "TestkitsNavigator",
-    "file": "src/screens/Navigators/TestkitsNavigator.tsx",
-    "chain": [
-      "StackTestkits",
-      "DevDataContactService"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "TestkitsNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "DevDataKeychain": {
-    "id": "DevDataKeychain",
-    "route": "DevDataKeychain",
-    "navigator": "TestkitsNavigator",
-    "file": "src/screens/Navigators/TestkitsNavigator.tsx",
-    "chain": [
-      "StackTestkits",
-      "DevDataKeychain"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "TestkitsNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "DevDataKeyringVault": {
-    "id": "DevDataKeyringVault",
-    "route": "DevDataKeyringVault",
-    "navigator": "TestkitsNavigator",
-    "file": "src/screens/Navigators/TestkitsNavigator.tsx",
-    "chain": [
-      "StackTestkits",
-      "DevDataKeyringVault"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "TestkitsNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "DevDataSQLite": {
-    "id": "DevDataSQLite",
-    "route": "DevDataSQLite",
-    "navigator": "TestkitsNavigator",
-    "file": "src/screens/Navigators/TestkitsNavigator.tsx",
-    "chain": [
-      "StackTestkits",
-      "DevDataSQLite"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "TestkitsNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "DevDataWhitelist": {
-    "id": "DevDataWhitelist",
-    "route": "DevDataWhitelist",
-    "navigator": "TestkitsNavigator",
-    "file": "src/screens/Navigators/TestkitsNavigator.tsx",
-    "chain": [
-      "StackTestkits",
-      "DevDataWhitelist"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "TestkitsNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "DevPerf": {
-    "id": "DevPerf",
-    "route": "DevPerf",
-    "navigator": "TestkitsNavigator",
-    "file": "src/screens/Navigators/TestkitsNavigator.tsx",
-    "chain": [
-      "StackTestkits",
-      "DevPerf"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "TestkitsNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "DevSwitches": {
-    "id": "DevSwitches",
-    "route": "DevSwitches",
-    "navigator": "TestkitsNavigator",
-    "file": "src/screens/Navigators/TestkitsNavigator.tsx",
-    "chain": [
-      "StackTestkits",
-      "DevSwitches"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "TestkitsNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "DevUIAccountShowCase": {
-    "id": "DevUIAccountShowCase",
-    "route": "DevUIAccountShowCase",
-    "navigator": "TestkitsNavigator",
-    "file": "src/screens/Navigators/TestkitsNavigator.tsx",
-    "chain": [
-      "StackTestkits",
-      "DevUIAccountShowCase"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "TestkitsNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "DevUIAnimatedTextAndView": {
-    "id": "DevUIAnimatedTextAndView",
-    "route": "DevUIAnimatedTextAndView",
-    "navigator": "TestkitsNavigator",
-    "file": "src/screens/Navigators/TestkitsNavigator.tsx",
-    "chain": [
-      "StackTestkits",
-      "DevUIAnimatedTextAndView"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "TestkitsNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "DevUIAutoFitTitlePlayground": {
-    "id": "DevUIAutoFitTitlePlayground",
-    "route": "DevUIAutoFitTitlePlayground",
-    "navigator": "TestkitsNavigator",
-    "file": "src/screens/Navigators/TestkitsNavigator.tsx",
-    "chain": [
-      "StackTestkits",
-      "DevUIAutoFitTitlePlayground"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "TestkitsNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "DevUIBuiltInPages": {
-    "id": "DevUIBuiltInPages",
-    "route": "DevUIBuiltInPages",
-    "navigator": "TestkitsNavigator",
-    "file": "src/screens/Navigators/TestkitsNavigator.tsx",
-    "chain": [
-      "StackTestkits",
-      "DevUIBuiltInPages"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "TestkitsNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "DevUIComponents2024ShowCase": {
-    "id": "DevUIComponents2024ShowCase",
-    "route": "DevUIComponents2024ShowCase",
-    "navigator": "TestkitsNavigator",
-    "file": "src/screens/Navigators/TestkitsNavigator.tsx",
-    "chain": [
-      "StackTestkits",
-      "DevUIComponents2024ShowCase"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "TestkitsNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "DevUIDapps": {
-    "id": "DevUIDapps",
-    "route": "DevUIDapps",
-    "navigator": "TestkitsNavigator",
-    "file": "src/screens/Navigators/TestkitsNavigator.tsx",
-    "chain": [
-      "StackTestkits",
-      "DevUIDapps"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "TestkitsNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "DevUIFontShowCase": {
-    "id": "DevUIFontShowCase",
-    "route": "DevUIFontShowCase",
-    "navigator": "TestkitsNavigator",
-    "file": "src/screens/Navigators/TestkitsNavigator.tsx",
-    "chain": [
-      "StackTestkits",
-      "DevUIFontShowCase"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "TestkitsNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "DevUIFormShowCase": {
-    "id": "DevUIFormShowCase",
-    "route": "DevUIFormShowCase",
-    "navigator": "TestkitsNavigator",
-    "file": "src/screens/Navigators/TestkitsNavigator.tsx",
-    "chain": [
-      "StackTestkits",
-      "DevUIFormShowCase"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "TestkitsNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "DevUINotifications": {
-    "id": "DevUINotifications",
-    "route": "DevUINotifications",
-    "navigator": "TestkitsNavigator",
-    "file": "src/screens/Navigators/TestkitsNavigator.tsx",
-    "chain": [
-      "StackTestkits",
-      "DevUINotifications"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "TestkitsNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "DevUIPermissions": {
-    "id": "DevUIPermissions",
-    "route": "DevUIPermissions",
-    "navigator": "TestkitsNavigator",
-    "file": "src/screens/Navigators/TestkitsNavigator.tsx",
-    "chain": [
-      "StackTestkits",
-      "DevUIPermissions"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "TestkitsNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "DevUISafeSvgMedia": {
-    "id": "DevUISafeSvgMedia",
-    "route": "DevUISafeSvgMedia",
-    "navigator": "TestkitsNavigator",
-    "file": "src/screens/Navigators/TestkitsNavigator.tsx",
-    "chain": [
-      "StackTestkits",
-      "DevUISafeSvgMedia"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "TestkitsNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "DevUIScreenContainerShowCase": {
-    "id": "DevUIScreenContainerShowCase",
-    "route": "DevUIScreenContainerShowCase",
-    "navigator": "TestkitsNavigator",
-    "file": "src/screens/Navigators/TestkitsNavigator.tsx",
-    "chain": [
-      "StackTestkits",
-      "DevUIScreenContainerShowCase"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "TestkitsNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "DevUIToast": {
-    "id": "DevUIToast",
-    "route": "DevUIToast",
-    "navigator": "TestkitsNavigator",
-    "file": "src/screens/Navigators/TestkitsNavigator.tsx",
-    "chain": [
-      "StackTestkits",
-      "DevUIToast"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "TestkitsNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "DevUIWalletConnect": {
-    "id": "DevUIWalletConnect",
-    "route": "DevUIWalletConnect",
-    "navigator": "TestkitsNavigator",
-    "file": "src/screens/Navigators/TestkitsNavigator.tsx",
-    "chain": [
-      "StackTestkits",
-      "DevUIWalletConnect"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "TestkitsNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "DevWatchAddressFixtureImport": {
-    "id": "DevWatchAddressFixtureImport",
-    "route": "DevWatchAddressFixtureImport",
-    "navigator": "TestkitsNavigator",
-    "file": "src/screens/Navigators/TestkitsNavigator.tsx",
-    "chain": [
-      "StackTestkits",
-      "DevWatchAddressFixtureImport"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "TestkitsNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "FavoriteDapps": {
-    "id": "FavoriteDapps",
-    "route": "FavoriteDapps",
-    "navigator": "DappsNavigator",
-    "file": "src/screens/Navigators/DappsNavigator.tsx",
-    "chain": [
-      "StackDapps",
-      "FavoriteDapps"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "DappsNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "GasAccount": {
-    "id": "GasAccount",
-    "route": "GasAccount",
-    "navigator": "TransactionNavigator",
-    "file": "src/screens/Navigators/TransactionNavigator.tsx",
-    "chain": [
-      "StackTransaction",
-      "GasAccount"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "TransactionNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "GetStarted": {
-    "id": "GetStarted",
-    "route": "GetStarted",
-    "navigator": "GetStartedNavigator",
-    "file": "src/screens/Navigators/GetStartedNavigator.tsx",
-    "chain": [
-      "StackGetStarted",
-      "GetStarted"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "GetStartedNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "GnosisTransactionQueue": {
-    "id": "GnosisTransactionQueue",
-    "route": "GnosisTransactionQueue",
-    "navigator": "TransactionNavigator",
-    "file": "src/screens/Navigators/TransactionNavigator.tsx",
-    "chain": [
-      "StackTransaction",
-      "GnosisTransactionQueue"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "TransactionNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "History": {
-    "id": "History",
-    "route": "History",
-    "navigator": "TransactionNavigator",
-    "file": "src/screens/Navigators/TransactionNavigator.tsx",
-    "chain": [
-      "StackTransaction",
-      "History"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "TransactionNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "HistoryDetail": {
-    "id": "HistoryDetail",
-    "route": "HistoryDetail",
-    "navigator": "TransactionNavigator",
-    "file": "src/screens/Navigators/TransactionNavigator.tsx",
-    "chain": [
-      "StackTransaction",
-      "HistoryDetail"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "TransactionNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "HistoryLocalDetail": {
-    "id": "HistoryLocalDetail",
-    "route": "HistoryLocalDetail",
-    "navigator": "TransactionNavigator",
-    "file": "src/screens/Navigators/TransactionNavigator.tsx",
-    "chain": [
-      "StackTransaction",
-      "HistoryLocalDetail"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "TransactionNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "Home": {
-    "id": "Home",
-    "route": "Home",
-    "navigator": "HomeScreenNavigator",
-    "file": "src/screens/Navigators/rootNavigator.tsx",
-    "chain": [
-      "StackRoot",
-      "Home"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "HomeScreenNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "ImportHardwareAddress": {
-    "id": "ImportHardwareAddress",
-    "route": "ImportHardwareAddress",
-    "navigator": "AddressNavigator",
-    "file": "src/screens/Navigators/AddressNavigator.tsx",
-    "chain": [
-      "StackAddress",
-      "ImportHardwareAddress"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "AddressNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "ImportMethods": {
-    "id": "ImportMethods",
-    "route": "ImportMethods",
-    "navigator": "AddressNavigator",
-    "file": "src/screens/Navigators/AddressNavigator.tsx",
-    "chain": [
-      "StackAddress",
-      "ImportMethods"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "AddressNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "ImportMnemonic": {
-    "id": "ImportMnemonic",
-    "route": "ImportMnemonic",
-    "navigator": "AddressNavigator",
-    "file": "src/screens/Navigators/AddressNavigator.tsx",
-    "chain": [
-      "StackAddress",
-      "ImportMnemonic"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "AddressNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "ImportMnemonic2024": {
-    "id": "ImportMnemonic2024",
-    "route": "ImportMnemonic2024",
-    "navigator": "AddressNavigator",
-    "file": "src/screens/Navigators/AddressNavigator.tsx",
-    "chain": [
-      "StackAddress",
-      "ImportMnemonic2024"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "AddressNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "ImportMoreAddress": {
-    "id": "ImportMoreAddress",
-    "route": "ImportMoreAddress",
-    "navigator": "AddressNavigator",
-    "file": "src/screens/Navigators/AddressNavigator.tsx",
-    "chain": [
-      "StackAddress",
-      "ImportMoreAddress"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "AddressNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "ImportNewAddress": {
-    "id": "ImportNewAddress",
-    "route": "ImportNewAddress",
-    "navigator": "AddressNavigator",
-    "file": "src/screens/Navigators/AddressNavigator.tsx",
-    "chain": [
-      "StackAddress",
-      "ImportNewAddress"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "AddressNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "ImportPrivateKey": {
-    "id": "ImportPrivateKey",
-    "route": "ImportPrivateKey",
-    "navigator": "AddressNavigator",
-    "file": "src/screens/Navigators/AddressNavigator.tsx",
-    "chain": [
-      "StackAddress",
-      "ImportPrivateKey"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "AddressNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "ImportPrivateKey2024": {
-    "id": "ImportPrivateKey2024",
-    "route": "ImportPrivateKey2024",
-    "navigator": "AddressNavigator",
-    "file": "src/screens/Navigators/AddressNavigator.tsx",
-    "chain": [
-      "StackAddress",
-      "ImportPrivateKey2024"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "AddressNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "ImportRabbyWallet": {
-    "id": "ImportRabbyWallet",
-    "route": "ImportRabbyWallet",
-    "navigator": "AppNavigation",
-    "file": "src/AppNavigation.tsx",
-    "chain": [
-      "ImportRabbyWallet"
-    ],
-    "chainNavigators": [
-      "AppNavigation"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "ImportSafeAddress": {
-    "id": "ImportSafeAddress",
-    "route": "ImportSafeAddress",
-    "navigator": "AddressNavigator",
-    "file": "src/screens/Navigators/AddressNavigator.tsx",
-    "chain": [
-      "StackAddress",
-      "ImportSafeAddress"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "AddressNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "ImportSafeAddress2024": {
-    "id": "ImportSafeAddress2024",
-    "route": "ImportSafeAddress2024",
-    "navigator": "AddressNavigator",
-    "file": "src/screens/Navigators/AddressNavigator.tsx",
-    "chain": [
-      "StackAddress",
-      "ImportSafeAddress2024"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "AddressNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "ImportSecret": {
-    "id": "ImportSecret",
-    "route": "ImportSecret",
-    "navigator": "AppNavigation",
-    "file": "src/AppNavigation.tsx",
-    "chain": [
-      "ImportSecret"
-    ],
-    "chainNavigators": [
-      "AppNavigation"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "ImportSuccess": {
-    "id": "ImportSuccess",
-    "route": "ImportSuccess",
-    "navigator": "AddressNavigator",
-    "file": "src/screens/Navigators/AddressNavigator.tsx",
-    "chain": [
-      "StackAddress",
-      "ImportSuccess"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "AddressNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "ImportSuccess2024": {
-    "id": "ImportSuccess2024",
-    "route": "ImportSuccess2024",
-    "navigator": "AddressNavigator",
-    "file": "src/screens/Navigators/AddressNavigator.tsx",
-    "chain": [
-      "StackAddress",
-      "ImportSuccess2024"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "AddressNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "ImportWatchAddress": {
-    "id": "ImportWatchAddress",
-    "route": "ImportWatchAddress",
-    "navigator": "AddressNavigator",
-    "file": "src/screens/Navigators/AddressNavigator.tsx",
-    "chain": [
-      "StackAddress",
-      "ImportWatchAddress"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "AddressNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "ImportWatchAddress2024": {
-    "id": "ImportWatchAddress2024",
-    "route": "ImportWatchAddress2024",
-    "navigator": "AddressNavigator",
-    "file": "src/screens/Navigators/AddressNavigator.tsx",
-    "chain": [
-      "StackAddress",
-      "ImportWatchAddress2024"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "AddressNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "InMemoryLogViewer": {
-    "id": "InMemoryLogViewer",
-    "route": "InMemoryLogViewer",
-    "navigator": "TestkitsNavigator",
-    "file": "src/screens/Navigators/TestkitsNavigator.tsx",
-    "chain": [
-      "StackTestkits",
-      "InMemoryLogViewer"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "TestkitsNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "Lending": {
-    "id": "Lending",
-    "route": "Lending",
-    "navigator": "TransactionNavigator",
-    "file": "src/screens/Navigators/TransactionNavigator.tsx",
-    "chain": [
-      "StackTransaction",
-      "Lending"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "TransactionNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "LendingHistory": {
-    "id": "LendingHistory",
-    "route": "LendingHistory",
-    "navigator": "TransactionNavigator",
-    "file": "src/screens/Navigators/TransactionNavigator.tsx",
-    "chain": [
-      "StackTransaction",
-      "LendingHistory"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "TransactionNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "Market": {
-    "id": "Market",
-    "route": "Market",
-    "navigator": "HomeNonTabNavigator",
-    "file": "src/screens/Navigators/HomeNonTabNavigator.tsx",
-    "chain": [
-      "StackHomeNonTab",
-      "Market"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "HomeNonTabNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "Meme": {
-    "id": "Meme",
-    "route": "Meme",
-    "navigator": "HomeNonTabNavigator",
-    "file": "src/screens/Navigators/HomeNonTabNavigator.tsx",
-    "chain": [
-      "StackHomeNonTab",
-      "Meme"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "HomeNonTabNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "MemeCoin": {
-    "id": "MemeCoin",
-    "route": "MemeCoin",
-    "navigator": "TransactionNavigator",
-    "file": "src/screens/Navigators/TransactionNavigator.tsx",
-    "chain": [
-      "StackTransaction",
-      "MemeCoin"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "TransactionNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "MemeCoinBuy": {
-    "id": "MemeCoinBuy",
-    "route": "MemeCoinBuy",
-    "navigator": "TransactionNavigator",
-    "file": "src/screens/Navigators/TransactionNavigator.tsx",
-    "chain": [
-      "StackTransaction",
-      "MemeCoinBuy"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "TransactionNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "MemeCoinExecute": {
-    "id": "MemeCoinExecute",
-    "route": "MemeCoinExecute",
-    "navigator": "TransactionNavigator",
-    "file": "src/screens/Navigators/TransactionNavigator.tsx",
-    "chain": [
-      "StackTransaction",
-      "MemeCoinExecute"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "TransactionNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "MoreImportMethods": {
-    "id": "MoreImportMethods",
-    "route": "MoreImportMethods",
-    "navigator": "AppNavigation",
-    "file": "src/AppNavigation.tsx",
-    "chain": [
-      "MoreImportMethods"
-    ],
-    "chainNavigators": [
-      "AppNavigation"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "MultiAddressHistory": {
-    "id": "MultiAddressHistory",
-    "route": "MultiAddressHistory",
-    "navigator": "TransactionNavigator",
-    "file": "src/screens/Navigators/TransactionNavigator.tsx",
-    "chain": [
-      "StackTransaction",
-      "MultiAddressHistory"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "TransactionNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "MultiSend": {
-    "id": "MultiSend",
-    "route": "MultiSend",
-    "navigator": "TransactionNavigator",
-    "file": "src/screens/Navigators/TransactionNavigator.tsx",
-    "chain": [
-      "StackTransaction",
-      "MultiSend"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "TransactionNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "MultiSwapBridge": {
-    "id": "MultiSwapBridge",
-    "route": "MultiSwapBridge",
-    "navigator": "TransactionNavigator",
-    "file": "src/screens/Navigators/TransactionNavigator.tsx",
-    "chain": [
-      "StackTransaction",
-      "MultiSwapBridge"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "TransactionNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "MyBundle": {
-    "id": "MyBundle",
-    "route": "MyBundle",
-    "navigator": "AppNavigation",
-    "file": "src/AppNavigation.tsx",
-    "chain": [
-      "MyBundle"
-    ],
-    "chainNavigators": [
-      "AppNavigation"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "NftDetail": {
-    "id": "NftDetail",
-    "route": "NftDetail",
-    "navigator": "AppNavigation",
-    "file": "src/AppNavigation.tsx",
-    "chain": [
-      "NftDetail"
-    ],
-    "chainNavigators": [
-      "AppNavigation"
-    ],
-    "params": [
-      "token"
-    ],
-    "optionalParams": [
-      "account",
-      "isSingleAddress"
-    ]
-  },
-  "NotFound": {
-    "id": "NotFound",
-    "route": "NotFound",
-    "navigator": "AppNavigation",
-    "file": "src/AppNavigation.tsx",
-    "chain": [
-      "NotFound"
-    ],
-    "chainNavigators": [
-      "AppNavigation"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "Perps": {
-    "id": "Perps",
-    "route": "Perps",
-    "navigator": "TransactionNavigator",
-    "file": "src/screens/Navigators/TransactionNavigator.tsx",
-    "chain": [
-      "StackTransaction",
-      "Perps"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "TransactionNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "PerpsHistory": {
-    "id": "PerpsHistory",
-    "route": "PerpsHistory",
-    "navigator": "TransactionNavigator",
-    "file": "src/screens/Navigators/TransactionNavigator.tsx",
-    "chain": [
-      "StackTransaction",
-      "PerpsHistory"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "TransactionNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "PerpsMarketDetail": {
-    "id": "PerpsMarketDetail",
-    "route": "PerpsMarketDetail",
-    "navigator": "TransactionNavigator",
-    "file": "src/screens/Navigators/TransactionNavigator.tsx",
-    "chain": [
-      "StackTransaction",
-      "PerpsMarketDetail"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "TransactionNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "PerpsProHistory": {
-    "id": "PerpsProHistory",
-    "route": "PerpsProHistory",
-    "navigator": "TransactionNavigator",
-    "file": "src/screens/Navigators/TransactionNavigator.tsx",
-    "chain": [
-      "StackTransaction",
-      "PerpsProHistory"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "TransactionNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "PerpsSearch": {
-    "id": "PerpsSearch",
-    "route": "PerpsSearch",
-    "navigator": "TransactionNavigator",
-    "file": "src/screens/Navigators/TransactionNavigator.tsx",
-    "chain": [
-      "StackTransaction",
-      "PerpsSearch"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "TransactionNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "Points": {
-    "id": "Points",
-    "route": "Points",
-    "navigator": "AddressNavigator",
-    "file": "src/screens/Navigators/AddressNavigator.tsx",
-    "chain": [
-      "StackAddress",
-      "Points"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "AddressNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "PreCreateMnemonic": {
-    "id": "PreCreateMnemonic",
-    "route": "PreCreateMnemonic",
-    "navigator": "AddressNavigator",
-    "file": "src/screens/Navigators/AddressNavigator.tsx",
-    "chain": [
-      "StackAddress",
-      "PreCreateMnemonic"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "AddressNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "Prediction": {
-    "id": "Prediction",
-    "route": "Prediction",
-    "navigator": "TransactionNavigator",
-    "file": "src/screens/Navigators/TransactionNavigator.tsx",
-    "chain": [
-      "StackTransaction",
-      "Prediction"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "TransactionNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "ProviderControllerTester": {
-    "id": "ProviderControllerTester",
-    "route": "ProviderControllerTester",
-    "navigator": "SettingNavigator",
-    "file": "src/screens/Navigators/SettingsNavigator.tsx",
-    "chain": [
-      "StackSettings",
-      "ProviderControllerTester"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "SettingNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "Receive": {
-    "id": "Receive",
-    "route": "Receive",
-    "navigator": "TransactionNavigator",
-    "file": "src/screens/Navigators/TransactionNavigator.tsx",
-    "chain": [
-      "StackTransaction",
-      "Receive"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "TransactionNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "ReceiveAddressList": {
-    "id": "ReceiveAddressList",
-    "route": "ReceiveAddressList",
-    "navigator": "AddressNavigator",
-    "file": "src/screens/Navigators/AddressNavigator.tsx",
-    "chain": [
-      "StackAddress",
-      "ReceiveAddressList"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "AddressNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "RestoreFromCloud": {
-    "id": "RestoreFromCloud",
-    "route": "RestoreFromCloud",
-    "navigator": "AddressNavigator",
-    "file": "src/screens/Navigators/AddressNavigator.tsx",
-    "chain": [
-      "StackAddress",
-      "RestoreFromCloud"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "AddressNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "SafeAddressList": {
-    "id": "SafeAddressList",
-    "route": "SafeAddressList",
-    "navigator": "AddressNavigator",
-    "file": "src/screens/Navigators/AddressNavigator.tsx",
-    "chain": [
-      "StackAddress",
-      "SafeAddressList"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "AddressNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "Scanner": {
-    "id": "Scanner",
-    "route": "Scanner",
-    "navigator": "AppNavigation",
-    "file": "src/AppNavigation.tsx",
-    "chain": [
-      "Scanner"
-    ],
-    "chainNavigators": [
-      "AppNavigation"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "Search": {
-    "id": "Search",
-    "route": "Search",
-    "navigator": "HomeNonTabNavigator",
-    "file": "src/screens/Navigators/HomeNonTabNavigator.tsx",
-    "chain": [
-      "StackHomeNonTab",
-      "Search"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "HomeNonTabNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "SelectAddMethod": {
-    "id": "SelectAddMethod",
-    "route": "SelectAddMethod",
-    "navigator": "AppNavigation",
-    "file": "src/AppNavigation.tsx",
-    "chain": [
-      "SelectAddMethod"
-    ],
-    "chainNavigators": [
-      "AppNavigation"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "SelectImportMethod": {
-    "id": "SelectImportMethod",
-    "route": "SelectImportMethod",
-    "navigator": "AppNavigation",
-    "file": "src/AppNavigation.tsx",
-    "chain": [
-      "SelectImportMethod"
-    ],
-    "chainNavigators": [
-      "AppNavigation"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "Send": {
-    "id": "Send",
-    "route": "Send",
-    "navigator": "TransactionNavigator",
-    "file": "src/screens/Navigators/TransactionNavigator.tsx",
-    "chain": [
-      "StackTransaction",
-      "Send"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "TransactionNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "SendNFT": {
-    "id": "SendNFT",
-    "route": "SendNFT",
-    "navigator": "TransactionNavigator",
-    "file": "src/screens/Navigators/TransactionNavigator.tsx",
-    "chain": [
-      "StackTransaction",
-      "SendNFT"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "TransactionNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "SetPassword": {
-    "id": "SetPassword",
-    "route": "SetPassword",
-    "navigator": "SettingNavigator",
-    "file": "src/screens/Navigators/SettingsNavigator.tsx",
-    "chain": [
-      "StackSettings",
-      "SetPassword"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "SettingNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "SetPassword2024": {
-    "id": "SetPassword2024",
-    "route": "SetPassword2024",
-    "navigator": "AddressNavigator",
-    "file": "src/screens/Navigators/AddressNavigator.tsx",
-    "chain": [
-      "StackAddress",
-      "SetPassword2024"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "AddressNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "Settings": {
-    "id": "Settings",
-    "route": "Settings",
-    "navigator": "SettingNavigator",
-    "file": "src/screens/Navigators/SettingsNavigator.tsx",
-    "chain": [
-      "StackSettings",
-      "Settings"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "SettingNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "SetupWallet": {
-    "id": "SetupWallet",
-    "route": "SetupWallet",
-    "navigator": "AppNavigation",
-    "file": "src/AppNavigation.tsx",
-    "chain": [
-      "SetupWallet"
-    ],
-    "chainNavigators": [
-      "AppNavigation"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "SingleAddressHome": {
-    "id": "SingleAddressHome",
-    "route": "SingleAddressHome",
-    "navigator": "SingleAddressNavigator",
-    "file": "src/screens/Navigators/SingleAddressNavigator.tsx",
-    "chain": [
-      "SingleAddressStack",
-      "SingleAddressHome"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "SingleAddressNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "SingleAddressStack": {
-    "id": "SingleAddressStack",
-    "route": "SingleAddressStack",
-    "navigator": "AppNavigation",
-    "file": "src/AppNavigation.tsx",
-    "chain": [
-      "SingleAddressStack"
-    ],
-    "chainNavigators": [
-      "AppNavigation"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "StackAddress": {
-    "id": "StackAddress",
-    "route": "StackAddress",
-    "navigator": "AppNavigation",
-    "file": "src/AppNavigation.tsx",
-    "chain": [
-      "StackAddress"
-    ],
-    "chainNavigators": [
-      "AppNavigation"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "StackDapps": {
-    "id": "StackDapps",
-    "route": "StackDapps",
-    "navigator": "AppNavigation",
-    "file": "src/AppNavigation.tsx",
-    "chain": [
-      "StackDapps"
-    ],
-    "chainNavigators": [
-      "AppNavigation"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "StackGetStarted": {
-    "id": "StackGetStarted",
-    "route": "StackGetStarted",
-    "navigator": "AppNavigation",
-    "file": "src/AppNavigation.tsx",
-    "chain": [
-      "StackGetStarted"
-    ],
-    "chainNavigators": [
-      "AppNavigation"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "StackHomeNonTab": {
-    "id": "StackHomeNonTab",
-    "route": "StackHomeNonTab",
-    "navigator": "AppNavigation",
-    "file": "src/AppNavigation.tsx",
-    "chain": [
-      "StackHomeNonTab"
-    ],
-    "chainNavigators": [
-      "AppNavigation"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "StackRoot": {
-    "id": "StackRoot",
-    "route": "StackRoot",
-    "navigator": "AppNavigation",
-    "file": "src/AppNavigation.tsx",
-    "chain": [
-      "StackRoot"
-    ],
-    "chainNavigators": [
-      "AppNavigation"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "StackSettings": {
-    "id": "StackSettings",
-    "route": "StackSettings",
-    "navigator": "AppNavigation",
-    "file": "src/AppNavigation.tsx",
-    "chain": [
-      "StackSettings"
-    ],
-    "chainNavigators": [
-      "AppNavigation"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "StackTestkits": {
-    "id": "StackTestkits",
-    "route": "StackTestkits",
-    "navigator": "AppNavigation",
-    "file": "src/AppNavigation.tsx",
-    "chain": [
-      "StackTestkits"
-    ],
-    "chainNavigators": [
-      "AppNavigation"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "StackTransaction": {
-    "id": "StackTransaction",
-    "route": "StackTransaction",
-    "navigator": "AppNavigation",
-    "file": "src/AppNavigation.tsx",
-    "chain": [
-      "StackTransaction"
-    ],
-    "chainNavigators": [
-      "AppNavigation"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "StartupPerformanceLogViewer": {
-    "id": "StartupPerformanceLogViewer",
-    "route": "StartupPerformanceLogViewer",
-    "navigator": "TestkitsNavigator",
-    "file": "src/screens/Navigators/TestkitsNavigator.tsx",
-    "chain": [
-      "StackTestkits",
-      "StartupPerformanceLogViewer"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "TestkitsNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "SwapBridge": {
-    "id": "SwapBridge",
-    "route": "SwapBridge",
-    "navigator": "TransactionNavigator",
-    "file": "src/screens/Navigators/TransactionNavigator.tsx",
-    "chain": [
-      "StackTransaction",
-      "SwapBridge"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "TransactionNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "SyncExtensionAccountSuccess": {
-    "id": "SyncExtensionAccountSuccess",
-    "route": "SyncExtensionAccountSuccess",
-    "navigator": "AddressNavigator",
-    "file": "src/screens/Navigators/AddressNavigator.tsx",
-    "chain": [
-      "StackAddress",
-      "SyncExtensionAccountSuccess"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "AddressNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "SyncExtensionPassword": {
-    "id": "SyncExtensionPassword",
-    "route": "SyncExtensionPassword",
-    "navigator": "AddressNavigator",
-    "file": "src/screens/Navigators/AddressNavigator.tsx",
-    "chain": [
-      "StackAddress",
-      "SyncExtensionPassword"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "AddressNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "TokenDetail": {
-    "id": "TokenDetail",
-    "route": "TokenDetail",
-    "navigator": "AppNavigation",
-    "file": "src/AppNavigation.tsx",
-    "chain": [
-      "TokenDetail"
-    ],
-    "chainNavigators": [
-      "AppNavigation"
-    ],
-    "params": [
-      "token"
-    ],
-    "optionalParams": [
-      "fromPortfolio",
-      "needUseCacheToken",
-      "isSingleAddress",
-      "account",
-      "rawPortfolios",
-      "unHold",
-      "isSwapToTokenDetail",
-      "isCustomTestnetToken",
-      "tokenSelectType"
-    ]
-  },
-  "TokenMarketInfo": {
-    "id": "TokenMarketInfo",
-    "route": "TokenMarketInfo",
-    "navigator": "AppNavigation",
-    "file": "src/AppNavigation.tsx",
-    "chain": [
-      "TokenMarketInfo"
-    ],
-    "chainNavigators": [
-      "AppNavigation"
-    ],
-    "params": [
-      "token"
-    ],
-    "optionalParams": [
-      "fromPortfolio",
-      "needUseCacheToken",
-      "isSingleAddress",
-      "account",
-      "rawPortfolios",
-      "unHold",
-      "isSwapToTokenDetail",
-      "tokenSelectType"
-    ]
-  },
-  "Unlock": {
-    "id": "Unlock",
-    "route": "Unlock",
-    "navigator": "AppNavigation",
-    "file": "src/AppNavigation.tsx",
-    "chain": [
-      "Unlock"
-    ],
-    "chainNavigators": [
-      "AppNavigation"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "WalletConnect": {
-    "id": "WalletConnect",
-    "route": "WalletConnect",
-    "navigator": "SettingNavigator",
-    "file": "src/screens/Navigators/SettingsNavigator.tsx",
-    "chain": [
-      "StackSettings",
-      "WalletConnect"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "SettingNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "WatchAddressList": {
-    "id": "WatchAddressList",
-    "route": "WatchAddressList",
-    "navigator": "AddressNavigator",
-    "file": "src/screens/Navigators/AddressNavigator.tsx",
-    "chain": [
-      "StackAddress",
-      "WatchAddressList"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "AddressNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
-  },
-  "Watchlist": {
-    "id": "Watchlist",
-    "route": "Watchlist",
-    "navigator": "HomeNonTabNavigator",
-    "file": "src/screens/Navigators/HomeNonTabNavigator.tsx",
-    "chain": [
-      "StackHomeNonTab",
-      "Watchlist"
-    ],
-    "chainNavigators": [
-      "AppNavigation",
-      "HomeNonTabNavigator"
-    ],
-    "params": [],
-    "optionalParams": []
+  AccountTransaction: {
+    id: 'AccountTransaction',
+    route: 'AccountTransaction',
+    navigator: 'AppNavigation',
+    file: 'src/AppNavigation.tsx',
+    chain: ['AccountTransaction'],
+    chainNavigators: ['AppNavigation'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: null,
+  },
+  AddMnemonic: {
+    id: 'AddMnemonic',
+    route: 'AddMnemonic',
+    navigator: 'AddressNavigator',
+    file: 'src/screens/Navigators/AddressNavigator.tsx',
+    chain: ['StackAddress', 'AddMnemonic'],
+    chainNavigators: ['AppNavigation', 'AddressNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile:
+      'src/screens/Address/AddSeedPhraseScreen/AddSeedPhraseScreen.tsx',
+  },
+  AddressDetail: {
+    id: 'AddressDetail',
+    route: 'AddressDetail',
+    navigator: 'AddressNavigator',
+    file: 'src/screens/Navigators/AddressNavigator.tsx',
+    chain: ['StackAddress', 'AddressDetail'],
+    chainNavigators: ['AppNavigation', 'AddressNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: ['address', 'type', 'brandName'],
+    riskyParams: ['address', 'type', 'brandName'],
+    sourceFile: 'src/screens/Address/AddressDetail.tsx',
+  },
+  ApprovalAddressList: {
+    id: 'ApprovalAddressList',
+    route: 'ApprovalAddressList',
+    navigator: 'AddressNavigator',
+    file: 'src/screens/Navigators/AddressNavigator.tsx',
+    chain: ['StackAddress', 'ApprovalAddressList'],
+    chainNavigators: ['AppNavigation', 'AddressNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/screens/Address/ApprovalAddressListScreen.tsx',
+  },
+  Approvals: {
+    id: 'Approvals',
+    route: 'Approvals',
+    navigator: 'TransactionNavigator',
+    file: 'src/screens/Navigators/TransactionNavigator.tsx',
+    chain: ['StackTransaction', 'Approvals'],
+    chainNavigators: ['AppNavigation', 'TransactionNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: ['account'],
+    riskyParams: ['account'],
+    sourceFile: 'src/screens/Approvals/index.tsx',
+  },
+  Backup: {
+    id: 'Backup',
+    route: 'Backup',
+    navigator: 'AppNavigation',
+    file: 'src/AppNavigation.tsx',
+    chain: ['Backup'],
+    chainNavigators: ['AppNavigation'],
+    params: [],
+    optionalParams: [],
+    usedParams: ['address', 'type', 'brandName'],
+    riskyParams: ['address', 'type', 'brandName'],
+    sourceFile: 'src/screens/Address/Backup.tsx',
+  },
+  BackupMnemonic: {
+    id: 'BackupMnemonic',
+    route: 'BackupMnemonic',
+    navigator: 'AddressNavigator',
+    file: 'src/screens/Navigators/AddressNavigator.tsx',
+    chain: ['StackAddress', 'BackupMnemonic'],
+    chainNavigators: ['AppNavigation', 'AddressNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: null,
+  },
+  BackupPrivateKey: {
+    id: 'BackupPrivateKey',
+    route: 'BackupPrivateKey',
+    navigator: 'AddressNavigator',
+    file: 'src/screens/Navigators/AddressNavigator.tsx',
+    chain: ['StackAddress', 'BackupPrivateKey'],
+    chainNavigators: ['AppNavigation', 'AddressNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: ['privateKeyVaultId'],
+    riskyParams: ['privateKeyVaultId'],
+    sourceFile: 'src/screens/Address/BackupPrivateKeyScreen.tsx',
+  },
+  BatchRevoke: {
+    id: 'BatchRevoke',
+    route: 'BatchRevoke',
+    navigator: 'TransactionNavigator',
+    file: 'src/screens/Navigators/TransactionNavigator.tsx',
+    chain: ['StackTransaction', 'BatchRevoke'],
+    chainNavigators: ['AppNavigation', 'TransactionNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: ['dataSource', 'revokeList', 'account'],
+    riskyParams: ['dataSource', 'revokeList', 'account'],
+    sourceFile: 'src/screens/BatchRevoke/BatchRevoke.tsx',
+  },
+  BridgeDetail: {
+    id: 'BridgeDetail',
+    route: 'BridgeDetail',
+    navigator: 'TransactionNavigator',
+    file: 'src/screens/Navigators/TransactionNavigator.tsx',
+    chain: ['StackTransaction', 'BridgeDetail'],
+    chainNavigators: ['AppNavigation', 'TransactionNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/screens/Bridge/BridgeDetailScreen.tsx',
+  },
+  ConvertDust: {
+    id: 'ConvertDust',
+    route: 'ConvertDust',
+    navigator: 'TransactionNavigator',
+    file: 'src/screens/Navigators/TransactionNavigator.tsx',
+    chain: ['StackTransaction', 'ConvertDust'],
+    chainNavigators: ['AppNavigation', 'TransactionNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/screens/ConvertDust/index.tsx',
+  },
+  CreateChooseBackup: {
+    id: 'CreateChooseBackup',
+    route: 'CreateChooseBackup',
+    navigator: 'AddressNavigator',
+    file: 'src/screens/Navigators/AddressNavigator.tsx',
+    chain: ['StackAddress', 'CreateChooseBackup'],
+    chainNavigators: ['AppNavigation', 'AddressNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/screens/Address/CreateChooseBackup.tsx',
+  },
+  CreateMnemonic: {
+    id: 'CreateMnemonic',
+    route: 'CreateMnemonic',
+    navigator: 'AddressNavigator',
+    file: 'src/screens/Navigators/AddressNavigator.tsx',
+    chain: ['StackAddress', 'CreateMnemonic'],
+    chainNavigators: ['AppNavigation', 'AddressNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/screens/Address/CreateSeedPhraseRiskCheckScreen.tsx',
+  },
+  CreateMnemonicBackup: {
+    id: 'CreateMnemonicBackup',
+    route: 'CreateMnemonicBackup',
+    navigator: 'AddressNavigator',
+    file: 'src/screens/Navigators/AddressNavigator.tsx',
+    chain: ['StackAddress', 'CreateMnemonicBackup'],
+    chainNavigators: ['AppNavigation', 'AddressNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/screens/Address/CreateSeedPhraseBackupScreen.tsx',
+  },
+  CreateMnemonicVerify: {
+    id: 'CreateMnemonicVerify',
+    route: 'CreateMnemonicVerify',
+    navigator: 'AddressNavigator',
+    file: 'src/screens/Navigators/AddressNavigator.tsx',
+    chain: ['StackAddress', 'CreateMnemonicVerify'],
+    chainNavigators: ['AppNavigation', 'AddressNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/screens/Address/CreateSeedPhraseVerifyScreen.tsx',
+  },
+  CreateNewAddress: {
+    id: 'CreateNewAddress',
+    route: 'CreateNewAddress',
+    navigator: 'AddressNavigator',
+    file: 'src/screens/Navigators/AddressNavigator.tsx',
+    chain: ['StackAddress', 'CreateNewAddress'],
+    chainNavigators: ['AppNavigation', 'AddressNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/screens/Address/CreateNewAddress.tsx',
+  },
+  CreateSelectMethod: {
+    id: 'CreateSelectMethod',
+    route: 'CreateSelectMethod',
+    navigator: 'AddressNavigator',
+    file: 'src/screens/Navigators/AddressNavigator.tsx',
+    chain: ['StackAddress', 'CreateSelectMethod'],
+    chainNavigators: ['AppNavigation', 'AddressNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/screens/Address/CreateSelectMethod.tsx',
+  },
+  CustomTestnet: {
+    id: 'CustomTestnet',
+    route: 'CustomTestnet',
+    navigator: 'SettingNavigator',
+    file: 'src/screens/Navigators/SettingsNavigator.tsx',
+    chain: ['StackSettings', 'CustomTestnet'],
+    chainNavigators: ['AppNavigation', 'SettingNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/screens/CustomTestnet/index.tsx',
+  },
+  Dapps: {
+    id: 'Dapps',
+    route: 'Dapps',
+    navigator: 'DappsNavigator',
+    file: 'src/screens/Navigators/DappsNavigator.tsx',
+    chain: ['StackDapps', 'Dapps'],
+    chainNavigators: ['AppNavigation', 'DappsNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/screens/Dapps/DappsScreen/index.tsx',
+  },
+  DappWebViewStubOnHome: {
+    id: 'DappWebViewStubOnHome',
+    route: 'DappWebViewStubOnHome',
+    navigator: 'HomeScreenNavigator',
+    file: 'src/screens/Navigators/rootNavigator.tsx',
+    chain: ['StackRoot', 'DappWebViewStubOnHome'],
+    chainNavigators: ['AppNavigation', 'HomeScreenNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: null,
+  },
+  DebugLogViewer: {
+    id: 'DebugLogViewer',
+    route: 'DebugLogViewer',
+    navigator: 'TestkitsNavigator',
+    file: 'src/screens/Navigators/TestkitsNavigator.tsx',
+    chain: ['StackTestkits', 'DebugLogViewer'],
+    chainNavigators: ['AppNavigation', 'TestkitsNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/perfs/loadables/testkitsNavigatorScreens.ts',
+  },
+  DevCapabilityFile: {
+    id: 'DevCapabilityFile',
+    route: 'DevCapabilityFile',
+    navigator: 'TestkitsNavigator',
+    file: 'src/screens/Navigators/TestkitsNavigator.tsx',
+    chain: ['StackTestkits', 'DevCapabilityFile'],
+    chainNavigators: ['AppNavigation', 'TestkitsNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/perfs/loadables/testkitsNavigatorScreens.ts',
+  },
+  DevDataContactService: {
+    id: 'DevDataContactService',
+    route: 'DevDataContactService',
+    navigator: 'TestkitsNavigator',
+    file: 'src/screens/Navigators/TestkitsNavigator.tsx',
+    chain: ['StackTestkits', 'DevDataContactService'],
+    chainNavigators: ['AppNavigation', 'TestkitsNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/perfs/loadables/testkitsNavigatorScreens.ts',
+  },
+  DevDataKeychain: {
+    id: 'DevDataKeychain',
+    route: 'DevDataKeychain',
+    navigator: 'TestkitsNavigator',
+    file: 'src/screens/Navigators/TestkitsNavigator.tsx',
+    chain: ['StackTestkits', 'DevDataKeychain'],
+    chainNavigators: ['AppNavigation', 'TestkitsNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/perfs/loadables/testkitsNavigatorScreens.ts',
+  },
+  DevDataKeyringVault: {
+    id: 'DevDataKeyringVault',
+    route: 'DevDataKeyringVault',
+    navigator: 'TestkitsNavigator',
+    file: 'src/screens/Navigators/TestkitsNavigator.tsx',
+    chain: ['StackTestkits', 'DevDataKeyringVault'],
+    chainNavigators: ['AppNavigation', 'TestkitsNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/perfs/loadables/testkitsNavigatorScreens.ts',
+  },
+  DevDataSQLite: {
+    id: 'DevDataSQLite',
+    route: 'DevDataSQLite',
+    navigator: 'TestkitsNavigator',
+    file: 'src/screens/Navigators/TestkitsNavigator.tsx',
+    chain: ['StackTestkits', 'DevDataSQLite'],
+    chainNavigators: ['AppNavigation', 'TestkitsNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/perfs/loadables/testkitsNavigatorScreens.ts',
+  },
+  DevDataWhitelist: {
+    id: 'DevDataWhitelist',
+    route: 'DevDataWhitelist',
+    navigator: 'TestkitsNavigator',
+    file: 'src/screens/Navigators/TestkitsNavigator.tsx',
+    chain: ['StackTestkits', 'DevDataWhitelist'],
+    chainNavigators: ['AppNavigation', 'TestkitsNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/perfs/loadables/testkitsNavigatorScreens.ts',
+  },
+  DevPerf: {
+    id: 'DevPerf',
+    route: 'DevPerf',
+    navigator: 'TestkitsNavigator',
+    file: 'src/screens/Navigators/TestkitsNavigator.tsx',
+    chain: ['StackTestkits', 'DevPerf'],
+    chainNavigators: ['AppNavigation', 'TestkitsNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/perfs/loadables/testkitsNavigatorScreens.ts',
+  },
+  DevSwitches: {
+    id: 'DevSwitches',
+    route: 'DevSwitches',
+    navigator: 'TestkitsNavigator',
+    file: 'src/screens/Navigators/TestkitsNavigator.tsx',
+    chain: ['StackTestkits', 'DevSwitches'],
+    chainNavigators: ['AppNavigation', 'TestkitsNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/perfs/loadables/testkitsNavigatorScreens.ts',
+  },
+  DevUIAccountShowCase: {
+    id: 'DevUIAccountShowCase',
+    route: 'DevUIAccountShowCase',
+    navigator: 'TestkitsNavigator',
+    file: 'src/screens/Navigators/TestkitsNavigator.tsx',
+    chain: ['StackTestkits', 'DevUIAccountShowCase'],
+    chainNavigators: ['AppNavigation', 'TestkitsNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/perfs/loadables/testkitsNavigatorScreens.ts',
+  },
+  DevUIAnimatedTextAndView: {
+    id: 'DevUIAnimatedTextAndView',
+    route: 'DevUIAnimatedTextAndView',
+    navigator: 'TestkitsNavigator',
+    file: 'src/screens/Navigators/TestkitsNavigator.tsx',
+    chain: ['StackTestkits', 'DevUIAnimatedTextAndView'],
+    chainNavigators: ['AppNavigation', 'TestkitsNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/perfs/loadables/testkitsNavigatorScreens.ts',
+  },
+  DevUIAutoFitTitlePlayground: {
+    id: 'DevUIAutoFitTitlePlayground',
+    route: 'DevUIAutoFitTitlePlayground',
+    navigator: 'TestkitsNavigator',
+    file: 'src/screens/Navigators/TestkitsNavigator.tsx',
+    chain: ['StackTestkits', 'DevUIAutoFitTitlePlayground'],
+    chainNavigators: ['AppNavigation', 'TestkitsNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/perfs/loadables/testkitsNavigatorScreens.ts',
+  },
+  DevUIBuiltInPages: {
+    id: 'DevUIBuiltInPages',
+    route: 'DevUIBuiltInPages',
+    navigator: 'TestkitsNavigator',
+    file: 'src/screens/Navigators/TestkitsNavigator.tsx',
+    chain: ['StackTestkits', 'DevUIBuiltInPages'],
+    chainNavigators: ['AppNavigation', 'TestkitsNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/perfs/loadables/testkitsNavigatorScreens.ts',
+  },
+  DevUIComponents2024ShowCase: {
+    id: 'DevUIComponents2024ShowCase',
+    route: 'DevUIComponents2024ShowCase',
+    navigator: 'TestkitsNavigator',
+    file: 'src/screens/Navigators/TestkitsNavigator.tsx',
+    chain: ['StackTestkits', 'DevUIComponents2024ShowCase'],
+    chainNavigators: ['AppNavigation', 'TestkitsNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/perfs/loadables/testkitsNavigatorScreens.ts',
+  },
+  DevUIDapps: {
+    id: 'DevUIDapps',
+    route: 'DevUIDapps',
+    navigator: 'TestkitsNavigator',
+    file: 'src/screens/Navigators/TestkitsNavigator.tsx',
+    chain: ['StackTestkits', 'DevUIDapps'],
+    chainNavigators: ['AppNavigation', 'TestkitsNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/perfs/loadables/testkitsNavigatorScreens.ts',
+  },
+  DevUIFontShowCase: {
+    id: 'DevUIFontShowCase',
+    route: 'DevUIFontShowCase',
+    navigator: 'TestkitsNavigator',
+    file: 'src/screens/Navigators/TestkitsNavigator.tsx',
+    chain: ['StackTestkits', 'DevUIFontShowCase'],
+    chainNavigators: ['AppNavigation', 'TestkitsNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/perfs/loadables/testkitsNavigatorScreens.ts',
+  },
+  DevUIFormShowCase: {
+    id: 'DevUIFormShowCase',
+    route: 'DevUIFormShowCase',
+    navigator: 'TestkitsNavigator',
+    file: 'src/screens/Navigators/TestkitsNavigator.tsx',
+    chain: ['StackTestkits', 'DevUIFormShowCase'],
+    chainNavigators: ['AppNavigation', 'TestkitsNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/perfs/loadables/testkitsNavigatorScreens.ts',
+  },
+  DevUINotifications: {
+    id: 'DevUINotifications',
+    route: 'DevUINotifications',
+    navigator: 'TestkitsNavigator',
+    file: 'src/screens/Navigators/TestkitsNavigator.tsx',
+    chain: ['StackTestkits', 'DevUINotifications'],
+    chainNavigators: ['AppNavigation', 'TestkitsNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/perfs/loadables/testkitsNavigatorScreens.ts',
+  },
+  DevUIPermissions: {
+    id: 'DevUIPermissions',
+    route: 'DevUIPermissions',
+    navigator: 'TestkitsNavigator',
+    file: 'src/screens/Navigators/TestkitsNavigator.tsx',
+    chain: ['StackTestkits', 'DevUIPermissions'],
+    chainNavigators: ['AppNavigation', 'TestkitsNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/perfs/loadables/testkitsNavigatorScreens.ts',
+  },
+  DevUISafeSvgMedia: {
+    id: 'DevUISafeSvgMedia',
+    route: 'DevUISafeSvgMedia',
+    navigator: 'TestkitsNavigator',
+    file: 'src/screens/Navigators/TestkitsNavigator.tsx',
+    chain: ['StackTestkits', 'DevUISafeSvgMedia'],
+    chainNavigators: ['AppNavigation', 'TestkitsNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/perfs/loadables/testkitsNavigatorScreens.ts',
+  },
+  DevUIScreenContainerShowCase: {
+    id: 'DevUIScreenContainerShowCase',
+    route: 'DevUIScreenContainerShowCase',
+    navigator: 'TestkitsNavigator',
+    file: 'src/screens/Navigators/TestkitsNavigator.tsx',
+    chain: ['StackTestkits', 'DevUIScreenContainerShowCase'],
+    chainNavigators: ['AppNavigation', 'TestkitsNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/perfs/loadables/testkitsNavigatorScreens.ts',
+  },
+  DevUIToast: {
+    id: 'DevUIToast',
+    route: 'DevUIToast',
+    navigator: 'TestkitsNavigator',
+    file: 'src/screens/Navigators/TestkitsNavigator.tsx',
+    chain: ['StackTestkits', 'DevUIToast'],
+    chainNavigators: ['AppNavigation', 'TestkitsNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/perfs/loadables/testkitsNavigatorScreens.ts',
+  },
+  DevUIWalletConnect: {
+    id: 'DevUIWalletConnect',
+    route: 'DevUIWalletConnect',
+    navigator: 'TestkitsNavigator',
+    file: 'src/screens/Navigators/TestkitsNavigator.tsx',
+    chain: ['StackTestkits', 'DevUIWalletConnect'],
+    chainNavigators: ['AppNavigation', 'TestkitsNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/perfs/loadables/testkitsNavigatorScreens.ts',
+  },
+  DevWatchAddressFixtureImport: {
+    id: 'DevWatchAddressFixtureImport',
+    route: 'DevWatchAddressFixtureImport',
+    navigator: 'TestkitsNavigator',
+    file: 'src/screens/Navigators/TestkitsNavigator.tsx',
+    chain: ['StackTestkits', 'DevWatchAddressFixtureImport'],
+    chainNavigators: ['AppNavigation', 'TestkitsNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/perfs/loadables/testkitsNavigatorScreens.ts',
+  },
+  FavoriteDapps: {
+    id: 'FavoriteDapps',
+    route: 'FavoriteDapps',
+    navigator: 'DappsNavigator',
+    file: 'src/screens/Navigators/DappsNavigator.tsx',
+    chain: ['StackDapps', 'FavoriteDapps'],
+    chainNavigators: ['AppNavigation', 'DappsNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/screens/Dapps/FavoriteDappsScreen/index.tsx',
+  },
+  GasAccount: {
+    id: 'GasAccount',
+    route: 'GasAccount',
+    navigator: 'TransactionNavigator',
+    file: 'src/screens/Navigators/TransactionNavigator.tsx',
+    chain: ['StackTransaction', 'GasAccount'],
+    chainNavigators: ['AppNavigation', 'TransactionNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/screens/GasAccount/index.tsx',
+  },
+  GetStarted: {
+    id: 'GetStarted',
+    route: 'GetStarted',
+    navigator: 'GetStartedNavigator',
+    file: 'src/screens/Navigators/GetStartedNavigator.tsx',
+    chain: ['StackGetStarted', 'GetStarted'],
+    chainNavigators: ['AppNavigation', 'GetStartedNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/screens/GetStarted/GetStarted.tsx',
+  },
+  GnosisTransactionQueue: {
+    id: 'GnosisTransactionQueue',
+    route: 'GnosisTransactionQueue',
+    navigator: 'TransactionNavigator',
+    file: 'src/screens/Navigators/TransactionNavigator.tsx',
+    chain: ['StackTransaction', 'GnosisTransactionQueue'],
+    chainNavigators: ['AppNavigation', 'TransactionNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: ['account'],
+    riskyParams: ['account'],
+    sourceFile: 'src/screens/GnosisQueue/index.tsx',
+  },
+  History: {
+    id: 'History',
+    route: 'History',
+    navigator: 'TransactionNavigator',
+    file: 'src/screens/Navigators/TransactionNavigator.tsx',
+    chain: ['StackTransaction', 'History'],
+    chainNavigators: ['AppNavigation', 'TransactionNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: ['tokenItem', 'isInTokenDetail', 'currentAddress'],
+    riskyParams: ['tokenItem', 'isInTokenDetail', 'currentAddress'],
+    sourceFile: 'src/screens/Transaction/MultiAddressHistory.tsx',
+  },
+  HistoryDetail: {
+    id: 'HistoryDetail',
+    route: 'HistoryDetail',
+    navigator: 'TransactionNavigator',
+    file: 'src/screens/Navigators/TransactionNavigator.tsx',
+    chain: ['StackTransaction', 'HistoryDetail'],
+    chainNavigators: ['AppNavigation', 'TransactionNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: ['data', 'isForMultipleAddress', 'title', 'account'],
+    riskyParams: ['data', 'isForMultipleAddress', 'title', 'account'],
+    sourceFile: 'src/screens/Transaction/HistoryDetailScreen.tsx',
+  },
+  HistoryLocalDetail: {
+    id: 'HistoryLocalDetail',
+    route: 'HistoryLocalDetail',
+    navigator: 'TransactionNavigator',
+    file: 'src/screens/Navigators/TransactionNavigator.tsx',
+    chain: ['StackTransaction', 'HistoryLocalDetail'],
+    chainNavigators: ['AppNavigation', 'TransactionNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: [
+      'data',
+      'isForMultipleAddress',
+      'title',
+      'type',
+      'onPressAddToWhitelistButton',
+      'account',
+    ],
+    riskyParams: [
+      'data',
+      'isForMultipleAddress',
+      'title',
+      'type',
+      'onPressAddToWhitelistButton',
+      'account',
+    ],
+    sourceFile: 'src/screens/Transaction/HistoryLocalDetailScreen.tsx',
+  },
+  Home: {
+    id: 'Home',
+    route: 'Home',
+    navigator: 'HomeScreenNavigator',
+    file: 'src/screens/Navigators/rootNavigator.tsx',
+    chain: ['StackRoot', 'Home'],
+    chainNavigators: ['AppNavigation', 'HomeScreenNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: null,
+  },
+  ImportHardwareAddress: {
+    id: 'ImportHardwareAddress',
+    route: 'ImportHardwareAddress',
+    navigator: 'AddressNavigator',
+    file: 'src/screens/Navigators/AddressNavigator.tsx',
+    chain: ['StackAddress', 'ImportHardwareAddress'],
+    chainNavigators: ['AppNavigation', 'AddressNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/screens/Address/ImportHardwareAddress.tsx',
+  },
+  ImportMethods: {
+    id: 'ImportMethods',
+    route: 'ImportMethods',
+    navigator: 'AddressNavigator',
+    file: 'src/screens/Navigators/AddressNavigator.tsx',
+    chain: ['StackAddress', 'ImportMethods'],
+    chainNavigators: ['AppNavigation', 'AddressNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/screens/Address/ImportMethods.tsx',
+  },
+  ImportMnemonic: {
+    id: 'ImportMnemonic',
+    route: 'ImportMnemonic',
+    navigator: 'AddressNavigator',
+    file: 'src/screens/Navigators/AddressNavigator.tsx',
+    chain: ['StackAddress', 'ImportMnemonic'],
+    chainNavigators: ['AppNavigation', 'AddressNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/screens/Address/ImportSeedPhraseScreen.tsx',
+  },
+  ImportMnemonic2024: {
+    id: 'ImportMnemonic2024',
+    route: 'ImportMnemonic2024',
+    navigator: 'AddressNavigator',
+    file: 'src/screens/Navigators/AddressNavigator.tsx',
+    chain: ['StackAddress', 'ImportMnemonic2024'],
+    chainNavigators: ['AppNavigation', 'AddressNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/screens/Address/ImportSeedPhraseScreen2024.tsx',
+  },
+  ImportMoreAddress: {
+    id: 'ImportMoreAddress',
+    route: 'ImportMoreAddress',
+    navigator: 'AddressNavigator',
+    file: 'src/screens/Navigators/AddressNavigator.tsx',
+    chain: ['StackAddress', 'ImportMoreAddress'],
+    chainNavigators: ['AppNavigation', 'AddressNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/screens/Address/ImportMoreAddressScreen.tsx',
+  },
+  ImportNewAddress: {
+    id: 'ImportNewAddress',
+    route: 'ImportNewAddress',
+    navigator: 'AddressNavigator',
+    file: 'src/screens/Navigators/AddressNavigator.tsx',
+    chain: ['StackAddress', 'ImportNewAddress'],
+    chainNavigators: ['AppNavigation', 'AddressNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/screens/Address/ImportNewAddress.tsx',
+  },
+  ImportPrivateKey: {
+    id: 'ImportPrivateKey',
+    route: 'ImportPrivateKey',
+    navigator: 'AddressNavigator',
+    file: 'src/screens/Navigators/AddressNavigator.tsx',
+    chain: ['StackAddress', 'ImportPrivateKey'],
+    chainNavigators: ['AppNavigation', 'AddressNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/screens/Address/ImportPrivateKeyScreen.tsx',
+  },
+  ImportPrivateKey2024: {
+    id: 'ImportPrivateKey2024',
+    route: 'ImportPrivateKey2024',
+    navigator: 'AddressNavigator',
+    file: 'src/screens/Navigators/AddressNavigator.tsx',
+    chain: ['StackAddress', 'ImportPrivateKey2024'],
+    chainNavigators: ['AppNavigation', 'AddressNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/screens/Address/ImportPrivateKeyScreen2024.tsx',
+  },
+  ImportRabbyWallet: {
+    id: 'ImportRabbyWallet',
+    route: 'ImportRabbyWallet',
+    navigator: 'AppNavigation',
+    file: 'src/AppNavigation.tsx',
+    chain: ['ImportRabbyWallet'],
+    chainNavigators: ['AppNavigation'],
+    params: [],
+    optionalParams: [],
+    usedParams: ['flow'],
+    riskyParams: ['flow'],
+    sourceFile: 'src/screens/Address/ImportRabbyWallet.tsx',
+  },
+  ImportSafeAddress: {
+    id: 'ImportSafeAddress',
+    route: 'ImportSafeAddress',
+    navigator: 'AddressNavigator',
+    file: 'src/screens/Navigators/AddressNavigator.tsx',
+    chain: ['StackAddress', 'ImportSafeAddress'],
+    chainNavigators: ['AppNavigation', 'AddressNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/screens/Address/ImportSafeAddressScreen.tsx',
+  },
+  ImportSafeAddress2024: {
+    id: 'ImportSafeAddress2024',
+    route: 'ImportSafeAddress2024',
+    navigator: 'AddressNavigator',
+    file: 'src/screens/Navigators/AddressNavigator.tsx',
+    chain: ['StackAddress', 'ImportSafeAddress2024'],
+    chainNavigators: ['AppNavigation', 'AddressNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/screens/Address/ImportSafeAddressScreen2024.tsx',
+  },
+  ImportSecret: {
+    id: 'ImportSecret',
+    route: 'ImportSecret',
+    navigator: 'AppNavigation',
+    file: 'src/AppNavigation.tsx',
+    chain: ['ImportSecret'],
+    chainNavigators: ['AppNavigation'],
+    params: [],
+    optionalParams: [],
+    usedParams: ['initialTab', 'flow'],
+    riskyParams: ['initialTab', 'flow'],
+    sourceFile: 'src/screens/Address/ImportSecret.tsx',
+  },
+  ImportSuccess: {
+    id: 'ImportSuccess',
+    route: 'ImportSuccess',
+    navigator: 'AddressNavigator',
+    file: 'src/screens/Navigators/AddressNavigator.tsx',
+    chain: ['StackAddress', 'ImportSuccess'],
+    chainNavigators: ['AppNavigation', 'AddressNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/screens/Address/ImportSuccessScreen.tsx',
+  },
+  ImportSuccess2024: {
+    id: 'ImportSuccess2024',
+    route: 'ImportSuccess2024',
+    navigator: 'AddressNavigator',
+    file: 'src/screens/Navigators/AddressNavigator.tsx',
+    chain: ['StackAddress', 'ImportSuccess2024'],
+    chainNavigators: ['AppNavigation', 'AddressNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/screens/Address/ImportSuccessScreen2024.tsx',
+  },
+  ImportWatchAddress: {
+    id: 'ImportWatchAddress',
+    route: 'ImportWatchAddress',
+    navigator: 'AddressNavigator',
+    file: 'src/screens/Navigators/AddressNavigator.tsx',
+    chain: ['StackAddress', 'ImportWatchAddress'],
+    chainNavigators: ['AppNavigation', 'AddressNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/screens/Address/ImportWatchAddressScreen.tsx',
+  },
+  ImportWatchAddress2024: {
+    id: 'ImportWatchAddress2024',
+    route: 'ImportWatchAddress2024',
+    navigator: 'AddressNavigator',
+    file: 'src/screens/Navigators/AddressNavigator.tsx',
+    chain: ['StackAddress', 'ImportWatchAddress2024'],
+    chainNavigators: ['AppNavigation', 'AddressNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/screens/Address/ImportWatchAddressScreen2024.tsx',
+  },
+  InMemoryLogViewer: {
+    id: 'InMemoryLogViewer',
+    route: 'InMemoryLogViewer',
+    navigator: 'TestkitsNavigator',
+    file: 'src/screens/Navigators/TestkitsNavigator.tsx',
+    chain: ['StackTestkits', 'InMemoryLogViewer'],
+    chainNavigators: ['AppNavigation', 'TestkitsNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/perfs/loadables/testkitsNavigatorScreens.ts',
+  },
+  Lending: {
+    id: 'Lending',
+    route: 'Lending',
+    navigator: 'TransactionNavigator',
+    file: 'src/screens/Navigators/TransactionNavigator.tsx',
+    chain: ['StackTransaction', 'Lending'],
+    chainNavigators: ['AppNavigation', 'TransactionNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/screens/Lending/index.tsx',
+  },
+  LendingHistory: {
+    id: 'LendingHistory',
+    route: 'LendingHistory',
+    navigator: 'TransactionNavigator',
+    file: 'src/screens/Navigators/TransactionNavigator.tsx',
+    chain: ['StackTransaction', 'LendingHistory'],
+    chainNavigators: ['AppNavigation', 'TransactionNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/screens/Lending/components/LendingHistory.tsx',
+  },
+  Market: {
+    id: 'Market',
+    route: 'Market',
+    navigator: 'HomeNonTabNavigator',
+    file: 'src/screens/Navigators/HomeNonTabNavigator.tsx',
+    chain: ['StackHomeNonTab', 'Market'],
+    chainNavigators: ['AppNavigation', 'HomeNonTabNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/perfs/loadables/homeNonTabNavigatorScreens.ts',
+  },
+  Meme: {
+    id: 'Meme',
+    route: 'Meme',
+    navigator: 'HomeNonTabNavigator',
+    file: 'src/screens/Navigators/HomeNonTabNavigator.tsx',
+    chain: ['StackHomeNonTab', 'Meme'],
+    chainNavigators: ['AppNavigation', 'HomeNonTabNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/perfs/loadables/homeNonTabNavigatorScreens.ts',
+  },
+  MemeCoin: {
+    id: 'MemeCoin',
+    route: 'MemeCoin',
+    navigator: 'TransactionNavigator',
+    file: 'src/screens/Navigators/TransactionNavigator.tsx',
+    chain: ['StackTransaction', 'MemeCoin'],
+    chainNavigators: ['AppNavigation', 'TransactionNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/screens/MemeCoin/home/MemeCoinHomeScreen.tsx',
+  },
+  MemeCoinBuy: {
+    id: 'MemeCoinBuy',
+    route: 'MemeCoinBuy',
+    navigator: 'TransactionNavigator',
+    file: 'src/screens/Navigators/TransactionNavigator.tsx',
+    chain: ['StackTransaction', 'MemeCoinBuy'],
+    chainNavigators: ['AppNavigation', 'TransactionNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: ['accountAddress', 'memes', 'amountUsd'],
+    riskyParams: ['accountAddress', 'memes', 'amountUsd'],
+    sourceFile: 'src/screens/MemeCoin/buy/MemeCoinBuyScreen.tsx',
+  },
+  MemeCoinExecute: {
+    id: 'MemeCoinExecute',
+    route: 'MemeCoinExecute',
+    navigator: 'TransactionNavigator',
+    file: 'src/screens/Navigators/TransactionNavigator.tsx',
+    chain: ['StackTransaction', 'MemeCoinExecute'],
+    chainNavigators: ['AppNavigation', 'TransactionNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: [
+      'maxPriceImpactPct',
+      'mode',
+      'legs',
+      'tokenLogos',
+      'accountAddress',
+    ],
+    riskyParams: [
+      'maxPriceImpactPct',
+      'mode',
+      'legs',
+      'tokenLogos',
+      'accountAddress',
+    ],
+    sourceFile: 'src/screens/MemeCoin/execute/MemeCoinExecuteScreen.tsx',
+  },
+  MoreImportMethods: {
+    id: 'MoreImportMethods',
+    route: 'MoreImportMethods',
+    navigator: 'AppNavigation',
+    file: 'src/AppNavigation.tsx',
+    chain: ['MoreImportMethods'],
+    chainNavigators: ['AppNavigation'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/screens/Address/MoreImportMethods.tsx',
+  },
+  MultiAddressHistory: {
+    id: 'MultiAddressHistory',
+    route: 'MultiAddressHistory',
+    navigator: 'TransactionNavigator',
+    file: 'src/screens/Navigators/TransactionNavigator.tsx',
+    chain: ['StackTransaction', 'MultiAddressHistory'],
+    chainNavigators: ['AppNavigation', 'TransactionNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: ['tokenItem', 'isInTokenDetail', 'currentAddress'],
+    riskyParams: ['tokenItem', 'isInTokenDetail', 'currentAddress'],
+    sourceFile: 'src/screens/Transaction/MultiAddressHistory.tsx',
+  },
+  MultiSend: {
+    id: 'MultiSend',
+    route: 'MultiSend',
+    navigator: 'TransactionNavigator',
+    file: 'src/screens/Navigators/TransactionNavigator.tsx',
+    chain: ['StackTransaction', 'MultiSend'],
+    chainNavigators: ['AppNavigation', 'TransactionNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: null,
+  },
+  MultiSwapBridge: {
+    id: 'MultiSwapBridge',
+    route: 'MultiSwapBridge',
+    navigator: 'TransactionNavigator',
+    file: 'src/screens/Navigators/TransactionNavigator.tsx',
+    chain: ['StackTransaction', 'MultiSwapBridge'],
+    chainNavigators: ['AppNavigation', 'TransactionNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: null,
+  },
+  MyBundle: {
+    id: 'MyBundle',
+    route: 'MyBundle',
+    navigator: 'AppNavigation',
+    file: 'src/AppNavigation.tsx',
+    chain: ['MyBundle'],
+    chainNavigators: ['AppNavigation'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/perfs/loadables/screens.ts',
+  },
+  NftDetail: {
+    id: 'NftDetail',
+    route: 'NftDetail',
+    navigator: 'AppNavigation',
+    file: 'src/AppNavigation.tsx',
+    chain: ['NftDetail'],
+    chainNavigators: ['AppNavigation'],
+    params: ['token'],
+    optionalParams: ['account', 'isSingleAddress'],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/perfs/loadables/screens.ts',
+  },
+  NotFound: {
+    id: 'NotFound',
+    route: 'NotFound',
+    navigator: 'AppNavigation',
+    file: 'src/AppNavigation.tsx',
+    chain: ['NotFound'],
+    chainNavigators: ['AppNavigation'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/perfs/loadables/screens.ts',
+  },
+  Perps: {
+    id: 'Perps',
+    route: 'Perps',
+    navigator: 'TransactionNavigator',
+    file: 'src/screens/Navigators/TransactionNavigator.tsx',
+    chain: ['StackTransaction', 'Perps'],
+    chainNavigators: ['AppNavigation', 'TransactionNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/screens/Perps/index.tsx',
+  },
+  PerpsHistory: {
+    id: 'PerpsHistory',
+    route: 'PerpsHistory',
+    navigator: 'TransactionNavigator',
+    file: 'src/screens/Navigators/TransactionNavigator.tsx',
+    chain: ['StackTransaction', 'PerpsHistory'],
+    chainNavigators: ['AppNavigation', 'TransactionNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/screens/PerpsHistory/index.tsx',
+  },
+  PerpsMarketDetail: {
+    id: 'PerpsMarketDetail',
+    route: 'PerpsMarketDetail',
+    navigator: 'TransactionNavigator',
+    file: 'src/screens/Navigators/TransactionNavigator.tsx',
+    chain: ['StackTransaction', 'PerpsMarketDetail'],
+    chainNavigators: ['AppNavigation', 'TransactionNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: ['market', 'fromSource', 'showOpenPosition', 'direction'],
+    riskyParams: ['market', 'fromSource', 'showOpenPosition', 'direction'],
+    sourceFile: 'src/screens/PerpsMarketDetail/index.tsx',
+  },
+  PerpsProHistory: {
+    id: 'PerpsProHistory',
+    route: 'PerpsProHistory',
+    navigator: 'TransactionNavigator',
+    file: 'src/screens/Navigators/TransactionNavigator.tsx',
+    chain: ['StackTransaction', 'PerpsProHistory'],
+    chainNavigators: ['AppNavigation', 'TransactionNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: ['initialTab'],
+    riskyParams: ['initialTab'],
+    sourceFile: 'src/screens/PerpsProHistory/index.tsx',
+  },
+  PerpsSearch: {
+    id: 'PerpsSearch',
+    route: 'PerpsSearch',
+    navigator: 'TransactionNavigator',
+    file: 'src/screens/Navigators/TransactionNavigator.tsx',
+    chain: ['StackTransaction', 'PerpsSearch'],
+    chainNavigators: ['AppNavigation', 'TransactionNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: ['initialTab', 'openFromSource', 'direction', 'autoFocus'],
+    riskyParams: ['initialTab', 'openFromSource', 'direction', 'autoFocus'],
+    sourceFile: 'src/screens/PerpsSearch/index.tsx',
+  },
+  Points: {
+    id: 'Points',
+    route: 'Points',
+    navigator: 'AddressNavigator',
+    file: 'src/screens/Navigators/AddressNavigator.tsx',
+    chain: ['StackAddress', 'Points'],
+    chainNavigators: ['AppNavigation', 'AddressNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/screens/Points/index.tsx',
+  },
+  PreCreateMnemonic: {
+    id: 'PreCreateMnemonic',
+    route: 'PreCreateMnemonic',
+    navigator: 'AddressNavigator',
+    file: 'src/screens/Navigators/AddressNavigator.tsx',
+    chain: ['StackAddress', 'PreCreateMnemonic'],
+    chainNavigators: ['AppNavigation', 'AddressNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/screens/Address/PreCreateSeedPhraseScreen.tsx',
+  },
+  Prediction: {
+    id: 'Prediction',
+    route: 'Prediction',
+    navigator: 'TransactionNavigator',
+    file: 'src/screens/Navigators/TransactionNavigator.tsx',
+    chain: ['StackTransaction', 'Prediction'],
+    chainNavigators: ['AppNavigation', 'TransactionNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: null,
+  },
+  ProviderControllerTester: {
+    id: 'ProviderControllerTester',
+    route: 'ProviderControllerTester',
+    navigator: 'SettingNavigator',
+    file: 'src/screens/Navigators/SettingsNavigator.tsx',
+    chain: ['StackSettings', 'ProviderControllerTester'],
+    chainNavigators: ['AppNavigation', 'SettingNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/perfs/loadables/settingsNavigatorScreens.ts',
+  },
+  Receive: {
+    id: 'Receive',
+    route: 'Receive',
+    navigator: 'TransactionNavigator',
+    file: 'src/screens/Navigators/TransactionNavigator.tsx',
+    chain: ['StackTransaction', 'Receive'],
+    chainNavigators: ['AppNavigation', 'TransactionNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: null,
+  },
+  ReceiveAddressList: {
+    id: 'ReceiveAddressList',
+    route: 'ReceiveAddressList',
+    navigator: 'AddressNavigator',
+    file: 'src/screens/Navigators/AddressNavigator.tsx',
+    chain: ['StackAddress', 'ReceiveAddressList'],
+    chainNavigators: ['AppNavigation', 'AddressNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: ['chainEnum', 'tokenSymbol'],
+    riskyParams: ['chainEnum', 'tokenSymbol'],
+    sourceFile: 'src/screens/Address/ReceiveAddressListScreen.tsx',
+  },
+  RestoreFromCloud: {
+    id: 'RestoreFromCloud',
+    route: 'RestoreFromCloud',
+    navigator: 'AddressNavigator',
+    file: 'src/screens/Navigators/AddressNavigator.tsx',
+    chain: ['StackAddress', 'RestoreFromCloud'],
+    chainNavigators: ['AppNavigation', 'AddressNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/screens/RestoreFromCloud/RestoreFromCloud.tsx',
+  },
+  SafeAddressList: {
+    id: 'SafeAddressList',
+    route: 'SafeAddressList',
+    navigator: 'AddressNavigator',
+    file: 'src/screens/Navigators/AddressNavigator.tsx',
+    chain: ['StackAddress', 'SafeAddressList'],
+    chainNavigators: ['AppNavigation', 'AddressNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/screens/Address/SafeAddressScreen.tsx',
+  },
+  Scanner: {
+    id: 'Scanner',
+    route: 'Scanner',
+    navigator: 'AppNavigation',
+    file: 'src/AppNavigation.tsx',
+    chain: ['Scanner'],
+    chainNavigators: ['AppNavigation'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/perfs/loadables/screens.ts',
+  },
+  Search: {
+    id: 'Search',
+    route: 'Search',
+    navigator: 'HomeNonTabNavigator',
+    file: 'src/screens/Navigators/HomeNonTabNavigator.tsx',
+    chain: ['StackHomeNonTab', 'Search'],
+    chainNavigators: ['AppNavigation', 'HomeNonTabNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/perfs/loadables/homeNonTabNavigatorScreens.ts',
+  },
+  SelectAddMethod: {
+    id: 'SelectAddMethod',
+    route: 'SelectAddMethod',
+    navigator: 'AppNavigation',
+    file: 'src/AppNavigation.tsx',
+    chain: ['SelectAddMethod'],
+    chainNavigators: ['AppNavigation'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/screens/Address/SelectAddMethod.tsx',
+  },
+  SelectImportMethod: {
+    id: 'SelectImportMethod',
+    route: 'SelectImportMethod',
+    navigator: 'AppNavigation',
+    file: 'src/AppNavigation.tsx',
+    chain: ['SelectImportMethod'],
+    chainNavigators: ['AppNavigation'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/screens/Address/SelectImportMethod.tsx',
+  },
+  Send: {
+    id: 'Send',
+    route: 'Send',
+    navigator: 'TransactionNavigator',
+    file: 'src/screens/Navigators/TransactionNavigator.tsx',
+    chain: ['StackTransaction', 'Send'],
+    chainNavigators: ['AppNavigation', 'TransactionNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: null,
+  },
+  SendNFT: {
+    id: 'SendNFT',
+    route: 'SendNFT',
+    navigator: 'TransactionNavigator',
+    file: 'src/screens/Navigators/TransactionNavigator.tsx',
+    chain: ['StackTransaction', 'SendNFT'],
+    chainNavigators: ['AppNavigation', 'TransactionNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/screens/SendNFT/SendNFT.tsx',
+  },
+  SetPassword: {
+    id: 'SetPassword',
+    route: 'SetPassword',
+    navigator: 'SettingNavigator',
+    file: 'src/screens/Navigators/SettingsNavigator.tsx',
+    chain: ['StackSettings', 'SetPassword'],
+    chainNavigators: ['AppNavigation', 'SettingNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/perfs/loadables/settingsNavigatorScreens.ts',
+  },
+  SetPassword2024: {
+    id: 'SetPassword2024',
+    route: 'SetPassword2024',
+    navigator: 'AddressNavigator',
+    file: 'src/screens/Navigators/AddressNavigator.tsx',
+    chain: ['StackAddress', 'SetPassword2024'],
+    chainNavigators: ['AppNavigation', 'AddressNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/screens/Address/SetPassword2024.tsx',
+  },
+  Settings: {
+    id: 'Settings',
+    route: 'Settings',
+    navigator: 'SettingNavigator',
+    file: 'src/screens/Navigators/SettingsNavigator.tsx',
+    chain: ['StackSettings', 'Settings'],
+    chainNavigators: ['AppNavigation', 'SettingNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: null,
+  },
+  SetupWallet: {
+    id: 'SetupWallet',
+    route: 'SetupWallet',
+    navigator: 'AppNavigation',
+    file: 'src/AppNavigation.tsx',
+    chain: ['SetupWallet'],
+    chainNavigators: ['AppNavigation'],
+    params: [],
+    optionalParams: [],
+    usedParams: [
+      'address',
+      'isLoading',
+      'isSubmitting',
+      'handleSubmit',
+      'mode',
+    ],
+    riskyParams: [
+      'address',
+      'isLoading',
+      'isSubmitting',
+      'handleSubmit',
+      'mode',
+    ],
+    sourceFile: 'src/screens/Address/SetupWallet.tsx',
+  },
+  SingleAddressHome: {
+    id: 'SingleAddressHome',
+    route: 'SingleAddressHome',
+    navigator: 'SingleAddressNavigator',
+    file: 'src/screens/Navigators/SingleAddressNavigator.tsx',
+    chain: ['SingleAddressStack', 'SingleAddressHome'],
+    chainNavigators: ['AppNavigation', 'SingleAddressNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: null,
+  },
+  SingleAddressStack: {
+    id: 'SingleAddressStack',
+    route: 'SingleAddressStack',
+    navigator: 'AppNavigation',
+    file: 'src/AppNavigation.tsx',
+    chain: ['SingleAddressStack'],
+    chainNavigators: ['AppNavigation'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/screens/Navigators/SingleAddressNavigator.tsx',
+  },
+  StackAddress: {
+    id: 'StackAddress',
+    route: 'StackAddress',
+    navigator: 'AppNavigation',
+    file: 'src/AppNavigation.tsx',
+    chain: ['StackAddress'],
+    chainNavigators: ['AppNavigation'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/perfs/loadables/navigators.ts',
+  },
+  StackDapps: {
+    id: 'StackDapps',
+    route: 'StackDapps',
+    navigator: 'AppNavigation',
+    file: 'src/AppNavigation.tsx',
+    chain: ['StackDapps'],
+    chainNavigators: ['AppNavigation'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/perfs/loadables/navigators.ts',
+  },
+  StackGetStarted: {
+    id: 'StackGetStarted',
+    route: 'StackGetStarted',
+    navigator: 'AppNavigation',
+    file: 'src/AppNavigation.tsx',
+    chain: ['StackGetStarted'],
+    chainNavigators: ['AppNavigation'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/screens/Navigators/GetStartedNavigator.tsx',
+  },
+  StackHomeNonTab: {
+    id: 'StackHomeNonTab',
+    route: 'StackHomeNonTab',
+    navigator: 'AppNavigation',
+    file: 'src/AppNavigation.tsx',
+    chain: ['StackHomeNonTab'],
+    chainNavigators: ['AppNavigation'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/perfs/loadables/navigators.ts',
+  },
+  StackRoot: {
+    id: 'StackRoot',
+    route: 'StackRoot',
+    navigator: 'AppNavigation',
+    file: 'src/AppNavigation.tsx',
+    chain: ['StackRoot'],
+    chainNavigators: ['AppNavigation'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/perfs/loadables/homeRootNavigator.ts',
+  },
+  StackSettings: {
+    id: 'StackSettings',
+    route: 'StackSettings',
+    navigator: 'AppNavigation',
+    file: 'src/AppNavigation.tsx',
+    chain: ['StackSettings'],
+    chainNavigators: ['AppNavigation'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/perfs/loadables/navigators.ts',
+  },
+  StackTestkits: {
+    id: 'StackTestkits',
+    route: 'StackTestkits',
+    navigator: 'AppNavigation',
+    file: 'src/AppNavigation.tsx',
+    chain: ['StackTestkits'],
+    chainNavigators: ['AppNavigation'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/perfs/loadables/navigators.ts',
+  },
+  StackTransaction: {
+    id: 'StackTransaction',
+    route: 'StackTransaction',
+    navigator: 'AppNavigation',
+    file: 'src/AppNavigation.tsx',
+    chain: ['StackTransaction'],
+    chainNavigators: ['AppNavigation'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/perfs/loadables/navigators.ts',
+  },
+  StartupPerformanceLogViewer: {
+    id: 'StartupPerformanceLogViewer',
+    route: 'StartupPerformanceLogViewer',
+    navigator: 'TestkitsNavigator',
+    file: 'src/screens/Navigators/TestkitsNavigator.tsx',
+    chain: ['StackTestkits', 'StartupPerformanceLogViewer'],
+    chainNavigators: ['AppNavigation', 'TestkitsNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/perfs/loadables/testkitsNavigatorScreens.ts',
+  },
+  SwapBridge: {
+    id: 'SwapBridge',
+    route: 'SwapBridge',
+    navigator: 'TransactionNavigator',
+    file: 'src/screens/Navigators/TransactionNavigator.tsx',
+    chain: ['StackTransaction', 'SwapBridge'],
+    chainNavigators: ['AppNavigation', 'TransactionNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: null,
+  },
+  SyncExtensionAccountSuccess: {
+    id: 'SyncExtensionAccountSuccess',
+    route: 'SyncExtensionAccountSuccess',
+    navigator: 'AddressNavigator',
+    file: 'src/screens/Navigators/AddressNavigator.tsx',
+    chain: ['StackAddress', 'SyncExtensionAccountSuccess'],
+    chainNavigators: ['AppNavigation', 'AddressNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile:
+      'src/screens/SyncExtension/SyncExtensionAccountSuccessScreen.tsx',
+  },
+  SyncExtensionPassword: {
+    id: 'SyncExtensionPassword',
+    route: 'SyncExtensionPassword',
+    navigator: 'AddressNavigator',
+    file: 'src/screens/Navigators/AddressNavigator.tsx',
+    chain: ['StackAddress', 'SyncExtensionPassword'],
+    chainNavigators: ['AppNavigation', 'AddressNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: null,
+  },
+  TokenDetail: {
+    id: 'TokenDetail',
+    route: 'TokenDetail',
+    navigator: 'AppNavigation',
+    file: 'src/AppNavigation.tsx',
+    chain: ['TokenDetail'],
+    chainNavigators: ['AppNavigation'],
+    params: ['token'],
+    optionalParams: [
+      'fromPortfolio',
+      'needUseCacheToken',
+      'isSingleAddress',
+      'account',
+      'rawPortfolios',
+      'unHold',
+      'isSwapToTokenDetail',
+      'isCustomTestnetToken',
+      'tokenSelectType',
+    ],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/perfs/loadables/screens.ts',
+  },
+  TokenMarketInfo: {
+    id: 'TokenMarketInfo',
+    route: 'TokenMarketInfo',
+    navigator: 'AppNavigation',
+    file: 'src/AppNavigation.tsx',
+    chain: ['TokenMarketInfo'],
+    chainNavigators: ['AppNavigation'],
+    params: ['token'],
+    optionalParams: [
+      'fromPortfolio',
+      'needUseCacheToken',
+      'isSingleAddress',
+      'account',
+      'rawPortfolios',
+      'unHold',
+      'isSwapToTokenDetail',
+      'tokenSelectType',
+    ],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/perfs/loadables/screens.ts',
+  },
+  Unlock: {
+    id: 'Unlock',
+    route: 'Unlock',
+    navigator: 'AppNavigation',
+    file: 'src/AppNavigation.tsx',
+    chain: ['Unlock'],
+    chainNavigators: ['AppNavigation'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: null,
+  },
+  WalletConnect: {
+    id: 'WalletConnect',
+    route: 'WalletConnect',
+    navigator: 'SettingNavigator',
+    file: 'src/screens/Navigators/SettingsNavigator.tsx',
+    chain: ['StackSettings', 'WalletConnect'],
+    chainNavigators: ['AppNavigation', 'SettingNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/perfs/loadables/settingsNavigatorScreens.ts',
+  },
+  WatchAddressList: {
+    id: 'WatchAddressList',
+    route: 'WatchAddressList',
+    navigator: 'AddressNavigator',
+    file: 'src/screens/Navigators/AddressNavigator.tsx',
+    chain: ['StackAddress', 'WatchAddressList'],
+    chainNavigators: ['AppNavigation', 'AddressNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/screens/Address/WatchAddressListScreen.tsx',
+  },
+  Watchlist: {
+    id: 'Watchlist',
+    route: 'Watchlist',
+    navigator: 'HomeNonTabNavigator',
+    file: 'src/screens/Navigators/HomeNonTabNavigator.tsx',
+    chain: ['StackHomeNonTab', 'Watchlist'],
+    chainNavigators: ['AppNavigation', 'HomeNonTabNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/perfs/loadables/homeNonTabNavigatorScreens.ts',
   },
 } as const satisfies Record<string, ScreenshotRegistryEntry>;
 

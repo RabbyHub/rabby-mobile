@@ -50,6 +50,17 @@ export function openScreenById(
   const missing = entry.params.filter(
     key => !Object.prototype.hasOwnProperty.call(params, key),
   );
+  const riskyMissing = entry.riskyParams.filter(
+    key => !Object.prototype.hasOwnProperty.call(params, key),
+  );
+  if (riskyMissing.length > 0) {
+    console.warn(
+      `[screenRegistry] "${id}" reads optional param(s) without a default: ${riskyMissing.join(
+        ', ',
+      )} - pass them in params to render reliably.`,
+    );
+  }
+
   if (missing.length > 0) {
     console.warn(
       `[screenRegistry] "${id}" is missing required param(s): ${missing.join(
