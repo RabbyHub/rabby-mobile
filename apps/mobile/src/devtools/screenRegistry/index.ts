@@ -45,6 +45,20 @@ export function openScreenById(
   const entry = SCREEN_REGISTRY[id];
   const chain = entry.chain;
 
+  // Requirement contract comes from src/navigation-type.ts, so a missing param
+  // fails here with a readable message instead of throwing inside the screen.
+  const missing = entry.params.filter(
+    key => !Object.prototype.hasOwnProperty.call(params, key),
+  );
+  if (missing.length > 0) {
+    console.warn(
+      `[screenRegistry] "${id}" is missing required param(s): ${missing.join(
+        ', ',
+      )}. optional: ${entry.optionalParams.join(', ') || 'none'}`,
+    );
+    return false;
+  }
+
   if (chain.length === 1) {
     navigationRef.dispatch(CommonActions.navigate(chain[0], params));
     return true;
