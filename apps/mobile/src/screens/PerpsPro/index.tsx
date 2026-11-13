@@ -8,6 +8,7 @@ import { isPerpsProHistorySdkSupported } from '@/screens/PerpsProHistory/reposit
 import type { PerpsRegionAlertLayout } from '@/screens/Perps/components/PerpsRegionAlert';
 import { PERPS_PORTFOLIO_BREAKDOWN_TIPS_OWNER } from '@/screens/PerpsShared/constants';
 import React, { useCallback, useMemo, useRef } from 'react';
+import type { Animated } from 'react-native';
 
 import { PerpsProKeyboardAccessory } from './components/common/PerpsProKeyboardAccessory';
 import { PerpsProScene } from './scene/PerpsProScene';
@@ -22,12 +23,16 @@ const PerpsProPortfolioBreakdownNavigationRegistration = () => {
 };
 
 export type PerpsProScreenProps = {
+  sceneActive?: boolean;
+  sharedHeaderNativeScrollY?: Animated.Value;
   initialRegionAlertLayout?: PerpsRegionAlertLayout | null;
   isModeSwitching: boolean;
   onSwitchToSimple: () => void;
 };
 
 export const PerpsProScreen: React.FC<PerpsProScreenProps> = ({
+  sceneActive = true,
+  sharedHeaderNativeScrollY,
   initialRegionAlertLayout = null,
   isModeSwitching,
   onSwitchToSimple,
@@ -36,29 +41,35 @@ export const PerpsProScreen: React.FC<PerpsProScreenProps> = ({
   const historyEnabled = useMemo(isPerpsProHistorySdkSupported, []);
   const openHistory = useCallback(
     (hasPendingFunding: boolean) => {
-      if (!historyEnabled) {
+      if (!sceneActive || !historyEnabled) {
         return;
       }
       historySheetRef.current?.present(
         hasPendingFunding ? 'transaction' : 'orders',
       );
     },
-    [historyEnabled],
+    [historyEnabled, sceneActive],
   );
 
   return (
     <NormalScreenContainer2024 noHeader type="bg1">
-      <PerpsProSheetNavigationHost />
-      <PerpsProKeyboardAccessory />
-      <PerpsProPortfolioBreakdownNavigationRegistration />
+      {sceneActive ? (
+        <>
+          <PerpsProSheetNavigationHost />
+          <PerpsProPortfolioBreakdownNavigationRegistration />
+        </>
+      ) : null}
+      <PerpsProKeyboardAccessory sceneActive={sceneActive} />
       <PerpsProScene
+        sceneActive={sceneActive}
+        sharedHeaderNativeScrollY={sharedHeaderNativeScrollY}
         historyEnabled={historyEnabled}
         initialRegionAlertLayout={initialRegionAlertLayout}
         isModeSwitching={isModeSwitching}
         onOpenHistory={openHistory}
         onSwitchToSimple={onSwitchToSimple}
       />
-      {historyEnabled ? (
+      {sceneActive && historyEnabled ? (
         <PerpsProHistorySheetHost ref={historySheetRef} />
       ) : null}
     </NormalScreenContainer2024>

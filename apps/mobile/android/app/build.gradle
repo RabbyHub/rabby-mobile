@@ -236,6 +236,14 @@ android {
     compileSdkVersion rootProject.ext.compileSdkVersion
 
     namespace "com.debank.rabbymobile"
+    buildFeatures {
+        prefab true
+    }
+    externalNativeBuild {
+        cmake {
+            path "src/main/jni/CMakeLists.txt"
+        }
+    }
     defaultConfig {
         applicationId "com.debank.rabbymobile"
         minSdkVersion rootProject.ext.minSdkVersion
@@ -249,6 +257,9 @@ android {
         externalNativeBuild {
           cmake {
             arguments "-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON"
+            arguments "-DANDROID_STL=c++_shared",
+                "-DRABBY_NEW_ARCH_ENABLED=${isNewArchitectureEnabled() ? 'ON' : 'OFF'}",
+                "-DRABBY_HERMES_ENABLED=${hermesEnabled.toBoolean() ? 'ON' : 'OFF'}"
             if (rabbyCcacheBinary) {
               arguments "-DCMAKE_C_COMPILER_LAUNCHER=${rabbyCcacheBinary}",
                         "-DCMAKE_CXX_COMPILER_LAUNCHER=${rabbyCcacheBinary}"

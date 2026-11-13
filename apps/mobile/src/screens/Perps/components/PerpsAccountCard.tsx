@@ -74,10 +74,111 @@ const PERPS_BTN_BG = 'rgba(80, 210, 193, 0.10)';
 // chart 120 + tab row (16 + 4 margin) + top margin 16
 const EXPANDED_BLOCK_HEIGHT = 156;
 
-export const PerpsAccountCard: React.FC = () => {
-  const { styles, isLight, colors2024 } = useTheme2024({ getStyle });
+type PortfolioViewState = 'zero' | 'loading' | 'data';
+
+const PORTFOLIO_VALUE_FONT_SIZE = {
+  maxFontSize: 24,
+  minFontSize: 18,
+  threshold: 11,
+  step: 1,
+};
+
+// WS ticks belong to the number and its breakdown entry, not the historical
+// curve, 24H PNL, or the rest of the card. Keep this leaf mounted in every
+// view state so its breakdown sheet retains the existing cleanup lifetime.
+const PerpsPortfolioValue = React.memo(function PerpsPortfolioValue({
+  portfolioViewState,
+  fallbackValue,
+  onHistory,
+}: {
+  portfolioViewState: PortfolioViewState;
+  fallbackValue: number | null;
+  onHistory: () => void;
+}) {
+  const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const portfolioValueLabel = t('page.perps.PerpsCard.portfolioValue');
+  const { showPortfolioBreakdown } = useShowPerpsPortfolioBreakdown();
+  // The API's latest point covers the gap until WS slices are ready. A live
+  // zero is authoritative; it must not fall back to the historical value.
+  const liveValue = usePerpsPortfolioLiveValue();
+  const displayValue = liveValue ?? fallbackValue;
+  const displayValueText = useMemo(
+    () => `$${splitNumberByStep(new BigNumber(displayValue || 0).toFixed(2))}`,
+    [displayValue],
+  );
+  const displayValueSV = useDerivedValue(
+    () => displayValueText,
+    [displayValueText],
+  );
+  const valueContainerProps = useMemo(
+    () => ({ style: styles.valueSlot }),
+    [styles.valueSlot],
+  );
+  const openBreakdown = useMemoizedFn(() =>
+    showPortfolioBreakdown(displayValue || 0),
+  );
+  const canShowBreakdown = (displayValue ?? 0) > 0;
+
+  return (
+    <>
+      <View style={styles.titleRow}>
+        {/* This entry explains account mode even if spot/staking are empty.
+            Keep its live-value guard independent from the REST view state. */}
+        {canShowBreakdown ? (
+          <PerpsProDottedUnderlineText
+            accessibilityLabel={portfolioValueLabel}
+            onPress={openBreakdown}
+            style={styles.portfolioLabel}>
+            {portfolioValueLabel}
+          </PerpsProDottedUnderlineText>
+        ) : (
+          <Text style={styles.portfolioLabel}>{portfolioValueLabel}</Text>
+        )}
+        <TouchableOpacity
+          hitSlop={{ top: 8, bottom: 8, left: 4, right: 8 }}
+          onPress={onHistory}>
+          <RcIconHistoryCC
+            width={16}
+            height={16}
+            color={colors2024['neutral-foot']}
+          />
+        </TouchableOpacity>
+      </View>
+      {portfolioViewState === 'loading' ? (
+        <Skeleton
+          width={132}
+          height={28}
+          style={styles.valueSkeleton}
+          LinearGradientComponent={LoadingLinear}
+        />
+      ) : portfolioViewState === 'zero' ? (
+        <Text style={[styles.portfolioValue, styles.valueSlot]}>0</Text>
+      ) : (
+        <AnimatedTickerText
+          value={displayValueSV}
+          lineHeight={28}
+          duration={750}
+          maxLength={18}
+          animateWidth={false}
+          style={styles.portfolioValueTicker}
+          containerProps={valueContainerProps}
+          // "$999,999.99" stays at 24; each extra character steps down 1pt,
+          // floored at 18. Preserve the existing ticker sizing policy.
+          fontSizeByLength={PORTFOLIO_VALUE_FONT_SIZE}
+        />
+      )}
+    </>
+  );
+});
+
+export const PerpsAccountCard = React.memo(function PerpsAccountCard({
+  sceneActive = true,
+}: {
+  sceneActive?: boolean;
+}) {
+  const { styles, isLight, colors2024 } = useTheme2024({ getStyle });
+  const { t } = useTranslation();
   const [popupState, setPopupState] = usePerpsPopupState();
   const navigation = useRabbyAppNavigation();
 
@@ -87,14 +188,10 @@ export const PerpsAccountCard: React.FC = () => {
     accountValue,
     isUnifiedAccount,
   } = usePerpsAccount();
-  const { showPortfolioBreakdown } = useShowPerpsPortfolioBreakdown();
 
-  const currentAddress = useActivityStore(
-    perpsStore,
-    s => s.currentPerpsAccount?.address,
-    Object.is,
-    { storeLabel: 'perps-account-card' },
-  );
+  // Keep identity live for account-scoped fetches; only display publications
+  // pause with the retained page's activity boundary.
+  const currentAddress = perpsStore(s => s.currentPerpsAccount?.address);
 
   // Deposits/withdrawals still in flight. Same signal the released header pill
   // and the Pro info panel read, so the entries never disagree on the count.
@@ -107,6 +204,7 @@ export const PerpsAccountCard: React.FC = () => {
 
   const portfolioEntry = usePerpsPortfolio(currentAddress);
   const isFocused = useIsFocused();
+  const active = sceneActive && isFocused;
 
   // Poll while the Perps screen is focused. The big PV number is WS-driven
   // now — this poll feeds what only the portfolio API has: the 24H change
@@ -114,7 +212,7 @@ export const PerpsAccountCard: React.FC = () => {
   // used until the WS slices are ready. The store dedupes and keeps a short
   // TTL, so focus flaps do not cause request bursts.
   useEffect(() => {
-    if (!currentAddress || !isFocused) {
+    if (!currentAddress || !active) {
       return;
     }
     fetchPerpsPortfolio(currentAddress);
@@ -131,7 +229,7 @@ export const PerpsAccountCard: React.FC = () => {
       }
     }, 60_000);
     return () => clearInterval(timer);
-  }, [currentAddress, isFocused]);
+  }, [currentAddress, active]);
 
   // Refresh shortly after a deposit/withdraw/swap popup closes so the
   // portfolio value catches the funding change. (Balance-driven triggers are
@@ -147,14 +245,14 @@ export const PerpsAccountCard: React.FC = () => {
   useEffect(() => {
     const wasOpen = prevFundingPopupOpenRef.current;
     prevFundingPopupOpenRef.current = anyFundingPopupOpen;
-    if (!wasOpen || anyFundingPopupOpen || !currentAddress) {
+    if (!active || !wasOpen || anyFundingPopupOpen || !currentAddress) {
       return;
     }
     const timer = setTimeout(() => {
       fetchPerpsPortfolio(currentAddress, { force: true });
     }, 3_000);
     return () => clearTimeout(timer);
-  }, [anyFundingPopupOpen, currentAddress]);
+  }, [active, anyFundingPopupOpen, currentAddress]);
 
   const portfolioData = portfolioEntry?.data ?? null;
   const isPortfolioEmpty = useMemo(
@@ -164,7 +262,7 @@ export const PerpsAccountCard: React.FC = () => {
   // 'zero': no account, or an account whose history is all zeros — show the
   // Figma empty state. 'loading': logged in but no data yet (fetch pending or
   // failed; the 60s poll keeps retrying) — show skeletons, never a fake $0.
-  const portfolioViewState: 'zero' | 'loading' | 'data' = !currentAddress
+  const portfolioViewState: PortfolioViewState = !currentAddress
     ? 'zero'
     : portfolioData == null
     ? 'loading'
@@ -174,19 +272,6 @@ export const PerpsAccountCard: React.FC = () => {
   const portfolioValue = useMemo(
     () => (portfolioData ? getLatestPortfolioValue(portfolioData) : null),
     [portfolioData],
-  );
-  // Live WS-computed value ticks in real time (Pro-panel basis); the
-  // portfolio API's near-realtime last point covers the gap until the WS
-  // slices are ready.
-  const liveValue = usePerpsPortfolioLiveValue();
-  const displayValue = liveValue ?? portfolioValue;
-  const displayValueText = useMemo(
-    () => `$${splitNumberByStep(new BigNumber(displayValue || 0).toFixed(2))}`,
-    [displayValue],
-  );
-  const displayValueSV = useDerivedValue(
-    () => displayValueText,
-    [displayValueText],
   );
   const change24h = useMemo(
     () => (portfolioData ? compute24hChange(portfolioData) : null),
@@ -251,7 +336,6 @@ export const PerpsAccountCard: React.FC = () => {
   const canExpandChart = !!portfolioData && !isPortfolioEmpty;
   // Hidden only when every asset is zero (also covers not-logged-in / loading,
   // where there is no value yet).
-  const canShowBreakdown = (displayValue ?? 0) > 0;
 
   const isNewUser = useMemo(() => {
     return (
@@ -303,64 +387,11 @@ export const PerpsAccountCard: React.FC = () => {
           <View style={styles.upperSection}>
             <View style={styles.headerRow}>
               <View style={styles.headerLeft}>
-                <View style={styles.titleRow}>
-                  {/* The breakdown sheet is reached by the dotted label
-                      itself. It also explains the account mode, so it shows
-                      even when spot / staking are empty; the label stays
-                      plain only when every asset is zero. */}
-                  {canShowBreakdown ? (
-                    <PerpsProDottedUnderlineText
-                      accessibilityLabel={portfolioValueLabel}
-                      onPress={() => showPortfolioBreakdown(displayValue || 0)}
-                      style={styles.portfolioLabel}>
-                      {portfolioValueLabel}
-                    </PerpsProDottedUnderlineText>
-                  ) : (
-                    <Text style={styles.portfolioLabel}>
-                      {portfolioValueLabel}
-                    </Text>
-                  )}
-                  <TouchableOpacity
-                    hitSlop={{ top: 8, bottom: 8, left: 4, right: 8 }}
-                    onPress={openHistory}>
-                    <RcIconHistoryCC
-                      width={16}
-                      height={16}
-                      color={colors2024['neutral-foot']}
-                    />
-                  </TouchableOpacity>
-                </View>
-                {portfolioViewState === 'loading' ? (
-                  <Skeleton
-                    width={132}
-                    height={28}
-                    style={styles.valueSkeleton}
-                    LinearGradientComponent={LoadingLinear}
-                  />
-                ) : portfolioViewState === 'zero' ? (
-                  <Text style={[styles.portfolioValue, styles.valueSlot]}>
-                    0
-                  </Text>
-                ) : (
-                  <AnimatedTickerText
-                    value={displayValueSV}
-                    lineHeight={28}
-                    duration={750}
-                    maxLength={18}
-                    animateWidth={false}
-                    style={styles.portfolioValueTicker}
-                    containerProps={{ style: styles.valueSlot }}
-                    // "$999,999.99" (6 integer digits) is 11 chars — stays at
-                    // 24. Every extra char steps down 1pt (7 digits -> 22, the
-                    // spec's "past 6 digits, minus 2"), floored at 18.
-                    fontSizeByLength={{
-                      maxFontSize: 24,
-                      minFontSize: 18,
-                      threshold: 11,
-                      step: 1,
-                    }}
-                  />
-                )}
+                <PerpsPortfolioValue
+                  portfolioViewState={portfolioViewState}
+                  fallbackValue={portfolioValue}
+                  onHistory={openHistory}
+                />
                 <View style={styles.changeRow}>
                   {portfolioViewState === 'loading' ? (
                     <Skeleton
@@ -559,7 +590,7 @@ export const PerpsAccountCard: React.FC = () => {
       )}
     </>
   );
-};
+});
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   // Shadow lives on its own wrapper: `overflow: 'hidden'` (needed to clip

@@ -12,7 +12,7 @@ import { perpsStore, usePerpsStore } from '@/hooks/perps/usePerpsStore';
 import type { TransactionNavigatorParamList } from '@/navigation-type';
 
 import {
-  buildPerpsProMarket,
+  buildPerpsProMarketDescriptor,
   buildPerpsProMarkets,
   type PerpsProMarket,
 } from '../model/market';
@@ -35,6 +35,7 @@ import {
   waitForPerpsProRealtimeDisplaySnapshot,
 } from './perpsProEntryIntent';
 import { usePerpsBookPrecision } from './usePerpsBookPrecision';
+import { selectPerpsProMarketData } from './usePerpsProLiveMarket';
 
 const getStaticMarketSignature = (market: {
   brief?: string;
@@ -64,7 +65,9 @@ type PreparedMarketSelection = {
   zeroAddressLeverageBaseline: PerpsProLeverageConfiguration | null;
 };
 
-export const usePerpsProScene = () => {
+export const usePerpsProScene = (sceneActive = true) => {
+  const sceneActiveRef = useRef(sceneActive);
+  sceneActiveRef.current = sceneActive;
   const route =
     useRoute<
       RouteProp<TransactionNavigatorParamList, typeof RootNames.Perps>
@@ -195,6 +198,9 @@ export const usePerpsProScene = () => {
 
   const startMarketRealtimeIntent = useCallback(
     (market: PerpsProMarket) => {
+      if (!sceneActiveRef.current) {
+        return;
+      }
       if (marketSelectionRef.current?.marketKey === market.marketKey) {
         releasePressedRealtimeIntent();
         return;
@@ -217,6 +223,9 @@ export const usePerpsProScene = () => {
 
   const prepareMarketSelection = useCallback(
     async (market: PerpsProMarket, prewarmRealtime: boolean) => {
+      if (!sceneActiveRef.current) {
+        return false;
+      }
       const selectedAccount = perpsStore.getState().currentPerpsAccount;
       const selectedAccountIdentity = selectedAccount
         ? getPerpsRuntimeIdentity(selectedAccount)
@@ -297,7 +306,10 @@ export const usePerpsProScene = () => {
           );
         }
       }
-      if (sequence !== marketSelectionSequenceRef.current) {
+      if (
+        !sceneActiveRef.current ||
+        sequence !== marketSelectionSequenceRef.current
+      ) {
         releasePendingRealtimeIntent(sequence);
         return false;
       }
@@ -363,11 +375,20 @@ export const usePerpsProScene = () => {
   }, [releasePendingRealtimeIntent, releasePressedRealtimeIntent]);
 
   const prefetchMarket = useCallback((coin: string) => {
-    prefetchPerpsProZeroAddressLeverageBaseline(coin);
+    if (sceneActiveRef.current) {
+      prefetchPerpsProZeroAddressLeverageBaseline(coin);
+    }
   }, []);
 
   useEffect(() => {
+    if (!sceneActive) {
+      cancelPendingMarketSelection();
+    }
+  }, [cancelPendingMarketSelection, sceneActive]);
+
+  useEffect(() => {
     if (
+      !sceneActive ||
       marketSelection?.accountIdentity === accountIdentity ||
       !synchronousMarketSelection
     ) {
@@ -376,9 +397,17 @@ export const usePerpsProScene = () => {
     marketSelectionRef.current = synchronousMarketSelection;
     setMarketSelection(synchronousMarketSelection);
     setPerpsProSessionMarket(synchronousMarketSelection.marketKey);
-  }, [accountIdentity, marketSelection, synchronousMarketSelection]);
+  }, [
+    accountIdentity,
+    marketSelection,
+    sceneActive,
+    synchronousMarketSelection,
+  ]);
 
   useEffect(() => {
+    if (!sceneActive) {
+      return;
+    }
     if (catalogue.length === 0) {
       cancelPendingMarketSelection();
       marketSelectionRef.current = null;
@@ -413,6 +442,7 @@ export const usePerpsProScene = () => {
     cancelPendingMarketSelection,
     catalogue,
     prepareMarketSelection,
+    sceneActive,
   ]);
 
   useEffect(
@@ -457,13 +487,13 @@ export const usePerpsProScene = () => {
   );
   const isResolvingMarket = catalogue.length > 0 && catalogueMarket == null;
   const canonicalCoin = catalogueMarket?.canonicalCoin ?? '';
-  const liveMarketData = perpsStore(state =>
-    canonicalCoin ? state.marketDataMap[canonicalCoin] : undefined,
-  );
-  const currentMarket = useMemo<PerpsProMarket | null>(
-    () =>
-      liveMarketData ? buildPerpsProMarket(liveMarketData) : catalogueMarket,
-    [catalogueMarket, liveMarketData],
+  // The scene owns identity/layout, not ticking trade or market-bar data.
+  // A descriptor change still propagates immediately (quote, name, dex, etc.).
+  const currentMarket = perpsStore(
+    useShallow(state => {
+      const data = selectPerpsProMarketData(state, canonicalCoin);
+      return data ? buildPerpsProMarketDescriptor(data) : null;
+    }),
   );
   const hasAuthoritativeCurrentPosition = perpsStore(state => {
     if (!canonicalCoin || !state.isUserDataReady) {
@@ -483,20 +513,23 @@ export const usePerpsProScene = () => {
     !!currentMarket &&
     (hasAuthoritativeCurrentPosition || hasPreparedTradeConfiguration);
 
-  const markPrice = Number(currentMarket?.marketData.markPx);
-  const markMagnitude =
-    Number.isFinite(markPrice) && markPrice > 0
-      ? Math.floor(Math.log10(markPrice))
+  const markMagnitude = perpsStore(state => {
+    const price = Number(
+      selectPerpsProMarketData(state, canonicalCoin)?.markPx,
+    );
+    return Number.isFinite(price) && price > 0
+      ? Math.floor(Math.log10(price))
       : null;
+  });
+  const sizeDecimals = perpsStore(
+    state => selectPerpsProMarketData(state, canonicalCoin)?.szDecimals,
+  );
   const tickOptions = useMemo(
     () =>
-      markMagnitude == null || currentMarket?.marketData.szDecimals == null
+      markMagnitude == null || sizeDecimals == null
         ? []
-        : getPerpTickOptions(
-            10 ** markMagnitude,
-            currentMarket.marketData.szDecimals,
-          ),
-    [currentMarket?.marketData.szDecimals, markMagnitude],
+        : getPerpTickOptions(10 ** markMagnitude, sizeDecimals),
+    [sizeDecimals, markMagnitude],
   );
 
   const { precision, selectTickOption, selectedTickOption } =
@@ -506,10 +539,14 @@ export const usePerpsProScene = () => {
     });
 
   const fundingHistoryEnabled =
-    runtime.status === 'ready' && isFocused && appState === 'active';
+    sceneActive &&
+    runtime.status === 'ready' &&
+    isFocused &&
+    appState === 'active';
   const klineEnabled = fundingHistoryEnabled && !!currentMarket;
   const subscriptionsEnabled = klineEnabled && !!selectedTickOption;
   const orderBookSubscriptionEnabled =
+    sceneActive &&
     runtime.status === 'ready' &&
     isFocused &&
     !!currentMarket &&

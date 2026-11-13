@@ -345,12 +345,14 @@ const ExpandedChartBody = ({
   );
 };
 
-export const PerpsPortfolioChart: React.FC<PerpsPortfolioChartProps> = ({
+// Only historical data and chart geometry drive this subtree. Unrelated
+// account/balance updates must not rebuild the wagmi chart providers.
+export const PerpsPortfolioChart = React.memo(function PerpsPortfolioChart({
   data,
   isEmpty,
   expanded,
   width,
-}) => {
+}: PerpsPortfolioChartProps) {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const [period, setPeriod] = useState<PortfolioPeriodKey>('day');
 
@@ -427,7 +429,7 @@ export const PerpsPortfolioChart: React.FC<PerpsPortfolioChartProps> = ({
       </View>
     </View>
   );
-};
+});
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   chartClip: {

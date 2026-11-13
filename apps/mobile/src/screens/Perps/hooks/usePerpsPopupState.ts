@@ -1,4 +1,4 @@
-import { atom, useAtom } from 'jotai';
+import { atom, useAtom, useSetAtom } from 'jotai';
 
 const visibleAtom = atom({
   isShowGuidePopup: false,
@@ -13,3 +13,5 @@ const visibleAtom = atom({
 export const usePerpsPopupState = () => {
   return useAtom(visibleAtom);
 };
+
+export const useSetPerpsPopupState = () => useSetAtom(visibleAtom);

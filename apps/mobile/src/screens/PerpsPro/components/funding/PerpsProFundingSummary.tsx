@@ -1,8 +1,9 @@
 import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
 import { Text } from '@/components/Typography';
+import { useStoreActivityScope } from '@/hooks/storeActivity/StoreActivityProvider';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useReducer, useSyncExternalStore } from 'react';
 import { Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
@@ -21,24 +22,34 @@ const PERPS_PRO_FUNDING_LABEL_MIN_WIDTH = 136;
 const FundingCountdown = React.memo(
   ({ serverClock }: { serverClock: PerpsServerClockSample | null }) => {
     const { styles } = useTheme2024({ getStyle });
-    const [now, setNow] = useState(Date.now());
+    const activityScope = useStoreActivityScope();
+    const active = useSyncExternalStore(
+      activityScope.subscribe,
+      activityScope.getActive,
+      activityScope.getActive,
+    );
+    const [, refreshCountdown] = useReducer((tick: number) => tick + 1, 0);
+    const hasServerClock = serverClock !== null;
 
     useEffect(() => {
-      if (!serverClock) {
+      if (!active || !hasServerClock) {
         return;
       }
-      setNow(Date.now());
       const timer = setInterval(
-        () => setNow(Date.now()),
+        refreshCountdown,
         PERPS_PRO_FUNDING_SCHEDULE.countdownRefreshMs,
       );
       return () => clearInterval(timer);
-    }, [serverClock]);
+    }, [active, hasServerClock]);
 
+    // New feed samples already render this leaf. Read the current clock here
+    // instead of publishing a second update and restarting the timer per tick.
+    // Retained Root previews keep the sample but need no hidden timer. Activity
+    // resumption rerenders this leaf immediately from elapsed time, not ticks.
     return (
       <Text style={styles.countdown}>
         {formatPerpsFundingCountdown(
-          getPerpsFundingCountdownMs(serverClock, now),
+          getPerpsFundingCountdownMs(serverClock, Date.now()),
         )}
       </Text>
     );

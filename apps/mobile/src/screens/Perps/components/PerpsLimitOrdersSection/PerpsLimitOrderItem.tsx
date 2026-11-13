@@ -11,6 +11,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { formatUsdValue, splitNumberByStep } from '@/utils/number';
 import { computeFilledPct } from '@/utils/perps';
 import { perpsStore } from '@/hooks/perps/usePerpsStore';
+import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 import { PerpsDisplayCoinName } from '../PerpsDisplayCoinName';
 
 // Circle progress ring. percent in [0, 100], filled clockwise from 12 o'clock.
@@ -74,7 +75,10 @@ export const PerpsLimitOrderItem: React.FC<Props> = ({
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
-  const marketData = perpsStore(s => s.marketDataMap[order.coin]);
+  const marketData = useActivityStore(
+    perpsStore,
+    s => s.marketDataMap[order.coin],
+  );
 
   // Hyperliquid: side === 'B' means Bid → Buy → Long visual.
   const isBuy = order.side === 'B';

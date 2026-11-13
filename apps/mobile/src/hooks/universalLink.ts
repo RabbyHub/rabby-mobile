@@ -106,6 +106,7 @@ type OnParseUrlAndProcessAction = (payload: {
     | 'debug-db-sync-policy'
     | 'debug-lending'
     | 'debug-open-target'
+    | 'debug-perps-account'
     | 'debug-create-address'
     | 'debug-set-language'
     | 'debug-import-test-accounts'
@@ -116,6 +117,8 @@ type OnParseUrlAndProcessAction = (payload: {
   testkitScreen?:
     | typeof RootNames.DevCapabilityFile
     | typeof RootNames.DevUIAnimatedTextAndView
+    | typeof RootNames.DevUISwipableSubScreen
+    | typeof RootNames.DevUIRootSubScreen
     | typeof RootNames.DevUIAutoFitTitlePlayground
     | typeof RootNames.DevUISafeSvgMedia
     | typeof RootNames.DebugLogViewer
@@ -149,6 +152,11 @@ type OnParseUrlAndProcessAction = (payload: {
   debugChainStatsLoadingOff?: boolean;
   /** Device path of the test-account list read by the import command. */
   debugImportAccountsPath?: string;
+  debugPerpsAccount?: {
+    action: 'state' | 'select';
+    address?: string;
+    open?: boolean;
+  };
   regressionScenarioCommand?: RegressionScenarioCommand | null;
   regressionScenarioError?: string;
 }) => void;
@@ -169,6 +177,8 @@ type DebugOpenTarget =
 const NON_PRODUCTION_TESTKIT_SCREENS = {
   DevCapabilityFile: RootNames.DevCapabilityFile,
   DevUIAnimatedTextAndView: RootNames.DevUIAnimatedTextAndView,
+  DevUISwipableSubScreen: RootNames.DevUISwipableSubScreen,
+  DevUIRootSubScreen: RootNames.DevUIRootSubScreen,
   DevUIAutoFitTitlePlayground: RootNames.DevUIAutoFitTitlePlayground,
   DevUISafeSvgMedia: RootNames.DevUISafeSvgMedia,
   DebugLogViewer: RootNames.DebugLogViewer,
@@ -516,15 +526,6 @@ function parseNonProductionMaintenanceLink(appLink: string) {
   // The list itself is never in the URL - only the device path of the file
   // the runner pushed - so private keys stay out of logcat.
   if (
-    rabbyGoCmd === 'debug-create-address' ||
-    target === 'debug-create-address'
-  ) {
-    return {
-      type: 'debug-create-address',
-    } satisfies Parameters<OnParseUrlAndProcessAction>[0];
-  }
-
-  if (
     rabbyGoCmd === 'debug-import-test-accounts' ||
     target === 'debug-import-test-accounts'
   ) {
@@ -540,6 +541,32 @@ function parseNonProductionMaintenanceLink(appLink: string) {
     return {
       type: 'debug-import-test-accounts',
       debugImportAccountsPath: path,
+    } satisfies Parameters<OnParseUrlAndProcessAction>[0];
+  }
+
+  if (
+    rabbyGoCmd === 'debug-perps-account' ||
+    target === 'debug-perps-account'
+  ) {
+    const action = urlInfo.searchParams.get('action') || 'state';
+    if (!['state', 'select'].includes(action)) {
+      console.warn(
+        '[useUniversalLinkOnTop] Unknown Perps debug action:',
+        action,
+      );
+      return null;
+    }
+    const openRaw = urlInfo.searchParams.get('open');
+    return {
+      type: 'debug-perps-account',
+      debugPerpsAccount: {
+        action: action as 'state' | 'select',
+        address: urlInfo.searchParams.get('address') || undefined,
+        open:
+          openRaw === null
+            ? undefined
+            : ['1', 'true', 'yes', 'on'].includes(openRaw.toLowerCase()),
+      },
     } satisfies Parameters<OnParseUrlAndProcessAction>[0];
   }
 
@@ -1094,6 +1121,31 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
         }
         void openRabbyGoTarget(target);
       }, `debug-open-${payload.debugOpenTarget}`);
+      break;
+    case 'debug-perps-account':
+      if (!isNonPublicProductionEnv || !payload.debugPerpsAccount) {
+        return;
+      }
+      void import('@/devtools/perpsDebugDeepLink')
+        .then(module =>
+          module.runNonProductionPerpsDebugCommand(payload.debugPerpsAccount!, {
+            openPerps: () => {
+              dispatchWhenNavigationReady(
+                StackActions.push(RootNames.StackTransaction, {
+                  screen: RootNames.Perps,
+                  params: { dappId: 'hyperliquid' },
+                }),
+                RootNames.Perps,
+              );
+            },
+          }),
+        )
+        .catch(error => {
+          console.error('[useUniversalLinkOnTop] Perps debug command failed', {
+            command: payload.debugPerpsAccount,
+            error,
+          });
+        });
       break;
     case 'debug-set-language':
       if (!isNonPublicProductionEnv || !payload.debugLanguage) {

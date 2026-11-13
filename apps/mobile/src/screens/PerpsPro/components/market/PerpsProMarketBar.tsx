@@ -4,11 +4,19 @@ import RcMarketCaret from '@/assets2024/icons/perps/PerpsProMarketCaret.svg';
 import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import React from 'react';
-import { Pressable, View } from 'react-native';
+import React, { useMemo } from 'react';
+import { View } from 'react-native';
+import { Pressable } from 'react-native-gesture-handler';
 import { useTranslation } from 'react-i18next';
 
-import type { PerpsProMarket } from '../../model/market';
+import { perpsStore } from '@/hooks/perps/usePerpsStore';
+import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
+import { shallow } from 'zustand/shallow';
+import {
+  calculatePerpsProChange24h,
+  type PerpsProMarketDescriptor,
+} from '../../model/market';
+import { selectPerpsProMarketData } from '../../scene/usePerpsProLiveMarket';
 import { formatPerpsProPercent } from '../../utils/format';
 import {
   getPerpsProMetadataTagContainerStyle,
@@ -18,19 +26,26 @@ import {
 export const PERPS_PRO_MARKET_BAR_HEIGHT = 40;
 
 export const PerpsProMarketBar: React.FC<{
-  klineOpen: boolean;
-  market: PerpsProMarket | null;
+  market: PerpsProMarketDescriptor | null;
+  onOpenKline: () => void;
   onPress: () => void;
-  onToggleKline: () => void;
-}> = React.memo(({ klineOpen, market, onPress, onToggleKline }) => {
+}> = React.memo(({ market, onOpenKline, onPress }) => {
   const { colors2024, styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
+  const [markPx, prevDayPx] = useActivityStore(
+    perpsStore,
+    state => {
+      const data = selectPerpsProMarketData(state, market?.canonicalCoin ?? '');
+      return [data?.markPx ?? '', data?.prevDayPx ?? ''] as const;
+    },
+    shallow,
+  );
+  const change24h = useMemo(
+    () => calculatePerpsProChange24h({ markPx, prevDayPx }),
+    [markPx, prevDayPx],
+  );
   const changeStyle =
-    market?.change24h == null
-      ? styles.muted
-      : market.change24h >= 0
-      ? styles.up
-      : styles.down;
+    change24h == null ? styles.muted : change24h >= 0 ? styles.up : styles.down;
 
   return (
     <View style={styles.container} testID="perps-pro-market-bar">
@@ -51,9 +66,7 @@ export const PerpsProMarketBar: React.FC<{
             </Text>
           </View>
         ) : null}
-        <Text style={changeStyle}>
-          {formatPerpsProPercent(market?.change24h)}
-        </Text>
+        <Text style={changeStyle}>{formatPerpsProPercent(change24h)}</Text>
         <RcMarketCaret
           color={colors2024['neutral-title-1']}
           height={18}
@@ -64,10 +77,10 @@ export const PerpsProMarketBar: React.FC<{
         <Pressable
           accessibilityLabel={t('page.perps.pro.chart.open')}
           accessibilityRole="button"
-          accessibilityState={{ disabled: !market, expanded: klineOpen }}
+          accessibilityState={{ disabled: !market }}
           disabled={!market}
           hitSlop={6}
-          onPress={onToggleKline}
+          onPress={onOpenKline}
           style={styles.actionIcon}
           testID="perps-pro-kline-trigger">
           <RcCandlestick

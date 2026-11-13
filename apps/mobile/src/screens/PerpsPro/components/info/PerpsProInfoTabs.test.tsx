@@ -3,6 +3,11 @@ import React from 'react';
 import { StyleSheet } from 'react-native';
 import type { SharedValue } from 'react-native-reanimated';
 
+// Keep callback and disabled semantics real; native hit testing is device-only.
+jest.mock('react-native-gesture-handler', () => ({
+  Pressable: require('react-native').Pressable,
+}));
+
 jest.mock('@/assets2024/icons/perps/IconHistoryCC.svg', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
@@ -242,6 +247,28 @@ describe('PerpsProInfoTabs', () => {
     expect(onHistoryPress).toHaveBeenLastCalledWith(false);
   });
 
+  it('dispatches the selected tab without invoking the independent History action', () => {
+    const onChange = jest.fn();
+    const onHistoryPress = jest.fn();
+    render(
+      <PerpsProInfoTabs
+        activeTab="account"
+        historyEnabled
+        indicatorPosition={indicatorPosition}
+        onChange={onChange}
+        onHistoryPress={onHistoryPress}
+        openOrdersCount={0}
+        pendingFundingCount={0}
+        positionsCount={0}
+      />,
+    );
+
+    fireEvent.press(screen.getByTestId('perps-pro-info-tab-openOrders'));
+    expect(onChange).toHaveBeenCalledTimes(1);
+    expect(onChange).toHaveBeenCalledWith('openOrders');
+    expect(onHistoryPress).not.toHaveBeenCalled();
+  });
+
   it('hides the count for one pending operation and shows it above one', () => {
     const view = render(
       <PerpsProInfoTabs
@@ -327,8 +354,8 @@ describe('PerpsProInfoTabs', () => {
     });
     expect(indicators).toHaveLength(1);
     expect(StyleSheet.flatten(indicators[0].props.style)).toMatchObject({
-      backgroundColor: '#23C0B0',
-      bottom: 2.5,
+      backgroundColor: 'neutral-body',
+      bottom: -0.5,
       height: 3,
       left: 0,
       opacity: 1,
@@ -354,8 +381,7 @@ describe('PerpsProInfoTabs', () => {
     const accountLabels = screen.getAllByText('Account', {
       includeHiddenElements: true,
     });
-    // Two visible layers plus the hidden width probe.
-    expect(accountLabels).toHaveLength(3);
+    expect(accountLabels).toHaveLength(2);
     expect(
       accountLabels.map(label => StyleSheet.flatten(label.props.style)),
     ).toEqual(

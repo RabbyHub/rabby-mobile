@@ -6,46 +6,39 @@ import {
   waitFor,
 } from '@testing-library/react-native';
 import React from 'react';
+import { BackHandler } from 'react-native';
 
-import type { PerpsProMarket } from '../../model/market';
-import type { PerpsPositionViewModel } from '../../model/position';
+import { perpsStore, type MarketData } from '@/hooks/perps/usePerpsStore';
+import type { PerpsProMarketDescriptor } from '../../model/market';
 
 const mockModalProps = jest.fn();
+const mockModalDismiss = jest.fn();
+const mockModalPresent = jest.fn();
 const mockSheetClose = jest.fn();
-const mockSheetSnapToIndex = jest.fn();
+const mockSnapToIndex = jest.fn();
 const mockClearCrosshair = jest.fn();
 const mockChartMount = jest.fn();
 const mockChartUnmount = jest.fn();
 const mockCompleteOlderCandlesRequest = jest.fn();
 const mockSetData = jest.fn();
-const mockResetPerpsProViewport = jest.fn();
-const mockSetPerpsProOverlays = jest.fn();
+const mockResetPriceScale = jest.fn();
 const mockTradingViewProps = jest.fn();
 const mockUpdateCandleData = jest.fn();
 const mockToolbarProps = jest.fn();
-const mockToolbarMount = jest.fn();
-const mockToolbarUnmount = jest.fn();
 const mockUsePerpsProKline = jest.fn();
 
 let mockKlineState: Record<string, unknown>;
 let mockLastDataDelivery: { identity: string; revision: number } | null;
 
-jest.mock('react-native-safe-area-context', () => ({
-  useSafeAreaInsets: () => ({ bottom: 34, left: 0, right: 0, top: 0 }),
+jest.mock('@/hooks/perps/usePerpsStore', () => ({
+  perpsStore: require('zustand').create(() => ({
+    marketData: [],
+    marketDataMap: {},
+  })),
 }));
 
-jest.mock(
-  '@/assets2024/icons/perps/PerpsProKline/close.svg',
-  () => require('react-native').View,
-);
-
-jest.mock(
-  '@/assets2024/icons/perps/PerpsSimpleChart/reset.svg',
-  () => require('react-native').View,
-);
-
-jest.mock('react-i18next', () => ({
-  useTranslation: () => ({ t: (key: string) => key }),
+jest.mock('@/components2024/GlobalBottomSheetModal/utils-help', () => ({
+  makeBottomSheetProps: () => ({ testSharedBottomSheetProp: true }),
 }));
 
 jest.mock('@/components/Typography', () => {
@@ -56,6 +49,43 @@ jest.mock('@/components/Typography', () => {
       ReactModule.createElement(Text, props),
   };
 });
+
+jest.mock(
+  '@/assets2024/icons/perps/PerpsSimpleChart/reset.svg',
+  () => require('react-native').View,
+);
+
+jest.mock(
+  '@/assets2024/icons/perps/PerpsProKline/close.svg',
+  () => require('react-native').View,
+);
+
+jest.mock('react-native-gesture-handler', () => ({
+  GestureDetector: ({ children }: { children: React.ReactNode }) => children,
+  Gesture: {
+    Native: () => {
+      const native: Record<string, jest.Mock> = {};
+      native.disallowInterruption = jest.fn(() => native);
+      native.onFinalize = jest.fn(() => native);
+      return native;
+    },
+    Tap: () => {
+      const tap: Record<string, jest.Mock> = {};
+      for (const name of [
+        'enabled',
+        'maxDistance',
+        'onBegin',
+        'onStart',
+        'onEnd',
+        'onFinalize',
+        'onTouchesDown',
+      ]) {
+        (tap as any)[name] = jest.fn(() => tap);
+      }
+      return tap;
+    },
+  },
+}));
 
 jest.mock('@/components2024/TradingViewCandleChart', () => {
   const ReactModule = require('react');
@@ -71,7 +101,7 @@ jest.mock('@/components2024/TradingViewCandleChart', () => {
             identity: string;
             revision: number;
           }) => void;
-          onPerpsProViewportChange?: (resetVisible: boolean) => void;
+          onPerpsProViewportChange?: (autoScale: boolean) => void;
           onRequestOlderCandles?: (request: {
             earliestTime: number;
             identity: string;
@@ -87,7 +117,7 @@ jest.mock('@/components2024/TradingViewCandleChart', () => {
         ReactModule.useImperativeHandle(ref, () => ({
           clearCrosshair: mockClearCrosshair,
           completeOlderCandlesRequest: mockCompleteOlderCandlesRequest,
-          resetPerpsProViewport: mockResetPerpsProViewport,
+          resetPerpsProViewport: mockResetPriceScale,
           setData: (data: { identity: string; revision: number }) => {
             mockSetData(data);
             mockLastDataDelivery = {
@@ -95,7 +125,6 @@ jest.mock('@/components2024/TradingViewCandleChart', () => {
               revision: data.revision,
             };
           },
-          setPerpsProOverlays: mockSetPerpsProOverlays,
           updateCandleData: mockUpdateCandleData,
           updateTPSLPriceLines: jest.fn(),
         }));
@@ -136,26 +165,41 @@ jest.mock('@/utils/styles', () => ({
   createGetStyles2024: (getStyle: unknown) => getStyle,
 }));
 
+jest.mock('react-native-safe-area-context', () => ({
+  ...jest.requireActual('react-native-safe-area-context'),
+  useSafeAreaInsets: () => ({ bottom: 0, left: 0, right: 0, top: 0 }),
+}));
+
 jest.mock('@gorhom/bottom-sheet', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
   return {
     __esModule: true,
-    default: ReactModule.forwardRef(
+    BottomSheetModal: ReactModule.forwardRef(
       (props: Record<string, unknown>, ref: React.Ref<unknown>) => {
         ReactModule.useImperativeHandle(ref, () => ({
           close: mockSheetClose,
-          snapToIndex: mockSheetSnapToIndex,
+          dismiss: mockModalDismiss,
+          present: mockModalPresent,
+          snapToIndex: mockSnapToIndex,
         }));
         mockModalProps(props);
-        return ReactModule.createElement(
-          View,
-          { testID: 'bottom-sheet' },
-          ReactModule.createElement(props.handleComponent),
+        const HandleComponent = props.handleComponent as
+          | React.ComponentType
+          | undefined;
+        return ReactModule.createElement(View, { testID: 'bottom-sheet' }, [
+          HandleComponent
+            ? ReactModule.createElement(HandleComponent, { key: 'handle' })
+            : null,
           props.children,
-        );
+        ]);
       },
     ),
+    BottomSheetBackdrop: (props: Record<string, unknown>) =>
+      ReactModule.createElement(View, {
+        ...props,
+        testID: 'bottom-sheet-backdrop',
+      }),
     BottomSheetView: (props: Record<string, unknown>) =>
       ReactModule.createElement(
         View,
@@ -168,6 +212,15 @@ jest.mock('@gorhom/bottom-sheet', () => {
 jest.mock('../../scene/usePerpsProKline', () => ({
   usePerpsProKline: mockUsePerpsProKline,
 }));
+
+jest.mock('../loading/PerpsProSkeletonBlock', () => {
+  const ReactModule = require('react');
+  const { View } = require('react-native');
+  return {
+    PerpsProSkeletonBlock: (props: Record<string, unknown>) =>
+      ReactModule.createElement(View, props),
+  };
+});
 
 jest.mock('./PerpsProKlineSkeleton', () => {
   const ReactModule = require('react');
@@ -188,38 +241,38 @@ jest.mock('./PerpsProKlineToolbar', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
   return {
+    // Keep the real height constant without pulling the gesture/Reanimated
+    // implementation into the unit test environment.
     PERPS_PRO_KLINE_TOOLBAR_HEIGHT: 36,
     PerpsProKlineToolbar: (props: Record<string, unknown>) => {
-      ReactModule.useEffect(() => {
-        mockToolbarMount();
-        return mockToolbarUnmount;
-      }, []);
       mockToolbarProps(props);
       return ReactModule.createElement(View, { testID: 'kline-toolbar' });
     },
   };
 });
 
-const { PERPS_PRO_KLINE_HEADER_HEIGHT, PerpsProKlineSheet: Sheet } =
-  require('./PerpsProKlineSheet') as typeof import('./PerpsProKlineSheet');
+const {
+  PERPS_PRO_KLINE_CONTENT_HEIGHT,
+  PERPS_PRO_KLINE_HEADER_HEIGHT,
+  PERPS_PRO_KLINE_SHEET_HEIGHT,
+  PerpsProKlineSheet,
+} = require('./PerpsProKlineSheet') as typeof import('./PerpsProKlineSheet');
 const { PERPS_PRO_KLINE_CHART_HEIGHT } =
   require('./PerpsProKlineSkeleton') as typeof import('./PerpsProKlineSkeleton');
-
-const PerpsProKlineSheet = (
-  props: Omit<React.ComponentProps<typeof Sheet>, 'position'> & {
-    position?: PerpsPositionViewModel | null;
-  },
-) => <Sheet position={null} {...props} />;
+const { PERPS_PRO_KLINE_TOOLBAR_HEIGHT } =
+  require('./PerpsProKlineToolbar') as typeof import('./PerpsProKlineToolbar');
 
 const market = {
   canonicalCoin: 'BTC',
   displayBase: 'BTC',
+  displayPair: 'BTCUSDC',
+  fullName: null,
   marketKey: 'hyperliquid::BTC',
-  marketData: {
-    pxDecimals: 0,
-  },
   quoteAsset: 'USDC',
-} as unknown as PerpsProMarket;
+  sourceTag: null,
+} satisfies PerpsProMarketDescriptor;
+
+const marketData = { name: 'BTC', markPx: '100', pxDecimals: 0 } as MarketData;
 
 const createKlineState = (
   status: 'idle' | 'loading' | 'ready' | 'empty' | 'stale' | 'error',
@@ -238,110 +291,131 @@ const createKlineState = (
   selectInterval: jest.fn(),
 });
 
+const candleAt = (time: number) => ({
+  close: 12,
+  high: 13,
+  low: 9,
+  open: 10,
+  quoteTurnover: null,
+  time,
+  trades: 2,
+  volume: 3,
+});
+
+const readyKlineState = () => ({
+  ...createKlineState('ready'),
+  feed: {
+    ...createKlineState('ready').feed,
+    candles: [candleAt(1_800_000)],
+    updateType: 'snapshot',
+  },
+});
+
 describe('PerpsProKlineSheet', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    perpsStore.setState({
+      marketData: [marketData],
+      marketDataMap: { BTC: marketData },
+    });
     mockLastDataDelivery = null;
     mockKlineState = createKlineState('loading');
     mockUsePerpsProKline.mockImplementation(() => mockKlineState);
   });
 
-  it('docks without a backdrop and closes from its header or a pan', () => {
+  it('uses the approved local sheet geometry and gesture boundary', () => {
     const onClose = jest.fn();
     render(<PerpsProKlineSheet enabled market={market} onClose={onClose} />);
 
     const props = mockModalProps.mock.calls.at(-1)?.[0];
     expect(props).toMatchObject({
       animateOnMount: false,
-      activeOffsetY: [-12, 12],
       enableContentPanningGesture: false,
+      enableDismissOnClose: false,
+      enableDynamicSizing: false,
       enableHandlePanningGesture: true,
       enablePanDownToClose: true,
-      failOffsetX: [-8, 8],
       index: 0,
-      keyboardBehavior: 'extend',
-      // Header 58 + chart 228 + max(16, safe-area bottom 34).
-      snapPoints: [320],
+      snapPoints: [PERPS_PRO_KLINE_SHEET_HEIGHT],
+      testSharedBottomSheetProp: true,
     });
-    expect(props.backdropComponent).toBeUndefined();
-    expect(props.backgroundStyle).toMatchObject({
-      borderTopLeftRadius: 24,
-      borderTopRightRadius: 24,
-      boxShadow: '0px -4px 16px 0px rgba(0, 0, 0, 0.1)',
+    expect(props.style).toMatchObject({
+      borderBottomLeftRadius: 0,
+      borderBottomRightRadius: 0,
+      borderTopLeftRadius: 32,
+      borderTopRightRadius: 32,
     });
-    expect(PERPS_PRO_KLINE_HEADER_HEIGHT).toBe(58);
+    expect({
+      chart: PERPS_PRO_KLINE_CHART_HEIGHT,
+      content: PERPS_PRO_KLINE_CONTENT_HEIGHT,
+      header: PERPS_PRO_KLINE_HEADER_HEIGHT,
+      sheet: PERPS_PRO_KLINE_SHEET_HEIGHT,
+      toolbar: PERPS_PRO_KLINE_TOOLBAR_HEIGHT,
+    }).toEqual({
+      chart: 228,
+      content: 228,
+      header: 58,
+      sheet: 302,
+      toolbar: 36,
+    });
     expect(
-      screen.getByTestId('perps-pro-kline-header').props.style,
+      screen.getByTestId('bottom-sheet-content').props.style,
     ).toMatchObject({
-      height: 58,
-      paddingTop: 22,
+      height: PERPS_PRO_KLINE_CONTENT_HEIGHT,
     });
+    expect(screen.getByTestId('perps-pro-kline-header')).toBeTruthy();
+    expect(screen.getByTestId('perps-pro-kline-close')).toBeTruthy();
+    expect(screen.queryByTestId('perps-pro-kline-footer')).toBeNull();
     expect(mockTradingViewProps.mock.calls.at(-1)?.[0]).toMatchObject({
       backGroundColor: 'neutral-bg-1',
       height: PERPS_PRO_KLINE_CHART_HEIGHT,
       variant: 'perps-pro',
     });
+    expect(screen.queryByTestId('perps-pro-kline-reset')).toBeNull();
+
+    const backdrop = props.backdropComponent({});
+    expect(backdrop.props).toMatchObject({
+      appearsOnIndex: 0,
+      disappearsOnIndex: -1,
+      pressBehavior: 'close',
+    });
+
+    act(() => props.onChange(-1));
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('closes from the header close button', () => {
+    const onClose = jest.fn();
+    render(<PerpsProKlineSheet enabled market={market} onClose={onClose} />);
 
     fireEvent.press(screen.getByTestId('perps-pro-kline-close'));
     expect(onClose).toHaveBeenCalledTimes(1);
-
-    act(() => props.onChange(-1));
-    expect(onClose).toHaveBeenCalledTimes(2);
   });
 
-  it('updates header state without remounting the interval toolbar', () => {
-    const onClose = jest.fn();
-    const { rerender } = render(
-      <PerpsProKlineSheet enabled market={market} onClose={onClose} />,
-    );
-    mockKlineState = {
-      ...mockKlineState,
-      interval: '1h',
-      selectInterval: jest.fn(),
-    };
-    rerender(<PerpsProKlineSheet enabled market={market} onClose={onClose} />);
-    expect(mockToolbarMount).toHaveBeenCalledTimes(1);
-    expect(mockToolbarUnmount).not.toHaveBeenCalled();
-    expect(mockToolbarProps.mock.calls.at(-1)?.[0]).toMatchObject({
-      interval: '1h',
-      onSelect: mockKlineState.selectInterval,
-    });
-  });
+  it('shows reset only while the local chart reports manual price scaling', () => {
+    render(<PerpsProKlineSheet enabled market={market} onClose={jest.fn()} />);
+    const chartProps = mockTradingViewProps.mock.calls.at(-1)?.[0];
 
-  it('closes and reopens through the sheet ref when visibility changes', () => {
-    const view = render(
-      <PerpsProKlineSheet enabled market={market} onClose={jest.fn()} />,
-    );
-    view.rerender(
-      <PerpsProKlineSheet
-        enabled
-        market={market}
-        onClose={jest.fn()}
-        visible={false}
-      />,
-    );
-    expect(mockSheetClose).toHaveBeenCalledTimes(1);
-    expect(mockModalProps.mock.calls.at(-1)?.[0].index).toBe(0);
-
-    view.rerender(
-      <PerpsProKlineSheet enabled market={market} onClose={jest.fn()} />,
-    );
-    expect(mockSheetSnapToIndex).toHaveBeenLastCalledWith(0);
-  });
-
-  it('shows reset only after a viewport change and hides it per market', () => {
-    const view = render(
-      <PerpsProKlineSheet enabled market={market} onClose={jest.fn()} />,
-    );
     expect(screen.queryByTestId('perps-pro-kline-reset')).toBeNull();
 
-    act(() =>
+    act(() => chartProps.onPerpsProViewportChange(false));
+    fireEvent.press(screen.getByTestId('perps-pro-kline-reset'));
+    expect(mockResetPriceScale).toHaveBeenCalledTimes(1);
+
+    act(() => chartProps.onPerpsProViewportChange(true));
+    expect(screen.queryByTestId('perps-pro-kline-reset')).toBeNull();
+  });
+
+  it('hides stale reset state immediately when the market changes', () => {
+    const view = render(
+      <PerpsProKlineSheet enabled market={market} onClose={jest.fn()} />,
+    );
+    act(() => {
       mockTradingViewProps.mock.calls
         .at(-1)?.[0]
-        .onPerpsProViewportChange(true),
-    );
-    fireEvent.press(screen.getByTestId('perps-pro-kline-reset'));
-    expect(mockResetPerpsProViewport).toHaveBeenCalledTimes(1);
+        .onPerpsProViewportChange(false);
+    });
+    expect(screen.getByTestId('perps-pro-kline-reset')).toBeTruthy();
 
     view.rerender(
       <PerpsProKlineSheet
@@ -355,73 +429,8 @@ describe('PerpsProKlineSheet', () => {
         onClose={jest.fn()}
       />,
     );
+
     expect(screen.queryByTestId('perps-pro-kline-reset')).toBeNull();
-  });
-
-  it('sends position guides once the chart is ready', () => {
-    const position = {
-      baseSize: '2',
-      entryPrice: '100',
-      liquidationPrice: '80',
-      tpslOrders: [
-        {
-          kind: 'takeProfit',
-          remainingSize: '0',
-          scope: 'position',
-          triggerPrice: '120',
-        },
-        {
-          kind: 'stopLoss',
-          remainingSize: '0.5',
-          scope: 'partial',
-          triggerPrice: '90',
-        },
-        {
-          kind: 'stopLoss',
-          remainingSize: '0',
-          scope: 'position',
-          triggerPrice: '85',
-        },
-      ],
-    } as unknown as PerpsPositionViewModel;
-    render(
-      <PerpsProKlineSheet
-        enabled
-        market={market}
-        onClose={jest.fn()}
-        position={position}
-      />,
-    );
-    expect(mockSetPerpsProOverlays).not.toHaveBeenCalled();
-
-    fireEvent.press(screen.getByTestId('trading-view-chart'));
-    expect(mockSetPerpsProOverlays.mock.calls.at(-1)?.[0].lines).toEqual([
-      {
-        id: 'entry',
-        kind: 'entry',
-        price: 100,
-        title: 'page.perpsDetail.simpleChart.averageEntry',
-      },
-      {
-        id: 'liquidation',
-        kind: 'liquidation',
-        price: 80,
-        title: 'page.perpsDetail.simpleChart.liquidation',
-      },
-      {
-        id: 'tp',
-        kind: 'tp',
-        price: 120,
-        title: 'page.perpsDetail.simpleChart.takeProfit',
-      },
-      {
-        // The partial SL at 90 is not drawn; only the position-scope one.
-        id: 'sl',
-        kind: 'sl',
-        price: 85,
-        title: 'page.perpsDetail.simpleChart.stopLoss',
-      },
-    ]);
   });
 
   it('loads older candles only for the current visible Pro identity', async () => {
@@ -490,6 +499,419 @@ describe('PerpsProKlineSheet', () => {
       screen.getByTestId('perps-pro-kline-retained-host').props.pointerEvents,
     ).toBe('none');
     expect(mockClearCrosshair).toHaveBeenCalledTimes(1);
+  });
+
+  it('explicitly closes the retained sheet and keeps rapid reopening declarative', () => {
+    const onClose = jest.fn();
+    const element = (visible: boolean) => (
+      <PerpsProKlineSheet
+        enabled
+        market={market}
+        onClose={onClose}
+        visible={visible}
+      />
+    );
+    const view = render(element(true));
+    expect(mockModalProps.mock.calls.at(-1)?.[0].index).toBe(0);
+    expect(mockSheetClose).not.toHaveBeenCalled();
+
+    view.rerender(element(false));
+    expect(mockModalProps.mock.calls.at(-1)?.[0].index).toBe(-1);
+    expect(mockSheetClose).toHaveBeenCalledTimes(1);
+    view.rerender(element(true));
+    expect(mockModalProps.mock.calls.at(-1)?.[0].index).toBe(0);
+    expect(mockSheetClose).toHaveBeenCalledTimes(1);
+    expect(
+      screen.getByTestId('perps-pro-kline-retained-host').props.pointerEvents,
+    ).toBe('box-none');
+
+    view.rerender(element(false));
+    expect(mockSheetClose).toHaveBeenCalledTimes(2);
+    // These assertions cover our lifecycle command contract, not native
+    // animation completion; the latter is verified on the device.
+    expect(mockChartMount).toHaveBeenCalledTimes(1);
+    expect(mockChartUnmount).not.toHaveBeenCalled();
+  });
+
+  it('presents the modal once and keeps its portal mounted while closed', () => {
+    const element = (visible: boolean) => (
+      <PerpsProKlineSheet
+        enabled
+        market={market}
+        onClose={jest.fn()}
+        visible={visible}
+      />
+    );
+    const view = render(element(true));
+
+    expect(mockModalPresent).toHaveBeenCalledTimes(1);
+    expect(mockModalDismiss).not.toHaveBeenCalled();
+
+    view.rerender(element(false));
+    expect(mockModalPresent).toHaveBeenCalledTimes(1);
+    expect(mockSheetClose).toHaveBeenCalledTimes(1);
+    expect(mockModalDismiss).not.toHaveBeenCalled();
+
+    view.rerender(element(true));
+    expect(mockModalPresent).toHaveBeenCalledTimes(1);
+    expect(mockModalDismiss).not.toHaveBeenCalled();
+
+    view.unmount();
+    expect(mockModalDismiss).toHaveBeenCalledTimes(1);
+  });
+
+  it('retains the native host with all Root-inactive gates off and releases Back handling', () => {
+    const remove = jest.fn();
+    const backHandler = jest
+      .spyOn(BackHandler, 'addEventListener')
+      .mockReturnValue({ remove });
+    const onClose = jest.fn();
+    const element = (active: boolean, currentMarket = market) => (
+      <PerpsProKlineSheet
+        enabled={active}
+        market={currentMarket}
+        onClose={onClose}
+        preloadEnabled={active}
+        publicationEnabled={active}
+        visible={active}
+      />
+    );
+    try {
+      const view = render(element(true));
+      const host = screen.getByTestId('bottom-sheet');
+      expect(backHandler).toHaveBeenCalledTimes(1);
+      view.rerender(element(false));
+      expect(screen.getByTestId('bottom-sheet')).toBe(host);
+      expect(mockUsePerpsProKline).toHaveBeenLastCalledWith({
+        coin: 'BTC',
+        enabled: false,
+        preloadEnabled: false,
+        publicationEnabled: false,
+      });
+      expect(mockSheetClose).toHaveBeenCalledTimes(1);
+      expect(remove).toHaveBeenCalledTimes(1);
+      act(() => mockModalProps.mock.lastCall?.[0].onChange(-1));
+      expect(onClose).not.toHaveBeenCalled();
+      expect(mockChartMount).toHaveBeenCalledTimes(1);
+      expect(mockChartUnmount).not.toHaveBeenCalled();
+
+      const nextMarket = {
+        ...market,
+        canonicalCoin: 'ETH',
+        marketKey: 'hyperliquid::ETH',
+      };
+      view.rerender(element(false, nextMarket));
+      // The shell survives, but the existing market-key boundary must still
+      // replace the chart; retention must not pin an old market identity.
+      expect(screen.getByTestId('bottom-sheet')).toBe(host);
+      expect(mockChartMount).toHaveBeenCalledTimes(2);
+      expect(mockChartUnmount).toHaveBeenCalledTimes(1);
+      expect(backHandler).toHaveBeenCalledTimes(1);
+      view.rerender(element(true, nextMarket));
+      expect(backHandler).toHaveBeenCalledTimes(2);
+      expect(mockChartMount).toHaveBeenCalledTimes(2);
+      view.unmount();
+      expect(remove).toHaveBeenCalledTimes(2);
+      expect(mockChartUnmount).toHaveBeenCalledTimes(2);
+    } finally {
+      backHandler.mockRestore();
+    }
+  });
+
+  it('preserves an initially hidden index and closes without remounting the chart', () => {
+    render(
+      <PerpsProKlineSheet
+        enabled={false}
+        market={market}
+        onClose={jest.fn()}
+        visible={false}
+      />,
+    );
+    expect(mockModalProps.mock.calls.at(-1)?.[0].index).toBe(-1);
+    expect(mockSheetClose).toHaveBeenCalledTimes(1);
+    expect(mockChartMount).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps the sheet and chart stable through price-only store updates while hidden', () => {
+    mockKlineState = readyKlineState();
+    const onClose = jest.fn();
+    const view = render(
+      <PerpsProKlineSheet
+        enabled
+        market={market}
+        onClose={onClose}
+        publicationEnabled={false}
+        visible={false}
+      />,
+    );
+    const renders = mockTradingViewProps.mock.calls.length;
+    const sheetRenders = mockModalProps.mock.calls.length;
+    act(() =>
+      perpsStore.setState({
+        marketDataMap: { BTC: { ...marketData, markPx: '123' } },
+      }),
+    );
+    expect(mockTradingViewProps).toHaveBeenCalledTimes(renders);
+    expect(mockModalProps).toHaveBeenCalledTimes(sheetRenders);
+    expect(mockChartMount).toHaveBeenCalledTimes(1);
+    expect(mockSetData).not.toHaveBeenCalled();
+
+    // An unrelated parent commit must not rerender the retained native host;
+    // normal memo still observes all control-plane prop changes below.
+    view.rerender(
+      <PerpsProKlineSheet
+        enabled
+        market={market}
+        onClose={onClose}
+        publicationEnabled={false}
+        visible={false}
+      />,
+    );
+    expect(mockModalProps).toHaveBeenCalledTimes(sheetRenders);
+
+    view.rerender(
+      <PerpsProKlineSheet
+        enabled
+        market={{ ...market, displayBase: 'Bitcoin' }}
+        onClose={onClose}
+        publicationEnabled={false}
+        visible={false}
+      />,
+    );
+    expect(mockTradingViewProps.mock.calls.length).toBeGreaterThan(renders);
+  });
+
+  it('updates live precision and its array fallback without remounting or keeping missing metadata', () => {
+    mockKlineState = readyKlineState();
+    render(<PerpsProKlineSheet enabled market={market} onClose={jest.fn()} />);
+    fireEvent.press(screen.getByTestId('trading-view-chart'));
+    expect(mockSetData.mock.lastCall?.[0].proConfig.priceDecimals).toBe(0);
+
+    act(() =>
+      perpsStore.setState({
+        marketDataMap: { BTC: { ...marketData, pxDecimals: 4 } },
+      }),
+    );
+    expect(mockSetData.mock.lastCall?.[0].proConfig.priceDecimals).toBe(4);
+    act(() =>
+      perpsStore.setState({
+        marketDataMap: {},
+        marketData: [{ ...marketData, pxDecimals: 3 }],
+      }),
+    );
+    expect(mockSetData.mock.lastCall?.[0].proConfig.priceDecimals).toBe(3);
+    act(() => perpsStore.setState({ marketDataMap: {}, marketData: [] }));
+    expect(mockSetData.mock.lastCall?.[0].proConfig.priceDecimals).toBe(2);
+    expect(mockChartMount).toHaveBeenCalledTimes(1);
+    expect(mockChartUnmount).not.toHaveBeenCalled();
+  });
+
+  it('preserves the warm preload before the live feed has been activated', () => {
+    mockKlineState = readyKlineState();
+    render(
+      <PerpsProKlineSheet
+        enabled={false}
+        market={market}
+        onClose={jest.fn()}
+        preloadEnabled
+        publicationEnabled={false}
+        visible={false}
+      />,
+    );
+    act(() => mockTradingViewProps.mock.calls.at(-1)?.[0].onChartReady());
+    expect(mockSetData).toHaveBeenCalledTimes(1);
+    expect(mockSetData.mock.calls[0][0].candles).toHaveLength(1);
+    expect(mockUsePerpsProKline).toHaveBeenLastCalledWith({
+      coin: 'BTC',
+      enabled: false,
+      preloadEnabled: true,
+      publicationEnabled: false,
+    });
+  });
+
+  it('resumes a paused preload without waiting for a live-feed publication epoch', () => {
+    mockKlineState = readyKlineState();
+    const onClose = jest.fn();
+    const element = (preloadEnabled: boolean) => (
+      <PerpsProKlineSheet
+        enabled={false}
+        market={market}
+        onClose={onClose}
+        preloadEnabled={preloadEnabled}
+        publicationEnabled={false}
+        visible={false}
+      />
+    );
+    const view = render(element(false));
+    act(() => mockTradingViewProps.mock.calls.at(-1)?.[0].onChartReady());
+    expect(mockSetData).not.toHaveBeenCalled();
+    view.rerender(element(true));
+    expect(mockSetData).toHaveBeenCalledTimes(1);
+    expect(mockSetData.mock.calls[0][0].candles).toHaveLength(1);
+    expect(mockChartMount).toHaveBeenCalledTimes(1);
+  });
+
+  it('fully catches up across hidden bars even when resume is batched with a realtime tick', () => {
+    mockKlineState = readyKlineState();
+    // Feed publication is a hook-owned notification, not a parent prop change.
+    const listeners = new Set<() => void>();
+    const subscribe = (listener: () => void) => {
+      listeners.add(listener);
+      return () => listeners.delete(listener);
+    };
+    mockUsePerpsProKline.mockImplementation(() =>
+      React.useSyncExternalStore(subscribe, () => mockKlineState),
+    );
+    const onClose = jest.fn();
+    const element = (publicationEnabled: boolean) => (
+      <PerpsProKlineSheet
+        enabled
+        market={market}
+        onClose={onClose}
+        publicationEnabled={publicationEnabled}
+        visible={publicationEnabled}
+      />
+    );
+    const view = render(element(true));
+    fireEvent.press(screen.getByTestId('trading-view-chart'));
+    expect(mockSetData).toHaveBeenCalledTimes(1);
+    view.rerender(element(false));
+    expect(mockClearCrosshair).toHaveBeenCalledTimes(1);
+
+    // The retained old snapshot must not be sent during the host's reopen
+    // render, before the feed's resume publication has reached this leaf.
+    view.rerender(element(true));
+    expect(mockSetData).toHaveBeenCalledTimes(1);
+    expect(mockUpdateCandleData).not.toHaveBeenCalled();
+    mockKlineState = {
+      ...mockKlineState,
+      feed: {
+        ...(mockKlineState.feed as object),
+        candles: [1_800_000, 2_700_000, 3_600_000, 4_500_000].map(candleAt),
+        publicationEpoch: 1,
+        updateType: 'realtime',
+      },
+    };
+    act(() => listeners.forEach(listener => listener()));
+    expect(mockSetData).toHaveBeenCalledTimes(2);
+    expect(mockSetData.mock.calls[1][0]).toMatchObject({
+      candles: [1800, 2700, 3600, 4500].map(time => ({ time })),
+      identity: 'BTC:15m',
+      preserveVisibleRange: true,
+    });
+    expect(mockUpdateCandleData).not.toHaveBeenCalled();
+
+    mockKlineState = {
+      ...mockKlineState,
+      feed: {
+        ...(mockKlineState.feed as object),
+        candles: [1_800_000, 2_700_000, 3_600_000, 4_500_000, 5_400_000].map(
+          candleAt,
+        ),
+      },
+    };
+    act(() => listeners.forEach(listener => listener()));
+    expect(mockSetData).toHaveBeenCalledTimes(2);
+    expect(mockUpdateCandleData).toHaveBeenLastCalledWith(
+      expect.objectContaining({ time: 5400 }),
+    );
+    expect(mockChartMount).toHaveBeenCalledTimes(1);
+    expect(mockChartUnmount).not.toHaveBeenCalled();
+  });
+
+  it.each(['interval', 'webview'] as const)(
+    'does not preserve the old viewport after a hidden %s replacement',
+    replacement => {
+      mockKlineState = readyKlineState();
+      const onClose = jest.fn();
+      const element = (publicationEnabled: boolean) => (
+        <PerpsProKlineSheet
+          enabled
+          market={market}
+          onClose={onClose}
+          publicationEnabled={publicationEnabled}
+          visible={publicationEnabled}
+        />
+      );
+      const view = render(element(true));
+      fireEvent.press(screen.getByTestId('trading-view-chart'));
+      view.rerender(element(false));
+      if (replacement === 'webview') {
+        act(() => mockTradingViewProps.mock.calls.at(-1)?.[0].onChartReady());
+      }
+      expect(mockSetData).toHaveBeenCalledTimes(1);
+      mockKlineState = {
+        ...mockKlineState,
+        interval: replacement === 'interval' ? '1h' : '15m',
+        feed: {
+          ...(mockKlineState.feed as object),
+          identity: replacement === 'interval' ? 'BTC:1h' : 'BTC:15m',
+          publicationEpoch: 1,
+          updateType: 'snapshot',
+        },
+      };
+      view.rerender(element(true));
+      expect(mockSetData).toHaveBeenCalledTimes(2);
+      expect(mockSetData.mock.calls[1][0].preserveVisibleRange).toBeUndefined();
+    },
+  );
+
+  it('keeps close, back handling, refs, and visibility live when publication is paused', async () => {
+    const remove = jest.fn();
+    const backHandler = jest
+      .spyOn(BackHandler, 'addEventListener')
+      .mockReturnValue({ remove });
+    const onClose = jest.fn();
+    const nextOnClose = jest.fn();
+    mockKlineState = readyKlineState();
+    const element = (visible: boolean, close = onClose) => (
+      <PerpsProKlineSheet
+        enabled
+        market={market}
+        onClose={close}
+        publicationEnabled={false}
+        visible={visible}
+      />
+    );
+    const view = render(element(true));
+    fireEvent.press(screen.getByTestId('trading-view-chart'));
+    expect(mockSetData).not.toHaveBeenCalled();
+    act(() => {
+      expect(backHandler.mock.calls.at(-1)?.[1]()).toBe(true);
+    });
+    expect(onClose).toHaveBeenCalledTimes(1);
+    view.rerender(element(true, nextOnClose));
+    act(() => {
+      backHandler.mock.calls.at(-1)?.[1]();
+      mockModalProps.mock.calls.at(-1)?.[0].onChange(-1);
+    });
+    expect(nextOnClose).toHaveBeenCalledTimes(2);
+    const backCalls = backHandler.mock.calls.length;
+    view.rerender(element(false, nextOnClose));
+    expect(remove).toHaveBeenCalledTimes(2);
+    expect(backHandler).toHaveBeenCalledTimes(backCalls);
+    expect(mockClearCrosshair).toHaveBeenCalledTimes(1);
+    expect(mockModalProps.mock.calls.at(-1)?.[0].index).toBe(-1);
+    expect(
+      screen.getByTestId('perps-pro-kline-retained-host').props.pointerEvents,
+    ).toBe('none');
+    await act(async () => {
+      mockModalProps.mock.calls.at(-1)?.[0].onChange(-1);
+      await mockTradingViewProps.mock.calls.at(-1)?.[0].onRequestOlderCandles({
+        earliestTime: 1800,
+        identity: 'BTC:15m',
+      });
+    });
+    expect(nextOnClose).toHaveBeenCalledTimes(2);
+    expect(mockKlineState.loadOlder).not.toHaveBeenCalled();
+    expect(mockCompleteOlderCandlesRequest).toHaveBeenLastCalledWith({
+      earliestTime: 1800,
+      identity: 'BTC:15m',
+      outcome: 'retry',
+    });
+    expect(mockChartMount).toHaveBeenCalledTimes(1);
+    expect(mockChartUnmount).not.toHaveBeenCalled();
+    backHandler.mockRestore();
   });
 
   it.each(['idle', 'loading', 'empty', 'stale', 'error'] as const)(

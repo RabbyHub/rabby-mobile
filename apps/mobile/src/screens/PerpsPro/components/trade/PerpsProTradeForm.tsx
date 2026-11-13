@@ -1,11 +1,18 @@
 import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
+import { RootScenePagerGestureBlock } from '@rabby-wallet/rn-collapsible-scene-view/src/RootScenePager';
 import RcIconAvailableAdd from '@/assets2024/icons/perps/PerpsProAvailableAdd.svg';
 import RcIconAvailableSwap from '@/assets2024/icons/perps/PerpsProAvailableSwap.svg';
 import { PERPS_MINI_USD_VALUE } from '@/constant/perps';
 import { Text, type TextInput } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
@@ -57,6 +64,7 @@ const tifLabels: Record<PerpsProTradeTif, string> = {
 };
 
 type PerpsProTradeFormProps = {
+  sceneActive?: boolean;
   addFundsMode?: 'deposit' | 'swap';
   configurationReady?: boolean;
   controller: PerpsProTradeController;
@@ -64,6 +72,7 @@ type PerpsProTradeFormProps = {
 };
 
 const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
+  sceneActive = true,
   addFundsMode = 'deposit',
   configurationReady = true,
   controller,
@@ -76,11 +85,34 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
   const triggerPriceInputRef = useRef<TextInput>(null);
   const requestReviewRef = useRef(controller.requestReview);
   requestReviewRef.current = controller.requestReview;
-  const dismissKeyboardThen = usePerpsProDismissKeyboard();
+  const dismissKeyboardThen = usePerpsProDismissKeyboard(sceneActive);
+  useEffect(() => {
+    if (!sceneActive) {
+      setSheet(null);
+    }
+  }, [sceneActive]);
   const openSheet = useCallback(
     (nextSheet: Exclude<Sheet, null>) =>
       dismissKeyboardThen(() => setSheet(nextSheet)),
     [dismissKeyboardThen],
+  );
+  const closeSheet = useCallback(() => setSheet(null), []);
+  const confirmLeverage = controller.confirmLeverage;
+  const confirmLeverageAndClose = useCallback(
+    async (value: number) => {
+      if (await confirmLeverage(value)) {
+        closeSheet();
+      }
+    },
+    [closeSheet, confirmLeverage],
+  );
+  const { marginMode, marginModeDisabledReason } = controller;
+  const disabledMarginModes = useMemo<readonly ('cross' | 'isolated')[]>(
+    () =>
+      marginModeDisabledReason
+        ? [marginMode === 'cross' ? 'isolated' : 'cross']
+        : [],
+    [marginMode, marginModeDisabledReason],
   );
   useEffect(() => {
     if (!configurationReady) {
@@ -161,7 +193,9 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
       }
       style={styles.container}
       testID="perps-pro-trade-form">
-      <View style={styles.inputGroup}>
+      <RootScenePagerGestureBlock
+        style={styles.inputGroup}
+        testID="perps-pro-trade-inputs-root-gesture-block">
         <View style={styles.doubleRow}>
           <PerpsProTradeSelect
             disabled={!configurationReady}
@@ -309,7 +343,7 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
           onChange={configurationReady ? controller.setPercentage : undefined}
           value={controller.percentage}
         />
-      </View>
+      </RootScenePagerGestureBlock>
       <View style={styles.optionsGroup}>
         <PerpsProTradeSummaryRow
           label={t('page.perps.pro.trade.available')}
@@ -341,23 +375,26 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
           valueTestID="perps-pro-trade-available-deposit"
         />
         {controller.attachedTpSlExecutionEnabled ? (
-          <PerpsProTpSlFields
-            controller={controller.tpSl}
-            draft={form.attachedTpSl}
-            pxDecimals={market?.marketData.pxDecimals ?? 2}
-            quoteAsset={quoteAsset}
-            szDecimals={priceSzDecimals}
-            slFillRevision={
-              controller.priceFillFeedback?.field === 'sl'
-                ? controller.priceFillFeedback.revision
-                : 0
-            }
-            tpFillRevision={
-              controller.priceFillFeedback?.field === 'tp'
-                ? controller.priceFillFeedback.revision
-                : 0
-            }
-          />
+          <RootScenePagerGestureBlock testID="perps-pro-trade-tpsl-root-gesture-block">
+            <PerpsProTpSlFields
+              sceneActive={sceneActive}
+              controller={controller.tpSl}
+              draft={form.attachedTpSl}
+              pxDecimals={market?.marketData.pxDecimals ?? 2}
+              quoteAsset={quoteAsset}
+              szDecimals={priceSzDecimals}
+              slFillRevision={
+                controller.priceFillFeedback?.field === 'sl'
+                  ? controller.priceFillFeedback.revision
+                  : 0
+              }
+              tpFillRevision={
+                controller.priceFillFeedback?.field === 'tp'
+                  ? controller.priceFillFeedback.revision
+                  : 0
+              }
+            />
+          </RootScenePagerGestureBlock>
         ) : null}
         <View style={styles.optionRow}>
           <PerpsProTradeCheckbox
@@ -475,50 +512,46 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
         })}
       </View>
 
-      <PerpsProOrderTypeSheet
-        onClose={() => setSheet(null)}
-        onSelect={controller.setOrderType}
-        selected={form.orderType}
-        visible={configurationReady && sheet === 'orderType'}
-      />
-      <PerpsProMarginModeSheet
-        disabledValues={
-          controller.marginModeDisabledReason
-            ? [controller.marginMode === 'cross' ? 'isolated' : 'cross']
-            : []
-        }
-        marketName={market?.displayBase ?? '-'}
-        onClose={() => setSheet(null)}
-        onSelect={controller.setMarginMode}
-        pending={controller.leveragePending}
-        selected={controller.marginMode}
-        visible={configurationReady && sheet === 'margin'}
-      />
-      <PerpsProTifSheet
-        onClose={() => setSheet(null)}
-        onSelect={controller.setTif}
-        selected={form.tif}
-        visible={configurationReady && sheet === 'tif'}
-      />
-      <PerpsProBboSheet
-        onClose={() => setSheet(null)}
-        onSelect={controller.enableBbo}
-        options={bboOptions}
-        selected={form.bboStrategy}
-        visible={configurationReady && sheet === 'bbo'}
-      />
-      <PerpsProLeverageSheet
-        currentLeverage={controller.leverage}
-        maxLeverage={market?.marketData.maxLeverage ?? 1}
-        onClose={() => setSheet(null)}
-        onConfirm={async value => {
-          if (await controller.confirmLeverage(value)) {
-            setSheet(null);
-          }
-        }}
-        pending={controller.leveragePending}
-        visible={configurationReady && sheet === 'leverage'}
-      />
+      {sceneActive ? (
+        <>
+          <PerpsProOrderTypeSheet
+            onClose={closeSheet}
+            onSelect={controller.setOrderType}
+            selected={form.orderType}
+            visible={configurationReady && sheet === 'orderType'}
+          />
+          <PerpsProMarginModeSheet
+            disabledValues={disabledMarginModes}
+            marketName={market?.displayBase ?? '-'}
+            onClose={closeSheet}
+            onSelect={controller.setMarginMode}
+            pending={controller.leveragePending}
+            selected={controller.marginMode}
+            visible={configurationReady && sheet === 'margin'}
+          />
+          <PerpsProTifSheet
+            onClose={closeSheet}
+            onSelect={controller.setTif}
+            selected={form.tif}
+            visible={configurationReady && sheet === 'tif'}
+          />
+          <PerpsProBboSheet
+            onClose={closeSheet}
+            onSelect={controller.enableBbo}
+            options={bboOptions}
+            selected={form.bboStrategy}
+            visible={configurationReady && sheet === 'bbo'}
+          />
+          <PerpsProLeverageSheet
+            currentLeverage={controller.leverage}
+            maxLeverage={market?.marketData.maxLeverage ?? 1}
+            onClose={closeSheet}
+            onConfirm={confirmLeverageAndClose}
+            pending={controller.leveragePending}
+            visible={configurationReady && sheet === 'leverage'}
+          />
+        </>
+      ) : null}
     </View>
   );
 };
