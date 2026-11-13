@@ -3,7 +3,7 @@ import React from 'react';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import Animated, { clamp, useAnimatedStyle } from 'react-native-reanimated';
-import { StyleSheet, TextProps, View } from 'react-native';
+import { PixelRatio, StyleSheet, TextProps, View } from 'react-native';
 import { ThemeColors2024 } from '@rabby-wallet/base-utils';
 import { HOME_TOP_HEADER_SIZES } from '@/constant/home';
 import { Text } from '@/components/Typography';
@@ -23,6 +23,17 @@ interface CustomLabelProps {
 }
 
 const LABEL_WIDTH = 70;
+// Snap animated offsets to whole device pixels. A translated text layer that
+// lands on sub-pixel offsets is re-rasterised at every step, which reads as a
+// horizontal shimmer/tremble while the row is moving.
+const PIXEL = PixelRatio.get();
+/** Last asset tab; the plate never animates outside the asset range. */
+const MAX_ASSET_INDEX = 3;
+
+function snapToPixel(value: number) {
+  'worklet';
+  return Math.round(value * PIXEL) / PIXEL;
+}
 // Park the plate a hair past the label edge: at exactly `width` its antialiased
 // edge still touches the clip boundary and leaves a 1px seam.
 const PLATE_TRAVEL = LABEL_WIDTH + 1;
@@ -55,13 +66,22 @@ const CustomLabel = ({
 }: CustomLabelProps) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
 
+  // The plate only travels *between asset tabs*. The overview boundary is the
+  // whole strip riding in, so the plate must stay fully covering its own label
+  // there - otherwise the label and its plate move at different speeds and the
+  // row looks like it is trembling.
+  const plateOffset = (track: number) => {
+    'worklet';
+    return clamp(clamp(track, 1, MAX_ASSET_INDEX) - index, -1, 1);
+  };
+
   const moverStyle = useAnimatedStyle(() => {
-    const d = clamp(indexDecimal.value - index, -1, 1);
-    return { transform: [{ translateX: d * PLATE_TRAVEL }] };
+    const d = plateOffset(indexDecimal.value);
+    return { transform: [{ translateX: snapToPixel(d * PLATE_TRAVEL) }] };
   });
   const pinnedTextStyle = useAnimatedStyle(() => {
-    const d = clamp(indexDecimal.value - index, -1, 1);
-    return { transform: [{ translateX: -d * PLATE_TRAVEL }] };
+    const d = plateOffset(indexDecimal.value);
+    return { transform: [{ translateX: -snapToPixel(d * PLATE_TRAVEL) }] };
   });
 
   return (

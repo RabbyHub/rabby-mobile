@@ -1,5 +1,6 @@
 import {
   Dimensions,
+  PixelRatio,
   useWindowDimensions,
   View,
   Pressable,
@@ -424,6 +425,10 @@ const AssetsTabLabels = [
   TabbarLabels[HomeTabName.nft],
 ];
 
+// Snap the strip to whole device pixels: a sub-pixel translate makes the whole
+// row shimmer while it rides in.
+const STRIP_PIXEL = PixelRatio.get();
+
 function AssetsTabBar() {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const indexDecimal = apisHomeTabIndex.svTabIndexDecimal;
@@ -435,7 +440,12 @@ function AssetsTabBar() {
   const stylez = useAnimatedStyle(() => {
     const progress = clamp(indexDecimal.value, 0, 1);
     return {
-      transform: [{ translateX: (1 - progress) * winWidth }],
+      transform: [
+        {
+          translateX:
+            Math.round((1 - progress) * winWidth * STRIP_PIXEL) / STRIP_PIXEL,
+        },
+      ],
       // Soften the leading edge: the row rides in slightly translucent and is
       // fully opaque after the first stretch of the swipe.
       opacity: interpolate(progress, [0, 0.15], [0.7, 1], Extrapolation.CLAMP),
