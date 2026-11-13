@@ -40,7 +40,7 @@ import {
 } from '@/core/utils/store';
 import { RefLikeObject } from '@/utils/type';
 import { perfEvents } from '@/core/utils/perf';
-import type { CollapsibleRef } from 'react-native-collapsible-tab-view';
+import { logger } from '@/utils/logger';
 import { autoLockEvent } from '@/core/apis/autoLock';
 import { notificationEvents } from '@/core/notifications/data';
 import {
@@ -463,7 +463,18 @@ export const TabbarLabels: {
   [HomeTabName.defi]: { index: 2, label: 'DeFi' },
   [HomeTabName.nft]: { index: 3, label: 'NFT' },
 };
-const homeTabScrollerRef = React.createRef<CollapsibleRef<string>>();
+/**
+ * Imperative handle the home scene registers so existing call sites
+ * (`setTabIndex`, deep links, regression actions) can jump between the
+ * horizontally linked home tabs without knowing the pager implementation.
+ */
+export type HomeTabPagerHandle = {
+  getCurrentIndex: () => number;
+  setIndex: (index: number) => void;
+};
+const homeTabScrollerRef: { current: HomeTabPagerHandle | null } = {
+  current: null,
+};
 // const tabIndexRef: RefLikeObject<number> = { current: 0 };
 const tabIndexSvs = {
   current: 0,
@@ -494,14 +505,33 @@ export const apisHomeTabIndex = {
   isHomeAtFirstTab() {
     return tabIndexSvs.svIndexDecimal.value === 0;
   },
-  setTabIndex(val: number, processJump = false) {
-    'worklet';
-    if (processJump) {
-      homeTabScrollerRef.current?.setIndex(val);
-    } else {
-      tabIndexSvs.svIndexDecimal.value = val;
-      tabIndexSvs.current = val;
-      runOnJS(() => tabIndexStore.setState({ tabIndex: val }))();
+  setTabIndex(val: number, processJump = false, source = 'unknown') {
+    // Plain JS on purpose: taps must be able to flip the JS-owned header
+    // state synchronously, before the pager jump and the heavy page render.
+    tabIndexSvs.current = val;
+    if (tabIndexStore.getState().tabIndex !== val) {
+      tabIndexStore.setState({ tabIndex: val });
+    }
+    logger.debug(
+      `[home-pager] request index=${val} source=${source} jump=${processJump}`,
+    );
+    // The scene pager owns the visible page. Jumping to the page that is
+    // already settled is a no-op, so this stays safe for commit notifications.
+    homeTabScrollerRef.current?.setIndex(val);
+  },
+  /**
+   * Report a page the pager already settled on. This must never command the
+   * pager: doing so from the pager's own commit callback re-enters the gesture
+   * track and can overwrite an in-flight settle or drag.
+   *
+   * It also must not write `svIndexDecimal` / `svTabName`: those are owned by
+   * the UI-thread track reaction. A JS write that lands one frame late is
+   * exactly what made the previous tab flash its highlight after a settle.
+   */
+  publishSettledIndex(val: number) {
+    tabIndexSvs.current = val;
+    if (tabIndexStore.getState().tabIndex !== val) {
+      tabIndexStore.setState({ tabIndex: val });
     }
   },
 };

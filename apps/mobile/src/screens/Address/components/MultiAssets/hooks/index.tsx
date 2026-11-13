@@ -25,10 +25,14 @@ import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { useEffect } from 'react';
 import useAsyncFn from 'react-use/lib/useAsyncFn';
 import useAppChainStore from '@/store/appchain';
+import { makeMutable } from 'react-native-reanimated';
 
-export const isTabsSwiping = {
-  value: false,
-};
+/**
+ * Shared flag: a home-tab horizontal transition is in flight. Written on the
+ * UI thread by the scene pager and read from worklets in rows/cards, so it has
+ * to be a real shared value rather than a plain object.
+ */
+export const isTabsSwiping = makeMutable(false);
 
 const EMPTY_SELECTED_ADDRESSES: string[] = [];
 

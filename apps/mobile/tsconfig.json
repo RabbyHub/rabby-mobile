@@ -28,7 +28,16 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
-      "@rabby-wallet/*": ["../../packages/*/dist", "../../packages/*/src"]
+      "@rabby-wallet/*": ["../../packages/*/dist", "../../packages/*/src"],
+      // Source-only RN workspaces use the host app's native peer dependencies.
+      "react-native-reanimated": ["./node_modules/react-native-reanimated"],
+      "react-native-reanimated/*": ["./node_modules/react-native-reanimated/*"],
+      "react-native-gesture-handler": [
+        "./node_modules/react-native-gesture-handler"
+      ],
+      "react-native-gesture-handler/*": [
+        "./node_modules/react-native-gesture-handler/*"
+      ]
     }
   }
 }

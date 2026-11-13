@@ -24,6 +24,8 @@ jest.mock('react-native-reanimated', () => ({
   default: { View: require('react-native').View },
   Extrapolate: { CLAMP: 'clamp' },
   interpolate: () => 0,
+  clamp: (value: number, lower: number, upper: number) =>
+    Math.min(Math.max(value, lower), upper),
   useAnimatedStyle: (callback: () => object) => callback(),
   useSharedValue: (value: unknown) =>
     require('react').useRef({ value }).current,
@@ -76,6 +78,7 @@ jest.mock('@/hooks/navigation', () => ({
     setTabIndex: jest.fn(),
   },
   HomeTabName: { overview: 'overview', token: 'token' },
+  useHomeTabIndex: () => ({ tabIndex: 0 }),
 }));
 jest.mock('@/store/tokens', () => ({
   __esModule: true,
@@ -163,7 +166,11 @@ it('still switches to assets when the empty header area itself is pressed', () =
   render(<TabsTopHeader />);
   getHeaderArea().props.onPress({ target: 101, currentTarget: 101 });
   expect(apisHomeTabIndex.setTabIndex).toHaveBeenCalledTimes(1);
-  expect(apisHomeTabIndex.setTabIndex).toHaveBeenCalledWith(1, true);
+  expect(apisHomeTabIndex.setTabIndex).toHaveBeenCalledWith(
+    1,
+    true,
+    'header-blank',
+  );
 });
 
 it('does not rerender the ticker for unrelated refresh and change updates', () => {
