@@ -3,7 +3,11 @@
  *
  * A test can seed a screen's data dependency before it mounts:
  *
- *   debug-open-screen&screen=TokenDetail&store={"homePortfolio":{...}}
+ *   debug-open-screen&screen=TokenDetail&store={"tokenList":{"tokenListMap":{...}}}
+ *
+ * Home/asset screens read these stores directly, so a patch is visible without
+ * walking the network: `balanceAccounts` (per-address balance + total) and
+ * `tokenList` (`tokenListMap[address] = ITokenItem[]`).
  *
  * Only the stores listed here can be written. The allowlist keeps a debug link
  * from mutating wallet/keyring state, and the deep link itself is gated on
@@ -29,11 +33,26 @@ function makeStoreApplier(
 }
 
 const STORE_APPLIERS: Record<string, StoreApplier> = {
-  // BaseStore subclasses expose `setState(partial)`; only these explicit
+  // BaseStore / zustand stores expose `setState(partial)`; only these explicit
   // stores may be written by a debug link.
   account: makeStoreApplier(
     async () => (await import('@/store/account')).default,
     'account',
+  ),
+  // Home balance card + address selection snapshot.
+  balanceAccounts: makeStoreApplier(
+    async () => (await import('@/store/balance')).balanceAccountsStore,
+    'balanceAccounts',
+  ),
+  // Home / TokenDetail token list. `tokenListMap[address] = ITokenItem[]`.
+  tokenList: makeStoreApplier(
+    async () => (await import('@/store/tokens')).default,
+    'tokenList',
+  ),
+  // Derived per-address token index used by the assets tab.
+  tokenIndex: makeStoreApplier(
+    async () => (await import('@/store/tokens')).useTokenIndexStore,
+    'tokenIndex',
   ),
 };
 

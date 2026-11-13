@@ -4,6 +4,8 @@ import { ScrollView, Text } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
+import { balanceAccountsStore } from '@/store/balance';
+import tokenListStore from '@/store/tokens';
 
 /**
  * Non-production probe for screen-level prop injection.
@@ -24,12 +26,31 @@ function DevScreenInjectionProbe(props: Record<string, unknown>) {
     [key: string]: unknown;
   };
 
+  const balanceAccountsState = balanceAccountsStore.getState();
+  const tokenListState = tokenListStore.getState();
+
   const payload = {
     route: route?.name ?? '(none)',
     routeParams: route?.params ?? null,
     injectedProps: Object.fromEntries(
       Object.entries(rest).sort(([a], [b]) => a.localeCompare(b)),
     ),
+    storeSnapshots: {
+      balanceAccounts: {
+        totalBalance: balanceAccountsState.totalBalance,
+        hasAnyBalanceValue: balanceAccountsState.hasAnyBalanceValue,
+        addresses: Object.keys(balanceAccountsState.balance),
+      },
+      tokenList: {
+        addressesWithTokens: Object.keys(tokenListState.tokenListMap),
+        tokenCounts: Object.fromEntries(
+          Object.entries(tokenListState.tokenListMap).map(([addr, list]) => [
+            addr,
+            Array.isArray(list) ? list.length : -1,
+          ]),
+        ),
+      },
+    },
   };
 
   return (
