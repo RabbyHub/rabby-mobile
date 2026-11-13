@@ -65,6 +65,15 @@ function waitForNavigationReady(timeoutMs = 15_000): Promise<boolean> {
  * chain is pushed as nested navigation params. That keeps `goBack()` meaningful
  * without replaying the long product flow that normally leads to the screen.
  */
+/**
+ * Screens whose render path requires a `react-native-collapsible-tab-view`
+ * `Tabs.Container` ancestor (they call `Tabs.FlatList` ->
+ * `useTabNameContext`). Direct navigation crashes; route them through the
+ * non-production `DevTabsHost` when the full tab shell is not part of the flow.
+ */
+const TAB_HOSTED_SCREENS = new Set(['Meme', 'Watchlist']);
+const TAB_HOST_ROUTE = 'DevTabsHost';
+
 export function openScreenById(
   id: string,
   params: Record<string, unknown> = {},
@@ -116,8 +125,16 @@ export function openScreenById(
     return false;
   }
 
-  const [rootRoute, ...rest] = chain;
-  let nested: Record<string, unknown> = paramsWithFixture;
+  // Tab-hosted screens go through the host wrapper, which provides the
+  // Tabs.Container context the screen's list components require.
+  const hosted = TAB_HOSTED_SCREENS.has(id);
+  const effectiveChain = hosted ? SCREEN_REGISTRY[TAB_HOST_ROUTE].chain : chain;
+  const effectiveParams = hosted
+    ? { screenId: id, params: paramsWithFixture }
+    : paramsWithFixture;
+
+  const [rootRoute, ...rest] = effectiveChain;
+  let nested: Record<string, unknown> = effectiveParams;
   for (let index = rest.length - 1; index >= 0; index -= 1) {
     nested = { screen: rest[index], params: nested };
   }
@@ -127,10 +144,10 @@ export function openScreenById(
     // same screen can be opened repeatedly with a fresh entry.
     navigationRef.dispatch(
       options.push
-        ? StackActions.push(rootRoute, rest.length ? nested : paramsWithFixture)
+        ? StackActions.push(rootRoute, rest.length ? nested : effectiveParams)
         : CommonActions.navigate(
             rootRoute,
-            rest.length ? nested : paramsWithFixture,
+            rest.length ? nested : effectiveParams,
           ),
     );
     if (options.probe) {

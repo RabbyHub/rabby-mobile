@@ -419,6 +419,19 @@ export const SCREEN_REGISTRY = {
     riskyParams: [],
     sourceFile: 'src/perfs/loadables/testkitsNavigatorScreens.ts',
   },
+  DevTabsHost: {
+    id: 'DevTabsHost',
+    route: 'DevTabsHost',
+    navigator: 'TestkitsNavigator',
+    file: 'src/screens/Navigators/TestkitsNavigator.tsx',
+    chain: ['StackTestkits', 'DevTabsHost'],
+    chainNavigators: ['AppNavigation', 'TestkitsNavigator'],
+    params: [],
+    optionalParams: [],
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/screens/Testkits/DevTabsHost.tsx',
+  },
   DevUIAccountShowCase: {
     id: 'DevUIAccountShowCase',
     route: 'DevUIAccountShowCase',
@@ -675,9 +688,9 @@ export const SCREEN_REGISTRY = {
     chainNavigators: ['AppNavigation', 'TransactionNavigator'],
     params: [],
     optionalParams: [],
-    usedParams: ['tokenItem', 'isInTokenDetail', 'currentAddress'],
-    riskyParams: ['tokenItem', 'isInTokenDetail', 'currentAddress'],
-    sourceFile: 'src/screens/Transaction/MultiAddressHistory.tsx',
+    usedParams: [],
+    riskyParams: [],
+    sourceFile: 'src/devtools/screenRegistry/screenInjection.tsx',
   },
   HistoryDetail: {
     id: 'HistoryDetail',
@@ -1625,8 +1638,7 @@ export const SCREEN_REGISTRY = {
     optionalParams: [],
     usedParams: [],
     riskyParams: [],
-    sourceFile:
-      'src/screens/SyncExtension/SyncExtensionAccountSuccessScreen.tsx',
+    sourceFile: 'src/devtools/screenRegistry/screenInjection.tsx',
   },
   SyncExtensionPassword: {
     id: 'SyncExtensionPassword',
@@ -1639,7 +1651,7 @@ export const SCREEN_REGISTRY = {
     optionalParams: [],
     usedParams: [],
     riskyParams: [],
-    sourceFile: null,
+    sourceFile: 'src/devtools/screenRegistry/screenInjection.tsx',
   },
   TokenDetail: {
     id: 'TokenDetail',
@@ -1684,7 +1696,7 @@ export const SCREEN_REGISTRY = {
     ],
     usedParams: [],
     riskyParams: [],
-    sourceFile: 'src/perfs/loadables/screens.ts',
+    sourceFile: 'src/devtools/screenRegistry/screenInjection.tsx',
   },
   Unlock: {
     id: 'Unlock',

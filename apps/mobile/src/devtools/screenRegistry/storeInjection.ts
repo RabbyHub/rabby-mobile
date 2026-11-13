@@ -38,6 +38,14 @@ const STORE_LOADERS: Record<string, { load: StoreLoader; label: string }> = {
     label: 'balanceAccounts',
     load: async () => (await import('@/store/balance')).balanceAccountsStore,
   },
+  // Scene account selection (`MakeTransactionAbout`, `Receive`, ...). The
+  // MemeCoin/Lending/Bridge flows bail out when this disagrees with their
+  // params, so pinning it is what lets those screens be opened directly.
+  sceneAccounts: {
+    label: 'sceneAccounts',
+    load: async () =>
+      (await import('@/hooks/sceneAccountInfoAtom')).sceneAccountInfoStore,
+  },
   // Home / TokenDetail token list. `tokenListMap[address] = ITokenItem[]`.
   tokenList: {
     label: 'tokenList',

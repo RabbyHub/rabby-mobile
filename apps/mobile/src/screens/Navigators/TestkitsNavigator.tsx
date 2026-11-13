@@ -2,6 +2,7 @@ import { withScreenPropsInjection } from '@/devtools/screenRegistry/screenInject
 import 'react-native-gesture-handler';
 import { RootNames } from '@/constant/layout';
 import DevScreenInjectionProbe from '@/screens/Testkits/DevScreenInjectionProbe';
+import DevTabsHost from '@/screens/Testkits/DevTabsHost';
 import { useStackScreenConfig } from '@/hooks/navigation';
 import { useThemeColors } from '@/hooks/theme';
 import { createCustomNativeStackNavigator as createNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
@@ -216,6 +217,14 @@ export function TestkitsNavigator() {
         options={{
           headerShown: true,
           title: 'Screen Injection Probe',
+        }}
+      />
+      <Stack.Screen
+        name={RootNames.DevTabsHost}
+        component={withScreenPropsInjection(DevTabsHost as any)}
+        options={{
+          headerShown: true,
+          title: 'Tabs Host',
         }}
       />
       <Stack.Screen
