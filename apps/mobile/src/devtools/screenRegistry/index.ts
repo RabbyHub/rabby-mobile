@@ -7,6 +7,7 @@ import {
   type RegisteredScreenId,
 } from './screens.gen';
 import { resolveScreenFixture } from './screenFixtures';
+import { recordScreenOpenProbe } from './probe';
 import { applyInjectedStore } from './storeInjection';
 
 export type { RegisteredScreenId };
@@ -62,12 +63,15 @@ function waitForNavigationReady(timeoutMs = 15_000): Promise<boolean> {
 export function openScreenById(
   id: string,
   params: Record<string, unknown> = {},
-  options: { push?: boolean } = {},
+  options: { push?: boolean; probe?: boolean } = {},
 ) {
   if (!isRegisteredScreenId(id)) {
     console.warn(
       `[screenRegistry] unknown screen "${id}". Use listRegisteredScreens().`,
     );
+    if (options.probe) {
+      void recordScreenOpenProbe(id, false);
+    }
     return false;
   }
 
@@ -101,6 +105,9 @@ export function openScreenById(
         ', ',
       )}. optional: ${entry.optionalParams.join(', ') || 'none'}`,
     );
+    if (options.probe) {
+      void recordScreenOpenProbe(id, false);
+    }
     return false;
   }
 
@@ -121,6 +128,9 @@ export function openScreenById(
             rest.length ? nested : paramsWithFixture,
           ),
     );
+    if (options.probe) {
+      void recordScreenOpenProbe(id, true);
+    }
   };
 
   if (!navigationRef.isReady()) {
@@ -159,5 +169,6 @@ export async function openScreenForDebug(request: OpenScreenRequest) {
   }
   return openScreenById(request.screen, request.params ?? {}, {
     push: request.push,
+    probe: true,
   });
 }

@@ -66,22 +66,42 @@ open_on_android() {
 }
 
 open_on_ios() {
-  local udid url
-  udid=${DEVICE:-$(xcrun simctl list devices booted | awk '/(Booted)/ { print $NF; exit }' | tr -d '()')}
+  local udid url container probe before line i
+  udid=${DEVICE:-$(xcrun simctl list devices booted | awk '/(Booted)/ { print $(NF-1); exit }' | tr -d '()')}
   [ -n "$udid" ] || {
     echo 'no booted simulator (set DEVICE=<udid>)' >&2
     exit 1
   }
-  url=$(build_url | sed 's#rabbygo-debug://#rabbygo-debug://#')
+  container=$(xcrun simctl get_app_container "$udid" "$PKG_IOS" data 2>/dev/null || true)
+  probe="$container/Documents/screen-registry-probe.log"
+  before=0
+  [ -f "$probe" ] && before=$(wc -l < "$probe" | tr -d ' ')
+  url=$(build_url)
+  xcrun simctl terminate "$udid" "$PKG_IOS" >/dev/null 2>&1 || true
+  sleep 1
   xcrun simctl launch "$udid" "$PKG_IOS" -rabby-deeplink "$url" >/dev/null
-  sleep 3
-  xcrun simctl spawn "$udid" log show --last 1m --style compact \
-    --predicate "process == \"RabbyMobile\"" 2>/dev/null |
-    grep -E '\[debug-open-screen\]' | tail -3 || true
+  # iOS JS console output only reaches Metro; the app appends each outcome to a
+  # sandbox file that the host reads here.
+  line=''
+  for i in $(seq 1 30); do
+    sleep 2
+    [ -f "$probe" ] || continue
+    line=$(tail -n +$((before + 1)) "$probe" | tail -1)
+    [ -n "$line" ] && break
+  done
+  [ -n "$line" ] && echo "probe: $line"
+}
+
+list_screens() {
+  local gen
+  gen="$(cd "$(dirname "$0")/../.." && pwd)/src/devtools/screenRegistry/screens.gen.ts"
+  grep -E '^  [A-Za-z0-9_]+: \{' "$gen" | sed -E 's/^  ([A-Za-z0-9_]+): \{/\1/'
 }
 
 run() {
-  if command -v adb >/dev/null 2>&1 && adb devices | awk '$2=="device"' | grep -q .; then
+  if [ -n "${DEVICE:-}" ] && xcrun simctl list devices 2>/dev/null | grep -q "$DEVICE"; then
+    open_on_ios
+  elif command -v adb >/dev/null 2>&1 && adb devices | awk '$2=="device"' | grep -q .; then
     open_on_android
   else
     open_on_ios
@@ -89,7 +109,8 @@ run() {
 }
 
 case "$ACTION" in
-  list) run ;;
+  # The registry is generated at build time, so listing does not need a device.
+  list) list_screens ;;
   open)
     [ -n "$SCREEN" ] || {
       echo 'usage: open-screen.sh open <ScreenId> [params-json] [store-json]' >&2
