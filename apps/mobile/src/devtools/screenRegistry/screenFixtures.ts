@@ -84,6 +84,13 @@ export const SCREEN_PARAM_FIXTURES: Record<string, ScreenFixture> = {
     isInTokenDetail: false,
   }),
 
+  // Perps market detail needs a market id; without it the screen dereferences
+  // an undefined market and crashes.
+  PerpsMarketDetail: () => ({ market: 'ETH' }),
+
+  // Receive address list only needs the chain/token context for its header.
+  ReceiveAddressList: () => ({ chainEnum: 'ETH', tokenSymbol: 'USDC' }),
+
   // Import flows read their initial tab.
   ImportSecret: () => ({ initialTab: 'seedPhrase' }),
   ImportRabbyWallet: () => ({ flow: 'create' }),
