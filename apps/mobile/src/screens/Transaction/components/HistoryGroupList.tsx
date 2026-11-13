@@ -6,7 +6,7 @@ import React, {
   useImperativeHandle,
   type Ref,
 } from 'react';
-import type { StyleProp, ViewStyle } from 'react-native';
+import type { ColorValue, StyleProp, ViewStyle } from 'react-native';
 import {
   FlatList,
   Platform,
@@ -19,6 +19,7 @@ import {
 import { RefreshControl } from 'react-native-gesture-handler';
 import { HistoryItem } from './HistoryItem';
 import { SkeletonCard } from './SkeletonCard';
+import { renderStickyRowScrollView } from './StickyRowScrollView';
 import { TransactionItem } from '@/screens/TransactionRecord/components/TransactionItem2025';
 import type { TransactionGroup } from '@/core/services/transactionHistory';
 import type { HistoryDisplayItem } from '@/types/history';
@@ -40,21 +41,17 @@ import {
 
 const isIOS = Platform.OS === 'ios';
 
-interface DisplayHistoryItem {
-  isDateStart?: boolean;
-  time: number;
-  data: BridgeAwareHistoryItem;
-}
+type DisplayHistoryItem =
+  | { type: 'date'; key: string; time: number }
+  | { type: 'tx'; time: number; data: BridgeAwareHistoryItem };
 
 export type HistoryListHeaderComponent =
   FlatListProps<DisplayHistoryItem>['ListHeaderComponent'];
 
-function markFirstItems(arr: BridgeAwareHistoryItem[]): DisplayHistoryItem[] {
-  if (arr.length === 0) {
-    return [];
-  }
-
-  const result: DisplayHistoryItem[] = [];
+/** One row per transaction, with a date row in front of each day's first one. */
+function buildRows(arr: BridgeAwareHistoryItem[]) {
+  const rows: DisplayHistoryItem[] = [];
+  const dateIndices: number[] = [];
   let prevDateKey = '';
 
   for (const item of arr) {
@@ -68,18 +65,19 @@ function markFirstItems(arr: BridgeAwareHistoryItem[]): DisplayHistoryItem[] {
     const date = new Date(time);
     const currentDateKey = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
 
-    const isDateStart = result.length === 0 || currentDateKey !== prevDateKey;
-
-    result.push({
-      data: item,
-      time,
-      isDateStart,
-    });
+    if (currentDateKey !== prevDateKey) {
+      // local rows are not strictly time-ordered, so a day can start more than
+      // once; the ordinal keeps the keys unique
+      const key = `date-${dateIndices.length}-${currentDateKey}`;
+      dateIndices.push(rows.length);
+      rows.push({ type: 'date', key, time });
+    }
+    rows.push({ type: 'tx', time, data: item });
 
     prevDateKey = currentDateKey;
   }
 
-  return result;
+  return { rows, dateIndices };
 }
 
 export const HistoryList = ({
@@ -101,6 +99,7 @@ export const HistoryList = ({
   noMoreText,
   style,
   ListHeaderComponent,
+  stickyDateBackgroundColor,
   emptyComponent,
   onScroll,
   scrollEventThrottle,
@@ -126,6 +125,12 @@ export const HistoryList = ({
   noMoreText?: string;
   style?: StyleProp<ViewStyle>;
   ListHeaderComponent?: HistoryListHeaderComponent;
+  /**
+   * Keeps the current day's date pinned to the top while its rows scroll under
+   * it. The date is painted with this color to cover those rows, so pass the
+   * background of the page the list sits on.
+   */
+  stickyDateBackgroundColor?: ColorValue;
   emptyComponent?: React.ReactElement | null;
   onScroll?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
   scrollEventThrottle?: number;
@@ -137,7 +142,11 @@ export const HistoryList = ({
   const flatListRef = useRef<FlatList>(null);
   const onViewableItemsChanged = useMemoizedFn(
     ({ viewableItems }: { viewableItems: ViewToken<DisplayHistoryItem>[] }) =>
-      onVisibleItemsChange?.(viewableItems.map(({ item }) => item.data)),
+      onVisibleItemsChange?.(
+        viewableItems.flatMap(({ item }) =>
+          item.type === 'tx' ? [item.data] : [],
+        ),
+      ),
   );
 
   const scrollToTop = useCallback(() => {
@@ -150,9 +159,15 @@ export const HistoryList = ({
     scrollToTop,
   }));
 
-  const markedList = useMemo(() => {
-    return markFirstItems(list);
-  }, [list]);
+  const { rows, dateIndices } = useMemo(() => buildRows(list), [list]);
+  const isStickyDate = !!stickyDateBackgroundColor;
+  // FlatList counts ListHeaderComponent as index 0
+  const headerOffset = ListHeaderComponent ? 1 : 0;
+  const stickyHeaderIndices = useMemo(
+    () =>
+      isStickyDate ? dateIndices.map(index => index + headerOffset) : undefined,
+    [isStickyDate, dateIndices, headerOffset],
+  );
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const { bottom } = useSafeAreaInsets();
@@ -173,6 +188,18 @@ export const HistoryList = ({
   }, [localTxList]);
 
   const renderItem = useMemoizedFn(({ item }: { item: DisplayHistoryItem }) => {
+    if (item.type === 'date') {
+      return (
+        <Text
+          style={[
+            styles.date,
+            isStickyDate && { backgroundColor: stickyDateBackgroundColor },
+          ]}>
+          {formatTimestamp(item.time, t)}
+        </Text>
+      );
+    }
+
     let content: React.ReactNode;
     if (isBridgeHistoryRow(item.data)) {
       content = renderBridgeItem?.(item.data);
@@ -212,17 +239,7 @@ export const HistoryList = ({
         />
       );
     }
-    return (
-      <>
-        {item.isDateStart ? (
-          <Text
-            style={[styles.date, !isForMultipleAddress && styles.marginBottom]}>
-            {formatTimestamp(item.time, t)}
-          </Text>
-        ) : null}
-        {content}
-      </>
-    );
+    return <>{content}</>;
   });
 
   if (loading) {
@@ -238,10 +255,14 @@ export const HistoryList = ({
   return (
     <FlatList
       ref={flatListRef}
-      data={markedList}
+      data={rows}
       renderItem={renderItem}
+      stickyHeaderIndices={stickyHeaderIndices}
+      renderScrollComponent={
+        isStickyDate ? renderStickyRowScrollView : undefined
+      }
       windowSize={5}
-      initialNumToRender={Math.min(markedList.length, 20)}
+      initialNumToRender={Math.min(rows.length, 20)}
       ListEmptyComponent={
         loading ? null : emptyComponent ? (
           emptyComponent
@@ -258,7 +279,9 @@ export const HistoryList = ({
       ListHeaderComponent={ListHeaderComponent}
       style={[styles.container, style]}
       keyExtractor={item =>
-        isBridgeHistoryRow(item.data)
+        item.type === 'date'
+          ? item.key
+          : isBridgeHistoryRow(item.data)
           ? item.data.key
           : 'id' in item.data
           ? `${item.data.address}-${item.data.chain}-${item.data.id}`
@@ -271,7 +294,11 @@ export const HistoryList = ({
         onVisibleItemsChange ? onViewableItemsChanged : undefined
       }
       scrollEventThrottle={scrollEventThrottle}
-      removeClippedSubviews={true}
+      // Android: React Native turns clipping off by itself once a list has
+      // sticky headers. Doing that on a mounted list drops the rows that are
+      // clipped at that moment and the next insert crashes, so pinned dates
+      // start with it off rather than switch when the first rows arrive.
+      removeClippedSubviews={!(isStickyDate && Platform.OS === 'android')}
       ListFooterComponent={
         loadingMore ? (
           <>
@@ -281,7 +308,7 @@ export const HistoryList = ({
           </>
         ) : (
           <>
-            {noMoreText && markedList.length ? (
+            {noMoreText && rows.length ? (
               <View style={styles.noMore}>
                 <View style={styles.noMoreLine} />
                 <Text style={styles.noMoreText}>{noMoreText}</Text>
@@ -331,16 +358,14 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     color: colors2024['neutral-secondary'],
     marginLeft: 4,
   },
-  marginBottom: {
-    marginBottom: 8,
-  },
   date: {
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     fontWeight: '500',
+    // padding rather than margin, so a sticky date's background covers the gaps
     paddingLeft: 4,
-    marginTop: 4,
-    marginBottom: 8,
+    paddingTop: 4,
+    paddingBottom: 8,
     color: colors2024['neutral-secondary'],
     lineHeight: 18,
   },
