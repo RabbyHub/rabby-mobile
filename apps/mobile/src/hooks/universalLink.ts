@@ -111,6 +111,7 @@ type OnParseUrlAndProcessAction = (payload: {
     | 'debug-open-screen'
     | 'debug-import-private-key'
     | 'debug-dump-route'
+    | 'debug-open-bridge-detail'
     | 'regression-scenario';
   target?: RabbyGoTarget;
   dappUrl?: string;
@@ -157,6 +158,11 @@ type OnParseUrlAndProcessAction = (payload: {
   /** Non-production only: dump the current route's params to the sandbox. */
   debugDumpRoute?: {
     name?: string;
+  };
+  /** Non-production only: open BridgeDetail from a real local+remote record. */
+  debugOpenBridgeDetail?: {
+    address?: string;
+    index?: number;
   };
   debugChainStatsLoading?: boolean;
   debugChainStatsLoadingForMs?: number;
@@ -505,6 +511,25 @@ function parseNonProductionMaintenanceLink(appLink: string) {
       debugChainStatsLoadingOff:
         urlInfo.searchParams.get('chainLoading') === '0' ||
         urlInfo.searchParams.get('chainLoading') === 'false',
+    } satisfies Parameters<OnParseUrlAndProcessAction>[0];
+  }
+
+  // Non-production only: open BridgeDetail from the address's real bridge
+  // history (local record + the openapi bridge record for the same tx id).
+  // `?_cmd=debug-open-bridge-detail&address=0x..&index=0`
+  if (
+    rabbyGoCmd === 'debug-open-bridge-detail' ||
+    target === 'debug-open-bridge-detail'
+  ) {
+    const indexRaw = Number(urlInfo.searchParams.get('index') || '0');
+    return {
+      type: 'debug-open-bridge-detail',
+      debugOpenBridgeDetail: {
+        address: urlInfo.searchParams.get('address') || undefined,
+        index: Number.isFinite(indexRaw)
+          ? Math.max(0, Math.trunc(indexRaw))
+          : 0,
+      },
     } satisfies Parameters<OnParseUrlAndProcessAction>[0];
   }
 
@@ -1176,6 +1201,130 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
       void import('@/hooks/lang').then(({ setAppLanguage }) =>
         setAppLanguage(payload.debugLanguage!),
       );
+      break;
+    case 'debug-open-bridge-detail':
+      if (!isNonPublicProductionEnv) {
+        return;
+      }
+      void (async () => {
+        try {
+          const [
+            { transactionHistoryServiceApi },
+            { getSelectedBalanceAddressesSnapshot },
+            { openapi },
+            bridgeHistoryUtils,
+            { openBridgeDetail },
+            { toast },
+          ] = await Promise.all([
+            import('@/core/serviceApi/transactionHistory'),
+            import('@/store/balance'),
+            import('@/core/request'),
+            import('@/screens/Transaction/utils/bridgeHistory'),
+            import('@/screens/Bridge/utils/navigation'),
+            import('@/components2024/Toast'),
+          ]);
+
+          const address = (
+            payload.debugOpenBridgeDetail?.address ||
+            getSelectedBalanceAddressesSnapshot()[0] ||
+            ''
+          ).toLowerCase();
+          if (!address) {
+            throw new Error('no address available');
+          }
+          const locals = (await transactionHistoryServiceApi.getBridgeTxHistory(
+            address,
+          )) as Array<{
+            hash: string;
+            fromToken?: { chain?: string };
+            fromChainId?: number;
+          }>;
+          const local = locals[payload.debugOpenBridgeDetail?.index ?? 0];
+
+          // Indexed bridge rows live in the history DB, not in the local
+          // pending-tx store; fall back to `cate_id === 'bridge'` rows there.
+          let candidates: Array<{ hash: string; chain: string }> = local
+            ? [{ hash: local.hash, chain: local.fromToken?.chain || '' }]
+            : [];
+          if (candidates.length === 0) {
+            const { HistoryItemEntity } = await import(
+              '@/databases/entities/historyItem'
+            );
+            const page = await HistoryItemEntity.getHistoryItemsPaginated(
+              [address],
+              { pageSize: 200 },
+            );
+            // Bridge rows are not stored with `cate_id === 'bridge'`; the
+            // bridge lookup resolves them from the tx id, so probe every recent
+            // row and let the bridge API decide which ones are bridges.
+            candidates = page.items
+              .filter(item => !!item.txHash)
+              .slice(0, 100)
+              .map(item => ({ hash: item.txHash, chain: item.chain }));
+          }
+          if (candidates.length === 0) {
+            throw new Error(
+              `no bridge history rows (local=${locals.length}) for ${address}`,
+            );
+          }
+
+          // The API caps `from_tx_ids`; probe recent hashes in small batches and
+          // stop at the first record that resolves to a bridge.
+          const hashes = [
+            ...new Set(candidates.map(item => item.hash.toLowerCase())),
+          ];
+          const BATCH = 10;
+          let history: Record<string, unknown> | undefined;
+          for (let start = 0; start < hashes.length; start += BATCH) {
+            const batch = hashes.slice(start, start + BATCH);
+            const { data } = await openapi.request.post<{
+              history_list?: Array<Record<string, unknown>>;
+            }>('/v1/bridge/history_list_by_tx_ids', {
+              from_tx_ids: batch,
+            });
+            const list = Array.isArray(data?.history_list)
+              ? data!.history_list
+              : [];
+            const found = list.find(item =>
+              candidates.some(
+                candidate =>
+                  bridgeHistoryUtils.bridgeSourceKey(item as never) ===
+                  bridgeHistoryUtils.historyTxKey(
+                    candidate.chain,
+                    candidate.hash,
+                  ),
+              ),
+            );
+            if (found) {
+              history = found;
+              break;
+            }
+          }
+          if (!history) {
+            throw new Error(
+              `bridge history API returned nothing (candidates=${candidates.length})`,
+            );
+          }
+          openBridgeDetail({
+            address,
+            history: history as never,
+            local: local as never,
+          });
+          console.log(
+            '[debug-open-bridge-detail] opened',
+            JSON.stringify({
+              address,
+              candidates: candidates.length,
+              chain: candidates[0]?.chain,
+              hasHistory: true,
+            }),
+          );
+        } catch (error) {
+          console.warn('[debug-open-bridge-detail] failed', error);
+          const { toast } = await import('@/components2024/Toast');
+          toast.show(`open-bridge-detail failed: ${String(error)}`);
+        }
+      })();
       break;
     case 'debug-dump-route':
       if (!isNonPublicProductionEnv) {
