@@ -11,7 +11,11 @@ import {
   View,
   type LayoutChangeEvent,
 } from 'react-native';
-import { useAnimatedReaction, useSharedValue } from 'react-native-reanimated';
+import {
+  useAnimatedReaction,
+  useAnimatedStyle,
+  useSharedValue,
+} from 'react-native-reanimated';
 import Animated from 'react-native-reanimated';
 import { useIsFocused } from '@react-navigation/native';
 import {
@@ -30,6 +34,7 @@ import { isTabsSwiping } from '@/screens/Address/components/MultiAssets/hooks';
 import { useRegressionScenario } from '@/devtools/regressionScenarios/react';
 
 import {
+  HOME_SCENE_CHROME_BOTTOM,
   HOME_SCENE_CONTENT_TOP,
   HOME_SCENE_HEADER_HEIGHT,
   HOME_SCENE_TAB_BAR_HEIGHT,
@@ -165,6 +170,20 @@ export function HomeSceneContainer({
 
   const activePath = useMemo(() => ({ key: activeTab }), [activeTab]);
 
+  // The opaque backdrop belongs to the tab strip: it only has to reach the
+  // point where the visible page's content starts. On the overview page the
+  // strip labels are hidden and the balance card starts right under the
+  // header, so the backdrop stays short there instead of covering the card.
+  const chromeBackdropStyle = useAnimatedStyle(() => {
+    const progress = Math.min(Math.max(indicatorPosition.value, 0), 1);
+    return {
+      height:
+        HOME_SCENE_CHROME_BOTTOM.overview +
+        (HOME_SCENE_CHROME_BOTTOM.assets - HOME_SCENE_CHROME_BOTTOM.overview) *
+          progress,
+    };
+  }, []);
+
   const handlePathChange = useCallback(
     (path: LinkedScenePath) => {
       const next = path.key as HomeTabName;
@@ -221,18 +240,18 @@ export function HomeSceneContainer({
             viewportHeight={viewportHeight}
             overlay={
               <>
+                {chromeBackdrop ? (
+                  <Animated.View
+                    pointerEvents="none"
+                    style={[styles.chromeBackdropLayer, chromeBackdropStyle]}
+                    testID="home-scene-chrome-backdrop">
+                    {chromeBackdrop}
+                  </Animated.View>
+                ) : null}
                 <View
                   pointerEvents="box-none"
                   style={styles.tabBarLayer}
                   testID="home-scene-tab-bar">
-                  {chromeBackdrop ? (
-                    <View
-                      pointerEvents="none"
-                      style={styles.tabBarSurface}
-                      testID="home-scene-chrome-backdrop">
-                      {chromeBackdrop}
-                    </View>
-                  ) : null}
                   {tabBar}
                 </View>
                 <View
@@ -307,6 +326,14 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  chromeBackdropLayer: {
+    left: 0,
+    overflow: 'hidden',
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    zIndex: 1,
+  },
   headerLayer: {
     height: HOME_SCENE_HEADER_HEIGHT,
     left: 0,
@@ -321,13 +348,5 @@ const styles = StyleSheet.create({
     right: 0,
     top: HOME_SCENE_TAB_BAR_TOP,
     zIndex: 2,
-  },
-  tabBarSurface: {
-    bottom: 0,
-    left: 0,
-    overflow: 'hidden',
-    position: 'absolute',
-    right: 0,
-    top: -HOME_SCENE_TAB_BAR_TOP,
   },
 });
