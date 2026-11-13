@@ -8,6 +8,7 @@ import React, {
 import {
   InteractionManager,
   StyleSheet,
+  useWindowDimensions,
   View,
   type LayoutChangeEvent,
 } from 'react-native';
@@ -76,6 +77,7 @@ export function HomeSceneContainer({
   const pagerRef = useRef<LinkedScenePagerHandle>(null);
   const indicatorPosition = useSharedValue(0);
   const gestureActive = useSharedValue(false);
+  const { width: winWidth, height: winHeight } = useWindowDimensions();
 
   const [activeTab, setActiveTab] = useState<HomeTabName>(HomeTabName.overview);
   const activeTabRef = useRef<HomeTabName>(HomeTabName.overview);
@@ -170,19 +172,28 @@ export function HomeSceneContainer({
 
   const activePath = useMemo(() => ({ key: activeTab }), [activeTab]);
 
-  // The opaque backdrop belongs to the tab strip: it only has to reach the
-  // point where the visible page's content starts. On the overview page the
-  // strip labels are hidden and the balance card starts right under the
-  // header, so the backdrop stays short there instead of covering the card.
-  const chromeBackdropStyle = useAnimatedStyle(() => {
+  // The opaque backdrop belongs to the tab strip. Its top part is shared by
+  // every page and stays at the overview's content edge; the extra band that
+  // assets pages need rides in horizontally with the tab strip instead of
+  // growing downwards over the overview card.
+  const chromeExtensionHeight =
+    HOME_SCENE_CHROME_BOTTOM.assets - HOME_SCENE_CHROME_BOTTOM.overview;
+
+  const chromeExtensionWindowStyle = useAnimatedStyle(() => {
     const progress = Math.min(Math.max(indicatorPosition.value, 0), 1);
     return {
-      height:
-        HOME_SCENE_CHROME_BOTTOM.overview +
-        (HOME_SCENE_CHROME_BOTTOM.assets - HOME_SCENE_CHROME_BOTTOM.overview) *
-          progress,
+      transform: [{ translateX: (1 - progress) * winWidth }],
     };
-  }, []);
+  }, [winWidth]);
+
+  // Counter-translate the replica so it keeps matching the screen backdrop
+  // while the clip window moves: only the visible band travels with the pager.
+  const chromeExtensionContentStyle = useAnimatedStyle(() => {
+    const progress = Math.min(Math.max(indicatorPosition.value, 0), 1);
+    return {
+      transform: [{ translateX: -(1 - progress) * winWidth }],
+    };
+  }, [winWidth]);
 
   const handlePathChange = useCallback(
     (path: LinkedScenePath) => {
@@ -241,12 +252,41 @@ export function HomeSceneContainer({
             overlay={
               <>
                 {chromeBackdrop ? (
-                  <Animated.View
-                    pointerEvents="none"
-                    style={[styles.chromeBackdropLayer, chromeBackdropStyle]}
-                    testID="home-scene-chrome-backdrop">
-                    {chromeBackdrop}
-                  </Animated.View>
+                  <>
+                    <View
+                      pointerEvents="none"
+                      style={[
+                        styles.chromeBackdropLayer,
+                        { height: HOME_SCENE_CHROME_BOTTOM.overview },
+                      ]}
+                      testID="home-scene-chrome-backdrop">
+                      {chromeBackdrop}
+                    </View>
+                    <Animated.View
+                      pointerEvents="none"
+                      style={[
+                        styles.chromeBackdropExtensionWindow,
+                        {
+                          top: HOME_SCENE_CHROME_BOTTOM.overview,
+                          height: chromeExtensionHeight,
+                        },
+                        chromeExtensionWindowStyle,
+                      ]}
+                      testID="home-scene-chrome-backdrop-extension">
+                      <Animated.View
+                        style={[
+                          styles.chromeBackdropExtensionContent,
+                          {
+                            top: -HOME_SCENE_CHROME_BOTTOM.overview,
+                            width: winWidth,
+                            height: winHeight,
+                          },
+                          chromeExtensionContentStyle,
+                        ]}>
+                        {chromeBackdrop}
+                      </Animated.View>
+                    </Animated.View>
+                  </>
                 ) : null}
                 <View
                   pointerEvents="box-none"
@@ -333,6 +373,17 @@ const styles = StyleSheet.create({
     right: 0,
     top: 0,
     zIndex: 1,
+  },
+  chromeBackdropExtensionWindow: {
+    left: 0,
+    overflow: 'hidden',
+    position: 'absolute',
+    right: 0,
+    zIndex: 1,
+  },
+  chromeBackdropExtensionContent: {
+    left: 0,
+    position: 'absolute',
   },
   headerLayer: {
     height: HOME_SCENE_HEADER_HEIGHT,
