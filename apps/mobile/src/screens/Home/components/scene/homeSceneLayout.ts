@@ -1,5 +1,4 @@
 import { HOME_TOP_HEADER_SIZES } from '@/constant/home';
-import { IS_ANDROID } from '@/core/native/utils';
 import { HomeTabName } from '@/hooks/navigation';
 
 /** Height of the collapsing top bar (total balance + indicator row). */
@@ -20,14 +19,15 @@ export const HOME_SCENE_TABS: readonly HomeTabName[] = [
 
 /**
  * Space each page reserves for the floating scene layers. The overview page
- * keeps its own smaller lead-in: its tab labels row is hidden there, so the
- * asset lists sit one label row lower.
+ * hides the tab labels row, so it reserves only the single block gap between
+ * the indicator row and its balance card; asset pages also reserve the row.
  */
 export function getHomeSceneContentInset(tab: HomeTabName) {
   if (tab === HomeTabName.overview) {
+    // The overview page has no visible tab strip: its balance card sits right
+    // below the indicator row with the same gap it has above the entry matrix.
     return (
-      HOME_SCENE_HEADER_HEIGHT +
-      (IS_ANDROID ? HOME_TOP_HEADER_SIZES.tabInnerHomeTopOffset : 0)
+      HOME_SCENE_HEADER_HEIGHT + HOME_TOP_HEADER_SIZES.tabInnerHomeTopOffset
     );
   }
   return (

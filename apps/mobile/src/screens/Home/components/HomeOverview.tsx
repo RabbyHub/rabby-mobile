@@ -547,9 +547,10 @@ const getStyle = createGetStyles2024(
       paddingTop: 0,
     },
     scrollViewInner: {
-      marginTop: !SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING
-        ? HOME_TOP_HEADER_SIZES.tabInnerHomeTopOffset
-        : 0,
+      // The scene content inset already reserves the gap between the indicator
+      // row and the balance card; adding it again here doubled that gap and
+      // made it larger than the card's gap above the entry matrix.
+      marginTop: 0,
       // ...makeDebugBorder('orange'),
       // ...makeDevOnlyStyle({
       //   backgroundColor: colors2024['orange-light-2'],
