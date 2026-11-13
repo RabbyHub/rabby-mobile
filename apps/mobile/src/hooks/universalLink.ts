@@ -109,6 +109,7 @@ type OnParseUrlAndProcessAction = (payload: {
     | 'debug-create-address'
     | 'debug-set-language'
     | 'debug-open-screen'
+    | 'debug-import-private-key'
     | 'regression-scenario';
   target?: RabbyGoTarget;
   dappUrl?: string;
@@ -144,6 +145,14 @@ type OnParseUrlAndProcessAction = (payload: {
   debugLanguage?: string;
   /** Non-production only: address seeded by `debug-create-address`. */
   debugAddress?: string;
+  /**
+   * Non-production only: import private-key accounts through the same API the
+   * Import Private Key screen calls, after unlocking with the test password.
+   */
+  debugPrivateKeyImport?: {
+    keys: string[];
+    password?: string;
+  };
   debugChainStatsLoading?: boolean;
   debugChainStatsLoadingForMs?: number;
   debugChainStatsLoadingOff?: boolean;
@@ -562,6 +571,35 @@ function parseNonProductionMaintenanceLink(appLink: string) {
     return {
       type: 'debug-create-address',
       debugAddress: address,
+    } satisfies Parameters<OnParseUrlAndProcessAction>[0];
+  }
+
+  // Non-production only: import private-key accounts exactly the way the
+  // Import Private Key screen does (unlock, then apiPrivateKey.importPrivateKey),
+  // so QA state can be rebuilt without tapping through the UI.
+  // `?_cmd=debug-import-private-key&keys=<hex>,<hex>&password=...`
+  if (
+    rabbyGoCmd === 'debug-import-private-key' ||
+    target === 'debug-import-private-key'
+  ) {
+    const rawKeys =
+      urlInfo.searchParams.get('keys') || urlInfo.searchParams.get('key') || '';
+    const keys = rawKeys
+      .split(',')
+      .map(item => item.trim())
+      .filter(Boolean);
+    if (keys.length === 0) {
+      console.warn(
+        '[useUniversalLinkOnTop] debug-import-private-key needs ?keys=<hex>[,<hex>]',
+      );
+      return null;
+    }
+    return {
+      type: 'debug-import-private-key',
+      debugPrivateKeyImport: {
+        keys,
+        password: urlInfo.searchParams.get('password') || undefined,
+      },
     } satisfies Parameters<OnParseUrlAndProcessAction>[0];
   }
 
@@ -1105,6 +1143,55 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
       void import('@/hooks/lang').then(({ setAppLanguage }) =>
         setAppLanguage(payload.debugLanguage!),
       );
+      break;
+    case 'debug-import-private-key':
+      if (
+        !isNonPublicProductionEnv ||
+        !payload.debugPrivateKeyImport?.keys.length
+      ) {
+        return;
+      }
+      void (async () => {
+        const imported: Array<{ address: string; label?: string }> = [];
+        try {
+          const [{ verifyPasswordOrUnlock }, { importPrivateKey }, { toast }] =
+            await Promise.all([
+              import('@/core/apis/lock'),
+              import('@/core/apis/privateKey'),
+              import('@/components2024/Toast'),
+            ]);
+          const { REGRESSION_DEFAULT_PASSWORD } = await import(
+            '@/devtools/regressionScenarios/credentials.nonprod'
+          );
+          // The import API is guarded by ensureWalletUnlocked(); unlocking with
+          // the regression password first keeps the flow headless.
+          await verifyPasswordOrUnlock(
+            payload.debugPrivateKeyImport!.password ||
+              REGRESSION_DEFAULT_PASSWORD,
+          );
+          for (const key of payload.debugPrivateKeyImport!.keys) {
+            const accounts = await importPrivateKey(key);
+            const address = accounts?.[0]?.address || '';
+            imported.push({ address });
+            console.log('[debug-import-private-key] imported', address);
+          }
+          toast.success(
+            `debug import: ${imported.length} private-key account(s)`,
+          );
+        } catch (error) {
+          console.warn(
+            '[useUniversalLinkOnTop] debug-import-private-key failed',
+            imported.length,
+            String(error),
+          );
+          const { toast } = await import('@/components2024/Toast');
+          toast.show(
+            `import-private-key failed after ${imported.length}: ${String(
+              error,
+            )}`,
+          );
+        }
+      })();
       break;
     case 'debug-create-address':
       if (!isNonPublicProductionEnv) {
