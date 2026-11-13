@@ -19,8 +19,6 @@ import {
 import Animated from 'react-native-reanimated';
 import { useIsFocused } from '@react-navigation/native';
 import {
-  CollapsibleHeaderLayer,
-  CollapsiblePinnedLayer,
   CollapsibleSceneProvider,
   LinkedScenePager,
   useCollapsibleSceneController,
@@ -204,6 +202,7 @@ export function HomeSceneContainer({
           activeTab={activeTab}
           controller={controller}
           headerHeight={HOME_SCENE_HEADER_HEIGHT}
+          syncOffsetOnActivate={false}
           tabs={HOME_SCENE_TABS}>
           <LinkedScenePager
             ref={pagerRef}
@@ -215,6 +214,7 @@ export function HomeSceneContainer({
             indicatorPosition={indicatorPosition}
             onPathChange={handlePathChange}
             pages={SCENE_PAGES}
+            settleMode="snap"
             pinnedHeight={HOME_SCENE_TAB_BAR_HEIGHT}
             renderLeaf={renderLeaf}
             scrollOffset={controller.scrollY}
@@ -222,16 +222,14 @@ export function HomeSceneContainer({
             viewportHeight={viewportHeight}
             overlay={
               <>
-                <CollapsiblePinnedLayer
-                  baseTop={HOME_SCENE_TAB_BAR_TOP}
-                  pinTop={0}
+                <View
                   pointerEvents="box-none"
                   style={styles.tabBarLayer}
                   testID="home-scene-tab-bar">
                   <PinnedTabBarSurface />
                   {tabBar}
-                </CollapsiblePinnedLayer>
-                <CollapsibleHeaderLayer
+                </View>
+                <View
                   pointerEvents="box-none"
                   style={styles.headerLayer}
                   testID="home-scene-header">
@@ -240,7 +238,7 @@ export function HomeSceneContainer({
                     label="home-multi-assets-header">
                     {header}
                   </RenderActivityBoundary>
-                </CollapsibleHeaderLayer>
+                </View>
               </>
             }
           />
@@ -261,19 +259,9 @@ function HomeScenePage({
   height: number;
   tab: HomeTabName;
 }) {
-  const controller = useCollapsibleSceneController();
   const isScreenFocused = useIsFocused();
   const regressionScenario = useRegressionScenario<'Home'>();
   const lastRegressionStateKeyRef = useRef<string | null>(null);
-
-  // Previewing a neighbour must show it at the current scene depth, not at a
-  // stale offset from its last visit.
-  useEffect(() => {
-    if (!active) {
-      return;
-    }
-    controller.scrollToTab(tab, Math.max(0, controller.scrollY.value), false);
-  }, [active, controller, tab]);
 
   useEffect(() => {
     if (
@@ -348,7 +336,7 @@ const styles = StyleSheet.create({
     left: 0,
     position: 'absolute',
     right: 0,
-    top: 0,
+    top: HOME_SCENE_TAB_BAR_TOP,
     zIndex: 2,
   },
   tabBarSurface: {

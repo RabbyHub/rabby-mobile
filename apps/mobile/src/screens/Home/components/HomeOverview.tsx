@@ -369,11 +369,51 @@ const usePulldownRefreshGesture = <T extends ScrollView | RNGHScrollView>({
     hasImpactOnPanup: false,
   });
 
+  // The drawer must not compete with the list's own scroll: the pan only
+  // activates when the gesture cannot be a normal scroll (pulling up at the
+  // very bottom, or pulling down at the very top for the iOS indicator).
+  const touchOrigin = useSharedValue({ y: 0 });
+  const touchDecided = useSharedValue(false);
+
   const panGestureRef = useRef(
     Gesture.Pan()
       .shouldCancelWhenOutside(false)
-      .activeOffsetY([-homeGestureConfs.activeY, homeGestureConfs.activeY])
+      .manualActivation(true)
       .maxPointers(1)
+      .onTouchesDown(event => {
+        'worklet';
+        const touch = event.allTouches[0];
+        touchOrigin.value = { y: touch ? touch.y : 0 };
+        touchDecided.value = false;
+      })
+      .onTouchesMove((event, manager) => {
+        'worklet';
+        if (touchDecided.value) {
+          return;
+        }
+        const touch = event.allTouches[0];
+        if (!touch) {
+          touchDecided.value = true;
+          manager.fail();
+          return;
+        }
+        const deltaY = touch.y - touchOrigin.value.y;
+        if (Math.abs(deltaY) < homeGestureConfs.activeY) {
+          return;
+        }
+        touchDecided.value = true;
+        const pullingRefresh =
+          SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING &&
+          scrollY.value <= 5 &&
+          deltaY > 0 &&
+          !svIsRefreshing.value;
+        const pullingDrawer = deltaY < 0 && getIsAtBottom(scrollY.value);
+        if (pullingRefresh || pullingDrawer) {
+          manager.activate();
+        } else {
+          manager.fail();
+        }
+      })
       .onStart(() => {
         startValues.value.startedAtBottom = getIsAtBottom(scrollY.value);
         startValues.value.startedAtTop = scrollY.value <= 5;
@@ -1396,6 +1436,7 @@ export const HomeOverview = React.memo(() => {
             onContentSizeChange={tabsScrollHandlers.onContentSizeChange}
             onLayout={tabsScrollHandlers.onLayout}
             simultaneousHandlers={[panGestureRef]}
+            waitFor={[panGestureRef]}
             {...(!SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING && {
               refreshControl: (
                 <RNGHRefreshControl

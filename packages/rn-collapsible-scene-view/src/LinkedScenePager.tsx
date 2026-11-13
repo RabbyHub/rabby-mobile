@@ -11,13 +11,19 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   cancelAnimation,
   runOnJS,
-  runOnUI,
   useAnimatedReaction,
   useAnimatedStyle,
   useSharedValue,
   withTiming,
   type SharedValue,
 } from 'react-native-reanimated';
+import {
+  clampTrackPosition,
+  resolveSettleTarget,
+  splitTrackDelta,
+  type LinkedTrackSettleMode,
+  type TrackRange,
+} from './continuousTrack';
 import {
   buildLinkedSceneModel,
   linkedScenePhysicalKey,
@@ -28,15 +34,6 @@ import {
   type LinkedScenePagingMode,
   type LinkedSceneRoot,
 } from './linkedSceneModel';
-import {
-  createLinkedPresentationCommandEdge,
-  getLinkedPresentationChildPosition,
-  getLinkedPresentationDragFraction,
-  getLinkedPresentationRootPosition,
-  resolveLinkedPresentationEndpoint,
-  resolveLinkedPresentationGestureEdge,
-  type LinkedPresentationEdge,
-} from './linkedPresentationModel';
 import {
   getRetainedPagerMinimumPageHeight,
   resolveRetainedPagerLayout,
@@ -94,6 +91,14 @@ export type LinkedScenePagerProps = {
    * routes to the adjacent parent, as if the parent had no children.
    */
   childSwipeEnabled?: boolean;
+  /**
+   * Release behaviour of the horizontal track.
+   *
+   * - `snap` (default): the track owns discrete pages and settles on one;
+   * - `free`: the track rests exactly where the finger left it, which is what
+   *   multi-level linked gestures need while levels hand off to each other.
+   */
+  settleMode?: LinkedTrackSettleMode;
   /**
    * Every leaf owns its own full-viewport vertical surface (a real scroll
    * view) instead of rows retained inside one outer scroll host. The pager
@@ -156,63 +161,72 @@ export function LinkedScenePager(props: LinkedScenePagerProps) {
   );
 }
 
-type MotionState = {
-  /** One horizontal owner: idle / finger / snap / settled React geometry. */
-  phase: 'idle' | 'drag' | 'snap' | 'commit';
-  epoch: number;
-  settled: LinkedScenePath;
-  remembered: Record<string, string>;
-  edge: LinkedPresentationEdge | null;
-  queued: LinkedScenePath | null;
+type DragAxis = 'root' | 'child';
+
+type DragState = {
+  active: boolean;
+  /** A successful release already scheduled its settle. */
+  done: boolean;
+  axis: DragAxis;
+  rootKey: string;
+  startChild: number;
+  startRoot: number;
+  startX: number;
 };
 
-type Transition = {
-  epoch: number;
-  sourceIndex: number;
-  scrollY: number;
+type RetainedTransition = {
   pagerHeight: number;
-  activeKeys: string[];
+  scrollY: number;
 };
+
+const rootIndexOf = (model: LinkedSceneModel, key: string) =>
+  Math.max(
+    model.roots.findIndex(root => root.key === key),
+    0,
+  );
+
+const childIndexOf = (model: LinkedSceneModel, path: LinkedScenePath) => {
+  const root = model.roots[rootIndexOf(model, path.key)];
+  if (!root || root.leaves.length < 2 || path.childKey === undefined) {
+    return undefined;
+  }
+  const index = root.leaves.findIndex(
+    leaf => leaf.path.childKey === path.childKey,
+  );
+  return index >= 0 ? index : undefined;
+};
+
+const initialChildTracks = (
+  model: LinkedSceneModel,
+  remembered: Readonly<Record<string, string>>,
+  initial: LinkedScenePath,
+) => {
+  const tracks: Record<string, number> = {};
+  for (const root of model.roots) {
+    if (root.leaves.length < 2) {
+      continue;
+    }
+    const rememberedChild = remembered[root.key];
+    const index =
+      root.key === initial.key && initial.childKey !== undefined
+        ? root.leaves.findIndex(
+            leaf => leaf.path.childKey === initial.childKey,
+          )
+        : root.leaves.findIndex(
+            leaf => leaf.path.childKey === rememberedChild,
+          );
+    tracks[root.key] = Math.max(index, 0);
+  }
+  return tracks;
+};
+
+const EMPTY_INSETS: number[] = [];
 
 type OwnerProps = LinkedScenePagerProps & {
   model: LinkedSceneModel;
   mode: LinkedScenePagingMode;
   width: number;
   remembered: React.RefObject<Record<string, string>>;
-};
-
-const rootPosition = (
-  model: LinkedSceneModel,
-  state: MotionState,
-  progress: number,
-) => {
-  'worklet';
-  return state.edge
-    ? getLinkedPresentationRootPosition(state.edge, progress)
-    : model.roots.findIndex(root => root.key === state.settled.key);
-};
-
-const childPosition = (
-  root: LinkedSceneRoot,
-  state: MotionState,
-  progress: number,
-) => {
-  'worklet';
-  if (state.edge) {
-    return getLinkedPresentationChildPosition(
-      state.edge,
-      root.rootIndex,
-      progress,
-    );
-  }
-  const key =
-    state.settled.key === root.key
-      ? state.settled.childKey
-      : state.remembered[root.key];
-  return Math.max(
-    0,
-    root.leaves.findIndex(leaf => leaf.path.childKey === key),
-  );
 };
 
 function LinkedScenePagerOwner({
@@ -232,580 +246,398 @@ function LinkedScenePagerOwner({
   ) {
     remembered.current[initial.key] = initial.childKey;
   }
+
   const [settled, setSettled] = useState(initial);
   const settledRef = useRef(initial);
-  const [transition, setTransition] = useState<Transition | null>(null);
-  const [settlementEpoch, setSettlementEpoch] = useState(0);
+  // Non-null while a drag owns the gesture: the visible root window plus the
+  // fact that no page may take taps. One React update per page crossing.
+  const [dragFloor, setDragFloor] = useState<number | null>(null);
+  const [retainedTransition, setRetainedTransition] =
+    useState<RetainedTransition | null>(null);
   const [headers, setHeaders] = useState<Record<string, number>>({});
-  const [heights, setHeights] = useState(() => model.leaves.map(() => 0));
-  const latestEpoch = useRef(0);
+  const [heights, setHeights] = useState<number[]>(() =>
+    model.leaves.map(() => 0),
+  );
   const mounted = useRef(true);
   const latestProps = useRef(props);
   latestProps.current = props;
-  const motion = useSharedValue<MotionState>({
-    phase: 'idle',
-    epoch: 0,
-    settled: initial,
-    remembered: { ...remembered.current },
-    edge: null,
-    queued: null,
-  });
-  const fraction = useSharedValue(0);
-  const uiMounted = useSharedValue(true);
+  settledRef.current = settled;
+
+  const { gestureActive, indicatorPosition, scrollOffset, settleMode } = props;
   const widthValue = useSharedValue(width);
-  const measured = useSharedValue({
-    headers,
-    heights,
-    topInsets: heights.map(() => 0),
-  });
-  const presentedHeight = useSharedValue(0);
-  const touchY = useSharedValue(0);
-  const gestureStarted = useSharedValue(false);
-  const gestureEnded = useSharedValue(false);
-  const interrupted = useSharedValue(false);
-  const snapEndpoint = useSharedValue<0 | 1>(0);
-  const pausedSnap = useSharedValue<{ epoch: number; endpoint: 0 | 1 } | null>(
-    null,
+  const rootTrack = useSharedValue(rootIndexOf(model, initial.key));
+  const childTracks = useSharedValue<Record<string, number>>(
+    initialChildTracks(model, remembered.current, initial),
   );
-  const interruptedEndpoint = useSharedValue<0 | 1>(0);
-  const childEligible = useSharedValue(false);
-  const startFraction = useSharedValue(0);
-  const startTranslation = useSharedValue(0);
-  const capturedY = useSharedValue(0);
-  const capturedHeight = useSharedValue(0);
-  const {
-    gestureActive,
-    indicatorPosition,
-    scrollOffset,
-    childSwipeEnabled = true,
-  } = props;
+  const drag = useSharedValue<DragState>({
+    active: false,
+    axis: 'root',
+    done: false,
+    rootKey: '',
+    startChild: 0,
+    startRoot: 0,
+    startX: 0,
+  });
+  const pageRange = useMemo<TrackRange>(
+    () => ({ end: Math.max(model.roots.length - 1, 0), start: 0 }),
+    [model],
+  );
+  const childSwipeEnabled = props.childSwipeEnabled ?? true;
+
   const minimum = getRetainedPagerMinimumPageHeight({
     viewportHeight: props.viewportHeight,
     tabHeight: props.pinnedHeight,
     minimumPageHeight: props.minimumPageHeight,
   });
-  const settledIndex = model.leaves.findIndex(
+  const settledLeafIndex = model.leaves.findIndex(
     leaf => leaf.physicalKey === linkedScenePhysicalKey(settled),
   );
   const retainedLayout = resolveRetainedPagerLayout({
     pageHeights: heights,
-    settledIndex: transition?.sourceIndex ?? settledIndex,
+    settledIndex: Math.max(settledLeafIndex, 0),
     viewportHeight: props.viewportHeight,
     headerHeight: props.contentTop,
     tabHeight: props.pinnedHeight,
     minimumPageHeight: minimum,
-    transitionScrollY: transition?.scrollY ?? null,
-    transitionPagerHeight: transition?.pagerHeight,
+    transitionScrollY: retainedTransition?.scrollY ?? null,
+    transitionPagerHeight: retainedTransition?.pagerHeight,
   });
-  // Own-surface pages are already scrolled to the shared offset by their own
-  // scroll host, so they must never receive a retained-layout inset.
-  const pagerHeight = props.fillViewport
+  const fillViewport = props.fillViewport === true;
+  const pagerHeight = fillViewport
     ? props.viewportHeight
     : retainedLayout.pagerHeight;
-  const pageTopInsets = props.fillViewport
-    ? model.leaves.map(() => 0)
+  const pageTopInsets = fillViewport
+    ? EMPTY_INSETS
     : retainedLayout.pageTopInsets;
+  const presentedHeight = useSharedValue(pagerHeight);
 
   useLayoutEffect(() => {
     widthValue.value = width;
-    measured.value = { headers, heights, topInsets: pageTopInsets };
     presentedHeight.value = pagerHeight;
-  }, [
-    headers,
-    heights,
-    measured,
-    pageTopInsets,
-    pagerHeight,
-    presentedHeight,
-    width,
-    widthValue,
-  ]);
+  }, [pagerHeight, presentedHeight, width, widthValue]);
 
   useLayoutEffect(() => {
     mounted.current = true;
-    uiMounted.value = true;
     return () => {
       mounted.current = false;
-      uiMounted.value = false;
-      cancelAnimation(fraction);
     };
-  }, [fraction, uiMounted]);
+  }, []);
 
-  // Only the indicator observes progress. Header and rows inherit one Orders
-  // ancestor transform instead of following each other's scrolling events.
+  // The indicator follows the exact track position, including mid-drag.
   useAnimatedReaction(
-    () => rootPosition(model, motion.value, fraction.value),
+    () => rootTrack.value,
     value => {
       indicatorPosition.value = value;
     },
-    [model, indicatorPosition],
+    [indicatorPosition],
   );
   useLayoutEffect(() => {
     gestureActive.value = false;
-    indicatorPosition.value = model.roots.findIndex(
-      root => root.key === initial.key,
-    );
+    indicatorPosition.value = rootIndexOf(model, initial.key);
   }, [gestureActive, indicatorPosition, initial.key, model]);
 
-  const began = useCallback(
-    (
-      epoch: number,
-      edge: LinkedPresentationEdge,
-      y: number,
-      height: number,
-    ) => {
-      if (!mounted.current || epoch < latestEpoch.current) {
+  const commit = useCallback(() => {
+    if (!mounted.current) {
+      return;
+    }
+    const rootIndex = Math.max(
+      0,
+      Math.min(
+        model.roots.length - 1,
+        Math.round(rootTrack.value),
+      ),
+    );
+    const root = model.roots[rootIndex];
+    const childTrack = childTracks.value[root.key];
+    const childIndex =
+      root.leaves.length > 1 && childTrack !== undefined
+        ? Math.max(0, Math.min(root.leaves.length - 1, Math.round(childTrack)))
+        : undefined;
+    const path: LinkedScenePath =
+      childIndex === undefined
+        ? { key: root.key }
+        : {
+            childKey: root.leaves[childIndex].path.childKey,
+            key: root.key,
+          };
+    const changed =
+      linkedScenePhysicalKey(settledRef.current) !==
+      linkedScenePhysicalKey(path);
+    if (path.childKey !== undefined) {
+      remembered.current[path.key] = path.childKey;
+    }
+    settledRef.current = path;
+    setSettled(current =>
+      linkedScenePhysicalKey(current) === linkedScenePhysicalKey(path)
+        ? current
+        : path,
+    );
+    setDragFloor(null);
+    setRetainedTransition(null);
+    gestureActive.value = false;
+    if (changed) {
+      latestProps.current.onPathChange(path);
+    }
+  }, [childTracks, gestureActive, model, rootTrack]);
+
+  const beginRetainedTransition = useCallback(
+    (scrollY: number, height: number) => {
+      if (fillViewport) {
         return;
       }
-      latestEpoch.current = epoch;
-      const activeKeys =
-        edge.scope === 'child'
-          ? [
-              linkedScenePhysicalKey(edge.fromPath),
-              linkedScenePhysicalKey(edge.toPath),
-            ]
-          : model.roots
-              .filter(
-                root =>
-                  root.rootIndex >=
-                    Math.min(edge.fromRootIndex, edge.toRootIndex) &&
-                  root.rootIndex <=
-                    Math.max(edge.fromRootIndex, edge.toRootIndex),
-              )
-              .map(
-                root =>
-                  root.leaves[edge.frozenChildPositions[root.rootIndex] ?? 0]
-                    .physicalKey,
-              );
-      setTransition(current => ({
-        epoch,
-        sourceIndex:
-          current?.sourceIndex ??
-          model.leaves.findIndex(
-            leaf => leaf.physicalKey === linkedScenePhysicalKey(edge.fromPath),
-          ),
-        scrollY: current?.scrollY ?? y,
-        pagerHeight: current?.pagerHeight ?? height,
-        activeKeys,
-      }));
+      setRetainedTransition({ pagerHeight: height, scrollY });
     },
-    [model],
-  );
-  const finished = useCallback(
-    (epoch: number, path: LinkedScenePath) => {
-      if (!mounted.current || epoch < latestEpoch.current) {
-        return;
-      }
-      latestEpoch.current = epoch;
-      if (path.childKey !== undefined) {
-        remembered.current[path.key] = path.childKey;
-      }
-      const changed =
-        linkedScenePhysicalKey(settledRef.current) !==
-        linkedScenePhysicalKey(path);
-      settledRef.current = path;
-      setSettled(path);
-      setTransition(null);
-      setSettlementEpoch(epoch);
-      if (changed) {
-        latestProps.current.onPathChange(path);
-      }
-    },
-    [remembered],
+    [fillViewport],
   );
 
+  const publishDragFloor = useCallback((floor: number) => {
+    setDragFloor(current => (current === floor ? current : floor));
+  }, []);
+
   const transport = useMemo(() => {
-    const complete = (endpoint: 0 | 1, epoch: number) => {
+    const settle = (axis: DragAxis, rootKey: string, velocityPages: number) => {
       'worklet';
-      const current = motion.value;
-      if (!uiMounted.value || current.epoch !== epoch) {
-        return;
-      }
-      const target = current.edge
-        ? endpoint
-          ? current.edge.toPath
-          : current.edge.fromPath
-        : current.settled;
-      motion.value = {
-        ...current,
-        phase: 'commit',
-        settled: target,
-        remembered:
-          target.childKey === undefined
-            ? current.remembered
-            : { ...current.remembered, [target.key]: target.childKey },
-      };
-      runOnJS(finished)(epoch, target);
-    };
-    const snap = (endpoint: 0 | 1) => {
-      'worklet';
-      const current = motion.value;
-      if (!current.edge) {
-        return;
-      }
-      pausedSnap.value = null;
-      snapEndpoint.value = endpoint;
-      motion.value = { ...current, phase: 'snap' };
-      const epoch = current.epoch;
-      if (Math.abs(fraction.value - endpoint) < 0.0001) {
-        fraction.value = endpoint;
-        complete(endpoint, epoch);
-      } else {
-        // One animation owner, including clicks. No native scroller is driven
-        // by another scroller or by a frame-by-frame scroll command.
-        fraction.value = withTiming(endpoint, { duration: 180 }, didFinish => {
-          if (didFinish) {
-            complete(endpoint, epoch);
-          }
+      if (axis === 'child') {
+        const root = model.roots.find(item => item.key === rootKey);
+        if (!root) {
+          return;
+        }
+        const range: TrackRange = {
+          end: Math.max(root.leaves.length - 1, 0),
+          start: 0,
+        };
+        const current = childTracks.value[rootKey] ?? 0;
+        const target = resolveSettleTarget({
+          mode: settleMode ?? 'snap',
+          position: current,
+          range,
+          velocityPages,
         });
-      }
-    };
-    const request = (path: LinkedScenePath) => {
-      'worklet';
-      if (!uiMounted.value) {
-        return;
-      }
-      const current = motion.value;
-      if (current.phase !== 'idle' || widthValue.value <= 0) {
-        motion.value = { ...current, queued: path };
-        return;
-      }
-      const edge = createLinkedPresentationCommandEdge({
-        model,
-        fromPath: current.settled,
-        toPath: path,
-        remembered: current.remembered,
-      });
-      if (!edge) {
-        motion.value = { ...current, queued: null };
-        return;
-      }
-      const epoch = current.epoch + 1;
-      motion.value = { ...current, epoch, edge, phase: 'snap', queued: null };
-      fraction.value = 0;
-      gestureActive.value = true;
-      runOnJS(began)(
-        epoch,
-        edge,
-        Math.max(0, scrollOffset.value),
-        presentedHeight.value,
-      );
-      snap(1);
-    };
-    // Tapping a tab must not sweep the presentation across every page between
-    // the source and the target (the intermediate page becomes visible). Commit
-    // the target directly: no transition frame is published, so `began` never
-    // mounts the pages in between.
-    const jump = (path: LinkedScenePath) => {
-      'worklet';
-      if (!uiMounted.value) {
-        return;
-      }
-      const current = motion.value;
-      if (widthValue.value <= 0) {
-        motion.value = { ...current, queued: path };
-        return;
-      }
-      if (
-        current.phase === 'idle' &&
-        linkedScenePhysicalKey(current.settled) ===
-          linkedScenePhysicalKey(path)
-      ) {
-        return;
-      }
-      const epoch = current.epoch + 1;
-      cancelAnimation(fraction);
-      pausedSnap.value = null;
-      fraction.value = 0;
-      gestureActive.value = true;
-      motion.value = {
-        ...current,
-        epoch,
-        edge: null,
-        phase: 'commit',
-        settled: path,
-        // Same bookkeeping as `complete`: a child-level target is remembered so
-        // the next gesture returns to it.
-        remembered:
-          path.childKey === undefined
-            ? current.remembered
-            : { ...current.remembered, [path.key]: path.childKey },
-        queued: null,
-      };
-      runOnJS(finished)(epoch, path);
-    };
-    const acknowledge = (epoch: number) => {
-      'worklet';
-      const current = motion.value;
-      if (
-        !uiMounted.value ||
-        current.epoch !== epoch ||
-        current.phase !== 'commit'
-      ) {
-        return;
-      }
-      motion.value = { ...current, phase: 'idle', edge: null, queued: null };
-      fraction.value = 0;
-      gestureActive.value = false;
-      if (current.queued) {
-        request(current.queued);
-      }
-    };
-    const chooseGestureEdge = (translationX: number) => {
-      'worklet';
-      const current = motion.value;
-      return resolveLinkedPresentationGestureEdge({
-        model,
-        fromPath: current.settled,
-        direction: translationX < 0 ? 1 : -1,
-        pagingMode: mode,
-        childEligible: childEligible.value,
-        childSwipeEnabled,
-        remembered: current.remembered,
-      });
-    };
-    return {
-      request,
-      jump,
-      acknowledge,
-      flush: () => {
-        'worklet';
-        const current = motion.value;
-        if (
-          current.phase === 'idle' &&
-          current.queued &&
-          widthValue.value > 0
-        ) {
-          request(current.queued);
-        }
-      },
-      down: (y: number) => {
-        'worklet';
-        touchY.value = y;
-        const current = motion.value;
-        if (current.phase === 'snap' && current.edge && !pausedSnap.value) {
-          // Reserve this exact animation at DOWN, not at horizontal activation:
-          // otherwise a near-finished snap can enter commit and swallow the drag.
-          // A tap or vertical failure resumes the same endpoint in finalize.
-          // Hand ownership over before canceling; any completion from the old
-          // snap belongs to the previous transaction, even before activation.
-          const epoch = current.epoch + 1;
-          motion.value = { ...current, epoch };
-          pausedSnap.value = {
-            epoch,
-            endpoint: snapEndpoint.value,
-          };
-          cancelAnimation(fraction);
-        }
-      },
-      start: (translationX: number) => {
-        'worklet';
-        const current = motion.value;
-        if (
-          !uiMounted.value ||
-          widthValue.value <= 0 ||
-          current.phase === 'commit'
-        ) {
+        if (Math.abs(target - current) < 0.0001) {
+          runOnJS(commit)();
           return;
         }
-        gestureStarted.value = true;
-        gestureEnded.value = false;
-        interrupted.value = current.phase === 'snap' && current.edge !== null;
-        interruptedEndpoint.value =
-          pausedSnap.value?.endpoint ?? snapEndpoint.value;
-        pausedSnap.value = null;
-        cancelAnimation(fraction);
-        startFraction.value = interrupted.value ? fraction.value : 0;
-        startTranslation.value = interrupted.value ? translationX : 0;
-        const source = model.leaves.find(
-          leaf => leaf.physicalKey === linkedScenePhysicalKey(current.settled),
-        )!;
-        const headerHeight = measured.value.headers[source.path.key] ?? 0;
-        const inset = measured.value.topInsets[source.index] ?? 0;
-        childEligible.value =
-          source.childIndex !== undefined &&
-          touchY.value >= inset + headerHeight &&
-          touchY.value < inset + (measured.value.heights[source.index] ?? 0);
-        capturedY.value = Math.max(0, scrollOffset.value);
-        capturedHeight.value = presentedHeight.value;
-        const edge = interrupted.value
-          ? current.edge
-          : chooseGestureEdge(translationX);
-        const epoch = current.epoch + 1;
-        motion.value = { ...current, phase: 'drag', epoch, edge };
-        gestureActive.value = true;
-        if (edge) {
-          if (!interrupted.value) {
-            fraction.value = getLinkedPresentationDragFraction({
-              edge,
-              startFraction: 0,
-              translationX,
-              width: widthValue.value,
-            });
-          }
-          runOnJS(began)(epoch, edge, capturedY.value, capturedHeight.value);
-        }
-      },
-      update: (translationX: number) => {
-        'worklet';
-        if (
-          !gestureStarted.value ||
-          !uiMounted.value ||
-          motion.value.phase !== 'drag'
-        ) {
-          return;
-        }
-        let current = motion.value;
-        if (!interrupted.value) {
-          const nextEdge = chooseGestureEdge(translationX);
-          if (
-            nextEdge?.direction !== current.edge?.direction ||
-            nextEdge?.scope !== current.edge?.scope
-          ) {
-            motion.value = { ...current, edge: nextEdge };
-            current = motion.value;
-            if (nextEdge) {
-              runOnJS(began)(
-                current.epoch,
-                nextEdge,
-                capturedY.value,
-                capturedHeight.value,
-              );
+        childTracks.value = {
+          ...childTracks.value,
+          [rootKey]: withTiming(target, { duration: 180 }, finished => {
+            if (finished) {
+              runOnJS(commit)();
             }
-          }
-        }
-        if (current.edge) {
-          fraction.value = getLinkedPresentationDragFraction({
-            edge: current.edge,
-            startFraction: startFraction.value,
-            translationX: translationX - startTranslation.value,
-            width: widthValue.value,
-          });
-        }
-      },
-      end: (translationX: number, velocityX: number) => {
-        'worklet';
-        if (
-          !gestureStarted.value ||
-          !uiMounted.value ||
-          motion.value.phase !== 'drag'
-        ) {
-          return;
-        }
-        gestureEnded.value = true;
-        const current = motion.value;
-        if (!current.edge) {
-          complete(0, current.epoch);
-          return;
-        }
-        snap(
-          resolveLinkedPresentationEndpoint({
-            edge: current.edge,
-            startFraction: startFraction.value,
-            fraction: fraction.value,
-            translationX: translationX - startTranslation.value,
-            velocityX,
-            width: widthValue.value,
           }),
-        );
-      },
-      finalize: () => {
-        'worklet';
-        if (!gestureStarted.value) {
-          const paused = pausedSnap.value;
-          pausedSnap.value = null;
-          if (
-            paused &&
-            uiMounted.value &&
-            motion.value.phase === 'snap' &&
-            motion.value.epoch === paused.epoch
-          ) {
-            snap(paused.endpoint);
-          }
-          return;
+        };
+        return;
+      }
+      const current = rootTrack.value;
+      const target = resolveSettleTarget({
+        mode: settleMode ?? 'snap',
+        position: current,
+        range: pageRange,
+        velocityPages,
+      });
+      if (Math.abs(target - current) < 0.0001) {
+        runOnJS(commit)();
+        return;
+      }
+      rootTrack.value = withTiming(target, { duration: 180 }, finished => {
+        if (finished) {
+          runOnJS(commit)();
         }
-        gestureStarted.value = false;
-        if (
-          !uiMounted.value ||
-          gestureEnded.value ||
-          motion.value.phase !== 'drag'
-        ) {
-          return;
-        }
-        if (motion.value.edge) {
-          // A cancelled takeover preserves the command/gesture it interrupted.
-          // An ordinary drag from idle still returns to its committed source.
-          snap(interrupted.value ? interruptedEndpoint.value : 0);
-        } else {
-          complete(0, motion.value.epoch);
-        }
-      },
+      });
     };
+
+    const begin = (translationX: number, touchY: number) => {
+      'worklet';
+      if (widthValue.value <= 0) {
+        return;
+      }
+      const rootIndex = Math.max(
+        0,
+        Math.min(
+          model.roots.length - 1,
+          Math.round(rootTrack.value),
+        ),
+      );
+      const root = model.roots[rootIndex];
+      const childEligible =
+        childSwipeEnabled &&
+        root.leaves.length > 1 &&
+        touchY >= (headers[root.key] ?? 0);
+      drag.value = {
+        active: true,
+        axis: childEligible ? 'child' : 'root',
+        done: false,
+        rootKey: root.key,
+        startChild: childTracks.value[root.key] ?? 0,
+        startRoot: rootTrack.value,
+        startX: translationX,
+      };
+      gestureActive.value = true;
+      runOnJS(publishDragFloor)(rootIndex);
+      runOnJS(beginRetainedTransition)(scrollOffset.value, presentedHeight.value);
+    };
+
+    const update = (translationX: number) => {
+      'worklet';
+      const current = drag.value;
+      if (!current.active || widthValue.value <= 0) {
+        return;
+      }
+      const delta = -(translationX - current.startX) / widthValue.value;
+      if (current.axis === 'child') {
+        const root = model.roots.find(item => item.key === current.rootKey);
+        if (!root) {
+          return;
+        }
+        const range: TrackRange = {
+          end: Math.max(root.leaves.length - 1, 0),
+          start: 0,
+        };
+        const { overflow, position } = splitTrackDelta({
+          delta,
+          range,
+          start: current.startChild,
+        });
+        childTracks.value = { ...childTracks.value, [root.key]: position };
+        // The child consumed what it could; the rest moves the parent track so
+        // a continued drag leaves the group instead of dead-ending.
+        rootTrack.value = clampTrackPosition(
+          current.startRoot + overflow,
+          pageRange,
+        );
+        return;
+      }
+      rootTrack.value = clampTrackPosition(
+        current.startRoot + delta,
+        pageRange,
+      );
+    };
+
+    const end = (translationX: number, velocityX: number) => {
+      'worklet';
+      const current = drag.value;
+      if (!current.active || widthValue.value <= 0) {
+        return;
+      }
+      drag.value = { ...current, done: true };
+      settle(
+        current.axis,
+        current.rootKey,
+        -velocityX / widthValue.value,
+      );
+    };
+
+    const finalize = () => {
+      'worklet';
+      const current = drag.value;
+      if (!current.active) {
+        return;
+      }
+      drag.value = { ...current, active: false };
+      if (!current.done) {
+        settle(current.axis, current.rootKey, 0);
+      }
+    };
+
+    return { begin, end, finalize, update };
   }, [
-    began,
-    capturedHeight,
-    capturedY,
-    childEligible,
+    beginRetainedTransition,
     childSwipeEnabled,
-    finished,
-    fraction,
+    childTracks,
+    commit,
+    drag,
     gestureActive,
-    gestureEnded,
-    gestureStarted,
-    interrupted,
-    interruptedEndpoint,
-    measured,
-    mode,
+    headers,
     model,
-    motion,
-    pausedSnap,
+    pageRange,
     presentedHeight,
+    publishDragFloor,
+    rootTrack,
     scrollOffset,
-    snapEndpoint,
-    startFraction,
-    startTranslation,
-    touchY,
-    uiMounted,
+    settleMode,
     widthValue,
   ]);
 
-  useLayoutEffect(() => {
-    runOnUI(transport.acknowledge)(settlementEpoch);
-  }, [settlementEpoch, transport]);
-  useLayoutEffect(() => {
-    runOnUI(transport.flush)();
-  }, [transport, width]);
+  // While the finger owns the track, publish the visible root window so page
+  // activity (store subscriptions / render gating) follows the preview.
+  useAnimatedReaction(
+    () => (drag.value.active ? Math.floor(rootTrack.value) : -1),
+    value => {
+      if (value < 0) {
+        return;
+      }
+      runOnJS(publishDragFloor)(
+        Math.max(0, Math.min(model.roots.length - 1, value)),
+      );
+    },
+    [model],
+  );
+
+  const settleFromCurrent = useCallback(
+    (path: LinkedScenePath) => {
+      const rootIndex = rootIndexOf(model, path.key);
+      cancelAnimation(rootTrack);
+      rootTrack.value = rootIndex;
+      const childIndex = childIndexOf(model, path);
+      if (childIndex !== undefined) {
+        const root = model.roots[rootIndex];
+        childTracks.value = {
+          ...childTracks.value,
+          [root.key]: childIndex,
+        };
+      }
+      commit();
+    },
+    [childTracks, commit, model, rootTrack],
+  );
 
   const selectPath = useCallback(
     (path: LinkedScenePath) => {
-      runOnUI(transport.request)(path);
+      const resolved = resolveLinkedScenePath(model, path, remembered.current);
+      const rootIndex = rootIndexOf(model, resolved.key);
+      const childIndex = childIndexOf(model, resolved);
+      if (childIndex !== undefined) {
+        const root = model.roots[rootIndex];
+        childTracks.value = { ...childTracks.value, [root.key]: childIndex };
+      }
+      gestureActive.value = true;
+      rootTrack.value = withTiming(rootIndex, { duration: 200 }, finished => {
+        if (finished) {
+          runOnJS(commit)();
+        }
+      });
     },
-    [transport],
+    [childTracks, commit, gestureActive, model, rootTrack],
   );
+
   const jumpPath = useCallback(
     (path: LinkedScenePath) => {
-      runOnUI(transport.jump)(path);
+      settleFromCurrent(
+        resolveLinkedScenePath(model, path, remembered.current),
+      );
     },
-    [transport],
+    [model, settleFromCurrent],
   );
+
   React.useImperativeHandle(
     props.ref,
     () => ({
-      selectPath,
-      selectTab: key => selectPath({ key }),
       jumpPath,
-      jumpTab: key => jumpPath({ key }),
+      jumpTab: (key: string) => jumpPath({ key }),
+      selectPath,
+      selectTab: (key: string) => selectPath({ key }),
     }),
     [jumpPath, selectPath],
   );
-  const previous = useRef(linkedScenePhysicalKey(props.activePath));
+
+  const previousControlledKey = useRef(linkedScenePhysicalKey(props.activePath));
   useEffect(() => {
     const nextKey = linkedScenePhysicalKey(props.activePath);
-    if (previous.current !== nextKey) {
-      previous.current = nextKey;
-      if (nextKey !== linkedScenePhysicalKey(settledRef.current)) {
-        selectPath(props.activePath);
-      }
+    if (previousControlledKey.current === nextKey) {
+      return;
+    }
+    previousControlledKey.current = nextKey;
+    if (nextKey !== linkedScenePhysicalKey(settledRef.current)) {
+      selectPath(props.activePath);
     }
   }, [props.activePath, selectPath]);
   useEffect(() => {
@@ -829,21 +661,13 @@ function LinkedScenePagerOwner({
         .onTouchesDown((event, manager) => {
           'worklet';
           const touch = event.allTouches[0];
-          if (
-            !touch ||
-            event.numberOfTouches !== 1 ||
-            !uiMounted.value ||
-            widthValue.value <= 0 ||
-            motion.value.phase === 'commit'
-          ) {
+          if (!touch || event.numberOfTouches !== 1 || widthValue.value <= 0) {
             manager.fail();
-          } else {
-            transport.down(touch.y);
           }
         })
         .onStart(event => {
           'worklet';
-          transport.start(event.translationX);
+          transport.begin(event.translationX, event.y);
         })
         .onUpdate(event => {
           'worklet';
@@ -856,23 +680,39 @@ function LinkedScenePagerOwner({
           }
         })
         .onFinalize(transport.finalize),
-    [enabled, motion, testID, transport, uiMounted, widthValue],
+    [enabled, testID, transport, widthValue],
   );
   const rootStyle = useAnimatedStyle(
     () => ({
-      transform: [
-        {
-          translateX:
-            -rootPosition(model, motion.value, fraction.value) *
-            widthValue.value,
-        },
-      ],
+      transform: [{ translateX: -rootTrack.value * widthValue.value }],
     }),
-    [model],
+    [],
   );
-  const activeKeys = transition?.activeKeys ?? [
-    linkedScenePhysicalKey(settled),
-  ];
+
+  const activeRootWindow = useMemo(() => {
+    if (dragFloor === null) {
+      return [rootIndexOf(model, settled.key), rootIndexOf(model, settled.key)];
+    }
+    const start = Math.max(
+      0,
+      Math.min(dragFloor, model.roots.length - 1),
+    );
+    return [start, Math.min(model.roots.length - 1, start + 1)];
+  }, [dragFloor, model, settled.key]);
+
+  const activeLeafKeys = useMemo(() => {
+    const keys: string[] = [];
+    const [start, end] = activeRootWindow;
+    for (let index = start; index <= end; index += 1) {
+      for (const leaf of model.roots[index].leaves) {
+        keys.push(leaf.physicalKey);
+      }
+    }
+    return keys;
+  }, [activeRootWindow, model]);
+
+  const settledKey = linkedScenePhysicalKey(settled);
+  const settledRootKey = settled.key;
 
   return (
     <GestureDetector gesture={gesture}>
@@ -886,97 +726,104 @@ function LinkedScenePagerOwner({
             { width: width * model.roots.length, height: pagerHeight },
             rootStyle,
           ]}>
-          {model.roots.map(root => (
-            <LinkedRootPage
-              key={root.key}
-              root={root}
-              motion={motion}
-              fraction={fraction}
-              widthValue={widthValue}
-              width={width}
-              height={pagerHeight}
-              topInsets={pageTopInsets}
-              onHeaderHeight={height =>
-                setHeaders(current =>
-                  current[root.key] === height
-                    ? current
-                    : { ...current, [root.key]: height },
-                )
-              }
-              testID={testID}
-              interactive={enabled && !transition && settled.key === root.key}
-              header={props.renderGroupHeader?.(root.key, {
-                active:
-                  props.activityEnabled &&
-                  root.leaves.some(leaf =>
-                    activeKeys.includes(leaf.physicalKey),
-                  ),
-                interactive: enabled && !transition && settled.key === root.key,
-                childKey:
-                  settled.key === root.key
-                    ? settled.childKey
-                    : remembered.current[root.key] ??
-                      root.leaves[0].path.childKey,
-                selectChild: childKey =>
-                  selectPath({ key: root.key, childKey }),
-              })}
-              renderLeaf={leaf => {
-                const grouped = leaf.childIndex !== undefined;
-                const headerHeight = grouped ? headers[root.key] ?? 0 : 0;
-                const interactive =
-                  enabled &&
-                  !transition &&
-                  leaf.physicalKey === linkedScenePhysicalKey(settled);
-                return (
-                  <View
-                    key={leaf.physicalKey}
-                    testID={testID + '-page-' + leaf.physicalKey}
-                    style={{ width, height: pagerHeight }}
-                    pointerEvents={interactive ? 'auto' : 'none'}
-                    accessibilityElementsHidden={!interactive}
-                    importantForAccessibility={
-                      interactive ? 'auto' : 'no-hide-descendants'
-                    }>
-                    <View
-                      testID={testID + '-content-' + leaf.physicalKey}
-                      style={[
-                        styles.content,
-                        { marginTop: pageTopInsets[leaf.index] },
-                      ]}
-                      onLayout={event => {
-                        const height = event.nativeEvent.layout.height;
-                        setHeights(current =>
-                          current[leaf.index] === height
-                            ? current
-                            : current.map((value, index) =>
-                                index === leaf.index ? height : value,
-                              ),
-                        );
-                      }}>
-                      {grouped && <View style={{ height: headerHeight }} />}
-                      {props.renderLeaf(leaf.path, {
+          {model.roots.map(root => {
+            const grouped = root.leaves.length > 1;
+            const interactiveRoot =
+              enabled && dragFloor === null && root.key === settledRootKey;
+            return (
+              <LinkedRootPage
+                key={root.key}
+                root={root}
+                width={width}
+                widthValue={widthValue}
+                height={pagerHeight}
+                topInsets={pageTopInsets}
+                childTracks={childTracks}
+                grouped={grouped}
+                onHeaderHeight={height =>
+                  setHeaders(current =>
+                    current[root.key] === height
+                      ? current
+                      : { ...current, [root.key]: height },
+                  )
+                }
+                testID={testID}
+                interactive={interactiveRoot}
+                header={
+                  grouped
+                    ? props.renderGroupHeader?.(root.key, {
                         active:
                           props.activityEnabled &&
-                          activeKeys.includes(leaf.physicalKey),
-                        interactive,
-                        contentTop:
-                          props.contentTop +
-                          pageTopInsets[leaf.index] +
-                          headerHeight,
-                        viewportHeight: props.viewportHeight,
-                        // Precise child hit bounds follow actual content. The
-                        // outer viewport supplies short-page blank space.
-                        minimumPageHeight:
-                          grouped && mode === 'nested'
-                            ? 0
-                            : Math.max(0, minimum - headerHeight),
-                      })}
+                          activeLeafKeys.some(key =>
+                            root.leaves.some(
+                              leaf => leaf.physicalKey === key,
+                            ),
+                          ),
+                        childKey:
+                          root.leaves[Math.round(
+                            childTracks.value[root.key] ?? 0,
+                          )]?.path.childKey,
+                        interactive: interactiveRoot,
+                        selectChild: childKey =>
+                          selectPath({ childKey, key: root.key }),
+                      }) ?? null
+                    : null
+                }
+                headerHeight={
+                  root.leaves.length > 1 ? headers[root.key] ?? 0 : 0
+                }
+                renderLeaf={(leaf, headerHeight) => {
+                  const interactive =
+                    enabled && dragFloor === null && leaf.physicalKey === settledKey;
+                  return (
+                    <View
+                      key={leaf.physicalKey}
+                      testID={testID + '-page-' + leaf.physicalKey}
+                      style={{ width, height: pagerHeight }}
+                      pointerEvents={interactive ? 'auto' : 'none'}
+                      accessibilityElementsHidden={!interactive}
+                      importantForAccessibility={
+                        interactive ? 'auto' : 'no-hide-descendants'
+                      }>
+                      <View
+                        testID={testID + '-content-' + leaf.physicalKey}
+                        style={[
+                          styles.content,
+                          { marginTop: pageTopInsets[leaf.index] ?? 0 },
+                        ]}
+                        onLayout={event => {
+                          const height = event.nativeEvent.layout.height;
+                          setHeights(current =>
+                            current[leaf.index] === height
+                              ? current
+                              : current.map((value, index) =>
+                                  index === leaf.index ? height : value,
+                                ),
+                          );
+                        }}>
+                        {grouped ? <View style={{ height: headerHeight }} /> : null}
+                        {props.renderLeaf(leaf.path, {
+                          active:
+                            props.activityEnabled &&
+                            activeLeafKeys.includes(leaf.physicalKey),
+                          contentTop:
+                            props.contentTop +
+                            (pageTopInsets[leaf.index] ?? 0) +
+                            headerHeight,
+                          interactive,
+                          minimumPageHeight:
+                            grouped && mode === 'nested'
+                              ? 0
+                              : Math.max(0, minimum - headerHeight),
+                          viewportHeight: props.viewportHeight,
+                        })}
+                      </View>
                     </View>
-                  </View>
-                );
-              }}
-            />
-          ))}
+                  );
+                }}
+              />
+            );
+          })}
         </Animated.View>
         {props.overlay}
       </View>
@@ -985,67 +832,71 @@ function LinkedScenePagerOwner({
 }
 
 function LinkedRootPage({
-  root,
-  motion,
-  fraction,
-  widthValue,
-  width,
-  height,
-  topInsets,
-  onHeaderHeight,
+  childTracks,
+  grouped,
   header,
+  headerHeight,
+  height,
   interactive,
-  testID,
+  onHeaderHeight,
   renderLeaf,
+  root,
+  testID,
+  topInsets,
+  width,
+  widthValue,
 }: {
-  root: LinkedSceneRoot;
-  motion: SharedValue<MotionState>;
-  fraction: SharedValue<number>;
-  widthValue: SharedValue<number>;
-  width: number;
-  height: number;
-  topInsets: number[];
-  onHeaderHeight: (height: number) => void;
+  childTracks: SharedValue<Record<string, number>>;
+  grouped: boolean;
   header: React.ReactNode;
+  headerHeight: number;
+  height: number;
   interactive: boolean;
+  onHeaderHeight: (height: number) => void;
+  renderLeaf: (
+    leaf: LinkedSceneRoot['leaves'][number],
+    headerHeight: number,
+  ) => React.ReactElement;
+  root: LinkedSceneRoot;
   testID: string;
-  renderLeaf: (leaf: LinkedSceneRoot['leaves'][number]) => React.ReactElement;
+  topInsets: number[];
+  width: number;
+  widthValue: SharedValue<number>;
 }) {
-  const grouped = root.leaves[0].childIndex !== undefined;
   const childStyle = useAnimatedStyle(
     () => ({
       transform: [
         {
           translateX:
-            -childPosition(root, motion.value, fraction.value) *
-            widthValue.value,
+            -(childTracks.value[root.key] ?? 0) * widthValue.value,
         },
       ],
     }),
-    [root],
+    [root.key],
   );
   const headerStyle = useAnimatedStyle(() => {
-    const position = childPosition(root, motion.value, fraction.value);
+    const position = childTracks.value[root.key] ?? 0;
     const lower = Math.floor(position);
     const upper = Math.min(root.leaves.length - 1, lower + 1);
     const from = topInsets[root.firstLeafIndex + lower] ?? 0;
     const to = topInsets[root.firstLeafIndex + upper] ?? from;
     return { top: from + (to - from) * (position - lower) };
   }, [root, topInsets]);
+
   return (
     <View
       testID={testID + '-root-' + root.key}
-      style={[styles.root, { width, height }]}>
+      style={[styles.root, { height, width }]}>
       {grouped ? (
         <>
           <Animated.View
             testID={testID + '-group-' + root.key + '-track'}
             style={[
               styles.track,
-              { width: width * root.leaves.length, height },
+              { height, width: width * root.leaves.length },
               childStyle,
             ]}>
-            {root.leaves.map(renderLeaf)}
+            {root.leaves.map(leaf => renderLeaf(leaf, headerHeight))}
           </Animated.View>
           <Animated.View
             style={[styles.groupHeader, { width }, headerStyle]}
@@ -1064,16 +915,16 @@ function LinkedRootPage({
           </Animated.View>
         </>
       ) : (
-        renderLeaf(root.leaves[0])
+        renderLeaf(root.leaves[0], 0)
       )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  viewport: { overflow: 'hidden' },
-  root: { overflow: 'hidden', flexShrink: 0 },
-  track: { flexDirection: 'row', alignItems: 'flex-start' },
   content: { flexGrow: 0, flexShrink: 0 },
-  groupHeader: { position: 'absolute', left: 0, top: 0, zIndex: 1 },
+  groupHeader: { left: 0, position: 'absolute', top: 0, zIndex: 1 },
+  root: { flexShrink: 0, overflow: 'hidden' },
+  track: { flexDirection: 'row', alignItems: 'flex-start' },
+  viewport: { overflow: 'hidden' },
 });
