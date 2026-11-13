@@ -969,11 +969,17 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
             enableBiometrics: false,
           } as any);
           await accountStore.fetchAccounts({ force: true });
+          const { toast } = await import('@/components2024/Toast');
+          toast.success(`debug address created: ${prepared.address || ''}`);
+          apisHomeTabIndex.setTabIndex(1, true);
+          // The startup-KPI runner waits for this marker in logcat.
           console.log(
             `[debug-create-address] done address=${prepared.address || ''}`,
           );
         } catch (error) {
           console.error('[debug-create-address] failed', error);
+          const { toast } = await import('@/components2024/Toast');
+          toast.show(`create-address failed: ${String(error)}`);
         }
       })();
       break;
@@ -1154,49 +1160,6 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
       void import('@/hooks/lang').then(({ setAppLanguage }) =>
         setAppLanguage(payload.debugLanguage!),
       );
-      break;
-    case 'debug-create-address':
-      if (!isNonPublicProductionEnv) {
-        return;
-      }
-      void (async () => {
-        try {
-          // Same data mutations as the onboarding UI, in the same order:
-          // the create-seed-phrase page prepares the wallet, then the
-          // set-password / create-address pages submit it (password, keyring,
-          // persisted accounts, backup reminder). No direct keyring shortcut.
-          const { prepareWalletCreation, completeWalletCreation } =
-            await import('@/hooks/address/useSetupWallet');
-          const { REGRESSION_DEFAULT_PASSWORD } = await import(
-            '@/devtools/regressionScenarios/credentials.nonprod'
-          );
-          const { toast } = await import('@/components2024/Toast');
-          const { default: accountStore } = await import('@/store/account');
-
-          const prepared = await prepareWalletCreation({ mode: 'create' });
-          // `PasswordFormValues` differs between stacks (develop still has
-          // `checked`, tmp carries `enableDataAnalysis`); pass the fields the
-          // submit path reads and let the call site stay version-agnostic.
-          await completeWalletCreation(prepared, {
-            password: REGRESSION_DEFAULT_PASSWORD,
-            confirmPassword: REGRESSION_DEFAULT_PASSWORD,
-            checked: true,
-            enableBiometrics: false,
-          } as any);
-          await accountStore.fetchAccounts({ force: true });
-          toast.success(`debug address created: ${prepared.address || ''}`);
-          apisHomeTabIndex.setTabIndex(1, true);
-        } catch (error) {
-          console.warn(
-            '[useUniversalLinkOnTop] debug-create-address failed',
-            error,
-          );
-          const { Alert } = await import('react-native');
-          Alert.alert('debug-create-address failed', String(error));
-          const { toast } = await import('@/components2024/Toast');
-          toast.show(`create-address failed: ${String(error)}`);
-        }
-      })();
       break;
     case 'regression-scenario':
       handleRegressionScenarioCommand(
