@@ -1792,19 +1792,108 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
             );
           }
           if (!params) {
-            params = {
-              data: [
-                {
-                  from: address,
-                  to: '0x000000000000000000000000000000000000dEaD',
-                  value: '0x0',
-                  data: '0x',
-                  chainId: 1,
-                  gas: '0x5208',
-                  gasPrice: '0x3b9aca00',
+            const component =
+              payload.debugInjectApproval?.component ?? 'SignTx';
+            const session = { origin: INTERNAL_REQUEST_ORIGIN };
+            if (component === 'SignText') {
+              // "Hello, Rabby!" as hex; SignText decodes hex2Text(data[0]).
+              params = {
+                data: ['0x48656c6c6f2c20526162627921', address],
+                session,
+                requestContext: { chainId: 1 },
+              };
+            } else if (component === 'SignTypedData') {
+              const typedData = {
+                types: {
+                  EIP712Domain: [
+                    { name: 'name', type: 'string' },
+                    { name: 'version', type: 'string' },
+                    { name: 'chainId', type: 'uint256' },
+                    { name: 'verifyingContract', type: 'address' },
+                  ],
+                  Person: [
+                    { name: 'name', type: 'string' },
+                    { name: 'wallet', type: 'address' },
+                  ],
+                  Mail: [
+                    { name: 'from', type: 'Person' },
+                    { name: 'to', type: 'Person' },
+                    { name: 'contents', type: 'string' },
+                  ],
                 },
-              ],
-            };
+                primaryType: 'Mail',
+                domain: {
+                  name: 'Rabby Debug',
+                  version: '1',
+                  chainId: 1,
+                  verifyingContract:
+                    '0x0000000000000000000000000000000000000000',
+                },
+                message: {
+                  from: { name: 'Alice', wallet: address },
+                  to: { name: 'Bob', wallet: address },
+                  contents: 'Hello from the debug harness',
+                },
+              };
+              params = {
+                data: [address, JSON.stringify(typedData)],
+                session,
+                method: 'eth_signTypedData_v4',
+                requestContext: { chainId: 1 },
+              };
+            } else if (component === 'Connect') {
+              params = {
+                icon: 'https://app.uniswap.org/favicon.png',
+                origin: 'https://app.uniswap.org',
+              };
+            } else if (component === 'AddChain') {
+              params = {
+                data: [
+                  {
+                    chainId: '0x1',
+                    chainName: 'Rabby Debug Chain',
+                    rpcUrls: ['https://eth.llamarpc.com'],
+                    nativeCurrency: {
+                      name: 'Ether',
+                      symbol: 'ETH',
+                      decimals: 18,
+                    },
+                    blockExplorerUrls: ['https://etherscan.io'],
+                  },
+                ],
+                session,
+              };
+            } else if (component === 'AddAsset') {
+              params = {
+                data: {
+                  type: 'ERC20',
+                  options: {
+                    address: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
+                    symbol: 'USDT',
+                    decimals: 6,
+                    image: '',
+                  },
+                },
+                session,
+                requestContext: { chainId: 1 },
+              };
+            } else {
+              params = {
+                data: [
+                  {
+                    from: address,
+                    to: '0x000000000000000000000000000000000000dEaD',
+                    value: '0x0',
+                    data: '0x',
+                    chainId: 1,
+                    gas: '0x5208',
+                    gasPrice: '0x3b9aca00',
+                  },
+                ],
+                session,
+                requestContext: { chainId: 1 },
+              };
+            }
           }
           // Recover from a stale modal handle left by a previous dismissal.
           try {
@@ -1822,7 +1911,10 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
             account: account as any,
             origin:
               payload.debugInjectApproval?.origin ?? INTERNAL_REQUEST_ORIGIN,
-            approvalType: payload.debugInjectApproval?.approvalType ?? 'SignTx',
+            approvalType:
+              payload.debugInjectApproval?.approvalType ??
+              payload.debugInjectApproval?.component ??
+              'SignTx',
           } as any);
           unlockNotificationSync();
           console.log('[debug-inject-approval] resolved', result);
