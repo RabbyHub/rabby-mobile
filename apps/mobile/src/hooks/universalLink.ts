@@ -594,8 +594,8 @@ function parseNonProductionMaintenanceLink(appLink: string) {
     rabbyGoCmd === 'debug-export-history' ||
     target === 'debug-export-history'
   ) {
-    const daysRaw = Number(urlInfo.searchParams.get('days') || '90');
-    const pagesRaw = Number(urlInfo.searchParams.get('pages') || '50');
+    const daysRaw = Number(urlInfo.searchParams.get('days') || '30');
+    const pagesRaw = Number(urlInfo.searchParams.get('pages') || '10');
     return {
       type: 'debug-export-history',
       debugExportHistory: {
@@ -604,11 +604,11 @@ function parseNonProductionMaintenanceLink(appLink: string) {
         days:
           Number.isFinite(daysRaw) && daysRaw > 0
             ? Math.min(365, Math.trunc(daysRaw))
-            : 90,
+            : 30,
         pages:
           Number.isFinite(pagesRaw) && pagesRaw > 0
             ? Math.min(200, Math.trunc(pagesRaw))
-            : 50,
+            : 10,
         name: urlInfo.searchParams.get('name') || undefined,
       },
     } satisfies Parameters<OnParseUrlAndProcessAction>[0];
@@ -1556,8 +1556,8 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
             throw new Error('no address available');
           }
           const chain = payload.debugExportHistory?.chain;
-          const days = payload.debugExportHistory?.days ?? 90;
-          const maxPages = payload.debugExportHistory?.pages ?? 50;
+          const days = payload.debugExportHistory?.days ?? 30;
+          const maxPages = payload.debugExportHistory?.pages ?? 10;
           const pageCount = 20;
           const until = Math.floor(Date.now() / 1000) - days * 24 * 60 * 60;
           const historyList: Record<string, any>[] = [];
