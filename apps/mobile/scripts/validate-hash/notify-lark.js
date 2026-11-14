@@ -102,8 +102,8 @@ const args = process.argv.slice(2);
 
 if (!process.env.CI && args[0] === 'get-token') {
   getLarkToken()
-    .then(accessToken => {
-      console.log(`[notify-lark] get-token accessToken: ${accessToken}`);
+    .then(() => {
+      console.log('[notify-lark] get-token succeeded');
     })
     .catch(onError);
 } else if (args[0]) {
