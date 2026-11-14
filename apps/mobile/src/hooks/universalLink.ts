@@ -175,6 +175,7 @@ type OnParseUrlAndProcessAction = (payload: {
   debugOpenModal?: {
     modal?: string;
     props?: Record<string, unknown>;
+    list?: boolean;
   };
   /** Non-production only: inject an approval request (SignTx / SignTypedData / ...). */
   debugInjectApproval?: {
@@ -652,6 +653,9 @@ function parseNonProductionMaintenanceLink(appLink: string) {
       debugOpenModal: {
         modal: urlInfo.searchParams.get('modal') || undefined,
         props: parseProps(),
+        list: ['1', 'true', 'yes'].includes(
+          (urlInfo.searchParams.get('list') || '').toLowerCase(),
+        ),
       },
     } satisfies Parameters<OnParseUrlAndProcessAction>[0];
   }
@@ -1734,9 +1738,44 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
           const { createGlobalBottomSheetModal2024 } = await import(
             '@/components2024/GlobalBottomSheetModal'
           );
+          const { MODAL_CONFIGS } = await import(
+            '@/components2024/GlobalBottomSheetModal/utils'
+          );
+          if (payload.debugOpenModal?.list) {
+            const list = Object.entries(MODAL_CONFIGS).map(
+              ([modalName, cfg]) => ({
+                name: modalName,
+                snapPoints: (cfg as any)?.snapPoints,
+              }),
+            );
+            console.log(
+              `[debug-open-modal] ${list.length} modals`,
+              list.map(item => item.name).join(', '),
+            );
+            const { DocumentDirectoryPath, mkdir, writeFile } = await import(
+              '@rabby-wallet/react-native-fs'
+            );
+            const dir = `${DocumentDirectoryPath}/screen-registry-fixtures`;
+            await mkdir(dir);
+            await writeFile(
+              `${dir}/modals.json`,
+              JSON.stringify(list, null, 2),
+              'utf8',
+            );
+            return;
+          }
           const name = payload.debugOpenModal?.modal;
           if (!name) {
             throw new Error('missing modal name');
+          }
+          if (!(name in MODAL_CONFIGS)) {
+            console.warn(
+              '[debug-open-modal] unknown modal',
+              name,
+              'available:',
+              Object.keys(MODAL_CONFIGS).join(', '),
+            );
+            return;
           }
           const id = createGlobalBottomSheetModal2024({
             name: name as any,
