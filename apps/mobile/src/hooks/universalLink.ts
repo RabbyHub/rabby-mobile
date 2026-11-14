@@ -116,6 +116,8 @@ type OnParseUrlAndProcessAction = (payload: {
     | 'debug-inject-approval'
     | 'debug-dump-approval'
     | 'debug-capture-requests'
+    | 'debug-disconnect-dapp'
+    | 'debug-set-current-account'
     | 'debug-open-bridge-detail'
     | 'debug-open-history-local-detail'
     | 'regression-scenario';
@@ -181,6 +183,14 @@ type OnParseUrlAndProcessAction = (payload: {
   debugCaptureRequests?: {
     on?: boolean;
     allowAnyApproval?: boolean;
+  };
+  /** Non-production only: disconnect a dapp origin (broadcasts accountsChanged). */
+  debugDisconnectDapp?: {
+    origin?: string;
+  };
+  /** Non-production only: switch the app's current account by address. */
+  debugSetCurrentAccount?: {
+    address?: string;
   };
   /** Non-production only: open a global bottom-sheet modal by name. */
   debugOpenModal?: {
@@ -658,6 +668,34 @@ function parseNonProductionMaintenanceLink(appLink: string) {
         allowAnyApproval: ['1', 'true', 'yes'].includes(
           (urlInfo.searchParams.get('allowAnyApproval') || '').toLowerCase(),
         ),
+      },
+    } satisfies Parameters<OnParseUrlAndProcessAction>[0];
+  }
+
+  // Non-production only: switch the app's current account by exact address or
+  // by prefix/suffix match. `?_cmd=debug-set-current-account&address=0x5952..3ee7`
+  if (
+    rabbyGoCmd === 'debug-set-current-account' ||
+    target === 'debug-set-current-account'
+  ) {
+    return {
+      type: 'debug-set-current-account',
+      debugSetCurrentAccount: {
+        address: urlInfo.searchParams.get('address') || undefined,
+      },
+    } satisfies Parameters<OnParseUrlAndProcessAction>[0];
+  }
+
+  // Non-production only: disconnect a dapp origin so the next connect asks for
+  // an account again. `?_cmd=debug-disconnect-dapp&origin=https://opensea.io`
+  if (
+    rabbyGoCmd === 'debug-disconnect-dapp' ||
+    target === 'debug-disconnect-dapp'
+  ) {
+    return {
+      type: 'debug-disconnect-dapp',
+      debugDisconnectDapp: {
+        origin: urlInfo.searchParams.get('origin') || undefined,
       },
     } satisfies Parameters<OnParseUrlAndProcessAction>[0];
   }
@@ -1799,6 +1837,75 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
           );
         } catch (error) {
           console.warn('[debug-capture-requests] failed', error);
+        }
+      })();
+      break;
+    case 'debug-set-current-account':
+      if (!isNonPublicProductionEnv) {
+        return;
+      }
+      void (async () => {
+        try {
+          const [{ getAllAccountsToDisplay }, { setCurrentAccount }] =
+            await Promise.all([
+              import('@/core/apis/account'),
+              import('@/core/serviceApi/preference'),
+            ]);
+          const input = (payload.debugSetCurrentAccount?.address || '')
+            .toLowerCase()
+            .trim();
+          if (!input) {
+            throw new Error('missing address');
+          }
+          const accounts = await getAllAccountsToDisplay();
+          const match = accounts.find(account => {
+            const address = String(account.address || '').toLowerCase();
+            if (address === input) {
+              return true;
+            }
+            const [prefix, suffix] = input.split('...');
+            return Boolean(
+              prefix &&
+                suffix &&
+                address.startsWith(prefix) &&
+                address.endsWith(suffix),
+            );
+          });
+          if (!match) {
+            console.warn(
+              '[debug-set-current-account] available',
+              accounts
+                .map(account => `${account.address}:${account.brandName}`)
+                .join(', '),
+            );
+            throw new Error(`account not found: ${input}`);
+          }
+          await setCurrentAccount(match as any);
+          console.log(
+            '[debug-set-current-account] set',
+            match.address,
+            match.brandName,
+          );
+        } catch (error) {
+          console.warn('[debug-set-current-account] failed', error);
+        }
+      })();
+      break;
+    case 'debug-disconnect-dapp':
+      if (!isNonPublicProductionEnv) {
+        return;
+      }
+      void (async () => {
+        try {
+          const { removeDapp } = await import('@/core/apis/dapp');
+          const origin = payload.debugDisconnectDapp?.origin;
+          if (!origin) {
+            throw new Error('missing origin');
+          }
+          await removeDapp(origin);
+          console.log('[debug-disconnect-dapp] removed', origin);
+        } catch (error) {
+          console.warn('[debug-disconnect-dapp] failed', error);
         }
       })();
       break;
