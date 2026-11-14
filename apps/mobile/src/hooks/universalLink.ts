@@ -120,6 +120,7 @@ type OnParseUrlAndProcessAction = (payload: {
     | 'debug-set-current-account'
     | 'debug-dapp-eval'
     | 'debug-browser-tabs'
+    | 'debug-biometrics'
     | 'debug-open-bridge-detail'
     | 'debug-open-history-local-detail'
     | 'regression-scenario';
@@ -202,6 +203,10 @@ type OnParseUrlAndProcessAction = (payload: {
   debugBrowserTabs?: {
     action?: 'list' | 'activate' | 'close-all';
     match?: string;
+  };
+  /** Non-production only: toggle biometrics auth. */
+  debugBiometrics?: {
+    on?: boolean;
   };
   /** Non-production only: open a global bottom-sheet modal by name. */
   debugOpenModal?: {
@@ -678,6 +683,19 @@ function parseNonProductionMaintenanceLink(appLink: string) {
         ),
         allowAnyApproval: ['1', 'true', 'yes'].includes(
           (urlInfo.searchParams.get('allowAnyApproval') || '').toLowerCase(),
+        ),
+      },
+    } satisfies Parameters<OnParseUrlAndProcessAction>[0];
+  }
+
+  // Non-production only: toggle biometrics so signing falls back to the
+  // dev password. `?_cmd=debug-biometrics&on=0`
+  if (rabbyGoCmd === 'debug-biometrics' || target === 'debug-biometrics') {
+    return {
+      type: 'debug-biometrics',
+      debugBiometrics: {
+        on: ['1', 'true', 'yes'].includes(
+          (urlInfo.searchParams.get('on') || '').toLowerCase(),
         ),
       },
     } satisfies Parameters<OnParseUrlAndProcessAction>[0];
@@ -1876,6 +1894,21 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
           );
         } catch (error) {
           console.warn('[debug-capture-requests] failed', error);
+        }
+      })();
+      break;
+    case 'debug-biometrics':
+      if (!isNonPublicProductionEnv) {
+        return;
+      }
+      void (async () => {
+        try {
+          const { setBiometrics } = await import('@/hooks/biometrics');
+          const on = payload.debugBiometrics?.on ?? false;
+          setBiometrics(prev => ({ ...prev, authEnabled: on }));
+          console.log('[debug-biometrics] authEnabled=', on);
+        } catch (error) {
+          console.warn('[debug-biometrics] failed', error);
         }
       })();
       break;
