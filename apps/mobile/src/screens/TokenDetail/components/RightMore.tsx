@@ -80,26 +80,21 @@ export const RightMore: React.FC<{
             ]}
             accessibilityRole="button"
             onPress={handleFavorite}>
-            {({ pressed }) => (
-              <>
-                <Text
-                  style={[styles.favoriteText, pressed && styles.pressedText]}>
-                  {t(
-                    isPinned
-                      ? 'page.tokenDetail.action.unfavorite'
-                      : 'page.tokenDetail.action.favorite',
-                  )}
-                </Text>
-                <RcFavorite
-                  width={20}
-                  height={20}
-                  color={colors2024['orange-default']}
-                  fill={isPinned ? 'currentColor' : 'none'}
-                  stroke={isPinned ? 'none' : colors2024['orange-default']}
-                  strokeWidth={1.5}
-                />
-              </>
-            )}
+            <Text style={styles.favoriteText}>
+              {t(
+                isPinned
+                  ? 'page.tokenDetail.action.unfavorite'
+                  : 'page.tokenDetail.action.favorite',
+              )}
+            </Text>
+            <RcFavorite
+              width={20}
+              height={20}
+              color={colors2024['orange-default']}
+              fill={isPinned ? 'currentColor' : 'none'}
+              stroke={isPinned ? 'none' : colors2024['orange-default']}
+              strokeWidth={1.5}
+            />
           </Pressable>
           <Pressable
             style={({ pressed }) => [
@@ -169,6 +164,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     }),
   },
   menu: { width: 192 },
+  // Press feedback is opacity-only (QA 1147): production shows no background
+  // colour when a menu row is held.
+  menuItemPressed: { opacity: 0.7 },
   menuItem: {
     paddingHorizontal: 8,
     paddingVertical: 12,
@@ -176,9 +174,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-  },
-  menuItemPressed: {
-    backgroundColor: colors2024['neutral-bg-2'],
   },
   favoriteText: {
     color: isLight
@@ -196,7 +191,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontSize: 16,
     lineHeight: 20,
   },
-  pressedText: { color: colors2024['brand-default'] },
   removeIcon: {
     width: 22,
     height: 22,
