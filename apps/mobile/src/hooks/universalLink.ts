@@ -119,6 +119,7 @@ type OnParseUrlAndProcessAction = (payload: {
     | 'debug-disconnect-dapp'
     | 'debug-set-current-account'
     | 'debug-dapp-eval'
+    | 'debug-browser-tabs'
     | 'debug-open-bridge-detail'
     | 'debug-open-history-local-detail'
     | 'regression-scenario';
@@ -196,6 +197,11 @@ type OnParseUrlAndProcessAction = (payload: {
   /** Non-production only: inject JavaScript into the active dapp webview. */
   debugDappEval?: {
     code?: string;
+  };
+  /** Non-production only: list/activate/close dapp browser tabs. */
+  debugBrowserTabs?: {
+    action?: 'list' | 'activate' | 'close-all';
+    match?: string;
   };
   /** Non-production only: open a global bottom-sheet modal by name. */
   debugOpenModal?: {
@@ -673,6 +679,23 @@ function parseNonProductionMaintenanceLink(appLink: string) {
         allowAnyApproval: ['1', 'true', 'yes'].includes(
           (urlInfo.searchParams.get('allowAnyApproval') || '').toLowerCase(),
         ),
+      },
+    } satisfies Parameters<OnParseUrlAndProcessAction>[0];
+  }
+
+  // Non-production only: inspect or switch dapp browser tabs.
+  // `?_cmd=debug-browser-tabs&action=list|activate|close-all&match=safe.global`
+  if (rabbyGoCmd === 'debug-browser-tabs' || target === 'debug-browser-tabs') {
+    const actionRaw = urlInfo.searchParams.get('action') || 'list';
+    const action =
+      actionRaw === 'activate' || actionRaw === 'close-all'
+        ? actionRaw
+        : 'list';
+    return {
+      type: 'debug-browser-tabs',
+      debugBrowserTabs: {
+        action,
+        match: urlInfo.searchParams.get('match') || undefined,
       },
     } satisfies Parameters<OnParseUrlAndProcessAction>[0];
   }
@@ -1853,6 +1876,50 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
           );
         } catch (error) {
           console.warn('[debug-capture-requests] failed', error);
+        }
+      })();
+      break;
+    case 'debug-browser-tabs':
+      if (!isNonPublicProductionEnv) {
+        return;
+      }
+      void (async () => {
+        try {
+          const { browserApis, getBrowserTabsSnapshot } = await import(
+            '@/hooks/browser/useBrowser'
+          );
+          const action = payload.debugBrowserTabs?.action ?? 'list';
+          if (action === 'close-all') {
+            browserApis.closeAllTabs();
+            console.log('[debug-browser-tabs] closed all');
+            return;
+          }
+          const state = getBrowserTabsSnapshot();
+          const summary = state.tabs.map(tab => ({
+            id: tab.id,
+            url: tab.initialUrl || tab.url,
+            isDapp: tab.isDapp,
+          }));
+          if (action === 'activate') {
+            const match = payload.debugBrowserTabs?.match;
+            const tab = state.tabs.find(item =>
+              String(item.initialUrl || item.url || '').includes(match || ''),
+            );
+            if (!tab) {
+              console.warn('[debug-browser-tabs] no match', match, summary);
+              return;
+            }
+            browserApis.switchToTab(tab.id);
+            console.log('[debug-browser-tabs] activated', tab.id, summary);
+            return;
+          }
+          console.log(
+            '[debug-browser-tabs] active=',
+            state.activeTabId,
+            summary,
+          );
+        } catch (error) {
+          console.warn('[debug-browser-tabs] failed', error);
         }
       })();
       break;
