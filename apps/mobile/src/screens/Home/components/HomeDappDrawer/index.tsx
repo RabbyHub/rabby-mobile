@@ -53,6 +53,11 @@ import { HOME_TOP_HEADER_SIZES } from '@/constant/home';
 import { Text } from '@/components/Typography';
 import MarketScreen from '@/screens/Market';
 import { HomeDappDrawerContent } from './HomeDappDrawerContent';
+import {
+  HOME_GESTURE_AXIS,
+  beginHomeGesture,
+  resolveHomeGestureAxis,
+} from '@/screens/Home/gesture/homeGestureAuthority';
 
 const AnimatedFlatList =
   Animated.createAnimatedComponent<FlatListProps<DappInfo>>(RNFlatList);
@@ -161,6 +166,7 @@ export const HomeDappDrawer: React.FC<{
 
               drawerGestureStartX.value = touch.absoluteX;
               drawerGestureStartY.value = touch.absoluteY;
+              beginHomeGesture(touch.absoluteX, touch.absoluteY);
             })
             .onTouchesMove((event, stateManager) => {
               'worklet';
@@ -175,6 +181,16 @@ export const HomeDappDrawer: React.FC<{
               const diffY = touch.absoluteY - drawerGestureStartY.value;
               const absX = Math.abs(diffX);
               const absY = Math.abs(diffY);
+
+              // The shared verdict decides the axis once per touch sequence; a
+              // horizontal drag belongs to the pager / tab strip, never here.
+              if (
+                resolveHomeGestureAxis(touch.absoluteX, touch.absoluteY) ===
+                HOME_GESTURE_AXIS.HORIZONTAL
+              ) {
+                stateManager.fail();
+                return;
+              }
 
               if (absX > DRAWER_GESTURE_FAIL_OFFSET_X && absX > absY) {
                 stateManager.fail();

@@ -9,6 +9,12 @@ import {
 } from 'react-native';
 import PagerView from 'react-native-pager-view';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import {
+  HOME_GESTURE_AXIS,
+  beginHomeGesture,
+  endHomeGesture,
+  resolveHomeGestureAxis,
+} from '@/screens/Home/gesture/homeGestureAuthority';
 import Animated, {
   runOnJS,
   runOnUI,
@@ -337,8 +343,6 @@ export const MultiAssetsContainer = React.memo(
     // rather than a transparent hand-off: RNGH cannot share a gesture with the
     // native pager without swallowing it (see
     // codex-rabby/plans/rabby-mobile-home-gesture-single-authority-20261115.md).
-    const gateStartX = useSharedValue(0);
-    const gateStartY = useSharedValue(0);
     const pagerScrollEnabledRef = React.useRef(true);
     const setPagerScrollEnabled = React.useCallback(
       (enabled: boolean) => {
@@ -368,8 +372,7 @@ export const MultiAssetsContainer = React.memo(
             if (!touch) {
               return;
             }
-            gateStartX.value = touch.absoluteX;
-            gateStartY.value = touch.absoluteY;
+            beginHomeGesture(touch.absoluteX, touch.absoluteY);
           })
           .onTouchesMove((event, stateManager) => {
             'worklet';
@@ -378,16 +381,19 @@ export const MultiAssetsContainer = React.memo(
               stateManager.fail();
               return;
             }
-            const dx = Math.abs(touch.absoluteX - gateStartX.value);
-            const dy = Math.abs(touch.absoluteY - gateStartY.value);
+            const axis = resolveHomeGestureAxis(
+              touch.absoluteX,
+              touch.absoluteY,
+            );
 
-            // Horizontal leads: the pager owns this drag, step aside entirely.
-            if (dx > 12 && dx > dy) {
+            if (axis === HOME_GESTURE_AXIS.HORIZONTAL) {
+              // The pager owns horizontal drags; step aside untouched.
               stateManager.fail();
               return;
             }
-            // Vertical leads: take the gesture and lock the pager out of it.
-            if (dy >= 8 && dy > dx * 1.2) {
+            if (axis === HOME_GESTURE_AXIS.VERTICAL) {
+              // The list owns vertical drags: take the gesture and lock the
+              // pager out of it for the rest of this touch sequence.
               stateManager.activate();
             }
           })
@@ -398,8 +404,9 @@ export const MultiAssetsContainer = React.memo(
           .onFinalize(() => {
             'worklet';
             runOnJS(setPagerScrollEnabled)(true);
+            endHomeGesture();
           }),
-      [gateStartX, gateStartY, setPagerScrollEnabled],
+      [setPagerScrollEnabled],
     );
 
     React.useImperativeHandle(
