@@ -70,6 +70,7 @@ import { SecurityEngineError } from '../SecurityEngine/SecurityEngineError';
 import { SUPPORT_1559_KEYRING_TYPE } from '@/constant/tx';
 import { getDappSnapshot } from '@/core/serviceApi/dapp';
 import { keyringServiceApi } from '@/core/serviceApi/keyring';
+import { createSigningOperationId } from '@/core/utils/signingOperation';
 import {
   getLastTimeGasSelection,
   updateLastTimeGasSelection,
@@ -1206,6 +1207,7 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
     if (!security.canSubmit()) return;
     if (!(await getApproval()) || !security.canSubmit()) return;
     if (WaitingSignComponent[account.type]) {
+      const signingOperationId = createSigningOperationId();
       apisKeyring.signTypedDataWithUI(
         account.type,
         account.address,
@@ -1213,11 +1215,13 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
         {
           brandName: account.brandName,
           version: 'V4',
+          signingOperationId,
         },
       );
 
       resolveApproval({
         uiRequestComponent: WaitingSignComponent[account.type],
+        signingOperationId,
         type: account.type,
         address: account.address,
         data: [account.address, JSON.stringify(typedData)],
