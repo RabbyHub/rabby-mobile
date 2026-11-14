@@ -182,6 +182,8 @@ type OnParseUrlAndProcessAction = (payload: {
     component?: string;
     params?: Record<string, unknown>;
     paramsFile?: string;
+    parseFile?: string;
+    parseCapture?: string;
     origin?: string;
     approvalType?: string;
   };
@@ -687,6 +689,8 @@ function parseNonProductionMaintenanceLink(appLink: string) {
         component: urlInfo.searchParams.get('component') || undefined,
         params: parseApprovalParams(),
         paramsFile: urlInfo.searchParams.get('paramsFile') || undefined,
+        parseFile: urlInfo.searchParams.get('parseFile') || undefined,
+        parseCapture: urlInfo.searchParams.get('parseCapture') || undefined,
         origin: urlInfo.searchParams.get('origin') || undefined,
         approvalType: urlInfo.searchParams.get('approvalType') || undefined,
       },
@@ -1798,13 +1802,21 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
             { getFallbackAccountSnapshot },
             { getSelectedBalanceAddressesSnapshot },
             { INTERNAL_REQUEST_ORIGIN },
-            { readRouteFixture },
+            { readRouteFixture, getRouteFixturePath },
+            { readFile },
+            {
+              setApprovalParseOverride,
+              clearApprovalParseOverride,
+              setApprovalParseCapture,
+            },
           ] = await Promise.all([
             import('@/core/serviceApi/notification'),
             import('@/core/serviceApi/preference'),
             import('@/store/balance'),
             import('@/constant'),
             import('@/devtools/screenRegistry/routeFixtures'),
+            import('@rabby-wallet/react-native-fs'),
+            import('@/devtools/screenRegistry/approvalParseOverride'),
           ]);
           const fallbackAccount = getFallbackAccountSnapshot();
           const address = (
@@ -1933,6 +1945,26 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
                 requestContext: { chainId: 1 },
               };
             }
+          }
+          if (payload.debugInjectApproval?.parseFile) {
+            const raw = await readFile(
+              getRouteFixturePath(payload.debugInjectApproval.parseFile),
+              'utf8',
+            );
+            const parsed = JSON.parse(raw);
+            setApprovalParseOverride({
+              typedDataKey: parsed.typedDataKey,
+              response: parsed.response,
+            });
+            console.log(
+              '[debug-inject-approval] parse override set',
+              payload.debugInjectApproval.parseFile,
+            );
+          } else {
+            clearApprovalParseOverride();
+          }
+          if (payload.debugInjectApproval?.parseCapture) {
+            setApprovalParseCapture(payload.debugInjectApproval.parseCapture);
           }
           // Recover from a stale modal handle left by a previous dismissal.
           try {
