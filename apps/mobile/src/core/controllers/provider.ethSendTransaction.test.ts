@@ -222,6 +222,27 @@ const ACCOUNT = {
   brandName: 'Rabby',
 };
 
+describe('provider passive account queries', () => {
+  it.each([
+    ['ethAccounts', []],
+    ['ethCoinbase', null],
+  ] as const)(
+    'keeps %s passive and respects disconnection',
+    async (method, empty) => {
+      const request = { session: { origin: DAPP_ORIGIN }, account: ACCOUNT };
+      expect(Reflect.getMetadata('SAFE', providerController, method)).toBe(
+        true,
+      );
+      mockGetDappSnapshot.mockReturnValue({ isConnected: false });
+      await expect(providerController[method](request)).resolves.toEqual(empty);
+      mockGetDappSnapshot.mockReturnValue({ isConnected: true });
+      await expect(providerController[method](request)).resolves.toEqual(
+        method === 'ethAccounts' ? [ACCOUNT.address] : ACCOUNT.address,
+      );
+    },
+  );
+});
+
 const TX_PARAMS = {
   from: ACCOUNT.address,
   to: '0x2222222222222222222222222222222222222222',
