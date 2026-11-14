@@ -114,6 +114,7 @@ type OnParseUrlAndProcessAction = (payload: {
     | 'debug-export-history'
     | 'debug-open-modal'
     | 'debug-inject-approval'
+    | 'debug-dump-approval'
     | 'debug-open-bridge-detail'
     | 'debug-open-history-local-detail'
     | 'regression-scenario';
@@ -169,6 +170,10 @@ type OnParseUrlAndProcessAction = (payload: {
     chain?: string;
     days?: number;
     pages?: number;
+    name?: string;
+  };
+  /** Non-production only: dump the current approval request to the sandbox. */
+  debugDumpApproval?: {
     name?: string;
   };
   /** Non-production only: open a global bottom-sheet modal by name. */
@@ -627,6 +632,21 @@ function parseNonProductionMaintenanceLink(appLink: string) {
           Number.isFinite(pagesRaw) && pagesRaw > 0
             ? Math.min(200, Math.trunc(pagesRaw))
             : 10,
+        name: urlInfo.searchParams.get('name') || undefined,
+      },
+    } satisfies Parameters<OnParseUrlAndProcessAction>[0];
+  }
+
+  // Non-production only: dump the current approval request so a real dapp
+  // request can be turned into a fixture.
+  // `?_cmd=debug-dump-approval&name=opensea-sell`
+  if (
+    rabbyGoCmd === 'debug-dump-approval' ||
+    target === 'debug-dump-approval'
+  ) {
+    return {
+      type: 'debug-dump-approval',
+      debugDumpApproval: {
         name: urlInfo.searchParams.get('name') || undefined,
       },
     } satisfies Parameters<OnParseUrlAndProcessAction>[0];
@@ -1730,6 +1750,59 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
           );
         } catch (error) {
           console.warn('[debug-export-history] failed', error);
+        }
+      })();
+      break;
+    case 'debug-dump-approval':
+      if (!isNonPublicProductionEnv) {
+        return;
+      }
+      void (async () => {
+        try {
+          const [
+            { notificationServiceApi },
+            { DocumentDirectoryPath, mkdir, writeFile },
+          ] = await Promise.all([
+            import('@/core/serviceApi/notification'),
+            import('@rabby-wallet/react-native-fs'),
+          ]);
+          const approval = await notificationServiceApi.getApproval();
+          if (!approval) {
+            console.warn('[debug-dump-approval] no current approval');
+            return;
+          }
+          const data = (approval as any).data;
+          const name = (
+            payload.debugDumpApproval?.name ||
+            `approval-${data?.approvalComponent || 'unknown'}`
+          )
+            .replace(/[^\w.-]/g, '_')
+            .slice(0, 80);
+          const dir = `${DocumentDirectoryPath}/screen-registry-fixtures`;
+          await mkdir(dir);
+          await writeFile(
+            `${dir}/${name}.json`,
+            JSON.stringify(
+              {
+                capturedAt: Date.now(),
+                approvalComponent: data?.approvalComponent,
+                origin: data?.origin,
+                approvalType: data?.approvalType,
+                params: data?.params,
+              },
+              null,
+              2,
+            ),
+            'utf8',
+          );
+          console.log(
+            '[debug-dump-approval] wrote',
+            name,
+            data?.approvalComponent,
+            data?.origin,
+          );
+        } catch (error) {
+          console.warn('[debug-dump-approval] failed', error);
         }
       })();
       break;
