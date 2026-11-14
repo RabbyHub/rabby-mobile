@@ -93,12 +93,19 @@ async function sendMessage({
   console.log(res.data);
 }
 
+function onError() {
+  console.error('[notify-lark] request failed');
+  process.exitCode = 1;
+}
+
 const args = process.argv.slice(2);
 
 if (!process.env.CI && args[0] === 'get-token') {
-  getLarkToken().then(accessToken => {
-    console.log(`[notify-lark] get-token accessToken: ${accessToken}`);
-  });
+  getLarkToken()
+    .then(accessToken => {
+      console.log(`[notify-lark] get-token accessToken: ${accessToken}`);
+    })
+    .catch(onError);
 } else if (args[0]) {
   sendMessage({
     androidHash: args[0],
@@ -111,7 +118,7 @@ if (!process.env.CI && args[0] === 'get-token') {
       process.env.GITHUB_TRIGGERING_ACTOR,
       process.env.GITHUB_ACTOR,
     ].filter(Boolean),
-  });
+  }).catch(onError);
 } else {
   console.log('[notify-lark] no message');
 }
