@@ -84,6 +84,26 @@ function getUniqueId(): number {
   return idCounter;
 }
 
+function createRpcError(error: {
+  message?: unknown;
+  code?: unknown;
+  data?: unknown;
+}) {
+  // Remote fields such as transaction must not become local error metadata.
+  return Object.assign(
+    new Error(
+      typeof error.message === 'string' ? error.message : 'RPC request failed',
+    ),
+    {
+      code:
+        typeof error.code === 'number' && Number.isInteger(error.code)
+          ? error.code
+          : -32603,
+      data: error.data,
+    },
+  );
+}
+
 // TODO: remove
 const fetchDefaultRpc = async () => {
   const { data } = await axios.get('https://api.rabby.io/v1/chainrpc');
@@ -199,7 +219,7 @@ export class CustomRPCService extends StoreServiceBase<
         timeout,
       },
     );
-    if (data?.error) throw data.error;
+    if (data?.error) throw createRpcError(data.error);
     return data.result;
   };
 
@@ -404,7 +424,7 @@ export class CustomRPCService extends StoreServiceBase<
         timeout,
       },
     );
-    if (data?.error) throw data.error;
+    if (data?.error) throw createRpcError(data.error);
     if (data?.result) return data.result;
     return data;
   };
