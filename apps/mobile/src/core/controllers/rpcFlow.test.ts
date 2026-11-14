@@ -464,6 +464,33 @@ describe('rpcFlow typed-data chain pinning', () => {
     },
   );
 
+  it.each([
+    ['eth_sign_typed_data_v1', 'eth_signTypedData_v1'],
+    ['ethSignTypedDataV1', 'eth_signTypedData_v1'],
+    ['eth_sign_typed_data', 'eth_signTypedData'],
+    ['ethSignTypedData', 'eth_signTypedData'],
+    ['eth_sign_typed_data_v3', 'eth_signTypedData_v3'],
+    ['ethSignTypedDataV4', 'eth_signTypedData_v4'],
+    ['eth_sign_typed_data_v_1', 'eth_signTypedData_v1'],
+    ['eth_sign_typed_data_v_3', 'eth_signTypedData_v3'],
+    ['eth_sign_typed_data_v_4', 'eth_signTypedData_v4'],
+  ])(
+    'accepts %s and presents the matching canonical method for approval',
+    async (method, canonicalMethod) => {
+      const request = makeRequest(canonicalMethod, 1);
+      request.data.method = method;
+      await expect(rpcFlow(request)).resolves.toBe('0xsignature');
+      expect(mockRequestApproval.mock.calls[0][0].params).toMatchObject({
+        method: canonicalMethod,
+        data: request.data.params,
+      });
+      expect(mockEthSignTypedData.mock.calls[0][0].data.params).toBe(
+        request.data.params,
+      );
+      expect(request.data.method).toBe(method);
+    },
+  );
+
   it('starts a retry from the mounted waiting UI without another mount event', async () => {
     const { waitSignComponentAmounted } =
       jest.requireMock('../utils/signEvent');
