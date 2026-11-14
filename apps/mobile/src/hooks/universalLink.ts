@@ -112,6 +112,8 @@ type OnParseUrlAndProcessAction = (payload: {
     | 'debug-import-private-key'
     | 'debug-dump-route'
     | 'debug-export-history'
+    | 'debug-open-modal'
+    | 'debug-inject-approval'
     | 'debug-open-bridge-detail'
     | 'debug-open-history-local-detail'
     | 'regression-scenario';
@@ -168,6 +170,19 @@ type OnParseUrlAndProcessAction = (payload: {
     days?: number;
     pages?: number;
     name?: string;
+  };
+  /** Non-production only: open a global bottom-sheet modal by name. */
+  debugOpenModal?: {
+    modal?: string;
+    props?: Record<string, unknown>;
+  };
+  /** Non-production only: inject an approval request (SignTx / SignTypedData / ...). */
+  debugInjectApproval?: {
+    component?: string;
+    params?: Record<string, unknown>;
+    paramsFile?: string;
+    origin?: string;
+    approvalType?: string;
   };
   /** Non-production only: open BridgeDetail from a real local+remote record. */
   debugOpenBridgeDetail?: {
@@ -610,6 +625,66 @@ function parseNonProductionMaintenanceLink(appLink: string) {
             ? Math.min(200, Math.trunc(pagesRaw))
             : 10,
         name: urlInfo.searchParams.get('name') || undefined,
+      },
+    } satisfies Parameters<OnParseUrlAndProcessAction>[0];
+  }
+
+  // Non-production only: open a global bottom-sheet modal by name.
+  // `?_cmd=debug-open-modal&modal=SIMPLE_CONFIRM&props={"title":"..."}`
+  if (rabbyGoCmd === 'debug-open-modal' || target === 'debug-open-modal') {
+    const parseProps = () => {
+      const raw = urlInfo.searchParams.get('props');
+      if (!raw) {
+        return undefined;
+      }
+      try {
+        const parsed = JSON.parse(raw);
+        return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+          ? (parsed as Record<string, unknown>)
+          : undefined;
+      } catch {
+        console.warn('[debug-open-modal] invalid props JSON');
+        return undefined;
+      }
+    };
+    return {
+      type: 'debug-open-modal',
+      debugOpenModal: {
+        modal: urlInfo.searchParams.get('modal') || undefined,
+        props: parseProps(),
+      },
+    } satisfies Parameters<OnParseUrlAndProcessAction>[0];
+  }
+
+  // Non-production only: inject an approval request exactly like the RPC flow.
+  // `?_cmd=debug-inject-approval&component=SignTx[&params=<json>|&paramsFile=<name>]`
+  if (
+    rabbyGoCmd === 'debug-inject-approval' ||
+    target === 'debug-inject-approval'
+  ) {
+    const parseApprovalParams = () => {
+      const raw = urlInfo.searchParams.get('params');
+      if (!raw) {
+        return undefined;
+      }
+      try {
+        const parsed = JSON.parse(raw);
+        return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+          ? (parsed as Record<string, unknown>)
+          : undefined;
+      } catch {
+        console.warn('[debug-inject-approval] invalid params JSON');
+        return undefined;
+      }
+    };
+    return {
+      type: 'debug-inject-approval',
+      debugInjectApproval: {
+        component: urlInfo.searchParams.get('component') || undefined,
+        params: parseApprovalParams(),
+        paramsFile: urlInfo.searchParams.get('paramsFile') || undefined,
+        origin: urlInfo.searchParams.get('origin') || undefined,
+        approvalType: urlInfo.searchParams.get('approvalType') || undefined,
       },
     } satisfies Parameters<OnParseUrlAndProcessAction>[0];
   }
@@ -1647,6 +1722,102 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
           );
         } catch (error) {
           console.warn('[debug-export-history] failed', error);
+        }
+      })();
+      break;
+    case 'debug-open-modal':
+      if (!isNonPublicProductionEnv) {
+        return;
+      }
+      void (async () => {
+        try {
+          const { createGlobalBottomSheetModal2024 } = await import(
+            '@/components2024/GlobalBottomSheetModal'
+          );
+          const name = payload.debugOpenModal?.modal;
+          if (!name) {
+            throw new Error('missing modal name');
+          }
+          const id = createGlobalBottomSheetModal2024({
+            name: name as any,
+            ...(payload.debugOpenModal?.props ?? {}),
+          });
+          console.log('[debug-open-modal] opened', name, id);
+        } catch (error) {
+          console.warn('[debug-open-modal] failed', error);
+        }
+      })();
+      break;
+    case 'debug-inject-approval':
+      if (!isNonPublicProductionEnv) {
+        return;
+      }
+      void (async () => {
+        try {
+          const [
+            { notificationServiceApi },
+            { getFallbackAccountSnapshot },
+            { getSelectedBalanceAddressesSnapshot },
+            { INTERNAL_REQUEST_ORIGIN },
+            { readRouteFixture },
+          ] = await Promise.all([
+            import('@/core/serviceApi/notification'),
+            import('@/core/serviceApi/preference'),
+            import('@/store/balance'),
+            import('@/constant'),
+            import('@/devtools/screenRegistry/routeFixtures'),
+          ]);
+          const fallbackAccount = getFallbackAccountSnapshot();
+          const address = (
+            (payload.debugInjectApproval as any)?.address ||
+            fallbackAccount?.address ||
+            getSelectedBalanceAddressesSnapshot()[0] ||
+            ''
+          ).toLowerCase();
+          if (!address) {
+            throw new Error('no account available');
+          }
+          const account = fallbackAccount || {
+            address,
+            type: 'Simple Key Pair',
+            brandName: 'Simple Key Pair',
+            aliasName: '',
+          };
+          let params = payload.debugInjectApproval?.params as
+            | Record<string, unknown>
+            | undefined;
+          if (!params && payload.debugInjectApproval?.paramsFile) {
+            params = await readRouteFixture(
+              payload.debugInjectApproval.paramsFile,
+            );
+          }
+          if (!params) {
+            params = {
+              data: [
+                {
+                  from: address,
+                  to: '0x000000000000000000000000000000000000dEaD',
+                  value: '0x0',
+                  data: '0x',
+                  chainId: 1,
+                  gas: '0x5208',
+                  gasPrice: '0x3b9aca00',
+                },
+              ],
+            };
+          }
+          const result = await notificationServiceApi.requestApproval({
+            approvalComponent:
+              payload.debugInjectApproval?.component ?? 'SignTx',
+            params,
+            account: account as any,
+            origin:
+              payload.debugInjectApproval?.origin ?? INTERNAL_REQUEST_ORIGIN,
+            approvalType: payload.debugInjectApproval?.approvalType ?? 'SignTx',
+          } as any);
+          console.log('[debug-inject-approval] resolved', result);
+        } catch (error) {
+          console.warn('[debug-inject-approval] failed', error);
         }
       })();
       break;
