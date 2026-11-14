@@ -405,6 +405,8 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
     });
   }, [chain.serverId, params.data]);
 
+  const gnosisOperation = Number(params.data[0]?.operation) === 1 ? 1 : 0;
+
   // Only the internal Safe queue has already built a transaction to sign.
   const isViewGnosisSafe =
     origin === INTERNAL_REQUEST_ORIGIN && requestedViewGnosisSafe === true;
@@ -864,8 +866,7 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
     } // do not overwrite nonce if from === to(cancel transaction)
 
     const explainNonce = (updateNonce ? recommendNonce : tx.nonce) || '0x1';
-    const delegateCall =
-      isGnosisAccount && Number(params?.data?.[0]?.operation) === 1;
+    const delegateCall = isGnosisAccount && gnosisOperation === 1;
     const parseTxPromise = openapi.parseTx({
       chainId: chain.serverId,
       tx: omit(
@@ -1188,6 +1189,7 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
         to: tx.to,
         data: tx.data,
         value: tx.value,
+        operation: gnosisOperation,
         safeTxGas: safeTxGas,
       };
       params.nonce = realNonce;
