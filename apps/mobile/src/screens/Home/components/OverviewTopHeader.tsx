@@ -36,6 +36,8 @@ import { formatSmallCurrencyValueParts } from '@/utils/currency';
 import LoadingCircle from '@/components2024/RotateLoadingCircle';
 import Animated, {
   clamp,
+  Extrapolate,
+  interpolate,
   useAnimatedStyle,
   useSharedValue,
 } from 'react-native-reanimated';
@@ -117,19 +119,21 @@ function formOpacity(p: number, index: number) {
   return rise * (1 - fall);
 }
 
-function formSlideY(p: number, index: number) {
+function formSlideX(p: number, index: number) {
   'worklet';
   // Zero whenever a form is settled. While the swap is in flight the form
-  // drifts a few dp: one vertical direction per swipe direction, so swiping
-  // right makes the incoming form come down from the top and the outgoing one
-  // leave downwards, and swiping left is the mirror image.
+  // drifts a few dp along the swipe: the incoming form enters from the side the
+  // finger came from and the outgoing one leaves towards the side the finger is
+  // heading to. Swiping left brings the next form in from the right, swiping
+  // right mirrors it.
   //
   // The overview form and the pinned history/clock anchor deliberately do not
   // use this: they share one slot on the overview boundary and must trade
   // places in-place, otherwise the gear and the clock slide past each other.
   const d = p - index;
   const away = 1 - formOpacity(p, index);
-  return (d < 0 ? -1 : 1) * away * FORM_SLIDE;
+  // d < 0 means this form is on the incoming side of the drag.
+  return (d < 0 ? 1 : -1) * away * FORM_SLIDE;
 }
 
 export function TabsTopHeader(): JSX.Element {
@@ -238,7 +242,20 @@ export function TabsTopHeader(): JSX.Element {
 
   // The header is a scene overlay now: it collapses with the shared scene
   // offset and only fades while the dapp drawer is pulled up.
-  const { opacityStyle } = useHomeDrawerOpacityStyle();
+  const { opacityStyle, pullPercent } = useHomeDrawerOpacityStyle();
+
+  // Collapse the header's height as the dapp drawer takes over. Without this
+  // the header keeps its full height while faded, which leaves a blank band
+  // above the drawer's tab row and lets the header box cover the top of those
+  // tabs.
+  const headerStyle = useAnimatedStyle(() => ({
+    height: interpolate(
+      pullPercent.value,
+      [0, -100],
+      [HOME_TOP_HEADER_SIZES.topHeaderHeight, 0],
+      Extrapolate.CLAMP,
+    ),
+  }));
 
   // Left side: total-balance label on the overview, live balance from the first
   // asset page on. Same band as the right-hand forms so both halves of the
@@ -271,7 +288,7 @@ export function TabsTopHeader(): JSX.Element {
     const opacity = formOpacity(p, 1);
     return {
       opacity,
-      transform: [{ translateY: formSlideY(p, 1) }],
+      transform: [{ translateX: formSlideX(p, 1) }],
       pointerEvents: opacity > 0.5 ? 'auto' : 'none',
     };
   });
@@ -280,7 +297,7 @@ export function TabsTopHeader(): JSX.Element {
     const opacity = formOpacity(p, 2);
     return {
       opacity,
-      transform: [{ translateY: formSlideY(p, 2) }],
+      transform: [{ translateX: formSlideX(p, 2) }],
       pointerEvents: opacity > 0.5 ? 'auto' : 'none',
     };
   });
@@ -326,7 +343,7 @@ export function TabsTopHeader(): JSX.Element {
   );
 
   return (
-    <Animated.View style={[styles.headerBox, opacityStyle]}>
+    <Animated.View style={[styles.headerBox, opacityStyle, headerStyle]}>
       <View style={styles.leftBox}>
         <Animated.View style={[styles.leftContent, totalBalanceStyle]}>
           <Text style={styles.balanceTextBox}>
