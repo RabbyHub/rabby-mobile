@@ -55,6 +55,13 @@ const isSignApproval = (type: string) => {
   return SIGN_APPROVALS.includes(type);
 };
 
+const TYPED_DATA_METHODS: Record<string, string> = {
+  ethSignTypedData: 'eth_signTypedData',
+  ethSignTypedDataV1: 'eth_signTypedData_v1',
+  ethSignTypedDataV3: 'eth_signTypedData_v3',
+  ethSignTypedDataV4: 'eth_signTypedData_v4',
+};
+
 const lockedOrigins = new Set<string>();
 const connectOrigins = new Set<string>();
 
@@ -346,7 +353,7 @@ const flowContext = flow
               $ctx: ctx?.request?.data?.$ctx,
               $mobileCtx,
               requestContext: ctx.request.requestContext,
-              method,
+              method: TYPED_DATA_METHODS[mapMethod] || method,
               data: ctx.request.data.params,
               session: { origin, name, icon, $mobileCtx },
             },
