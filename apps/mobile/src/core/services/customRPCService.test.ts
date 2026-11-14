@@ -15,6 +15,7 @@ jest.mock('@/constant', () => ({
 }));
 
 import { CustomRPCService } from './customRPCService';
+import axios from 'axios';
 
 class TestCustomRPCService extends CustomRPCService {
   setDefaultRPCForTest(chainServerId: string, rpcUrls: string[]) {
@@ -41,6 +42,77 @@ const createService = (
   service.rpcStatus = {};
   return service;
 };
+
+describe.each(['request', 'defaultRPCRequest'] as const)(
+  'CustomRPCService.%s error boundary',
+  method => {
+    afterEach(() => jest.restoreAllMocks());
+
+    it('preserves standard error fields without promoting remote transaction metadata', async () => {
+      const transaction = { to: '0x3333333333333333333333333333333333333333' };
+      const data = { reason: 'upstream failure', transaction };
+      jest.spyOn(axios, 'post').mockResolvedValue({
+        data: {
+          error: {
+            code: -32000,
+            message: 'backend unavailable',
+            data,
+            transaction,
+            method: 'estimateGas',
+          },
+        },
+      });
+      const pending = new CustomRPCService()[method](
+        'https://rpc.example',
+        'eth_estimateGas',
+        [],
+      );
+      await expect(pending).rejects.toBeInstanceOf(Error);
+      await expect(pending).rejects.toMatchObject({
+        code: -32000,
+        message: 'backend unavailable',
+        data,
+      });
+      await expect(pending).rejects.not.toHaveProperty('transaction');
+      await expect(pending).rejects.not.toHaveProperty('method');
+    });
+
+    it('handles malformed message and code without copying untrusted fields', async () => {
+      jest.spyOn(axios, 'post').mockResolvedValue({
+        data: {
+          error: {
+            message: {},
+            code: 'UNPREDICTABLE_GAS_LIMIT',
+            transaction: {},
+          },
+        },
+      });
+      const pending = new CustomRPCService()[method](
+        'https://rpc.example',
+        'eth_estimateGas',
+        [],
+      );
+      await expect(pending).rejects.toMatchObject({
+        code: -32603,
+        message: 'RPC request failed',
+      });
+      await expect(pending).rejects.not.toHaveProperty('transaction');
+    });
+
+    it('preserves successful RPC results', async () => {
+      jest
+        .spyOn(axios, 'post')
+        .mockResolvedValue({ data: { result: '0x5208' } });
+      await expect(
+        new CustomRPCService()[method](
+          'https://rpc.example',
+          'eth_estimateGas',
+          [],
+        ),
+      ).resolves.toBe('0x5208');
+    });
+  },
+);
 
 describe('CustomRPCService preferred RPC', () => {
   afterEach(() => {
