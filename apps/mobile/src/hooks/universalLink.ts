@@ -111,6 +111,7 @@ type OnParseUrlAndProcessAction = (payload: {
     | 'debug-open-screen'
     | 'debug-import-private-key'
     | 'debug-dump-route'
+    | 'debug-export-history'
     | 'debug-open-bridge-detail'
     | 'debug-open-history-local-detail'
     | 'regression-scenario';
@@ -158,6 +159,14 @@ type OnParseUrlAndProcessAction = (payload: {
   };
   /** Non-production only: dump the current route's params to the sandbox. */
   debugDumpRoute?: {
+    name?: string;
+  };
+  /** Non-production only: export an address's API history to the sandbox. */
+  debugExportHistory?: {
+    address?: string;
+    chain?: string;
+    days?: number;
+    pages?: number;
     name?: string;
   };
   /** Non-production only: open BridgeDetail from a real local+remote record. */
@@ -573,6 +582,33 @@ function parseNonProductionMaintenanceLink(appLink: string) {
     return {
       type: 'debug-dump-route',
       debugDumpRoute: {
+        name: urlInfo.searchParams.get('name') || undefined,
+      },
+    } satisfies Parameters<OnParseUrlAndProcessAction>[0];
+  }
+
+  // Non-production only: export an address's API history page by page so the
+  // host can turn real items into HistoryDetail fixtures.
+  // `?_cmd=debug-export-history&address=0x..&chain=eth&days=90&pages=50`
+  if (
+    rabbyGoCmd === 'debug-export-history' ||
+    target === 'debug-export-history'
+  ) {
+    const daysRaw = Number(urlInfo.searchParams.get('days') || '90');
+    const pagesRaw = Number(urlInfo.searchParams.get('pages') || '50');
+    return {
+      type: 'debug-export-history',
+      debugExportHistory: {
+        address: urlInfo.searchParams.get('address') || undefined,
+        chain: urlInfo.searchParams.get('chain') || undefined,
+        days:
+          Number.isFinite(daysRaw) && daysRaw > 0
+            ? Math.min(365, Math.trunc(daysRaw))
+            : 90,
+        pages:
+          Number.isFinite(pagesRaw) && pagesRaw > 0
+            ? Math.min(200, Math.trunc(pagesRaw))
+            : 50,
         name: urlInfo.searchParams.get('name') || undefined,
       },
     } satisfies Parameters<OnParseUrlAndProcessAction>[0];
@@ -1491,6 +1527,126 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
             '[useUniversalLinkOnTop] debug-dump-route failed',
             error,
           );
+        }
+      })();
+      break;
+    case 'debug-export-history':
+      if (!isNonPublicProductionEnv) {
+        return;
+      }
+      void (async () => {
+        try {
+          const [
+            { openapi },
+            { getSelectedBalanceAddressesSnapshot },
+            { DocumentDirectoryPath, mkdir, writeFile },
+            { txResultToToHistoryDisplayItem },
+          ] = await Promise.all([
+            import('@/core/request'),
+            import('@/store/balance'),
+            import('@rabby-wallet/react-native-fs'),
+            import('@/utils/transaction'),
+          ]);
+          const address = (
+            payload.debugExportHistory?.address ||
+            getSelectedBalanceAddressesSnapshot()[0] ||
+            ''
+          ).toLowerCase();
+          if (!address) {
+            throw new Error('no address available');
+          }
+          const chain = payload.debugExportHistory?.chain;
+          const days = payload.debugExportHistory?.days ?? 90;
+          const maxPages = payload.debugExportHistory?.pages ?? 50;
+          const pageCount = 20;
+          const until = Math.floor(Date.now() / 1000) - days * 24 * 60 * 60;
+          const historyList: Record<string, any>[] = [];
+          const tokenDict: Record<string, any> = {};
+          const projectDict: Record<string, any> = {};
+          const cateDict: Record<string, any> = {};
+          const seen = new Set<string>();
+          let startTime = 0;
+          for (let page = 0; page < maxPages; page++) {
+            const res = (await openapi.listTxHistory({
+              id: address,
+              ...(chain ? { chain_id: chain } : {}),
+              start_time: startTime,
+              page_count: pageCount,
+            })) as any;
+            const list: Record<string, any>[] = res?.history_list ?? [];
+            Object.assign(tokenDict, res?.token_dict ?? {});
+            Object.assign(projectDict, res?.project_dict ?? {});
+            Object.assign(cateDict, res?.cate_dict ?? {});
+            for (const item of list) {
+              const key = String(item?.id ?? '');
+              if (!key || seen.has(key)) {
+                continue;
+              }
+              seen.add(key);
+              historyList.push(item);
+            }
+            const lastItem = list[list.length - 1];
+            if (!lastItem?.time_at || lastItem.time_at < until) {
+              break;
+            }
+            if (lastItem.time_at === startTime) {
+              break;
+            }
+            startTime = lastItem.time_at;
+            if (list.length < pageCount) {
+              break;
+            }
+          }
+          const displayItems = txResultToToHistoryDisplayItem({
+            address,
+            res: {
+              history_list: historyList,
+              token_dict: tokenDict,
+              project_dict: projectDict,
+              cate_dict: cateDict,
+            } as any,
+            pinedQueue: [],
+            customTxItemsMap: {},
+            transactions: [],
+          });
+          const dir = `${DocumentDirectoryPath}/screen-registry-fixtures`;
+          await mkdir(dir);
+          const fileName = (
+            payload.debugExportHistory?.name ||
+            `history-export-${address.slice(-6)}`
+          )
+            .replace(/[^\w.-]/g, '_')
+            .slice(0, 80);
+          const filePath = `${dir}/${fileName}.json`;
+          await writeFile(
+            filePath,
+            JSON.stringify(
+              {
+                address,
+                chain: chain ?? null,
+                days,
+                fetchedAt: Date.now(),
+                count: displayItems.length,
+                items: displayItems,
+              },
+              null,
+              2,
+            ),
+            'utf8',
+          );
+          const histogram: Record<string, number> = {};
+          for (const item of displayItems) {
+            const key = String(
+              (item as any)?.history_type ?? item?.historyType ?? 'unknown',
+            );
+            histogram[key] = (histogram[key] ?? 0) + 1;
+          }
+          console.log(
+            `[debug-export-history] ${displayItems.length} items -> ${fileName}.json`,
+            histogram,
+          );
+        } catch (error) {
+          console.warn('[debug-export-history] failed', error);
         }
       })();
       break;
