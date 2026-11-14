@@ -36,6 +36,8 @@ import { formatSmallCurrencyValueParts } from '@/utils/currency';
 import LoadingCircle from '@/components2024/RotateLoadingCircle';
 import Animated, {
   clamp,
+  Extrapolate,
+  interpolate,
   useAnimatedStyle,
   useSharedValue,
 } from 'react-native-reanimated';
@@ -238,7 +240,20 @@ export function TabsTopHeader(): JSX.Element {
 
   // The header is a scene overlay now: it collapses with the shared scene
   // offset and only fades while the dapp drawer is pulled up.
-  const { opacityStyle } = useHomeDrawerOpacityStyle();
+  const { opacityStyle, pullPercent } = useHomeDrawerOpacityStyle();
+
+  // Collapse the header's height as the dapp drawer takes over. Without this
+  // the header keeps its full height while faded, which leaves a blank band
+  // above the drawer's tab row and lets the header box cover the top of those
+  // tabs.
+  const headerStyle = useAnimatedStyle(() => ({
+    height: interpolate(
+      pullPercent.value,
+      [0, -100],
+      [HOME_TOP_HEADER_SIZES.topHeaderHeight, 0],
+      Extrapolate.CLAMP,
+    ),
+  }));
 
   // Left side: total-balance label on the overview, live balance from the first
   // asset page on. Same band as the right-hand forms so both halves of the
@@ -326,7 +341,7 @@ export function TabsTopHeader(): JSX.Element {
   );
 
   return (
-    <Animated.View style={[styles.headerBox, opacityStyle]}>
+    <Animated.View style={[styles.headerBox, opacityStyle, headerStyle]}>
       <View style={styles.leftBox}>
         <Animated.View style={[styles.leftContent, totalBalanceStyle]}>
           <Text style={styles.balanceTextBox}>
