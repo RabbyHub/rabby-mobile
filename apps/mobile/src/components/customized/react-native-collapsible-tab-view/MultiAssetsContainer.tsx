@@ -381,6 +381,16 @@ export const MultiAssetsContainer = React.memo(
               stateManager.fail();
               return;
             }
+
+            // The overview page hosts the dapp drawer, and every vertical drag
+            // inside that drawer has to reach the drawer's own lists. The gate
+            // exists to protect the asset pages' lists from the pager, so it
+            // must stay out of anything below the first page boundary.
+            if (indexDecimal.value < 0.5) {
+              stateManager.fail();
+              return;
+            }
+
             const axis = resolveHomeGestureAxis(
               touch.absoluteX,
               touch.absoluteY,
@@ -406,7 +416,7 @@ export const MultiAssetsContainer = React.memo(
             runOnJS(setPagerScrollEnabled)(true);
             endHomeGesture();
           }),
-      [setPagerScrollEnabled],
+      [indexDecimal, setPagerScrollEnabled],
     );
 
     React.useImperativeHandle(
