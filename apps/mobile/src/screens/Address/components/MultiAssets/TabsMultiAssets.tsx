@@ -18,11 +18,6 @@ import { NFTList } from './NFTList';
 import { ProtocolList } from './ProtocolList';
 import { TokenList } from './TokenList';
 import { IS_IOS } from '@/core/native/utils';
-import {
-  makeMutable,
-  useAnimatedReaction,
-  withTiming,
-} from 'react-native-reanimated';
 import { HomeOverview } from '@/screens/Home/components/HomeOverview';
 import { RenderActivityBoundary } from '@/hooks/storeActivity/RenderActivityBoundary';
 import { useRegressionScenario } from '@/devtools/regressionScenarios/react';
@@ -143,8 +138,6 @@ const HomeTabActivityBoundary = ({
   );
 };
 
-const svTabsSettling = makeMutable(false);
-
 export const TabsMultiAssets: React.FC<TabMultiAssetsProps> = () => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const isScreenFocused = useIsFocused();
@@ -156,30 +149,6 @@ export const TabsMultiAssets: React.FC<TabMultiAssetsProps> = () => {
     [],
   );
   useRendererDetect({ name: 'TabsMultiAssets' });
-
-  // The pager emits very few `onPageScroll` samples during a fling, so the tab
-  // strip used to land a beat later than the pages. Mirror the pager while the
-  // finger drives it, and ease the strip to the settling page when the pager
-  // reports a large jump.
-  useAnimatedReaction(
-    () => ({
-      value: apisHomeTabIndex.svTabIndexDecimal.value,
-      settling: svTabsSettling.value,
-    }),
-    ({ value, settling }) => {
-      'worklet';
-      if (
-        settling &&
-        Math.abs(value - apisHomeTabIndex.svRowTrack.value) > 0.3
-      ) {
-        apisHomeTabIndex.svRowTrack.value = withTiming(Math.round(value), {
-          duration: 180,
-        });
-        return;
-      }
-      apisHomeTabIndex.svRowTrack.value = value;
-    },
-  );
 
   return (
     <View style={styles.container}>
@@ -212,9 +181,8 @@ export const TabsMultiAssets: React.FC<TabMultiAssetsProps> = () => {
         cancelLazyFadeIn
         pagerProps={{
           onPageScrollStateChanged: event => {
-            const state = event?.nativeEvent?.pageScrollState;
-            isTabsSwiping.value = state !== 'idle';
-            svTabsSettling.value = state === 'settling';
+            isTabsSwiping.value =
+              event?.nativeEvent?.pageScrollState !== 'idle';
           },
           // scrollEnabled: !accountToShowReceiveTip,
         }}

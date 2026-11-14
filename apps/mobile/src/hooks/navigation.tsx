@@ -468,12 +468,6 @@ const homeTabScrollerRef = React.createRef<CollapsibleRef<string>>();
 const tabIndexSvs = {
   current: 0,
   svIndexDecimal: makeMutable(0),
-  /**
-   * Track used by the tab strip / labels. Normally mirrors `svIndexDecimal`,
-   * but during a fling the pager only emits a couple of samples, so the row
-   * eases to the settling page instead of jumping with those samples.
-   */
-  svRowTrack: makeMutable(0),
   svTabName: makeMutable(HomeTabName.overview),
 };
 export const apisHomeTabIndex = {
@@ -485,9 +479,6 @@ export const apisHomeTabIndex = {
   // },
   get svTabIndexDecimal() {
     return tabIndexSvs.svIndexDecimal;
-  },
-  get svRowTrack() {
-    return tabIndexSvs.svRowTrack;
   },
   get svTabName() {
     return tabIndexSvs.svTabName;
