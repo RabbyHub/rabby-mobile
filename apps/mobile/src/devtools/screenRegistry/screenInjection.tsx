@@ -14,6 +14,9 @@ export const SCREEN_INJECTED_PROPS_PARAM = '__debugInjectedProps';
 
 const RESERVED_PROP_KEYS = new Set(['route', 'navigation']);
 
+/** Stable wrapper identity per screen component (see withScreenPropsInjection). */
+const wrapperCache = new WeakMap<object, React.ComponentType<never>>();
+
 type RouteLike = {
   name?: string;
   params?: Record<string, unknown> & {
@@ -59,6 +62,16 @@ export function withScreenPropsInjection<P extends object>(
     return Component;
   }
 
+  // Navigator files call this inside JSX, so it runs on every navigator render.
+  // Returning a fresh wrapper each time changes the screen component type and
+  // makes React Navigation remount the screen — its data effects re-run and
+  // request the same API in a loop (observed as ~2 req/s on Home). Cache one
+  // wrapper per component so the identity stays stable.
+  const cached = wrapperCache.get(Component as object);
+  if (cached) {
+    return cached as React.ComponentType<P>;
+  }
+
   function ScreenPropsInjectionBoundary(props: P) {
     const route = (props as { route?: RouteLike }).route;
     const injected = route?.params?.[SCREEN_INJECTED_PROPS_PARAM];
@@ -82,5 +95,6 @@ export function withScreenPropsInjection<P extends object>(
     Component.displayName || Component.name || 'Screen'
   })`;
 
+  wrapperCache.set(Component as object, ScreenPropsInjectionBoundary);
   return ScreenPropsInjectionBoundary;
 }
