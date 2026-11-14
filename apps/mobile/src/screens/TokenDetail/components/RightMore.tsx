@@ -80,21 +80,26 @@ export const RightMore: React.FC<{
             ]}
             accessibilityRole="button"
             onPress={handleFavorite}>
-            <Text style={styles.favoriteText}>
-              {t(
-                isPinned
-                  ? 'page.tokenDetail.action.unfavorite'
-                  : 'page.tokenDetail.action.favorite',
-              )}
-            </Text>
-            <RcFavorite
-              width={20}
-              height={20}
-              color={colors2024['orange-default']}
-              fill={isPinned ? 'currentColor' : 'none'}
-              stroke={isPinned ? 'none' : colors2024['orange-default']}
-              strokeWidth={1.5}
-            />
+            {({ pressed }) => (
+              <>
+                <Text
+                  style={[styles.favoriteText, pressed && styles.pressedText]}>
+                  {t(
+                    isPinned
+                      ? 'page.tokenDetail.action.unfavorite'
+                      : 'page.tokenDetail.action.favorite',
+                  )}
+                </Text>
+                <RcFavorite
+                  width={20}
+                  height={20}
+                  color={colors2024['orange-default']}
+                  fill={isPinned ? 'currentColor' : 'none'}
+                  stroke={isPinned ? 'none' : colors2024['orange-default']}
+                  strokeWidth={1.5}
+                />
+              </>
+            )}
           </Pressable>
           <Pressable
             style={({ pressed }) => [
@@ -106,17 +111,21 @@ export const RightMore: React.FC<{
               pendingRemoveTokenRef.current = token;
               setVisible(false);
             }}>
-            <Text style={styles.removeText}>
-              {t('page.singleHome.tokenActions.remove')}
-            </Text>
-            <Image
+            {() => (
+              <>
+                <Text style={styles.removeText}>
+                  {t('page.singleHome.tokenActions.remove')}
+                </Text>
+                <Image
               source={
                 isLight
                   ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_remove.png')
                   : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_remove_dark.png')
               }
-              style={styles.removeIcon}
-            />
+                  style={styles.removeIcon}
+                />
+              </>
+            )}
           </Pressable>
         </View>
       }>
@@ -166,7 +175,14 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   menu: { width: 192 },
   // Press feedback is opacity-only (QA 1147): production shows no background
   // colour when a menu row is held.
-  menuItemPressed: { opacity: 0.7 },
+  menuItemPressed: {
+    // Theme-aware press tint: neutral-bg-2 is invisible on the classic dark
+    // palette, so dark uses a translucent white lift instead.
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-2']
+      : 'rgba(255, 255, 255, 0.08)',
+  },
+  pressedText: { color: colors2024['brand-default'] },
   menuItem: {
     paddingHorizontal: 8,
     paddingVertical: 12,
