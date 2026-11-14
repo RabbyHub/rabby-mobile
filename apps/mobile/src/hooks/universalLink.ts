@@ -118,6 +118,7 @@ type OnParseUrlAndProcessAction = (payload: {
     | 'debug-capture-requests'
     | 'debug-disconnect-dapp'
     | 'debug-set-current-account'
+    | 'debug-dapp-eval'
     | 'debug-open-bridge-detail'
     | 'debug-open-history-local-detail'
     | 'regression-scenario';
@@ -191,6 +192,10 @@ type OnParseUrlAndProcessAction = (payload: {
   /** Non-production only: switch the app's current account by address. */
   debugSetCurrentAccount?: {
     address?: string;
+  };
+  /** Non-production only: inject JavaScript into the active dapp webview. */
+  debugDappEval?: {
+    code?: string;
   };
   /** Non-production only: open a global bottom-sheet modal by name. */
   debugOpenModal?: {
@@ -668,6 +673,17 @@ function parseNonProductionMaintenanceLink(appLink: string) {
         allowAnyApproval: ['1', 'true', 'yes'].includes(
           (urlInfo.searchParams.get('allowAnyApproval') || '').toLowerCase(),
         ),
+      },
+    } satisfies Parameters<OnParseUrlAndProcessAction>[0];
+  }
+
+  // Non-production only: run JS in the active dapp webview.
+  // `?_cmd=debug-dapp-eval&code=<urlencoded js>`
+  if (rabbyGoCmd === 'debug-dapp-eval' || target === 'debug-dapp-eval') {
+    return {
+      type: 'debug-dapp-eval',
+      debugDappEval: {
+        code: urlInfo.searchParams.get('code') || undefined,
       },
     } satisfies Parameters<OnParseUrlAndProcessAction>[0];
   }
@@ -1837,6 +1853,26 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
           );
         } catch (error) {
           console.warn('[debug-capture-requests] failed', error);
+        }
+      })();
+      break;
+    case 'debug-dapp-eval':
+      if (!isNonPublicProductionEnv) {
+        return;
+      }
+      void (async () => {
+        try {
+          const { emitBrowserEval } = await import(
+            '@/devtools/screenRegistry/browserEval'
+          );
+          const code = payload.debugDappEval?.code;
+          if (!code) {
+            throw new Error('missing code');
+          }
+          emitBrowserEval(code);
+          console.log('[debug-dapp-eval] dispatched');
+        } catch (error) {
+          console.warn('[debug-dapp-eval] failed', error);
         }
       })();
       break;
