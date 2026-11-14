@@ -431,7 +431,7 @@ const STRIP_PIXEL = PixelRatio.get();
 
 function AssetsTabBar() {
   const { styles } = useTheme2024({ getStyle: getStyles });
-  const indexDecimal = apisHomeTabIndex.svTabIndexDecimal;
+  const indexDecimal = apisHomeTabIndex.svRowTrack;
   const { width: winWidth } = useWindowDimensions();
 
   // The strip belongs to the assets pages: it rides in from the right at the
@@ -490,7 +490,7 @@ export const HomeCustomMaterialTabBar = ({}: Partial<
   Pick<MaterialTabBarProps, 'indexDecimal'>
 >) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
-  const indexDecimal = apisHomeTabIndex.svTabIndexDecimal;
+  const indexDecimal = apisHomeTabIndex.svRowTrack;
   const { tabsOpacity } = useHomeDrawerOpacityStyle();
 
   // Keep the native sibling order stable while PagerView is settling. Changing
