@@ -48,6 +48,7 @@ Read the matching guide whenever a change reaches one of these surfaces:
 | --- | --- |
 | Startup stages, lock/unlock, keyring readiness, visible/current account state, first route or first Home readiness | `skills/rabby-mobile-startup-governance/SKILL.md` |
 | Home, stores, hooks, selectors, lists, render fan-out, or inactive Screen subscriptions | `apps/mobile/skills/perf-hooks.md` |
+| Gesture- or shared-value-driven animation, swipe-following chrome, tab highlight, pager settle, animated text/strip jitter | `skills/rabby-mobile-gesture-animation-perf/SKILL.md` |
 | SQLite writes, resource persistence, batching, reset, or clear cache | `skills/db-sync-write-scheduler/SKILL.md` |
 | Deterministic lifecycle or performance evidence inside the real app | `skills/mobile-testable-component-boundaries/SKILL.md` |
 | Import graph, barrels, service boundaries, or module reachability | `apps/mobile/skills/import-cycles.md` |

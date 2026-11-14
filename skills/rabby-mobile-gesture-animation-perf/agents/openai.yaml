@@ -1,0 +1,4 @@
+interface:
+  display_name: "Rabby Mobile Gesture And Animation Performance"
+  short_description: "Keep gesture-driven animation on the UI runtime"
+  default_prompt: "Use $rabby-mobile-gesture-animation-perf to review or design a gesture-driven animation in Rabby Mobile."
