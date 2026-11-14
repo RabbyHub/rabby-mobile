@@ -61,8 +61,16 @@ export function setCurrentMiniApprovalSync(
 
 export function setCurrentRequestDeferFnSync(
   value: Parameters<NotificationService['setCurrentRequestDeferFn']>[0],
+  signingOperationId?: string,
 ) {
-  requireNotificationService().setCurrentRequestDeferFn(value);
+  if (signingOperationId === undefined) {
+    requireNotificationService().setCurrentRequestDeferFn(value);
+    return;
+  }
+  requireNotificationService().setCurrentRequestDeferFn(
+    value,
+    signingOperationId,
+  );
 }
 
 export function unlockNotificationSync() {
