@@ -115,6 +115,7 @@ type OnParseUrlAndProcessAction = (payload: {
     | 'debug-open-modal'
     | 'debug-inject-approval'
     | 'debug-dump-approval'
+    | 'debug-capture-requests'
     | 'debug-open-bridge-detail'
     | 'debug-open-history-local-detail'
     | 'regression-scenario';
@@ -175,6 +176,11 @@ type OnParseUrlAndProcessAction = (payload: {
   /** Non-production only: dump the current approval request to the sandbox. */
   debugDumpApproval?: {
     name?: string;
+  };
+  /** Non-production only: toggle raw provider-request capture. */
+  debugCaptureRequests?: {
+    on?: boolean;
+    allowAnyApproval?: boolean;
   };
   /** Non-production only: open a global bottom-sheet modal by name. */
   debugOpenModal?: {
@@ -633,6 +639,25 @@ function parseNonProductionMaintenanceLink(appLink: string) {
             ? Math.min(200, Math.trunc(pagesRaw))
             : 10,
         name: urlInfo.searchParams.get('name') || undefined,
+      },
+    } satisfies Parameters<OnParseUrlAndProcessAction>[0];
+  }
+
+  // Non-production only: toggle raw provider-request capture.
+  // `?_cmd=debug-capture-requests&on=1`
+  if (
+    rabbyGoCmd === 'debug-capture-requests' ||
+    target === 'debug-capture-requests'
+  ) {
+    return {
+      type: 'debug-capture-requests',
+      debugCaptureRequests: {
+        on: ['1', 'true', 'yes'].includes(
+          (urlInfo.searchParams.get('on') || '').toLowerCase(),
+        ),
+        allowAnyApproval: ['1', 'true', 'yes'].includes(
+          (urlInfo.searchParams.get('allowAnyApproval') || '').toLowerCase(),
+        ),
       },
     } satisfies Parameters<OnParseUrlAndProcessAction>[0];
   }
@@ -1750,6 +1775,30 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
           );
         } catch (error) {
           console.warn('[debug-export-history] failed', error);
+        }
+      })();
+      break;
+    case 'debug-capture-requests':
+      if (!isNonPublicProductionEnv) {
+        return;
+      }
+      void (async () => {
+        try {
+          const { setRequestCaptureEnabled, setAllowAnyApproval } =
+            await import('@/devtools/screenRegistry/requestCapture');
+          const on = payload.debugCaptureRequests?.on ?? false;
+          setRequestCaptureEnabled(on);
+          setAllowAnyApproval(
+            payload.debugCaptureRequests?.allowAnyApproval ?? false,
+          );
+          console.log(
+            '[debug-capture-requests]',
+            on ? 'enabled' : 'disabled',
+            'allowAnyApproval=',
+            payload.debugCaptureRequests?.allowAnyApproval ?? false,
+          );
+        } catch (error) {
+          console.warn('[debug-capture-requests] failed', error);
         }
       })();
       break;
