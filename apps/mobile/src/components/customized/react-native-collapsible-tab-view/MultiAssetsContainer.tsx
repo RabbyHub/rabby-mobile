@@ -8,6 +8,7 @@ import {
   View,
 } from 'react-native';
 import PagerView from 'react-native-pager-view';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   runOnJS,
   runOnUI,
@@ -326,6 +327,81 @@ export const MultiAssetsContainer = React.memo(
       },
     });
 
+    // One arbiter for the asset pages: the first direction of a drag decides
+    // who owns it. A vertical drag takes the pager out of the race (its native
+    // scrolling is switched off for the rest of the gesture) so the list can
+    // scroll without the pages sliding; a horizontal drag lets the pager keep
+    // the gesture untouched.
+    //
+    // The pager itself has no arbitration API we can join, so this is a gate
+    // rather than a transparent hand-off: RNGH cannot share a gesture with the
+    // native pager without swallowing it (see
+    // codex-rabby/plans/rabby-mobile-home-gesture-single-authority-20261115.md).
+    const gateStartX = useSharedValue(0);
+    const gateStartY = useSharedValue(0);
+    const pagerScrollEnabledRef = React.useRef(true);
+    const setPagerScrollEnabled = React.useCallback(
+      (enabled: boolean) => {
+        if (pagerScrollEnabledRef.current === enabled) {
+          return;
+        }
+        pagerScrollEnabledRef.current = enabled;
+        containerRef.current?.setScrollEnabled?.(enabled);
+      },
+      [containerRef],
+    );
+    React.useEffect(
+      () => () => {
+        // Never leave the pager disabled if the screen goes away mid-gesture.
+        containerRef.current?.setScrollEnabled?.(true);
+      },
+      [containerRef],
+    );
+    const pagerGateGesture = React.useMemo(
+      () =>
+        Gesture.Pan()
+          .manualActivation(true)
+          .maxPointers(1)
+          .onTouchesDown(event => {
+            'worklet';
+            const touch = event.allTouches[0];
+            if (!touch) {
+              return;
+            }
+            gateStartX.value = touch.absoluteX;
+            gateStartY.value = touch.absoluteY;
+          })
+          .onTouchesMove((event, stateManager) => {
+            'worklet';
+            const touch = event.allTouches[0];
+            if (!touch) {
+              stateManager.fail();
+              return;
+            }
+            const dx = Math.abs(touch.absoluteX - gateStartX.value);
+            const dy = Math.abs(touch.absoluteY - gateStartY.value);
+
+            // Horizontal leads: the pager owns this drag, step aside entirely.
+            if (dx > 12 && dx > dy) {
+              stateManager.fail();
+              return;
+            }
+            // Vertical leads: take the gesture and lock the pager out of it.
+            if (dy >= 8 && dy > dx * 1.2) {
+              stateManager.activate();
+            }
+          })
+          .onStart(() => {
+            'worklet';
+            runOnJS(setPagerScrollEnabled)(false);
+          })
+          .onFinalize(() => {
+            'worklet';
+            runOnJS(setPagerScrollEnabled)(true);
+          }),
+      [gateStartX, gateStartY, setPagerScrollEnabled],
+    );
+
     React.useImperativeHandle(
       ref,
       () => ({
@@ -422,30 +498,32 @@ export const MultiAssetsContainer = React.memo(
             </View>
           </Animated.View>
 
-          <AnimatedPagerView
-            ref={containerRef}
-            onPageScroll={pageScrollHandler}
-            initialPage={index.value}
-            {...pagerProps}
-            style={[pagerProps?.style, StyleSheet.absoluteFill]}>
-            {data.map((tabName, i) => {
-              return (
-                <View key={i}>
-                  <TabNameContext.Provider value={tabName}>
-                    <Lazy
-                      startMounted={lazy ? undefined : true}
-                      cancelLazyFadeIn={!lazy ? true : !!cancelLazyFadeIn}>
-                      {
-                        React.Children.toArray(children)[
-                          i
-                        ] as React.ReactElement<any>
-                      }
-                    </Lazy>
-                  </TabNameContext.Provider>
-                </View>
-              );
-            })}
-          </AnimatedPagerView>
+          <GestureDetector gesture={pagerGateGesture}>
+            <AnimatedPagerView
+              ref={containerRef}
+              onPageScroll={pageScrollHandler}
+              initialPage={index.value}
+              {...pagerProps}
+              style={[pagerProps?.style, StyleSheet.absoluteFill]}>
+              {data.map((tabName, i) => {
+                return (
+                  <View key={i}>
+                    <TabNameContext.Provider value={tabName}>
+                      <Lazy
+                        startMounted={lazy ? undefined : true}
+                        cancelLazyFadeIn={!lazy ? true : !!cancelLazyFadeIn}>
+                        {
+                          React.Children.toArray(children)[
+                            i
+                          ] as React.ReactElement<any>
+                        }
+                      </Lazy>
+                    </TabNameContext.Provider>
+                  </View>
+                );
+              })}
+            </AnimatedPagerView>
+          </GestureDetector>
         </Animated.View>
       </Context.Provider>
     );
