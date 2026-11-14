@@ -551,7 +551,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   displayModeButton: {
     height: HeaderHeight,
     paddingHorizontal: 12,
-    paddingVertical: 6,
     borderRadius: 8,
     backgroundColor: colors2024['neutral-bg-5'],
     // justifyContent: 'center',
@@ -565,6 +564,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   displayModeText: {
     fontSize: 14,
     lineHeight: 18,
+    includeFontPadding: false,
+    textAlignVertical: 'center',
     color: colors2024['neutral-body'],
     fontWeight: '500',
     fontFamily: 'SF Pro Rounded',
