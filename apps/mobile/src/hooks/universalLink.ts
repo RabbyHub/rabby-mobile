@@ -1755,7 +1755,7 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
       void (async () => {
         try {
           const [
-            { notificationServiceApi },
+            { notificationServiceApi, unlockNotificationSync },
             { getFallbackAccountSnapshot },
             { getSelectedBalanceAddressesSnapshot },
             { INTERNAL_REQUEST_ORIGIN },
@@ -1806,6 +1806,15 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
               ],
             };
           }
+          // Recover from a stale modal handle left by a previous dismissal.
+          try {
+            await notificationServiceApi.clear();
+          } catch {
+            // ignore
+          }
+          // The notification service locks itself when a window opens and only
+          // the rpc flow unlocks it. A direct injection must do the same.
+          unlockNotificationSync();
           const result = await notificationServiceApi.requestApproval({
             approvalComponent:
               payload.debugInjectApproval?.component ?? 'SignTx',
@@ -1815,8 +1824,17 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
               payload.debugInjectApproval?.origin ?? INTERNAL_REQUEST_ORIGIN,
             approvalType: payload.debugInjectApproval?.approvalType ?? 'SignTx',
           } as any);
+          unlockNotificationSync();
           console.log('[debug-inject-approval] resolved', result);
         } catch (error) {
+          try {
+            const { unlockNotificationSync: unlock } = await import(
+              '@/core/serviceApi/notification'
+            );
+            unlock();
+          } catch {
+            // ignore
+          }
           console.warn('[debug-inject-approval] failed', error);
         }
       })();
