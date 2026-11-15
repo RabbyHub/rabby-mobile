@@ -121,6 +121,7 @@ type OnParseUrlAndProcessAction = (payload: {
     | 'debug-dapp-eval'
     | 'debug-browser-tabs'
     | 'debug-biometrics'
+    | 'debug-set-clipboard'
     | 'debug-open-bridge-detail'
     | 'debug-open-history-local-detail'
     | 'regression-scenario';
@@ -207,6 +208,10 @@ type OnParseUrlAndProcessAction = (payload: {
   /** Non-production only: toggle biometrics auth. */
   debugBiometrics?: {
     on?: boolean;
+  };
+  /** Non-production only: write text to the device clipboard. */
+  debugSetClipboard?: {
+    text?: string;
   };
   /** Non-production only: open a global bottom-sheet modal by name. */
   debugOpenModal?: {
@@ -684,6 +689,20 @@ function parseNonProductionMaintenanceLink(appLink: string) {
         allowAnyApproval: ['1', 'true', 'yes'].includes(
           (urlInfo.searchParams.get('allowAnyApproval') || '').toLowerCase(),
         ),
+      },
+    } satisfies Parameters<OnParseUrlAndProcessAction>[0];
+  }
+
+  // Non-production only: write text to the device clipboard.
+  // `?_cmd=debug-set-clipboard&text=<urlencoded>`
+  if (
+    rabbyGoCmd === 'debug-set-clipboard' ||
+    target === 'debug-set-clipboard'
+  ) {
+    return {
+      type: 'debug-set-clipboard',
+      debugSetClipboard: {
+        text: urlInfo.searchParams.get('text') || undefined,
       },
     } satisfies Parameters<OnParseUrlAndProcessAction>[0];
   }
@@ -1894,6 +1913,25 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
           );
         } catch (error) {
           console.warn('[debug-capture-requests] failed', error);
+        }
+      })();
+      break;
+    case 'debug-set-clipboard':
+      if (!isNonPublicProductionEnv) {
+        return;
+      }
+      void (async () => {
+        try {
+          const text = payload.debugSetClipboard?.text;
+          if (!text) {
+            throw new Error('missing text');
+          }
+          const Clipboard = (await import('@react-native-clipboard/clipboard'))
+            .default;
+          Clipboard.setString(text);
+          console.log('[debug-set-clipboard] wrote', text.length, 'chars');
+        } catch (error) {
+          console.warn('[debug-set-clipboard] failed', error);
         }
       })();
       break;
