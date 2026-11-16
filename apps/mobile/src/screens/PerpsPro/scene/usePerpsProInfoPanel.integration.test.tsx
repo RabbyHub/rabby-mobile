@@ -48,7 +48,7 @@ const { usePerpsProInfoPanel } =
   require('./usePerpsProInfoPanel') as typeof import('./usePerpsProInfoPanel');
 const { usePerpsPortfolioLiveValue } =
   require('@/hooks/perps/usePerpsPortfolioLiveValue') as typeof import('@/hooks/perps/usePerpsPortfolioLiveValue');
-const { PerpsProAccountSummaryRow } =
+const { PerpsProAccountSummaryRow, PerpsProAccountAssetDataRow } =
   require('./PerpsProAccountPresentation') as typeof import('./PerpsProAccountPresentation');
 const { createPerpsProAccountSelectors } =
   require('./perpsProAccountSelectors') as typeof import('./perpsProAccountSelectors');
@@ -401,10 +401,17 @@ describe('Perps Pro account price publication integration', () => {
           <PerpsProAccountSummaryRow
             selectors={info.accountSelectors}
             onDeposit={onDeposit}
-            onSwap={onSwap}
-            onTransfer={onTransfer}
             onWithdraw={onWithdraw}
           />
+          {info.accountAssetKeys.map(assetKey => (
+            <PerpsProAccountAssetDataRow
+              key={assetKey}
+              assetKey={assetKey}
+              selectors={info.accountSelectors}
+              onSwap={onSwap}
+              onTransfer={onTransfer}
+            />
+          ))}
         </StoreActivityBoundary>
       );
     }

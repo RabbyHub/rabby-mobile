@@ -84,6 +84,7 @@ import {
   getPerpsProInfoSectionMinimumContentHeight,
   getPerpsProInfoTabsNaturalAnchor,
   PERPS_PRO_INFO_TABS_HEIGHT,
+  PERPS_PRO_INFO_SECTION_DIVIDER_HEIGHT,
   PERPS_PRO_INFO_TABS_PLACEHOLDER_HEIGHT,
   PERPS_PRO_INFO_SECTION_TOP_GAP,
 } from '../components/info/perpsProInfoTabsSticky';
@@ -128,7 +129,10 @@ import {
 import { usePerpsProScene } from './usePerpsProScene';
 import { usePerpsProTradeDisplayVisibility } from './usePerpsProTradeDisplayVisibility';
 import { PerpsProAccountPresentationReset } from './PerpsProAccountPresentationReset';
-import { PerpsProAccountSummaryRow } from './PerpsProAccountPresentation';
+import {
+  PerpsProAccountAssetDataRow,
+  PerpsProAccountSummaryRow,
+} from './PerpsProAccountPresentation';
 import { usePerpsProCancelOrders } from './usePerpsProCancelOrders';
 import { usePerpsProOpenOrderEdit } from './usePerpsProOpenOrderEdit';
 import { usePerpsProCloseAll } from './usePerpsProCloseAll';
@@ -146,6 +150,7 @@ type PerpsProSceneRow =
       type: 'account-state';
     }
   | { key: 'account-summary'; type: 'account-summary' }
+  | { assetKey: string; key: string; type: 'account-asset' }
   | { key: 'positions-controls'; type: 'positions-controls' }
   | { key: 'positions-empty'; type: 'positions-empty' }
   | { key: string; position: PerpsPositionViewModel; type: 'position' }
@@ -800,8 +805,14 @@ export const PerpsProScene: React.FC<{
   const accountRows = useMemo<PerpsProSceneRow[]>(() => {
     const rows: PerpsProSceneRow[] = [];
     if (info.accountState === 'ready') {
-      // Asset rows render inside the summary card (Figma 86609:327475).
       rows.push({ key: 'account-summary', type: 'account-summary' });
+      rows.push(
+        ...info.accountAssetKeys.map(assetKey => ({
+          assetKey,
+          key: `account-asset:${assetKey}`,
+          type: 'account-asset' as const,
+        })),
+      );
     } else {
       rows.push({
         key: 'account-state',
@@ -811,7 +822,7 @@ export const PerpsProScene: React.FC<{
     }
 
     return rows;
-  }, [info.accountState]);
+  }, [info.accountAssetKeys, info.accountState]);
 
   // Empty/loading rows depend on presentation, not each fresh polling array.
   // Populated rows still consume every position/order update without equality
@@ -912,9 +923,16 @@ export const PerpsProScene: React.FC<{
             <PerpsProAccountSummaryRow
               selectors={info.accountSelectors}
               onDeposit={openDeposit}
+              onWithdraw={openWithdraw}
+            />
+          );
+        case 'account-asset':
+          return (
+            <PerpsProAccountAssetDataRow
+              selectors={info.accountSelectors}
+              assetKey={item.assetKey}
               onSwap={openSwap}
               onTransfer={transfer.open}
-              onWithdraw={openWithdraw}
             />
           );
         default:
@@ -1129,13 +1147,14 @@ export const PerpsProScene: React.FC<{
       onPress={openMarketSelector}
     />
   );
-  // The tab strip pins right below the (also pinned) market bar. The 20px gap
-  // scrolls away with the strip, so the pin point is measured from the bar
-  // itself.
+  // The tab strip pins right below the (also pinned) market bar. The 16px gap
+  // and 6px divider scroll away with the strip, so the pin point is measured
+  // from the bar itself.
   const infoTabsPinTop =
     regionAlertExtent +
     PERPS_PRO_MARKET_BAR_HEIGHT -
-    PERPS_PRO_INFO_SECTION_TOP_GAP;
+    PERPS_PRO_INFO_SECTION_TOP_GAP -
+    PERPS_PRO_INFO_SECTION_DIVIDER_HEIGHT;
   const listHeader = useMemo(
     () => (
       <View>
@@ -1239,8 +1258,12 @@ export const PerpsProScene: React.FC<{
                   <View
                     pointerEvents="none"
                     style={styles.infoTabsSpacer}
-                    testID="perps-pro-info-tabs-spacer"
-                  />
+                    testID="perps-pro-info-tabs-spacer">
+                    <View
+                      pointerEvents="none"
+                      style={styles.infoSectionDivider}
+                    />
+                  </View>
                   <View pointerEvents="box-none" style={styles.infoTabsBar}>
                     <PerpsProInfoTabs
                       activeTab={settledInfoTab}
@@ -1518,7 +1541,7 @@ export const PerpsProScene: React.FC<{
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   container: {
     flex: 1,
     overflow: 'hidden',
@@ -1563,7 +1586,16 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     backgroundColor: colors2024['neutral-bg-1'],
   },
   infoTabsSpacer: {
-    height: PERPS_PRO_INFO_SECTION_TOP_GAP,
+    height:
+      PERPS_PRO_INFO_SECTION_TOP_GAP + PERPS_PRO_INFO_SECTION_DIVIDER_HEIGHT,
+  },
+  infoSectionDivider: {
+    backgroundColor: colors2024[isLight ? 'neutral-bg-0' : 'neutral-bg-2'],
+    bottom: 0,
+    height: PERPS_PRO_INFO_SECTION_DIVIDER_HEIGHT,
+    left: 0,
+    position: 'absolute',
+    right: 0,
   },
   scroll: {
     bottom: 0,
