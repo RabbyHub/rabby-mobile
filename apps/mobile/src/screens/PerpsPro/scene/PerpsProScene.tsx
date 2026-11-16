@@ -84,7 +84,6 @@ import {
   getPerpsProInfoSectionMinimumContentHeight,
   getPerpsProInfoTabsNaturalAnchor,
   PERPS_PRO_INFO_TABS_HEIGHT,
-  PERPS_PRO_INFO_SECTION_DIVIDER_HEIGHT,
   PERPS_PRO_INFO_TABS_PLACEHOLDER_HEIGHT,
   PERPS_PRO_INFO_SECTION_TOP_GAP,
 } from '../components/info/perpsProInfoTabsSticky';
@@ -1130,14 +1129,13 @@ export const PerpsProScene: React.FC<{
       onPress={openMarketSelector}
     />
   );
-  // The tab strip pins right below the (also pinned) market bar. The 16px gap
-  // and 6px divider scroll away with the strip, so the pin point is measured
-  // from the bar itself.
+  // The tab strip pins right below the (also pinned) market bar. The 20px gap
+  // scrolls away with the strip, so the pin point is measured from the bar
+  // itself.
   const infoTabsPinTop =
     regionAlertExtent +
     PERPS_PRO_MARKET_BAR_HEIGHT -
-    PERPS_PRO_INFO_SECTION_TOP_GAP -
-    PERPS_PRO_INFO_SECTION_DIVIDER_HEIGHT;
+    PERPS_PRO_INFO_SECTION_TOP_GAP;
   const listHeader = useMemo(
     () => (
       <View>
@@ -1241,12 +1239,8 @@ export const PerpsProScene: React.FC<{
                   <View
                     pointerEvents="none"
                     style={styles.infoTabsSpacer}
-                    testID="perps-pro-info-tabs-spacer">
-                    <View
-                      pointerEvents="none"
-                      style={styles.infoSectionDivider}
-                    />
-                  </View>
+                    testID="perps-pro-info-tabs-spacer"
+                  />
                   <View pointerEvents="box-none" style={styles.infoTabsBar}>
                     <PerpsProInfoTabs
                       activeTab={settledInfoTab}
@@ -1524,7 +1518,7 @@ export const PerpsProScene: React.FC<{
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
+const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
     flex: 1,
     overflow: 'hidden',
@@ -1569,16 +1563,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     backgroundColor: colors2024['neutral-bg-1'],
   },
   infoTabsSpacer: {
-    height:
-      PERPS_PRO_INFO_SECTION_TOP_GAP + PERPS_PRO_INFO_SECTION_DIVIDER_HEIGHT,
-  },
-  infoSectionDivider: {
-    backgroundColor: colors2024[isLight ? 'neutral-bg-0' : 'neutral-bg-2'],
-    bottom: 0,
-    height: PERPS_PRO_INFO_SECTION_DIVIDER_HEIGHT,
-    left: 0,
-    position: 'absolute',
-    right: 0,
+    height: PERPS_PRO_INFO_SECTION_TOP_GAP,
   },
   scroll: {
     bottom: 0,
