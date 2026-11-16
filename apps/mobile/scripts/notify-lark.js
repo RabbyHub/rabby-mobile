@@ -225,18 +225,25 @@ async function sendTextMessage({ title, lines = [] }) {
   console.log(res.data);
 }
 
+function onError() {
+  console.error('[notify-lark] request failed');
+  process.exitCode = 1;
+}
+
 const args = process.argv.slice(2);
 
 if (!process.env.CI && args[0] === 'get-token') {
   const { getLarkToken } = loadLarkHelpers();
-  getLarkToken().then(accessToken => {
-    console.log(`[notify-lark] get-token accessToken: ${accessToken}`);
-  });
+  getLarkToken()
+    .then(() => {
+      console.log('[notify-lark] get-token succeeded');
+    })
+    .catch(onError);
 } else if (args[0] === 'text') {
   sendTextMessage({
     title: args[1] || 'Rabby Mobile Notification',
     lines: args.slice(2),
-  });
+  }).catch(onError);
 } else if (args[0]) {
   const android16kbReportTextPath =
     process.env.RABBY_MOBILE_ANDROID_16KB_REPORT_TEXT;
@@ -257,7 +264,7 @@ if (!process.env.CI && args[0] === 'get-token') {
       process.env.GITHUB_ACTOR,
     ].filter(Boolean),
     android16kbReportText,
-  });
+  }).catch(onError);
 } else {
   console.log('[notify-lark] no message');
 }
