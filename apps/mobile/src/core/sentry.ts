@@ -3,6 +3,7 @@ import type { ReactNativeOptions } from '@sentry/react-native';
 
 import { APP_VERSIONS } from '@/constant';
 import { SENTRY_DEBUG, getSentryEnv } from '@/constant/env';
+import { createBridgeSdkSentryEvent } from '@/core/bridgeSdkReport';
 import { getUserBehaviorTrackingOptOut } from '@/utils/trackingOptOut';
 
 let sentryInitialized = false;
@@ -24,6 +25,29 @@ function dropWhenTrackingOptedOut<T>(event: T) {
 function beforeSendSentryEvent(event: SentryEvent, hint?: SentryEventHint) {
   if (!shouldSendToSentry()) {
     return null;
+  }
+
+  if (event.tags?.bridge_sdk === 'validation') {
+    if (!hint?.data?.bridge_sdk_report) {
+      return null;
+    }
+    const reportEvent = createBridgeSdkSentryEvent(hint.data.bridge_sdk_report);
+    if (!reportEvent) {
+      return null;
+    }
+    if (hint?.attachments) {
+      hint.attachments = [];
+    }
+    // Keep only SDK-approved diagnostics, without inherited wallet/request context.
+    return {
+      ...reportEvent,
+      event_id: event.event_id,
+      timestamp: event.timestamp,
+      release: event.release,
+      environment: event.environment,
+      platform: event.platform,
+      sdkProcessingMetadata: event.sdkProcessingMetadata,
+    };
   }
 
   return shouldDropSentryEvent(event, hint) ? null : scrubSentryPayload(event);

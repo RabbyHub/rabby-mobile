@@ -42,6 +42,15 @@ export const bridgeQuoteScore = (
   return amountUsd.minus(gasFeeUsd).minus(timeCostUsd);
 };
 
+export const getBridgeToTokenRawAmount = (quote: {
+  to_token_raw_amount_hex_str?: string;
+  to_token_raw_amount?: number;
+}) =>
+  quote.to_token_raw_amount_hex_str ??
+  (Number.isSafeInteger(quote.to_token_raw_amount)
+    ? String(quote.to_token_raw_amount)
+    : undefined);
+
 export const isSameBridgeQuote = (
   left?: SelectedBridgeQuote,
   right?: SelectedBridgeQuote,

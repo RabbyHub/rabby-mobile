@@ -23,7 +23,7 @@ import BigNumber from 'bignumber.js';
 import { QuoteList } from './BridgeQuotes';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { openapi } from '@/core/request';
-import pRetry from 'p-retry';
+import pRetry, { AbortError } from 'p-retry';
 import { bridgeToken, buildBridgeToken } from '../hooks/bridge';
 import { toast } from '@/components2024/Toast';
 import { useMemoizedFn, useRequest } from 'ahooks';
@@ -76,6 +76,12 @@ import type { FormAmountMode } from '@/utils/form';
 import { FormValuesOnSubmit, createAmountComparer } from '@/utils/form';
 import { tokenAmountBn } from '@/screens/Swap/utils';
 import { buildTx as buildBridgeTx } from '@rabby-wallet/rabby-bridge';
+import {
+  reportBridgeSdkError,
+  reportBridgeSdkException,
+  shouldStopBridgeBuildRetry,
+} from '@/core/bridgeSdkReport';
+import { getBridgeToTokenRawAmount } from '../utils/bridgeQuote';
 import { useMiniSignerEffectPause } from '@/hooks/useMiniSignerEffectPause';
 import {
   hasQuotePollingPauseReason,
@@ -655,11 +661,22 @@ export const BridgeContent = ({
                   .toString(),
                 toChainId: toToken.chain,
                 toTokenId: toToken.id,
+                toTokenRawAmount:
+                  getBridgeToTokenRawAmount(selectedBridgeQuote),
                 slippage: new BigNumber(slippage).div(100).toString(10),
                 quoteKey: selectedBridgeQuote.quote_key || {},
+                onError: reportBridgeSdkError,
               },
               openapi,
-            ),
+            ).catch(error => {
+              reportBridgeSdkException(error);
+              if (shouldStopBridgeBuildRetry(error)) {
+                throw new AbortError(
+                  error instanceof Error ? error : String(error),
+                );
+              }
+              throw error;
+            }),
           { retries: 1 },
         );
         const addBridgeTxHistoryObj = {
@@ -788,6 +805,7 @@ export const BridgeContent = ({
     toToken,
   ]);
   const selectedBridgeQuoteBuildKeyRef = useRef(selectedBridgeQuoteBuildKey);
+  const quoteRequestIdRef = useRef(quoteRequestId);
 
   useEffect(() => {
     selectedBridgeQuoteBuildKeyRef.current = selectedBridgeQuoteBuildKey;
@@ -814,6 +832,7 @@ export const BridgeContent = ({
     ) {
       const buildKey =
         expectedBuildKey || selectedBridgeQuoteBuildKeyRef.current;
+      const requestId = quoteRequestIdRef.current;
       if (
         expectedBuildKey &&
         buildKey !== selectedBridgeQuoteBuildKeyRef.current
@@ -835,8 +854,10 @@ export const BridgeContent = ({
               .toString(),
             toChainId: toToken.chain,
             toTokenId: toToken.id,
+            toTokenRawAmount: getBridgeToTokenRawAmount(selectedBridgeQuote),
             slippage: new BigNumber(slippage).div(100).toString(10),
             quoteKey: selectedBridgeQuote.quote_key || {},
+            onError: reportBridgeSdkError,
           },
           openapi,
         );
@@ -901,6 +922,14 @@ export const BridgeContent = ({
         builtBridgeTxsKeyRef.current = buildKey;
         return result;
       } catch (error) {
+        reportBridgeSdkException(error);
+        if (
+          buildKey !== selectedBridgeQuoteBuildKeyRef.current ||
+          requestId !== quoteRequestIdRef.current
+        ) {
+          console.debug(error);
+          return;
+        }
         toast.info((error as any)?.message || String(error));
         setQuotesList(pre =>
           pre?.filter(
@@ -938,7 +967,6 @@ export const BridgeContent = ({
     finalBuildKey: '',
     manualBuildKey: '',
   });
-  const quoteRequestIdRef = useRef(quoteRequestId);
   const allQuotesLoadedRef = useRef(allQuotesLoaded);
 
   useEffect(() => {
