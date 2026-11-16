@@ -129,10 +129,7 @@ import {
 import { usePerpsProScene } from './usePerpsProScene';
 import { usePerpsProTradeDisplayVisibility } from './usePerpsProTradeDisplayVisibility';
 import { PerpsProAccountPresentationReset } from './PerpsProAccountPresentationReset';
-import {
-  PerpsProAccountAssetDataRow,
-  PerpsProAccountSummaryRow,
-} from './PerpsProAccountPresentation';
+import { PerpsProAccountSummaryRow } from './PerpsProAccountPresentation';
 import { usePerpsProCancelOrders } from './usePerpsProCancelOrders';
 import { usePerpsProOpenOrderEdit } from './usePerpsProOpenOrderEdit';
 import { usePerpsProCloseAll } from './usePerpsProCloseAll';
@@ -150,7 +147,6 @@ type PerpsProSceneRow =
       type: 'account-state';
     }
   | { key: 'account-summary'; type: 'account-summary' }
-  | { assetKey: string; key: string; type: 'account-asset' }
   | { key: 'positions-controls'; type: 'positions-controls' }
   | { key: 'positions-empty'; type: 'positions-empty' }
   | { key: string; position: PerpsPositionViewModel; type: 'position' }
@@ -805,14 +801,8 @@ export const PerpsProScene: React.FC<{
   const accountRows = useMemo<PerpsProSceneRow[]>(() => {
     const rows: PerpsProSceneRow[] = [];
     if (info.accountState === 'ready') {
+      // Asset rows render inside the summary card (Figma 86609:327475).
       rows.push({ key: 'account-summary', type: 'account-summary' });
-      rows.push(
-        ...info.accountAssetKeys.map(assetKey => ({
-          assetKey,
-          key: `account-asset:${assetKey}`,
-          type: 'account-asset' as const,
-        })),
-      );
     } else {
       rows.push({
         key: 'account-state',
@@ -822,7 +812,7 @@ export const PerpsProScene: React.FC<{
     }
 
     return rows;
-  }, [info.accountAssetKeys, info.accountState]);
+  }, [info.accountState]);
 
   // Empty/loading rows depend on presentation, not each fresh polling array.
   // Populated rows still consume every position/order update without equality
@@ -923,16 +913,9 @@ export const PerpsProScene: React.FC<{
             <PerpsProAccountSummaryRow
               selectors={info.accountSelectors}
               onDeposit={openDeposit}
-              onWithdraw={openWithdraw}
-            />
-          );
-        case 'account-asset':
-          return (
-            <PerpsProAccountAssetDataRow
-              selectors={info.accountSelectors}
-              assetKey={item.assetKey}
               onSwap={openSwap}
               onTransfer={transfer.open}
+              onWithdraw={openWithdraw}
             />
           );
         default:
