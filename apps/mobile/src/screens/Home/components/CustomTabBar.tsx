@@ -172,12 +172,21 @@ const Indicator = ({
 
 const indicatorMarginTop = 0;
 const indicatorHeight = HOME_TOP_HEADER_SIZES.headerIndicatorHeight;
+/**
+ * Extra touch area above and below the indicator bars, in pt. The container
+ * grows by twice this value and pulls the same amount back with negative
+ * margins, so the bars keep their exact visual position while the tappable
+ * height grows. Tapping slightly off the bar used to fall through to the pager.
+ */
+const indicatorHitPaddingY = 8;
 // Keep the indicator hit regions below the header's eye/action buttons.
 // Expanding 50pt upward overlaps those controls under Fabric hit testing.
-const leftHitSlopTop = 4;
-const leftHitSlopBottom = 4;
-const rightHitSlopTop = 4;
-const rightHitSlopBottom = 4;
+// The vertical touch area is owned by `indicatorHitPaddingY` on the container
+// now, so the pressables do not add their own slop on top of it.
+const leftHitSlopTop = 0;
+const leftHitSlopBottom = 0;
+const rightHitSlopTop = 0;
+const rightHitSlopBottom = 0;
 
 const indicatorStyles = createGetStyles2024(
   {
@@ -189,7 +198,7 @@ const indicatorStyles = createGetStyles2024(
 
         return {
           position: 'absolute',
-          top: indicatorMarginTop,
+          top: indicatorMarginTop + indicatorHitPaddingY,
           left: 20,
           width: indicatorWidth,
           height: indicatorHeight,
@@ -205,7 +214,7 @@ const indicatorStyles = createGetStyles2024(
 
         return {
           position: 'absolute',
-          top: indicatorMarginTop,
+          top: indicatorMarginTop + indicatorHitPaddingY,
           right: 20,
           width: indicatorWidth,
           height: indicatorHeight,
@@ -219,8 +228,10 @@ const indicatorStyles = createGetStyles2024(
   ({ isLight, colors2024 }) => {
     const winWidth = Dimensions.get('window').width;
     const indicatorWidth = getHomeTabIndicatorWidth(winWidth);
-    const rightPressableWidth = indicatorWidth * 0.5;
-    const rightPressableOffset = indicatorWidth - rightPressableWidth;
+    // The right segment covers the whole right bar: half of it was dead before,
+    // so tapping the right half of the grey bar did nothing.
+    const rightPressableWidth = indicatorWidth;
+    const rightPressableOffset = 0;
     return {
       indicator: {
         height: 6,
@@ -229,13 +240,15 @@ const indicatorStyles = createGetStyles2024(
           : colors2024['brand-default'],
         position: 'absolute',
         borderRadius: 12,
-        top: indicatorMarginTop,
+        top: indicatorMarginTop + indicatorHitPaddingY,
         zIndex: 99,
       },
       indicatorContainer: {
         position: 'relative',
         paddingTop: indicatorMarginTop,
-        height: indicatorMarginTop + indicatorHeight,
+        height: indicatorMarginTop + indicatorHeight + indicatorHitPaddingY * 2,
+        marginTop: -indicatorHitPaddingY,
+        marginBottom: -indicatorHitPaddingY,
       },
       indicatorBgBox: {
         backgroundColor: colors2024['neutral-bg-1'],
@@ -245,7 +258,7 @@ const indicatorStyles = createGetStyles2024(
         top: indicatorMarginTop,
         left: 20,
         width: indicatorWidth,
-        height: indicatorHeight,
+        height: indicatorHeight + indicatorHitPaddingY * 2,
         zIndex: 99,
       },
       rightPressable: {
@@ -253,32 +266,8 @@ const indicatorStyles = createGetStyles2024(
         right: 20 + rightPressableOffset,
         top: indicatorMarginTop,
         width: rightPressableWidth,
-        height: indicatorHeight,
+        height: indicatorHeight + indicatorHitPaddingY * 2,
         zIndex: 99,
-      },
-      leftHitAreaDebug: {
-        position: 'absolute',
-        top: indicatorMarginTop - leftHitSlopTop,
-        left: 20,
-        width: indicatorWidth,
-        height: indicatorHeight + leftHitSlopTop + leftHitSlopBottom,
-        borderRadius: 12,
-        backgroundColor: 'rgba(255, 0, 0, 0.12)',
-        borderWidth: 1,
-        borderColor: 'rgba(255, 0, 0, 0.4)',
-        zIndex: 97,
-      },
-      rightHitAreaDebug: {
-        position: 'absolute',
-        top: indicatorMarginTop - rightHitSlopTop,
-        right: 20 + rightPressableOffset,
-        width: rightPressableWidth,
-        height: indicatorHeight + rightHitSlopTop + rightHitSlopBottom,
-        borderRadius: 12,
-        backgroundColor: 'rgba(255, 0, 0, 0.12)',
-        borderWidth: 1,
-        borderColor: 'rgba(255, 0, 0, 0.4)',
-        zIndex: 97,
       },
     };
   },
