@@ -37,7 +37,7 @@ async function main() {
   process.stdout.write(result.url);
 }
 
-main().catch(error => {
-  console.error(`[lark-drive] ${error.message}`);
+main().catch(() => {
+  console.error('[lark-drive] upload failed');
   process.exitCode = 1;
 });

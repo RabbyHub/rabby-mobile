@@ -236,7 +236,7 @@ async function main() {
   );
 }
 
-main().catch(error => {
-  console.error(`[probe-lark-notification] ${error.message}`);
+main().catch(() => {
+  console.error('[probe-lark-notification] request failed');
   process.exitCode = 1;
 });
