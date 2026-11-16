@@ -8,7 +8,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { StyleSheet, View, type ViewProps } from 'react-native';
+import { Platform, StyleSheet, View, type ViewProps } from 'react-native';
 import {
   Gesture,
   GestureDetector,
@@ -37,8 +37,12 @@ import {
   getRootSceneVisibleRange,
   requestRootSceneTarget,
   resolveRootSceneRelease,
+  resolveRootSceneDragClaim,
   validateRootSceneKeys,
+  type RootScenePagerGestureMode,
 } from './rootScenePagerModel';
+
+export type { RootScenePagerGestureMode } from './rootScenePagerModel';
 import type {
   RootScenePagerProbe,
   RootScenePagerProbeEvent,
@@ -87,6 +91,16 @@ export type RootScenePagerProps = {
   ) => React.ReactElement | null;
   /** Enables gestures/UI selections, not child controls or requestedKey commands. */
   enabled?: boolean;
+  /**
+   * How horizontal drags share the platform back gesture.
+   * - `edge-handoff` (default): the native back-gesture edge belongs to the
+   *   system on every page; other horizontal drags page between sub-screens.
+   * - `boundary-handoff`: only the first page's rightward drag (and the last
+   *   page's leftward drag) go back to the parent; other drags page.
+   */
+  gestureMode?: RootScenePagerGestureMode;
+  /** Width (pt) of the native back-gesture edge. Defaults to 20 on iOS, else 0. */
+  backGestureEdge?: number;
   testID?: string;
   panGestureRef?: React.MutableRefObject<GestureType | undefined>;
   /** Optional UI worklet; veto at DOWN, before competing controls activate. */
@@ -169,6 +183,8 @@ const RootPageHost = memo(function RootPageHost({
 export function RootScenePager(props: RootScenePagerProps) {
   const {
     enabled = true,
+    gestureMode = 'edge-handoff',
+    backGestureEdge = Platform.OS === 'ios' ? 20 : 0,
     shouldStartGesture,
     panGestureRef,
     testID = 'root-scene',
@@ -641,13 +657,20 @@ export function RootScenePager(props: RootScenePagerProps) {
         }
         const dx = touch.absoluteX - touchStartX.value;
         const dy = touch.absoluteY - touchStartY.value;
-        const absX = Math.abs(dx);
-        const absY = Math.abs(dy);
-        if (absX < 8 && absY < 8) {
+        const claim = resolveRootSceneDragClaim({
+          gestureMode,
+          backGestureEdge,
+          dx,
+          dy,
+          startX: touchStartX.value,
+          selected: motion.value.selected,
+          count: keys.length,
+        });
+        if (claim === 'pending') {
           return;
         }
         slopeDecided.value = true;
-        if (absX >= absY * 1.15) {
+        if (claim === 'claim') {
           manager.activate();
         } else {
           manager.fail();
@@ -712,7 +735,9 @@ export function RootScenePager(props: RootScenePagerProps) {
     return pan;
   }, [
     blocks,
+    backGestureEdge,
     enabled,
+    gestureMode,
     keys,
     motion,
     panGestureRef,

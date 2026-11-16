@@ -7,10 +7,137 @@ import {
   getRootSceneVisibleRange,
   requestRootSceneTarget,
   resolveRootSceneRelease,
+  resolveRootSceneDragClaim,
   validateRootSceneKeys,
 } from './rootScenePagerModel';
 
 describe('root scene pager transport', () => {
+  describe('manual-activation claim', () => {
+    const base = { count: 2, backGestureEdge: 20 };
+
+    it('waits below the 8pt slop and releases vertical drags', () => {
+      expect(
+        resolveRootSceneDragClaim({
+          ...base,
+          gestureMode: 'edge-handoff',
+          dx: 4,
+          dy: 3,
+          startX: 100,
+          selected: 0,
+        }),
+      ).toBe('pending');
+      expect(
+        resolveRootSceneDragClaim({
+          ...base,
+          gestureMode: 'edge-handoff',
+          dx: 10,
+          dy: 20,
+          startX: 100,
+          selected: 0,
+        }),
+      ).toBe('release');
+    });
+
+    it('edge-handoff yields the back-gesture edge on every page', () => {
+      expect(
+        resolveRootSceneDragClaim({
+          ...base,
+          gestureMode: 'edge-handoff',
+          dx: 30,
+          dy: 2,
+          startX: 12,
+          selected: 0,
+        }),
+      ).toBe('release');
+      expect(
+        resolveRootSceneDragClaim({
+          ...base,
+          gestureMode: 'edge-handoff',
+          dx: 30,
+          dy: 2,
+          startX: 12,
+          selected: 1,
+        }),
+      ).toBe('release');
+      expect(
+        resolveRootSceneDragClaim({
+          ...base,
+          gestureMode: 'edge-handoff',
+          dx: 30,
+          dy: 2,
+          startX: 120,
+          selected: 0,
+        }),
+      ).toBe('claim');
+      // A leftward drag starting on the edge still belongs to the pager.
+      expect(
+        resolveRootSceneDragClaim({
+          ...base,
+          gestureMode: 'edge-handoff',
+          dx: -30,
+          dy: 2,
+          startX: 12,
+          selected: 0,
+        }),
+      ).toBe('claim');
+      // Platforms without a native edge gesture keep the full claim.
+      expect(
+        resolveRootSceneDragClaim({
+          ...base,
+          gestureMode: 'edge-handoff',
+          backGestureEdge: 0,
+          dx: 30,
+          dy: 2,
+          startX: 12,
+          selected: 0,
+        }),
+      ).toBe('claim');
+    });
+
+    it('boundary-handoff only releases the first/last page boundaries', () => {
+      expect(
+        resolveRootSceneDragClaim({
+          ...base,
+          gestureMode: 'boundary-handoff',
+          dx: 30,
+          dy: 2,
+          startX: 12,
+          selected: 0,
+        }),
+      ).toBe('release');
+      expect(
+        resolveRootSceneDragClaim({
+          ...base,
+          gestureMode: 'boundary-handoff',
+          dx: -30,
+          dy: 2,
+          startX: 12,
+          selected: 0,
+        }),
+      ).toBe('claim');
+      expect(
+        resolveRootSceneDragClaim({
+          ...base,
+          gestureMode: 'boundary-handoff',
+          dx: -30,
+          dy: 2,
+          startX: 12,
+          selected: 1,
+        }),
+      ).toBe('release');
+      expect(
+        resolveRootSceneDragClaim({
+          ...base,
+          gestureMode: 'boundary-handoff',
+          dx: 30,
+          dy: 2,
+          startX: 12,
+          selected: 1,
+        }),
+      ).toBe('claim');
+    });
+  });
+
   it('validates stable, nonempty unique keys', () => {
     expect(validateRootSceneKeys(['simple', 'pro'])).toBe('["simple","pro"]');
     expect(() => validateRootSceneKeys([])).toThrow();

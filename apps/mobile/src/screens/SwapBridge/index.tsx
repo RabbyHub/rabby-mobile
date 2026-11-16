@@ -9,6 +9,7 @@ import React, {
 import { View } from 'react-native';
 import {
   RootScenePager,
+  type RootScenePagerGestureMode,
   type RootScenePagerProps,
 } from '@rabby-wallet/rn-collapsible-scene-view';
 import {
@@ -44,8 +45,11 @@ import { TokenInfoPopup } from '../Swap/components/TokenInfoPopup';
 import { withSwapService } from '../Swap/swapServiceDependencies';
 import { getSwapBridgeActiveTab } from './navigationParams';
 import { useRootPagerEnabled } from '@/hooks/useRootPagerEnabled';
+import { useRootScenePagerBackGesture } from '@/hooks/useRootScenePagerBackGesture';
 
 const ROOT_SCENES: readonly SwapBridgeTab[] = ['swap', 'bridge'];
+// TEMP 1400 B-mode experiment: flip to 'edge-handoff' (or drop the prop) for A.
+const ROOT_PAGER_GESTURE_MODE: RootScenePagerGestureMode = 'edge-handoff';
 
 type SwapBridgeRoute = GetNestedScreenRouteProp<
   'TransactionNavigatorParamList',
@@ -137,6 +141,10 @@ function SwapBridgeScreenContent({
     });
   }
   const [settledTab, setSettledTab] = useState(activeTab);
+  useRootScenePagerBackGesture({
+    atFirstPage: settledTab === 'swap',
+    gestureMode: ROOT_PAGER_GESTURE_MODE,
+  });
   const [prewarm, setPrewarm] = useState(false);
   // Swap-again can leave an earlier SwapBridge route mounted. Shared scene
   // modals must have only one focused host.
@@ -234,6 +242,7 @@ function SwapBridgeScreenContent({
         onSettled={onSettled}
         renderPage={renderPage}
         enabled={pagerEnabled}
+        gestureMode={ROOT_PAGER_GESTURE_MODE}
         testID="swap-bridge-root"
       />
       <TokenInfoPopup />

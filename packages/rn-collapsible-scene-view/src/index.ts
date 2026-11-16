@@ -40,6 +40,7 @@ export type { LinkedPagerTrack } from './linkedPagerMath';
 export {
   RootScenePager,
   RootScenePagerGestureBlock,
+  type RootScenePagerGestureMode,
   type RootScenePagerProps,
   type RootScenePageContext,
   type RootSceneOverlayContext,
