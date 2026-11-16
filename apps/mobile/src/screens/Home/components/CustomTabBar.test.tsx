@@ -22,6 +22,8 @@ jest.mock('react-native-reanimated', () => {
     // As in Reanimated's Jest mock, interpolation is not simulated. Assertions
     // below cover the overlay's real opacity and pointer gates, not indicator
     // geometry or the asset-label fade interpolation.
+    clamp: (value: number, lower: number, upper: number) =>
+      Math.min(Math.max(value, lower), upper),
     interpolate: jest.fn(),
     Extrapolation: { CLAMP: 'clamp' },
     useAnimatedStyle: (callback: () => object) => callback(),
@@ -197,9 +199,11 @@ describe('HomeCustomMaterialTabBar presentation contract', () => {
         .filter(node => node.props.hitSlop != null);
       expect(indicatorControls).toHaveLength(2);
       for (const control of indicatorControls) {
-        // A 50pt upward expansion used to cover the header's eye/add buttons.
-        // Keep both indicator hit regions close to the visible bar.
-        expect(control.props.hitSlop.top).toBe(4);
+        // The vertical touch area now lives on the indicator container
+        // (`indicatorHitPaddingY`); the pressables must not add upward slop
+        // that could cover the header's eye/add buttons.
+        expect(control.props.hitSlop.top).toBe(0);
+        expect(control.props.hitSlop.bottom).toBe(0);
       }
     }
   });
@@ -231,7 +235,7 @@ describe('HomeCustomMaterialTabBar presentation contract', () => {
       view.rerender(<HomeCustomMaterialTabBar />);
 
       expect(getAssetsRowStyle().pointerEvents).toBe(
-        index < 1 ? 'none' : 'auto',
+        index > 0.99 ? 'auto' : 'none',
       );
     }
   });
