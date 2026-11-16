@@ -207,6 +207,7 @@ jest.mock('@react-navigation/native', () => {
     useRoute: () => ({ params: mockRouteParams }),
     useIsFocused: () =>
       ReactModule.useSyncExternalStore(subscribe, getSnapshot, getSnapshot),
+    useNavigation: () => ({ getParent: () => undefined }),
   };
 });
 

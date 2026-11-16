@@ -11,6 +11,7 @@ import { useIsFocused } from '@react-navigation/native';
 import {
   RootScenePager,
   type RootScenePageContext,
+  type RootScenePagerGestureMode,
   type RootScenePagerProps,
 } from '@rabby-wallet/rn-collapsible-scene-view';
 
@@ -21,6 +22,7 @@ import {
   PerpsRootProbeProfiler,
 } from '@/devtools/pullRefreshProbe/usePerpsRootProbe';
 import { useRootPagerEnabled } from '@/hooks/useRootPagerEnabled';
+import { useRootScenePagerBackGesture } from '@/hooks/useRootScenePagerBackGesture';
 import {
   getTopPerpsProSheetNavigationRegistration,
   subscribePerpsProSheetNavigation,
@@ -41,6 +43,8 @@ import {
 
 const MODES: readonly PerpsViewMode[] = ['simple', 'pro'];
 const hasProSheet = () => getTopPerpsProSheetNavigationRegistration() !== null;
+// TEMP 1400 B-mode experiment: flip to 'edge-handoff' (or drop the prop) for A.
+const ROOT_PAGER_GESTURE_MODE: RootScenePagerGestureMode = 'edge-handoff';
 
 type Props = {
   preferenceSource: PerpsRootModePreferenceSource;
@@ -129,6 +133,10 @@ export const PerpsRootPager = memo(function PerpsRootPager({
     hasProSheet,
   );
   const mode = usePerpsRootModeAdapter(preferenceSource);
+  useRootScenePagerBackGesture({
+    atFirstPage: mode.settledMode === 'simple',
+    gestureMode: ROOT_PAGER_GESTURE_MODE,
+  });
   const proNativeScrollY = useAnimatedValue(0);
   const headerPresentation = usePerpsRootHeaderPresentation(
     proNativeScrollY,
@@ -278,6 +286,7 @@ export const PerpsRootPager = memo(function PerpsRootPager({
         renderPage={renderPage}
         renderOverlay={renderOverlay}
         enabled={enabled}
+        gestureMode={ROOT_PAGER_GESTURE_MODE}
         testID="perps-root"
       />
     </View>
