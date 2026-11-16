@@ -41,10 +41,13 @@ function toError(e: unknown): Error {
   }
   const payload = e as {
     message?: unknown;
+    error?: unknown;
     code?: unknown;
     errorCode?: unknown;
   } | null;
-  const message = payload?.message;
+  // SDK failures use `error` for the text. Ignoring it stringifies the
+  // payload and drops the readable device message.
+  const message = payload?.message ?? payload?.error;
   let error: Error;
   if (typeof message === 'string' && message) {
     error = new Error(message);
@@ -148,6 +151,34 @@ function isCancelledError(payload?: {
 }
 
 /**
+ * Whether a connect id can no longer address the device.
+ *
+ * Busy and PIN failures are not stale: the same id is still the device.
+ *
+ * @param payload - The failed SDK response payload.
+ * @param payload.code - The SDK error code.
+ * @param payload.error - The SDK error message.
+ * @param payload.message - The thrown Error message.
+ * @returns True when discovery should look for a replacement connect id.
+ */
+function isStaleConnectError(payload?: {
+  code?: unknown;
+  error?: unknown;
+  message?: unknown;
+}) {
+  const code = payload?.code;
+  // 105 DeviceNotFound, 713 BleTimeout, 720 BleDeviceDisconnected.
+  return (
+    code === 105 ||
+    code === 713 ||
+    code === 720 ||
+    /device not found|disconnected/iu.test(
+      String(payload?.error ?? payload?.message ?? ''),
+    )
+  );
+}
+
+/**
  * Read the passphrase protection flag from a getDeviceState payload.
  *
  * @param payload - The getDeviceState payload.
@@ -188,6 +219,12 @@ type PassphraseParams = {
   useEmptyPassphrase?: boolean;
 };
 
+/** Cancellation version and unlock epoch captured when an unlock starts. */
+type OneKeyUnlockGuard = {
+  version: number;
+  epoch: number;
+};
+
 const NULL_TYPED_DATA_ERROR =
   'Invalid EIP-712 typed data: null is not a valid value for typed signing';
 
@@ -211,6 +248,11 @@ type AccountDetail = {
   index: number;
   connectId?: string | null;
   deviceId?: string | null;
+  /**
+   * Stray hidden-wallet id. Mobile does not write this, but a vault copied
+   * from the extension can still carry it. 113 recovery deletes it.
+   */
+  passphraseState?: string;
 };
 
 /**
@@ -290,6 +332,27 @@ class OneKeyKeyring extends EventEmitter {
   /** Whether the last getDeviceState reported an attach-PIN session. */
   private _unlockedAttachPin = false;
 
+  /** Connect id of the device call currently in flight, if it differs. */
+  pendingConnectId: string | null = null;
+
+  private cancellationVersion = 0;
+
+  /**
+   * Bumped on every cleanUp, including a device switch that does not cancel.
+   *
+   * Kept separate from `cancellationVersion` so an in-flight signature still
+   * surfaces the SDK disconnect code instead of "signing cancelled".
+   */
+  private unlockEpoch = 0;
+
+  private pendingSignings = 0;
+
+  private unlockPromise?: Promise<string>;
+
+  private pendingWorkCancelled = false;
+
+  private passphraseStateCleared = false;
+
   accountDetails: Record<string, AccountDetail>;
 
   bridge!: OneKeyBridgeInterface;
@@ -347,18 +410,249 @@ class OneKeyKeyring extends EventEmitter {
     return Boolean(this.hdk && this.hdk.publicKey);
   }
 
-  cleanUp() {
+  /**
+   * Drop the unlocked xpub and wallet/device identity.
+   *
+   * The selected BLE target (`_deviceConnectId`) is kept so the caller can
+   * still search that device. `cleanUp` clears it separately.
+   */
+  private _resetUnlockedSession() {
     this.hdk = new HDKey();
+    this.passphraseState = undefined;
+    this.deviceId = null;
+    this.connectId = null;
   }
 
-  async trySearchDevice(needCancel = false) {
+  /**
+   * True when this unlock or signing was invalidated, for example by lock.
+   *
+   * @param version - The version captured when the operation started.
+   */
+  private _assertNotCancelled(version: number) {
+    if (version !== this.cancellationVersion) {
+      throw new Error('OneKey signing cancelled');
+    }
+  }
+
+  /**
+   * Reject an unlock that lock cancelled or that a device switch replaced.
+   *
+   * @param version - Cancellation version captured when the unlock started.
+   * @param epoch - Unlock epoch captured when the unlock started.
+   */
+  private _assertSameUnlock(version: number, epoch: number) {
+    this._assertNotCancelled(version);
+    if (epoch !== this.unlockEpoch) {
+      throw new Error('OneKey signing cancelled');
+    }
+  }
+
+  /**
+   * Whether disconnect cleanup or cancel has invalidated this unlock.
+   *
+   * @param guard - The generation captured when the unlock started.
+   * @returns True when a later guard check would reject the unlock.
+   */
+  private _unlockWasReplaced(guard: OneKeyUnlockGuard | undefined) {
+    if (!guard) {
+      return false;
+    }
+    return (
+      guard.version !== this.cancellationVersion ||
+      guard.epoch !== this.unlockEpoch
+    );
+  }
+
+  /**
+   * Keep a failed SDK response when this unlock was already invalidated.
+   *
+   * Disconnect cleanup bumps the epoch while the call is in flight. Checking
+   * the epoch first replaces 107/109 with a code-less cancel, and the next
+   * mini-sign tx then bumps nonce. A successful response does not throw here.
+   *
+   * @param guard - The generation captured when the unlock started.
+   * @param response - The SDK response, success or failure.
+   * @param response.success - Whether the SDK call succeeded.
+   * @param response.payload - The SDK payload.
+   * @param fallbackMessage - Used when the payload has no error text.
+   */
+  private _throwStaleSdkFailure(
+    guard: OneKeyUnlockGuard | undefined,
+    response: { success: boolean; payload?: unknown },
+    fallbackMessage: string,
+  ) {
+    if (response.success || !this._unlockWasReplaced(guard)) {
+      return;
+    }
+    const payload = response.payload as
+      | { error?: string; code?: unknown }
+      | undefined;
+    throw sdkError(
+      payload && typeof payload === 'object' && !Array.isArray(payload)
+        ? payload
+        : undefined,
+      fallbackMessage,
+    );
+  }
+
+  /**
+   * Drop a pending unlock so the next device cannot reuse or be cleared by it.
+   *
+   * Does not bump `cancellationVersion` and does not call `bridge.cancel`.
+   */
+  private _invalidatePendingUnlock() {
+    this.unlockEpoch += 1;
+    this.unlockPromise = undefined;
+  }
+
+  /**
+   * Invalidate any in-flight unlock or signing and ask the device to stop
+   * only when something is actually pending.
+   *
+   * @returns The device cancel promise when a call is in flight.
+   */
+  cancelPendingWork() {
+    this.pendingWorkCancelled = true;
+    if (this.unlockPromise || this.pendingSignings) {
+      return this.cancel();
+    }
+    this.cancellationVersion += 1;
+    return undefined;
+  }
+
+  /**
+   * Stop the device call that is in flight, even when its connect id has not
+   * been stored on the keyring yet.
+   *
+   * @returns The device cancel promise, or undefined when no device is selected.
+   */
+  cancel() {
+    this.cancellationVersion += 1;
+    const connectId =
+      this.pendingConnectId || this.connectId || this._deviceConnectId;
+    if (!connectId) {
+      return undefined;
+    }
+    return this.bridge.cancel(connectId);
+  }
+
+  /**
+   * Count an in-flight signature so lock and import cleanup can see it.
+   *
+   * @returns The cancellation version captured when the signature started.
+   */
+  private _beginSigning(): number {
+    this.pendingSignings += 1;
+    return this.cancellationVersion;
+  }
+
+  /** Drop one in-flight signature. */
+  private _endSigning() {
+    this.pendingSignings = Math.max(0, this.pendingSignings - 1);
+  }
+
+  /**
+   * Whether 113 recovery removed a passphrase state that the vault still has.
+   *
+   * The flag is consumed once so a later signature does not persist again.
+   *
+   * @returns True when the caller should persist account details.
+   */
+  consumePassphraseStateCleared(): boolean {
+    const cleared = this.passphraseStateCleared;
+    this.passphraseStateCleared = false;
+    return cleared;
+  }
+
+  /**
+   * Drop the in-memory OneKey session.
+   *
+   * Called with no argument, this only clears fields. `setDeviceConnectId`
+   * relies on that form staying synchronous.
+   *
+   * @param cancelPending - Also cancel an in-flight unlock before clearing.
+   * @returns Nothing. A pending cancel resolves to undefined.
+   */
+  cleanUp(): undefined;
+
+  cleanUp(cancelPending: true): Promise<undefined> | undefined;
+
+  cleanUp(cancelPending = false) {
+    // A signing on this keyring is owned by its approval. Closing an import
+    // sheet with cancelPending must not wipe that signing's session.
+    if (
+      cancelPending &&
+      this.pendingSignings > 0 &&
+      !this.pendingWorkCancelled
+    ) {
+      return undefined;
+    }
+    this.pendingWorkCancelled = false;
+    // Snapshot before invalidation clears the promise. A device switch uses
+    // the no-argument form: the old unlock must not commit, and it must not
+    // cancel the device, so an in-flight signature can still report unplug.
+    const hadPendingUnlock = Boolean(this.unlockPromise);
+    this._invalidatePendingUnlock();
+    let cancelPromise: Promise<unknown> | undefined;
+    if (cancelPending) {
+      if (hadPendingUnlock) {
+        cancelPromise = Promise.resolve(this.cancel());
+      } else {
+        this.cancellationVersion += 1;
+      }
+    }
+    this._resetUnlockedSession();
+    this._deviceConnectId = undefined;
+    this.pendingConnectId = null;
+    this._passphraseProtection = undefined;
+    this._protocol = undefined;
+    this._mainWalletUnlocked = false;
+    this._unlockedAttachPin = false;
+    if (cancelPromise) {
+      return Promise.resolve(cancelPromise).then(() => undefined);
+    }
+    return undefined;
+  }
+
+  async trySearchDevice(needCancel = false, unlockGuard?: OneKeyUnlockGuard) {
+    const assertCurrent = () => {
+      if (!unlockGuard) {
+        return;
+      }
+      this._assertSameUnlock(unlockGuard.version, unlockGuard.epoch);
+    };
     await this.init();
+    assertCurrent();
 
     let deviceStateRead = false;
+    if (this._deviceConnectId) {
+      this.pendingConnectId = this._deviceConnectId;
+    }
     const devicePromise = this._deviceConnectId
-      ? this.bridge.getDeviceState(this._deviceConnectId).then(res => {
+      ? this.bridge.getDeviceState(this._deviceConnectId).then(async res => {
+          this._throwStaleSdkFailure(unlockGuard, res, 'searchDevices failed');
+          assertCurrent();
           if (!res.success) {
-            throw sdkError(res.payload, 'searchDevices failed');
+            // A BLE reconnect issues a new connect id. The stored one then
+            // fails lookup; search once and adopt the device that is here.
+            if (!isStaleConnectError(res.payload)) {
+              throw sdkError(res.payload, 'searchDevices failed');
+            }
+            const searched = await this.bridge.searchDevices();
+            this._throwStaleSdkFailure(
+              unlockGuard,
+              searched,
+              'searchDevices failed',
+            );
+            assertCurrent();
+            if (!searched.success || searched.payload.length <= 0) {
+              throw sdkError(res.payload, 'searchDevices failed');
+            }
+            const preferred = this.connectId || this._deviceConnectId;
+            return (
+              searched.payload.find(item => item.connectId === preferred) ||
+              searched.payload[0]
+            );
           }
           deviceStateRead = true;
           this._passphraseProtection = readPassphraseProtection(res.payload);
@@ -373,6 +667,8 @@ class OneKeyKeyring extends EventEmitter {
           };
         })
       : this.bridge.searchDevices().then(res => {
+          this._throwStaleSdkFailure(unlockGuard, res, 'searchDevices failed');
+          assertCurrent();
           if (!res.success) {
             throw sdkError(res.payload, 'searchDevices failed');
           }
@@ -381,15 +677,24 @@ class OneKeyKeyring extends EventEmitter {
             throw new Error('No OneKey Device found');
           }
 
-          return res.payload[0];
+          const preferred = this.connectId || this._deviceConnectId;
+          return (
+            res.payload.find(item => item.connectId === preferred) ||
+            res.payload[0]
+          );
         });
 
     return devicePromise.then(async device => {
+      assertCurrent();
       if (!device) {
         throw new Error('no device');
       }
       const { connectId } = device;
       let { deviceId } = device;
+      if (connectId) {
+        // Cancel must hit this id even if the stored one is still the old id.
+        this.pendingConnectId = connectId;
+      }
 
       // Passphrase protection is reported by getDeviceState, not by device
       // discovery. Read it even when searchDevices already returned a
@@ -397,6 +702,8 @@ class OneKeyKeyring extends EventEmitter {
       // unknown value.
       if (connectId && (!deviceId || !deviceStateRead)) {
         const state = await this.bridge.getDeviceState(connectId);
+        this._throwStaleSdkFailure(unlockGuard, state, 'getDeviceState failed');
+        assertCurrent();
         if (!state.success) {
           // A known deviceId is enough to continue; the unlock flow can still
           // fall back to the standard wallet when wallet selection fails.
@@ -418,6 +725,10 @@ class OneKeyKeyring extends EventEmitter {
         throw new Error('no deviceId or connectId');
       }
 
+      if (connectId !== this._deviceConnectId) {
+        this._deviceConnectId = connectId;
+      }
+
       if (needCancel) {
         this.bridge.cancel(connectId);
       }
@@ -430,171 +741,217 @@ class OneKeyKeyring extends EventEmitter {
   }
 
   unlock(): Promise<string> {
-    if (this.isUnlocked()) {
-      return Promise.resolve('already unlocked');
+    if (!this.unlockPromise) {
+      const promise = this.unlockDevice().finally(() => {
+        // A device switch replaces this promise. The old finally must not
+        // drop the replacement.
+        if (this.unlockPromise === promise) {
+          this.unlockPromise = undefined;
+        }
+      });
+      this.unlockPromise = promise;
     }
-    return new Promise((resolve, rejectRaw) => {
-      // Reject with real Errors so callers/UI get a readable message
-      // instead of a bare string or `{}`.
-      const reject = (e: unknown) => {
-        rejectRaw(toError(e));
-      };
+    return this.unlockPromise;
+  }
+
+  /**
+   * Open the device wallet and commit xpub only after it is read.
+   *
+   * A different device, a failed read, or a cancel that lands after the read
+   * must not leave the previous device's xpub in place.
+   */
+  private async unlockDevice(): Promise<string> {
+    this.pendingWorkCancelled = false;
+    const version = this.cancellationVersion;
+    const epoch = this.unlockEpoch;
+    const unlockGuard = { version, epoch };
+    const checkCancelled = () => {
+      this._assertSameUnlock(version, epoch);
+    };
+    try {
       this._passphraseProtection = undefined;
       this._protocol = undefined;
       this._mainWalletUnlocked = false;
       this._unlockedAttachPin = false;
-      this.trySearchDevice()
-        .then(async ({ deviceId, connectId }) => {
-          if (
-            this.deviceId &&
-            this.connectId &&
-            this.isUnlocked() &&
-            this.deviceId === deviceId &&
-            this.connectId === connectId
-          ) {
-            resolve('already unlocked');
-            return;
-          }
-          this.deviceId = deviceId;
-          this.connectId = connectId;
 
-          const selectViaGetPassphraseState = async (): Promise<boolean> => {
-            // Protocol V1 or bridges without openWalletSession:
-            // getPassphraseState() without options always opens wallet
-            // selection, and answering it with "passphrase on device" fails
-            // with "Passphrase disabled" when the device has passphrase
-            // protection off. Select the standard wallet instead.
-            let standardWallet = this._passphraseProtection === false;
-            let passphraseState = await this.bridge.getPassphraseState(
-              connectId,
-              standardWallet ? { useEmptyPassphrase: true } : undefined,
+      const { deviceId, connectId } = await this.trySearchDevice(
+        false,
+        unlockGuard,
+      );
+      checkCancelled();
+
+      const sameDeviceIdentity =
+        Boolean(this.deviceId && this.connectId) &&
+        this.deviceId === deviceId &&
+        this.connectId === connectId;
+      if (sameDeviceIdentity && this.isUnlocked()) {
+        return 'already unlocked';
+      }
+      if (!sameDeviceIdentity) {
+        this._resetUnlockedSession();
+        checkCancelled();
+      }
+
+      const selectViaGetPassphraseState = async (): Promise<
+        string | undefined
+      > => {
+        // Protocol V1 or bridges without openWalletSession:
+        // getPassphraseState() without options always opens wallet
+        // selection, and answering it with "passphrase on device" fails
+        // with "Passphrase disabled" when the device has passphrase
+        // protection off. Select the standard wallet instead.
+        let standardWallet = this._passphraseProtection === false;
+        let passphraseState = await this.bridge.getPassphraseState(
+          connectId,
+          standardWallet ? { useEmptyPassphrase: true } : undefined,
+        );
+        this._throwStaleSdkFailure(
+          unlockGuard,
+          passphraseState,
+          'getPassphraseState failed',
+        );
+        checkCancelled();
+        if (
+          !passphraseState.success &&
+          !standardWallet &&
+          isPassphraseDisabledError(passphraseState.payload)
+        ) {
+          standardWallet = true;
+          passphraseState = await this.bridge.getPassphraseState(connectId, {
+            useEmptyPassphrase: true,
+          });
+          this._throwStaleSdkFailure(
+            unlockGuard,
+            passphraseState,
+            'getPassphraseState failed',
+          );
+          checkCancelled();
+        }
+        if (!passphraseState.success) {
+          throw sdkError(passphraseState.payload, 'getPassphraseState failed');
+        }
+        // On V2 the standard-wallet session still returns a wallet id
+        // (btc_test_address). Passing it on a passphrase-off device makes
+        // the SDK throw DeviceNotOpenedPassphrase (113), so the standard
+        // wallet is represented by an empty passphraseState.
+        return this._resolvePassphraseStateForImport({
+          connectId,
+          protocol: this._protocol,
+          unlockedAttachPin: this._unlockedAttachPin,
+          passphraseState: standardWallet
+            ? undefined
+            : passphraseState.payload || undefined,
+          unlockGuard,
+        });
+      };
+
+      // Follow Rabby's original flow on every device:
+      // getPassphraseState() resumes the wallet the device already has
+      // open and otherwise asks for the passphrase on the device. A Pro 2
+      // (Protocol V2) uses openWalletSession only where that call cannot:
+      // passphrase off (standard wallet), and a locked device or an
+      // attach-PIN session (the device must accept any PIN).
+      let nextPassphraseState: string | undefined;
+      const { openWalletSession } = this.bridge;
+      if (
+        this._protocol === 'V2' &&
+        openWalletSession &&
+        (this._passphraseProtection === false || !this._mainWalletUnlocked)
+      ) {
+        // A standard wallet must not keep any wallet id, otherwise
+        // turning passphrase protection off later makes every signature
+        // fail with DeviceNotOpenedPassphrase (113) until re-import.
+        try {
+          const mode =
+            this._passphraseProtection === false ? 'standard' : 'select-hidden';
+          let session = await openWalletSession(connectId, { mode });
+          this._throwStaleSdkFailure(
+            unlockGuard,
+            session,
+            'openWalletSession failed',
+          );
+          checkCancelled();
+          if (
+            !session.success &&
+            mode === 'select-hidden' &&
+            isPassphraseDisabledError(session.payload)
+          ) {
+            session = await openWalletSession(connectId, {
+              mode: 'standard',
+            });
+            this._throwStaleSdkFailure(
+              unlockGuard,
+              session,
+              'openWalletSession failed',
             );
-            if (
-              !passphraseState.success &&
-              !standardWallet &&
-              isPassphraseDisabledError(passphraseState.payload)
-            ) {
-              standardWallet = true;
-              passphraseState = await this.bridge.getPassphraseState(
-                connectId,
-                {
-                  useEmptyPassphrase: true,
-                },
-              );
-            }
-            if (!passphraseState.success) {
-              reject(
-                sdkError(passphraseState.payload, 'getPassphraseState failed'),
-              );
-              return false;
-            }
-            // On V2 the standard-wallet session still returns a wallet id
-            // (btc_test_address). Passing it on a passphrase-off device makes
-            // the SDK throw DeviceNotOpenedPassphrase (113), so the standard
-            // wallet is represented by an empty passphraseState.
-            this.passphraseState = await this._resolvePassphraseStateForImport({
+            checkCancelled();
+          }
+          if (
+            !session.success &&
+            isUnsupportedWalletSessionError(session.payload)
+          ) {
+            nextPassphraseState = await selectViaGetPassphraseState();
+          } else if (!session.success) {
+            throw sdkError(session.payload, 'openWalletSession failed');
+          } else {
+            nextPassphraseState = await this._resolvePassphraseStateForImport({
               connectId,
               protocol: this._protocol,
-              unlockedAttachPin: this._unlockedAttachPin,
-              passphraseState: standardWallet
-                ? undefined
-                : passphraseState.payload || undefined,
+              walletType: session.payload.walletType,
+              passphraseState: session.payload.passphraseState,
+              unlockGuard,
             });
-            return true;
-          };
-
-          // Follow Rabby's original flow on every device:
-          // getPassphraseState() resumes the wallet the device already has
-          // open and otherwise asks for the passphrase on the device. A Pro 2
-          // (Protocol V2) uses openWalletSession only where that call cannot:
-          // passphrase off (standard wallet), and a locked device or an
-          // attach-PIN session (the device must accept any PIN).
-          const { openWalletSession } = this.bridge;
-          if (
-            this._protocol === 'V2' &&
-            openWalletSession &&
-            (this._passphraseProtection === false || !this._mainWalletUnlocked)
-          ) {
-            // A standard wallet must not keep any wallet id, otherwise
-            // turning passphrase protection off later makes every signature
-            // fail with DeviceNotOpenedPassphrase (113) until re-import.
-            try {
-              const mode =
-                this._passphraseProtection === false
-                  ? 'standard'
-                  : 'select-hidden';
-              let session = await openWalletSession(connectId, { mode });
-              if (
-                !session.success &&
-                mode === 'select-hidden' &&
-                isPassphraseDisabledError(session.payload)
-              ) {
-                session = await openWalletSession(connectId, {
-                  mode: 'standard',
-                });
-              }
-              if (
-                !session.success &&
-                isUnsupportedWalletSessionError(session.payload)
-              ) {
-                if (!(await selectViaGetPassphraseState())) {
-                  return;
-                }
-              } else if (!session.success) {
-                reject(sdkError(session.payload, 'openWalletSession failed'));
-                return;
-              } else {
-                this.passphraseState =
-                  await this._resolvePassphraseStateForImport({
-                    connectId,
-                    protocol: this._protocol,
-                    walletType: session.payload.walletType,
-                    passphraseState: session.payload.passphraseState,
-                  });
-              }
-            } catch (e) {
-              if (
-                isUnsupportedWalletSessionError(
-                  e as { code?: unknown; error?: unknown; message?: unknown },
-                )
-              ) {
-                if (!(await selectViaGetPassphraseState())) {
-                  return;
-                }
-              } else {
-                reject(e);
-                return;
-              }
-            }
-          } else if (!(await selectViaGetPassphraseState())) {
-            return;
           }
+        } catch (e) {
+          if (
+            isUnsupportedWalletSessionError(
+              e as { code?: unknown; error?: unknown; message?: unknown },
+            )
+          ) {
+            nextPassphraseState = await selectViaGetPassphraseState();
+          } else {
+            throw e;
+          }
+        }
+      } else {
+        nextPassphraseState = await selectViaGetPassphraseState();
+      }
+      checkCancelled();
 
-          await this.bridge
-            .evmGetPublicKey(connectId, deviceId, {
-              showOnOneKey: false,
-              chainId: 1,
-              path: hdPathString,
-              passphraseState: this.passphraseState,
-              useEmptyPassphrase: this._isEmptyPassphrase(this.passphraseState),
-            })
-            .then(res => {
-              if (res.success) {
-                this.hdk.publicKey = Buffer.from(res.payload.pub, 'hex');
-                this.hdk.chainCode = Buffer.from(
-                  res.payload.node.chain_code,
-                  'hex',
-                );
-                resolve('just unlocked');
-              } else {
-                reject(sdkError(res.payload, 'getPublicKey failed'));
-              }
-            });
-        })
-        .catch(e => {
-          reject(toError(e));
-        });
-    });
+      const res = await this.bridge.evmGetPublicKey(connectId, deviceId, {
+        showOnOneKey: false,
+        chainId: 1,
+        path: hdPathString,
+        passphraseState: nextPassphraseState,
+        useEmptyPassphrase: this._isEmptyPassphrase(nextPassphraseState),
+      });
+      // A device read that failed keeps its SDK code. 107 and 109 share the
+      // text "Device interrupted"; replacing that with "signing cancelled"
+      // would make an unplug bump the next nonce. A successful read that is
+      // already stale still fails the check below.
+      this._throwStaleSdkFailure(unlockGuard, res, 'getPublicKey failed');
+      if (!res.success) {
+        throw sdkError(res.payload, 'getPublicKey failed');
+      }
+      checkCancelled();
+
+      const nextHdk = new HDKey();
+      nextHdk.publicKey = Buffer.from(res.payload.pub, 'hex');
+      nextHdk.chainCode = Buffer.from(res.payload.node.chain_code, 'hex');
+      // A cancel that lands after the read must not publish this xpub.
+      checkCancelled();
+      this.hdk = nextHdk;
+      this.passphraseState = nextPassphraseState;
+      this.deviceId = deviceId;
+      this.connectId = connectId;
+      return 'just unlocked';
+    } catch (e) {
+      throw toError(e);
+    } finally {
+      if (epoch === this.unlockEpoch) {
+        this.pendingConnectId = null;
+      }
+    }
   }
 
   setAccountToUnlock(index: string): void {
@@ -610,18 +967,24 @@ class OneKeyKeyring extends EventEmitter {
 
           for (let i = from; i < to; i++) {
             const address = this._addressFromIndex(pathBase, i);
-            if (!this.accounts.includes(address)) {
+            const checksummedAddress = ethUtil.toChecksumAddress(address);
+            if (
+              !this.accounts.some(
+                account => account.toLowerCase() === address.toLowerCase(),
+              )
+            ) {
               this.accounts.push(address);
-              this.accountDetails[ethUtil.toChecksumAddress(address)] = {
-                hdPath: this._pathFromAddress(address),
-                hdPathType: LedgerHDPathType.BIP44,
-                hdPathBasePublicKey: this.getPathBasePublicKey(),
-                index: i,
-                connectId: this._deviceConnectId,
-              };
-            } else {
-              throw new Error("The address you're trying to import is invalid");
             }
+            // Re-import refreshes metadata. A stale hdPath or connect id
+            // from the previous device must not survive.
+            this.paths[checksummedAddress] = i;
+            this.accountDetails[checksummedAddress] = {
+              hdPath: `${this.hdPath}/${i}`,
+              hdPathType: LedgerHDPathType.BIP44,
+              hdPathBasePublicKey: this.getPathBasePublicKey(),
+              index: i,
+              connectId: this._deviceConnectId,
+            };
             this.page = 0;
           }
           resolve(this.accounts);
@@ -723,11 +1086,16 @@ class OneKeyKeyring extends EventEmitter {
 
   // tx is an instance of the ethereumjs-transaction class.
   signTransaction(address: string, tx: any): Promise<any> {
+    const cancellationVersion = this._beginSigning();
     return new Promise((resolve, reject) => {
       this.unlock()
         .then(status => {
           setTimeout(
             (_: any) => {
+              if (cancellationVersion !== this.cancellationVersion) {
+                reject(new Error('OneKey signing cancelled'));
+                return;
+              }
               if (isOldStyleEthereumjsTx(tx)) {
                 // In this version of ethereumjs-tx we must add the chainId in hex format
                 // to the initial v value. The chainId must be included in the serialized
@@ -745,9 +1113,10 @@ class OneKeyKeyring extends EventEmitter {
                     tx.s = Buffer.from(payload.s, 'hex');
                     return tx;
                   },
+                  cancellationVersion,
                 )
                   .then(resolve)
-                  .catch(reject);
+                  .catch(e => reject(toError(e)));
               } else {
                 // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 this._signTransaction(
@@ -772,9 +1141,10 @@ class OneKeyKeyring extends EventEmitter {
                       freeze: Object.isFrozen(tx),
                     });
                   },
+                  cancellationVersion,
                 )
                   .then(resolve)
-                  .catch(reject);
+                  .catch(e => reject(toError(e)));
               }
               // This is necessary to avoid popup collision
               // between the unlock & sign trezor popups
@@ -785,6 +1155,8 @@ class OneKeyKeyring extends EventEmitter {
         .catch(e => {
           reject(toError(e));
         });
+    }).finally(() => {
+      this._endSigning();
     });
   }
 
@@ -793,6 +1165,7 @@ class OneKeyKeyring extends EventEmitter {
     chainId: number,
     tx: any,
     handleSigning: any,
+    cancellationVersion?: number,
   ) {
     let transaction: EVMTransaction | EVMTransactionEIP1559;
     if (isOldStyleEthereumjsTx(tx)) {
@@ -827,7 +1200,14 @@ class OneKeyKeyring extends EventEmitter {
           transaction,
           ...params,
         }),
+      cancellationVersion,
     ).then(res => {
+      if (
+        cancellationVersion !== undefined &&
+        cancellationVersion !== this.cancellationVersion
+      ) {
+        throw new Error('OneKey signing cancelled');
+      }
       if (res.success) {
         const newOrMutatedTx = handleSigning(res.payload);
         const addressSignedWith = ethUtil.toChecksumAddress(
@@ -853,11 +1233,16 @@ class OneKeyKeyring extends EventEmitter {
   // For personal_sign, we need to prefix the message:
   signPersonalMessage(withAccount: string, message: string): Promise<any> {
     const messageHex = ethUtil.stripHexPrefix(message);
+    const cancellationVersion = this._beginSigning();
     return new Promise((resolve, reject) => {
       this.unlock()
         .then(status => {
           setTimeout(
             (_: any) => {
+              if (cancellationVersion !== this.cancellationVersion) {
+                reject(new Error('OneKey signing cancelled'));
+                return;
+              }
               this._withPassphraseRecovery(
                 withAccount,
                 {
@@ -872,8 +1257,13 @@ class OneKeyKeyring extends EventEmitter {
                     messageHex,
                     ...params,
                   }),
+                cancellationVersion,
               )
                 .then(response => {
+                  if (cancellationVersion !== this.cancellationVersion) {
+                    reject(new Error('OneKey signing cancelled'));
+                    return;
+                  }
                   if (response.success) {
                     if (!isSameAddress(response.payload.address, withAccount)) {
                       reject(
@@ -912,6 +1302,8 @@ class OneKeyKeyring extends EventEmitter {
           console.log('Error while trying to sign a message ', e);
           reject(toError(e));
         });
+    }).finally(() => {
+      this._endSigning();
     });
   }
 
@@ -939,6 +1331,7 @@ class OneKeyKeyring extends EventEmitter {
     typedData: any,
     opts: { version?: 'V3' | 'V4' } = {},
   ) {
+    const cancellationVersion = this._beginSigning();
     return new Promise((resolve, reject) => {
       const isV4 = opts.version === 'V4';
       let domain: Record<string, any>;
@@ -975,6 +1368,10 @@ class OneKeyKeyring extends EventEmitter {
         .then(status => {
           setTimeout(
             (_: any) => {
+              if (cancellationVersion !== this.cancellationVersion) {
+                reject(new Error('OneKey signing cancelled'));
+                return;
+              }
               try {
                 this._withPassphraseRecovery(
                   address,
@@ -1000,8 +1397,13 @@ class OneKeyKeyring extends EventEmitter {
                         ...params,
                       },
                     ),
+                  cancellationVersion,
                 )
                   .then(response => {
+                    if (cancellationVersion !== this.cancellationVersion) {
+                      reject(new Error('OneKey signing cancelled'));
+                      return;
+                    }
                     if (response.success) {
                       const signature = ethUtil.addHexPrefix(
                         response.payload.signature,
@@ -1074,6 +1476,8 @@ class OneKeyKeyring extends EventEmitter {
           console.log('Error while trying to sign a message ', e);
           reject(toError(e));
         });
+    }).finally(() => {
+      this._endSigning();
     });
   }
 
@@ -1085,6 +1489,8 @@ class OneKeyKeyring extends EventEmitter {
     this.accounts = [];
     this.accountDetails = {};
     this.passphraseState = undefined;
+    this.passphraseStateCleared = false;
+    this.pendingConnectId = null;
     this.deviceId = null;
     this.connectId = null;
     this._deviceConnectId = undefined;
@@ -1107,16 +1513,23 @@ class OneKeyKeyring extends EventEmitter {
    * @param address - The account being signed with.
    * @param params - The passphrase parameters used for the first call.
    * @param call - The device call to perform.
+   * @param cancellationVersion - Version captured when signing started. A
+   * change means lock or cancel landed and the recovery must not retry.
    * @returns The first response, or the retried response.
    */
   private async _withPassphraseRecovery<T>(
     address: string,
     params: PassphraseParams,
     call: (params: PassphraseParams) => OneKeyResponse<T>,
+    cancellationVersion?: number,
   ): Promise<Awaited<OneKeyResponse<T>>> {
+    const cancelled = () =>
+      cancellationVersion !== undefined &&
+      cancellationVersion !== this.cancellationVersion;
     const response = await call(params);
 
     if (
+      cancelled() ||
       response.success ||
       this._isEmptyPassphrase(params.passphraseState) ||
       isCancelledError(response.payload) ||
@@ -1137,7 +1550,7 @@ class OneKeyKeyring extends EventEmitter {
         chainId: 1,
         useEmptyPassphrase: true,
       });
-      if (!publicKey.success) {
+      if (cancelled() || !publicKey.success) {
         return response;
       }
 
@@ -1153,9 +1566,21 @@ class OneKeyKeyring extends EventEmitter {
         return response;
       }
 
-      // The account belongs to the standard wallet: drop the stale hidden
-      // wallet session and sign once more without a passphrase state.
+      // The account belongs to the standard wallet. Drop the stale hidden
+      // wallet id, including one stored on the account, and sign once more
+      // without it. The xpub was read for that hidden wallet, so it cannot
+      // stay in memory either.
+      const checksummedAddress = ethUtil.toChecksumAddress(address);
+      const detail = this.accountDetails[checksummedAddress];
+      if (detail && detail.passphraseState !== undefined) {
+        delete detail.passphraseState;
+        this.passphraseStateCleared = true;
+      }
       this.passphraseState = undefined;
+      this.hdk = new HDKey();
+      if (cancelled()) {
+        return response;
+      }
 
       return await call({
         passphraseState: undefined,
@@ -1187,6 +1612,8 @@ class OneKeyKeyring extends EventEmitter {
    * it when resuming via getPassphraseState without opening a new session.
    * @param options0.walletType - Wallet type reported by openWalletSession.
    * @param options0.passphraseState - Wallet identity returned by the SDK.
+   * @param options0.unlockGuard - Unlock generation. Checked after each await
+   * so a cancel cannot start another device call.
    * @returns The hidden wallet id, or undefined for the standard wallet.
    */
   private async _resolvePassphraseStateForImport({
@@ -1195,13 +1622,18 @@ class OneKeyKeyring extends EventEmitter {
     unlockedAttachPin,
     walletType,
     passphraseState,
+    unlockGuard,
   }: {
     connectId: string;
     protocol?: string;
     unlockedAttachPin?: boolean;
     walletType?: 'standard' | 'hidden';
     passphraseState?: string | null;
+    unlockGuard: OneKeyUnlockGuard;
   }): Promise<string | undefined> {
+    const assertCurrent = () => {
+      this._assertSameUnlock(unlockGuard.version, unlockGuard.epoch);
+    };
     if (walletType === 'standard') {
       return undefined;
     }
@@ -1214,6 +1646,8 @@ class OneKeyKeyring extends EventEmitter {
     }
     try {
       const state = await this.bridge.getDeviceState(connectId);
+      this._throwStaleSdkFailure(unlockGuard, state, 'getDeviceState failed');
+      assertCurrent();
       if (!state.success && isCancelledError(state.payload)) {
         throw sdkError(state.payload, 'getDeviceState cancelled');
       }
@@ -1222,13 +1656,27 @@ class OneKeyKeyring extends EventEmitter {
       }
     } catch (e) {
       const error = toError(e);
+      const { code } = error as { code?: unknown };
+      if (code !== undefined) {
+        this._throwStaleSdkFailure(
+          unlockGuard,
+          { success: false, payload: { error: error.message, code } },
+          error.message,
+        );
+      }
+      assertCurrent();
       if (isCancelledError(error)) {
         throw error;
       }
       // On non-cancel refresh failures, still try the probe as before.
       console.log('failed to refresh OneKey attach-PIN status', e);
     }
-    const standardIdentity = await this._getStandardWalletIdentity(connectId);
+    assertCurrent();
+    const standardIdentity = await this._getStandardWalletIdentity(
+      connectId,
+      unlockGuard,
+    );
+    assertCurrent();
     if (standardIdentity && standardIdentity === imported) {
       return undefined;
     }
@@ -1237,11 +1685,24 @@ class OneKeyKeyring extends EventEmitter {
 
   private async _getStandardWalletIdentity(
     connectId: string,
+    unlockGuard: OneKeyUnlockGuard,
   ): Promise<string | undefined> {
+    const assertCurrent = () => {
+      this._assertSameUnlock(unlockGuard.version, unlockGuard.epoch);
+    };
     try {
+      assertCurrent();
       const result = await this.bridge.getPassphraseState(connectId, {
         useEmptyPassphrase: true,
       });
+      if (result) {
+        this._throwStaleSdkFailure(
+          unlockGuard,
+          result,
+          'getPassphraseState cancelled',
+        );
+      }
+      assertCurrent();
       if (result && !result.success && isCancelledError(result.payload)) {
         throw sdkError(result.payload, 'getPassphraseState cancelled');
       }
@@ -1254,6 +1715,15 @@ class OneKeyKeyring extends EventEmitter {
       }
     } catch (e) {
       const error = toError(e);
+      const { code } = error as { code?: unknown };
+      if (code !== undefined) {
+        this._throwStaleSdkFailure(
+          unlockGuard,
+          { success: false, payload: { error: error.message, code } },
+          error.message,
+        );
+      }
+      assertCurrent();
       if (isCancelledError(error)) {
         throw error;
       }
@@ -1290,7 +1760,7 @@ class OneKeyKeyring extends EventEmitter {
   indexFromAddress(address: string) {
     const checksummedAddress = ethUtil.toChecksumAddress(address);
     let index =
-      this.paths[checksummedAddress] ||
+      this.paths[checksummedAddress] ??
       this.accountDetails[checksummedAddress]?.index;
 
     if (typeof index === 'undefined') {

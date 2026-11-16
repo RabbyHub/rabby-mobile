@@ -28,6 +28,7 @@ import {
   useClearMiniApprovalTask,
   useMiniApprovalTask,
 } from './useMiniApprovalTask';
+import { setRetryTxRecommendNonce } from '@/utils/errorTxRetry';
 
 const txItem = (type: string) =>
   ({
@@ -58,6 +59,7 @@ describe('useMiniApprovalTask OneKey release', () => {
   beforeEach(() => {
     mockCancel.mockClear();
     mockSendTransaction.mockReset();
+    (setRetryTxRecommendNonce as jest.Mock).mockClear();
     releaseOneKeyMiniSign();
     mockCancel.mockClear();
   });
@@ -122,5 +124,73 @@ describe('useMiniApprovalTask OneKey release', () => {
 
     act(() => result.current.clear());
     expect(mockCancel).not.toHaveBeenCalled();
+  });
+
+  it('does not bump nonce when OneKey disconnects', async () => {
+    const send = pendingSend();
+    const { result } = renderHook(() => useMiniApprovalTask({}));
+    act(() => result.current.init([txItem('Onekey Hardware')]));
+    act(() => {
+      result.current.start().catch(() => undefined);
+    });
+    await flush();
+
+    send.reject(Object.assign(new Error('Device disconnected'), { code: 720 }));
+    await flush();
+
+    expect(setRetryTxRecommendNonce).not.toHaveBeenCalled();
+  });
+
+  it('bumps nonce on a normal OneKey signing failure', async () => {
+    const send = pendingSend();
+    const { result } = renderHook(() => useMiniApprovalTask({}));
+    act(() => result.current.init([txItem('Onekey Hardware')]));
+    act(() => {
+      result.current.start().catch(() => undefined);
+    });
+    await flush();
+
+    send.reject(new Error('PIN invalid'));
+    await flush();
+
+    expect(setRetryTxRecommendNonce).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([107, 109])(
+    'does not bump nonce when Device interrupted still has code %s',
+    async code => {
+      const send = pendingSend();
+      const { result } = renderHook(() => useMiniApprovalTask({}));
+      act(() => result.current.init([txItem('Onekey Hardware')]));
+      act(() => {
+        result.current.start().catch(() => undefined);
+      });
+      await flush();
+
+      send.reject(
+        Object.assign(new Error('Device interrupted'), {
+          code,
+          name: 'SubmitTxFailed',
+        }),
+      );
+      await flush();
+
+      expect(setRetryTxRecommendNonce).not.toHaveBeenCalled();
+    },
+  );
+
+  it('bumps nonce when Device interrupted has no SDK code', async () => {
+    const send = pendingSend();
+    const { result } = renderHook(() => useMiniApprovalTask({}));
+    act(() => result.current.init([txItem('Onekey Hardware')]));
+    act(() => {
+      result.current.start().catch(() => undefined);
+    });
+    await flush();
+
+    send.reject(new Error('Device interrupted'));
+    await flush();
+
+    expect(setRetryTxRecommendNonce).toHaveBeenCalledTimes(1);
   });
 });

@@ -14,6 +14,7 @@ import {
 import BigNumber from 'bignumber.js';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { cancel as cancelOneKeyRequest } from '@/core/apis/onekey';
+import { isOneKeyDisconnectError } from '@/utils/onekeyError';
 
 type TxStatus = 'sended' | 'signed' | 'idle' | 'failed';
 
@@ -232,12 +233,15 @@ export const useMiniApprovalTask = ({ ga }: { ga?: Record<string, any> }) => {
               e.name === FailedCode.UserRejected ? 'REJECTED' : 'FAILED';
 
             retryTxReset();
-            await setRetryTxRecommendNonce({
-              from: tx.from,
-              chainId: tx.chainId,
-              account: options.account,
-              nonce: tx.nonce,
-            });
+            // Unplug must not look like a nonce collision on the next tx.
+            if (!isOneKeyDisconnectError(e) && !isOneKeyDisconnectError(msg)) {
+              await setRetryTxRecommendNonce({
+                from: tx.from,
+                chainId: tx.chainId,
+                account: options.account,
+                nonce: tx.nonce,
+              });
+            }
 
             setError({
               status: _status,

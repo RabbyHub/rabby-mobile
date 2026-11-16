@@ -129,6 +129,48 @@ export function isOneKeyBleSetupError(code?: number) {
   );
 }
 
+const ONEKEY_DISCONNECT_CODES = new Set<number>([
+  C.DeviceNotFound,
+  C.DeviceInterruptedFromOutside,
+  C.DeviceInterruptedFromUser,
+  C.BleTimeoutError,
+  C.BleDeviceDisconnected,
+]);
+
+/**
+ * Whether a failure means the OneKey is gone, so a batch must not bump nonce.
+ *
+ * Bare "Device interrupted" is not enough: 107 and 109 share that text.
+ * WebUSB 901 is not used on mobile BLE.
+ *
+ * @param error - An SDK error, a message, or a code.
+ * @returns True when the device disconnect or interrupt should skip nonce.
+ */
+export function isOneKeyDisconnectError(error: unknown): boolean {
+  if (error === null || error === undefined || error === '') {
+    return false;
+  }
+  if (typeof error === 'string') {
+    if (error === 'DISCONNECTED' || error === 'No OneKey Device found') {
+      return true;
+    }
+  } else if (typeof error === 'object') {
+    const record = error as { message?: unknown; name?: unknown };
+    if (
+      (typeof record.message === 'string' &&
+        (record.message === 'DISCONNECTED' ||
+          record.message === 'No OneKey Device found')) ||
+      (typeof record.name === 'string' &&
+        (record.name === 'DISCONNECTED' ||
+          record.name === 'No OneKey Device found'))
+    ) {
+      return true;
+    }
+  }
+  const code = getOneKeyErrorCode(error);
+  return code !== undefined && ONEKEY_DISCONNECT_CODES.has(code);
+}
+
 /** The user (or the app on their behalf) cancelled on the device or in UI. */
 export function isOneKeyUserCancelError(code?: number) {
   return (
@@ -193,4 +235,29 @@ export function getOneKeyErrorMessage(
   const code = getOneKeyErrorCode(error);
   const key = code !== undefined ? ERROR_I18N_KEY[code] : undefined;
   return key ? t(`page.newAddress.onekey.error.${key}`) : undefined;
+}
+
+/**
+ * Rebuild a submit failure without dropping the SDK error code.
+ *
+ * 107 and 109 both use the message "Device interrupted". Nonce retry ignores
+ * that text unless `code` is still on the error. The name matches
+ * `FailedCode.SubmitTxFailed` in sendTransaction.
+ *
+ * @param e - The rejected provider or device error.
+ * @returns An Error named SubmitTxFailed, with `code` copied when present.
+ */
+export function toSubmitTxError(e: unknown): Error {
+  const source = e as {
+    message?: string;
+    code?: unknown;
+    errorCode?: unknown;
+  } | null;
+  const err = new Error(source?.message);
+  err.name = 'SubmitTxFailed';
+  const code = source?.code ?? source?.errorCode;
+  if (code !== undefined) {
+    Object.assign(err, { code });
+  }
+  return err;
 }

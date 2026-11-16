@@ -2,6 +2,7 @@ import {
   getOneKeyErrorCode,
   getOneKeyErrorMessage,
   isOneKeyBleSetupError,
+  isOneKeyDisconnectError,
   isOneKeyPermissionError,
   isOneKeyUserCancelError,
 } from './onekeyError';
@@ -100,4 +101,25 @@ describe('utils/onekeyError', () => {
       expect(isOneKeyPermissionError(code, isIOS, permission)).toBe(expected);
     },
   );
+
+  it.each([
+    [Object.assign(new Error('Device disconnected'), { code: 720 }), true],
+    [{ code: 105, error: 'Device not found' }, true],
+    [{ code: 713 }, true],
+    [{ code: 107 }, true],
+    [Object.assign(new Error('raw'), { code: 109 }), true],
+    ['DISCONNECTED', true],
+    ['No OneKey Device found', true],
+    [new Error('No OneKey Device found'), true],
+    ['Device not found', true],
+    [{ code: 117, message: 'Device is busy' }, false],
+    ['Device interrupted', false],
+    [new Error('PIN invalid'), false],
+    [{ code: 802 }, false],
+    ['', false],
+    [null, false],
+    [undefined, false],
+  ])('isOneKeyDisconnectError(%p) === %s', (input, expected) => {
+    expect(isOneKeyDisconnectError(input)).toBe(expected);
+  });
 });

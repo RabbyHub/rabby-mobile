@@ -146,6 +146,37 @@ function stripHexPrefix(value: string) {
 }
 
 /**
+ * Wait until a mocked device call has been entered.
+ *
+ * @param ready - True once the mock is in use.
+ */
+async function waitFor(ready: () => boolean) {
+  for (let attempt = 0; attempt < 30; attempt += 1) {
+    if (ready()) {
+      return;
+    }
+    await new Promise(resolve => setImmediate(resolve));
+  }
+  throw new Error('timed out waiting for OneKey keyring');
+}
+
+/**
+ * Wait on the timer phase. Signing starts from setTimeout(0), which a
+ * setImmediate loop never reaches.
+ *
+ * @param ready - True once the signature call has started.
+ */
+async function waitForTimer(ready: () => boolean) {
+  for (let attempt = 0; attempt < 20; attempt += 1) {
+    if (ready()) {
+      return;
+    }
+    await new Promise(resolve => setTimeout(resolve, 10));
+  }
+  throw new Error('timed out waiting for OneKey keyring');
+}
+
+/**
  * Prepare an already-unlocked keyring for signing tests.
  *
  * @param args - The test fixtures.
@@ -238,7 +269,7 @@ describe('OneKeyKeyring SDK error propagation', () => {
     },
     {
       rejection: { error: 'Pairing failed', code: 718 },
-      message: '{"error":"Pairing failed","code":718}',
+      message: 'Pairing failed',
       code: 718,
     },
   ])(
@@ -1076,7 +1107,9 @@ describe('OneKeyKeyring unlock wallet selection', () => {
         mode: 'select-hidden',
       });
       expect(bridge.initSession).not.toHaveBeenCalled();
-      expect(bridge.getDeviceState).toHaveBeenCalledTimes(2);
+      // Import reads state twice. The later sign looks the stored connect id
+      // up again instead of reopening the wallet session.
+      expect(bridge.getDeviceState).toHaveBeenCalledTimes(3);
       expect(bridge.getPassphraseState).not.toHaveBeenCalled();
       expect(bridge.evmGetPublicKey).toHaveBeenCalledTimes(1);
       expect(bridge.evmGetPublicKey).toHaveBeenCalledWith(
@@ -1373,6 +1406,567 @@ describe('OneKeyKeyring unlock wallet selection', () => {
       }),
     );
   });
+
+  it('does not commit unlock state when evmGetPublicKey fails', async () => {
+    const { bridge, keyring } = setup('hidden-wallet-token', {
+      passphraseProtection: true,
+    });
+    bridge.evmGetPublicKey.mockResolvedValue({
+      success: false,
+      payload: { code: 801, error: 'PIN invalid' },
+    });
+
+    await expect(keyring.unlock()).rejects.toMatchObject({
+      message: 'PIN invalid',
+      code: 801,
+    });
+    expect(keyring.isUnlocked()).toBe(false);
+    expect(keyring.passphraseState).toBeUndefined();
+    expect(keyring.connectId).toBeNull();
+    expect(keyring.deviceId).toBeNull();
+  });
+
+  it('does not keep the previous xpub when unlocking another device fails', async () => {
+    const { bridge, keyring } = setup('hidden-wallet-token', {
+      passphraseProtection: true,
+    });
+    expect(await keyring.unlock()).toBe('just unlocked');
+    expect(keyring.isUnlocked()).toBe(true);
+
+    bridge.getDeviceState.mockImplementation(async (id: string) => {
+      if (id === 'connect-id') {
+        return {
+          success: false,
+          payload: { code: 105, error: 'Device not found' },
+        };
+      }
+      return {
+        success: true,
+        payload: {
+          protocol: 'V2',
+          identity: { deviceId: 'other-device' },
+          status: {
+            passphraseProtection: true,
+            unlocked: true,
+            unlockedAttachPin: false,
+          },
+        },
+      };
+    });
+    bridge.searchDevices.mockResolvedValue({
+      success: true,
+      payload: [{ connectId: 'other-connect', deviceId: 'other-device' }],
+    });
+    bridge.evmGetPublicKey.mockResolvedValue({
+      success: false,
+      payload: { code: 801, error: 'PIN invalid' },
+    });
+
+    await expect(keyring.unlock()).rejects.toMatchObject({
+      message: 'PIN invalid',
+      code: 801,
+    });
+    expect(keyring.isUnlocked()).toBe(false);
+    expect(keyring.hdk.publicKey).toBeNull();
+    expect(keyring.passphraseState).toBeUndefined();
+    expect(keyring.connectId).toBeNull();
+    expect(keyring.deviceId).toBeNull();
+  });
+
+  it('does not publish an xpub when cancel lands after the public key is read', async () => {
+    const { bridge, keyring } = setup('hidden-wallet-token', {
+      passphraseProtection: true,
+    });
+    let release: (() => void) | undefined;
+    bridge.evmGetPublicKey.mockImplementation(
+      () =>
+        new Promise(resolve => {
+          release = () => {
+            keyring.cancel();
+            resolve({
+              success: true,
+              payload: {
+                pub: publicKey,
+                node: { chain_code: '11'.repeat(32) },
+              },
+            });
+          };
+        }),
+    );
+
+    const pending = keyring.unlock();
+    const tick = () => new Promise(resolve => setImmediate(resolve));
+    await tick();
+    await tick();
+    await tick();
+    await tick();
+    await tick();
+    await tick();
+    await tick();
+    await tick();
+    expect(release).toStrictEqual(expect.any(Function));
+    release?.();
+
+    await expect(pending).rejects.toThrow('OneKey signing cancelled');
+    expect(keyring.isUnlocked()).toBe(false);
+    expect(bridge.cancel).toHaveBeenCalledWith('connect-id');
+  });
+
+  it('adopts a fresh connect id when the stored one is stale', async () => {
+    const { bridge, keyring } = setup(undefined, {
+      passphraseProtection: false,
+      unlocked: true,
+      unlockedAttachPin: false,
+    });
+    keyring.setDeviceConnectId('stale-id');
+    bridge.getDeviceState.mockImplementation(async (id: string) => {
+      if (id === 'stale-id') {
+        return {
+          success: false,
+          payload: { code: 720, error: 'Device disconnected' },
+        };
+      }
+      return {
+        success: true,
+        payload: {
+          protocol: 'V2',
+          identity: { deviceId: 'device-id' },
+          status: {
+            passphraseProtection: false,
+            unlocked: true,
+            unlockedAttachPin: false,
+          },
+        },
+      };
+    });
+    bridge.searchDevices.mockResolvedValue({
+      success: true,
+      payload: [{ connectId: 'fresh-id', deviceId: 'device-id' }],
+    });
+
+    expect(await keyring.unlock()).toBe('just unlocked');
+    expect(keyring.connectId).toBe('fresh-id');
+    expect(keyring._deviceConnectId).toBe('fresh-id');
+    expect(bridge.getDeviceState).toHaveBeenCalledWith('stale-id');
+  });
+
+  it('refreshes account details when the same address is imported again', async () => {
+    const { keyring } = setup(undefined, {
+      passphraseProtection: false,
+      unlocked: true,
+      unlockedAttachPin: false,
+    });
+
+    const accounts: string[] = await keyring.addAccounts(1);
+    const address = accounts[0];
+    keyring.accountDetails[address] = {
+      ...keyring.accountDetails[address],
+      hdPath: 'stale-path',
+      connectId: 'old-connect',
+    };
+    keyring.unlockedAccount = 0;
+
+    const again: string[] = await keyring.addAccounts(1);
+
+    expect(again.filter(item => item === address)).toHaveLength(1);
+    expect(keyring.accounts.filter(item => item === address)).toHaveLength(1);
+    expect(keyring.accountDetails[address]).toStrictEqual(
+      expect.objectContaining({
+        hdPath: "m/44'/60'/0'/0/0",
+        index: 0,
+        connectId: 'connect-id',
+      }),
+    );
+  });
+
+  it('does not commit device A when a switch to B replaces the pending unlock', async () => {
+    const publicKeyA =
+      '0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798';
+    const publicKeyB = `03${'11'.repeat(32)}`;
+    const { bridge, keyring } = setup(undefined, {
+      passphraseProtection: false,
+      unlocked: true,
+      unlockedAttachPin: false,
+    });
+    const releases: ((value: unknown) => void)[] = [];
+    bridge.evmGetPublicKey.mockImplementation(
+      () =>
+        new Promise(resolve => {
+          releases.push(resolve);
+        }),
+    );
+
+    const pendingA = keyring.unlock();
+    await waitFor(() => releases.length === 1);
+    keyring.setDeviceConnectId('connect-b');
+    expect(bridge.cancel).not.toHaveBeenCalled();
+    expect(keyring._deviceConnectId).toBe('connect-b');
+    expect(keyring.isUnlocked()).toBe(false);
+
+    bridge.getDeviceState.mockImplementation(async (id: string) => ({
+      success: true,
+      payload: {
+        protocol: 'V2',
+        identity: { deviceId: id === 'connect-b' ? 'device-b' : 'device-id' },
+        status: {
+          passphraseProtection: false,
+          unlocked: true,
+          unlockedAttachPin: false,
+        },
+      },
+    }));
+    const pendingB = keyring.unlock();
+    await waitFor(() => releases.length === 2);
+
+    releases[0]({
+      success: true,
+      payload: {
+        pub: publicKeyA,
+        node: { chain_code: '11'.repeat(32) },
+      },
+    });
+    await expect(pendingA).rejects.toThrow('OneKey signing cancelled');
+    expect(keyring.unlock()).toBe(pendingB);
+    expect(releases).toHaveLength(2);
+    expect(keyring.pendingConnectId).toBe('connect-b');
+    expect(keyring.isUnlocked()).toBe(false);
+    expect(keyring.connectId).toBeNull();
+
+    releases[1]({
+      success: true,
+      payload: {
+        pub: publicKeyB,
+        node: { chain_code: '22'.repeat(32) },
+      },
+    });
+    expect(await pendingB).toBe('just unlocked');
+    expect(keyring.isUnlocked()).toBe(true);
+    expect(keyring.connectId).toBe('connect-b');
+    expect(keyring.deviceId).toBe('device-b');
+    expect(keyring._deviceConnectId).toBe('connect-b');
+    expect(keyring.hdk.publicKey.toString('hex')).toBe(publicKeyB);
+  });
+
+  it.each([
+    [107, 'Device interrupted'],
+    [720, 'Device disconnected'],
+  ])(
+    'keeps SDK code %s when cleanUp lands during a failed device lookup',
+    async (code, message) => {
+      const { bridge, keyring } = setup(undefined, {
+        passphraseProtection: false,
+        unlocked: true,
+        unlockedAttachPin: false,
+      });
+      keyring.setDeviceConnectId('stale-id');
+      let release: ((value: unknown) => void) | undefined;
+      bridge.getDeviceState.mockImplementation(
+        () =>
+          new Promise(resolve => {
+            release = resolve;
+          }),
+      );
+
+      const pending = keyring.unlock();
+      await waitFor(() => typeof release === 'function');
+      expect(keyring.cleanUp()).toBeUndefined();
+      release?.({
+        success: false,
+        payload: { code, error: message },
+      });
+
+      await expect(pending).rejects.toMatchObject({ message, code });
+      expect(bridge.searchDevices).not.toHaveBeenCalled();
+      expect(bridge.evmGetPublicKey).not.toHaveBeenCalled();
+    },
+  );
+
+  it('keeps SDK code 109 when cleanUp lands during a failed device search', async () => {
+    const { bridge, keyring } = setup(undefined, {
+      passphraseProtection: false,
+      unlocked: true,
+      unlockedAttachPin: false,
+    });
+    let release: ((value: unknown) => void) | undefined;
+    bridge.searchDevices.mockImplementation(
+      () =>
+        new Promise(resolve => {
+          release = resolve;
+        }),
+    );
+
+    const pending = keyring.unlock();
+    await waitFor(() => typeof release === 'function');
+    keyring.cleanUp();
+    release?.({
+      success: false,
+      payload: { code: 109, error: 'Device interrupted' },
+    });
+
+    await expect(pending).rejects.toMatchObject({
+      message: 'Device interrupted',
+      code: 109,
+    });
+    expect(bridge.getDeviceState).not.toHaveBeenCalled();
+    expect(bridge.evmGetPublicKey).not.toHaveBeenCalled();
+  });
+
+  it('keeps SDK code 109 when cleanUp lands during a failed wallet selection', async () => {
+    const { bridge, keyring } = setup(undefined, {
+      passphraseProtection: false,
+      unlocked: true,
+      unlockedAttachPin: false,
+    });
+    let release: ((value: unknown) => void) | undefined;
+    mockOpenWalletSession(bridge).mockImplementation(
+      () =>
+        new Promise(resolve => {
+          release = resolve;
+        }),
+    );
+
+    const pending = keyring.unlock();
+    await waitFor(() => typeof release === 'function');
+    keyring.cleanUp();
+    release?.({
+      success: false,
+      payload: { code: 109, error: 'Device interrupted' },
+    });
+
+    await expect(pending).rejects.toMatchObject({
+      message: 'Device interrupted',
+      code: 109,
+    });
+    expect(bridge.evmGetPublicKey).not.toHaveBeenCalled();
+  });
+
+  it('cancels when wallet selection succeeds after cleanUp', async () => {
+    const { bridge, keyring } = setup(undefined, {
+      passphraseProtection: false,
+      unlocked: true,
+      unlockedAttachPin: false,
+    });
+    let release: ((value: unknown) => void) | undefined;
+    mockOpenWalletSession(bridge).mockImplementation(
+      () =>
+        new Promise(resolve => {
+          release = resolve;
+        }),
+    );
+
+    const pending = keyring.unlock();
+    await waitFor(() => typeof release === 'function');
+    keyring.cleanUp();
+    release?.(createSession('standard', null));
+
+    await expect(pending).rejects.toThrow('OneKey signing cancelled');
+    expect(bridge.evmGetPublicKey).not.toHaveBeenCalled();
+  });
+
+  it('keeps SDK code 107 when cleanUp lands during a failed passphrase read', async () => {
+    const { bridge, keyring } = setup('hidden-wallet-token', {
+      passphraseProtection: true,
+      unlocked: true,
+      unlockedAttachPin: false,
+    });
+    let release: ((value: unknown) => void) | undefined;
+    bridge.getPassphraseState.mockImplementation(
+      () =>
+        new Promise(resolve => {
+          release = resolve;
+        }),
+    );
+
+    const pending = keyring.unlock();
+    await waitFor(() => typeof release === 'function');
+    keyring.cleanUp();
+    release?.({
+      success: false,
+      payload: { code: 107, error: 'Device interrupted' },
+    });
+
+    await expect(pending).rejects.toMatchObject({
+      message: 'Device interrupted',
+      code: 107,
+    });
+    expect(bridge.evmGetPublicKey).not.toHaveBeenCalled();
+  });
+
+  it('keeps SDK code 107 when cleanUp lands during a failed status refresh', async () => {
+    const { bridge, keyring } = setup('hidden-wallet-token', {
+      passphraseProtection: true,
+    });
+    mockOpenWalletSession(bridge).mockResolvedValue(
+      createSession('hidden', 'hidden-wallet-token'),
+    );
+    let deviceStateCalls = 0;
+    let release: (() => void) | undefined;
+    const state = {
+      success: true,
+      payload: {
+        protocol: 'V2',
+        identity: { deviceId: 'device-id' },
+        status: {
+          passphraseProtection: true,
+          unlocked: false,
+          unlockedAttachPin: false,
+        },
+      },
+    };
+    bridge.getDeviceState.mockImplementation(() => {
+      deviceStateCalls += 1;
+      if (deviceStateCalls === 1) {
+        return Promise.resolve(state);
+      }
+      return new Promise(resolve => {
+        release = () =>
+          resolve({
+            success: false,
+            payload: { code: 107, error: 'Device interrupted' },
+          });
+      });
+    });
+
+    const pending = keyring.unlock();
+    await waitFor(() => deviceStateCalls >= 2 && typeof release === 'function');
+    keyring.cleanUp();
+    release?.();
+
+    await expect(pending).rejects.toMatchObject({
+      message: 'Device interrupted',
+      code: 107,
+    });
+    expect(bridge.getPassphraseState).not.toHaveBeenCalled();
+    expect(bridge.evmGetPublicKey).not.toHaveBeenCalled();
+  });
+
+  it('keeps SDK code 107 when cleanUp lands during a failed public-key read', async () => {
+    const { bridge, keyring } = setup(undefined, {
+      passphraseProtection: false,
+      unlocked: true,
+      unlockedAttachPin: false,
+    });
+    let release: ((value: unknown) => void) | undefined;
+    bridge.evmGetPublicKey.mockImplementation(
+      () =>
+        new Promise(resolve => {
+          release = resolve;
+        }),
+    );
+
+    const pending = keyring.unlock();
+    await waitFor(() => typeof release === 'function');
+    expect(keyring.cleanUp()).toBeUndefined();
+    expect(bridge.cancel).not.toHaveBeenCalled();
+    release?.({
+      success: false,
+      payload: { code: 107, error: 'Device interrupted' },
+    });
+
+    await expect(pending).rejects.toMatchObject({
+      message: 'Device interrupted',
+      code: 107,
+    });
+    expect(keyring.isUnlocked()).toBe(false);
+    expect(keyring.connectId).toBeNull();
+    expect(keyring.deviceId).toBeNull();
+  });
+
+  it('does not probe the standard wallet after cancel during the status refresh', async () => {
+    const { bridge, keyring } = setup('hidden-wallet-token', {
+      passphraseProtection: true,
+      unlocked: true,
+      unlockedAttachPin: false,
+    });
+    let deviceStateCalls = 0;
+    let release: (() => void) | undefined;
+    const state = {
+      success: true,
+      payload: {
+        protocol: 'V2',
+        identity: { deviceId: 'device-id' },
+        status: {
+          passphraseProtection: true,
+          unlocked: true,
+          unlockedAttachPin: false,
+        },
+      },
+    };
+    bridge.getDeviceState.mockImplementation(() => {
+      deviceStateCalls += 1;
+      if (deviceStateCalls === 1) {
+        return Promise.resolve(state);
+      }
+      return new Promise(resolve => {
+        release = () => resolve(state);
+      });
+    });
+
+    const pending = keyring.unlock();
+    await waitFor(() => deviceStateCalls >= 2 && typeof release === 'function');
+    keyring.cancelPendingWork();
+    keyring.cleanUp();
+    release?.();
+
+    await expect(pending).rejects.toThrow('OneKey signing cancelled');
+    expect(
+      bridge.getPassphraseState.mock.calls.some(
+        (call: unknown[]) =>
+          (call[1] as { useEmptyPassphrase?: boolean } | undefined)
+            ?.useEmptyPassphrase === true,
+      ),
+    ).toBe(false);
+  });
+
+  it('does not read state for a rediscovered id after cancellation', async () => {
+    const { bridge, keyring } = setup(undefined, {
+      passphraseProtection: false,
+      unlocked: true,
+      unlockedAttachPin: false,
+    });
+    keyring.setDeviceConnectId('stale-id');
+    let releaseSearch: ((value: unknown) => void) | undefined;
+    bridge.getDeviceState.mockImplementation(async (id: string) => {
+      if (id === 'stale-id') {
+        return {
+          success: false,
+          payload: { code: 720, error: 'Device disconnected' },
+        };
+      }
+      return {
+        success: true,
+        payload: {
+          protocol: 'V2',
+          identity: { deviceId: 'device-id' },
+          status: {
+            passphraseProtection: false,
+            unlocked: true,
+            unlockedAttachPin: false,
+          },
+        },
+      };
+    });
+    bridge.searchDevices.mockImplementation(
+      () =>
+        new Promise(resolve => {
+          releaseSearch = resolve;
+        }),
+    );
+
+    const pending = keyring.unlock();
+    await waitFor(() => typeof releaseSearch === 'function');
+    keyring.cancelPendingWork();
+    keyring.cleanUp();
+    releaseSearch?.({
+      success: true,
+      payload: [{ connectId: 'fresh-id', deviceId: 'device-id' }],
+    });
+
+    await expect(pending).rejects.toThrow('OneKey signing cancelled');
+    expect(
+      bridge.getDeviceState.mock.calls.map((call: unknown[]) => call[0]),
+    ).not.toContain('fresh-id');
+  });
 });
 
 describe('OneKeyKeyring signPersonalMessage', () => {
@@ -1437,6 +2031,35 @@ describe('OneKeyKeyring signPersonalMessage', () => {
     await expect(
       keyring.signPersonalMessage(SIGNING_ADDRESS, '0x01'),
     ).rejects.toThrow('signature doesnt match the right address');
+  });
+
+  it('keeps the device signature when cleanUp does not cancel', async () => {
+    const bridge = createBridge();
+    let release: ((value: unknown) => void) | undefined;
+    bridge.evmSignMessage.mockImplementation(
+      () =>
+        new Promise(resolve => {
+          release = resolve;
+        }),
+    );
+    const keyring = prepareUnlockedKeyring({ bridge });
+    const signature = sigUtil.personalSign(SIGNING_PRIVATE_KEY, {
+      data: '0x01',
+    });
+
+    const pending = keyring.signPersonalMessage(SIGNING_ADDRESS, '0x01');
+    await waitForTimer(() => typeof release === 'function');
+    expect(keyring.cleanUp()).toBeUndefined();
+    expect(bridge.cancel).not.toHaveBeenCalled();
+    release?.({
+      success: true,
+      payload: {
+        address: SIGNING_ADDRESS,
+        signature: stripHexPrefix(signature),
+      },
+    });
+
+    expect(await pending).toBe(signature);
   });
 
   it('rejects a signature from a different account', async () => {
@@ -1555,6 +2178,7 @@ describe('OneKeyKeyring passphrase recovery on signing', () => {
       }),
     );
     expect(keyring.passphraseState).toBeUndefined();
+    expect(keyring.consumePassphraseStateCleared()).toBe(false);
   });
 
   it('does not recover after the user cancels the signing request', async () => {
@@ -1659,5 +2283,123 @@ describe('OneKeyKeyring passphrase recovery on signing', () => {
         useEmptyPassphrase: true,
       }),
     );
+  });
+
+  it('flags a stored passphrase state so the vault can drop it', async () => {
+    const { bridge, keyring } = prepareStaleHiddenSession();
+    keyring.accountDetails[SIGNING_ADDRESS].passphraseState =
+      'stale-wallet-state';
+    const signature = sigUtil.personalSign(SIGNING_PRIVATE_KEY, {
+      data: '0x01',
+    });
+    bridge.evmSignMessage
+      .mockResolvedValueOnce(disabled)
+      .mockResolvedValueOnce({
+        success: true,
+        payload: {
+          address: SIGNING_ADDRESS,
+          signature: stripHexPrefix(signature),
+        },
+      });
+
+    expect(await keyring.signPersonalMessage(SIGNING_ADDRESS, '0x01')).toBe(
+      signature,
+    );
+    expect(
+      keyring.accountDetails[SIGNING_ADDRESS].passphraseState,
+    ).toBeUndefined();
+    expect(keyring.consumePassphraseStateCleared()).toBe(true);
+    expect(keyring.consumePassphraseStateCleared()).toBe(false);
+    expect(keyring.isUnlocked()).toBe(false);
+  });
+});
+
+describe('OneKeyKeyring session reset', () => {
+  it('cleanUp(true) cancels a pending unlock and does not let it commit', async () => {
+    const bridge = createBridge();
+    let release: ((value: unknown) => void) | undefined;
+    bridge.searchDevices.mockImplementation(
+      () =>
+        new Promise(resolve => {
+          release = resolve;
+        }),
+    );
+    const keyring = new OneKeyKeyring({ bridge });
+    const pending = keyring.unlock();
+    await waitFor(() => typeof release === 'function');
+
+    const cleaned = keyring.cleanUp(true);
+    expect(cleaned).toBeInstanceOf(Promise);
+    release?.({
+      success: true,
+      payload: [
+        {
+          connectId: 'connect-a',
+          deviceId: 'device-a',
+        },
+      ],
+    });
+
+    await expect(pending).rejects.toThrow('OneKey signing cancelled');
+    expect(await cleaned).toBeUndefined();
+    expect(keyring.isUnlocked()).toBe(false);
+    expect(keyring.connectId).toBeNull();
+  });
+
+  it('cleanUp(true) advances cancellation when no unlock is pending', () => {
+    const bridge = createBridge();
+    const keyring = new OneKeyKeyring({ bridge });
+    keyring.connectId = 'stored-id';
+
+    expect(keyring.cleanUp(true)).toBeUndefined();
+    expect(bridge.cancel).not.toHaveBeenCalled();
+    expect(keyring.connectId).toBeNull();
+  });
+
+  it('cleanUp clears the unlocked session and does not cancel the device', () => {
+    const bridge = createBridge();
+    const keyring = new OneKeyKeyring({ bridge });
+    keyring.hdk.publicKey = Buffer.from(`04${SIGNING_PUBLIC_KEY}`, 'hex');
+    keyring.passphraseState = 'hidden-wallet-token';
+    keyring.deviceId = 'device-id';
+    keyring.connectId = 'stored-id';
+    keyring._deviceConnectId = 'stored-id';
+    keyring.pendingConnectId = 'inflight-id';
+
+    expect(keyring.cleanUp()).toBeUndefined();
+
+    expect(keyring.isUnlocked()).toBe(false);
+    expect(keyring.passphraseState).toBeUndefined();
+    expect(keyring.deviceId).toBeNull();
+    expect(keyring.connectId).toBeNull();
+    expect(keyring._deviceConnectId).toBeUndefined();
+    expect(keyring.pendingConnectId).toBeNull();
+    expect(bridge.cancel).not.toHaveBeenCalled();
+  });
+
+  it('cancel uses the in-flight connect id', () => {
+    const bridge = createBridge();
+    const keyring = new OneKeyKeyring({ bridge });
+    keyring.connectId = 'stored-id';
+    keyring._deviceConnectId = 'selected-id';
+    keyring.pendingConnectId = 'inflight-id';
+
+    keyring.cancel();
+
+    expect(bridge.cancel).toHaveBeenCalledWith('inflight-id');
+  });
+
+  it('treats account index 0 as present', () => {
+    const fromPath = new OneKeyKeyring({ bridge: createBridge() });
+    fromPath.paths[SIGNING_ADDRESS] = 0;
+    expect(fromPath.indexFromAddress(SIGNING_ADDRESS)).toBe(0);
+
+    const fromDetails = new OneKeyKeyring({ bridge: createBridge() });
+    fromDetails.accountDetails[SIGNING_ADDRESS] = {
+      hdPath: "m/44'/60'/0'/0/0",
+      hdPathType: 'BIP44' as any,
+      index: 0,
+    };
+    expect(fromDetails.indexFromAddress(SIGNING_ADDRESS)).toBe(0);
   });
 });

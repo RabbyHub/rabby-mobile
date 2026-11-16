@@ -5,6 +5,7 @@ function setupApiOneKeyModule() {
     init: jest.fn(async () => undefined),
     connectId: null as string | null,
     _deviceConnectId: undefined as string | undefined,
+    pendingConnectId: null as string | null,
     bridge: {
       searchDevices: jest.fn(
         async (): Promise<any> => ({
@@ -273,6 +274,16 @@ describe('core/apis/onekey', () => {
       await cancel();
 
       expect(mockKeyring.bridge.cancel).toHaveBeenCalledWith('selected');
+    });
+
+    it('prefers the in-flight connect id over the stored one', async () => {
+      const { cancel, mockKeyring } = setupApiOneKeyModule();
+      mockKeyring.connectId = 'stored';
+      mockKeyring.pendingConnectId = 'inflight';
+
+      await cancel();
+
+      expect(mockKeyring.bridge.cancel).toHaveBeenCalledWith('inflight');
     });
 
     it('is a no-op without a device and never throws', async () => {

@@ -191,7 +191,24 @@ export async function searchDevices({
  */
 export async function cancel() {
   const keyring = await getOneKeyKeyring();
-  const connectId = keyring.connectId || keyring._deviceConnectId;
+  // The keyring cancel targets the connect id of the call in flight, which
+  // can differ from the id stored before rediscovery. Mocks without that
+  // method still cancel through the bridge. The fields are optional here
+  // because this package is typed from its last build.
+  const session = keyring as typeof keyring & {
+    cancel?: () => Promise<unknown> | undefined;
+    pendingConnectId?: string | null;
+  };
+  if (typeof session.cancel === 'function') {
+    try {
+      await session.cancel();
+    } catch (e) {
+      console.warn('[OneKey] cancel failed', e);
+    }
+    return;
+  }
+  const connectId =
+    session.pendingConnectId || keyring.connectId || keyring._deviceConnectId;
   if (!connectId) {
     return;
   }
