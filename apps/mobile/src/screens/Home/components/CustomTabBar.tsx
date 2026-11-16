@@ -105,37 +105,29 @@ const Indicator = ({
     right: 0,
   };
 
-  const stylez = useAnimatedStyle(() => {
-    const firstItemX = itemsLayout[0]?.x ?? 0;
-
-    const transform = [
-      {
-        translateX:
-          itemsLayout.length > 1
-            ? interpolate(
-                indexDecimal.value,
-                itemsLayout.map((_, i) => i),
-                itemsLayout.map(v => v.x),
-              )
-            : firstItemX,
-      },
-    ];
-
-    const width =
-      itemsLayout.length > 1
-        ? interpolate(
-            indexDecimal.value,
-            itemsLayout.map((_, i) => i),
-            itemsLayout.map(v => v.width),
-          )
-        : itemsLayout[0]?.width;
-
+  // Shuttle, not a bar crossing the gap: each slot clips its own plate. The
+  // left plate slides out to the right while the right plate slides in from the
+  // left, so the black fill is only ever visible inside a slot - the 12pt gap
+  // between them never shows the indicator travelling across it.
+  const slotWidth = itemsLayout[0]?.width ?? 0;
+  const snapPixels = (value: number) => {
+    'worklet';
+    return Math.round(value * STRIP_PIXEL) / STRIP_PIXEL;
+  };
+  const leftPlateStyle = useAnimatedStyle(() => {
+    const p = Math.min(Math.max(indexDecimal.value, 0), 1);
     return {
-      transform,
-      width,
+      transform: [{ translateX: snapPixels(p * slotWidth) }],
       opacity: withTiming(opacity.value),
     };
-  }, [indexDecimal, itemsLayout]);
+  }, [indexDecimal, slotWidth]);
+  const rightPlateStyle = useAnimatedStyle(() => {
+    const p = Math.min(Math.max(indexDecimal.value, 0), 1);
+    return {
+      transform: [{ translateX: snapPixels((p - 1) * slotWidth) }],
+      opacity: withTiming(opacity.value),
+    };
+  }, [indexDecimal, slotWidth]);
 
   React.useEffect(() => {
     if (fadeIn) {
@@ -145,7 +137,12 @@ const Indicator = ({
 
   return (
     <Animated.View style={[styles.indicatorContainer, animatedStyle]}>
-      <Animated.View style={[stylez, styles.indicator, style]} />
+      <View style={[styles.slotClip, styles.slotClipLeft]}>
+        <Animated.View style={[styles.slotPlate, leftPlateStyle]} />
+      </View>
+      <View style={[styles.slotClip, styles.slotClipRight]}>
+        <Animated.View style={[styles.slotPlate, rightPlateStyle]} />
+      </View>
       <Animated.View
         style={[rStyles.leftBackground /* , styles.leftBackground */]}
       />
@@ -172,12 +169,21 @@ const Indicator = ({
 
 const indicatorMarginTop = 0;
 const indicatorHeight = HOME_TOP_HEADER_SIZES.headerIndicatorHeight;
+/**
+ * Extra touch area above and below the indicator bars, in pt. The container
+ * grows by twice this value and pulls the same amount back with negative
+ * margins, so the bars keep their exact visual position while the tappable
+ * height grows. Tapping slightly off the bar used to fall through to the pager.
+ */
+const indicatorHitPaddingY = 8;
 // Keep the indicator hit regions below the header's eye/action buttons.
 // Expanding 50pt upward overlaps those controls under Fabric hit testing.
-const leftHitSlopTop = 4;
-const leftHitSlopBottom = 4;
-const rightHitSlopTop = 4;
-const rightHitSlopBottom = 4;
+// The vertical touch area is owned by `indicatorHitPaddingY` on the container
+// now, so the pressables do not add their own slop on top of it.
+const leftHitSlopTop = 0;
+const leftHitSlopBottom = 0;
+const rightHitSlopTop = 0;
+const rightHitSlopBottom = 0;
 
 const indicatorStyles = createGetStyles2024(
   {
@@ -189,7 +195,7 @@ const indicatorStyles = createGetStyles2024(
 
         return {
           position: 'absolute',
-          top: indicatorMarginTop,
+          top: indicatorMarginTop + indicatorHitPaddingY,
           left: 20,
           width: indicatorWidth,
           height: indicatorHeight,
@@ -205,7 +211,7 @@ const indicatorStyles = createGetStyles2024(
 
         return {
           position: 'absolute',
-          top: indicatorMarginTop,
+          top: indicatorMarginTop + indicatorHitPaddingY,
           right: 20,
           width: indicatorWidth,
           height: indicatorHeight,
@@ -219,8 +225,10 @@ const indicatorStyles = createGetStyles2024(
   ({ isLight, colors2024 }) => {
     const winWidth = Dimensions.get('window').width;
     const indicatorWidth = getHomeTabIndicatorWidth(winWidth);
-    const rightPressableWidth = indicatorWidth * 0.5;
-    const rightPressableOffset = indicatorWidth - rightPressableWidth;
+    // The right segment covers the whole right bar: half of it was dead before,
+    // so tapping the right half of the grey bar did nothing.
+    const rightPressableWidth = indicatorWidth;
+    const rightPressableOffset = 0;
     return {
       indicator: {
         height: 6,
@@ -229,13 +237,41 @@ const indicatorStyles = createGetStyles2024(
           : colors2024['brand-default'],
         position: 'absolute',
         borderRadius: 12,
-        top: indicatorMarginTop,
+        top: indicatorMarginTop + indicatorHitPaddingY,
         zIndex: 99,
+      },
+      slotClip: {
+        position: 'absolute',
+        top: indicatorMarginTop + indicatorHitPaddingY,
+        width: indicatorWidth,
+        height: indicatorHeight,
+        borderRadius: 12,
+        overflow: 'hidden',
+        zIndex: 99,
+      },
+      slotClipLeft: {
+        left: 20,
+      },
+      slotClipRight: {
+        right: 20,
+      },
+      slotPlate: {
+        position: 'absolute',
+        left: 0,
+        top: 0,
+        width: '100%',
+        height: '100%',
+        borderRadius: 12,
+        backgroundColor: isLight
+          ? 'rgba(0, 0, 0, 1)'
+          : colors2024['brand-default'],
       },
       indicatorContainer: {
         position: 'relative',
         paddingTop: indicatorMarginTop,
-        height: indicatorMarginTop + indicatorHeight,
+        height: indicatorMarginTop + indicatorHeight + indicatorHitPaddingY * 2,
+        marginTop: -indicatorHitPaddingY,
+        marginBottom: -indicatorHitPaddingY,
       },
       indicatorBgBox: {
         backgroundColor: colors2024['neutral-bg-1'],
@@ -245,7 +281,7 @@ const indicatorStyles = createGetStyles2024(
         top: indicatorMarginTop,
         left: 20,
         width: indicatorWidth,
-        height: indicatorHeight,
+        height: indicatorHeight + indicatorHitPaddingY * 2,
         zIndex: 99,
       },
       rightPressable: {
@@ -253,32 +289,8 @@ const indicatorStyles = createGetStyles2024(
         right: 20 + rightPressableOffset,
         top: indicatorMarginTop,
         width: rightPressableWidth,
-        height: indicatorHeight,
+        height: indicatorHeight + indicatorHitPaddingY * 2,
         zIndex: 99,
-      },
-      leftHitAreaDebug: {
-        position: 'absolute',
-        top: indicatorMarginTop - leftHitSlopTop,
-        left: 20,
-        width: indicatorWidth,
-        height: indicatorHeight + leftHitSlopTop + leftHitSlopBottom,
-        borderRadius: 12,
-        backgroundColor: 'rgba(255, 0, 0, 0.12)',
-        borderWidth: 1,
-        borderColor: 'rgba(255, 0, 0, 0.4)',
-        zIndex: 97,
-      },
-      rightHitAreaDebug: {
-        position: 'absolute',
-        top: indicatorMarginTop - rightHitSlopTop,
-        right: 20 + rightPressableOffset,
-        width: rightPressableWidth,
-        height: indicatorHeight + rightHitSlopTop + rightHitSlopBottom,
-        borderRadius: 12,
-        backgroundColor: 'rgba(255, 0, 0, 0.12)',
-        borderWidth: 1,
-        borderColor: 'rgba(255, 0, 0, 0.4)',
-        zIndex: 97,
       },
     };
   },
@@ -446,9 +458,14 @@ function AssetsTabBar() {
             Math.round((1 - progress) * winWidth * STRIP_PIXEL) / STRIP_PIXEL,
         },
       ],
-      // Soften the leading edge: the row rides in slightly translucent and is
-      // fully opaque after the first stretch of the swipe.
-      opacity: interpolate(progress, [0, 0.15], [0.7, 1], Extrapolation.CLAMP),
+      // Fallback version: the row still rides in 1:1 with the pager, and the
+      // fade hides the fast-fling tail where the event stream trails the page.
+      opacity: interpolate(
+        progress,
+        [0, 0.45, 0.85, 1],
+        [0, 0.3, 0.8, 1],
+        Extrapolation.CLAMP,
+      ),
     };
   }, [winWidth]);
 
