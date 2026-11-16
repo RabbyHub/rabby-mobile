@@ -299,6 +299,10 @@ export const HistoryList = ({
       // clipped at that moment and the next insert crashes, so pinned dates
       // start with it off rather than switch when the first rows arrive.
       removeClippedSubviews={!(isStickyDate && Platform.OS === 'android')}
+      // Android 12+ stretches the whole content when a fling runs into the end
+      // of the rows loaded so far, pinned date included: the date slides up
+      // with the rows and springs back. No overscroll effect keeps it pinned.
+      overScrollMode={isStickyDate ? 'never' : undefined}
       ListFooterComponent={
         loadingMore ? (
           <>

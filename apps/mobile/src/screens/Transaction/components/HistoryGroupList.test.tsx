@@ -249,3 +249,28 @@ describe('HistoryList subview clipping', () => {
     expect(clipping()).toBe(true);
   });
 });
+
+// Android stretches the whole list, pinned date included, when a fling runs
+// into the end of the rows loaded so far.
+describe('HistoryList overscroll effect', () => {
+  const overScrollMode = () =>
+    screen.UNSAFE_getByType(FlatList).props.overScrollMode;
+
+  it('is off once the dates are pinned', () => {
+    render(
+      <HistoryList
+        list={twoDays}
+        firstFetchDone
+        stickyDateBackgroundColor="#fff"
+      />,
+    );
+
+    expect(overScrollMode()).toBe('never');
+  });
+
+  it('keeps the platform default for lists without pinned dates', () => {
+    render(<HistoryList list={twoDays} firstFetchDone />);
+
+    expect(overScrollMode()).toBeUndefined();
+  });
+});
