@@ -155,6 +155,62 @@ def reactNativeArchitectures() {
 }
 
 /**
+ * ccache for the native (CMake) build.
+ *
+ * CMake fails the configure step when CMAKE_C_COMPILER_LAUNCHER points at a
+ * binary that does not exist ("that program was not found"), so the launcher is
+ * only injected when ccache is actually resolvable. Select with
+ * -PrabbYAndroidCcache=<auto|true|false> or RABBY_MOBILE_ANDROID_CCACHE:
+ *   auto (default)  enable when ccache is found, otherwise silently skip
+ *   true            require it; fail the build with a clear message if missing
+ *   false           never use it
+ * CCACHE_PATH overrides the lookup, otherwise PATH and the usual Homebrew paths
+ * are searched.
+ */
+def resolveCcacheBinary() {
+    def setting = (
+        findProperty('rabbYAndroidCcache')
+            ?: System.getenv('RABBY_MOBILE_ANDROID_CCACHE')
+            ?: 'auto'
+    ).toString().trim().toLowerCase()
+    if (['false', 'off', '0'].contains(setting)) {
+        return null
+    }
+
+    def candidates = []
+    def explicit = System.getenv('CCACHE_PATH')
+    if (explicit) {
+        candidates << new File(explicit)
+    }
+    (System.getenv('PATH') ?: '').split(File.pathSeparator).each { dir ->
+        if (dir) {
+            candidates << new File(dir, 'ccache')
+        }
+    }
+    ['/opt/homebrew/bin/ccache', '/usr/local/bin/ccache', '/usr/bin/ccache'].each {
+        candidates << new File(it)
+    }
+
+    def found = candidates.find { it.canExecute() }
+    if (found) {
+        return found.absolutePath
+    }
+    if (['true', 'on', '1'].contains(setting)) {
+        throw new GradleException(
+            "rabbYAndroidCcache=${setting} but no ccache binary was found; " +
+            "install ccache, set CCACHE_PATH, or use -PrabbYAndroidCcache=false"
+        )
+    }
+    return null
+}
+
+def rabbyCcacheBinary = resolveCcacheBinary()
+logger.lifecycle("[rabby] android ccache=${rabbyCcacheBinary ?: 'disabled'}")
+
+// Resolved by the root build.gradle ABI profile (defaults to arm64 for
+// Regression/SignOnly builds, everything for release).
+
+/**
  * The preferred build flavor of JavaScriptCore (JSC)
  *
  * For example, to use the international variant, you can use:
@@ -193,6 +249,10 @@ android {
         externalNativeBuild {
           cmake {
             arguments "-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON"
+            if (rabbyCcacheBinary) {
+              arguments "-DCMAKE_C_COMPILER_LAUNCHER=${rabbyCcacheBinary}",
+                        "-DCMAKE_CXX_COMPILER_LAUNCHER=${rabbyCcacheBinary}"
+            }
           }
         }
     }
