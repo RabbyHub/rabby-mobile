@@ -328,7 +328,7 @@ describe('PerpsModeSwitch', () => {
     expect(simpleActive).toHaveStyle({ opacity: 0 });
     expect(proActive).toHaveStyle({
       fontFamily: 'SF Pro Rounded',
-      fontWeight: '900',
+      fontWeight: '800',
     });
     expect(proInactive).toHaveStyle({
       fontFamily: 'SF Pro Rounded',
