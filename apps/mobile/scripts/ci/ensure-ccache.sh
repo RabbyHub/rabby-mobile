@@ -158,6 +158,15 @@ trap 'if [ -n "${CCACHE_TMP_DIR:-}" ]; then rm -rf "$CCACHE_TMP_DIR"; fi' EXIT
 
 bin="$(resolve_ccache || true)"
 if [ -z "$bin" ]; then
+  # A platform we never published a bundle for is a capability gap, not a
+  # broken install: those runners (e.g. the legacy x86 Linux builders) simply
+  # build without ccache. Real failures (download/checksum/sidecar mismatch)
+  # still honour RABBY_MOBILE_CCACHE_STRICT below.
+  platform="$(detect_platform)"
+  if [ -n "$platform" ] && [ -z "$(pinned_sha256 "$platform")" ]; then
+    log "no managed ccache bundle is published for $platform; building without ccache"
+    exit 0
+  fi
   if [ "$STRICT" = "true" ]; then
     log "no usable ccache (>= $MIN_VERSION) was found and the managed bundle could not be installed."
     log "Provide a managed bundle at s3://${BUCKET:-<bucket>}/_private/toolchains/ccache/$VERSION/<platform>.tar.gz,"
