@@ -8,6 +8,67 @@ export type RootScenePagerMotion = {
   queued: number | null;
 };
 
+/**
+ * How a horizontal drag is shared with the platform back gesture.
+ *
+ * - `edge-handoff`: a rightward drag that starts inside the native back-gesture
+ *   edge belongs to the system. Every page keeps the same meaning: edge swipe =
+ *   go back, in-page swipe = change sub-screen.
+ * - `boundary-handoff`: the pager claims all horizontal drags except the two
+ *   boundaries: first page's rightward drag and last page's leftward drag.
+ *   Only the first sub-screen is treated like the native back gesture.
+ */
+export type RootScenePagerGestureMode = 'edge-handoff' | 'boundary-handoff';
+
+export type RootSceneDragClaim = 'pending' | 'claim' | 'release';
+
+/**
+ * Resolution of one manual-activation frame: `pending` keeps waiting for a
+ * clearer direction, `claim` lets the pager take the touch, `release` fails the
+ * pager gesture so the parent/native gesture can own it.
+ */
+export function resolveRootSceneDragClaim({
+  gestureMode,
+  dx,
+  dy,
+  startX,
+  selected,
+  count,
+  backGestureEdge,
+}: {
+  gestureMode: RootScenePagerGestureMode;
+  dx: number;
+  dy: number;
+  startX: number;
+  selected: number;
+  count: number;
+  backGestureEdge: number;
+}): RootSceneDragClaim {
+  'worklet';
+  const absX = Math.abs(dx);
+  const absY = Math.abs(dy);
+  if (absX < 8 && absY < 8) {
+    return 'pending';
+  }
+  if (absX < absY * 1.15) {
+    return 'release';
+  }
+  const rightward = dx > 0;
+  if (gestureMode === 'edge-handoff') {
+    if (rightward && backGestureEdge > 0 && startX <= backGestureEdge) {
+      return 'release';
+    }
+    return 'claim';
+  }
+  if (rightward && selected <= 0) {
+    return 'release';
+  }
+  if (!rightward && selected >= count - 1) {
+    return 'release';
+  }
+  return 'claim';
+}
+
 export function validateRootSceneKeys(keys: readonly string[]) {
   if (!keys.length || keys.some(key => !key || typeof key !== 'string')) {
     throw new Error('RootScenePager requires non-empty page keys');
