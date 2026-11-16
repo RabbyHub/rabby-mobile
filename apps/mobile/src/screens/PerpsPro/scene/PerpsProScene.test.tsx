@@ -2893,7 +2893,7 @@ describe('PerpsProScene market loading states', () => {
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-list-tabs-placeholder').props.style,
       ),
-    ).toMatchObject({ height: 60 });
+    ).toMatchObject({ height: 64 });
     const header = screen.UNSAFE_getByType(PerpsProInfoSingleList).props
       .listHeader;
     expect(
@@ -2914,7 +2914,7 @@ describe('PerpsProScene market loading states', () => {
     const pageStyle = StyleSheet.flatten(getInfoList('account').props.style);
     const rowStartOffset = screen.UNSAFE_getByType(PerpsProInfoSingleList).props
       .rowStartOffset;
-    expect(pageStyle).toMatchObject({ minHeight: 1202 - rowStartOffset });
+    expect(pageStyle).toMatchObject({ minHeight: 1200 - rowStartOffset });
     expect(pageStyle?.paddingTop ?? 0).toBe(0);
     const marketOverlayStyle = StyleSheet.flatten(
       screen.getByTestId('perps-pro-market-overlay').props.style,
@@ -2931,14 +2931,14 @@ describe('PerpsProScene market loading states', () => {
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-info-tabs-spacer').props.style,
       ),
-    ).toMatchObject({ height: 22 });
+    ).toMatchObject({ height: 20 });
     // The tab strip is a pinned layer below the market bar.
     expect(screen.getByTestId('perps-pro-info-tabs-overlay')).toBeTruthy();
     expect(screen.getAllByTestId('perps-pro-info-tab-account')).toHaveLength(1);
   });
 
   it.each([true, false])(
-    'keeps the six-point section divider distinct with isLight=%s',
+    'keeps the tab gap a plain spacer with no section divider, isLight=%s',
     isLight => {
       mockIsLight = isLight;
       mockUsePerpsProScene.mockReturnValue(createSceneState());
@@ -2946,20 +2946,9 @@ describe('PerpsProScene market loading states', () => {
         <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
       );
       const spacer = screen.getByTestId('perps-pro-info-tabs-spacer');
-      const divider = spacer.children[0];
-      if (typeof divider === 'string') {
-        throw new Error('Missing section divider');
-      }
-      expect(divider.props.pointerEvents).toBe('none');
-      expect(StyleSheet.flatten(divider.props.style)).toMatchObject({
-        backgroundColor: isLight ? 'neutral-bg-0' : 'neutral-bg-2',
-        height: 6,
-        bottom: 0,
-        left: 0,
-        right: 0,
-      });
+      expect(spacer.children).toHaveLength(0);
       expect(StyleSheet.flatten(spacer.props.style)).toMatchObject({
-        height: 22,
+        height: 20,
       });
     },
   );
@@ -4614,10 +4603,10 @@ describe('PerpsProScene market loading states', () => {
 
     const rowStartOffset = screen.UNSAFE_getByType(PerpsProInfoSingleList).props
       .rowStartOffset;
-    const expectedMinHeight = 1202 - rowStartOffset;
+    const expectedMinHeight = 1200 - rowStartOffset;
     expect(
       StyleSheet.flatten(getInfoList('account').props.style),
-    ).toMatchObject({ minHeight: expectedMinHeight, paddingBottom: 386 });
+    ).toMatchObject({ minHeight: expectedMinHeight, paddingBottom: 380 });
 
     mockUsePerpsProInfoPanel.mockReturnValue(
       createInfoState({
@@ -4632,7 +4621,7 @@ describe('PerpsProScene market loading states', () => {
     settleInfoPage('positions');
     expect(
       StyleSheet.flatten(getInfoList('positions').props.style),
-    ).toMatchObject({ minHeight: expectedMinHeight, paddingBottom: 386 });
+    ).toMatchObject({ minHeight: expectedMinHeight, paddingBottom: 380 });
 
     mockUsePerpsProInfoPanel.mockReturnValue(
       createInfoState({
@@ -4647,7 +4636,7 @@ describe('PerpsProScene market loading states', () => {
     settleInfoPage('openOrders');
     expect(
       StyleSheet.flatten(getInfoList('openOrders').props.style),
-    ).toMatchObject({ minHeight: expectedMinHeight, paddingBottom: 386 });
+    ).toMatchObject({ minHeight: expectedMinHeight, paddingBottom: 380 });
 
     mockUsePerpsProInfoPanel.mockReturnValue(
       createInfoState({

@@ -1,10 +1,8 @@
-export const PERPS_PRO_INFO_TABS_HEIGHT = 38;
-export const PERPS_PRO_INFO_SECTION_TOP_GAP = 16;
-export const PERPS_PRO_INFO_SECTION_DIVIDER_HEIGHT = 6;
+export const PERPS_PRO_INFO_TABS_HEIGHT = 44;
+// Figma 86609:348308: the tabs follow the trade row after 20pt, no divider.
+export const PERPS_PRO_INFO_SECTION_TOP_GAP = 20;
 export const PERPS_PRO_INFO_TABS_PLACEHOLDER_HEIGHT =
-  PERPS_PRO_INFO_SECTION_TOP_GAP +
-  PERPS_PRO_INFO_SECTION_DIVIDER_HEIGHT +
-  PERPS_PRO_INFO_TABS_HEIGHT;
+  PERPS_PRO_INFO_SECTION_TOP_GAP + PERPS_PRO_INFO_TABS_HEIGHT;
 const PERPS_PRO_INFO_EMPTY_STATE_VISIBLE_HEIGHT = 80 + 126 + 12 + 18;
 const PERPS_PRO_INFO_MIN_BOTTOM_PADDING = 32;
 
@@ -14,11 +12,7 @@ export const getPerpsProInfoTabsNaturalAnchor = ({
 }: {
   leadInHeight: number;
   tradeRowHeight: number;
-}) =>
-  leadInHeight +
-  tradeRowHeight +
-  PERPS_PRO_INFO_SECTION_TOP_GAP +
-  PERPS_PRO_INFO_SECTION_DIVIDER_HEIGHT;
+}) => leadInHeight + tradeRowHeight + PERPS_PRO_INFO_SECTION_TOP_GAP;
 
 export const getPerpsProInfoSectionMinimumContentHeight = ({
   infoTabsNaturalAnchor,
