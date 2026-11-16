@@ -435,9 +435,14 @@ function AssetsTabBar() {
             Math.round((1 - progress) * winWidth * STRIP_PIXEL) / STRIP_PIXEL,
         },
       ],
-      // Soften the leading edge: the row rides in slightly translucent and is
-      // fully opaque after the first stretch of the swipe.
-      opacity: interpolate(progress, [0, 0.15], [0.7, 1], Extrapolation.CLAMP),
+      // Fallback version: the row still rides in 1:1 with the pager, and the
+      // fade hides the fast-fling tail where the event stream trails the page.
+      opacity: interpolate(
+        progress,
+        [0, 0.45, 0.85, 1],
+        [0, 0.3, 0.8, 1],
+        Extrapolation.CLAMP,
+      ),
     };
   }, [winWidth]);
 
