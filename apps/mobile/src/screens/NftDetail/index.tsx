@@ -324,7 +324,7 @@ export const NFTDetailScreen = () => {
               style={styles.images}
               mediaStyle={styles.innerImages}
               playable={true}
-              poster={iToken?.content}
+              poster={iToken?.thumbnail_url}
             />
           </View>
           <View style={styles.bottom}>
