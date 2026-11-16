@@ -14,7 +14,8 @@ import { useTranslation } from 'react-i18next';
 import type { PerpsProCloseAllConfirmation } from '../../scene/usePerpsProCloseAll';
 
 // Figma 84231:25827 specifies compact 40px modal actions, rather than sheet actions.
-const CLOSE_ALL_ACTION_HEIGHT = 40;
+// Figma 86609:313792: 48pt actions and a secondary-color message.
+const CLOSE_ALL_ACTION_HEIGHT = 48;
 
 export const PerpsProCloseAllConfirmationModal: React.FC<{
   confirmation: PerpsProCloseAllConfirmation | null;
@@ -147,7 +148,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: '100%',
   },
   message: {
-    color: colors2024['neutral-body'],
+    color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 16,
     lineHeight: 20,

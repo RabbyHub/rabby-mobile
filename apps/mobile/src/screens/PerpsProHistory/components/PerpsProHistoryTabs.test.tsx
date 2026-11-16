@@ -170,7 +170,7 @@ describe('PerpsProHistoryTabs', () => {
     mockAnimatedScrollHandlers = null;
   });
 
-  it('renders one background pill behind stable-width labels', () => {
+  it('renders one underline indicator behind stable-width labels', () => {
     const onChange = jest.fn();
     renderTabs({ onChange });
 
@@ -210,7 +210,7 @@ describe('PerpsProHistoryTabs', () => {
       animatedProps: {
         opacity: 1,
       },
-      fill: '#131416',
+      fill: '#23C0B0',
     });
     expect(indicator.props.animatedProps.d).not.toBe('');
     expect(
@@ -232,17 +232,17 @@ describe('PerpsProHistoryTabs', () => {
     );
     expect(selectedTab.props.accessibilityState).toEqual({ selected: true });
     expect(StyleSheet.flatten(visuallyActiveLabel.props.style)).toMatchObject({
-      color: 'neutral-contrast',
+      color: 'neutral-title-1',
       ...RoundedFontStyles.bold,
-      fontSize: 14,
-      lineHeight: 18,
+      fontSize: 16,
+      lineHeight: 20,
     });
     expect(StyleSheet.flatten(visuallyInactiveLabel.props.style)).toMatchObject(
       {
         color: 'neutral-secondary',
         ...RoundedFontStyles.medium,
-        fontSize: 14,
-        lineHeight: 18,
+        fontSize: 16,
+        lineHeight: 20,
       },
     );
 
@@ -259,7 +259,7 @@ describe('PerpsProHistoryTabs', () => {
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-history-tab-orders').props.style,
       ),
-    ).toMatchObject({ height: 32, paddingHorizontal: 12 });
+    ).toMatchObject({ height: 38, paddingTop: 8 });
   });
 
   it('builds direction-safe strip anchors for unequal-width tabs', () => {
@@ -269,7 +269,7 @@ describe('PerpsProHistoryTabs', () => {
         layouts: indicatorLayouts,
         viewportWidth: 200,
       }),
-    ).toEqual([0, 28, 100, 172]);
+    ).toEqual([0, 32, 104, 172]);
     expect(
       getPerpsProHistoryTabStripAnchors({
         contentWidth: 180,
@@ -299,7 +299,7 @@ describe('PerpsProHistoryTabs', () => {
         ],
         viewportWidth: 100,
       }),
-    ).toEqual([16, 26, 36, 46]);
+    ).toEqual([20, 30, 40, 50]);
   });
 
   it('keeps both pill edges monotonic throughout adjacent transitions', () => {
@@ -358,7 +358,7 @@ describe('PerpsProHistoryTabs', () => {
     const view = renderTabs({ activeTab: 'trade', onChange, position });
     publishScrollableGeometry();
 
-    expectAutomaticScroll(28);
+    expectAutomaticScroll(32);
     position = shared(1.5);
     view.rerender(
       <PerpsProHistoryTabs
@@ -368,7 +368,7 @@ describe('PerpsProHistoryTabs', () => {
       />,
     );
 
-    expectAutomaticScroll(64);
+    expectAutomaticScroll(68);
     expect(
       screen.getByTestId('perps-pro-history-tab-indicator', {
         includeHiddenElements: true,
@@ -376,7 +376,7 @@ describe('PerpsProHistoryTabs', () => {
     ).toBe(
       getPerpsProHistoryIndicatorPath({
         frame: { width: 91, x: 112 },
-        stripOffset: 64,
+        stripOffset: 68,
       }),
     );
 
@@ -388,7 +388,7 @@ describe('PerpsProHistoryTabs', () => {
         position={position}
       />,
     );
-    expectAutomaticScroll(100);
+    expectAutomaticScroll(104);
   });
 
   it('does not start a second strip movement when business state commits', () => {
@@ -417,7 +417,7 @@ describe('PerpsProHistoryTabs', () => {
   it('reprojects the settled position directly after geometry changes', () => {
     renderTabs({ activeTab: 'transaction', position: shared(2) });
     const scroll = publishScrollableGeometry();
-    expectAutomaticScroll(100);
+    expectAutomaticScroll(104);
 
     act(() => {
       fireEvent(scroll, 'layout', {
@@ -425,7 +425,7 @@ describe('PerpsProHistoryTabs', () => {
       });
     });
 
-    expectAutomaticScroll(90);
+    expectAutomaticScroll(94);
   });
 
   it('preserves a manual strip offset as a UI-thread bias', () => {
@@ -549,7 +549,7 @@ describe('PerpsProHistoryTabs', () => {
         nativeEvent: { layout: { height: 32, width: 220, x: 0, y: 0 } },
       });
     });
-    expectAutomaticScroll(18);
+    expectAutomaticScroll(22);
   });
 
   it('snapshots native layout before a deferred state updater runs', () => {

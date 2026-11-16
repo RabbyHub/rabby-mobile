@@ -16,6 +16,12 @@ const mockPagerSetPageWithoutAnimation = jest.fn();
 
 const mockUiRefreshTimeout = jest.fn();
 
+jest.mock('@/assets2024/icons/perps/PerpsProMarketTabFavorite.svg', () => {
+  const ReactModule = require('react');
+  const { View } = require('react-native');
+  return (props: object) => ReactModule.createElement(View, props);
+});
+
 jest.mock('@/core/apis/autoLock', () => ({
   uiRefreshTimeout: mockUiRefreshTimeout,
 }));
@@ -585,7 +591,7 @@ describe('PerpsProMarketSelector component', () => {
 
     act(() => {
       fireEvent.press(
-        screen.getByText('page.perps.pro.marketSelector.favorites'),
+        screen.getByLabelText('page.perps.pro.marketSelector.favorites'),
       );
     });
     act(() => {
@@ -609,7 +615,7 @@ describe('PerpsProMarketSelector component', () => {
       fireEvent.changeText(screen.getByTestId('market-search'), 'MARKET295');
     });
     expect(
-      screen.queryByText('page.perps.pro.marketSelector.favorites'),
+      screen.queryByLabelText('page.perps.pro.marketSelector.favorites'),
     ).toBeNull();
     expect(screen.queryByText('page.perps.pro.marketSelector.all')).toBeNull();
     expect(screen.queryByTestId('perps-pro-market-pager')).toBeNull();
@@ -626,7 +632,7 @@ describe('PerpsProMarketSelector component', () => {
     });
     expect(getLatestListProps('favorites').data).toHaveLength(1);
     expect(
-      screen.getByText('page.perps.pro.marketSelector.favorites'),
+      screen.getByLabelText('page.perps.pro.marketSelector.favorites'),
     ).toBeTruthy();
     expect(screen.getByTestId('perps-pro-market-column-header')).toBeTruthy();
 
@@ -640,7 +646,7 @@ describe('PerpsProMarketSelector component', () => {
     );
     expect(removeFavoriteMarket).toHaveBeenCalledWith('MARKET001');
     expect(
-      screen.queryByText('page.perps.pro.marketSelector.favorites'),
+      screen.queryByLabelText('page.perps.pro.marketSelector.favorites'),
     ).toBeNull();
     expect(getLatestListProps('all').data).toHaveLength(296);
 

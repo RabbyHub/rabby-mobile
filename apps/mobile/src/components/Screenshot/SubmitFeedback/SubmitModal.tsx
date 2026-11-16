@@ -89,8 +89,9 @@ const getSwitchLineStyle = createGetStyles2024(ctx => {
   };
 });
 
-// const IMAGE_CONTAIN_STYLE = { height: 200, width: '100%' } as const;
-const IMAGE_RESIZE_MODE = 'cover' as const;
+// The preview box is landscape while screenshots are portrait: show the whole
+// screenshot instead of cropping it.
+const IMAGE_RESIZE_MODE = 'contain' as const;
 
 function wrapOnPress(handler?: (evt: GestureResponderEvent) => void) {
   return (evt: GestureResponderEvent) => {
@@ -157,6 +158,11 @@ export function ScreenshotFeedbackSubmitModal() {
       visible={globalModalShown}
       transparent
       animationType="fade"
+      onRequestClose={() => {
+        if (!isSubmitting) {
+          closeSubmitModal({ skipInNext1Day });
+        }
+      }}
       style={styles.modalComp}>
       <View style={[styles.maskExtra, styles.maskBg]} />
 
@@ -265,7 +271,7 @@ export function ScreenshotFeedbackSubmitModal() {
                     onChange={nextVal => {
                       setSkipInNext1Day(nextVal);
                     }}
-                    style={[]}
+                    style={styles.skipLine}
                   />
                 </View>
               </View>
@@ -281,9 +287,12 @@ const SIZES = {
   MODAL_MASK_H_PADDING: 20,
   MODAL_V_MARGIN: 97,
   MODAL_H_PADDING: 20,
-  MODAL_MIN_H: 450,
+  MODAL_V_PADDING: 36,
 
-  IMG_MAX_H: 450,
+  // Per design; it shrinks, down to IMG_MIN_H, when a short screen can't fit
+  // the whole modal.
+  IMG_H: 199,
+  IMG_MIN_H: 100,
   IMG_MAX_W: 321,
 
   EDIT_ICON_WRAPPER_SIZE: 60,
@@ -323,8 +332,7 @@ const getModalStyle = createGetStyles2024(({ isLight, colors2024 }) => {
     },
     modalWrapper: {
       width: '100%',
-      height: winLayout.height - SIZES.MODAL_V_MARGIN * 2,
-      minHeight: winLayout.height - SIZES.MODAL_V_MARGIN * 2,
+      maxHeight: winLayout.height - SIZES.MODAL_V_MARGIN * 2,
       justifyContent: 'center',
       alignItems: 'center',
       position: 'relative',
@@ -332,9 +340,9 @@ const getModalStyle = createGetStyles2024(({ isLight, colors2024 }) => {
     modal: {
       maxWidth: modalWidth,
       width: '100%',
-      height: '100%',
-      paddingTop: 30,
-      paddingBottom: 30,
+      flexShrink: 1,
+      paddingTop: SIZES.MODAL_V_PADDING,
+      paddingBottom: SIZES.MODAL_V_PADDING,
       backgroundColor: colors2024['neutral-bg-1'],
       borderRadius: 20,
       position: 'relative',
@@ -343,7 +351,7 @@ const getModalStyle = createGetStyles2024(({ isLight, colors2024 }) => {
     },
     modalContent: {
       width: '100%',
-      height: '100%',
+      flexShrink: 1,
       paddingHorizontal: SIZES.MODAL_H_PADDING,
       alignItems: 'center',
       justifyContent: 'center',
@@ -379,14 +387,15 @@ const getModalStyle = createGetStyles2024(({ isLight, colors2024 }) => {
       position: 'relative',
       width: '100%',
       // maxWidth: SIZES.IMG_MAX_W,
-      maxHeight: SIZES.IMG_MAX_H,
+      height: SIZES.IMG_H,
+      minHeight: SIZES.IMG_MIN_H,
+      flexShrink: 1,
       borderRadius: 21,
       borderWidth: 1,
       borderStyle: 'solid',
       borderColor: colors2024['neutral-line'],
-      flex: 1,
       marginTop: 16,
-      marginBottom: 16,
+      marginBottom: 12,
       overflow: 'hidden',
       // ...makeDebugBorder(),
     },
@@ -394,13 +403,16 @@ const getModalStyle = createGetStyles2024(({ isLight, colors2024 }) => {
     submitArea: {
       position: 'relative',
       width: '100%',
-      gap: 16,
       // ...makeDebugBorder('yellow'),
     },
     buttonGroup: {
       flexDirection: 'row',
       gap: 12,
       width: '100%',
+      marginTop: 20,
+    },
+    skipLine: {
+      marginTop: 19,
     },
     buttonContainer: {
       height: 48,

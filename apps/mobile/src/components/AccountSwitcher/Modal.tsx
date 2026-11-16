@@ -44,9 +44,10 @@ export function AccountSwitcherModal({
 }>) {
   const { isVisible, toggleSceneVisible } = useAccountSceneVisible(forScene);
   const modalRef = useRef<AppBottomSheetModal>(null);
-  const { toggleShowSheetModal } = useSheetModals({
-    selectAddress: modalRef,
-  });
+  // Stable, so the effect below runs only on open/close: rerunning it on every
+  // render would close the keyboard of a dialog opened over the switcher.
+  const sheetModalRefs = useMemo(() => ({ selectAddress: modalRef }), []);
+  const { toggleShowSheetModal } = useSheetModals(sheetModalRefs);
 
   const { styles, colors2024 } = useTheme2024({ getStyle: getModalStyle });
 
@@ -149,9 +150,9 @@ function AccountSwitcherModalInDappWebViewImpl({
     '@ActiveDappWebViewModal',
   );
   const modalRef = useRef<AppBottomSheetModal>(null);
-  const { toggleShowSheetModal } = useSheetModals({
-    selectAddress: modalRef,
-  });
+  // stable for the same reason as in AccountSwitcherModal
+  const sheetModalRefs = useMemo(() => ({ selectAddress: modalRef }), []);
+  const { toggleShowSheetModal } = useSheetModals(sheetModalRefs);
 
   const { styles, colors2024 } = useTheme2024({
     getStyle: getModalInDappWebViewStyle,

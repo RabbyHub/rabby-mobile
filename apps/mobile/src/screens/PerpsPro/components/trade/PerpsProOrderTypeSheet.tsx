@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next';
 
 import type { PerpsProTradeOrderType } from '../../model/trade';
 import { getPerpsProDialogStyles } from '../common/perpsProDialogVisual';
+import { PerpsProDialogOptionCheck } from '../common/PerpsProDialogOptionCheck';
 import { PerpsProDialogBackdrop } from '../common/PerpsProDialogBackdrop';
 import { usePerpsProSheetNavigationRegistration } from '../common/perpsProSheetNavigationRegistry';
 import { PerpsProOrderTypeIcon } from './PerpsProOrderTypeIcon';
@@ -103,6 +104,10 @@ export const PerpsProOrderTypeSheet: React.FC<{
                     </View>
                     <Text style={styles.description}>{option.description}</Text>
                   </View>
+                  <PerpsProDialogOptionCheck
+                    active={active}
+                    titleLineHeight={24}
+                  />
                 </Pressable>
               );
             })}

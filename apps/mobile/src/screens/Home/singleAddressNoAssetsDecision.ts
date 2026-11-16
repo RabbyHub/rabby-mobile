@@ -205,9 +205,8 @@ export function resolveSingleAddressAssetViewState({
   if (balance !== 0 || evmBalance !== 0) {
     return 'assets';
   }
-  if (balanceFlow.isLoading) {
-    return 'pending';
-  }
+  // A cached zero balance can refresh in the background. Hiding the receive
+  // QR here flashes the skeleton and then brings the same QR back.
   if (balanceFlow.hasError) {
     return 'assets';
   }

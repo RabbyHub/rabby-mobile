@@ -27,8 +27,18 @@ jest.mock('@/components/Modal/TrackedModal', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
   return {
-    TrackedModal: ({ children }: { children?: React.ReactNode }) =>
-      ReactModule.createElement(View, null, children),
+    TrackedModal: ({
+      children,
+      visible,
+    }: {
+      children?: React.ReactNode;
+      visible?: boolean;
+    }) =>
+      ReactModule.createElement(
+        View,
+        { testID: 'qr-code-modal', accessibilityValue: { text: `${visible}` } },
+        children,
+      ),
   };
 });
 
@@ -68,4 +78,19 @@ it('keeps the QR content mounted after it becomes invisible', () => {
 it('renders nothing before the first open', () => {
   const view = render(<QrCodeModal />);
   expect(view.UNSAFE_queryAllByType(TouchableOpacity)).toHaveLength(0);
+});
+
+it('never presents an empty transparent modal', () => {
+  const modalVisible = (view: ReturnType<typeof render>) =>
+    view.getByTestId('qr-code-modal').props.accessibilityValue.text;
+  store.set(visibleAtom, true);
+
+  const view = render(<QrCodeModal />);
+  // Visible without data: nothing to draw and nothing to tap.
+  expect(modalVisible(view)).toBe('false');
+
+  act(() => {
+    store.set(dataAtom, '0x341a1fbd51825e5a107db54ccb3166deba145479');
+  });
+  expect(modalVisible(view)).toBe('true');
 });

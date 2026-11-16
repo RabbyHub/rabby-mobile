@@ -554,10 +554,11 @@ describe('PerpsProPositionCard', () => {
     ).toEqual({ disabled: true });
     const leverageAction = screen.getByRole('button', { name: 'Leverage' });
     expect(StyleSheet.flatten(leverageAction.props.style)).toMatchObject({
+      backgroundColor: 'neutral-bg-5',
       borderRadius: 6,
       flex: 1,
-      minHeight: 34,
-      paddingVertical: 8,
+      minHeight: 32,
+      paddingVertical: 4,
     });
     expect(
       StyleSheet.flatten(leverageAction.props.style).height,
@@ -592,7 +593,7 @@ describe('PerpsProPositionCard', () => {
     expect(value.props.adjustsFontSizeToFit).toBeUndefined();
     expect(value.props.numberOfLines).toBe(1);
     expect(StyleSheet.flatten(value.props.style)).toMatchObject({
-      fontSize: 12,
+      fontSize: 13,
       lineHeight: 16,
       fontVariant: ['tabular-nums'],
     });
@@ -678,7 +679,7 @@ describe('PerpsProPositionCard', () => {
       StyleSheet.flatten(
         screen.getByRole('button', { name: 'Apalancamiento' }).props.style,
       ),
-    ).toMatchObject({ minHeight: 34, paddingVertical: 8 });
+    ).toMatchObject({ minHeight: 32, paddingVertical: 4 });
   });
 
   it('does not re-render the card when fitting measurements confirm compact mode', () => {
@@ -1235,8 +1236,9 @@ describe('PerpsProPositionCard', () => {
         screen.getByTestId('perps-pro-position-BTC').props.style,
       ),
     ).toMatchObject({
-      marginLeft: 16,
-      marginRight: 14,
+      borderRadius: 12,
+      marginHorizontal: 12,
+      padding: 12,
     });
     fireEvent.press(screen.getByText('Size (USDC)'));
     expect(screen.getByText('Size (BTC)')).toBeTruthy();

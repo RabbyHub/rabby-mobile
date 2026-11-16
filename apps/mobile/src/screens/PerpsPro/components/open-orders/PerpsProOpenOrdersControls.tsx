@@ -83,7 +83,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   tabs: {
     flexDirection: 'row',
     gap: 0,
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     paddingBottom: 12,
   },
   tab: {

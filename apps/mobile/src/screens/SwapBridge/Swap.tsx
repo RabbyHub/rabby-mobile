@@ -4,7 +4,6 @@ import { CompareFee } from '@/components/RabbyFeePopup/CompareFee';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import {
   BOTTOM_BUTTON_SINGLE_HEIGHT,
-  BOTTOM_BUTTON_TITLE_STYLE,
   BOTTOM_BUTTON_TOP_OFFSET,
   getBottomButtonBottomOffset,
   type RootNames,
@@ -1641,6 +1640,7 @@ const Swap = ({
               <View style={styles.swapTokenCard}>
                 <SwapTokenItem
                   disabled={!isSupportedChain}
+                  sceneActive={sceneActive}
                   inSufficient={inSufficient}
                   slider={slider}
                   onChangeSlider={onChangeSlider}
@@ -1765,7 +1765,6 @@ const Swap = ({
                   // refresh  risk check
                   key={`${refreshId}-${chain}-${payToken?.id}-${receiveToken?.id}-${payAmount}-${activeProvider?.quote?.tx?.data}-${isApprove}`}
                   height={BOTTOM_BUTTON_SINGLE_HEIGHT}
-                  titleStyle={styles.bottomButtonTitle}
                   loading={miniSignLoading}
                   loadingType="circle"
                   showTextOnLoading
@@ -1798,7 +1797,6 @@ const Swap = ({
               ) : (
                 <Button
                   height={BOTTOM_BUTTON_SINGLE_HEIGHT}
-                  titleStyle={styles.bottomButtonTitle}
                   onPress={() => {
                     if (!isSupportedChain && !externalDapps.length) {
                       return;
@@ -2100,9 +2098,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   riskWarning: {
     marginTop: 12,
     marginBottom: 12,
-  },
-  bottomButtonTitle: {
-    ...BOTTOM_BUTTON_TITLE_STYLE,
   },
   approveContainer: {
     flexDirection: 'row',

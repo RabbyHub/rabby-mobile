@@ -62,7 +62,7 @@ describe('PerpsProPositionTpSlHeader', () => {
 
     const header = screen.getByTestId('perps-pro-position-tpsl-header-main');
     expect(StyleSheet.flatten(header.props.style)).toMatchObject({
-      paddingHorizontal: 16,
+      paddingHorizontal: 12,
       paddingTop: 8,
     });
     expect(
@@ -206,7 +206,7 @@ describe('PerpsProPositionTpSlHeader', () => {
         screen.getByTestId('perps-pro-position-tpsl-header-empty').props.style,
       ),
     ).toMatchObject({
-      paddingHorizontal: 16,
+      paddingHorizontal: 12,
       paddingTop: 8,
     });
     expect(

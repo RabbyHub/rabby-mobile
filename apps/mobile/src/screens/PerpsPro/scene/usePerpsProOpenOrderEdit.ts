@@ -19,7 +19,10 @@ import {
   readActiveAssetDataFromCache,
 } from '@/hooks/perps/useActiveAssetDataCache';
 import type { PerpsProLeverageConfiguration } from '../model/leverage';
-import { perpsStore } from '@/hooks/perps/usePerpsStore';
+import {
+  ensureCurrentPerpPermission,
+  perpsStore,
+} from '@/hooks/perps/usePerpsStore';
 import * as Sentry from '@sentry/react-native';
 import type { OpenOrder } from '@rabby-wallet/hyperliquid-sdk';
 import BigNumber from 'bignumber.js';
@@ -359,6 +362,11 @@ export const usePerpsProOpenOrderEdit = (
       pendingRef.current = true;
       setPending(true);
       try {
+        if (!(await ensureCurrentPerpPermission(editorSnapshot.account))) {
+          showToast(t('page.perps.regionNotSupport'), 'error');
+          setReview(null);
+          return;
+        }
         await ensurePerpsActionApproval(editorSnapshot.account, {
           builderFee: false,
         });

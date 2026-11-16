@@ -1,28 +1,54 @@
-import { Dimensions, View } from 'react-native';
-import { MaterialTabBar } from 'react-native-collapsible-tab-view';
-import { Indicator } from './CustomIndicator';
+import React from 'react';
+import { StyleSheet, useWindowDimensions } from 'react-native';
+import {
+  MaterialTabBar,
+  type MaterialTabBarProps,
+} from 'react-native-collapsible-tab-view';
 
-const screenWidth = Dimensions.get('window').width;
-// 只针对了2个tab，后面再动态适配两个以上tab的场景
-export const CustomMaterialTabBar = (props: any) => {
+/**
+ * Horizontally scrollable MaterialTabBar.
+ *
+ * Each tab keeps its label width, so long translations stay on one line and
+ * the bar scrolls instead of wrapping. When every tab fits, the content still
+ * spans the full bar width and `space-around` spreads the tabs across it.
+ * The built-in indicator follows the measured tab layouts and scrolls with
+ * the tabs.
+ */
+export const CustomMaterialTabBar = ({
+  scrollEnabled = true,
+  contentContainerStyle,
+  indicatorStyle,
+  ...props
+}: MaterialTabBarProps<string>) => {
+  const windowWidth = useWindowDimensions().width;
+  const width = props.width ?? windowWidth;
+
+  const mergedContentContainerStyle = React.useMemo(
+    () => [styles.contentContainer, { minWidth: width }, contentContainerStyle],
+    [contentContainerStyle, width],
+  );
+  const mergedIndicatorStyle = React.useMemo(
+    () => [styles.indicator, indicatorStyle],
+    [indicatorStyle],
+  );
+
   return (
-    <View>
-      <MaterialTabBar {...props} indicatorStyle={{ height: 0 }} />
-      <Indicator
-        indexDecimal={props.indexDecimal}
-        style={props.indicatorStyle}
-        itemsLayout={[
-          {
-            width: screenWidth / 4,
-            x: screenWidth / 20,
-          },
-          {
-            width: screenWidth / 4,
-            x: screenWidth / 3 + screenWidth / 20,
-          },
-        ]}
-        fadeIn
-      />
-    </View>
+    <MaterialTabBar
+      {...props}
+      scrollEnabled={scrollEnabled}
+      contentContainerStyle={mergedContentContainerStyle}
+      indicatorStyle={mergedIndicatorStyle}
+    />
   );
 };
+
+const styles = StyleSheet.create({
+  contentContainer: {
+    justifyContent: 'space-around',
+  },
+  indicator: {
+    // Tab x offsets are measured from the content container's edge; pin the
+    // absolute indicator there so container padding/justify don't shift it.
+    left: 0,
+  },
+});

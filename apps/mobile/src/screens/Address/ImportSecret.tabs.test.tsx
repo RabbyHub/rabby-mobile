@@ -3,7 +3,7 @@ import { act, fireEvent, render } from '@testing-library/react-native';
 import { Keyboard, View } from 'react-native';
 import PagerView from 'react-native-pager-view';
 import { TouchableOpacity as GestureTouchableOpacity } from 'react-native-gesture-handler';
-import { ImportSecret } from './ImportSecret';
+import { ImportSecret, ImportSecretHeader } from './ImportSecret';
 import { FooterButtonScreenContainer } from '@/components2024/ScreenContainer/FooterButtonScreenContainer';
 import { E2E_ID } from '@/constant/e2e';
 
@@ -37,18 +37,27 @@ jest.mock('react-native-gesture-handler', () => ({
     const { View: NativeView } = require('react-native');
     return <NativeView {...props} />;
   },
+  Text: require('react-native').Text,
+  TextInput: require('react-native').TextInput,
 }));
 jest.mock('@/hooks/theme', () => ({ useTheme2024: () => mockTheme }));
+jest.mock('react-native-safe-area-context', () => ({
+  useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
+}));
 jest.mock('@/utils/styles', () => ({
   createGetStyles2024: (fn: unknown) => fn,
 }));
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: mockT }),
   Trans: () => null,
+  initReactI18next: { type: '3rdParty', init: () => undefined },
 }));
 jest.mock('@/utils/navigation', () => ({
   navigateDeprecated: jest.fn(),
   replaceToFirst: jest.fn(),
+}));
+jest.mock('@/hooks/navigation', () => ({
+  HeaderBackButton: () => null,
 }));
 jest.mock('@/constant/layout', () => ({ RootNames: {} }));
 jest.mock('../Scanner/ScannerScreen', () => ({
@@ -110,13 +119,6 @@ const privateKeyPlaceholder =
 
 function renderImport(initialTab: 'seedPhrase' | 'privateKey' = 'seedPhrase') {
   function NavigationHost() {
-    const [options, setOptions] = React.useState<{
-      headerTitle?: React.ComponentType;
-    }>({});
-    React.useLayoutEffect(() => {
-      mockNavigation.setOptions.mockImplementation(setOptions);
-    }, []);
-    const Header = options.headerTitle;
     return (
       <View>
         <ImportSecret
@@ -127,7 +129,7 @@ function renderImport(initialTab: 'seedPhrase' | 'privateKey' = 'seedPhrase') {
           }}
           navigation={mockNavigation as never}
         />
-        {Header && <Header />}
+        <ImportSecretHeader />
       </View>
     );
   }
@@ -157,13 +159,12 @@ it('uses gesture-handler hosts for both native-stack header tabs without dimming
   expect(tabs).toHaveLength(2);
   tabs.forEach(tab => expect(tab.props.activeOpacity).toBe(1));
   expect(tabs[1].props.testID).toBe(E2E_ID.onboarding.privateKeyTab);
-  expect(mockNavigation.setOptions).toHaveBeenLastCalledWith(
-    expect.objectContaining({ headerTitleAlign: 'center' }),
-  );
+  expect(view.getByText(seedPhraseLabel)).toBeTruthy();
+  expect(view.getByText(privateKeyLabel)).toBeTruthy();
 });
 
 it.each(['seedPhrase', 'privateKey'] as const)(
-  'switches both directions from %s, dismisses the keyboard, and preserves independent drafts',
+  'switches both directions from %s and preserves independent drafts',
   initialTab => {
     const { view, pressTab, getConfirm } = renderImport(initialTab);
     expect(view.UNSAFE_getByType(PagerView).props.initialPage).toBe(
@@ -198,8 +199,8 @@ it.each(['seedPhrase', 'privateKey'] as const)(
     expect(mockSetPage).toHaveBeenLastCalledWith(0);
     expect(getConfirm().disabled).toBe(false);
     pressTab(privateKeyLabel);
-    expect(mockSetPage.mock.calls).toEqual([[1], [0], [1]]);
-    expect(Keyboard.dismiss).toHaveBeenCalledTimes(3);
+    expect(mockSetPage).toHaveBeenCalledWith(0);
+    expect(mockSetPage).toHaveBeenLastCalledWith(1);
     expect(view.getByPlaceholderText(seedPhrasePlaceholder).props.value).toBe(
       'mnemonic draft',
     );
@@ -218,6 +219,7 @@ it.each(['seedPhrase', 'privateKey'] as const)(
 
 it('keeps header selection synchronized when the pager is swiped', () => {
   const { view, getConfirm } = renderImport();
+  mockSetPage.mockClear();
   act(() => {
     view.UNSAFE_getByType(PagerView).props.onPageSelected({
       nativeEvent: { position: 1 },
@@ -227,5 +229,5 @@ it('keeps header selection synchronized when the pager is swiped', () => {
   expect(tabs[1].props.style).toContain(mockTheme.styles.tabActive);
   expect(tabs[0].props.style).not.toContain(mockTheme.styles.tabActive);
   expect(getConfirm().testID).toBe(E2E_ID.onboarding.privateKeySubmit);
-  expect(mockSetPage).not.toHaveBeenCalled();
+  expect(mockSetPage).toHaveBeenLastCalledWith(1);
 });

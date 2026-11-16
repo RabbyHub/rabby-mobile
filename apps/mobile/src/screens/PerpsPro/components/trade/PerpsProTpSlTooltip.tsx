@@ -1,4 +1,3 @@
-import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
 import RcTooltipTail from '@/assets2024/icons/perps/PerpsProTpSlTooltipTail.svg';
 import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
@@ -261,7 +260,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     paddingVertical: 4,
   },
   line: {
-    ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['neutral-title-2'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 12,

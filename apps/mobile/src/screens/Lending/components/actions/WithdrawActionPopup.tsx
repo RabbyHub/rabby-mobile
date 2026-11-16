@@ -88,7 +88,6 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
   reserve,
   userSummary,
   onClose,
-  source,
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const [_amount, setAmount] = useState<string | undefined>(undefined);

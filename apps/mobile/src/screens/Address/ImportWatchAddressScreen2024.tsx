@@ -3,11 +3,11 @@ import { Text } from '@/components';
 import { RootNames } from '@/constant/layout';
 import { apisAddress } from '@/core/apis';
 import { useTheme2024 } from '@/hooks/theme';
-import { resolveEnsAddressByName, resolveEnsNameByAddress } from '@/utils/ens';
+import { useEnsInputResolver } from '@/hooks/useEnsInputResolver';
 import { navigateDeprecated, replaceToFirst } from '@/utils/navigation';
 import { isValidHexAddress } from '@metamask/utils';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
-import React, { useEffect } from 'react';
+import React from 'react';
 import {
   Keyboard,
   TouchableOpacity,
@@ -22,7 +22,6 @@ import PasteButton from '@/components2024/PasteButton';
 import { useTranslation } from 'react-i18next';
 import { useScanner } from '../Scanner/ScannerScreen';
 import { ellipsisAddress } from '@/utils/address';
-import { debounce } from 'lodash';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { E2E_ID } from '@/constant/e2e';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
@@ -41,50 +40,33 @@ const ERROR_MESSAGE = {
   [INPUT_ERROR.REQUIRED]: 'Please input address',
 };
 
+const parseInputAddress = (text: string) => {
+  const normalized = text.trim().toLowerCase();
+  return isValidHexAddress(normalized as `0x${string}`) ? normalized : null;
+};
+
 export const ImportWatchAddressScreen2024 = () => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
-  const [input, setInput] = React.useState('');
-  const [error, setError] = React.useState<INPUT_ERROR>();
+  const [input, _setInput] = React.useState('');
+  // Errors from confirming; name-lookup errors come from `isNameNotFound`.
+  const [submitError, setSubmitError] = React.useState<INPUT_ERROR>();
+  const setInput = React.useCallback((text: string) => {
+    _setInput(text);
+    setSubmitError(undefined);
+  }, []);
   const scanner = useScanner();
-  const [ensResult, setEnsResult] = React.useState<null | {
-    addr: string;
-    name: string;
-  }>(null);
-  const latestInputRef = React.useRef<string>('');
+  // Only ever describes the current input: late results of earlier inputs are dropped.
+  const { ensResult, isPending, isResolvingName, isNameNotFound } =
+    useEnsInputResolver(input, { parseAddress: parseInputAddress });
+  const error =
+    submitError ?? (isNameNotFound ? INPUT_ERROR.INVALID_ADDRESS : undefined);
 
   const { t } = useTranslation();
   const duplicateAddressModal = useDuplicateAddressModal();
-  const debouncedResolveEns = React.useMemo(
-    () =>
-      debounce(
-        async (
-          value: string,
-          callback: (result: { addr: string; name: string } | null) => void,
-        ) => {
-          const result = await resolveEnsAddressByName(value);
-          callback(result);
-        },
-        500,
-        { leading: false, trailing: true },
-      ),
-    [],
-  );
-  const debouncedResolveEnsName = React.useMemo(
-    () =>
-      debounce(
-        async (value: string, callback: (name: string | null) => void) => {
-          const name = await resolveEnsNameByAddress(value);
-          callback(name);
-        },
-        500,
-        { leading: false, trailing: true },
-      ),
-    [],
-  );
 
   const handleDone = async () => {
     if (!input) {
-      setError(INPUT_ERROR.REQUIRED);
+      setSubmitError(INPUT_ERROR.REQUIRED);
       return;
     }
 
@@ -95,7 +77,7 @@ export const ImportWatchAddressScreen2024 = () => {
 
     const normalizedAddress = address.trim().toLowerCase();
     if (!isValidHexAddress(normalizedAddress as any)) {
-      setError(INPUT_ERROR.INVALID_ADDRESS);
+      setSubmitError(INPUT_ERROR.INVALID_ADDRESS);
       return;
     }
     try {
@@ -117,82 +99,30 @@ export const ImportWatchAddressScreen2024 = () => {
           type: KEYRING_TYPE.WatchAddressKeyring,
         });
       } else {
-        setError(err.message);
+        setSubmitError(err.message);
       }
     }
   };
 
-  const handleSubmit = React.useCallback((text: string) => {
-    setInput(text);
-  }, []);
+  const handleSubmit = React.useCallback(
+    (text: string) => {
+      setInput(text);
+    },
+    [setInput],
+  );
 
   const onSubmitEditing = React.useCallback(() => {
     if (!error && ensResult && input !== ensResult.addr) {
       setInput(ensResult.addr);
-      setEnsResult(null);
     }
-  }, [error, ensResult, input]);
+  }, [error, ensResult, input, setInput]);
 
   React.useEffect(() => {
     if (scanner.text) {
       setInput(scanner.text);
       scanner.clear();
     }
-  }, [scanner]);
-
-  useEffect(() => {
-    latestInputRef.current = input;
-    if (!input) {
-      setError(undefined);
-      setEnsResult(null);
-      debouncedResolveEnsName.cancel();
-      return;
-    }
-    const normalizedInput = input.trim().toLowerCase();
-    if (isValidHexAddress(normalizedInput as `0x${string}`)) {
-      setError(undefined);
-      debouncedResolveEns.cancel();
-      debouncedResolveEnsName(normalizedInput, name => {
-        if (!name) {
-          setEnsResult(null);
-          return;
-        }
-        setEnsResult({
-          addr: normalizedInput,
-          name,
-        });
-      });
-      return;
-    }
-    const currentInput = input;
-    debouncedResolveEnsName.cancel();
-    debouncedResolveEns(input, result => {
-      // Ignore stale results if input has changed
-      if (latestInputRef.current !== currentInput) {
-        return;
-      }
-      if (result && result.addr) {
-        setEnsResult(result);
-        setError(undefined);
-      } else {
-        setEnsResult(null);
-        setError(INPUT_ERROR.INVALID_ADDRESS);
-      }
-    });
-  }, [input, debouncedResolveEns, debouncedResolveEnsName]);
-
-  useEffect(() => {
-    return () => {
-      debouncedResolveEns.cancel();
-      debouncedResolveEnsName.cancel();
-    };
-  }, [debouncedResolveEns, debouncedResolveEnsName]);
-
-  useEffect(() => {
-    if (!isValidHexAddress(input.toLowerCase() as `0x${string}`)) {
-      setEnsResult(null);
-    }
-  }, [input]);
+  }, [scanner, setInput]);
 
   return (
     <FooterButtonScreenContainer
@@ -200,7 +130,7 @@ export const ImportWatchAddressScreen2024 = () => {
       buttonProps={{
         title: t('global.Confirm'),
         onPress: handleDone,
-        disabled: !input || !!error,
+        disabled: !input || !!error || isPending,
         ...makeTestIDProps(E2E_ID.home.watchAddressSubmit),
       }}
       style={styles.screen}
@@ -247,6 +177,12 @@ export const ImportWatchAddressScreen2024 = () => {
                   </TouchableOpacity>
                 )}
               />
+
+              {isResolvingName && (
+                <Text style={styles.ensText}>
+                  {t('page.sendPoly.resolvingAddressName')}
+                </Text>
+              )}
 
               {!error && ensResult && isSameAddress(input, ensResult.addr) && (
                 <Text style={styles.ensText}>ENS: {ensResult.name}</Text>

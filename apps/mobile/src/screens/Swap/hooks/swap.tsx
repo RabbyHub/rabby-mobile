@@ -23,8 +23,6 @@ import {
   shouldUseTempoBatchTransaction,
 } from '@/utils/tempo';
 
-const MAX_UNSIGNED_256_INT = new BigNumber(2).pow(256).minus(1).toString(10);
-
 export const approveToken = async ({
   chainServerId,
   id,
@@ -121,14 +119,11 @@ export const dexSwap = async (
     needApprove,
     spender,
     pay_token_id,
-    unlimited,
     gasPrice,
     shouldTwoStepApprove,
     postSwapParams,
     swapPreferMEVGuarded,
     account,
-    isTwoStep,
-    isApprove,
   }: {
     chain: CHAINS_ENUM;
     quote: QuoteResult;
@@ -384,7 +379,6 @@ export const buildDexSwap = async (
     needApprove,
     spender,
     pay_token_id,
-    unlimited,
     gasPrice,
     shouldTwoStepApprove,
     postSwapParams,

@@ -133,4 +133,64 @@ describe('provider entrypoint', () => {
 
     expect(mockInternalMethod).toHaveBeenCalledTimes(1);
   });
+
+  it.each([
+    ['browser', undefined],
+    ['mobile WebView', { isFromMobileInnerDapp: true }],
+    ['WalletConnect', { isFromWalletConnect: true }],
+  ])(
+    'removes speed-up and cancel flags from %s transactions',
+    async (_source, $mobileCtx) => {
+      await provider({
+        data: {
+          method: 'eth_sendTransaction',
+          params: [
+            {
+              from: walletConnectAccount.address,
+              isSpeedUp: true,
+              isCancel: true,
+            },
+          ],
+        },
+        session: {
+          origin: 'https://example.com',
+          name: 'Example dapp',
+          icon: '',
+          $mobileCtx,
+        },
+        account: walletConnectAccount,
+      });
+
+      const request = jest.mocked(rpcFlow).mock.calls[0][0];
+      expect(request.data.params[0]).not.toHaveProperty('isSpeedUp');
+      expect(request.data.params[0]).not.toHaveProperty('isCancel');
+    },
+  );
+
+  it('preserves speed-up and cancel flags for internal transactions', async () => {
+    await provider({
+      data: {
+        method: 'eth_sendTransaction',
+        params: [
+          {
+            from: walletConnectAccount.address,
+            isSpeedUp: true,
+            isCancel: true,
+          },
+        ],
+      },
+      session: {
+        origin: 'rabby-internal-request',
+        name: 'Rabby internal',
+        icon: '',
+      },
+      account: walletConnectAccount,
+    });
+
+    const request = jest.mocked(rpcFlow).mock.calls[0][0];
+    expect(request.data.params[0]).toMatchObject({
+      isSpeedUp: true,
+      isCancel: true,
+    });
+  });
 });

@@ -6,6 +6,7 @@ import type {
 } from '@react-navigation/native';
 
 import type { Account, KeyringAccountWithAlias } from '@/types/account';
+import type { ExecLeg, MemeTarget } from '@/screens/MemeCoin/engine/types';
 import {} from '@react-navigation/bottom-tabs';
 
 import type { RootNames } from './constant/layout';
@@ -70,7 +71,12 @@ export type RootStackParamsList = {
     | undefined;
   [RootNames.AccountTransaction]: NavigatorScreenParams<AccountNavigatorParamList>;
   [RootNames.StackSettings]: NavigatorScreenParams<SettingNavigatorParamList>;
-  [RootNames.StackTransaction]: NavigatorScreenParams<TransactionNavigatorParamList>;
+  [RootNames.StackTransaction]:
+    | (NavigatorScreenParams<TransactionNavigatorParamList> & {
+        /** One-shot Android browser handoff; consumed on native appearance. */
+        browserPerpsNavigationId?: number;
+      })
+    | undefined;
   [RootNames.StackAddress]: NavigatorScreenParams<AddressNavigatorParamList>;
   [RootNames.StackDapps]: NavigatorScreenParams<DappsNavigatorParamsList>;
   [RootNames.StackBrowser]: NavigatorScreenParams<BrowserNavigatorParamsList>;
@@ -315,6 +321,7 @@ export type SingleAddressNavigatorParamList = {
 };
 
 export type TransactionNavigatorParamList = {
+  [RootNames.BridgeDetail]: import('./screens/Bridge/utils/statusTypes').BridgeRecordData;
   [RootNames.History]?: {};
   [RootNames.MultiAddressHistory]?: {
     isInTokenDetail?: boolean;
@@ -386,6 +393,23 @@ export type TransactionNavigatorParamList = {
     disableAccountSwitch?: boolean;
     fromHomeConvertDustBanner?: boolean;
   };
+  [RootNames.MemeCoin]?: undefined;
+  [RootNames.MemeCoinBuy]: {
+    accountAddress: string;
+    /** entered on the home; still editable on the preview page */
+    amountUsd: number;
+    /** snapshot at confirm time; marketCap drives the allocation */
+    memes: Array<MemeTarget & { logoUrl: string }>;
+  };
+  [RootNames.MemeCoinExecute]: {
+    accountAddress: string;
+    mode: 'buy' | 'sell';
+    /** frozen at confirm time, already in execution order */
+    legs: ExecLeg[];
+    maxPriceImpactPct: 1 | 5 | 20;
+    /** tokenKey -> logo url, display only */
+    tokenLogos: Record<string, string>;
+  };
   [RootNames.GasAccount]?: {};
   [RootNames.BatchRevoke]: {
     revokeList: ApprovalSpenderItemToBeRevoked[];
@@ -427,10 +451,6 @@ export type TransactionNavigatorParamList = {
     autoFocus?: boolean;
   };
   [RootNames.Lending]?: {
-    tokenAddress?: string;
-    direction?: 'supply' | 'borrow';
-    source?: string;
-    account?: KeyringAccountWithAlias;
     dappId?: string;
   };
   [RootNames.Prediction]?: {};

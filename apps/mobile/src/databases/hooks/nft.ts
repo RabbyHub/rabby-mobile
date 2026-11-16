@@ -46,7 +46,7 @@ export const batchQueryNFTSnapshotWithLocalCache = async (
           return isValidCollection(n.collection);
         });
       if (!options?.deferPersistence) {
-        void syncRemoteNFTs(id, nftsWithCollection);
+        syncRemoteNFTs(id, nftsWithCollection);
       }
       return {
         status: 'snapshot',
@@ -68,19 +68,4 @@ export const batchQueryNFTSnapshotWithLocalCache = async (
     status: 'snapshot',
     nfts: await openapi.listNFT(id, isAll, sortByCredit),
   };
-};
-
-export const batchQueryNFTsWithLocalCache = async (
-  params: { id: string; isAll?: boolean; sortByCredit?: boolean },
-  force?: boolean,
-  onlySync?: boolean,
-  options?: NftSnapshotLoadOptions,
-): Promise<NFTItem[]> => {
-  const result = await batchQueryNFTSnapshotWithLocalCache(
-    params,
-    force,
-    onlySync,
-    options,
-  );
-  return result.status === 'snapshot' ? result.nfts : [];
 };

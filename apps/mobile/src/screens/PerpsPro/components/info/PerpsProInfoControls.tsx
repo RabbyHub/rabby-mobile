@@ -81,7 +81,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
     flexDirection: 'row',
     gap: 8,
-    paddingHorizontal: 16,
+    // Figma 86609:330024: 12pt list inset + 8pt row inset.
+    paddingHorizontal: 20,
     paddingVertical: 12,
   },
   filter: {
@@ -91,12 +92,12 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     minWidth: 0,
   },
   filterText: {
-    color: colors2024['neutral-foot'],
+    color: colors2024['neutral-secondary'],
     flexShrink: 1,
     fontFamily: 'SF Pro Rounded',
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: '400',
-    lineHeight: 16,
+    lineHeight: 18,
   },
   action: {
     alignItems: 'center',
@@ -119,17 +120,17 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     paddingHorizontal: 8,
   },
   actionText: {
-    color: colors2024['neutral-title-1'],
+    color: colors2024['neutral-body'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,
-    fontWeight: '700',
+    fontWeight: '500',
     lineHeight: 18,
   },
   disabledActionText: {
     color: colors2024['neutral-foot'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,
-    fontWeight: '700',
+    fontWeight: '500',
     lineHeight: 18,
   },
 }));

@@ -234,7 +234,7 @@ const BridgeToTokenSelect = ({
   }, [chainId]);
 
   const { t } = useTranslation();
-  const { styles, colors2024 } = useTheme2024({ getStyle });
+  const { styles } = useTheme2024({ getStyle });
   const [_, setLongPressToken] = useLongPressTokenAtom();
 
   const handleTokenChange = useMemoizedFn(async (tokenItem?: TokenItem) => {

@@ -22,6 +22,7 @@ export interface PerpsProChartConfig {
     | '8h'
     | '12h'
     | '1d'
+    | '3d'
     | '1w'
     | '1M';
   maPeriods: readonly [7, 25, 99];
@@ -29,6 +30,28 @@ export interface PerpsProChartConfig {
   quoteAsset: string;
   variant: 'perps-pro';
 }
+
+export type PerpsProOverlayLine = {
+  id: string;
+  kind: 'entry' | 'tp' | 'sl' | 'liquidation';
+  price: number;
+  title: string;
+};
+
+export type PerpsProOverlays = {
+  colors: {
+    accent: string;
+    background: string;
+    contrast: string;
+    down: string;
+    entry: string;
+    entryBackground: string;
+    entryText: string;
+    liquidation: string;
+    up: string;
+  };
+  lines: PerpsProOverlayLine[];
+};
 
 export interface ChartColors {
   background: string;

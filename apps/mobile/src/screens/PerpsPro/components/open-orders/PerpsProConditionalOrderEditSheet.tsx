@@ -1,8 +1,10 @@
 import {
   getPerpsProDialogStyles,
+  PERPS_PRO_DIALOG_FIELD,
   resolvePerpsProDialogCardBackground,
   resolvePerpsProDialogFieldBackground,
 } from '../common/perpsProDialogVisual';
+import { getPerpsProListRowStyles } from '../common/perpsProListVisual';
 import { PerpsProDialogBackdrop } from '../common/PerpsProDialogBackdrop';
 import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
 import AutoLockView from '@/components/AutoLockView';
@@ -70,7 +72,8 @@ import {
 import { PerpsProOpenOrderEditInput } from './PerpsProOpenOrderEditInput';
 
 const MODAL_ID = 'perps-pro-conditional-order-edit';
-const SHEET_HEIGHT = 560;
+// Figma 86609:346285: 30pt rows with 46pt and 56pt fields.
+const SHEET_HEIGHT = 620;
 const CONTENT_HEIGHT = SHEET_HEIGHT - 40;
 const SheetContent = IS_ANDROID ? BottomSheetScrollView : BottomSheetView;
 
@@ -307,9 +310,10 @@ export const PerpsProConditionalOrderEditSheet: React.FC<{
                       : '--'}
                   </Text>
                 </View>
-                <View style={styles.direction}>
-                  <PerpsProOpenOrderEditDirection order={editor.order} />
-                </View>
+                <PerpsProOpenOrderEditDirection
+                  order={editor.order}
+                  style={styles.direction}
+                />
                 <View style={styles.form}>
                   <PerpsProOpenOrderEditInput
                     accessibilityLabel={t(
@@ -336,6 +340,7 @@ export const PerpsProConditionalOrderEditSheet: React.FC<{
                           accessibilityLabel={t(
                             'page.perps.pro.openOrders.limitPrice',
                           )}
+                          compact
                           currentValue={`Current ${formatPerpsProPrice(
                             initialLimit,
                             editor.market.pxDecimals,
@@ -390,28 +395,30 @@ export const PerpsProConditionalOrderEditSheet: React.FC<{
                       unit={displayUnit}
                       value={amountValue}
                     />
-                    <PerpsProSlider
-                      appearance="order-dialog"
-                      dimWhenDisabled={false}
-                      disabled={interactionLocked || !sliderSizeBasis}
-                      maximumValue={100}
-                      minimumValue={0}
-                      onSlidingComplete={sliderHaptics.onSlidingComplete}
-                      onSlidingStart={value => {
-                        Keyboard.dismiss();
-                        sliderHaptics.onSlidingStart(value);
-                      }}
-                      onValueChange={value => {
-                        const rounded = Math.round(value);
-                        sliderHaptics.onValueChange(rounded);
-                        setAmountSource('slider');
-                        setPercent(rounded);
-                      }}
-                      pointCount={5}
-                      step={1}
-                      tone="neutral"
-                      value={activePercent}
-                    />
+                    <View style={styles.slider}>
+                      <PerpsProSlider
+                        appearance="order-dialog"
+                        dimWhenDisabled={false}
+                        disabled={interactionLocked || !sliderSizeBasis}
+                        maximumValue={100}
+                        minimumValue={0}
+                        onSlidingComplete={sliderHaptics.onSlidingComplete}
+                        onSlidingStart={value => {
+                          Keyboard.dismiss();
+                          sliderHaptics.onSlidingStart(value);
+                        }}
+                        onValueChange={value => {
+                          const rounded = Math.round(value);
+                          sliderHaptics.onValueChange(rounded);
+                          setAmountSource('slider');
+                          setPercent(rounded);
+                        }}
+                        pointCount={5}
+                        step={1}
+                        tone="neutral"
+                        value={activePercent}
+                      />
+                    </View>
                   </View>
                 </View>
                 <View style={styles.summary}>
@@ -505,24 +512,24 @@ const getStyle = createGetStyles2024(
       paddingTop: 8,
       position: 'relative',
     },
+    // Figma 86609:346291: 30pt summary rows, 12pt insets and 8pt card padding.
     entryRow: {
-      alignItems: 'center',
-      flexDirection: 'row',
-      justifyContent: 'space-between',
+      ...getPerpsProListRowStyles(colors2024).listRow,
+      paddingHorizontal: 12,
     },
     card: {
       backgroundColor: resolvePerpsProDialogCardBackground(colors2024, isLight),
       borderRadius: 12,
-      padding: 16,
+      paddingVertical: 8,
       marginTop: 24,
     },
-    direction: { marginTop: 10 },
-    form: { gap: 20, marginTop: 20 },
+    direction: { paddingHorizontal: 12, paddingVertical: 6 },
+    form: { gap: 20, marginTop: 20, paddingHorizontal: 12 },
     executionRow: { flexDirection: 'row', gap: 8 },
     executionPrice: { flex: 1, minWidth: 0 },
     executionType: {
       width: 100,
-      height: 40,
+      height: PERPS_PRO_DIALOG_FIELD.height,
       borderRadius: 6,
       alignItems: 'center',
       justifyContent: 'center',
@@ -539,49 +546,32 @@ const getStyle = createGetStyles2024(
       lineHeight: 18,
     },
     amountGroup: { gap: 10 },
-    summary: { gap: 8, marginTop: 8 },
-    summaryRow: {
-      alignItems: 'center',
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-    },
-    summaryLabel: {
-      color: colors2024['neutral-secondary'],
-      fontFamily: 'SF Pro Rounded',
-      fontSize: 12,
-      lineHeight: 16,
-    },
+    // Keeps the 329pt order-dialog rail of Figma 86609:346330.
+    slider: { paddingHorizontal: 4 },
+    summary: { marginTop: 8, paddingHorizontal: 12 },
+    summaryRow: getPerpsProListRowStyles(colors2024).listRow,
+    summaryLabel: getPerpsProListRowStyles(colors2024).listLabel,
     summaryValue: {
       ...PERPS_PRO_NUMBER_STYLE,
-      color: colors2024['neutral-title-1'],
-      fontFamily: 'SF Pro Rounded',
-      fontSize: 12,
-      fontWeight: '500',
-      lineHeight: 16,
+      ...getPerpsProListRowStyles(colors2024).listValue,
       maxWidth: '64%',
       textAlign: 'right',
     },
     positiveValue: {
       ...PERPS_PRO_NUMBER_STYLE,
+      ...getPerpsProListRowStyles(colors2024).listValue,
       color: colors2024['green-default'],
-      fontFamily: 'SF Pro Rounded',
-      fontSize: 12,
-      fontWeight: '500',
-      lineHeight: 16,
     },
     negativeValue: {
       ...PERPS_PRO_NUMBER_STYLE,
+      ...getPerpsProListRowStyles(colors2024).listValue,
       color: colors2024['red-default'],
-      fontFamily: 'SF Pro Rounded',
-      fontSize: 12,
-      fontWeight: '500',
-      lineHeight: 16,
     },
     footer: {
       left: 20,
       position: 'absolute',
       right: 20,
-      top: 432,
+      top: 492,
     },
   }),
 );

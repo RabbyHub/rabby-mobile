@@ -47,6 +47,7 @@ import { TabsFlatList } from '@/components/customized/react-native-collapsible-t
 import {
   pulldownRefreshSizes,
   RefreshPlaceholderIOS,
+  useSuspendedVisibleAnchor,
   setPulldownRefreshStage,
   usePulldownRefreshGesture,
   usePulldownRefreshStyles,
@@ -678,6 +679,12 @@ export const ProtocolList = () => {
       return onRefresh();
     },
   });
+  // Keep the native visible anchor from pinning rows to a stale offset while
+  // RefreshPlaceholderIOS changes the list header height.
+  // #1285: re-enabling the native visible anchor in the frame the placeholder
+  // collapses re-anchors the first row against the pre-collapse layout and
+  // leaves a transient blank at the top; wait for the layout to settle.
+  const isPullRefreshVisible = useSuspendedVisibleAnchor(pullDistance);
 
   useEffect(() => {
     console.debug(
@@ -728,7 +735,8 @@ export const ProtocolList = () => {
         updateCellsBatchingPeriod={32}
         removeClippedSubviews={IS_ANDROID}
         {...(!IS_ANDROID &&
-          !suspendVisibleAnchor && {
+          !suspendVisibleAnchor &&
+          !isPullRefreshVisible && {
             maintainVisibleContentPosition: { minIndexForVisible: 0 },
           })}
         onLayout={onHighCardinalityListLayout}

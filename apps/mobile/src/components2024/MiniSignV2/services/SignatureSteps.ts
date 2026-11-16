@@ -61,6 +61,10 @@ import { isLedgerLockError } from '@/utils/ledger';
 import type { SignerCtx } from '../domain/ctx';
 import { buildFingerprint } from '../domain/ctx';
 import { openapi, testOpenapi } from '@/core/request';
+import {
+  getTxAddressesToCheck,
+  hasBlockedAddress,
+} from '@/core/utils/blockedAddress';
 import { keyringServiceApi } from '@/core/serviceApi/keyring';
 import { gasAccountServiceApi } from '@/core/serviceApi/gasAccount';
 import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
@@ -1093,6 +1097,11 @@ export class SignatureSteps {
       config,
       autoSwitchGasAccount = true,
     } = params;
+    // Fired alongside prepareContext so the result is ready before the user acts.
+    // Cached, so the sign-time check in ethSendTransaction reuses the answer.
+    const isBlockedPromise = hasBlockedAddress(
+      txs.flatMap(tx => getTxAddressesToCheck(tx)),
+    );
     const prepared = await SignatureSteps.prepareContext({
       account,
       txs,
@@ -1112,12 +1121,15 @@ export class SignatureSteps {
       });
     }
 
-    return SignatureSteps.toCtxFromPrepared({
-      prepared,
-      txs,
-      open: false,
-      switchGasAccount,
-    });
+    return {
+      ...SignatureSteps.toCtxFromPrepared({
+        prepared,
+        txs,
+        open: false,
+        switchGasAccount,
+      }),
+      isBlocked: await isBlockedPromise,
+    };
   }
 
   static async openUICore(params: {

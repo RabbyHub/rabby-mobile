@@ -28,6 +28,7 @@ import {
 } from '@/hooks/onekey/useOneKeyStatus';
 import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
 import { getMiniSignGasPanelController } from './MiniSignGasPanelController';
+import { showBlockedAddressDialog } from './blockedAddressDialog';
 
 const ETH_GAS_USD_LIMIT = 15;
 const OTHER_GAS_USD_LIMIT = 5;
@@ -79,6 +80,11 @@ export class SignatureManager {
 
   constructor(instanceId?: string) {
     this.instanceId = instanceId ?? `sig-${++nextInstanceId}`;
+  }
+
+  /** Leave direct mode and drop the transparent blocker (overlay timeout). */
+  public endDirectOverlay() {
+    this.dispatch({ type: 'END_DIRECT' });
   }
 
   private dispatch(action: SignatureAction) {
@@ -375,6 +381,10 @@ export class SignatureManager {
     this.dispatch({ type: 'OPEN_UI_SKELETON', fingerprint, ctx: skeleton });
 
     try {
+      // Refuse as soon as prefetch lands, before the security engine runs.
+      const preparedCtx = await prepared;
+      if (!this.isActive(opId, fingerprint)) return preparedCtx;
+      if (this.blockIfNeeded(preparedCtx)) return;
       const ctx = await signatureService.openUI({
         txs: request.txs,
         config: request.config,
@@ -608,6 +618,14 @@ export class SignatureManager {
     this.dispatch({ type: 'RESET' });
   }
 
+  // Close the signer, reject the caller and tell the user, like SignTx does.
+  private blockIfNeeded(ctx?: SignerCtx | null) {
+    if (!ctx?.isBlocked) return false;
+    this.reset();
+    showBlockedAddressDialog();
+    return true;
+  }
+
   public updateConfig(config: Partial<SignerConfig>) {
     this.dispatch({ type: 'SET_CONFIG', payload: config });
   }
@@ -682,6 +700,9 @@ export class SignatureManager {
     const fingerprint = this.getFingerprint(request.txs);
     this.bindManualGasMethodToFingerprint(fingerprint);
     const resultPromise = this.createResultPromise();
+    // When this method throws, the caller never receives `resultPromise`. Keep
+    // its rejection from surfacing as an unhandled one.
+    resultPromise.catch(() => undefined);
     if (this.state.status === 'prefetch_failure') {
       this.rejectPending(MINI_SIGN_ERROR.PREFETCH_FAILURE);
       return resultPromise;
@@ -702,6 +723,10 @@ export class SignatureManager {
         this.pendingCtx.get(fingerprint) ||
         this.ensureContext(request, this.run?.id);
       await prepared;
+
+      if (this.blockIfNeeded(this.state.ctx)) {
+        return resultPromise;
+      }
 
       if (this.isPreExecResultFailed()) {
         this.rejectPending(MINI_SIGN_ERROR.PREFETCH_FAILURE);
@@ -874,6 +899,7 @@ export class SignatureManager {
     }
     this.clearRunState();
     this.removeSigningTx();
+    this.dispatch({ type: 'END_DIRECT' });
   }
 }
 

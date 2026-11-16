@@ -434,18 +434,34 @@ const PasswordInput = ({
     );
   }, [props.customIcon, props.iconColor, passwordVisible, colors2024]);
 
+  // Keep the prop object stable and pin the input traits. The flicker came from
+  // the same traits being re-applied on every keystroke (the sheet re-rendered
+  // per character), not from the password semantic itself; with a stable,
+  // uncontrolled input we can keep the password keyboard behaviour.
+  //
+  // Do NOT use `oneTimeCode` here: it tells iOS this is an SMS/OTP field, which
+  // drops the password AutoFill/Keychain treatment and the password keyboard
+  // appearance. `password` keeps that and still hides the predictive bar.
+  const outerInputProps = props.inputProps;
+  const mergedInputProps = React.useMemo(
+    () => ({
+      placeholderTextColor: colors2024['neutral-info'],
+      ...outerInputProps,
+      secureTextEntry: !passwordVisible,
+      textContentType: passwordVisible
+        ? ('none' as const)
+        : ('password' as const),
+      autoCorrect: false,
+      spellCheck: false,
+    }),
+    [colors2024, outerInputProps, passwordVisible],
+  );
+
   return (
     <NextInput
       {...props}
       containerStyle={[styles.inputContainer, props.containerStyle]}
-      inputProps={{
-        placeholderTextColor: colors2024['neutral-info'],
-        ...props.inputProps,
-        secureTextEntry: passwordVisible ? false : true,
-        // ...IS_ANDROID && {
-        //   keyboardType: passwordVisible ? 'visible-password' : 'default',
-        // },
-      }}
+      inputProps={mergedInputProps}
       ref={ref as any}
       customIcon={customIconProp}
     />

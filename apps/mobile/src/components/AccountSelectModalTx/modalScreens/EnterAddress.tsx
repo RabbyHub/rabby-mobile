@@ -19,8 +19,7 @@ import {
 import { NextInput } from '@/components2024/Form/Input';
 import PasteButton from '@/components2024/PasteButton';
 import { useTranslation } from 'react-i18next';
-import { resolveEnsAddressByName, resolveEnsNameByAddress } from '@/utils/ens';
-import { debounce, throttle } from 'lodash';
+import { useEnsInputResolver } from '@/hooks/useEnsInputResolver';
 import { useFindAddressByWhitelist } from '@/screens/Send/hooks/useWhiteListAddress';
 import { useAccountSelectModalCtx } from '../hooks';
 import { SelectAccountSheetModalSizes } from '../layout';
@@ -51,6 +50,9 @@ const ERROR_MESSAGE = {
   [INPUT_ERROR.REQUIRED]: 'Please input address',
 };
 
+const parseInputAddress = (text: string) =>
+  isValidAddress(text as `0x${string}`) ? text : null;
+
 const ScreenPanelEnterAddress = ({
   onCleanupInput,
   newValue,
@@ -62,50 +64,25 @@ const ScreenPanelEnterAddress = ({
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const [input, _setInput] = React.useState('');
   const addressInputRef = React.useRef<TextInputRef>(null);
+  // Errors from confirming; name-lookup errors come from `isNameNotFound`.
+  const [submitError, setSubmitError] = React.useState<INPUT_ERROR>();
   const setInput = useCallback((text: string) => {
     _setInput(text);
-    setEnsResult(null);
+    setSubmitError(undefined);
   }, []);
-  const [error, setError] = React.useState<INPUT_ERROR>();
   const [loading, setLoading] = useState(false);
-  const [ensResult, setEnsResult] = React.useState<null | {
-    addr: string;
-    name: string;
-  }>(null);
-  const debouncedResolveEns = React.useMemo(
-    () =>
-      debounce(
-        async (
-          value: string,
-          callback: (result: { addr: string; name: string } | null) => void,
-        ) => {
-          const result = await resolveEnsAddressByName(value);
-          callback(result);
-        },
-        500,
-        { leading: false, trailing: true },
-      ),
-    [],
-  );
-  const debouncedResolveEnsName = React.useMemo(
-    () =>
-      debounce(
-        async (value: string, callback: (name: string | null) => void) => {
-          const name = await resolveEnsNameByAddress(value);
-          callback(name);
-        },
-        500,
-        { leading: false, trailing: true },
-      ),
-    [],
-  );
+  // Only ever describes the current input: late results of earlier inputs are dropped.
+  const { ensResult, isPending, isResolvingName, isNameNotFound } =
+    useEnsInputResolver(input, { parseAddress: parseInputAddress });
+  const error =
+    submitError ?? (isNameNotFound ? INPUT_ERROR.INVALID_ADDRESS : undefined);
 
   const isValidAddr = useMemo(
     () => isValidAddress(input as `0x${string}`),
     [input],
   );
-  const hasError = !!input && !isValidAddr && !ensResult?.addr;
-  const disableConfirm = !input || hasError;
+  const hasError = !!input && !isValidAddr && !ensResult?.addr && !isPending;
+  const disableConfirm = !input || hasError || isPending;
 
   const { sortedAccounts, fetchSortedAccounts } = useSortedAccounts();
   const { isAddrOnWhitelist, findAccountWithoutBalance } =
@@ -169,7 +146,7 @@ const ScreenPanelEnterAddress = ({
   const handleConfirmAddress = useCallback(
     async (address: string) => {
       if (!isValidAddress(address as any)) {
-        setError(INPUT_ERROR.INVALID_ADDRESS);
+        setSubmitError(INPUT_ERROR.INVALID_ADDRESS);
         return;
       }
       try {
@@ -191,7 +168,7 @@ const ScreenPanelEnterAddress = ({
 
   const handleDone = useCallback(async () => {
     if (!input) {
-      setError(INPUT_ERROR.REQUIRED);
+      setSubmitError(INPUT_ERROR.REQUIRED);
       return;
     }
 
@@ -209,7 +186,6 @@ const ScreenPanelEnterAddress = ({
         text,
         addressInputRef.current,
       );
-      setError(undefined);
       setInput(normalizedText);
     },
     [setInput],
@@ -226,48 +202,6 @@ const ScreenPanelEnterAddress = ({
       setInput(ensResult.addr);
     }
   }, [error, ensResult, input, setInput]);
-
-  useEffect(() => {
-    if (!input) {
-      setError(undefined);
-      setEnsResult(null);
-      debouncedResolveEnsName.cancel();
-      return;
-    }
-    if (isValidAddress(input as `0x${string}`)) {
-      setError(undefined);
-      debouncedResolveEns.cancel();
-      debouncedResolveEnsName(input, name => {
-        if (!name) {
-          setEnsResult(null);
-          return;
-        }
-        setEnsResult({
-          addr: input,
-          name,
-        });
-      });
-      return;
-    }
-    debouncedResolveEnsName.cancel();
-
-    debouncedResolveEns(input, result => {
-      if (result && result.addr) {
-        setEnsResult(result);
-        setError(undefined);
-      } else {
-        setEnsResult(null);
-        setError(INPUT_ERROR.INVALID_ADDRESS);
-      }
-    });
-  }, [input, debouncedResolveEns, debouncedResolveEnsName]);
-
-  useEffect(() => {
-    return () => {
-      debouncedResolveEns.cancel();
-      debouncedResolveEnsName.cancel();
-    };
-  }, [debouncedResolveEns, debouncedResolveEnsName]);
 
   useEffect(() => {
     if (newValue) {
@@ -365,6 +299,11 @@ const ScreenPanelEnterAddress = ({
             )}
           </View>
           <View style={styles.afterInput}>
+            {isResolvingName && !hasAccount && (
+              <Text style={styles.ensText}>
+                {t('page.sendPoly.resolvingAddressName')}
+              </Text>
+            )}
             {!showSearchError && ensResult && input === ensResult.addr && (
               <Text style={styles.ensText}>ENS: {ensResult.name}</Text>
             )}

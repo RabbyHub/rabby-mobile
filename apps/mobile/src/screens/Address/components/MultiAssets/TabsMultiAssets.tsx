@@ -12,7 +12,6 @@ import { STARTUP_TASKS } from '@/core/utils/startupTaskManifest';
 import { apisHomeTabIndex, HomeTabName } from '@/hooks/navigation';
 import { HomeCustomMaterialTabBar } from '@/screens/Home/components/CustomTabBar';
 import { TabsTopHeader } from '@/screens/Home/components/OverviewTopHeader';
-import { HOME_TOP_HEADER_SIZES } from '@/constant/home';
 import { Tabs, useFocusedTab } from 'react-native-collapsible-tab-view';
 import { isTabsSwiping } from './hooks';
 import { NFTList } from './NFTList';
@@ -22,10 +21,6 @@ import { IS_IOS } from '@/core/native/utils';
 import { HomeOverview } from '@/screens/Home/components/HomeOverview';
 import { RenderActivityBoundary } from '@/hooks/storeActivity/RenderActivityBoundary';
 import { useRegressionScenario } from '@/devtools/regressionScenarios/react';
-
-export const TAB_HEADER_FULL_HEIGHT =
-  HOME_TOP_HEADER_SIZES.headerHeight +
-  HOME_TOP_HEADER_SIZES.scrollableListTopOffset;
 
 interface TabMultiAssetsProps {}
 

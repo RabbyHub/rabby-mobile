@@ -80,6 +80,7 @@ function syncUserBehaviorTrackingSdkOptOut() {
 
 export interface ChainGas {
   gasPrice?: number | null; // custom cached gas price
+  maxPriorityFee?: number | null; // custom cached tip, for EIP-1559 txs
   gasLevel?: string | null; // cached gasLevel
   lastTimeSelect?: 'gasLevel' | 'gasPrice'; // last time selection, 'gasLevel' | 'gasPrice'
   expireAt?: number;

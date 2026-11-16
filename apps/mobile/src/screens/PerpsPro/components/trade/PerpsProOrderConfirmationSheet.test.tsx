@@ -411,7 +411,7 @@ describe.each(['light', 'dark'] as const)(
         StyleSheet.flatten(
           screen.getByTestId('perps-pro-order-confirmation-footer').props.style,
         ),
-      ).toMatchObject({ paddingBottom: 36, paddingTop: 24 });
+      ).toMatchObject({ paddingBottom: 36, paddingTop: 12 });
       expect(
         StyleSheet.flatten(screen.getByText('Isolated 10x').props.style),
       ).not.toHaveProperty('fontVariant');

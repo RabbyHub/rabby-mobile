@@ -14,7 +14,11 @@ jest.mock('react-native-reanimated', () => {
   const { View: NativeView } = require('react-native');
   return {
     __esModule: true,
-    default: { View: NativeView },
+    default: {
+      View: NativeView,
+      createAnimatedComponent: (component: React.ComponentType) => component,
+      addWhitelistedNativeProps: jest.fn(),
+    },
     // As in Reanimated's Jest mock, interpolation is not simulated. Assertions
     // below cover the overlay's real opacity and pointer gates, not indicator
     // geometry or the asset-label fade interpolation.
@@ -30,8 +34,12 @@ jest.mock('react-native-reanimated', () => {
 
 jest.mock('@/core/native/utils', () => ({ IS_ANDROID: true, IS_IOS: false }));
 jest.mock('react-native-collapsible-tab-view', () => ({}));
+jest.mock('@/components/Typography', () => ({
+  Text: require('react-native').Text,
+}));
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
+  initReactI18next: { type: '3rdParty', init: () => undefined },
 }));
 jest.mock('@/hooks/navigation', () => ({
   apisHomeTabIndex: {
@@ -94,11 +102,38 @@ jest.mock('@/components2024/Animations/HomeGuidanceMultipleTabs', () => ({
   }),
 }));
 jest.mock('../useChainInfo', () => ({
+  getComputedChainInfo: () => ({ chainAssets: [] }),
+  getSelectChainItem: () => undefined,
+  setSelectChainItem: jest.fn(),
+  useChainStatsLoading: () => false,
   useSelectedChainItem: () => undefined,
+  useChainLength: () => 0,
+  useChainProjectionReady: () => true,
   useTop3Chains: () => [],
+}));
+jest.mock('@/store/balance', () => ({
+  addressBalanceStore: {
+    useLoadBalanceFromApiStage: () => ({
+      loadBalanceFromApiStage: 'success',
+    }),
+  },
+  balanceAccountsStore: (selector: (state: object) => unknown) =>
+    selector({
+      hasResolvedSelection: true,
+      isAnyBalanceLoadingWithoutValue: false,
+      selectedAddresses: [],
+    }),
+}));
+jest.mock('@/store/tokens', () => ({}));
+jest.mock('@/store/assetProjectionAvailability', () => ({
+  hasConfirmedAssetProjectionSources: () => true,
+}));
+jest.mock('@/hooks/storeActivity/useActivityStore', () => ({
+  useActivityStore: () => ({}),
 }));
 jest.mock('./AssetRenderItems/SectionHeaders', () => ({
   ChainSelector: () => null,
+  CHAIN_SELECTOR_SLOT_WIDTH: 96,
 }));
 jest.mock('@/components2024/GlobalBottomSheetModal', () => ({
   createGlobalBottomSheetModal2024: jest.fn(),

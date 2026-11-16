@@ -1,15 +1,6 @@
 import 'reflect-metadata';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
-import {
-  Entity,
-  Column,
-  In,
-  Brackets,
-  Not,
-  MoreThan,
-  Raw,
-  Index,
-} from 'typeorm/browser';
+import { Entity, Column, In, Brackets, Not, Index } from 'typeorm/browser';
 import type { DataSource } from 'typeorm/browser';
 import { EntityAddressAssetBase } from './base';
 import {
@@ -23,8 +14,7 @@ import { EMPTY_TOKEN_ITEM_ID } from '@/constant/assets';
 import { prepareAppDataSource } from '../imports';
 import { tokenItemEntityToTokenItem } from '@/utils/token';
 import type { ITokenItem } from '@/types/assets';
-import { APP_DB_PREFIX, ORM_TABLE_NAMES } from '../constant';
-import { PreparedStatement } from '@op-engineering/op-sqlite';
+import { ORM_TABLE_NAMES } from '../constant';
 import { ParseEntity } from '@/core/utils/typeorm';
 import { chunkBySqliteVariableBudget } from '@/core/databases/sqliteVariableLimit';
 import {

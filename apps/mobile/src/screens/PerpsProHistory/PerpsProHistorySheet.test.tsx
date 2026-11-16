@@ -196,8 +196,8 @@ describe('PerpsProHistorySheetHost', () => {
     ).toBeTruthy();
     expect(titleDragRegion.props.accessible).toBe(false);
     expect(StyleSheet.flatten(titleDragRegion.props.style)).toMatchObject({
-      height: 56,
-      paddingBottom: 20,
+      height: 48,
+      paddingBottom: 12,
       paddingHorizontal: 16,
       paddingTop: 12,
     });

@@ -257,6 +257,10 @@ export interface PerpsState {
   marketDataStatus: MarketDataStatus;
   categories: PerpTopTokenCategory[];
   hasPermission: boolean;
+  // Lowercased address ('' = IP only) that hasPermission was checked for;
+  // null while unknown or after a failed check. Execution gates read
+  // hasCurrentPerpPermission instead of the display flag.
+  permissionAddress: string | null;
   perpFee: number;
   isLogin: boolean;
   isInitialized: boolean;
@@ -336,6 +340,7 @@ export const initialState: PerpsState = {
   userAbstractionCachedAddress: null,
   isOpenOrdersReady: false,
   hasPermission: true,
+  permissionAddress: null,
   perpFee: 0.00045,
   currentPerpsAccount: null,
   clearinghouseStateMap: {},
@@ -746,11 +751,88 @@ const setHasPermission = (payload: boolean) => {
   setPerpsState(prev => ({ ...prev, hasPermission: payload }));
 };
 
-const fetchPerpPermission = async (address: string) => {
-  const { has_permission } = await openapi.getPerpPermission({ id: address });
+const getPermissionTarget = (state: PerpsState) =>
+  state.currentPerpsAccount?.address.toLowerCase() ?? '';
 
-  setHasPermission(has_permission);
-  // setHasPermission(true);
+const PERP_PERMISSION_TIMEOUT = 5000;
+const pendingPermissionChecks = new Map<string, Promise<void>>();
+let permissionRequestSeq = 0;
+const appliedPermissionSeq = new Map<string, number>();
+
+const applyPerpPermission = (target: string, seq: number, granted: boolean) => {
+  // Drop results for an address that is no longer current, and results
+  // older than one already applied for it.
+  if (
+    getPermissionTarget(perpsStore.getState()) !== target ||
+    seq <= (appliedPermissionSeq.get(target) ?? 0)
+  ) {
+    return;
+  }
+  appliedPermissionSeq.set(target, seq);
+  setPerpsState(prev => ({
+    ...prev,
+    hasPermission: granted,
+    permissionAddress: target,
+  }));
+};
+
+const fetchPerpPermission = (address: string): Promise<void> => {
+  const target = address.toLowerCase();
+  const pending = pendingPermissionChecks.get(target);
+  if (pending) {
+    return pending;
+  }
+  const seq = ++permissionRequestSeq;
+  // The timeout only bounds the waiters; a slow response still applies.
+  const response = openapi
+    .getPerpPermission({ id: address })
+    .then(({ has_permission }) => {
+      applyPerpPermission(target, seq, has_permission === true);
+    });
+  // openapi has no axios timeout; a stalled check must not block retries.
+  const request = withTimeout(
+    response,
+    PERP_PERMISSION_TIMEOUT,
+    'getPerpPermission',
+  )
+    .catch(error => {
+      console.error('[perps] fetch permission failed', error);
+      if (getPermissionTarget(perpsStore.getState()) === target) {
+        setPerpsState(prev => ({ ...prev, permissionAddress: null }));
+      }
+    })
+    .finally(() => {
+      pendingPermissionChecks.delete(target);
+    });
+  pendingPermissionChecks.set(target, request);
+  return request;
+};
+
+/** Permission confirmed for the current account; unknown or failed denies. */
+export const hasCurrentPerpPermission = (
+  state: PerpsState = perpsStore.getState(),
+) =>
+  !!state.currentPerpsAccount &&
+  state.hasPermission &&
+  state.permissionAddress === state.currentPerpsAccount.address.toLowerCase();
+
+/** Resolves the current account's permission, re-checking when unknown. */
+export const ensureCurrentPerpPermission = async (
+  account: Pick<Account, 'address'>,
+) => {
+  const isCurrent = () => {
+    const current = perpsStore.getState().currentPerpsAccount;
+    return !!current && isSameAddress(current.address, account.address);
+  };
+  if (!isCurrent()) {
+    return false;
+  }
+  if (
+    perpsStore.getState().permissionAddress !== account.address.toLowerCase()
+  ) {
+    await fetchPerpPermission(account.address);
+  }
+  return isCurrent() && hasCurrentPerpPermission();
 };
 
 const setIsFetchAllDone = (payload: boolean) => {
@@ -1473,6 +1555,7 @@ const resetAccountState = () => {
     approveSignatures: [],
     fillsOrderTpOrSl: {},
     hasPermission: true,
+    permissionAddress: null,
     homePositionPnl: {
       pnl: 0,
       show: false,
@@ -1493,25 +1576,53 @@ const resetAccountState = () => {
   }));
 };
 
-const fetchUserFillHistory = async () => {
-  const sdk = apisPerps.getPerpsSDK();
+let userFillHistoryRequest: {
+  address: string;
+  promise: Promise<void>;
+} | null = null;
+
+// Login and the WS snapshot both ask for the same history; share the request
+// while it is in flight.
+const fetchUserFillHistory = (): Promise<void> => {
   const expectedAddress = perpsStore.getState().currentPerpsAccount?.address;
   if (!expectedAddress) {
-    return;
+    return Promise.resolve();
   }
-  try {
-    const res = await sdk.info.getUserFills();
-    // Account switched during the await — drop the response.
-    if (!isCurrentPerpsAccountAddress(expectedAddress)) {
-      return;
+  if (
+    userFillHistoryRequest &&
+    isSameAddress(userFillHistoryRequest.address, expectedAddress)
+  ) {
+    return userFillHistoryRequest.promise;
+  }
+  const request = async () => {
+    try {
+      // Bind the request to THIS address: the SDK default is its
+      // masterAddress, which a login branch that skips initAccount never sets.
+      const res = await apisPerps
+        .getPerpsSDK()
+        .info.getUserFills(expectedAddress);
+      // Account switched during the await — drop the response.
+      if (!isCurrentPerpsAccountAddress(expectedAddress)) {
+        return;
+      }
+      setPerpsState(prev => ({
+        ...prev,
+        userFills: reconcileHttpFills(
+          res as unknown as WsFill[],
+          prev.userFills,
+        ),
+      }));
+    } catch (error) {
+      console.error('Failed to fetch user fill history:', error);
     }
-    setPerpsState(prev => ({
-      ...prev,
-      userFills: reconcileHttpFills(res as unknown as WsFill[], prev.userFills),
-    }));
-  } catch (error) {
-    console.error('Failed to fetch user fill history:', error);
-  }
+  };
+  const promise = request().finally(() => {
+    if (userFillHistoryRequest?.promise === promise) {
+      userFillHistoryRequest = null;
+    }
+  });
+  userFillHistoryRequest = { address: expectedAddress, promise };
+  return promise;
 };
 
 const addUserFills = (payload: {
@@ -2792,7 +2903,7 @@ export const apisPerpsStore = {
     // isInitialized=true would skip initIsLogin and a self-sign account could
     // not sign after an unlock.
     setInitialized(false);
-    fetchPerpPermission('');
+    void fetchPerpPermission('');
   },
 };
 
@@ -2919,6 +3030,9 @@ export const usePerpsStore = () => {
       };
     });
     fetchUserHistoricalOrders();
+    // The WS snapshot only carries recent fills and a reused stream sends
+    // none at all, so the history must not wait for it.
+    void fetchUserFillHistory();
     if (!canReuseSubscription) {
       subscribeToUserData(account);
     } else {
@@ -2927,7 +3041,7 @@ export const usePerpsStore = () => {
       scheduleAccountReadinessFallback(account.address);
     }
     fetchUserNonFundingLedgerUpdates();
-    fetchPerpPermission(account.address);
+    void fetchPerpPermission(account.address);
     void fetchUserAbstraction(account).catch(error => {
       console.error('[perps] fetch user abstraction failed', error);
     });
@@ -2947,13 +3061,21 @@ export const usePerpsStore = () => {
   );
 
   const fetchUserHistoricalOrders = useMemoizedFn(async () => {
+    const expectedAddress = perpsStore.getState().currentPerpsAccount?.address;
+    if (!expectedAddress) {
+      return;
+    }
     try {
       const sdk = apisPerps.getPerpsSDK();
       const res = await sdk.info.getUserHistoricalOrders(
-        undefined, // use sdk inner address
+        expectedAddress,
         Date.now() - 1000 * 60 * 60 * 24 * 7, // 7 days ago
         0,
       );
+      // Account switched during the await — drop the response.
+      if (!isCurrentPerpsAccountAddress(expectedAddress)) {
+        return;
+      }
       const listOrderTpOrSl = {} as Record<string, 'tp' | 'sl'>;
       res.forEach(item => {
         if (item.status !== 'triggered') {

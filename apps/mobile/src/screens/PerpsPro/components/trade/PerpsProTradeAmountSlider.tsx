@@ -1,5 +1,5 @@
 import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
-// Figma cNPc4bz8P8QBjkPk2huEml / 83992:156879; original 13px circle geometry.
+// Figma cNPc4bz8P8QBjkPk2huEml / 86719:167816: 12px thumb, 2.35px stroke.
 import RcAmountSliderThumb from '@/assets2024/icons/perps/PerpsProTradeAmountSliderThumb.svg';
 import { Text } from '@/components/Typography';
 import { PerpsGestureSlider as Slider } from '@/components/perps/PerpsGestureSlider';
@@ -16,8 +16,13 @@ import Animated, {
 import { usePerpsProSliderHaptics } from '../common/usePerpsProSliderHaptics';
 
 const TRADE_SLIDER_POINTS = [0, 25, 50, 75, 100] as const;
-const TRADE_SLIDER_THUMB_SIZE = 13;
+// Figma 86719:167812: 2px track, 10px points with 2px strokes, centered at y=10.
+const TRADE_SLIDER_THUMB_SIZE = 12;
 const TRADE_SLIDER_TRACK_INSET = 9;
+const TRADE_SLIDER_TRACK_HEIGHT = 2;
+const TRADE_SLIDER_POINT_SIZE = 10;
+const TRADE_SLIDER_POINT_BORDER = 2;
+const TRADE_SLIDER_CENTER_Y = 10;
 const TRADE_SLIDER_TOOLTIP_WIDTH = 36;
 
 const toFraction = (value: number) => {
@@ -173,7 +178,9 @@ export const PerpsProTradeAmountSlider: React.FC<{
             pointerEvents="none"
             style={[styles.tooltip, tooltipStyle]}
             testID="perps-pro-trade-amount-slider-tooltip">
-            <Text style={styles.tooltipText}>{Math.round(value)}%</Text>
+            <Text numberOfLines={1} style={styles.tooltipText}>
+              {Math.round(value)}%
+            </Text>
           </Animated.View>
         </View>
       ) : null}
@@ -197,55 +204,55 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     zIndex: 4,
   },
   track: {
-    borderRadius: 1,
-    height: 1,
+    borderRadius: TRADE_SLIDER_TRACK_HEIGHT / 2,
+    height: TRADE_SLIDER_TRACK_HEIGHT,
   },
   trackBase: {
     backgroundColor: colors2024['neutral-line'],
-    height: 1,
+    borderRadius: TRADE_SLIDER_TRACK_HEIGHT / 2,
+    height: TRADE_SLIDER_TRACK_HEIGHT,
     left: TRADE_SLIDER_TRACK_INSET,
     overflow: 'hidden',
     position: 'absolute',
     right: TRADE_SLIDER_TRACK_INSET,
-    top: 11,
+    top: TRADE_SLIDER_CENTER_Y - TRADE_SLIDER_TRACK_HEIGHT / 2,
     zIndex: 1,
   },
   activeTrack: {
     backgroundColor: colors2024['neutral-title-1'],
-    height: 1,
+    height: TRADE_SLIDER_TRACK_HEIGHT,
     width: '100%',
   },
   points: {
     left: TRADE_SLIDER_TRACK_INSET,
     position: 'absolute',
     right: TRADE_SLIDER_TRACK_INSET,
-    top: 8,
+    top: TRADE_SLIDER_CENTER_Y - TRADE_SLIDER_POINT_SIZE / 2,
     zIndex: 2,
   },
   pointPosition: {
-    marginLeft: -3.5,
+    marginLeft: -TRADE_SLIDER_POINT_SIZE / 2,
     position: 'absolute',
   },
   point: {
     backgroundColor: colors2024['neutral-bg-1'],
     borderColor: colors2024['neutral-line'],
-    borderRadius: 3.5,
-    borderWidth: 1,
-    height: 7,
-    width: 7,
+    borderRadius: TRADE_SLIDER_POINT_SIZE / 2,
+    borderWidth: TRADE_SLIDER_POINT_BORDER,
+    height: TRADE_SLIDER_POINT_SIZE,
+    width: TRADE_SLIDER_POINT_SIZE,
   },
   activePoint: {
     borderColor: colors2024['neutral-title-1'],
-    left: -1,
+    left: -TRADE_SLIDER_POINT_BORDER,
     position: 'absolute',
-    top: -1,
+    top: -TRADE_SLIDER_POINT_BORDER,
   },
   thumbRail: {
     left: TRADE_SLIDER_TRACK_INSET,
     position: 'absolute',
     right: TRADE_SLIDER_TRACK_INSET,
-    // Original visual centre: (24 - 13) / 2 with the -0.5 rail alignment.
-    top: (24 - TRADE_SLIDER_THUMB_SIZE) / 2 - 0.5,
+    top: TRADE_SLIDER_CENTER_Y - TRADE_SLIDER_THUMB_SIZE / 2,
     zIndex: 3,
   },
   thumbPosition: {
@@ -275,7 +282,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     justifyContent: 'center',
     width: TRADE_SLIDER_TOOLTIP_WIDTH,
     left: 0,
-    paddingHorizontal: 4,
+    // No horizontal padding: "100%" needs about 28pt, which is all a 4pt
+    // inset leaves, so wider system digits wrapped it onto a second line.
     position: 'absolute',
     top: -18,
     zIndex: 4,

@@ -58,6 +58,7 @@ import { TabsSectionList } from '@/components/customized/react-native-collapsibl
 import {
   pulldownRefreshSizes,
   RefreshPlaceholderIOS,
+  useSuspendedVisibleAnchor,
   setPulldownRefreshStage,
   usePulldownRefreshGesture,
   usePulldownRefreshStyles,
@@ -1037,6 +1038,14 @@ export const TokenList = () => {
       return onRefresh();
     },
   });
+  // RefreshPlaceholderIOS changes the list header height throughout the pull
+  // and its closing animation. Keeping the native visible anchor enabled while
+  // that header shrinks anchors the first token row to a stale offset, leaving
+  // a large blank area above short token lists.
+  // #1285: re-enabling the native visible anchor in the frame the placeholder
+  // collapses re-anchors the first row against the pre-collapse layout and
+  // leaves a transient blank at the top; wait for the layout to settle.
+  const isPullRefreshVisible = useSuspendedVisibleAnchor(pullDistance);
 
   useEffect(() => {
     console.debug('[PulldownRefresh] TokenList isLoading changed', isLoading);
@@ -1103,7 +1112,9 @@ export const TokenList = () => {
         updateCellsBatchingPeriod={TOKEN_LIST_BATCHING_PERIOD_MS}
         removeClippedSubviews={IS_ANDROID}
         maintainVisibleContentPosition={
-          suspendVisibleAnchor ? undefined : { minIndexForVisible: 0 }
+          suspendVisibleAnchor || isPullRefreshVisible
+            ? undefined
+            : { minIndexForVisible: 0 }
         }
       />
     </GestureDetector>

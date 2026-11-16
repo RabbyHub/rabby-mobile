@@ -216,7 +216,7 @@ PerpsProPositionTpSlSideInputs.displayName = 'PerpsProPositionTpSlSideInputs';
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   revealGroup: { gap: 8 },
   sideInputs: { flexDirection: 'row', gap: 8 },
-  fieldHintRow: { marginTop: 2 },
+  fieldHintRow: { gap: 8 },
   fieldHint: {
     color: colors2024['neutral-foot'],
     fontFamily: 'SF Pro Rounded',

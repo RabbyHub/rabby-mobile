@@ -18,6 +18,12 @@ const mockScreens = new Map<string, CapturedScreen>();
 // Capture the real navigator's first screen configuration without mounting the
 // business screen. This is a component/config contract, not a native-stack or
 // iOS transition test: device coverage must still check the cold-entry arrow.
+jest.mock('../Bridge/BridgeDetailScreen', () => ({
+  BridgeDetailScreen: () => null,
+}));
+jest.mock('@/screens/Approvals/components/Headers/ApprovalsHeader', () => ({
+  ApprovalsHeader: () => null,
+}));
 jest.mock('@/utils/CustomNativeStackNavigator', () => ({
   createCustomNativeStackNavigator: () => ({
     Navigator: ({ children }: React.PropsWithChildren) => children,
@@ -39,6 +45,7 @@ jest.mock('@react-navigation/native', () => ({
 }));
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
+  initReactI18next: { type: '3rdParty', init: () => undefined },
 }));
 jest.mock('@/core/native/utils', () => ({ IS_IOS: true, IS_ANDROID: false }));
 jest.mock('@/hooks/theme', () => ({
@@ -118,6 +125,18 @@ jest.mock('../Transaction/HistoryLocalDetailScreen', () => ({
 jest.mock('../Approvals', () => () => null);
 jest.mock('../Receive/Receive', () => () => null);
 jest.mock('../ConvertDust', () => ({ ConvertDustScreen: () => null }));
+jest.mock('../MemeCoin/home/MemeCoinHomeScreen', () => ({
+  MemeCoinHomeScreen: () => null,
+}));
+jest.mock('../MemeCoin/buy/MemeCoinBuyScreen', () => ({
+  MemeCoinBuyScreen: () => null,
+}));
+jest.mock('../MemeCoin/execute/MemeCoinExecuteScreen', () => ({
+  MemeCoinExecuteScreen: () => null,
+}));
+jest.mock('../MemeCoin/components/MemeCoinHeader', () => ({
+  MemeCoinHeader: () => null,
+}));
 jest.mock('../GasAccount', () => ({ GasAccountScreen: () => null }));
 jest.mock('../Transaction/MultiAddressHistory', () => ({
   __esModule: true,

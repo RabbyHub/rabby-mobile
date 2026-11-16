@@ -17,9 +17,9 @@ export const BOTTOM_BUTTON_COMPACT_HEIGHT = 36;
 export const BOTTOM_BUTTON_DOUBLE_HEIGHT = 48;
 export const BOTTOM_BUTTON_TEXT_SIZE = 18;
 export const BOTTOM_BUTTON_TEXT_LINE_HEIGHT = 22;
-// 标题样式故意不带 lineHeight：components2024/Button 在传了 height 时默认把
-// 行高设为按钮高度（中文字体垂直居中需要）。非 Button 的 Text 需要固定行高时
-// 用 BOTTOM_BUTTON_TEXT_LINE_HEIGHT
+// 标题样式不带 lineHeight。Button 在传入 height 时自己居中：iOS 用
+// BOTTOM_BUTTON_TEXT_LINE_HEIGHT，Android 不设行高。非 Button 的 Text 需要
+// 固定行高时用 BOTTOM_BUTTON_TEXT_LINE_HEIGHT。
 export const BOTTOM_BUTTON_TITLE_STYLE = {
   fontSize: BOTTOM_BUTTON_TEXT_SIZE,
   fontWeight: '700',
@@ -146,6 +146,7 @@ export const RootNames = {
   StackTestkits: 'StackTestkits',
   DevUIFontShowCase: 'DevUIFontShowCase',
   DevUIAnimatedTextAndView: 'DevUIAnimatedTextAndView',
+  DevUIAutoFitTitlePlayground: 'DevUIAutoFitTitlePlayground',
   DevUIFormShowCase: 'DevUIFormShowCase',
   DevUIAccountShowCase: 'DevUIAccountShowCase',
   DevUIComponents2024ShowCase: 'DevUIComponents2024ShowCase',
@@ -186,10 +187,14 @@ export const RootNames = {
   BatchRevoke: 'BatchRevoke',
   History: 'History',
   HistoryDetail: 'HistoryDetail',
+  BridgeDetail: 'BridgeDetail',
   HistoryLocalDetail: 'HistoryLocalDetail',
   MultiAddressHistory: 'MultiAddressHistory',
   LendingHistory: 'LendingHistory',
   ConvertDust: 'ConvertDust',
+  MemeCoin: 'MemeCoin',
+  MemeCoinBuy: 'MemeCoinBuy',
+  MemeCoinExecute: 'MemeCoinExecute',
   GasAccount: 'GasAccount',
   Perps: 'Perps',
   PerpsMarketList: 'PerpsMarketList',
@@ -330,6 +335,12 @@ function makeScreenSpecConfig() {
       }),
     };
 
+    const bridgeDetailPageConf = <ScreenSystemBarConfig>{
+      statusBarStyle,
+      statusBarBackgroundColor:
+        colors2024[isDarkTheme ? 'neutral-bg-1' : 'neutral-bg-0'],
+    };
+
     const transparentDefault2024Conf = <ScreenSystemBarConfig>{
       statusBarStyle,
       statusBarBackgroundColor: 'transparent',
@@ -385,6 +396,7 @@ function makeScreenSpecConfig() {
       // StackTestkits
       [RootNames.DevUIFontShowCase]: bg1Default2024Conf,
       [RootNames.DevUIAnimatedTextAndView]: bg1Default2024Conf,
+      [RootNames.DevUIAutoFitTitlePlayground]: bg1Default2024Conf,
       [RootNames.DevUIFormShowCase]: bg1Default2024Conf,
       [RootNames.DevUIAccountShowCase]: bg1Default2024Conf,
       [RootNames.DevUIComponents2024ShowCase]: bg1Default2024Conf,
@@ -423,10 +435,14 @@ function makeScreenSpecConfig() {
       [RootNames.BatchRevoke]: transparentDefault2024Conf,
       [RootNames.History]: historyPageConf,
       [RootNames.HistoryDetail]: historyPageConf,
+      [RootNames.BridgeDetail]: bridgeDetailPageConf,
       [RootNames.HistoryLocalDetail]: historyPageConf,
       [RootNames.MultiAddressHistory]: historyPageConf,
       [RootNames.LendingHistory]: bg1Default2024Conf,
       [RootNames.ConvertDust]: bg1Default2024Conf,
+      [RootNames.MemeCoin]: transparentDefault2024Conf,
+      [RootNames.MemeCoinBuy]: transparentDefault2024Conf,
+      [RootNames.MemeCoinExecute]: transparentDefault2024Conf,
       [RootNames.GasAccount]: transparentDefault2024Conf,
       [RootNames.Perps]: transparentDefault2024Conf,
       [RootNames.PerpsMarketList]: bg1Default2024Conf,

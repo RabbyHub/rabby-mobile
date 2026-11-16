@@ -39,6 +39,12 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       fontSize: 16,
       fontWeight: '700',
       marginLeft: 4,
+      // Android adds the font's asymmetric ascent/descent as extra padding, so
+      // the glyph ink sits at the bottom of the line box even though the row is
+      // centred. Drop that padding and pin the line box (QA 1348).
+      includeFontPadding: false,
+      lineHeight: 20,
+      textAlignVertical: 'center',
     },
     icon: {
       marginLeft: 4,

@@ -62,6 +62,29 @@ const URL_QUERY_KEYS = new Set([
   'url.fragment',
 ]);
 const MAX_SCRUB_DEPTH = 12;
+// Keys whose value is a token contract, never a holder, so the address is kept
+// for debugging. Exact names only, compared without case, `_` or `-`: a loose
+// /token/ would also keep tokenOwner, token_holder or tokenRecipient. Only
+// structured fields qualify; the same pair inside free text (a message,
+// stringified JSON) is still redacted, since text can't say which hex is which.
+// `contractAddress` is left out: it can carry a contract wallet (Safe) address.
+const TOKEN_CONTRACT_KEYS = new Set([
+  'tokenid',
+  'fromtokenid',
+  'totokenid',
+  'paytokenid',
+  'receivetokenid',
+  'tokenaddress',
+]);
+const EXACT_EVM_ADDRESS_PATTERN = /^0x[0-9a-fA-F]{40}$/;
+
+function isTokenContractEntry(key: string, value: unknown) {
+  return (
+    typeof value === 'string' &&
+    EXACT_EVM_ADDRESS_PATTERN.test(value) &&
+    TOKEN_CONTRACT_KEYS.has(key.toLowerCase().replace(/[_-]/g, ''))
+  );
+}
 
 let bip39Words: Set<string> | undefined;
 
@@ -222,7 +245,9 @@ function scrubSentryValue(
       }
 
       const scrubbedKey = scrubSentryText(entryKey);
-      const scrubbedValue = isSensitiveEntry(entryKey, entryValue)
+      const scrubbedValue = isTokenContractEntry(entryKey, entryValue)
+        ? entryValue
+        : isSensitiveEntry(entryKey, entryValue)
         ? SENTRY_REDACTED
         : scrubSentryValue(entryValue, depth + 1, ancestors, entryKey);
       changed ||= scrubbedKey !== entryKey || scrubbedValue !== entryValue;
@@ -247,7 +272,8 @@ function scrubSentryValue(
  * Strips URL query strings and redacts EVM addresses, 32-byte hex values
  * (private keys), BIP39 mnemonics and values under secret-looking keys from
  * anything that is about to leave the device (events, transactions,
- * breadcrumbs).
+ * breadcrumbs). The one exemption is a single address under a token-contract
+ * key (TOKEN_CONTRACT_KEYS), kept so failures can be traced to a token.
  */
 export function scrubSentryPayload<T>(payload: T): T {
   return scrubSentryValue(payload, 0, new Set()) as T;
@@ -338,7 +364,12 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === 'object';
 }
 
-function normalizeSentryText(value: unknown): string[] {
+// A wrapped report (`new Error('postSwap failed', { cause })`) is filtered by
+// its cause too. Linked errors only chain an Error cause into the event, so a
+// non-Error rejection is read here.
+const MAX_CAUSE_DEPTH = 5;
+
+function normalizeSentryText(value: unknown, causeDepth = 0): string[] {
   if (typeof value === 'string') {
     return [value];
   }
@@ -352,7 +383,12 @@ function normalizeSentryText(value: unknown): string[] {
   }
 
   if (value instanceof Error) {
-    return [value.name, value.message].filter((text): text is string => !!text);
+    const texts = [value.name, value.message].filter(
+      (text): text is string => !!text,
+    );
+    return value.cause !== undefined && causeDepth < MAX_CAUSE_DEPTH
+      ? [...texts, ...normalizeSentryText(value.cause, causeDepth + 1)]
+      : texts;
   }
 
   if (!isRecord(value)) {
@@ -371,7 +407,7 @@ function normalizeSentryText(value: unknown): string[] {
   return [
     ...keys,
     keys.join(', '),
-    ...knownFields.flatMap(normalizeSentryText),
+    ...knownFields.flatMap(item => normalizeSentryText(item)),
   ].filter(Boolean);
 }
 
@@ -396,7 +432,7 @@ function getSentryEventTextFragments(
     });
   });
 
-  return fragments.flatMap(normalizeSentryText);
+  return fragments.flatMap(item => normalizeSentryText(item));
 }
 
 function hasIgnoredSentryPattern(fragment: string) {

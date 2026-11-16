@@ -10,7 +10,11 @@ import {
   sanitizePerpsProPriceEditingInput,
   sanitizePerpsProPriceInput,
 } from '../../model/trade';
-import { resolvePerpsProDialogFieldBackground } from '../common/perpsProDialogVisual';
+import {
+  PERPS_PRO_DIALOG_FIELD,
+  PERPS_PRO_DIALOG_LABELED_FIELD,
+  resolvePerpsProDialogFieldBackground,
+} from '../common/perpsProDialogVisual';
 import { PerpsProDecimalTextInput } from '../trade/PerpsProDecimalTextInput';
 import { PERPS_PRO_ANDROID_SINGLE_LINE_INPUT_STYLE } from '../common/perpsProSingleLineInput';
 
@@ -30,6 +34,8 @@ OpenOrderBottomSheetTextInput.displayName = 'OpenOrderBottomSheetTextInput';
 
 export const PerpsProOpenOrderEditInput: React.FC<{
   accessibilityLabel: string;
+  /** 46pt labeled field (Figma 86609:347557); defaults to the 56pt field. */
+  compact?: boolean;
   currentValue?: string | null;
   disabled?: boolean;
   label?: string;
@@ -43,6 +49,7 @@ export const PerpsProOpenOrderEditInput: React.FC<{
 }> = React.memo(
   ({
     accessibilityLabel,
+    compact = false,
     currentValue,
     disabled = false,
     label,
@@ -67,19 +74,21 @@ export const PerpsProOpenOrderEditInput: React.FC<{
     );
     if (disabled) {
       return (
-        <View style={[styles.field, styles.disabled]} testID={testID}>
+        <View style={[styles.compactField, styles.disabled]} testID={testID}>
           <Text style={styles.disabledText}>{value}</Text>
         </View>
       );
     }
     return (
-      <View style={styles.field} testID={testID}>
+      <View
+        style={compact ? styles.compactField : styles.field}
+        testID={testID}>
         {label ? (
-          <Text numberOfLines={1} style={styles.label}>
+          <Text
+            numberOfLines={1}
+            style={[styles.label, compact && styles.compactLabel]}>
             <Text style={styles.labelTitle}>{label} </Text>
-            {currentValue ? (
-              <Text style={PERPS_PRO_NUMBER_STYLE}>{`(${currentValue})`}</Text>
-            ) : null}
+            {currentValue ? `(${currentValue})` : null}
           </Text>
         ) : null}
         <PerpsProDecimalTextInput
@@ -95,11 +104,17 @@ export const PerpsProOpenOrderEditInput: React.FC<{
             priceSzDecimals == null ? undefined : canonicalizePriceValue
           }
           preserveIntegerZeroRun={priceSzDecimals != null}
-          style={[styles.input, unit ? styles.inputWithUnit : null]}
+          style={[
+            styles.input,
+            compact && styles.compactInput,
+            unit ? styles.inputWithUnit : null,
+          ]}
           value={value}
         />
         {unit ? (
-          <Text pointerEvents="none" style={styles.unit}>
+          <Text
+            pointerEvents="none"
+            style={compact ? styles.compactUnit : styles.unit}>
             {unit}
           </Text>
         ) : null}
@@ -114,7 +129,15 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   field: {
     backgroundColor: resolvePerpsProDialogFieldBackground(colors2024, isLight),
     borderRadius: 6,
-    height: 40,
+    height: PERPS_PRO_DIALOG_LABELED_FIELD.height,
+    justifyContent: 'center',
+    paddingHorizontal: 12,
+    position: 'relative',
+  },
+  compactField: {
+    backgroundColor: resolvePerpsProDialogFieldBackground(colors2024, isLight),
+    borderRadius: 6,
+    height: PERPS_PRO_DIALOG_FIELD.height,
     justifyContent: 'center',
     paddingHorizontal: 12,
     position: 'relative',
@@ -126,10 +149,11 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontSize: 10,
     lineHeight: 12,
     position: 'absolute',
-    top: 4,
+    top: PERPS_PRO_DIALOG_LABELED_FIELD.labelTop,
     left: 12,
     right: 12,
   },
+  compactLabel: { top: PERPS_PRO_DIALOG_FIELD.labelTop },
   labelTitle: {
     fontFamily: 'SF Pro Rounded',
     fontWeight: '500',
@@ -140,14 +164,29 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     fontWeight: '500',
-    height: 40,
+    height: PERPS_PRO_DIALOG_LABELED_FIELD.height,
     lineHeight: 18,
     padding: 0,
-    paddingTop: 13,
+    ...PERPS_PRO_DIALOG_LABELED_FIELD.inputPadding,
     ...PERPS_PRO_ANDROID_SINGLE_LINE_INPUT_STYLE,
   },
+  compactInput: {
+    height: PERPS_PRO_DIALOG_FIELD.height,
+    ...PERPS_PRO_DIALOG_FIELD.inputPadding,
+  },
   inputWithUnit: { paddingRight: 72 },
+  // Figma 86609:343156: field units are 16pt Bold.
   unit: {
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 16,
+    fontWeight: '700',
+    lineHeight: 20,
+    position: 'absolute',
+    right: 12,
+  },
+  // Figma 86609:347561: the compact field keeps the 14pt Medium unit.
+  compactUnit: {
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,
@@ -157,7 +196,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     right: 12,
   },
   disabledText: {
-    ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,

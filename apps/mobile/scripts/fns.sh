@@ -220,19 +220,36 @@ EOF
   return 1
 }
 
+is_valid_rabbit_code() {
+  case "${1:-}" in
+    '' | null | NULL | undefined | UNDEFINED | RABBY_MOBILE_CODE_DEV)
+      return 1
+      ;;
+  esac
+  return 0
+}
+
+validate_rabbit_code() {
+  if [ "${APP_ENV:-}" = "hashing" ] && [ "${RABBY_MOBILE_CODE:-}" = "RABBY_MOBILE_CODE_DEV" ]; then
+    return 0
+  fi
+
+  if ! is_valid_rabbit_code "${RABBY_MOBILE_CODE:-}"; then
+    echo "[RabbyMobileBuild] RABBY_MOBILE_CODE is missing or invalid (${RABBY_MOBILE_CODE:-<empty>}); export the real value before building." >&2
+    return 1
+  fi
+}
+
 check_build_params() {
-  load_env_var_from_candidate_files RABBY_MOBILE_KR_PWD
-  load_env_var_from_candidate_files RABBY_MOBILE_CODE
+  load_env_var_from_candidate_files RABBY_MOBILE_KR_PWD || true
+  load_env_var_from_candidate_files RABBY_MOBILE_CODE || true
 
   if [ -z $RABBY_MOBILE_KR_PWD ]; then
     echo "RABBY_MOBILE_KR_PWD is not set"
     exit 1;
   fi
 
-  if [ -z $RABBY_MOBILE_CODE ]; then
-    echo "RABBY_MOBILE_CODE is not set"
-    exit 1;
-  fi
+  validate_rabbit_code || exit 1
 }
 
 resolve_ios_info_plist_path() {

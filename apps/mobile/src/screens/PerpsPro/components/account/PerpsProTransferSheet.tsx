@@ -81,6 +81,11 @@ export const PerpsProTransferSheet: React.FC<{
     () => new BigNumber(available || 0),
     [available],
   );
+  // Floored, not rounded: a rounded-up balance reads as an amount the account
+  // cannot actually transfer.
+  const displayedAvailable = availableValue
+    .decimalPlaces(2, BigNumber.ROUND_DOWN)
+    .toFixed();
   const amountValue = useMemo(() => new BigNumber(amount || 0), [amount]);
   const hasAvailable = availableValue.isFinite() && availableValue.gt(0);
   const valid =
@@ -94,7 +99,7 @@ export const PerpsProTransferSheet: React.FC<{
       ref={modalRef}
       {...makeBottomSheetProps({
         colors: colors2024,
-        linearGradientType: 'bg0',
+        linearGradientType: 'bg1',
       })}
       backgroundStyle={styles.background}
       backdropComponent={renderBackdrop}
@@ -109,7 +114,7 @@ export const PerpsProTransferSheet: React.FC<{
       }}
       style={styles.modal}
       snapPoints={[
-        490 + getBottomButtonBottomOffset(bottom) - BOTTOM_BUTTON_BOTTOM_OFFSET,
+        504 + getBottomButtonBottomOffset(bottom) - BOTTOM_BUTTON_BOTTOM_OFFSET,
       ]}>
       <BottomSheetView style={styles.sheetView}>
         <AutoLockView style={styles.container}>
@@ -118,9 +123,11 @@ export const PerpsProTransferSheet: React.FC<{
           </Text>
           <View style={styles.content}>
             <View style={styles.section}>
-              <Text style={styles.sectionLabel}>
-                {t('page.perps.pro.account.transfer')}
-              </Text>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionLabel}>
+                  {t('page.perps.pro.account.transfer')}
+                </Text>
+              </View>
               <View
                 style={styles.directionCard}
                 testID="perps-pro-transfer-direction-card">
@@ -148,14 +155,11 @@ export const PerpsProTransferSheet: React.FC<{
                 </Text>
                 <Text style={styles.balance}>{`${t(
                   'page.perps.pro.account.balance',
-                )}:${formatPerpsProDecimal(available, 2)} USDC`}</Text>
+                )}:${formatPerpsProDecimal(displayedAvailable, 2)} USDC`}</Text>
               </View>
               <View
                 style={styles.amountField}
                 testID="perps-pro-transfer-amount-field">
-                <Text pointerEvents="none" style={styles.amountPrefix}>
-                  $
-                </Text>
                 <BottomSheetTextInput
                   {...PERPS_PRO_INPUT_COLOR_PROPS}
                   {...keyboard}
@@ -179,12 +183,13 @@ export const PerpsProTransferSheet: React.FC<{
                 <PerpsProInputAccessory
                   nativeID={keyboard.inputAccessoryViewID}
                 />
+                <View style={styles.tokenDivider} />
                 <View
                   style={styles.tokenPill}
                   testID="perps-pro-transfer-token-pill">
                   <RcTransferUSDC
-                    width={24}
-                    height={24}
+                    width={26}
+                    height={26}
                     testID="perps-pro-transfer-usdc-icon"
                   />
                   <Text style={styles.tokenText}>USDC</Text>

@@ -275,6 +275,34 @@ export const AuthenticationModal2024 = ({
   const passwordRef = React.useRef(APP_TEST_PWD);
   const [error, setError] = React.useState<string>();
 
+  // Keep the input props stable so a parent re-render cannot hand the focused
+  // TextInput a fresh prop object (iOS re-applies the input traits and the
+  // keyboard flashes between layouts).
+  const passwordInputProps = React.useMemo(
+    () => ({
+      // Uncontrolled on purpose: every keystroke must not re-render/re-measure
+      // the sheet.
+      defaultValue: passwordRef.current,
+      secureTextEntry: true,
+      inputMode: 'text' as const,
+      returnKeyType: 'done' as const,
+      returnKeyLabel: t('global.Confirm'),
+      placeholderTextColor: colors2024['neutral-foot'],
+      onChangeText: (value: string) => {
+        passwordRef.current = value;
+        if (error) {
+          setError('');
+        }
+      },
+      ...makeTestIDProps(E2E_ID.authModal.passwordInput),
+    }),
+    [colors2024, error, t],
+  );
+  const passwordContainerStyle = React.useMemo(
+    () => Object.assign({}, error ? {} : { borderColor: 'transparent' }),
+    [error],
+  );
+
   const onFinishedReturnBase = useMemo(
     () => ({ hasSetupCustomPassword: isUseCustomPwd }),
     [isUseCustomPwd],
@@ -489,32 +517,9 @@ export const AuthenticationModal2024 = ({
                   fieldName={t(
                     'component.AuthenticationModal.passwordPlaceholder',
                   )}
-                  containerStyle={Object.assign(
-                    {},
-                    error
-                      ? {}
-                      : {
-                          borderColor: 'transparent',
-                        },
-                  )}
+                  containerStyle={passwordContainerStyle}
                   iconColor={colors2024['neutral-title-1']}
-                  inputProps={{
-                    // Uncontrolled on purpose: every keystroke must not
-                    // re-render/re-measure the sheet.
-                    defaultValue: passwordRef.current,
-                    secureTextEntry: true,
-                    inputMode: 'text',
-                    returnKeyType: 'done',
-                    returnKeyLabel: t('global.Confirm'),
-                    placeholderTextColor: colors2024['neutral-foot'],
-                    onChangeText: value => {
-                      passwordRef.current = value;
-                      if (error) {
-                        setError('');
-                      }
-                    },
-                    ...makeTestIDProps(E2E_ID.authModal.passwordInput),
-                  }}
+                  inputProps={passwordInputProps}
                   style={StyleSheet.flatten([
                     styles.input,
                     bioComputed.isBiometricsEnabled && styles.inputWithAddOn,

@@ -4,6 +4,7 @@ import {
   fetchClearinghouseStateHttp,
   fetchPositionOpenOrdersHttp,
   getDexByCoin,
+  hasCurrentPerpPermission,
   perpsStore,
 } from '@/hooks/perps/usePerpsStore';
 import type {
@@ -309,7 +310,7 @@ const defaultDependencies: PerpsModifyOpenOrderDependencies = {
   getCurrentDex: coin => getDexByCoin(coin),
   getOrderStatus: (oid, address) =>
     apisPerps.getPerpsSDK().info.getOrderStatus(oid, address),
-  hasPermission: () => perpsStore.getState().hasPermission,
+  hasPermission: () => hasCurrentPerpPermission(),
   modifyOrder: params => getExchange().modifyOrder(params),
   refreshClearinghouse: dex => fetchClearinghouseStateHttp(dex),
   refreshOpenOrders: dex => fetchPositionOpenOrdersHttp(dex),

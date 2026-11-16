@@ -231,8 +231,9 @@ describe('PerpsProOpenOrderCard', () => {
         screen.getByTestId('perps-pro-order-basic:BTC:1').props.style,
       ),
     ).toMatchObject({
-      marginLeft: 16,
-      marginRight: 14,
+      borderRadius: 12,
+      marginHorizontal: 12,
+      padding: 12,
     });
   });
 
@@ -311,7 +312,7 @@ describe('PerpsProOpenOrderCard', () => {
     expect(screen.getByText('Cancel').props.style).toMatchObject({
       color: 'neutral-title-1',
       fontFamily: 'SF Pro Rounded',
-      fontSize: 14,
+      fontSize: 13,
       fontWeight: '700',
       lineHeight: 18,
     });

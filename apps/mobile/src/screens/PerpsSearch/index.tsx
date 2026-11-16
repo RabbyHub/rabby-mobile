@@ -29,15 +29,18 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import RcIconFavorite from '@/assets2024/icons/home/favorite.svg';
 
-import CustomLabel from '../TokenDetail/components/CustomLabel';
+import { PerpsSearchTabLabel } from './components/PerpsSearchTabLabel';
+import {
+  getPerpsProTabIndicatorStyle,
+  PERPS_MARKET_TAB_LAYOUT,
+} from '@/components2024/PerpsTab/visual';
 import { perpsStore } from '@/hooks/perps/usePerpsStore';
 import { PerpsCategoryId } from '../Perps/constants/perpsCategories';
 import { usePerpsGroupedMarketData } from '../Perps/hooks/usePerpsGroupedMarketData';
 import { PerpsSearchTabContent } from './components/PerpsSearchTabContent';
 import { PerpsSearchFilteredList } from './components/PerpsSearchFilteredList';
 
-const TAB_GAP = 8;
-const TAB_BAR_HEIGHT = 28;
+const { gap: TAB_GAP, height: TAB_BAR_HEIGHT } = PERPS_MARKET_TAB_LAYOUT;
 
 const FavoriteTabIcon: React.FC = () => {
   const { colors2024 } = useTheme2024();
@@ -193,12 +196,10 @@ export const PerpsSearchScreen: React.FC = () => {
             visibleSearchTabs.map(tab => {
               const isFav = tab.id === 'favorite';
               const renderLabel = ({ index: i, indexDecimal }: any) => (
-                <CustomLabel
+                <PerpsSearchTabLabel
                   index={i}
                   indexDecimal={indexDecimal}
                   text={isFav ? '' : tab.cfg.label}
-                  style={styles.tabLabel}
-                  containerStyle={styles.tabLabelContainer}
                   icon={isFav ? <FavoriteTabIcon /> : undefined}
                 />
               );
@@ -257,19 +258,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       flexGrow: 0,
     },
     tabsBarContent: {
-      paddingHorizontal: 20,
+      paddingHorizontal: PERPS_MARKET_TAB_LAYOUT.paddingHorizontal,
       alignItems: 'center',
     },
-    indicator: {
-      backgroundColor: colors2024['neutral-body'],
-      height: 4,
-      borderRadius: 100,
-    },
-    tabLabelContainer: {
-      height: TAB_BAR_HEIGHT,
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    tabLabel: { marginTop: 0 },
+    indicator: getPerpsProTabIndicatorStyle(),
   };
 });

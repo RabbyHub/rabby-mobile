@@ -54,7 +54,10 @@ jobs:
     steps:
       - name: Prepare isolated checkout
         run: |
-          rm -rf "$GITHUB_WORKSPACE/.ci-source"
+          # Keep `.ci-source` between runs: re-creating node_modules costs
+          # ~2 minutes in Yarn's node-modules link step on this runner. The
+          # checkout/clean steps below still reset tracked files and drop
+          # untracked files except node_modules + the Yarn install state.
           mkdir -p \
             "$RUNNER_TEMP/rabby-mobile-integration-jest" \
             "$RUNNER_TEMP/rabby-mobile-integration-yarn"
@@ -66,14 +69,15 @@ jobs:
       - name: Checkout git repo
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
-          clean: true
+          # clean: false keeps the warm node_modules from the previous run.
+          clean: false
           path: .ci-source
 
       - name: Clean isolated checkout
         working-directory: .ci-source
         run: |
           git reset --hard HEAD
-          git clean -ffdx
+          git clean -ffdx -e node_modules -e .yarn/install-state.gz
 
       - name: Use runner Node.js
         working-directory: .ci-source

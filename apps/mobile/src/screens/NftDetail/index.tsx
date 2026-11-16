@@ -1,7 +1,7 @@
 /* eslint-disable react-native/no-inline-styles */
 import React, { useCallback, useEffect, useMemo } from 'react';
 import dayjs from 'dayjs';
-import { StyleSheet, View, ScrollView } from 'react-native';
+import { Dimensions, StyleSheet, View, ScrollView } from 'react-native';
 import BigNumber from 'bignumber.js';
 import { getCHAIN_ID_LIST } from '@/constant/projectLists';
 import { useTheme2024 } from '@/hooks/theme';
@@ -21,6 +21,7 @@ import { useRoute } from '@react-navigation/native';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import type { GetRootScreenRouteProp } from '@/navigation-type';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
+import { HeaderBackPressable } from '@/hooks/navigation';
 import { ellipsisOverflowedText } from '@/utils/text';
 import { createGetStyles2024 } from '@/utils/styles';
 import { Button } from '@/components2024/Button';
@@ -73,6 +74,10 @@ export const NFTDetailScreen = () => {
   const TokenDetailHeaderArea = useMemoizedFn(() => {
     return (
       <View style={styles.headerArea}>
+        <HeaderBackPressable
+          style={styles.headerBack}
+          tintColor={colors2024['neutral-title-1']}
+        />
         <View style={styles.avator}>
           <View
             style={StyleSheet.flatten([
@@ -112,10 +117,18 @@ export const NFTDetailScreen = () => {
     );
   });
 
-  React.useEffect(() => {
+  React.useLayoutEffect(() => {
     setNavigationOptions({
       headerTitle: TokenDetailHeaderArea,
-      headerTitleAlign: 'center',
+      // The row renders its own back button so the avatar always follows it
+      // with the same gap on every device; the native item reserves much more
+      // space than the glyph on iOS 26.
+      headerTitleAlign: 'left',
+      headerBackVisible: false,
+      headerLeft: () => null,
+      // mergeScreenOptions installs a native back bar item on iOS; clear it so
+      // only the row's own back button is rendered.
+      unstable_headerLeftItems: () => [],
     });
   }, [TokenDetailHeaderArea, setNavigationOptions]);
 
@@ -414,6 +427,8 @@ export const NFTDetailScreen = () => {
   );
 };
 
+const SCREEN_WIDTH = Dimensions.get('window').width;
+
 const getStyle = createGetStyles2024(
   ({ colors2024, colors, safeAreaInsets }) => ({
     screenRoot: {
@@ -466,13 +481,21 @@ const getStyle = createGetStyles2024(
       marginBottom: 0,
     },
     headerArea: {
-      width: '100%',
+      // Full row: our own back button + avatar + name, laid out from 16pt.
+      width: SCREEN_WIDTH - 32,
       height: 'auto',
-      marginLeft: 8,
       display: 'flex',
       flexDirection: 'row',
       gap: 8,
       alignItems: 'center',
+    },
+    headerBack: {
+      marginLeft: 0,
+      paddingLeft: 0,
+      width: 24,
+      height: 24,
+      alignItems: 'center',
+      justifyContent: 'center',
     },
     tokenSymbol: {
       flexShrink: 1,

@@ -213,7 +213,15 @@ describe('PerpsProMarketSearchBar', () => {
     fireEvent.press(screen.getByTestId('perps-pro-market-search-focus-mask'));
     expect(mockFocus).toHaveBeenCalledTimes(1);
     expect(onFocusChange).toHaveBeenCalledWith(true);
-    expect(screen.getByTestId('market-search-cancel')).toBeTruthy();
+    const cancel = screen.getByTestId('market-search-cancel');
+    expect(StyleSheet.flatten(cancel.props.style)).toMatchObject({
+      flexShrink: 0,
+      minWidth: 49,
+    });
+    expect(StyleSheet.flatten(cancel.props.style).width).toBeUndefined();
+    expect(
+      cancel.findAll(node => node.props.numberOfLines === 1).length,
+    ).toBeGreaterThan(0);
     expect(
       screen.getByTestId('perps-pro-market-search-active-placeholder'),
     ).toBeTruthy();

@@ -1,13 +1,15 @@
 import React from 'react';
 import { fireEvent, render } from '@testing-library/react-native';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
-import { RecipientAddress } from './WithdrawSelectPopup';
+import { DestinationChain, RecipientAddress } from './WithdrawSelectPopup';
+import { findChainByServerID } from '@/utils/chain';
 
 const mockAccount = {
   address: '0x1111111111111111111111111111111111111111',
   aliasName: 'A very long recipient wallet name',
 };
 let mockStyles: Record<string, any>;
+let mockRenderListItem = false;
 
 jest.mock('@/hooks/account', () => ({
   useAccounts: () => ({ accounts: [mockAccount] }),
@@ -42,7 +44,7 @@ jest.mock('@/components2024/GlobalBottomSheetModal', () => ({
   removeGlobalBottomSheetModal2024: jest.fn(),
 }));
 jest.mock('@/components2024/ListItem/ListItem', () => ({
-  ListItem: () => null,
+  ListItem: ({ content }: any) => (mockRenderListItem ? content : null),
 }));
 jest.mock('@/components2024/AddressItem/AddressItem', () => ({
   AddressItem: ({ children, style }: any) => {
@@ -146,5 +148,35 @@ describe('withdraw recipient layout', () => {
     });
     expect(mockStyles.shadowSelected.padding).toBeUndefined();
     expect(view.UNSAFE_getAllByType(View).length).toBeGreaterThan(0);
+  });
+});
+
+describe('withdraw destination chain', () => {
+  const offline = { chain_id: 'offline', withdraw_limit: 1 } as any;
+  const eth = { chain_id: 'eth', withdraw_limit: 1 } as any;
+
+  beforeEach(() => {
+    mockRenderListItem = true;
+    (findChainByServerID as jest.Mock).mockImplementation((id: string) =>
+      id === 'eth' ? { name: 'Ethereum', logo: 'eth.png' } : null,
+    );
+  });
+
+  afterEach(() => {
+    mockRenderListItem = false;
+  });
+
+  it('skips chains that are no longer supported locally', () => {
+    const view = render(
+      <DestinationChain
+        chain={offline}
+        list={[offline, eth]}
+        onSelect={jest.fn()}
+      />,
+    );
+    expect(view.getAllByText('Ethereum')).toHaveLength(1);
+    expect(
+      view.getByText('page.gasAccount.withdrawPopup.selectChain'),
+    ).toBeTruthy();
   });
 });

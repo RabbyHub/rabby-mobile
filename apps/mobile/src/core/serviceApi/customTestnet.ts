@@ -6,7 +6,7 @@ import { appStorage } from '@/core/storage/mmkv';
 import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
 import { getLoadedCoreService } from '@/core/services/serviceRegistry';
 import { updateChainStore } from '@/constant/chains';
-import { createTestnetChain } from '@/core/utils/customTestnetChain';
+import { createTestnetChainList } from '@/core/utils/customTestnetChain';
 import {
   markCustomTestnetStoreHydrating,
   markCustomTestnetStoreHydrationFailed,
@@ -35,7 +35,7 @@ export function ensureCustomTestnetStoreHydrated() {
   markCustomTestnetStoreHydrating();
   try {
     const snapshot = getCustomTestnetStoreSnapshot();
-    syncCustomTestnetChainList(snapshot.customTestnet);
+    syncCustomTestnetChainList(snapshot);
     syncCustomTestnetStore(snapshot);
   } catch (error) {
     markCustomTestnetStoreHydrationFailed();
@@ -43,11 +43,12 @@ export function ensureCustomTestnetStoreHydrated() {
   }
 }
 
-function syncCustomTestnetChainList(
-  customTestnet: CutsomTestnetServiceStore['customTestnet'],
-) {
+function syncCustomTestnetChainList({
+  customTestnet,
+  eip1559,
+}: Pick<CutsomTestnetServiceStore, 'customTestnet' | 'eip1559'>) {
   updateChainStore({
-    testnetList: Object.values(customTestnet).map(createTestnetChain),
+    testnetList: createTestnetChainList(customTestnet, eip1559),
   });
 }
 
@@ -71,5 +72,9 @@ export function getCustomTestnetStoreSnapshot(): CutsomTestnetServiceStore {
     customTokenList: Array.isArray(persisted?.customTokenList)
       ? persisted.customTokenList
       : [],
+    eip1559:
+      persisted?.eip1559 && typeof persisted.eip1559 === 'object'
+        ? persisted.eip1559
+        : {},
   };
 }

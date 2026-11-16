@@ -281,11 +281,111 @@ describe('sentry filtering', () => {
       shouldDropSentryEvent(makeEvent('Unexpected database failure')),
     ).toBe(false);
   });
+
+  it('drops a wrapped error whose cause is not an Error but is network noise', () => {
+    const { shouldDropSentryEvent } = loadSentryFilterModule();
+    const wrapped = (cause: unknown) => new Error('postSwap failed', { cause });
+    const event: SentryEvent = {
+      exception: { values: [{ type: 'Error', value: 'postSwap failed' }] },
+    };
+
+    expect(
+      shouldDropSentryEvent(event, {
+        originalException: wrapped({ message: 'Network Error' }),
+      }),
+    ).toBe(true);
+    expect(
+      shouldDropSentryEvent(event, {
+        originalException: wrapped(wrapped('Request timed out')),
+      }),
+    ).toBe(true);
+    expect(
+      shouldDropSentryEvent(event, {
+        originalException: wrapped({ message: 'bad quote' }),
+      }),
+    ).toBe(false);
+  });
+
+  // Shape of the postSwap report in SwapService: a fixed title, the failure as
+  // its cause, the quote in extra. Runs through a real Sentry client so linked
+  // errors, inbound filters and beforeSend all apply as in the app.
+  it('filters wrapped errors by their cause and keeps quote token ids', async () => {
+    const { sentry, sentryModule } = loadSentryModule({
+      userBehaviorTrackingOptOut: false,
+    });
+    sentryModule.initSentry();
+    const options = (sentry.init as jest.Mock).mock.calls[0][0];
+    const core = jest.requireActual(
+      '@sentry/core',
+    ) as typeof import('@sentry/core');
+    const events: Array<Record<string, any>> = [];
+    const client = new core.ServerRuntimeClient({
+      dsn: 'https://public@o0.ingest.sentry.io/0',
+      integrations: [
+        core.inboundFiltersIntegration(),
+        core.linkedErrorsIntegration(),
+      ],
+      ignoreErrors: options.ignoreErrors,
+      beforeSend: (event, hint) => {
+        const kept = options.beforeSend(event, hint);
+        if (kept) {
+          events.push(kept);
+        }
+        return kept;
+      },
+      stackParser: core.createStackParser(core.nodeStackLineParser()),
+      transport: transportOptions =>
+        core.createTransport(transportOptions, () =>
+          Promise.resolve({ statusCode: 200 }),
+        ),
+    });
+    client.init();
+    const scope = new core.Scope();
+    scope.setClient(client);
+
+    const quote = {
+      pay_token_id: USDC,
+      pay_token_amount: 100,
+      receive_token_id: WETH,
+      receive_token_amount: 0.03,
+      slippage: 0.005,
+    };
+    const axiosError = Object.assign(
+      new Error('Request failed with status code 502'),
+      { name: 'AxiosError', code: 'ERR_BAD_RESPONSE' },
+    );
+    const extra = { quote, dex_id: 'uniswap3', fee_rate: 0.0025 };
+
+    // Network noise, dropped by the ignore list through the cause.
+    scope.captureException(
+      new Error('postSwap failed', { cause: axiosError }),
+      {
+        captureContext: { extra },
+      },
+    );
+    scope.captureException(
+      new Error('postSwap failed', { cause: new TypeError('bad quote') }),
+      { captureContext: { extra } },
+    );
+    await client.flush(2000);
+
+    expect(events).toHaveLength(1);
+    expect(
+      events[0].exception.values.map(
+        (value: { type: string; value: string }) =>
+          `${value.type}: ${value.value}`,
+      ),
+    ).toEqual(['TypeError: bad quote', 'Error: postSwap failed']);
+    expect(events[0].extra).toMatchObject(extra);
+    await client.close(2000);
+  });
 });
 
 const ADDRESS = '0x1234567890abcdef1234567890ABCDEF12345678';
 const OTHER_ADDRESS = '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd';
 const TX_HASH = `0x${'ab'.repeat(32)}`;
+const USDC = '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48';
+const WETH = '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2';
 
 describe('sentry scrubbing', () => {
   afterEach(() => {
@@ -443,6 +543,70 @@ describe('sentry scrubbing', () => {
       (sentryModule.scrubSentryPayload(cyclic) as Record<string, unknown>)
         .address,
     ).toBe('0x[redacted]');
+  });
+
+  it('keeps token contract ids in structured fields but not holder addresses', () => {
+    const { options } = loadInitOptions();
+    const order = {
+      fromTokenId: USDC,
+      quote: { pay_token_id: USDC, receive_token_id: WETH },
+      'to-token-id': WETH,
+      TokenAddress: USDC,
+      // A loose /token/ match would keep these.
+      tokenOwner: ADDRESS,
+      token_holder: ADDRESS,
+      tokenRecipient: ADDRESS,
+      contractAddress: ADDRESS,
+      // Only a single, exact address is kept.
+      to_token_id: `${USDC},${WETH}`,
+      token_address: `0x${'0'.repeat(24)}${USDC.slice(2)}`,
+      receiveTokenId: ` ${WETH}`,
+      tokenId: 'eth',
+    };
+    const event = {
+      message: `swap failed {"fromTokenId":"${USDC}","owner":"${ADDRESS}"}`,
+      exception: {
+        values: [{ type: 'Error', value: `tokenId ${USDC} for ${ADDRESS}` }],
+      },
+      tags: { token_id: USDC, owner: ADDRESS },
+      extra: { order },
+      breadcrumbs: [{ category: 'swap', data: { payTokenId: USDC } }],
+    };
+
+    const scrubbed = options.beforeSend(event);
+
+    expect(scrubbed.tags).toEqual({ token_id: USDC, owner: '0x[redacted]' });
+    expect(scrubbed.extra.order).toEqual({
+      fromTokenId: USDC,
+      quote: { pay_token_id: USDC, receive_token_id: WETH },
+      'to-token-id': WETH,
+      TokenAddress: USDC,
+      tokenOwner: '0x[redacted]',
+      token_holder: '0x[redacted]',
+      tokenRecipient: '0x[redacted]',
+      contractAddress: '0x[redacted]',
+      to_token_id: '0x[redacted],0x[redacted]',
+      token_address: '[redacted]',
+      receiveTokenId: ' 0x[redacted]',
+      tokenId: 'eth',
+    });
+    expect(scrubbed.breadcrumbs[0].data).toEqual({ payTokenId: USDC });
+    // Free text can't say which hex is a token, so all of it is redacted.
+    expect(scrubbed.message).toBe(
+      'swap failed {"fromTokenId":"0x[redacted]","owner":"0x[redacted]"}',
+    );
+    expect(scrubbed.exception.values[0].value).toBe(
+      'tokenId 0x[redacted] for 0x[redacted]',
+    );
+    expect(JSON.stringify(scrubbed)).not.toContain(ADDRESS);
+    expect(order.tokenOwner).toBe(ADDRESS);
+  });
+
+  it('keeps a payload that only holds token contract ids intact', () => {
+    const { sentryModule } = loadInitOptions();
+    const payload = { extra: { tokenId: USDC, quote: { payTokenId: WETH } } };
+
+    expect(sentryModule.scrubSentryPayload(payload)).toBe(payload);
   });
 
   it('turns off native network breadcrumbs that bypass the JS hooks', () => {

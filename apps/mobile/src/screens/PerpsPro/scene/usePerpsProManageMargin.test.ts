@@ -90,6 +90,8 @@ jest.mock('@/hooks/perps/usePerpsStore', () => {
       mockFetchClearinghouse(...args),
     fetchSpotStateHttp: (...args: unknown[]) => mockFetchSpot(...args),
     getDexByCoin: jest.fn(() => ''),
+    ensureCurrentPerpPermission: async () => mockPerpsState.hasPermission,
+    hasCurrentPerpPermission: (state = mockPerpsState) => state.hasPermission,
     isPerpsUserAbstractionReadyForAccount: (state: typeof mockPerpsState) =>
       state.userAbstractionReady,
     perpsStore: store,

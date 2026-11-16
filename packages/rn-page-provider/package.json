@@ -13,21 +13,21 @@
   },
   "dependencies": {
     "@ledgerhq/devices": "8.14.2",
-    "@types/chrome": "^0.0.186",
-    "@types/events": "^3.0.0",
-    "@types/node": "^20.14.8",
-    "@types/w3c-web-hid": "^1.0.3",
-    "eth-rpc-errors": "^4.0.3",
-    "events": "^3.3.0",
-    "lodash": "^4.17.21",
+    "@types/chrome": "0.0.186",
+    "@types/events": "3.0.3",
+    "@types/node": "20.14.9",
+    "@types/w3c-web-hid": "1.0.6",
+    "eth-rpc-errors": "4.0.3",
+    "events": "3.3.0",
+    "lodash": "4.17.21",
     "webextension-polyfill": "0.7.0"
   },
   "devDependencies": {
-    "@rollup/plugin-image": "^2.1.1",
-    "@rollup/plugin-typescript": "^8.3.2",
-    "@types/webextension-polyfill": "^0.10.4",
-    "rollup": "^2.73.0",
-    "typescript": "^4.6.4"
+    "@rollup/plugin-image": "2.1.1",
+    "@rollup/plugin-typescript": "8.5.0",
+    "@types/webextension-polyfill": "0.10.7",
+    "rollup": "2.79.1",
+    "typescript": "4.9.5"
   },
   "installConfig": {
     "hoistingLimits": "workspaces"

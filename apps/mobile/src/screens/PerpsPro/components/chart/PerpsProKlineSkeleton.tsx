@@ -3,9 +3,10 @@ import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
 import { View } from 'react-native';
 
-import { PerpsProSkeletonBlock } from '../loading/PerpsProSkeletonBlock';
+import { PerpsChartLoadingGif } from '@/screens/PerpsShared/components/PerpsChartLoadingGif';
 
-export const PERPS_PRO_KLINE_CHART_HEIGHT = 224;
+// MA band (22) + plot + time axis; the panel adds header and bottom padding.
+export const PERPS_PRO_KLINE_CHART_HEIGHT = 228;
 
 export const PerpsProKlineSkeleton: React.FC<{ overlay?: boolean }> =
   React.memo(({ overlay = false }) => {
@@ -16,21 +17,8 @@ export const PerpsProKlineSkeleton: React.FC<{ overlay?: boolean }> =
         pointerEvents="none"
         style={[styles.container, overlay ? styles.overlay : null]}
         testID="perps-pro-kline-skeleton">
-        <View style={styles.legend}>
-          <PerpsProSkeletonBlock height={8} style={styles.rounded} width={52} />
-          <PerpsProSkeletonBlock height={8} style={styles.rounded} width={52} />
-          <PerpsProSkeletonBlock height={8} style={styles.rounded} width={52} />
-        </View>
-        <View style={styles.chart}>
-          {[40, 70, 52, 82, 62, 96, 72, 54, 78, 46].map((height, index) => (
-            <PerpsProSkeletonBlock
-              key={`${height}:${index}`}
-              height={height}
-              style={styles.candle}
-              width={6}
-            />
-          ))}
-        </View>
+        {/* The shared loading GIF is the only loading indicator. */}
+        <PerpsChartLoadingGif />
       </View>
     );
   });
@@ -39,10 +27,10 @@ PerpsProKlineSkeleton.displayName = 'PerpsProKlineSkeleton';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
+    alignItems: 'center',
     backgroundColor: colors2024['neutral-bg-1'],
     height: PERPS_PRO_KLINE_CHART_HEIGHT,
-    paddingHorizontal: 16,
-    paddingTop: 8,
+    justifyContent: 'center',
     width: '100%',
   },
   overlay: {
@@ -50,24 +38,5 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     position: 'absolute',
     top: 0,
     zIndex: 2,
-  },
-  legend: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  rounded: {
-    borderRadius: 4,
-  },
-  chart: {
-    alignItems: 'flex-end',
-    flex: 1,
-    flexDirection: 'row',
-    gap: 12,
-    justifyContent: 'space-around',
-    paddingBottom: 18,
-    paddingHorizontal: 8,
-  },
-  candle: {
-    borderRadius: 2,
   },
 }));

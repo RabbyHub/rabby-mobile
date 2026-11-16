@@ -1,12 +1,15 @@
 import { useTheme2024 } from '@/hooks/theme';
-import {
-  getPerpsProFontStyle,
-  PERPS_PRO_FONT_FAMILY,
-} from '@/screens/PerpsPro/components/common/perpsProVisual';
+import { getPerpsProFontStyle } from '@/screens/PerpsPro/components/common/perpsProVisual';
 import {
   getPerpsProTabIndicatorFrame,
   type PerpsProTabIndicatorLayout,
 } from '@/screens/PerpsPro/components/common/PerpsProTabIndicator';
+import {
+  getPerpsProTabDividerColor,
+  getPerpsProTabIndicatorStyle,
+  getPerpsProTabTextStyle,
+  PERPS_PRO_TAB_TOKENS,
+} from '@/screens/PerpsPro/components/common/perpsProTabVisual';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { useMemo, useState } from 'react';
 import {
@@ -42,10 +45,18 @@ const TABS: PerpsProHistoryTab[] = [
   'transaction',
   'funding',
 ];
-const TAB_HORIZONTAL_PADDING = 16;
-const TAB_INDICATOR_HEIGHT = 30;
-const TAB_INDICATOR_RADIUS = 8;
-const TAB_INDICATOR_TOP = 1;
+// Figma 导航 Tab instance 86313:291968: 38pt strip, 8pt top inset, 14pt gaps.
+const TAB_HORIZONTAL_PADDING = 20;
+const TAB_GAP = 14;
+const TAB_STRIP_HEIGHT = 38;
+const TAB_PADDING_TOP = 8;
+const TAB_INDICATOR_HEIGHT = PERPS_PRO_TAB_TOKENS.indicatorHeight;
+const TAB_INDICATOR_RADIUS = TAB_INDICATOR_HEIGHT / 2;
+const TAB_INDICATOR_TOP =
+  TAB_STRIP_HEIGHT -
+  PERPS_PRO_TAB_TOKENS.indicatorBottom -
+  TAB_INDICATOR_HEIGHT;
+const TAB_INDICATOR_CAP = PERPS_PRO_TAB_TOKENS.indicatorCapInset;
 const STRIP_MOMENTUM_VELOCITY_EPSILON = 0.01;
 const STRIP_MOMENTUM_OFFSET_EPSILON = 0.5;
 type PerpsProHistoryTabFrames = Partial<
@@ -236,8 +247,10 @@ export const getPerpsProHistoryIndicatorPath = ({
   if (frame.width <= 0) {
     return '';
   }
-  const left = TAB_HORIZONTAL_PADDING + frame.x - stripOffset;
-  const right = left + frame.width;
+  // Round caps extend beyond each text edge, as in the Figma stroke.
+  const left =
+    TAB_HORIZONTAL_PADDING + frame.x - TAB_INDICATOR_CAP - stripOffset;
+  const right = left + frame.width + TAB_INDICATOR_CAP * 2;
   const top = TAB_INDICATOR_TOP;
   const bottom = top + TAB_INDICATOR_HEIGHT;
   const radius = Math.min(
@@ -470,6 +483,7 @@ export const PerpsProHistoryTabs: React.FC<{
 
   return (
     <View style={styles.tabViewport}>
+      <View pointerEvents="none" style={styles.divider} />
       <Svg
         accessibilityElementsHidden
         importantForAccessibility="no-hide-descendants"
@@ -518,7 +532,7 @@ export const PerpsProHistoryTabs: React.FC<{
                   />
                 ) : null}
                 <PerpsProHistoryTabLabel
-                  activeColor={colors2024['neutral-contrast']}
+                  activeColor={colors2024['neutral-title-1']}
                   inactiveColor={colors2024['neutral-secondary']}
                   index={index}
                   label={t(`page.perps.pro.history.tabs.${tab}`)}
@@ -536,9 +550,9 @@ export const PerpsProHistoryTabs: React.FC<{
 
 PerpsProHistoryTabs.displayName = 'PerpsProHistoryTabs';
 
-const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
+const getStyle = createGetStyles2024(({ colors2024 }) => ({
   tabViewport: {
-    height: 32,
+    height: TAB_STRIP_HEIGHT,
     position: 'relative' as const,
   },
   scroll: {
@@ -548,44 +562,37 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     ...StyleSheet.absoluteFillObject,
     zIndex: 0,
   },
+  divider: {
+    backgroundColor: getPerpsProTabDividerColor(colors2024),
+    bottom: 0,
+    height: 1,
+    left: 0,
+    position: 'absolute',
+    right: 0,
+  },
   content: {
     minWidth: '100%',
     paddingHorizontal: TAB_HORIZONTAL_PADDING,
   },
   tabs: {
-    alignItems: 'center',
+    alignItems: 'flex-start',
     flexDirection: 'row',
-    height: 32,
+    gap: TAB_GAP,
+    height: TAB_STRIP_HEIGHT,
     position: 'relative',
   },
   tab: {
     alignItems: 'center',
-    height: 32,
-    justifyContent: 'center',
-    paddingHorizontal: 12,
+    height: TAB_STRIP_HEIGHT,
+    paddingTop: TAB_PADDING_TOP,
     zIndex: 1,
   },
-  text: {
-    color: colors2024['neutral-secondary'],
-    fontFamily: PERPS_PRO_FONT_FAMILY,
-    fontSize: 14,
-    fontWeight: '500',
-    lineHeight: 18,
-  },
-  indicator: {
-    backgroundColor: isLight
-      ? '#131416'
-      : colors2024['neutral-InvertHighlight'],
-  },
+  text: getPerpsProTabTextStyle(colors2024),
+  indicator: getPerpsProTabIndicatorStyle(),
   fallbackIndicator: {
-    backgroundColor: isLight
-      ? '#131416'
-      : colors2024['neutral-InvertHighlight'],
-    borderRadius: 8,
-    bottom: 1,
-    left: 0,
+    ...getPerpsProTabIndicatorStyle(),
+    left: -TAB_INDICATOR_CAP,
     position: 'absolute',
-    right: 0,
-    top: 1,
+    right: -TAB_INDICATOR_CAP,
   },
 }));

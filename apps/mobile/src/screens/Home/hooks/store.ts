@@ -1,6 +1,6 @@
 import BigNumber from 'bignumber.js';
 import { AbstractPortfolioToken, DisplayNftItem } from '../types';
-import nftListStore, { combinedNfts, getAssetsMapDirectly } from '@/store/nfts';
+import nftListStore, { combinedNfts } from '@/store/nfts';
 
 export type CombineNFTItem = DisplayNftItem & {
   address?: string;
@@ -42,15 +42,6 @@ export function updateAssetListByAddress(
     }
   }
 }
-
-export const useAssetsMap = () => {
-  const nftsMap = nftListStore(s => s.nftsMap);
-
-  return {
-    nftsMap,
-    getAssetsMapDirectly,
-  };
-};
 
 export const computeAssetsApis = {
   memoNfts: (caredAddresses: string[], nftsMap?: AssetsMapState['nftsMap']) => {

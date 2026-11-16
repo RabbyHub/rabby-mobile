@@ -11,10 +11,15 @@ import {
 // selection still needs native validation; the RN preset provides Platform.
 describe('rounded font styles', () => {
   const weights = [
+    ['100', 'Thin', '100'],
+    ['200', 'Ultralight', '200'],
+    ['300', 'Light', '300'],
     ['400', 'Regular', '400'],
     ['500', 'Medium', '500'],
+    ['600', 'Semibold', '600'],
     ['700', 'Bold', '700'],
-    ['900', 'Heavy', '800'],
+    ['800', 'Heavy', '800'],
+    ['900', 'Black', '900'],
   ] as const;
 
   it.each(weights)(
@@ -38,22 +43,11 @@ describe('rounded font styles', () => {
   );
 
   it.each(['ios', 'android'] as const)(
-    'defaults to regular and preserves existing business weight groups on %s',
+    'defaults to regular for absent or normal weights on %s',
     platform => {
-      for (const weight of [
-        undefined,
-        'normal',
-        '100',
-        '200',
-        '300',
-      ] as const) {
+      for (const weight of [undefined, 'normal', 'regular'] as const) {
         expect(getRoundedFontStyle(weight, platform)).toEqual(
           getRoundedFontStyle('400', platform),
-        );
-      }
-      for (const weight of ['bold', '600', '800'] as const) {
-        expect(getRoundedFontStyle(weight, platform)).toEqual(
-          getRoundedFontStyle('700', platform),
         );
       }
     },
@@ -65,8 +59,8 @@ describe('rounded font styles', () => {
       finalFontWeight: 900,
     });
     expect(getFontWeightType('800')).toMatchObject({
-      supertype: 700,
-      finalFontWeight: 700,
+      supertype: 800,
+      finalFontWeight: 800,
     });
   });
 
@@ -76,7 +70,7 @@ describe('rounded font styles', () => {
       regular: getRoundedFontStyle('400', platform),
       medium: getRoundedFontStyle('500', platform),
       bold: getRoundedFontStyle('700', platform),
-      heavy: getRoundedFontStyle('900', platform),
+      heavy: getRoundedFontStyle('800', platform),
     });
     expect(FontNames.sf_pro).toBe(platform === 'ios' ? 'System' : 'Roboto');
   });
@@ -88,29 +82,36 @@ describe('rounded font styles', () => {
     style.fontWeight = '400';
     expect(getRoundedFontStyle('900', 'ios')).toEqual({
       fontFamily: 'ui-rounded',
-      fontWeight: '800',
+      fontWeight: '900',
     });
     expect(RoundedFontStyles.heavy).toEqual(original);
   });
 });
 
 describe('single-weight font cleanup', () => {
-  it.each(['Regular', 'Medium', 'Bold', 'Heavy'])(
-    'removes redundant weight only from the Android %s face',
-    face => {
-      const input = {
-        fontFamily: `SF-Pro-Rounded-${face}`,
-        fontWeight: '900' as const,
-        fontSize: 20,
-        color: '#123456',
-      };
-      expect(cleanSpecialSoloWeightFont(input)).toEqual({
-        ...input,
-        fontWeight: undefined,
-      });
-      expect(input.fontWeight).toBe('900');
-    },
-  );
+  it.each([
+    'Thin',
+    'Ultralight',
+    'Light',
+    'Regular',
+    'Medium',
+    'Semibold',
+    'Bold',
+    'Heavy',
+    'Black',
+  ])('removes redundant weight only from the Android %s face', face => {
+    const input = {
+      fontFamily: `SF-Pro-Rounded-${face}`,
+      fontWeight: '900' as const,
+      fontSize: 20,
+      color: '#123456',
+    };
+    expect(cleanSpecialSoloWeightFont(input)).toEqual({
+      ...input,
+      fontWeight: undefined,
+    });
+    expect(input.fontWeight).toBe('900');
+  });
 
   it.each(['ui-rounded', 'System', 'Roboto', 'monospace'])(
     'retains explicit weights and object identity for %s',

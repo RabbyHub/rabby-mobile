@@ -127,7 +127,7 @@ export const RightMore: React.FC<{
       }>
       <CustomTouchableOpacity
         as="RNGHTouchableOpacity"
-        style={styles.trigger}
+        style={[styles.trigger]}
         accessibilityRole="button"
         accessibilityLabel={t('page.tokenDetail.removed.more')}
         hitSlop={10}
@@ -140,9 +140,13 @@ export const RightMore: React.FC<{
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   trigger: {
-    width: 24,
-    height: 24,
-    alignItems: 'center',
+    // 44x48 tap target: the icon stays on the row's right edge (alignItems
+    // flex-end) while the box grows leftwards into the free space. A fixed
+    // width is required: the `Tip` wrapper sizes to this child, so a percentage
+    // would resolve against the icon instead of the header slot.
+    width: 44,
+    height: '100%',
+    alignItems: 'flex-end',
     justifyContent: 'center',
   },
   popup: {

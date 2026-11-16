@@ -19,19 +19,19 @@
   "dependencies": {
     "@rabby-wallet/base-utils": "workspace:^",
     "@rozenite/plugin-bridge": "1.6.0",
-    "@tailwindcss/vite": "^4.2.2",
-    "antd": "^6.3.5",
-    "tailwindcss": "^4.2.2"
+    "@tailwindcss/vite": "4.2.2",
+    "antd": "6.3.5",
+    "tailwindcss": "4.2.2"
   },
   "devDependencies": {
     "@rozenite/vite-plugin": "patch:@rozenite/vite-plugin@npm%3A1.6.0#~/.yarn/patches/@rozenite-vite-plugin-npm-1.6.0-f6acc5490f.patch",
-    "@types/react": "^19.1.4",
-    "@types/react-dom": "^19.1.5",
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
     "react": "19.1.4",
     "react-dom": "19.1.4",
     "react-native": "0.81.6",
-    "react-native-web": "^0.21.2",
+    "react-native-web": "0.21.2",
     "typescript": "5.7.3",
-    "vite": "^7.3.1"
+    "vite": "7.3.1"
   }
 }

@@ -174,16 +174,16 @@ describe('PerpsProTradeSkeleton', () => {
       backgroundColor: 'transparent',
       borderRadius: 0,
       borderWidth: 0,
-      height: 13,
-      width: 13,
+      height: 12,
+      width: 12,
     });
     expect(
       screen.getByTestId('perps-pro-trade-amount-slider-thumb').props,
     ).toMatchObject({
       fill: 'neutral-bg-1',
       stroke: 'neutral-title-1',
-      height: 13,
-      width: 13,
+      height: 12,
+      width: 12,
     });
     expect(
       StyleSheet.flatten(
@@ -194,9 +194,9 @@ describe('PerpsProTradeSkeleton', () => {
       backgroundColor: 'neutral-bg-1',
       borderColor: 'neutral-title-1',
       opacity: 1,
-      borderWidth: 1,
-      height: 7,
-      width: 7,
+      borderWidth: 2,
+      height: 10,
+      width: 10,
     });
     expect(screen.getByLabelText('Amount(USDC)')).toBeTruthy();
     expect(screen.queryByTestId('perps-pro-trade-amount-minus')).toBeNull();

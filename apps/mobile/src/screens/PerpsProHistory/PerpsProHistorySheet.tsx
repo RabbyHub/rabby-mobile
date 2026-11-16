@@ -254,8 +254,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flex: 1,
   },
   titleDragRegion: {
-    height: 56,
-    paddingBottom: 20,
+    // Figma 86313:138622: tabs start 12pt below the title.
+    height: 48,
+    paddingBottom: 12,
     paddingHorizontal: 16,
     paddingTop: 12,
   },

@@ -1,4 +1,3 @@
-import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
 import RcIconEdit from '@/assets2024/icons/perps/PerpsProEdit.svg';
 import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
@@ -24,6 +23,10 @@ import {
   getPerpsProTintedTagContainerStyle,
   getPerpsProTintedTagTextStyle,
 } from '../common/perpsProSemanticTagStyles';
+import {
+  getPerpsProInfoCardStyle,
+  getPerpsProListRowStyles,
+} from '../common/perpsProListVisual';
 import { PerpsProMarketPair } from '../common/PerpsProMarketPair';
 
 const EDITABLE_VALUE_HIT_SLOP = {
@@ -293,12 +296,13 @@ export const PerpsProOpenOrderCard: React.FC<{
 
 PerpsProOpenOrderCard.displayName = 'PerpsProOpenOrderCard';
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+// Figma 86609:328079: 12pt-inset cards, 12pt apart, 30pt detail rows.
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   row: {
+    ...getPerpsProInfoCardStyle(colors2024, isLight),
     gap: 12,
-    marginLeft: 16,
-    marginRight: 14,
-    paddingBottom: 24,
+    marginBottom: 12,
+    marginHorizontal: 12,
   },
   header: {
     minHeight: 26,
@@ -341,7 +345,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   buyText: getPerpsProTintedTagTextStyle(colors2024, 'positive'),
   sellText: getPerpsProTintedTagTextStyle(colors2024, 'negative'),
   time: {
-    ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 12,
@@ -361,7 +364,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: 32,
   },
   progressText: {
-    ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro',
     fontSize: 10,
@@ -390,6 +392,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     height: 26,
     justifyContent: 'center',
     paddingHorizontal: 8,
+    paddingVertical: 4,
   },
   cancelButtonPressed: {
     opacity: 0.6,
@@ -397,34 +400,16 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   cancelText: {
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '700',
     lineHeight: 18,
   },
-  details: {
-    gap: 8,
-  },
-  detailRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    minHeight: 16,
-  },
-  label: {
-    fontWeight: '500',
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 12,
-    lineHeight: 16,
-  },
+  details: {},
+  detailRow: getPerpsProListRowStyles(colors2024).listRow,
+  label: getPerpsProListRowStyles(colors2024).listLabel,
   detailValue: {
-    ...PERPS_PRO_NUMBER_STYLE,
-    color: colors2024['neutral-title-1'],
+    ...getPerpsProListRowStyles(colors2024).listValue,
     flexShrink: 1,
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 12,
-    fontWeight: '500',
-    lineHeight: 16,
     marginLeft: 12,
     textAlign: 'right',
   },

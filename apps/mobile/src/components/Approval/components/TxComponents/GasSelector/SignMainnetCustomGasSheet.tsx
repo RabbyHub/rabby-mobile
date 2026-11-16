@@ -631,7 +631,9 @@ export const SignMainnetCustomGasSheet = ({
                   }>
                   <BottomSheetTextInput
                     style={styles.feeInput}
-                    value={maxPriorityFee?.toString()}
+                    // Stay controlled when cleared: with an undefined value
+                    // native keeps the last text, and the next key appends to it.
+                    value={maxPriorityFee ?? ''}
                     onChange={e =>
                       handleMaxPriorityFeeChange(e.nativeEvent.text)
                     }

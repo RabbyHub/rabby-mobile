@@ -84,7 +84,10 @@ const DestinationChainInner = ({
   const ChainItem = React.useCallback(
     ({ item }: { item: RechargeChainItem }) => {
       const disabled = !item.withdraw_limit;
-      const chainInfo = findChainByServerID(item.chain_id)!;
+      const chainInfo = findChainByServerID(item.chain_id);
+      if (!chainInfo) {
+        return null;
+      }
       return (
         <TouchableOpacity
           disabled={disabled}
@@ -184,6 +187,13 @@ export const DestinationChain = ({
 
   const [visible, setVisible] = React.useState(false);
 
+  // Server may still return chains that are offline locally; drop them.
+  const supportedList = useMemo(
+    () => list?.filter(item => findChainByServerID(item.chain_id)),
+    [list],
+  );
+  const chainInfo = chain ? findChainByServerID(chain.chain_id) : null;
+
   const handleSelect = React.useCallback(
     (selectedChain: RechargeChainItem) => {
       onChainSelect(selectedChain);
@@ -198,15 +208,10 @@ export const DestinationChain = ({
         style={styles.fullWidth}
         title=""
         content={
-          chain ? (
+          chainInfo ? (
             <View style={styles.chainBox}>
-              <AssetAvatar
-                logo={findChainByServerID(chain.chain_id)!.logo}
-                size={24}
-              />
-              <Text style={styles.text}>
-                {findChainByServerID(chain.chain_id)!.name}
-              </Text>
+              <AssetAvatar logo={chainInfo.logo} size={24} />
+              <Text style={styles.text}>{chainInfo.name}</Text>
             </View>
           ) : (
             <Text style={styles.text}>
@@ -215,12 +220,12 @@ export const DestinationChain = ({
           )
         }
         onPress={() => {
-          if (list?.length) {
+          if (supportedList?.length) {
             setVisible(true);
           }
         }}
       />
-      {list && (
+      {supportedList && (
         <BottomSheetWrapper
           visible={visible}
           onClose={() => {
@@ -230,7 +235,7 @@ export const DestinationChain = ({
             linearGradientType: 'linear',
             colors: colors2024,
           })}>
-          <DestinationChainInner onSelect={handleSelect} list={list} />
+          <DestinationChainInner onSelect={handleSelect} list={supportedList} />
         </BottomSheetWrapper>
       )}
     </>

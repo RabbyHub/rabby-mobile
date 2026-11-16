@@ -6,7 +6,6 @@ import { loadJavaScriptBeforeContentLoadedOnBoot } from '@/hooks/useBootstrap';
 import { autoGoogleSignIfPreviousSignedOnBoot } from '@/hooks/cloudStorage';
 import { startSyncDefaultRPCs } from '@/hooks/defaultRPCs';
 import { rateModalStartSyncNetworth } from '@/components/RateModal/hooks';
-import { screenshotModalStartSyncNetworth } from '@/components/Screenshot/hooks';
 import { trimNoLongerSupportsOnUnlock } from '@/components2024/NoLongerSupports/useNoLongerSupports';
 
 export function startSetupRuntimeRemoteWarmups() {
@@ -20,6 +19,5 @@ export function startSetupRuntimeRemoteWarmups() {
   autoGoogleSignIfPreviousSignedOnBoot();
   startSyncDefaultRPCs();
   rateModalStartSyncNetworth();
-  screenshotModalStartSyncNetworth();
   trimNoLongerSupportsOnUnlock();
 }

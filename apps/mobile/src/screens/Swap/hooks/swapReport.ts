@@ -66,7 +66,8 @@ const reportSwapSdkVerificationUnsafe = ({
     swap_chain: chain,
     swap_verify_category: category,
     swap_verify_reasons: primaryReasons,
-    swap_token_pair: `${payTokenId}/${receiveTokenId}`,
+    payTokenId,
+    receiveTokenId,
   };
   if (result) {
     tags.swap_failed_checks = sdkCheckKeys

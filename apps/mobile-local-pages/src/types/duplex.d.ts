@@ -107,7 +107,11 @@ type DuplexDefs = {
             type: 'CLEAR_CROSSHAIR';
           }
         | {
-            type: 'RESET_PERPS_PRO_PRICE_SCALE';
+            type: 'RESET_PERPS_PRO_VIEWPORT';
+          }
+        | {
+            type: 'SET_PERPS_PRO_OVERLAYS';
+            overlays: import('../pages/tradingview-candle-chart/types').PerpsProOverlays;
           }
         | {
             type: 'COMPLETE_OLDER_CANDLES_REQUEST';
@@ -192,10 +196,10 @@ type DuplexDefs = {
     };
     receive: never;
   };
-  TradingView_PerpsProPriceScaleAutoScaleChanged: {
+  TradingView_PerpsProViewportChanged: {
     post: {
-      type: 'PERPS_PRO_PRICE_SCALE_AUTO_SCALE_CHANGED';
-      autoScale: boolean;
+      type: 'PERPS_PRO_VIEWPORT_CHANGED';
+      resetVisible: boolean;
     };
     receive: never;
   };

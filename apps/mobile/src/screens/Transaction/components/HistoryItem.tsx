@@ -4,7 +4,7 @@ import { ProjectItem } from '@rabby-wallet/rabby-api/dist/types';
 import type { HistoryDisplayItem } from '@/types/history';
 import { StyleProp, TouchableOpacity, View, ViewStyle } from 'react-native';
 import { TxChange } from './TokenChange';
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { getAliasName } from '@/core/apis/contact';
@@ -28,7 +28,7 @@ type HistoryItemProps = {
   style?: StyleProp<ViewStyle>;
   data: HistoryDisplayItem;
   isForMultipleAddress?: boolean;
-  getCexInfoByAddress?: (address: string) => ProjectItem;
+  getCexInfoByAddress?: (address: string) => ProjectItem | undefined;
   onPress?: (data: HistoryDisplayItem) => void;
   account?: Account | null;
 };

@@ -496,6 +496,7 @@ describe('PerpsProPositionTpSlSheet', () => {
         coveredByReview: false,
         defaultTab: 'partial' as const,
         market,
+        onCancelAllOrders: jest.fn(),
         onCancelOrder: jest.fn(),
         onClose: jest.fn(),
         onReview: jest.fn(),
@@ -545,7 +546,7 @@ describe('PerpsProPositionTpSlSheet', () => {
         StyleSheet.flatten(
           screen.getByTestId('perps-pro-position-tpsl-tabs').props.style,
         ),
-      ).toMatchObject({ flexDirection: 'row', paddingLeft: 8 });
+      ).toMatchObject({ flexDirection: 'row' });
       fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-add'));
       expectShell(797);
       fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-back'));
@@ -595,6 +596,7 @@ describe('PerpsProPositionTpSlSheet', () => {
         coveredByReview={false}
         defaultTab="partial"
         market={market}
+        onCancelAllOrders={jest.fn()}
         onCancelOrder={jest.fn()}
         onClose={jest.fn()}
         onReview={jest.fn()}
@@ -656,6 +658,7 @@ describe('PerpsProPositionTpSlSheet', () => {
         coveredByReview={false}
         defaultTab="partial"
         market={market}
+        onCancelAllOrders={jest.fn()}
         onCancelOrder={jest.fn()}
         onClose={jest.fn()}
         onReview={jest.fn()}
@@ -670,7 +673,7 @@ describe('PerpsProPositionTpSlSheet', () => {
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-position-tpsl-tabs').props.style,
       ),
-    ).toMatchObject({ flexDirection: 'row', paddingLeft: 8 });
+    ).toMatchObject({ flexDirection: 'row' });
     expect(
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-position-tpsl-add').props.style,
@@ -679,7 +682,7 @@ describe('PerpsProPositionTpSlSheet', () => {
       borderRadius: 6,
       flexDirection: 'row',
       gap: 4,
-      height: 30,
+      height: 26,
       paddingHorizontal: 6,
     });
     expect(
@@ -948,6 +951,7 @@ describe('PerpsProPositionTpSlSheet', () => {
         coveredByReview={false}
         defaultTab="partial"
         market={market}
+        onCancelAllOrders={jest.fn()}
         onCancelOrder={jest.fn()}
         onClose={jest.fn()}
         onReview={jest.fn()}
@@ -992,7 +996,6 @@ describe('PerpsProPositionTpSlSheet', () => {
     });
     expect(StyleSheet.flatten(value.props.style).left).toBeUndefined();
     expect(StyleSheet.flatten(value.props.style)).toMatchObject({
-      fontVariant: ['tabular-nums'],
       flexShrink: 0,
       position: 'absolute',
       right: 0,
@@ -1010,6 +1013,7 @@ describe('PerpsProPositionTpSlSheet', () => {
         coveredByReview={false}
         defaultTab="partial"
         market={market}
+        onCancelAllOrders={jest.fn()}
         onCancelOrder={jest.fn()}
         onClose={jest.fn()}
         onReview={jest.fn()}
@@ -1033,6 +1037,7 @@ describe('PerpsProPositionTpSlSheet', () => {
         coveredByReview={false}
         defaultTab="partial"
         market={market}
+        onCancelAllOrders={jest.fn()}
         onCancelOrder={jest.fn()}
         onClose={jest.fn()}
         onReview={jest.fn()}
@@ -1080,6 +1085,7 @@ describe('PerpsProPositionTpSlSheet', () => {
       confirmedCancelledOids: [],
       defaultTab: 'position' as const,
       market,
+      onCancelAllOrders: jest.fn(),
       onCancelOrder: jest.fn(),
       onClose: jest.fn(),
       onReview: jest.fn(),
@@ -1151,6 +1157,7 @@ describe('PerpsProPositionTpSlSheet', () => {
       coveredByReview: false,
       defaultTab: 'position' as const,
       market,
+      onCancelAllOrders: jest.fn(),
       onCancelOrder: jest.fn(),
       onClose: jest.fn(),
       onReview: jest.fn(),
@@ -1187,6 +1194,7 @@ describe('PerpsProPositionTpSlSheet', () => {
         coveredByReview={false}
         defaultTab="partial"
         market={market}
+        onCancelAllOrders={jest.fn()}
         onCancelOrder={jest.fn()}
         onClose={jest.fn()}
         onReview={jest.fn()}
@@ -1207,6 +1215,7 @@ describe('PerpsProPositionTpSlSheet', () => {
         coveredByReview={false}
         defaultTab="partial"
         market={market}
+        onCancelAllOrders={jest.fn()}
         onCancelOrder={jest.fn()}
         onClose={jest.fn()}
         onReview={jest.fn()}
@@ -1234,6 +1243,7 @@ describe('PerpsProPositionTpSlSheet', () => {
         coveredByReview={false}
         defaultTab="partial"
         market={market}
+        onCancelAllOrders={jest.fn()}
         onCancelOrder={jest.fn()}
         onClose={jest.fn()}
         onReview={jest.fn()}
@@ -1254,6 +1264,7 @@ describe('PerpsProPositionTpSlSheet', () => {
         coveredByReview={false}
         defaultTab="partial"
         market={market}
+        onCancelAllOrders={jest.fn()}
         onCancelOrder={jest.fn()}
         onClose={jest.fn()}
         onReview={jest.fn()}
@@ -1279,6 +1290,7 @@ describe('PerpsProPositionTpSlSheet', () => {
         coveredByReview={false}
         defaultTab="partial"
         market={market}
+        onCancelAllOrders={jest.fn()}
         onCancelOrder={jest.fn()}
         onClose={jest.fn()}
         onReview={jest.fn()}
@@ -1302,7 +1314,7 @@ describe('PerpsProPositionTpSlSheet', () => {
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-position-tpsl-tabs').props.style,
       ),
-    ).toMatchObject({ flexDirection: 'row', paddingLeft: 8 });
+    ).toMatchObject({ flexDirection: 'row' });
   });
 
   it('switches from the list to the inline form after the final confirmed cancellation', () => {
@@ -1314,6 +1326,7 @@ describe('PerpsProPositionTpSlSheet', () => {
         coveredByReview={false}
         defaultTab="partial"
         market={market}
+        onCancelAllOrders={jest.fn()}
         onCancelOrder={jest.fn()}
         onClose={jest.fn()}
         onReview={jest.fn()}
@@ -1331,6 +1344,7 @@ describe('PerpsProPositionTpSlSheet', () => {
         coveredByReview={false}
         defaultTab="partial"
         market={market}
+        onCancelAllOrders={jest.fn()}
         onCancelOrder={jest.fn()}
         onClose={jest.fn()}
         onReview={jest.fn()}
@@ -1352,12 +1366,56 @@ describe('PerpsProPositionTpSlSheet', () => {
     coveredByReview: false,
     defaultTab: 'position' as const,
     market,
+    onCancelAllOrders: jest.fn(),
     onCancelOrder: jest.fn(),
     onClose: jest.fn(),
     onReview: jest.fn(),
     pending: false,
     position: { ...position, tpslOrders },
     visible: true,
+  });
+
+  it('offers Cancel All only for partial orders and reports their remaining count while canceling', () => {
+    const partial = [
+      order(1, '110', '0.5', 'partial'),
+      order(2, '120', '0.5', 'partial'),
+    ];
+    const full = order(3, '130', '0', 'position');
+    const props = {
+      ...makeSheetProps([...partial, full]),
+      defaultTab: 'partial' as const,
+    };
+    const label = 'page.perps.pro.openOrders.cancelAll';
+    const view = render(<PerpsProPositionTpSlSheet {...props} />);
+    fireEvent.press(screen.getByLabelText(label));
+    expect(props.onCancelAllOrders).toHaveBeenCalledWith(partial);
+    view.rerender(
+      <PerpsProPositionTpSlSheet
+        {...props}
+        cancelAllOids={[1, 2]}
+        cancelingOids={[1, 2]}
+        pending
+      />,
+    );
+    expect(
+      screen.getByLabelText(`${label} (2)`).props.accessibilityState,
+    ).toMatchObject({ busy: true, disabled: true });
+    view.rerender(
+      <PerpsProPositionTpSlSheet
+        {...props}
+        position={{ ...props.position, tpslOrders: [partial[1], full] }}
+        cancelAllOids={[1, 2]}
+        cancelingOids={[1, 2]}
+        pending
+      />,
+    );
+    expect(screen.getByLabelText(`${label} (1)`)).toBeTruthy();
+    view.rerender(<PerpsProPositionTpSlSheet {...props} />);
+    fireEvent.press(screen.getByText('Position TP/SL'));
+    expect(screen.queryByLabelText(label)).toBeNull();
+    fireEvent.press(screen.getByText('TP/SL'));
+    fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-add'));
+    expect(screen.queryByLabelText(label)).toBeNull();
   });
 
   it.each(['takeProfit', 'stopLoss'] as const)(

@@ -2,6 +2,7 @@ import { apisPerps } from '@/core/apis';
 import {
   fetchAllDexsClearinghouseStateHttp,
   fetchClearinghouseStateHttp,
+  ensureCurrentPerpPermission,
   fetchPositionOpenOrdersHttp,
   getDexByCoin,
   getPerpsAccountRuntimeContext,
@@ -421,6 +422,11 @@ export const usePerpsPosition = () => {
       return runPerpsAction(
         { fallback: undefined, label: 'open position', context: params },
         async () => {
+          const account = perpsStore.getState().currentPerpsAccount;
+          if (!account || !(await ensureCurrentPerpPermission(account))) {
+            showToast(t('page.perps.regionNotSupport'), 'error');
+            return;
+          }
           const sdk = apisPerps.getPerpsSDK();
           const {
             coin,

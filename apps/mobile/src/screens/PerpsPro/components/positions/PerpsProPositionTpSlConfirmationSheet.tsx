@@ -2,20 +2,19 @@ import { formatPositionTpSlSignedValue } from '../../utils/positionTpSlFormattin
 import {
   getPerpsProDialogCheckboxStyles,
   getPerpsProDialogStyles,
+  getPerpsProConfirmationFooterStyle,
   resolvePerpsProDialogCardBackground,
 } from '../common/perpsProDialogVisual';
+import { getPerpsProListRowStyles } from '../common/perpsProListVisual';
+import { PerpsProSectionTitle } from '../common/PerpsProSectionTitle';
 import { PerpsProDialogBackdrop } from '../common/PerpsProDialogBackdrop';
-import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
 import { PerpsProCheckboxIcon } from '../common/PerpsProCheckboxIcon';
 import AutoLockView from '@/components/AutoLockView';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { Text } from '@/components/Typography';
 import { Button } from '@/components2024/Button';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
-import {
-  BOTTOM_BUTTON_SINGLE_HEIGHT,
-  getBottomButtonBottomOffset,
-} from '@/constant/layout';
+import { BOTTOM_BUTTON_SINGLE_HEIGHT } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useRegisterBlockingModal } from '@/utils/modalGate';
@@ -214,18 +213,15 @@ export const PerpsProPositionTpSlConfirmationSheet: React.FC<{
                       .toString();
               return (
                 <View key={leg.kind} style={styles.leg}>
-                  <Text
-                    style={
-                      leg.kind === 'takeProfit'
-                        ? styles.takeProfit
-                        : styles.stopLoss
-                    }>
+                  <PerpsProSectionTitle
+                    style={styles.legTitle}
+                    tone={leg.kind === 'takeProfit' ? 'positive' : 'negative'}>
                     {t(
                       leg.kind === 'takeProfit'
                         ? 'page.perps.pro.positionTpsl.takeProfit'
                         : 'page.perps.pro.positionTpsl.stopLoss',
                     )}
-                  </Text>
+                  </PerpsProSectionTitle>
                   <DetailRow
                     label={t('page.perps.pro.positionTpsl.triggerPrice')}
                     value={`Mark ${
@@ -351,17 +347,19 @@ const getStyle = createGetStyles2024(
       safeAreaInsets.bottom,
       isLight,
     );
+    const rows = getPerpsProListRowStyles(colors2024);
     return {
       ...dialog,
-      container: { paddingHorizontal: 16, paddingTop: 8 },
+      // Figma 86609:333458: 12pt content inset and 12pt card insets.
+      container: { paddingHorizontal: 12, paddingTop: 8 },
       summary: {
         backgroundColor: resolvePerpsProDialogCardBackground(
           colors2024,
           isLight,
         ),
         borderRadius: 12,
-        padding: 16,
-        gap: 10,
+        paddingHorizontal: 12,
+        paddingVertical: 8,
         marginTop: 24,
       },
       leg: {
@@ -370,67 +368,29 @@ const getStyle = createGetStyles2024(
           isLight,
         ),
         borderRadius: 12,
-        padding: 16,
-        gap: 10,
+        paddingBottom: 8,
+        paddingHorizontal: 12,
+        paddingTop: 12,
         marginTop: 8,
       },
-      takeProfit: {
-        color: colors2024['neutral-title-1'],
-        fontFamily: 'SF Pro Rounded',
-        fontSize: 16,
-        fontWeight: '700',
-        lineHeight: 20,
-      },
-      stopLoss: {
-        color: colors2024['neutral-title-1'],
-        fontFamily: 'SF Pro Rounded',
-        fontSize: 16,
-        fontWeight: '700',
-        lineHeight: 20,
-      },
-      detailRow: {
-        alignItems: 'center',
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-      },
-      detailLabel: {
-        color: colors2024['neutral-secondary'],
-        fontFamily: 'SF Pro Rounded',
-        fontSize: 12,
-        lineHeight: 16,
-      },
+      legTitle: { marginBottom: 10 },
+      detailRow: rows.listRow,
+      detailLabel: rows.listLabel,
       detailValue: {
-        ...PERPS_PRO_NUMBER_STYLE,
-        color: colors2024['neutral-title-1'],
-        fontFamily: 'SF Pro Rounded',
-        fontSize: 12,
-        fontWeight: '500',
-        lineHeight: 16,
+        ...rows.listValue,
         maxWidth: '64%',
         textAlign: 'right',
       },
       positiveValue: {
-        ...PERPS_PRO_NUMBER_STYLE,
+        ...rows.listValue,
         color: colors2024['green-default'],
-        fontFamily: 'SF Pro Rounded',
-        fontSize: 12,
-        fontWeight: '500',
-        lineHeight: 16,
       },
       negativeValue: {
-        ...PERPS_PRO_NUMBER_STYLE,
+        ...rows.listValue,
         color: colors2024['red-default'],
-        fontFamily: 'SF Pro Rounded',
-        fontSize: 12,
-        fontWeight: '500',
-        lineHeight: 16,
       },
       ...getPerpsProDialogCheckboxStyles(colors2024),
-      footer: {
-        paddingHorizontal: 4,
-        paddingBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
-        paddingTop: 24,
-      },
+      footer: getPerpsProConfirmationFooterStyle(safeAreaInsets.bottom),
     };
   },
 );

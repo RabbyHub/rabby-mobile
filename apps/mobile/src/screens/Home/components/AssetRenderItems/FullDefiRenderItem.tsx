@@ -16,10 +16,7 @@ import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { AssetAvatar } from '@/components/AssetAvatar';
 import { ellipsisOverflowedText } from '@/utils/text';
 import { AccountOverview } from '../AccountOverview';
-import {
-  isAave3Portfolio,
-  useProtocolConfig,
-} from '../../utils/protocolConfig';
+import { useProtocolConfig } from '../../utils/protocolConfig';
 import JumpIconCC from '@/assets2024/icons/home/jump-cc.svg';
 import { resetFetchHistoryTxCount } from '../../hooks/history';
 import { setRefreshHistoryId } from '../../SingleHomeRightArea';
@@ -178,15 +175,6 @@ export const FullDefiRenderItem = ({
       }
     }
 
-    const isAave3 = isAave3Portfolio(data?.id);
-    const isLending = data._portfolios.some(
-      item => item.name?.toLowerCase() === 'lending',
-    );
-    // 这个是内置 lending 的withdraw入口，直接跳转到 lending 页面的
-    if (isAave3 && isLending) {
-      result.add('Withdraw');
-    }
-
     for (let i = 0; i < data._portfolios.length; i++) {
       if (result.size >= 3 || !data.chain) {
         break; // 最多只有 3 个标签，发现标签足够就不需要再继续遍历下去了
@@ -339,12 +327,6 @@ export const FullDefiRenderItem = ({
                 config?.[data.id]?.showManage &&
                 config[data.id]?.showManage?.(item, account)
                   ? config[data.id]?.onManage
-                  : undefined
-              }
-              tokenManageAction={
-                config?.[data.id]?.showManage &&
-                config[data.id]?.showManage?.(item, account)
-                  ? config[data.id]?.onTokenManage
                   : undefined
               }
               key={`${item.id}-${account.address}-${item.netWorth}`}

@@ -117,7 +117,12 @@ export default function ChainItem({
         )}
         <View style={styles.contentContainer}>
           <View style={styles.leftBasic}>
-            <Text style={styles.nameText}>{data?.name}</Text>
+            <Text
+              style={styles.nameText}
+              numberOfLines={1}
+              ellipsizeMode="tail">
+              {data?.name}
+            </Text>
             {!!chainBalanceItem?.usd_value && (
               <View style={styles.chainSummary}>
                 <View style={styles.selectChainItemBalance}>
@@ -185,6 +190,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   leftBasic: {
     flexDirection: 'column',
+    flexShrink: 1,
   },
   nameText: {
     fontSize: 16,
@@ -210,7 +216,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro',
   },
-  rightArea: {},
+  rightArea: {
+    flexShrink: 0,
+  },
   disable: {
     opacity: 0.5,
   },

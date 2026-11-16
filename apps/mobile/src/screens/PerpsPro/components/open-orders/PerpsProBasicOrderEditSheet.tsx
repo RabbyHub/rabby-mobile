@@ -59,7 +59,8 @@ import {
 import { PerpsProOpenOrderEditInput } from './PerpsProOpenOrderEditInput';
 
 const MODAL_ID = 'perps-pro-basic-order-edit';
-const SHEET_HEIGHT = 396;
+// Figma 86609:343138: stacked header, 30pt direction row and 56pt fields.
+const SHEET_HEIGHT = 444;
 const CONTENT_HEIGHT = SHEET_HEIGHT - 40;
 const SheetContent = IS_ANDROID ? BottomSheetScrollView : BottomSheetView;
 
@@ -231,47 +232,52 @@ export const PerpsProBasicOrderEditSheet: React.FC<{
               }
             />
             <View style={styles.form}>
-              <PerpsProOpenOrderEditDirection order={editor.order} />
-              <PerpsProOpenOrderEditInput
-                accessibilityLabel={t('page.perps.pro.openOrders.price')}
-                currentValue={`Current ${formatPerpsProPrice(
-                  initialPrice,
-                  editor.market.pxDecimals,
-                )}`}
-                label={t('page.perps.pro.openOrders.price')}
-                maxDecimals={getPerpsProPriceInputMaxDecimals(
-                  editor.market.szDecimals,
-                )}
-                onChangeText={setPrice}
-                priceSzDecimals={editor.market.szDecimals}
-                testID="perps-pro-basic-order-edit-price"
-                unit={editor.market.quoteAsset}
-                value={price}
+              <PerpsProOpenOrderEditDirection
+                order={editor.order}
+                style={styles.directionRow}
               />
-              <View style={styles.amountGroup}>
+              <View style={styles.fields}>
                 <PerpsProOpenOrderEditInput
-                  accessibilityLabel={t('page.perps.pro.openOrders.amount')}
-                  currentValue={`Current ${formatPerpsProDecimal(
-                    currentAmount,
-                    amountDecimals,
+                  accessibilityLabel={t('page.perps.pro.openOrders.price')}
+                  currentValue={`Current ${formatPerpsProPrice(
+                    initialPrice,
+                    editor.market.pxDecimals,
                   )}`}
-                  label={t('page.perps.pro.openOrders.amount')}
-                  maxDecimals={getPerpsProAmountInputDecimals({
-                    amountUnit: editor.amountUnit,
-                    szDecimals: editor.market.szDecimals,
-                  })}
-                  onChangeText={value => {
-                    setAmountTouched(true);
-                    setManualAmount(value);
-                  }}
-                  testID="perps-pro-basic-order-edit-amount"
-                  unit={displayUnit}
-                  value={amount}
+                  label={t('page.perps.pro.openOrders.price')}
+                  maxDecimals={getPerpsProPriceInputMaxDecimals(
+                    editor.market.szDecimals,
+                  )}
+                  onChangeText={setPrice}
+                  priceSzDecimals={editor.market.szDecimals}
+                  testID="perps-pro-basic-order-edit-price"
+                  unit={editor.market.quoteAsset}
+                  value={price}
                 />
-                <Text style={styles.conversion}>
-                  ≈{formatPerpsProDecimal(oppositeAmount, oppositeDecimals)}{' '}
-                  {oppositeUnit}
-                </Text>
+                <View style={styles.amountGroup}>
+                  <PerpsProOpenOrderEditInput
+                    accessibilityLabel={t('page.perps.pro.openOrders.amount')}
+                    currentValue={`Current ${formatPerpsProDecimal(
+                      currentAmount,
+                      amountDecimals,
+                    )}`}
+                    label={t('page.perps.pro.openOrders.amount')}
+                    maxDecimals={getPerpsProAmountInputDecimals({
+                      amountUnit: editor.amountUnit,
+                      szDecimals: editor.market.szDecimals,
+                    })}
+                    onChangeText={value => {
+                      setAmountTouched(true);
+                      setManualAmount(value);
+                    }}
+                    testID="perps-pro-basic-order-edit-amount"
+                    unit={displayUnit}
+                    value={amount}
+                  />
+                  <Text style={styles.conversion}>
+                    ≈{formatPerpsProDecimal(oppositeAmount, oppositeDecimals)}{' '}
+                    {oppositeUnit}
+                  </Text>
+                </View>
               </View>
             </View>
             <View
@@ -313,17 +319,20 @@ const getStyle = createGetStyles2024(
         CONTENT_HEIGHT +
         getBottomButtonBottomOffset(safeAreaInsets.bottom) -
         BOTTOM_BUTTON_BOTTOM_OFFSET,
-      paddingHorizontal: 16,
+      paddingHorizontal: 12,
       paddingTop: 8,
       position: 'relative',
     },
     form: {
       backgroundColor: resolvePerpsProDialogCardBackground(colors2024, isLight),
       borderRadius: 12,
-      padding: 16,
-      gap: 20,
+      gap: 12,
       marginTop: 24,
+      paddingBottom: 12,
+      paddingTop: 8,
     },
+    directionRow: { paddingHorizontal: 12, paddingVertical: 6 },
+    fields: { gap: 20, paddingHorizontal: 12 },
     amountGroup: { gap: 4 },
     conversion: {
       paddingLeft: 12,
@@ -337,7 +346,7 @@ const getStyle = createGetStyles2024(
       left: 20,
       position: 'absolute',
       right: 20,
-      top: 268,
+      top: 316,
     },
   }),
 );

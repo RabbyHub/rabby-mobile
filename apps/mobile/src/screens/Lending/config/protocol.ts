@@ -29,10 +29,6 @@ export const protocolIdToMarketKey = (protocolId?: string) => {
   return keyToMarketKey[protocolId.toLowerCase()];
 };
 
-export const isAave3Portfolio = (project_id?: string) => {
-  return !!protocolIdToMarketKey(project_id);
-};
-
 export const marketKeyToProtocolId = (marketKey?: CustomMarket) => {
   return Object.keys(keyToMarketKey).find(
     key => keyToMarketKey[key] === marketKey,

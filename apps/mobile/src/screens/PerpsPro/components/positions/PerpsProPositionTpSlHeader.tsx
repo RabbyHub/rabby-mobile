@@ -20,6 +20,7 @@ import {
   PERPS_PRO_DIALOG_HEAVY_TEXT_STYLE,
   resolvePerpsProDialogCardBackground,
 } from '../common/perpsProDialogVisual';
+import { getPerpsProListRowStyles } from '../common/perpsProListVisual';
 
 export const PerpsProPositionTpSlPageHeader: React.FC<{
   backButtonRef?: React.Ref<View>;
@@ -182,15 +183,16 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     maxWidth: 260,
     textAlign: 'center',
   },
+  // Figma 86609:305175: 12pt content inset.
   mainHeader: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     paddingTop: 8,
   },
   emptyHeader: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     paddingTop: 8,
   },
-  summaryHeader: { paddingHorizontal: 16 },
+  summaryHeader: { paddingHorizontal: 12 },
   mainTitle: {
     ...PERPS_PRO_DIALOG_HEAVY_TEXT_STYLE,
     color: colors2024['neutral-title-1'],
@@ -202,9 +204,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   card: {
     backgroundColor: resolvePerpsProDialogCardBackground(colors2024, isLight),
     borderRadius: 12,
-    paddingBottom: 12,
-    paddingHorizontal: 16,
-    paddingTop: 16,
+    paddingBottom: 8,
+    paddingHorizontal: 12,
+    paddingTop: 12,
   },
   pairRow: { alignItems: 'flex-start', flexDirection: 'row', gap: 4 },
   pair: {
@@ -220,27 +222,14 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   shortTagText: getPerpsProTintedTagTextStyle(colors2024, 'negative'),
   metrics: { marginTop: 10 },
   metric: {
-    alignItems: 'center',
-    flexDirection: 'row',
+    ...getPerpsProListRowStyles(colors2024).listRow,
     gap: 4,
-    justifyContent: 'space-between',
     minWidth: 0,
-    paddingVertical: 6,
   },
-  metricLabel: {
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 13,
-    fontWeight: '500',
-    lineHeight: 18,
-  },
+  metricLabel: getPerpsProListRowStyles(colors2024).listLabel,
   metricValue: {
     ...PERPS_PRO_NUMBER_STYLE,
-    color: colors2024['neutral-title-1'],
+    ...getPerpsProListRowStyles(colors2024).listValue,
     flexShrink: 1,
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    fontWeight: '700',
-    lineHeight: 18,
   },
 }));

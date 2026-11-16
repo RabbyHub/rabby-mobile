@@ -73,11 +73,11 @@ describe('Perps Pro visual contract', () => {
       fontWeight: undefined,
     });
     expect(getPerpsProFontStyle('android', '600')).toEqual({
-      fontFamily: 'SF-Pro-Rounded-Bold',
+      fontFamily: 'SF-Pro-Rounded-Semibold',
       fontWeight: undefined,
     });
     expect(getPerpsProFontStyle('android', '900')).toEqual({
-      fontFamily: 'SF-Pro-Rounded-Heavy',
+      fontFamily: 'SF-Pro-Rounded-Black',
       fontWeight: undefined,
     });
   });

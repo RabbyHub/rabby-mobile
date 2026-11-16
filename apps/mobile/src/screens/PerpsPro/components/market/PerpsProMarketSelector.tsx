@@ -875,10 +875,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
     columnHeader: {
       alignItems: 'flex-start',
       flexDirection: 'row',
-      // The last 4pt of the tab strip only paint its divider/indicator.
+      // The last 6pt of the tab strip only paint its divider/indicator.
       // Borrow that space for 44pt sort targets; the first row stays at y=180.
       height: 44,
-      marginTop: -4,
+      marginTop: -6,
       paddingHorizontal: 9,
     },
     sortGroup: {

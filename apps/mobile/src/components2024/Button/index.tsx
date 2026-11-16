@@ -17,6 +17,7 @@ import {
 
 import { useTheme2024 } from '@/hooks/theme';
 import { Text } from '@/components/Text';
+import { BOTTOM_BUTTON_TEXT_LINE_HEIGHT } from '@/constant/layout';
 import { renderText } from '@/utils/renderNode';
 import { createGetStyles2024 } from '@/utils/styles';
 import { CircleSpinnerCC } from '../CircleSpinner/CircleSpinnerCC';
@@ -174,10 +175,20 @@ export const Button = ({
     return StyleSheet.flatten([
       { color: currentColor },
       styles.title,
-      // 默认行高 = 按钮高度：固定 22 行高下 CJK 字体（PingFang / Noto Sans CJK）
-      // 的 ascent/descent 不对称，中文标题会整体偏上。titleStyle 里显式写的
-      // lineHeight 优先（多行标题需要小行高时用）
-      typeof height === 'number' && { lineHeight: height },
+      // 行高不要等于按钮高度，否则行盒撑满按钮，alignItems 无法再把字形居中。
+      // iOS 用略高于字号的行高。Android 不设行高，避免 SF Pro Rounded 裁切中文。
+      // 调用方 titleStyle 里的 lineHeight 仍然优先。
+      typeof height === 'number' &&
+        (Platform.OS === 'android'
+          ? {
+              includeFontPadding: false,
+              textAlignVertical: 'center' as const,
+              paddingVertical: 0,
+            }
+          : {
+              lineHeight: BOTTOM_BUTTON_TEXT_LINE_HEIGHT,
+              paddingVertical: 0,
+            }),
       passedTitleStyle,
       disabled && disabledTitleStyle,
     ]);
@@ -377,9 +388,7 @@ const getStyle = createGetStyles2024(ctx => ({
   },
   title: {
     fontSize: 18,
-    // lineHeight: 22,
     textAlign: 'center',
-    paddingVertical: 1,
     fontFamily: 'SF Pro Rounded',
     fontWeight: '700',
   },

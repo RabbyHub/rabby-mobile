@@ -65,6 +65,7 @@ export const TokenInfoPopup = () => {
       transparent
       visible={longPressToken.visible}
       animationType="none"
+      onRequestClose={handleClose}
       onDismiss={handleClose}>
       <View
         style={{

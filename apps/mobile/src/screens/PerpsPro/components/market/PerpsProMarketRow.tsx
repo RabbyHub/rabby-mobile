@@ -154,42 +154,6 @@ const PerpsProMarketRowComponent: React.FC<PerpsProMarketRowProps> = ({
       onPressIn={captureSelectIdentity}
       onPressOut={scheduleSelectIntentCancel}
       style={styles.marketRow}>
-      <TouchableOpacity
-        accessibilityLabel={
-          favorite
-            ? t('page.perps.pro.marketSelector.removeFavorite', {
-                pair: model.displayPair,
-              })
-            : t('page.perps.pro.marketSelector.addFavorite', {
-                pair: model.displayPair,
-              })
-        }
-        accessibilityRole="button"
-        hitSlop={8}
-        onPress={event => {
-          event.stopPropagation();
-          toggleFavorite();
-        }}
-        onPressIn={captureFavoriteIdentity}
-        style={styles.star}>
-        <View pointerEvents="none" style={styles.starGlyph}>
-          {favorite ? (
-            <RcFavoriteStar
-              color={colors2024['orange-default']}
-              height={13.5}
-              style={styles.favoriteStar}
-              width={13.6}
-            />
-          ) : (
-            <RcFavoriteStarInactive
-              color={colors2024['neutral-line']}
-              height={12.9}
-              style={styles.inactiveStar}
-              width={13}
-            />
-          )}
-        </View>
-      </TouchableOpacity>
       <PerpsProMarketLogo
         isLight={isLight}
         logoUrl={model.logoUrl}
@@ -230,6 +194,42 @@ const PerpsProMarketRowComponent: React.FC<PerpsProMarketRowProps> = ({
           </Text>
         </View>
       </View>
+      <TouchableOpacity
+        accessibilityLabel={
+          favorite
+            ? t('page.perps.pro.marketSelector.removeFavorite', {
+                pair: model.displayPair,
+              })
+            : t('page.perps.pro.marketSelector.addFavorite', {
+                pair: model.displayPair,
+              })
+        }
+        accessibilityRole="button"
+        hitSlop={8}
+        onPress={event => {
+          event.stopPropagation();
+          toggleFavorite();
+        }}
+        onPressIn={captureFavoriteIdentity}
+        style={styles.star}>
+        <View pointerEvents="none" style={styles.starGlyph}>
+          {favorite ? (
+            <RcFavoriteStar
+              color={colors2024['orange-default']}
+              height={13.5}
+              style={styles.favoriteStar}
+              width={13.6}
+            />
+          ) : (
+            <RcFavoriteStarInactive
+              color={colors2024['neutral-line']}
+              height={12.9}
+              style={styles.inactiveStar}
+              width={13}
+            />
+          )}
+        </View>
+      </TouchableOpacity>
     </Pressable>
   );
 };
@@ -254,14 +254,15 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
     flexDirection: 'row',
     height: PERPS_PRO_MARKET_ROW_HEIGHT,
-    paddingHorizontal: 16,
+    // Figma 86609:236759: 8pt list inset + 12pt row inset.
+    paddingHorizontal: 20,
     paddingVertical: 10,
   },
   star: {
     alignItems: 'center',
     height: 32,
     justifyContent: 'center',
-    marginRight: 6,
+    marginLeft: 8,
     width: 16,
   },
   starGlyph: {
@@ -314,8 +315,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     color: colors2024['neutral-title-1'],
     flexShrink: 1,
     fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    fontWeight: '500',
+    fontSize: 15,
+    fontWeight: '700',
     lineHeight: 20,
   },
   sourceTag: {
@@ -335,8 +336,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     color: colors2024['neutral-secondary'],
     flexShrink: 1,
     fontFamily: 'SF Pro Rounded',
-    fontSize: 12,
-    fontWeight: '400',
+    fontSize: 13,
+    fontWeight: '500',
     lineHeight: 16,
   },
   volumeText: {
@@ -344,8 +345,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     color: colors2024['neutral-secondary'],
     flexShrink: 0,
     fontFamily: 'SF Pro Rounded',
-    fontSize: 12,
-    fontWeight: '400',
+    fontSize: 13,
+    fontWeight: '500',
     lineHeight: 16,
   },
   marketMetaDivider: {

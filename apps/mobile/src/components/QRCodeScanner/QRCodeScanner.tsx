@@ -6,6 +6,7 @@ import {
   Linking,
   StyleProp,
   StyleSheet,
+  TextStyle,
   View,
   ViewStyle,
 } from 'react-native';
@@ -34,6 +35,8 @@ interface CameraViewProps {
   containerStyle?: StyleProp<ViewStyle>;
   size?: number;
   showScanLine?: boolean;
+  /** Pauses the camera without unmounting it, e.g. while a photo is picked. */
+  active?: boolean;
 }
 
 const getStyles = (colors: AppColorsVariants) =>
@@ -66,6 +69,7 @@ export const CameraView = ({
   containerStyle,
   size = Dimensions.get('window').width - 70,
   showScanLine,
+  active = true,
 }: CameraViewProps) => {
   const colors = useThemeColors();
   const [initialized, setInitialized] = useState(false);
@@ -149,7 +153,7 @@ export const CameraView = ({
             video={false}
             audio={false}
             device={device}
-            isActive={initialized && isActive}
+            isActive={initialized && isActive && active}
             style={styles.camera}
             onError={onError}
             codeScanner={codeScanner}
@@ -170,9 +174,14 @@ export const CameraView = ({
     </View>
   );
 };
-export interface QRCodeScannerProps extends CameraViewProps {}
+export interface QRCodeScannerProps extends CameraViewProps {
+  permissionTipStyle?: StyleProp<TextStyle>;
+}
 
-export const QRCodeScanner = (props: QRCodeScannerProps) => {
+export const QRCodeScanner = ({
+  permissionTipStyle,
+  ...props
+}: QRCodeScannerProps) => {
   const { hasPermission, requestPermission } = useCameraPermission();
   const appState = useAppState();
   const colors = useThemeColors();
@@ -186,14 +195,17 @@ export const QRCodeScanner = (props: QRCodeScannerProps) => {
   if (!hasPermission) {
     return (
       <Text
-        style={{
-          maxWidth: 300,
-          color: '#FFFFFF',
-        }}>
+        style={[
+          {
+            maxWidth: 300,
+            color: '#FFFFFF',
+          },
+          permissionTipStyle,
+        ]}>
         Camera permission is not granted. You can grant it on
         <Text
           onPress={() => Linking.openSettings()}
-          style={{ color: '#FFFFFF' }}>
+          style={[{ color: '#FFFFFF' }, permissionTipStyle]}>
           {' '}
           Settings
         </Text>

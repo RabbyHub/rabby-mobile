@@ -1,5 +1,4 @@
 import { AssetAvatar } from '@/components';
-import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { RootNames } from '@/constant/layout';
 import type {
   SwapTxHistoryItem,
@@ -11,31 +10,21 @@ import {
   transactionHistoryServiceApi,
 } from '@/core/serviceApi/transactionHistory';
 import { swapServiceApi } from '@/core/serviceApi/swap';
-import { SendRequireData } from '@rabby-wallet/rabby-action/dist/types/actionRequireData';
-import { getAliasName } from '@/core/apis/contact';
-import type { TransactionGroup } from '@/core/services/transactionHistory';
-import {
-  switchSceneCurrentAccount,
-  useSceneAccountInfo,
-} from '@/hooks/accountsSwitcher';
+import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { useTheme2024 } from '@/hooks/theme';
 import { TxStatusItem } from '@/screens/Transaction/components/TxStatusItem';
-import { ellipsisAddress } from '@/utils/address';
 import { findChain } from '@/utils/chain';
 import { naviPush } from '@/utils/navigation';
 import { formatTokenAmount } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import { getTokenSymbol } from '@/utils/token';
-import BigNumber from 'bignumber.js';
 import React, { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { TouchableOpacity, View } from 'react-native';
-import { sendToken } from '@/core/apis/token';
 import { useMemoizedFn } from 'ahooks';
 import { HistoryItemCateType } from '@/screens/Transaction/components/type';
 import useAsyncFn from 'react-use/lib/useAsyncFn';
 import { noop } from 'lodash';
-import useAsync from 'react-use/lib/useAsync';
 import useMount from 'react-use/lib/useMount';
 import { Text } from '@/components/Typography';
 import type { Account } from '@/types/account';
@@ -77,7 +66,7 @@ export const PendingTxItem = ({
   showHeaderDivider?: boolean;
   showFooterDivider?: boolean;
 }) => {
-  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+  const { styles } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
 
   const chainItem = React.useMemo(
@@ -88,7 +77,6 @@ export const PendingTxItem = ({
     [data?.chainId],
   );
   const isPending = data.status === 'pending';
-  const chainName = chainItem?.name || '';
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'MakeTransactionAbout',
   });
@@ -97,7 +85,7 @@ export const PendingTxItem = ({
     if (!isPending) {
       clearLocalPendingTxData();
       type === 'send' &&
-        void swapServiceApi
+        swapServiceApi
           .setOpenSwapHistoryTs(currentAccount?.address ?? '')
           .catch(error => {
             console.error(

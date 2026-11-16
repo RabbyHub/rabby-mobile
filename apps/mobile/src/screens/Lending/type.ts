@@ -27,7 +27,6 @@ export type PopupDetailProps = {
   reserve: DisplayPoolReserveInfo;
   userSummary: UserSummary;
   onClose?: () => void;
-  source?: string;
 };
 export type OpenDetailProps = {
   underlyingAsset: string;

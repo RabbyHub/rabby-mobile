@@ -1,5 +1,5 @@
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
-import { useCallback, useMemo } from 'react';
+import { useCallback } from 'react';
 import type { Account } from '@/types/account';
 import {
   isSameAccount,
@@ -23,25 +23,6 @@ export function extractOwnerAccountFromTokenItem(
   }
 
   return null;
-}
-
-export function makeKeyForTokenItemMaybeWithOwner(
-  token: TokenItemMaybeWithOwner,
-  tokenKey?: string,
-) {
-  const ownerAccount = extractOwnerAccountFromTokenItem(token);
-  const ownerKey = !ownerAccount
-    ? ''
-    : `${ownerAccount.type}-${ownerAccount.address}`;
-
-  const token_key = [
-    ownerKey,
-    tokenKey || `${token.id}-${token.optimized_symbol}-${token.chain}`,
-  ]
-    .filter(Boolean)
-    .join('-');
-
-  return token_key;
 }
 
 export function useSwitchSceneAccountOnSelectedTokenWithOwner(

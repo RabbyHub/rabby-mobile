@@ -1,4 +1,4 @@
-import type { PerpsCandleInterval } from '@/constant/perps';
+import type { PerpsCandleDataInterval } from '@/constant/perps';
 
 export interface CandleStick {
   time: number;
@@ -30,7 +30,7 @@ export enum CandlePeriod {
 
 export interface CandleData {
   coin: string;
-  interval: CandlePeriod | PerpsCandleInterval;
+  interval: CandlePeriod | PerpsCandleDataInterval;
   identity?: string;
   revision?: number;
   showVolume?: boolean;
@@ -44,12 +44,34 @@ export interface CandleData {
 export interface PerpsProCandleChartConfig {
   baseAsset: string;
   initialVisibleBars: number;
-  interval: PerpsCandleInterval;
+  interval: PerpsCandleDataInterval;
   maPeriods: readonly [7, 25, 99];
   priceDecimals: number;
   quoteAsset: string;
   variant: 'perps-pro';
 }
+
+export type PerpsProOverlayLine = {
+  id: string;
+  kind: 'entry' | 'tp' | 'sl' | 'liquidation';
+  price: number;
+  title: string;
+};
+
+export type PerpsProOverlays = {
+  colors: {
+    accent: string;
+    background: string;
+    contrast: string;
+    down: string;
+    entry: string;
+    entryBackground: string;
+    entryText: string;
+    liquidation: string;
+    up: string;
+  };
+  lines: PerpsProOverlayLine[];
+};
 
 /** Simple is an opt-in protocol; legacy and Pro messages keep their contracts. */
 export type SimpleChartConfig = {

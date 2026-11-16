@@ -38,6 +38,8 @@ import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
 import { openapi, testOpenapi } from '@/core/request';
 import { approvalUtils } from '@rabby-wallet/biz-utils';
 import { atom, useAtom, useAtomValue } from 'jotai';
+import { zCreate } from '@/core/utils/reexports';
+import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 import type { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { useSheetModals } from '@/hooks/useSheetModal';
 import {
@@ -59,6 +61,32 @@ export const FILTER_TYPES = {
   assets: 'assets',
   EIP7702: 'EIP7702',
 } as const;
+
+// The header is configured once in the navigator options (declarative header
+// contract), so the search state it drives has to live outside the screen body.
+// Zustand is the project's state solution going forward; jotai is deprecated.
+type ApprovalsHeaderState = {
+  filterType: keyof typeof FILTER_TYPES;
+  searchKw: string;
+  isSearching: boolean;
+};
+
+const approvalsHeaderStore = zCreate<ApprovalsHeaderState>(() => ({
+  filterType: 'contract',
+  searchKw: '',
+  isSearching: false,
+}));
+
+export const useApprovalsHeaderState = <T>(
+  selector: (state: ApprovalsHeaderState) => T,
+) =>
+  useActivityStore(approvalsHeaderStore, selector, Object.is, {
+    storeLabel: 'approvals-header',
+  });
+
+export const setApprovalsHeaderState = (
+  partial: Partial<ApprovalsHeaderState>,
+) => approvalsHeaderStore.setState(partial);
 
 const SAFE_LEVEL: Record<string, string> = {
   safe: 'safe',
@@ -177,11 +205,25 @@ export function useApprovalsPageOnTop(options: {
   account: Account | null;
 }) {
   const { account: currentAccount } = options;
-  const [filterType, setFilterType] = useState<keyof typeof FILTER_TYPES>(
-    __DEV__ ? 'contract' : 'contract',
-  );
+  const filterType = useApprovalsHeaderState(state => state.filterType);
+  const searchKw = useApprovalsHeaderState(state => state.searchKw);
+  const setFilterType = (value: ApprovalsHeaderState['filterType']) =>
+    setApprovalsHeaderState({ filterType: value });
+  const setSearchKw = (value: string) =>
+    setApprovalsHeaderState({ searchKw: value });
+  const setSearching = (value: boolean) =>
+    setApprovalsHeaderState({ isSearching: value });
 
-  const [searchKw, setSearchKw] = useState('');
+  // Leaving the page must not keep a stale query or an open search field for
+  // the next visit; both header and body read the same atoms.
+  React.useEffect(
+    () => () => {
+      setSearchKw('');
+      setSearching(false);
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
 
   const debouncedSkContract = useDebouncedValue(searchKw, 250);
   const debouncedSkAssets = useDebouncedValue(searchKw, 250);

@@ -126,3 +126,25 @@ export const normalizePerpsProCalculatedPrice = (
     ? result
     : null;
 };
+
+/** TP/SL targets use the nearest executable price, not a downward bias. */
+export const roundPerpsProTpSlPrice = (
+  value: BigNumber.Value,
+  szDecimals: number,
+): string | null => {
+  const price = decimal(value);
+  if (!price?.gt(0) || !Number.isSafeInteger(szDecimals) || szDecimals < 0) {
+    return null;
+  }
+  // Integer prices are exempt from the five-significant-figure limit.
+  const decimals = Math.min(
+    getPerpsProPriceInputMaxDecimals(szDecimals),
+    Math.max(0, PERPS_MAX_PRICE_SIGNIFICANT_FIGURES - 1 - price.e!),
+  );
+  // Round once: rounding significant figures and decimal places separately
+  // can move a target across a half-tick boundary twice.
+  const result = price
+    .decimalPlaces(decimals, BigNumber.ROUND_HALF_UP)
+    .toFixed();
+  return isPerpsProPriceProtocolValid(result, szDecimals) ? result : null;
+};

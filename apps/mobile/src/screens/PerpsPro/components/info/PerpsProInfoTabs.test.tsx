@@ -327,8 +327,8 @@ describe('PerpsProInfoTabs', () => {
     });
     expect(indicators).toHaveLength(1);
     expect(StyleSheet.flatten(indicators[0].props.style)).toMatchObject({
-      backgroundColor: 'neutral-body',
-      bottom: -0.5,
+      backgroundColor: '#23C0B0',
+      bottom: 2.5,
       height: 3,
       left: 0,
       opacity: 1,
@@ -354,7 +354,8 @@ describe('PerpsProInfoTabs', () => {
     const accountLabels = screen.getAllByText('Account', {
       includeHiddenElements: true,
     });
-    expect(accountLabels).toHaveLength(2);
+    // Two visible layers plus the hidden width probe.
+    expect(accountLabels).toHaveLength(3);
     expect(
       accountLabels.map(label => StyleSheet.flatten(label.props.style)),
     ).toEqual(

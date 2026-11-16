@@ -94,6 +94,7 @@ jest.mock('@/hooks/perps/usePerpsStore', () => {
       generation: 1,
       isInitialized: true,
     }),
+    hasCurrentPerpPermission: (value = state) => value.hasPermission,
     perpsStore: store,
   };
 });

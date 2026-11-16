@@ -136,6 +136,14 @@ const setCurrentLanguage = async (lang: SupportedLang) => {
   gSetCurrentLanguage(makeLangSetting(nextVal));
 };
 
+/**
+ * Force the app language from non-production automation (QA 1352).
+ * Accepts the same tags the settings screen uses, e.g. `pt-BR` or `en-US`.
+ */
+export function setAppLanguage(lang: string) {
+  return setCurrentLanguage(lang as SupportedLang);
+}
+
 export function useAppLanguage() {
   const lang = langStore(s => s.lang);
 

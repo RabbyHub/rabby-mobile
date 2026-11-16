@@ -1,8 +1,12 @@
 import { useFocusEffect } from '@react-navigation/native';
 import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import {
+  BOTTOM_BUTTON_TOP_OFFSET,
+  getBottomButtonBottomOffset,
+} from '@/constant/layout';
 import { createGetStyles2024 } from '@/utils/styles';
 import Animated, {
   useSharedValue,
@@ -39,7 +43,7 @@ const FORM_DELAY =
 
 export default function SetupWallet({ route }: ScreenProps) {
   const { styles } = useTheme2024({ getStyle });
-  const { top } = useSafeAreaInsets();
+  const { top, bottom } = useSafeAreaInsets();
   const { t } = useTranslation();
 
   const rawParams = route.params;
@@ -91,46 +95,81 @@ export default function SetupWallet({ route }: ScreenProps) {
     };
   });
 
-  return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      style={styles.keyboardAvoidingView}>
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={[styles.scrollContent, { paddingTop: top }]}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}>
-        {address && (
-          <WalletSuccessCard
-            title={t('page.newUserOnboarding.walletReady')}
-            addresses={[
-              {
-                address,
-                brandName: KEYRING_CLASS.MNEMONIC,
-                showBalance: isImportMode,
-              },
-            ]}
-          />
-        )}
+  // The footer fades in with the form but keeps its place: sliding it would
+  // briefly uncover the content scrolled underneath.
+  const footerAnimatedStyle = useAnimatedStyle(() => {
+    'worklet';
+    return { opacity: formProgress.value };
+  });
 
-        <Animated.View style={[styles.formContainer, formAnimatedStyle]}>
-          <PasswordForm
-            onSubmit={handleSubmit}
-            topTip={t('page.newUserOnboarding.setPasswordTip')}
-            loading={isSubmitting || isLoading}
-          />
-        </Animated.View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+  return (
+    <PasswordForm
+      onSubmit={handleSubmit}
+      topTip={t('page.newUserOnboarding.setPasswordTip')}
+      loading={isSubmitting || isLoading}>
+      {({ content, footer }) => (
+        <View style={styles.screen}>
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            style={styles.keyboardAvoidingView}>
+            <ScrollView
+              style={styles.scrollView}
+              contentContainerStyle={[
+                styles.scrollContent,
+                { paddingTop: top },
+              ]}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}>
+              {address && (
+                <WalletSuccessCard
+                  title={t('page.newUserOnboarding.walletReady')}
+                  addresses={[
+                    {
+                      address,
+                      brandName: KEYRING_CLASS.MNEMONIC,
+                      showBalance: isImportMode,
+                    },
+                  ]}
+                />
+              )}
+
+              <Animated.View style={[styles.formContainer, formAnimatedStyle]}>
+                {content}
+              </Animated.View>
+            </ScrollView>
+          </KeyboardAvoidingView>
+
+          {/* Outside the keyboard-avoiding area: the keyboard covers the
+              footer instead of squeezing the fields between the two. */}
+          <Animated.View
+            style={[
+              styles.footer,
+              { paddingBottom: getBottomButtonBottomOffset(bottom) },
+              footerAnimatedStyle,
+            ]}>
+            {footer}
+          </Animated.View>
+        </View>
+      )}
+    </PasswordForm>
   );
 }
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
+  screen: {
+    flex: 1,
+    backgroundColor: colors2024['neutral-bg-1'],
+  },
   keyboardAvoidingView: {
     flex: 1,
   },
   scrollView: {
     flex: 1,
+    backgroundColor: colors2024['neutral-bg-1'],
+  },
+  footer: {
+    paddingHorizontal: 24,
+    paddingTop: BOTTOM_BUTTON_TOP_OFFSET,
     backgroundColor: colors2024['neutral-bg-1'],
   },
   scrollContent: {

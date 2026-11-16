@@ -31,6 +31,7 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from '@testing-library/react-native';
 import React from 'react';
 import { StyleSheet } from 'react-native';
@@ -243,7 +244,7 @@ describe.each(['light', 'dark'] as const)(
       await waitFor(() => expect(onClose).toHaveBeenCalledTimes(1));
     });
 
-    it('keeps Margin Mode selection visible without rendering a check icon', () => {
+    it('marks only the selected Margin Mode with the design check', () => {
       render(
         <PerpsProMarginModeSheet
           marketName="BTC"
@@ -270,6 +271,16 @@ describe.each(['light', 'dark'] as const)(
           .accessibilityState,
       ).toEqual({ checked: false, disabled: false });
       expect(screen.queryByTestId('perps-pro-margin-mode-selected')).toBeNull();
+      expect(
+        within(
+          screen.getByTestId('perps-pro-margin-mode-isolated'),
+        ).getAllByTestId('perps-pro-dialog-option-check'),
+      ).toHaveLength(1);
+      expect(
+        within(screen.getByTestId('perps-pro-margin-mode-cross')).queryByTestId(
+          'perps-pro-dialog-option-check',
+        ),
+      ).toBeNull();
       expect(screen.getByText('Isolated description')).toBeTruthy();
       const crossTitleStyle = StyleSheet.flatten(
         screen.getByText('Cross').props.style,

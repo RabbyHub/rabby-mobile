@@ -88,6 +88,102 @@ const command = (
   });
 
 describe('Perps position TP/SL action', () => {
+  it('requires 10 USDC after lot normalization, including fixed-size 100% closes', () => {
+    expect(() =>
+      command({
+        legs: [{ kind: 'takeProfit', size: '0.09999', triggerPrice: '110' }],
+      }),
+    ).toThrow('Minimum amount is 10');
+    expect(
+      command({
+        legs: [{ kind: 'takeProfit', size: '0.1', triggerPrice: '110' }],
+      }).legs[0]?.size,
+    ).toBe('0.1');
+    expect(() =>
+      command({
+        expectedPositionSize: '0.09',
+        legs: [{ kind: 'takeProfit', size: '0.09', triggerPrice: '110' }],
+      }),
+    ).toThrow('Minimum amount is 10');
+  });
+
+  it('keeps dynamic whole-position TP/SL available below 10 USDC', async () => {
+    const deps = dependencies({
+      getLiveSignedSize: () => '0.01',
+      getLiveOpenOrders: () => [],
+    });
+    const result = await executePerpsPositionTpSl(
+      command({
+        expectedPositionSize: '0.01',
+        scope: 'position',
+        legs: [{ kind: 'takeProfit', triggerPrice: '110' }],
+      }),
+      deps,
+    );
+    expect(result.kind).toBe('success');
+    expect(deps.placePosition).toHaveBeenCalled();
+  });
+
+  it('preserves the old protection when live notional has fallen below the floor', async () => {
+    const deps = dependencies({ getLiveMark: () => '19' });
+    const result = await executePerpsPositionTpSl(command(), deps);
+    expect(result.kind).toBe('staleContext');
+    expect(deps.cancelOrder).not.toHaveBeenCalled();
+    expect(deps.placePartial).not.toHaveBeenCalled();
+  });
+
+  it('rechecks notional after cancellation and reports the partial mutation', async () => {
+    let mark = '100';
+    const deps = dependencies({
+      getLiveMark: () => mark,
+      cancelOrder: jest.fn(async () => {
+        mark = '19';
+        return cancelled();
+      }),
+    });
+    const result = await executePerpsPositionTpSl(command(), deps);
+    expect(result).toMatchObject({
+      kind: 'partial',
+      legs: [
+        {
+          cancel: 'success',
+          create: 'notAttempted',
+          error: 'Minimum amount is 10',
+        },
+      ],
+    });
+    expect(deps.placePartial).not.toHaveBeenCalled();
+    expect(deps.refresh).toHaveBeenCalled();
+  });
+
+  it('rechecks each fixed leg after the previous request completes', async () => {
+    let mark = '100';
+    const deps = dependencies({
+      getLiveMark: () => mark,
+      placePartial: jest.fn(async () => {
+        mark = '95';
+        return accepted();
+      }),
+    });
+    const result = await executePerpsPositionTpSl(
+      command({
+        legs: [
+          { kind: 'takeProfit', size: '0.1', triggerPrice: '110' },
+          { kind: 'stopLoss', size: '0.1', triggerPrice: '90' },
+        ],
+      }),
+      deps,
+    );
+    expect(result).toMatchObject({
+      kind: 'partial',
+      legs: [
+        { create: 'success' },
+        { create: 'notAttempted', error: 'Minimum amount is 10' },
+      ],
+    });
+    expect(deps.placePartial).toHaveBeenCalledTimes(1);
+  });
+
   it('builds an immutable command and validates each amount against the position', () => {
     const result = command();
     expect(Object.isFrozen(result)).toBe(true);
@@ -279,11 +375,12 @@ describe('Perps position TP/SL action', () => {
   });
 
   it('revalidates live size after cancellation before creating a partial order', async () => {
-    let reads = 0;
+    let liveSize = '1';
     const deps = dependencies({
-      getLiveSignedSize: jest.fn(() => {
-        reads += 1;
-        return reads <= 2 ? '1' : '0.25';
+      getLiveSignedSize: jest.fn(() => liveSize),
+      cancelOrder: jest.fn(async () => {
+        liveSize = '0.25';
+        return cancelled();
       }),
     });
 

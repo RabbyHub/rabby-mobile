@@ -5,6 +5,10 @@ import { HistoryList } from './HistoryGroupList';
 
 // Component coverage: the list footer and empty-state contract only; rows,
 // skeletons and the empty illustration are presentation stubs.
+jest.mock('../utils/bridgeHistory', () => ({
+  isBridgeHistoryRow: (item: { kind?: string } | null | undefined) =>
+    !!item && item.kind === 'bridge',
+}));
 jest.mock('@/components/Typography', () => ({
   Text: require('react-native').Text,
 }));

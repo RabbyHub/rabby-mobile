@@ -71,6 +71,7 @@ export type SignatureAction =
       fingerprint: string;
       ctx: SignerCtx;
     }
+  | { type: 'END_DIRECT' }
   | { type: 'SEND_START'; fingerprint: string }
   | {
       type: 'SEND_PROGRESS';

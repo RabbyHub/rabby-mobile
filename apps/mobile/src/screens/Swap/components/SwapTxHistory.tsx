@@ -27,10 +27,7 @@ import {
   getTransactionHistoryTransactions,
   transactionHistoryServiceApi,
 } from '@/core/serviceApi/transactionHistory';
-import {
-  switchSceneCurrentAccount,
-  useSceneAccountInfo,
-} from '@/hooks/accountsSwitcher';
+import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { HistoryItemCateType } from '@/screens/Transaction/components/type';
 import type { HistoryDisplayItem } from '@/screens/Transaction/MultiAddressHistory';
 import { useHandleBackPressClosable } from '@/hooks/useAppGesture';
@@ -39,7 +36,6 @@ import { Text } from '@/components/Typography';
 import { notificationOpenapi } from '@/core/notifications/openapi';
 import { txResultToToHistoryDisplayItem } from '@/utils/transaction';
 import { useDebugSwapHistorySkipLocalLookup } from '@/hooks/appSettings';
-import { Account } from '@/types/account';
 import type { TransactionGroup } from '@/core/services/transactionHistory';
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
@@ -143,7 +139,7 @@ const HistoryList = ({
         <Text style={styles.headerTitle}>{t('page.swap.historyTitle')}</Text>
         {Boolean(currentAccount) && (
           <AddressItem account={currentAccount!}>
-            {({ WalletIcon, WalletAddress }) => {
+            {({ WalletIcon }) => {
               return (
                 <View style={styles.addressRow}>
                   <WalletIcon style={styles.walletIcon} />

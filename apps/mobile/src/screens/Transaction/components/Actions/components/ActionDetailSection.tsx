@@ -10,6 +10,7 @@ import { ellipsisAddress } from '@/utils/address';
 import type { findChain } from '@/utils/chain';
 import { formatAmount } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
+import { makeHistoryDetailColors } from '../../detailColors';
 import { formatIntlTimestamp } from '@/utils/time';
 import { openTxExternalUrl } from '@/utils/transaction';
 import { useMemoizedFn } from 'ahooks';
@@ -170,9 +171,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     borderRadius: 16,
     paddingTop: 12,
     paddingBottom: 4,
-    backgroundColor: !isLight
-      ? colors2024['neutral-bg-2']
-      : colors2024['neutral-bg-1'],
+    backgroundColor: makeHistoryDetailColors({ isLight, colors2024 }).card,
     marginBottom: 16,
   },
   detailContainerHeader: {

@@ -24,10 +24,7 @@ import { Keyboard, Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { PerpsProSlider } from '../common/PerpsProSlider';
-import {
-  getPerpsProDialogStyles,
-  resolvePerpsProDialogCardBackground,
-} from '../common/perpsProDialogVisual';
+import { getPerpsProInputDialogStyles } from '../common/perpsProDialogVisual';
 import { PerpsProDialogBackdrop } from '../common/PerpsProDialogBackdrop';
 import RcLeverageMinus from '@/assets2024/icons/perps/PerpsProLeverageMinus.svg';
 import RcLeveragePlus from '@/assets2024/icons/perps/PerpsProLeveragePlus.svg';
@@ -157,7 +154,7 @@ export const PerpsProLeverageSheet: React.FC<{
         ref={modalRef}
         {...makeBottomSheetProps({
           colors: colors2024,
-          linearGradientType: 'bg0',
+          linearGradientType: 'bg1',
         })}
         backdropComponent={PerpsProDialogBackdrop}
         backgroundStyle={styles.background}
@@ -322,7 +319,7 @@ PerpsProLeverageSheet.displayName = 'PerpsProLeverageSheet';
 
 const getStyle = createGetStyles2024(
   ({ colors2024, isLight, safeAreaInsets }) => ({
-    ...getPerpsProDialogStyles(colors2024, safeAreaInsets.bottom, isLight),
+    ...getPerpsProInputDialogStyles(colors2024, safeAreaInsets.bottom, isLight),
     sheetView: { height: '100%' },
     scrollContent: { flexGrow: 1 },
     container: {
@@ -351,7 +348,8 @@ const getStyle = createGetStyles2024(
     inputRow: {
       alignSelf: 'center',
       alignItems: 'center',
-      backgroundColor: resolvePerpsProDialogCardBackground(colors2024, isLight),
+      // Figma 86609:303158: bg-5 field with line-colored step buttons.
+      backgroundColor: colors2024['neutral-bg-5'],
       borderRadius: 12,
       flexDirection: 'row',
       height: 54,
@@ -362,7 +360,7 @@ const getStyle = createGetStyles2024(
     },
     stepButton: {
       alignItems: 'center',
-      backgroundColor: colors2024['neutral-bg-5'],
+      backgroundColor: colors2024['neutral-line'],
       borderRadius: 6,
       height: 32,
       width: 32,

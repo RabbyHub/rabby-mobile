@@ -273,6 +273,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
 
 const staticStyles = StyleSheet.create({
   separator: {
-    height: 8,
+    height: 12,
   },
 });

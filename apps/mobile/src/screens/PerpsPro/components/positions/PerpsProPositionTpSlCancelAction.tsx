@@ -14,6 +14,7 @@ export const PerpsProPositionTpSlCancelAction = ({
   disabled,
   label,
   loading,
+  remainingCount,
   onPress,
   style,
   textStyle,
@@ -21,12 +22,17 @@ export const PerpsProPositionTpSlCancelAction = ({
   disabled: boolean;
   label: string;
   loading: boolean;
+  remainingCount?: number;
   onPress: () => void;
   style?: StyleProp<ViewStyle>;
   textStyle: StyleProp<TextStyle>;
 }) => (
   <Pressable
-    accessibilityLabel={label}
+    accessibilityLabel={
+      loading && remainingCount !== undefined
+        ? `${label} (${remainingCount})`
+        : label
+    }
     accessibilityRole="button"
     accessibilityState={{ busy: loading, disabled: disabled || loading }}
     disabled={disabled || loading}
@@ -44,6 +50,9 @@ export const PerpsProPositionTpSlCancelAction = ({
           color={StyleSheet.flatten(textStyle)?.color}
           size="small"
         />
+        {remainingCount !== undefined ? (
+          <Text style={textStyle}>{remainingCount}</Text>
+        ) : null}
       </View>
     ) : null}
   </Pressable>
@@ -55,5 +64,7 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     alignItems: 'center',
     justifyContent: 'center',
+    flexDirection: 'row',
+    gap: 4,
   },
 });

@@ -105,14 +105,12 @@ interface RepayWithCollateralProps {
   repayToken: SwappableToken;
   defaultCollateralToken?: SwappableToken;
   onClose?: () => void;
-  source?: string;
 }
 
 export default function RepayWithCollateral({
   repayToken,
   defaultCollateralToken,
   onClose,
-  source,
 }: RepayWithCollateralProps) {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const { t } = useTranslation();

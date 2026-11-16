@@ -129,42 +129,47 @@ afterEach(() => {
   Platform.OS = originalOS;
 });
 
+const renderSheet = () => {
+  const onChange = jest.fn();
+  const onClose = jest.fn();
+  const gasCalcMethod = jest.fn(async () => ({
+    gasCostUsd: new BigNumber(1),
+    gasCostAmount: new BigNumber(0.001),
+  }));
+  const view = render(
+    <SignMainnetCustomGasSheet
+      visible
+      onClose={onClose}
+      tx={{ chainId: 1 } as Tx}
+      gas={{ gasCostUsd: 1, gasCostAmount: 0.001, success: true }}
+      version="v2"
+      chainId={1}
+      onChange={onChange}
+      isReady
+      nonce="0"
+      gasList={[gasLevel]}
+      selectedGas={gasLevel}
+      is1559
+      isHardware={false}
+      gasCalcMethod={gasCalcMethod}
+      nativeTokenBalance="0"
+      gasPriceMedian={null}
+      isCancel={false}
+      isSpeedUp={false}
+      account={
+        { address: '0x0000000000000000000000000000000000000001' } as Account
+      }
+    />,
+  );
+  return { view, onChange, onClose };
+};
+
 // Component contract only: real input handler and real styles, with native
 // sheet/input boundaries mocked. Native Android measurement still needs QA.
 describe('SignMainnetCustomGasSheet priority fee geometry', () => {
   it('keeps the Android input slot through empty, typed and cleared values', async () => {
     Platform.OS = 'android';
-    const onChange = jest.fn();
-    const onClose = jest.fn();
-    const gasCalcMethod = jest.fn(async () => ({
-      gasCostUsd: new BigNumber(1),
-      gasCostAmount: new BigNumber(0.001),
-    }));
-    const view = render(
-      <SignMainnetCustomGasSheet
-        visible
-        onClose={onClose}
-        tx={{ chainId: 1 } as Tx}
-        gas={{ gasCostUsd: 1, gasCostAmount: 0.001, success: true }}
-        version="v2"
-        chainId={1}
-        onChange={onChange}
-        isReady
-        nonce="0"
-        gasList={[gasLevel]}
-        selectedGas={gasLevel}
-        is1559
-        isHardware={false}
-        gasCalcMethod={gasCalcMethod}
-        nativeTokenBalance="0"
-        gasPriceMedian={null}
-        isCancel={false}
-        isSpeedUp={false}
-        account={
-          { address: '0x0000000000000000000000000000000000000001' } as Account
-        }
-      />,
-    );
+    const { view, onChange, onClose } = renderSheet();
     await act(async () => {});
     fireEvent.press(view.getByTestId('normal-gas-preset'));
     await act(async () => {});
@@ -184,7 +189,7 @@ describe('SignMainnetCustomGasSheet priority fee geometry', () => {
       fireEvent(input, 'change', { nativeEvent: { text: value } });
       const currentInput = view.UNSAFE_getByType(TextInput);
       expect(currentInput).toBe(input);
-      expect(currentInput.props.value).toBe(value || undefined);
+      expect(currentInput.props.value).toBe(value);
       expect(StyleSheet.flatten(currentInput.props.style)).toEqual(
         initialStyle,
       );
@@ -192,5 +197,25 @@ describe('SignMainnetCustomGasSheet priority fee geometry', () => {
 
     expect(onChange).not.toHaveBeenCalled();
     expect(onClose).not.toHaveBeenCalled();
+  });
+});
+
+// RN only pushes a string `value` to native. An undefined value after the
+// field is cleared leaves the old native text, so the next key appends to it.
+describe('SignMainnetCustomGasSheet priority fee input', () => {
+  it('stays controlled when cleared, so the next key starts a new value', async () => {
+    const { view } = renderSheet();
+    await act(async () => {});
+    fireEvent.press(view.getByTestId('normal-gas-preset'));
+    await act(async () => {});
+
+    const input = view.UNSAFE_getByType(TextInput);
+    expect(input.props.value).toBe('1');
+
+    fireEvent(input, 'change', { nativeEvent: { text: '' } });
+    expect(view.UNSAFE_getByType(TextInput).props.value).toBe('');
+
+    fireEvent(input, 'change', { nativeEvent: { text: '2' } });
+    expect(view.UNSAFE_getByType(TextInput).props.value).toBe('2');
   });
 });

@@ -10,6 +10,7 @@ import {
   fetchClearinghouseStateHttp,
   fetchPositionOpenOrdersHttp,
   getPerpsAccountRuntimeContext,
+  hasCurrentPerpPermission,
   perpsStore,
 } from '@/hooks/perps/usePerpsStore';
 
@@ -226,7 +227,7 @@ export const usePerpsProAttachedTpSlExecution = ({
       active: latest.active,
       coin: latest.market?.canonicalCoin ?? '',
       dexId: latest.market?.marketData.dexId ?? '',
-      hasPermission: state.hasPermission,
+      hasPermission: hasCurrentPerpPermission(state),
       marketKey: latest.market?.marketKey ?? null,
       runtime: getPerpsRuntimeSnapshot(),
     };

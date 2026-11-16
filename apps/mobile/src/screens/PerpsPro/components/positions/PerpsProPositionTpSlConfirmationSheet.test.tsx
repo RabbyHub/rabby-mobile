@@ -319,8 +319,9 @@ describe('PerpsProPositionTpSlConfirmationSheet', () => {
           const symbolLabel = screen.getByText('Symbol');
           expect(StyleSheet.flatten(symbolLabel.props.style)).toMatchObject({
             color: colors['neutral-secondary'],
-            fontSize: 12,
-            lineHeight: 16,
+            fontSize: 14,
+            fontWeight: '500',
+            lineHeight: 18,
           });
           const symbolRow = screen.UNSAFE_getAllByType(View).find(node => {
             const style = StyleSheet.flatten(node.props.style);
@@ -335,9 +336,9 @@ describe('PerpsProPositionTpSlConfirmationSheet', () => {
             ),
           ).toMatchObject({
             color: colors['neutral-title-1'],
-            fontSize: 12,
-            fontWeight: '500',
-            lineHeight: 16,
+            fontSize: 14,
+            fontWeight: '700',
+            lineHeight: 18,
             textAlign: 'right',
           });
           expect(screen.queryAllByText(/^Volume/)).toHaveLength(
@@ -385,7 +386,7 @@ describe('PerpsProPositionTpSlConfirmationSheet', () => {
               screen.getByTestId('tpsl-confirmation-content').props.style,
             ),
           ).toMatchObject({
-            paddingHorizontal: 16,
+            paddingHorizontal: 12,
             paddingTop: 8,
           });
           expect(
@@ -396,7 +397,7 @@ describe('PerpsProPositionTpSlConfirmationSheet', () => {
           ).toMatchObject({
             paddingHorizontal: 4,
             paddingBottom: 36,
-            paddingTop: 24,
+            paddingTop: 12,
           });
           expect(
             screen.getByTestId('tpsl-confirmation-backdrop').props,
@@ -457,7 +458,7 @@ describe('PerpsProPositionTpSlConfirmationSheet', () => {
       );
       expect(StyleSheet.flatten(checkbox.props.style)).toMatchObject({
         justifyContent: 'center',
-        marginTop: 8,
+        marginTop: 24,
         minHeight: 20,
         gap: 4,
       });
@@ -616,6 +617,6 @@ describe('PerpsProPositionTpSlConfirmationSheet', () => {
         screen.getByTestId('perps-pro-position-tpsl-confirmation-footer').props
           .style,
       ),
-    ).toMatchObject({ paddingBottom: 36, paddingTop: 24 });
+    ).toMatchObject({ paddingBottom: 36, paddingTop: 12 });
   });
 });

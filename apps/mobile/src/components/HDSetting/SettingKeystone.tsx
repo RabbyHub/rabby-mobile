@@ -217,7 +217,8 @@ export const SettingKeystone: React.FC<{
         modalId={MODAL_GATE_IDS.hdKeystoneSwitchDevice}
         visible={visible}
         transparent
-        animationType="fade">
+        animationType="fade"
+        onRequestClose={handleModalClose}>
         <View style={styles.modalMask}>
           <View style={styles.modal}>
             <Text style={styles.modalTitle}>

@@ -30,6 +30,8 @@ import { ShowMoreOnSendNFT } from './components/ShowMoreOnSendNFT';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { withWhitelistService } from '@/hooks/whitelistServiceDependencies';
 import { markStartupPerf } from '@/core/utils/startupPerfMarks';
+import { hasBlockedAddress } from '@/core/utils/blockedAddress';
+import { BlockedAddressDialog } from '@/components/Dialogs/BlockedAddressDialog';
 
 const AnimatedKeyboardAwareScrollView = Animated.createAnimatedComponent(
   KeyboardAwareScrollView,
@@ -181,6 +183,29 @@ function SendNFT() {
     }
   }, [toAddress, formValues.to, handleFieldChange]);
 
+  // Same as Send token: the NFT receiver sits in safeTransferFrom calldata, so
+  // the sign-time from/to check never sees it.
+  const [isBlockedReceiver, setIsBlockedReceiver] = React.useState(false);
+  React.useEffect(() => {
+    const to = formValues.to;
+    if (!to) return;
+    let disposed = false;
+    hasBlockedAddress([to]).then(isBlocked => {
+      if (!disposed && isBlocked) setIsBlockedReceiver(true);
+    });
+    return () => {
+      disposed = true;
+    };
+  }, [formValues.to]);
+  const handleBlockedReceiverConfirm = React.useCallback(() => {
+    resetScreenState();
+    navigation.dispatch(
+      StackActions.replace(RootNames.StackRoot, {
+        screen: RootNames.Home,
+      }),
+    );
+  }, [resetScreenState, navigation]);
+
   React.useEffect(() => {
     const disposeRets = [] as Function[];
     subscribeEvent(
@@ -283,6 +308,10 @@ function SendNFT() {
           toAddressBrandName={navParams?.addressBrandName}
         />
         <SendNFTScreenBody />
+        <BlockedAddressDialog
+          visible={isBlockedReceiver}
+          onConfirm={handleBlockedReceiverConfirm}
+        />
       </SendNFTInternalContextProvider>
     </SignatureInstanceProvider>
   );

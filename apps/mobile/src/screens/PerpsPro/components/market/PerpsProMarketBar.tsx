@@ -18,10 +18,11 @@ import {
 export const PERPS_PRO_MARKET_BAR_HEIGHT = 40;
 
 export const PerpsProMarketBar: React.FC<{
+  klineOpen: boolean;
   market: PerpsProMarket | null;
-  onOpenKline: () => void;
   onPress: () => void;
-}> = React.memo(({ market, onOpenKline, onPress }) => {
+  onToggleKline: () => void;
+}> = React.memo(({ klineOpen, market, onPress, onToggleKline }) => {
   const { colors2024, styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const changeStyle =
@@ -63,10 +64,10 @@ export const PerpsProMarketBar: React.FC<{
         <Pressable
           accessibilityLabel={t('page.perps.pro.chart.open')}
           accessibilityRole="button"
-          accessibilityState={{ disabled: !market }}
+          accessibilityState={{ disabled: !market, expanded: klineOpen }}
           disabled={!market}
           hitSlop={6}
-          onPress={onOpenKline}
+          onPress={onToggleKline}
           style={styles.actionIcon}
           testID="perps-pro-kline-trigger">
           <RcCandlestick

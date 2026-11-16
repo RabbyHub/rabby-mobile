@@ -3,13 +3,7 @@ import React, { useCallback, useMemo, useRef, useState } from 'react';
 import BigNumber from 'bignumber.js';
 import { useTranslation } from 'react-i18next';
 import { FlatList, RefreshControl, View } from 'react-native';
-import {
-  useIsFocused,
-  useNavigation,
-  useRoute,
-} from '@react-navigation/native';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import type { RouteProp } from '@react-navigation/native';
+import { useIsFocused } from '@react-navigation/native';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { Button } from '@/components2024/Button';
@@ -48,10 +42,8 @@ import {
   BOTTOM_BUTTON_DOUBLE_HEIGHT,
   BOTTOM_BUTTON_TEXT_LINE_HEIGHT,
   BOTTOM_BUTTON_TEXT_SIZE,
-  RootNames,
   getBottomButtonBottomOffset,
 } from '@/constant/layout';
-import type { TransactionNavigatorParamList } from '@/navigation-type';
 import {
   clearLendingActionPopupState,
   consumeLendingActionPopupToRestore,
@@ -59,16 +51,6 @@ import {
   openLendingActionPopup,
   peekLendingActionPopupToRestore,
 } from './utils/actionPopup';
-
-type LendingRouteProp = RouteProp<
-  TransactionNavigatorParamList,
-  typeof RootNames.Lending
->;
-
-type LendingNavigationProp = NativeStackNavigationProp<
-  TransactionNavigatorParamList,
-  typeof RootNames.Lending
->;
 
 type MyAssetItem =
   | {
@@ -92,10 +74,7 @@ const MyAssetHome: React.FC = () => {
   const { fetchData } = useFetchLendingData();
   const { refreshWalletBalances } = useRefreshLendingWalletBalances();
   const { displayPoolReserves, iUserSummary, apyInfo } = useLendingSummary();
-  const route = useRoute<LendingRouteProp>();
-  const navigation = useNavigation<LendingNavigationProp>();
   const isFocused = useIsFocused();
-  const openedRouteActionKeyRef = useRef<string | null>(null);
   const restoringPopupRefreshKeyRef = useRef<string | null>(null);
   const [activeUnderlyingAsset, setActiveUnderlyingAsset] = useState('');
 
@@ -322,9 +301,7 @@ const MyAssetHome: React.FC = () => {
       return;
     }
 
-    const restoreKey = `${popupToRestore.popup}-${
-      popupToRestore.tokenAddress
-    }-${popupToRestore.source || ''}`;
+    const restoreKey = `${popupToRestore.popup}-${popupToRestore.tokenAddress}`;
     if (restoringPopupRefreshKeyRef.current !== restoreKey) {
       restoringPopupRefreshKeyRef.current = restoreKey;
       refreshWalletBalances(true).catch(() => {
@@ -344,7 +321,6 @@ const MyAssetHome: React.FC = () => {
       reserve,
       userSummary: iUserSummary,
       colors2024,
-      source: popupToRestore.source,
     });
     restoringPopupRefreshKeyRef.current = null;
     consumeLendingActionPopupToRestore();
@@ -355,75 +331,6 @@ const MyAssetHome: React.FC = () => {
     isFocused,
     loading,
     refreshWalletBalances,
-  ]);
-
-  React.useEffect(() => {
-    const tokenAddress = route.params?.tokenAddress;
-    const direction = route.params?.direction;
-    const source = route.params?.source;
-    if (!tokenAddress || !direction || loading || !iUserSummary) {
-      return;
-    }
-
-    const reserve = findReserveByTokenAddress(tokenAddress);
-
-    if (!reserve) {
-      return;
-    }
-
-    const actionKey = `${marketKey}-${direction}-${tokenAddress}`;
-    if (openedRouteActionKeyRef.current === actionKey) {
-      return;
-    }
-    openedRouteActionKeyRef.current = actionKey;
-
-    if (direction !== 'supply' && direction !== 'borrow') {
-      return;
-    }
-
-    if (direction === 'borrow') {
-      openLendingActionPopup({
-        popup: 'repay',
-        reserve,
-        userSummary: iUserSummary,
-        colors2024,
-        source,
-      });
-    } else {
-      const modalId = createGlobalBottomSheetModal2024({
-        name: MODAL_NAMES.WITHDRAW_ACTION_DETAIL,
-        reserve,
-        userSummary: iUserSummary,
-        source: source === 'Portfolio Defi' ? source : undefined,
-        onClose: () => {
-          removeGlobalBottomSheetModal2024(modalId);
-        },
-        bottomSheetModalProps: {
-          enableContentPanningGesture: true,
-          enablePanDownToClose: true,
-          enableDismissOnClose: true,
-          handleStyle: {
-            backgroundColor: colors2024['neutral-bg-1'],
-          },
-        },
-      });
-    }
-
-    navigation.setParams({
-      tokenAddress: undefined,
-      direction: undefined,
-      source: undefined,
-    });
-  }, [
-    colors2024,
-    findReserveByTokenAddress,
-    iUserSummary,
-    loading,
-    marketKey,
-    navigation,
-    route.params?.direction,
-    route.params?.source,
-    route.params?.tokenAddress,
   ]);
 
   const handleRefresh = useCallback(() => {

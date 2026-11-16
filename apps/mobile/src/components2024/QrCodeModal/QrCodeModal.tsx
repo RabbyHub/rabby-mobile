@@ -19,7 +19,9 @@ export const QrCodeModal: React.FC = () => {
     <TrackedModal
       modalId={MODAL_GATE_IDS.qrCode}
       style={styles.root}
-      visible={visible}
+      // Without data there is nothing to draw or tap: never present an empty
+      // transparent Modal.
+      visible={visible && !!data}
       transparent
       animationType="none"
       onRequestClose={() => {

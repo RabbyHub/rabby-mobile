@@ -19,6 +19,7 @@ import { ellipsisAddress } from '@/utils/address';
 import { getChain } from '@/utils/chain';
 import { formatAmount } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
+import { makeHistoryDetailColors } from './components/detailColors';
 import { formatIntlTimestamp } from '@/utils/time';
 import { openTxExternalUrl } from '@/utils/transaction';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
@@ -172,15 +173,19 @@ function HistoryDetailScreen(): JSX.Element {
   }, [account, accounts, data.address]);
 
   const getHeaderTitle = React.useCallback(() => {
+    // The native back item is wider than the old JS header button, so UIKit
+    // lays this title container out right of the screen centre (QA 1360).
     return (
-      <ScreenHeaderAccountTitle
-        account={currentAccount}
-        titleText={
-          <HistoryHeaderTitle>
-            {title || t('page.transactions.itemTitle.Default')}
-          </HistoryHeaderTitle>
-        }
-      />
+      <View style={{ transform: [{ translateX: -12 }] }}>
+        <ScreenHeaderAccountTitle
+          account={currentAccount}
+          titleText={
+            <HistoryHeaderTitle>
+              {title || t('page.transactions.itemTitle.Default')}
+            </HistoryHeaderTitle>
+          }
+        />
+      </View>
     );
   }, [currentAccount, title, t]);
 
@@ -526,9 +531,7 @@ const getStyle = createGetStyles2024(
       width: '100%',
       marginTop: 12,
       borderRadius: 16,
-      backgroundColor: !isLight
-        ? colors2024['neutral-bg-2']
-        : colors2024['neutral-bg-1'],
+      backgroundColor: makeHistoryDetailColors({ isLight, colors2024 }).card,
       paddingTop: 12,
       paddingBottom: 4,
     },
@@ -550,9 +553,8 @@ const getStyle = createGetStyles2024(
     extraItem: {
       flexDirection: 'row',
       padding: 12,
-      backgroundColor: isLight
-        ? colors2024['neutral-bg-2']
-        : colors2024['neutral-bg-1'],
+      backgroundColor: makeHistoryDetailColors({ isLight, colors2024 })
+        .cardInner,
       borderRadius: 12,
       justifyContent: 'space-between',
       alignItems: 'flex-start',

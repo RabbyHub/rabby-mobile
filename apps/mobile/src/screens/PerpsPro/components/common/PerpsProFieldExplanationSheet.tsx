@@ -95,12 +95,14 @@ const getStyle = createGetStyles2024(
       paddingHorizontal: 16,
       paddingTop: 8,
     },
+    // Figma 86609:304833: 345pt copy inset 24pt from the sheet edges.
     description: {
-      color: colors2024['neutral-foot'],
+      color: colors2024['neutral-secondary'],
       fontFamily: 'SF Pro Rounded',
       fontSize: 16,
       fontWeight: '400',
       lineHeight: 20,
+      marginHorizontal: 8,
       marginTop: 12,
     },
     footer: {

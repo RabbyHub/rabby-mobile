@@ -297,13 +297,20 @@ export function loadSwapService() {
 
 export function loadSyncChainService() {
   return loadFeatureService('syncChainService', async () => {
-    const { SyncChainService } = await import('./syncChainService');
+    const [{ SyncChainService }, { disconnectDappsWithUnsupportedChain }] =
+      await Promise.all([
+        import('./syncChainService'),
+        import('../serviceApi/dappUnsupportedChain'),
+      ]);
     registerService(
       'syncChainService',
       new SyncChainService({
         storageAdapter: appStorage,
+        onMainnetChainListUpdated: disconnectDappsWithUnsupportedChain,
       }),
     );
+    // the cached mainnet list, if any, is restored now
+    disconnectDappsWithUnsupportedChain();
   });
 }
 
@@ -321,7 +328,11 @@ export function loadBrowserHistoryService() {
 
 export function loadDappService() {
   return loadFeatureService('dappService', async () => {
-    const { DappService } = await import('./dappService');
+    const [{ DappService }, { disconnectDappsWithUnsupportedChain }] =
+      await Promise.all([
+        import('./dappService'),
+        import('../serviceApi/dappUnsupportedChain'),
+      ]);
     const preferenceService = requireCoreService('preferenceService');
     const dappService = new DappService({
       storageAdapter: appStorage,
@@ -330,6 +341,8 @@ export function loadDappService() {
       [APP_STORE_NAMES.preference]: preferenceService,
     });
     registerService('dappService', dappService);
+    // the chain list may have changed while the dapps were not loaded
+    disconnectDappsWithUnsupportedChain();
   });
 }
 

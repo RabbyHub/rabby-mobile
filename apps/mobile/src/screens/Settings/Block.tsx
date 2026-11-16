@@ -55,6 +55,7 @@ type GenerateNodeCtx = {
 
 function BlockItem({
   label,
+  labelSuffix,
   icon,
   rightTextNode,
   rightNode,
@@ -67,6 +68,8 @@ function BlockItem({
   accessibilityLabel,
 }: React.PropsWithChildren<{
   label?: React.ReactNode;
+  /** Rendered right after the label on the same line, e.g. an info icon. */
+  labelSuffix?: React.ReactNode;
   icon?: React.ReactNode | React.FC<SvgProps>;
   rightTextNode?: React.ReactNode | ((ctx: GenerateNodeCtx) => React.ReactNode);
   rightNode?: React.ReactNode | ((ctx: GenerateNodeCtx) => React.ReactNode);
@@ -81,17 +84,31 @@ function BlockItem({
     getStyle: getBlockItemStyles,
   });
 
-  children = children || (
+  const labelNode = (
     <Text
       numberOfLines={1}
-      style={{
-        color: colors['neutral-body'],
-        fontSize: 16,
-        ...RoundedFontStyles.bold,
-      }}>
+      style={[
+        {
+          color: colors['neutral-body'],
+          fontSize: 16,
+          ...RoundedFontStyles.bold,
+        },
+        !!labelSuffix && styles.labelBeforeSuffix,
+      ]}>
       {label}
     </Text>
   );
+
+  children =
+    children ||
+    (labelSuffix ? (
+      <View style={styles.labelRow}>
+        {labelNode}
+        {labelSuffix}
+      </View>
+    ) : (
+      labelNode
+    ));
 
   const MaybeIconEle = icon as React.FC<SvgProps>;
 
@@ -155,7 +172,7 @@ function BlockItem({
   );
 }
 
-const getBlockItemStyles = createGetStyles2024(colors => {
+const getBlockItemStyles = createGetStyles2024(({ colors2024 }) => {
   return {
     container: {
       flexDirection: 'row',
@@ -189,9 +206,21 @@ const getBlockItemStyles = createGetStyles2024(colors => {
       // ...makeDebugBorder(),
     },
     defaultRightText: {
-      color: colors['neutral-title-1'],
+      color: colors2024['neutral-title-1'],
       fontWeight: '400',
       fontSize: 14,
+    },
+    // A long label truncates so the suffix stays on the row, clear of the
+    // right node.
+    labelRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+      maxWidth: '100%',
+      paddingRight: 8,
+    },
+    labelBeforeSuffix: {
+      flexShrink: 1,
     },
   };
 });
@@ -203,6 +232,7 @@ export type SettingConfBlock = {
   items: Pick<
     React.ComponentProps<typeof BlockItem>,
     | 'label'
+    | 'labelSuffix'
     | 'icon'
     | 'onPress'
     | 'rightTextNode'

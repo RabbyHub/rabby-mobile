@@ -1,3 +1,4 @@
+import { PerpsProPositionTpSlCancelAction } from './PerpsProPositionTpSlCancelAction';
 import AutoLockView from '@/components/AutoLockView';
 import {
   BOTTOM_BUTTON_BOTTOM_OFFSET,
@@ -85,11 +86,15 @@ const LAYOUT_TOLERANCE = 1;
 
 export const PerpsProPositionTpSlSheet: React.FC<{
   amountUnit: PerpsProTradeAmountUnit;
+  cancelAllOids?: readonly number[] | null;
   cancelingOids: readonly number[];
   confirmedCancelledOids: readonly number[];
   coveredByReview: boolean;
   defaultTab: 'partial' | 'position';
   market: PerpsPositionTpSlMarketSnapshot;
+  onCancelAllOrders: (
+    orders: readonly PerpsPositionTpSlOrderViewModel[],
+  ) => void;
   onCancelOrder: (order: PerpsPositionTpSlOrderViewModel) => void;
   onClose: () => void;
   onReview: (draft: PerpsPositionTpSlDraft) => void;
@@ -105,11 +110,13 @@ export const PerpsProPositionTpSlSheet: React.FC<{
 }> = React.memo(
   ({
     amountUnit,
+    cancelAllOids = null,
     cancelingOids,
     confirmedCancelledOids,
     coveredByReview,
     defaultTab,
     market,
+    onCancelAllOrders,
     onCancelOrder,
     onClose,
     onReview,
@@ -304,9 +311,17 @@ export const PerpsProPositionTpSlSheet: React.FC<{
       }),
       [positionFormOrders, visiblePosition],
     );
-    const hasPartialOrders = visiblePosition.tpslOrders.some(
+    const partialOrders = visiblePosition.tpslOrders.filter(
       order => order.scope === 'partial',
     );
+    const hasPartialOrders = partialOrders.length > 0;
+    const cancelAllOidSet = useMemo(
+      () => new Set(cancelAllOids),
+      [cancelAllOids],
+    );
+    const remainingCancelCount = partialOrders.filter(order =>
+      cancelAllOidSet.has(order.oid),
+    ).length;
     const isPartialList =
       tab === 'partial' && partialPage === 'list' && hasPartialOrders;
     const isInlineEmpty =
@@ -617,12 +632,23 @@ export const PerpsProPositionTpSlSheet: React.FC<{
           />
         </View>
         {isPartialList ? (
-          <PerpsProPositionTpSlAddButton
-            pending={interactionLocked}
-            onAdd={() => {
-              if (!interactionLocked) setPartialPage('add');
-            }}
-          />
+          <View style={styles.listActions}>
+            <PerpsProPositionTpSlAddButton
+              pending={interactionLocked}
+              onAdd={() => {
+                if (!interactionLocked) setPartialPage('add');
+              }}
+            />
+            <PerpsProPositionTpSlCancelAction
+              disabled={interactionLocked || cancelingOids.length > 0}
+              label={t('page.perps.pro.openOrders.cancelAll')}
+              loading={cancelAllOids !== null}
+              remainingCount={remainingCancelCount}
+              onPress={() => onCancelAllOrders(partialOrders)}
+              style={styles.cancelAllButton}
+              textStyle={styles.cancelAllText}
+            />
+          </View>
         ) : null}
       </View>
     );
@@ -962,12 +988,12 @@ const getStyle = createGetStyles2024(
     return {
       ...dialog,
       listPage: { flex: 1 },
-      listCard: { flex: 1, marginHorizontal: 16, marginTop: 8 },
+      listCard: { flex: 1, marginHorizontal: 12, marginTop: 8 },
       orderScroll: { flex: 1 },
       orderScrollContent: {
         paddingBottom: Math.max(12, safeAreaInsets.bottom),
       },
-      formTabs: { marginHorizontal: 16, marginTop: 8 },
+      formTabs: { marginHorizontal: 12, marginTop: 8 },
       tabRow: {
         alignItems: 'center',
         flexDirection: 'row',
@@ -975,7 +1001,23 @@ const getStyle = createGetStyles2024(
         justifyContent: 'space-between',
         marginBottom: 8,
       },
-      tabs: { flexDirection: 'row', paddingLeft: 8 },
+      listActions: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+      cancelAllButton: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: colors2024['neutral-bg-5'],
+        height: 26,
+        borderRadius: 6,
+        paddingHorizontal: 8,
+      },
+      cancelAllText: {
+        color: colors2024['neutral-title-1'],
+        fontFamily: 'SF Pro Rounded',
+        fontSize: 12,
+        fontWeight: '700',
+        lineHeight: 16,
+      },
+      tabs: { flexDirection: 'row' },
       tab: {
         alignItems: 'center',
         borderRadius: 120,

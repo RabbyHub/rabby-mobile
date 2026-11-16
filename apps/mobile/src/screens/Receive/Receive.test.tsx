@@ -1,6 +1,6 @@
 import React from 'react';
 import { act, fireEvent, render } from '@testing-library/react-native';
-import { StyleSheet } from 'react-native';
+import { Image, StyleSheet } from 'react-native';
 import { themeColorsNext2024 } from '@rabby-wallet/base-utils/src/isomorphic/theme-colors';
 import { Button } from '@/components2024/Button';
 import { createGlobalBottomSheetModal2024 } from '@/components2024/GlobalBottomSheetModal';
@@ -109,7 +109,24 @@ jest.mock('@/utils/chain', () => ({
 jest.mock('@/components/Chain/TestnetChainLogo', () => ({
   TestnetChainLogo: () => null,
 }));
-jest.mock('@/assets/icons/common', () => ({ RcArrowRightCC: () => null }));
+jest.mock('@debank/common', () => ({
+  CHAINS_ENUM: {
+    ETH: 'ETH',
+    BASE: 'BASE',
+    ARBITRUM: 'ARBITRUM',
+    OP: 'OP',
+    BSC: 'BSC',
+  },
+}));
+jest.mock('@/hooks/useChainList', () => ({
+  useMainnetChainList: () =>
+    ['POLYGON', 'BSC', 'ETH', 'ARBITRUM', 'BASE'].map(chain => ({
+      enum: chain,
+      name: chain,
+      logo: `https://example.invalid/${chain}.png`,
+    })),
+}));
+jest.mock('@/assets2024/icons/common/right-cc.svg', () => () => null);
 jest.mock('@/assets2024/singleHome/copy.svg', () => () => null);
 jest.mock('react-native-qrcode-svg', () => () => null);
 jest.mock('react-native-haptic-feedback', () => ({ trigger: jest.fn() }));
@@ -136,7 +153,14 @@ describe('Receive chain selector contrast', () => {
       );
       const buttonBackground =
         palette[isLight ? 'neutral-bg-2' : 'neutral-bg-4'];
-      expect(getButton().props.title).toBe('page.receive.allEVMChain');
+      expect(
+        view.UNSAFE_getAllByType(Image).map(image => image.props.source.uri),
+      ).toEqual(
+        ['ETH', 'BASE', 'ARBITRUM'].map(
+          chain => `https://example.invalid/${chain}.png`,
+        ),
+      );
+      expect(view.getByText('+2')).toBeTruthy();
       expect(
         StyleSheet.flatten(getButton().props.buttonStyle).backgroundColor,
       ).not.toBe(cardBackground);

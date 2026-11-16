@@ -2,7 +2,7 @@ import BigNumber from 'bignumber.js';
 
 import {
   isPerpsProPriceProtocolValid,
-  normalizePerpsProCalculatedPrice,
+  roundPerpsProTpSlPrice,
 } from '@/utils/perpsPriceProtocol';
 
 export type PerpsProTpSlMode = 'pnl' | 'price' | 'roi';
@@ -115,7 +115,7 @@ export const normalizePerpsProTpSlPrice = ({
   price: BigNumber;
   szDecimals: number;
 }) => {
-  return normalizePerpsProCalculatedPrice(price, szDecimals);
+  return roundPerpsProTpSlPrice(price, szDecimals);
 };
 
 type PerpsProTpSlLegCalculation =

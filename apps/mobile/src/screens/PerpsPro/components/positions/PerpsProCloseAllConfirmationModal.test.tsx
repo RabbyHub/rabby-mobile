@@ -122,7 +122,7 @@ describe('PerpsProCloseAllConfirmationModal', () => {
       gap: 16,
     });
     const confirm = screen.getByTestId('perps-pro-close-all-confirm');
-    expect(confirm.props.height).toBe(40);
+    expect(confirm.props.height).toBe(48);
     expect(StyleSheet.flatten(confirm.props.buttonStyle)).toMatchObject({
       borderRadius: 10,
       backgroundColor: '#23C0B0',

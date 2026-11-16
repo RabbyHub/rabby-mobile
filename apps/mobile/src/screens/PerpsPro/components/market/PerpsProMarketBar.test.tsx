@@ -60,13 +60,14 @@ const market = {
 
 describe('PerpsProMarketBar', () => {
   it('exposes independent market and K-line actions', () => {
-    const onOpenKline = jest.fn();
+    const onToggleKline = jest.fn();
     const onPress = jest.fn();
     render(
       <PerpsProMarketBar
+        klineOpen
         market={market}
-        onOpenKline={onOpenKline}
         onPress={onPress}
+        onToggleKline={onToggleKline}
       />,
     );
 
@@ -74,10 +75,13 @@ describe('PerpsProMarketBar', () => {
     fireEvent.press(screen.getByTestId('perps-pro-kline-trigger'));
 
     expect(onPress).toHaveBeenCalledTimes(1);
-    expect(onOpenKline).toHaveBeenCalledTimes(1);
+    expect(onToggleKline).toHaveBeenCalledTimes(1);
     expect(
       screen.getByTestId('perps-pro-kline-trigger').props.accessibilityLabel,
     ).toBe('page.perps.pro.chart.open');
+    expect(
+      screen.getByTestId('perps-pro-kline-trigger').props.accessibilityState,
+    ).toMatchObject({ expanded: true });
     expect(
       React.Children.count(
         screen.getByTestId('perps-pro-market-actions').props.children,
@@ -103,17 +107,18 @@ describe('PerpsProMarketBar', () => {
   });
 
   it('disables the K-line action when no market is resolved', () => {
-    const onOpenKline = jest.fn();
+    const onToggleKline = jest.fn();
     render(
       <PerpsProMarketBar
+        klineOpen={false}
         market={null}
-        onOpenKline={onOpenKline}
         onPress={jest.fn()}
+        onToggleKline={onToggleKline}
       />,
     );
 
     fireEvent.press(screen.getByTestId('perps-pro-kline-trigger'));
-    expect(onOpenKline).not.toHaveBeenCalled();
+    expect(onToggleKline).not.toHaveBeenCalled();
     expect(
       screen.getByTestId('perps-pro-kline-trigger').props.accessibilityState,
     ).toMatchObject({ disabled: true });
@@ -123,8 +128,9 @@ describe('PerpsProMarketBar', () => {
     render(
       <PerpsProMarketBar
         market={{ ...market, sourceTag: 'xyz' }}
-        onOpenKline={jest.fn()}
+        klineOpen={false}
         onPress={jest.fn()}
+        onToggleKline={jest.fn()}
       />,
     );
 

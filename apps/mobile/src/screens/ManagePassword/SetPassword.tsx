@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, ActivityIndicator, ScrollView, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import * as Yup from 'yup';
@@ -12,6 +12,7 @@ import { FormInput } from '@/components/Form/Input';
 
 import { default as RcPasswordLockCC } from './icons/password-lock-cc.svg';
 import { CheckBoxCircled } from '@/components/Icons/Checkbox';
+import { DataAnalysisCard } from '@/components2024/OnboardingConsent';
 import { getFormikErrorsCount, useAppFormik } from '@/utils/patch';
 import { toast, toastWithIcon } from '@/components2024/Toast';
 import { apisLock } from '@/core/apis';
@@ -37,6 +38,7 @@ import { IS_IOS } from '@/core/native/utils';
 import type { TextInput } from '@/components/Typography';
 import { Text } from '@/components/Typography';
 import { setUserBehaviorTrackingOptOutSync } from '@/core/serviceApi/preference';
+import { getUserBehaviorTrackingOptOut } from '@/utils/trackingOptOut';
 
 const INIT_FORM_DATA = __DEV__
   ? { password: APP_TEST_PWD, confirmPassword: APP_TEST_PWD, checked: true }
@@ -57,6 +59,11 @@ const LAYOUTS = {
 
 function useSetupPasswordForm() {
   const { t } = useTranslation();
+  // Users reach this page from Settings, where the same switch lives, so the
+  // card starts from what they see there instead of an onboarding default.
+  const [initialEnableDataAnalysis] = React.useState(
+    () => !getUserBehaviorTrackingOptOut(),
+  );
   const yupSchema = React.useMemo(() => {
     const passSchema = Yup.string()
       .default(INIT_FORM_DATA.password)
@@ -79,8 +86,9 @@ function useSetupPasswordForm() {
               ),
         }),
       checked: Yup.boolean().default(INIT_FORM_DATA.checked).oneOf([true]),
+      enableDataAnalysis: Yup.boolean().default(initialEnableDataAnalysis),
     });
-  }, [t]);
+  }, [t, initialEnableDataAnalysis]);
 
   const navigation = useRabbyAppNavigation();
   const route =
@@ -101,7 +109,9 @@ function useSetupPasswordForm() {
 
       if (getFormikErrorsCount(errors)) return;
 
-      setUserBehaviorTrackingOptOutSync(false);
+      // Persist the card's value either way: untouched, it writes back the
+      // current setting; changed, it is the user's new choice.
+      setUserBehaviorTrackingOptOutSync(!values.enableDataAnalysis);
 
       const toastHide = toastWithIcon(() => (
         <ActivityIndicator style={{ marginRight: 6 }} />
@@ -205,7 +215,11 @@ export default function SetPasswordScreen() {
           <Text style={styles.title2}>{t('page.createPassword.subTitle')}</Text>
         </View>
         <View style={styles.bodyContainer}>
-          <View style={styles.formWrapper}>
+          <ScrollView
+            contentContainerStyle={styles.formWrapper}
+            alwaysBounceVertical={false}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}>
             <View style={styles.inputHorizontalGroup}>
               <FormInput
                 ref={passwordInputRef}
@@ -252,6 +266,14 @@ export default function SetPasswordScreen() {
                 }}
                 errorText={formik.errors.confirmPassword}
               />
+
+              <DataAnalysisCard
+                style={styles.dataAnalysisCard}
+                value={formik.values.enableDataAnalysis}
+                onValueChange={value => {
+                  formik.setFieldValue('enableDataAnalysis', value, true);
+                }}
+              />
             </View>
             <TouchableView
               style={styles.agreementWrapper}
@@ -289,7 +311,7 @@ export default function SetPasswordScreen() {
                 </TouchableText>
               </View>
             </TouchableView>
-          </View>
+          </ScrollView>
         </View>
         <View
           style={[
@@ -364,13 +386,15 @@ const getStyles = createGetStyles(colors => {
       paddingBottom: 24,
       // ...makeDebugBorder()
     },
+    // Fills the body so the agreement stays at the bottom, and scrolls when
+    // the card does not fit above it on a short screen.
     formWrapper: {
-      width: '100%',
-      height: '100%',
+      flexGrow: 1,
       paddingHorizontal: 20,
       flexDirection: 'column',
       justifyContent: 'space-between',
       alignItems: 'center',
+      gap: 24,
     },
     inputHorizontalGroup: {
       width: '100%',
@@ -386,6 +410,13 @@ const getStyles = createGetStyles(colors => {
     input: {
       backgroundColor: colors['neutral-card1'],
       fontSize: 14,
+    },
+    // This page still uses the classic theme: the card takes the inputs'
+    // surface color instead of its own 2024 background.
+    dataAnalysisCard: {
+      alignSelf: 'stretch',
+      marginTop: 24,
+      backgroundColor: colors['neutral-card1'],
     },
 
     agreementWrapper: {

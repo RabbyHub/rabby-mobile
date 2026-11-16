@@ -3,6 +3,8 @@ import { RcIconRightCC } from '@/assets/icons/common';
 import { useTheme2024 } from '@/hooks/theme';
 import { findChain } from '@/utils/chain';
 import { createGetStyles2024 } from '@/utils/styles';
+import { makeHistoryDetailColors } from '../detailColors';
+import { HistoryDetailArrow } from '../HistoryDetailArrow';
 import type { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import React, { useMemo } from 'react';
 import RcIconJumpCC from '@/assets2024/icons/history/IconJumpCC.svg';
@@ -48,7 +50,6 @@ import { HistoryItemTokenPrice } from '../HistoryItemTokenPrice';
 import { Media } from '@/components/Media';
 import { IconDefaultNFT } from '@/assets/icons/nft';
 import { ellipsisOverflowedText } from '@/utils/text';
-import RcIconSingleArrow from '@/assets2024/icons/history/IconSingleArrow.svg';
 import {
   ActionDetailItem,
   ActionDetailSection,
@@ -63,7 +64,7 @@ interface Props {
 }
 
 export const Swap: React.FC<Props> = ({ data, isSingleAddress, account }) => {
-  const { styles, colors2024, isLight } = useTheme2024({ getStyle });
+  const { styles, isLight } = useTheme2024({ getStyle });
 
   const { t } = useTranslation();
   const { bottom } = useSafeAreaInsets();
@@ -239,11 +240,7 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress, account }) => {
                         alignItems: 'center',
                         width: 26,
                       }}>
-                      <RcIconSingleArrow
-                        width={26}
-                        height={26}
-                        color={colors2024['neutral-bg-2']}
-                      />
+                      <HistoryDetailArrow />
                     </View>
                   </View>
                 </TouchableOpacity>
@@ -318,11 +315,7 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress, account }) => {
                         alignItems: 'center',
                         width: 26,
                       }}>
-                      <RcIconSingleArrow
-                        width={26}
-                        height={26}
-                        color={colors2024['neutral-bg-2']}
-                      />
+                      <HistoryDetailArrow />
                     </View>
                   </View>
                 </TouchableOpacity>
@@ -488,9 +481,7 @@ const getStyle = createGetStyles2024(
       flexDirection: 'column',
       position: 'relative',
 
-      backgroundColor: !isLight
-        ? colors2024['neutral-bg-2']
-        : colors2024['neutral-bg-1'],
+      backgroundColor: makeHistoryDetailColors({ isLight, colors2024 }).card,
       borderRadius: 16,
       padding: 16,
     },
@@ -538,9 +529,7 @@ const getStyle = createGetStyles2024(
       paddingTop: 12,
       paddingHorizontal: 20,
       paddingBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
-      backgroundColor: !isLight
-        ? colors2024['neutral-bg-2']
-        : colors2024['neutral-bg-1'],
+      backgroundColor: makeHistoryDetailColors({ isLight, colors2024 }).footer,
     },
     itemAddressText: {
       color: colors2024['neutral-secondary'],
@@ -563,9 +552,7 @@ const getStyle = createGetStyles2024(
       width: 20,
       height: 20,
       borderWidth: 1,
-      borderColor: !isLight
-        ? colors2024['neutral-bg-2']
-        : colors2024['neutral-bg-1'],
+      borderColor: makeHistoryDetailColors({ isLight, colors2024 }).card,
       borderRadius: 1000,
     },
   }),

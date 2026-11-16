@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next';
 
 import type { PerpsProTradeTif } from '../../model/trade';
 import { getPerpsProDialogStyles } from '../common/perpsProDialogVisual';
+import { PerpsProDialogOptionCheck } from '../common/PerpsProDialogOptionCheck';
 import { PerpsProDialogBackdrop } from '../common/PerpsProDialogBackdrop';
 import { usePerpsProSheetNavigationRegistration } from '../common/perpsProSheetNavigationRegistry';
 
@@ -94,6 +95,7 @@ export const PerpsProTifSheet: React.FC<{
                     <Text style={styles.label}>{option.label}</Text>
                     <Text style={styles.description}>{option.description}</Text>
                   </View>
+                  <PerpsProDialogOptionCheck active={active} />
                 </Pressable>
               );
             })}

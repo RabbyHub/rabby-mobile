@@ -39,7 +39,7 @@ export const LowCreditModal: React.FC<LowCreditModalProps> = ({
   onCancel,
   token,
 }) => {
-  const { styles, colors, colors2024 } = useTheme2024({ getStyle: getStyles });
+  const { styles, colors } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
 
   const openTokenAddress = () => {

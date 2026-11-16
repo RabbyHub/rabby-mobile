@@ -9,6 +9,7 @@ import { Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { getPerpsProDialogStyles } from '../common/perpsProDialogVisual';
+import { PerpsProDialogOptionCheck } from '../common/PerpsProDialogOptionCheck';
 import { PerpsProDialogBackdrop } from '../common/PerpsProDialogBackdrop';
 import { usePerpsProSheetNavigationRegistration } from '../common/perpsProSheetNavigationRegistry';
 
@@ -113,6 +114,7 @@ export const PerpsProMarginModeSheet: React.FC<{
                         {option.description}
                       </Text>
                     </View>
+                    <PerpsProDialogOptionCheck active={active} />
                   </Pressable>
                 );
               })}

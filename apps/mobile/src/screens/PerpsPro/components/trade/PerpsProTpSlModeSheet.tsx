@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next';
 
 import type { PerpsProTpSlMode } from '../../model/tpsl';
 import { getPerpsProDialogStyles } from '../common/perpsProDialogVisual';
+import { PerpsProDialogOptionCheck } from '../common/PerpsProDialogOptionCheck';
 import { PerpsProDialogBackdrop } from '../common/PerpsProDialogBackdrop';
 import { usePerpsProSheetNavigationRegistration } from '../common/perpsProSheetNavigationRegistry';
 
@@ -107,6 +108,7 @@ export const PerpsProTpSlModeSheet: React.FC<{
                         {option.description}
                       </Text>
                     </View>
+                    <PerpsProDialogOptionCheck active={active} />
                   </Pressable>
                 );
               })}

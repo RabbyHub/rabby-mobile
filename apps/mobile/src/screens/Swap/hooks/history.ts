@@ -6,18 +6,16 @@ import { uniqBy } from 'lodash';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import useAsync from 'react-use/lib/useAsync';
 import { refreshIdAtom } from './atom';
-import { useInterval, useMount, useRequest } from 'ahooks';
+import { useInterval, useRequest } from 'ahooks';
 import { swapServiceApi } from '@/core/serviceApi/swap';
 import {
   getTransactionHistoryRecentPendingSnapshot,
   getTransactionHistoryRecentTxSnapshot,
 } from '@/core/serviceApi/transactionHistory';
-import { findChain } from '@/utils/chain';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import type {
   SwapTxHistoryItem,
   SendTxHistoryItem,
-  TransactionGroup,
 } from '@/core/services/transactionHistory';
 import { useTransactionHistoryServiceReady } from '@/core/serviceApi/transactionHistoryHooks';
 const swapTxHistoryVisibleAtom = atom(false);
@@ -30,7 +28,16 @@ export const useSwapTxHistoryVisible = () => {
   };
 };
 
-const getSwapList = async (addr: string, start = 0, limit = 5) => {
+const SWAP_HISTORY_PAGE_SIZE = 20;
+
+const swapHistoryKey = (item: SwapItem) =>
+  `${item.chain}:${item.tx_id.toLowerCase()}`;
+
+const getSwapList = async (
+  addr: string,
+  start = 0,
+  limit = SWAP_HISTORY_PAGE_SIZE,
+) => {
   const data = await openapi.getSwapTradeList({
     user_addr: addr,
     start: `${start}`,
@@ -40,6 +47,9 @@ const getSwapList = async (addr: string, start = 0, limit = 5) => {
     list: data?.history_list,
     last: data,
     totalCount: data?.total_cnt,
+    // 后端按数据库行 offset，返回前会丢掉无法展示的行。
+    // 下一页必须按本次请求的行数推进，不能用已经展示的条数。
+    nextStart: start + limit,
   };
 };
 
@@ -65,18 +75,27 @@ export const useSwapHistory = () => {
     mutate,
     reload,
   } = useInfiniteScroll(
-    d =>
-      getSwapList(
+    async d => {
+      const page = await getSwapList(
         addr,
-        d?.list?.length && d?.list?.length > 1 ? d?.list?.length : 0,
-        20,
-      ),
+        d?.nextStart ?? 0,
+        SWAP_HISTORY_PAGE_SIZE,
+      );
+      if (!d?.list?.length || !page.list?.length) {
+        return page;
+      }
+      const seen = new Set(d.list.map(swapHistoryKey));
+      return {
+        ...page,
+        list: page.list.filter(item => !seen.has(swapHistoryKey(item))),
+      };
+    },
     {
       isNoMore(data) {
-        if (data) {
-          return data?.list.length >= data?.totalCount;
+        if (!data || typeof data.totalCount !== 'number') {
+          return !data;
         }
-        return true;
+        return (data.nextStart ?? 0) >= data.totalCount;
       },
       manual: !addr,
     },
@@ -84,7 +103,7 @@ export const useSwapHistory = () => {
 
   const { value } = useAsync(async () => {
     if (addr) {
-      return getSwapList(addr, 0, 20);
+      return getSwapList(addr, 0, SWAP_HISTORY_PAGE_SIZE);
     }
   }, [addr, refreshSwapTxListCount]);
 
@@ -92,15 +111,16 @@ export const useSwapHistory = () => {
     if (value?.list) {
       mutate(d => {
         if (!d) {
-          return;
+          return value;
         }
         return {
           last: d?.last,
-          totalCount: d?.totalCount,
+          totalCount: value.totalCount ?? d?.totalCount,
+          nextStart: d.nextStart,
           list: uniqBy(
             [...(value.list || []), ...(d?.list || [])],
-            e => `${e.chain}-${e.tx_id}`,
-          ) as SwapItem[],
+            swapHistoryKey,
+          ),
         };
       });
     }
@@ -132,12 +152,8 @@ export const useSwapHistory = () => {
   };
 };
 
-export const swapPendingCountAtom = atom(0);
 export const swapPendingTxDataAtom = atom<SwapItem | null>(null);
 export const swapHistoryRedDotAtom = atom(false);
-export const useReadPendingCount = () => {
-  return useAtomValue(swapPendingCountAtom);
-};
 
 export const fetchLocalSwapPendingTx = (address: string) => {
   return getTransactionHistoryRecentPendingSnapshot(
@@ -170,14 +186,6 @@ export const fetchRefreshLocalData = (
   }
 };
 
-export const usePendingTxData = () => {
-  return useAtomValue(swapPendingCountAtom);
-};
-
-export const useReadSwapHistoryRedDot = () => {
-  return useAtomValue(swapHistoryRedDotAtom);
-};
-
 export const useClearSwapHistoryRedDot = () => {
   const setSwapHistoryRedDot = useSetAtom(swapHistoryRedDotAtom);
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
@@ -200,7 +208,6 @@ export const useClearSwapHistoryRedDot = () => {
 
 export const usePollSwapPendingNumber = (timer = 10000, enabled = true) => {
   const transactionHistoryReady = useTransactionHistoryServiceReady();
-  const [, setCount] = useAtom(swapPendingCountAtom);
   const [, setTxData] = useAtom(swapPendingTxDataAtom);
   const [localPendingTxData, setLocalPendingTxData] = useState<
     SwapTxHistoryItem | SendTxHistoryItem | null

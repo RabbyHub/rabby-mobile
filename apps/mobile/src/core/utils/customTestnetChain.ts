@@ -1,8 +1,17 @@
 import { CHAINS_ENUM } from '@debank/common';
 import { intToHex } from 'ethereumjs-util';
-import type { TestnetChain, TestnetChainBase } from '@/types/customTestnet';
+import type {
+  CustomTestnetEip1559Detection,
+  TestnetChain,
+  TestnetChainBase,
+} from '@/types/customTestnet';
 
-export const createTestnetChain = (chain: TestnetChainBase): TestnetChain => {
+export const createTestnetChain = (
+  chain: TestnetChainBase,
+  options?: {
+    supportsEip1559?: boolean;
+  },
+): TestnetChain => {
   return {
     ...chain,
     id: +chain.id,
@@ -18,9 +27,25 @@ export const createTestnetChain = (chain: TestnetChainBase): TestnetChain => {
       chain.name.substring(0, 3),
     )}</text></svg>`,
     eip: {
-      1559: false,
+      // unknown or failed detection keeps the chain on legacy transactions
+      1559: !!options?.supportsEip1559,
     },
     isTestnet: true,
     severity: 0,
   };
+};
+
+/**
+ * Chain list for custom networks, with EIP-1559 support taken from the
+ * detection results instead of the user-entered config.
+ */
+export const createTestnetChainList = (
+  customTestnet: Record<string, TestnetChainBase>,
+  eip1559?: Record<string, CustomTestnetEip1559Detection> | null,
+): TestnetChain[] => {
+  return Object.values(customTestnet).map(item =>
+    createTestnetChain(item, {
+      supportsEip1559: !!eip1559?.[item.id]?.supported,
+    }),
+  );
 };
