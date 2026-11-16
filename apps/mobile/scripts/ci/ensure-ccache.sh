@@ -55,6 +55,10 @@ detect_platform() {
 pinned_sha256() {
   case "$1" in
     darwin-arm64) echo '5fd2e024d15c0231165661f792b3e7d16f43b788526c857c734948c5503022da' ;;
+    # Built from the 4.14.3 source in an Ubuntu 20.04 container (gcc-11,
+    # static libstdc++/libgcc) so it runs on the legacy 20.04 builders; it only
+    # needs the system libzstd.
+    linux-x86_64) echo '1314ad507ade7d8fc394e99eeaca021e3bcbe07a1662fb6492cac54fbaebc92f' ;;
     *) echo '' ;;
   esac
 }
