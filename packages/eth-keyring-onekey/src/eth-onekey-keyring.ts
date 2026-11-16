@@ -548,7 +548,6 @@ class OneKeyKeyring extends EventEmitter {
                   await this._resolvePassphraseStateForImport({
                     connectId,
                     protocol: this._protocol,
-                    unlockedAttachPin: this._unlockedAttachPin,
                     walletType: session.payload.walletType,
                     passphraseState: session.payload.passphraseState,
                   });
@@ -1175,13 +1174,17 @@ class OneKeyKeyring extends EventEmitter {
    * that identity with a useEmptyPassphrase probe and, if they match, treat the
    * session as the standard wallet so the id is never persisted. The probe runs
    * only for an ambiguous V2 session (hidden type + non-empty state). Skip
-   * attach-PIN sessions because the probe would prompt for the Main PIN. A
-   * failed probe keeps the hidden id so import can proceed, unless cancelled.
+   * attach-PIN sessions because the probe would prompt for the Main PIN. After
+   * opening a new session, refresh the status instead of trusting the
+   * pre-session flag. Only the legacy getPassphraseState resume path may use
+   * that flag to skip the refresh and probe. A failed probe keeps the hidden id
+   * so import can proceed, unless cancelled.
    *
    * @param options0 - The imported wallet session.
    * @param options0.connectId - Device connect id used for the identity probe.
    * @param options0.protocol - Hardware protocol reported by getDeviceState.
-   * @param options0.unlockedAttachPin - Whether an attach PIN unlocked the device.
+   * @param options0.unlockedAttachPin - Pre-session attach-PIN flag; only pass
+   * it when resuming via getPassphraseState without opening a new session.
    * @param options0.walletType - Wallet type reported by openWalletSession.
    * @param options0.passphraseState - Wallet identity returned by the SDK.
    * @returns The hidden wallet id, or undefined for the standard wallet.

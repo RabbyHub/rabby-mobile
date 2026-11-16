@@ -747,6 +747,52 @@ describe('OneKeyKeyring unlock wallet selection', () => {
   );
 
   it.each([false, true])(
+    'uses refreshed attach-PIN status %p after select-hidden instead of the pre-session true flag',
+    async unlockedAttachPin => {
+      const { bridge, keyring } = setup(undefined, {
+        passphraseProtection: true,
+        unlocked: true,
+        unlockedAttachPin: true,
+      });
+      mockOpenWalletSession(bridge).mockImplementation(async () => {
+        bridge.getDeviceState.mockResolvedValue({
+          success: true,
+          payload: { status: { unlocked: true, unlockedAttachPin } },
+        });
+        return createSession('hidden', 'standard-wallet-id');
+      });
+
+      expect(await keyring.unlock()).toBe('just unlocked');
+      expect(bridge.openWalletSession).toHaveBeenCalledTimes(1);
+      expect(bridge.openWalletSession).toHaveBeenCalledWith('connect-id', {
+        mode: 'select-hidden',
+      });
+      expect(bridge.getDeviceState).toHaveBeenCalledTimes(2);
+      expect(bridge.getDeviceState).toHaveBeenNthCalledWith(2, 'connect-id');
+      expect(bridge.getPassphraseState).toHaveBeenCalledTimes(
+        unlockedAttachPin ? 0 : 1,
+      );
+      expect(
+        bridge.getPassphraseState.mock.calls.every(
+          ([connectId, options]: [string, { useEmptyPassphrase?: boolean }?]) =>
+            connectId === 'connect-id' && options?.useEmptyPassphrase === true,
+        ),
+      ).toBe(true);
+      expect(keyring.passphraseState).toBe(
+        unlockedAttachPin ? 'standard-wallet-id' : undefined,
+      );
+      expect(bridge.evmGetPublicKey).toHaveBeenCalledWith(
+        'connect-id',
+        'device-id',
+        expect.objectContaining({
+          passphraseState: unlockedAttachPin ? 'standard-wallet-id' : undefined,
+          useEmptyPassphrase: !unlockedAttachPin,
+        }),
+      );
+    },
+  );
+
+  it.each([false, true])(
     'keeps the hidden wallet after a failed status refresh (throws=%p) and failed probe',
     async throws => {
       const { bridge, keyring } = setup(undefined, {
@@ -1030,7 +1076,7 @@ describe('OneKeyKeyring unlock wallet selection', () => {
         mode: 'select-hidden',
       });
       expect(bridge.initSession).not.toHaveBeenCalled();
-      expect(bridge.getDeviceState).toHaveBeenCalledTimes(1);
+      expect(bridge.getDeviceState).toHaveBeenCalledTimes(2);
       expect(bridge.getPassphraseState).not.toHaveBeenCalled();
       expect(bridge.evmGetPublicKey).toHaveBeenCalledTimes(1);
       expect(bridge.evmGetPublicKey).toHaveBeenCalledWith(
@@ -1070,6 +1116,10 @@ describe('OneKeyKeyring unlock wallet selection', () => {
         'connect-id',
         undefined,
       );
+      expect(bridge.getDeviceState).toHaveBeenCalledTimes(1);
+      expect(bridge.getPassphraseState).not.toHaveBeenCalledWith('connect-id', {
+        useEmptyPassphrase: true,
+      });
       expect(keyring.passphraseState).toBe('attach-pin-wallet-token');
     },
   );
