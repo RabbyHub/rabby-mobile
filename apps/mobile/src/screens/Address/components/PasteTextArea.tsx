@@ -28,6 +28,7 @@ const getStyles = (colors: AppColorsVariants) =>
     },
     textArea: {
       borderRadius: 8,
+      borderCurve: 'continuous',
       borderWidth: 1,
       borderStyle: 'solid',
       height: 120,

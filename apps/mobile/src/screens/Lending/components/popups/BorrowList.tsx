@@ -550,6 +550,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     paddingVertical: 12,
     backgroundColor: colors2024['neutral-bg-5'],
     borderRadius: 6,
+    borderCurve: 'continuous',
     marginTop: 0,
     gap: 2,
   },

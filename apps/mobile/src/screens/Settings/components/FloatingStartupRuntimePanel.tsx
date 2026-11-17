@@ -463,6 +463,7 @@ function FloatingStartupRuntimePanelContent() {
       borderBottomLeftRadius: activeSide === SIDE_LEFT ? 10 : 0,
       borderTopRightRadius: activeSide === SIDE_RIGHT ? 10 : 0,
       borderBottomRightRadius: activeSide === SIDE_RIGHT ? 10 : 0,
+      borderCurve: 'continuous',
     };
   }, [collapsed]);
 
@@ -476,6 +477,7 @@ function FloatingStartupRuntimePanelContent() {
       borderBottomLeftRadius: activeSide === SIDE_LEFT ? 0 : HANDLE_SIZE / 2,
       borderTopRightRadius: activeSide === SIDE_RIGHT ? 0 : HANDLE_SIZE / 2,
       borderBottomRightRadius: activeSide === SIDE_RIGHT ? 0 : HANDLE_SIZE / 2,
+      borderCurve: 'continuous',
     };
   });
 
@@ -617,6 +619,7 @@ const styles = StyleSheet.create({
     width: HANDLE_SIZE,
     height: HANDLE_SIZE,
     borderRadius: HANDLE_SIZE / 2,
+    borderCurve: 'continuous',
     borderWidth: StyleSheet.hairlineWidth,
     alignItems: 'center',
     justifyContent: 'center',
@@ -669,6 +672,7 @@ const styles = StyleSheet.create({
     minWidth: 72,
     flexGrow: 1,
     borderRadius: 6,
+    borderCurve: 'continuous',
     paddingHorizontal: 8,
     paddingVertical: 6,
     backgroundColor: 'rgba(255, 255, 255, 0.1)',

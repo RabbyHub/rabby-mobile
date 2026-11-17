@@ -22,6 +22,7 @@ const getStyles2024 = createGetStyles2024(({ colors2024 }) => ({
   button: {
     height: BOTTOM_BUTTON_DOUBLE_HEIGHT,
     borderRadius: 12,
+    borderCurve: 'continuous',
   },
   wrapper: {
     position: 'relative',

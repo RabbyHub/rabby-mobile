@@ -219,6 +219,7 @@ const getStyles = createGetStyles(colors => {
     },
     inputContainer: {
       borderRadius: 4,
+      borderCurve: 'continuous',
 
       height: 52,
     },

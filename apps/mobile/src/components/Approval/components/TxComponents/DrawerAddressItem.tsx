@@ -101,6 +101,7 @@ const getStyles = (colors: AppColorsVariants) =>
       alignItems: 'center',
       padding: 14,
       borderRadius: 8,
+      borderCurve: 'continuous',
       backgroundColor: colors['neutral-card-2'],
       marginBottom: 12,
       gap: 8,

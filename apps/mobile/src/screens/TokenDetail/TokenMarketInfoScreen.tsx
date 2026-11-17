@@ -707,6 +707,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
         ? colors2024['neutral-bg-1']
         : colors2024['neutral-bg-2'],
       borderRadius: 16,
+      borderCurve: 'continuous',
       position: 'relative',
       marginTop: 12,
       marginHorizontal: 12,
@@ -750,6 +751,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     },
     btnInnerContainer: {
       borderRadius: 12,
+      borderCurve: 'continuous',
     },
     searchTokenDanger: {
       flex: 1,
@@ -759,6 +761,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       padding: 8,
       backgroundColor: colors2024['red-light-1'],
       borderRadius: 8,
+      borderCurve: 'continuous',
       // marginTop: 12,
     },
     tokenRowContent: {
@@ -774,6 +777,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       padding: 8,
       backgroundColor: colors2024['orange-light-1'],
       borderRadius: 8,
+      borderCurve: 'continuous',
       // marginTop: 12,
     },
 
@@ -821,11 +825,13 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       backgroundColor: colors2024['neutral-body'],
       height: 3,
       borderRadius: 100,
+      borderCurve: 'continuous',
     },
     skeleton: {
       width: '100%',
       height: 200,
       borderRadius: 12,
+      borderCurve: 'continuous',
     },
     klineContainer: {},
   };

@@ -536,6 +536,7 @@ const getStyle = createGetStyles2024(ctx => {
     },
     chainContainer: {
       borderRadius: 16,
+      borderCurve: 'continuous',
       marginTop: 12,
       marginBottom: 30,
       paddingHorizontal: 16,
@@ -566,6 +567,7 @@ const getStyle = createGetStyles2024(ctx => {
       justifyContent: 'center',
       alignItems: 'center',
       borderRadius: 100,
+      borderCurve: 'continuous',
       backgroundColor: ctx.isLight
         ? 'rgba(0, 0, 0, 0.1)'
         : ctx.colors2024['neutral-line'],
@@ -597,6 +599,7 @@ const getStyle = createGetStyles2024(ctx => {
     inputContainer: {
       height: 76,
       borderRadius: 16,
+      borderCurve: 'continuous',
       paddingVertical: 20,
       paddingHorizontal: 20,
       backgroundColor: ctx.colors2024['neutral-bg-2'],
@@ -675,6 +678,7 @@ const getStyle = createGetStyles2024(ctx => {
       padding: 4,
       backgroundColor: 'rgba(80, 210, 193, 0.12)',
       borderRadius: 8,
+      borderCurve: 'continuous',
     },
     maxButtonText: {
       color: '#50D2C1',
@@ -690,6 +694,7 @@ const getStyle = createGetStyles2024(ctx => {
       padding: 4,
       backgroundColor: ctx.colors2024['neutral-line'],
       borderRadius: 100,
+      borderCurve: 'continuous',
       gap: 2,
     },
     tokenText: {
@@ -719,6 +724,7 @@ const getStyle = createGetStyles2024(ctx => {
       flex: 1,
       height: 40,
       borderRadius: 8,
+      borderCurve: 'continuous',
       backgroundColor: ctx.colors2024['neutral-bg-5'],
       alignItems: 'center',
       justifyContent: 'center',

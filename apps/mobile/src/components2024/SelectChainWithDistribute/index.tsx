@@ -224,6 +224,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   inputContainerStyle: {
     height: 46,
     borderRadius: 30,
+    borderCurve: 'continuous',
     paddingHorizontal: 20,
     borderBottomWidth: 0,
   },

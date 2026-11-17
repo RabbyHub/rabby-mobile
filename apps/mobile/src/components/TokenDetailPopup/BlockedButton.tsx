@@ -60,6 +60,7 @@ const getStyles = createGetStyles(colors => {
       flexDirection: 'row',
       alignItems: 'center',
       borderRadius: 4,
+      borderCurve: 'continuous',
       gap: 30,
     },
     selected: {

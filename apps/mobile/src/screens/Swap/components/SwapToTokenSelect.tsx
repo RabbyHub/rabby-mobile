@@ -425,6 +425,7 @@ const SwapToTokenSelect = ({
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   wrapper: {
     borderRadius: 100,
+    borderCurve: 'continuous',
     // TODO: backgroundColor: colors2024['neutral-card-2'],
     backgroundColor: colors2024['neutral-line'],
     // backgroundColor: colors2024['neutral-bg-2'],
@@ -439,6 +440,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   bridgeWrapper: {
     borderRadius: 12,
+    borderCurve: 'continuous',
     backgroundColor: colors2024['neutral-line'],
     padding: 4,
     flexDirection: 'row',
@@ -447,6 +449,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   recentItemWrapper: {
     borderRadius: 8,
+    borderCurve: 'continuous',
     backgroundColor: isLight
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-bg-2'],

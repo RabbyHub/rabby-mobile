@@ -70,6 +70,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     paddingLeft: 8,
     paddingRight: 8,
     borderRadius: 8,
+    borderCurve: 'continuous',
     overflow: 'hidden',
   },
   label: {

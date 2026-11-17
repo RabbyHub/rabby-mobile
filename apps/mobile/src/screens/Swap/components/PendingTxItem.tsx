@@ -338,6 +338,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     left: 0,
     top: 0,
     borderRadius: 30,
+    borderCurve: 'continuous',
   },
   rightIcon: {
     borderWidth: 2,
@@ -346,6 +347,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     right: -2,
     bottom: -3,
     borderRadius: 40,
+    borderCurve: 'continuous',
     backgroundColor: colors2024['neutral-bg-1'],
   },
   arrow: {
@@ -383,6 +385,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     width: 4,
     height: 4,
     borderRadius: 2,
+    borderCurve: 'continuous',
     marginHorizontal: 16,
     backgroundColor: colors2024['neutral-info'],
   },

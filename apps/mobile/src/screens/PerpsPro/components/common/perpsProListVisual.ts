@@ -15,6 +15,7 @@ export const getPerpsProInfoCardStyle = (
     backgroundColor:
       colors[isLight === false ? 'neutral-bg-2' : 'neutral-bg-1'],
     borderRadius: 12,
+    borderCurve: 'continuous',
     padding: 12,
     ...(isLight === false ? null : { boxShadow: PERPS_PRO_CARD_SHADOW }),
   } as const);

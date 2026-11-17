@@ -106,6 +106,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     borderRadius: 14,
+    borderCurve: 'continuous',
     backgroundColor: colors2024['neutral-card-1'],
   },
   symbol: {

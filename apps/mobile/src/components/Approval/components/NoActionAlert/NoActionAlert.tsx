@@ -14,6 +14,7 @@ const getStyles = (colors: AppColorsVariants) =>
     wrapper: {
       backgroundColor: colors['neutral-card-1'],
       borderRadius: 6,
+      borderCurve: 'continuous',
       padding: 15,
     },
     text: {

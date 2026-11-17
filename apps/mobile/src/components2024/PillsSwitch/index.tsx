@@ -85,6 +85,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     justifyContent: 'center',
     flexDirection: 'row',
     borderRadius: 100,
+    borderCurve: 'continuous',
     overflow: 'hidden',
     backgroundColor: colors2024['neutral-line'],
     width: '100%',
@@ -100,6 +101,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   itemActive: {
     backgroundColor: colors2024['neutral-bg-1'],
     borderRadius: 18,
+    borderCurve: 'continuous',
   },
   itemText: {
     fontSize: 14,

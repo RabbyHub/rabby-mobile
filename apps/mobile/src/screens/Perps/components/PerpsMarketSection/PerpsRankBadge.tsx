@@ -34,6 +34,7 @@ const getStyle = createGetStyles2024(() => ({
     width: 17,
     height: 17,
     borderRadius: 1000,
+    borderCurve: 'continuous',
     borderWidth: 1,
     borderColor: '#FFFFFF',
     alignItems: 'center',

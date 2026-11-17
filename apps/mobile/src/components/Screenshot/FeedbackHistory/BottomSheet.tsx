@@ -1110,6 +1110,7 @@ const getStyle = createGetStyles2024(
     },
     messageBubble: {
       borderRadius: 12,
+      borderCurve: 'continuous',
       padding: 12,
       minWidth: 0,
       flex: 1,
@@ -1146,6 +1147,7 @@ const getStyle = createGetStyles2024(
       width: 80,
       height: 80,
       borderRadius: 12,
+      borderCurve: 'continuous',
       backgroundColor: colors2024['neutral-bg-5'],
       borderWidth: 1,
       borderColor: colors2024['neutral-line'],
@@ -1157,6 +1159,7 @@ const getStyle = createGetStyles2024(
       width: 20,
       height: 20,
       borderRadius: 20,
+      borderCurve: 'continuous',
       alignItems: 'center',
       justifyContent: 'center',
       backgroundColor: 'rgba(0, 0, 0, 0.40)',
@@ -1221,6 +1224,7 @@ const getStyle = createGetStyles2024(
       width: 80,
       height: 80,
       borderRadius: 8,
+      borderCurve: 'continuous',
       marginTop: 0,
       alignSelf: 'flex-start',
       alignItems: 'center',
@@ -1237,6 +1241,7 @@ const getStyle = createGetStyles2024(
       borderWidth: 1,
       borderColor: colors2024['neutral-line'],
       borderRadius: 12,
+      borderCurve: 'continuous',
       overflow: 'hidden',
       backgroundColor: colors2024['neutral-bg-5'],
     },
@@ -1247,6 +1252,7 @@ const getStyle = createGetStyles2024(
       width: 21,
       height: 21,
       borderRadius: 21,
+      borderCurve: 'continuous',
     },
     mediaUploadMask: {
       position: 'absolute',
@@ -1257,6 +1263,7 @@ const getStyle = createGetStyles2024(
       width: 80,
       height: 80,
       borderRadius: 12,
+      borderCurve: 'continuous',
       alignItems: 'center',
       justifyContent: 'center',
       backgroundColor: 'rgba(0, 0, 0, 0.35)',
@@ -1278,6 +1285,7 @@ const getStyle = createGetStyles2024(
     replySubmitButton: {
       height: 32,
       borderRadius: 8,
+      borderCurve: 'continuous',
     },
     replySubmitButtonTitle: {
       fontFamily: 'SF Pro Rounded',

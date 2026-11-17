@@ -628,6 +628,7 @@ const getStyles = createGetStyles2024(ctx => ({
     paddingVertical: 8,
     paddingHorizontal: 10,
     borderRadius: 8,
+    borderCurve: 'continuous',
   },
   warningText: {
     fontSize: 14,

@@ -272,6 +272,7 @@ export const SearchedAddressItemInSheetModal = ({
 const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   root: {
     borderRadius: SELECT_ACCOUNT_ADDRESS_ITEM_RADIUS,
+    borderCurve: 'continuous',
     overflow: 'hidden',
     // backgroundColor: colors2024['neutral-bg-1'],
   },
@@ -280,6 +281,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   shadowView: {
     borderRadius: SELECT_ACCOUNT_ADDRESS_ITEM_RADIUS,
+    borderCurve: 'continuous',
     backgroundColor: isLight
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-bg-2'],
@@ -290,6 +292,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     borderWidth: 0,
     // borderColor: colors2024['neutral-line'],
     borderRadius: SELECT_ACCOUNT_ADDRESS_ITEM_RADIUS,
+    borderCurve: 'continuous',
     flex: 1,
     flexGrow: 1,
     backgroundColor: isLight
@@ -373,6 +376,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   walletIcon: {
     borderRadius: 12,
+    borderCurve: 'continuous',
   },
   modalNextButtonText: {
     fontFamily: 'SF Pro Rounded',

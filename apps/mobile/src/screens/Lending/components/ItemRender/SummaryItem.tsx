@@ -288,6 +288,7 @@ export default withLendingService(SummaryItem);
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   container: {
     borderRadius: 16,
+    borderCurve: 'continuous',
     backgroundColor: isLight
       ? 'rgba(255, 255, 255, 0.9)'
       : colors2024['neutral-bg-2'],
@@ -359,6 +360,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     paddingHorizontal: 4,
     paddingVertical: 2,
     borderRadius: 4,
+    borderCurve: 'continuous',
   },
   healthTagText: {
     fontSize: 12,
@@ -395,6 +397,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     alignItems: 'center',
     justifyContent: 'space-between',
     borderRadius: 12,
+    borderCurve: 'continuous',
     paddingHorizontal: 12,
     paddingRight: 16,
     paddingVertical: 10,

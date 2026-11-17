@@ -59,6 +59,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     // field never touches it.
     marginRight: IS_ANDROID ? 8 : 0,
     borderRadius: 30,
+    borderCurve: 'continuous',
     borderWidth: 0,
     backgroundColor: colors2024['neutral-bg-2'],
     height: ApprovalsLayouts.searchBarHeight,

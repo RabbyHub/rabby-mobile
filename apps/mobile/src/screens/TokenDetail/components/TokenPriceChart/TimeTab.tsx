@@ -105,5 +105,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     paddingHorizontal: 13.5,
     paddingVertical: 5,
     borderRadius: 8,
+    borderCurve: 'continuous',
   },
 }));

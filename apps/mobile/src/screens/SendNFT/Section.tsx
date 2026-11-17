@@ -162,6 +162,7 @@ const getNFTSectionStyles = createGetStyles2024(({ colors2024 }) => {
       height: BASIC_INFO_H,
       width: BASIC_INFO_H,
       borderRadius: 6,
+      borderCurve: 'continuous',
       resizeMode: 'cover',
     },
     nftDetailBlock: {
@@ -245,6 +246,7 @@ const getNFTSectionStyles = createGetStyles2024(({ colors2024 }) => {
       color: colors2024['neutral-title-1'],
       borderWidth: StyleSheet.hairlineWidth,
       borderRadius: 4,
+      borderCurve: 'continuous',
     },
   };
 });

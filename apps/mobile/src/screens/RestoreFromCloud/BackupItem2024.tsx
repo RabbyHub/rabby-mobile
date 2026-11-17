@@ -102,6 +102,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   walletIcon: {
     borderRadius: 12,
+    borderCurve: 'continuous',
   },
   item: {
     flexDirection: 'row',

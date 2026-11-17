@@ -84,6 +84,7 @@ const getStyles = createGetStyles2024(ctx => ({
     flexDirection: 'row',
     backgroundColor: ctx.colors2024['neutral-bg-1'],
     borderRadius: 30,
+    borderCurve: 'continuous',
     borderWidth: 1,
     borderColor: ctx.colors2024['neutral-line'],
     justifyContent: 'space-between',

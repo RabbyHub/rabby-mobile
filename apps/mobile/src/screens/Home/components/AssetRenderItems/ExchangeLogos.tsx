@@ -44,6 +44,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     width: 12,
     height: 12,
     borderRadius: 12,
+    borderCurve: 'continuous',
   },
   line: {
     width: 1,

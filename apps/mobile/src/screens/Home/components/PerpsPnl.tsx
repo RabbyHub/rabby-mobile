@@ -59,6 +59,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   },
   skeleton: {
     borderRadius: 8,
+    borderCurve: 'continuous',
   },
   textValue: {
     fontFamily: 'SF Pro Rounded',

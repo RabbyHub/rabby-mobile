@@ -28,6 +28,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     paddingHorizontal: 4,
     paddingVertical: 1,
     borderRadius: 4,
+    borderCurve: 'continuous',
     backgroundColor: colors2024['red-light-1'],
     justifyContent: 'center',
     alignItems: 'center',

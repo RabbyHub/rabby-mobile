@@ -1001,6 +1001,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     alignItems: 'center',
     backgroundColor: colors2024['neutral-bg-5'],
     borderRadius: 6,
+    borderCurve: 'continuous',
     flex: 1,
     justifyContent: 'center',
     minHeight: 32,

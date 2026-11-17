@@ -600,6 +600,7 @@ describe('Perps Pro open order edit sheets', () => {
     ).toEqual({
       alignItems: 'center',
       backgroundColor: 'neutral-bg-5',
+      borderCurve: 'continuous',
       borderRadius: 4,
       justifyContent: 'center',
       paddingHorizontal: 4,

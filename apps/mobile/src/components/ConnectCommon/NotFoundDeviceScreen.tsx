@@ -43,6 +43,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: 240,
     height: 240,
     borderRadius: 1000,
+    borderCurve: 'continuous',
     borderColor: colors2024['red-default'],
     borderWidth: 4,
   },

@@ -46,6 +46,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     borderColor: colors2024['neutral-line'],
     gap: 8,
     borderRadius: 30,
+    borderCurve: 'continuous',
   },
   text: {
     flex: 1,

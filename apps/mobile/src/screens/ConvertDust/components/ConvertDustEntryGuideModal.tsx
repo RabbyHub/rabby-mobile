@@ -71,6 +71,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     width: '100%',
     maxWidth: 352,
     borderRadius: 20,
+    borderCurve: 'continuous',
     paddingTop: 32,
     paddingBottom: 32,
     backgroundColor: colors2024['neutral-bg-0'],
@@ -105,6 +106,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     width: '100%',
     height: 56,
     borderRadius: 12,
+    borderCurve: 'continuous',
   },
   buttonText: {
     fontFamily: 'SF Pro Rounded',

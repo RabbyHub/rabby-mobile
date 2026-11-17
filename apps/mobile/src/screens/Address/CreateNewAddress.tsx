@@ -199,6 +199,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     marginTop: 29,
     marginBottom: 0,
     borderRadius: 16,
+    borderCurve: 'continuous',
   },
   btnContainer: {
     width: '100%',

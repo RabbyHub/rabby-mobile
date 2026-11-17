@@ -86,6 +86,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     borderColor: colors2024['brand-light-1'],
     borderRadius: 19,
+    borderCurve: 'continuous',
     gap: 12,
   },
   iconWrapper: {
@@ -115,12 +116,14 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     height: 7,
     backgroundColor: colors2024['brand-light-1'],
     borderRadius: 8,
+    borderCurve: 'continuous',
   },
   loadingSection2: {
     width: 58,
     height: 7,
     backgroundColor: colors2024['brand-light-2'],
     borderRadius: 8,
+    borderCurve: 'continuous',
   },
   footer: {
     flexDirection: 'row',

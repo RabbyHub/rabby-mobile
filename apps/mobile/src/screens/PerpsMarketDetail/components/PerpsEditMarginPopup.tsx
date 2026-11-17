@@ -562,6 +562,7 @@ const getStyle = createGetStyles2024(ctx => {
       paddingHorizontal: 16,
       paddingVertical: 18,
       borderRadius: 16,
+      borderCurve: 'continuous',
       backgroundColor: isLight
         ? colors2024['neutral-bg-1']
         : colors2024['neutral-bg-2'],
@@ -682,6 +683,7 @@ const getStyle = createGetStyles2024(ctx => {
       borderWidth: 1,
       borderColor: colors2024['neutral-line'],
       borderRadius: 16,
+      borderCurve: 'continuous',
       marginBottom: 8,
     },
     liqPriceRow: {
@@ -733,6 +735,7 @@ const getStyle = createGetStyles2024(ctx => {
     },
     list: {
       borderRadius: 16,
+      borderCurve: 'continuous',
       backgroundColor: colors2024['neutral-bg-2'],
       marginBottom: 18,
     },
@@ -753,6 +756,7 @@ const getStyle = createGetStyles2024(ctx => {
       padding: 12,
       backgroundColor: colors2024['neutral-bg-2'],
       borderRadius: 6,
+      borderCurve: 'continuous',
       marginTop: 12,
     },
     listSubItem: {
@@ -826,6 +830,7 @@ const getStyle = createGetStyles2024(ctx => {
       padding: 4,
       backgroundColor: colors2024['brand-light-1'],
       borderRadius: 8,
+      borderCurve: 'continuous',
     },
     maxButtonText: {
       color: colors2024['brand-default'],
@@ -841,6 +846,7 @@ const getStyle = createGetStyles2024(ctx => {
       flexDirection: 'row',
       marginBottom: 16,
       borderRadius: 8,
+      borderCurve: 'continuous',
       height: 42,
       overflow: 'hidden',
       backgroundColor: colors2024['neutral-bg-2'],
@@ -855,10 +861,12 @@ const getStyle = createGetStyles2024(ctx => {
     directionButtonLeft: {
       borderTopLeftRadius: 8,
       borderBottomLeftRadius: 8,
+      borderCurve: 'continuous',
     },
     directionButtonRight: {
       borderTopRightRadius: 8,
       borderBottomRightRadius: 8,
+      borderCurve: 'continuous',
     },
     directionButtonText: {
       fontSize: 16,
@@ -896,6 +904,7 @@ const getStyle = createGetStyles2024(ctx => {
     },
     crossTag: {
       borderRadius: 4,
+      borderCurve: 'continuous',
       paddingHorizontal: 4,
       height: 20,
       justifyContent: 'center',
@@ -954,6 +963,7 @@ const getStyle = createGetStyles2024(ctx => {
       paddingHorizontal: 16,
       backgroundColor: colors2024['neutral-bg-2'],
       borderRadius: 20,
+      borderCurve: 'continuous',
       paddingBottom: 6,
       marginBottom: 12,
       display: 'flex',
@@ -977,6 +987,7 @@ const getStyle = createGetStyles2024(ctx => {
       padding: 4,
       backgroundColor: 'rgba(80, 210, 193, 0.16)',
       borderRadius: 8,
+      borderCurve: 'continuous',
     },
     marginBtnText: {
       fontSize: 14,
@@ -1009,6 +1020,7 @@ const getStyle = createGetStyles2024(ctx => {
     leverageContainer: {
       backgroundColor: colors2024['neutral-bg-5'],
       borderRadius: 4,
+      borderCurve: 'continuous',
       paddingHorizontal: 4,
       paddingVertical: 1,
     },
@@ -1057,6 +1069,7 @@ const getStyle = createGetStyles2024(ctx => {
     },
     leverageTag: {
       borderRadius: 4,
+      borderCurve: 'continuous',
       paddingHorizontal: 4,
       height: 20,
       justifyContent: 'center',
@@ -1077,6 +1090,7 @@ const getStyle = createGetStyles2024(ctx => {
     card: {
       marginTop: 16,
       borderRadius: 16,
+      borderCurve: 'continuous',
       paddingVertical: 14,
       paddingHorizontal: 12,
       borderWidth: 1,
@@ -1105,6 +1119,7 @@ const getStyle = createGetStyles2024(ctx => {
       width: 46,
       height: 46,
       borderRadius: 1000,
+      borderCurve: 'continuous',
       flexShrink: 0,
     },
     infoContainer: {

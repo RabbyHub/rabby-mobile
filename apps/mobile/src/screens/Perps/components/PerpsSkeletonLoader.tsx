@@ -225,10 +225,12 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   skeleton: {
     backgroundColor: 'rgba(190,190,190,0.2)',
     borderRadius: 6,
+    borderCurve: 'continuous',
   },
   accountCard: {
     backgroundColor: colors2024['neutral-card-1'],
     borderRadius: 12,
+    borderCurve: 'continuous',
     height: 106,
     alignItems: 'flex-start',
     justifyContent: 'center',
@@ -265,6 +267,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   marketItemFromDetail: {
     borderRadius: 12,
+    borderCurve: 'continuous',
     padding: 12,
     marginBottom: 8,
     flexDirection: 'row',
@@ -274,6 +277,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   marketItem: {
     backgroundColor: colors2024['neutral-card-1'],
     borderRadius: 12,
+    borderCurve: 'continuous',
     padding: 12,
     marginBottom: 8,
     flexDirection: 'row',
@@ -287,6 +291,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   marketIcon: {
     borderRadius: 100,
+    borderCurve: 'continuous',
   },
   marketItemInfo: {
     marginLeft: 12,
@@ -315,6 +320,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   list: {
     borderRadius: 16,
+    borderCurve: 'continuous',
     backgroundColor: isLight
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-bg-2'],

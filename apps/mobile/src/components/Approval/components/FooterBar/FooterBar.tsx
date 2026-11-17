@@ -84,6 +84,7 @@ const getStyles = (
       paddingBottom: BOTTOM_BUTTON_BOTTOM_OFFSET,
       borderTopLeftRadius: 20,
       borderTopRightRadius: 20,
+      borderCurve: 'continuous',
       backgroundColor: colors2024['neutral-bg-1'],
       position: 'relative',
       // shadow
@@ -105,11 +106,13 @@ const getStyles = (
       width: 24,
       height: 24,
       borderRadius: 4,
+      borderCurve: 'continuous',
     },
     chainLogo: {
       width: 14,
       height: 14,
       borderRadius: 100,
+      borderCurve: 'continuous',
       position: 'absolute',
       bottom: -5,
       right: -5,
@@ -152,6 +155,7 @@ const getStyles = (
     securityLevelTip: {
       marginTop: 10,
       borderRadius: 4,
+      borderCurve: 'continuous',
       paddingVertical: 6,
       paddingHorizontal: 8,
       display: 'flex',

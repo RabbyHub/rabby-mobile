@@ -161,12 +161,14 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     width: 23,
     height: 23,
     borderRadius: 4,
+    borderCurve: 'continuous',
   },
   body: {
     flex: 1,
   },
   connectContent: {
     borderRadius: 16,
+    borderCurve: 'continuous',
     backgroundColor: isLight
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-bg-2'],
@@ -219,6 +221,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   button: {
     borderRadius: 16,
+    borderCurve: 'continuous',
     backgroundColor: colors2024['red-light-1'],
     display: 'flex',
     flexDirection: 'row',

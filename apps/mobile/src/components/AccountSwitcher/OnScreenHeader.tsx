@@ -236,6 +236,7 @@ const getStyle = createGetStyles2024(ctx => {
     },
     walletIcon: {
       borderRadius: 4,
+      borderCurve: 'continuous',
       width: 18,
       height: 18,
       marginRight: 4,

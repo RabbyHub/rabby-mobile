@@ -89,6 +89,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   tab: {
     alignItems: 'center',
     borderRadius: 8,
+    borderCurve: 'continuous',
     height: 30,
     justifyContent: 'center',
     paddingHorizontal: 12,
@@ -100,6 +101,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
         ? colors2024['neutral-title-1']
         : ThemeColors2024.dark['neutral-bg-0'],
     borderRadius: 8,
+    borderCurve: 'continuous',
     height: 30,
     justifyContent: 'center',
     paddingHorizontal: 12,

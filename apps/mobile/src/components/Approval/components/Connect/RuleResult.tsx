@@ -53,6 +53,7 @@ const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
     width: 20,
     height: 20,
     borderRadius: 10,
+    borderCurve: 'continuous',
   },
   icon: {
     marginLeft: 6,

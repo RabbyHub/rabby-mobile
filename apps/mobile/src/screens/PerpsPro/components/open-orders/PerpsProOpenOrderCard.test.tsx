@@ -405,6 +405,7 @@ describe('PerpsProOpenOrderCard', () => {
       ),
     ).toEqual({
       backgroundColor: 'neutral-bg-5',
+      borderCurve: 'continuous',
       borderRadius: 4,
       paddingHorizontal: 4,
       paddingVertical: 1,

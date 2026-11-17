@@ -266,6 +266,7 @@ const getStyle = createGetStyles2024(({ colors, colors2024, isLight }) => {
       flexDirection: 'column',
       overflow: 'hidden',
       borderRadius: 32,
+      borderCurve: 'continuous',
     },
     handle: {
       height: 20,

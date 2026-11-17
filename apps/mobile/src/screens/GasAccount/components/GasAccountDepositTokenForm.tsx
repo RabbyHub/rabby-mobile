@@ -1257,6 +1257,7 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   inputContainer: {
     borderRadius: 16,
+    borderCurve: 'continuous',
     paddingVertical: 28,
     paddingHorizontal: 20,
     backgroundColor: ctx.colors2024['neutral-bg-2'],
@@ -1300,6 +1301,7 @@ const getStyles = createGetStyles2024(ctx => ({
     backgroundColor: ctx.colors2024['neutral-line'],
     padding: 4,
     borderRadius: 100,
+    borderCurve: 'continuous',
   },
   tokenContainer: {
     display: 'flex',
@@ -1328,6 +1330,7 @@ const getStyles = createGetStyles2024(ctx => ({
     padding: 4,
     backgroundColor: ctx.colors2024['brand-light-1'],
     borderRadius: 8,
+    borderCurve: 'continuous',
   },
   maxButtonText: {
     color: ctx.colors2024['brand-default'],
@@ -1362,6 +1365,7 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   skeleton: {
     borderRadius: 100,
+    borderCurve: 'continuous',
     backgroundColor: ctx.colors2024['neutral-bg-5'],
   },
   tipTrigger: {
@@ -1390,6 +1394,7 @@ const getStyles = createGetStyles2024(ctx => ({
   tipContentStyle: {
     backgroundColor: ctx.colors2024['neutral-black'],
     borderRadius: 8,
+    borderCurve: 'continuous',
     padding: 0,
   },
   tipTooltipStyle: {
@@ -1405,6 +1410,7 @@ const getStyles = createGetStyles2024(ctx => ({
   depositButton: {
     height: BOTTOM_BUTTON_SINGLE_HEIGHT,
     borderRadius: 16,
+    borderCurve: 'continuous',
   },
   depositButtonTitle: {
     fontFamily: 'SF Pro Rounded',

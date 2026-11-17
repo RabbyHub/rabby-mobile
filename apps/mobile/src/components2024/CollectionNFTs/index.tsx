@@ -117,6 +117,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     maxHeight: 281,
     backgroundColor: colors2024['neutral-bg-1'],
     borderRadius: 16,
+    borderCurve: 'continuous',
     padding: 16,
     gap: 16,
   },

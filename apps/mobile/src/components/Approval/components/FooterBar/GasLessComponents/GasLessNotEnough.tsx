@@ -161,6 +161,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       height: 28,
       backgroundColor: colors2024['brand-default'],
       borderRadius: 6,
+      borderCurve: 'continuous',
       flexShrink: 0,
       paddingHorizontal: 12,
     },

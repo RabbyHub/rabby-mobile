@@ -167,10 +167,12 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   sectionFirst: {
     borderTopLeftRadius: RADIUS_VALUE,
     borderTopRightRadius: RADIUS_VALUE,
+    borderCurve: 'continuous',
   },
   sectionLast: {
     borderBottomLeftRadius: RADIUS_VALUE,
     borderBottomRightRadius: RADIUS_VALUE,
+    borderCurve: 'continuous',
   },
   headerContainer: {
     flexDirection: 'row',
@@ -205,6 +207,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-bg-2'],
     borderRadius: 16,
+    borderCurve: 'continuous',
     marginTop: 8,
   },
   left: {

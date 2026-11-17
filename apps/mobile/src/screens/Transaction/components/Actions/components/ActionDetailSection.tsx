@@ -169,6 +169,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     width: '100%',
     marginTop: 12,
     borderRadius: 16,
+    borderCurve: 'continuous',
     paddingTop: 12,
     paddingBottom: 4,
     backgroundColor: makeHistoryDetailColors({ isLight, colors2024 }).card,

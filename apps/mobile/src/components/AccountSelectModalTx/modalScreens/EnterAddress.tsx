@@ -240,6 +240,7 @@ const ScreenPanelEnterAddress = ({
               containerStyle={Object.assign(
                 {
                   borderRadius: 16,
+                  borderCurve: 'continuous' as const,
                 },
                 error
                   ? {}
@@ -460,6 +461,7 @@ const getStyles = createGetStyles2024(ctx => ({
     paddingHorizontal: 12,
     width: '100%',
     borderRadius: 16,
+    borderCurve: 'continuous',
     display: 'flex',
     backgroundColor: ctx.colors2024['brand-light-1'],
   },
@@ -476,6 +478,7 @@ const getStyles = createGetStyles2024(ctx => ({
     alignItems: 'center',
     fontSize: 14,
     borderRadius: 16,
+    borderCurve: 'continuous',
     // overflow: 'hidden',
     color: ctx.colors2024['brand-default'],
     fontFamily: 'SF Pro Rounded',
