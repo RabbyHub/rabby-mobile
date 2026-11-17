@@ -47,6 +47,7 @@ fi
 
 script_dir="$(cd "$(dirname "$0")/.." && pwd -P)"
 project_dir="$(cd "$script_dir/.." && pwd -P)"
+. "$script_dir/ci/ios-compilation-cache.sh"
 sim_repo_root="$(cd "$project_dir/../.." && pwd -P)"
 cd "$project_dir"
 
@@ -168,7 +169,8 @@ xcodebuild build \
   RABBY_MOBILE_CODE="$RABBY_MOBILE_CODE" \
   RABBY_MOBILE_SIMULATOR_BUILD_INPUT_PROFILE=simulator-smoke-v1 \
   RABBY_MOBILE_SIMULATOR_BUNDLE_RECEIPT="$sim_output_dir/metro-inputs.json" \
-  SENTRY_DISABLE_AUTO_UPLOAD=true FORCE_BUNDLING=1
+  SENTRY_DISABLE_AUTO_UPLOAD=true FORCE_BUNDLING=1 \
+  $(rabby_ios_compilation_cache_xcargs)
 
 # A failed xcodebuild exits above, before any previous DerivedData output can
 # be exported. Preserve this successful build before later validation so a
