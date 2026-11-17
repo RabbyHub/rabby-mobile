@@ -247,6 +247,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     height: '100%',
     borderRadius: 16,
     borderCurve: 'continuous',
+    // On iOS 27 a blur view no longer rounds to its own `borderRadius`, so
+    // this wrapper carries the radius and clips the blur inside it.
+    overflow: 'hidden',
   },
   maskWraper: {
     display: 'flex',
@@ -668,26 +671,28 @@ export const SeedPhrase: React.FC<Props> = ({
             style={[styles.wordsMatrix]}
           />
           {isHidden && (
-            <BlurView
-              style={styles.mask}
-              blurType={appThemeMode ?? 'light'}
-              blurAmount={3}>
-              <TouchableWithoutFeedback
-                style={styles.maskWraper}
-                onPress={() => {
-                  setIsHidden(false);
-                }}>
-                <RcIconEye />
-                <Text style={styles.tapText}>
-                  {/* Tap to reveal your seed phrase */}
-                  {t('page.backupSeedPhrase.tapToReveal.line1')}
-                </Text>
-                <Text style={styles.tapDesc}>
-                  {/* Make sure no one is watching your screen. */}
-                  {t('page.backupSeedPhrase.tapToReveal.line2')}
-                </Text>
-              </TouchableWithoutFeedback>
-            </BlurView>
+            <View style={styles.mask}>
+              <BlurView
+                style={StyleSheet.absoluteFill}
+                blurType={appThemeMode ?? 'light'}
+                blurAmount={3}>
+                <TouchableWithoutFeedback
+                  style={styles.maskWraper}
+                  onPress={() => {
+                    setIsHidden(false);
+                  }}>
+                  <RcIconEye />
+                  <Text style={styles.tapText}>
+                    {/* Tap to reveal your seed phrase */}
+                    {t('page.backupSeedPhrase.tapToReveal.line1')}
+                  </Text>
+                  <Text style={styles.tapDesc}>
+                    {/* Make sure no one is watching your screen. */}
+                    {t('page.backupSeedPhrase.tapToReveal.line2')}
+                  </Text>
+                </TouchableWithoutFeedback>
+              </BlurView>
+            </View>
           )}
 
           {!isHidden && !currentSelecting ? (
