@@ -143,8 +143,31 @@ build_adhoc() {
   fi
 
   export GYM_XCARGS="${GYM_XCARGS:+$GYM_XCARGS }$(rabby_ios_compilation_cache_xcargs)"
+
+  # Build the JS bundle concurrently with the archive's compile step, then let
+  # the bundle phase copy it in instead of bundling again (RABBY_MOBILE_IOS_PREBUNDLE_JS).
+  prebundle_pid=""
+  if [ "${RABBY_MOBILE_IOS_PREBUNDLE_JS:-false}" = "true" ]; then
+    prebundle_dir="$(mktemp -d "${TMPDIR:-/tmp}/rabby-ios-prebundle.XXXXXX")"
+    export RABBY_MOBILE_PREBUILT_BUNDLE_DIR="$prebundle_dir"
+    echo "[deploy-ios-adhoc] prebuilding the JS bundle in $prebundle_dir"
+    (
+      CONFIGURATION="$CONFIGURATION" PLATFORM_NAME="iphoneos" \
+        RABBY_MOBILE_PREBUNDLE_OUT="$prebundle_dir" \
+        bash "$project_dir/ios/patches/phase-bundle-rn.sh" > "$prebundle_dir/prebundle.log" 2>&1
+    ) &
+    prebundle_pid=$!
+  fi
+
   turbo_bundle_exec exec fastlane ios adhoc;
   build_status=$?
+
+  if [ -n "$prebundle_pid" ]; then
+    wait "$prebundle_pid" || {
+      echo "[deploy-ios-adhoc] prebuilt JS bundle failed; see $prebundle_dir/prebundle.log" >&2
+      return 1
+    }
+  fi
 
   if [ $build_status -eq 0 ] && ios_fast_build_enabled && [ -d "$ios_archive_path" ]; then
     sh $script_dir/fast-build/ios.sh save-template "$ios_archive_path"
