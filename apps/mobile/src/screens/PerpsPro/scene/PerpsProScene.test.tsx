@@ -773,6 +773,7 @@ const createSceneState = (overrides: Record<string, unknown> = {}) => ({
   cancelPendingMarketSelection: jest.fn(),
   currentMarket: null,
   executionActive: false,
+  routeFocused: true,
   fundingHistoryEnabled: false,
   isResolvingMarket: false,
   klineEnabled: false,

@@ -180,6 +180,7 @@ export const usePerpsProTrade = ({
   bboSessionKey,
   bboStatus,
   executionActive,
+  routeFocused,
   leveragePending,
   market,
   tradeConfigurationReady = true,
@@ -194,6 +195,7 @@ export const usePerpsProTrade = ({
   bboSessionKey: string | null;
   bboStatus: 'error' | 'idle' | 'loading' | 'ready' | 'stale';
   executionActive: boolean;
+  routeFocused: boolean;
   leveragePending: boolean;
   market: PerpsProMarket | null;
   tradeConfigurationReady?: boolean;
@@ -501,6 +503,7 @@ export const usePerpsProTrade = ({
         triggerPrice: '',
         scaleLowerPrice: '',
         scaleUpperPrice: '',
+        scaleCount: '',
       };
       formRef.current = next;
       return next;
@@ -554,6 +557,13 @@ export const usePerpsProTrade = ({
       return next;
     });
   }, []);
+  useEffect(() => {
+    // A backgrounded or temporarily unready scene still owns its draft.
+    // Only navigation away clears Count; patchForm also invalidates old previews.
+    if (!routeFocused && formRef.current.scaleCount !== '') {
+      patchForm({ scaleCount: '' });
+    }
+  }, [patchForm, routeFocused]);
   const marketPrice =
     market?.marketData.midPx || market?.marketData.markPx || '';
   const maxDisplayMarketPrice =
@@ -684,7 +694,7 @@ export const usePerpsProTrade = ({
           orderType === 'scale' ? ('base' as const) : preferences.amountUnit,
         scaleLowerPrice: '',
         scaleUpperPrice: '',
-        scaleCount: '5',
+        scaleCount: '',
         scaleDistribution: 'flat' as const,
         ...(orderType === 'scale'
           ? {

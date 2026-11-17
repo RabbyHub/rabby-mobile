@@ -251,6 +251,7 @@ export const PerpsProScene: React.FC<{
     bboSessionKey: bboBook.sessionKey,
     bboStatus: bboBook.status,
     executionActive: scene.executionActive && !isModeSwitching,
+    routeFocused: scene.routeFocused,
     leveragePending: leverageUpdate.pending,
     market: scene.currentMarket,
     tradeConfigurationReady: scene.tradeConfigurationReady,

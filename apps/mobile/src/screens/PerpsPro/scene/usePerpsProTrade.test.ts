@@ -324,10 +324,80 @@ const activeAssetData = {
 };
 
 describe('usePerpsProTrade attached TP/SL execution integration', () => {
+  it('clears Scale Count at draft boundaries but keeps it while execution is inactive', () => {
+    const initialProps = {
+      routeFocused: true,
+      executionActive: true,
+      currentMarket: market,
+    };
+    const hook = renderHook(
+      ({ routeFocused, executionActive, currentMarket }) =>
+        usePerpsProTrade({
+          routeFocused,
+          executionActive,
+          activeAssetData,
+          bboBook: book,
+          bboPrices: { asks1: '101', asks5: null, bids1: '99', bids5: null },
+          bboSessionKey: 'BTC:1',
+          bboStatus: 'ready',
+          leveragePending: false,
+          market: currentMarket,
+          refreshActiveAssetData: async () => activeAssetData,
+          updateLeverageRequest: async () => true,
+        }),
+      { initialProps },
+    );
+    act(() => hook.result.current.setOrderType('scale'));
+    expect(hook.result.current.form.scaleCount).toBe('');
+    act(() =>
+      hook.result.current.patchForm({
+        amount: '1',
+        scaleCount: '17',
+        scaleLowerPrice: '100',
+        scaleUpperPrice: '140',
+      }),
+    );
+    const draft = hook.result.current.form;
+    hook.rerender({ ...initialProps, executionActive: false });
+    expect(hook.result.current.form).toEqual(draft);
+    hook.rerender(initialProps);
+    expect(hook.result.current.form).toEqual(draft);
+
+    hook.rerender({
+      ...initialProps,
+      routeFocused: false,
+      executionActive: false,
+    });
+    expect(hook.result.current.form).toEqual({ ...draft, scaleCount: '' });
+    hook.rerender(initialProps);
+    expect(hook.result.current.form.scaleCount).toBe('');
+
+    act(() => hook.result.current.patchForm({ scaleCount: '17' }));
+    hook.rerender({
+      ...initialProps,
+      currentMarket: {
+        ...market,
+        marketKey: 'hyperliquid::ETH',
+        canonicalCoin: 'ETH',
+      },
+    });
+    expect(hook.result.current.form).toMatchObject({
+      amount: '',
+      scaleCount: '',
+      scaleLowerPrice: '',
+      scaleUpperPrice: '',
+    });
+    act(() => hook.result.current.patchForm({ scaleCount: '17' }));
+    act(() => hook.result.current.setOrderType('limit'));
+    act(() => hook.result.current.setOrderType('scale'));
+    expect(hook.result.current.form.scaleCount).toBe('');
+  });
+
   it('always previews Scale in base units and restores the ordinary unit without submitting during preview', async () => {
     mockGetSkipConfirmation.mockResolvedValue(true);
     const hook = renderHook(() =>
       usePerpsProTrade({
+        routeFocused: true,
         activeAssetData,
         bboBook: book,
         bboPrices: { asks1: '101', asks5: null, bids1: '99', bids5: null },
@@ -346,6 +416,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
       hook.result.current.patchForm({
         scaleLowerPrice: '100',
         scaleUpperPrice: '140',
+        scaleCount: '5',
       });
       hook.result.current.setAmount('1');
     });
@@ -409,6 +480,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     const hook = renderHook(
       ({ active }) =>
         usePerpsProTrade({
+          routeFocused: true,
           activeAssetData,
           bboBook: book,
           bboPrices: { asks1: '101', asks5: null, bids1: '99', bids5: null },
@@ -427,6 +499,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
       hook.result.current.patchForm({
         scaleLowerPrice: '100',
         scaleUpperPrice: '140',
+        scaleCount: '5',
         amount: '1',
       }),
     );
@@ -477,6 +550,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     const updateLeverageRequest = jest.fn(async () => true);
     const hook = renderHook(() =>
       usePerpsProTrade({
+        routeFocused: true,
         activeAssetData,
         bboBook: book,
         bboPrices: { asks1: '101', asks5: null, bids1: '99', bids5: null },
@@ -513,6 +587,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
       .mockResolvedValueOnce(false);
     const hook = renderHook(() =>
       usePerpsProTrade({
+        routeFocused: true,
         activeAssetData,
         bboBook: book,
         bboPrices: { asks1: '101', asks5: null, bids1: '99', bids5: null },
@@ -551,6 +626,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
   it('uses the latest trade for a new Limit session and replaces manual price after BBO', () => {
     const hook = renderHook(() =>
       usePerpsProTrade({
+        routeFocused: true,
         activeAssetData,
         bboBook: book,
         bboPrices: { asks1: '101', asks5: null, bids1: '99', bids5: null },
@@ -593,6 +669,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
   it('fills only the Conditional Trigger Price after an explicit order-book selection', () => {
     const hook = renderHook(() =>
       usePerpsProTrade({
+        routeFocused: true,
         activeAssetData,
         bboBook: book,
         bboPrices: { asks1: '101', asks5: null, bids1: '99', bids5: null },
@@ -644,6 +721,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
   it('resolves order-book intent from the synchronous input focus owner', () => {
     const hook = renderHook(() =>
       usePerpsProTrade({
+        routeFocused: true,
         activeAssetData,
         bboBook: book,
         bboPrices: { asks1: '101', asks5: null, bids1: '99', bids5: null },
@@ -689,6 +767,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
   it('fills only the frozen TP/SL Price leg and revalidates context', () => {
     const hook = renderHook(() =>
       usePerpsProTrade({
+        routeFocused: true,
         activeAssetData,
         bboBook: book,
         bboPrices: { asks1: '101', asks5: null, bids1: '99', bids5: null },
@@ -772,6 +851,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
   it('uses the latest trade when BBO is disabled without a manual Limit price', () => {
     const hook = renderHook(() =>
       usePerpsProTrade({
+        routeFocused: true,
         activeAssetData,
         bboBook: book,
         bboPrices: { asks1: '101', asks5: null, bids1: '99', bids5: null },
@@ -801,6 +881,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
   it('waits for the next latest trade when BBO is disabled before one exists', () => {
     const hook = renderHook(() =>
       usePerpsProTrade({
+        routeFocused: true,
         activeAssetData,
         bboBook: book,
         bboPrices: { asks1: '101', asks5: null, bids1: '99', bids5: null },
@@ -829,6 +910,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
   it('atomically replaces BBO with TP/SL and clears the selected level', () => {
     const hook = renderHook(() =>
       usePerpsProTrade({
+        routeFocused: true,
         activeAssetData,
         bboBook: book,
         bboPrices: { asks1: '101', asks5: null, bids1: '99', bids5: null },
@@ -868,6 +950,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
   it('fills the next latest trade once when TP/SL replaces BBO before a trade exists', () => {
     const hook = renderHook(() =>
       usePerpsProTrade({
+        routeFocused: true,
         activeAssetData,
         bboBook: book,
         bboPrices: { asks1: '101', asks5: null, bids1: '99', bids5: null },
@@ -899,6 +982,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
   it('keeps quote Max available before manual Limit prices are entered', () => {
     const hook = renderHook(() =>
       usePerpsProTrade({
+        routeFocused: true,
         activeAssetData,
         bboBook: book,
         bboPrices: { asks1: '101', asks5: null, bids1: '99', bids5: null },
@@ -932,6 +1016,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     const hook = renderHook(
       ({ ask }: { ask: string }) =>
         usePerpsProTrade({
+          routeFocused: true,
           activeAssetData,
           bboBook: {
             ...book,
@@ -981,6 +1066,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
   it('blocks a BBO order above the selected-side Max when Buy is pressed', async () => {
     const hook = renderHook(() =>
       usePerpsProTrade({
+        routeFocused: true,
         activeAssetData: {
           ...activeAssetData,
           maxTradeSzs: ['0.5', '10'],
@@ -1021,6 +1107,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     const hook = renderHook(
       ({ buyMax }: { buyMax: string }) =>
         usePerpsProTrade({
+          routeFocused: true,
           activeAssetData: {
             ...activeAssetData,
             maxTradeSzs: [buyMax, '10'],
@@ -1077,6 +1164,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     });
     const hook = renderHook(() =>
       usePerpsProTrade({
+        routeFocused: true,
         activeAssetData,
         bboBook: book,
         bboPrices: { asks1: '101', asks5: null, bids1: '99', bids5: null },
@@ -1124,6 +1212,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     } as PerpsProMarket;
     const hook = renderHook(() =>
       usePerpsProTrade({
+        routeFocused: true,
         activeAssetData: {
           ...activeAssetData,
           availableToTrade: ['1000', '1000'],
@@ -1161,6 +1250,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
   it('keeps TIF visible state mutually exclusive with BBO', () => {
     const hook = renderHook(() =>
       usePerpsProTrade({
+        routeFocused: true,
         activeAssetData,
         bboBook: book,
         bboPrices: { asks1: '101', asks5: null, bids1: '99', bids5: null },
@@ -1210,6 +1300,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
   it('clears Conditional prices when order type or execution mode changes', () => {
     const hook = renderHook(() =>
       usePerpsProTrade({
+        routeFocused: true,
         activeAssetData,
         bboBook: book,
         bboPrices: { asks1: '101', asks5: null, bids1: '99', bids5: null },
@@ -1239,6 +1330,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
   it('falls back from missing mid to mark for quote Max display only', () => {
     const hook = renderHook(() =>
       usePerpsProTrade({
+        routeFocused: true,
         activeAssetData,
         bboBook: book,
         bboPrices: { asks1: '101', asks5: null, bids1: '99', bids5: null },
@@ -1263,6 +1355,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
   it('clears Amount and Slider on every order type change', () => {
     const hook = renderHook(() =>
       usePerpsProTrade({
+        routeFocused: true,
         activeAssetData,
         bboBook: book,
         bboPrices: { asks1: '101', asks5: null, bids1: '99', bids5: null },
@@ -1303,6 +1396,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
   it('never toasts while manual Amount input moves above or below Max', () => {
     const hook = renderHook(() =>
       usePerpsProTrade({
+        routeFocused: true,
         activeAssetData: {
           ...activeAssetData,
           maxTradeSzs: ['5', '10'],
@@ -1342,6 +1436,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     async (blockedSide, allowedSide, maxTradeSzs) => {
       const hook = renderHook(() =>
         usePerpsProTrade({
+          routeFocused: true,
           activeAssetData: { ...activeAssetData, maxTradeSzs },
           bboBook: book,
           bboPrices: { asks1: '101', asks5: null, bids1: '99', bids5: null },
@@ -1381,6 +1476,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
   it('blocks an attached order above the selected-side Max before review', async () => {
     const hook = renderHook(() =>
       usePerpsProTrade({
+        routeFocused: true,
         activeAssetData: {
           ...activeAssetData,
           maxTradeSzs: ['5', '10'],
@@ -1423,6 +1519,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     const hook = renderHook(
       ({ buyMax }: { buyMax: string }) =>
         usePerpsProTrade({
+          routeFocused: true,
           activeAssetData: {
             ...activeAssetData,
             maxTradeSzs: [buyMax, '10'],
@@ -1475,6 +1572,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     });
     const hook = renderHook(() =>
       usePerpsProTrade({
+        routeFocused: true,
         activeAssetData,
         bboBook: book,
         bboPrices: { asks1: '101', asks5: null, bids1: '99', bids5: null },
@@ -1528,6 +1626,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     async (_label, amountUnit, amount, buyMax, blocked, expectedBaseSize) => {
       const hook = renderHook(() =>
         usePerpsProTrade({
+          routeFocused: true,
           activeAssetData: {
             ...activeAssetData,
             maxTradeSzs: [buyMax, '20'],
@@ -1572,6 +1671,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
   it('treats an identity-scoped finite zero Max as known capacity', async () => {
     const hook = renderHook(() =>
       usePerpsProTrade({
+        routeFocused: true,
         activeAssetData: { ...activeAssetData, maxTradeSzs: ['0', '10'] },
         bboBook: book,
         bboPrices: { asks1: '101', asks5: null, bids1: '99', bids5: null },
@@ -1613,6 +1713,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     async (_label, nextActiveAssetData) => {
       const hook = renderHook(() =>
         usePerpsProTrade({
+          routeFocused: true,
           activeAssetData: nextActiveAssetData,
           bboBook: book,
           bboPrices: { asks1: '101', asks5: null, bids1: '99', bids5: null },
@@ -1641,6 +1742,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
   it('keeps the canonical minimum-amount error ahead of a known zero Max', async () => {
     const hook = renderHook(() =>
       usePerpsProTrade({
+        routeFocused: true,
         activeAssetData: { ...activeAssetData, maxTradeSzs: ['0', '10'] },
         bboBook: book,
         bboPrices: { asks1: '101', asks5: null, bids1: '99', bids5: null },
@@ -1669,6 +1771,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
   it('projects Slider button amounts per side and zeros the unavailable Reduce Only side', () => {
     const hook = renderHook(() =>
       usePerpsProTrade({
+        routeFocused: true,
         activeAssetData: {
           ...activeAssetData,
           maxTradeSzs: ['8', '4'],
@@ -1715,6 +1818,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     } as never);
     const hook = renderHook(() =>
       usePerpsProTrade({
+        routeFocused: true,
         activeAssetData: {
           ...activeAssetData,
           maxTradeSzs: ['0', '10'],
@@ -1747,6 +1851,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     mockPerpsState.isUserDataReady = false;
     const hook = renderHook(() =>
       usePerpsProTrade({
+        routeFocused: true,
         activeAssetData,
         bboBook: book,
         bboPrices: { asks1: '101', asks5: null, bids1: '99', bids5: null },
@@ -1783,6 +1888,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     };
     const hook = renderHook(() =>
       usePerpsProTrade({
+        routeFocused: true,
         activeAssetData,
         bboBook: book,
         bboPrices: {
@@ -1817,6 +1923,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
   it('atomically clears Slider percentage and Amount when switching units', () => {
     const hook = renderHook(() =>
       usePerpsProTrade({
+        routeFocused: true,
         activeAssetData,
         bboBook: book,
         bboPrices: {
@@ -1849,6 +1956,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
   it('atomically exits Slider source when manual Amount entry begins', () => {
     const hook = renderHook(() =>
       usePerpsProTrade({
+        routeFocused: true,
         activeAssetData,
         bboBook: book,
         bboPrices: {
@@ -1885,6 +1993,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     const refreshActiveAssetData = jest.fn(async () => undefined);
     const hook = renderHook(() =>
       usePerpsProTrade({
+        routeFocused: true,
         activeAssetData,
         bboBook: book,
         bboPrices: {
@@ -1959,6 +2068,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
   it('blocks the right Trade Form with the shared region message', async () => {
     const hook = renderHook(() =>
       usePerpsProTrade({
+        routeFocused: true,
         activeAssetData,
         bboBook: book,
         bboPrices: {
@@ -1994,6 +2104,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
   it('rechecks region permission when an existing review is confirmed', async () => {
     const hook = renderHook(() =>
       usePerpsProTrade({
+        routeFocused: true,
         activeAssetData,
         bboBook: book,
         bboPrices: {
@@ -2030,6 +2141,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
   it('reports direction-specific TP validation through toast only', async () => {
     const hook = renderHook(() =>
       usePerpsProTrade({
+        routeFocused: true,
         activeAssetData,
         bboBook: book,
         bboPrices: { asks1: '101', asks5: null, bids1: '99', bids5: null },
@@ -2058,6 +2170,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
   it('allows a Long stop below estimated liquidation and keeps the estimate for review', async () => {
     const hook = renderHook(() =>
       usePerpsProTrade({
+        routeFocused: true,
         activeAssetData,
         bboBook: book,
         bboPrices: { asks1: '101', asks5: null, bids1: '99', bids5: null },
@@ -2107,6 +2220,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
       } as never);
       const hook = renderHook(() =>
         usePerpsProTrade({
+          routeFocused: true,
           activeAssetData,
           bboBook: book,
           bboPrices: { asks1: '101', asks5: null, bids1: '99', bids5: null },
@@ -2139,6 +2253,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     mockGetSkipConfirmation.mockResolvedValueOnce(true);
     const hook = renderHook(() =>
       usePerpsProTrade({
+        routeFocused: true,
         activeAssetData,
         bboBook: null,
         bboPrices: { asks1: null, asks5: null, bids1: null, bids5: null },
@@ -2183,6 +2298,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     const hook = renderHook(
       ({ currentMarket }: { currentMarket: PerpsProMarket }) =>
         usePerpsProTrade({
+          routeFocused: true,
           activeAssetData,
           bboBook: book,
           bboPrices: {
@@ -2237,6 +2353,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     const hook = renderHook(
       ({ currentMarket }: { currentMarket: PerpsProMarket }) =>
         usePerpsProTrade({
+          routeFocused: true,
           activeAssetData,
           bboBook: book,
           bboPrices: {
@@ -2283,6 +2400,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
   it('does not use Mark Price as a Conditional classification fallback', async () => {
     const hook = renderHook(() =>
       usePerpsProTrade({
+        routeFocused: true,
         activeAssetData,
         bboBook: book,
         bboPrices: { asks1: '101', asks5: null, bids1: '99', bids5: null },
@@ -2314,6 +2432,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
   it('executes ordinary Review with its frozen margin mode and leverage', async () => {
     const hook = renderHook(() =>
       usePerpsProTrade({
+        routeFocused: true,
         activeAssetData,
         bboBook: book,
         bboPrices: { asks1: '101', asks5: null, bids1: '99', bids5: null },
@@ -2354,6 +2473,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     }));
     const hook = renderHook(() =>
       usePerpsProTrade({
+        routeFocused: true,
         activeAssetData: {
           ...activeAssetData,
           leverage: undefined,
@@ -2393,6 +2513,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     const hook = renderHook(
       ({ data }: { data: typeof activeAssetData }) =>
         usePerpsProTrade({
+          routeFocused: true,
           activeAssetData: data,
           bboBook: book,
           bboPrices: { asks1: '101', asks5: null, bids1: '99', bids5: null },
@@ -2430,6 +2551,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
   it('keeps Market Cost on VWAP and shares marginal liquidation with Review', async () => {
     const hook = renderHook(() =>
       usePerpsProTrade({
+        routeFocused: true,
         activeAssetData,
         bboBook: book,
         bboPrices: { asks1: '101', asks5: null, bids1: '99', bids5: null },
@@ -2514,6 +2636,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     } as L2Book;
     const hook = renderHook(() =>
       usePerpsProTrade({
+        routeFocused: true,
         activeAssetData: {
           ...activeAssetData,
           availableToTrade: ['13.18', '13.18'],
@@ -2551,6 +2674,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
   it('keeps Mid submission/Cost but fail-closes Market risk when L2 is unavailable', async () => {
     const hook = renderHook(() =>
       usePerpsProTrade({
+        routeFocused: true,
         activeAssetData,
         bboBook: null,
         bboPrices: { asks1: null, asks5: null, bids1: null, bids5: null },
@@ -2584,6 +2708,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
   it('falls back to Mid for an attached Market review when L2 is unavailable', async () => {
     const hook = renderHook(() =>
       usePerpsProTrade({
+        routeFocused: true,
         activeAssetData,
         bboBook: null,
         bboPrices: { asks1: null, asks5: null, bids1: null, bids5: null },
@@ -2636,6 +2761,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
       });
       const hook = renderHook(() =>
         usePerpsProTrade({
+          routeFocused: true,
           activeAssetData,
           bboBook: book,
           bboPrices: {
@@ -2686,6 +2812,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     });
     const hook = renderHook(() =>
       usePerpsProTrade({
+        routeFocused: true,
         activeAssetData,
         bboBook: book,
         bboPrices: { asks1: '101', asks5: null, bids1: '99', bids5: null },
@@ -2715,6 +2842,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     const updateLeverageRequest = jest.fn(async () => true);
     const hook = renderHook(() =>
       usePerpsProTrade({
+        routeFocused: true,
         activeAssetData,
         bboBook: book,
         bboPrices: {
@@ -2752,6 +2880,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
   it('uses current-account Active Asset before zero-address and keeps Max as fallback', () => {
     const baseline = renderHook(() =>
       usePerpsProTrade({
+        routeFocused: true,
         activeAssetData,
         bboBook: book,
         bboPrices: { asks1: '101', asks5: null, bids1: '99', bids5: null },
@@ -2767,6 +2896,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     );
     const fallback = renderHook(() =>
       usePerpsProTrade({
+        routeFocused: true,
         activeAssetData: null,
         bboBook: book,
         bboPrices: { asks1: '101', asks5: null, bids1: '99', bids5: null },
@@ -2811,6 +2941,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
         };
       }) => {
         const controller = usePerpsProTrade({
+          routeFocused: true,
           activeAssetData,
           bboBook: book,
           bboPrices: { asks1: '101', asks5: null, bids1: '99', bids5: null },
@@ -2873,6 +3004,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     const hook = renderHook(
       ({ currentMarket }: { currentMarket: PerpsProMarket }) =>
         usePerpsProTrade({
+          routeFocused: true,
           activeAssetData,
           bboBook: book,
           bboPrices: { asks1: '101', asks5: null, bids1: '99', bids5: null },
@@ -2910,6 +3042,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     } as never);
     const hook = renderHook(() =>
       usePerpsProTrade({
+        routeFocused: true,
         activeAssetData,
         bboBook: book,
         bboPrices: { asks1: '101', asks5: null, bids1: '99', bids5: null },
@@ -2943,6 +3076,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     };
     const hook = renderHook(() =>
       usePerpsProTrade({
+        routeFocused: true,
         activeAssetData: null,
         bboBook: null,
         bboPrices: { asks1: null, asks5: null, bids1: null, bids5: null },
@@ -2977,6 +3111,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     } as never);
     const hook = renderHook(() =>
       usePerpsProTrade({
+        routeFocused: true,
         activeAssetData,
         bboBook: book,
         bboPrices: { asks1: '101', asks5: null, bids1: '99', bids5: null },
@@ -3030,6 +3165,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     } as L2Book;
     const hook = renderHook(() =>
       usePerpsProTrade({
+        routeFocused: true,
         activeAssetData: {
           ...activeAssetData,
           availableToTrade: ['34.211138', '34.211138'],
@@ -3120,6 +3256,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     } as L2Book;
     const hook = renderHook(() =>
       usePerpsProTrade({
+        routeFocused: true,
         activeAssetData: {
           ...activeAssetData,
           availableToTrade: ['1205.36', '836.17'],
@@ -3159,6 +3296,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
   it('uses live Mark for Conditional Market liquidation before Trigger Price input', () => {
     const hook = renderHook(() =>
       usePerpsProTrade({
+        routeFocused: true,
         activeAssetData,
         bboBook: book,
         bboPrices: { asks1: '101', asks5: null, bids1: '99', bids5: null },
@@ -3191,6 +3329,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
   it('does not carry an applied leverage override across accounts', async () => {
     const hook = renderHook(() =>
       usePerpsProTrade({
+        routeFocused: true,
         activeAssetData,
         bboBook: book,
         bboPrices: { asks1: '101', asks5: null, bids1: '99', bids5: null },

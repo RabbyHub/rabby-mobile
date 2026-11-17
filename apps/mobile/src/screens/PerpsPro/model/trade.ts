@@ -293,6 +293,6 @@ export const createPerpsProTradeFormState = ({
   triggerPrice: '',
   scaleLowerPrice: '',
   scaleUpperPrice: '',
-  scaleCount: '5',
+  scaleCount: '',
   scaleDistribution: 'flat',
 });

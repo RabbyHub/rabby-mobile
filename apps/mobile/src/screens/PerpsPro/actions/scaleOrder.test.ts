@@ -50,6 +50,7 @@ const command = () => {
     form: {
       ...createPerpsProTradeFormState({ orderType: 'scale' }),
       amount: '1',
+      scaleCount: '5',
       scaleLowerPrice: '1000',
       scaleUpperPrice: '1400',
     },
