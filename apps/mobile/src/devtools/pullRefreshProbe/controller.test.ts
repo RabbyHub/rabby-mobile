@@ -152,8 +152,13 @@ describe('temporary pull-refresh probe controller (unit)', () => {
       })),
     ]);
     expect(probe.info).not.toHaveBeenCalled();
-    expect(probe.setEnabled).not.toHaveBeenCalled();
+    // Recording keeps the file logger on so a crash still leaves evidence; the
+    // user's prior setting is restored when the run stops.
+    expect(probe.setEnabled.mock.calls).toEqual([[true]]);
+    expect(probe.isLogging()).toBe(true);
     await probe.stopPullRefreshProbe('cancel');
+    expect(probe.setEnabled.mock.calls).toEqual([[true], [false]]);
+    expect(probe.isLogging()).toBe(false);
     const rows = probe
       .entries()
       .filter(entry => entry.source === 'pager')
@@ -250,7 +255,10 @@ describe('temporary pull-refresh probe controller (unit)', () => {
     ]);
     await probe.flushPullRefreshProbe();
     const batches = probe.entries().filter(entry => entry.source === 'ui');
-    expect(batches).toHaveLength(3);
+    // `writeRows` caps UI/pager entries at two rows so one serialized logger
+    // line always stays under the bridge bound.
+    expect(batches).toHaveLength(12);
+    expect(batches.every(entry => entry.rows.length <= 2)).toBe(true);
     expect(batches.flatMap(entry => entry.rows)).toHaveLength(24);
     expect(JSON.stringify(probe.entries())).not.toContain('must-not-appear');
     for (const [, serialized] of probe.info.mock.calls) {
@@ -347,9 +355,13 @@ describe('temporary pull-refresh probe controller (unit)', () => {
     expect(probe.native).toHaveBeenCalledTimes(1);
     expect(probe.info).not.toHaveBeenCalled();
     expect(probe.flush).not.toHaveBeenCalled();
-    expect(probe.setEnabled).not.toHaveBeenCalled();
-    expect(probe.isLogging()).toBe(false);
+    // The logger is enabled up front (crash evidence) but nothing is written
+    // until an explicit export.
+    expect(probe.setEnabled.mock.calls).toEqual([[true]]);
+    expect(probe.isLogging()).toBe(true);
     await probe.stopPullRefreshProbe('cancel');
+    expect(probe.setEnabled.mock.calls).toEqual([[true], [false]]);
+    expect(probe.isLogging()).toBe(false);
     expect(probe.entries().some(entry => entry.source === 'ui')).toBe(true);
   });
 
@@ -525,22 +537,22 @@ describe('temporary pull-refresh probe controller (unit)', () => {
     expect(probe.isLogging()).toBe(true);
   });
 
-  it('enables logging only for explicit export and preserves user changes during recording', async () => {
+  it('keeps file logging on while recording and restores the prior setting', async () => {
     const probe = createHarness();
     await probe.startPullRefreshProbe({
       runId: 'export-only',
       expiresAt: Date.now() + 5000,
     });
-    expect(probe.setEnabled).not.toHaveBeenCalled();
+    expect(probe.setEnabled.mock.calls).toEqual([[true]]);
+    expect(probe.isLogging()).toBe(true);
+    // A mid-run export must not toggle the logger the recording already owns.
     await probe.flushPullRefreshProbe();
+    expect(probe.setEnabled.mock.calls).toEqual([[true]]);
+    expect(probe.isLogging()).toBe(true);
+    expect(probe.getPullRefreshProbeSnapshot().active).toBe(true);
+    await probe.stopPullRefreshProbe('cancel');
     expect(probe.setEnabled.mock.calls).toEqual([[true], [false]]);
     expect(probe.isLogging()).toBe(false);
-    expect(probe.getPullRefreshProbeSnapshot().active).toBe(true);
-    probe.setEnabled.mockClear();
-    probe.setInitialLogging(true);
-    await probe.stopPullRefreshProbe('cancel');
-    expect(probe.setEnabled).not.toHaveBeenCalled();
-    expect(probe.isLogging()).toBe(true);
   });
 
   it('caps the TTL to five minutes and removes timers on expiry', async () => {

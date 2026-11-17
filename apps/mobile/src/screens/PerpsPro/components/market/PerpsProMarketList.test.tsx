@@ -221,23 +221,25 @@ describe('PerpsProMarketList', () => {
       ),
     );
     const hiddenProbe = render(
-      <RegistrationProbe
-        effect={effect}
-        focusHook={focusHookOfLastRender()}
-      />,
+      <RegistrationProbe effect={effect} focusHook={focusHookOfLastRender()} />,
     );
     expect(effect).not.toHaveBeenCalled();
     hiddenProbe.unmount();
     hiddenList.unmount();
 
     const visibleList = render(
-      renderMarketList(slots, undefined, false, 'success', null, 'active', true),
+      renderMarketList(
+        slots,
+        undefined,
+        false,
+        'success',
+        null,
+        'active',
+        true,
+      ),
     );
     const visibleProbe = render(
-      <RegistrationProbe
-        effect={effect}
-        focusHook={focusHookOfLastRender()}
-      />,
+      <RegistrationProbe effect={effect} focusHook={focusHookOfLastRender()} />,
     );
     expect(effect).toHaveBeenCalledTimes(1);
     visibleProbe.unmount();
