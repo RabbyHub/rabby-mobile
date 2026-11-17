@@ -1784,7 +1784,6 @@
       "dataAnalysis": "Помочь улучшить Rabby",
       "dataAnalysisDesc": "Делитесь анонимными данными об использовании, чтобы помочь улучшить Rabby. Собранные данные не связаны с вами или вашим аккаунтом.",
       "bugReportChat": "Поделиться отзывом в чате",
-      "features": "Функции",
       "manageWallets": "Управление кошельками"
     },
     "settings": {
@@ -3540,7 +3539,7 @@
       "title": "Конвертировать мелкие остатки"
     },
     "walletConnect": {
-      "screenTitle": "Подключить кошелек",
+      "screenTitle": "Сканировать для подключения",
       "connectingToRabby": "Подключение к Rabby",
       "pairingFailed": "Сопряжение WalletConnect не удалось.",
       "proposalNotReceived": "QR-код WalletConnect, возможно, устарел. Обновите его и попробуйте снова.",
