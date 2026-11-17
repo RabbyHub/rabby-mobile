@@ -93,8 +93,8 @@ export function TabsTopHeader(): JSX.Element {
         changeActivity: state.activity,
       })),
     );
-  const isAnyRemoteRefreshing = useHomeRefreshProjection(
-    state => state.isAnyRemoteRefreshing,
+  const isBalanceOrChangeRefreshing = useHomeRefreshProjection(
+    state => state.isBalanceFetchingRemote || state.is24hChangeFetchingRemote,
   );
   const showBalanceLoadingWithoutLocal =
     isHomeProjectionWaitingForValue(balanceAvailability);
@@ -166,8 +166,8 @@ export function TabsTopHeader(): JSX.Element {
   }, [data.changePercent, data.isLoss]);
   const showChangeLoading = showChangeLoadingWithoutLocal;
   const showHeaderSideLoadingIndicator = useMemo(() => {
-    return showBalanceLoadingWithoutLocal || isAnyRemoteRefreshing;
-  }, [isAnyRemoteRefreshing, showBalanceLoadingWithoutLocal]);
+    return showBalanceLoadingWithoutLocal || isBalanceOrChangeRefreshing;
+  }, [isBalanceOrChangeRefreshing, showBalanceLoadingWithoutLocal]);
   const showNetWorthSideLoadingIndicator =
     showHeaderSideLoadingIndicator &&
     !showBalanceLoadingWithoutLocal &&

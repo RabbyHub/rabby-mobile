@@ -26,7 +26,7 @@ import RcIconSmallWalletCC from '@/assets2024/icons/home/IconSmallWalletCC.svg';
 import RcIconSmallArrowCC from '@/assets2024/icons/home/IconSmallArrowCC.svg';
 import { E2E_ID } from '@/constant/e2e';
 import Svg, { Path } from 'react-native-svg';
-import { refreshDayCurve } from '@/store/curve24h';
+import { refreshDayCurve, sceneCurve24hStore } from '@/store/curve24h';
 import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
 import { useRendererDetect } from '@/components/Perf/PerfDetector';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
@@ -67,19 +67,15 @@ const EMPTY_CHANGE_DATA = {
 const svIsFoldMultiChart = makeMutable(true);
 
 export function setIsFoldMultiChart(valOrFunc: UpdaterOrPartials<boolean>) {
-  'worklet';
-  const { newVal } = resolveValFromUpdater(
-    svIsFoldMultiChart.value,
-    valOrFunc,
-    {
-      strict: false,
-    },
-  );
+  const { newVal } = resolveValFromUpdater(getIsFoldMultiChart(), valOrFunc, {
+    strict: false,
+  });
+  sceneCurve24hStore.setHomeCurveExpanded(!newVal);
   svIsFoldMultiChart.value = newVal;
 }
 
 export function getIsFoldMultiChart() {
-  return !!svIsFoldMultiChart.value;
+  return !sceneCurve24hStore.getHomeCurveExpanded();
 }
 
 const ChartContent = memo(function ChartContent({
@@ -120,7 +116,12 @@ const ChartContent = memo(function ChartContent({
 
   return (
     <Animated.View style={[animatedContainerStyle]}>
-      {!chartsData.length ? null : !isAnyAddrLoading ? (
+      {isAnyAddrLoading ? (
+        <CurveLoader
+          {...makeTestIDProps(E2E_ID.home.portfolioCurveLoading)}
+          style={styles.loading}
+        />
+      ) : chartsData.length ? (
         <LineChart
           height={CHART_HEIGHT}
           width={winWidth - CHART_HORIZONTAL_INSET}
@@ -139,12 +140,7 @@ const ChartContent = memo(function ChartContent({
             size={8}
           />
         </LineChart>
-      ) : (
-        <CurveLoader
-          {...makeTestIDProps(E2E_ID.home.portfolioCurveLoading)}
-          style={styles.loading}
-        />
-      )}
+      ) : null}
     </Animated.View>
   );
 });
@@ -162,12 +158,14 @@ export const MultiChart = memo(function MultiChart({
   onPressWalletList?: () => void;
 } & RNViewProps) {
   const { styles } = useTheme2024({ getStyle });
-  const { curveAvailability, curveList } = useHomeCurveProjection(
-    useShallow(state => ({
-      curveAvailability: state.availability,
-      curveList: getHomeCurveProjectionList(state),
-    })),
-  );
+  const { curveAvailability, curveList, isCurveFetchingRemote } =
+    useHomeCurveProjection(
+      useShallow(state => ({
+        curveAvailability: state.availability,
+        curveList: getHomeCurveProjectionList(state),
+        isCurveFetchingRemote: state.activity.isFetchingRemote,
+      })),
+    );
   const { matteredAccountLength, isPendingMatteredAccountLength } =
     useHomeAccountProjection(
       useShallow(state => ({
@@ -197,7 +195,10 @@ export const MultiChart = memo(function MultiChart({
   const showChangeLoading =
     !startupReady || isHomeProjectionWaitingForValue(changeAvailability);
   const isCurveLoading =
-    !startupReady || isHomeProjectionWaitingForValue(curveAvailability);
+    startupReady &&
+    (isCurveFetchingRemote ||
+      (chartsData.length > 0 &&
+        isHomeProjectionWaitingForValue(curveAvailability)));
 
   return (
     <View
@@ -478,8 +479,8 @@ const ChartHeader = React.memo(
             {...makeTestIDProps(E2E_ID.home.portfolioCurveToggle)}
             onPress={e => {
               e.stopPropagation();
-              const nextValue = !svIsFoldMultiChart.value;
-              svIsFoldMultiChart.value = nextValue;
+              const nextValue = !getIsFoldMultiChart();
+              setIsFoldMultiChart(nextValue);
               if (!nextValue) {
                 refreshDayCurve({
                   force: false,

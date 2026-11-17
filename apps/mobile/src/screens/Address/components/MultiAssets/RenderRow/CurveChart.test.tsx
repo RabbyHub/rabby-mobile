@@ -4,12 +4,19 @@ import { StyleSheet } from 'react-native';
 
 import { E2E_ID } from '@/constant/e2e';
 import type { HomeProjectionAvailability } from '@/store/homePortfolio/model';
-import { MultiChart } from './CurveChart';
+import { refreshDayCurve } from '@/store/curve24h';
+import {
+  getIsFoldMultiChart,
+  MultiChart,
+  setIsFoldMultiChart,
+} from './CurveChart';
 
 let mockStartupReady = true;
 let mockBalanceAvailability: HomeProjectionAvailability = 'ready';
 let mockTotalBalance = 1234;
 let mockCurrency: 'USD' | 'EUR' = 'USD';
+let mockHomeCurveExpanded = false;
+let mockCurveFetching = false;
 const mockTickerMount = jest.fn();
 const mockTickerUnmount = jest.fn();
 const includingHidden = { includeHiddenElements: true };
@@ -113,10 +120,18 @@ jest.mock('@/core/utils/homeStartupReady', () => ({
 jest.mock('@/components/Perf/PerfDetector', () => ({
   useRendererDetect: jest.fn(),
 }));
-jest.mock('@/store/curve24h', () => ({ refreshDayCurve: jest.fn() }));
+jest.mock('@/store/curve24h', () => ({
+  refreshDayCurve: jest.fn(),
+  sceneCurve24hStore: {
+    getHomeCurveExpanded: () => mockHomeCurveExpanded,
+    setHomeCurveExpanded: (expanded: boolean) => {
+      mockHomeCurveExpanded = expanded;
+    },
+  },
+}));
 jest.mock(
   '@/screens/TokenDetail/components/TokenPriceChart/CurveLoader',
-  () => ({ CurveLoader: () => null }),
+  () => ({ CurveLoader: require('react-native').View }),
 );
 jest.mock(
   '@/screens/TokenDetail/components/TokenPriceChart/LoadingLinear',
@@ -152,7 +167,10 @@ jest.mock('@/store/homePortfolio', () => ({
     '@/store/homePortfolio/model',
   ).isHomeProjectionWaitingForValue,
   useHomeCurveProjection: (select: (state: object) => unknown) =>
-    select({ availability: 'ready' }),
+    select({
+      availability: 'ready',
+      activity: { isFetchingRemote: mockCurveFetching },
+    }),
   useHomeAccountProjection: (select: (state: object) => unknown) =>
     select({
       matteredAccountLength: 3,
@@ -179,6 +197,9 @@ describe('MultiChart balance presentation', () => {
     mockBalanceAvailability = 'ready';
     mockTotalBalance = 1234;
     mockCurrency = 'USD';
+    mockCurveFetching = false;
+    setIsFoldMultiChart(true);
+    jest.mocked(refreshDayCurve).mockClear();
     mockTickerMount.mockClear();
     mockTickerUnmount.mockClear();
   });
@@ -191,6 +212,53 @@ describe('MultiChart balance presentation', () => {
       <MultiChart tabName="overview" hideType="SHOW" style={{}} {...props} />
     </mockThemeContext.Provider>
   );
+
+  it('requests the curve only on expansion and synchronizes programmatic folding', () => {
+    const view = render(tree());
+    const toggle = view.getByTestId(E2E_ID.home.portfolioCurveToggle);
+    expect(getIsFoldMultiChart()).toBe(true);
+    expect(refreshDayCurve).not.toHaveBeenCalled();
+
+    fireEvent.press(toggle, { stopPropagation: jest.fn() });
+    expect(getIsFoldMultiChart()).toBe(false);
+    expect(refreshDayCurve).toHaveBeenCalledTimes(1);
+    expect(refreshDayCurve).toHaveBeenCalledWith({
+      force: false,
+      reason: 'manual_refresh',
+    });
+
+    fireEvent.press(toggle, { stopPropagation: jest.fn() });
+    expect(getIsFoldMultiChart()).toBe(true);
+    expect(refreshDayCurve).toHaveBeenCalledTimes(1);
+
+    fireEvent.press(toggle, { stopPropagation: jest.fn() });
+    setIsFoldMultiChart(true);
+    expect(getIsFoldMultiChart()).toBe(true);
+    expect(refreshDayCurve).toHaveBeenCalledTimes(2);
+  });
+
+  it('shows curve loading on first demand without blocking balance and change', () => {
+    const view = render(tree());
+    expect(
+      view.queryByTestId(E2E_ID.home.portfolioCurveLoading, includingHidden),
+    ).toBeNull();
+
+    mockCurveFetching = true;
+    view.rerender(tree());
+    expect(
+      view.getByTestId(E2E_ID.home.portfolioCurveLoading, includingHidden),
+    ).toBeTruthy();
+    expect(
+      view.queryByTestId(E2E_ID.home.portfolioBalanceLoading, includingHidden),
+    ).toBeNull();
+    expect(view.getByTestId(E2E_ID.home.portfolioCurveToggle)).toBeTruthy();
+
+    mockCurveFetching = false;
+    view.rerender(tree());
+    expect(
+      view.queryByTestId(E2E_ID.home.portfolioCurveLoading, includingHidden),
+    ).toBeNull();
+  });
 
   it('keeps ticker inputs stable when an unrelated parent callback changes', () => {
     const firstOnPress = jest.fn();

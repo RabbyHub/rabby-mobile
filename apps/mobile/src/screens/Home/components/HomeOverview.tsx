@@ -788,7 +788,6 @@ function HomeOverviewPostStartupEffects({
         });
         refreshDayCurve({
           addresses: balanceAddresses.length ? balanceAddresses : undefined,
-          force: isFirstTrigger,
           reason: 'manual_refresh',
         });
       });
