@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect } from 'react';
 import RNFS from '@rabby-wallet/react-native-fs';
 import { Linking } from 'react-native';
+import { executeOnUIRuntimeSync } from 'react-native-reanimated';
 import { StackActions } from '@react-navigation/native';
 import { t } from 'i18next';
 import {
@@ -76,6 +77,10 @@ import {
   forceDebugChainStatsFor,
   toggleDebugChainStatsForced,
 } from '@/screens/Home/debugChainStats';
+import {
+  debugPagerOffsetSampling,
+  type PagerOffsetMode,
+} from '@/screens/Home/debugPagerOffsetSampling';
 import { apisSingleHome } from '@/screens/Home/hooks/singleHome';
 
 const nextAppLinkRef = {
@@ -110,6 +115,7 @@ type OnParseUrlAndProcessAction = (payload: {
     | 'debug-create-address'
     | 'debug-set-language'
     | 'debug-import-test-accounts'
+    | 'toggle-pager-offset-sampling'
     | 'regression-scenario';
   target?: RabbyGoTarget;
   dappUrl?: string;
@@ -157,6 +163,8 @@ type OnParseUrlAndProcessAction = (payload: {
     address?: string;
     open?: boolean;
   };
+  /** Non-production only: `undefined` toggles the native pager-offset sampler. */
+  debugPagerOffsetSampling?: PagerOffsetMode;
   regressionScenarioCommand?: RegressionScenarioCommand | null;
   regressionScenarioError?: string;
 }) => void;
@@ -579,6 +587,29 @@ function parseNonProductionMaintenanceLink(appLink: string) {
             ? undefined
             : ['1', 'true', 'yes', 'on'].includes(openRaw.toLowerCase()),
       },
+    } satisfies Parameters<OnParseUrlAndProcessAction>[0];
+  }
+
+  // Non-production only: switch the home tab chrome between the JS-side
+  // interpolation fallback and the native per-frame pager offset (QA 1396).
+  // `?_cmd=toggle-pager-offset-sampling` toggles off <-> pull;
+  // `&value=on|push|pull|off` pins one delivery variant.
+  if (
+    rabbyGoCmd === 'toggle-pager-offset-sampling' ||
+    target === 'toggle-pager-offset-sampling'
+  ) {
+    const raw = (urlInfo.searchParams.get('value') || '').toLowerCase();
+    let mode: PagerOffsetMode | undefined;
+    if (raw === 'push' || raw === 'on' || raw === '1' || raw === 'true') {
+      mode = 'push';
+    } else if (raw === 'pull') {
+      mode = 'pull';
+    } else if (raw === 'off' || raw === '0' || raw === 'false') {
+      mode = 'off';
+    }
+    return {
+      type: 'toggle-pager-offset-sampling',
+      debugPagerOffsetSampling: mode,
     } satisfies Parameters<OnParseUrlAndProcessAction>[0];
   }
 
@@ -1205,6 +1236,82 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
       void import('@/hooks/lang').then(({ setAppLanguage }) =>
         setAppLanguage(payload.debugLanguage!),
       );
+      break;
+    case 'toggle-pager-offset-sampling':
+      if (!isNonPublicProductionEnv) {
+        return;
+      }
+      if (payload.debugPagerOffsetSampling) {
+        debugPagerOffsetSampling.set(payload.debugPagerOffsetSampling);
+      } else {
+        debugPagerOffsetSampling.toggle();
+      }
+      console.log('[debug-pager-offset] mode:', debugPagerOffsetSampling.mode);
+      if (__DEV__) {
+        // The getter lives on the Reanimated UI runtime, so probe it there.
+        setTimeout(() => {
+          try {
+            const probe = executeOnUIRuntimeSync(() => {
+              'worklet';
+              const hasOffset =
+                typeof (global as any).__pagerOffset === 'function';
+              const hasPages =
+                typeof (global as any).__pagerOffsetPages === 'function';
+              return hasOffset && hasPages
+                ? `offset=${(global as any).__pagerOffset()} pages=${(
+                    global as any
+                  ).__pagerOffsetPages()}`
+                : `missing offset=${hasOffset} pages=${hasPages}`;
+            })();
+            console.log('[debug-pager-offset] ui-runtime bridge:', probe);
+          } catch (error) {
+            console.warn('[debug-pager-offset] probe failed:', error);
+          }
+        }, 1500);
+      }
+      break;
+    case 'debug-create-address':
+      if (!isNonPublicProductionEnv) {
+        return;
+      }
+      void (async () => {
+        try {
+          // Same data mutations as the onboarding UI, in the same order:
+          // the create-seed-phrase page prepares the wallet, then the
+          // set-password / create-address pages submit it (password, keyring,
+          // persisted accounts, backup reminder). No direct keyring shortcut.
+          const { prepareWalletCreation, completeWalletCreation } =
+            await import('@/hooks/address/useSetupWallet');
+          const { REGRESSION_DEFAULT_PASSWORD } = await import(
+            '@/devtools/regressionScenarios/credentials.nonprod'
+          );
+          const { toast } = await import('@/components2024/Toast');
+          const { default: accountStore } = await import('@/store/account');
+
+          const prepared = await prepareWalletCreation({ mode: 'create' });
+          // `PasswordFormValues` differs between stacks (develop still has
+          // `checked`, tmp carries `enableDataAnalysis`); pass the fields the
+          // submit path reads and let the call site stay version-agnostic.
+          await completeWalletCreation(prepared, {
+            password: REGRESSION_DEFAULT_PASSWORD,
+            confirmPassword: REGRESSION_DEFAULT_PASSWORD,
+            checked: true,
+            enableBiometrics: false,
+          } as any);
+          await accountStore.fetchAccounts({ force: true });
+          toast.success(`debug address created: ${prepared.address || ''}`);
+          apisHomeTabIndex.setTabIndex(1, true);
+        } catch (error) {
+          console.warn(
+            '[useUniversalLinkOnTop] debug-create-address failed',
+            error,
+          );
+          const { Alert } = await import('react-native');
+          Alert.alert('debug-create-address failed', String(error));
+          const { toast } = await import('@/components2024/Toast');
+          toast.show(`create-address failed: ${String(error)}`);
+        }
+      })();
       break;
     case 'regression-scenario':
       handleRegressionScenarioCommand(

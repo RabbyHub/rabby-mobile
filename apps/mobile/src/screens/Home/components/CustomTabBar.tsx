@@ -8,9 +8,10 @@ import {
 } from 'react-native';
 import { MaterialTabBar } from 'react-native-collapsible-tab-view';
 
-import React, { useCallback, useRef } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import Animated, {
   Easing,
+  executeOnUIRuntimeSync,
   clamp,
   useAnimatedReaction,
   useFrameCallback,
@@ -58,6 +59,7 @@ import {
 } from '@/hooks/navigation';
 import CustomLabel from './Tabs/CustomLabel';
 import { getHomeTabIndicatorWidth } from '../utils/homeTabIndicator';
+import { useDebugPagerOffsetSamplingMode } from '../debugPagerOffsetSampling';
 
 type ItemLayout = {
   width: number;
@@ -447,6 +449,44 @@ const AssetsTabLabels = [
 // row shimmer while it rides in.
 const STRIP_PIXEL = PixelRatio.get();
 
+// The assets pager: overview + token + defi + nft. Used to ignore offsets
+// published by an unrelated pager while the home chrome is mounted.
+const HOME_TAB_PAGE_COUNT = AssetsTabLabels.length + 1;
+
+/**
+ * Push variant (QA 1396): native calls this worklet on every sampled frame, so
+ * the shared value is already fresh when Reanimated's frame callbacks run.
+ */
+function applyNativePagerOffset(
+  target: Animated.SharedValue<number>,
+  offset: number,
+  pageCount: number,
+) {
+  'worklet';
+  if (pageCount !== HOME_TAB_PAGE_COUNT) {
+    return;
+  }
+  target.value = offset;
+}
+
+/** Installs the push setter. Returns whether the native binder is available. */
+function bindNativePagerOffset(target: Animated.SharedValue<number>): boolean {
+  'worklet';
+  const bind = (global as any).__pagerOffsetBind;
+  if (typeof bind !== 'function') {
+    return false;
+  }
+  return bind(applyNativePagerOffset, target);
+}
+
+function unbindNativePagerOffset() {
+  'worklet';
+  const bind = (global as any).__pagerOffsetBind;
+  if (typeof bind === 'function') {
+    bind(null, null);
+  }
+}
+
 function AssetsTabBar({
   indexDecimal,
 }: {
@@ -534,8 +574,71 @@ export const HomeCustomMaterialTabBar = ({}: Partial<
   const velocity = useSharedValue(0); // pages per ms
   const restSettled = useSharedValue(1);
 
+  // Native path (QA 1396): the patched pager samples the real page offset at
+  // the display rate and hands it to the UI runtime. `pull` reads it from this
+  // frame callback, `push` lets native write `indexDecimal` itself. Both are
+  // debug-switch driven; `off` keeps the interpolation fallback below, which is
+  // still the shipped behaviour.
+  const pagerOffsetMode = useDebugPagerOffsetSamplingMode();
+  // 0 = off, 1 = pull, 2 = push
+  const nativeMode = useSharedValue(0);
+  // Whether the push setter is actually installed on this app session.
+  const pushBound = useSharedValue(0);
+  const nativeActive = useSharedValue(0);
+
+  useEffect(() => {
+    nativeMode.value =
+      pagerOffsetMode === 'push' ? 2 : pagerOffsetMode === 'pull' ? 1 : 0;
+    let bound = false;
+    if (pagerOffsetMode === 'push') {
+      try {
+        bound = executeOnUIRuntimeSync(bindNativePagerOffset)(indexDecimal);
+      } catch (error) {
+        console.warn('[debug-pager-offset] push bind failed:', error);
+      }
+      if (__DEV__) {
+        console.log('[debug-pager-offset] push bound:', bound);
+      }
+    }
+    pushBound.value = bound ? 1 : 0;
+    return () => {
+      if (!bound) {
+        return;
+      }
+      pushBound.value = 0;
+      try {
+        executeOnUIRuntimeSync(unbindNativePagerOffset)();
+      } catch (error) {
+        console.warn('[debug-pager-offset] push unbind failed:', error);
+      }
+    };
+  }, [pagerOffsetMode, indexDecimal, nativeMode, pushBound]);
+
   useFrameCallback(info => {
     nowMs.value += info.timeSincePreviousFrame ?? 1000 / 60;
+    if (nativeMode.value === 2) {
+      // Native writes `indexDecimal`; just keep the fallback writer quiet.
+      nativeActive.value = pushBound.value;
+      if (pushBound.value === 1) {
+        return;
+      }
+    } else if (nativeMode.value === 1) {
+      const readOffset = (global as any).__pagerOffset;
+      const readPageCount = (global as any).__pagerOffsetPages;
+      if (
+        typeof readOffset === 'function' &&
+        typeof readPageCount === 'function' &&
+        readPageCount() === HOME_TAB_PAGE_COUNT
+      ) {
+        const nativeOffset = readOffset();
+        if (typeof nativeOffset === 'number' && Number.isFinite(nativeOffset)) {
+          nativeActive.value = 1;
+          indexDecimal.value = nativeOffset;
+          return;
+        }
+      }
+    }
+    nativeActive.value = 0;
     // Once samples stop, land on the exact last sample: the timing target
     // carries a small velocity lead that must not survive the settle.
     if (
@@ -568,6 +671,10 @@ export const HomeCustomMaterialTabBar = ({}: Partial<
         -0.2,
         Math.min(0.2, velocity.value * sampleIntervalMs.value * 0.5),
       );
+      // The native sampler already owns `indexDecimal` while it is live.
+      if (nativeActive.value === 1) {
+        return;
+      }
       indexDecimal.value = withTiming(value + lead, {
         duration: Math.max(16, Math.min(80, sampleIntervalMs.value)),
         easing: Easing.linear,
