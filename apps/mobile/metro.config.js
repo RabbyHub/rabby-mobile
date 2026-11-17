@@ -406,7 +406,9 @@ const withPackageExportsDisabled = config => {
  * @type {import('metro-config').MetroConfig}
  */
 const config = {
-  ...(metroCacheDir ? { cacheStores: [new FileStore({ root: metroCacheDir })] } : {}),
+  ...(metroCacheDir
+    ? { cacheStores: [new FileStore({ root: metroCacheDir })] }
+    : {}),
   cacheVersion: `${defaultConfig.cacheVersion}:${babelTransformCacheVersion}:react-native-architecture=${reactNativeArchitecture}`,
   projectRoot,
   transformer: {
@@ -463,27 +465,6 @@ const config = {
           filePath: mobileReactRuntimeModule,
           type: 'sourceFile',
         };
-      }
-
-      if (
-        /^(react-native-reanimated|react-native-gesture-handler)(\/|$)/.test(
-          moduleName,
-        )
-      ) {
-        // Source-linked workspaces must share the app's native peer instance.
-        // Restrict lookup, but let Metro keep its platform extensions and
-        // react-native/mainFields selection instead of using Node's main entry.
-        return context.resolveRequest(
-          {
-            ...context,
-            allowHaste: false,
-            disableHierarchicalLookup: true,
-            nodeModulesPaths: [path.resolve(projectRoot, 'node_modules')],
-            extraNodeModules: {},
-          },
-          moduleName,
-          platform,
-        );
       }
 
       if (moduleName === '@walletconnect/keyvaluestorage') {
