@@ -66,13 +66,16 @@ const getStyle = createGetStyles2024(ctx => ({
     borderWidth: 1,
     borderColor: ctx.colors2024['brand-default'],
     borderRadius: 8,
-    width: 85,
+    // minWidth so longer translations (e.g. ru "Вставить") grow the button instead of overflowing
+    minWidth: 85,
     height: 34,
     paddingVertical: 8,
     paddingHorizontal: 11,
     display: 'flex',
     gap: 8,
     flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   pasteButtonText: {
     color: ctx.colors2024['brand-default'],
