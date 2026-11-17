@@ -1,7 +1,7 @@
 import {
-  getPerpsProPopulatedInfoSectionBottomPadding,
   getPerpsProInfoSectionMinimumContentHeight,
   getPerpsProInfoTabsNaturalAnchor,
+  PERPS_PRO_INFO_SECTION_BOTTOM_PADDING,
   PERPS_PRO_INFO_TABS_PLACEHOLDER_HEIGHT,
 } from './perpsProInfoTabsSticky';
 
@@ -33,24 +33,9 @@ describe('Perps Pro info tabs sticky geometry', () => {
     ).toBe(0);
   });
 
-  it('preserves the empty-state trailing distance after populated rows', () => {
-    expect(
-      getPerpsProPopulatedInfoSectionBottomPadding({
-        marketBarHeight: 40,
-        viewportHeight: 700,
-      }),
-    ).toBe(380);
-    expect(
-      getPerpsProPopulatedInfoSectionBottomPadding({
-        marketBarHeight: 40,
-        viewportHeight: 300,
-      }),
-    ).toBe(32);
-    expect(
-      getPerpsProPopulatedInfoSectionBottomPadding({
-        marketBarHeight: 40,
-        viewportHeight: Number.NaN,
-      }),
-    ).toBe(32);
+  it('ends long tabs with a fixed gap below the last row', () => {
+    // Viewport-sized trailing padding made the Open Orders list show a tall
+    // blank area below its last card (QA 1407).
+    expect(PERPS_PRO_INFO_SECTION_BOTTOM_PADDING).toBe(36);
   });
 });
