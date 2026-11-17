@@ -77,7 +77,10 @@ import {
   forceDebugChainStatsFor,
   toggleDebugChainStatsForced,
 } from '@/screens/Home/debugChainStats';
-import { debugPagerOffsetSampling } from '@/screens/Home/debugPagerOffsetSampling';
+import {
+  debugPagerOffsetSampling,
+  type PagerOffsetMode,
+} from '@/screens/Home/debugPagerOffsetSampling';
 import { apisSingleHome } from '@/screens/Home/hooks/singleHome';
 
 const nextAppLinkRef = {
@@ -150,7 +153,7 @@ type OnParseUrlAndProcessAction = (payload: {
   debugChainStatsLoadingForMs?: number;
   debugChainStatsLoadingOff?: boolean;
   /** Non-production only: `undefined` toggles the native pager-offset sampler. */
-  debugPagerOffsetSampling?: boolean;
+  debugPagerOffsetSampling?: PagerOffsetMode;
   regressionScenarioCommand?: RegressionScenarioCommand | null;
   regressionScenarioError?: string;
 }) => void;
@@ -516,16 +519,24 @@ function parseNonProductionMaintenanceLink(appLink: string) {
 
   // Non-production only: switch the home tab chrome between the JS-side
   // interpolation fallback and the native per-frame pager offset (QA 1396).
-  // `?_cmd=toggle-pager-offset-sampling` toggles, `&value=on|off` pins it.
+  // `?_cmd=toggle-pager-offset-sampling` toggles off <-> push;
+  // `&value=on|push|pull|off` pins one delivery variant.
   if (
     rabbyGoCmd === 'toggle-pager-offset-sampling' ||
     target === 'toggle-pager-offset-sampling'
   ) {
-    const raw = urlInfo.searchParams.get('value');
+    const raw = (urlInfo.searchParams.get('value') || '').toLowerCase();
+    let mode: PagerOffsetMode | undefined;
+    if (raw === 'push' || raw === 'on' || raw === '1' || raw === 'true') {
+      mode = 'push';
+    } else if (raw === 'pull') {
+      mode = 'pull';
+    } else if (raw === 'off' || raw === '0' || raw === 'false') {
+      mode = 'off';
+    }
     return {
       type: 'toggle-pager-offset-sampling',
-      debugPagerOffsetSampling:
-        raw == null ? undefined : raw === '1' || raw === 'true' || raw === 'on',
+      debugPagerOffsetSampling: mode,
     } satisfies Parameters<OnParseUrlAndProcessAction>[0];
   }
 
@@ -1041,15 +1052,12 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
       if (!isNonPublicProductionEnv) {
         return;
       }
-      if (typeof payload.debugPagerOffsetSampling === 'boolean') {
+      if (payload.debugPagerOffsetSampling) {
         debugPagerOffsetSampling.set(payload.debugPagerOffsetSampling);
       } else {
         debugPagerOffsetSampling.toggle();
       }
-      console.log(
-        '[debug-pager-offset] useNativePagerOffset:',
-        debugPagerOffsetSampling.enabled,
-      );
+      console.log('[debug-pager-offset] mode:', debugPagerOffsetSampling.mode);
       if (__DEV__) {
         // The getter lives on the Reanimated UI runtime, so probe it there.
         setTimeout(() => {

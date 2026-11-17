@@ -86,10 +86,10 @@ index b46c366..a02fe4f 100644
    }
 diff --git a/android/cpp/PagerOffsetSampler.cpp b/android/cpp/PagerOffsetSampler.cpp
 new file mode 100644
-index 0000000..ac50ed2
+index 0000000..16a63ac
 --- /dev/null
 +++ b/android/cpp/PagerOffsetSampler.cpp
-@@ -0,0 +1,127 @@
+@@ -0,0 +1,188 @@
 +// Dev-only (QA 1396) bridge: publish the pager offset that Android samples
 +// every display frame into the Reanimated UI runtime.
 +//
@@ -99,8 +99,17 @@ index 0000000..ac50ed2
 +//
 +//   1. on the JS thread, resolve `__reanimatedModuleProxy` and grab its UI
 +//      runtime,
-+//   2. on the UI thread (the first sampled frame), install a `__pagerOffset`
-+//      host function on that runtime.
++//   2. on the UI thread (the first sampled frame), install the host functions
++//      below on that runtime.
++//
++// Two delivery variants share the same sampler:
++//   - pull: `__pagerOffset()` / `__pagerOffsetPages()` read the last sample
++//     from a worklet (frame callback);
++//   - push: `__pagerOffsetBind(setter, sharedValue)` installs a worklet setter
++//     that native calls on every sample, so the shared value is already fresh
++//     when Reanimated's own frame callbacks run - no per-frame pull at all.
++//     (3.19 shared values are plain JS objects, so there is no C++ mutable to
++//     write into directly; calling the setter worklet is the direct path.)
 +//
 +// The Reanimated header is included deliberately: this is a compile-time
 +// coupling. If an upgrade renames/removes the proxy accessor the build fails
@@ -109,6 +118,7 @@ index 0000000..ac50ed2
 +#include <jni.h>
 +
 +#include <atomic>
++#include <memory>
 +
 +#include <jsi/jsi.h>
 +
@@ -153,7 +163,30 @@ index 0000000..ac50ed2
 +  gInstalled.store(true, std::memory_order_release);
 +}
 +
-+// Must only run on the UI thread, which is where the sampler runs.
++// Only touched on the UI thread.
++std::unique_ptr<Value> gOffsetSetter;
++std::unique_ptr<Value> gOffsetSetterTarget;
++
++void installBinder(Runtime &uiRuntime) {
++  auto binder = Function::createFromHostFunction(
++      uiRuntime,
++      PropNameID::forAscii(uiRuntime, "__pagerOffsetBind"),
++      2,
++      [](Runtime &rt, const Value &, const Value *args, size_t count) -> Value {
++        gOffsetSetter.reset();
++        gOffsetSetterTarget.reset();
++        if (count < 2 || !args[0].isObject() || args[1].isNull() ||
++            args[1].isUndefined()) {
++          return Value(false);
++        }
++        gOffsetSetter = std::make_unique<Value>(rt, args[0]);
++        gOffsetSetterTarget = std::make_unique<Value>(rt, args[1]);
++        return Value(true);
++      });
++  uiRuntime.global().setProperty(
++      uiRuntime, "__pagerOffsetBind", std::move(binder));
++}
++
 +void ensureInstalled() {
 +  if (gInstalled.load(std::memory_order_acquire)) {
 +    return;
@@ -162,7 +195,34 @@ index 0000000..ac50ed2
 +  if (runtimePtr == 0) {
 +    return;
 +  }
-+  installGetter(*reinterpret_cast<Runtime *>(runtimePtr));
++  auto &uiRuntime = *reinterpret_cast<Runtime *>(runtimePtr);
++  installGetter(uiRuntime);
++  installBinder(uiRuntime);
++}
++
++// Pushes the newest sample into the bound shared value, if any.
++void pushToBoundSharedValue(float pageOffset, int pageCount) {
++  if (!gOffsetSetter || !gOffsetSetterTarget) {
++    return;
++  }
++  const auto runtimePtr = gUiRuntime.load(std::memory_order_acquire);
++  if (runtimePtr == 0) {
++    return;
++  }
++  auto &uiRuntime = *reinterpret_cast<Runtime *>(runtimePtr);
++  try {
++    gOffsetSetter->asObject(uiRuntime)
++        .asFunction(uiRuntime)
++        .call(
++            uiRuntime,
++            *gOffsetSetterTarget,
++            Value(static_cast<double>(pageOffset)),
++            Value(static_cast<double>(pageCount)));
++  } catch (...) {
++    // The consumer went away mid-frame; drop the binding.
++    gOffsetSetter.reset();
++    gOffsetSetterTarget.reset();
++  }
 +}
 +
 +} // namespace
@@ -216,6 +276,7 @@ index 0000000..ac50ed2
 +  gPageOffset.store(pageOffset, std::memory_order_relaxed);
 +  gPageCount.store(pageCount, std::memory_order_relaxed);
 +  ensureInstalled();
++  pushToBoundSharedValue(pageOffset, pageCount);
 +}
 diff --git a/android/src/fabric/java/com/reactnativepagerview/PagerViewViewManager.kt b/android/src/fabric/java/com/reactnativepagerview/PagerViewViewManager.kt
 index aad38b2..242b556 100644
@@ -280,16 +341,18 @@ index aad38b2..242b556 100644
 +}
 diff --git a/android/src/main/java/com/reactnativepagerview/PagerOffsetSampler.kt b/android/src/main/java/com/reactnativepagerview/PagerOffsetSampler.kt
 new file mode 100644
-index 0000000..6e608bb
+index 0000000..e752d1e
 --- /dev/null
 +++ b/android/src/main/java/com/reactnativepagerview/PagerOffsetSampler.kt
-@@ -0,0 +1,182 @@
+@@ -0,0 +1,205 @@
 +package com.reactnativepagerview
 +
++import android.os.Build
 +import android.os.Handler
 +import android.os.Looper
 +import android.util.Log
 +import android.view.Choreographer
++import androidx.annotation.RequiresApi
 +import androidx.recyclerview.widget.RecyclerView
 +import androidx.viewpager2.widget.ViewPager2
 +import com.facebook.react.bridge.ReactContext
@@ -413,7 +476,7 @@ index 0000000..6e608bb
 + */
 +internal class PagerFrameSampler(
 +  private val viewPager: ViewPager2,
-+) : Choreographer.FrameCallback {
++) {
 +  companion object {
 +    private const val SETTLE_FRAMES = 2
 +  }
@@ -423,9 +486,30 @@ index 0000000..6e608bb
 +
 +  @Volatile private var scrollState = ViewPager2.SCROLL_STATE_IDLE
 +
++  private val frameCallback = Choreographer.FrameCallback { onFrame() }
++
++  // Vsync callbacks run at the very beginning of a frame, i.e. before
++  // Reanimated's animation-phase frame callbacks, so a pushed value is already
++  // in place for the frame that draws it.
++  @RequiresApi(Build.VERSION_CODES.TIRAMISU)
++  private val vsyncRound = object : Choreographer.VsyncCallback {
++    override fun onVsync(frameData: Choreographer.FrameData) {
++      onFrame()
++    }
++  }
++
 +  fun start() {
 +    if (running.compareAndSet(false, true)) {
-+      Choreographer.getInstance().postFrameCallback(this)
++      post()
++    }
++  }
++
++  private fun post() {
++    val choreographer = Choreographer.getInstance()
++    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
++      choreographer.postVsyncCallback(vsyncRound)
++    } else {
++      choreographer.postFrameCallback(frameCallback)
 +    }
 +  }
 +
@@ -441,7 +525,7 @@ index 0000000..6e608bb
 +    }
 +  }
 +
-+  override fun doFrame(frameTimeNanos: Long) {
++  private fun onFrame() {
 +    if (!running.get()) return
 +    if (scrollState == ViewPager2.SCROLL_STATE_IDLE) {
 +      if (idleFrames >= SETTLE_FRAMES) {
@@ -453,7 +537,7 @@ index 0000000..6e608bb
 +      idleFrames = 0
 +    }
 +    publishOffset()
-+    Choreographer.getInstance().postFrameCallback(this)
++    post()
 +  }
 +
 +  private fun publishOffset() {
