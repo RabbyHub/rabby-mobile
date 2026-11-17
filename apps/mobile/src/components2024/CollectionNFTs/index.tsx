@@ -1,7 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { View } from 'react-native';
-import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
+import { View, ScrollView } from 'react-native';
 import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
 import type { NftCollectionResourceValue } from '@/store/nftAssetsIndex';
 import { useTheme2024 } from '@/hooks/theme';
@@ -74,16 +73,14 @@ export const CollectionNFTs: React.FC<Props> = ({
           </Text>
         </View>
         <View style={styles.nftListContainer}>
-          {/* gorhom only hands the pull-down over from its own scrollable, so
-              a plain ScrollView here would swallow the drag and the sheet would
-              never follow. */}
-          <BottomSheetScrollView
+          <ScrollView
+            horizontal={false}
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.scrollContent}>
             {data.nft_list.map(nft => (
               <Item item={nft} key={nft.id} onPress={() => onPressItem(nft)} />
             ))}
-          </BottomSheetScrollView>
+          </ScrollView>
         </View>
       </View>
     </AutoLockView>

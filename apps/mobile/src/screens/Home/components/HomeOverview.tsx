@@ -145,6 +145,7 @@ import { useCurrentTabScrollY } from 'react-native-collapsible-tab-view';
 import type { ScrollHandlerProps } from '@/components/customized/react-native-collapsible-tab-view/hooks';
 import { triggerImpact } from '@/utils/common';
 import type { WorkletFunction } from 'react-native-reanimated/lib/typescript/commonTypes';
+import { IS_ANDROID } from '@/core/native/utils';
 import {
   HOME_TOP_HEADER_SIZES,
   SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING,
@@ -427,33 +428,12 @@ const usePulldownRefreshGesture = <T extends ScrollView | RNGHScrollView>({
       .onStart(() => {
         startValues.value.startedAtBottom = getIsAtBottom(scrollY.value);
         startValues.value.startedAtTop = scrollY.value <= 5;
-        // Pin the first floor to its very end once, before the drawer starts
-        // moving, so the content that stays visible above the drawer is always
-        // the true end of the list. This used to be re-issued on every
-        // `onUpdate` frame (animated, Android only), which kept a native
-        // smooth scroll running on its own timeline next to the finger-driven
-        // translate: the list kept gliding while dragging back, then snapped
-        // in line once the finger stopped.
-        if (startValues.value.startedAtBottom) {
-          scrollToEnd(true, false);
-        }
       })
       .onUpdate(event => {
         panUp: {
           if (startValues.value.startedAtBottom && event.translationY < 0) {
             translateY.value = event.translationY;
             scrollableStatus.value = SCROLLABLE_STATUS.LOCKED;
-            // Keep the first floor frozen at its end while the drawer owns the
-            // drag. If the native scroll view manages to move the offset (an
-            // edge effect, a leftover fling, the few px before this pan
-            // activates), the content would slide under the drawer-anchored
-            // overlay while the finger keeps translating the drawer, so the
-            // two layers drift by a random amount. Snap back instantly and
-            // only when it actually drifted: no animation is started, nothing
-            // runs when the offset is already stable.
-            if (!getIsAtBottom(scrollY.value)) {
-              scrollToEnd(true, false);
-            }
           } else {
             translateY.value = 0;
             scrollableStatus.value = SCROLLABLE_STATUS.UNLOCKED;
@@ -464,6 +444,9 @@ const usePulldownRefreshGesture = <T extends ScrollView | RNGHScrollView>({
             hasOverThreshold() &&
             event.translationY < 0
           ) {
+            if (IS_ANDROID) {
+              scrollToEnd(true, true);
+            }
             !startValues.value.hasImpactOnPandown && runOnJS(triggerImpact)();
             startValues.value.hasImpactOnPandown = true;
           }

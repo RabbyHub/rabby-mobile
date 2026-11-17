@@ -163,9 +163,6 @@ export const MODAL_CONFIGS = {
   [MODAL_NAMES.COLLECTION_NFTS]: {
     snapPoints: [422],
     Component: CollectionNFTs,
-    // Same as NFT_DETAIL: the grid is a BottomSheetScrollView, so the sheet has
-    // to own content panning and must not wrap it in BottomSheetView.
-    globalModalPropsPreset: getDefaultViewTypePropsPreset(),
   },
   [MODAL_NAMES.CONNECT_KEYSTONE]: {
     snapPoints: ['95%'],
@@ -283,9 +280,6 @@ export const MODAL_CONFIGS = {
   [MODAL_NAMES.NFT_DETAIL]: {
     snapPoints: ['85%'],
     Component: NFTDetailPopupInner,
-    // Its content is a BottomSheetScrollView: content panning has to be on and
-    // the host must not wrap the sheet content in BottomSheetView.
-    globalModalPropsPreset: getDefaultViewTypePropsPreset(),
   },
   [MODAL_NAMES.DESCRIPTION]: {
     snapPoints: [674],
