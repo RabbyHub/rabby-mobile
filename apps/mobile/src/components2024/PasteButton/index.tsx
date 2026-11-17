@@ -56,7 +56,9 @@ const PasteButton: React.FC<IProps> = ({
         height={16}
         color={iconColor || colors2024['neutral-foot']}
       />
-      <Text style={styles.pasteButtonText}>{t('global.Paste')}</Text>
+      <Text numberOfLines={1} style={styles.pasteButtonText}>
+        {t('global.Paste')}
+      </Text>
     </TouchableOpacity>
   );
 };
@@ -67,16 +69,17 @@ const getStyle = createGetStyles2024(ctx => ({
     borderColor: ctx.colors2024['brand-default'],
     borderRadius: 8,
     borderCurve: 'continuous',
-    // minWidth so longer translations (e.g. ru "Вставить") grow the button instead of overflowing
+    // minWidth so longer translations (e.g. ru "Вставить") grow the button
+    // instead of overflowing (QA 1382).
     minWidth: 85,
     height: 34,
     paddingVertical: 8,
     paddingHorizontal: 11,
     display: 'flex',
-    gap: 8,
-    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 8,
+    flexDirection: 'row',
   },
   pasteButtonText: {
     color: ctx.colors2024['brand-default'],
