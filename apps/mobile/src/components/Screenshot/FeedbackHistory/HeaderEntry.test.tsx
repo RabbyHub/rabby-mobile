@@ -61,7 +61,7 @@ jest.mock('@/hooks/theme', () => ({
     }),
   }),
 }));
-jest.mock('@/assets/icons/feedback/ticket-cc.svg', () => {
+jest.mock('@/assets/icons/feedback/chat-cc.svg', () => {
   const { View } = require('react-native');
   return (props: object) => <View {...props} testID="feedback-chat-icon" />;
 });

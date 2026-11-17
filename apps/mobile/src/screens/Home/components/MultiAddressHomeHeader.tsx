@@ -203,9 +203,7 @@ export function MultiAddressHomeHeader(
             {},
           ]}>
           {/* Keep border props on the native view, not the legacy gradient. */}
-          <View
-            pointerEvents="none"
-            style={[styles.curveCardGradientBg, !isLight && styles.shadowView]}>
+          <View pointerEvents="none" style={styles.curveCardGradientBg}>
             {isLight && (
               <RNLinearGradient
                 colors={['rgba(255, 255, 255, 1)', 'rgba(255, 255, 255, .54)']}
@@ -218,7 +216,7 @@ export function MultiAddressHomeHeader(
           <View
             style={[
               styles.curveCard,
-              isLight && styles.shadowView,
+              styles.shadowView,
               // !pinnedAccountList.length && styles.noAddressCard,
             ]}>
             <MultiChart
@@ -338,26 +336,16 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     },
     shadowView: {
       ...Platform.select({
-        ios: isLight
-          ? {
-              shadowColor: colors2024['neutral-black'],
-              shadowOffset: {
-                width: 0,
-                height: 4,
-              },
-              shadowOpacity: 0.03,
-              shadowRadius: 10,
-              elevation: 8,
-            }
-          : {
-              shadowColor: 'rgba(0, 0, 0, 0.12)',
-              shadowOffset: {
-                width: 0,
-                height: 15,
-              },
-              shadowOpacity: 1,
-              shadowRadius: 27.5,
-            },
+        ios: {
+          shadowColor: colors2024['neutral-black'],
+          shadowOffset: {
+            width: 0,
+            height: 4,
+          },
+          shadowOpacity: 0.03,
+          shadowRadius: 10,
+          elevation: 8,
+        },
       }),
     },
     globalWarning: {

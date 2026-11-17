@@ -562,7 +562,7 @@ const getStyle = createGetStyles2024(
         : colors2024['neutral-bg-2'],
       width: '48%', // default
       minWidth: 0,
-      borderRadius: 18,
+      borderRadius: 16,
       flexShrink: 0,
       padding: 20,
       paddingBottom: 16,

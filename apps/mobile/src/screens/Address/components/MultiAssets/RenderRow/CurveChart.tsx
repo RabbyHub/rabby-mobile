@@ -425,7 +425,7 @@ const ChartHeader = React.memo(
               animateWidth={false}
               fitWidth
               maxLength={24}
-              lineHeight={styles.netWorth.lineHeight}
+              lineHeight={42}
               duration={320}
               style={styles.netWorth}
               fontSizeByLength={NETWORTH_FONT_SIZE_OPTIONS}
@@ -436,7 +436,7 @@ const ChartHeader = React.memo(
             <Skeleton
               {...makeTestIDProps(E2E_ID.home.portfolioBalanceLoading)}
               width={181}
-              height={styles.netWorth.lineHeight}
+              height={42}
               style={styles.skeletonNetWorth}
               LinearGradientComponent={LoadingLinear}
             />
@@ -469,7 +469,7 @@ const ChartHeader = React.memo(
           <Skeleton
             {...makeTestIDProps(E2E_ID.home.portfolioChangeLoading)}
             width={100}
-            height={styles.changeSection.height}
+            height={18}
             style={styles.skeletonChange}
             LinearGradientComponent={LoadingLinear}
           />
@@ -537,7 +537,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     flexDirection: 'column',
     width: '100%',
     maxWidth: '100%',
-    gap: 4,
+    gap: 2,
     // ...makeDebugBorder('blue'),
   },
   skeletonNetWorth: {
@@ -553,7 +553,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
       : colors2024['neutral-bg-2'],
   },
   netWorth: {
-    lineHeight: 46,
+    lineHeight: 42,
     fontWeight: '700',
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
@@ -561,7 +561,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   changeSection: {
     // Same height for the shown row and the hidden `***` placeholder so the
     // card cannot jump between hide/show (QA 1175).
-    height: 20,
+    height: 18,
     flexDirection: 'row',
     gap: 2,
     alignItems: 'center',
@@ -570,28 +570,29 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   changeRowContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 2,
   },
   changeHidden: {
-    fontSize: 16,
-    lineHeight: 20,
-    fontWeight: '600',
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
     color: colors2024['neutral-title-1'],
   },
   changePercent: {
-    fontSize: 16,
-    lineHeight: 20,
-    fontWeight: '600',
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '700',
     color: colors2024['green-default'],
     fontFamily: 'SF Pro Rounded',
   },
   changeTime: {
-    fontSize: 16,
-    lineHeight: 20,
-    fontWeight: '400',
+    fontSize: 14,
+    fontWeight: '700',
+    lineHeight: 18,
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
+    marginLeft: 4,
   },
   container: {
     maxWidth: '100%',
@@ -617,7 +618,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     // Fixed height: the ticker swaps font sizes by character count, and the
     // hidden value (`******`) is shorter than a real balance. Without this the
     // card grows while that transition renders (QA 1175).
-    height: 46,
+    height: 42,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -631,21 +632,16 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   accountBg: {
     minWidth: 74,
-    height: 38,
-    paddingHorizontal: 8,
-    ...(isLight
-      ? {
-          shadowColor: colors2024['brand-light-1'],
-          shadowOffset: { width: 0, height: 9.411 },
-          shadowOpacity: 0.1,
-          shadowRadius: 22.587,
-        }
-      : {}),
+    padding: 8,
     paddingLeft: 11,
     borderRadius: 10,
     backgroundColor: isLight
       ? colors2024['neutral-line']
       : colors2024['brand-default'],
+    shadowColor: colors2024['brand-light-1'],
+    shadowOffset: { width: 0, height: 9.411 },
+    shadowOpacity: 0.1,
+    shadowRadius: 22.587,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
@@ -660,7 +656,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontWeight: '700',
     textAlign: 'left',
     color: colors2024['neutral-title-1'],
-    lineHeight: 18,
+    lineHeight: 20,
     fontFamily: 'SF Pro Rounded',
     paddingLeft: 6,
   },
