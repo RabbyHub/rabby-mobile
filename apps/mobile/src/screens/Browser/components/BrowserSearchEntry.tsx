@@ -3,7 +3,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { BlurView, BlurViewProps } from '@react-native-community/blur';
 import React from 'react';
-import { Platform, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import { BrowserTabCard } from '../BrowserScreen/components/BrowserManage/BrowserTabList/BrowserTabCard';
 
 const isAndroid = Platform.OS === 'android';
@@ -158,14 +158,23 @@ const BlurViewOnlyIOSWrapper = ({
       </View>
     );
   }
+  // On iOS 27 a blur view no longer rounds to its own `borderRadius` and
+  // renders square, while a clipping ancestor still rounds it. So the radius
+  // lives on a wrapper and the blur just fills it.
   return (
-    <BlurView
-      style={[{ borderRadius, borderCurve: 'continuous' }, style]}
-      blurAmount={blurAmount}
-      blurType={isLight ? 'light' : 'dark'}
-      reducedTransparencyFallbackColor="white">
+    <View
+      style={[
+        { borderRadius, borderCurve: 'continuous', overflow: 'hidden' },
+        style,
+      ]}>
+      <BlurView
+        style={StyleSheet.absoluteFill}
+        blurAmount={blurAmount}
+        blurType={isLight ? 'light' : 'dark'}
+        reducedTransparencyFallbackColor="white"
+      />
       {children}
-    </BlurView>
+    </View>
   );
 };
 
