@@ -16,6 +16,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   main: {
     flex: 1,
     alignItems: 'center',
+    paddingHorizontal: 20,
   },
   text: {
     fontSize: 17,
@@ -23,6 +24,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 22,
     fontWeight: '400',
     fontFamily: 'SF Pro Rounded',
+    textAlign: 'center',
   },
   list: {
     marginBottom: 24,
