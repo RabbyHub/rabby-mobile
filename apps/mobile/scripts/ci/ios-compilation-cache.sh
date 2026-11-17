@@ -8,8 +8,6 @@
 # root) when it grows.
 #
 # Usage: rabby_ios_compilation_cache_xcargs   -> prints xcodebuild/gym xcargs
-set -uo pipefail
-
 rabby_ios_compilation_cache_xcargs() {
   # RABBY_IOS_COMPILATION_CACHE=off disables the cache for A/B measurements.
   if [ "${RABBY_IOS_COMPILATION_CACHE:-on}" = "off" ]; then
