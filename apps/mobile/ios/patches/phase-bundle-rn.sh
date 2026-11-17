@@ -8,7 +8,12 @@ project_dir=$(dirname $(dirname $script_dir))
 # Produce mode (used by deploy-ios-adhoc.sh): redirect the bundle output before
 # any build-info write so the whole phase can run outside Xcode.
 if [ -n "${RABBY_MOBILE_PREBUNDLE_OUT:-}" ]; then
+  # RN's bundle script writes through CONFIGURATION_BUILD_DIR/TARGET_BUILD_DIR;
+  # point all of them at the prebundle directory so the artifact and the
+  # source map land where the deploy script expects them.
   export TARGET_BUILD_DIR="$RABBY_MOBILE_PREBUNDLE_OUT"
+  export CONFIGURATION_BUILD_DIR="$RABBY_MOBILE_PREBUNDLE_OUT"
+  export BUILT_PRODUCTS_DIR="$RABBY_MOBILE_PREBUNDLE_OUT"
   export UNLOCALIZED_RESOURCES_FOLDER_PATH="."
   export REACT_NATIVE_PATH="${REACT_NATIVE_PATH:-$project_dir/node_modules/react-native}"
   export PROJECT_DIR="${PROJECT_DIR:-$project_dir}"
