@@ -11,6 +11,16 @@ WITH_ENVIRONMENT="$REACT_NATIVE_PATH/scripts/xcode/with-environment.sh"
 REACT_NATIVE_XCODE="$REACT_NATIVE_PATH/scripts/react-native-xcode.sh"
 SENTRY_XCODE="../node_modules/@sentry/react-native/scripts/sentry-xcode.sh"
 export CLI_PATH="$project_dir/scripts/metro-bundle-cli.js"
+
+# Persist Metro's transform cache outside the per-job temp directory so
+# consecutive builds can reuse it. The cache key already includes cacheVersion.
+if [ -z "${RABBY_MOBILE_METRO_CACHE_DIR:-}" ]; then
+  metro_cache_root="${RABBY_MOBILE_TURBO_LOCAL_CACHE_ROOT:-$HOME/Library/Caches/rabby-mobile/build-cache}"
+  RABBY_MOBILE_METRO_CACHE_DIR="$metro_cache_root/metro-cache"
+  mkdir -p "$RABBY_MOBILE_METRO_CACHE_DIR" 2>/dev/null || true
+  export RABBY_MOBILE_METRO_CACHE_DIR
+fi
+echo "[RabbyMobileBuild] METRO_CACHE_DIR is $RABBY_MOBILE_METRO_CACHE_DIR"
 export RABBY_MOBILE_METRO_CLI_DELEGATE="$REACT_NATIVE_PATH/scripts/bundle.js"
 
 # you can also run `sudo ln -s $(which node) /usr/local/bin/node` on macOS
