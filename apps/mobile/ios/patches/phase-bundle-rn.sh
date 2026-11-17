@@ -5,6 +5,18 @@ set -e
 script_dir="$( cd "$( dirname "$0"  )" && pwd  )"
 project_dir=$(dirname $(dirname $script_dir))
 
+# Produce mode (used by deploy-ios-adhoc.sh): redirect the bundle output before
+# any build-info write so the whole phase can run outside Xcode.
+if [ -n "${RABBY_MOBILE_PREBUNDLE_OUT:-}" ]; then
+  export TARGET_BUILD_DIR="$RABBY_MOBILE_PREBUNDLE_OUT"
+  export UNLOCALIZED_RESOURCES_FOLDER_PATH="."
+  export REACT_NATIVE_PATH="${REACT_NATIVE_PATH:-$project_dir/node_modules/react-native}"
+  export PROJECT_DIR="${PROJECT_DIR:-$project_dir}"
+  export SRCROOT="${SRCROOT:-$project_dir}"
+  export TARGET_NAME="${TARGET_NAME:-RabbyMobile}"
+  mkdir -p "$RABBY_MOBILE_PREBUNDLE_OUT"
+fi
+
 . "$project_dir/scripts/fns.sh" --source-only
 
 WITH_ENVIRONMENT="$REACT_NATIVE_PATH/scripts/xcode/with-environment.sh"
@@ -240,6 +252,40 @@ fi
 [ ! -z $DO_POD_INSTALL ] && bundle install && bundle exec pod install;
 echo "[RabbyMobileBuild] customize build environment vars finished."
 
+# Produce mode: write the bundle into RABBY_MOBILE_PREBUNDLE_OUT instead of the
+# app, so the deploy script can build it concurrently with the compile.
+prebundle_out="${RABBY_MOBILE_PREBUNDLE_OUT:-}"
+if [ -n "$prebundle_out" ]; then
+  echo "[RabbyMobileBuild] prebundle mode: $prebundle_out"
+fi
+
+# Consume mode: a prebuilt bundle was produced by the deploy script; wait for it
+# (it overlaps the compile) and copy it in instead of bundling again.
+prebundle_dir="${RABBY_MOBILE_PREBUILT_BUNDLE_DIR:-}"
+if [ -n "$prebundle_dir" ] && [ -z "$prebundle_out" ]; then
+  waited=0
+  while [ ! -f "$prebundle_dir/.done" ] && [ "$waited" -lt 900 ]; do
+    sleep 2
+    waited=$((waited + 2))
+  done
+  if [ ! -f "$prebundle_dir/.done" ]; then
+    echo "[RabbyMobileBuild] prebuilt bundle timed out after ${waited}s" >&2
+    exit 1
+  fi
+  if [ "$(cat "$prebundle_dir/.status" 2>/dev/null)" != "0" ]; then
+    echo "[RabbyMobileBuild] prebuilt bundle failed; see the deploy log" >&2
+    exit 1
+  fi
+  bundle_dest="$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH"
+  mkdir -p "$bundle_dest"
+  cp "$prebundle_dir/main.jsbundle" "$bundle_dest/main.jsbundle"
+  if [ -d "$prebundle_dir/assets" ]; then
+    cp -R "$prebundle_dir/assets/." "$bundle_dest/" 2>/dev/null || true
+  fi
+  echo "[RabbyMobileBuild] used the prebuilt JS bundle from $prebundle_dir (waited ${waited}s)"
+  exit 0
+fi
+
 # sentry-cli loads the nearest .env (apps/mobile/.env) into its own process
 # env by default, and the Metro bundle it starts inherits that env.
 # react-native-dotenv ranks process env above every dotenv file, so .env
@@ -247,6 +293,15 @@ echo "[RabbyMobileBuild] customize build environment vars finished."
 # Set SENTRY_LOAD_DOTENV=1 to opt back in.
 export SENTRY_LOAD_DOTENV="${SENTRY_LOAD_DOTENV:-0}"
 echo "[RabbyMobileBuild] SENTRY_LOAD_DOTENV is $SENTRY_LOAD_DOTENV"
+
+if [ -n "$prebundle_out" ]; then
+  prebundle_rc=0
+  /bin/sh -c "$WITH_ENVIRONMENT $SENTRY_XCODE" || prebundle_rc=$?
+  printf '%s' "$prebundle_rc" > "$prebundle_out/.status"
+  : > "$prebundle_out/.done"
+  echo "[RabbyMobileBuild] prebundle finished (status $prebundle_rc)"
+  exit "$prebundle_rc"
+fi
 
 /bin/sh -c "$WITH_ENVIRONMENT $SENTRY_XCODE"
 
