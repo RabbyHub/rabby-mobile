@@ -233,7 +233,7 @@ describe('HomeCustomMaterialTabBar presentation contract', () => {
       view.rerender(<HomeCustomMaterialTabBar />);
 
       expect(getAssetsRowStyle().pointerEvents).toBe(
-        index < 1 ? 'none' : 'auto',
+        index > 0.99 ? 'auto' : 'none',
       );
     }
   });
