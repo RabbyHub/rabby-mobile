@@ -7,6 +7,7 @@ project_dir=$(dirname $script_dir)
 . $script_dir/fast-build/_fns.sh --source-only
 . $script_dir/libs/node-runtime.sh
 . $script_dir/turbo-build/_fns.sh --source-only
+. $script_dir/ci/ios-compilation-cache.sh
 
 ensure_mobile_node_runtime
 
@@ -54,7 +55,9 @@ rm -rf $deployment_local_dir && mkdir -p $deployment_local_dir;
 
 mkdir -p "$script_dir/deployments/tmp"
 
-xcodebuild -project $project_dir/ios/RabbyMobile.xcodeproj -target "RabbyMobile" -showBuildSettings -json | plutil -convert xml1 - -o $script_dir/deployments/tmp/RabbyMobileAdHoc.plist
+adhoc_settings_json="$script_dir/deployments/tmp/RabbyMobileAdHoc.settings.json"
+xcodebuild -project $project_dir/ios/RabbyMobile.xcodeproj -target "RabbyMobile" -showBuildSettings -json > "$adhoc_settings_json"
+plutil -convert xml1 - -o $script_dir/deployments/tmp/RabbyMobileAdHoc.plist < "$adhoc_settings_json"
 
 ios_version_name=$(/usr/libexec/PlistBuddy -c "Print:CFBundleShortVersionString" $project_dir/ios/RabbyMobile/Info.plist)
 ios_version_code=$(/usr/libexec/PlistBuddy -c "Print:0:buildSettings:CURRENT_PROJECT_VERSION" $script_dir/deployments/tmp/RabbyMobileAdHoc.plist)
@@ -93,6 +96,7 @@ build_adhoc() {
     # Never re-upload an IPA left over from an earlier run.
     rm -f "$ouput_dir/RabbyMobile.ipa"
     prepare_ios_ruby_bundle || return $?
+    export GYM_XCARGS="${GYM_XCARGS:+$GYM_XCARGS }$(rabby_ios_compilation_cache_xcargs)"
     turbo_bundle_exec exec fastlane ios adhoc
     return $?
   fi
@@ -140,8 +144,52 @@ build_adhoc() {
     export GYM_XCARGS="${GYM_XCARGS:+$GYM_XCARGS }SENTRY_DISABLE_AUTO_UPLOAD=true"
   fi
 
+  export GYM_XCARGS="${GYM_XCARGS:+$GYM_XCARGS }$(rabby_ios_compilation_cache_xcargs)"
+
+  # Build the JS bundle concurrently with the archive's compile step, then let
+  # the bundle phase copy it in instead of bundling again (RABBY_MOBILE_IOS_PREBUNDLE_JS).
+  prebundle_pid=""
+  if [ "${RABBY_MOBILE_IOS_PREBUNDLE_JS:-true}" = "true" ]; then
+    prebundle_dir="$(mktemp -d "${TMPDIR:-/tmp}/rabby-ios-prebundle.XXXXXX")"
+    export RABBY_MOBILE_PREBUILT_BUNDLE_DIR="$prebundle_dir"
+    # The adhoc lane archives the Regression configuration, so collect that
+    # configuration's build settings for the standalone bundle run.
+    prebundle_settings_json="$script_dir/deployments/tmp/RabbyMobileRegression.settings.json"
+    xcodebuild -project "$project_dir/ios/RabbyMobile.xcodeproj" -target RabbyMobile -configuration Regression -showBuildSettings -json > "$prebundle_settings_json"
+    echo "[deploy-ios-adhoc] prebuilding the JS bundle in $prebundle_dir"
+    (
+      # The bundle phase expects a full Xcode build environment; replay the
+      # settings collected from -showBuildSettings so it can run outside xcodebuild.
+      python3 - "$prebundle_settings_json" "$prebundle_dir" "$project_dir/ios" > "$prebundle_dir/prebundle.log" 2>&1 <<'PREBUNDLE_PY'
+import json, os, subprocess, sys
+
+settings_path, out_dir, ios_dir = sys.argv[1], sys.argv[2], sys.argv[3]
+data = json.load(open(settings_path))
+entries = data if isinstance(data, list) else [data]
+settings = {}
+for entry in entries:
+    settings.update(entry.get("buildSettings") or {})
+env = dict(os.environ)
+for key, value in settings.items():
+    env[str(key)] = str(value)
+env["RABBY_MOBILE_PREBUNDLE_OUT"] = out_dir
+env.setdefault("PLATFORM_NAME", "iphoneos")
+sys.exit(subprocess.call(["bash", "./patches/phase-bundle-rn.sh"], cwd=ios_dir, env=env))
+PREBUNDLE_PY
+    ) &
+    prebundle_pid=$!
+  fi
+
   turbo_bundle_exec exec fastlane ios adhoc;
   build_status=$?
+
+  if [ -n "$prebundle_pid" ]; then
+    wait "$prebundle_pid" || {
+      echo "[deploy-ios-adhoc] prebuilt JS bundle failed; log follows:" >&2
+      [ -f "$prebundle_dir/prebundle.log" ] && cat "$prebundle_dir/prebundle.log" >&2
+      return 1
+    }
+  fi
 
   if [ $build_status -eq 0 ] && ios_fast_build_enabled && [ -d "$ios_archive_path" ]; then
     sh $script_dir/fast-build/ios.sh save-template "$ios_archive_path"
@@ -219,6 +267,7 @@ if [ "$RABBY_MOBILE_IOS_BUILD_UNSIGNED" == "true" ]; then
     CODE_SIGNING_ALLOWED=NO \
     CODE_SIGN_IDENTITY="" \
     CODE_SIGNING_REQUIRED=NO \
+    $(rabby_ios_compilation_cache_xcargs) \
     archive || exit $?
   # An unsigned archive carries no entitlements, so the later gym export
   # re-signs the app with the bare minimum (application-identifier/team-id) and

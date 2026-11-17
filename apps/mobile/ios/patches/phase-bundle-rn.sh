@@ -5,12 +5,39 @@ set -e
 script_dir="$( cd "$( dirname "$0"  )" && pwd  )"
 project_dir=$(dirname $(dirname $script_dir))
 
+# Produce mode (used by deploy-ios-adhoc.sh): redirect the bundle output before
+# any build-info write so the whole phase can run outside Xcode.
+if [ -n "${RABBY_MOBILE_PREBUNDLE_OUT:-}" ]; then
+  # RN's bundle script writes through CONFIGURATION_BUILD_DIR/TARGET_BUILD_DIR;
+  # point all of them at the prebundle directory so the artifact and the
+  # source map land where the deploy script expects them.
+  export TARGET_BUILD_DIR="$RABBY_MOBILE_PREBUNDLE_OUT"
+  export CONFIGURATION_BUILD_DIR="$RABBY_MOBILE_PREBUNDLE_OUT"
+  export BUILT_PRODUCTS_DIR="$RABBY_MOBILE_PREBUNDLE_OUT"
+  export UNLOCALIZED_RESOURCES_FOLDER_PATH="."
+  export REACT_NATIVE_PATH="${REACT_NATIVE_PATH:-$project_dir/node_modules/react-native}"
+  export PROJECT_DIR="${PROJECT_DIR:-$project_dir}"
+  export SRCROOT="${SRCROOT:-$project_dir}"
+  export TARGET_NAME="${TARGET_NAME:-RabbyMobile}"
+  mkdir -p "$RABBY_MOBILE_PREBUNDLE_OUT"
+fi
+
 . "$project_dir/scripts/fns.sh" --source-only
 
 WITH_ENVIRONMENT="$REACT_NATIVE_PATH/scripts/xcode/with-environment.sh"
 REACT_NATIVE_XCODE="$REACT_NATIVE_PATH/scripts/react-native-xcode.sh"
 SENTRY_XCODE="../node_modules/@sentry/react-native/scripts/sentry-xcode.sh"
 export CLI_PATH="$project_dir/scripts/metro-bundle-cli.js"
+
+# Persist Metro's transform cache outside the per-job temp directory so
+# consecutive builds can reuse it. The cache key already includes cacheVersion.
+if [ -z "${RABBY_MOBILE_METRO_CACHE_DIR:-}" ]; then
+  metro_cache_root="${RABBY_MOBILE_TURBO_LOCAL_CACHE_ROOT:-$HOME/Library/Caches/rabby-mobile/build-cache}"
+  RABBY_MOBILE_METRO_CACHE_DIR="$metro_cache_root/metro-cache"
+  mkdir -p "$RABBY_MOBILE_METRO_CACHE_DIR" 2>/dev/null || true
+  export RABBY_MOBILE_METRO_CACHE_DIR
+fi
+echo "[RabbyMobileBuild] METRO_CACHE_DIR is $RABBY_MOBILE_METRO_CACHE_DIR"
 export RABBY_MOBILE_METRO_CLI_DELEGATE="$REACT_NATIVE_PATH/scripts/bundle.js"
 
 # you can also run `sudo ln -s $(which node) /usr/local/bin/node` on macOS
@@ -274,6 +301,18 @@ fi
 # Set SENTRY_LOAD_DOTENV=1 to opt back in.
 export SENTRY_LOAD_DOTENV="${SENTRY_LOAD_DOTENV:-0}"
 echo "[RabbyMobileBuild] SENTRY_LOAD_DOTENV is $SENTRY_LOAD_DOTENV"
+
+if [ -n "$prebundle_out" ]; then
+  prebundle_rc=0
+  # Skip the Sentry wrapper here: it resolves the source map through an
+  # xcodebuild-only path. The archive's own phase is skipped in consume mode,
+  # and CI keeps SENTRY_DISABLE_AUTO_UPLOAD on for packaging validation.
+  /bin/sh -c "$WITH_ENVIRONMENT $REACT_NATIVE_XCODE" || prebundle_rc=$?
+  printf '%s' "$prebundle_rc" > "$prebundle_out/.status"
+  : > "$prebundle_out/.done"
+  echo "[RabbyMobileBuild] prebundle finished (status $prebundle_rc)"
+  exit "$prebundle_rc"
+fi
 
 /bin/sh -c "$WITH_ENVIRONMENT $SENTRY_XCODE"
 
