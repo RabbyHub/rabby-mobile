@@ -120,10 +120,14 @@ const PerpsProMarketListComponent = forwardRef<
     // scrollables: it decides which list the sheet reads for scroll position and
     // drag hand-off. Registering only the visible page keeps "list at top then
     // keep dragging" working across tab switches without patching the library.
+    //
+    // The library invokes this function in place of `useEffect` from inside its
+    // own render (that is the whole point of its `focusHook` extension point),
+    // so the hook call below is legal at runtime even though it sits inside a
+    // callback here. Neither React rule can see the library's call position.
     const focusHook = useCallback(
       (effect: EffectCallback) => {
-        // eslint-disable-next-line react-hooks/rules-of-hooks -- gorhom calls
-        // this with a stable effect, mirroring its default `useEffect`.
+        // eslint-disable-next-line react-hooks/rules-of-hooks, react-hooks/exhaustive-deps -- gorhom calls this in place of useEffect
         useEffect(() => (isActive ? effect() : undefined), [isActive, effect]);
       },
       [isActive],
