@@ -7,6 +7,7 @@ project_dir=$(dirname $script_dir)
 . $script_dir/fast-build/_fns.sh --source-only
 . $script_dir/libs/node-runtime.sh
 . $script_dir/turbo-build/_fns.sh --source-only
+. $script_dir/ci/ios-compilation-cache.sh
 
 ensure_mobile_node_runtime
 
@@ -93,6 +94,7 @@ build_adhoc() {
     # Never re-upload an IPA left over from an earlier run.
     rm -f "$ouput_dir/RabbyMobile.ipa"
     prepare_ios_ruby_bundle || return $?
+    export GYM_XCARGS="${GYM_XCARGS:+$GYM_XCARGS }$(rabby_ios_compilation_cache_xcargs)"
     turbo_bundle_exec exec fastlane ios adhoc
     return $?
   fi
@@ -140,6 +142,7 @@ build_adhoc() {
     export GYM_XCARGS="${GYM_XCARGS:+$GYM_XCARGS }SENTRY_DISABLE_AUTO_UPLOAD=true"
   fi
 
+  export GYM_XCARGS="${GYM_XCARGS:+$GYM_XCARGS }$(rabby_ios_compilation_cache_xcargs)"
   turbo_bundle_exec exec fastlane ios adhoc;
   build_status=$?
 
@@ -219,6 +222,7 @@ if [ "$RABBY_MOBILE_IOS_BUILD_UNSIGNED" == "true" ]; then
     CODE_SIGNING_ALLOWED=NO \
     CODE_SIGN_IDENTITY="" \
     CODE_SIGNING_REQUIRED=NO \
+    $(rabby_ios_compilation_cache_xcargs) \
     archive || exit $?
   # An unsigned archive carries no entitlements, so the later gym export
   # re-signs the app with the bare minimum (application-identifier/team-id) and
