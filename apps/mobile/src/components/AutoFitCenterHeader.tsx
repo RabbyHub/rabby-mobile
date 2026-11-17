@@ -2,7 +2,11 @@ import React from 'react';
 import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { AutoFitHeaderTitle } from '@/components/AutoFitHeaderTitle';
+import {
+  AutoFitHeaderTitle,
+  HeaderTitleLanguageStyle,
+} from '@/components/AutoFitHeaderTitle';
+import { useAddWalletHeaderTitleStyles } from '@/components/headerTitleLanguageStyles';
 import { HeaderBackButton } from '@/hooks/navigation';
 import { useTheme2024 } from '@/hooks/theme';
 import { IS_IOS } from '@/core/native/utils';
@@ -28,9 +32,17 @@ const HEADER_HORIZONTAL_INSET = 16;
  * behaviour: it measures the real glyphs and shrinks to the compact two-line
  * layout only when the base-size title cannot fit.
  */
-export const AutoFitCenterHeader = ({ title }: { title: string }) => {
+export const AutoFitCenterHeader = ({
+  title,
+  textStylesByLanguage,
+}: {
+  title: string;
+  /** Exact language tag -> typography override; defaults to the add-wallet policy. */
+  textStylesByLanguage?: Partial<Record<string, HeaderTitleLanguageStyle>>;
+}) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const insets = useSafeAreaInsets();
+  const defaultTextStylesByLanguage = useAddWalletHeaderTitleStyles();
 
   return (
     <View style={[styles.outer, { paddingTop: insets.top }]}>
@@ -42,7 +54,13 @@ export const AutoFitCenterHeader = ({ title }: { title: string }) => {
           />
         </View>
         <View style={styles.titleArea}>
-          <AutoFitHeaderTitle text={title} textStyle={styles.title} />
+          <AutoFitHeaderTitle
+            text={title}
+            textStyle={styles.title}
+            textStylesByLanguage={
+              textStylesByLanguage ?? defaultTextStylesByLanguage
+            }
+          />
         </View>
         {/* Equal trailing slot keeps the title centred on the screen. */}
         <View style={styles.rightSlot} />
