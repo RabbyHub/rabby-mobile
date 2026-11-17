@@ -10,7 +10,10 @@ import { MaterialTabBar } from 'react-native-collapsible-tab-view';
 
 import React, { useCallback, useRef } from 'react';
 import Animated, {
+  Easing,
   clamp,
+  useAnimatedReaction,
+  useFrameCallback,
   useAnimatedStyle,
   useSharedValue,
   withTiming,
@@ -444,9 +447,12 @@ const AssetsTabLabels = [
 // row shimmer while it rides in.
 const STRIP_PIXEL = PixelRatio.get();
 
-function AssetsTabBar() {
+function AssetsTabBar({
+  indexDecimal,
+}: {
+  indexDecimal: Animated.SharedValue<number>;
+}) {
   const { styles } = useTheme2024({ getStyle: getStyles });
-  const indexDecimal = apisHomeTabIndex.svTabIndexDecimal;
   const { width: winWidth } = useWindowDimensions();
 
   // The strip belongs to the assets pages: it rides in from the right at the
@@ -510,8 +516,65 @@ export const HomeCustomMaterialTabBar = ({}: Partial<
   Pick<MaterialTabBarProps, 'indexDecimal'>
 >) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
-  const indexDecimal = apisHomeTabIndex.svTabIndexDecimal;
+  const rawIndexDecimal = apisHomeTabIndex.svTabIndexDecimal;
   const { tabsOpacity } = useHomeDrawerOpacityStyle();
+
+  // `onPageScroll` delivers the pager position as discrete samples (~60 per
+  // second, while the pager itself moves natively at the display rate). Driving
+  // the chrome straight from that value makes it advance in steps on a fast
+  // fling. Bridge each sample with a linear `withTiming` whose duration equals
+  // the *measured* sample interval (wall clock, so any refresh rate works), and
+  // lead the target by ~half a sample to cancel the ~1-sample lag of the event
+  // stream. The lead is dropped once samples stop so the settle lands exactly.
+  const indexDecimal = useSharedValue(rawIndexDecimal.value);
+  const nowMs = useSharedValue(0);
+  const lastSampleMs = useSharedValue(0);
+  const sampleIntervalMs = useSharedValue(16);
+  const lastRawValue = useSharedValue(rawIndexDecimal.value);
+  const velocity = useSharedValue(0); // pages per ms
+  const restSettled = useSharedValue(1);
+
+  useFrameCallback(info => {
+    nowMs.value += info.timeSincePreviousFrame ?? 1000 / 60;
+    // Once samples stop, land on the exact last sample: the timing target
+    // carries a small velocity lead that must not survive the settle.
+    if (
+      !restSettled.value &&
+      nowMs.value - lastSampleMs.value > sampleIntervalMs.value * 1.5
+    ) {
+      restSettled.value = 1;
+      indexDecimal.value = withTiming(lastRawValue.value, {
+        duration: 80,
+        easing: Easing.linear,
+      });
+    }
+  }, true);
+
+  useAnimatedReaction(
+    () => rawIndexDecimal.value,
+    value => {
+      const gapMs = Math.max(
+        8,
+        Math.min(120, nowMs.value - lastSampleMs.value),
+      );
+      lastSampleMs.value = nowMs.value;
+      restSettled.value = 0;
+      const dv = value - lastRawValue.value;
+      lastRawValue.value = value;
+      velocity.value = velocity.value * 0.6 + (dv / gapMs) * 0.4;
+      // Light smoothing: one unusually long gap should not stall the chrome.
+      sampleIntervalMs.value = sampleIntervalMs.value * 0.7 + gapMs * 0.3;
+      const lead = Math.max(
+        -0.2,
+        Math.min(0.2, velocity.value * sampleIntervalMs.value * 0.5),
+      );
+      indexDecimal.value = withTiming(value + lead, {
+        duration: Math.max(16, Math.min(80, sampleIntervalMs.value)),
+        easing: Easing.linear,
+      });
+    },
+    [],
+  );
 
   // Keep the native sibling order stable while PagerView is settling. Changing
   // zIndex here can detach/reinsert the pager under Fabric and stop its scroll.
@@ -578,7 +641,7 @@ export const HomeCustomMaterialTabBar = ({}: Partial<
           }
         }}
       />
-      <AssetsTabBar />
+      <AssetsTabBar indexDecimal={indexDecimal} />
     </Animated.View>
   );
 };
