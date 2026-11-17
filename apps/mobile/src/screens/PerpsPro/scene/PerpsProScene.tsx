@@ -80,9 +80,9 @@ import {
   usePerpsProInfoScrollBridge,
 } from '../components/info/usePerpsProInfoScrollBridge';
 import {
-  getPerpsProPopulatedInfoSectionBottomPadding,
   getPerpsProInfoSectionMinimumContentHeight,
   getPerpsProInfoTabsNaturalAnchor,
+  PERPS_PRO_INFO_SECTION_BOTTOM_PADDING,
   PERPS_PRO_INFO_TABS_HEIGHT,
   PERPS_PRO_INFO_TABS_PLACEHOLDER_HEIGHT,
   PERPS_PRO_INFO_SECTION_TOP_GAP,
@@ -719,74 +719,39 @@ export const PerpsProScene: React.FC<{
         : null,
     [infoTabsNaturalAnchor, scrollViewportHeight],
   );
-  const populatedInfoBottomPadding =
-    scrollViewportHeight > 0
-      ? getPerpsProPopulatedInfoSectionBottomPadding({
-          marketBarHeight: PERPS_PRO_MARKET_BAR_HEIGHT,
-          viewportHeight: scrollViewportHeight,
-        })
-      : null;
-  const makeScrollContentStyle = useCallback(
-    (populated: boolean): ViewStyle[] => [
+  // Short tabs keep the one-page minimum; long tabs end a fixed gap below their
+  // last row. A viewport-sized gap made the Open Orders list show a tall blank
+  // area below the last card (QA 1407; same fixed-gap contract as develop).
+  const contentStyle = useMemo<ViewStyle[]>(
+    () => [
       styles.scrollContent,
       ...(scrollContentMinimumHeightStyle
         ? [scrollContentMinimumHeightStyle]
         : []),
-      {
-        // The docked K-line is an overlay; changing this padding when it opens
-        // or closes reflows the list (closing it shifted the Account tab and
-        // revealed a row that was out of view). Keep the padding stable.
-        paddingBottom:
-          populated && populatedInfoBottomPadding != null
-            ? populatedInfoBottomPadding
-            : 32,
-      },
+      { paddingBottom: PERPS_PRO_INFO_SECTION_BOTTOM_PADDING },
     ],
-    [
-      styles.scrollContent,
-      scrollContentMinimumHeightStyle,
-      populatedInfoBottomPadding,
-    ],
-  );
-  const accountContentStyle = useMemo(
-    () => makeScrollContentStyle(info.accountState === 'ready'),
-    [makeScrollContentStyle, info.accountState],
-  );
-  const positionContentStyle = useMemo(
-    () =>
-      makeScrollContentStyle(
-        info.positionCollectionPresentation === 'populated',
-      ),
-    [makeScrollContentStyle, info.positionCollectionPresentation],
+    [scrollContentMinimumHeightStyle, styles.scrollContent],
   );
   const basicOrderPresentation =
     info.openOrderCollectionPresentationByCategory.basic;
   const conditionalOrderPresentation =
     info.openOrderCollectionPresentationByCategory.conditional;
-  const basicOrderContentStyle = useMemo(
-    () => makeScrollContentStyle(basicOrderPresentation === 'populated'),
-    [makeScrollContentStyle, basicOrderPresentation],
-  );
-  const conditionalOrderContentStyle = useMemo(
-    () => makeScrollContentStyle(conditionalOrderPresentation === 'populated'),
-    [makeScrollContentStyle, conditionalOrderPresentation],
-  );
   const openOrderContentStyleByCategory = useMemo(
     () => ({
-      basic: basicOrderContentStyle,
-      conditional: conditionalOrderContentStyle,
+      basic: contentStyle,
+      conditional: contentStyle,
     }),
-    [basicOrderContentStyle, conditionalOrderContentStyle],
+    [contentStyle],
   );
   const openOrderContentStyle =
     openOrderContentStyleByCategory[info.openOrderCategory];
   const scrollContentStyles = useMemo(
     () => ({
-      account: accountContentStyle,
-      positions: positionContentStyle,
+      account: contentStyle,
+      positions: contentStyle,
       openOrders: openOrderContentStyle,
     }),
-    [accountContentStyle, positionContentStyle, openOrderContentStyle],
+    [contentStyle, openOrderContentStyle],
   );
   const openHistory = useCallback(
     () => onOpenHistory(info.pendingFundingCount > 0),

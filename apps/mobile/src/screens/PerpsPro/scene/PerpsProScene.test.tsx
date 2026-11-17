@@ -4575,7 +4575,7 @@ describe('PerpsProScene market loading states', () => {
     );
   });
 
-  it('preserves the empty-state trailing distance after populated account, position, and order rows', () => {
+  it('ends every info tab with the fixed bottom gap regardless of row count', () => {
     mockUsePerpsProScene.mockReturnValue(createSceneState());
     mockUsePerpsProInfoPanel.mockReturnValue(
       createInfoState({
@@ -4609,7 +4609,7 @@ describe('PerpsProScene market loading states', () => {
     const expectedMinHeight = 1200 - rowStartOffset;
     expect(
       StyleSheet.flatten(getInfoList('account').props.style),
-    ).toMatchObject({ minHeight: expectedMinHeight, paddingBottom: 380 });
+    ).toMatchObject({ minHeight: expectedMinHeight, paddingBottom: 36 });
 
     mockUsePerpsProInfoPanel.mockReturnValue(
       createInfoState({
@@ -4624,7 +4624,7 @@ describe('PerpsProScene market loading states', () => {
     settleInfoPage('positions');
     expect(
       StyleSheet.flatten(getInfoList('positions').props.style),
-    ).toMatchObject({ minHeight: expectedMinHeight, paddingBottom: 380 });
+    ).toMatchObject({ minHeight: expectedMinHeight, paddingBottom: 36 });
 
     mockUsePerpsProInfoPanel.mockReturnValue(
       createInfoState({
@@ -4639,7 +4639,7 @@ describe('PerpsProScene market loading states', () => {
     settleInfoPage('openOrders');
     expect(
       StyleSheet.flatten(getInfoList('openOrders').props.style),
-    ).toMatchObject({ minHeight: expectedMinHeight, paddingBottom: 380 });
+    ).toMatchObject({ minHeight: expectedMinHeight, paddingBottom: 36 });
 
     mockUsePerpsProInfoPanel.mockReturnValue(
       createInfoState({
@@ -4654,7 +4654,7 @@ describe('PerpsProScene market loading states', () => {
     settleInfoPage('positions');
     expect(
       StyleSheet.flatten(getInfoList('positions').props.style),
-    ).toMatchObject({ minHeight: expectedMinHeight, paddingBottom: 32 });
+    ).toMatchObject({ minHeight: expectedMinHeight, paddingBottom: 36 });
 
     mockUsePerpsProInfoPanel.mockReturnValue(
       createInfoState({
@@ -4668,7 +4668,7 @@ describe('PerpsProScene market loading states', () => {
     settleInfoPage('account');
     expect(
       StyleSheet.flatten(getInfoList('account').props.style),
-    ).toMatchObject({ minHeight: expectedMinHeight, paddingBottom: 32 });
+    ).toMatchObject({ minHeight: expectedMinHeight, paddingBottom: 36 });
   });
 
   it('closes the local funding overlay when the active account changes', () => {
