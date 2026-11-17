@@ -11,6 +11,10 @@
 set -uo pipefail
 
 rabby_ios_compilation_cache_xcargs() {
+  # RABBY_IOS_COMPILATION_CACHE=off disables the cache for A/B measurements.
+  if [ "${RABBY_IOS_COMPILATION_CACHE:-on}" = "off" ]; then
+    return 0
+  fi
   local root="${RABBY_MOBILE_TURBO_LOCAL_CACHE_ROOT:-$HOME/Library/Caches/rabby-mobile/build-cache}"
   local cas="$root/swift-cas"
   mkdir -p "$cas" 2>/dev/null || true
