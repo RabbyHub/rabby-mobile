@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect } from 'react';
 import RNFS from '@rabby-wallet/react-native-fs';
 import { Linking } from 'react-native';
+import { executeOnUIRuntimeSync } from 'react-native-reanimated';
 import { StackActions } from '@react-navigation/native';
 import { t } from 'i18next';
 import {
@@ -76,6 +77,7 @@ import {
   forceDebugChainStatsFor,
   toggleDebugChainStatsForced,
 } from '@/screens/Home/debugChainStats';
+import { debugPagerOffsetSampling } from '@/screens/Home/debugPagerOffsetSampling';
 import { apisSingleHome } from '@/screens/Home/hooks/singleHome';
 
 const nextAppLinkRef = {
@@ -108,6 +110,7 @@ type OnParseUrlAndProcessAction = (payload: {
     | 'debug-open-target'
     | 'debug-create-address'
     | 'debug-set-language'
+    | 'toggle-pager-offset-sampling'
     | 'regression-scenario';
   target?: RabbyGoTarget;
   dappUrl?: string;
@@ -146,6 +149,8 @@ type OnParseUrlAndProcessAction = (payload: {
   debugChainStatsLoading?: boolean;
   debugChainStatsLoadingForMs?: number;
   debugChainStatsLoadingOff?: boolean;
+  /** Non-production only: `undefined` toggles the native pager-offset sampler. */
+  debugPagerOffsetSampling?: boolean;
   regressionScenarioCommand?: RegressionScenarioCommand | null;
   regressionScenarioError?: string;
 }) => void;
@@ -506,6 +511,21 @@ function parseNonProductionMaintenanceLink(appLink: string) {
     return {
       type: 'debug-create-address',
       debugAddress: address,
+    } satisfies Parameters<OnParseUrlAndProcessAction>[0];
+  }
+
+  // Non-production only: switch the home tab chrome between the JS-side
+  // interpolation fallback and the native per-frame pager offset (QA 1396).
+  // `?_cmd=toggle-pager-offset-sampling` toggles, `&value=on|off` pins it.
+  if (
+    rabbyGoCmd === 'toggle-pager-offset-sampling' ||
+    target === 'toggle-pager-offset-sampling'
+  ) {
+    const raw = urlInfo.searchParams.get('value');
+    return {
+      type: 'toggle-pager-offset-sampling',
+      debugPagerOffsetSampling:
+        raw == null ? undefined : raw === '1' || raw === 'true' || raw === 'on',
     } satisfies Parameters<OnParseUrlAndProcessAction>[0];
   }
 
@@ -1016,6 +1036,42 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
       void import('@/hooks/lang').then(({ setAppLanguage }) =>
         setAppLanguage(payload.debugLanguage!),
       );
+      break;
+    case 'toggle-pager-offset-sampling':
+      if (!isNonPublicProductionEnv) {
+        return;
+      }
+      if (typeof payload.debugPagerOffsetSampling === 'boolean') {
+        debugPagerOffsetSampling.set(payload.debugPagerOffsetSampling);
+      } else {
+        debugPagerOffsetSampling.toggle();
+      }
+      console.log(
+        '[debug-pager-offset] useNativePagerOffset:',
+        debugPagerOffsetSampling.enabled,
+      );
+      if (__DEV__) {
+        // The getter lives on the Reanimated UI runtime, so probe it there.
+        setTimeout(() => {
+          try {
+            const probe = executeOnUIRuntimeSync(() => {
+              'worklet';
+              const hasOffset =
+                typeof (global as any).__pagerOffset === 'function';
+              const hasPages =
+                typeof (global as any).__pagerOffsetPages === 'function';
+              return hasOffset && hasPages
+                ? `offset=${(global as any).__pagerOffset()} pages=${(
+                    global as any
+                  ).__pagerOffsetPages()}`
+                : `missing offset=${hasOffset} pages=${hasPages}`;
+            })();
+            console.log('[debug-pager-offset] ui-runtime bridge:', probe);
+          } catch (error) {
+            console.warn('[debug-pager-offset] probe failed:', error);
+          }
+        }, 1500);
+      }
       break;
     case 'debug-create-address':
       if (!isNonPublicProductionEnv) {

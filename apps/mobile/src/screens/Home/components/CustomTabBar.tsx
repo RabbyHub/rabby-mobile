@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 import { MaterialTabBar } from 'react-native-collapsible-tab-view';
 
-import React, { useCallback, useRef } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import Animated, {
   Easing,
   clamp,
@@ -58,6 +58,7 @@ import {
 } from '@/hooks/navigation';
 import CustomLabel from './Tabs/CustomLabel';
 import { getHomeTabIndicatorWidth } from '../utils/homeTabIndicator';
+import { useDebugPagerOffsetSamplingEnabled } from '../debugPagerOffsetSampling';
 
 type ItemLayout = {
   width: number;
@@ -444,6 +445,10 @@ const AssetsTabLabels = [
 // row shimmer while it rides in.
 const STRIP_PIXEL = PixelRatio.get();
 
+// The assets pager: overview + token + defi + nft. Used to ignore offsets
+// published by an unrelated pager while the home chrome is mounted.
+const HOME_TAB_PAGE_COUNT = AssetsTabLabels.length + 1;
+
 function AssetsTabBar({
   indexDecimal,
 }: {
@@ -531,8 +536,36 @@ export const HomeCustomMaterialTabBar = ({}: Partial<
   const velocity = useSharedValue(0); // pages per ms
   const restSettled = useSharedValue(1);
 
+  // Native path (QA 1396): the patched pager publishes the real display-rate
+  // offset to the UI runtime, so the chrome can follow the page 1:1 instead of
+  // interpolating a ~60Hz sample stream. Debug-switch driven: `false` keeps the
+  // interpolation fallback below as the shipped behaviour.
+  const useNativePagerOffset = useDebugPagerOffsetSamplingEnabled();
+  const nativeSampling = useSharedValue(false);
+  const nativeActive = useSharedValue(0);
+  useEffect(() => {
+    nativeSampling.value = useNativePagerOffset;
+  }, [useNativePagerOffset, nativeSampling]);
+
   useFrameCallback(info => {
     nowMs.value += info.timeSincePreviousFrame ?? 1000 / 60;
+    if (nativeSampling.value) {
+      const readOffset = (global as any).__pagerOffset;
+      const readPageCount = (global as any).__pagerOffsetPages;
+      if (
+        typeof readOffset === 'function' &&
+        typeof readPageCount === 'function' &&
+        readPageCount() === HOME_TAB_PAGE_COUNT
+      ) {
+        const nativeOffset = readOffset();
+        if (typeof nativeOffset === 'number' && Number.isFinite(nativeOffset)) {
+          nativeActive.value = 1;
+          indexDecimal.value = nativeOffset;
+          return;
+        }
+      }
+    }
+    nativeActive.value = 0;
     // Once samples stop, land on the exact last sample: the timing target
     // carries a small velocity lead that must not survive the settle.
     if (
@@ -565,6 +598,10 @@ export const HomeCustomMaterialTabBar = ({}: Partial<
         -0.2,
         Math.min(0.2, velocity.value * sampleIntervalMs.value * 0.5),
       );
+      // The native sampler already owns `indexDecimal` while it is live.
+      if (nativeActive.value === 1) {
+        return;
+      }
       indexDecimal.value = withTiming(value + lead, {
         duration: Math.max(16, Math.min(80, sampleIntervalMs.value)),
         easing: Easing.linear,
