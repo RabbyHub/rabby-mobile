@@ -149,7 +149,7 @@ build_adhoc() {
   # Build the JS bundle concurrently with the archive's compile step, then let
   # the bundle phase copy it in instead of bundling again (RABBY_MOBILE_IOS_PREBUNDLE_JS).
   prebundle_pid=""
-  if [ "${RABBY_MOBILE_IOS_PREBUNDLE_JS:-true}" = "true" ]; then
+  if [ "${RABBY_MOBILE_IOS_PREBUNDLE_JS:-false}" = "true" ]; then
     prebundle_dir="$(mktemp -d "${TMPDIR:-/tmp}/rabby-ios-prebundle.XXXXXX")"
     export RABBY_MOBILE_PREBUILT_BUNDLE_DIR="$prebundle_dir"
     # The adhoc lane archives the Regression configuration, so collect that
@@ -185,7 +185,8 @@ PREBUNDLE_PY
 
   if [ -n "$prebundle_pid" ]; then
     wait "$prebundle_pid" || {
-      echo "[deploy-ios-adhoc] prebuilt JS bundle failed; see $prebundle_dir/prebundle.log" >&2
+      echo "[deploy-ios-adhoc] prebuilt JS bundle failed; log follows:" >&2
+      [ -f "$prebundle_dir/prebundle.log" ] && cat "$prebundle_dir/prebundle.log" >&2
       return 1
     }
   fi
