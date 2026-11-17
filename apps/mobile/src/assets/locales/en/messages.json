@@ -2640,12 +2640,12 @@
           "errors": {
             "range": "Enter valid prices with the upper price above the lower price.",
             "count": "Enter an integer between 2 and 100.",
-            "size": "Enter a valid size in the asset’s native token.",
-            "duplicatePrice": "Prices overlap after rounding. Widen the price range or reduce the order count.",
-            "minimum": "Each sub-order must be worth at least $10 after rounding.",
-            "maximum": "The total amount exceeds the market limit.",
+            "size": "Enter an order size greater than 0 that meets this market’s size precision requirements.",
+            "duplicatePrice": "Some order prices are identical after adjustment to the required price precision. Widen the price range or reduce the order count.",
+            "minimum": "After adjustment to the required size precision, each sub-order must be worth at least $10.",
+            "maximum": "The total order value exceeds the limit allowed for this market.",
             "capacity": "Insufficient trading capacity for this batch.",
-            "reduceOnly": "Total size exceeds the position available to reduce."
+            "reduceOnly": "The total order size exceeds the position size currently available to close."
           }
         }
       },

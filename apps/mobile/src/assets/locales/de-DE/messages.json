@@ -2834,17 +2834,17 @@
           "previewSell": "Verkaufsvorschau",
           "totalSize": "Gesamtmenge",
           "averagePrice": "Durchschnittspreis",
-          "result": "{{accepted}} angenommen, {{rejected}} abgelehnt, {{unresolved}} unbestätigt",
+          "result": "{{accepted}} angenommen, {{rejected}} abgelehnt, {{unresolved}} warten auf Bestätigung",
           "unknown": "Orderergebnis unbestätigt. Prüfe offene Orders und den Handelsverlauf, bevor du erneut eine Order platzierst.",
           "errors": {
             "range": "Gültige Preise eingeben. Der obere Preis muss höher sein.",
             "count": "Eine ganze Zahl zwischen 2 und 100 eingeben.",
-            "size": "Eine gültige Menge des nativen Tokens eingeben.",
-            "duplicatePrice": "Preise überschneiden sich nach Rundung. Bereich erweitern oder Orderanzahl reduzieren.",
-            "minimum": "Jede Teilorder muss nach Rundung mindestens $10 wert sein.",
-            "maximum": "Der Gesamtbetrag überschreitet das Marktlimit.",
+            "size": "Eine Ordermenge größer als 0 eingeben, die der für diesen Markt zulässigen Mengengenauigkeit entspricht.",
+            "duplicatePrice": "Nach Anpassung an die zulässige Preisgenauigkeit sind einige Orderpreise identisch. Preisbereich erweitern oder Orderanzahl reduzieren.",
+            "minimum": "Nach Anpassung an die zulässige Mengengenauigkeit muss jede Teilorder mindestens $10 wert sein.",
+            "maximum": "Der Gesamtwert der Orders überschreitet das für diesen Markt zulässige Limit.",
             "capacity": "Nicht genügend Handelskapazität für diese Orders.",
-            "reduceOnly": "Die Gesamtmenge überschreitet die reduzierbare Position."
+            "reduceOnly": "Die gesamte Ordermenge überschreitet die aktuell schließbare Positionsmenge."
           }
         }
       },

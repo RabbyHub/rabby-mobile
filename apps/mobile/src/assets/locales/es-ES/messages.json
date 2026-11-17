@@ -2732,17 +2732,17 @@
           "previewSell": "Prever venta",
           "totalSize": "Cantidad total",
           "averagePrice": "Precio medio",
-          "result": "{{accepted}} aceptadas, {{rejected}} rechazadas, {{unresolved}} pendientes",
+          "result": "{{accepted}} aceptadas, {{rejected}} rechazadas, {{unresolved}} pendientes de confirmación",
           "unknown": "Resultado pendiente de confirmación. Revisa las órdenes abiertas y el historial antes de colocar otra orden.",
           "errors": {
             "range": "Introduce precios válidos; el máximo debe superar al mínimo.",
             "count": "Introduce un entero entre 2 y 100.",
-            "size": "Introduce una cantidad válida del token nativo del activo.",
-            "duplicatePrice": "Los precios coinciden tras redondear. Amplía el rango o reduce el número de órdenes.",
-            "minimum": "Cada suborden debe valer al menos $10 tras redondear.",
-            "maximum": "El importe total supera el límite del mercado.",
+            "size": "Introduce una cantidad de orden mayor que 0 que cumpla los requisitos de precisión de cantidad de este mercado.",
+            "duplicatePrice": "Algunos precios de las órdenes coinciden tras ajustarse a la precisión de precio permitida. Amplía el rango de precios o reduce el número de órdenes.",
+            "minimum": "Tras ajustarse a la precisión de cantidad permitida, cada suborden debe tener un valor mínimo de $10.",
+            "maximum": "El valor total de las órdenes supera el límite permitido para este mercado.",
             "capacity": "Capacidad de negociación insuficiente para el lote.",
-            "reduceOnly": "La cantidad total supera la posición que se puede reducir."
+            "reduceOnly": "La cantidad total de las órdenes supera la cantidad de la posición que se puede cerrar actualmente."
           }
         }
       },

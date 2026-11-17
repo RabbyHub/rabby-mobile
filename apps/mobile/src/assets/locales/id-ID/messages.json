@@ -2553,12 +2553,12 @@
           "errors": {
             "range": "Masukkan harga valid; harga tertinggi harus melebihi harga terendah.",
             "count": "Masukkan bilangan bulat antara 2 dan 100.",
-            "size": "Masukkan jumlah token asli aset yang valid.",
-            "duplicatePrice": "Harga bertumpuk setelah pembulatan. Perluas rentang atau kurangi jumlah order.",
-            "minimum": "Setiap sub-order harus bernilai setidaknya $10 setelah pembulatan.",
-            "maximum": "Jumlah total melebihi batas pasar.",
+            "size": "Masukkan kuantitas order lebih besar dari 0 yang memenuhi ketentuan presisi kuantitas pasar ini.",
+            "duplicatePrice": "Beberapa harga order sama setelah disesuaikan dengan presisi harga yang diizinkan. Perluas rentang harga atau kurangi jumlah order.",
+            "minimum": "Setelah disesuaikan dengan presisi kuantitas yang diizinkan, setiap sub-order harus bernilai setidaknya $10.",
+            "maximum": "Nilai total order melebihi batas yang diizinkan untuk pasar ini.",
             "capacity": "Kapasitas perdagangan tidak cukup untuk kumpulan order ini.",
-            "reduceOnly": "Jumlah total melebihi posisi yang dapat dikurangi."
+            "reduceOnly": "Total kuantitas order melebihi kuantitas posisi yang saat ini dapat ditutup."
           }
         }
       },

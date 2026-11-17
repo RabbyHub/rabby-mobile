@@ -2548,17 +2548,17 @@
           "previewSell": "Satışı Önizle",
           "totalSize": "Toplam Miktar",
           "averagePrice": "Ortalama Fiyat",
-          "result": "{{accepted}} kabul, {{rejected}} ret, {{unresolved}} onay bekliyor",
+          "result": "{{accepted}} kabul edildi, {{rejected}} reddedildi, {{unresolved}} onay bekliyor",
           "unknown": "Emir sonucu onay bekliyor. Yeni emir vermeden önce açık emirleri ve işlem geçmişini kontrol edin.",
           "errors": {
             "range": "Geçerli fiyatlar girin; üst fiyat alt fiyattan yüksek olmalıdır.",
             "count": "2 ile 100 arasında bir tam sayı girin.",
-            "size": "Varlığın yerel tokeni cinsinden geçerli bir miktar girin.",
-            "duplicatePrice": "Yuvarlama sonrası fiyatlar çakışıyor. Aralığı genişletin veya emir sayısını azaltın.",
-            "minimum": "Yuvarlama sonrası her alt emir en az $10 değerinde olmalıdır.",
-            "maximum": "Toplam tutar piyasa sınırını aşıyor.",
+            "size": "0’dan büyük ve bu piyasanın miktar hassasiyeti gereksinimlerine uygun bir emir miktarı girin.",
+            "duplicatePrice": "Fiyat hassasiyetine göre ayarlandıktan sonra bazı emir fiyatları aynı oluyor. Fiyat aralığını genişletin veya emir sayısını azaltın.",
+            "minimum": "Miktar hassasiyetine göre ayarlandıktan sonra her alt emir en az $10 değerinde olmalıdır.",
+            "maximum": "Toplam emir değeri bu piyasa için izin verilen sınırı aşıyor.",
             "capacity": "Bu emir grubu için işlem kapasitesi yetersiz.",
-            "reduceOnly": "Toplam miktar azaltılabilecek pozisyonu aşıyor."
+            "reduceOnly": "Toplam emir miktarı şu anda kapatılabilecek pozisyon miktarını aşıyor."
           }
         }
       },

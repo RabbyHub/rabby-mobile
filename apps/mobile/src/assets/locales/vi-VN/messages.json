@@ -2670,12 +2670,12 @@
           "errors": {
             "range": "Nhập giá hợp lệ; giá cao nhất phải lớn hơn giá thấp nhất.",
             "count": "Nhập số nguyên từ 2 đến 100.",
-            "size": "Nhập số lượng token gốc của tài sản hợp lệ.",
-            "duplicatePrice": "Giá trùng nhau sau khi làm tròn. Hãy mở rộng khoảng giá hoặc giảm số lệnh.",
-            "minimum": "Mỗi lệnh con phải có giá trị ít nhất $10 sau khi làm tròn.",
-            "maximum": "Tổng giá trị vượt giới hạn thị trường.",
+            "size": "Nhập khối lượng lệnh lớn hơn 0 và đáp ứng yêu cầu về độ chính xác khối lượng của thị trường này.",
+            "duplicatePrice": "Một số giá lệnh trùng nhau sau khi điều chỉnh theo độ chính xác giá cho phép. Hãy mở rộng khoảng giá hoặc giảm số lệnh.",
+            "minimum": "Sau khi điều chỉnh theo độ chính xác khối lượng cho phép, mỗi lệnh con phải có giá trị ít nhất $10.",
+            "maximum": "Tổng giá trị các lệnh vượt quá giới hạn cho phép của thị trường này.",
             "capacity": "Không đủ khả năng giao dịch cho nhóm lệnh này.",
-            "reduceOnly": "Tổng số lượng vượt vị thế có thể giảm."
+            "reduceOnly": "Tổng khối lượng các lệnh vượt quá khối lượng vị thế hiện có thể đóng."
           }
         }
       },

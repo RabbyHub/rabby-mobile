@@ -2557,17 +2557,17 @@
           "previewSell": "Aperçu de vente",
           "totalSize": "Quantité totale",
           "averagePrice": "Prix moyen",
-          "result": "{{accepted}} acceptés, {{rejected}} rejetés, {{unresolved}} en attente",
+          "result": "{{accepted}} acceptés, {{rejected}} rejetés, {{unresolved}} en attente de confirmation",
           "unknown": "Résultat en attente de confirmation. Consultez les ordres ouverts et l’historique avant de placer un autre ordre.",
           "errors": {
             "range": "Saisissez des prix valides, avec le maximum supérieur au minimum.",
             "count": "Saisissez un entier entre 2 et 100.",
-            "size": "Saisissez une quantité valide du jeton natif de l’actif.",
-            "duplicatePrice": "Les prix se chevauchent après arrondi. Élargissez la plage ou réduisez le nombre d’ordres.",
-            "minimum": "Chaque sous-ordre doit valoir au moins $10 après arrondi.",
-            "maximum": "Le montant total dépasse la limite du marché.",
+            "size": "Saisissez une quantité d’ordre supérieure à 0 respectant la précision des quantités requise sur ce marché.",
+            "duplicatePrice": "Certains prix d’ordres sont identiques après ajustement à la précision des prix requise. Élargissez la plage de prix ou réduisez le nombre d’ordres.",
+            "minimum": "Après ajustement à la précision des quantités requise, chaque sous-ordre doit avoir une valeur d’au moins $10.",
+            "maximum": "La valeur totale des ordres dépasse la limite autorisée sur ce marché.",
             "capacity": "Capacité de négociation insuffisante pour ce lot.",
-            "reduceOnly": "La quantité totale dépasse la position pouvant être réduite."
+            "reduceOnly": "La quantité totale des ordres dépasse la quantité de la position pouvant actuellement être clôturée."
           }
         }
       },

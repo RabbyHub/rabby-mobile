@@ -2387,7 +2387,7 @@
           "orderFilled": "订单已成交。",
           "orderPlaced": "订单已挂出。",
           "orderFailed": "订单失败。",
-          "scale": "阶梯委托",
+          "scale": "分段委托",
           "scaleDescription": "设置价格区间并下达多笔限价子单"
         },
         "orderError": {
@@ -2698,17 +2698,17 @@
           "previewSell": "预览卖单",
           "totalSize": "总数量",
           "averagePrice": "平均价格",
-          "result": "已接受 {{accepted}} 笔，已拒绝 {{rejected}} 笔，待确认 {{unresolved}} 笔",
+          "result": "已受理 {{accepted}} 笔，已拒绝 {{rejected}} 笔，待确认 {{unresolved}} 笔",
           "unknown": "下单结果待确认。请先检查当前委托和交易历史，再下新订单。",
           "errors": {
             "range": "请输入有效价格，最高价必须高于最低价。",
             "count": "请输入 2 至 100 之间的整数。",
-            "size": "请输入有效的标的原生代币数量。",
-            "duplicatePrice": "取整后的价格重复，请扩大价格区间或减少订单数。",
-            "minimum": "取整后每笔子单的金额必须至少为 $10。",
-            "maximum": "总金额超过市场限额。",
+            "size": "请输入大于 0 且符合该市场数量精度的委托数量。",
+            "duplicatePrice": "按价格精度调整后，部分委托价格重复。请扩大价格区间或减少订单数。",
+            "minimum": "按数量精度调整后，每笔子订单金额不得低于 $10。",
+            "maximum": "委托总金额超过该市场允许的上限。",
             "capacity": "当前可交易额度不足以提交整批订单。",
-            "reduceOnly": "总数量超过当前可减少的仓位。"
+            "reduceOnly": "委托总数量超过当前可平仓数量。"
           }
         }
       },

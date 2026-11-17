@@ -2839,12 +2839,12 @@
           "errors": {
             "range": "Introduza preços válidos; o máximo deve ser superior ao mínimo.",
             "count": "Introduza um inteiro entre 2 e 100.",
-            "size": "Introduza uma quantidade válida do token nativo do ativo.",
-            "duplicatePrice": "Os preços coincidem após o arredondamento. Alargue o intervalo ou reduza o número de ordens.",
-            "minimum": "Cada subordem deve valer pelo menos $10 após o arredondamento.",
-            "maximum": "O montante total excede o limite do mercado.",
+            "size": "Introduza uma quantidade de ordem superior a 0 que cumpra os requisitos de precisão de quantidade deste mercado.",
+            "duplicatePrice": "Alguns preços das ordens coincidem após o ajuste à precisão de preço permitida. Alargue o intervalo de preços ou reduza o número de ordens.",
+            "minimum": "Após o ajuste à precisão de quantidade permitida, cada subordem deve ter um valor de, pelo menos, $10.",
+            "maximum": "O valor total das ordens excede o limite permitido para este mercado.",
             "capacity": "Capacidade de negociação insuficiente para este lote.",
-            "reduceOnly": "A quantidade total excede a posição que pode ser reduzida."
+            "reduceOnly": "A quantidade total das ordens excede a quantidade da posição que pode ser fechada neste momento."
           }
         }
       },
