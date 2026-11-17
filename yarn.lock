@@ -9965,9 +9965,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rabby-wallet/rabby-swap@npm:0.0.96-alpha.0":
-  version: 0.0.96-alpha.0
-  resolution: "@rabby-wallet/rabby-swap@npm:0.0.96-alpha.0"
+"@rabby-wallet/rabby-swap@npm:0.0.96-alpha.1":
+  version: 0.0.96-alpha.1
+  resolution: "@rabby-wallet/rabby-swap@npm:0.0.96-alpha.1"
   dependencies:
     "@ethersproject/abi": "npm:^5.7.0"
     "@uniswap/universal-router-sdk": "npm:5.14.0"
@@ -9978,7 +9978,7 @@ __metadata:
   peerDependencies:
     "@debank/common": ">=0.3.60"
     "@rabby-wallet/rabby-api": ">=0.6.28"
-  checksum: 10/f3cabb3ce7f6288bd1f36ea85d33da554e640c0988c8838f7c9d45c2176405006ff497f179cbcb62bb25bc455b92afee1585259df5622be6a6501b97ffa7eeb0
+  checksum: 10/645e78366f7a6da2f6f1c45655f0df2100fca5c78728f122608d854ff2db62e0720666b87833aea7998e06f9392e13eed58ccb8ef1f3882f7b9378405ba15914
   languageName: node
   linkType: hard
 
@@ -37856,7 +37856,7 @@ __metadata:
     "@rabby-wallet/rabby-logger": "npm:0.3.1"
     "@rabby-wallet/rabby-security-engine": "npm:2.0.13"
     "@rabby-wallet/rabby-sign-bvm": "npm:0.1.1"
-    "@rabby-wallet/rabby-swap": "npm:0.0.96-alpha.0"
+    "@rabby-wallet/rabby-swap": "npm:0.0.96-alpha.1"
     "@rabby-wallet/react-native-bootsplash": "workspace:^"
     "@rabby-wallet/react-native-fs": "workspace:^"
     "@rabby-wallet/react-native-ios-context-menu": "workspace:^"
