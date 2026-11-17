@@ -341,18 +341,16 @@ index aad38b2..242b556 100644
 +}
 diff --git a/android/src/main/java/com/reactnativepagerview/PagerOffsetSampler.kt b/android/src/main/java/com/reactnativepagerview/PagerOffsetSampler.kt
 new file mode 100644
-index 0000000..e752d1e
+index 0000000..f7855f4
 --- /dev/null
 +++ b/android/src/main/java/com/reactnativepagerview/PagerOffsetSampler.kt
-@@ -0,0 +1,205 @@
+@@ -0,0 +1,192 @@
 +package com.reactnativepagerview
 +
-+import android.os.Build
 +import android.os.Handler
 +import android.os.Looper
 +import android.util.Log
 +import android.view.Choreographer
-+import androidx.annotation.RequiresApi
 +import androidx.recyclerview.widget.RecyclerView
 +import androidx.viewpager2.widget.ViewPager2
 +import com.facebook.react.bridge.ReactContext
@@ -488,16 +486,6 @@ index 0000000..e752d1e
 +
 +  private val frameCallback = Choreographer.FrameCallback { onFrame() }
 +
-+  // Vsync callbacks run at the very beginning of a frame, i.e. before
-+  // Reanimated's animation-phase frame callbacks, so a pushed value is already
-+  // in place for the frame that draws it.
-+  @RequiresApi(Build.VERSION_CODES.TIRAMISU)
-+  private val vsyncRound = object : Choreographer.VsyncCallback {
-+    override fun onVsync(frameData: Choreographer.FrameData) {
-+      onFrame()
-+    }
-+  }
-+
 +  fun start() {
 +    if (running.compareAndSet(false, true)) {
 +      post()
@@ -505,12 +493,11 @@ index 0000000..e752d1e
 +  }
 +
 +  private fun post() {
-+    val choreographer = Choreographer.getInstance()
-+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-+      choreographer.postVsyncCallback(vsyncRound)
-+    } else {
-+      choreographer.postFrameCallback(frameCallback)
-+    }
++    // Animation phase: the pager has already applied this frame's scroll step
++    // (touch drags scroll in the input phase, flings in the animation phase),
++    // so the sample is current rather than one frame old. Sampling in the vsync
++    // phase instead makes every consumer lag a frame.
++    Choreographer.getInstance().postFrameCallback(frameCallback)
 +  }
 +
 +  fun stop() {
