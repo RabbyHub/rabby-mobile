@@ -1,4 +1,8 @@
-import type { L2Book } from '@rabby-wallet/hyperliquid-sdk';
+import type {
+  L2Book,
+  MultiOrderOutcome,
+  MultiOrderWithOutcomeParams,
+} from '@rabby-wallet/hyperliquid-sdk';
 import { act, renderHook } from '@testing-library/react-native';
 
 const mockAccount = {
@@ -321,6 +325,45 @@ const activeAssetData = {
 };
 
 describe('usePerpsProTrade attached TP/SL execution integration', () => {
+  it('always previews Scale in base units and restores the ordinary unit without submitting during preview', async () => {
+    mockGetSkipConfirmation.mockResolvedValue(true);
+    const hook = renderHook(() =>
+      usePerpsProTrade({
+        activeAssetData,
+        bboBook: book,
+        bboPrices: { asks1: '101', asks5: null, bids1: '99', bids5: null },
+        bboSessionKey: 'BTC:1',
+        bboStatus: 'ready',
+        executionActive: true,
+        leveragePending: false,
+        market,
+        refreshActiveAssetData: async () => activeAssetData,
+        updateLeverageRequest: async () => true,
+      }),
+    );
+    act(() => hook.result.current.setOrderType('scale'));
+    expect(hook.result.current.amountUnit).toBe('base');
+    act(() => {
+      hook.result.current.patchForm({
+        scaleLowerPrice: '100',
+        scaleUpperPrice: '140',
+      });
+      hook.result.current.setAmount('1');
+    });
+    await act(async () => {
+      await hook.result.current.requestReview('sell');
+    });
+    expect(hook.result.current.review).toMatchObject({
+      type: 'scaleOrder',
+      side: 'sell',
+      plan: { totalSize: '1' },
+    });
+    expect(mockGetSkipConfirmation).not.toHaveBeenCalled();
+    expect(mockEnsureApproval).not.toHaveBeenCalled();
+    act(() => hook.result.current.setOrderType('limit'));
+    expect(hook.result.current.amountUnit).toBe('quote');
+    expect(hook.result.current.form.amount).toBe('');
+  });
   beforeEach(() => {
     jest.clearAllMocks();
     mockLatestTradeListeners.clear();
@@ -350,6 +393,85 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
       status: 'ok',
     });
     mockPerpsState.isUserDataReady = true;
+    mockPerpsState.currentPerpsAccount = mockAccount;
+  });
+
+  it('retains a late Scale receipt for its original account without resubmitting', async () => {
+    let resolveSubmission!: (outcome: MultiOrderOutcome) => void;
+    const submit = jest.fn(
+      (_params: MultiOrderWithOutcomeParams) =>
+        new Promise<MultiOrderOutcome>(resolve => {
+          resolveSubmission = resolve;
+        }),
+    );
+    mockGetPerpsSdk.mockReturnValue({
+      exchange: { multiOrderWithOutcome: submit },
+    });
+    const hook = renderHook(
+      ({ active }) =>
+        usePerpsProTrade({
+          activeAssetData,
+          bboBook: book,
+          bboPrices: { asks1: '101', asks5: null, bids1: '99', bids5: null },
+          bboSessionKey: 'BTC:1',
+          bboStatus: 'ready',
+          executionActive: active,
+          leveragePending: false,
+          market,
+          refreshActiveAssetData: async () => activeAssetData,
+          updateLeverageRequest: async () => true,
+        }),
+      { initialProps: { active: true } },
+    );
+    act(() => hook.result.current.setOrderType('scale'));
+    act(() =>
+      hook.result.current.patchForm({
+        scaleLowerPrice: '100',
+        scaleUpperPrice: '140',
+        amount: '1',
+      }),
+    );
+    await act(async () => hook.result.current.requestReview('buy'));
+    let confirmation!: Promise<void>;
+    await act(async () => {
+      confirmation = hook.result.current.confirmReview();
+    });
+    expect(submit).toHaveBeenCalledTimes(1);
+    hook.rerender({ active: false });
+    mockPerpsState.currentPerpsAccount = {
+      ...mockAccount,
+      address: '0x0000000000000000000000000000000000000002',
+    };
+    hook.rerender({ active: true });
+    await act(async () => {
+      const requestLegs = submit.mock.calls[0][0].orders.map(
+        (order, index) => ({
+          index,
+          cloid: order.cloid,
+        }),
+      );
+      resolveSubmission({
+        kind: 'fullAccepted',
+        legs: requestLegs.map(leg => ({
+          ...leg,
+          kind: 'accepted',
+          acceptance: 'resting',
+          oid: leg.index + 1,
+        })),
+        evidence: { requestLegs, transportPhase: 'dispatched' },
+      });
+      await confirmation;
+    });
+    expect(mockShowToast).not.toHaveBeenCalled();
+    expect(hook.result.current.review).toBeNull();
+    mockPerpsState.currentPerpsAccount = mockAccount;
+    hook.rerender({ active: true });
+    expect(mockShowToast).toHaveBeenCalledWith(
+      'page.perps.pro.scaleOrder.result',
+      'success',
+    );
+    await act(async () => hook.result.current.confirmReview());
+    expect(submit).toHaveBeenCalledTimes(1);
   });
 
   it('fail-closes configuration changes and order review while the visible market is still preparing', async () => {

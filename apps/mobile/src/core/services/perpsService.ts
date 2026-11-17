@@ -57,7 +57,15 @@ export type PerpsProInfoTabPreference = {
   hasUserSelectedInfoTab: boolean;
 };
 export type PerpsProTradeAmountUnit = 'base' | 'quote';
-export type PerpsProTradeOrderType = 'conditional' | 'limit' | 'market';
+export type PerpsProTradeOrderType =
+  | 'conditional'
+  | 'limit'
+  | 'market'
+  | 'scale';
+export type PerpsProSkippableTradeOrderType = Exclude<
+  PerpsProTradeOrderType,
+  'scale'
+>;
 export type PerpsProOpenOrderEditCategory = 'basic' | 'conditional';
 export type PerpsProOpeningTpSlMode = 'pnl' | 'price' | 'roi';
 export type PerpsProPositionTpSlMode = 'pnl' | 'roi';
@@ -93,7 +101,10 @@ export type PerpsProPreferences = {
   >;
   tradeAmountUnit: PerpsProTradeAmountUnit;
   tradeOrderType: PerpsProTradeOrderType;
-  skipTradeConfirmationByOrderType: Record<PerpsProTradeOrderType, boolean>;
+  skipTradeConfirmationByOrderType: Record<
+    PerpsProSkippableTradeOrderType,
+    boolean
+  >;
   tpSlModePreferences: PerpsProTpSlModePreferences;
   [key: string]: unknown;
 };
@@ -217,13 +228,14 @@ const normalizePerpsProTradeOrderType = (
   hasReadableProPreferences(value) &&
   (value.tradeOrderType === 'market' ||
     value.tradeOrderType === 'limit' ||
-    value.tradeOrderType === 'conditional')
+    value.tradeOrderType === 'conditional' ||
+    value.tradeOrderType === 'scale')
     ? value.tradeOrderType
     : 'market';
 
 const normalizeSkipTradeConfirmationByOrderType = (
   value: unknown,
-): Record<PerpsProTradeOrderType, boolean> => {
+): Record<PerpsProSkippableTradeOrderType, boolean> => {
   const source =
     hasReadableProPreferences(value) &&
     isRecord(value.skipTradeConfirmationByOrderType)
@@ -1103,7 +1115,12 @@ export class PerpsService extends StoreServiceBase<
   };
 
   setPerpsProTradeOrderType = async (value: PerpsProTradeOrderType) => {
-    if (value !== 'market' && value !== 'limit' && value !== 'conditional') {
+    if (
+      value !== 'market' &&
+      value !== 'limit' &&
+      value !== 'conditional' &&
+      value !== 'scale'
+    ) {
       throw new Error('Invalid Perps Pro trade order type');
     }
     const currentPreferences: unknown = this.store.proPreferences;
@@ -1116,7 +1133,7 @@ export class PerpsService extends StoreServiceBase<
   };
 
   getSkipPerpsProTradeConfirmation = async (
-    orderType: PerpsProTradeOrderType,
+    orderType: PerpsProSkippableTradeOrderType,
   ) => {
     if (!this.store) {
       throw new Error('PerpsService not initialized');
@@ -1127,7 +1144,7 @@ export class PerpsService extends StoreServiceBase<
   };
 
   setSkipPerpsProTradeConfirmation = async (
-    orderType: PerpsProTradeOrderType,
+    orderType: PerpsProSkippableTradeOrderType,
     value: boolean,
   ) => {
     const current = getWritableProPreferences(this.store.proPreferences);

@@ -2,6 +2,27 @@ import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
 import { Keyboard, Platform, StyleSheet } from 'react-native';
 
+// This form unit suite tests field/keyboard behavior, not the native help sheet.
+jest.mock('./PerpsProScaleDistributionSheet', () => ({
+  PerpsProScaleDistributionSheet: (props: object) =>
+    require('react').createElement(require('react-native').View, {
+      ...props,
+      testID: 'scale-distribution-sheet',
+    }),
+}));
+
+jest.mock('./PerpsProScaleOrderFields', () => ({
+  PerpsProScaleOrderFields: ({
+    onDistributionHelp,
+  }: {
+    onDistributionHelp: () => void;
+  }) =>
+    require('react').createElement(require('react-native').Pressable, {
+      onPress: onDistributionHelp,
+      testID: 'scale-fields',
+    }),
+}));
+
 jest.mock('react-native-haptic-feedback', () => ({
   trigger: jest.fn(),
 }));
@@ -358,6 +379,36 @@ describe('PerpsProTradeForm order matrix', () => {
         .filter(([name]) => name === 'leverage')
         .at(-1)?.[1].visible,
     ).toBe(false);
+  });
+
+  it('keeps Scale inputs in the gesture block and releases its help sheet when inactive', () => {
+    const trade = controller({ orderType: 'scale', amountUnit: 'base' });
+    const props = { controller: trade, onAddFunds: jest.fn() };
+    const view = render(<PerpsProTradeForm {...props} sceneActive />);
+    const block = screen.getByTestId(
+      'perps-pro-trade-inputs-root-gesture-block',
+    );
+    expect(
+      block.findAllByProps({ testID: 'scale-fields' }).length,
+    ).toBeGreaterThan(0);
+    expect(screen.queryByTestId('perps-pro-trade-amount-slider')).toBeNull();
+    expect(
+      screen.queryByTestId('perps-pro-trade-tpsl-root-gesture-block'),
+    ).toBeNull();
+    fireEvent.press(screen.getByTestId('scale-fields'));
+    expect(mockDismissKeyboardThen).toHaveBeenCalledTimes(1);
+    expect(screen.getByTestId('scale-distribution-sheet').props.visible).toBe(
+      true,
+    );
+    view.rerender(<PerpsProTradeForm {...props} sceneActive={false} />);
+    expect(
+      screen.getByTestId('perps-pro-trade-inputs-root-gesture-block'),
+    ).toBe(block);
+    expect(screen.queryByTestId('scale-distribution-sheet')).toBeNull();
+    view.rerender(<PerpsProTradeForm {...props} sceneActive />);
+    expect(screen.getByTestId('scale-distribution-sheet').props.visible).toBe(
+      false,
+    );
   });
 
   it('uses the current leverage callback and only closes after a successful update', async () => {

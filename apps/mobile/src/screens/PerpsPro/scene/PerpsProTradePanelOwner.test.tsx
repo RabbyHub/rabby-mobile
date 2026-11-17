@@ -16,6 +16,7 @@ const mockTradeMount = jest.fn();
 const mockTradeUnmount = jest.fn();
 const mockFormProps = jest.fn();
 const mockConfirmationProps = jest.fn();
+const mockScaleConfirmationProps = jest.fn();
 const mockOrderBookProps = jest.fn();
 const mockPlacementContext = React.createContext('scene');
 const mockSceneChildrenRender = jest.fn();
@@ -146,7 +147,13 @@ jest.mock('./usePerpsProTrade', () => ({
       getOrderBookPriceIntent: mockGetOrderBookPriceIntent,
       market: props.market,
       pending: false,
-      requestReview: () => setReview({ marketKey: props.market?.marketKey }),
+      requestReview: () =>
+        setReview({
+          marketKey: props.market?.marketKey,
+          ...(mockTradeInteraction.orderType === 'scale'
+            ? { type: 'scaleOrder' }
+            : {}),
+        }),
       review,
       selectOrderBookPrice: mockTradeInteraction.selectOrderBookPrice,
       setAmount,
@@ -172,6 +179,18 @@ jest.mock('../components/trade/PerpsProTradeForm', () => ({
 jest.mock('../components/trade/PerpsProOrderConfirmationSheet', () => ({
   PerpsProOrderConfirmationSheet: function Confirmation(props: object) {
     mockConfirmationProps(
+      props,
+      (require('react') as typeof React).useContext(mockPlacementContext),
+    );
+    return null;
+  },
+}));
+
+jest.mock('../components/trade/PerpsProScaleOrderConfirmationSheet', () => ({
+  PerpsProScaleOrderConfirmationSheet: function ScaleConfirmation(
+    props: object,
+  ) {
+    mockScaleConfirmationProps(
       props,
       (require('react') as typeof React).useContext(mockPlacementContext),
     );
@@ -657,6 +676,28 @@ describe('PerpsProTradePanelOwner component boundary', () => {
     act(() => publishMarkets([fallback]));
     expect(mockTradeInputs.mock.lastCall?.[0].market.marketData).toBe(fallback);
     expect(screen.getByTestId('trade-form')).toBeOnTheScreen();
+    expect(mockTradeMount).toHaveBeenCalledTimes(1);
+  });
+
+  it('routes a Scale review to its own confirmation at the retained scene boundary', () => {
+    mockTradeInteraction.orderType = 'scale';
+    render(
+      <PerpsProTradePanelOwner {...createProps()}>
+        {panelAndConfirmation}
+      </PerpsProTradePanelOwner>,
+    );
+    act(() => mockFormProps.mock.lastCall?.[0].controller.requestReview('buy'));
+    const trade = mockFormProps.mock.lastCall![0].controller;
+    expect(mockConfirmationProps.mock.lastCall?.[0].command).toBeNull();
+    expect(mockScaleConfirmationProps.mock.lastCall?.[0]).toMatchObject({
+      command: trade.review,
+      onClose: trade.closeReview,
+      onConfirm: trade.confirmReview,
+      pending: trade.pending,
+    });
+    expect(mockScaleConfirmationProps.mock.lastCall?.[1]).toBe('scene');
+    act(() => trade.closeReview());
+    expect(mockScaleConfirmationProps.mock.lastCall?.[0].command).toBeNull();
     expect(mockTradeMount).toHaveBeenCalledTimes(1);
   });
 

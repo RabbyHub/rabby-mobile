@@ -376,6 +376,9 @@ describe.each(['light', 'dark'] as const)(
 
       fireEvent.press(screen.getByTestId('perps-pro-order-type-market'));
       expect(onSelect).toHaveBeenCalledWith('market');
+      fireEvent.press(screen.getByTestId('perps-pro-order-type-scale'));
+      expect(onSelect).toHaveBeenCalledWith('scale');
+      expect(screen.queryByTestId('perps-pro-order-type-twap')).toBeNull();
     });
 
     it('matches the new BBO card layout', () => {
@@ -533,3 +536,8 @@ describe.each(['light', 'dark'] as const)(
     });
   },
 );
+jest.mock('@/assets2024/icons/perps/PerpsProOrderTypeScale.svg', () => {
+  const ReactModule = require('react');
+  return (props: object) =>
+    ReactModule.createElement(require('react-native').View, props);
+});

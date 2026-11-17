@@ -1,3 +1,4 @@
+import { isPerpsScaleCloid } from '@/utils/perpsScaleCloid';
 import { apisPerps } from '@/core/apis/perps';
 import type { Account } from '@/core/startupServices/preference';
 import {
@@ -47,7 +48,7 @@ export type PerpsModifyOpenOrderCommand = {
   coin: string;
   dexId: string;
   expected: {
-    cloid: null;
+    cloid: string | null;
     isPositionTpsl: boolean;
     kind: PerpsModifyOpenOrderKind;
     limitPrice: string;
@@ -251,7 +252,12 @@ export const buildPerpsModifyOpenOrderCommand = ({
     !normalizedSize ||
     !expectedPrice ||
     !expectedSize ||
-    cloid !== null ||
+    (cloid !== null &&
+      !(
+        editKind === 'limit' &&
+        !expectedIsPositionTpsl &&
+        isPerpsScaleCloid(cloid)
+      )) ||
     !acceptedOrderTypes.includes(expectedOrderType) ||
     (editKind === 'limit' && !normalizedTif) ||
     (editKind !== 'limit' && (!expectedTrigger || !normalizedTrigger))
@@ -275,7 +281,7 @@ export const buildPerpsModifyOpenOrderCommand = ({
     coin: normalizedCoin,
     dexId,
     expected: Object.freeze({
-      cloid: null,
+      cloid,
       isPositionTpsl: expectedIsPositionTpsl,
       kind: editKind,
       limitPrice: expectedPrice,
@@ -335,7 +341,8 @@ const hasExpectedOrder = (
   return (
     !!order &&
     !order.children?.length &&
-    !order.cloid &&
+    (order.cloid?.toLowerCase() || null) ===
+      (command.expected.cloid?.toLowerCase() || null) &&
     order.isTrigger === (command.expected.kind !== 'limit') &&
     order.isPositionTpsl === command.expected.isPositionTpsl &&
     order.orderType === command.expected.orderType &&

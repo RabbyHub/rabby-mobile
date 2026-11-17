@@ -2285,7 +2285,9 @@
           "attachedTpSlUnresolved": "この市場では、以前に送信したTP/SLの結果が未確定です。再試行する前に未約定注文とポジションを確認してください。",
           "orderFilled": "注文が約定しました。",
           "orderPlaced": "注文を発注しました。",
-          "orderFailed": "注文に失敗しました。"
+          "orderFailed": "注文に失敗しました。",
+          "scale": "スケール注文",
+          "scaleDescription": "価格範囲を指定し、複数の指値注文を発注します"
         },
         "orderError": {
           "aloBuyWouldMatch": "即時約定を避けるため、ポストオンリー価格は最良売り気配値より低く設定してください。",
@@ -2578,6 +2580,35 @@
           "cancelPartial": "{{success}}件の注文をキャンセル、{{failed}}件が失敗",
           "cancelFailed": "注文のキャンセルに失敗しました",
           "cancelContextChanged": "アカウントが変更されました。もう一度お試しください。"
+        },
+        "scaleOrder": {
+          "lowerPrice": "最低価格",
+          "upperPrice": "最高価格",
+          "size": "数量",
+          "count": "注文数 (2–100)",
+          "distribution": "数量配分",
+          "flat": "均等",
+          "ascending": "昇順",
+          "descending": "降順",
+          "flatDescription": "各注文に同じ数量を配分します",
+          "ascendingDescription": "価格が上がるほど注文数量が増えます",
+          "descendingDescription": "価格が下がるほど注文数量が増えます",
+          "previewBuy": "買いを確認",
+          "previewSell": "売りを確認",
+          "totalSize": "合計数量",
+          "averagePrice": "平均価格",
+          "result": "受付済み {{accepted}} 件、拒否 {{rejected}} 件、確認待ち {{unresolved}} 件",
+          "unknown": "注文結果は確認待ちです。新たに発注する前に未約定注文と取引履歴を確認してください。",
+          "errors": {
+            "range": "有効な価格を入力してください。最高価格は最低価格を上回る必要があります。",
+            "count": "2～100 の整数を入力してください。",
+            "size": "対象資産のネイティブトークンで有効な数量を入力してください。",
+            "duplicatePrice": "丸め後の価格が重複します。価格範囲を広げるか注文数を減らしてください。",
+            "minimum": "丸め後の各注文金額は $10 以上必要です。",
+            "maximum": "合計金額が市場の上限を超えています。",
+            "capacity": "この注文一式を発注する取引余力が不足しています。",
+            "reduceOnly": "合計数量が削減可能なポジションを超えています。"
+          }
         }
       },
       "limitOrders": "指値注文",

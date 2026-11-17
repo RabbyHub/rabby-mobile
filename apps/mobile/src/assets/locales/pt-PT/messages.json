@@ -2521,7 +2521,9 @@
           "attachedTpSlUnresolved": "Um envio de TP/SL anterior para este mercado continua por resolver. Verifique as Ordens abertas e as Posições antes de tentar novamente.",
           "orderFilled": "Ordem executada.",
           "orderPlaced": "Ordem colocada.",
-          "orderFailed": "A ordem falhou."
+          "orderFailed": "A ordem falhou.",
+          "scale": "Ordem escalonada",
+          "scaleDescription": "Defina um intervalo de preços e coloque várias subordens limitadas"
         },
         "orderError": {
           "aloBuyWouldMatch": "O preço post-only deve ser inferior à melhor oferta de venda para evitar uma execução imediata.",
@@ -2814,6 +2816,35 @@
           "cancelPartial": "{{success}} ordens canceladas; {{failed}} falharam",
           "cancelFailed": "Falha ao cancelar a ordem",
           "cancelContextChanged": "A conta foi alterada. Tente novamente."
+        },
+        "scaleOrder": {
+          "lowerPrice": "Preço mínimo",
+          "upperPrice": "Preço máximo",
+          "size": "Quantidade",
+          "count": "N.º de ordens (2–100)",
+          "distribution": "Distribuição",
+          "flat": "Uniforme",
+          "ascending": "Ascendente",
+          "descending": "Descendente",
+          "flatDescription": "Cada ordem recebe a mesma quantidade",
+          "ascendingDescription": "A quantidade aumenta à medida que o preço sobe",
+          "descendingDescription": "A quantidade aumenta à medida que o preço desce",
+          "previewBuy": "Prévia de compra",
+          "previewSell": "Prévia de venda",
+          "totalSize": "Quantidade total",
+          "averagePrice": "Preço médio",
+          "result": "{{accepted}} aceites, {{rejected}} rejeitadas, {{unresolved}} por confirmar",
+          "unknown": "Resultado por confirmar. Verifique as ordens abertas e o histórico antes de colocar outra ordem.",
+          "errors": {
+            "range": "Introduza preços válidos; o máximo deve ser superior ao mínimo.",
+            "count": "Introduza um inteiro entre 2 e 100.",
+            "size": "Introduza uma quantidade válida do token nativo do ativo.",
+            "duplicatePrice": "Os preços coincidem após o arredondamento. Alargue o intervalo ou reduza o número de ordens.",
+            "minimum": "Cada subordem deve valer pelo menos $10 após o arredondamento.",
+            "maximum": "O montante total excede o limite do mercado.",
+            "capacity": "Capacidade de negociação insuficiente para este lote.",
+            "reduceOnly": "A quantidade total excede a posição que pode ser reduzida."
+          }
         }
       },
       "PerpsCard": {

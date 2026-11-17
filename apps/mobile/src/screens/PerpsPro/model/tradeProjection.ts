@@ -127,6 +127,7 @@ export const getPerpsProTradeDisplayReferencePrice = ({
   form: PerpsProTradeFormState;
   marketPrice: string;
 }) => {
+  if (form.orderType === 'scale') return '';
   if (form.orderType === 'market') return marketPrice;
   if (form.orderType === 'limit') {
     return form.bboEnabled ? marketPrice : form.limitPrice;
@@ -143,6 +144,7 @@ export const getPerpsProMaxDisplayReferencePrice = ({
   form: PerpsProTradeFormState;
   marketPrice: string;
 }) => {
+  if (form.orderType === 'scale') return '';
   if (form.orderType === 'market') {
     return marketPrice;
   }

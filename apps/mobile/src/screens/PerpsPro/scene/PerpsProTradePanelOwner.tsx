@@ -23,6 +23,7 @@ import { useTranslation } from 'react-i18next';
 import { triggerPerpsProLightHaptic } from '../components/common/triggerPerpsProLightHaptic';
 import { PerpsProSceneSkeleton } from '../components/loading/PerpsProSceneSkeleton';
 import { PerpsProOrderConfirmationSheet } from '../components/trade/PerpsProOrderConfirmationSheet';
+import { PerpsProScaleOrderConfirmationSheet } from '../components/trade/PerpsProScaleOrderConfirmationSheet';
 import { PerpsProTradeForm } from '../components/trade/PerpsProTradeForm';
 import {
   getPerpsProColumnLayout,
@@ -266,16 +267,24 @@ export const PerpsProTradePanelOwner = React.memo(
       </View>
     );
     const confirmation = (
-      <PerpsProOrderConfirmationSheet
-        command={trade.review}
-        estimatedLiquidation={trade.estimatedLiquidation}
-        market={trade.market}
-        onClose={trade.closeReview}
-        onConfirm={trade.confirmReview}
-        onToggleSkip={() => trade.setSkipConfirmation(value => !value)}
-        pending={trade.pending}
-        skipConfirmation={trade.skipConfirmation}
-      />
+      <>
+        <PerpsProOrderConfirmationSheet
+          command={trade.review?.type === 'scaleOrder' ? null : trade.review}
+          estimatedLiquidation={trade.estimatedLiquidation}
+          market={trade.market}
+          onClose={trade.closeReview}
+          onConfirm={trade.confirmReview}
+          onToggleSkip={() => trade.setSkipConfirmation(value => !value)}
+          pending={trade.pending}
+          skipConfirmation={trade.skipConfirmation}
+        />
+        <PerpsProScaleOrderConfirmationSheet
+          command={trade.review?.type === 'scaleOrder' ? trade.review : null}
+          onClose={trade.closeReview}
+          onConfirm={trade.confirmReview}
+          pending={trade.pending}
+        />
+      </>
     );
 
     return (

@@ -1,6 +1,21 @@
 import { perpsServiceApi } from '@/core/serviceApi/perps';
+import { apisPerps } from '@/core/apis/perps';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import {
+  buildPerpsProScaleOrderCommand,
+  executePerpsProScaleOrder,
+  isPerpsProScaleContextCurrent,
+  reconcilePerpsProScaleOrders,
+  type PerpsProScaleOrderCommand,
+  type PerpsProScaleContext,
+} from '../actions/scaleOrder';
+import {
+  PerpsProScaleError,
+  type PerpsProScaleCapacity,
+} from '../model/scaleOrder';
 import { PERPS_MINI_USD_VALUE } from '@/constant/perps';
 import { isPerpsActionUserCancelled } from '@/hooks/perps/actions/actionError';
+import { isSamePerpsActionAccount } from '@/hooks/perps/actions/accountGuard';
 import { ensurePerpsActionApproval } from '@/hooks/perps/actions/perpsActionApproval';
 import {
   judgeIsBuilderFeeNeedApprove,
@@ -21,6 +36,8 @@ import {
 } from '@/hooks/perps/runtime/perpsRuntimeState';
 import {
   ensureCurrentPerpPermission,
+  fetchClearinghouseStateHttp,
+  fetchPositionOpenOrdersHttp,
   getPerpsAccountRuntimeContext,
   hasCurrentPerpPermission,
   isPerpsUserAbstractionReadyForAccount,
@@ -287,9 +304,20 @@ export const usePerpsProTrade = ({
     value: 1,
   });
   const [review, setReview] = useState<
-    PerpsProAttachedTpSlCommand | PerpsProOpenOrderCommand | null
+    | PerpsProAttachedTpSlCommand
+    | PerpsProOpenOrderCommand
+    | PerpsProScaleOrderCommand
+    | null
   >(null);
   const [pending, setPending] = useState(false);
+  const [scaleReceipts, setScaleReceipts] = useState<
+    {
+      command: PerpsProScaleOrderCommand;
+      accepted: number;
+      rejected: number;
+      unresolved: number;
+    }[]
+  >([]);
   const [skipConfirmation, setSkipConfirmation] = useState(false);
   const [amountSource, setAmountSource] =
     useState<PerpsProTradeAmountSource>('manual');
@@ -471,6 +499,8 @@ export const usePerpsProTrade = ({
         conditionalLimitPrice: '',
         limitPrice: '',
         triggerPrice: '',
+        scaleLowerPrice: '',
+        scaleUpperPrice: '',
       };
       formRef.current = next;
       return next;
@@ -650,6 +680,19 @@ export const usePerpsProTrade = ({
       const nextForm = {
         ...currentForm,
         amount: '',
+        amountUnit:
+          orderType === 'scale' ? ('base' as const) : preferences.amountUnit,
+        scaleLowerPrice: '',
+        scaleUpperPrice: '',
+        scaleCount: '5',
+        scaleDistribution: 'flat' as const,
+        ...(orderType === 'scale'
+          ? {
+              bboEnabled: false,
+              attachedTpSl: { ...currentForm.attachedTpSl, enabled: false },
+              tif: 'Gtc' as const,
+            }
+          : {}),
         conditionalLimitPrice: '',
         ...(orderType === 'limit'
           ? {
@@ -672,10 +715,11 @@ export const usePerpsProTrade = ({
       setPercentageState(0);
       setForm(nextForm);
     },
-    [getLatestLimitPrice],
+    [getLatestLimitPrice, preferences.amountUnit],
   );
   const applyAmountUnit = useCallback((amountUnit: PerpsProTradeAmountUnit) => {
     const currentForm = formRef.current;
+    if (currentForm.orderType === 'scale') amountUnit = 'base';
     if (currentForm.amountUnit === amountUnit) return;
 
     amountDraftRef.current = createPerpsProTradeAmountDraft();
@@ -757,7 +801,11 @@ export const usePerpsProTrade = ({
   const setTif = useCallback(
     (tif: PerpsProTradeTif) => {
       const currentForm = formRef.current;
-      if (currentForm.orderType !== 'limit') return;
+      if (
+        currentForm.orderType !== 'limit' &&
+        currentForm.orderType !== 'scale'
+      )
+        return;
       if (!currentForm.bboEnabled || tif === 'Gtc') {
         patchForm({ tif });
         return;
@@ -815,10 +863,11 @@ export const usePerpsProTrade = ({
   ]);
 
   const toggleAmountUnit = useCallback(() => {
+    if (form.orderType === 'scale') return;
     const next = form.amountUnit === 'quote' ? 'base' : 'quote';
     applyAmountUnit(next);
     void preferences.setAmountUnit(next);
-  }, [applyAmountUnit, form.amountUnit, preferences]);
+  }, [applyAmountUnit, form.amountUnit, form.orderType, preferences]);
 
   useEffect(() => {
     if (amountSource !== 'manual' || !amountDraftRef.current.inputSource) {
@@ -1363,6 +1412,7 @@ export const usePerpsProTrade = ({
     (side: PerpsProTradeSide) => {
       if (
         !market ||
+        form.orderType === 'scale' ||
         form.orderType === 'conditional' ||
         (form.orderType === 'limit' && form.bboEnabled)
       ) {
@@ -1446,7 +1496,10 @@ export const usePerpsProTrade = ({
         surface: 'opening',
       });
     },
-    order: form,
+    order: {
+      ...form,
+      orderType: form.orderType === 'scale' ? 'conditional' : form.orderType,
+    },
     previewFacts: tpSlPreviewFacts,
     pxDecimals: market?.marketData.pxDecimals ?? 2,
     szDecimals: market?.marketData.szDecimals ?? 0,
@@ -1503,6 +1556,38 @@ export const usePerpsProTrade = ({
         sourceTag: market.sourceTag ?? null,
         szDecimals: market.marketData.szDecimals,
       });
+      if (commandForm.orderType === 'scale') {
+        if (
+          !scopedActiveAssetData ||
+          formRef.current !== form ||
+          !isSamePerpsActionAccount(
+            getPerpsAccountRuntimeContext().account,
+            accountFacts.account,
+          )
+        )
+          throw new Error(t('page.perps.pro.trade.contextChanged'));
+        return buildPerpsProScaleOrderCommand({
+          accountRuntime: getPerpsAccountRuntimeContext(),
+          runtime: getPerpsRuntimeSnapshot(),
+          coin: market.canonicalCoin,
+          dexId: market.marketData.dexId,
+          marketKey: market.marketKey,
+          form: commandForm,
+          side,
+          reviewFacts,
+          capacity: {
+            availableQuote: BigNumber.min(
+              ...scopedActiveAssetData.availableToTrade,
+            ).toFixed(),
+            leverage,
+            markPrice: market.marketData.markPx,
+            maxTradeSize:
+              scopedActiveAssetData.maxTradeSzs[side === 'buy' ? 0 : 1],
+            positionSize: currentPosition?.szi ?? '0',
+            maxUsdValueSize: market.marketData.maxUsdValueSize,
+          },
+        });
+      }
       let marketSnapshot:
         | Omit<
             PerpsProAttachedTpSlCommand['marketSnapshot'],
@@ -1607,7 +1692,7 @@ export const usePerpsProTrade = ({
         expectedEntryPrice,
         leverage,
         liquidationPrice: risk?.liquidationPrice ?? null,
-        order: commandForm,
+        order: { ...commandForm, orderType: commandForm.orderType },
         side,
         szDecimals: market.marketData.szDecimals,
       });
@@ -2176,12 +2261,243 @@ export const usePerpsProTrade = ({
     ],
   );
 
+  const scaleLiveRef = useRef({
+    active: executionActive,
+    market,
+    activeAsset: scopedActiveAssetData,
+  });
+  const scaleMountedRef = useRef(true);
+  scaleLiveRef.current = {
+    active: executionActive,
+    market,
+    activeAsset: scopedActiveAssetData,
+  };
+  useEffect(() => {
+    scaleMountedRef.current = true;
+    return () => {
+      scaleMountedRef.current = false;
+      scaleLiveRef.current.active = false;
+    };
+  }, []);
+  // A late receipt belongs to the submitting account and market, even when its
+  // draft/generation has since changed. Retain it while this Scene is mounted.
+  useEffect(() => {
+    if (!executionActive || !accountFacts.isUserDataReady) return;
+    const receipt = scaleReceipts.find(
+      item =>
+        item.command.runtimeIdentity === accountIdentity &&
+        item.command.marketKey === market?.marketKey,
+    );
+    if (!receipt) return;
+    setScaleReceipts(items => items.filter(item => item !== receipt));
+    showToast(
+      t('page.perps.pro.scaleOrder.result', {
+        accepted: receipt.accepted,
+        rejected: receipt.rejected,
+        unresolved: receipt.unresolved,
+      }),
+      receipt.rejected || receipt.unresolved ? 'error' : 'success',
+    );
+    // Refresh once per receipt, never once per child. Existing WS stays unchanged.
+    void Promise.allSettled([
+      fetchClearinghouseStateHttp(receipt.command.dexId),
+      fetchPositionOpenOrdersHttp(receipt.command.dexId),
+      refreshActiveAssetData(),
+    ]);
+  }, [
+    accountFacts.isUserDataReady,
+    accountIdentity,
+    executionActive,
+    market?.marketKey,
+    refreshActiveAssetData,
+    scaleReceipts,
+    t,
+  ]);
+  const getScaleContext = useCallback(
+    (command: PerpsProScaleOrderCommand): PerpsProScaleContext => {
+      const live = scaleLiveRef.current;
+      const state = perpsStore.getState();
+      const data = live.activeAsset;
+      const matched =
+        data &&
+        data.coin === command.coin &&
+        isSameAddress(data.user, command.account.address);
+      const capacity: PerpsProScaleCapacity | null =
+        matched &&
+        state.isUserDataReady &&
+        live.market &&
+        data.leverage.type === command.reviewFacts.marginMode &&
+        data.leverage.value === command.reviewFacts.leverage &&
+        live.market.marketData.szDecimals === command.reviewFacts.szDecimals
+          ? {
+              availableQuote: BigNumber.min(...data.availableToTrade).toFixed(),
+              leverage: command.reviewFacts.leverage,
+              markPrice: live.market.marketData.markPx,
+              maxTradeSize: data.maxTradeSzs[command.side === 'buy' ? 0 : 1],
+              maxUsdValueSize: live.market.marketData.maxUsdValueSize,
+              positionSize:
+                state.currentClearinghouseState?.assetPositions.find(
+                  item => item.position.coin === command.coin,
+                )?.position.szi ?? '0',
+            }
+          : null;
+      return {
+        active: live.active,
+        accountRuntime: getPerpsAccountRuntimeContext(),
+        runtime: getPerpsRuntimeSnapshot(),
+        marketKey: live.market?.marketKey ?? null,
+        coin: live.market?.canonicalCoin ?? '',
+        dexId: live.market?.marketData.dexId ?? '',
+        formRevision: formRevisionRef.current,
+        hasPermission: hasCurrentPerpPermission(),
+        capacity,
+      };
+    },
+    [],
+  );
+  const executeScaleReview = useCallback(
+    async (command: PerpsProScaleOrderCommand) => {
+      if (pendingRef.current || !tradeConfigurationReady) return;
+      const current = () =>
+        isPerpsProScaleContextCurrent(command, getScaleContext(command));
+      if (!current()) {
+        setReview(null);
+        showToast(t('page.perps.pro.trade.contextChanged'), 'error');
+        return;
+      }
+      pendingRef.current = true;
+      setPending(true);
+      let dispatched = false;
+      try {
+        const account = perpsStore.getState().currentPerpsAccount;
+        if (!account) return;
+        await ensurePerpsActionApproval(account);
+        if (!current()) return;
+        const desired = command.reviewFacts;
+        const readiness = await resolveLeverageExecutionReadiness({
+          address: command.account.address,
+          coin: command.coin,
+          desired,
+          expectedAccountIdentity: command.runtimeIdentity,
+          marketKey: command.marketKey,
+        });
+        if (!current() || readiness === 'contextChanged')
+          throw new Error(t('page.perps.pro.trade.contextChanged'));
+        if (readiness === 'needsUpdate') {
+          const result = await executePerpsUpdateLeverage(
+            buildPerpsUpdateLeverageCommand({
+              account: command.account,
+              coin: command.coin,
+              isCross: desired.marginMode === 'cross',
+              leverage: desired.leverage,
+              maxLeverage: desired.maxLeverage,
+            }),
+          );
+          if (result.kind !== 'success') {
+            if (
+              result.kind === 'failed' &&
+              result.failureReason === 'userCancelled'
+            )
+              return;
+            throw new Error(t('page.perps.pro.trade.contextChanged'));
+          }
+        }
+        if (!current()) return;
+        const refreshed =
+          (await refreshActiveAssetData()) as WsActiveAssetData | null;
+        if (
+          !current() ||
+          !refreshed ||
+          refreshed.coin !== command.coin ||
+          !isSameAddress(refreshed.user, command.account.address) ||
+          refreshed.leverage.type !== desired.marginMode ||
+          refreshed.leverage.value !== desired.leverage
+        )
+          throw new Error(t('page.perps.pro.trade.contextChanged'));
+        scaleLiveRef.current.activeAsset = refreshed;
+        const sdk = apisPerps.getPerpsSDK();
+        const exchange = sdk.exchange;
+        if (!exchange)
+          throw new Error(t('page.perps.pro.trade.contextChanged'));
+        const result = await executePerpsProScaleOrder(command, {
+          getContext: () => getScaleContext(command),
+          submit: (params, options) =>
+            exchange.multiOrderWithOutcome(params, options),
+        });
+        if (result.kind === 'userCancelled') return;
+        if (result.kind === 'contextChanged')
+          throw new Error(t('page.perps.pro.trade.contextChanged'));
+        if (result.kind === 'requestFailed') throw new Error(result.error);
+        dispatched = true;
+        // Clear the consumed preview before any read requests; keep its original ownership.
+        if (!scaleMountedRef.current) return;
+        setReview(value => (value === command ? null : value));
+        const reconciled = await reconcilePerpsProScaleOrders(command, result, {
+          isCurrent: current,
+          getOrderStatus: (cloid, address) =>
+            sdk.info.getOrderStatus(cloid, address),
+        });
+        if (!scaleMountedRef.current) return;
+        const confirmed = reconciled.filter(
+          item =>
+            item.response.status === 'order' &&
+            item.response.order?.order?.coin === command.coin &&
+            item.response.order.order.cloid?.toLowerCase() ===
+              item.cloid.toLowerCase() &&
+            (item.response.order.status === 'open' ||
+              item.response.order.status === 'filled'),
+        ).length;
+        const accepted =
+          result.legs.filter(leg => leg.kind === 'accepted').length + confirmed;
+        const rejected = result.legs.filter(
+          leg => leg.kind === 'rejected',
+        ).length;
+        const unresolved = command.plan.orders.length - accepted - rejected;
+        setScaleReceipts(items => [
+          ...items,
+          { command, accepted, rejected, unresolved },
+        ]);
+        if (current()) patchForm({ amount: '' });
+      } catch (error) {
+        if (current() && !isPerpsActionUserCancelled(error)) {
+          setReview(null);
+          showToast(
+            dispatched
+              ? t('page.perps.pro.scaleOrder.unknown')
+              : error instanceof Error
+              ? error.message
+              : String(error),
+            'error',
+          );
+        }
+      } finally {
+        pendingRef.current = false;
+        setPending(false);
+      }
+    },
+    [
+      getScaleContext,
+      patchForm,
+      refreshActiveAssetData,
+      resolveLeverageExecutionReadiness,
+      t,
+      tradeConfigurationReady,
+    ],
+  );
+
   const submitReview = useCallback(
-    async (command: PerpsProAttachedTpSlCommand | PerpsProOpenOrderCommand) =>
-      command.type === 'openOrderWithAttachedTpSl'
+    async (
+      command:
+        | PerpsProAttachedTpSlCommand
+        | PerpsProOpenOrderCommand
+        | PerpsProScaleOrderCommand,
+    ) =>
+      command.type === 'scaleOrder'
+        ? executeScaleReview(command)
+        : command.type === 'openOrderWithAttachedTpSl'
         ? executeAttachedReview(command)
         : execute(command),
-    [execute, executeAttachedReview],
+    [execute, executeAttachedReview, executeScaleReview],
   );
 
   const requestReview = useCallback(
@@ -2199,6 +2515,11 @@ export const usePerpsProTrade = ({
           return;
         }
         const command = buildReview(side);
+        if (command.type === 'scaleOrder') {
+          setSkipConfirmation(false);
+          setReview(command);
+          return;
+        }
         const orderType = getReviewParent(command).orderType;
         const skip = await perpsServiceApi.getSkipPerpsProTradeConfirmation(
           orderType,
@@ -2215,7 +2536,11 @@ export const usePerpsProTrade = ({
         }
       } catch (error) {
         showToast(
-          error instanceof Error ? error.message : String(error),
+          error instanceof PerpsProScaleError
+            ? t(`page.perps.pro.scaleOrder.errors.${error.code}`)
+            : error instanceof Error
+            ? error.message
+            : String(error),
           'error',
         );
       }
@@ -2232,7 +2557,7 @@ export const usePerpsProTrade = ({
       setReview(null);
       return;
     }
-    if (skipConfirmation) {
+    if (skipConfirmation && review.type !== 'scaleOrder') {
       const orderType = getReviewParent(review).orderType;
       perpsServiceApi
         .setSkipPerpsProTradeConfirmation(orderType, true)
@@ -2326,7 +2651,7 @@ export const usePerpsProTrade = ({
     ],
   );
   const estimatedLiquidation = useMemo(() => {
-    if (!review || !market) return null;
+    if (!review || review.type === 'scaleOrder' || !market) return null;
     const parent = getReviewParent(review);
     const reviewFacts = review.reviewFacts;
     if (!reviewFacts) return null;

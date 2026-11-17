@@ -634,6 +634,9 @@ jest.mock('../components/trade/PerpsProOrderConfirmationSheet', () => ({
     return null;
   },
 }));
+jest.mock('../components/trade/PerpsProScaleOrderConfirmationSheet', () => ({
+  PerpsProScaleOrderConfirmationSheet: () => null,
+}));
 
 jest.mock('./PerpsProRealtimeOrderBook', () => {
   const ReactModule = require('react');
