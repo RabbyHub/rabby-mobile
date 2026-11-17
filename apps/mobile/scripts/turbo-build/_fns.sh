@@ -622,7 +622,10 @@ turbo_compute_cocoapods_cache_key() {
   files_hash=$(
     turbo_hash_git_files "$repo_root" \
       apps/mobile/ios/Podfile \
-      apps/mobile/ios/Podfile.lock
+      apps/mobile/ios/Podfile.lock \
+      apps/mobile/package.json \
+      yarn.lock \
+      apps/mobile/patches
   ) || return $?
 
   printf '%s\n' \
