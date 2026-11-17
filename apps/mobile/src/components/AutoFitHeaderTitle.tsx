@@ -1,7 +1,13 @@
 import React from 'react';
-import type { StyleProp, TextStyle, ViewStyle } from 'react-native';
+import type {
+  LayoutChangeEvent,
+  StyleProp,
+  TextStyle,
+  ViewStyle,
+} from 'react-native';
 import { View } from 'react-native';
 import type { TextLayoutEventData, NativeSyntheticEvent } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import { Text } from '@/components/Typography';
 import { RoundedFontStyles } from '@/core/utils/fonts';
@@ -16,6 +22,23 @@ const COMPACT_LINE_HEIGHT = 20;
 
 type Stage = 'base' | 'compact';
 
+/**
+ * Per-language typography for a header title.
+ *
+ * - `'auto'`  : keep the adaptive behaviour (measure the slot, shrink to the
+ *               compact two-line layout when the base size does not fit);
+ * - an object : fixed metrics for that language. Only measurements are allowed:
+ *               font family/weight are owned by this component so the shared
+ *               Rounded/Heavy contract stays intact (QA 1387/1388).
+ */
+export type HeaderTitleLanguageStyle =
+  | 'auto'
+  | {
+      textStyle?: TextStyle;
+      numberOfLines?: 1 | 2;
+      ellipsizeMode?: 'tail' | 'clip';
+    };
+
 export type AutoFitHeaderTitleProps = {
   text: string;
   /** Extra text style (colour, family, weight); size/lineHeight are owned here. */
@@ -29,24 +52,28 @@ export type AutoFitHeaderTitleProps = {
     lineCount: number;
     firstLineWidth?: number;
   }) => void;
+  /**
+   * Exact language tag -> typography override (e.g. `en-US`, `pt-PT`; no prefix
+   * matching). When a tag has no entry the component renders the English
+   * baseline: base size, one line, tail ellipsis, and no measuring at all.
+   */
+  textStylesByLanguage?: Partial<Record<string, HeaderTitleLanguageStyle>>;
+  /** Forces the language key (tests/playground); defaults to the i18n one. */
+  languageKey?: string;
 };
 
 /**
  * Header title that keeps itself inside the slot it is given.
  *
- * Long translations (QA 1352) used to run past the header edge. This measures
- * the unclamped text once with the platform text engine (`onTextLayout`, so
- * Dynamic Type and per-locale metrics are included) and then picks one of two
- * layouts:
+ * The default layout is the English design: base size, one line, tail
+ * ellipsis. It is deterministic - no measuring, no stage changes - so entering
+ * the screen always renders the same thing (QA 1409: the title used to flip
+ * between 20pt/two lines and 16pt/one line depending on the entry).
  *
- *   1. base    - 20pt, one line;
- *   2. compact - 16pt, two lines with a trailing ellipsis.
- *
- * A single measuring pass keeps it deterministic: the unclamped base-size text
- * either fits on one line or it does not. The container has a fixed height and
- * the text sits inside it, so switching layouts changes only the glyphs inside
- * the slot: the header row and the screen below keep their layout. A frame
- * where the title changes size is acceptable; a reflow of the page is not.
+ * Languages that need more room opt into `'auto'` through
+ * `textStylesByLanguage`, which keeps the long-translation behaviour from QA
+ * 1352: measure the real slot width once and fall back to the compact
+ * two-line layout only when the base size genuinely overflows.
  */
 export const AutoFitHeaderTitle = ({
   text,
@@ -54,68 +81,160 @@ export const AutoFitHeaderTitle = ({
   containerStyle,
   align = 'center',
   onMeasure,
+  textStylesByLanguage,
+  languageKey,
 }: AutoFitHeaderTitleProps) => {
-  const [stage, setStage] = React.useState<Stage>('base');
+  const { i18n } = useTranslation();
+  const activeLanguage =
+    languageKey || i18n?.resolvedLanguage || i18n?.language || '';
 
-  // A new language (or a different title) starts from the base metrics again.
+  const languageStyle = React.useMemo(() => {
+    if (!textStylesByLanguage || !activeLanguage) {
+      return undefined;
+    }
+    return textStylesByLanguage[activeLanguage];
+  }, [textStylesByLanguage, activeLanguage]);
+
+  const isAdaptive = languageStyle === 'auto';
+  const fixedStyle = languageStyle !== 'auto' ? languageStyle : undefined;
+
+  // The map is an object prop, so nothing downstream may depend on its
+  // identity: a scalar signature keeps re-computation and style churn tied to
+  // the actual metrics instead of to the caller's render count.
+  const fixedSignature = fixedStyle
+    ? [
+        fixedStyle.textStyle?.fontSize ?? BASE_FONT_SIZE,
+        fixedStyle.textStyle?.lineHeight ?? BASE_LINE_HEIGHT,
+        fixedStyle.numberOfLines ?? 1,
+        fixedStyle.ellipsizeMode ?? 'tail',
+      ].join('|')
+    : '';
+
+  const fixedMetrics = React.useMemo(() => {
+    if (!fixedStyle) {
+      return undefined;
+    }
+    const {
+      fontFamily: _family,
+      fontWeight: _weight,
+      ...metrics
+    } = fixedStyle.textStyle ?? {};
+    return {
+      metrics,
+      numberOfLines: fixedStyle.numberOfLines ?? 1,
+      ellipsizeMode: fixedStyle.ellipsizeMode ?? 'tail',
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fixedSignature]);
+
+  // Adaptive path only ('auto' languages).
+  const [stage, setStage] = React.useState<Stage>('base');
+  const [containerWidth, setContainerWidth] = React.useState(0);
+  const measuredRef = React.useRef<{ width: number; text: string } | null>(
+    null,
+  );
+
+  const handleContainerLayout = React.useCallback(
+    (event: LayoutChangeEvent) => {
+      const nextWidth = Math.round(event.nativeEvent.layout.width);
+      setContainerWidth(prev => (prev === nextWidth ? prev : nextWidth));
+    },
+    [],
+  );
+
+  // A new language, title or slot width restarts the measurement so the
+  // verdict is not carried over from a different layout.
   React.useEffect(() => {
+    if (!isAdaptive) {
+      return;
+    }
+    measuredRef.current = null;
     setStage('base');
-  }, [text]);
+  }, [isAdaptive, text, containerWidth]);
 
   const handleTextLayout = React.useCallback(
     (event: NativeSyntheticEvent<TextLayoutEventData>) => {
-      const lineCount = event.nativeEvent?.lines?.length ?? 0;
+      if (!isAdaptive) {
+        return;
+      }
+      const lines = event.nativeEvent?.lines ?? [];
+      // Measurements taken before the slot has a real width are meaningless.
+      if (containerWidth <= 0 || lines.length === 0) {
+        return;
+      }
+      const measured = measuredRef.current;
+      if (measured?.width === containerWidth && measured.text === text) {
+        return;
+      }
+      measuredRef.current = { width: containerWidth, text };
+      const lineCount = lines.length;
       const next: Stage = lineCount > 1 ? 'compact' : 'base';
       onMeasure?.({
         stage: next,
         lineCount,
-        firstLineWidth: event.nativeEvent?.lines?.[0]?.width,
+        firstLineWidth: lines[0]?.width,
       });
       setStage(next);
     },
-    [onMeasure],
+    [isAdaptive, onMeasure, containerWidth, text],
   );
 
-  const isCompact = stage === 'compact';
-  const fontSize = isCompact ? COMPACT_FONT_SIZE : BASE_FONT_SIZE;
-  const lineHeight = isCompact ? COMPACT_LINE_HEIGHT : BASE_LINE_HEIGHT;
+  const isCompact = isAdaptive && stage === 'compact';
+  const fontSize =
+    fixedMetrics?.metrics.fontSize ??
+    (isCompact ? COMPACT_FONT_SIZE : BASE_FONT_SIZE);
+  const lineHeight =
+    fixedMetrics?.metrics.lineHeight ??
+    (isCompact ? COMPACT_LINE_HEIGHT : BASE_LINE_HEIGHT);
+  const numberOfLines = isAdaptive ? 2 : fixedMetrics?.numberOfLines ?? 1;
+  const ellipsizeMode = fixedMetrics?.ellipsizeMode ?? 'tail';
   const textAlign = align === 'left' ? 'left' : 'center';
 
   return (
-    <View style={[styles.container, containerStyle]}>
+    <View
+      style={[styles.container, containerStyle]}
+      onLayout={isAdaptive ? handleContainerLayout : undefined}>
       <Text
-        // Keep two lines available in both stages. The measuring pass decides
-        // whether the compact font is needed; a long translation must never be
-        // reduced to a single clipped line before that decision settles.
-        numberOfLines={2}
-        ellipsizeMode="tail"
-        style={[styles.title, textStyle, { fontSize, lineHeight, textAlign }]}
-        accessibilityRole="header">
-        {text}
-      </Text>
-      {/* Unclamped twin used only for measurement: absolute, invisible and
-          excluded from accessibility, so it cannot affect layout or the a11y
-          tree. It always measures at the base metrics, which makes the result
-          independent of the layout currently shown. */}
-      <Text
-        numberOfLines={0}
-        onTextLayout={handleTextLayout}
+        numberOfLines={numberOfLines}
+        ellipsizeMode={ellipsizeMode}
         style={[
           styles.title,
           textStyle,
-          styles.measure,
-          {
-            fontSize: BASE_FONT_SIZE,
-            lineHeight: BASE_LINE_HEIGHT,
-            textAlign,
-          },
+          fixedMetrics?.metrics,
+          { fontSize, lineHeight, textAlign },
         ]}
-        accessible={false}
-        accessibilityElementsHidden
-        importantForAccessibility="no-hide-descendants"
-        pointerEvents="none">
+        accessibilityRole="header">
         {text}
       </Text>
+      {isAdaptive ? (
+        /* Unclamped twin used only for measurement: absolute, invisible and
+           excluded from accessibility, so it cannot affect layout or the a11y
+           tree. It always measures at the base metrics, which makes the result
+           independent of the layout currently shown. */
+        <Text
+          // Re-mounting the probe on a width change makes it lay out (and
+          // report) again at the new width instead of keeping a stale verdict.
+          key={`probe-${containerWidth}`}
+          numberOfLines={0}
+          onTextLayout={handleTextLayout}
+          style={[
+            styles.title,
+            textStyle,
+            styles.measure,
+            {
+              width: containerWidth > 0 ? containerWidth : undefined,
+              fontSize: BASE_FONT_SIZE,
+              lineHeight: BASE_LINE_HEIGHT,
+              textAlign,
+            },
+          ]}
+          accessible={false}
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+          pointerEvents="none">
+          {text}
+        </Text>
+      ) : null}
     </View>
   );
 };

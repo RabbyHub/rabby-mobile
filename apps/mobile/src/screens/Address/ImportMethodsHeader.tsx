@@ -3,7 +3,10 @@ import { View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { AutoFitHeaderTitle } from '@/components/AutoFitHeaderTitle';
+import {
+  AutoFitHeaderTitle,
+  HeaderTitleLanguageStyle,
+} from '@/components/AutoFitHeaderTitle';
 import { HeaderBackButton } from '@/hooks/navigation';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -24,7 +27,12 @@ const HEADER_HORIZONTAL_INSET = 16;
  * a single-line title that truncates with an ellipsis, so every language starts
  * at the same x and never overflows.
  */
-export const ImportMethodsHeader = () => {
+export const ImportMethodsHeader = ({
+  textStylesByLanguage,
+}: {
+  /** Exact language tag -> typography override; decided by the navigator. */
+  textStylesByLanguage?: Partial<Record<string, HeaderTitleLanguageStyle>>;
+} = {}) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
@@ -42,6 +50,7 @@ export const ImportMethodsHeader = () => {
           <AutoFitHeaderTitle
             text={t('screens.addressStackTitle.ImportMethods')}
             textStyle={styles.title}
+            textStylesByLanguage={textStylesByLanguage}
           />
         </View>
         {/* Reserved trailing slot: keeps the title centred on the screen, the
