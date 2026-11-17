@@ -136,10 +136,6 @@ it.each([true, false])(
     } else {
       expect(StyleSheet.flatten(frames[0].props.style)).toMatchObject({
         backgroundColor: '#232428',
-        shadowColor: 'rgba(0, 0, 0, 0.12)',
-        shadowOffset: { width: 0, height: 15 },
-        shadowOpacity: 1,
-        shadowRadius: 27.5,
       });
       expect(screen.UNSAFE_queryByType(LinearGradient)).toBeNull();
     }

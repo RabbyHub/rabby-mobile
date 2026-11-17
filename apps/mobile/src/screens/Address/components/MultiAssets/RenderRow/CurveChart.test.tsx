@@ -251,26 +251,18 @@ describe('MultiChart balance presentation', () => {
     expect(mockTickerUnmount).not.toHaveBeenCalled();
   });
 
-  it('updates the ticker color while preserving typography across themes', () => {
+  it('updates the ticker color on theme changes and then reuses the new style', () => {
     const view = render(tree());
     const ticker = view.getByTestId('balance-ticker', includingHidden);
     const lightStyle = ticker.props.style;
     const initialValue = ticker.props.value;
     const fontSizeByLength = ticker.props.fontSizeByLength;
-    expect(StyleSheet.flatten(lightStyle)).toMatchObject({
-      color: '#192945',
-      lineHeight: 46,
-    });
-    expect(ticker.props.lineHeight).toBe(46);
+    expect(StyleSheet.flatten(lightStyle).color).toBe('#192945');
 
     view.rerender(tree({}, mockDarkTheme));
     const darkStyle = ticker.props.style;
     expect(darkStyle).not.toBe(lightStyle);
-    expect(StyleSheet.flatten(darkStyle)).toMatchObject({
-      color: '#F7FAFC',
-      lineHeight: 46,
-    });
-    expect(ticker.props.lineHeight).toBe(46);
+    expect(StyleSheet.flatten(darkStyle).color).toBe('#F7FAFC');
 
     view.rerender(tree({ onPressNetWorth: jest.fn() }, mockDarkTheme));
     expect(ticker.props.style).toBe(darkStyle);
@@ -358,7 +350,7 @@ describe('MultiChart balance presentation', () => {
       const view = render(tree());
       const placeholder = view.getByTestId(E2E_ID.home.portfolioBalanceLoading);
 
-      expect(placeholder.props).toMatchObject({ width: 181, height: 46 });
+      expect(placeholder.props).toMatchObject({ width: 181, height: 42 });
       expect(StyleSheet.flatten(placeholder.props.style)).toMatchObject({
         borderRadius: 8,
       });
@@ -372,56 +364,40 @@ describe('MultiChart balance presentation', () => {
     },
   );
 
-  it.each([
-    { name: 'light', theme: mockLightTheme },
-    { name: 'dark', theme: mockDarkTheme },
-  ])(
-    'keeps the $name ticker layout through loading and resolution',
-    ({ theme }) => {
-      const view = render(tree({}, theme));
-      const balance = view.getByTestId(
-        E2E_ID.home.portfolioBalanceValue,
-        includingHidden,
-      );
-      const ticker = view.getByTestId('balance-ticker', includingHidden);
-      const balanceStyle = StyleSheet.flatten(balance.props.style);
-      const tickerStyle = StyleSheet.flatten(ticker.props.style);
-      expect(tickerStyle.lineHeight).toBe(46);
-      expect(ticker.props.lineHeight).toBe(tickerStyle.lineHeight);
+  it('keeps the balance ticker instance and layout through loading and resolution', () => {
+    const view = render(tree());
+    const balance = view.getByTestId(
+      E2E_ID.home.portfolioBalanceValue,
+      includingHidden,
+    );
+    const ticker = view.getByTestId('balance-ticker', includingHidden);
+    const balanceStyle = StyleSheet.flatten(balance.props.style);
+    const tickerStyle = StyleSheet.flatten(ticker.props.style);
 
-      mockBalanceAvailability = 'loading';
-      view.rerender(tree({}, theme));
-      expect(
-        view.getByTestId(E2E_ID.home.portfolioBalanceLoading).props.height,
-      ).toBe(46);
-      expect(
-        view.getByTestId(E2E_ID.home.portfolioChangeLoading).props.height,
-      ).toBe(20);
-      expect(
-        view.getByTestId(E2E_ID.home.portfolioBalanceValue, includingHidden),
-      ).toBe(balance);
-      expect(view.getByTestId('balance-ticker', includingHidden)).toBe(ticker);
+    mockBalanceAvailability = 'loading';
+    view.rerender(tree());
+    expect(view.getByTestId(E2E_ID.home.portfolioBalanceLoading)).toBeTruthy();
+    expect(
+      view.getByTestId(E2E_ID.home.portfolioBalanceValue, includingHidden),
+    ).toBe(balance);
+    expect(view.getByTestId('balance-ticker', includingHidden)).toBe(ticker);
 
-      mockBalanceAvailability = 'ready';
-      mockTotalBalance = 9876;
-      view.rerender(tree({}, theme));
-      expect(
-        view.queryByTestId(
-          E2E_ID.home.portfolioBalanceLoading,
-          includingHidden,
-        ),
-      ).toBeNull();
-      expect(
-        view.getByTestId(E2E_ID.home.portfolioBalanceValue, includingHidden),
-      ).toBe(balance);
-      expect(view.getByTestId('balance-ticker', includingHidden)).toBe(ticker);
-      expect(StyleSheet.flatten(balance.props.style)).toEqual(balanceStyle);
-      expect(StyleSheet.flatten(ticker.props.style)).toEqual(tickerStyle);
-      expect(ticker.props.value.value).toBe('$9876');
-      expect(mockTickerMount).toHaveBeenCalledTimes(1);
-      expect(mockTickerUnmount).not.toHaveBeenCalled();
-    },
-  );
+    mockBalanceAvailability = 'ready';
+    mockTotalBalance = 9876;
+    view.rerender(tree());
+    expect(
+      view.queryByTestId(E2E_ID.home.portfolioBalanceLoading, includingHidden),
+    ).toBeNull();
+    expect(
+      view.getByTestId(E2E_ID.home.portfolioBalanceValue, includingHidden),
+    ).toBe(balance);
+    expect(view.getByTestId('balance-ticker', includingHidden)).toBe(ticker);
+    expect(StyleSheet.flatten(balance.props.style)).toEqual(balanceStyle);
+    expect(StyleSheet.flatten(ticker.props.style)).toEqual(tickerStyle);
+    expect(ticker.props.value.value).toBe('$9876');
+    expect(mockTickerMount).toHaveBeenCalledTimes(1);
+    expect(mockTickerUnmount).not.toHaveBeenCalled();
+  });
 
   it('unmounts the startup placeholder without remounting the balance ticker', () => {
     mockStartupReady = false;

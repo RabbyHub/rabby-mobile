@@ -4,7 +4,7 @@ import { TouchableOpacity } from 'react-native-gesture-handler';
 
 import { toggleFeedbackHistoryVisible } from '../hooks';
 
-import RcTicketCC from '@/assets/icons/feedback/ticket-cc.svg';
+import RcChatCC from '@/assets/icons/feedback/chat-cc.svg';
 
 import { Button } from '@/components2024/Button';
 import {
@@ -57,7 +57,7 @@ export function FeedbackHistoryHeaderEntry({ style }: RNViewProps) {
         }}>
         <View style={styles.chatIconContainer}>
           {data?.unread_count ? <View style={styles.dot} /> : null}
-          <RcTicketCC style={styles.icon} color={styles.icon.color} />
+          <RcChatCC style={styles.icon} color={styles.icon.color} />
         </View>
       </TouchableOpacity>
     </>
