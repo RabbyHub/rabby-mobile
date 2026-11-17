@@ -43,6 +43,7 @@ export const BlockedAddressDialog = ({
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   dialog: {
     borderRadius: 20,
+    borderCurve: 'continuous',
     padding: 20,
     backgroundColor: colors2024['neutral-bg-1'],
     width: 353,

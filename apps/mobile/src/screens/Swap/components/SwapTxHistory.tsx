@@ -62,6 +62,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   walletIcon: {
     borderRadius: 4,
+    borderCurve: 'continuous',
     width: 18,
     height: 18,
     marginRight: 4,
@@ -79,6 +80,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     height: 74,
     padding: 0,
     borderRadius: 16,
+    borderCurve: 'continuous',
     marginTop: 8,
   },
   loading: {

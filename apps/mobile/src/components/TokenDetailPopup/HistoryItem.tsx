@@ -110,6 +110,7 @@ const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
     card: {
       borderRadius: 6,
+      borderCurve: 'continuous',
       backgroundColor: colors['neutral-card2'],
       marginBottom: 12,
     },
@@ -141,6 +142,7 @@ const getStyles = (colors: AppColorsVariants) =>
     },
     scamContainer: {
       borderRadius: 2,
+      borderCurve: 'continuous',
       backgroundColor: colors['neutral-line'],
       paddingHorizontal: 6,
       paddingVertical: 3,

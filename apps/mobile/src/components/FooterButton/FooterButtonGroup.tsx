@@ -75,6 +75,7 @@ const getStyles = createGetStyles(colors => ({
     borderWidth: 1,
     borderStyle: 'solid',
     borderRadius: 8,
+    borderCurve: 'continuous',
     height: '100%',
     width: '100%',
   },
@@ -91,6 +92,7 @@ const getStyles = createGetStyles(colors => ({
   confirmStyle: {
     backgroundColor: colors['blue-default'],
     borderRadius: 8,
+    borderCurve: 'continuous',
     width: '100%',
     height: '100%',
   },

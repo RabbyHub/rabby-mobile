@@ -58,6 +58,7 @@ const CoinAvatar = ({ logo, size }: { logo: string; size: number }) => {
       width: size,
       height: size,
       borderRadius: size / 2,
+      borderCurve: 'continuous' as const,
       overflow: 'hidden' as const,
     }),
     [size],
@@ -528,6 +529,7 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-bg-2'],
     borderRadius: 16,
+    borderCurve: 'continuous',
     // paddingHorizontal: 14,
     paddingVertical: 14,
     paddingBottom: 12,
@@ -583,6 +585,7 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
   },
   crossTag: {
     borderRadius: 4,
+    borderCurve: 'continuous',
     paddingHorizontal: 4,
     justifyContent: 'center',
     alignItems: 'center',
@@ -596,6 +599,7 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
   },
   leverageTag: {
     borderRadius: 4,
+    borderCurve: 'continuous',
     paddingHorizontal: 4,
     justifyContent: 'center',
     alignItems: 'center',
@@ -618,6 +622,7 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
     alignItems: 'center',
     gap: 4,
     borderRadius: 100,
+    borderCurve: 'continuous',
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderWidth: 0.8,
@@ -626,6 +631,7 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
     width: 10,
     height: 10,
     borderRadius: 5,
+    borderCurve: 'continuous',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -644,6 +650,7 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
     width: 4,
     height: 4,
     borderRadius: 2,
+    borderCurve: 'continuous',
   },
   pnlPctText: {
     fontFamily: 'SF Pro Rounded',

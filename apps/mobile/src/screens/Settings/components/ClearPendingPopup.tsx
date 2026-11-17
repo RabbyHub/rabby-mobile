@@ -151,6 +151,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   alert: {
     borderRadius: 8,
+    borderCurve: 'continuous',
     backgroundColor: colors2024['red-light-1'],
     padding: 8,
     display: 'flex',

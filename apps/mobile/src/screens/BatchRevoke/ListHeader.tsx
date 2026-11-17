@@ -33,6 +33,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 6,
+    borderCurve: 'continuous',
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,

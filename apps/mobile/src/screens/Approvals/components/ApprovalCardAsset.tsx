@@ -131,6 +131,7 @@ export const getAssetItemStyles = createGetStyles2024(ctx => {
   return {
     container: {
       borderRadius: 20,
+      borderCurve: 'continuous',
       backgroundColor: isLight
         ? colors2024['neutral-bg-1']
         : colors2024['neutral-bg-2'],
@@ -189,6 +190,7 @@ export const getAssetItemStyles = createGetStyles2024(ctx => {
     },
     nftTypeBadge: {
       borderRadius: 2,
+      borderCurve: 'continuous',
       borderStyle: 'solid',
       borderColor: colors2024['neutral-line'],
       borderWidth: 0.5,

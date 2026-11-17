@@ -79,6 +79,7 @@ const getStyles = createGetStyles(colors => ({
   txConfirm: {
     backgroundColor: colors['neutral-card-2'],
     borderRadius: 6,
+    borderCurve: 'continuous',
   },
   txConfirmHead: {
     padding: 12,

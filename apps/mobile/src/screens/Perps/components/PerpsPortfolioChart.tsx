@@ -461,6 +461,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     left: 0,
     backgroundColor: 'rgba(19, 20, 22, 0.95)',
     borderRadius: 12,
+    borderCurve: 'continuous',
     paddingVertical: 8,
     paddingHorizontal: 10,
     alignItems: 'flex-start',

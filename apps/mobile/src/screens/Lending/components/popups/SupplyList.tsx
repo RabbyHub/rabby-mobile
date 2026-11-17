@@ -523,6 +523,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       paddingVertical: 12,
       justifyContent: 'space-between',
       borderRadius: 16,
+      borderCurve: 'continuous',
       overflow: 'visible',
     },
     wrapperToken: {
@@ -670,6 +671,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       paddingVertical: 12,
       backgroundColor: colors2024['orange-light-1'],
       borderRadius: 6,
+      borderCurve: 'continuous',
       marginTop: 0,
       marginBottom: 8,
       gap: 2,

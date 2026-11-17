@@ -121,6 +121,7 @@ const getStyles = createGetStyles2024(({ colors2024, colors }) => ({
     marginHorizontal: 20,
     backgroundColor: colors['neutral-bg1'],
     borderRadius: 20,
+    borderCurve: 'continuous',
     padding: 20,
     alignItems: 'center',
     borderWidth: 1,
@@ -181,6 +182,7 @@ const getStyles = createGetStyles2024(({ colors2024, colors }) => ({
     width: '100%',
     height: 48,
     borderRadius: 100,
+    borderCurve: 'continuous',
   },
   titleStyle: {
     width: '100%',
@@ -194,6 +196,7 @@ const getStyles = createGetStyles2024(({ colors2024, colors }) => ({
   buttonStyle: {
     backgroundColor: colors['blue-default'],
     borderRadius: 6,
+    borderCurve: 'continuous',
     width: '100%',
     height: '100%',
   },

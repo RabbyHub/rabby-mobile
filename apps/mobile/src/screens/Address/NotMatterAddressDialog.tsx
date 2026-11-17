@@ -271,6 +271,7 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
     backgroundColor: colors2024['neutral-bg-2'],
     padding: 16,
     borderRadius: 20,
+    borderCurve: 'continuous',
   },
   footerMain: {
     height: 46,

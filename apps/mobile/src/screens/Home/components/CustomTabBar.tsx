@@ -200,6 +200,7 @@ const indicatorStyles = createGetStyles2024(
           width: indicatorWidth,
           height: indicatorHeight,
           borderRadius: 12,
+          borderCurve: 'continuous',
           backgroundColor: colors2024['neutral-line'],
           zIndex: 98,
         };
@@ -216,6 +217,7 @@ const indicatorStyles = createGetStyles2024(
           width: indicatorWidth,
           height: indicatorHeight,
           borderRadius: 12,
+          borderCurve: 'continuous',
           backgroundColor: colors2024['neutral-line'],
           zIndex: 98,
         };
@@ -239,6 +241,7 @@ const indicatorStyles = createGetStyles2024(
         borderRadius: 12,
         top: indicatorMarginTop + indicatorHitPaddingY,
         zIndex: 99,
+        borderCurve: 'continuous',
       },
       slotClip: {
         position: 'absolute',

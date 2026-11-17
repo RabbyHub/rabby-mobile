@@ -126,6 +126,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     flex: 1,
     height: 60,
     borderRadius: 10,
+    borderCurve: 'continuous',
     backgroundColor: colors2024['neutral-bg-2'],
     borderWidth: 1,
     borderColor: 'transparent',

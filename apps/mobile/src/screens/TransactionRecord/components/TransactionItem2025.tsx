@@ -383,6 +383,7 @@ export const TransactionItem = ({
                     width: 14,
                     height: 14,
                     borderRadius: 4,
+                    borderCurve: 'continuous',
                     marginHorizontal: 4,
                   }}
                 />
@@ -580,6 +581,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight, colors }) => ({
     paddingRight: 16,
     paddingVertical: 14,
     borderRadius: 16,
+    borderCurve: 'continuous',
     backgroundColor: isLight
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-bg-2'],

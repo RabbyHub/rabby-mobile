@@ -19,6 +19,7 @@ export const NoOpen = () => {
 const getStyles = createGetStyles2024(({ colors2024 }) => ({
   noOpenContainer: {
     borderRadius: 6,
+    borderCurve: 'continuous',
     backgroundColor: colors2024['neutral-bg-5'],
     width: 68,
     height: 28,

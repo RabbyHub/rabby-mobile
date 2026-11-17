@@ -393,6 +393,7 @@ const getStyles = createGetStyles2024(ctx =>
     section: {
       backgroundColor: ctx.colors2024['neutral-bg-1'],
       borderRadius: 16,
+      borderCurve: 'continuous',
       padding: 16,
       gap: 12,
     },
@@ -441,6 +442,7 @@ const getStyles = createGetStyles2024(ctx =>
       paddingHorizontal: 12,
       paddingVertical: 10,
       borderRadius: 10,
+      borderCurve: 'continuous',
       backgroundColor: ctx.colors2024['neutral-bg-2'],
     },
     tickerText: {
@@ -458,6 +460,7 @@ const getStyles = createGetStyles2024(ctx =>
       width: 56,
       height: 82,
       borderRadius: 8,
+      borderCurve: 'continuous',
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: ctx.colors2024['neutral-line'],
       backgroundColor: ctx.colors2024['neutral-bg-2'],

@@ -498,7 +498,11 @@ function ClearAppCacheSettingItem() {
                     <CustomSkeleton
                       width={64}
                       height={16}
-                      style={{ borderRadius: 8, marginRight: 8 }}
+                      style={{
+                        borderRadius: 8,
+                        borderCurve: 'continuous',
+                        marginRight: 8,
+                      }}
                     />
                   ) : (
                     <AppCacheSizeText

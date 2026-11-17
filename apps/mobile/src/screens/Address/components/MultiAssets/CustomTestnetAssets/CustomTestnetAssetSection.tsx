@@ -624,6 +624,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) =>
     container: {
       overflow: 'hidden',
       borderRadius: 16,
+      borderCurve: 'continuous',
       backgroundColor: isLight
         ? colors2024['neutral-bg-1']
         : colors2024['neutral-bg-2'],
@@ -678,6 +679,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) =>
         ? colors2024['neutral-bg-1']
         : colors2024['neutral-bg-2'],
       borderRadius: 18,
+      borderCurve: 'continuous',
       backgroundColor: colors2024['neutral-line'],
       paddingHorizontal: 0,
       paddingVertical: 0,
@@ -696,6 +698,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) =>
       width: 76,
       height: 32,
       borderRadius: 8,
+      borderCurve: 'continuous',
       paddingHorizontal: 12,
       flexDirection: 'row',
       alignItems: 'center',
@@ -734,6 +737,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) =>
     },
     innerChainStyle: {
       borderRadius: 12,
+      borderCurve: 'continuous',
       borderColor: isLight
         ? colors2024['neutral-bg-1']
         : colors2024['neutral-bg-2'],
@@ -778,6 +782,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) =>
       width: 76,
       height: 20,
       borderRadius: 100,
+      borderCurve: 'continuous',
       backgroundColor: colors2024['neutral-line'],
     },
     balanceSkeletonLinear: {

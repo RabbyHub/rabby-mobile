@@ -566,6 +566,7 @@ const getStyle = createGetStyles2024(
       flexDirection: 'row',
       flexWrap: 'wrap',
       borderRadius: 8,
+      borderCurve: 'continuous',
       rowGap: ITEM_GRID_GAP,
       columnGap: ITEM_GRID_GAP,
       justifyContent: 'space-between',
@@ -580,6 +581,7 @@ const getStyle = createGetStyles2024(
       width: '48%', // default
       minWidth: 0,
       borderRadius: 16,
+      borderCurve: 'continuous',
       flexShrink: 0,
       padding: 20,
       paddingBottom: 16,

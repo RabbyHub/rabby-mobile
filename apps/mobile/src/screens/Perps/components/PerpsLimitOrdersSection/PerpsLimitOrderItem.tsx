@@ -159,6 +159,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-bg-2'],
     borderRadius: 14,
+    borderCurve: 'continuous',
     paddingVertical: 14,
     ...(isLight ? { boxShadow: '0 18 40 0 rgba(55, 56, 63, 0.04)' } : null),
   },
@@ -176,6 +177,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     backgroundColor: 'white',
     flexShrink: 0,
     borderRadius: 1000,
+    borderCurve: 'continuous',
   },
   coinNameRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   sideText: {
@@ -187,6 +189,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   crossTag: {
     borderRadius: 4,
+    borderCurve: 'continuous',
     paddingHorizontal: 4,
     justifyContent: 'center',
     alignItems: 'center',
@@ -203,6 +206,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   tagRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   directionTag: {
     borderRadius: 4,
+    borderCurve: 'continuous',
     paddingHorizontal: 4,
     justifyContent: 'center',
     alignItems: 'center',

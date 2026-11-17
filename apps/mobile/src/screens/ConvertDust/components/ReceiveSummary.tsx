@@ -162,6 +162,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   receiveCard: {
     marginTop: 8,
     borderRadius: 16,
+    borderCurve: 'continuous',
     backgroundColor: colors2024['neutral-bg-2'],
     padding: 16,
     justifyContent: 'center',

@@ -192,6 +192,7 @@ const getStyle = createGetStyles2024(() => ({
     paddingHorizontal: 6,
     paddingVertical: 4,
     borderRadius: 10,
+    borderCurve: 'continuous',
     backgroundColor: TIP_BG,
   },
   tipTail: {

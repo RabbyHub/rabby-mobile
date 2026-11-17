@@ -549,6 +549,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight: _isLight }) => {
   return {
     popupStyle: {
       borderRadius: 32,
+      borderCurve: 'continuous',
       overflow: 'hidden',
     },
     handleStyle: {
@@ -558,6 +559,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight: _isLight }) => {
       backgroundColor: colors2024['neutral-bg-1'],
       borderTopLeftRadius: 32,
       borderTopRightRadius: 32,
+      borderCurve: 'continuous',
     },
     handleIndicatorStyle: {
       backgroundColor: colors2024['neutral-bg-5'],
@@ -679,6 +681,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight: _isLight }) => {
       width: 12,
       height: 12,
       borderRadius: 1000,
+      borderCurve: 'continuous',
     },
     listByMore: {
       fontFamily: 'SF Pro Rounded',
@@ -706,6 +709,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight: _isLight }) => {
       paddingHorizontal: 4,
       paddingVertical: 1,
       borderRadius: 4,
+      borderCurve: 'continuous',
       minWidth: 38,
     },
     tagText: {

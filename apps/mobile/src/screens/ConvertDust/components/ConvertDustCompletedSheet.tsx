@@ -341,17 +341,20 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     backgroundColor: colors2024['neutral-bg-1'],
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,
+    borderCurve: 'continuous',
   },
   sheetHandle: {
     backgroundColor: colors2024['neutral-bg-1'],
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,
+    borderCurve: 'continuous',
     paddingTop: 10,
   },
   sheetHandleIndicator: {
     width: 50,
     height: 6,
     borderRadius: 100,
+    borderCurve: 'continuous',
     backgroundColor: '#D1D4DB',
   },
   sheetContent: {
@@ -400,6 +403,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     height: 80,
     marginTop: 16,
     borderRadius: 16,
+    borderCurve: 'continuous',
     borderWidth: 1,
     borderColor: colors2024['neutral-line'],
     padding: 16,
@@ -444,6 +448,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     height: 42,
     marginTop: 12,
     borderRadius: 12,
+    borderCurve: 'continuous',
     backgroundColor: colors2024['neutral-bg-2'],
     flexDirection: 'row',
     alignItems: 'center',
@@ -463,6 +468,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   detailPanel: {
     marginTop: 12,
     borderRadius: 12,
+    borderCurve: 'continuous',
     paddingTop: 12,
     backgroundColor: colors2024['neutral-bg-2'],
     overflow: 'hidden',
@@ -550,6 +556,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   button: {
     height: 52,
     borderRadius: 12,
+    borderCurve: 'continuous',
   },
   buttonTitle: {
     fontFamily: 'SF Pro Rounded',

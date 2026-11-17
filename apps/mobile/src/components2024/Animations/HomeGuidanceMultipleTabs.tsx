@@ -562,6 +562,7 @@ function DefaultBeforeNode({
                 getHomeTabIndicatorWidth(Dimensions.get('window').width),
               ),
               borderRadius: 12,
+              borderCurve: 'continuous',
             },
           ]}
         />

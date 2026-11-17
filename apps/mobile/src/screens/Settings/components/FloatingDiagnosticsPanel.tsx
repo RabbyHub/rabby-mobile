@@ -406,6 +406,7 @@ function FloatingDiagnosticsPanelContent({
       borderBottomLeftRadius: activeSide === SIDE_LEFT ? 0 : HANDLE_SIZE / 2,
       borderTopRightRadius: activeSide === SIDE_RIGHT ? 0 : HANDLE_SIZE / 2,
       borderBottomRightRadius: activeSide === SIDE_RIGHT ? 0 : HANDLE_SIZE / 2,
+      borderCurve: 'continuous',
     };
   });
 
@@ -436,6 +437,7 @@ function FloatingDiagnosticsPanelContent({
       borderBottomLeftRadius: activeSide === SIDE_LEFT ? 12 : 0,
       borderTopRightRadius: activeSide === SIDE_RIGHT ? 12 : 0,
       borderBottomRightRadius: activeSide === SIDE_RIGHT ? 12 : 0,
+      borderCurve: 'continuous',
     };
   });
 
@@ -609,6 +611,7 @@ const getFloatingDiagnosticsPanelStyles = createGetStyles(colors => {
       width: UNLOCK_STATUS_BAR_WIDTH,
       height: UNLOCK_STATUS_BAR_HEIGHT,
       borderRadius: 18,
+      borderCurve: 'continuous',
       paddingHorizontal: 12,
       flexDirection: 'row',
       alignItems: 'center',
@@ -635,6 +638,7 @@ const getFloatingDiagnosticsPanelStyles = createGetStyles(colors => {
       width: 8,
       height: 8,
       borderRadius: 4,
+      borderCurve: 'continuous',
     },
     unlockStatusDotUnlocked: {
       backgroundColor: '#37D67A',
@@ -653,6 +657,7 @@ const getFloatingDiagnosticsPanelStyles = createGetStyles(colors => {
       width: HANDLE_SIZE,
       height: HANDLE_SIZE,
       borderRadius: HANDLE_SIZE / 2,
+      borderCurve: 'continuous',
       opacity: 0.94,
       backgroundColor: colors['blue-default'],
       justifyContent: 'center',
@@ -709,6 +714,7 @@ const getFloatingDiagnosticsPanelStyles = createGetStyles(colors => {
       minWidth: 20,
       height: 20,
       borderRadius: 10,
+      borderCurve: 'continuous',
       paddingHorizontal: 6,
       backgroundColor: '#FFB648',
       justifyContent: 'center',

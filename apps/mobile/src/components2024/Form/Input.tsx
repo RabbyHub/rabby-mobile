@@ -41,6 +41,7 @@ const getFormInputStyles = createGetStyles2024(ctx => {
       position: 'relative',
       height: 56,
       borderRadius: 12,
+      borderCurve: 'continuous',
       borderWidth: 1,
       borderStyle: 'solid',
       borderColor: ctx.colors['neutral-line'],
@@ -473,6 +474,7 @@ const getPasswordInputStyles = createGetStyles2024(ctx => {
     inputContainer: {
       height: 56,
       borderRadius: 12,
+      borderCurve: 'continuous',
       backgroundColor: ctx.colors2024['neutral-bg-2'],
     },
   };
@@ -531,6 +533,7 @@ const getTextAreaInputStyles = createGetStyles2024(ctx => {
     taContainer: {
       height: 176,
       borderRadius: 12,
+      borderCurve: 'continuous',
       backgroundColor: ctx.colors2024['neutral-bg-2'],
     },
     overrideCustomIconStyle: {

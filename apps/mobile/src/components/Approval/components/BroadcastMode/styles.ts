@@ -5,6 +5,7 @@ export const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
     wrapper: {
       borderRadius: 6,
+      borderCurve: 'continuous',
       backgroundColor: colors['neutral-card-1'],
       paddingHorizontal: 12,
     },
@@ -27,6 +28,7 @@ export const getStyles = (colors: AppColorsVariants) =>
       width: 4,
       height: 4,
       borderRadius: 100,
+      borderCurve: 'continuous',
       backgroundColor: colors['neutral-body'],
       left: 0,
       top: 8,
@@ -47,6 +49,7 @@ export const getStyles = (colors: AppColorsVariants) =>
       paddingVertical: 2,
       paddingHorizontal: 4,
       borderRadius: 2,
+      borderCurve: 'continuous',
       backgroundColor: colors['neutral-card-2'],
       minWidth: 40,
       color: colors['neutral-title-1'],
@@ -91,6 +94,7 @@ export const getStyles = (colors: AppColorsVariants) =>
       flexDirection: 'row',
       backgroundColor: colors['neutral-card-1'],
       borderRadius: 8,
+      borderCurve: 'continuous',
       borderWidth: 1,
       borderColor: 'transparent',
     },

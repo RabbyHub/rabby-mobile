@@ -56,6 +56,7 @@ const SHEET_STYLE = {
   overflow: 'hidden',
   borderTopLeftRadius: 20,
   borderTopRightRadius: 20,
+  borderCurve: 'continuous',
 } as const;
 
 const NO_ANIMATION = { duration: 0 };
@@ -213,6 +214,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: '100%',
     marginBottom: PAYMENT_ROW_GAP,
     borderRadius: 14,
+    borderCurve: 'continuous',
   },
   footer: {
     marginTop: LIST_BOTTOM,

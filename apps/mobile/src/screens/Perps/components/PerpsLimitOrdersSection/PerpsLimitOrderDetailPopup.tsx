@@ -240,6 +240,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-bg-2'],
     borderRadius: 12,
+    borderCurve: 'continuous',
     paddingHorizontal: 16,
   },
   row: {

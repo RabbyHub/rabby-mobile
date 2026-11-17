@@ -688,6 +688,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   tabSwitch: {
     width: '100%',
     borderRadius: 12,
+    borderCurve: 'continuous',
     backgroundColor: colors2024['neutral-bg-2'],
   },
   tabSwitchItem: {
@@ -696,11 +697,13 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     height: 34,
     paddingHorizontal: 8,
     borderRadius: 10,
+    borderCurve: 'continuous',
   },
   summaryCard: {
     marginTop: 16,
     padding: 14,
     borderRadius: 16,
+    borderCurve: 'continuous',
     borderWidth: 1,
     borderColor: colors2024['neutral-line'],
     backgroundColor: colors2024['neutral-card-1'],
@@ -721,6 +724,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     paddingHorizontal: 10,
     paddingVertical: 7,
     borderRadius: 12,
+    borderCurve: 'continuous',
     backgroundColor: colors2024['neutral-bg-2'],
   },
   summaryBadgeText: {
@@ -754,6 +758,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   scrollPanel: {
     marginTop: 12,
     borderRadius: 18,
+    borderCurve: 'continuous',
     borderWidth: 1,
     borderColor: colors2024['neutral-line'],
     backgroundColor: colors2024['neutral-bg-1'],
@@ -815,6 +820,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     paddingHorizontal: 8,
     paddingVertical: 5,
     borderRadius: 10,
+    borderCurve: 'continuous',
     backgroundColor: colors2024['neutral-bg-2'],
   },
   metaBadgeText: {
@@ -827,6 +833,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     marginTop: 12,
     padding: 14,
     borderRadius: 16,
+    borderCurve: 'continuous',
     borderWidth: 1,
     borderColor: colors2024['neutral-line'],
     backgroundColor: colors2024['neutral-card-1'],
@@ -854,6 +861,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     marginTop: 16,
     padding: 16,
     borderRadius: 16,
+    borderCurve: 'continuous',
     borderWidth: 1,
     borderColor: colors2024['neutral-line'],
     backgroundColor: colors2024['neutral-card-1'],

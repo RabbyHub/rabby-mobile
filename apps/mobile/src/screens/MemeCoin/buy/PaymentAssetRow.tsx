@@ -67,6 +67,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
     paddingHorizontal: 14,
     borderRadius: 14,
+    borderCurve: 'continuous',
     borderWidth: 2,
     borderColor: 'transparent',
     backgroundColor: colors2024['neutral-card-1'],

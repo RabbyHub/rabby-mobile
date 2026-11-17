@@ -80,6 +80,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       paddingHorizontal: 12,
       paddingVertical: 16,
       borderRadius: 12,
+      borderCurve: 'continuous',
     },
     tipIcon: {
       width: 14,
@@ -97,6 +98,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
     loadingRisks: {
       backgroundColor: colors2024['red-light-1'],
       borderRadius: 8,
+      borderCurve: 'continuous',
       flex: 1,
     },
     checkbox: {

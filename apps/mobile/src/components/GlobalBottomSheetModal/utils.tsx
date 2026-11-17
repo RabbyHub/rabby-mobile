@@ -109,6 +109,7 @@ export function makeClassicalBottomSheetProps(ctx: {
       style: {
         overflow: 'hidden',
         borderRadius: 32,
+        borderCurve: 'continuous',
       },
       handleStyle: {
         backgroundColor: ctx.isLight

@@ -68,6 +68,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     width: 40,
     height: 40,
     borderRadius: 12,
+    borderCurve: 'continuous',
   },
   title: {
     fontSize: 20,
@@ -78,6 +79,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   descriptionContainer: {
     marginTop: 15,
     borderRadius: 6,
+    borderCurve: 'continuous',
     paddingVertical: 6,
     paddingHorizontal: 16,
     backgroundColor: colors2024['brand-light-1'],

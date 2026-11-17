@@ -176,6 +176,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-bg-2'],
     borderRadius: 14,
+    borderCurve: 'continuous',
     // paddingHorizontal: 14,
     paddingVertical: 14,
     ...(isLight ? { boxShadow: '0 18 40 0 rgba(55, 56, 63, 0.04)' } : null),
@@ -206,6 +207,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     backgroundColor: 'white',
     flexShrink: 0,
     borderRadius: 1000,
+    borderCurve: 'continuous',
   },
   coinNameRow: {
     flexDirection: 'row',
@@ -228,6 +230,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   crossTag: {
     borderRadius: 4,
+    borderCurve: 'continuous',
     paddingHorizontal: 4,
     height: 18,
     justifyContent: 'center',
@@ -241,6 +244,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   leverageTag: {
     borderRadius: 4,
+    borderCurve: 'continuous',
     paddingHorizontal: 4,
     justifyContent: 'center',
     alignItems: 'center',
@@ -263,6 +267,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     alignItems: 'center',
     gap: 4,
     borderRadius: 100,
+    borderCurve: 'continuous',
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderWidth: 0.8,
@@ -271,6 +276,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     width: 10,
     height: 10,
     borderRadius: 5,
+    borderCurve: 'continuous',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -278,6 +284,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     width: 4,
     height: 4,
     borderRadius: 2,
+    borderCurve: 'continuous',
   },
   pnlPctText: {
     fontFamily: 'SF Pro Rounded',

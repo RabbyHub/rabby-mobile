@@ -124,6 +124,7 @@ const getStyle = createGetStyles2024(ctx => ({
     paddingHorizontal: 6,
     paddingVertical: 3,
     borderRadius: 6,
+    borderCurve: 'continuous',
     height: 32,
     overflow: 'hidden',
   },
@@ -144,6 +145,7 @@ const getStyle = createGetStyles2024(ctx => ({
     justifyContent: 'center',
     backgroundColor: ctx.colors2024['neutral-bg-1'],
     borderRadius: 20,
+    borderCurve: 'continuous',
   },
   chainIcon: {
     display: 'flex',

@@ -114,6 +114,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   card: {
     height: 70,
     borderRadius: 16,
+    borderCurve: 'continuous',
     overflow: 'hidden',
     backgroundColor: isLight
       ? colors2024['neutral-bg-1']

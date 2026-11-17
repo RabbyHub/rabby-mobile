@@ -204,6 +204,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderRadius: 14,
+    borderCurve: 'continuous',
     backgroundColor: colors2024['neutral-card-1'],
   },
   topRow: {

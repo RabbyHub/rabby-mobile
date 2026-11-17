@@ -296,9 +296,11 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   sectionFirst: {
     borderTopLeftRadius: RADIUS_VALUE,
     borderTopRightRadius: RADIUS_VALUE,
+    borderCurve: 'continuous',
   },
   sectionLast: {
     borderBottomLeftRadius: RADIUS_VALUE,
     borderBottomRightRadius: RADIUS_VALUE,
+    borderCurve: 'continuous',
   },
 }));

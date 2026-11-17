@@ -617,6 +617,7 @@ const getStyle = createGetStyles2024(ctx => {
     },
     leverageTag: {
       borderRadius: 4,
+      borderCurve: 'continuous',
       paddingHorizontal: 4,
       height: 20,
       justifyContent: 'center',
@@ -637,6 +638,7 @@ const getStyle = createGetStyles2024(ctx => {
     card: {
       marginTop: 12,
       borderRadius: 16,
+      borderCurve: 'continuous',
       paddingVertical: 14,
       paddingHorizontal: 12,
       borderWidth: 1,
@@ -687,6 +689,7 @@ const getStyle = createGetStyles2024(ctx => {
     },
     crossTag: {
       borderRadius: 4,
+      borderCurve: 'continuous',
       paddingHorizontal: 4,
       height: 20,
       justifyContent: 'center',
@@ -698,6 +701,7 @@ const getStyle = createGetStyles2024(ctx => {
       borderWidth: 1,
       borderColor: colors2024['neutral-line'],
       borderRadius: 20,
+      borderCurve: 'continuous',
       paddingVertical: 16,
       paddingBottom: 6,
       paddingHorizontal: 20,
@@ -844,6 +848,7 @@ const getStyle = createGetStyles2024(ctx => {
       borderWidth: 1,
       borderColor: colors2024['neutral-line'],
       borderRadius: 16,
+      borderCurve: 'continuous',
       paddingHorizontal: 16,
       // paddingVertical: 16,
       flexDirection: 'column',

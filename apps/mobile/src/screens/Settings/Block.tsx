@@ -36,6 +36,7 @@ export function Block({
       <View
         style={{
           borderRadius: 24,
+          borderCurve: 'continuous',
           marginTop: 8,
           flexDirection: 'column',
           backgroundColor: isLight

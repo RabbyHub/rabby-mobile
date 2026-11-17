@@ -1323,7 +1323,12 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  sourceLogo: { width: 18, height: 18, borderRadius: 16 },
+  sourceLogo: {
+    width: 18,
+    height: 18,
+    borderRadius: 16,
+    borderCurve: 'continuous',
+  },
   sourceName: {
     fontFamily: 'SF Pro Rounded',
     fontSize: 16,
@@ -1348,6 +1353,7 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
     paddingHorizontal: 8,
     paddingVertical: 1,
     borderRadius: 5,
+    borderCurve: 'continuous',
     backgroundColor: colors['green-default'],
     overflow: 'hidden',
   },
@@ -1378,6 +1384,7 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
     borderWidth: 1,
     borderColor: colors['green-default'],
     borderRadius: 4,
+    borderCurve: 'continuous',
     overflow: 'hidden',
   },
   halfFee: {
@@ -1428,16 +1435,19 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
     width: 60,
     height: 20,
     borderRadius: 12,
+    borderCurve: 'continuous',
   },
   gasSkeleton: {
     width: 131,
     height: 20,
     borderRadius: 100,
+    borderCurve: 'continuous',
   },
   infoCardGasSkeleton: {
     width: 60,
     height: 20,
     borderRadius: 12,
+    borderCurve: 'continuous',
   },
   arrowIcon: {
     transform: [{ rotate: '-90deg' }],
@@ -1463,6 +1473,7 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
     height: 20,
     borderTopLeftRadius: 4,
     borderBottomLeftRadius: 4,
+    borderCurve: 'continuous',
     overflow: 'hidden',
     justifyContent: 'center',
     paddingLeft: 3,
@@ -1495,11 +1506,13 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
     borderColor: colors2024['brand-default'],
     borderTopRightRadius: 4,
     borderBottomRightRadius: 4,
+    borderCurve: 'continuous',
   },
   bestSourceLogo: {
     width: 12,
     height: 12,
     borderRadius: 90,
+    borderCurve: 'continuous',
   },
   bestSourceName: {
     fontFamily: 'SF Pro Rounded',

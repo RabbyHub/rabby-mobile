@@ -2731,12 +2731,14 @@ const getStyles = createGetStyles2024(ctx =>
     },
     summaryCard: {
       borderRadius: 20,
+      borderCurve: 'continuous',
       backgroundColor: ctx.colors2024['neutral-bg-2'],
       padding: 16,
       gap: 14,
     },
     sectionCard: {
       borderRadius: 20,
+      borderCurve: 'continuous',
       backgroundColor: ctx.colors2024['neutral-bg-2'],
       padding: 16,
       gap: 12,
@@ -2754,6 +2756,7 @@ const getStyles = createGetStyles2024(ctx =>
     },
     summaryBadge: {
       borderRadius: 999,
+      borderCurve: 'continuous',
       backgroundColor: ctx.colors2024['neutral-bg-5'],
       paddingHorizontal: 12,
       paddingVertical: 8,
@@ -2772,6 +2775,7 @@ const getStyles = createGetStyles2024(ctx =>
       justifyContent: 'space-between',
       gap: 12,
       borderRadius: 14,
+      borderCurve: 'continuous',
       backgroundColor: ctx.colors2024['neutral-bg-5'],
       paddingHorizontal: 14,
       paddingVertical: 12,
@@ -2808,6 +2812,7 @@ const getStyles = createGetStyles2024(ctx =>
     },
     emptyCard: {
       borderRadius: 20,
+      borderCurve: 'continuous',
       backgroundColor: ctx.colors2024['neutral-bg-2'],
       padding: 20,
       gap: 8,
@@ -2842,6 +2847,7 @@ const getStyles = createGetStyles2024(ctx =>
     },
     jsonCard: {
       borderRadius: 20,
+      borderCurve: 'continuous',
       backgroundColor: ctx.colors2024['neutral-bg-2'],
       padding: 16,
       gap: 12,
@@ -2903,6 +2909,7 @@ const getStyles = createGetStyles2024(ctx =>
     },
     fileCard: {
       borderRadius: 16,
+      borderCurve: 'continuous',
       backgroundColor: ctx.colors2024['neutral-bg-5'],
       padding: 14,
       gap: 8,
@@ -2947,6 +2954,7 @@ const getStyles = createGetStyles2024(ctx =>
       alignItems: 'center',
       gap: 12,
       borderRadius: 16,
+      borderCurve: 'continuous',
       backgroundColor: ctx.colors2024['neutral-bg-5'],
       padding: 12,
     },
@@ -2954,12 +2962,14 @@ const getStyles = createGetStyles2024(ctx =>
       width: 56,
       height: 56,
       borderRadius: 12,
+      borderCurve: 'continuous',
       backgroundColor: ctx.colors2024['neutral-bg-4'],
     },
     mediaListThumbPlaceholder: {
       width: 56,
       height: 56,
       borderRadius: 12,
+      borderCurve: 'continuous',
       backgroundColor: ctx.colors2024['neutral-bg-4'],
       alignItems: 'center',
       justifyContent: 'center',
@@ -2988,6 +2998,7 @@ const getStyles = createGetStyles2024(ctx =>
     mediaPreviewCard: {
       marginTop: 2,
       borderRadius: 18,
+      borderCurve: 'continuous',
       backgroundColor: ctx.colors2024['neutral-bg-5'],
       padding: 14,
       gap: 8,
@@ -3008,12 +3019,14 @@ const getStyles = createGetStyles2024(ctx =>
       alignItems: 'center',
       justifyContent: 'center',
       borderRadius: 16,
+      borderCurve: 'continuous',
       backgroundColor: ctx.colors2024['neutral-bg-2'],
       padding: 10,
       overflow: 'hidden',
     },
     mediaPreviewImage: {
       borderRadius: 12,
+      borderCurve: 'continuous',
       backgroundColor: ctx.colors2024['neutral-bg-4'],
     },
     loadMoreButton: {

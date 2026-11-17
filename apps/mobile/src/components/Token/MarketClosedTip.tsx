@@ -30,6 +30,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
     marginTop: 16,
     borderRadius: 6,
+    borderCurve: 'continuous',
     paddingHorizontal: 16,
     paddingVertical: 6,
     backgroundColor: colors2024['orange-light-1'],

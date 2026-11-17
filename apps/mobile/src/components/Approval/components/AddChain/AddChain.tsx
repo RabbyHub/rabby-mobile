@@ -138,6 +138,7 @@ const getStyle = createGetStyles(colors => {
     },
     desc: {
       borderRadius: 6,
+      borderCurve: 'continuous',
       backgroundColor: colors['neutral-card-2'],
       padding: 10,
       color: colors['neutral-body'],

@@ -193,6 +193,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   walletIcon: {
     borderRadius: 6,
+    borderCurve: 'continuous',
     width: 32,
     height: 32,
   },
@@ -202,6 +203,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   chain: {
     position: 'absolute',
     borderRadius: 1000,
+    borderCurve: 'continuous',
     width: 16,
     height: 16,
     borderColor: colors2024['neutral-bg-1'],
@@ -227,6 +229,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     paddingVertical: 9,
     backgroundColor: colors2024['neutral-bg-2'],
     borderRadius: 12,
+    borderCurve: 'continuous',
     height: 42,
     display: 'flex',
     flexDirection: 'row',
@@ -263,6 +266,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 32,
+    borderCurve: 'continuous',
   },
   searchBar: {
     flex: 1,

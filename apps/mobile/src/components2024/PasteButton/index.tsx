@@ -66,6 +66,7 @@ const getStyle = createGetStyles2024(ctx => ({
     borderWidth: 1,
     borderColor: ctx.colors2024['brand-default'],
     borderRadius: 8,
+    borderCurve: 'continuous',
     width: 85,
     height: 34,
     paddingVertical: 8,

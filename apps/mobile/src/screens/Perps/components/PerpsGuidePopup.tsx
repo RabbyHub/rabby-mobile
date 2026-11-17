@@ -384,6 +384,7 @@ const getStyle = createGetStyles2024(ctx => {
       width: 6,
       height: 6,
       borderRadius: 1000,
+      borderCurve: 'continuous',
       backgroundColor: ctx.colors2024['brand-light-2'],
     },
     tabContentContainer: {

@@ -520,6 +520,7 @@ const getStyle = createGetStyles2024(
     card: {
       backgroundColor: resolvePerpsProDialogCardBackground(colors2024, isLight),
       borderRadius: 12,
+      borderCurve: 'continuous',
       paddingVertical: 8,
       marginTop: 24,
     },
@@ -531,6 +532,7 @@ const getStyle = createGetStyles2024(
       width: 100,
       height: PERPS_PRO_DIALOG_FIELD.height,
       borderRadius: 6,
+      borderCurve: 'continuous',
       alignItems: 'center',
       justifyContent: 'center',
       backgroundColor: resolvePerpsProDialogFieldBackground(

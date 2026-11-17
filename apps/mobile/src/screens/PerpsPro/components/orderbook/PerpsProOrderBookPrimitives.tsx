@@ -162,18 +162,21 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   modeGuideBar: {
     borderRadius: 1,
+    borderCurve: 'continuous',
     flex: 1,
     minHeight: 1,
     width: 8,
   },
   modeSides: {
     borderRadius: 1,
+    borderCurve: 'continuous',
     gap: 2,
     height: 18,
     width: 8,
   },
   modeSideBar: {
     borderRadius: 1,
+    borderCurve: 'continuous',
     flex: 1,
     minHeight: 1,
     width: 8,

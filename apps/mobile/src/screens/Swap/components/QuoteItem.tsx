@@ -422,6 +422,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     flexDirection: 'column',
     justifyContent: 'center',
     borderRadius: 16,
+    borderCurve: 'continuous',
     paddingHorizontal: 16,
     paddingVertical: 16,
     borderWidth: 1,
@@ -494,6 +495,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   bestInlineTag: {
     backgroundColor: colors2024['brand-default'],
     borderRadius: 4,
+    borderCurve: 'continuous',
     paddingHorizontal: 4,
     height: 18,
     alignItems: 'center',
@@ -568,6 +570,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     right: -1,
     borderRadius: 0,
     borderBottomLeftRadius: 8,
+    borderCurve: 'continuous',
     paddingHorizontal: 6,
     paddingVertical: 1,
     backgroundColor: colors2024['red-light-1'],

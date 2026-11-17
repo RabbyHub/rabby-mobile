@@ -42,6 +42,7 @@ const getStyles = (colors: AppColorsVariants) =>
     list: {
       paddingHorizontal: 16,
       borderRadius: 6,
+      borderCurve: 'continuous',
       backgroundColor: colors['neutral-card2'],
     },
     divider: {

@@ -32,9 +32,11 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   itemWithManageButton: {
     borderRadius: 20,
+    borderCurve: 'continuous',
   },
   shadowWithManageButton: {
     borderRadius: 20,
+    borderCurve: 'continuous',
     ...Platform.select({
       ios: {
         shadowOffset: { width: 0, height: 10 },

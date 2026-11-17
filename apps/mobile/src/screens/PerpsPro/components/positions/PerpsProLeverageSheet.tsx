@@ -351,6 +351,7 @@ const getStyle = createGetStyles2024(
       // Figma 86609:303158: bg-5 field with line-colored step buttons.
       backgroundColor: colors2024['neutral-bg-5'],
       borderRadius: 12,
+      borderCurve: 'continuous',
       flexDirection: 'row',
       height: 54,
       width: 202,
@@ -362,6 +363,7 @@ const getStyle = createGetStyles2024(
       alignItems: 'center',
       backgroundColor: colors2024['neutral-line'],
       borderRadius: 6,
+      borderCurve: 'continuous',
       height: 32,
       width: 32,
       justifyContent: 'center',

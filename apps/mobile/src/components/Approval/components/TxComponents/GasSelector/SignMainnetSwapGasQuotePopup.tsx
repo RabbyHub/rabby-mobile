@@ -531,6 +531,7 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
     alignItems: 'center',
     padding: 2,
     borderRadius: 8,
+    borderCurve: 'continuous',
     backgroundColor: isLight
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-bg-2'],
@@ -540,6 +541,7 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 8,
+    borderCurve: 'continuous',
     paddingVertical: 5,
     paddingHorizontal: 8,
     gap: 4,
@@ -571,6 +573,7 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
     justifyContent: 'space-between',
     alignItems: 'center',
     borderRadius: 6,
+    borderCurve: 'continuous',
     borderWidth: 0.5,
     borderColor: colors2024['neutral-line'],
     backgroundColor: colors2024['neutral-bg-2'],
@@ -613,6 +616,7 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
     minWidth: 0,
     height: 119,
     borderRadius: 16,
+    borderCurve: 'continuous',
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
@@ -671,6 +675,7 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
     width: 48,
     height: 12,
     borderRadius: 4,
+    borderCurve: 'continuous',
   },
   gasCardMain: {
     alignItems: 'center',

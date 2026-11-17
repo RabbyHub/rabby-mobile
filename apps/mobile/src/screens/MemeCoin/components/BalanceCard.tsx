@@ -145,6 +145,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   background: {
     ...StyleSheet.absoluteFillObject,
     borderRadius: 14,
+    borderCurve: 'continuous',
     borderWidth: 2,
     borderColor: colors2024['neutral-bg-1'],
     overflow: 'hidden',
@@ -169,6 +170,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   valueSkeleton: {
     borderRadius: 8,
+    borderCurve: 'continuous',
   },
   pnlRow: {
     marginTop: 10,
@@ -207,6 +209,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     flexDirection: 'row',
     padding: TABS_PADDING,
     borderRadius: 6,
+    borderCurve: 'continuous',
     backgroundColor: colors2024['neutral-bg-2'],
   },
   tab: {
@@ -215,6 +218,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 4,
+    borderCurve: 'continuous',
   },
   tabActive: {
     backgroundColor: isLight ? '#2F3135' : '#E0E5EC',

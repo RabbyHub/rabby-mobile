@@ -604,6 +604,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
     backgroundColor: colors2024['neutral-bg-2'],
     borderRadius: 6,
+    borderCurve: 'continuous',
     flexDirection: 'row',
     height: 24,
     justifyContent: 'space-between',
