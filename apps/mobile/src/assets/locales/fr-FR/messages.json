@@ -1877,7 +1877,6 @@
       "dataAnalysis": "Aider à améliorer Rabby",
       "dataAnalysisDesc": "Partagez des données d'utilisation anonymes pour aider à améliorer Rabby. Les données collectées ne sont associées ni à vous ni à votre compte.",
       "bugReportChat": "Partager vos commentaires via le chat",
-      "features": "Fonctionnalités",
       "manageWallets": "Gérer les portefeuilles"
     },
     "settings": {
@@ -3431,7 +3430,7 @@
       "title": "Convertir les petits soldes"
     },
     "walletConnect": {
-      "screenTitle": "Connecter le portefeuille",
+      "screenTitle": "Scanner pour se connecter",
       "connectingToRabby": "Connexion à Rabby",
       "pairingFailed": "L'appairage WalletConnect a échoué.",
       "proposalNotReceived": "Le QR code WalletConnect a peut-être expiré. Actualisez-le et réessayez.",

@@ -2066,7 +2066,6 @@
       "dataAnalysis": "Ajudar a melhorar a Rabby",
       "dataAnalysisDesc": "Partilhe dados de utilização anónimos para ajudar a melhorar a Rabby. Os dados recolhidos não são associados a si nem à sua conta.",
       "bugReportChat": "Partilhar feedback através do chat",
-      "features": "Funcionalidades",
       "manageWallets": "Gerir carteiras"
     },
     "settings": {
@@ -3708,7 +3707,7 @@
       "title": "Converter saldos residuais"
     },
     "walletConnect": {
-      "screenTitle": "Ligar carteira",
+      "screenTitle": "Digitalizar para ligar",
       "connectingToRabby": "A ligar ao Rabby",
       "pairingFailed": "O emparelhamento WalletConnect falhou.",
       "proposalNotReceived": "O código QR do WalletConnect pode ter expirado. Atualize-o e tente novamente.",
