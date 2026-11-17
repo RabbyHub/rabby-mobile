@@ -313,12 +313,14 @@ export const BridgeContent = ({
   disableAccountSwitcherModal = false,
   diagnosticActive = false,
   sceneActive = true,
+  tabSelected = true,
 }: {
   isForMultipleAddress?: boolean;
   disableHeaderRight?: boolean;
   disableAccountSwitcherModal?: boolean;
   diagnosticActive?: boolean;
   sceneActive?: boolean;
+  tabSelected?: boolean;
 }) => {
   const { t } = useTranslation();
   const { bottom } = useSafeAreaInsets();
@@ -345,6 +347,13 @@ export const BridgeContent = ({
   const quoteVisible = useQuoteVisible();
 
   const setQuoteVisible = useSetQuoteVisible();
+
+  useEffect(() => {
+    if (tabSelected) {
+      return;
+    }
+    setQuoteVisible(false);
+  }, [setQuoteVisible, tabSelected]);
   const regressionScenario = useRegressionScenario<'SwapBridge'>();
   const regressionScenarioActive = regressionScenario.active;
   const regressionScenarioId = regressionScenario.active
@@ -418,7 +427,7 @@ export const BridgeContent = ({
     quoteBlockedByClosedMarket,
     slider,
     onChangeSlider,
-  } = useBridge(isForMultipleAddress, { active: sceneActive });
+  } = useBridge(isForMultipleAddress, { active: sceneActive, tabSelected });
 
   const isRegressionBridgePairMatched = useMemo(() => {
     const params = route.params;

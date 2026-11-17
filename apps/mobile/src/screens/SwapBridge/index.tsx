@@ -167,6 +167,7 @@ function SwapBridgeScreenContent({
               disableHeaderRight
               disableAccountSwitcherModal
               sceneActive={swapSceneActive}
+              tabSelected={activeTab === 'swap'}
               diagnosticActive={
                 isNonProductionDiagnosticsEnabled && swapSceneActive
               }
@@ -176,6 +177,7 @@ function SwapBridgeScreenContent({
               disableHeaderRight
               disableAccountSwitcherModal
               sceneActive={swapSceneActive}
+              tabSelected={activeTab === 'swap'}
               diagnosticActive={
                 isNonProductionDiagnosticsEnabled && swapSceneActive
               }
@@ -195,6 +197,7 @@ function SwapBridgeScreenContent({
               disableHeaderRight
               disableAccountSwitcherModal
               sceneActive={bridgeSceneActive}
+              tabSelected={activeTab === 'bridge'}
               diagnosticActive={
                 isNonProductionDiagnosticsEnabled && bridgeSceneActive
               }
@@ -204,6 +207,7 @@ function SwapBridgeScreenContent({
               disableHeaderRight
               disableAccountSwitcherModal
               sceneActive={bridgeSceneActive}
+              tabSelected={activeTab === 'bridge'}
               diagnosticActive={
                 isNonProductionDiagnosticsEnabled && bridgeSceneActive
               }
