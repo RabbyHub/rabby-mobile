@@ -35,6 +35,7 @@ import { Text, AnimateableText } from '@/components/Typography';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
 import { useShallow } from 'zustand/react/shallow';
 import TabFocusedTickerText from '@/components/Animated/TabFocusedTickerText';
+import { StoreActivityBoundary } from '@/hooks/storeActivity/StoreActivityBoundary';
 import {
   EMPTY_HOME_CURVE_LIST,
   getHomeCurveProjectionList,
@@ -56,12 +57,6 @@ const NETWORTH_FONT_SIZE_OPTIONS = {
   maxFontSize: MAX_NETWORTH_FS,
   minFontSize: MIN_NETWORTH_FS,
   threshold: NETWORTH_FIT_LEN,
-};
-
-const EMPTY_CHANGE_DATA = {
-  rawChange: 0,
-  changePercent: '',
-  isLoss: false,
 };
 
 const svIsFoldMultiChart = makeMutable(true);
@@ -173,27 +168,12 @@ export const MultiChart = memo(function MultiChart({
         isPendingMatteredAccountLength: state.isPendingMatteredAccountLength,
       })),
     );
-  const { balanceAvailability, totalBalance } = useHomeBalanceProjection(
-    useShallow(state => ({
-      balanceAvailability: state.availability,
-      totalBalance: state.value?.totalBalance || 0,
-    })),
-  );
-  const { changeAvailability, changeData } = useHome24hProjection(
-    useShallow(state => ({
-      changeAvailability: state.availability,
-      changeData: state.value || EMPTY_CHANGE_DATA,
-    })),
-  );
+  const isLoss = useHome24hProjection(state => state.value?.isLoss || false);
   const startupReady = useHomeStartupReady();
 
   useRendererDetect({ name: 'MultiAssets-MultiChart' });
 
   const chartsData = startupReady ? curveList : EMPTY_HOME_CURVE_LIST;
-  const showBalanceLoading =
-    !startupReady || isHomeProjectionWaitingForValue(balanceAvailability);
-  const showChangeLoading =
-    !startupReady || isHomeProjectionWaitingForValue(changeAvailability);
   const isCurveLoading =
     startupReady &&
     (isCurveFetchingRemote ||
@@ -208,27 +188,24 @@ export const MultiChart = memo(function MultiChart({
       }}>
       <View style={styles.chartContainer}>
         <LineChart.Provider data={chartsData}>
-          <ChartHeader
-            tabName={tabName}
-            rawNetWorth={totalBalance}
-            rawChange={changeData.rawChange}
-            changePercent={changeData.changePercent}
-            isLoss={changeData.isLoss}
-            data={chartsData}
-            hideType={hideType}
-            matteredAccountCount={matteredAccountLength}
-            isMatteredAccountCountPending={
-              !startupReady || isPendingMatteredAccountLength
-            }
-            showBalanceLoadingWithoutLocal={showBalanceLoading}
-            showChangeLoadingWithoutLocal={showChangeLoading}
-            onPressNetWorth={onPressNetWorth}
-            onPressWalletList={onPressWalletList}
-          />
+          {/* Keep the summary current even after leaving Home. */}
+          <StoreActivityBoundary active label="home-overview-balance">
+            <ChartHeader
+              tabName={tabName}
+              data={chartsData}
+              hideType={hideType}
+              matteredAccountCount={matteredAccountLength}
+              isMatteredAccountCountPending={
+                !startupReady || isPendingMatteredAccountLength
+              }
+              onPressNetWorth={onPressNetWorth}
+              onPressWalletList={onPressWalletList}
+            />
+          </StoreActivityBoundary>
           <ChartContent
             data={chartsData}
             hideType={hideType}
-            isLoss={changeData.isLoss}
+            isLoss={isLoss}
             isAnyAddrLoading={isCurveLoading}
           />
         </LineChart.Provider>
@@ -239,45 +216,49 @@ export const MultiChart = memo(function MultiChart({
 
 interface IHeaderProps {
   tabName: string;
-  rawNetWorth: number;
-  rawChange: number;
-  changePercent: string;
-  isLoss: boolean;
   data: CurvePoint[];
   hideType: BALANCE_HIDE_TYPE;
   matteredAccountCount: number;
   isMatteredAccountCountPending: boolean;
-  showBalanceLoadingWithoutLocal: boolean;
-  showChangeLoadingWithoutLocal: boolean;
   onPressNetWorth?: () => void;
   onPressWalletList?: () => void;
 }
 const ChartHeader = React.memo(
   ({
     tabName,
-    rawNetWorth,
-    rawChange,
-    changePercent: _changePercent,
-    isLoss,
     hideType,
     data: _data,
     matteredAccountCount,
     isMatteredAccountCountPending,
-    showBalanceLoadingWithoutLocal,
-    showChangeLoadingWithoutLocal,
     onPressNetWorth,
     onPressWalletList,
   }: IHeaderProps) => {
+    const { balanceAvailability, rawNetWorth } = useHomeBalanceProjection(
+      useShallow(state => ({
+        balanceAvailability: state.availability,
+        rawNetWorth: state.value?.totalBalance || 0,
+      })),
+    );
+    const { changeAvailability, rawChange, rawChangePercent, isLoss } =
+      useHome24hProjection(
+        useShallow(state => ({
+          changeAvailability: state.availability,
+          rawChange: state.value?.rawChange ?? 0,
+          rawChangePercent: state.value?.changePercent ?? '',
+          isLoss: state.value?.isLoss ?? false,
+        })),
+      );
+    const startupReady = useHomeStartupReady();
+    const showNetWorthLoading =
+      !startupReady || isHomeProjectionWaitingForValue(balanceAvailability);
+    const showChangeLoading =
+      showNetWorthLoading ||
+      isHomeProjectionWaitingForValue(changeAvailability);
     const { styles, colors2024 } = useTheme2024({ getStyle });
     const { currentIndex } = LineChart.useChart();
     const { currency } = useCurrency();
     const debouncedRawChange = useDebouncedValue(rawChange, 300);
-    const showNetWorthLoading = useMemo(() => {
-      return showBalanceLoadingWithoutLocal;
-    }, [showBalanceLoadingWithoutLocal]);
-    const changePercent = useDebouncedValue(_changePercent, 300);
-    const showChangeLoading =
-      showNetWorthLoading || showChangeLoadingWithoutLocal;
+    const changePercent = useDebouncedValue(rawChangePercent, 300);
     const displayMatteredAccountCount =
       matteredAccountCount >= 10 ? '10' : String(matteredAccountCount);
 

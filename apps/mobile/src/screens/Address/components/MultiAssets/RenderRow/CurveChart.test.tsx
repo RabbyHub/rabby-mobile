@@ -1,6 +1,9 @@
 import React from 'react';
-import { fireEvent, render } from '@testing-library/react-native';
+import { act, fireEvent, render } from '@testing-library/react-native';
 import { StyleSheet } from 'react-native';
+import { createStore } from 'zustand/vanilla';
+import { RenderActivityBoundary } from '@/hooks/storeActivity/RenderActivityBoundary';
+import { ScreenStoreActivityProvider } from '@/hooks/storeActivity/ScreenStoreActivityProvider';
 
 import { E2E_ID } from '@/constant/e2e';
 import type { HomeProjectionAvailability } from '@/store/homePortfolio/model';
@@ -12,11 +15,36 @@ import {
 } from './CurveChart';
 
 let mockStartupReady = true;
-let mockBalanceAvailability: HomeProjectionAvailability = 'ready';
-let mockTotalBalance = 1234;
-let mockCurrency: 'USD' | 'EUR' = 'USD';
+const mockNavigationListeners: Partial<Record<'focus' | 'blur', () => void>> =
+  {};
+const mockNavigation = {
+  focused: true,
+  isFocused: () => mockNavigation.focused,
+  addListener: (event: 'focus' | 'blur', listener: () => void) => {
+    mockNavigationListeners[event] = listener;
+    return () => {
+      delete mockNavigationListeners[event];
+    };
+  },
+};
+const mockBalanceStore = createStore(() => ({
+  availability: 'ready' as HomeProjectionAvailability,
+  value: { totalBalance: 1234 },
+}));
+const mockChangeStore = createStore(() => ({
+  availability: 'ready' as HomeProjectionAvailability,
+  value: { rawChange: 0, changePercent: '', isLoss: false },
+}));
+const mockCurrencyStore = createStore(() => ({
+  currency: 'USD' as 'USD' | 'EUR',
+}));
+const mockCurveStore = createStore(() => ({
+  availability: 'ready',
+  activity: { isFetchingRemote: false },
+}));
+const mockEmptyCurveList: never[] = [];
+const mockCurveProviderRender = jest.fn();
 let mockHomeCurveExpanded = false;
-let mockCurveFetching = false;
 const mockTickerMount = jest.fn();
 const mockTickerUnmount = jest.fn();
 const includingHidden = { includeHiddenElements: true };
@@ -32,6 +60,9 @@ const mockDarkTheme = {
 };
 const mockThemeContext = React.createContext(mockLightTheme);
 
+jest.mock('@react-navigation/native', () => ({
+  useNavigation: () => mockNavigation,
+}));
 jest.mock('react-native-reanimated', () => ({
   __esModule: true,
   default: {
@@ -59,7 +90,10 @@ jest.mock('react-native-reanimated', () => ({
 }));
 jest.mock('react-native-wagmi-charts', () => ({
   LineChart: {
-    Provider: ({ children }: { children: React.ReactNode }) => children,
+    Provider: ({ children }: { children: React.ReactNode }) => {
+      mockCurveProviderRender();
+      return children;
+    },
     useChart: () => ({ currentIndex: { value: -1 } }),
   },
 }));
@@ -95,7 +129,7 @@ jest.mock('@/utils/styles', () => ({
   createGetStyles2024: (fn: unknown) => fn,
 }));
 jest.mock('@/hooks/useCurrency', () => ({
-  useCurrency: () => ({ currency: mockCurrency }),
+  useCurrency: () => require('zustand').useStore(mockCurrencyStore),
 }));
 jest.mock('@/utils/currency', () => ({
   formatSmallCurrencyValueParts: (
@@ -162,30 +196,30 @@ jest.mock('@/components/Animated/TabFocusedTickerText', () => {
 });
 jest.mock('@/store/homePortfolio', () => ({
   EMPTY_HOME_CURVE_LIST: [],
-  getHomeCurveProjectionList: () => [],
+  getHomeCurveProjectionList: () => mockEmptyCurveList,
   isHomeProjectionWaitingForValue: jest.requireActual(
     '@/store/homePortfolio/model',
   ).isHomeProjectionWaitingForValue,
   useHomeCurveProjection: (select: (state: object) => unknown) =>
-    select({
-      availability: 'ready',
-      activity: { isFetchingRemote: mockCurveFetching },
-    }),
+    require('@/hooks/storeActivity/useActivityStore').useActivityStore(
+      mockCurveStore,
+      select,
+    ),
   useHomeAccountProjection: (select: (state: object) => unknown) =>
     select({
       matteredAccountLength: 3,
       isPendingMatteredAccountLength: false,
     }),
   useHomeBalanceProjection: (select: (state: object) => unknown) =>
-    select({
-      availability: mockBalanceAvailability,
-      value: { totalBalance: mockTotalBalance },
-    }),
+    require('@/hooks/storeActivity/useActivityStore').useActivityStore(
+      mockBalanceStore,
+      select,
+    ),
   useHome24hProjection: (select: (state: object) => unknown) =>
-    select({
-      availability: 'ready',
-      value: { rawChange: 0, changePercent: '', isLoss: false },
-    }),
+    require('@/hooks/storeActivity/useActivityStore').useActivityStore(
+      mockChangeStore,
+      select,
+    ),
 }));
 
 // Component contracts only: projection hooks supply inputs and native/chart
@@ -194,12 +228,20 @@ jest.mock('@/store/homePortfolio', () => ({
 describe('MultiChart balance presentation', () => {
   beforeEach(() => {
     mockStartupReady = true;
-    mockBalanceAvailability = 'ready';
-    mockTotalBalance = 1234;
-    mockCurrency = 'USD';
-    mockCurveFetching = false;
+    mockNavigation.focused = true;
+    act(() => mockBalanceStore.setState({ availability: 'ready' }));
+    act(() => mockBalanceStore.setState({ value: { totalBalance: 1234 } }));
+    act(() => mockCurrencyStore.setState({ currency: 'USD' }));
+    act(() =>
+      mockCurveStore.setState({ activity: { isFetchingRemote: false } }),
+    );
     setIsFoldMultiChart(true);
     jest.mocked(refreshDayCurve).mockClear();
+    mockChangeStore.setState({
+      availability: 'ready',
+      value: { rawChange: 0, changePercent: '', isLoss: false },
+    });
+    mockCurveProviderRender.mockClear();
     mockTickerMount.mockClear();
     mockTickerUnmount.mockClear();
   });
@@ -237,13 +279,88 @@ describe('MultiChart balance presentation', () => {
     expect(refreshDayCurve).toHaveBeenCalledTimes(2);
   });
 
+  it.each([true, false])(
+    'keeps the summary live with Overview inactive and Home focused=%s',
+    homeFocused => {
+      mockBalanceStore.setState({ availability: 'loading' });
+      mockChangeStore.setState({ availability: 'loading' });
+      const renderTree = (active: boolean) => (
+        <ScreenStoreActivityProvider label="curve-test-home">
+          <RenderActivityBoundary active={active} label="curve-test-overview">
+            {tree()}
+          </RenderActivityBoundary>
+        </ScreenStoreActivityProvider>
+      );
+      const view = render(renderTree(true));
+      expect(
+        view.getByTestId(E2E_ID.home.portfolioBalanceLoading),
+      ).toBeTruthy();
+      expect(view.getByTestId(E2E_ID.home.portfolioChangeLoading)).toBeTruthy();
+      if (!homeFocused) {
+        act(() => {
+          mockNavigation.focused = false;
+          mockNavigationListeners.blur?.();
+        });
+      }
+      view.rerender(renderTree(false));
+      const curveRenderCount = mockCurveProviderRender.mock.calls.length;
+
+      act(() => {
+        mockBalanceStore.setState({
+          availability: 'ready',
+          value: { totalBalance: 5678 },
+        });
+        mockChangeStore.setState({
+          availability: 'ready',
+          value: { rawChange: 100, changePercent: '10%', isLoss: true },
+        });
+        mockCurveStore.setState({ activity: { isFetchingRemote: true } });
+      });
+
+      expect(
+        view.getByTestId('balance-ticker', includingHidden).props.value.value,
+      ).toBe('$5678');
+      expect(
+        view.queryByTestId(
+          E2E_ID.home.portfolioBalanceLoading,
+          includingHidden,
+        ),
+      ).toBeNull();
+      expect(
+        view.queryByTestId(E2E_ID.home.portfolioChangeLoading, includingHidden),
+      ).toBeNull();
+      const change = view.getByTestId(E2E_ID.home.portfolioCurveToggle);
+      expect(
+        change.findAll(node => node.props.animatedProps?.text === '-10%(-$100)')
+          .length,
+      ).toBeGreaterThan(0);
+      expect(
+        view.queryByTestId(E2E_ID.home.portfolioCurveLoading, includingHidden),
+      ).toBeNull();
+      expect(mockCurveProviderRender).toHaveBeenCalledTimes(curveRenderCount);
+
+      if (!homeFocused) {
+        act(() => {
+          mockNavigation.focused = true;
+          mockNavigationListeners.focus?.();
+        });
+      }
+      view.rerender(renderTree(true));
+      expect(
+        view.getByTestId(E2E_ID.home.portfolioCurveLoading, includingHidden),
+      ).toBeTruthy();
+    },
+  );
+
   it('shows curve loading on first demand without blocking balance and change', () => {
     const view = render(tree());
     expect(
       view.queryByTestId(E2E_ID.home.portfolioCurveLoading, includingHidden),
     ).toBeNull();
 
-    mockCurveFetching = true;
+    act(() =>
+      mockCurveStore.setState({ activity: { isFetchingRemote: true } }),
+    );
     view.rerender(tree());
     expect(
       view.getByTestId(E2E_ID.home.portfolioCurveLoading, includingHidden),
@@ -253,7 +370,9 @@ describe('MultiChart balance presentation', () => {
     ).toBeNull();
     expect(view.getByTestId(E2E_ID.home.portfolioCurveToggle)).toBeTruthy();
 
-    mockCurveFetching = false;
+    act(() =>
+      mockCurveStore.setState({ activity: { isFetchingRemote: false } }),
+    );
     view.rerender(tree());
     expect(
       view.queryByTestId(E2E_ID.home.portfolioCurveLoading, includingHidden),
@@ -348,7 +467,7 @@ describe('MultiChart balance presentation', () => {
     const initialStyle = ticker.props.style;
     const fontSizeByLength = ticker.props.fontSizeByLength;
 
-    mockTotalBalance = 9876;
+    act(() => mockBalanceStore.setState({ value: { totalBalance: 9876 } }));
     view.rerender(tree());
 
     expect(ticker.props.value).toBe(initialValue);
@@ -367,7 +486,7 @@ describe('MultiChart balance presentation', () => {
     const fontSizeByLength = ticker.props.fontSizeByLength;
     expect(initialValue.value).toBe('$1234');
 
-    mockCurrency = 'EUR';
+    act(() => mockCurrencyStore.setState({ currency: 'EUR' }));
     view.rerender(tree());
 
     expect(view.getByTestId('balance-ticker', includingHidden)).toBe(ticker);
@@ -376,7 +495,7 @@ describe('MultiChart balance presentation', () => {
     expect(ticker.props.style).toBe(initialStyle);
     expect(ticker.props.fontSizeByLength).toBe(fontSizeByLength);
 
-    mockCurrency = 'USD';
+    act(() => mockCurrencyStore.setState({ currency: 'USD' }));
     view.rerender(tree());
 
     expect(ticker.props.value).toBe(initialValue);
@@ -390,7 +509,7 @@ describe('MultiChart balance presentation', () => {
   it.each<HomeProjectionAvailability>(['ready', 'partial', 'empty'])(
     'does not retain a hidden balance Skeleton for %s data',
     availability => {
-      mockBalanceAvailability = availability;
+      act(() => mockBalanceStore.setState({ availability: availability }));
       const view = render(tree());
 
       expect(
@@ -414,7 +533,7 @@ describe('MultiChart balance presentation', () => {
   it.each<HomeProjectionAvailability>(['unresolved', 'loading'])(
     'mounts the same loading geometry while balance is %s',
     availability => {
-      mockBalanceAvailability = availability;
+      act(() => mockBalanceStore.setState({ availability: availability }));
       const view = render(tree());
       const placeholder = view.getByTestId(E2E_ID.home.portfolioBalanceLoading);
 
@@ -442,7 +561,7 @@ describe('MultiChart balance presentation', () => {
     const balanceStyle = StyleSheet.flatten(balance.props.style);
     const tickerStyle = StyleSheet.flatten(ticker.props.style);
 
-    mockBalanceAvailability = 'loading';
+    act(() => mockBalanceStore.setState({ availability: 'loading' }));
     view.rerender(tree());
     expect(view.getByTestId(E2E_ID.home.portfolioBalanceLoading)).toBeTruthy();
     expect(
@@ -450,8 +569,8 @@ describe('MultiChart balance presentation', () => {
     ).toBe(balance);
     expect(view.getByTestId('balance-ticker', includingHidden)).toBe(ticker);
 
-    mockBalanceAvailability = 'ready';
-    mockTotalBalance = 9876;
+    act(() => mockBalanceStore.setState({ availability: 'ready' }));
+    act(() => mockBalanceStore.setState({ value: { totalBalance: 9876 } }));
     view.rerender(tree());
     expect(
       view.queryByTestId(E2E_ID.home.portfolioBalanceLoading, includingHidden),
