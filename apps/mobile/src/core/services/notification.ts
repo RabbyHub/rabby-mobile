@@ -9,7 +9,6 @@ import BigNumber from 'bignumber.js';
 import { apisAppWin } from './appWin';
 import type { EVENT_NAMES } from '@/components/GlobalBottomSheetModal/types';
 import type { Account } from '@/types/account';
-import { cancelSignComponentAmounted } from '../utils/signEvent';
 
 export interface Approval {
   id: string;
@@ -75,8 +74,7 @@ export class NotificationService extends Events {
   _approvals: Approval[] = [];
   notifyWindowId: null | string = null;
   isLocked = false;
-  currentRequestDeferFn?: (isRetry?: boolean) => Promise<any>;
-  currentRequestDeferSigningOperationId?: string;
+  currentRequestDeferFn?: (isRetry?: boolean) => void;
   preferenceService: import('../startupServices/preference').PreferenceService;
   transactionHistoryService: import('./transactionHistory').TransactionHistoryService;
 
@@ -147,14 +145,6 @@ export class NotificationService extends Events {
   };
 
   deleteApproval = (approval: Approval | null) => {
-    const signingOperationId = approval?.data.params?.signingOperationId;
-    if (signingOperationId) {
-      cancelSignComponentAmounted(signingOperationId);
-      if (this.currentRequestDeferSigningOperationId === signingOperationId) {
-        this.currentRequestDeferFn = undefined;
-        this.currentRequestDeferSigningOperationId = undefined;
-      }
-    }
     if (approval && this.approvals.length > 1) {
       this.approvals = this.approvals.filter(item => approval.id !== item.id);
     } else {
@@ -194,13 +184,7 @@ export class NotificationService extends Events {
     this.emit('resolve', data);
   };
 
-  rejectApproval = async (
-    err?: string,
-    stay = false,
-    isInternal = false,
-    approvalId?: string,
-  ) => {
-    if (approvalId && approvalId !== this.currentApproval?.id) return;
+  rejectApproval = async (err?: string, stay = false, isInternal = false) => {
     this.addLastRejectDapp();
     const approval = this.currentApproval;
     if (this.approvals.length <= 1) {
@@ -311,12 +295,6 @@ export class NotificationService extends Events {
   };
 
   clear = async (stay = false) => {
-    this.approvals.forEach(approval => {
-      const signingOperationId = approval.data.params?.signingOperationId;
-      if (signingOperationId) cancelSignComponentAmounted(signingOperationId);
-    });
-    this.currentRequestDeferFn = undefined;
-    this.currentRequestDeferSigningOperationId = undefined;
     this.approvals = [];
     this.currentApproval = null;
     if (this.notifyWindowId !== null && !stay) {
@@ -335,16 +313,12 @@ export class NotificationService extends Events {
   rejectAllApprovals = () => {
     this.addLastRejectDapp();
     this.approvals.forEach(approval => {
-      const signingOperationId = approval.data.params?.signingOperationId;
-      if (signingOperationId) cancelSignComponentAmounted(signingOperationId);
       approval.reject &&
         approval.reject(
           // new EthereumProviderError(4001, 'User rejected the request.'),
           ethErrors.provider.userRejectedRequest('User rejected the request.'),
         );
     });
-    this.currentRequestDeferFn = undefined;
-    this.currentRequestDeferSigningOperationId = undefined;
     this.approvals = [];
     this.currentApproval = null;
     this.transactionHistoryService.removeAllSigningTx();
@@ -377,22 +351,12 @@ export class NotificationService extends Events {
       }) ?? null;
   };
 
-  setCurrentRequestDeferFn = (
-    fn: (isRetry?: boolean) => Promise<any>,
-    signingOperationId?: string,
-  ) => {
+  setCurrentRequestDeferFn = (fn: (isRetry?: boolean) => void) => {
     this.currentRequestDeferFn = fn;
-    this.currentRequestDeferSigningOperationId = signingOperationId;
   };
 
-  callCurrentRequestDeferFn = (
-    isRetry?: boolean,
-    signingOperationId?: string,
-  ) => {
-    if (this.currentRequestDeferSigningOperationId !== signingOperationId) {
-      return Promise.resolve(undefined);
-    }
-    return Promise.resolve(this.currentRequestDeferFn?.(isRetry));
+  callCurrentRequestDeferFn = (isRetry?: boolean) => {
+    return this.currentRequestDeferFn?.(isRetry);
   };
 
   private addLastRejectDapp() {

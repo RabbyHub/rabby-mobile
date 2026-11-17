@@ -17,11 +17,7 @@ import Player from './Player';
 import Reader from './Reader';
 import { adjustV } from '@/utils/gnosis';
 import { apisSafe } from '@/core/apis/safe';
-import {
-  cancelSignComponentAmounted,
-  emitSignComponentAmounted,
-} from '@/core/utils/signEvent';
-import { listenForSignFinished } from '@/core/utils/signingOperation';
+import { emitSignComponentAmounted } from '@/core/utils/signEvent';
 import { Spin } from '@/components/Spin';
 import { useUnmount } from 'ahooks';
 import { Text } from '@/components/Typography';
@@ -42,7 +38,6 @@ export type RequestSignPayload = {
 
 interface ApprovalParams {
   address: string;
-  signingOperationId: string;
   chainId?: number;
   isGnosis?: boolean;
   data?: string[];
@@ -123,14 +118,10 @@ export const KeystoneHardwareWaiting = ({
   const styles = useMemo(() => getStyles(colors), [colors]);
 
   const cancelRef = useRef(false);
-  const operationActiveRef = useRef(true);
-  const signFinishedSubscriptionRef = useRef<(() => void) | undefined>(
-    undefined,
-  );
 
   const init = useCallback(async () => {
     const approval = await getApproval();
-    if (!account || !approval || !operationActiveRef.current) {
+    if (!account) {
       return;
     }
     setBrand(account.brandName);
@@ -155,52 +146,45 @@ export const KeystoneHardwareWaiting = ({
         }
       },
     );
-    if (!operationActiveRef.current) return;
-
-    signFinishedSubscriptionRef.current = listenForSignFinished(
-      params.signingOperationId,
-      () => operationActiveRef.current,
-      async data => {
-        if (data.success) {
-          let sig = data.data;
-          try {
-            if (params.isGnosis) {
-              sig = adjustV('eth_signTypedData', sig);
-              const safeMessage = params.safeMessage;
-              if (safeMessage) {
-                await apisSafe.handleGnosisMessage({
-                  signature: data.data,
-                  signerAddress: params.account!.address!,
-                });
+    eventBus.addListener(EVENTS.SIGN_FINISHED, async data => {
+      if (data.success) {
+        cancelRef.current = true;
+        let sig = data.data;
+        try {
+          if (params.isGnosis) {
+            sig = adjustV('eth_signTypedData', sig);
+            const safeMessage = params.safeMessage;
+            if (safeMessage) {
+              await apisSafe.handleGnosisMessage({
+                signature: data.data,
+                signerAddress: params.account!.address!,
+              });
+            } else {
+              const sigs = await apisSafe.getGnosisTransactionSignatures();
+              if (sigs.length > 0) {
+                await apisSafe.gnosisAddConfirmation(account.address, sig);
               } else {
-                const sigs = await apisSafe.getGnosisTransactionSignatures();
-                if (sigs.length > 0) {
-                  await apisSafe.gnosisAddConfirmation(account.address, sig);
-                } else {
-                  await apisSafe.gnosisAddSignature(account.address, sig);
-                  await apisSafe.postGnosisTransaction();
-                }
+                await apisSafe.gnosisAddSignature(account.address, sig);
+                await apisSafe.postGnosisTransaction();
               }
             }
-          } catch (e: any) {
-            setErrorMessage(e.message);
-            // rejectApproval(e.message);
-            return;
           }
-          operationActiveRef.current = false;
-          cancelRef.current = true;
-          setStatus(QR_HARDWARE_STATUS.DONE);
-          setSignFinishedData({
-            data: sig,
-            stay: !isSignText,
-            approvalId: approval.id,
-          });
-        } else {
-          setErrorMessage(data.errorMsg || '');
+        } catch (e: any) {
+          setErrorMessage(e.message);
+          // rejectApproval(e.message);
+          return;
         }
-      },
-    );
-    emitSignComponentAmounted(params.signingOperationId);
+        setStatus(QR_HARDWARE_STATUS.DONE);
+        setSignFinishedData({
+          data: sig,
+          stay: !isSignText,
+          approvalId: approval!.id,
+        });
+      } else {
+        setErrorMessage(data.errorMsg);
+      }
+    });
+    emitSignComponentAmounted();
     apiKeystone.acquireKeystoneMemStoreData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -209,13 +193,10 @@ export const KeystoneHardwareWaiting = ({
     init();
 
     return () => {
-      operationActiveRef.current = false;
-      signFinishedSubscriptionRef.current?.();
-      signFinishedSubscriptionRef.current = undefined;
-      cancelSignComponentAmounted(params.signingOperationId);
+      eventBus.removeAllListeners(EVENTS.SIGN_FINISHED);
       eventBus.removeAllListeners(EVENTS.QRHARDWARE.ACQUIRE_MEMSTORE_SUCCEED);
     };
-  }, [init, params.signingOperationId]);
+  }, [init]);
 
   React.useEffect(() => {
     if (signFinishedData && isClickDone) {
@@ -231,7 +212,6 @@ export const KeystoneHardwareWaiting = ({
   }, [signFinishedData, isClickDone]);
 
   const handleCancel = () => {
-    operationActiveRef.current = false;
     cancelRef.current = true;
     rejectApproval('user cancel');
   };
@@ -259,7 +239,7 @@ export const KeystoneHardwareWaiting = ({
       }
       setErrorMessage('');
       setStatus(QR_HARDWARE_STATUS.SIGN);
-      emitSignComponentAmounted(params.signingOperationId);
+      emitSignComponentAmounted();
     }
   };
 

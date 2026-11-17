@@ -16,17 +16,12 @@ import type { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
 import { adjustV } from '@/utils/gnosis';
 import { apisSafe } from '@/core/apis/safe';
-import {
-  cancelSignComponentAmounted,
-  emitSignComponentAmounted,
-} from '@/core/utils/signEvent';
-import { listenForSignFinished } from '@/core/utils/signingOperation';
+import { emitSignComponentAmounted } from '@/core/utils/signEvent';
 import { Text } from '@/components/Typography';
 import { useRetryMinPending } from '@/components/Approval/hooks/useRetryMinPending';
 
 interface ApprovalParams {
   address: string;
-  signingOperationId: string;
   chainId?: number;
   isGnosis?: boolean;
   data?: string[];
@@ -102,15 +97,7 @@ export const TrezorHardwareWaiting = ({
   const mountedRef = React.useRef(false);
   const showDueToStatusChangeRef = React.useRef(false);
 
-  const cancelRef = React.useRef(false);
-  const operationActiveRef = React.useRef(true);
-  const signFinishedSubscriptionRef = React.useRef<(() => void) | undefined>(
-    undefined,
-  );
-
   const handleCancel = () => {
-    operationActiveRef.current = false;
-    cancelRef.current = true;
     rejectApproval('user cancel');
   };
 
@@ -126,7 +113,7 @@ export const TrezorHardwareWaiting = ({
     // Fire and forget: this resolves only when signing ends, and a failed
     // attempt is reported through SIGN_FINISHED instead.
     void notificationServiceApi
-      .callCurrentRequestDeferFn(false, params.signingOperationId)
+      .callCurrentRequestDeferFn()
       .catch(console.error);
     if (showToast) {
       toast.success(t('page.signFooterBar.ledger.resent'));
@@ -135,8 +122,7 @@ export const TrezorHardwareWaiting = ({
 
   const init = async () => {
     const account = params.isGnosis ? params.account! : $account;
-    const approval = await getApproval();
-    if (!approval || !operationActiveRef.current) return;
+    const approval = (await getApproval())!;
 
     const isSignText = params.isGnosis
       ? true
@@ -155,8 +141,6 @@ export const TrezorHardwareWaiting = ({
         }
       }
     }
-    if (!operationActiveRef.current) return;
-
     eventBus.addListener(EVENTS.COMMON_HARDWARE.REJECTED, async data => {
       setErrorMessage(data);
       setConnectStatus(APPROVAL_STATUS_MAP.REJECTED);
@@ -164,61 +148,55 @@ export const TrezorHardwareWaiting = ({
     eventBus.addListener(EVENTS.TX_SUBMITTING, async () => {
       setConnectStatus(APPROVAL_STATUS_MAP.SUBMITTING);
     });
-    signFinishedSubscriptionRef.current = listenForSignFinished(
-      params.signingOperationId,
-      () => operationActiveRef.current,
-      async data => {
-        if (data.success) {
-          let sig = data.data;
-          setResult(sig);
-          setConnectStatus(APPROVAL_STATUS_MAP.SUBMITTED);
-          try {
-            if (params.isGnosis) {
-              sig = adjustV('eth_signTypedData', sig);
-              const safeMessage = params.safeMessage;
-              if (safeMessage) {
-                await apisSafe.handleGnosisMessage({
-                  signature: data.data,
-                  signerAddress: params.account!.address!,
-                });
+    eventBus.addListener(EVENTS.SIGN_FINISHED, async data => {
+      if (data.success) {
+        let sig = data.data;
+        setResult(sig);
+        setConnectStatus(APPROVAL_STATUS_MAP.SUBMITTED);
+        try {
+          if (params.isGnosis) {
+            sig = adjustV('eth_signTypedData', sig);
+            const safeMessage = params.safeMessage;
+            if (safeMessage) {
+              await apisSafe.handleGnosisMessage({
+                signature: data.data,
+                signerAddress: params.account!.address!,
+              });
+            } else {
+              const sigs = await apisSafe.getGnosisTransactionSignatures();
+              if (sigs.length > 0) {
+                await apisSafe.gnosisAddConfirmation(
+                  account.address,
+                  data.data,
+                );
               } else {
-                const sigs = await apisSafe.getGnosisTransactionSignatures();
-                if (sigs.length > 0) {
-                  await apisSafe.gnosisAddConfirmation(
-                    account.address,
-                    data.data,
-                  );
-                } else {
-                  await apisSafe.gnosisAddSignature(account.address, data.data);
-                  await apisSafe.postGnosisTransaction();
-                }
+                await apisSafe.gnosisAddSignature(account.address, data.data);
+                await apisSafe.postGnosisTransaction();
               }
             }
-          } catch (e: any) {
-            setConnectStatus(APPROVAL_STATUS_MAP.FAILED);
-            setErrorMessage(e.message);
-            return;
           }
-
-          operationActiveRef.current = false;
-          cancelRef.current = true;
-          setSignFinishedData({
-            data: sig,
-            approvalId: approval.id,
-          });
-        } else {
-          Sentry.captureException(
-            new Error('Trezor sign error: ' + JSON.stringify(data)),
-          );
-          afterMinPending(() => {
-            setConnectStatus(APPROVAL_STATUS_MAP.FAILED);
-            setErrorMessage(data.errorMsg || '');
-          });
+        } catch (e: any) {
+          setConnectStatus(APPROVAL_STATUS_MAP.FAILED);
+          setErrorMessage(e.message);
+          return;
         }
-      },
-    );
 
-    emitSignComponentAmounted(params.signingOperationId);
+        setSignFinishedData({
+          data: sig,
+          approvalId: approval.id,
+        });
+      } else {
+        Sentry.captureException(
+          new Error('Trezor sign error: ' + JSON.stringify(data)),
+        );
+        afterMinPending(() => {
+          setConnectStatus(APPROVAL_STATUS_MAP.FAILED);
+          setErrorMessage(data.errorMsg);
+        });
+      }
+    });
+
+    emitSignComponentAmounted();
   };
 
   React.useEffect(() => {
@@ -231,12 +209,9 @@ export const TrezorHardwareWaiting = ({
     mountedRef.current = true;
 
     return () => {
-      operationActiveRef.current = false;
-      signFinishedSubscriptionRef.current?.();
-      signFinishedSubscriptionRef.current = undefined;
-      cancelSignComponentAmounted(params.signingOperationId);
       eventBus.removeAllListeners(EVENTS.COMMON_HARDWARE.REJECTED);
       eventBus.removeAllListeners(EVENTS.TX_SUBMITTING);
+      eventBus.removeAllListeners(EVENTS.SIGN_FINISHED);
     };
 
     // eslint-disable-next-line react-hooks/exhaustive-deps

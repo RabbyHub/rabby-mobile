@@ -49,7 +49,6 @@ import type { KeyringEventAccount } from '@rabby-wallet/service-keyring';
 import pRetry from 'p-retry';
 import { useCallback } from 'react';
 import { useShallow } from 'zustand/react/shallow';
-import { assertGasAccountSignText } from '../utils/signText';
 import type {
   GasAccountBalanceAccount,
   GasAccountSessionAccount,
@@ -1380,14 +1379,13 @@ export const storeApiGasAccount = {
       throw new Error('background.error.noCurrentAccount');
     }
     await ensureGasAccountRuntimeReady();
-    const { text } = await openapi.getGasAccountSignText(selectAccount.address);
-    assertGasAccountSignText(text, selectAccount.address);
     gasAccountStore.setState(prev =>
       updateSessionState(prev, {
         status: 'logging_in',
       }),
     );
     console.debug('selectAccount', selectAccount);
+    const { text } = await openapi.getGasAccountSignText(selectAccount.address);
 
     const noSignType =
       selectAccount.type === KEYRING_CLASS.PRIVATE_KEY ||

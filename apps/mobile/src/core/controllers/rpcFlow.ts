@@ -24,10 +24,7 @@ import { addHexPrefix, stripHexPrefix } from 'ethereumjs-util';
 import { eventBus, EVENTS } from '@/utils/events';
 import { Chain, CHAINS_ENUM, getTestnetChainList } from '@/constant/chains';
 import * as apisDapp from '../apis/dapp';
-import {
-  cancelSignComponentAmounted,
-  waitSignComponentAmounted,
-} from '../utils/signEvent';
+import { waitSignComponentAmounted } from '../utils/signEvent';
 import { findChain } from '@/utils/chain';
 import { gnosisController } from './gnosisController';
 import { underline2Camelcase } from '../utils/common';
@@ -48,7 +45,6 @@ import {
   getProviderRequestChain,
   normalizeProviderRequestChainId,
 } from './requestContext';
-import { createSigningOperationId } from '../utils/signingOperation';
 
 export const resemblesETHAddress = (str: string): boolean => {
   return str.length === 42;
@@ -57,13 +53,6 @@ export const resemblesETHAddress = (str: string): boolean => {
 const isSignApproval = (type: string) => {
   const SIGN_APPROVALS = ['SignText', 'SignTypedData', 'SignTx'];
   return SIGN_APPROVALS.includes(type);
-};
-
-const TYPED_DATA_METHODS: Record<string, string> = {
-  ethSignTypedData: 'eth_signTypedData',
-  ethSignTypedDataV1: 'eth_signTypedData_v1',
-  ethSignTypedDataV3: 'eth_signTypedData_v3',
-  ethSignTypedDataV4: 'eth_signTypedData_v4',
 };
 
 const lockedOrigins = new Set<string>();
@@ -362,7 +351,7 @@ const flowContext = flow
               $ctx: ctx?.request?.data?.$ctx,
               $mobileCtx,
               requestContext: ctx.request.requestContext,
-              method: TYPED_DATA_METHODS[mapMethod] || method,
+              method,
               data: ctx.request.data.params,
               session: { origin, name, icon, $mobileCtx },
             },
@@ -393,10 +382,7 @@ const flowContext = flow
       Reflect.getMetadata('APPROVAL', providerController, mapMethod) || [];
     // // leave here for debug
     // console.debug('[debug] flowContext:: before process request');
-    const { uiRequestComponent, ...approvalRest } = approvalRes || {};
-    const signingOperationId =
-      approvalRest.signingOperationId || createSigningOperationId();
-    const rest = { ...approvalRest, signingOperationId };
+    const { uiRequestComponent, ...rest } = approvalRes || {};
     const {
       session: { origin, $mobileCtx },
     } = request;
@@ -458,7 +444,6 @@ const flowContext = flow
               if (retryType) {
                 setCurrentRequestDeferFnSync(
                   createRequestDeferFn(_approvalRes),
-                  signingOperationId,
                 );
               }
             }
@@ -476,7 +461,6 @@ const flowContext = flow
                   eventBus.emit(EVENTS.SIGN_FINISHED, {
                     success: true,
                     data: result,
-                    signingOperationId,
                   });
                 }
                 return result;
@@ -488,7 +472,6 @@ const flowContext = flow
                   params: {
                     success: false,
                     errorMsg: e?.message || JSON.stringify(e),
-                    signingOperationId,
                   },
                 };
                 if (e.method) {
@@ -513,7 +496,7 @@ const flowContext = flow
     // Safe owner signing registers its own retry fn
     // (apisKeyring.signTypedDataWithUI); ours would only resolve undefined.
     if (!approvalRes?.isGnosis) {
-      setCurrentRequestDeferFnSync(requestDeferFn, signingOperationId);
+      setCurrentRequestDeferFnSync(requestDeferFn);
     }
     // Only the first attempt waits for the waiting UI to mount. Retries are
     // started from that mounted UI, which emits no further mount event.
@@ -522,9 +505,7 @@ const flowContext = flow
       !isAutoPersonalSign &&
       isSignApproval(approvalType) &&
       uiRequestComponent
-        ? waitSignComponentAmounted(signingOperationId).then(mounted =>
-            mounted ? requestDeferFn() : undefined,
-          )
+        ? waitSignComponentAmounted().then(() => requestDeferFn())
         : requestDeferFn();
     async function requestApprovalLoop({
       uiRequestComponent,
@@ -546,12 +527,11 @@ const flowContext = flow
           isUnshift: true,
         });
         if (res?.uiRequestComponent) {
-          return await requestApprovalLoop({ ...res, signingOperationId });
+          return await requestApprovalLoop(res);
         } else {
           return res;
         }
       } catch (e) {
-        cancelSignComponentAmounted(signingOperationId);
         console.error(e);
         throw e;
       }

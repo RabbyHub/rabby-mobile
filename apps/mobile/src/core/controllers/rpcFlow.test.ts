@@ -157,7 +157,6 @@ jest.mock('@/utils/number', () => ({
 
 jest.mock('../utils/signEvent', () => ({
   waitSignComponentAmounted: jest.fn(),
-  cancelSignComponentAmounted: jest.fn(),
 }));
 
 jest.mock('./gnosisController', () => ({
@@ -480,39 +479,12 @@ describe('rpcFlow typed-data chain pinning', () => {
     },
   );
 
-  it.each([
-    ['eth_sign_typed_data_v1', 'eth_signTypedData_v1'],
-    ['ethSignTypedDataV1', 'eth_signTypedData_v1'],
-    ['eth_sign_typed_data', 'eth_signTypedData'],
-    ['ethSignTypedData', 'eth_signTypedData'],
-    ['eth_sign_typed_data_v3', 'eth_signTypedData_v3'],
-    ['ethSignTypedDataV4', 'eth_signTypedData_v4'],
-    ['eth_sign_typed_data_v_1', 'eth_signTypedData_v1'],
-    ['eth_sign_typed_data_v_3', 'eth_signTypedData_v3'],
-    ['eth_sign_typed_data_v_4', 'eth_signTypedData_v4'],
-  ])(
-    'accepts %s and presents the matching canonical method for approval',
-    async (method, canonicalMethod) => {
-      const request = makeRequest(canonicalMethod, 1);
-      request.data.method = method;
-      await expect(rpcFlow(request)).resolves.toBe('0xsignature');
-      expect(mockRequestApproval.mock.calls[0][0].params).toMatchObject({
-        method: canonicalMethod,
-        data: request.data.params,
-      });
-      expect(mockEthSignTypedData.mock.calls[0][0].data.params).toBe(
-        request.data.params,
-      );
-      expect(request.data.method).toBe(method);
-    },
-  );
-
   it('starts a retry from the mounted waiting UI without another mount event', async () => {
     const { waitSignComponentAmounted } =
       jest.requireMock('../utils/signEvent');
     // Only the initial mount emits; a retry comes from the same mounted UI.
     waitSignComponentAmounted
-      .mockResolvedValueOnce(true)
+      .mockResolvedValueOnce(undefined)
       .mockReturnValue(new Promise(() => {}));
     mockRequestApproval
       .mockResolvedValueOnce({ uiRequestComponent: 'LedgerHardwareWaiting' })
@@ -534,7 +506,7 @@ describe('rpcFlow typed-data chain pinning', () => {
     const { waitSignComponentAmounted } =
       jest.requireMock('../utils/signEvent');
     const { eventBus } = jest.requireMock('@/utils/events');
-    waitSignComponentAmounted.mockResolvedValue(true);
+    waitSignComponentAmounted.mockResolvedValue(undefined);
     mockRequestApproval
       .mockResolvedValueOnce({ uiRequestComponent: 'PrivatekeyWaiting' })
       .mockResolvedValueOnce('0xfromWaitingUi');
@@ -550,7 +522,6 @@ describe('rpcFlow typed-data chain pinning', () => {
       expect(eventBus.emit).toHaveBeenCalledWith('SIGN_FINISHED', {
         success: false,
         errorMsg: 'device busy',
-        signingOperationId: expect.any(String),
       });
       expect(unhandled).toEqual([]);
     } finally {
@@ -558,58 +529,11 @@ describe('rpcFlow typed-data chain pinning', () => {
     }
   });
 
-  it('binds waiting params, retries and completion to one signing operation', async () => {
-    const { waitSignComponentAmounted } =
-      jest.requireMock('../utils/signEvent');
-    const { eventBus } = jest.requireMock('@/utils/events');
-    waitSignComponentAmounted.mockResolvedValue(true);
-    mockRequestApproval
-      .mockResolvedValueOnce({ uiRequestComponent: 'PrivatekeyWaiting' })
-      .mockResolvedValueOnce('0xfromWaitingUi');
-    mockEthSignTypedData.mockResolvedValue('0xsignature-a');
-
-    await expect(rpcFlow(makeRequest())).resolves.toBe('0xfromWaitingUi');
-    await new Promise(resolve => setImmediate(resolve));
-
-    const waitingApproval = mockRequestApproval.mock.calls[1][0];
-    const { signingOperationId } = waitingApproval.params;
-    expect(signingOperationId).toEqual(expect.any(String));
-    expect(waitSignComponentAmounted).toHaveBeenCalledWith(signingOperationId);
-    expect(mockSetCurrentRequestDeferFn).toHaveBeenCalledWith(
-      expect.any(Function),
-      signingOperationId,
-    );
-    expect(eventBus.emit).toHaveBeenCalledWith('SIGN_FINISHED', {
-      success: true,
-      data: '0xsignature-a',
-      signingOperationId,
-    });
-  });
-
-  it('does not start signing when its waiting mount was cancelled', async () => {
-    const { waitSignComponentAmounted, cancelSignComponentAmounted } =
-      jest.requireMock('../utils/signEvent');
-    const { eventBus } = jest.requireMock('@/utils/events');
-    waitSignComponentAmounted.mockResolvedValue(false);
-    mockRequestApproval
-      .mockResolvedValueOnce({ uiRequestComponent: 'LedgerHardwareWaiting' })
-      .mockRejectedValueOnce(new Error('user cancel'));
-
-    await expect(rpcFlow(makeRequest())).rejects.toThrow('user cancel');
-    await new Promise(resolve => setImmediate(resolve));
-
-    expect(mockEthSignTypedData).not.toHaveBeenCalled();
-    expect(eventBus.emit).not.toHaveBeenCalled();
-    expect(cancelSignComponentAmounted).toHaveBeenCalledWith(
-      expect.any(String),
-    );
-  });
-
   describe('Safe owner signing', () => {
     const openSafeOwnerApproval = (registerDuringApproval?: () => void) => {
       const { waitSignComponentAmounted } =
         jest.requireMock('../utils/signEvent');
-      waitSignComponentAmounted.mockResolvedValue(true);
+      waitSignComponentAmounted.mockResolvedValue(undefined);
       mockSetCurrentRequestDeferFn.mockImplementation(fn => {
         mockCurrentDeferFn = fn;
       });

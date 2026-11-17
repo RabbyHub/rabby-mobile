@@ -70,7 +70,6 @@ import { SecurityEngineError } from '../SecurityEngine/SecurityEngineError';
 import { SUPPORT_1559_KEYRING_TYPE } from '@/constant/tx';
 import { getDappSnapshot } from '@/core/serviceApi/dapp';
 import { keyringServiceApi } from '@/core/serviceApi/keyring';
-import { createSigningOperationId } from '@/core/utils/signingOperation';
 import {
   getLastTimeGasSelection,
   updateLastTimeGasSelection,
@@ -404,8 +403,6 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
       stripTopLevelData: true,
     });
   }, [chain.serverId, params.data]);
-
-  const gnosisOperation = Number(params.data[0]?.operation) === 1 ? 1 : 0;
 
   // Only the internal Safe queue has already built a transaction to sign.
   const isViewGnosisSafe =
@@ -866,7 +863,8 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
     } // do not overwrite nonce if from === to(cancel transaction)
 
     const explainNonce = (updateNonce ? recommendNonce : tx.nonce) || '0x1';
-    const delegateCall = isGnosisAccount && gnosisOperation === 1;
+    const delegateCall =
+      isGnosisAccount && Number(params?.data?.[0]?.operation) === 1;
     const parseTxPromise = openapi.parseTx({
       chainId: chain.serverId,
       tx: omit(
@@ -1189,7 +1187,6 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
         to: tx.to,
         data: tx.data,
         value: tx.value,
-        operation: gnosisOperation,
         safeTxGas: safeTxGas,
       };
       params.nonce = realNonce;
@@ -1209,7 +1206,6 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
     if (!security.canSubmit()) return;
     if (!(await getApproval()) || !security.canSubmit()) return;
     if (WaitingSignComponent[account.type]) {
-      const signingOperationId = createSigningOperationId();
       apisKeyring.signTypedDataWithUI(
         account.type,
         account.address,
@@ -1217,13 +1213,11 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
         {
           brandName: account.brandName,
           version: 'V4',
-          signingOperationId,
         },
       );
 
       resolveApproval({
         uiRequestComponent: WaitingSignComponent[account.type],
-        signingOperationId,
         type: account.type,
         address: account.address,
         data: [account.address, JSON.stringify(typedData)],
