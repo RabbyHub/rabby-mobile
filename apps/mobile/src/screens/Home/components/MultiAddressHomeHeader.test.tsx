@@ -36,7 +36,11 @@ jest.mock('@/hooks/theme', () => ({
   useTheme2024: ({ getStyle }: { getStyle: (theme: object) => object }) => {
     const theme = {
       isLight: mockIsLight,
-      colors2024: { 'neutral-black': '#000000' },
+      colors2024: {
+        'neutral-black': '#000000',
+        'neutral-bg-2': '#232428',
+        'neutral-bg-5': 'rgba(47, 49, 53, 0.5)',
+      },
     };
     return { ...theme, styles: getStyle(theme) };
   },
@@ -96,30 +100,49 @@ jest.mock('@/hooks/storeActivity/useActivityStore', () => ({
 }));
 
 it.each([true, false])(
-  'keeps the balance-card border and clipping on one RN view (light=%s)',
+  'preserves the light gradient and dark card surface (light=%s)',
   isLight => {
     mockIsLight = isLight;
     render(<MultiAddressHomeHeader />);
     expect(mockChartTabName).toBe('overview');
-    const gradient = screen.UNSAFE_getByType(LinearGradient);
-    const gradientStyle = StyleSheet.flatten(gradient.props.style);
-    expect(gradientStyle.borderWidth).toBeUndefined();
-    expect(gradientStyle.borderRadius).toBeUndefined();
+    const borderWidth = isLight ? 1 : 2;
     const frames = screen.UNSAFE_getAllByType(View).filter(view => {
       const style = StyleSheet.flatten(view.props.style);
-      return style?.borderWidth === 1 && style?.overflow === 'hidden';
+      return (
+        style?.borderWidth === borderWidth && style?.position === 'absolute'
+      );
     });
     expect(frames).toHaveLength(1);
     expect(StyleSheet.flatten(frames[0].props.style)).toMatchObject({
       borderRadius: 20,
-      borderColor: isLight ? 'rgba(255, 255, 255, 1)' : 'rgba(35, 36, 40, 1)',
-      position: 'absolute',
+      overflow: isLight ? 'hidden' : 'visible',
+      borderColor: isLight ? 'rgba(255, 255, 255, 1)' : 'rgba(47, 49, 53, 0.5)',
       top: 0,
       bottom: 0,
       left: 0,
       right: 0,
     });
-    expect(frames[0].findByType(LinearGradient)).toBe(gradient);
+    if (isLight) {
+      const gradient = screen.UNSAFE_getByType(LinearGradient);
+      expect(gradient.props).toMatchObject({
+        colors: ['rgba(255, 255, 255, 1)', 'rgba(255, 255, 255, .54)'],
+        start: { x: 0.25, y: 0.5 },
+        end: { x: 0.75, y: 0.5 },
+      });
+      const gradientStyle = StyleSheet.flatten(gradient.props.style);
+      expect(gradientStyle.borderWidth).toBeUndefined();
+      expect(gradientStyle.borderRadius).toBeUndefined();
+      expect(frames[0].findByType(LinearGradient)).toBe(gradient);
+    } else {
+      expect(StyleSheet.flatten(frames[0].props.style)).toMatchObject({
+        backgroundColor: '#232428',
+        shadowColor: 'rgba(0, 0, 0, 0.12)',
+        shadowOffset: { width: 0, height: 15 },
+        shadowOpacity: 1,
+        shadowRadius: 27.5,
+      });
+      expect(screen.UNSAFE_queryByType(LinearGradient)).toBeNull();
+    }
   },
 );
 
