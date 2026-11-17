@@ -247,7 +247,14 @@ public class RNHelpersModule extends SimplePackageSpec {
         return;
       }
 
-      // Let the chooser grant temporary access only to the selected recipient.
+      for (ResolveInfo resolveInfo : resolvedActivities) {
+        this.reactContext.grantUriPermission(
+          resolveInfo.activityInfo.packageName,
+          uri,
+          Intent.FLAG_GRANT_READ_URI_PERMISSION
+        );
+      }
+
       Intent chooserIntent = Intent.createChooser(intent, chooserTitle);
       chooserIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_GRANT_READ_URI_PERMISSION);
       this.reactContext.startActivity(chooserIntent);

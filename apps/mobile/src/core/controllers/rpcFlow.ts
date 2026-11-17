@@ -134,16 +134,13 @@ const flowContext = flow
         try {
           let defaultChain: CHAINS_ENUM | null = null;
           let defaultAccount: Account | undefined = undefined;
-          let isAutoConnect = true;
-          const autoConnectInfo =
-            getDappSnapshot(origin)?.isConnected === false
-              ? undefined
-              : await autoConnectServiceApi.autoConnect(origin);
+          const autoConnectInfo = await autoConnectServiceApi.autoConnect(
+            origin,
+          );
           if (autoConnectInfo) {
             defaultAccount = autoConnectInfo.defaultAccount;
             defaultChain = autoConnectInfo.defaultChain || CHAINS_ENUM.ETH;
           } else if (
-            getDappSnapshot(origin)?.isConnected !== false &&
             isFromMobileInnerDapp &&
             shouldAutoConnect(origin, ctx.request.data.method)
           ) {
@@ -193,12 +190,10 @@ const flowContext = flow
             );
             defaultChain = res.defaultChain;
             defaultAccount = res.defaultAccount;
-            isAutoConnect = false;
           }
           connectOrigins.delete(origin);
           await apisDapp.connect({
             origin,
-            isAutoConnect,
             chainId: defaultChain || CHAINS_ENUM.ETH,
             currentAccount: defaultAccount || getFallbackAccountSnapshot(),
             session: {

@@ -674,7 +674,6 @@ class ProviderController extends BaseController {
     return account ? [account.address.toLowerCase()] : [];
   };
 
-  @Reflect.metadata('SAFE', true)
   ethCoinbase = async ({
     session: { origin },
     account,
