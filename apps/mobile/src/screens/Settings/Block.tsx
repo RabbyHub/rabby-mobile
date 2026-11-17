@@ -17,15 +17,19 @@ export function Block({
   style,
   children,
 }: React.PropsWithChildren<{
-  /** Omit to render the card without a section header. */
+  /**
+   * Omit to render the card without a section header. An empty string still
+   * reserves the header row, which is what spaces label-less cards apart.
+   */
   label?: string;
   style?: React.ComponentProps<typeof View>['style'];
 }>) {
   const { colors2024, isLight } = useTheme2024();
+  const hasHeader = label !== undefined;
 
   return (
     <View style={style}>
-      {label ? (
+      {hasHeader ? (
         <Text
           style={{
             fontSize: 16,
@@ -39,7 +43,7 @@ export function Block({
       <View
         style={{
           borderRadius: 24,
-          marginTop: label ? 8 : 0,
+          marginTop: hasHeader ? 8 : 0,
           flexDirection: 'column',
           backgroundColor: isLight
             ? colors2024['neutral-bg-1']
