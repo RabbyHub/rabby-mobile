@@ -295,9 +295,7 @@ export const Media = ({
         onPlaybackStateChanged={handlePlaybackStateChanged}
       />
       {pause ? (
-        <CustomTouchableOpacity
-          onPress={toggle}
-          style={styles.detailPlayIcon}>
+        <CustomTouchableOpacity onPress={toggle} style={styles.detailPlayIcon}>
           <IconPlay width={72} height={72} />
         </CustomTouchableOpacity>
       ) : null}
