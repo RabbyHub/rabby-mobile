@@ -2420,7 +2420,9 @@
           "attachedTpSlUnresolved": "Hay un envío de TP/SL anterior sin resolver para este mercado. Comprueba Órdenes abiertas y Posiciones antes de volver a intentarlo.",
           "orderFilled": "Orden ejecutada.",
           "orderPlaced": "Orden enviada.",
-          "orderFailed": "La orden ha fallado."
+          "orderFailed": "La orden ha fallado.",
+          "scale": "Orden escalonada",
+          "scaleDescription": "Establece un rango de precios y coloca varias subórdenes limitadas"
         },
         "orderError": {
           "aloBuyWouldMatch": "El precio post-only debe ser inferior al mejor precio de venta para evitar una ejecución inmediata.",
@@ -2713,6 +2715,35 @@
           "cancelPartial": "{{success}} órdenes canceladas; {{failed}} fallidas",
           "cancelFailed": "No se ha podido cancelar la orden",
           "cancelContextChanged": "La cuenta ha cambiado. Inténtalo de nuevo."
+        },
+        "scaleOrder": {
+          "lowerPrice": "Precio mínimo",
+          "upperPrice": "Precio máximo",
+          "size": "Cantidad",
+          "count": "N.º de órdenes (2–100)",
+          "distribution": "Distribución",
+          "flat": "Uniforme",
+          "ascending": "Ascendente",
+          "descending": "Descendente",
+          "flatDescription": "Cada orden recibe la misma cantidad",
+          "ascendingDescription": "La cantidad aumenta a medida que sube el precio",
+          "descendingDescription": "La cantidad aumenta a medida que baja el precio",
+          "previewBuy": "Prever compra",
+          "previewSell": "Prever venta",
+          "totalSize": "Cantidad total",
+          "averagePrice": "Precio medio",
+          "result": "{{accepted}} aceptadas, {{rejected}} rechazadas, {{unresolved}} pendientes",
+          "unknown": "Resultado pendiente de confirmación. Revisa las órdenes abiertas y el historial antes de colocar otra orden.",
+          "errors": {
+            "range": "Introduce precios válidos; el máximo debe superar al mínimo.",
+            "count": "Introduce un entero entre 2 y 100.",
+            "size": "Introduce una cantidad válida del token nativo del activo.",
+            "duplicatePrice": "Los precios coinciden tras redondear. Amplía el rango o reduce el número de órdenes.",
+            "minimum": "Cada suborden debe valer al menos $10 tras redondear.",
+            "maximum": "El importe total supera el límite del mercado.",
+            "capacity": "Capacidad de negociación insuficiente para el lote.",
+            "reduceOnly": "La cantidad total supera la posición que se puede reducir."
+          }
         }
       },
       "limitOrders": "Órdenes Limitadas",

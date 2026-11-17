@@ -2353,7 +2353,9 @@
           "attachedTpSlUnresolved": "Một lần gửi TP/SL trước đó cho thị trường này vẫn chưa có kết quả xác định. Hãy kiểm tra Lệnh đang mở và Vị thế trước khi thử lại.",
           "orderFilled": "Lệnh đã khớp.",
           "orderPlaced": "Đã đặt lệnh.",
-          "orderFailed": "Lệnh thất bại."
+          "orderFailed": "Lệnh thất bại.",
+          "scale": "Lệnh chia bậc",
+          "scaleDescription": "Đặt khoảng giá và tạo nhiều lệnh giới hạn con"
         },
         "orderError": {
           "aloBuyWouldMatch": "Giá post-only phải thấp hơn giá bán tốt nhất để tránh khớp ngay lập tức.",
@@ -2646,6 +2648,35 @@
           "cancelPartial": "Đã hủy {{success}} lệnh; {{failed}} lệnh thất bại",
           "cancelFailed": "Không thể hủy lệnh",
           "cancelContextChanged": "Tài khoản đã thay đổi. Hãy thử lại."
+        },
+        "scaleOrder": {
+          "lowerPrice": "Giá thấp nhất",
+          "upperPrice": "Giá cao nhất",
+          "size": "Số lượng",
+          "count": "Số lệnh (2–100)",
+          "distribution": "Phân bổ số lượng",
+          "flat": "Đồng đều",
+          "ascending": "Tăng dần",
+          "descending": "Giảm dần",
+          "flatDescription": "Mỗi lệnh được phân bổ cùng số lượng",
+          "ascendingDescription": "Số lượng lệnh tăng khi giá tăng",
+          "descendingDescription": "Số lượng lệnh tăng khi giá giảm",
+          "previewBuy": "Xem trước mua",
+          "previewSell": "Xem trước bán",
+          "totalSize": "Tổng số lượng",
+          "averagePrice": "Giá trung bình",
+          "result": "{{accepted}} được chấp nhận, {{rejected}} bị từ chối, {{unresolved}} chờ xác nhận",
+          "unknown": "Kết quả lệnh đang chờ xác nhận. Hãy kiểm tra lệnh mở và lịch sử giao dịch trước khi đặt lệnh mới.",
+          "errors": {
+            "range": "Nhập giá hợp lệ; giá cao nhất phải lớn hơn giá thấp nhất.",
+            "count": "Nhập số nguyên từ 2 đến 100.",
+            "size": "Nhập số lượng token gốc của tài sản hợp lệ.",
+            "duplicatePrice": "Giá trùng nhau sau khi làm tròn. Hãy mở rộng khoảng giá hoặc giảm số lệnh.",
+            "minimum": "Mỗi lệnh con phải có giá trị ít nhất $10 sau khi làm tròn.",
+            "maximum": "Tổng giá trị vượt giới hạn thị trường.",
+            "capacity": "Không đủ khả năng giao dịch cho nhóm lệnh này.",
+            "reduceOnly": "Tổng số lượng vượt vị thế có thể giảm."
+          }
         }
       },
       "limitOrders": "Lệnh giới hạn",

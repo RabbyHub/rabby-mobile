@@ -2522,7 +2522,9 @@
           "attachedTpSlUnresolved": "Eine frühere TP/SL-Übermittlung für diesen Markt ist noch ungeklärt. Prüfen Sie offene Orders und Positionen, bevor Sie es erneut versuchen.",
           "orderFilled": "Order ausgeführt.",
           "orderPlaced": "Order platziert.",
-          "orderFailed": "Order fehlgeschlagen."
+          "orderFailed": "Order fehlgeschlagen.",
+          "scale": "Staffelorder",
+          "scaleDescription": "Preisbereich festlegen und mehrere Limit-Teilorders platzieren"
         },
         "orderError": {
           "aloBuyWouldMatch": "Der Post-only-Preis muss unter dem besten Briefkurs liegen, um eine sofortige Ausführung zu vermeiden.",
@@ -2815,6 +2817,35 @@
           "cancelPartial": "{{success}} Orders storniert; {{failed}} fehlgeschlagen",
           "cancelFailed": "Order konnte nicht storniert werden",
           "cancelContextChanged": "Das Konto hat sich geändert. Versuchen Sie es erneut."
+        },
+        "scaleOrder": {
+          "lowerPrice": "Unterer Preis",
+          "upperPrice": "Oberer Preis",
+          "size": "Menge",
+          "count": "Orderanzahl (2–100)",
+          "distribution": "Mengenverteilung",
+          "flat": "Gleichmäßig",
+          "ascending": "Aufsteigend",
+          "descending": "Absteigend",
+          "flatDescription": "Jede Order erhält die gleiche Menge",
+          "ascendingDescription": "Die Ordermenge steigt mit dem Preis",
+          "descendingDescription": "Die Ordermenge steigt bei sinkendem Preis",
+          "previewBuy": "Kaufvorschau",
+          "previewSell": "Verkaufsvorschau",
+          "totalSize": "Gesamtmenge",
+          "averagePrice": "Durchschnittspreis",
+          "result": "{{accepted}} angenommen, {{rejected}} abgelehnt, {{unresolved}} unbestätigt",
+          "unknown": "Orderergebnis unbestätigt. Prüfe offene Orders und den Handelsverlauf, bevor du erneut eine Order platzierst.",
+          "errors": {
+            "range": "Gültige Preise eingeben. Der obere Preis muss höher sein.",
+            "count": "Eine ganze Zahl zwischen 2 und 100 eingeben.",
+            "size": "Eine gültige Menge des nativen Tokens eingeben.",
+            "duplicatePrice": "Preise überschneiden sich nach Rundung. Bereich erweitern oder Orderanzahl reduzieren.",
+            "minimum": "Jede Teilorder muss nach Rundung mindestens $10 wert sein.",
+            "maximum": "Der Gesamtbetrag überschreitet das Marktlimit.",
+            "capacity": "Nicht genügend Handelskapazität für diese Orders.",
+            "reduceOnly": "Die Gesamtmenge überschreitet die reduzierbare Position."
+          }
         }
       },
       "limitOrders": "Limit-Orders",

@@ -2236,7 +2236,9 @@
           "attachedTpSlUnresolved": "이 마켓에 이전에 제출한 TP/SL의 결과가 아직 확정되지 않았습니다. 다시 시도하기 전에 미체결 주문과 포지션을 확인하세요.",
           "orderFilled": "주문이 체결되었습니다.",
           "orderPlaced": "주문이 접수되었습니다.",
-          "orderFailed": "주문에 실패했습니다."
+          "orderFailed": "주문에 실패했습니다.",
+          "scale": "분할 주문",
+          "scaleDescription": "가격 범위를 설정하고 여러 지정가 하위 주문을 제출합니다"
         },
         "orderError": {
           "aloBuyWouldMatch": "즉시 체결되지 않도록 포스트 온리 가격은 최우선 매도호가보다 낮아야 합니다.",
@@ -2529,6 +2531,35 @@
           "cancelPartial": "주문 {{success}}건 취소, {{failed}}건 실패",
           "cancelFailed": "주문 취소에 실패했습니다",
           "cancelContextChanged": "계정이 변경되었습니다. 다시 시도하세요."
+        },
+        "scaleOrder": {
+          "lowerPrice": "최저 가격",
+          "upperPrice": "최고 가격",
+          "size": "수량",
+          "count": "주문 수 (2–100)",
+          "distribution": "수량 분배",
+          "flat": "균등",
+          "ascending": "오름차순",
+          "descending": "내림차순",
+          "flatDescription": "각 주문에 동일한 수량을 배분합니다",
+          "ascendingDescription": "가격이 높아질수록 주문 수량이 증가합니다",
+          "descendingDescription": "가격이 낮아질수록 주문 수량이 증가합니다",
+          "previewBuy": "매수 미리보기",
+          "previewSell": "매도 미리보기",
+          "totalSize": "총 수량",
+          "averagePrice": "평균 가격",
+          "result": "접수 {{accepted}}건, 거부 {{rejected}}건, 확인 대기 {{unresolved}}건",
+          "unknown": "주문 결과 확인 대기 중입니다. 새 주문 전에 미체결 주문과 거래 내역을 확인하세요.",
+          "errors": {
+            "range": "유효한 가격을 입력하세요. 최고 가격은 최저 가격보다 높아야 합니다.",
+            "count": "2~100 사이의 정수를 입력하세요.",
+            "size": "해당 자산의 기본 토큰으로 유효한 수량을 입력하세요.",
+            "duplicatePrice": "반올림 후 가격이 겹칩니다. 가격 범위를 넓히거나 주문 수를 줄이세요.",
+            "minimum": "반올림 후 각 하위 주문 금액은 $10 이상이어야 합니다.",
+            "maximum": "총 금액이 시장 한도를 초과합니다.",
+            "capacity": "이 주문 묶음을 제출할 거래 여력이 부족합니다.",
+            "reduceOnly": "총 수량이 줄일 수 있는 포지션을 초과합니다."
+          }
         }
       },
       "limitOrders": "지정가 주문",

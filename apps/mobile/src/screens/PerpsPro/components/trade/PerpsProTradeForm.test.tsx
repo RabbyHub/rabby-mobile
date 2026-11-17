@@ -2,6 +2,11 @@ import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
 import { Keyboard, Platform, StyleSheet } from 'react-native';
 
+// This form unit suite tests field/keyboard behavior, not the native help sheet.
+jest.mock('./PerpsProScaleDistributionSheet', () => ({
+  PerpsProScaleDistributionSheet: () => null,
+}));
+
 jest.mock('react-native-haptic-feedback', () => ({
   trigger: jest.fn(),
 }));

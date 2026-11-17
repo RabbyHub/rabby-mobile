@@ -2323,7 +2323,9 @@
           "attachedTpSlUnresolved": "A previous TP/SL submission for this market is unresolved. Check Open Orders and Positions before trying again.",
           "orderFilled": "Order filled.",
           "orderPlaced": "Order placed.",
-          "orderFailed": "Order failed."
+          "orderFailed": "Order failed.",
+          "scale": "Scaled Order",
+          "scaleDescription": "Set a price range and place multiple limit sub-orders"
         },
         "orderError": {
           "aloBuyWouldMatch": "Post-only price must be lower than the best ask to avoid immediately matching.",
@@ -2616,6 +2618,35 @@
           "cancelPartial": "{{success}} orders canceled; {{failed}} failed",
           "cancelFailed": "Failed to cancel order",
           "cancelContextChanged": "Account changed. Please try again."
+        },
+        "scaleOrder": {
+          "lowerPrice": "Lower Price",
+          "upperPrice": "Upper Price",
+          "size": "Size",
+          "count": "Order Count (2–100)",
+          "distribution": "Amount Distribution",
+          "flat": "Flat",
+          "ascending": "Ascending",
+          "descending": "Descending",
+          "flatDescription": "Each order within the total amount receives the same size",
+          "ascendingDescription": "The order size systematically grows as the price escalates",
+          "descendingDescription": "The order size systematically grows as the price decreases",
+          "previewBuy": "Preview Buy",
+          "previewSell": "Preview Sell",
+          "totalSize": "Total Size",
+          "averagePrice": "Average Price",
+          "result": "{{accepted}} accepted, {{rejected}} rejected, {{unresolved}} pending confirmation",
+          "unknown": "Order outcome is pending confirmation. Check open orders and trade history before placing another order.",
+          "errors": {
+            "range": "Enter valid prices with the upper price above the lower price.",
+            "count": "Enter an integer between 2 and 100.",
+            "size": "Enter a valid size in the asset’s native token.",
+            "duplicatePrice": "Prices overlap after rounding. Widen the price range or reduce the order count.",
+            "minimum": "Each sub-order must be worth at least $10 after rounding.",
+            "maximum": "The total amount exceeds the market limit.",
+            "capacity": "Insufficient trading capacity for this batch.",
+            "reduceOnly": "Total size exceeds the position available to reduce."
+          }
         }
       },
       "dappSelect": {

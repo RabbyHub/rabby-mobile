@@ -2245,7 +2245,9 @@
           "attachedTpSlUnresolved": "Un précédent envoi TP/SL pour ce marché n’est pas résolu. Vérifiez les ordres ouverts et les positions avant de réessayer.",
           "orderFilled": "Ordre exécuté.",
           "orderPlaced": "Ordre passé.",
-          "orderFailed": "Échec de l’ordre."
+          "orderFailed": "Échec de l’ordre.",
+          "scale": "Ordre échelonné",
+          "scaleDescription": "Définissez une plage de prix et placez plusieurs sous-ordres à cours limité"
         },
         "orderError": {
           "aloBuyWouldMatch": "Le prix post-only doit être inférieur à la meilleure offre de vente pour éviter une exécution immédiate.",
@@ -2538,6 +2540,35 @@
           "cancelPartial": "{{success}} ordres annulés ; {{failed}} en échec",
           "cancelFailed": "Échec de l’annulation de l’ordre",
           "cancelContextChanged": "Le compte a changé. Réessayez."
+        },
+        "scaleOrder": {
+          "lowerPrice": "Prix minimum",
+          "upperPrice": "Prix maximum",
+          "size": "Quantité",
+          "count": "Nombre d’ordres (2–100)",
+          "distribution": "Répartition",
+          "flat": "Uniforme",
+          "ascending": "Croissante",
+          "descending": "Décroissante",
+          "flatDescription": "Chaque ordre reçoit la même quantité",
+          "ascendingDescription": "La quantité augmente avec le prix",
+          "descendingDescription": "La quantité augmente lorsque le prix baisse",
+          "previewBuy": "Aperçu d’achat",
+          "previewSell": "Aperçu de vente",
+          "totalSize": "Quantité totale",
+          "averagePrice": "Prix moyen",
+          "result": "{{accepted}} acceptés, {{rejected}} rejetés, {{unresolved}} en attente",
+          "unknown": "Résultat en attente de confirmation. Consultez les ordres ouverts et l’historique avant de placer un autre ordre.",
+          "errors": {
+            "range": "Saisissez des prix valides, avec le maximum supérieur au minimum.",
+            "count": "Saisissez un entier entre 2 et 100.",
+            "size": "Saisissez une quantité valide du jeton natif de l’actif.",
+            "duplicatePrice": "Les prix se chevauchent après arrondi. Élargissez la plage ou réduisez le nombre d’ordres.",
+            "minimum": "Chaque sous-ordre doit valoir au moins $10 après arrondi.",
+            "maximum": "Le montant total dépasse la limite du marché.",
+            "capacity": "Capacité de négociation insuffisante pour ce lot.",
+            "reduceOnly": "La quantité totale dépasse la position pouvant être réduite."
+          }
         }
       },
       "limitOrders": "Ordres à cours limité",
