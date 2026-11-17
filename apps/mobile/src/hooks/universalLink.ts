@@ -519,7 +519,7 @@ function parseNonProductionMaintenanceLink(appLink: string) {
 
   // Non-production only: switch the home tab chrome between the JS-side
   // interpolation fallback and the native per-frame pager offset (QA 1396).
-  // `?_cmd=toggle-pager-offset-sampling` toggles off <-> push;
+  // `?_cmd=toggle-pager-offset-sampling` toggles off <-> pull;
   // `&value=on|push|pull|off` pins one delivery variant.
   if (
     rabbyGoCmd === 'toggle-pager-offset-sampling' ||

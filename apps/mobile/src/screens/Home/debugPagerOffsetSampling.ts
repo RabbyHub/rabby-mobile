@@ -19,7 +19,7 @@ export type PagerOffsetMode = 'off' | 'pull' | 'push';
  * runtime; this flag selects how the chrome consumes it.
  *
  * Toggle from the debug deep link:
- *   ...&_cmd=toggle-pager-offset-sampling            (off <-> push)
+ *   ...&_cmd=toggle-pager-offset-sampling            (off <-> pull)
  *   ...&_cmd=toggle-pager-offset-sampling&value=on|push|pull|off
  *
  * Kept deliberately dependency-free: the deep-link handler imports this module,
@@ -63,6 +63,8 @@ export const debugPagerOffsetSampling = {
     applier?.(mode);
   },
   toggle() {
-    this.set(this.mode === 'off' ? 'push' : 'off');
+    // `pull` is the delivery that tracks the pager best; `push` stays available
+    // through an explicit `value=push` for comparisons.
+    this.set(this.mode === 'off' ? 'pull' : 'off');
   },
 };
