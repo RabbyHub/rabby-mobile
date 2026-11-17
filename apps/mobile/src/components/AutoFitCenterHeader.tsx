@@ -6,7 +6,6 @@ import {
   AutoFitHeaderTitle,
   HeaderTitleLanguageStyle,
 } from '@/components/AutoFitHeaderTitle';
-import { useAddWalletHeaderTitleStyles } from '@/components/headerTitleLanguageStyles';
 import { HeaderBackButton } from '@/hooks/navigation';
 import { useTheme2024 } from '@/hooks/theme';
 import { IS_IOS } from '@/core/native/utils';
@@ -37,12 +36,11 @@ export const AutoFitCenterHeader = ({
   textStylesByLanguage,
 }: {
   title: string;
-  /** Exact language tag -> typography override; defaults to the add-wallet policy. */
+  /** Exact language tag -> typography override; decided by the screen. */
   textStylesByLanguage?: Partial<Record<string, HeaderTitleLanguageStyle>>;
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const insets = useSafeAreaInsets();
-  const defaultTextStylesByLanguage = useAddWalletHeaderTitleStyles();
 
   return (
     <View style={[styles.outer, { paddingTop: insets.top }]}>
@@ -57,9 +55,7 @@ export const AutoFitCenterHeader = ({
           <AutoFitHeaderTitle
             text={title}
             textStyle={styles.title}
-            textStylesByLanguage={
-              textStylesByLanguage ?? defaultTextStylesByLanguage
-            }
+            textStylesByLanguage={textStylesByLanguage}
           />
         </View>
         {/* Equal trailing slot keeps the title centred on the screen. */}

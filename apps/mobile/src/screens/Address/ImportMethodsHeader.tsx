@@ -7,7 +7,6 @@ import {
   AutoFitHeaderTitle,
   HeaderTitleLanguageStyle,
 } from '@/components/AutoFitHeaderTitle';
-import { useAddWalletHeaderTitleStyles } from '@/components/headerTitleLanguageStyles';
 import { HeaderBackButton } from '@/hooks/navigation';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -31,13 +30,12 @@ const HEADER_HORIZONTAL_INSET = 16;
 export const ImportMethodsHeader = ({
   textStylesByLanguage,
 }: {
-  /** Exact language tag -> typography override; defaults to the add-wallet policy. */
+  /** Exact language tag -> typography override; decided by the navigator. */
   textStylesByLanguage?: Partial<Record<string, HeaderTitleLanguageStyle>>;
 } = {}) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
-  const defaultTextStylesByLanguage = useAddWalletHeaderTitleStyles();
 
   return (
     <View style={[styles.outer, { paddingTop: insets.top }]}>
@@ -52,9 +50,7 @@ export const ImportMethodsHeader = ({
           <AutoFitHeaderTitle
             text={t('screens.addressStackTitle.ImportMethods')}
             textStyle={styles.title}
-            textStylesByLanguage={
-              textStylesByLanguage ?? defaultTextStylesByLanguage
-            }
+            textStylesByLanguage={textStylesByLanguage}
           />
         </View>
         {/* Reserved trailing slot: keeps the title centred on the screen, the

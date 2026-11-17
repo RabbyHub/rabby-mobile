@@ -1,6 +1,6 @@
 import { useWindowDimensions } from 'react-native';
 
-import type { HeaderTitleLanguageStyle } from './AutoFitHeaderTitle';
+import type { HeaderTitleLanguageStyle } from '@/components/AutoFitHeaderTitle';
 
 /**
  * Screens narrower than this cannot fit the English header title at the base
