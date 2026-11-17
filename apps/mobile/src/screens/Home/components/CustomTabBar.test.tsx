@@ -30,7 +30,14 @@ jest.mock('react-native-reanimated', () => {
     useSharedValue: (value: unknown) => ReactModule.useRef({ value }).current,
     makeMutable: (value: unknown) => ({ value }),
     withTiming: (value: unknown) => value,
-    useAnimatedReaction: () => undefined,
+    // The tab bar mirrors the pager through an animated reaction; run it once
+    // per render so the assertions see the bridged value.
+    useAnimatedReaction: (
+      prepare: () => unknown,
+      react: (value: unknown) => void,
+    ) => {
+      react(prepare());
+    },
     // Added when the tab bar started bridging the pager sample stream.
     useFrameCallback: () => undefined,
     Easing: { linear: (value: number) => value },
