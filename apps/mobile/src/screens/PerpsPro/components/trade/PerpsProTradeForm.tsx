@@ -205,6 +205,7 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
         />
         {form.orderType === 'scale' ? (
           <PerpsProScaleOrderFields
+            amountInputRef={amountInputRef}
             controller={controller}
             onDistributionHelp={() => openSheet('distribution')}
             onTif={() => openSheet('tif')}

@@ -1,4 +1,10 @@
-import { act, fireEvent, render, screen } from '@testing-library/react-native';
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from '@testing-library/react-native';
 import React from 'react';
 import { Keyboard, Platform, StyleSheet } from 'react-native';
 
@@ -6,6 +12,23 @@ import { Keyboard, Platform, StyleSheet } from 'react-native';
 jest.mock('./PerpsProScaleDistributionSheet', () => ({
   PerpsProScaleDistributionSheet: () => null,
 }));
+
+jest.mock(
+  '@/assets2024/icons/perps/PerpsProScaleAscending.svg',
+  () => require('react-native').View,
+);
+jest.mock(
+  '@/assets2024/icons/perps/PerpsProScaleDescending.svg',
+  () => require('react-native').View,
+);
+jest.mock(
+  '@/assets2024/icons/perps/PerpsProScaleRadioSelected.svg',
+  () => require('react-native').View,
+);
+jest.mock(
+  '@/assets2024/icons/perps/PerpsProScaleRadio.svg',
+  () => require('react-native').View,
+);
 
 jest.mock('react-native-haptic-feedback', () => ({
   trigger: jest.fn(),
@@ -265,6 +288,83 @@ describe('PerpsProTradeForm order matrix', () => {
     mockCancelAnimation.mockClear();
     mockWithTiming.mockClear();
   });
+
+  it.each([
+    { index: 0, label: 'size (BTC)', field: 'amount' as const, value: '0.12' },
+    { index: 1, label: 'count', field: 'scaleCount' as const, value: '17' },
+  ])(
+    'keeps the Scale $field host stable through floating-label edits',
+    ({ index, label, field, value }) => {
+      const trade = controller({
+        orderType: 'scale',
+        amountUnit: 'base',
+        scaleCount: '',
+      });
+      const view = render(
+        <PerpsProTradeForm controller={trade} onAddFunds={jest.fn()} />,
+      );
+      const fieldView = within(
+        screen.getAllByTestId('perps-pro-trade-amount-field')[index],
+      );
+      const input = screen.getByLabelText(label);
+      const inputStyle = StyleSheet.flatten(input.props.style);
+      expect(inputStyle).toMatchObject({ height: 34, textAlign: 'center' });
+      expect(
+        fieldView.getByTestId('perps-pro-amount-placeholder'),
+      ).toHaveTextContent(label);
+      expect(screen.queryByTestId('perps-pro-trade-amount-unit')).toBeNull();
+
+      fireEvent(input, 'focus');
+      expect(
+        fieldView.queryByTestId('perps-pro-amount-placeholder'),
+      ).toBeNull();
+      expect(fieldView.getByTestId('perps-pro-amount-label')).toHaveStyle({
+        fontSize: 10,
+        lineHeight: 12,
+      });
+      fireEvent.changeText(input, value.slice(0, 1));
+      fireEvent.changeText(input, value);
+      if (field === 'amount') {
+        expect(trade.beginAmountEntry).toHaveBeenCalledTimes(1);
+        expect(trade.setAmount).toHaveBeenLastCalledWith(value);
+      } else {
+        expect(trade.patchForm).toHaveBeenLastCalledWith({ scaleCount: value });
+        expect(input.props.keyboardType).toBe('number-pad');
+      }
+      view.rerender(
+        <PerpsProTradeForm
+          controller={{ ...trade, form: { ...trade.form, [field]: value } }}
+          onAddFunds={jest.fn()}
+        />,
+      );
+      expect(screen.getByLabelText(label)).toBe(input);
+      expect(input.props.selection).toBeUndefined();
+      expect(StyleSheet.flatten(input.props.style)).toEqual(inputStyle);
+      fireEvent(input, 'blur');
+      expect(fieldView.getByTestId('perps-pro-amount-label')).toBeTruthy();
+      fireEvent(input, 'focus');
+      fireEvent.changeText(input, '');
+      view.rerender(
+        <PerpsProTradeForm controller={trade} onAddFunds={jest.fn()} />,
+      );
+      fireEvent(input, 'blur');
+      expect(
+        fieldView.getByTestId('perps-pro-amount-placeholder'),
+      ).toBeTruthy();
+      expect(StyleSheet.flatten(input.props.style)).toEqual(inputStyle);
+    },
+  );
+
+  it.each(['buy', 'sell'])(
+    'focuses empty Scale Size before the %s preview',
+    side => {
+      const trade = controller({ orderType: 'scale', amountUnit: 'base' });
+      render(<PerpsProTradeForm controller={trade} onAddFunds={jest.fn()} />);
+      fireEvent.press(screen.getByTestId(`perps-pro-trade-button-${side}`));
+      expect(mockFocusTextInput).toHaveBeenCalledWith('size (BTC)');
+      expect(trade.requestReview).not.toHaveBeenCalled();
+    },
+  );
 
   it('keeps the real form frame visible but fail-closed while configuration is preparing', () => {
     const trade = controller();
