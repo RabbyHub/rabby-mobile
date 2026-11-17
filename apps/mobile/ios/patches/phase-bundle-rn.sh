@@ -296,7 +296,10 @@ echo "[RabbyMobileBuild] SENTRY_LOAD_DOTENV is $SENTRY_LOAD_DOTENV"
 
 if [ -n "$prebundle_out" ]; then
   prebundle_rc=0
-  /bin/sh -c "$WITH_ENVIRONMENT $SENTRY_XCODE" || prebundle_rc=$?
+  # Skip the Sentry wrapper here: it resolves the source map through an
+  # xcodebuild-only path. The archive's own phase is skipped in consume mode,
+  # and CI keeps SENTRY_DISABLE_AUTO_UPLOAD on for packaging validation.
+  /bin/sh -c "$WITH_ENVIRONMENT $REACT_NATIVE_XCODE" || prebundle_rc=$?
   printf '%s' "$prebundle_rc" > "$prebundle_out/.status"
   : > "$prebundle_out/.done"
   echo "[RabbyMobileBuild] prebundle finished (status $prebundle_rc)"

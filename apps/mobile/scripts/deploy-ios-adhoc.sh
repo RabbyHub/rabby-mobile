@@ -55,7 +55,9 @@ rm -rf $deployment_local_dir && mkdir -p $deployment_local_dir;
 
 mkdir -p "$script_dir/deployments/tmp"
 
-xcodebuild -project $project_dir/ios/RabbyMobile.xcodeproj -target "RabbyMobile" -showBuildSettings -json | plutil -convert xml1 - -o $script_dir/deployments/tmp/RabbyMobileAdHoc.plist
+adhoc_settings_json="$script_dir/deployments/tmp/RabbyMobileAdHoc.settings.json"
+xcodebuild -project $project_dir/ios/RabbyMobile.xcodeproj -target "RabbyMobile" -showBuildSettings -json > "$adhoc_settings_json"
+plutil -convert xml1 - -o $script_dir/deployments/tmp/RabbyMobileAdHoc.plist < "$adhoc_settings_json"
 
 ios_version_name=$(/usr/libexec/PlistBuddy -c "Print:CFBundleShortVersionString" $project_dir/ios/RabbyMobile/Info.plist)
 ios_version_code=$(/usr/libexec/PlistBuddy -c "Print:0:buildSettings:CURRENT_PROJECT_VERSION" $script_dir/deployments/tmp/RabbyMobileAdHoc.plist)
@@ -147,14 +149,33 @@ build_adhoc() {
   # Build the JS bundle concurrently with the archive's compile step, then let
   # the bundle phase copy it in instead of bundling again (RABBY_MOBILE_IOS_PREBUNDLE_JS).
   prebundle_pid=""
-  if [ "${RABBY_MOBILE_IOS_PREBUNDLE_JS:-false}" = "true" ]; then
+  if [ "${RABBY_MOBILE_IOS_PREBUNDLE_JS:-true}" = "true" ]; then
     prebundle_dir="$(mktemp -d "${TMPDIR:-/tmp}/rabby-ios-prebundle.XXXXXX")"
     export RABBY_MOBILE_PREBUILT_BUNDLE_DIR="$prebundle_dir"
+    # The adhoc lane archives the Regression configuration, so collect that
+    # configuration's build settings for the standalone bundle run.
+    prebundle_settings_json="$script_dir/deployments/tmp/RabbyMobileRegression.settings.json"
+    xcodebuild -project "$project_dir/ios/RabbyMobile.xcodeproj" -target RabbyMobile -configuration Regression -showBuildSettings -json > "$prebundle_settings_json"
     echo "[deploy-ios-adhoc] prebuilding the JS bundle in $prebundle_dir"
     (
-      CONFIGURATION="$CONFIGURATION" PLATFORM_NAME="iphoneos" \
-        RABBY_MOBILE_PREBUNDLE_OUT="$prebundle_dir" \
-        bash "$project_dir/ios/patches/phase-bundle-rn.sh" > "$prebundle_dir/prebundle.log" 2>&1
+      # The bundle phase expects a full Xcode build environment; replay the
+      # settings collected from -showBuildSettings so it can run outside xcodebuild.
+      python3 - "$prebundle_settings_json" "$prebundle_dir" "$project_dir/ios" > "$prebundle_dir/prebundle.log" 2>&1 <<'PREBUNDLE_PY'
+import json, os, subprocess, sys
+
+settings_path, out_dir, ios_dir = sys.argv[1], sys.argv[2], sys.argv[3]
+data = json.load(open(settings_path))
+entries = data if isinstance(data, list) else [data]
+settings = {}
+for entry in entries:
+    settings.update(entry.get("buildSettings") or {})
+env = dict(os.environ)
+for key, value in settings.items():
+    env[str(key)] = str(value)
+env["RABBY_MOBILE_PREBUNDLE_OUT"] = out_dir
+env.setdefault("PLATFORM_NAME", "iphoneos")
+sys.exit(subprocess.call(["bash", "./patches/phase-bundle-rn.sh"], cwd=ios_dir, env=env))
+PREBUNDLE_PY
     ) &
     prebundle_pid=$!
   fi
