@@ -27,6 +27,8 @@ jest.mock('react-native-reanimated', () => {
     useAnimatedStyle: (callback: () => object) => callback(),
     useSharedValue: (value: unknown) => ReactModule.useRef({ value }).current,
     makeMutable: (value: unknown) => ({ value }),
+    clamp: (value: number, lowerBound: number, upperBound: number) =>
+      Math.min(Math.max(value, lowerBound), upperBound),
     withTiming: (value: unknown) => value,
     useAnimatedReaction: () => undefined,
   };
