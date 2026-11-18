@@ -1,4 +1,5 @@
 import { appStorage } from '../storage/mmkv';
+import { securePreferences } from '../storage/securePreferences';
 import { APP_STORE_NAMES } from '../storage/storeConstant';
 import { migrateService } from '@/migrations/migrations';
 import { traceAndroidInstant } from '../utils/androidTrace';
@@ -151,9 +152,12 @@ export function loadTransactionBroadcastWatcherService() {
 
 export function loadSecurityEngineService() {
   return loadFeatureService('securityEngineService', async () => {
-    const { SecurityEngineService } = await import('./securityEngine');
+    const [{ SecurityEngineService }, storageAdapter] = await Promise.all([
+      import('./securityEngine'),
+      securePreferences.getAdapter(APP_STORE_NAMES.securityEngine),
+    ]);
     const securityEngineService = new SecurityEngineService({
-      storageAdapter: appStorage,
+      storageAdapter,
     });
     await securityEngineService.init();
     registerService('securityEngineService', securityEngineService);
@@ -198,11 +202,14 @@ export function loadCurrencyService() {
 
 export function loadCustomRPCService() {
   return loadFeatureService('customRPCService', async () => {
-    const { CustomRPCService } = await import('./customRPCService');
+    const [{ CustomRPCService }, storageAdapter] = await Promise.all([
+      import('./customRPCService'),
+      securePreferences.getAdapter(APP_STORE_NAMES.rpc),
+    ]);
     registerService(
       'customRPCService',
       new CustomRPCService({
-        storageAdapter: appStorage,
+        storageAdapter,
       }),
     );
   });
@@ -361,9 +368,12 @@ export function loadSessionService() {
 
 export function loadWhitelistService() {
   return loadFeatureService('whitelistService', async () => {
-    const { WhitelistService } = await import('./whitelist');
+    const [{ WhitelistService }, storageAdapter] = await Promise.all([
+      import('./whitelist'),
+      securePreferences.getAdapter(APP_STORE_NAMES.whitelist),
+    ]);
     const whitelistService = new WhitelistService({
-      storageAdapter: appStorage,
+      storageAdapter,
     });
     migrateService(APP_STORE_NAMES.whitelist, whitelistService);
     registerService('whitelistService', whitelistService);

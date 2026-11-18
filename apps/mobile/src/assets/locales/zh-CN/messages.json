@@ -156,6 +156,17 @@
     "IMPORTED_HD_KEYRING_NEED_PASSPHRASE": "通过助记词（密码短语）导入"
   },
   "page": {
+    "securePreferences": {
+      "damagedTitle": "部分安全设置可能已损坏",
+      "damagedDescription": "请将以下设置恢复为默认值，并在下次交易前检查这些设置。",
+      "unavailableTitle": "安全设置暂时不可用",
+      "unavailableDescription": "Rabby 已对暂时无法校验的设置使用默认值。对以下设置的修改无法保存。请解锁设备并重新打开 Rabby 后重试。",
+      "reset": "重置设置",
+      "whitelist": "转账白名单",
+      "contactBook": "地址簿与备注",
+      "securityEngine": "安全引擎规则与名单",
+      "rpc": "自定义 RPC"
+    },
     "transactions": {
       "explain": {
         "unknown": "合约交互",
