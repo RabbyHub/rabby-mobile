@@ -855,18 +855,10 @@ index 507b45d..88ee912 100644
      }
      return self;
  }
-@@ -394,6 +388,22 @@ - (void)scrollViewWillEndDragging:(UIScrollView *)scrollView withVelocity:(CGPoi
+@@ -394,6 +388,14 @@ - (void)scrollViewWillEndDragging:(UIScrollView *)scrollView withVelocity:(CGPoi
      }
  }
  
-+- (void)scrollViewDidEndDragging:(UIScrollView *)scrollView willDecelerate:(BOOL)decelerate {
-+    // UIKit does not call didEndDecelerating when a drag stops at touch-up.
-+    // Complete the state transition here so consumers can accept taps again.
-+    if (!decelerate) {
-+        [self.eventDispatcher sendEvent:[[RCTOnPageScrollStateChanged alloc] initWithReactTag:self.reactTag state:@"idle" coalescingKey:_coalescingKey++]];
-+    }
-+}
-+
 +- (void)scrollViewDidEndDragging:(UIScrollView *)scrollView willDecelerate:(BOOL)decelerate {
 +    // UIKit does not call didEndDecelerating when a drag stops at touch-up.
 +    // Complete the state transition here so consumers can accept taps again.
