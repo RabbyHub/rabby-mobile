@@ -1,123 +1,97 @@
 package com.rabby.durationpicker
 
-import android.content.res.Configuration
-import android.view.ContextThemeWrapper
-import android.view.Gravity
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
+import android.icu.text.MeasureFormat
+import android.icu.util.MeasureUnit
 import android.widget.LinearLayout
-import android.widget.NumberPicker
-import android.widget.TextView
 import com.facebook.react.bridge.Arguments
 import com.facebook.react.bridge.WritableMap
 import com.facebook.react.uimanager.ThemedReactContext
 import com.facebook.react.uimanager.UIManagerHelper
 import com.facebook.react.uimanager.events.Event
+import java.util.Locale
 
 class DurationPickerView(private val reactContext: ThemedReactContext) : LinearLayout(reactContext) {
-  private var hours: NumberPicker? = null
-  private var minutes: NumberPicker? = null
-  private var session = 0
-  private var value = 0
-  private var dark = false
-  private var pickerEnabled = true
-  private var updating = false
-  private var hoursIdle = true
-  private var minutesIdle = true
+  var durationMinutes = 0
+  var sessionId = 0
+  private var activeSession: Int? = null
   private var pendingRead: Int? = null
+  private val divider = Paint()
+  private val hours = DurationWheel(reactContext, 23, MeasureUnit.HOUR, MeasureFormat.FormatWidth.WIDE)
+  private val minutes = DurationWheel(reactContext, 59, MeasureUnit.MINUTE, MeasureFormat.FormatWidth.SHORT)
+  private val finishRead = Runnable(::readWhenSettled)
 
   init {
     orientation = HORIZONTAL
-    gravity = Gravity.CENTER
-    createPickers()
+    for (wheel in listOf(hours, minutes)) {
+      addView(wheel, LayoutParams(0, LayoutParams.MATCH_PARENT, 1f))
+      wheel.onSelectionChange = { emit("topDurationChange") }
+    }
+    setDarkTheme(false)
   }
 
-  private fun createPickers() {
-    hours?.setOnValueChangedListener(null)
-    minutes?.setOnValueChangedListener(null)
-    hours?.setOnScrollListener(null)
-    minutes?.setOnScrollListener(null)
-    removeAllViews()
-    val config = Configuration(resources.configuration)
-    config.uiMode = (config.uiMode and Configuration.UI_MODE_NIGHT_MASK.inv()) or
-      if (dark) Configuration.UI_MODE_NIGHT_YES else Configuration.UI_MODE_NIGHT_NO
-    val context = ContextThemeWrapper(reactContext.createConfigurationContext(config),
-      if (dark) android.R.style.Theme_Material else android.R.style.Theme_Material_Light)
-    fun picker(maximum: Int, isHours: Boolean): NumberPicker = NumberPicker(context).apply {
-      minValue = 0
-      maxValue = maximum
-      wrapSelectorWheel = false
-      descendantFocusability = FOCUS_BLOCK_DESCENDANTS
-      setFormatter { it.toString().padStart(2, '0') }
-      setOnValueChangedListener { _, _, _ ->
-        if (!updating) {
-          this@DurationPickerView.value = currentMinutes()
-          emit("topDurationChange")
-        }
-      }
-      setOnScrollListener { _, state ->
-        if (isHours) hoursIdle = state == NumberPicker.OnScrollListener.SCROLL_STATE_IDLE
-        else minutesIdle = state == NumberPicker.OnScrollListener.SCROLL_STATE_IDLE
-        finishReadIfIdle()
-      }
-      setOnTouchListener { _, event ->
-        parent?.requestDisallowInterceptTouchEvent(event.actionMasked != android.view.MotionEvent.ACTION_UP &&
-          event.actionMasked != android.view.MotionEvent.ACTION_CANCEL)
-        false
-      }
-      isEnabled = pickerEnabled
-    }
-    hours = picker(23, true)
-    minutes = picker(59, false)
-    hours?.contentDescription = "h"
-    minutes?.contentDescription = "min"
-    fun unit(text: String) = TextView(context).apply {
-      this.text = text
-      textSize = 18f
-      importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_NO
-    }
-    addView(hours, LayoutParams(0, LayoutParams.MATCH_PARENT, 1f))
-    addView(unit("h"), LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT))
-    addView(minutes, LayoutParams(0, LayoutParams.MATCH_PARENT, 1f))
-    addView(unit("min"), LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT))
-    hoursIdle = true
-    minutesIdle = true
-    applyMinutes(value)
-  }
-
-  fun setMinutes(next: Int) {
-    val normalized = next.coerceIn(0, 1439)
-    if (normalized == currentMinutes()) { value = normalized; return }
-    applyMinutes(normalized)
-  }
-  private fun applyMinutes(next: Int) {
-    value = next.coerceIn(0, 1439)
-    updating = true
-    hours?.value = value / 60
-    minutes?.value = value % 60
-    updating = false
-  }
-  fun setSession(next: Int) {
-    if (session == next) return
+  // Fabric may deliver the two props in either order. Subsequent values in the
+  // same session are JS echoes of previews and can lag behind a native fling.
+  fun applySession() {
+    if (sessionId == activeSession) return
     pendingRead = null
-    session = next
-    createPickers()
+    activeSession = sessionId
+    val initial = durationMinutes.coerceIn(0, 1439)
+    hours.select(initial / 60)
+    minutes.select(initial % 60)
   }
-  fun setDarkTheme(next: Boolean) { if (dark != next) { dark = next; createPickers() } }
-  fun setPickerEnabled(next: Boolean) { pickerEnabled = next; hours?.isEnabled = next; minutes?.isEnabled = next }
-  private fun currentMinutes() = (hours?.value ?: 0) * 60 + (minutes?.value ?: 0)
+
+  fun setLocale(tag: String?) {
+    val locale = if (tag.isNullOrBlank()) resources.configuration.locales[0] else Locale.forLanguageTag(tag)
+    hours.setLabelLocale(locale)
+    minutes.setLabelLocale(locale)
+  }
+
+  fun setDarkTheme(dark: Boolean) {
+    val textColor = if (dark) Color.WHITE else Color.BLACK
+    hours.setLabelColor(textColor)
+    minutes.setLabelColor(textColor)
+    divider.color = if (dark) 0x20FFFFFF else 0x0A000000
+    invalidate()
+  }
+
+  override fun dispatchDraw(canvas: Canvas) {
+    super.dispatchDraw(canvas)
+    val top = hours.paddingTop.toFloat()
+    val bottom = height - hours.paddingBottom.toFloat()
+    canvas.drawRect(0f, top, width.toFloat(), top + 1f, divider)
+    canvas.drawRect(0f, bottom - 1f, width.toFloat(), bottom, divider)
+  }
+
+  fun setPickerEnabled(enabled: Boolean) {
+    hours.isEnabled = enabled
+    minutes.isEnabled = enabled
+  }
 
   fun readCurrentValue(requestId: Int) {
     pendingRead = requestId
-    finishReadIfIdle()
+    removeCallbacks(finishRead)
+    readWhenSettled()
   }
-  private fun finishReadIfIdle() {
-    if (!hoursIdle || !minutesIdle) return
-    val requestId = pendingRead ?: return
-    pendingRead = null
-    emit("topValueRead", requestId)
+
+  // SnapHelper can already own a fling before RecyclerView enters SETTLING.
+  // Check only while a Confirm is pending, including that first animation frame.
+  private fun readWhenSettled() {
+    val request = pendingRead ?: return
+    if (hours.isSettled && minutes.isSettled) {
+      pendingRead = null
+      emit("topValueRead", request)
+    } else {
+      postOnAnimation(finishRead)
+    }
   }
+
   private fun emit(name: String, requestId: Int? = null) {
+    val session = activeSession ?: return
     val payload = Arguments.createMap().apply {
-      putInt("minutes", currentMinutes())
+      putInt("minutes", hours.selected * 60 + minutes.selected)
       putInt("sessionId", session)
       requestId?.let { putInt("requestId", it) }
     }
@@ -125,7 +99,31 @@ class DurationPickerView(private val reactContext: ThemedReactContext) : LinearL
       DurationEvent(UIManagerHelper.getSurfaceId(this), id, name, payload)
     )
   }
-  override fun onDetachedFromWindow() { pendingRead = null; super.onDetachedFromWindow() }
+
+  // Fabric owns the outer frame. RecyclerView also needs Android layout passes
+  // after an imperative reset or a locale change within that same frame.
+  private val layoutWheels = Runnable {
+    if (isLayoutRequested && width > 0 && height > 0) {
+      measure(MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY),
+        MeasureSpec.makeMeasureSpec(height, MeasureSpec.EXACTLY))
+      layout(left, top, right, bottom)
+    }
+  }
+
+  override fun requestLayout() {
+    super.requestLayout()
+    if (isAttachedToWindow && !isInLayout) {
+      removeCallbacks(layoutWheels)
+      postOnAnimation(layoutWheels)
+    }
+  }
+
+  override fun onDetachedFromWindow() {
+    pendingRead = null
+    removeCallbacks(finishRead)
+    removeCallbacks(layoutWheels)
+    super.onDetachedFromWindow()
+  }
 }
 
 private class DurationEvent(surfaceId: Int, viewId: Int, private val name: String,
