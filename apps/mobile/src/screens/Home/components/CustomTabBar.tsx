@@ -1,5 +1,5 @@
 import { View, Pressable, ViewStyle } from 'react-native';
-import { Dimensions, useWindowDimensions } from '@/core/dimensions';
+import { getDimensionsSnapshot, useWindowDimensions } from '@/core/dimensions';
 import { MaterialTabBar } from 'react-native-collapsible-tab-view';
 
 import React, { useCallback, useRef } from 'react';
@@ -213,7 +213,7 @@ const indicatorStyles = createGetStyles2024(
     },
   },
   ({ isLight, colors2024 }) => {
-    const winWidth = Dimensions.get('window').width;
+    const winWidth = getDimensionsSnapshot('window').width;
     const indicatorWidth = getHomeTabIndicatorWidth(winWidth);
     const rightPressableWidth = indicatorWidth * 0.5;
     const rightPressableOffset = indicatorWidth - rightPressableWidth;

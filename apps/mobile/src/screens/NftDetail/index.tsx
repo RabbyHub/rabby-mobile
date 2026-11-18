@@ -2,7 +2,7 @@
 import React, { useCallback, useEffect, useMemo } from 'react';
 import dayjs from 'dayjs';
 import { StyleSheet, View, ScrollView } from 'react-native';
-import { Dimensions as AppDimensions } from '@/core/dimensions';
+import { getDimensionsSnapshot } from '@/core/dimensions';
 import BigNumber from 'bignumber.js';
 import { getCHAIN_ID_LIST } from '@/constant/projectLists';
 import { useTheme2024 } from '@/hooks/theme';
@@ -432,7 +432,7 @@ const getStyle = createGetStyles2024(
   ({ colors2024, colors, safeAreaInsets }) => {
     // Per style build, so a fold/rotation is honoured instead of freezing the
     // width captured when this module was first imported.
-    const screenWidth = AppDimensions.get('window').width;
+    const screenWidth = getDimensionsSnapshot('window').width;
     return {
       screenRoot: {
         flex: 1,
