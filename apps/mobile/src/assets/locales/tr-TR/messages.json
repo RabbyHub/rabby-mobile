@@ -2235,7 +2235,9 @@
           "attachedTpSlUnresolved": "Bu piyasa için önceki bir TP/SL gönderimi hâlâ çözümlenmedi. Tekrar denemeden önce Açık Emirleri ve Pozisyonları kontrol edin.",
           "orderFilled": "Emir gerçekleşti.",
           "orderPlaced": "Emir verildi.",
-          "orderFailed": "Emir başarısız."
+          "orderFailed": "Emir başarısız.",
+          "scale": "Kademeli Emir",
+          "scaleDescription": "Bir fiyat aralığı belirleyip birden fazla limit alt emri verin"
         },
         "orderError": {
           "aloBuyWouldMatch": "Hemen eşleşmesini önlemek için post-only fiyatı en iyi satış fiyatından düşük olmalıdır.",
@@ -2528,6 +2530,35 @@
           "cancelPartial": "{{success}} emir iptal edildi; {{failed}} başarısız",
           "cancelFailed": "Emir iptal edilemedi",
           "cancelContextChanged": "Hesap değişti. Tekrar deneyin."
+        },
+        "scaleOrder": {
+          "lowerPrice": "Alt Fiyat",
+          "upperPrice": "Üst Fiyat",
+          "size": "Miktar",
+          "count": "Emir Sayısı (2–100)",
+          "distribution": "Miktar Dağılımı",
+          "flat": "Eşit",
+          "ascending": "Artan",
+          "descending": "Azalan",
+          "flatDescription": "Her emre eşit miktar ayrılır",
+          "ascendingDescription": "Fiyat yükseldikçe emir miktarı artar",
+          "descendingDescription": "Fiyat düştükçe emir miktarı artar",
+          "previewBuy": "Alışı Önizle",
+          "previewSell": "Satışı Önizle",
+          "totalSize": "Toplam Miktar",
+          "averagePrice": "Ortalama Fiyat",
+          "result": "{{accepted}} kabul, {{rejected}} ret, {{unresolved}} onay bekliyor",
+          "unknown": "Emir sonucu onay bekliyor. Yeni emir vermeden önce açık emirleri ve işlem geçmişini kontrol edin.",
+          "errors": {
+            "range": "Geçerli fiyatlar girin; üst fiyat alt fiyattan yüksek olmalıdır.",
+            "count": "2 ile 100 arasında bir tam sayı girin.",
+            "size": "Varlığın yerel tokeni cinsinden geçerli bir miktar girin.",
+            "duplicatePrice": "Yuvarlama sonrası fiyatlar çakışıyor. Aralığı genişletin veya emir sayısını azaltın.",
+            "minimum": "Yuvarlama sonrası her alt emir en az $10 değerinde olmalıdır.",
+            "maximum": "Toplam tutar piyasa sınırını aşıyor.",
+            "capacity": "Bu emir grubu için işlem kapasitesi yetersiz.",
+            "reduceOnly": "Toplam miktar azaltılabilecek pozisyonu aşıyor."
+          }
         }
       },
       "limitOrders": "Limit Emirler",

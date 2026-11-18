@@ -1,3 +1,4 @@
+import { PerpsProScaleOrderConfirmationSheet } from '../components/trade/PerpsProScaleOrderConfirmationSheet';
 import { Text } from '@/components/Typography';
 import type { PerpsQuoteAsset } from '@/constant/perps';
 import type { PerpsProInfoTab } from '@/core/services/perpsService';
@@ -1662,7 +1663,7 @@ export const PerpsProScene: React.FC<{
         />
       ) : null}
       <PerpsProOrderConfirmationSheet
-        command={trade.review}
+        command={trade.review?.type === 'scaleOrder' ? null : trade.review}
         estimatedLiquidation={trade.estimatedLiquidation}
         market={trade.market}
         onClose={trade.closeReview}
@@ -1670,6 +1671,12 @@ export const PerpsProScene: React.FC<{
         onToggleSkip={() => trade.setSkipConfirmation(value => !value)}
         pending={trade.pending}
         skipConfirmation={trade.skipConfirmation}
+      />
+      <PerpsProScaleOrderConfirmationSheet
+        command={trade.review?.type === 'scaleOrder' ? trade.review : null}
+        onClose={trade.closeReview}
+        onConfirm={trade.confirmReview}
+        pending={trade.pending}
       />
       <PerpsProSheetGlobalEdgeTarget />
     </PerpsProFieldExplanationProvider>

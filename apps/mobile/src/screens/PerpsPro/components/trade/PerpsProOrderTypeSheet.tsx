@@ -54,6 +54,11 @@ export const PerpsProOrderTypeSheet: React.FC<{
       label: t('page.perps.pro.trade.conditional'),
       value: 'conditional',
     },
+    {
+      description: t('page.perps.pro.trade.scaleDescription'),
+      label: t('page.perps.pro.trade.scale'),
+      value: 'scale',
+    },
   ];
 
   return (

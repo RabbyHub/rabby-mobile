@@ -32,7 +32,7 @@ type PerpsProTradePriceFieldProps = {
   suffix?: string;
   suffixActive?: boolean;
   value: string;
-  variant?: 'default' | 'conditionalExecution';
+  variant?: 'default' | 'conditionalExecution' | 'scale';
 };
 
 export const PerpsProTradePriceField = React.memo(
@@ -94,7 +94,11 @@ export const PerpsProTradePriceField = React.memo(
           onChangeText={onChangeText}
           onFocus={() => setFocused(true)}
           pointerEvents={onPressValue ? 'none' : 'auto'}
-          style={[styles.input, animatedInputStyle]}
+          style={[
+            styles.input,
+            variant === 'scale' && styles.scaleHeight,
+            animatedInputStyle,
+          ]}
           value={value}
         />
       </View>
@@ -102,9 +106,12 @@ export const PerpsProTradePriceField = React.memo(
     const fieldStyle = [
       styles.fieldArea,
       variant === 'conditionalExecution' ? styles.conditionalField : null,
+      variant === 'scale' ? styles.scaleField : null,
     ];
     return (
-      <View style={styles.container} testID="perps-pro-trade-price-field">
+      <View
+        style={[styles.container, variant === 'scale' && styles.scaleHeight]}
+        testID="perps-pro-trade-price-field">
         {onPressValue ? (
           <Pressable
             accessibilityRole="button"
@@ -172,6 +179,11 @@ export const PerpsProTradePriceField = React.memo(
 PerpsProTradePriceField.displayName = 'PerpsProTradePriceField';
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
+  scaleHeight: { height: 42 },
+  scaleField: {
+    height: 42,
+    backgroundColor: colors2024[isLight ? 'neutral-bg-0' : 'neutral-bg-5'],
+  },
   container: {
     alignItems: 'center',
     flexDirection: 'row',

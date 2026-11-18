@@ -2235,7 +2235,9 @@
           "attachedTpSlUnresolved": "Pengiriman TP/SL sebelumnya untuk pasar ini belum terselesaikan. Periksa Order Terbuka dan Posisi sebelum mencoba lagi.",
           "orderFilled": "Order terisi.",
           "orderPlaced": "Order ditempatkan.",
-          "orderFailed": "Order gagal."
+          "orderFailed": "Order gagal.",
+          "scale": "Order Bertingkat",
+          "scaleDescription": "Tetapkan rentang harga dan tempatkan beberapa sub-order limit"
         },
         "orderError": {
           "aloBuyWouldMatch": "Harga post-only harus lebih rendah dari harga jual terbaik agar tidak langsung terisi.",
@@ -2528,6 +2530,35 @@
           "cancelPartial": "{{success}} order dibatalkan; {{failed}} gagal",
           "cancelFailed": "Gagal membatalkan order",
           "cancelContextChanged": "Akun telah berubah. Coba lagi."
+        },
+        "scaleOrder": {
+          "lowerPrice": "Harga Terendah",
+          "upperPrice": "Harga Tertinggi",
+          "size": "Jumlah",
+          "count": "Jumlah Order (2–100)",
+          "distribution": "Distribusi Jumlah",
+          "flat": "Merata",
+          "ascending": "Menaik",
+          "descending": "Menurun",
+          "flatDescription": "Setiap order mendapatkan jumlah yang sama",
+          "ascendingDescription": "Jumlah order bertambah saat harga naik",
+          "descendingDescription": "Jumlah order bertambah saat harga turun",
+          "previewBuy": "Pratinjau Beli",
+          "previewSell": "Pratinjau Jual",
+          "totalSize": "Jumlah Total",
+          "averagePrice": "Harga Rata-rata",
+          "result": "{{accepted}} diterima, {{rejected}} ditolak, {{unresolved}} menunggu konfirmasi",
+          "unknown": "Hasil order menunggu konfirmasi. Periksa order terbuka dan riwayat transaksi sebelum membuat order lain.",
+          "errors": {
+            "range": "Masukkan harga valid; harga tertinggi harus melebihi harga terendah.",
+            "count": "Masukkan bilangan bulat antara 2 dan 100.",
+            "size": "Masukkan jumlah token asli aset yang valid.",
+            "duplicatePrice": "Harga bertumpuk setelah pembulatan. Perluas rentang atau kurangi jumlah order.",
+            "minimum": "Setiap sub-order harus bernilai setidaknya $10 setelah pembulatan.",
+            "maximum": "Jumlah total melebihi batas pasar.",
+            "capacity": "Kapasitas perdagangan tidak cukup untuk kumpulan order ini.",
+            "reduceOnly": "Jumlah total melebihi posisi yang dapat dikurangi."
+          }
         }
       },
       "limitOrders": "Limit Order",
