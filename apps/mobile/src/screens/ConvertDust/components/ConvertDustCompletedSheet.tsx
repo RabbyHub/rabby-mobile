@@ -23,12 +23,12 @@ import Lottie from 'lottie-react-native';
 import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  Dimensions,
   FlatList,
   TouchableOpacity,
   useWindowDimensions,
   View,
 } from 'react-native';
+import { getDimensionsSnapshot } from '@/core/dimensions';
 import { TaskStatusIcon } from './LowValueTokenSelector';
 import type { TaskItemStatus } from '../hooks/useBatchSwapTask';
 import { LocalPannableDraggableView } from '@/components/customized/BottomSheetDraggableView';
@@ -188,7 +188,7 @@ export function ConvertDustCompletedSheet({
       ref={modalRef}
       enableDynamicSizing
       enableContentPanningGesture={false}
-      maxDynamicContentSize={Dimensions.get('screen').height * 0.98}
+      maxDynamicContentSize={getDimensionsSnapshot('screen').height * 0.98}
       backgroundStyle={styles.sheetBackground}
       handleStyle={styles.sheetHandle}
       handleIndicatorStyle={styles.sheetHandleIndicator}

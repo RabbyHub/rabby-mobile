@@ -8,7 +8,8 @@ import { HistoryDetailArrow } from '../HistoryDetailArrow';
 import type { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import React, { useMemo } from 'react';
 import RcIconJumpCC from '@/assets2024/icons/history/IconJumpCC.svg';
-import { Dimensions, ScrollView, TouchableOpacity, View } from 'react-native';
+import { ScrollView, TouchableOpacity, View } from 'react-native';
+import { getDimensionsSnapshot } from '@/core/dimensions';
 import type { TransactionGroup } from '@/core/services/transactionHistory';
 
 import RcIconSwitchArrow from '@/assets2024/icons/history/IconSwitchArrow.svg';
@@ -495,7 +496,7 @@ const getStyle = createGetStyles2024(
     },
     singleColomnBox: {
       // flex: 1,
-      width: Dimensions.get('window').width - 160,
+      width: getDimensionsSnapshot('window').width - 160,
       flexDirection: 'column',
       // alignItems: 'center',
     },

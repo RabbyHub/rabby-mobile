@@ -10,12 +10,12 @@ import React, { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Animated,
-  Dimensions,
   ImageBackground,
   Platform,
   Pressable,
   View,
 } from 'react-native';
+import { getDimensionsSnapshot } from '@/core/dimensions';
 import { TokenDetailHeaderArea } from './components/HeaderArea';
 import { formatPrice } from '@/utils/number';
 import { GetRootScreenNavigationProps } from '@/navigation-type';
@@ -55,7 +55,6 @@ import {
 export type { RelatedDeFiType, TokenFromAddressItem } from './types';
 
 const isAndroid = Platform.OS === 'android';
-const ScreenWidth = Dimensions.get('window').width;
 
 const TokenDetailContent = () => {
   const route =
@@ -499,7 +498,7 @@ const getStyle = createGetStyles2024(ctx => {
       position: 'absolute',
       top: 0,
       right: 0,
-      width: ScreenWidth,
+      width: getDimensionsSnapshot('window').width,
       overflow: 'hidden',
     },
     balanceOverviewContainer: {

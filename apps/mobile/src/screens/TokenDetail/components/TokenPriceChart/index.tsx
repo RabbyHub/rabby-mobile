@@ -11,12 +11,8 @@ import React, {
   useMemo,
   useState,
 } from 'react';
-import {
-  Dimensions,
-  ImageBackground,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { ImageBackground, TouchableOpacity, View } from 'react-native';
+import { getDimensionsSnapshot } from '@/core/dimensions';
 import { LineChart } from 'react-native-wagmi-charts';
 import { CurveLoader } from './CurveLoader';
 import { DataHeaderInfo, DataHeaderInfoSkeleton } from './DataHeaderInfo';
@@ -36,8 +32,6 @@ import { Text } from '@/components/Typography';
 const DATE_FORMATTER = 'MMM DD, YYYY';
 
 const isRealTimeKey = (key: TabKey) => REAL_TIME_TAB_LIST.includes(key);
-
-const winInfo = Dimensions.get('window');
 
 interface Props {
   token: ITokenItem;
@@ -338,7 +332,7 @@ function Chart({
         <>
           <LineChart
             height={114}
-            width={winInfo.width - 56}
+            width={getDimensionsSnapshot('window').width - 56}
             shape={d3Shape.curveCatmullRom}
             style={styles.chart}>
             <LineChart.Path
@@ -424,7 +418,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     alignItems: 'center',
   },
   emptyChart: {
-    width: winInfo.width - 56,
+    width: getDimensionsSnapshot('window').width - 56,
     height: 115,
     // marginTop: 24,
     //marginHorizontal: 20,

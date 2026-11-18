@@ -1,5 +1,6 @@
 import React from 'react';
-import { Dimensions, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { svsLayout } from '@/hooks/useAppLayout';
 import Animated, {
   makeMutable,
   runOnJS,
@@ -23,11 +24,19 @@ import {
 
 const MAX_ACCOUNT_ROWS = 4;
 const MAX_RECORD_ROWS = 2;
-const screenLayout = Dimensions.get('window');
 const HANDLE_SIZE = 48;
-const PANEL_WIDTH = Math.min(screenLayout.width - 24, 560);
-const PANEL_BODY_WIDTH = PANEL_WIDTH - HANDLE_SIZE;
-const PANEL_HEIGHT = Math.min(308, screenLayout.height * 0.8);
+
+function getPanelWidth() {
+  'worklet';
+
+  return Math.min(svsLayout.winLayout.value.width - 24, 560);
+}
+
+function getPanelHeight() {
+  'worklet';
+
+  return Math.min(308, svsLayout.winLayout.value.height * 0.8);
+}
 const VERTICAL_EDGE_PADDING = 40;
 const HORIZONTAL_EDGE_PADDING = 0;
 const SIDE_LEFT = 0;
@@ -121,13 +130,13 @@ function getMinHandleTop() {
 function getMaxHandleTop() {
   'worklet';
 
-  return screenLayout.height - VERTICAL_EDGE_PADDING - HANDLE_SIZE;
+  return svsLayout.winLayout.value.height - VERTICAL_EDGE_PADDING - HANDLE_SIZE;
 }
 
 function getHandleOffsetY(handleTop: number) {
   'worklet';
 
-  if (PANEL_HEIGHT <= HANDLE_SIZE) {
+  if (getPanelHeight() <= HANDLE_SIZE) {
     return 0;
   }
 
@@ -136,7 +145,7 @@ function getHandleOffsetY(handleTop: number) {
   const ratio =
     max === min ? 0 : (clamp(handleTop, min, max) - min) / (max - min);
 
-  return ratio * (PANEL_HEIGHT - HANDLE_SIZE);
+  return ratio * (getPanelHeight() - HANDLE_SIZE);
 }
 
 function getCollapsedHandleLeft(side: number) {
@@ -144,7 +153,7 @@ function getCollapsedHandleLeft(side: number) {
 
   return side === SIDE_LEFT
     ? HORIZONTAL_EDGE_PADDING
-    : screenLayout.width - HANDLE_SIZE - HORIZONTAL_EDGE_PADDING;
+    : svsLayout.winLayout.value.width - HANDLE_SIZE - HORIZONTAL_EDGE_PADDING;
 }
 
 function getExpandedPanelLeft(side: number) {
@@ -152,13 +161,15 @@ function getExpandedPanelLeft(side: number) {
 
   return side === SIDE_LEFT
     ? HORIZONTAL_EDGE_PADDING
-    : screenLayout.width - PANEL_WIDTH - HORIZONTAL_EDGE_PADDING;
+    : svsLayout.winLayout.value.width -
+        getPanelWidth() -
+        HORIZONTAL_EDGE_PADDING;
 }
 
 function getExpandedHandleLeft(side: number) {
   'worklet';
 
-  return side === SIDE_LEFT ? PANEL_WIDTH - HANDLE_SIZE : 0;
+  return side === SIDE_LEFT ? getPanelWidth() - HANDLE_SIZE : 0;
 }
 
 function getPanelBodyLeft(side: number) {
@@ -170,7 +181,7 @@ function getPanelBodyLeft(side: number) {
 function getDockSideByHandleLeft(handleLeft: number) {
   'worklet';
 
-  return handleLeft + HANDLE_SIZE / 2 < screenLayout.width / 2
+  return handleLeft + HANDLE_SIZE / 2 < svsLayout.winLayout.value.width / 2
     ? SIDE_LEFT
     : SIDE_RIGHT;
 }
@@ -536,14 +547,16 @@ export function FloatingKeyringRuntimePanel() {
     const nextPanelTop = clamp(
       handleTop.value - getHandleOffsetY(handleTop.value),
       getMinHandleTop(),
-      screenLayout.height - VERTICAL_EDGE_PADDING - PANEL_HEIGHT,
+      svsLayout.winLayout.value.height -
+        VERTICAL_EDGE_PADDING -
+        getPanelHeight(),
     );
 
     return {
       left: getExpandedPanelLeft(dockSide.value),
       top: nextPanelTop,
-      width: PANEL_WIDTH,
-      height: PANEL_HEIGHT,
+      width: getPanelWidth(),
+      height: getPanelHeight(),
     };
   }, [collapsed]);
 
@@ -567,7 +580,7 @@ export function FloatingKeyringRuntimePanel() {
 
     return {
       opacity: hidden ? 0 : 1,
-      width: hidden ? 0 : PANEL_BODY_WIDTH,
+      width: hidden ? 0 : getPanelWidth() - HANDLE_SIZE,
       left: getPanelBodyLeft(activeSide),
       borderTopLeftRadius: activeSide === SIDE_LEFT ? 10 : 0,
       borderBottomLeftRadius: activeSide === SIDE_LEFT ? 10 : 0,
@@ -636,7 +649,9 @@ export function FloatingKeyringRuntimePanel() {
         dragHandleLeft.value = clamp(
           dragStartLeft.value + event.translationX,
           HORIZONTAL_EDGE_PADDING,
-          screenLayout.width - HANDLE_SIZE - HORIZONTAL_EDGE_PADDING,
+          svsLayout.winLayout.value.width -
+            HANDLE_SIZE -
+            HORIZONTAL_EDGE_PADDING,
         );
         dragHandleTop.value = clamp(
           dragStartTop.value + event.translationY,

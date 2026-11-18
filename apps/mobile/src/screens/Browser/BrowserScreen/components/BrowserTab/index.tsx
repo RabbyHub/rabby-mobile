@@ -10,7 +10,8 @@ import React, {
 } from 'react';
 import type { Ref } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
-import { Dimensions, Linking, Platform, StyleSheet, View } from 'react-native';
+import { Linking, Platform, StyleSheet, View } from 'react-native';
+import { getDimensionsSnapshot } from '@/core/dimensions';
 import type { WebViewProps } from 'react-native-webview';
 import WebView from 'react-native-webview';
 
@@ -106,7 +107,7 @@ export const BrowserTab = ({
   embedHtml,
   url,
   webviewProps,
-  webviewContainerMaxHeight = Dimensions.get('screen').height,
+  webviewContainerMaxHeight = getDimensionsSnapshot('screen').height,
   style,
   tabsCount,
   onUpdateTab,
@@ -229,7 +230,7 @@ export const BrowserTab = ({
       }
 
       const change = () => {
-        const screenWidth = Dimensions.get('screen').width;
+        const screenWidth = getDimensionsSnapshot('screen').width;
         const pageWidth = Math.max(screenWidth, 1440); // Ensure at least 1440px width
         const initScale = coerceInteger(screenWidth / pageWidth, 1);
 
@@ -358,7 +359,9 @@ export const BrowserTab = ({
   });
 
   const handleOpenInBrowser = useMemoizedFn(() => {
-    if (!canOpenExternalUrl()) return;
+    if (!canOpenExternalUrl()) {
+      return;
+    }
     Linking.openURL(webviewState.resolvedUrl);
   });
 
@@ -759,7 +762,9 @@ export const BrowserTab = ({
                           // }
                         }}
                         onFileDownload={e => {
-                          if (!canOpenExternalUrl()) return;
+                          if (!canOpenExternalUrl()) {
+                            return;
+                          }
                           Linking.openURL(e.nativeEvent.downloadUrl);
                         }}
                         onShouldStartLoadWithRequest={nativeEvent => {
@@ -1070,7 +1075,7 @@ const getStyles = createGetStyles2024(ctx =>
       justifyContent: 'space-between',
       alignItems: 'center',
       width: '100%',
-      maxWidth: Dimensions.get('window').width,
+      maxWidth: getDimensionsSnapshot('window').width,
       height: ScreenLayouts2.dappWebViewControlHeaderHeight,
       paddingHorizontal: 20,
       paddingVertical: 0,
@@ -1128,7 +1133,7 @@ const getStyles = createGetStyles2024(ctx =>
       flex: 1,
       height: '100%',
       // maxHeight:
-      //   Dimensions.get('window').height -
+      //   getDimensionsSnapshot('window').height -
       //   ScreenLayouts2.dappWebViewControlHeaderHeight -
       //   ScreenLayouts2.TabbedDappWebViewControlNavHeight,
       width: '100%',

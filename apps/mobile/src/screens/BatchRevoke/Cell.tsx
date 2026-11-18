@@ -1,7 +1,8 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
-import { Dimensions, View } from 'react-native';
+import { View } from 'react-native';
+import { getDimensionsSnapshot } from '@/core/dimensions';
 import { Text } from '@/components/Typography';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
@@ -40,10 +41,12 @@ export const CellText: React.FC<any> = ({ children }) => {
   );
 };
 
-const { width: windowWidth } = Dimensions.get('window');
+export function getCellWidths() {
+  const { width: windowWidth } = getDimensionsSnapshot('window');
 
-export const CELL_WIDTH = {
-  ASSET: (84 / 393) * windowWidth,
-  REVOKE_FROM: (132 / 393) * windowWidth,
-  GAS_FEE: (81 / 393) * windowWidth,
-};
+  return {
+    ASSET: (84 / 393) * windowWidth,
+    REVOKE_FROM: (132 / 393) * windowWidth,
+    GAS_FEE: (81 / 393) * windowWidth,
+  };
+}

@@ -1,5 +1,6 @@
 import React from 'react';
-import { Dimensions, View } from 'react-native';
+import { View } from 'react-native';
+import { svsLayout } from '@/hooks/useAppLayout';
 import Animated, {
   makeMutable,
   runOnJS,
@@ -31,11 +32,13 @@ const modalDebugCount = makeMutable(0);
 const modalDebugSummary = makeMutable('No blocking modals');
 const modalDebugDetails = makeMutable('none');
 
-const screenLayout = Dimensions.get('window');
-
 const HANDLE_SIZE = 60;
-const PANEL_WIDTH = 320;
-const PANEL_BODY_WIDTH = PANEL_WIDTH - HANDLE_SIZE;
+
+function getPanelWidth() {
+  'worklet';
+
+  return 320;
+}
 const PANEL_HEIGHT_MODAL_ONLY = 132;
 const PANEL_HEIGHT_FULL = 156;
 const UNLOCK_STATUS_BAR_WIDTH = 168;
@@ -79,7 +82,7 @@ function getMinHandleTop() {
 function getMaxHandleTop() {
   'worklet';
 
-  return screenLayout.height - VERTICAL_EDGE_PADDING - HANDLE_SIZE;
+  return svsLayout.winLayout.value.height - VERTICAL_EDGE_PADDING - HANDLE_SIZE;
 }
 
 function getHandleOffsetY(handleTop: number, panelHeight: number) {
@@ -102,7 +105,7 @@ function getCollapsedHandleLeft(side: number) {
 
   return side === SIDE_LEFT
     ? HORIZONTAL_EDGE_PADDING
-    : screenLayout.width - HANDLE_SIZE - HORIZONTAL_EDGE_PADDING;
+    : svsLayout.winLayout.value.width - HANDLE_SIZE - HORIZONTAL_EDGE_PADDING;
 }
 
 function getExpandedPanelLeft(side: number) {
@@ -110,19 +113,21 @@ function getExpandedPanelLeft(side: number) {
 
   return side === SIDE_LEFT
     ? HORIZONTAL_EDGE_PADDING
-    : screenLayout.width - PANEL_WIDTH - HORIZONTAL_EDGE_PADDING;
+    : svsLayout.winLayout.value.width -
+        getPanelWidth() -
+        HORIZONTAL_EDGE_PADDING;
 }
 
 function getExpandedHandleLeft(side: number) {
   'worklet';
 
-  return side === SIDE_LEFT ? PANEL_WIDTH - HANDLE_SIZE : 0;
+  return side === SIDE_LEFT ? getPanelWidth() - HANDLE_SIZE : 0;
 }
 
 function getDockSideByHandleLeft(handleLeft: number) {
   'worklet';
 
-  return handleLeft + HANDLE_SIZE / 2 < screenLayout.width / 2
+  return handleLeft + HANDLE_SIZE / 2 < svsLayout.winLayout.value.width / 2
     ? SIDE_LEFT
     : SIDE_RIGHT;
 }
@@ -205,7 +210,7 @@ function FloatingUnlockStatusBar() {
   const positionLeft = useSharedValue(
     Math.max(
       UNLOCK_STATUS_BAR_EDGE_PADDING,
-      screenLayout.width -
+      svsLayout.winLayout.value.width -
         UNLOCK_STATUS_BAR_WIDTH -
         UNLOCK_STATUS_BAR_EDGE_PADDING,
     ),
@@ -234,14 +239,14 @@ function FloatingUnlockStatusBar() {
         positionLeft.value = clamp(
           dragStartLeft.value + event.translationX,
           UNLOCK_STATUS_BAR_EDGE_PADDING,
-          screenLayout.width -
+          svsLayout.winLayout.value.width -
             UNLOCK_STATUS_BAR_WIDTH -
             UNLOCK_STATUS_BAR_EDGE_PADDING,
         );
         positionTop.value = clamp(
           dragStartTop.value + event.translationY,
           UNLOCK_STATUS_BAR_EDGE_PADDING,
-          screenLayout.height -
+          svsLayout.winLayout.value.height -
             UNLOCK_STATUS_BAR_HEIGHT -
             UNLOCK_STATUS_BAR_EDGE_PADDING,
         );
@@ -330,13 +335,13 @@ function FloatingDiagnosticsPanelContent({
     const nextPanelTop = clamp(
       handleTop.value - getHandleOffsetY(handleTop.value, panelHeight),
       getMinHandleTop(),
-      screenLayout.height - VERTICAL_EDGE_PADDING - panelHeight,
+      svsLayout.winLayout.value.height - VERTICAL_EDGE_PADDING - panelHeight,
     );
 
     return {
       left: getExpandedPanelLeft(dockSide.value),
       top: nextPanelTop,
-      width: PANEL_WIDTH,
+      width: getPanelWidth(),
       height: panelHeight,
     };
   }, [collapsed, panelHeight]);
@@ -360,7 +365,7 @@ function FloatingDiagnosticsPanelContent({
 
     return {
       opacity: hidden ? 0 : 1,
-      width: hidden ? 0 : PANEL_BODY_WIDTH,
+      width: hidden ? 0 : getPanelWidth() - HANDLE_SIZE,
       left: dockSide.value === SIDE_LEFT ? 0 : HANDLE_SIZE,
     };
   }, [collapsed]);
@@ -468,7 +473,9 @@ function FloatingDiagnosticsPanelContent({
         dragHandleLeft.value = clamp(
           dragStartLeft.value + event.translationX,
           HORIZONTAL_EDGE_PADDING,
-          screenLayout.width - HANDLE_SIZE - HORIZONTAL_EDGE_PADDING,
+          svsLayout.winLayout.value.width -
+            HANDLE_SIZE -
+            HORIZONTAL_EDGE_PADDING,
         );
         dragHandleTop.value = clamp(
           dragStartTop.value + event.translationY,
@@ -479,7 +486,8 @@ function FloatingDiagnosticsPanelContent({
       .onEnd(() => {
         handleTop.value = dragHandleTop.value;
         dockSide.value =
-          dragHandleLeft.value + HANDLE_SIZE / 2 < screenLayout.width / 2
+          dragHandleLeft.value + HANDLE_SIZE / 2 <
+          svsLayout.winLayout.value.width / 2
             ? SIDE_LEFT
             : SIDE_RIGHT;
         isDragging.value = 0;

@@ -24,7 +24,8 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import { useMemoizedFn } from 'ahooks';
 import React, { useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Dimensions, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import { getDimensionsSnapshot } from '@/core/dimensions';
 import { NotMatchedHolder } from '@/screens/Approvals/components/Layout';
 import { Text } from '@/components/Typography';
 
@@ -92,7 +93,7 @@ export const PerpsSelectTokenPopup: React.FC<{
         linearGradientType: isLight ? 'bg0' : 'bg1',
       })}
       onDismiss={onClose}
-      snapPoints={[Dimensions.get('window').height - 200]}>
+      snapPoints={[getDimensionsSnapshot('window').height - 200]}>
       <AutoLockView style={styles.container}>
         <Text style={styles.title}>
           {t('page.perps.PerpsSelectTokenPopup.title')}
