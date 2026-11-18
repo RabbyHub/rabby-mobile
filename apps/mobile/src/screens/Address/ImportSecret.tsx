@@ -32,7 +32,7 @@ import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 import { zCreate } from '@/core/utils/reexports';
 import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 import { HeaderBackButton } from '@/hooks/navigation';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useCustomHeaderTop } from '@/hooks/useAppLayout';
 
 /** Toast position at the top of screen */
 const TOAST_POSITION_TOP = 30;
@@ -473,9 +473,9 @@ export const ImportSecret = ({ route }: ScreenProps) => {
  */
 export const ImportSecretHeader = () => {
   const { styles } = useTheme2024({ getStyle: getStyles });
-  const insets = useSafeAreaInsets();
+  const headerTop = useCustomHeaderTop();
   return (
-    <View style={[styles.headerOuter, { paddingTop: insets.top }]}>
+    <View style={[styles.headerOuter, { paddingTop: headerTop }]}>
       <ImportSecretHeaderToggle />
     </View>
   );
