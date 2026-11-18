@@ -30,6 +30,17 @@
     }
   },
   "page": {
+    "securePreferences": {
+      "damagedTitle": "Bazı güvenlik ayarları bozulmuş olabilir",
+      "damagedDescription": "Aşağıdaki ayarları varsayılan değerlerine sıfırlayın. Bir sonraki işlemden önce ayarları kontrol edin.",
+      "unavailableTitle": "Güvenlik ayarları geçici olarak kullanılamıyor",
+      "unavailableDescription": "Rabby, doğrulayamadığı ayarlar için varsayılan değerleri kullanır. Aşağıdaki ayarlarda yapılan değişiklikler kaydedilmez. Cihazınızın kilidini açıp Rabby’yi yeniden açın.",
+      "reset": "Ayarları sıfırla",
+      "whitelist": "Transfer izin listesi",
+      "contactBook": "Adres defteri ve notlar",
+      "securityEngine": "Güvenlik kuralları ve listeleri",
+      "rpc": "Özel RPC"
+    },
     "getStart": {
       "goToHome": "Ana Sayfaya Git",
       "createNewAddress": "Yeni Cüzdan Oluştur",
