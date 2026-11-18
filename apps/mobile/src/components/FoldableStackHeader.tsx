@@ -41,6 +41,19 @@ export function FoldableStackHeader(props: NativeStackHeaderProps) {
     if (typeof headerTitle === 'function') {
       return headerTitle({ children: options.title ?? route.name, tintColor });
     }
+    if (typeof headerTitle === 'string') {
+      return (
+        <Text
+          numberOfLines={1}
+          style={[
+            styles.title,
+            options.headerTitleStyle as TextStyle | undefined,
+            { color: tintColor },
+          ]}>
+          {headerTitle}
+        </Text>
+      );
+    }
     if (headerTitle !== undefined) {
       return headerTitle as React.ReactNode;
     }
