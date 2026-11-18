@@ -85,6 +85,24 @@ For `apps/mobile/package.json`, the correct pattern is:
 
 ## Merging Branches That Touch The Same Patch
 
+After **any** merge, the agent that performed it must run a dependency check
+before pushing:
+
+```bash
+yarn install --immutable
+```
+
+- It is cheap with warm caches (seconds, no native builds) and is the only
+  local guard: packaging branches such as `tmp/*` are pushed directly, so no PR
+  CI runs for them, and the packaging workflow itself skips `yarn install`
+  (`[turbo-build] skip extra yarn install in CI`), so a broken patch or a stale
+  lockfile only shows up much later as an unrelated native compile error.
+- If it reports lockfile drift, run `yarn install --mode=update-lockfile`,
+  review the `yarn.lock` diff (a patch edit must show a new `hash=` and
+  `checksum`), commit both files, and re-run `--immutable` to confirm.
+- If the merge touched `.yarn/patches`, also confirm the registered symbol
+  appears once in the applied package before running the check.
+
 Two branches that both modify the same `.yarn/patches/*` file cannot be merged by
 resolving the patch as ordinary text. A line-based merge concatenates hunks that
 apply to the same place and produces a patch that still applies, so nothing fails
