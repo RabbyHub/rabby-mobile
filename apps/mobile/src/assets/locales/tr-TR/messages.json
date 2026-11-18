@@ -2238,7 +2238,8 @@
           "orderPlaced": "Emir verildi.",
           "orderFailed": "Emir başarısız.",
           "scale": "Kademeli Emir",
-          "scaleDescription": "Bir fiyat aralığı belirleyip birden fazla limit alt emri verin"
+          "scaleDescription": "Bir fiyat aralığı belirleyip birden fazla limit alt emri verin",
+          "twap": "TWAP"
         },
         "orderError": {
           "aloBuyWouldMatch": "Hemen eşleşmesini önlemek için post-only fiyatı en iyi satış fiyatından düşük olmalıdır.",
@@ -2559,6 +2560,68 @@
             "maximum": "Toplam emir değeri bu piyasa için izin verilen sınırı aşıyor.",
             "capacity": "Bu emir grubu için işlem kapasitesi yetersiz.",
             "reduceOnly": "Toplam emir miktarı şu anda kapatılabilecek pozisyon miktarını aşıyor."
+          }
+        },
+        "twap": {
+          "description": "Bir emri zamana yayılan daha küçük işlemlere bölün.",
+          "totalTime": "Toplam süre",
+          "totalSize": "Toplam miktar",
+          "selectTime": "Toplam süreyi seç",
+          "reset": "Sıfırla",
+          "randomize": "Rastgeleleştir",
+          "randomized": "Rastgeleleştirildi",
+          "durationHint": "TWAP emrinin çalışma süresi 5–1439 dakikadır.",
+          "minimum": "Minimum emir miktarı {{amount}}.",
+          "filled": "Gerçekleşen",
+          "duration": "Geçen süre",
+          "runtime": "Çalışma süresi",
+          "averagePrice": "Ort. fiyat",
+          "end": "Sonlandır",
+          "detail": "Ayrıntılar",
+          "add": "Ekle",
+          "detailTitle": "Aktif TWAP ayrıntıları",
+          "historyDetailTitle": "TWAP geçmiş ayrıntıları",
+          "trades": "İşlemler",
+          "size": "Miktar",
+          "fee": "Ücret",
+          "noTrades": "Henüz işlem yok",
+          "endTitle": "TWAP emri sonlandırılsın mı?",
+          "endMessage": "Kalan {{coin}} TWAP emri sonlandırılsın mı? Gerçekleşmiş işlemler korunacaktır.",
+          "ending": "Sonlandırılıyor…",
+          "ended": "TWAP emri sonlandırıldı.",
+          "placed": "{{coin}} TWAP emri verildi.",
+          "unknownOutcome": "{{coin}} TWAP sonucu onay bekliyor. Yeni bir emir vermeden önce emirleri ve geçmişi kontrol edin.",
+          "unknown": "TWAP sonucu onay bekliyor. Tekrar denemeden önce emirleri ve geçmişi kontrol edin.",
+          "loadError": "TWAP emirleri yüklenemedi. Tekrar denemek için dokunun.",
+          "endedLabel": "Sonlandı",
+          "skipConfirmation": "TWAP emirleri için ikinci onayı tekrar gösterme.",
+          "averageFilledPrice": "Ort. gerçekleşme fiyatı",
+          "status": {
+            "working": "Çalışıyor",
+            "waiting": "Bekliyor",
+            "filled": "Gerçekleşti",
+            "cancelled": "İptal edildi",
+            "expired": "Süresi doldu",
+            "unknown": "Bilinmiyor"
+          },
+          "fills": {
+            "loading": "İşlemler yükleniyor…",
+            "partial": "Yalnızca erişilebilen işlemler gösteriliyor. Tekrar denemek için dokunun.",
+            "error": "İşlemler yüklenemedi. Tekrar denemek için dokunun."
+          },
+          "errors": {
+            "amountRequired": "Emir miktarını girin.",
+            "amountTooSmall": "TWAP emrinin değeri en az $100 olmalıdır.",
+            "amountExceedsMaximum": "Emir kullanılabilir maksimum miktarı aşıyor.",
+            "invalidPrecision": "Bu piyasanın miktar hassasiyetine uygun bir miktar girin.",
+            "priceUnavailable": "Güncel fiyat alınamıyor. Lütfen tekrar deneyin.",
+            "durationRequired": "Toplam süreyi girin.",
+            "durationInvalid": "Tam sayı olarak dakika girin.",
+            "durationTooShort": "Minimum TWAP süresi 5 dakikadır.",
+            "durationTooLong": "Maksimum TWAP süresi 1439 dakikadır.",
+            "capacity": "Bu emir için yeterli işlem kapasitesi yok.",
+            "reduceOnly": "Emir, kapatılabilir pozisyon miktarını aşıyor.",
+            "contextChanged": "Hesap, emir veya piyasa değişti. Lütfen emri tekrar inceleyin."
           }
         }
       },

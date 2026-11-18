@@ -2524,7 +2524,8 @@
           "orderPlaced": "Order platziert.",
           "orderFailed": "Order fehlgeschlagen.",
           "scale": "Staffelorder",
-          "scaleDescription": "Preisbereich festlegen und mehrere Limit-Teilorders platzieren"
+          "scaleDescription": "Preisbereich festlegen und mehrere Limit-Teilorders platzieren",
+          "twap": "TWAP"
         },
         "orderError": {
           "aloBuyWouldMatch": "Der Post-only-Preis muss unter dem besten Briefkurs liegen, um eine sofortige Ausführung zu vermeiden.",
@@ -2845,6 +2846,68 @@
             "maximum": "Der Gesamtwert der Orders überschreitet das für diesen Markt zulässige Limit.",
             "capacity": "Nicht genügend Handelskapazität für diese Orders.",
             "reduceOnly": "Die gesamte Ordermenge überschreitet die aktuell schließbare Positionsmenge."
+          }
+        },
+        "twap": {
+          "description": "Eine Order in kleinere Trades über einen Zeitraum aufteilen.",
+          "totalTime": "Gesamtdauer",
+          "totalSize": "Gesamtmenge",
+          "selectTime": "Gesamtdauer wählen",
+          "reset": "Zurücksetzen",
+          "randomize": "Zufällig verteilen",
+          "randomized": "Zufällig verteilt",
+          "durationHint": "Die Laufzeit der TWAP-Order beträgt 5–1439 Minuten.",
+          "minimum": "Die Mindestordermenge beträgt {{amount}}.",
+          "filled": "Ausgeführt",
+          "duration": "Verstrichen",
+          "runtime": "Laufzeit",
+          "averagePrice": "Ø Preis",
+          "end": "Beenden",
+          "detail": "Details",
+          "add": "Hinzufügen",
+          "detailTitle": "Laufende TWAP: Details",
+          "historyDetailTitle": "TWAP-Verlauf: Details",
+          "trades": "Trades",
+          "size": "Menge",
+          "fee": "Gebühr",
+          "noTrades": "Noch keine Trades",
+          "endTitle": "TWAP-Order beenden?",
+          "endMessage": "Die verbleibende {{coin}}-TWAP-Order beenden? Bereits ausgeführte Trades bleiben erhalten.",
+          "ending": "Wird beendet…",
+          "ended": "TWAP-Order beendet.",
+          "placed": "{{coin}}-TWAP-Order erteilt.",
+          "unknownOutcome": "Das Ergebnis der {{coin}}-TWAP-Order ist noch unbestätigt. Prüfe Orders und Verlauf, bevor du erneut eine Order erteilst.",
+          "unknown": "Das TWAP-Ergebnis ist noch unbestätigt. Prüfe Orders und Verlauf vor einem erneuten Versuch.",
+          "loadError": "TWAP-Orders konnten nicht geladen werden. Zum Wiederholen tippen.",
+          "endedLabel": "Beendet",
+          "skipConfirmation": "Doppelte Bestätigung für TWAP-Orders nicht mehr anzeigen.",
+          "averageFilledPrice": "Ø Ausführungspreis",
+          "status": {
+            "working": "Aktiv",
+            "waiting": "Wartend",
+            "filled": "Ausgeführt",
+            "cancelled": "Storniert",
+            "expired": "Abgelaufen",
+            "unknown": "Unbekannt"
+          },
+          "fills": {
+            "loading": "Trades werden geladen…",
+            "partial": "Nur verfügbare Trades werden angezeigt. Zum Wiederholen tippen.",
+            "error": "Trades konnten nicht geladen werden. Zum Wiederholen tippen."
+          },
+          "errors": {
+            "amountRequired": "Gib eine Ordermenge ein.",
+            "amountTooSmall": "Die TWAP-Order muss mindestens $100 wert sein.",
+            "amountExceedsMaximum": "Die Order überschreitet das verfügbare Maximum.",
+            "invalidPrecision": "Gib eine Menge mit der für diesen Markt zulässigen Genauigkeit ein.",
+            "priceUnavailable": "Der aktuelle Preis ist nicht verfügbar. Bitte erneut versuchen.",
+            "durationRequired": "Gib eine Gesamtdauer ein.",
+            "durationInvalid": "Gib eine ganze Anzahl von Minuten ein.",
+            "durationTooShort": "Die Mindestdauer für TWAP beträgt 5 Minuten.",
+            "durationTooLong": "Die Höchstdauer für TWAP beträgt 1439 Minuten.",
+            "capacity": "Unzureichender Handelsspielraum für diese Order.",
+            "reduceOnly": "Die Order überschreitet die zum Schließen verfügbare Positionsmenge.",
+            "contextChanged": "Konto, Order oder Markt wurde geändert. Bitte prüfe die Order erneut."
           }
         }
       },

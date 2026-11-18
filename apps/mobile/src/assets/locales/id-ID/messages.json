@@ -2238,7 +2238,8 @@
           "orderPlaced": "Order ditempatkan.",
           "orderFailed": "Order gagal.",
           "scale": "Order Bertingkat",
-          "scaleDescription": "Tetapkan rentang harga dan tempatkan beberapa sub-order limit"
+          "scaleDescription": "Tetapkan rentang harga dan tempatkan beberapa sub-order limit",
+          "twap": "TWAP"
         },
         "orderError": {
           "aloBuyWouldMatch": "Harga post-only harus lebih rendah dari harga jual terbaik agar tidak langsung terisi.",
@@ -2559,6 +2560,68 @@
             "maximum": "Nilai total order melebihi batas yang diizinkan untuk pasar ini.",
             "capacity": "Kapasitas perdagangan tidak cukup untuk kumpulan order ini.",
             "reduceOnly": "Total kuantitas order melebihi kuantitas posisi yang saat ini dapat ditutup."
+          }
+        },
+        "twap": {
+          "description": "Bagi order menjadi transaksi lebih kecil yang dieksekusi bertahap.",
+          "totalTime": "Total waktu",
+          "totalSize": "Total jumlah",
+          "selectTime": "Pilih total waktu",
+          "reset": "Atur ulang",
+          "randomize": "Acak",
+          "randomized": "Diacak",
+          "durationHint": "Durasi order TWAP adalah 5–1439 menit.",
+          "minimum": "Jumlah minimum order adalah {{amount}}.",
+          "filled": "Terisi",
+          "duration": "Waktu berlalu",
+          "runtime": "Waktu berjalan",
+          "averagePrice": "Harga rata-rata",
+          "end": "Akhiri",
+          "detail": "Detail",
+          "add": "Tambah",
+          "detailTitle": "Detail TWAP aktif",
+          "historyDetailTitle": "Detail riwayat TWAP",
+          "trades": "Transaksi",
+          "size": "Jumlah",
+          "fee": "Biaya",
+          "noTrades": "Belum ada transaksi",
+          "endTitle": "Akhiri order TWAP?",
+          "endMessage": "Akhiri sisa order TWAP {{coin}}? Transaksi yang sudah terisi akan tetap berlaku.",
+          "ending": "Mengakhiri…",
+          "ended": "Order TWAP diakhiri.",
+          "placed": "Order TWAP {{coin}} dipasang.",
+          "unknownOutcome": "Hasil TWAP {{coin}} menunggu konfirmasi. Periksa order dan riwayat sebelum memasang order lain.",
+          "unknown": "Hasil TWAP menunggu konfirmasi. Periksa order dan riwayat sebelum mencoba lagi.",
+          "loadError": "Gagal memuat order TWAP. Ketuk untuk mencoba lagi.",
+          "endedLabel": "Berakhir",
+          "skipConfirmation": "Jangan tampilkan konfirmasi ganda untuk order TWAP lagi.",
+          "averageFilledPrice": "Harga rata-rata terisi",
+          "status": {
+            "working": "Berjalan",
+            "waiting": "Menunggu",
+            "filled": "Terisi",
+            "cancelled": "Dibatalkan",
+            "expired": "Kedaluwarsa",
+            "unknown": "Tidak diketahui"
+          },
+          "fills": {
+            "loading": "Memuat transaksi…",
+            "partial": "Hanya transaksi yang tersedia yang ditampilkan. Ketuk untuk mencoba lagi.",
+            "error": "Gagal memuat transaksi. Ketuk untuk mencoba lagi."
+          },
+          "errors": {
+            "amountRequired": "Masukkan jumlah order.",
+            "amountTooSmall": "Nilai order TWAP harus minimal $100.",
+            "amountExceedsMaximum": "Order melebihi batas maksimum yang tersedia.",
+            "invalidPrecision": "Masukkan jumlah sesuai presisi jumlah pasar ini.",
+            "priceUnavailable": "Harga saat ini tidak tersedia. Silakan coba lagi.",
+            "durationRequired": "Masukkan total waktu.",
+            "durationInvalid": "Masukkan jumlah menit dalam bilangan bulat.",
+            "durationTooShort": "Durasi minimum TWAP adalah 5 menit.",
+            "durationTooLong": "Durasi maksimum TWAP adalah 1439 menit.",
+            "capacity": "Kapasitas perdagangan tidak cukup untuk order ini.",
+            "reduceOnly": "Order melebihi jumlah posisi yang dapat ditutup.",
+            "contextChanged": "Akun, order, atau pasar berubah. Silakan tinjau ulang order."
           }
         }
       },

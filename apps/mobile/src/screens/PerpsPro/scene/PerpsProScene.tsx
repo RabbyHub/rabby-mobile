@@ -1,3 +1,4 @@
+import { PerpsProTwapOrderConfirmationSheet } from '../components/trade/PerpsProTwapOrderConfirmationSheet';
 import { PerpsProScaleOrderConfirmationSheet } from '../components/trade/PerpsProScaleOrderConfirmationSheet';
 import { Text } from '@/components/Typography';
 import type { PerpsQuoteAsset } from '@/constant/perps';
@@ -1664,9 +1665,22 @@ export const PerpsProScene: React.FC<{
         />
       ) : null}
       <PerpsProOrderConfirmationSheet
-        command={trade.review?.type === 'scaleOrder' ? null : trade.review}
+        command={
+          trade.review?.type === 'scaleOrder' ||
+          trade.review?.type === 'twapOrder'
+            ? null
+            : trade.review
+        }
         estimatedLiquidation={trade.estimatedLiquidation}
         market={trade.market}
+        onClose={trade.closeReview}
+        onConfirm={trade.confirmReview}
+        onToggleSkip={() => trade.setSkipConfirmation(value => !value)}
+        pending={trade.pending}
+        skipConfirmation={trade.skipConfirmation}
+      />
+      <PerpsProTwapOrderConfirmationSheet
+        command={trade.review?.type === 'twapOrder' ? trade.review : null}
         onClose={trade.closeReview}
         onConfirm={trade.confirmReview}
         onToggleSkip={() => trade.setSkipConfirmation(value => !value)}

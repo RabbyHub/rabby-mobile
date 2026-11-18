@@ -17,6 +17,7 @@ const UNIT_AREA_MAX_WIDTH = 72;
 const UNIT_TEXT_MIN_WIDTH = 34;
 
 type PerpsProTradeAmountFieldProps = {
+  invalid?: boolean;
   getKeyboardMinimum?: () => string | null;
   inputMode?: TextInputProps['inputMode'];
   keyboardType?: TextInputProps['keyboardType'];
@@ -36,6 +37,7 @@ export const PerpsProTradeAmountField = React.memo(
   React.forwardRef<TextInput, PerpsProTradeAmountFieldProps>(
     (props, forwardedRef) => {
       const {
+        invalid,
         getKeyboardMinimum,
         inputMode,
         keyboardType,
@@ -58,6 +60,7 @@ export const PerpsProTradeAmountField = React.memo(
         <View
           style={[
             styles.container,
+            invalid && styles.invalid,
             variant === 'compact' && styles.compactHeight,
           ]}
           testID="perps-pro-trade-amount-field">
@@ -143,6 +146,7 @@ export const PerpsProTradeAmountField = React.memo(
 PerpsProTradeAmountField.displayName = 'PerpsProTradeAmountField';
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
+  invalid: { borderWidth: 1, borderColor: colors2024['red-default'] },
   compactHeight: { height: 34 },
   compactFloatingLabel: { top: 2 },
   compactPlaceholder: { top: 8 },

@@ -1,3 +1,6 @@
+jest.mock('./PerpsProTwapDurationSheet', () => ({
+  PerpsProTwapDurationSheet: () => null,
+}));
 import {
   act,
   fireEvent,

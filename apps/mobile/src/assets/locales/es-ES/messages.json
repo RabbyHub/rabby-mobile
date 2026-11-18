@@ -2422,7 +2422,8 @@
           "orderPlaced": "Orden enviada.",
           "orderFailed": "La orden ha fallado.",
           "scale": "Orden escalonada",
-          "scaleDescription": "Establece un rango de precios y coloca varias subórdenes limitadas"
+          "scaleDescription": "Establece un rango de precios y coloca varias subórdenes limitadas",
+          "twap": "TWAP"
         },
         "orderError": {
           "aloBuyWouldMatch": "El precio post-only debe ser inferior al mejor precio de venta para evitar una ejecución inmediata.",
@@ -2743,6 +2744,68 @@
             "maximum": "El valor total de las órdenes supera el límite permitido para este mercado.",
             "capacity": "Capacidad de negociación insuficiente para el lote.",
             "reduceOnly": "La cantidad total de las órdenes supera la cantidad de la posición que se puede cerrar actualmente."
+          }
+        },
+        "twap": {
+          "description": "Dividir una orden en operaciones más pequeñas a lo largo del tiempo.",
+          "totalTime": "Tiempo total",
+          "totalSize": "Cantidad total",
+          "selectTime": "Elegir tiempo total",
+          "reset": "Restablecer",
+          "randomize": "Aleatorizar",
+          "randomized": "Aleatorizado",
+          "durationHint": "La duración de la orden TWAP es de 5 a 1439 minutos.",
+          "minimum": "La cantidad mínima de la orden es {{amount}}.",
+          "filled": "Ejecutado",
+          "duration": "Transcurrido",
+          "runtime": "Tiempo de ejecución",
+          "averagePrice": "Precio medio",
+          "end": "Finalizar",
+          "detail": "Detalles",
+          "add": "Añadir",
+          "detailTitle": "Detalles del TWAP activo",
+          "historyDetailTitle": "Detalles del historial TWAP",
+          "trades": "Operaciones",
+          "size": "Cantidad",
+          "fee": "Comisión",
+          "noTrades": "Aún no hay operaciones",
+          "endTitle": "¿Finalizar la orden TWAP?",
+          "endMessage": "¿Finalizar la parte restante de la orden TWAP de {{coin}}? Las operaciones ya ejecutadas se conservarán.",
+          "ending": "Finalizando…",
+          "ended": "Orden TWAP finalizada.",
+          "placed": "Orden TWAP de {{coin}} enviada.",
+          "unknownOutcome": "El resultado del TWAP de {{coin}} está pendiente de confirmación. Revisa las órdenes y el historial antes de enviar otra orden.",
+          "unknown": "El resultado del TWAP está pendiente de confirmación. Revisa las órdenes y el historial antes de volver a intentarlo.",
+          "loadError": "No se pudieron cargar las órdenes TWAP. Toca para reintentar.",
+          "endedLabel": "Finalizada",
+          "skipConfirmation": "No volver a mostrar la doble confirmación para órdenes TWAP.",
+          "averageFilledPrice": "Precio medio de ejecución",
+          "status": {
+            "working": "En curso",
+            "waiting": "En espera",
+            "filled": "Ejecutada",
+            "cancelled": "Cancelada",
+            "expired": "Caducada",
+            "unknown": "Desconocido"
+          },
+          "fills": {
+            "loading": "Cargando operaciones…",
+            "partial": "Solo se muestran las operaciones disponibles. Toca para reintentar.",
+            "error": "No se pudieron cargar las operaciones. Toca para reintentar."
+          },
+          "errors": {
+            "amountRequired": "Introduce la cantidad de la orden.",
+            "amountTooSmall": "La orden TWAP debe tener un valor mínimo de $100.",
+            "amountExceedsMaximum": "La orden supera el máximo disponible.",
+            "invalidPrecision": "Introduce una cantidad que respete la precisión de este mercado.",
+            "priceUnavailable": "El precio actual no está disponible. Vuelve a intentarlo.",
+            "durationRequired": "Introduce el tiempo total.",
+            "durationInvalid": "Introduce un número entero de minutos.",
+            "durationTooShort": "La duración mínima del TWAP es de 5 minutos.",
+            "durationTooLong": "La duración máxima del TWAP es de 1439 minutos.",
+            "capacity": "Capacidad de negociación insuficiente para esta orden.",
+            "reduceOnly": "La orden supera la cantidad de la posición que se puede cerrar.",
+            "contextChanged": "La cuenta, la orden o el mercado ha cambiado. Revisa la orden de nuevo."
           }
         }
       },

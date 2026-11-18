@@ -2524,7 +2524,8 @@
           "orderPlaced": "Ordem colocada.",
           "orderFailed": "A ordem falhou.",
           "scale": "Ordem escalonada",
-          "scaleDescription": "Defina um intervalo de preços e coloque várias subordens limitadas"
+          "scaleDescription": "Defina um intervalo de preços e coloque várias subordens limitadas",
+          "twap": "TWAP"
         },
         "orderError": {
           "aloBuyWouldMatch": "O preço post-only deve ser inferior à melhor oferta de venda para evitar uma execução imediata.",
@@ -2845,6 +2846,68 @@
             "maximum": "O valor total das ordens excede o limite permitido para este mercado.",
             "capacity": "Capacidade de negociação insuficiente para este lote.",
             "reduceOnly": "A quantidade total das ordens excede a quantidade da posição que pode ser fechada neste momento."
+          }
+        },
+        "twap": {
+          "description": "Dividir uma ordem em transações menores ao longo do tempo.",
+          "totalTime": "Tempo total",
+          "totalSize": "Quantidade total",
+          "selectTime": "Selecionar tempo total",
+          "reset": "Repor",
+          "randomize": "Aleatorizar",
+          "randomized": "Aleatorizado",
+          "durationHint": "A duração da ordem TWAP é de 5 a 1439 minutos.",
+          "minimum": "A quantidade mínima da ordem é {{amount}}.",
+          "filled": "Executado",
+          "duration": "Tempo decorrido",
+          "runtime": "Tempo de execução",
+          "averagePrice": "Preço médio",
+          "end": "Terminar",
+          "detail": "Detalhes",
+          "add": "Adicionar",
+          "detailTitle": "Detalhes do TWAP ativo",
+          "historyDetailTitle": "Detalhes do histórico TWAP",
+          "trades": "Transações",
+          "size": "Quantidade",
+          "fee": "Taxa",
+          "noTrades": "Ainda não há transações",
+          "endTitle": "Terminar a ordem TWAP?",
+          "endMessage": "Terminar a parte restante da ordem TWAP de {{coin}}? As transações já executadas serão mantidas.",
+          "ending": "A terminar…",
+          "ended": "Ordem TWAP terminada.",
+          "placed": "Ordem TWAP de {{coin}} colocada.",
+          "unknownOutcome": "O resultado do TWAP de {{coin}} aguarda confirmação. Verifique as ordens e o histórico antes de colocar outra ordem.",
+          "unknown": "O resultado do TWAP aguarda confirmação. Verifique as ordens e o histórico antes de tentar novamente.",
+          "loadError": "Não foi possível carregar as ordens TWAP. Toque para tentar novamente.",
+          "endedLabel": "Terminada",
+          "skipConfirmation": "Não voltar a mostrar a dupla confirmação para ordens TWAP.",
+          "averageFilledPrice": "Preço médio de execução",
+          "status": {
+            "working": "Em execução",
+            "waiting": "Em espera",
+            "filled": "Executada",
+            "cancelled": "Cancelada",
+            "expired": "Expirada",
+            "unknown": "Desconhecido"
+          },
+          "fills": {
+            "loading": "A carregar transações…",
+            "partial": "São apresentadas apenas as transações disponíveis. Toque para tentar novamente.",
+            "error": "Não foi possível carregar as transações. Toque para tentar novamente."
+          },
+          "errors": {
+            "amountRequired": "Introduza a quantidade da ordem.",
+            "amountTooSmall": "A ordem TWAP deve ter um valor mínimo de $100.",
+            "amountExceedsMaximum": "A ordem excede o máximo disponível.",
+            "invalidPrecision": "Introduza uma quantidade com a precisão permitida neste mercado.",
+            "priceUnavailable": "O preço atual não está disponível. Tente novamente.",
+            "durationRequired": "Introduza o tempo total.",
+            "durationInvalid": "Introduza um número inteiro de minutos.",
+            "durationTooShort": "A duração mínima do TWAP é de 5 minutos.",
+            "durationTooLong": "A duração máxima do TWAP é de 1439 minutos.",
+            "capacity": "Capacidade de negociação insuficiente para esta ordem.",
+            "reduceOnly": "A ordem excede a quantidade da posição disponível para fechar.",
+            "contextChanged": "A conta, a ordem ou o mercado mudou. Reveja a ordem."
           }
         }
       },

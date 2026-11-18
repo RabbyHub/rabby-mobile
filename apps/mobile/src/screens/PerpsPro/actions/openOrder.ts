@@ -158,8 +158,8 @@ export const buildPerpsProOpenOrderCommand = ({
   szDecimals: number;
 }): PerpsProOpenOrderCommand => {
   const normalizedCoin = coin.trim();
-  if (form.orderType === 'scale') {
-    throw new Error('Scale orders must use their dedicated executor');
+  if (form.orderType === 'scale' || form.orderType === 'twap') {
+    throw new Error('Scale and TWAP orders must use their dedicated executor');
   }
   if (!account.address || !normalizedCoin || !marketKey) {
     throw new Error('Perps account and market are required');

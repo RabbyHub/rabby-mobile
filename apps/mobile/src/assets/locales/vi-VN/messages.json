@@ -2355,7 +2355,8 @@
           "orderPlaced": "Đã đặt lệnh.",
           "orderFailed": "Lệnh thất bại.",
           "scale": "Lệnh chia bậc",
-          "scaleDescription": "Đặt khoảng giá và tạo nhiều lệnh giới hạn con"
+          "scaleDescription": "Đặt khoảng giá và tạo nhiều lệnh giới hạn con",
+          "twap": "TWAP"
         },
         "orderError": {
           "aloBuyWouldMatch": "Giá post-only phải thấp hơn giá bán tốt nhất để tránh khớp ngay lập tức.",
@@ -2676,6 +2677,68 @@
             "maximum": "Tổng giá trị các lệnh vượt quá giới hạn cho phép của thị trường này.",
             "capacity": "Không đủ khả năng giao dịch cho nhóm lệnh này.",
             "reduceOnly": "Tổng khối lượng các lệnh vượt quá khối lượng vị thế hiện có thể đóng."
+          }
+        },
+        "twap": {
+          "description": "Chia lệnh thành các giao dịch nhỏ hơn để thực hiện theo thời gian.",
+          "totalTime": "Tổng thời gian",
+          "totalSize": "Tổng khối lượng",
+          "selectTime": "Chọn tổng thời gian",
+          "reset": "Đặt lại",
+          "randomize": "Ngẫu nhiên hóa",
+          "randomized": "Đã ngẫu nhiên hóa",
+          "durationHint": "Thời gian chạy lệnh TWAP là 5–1439 phút.",
+          "minimum": "Khối lượng lệnh tối thiểu là {{amount}}.",
+          "filled": "Đã khớp",
+          "duration": "Đã chạy",
+          "runtime": "Thời gian hoạt động",
+          "averagePrice": "Giá trung bình",
+          "end": "Kết thúc",
+          "detail": "Chi tiết",
+          "add": "Thêm",
+          "detailTitle": "Chi tiết TWAP đang chạy",
+          "historyDetailTitle": "Chi tiết lịch sử TWAP",
+          "trades": "Giao dịch",
+          "size": "Khối lượng",
+          "fee": "Phí",
+          "noTrades": "Chưa có giao dịch",
+          "endTitle": "Kết thúc lệnh TWAP?",
+          "endMessage": "Kết thúc phần còn lại của lệnh TWAP {{coin}}? Các giao dịch đã khớp sẽ được giữ nguyên.",
+          "ending": "Đang kết thúc…",
+          "ended": "Lệnh TWAP đã kết thúc.",
+          "placed": "Đã đặt lệnh TWAP {{coin}}.",
+          "unknownOutcome": "Kết quả TWAP {{coin}} đang chờ xác nhận. Kiểm tra lệnh và lịch sử trước khi đặt lệnh khác.",
+          "unknown": "Kết quả TWAP đang chờ xác nhận. Kiểm tra lệnh và lịch sử trước khi thử lại.",
+          "loadError": "Không thể tải lệnh TWAP. Nhấn để thử lại.",
+          "endedLabel": "Đã kết thúc",
+          "skipConfirmation": "Không hiển thị xác nhận lần hai cho lệnh TWAP nữa.",
+          "averageFilledPrice": "Giá khớp trung bình",
+          "status": {
+            "working": "Đang chạy",
+            "waiting": "Đang chờ",
+            "filled": "Đã khớp",
+            "cancelled": "Đã hủy",
+            "expired": "Hết hiệu lực",
+            "unknown": "Không xác định"
+          },
+          "fills": {
+            "loading": "Đang tải giao dịch…",
+            "partial": "Chỉ hiển thị các giao dịch có sẵn. Nhấn để thử lại.",
+            "error": "Không thể tải giao dịch. Nhấn để thử lại."
+          },
+          "errors": {
+            "amountRequired": "Nhập khối lượng lệnh.",
+            "amountTooSmall": "Giá trị lệnh TWAP phải tối thiểu $100.",
+            "amountExceedsMaximum": "Lệnh vượt quá mức tối đa khả dụng.",
+            "invalidPrecision": "Nhập khối lượng phù hợp với độ chính xác của thị trường này.",
+            "priceUnavailable": "Giá hiện tại không khả dụng. Vui lòng thử lại.",
+            "durationRequired": "Nhập tổng thời gian.",
+            "durationInvalid": "Nhập số phút nguyên.",
+            "durationTooShort": "Thời gian TWAP tối thiểu là 5 phút.",
+            "durationTooLong": "Thời gian TWAP tối đa là 1439 phút.",
+            "capacity": "Không đủ khả năng giao dịch cho lệnh này.",
+            "reduceOnly": "Lệnh vượt quá khối lượng vị thế có thể đóng.",
+            "contextChanged": "Tài khoản, lệnh hoặc thị trường đã thay đổi. Vui lòng kiểm tra lại lệnh."
           }
         }
       },

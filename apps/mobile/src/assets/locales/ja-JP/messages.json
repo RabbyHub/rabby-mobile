@@ -2288,7 +2288,8 @@
           "orderPlaced": "注文を発注しました。",
           "orderFailed": "注文に失敗しました。",
           "scale": "スケール注文",
-          "scaleDescription": "価格範囲を指定し、複数の指値注文を発注します"
+          "scaleDescription": "価格範囲を指定し、複数の指値注文を発注します",
+          "twap": "TWAP"
         },
         "orderError": {
           "aloBuyWouldMatch": "即時約定を避けるため、ポストオンリー価格は最良売り気配値より低く設定してください。",
@@ -2609,6 +2610,68 @@
             "maximum": "注文の合計金額がこの市場で許容される上限を超えています。",
             "capacity": "この注文一式を発注する取引余力が不足しています。",
             "reduceOnly": "注文の合計数量が現在決済可能なポジション数量を超えています。"
+          }
+        },
+        "twap": {
+          "description": "注文を小さな取引に分割し、時間をかけて執行します。",
+          "totalTime": "合計時間",
+          "totalSize": "合計数量",
+          "selectTime": "合計時間を選択",
+          "reset": "リセット",
+          "randomize": "ランダム化",
+          "randomized": "ランダム化済み",
+          "durationHint": "TWAP 注文の実行時間は 5～1439 分です。",
+          "minimum": "最小注文数量は {{amount}} です。",
+          "filled": "約定済み",
+          "duration": "経過時間",
+          "runtime": "実行時間",
+          "averagePrice": "平均価格",
+          "end": "終了",
+          "detail": "詳細",
+          "add": "追加",
+          "detailTitle": "TWAP 実行詳細",
+          "historyDetailTitle": "TWAP 履歴詳細",
+          "trades": "約定",
+          "size": "数量",
+          "fee": "手数料",
+          "noTrades": "約定はまだありません",
+          "endTitle": "TWAP 注文を終了しますか？",
+          "endMessage": "残りの {{coin}} TWAP 注文を終了しますか？約定済みの取引は保持されます。",
+          "ending": "終了中…",
+          "ended": "TWAP 注文を終了しました。",
+          "placed": "{{coin}} TWAP 注文を送信しました。",
+          "unknownOutcome": "{{coin}} TWAP の結果を確認中です。再注文する前に、注文と履歴を確認してください。",
+          "unknown": "TWAP の結果を確認中です。再試行する前に、注文と履歴を確認してください。",
+          "loadError": "TWAP 注文を読み込めません。タップして再試行してください。",
+          "endedLabel": "終了済み",
+          "skipConfirmation": "TWAP 注文の二重確認を今後表示しない。",
+          "averageFilledPrice": "平均約定価格",
+          "status": {
+            "working": "実行中",
+            "waiting": "待機中",
+            "filled": "約定済み",
+            "cancelled": "キャンセル済み",
+            "expired": "失効",
+            "unknown": "不明"
+          },
+          "fills": {
+            "loading": "約定を読み込み中…",
+            "partial": "取得できた約定のみ表示しています。タップして再試行してください。",
+            "error": "約定を読み込めません。タップして再試行してください。"
+          },
+          "errors": {
+            "amountRequired": "注文数量を入力してください。",
+            "amountTooSmall": "TWAP 注文の価値は $100 以上である必要があります。",
+            "amountExceedsMaximum": "注文が利用可能な上限を超えています。",
+            "invalidPrecision": "この市場の数量精度に合う数量を入力してください。",
+            "priceUnavailable": "現在の価格を取得できません。再試行してください。",
+            "durationRequired": "合計時間を入力してください。",
+            "durationInvalid": "分数を整数で入力してください。",
+            "durationTooShort": "TWAP の最短時間は 5 分です。",
+            "durationTooLong": "TWAP の最長時間は 1439 分です。",
+            "capacity": "この注文に必要な取引余力が不足しています。",
+            "reduceOnly": "注文数量が決済可能なポジション数量を超えています。",
+            "contextChanged": "アカウント、注文または市場が変更されました。注文を再確認してください。"
           }
         }
       },

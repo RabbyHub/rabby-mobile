@@ -1,3 +1,6 @@
+jest.mock('../components/trade/PerpsProTwapOrderConfirmationSheet', () => ({
+  PerpsProTwapOrderConfirmationSheet: () => null,
+}));
 import {
   act,
   fireEvent,

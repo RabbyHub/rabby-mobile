@@ -2238,7 +2238,8 @@
           "orderPlaced": "주문이 접수되었습니다.",
           "orderFailed": "주문에 실패했습니다.",
           "scale": "분할 주문",
-          "scaleDescription": "가격 범위를 설정하고 여러 지정가 하위 주문을 제출합니다"
+          "scaleDescription": "가격 범위를 설정하고 여러 지정가 하위 주문을 제출합니다",
+          "twap": "TWAP"
         },
         "orderError": {
           "aloBuyWouldMatch": "즉시 체결되지 않도록 포스트 온리 가격은 최우선 매도호가보다 낮아야 합니다.",
@@ -2559,6 +2560,68 @@
             "maximum": "총 주문 금액이 이 시장에서 허용되는 한도를 초과합니다.",
             "capacity": "이 주문 묶음을 제출할 거래 여력이 부족합니다.",
             "reduceOnly": "총 주문 수량이 현재 청산 가능한 포지션 수량을 초과합니다."
+          }
+        },
+        "twap": {
+          "description": "주문을 여러 소규모 거래로 나누어 시간에 걸쳐 실행합니다.",
+          "totalTime": "총 시간",
+          "totalSize": "총 수량",
+          "selectTime": "총 시간 선택",
+          "reset": "초기화",
+          "randomize": "무작위화",
+          "randomized": "무작위화됨",
+          "durationHint": "TWAP 주문 실행 시간은 5~1439분입니다.",
+          "minimum": "최소 주문 수량은 {{amount}}입니다.",
+          "filled": "체결 수량",
+          "duration": "경과 시간",
+          "runtime": "실행 시간",
+          "averagePrice": "평균 가격",
+          "end": "종료",
+          "detail": "상세",
+          "add": "추가",
+          "detailTitle": "TWAP 실행 상세",
+          "historyDetailTitle": "TWAP 내역 상세",
+          "trades": "체결",
+          "size": "수량",
+          "fee": "수수료",
+          "noTrades": "아직 체결 내역이 없습니다",
+          "endTitle": "TWAP 주문을 종료할까요?",
+          "endMessage": "남은 {{coin}} TWAP 주문을 종료할까요? 이미 체결된 거래는 유지됩니다.",
+          "ending": "종료 중…",
+          "ended": "TWAP 주문이 종료되었습니다.",
+          "placed": "{{coin}} TWAP 주문이 제출되었습니다.",
+          "unknownOutcome": "{{coin}} TWAP 결과를 확인 중입니다. 다시 주문하기 전에 주문과 내역을 확인하세요.",
+          "unknown": "TWAP 결과를 확인 중입니다. 다시 시도하기 전에 주문과 내역을 확인하세요.",
+          "loadError": "TWAP 주문을 불러올 수 없습니다. 탭하여 다시 시도하세요.",
+          "endedLabel": "종료됨",
+          "skipConfirmation": "TWAP 주문의 추가 확인을 다시 표시하지 않습니다.",
+          "averageFilledPrice": "평균 체결가",
+          "status": {
+            "working": "실행 중",
+            "waiting": "대기 중",
+            "filled": "체결 완료",
+            "cancelled": "취소됨",
+            "expired": "만료됨",
+            "unknown": "알 수 없음"
+          },
+          "fills": {
+            "loading": "체결 내역을 불러오는 중…",
+            "partial": "가져올 수 있는 체결 내역만 표시됩니다. 탭하여 다시 시도하세요.",
+            "error": "체결 내역을 불러올 수 없습니다. 탭하여 다시 시도하세요."
+          },
+          "errors": {
+            "amountRequired": "주문 수량을 입력하세요.",
+            "amountTooSmall": "TWAP 주문 금액은 $100 이상이어야 합니다.",
+            "amountExceedsMaximum": "주문이 사용 가능한 최대치를 초과합니다.",
+            "invalidPrecision": "이 시장의 수량 정밀도에 맞는 수량을 입력하세요.",
+            "priceUnavailable": "현재 가격을 가져올 수 없습니다. 다시 시도하세요.",
+            "durationRequired": "총 시간을 입력하세요.",
+            "durationInvalid": "분 단위 정수를 입력하세요.",
+            "durationTooShort": "TWAP 최소 실행 시간은 5분입니다.",
+            "durationTooLong": "TWAP 최대 실행 시간은 1439분입니다.",
+            "capacity": "이 주문을 실행할 거래 여력이 부족합니다.",
+            "reduceOnly": "주문 수량이 청산 가능한 포지션 수량을 초과합니다.",
+            "contextChanged": "계정, 주문 또는 시장이 변경되었습니다. 주문을 다시 확인하세요."
           }
         }
       },
