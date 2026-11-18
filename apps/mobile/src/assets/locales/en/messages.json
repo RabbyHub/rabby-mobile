@@ -2437,7 +2437,8 @@
             "orders": "Order History",
             "trade": "Trade History",
             "transaction": "Transaction History",
-            "funding": "Funding Fee"
+            "funding": "Funding Fee",
+            "twap": "TWAP History"
           },
           "empty": {
             "orders": "No orders history",

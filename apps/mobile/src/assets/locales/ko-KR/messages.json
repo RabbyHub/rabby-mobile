@@ -2350,7 +2350,8 @@
             "orders": "주문 내역",
             "trade": "체결 내역",
             "transaction": "입출금 내역",
-            "funding": "펀딩비"
+            "funding": "펀딩비",
+            "twap": "TWAP 내역"
           },
           "empty": {
             "orders": "주문 내역 없음",

@@ -2500,7 +2500,8 @@
             "orders": "委托历史",
             "trade": "成交历史",
             "transaction": "资金流水",
-            "funding": "资金费"
+            "funding": "资金费",
+            "twap": "TWAP 历史"
           },
           "empty": {
             "orders": "暂无委托历史",

@@ -2636,7 +2636,8 @@
             "orders": "Orderverlauf",
             "trade": "Trade-Verlauf",
             "transaction": "Ein-/Auszahlungen",
-            "funding": "Funding-Gebühr"
+            "funding": "Funding-Gebühr",
+            "twap": "TWAP-Verlauf"
           },
           "empty": {
             "orders": "Kein Orderverlauf",

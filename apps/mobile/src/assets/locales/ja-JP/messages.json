@@ -2400,7 +2400,8 @@
             "orders": "注文履歴",
             "trade": "約定履歴",
             "transaction": "資金移動履歴",
-            "funding": "資金調達料"
+            "funding": "資金調達料",
+            "twap": "TWAP 履歴"
           },
           "empty": {
             "orders": "注文履歴はありません",

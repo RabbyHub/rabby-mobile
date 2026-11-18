@@ -2350,7 +2350,8 @@
             "orders": "Emir Geçmişi",
             "trade": "İşlem Geçmişi",
             "transaction": "Yatırma ve çekme",
-            "funding": "Fonlama Ücreti"
+            "funding": "Fonlama Ücreti",
+            "twap": "TWAP geçmişi"
           },
           "empty": {
             "orders": "Emir geçmişi yok",

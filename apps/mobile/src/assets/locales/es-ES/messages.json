@@ -2534,7 +2534,8 @@
             "orders": "Historial de órdenes",
             "trade": "Historial de operaciones",
             "transaction": "Depósitos y retiradas",
-            "funding": "Comisión de financiación"
+            "funding": "Comisión de financiación",
+            "twap": "Historial TWAP"
           },
           "empty": {
             "orders": "No hay historial de órdenes",

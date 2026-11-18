@@ -2350,7 +2350,8 @@
             "orders": "Riwayat Order",
             "trade": "Riwayat Perdagangan",
             "transaction": "Riwayat Setor/Tarik",
-            "funding": "Biaya Pendanaan"
+            "funding": "Biaya Pendanaan",
+            "twap": "Riwayat TWAP"
           },
           "empty": {
             "orders": "Tidak ada riwayat order",

@@ -2467,7 +2467,8 @@
             "orders": "Lịch sử lệnh",
             "trade": "Lịch sử giao dịch",
             "transaction": "Lịch sử nạp/rút",
-            "funding": "Phí funding"
+            "funding": "Phí funding",
+            "twap": "Lịch sử TWAP"
           },
           "empty": {
             "orders": "Không có lịch sử lệnh",

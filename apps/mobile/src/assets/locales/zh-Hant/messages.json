@@ -2522,7 +2522,8 @@
             "orders": "委託歷史",
             "trade": "成交歷史",
             "transaction": "資金流水",
-            "funding": "資金費"
+            "funding": "資金費",
+            "twap": "TWAP 歷史"
           },
           "empty": {
             "orders": "暫無委託歷史",

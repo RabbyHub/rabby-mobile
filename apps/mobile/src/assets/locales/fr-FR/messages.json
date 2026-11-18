@@ -2359,7 +2359,8 @@
             "orders": "Historique des ordres",
             "trade": "Historique des trades",
             "transaction": "Dépôts et retraits",
-            "funding": "Frais de financement"
+            "funding": "Frais de financement",
+            "twap": "Historique TWAP"
           },
           "empty": {
             "orders": "Aucun historique d’ordres",
