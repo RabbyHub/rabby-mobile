@@ -129,9 +129,11 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   plate: {
     ...StyleSheet.absoluteFillObject,
     borderRadius: 8,
-    backgroundColor: isLight
-      ? ThemeColors2024.dark['neutral-bg-1']
-      : colors2024['neutral-bg-1'],
+    // Match the pre-plate implementation: the active chip is near-black in
+    // light mode and plain white in dark mode, with the dark active label on
+    // top of it. Using the themed `neutral-bg-1` here made the dark-mode chip
+    // near-black and left the dark active label unreadable.
+    backgroundColor: isLight ? ThemeColors2024.dark['neutral-bg-1'] : '#FFF',
   },
   label: {
     fontSize: 16,
