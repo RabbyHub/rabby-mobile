@@ -83,6 +83,11 @@ import {
   ITEM_GRID_GAP,
   ITEM_LAYOUT_PADDING_HORIZONTAL,
 } from '@/constant/home';
+import {
+  HOME_GESTURE_AXIS,
+  beginHomeGesture,
+  resolveHomeGestureAxis,
+} from '@/screens/Home/gesture/homeGestureAuthority';
 import { perfEvents } from '@/core/utils/perf';
 import { beginAssetDataLoadDiagnostic } from '@/core/utils/assetDataLoadDiagnostics';
 import {
@@ -396,6 +401,29 @@ const usePulldownRefreshGesture = <T extends ScrollView | RNGHScrollView>({
       .shouldCancelWhenOutside(false)
       .activeOffsetY([-homeGestureConfs.activeY, homeGestureConfs.activeY])
       .maxPointers(1)
+      // Share the Home-wide verdict: a horizontal drag belongs to the pager,
+      // never to the pull-to-refresh / drawer-pull pan.
+      .onTouchesDown(event => {
+        'worklet';
+        const touch = event.allTouches[0];
+        if (touch) {
+          beginHomeGesture(touch.absoluteX, touch.absoluteY);
+        }
+      })
+      .onTouchesMove((event, stateManager) => {
+        'worklet';
+        const touch = event.allTouches[0];
+        if (!touch) {
+          stateManager.fail();
+          return;
+        }
+        if (
+          resolveHomeGestureAxis(touch.absoluteX, touch.absoluteY) ===
+          HOME_GESTURE_AXIS.HORIZONTAL
+        ) {
+          stateManager.fail();
+        }
+      })
       .onStart(() => {
         startValues.value.startedAtBottom = getIsAtBottom(scrollY.value);
         startValues.value.startedAtTop = scrollY.value <= 5;
