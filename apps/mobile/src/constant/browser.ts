@@ -1,7 +1,7 @@
 // export const ANDROID_DESKTOP_MODE_UA =
 //   'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36';
 
-import { Dimensions, Platform } from 'react-native';
+import { Platform } from 'react-native';
 
 export const DESKTOP_MODE_UA =
   'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36';
@@ -29,8 +29,6 @@ export const APP_STORE_URL_PREFIXES = [
 ];
 
 export const BOTTOM_SHEET_EXTRA = 36;
-export const WEBVIEW_HEIGHT =
-  Dimensions.get('screen').height - 124 - BOTTOM_SHEET_EXTRA;
 export const GROW_WEBVIEW_THRESHOLD = 10;
 export const SHRINK_WEBVIEW_THRESHOLD = 10;
 export const EXTRA_WEBVIEW_HEIGHT = Platform.OS === 'ios' ? 68 : 44;

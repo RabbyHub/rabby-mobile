@@ -1,6 +1,7 @@
 import 'reflect-metadata';
 import React from 'react';
-import { Dimensions, Keyboard, UIManager } from 'react-native';
+import { Keyboard, UIManager } from 'react-native';
+import { getDimensionsSnapshot } from '@/core/dimensions';
 import {
   act,
   cleanupAsync,
@@ -95,8 +96,9 @@ jest.mock('@gorhom/bottom-sheet', () => {
     useBottomSheetInternal: () => mockNativeSheetState,
     BottomSheetModal: ReactModule.forwardRef((props: any, ref: any) => {
       const [closing, setClosing] = ReactModule.useState(false);
-      if (!props.enableDynamicSizing)
+      if (!props.enableDynamicSizing) {
         mockNativeSheetState.animatedSheetHeight.value = props.snapPoints[0];
+      }
       ReactModule.useImperativeHandle(ref, () => ({
         present: () => setClosing(false),
         close: () => setClosing(true),
@@ -249,7 +251,7 @@ const priceId = 'perps-pro-position-tpsl-stopLoss-price';
 
 describe('position TP/SL input source integration', () => {
   let unregister: () => void;
-  const originalWindow = Dimensions.get('window');
+  const originalWindow = getDimensionsSnapshot('window');
   beforeAll(() => {
     Dimensions.set({ window: { ...originalWindow, width: 393, height: 852 } });
     const values = new Map<string, unknown>();
@@ -661,8 +663,9 @@ describe('position TP/SL input source integration', () => {
         render(<PerpsProPositionTpSlSheets {...props} />, { wrapper });
         await act(async () => {});
         const scroll = screen.getByTestId('perps-pro-position-tpsl-scroll');
-        if (entry === 'add')
+        if (entry === 'add') {
           fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-add'));
+        }
         await act(async () => {});
         expect(screen.getByTestId('perps-pro-position-tpsl-scroll')).toBe(
           scroll,

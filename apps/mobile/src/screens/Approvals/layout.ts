@@ -1,4 +1,5 @@
-import { Platform, Dimensions } from 'react-native';
+import { Platform } from 'react-native';
+import { getDimensionsSnapshot } from '@/core/dimensions';
 import {
   BOTTOM_BUTTON_BOTTOM_OFFSET,
   BOTTOM_BUTTON_SINGLE_HEIGHT,
@@ -46,7 +47,7 @@ export const ApprovalsLayouts = {
 
   get riskAlertTooltipMaxWidth() {
     return (
-      Dimensions.get('window').width -
+      getDimensionsSnapshot('window').width -
       (this.innerContainerHorizontalOffset + this.contractCardPadding + 63)
     );
   },

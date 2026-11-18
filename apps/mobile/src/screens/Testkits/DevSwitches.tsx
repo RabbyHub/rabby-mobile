@@ -8,13 +8,13 @@ import React, {
 } from 'react';
 import {
   Alert,
-  Dimensions,
   ScrollView,
   StyleSheet,
   TouchableOpacity,
   useWindowDimensions,
   View,
 } from 'react-native';
+import { getDimensionsSnapshot } from '@/core/dimensions';
 
 import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import { useNavigation } from '@react-navigation/native';
@@ -1742,7 +1742,6 @@ function DevSwitches(): JSX.Element {
   );
 }
 
-const CONTENT_W = Dimensions.get('screen').width - 24;
 const getStyles = createGetStyles2024(ctx =>
   StyleSheet.create({
     screen: {
@@ -1920,7 +1919,7 @@ const getStyles = createGetStyles2024(ctx =>
     propertyDesc: {
       flexDirection: 'row',
       width: '100%',
-      maxWidth: CONTENT_W,
+      maxWidth: getDimensionsSnapshot('screen').width - 24,
       flexWrap: 'wrap',
       alignItems: 'flex-start',
       justifyContent: 'flex-start',

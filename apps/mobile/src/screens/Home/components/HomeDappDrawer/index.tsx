@@ -5,13 +5,13 @@ import React, { useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { FlatListProps } from 'react-native';
 import {
-  Dimensions,
   Platform,
   FlatList as RNFlatList,
   TouchableOpacity,
   View,
   useWindowDimensions,
 } from 'react-native';
+import { getDimensionsSnapshot } from '@/core/dimensions';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   Extrapolate,
@@ -76,7 +76,7 @@ export const HomeDappDrawer: React.FC<{
     getStyle,
   });
   const { t } = useTranslation();
-  const height = Dimensions.get('screen').height;
+  const height = getDimensionsSnapshot('screen').height;
 
   const { setPartialBrowserState } = useBrowser();
   const isDrawerExpanded = useValueFromSharedValue(isExpanded);
@@ -582,7 +582,7 @@ const getStyle = createGetStyles2024(
       display: 'flex',
       flexDirection: 'column',
       height: '100%',
-      maxHeight: Dimensions.get('screen').height - safeAreaInsets.top,
+      maxHeight: getDimensionsSnapshot('screen').height - safeAreaInsets.top,
     },
     favoritesList: {
       flex: 1,

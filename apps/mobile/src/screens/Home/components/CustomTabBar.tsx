@@ -1,11 +1,5 @@
-import {
-  Dimensions,
-  PixelRatio,
-  useWindowDimensions,
-  View,
-  Pressable,
-  ViewStyle,
-} from 'react-native';
+import { PixelRatio, View, Pressable, ViewStyle } from 'react-native';
+import { getDimensionsSnapshot, useWindowDimensions } from '@/core/dimensions';
 import { MaterialTabBar } from 'react-native-collapsible-tab-view';
 
 import React, { useCallback, useEffect, useRef } from 'react';
@@ -231,7 +225,7 @@ const indicatorStyles = createGetStyles2024(
     },
   },
   ({ isLight, colors2024 }) => {
-    const winWidth = Dimensions.get('window').width;
+    const winWidth = getDimensionsSnapshot('window').width;
     const indicatorWidth = getHomeTabIndicatorWidth(winWidth);
     // The right segment covers the whole right bar: half of it was dead before,
     // so tapping the right half of the grey bar did nothing.
@@ -721,7 +715,7 @@ export const HomeCustomMaterialTabBar = ({}: Partial<
     measureSecondaryIndicator();
   }, [measureSecondaryIndicator]);
 
-  // const winWidth = Dimensions.get('window').width;
+  // const winWidth = getDimensionsSnapshot('window').width;
   const { width: winWidth } = useWindowDimensions();
 
   return (

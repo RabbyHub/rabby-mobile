@@ -1,15 +1,16 @@
 import React from 'react';
 import { View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
   AutoFitHeaderTitle,
   HeaderTitleLanguageStyle,
 } from '@/components/AutoFitHeaderTitle';
 import { HeaderBackButton } from '@/hooks/navigation';
+import { useCustomHeaderTop } from '@/hooks/useAppLayout';
 import { useTheme2024 } from '@/hooks/theme';
 import { IS_IOS } from '@/core/native/utils';
 import { ScreenLayouts } from '@/constant/layout';
+import { useSystemColumnInset } from '@/components/SafeWindowFrame/backdrop';
 import { createGetStyles2024 } from '@/utils/styles';
 
 // Match the container's header offset (`ScreenLayouts.headerAreaHeight`), so a
@@ -40,11 +41,19 @@ export const AutoFitCenterHeader = ({
   textStylesByLanguage?: Partial<Record<string, HeaderTitleLanguageStyle>>;
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
-  const insets = useSafeAreaInsets();
+  const headerTop = useCustomHeaderTop();
+  const columnInset = useSystemColumnInset();
 
   return (
-    <View style={[styles.outer, { paddingTop: insets.top }]}>
-      <View style={styles.row}>
+    <View style={[styles.outer, { paddingTop: headerTop }]}>
+      <View
+        style={[
+          styles.row,
+          {
+            paddingLeft: HEADER_HORIZONTAL_INSET + columnInset.left,
+            paddingRight: HEADER_HORIZONTAL_INSET + columnInset.right,
+          },
+        ]}>
         <View style={styles.backSlot}>
           <HeaderBackButton
             style={styles.backButtonTouch}

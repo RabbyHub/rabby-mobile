@@ -19,7 +19,8 @@ import React, {
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View, Pressable, ScrollView, Dimensions } from 'react-native';
+import { View, Pressable, ScrollView } from 'react-native';
+import { useWindowDimensions } from '@/core/dimensions';
 import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 import { IS_IOS } from '@/core/native/utils';
 import { trigger } from 'react-native-haptic-feedback';
@@ -102,9 +103,10 @@ function ReceiveScreen(): JSX.Element {
       !!offlineChainData.displayWillClosedChain &&
       !!offlineChainData.offlineChainInfo);
 
+  const { width: windowWidth } = useWindowDimensions();
   const headerTitle = useMemo(
     () => (
-      <View style={styles.headerTitle}>
+      <View style={[styles.headerTitle, { width: windowWidth - 100 }]}>
         {showName ? (
           <>
             <WalletIcon
@@ -154,6 +156,7 @@ function ReceiveScreen(): JSX.Element {
       account?.address,
       account?.aliasName,
       colors2024,
+      windowWidth,
     ],
   );
 
@@ -335,123 +338,127 @@ function ReceiveScreen(): JSX.Element {
   );
 }
 
-const SCREEN_WIDTH = Dimensions.get('window').width;
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
-  headerTitle: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 4,
-    width: SCREEN_WIDTH - 100,
-    // Same native-container correction as the Approvals header.
-    ...(IS_IOS ? { paddingRight: 65 } : {}),
-  },
-  screen: {
-    backgroundColor: colors2024['neutral-bg-0'],
-  },
-  container: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  scrollView: {
-    flex: 1,
-    width: '100%',
-  },
-  scrollViewContent: {
-    flexGrow: 1,
-    alignItems: 'center',
-    justifyContent: 'flex-start',
-  },
-  receiveContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 24,
-    paddingTop: 0,
-    width: '100%',
-  },
-  offlineChainNotify: {
-    marginHorizontal: 0,
-    marginBottom: 12,
-    marginTop: 8,
-    width: '100%',
-  },
-  // 24 + 12 gives the design's 36px side gap for the QR card only.
-  qrCardWrapper: {
-    width: '100%',
-    paddingHorizontal: 12,
-  },
-  // Design gap between the header and the QR card when no notice is shown.
-  qrCardWrapperFirst: {
-    marginTop: 40,
-  },
-  // Backup Reminder Card styles
-  backupReminderCard: {
-    marginHorizontal: 0,
-    marginBottom: 16,
-    marginTop: 8,
-    width: '100%',
-  },
-  overlay: {
-    backgroundColor: 'rgba(0,0,0,0.8)',
-    height: '100%',
-    justifyContent: 'center',
-  },
-  modalContent: {
-    borderRadius: 20,
-    borderCurve: 'continuous',
-    backgroundColor: colors2024['neutral-bg-1'],
-    boxShadow: '0 20 20 0 rgba(45, 48, 51, 0.16)',
-    borderWidth: 1,
-    borderColor: colors2024['neutral-line'],
-    marginHorizontal: 20,
-    paddingHorizontal: 20,
-    paddingVertical: 30,
-  },
-  btns: {
-    padding: 0,
-    marginTop: 30,
-  },
-  alertModalText: {
-    fontSize: 18,
-    lineHeight: 22,
-    fontWeight: '700',
-    fontFamily: 'SF Pro Rounded',
-    textAlign: 'center',
-    color: colors2024['neutral-title-1'],
-  },
-  accountBox: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 9,
-    gap: 8,
-  },
-  titleText: {
-    flexShrink: 1,
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 18,
-    lineHeight: 22,
-    fontWeight: '700',
-    flexWrap: 'nowrap',
-  },
-  walletIcon: {
-    width: 24,
-    height: 24,
-    borderRadius: 7,
-    borderCurve: 'continuous',
-  },
-  // Inline-header button target: fill the header row vertically, comfortable
-  // width. The 16pt eye hugs the title text (left-aligned) and the extra width
-  // becomes a ~44x56 tap area on its right, so no negative-margin compensation
-  // is needed.
-  eyeButton: {
-    width: 44,
-    height: ScreenLayouts.headerAreaHeight,
-    // Left-align the glyph so it hugs the text; vertically centre it in the row.
-    alignItems: 'flex-start',
-    justifyContent: 'center',
-  },
-}));
+const getStyle = createGetStyles2024(({ colors2024 }) => {
+  // Resolved per style build so a fold/rotation is picked up; a module-level
+  // constant would freeze the value from the first import.
+  return {
+    headerTitle: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 4,
+      // The width is set per-render from the live window (see headerTitle);
+      // keeping it out of the style factory avoids a stale snapshot.
+      // Same native-container correction as the Approvals header.
+      ...(IS_IOS ? { paddingRight: 65 } : {}),
+    },
+    screen: {
+      backgroundColor: colors2024['neutral-bg-0'],
+    },
+    container: {
+      flex: 1,
+      alignItems: 'center',
+    },
+    scrollView: {
+      flex: 1,
+      width: '100%',
+    },
+    scrollViewContent: {
+      flexGrow: 1,
+      alignItems: 'center',
+      justifyContent: 'flex-start',
+    },
+    receiveContainer: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: 24,
+      paddingTop: 0,
+      width: '100%',
+    },
+    offlineChainNotify: {
+      marginHorizontal: 0,
+      marginBottom: 12,
+      marginTop: 8,
+      width: '100%',
+    },
+    // 24 + 12 gives the design's 36px side gap for the QR card only.
+    qrCardWrapper: {
+      width: '100%',
+      paddingHorizontal: 12,
+    },
+    // Design gap between the header and the QR card when no notice is shown.
+    qrCardWrapperFirst: {
+      marginTop: 40,
+    },
+    // Backup Reminder Card styles
+    backupReminderCard: {
+      marginHorizontal: 0,
+      marginBottom: 16,
+      marginTop: 8,
+      width: '100%',
+    },
+    overlay: {
+      backgroundColor: 'rgba(0,0,0,0.8)',
+      height: '100%',
+      justifyContent: 'center',
+    },
+    modalContent: {
+      borderRadius: 20,
+      borderCurve: 'continuous',
+      backgroundColor: colors2024['neutral-bg-1'],
+      boxShadow: '0 20 20 0 rgba(45, 48, 51, 0.16)',
+      borderWidth: 1,
+      borderColor: colors2024['neutral-line'],
+      marginHorizontal: 20,
+      paddingHorizontal: 20,
+      paddingVertical: 30,
+    },
+    btns: {
+      padding: 0,
+      marginTop: 30,
+    },
+    alertModalText: {
+      fontSize: 18,
+      lineHeight: 22,
+      fontWeight: '700',
+      fontFamily: 'SF Pro Rounded',
+      textAlign: 'center',
+      color: colors2024['neutral-title-1'],
+    },
+    accountBox: {
+      flexDirection: 'row',
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginBottom: 9,
+      gap: 8,
+    },
+    titleText: {
+      flexShrink: 1,
+      color: colors2024['neutral-title-1'],
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 18,
+      lineHeight: 22,
+      fontWeight: '700',
+      flexWrap: 'nowrap',
+    },
+    walletIcon: {
+      width: 24,
+      height: 24,
+      borderRadius: 7,
+      borderCurve: 'continuous',
+    },
+    // Inline-header button target: fill the header row vertically, comfortable
+    // width. The 16pt eye hugs the title text (left-aligned) and the extra width
+    // becomes a ~44x56 tap area on its right, so no negative-margin compensation
+    // is needed.
+    eyeButton: {
+      width: 44,
+      height: ScreenLayouts.headerAreaHeight,
+      // Left-align the glyph so it hugs the text; vertically centre it in the row.
+      alignItems: 'flex-start',
+      justifyContent: 'center',
+    },
+  };
+});
 
 export default ReceiveScreen;

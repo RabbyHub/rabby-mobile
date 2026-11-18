@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { View, Dimensions, TouchableOpacity } from 'react-native';
+import { View, TouchableOpacity } from 'react-native';
+import { getDimensionsSnapshot, useWindowDimensions } from '@/core/dimensions';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -44,8 +45,6 @@ import { promptLocalStorageArchiveShare } from '@/utils/promptLocalStorageArchiv
 import StartScreenAnimation from '@/assets2024/animations/start-screen-animation.min.json';
 import StartScreenAnimationDark from '@/assets2024/animations/start-screen-animation-dark.min.json';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-
 // Logo images
 import logoLight from '@/assets/images/get-started/logo-light.png';
 import logoDark from '@/assets/images/get-started/logo-dark.png';
@@ -61,6 +60,7 @@ const HeroIllustration = ({ isLight }: { isLight: boolean }) => {
   const animationCompletedRef = useRef(false);
   const rapidTapRef = useRef({ count: 0, lastTappedAt: 0 });
 
+  const { width: SCREEN_WIDTH } = useWindowDimensions();
   const heroHeight = Math.ceil(SCREEN_WIDTH * HERO_ASPECT_RATIO);
 
   const handleAnimationTap = useCallback(() => {
@@ -352,7 +352,7 @@ const getStyle = createGetStyles2024(ctx => ({
     flex: 1,
   },
   heroContainer: {
-    width: SCREEN_WIDTH,
+    width: getDimensionsSnapshot('window').width,
     flexShrink: 1,
     justifyContent: 'flex-end',
     overflow: 'hidden',
@@ -360,7 +360,7 @@ const getStyle = createGetStyles2024(ctx => ({
   },
   heroBackground: {
     marginLeft: -12,
-    width: SCREEN_WIDTH + 24,
+    width: getDimensionsSnapshot('window').width + 24,
   },
   textContent: {
     alignItems: 'center',

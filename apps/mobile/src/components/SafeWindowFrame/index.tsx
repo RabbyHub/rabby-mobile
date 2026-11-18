@@ -6,34 +6,23 @@ import {
   StyleSheet,
   View,
 } from 'react-native';
-import DeviceInfo from 'react-native-device-info';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useTheme2024 } from '@/hooks/theme';
+import { perfEvents } from '@/core/utils/perf';
+import {
+  FOLDABLE_WIDE_CENTERED_COLUMN_ENABLED,
+  FOLDABLE_WIDE_CONTENT_MAX_WIDTH,
+  isFoldableIosDevice,
+  isFoldableWidePosture,
+} from '@/core/utils/foldableDevice';
+import { getScreenContentBackgroundColor } from '@/constant/layout';
+import {
+  SafeWindowBackdropContext,
+  SystemColumnInsetContext,
+} from './backdrop';
 
 const isIOS = Platform.OS === 'ios';
-
-/**
- * Device ids that expose a horizontal system column on iOS. Add new foldable
- * ids here once they are supported; everything else gets `React.Fragment`, so
- * unsupported devices never mount the frame or touch `Dimensions`.
- */
-const FOLDABLE_IOS_DEVICE_IDS = ['iPhone19,4'];
-
-function isFoldableIosDevice() {
-  if (!isIOS) {
-    return false;
-  }
-
-  try {
-    if (FOLDABLE_IOS_DEVICE_IDS.includes(DeviceInfo.getDeviceId())) {
-      return true;
-    }
-    return /duo/i.test(DeviceInfo.getModel() || '');
-  } catch {
-    return false;
-  }
-}
 
 /**
  * Survive Fast Refresh remounts: when this module re-evaluates while the
@@ -45,23 +34,19 @@ let lastNativeWindow: ScaledSize | null = null;
 let lastAppliedWidth: number | null = null;
 
 /**
- * Keeps the whole app inside the horizontally safe part of the window.
+ * Full-bleed frame for the iPhone Duo outer screen.
  *
- * On iPhone Duo (iOS foldable) the system draws its own control column on the
- * right edge of some windows (cover screen / inner right pane). Every existing
- * screen only consumes `insets.top` / `insets.bottom`, so the right column ends
- * up covering app content. Insetting the root once is the documented
- * short-term workaround ("display area limited to the left of the navigation
- * bar") and is a no-op on phones where `left`/`right` are 0.
+ * The app tree keeps the full window width so a screen's background layer
+ * (gradient, image, colour) runs under the system control column; the content
+ * containers and every JS header inset themselves through
+ * `SystemColumnInsetContext` instead.
  *
- * Padding alone is not enough: plenty of components size themselves from
- * `Dimensions.get('window').width`, so they would still be laid out for the
- * full window and get clipped at the safe-area edge. React Native has no
- * safe-area-aware window size (upstream `Dimensions` still reports the key
- * window bounds), so we publish the reduced width through `Dimensions.set()`
- * — the same entry point the native `didUpdateDimensions` event uses — and
- * re-apply it whenever native dimensions change. This keeps every consumer of
- * `Dimensions` / `useWindowDimensions` consistent without touching screens.
+ * Components still size themselves from `Dimensions.get('window').width`, so
+ * the frame also publishes the content width (native width minus the column)
+ * through `Dimensions.set()` — the same entry point the native
+ * `didUpdateDimensions` event uses — and re-applies it whenever native
+ * dimensions change. That keeps `Dimensions` / `useWindowDimensions`
+ * consumers aligned with the padded content area without touching screens.
  *
  * The component itself is only exported for foldable iOS devices. Every other
  * platform / model exports `React.Fragment`, so those builds keep the previous
@@ -69,22 +54,65 @@ let lastAppliedWidth: number | null = null;
  */
 function SafeWindowFrameImpl({ children }: { children?: React.ReactNode }) {
   const insets = useSafeAreaInsets();
-  const { colors2024 } = useTheme2024();
+  const { colors2024, isLight } = useTheme2024();
+
+  /**
+   * Follow the focused screen's declared background.
+   *
+   * `ScreenSpecs` (constant/layout) is already the single source of truth for a
+   * screen's background - the stack navigator feeds the same helper into
+   * `contentStyle` - so the strip can reuse it instead of hard-coding a colour.
+   * Only the route name is stored: the colour is resolved per render, which
+   * keeps light/dark switches correct without an extra listener.
+   */
+  const [routeName, setRouteName] = React.useState<string | undefined>();
+
+  React.useEffect(() => {
+    const onRouteChange = (ctx: { currentRouteName?: string }) => {
+      if (ctx.currentRouteName) {
+        setRouteName(ctx.currentRouteName);
+      }
+    };
+    const onNavigationReady = (ctx: { readyRootName?: string }) => {
+      if (ctx.readyRootName) {
+        setRouteName(ctx.readyRootName);
+      }
+    };
+    perfEvents.addListener('EVENT_ROUTE_CHANGE', onRouteChange);
+    perfEvents.addListener('APP_NAVIGATION_READY', onNavigationReady);
+    return () => {
+      perfEvents.removeListener('EVENT_ROUTE_CHANGE', onRouteChange);
+      perfEvents.removeListener('APP_NAVIGATION_READY', onNavigationReady);
+    };
+  }, []);
 
   const leftInset = isIOS ? Math.max(0, Math.round(insets.left)) : 0;
   const rightInset = isIOS ? Math.max(0, Math.round(insets.right)) : 0;
   const active = leftInset > 0 || rightInset > 0;
 
-  const [availableWidth, setAvailableWidth] = React.useState<number | null>(
-    null,
-  );
+  /**
+   * Pages may override the strip colour; the default is the page background so
+   * the strip blends in instead of showing a band next to the system column.
+   */
+  const [backdropColor, setBackdropColor] = React.useState<string | null>(null);
+
+  const declaredBackground = routeName
+    ? getScreenContentBackgroundColor({
+        screenName: routeName,
+        isDarkTheme: !isLight,
+      })
+    : 'transparent';
+  const stripColor =
+    backdropColor ??
+    (declaredBackground === 'transparent'
+      ? colors2024['neutral-bg-0']
+      : declaredBackground);
+
   const lastWrittenWidthRef = React.useRef<number | null>(null);
+  /** Content width of the centered column in the wide inner-screen posture. */
+  const [wideWidth, setWideWidth] = React.useState<number | null>(null);
 
   React.useEffect(() => {
-    if (!active) {
-      return;
-    }
-
     const applyWindow = (win: ScaledSize) => {
       const screen = Dimensions.get('screen');
       const isOwnValue =
@@ -95,15 +123,39 @@ function SafeWindowFrameImpl({ children }: { children?: React.ReactNode }) {
       // narrower than the screen, and `max(window, screen)` would over-shrink.
       const nativeWidth =
         isOwnValue && lastNativeWindow ? lastNativeWindow.width : win.width;
-      const targetWidth = Math.max(0, nativeWidth - leftInset - rightInset);
-      const nativeWindow = { ...win, width: nativeWidth };
-
+      const nativeHeight =
+        isOwnValue && lastNativeWindow ? lastNativeWindow.height : win.height;
+      const nativeWindow = { ...win, width: nativeWidth, height: nativeHeight };
       lastNativeWindow = nativeWindow;
+
+      const inWidePosture =
+        !active &&
+        FOLDABLE_WIDE_CENTERED_COLUMN_ENABLED &&
+        isFoldableWidePosture(nativeWindow);
+      const targetWidth = active
+        ? Math.max(0, nativeWidth - leftInset - rightInset)
+        : inWidePosture
+        ? Math.min(nativeWidth, FOLDABLE_WIDE_CONTENT_MAX_WIDTH)
+        : null;
+
+      if (targetWidth === null) {
+        setWideWidth(null);
+        if (lastAppliedWidth !== null) {
+          lastAppliedWidth = null;
+          lastWrittenWidthRef.current = null;
+          Dimensions.set({
+            window: nativeWindow,
+            screen,
+          });
+        }
+        return;
+      }
+
       lastAppliedWidth = targetWidth;
       lastWrittenWidthRef.current = targetWidth;
-      setAvailableWidth(targetWidth);
+      setWideWidth(active ? null : targetWidth);
       Dimensions.set({
-        window: { ...win, width: targetWidth },
+        window: { ...win, width: targetWidth, height: nativeHeight },
         screen,
       });
     };
@@ -122,6 +174,7 @@ function SafeWindowFrameImpl({ children }: { children?: React.ReactNode }) {
     return () => {
       subscription.remove();
       lastWrittenWidthRef.current = null;
+      lastAppliedWidth = null;
       if (lastNativeWindow) {
         Dimensions.set({
           window: lastNativeWindow,
@@ -131,19 +184,40 @@ function SafeWindowFrameImpl({ children }: { children?: React.ReactNode }) {
     };
   }, [active, leftInset, rightInset]);
 
+  if (wideWidth !== null) {
+    return (
+      <View
+        style={[
+          styles.wideFrame,
+          { backgroundColor: colors2024['neutral-bg-1'] },
+        ]}>
+        <View style={[styles.wideContent, { width: wideWidth }]}>
+          {children}
+        </View>
+      </View>
+    );
+  }
+
   if (!active) {
     return <>{children}</>;
   }
 
   return (
-    <View
-      style={[styles.frame, { backgroundColor: colors2024['neutral-bg-0'] }]}>
-      {leftInset > 0 ? <View style={{ width: leftInset }} /> : null}
-      <View style={[styles.content, { width: availableWidth ?? undefined }]}>
-        {children}
-      </View>
-      {rightInset > 0 ? <View style={{ width: rightInset }} /> : null}
-    </View>
+    <SystemColumnInsetContext.Provider
+      value={{ left: leftInset, right: rightInset }}>
+      <SafeWindowBackdropContext.Provider value={setBackdropColor}>
+        {/*
+          The app tree keeps the full window width so a screen's background
+          layer (gradient, image, colour) runs under the system column. The
+          content containers and every header inset themselves through
+          `useSystemColumnInset`; on this posture every stack header is a JS
+          header, so the native bar geometry is never involved.
+        */}
+        <View style={[styles.frame, { backgroundColor: stripColor }]}>
+          <View style={styles.content}>{children}</View>
+        </View>
+      </SafeWindowBackdropContext.Provider>
+    </SystemColumnInsetContext.Provider>
   );
 }
 
@@ -159,6 +233,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
   content: {
+    flex: 1,
+  },
+  wideFrame: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  wideContent: {
     flex: 1,
   },
 });
