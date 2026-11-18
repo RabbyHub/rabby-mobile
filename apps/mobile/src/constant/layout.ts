@@ -52,8 +52,6 @@ export const ScreenLayouts = {
   dappWebViewNavBottomSheetHeight: 302,
   inConnectedDappWebViewNavBottomSheetHeight: 302 /*  - 120 */,
 };
-const SCREEN_WIDTH = Dimensions.get('window').width - 32;
-export const DEFI_CARD_WIDTH = (SCREEN_WIDTH - 12) / 2;
 export const ASSETS_ITEM_HEIGHT = 68;
 export const ASSETS_ITEM_HEIGHT_NEW = 70;
 export const DEFI_ITEM_HEIGHT = 200;

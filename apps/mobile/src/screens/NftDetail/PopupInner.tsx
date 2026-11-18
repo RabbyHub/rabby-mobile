@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import dayjs from 'dayjs';
-import { Dimensions, StyleSheet, TextStyle, View } from 'react-native';
+import { StyleSheet, TextStyle, View } from 'react-native';
+import { useWindowDimensions } from '@/core/dimensions';
 import BigNumber from 'bignumber.js';
 
 import { getCHAIN_ID_LIST } from '@/constant/projectLists';
@@ -111,12 +112,15 @@ export type NFTDetailPopupProps = {
 };
 
 const LAYOUT_INNER_PX = 20;
-const CONTENT_W = Dimensions.get('window').width - LAYOUT_INNER_PX * 2;
 export const NFTDetailPopupInner = ({
   token,
   collectionName,
 }: NFTDetailPopupProps) => {
   const { t } = useTranslation();
+  // Render-time read: the popup follows a fold/rotation instead of keeping the
+  // width captured at import time.
+  const { width: windowWidth } = useWindowDimensions();
+  const contentW = windowWidth - LAYOUT_INNER_PX * 2;
   const { styles } = useThemeStyles(getStyle);
 
   const price = useMemo(() => {
@@ -140,10 +144,10 @@ export const NFTDetailPopupInner = ({
       <BottomSheetScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollViewContentContainer}>
-        <View style={styles.imageView}>
+        <View style={[styles.imageView, { width: contentW, height: contentW }]}>
           <Media
             failedPlaceholder={
-              <IconDefaultNFT width={CONTENT_W} height={CONTENT_W} />
+              <IconDefaultNFT width={contentW} height={contentW} />
             }
             type={token.content_type}
             src={token.content}
@@ -221,8 +225,6 @@ const getStyle = createGetStyles(colors => ({
     paddingBottom: LAYOUT.footerHeight + 20,
   },
   imageView: {
-    width: CONTENT_W,
-    height: CONTENT_W,
     position: 'relative',
     marginBottom: 10,
   },

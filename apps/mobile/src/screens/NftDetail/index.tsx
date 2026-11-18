@@ -1,7 +1,8 @@
 /* eslint-disable react-native/no-inline-styles */
 import React, { useCallback, useEffect, useMemo } from 'react';
 import dayjs from 'dayjs';
-import { Dimensions, StyleSheet, View, ScrollView } from 'react-native';
+import { StyleSheet, View, ScrollView } from 'react-native';
+import { Dimensions as AppDimensions } from '@/core/dimensions';
 import BigNumber from 'bignumber.js';
 import { getCHAIN_ID_LIST } from '@/constant/projectLists';
 import { useTheme2024 } from '@/hooks/theme';
@@ -427,197 +428,200 @@ export const NFTDetailScreen = () => {
   );
 };
 
-const SCREEN_WIDTH = Dimensions.get('window').width;
-
 const getStyle = createGetStyles2024(
-  ({ colors2024, colors, safeAreaInsets }) => ({
-    screenRoot: {
-      flex: 1,
-    },
-    scrollContainer: {
-      flex: 1,
-      width: '100%',
-      marginTop: 8,
-      // backgroundColor: colors2024['neutral-bg-4'],
-    },
-    accountBox: {
-      flexDirection: 'row',
-      marginLeft: 25,
-      gap: 4,
-      marginTop: 10,
-      marginBottom: 8,
-    },
-    titleText: {
-      flexShrink: 1,
-      color: colors2024['neutral-secondary'],
-      fontFamily: 'SF Pro Rounded',
-      fontSize: 16,
-      lineHeight: 20,
-      fontWeight: '500',
-      flexWrap: 'nowrap',
-    },
-    walletIcon: {
-      width: 18,
-      height: 18,
-      borderRadius: 4,
-    },
-    relative: {
-      position: 'relative',
-    },
-    buttonContainer: {
-      width: '100%',
-      paddingTop: BOTTOM_BUTTON_TOP_OFFSET,
-      paddingHorizontal: 20,
-      paddingBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
-    },
-    btnTitle: {
-      color: colors['neutral-title-2'],
-    },
-    imagesView: {
-      borderRadius: 4,
-      justifyContent: 'center',
-      alignItems: 'center',
-      position: 'relative',
-      marginBottom: 0,
-    },
-    headerArea: {
-      // Full row: our own back button + avatar + name, laid out from 16pt.
-      width: SCREEN_WIDTH - 32,
-      height: 'auto',
-      display: 'flex',
-      flexDirection: 'row',
-      gap: 8,
-      alignItems: 'center',
-    },
-    headerBack: {
-      marginLeft: 0,
-      paddingLeft: 0,
-      width: 24,
-      height: 24,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    tokenSymbol: {
-      flexShrink: 1,
-      color: colors2024['neutral-title-1'],
-      fontFamily: 'SF Pro Rounded',
-      fontSize: 20,
-      lineHeight: 24,
-      fontWeight: '700',
-      flexWrap: 'nowrap',
-    },
-    container: {
-      flex: 1,
-      flexDirection: 'column',
-      justifyContent: 'flex-start',
-      alignItems: 'flex-start',
-    },
-    innerImages: {
-      borderRadius: 16,
-      // width: '100%',
-      // height: 'auto',
-    },
-    avator: {
-      width: 44,
-      height: 44,
-      position: 'relative',
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    chainIcon: {
-      width: 16,
-      height: 16,
-      borderRadius: 16,
-      position: 'absolute',
-      bottom: 0,
-      right: 0,
-    },
-    imagesAvatar: {
-      width: '100%',
-      height: '100%',
-      borderRadius: 8,
-    },
-    imageContainer: {
-      width: '100%',
-      // Keep page spacing outside Media so its absolute loading layer and
-      // normal-flow image/fallback share the same content bounds.
-      paddingHorizontal: 16,
-    },
-    images: {
-      width: '100%',
-      height: 360,
-      // flex: 1,
-      borderRadius: 0,
-      resizeMode: 'cover',
-      backgroundColor: 'transparent',
-    },
-    titleView: {
-      paddingTop: 16,
-      paddingBottom: 16,
-      width: '100%',
-    },
-    title: {
-      color: colors2024['neutral-title-1'],
-      fontFamily: 'SF Pro Rounded',
-      fontSize: 20,
-      lineHeight: 24,
-      fontWeight: '700',
-    },
-    subtitle: {
-      flexDirection: 'row',
-      justifyContent: 'flex-start',
-      alignItems: 'center',
-      marginTop: 16,
-    },
-    numbernft: {
-      fontSize: 15,
-      fontWeight: '500',
-      color: colors['neutral-title-1'],
-      lineHeight: 17,
-      marginLeft: 8,
-    },
-    listItem: {
-      flexDirection: 'row',
-      paddingTop: 16,
-      justifyContent: 'space-between',
-    },
-    price: {
-      color: colors2024['neutral-title-1'],
-      fontFamily: 'SF Pro Rounded',
-      fontSize: 16,
-      lineHeight: 20,
-      fontWeight: '700',
-    },
-    value: {
-      color: colors2024['neutral-title-1'],
-      fontFamily: 'SF Pro Rounded',
-      fontSize: 16,
-      lineHeight: 20,
-      fontWeight: '500',
-      alignSelf: 'flex-end',
-      alignItems: 'flex-end',
-      alignContent: 'flex-end',
-      maxWidth: 227,
-      marginLeft: 24,
-      textAlign: 'right',
-    },
-    borderTop: {
-      borderTopWidth: StyleSheet.hairlineWidth,
-      borderColor: colors['neutral-line'],
-    },
-    bottom: {
-      paddingHorizontal: 20,
-      width: '100%',
-    },
-    left: {
-      alignSelf: 'flex-start',
-    },
-    right: {
-      alignItems: 'flex-end',
-      justifyContent: 'flex-end',
-      alignSelf: 'flex-end',
-      flexWrap: 'wrap',
-      alignContent: 'flex-end',
-    },
-  }),
+  ({ colors2024, colors, safeAreaInsets }) => {
+    // Per style build, so a fold/rotation is honoured instead of freezing the
+    // width captured when this module was first imported.
+    const screenWidth = AppDimensions.get('window').width;
+    return {
+      screenRoot: {
+        flex: 1,
+      },
+      scrollContainer: {
+        flex: 1,
+        width: '100%',
+        marginTop: 8,
+        // backgroundColor: colors2024['neutral-bg-4'],
+      },
+      accountBox: {
+        flexDirection: 'row',
+        marginLeft: 25,
+        gap: 4,
+        marginTop: 10,
+        marginBottom: 8,
+      },
+      titleText: {
+        flexShrink: 1,
+        color: colors2024['neutral-secondary'],
+        fontFamily: 'SF Pro Rounded',
+        fontSize: 16,
+        lineHeight: 20,
+        fontWeight: '500',
+        flexWrap: 'nowrap',
+      },
+      walletIcon: {
+        width: 18,
+        height: 18,
+        borderRadius: 4,
+      },
+      relative: {
+        position: 'relative',
+      },
+      buttonContainer: {
+        width: '100%',
+        paddingTop: BOTTOM_BUTTON_TOP_OFFSET,
+        paddingHorizontal: 20,
+        paddingBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
+      },
+      btnTitle: {
+        color: colors['neutral-title-2'],
+      },
+      imagesView: {
+        borderRadius: 4,
+        justifyContent: 'center',
+        alignItems: 'center',
+        position: 'relative',
+        marginBottom: 0,
+      },
+      headerArea: {
+        // Full row: our own back button + avatar + name, laid out from 16pt.
+        width: screenWidth - 32,
+        height: 'auto',
+        display: 'flex',
+        flexDirection: 'row',
+        gap: 8,
+        alignItems: 'center',
+      },
+      headerBack: {
+        marginLeft: 0,
+        paddingLeft: 0,
+        width: 24,
+        height: 24,
+        alignItems: 'center',
+        justifyContent: 'center',
+      },
+      tokenSymbol: {
+        flexShrink: 1,
+        color: colors2024['neutral-title-1'],
+        fontFamily: 'SF Pro Rounded',
+        fontSize: 20,
+        lineHeight: 24,
+        fontWeight: '700',
+        flexWrap: 'nowrap',
+      },
+      container: {
+        flex: 1,
+        flexDirection: 'column',
+        justifyContent: 'flex-start',
+        alignItems: 'flex-start',
+      },
+      innerImages: {
+        borderRadius: 16,
+        // width: '100%',
+        // height: 'auto',
+      },
+      avator: {
+        width: 44,
+        height: 44,
+        position: 'relative',
+        justifyContent: 'center',
+        alignItems: 'center',
+      },
+      chainIcon: {
+        width: 16,
+        height: 16,
+        borderRadius: 16,
+        position: 'absolute',
+        bottom: 0,
+        right: 0,
+      },
+      imagesAvatar: {
+        width: '100%',
+        height: '100%',
+        borderRadius: 8,
+      },
+      imageContainer: {
+        width: '100%',
+        // Keep page spacing outside Media so its absolute loading layer and
+        // normal-flow image/fallback share the same content bounds.
+        paddingHorizontal: 16,
+      },
+      images: {
+        width: '100%',
+        height: 360,
+        // flex: 1,
+        borderRadius: 0,
+        resizeMode: 'cover',
+        backgroundColor: 'transparent',
+      },
+      titleView: {
+        paddingTop: 16,
+        paddingBottom: 16,
+        width: '100%',
+      },
+      title: {
+        color: colors2024['neutral-title-1'],
+        fontFamily: 'SF Pro Rounded',
+        fontSize: 20,
+        lineHeight: 24,
+        fontWeight: '700',
+      },
+      subtitle: {
+        flexDirection: 'row',
+        justifyContent: 'flex-start',
+        alignItems: 'center',
+        marginTop: 16,
+      },
+      numbernft: {
+        fontSize: 15,
+        fontWeight: '500',
+        color: colors['neutral-title-1'],
+        lineHeight: 17,
+        marginLeft: 8,
+      },
+      listItem: {
+        flexDirection: 'row',
+        paddingTop: 16,
+        justifyContent: 'space-between',
+      },
+      price: {
+        color: colors2024['neutral-title-1'],
+        fontFamily: 'SF Pro Rounded',
+        fontSize: 16,
+        lineHeight: 20,
+        fontWeight: '700',
+      },
+      value: {
+        color: colors2024['neutral-title-1'],
+        fontFamily: 'SF Pro Rounded',
+        fontSize: 16,
+        lineHeight: 20,
+        fontWeight: '500',
+        alignSelf: 'flex-end',
+        alignItems: 'flex-end',
+        alignContent: 'flex-end',
+        maxWidth: 227,
+        marginLeft: 24,
+        textAlign: 'right',
+      },
+      borderTop: {
+        borderTopWidth: StyleSheet.hairlineWidth,
+        borderColor: colors['neutral-line'],
+      },
+      bottom: {
+        paddingHorizontal: 20,
+        width: '100%',
+      },
+      left: {
+        alignSelf: 'flex-start',
+      },
+      right: {
+        alignItems: 'flex-end',
+        justifyContent: 'flex-end',
+        alignSelf: 'flex-end',
+        flexWrap: 'wrap',
+        alignContent: 'flex-end',
+      },
+    };
+  },
 );

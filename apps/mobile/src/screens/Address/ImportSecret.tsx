@@ -8,13 +8,7 @@ import { useScanner } from '../Scanner/ScannerScreen';
 import PasteButton from '@/components2024/PasteButton';
 import { NextInput } from '@/components2024/Form/Input';
 import { createGetStyles2024 } from '@/utils/styles';
-import {
-  Dimensions,
-  Keyboard,
-  Pressable,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { Keyboard, Pressable, TouchableOpacity, View } from 'react-native';
 import { validateAndCleanPrivateKey } from '@/core/apis/privateKey';
 import { apiPrivateKey, apiMnemonic } from '@/core/apis';
 import { validateAndCleanMnemonic } from '@/core/apis/mnemonic';
@@ -42,7 +36,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 /** Toast position at the top of screen */
 const TOAST_POSITION_TOP = 30;
-const SCREEN_WIDTH = Dimensions.get('window').width;
 
 // Android needs touch-start dismissal without Pressable claiming the swipe.
 const Container = IS_ANDROID ? View : Pressable;
