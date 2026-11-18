@@ -21,6 +21,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { parsePerpsProTwapDuration } from '../../model/twapOrder';
 import { PerpsProDialogBackdrop } from '../common/PerpsProDialogBackdrop';
+import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
 import {
   getPerpsProInputDialogStyles,
   resolvePerpsProDialogFieldBackground,
@@ -72,6 +73,38 @@ export const PerpsProTwapDurationSheet = React.memo(
     const error = parsePerpsProTwapDuration(draft).error;
     const totalMinutes = Number(draft);
     const hours = Math.floor(totalMinutes / 60);
+    const renderValue = (
+      amount: number,
+      unitKey: 'global.time.hours' | 'global.time.mins',
+    ) => {
+      const key =
+        unitKey === 'global.time.hours' && amount === 1
+          ? 'global.time.hour'
+          : unitKey;
+      // A figure space occupies the same width as one tabular digit.
+      const digits = String(amount).padStart(2, '\u2007');
+      return (
+        <View style={styles.value}>
+          {draft ? (
+            <View>
+              {/* Reserve the same centered width for both "hour" and "hours". */}
+              <Text
+                accessible={false}
+                accessibilityElementsHidden
+                importantForAccessibility="no-hide-descendants"
+                style={[styles.valueText, styles.measureText]}>
+                {t(unitKey, { t: '00' })}
+              </Text>
+              <Text style={[styles.valueText, styles.positionedText]}>
+                {t(key, { t: digits })}
+              </Text>
+            </View>
+          ) : (
+            <Text style={styles.valueText}>{t(unitKey, { t: '' }).trim()}</Text>
+          )}
+        </View>
+      );
+    };
     return (
       <AppBottomSheetModal
         ref={modal}
@@ -93,21 +126,9 @@ export const PerpsProTwapDurationSheet = React.memo(
               {t('page.perps.pro.twap.selectTime')}
             </Text>
             <View style={styles.values}>
-              <View style={styles.value}>
-                <Text style={styles.valueText}>
-                  {t(hours === 1 ? 'global.time.hour' : 'global.time.hours', {
-                    t: draft ? hours : '',
-                  }).trim()}
-                </Text>
-              </View>
+              {renderValue(hours, 'global.time.hours')}
               <Text style={styles.valueText}>：</Text>
-              <View style={styles.value}>
-                <Text style={styles.valueText}>
-                  {t('global.time.mins', {
-                    t: draft ? totalMinutes % 60 : '',
-                  }).trim()}
-                </Text>
-              </View>
+              {renderValue(totalMinutes % 60, 'global.time.mins')}
             </View>
             <DurationPicker
               ref={picker}
@@ -212,6 +233,7 @@ const getStyle = createGetStyles2024(
         justifyContent: 'center',
       },
       valueText: {
+        ...PERPS_PRO_NUMBER_STYLE,
         fontFamily: 'SF Pro Rounded',
         fontSize: 14,
         lineHeight: 18,
@@ -219,6 +241,8 @@ const getStyle = createGetStyles2024(
         includeFontPadding: false,
         color: colors2024['neutral-title-1'],
       },
+      measureText: { opacity: 0 },
+      positionedText: { position: 'absolute', left: 0, top: 0 },
       picker: {
         marginTop: 16,
         width: '100%',
