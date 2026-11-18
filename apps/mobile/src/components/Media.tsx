@@ -301,11 +301,11 @@ export const Media = ({
       ) : null}
       {type === MEDIA_TYPE.VIDEO_URL ? (
         playable ? (
-          <CustomTouchableOpacity style={mediaContainerStyles} onPress={toggle}>
+          <View style={mediaContainerStyles}>
             <Video
               style={mediaContainerStyles}
               source={srcSource}
-              controls={!pause}
+              controls={true}
               onLoad={handleLoad}
               onError={onError}
               paused={pause}
@@ -321,7 +321,7 @@ export const Media = ({
                 <IconPlay width={72} height={72} />
               </CustomTouchableOpacity>
             ) : null}
-          </CustomTouchableOpacity>
+          </View>
         ) : (
           <>
             {_thumbnail ? (

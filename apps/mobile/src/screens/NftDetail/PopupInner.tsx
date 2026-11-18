@@ -150,7 +150,7 @@ export const NFTDetailPopupInner = ({
             style={styles.images}
             mediaStyle={styles.images}
             playable={true}
-            poster={token.content}
+            poster={token.thumbnail_url}
           />
           {token.amount > 1 && (
             <View style={styles.nftCountContainer}>
