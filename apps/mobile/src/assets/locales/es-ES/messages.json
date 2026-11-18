@@ -214,6 +214,17 @@
     }
   },
   "page": {
+    "securePreferences": {
+      "damagedTitle": "Algunos ajustes de seguridad podrían estar dañados",
+      "damagedDescription": "Restablece los siguientes ajustes a sus valores predeterminados. Revísalos antes de tu próxima transacción.",
+      "unavailableTitle": "Los ajustes de seguridad no están disponibles temporalmente",
+      "unavailableDescription": "Rabby usa los valores predeterminados de los ajustes que no pudo verificar. Los cambios en los siguientes ajustes no se guardarán. Desbloquea el dispositivo y vuelve a abrir Rabby.",
+      "reset": "Restablecer ajustes",
+      "whitelist": "Lista de transferencias permitidas",
+      "contactBook": "Libreta de direcciones y notas",
+      "securityEngine": "Reglas y listas de seguridad",
+      "rpc": "RPC personalizado"
+    },
     "getStart": {
       "goToHome": "Ir al inicio",
       "alreadyHaveAddress": "Ya tengo una cartera",
@@ -2750,7 +2761,10 @@
           "description": "Coloca órdenes a intervalos personalizados",
           "totalTime": "Tiempo total",
           "durationFieldLabel": "Tiempo total (hh:mm)",
-          "durationFieldValue": "{{hours}} : {{minutes}} min",
+          "durationFieldValue": "{{hours}} : {{minutes}}",
+          "minuteValue": "{{t}} min",
+          "minuteValue_one": "{{t}} min",
+          "confirmationDuration": "{{t}} min",
           "totalSize": "Cantidad total",
           "selectTime": "Elegir tiempo total",
           "reset": "Restablecer",
@@ -2771,8 +2785,8 @@
           "size": "Cantidad",
           "fee": "Comisión",
           "noTrades": "Aún no hay operaciones",
-          "endTitle": "¿Finalizar la orden TWAP?",
-          "endMessage": "¿Finalizar la parte restante de la orden TWAP de {{coin}}? Las operaciones ya ejecutadas se conservarán.",
+          "endTitle": "Confirmar la finalización de la orden TWAP",
+          "endMessage": "Tras la confirmación, se detendrá la orden TWAP y se cancelarán automáticamente sus órdenes abiertas.",
           "ending": "Finalizando…",
           "ended": "Orden TWAP finalizada.",
           "placed": "Orden TWAP de {{coin}} enviada.",
@@ -2792,7 +2806,6 @@
           },
           "fills": {
             "loading": "Cargando operaciones…",
-            "partial": "Solo se muestran las operaciones disponibles. Toca para reintentar.",
             "error": "No se pudieron cargar las operaciones. Toca para reintentar."
           },
           "errors": {

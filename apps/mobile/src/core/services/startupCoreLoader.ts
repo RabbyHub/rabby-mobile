@@ -29,6 +29,7 @@ import {
   keyringMMKVInstance,
   normalizeKeyringState,
 } from '../storage/mmkv';
+import { securePreferences } from '../storage/securePreferences';
 import { APP_MMKV_KEYS } from '../storage/mmkvConstants';
 import { inspectPersistedKeyringState } from '../storage/keyringStateMigration';
 import {
@@ -100,7 +101,10 @@ const keyringClasses = [
   TrezorKeyring,
 ] as (typeof KeyringIntf)[];
 
-export function loadStartupCoreServices() {
+export async function loadStartupCoreServices() {
+  const contactStorage = securePreferences.getAdapter(
+    APP_STORE_NAMES.contactBook,
+  );
   migrateAppStorage(appStorage);
 
   const normalizedKeyringState = normalizeKeyringState({
@@ -152,7 +156,7 @@ export function loadStartupCoreServices() {
   );
 
   const contactService = new ContactBookService({
-    storageAdapter: appStorage,
+    storageAdapter: await contactStorage,
   });
   contactService.subscribeStoreFields((key, value) => {
     if (key === 'aliases') {

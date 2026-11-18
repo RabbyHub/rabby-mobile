@@ -3,20 +3,21 @@ import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 import type { PerpsTwapFill, PerpsTwapRecord } from './types';
 import { mergePerpsTwapFills } from './twapReconciliation';
 
+export type PerpsTwapSource = 'active' | 'history' | 'fills';
+type SourceState = Readonly<{ ready: boolean; error: string | null }>;
+const LOADING: SourceState = { ready: false, error: null };
+const READY: SourceState = { ready: true, error: null };
+
 export type PerpsTwapAccountData = {
   records: Readonly<Record<string, PerpsTwapRecord>>;
   fills: Readonly<Record<string, readonly PerpsTwapFill[]>>;
-  activeReady: boolean;
-  historyReady: boolean;
-  error: string | null;
+  sources: Readonly<Record<PerpsTwapSource, SourceState>>;
 };
 
 export const EMPTY_TWAP_ACCOUNT: PerpsTwapAccountData = {
   records: {},
   fills: {},
-  activeReady: false,
-  historyReady: false,
-  error: null,
+  sources: { active: LOADING, history: LOADING, fills: LOADING },
 };
 const EMPTY_FILLS: readonly PerpsTwapFill[] = [];
 export type PerpsTwapReceipt = Readonly<{
@@ -107,17 +108,27 @@ export const usePerpsTwapFills = (
         : undefined) ?? EMPTY_FILLS,
   );
 
-export const usePerpsTwapReadiness = (user: string | undefined) =>
-  useActivityStore(perpsTwapStore, state => {
-    const account = user ? state.accounts[user.toLowerCase()] : undefined;
-    return !account
-      ? 'loading'
-      : account.error
-      ? 'error'
-      : account.activeReady && account.historyReady
-      ? 'ready'
-      : 'loading';
-  });
+export const withPerpsTwapSourceState = (
+  account: PerpsTwapAccountData,
+  source: PerpsTwapSource,
+  ready: boolean,
+  error: string | null = null,
+): PerpsTwapAccountData => {
+  const previous = account.sources[source];
+  if (previous.ready === ready && previous.error === error) return account;
+  const next = error ? { ready, error } : ready ? READY : LOADING;
+  return { ...account, sources: { ...account.sources, [source]: next } };
+};
+
+export const usePerpsTwapSourceState = (
+  user: string | undefined,
+  source: PerpsTwapSource,
+) =>
+  useActivityStore(perpsTwapStore, state =>
+    user
+      ? state.accounts[user.toLowerCase()]?.sources[source] ?? LOADING
+      : LOADING,
+  );
 
 export const queuePerpsTwapReceipt = (
   identity: string,

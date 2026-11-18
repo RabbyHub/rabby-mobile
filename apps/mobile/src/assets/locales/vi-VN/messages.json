@@ -147,6 +147,17 @@
     "failed": "Thất bại"
   },
   "page": {
+    "securePreferences": {
+      "damagedTitle": "Một số cài đặt bảo mật có thể bị hỏng",
+      "damagedDescription": "Đặt lại các cài đặt bên dưới về mặc định. Hãy kiểm tra các cài đặt này trước giao dịch tiếp theo.",
+      "unavailableTitle": "Tạm thời không thể truy cập cài đặt bảo mật",
+      "unavailableDescription": "Rabby dùng giá trị mặc định cho các cài đặt không thể xác minh. Thay đổi đối với các cài đặt bên dưới sẽ không được lưu. Hãy mở khóa thiết bị rồi mở lại Rabby.",
+      "reset": "Đặt lại cài đặt",
+      "whitelist": "Danh sách địa chỉ được phép chuyển",
+      "contactBook": "Sổ địa chỉ và ghi chú",
+      "securityEngine": "Quy tắc và danh sách bảo mật",
+      "rpc": "RPC tùy chỉnh"
+    },
     "transactions": {
       "explain": {
         "unknown": "Tương tác hợp đồng",
@@ -2683,7 +2694,10 @@
           "description": "Đặt lệnh theo khoảng thời gian tùy chỉnh",
           "totalTime": "Tổng thời gian",
           "durationFieldLabel": "Tổng thời gian (hh:mm)",
-          "durationFieldValue": "{{hours}} : {{minutes}} phút",
+          "durationFieldValue": "{{hours}} : {{minutes}}",
+          "minuteValue": "{{t}} phút",
+          "minuteValue_one": "{{t}} phút",
+          "confirmationDuration": "{{t}} phút",
           "totalSize": "Tổng khối lượng",
           "selectTime": "Chọn tổng thời gian",
           "reset": "Đặt lại",
@@ -2704,8 +2718,8 @@
           "size": "Khối lượng",
           "fee": "Phí",
           "noTrades": "Chưa có giao dịch",
-          "endTitle": "Kết thúc lệnh TWAP?",
-          "endMessage": "Kết thúc phần còn lại của lệnh TWAP {{coin}}? Các giao dịch đã khớp sẽ được giữ nguyên.",
+          "endTitle": "Xác nhận kết thúc lệnh TWAP",
+          "endMessage": "Sau khi bạn xác nhận, lệnh TWAP sẽ dừng và các lệnh đang mở của TWAP này sẽ tự động bị hủy.",
           "ending": "Đang kết thúc…",
           "ended": "Lệnh TWAP đã kết thúc.",
           "placed": "Đã đặt lệnh TWAP {{coin}}.",
@@ -2725,7 +2739,6 @@
           },
           "fills": {
             "loading": "Đang tải giao dịch…",
-            "partial": "Chỉ hiển thị các giao dịch có sẵn. Nhấn để thử lại.",
             "error": "Không thể tải giao dịch. Nhấn để thử lại."
           },
           "errors": {

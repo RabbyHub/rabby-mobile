@@ -156,6 +156,17 @@
     "IMPORTED_HD_KEYRING_NEED_PASSPHRASE": "通过助记词（密码短语）导入"
   },
   "page": {
+    "securePreferences": {
+      "damagedTitle": "部分安全设置可能已损坏",
+      "damagedDescription": "请将以下设置恢复为默认值，并在下次交易前检查这些设置。",
+      "unavailableTitle": "安全设置暂时不可用",
+      "unavailableDescription": "Rabby 已对暂时无法校验的设置使用默认值。对以下设置的修改无法保存。请解锁设备并重新打开 Rabby 后重试。",
+      "reset": "重置设置",
+      "whitelist": "转账白名单",
+      "contactBook": "地址簿与备注",
+      "securityEngine": "安全引擎规则与名单",
+      "rpc": "自定义 RPC"
+    },
     "transactions": {
       "explain": {
         "unknown": "合约交互",
@@ -2716,7 +2727,10 @@
           "description": "按自定义时间间隔下单",
           "totalTime": "总时间",
           "durationFieldLabel": "总时间 (hh:mm)",
-          "durationFieldValue": "{{hours}} : {{minutes}} 分钟",
+          "durationFieldValue": "{{hours}} : {{minutes}}",
+          "minuteValue": "{{t}} 分钟",
+          "minuteValue_one": "{{t}} 分钟",
+          "confirmationDuration": "{{t}} 分钟",
           "totalSize": "总数量",
           "selectTime": "选择总运行时间",
           "reset": "重置",
@@ -2737,8 +2751,8 @@
           "size": "数量",
           "fee": "费用",
           "noTrades": "暂无成交",
-          "endTitle": "结束 TWAP 订单？",
-          "endMessage": "结束剩余的 {{coin}} TWAP 订单？已成交的交易将保留。",
+          "endTitle": "确认结束 TWAP",
+          "endMessage": "确认后，TWAP 订单将停止执行，该 TWAP 的所有未成交挂单将自动撤销。",
           "ending": "正在结束…",
           "ended": "TWAP 订单已结束。",
           "placed": "{{coin}} TWAP 订单已提交。",
@@ -2755,7 +2769,6 @@
           },
           "fills": {
             "loading": "正在加载成交…",
-            "partial": "仅展示可获取的成交记录，点击重试。",
             "error": "无法加载成交记录，点击重试。"
           },
           "errors": {

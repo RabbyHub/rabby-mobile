@@ -2207,6 +2207,33 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     );
   });
 
+  it('prompts for the missing TWAP duration before reviewing an order', async () => {
+    const { result } = renderHook(() =>
+      usePerpsProTrade({
+        routeFocused: true,
+        activeAssetData,
+        bboBook: book,
+        bboPrices: { asks1: '101', asks5: null, bids1: '99', bids5: null },
+        bboSessionKey: 'BTC:1',
+        bboStatus: 'ready',
+        executionActive: true,
+        leveragePending: false,
+        market,
+        refreshActiveAssetData: async () => activeAssetData,
+        updateLeverageRequest: async () => true,
+      }),
+    );
+    act(() => result.current.setOrderType('twap'));
+    act(() => result.current.setAmount('200'));
+    await act(async () => result.current.requestReview('buy'));
+
+    expect(mockShowToast).toHaveBeenCalledWith(
+      'page.perps.pro.twap.errors.durationRequired',
+      'error',
+    );
+    expect(result.current.review).toBeNull();
+  });
+
   it('reports direction-specific TP validation through toast only', async () => {
     const hook = renderHook(() =>
       usePerpsProTrade({

@@ -39,6 +39,7 @@ internal class DurationWheel(
   private var positioning = false
   private var labelColor = Color.BLACK
   private var labelLocale = resources.configuration.locales[0]
+  private var customLabels: List<String>? = null
   private var labels = formatLabels(labelLocale)
   private val snap = LinearSnapHelper()
   private val rows = object : LinearLayoutManager(context) {
@@ -73,7 +74,18 @@ internal class DurationWheel(
   fun setLabelLocale(locale: Locale) {
     if (labelLocale == locale) return
     labelLocale = locale
-    labels = formatLabels(locale)
+    if (customLabels == null) updateLabels()
+  }
+
+  fun setCustomLabels(value: List<String>?) {
+    val valid = value?.takeIf { it.size == maximum + 1 }
+    if (customLabels == valid) return
+    customLabels = valid
+    updateLabels()
+  }
+
+  private fun updateLabels() {
+    labels = customLabels ?: formatLabels(labelLocale)
     contentDescription = labels[selected]
     adapter?.notifyDataSetChanged()
   }

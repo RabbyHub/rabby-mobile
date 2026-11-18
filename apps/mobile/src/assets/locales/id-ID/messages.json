@@ -30,6 +30,17 @@
     }
   },
   "page": {
+    "securePreferences": {
+      "damagedTitle": "Beberapa pengaturan keamanan mungkin rusak",
+      "damagedDescription": "Setel ulang pengaturan di bawah ke nilai bawaan. Periksa pengaturan tersebut sebelum transaksi berikutnya.",
+      "unavailableTitle": "Pengaturan keamanan untuk sementara tidak tersedia",
+      "unavailableDescription": "Rabby menggunakan nilai bawaan untuk pengaturan yang tidak dapat diverifikasi. Perubahan pada pengaturan di bawah tidak akan disimpan. Buka kunci perangkat dan buka kembali Rabby.",
+      "reset": "Setel ulang pengaturan",
+      "whitelist": "Daftar izin transfer",
+      "contactBook": "Buku alamat dan catatan",
+      "securityEngine": "Aturan dan daftar keamanan",
+      "rpc": "RPC khusus"
+    },
     "getStart": {
       "goToHome": "Pergi ke Beranda",
       "createNewAddress": "Buat Dompet Baru",
@@ -2566,7 +2577,10 @@
           "description": "Pasang order pada interval yang ditentukan sendiri",
           "totalTime": "Total waktu",
           "durationFieldLabel": "Total waktu (hh:mm)",
-          "durationFieldValue": "{{hours}} : {{minutes}} menit",
+          "durationFieldValue": "{{hours}} : {{minutes}}",
+          "minuteValue": "{{t}} menit",
+          "minuteValue_one": "{{t}} menit",
+          "confirmationDuration": "{{t}} menit",
           "totalSize": "Total jumlah",
           "selectTime": "Pilih total waktu",
           "reset": "Atur ulang",
@@ -2587,8 +2601,8 @@
           "size": "Jumlah",
           "fee": "Biaya",
           "noTrades": "Belum ada transaksi",
-          "endTitle": "Akhiri order TWAP?",
-          "endMessage": "Akhiri sisa order TWAP {{coin}}? Transaksi yang sudah terisi akan tetap berlaku.",
+          "endTitle": "Konfirmasi Penghentian Order TWAP",
+          "endMessage": "Setelah dikonfirmasi, order TWAP Anda akan dihentikan dan semua order yang masih terbuka dari TWAP ini akan dibatalkan secara otomatis.",
           "ending": "Mengakhiri…",
           "ended": "Order TWAP diakhiri.",
           "placed": "Order TWAP {{coin}} dipasang.",
@@ -2608,7 +2622,6 @@
           },
           "fills": {
             "loading": "Memuat transaksi…",
-            "partial": "Hanya transaksi yang tersedia yang ditampilkan. Ketuk untuk mencoba lagi.",
             "error": "Gagal memuat transaksi. Ketuk untuk mencoba lagi."
           },
           "errors": {

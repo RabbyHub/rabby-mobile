@@ -202,6 +202,17 @@
     }
   },
   "page": {
+    "securePreferences": {
+      "damagedTitle": "部分安全設定可能已損毀",
+      "damagedDescription": "請將以下設定恢復為預設值，並在下次交易前檢查這些設定。",
+      "unavailableTitle": "安全設定暫時無法使用",
+      "unavailableDescription": "Rabby 已對暫時無法驗證的設定使用預設值。對以下設定的變更無法儲存。請解鎖裝置並重新開啟 Rabby 後重試。",
+      "reset": "重設設定",
+      "whitelist": "轉帳白名單",
+      "contactBook": "通訊錄與備註",
+      "securityEngine": "安全引擎規則與名單",
+      "rpc": "自訂 RPC"
+    },
     "importSuccess": {
       "success": "{{type}} 成功！",
       "importMore": "從此助記詞新增更多錢包",
@@ -2738,7 +2749,10 @@
           "description": "按自訂時間間隔下單",
           "totalTime": "總時長",
           "durationFieldLabel": "總時長 (hh:mm)",
-          "durationFieldValue": "{{hours}} : {{minutes}} 分鐘",
+          "durationFieldValue": "{{hours}} : {{minutes}}",
+          "minuteValue": "{{t}} 分鐘",
+          "minuteValue_one": "{{t}} 分鐘",
+          "confirmationDuration": "{{t}} 分鐘",
           "totalSize": "總數量",
           "selectTime": "選擇總時長",
           "reset": "重設",
@@ -2759,8 +2773,8 @@
           "size": "數量",
           "fee": "手續費",
           "noTrades": "暫無成交",
-          "endTitle": "結束 TWAP 訂單？",
-          "endMessage": "結束剩餘的 {{coin}} TWAP 訂單？已成交的交易將保留。",
+          "endTitle": "確認結束 TWAP",
+          "endMessage": "確認後，TWAP 訂單將停止執行，該 TWAP 的所有未成交掛單將自動撤銷。",
           "ending": "正在結束…",
           "ended": "TWAP 訂單已結束。",
           "placed": "{{coin}} TWAP 訂單已提交。",
@@ -2780,7 +2794,6 @@
           },
           "fills": {
             "loading": "正在載入成交…",
-            "partial": "僅顯示可取得的成交，點擊重試。",
             "error": "無法載入成交，點擊重試。"
           },
           "errors": {

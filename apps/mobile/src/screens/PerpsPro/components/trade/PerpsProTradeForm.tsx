@@ -17,6 +17,7 @@ import { Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import type { PerpsProBboStrategy } from '../../model/bbo';
+import type { PerpsProColumnLayout } from '../../model/layout';
 import {
   getPerpsProPriceInputMaxDecimals,
   resolvePerpsProMinimumOrderAmount,
@@ -79,6 +80,7 @@ const tifLabels: Record<PerpsProTradeTif, string> = {
 
 type PerpsProTradeFormProps = {
   sceneActive?: boolean;
+  columnLayout?: PerpsProColumnLayout;
   addFundsMode?: 'deposit' | 'swap';
   configurationReady?: boolean;
   controller: PerpsProTradeController;
@@ -87,6 +89,7 @@ type PerpsProTradeFormProps = {
 
 const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
   sceneActive = true,
+  columnLayout,
   addFundsMode = 'deposit',
   configurationReady = true,
   controller,
@@ -369,11 +372,13 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
           <>
             {form.orderType === 'twap' ? (
               <View
+                collapsable={false}
                 pointerEvents="box-none"
-                style={showTwapMinimum && styles.amountWithHint}>
+                style={styles.amountWithHint}
+                testID="perps-pro-twap-amount-anchor">
                 {amountField}
                 {showTwapMinimum ? (
-                  <PerpsProTwapHint>
+                  <PerpsProTwapHint columnLayout={columnLayout}>
                     {t('page.perps.pro.twap.minimum', {
                       amount:
                         getKeyboardMinimum() ??
@@ -400,6 +405,11 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
               </Text>
             ) : null}
             <PerpsProTradeAmountSlider
+              draggingContainerStyle={
+                form.orderType === 'twap'
+                  ? styles.twapSliderDragging
+                  : undefined
+              }
               onChange={
                 configurationReady ? controller.setPercentage : undefined
               }
@@ -591,12 +601,7 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
                 </View>
               ) : null}
               <PerpsProTradeButton
-                disabled={
-                  controller.pending ||
-                  !configurationReady ||
-                  (form.orderType === 'twap' &&
-                    !controller.getTwapValidation(side).valid)
-                }
+                disabled={controller.pending || !configurationReady}
                 label={
                   form.orderType === 'scale'
                     ? t(
@@ -691,7 +696,9 @@ PerpsProTradeForm.displayName = 'PerpsProTradeForm';
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: { gap: 16, minHeight: 416 },
   inputGroup: { gap: 8 },
+  // Changing stacking order mid-edit can detach the focused or touched native view.
   amountWithHint: { zIndex: 1 },
+  twapSliderDragging: { zIndex: 2 },
   doubleRow: { flexDirection: 'row', gap: 8 },
   flexItem: { flex: 1, minWidth: 0 },
   twapOptions: { gap: 8 },

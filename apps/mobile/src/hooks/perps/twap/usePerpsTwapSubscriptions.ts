@@ -9,19 +9,25 @@ import {
   parsePerpsTwapState,
   replacePerpsTwapActiveSnapshot,
 } from './twapReconciliation';
-import { addPerpsTwapFills, updatePerpsTwapAccount } from './usePerpsTwapStore';
-import type { PerpsTwapFill, PerpsTwapRecord, PerpsTwapState } from './types';
+import {
+  addPerpsTwapFills,
+  getPerpsTwapAccount,
+  updatePerpsTwapAccount,
+  withPerpsTwapSourceState,
+  type PerpsTwapSource,
+} from './usePerpsTwapStore';
+import type { PerpsTwapState } from './types';
 
 type Session = {
   generation: number;
   users: number;
-  refresh: () => Promise<void>;
+  refresh: (source?: PerpsTwapSource) => Promise<void>;
   dispose: () => void;
 };
 const sessions = new Map<string, Session>();
 
-export const refreshPerpsTwaps = (user: string) =>
-  sessions.get(user.toLowerCase())?.refresh() ?? Promise.resolve();
+export const refreshPerpsTwaps = (user: string, source?: PerpsTwapSource) =>
+  sessions.get(user.toLowerCase())?.refresh(source) ?? Promise.resolve();
 
 const acquire = (user: string, generation: number) => {
   const key = user.toLowerCase();
@@ -33,65 +39,99 @@ const acquire = (user: string, generation: number) => {
   existing?.dispose();
   const sdk = apisPerps.getPerpsSDK();
   let disposed = false;
-  let revision = 0;
-  let pending: Promise<void> | null = null;
-  const report = (error: unknown) => {
-    if (!disposed)
-      updatePerpsTwapAccount(user, current => ({
-        ...current,
-        error: error instanceof Error ? error.message : 'TWAP data unavailable',
-      }));
+  const wsRevision = { history: 0, fills: 0 };
+  const pending: Partial<Record<'history' | 'fills', Promise<void>>> = {};
+  const subscriptions: Partial<
+    Record<PerpsTwapSource, { unsubscribe: () => void }>
+  > = {};
+  const report = (source: PerpsTwapSource, stage: string, error: unknown) => {
+    if (disposed) return;
+    updatePerpsTwapAccount(user, current =>
+      withPerpsTwapSourceState(
+        current,
+        source,
+        source !== 'active' && current.sources[source].ready,
+        `${source} ${stage}: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      ),
+    );
   };
-  const readHistory = (items: unknown) => {
+  const acceptHistory = (items: unknown, snapshot: boolean) => {
     if (!Array.isArray(items)) throw new Error('Invalid TWAP history response');
-    const parsed = items.map(item => parsePerpsTwapHistory(item, user));
-    if (parsed.some(item => !item))
-      throw new Error('Invalid TWAP history event');
-    return parsed.filter((item): item is PerpsTwapRecord => !!item);
+    const history = items.map(item => {
+      const record = parsePerpsTwapHistory(item, user);
+      if (!record) throw new Error('Invalid TWAP history event');
+      return record;
+    });
+    if (!snapshot && !history.length) return;
+    updatePerpsTwapAccount(user, current => {
+      const records = mergePerpsTwapHistory(current.records, history);
+      const next =
+        records === current.records ? current : { ...current, records };
+      // A delta can contribute rows, but only a snapshot establishes an empty history.
+      return snapshot || current.sources.history.ready
+        ? withPerpsTwapSourceState(next, 'history', true)
+        : next;
+    });
   };
-  const readFills = (items: unknown) => {
+  const acceptFills = (items: unknown, snapshot: boolean) => {
     if (!Array.isArray(items)) throw new Error('Invalid TWAP fills response');
-    const parsed = items.map(parsePerpsTwapFill);
-    if (parsed.some(item => !item)) throw new Error('Invalid TWAP fill');
-    return parsed.filter((item): item is PerpsTwapFill => !!item);
+    const fills = items.map(item => {
+      const fill = parsePerpsTwapFill(item);
+      if (!fill) throw new Error('Invalid TWAP fill');
+      return fill;
+    });
+    if (!snapshot && !fills.length) return;
+    addPerpsTwapFills(user, fills);
+    updatePerpsTwapAccount(user, current =>
+      snapshot || current.sources.fills.ready
+        ? withPerpsTwapSourceState(current, 'fills', true)
+        : current,
+    );
   };
-  const refresh = () => {
-    if (pending) return pending;
-    const startedRevision = revision;
-    pending = Promise.all([
-      sdk.info.getUserTwapHistory(user),
-      sdk.info.getUserTwapSliceFills(user),
-    ])
-      .then(([history, fills]) => {
-        if (disposed) return;
-        const parsedHistory = readHistory(history);
-        const parsedFills = readFills(fills);
-        updatePerpsTwapAccount(user, current => ({
-          ...current,
-          // The reducer also protects terminal facts against a late REST response.
-          records: mergePerpsTwapHistory(current.records, parsedHistory),
-          historyReady: true,
-          error: startedRevision === revision ? null : current.error,
-        }));
-        addPerpsTwapFills(user, parsedFills);
+  const fetchSource = (source: 'history' | 'fills') => {
+    const inFlight = pending[source];
+    if (inFlight) return inFlight;
+    const startedRevision = wsRevision[source];
+    const request = (async () => {
+      if (source === 'history') {
+        const history = await sdk.info.getUserTwapHistory(user);
+        if (!disposed) acceptHistory(history, true);
+      } else {
+        const fills = await sdk.info.getUserTwapSliceFills(user);
+        if (!disposed) acceptFills(fills, true);
+      }
+    })()
+      .catch(error => {
+        // A newer valid snapshot can satisfy this source while HTTP is in flight.
+        if (wsRevision[source] === startedRevision)
+          report(source, 'REST', error);
       })
-      .catch(report)
       .finally(() => {
-        pending = null;
+        delete pending[source];
       });
-    return pending;
+    pending[source] = request;
+    return request;
   };
-  updatePerpsTwapAccount(user, current => ({
-    ...current,
-    activeReady: false,
-    error: null,
-  }));
-  const subscriptions: Array<{ unsubscribe: () => void }> = [];
-  try {
-    subscriptions.push(
-      sdk.ws.subscribeToTwapStates(payload => {
-        if (disposed || !isSameAddress(payload.user, user)) return;
-        try {
+
+  const onPayload =
+    <T extends { user: string }>(
+      source: PerpsTwapSource,
+      apply: (payload: T) => void,
+    ) =>
+    (payload: T) => {
+      if (disposed || !isSameAddress(payload.user, user)) return;
+      try {
+        apply(payload);
+      } catch (error) {
+        report(source, 'WS payload', error);
+      }
+    };
+  const register = {
+    active: () =>
+      sdk.ws.subscribeToTwapStates(
+        onPayload('active', payload => {
           if (!Array.isArray(payload.states))
             throw new Error('Invalid TWAP state snapshot');
           const entries: [number, PerpsTwapState][] = payload.states.map(
@@ -107,46 +147,67 @@ const acquire = (user: string, generation: number) => {
               return [entry[0], state];
             },
           );
-          revision++;
-          updatePerpsTwapAccount(user, current => ({
-            ...current,
-            records: replacePerpsTwapActiveSnapshot(current.records, entries),
-            activeReady: true,
-          }));
-        } catch (error) {
-          report(error);
-        }
-      }, user),
-    );
-    subscriptions.push(
-      sdk.ws.subscribeToUserTwapHistory(payload => {
-        if (disposed || !isSameAddress(payload.user, user)) return;
-        try {
-          const history = readHistory(payload.history);
-          revision++;
-          updatePerpsTwapAccount(user, current => ({
-            ...current,
-            records: mergePerpsTwapHistory(current.records, history),
-            historyReady: true,
-          }));
-        } catch (error) {
-          report(error);
-        }
-      }, user),
-    );
-    subscriptions.push(
-      sdk.ws.subscribeToUserTwapSliceFills(payload => {
-        if (disposed || !isSameAddress(payload.user, user)) return;
-        try {
-          addPerpsTwapFills(user, readFills(payload.twapSliceFills));
-        } catch (error) {
-          report(error);
-        }
-      }, user),
-    );
-  } catch (error) {
-    report(error);
-  }
+          updatePerpsTwapAccount(user, current => {
+            const records = replacePerpsTwapActiveSnapshot(
+              current.records,
+              entries,
+            );
+            return withPerpsTwapSourceState(
+              records === current.records ? current : { ...current, records },
+              'active',
+              true,
+            );
+          });
+        }),
+        user,
+      ),
+    history: () =>
+      sdk.ws.subscribeToUserTwapHistory(
+        onPayload('history', payload => {
+          acceptHistory(payload.history, payload.isSnapshot === true);
+          if (payload.isSnapshot) wsRevision.history++;
+        }),
+        user,
+      ),
+    fills: () =>
+      sdk.ws.subscribeToUserTwapSliceFills(
+        onPayload('fills', payload => {
+          acceptFills(payload.twapSliceFills, payload.isSnapshot === true);
+          if (payload.isSnapshot) wsRevision.fills++;
+        }),
+        user,
+      ),
+  };
+  const subscribe = (source: PerpsTwapSource) => {
+    if (subscriptions[source]) return;
+    try {
+      subscriptions[source] = register[source]();
+    } catch (error) {
+      report(source, 'WS subscribe', error);
+    }
+  };
+  const refresh = async (source?: PerpsTwapSource) => {
+    if (source === 'active') {
+      if (!getPerpsTwapAccount(user).sources.active.ready) {
+        subscriptions.active?.unsubscribe();
+        delete subscriptions.active;
+      }
+      subscribe('active');
+      return;
+    }
+    if (source) {
+      subscribe(source);
+      await fetchSource(source);
+      return;
+    }
+    subscribe('active');
+    subscribe('history');
+    subscribe('fills');
+    await Promise.all([fetchSource('history'), fetchSource('fills')]);
+  };
+  updatePerpsTwapAccount(user, current =>
+    withPerpsTwapSourceState(current, 'active', false),
+  );
   const appState = AppState.addEventListener('change', state => {
     if (state === 'active') void refresh();
   });
@@ -157,7 +218,9 @@ const acquire = (user: string, generation: number) => {
     dispose: () => {
       if (disposed) return;
       disposed = true;
-      subscriptions.forEach(subscription => subscription.unsubscribe());
+      Object.values(subscriptions).forEach(subscription =>
+        subscription.unsubscribe(),
+      );
       appState.remove();
     },
   };

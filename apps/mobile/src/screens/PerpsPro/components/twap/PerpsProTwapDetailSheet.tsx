@@ -154,6 +154,10 @@ export const PerpsProTwapDetailSheet = React.memo(
         t,
       ],
     );
+    const renderSeparator = useCallback(
+      () => <View style={styles.separator} />,
+      [styles.separator],
+    );
     return (
       <AppBottomSheetModal
         ref={modal}
@@ -199,8 +203,7 @@ export const PerpsProTwapDetailSheet = React.memo(
               order={order}
               amountUnit={amountUnit}
               now={now}
-              detail
-              history={history}
+              variant={history ? 'historyDetail' : 'runningDetail'}
             />
           </View>
           <View style={styles.tradesPanel}>
@@ -211,11 +214,13 @@ export const PerpsProTwapDetailSheet = React.memo(
               data={fills}
               keyExtractor={item => item.key}
               renderItem={renderFill}
+              ItemSeparatorComponent={renderSeparator}
               initialNumToRender={8}
+              showsVerticalScrollIndicator={false}
               windowSize={5}
               contentContainerStyle={styles.list}
               ListFooterComponent={
-                load === 'complete' ? null : (
+                load === 'loading' || load === 'error' ? (
                   <Pressable
                     disabled={load === 'loading'}
                     onPress={() => setRetry(value => value + 1)}
@@ -224,7 +229,7 @@ export const PerpsProTwapDetailSheet = React.memo(
                       {t(`page.perps.pro.twap.fills.${load}`)}
                     </Text>
                   </Pressable>
-                )
+                ) : null
               }
               ListEmptyComponent={
                 load === 'complete' ? (
@@ -244,7 +249,7 @@ PerpsProTwapDetailSheet.displayName = 'PerpsProTwapDetailSheet';
 const getStyle = createGetStyles2024(
   ({ colors2024, safeAreaInsets, isLight }) => ({
     ...getPerpsProDialogStyles(colors2024, safeAreaInsets.bottom, isLight),
-    body: { flex: 1 },
+    body: { flex: 1, paddingTop: 8 },
     titleRow: { justifyContent: 'center', minHeight: 24 },
     back: { position: 'absolute', left: 20, zIndex: 1 },
     backIcon: { transform: [{ rotate: '180deg' }] },
@@ -259,6 +264,7 @@ const getStyle = createGetStyles2024(
     },
     list: { paddingBottom: 8 },
     trades: {
+      fontFamily: 'SF Pro Rounded',
       fontSize: 16,
       lineHeight: 20,
       fontWeight: '700',
@@ -269,9 +275,12 @@ const getStyle = createGetStyles2024(
     },
     fill: {
       marginHorizontal: 12,
-      paddingVertical: 10,
-      borderBottomWidth: 1,
-      borderBottomColor: colors2024['neutral-line'],
+    },
+    separator: {
+      marginHorizontal: 12,
+      marginVertical: 10,
+      height: 1,
+      backgroundColor: colors2024['neutral-bg-5'],
     },
     fillHeading: {
       flexDirection: 'row',
@@ -280,6 +289,7 @@ const getStyle = createGetStyles2024(
       marginBottom: 8,
     },
     side: {
+      fontFamily: 'SF Pro Rounded',
       fontSize: 12,
       lineHeight: 16,
       fontWeight: '500',
@@ -289,14 +299,17 @@ const getStyle = createGetStyles2024(
       overflow: 'hidden',
     },
     fillTime: {
+      fontFamily: 'SF Pro Rounded',
+      fontWeight: '400',
       fontSize: 12,
       lineHeight: 16,
       color: colors2024['neutral-secondary'],
     },
-    fillValues: { flexDirection: 'row' },
+    fillValues: { flexDirection: 'row', gap: 8 },
     third: { flex: 1, minWidth: 0 },
     footer: { padding: 16 },
     footerText: {
+      fontFamily: 'SF Pro Rounded',
       fontSize: 13,
       lineHeight: 18,
       color: colors2024['neutral-foot'],

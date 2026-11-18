@@ -316,6 +316,17 @@
     "failed": "Falhou"
   },
   "page": {
+    "securePreferences": {
+      "damagedTitle": "Algumas definições de segurança podem estar danificadas",
+      "damagedDescription": "Reponha as definições abaixo para os valores predefinidos. Reveja-as antes da próxima transação.",
+      "unavailableTitle": "As definições de segurança estão temporariamente indisponíveis",
+      "unavailableDescription": "O Rabby usa os valores predefinidos das definições que não conseguiu verificar. As alterações às definições abaixo não serão guardadas. Desbloqueie o dispositivo e volte a abrir o Rabby.",
+      "reset": "Repor definições",
+      "whitelist": "Lista de transferências permitidas",
+      "contactBook": "Livro de endereços e notas",
+      "securityEngine": "Regras e listas de segurança",
+      "rpc": "RPC personalizado"
+    },
     "getStart": {
       "goToHome": "Ir para o início",
       "createNewAddress": "Criar uma nova carteira",
@@ -2852,7 +2863,10 @@
           "description": "Coloque ordens a intervalos personalizados",
           "totalTime": "Tempo total",
           "durationFieldLabel": "Tempo total (hh:mm)",
-          "durationFieldValue": "{{hours}} : {{minutes}} min",
+          "durationFieldValue": "{{hours}} : {{minutes}}",
+          "minuteValue": "{{t}} min",
+          "minuteValue_one": "{{t}} min",
+          "confirmationDuration": "{{t}} min",
           "totalSize": "Quantidade total",
           "selectTime": "Selecionar tempo total",
           "reset": "Repor",
@@ -2873,8 +2887,8 @@
           "size": "Quantidade",
           "fee": "Taxa",
           "noTrades": "Ainda não há transações",
-          "endTitle": "Terminar a ordem TWAP?",
-          "endMessage": "Terminar a parte restante da ordem TWAP de {{coin}}? As transações já executadas serão mantidas.",
+          "endTitle": "Confirmar o fim da ordem TWAP",
+          "endMessage": "Após a confirmação, a sua ordem TWAP será interrompida e as ordens em aberto deste TWAP serão canceladas automaticamente.",
           "ending": "A terminar…",
           "ended": "Ordem TWAP terminada.",
           "placed": "Ordem TWAP de {{coin}} colocada.",
@@ -2894,7 +2908,6 @@
           },
           "fills": {
             "loading": "A carregar transações…",
-            "partial": "São apresentadas apenas as transações disponíveis. Toque para tentar novamente.",
             "error": "Não foi possível carregar as transações. Toque para tentar novamente."
           },
           "errors": {
