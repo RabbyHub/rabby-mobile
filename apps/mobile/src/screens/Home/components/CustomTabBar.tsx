@@ -1,10 +1,5 @@
-import {
-  Dimensions,
-  useWindowDimensions,
-  View,
-  Pressable,
-  ViewStyle,
-} from 'react-native';
+import { View, Pressable, ViewStyle } from 'react-native';
+import { Dimensions, useWindowDimensions } from '@/core/dimensions';
 import { MaterialTabBar } from 'react-native-collapsible-tab-view';
 
 import React, { useCallback, useRef } from 'react';
@@ -82,12 +77,19 @@ const Indicator = ({
   onRightPress,
   handleMeasureSecondaryIndicator,
 }: IndicatorProps) => {
-  const { styles, reanimatedStyles } = useTheme2024({
+  const { styles } = useTheme2024({
     getStyle: indicatorStyles,
   });
-  const rStyles = {
-    leftBackground: useAnimatedStyle(reanimatedStyles.leftBackground),
-    rightBackground: useAnimatedStyle(reanimatedStyles.rightBackground),
+  /**
+   * The two grey slots are static, so they are sized from the same value the
+   * black indicator uses. Reading them from the worklet's shared value left
+   * them on an older width, which ate the 12pt gap between the slots.
+   */
+  const { width: winWidth } = useWindowDimensions();
+  const slotWidth = getHomeTabIndicatorWidth(winWidth);
+  const slotStyles = {
+    leftBackground: [styles.slotBackground, { left: 20, width: slotWidth }],
+    rightBackground: [styles.slotBackground, { right: 20, width: slotWidth }],
   };
   const opacity = useSharedValue(fadeIn ? 0 : 1);
   const leftHitSlop = {
@@ -144,17 +146,13 @@ const Indicator = ({
   return (
     <Animated.View style={[styles.indicatorContainer, animatedStyle]}>
       <Animated.View style={[stylez, styles.indicator, style]} />
-      <Animated.View
-        style={[rStyles.leftBackground /* , styles.leftBackground */]}
-      />
+      <View style={slotStyles.leftBackground} />
       <Pressable
         onPress={onLeftPress}
         style={styles.leftPressable}
         hitSlop={leftHitSlop}
       />
-      <Animated.View
-        style={[rStyles.rightBackground /* , styles.rightBackground */]}
-      />
+      <View style={slotStyles.rightBackground} />
       <Pressable
         ref={secondaryIndicatorViewRef}
         style={styles.rightPressable}
@@ -237,6 +235,14 @@ const indicatorStyles = createGetStyles2024(
       },
       indicatorBgBox: {
         backgroundColor: colors2024['neutral-bg-1'],
+      },
+      slotBackground: {
+        position: 'absolute',
+        top: indicatorMarginTop,
+        height: indicatorHeight,
+        borderRadius: 12,
+        backgroundColor: colors2024['neutral-line'],
+        zIndex: 98,
       },
       leftPressable: {
         position: 'absolute',
