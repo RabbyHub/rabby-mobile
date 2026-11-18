@@ -203,6 +203,7 @@ jest.mock('./PerpsProTpSlModeSheet', () => ({
   PerpsProTpSlModeSheet: () => null,
 }));
 
+import { getPerpsProColumnLayout } from '../../model/layout';
 import { createPerpsProTradeFormState } from '../../model/trade';
 import { validatePerpsProTwapDraft } from '../../model/twapOrder';
 import type { PerpsProTradeController } from '../../scene/usePerpsProTrade';
@@ -310,16 +311,20 @@ describe('PerpsProTradeForm order matrix', () => {
     expect(screen.getByTestId('twap-duration-sheet')).toBeTruthy();
   });
 
-  it('anchors the TWAP minimum above Amount when the slider crosses the floor', () => {
-    const trade = controller({ orderType: 'twap', amount: '10%' });
-    const formForSize = (baseSize: string) => (
+  it('keeps the same Amount host and active slider when dragging through the TWAP minimum to zero', () => {
+    const trade = controller({ orderType: 'twap' });
+    const columns = getPerpsProColumnLayout(390);
+    const formForPercentage = (percentage: number) => (
       <PerpsProTradeForm
+        columnLayout={columns}
         controller={{
           ...trade,
-          amountSource: 'slider',
+          form: { ...trade.form, amount: percentage ? `${percentage}%` : '' },
+          percentage,
+          amountSource: percentage ? 'slider' : 'manual',
           getTwapValidation: () =>
             validatePerpsProTwapDraft({
-              baseSize,
+              baseSize: (percentage / 10000).toFixed(4),
               midPrice: '50000',
               szDecimals: 5,
               durationDraft: '30',
@@ -328,16 +333,72 @@ describe('PerpsProTradeForm order matrix', () => {
         onAddFunds={jest.fn()}
       />
     );
-    const view = render(formForSize('0.001'));
-    const hint = screen.getByRole('alert');
-    expect(hint).toHaveStyle({
-      position: 'absolute',
-      bottom: '100%',
-      marginBottom: 6,
-    });
-    expect(hint.props.pointerEvents).toBe('none');
-    view.rerender(formForSize('0.002'));
-    expect(screen.queryByRole('alert')).toBeNull();
+    const view = render(formForPercentage(100));
+    const anchor = screen.getByTestId('perps-pro-twap-amount-anchor');
+    const input = screen.getByLabelText('amount(USDC)');
+    const slider = screen.getByTestId('rne-slider');
+    expect(anchor.props.collapsable).toBe(false);
+    expect(anchor).toHaveStyle({ zIndex: 1 });
+    fireEvent(slider, 'slidingStart');
+    for (const percent of [20, 10, 1, 0]) {
+      fireEvent(slider, 'valueChange', percent);
+      view.rerender(formForPercentage(percent));
+      expect(trade.setPercentage).toHaveBeenLastCalledWith(percent);
+      expect(screen.getByTestId('perps-pro-twap-amount-anchor')).toBe(anchor);
+      expect(anchor).toHaveStyle({ zIndex: 1 });
+      expect(screen.getByLabelText('amount(USDC)')).toBe(input);
+      expect(screen.getByTestId('rne-slider')).toBe(slider);
+      expect(
+        screen.getByTestId('perps-pro-trade-amount-slider-tooltip'),
+      ).toBeTruthy();
+      if (percent > 0 && percent < 20) {
+        const hint = screen.getByRole('alert');
+        expect(hint).toHaveStyle({
+          position: 'absolute',
+          bottom: '100%',
+          right: 0,
+          left: -(columns.orderBookWidth + columns.gap),
+        });
+        expect(hint.props.pointerEvents).toBe('none');
+      } else {
+        expect(screen.queryByRole('alert')).toBeNull();
+      }
+    }
+    fireEvent(slider, 'slidingComplete', 0);
+    expect(
+      screen.queryByTestId('perps-pro-trade-amount-slider-tooltip'),
+    ).toBeNull();
+  });
+
+  it('keeps the focused TWAP input mounted when typing across the minimum', () => {
+    const trade = controller({ orderType: 'twap' });
+    const formForAmount = (amount: string) => (
+      <PerpsProTradeForm
+        controller={{
+          ...trade,
+          form: { ...trade.form, amount },
+          getTwapValidation: () =>
+            validatePerpsProTwapDraft({
+              baseSize: (Number(amount) / 50000).toFixed(5),
+              midPrice: '50000',
+              szDecimals: 5,
+              durationDraft: '30',
+            }),
+        }}
+        onAddFunds={jest.fn()}
+      />
+    );
+    const view = render(formForAmount(''));
+    const input = screen.getByLabelText('amount(USDC)');
+    fireEvent(input, 'focus');
+    for (const amount of ['1', '18', '184']) {
+      fireEvent.changeText(input, amount);
+      view.rerender(formForAmount(amount));
+      expect(screen.getByLabelText('amount(USDC)')).toBe(input);
+      expect(input.props.value).toBe(amount);
+      expect(!!screen.queryByRole('alert')).toBe(Number(amount) < 100);
+    }
+    expect(trade.endAmountEntry).not.toHaveBeenCalled();
   });
 
   it.each([
