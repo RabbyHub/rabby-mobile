@@ -1,9 +1,9 @@
 import React from 'react';
 import { View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AutoFitHeaderTitle } from '@/components/AutoFitHeaderTitle';
 import { HeaderBackButton } from '@/hooks/navigation';
+import { useCustomHeaderTop } from '@/hooks/useAppLayout';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 
@@ -22,10 +22,10 @@ const HEADER_HORIZONTAL_INSET = 16;
  */
 export const AutoFitCenterHeader = ({ title }: { title: string }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
-  const insets = useSafeAreaInsets();
+  const headerTop = useCustomHeaderTop();
 
   return (
-    <View style={[styles.outer, { paddingTop: insets.top }]}>
+    <View style={[styles.outer, { paddingTop: headerTop }]}>
       <View style={styles.row}>
         <View style={styles.backSlot}>
           <HeaderBackButton
