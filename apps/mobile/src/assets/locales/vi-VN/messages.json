@@ -2683,6 +2683,8 @@
         "twap": {
           "description": "Chia lệnh thành các giao dịch nhỏ hơn để thực hiện theo thời gian.",
           "totalTime": "Tổng thời gian",
+          "durationFieldLabel": "Tổng thời gian (hh:mm)",
+          "durationFieldValue": "{{hours}} : {{minutes}} phút",
           "totalSize": "Tổng khối lượng",
           "selectTime": "Chọn tổng thời gian",
           "reset": "Đặt lại",

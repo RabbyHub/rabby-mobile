@@ -2653,6 +2653,8 @@
         "twap": {
           "description": "Split an order into smaller trades over time.",
           "totalTime": "Total Time",
+          "durationFieldLabel": "Total Time(hh:mm)",
+          "durationFieldValue": "{{hours}} : {{minutes}}min",
           "totalSize": "Total Size",
           "selectTime": "Select Total Time",
           "reset": "Reset",

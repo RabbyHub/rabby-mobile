@@ -2716,6 +2716,8 @@
         "twap": {
           "description": "在一段时间内将订单拆分为多笔交易。",
           "totalTime": "总时间",
+          "durationFieldLabel": "总时间 (hh:mm)",
+          "durationFieldValue": "{{hours}} : {{minutes}} 分钟",
           "totalSize": "总数量",
           "selectTime": "选择总运行时间",
           "reset": "重置",

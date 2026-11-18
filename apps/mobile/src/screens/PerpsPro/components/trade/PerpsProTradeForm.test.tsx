@@ -1,5 +1,10 @@
 jest.mock('./PerpsProTwapDurationSheet', () => ({
-  PerpsProTwapDurationSheet: () => null,
+  PerpsProTwapDurationSheet: ({ visible }: { visible: boolean }) =>
+    visible
+      ? require('react').createElement(require('react-native').View, {
+          testID: 'twap-duration-sheet',
+        })
+      : null,
 }));
 import {
   act,
@@ -237,6 +242,7 @@ const controller = (
     getEstimatedLiquidationPrice: jest.fn(() => null),
     getMaxDisplayAmount: jest.fn(() => '1000'),
     getSliderButtonDisplayAmount: jest.fn(() => null),
+    getTwapValidation: jest.fn(() => ({ amountError: null, valid: false })),
     leverage: 25,
     leveragePending: false,
     marginMode: 'isolated',
@@ -290,6 +296,17 @@ describe('PerpsProTradeForm order matrix', () => {
     mockDismissKeyboardThen.mockImplementation(action => action());
     mockCancelAnimation.mockClear();
     mockWithTiming.mockClear();
+  });
+
+  it('opens TWAP time from the whole field and writes presets in minutes', () => {
+    const trade = controller({ orderType: 'twap' });
+    render(<PerpsProTradeForm controller={trade} onAddFunds={jest.fn()} />);
+
+    fireEvent.press(screen.getByRole('button', { name: '12h' }));
+    expect(trade.patchForm).toHaveBeenCalledWith({ twapDuration: '720' });
+    expect(screen.queryByTestId('twap-duration-sheet')).toBeNull();
+    fireEvent.press(screen.getByRole('button', { name: 'durationFieldLabel' }));
+    expect(screen.getByTestId('twap-duration-sheet')).toBeTruthy();
   });
 
   it.each([

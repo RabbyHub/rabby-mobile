@@ -2683,6 +2683,8 @@
         "twap": {
           "description": "Разделить ордер на небольшие сделки, исполняемые в течение заданного времени.",
           "totalTime": "Общее время",
+          "durationFieldLabel": "Общее время (hh:mm)",
+          "durationFieldValue": "{{hours}} : {{minutes}} мин",
           "totalSize": "Общий объём",
           "selectTime": "Выбрать общее время",
           "reset": "Сбросить",

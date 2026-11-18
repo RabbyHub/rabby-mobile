@@ -2852,6 +2852,8 @@
         "twap": {
           "description": "Dividir uma ordem em transações menores ao longo do tempo.",
           "totalTime": "Tempo total",
+          "durationFieldLabel": "Tempo total (hh:mm)",
+          "durationFieldValue": "{{hours}} : {{minutes}} min",
           "totalSize": "Quantidade total",
           "selectTime": "Selecionar tempo total",
           "reset": "Repor",

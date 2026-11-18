@@ -2566,6 +2566,8 @@
         "twap": {
           "description": "Bagi order menjadi transaksi lebih kecil yang dieksekusi bertahap.",
           "totalTime": "Total waktu",
+          "durationFieldLabel": "Total waktu (hh:mm)",
+          "durationFieldValue": "{{hours}} : {{minutes}} menit",
           "totalSize": "Total jumlah",
           "selectTime": "Pilih total waktu",
           "reset": "Atur ulang",

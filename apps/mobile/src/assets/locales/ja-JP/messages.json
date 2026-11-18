@@ -2616,6 +2616,8 @@
         "twap": {
           "description": "注文を小さな取引に分割し、時間をかけて執行します。",
           "totalTime": "合計時間",
+          "durationFieldLabel": "合計時間 (hh:mm)",
+          "durationFieldValue": "{{hours}} : {{minutes}} 分",
           "totalSize": "合計数量",
           "selectTime": "合計時間を選択",
           "reset": "リセット",

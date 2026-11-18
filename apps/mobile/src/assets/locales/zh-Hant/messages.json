@@ -2738,6 +2738,8 @@
         "twap": {
           "description": "將訂單拆分為多筆交易，分時執行。",
           "totalTime": "總時長",
+          "durationFieldLabel": "總時長 (hh:mm)",
+          "durationFieldValue": "{{hours}} : {{minutes}} 分鐘",
           "totalSize": "總數量",
           "selectTime": "選擇總時長",
           "reset": "重設",

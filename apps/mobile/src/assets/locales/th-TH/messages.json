@@ -2735,6 +2735,8 @@
         "twap": {
           "description": "แบ่งคำสั่งเป็นรายการซื้อขายขนาดเล็กเพื่อดำเนินการตามช่วงเวลา",
           "totalTime": "เวลาทั้งหมด",
+          "durationFieldLabel": "เวลาทั้งหมด (hh:mm)",
+          "durationFieldValue": "{{hours}} : {{minutes}} นาที",
           "totalSize": "ปริมาณทั้งหมด",
           "selectTime": "เลือกเวลาทั้งหมด",
           "reset": "รีเซ็ต",

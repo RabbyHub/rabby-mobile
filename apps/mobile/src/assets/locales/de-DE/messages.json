@@ -2852,6 +2852,8 @@
         "twap": {
           "description": "Eine Order in kleinere Trades über einen Zeitraum aufteilen.",
           "totalTime": "Gesamtdauer",
+          "durationFieldLabel": "Gesamtdauer (hh:mm)",
+          "durationFieldValue": "{{hours}} : {{minutes}} Min.",
           "totalSize": "Gesamtmenge",
           "selectTime": "Gesamtdauer wählen",
           "reset": "Zurücksetzen",

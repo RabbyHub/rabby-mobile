@@ -2566,6 +2566,8 @@
         "twap": {
           "description": "Bir emri zamana yayılan daha küçük işlemlere bölün.",
           "totalTime": "Toplam süre",
+          "durationFieldLabel": "Toplam süre (hh:mm)",
+          "durationFieldValue": "{{hours}} : {{minutes}} dk",
           "totalSize": "Toplam miktar",
           "selectTime": "Toplam süreyi seç",
           "reset": "Sıfırla",
