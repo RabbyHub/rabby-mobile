@@ -459,12 +459,14 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontWeight: '500',
   },
   progress: {
+    borderRadius: 1,
     height: 2,
     width: 32,
     backgroundColor: colors2024['neutral-line'],
     overflow: 'hidden',
   },
   progressFilled: {
+    borderRadius: 1,
     height: 2,
     backgroundColor: colors2024['neutral-secondary'],
   },
