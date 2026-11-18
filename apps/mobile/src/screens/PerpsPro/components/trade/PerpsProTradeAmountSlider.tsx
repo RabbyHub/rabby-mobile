@@ -51,9 +51,10 @@ const TradeSliderPoint: React.FC<{
 };
 
 export const PerpsProTradeAmountSlider: React.FC<{
+  draggingContainerStyle?: ViewStyle;
   onChange?: (value: number) => void;
   value?: number;
-}> = React.memo(({ onChange, value = 0 }) => {
+}> = React.memo(({ draggingContainerStyle, onChange, value = 0 }) => {
   const { colors2024, styles } = useTheme2024({ getStyle });
   const [dragging, setDragging] = useState(false);
   const points = useMemo(() => [...TRADE_SLIDER_POINTS], []);
@@ -106,7 +107,7 @@ export const PerpsProTradeAmountSlider: React.FC<{
           ),
         );
       }}
-      style={styles.container}
+      style={[styles.container, dragging && draggingContainerStyle]}
       testID="perps-pro-trade-amount-slider">
       <View
         onLayout={event => {

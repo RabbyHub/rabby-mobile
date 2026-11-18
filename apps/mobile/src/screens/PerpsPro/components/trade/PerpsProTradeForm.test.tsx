@@ -1379,6 +1379,19 @@ describe('PerpsProTradeForm order matrix', () => {
     expect(screen.queryByText('⌄')).toBeNull();
   });
 
+  it('raises the TWAP slider above Amount only while dragging', () => {
+    const trade = controller({ orderType: 'twap' });
+    render(<PerpsProTradeForm controller={trade} onAddFunds={jest.fn()} />);
+    const container = screen.getByTestId('perps-pro-trade-amount-slider');
+    const slider = screen.getByTestId('rne-slider');
+
+    expect(container).not.toHaveStyle({ zIndex: 2 });
+    fireEvent(slider, 'slidingStart', 0);
+    expect(container).toHaveStyle({ zIndex: 2 });
+    fireEvent(slider, 'slidingComplete', 50);
+    expect(container).not.toHaveStyle({ zIndex: 2 });
+  });
+
   it('dismisses Amount focus when Slider interaction takes ownership', () => {
     const dismiss = jest
       .spyOn(Keyboard, 'dismiss')

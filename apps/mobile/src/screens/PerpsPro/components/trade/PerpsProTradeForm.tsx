@@ -366,6 +366,11 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
               </Text>
             ) : null}
             <PerpsProTradeAmountSlider
+              draggingContainerStyle={
+                form.orderType === 'twap'
+                  ? styles.twapSliderDragging
+                  : undefined
+              }
               onChange={
                 configurationReady ? controller.setPercentage : undefined
               }
@@ -658,6 +663,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   inputGroup: { gap: 8 },
   // Changing stacking order mid-edit can detach the focused or touched native view.
   amountWithHint: { zIndex: 1 },
+  twapSliderDragging: { zIndex: 2 },
   doubleRow: { flexDirection: 'row', gap: 8 },
   flexItem: { flex: 1, minWidth: 0 },
   twapOptions: { gap: 8 },
