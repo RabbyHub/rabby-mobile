@@ -3,6 +3,7 @@ import {
   ColorSchemeName,
   Appearance,
   useColorScheme,
+  useWindowDimensions,
   Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -289,6 +290,13 @@ export function useTheme2024<
 >(opts?: { getStyle?: T; isLight?: boolean }) {
   const appThemeMode = useGetBinaryMode();
   const { safeAreaInsets } = useStyleSafeAreaInsets();
+  /**
+   * Style factories are allowed to read `Dimensions` while they build. Those
+   * reads are snapshots, so the memo below must also depend on the window size;
+   * otherwise a fold, a rotation, or the safe-area-driven width the foldable
+   * frame publishes would leave those styles at their first-render values.
+   */
+  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const { getStyle: makeStyles = DefaultMakeStyles2024 } = opts || {};
   const getStyles = useMemoizedFn(
     makeStyles.getStyles || DefaultMakeStyles2024.getStyles,
@@ -305,6 +313,11 @@ export function useTheme2024<
       : appThemeMode === 'light';
 
   const cs = React.useMemo(() => {
+    // Referenced so the dependency is real: the factories below may read
+    // `Dimensions` while they build, and those reads must not outlive a size
+    // change.
+    void windowWidth;
+    void windowHeight;
     return {
       styles: getStyles?.({
         colors: classicalColors,
@@ -314,7 +327,15 @@ export function useTheme2024<
         safeAreaInsets,
       }) as T extends void ? void : ReturnType<T['getStyles']>,
     };
-  }, [colors2024, classicalColors, getStyles, isLight, safeAreaInsets]);
+  }, [
+    colors2024,
+    classicalColors,
+    getStyles,
+    isLight,
+    safeAreaInsets,
+    windowWidth,
+    windowHeight,
+  ]);
 
   const reanimatedStyles = React.useMemo(() => {
     type Fns = T['getReanimatedStyles'] & object;
