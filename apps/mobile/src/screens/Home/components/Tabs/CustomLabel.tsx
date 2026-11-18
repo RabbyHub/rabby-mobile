@@ -6,7 +6,15 @@ import Animated, { clamp, useAnimatedStyle } from 'react-native-reanimated';
 import { PixelRatio, StyleSheet, TextProps, View } from 'react-native';
 import { ThemeColors2024 } from '@rabby-wallet/base-utils';
 import { HOME_TOP_HEADER_SIZES } from '@/constant/home';
-import { Text } from '@/components/Typography';
+import { AnimatedText, Text } from '@/components/Typography';
+
+/**
+ * `plate` — the moving black chip used by the multi-address asset strip.
+ * `fade` — the original per-label colour/background swap used by the
+ * single-address tabs: those labels are packed tightly together, so a chip
+ * sliding between them reads as overlapping rather than travelling.
+ */
+export type CustomLabelVariant = 'plate' | 'fade';
 
 interface CustomLabelProps {
   index: number;
@@ -19,6 +27,7 @@ interface CustomLabelProps {
   inactiveFontWeight?: string;
   activeFontSize?: number;
   inactiveFontSize?: number;
+  variant?: CustomLabelVariant;
   style?: TextProps['style'];
 }
 
@@ -58,7 +67,7 @@ const PLATE_TRAVEL = LABEL_WIDTH + 1;
  * Only `transform` is animated: no `color`, `backgroundColor`, width or text
  * prop is written from the worklet.
  */
-const CustomLabel = ({
+const PlateCustomLabel = ({
   index,
   indexDecimal,
   text,
@@ -97,6 +106,56 @@ const CustomLabel = ({
     </Animated.View>
   );
 };
+
+/**
+ * The pre-plate label: each label owns its own rounded background and swaps
+ * colour at the midpoint of the swipe. Kept for the single-address tabs, whose
+ * labels sit directly next to each other.
+ */
+const FadeCustomLabel = ({
+  index,
+  indexDecimal,
+  text,
+  style,
+}: CustomLabelProps) => {
+  const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
+
+  const textStyle = useAnimatedStyle(() => {
+    return {
+      color:
+        Math.abs(index - indexDecimal.value) < 0.5
+          ? isLight
+            ? ThemeColors2024.dark['neutral-title-1']
+            : ThemeColors2024.light['neutral-title-1']
+          : colors2024['neutral-secondary'],
+    };
+  });
+  const wrapperStyle = useAnimatedStyle(() => {
+    return {
+      backgroundColor:
+        Math.abs(index - indexDecimal.value) < 0.5
+          ? isLight
+            ? ThemeColors2024.dark['neutral-bg-1']
+            : '#FFF'
+          : 'transparent',
+    };
+  });
+
+  return (
+    <Animated.View style={[styles.container, wrapperStyle]}>
+      <AnimatedText style={[styles.label, textStyle, style]}>
+        {text}
+      </AnimatedText>
+    </Animated.View>
+  );
+};
+
+const CustomLabel = ({ variant = 'plate', ...props }: CustomLabelProps) =>
+  variant === 'fade' ? (
+    <FadeCustomLabel {...props} />
+  ) : (
+    <PlateCustomLabel {...props} />
+  );
 
 export default CustomLabel;
 
@@ -152,3 +211,6 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
       : ThemeColors2024.light['neutral-title-1'],
   },
 }));
+
+PlateCustomLabel.displayName = 'PlateCustomLabel';
+FadeCustomLabel.displayName = 'FadeCustomLabel';
