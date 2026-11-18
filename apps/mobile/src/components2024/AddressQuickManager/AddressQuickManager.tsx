@@ -4,7 +4,8 @@ import {
   usePinAddresses,
 } from '@/hooks/account';
 import React, { useCallback } from 'react';
-import { Dimensions, TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
+import { getDimensionsSnapshot } from '@/core/dimensions';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { AddressItemInner2024 } from '@/screens/Address/components/AddressItemInner2024';
@@ -37,7 +38,9 @@ export interface Props {
   onCancel: () => void;
 }
 
-const maxHeight = Dimensions.get('window').height - 104;
+function getMaxHeight() {
+  return getDimensionsSnapshot('window').height - 104;
+}
 
 // eslint-disable-next-line react-native/no-inline-styles
 const ItemSeparatorComponent = () => <View style={{ height: 12 }} />;
@@ -108,7 +111,7 @@ export const AddressQuickManager: React.FC<Props> = ({
     const id = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.ADDRESS_QUICK_MANAGER,
       bottomSheetModalProps: {
-        snapPoints: [Math.min(contentHeight, maxHeight)],
+        snapPoints: [Math.min(contentHeight, getMaxHeight())],
       },
       type: 'watch-address',
       onCancel: () => {
@@ -126,7 +129,7 @@ export const AddressQuickManager: React.FC<Props> = ({
     const id = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.ADDRESS_QUICK_MANAGER,
       bottomSheetModalProps: {
-        snapPoints: [Math.min(contentHeight, maxHeight)],
+        snapPoints: [Math.min(contentHeight, getMaxHeight())],
       },
       type: 'safe-address',
       onCancel: () => {

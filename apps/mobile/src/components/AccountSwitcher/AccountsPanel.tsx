@@ -2,7 +2,8 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import type { StyleProp, ViewStyle } from 'react-native';
-import { Dimensions, TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
+import { getDimensionsSnapshot } from '@/core/dimensions';
 
 import { default as RcCaretDownCC } from './icons/caret-down-cc.svg';
 import TouchableView from '../Touchable/TouchableView';
@@ -574,7 +575,7 @@ AccountSwitcherAopProps<{
 }
 
 export function getAccountsPanelInModalMaxHeight() {
-  const winInfo = Dimensions.get('window');
+  const winInfo = getDimensionsSnapshot('window');
 
   return winInfo.height - ScreenWithAccountSwitcherLayouts.modalBottomSpace;
 }

@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
-import { Dimensions, View } from 'react-native';
+import { View } from 'react-native';
+import { getDimensionsSnapshot } from '@/core/dimensions';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { MiniWaiting } from '@/components/Approval/components/MiniSignTx/MiniWaiting';
@@ -157,7 +158,7 @@ const SignerPortalItem: React.FC = () => {
           },
         ]}
         handleIndicatorStyle={styles.handleIndicatorStyle}
-        maxDynamicContentSize={Dimensions.get('screen').height * 0.9}
+        maxDynamicContentSize={getDimensionsSnapshot('screen').height * 0.9}
         backgroundStyle={styles.sheetBg}
         backdropProps={{
           onPress() {

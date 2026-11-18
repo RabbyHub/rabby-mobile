@@ -2,7 +2,6 @@ import { AppColorsVariants } from '@/constant/theme';
 import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
-  Dimensions,
   Keyboard,
   KeyboardAvoidingView,
   ScrollView,
@@ -11,6 +10,7 @@ import {
   View,
   ViewStyle,
 } from 'react-native';
+import { getDimensionsSnapshot } from '@/core/dimensions';
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { Button, ButtonProps } from '../Button';
 import { FooterButtonGroup } from '../FooterButtonGroup';
@@ -127,7 +127,9 @@ export const FooterButtonScreenContainer = <
   const [keyboardVisible, setKeyboardVisible] = useState(false);
 
   useEffect(() => {
-    if (!keyboardAvoiding) return;
+    if (!keyboardAvoiding) {
+      return;
+    }
 
     const showSubscription = Keyboard.addListener('keyboardDidShow', () => {
       setKeyboardVisible(true);
@@ -144,7 +146,7 @@ export const FooterButtonScreenContainer = <
 
   const { winHeight, bottomOffset, headerOffset } = useMemo(() => {
     return {
-      winHeight: Dimensions.get('screen').height,
+      winHeight: getDimensionsSnapshot('screen').height,
       bottomOffset: androidOnlyBottomOffset + footerBottomOffset,
       headerOffset: noHeader ? 0 : safeOffHeader,
     };

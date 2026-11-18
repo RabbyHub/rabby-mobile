@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { Dimensions, Platform, StyleSheet } from 'react-native';
+import { Platform, StyleSheet } from 'react-native';
 import { atom, useAtom } from 'jotai';
 import WebView, { WebViewProps } from 'react-native-webview';
 
@@ -7,7 +7,6 @@ import { useJavaScriptBeforeContentLoaded } from '@/hooks/useBootstrap';
 import { devLog } from '@/utils/logger';
 import DappWebViewControl from './DappWebViewControl';
 import { SELF_CHECK_RPC_METHOD } from '@/constant/rpc';
-import { makeDebugBorder } from '@/utils/styles';
 import { BLANK_RABBY_PAGE } from './hooks';
 
 const isAndroid = Platform.OS === 'android';
@@ -25,7 +24,7 @@ function getTouchHtml() {
       ;(function() {
         // ${
           __DEV__
-            ? `!window.ethereum && window.alert('window.ethereum not exist, type: ' + Object.keys(window).sort());`
+            ? "!window.ethereum && window.alert('window.ethereum not exist, type: ' + Object.keys(window).sort());"
             : ''
         }
         window.ReactNativeWebView.postMessage(JSON.stringify({
@@ -78,11 +77,17 @@ export default function WebViewControlPreload() {
   }, [setFirstTouched]);
 
   // const
-  if (!isAndroid) return null;
+  if (!isAndroid) {
+    return null;
+  }
 
-  if (firstTouched) return null;
+  if (firstTouched) {
+    return null;
+  }
 
-  if (!entryScriptWeb3Loaded) return null;
+  if (!entryScriptWeb3Loaded) {
+    return null;
+  }
 
   return (
     <DappWebViewControl
@@ -115,19 +120,5 @@ const styles = StyleSheet.create({
     width: 0,
     position: 'absolute',
     bottom: -999,
-  },
-  debugStyle: {
-    ...makeDebugBorder('red'),
-    display: 'flex',
-    padding: 0,
-    flexDirection: 'column',
-    justifyContent: 'center',
-    alignItems: 'center',
-    height: Dimensions.get('window').height - 60,
-    width: '100%',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    position: 'absolute',
-    top: 60,
-    bottom: 0,
   },
 });
