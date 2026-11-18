@@ -5,7 +5,7 @@ import { PERPS_PRO_FONT_FAMILY } from '@/screens/PerpsPro/components/common/perp
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
 import { View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useCustomHeaderTop } from '@/hooks/useAppLayout';
 
 export const PERPS_PRO_HISTORY_HEADER_CONTENT_HEIGHT = 56;
 
@@ -14,15 +14,15 @@ export const PerpsProHistoryHeader: React.FC<{ title: string }> = ({
   title,
 }) => {
   const { styles } = useTheme2024({ getStyle });
-  const { top } = useSafeAreaInsets();
+  const headerTop = useCustomHeaderTop();
 
   return (
     <View
       style={[
         styles.outer,
         {
-          height: top + PERPS_PRO_HISTORY_HEADER_CONTENT_HEIGHT,
-          paddingTop: top,
+          height: headerTop + PERPS_PRO_HISTORY_HEADER_CONTENT_HEIGHT,
+          paddingTop: headerTop,
         },
       ]}>
       <View style={styles.content}>
