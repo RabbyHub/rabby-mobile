@@ -51,7 +51,7 @@ export default function NormalScreenContainer2024<
     bgImageStyle?: StyleProp<ImageStyle>;
   } & React.ComponentProps<ReactNativeViewAsMap[T]>
 >) {
-  const { safeOffHeader, safeTop } = useSafeSizes();
+  const { safeHeaderTop, safeOffHeader } = useSafeSizes();
   const ViewComp = useMemo(() => getViewComponentByAs(as), [as]);
 
   return (
@@ -73,7 +73,7 @@ export default function NormalScreenContainer2024<
           style,
           fitStatuBar && { marginTop: -1 },
           {
-            paddingTop: noHeader ? safeTop : safeOffHeader,
+            paddingTop: noHeader ? safeHeaderTop : safeOffHeader,
             flexDirection: 'column',
             width: '100%',
             height: '100%',

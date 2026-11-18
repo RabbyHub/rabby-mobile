@@ -1,8 +1,9 @@
 import { Metrics, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { HeaderHeightContext } from '@react-navigation/elements';
 
 import { ScreenLayouts } from '@/constant/layout';
-import { Dimensions, Platform, StatusBar } from 'react-native';
-import { useMemo } from 'react';
+import { Dimensions, Platform, StatusBar, type ScaledSize } from 'react-native';
+import { useContext, useMemo } from 'react';
 import { makeMutable } from 'react-native-reanimated';
 import { isEqual } from 'lodash';
 import { zCreate } from '@/core/utils/reexports';
@@ -21,7 +22,13 @@ export const svsLayout = {
 };
 
 export function startWatchLayoutChange() {
-  Dimensions.addEventListener('change', ({ window, screen }) => {
+  const syncLayout = ({
+    window,
+    screen,
+  }: {
+    window: ScaledSize;
+    screen: ScaledSize;
+  }) => {
     if (!isEqual(svsLayout.winLayout.value, window)) {
       svsLayout.winLayout.value = window;
     }
@@ -29,7 +36,18 @@ export function startWatchLayoutChange() {
     if (!isEqual(svsLayout.screenLayout.value, screen)) {
       svsLayout.screenLayout.value = screen;
     }
+  };
+
+  // The initial native size is captured when this module loads, which can be
+  // before `SafeWindowFrame` publishes the reduced foldable width. Sync once
+  // when the listener starts so `AppDimensions` does not keep the native
+  // 466pt width while React Native's Dimensions is already 382pt.
+  syncLayout({
+    window: Dimensions.get('window'),
+    screen: Dimensions.get('screen'),
   });
+
+  Dimensions.addEventListener('change', syncLayout);
 }
 
 export function getVerticalLayoutHeights() {
@@ -48,12 +66,40 @@ export function getVerticalLayoutHeights() {
 }
 
 export function useSafeSizes() {
-  const { top, bottom } = useSafeAreaInsets();
+  const { top, right, bottom } = useSafeAreaInsets();
+  const navigationHeaderHeight = useContext(HeaderHeightContext);
+  const baseOffHeader = ScreenLayouts.headerAreaHeight + top;
+  // iOS foldable outer screen: the app is letterboxed to the left of the
+  // system column, so safe-area-context reports `top = 0` even though the
+  // native stack header still reserves a status-bar-sized top inset. Using
+  // only `headerAreaHeight + top` then puts the content ~31pt too high and
+  // the first label slides under the header's translucent edge.
+  const usesSideStatusColumn = Platform.OS === 'ios' && right > 0;
+  const safeOffHeader =
+    usesSideStatusColumn &&
+    typeof navigationHeaderHeight === 'number' &&
+    navigationHeaderHeight > 0
+      ? Math.max(baseOffHeader, navigationHeaderHeight + 12)
+      : baseOffHeader;
+  // Custom in-screen headers do not get the native stack header's automatic
+  // status-bar inset. On the iPhone Duo outer screen safe-area-context reports
+  // `top = 0`, while the native header still reserves ~38pt above its 44pt bar.
+  // Reuse the measured native height when available, and fall back to the
+  // device-specific inset that the foldable frame was validated against.
+  const foldableStatusBarTop = 38;
+  const nativeHeaderTopInset =
+    typeof navigationHeaderHeight === 'number' && navigationHeaderHeight > 44
+      ? navigationHeaderHeight - 44
+      : foldableStatusBarTop;
+  const safeHeaderTop = usesSideStatusColumn
+    ? Math.max(top, nativeHeaderTopInset)
+    : top;
 
   return {
     safeTop: top,
+    safeHeaderTop,
     headerHeight: ScreenLayouts.headerAreaHeight,
-    safeOffHeader: ScreenLayouts.headerAreaHeight + top,
+    safeOffHeader,
     safeOffScreenTop: Dimensions.get('screen').height - top,
     safeOffBottom: bottom,
     /**
