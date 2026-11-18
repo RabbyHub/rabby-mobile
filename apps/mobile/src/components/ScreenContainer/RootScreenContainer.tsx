@@ -3,7 +3,7 @@ import { isNil } from 'lodash';
 import React from 'react';
 
 import { View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeSizes } from '@/hooks/useAppLayout';
 
 export default function RootScreenContainer({
   children,
@@ -17,7 +17,7 @@ export default function RootScreenContainer({
   hideBottomBar?: boolean;
   top?: number;
 }>) {
-  const { top } = useSafeAreaInsets();
+  const { safeOffHeader } = useSafeSizes();
 
   return (
     <View
@@ -27,8 +27,13 @@ export default function RootScreenContainer({
         !hideBottomBar && { paddingBottom: ScreenLayouts.bottomBarHeight },
         // eslint-disable-next-line react-native/no-inline-styles
         {
-          paddingTop:
-            (!isNil(topProp) ? topProp : top) + ScreenLayouts.headerAreaHeight,
+          // Same content offset as `NormalScreenContainer`: a native header can
+          // be taller than `headerAreaHeight + top` (the Duo outer screen
+          // reports top = 0 while the bar is 82pt), and content must not slide
+          // under its translucent edge.
+          paddingTop: isNil(topProp)
+            ? safeOffHeader
+            : topProp + ScreenLayouts.headerAreaHeight,
           flexDirection: 'column',
           height: '100%',
         },
