@@ -1,6 +1,7 @@
 package com.rabby.durationpicker
 
 import com.facebook.react.uimanager.SimpleViewManager
+import com.facebook.react.bridge.ReadableArray
 import com.facebook.react.uimanager.ThemedReactContext
 import com.facebook.react.uimanager.ViewManagerDelegate
 import com.facebook.react.viewmanagers.RabbyDurationPickerManagerDelegate
@@ -12,6 +13,9 @@ class DurationPickerViewManager : SimpleViewManager<DurationPickerView>(), Rabby
   override fun getName() = "RabbyDurationPicker"
   override fun createViewInstance(context: ThemedReactContext) = DurationPickerView(context)
   override fun setDurationMinutes(view: DurationPickerView, value: Int) { view.durationMinutes = value }
+  override fun setMinuteLabels(view: DurationPickerView, value: ReadableArray?) {
+    view.setMinuteLabels(value?.let { labels -> List(labels.size()) { labels.getString(it).orEmpty() } })
+  }
   override fun setSessionId(view: DurationPickerView, value: Int) { view.sessionId = value }
   override fun setAndroidLocale(view: DurationPickerView, value: String?) = view.setLocale(value)
   override fun onAfterUpdateTransaction(view: DurationPickerView) {

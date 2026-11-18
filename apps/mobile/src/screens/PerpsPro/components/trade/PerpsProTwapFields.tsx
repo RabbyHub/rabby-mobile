@@ -46,7 +46,10 @@ export const PerpsProTwapFields = React.memo(
           hours: t(hours === 1 ? 'global.time.hour' : 'global.time.hours', {
             t: hours,
           }),
-          minutes: totalMinutes % 60,
+          minutes: t('page.perps.pro.twap.minuteValue', {
+            count: totalMinutes % 60,
+            t: totalMinutes % 60,
+          }),
         })
       : '';
     return (
