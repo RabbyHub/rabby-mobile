@@ -10,6 +10,8 @@ import DeviceInfo from 'react-native-device-info';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useTheme2024 } from '@/hooks/theme';
+import { perfEvents } from '@/core/utils/perf';
+import { getScreenContentBackgroundColor } from '@/constant/layout';
 import { SafeWindowBackdropContext } from './backdrop';
 
 const isIOS = Platform.OS === 'ios';
@@ -70,7 +72,37 @@ let lastAppliedWidth: number | null = null;
  */
 function SafeWindowFrameImpl({ children }: { children?: React.ReactNode }) {
   const insets = useSafeAreaInsets();
-  const { colors2024 } = useTheme2024();
+  const { colors2024, isLight } = useTheme2024();
+
+  /**
+   * Follow the focused screen's declared background.
+   *
+   * `ScreenSpecs` (constant/layout) is already the single source of truth for a
+   * screen's background - the stack navigator feeds the same helper into
+   * `contentStyle` - so the strip can reuse it instead of hard-coding a colour.
+   * Only the route name is stored: the colour is resolved per render, which
+   * keeps light/dark switches correct without an extra listener.
+   */
+  const [routeName, setRouteName] = React.useState<string | undefined>();
+
+  React.useEffect(() => {
+    const onRouteChange = (ctx: { currentRouteName?: string }) => {
+      if (ctx.currentRouteName) {
+        setRouteName(ctx.currentRouteName);
+      }
+    };
+    const onNavigationReady = (ctx: { readyRootName?: string }) => {
+      if (ctx.readyRootName) {
+        setRouteName(ctx.readyRootName);
+      }
+    };
+    perfEvents.addListener('EVENT_ROUTE_CHANGE', onRouteChange);
+    perfEvents.addListener('APP_NAVIGATION_READY', onNavigationReady);
+    return () => {
+      perfEvents.removeListener('EVENT_ROUTE_CHANGE', onRouteChange);
+      perfEvents.removeListener('APP_NAVIGATION_READY', onNavigationReady);
+    };
+  }, []);
 
   const leftInset = isIOS ? Math.max(0, Math.round(insets.left)) : 0;
   const rightInset = isIOS ? Math.max(0, Math.round(insets.right)) : 0;
@@ -81,6 +113,18 @@ function SafeWindowFrameImpl({ children }: { children?: React.ReactNode }) {
    * the strip blends in instead of showing a band next to the system column.
    */
   const [backdropColor, setBackdropColor] = React.useState<string | null>(null);
+
+  const declaredBackground = routeName
+    ? getScreenContentBackgroundColor({
+        screenName: routeName,
+        isDarkTheme: !isLight,
+      })
+    : 'transparent';
+  const stripColor =
+    backdropColor ??
+    (declaredBackground === 'transparent'
+      ? colors2024['neutral-bg-0']
+      : declaredBackground);
 
   const [availableWidth, setAvailableWidth] = React.useState<number | null>(
     null,
@@ -144,13 +188,7 @@ function SafeWindowFrameImpl({ children }: { children?: React.ReactNode }) {
 
   return (
     <SafeWindowBackdropContext.Provider value={setBackdropColor}>
-      <View
-        style={[
-          styles.frame,
-          {
-            backgroundColor: backdropColor ?? colors2024['neutral-bg-0'],
-          },
-        ]}>
+      <View style={[styles.frame, { backgroundColor: stripColor }]}>
         {leftInset > 0 ? <View style={{ width: leftInset }} /> : null}
         <View style={[styles.content, { width: availableWidth ?? undefined }]}>
           {children}
