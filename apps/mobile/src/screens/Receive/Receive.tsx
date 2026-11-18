@@ -19,7 +19,7 @@ import React, {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View, Pressable, ScrollView } from 'react-native';
-import { Dimensions as AppDimensions } from '@/core/dimensions';
+import { useWindowDimensions } from '@/core/dimensions';
 import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 import { IS_IOS } from '@/core/native/utils';
 import { trigger } from 'react-native-haptic-feedback';
@@ -102,9 +102,10 @@ function ReceiveScreen(): JSX.Element {
       !!offlineChainData.displayWillClosedChain &&
       !!offlineChainData.offlineChainInfo);
 
+  const { width: windowWidth } = useWindowDimensions();
   const headerTitle = useMemo(
     () => (
-      <View style={styles.headerTitle}>
+      <View style={[styles.headerTitle, { width: windowWidth - 100 }]}>
         {showName ? (
           <>
             <WalletIcon
@@ -152,6 +153,7 @@ function ReceiveScreen(): JSX.Element {
       account?.address,
       account?.aliasName,
       colors2024,
+      windowWidth,
     ],
   );
 
@@ -336,14 +338,14 @@ function ReceiveScreen(): JSX.Element {
 const getStyle = createGetStyles2024(({ colors2024 }) => {
   // Resolved per style build so a fold/rotation is picked up; a module-level
   // constant would freeze the value from the first import.
-  const screenWidth = AppDimensions.get('window').width;
   return {
     headerTitle: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
       gap: 4,
-      width: screenWidth - 100,
+      // The width is set per-render from the live window (see headerTitle);
+      // keeping it out of the style factory avoids a stale snapshot.
       // Same native-container correction as the Approvals header.
       ...(IS_IOS ? { paddingRight: 65 } : {}),
     },
