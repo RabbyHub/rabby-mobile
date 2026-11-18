@@ -3,12 +3,12 @@ import { RoundedFontStyles } from '@/core/utils/fonts';
 import 'react-native-gesture-handler';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { IS_IOS } from '@/core/native/utils';
 
 import { createCustomNativeStackNavigator as createNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
 
 import { HeaderBackPressable, useStackScreenConfig } from '@/hooks/navigation';
+import { useCustomHeaderTop } from '@/hooks/useAppLayout';
 import {
   RootNames,
   makeHeadersPresets,
@@ -91,10 +91,10 @@ function ConvertDustHeader({
   disableSwitch?: boolean;
 }) {
   const { styles } = useTheme2024({ getStyle: getConvertDustHeaderStyle });
-  const { top } = useSafeAreaInsets();
+  const headerTop = useCustomHeaderTop();
 
   return (
-    <View style={[styles.convertDustHeaderOuter, { marginTop: top }]}>
+    <View style={[styles.convertDustHeaderOuter, { marginTop: headerTop }]}>
       <View style={styles.convertDustHeaderInner}>
         <View style={styles.convertDustHeaderLeft}>
           <HeaderBackPressable style={styles.convertDustHeaderBackButton} />
