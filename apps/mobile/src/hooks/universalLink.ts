@@ -164,7 +164,13 @@ type DebugOpenTarget =
   | 'homeAssets'
   | 'approvals'
   | 'importSecret'
-  | 'importMethods';
+  | 'importMethods'
+  | 'importHardware'
+  | 'importWatch'
+  | 'importSafe'
+  | 'selectAddMethod'
+  | 'moreImportMethods'
+  | 'restoreRabbyWallet';
 
 const NON_PRODUCTION_TESTKIT_SCREENS = {
   DevCapabilityFile: RootNames.DevCapabilityFile,
@@ -441,7 +447,13 @@ function parseNonProductionMaintenanceLink(appLink: string) {
       rawTarget === 'homeAssets' ||
       rawTarget === 'approvals' ||
       rawTarget === 'importSecret' ||
-      rawTarget === 'importMethods';
+      rawTarget === 'importMethods' ||
+      rawTarget === 'importHardware' ||
+      rawTarget === 'importWatch' ||
+      rawTarget === 'importSafe' ||
+      rawTarget === 'selectAddMethod' ||
+      rawTarget === 'moreImportMethods' ||
+      rawTarget === 'restoreRabbyWallet';
     if (!isRabbyGoTarget && !isDebugScreenTarget) {
       console.warn(
         '[useUniversalLinkOnTop] Unknown debug-open-target target:',
@@ -1080,6 +1092,39 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
           navigateDeprecated(RootNames.ImportSecret, {
             initialTab: payload.debugOpenTargetTab,
           } as any);
+          return;
+        }
+        if (target === 'importHardware') {
+          navigateDeprecated(RootNames.StackAddress, {
+            screen: RootNames.ImportHardwareAddress,
+            params: {},
+          } as any);
+          return;
+        }
+        if (target === 'importWatch') {
+          navigateDeprecated(RootNames.StackAddress, {
+            screen: RootNames.ImportWatchAddress2024,
+            params: {},
+          } as any);
+          return;
+        }
+        if (target === 'importSafe') {
+          navigateDeprecated(RootNames.StackAddress, {
+            screen: RootNames.ImportSafeAddress2024,
+            params: {},
+          } as any);
+          return;
+        }
+        if (target === 'selectAddMethod') {
+          navigateDeprecated(RootNames.SelectAddMethod, {} as any);
+          return;
+        }
+        if (target === 'moreImportMethods') {
+          navigateDeprecated(RootNames.MoreImportMethods, {} as any);
+          return;
+        }
+        if (target === 'restoreRabbyWallet') {
+          navigateDeprecated(RootNames.ImportRabbyWallet, {} as any);
           return;
         }
         if (target === 'importMethods') {
