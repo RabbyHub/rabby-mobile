@@ -29,37 +29,56 @@ function fixture() {
     },
   };
   let secret: string | undefined;
+  let stagedSecret: string | undefined;
+  let generation = 0;
   let enrollmentCount = 0;
   let locked = false;
+  let failingCommit = false;
   const key = {
-    async open(create: boolean) {
+    async open(stage: boolean) {
       if (locked) {
         throw new Error('Device locked');
       }
       if (secret) {
         return 'ready' as const;
       }
-      if (!create) {
+      if (!stage) {
         return 'missing' as const;
       }
-      secret = `test-key-${++enrollmentCount}`;
-      return 'created' as const;
+      stagedSecret ??= `test-key-${++generation}`;
+      return 'staged' as const;
+    },
+    async commit() {
+      if (failingCommit || !stagedSecret) {
+        failingCommit = false;
+        throw new Error('Interrupted migration commit');
+      }
+      secret = stagedSecret;
+      stagedSecret = undefined;
+      enrollmentCount += 1;
     },
     mac(message: string) {
-      if (locked || !secret) {
+      const activeSecret = secret ?? stagedSecret;
+      if (locked || !activeSecret) {
         return '';
       }
-      return createHmac('sha256', secret).update(message).digest('hex');
+      return createHmac('sha256', activeSecret).update(message).digest('hex');
     },
   };
   return {
     disk,
-    restart: () => createSecurePreferenceStorage(disk, key),
+    restart() {
+      stagedSecret = undefined;
+      return createSecurePreferenceStorage(disk, key);
+    },
     seed(name: string, value: unknown) {
       disk.write(name, JSON.stringify(value));
     },
     interruptWriteTo(name: string) {
       failingWrite = name;
+    },
+    interruptCommit() {
+      failingCommit = true;
     },
     loseKey() {
       secret = undefined;
@@ -161,7 +180,7 @@ describe('secure preference persistence', () => {
     expect(restarted.getItem(whitelist)).toEqual({});
   });
 
-  it('never treats deleted signed records or a missing device key as a legacy upgrade', async () => {
+  it('checks protected records when the key exists and enrolls legacy values when it is missing', async () => {
     const env = fixture();
     env.seed(whitelist, whitelistData);
     await env.restart().getAdapter(whitelist);
@@ -176,42 +195,54 @@ describe('secure preference persistence', () => {
 
     env.loseKey();
     const keyLost = env.restart();
-    expect((await keyLost.getAdapter(whitelist)).getItem(whitelist)).toEqual(
-      {},
-    );
-    expect(keyLost.getIssues()).toEqual([{ name: whitelist, kind: 'damaged' }]);
-    expect(env.getEnrollmentCount()).toBe(1);
-  });
-
-  it('keeps already sealed groups after an interrupted migration', async () => {
-    const env = fixture();
-    env.seed(whitelist, whitelistData);
-    env.seed(contactBook, {
-      aliases: { [address]: { address, alias: 'Legacy' } },
+    expect((await keyLost.getAdapter(whitelist)).getItem(whitelist)).toEqual({
+      enabled: false,
+      whitelists: [replacement],
     });
-    env.interruptWriteTo(`secure-preference:${contactBook}`);
-
-    const firstStart = env.restart();
-    await firstStart.getAdapter(contactBook);
-    expect(firstStart.getIssues()).toEqual([
-      { name: contactBook, kind: 'unavailable' },
-    ]);
-    expect(env.disk.read(contactBook)).not.toBeNull();
-
-    const resumed = env.restart();
-    const [saved, unsigned] = await Promise.all([
-      resumed.getAdapter(whitelist),
-      resumed.getAdapter(contactBook),
-    ]);
-    expect(saved.getItem(whitelist)).toEqual(whitelistData);
-    expect(unsigned.getItem(contactBook)).toEqual({});
-    expect(resumed.getIssues()).toEqual([
-      { name: contactBook, kind: 'damaged' },
-    ]);
-    await resumed.reset([contactBook]);
-    expect(env.disk.read(contactBook)).toBeNull();
-    expect(env.getEnrollmentCount()).toBe(1);
+    expect(keyLost.getIssues()).toEqual([]);
+    expect(env.getEnrollmentCount()).toBe(2);
   });
+
+  it.each(['before all writes', 'before key commit'])(
+    'retries an interrupted migration %s',
+    async interruption => {
+      const env = fixture();
+      const contactData = {
+        aliases: { [address]: { address, alias: 'Legacy' } },
+      };
+      env.seed(whitelist, whitelistData);
+      env.seed(contactBook, contactData);
+      if (interruption === 'before all writes') {
+        env.interruptWriteTo(`secure-preference:${contactBook}`);
+      } else {
+        env.interruptCommit();
+      }
+
+      const firstStart = env.restart();
+      await firstStart.getAdapter(contactBook);
+      expect(firstStart.getIssues()).toEqual([
+        { name: contactBook, kind: 'unavailable' },
+      ]);
+      expect(env.getEnrollmentCount()).toBe(0);
+      expect(env.disk.read(contactBook)).toBe(JSON.stringify(contactData));
+      const whitelistKey = `secure-preference:${whitelist}`;
+      const stagedRecord = env.disk.read(whitelistKey)!;
+      // The unfinished record is never used as the source for a retry.
+      env.disk.write(whitelistKey, stagedRecord.replace(address, replacement));
+
+      const resumed = env.restart();
+      const [saved, contacts] = await Promise.all([
+        resumed.getAdapter(whitelist),
+        resumed.getAdapter(contactBook),
+      ]);
+      expect(saved.getItem(whitelist)).toEqual(whitelistData);
+      expect(contacts.getItem(contactBook)).toEqual(contactData);
+      expect(resumed.getIssues()).toEqual([]);
+      expect(env.disk.read(whitelistKey)).not.toBe(stagedRecord);
+      expect(env.disk.read(contactBook)).toBeNull();
+      expect(env.getEnrollmentCount()).toBe(1);
+    },
+  );
 
   it('keeps the RPC cache separate from the signed user RPC configuration', async () => {
     const env = fixture();

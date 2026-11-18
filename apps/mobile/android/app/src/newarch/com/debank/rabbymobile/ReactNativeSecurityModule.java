@@ -55,11 +55,22 @@ public class ReactNativeSecurityModule extends NativeReactNativeSecuritySpec {
 
   @ReactMethod
   @Override
-  public void openSecurePreferencesKey(boolean create, Promise promise) {
+  public void openSecurePreferencesKey(boolean stage, Promise promise) {
     try {
-      promise.resolve(SecurePreferenceKey.open(create));
+      promise.resolve(SecurePreferenceKey.open(stage));
     } catch (Exception error) {
       promise.reject("E_SECURE_PREFERENCES_KEY", "Secure preference key unavailable");
+    }
+  }
+
+  @ReactMethod
+  @Override
+  public void commitSecurePreferencesKey(String storagePath, Promise promise) {
+    try {
+      SecurePreferenceKey.commit(storagePath);
+      promise.resolve(null);
+    } catch (Exception error) {
+      promise.reject("E_SECURE_PREFERENCES_KEY", "Secure preference migration could not be committed");
     }
   }
 
