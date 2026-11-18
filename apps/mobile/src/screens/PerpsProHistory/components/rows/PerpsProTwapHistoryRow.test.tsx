@@ -151,9 +151,14 @@ it('removes the retry footer when a retry returns partial trades', async () => {
   expect(screen.queryByText('noTrades')).toBeNull();
 });
 
-it.each(['B', 'A'] as const)(
-  'renders neutral progress for a running %s order',
-  side => {
+it.each([
+  ['runningDetail', 'B'],
+  ['runningDetail', 'A'],
+  ['openOrder', 'B'],
+  ['openOrder', 'A'],
+] as const)(
+  'renders rounded neutral progress in %s for side %s',
+  (variant, side) => {
     const order: PerpsTwapRecord = {
       ...endedOrder,
       active: true,
@@ -167,11 +172,11 @@ it.each(['B', 'A'] as const)(
         amountUnit="base"
         now={0}
         active={false}
-        variant="runningDetail"
+        variant={variant}
       />,
     );
     expect(screen.getByText('31.6%')).toBeTruthy();
-    expect(screen.getByText('working')).toBeTruthy();
+    expect(!!screen.queryByText('working')).toBe(variant === 'runningDetail');
     expect(screen.queryByTestId('history-arrow')).toBeNull();
     const viewStyles = screen
       .UNSAFE_getAllByType(View)

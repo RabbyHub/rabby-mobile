@@ -128,7 +128,6 @@ export const PerpsProTwapCard = React.memo(
     const historyRow = variant === 'historyRow';
     const history = historyRow || variant === 'historyDetail';
     const detail = variant === 'runningDetail' || variant === 'historyDetail';
-    const progressCorners = detail && styles.detailProgressCorners;
     const market = usePerpsProTwapMarket(
       order.state.coin,
       amountUnit === 'quote' && order.endedAt === null,
@@ -239,11 +238,10 @@ export const PerpsProTwapCard = React.memo(
                   ]}>
                   {Number(summary.percentage.toFixed(1))}%
                 </Text>
-                <View style={[styles.progress, progressCorners]}>
+                <View style={styles.progress}>
                   <View
                     style={[
                       styles.progressFilled,
-                      progressCorners,
                       {
                         width: `${summary.percentage}%`,
                       },
@@ -461,16 +459,17 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontWeight: '500',
   },
   progress: {
+    borderRadius: 1,
     height: 2,
     width: 32,
     backgroundColor: colors2024['neutral-line'],
     overflow: 'hidden',
   },
   progressFilled: {
+    borderRadius: 1,
     height: 2,
     backgroundColor: colors2024['neutral-secondary'],
   },
-  detailProgressCorners: { borderRadius: 1 },
   time: {
     fontFamily: 'SF Pro Rounded',
     fontWeight: '400',
