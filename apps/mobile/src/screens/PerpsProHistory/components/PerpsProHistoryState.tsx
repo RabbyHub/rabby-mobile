@@ -48,18 +48,25 @@ export const PerpsProHistoryEmpty = () => {
   );
 };
 
-export const PerpsProHistoryError: React.FC<{ onRetry: () => void }> = ({
-  onRetry,
-}) => {
+export const PerpsProHistoryError: React.FC<{
+  disabled?: boolean;
+  inline?: boolean;
+  onRetry: () => void;
+}> = ({ disabled, inline, onRetry }) => {
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   return (
-    <View style={styles.center}>
+    <View style={inline ? styles.inlineError : styles.center}>
       <Text style={styles.message}>
-        {t('page.perps.pro.history.loadFailed')}
+        {t(
+          inline
+            ? 'page.perps.pro.history.refreshFailed'
+            : 'page.perps.pro.history.loadFailed',
+        )}
       </Text>
       <Pressable
         accessibilityRole="button"
+        disabled={disabled}
         onPress={onRetry}
         style={({ pressed }) => [
           styles.retryButton,
@@ -111,6 +118,11 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     borderRadius: 3,
     height: 14,
     width: '72%',
+  },
+  inlineError: {
+    alignItems: 'center',
+    gap: 4,
+    paddingBottom: 12,
   },
   center: {
     alignItems: 'center',

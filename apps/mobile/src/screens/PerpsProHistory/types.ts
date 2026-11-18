@@ -126,6 +126,7 @@ export interface PerpsProHistoryTabState<
   loadingEarlier: boolean;
   loadEarlierError?: string;
   oldestLoadedTime?: number;
+  refreshError?: string;
   refreshing: boolean;
   rows: Row[];
   status: PerpsProHistoryStatus;

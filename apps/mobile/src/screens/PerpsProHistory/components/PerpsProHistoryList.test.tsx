@@ -241,6 +241,38 @@ describe('PerpsProHistoryList', () => {
     expect(onRetry).toHaveBeenCalledTimes(1);
   });
 
+  it.each(['ready', 'empty'] as const)(
+    'offers an inline TWAP retry alongside a cached %s snapshot',
+    status => {
+      const onRetry = jest.fn();
+      render(
+        <PerpsProHistoryList
+          amountUnit="base"
+          onLoadEarlier={jest.fn()}
+          onRefresh={jest.fn()}
+          onRetry={onRetry}
+          state={makeState({
+            rows: status === 'ready' ? [{ key: 'twap-7' } as never] : [],
+            status,
+            refreshError: 'history offline',
+          })}
+          tab="twap"
+        />,
+      );
+      if (status === 'ready')
+        expect(screen.getByTestId('history-row-twap-7')).toBeTruthy();
+      else
+        expect(
+          screen.getByText('page.perps.pro.history.noHistory'),
+        ).toBeTruthy();
+      expect(
+        screen.getByText('page.perps.pro.history.refreshFailed'),
+      ).toBeTruthy();
+      fireEvent.press(screen.getByText('page.perps.pro.common.retry'));
+      expect(onRetry).toHaveBeenCalledTimes(1);
+    },
+  );
+
   it('starts the first card at the Pager-owned 12px content gap', () => {
     render(
       <PerpsProHistoryList

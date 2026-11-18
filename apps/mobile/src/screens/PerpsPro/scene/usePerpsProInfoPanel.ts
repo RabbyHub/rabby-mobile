@@ -1,6 +1,6 @@
 import {
   usePerpsTwapRecords,
-  usePerpsTwapReadiness,
+  usePerpsTwapSourceState,
 } from '@/hooks/perps/twap/usePerpsTwapStore';
 import {
   usePerpsTwapSubscriptions,
@@ -113,7 +113,12 @@ export const usePerpsProInfoPanel = (
     getPerpsAccountRuntimeContext().generation,
   );
   const twapRecords = usePerpsTwapRecords(twapUser);
-  const twapReadiness = usePerpsTwapReadiness(twapUser);
+  const activeTwaps = usePerpsTwapSourceState(twapUser, 'active');
+  const twapReadiness = activeTwaps.error
+    ? 'error'
+    : activeTwaps.ready
+    ? 'ready'
+    : 'loading';
   const pendingFundingCount = perpsStore(state =>
     getPerpsPendingFundingCount(state.localLoadingHistory),
   );
@@ -453,7 +458,7 @@ export const usePerpsProInfoPanel = (
     twapCount: allTwaps.length,
     twapReadiness,
     retryTwaps: () =>
-      twapUser ? refreshPerpsTwaps(twapUser) : Promise.resolve(),
+      twapUser ? refreshPerpsTwaps(twapUser, 'active') : Promise.resolve(),
     allPositionsCount: allPositions.length,
     allPositionsByCoin,
     openOrderCollectionPresentation: resolvePerpsProCollectionPresentation({
