@@ -21,7 +21,7 @@ export const PerpsProTwapHistoryRowView = React.memo(
     return (
       <>
         <PerpsProTwapCard
-          history
+          variant="historyRow"
           order={row.order}
           amountUnit={amountUnit}
           now={row.time}
