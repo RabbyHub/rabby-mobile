@@ -6,8 +6,9 @@
 #   2. the managed bundle previously unpacked under RABBY_MOBILE_CCACHE_ROOT
 #   3. the managed bundle published in S3
 #      s3://$RABBY_MOBILE_BUILD_BUCKET/_private/toolchains/ccache/<version>/<platform>.tar.gz
-#      (plus a .sha256 next to it). natively built and signed by us, no
-#      third-party package manager involved.
+#      The expected SHA-256 is pinned in this script (see pinned_sha256), so a
+#      replaced S3 object cannot inject a different compiler wrapper. The
+#      bundle is natively built by us; no third-party package manager involved.
 #
 # When none of those work the behaviour depends on RABBY_MOBILE_CCACHE_STRICT:
 #   true (default in CI)  fail the build with an actionable message
@@ -47,6 +48,17 @@ detect_platform() {
   esac
 }
 
+# Expected SHA-256 of the published bundle, per platform. Pinned in-repo on
+# purpose: the sidecar object next to the tarball lives in the same bucket and
+# only proves the upload was not corrupted, not that it is the bundle we built.
+# Add the new hash here before using a bundle for a new platform.
+pinned_sha256() {
+  case "$1" in
+    darwin-arm64) echo '5fd2e024d15c0231165661f792b3e7d16f43b788526c857c734948c5503022da' ;;
+    *) echo '' ;;
+  esac
+}
+
 version_at_least() {
   # $1 = found version, $2 = required version
   [ "$(printf '%s\n%s\n' "$2" "$1" | sort -V | head -1)" = "$2" ]
@@ -73,7 +85,7 @@ managed_bundle_dir() {
 }
 
 install_managed() {
-  local platform="$1" dir bundle sha_url sha_file
+  local platform="$1" dir bundle expected
   dir="$(managed_bundle_dir "$platform")"
   if [ -x "$dir/bin/ccache" ]; then
     printf '%s' "$dir/bin/ccache"
@@ -81,6 +93,11 @@ install_managed() {
   fi
 
   bundle="ccache-$VERSION-$platform.tar.gz"
+  expected="$(pinned_sha256 "$platform")"
+  if [ -z "$expected" ]; then
+    log "no pinned sha256 for $platform; refusing to use an unpinned managed bundle"
+    return 1
+  fi
   if [ -z "$BUCKET" ]; then
     return 1
   fi
@@ -99,8 +116,12 @@ install_managed() {
   aws s3 cp "s3://$BUCKET/_private/toolchains/ccache/$VERSION/$platform.tar.gz.sha256" \
     "$tmp/$bundle.sha256" --only-show-errors
 
-  local expected actual
-  expected="$(awk '{print $1}' "$tmp/$bundle.sha256")"
+  local sidecar actual
+  sidecar="$(awk '{print $1}' "$tmp/$bundle.sha256")"
+  if [ "$sidecar" != "$expected" ]; then
+    log "sidecar sha256 for $bundle does not match the pinned value (pinned ${expected}, sidecar ${sidecar:-none})"
+    return 1
+  fi
   actual="$(shasum -a 256 "$tmp/$bundle" 2>/dev/null | awk '{print $1}' \
     || sha256sum "$tmp/$bundle" | awk '{print $1}')"
   if [ -z "$expected" ] || [ "$expected" != "$actual" ]; then
