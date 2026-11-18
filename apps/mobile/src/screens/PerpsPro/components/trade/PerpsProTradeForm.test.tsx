@@ -1287,6 +1287,21 @@ describe('PerpsProTradeForm order matrix', () => {
     expect(trade.requestReview).not.toHaveBeenCalled();
   });
 
+  it.each(['buy', 'sell'])(
+    'focuses Amount when %s is pressed on an empty TWAP draft',
+    side => {
+      const trade = controller({ orderType: 'twap' });
+      render(<PerpsProTradeForm controller={trade} onAddFunds={jest.fn()} />);
+
+      const button = screen.getByTestId(`perps-pro-trade-button-${side}`);
+      expect(button).toBeEnabled();
+      fireEvent.press(button);
+      expect(mockFocusTextInput).toHaveBeenCalledWith('amount(USDC)');
+      expect(mockDismissKeyboardThen).not.toHaveBeenCalled();
+      expect(trade.requestReview).not.toHaveBeenCalled();
+    },
+  );
+
   it('focuses an empty Conditional Trigger Price before submitting a valid Amount', () => {
     const trade = controller({
       amount: '10',
@@ -1321,19 +1336,24 @@ describe('PerpsProTradeForm order matrix', () => {
     expect(trade.requestReview).not.toHaveBeenCalled();
   });
 
-  it('keeps a Slider percentage as valid input when Buy is pressed', () => {
-    const trade = controller({ amount: '25%' }) as any;
-    trade.amountSource = 'slider';
-    trade.percentage = 25;
-    render(<PerpsProTradeForm controller={trade} onAddFunds={jest.fn()} />);
+  it.each(['market', 'twap'] as const)(
+    'preserves the %s slider amount when requesting review',
+    orderType => {
+      const trade = {
+        ...controller({ amount: '25%', orderType }),
+        amountSource: 'slider' as const,
+        percentage: 25,
+      };
+      render(<PerpsProTradeForm controller={trade} onAddFunds={jest.fn()} />);
 
-    fireEvent.press(screen.getByTestId('perps-pro-trade-button-buy'));
+      fireEvent.press(screen.getByTestId('perps-pro-trade-button-buy'));
 
-    expect(trade.beginAmountEntry).not.toHaveBeenCalled();
-    expect(trade.requestReview).toHaveBeenCalledWith('buy');
-    expect(trade.form.amount).toBe('25%');
-    expect(trade.percentage).toBe(25);
-  });
+      expect(trade.beginAmountEntry).not.toHaveBeenCalled();
+      expect(trade.requestReview).toHaveBeenCalledWith('buy');
+      expect(trade.form.amount).toBe('25%');
+      expect(trade.percentage).toBe(25);
+    },
+  );
 
   it('makes the Available value and USDC text part of the Deposit target', () => {
     const onDeposit = jest.fn();

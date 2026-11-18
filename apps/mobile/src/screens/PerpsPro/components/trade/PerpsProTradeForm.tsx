@@ -559,12 +559,7 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
                 </View>
               ) : null}
               <PerpsProTradeButton
-                disabled={
-                  controller.pending ||
-                  !configurationReady ||
-                  (form.orderType === 'twap' &&
-                    !controller.getTwapValidation(side).valid)
-                }
+                disabled={controller.pending || !configurationReady}
                 label={
                   form.orderType === 'scale'
                     ? t(
