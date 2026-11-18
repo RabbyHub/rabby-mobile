@@ -274,6 +274,58 @@ describe('store/balance', () => {
     },
   );
 
+  it('shares the current selection with 24h while the real-time refresh is still pending', async () => {
+    const {
+      renderHook,
+    }: typeof import('@testing-library/react-native/pure') = require('@testing-library/react-native/pure');
+    const store = balanceModule.default;
+    const select = jest.fn().mockResolvedValue({
+      selectedAccounts: [{ address: '0xA', type: 'SimpleKeyring' }],
+      selectedAddresses: ['0xa'],
+      matteredAccountLength: 1,
+    });
+    balanceModule.setAccountBalanceSelectionSnapshotGetter(select);
+    mockKeyringServiceGetAllAddresses.mockResolvedValue([]);
+    let finishAppChains!: () => void;
+    mockBatchGetAppChains.mockReturnValueOnce(
+      new Promise<void>(resolve => {
+        finishAppChains = resolve;
+      }),
+    );
+    mockOpenapiGetTotalBalanceV2.mockResolvedValueOnce({
+      total_usd_value: 75,
+      chain_list: [],
+    });
+    mockGetAppChainTotalUsdValue.mockReturnValue(25);
+    const { result, unmount } = renderHook(() =>
+      store.useAccountsBalanceTrigger(),
+    );
+    let finish24h!: () => void;
+    const start24h = jest.fn(
+      () =>
+        new Promise<void>(resolve => {
+          finish24h = resolve;
+        }),
+    );
+    try {
+      const balance = store.fetchTotalBalance('from_api');
+      await flushResourceFlowPersist();
+      const home = result.current.triggerUpdate(true, start24h);
+      await flushResourceFlowPersist();
+      expect(select).toHaveBeenCalledTimes(1);
+      expect(start24h).toHaveBeenCalledWith(['0xa']);
+      expect(mockOpenapiGetTotalBalanceV2).toHaveBeenCalledTimes(1);
+      expect(mockSyncBalance).not.toHaveBeenCalled();
+      finishAppChains();
+      await Promise.all([balance, home]);
+      expect(store.getAddressValue('0xa')?.totalBalance).toBe(100);
+    } finally {
+      finishAppChains?.();
+      finish24h?.();
+      unmount();
+    }
+  });
+
   it('updates memory before scheduling sqlite persistence on remote refresh', async () => {
     mockKeyringServiceGetAllAddresses.mockResolvedValue([
       {

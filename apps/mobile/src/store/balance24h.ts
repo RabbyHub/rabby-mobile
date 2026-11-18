@@ -858,6 +858,7 @@ class Scene24hBalanceStore extends BaseStore<Multi24hBalanceState> {
         }
 
         this.setSceneLoading(scene, !!force);
+        const alreadyLoading = this.getState().sceneAddrLoading;
         const nextCheckAddress = new Set([...normalizedAddresses]);
 
         normalizedAddresses.forEach(address => {
@@ -874,9 +875,17 @@ class Scene24hBalanceStore extends BaseStore<Multi24hBalanceState> {
         beforeReturn();
 
         const queue = this.queues[scene];
+        const staleAddresses = Array.from(nextCheckAddress);
+        if (
+          !hasAddressSelectionChanged &&
+          staleAddresses.length &&
+          staleAddresses.every(address => alreadyLoading[`${scene}-${address}`])
+        ) {
+          return this.waitQueueFinished(queue);
+        }
         queue.clear();
         const fetchBalance = createHomeAssetBatchFetcher(
-          Array.from(nextCheckAddress),
+          staleAddresses,
           openapi.get24hTotalBalanceBatch,
         );
         const fetchBatchBalance: typeof fetch24hBalance = async address => {

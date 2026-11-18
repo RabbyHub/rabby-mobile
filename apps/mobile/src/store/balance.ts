@@ -1094,6 +1094,11 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
     return { loadBalanceFromApiStage };
   };
 
+  // A Home caller joining an in-flight refresh uses that round's selection too.
+  private readonly readRefreshAddresses: Partial<
+    Record<FetchTotalBalanceType, () => Promise<string[] | undefined>>
+  > = {};
+
   fetchTotalBalance = makeSWRKeyAsyncFunc(
     async (fetchType: FetchTotalBalanceType) => {
       const retBalances = {} as Record<string, BalanceAccountType>;
@@ -1133,7 +1138,14 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
         }
 
         const selectionPolicyKey = getHomeAssetSelectionSettingsKey();
-        const selectionSnapshot = await getAccountBalanceSelectionSnapshot();
+        const selection = getAccountBalanceSelectionSnapshot();
+        this.readRefreshAddresses[fetchType] = async () => {
+          const snapshot = await selection;
+          return selectionPolicyKey === getHomeAssetSelectionSettingsKey()
+            ? snapshot?.selectedAddresses
+            : undefined;
+        };
+        const selectionSnapshot = await selection;
         if (!selectionSnapshot) {
           return retBalances;
         }
@@ -1167,6 +1179,8 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
         );
       } catch (e) {
         console.error('fetchTotalBalance  error', e);
+      } finally {
+        delete this.readRefreshAddresses[fetchType];
       }
 
       return retBalances;
@@ -1189,7 +1203,10 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
     }, []);
 
     const triggerUpdate = useCallback(
-      async (options?: boolean | AccountsBalanceTriggerOptions) => {
+      async (
+        options?: boolean | AccountsBalanceTriggerOptions,
+        onSelected?: (addresses?: string[]) => Promise<void>,
+      ) => {
         const forceFromApi =
           typeof options === 'boolean' ? options : !!options?.forceFromApi;
         const localOnly = typeof options === 'object' && !!options.localOnly;
@@ -1207,7 +1224,14 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
         if (forceFromApi) {
           lastTimeStamps.current = Date.now();
         }
-        return this.fetchTotalBalance(fetchType);
+        const balance = this.fetchTotalBalance(fetchType);
+        if (onSelected && !localOnly) {
+          Promise.resolve(this.readRefreshAddresses[fetchType]?.())
+            .catch(() => undefined)
+            .then(onSelected)
+            .catch(console.error);
+        }
+        return balance;
       },
       [isNeedFetchData],
     );

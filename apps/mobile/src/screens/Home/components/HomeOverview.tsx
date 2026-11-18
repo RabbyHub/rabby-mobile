@@ -102,7 +102,6 @@ import {
   checkGasAccountAddressesEligibility,
   useGasAccountGiftEligibility,
 } from '@/hooks/useGasAccountEligibility';
-import { refreshDayCurve } from '@/store/curve24h';
 import { scene24hBalanceStore } from '@/store/balance24h';
 import { deleteLongTimeCurveCache } from '@/utils/24balanceCurveCache';
 import { deleteLongTime24hBalanceCache } from '@/utils/24hBalanceCache';
@@ -642,6 +641,19 @@ type HomeOverviewTriggerUpdate = ReturnType<
   typeof addressBalanceStore.useAccountsBalanceTrigger
 >['triggerUpdate'];
 
+function refreshOverviewBalances(
+  triggerUpdate: HomeOverviewTriggerUpdate,
+  force: boolean,
+) {
+  return triggerUpdate(force, addresses =>
+    scene24hBalanceStore.refresh24hAssets({
+      addresses: addresses?.length ? addresses : undefined,
+      force,
+      reason: 'manual_refresh',
+    }),
+  );
+}
+
 function HomeOverviewDeferredStartupGate({
   triggerUpdate,
 }: {
@@ -778,19 +790,7 @@ function HomeOverviewPostStartupEffects({
         isFirstTriggerRef.current = false;
       }
 
-      triggerUpdate(isFirstTrigger || undefined).then(balanceAccounts => {
-        // console.debug('[perf] MultiAddressHome triggerUpdate refreshed:: balanceAccounts', balanceAccounts);
-        const balanceAddresses = Object.keys(balanceAccounts);
-        scene24hBalanceStore.refresh24hAssets({
-          addresses: balanceAddresses.length ? balanceAddresses : undefined,
-          force: isFirstTrigger,
-          reason: 'manual_refresh',
-        });
-        refreshDayCurve({
-          addresses: balanceAddresses.length ? balanceAddresses : undefined,
-          reason: 'manual_refresh',
-        });
-      });
+      refreshOverviewBalances(triggerUpdate, isFirstTrigger);
 
       if (!canRefreshOverview) {
         return;
@@ -1030,19 +1030,7 @@ export const HomeOverview = React.memo(() => {
   const { triggerUpdate } = addressBalanceStore.useAccountsBalanceTrigger();
 
   const refreshManualBalance = useCallback(() => {
-    return triggerUpdate(true).then(balanceAccounts => {
-      const balanceAddresses = Object.keys(balanceAccounts);
-      scene24hBalanceStore.refresh24hAssets({
-        addresses: balanceAddresses.length ? balanceAddresses : undefined,
-        force: true,
-        reason: 'manual_refresh',
-      });
-      refreshDayCurve({
-        addresses: balanceAddresses.length ? balanceAddresses : undefined,
-        force: true,
-        reason: 'manual_refresh',
-      });
-    });
+    return refreshOverviewBalances(triggerUpdate, true);
   }, [triggerUpdate]);
 
   const refreshManualHomeBackgroundData = useCallback(async () => {

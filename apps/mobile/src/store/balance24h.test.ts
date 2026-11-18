@@ -299,6 +299,35 @@ describe('store/balance24h', () => {
     },
   );
 
+  it('shares the pending 24h batch across refresh reasons and still applies list changes', async () => {
+    mockGetBalance24hCache.mockReturnValue(null);
+    let finish!: () => void;
+    mockGet24hTotalBalanceBatch.mockImplementationOnce(
+      () =>
+        new Promise(resolve => {
+          finish = () =>
+            resolve([{ id: '0xa', error_code: 0, total_usd_value: 1 }]);
+        }),
+    );
+    const scene = balance24hModule.scene24hBalanceStore;
+    const first = scene.refresh24hAssets({ addresses: ['0xa'], force: true });
+    const same = scene.refresh24hAssets({
+      addresses: ['0xA'],
+      reason: 'selection_changed',
+    });
+    const changed = scene.refresh24hAssets({
+      addresses: ['0xb'],
+      reason: 'balance_changed',
+    });
+    finish();
+    await Promise.all([first, same, changed]);
+    expect(mockGet24hTotalBalanceBatch.mock.calls).toEqual([
+      [['0xa']],
+      [['0xb']],
+    ]);
+    expect(scene.getState().addresses.Home).toEqual(['0xb']);
+  });
+
   it('fetches only stale addresses and preserves a failed address while applying a zero balance', async () => {
     const errorSpy = jest.spyOn(console, 'error').mockImplementation();
     mockGetBalance24hCache.mockImplementation((address: string) => ({
