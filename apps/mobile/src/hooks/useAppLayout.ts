@@ -7,6 +7,7 @@ import { useContext, useMemo } from 'react';
 import { makeMutable } from 'react-native-reanimated';
 import { isEqual } from 'lodash';
 import { zCreate } from '@/core/utils/reexports';
+import { isFoldableSideColumnPosture } from '@/core/utils/foldableDevice';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -20,6 +21,10 @@ const isAndroid = Platform.OS === 'android';
  * 82pt, native title center ~48pt): a 52pt JS header row centred on it starts
  * 22pt from the window top. Verified against Send/Settings at 48.5pt vs
  * 47.9pt.
+ *
+ * Only applied when `isFoldableSideColumnPosture()` matches: iOS, a listed
+ * foldable device id, iOS >= 27, and the letterboxed outer window signature
+ * (`right > 0`, `top = 0`).
  */
 const FOLDABLE_HEADER_TOP = 22;
 
@@ -87,7 +92,10 @@ export function useSafeSizes() {
   // native stack header still reserves a status-bar-sized top inset. Using
   // only `headerAreaHeight + top` then puts the content ~31pt too high and
   // the first label slides under the header's translucent edge.
-  const usesSideStatusColumn = Platform.OS === 'ios' && right > 0;
+  //
+  // Gated on the exact device id + iOS major version + letterbox signature so
+  // no other phone/iPad posture can pick up the compensation.
+  const usesSideStatusColumn = isFoldableSideColumnPosture({ top, right });
   const safeOffHeader =
     usesSideStatusColumn &&
     typeof navigationHeaderHeight === 'number' &&
@@ -122,14 +130,18 @@ export function useSafeSizes() {
 /**
  * Top inset for JS-owned headers.
  *
- * Native stack headers reserve a status-bar inset even when the app is
- * letterboxed to the left of the Duo system column and safe-area-context
- * reports `top = 0`. Custom `header:` renderers must reproduce that inset or
- * they sit at the very top of the screen.
+ * On the Duo outer screen the native header is aligned below an inset that
+ * safe-area-context does not report (`top = 0`), so JS-owned `header:`
+ * renderers must reproduce it or they sit at the very top of the screen.
+ * Every other posture keeps using the real safe-area top.
  */
 export function useCustomHeaderTop() {
   const { top, right } = useSafeAreaInsets();
-  return top > 0 ? top : right > 0 ? FOLDABLE_HEADER_TOP : 0;
+  return top > 0
+    ? top
+    : isFoldableSideColumnPosture({ top, right })
+    ? FOLDABLE_HEADER_TOP
+    : 0;
 }
 
 /**

@@ -6,37 +6,15 @@ import {
   StyleSheet,
   View,
 } from 'react-native';
-import DeviceInfo from 'react-native-device-info';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { perfEvents } from '@/core/utils/perf';
+import { isFoldableIosDevice } from '@/core/utils/foldableDevice';
 import { getScreenContentBackgroundColor } from '@/constant/layout';
 import { SafeWindowBackdropContext } from './backdrop';
 
 const isIOS = Platform.OS === 'ios';
-
-/**
- * Device ids that expose a horizontal system column on iOS. Add new foldable
- * ids here once they are supported; everything else gets `React.Fragment`, so
- * unsupported devices never mount the frame or touch `Dimensions`.
- */
-const FOLDABLE_IOS_DEVICE_IDS = ['iPhone19,4'];
-
-function isFoldableIosDevice() {
-  if (!isIOS) {
-    return false;
-  }
-
-  try {
-    if (FOLDABLE_IOS_DEVICE_IDS.includes(DeviceInfo.getDeviceId())) {
-      return true;
-    }
-    return /duo/i.test(DeviceInfo.getModel() || '');
-  } catch {
-    return false;
-  }
-}
 
 /**
  * Survive Fast Refresh remounts: when this module re-evaluates while the
