@@ -99,6 +99,7 @@ const PlateCustomLabel = ({
       <Animated.View style={[styles.mover, moverStyle]}>
         <View style={styles.plate} />
         <Animated.Text
+          allowFontScaling={false}
           style={[styles.label, styles.labelActive, style, pinnedTextStyle]}>
           {text}
         </Animated.Text>
