@@ -177,9 +177,13 @@ it.each(['B', 'A'] as const)(
       .UNSAFE_getAllByType(View)
       .map(view => StyleSheet.flatten(view.props.style));
     expect(viewStyles).toContainEqual(
+      expect.objectContaining({ width: 32, height: 2, borderRadius: 1 }),
+    );
+    expect(viewStyles).toContainEqual(
       expect.objectContaining({
         width: '31.6%',
         backgroundColor: 'neutral-secondary',
+        borderRadius: 1,
       }),
     );
   },
