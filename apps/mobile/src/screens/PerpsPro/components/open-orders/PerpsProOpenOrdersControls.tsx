@@ -9,9 +9,11 @@ import { useTranslation } from 'react-i18next';
 import type { PerpsOpenOrderCategory } from '../../model/openOrder';
 import { PerpsProInfoControls } from '../info/PerpsProInfoControls';
 
-type VisibleCategory = Exclude<PerpsOpenOrderCategory, 'unsupported'>;
+type VisibleCategory = Exclude<PerpsOpenOrderCategory, 'unsupported'> | 'twap';
 
 export const PerpsProOpenOrdersControls: React.FC<{
+  twapCount?: number;
+  onAddTwap?: () => void;
   basicCount: number;
   category: VisibleCategory;
   conditionalCount: number;
@@ -22,6 +24,8 @@ export const PerpsProOpenOrdersControls: React.FC<{
   onToggleHideOtherSymbols: () => void;
 }> = React.memo(
   ({
+    twapCount = 0,
+    onAddTwap,
     basicCount,
     category,
     conditionalCount,
@@ -37,20 +41,30 @@ export const PerpsProOpenOrdersControls: React.FC<{
     return (
       <View>
         <PerpsProInfoControls
-          actionLabel={t('page.perps.pro.openOrders.cancelAll')}
+          actionLabel={t(
+            category === 'twap'
+              ? 'page.perps.pro.twap.add'
+              : 'page.perps.pro.openOrders.cancelAll',
+          )}
           actionDisabled={
+            category !== 'twap' &&
             (category === 'basic' ? basicCount : conditionalCount) === 0
           }
-          actionPending={isCancelAllPending}
+          actionPending={category !== 'twap' && isCancelAllPending}
           hideOtherSymbols={hideOtherSymbols}
-          onAction={onCancelAll}
+          onAction={category === 'twap' ? onAddTwap ?? (() => {}) : onCancelAll}
           onToggleHideOtherSymbols={onToggleHideOtherSymbols}
           testID="perps-pro-open-orders-controls"
         />
         <View style={styles.tabs} testID="perps-pro-open-orders-tabs">
-          {(['basic', 'conditional'] as const).map(item => {
+          {(['basic', 'conditional', 'twap'] as const).map(item => {
             const selected = item === category;
-            const count = item === 'basic' ? basicCount : conditionalCount;
+            const count =
+              item === 'twap'
+                ? twapCount
+                : item === 'basic'
+                ? basicCount
+                : conditionalCount;
             return (
               <Pressable
                 accessibilityRole="tab"
@@ -60,7 +74,9 @@ export const PerpsProOpenOrdersControls: React.FC<{
                 style={selected ? styles.activeTab : styles.tab}
                 testID={`perps-pro-open-orders-tab-${item}`}>
                 <Text style={selected ? styles.activeText : styles.text}>
-                  {item === 'basic'
+                  {item === 'twap'
+                    ? 'TWAP'
+                    : item === 'basic'
                     ? t('page.perps.pro.openOrders.basic')
                     : t('page.perps.pro.openOrders.conditional')}
                   {'  '}

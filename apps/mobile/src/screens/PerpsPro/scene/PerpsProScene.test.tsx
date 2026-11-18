@@ -1,5 +1,24 @@
+// These isolated scene tests replace child sheets and action controllers.
+jest.mock('../components/twap/PerpsProTwapCard', () => ({
+  PerpsProTwapCard: () => null,
+}));
+jest.mock('../components/twap/PerpsProTwapDetailSheet', () => ({
+  PerpsProTwapDetailSheet: () => null,
+}));
+jest.mock('../components/twap/PerpsProEndTwapModal', () => ({
+  PerpsProEndTwapModal: () => null,
+}));
 jest.mock('../components/trade/PerpsProTwapOrderConfirmationSheet', () => ({
   PerpsProTwapOrderConfirmationSheet: () => null,
+}));
+jest.mock('./usePerpsProCancelTwap', () => ({
+  usePerpsProCancelTwap: () => ({
+    command: null,
+    pending: false,
+    request: jest.fn(),
+    close: jest.fn(),
+    confirm: jest.fn(),
+  }),
 }));
 import {
   act,
@@ -2856,7 +2875,8 @@ describe('PerpsProScene market loading states', () => {
       screen.getByTestId('perps-pro-open-orders-empty-illustration'),
     ).toBeTruthy();
     expect(screen.getByText('page.perps.pro.openOrders.empty')).toBeTruthy();
-    expect(screen.queryByTestId('perps-pro-open-orders-controls')).toBeNull();
+    // TWAP remains reachable from an empty Open Orders collection.
+    expect(screen.getByTestId('perps-pro-open-orders-controls')).toBeTruthy();
   });
 
   it('keeps controls when a filter has no visible rows but the source is not empty', () => {

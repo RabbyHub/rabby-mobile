@@ -5,6 +5,10 @@ import {
   validatePerpsProTwapCapacity,
   type PerpsProTwapContext,
 } from './twapOrder';
+import {
+  buildPerpsProCancelTwapCommand,
+  executePerpsProCancelTwap,
+} from './cancelTwap';
 import type { TwapSubmissionOutcome } from '@rabby-wallet/hyperliquid-sdk';
 const context: PerpsProTwapContext = {
   active: true,
@@ -113,4 +117,53 @@ test('blocks stale generations and a price drop below minimum without resizing t
     }),
   ).toThrow('amountTooSmall');
   expect(prepared.baseSize).toBe('1');
+});
+
+test('End binds the original TWAP identity and remains independent of the trading form market', async () => {
+  const order = {
+    key: 'xyz:TEST:7',
+    twapId: 7,
+    active: true,
+    status: 'activated',
+    endedAt: null,
+    eventTime: 0,
+    state: {
+      coin: 'xyz:TEST',
+      user: '0xabc',
+      side: 'B' as const,
+      sz: '1',
+      executedSz: '0',
+      executedNtl: '0',
+      minutes: 5,
+      timestamp: 1,
+      randomize: false,
+      reduceOnly: false,
+    },
+  };
+  const cancel = buildPerpsProCancelTwapCommand(
+    order,
+    context.accountRuntime,
+    context.runtime,
+  )!;
+  const submit = jest.fn(
+    async (): Promise<TwapSubmissionOutcome> => ({
+      kind: 'cancelled',
+      evidence: { nonce: 2, transportPhase: 'response' },
+    }),
+  );
+  expect(
+    (
+      await executePerpsProCancelTwap(cancel, {
+        submit,
+        getContext: () => ({
+          accountRuntime: context.accountRuntime,
+          runtime: context.runtime,
+          activeReady: true,
+          hasPermission: true,
+          order,
+        }),
+      })
+    ).kind,
+  ).toBe('cancelled');
+  expect(submit.mock.calls[0][0]).toEqual({ coin: 'xyz:TEST', twapId: 7 });
 });
