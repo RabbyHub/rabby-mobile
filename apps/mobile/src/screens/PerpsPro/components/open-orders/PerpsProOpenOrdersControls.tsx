@@ -6,21 +6,22 @@ import React from 'react';
 import { Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
-import type { PerpsOpenOrderCategory } from '../../model/openOrder';
+import {
+  OPEN_ORDER_CATEGORIES,
+  type OpenOrderCategory,
+} from '../../model/openOrderCategories';
 import { PerpsProInfoControls } from '../info/PerpsProInfoControls';
-
-type VisibleCategory = Exclude<PerpsOpenOrderCategory, 'unsupported'> | 'twap';
 
 export const PerpsProOpenOrdersControls: React.FC<{
   twapCount?: number;
   onAddTwap?: () => void;
   basicCount: number;
-  category: VisibleCategory;
+  category: OpenOrderCategory;
   conditionalCount: number;
   hideOtherSymbols: boolean;
   isCancelAllPending: boolean;
   onCancelAll: () => void;
-  onSetCategory: (category: VisibleCategory) => void;
+  onSetCategory: (category: OpenOrderCategory) => void;
   onToggleHideOtherSymbols: () => void;
 }> = React.memo(
   ({
@@ -57,7 +58,7 @@ export const PerpsProOpenOrdersControls: React.FC<{
           testID="perps-pro-open-orders-controls"
         />
         <View style={styles.tabs} testID="perps-pro-open-orders-tabs">
-          {(['basic', 'conditional', 'twap'] as const).map(item => {
+          {OPEN_ORDER_CATEGORIES.map(item => {
             const selected = item === category;
             const count =
               item === 'twap'

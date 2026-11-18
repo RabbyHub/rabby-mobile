@@ -123,10 +123,12 @@ const getStyles = createGetStyles2024(ctx => ({
     borderWidth: 0,
     padding: 0,
     borderRadius: 16,
+    borderCurve: 'continuous',
     overflow: 'hidden',
   },
   cameraWrap: {
     borderRadius: 16,
+    borderCurve: 'continuous',
   },
   permissionTip: {
     textAlign: 'center',

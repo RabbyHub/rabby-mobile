@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from 'react';
 import { AppState } from 'react-native';
+import { useStoreActivityScope } from '@/hooks/storeActivity/StoreActivityProvider';
 
 // A single process-local presentation clock, retained only by visible TWAP
 // duration cells. Quotes, trading inputs and parent scenes do not subscribe.
@@ -36,9 +37,16 @@ const subscribe = (listener: () => void) => {
 };
 const inactiveSubscribe = () => () => {};
 const snapshot = () => now;
-export const usePerpsProTwapClock = (enabled: boolean) =>
-  useSyncExternalStore(
-    enabled ? subscribe : inactiveSubscribe,
+export const usePerpsProTwapClock = (enabled: boolean) => {
+  const scope = useStoreActivityScope();
+  const pageActive = useSyncExternalStore(
+    scope.subscribe,
+    scope.getActive,
+    scope.getActive,
+  );
+  return useSyncExternalStore(
+    enabled && pageActive ? subscribe : inactiveSubscribe,
     snapshot,
     snapshot,
   );
+};

@@ -1,7 +1,8 @@
 import { usePerpsProTwapClock } from '../../scene/usePerpsProTwapClock';
 import React, { useMemo, useState } from 'react';
 import { Pressable, View } from 'react-native';
-import { useShallow } from 'zustand/react/shallow';
+import { shallow } from 'zustand/shallow';
+import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
 import { Text } from '@/components/Typography';
@@ -24,8 +25,9 @@ import { resolvePerpsProFittedFontSize } from '../common/perpsProFitFontSize';
 import { PerpsProTextWidthProbe } from '../common/PerpsProTextWidthProbe';
 
 export const usePerpsProTwapMarket = (coin: string, needsPrice: boolean) =>
-  perpsStore(
-    useShallow(state => {
+  useActivityStore(
+    perpsStore,
+    state => {
       const market = state.marketDataMap[coin];
       if (!market) return null;
       const descriptor = buildPerpsProMarketDescriptor(market);
@@ -38,7 +40,8 @@ export const usePerpsProTwapMarket = (coin: string, needsPrice: boolean) =>
         pxDecimals: market.pxDecimals,
         midPrice: needsPrice ? market.midPx : undefined,
       };
-    }),
+    },
+    shallow,
   );
 
 export const formatTwapDuration = (seconds: number) => {

@@ -56,7 +56,9 @@ jest.mock('@/hooks/perps/twap/twapRepository', () => ({
   loadPerpsTwapFills: jest.fn(async () => ({ fills: [], complete: true })),
 }));
 jest.mock('@/hooks/perps/usePerpsStore', () => ({
-  perpsStore: () => null,
+  perpsStore: jest.requireActual('zustand/vanilla').createStore(() => ({
+    marketDataMap: {},
+  })),
 }));
 jest.mock('@/hooks/theme', () => ({
   useTheme2024: ({ getStyle }: { getStyle: (ctx: object) => object }) => {
