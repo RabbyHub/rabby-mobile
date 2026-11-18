@@ -1,7 +1,7 @@
 import React, { useCallback } from 'react';
 import { Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { Text } from '@/components/Typography';
+import { Text, type TextInput } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import AscendingIcon from '@/assets2024/icons/perps/PerpsProScaleAscending.svg';
@@ -15,16 +15,18 @@ import {
   sanitizePerpsProPriceInput,
 } from '../../model/trade';
 import { PerpsProTradePriceField } from './PerpsProTradePriceField';
-import { PerpsProDecimalTextInput } from './PerpsProDecimalTextInput';
+import { PerpsProTradeAmountField } from './PerpsProTradeAmountField';
+import { PerpsProDottedUnderlineText } from '../common/PerpsProDottedUnderlineText';
 import { PerpsProSelectCaret } from '../common/PerpsProSelectCaret';
-import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
 
 export const PerpsProScaleOrderFields = React.memo(
   ({
+    amountInputRef,
     controller,
     onDistributionHelp,
     onTif,
   }: {
+    amountInputRef: React.Ref<TextInput>;
     controller: PerpsProTradeController;
     onDistributionHelp: () => void;
     onTif: () => void;
@@ -59,43 +61,34 @@ export const PerpsProScaleOrderFields = React.memo(
             variant="scale"
           />
         ))}
-        <View style={styles.compactField}>
-          <Text style={styles.fieldLabel} numberOfLines={1}>
-            {t('page.perps.pro.scaleOrder.size')} ({market?.displayBase ?? '-'})
-          </Text>
-          <PerpsProDecimalTextInput
-            accessibilityLabel={t('page.perps.pro.scaleOrder.size')}
-            keyboardScrollTrade
-            maxDecimals={decimals}
-            onChangeText={controller.setAmount}
-            value={form.amount}
-            style={styles.input}
-            onFocus={controller.beginAmountEntry}
-            onBlur={controller.endAmountEntry}
-          />
-        </View>
-        <View style={styles.compactField}>
-          <Text style={styles.fieldLabel} numberOfLines={1}>
-            {t('page.perps.pro.scaleOrder.count')}
-          </Text>
-          <PerpsProDecimalTextInput
-            accessibilityLabel={t('page.perps.pro.scaleOrder.count')}
-            keyboardScrollTrade
-            maxDecimals={0}
-            keyboardType="number-pad"
-            inputMode="numeric"
-            onChangeText={value => controller.patchForm({ scaleCount: value })}
-            value={form.scaleCount}
-            style={styles.input}
-          />
-        </View>
+        <PerpsProTradeAmountField
+          label={`${t('page.perps.pro.scaleOrder.size')} (${
+            market?.displayBase ?? '-'
+          })`}
+          maxDecimals={decimals}
+          onChangeText={controller.setAmount}
+          value={form.amount}
+          ref={amountInputRef}
+          variant="compact"
+          onFocus={controller.beginAmountEntry}
+          onBlur={controller.endAmountEntry}
+        />
+        <PerpsProTradeAmountField
+          label={t('page.perps.pro.scaleOrder.count')}
+          maxDecimals={0}
+          keyboardType="number-pad"
+          inputMode="numeric"
+          onChangeText={value => controller.patchForm({ scaleCount: value })}
+          value={form.scaleCount}
+          variant="compact"
+        />
         <View style={styles.distribution}>
           <View style={styles.row}>
-            <Pressable accessibilityRole="button" onPress={onDistributionHelp}>
-              <Text style={styles.help}>
-                {t('page.perps.pro.scaleOrder.distribution')}
-              </Text>
-            </Pressable>
+            <PerpsProDottedUnderlineText
+              onPress={onDistributionHelp}
+              style={styles.help}>
+              {t('page.perps.pro.scaleOrder.distribution')}
+            </PerpsProDottedUnderlineText>
             <Pressable
               accessibilityRole="button"
               onPress={onTif}
@@ -163,38 +156,7 @@ export const PerpsProScaleOrderFields = React.memo(
 );
 PerpsProScaleOrderFields.displayName = 'PerpsProScaleOrderFields';
 
-const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
-  compactField: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 8,
-    height: 34,
-    borderRadius: 6,
-    backgroundColor: colors2024[isLight ? 'neutral-bg-0' : 'neutral-bg-5'],
-  },
-  fieldLabel: {
-    flexShrink: 1,
-    fontFamily: 'SF Pro Rounded',
-    fontWeight: '500',
-    fontSize: 14,
-    lineHeight: 18,
-    color: colors2024['neutral-info'],
-  },
-  input: {
-    ...PERPS_PRO_NUMBER_STYLE,
-    flex: 1,
-    minWidth: 48,
-    height: 34,
-    padding: 0,
-    paddingLeft: 4,
-    fontFamily: 'SF Pro Rounded',
-    fontWeight: '500',
-    fontSize: 14,
-    lineHeight: 18,
-    color: colors2024['neutral-title-1'],
-    textAlign: 'right',
-    includeFontPadding: false,
-  },
+const getStyle = createGetStyles2024(({ colors2024 }) => ({
   distribution: { gap: 8, marginTop: 8 },
   row: {
     flexDirection: 'row',
@@ -210,8 +172,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontSize: 12,
     lineHeight: 16,
     color: colors2024['neutral-secondary'],
-    textDecorationLine: 'underline',
-    textDecorationStyle: 'dotted',
   },
   secondary: {
     fontFamily: 'SF Pro Rounded',

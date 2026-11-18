@@ -1,3 +1,7 @@
+jest.mock(
+  '@/assets2024/icons/perps/PerpsProOrderTypeTwap.svg',
+  () => require('react-native').View,
+);
 jest.mock('@/assets2024/icons/perps/PerpsProOrderTypeLimit.svg', () => {
   const ReactModule = require('react');
   return (props: object) =>
@@ -378,7 +382,8 @@ describe.each(['light', 'dark'] as const)(
       expect(onSelect).toHaveBeenCalledWith('market');
       fireEvent.press(screen.getByTestId('perps-pro-order-type-scale'));
       expect(onSelect).toHaveBeenCalledWith('scale');
-      expect(screen.queryByTestId('perps-pro-order-type-twap')).toBeNull();
+      fireEvent.press(screen.getByTestId('perps-pro-order-type-twap'));
+      expect(onSelect).toHaveBeenCalledWith('twap');
     });
 
     it('matches the new BBO card layout', () => {

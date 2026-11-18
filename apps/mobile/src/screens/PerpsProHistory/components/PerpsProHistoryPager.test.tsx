@@ -64,7 +64,7 @@ jest.mock('react-native-reanimated', () => {
 jest.mock('./PerpsProHistoryTabs', () => {
   const ReactModule = require('react');
   const { Pressable, View } = require('react-native');
-  const tabs = ['orders', 'trade', 'transaction', 'funding'];
+  const tabs = ['orders', 'trade', 'transaction', 'twap', 'funding'];
   return {
     PerpsProHistoryTabs: ({
       activeTab,
@@ -178,7 +178,7 @@ describe('PerpsProHistoryPager', () => {
     renderPager();
 
     expect(screen.getByTestId('history-list-orders-active')).toBeTruthy();
-    for (const tab of ['trade', 'transaction', 'funding']) {
+    for (const tab of ['trade', 'transaction', 'twap', 'funding']) {
       expect(
         screen.getByTestId(`history-list-${tab}-preview`, {
           includeHiddenElements: true,
@@ -191,7 +191,7 @@ describe('PerpsProHistoryPager', () => {
     useAndroidPagerEvents();
     renderPager();
 
-    expect(getPager().props.offscreenPageLimit).toBe(3);
+    expect(getPager().props.offscreenPageLimit).toBe(4);
   });
 
   it('waits for gesture idle, snaps on UI, then commits business state', () => {
@@ -339,12 +339,12 @@ describe('PerpsProHistoryPager', () => {
 
     fireEvent.press(screen.getByTestId('perps-pro-history-tab-funding'));
 
-    expect(mockTabsPosition?.value).toBe(3);
-    expect(mockSetPageWithoutAnimation).toHaveBeenCalledWith(3);
+    expect(mockTabsPosition?.value).toBe(4);
+    expect(mockSetPageWithoutAnimation).toHaveBeenCalledWith(4);
     expect(mockSetPage).not.toHaveBeenCalled();
     expect(onChange).not.toHaveBeenCalled();
 
-    fireSelected(3);
+    fireSelected(4);
     expect(onChange).toHaveBeenCalledWith('funding');
   });
 
@@ -407,11 +407,11 @@ describe('PerpsProHistoryPager', () => {
     fireSelected(1);
     fireState('idle');
 
-    expect(mockSetPageWithoutAnimation).toHaveBeenCalledWith(3);
-    expect(mockTabsPosition?.value).toBe(3);
+    expect(mockSetPageWithoutAnimation).toHaveBeenCalledWith(4);
+    expect(mockTabsPosition?.value).toBe(4);
     expect(onChange).not.toHaveBeenCalled();
 
-    fireSelected(3);
+    fireSelected(4);
     expect(onChange).toHaveBeenCalledTimes(1);
     expect(onChange).toHaveBeenCalledWith('funding');
   });

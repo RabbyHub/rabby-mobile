@@ -118,7 +118,7 @@ export const PerpsProHistoryList: React.FC<{
         () => finishBottomSheetRefresh(epoch),
       );
     }, [finishBottomSheetRefresh, onRefresh, scrollHost]);
-    const rowActive = tab === 'transaction' ? active : true;
+    const rowActive = tab === 'transaction' || tab === 'twap' ? active : true;
     const renderItem = useCallback<ListRenderItem<PerpsProHistoryRow>>(
       ({ item }) => (
         <PerpsProHistoryRowView

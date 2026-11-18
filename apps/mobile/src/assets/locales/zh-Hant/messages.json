@@ -2408,8 +2408,9 @@
           "orderFilled": "訂單已成交。",
           "orderPlaced": "訂單已掛出。",
           "orderFailed": "訂單失敗。",
-          "scale": "階梯委託",
-          "scaleDescription": "設定價格區間並下達多筆限價子單"
+          "scale": "分段委託",
+          "scaleDescription": "設定價格區間並下達多筆限價子單",
+          "twap": "TWAP"
         },
         "orderError": {
           "aloBuyWouldMatch": "僅掛單模式下，買入價必須低於目前最低賣價，以避免立即成交。",
@@ -2520,7 +2521,8 @@
             "orders": "委託歷史",
             "trade": "成交歷史",
             "transaction": "資金流水",
-            "funding": "資金費"
+            "funding": "資金費",
+            "twap": "TWAP 歷史"
           },
           "empty": {
             "orders": "暫無委託歷史",
@@ -2719,17 +2721,79 @@
           "previewSell": "預覽賣單",
           "totalSize": "總數量",
           "averagePrice": "平均價格",
-          "result": "已接受 {{accepted}} 筆，已拒絕 {{rejected}} 筆，待確認 {{unresolved}} 筆",
+          "result": "已受理 {{accepted}} 筆，已拒絕 {{rejected}} 筆，待確認 {{unresolved}} 筆",
           "unknown": "下單結果待確認。請先檢查目前委託和交易紀錄，再下新訂單。",
           "errors": {
             "range": "請輸入有效價格，最高價必須高於最低價。",
             "count": "請輸入 2 至 100 之間的整數。",
-            "size": "請輸入有效的標的原生代幣數量。",
-            "duplicatePrice": "取整後的價格重複，請擴大價格區間或減少訂單數。",
-            "minimum": "取整後每筆子單的金額必須至少為 $10。",
-            "maximum": "總金額超過市場限額。",
+            "size": "請輸入大於 0 且符合該市場數量精度的委託數量。",
+            "duplicatePrice": "按價格精度調整後，部分委託價格重複。請擴大價格區間或減少訂單數。",
+            "minimum": "按數量精度調整後，每筆子訂單金額不得低於 $10。",
+            "maximum": "委託總金額超過該市場允許的上限。",
             "capacity": "目前可交易額度不足以提交整批訂單。",
-            "reduceOnly": "總數量超過目前可減少的倉位。"
+            "reduceOnly": "委託總數量超過目前可平倉數量。"
+          }
+        },
+        "twap": {
+          "description": "將訂單拆分為多筆交易，分時執行。",
+          "totalTime": "總時長",
+          "totalSize": "總數量",
+          "selectTime": "選擇總時長",
+          "reset": "重設",
+          "randomize": "隨機化",
+          "randomized": "已隨機化",
+          "durationHint": "TWAP 訂單運行時間為 5–1439 分鐘。",
+          "minimum": "最小下單數量為 {{amount}}。",
+          "filled": "已成交",
+          "duration": "已持續",
+          "runtime": "運行時長",
+          "averagePrice": "平均價格",
+          "end": "結束",
+          "detail": "詳情",
+          "add": "新增",
+          "detailTitle": "TWAP 運行詳情",
+          "historyDetailTitle": "TWAP 歷史詳情",
+          "trades": "成交",
+          "size": "數量",
+          "fee": "手續費",
+          "noTrades": "暫無成交",
+          "endTitle": "結束 TWAP 訂單？",
+          "endMessage": "結束剩餘的 {{coin}} TWAP 訂單？已成交的交易將保留。",
+          "ending": "正在結束…",
+          "ended": "TWAP 訂單已結束。",
+          "placed": "{{coin}} TWAP 訂單已提交。",
+          "unknownOutcome": "{{coin}} TWAP 結果待確認。再次下單前，請先檢查訂單與歷史紀錄。",
+          "unknown": "TWAP 結果待確認。再次操作前，請先檢查訂單與歷史紀錄。",
+          "loadError": "無法載入 TWAP 訂單，點擊重試。",
+          "endedLabel": "已結束",
+          "skipConfirmation": "不再顯示 TWAP 訂單二次確認。",
+          "averageFilledPrice": "平均成交價",
+          "status": {
+            "working": "運行中",
+            "waiting": "等待中",
+            "filled": "已成交",
+            "cancelled": "已取消",
+            "expired": "已失效",
+            "unknown": "未知"
+          },
+          "fills": {
+            "loading": "正在載入成交…",
+            "partial": "僅顯示可取得的成交，點擊重試。",
+            "error": "無法載入成交，點擊重試。"
+          },
+          "errors": {
+            "amountRequired": "請輸入下單數量。",
+            "amountTooSmall": "TWAP 訂單價值不得低於 $100。",
+            "amountExceedsMaximum": "下單數量超過可用上限。",
+            "invalidPrecision": "請輸入符合市場數量精度的數量。",
+            "priceUnavailable": "暫時無法取得目前價格，請重試。",
+            "durationRequired": "請輸入總時長。",
+            "durationInvalid": "請輸入整數分鐘。",
+            "durationTooShort": "TWAP 最短時長為 5 分鐘。",
+            "durationTooLong": "TWAP 最長時長為 1439 分鐘。",
+            "capacity": "可用交易額度不足。",
+            "reduceOnly": "下單數量超過可平倉數量。",
+            "contextChanged": "帳戶、訂單或市場已變更，請重新確認訂單。"
           }
         }
       },
