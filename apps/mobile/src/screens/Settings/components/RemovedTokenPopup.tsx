@@ -209,7 +209,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   header: { marginBottom: 16 },
   title: {
     fontFamily: 'SF Pro Rounded',
-    fontWeight: '900',
+    fontWeight: '800',
     fontSize: 20,
     lineHeight: 24,
     textAlign: 'center',

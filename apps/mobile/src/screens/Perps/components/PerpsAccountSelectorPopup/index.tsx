@@ -292,7 +292,7 @@ const getModalStyle = createGetStyles2024(ctx => {
     title: {
       fontSize: 20,
       lineHeight: 24,
-      fontWeight: '900',
+      fontWeight: '800',
       color: colors2024['neutral-title-1'],
       fontFamily: 'SF Pro Rounded',
       marginBottom: 20,

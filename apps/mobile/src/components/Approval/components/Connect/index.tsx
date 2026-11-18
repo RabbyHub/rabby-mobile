@@ -723,7 +723,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     marginTop: 12,
   },
   approvalTitle: {
-    fontWeight: '900',
+    fontWeight: '800',
     fontSize: 17,
     lineHeight: 22,
     color: colors2024['neutral-title-1'],

@@ -364,7 +364,7 @@ const getStyle = createGetStyles2024(
     header: { alignItems: 'center', gap: 2 },
     headerTitle: {
       fontFamily: 'SF Pro Rounded',
-      fontWeight: '900',
+      fontWeight: '800',
       fontSize: 20,
       lineHeight: 24,
       color: colors2024['neutral-title-1'],

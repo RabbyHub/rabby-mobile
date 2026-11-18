@@ -805,7 +805,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 20,
     lineHeight: 24,
-    fontWeight: '900',
+    fontWeight: '800',
     color: colors2024['neutral-title-1'],
     marginBottom: 8,
     textAlign: 'center',
@@ -943,14 +943,14 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 17,
     lineHeight: 22,
-    fontWeight: '900',
+    fontWeight: '800',
   },
 
   infoText: {
     fontFamily: 'SF Pro Rounded',
     fontSize: 17,
     lineHeight: 22,
-    fontWeight: '900',
+    fontWeight: '800',
     color: colors2024['neutral-info'],
   },
 

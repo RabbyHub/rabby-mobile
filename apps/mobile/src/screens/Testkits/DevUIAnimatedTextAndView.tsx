@@ -639,7 +639,7 @@ const getStyles = createGetStyles2024(ctx => {
       fontFamily: 'SF Pro Rounded',
       fontSize: 40,
       lineHeight: 48,
-      fontWeight: '900',
+      fontWeight: '800',
       color: ctx.colors2024['neutral-title-1'],
     },
     numSamples: {

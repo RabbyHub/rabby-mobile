@@ -155,14 +155,14 @@ export const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 20,
     fontStyle: 'normal',
-    fontWeight: '900',
+    fontWeight: '800',
     lineHeight: 24,
   },
   gasSelectorModalTop: {
     paddingBottom: 24,
   },
   gasSelectorModalAmount: {
-    fontWeight: '900',
+    fontWeight: '800',
     fontFamily: 'SF Pro Rounded',
     fontSize: 36,
     lineHeight: 42,
@@ -208,7 +208,7 @@ export const getStyle = createGetStyles2024(({ colors2024 }) => ({
   cardContainerTitle: {
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,
-    fontWeight: '900',
+    fontWeight: '800',
     lineHeight: 18,
     color: colors2024['neutral-title-1'],
     marginBottom: 8,
@@ -296,7 +296,7 @@ export const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     lineHeight: 18,
-    fontWeight: '900',
+    fontWeight: '800',
   },
   gasPriceDescItem: {
     flexDirection: 'row',
@@ -315,7 +315,7 @@ export const getStyle = createGetStyles2024(({ colors2024 }) => ({
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,
-    fontWeight: '900',
+    fontWeight: '800',
     lineHeight: 18,
     marginRight: 2,
   },
