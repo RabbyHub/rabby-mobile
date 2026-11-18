@@ -285,7 +285,10 @@ if [ -n "$prebundle_dir" ] && [ -z "$prebundle_out" ]; then
   mkdir -p "$bundle_dest"
   cp "$prebundle_dir/main.jsbundle" "$bundle_dest/main.jsbundle"
   if [ -d "$prebundle_dir/assets" ]; then
-    cp -R "$prebundle_dir/assets/." "$bundle_dest/" 2>/dev/null || true
+    # Metro's image URIs include the assets/ prefix. Preserve that directory
+    # exactly as react-native-xcode.sh does for a normal, non-prebuilt bundle.
+    mkdir -p "$bundle_dest/assets"
+    cp -R "$prebundle_dir/assets/." "$bundle_dest/assets/"
   fi
   echo "[RabbyMobileBuild] used the prebuilt JS bundle from $prebundle_dir (waited ${waited}s)"
   exit 0

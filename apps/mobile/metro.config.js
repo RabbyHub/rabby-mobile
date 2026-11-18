@@ -406,7 +406,9 @@ const withPackageExportsDisabled = config => {
  * @type {import('metro-config').MetroConfig}
  */
 const config = {
-  ...(metroCacheDir ? { cacheStores: [new FileStore({ root: metroCacheDir })] } : {}),
+  ...(metroCacheDir
+    ? { cacheStores: [new FileStore({ root: metroCacheDir })] }
+    : {}),
   cacheVersion: `${defaultConfig.cacheVersion}:${babelTransformCacheVersion}:react-native-architecture=${reactNativeArchitecture}`,
   projectRoot,
   transformer: {
