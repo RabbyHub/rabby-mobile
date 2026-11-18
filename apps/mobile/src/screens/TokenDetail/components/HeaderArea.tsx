@@ -16,11 +16,11 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import { NavigationContext, useFocusEffect } from '@react-navigation/native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { IS_IOS } from '@/core/native/utils';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { HeaderBackButton } from '@/hooks/navigation';
+import { useCustomHeaderTop } from '@/hooks/useAppLayout';
 import { createGetStyles2024 } from '@/utils/styles';
 
 import { AssetAvatar } from '@/components';
@@ -322,10 +322,10 @@ export const TokenDetailHeader = ({
   isCustomTestnetToken?: boolean;
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getHeaderStyles });
-  const insets = useSafeAreaInsets();
+  const headerTop = useCustomHeaderTop();
 
   return (
-    <View style={[styles.headerOuter, { paddingTop: insets.top }]}>
+    <View style={[styles.headerOuter, { paddingTop: headerTop }]}>
       <View style={styles.headerRow}>
         <View style={styles.headerBackSlot}>
           <HeaderBackButton

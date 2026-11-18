@@ -113,6 +113,19 @@ export function useSafeSizes() {
 }
 
 /**
+ * Top inset for JS-owned headers.
+ *
+ * Native stack headers reserve a status-bar inset even when the app is
+ * letterboxed to the left of the Duo system column and safe-area-context
+ * reports `top = 0`. Custom `header:` renderers must reproduce that inset or
+ * they sit at the very top of the screen.
+ */
+export function useCustomHeaderTop() {
+  const { top, right } = useSafeAreaInsets();
+  return top > 0 ? top : right > 0 ? 38 : 0;
+}
+
+/**
  * @description pass inputs with key-value pairs, the value should be a number which means the original size
  * if it's not on android's navigation mode(3 buttons mode).
  */
