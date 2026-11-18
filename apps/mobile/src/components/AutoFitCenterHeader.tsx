@@ -5,6 +5,7 @@ import { AutoFitHeaderTitle } from '@/components/AutoFitHeaderTitle';
 import { HeaderBackButton } from '@/hooks/navigation';
 import { useCustomHeaderTop } from '@/hooks/useAppLayout';
 import { useTheme2024 } from '@/hooks/theme';
+import { useSystemColumnInset } from '@/components/SafeWindowFrame/backdrop';
 import { createGetStyles2024 } from '@/utils/styles';
 
 // Matches the row height used by the other JS-owned headers in this stack.
@@ -23,10 +24,18 @@ const HEADER_HORIZONTAL_INSET = 16;
 export const AutoFitCenterHeader = ({ title }: { title: string }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const headerTop = useCustomHeaderTop();
+  const columnInset = useSystemColumnInset();
 
   return (
     <View style={[styles.outer, { paddingTop: headerTop }]}>
-      <View style={styles.row}>
+      <View
+        style={[
+          styles.row,
+          {
+            paddingLeft: HEADER_HORIZONTAL_INSET + columnInset.left,
+            paddingRight: HEADER_HORIZONTAL_INSET + columnInset.right,
+          },
+        ]}>
         <View style={styles.backSlot}>
           <HeaderBackButton
             style={styles.backButtonTouch}

@@ -4,6 +4,7 @@ import React from 'react';
 
 import { View } from 'react-native';
 import { useSafeSizes } from '@/hooks/useAppLayout';
+import { useSystemColumnInset } from '@/components/SafeWindowFrame/backdrop';
 
 export default function RootScreenContainer({
   children,
@@ -18,6 +19,7 @@ export default function RootScreenContainer({
   top?: number;
 }>) {
   const { safeOffHeader } = useSafeSizes();
+  const columnInset = useSystemColumnInset();
 
   return (
     <View
@@ -36,6 +38,8 @@ export default function RootScreenContainer({
             : topProp + ScreenLayouts.headerAreaHeight,
           flexDirection: 'column',
           height: '100%',
+          ...(columnInset.left > 0 && { paddingLeft: columnInset.left }),
+          ...(columnInset.right > 0 && { paddingRight: columnInset.right }),
         },
       ]}>
       {children}

@@ -9,6 +9,7 @@ import { ScreenLayouts } from '@/constant/layout';
 import { HeaderBackPressable } from '@/hooks/navigation';
 import { useTheme2024 } from '@/hooks/theme';
 import { useCustomHeaderTop } from '@/hooks/useAppLayout';
+import { useSystemColumnInset } from '@/components/SafeWindowFrame/backdrop';
 import { createGetStyles2024 } from '@/utils/styles';
 
 const toastWarning = toastWithIcon(RcIconWarning);
@@ -21,13 +22,21 @@ export const MemeCoinHeader = ({
   const { t } = useTranslation();
   const { styles } = useTheme2024({ getStyle });
   const headerTop = useCustomHeaderTop();
+  const columnInset = useSystemColumnInset();
   const warnSwitchUnsupported = () => {
     toastWarning(t('page.memeCoin.addressSwitchUnsupported'));
   };
 
   return (
     <View style={[styles.outer, { paddingTop: headerTop }]}>
-      <View style={styles.inner}>
+      <View
+        style={[
+          styles.inner,
+          {
+            paddingLeft: 12 + columnInset.left,
+            paddingRight: 16 + columnInset.right,
+          },
+        ]}>
         <View style={styles.side}>
           <HeaderBackPressable style={styles.back} />
         </View>

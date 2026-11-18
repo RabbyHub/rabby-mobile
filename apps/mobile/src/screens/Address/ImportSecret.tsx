@@ -33,6 +33,7 @@ import { zCreate } from '@/core/utils/reexports';
 import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 import { HeaderBackButton } from '@/hooks/navigation';
 import { useCustomHeaderTop } from '@/hooks/useAppLayout';
+import { useSystemColumnInset } from '@/components/SafeWindowFrame/backdrop';
 
 /** Toast position at the top of screen */
 const TOAST_POSITION_TOP = 30;
@@ -474,21 +475,33 @@ export const ImportSecret = ({ route }: ScreenProps) => {
 export const ImportSecretHeader = () => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const headerTop = useCustomHeaderTop();
+  const columnInset = useSystemColumnInset();
   return (
     <View style={[styles.headerOuter, { paddingTop: headerTop }]}>
-      <ImportSecretHeaderToggle />
+      <ImportSecretHeaderToggle columnInset={columnInset} />
     </View>
   );
 };
 
-const ImportSecretHeaderToggle = () => {
+const ImportSecretHeaderToggle = ({
+  columnInset,
+}: {
+  columnInset: { left: number; right: number };
+}) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
   const activeTab = useImportSecretTab();
   const setActiveTab = setImportSecretTab;
 
   return (
-    <View style={styles.headerRow}>
+    <View
+      style={[
+        styles.headerRow,
+        {
+          paddingLeft: 16 + columnInset.left,
+          paddingRight: 16 + columnInset.right,
+        },
+      ]}>
       <HeaderBackButton
         style={styles.headerBack}
         tintColor={colors2024['neutral-title-1']}

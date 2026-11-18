@@ -21,6 +21,7 @@ import { IS_IOS } from '@/core/native/utils';
 import { useTheme2024 } from '@/hooks/theme';
 import { HeaderBackButton } from '@/hooks/navigation';
 import { useCustomHeaderTop } from '@/hooks/useAppLayout';
+import { useSystemColumnInset } from '@/components/SafeWindowFrame/backdrop';
 import { createGetStyles2024 } from '@/utils/styles';
 
 import { AssetAvatar } from '@/components';
@@ -323,10 +324,18 @@ export const TokenDetailHeader = ({
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getHeaderStyles });
   const headerTop = useCustomHeaderTop();
+  const columnInset = useSystemColumnInset();
 
   return (
     <View style={[styles.headerOuter, { paddingTop: headerTop }]}>
-      <View style={styles.headerRow}>
+      <View
+        style={[
+          styles.headerRow,
+          {
+            paddingLeft: TOKEN_HEADER_HORIZONTAL_INSET + columnInset.left,
+            paddingRight: TOKEN_HEADER_HORIZONTAL_INSET + columnInset.right,
+          },
+        ]}>
         <View style={styles.headerBackSlot}>
           <HeaderBackButton
             style={[styles.headerBackTouch]}

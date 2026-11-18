@@ -19,6 +19,7 @@ import {
   LinearGradientContainerProps,
 } from './LinearGradientContainer';
 import { LinearGradientProps } from 'react-native-linear-gradient';
+import { useSystemColumnInset } from '@/components/SafeWindowFrame/backdrop';
 
 export default function NormalScreenContainer2024<
   T extends ReactNativeViewAs = 'View',
@@ -52,6 +53,7 @@ export default function NormalScreenContainer2024<
   } & React.ComponentProps<ReactNativeViewAsMap[T]>
 >) {
   const { safeHeaderTop, safeOffHeader } = useSafeSizes();
+  const columnInset = useSystemColumnInset();
   const ViewComp = useMemo(() => getViewComponentByAs(as), [as]);
 
   return (
@@ -79,6 +81,8 @@ export default function NormalScreenContainer2024<
             height: '100%',
             backgroundColor: 'transparent',
           },
+          columnInset.left > 0 && { paddingLeft: columnInset.left },
+          columnInset.right > 0 && { paddingRight: columnInset.right },
           overwriteStyle,
         ])}>
         {children}

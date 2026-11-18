@@ -15,6 +15,9 @@ import {
   naviReplace,
 } from '@/utils/navigation';
 import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
+import { renderFoldableStackHeader } from '@/components/FoldableStackHeader';
+import { isFoldableSideColumnPosture } from '@/core/utils/foldableDevice';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { default as RcIconHeaderBack } from '@/assets/icons/header/back-cc.svg';
 import type { AppRootName } from '@/constant/layout';
@@ -218,6 +221,17 @@ const IOS_LIQUID_GLASS_HEADER_OPTIONS = {
 
 export const useStackScreenConfig = () => {
   const appThemeMode = useGetBinaryMode();
+  const insets = useSafeAreaInsets();
+  /**
+   * On the Duo outer screen the app tree is full width so backgrounds run
+   * under the system column. react-native-screens cannot place a UIKit bar
+   * item on that wider view, so every stack header becomes the JS replica.
+   * Other devices/postures keep the native header untouched.
+   */
+  const foldableOuter = isFoldableSideColumnPosture({
+    top: insets.top,
+    right: insets.right,
+  });
 
   /** @deprecated for new screen use mergeScreenOptions2024 instead */
   const mergeScreenOptions = useCallback(
@@ -232,7 +246,10 @@ export const useStackScreenConfig = () => {
         ...headerPresets.onlyTitle,
         // Native bar button item: UIKit owns the layout (correct on every
         // device) and hidesSharedBackground keeps the iOS 26 glass capsule off.
-        unstable_headerLeftItems: IS_IOS ? renderNativeBackItems : undefined,
+        // The Duo outer posture needs the JS replica instead.
+        unstable_headerLeftItems:
+          IS_IOS && !foldableOuter ? renderNativeBackItems : undefined,
+        ...(foldableOuter ? { header: renderFoldableStackHeader } : {}),
         headerTitleStyle: {
           ...(headerPresets.onlyTitle.headerTitleStyle as object),
           color: colors['neutral-title-1'],
@@ -274,7 +291,7 @@ export const useStackScreenConfig = () => {
 
       return result;
     },
-    [appThemeMode],
+    [appThemeMode, foldableOuter],
   );
 
   const mergeScreenOptions2024 = useCallback(
@@ -287,7 +304,9 @@ export const useStackScreenConfig = () => {
         animationDuration: 200,
         ...IOS_LIQUID_GLASS_HEADER_OPTIONS,
         ...headerPresets.onlyTitle,
-        unstable_headerLeftItems: IS_IOS ? renderNativeBackItems : undefined,
+        unstable_headerLeftItems:
+          IS_IOS && !foldableOuter ? renderNativeBackItems : undefined,
+        ...(foldableOuter ? { header: renderFoldableStackHeader } : {}),
         headerTitleStyle: {
           ...(headerPresets.onlyTitle.headerTitleStyle as object),
           color: colors2024['neutral-title-1'],
@@ -318,7 +337,7 @@ export const useStackScreenConfig = () => {
 
       return result;
     },
-    [appThemeMode],
+    [appThemeMode, foldableOuter],
   );
 
   return { mergeScreenOptions, mergeScreenOptions2024 };

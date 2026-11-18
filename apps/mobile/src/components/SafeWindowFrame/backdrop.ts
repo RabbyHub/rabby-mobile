@@ -16,6 +16,22 @@ export const SafeWindowBackdropContext =
   React.createContext<SetBackdropColor | null>(null);
 
 /**
+ * Width of the system column the app must keep content clear of.
+ *
+ * `0` everywhere the frame is not mounted (every non-foldable device, and the
+ * inner/split postures where the column is absent). Every consumer must treat
+ * `0` as "no change at all".
+ */
+export const SystemColumnInsetContext = React.createContext({
+  left: 0,
+  right: 0,
+});
+
+export function useSystemColumnInset() {
+  return React.useContext(SystemColumnInsetContext);
+}
+
+/**
  * Declare the backdrop colour for the reserved system-column strip.
  *
  * No-op on every device that does not mount the frame (non-foldables export

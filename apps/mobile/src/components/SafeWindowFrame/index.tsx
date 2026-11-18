@@ -12,7 +12,10 @@ import { useTheme2024 } from '@/hooks/theme';
 import { perfEvents } from '@/core/utils/perf';
 import { isFoldableIosDevice } from '@/core/utils/foldableDevice';
 import { getScreenContentBackgroundColor } from '@/constant/layout';
-import { SafeWindowBackdropContext } from './backdrop';
+import {
+  SafeWindowBackdropContext,
+  SystemColumnInsetContext,
+} from './backdrop';
 
 const isIOS = Platform.OS === 'ios';
 
@@ -26,23 +29,19 @@ let lastNativeWindow: ScaledSize | null = null;
 let lastAppliedWidth: number | null = null;
 
 /**
- * Keeps the whole app inside the horizontally safe part of the window.
+ * Full-bleed frame for the iPhone Duo outer screen.
  *
- * On iPhone Duo (iOS foldable) the system draws its own control column on the
- * right edge of some windows (cover screen / inner right pane). Every existing
- * screen only consumes `insets.top` / `insets.bottom`, so the right column ends
- * up covering app content. Insetting the root once is the documented
- * short-term workaround ("display area limited to the left of the navigation
- * bar") and is a no-op on phones where `left`/`right` are 0.
+ * The app tree keeps the full window width so a screen's background layer
+ * (gradient, image, colour) runs under the system control column; the content
+ * containers and every JS header inset themselves through
+ * `SystemColumnInsetContext` instead.
  *
- * Padding alone is not enough: plenty of components size themselves from
- * `Dimensions.get('window').width`, so they would still be laid out for the
- * full window and get clipped at the safe-area edge. React Native has no
- * safe-area-aware window size (upstream `Dimensions` still reports the key
- * window bounds), so we publish the reduced width through `Dimensions.set()`
- * — the same entry point the native `didUpdateDimensions` event uses — and
- * re-apply it whenever native dimensions change. This keeps every consumer of
- * `Dimensions` / `useWindowDimensions` consistent without touching screens.
+ * Components still size themselves from `Dimensions.get('window').width`, so
+ * the frame also publishes the content width (native width minus the column)
+ * through `Dimensions.set()` — the same entry point the native
+ * `didUpdateDimensions` event uses — and re-applies it whenever native
+ * dimensions change. That keeps `Dimensions` / `useWindowDimensions`
+ * consumers aligned with the padded content area without touching screens.
  *
  * The component itself is only exported for foldable iOS devices. Every other
  * platform / model exports `React.Fragment`, so those builds keep the previous
@@ -104,9 +103,6 @@ function SafeWindowFrameImpl({ children }: { children?: React.ReactNode }) {
       ? colors2024['neutral-bg-0']
       : declaredBackground);
 
-  const [availableWidth, setAvailableWidth] = React.useState<number | null>(
-    null,
-  );
   const lastWrittenWidthRef = React.useRef<number | null>(null);
 
   React.useEffect(() => {
@@ -130,7 +126,6 @@ function SafeWindowFrameImpl({ children }: { children?: React.ReactNode }) {
       lastNativeWindow = nativeWindow;
       lastAppliedWidth = targetWidth;
       lastWrittenWidthRef.current = targetWidth;
-      setAvailableWidth(targetWidth);
       Dimensions.set({
         window: { ...win, width: targetWidth },
         screen,
@@ -165,15 +160,21 @@ function SafeWindowFrameImpl({ children }: { children?: React.ReactNode }) {
   }
 
   return (
-    <SafeWindowBackdropContext.Provider value={setBackdropColor}>
-      <View style={[styles.frame, { backgroundColor: stripColor }]}>
-        {leftInset > 0 ? <View style={{ width: leftInset }} /> : null}
-        <View style={[styles.content, { width: availableWidth ?? undefined }]}>
-          {children}
+    <SystemColumnInsetContext.Provider
+      value={{ left: leftInset, right: rightInset }}>
+      <SafeWindowBackdropContext.Provider value={setBackdropColor}>
+        {/*
+          The app tree keeps the full window width so a screen's background
+          layer (gradient, image, colour) runs under the system column. The
+          content containers and every header inset themselves through
+          `useSystemColumnInset`; on this posture every stack header is a JS
+          header, so the native bar geometry is never involved.
+        */}
+        <View style={[styles.frame, { backgroundColor: stripColor }]}>
+          <View style={styles.content}>{children}</View>
         </View>
-        {rightInset > 0 ? <View style={{ width: rightInset }} /> : null}
-      </View>
-    </SafeWindowBackdropContext.Provider>
+      </SafeWindowBackdropContext.Provider>
+    </SystemColumnInsetContext.Provider>
   );
 }
 

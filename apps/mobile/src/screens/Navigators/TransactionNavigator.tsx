@@ -9,6 +9,7 @@ import { createCustomNativeStackNavigator as createNativeStackNavigator } from '
 
 import { HeaderBackPressable, useStackScreenConfig } from '@/hooks/navigation';
 import { useCustomHeaderTop } from '@/hooks/useAppLayout';
+import { useSystemColumnInset } from '@/components/SafeWindowFrame/backdrop';
 import {
   RootNames,
   makeHeadersPresets,
@@ -92,9 +93,18 @@ function ConvertDustHeader({
 }) {
   const { styles } = useTheme2024({ getStyle: getConvertDustHeaderStyle });
   const headerTop = useCustomHeaderTop();
+  const columnInset = useSystemColumnInset();
 
   return (
-    <View style={[styles.convertDustHeaderOuter, { marginTop: headerTop }]}>
+    <View
+      style={[
+        styles.convertDustHeaderOuter,
+        {
+          marginTop: headerTop,
+          paddingLeft: 12 + columnInset.left,
+          paddingRight: 20 + columnInset.right,
+        },
+      ]}>
       <View style={styles.convertDustHeaderInner}>
         <View style={styles.convertDustHeaderLeft}>
           <HeaderBackPressable style={styles.convertDustHeaderBackButton} />

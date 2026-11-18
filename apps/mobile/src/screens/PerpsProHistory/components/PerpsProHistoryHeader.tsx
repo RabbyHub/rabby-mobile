@@ -6,6 +6,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
 import { View } from 'react-native';
 import { useCustomHeaderTop } from '@/hooks/useAppLayout';
+import { useSystemColumnInset } from '@/components/SafeWindowFrame/backdrop';
 
 export const PERPS_PRO_HISTORY_HEADER_CONTENT_HEIGHT = 56;
 
@@ -15,6 +16,7 @@ export const PerpsProHistoryHeader: React.FC<{ title: string }> = ({
 }) => {
   const { styles } = useTheme2024({ getStyle });
   const headerTop = useCustomHeaderTop();
+  const columnInset = useSystemColumnInset();
 
   return (
     <View
@@ -26,8 +28,18 @@ export const PerpsProHistoryHeader: React.FC<{ title: string }> = ({
         },
       ]}>
       <View style={styles.content}>
-        <HeaderBackPressable style={styles.backButton} />
-        <View pointerEvents="none" style={styles.titleLayer}>
+        <HeaderBackPressable
+          style={[styles.backButton, { left: 16 + columnInset.left }]}
+        />
+        <View
+          pointerEvents="none"
+          style={[
+            styles.titleLayer,
+            {
+              left: 56 + columnInset.left,
+              right: 56 + columnInset.right,
+            },
+          ]}>
           <Text numberOfLines={1} style={styles.title}>
             {title}
           </Text>

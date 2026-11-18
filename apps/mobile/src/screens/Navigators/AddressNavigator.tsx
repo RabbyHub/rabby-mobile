@@ -53,6 +53,7 @@ import { APP_TEST_PASSWORD } from '@/constant';
 import { withRegressionScenario } from '@/devtools/regressionScenarios/react';
 import { ImportMethodsHeader } from '../Address/ImportMethodsHeader';
 import { AutoFitCenterHeader } from '@/components/AutoFitCenterHeader';
+import { SafeWindowHeaderInset } from '@/components/SafeWindowFrame/headerInset';
 
 const AddressStack = createNativeStackNavigator<AddressNavigatorParamList>();
 const RegressionSyncExtensionPasswordScreen = withRegressionScenario(
@@ -153,7 +154,11 @@ export function AddressNavigator() {
           headerTintColor: colors2024['neutral-title-1'],
           headerTitleStyle: styles.headerTitleText,
           // eslint-disable-next-line react/no-unstable-nested-components
-          headerRight: () => <AddressListScreenButton type="watch-address" />,
+          headerRight: () => (
+            <SafeWindowHeaderInset>
+              <AddressListScreenButton type="watch-address" />
+            </SafeWindowHeaderInset>
+          ),
         })}
       />
       <AddressStack.Screen
@@ -165,7 +170,11 @@ export function AddressNavigator() {
           headerTintColor: colors2024['neutral-title-1'],
           headerTitleStyle: styles.headerTitleText,
           // eslint-disable-next-line react/no-unstable-nested-components
-          headerRight: () => <AddressListScreenButton type="safe-address" />,
+          headerRight: () => (
+            <SafeWindowHeaderInset>
+              <AddressListScreenButton type="safe-address" />
+            </SafeWindowHeaderInset>
+          ),
         })}
       />
 
