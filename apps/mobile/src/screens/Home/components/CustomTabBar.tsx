@@ -59,7 +59,7 @@ import {
 } from '@/hooks/navigation';
 import CustomLabel from './Tabs/CustomLabel';
 import { getHomeTabIndicatorWidth } from '../utils/homeTabIndicator';
-import { useDebugPagerOffsetSamplingMode } from '../debugPagerOffsetSampling';
+import { usePagerOffsetStrategy } from '../pagerOffsetStrategy';
 import { useLegacyHomeChromeBridge } from '../debugHomeChromeBridge';
 
 type ItemLayout = {
@@ -580,7 +580,7 @@ export const HomeCustomMaterialTabBar = ({}: Partial<
   // frame callback, `push` lets native write `indexDecimal` itself. Both are
   // debug-switch driven; `off` keeps the interpolation fallback below, which is
   // still the shipped behaviour.
-  const pagerOffsetMode = useDebugPagerOffsetSamplingMode();
+  const pagerOffsetStrategy = usePagerOffsetStrategy();
   // iOS falls back to the pre-#2395 raw sample stream by default; Android keeps
   // the tuned bridge. Flip with `_cmd=toggle-home-chrome-bridge` on device.
   const legacyBridge = useLegacyHomeChromeBridge();
@@ -592,16 +592,20 @@ export const HomeCustomMaterialTabBar = ({}: Partial<
 
   useEffect(() => {
     nativeMode.value =
-      pagerOffsetMode === 'push' ? 2 : pagerOffsetMode === 'pull' ? 1 : 0;
+      pagerOffsetStrategy === 'push'
+        ? 2
+        : pagerOffsetStrategy === 'pull'
+        ? 1
+        : 0;
     let bound = false;
-    if (pagerOffsetMode === 'push') {
+    if (pagerOffsetStrategy === 'push') {
       try {
         bound = executeOnUIRuntimeSync(bindNativePagerOffset)(indexDecimal);
       } catch (error) {
-        console.warn('[debug-pager-offset] push bind failed:', error);
+        console.warn('[pager-offset-strategy] push bind failed:', error);
       }
       if (__DEV__) {
-        console.log('[debug-pager-offset] push bound:', bound);
+        console.log('[pager-offset-strategy] push bound:', bound);
       }
     }
     pushBound.value = bound ? 1 : 0;
@@ -613,10 +617,10 @@ export const HomeCustomMaterialTabBar = ({}: Partial<
       try {
         executeOnUIRuntimeSync(unbindNativePagerOffset)();
       } catch (error) {
-        console.warn('[debug-pager-offset] push unbind failed:', error);
+        console.warn('[pager-offset-strategy] push unbind failed:', error);
       }
     };
-  }, [pagerOffsetMode, indexDecimal, nativeMode, pushBound]);
+  }, [pagerOffsetStrategy, indexDecimal, nativeMode, pushBound]);
 
   useFrameCallback(info => {
     if (legacyBridge) {

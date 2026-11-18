@@ -78,9 +78,9 @@ import {
   toggleDebugChainStatsForced,
 } from '@/screens/Home/debugChainStats';
 import {
-  debugPagerOffsetSampling,
-  type PagerOffsetMode,
-} from '@/screens/Home/debugPagerOffsetSampling';
+  pagerOffsetStrategy,
+  type PagerOffsetStrategy,
+} from '@/screens/Home/pagerOffsetStrategy';
 import {
   debugHomeChromeBridge,
   type HomeChromeBridgeMode,
@@ -161,7 +161,7 @@ type OnParseUrlAndProcessAction = (payload: {
   /** Device path of the test-account list read by the import command. */
   debugImportAccountsPath?: string;
   /** Non-production only: `undefined` toggles the native pager-offset sampler. */
-  debugPagerOffsetSampling?: PagerOffsetMode;
+  pagerOffsetStrategy?: PagerOffsetStrategy;
   /** Non-production only: `undefined` toggles the home chrome sample bridge. */
   debugHomeChromeBridge?: HomeChromeBridgeMode;
   regressionScenarioCommand?: RegressionScenarioCommand | null;
@@ -570,7 +570,7 @@ function parseNonProductionMaintenanceLink(appLink: string) {
     target === 'toggle-pager-offset-sampling'
   ) {
     const raw = (urlInfo.searchParams.get('value') || '').toLowerCase();
-    let mode: PagerOffsetMode | undefined;
+    let mode: PagerOffsetStrategy | undefined;
     if (raw === 'push' || raw === 'on' || raw === '1' || raw === 'true') {
       mode = 'push';
     } else if (raw === 'pull') {
@@ -580,7 +580,7 @@ function parseNonProductionMaintenanceLink(appLink: string) {
     }
     return {
       type: 'toggle-pager-offset-sampling',
-      debugPagerOffsetSampling: mode,
+      pagerOffsetStrategy: mode,
     } satisfies Parameters<OnParseUrlAndProcessAction>[0];
   }
 
@@ -1215,12 +1215,12 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
       if (!isNonPublicProductionEnv) {
         return;
       }
-      if (payload.debugPagerOffsetSampling) {
-        debugPagerOffsetSampling.set(payload.debugPagerOffsetSampling);
+      if (payload.pagerOffsetStrategy) {
+        pagerOffsetStrategy.set(payload.pagerOffsetStrategy);
       } else {
-        debugPagerOffsetSampling.toggle();
+        pagerOffsetStrategy.toggle();
       }
-      console.log('[debug-pager-offset] mode:', debugPagerOffsetSampling.mode);
+      console.log('[pager-offset-strategy] mode:', pagerOffsetStrategy.mode);
       if (__DEV__) {
         // The getter lives on the Reanimated UI runtime, so probe it there.
         setTimeout(() => {
@@ -1237,9 +1237,9 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
                   ).__pagerOffsetPages()}`
                 : `missing offset=${hasOffset} pages=${hasPages}`;
             })();
-            console.log('[debug-pager-offset] ui-runtime bridge:', probe);
+            console.log('[pager-offset-strategy] ui-runtime bridge:', probe);
           } catch (error) {
-            console.warn('[debug-pager-offset] probe failed:', error);
+            console.warn('[pager-offset-strategy] probe failed:', error);
           }
         }, 1500);
       }
