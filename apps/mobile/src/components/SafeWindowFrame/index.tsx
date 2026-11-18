@@ -10,6 +10,7 @@ import DeviceInfo from 'react-native-device-info';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useTheme2024 } from '@/hooks/theme';
+import { SafeWindowBackdropContext } from './backdrop';
 
 const isIOS = Platform.OS === 'ios';
 
@@ -75,6 +76,12 @@ function SafeWindowFrameImpl({ children }: { children?: React.ReactNode }) {
   const rightInset = isIOS ? Math.max(0, Math.round(insets.right)) : 0;
   const active = leftInset > 0 || rightInset > 0;
 
+  /**
+   * Pages may override the strip colour; the default is the page background so
+   * the strip blends in instead of showing a band next to the system column.
+   */
+  const [backdropColor, setBackdropColor] = React.useState<string | null>(null);
+
   const [availableWidth, setAvailableWidth] = React.useState<number | null>(
     null,
   );
@@ -136,14 +143,21 @@ function SafeWindowFrameImpl({ children }: { children?: React.ReactNode }) {
   }
 
   return (
-    <View
-      style={[styles.frame, { backgroundColor: colors2024['neutral-bg-1'] }]}>
-      {leftInset > 0 ? <View style={{ width: leftInset }} /> : null}
-      <View style={[styles.content, { width: availableWidth ?? undefined }]}>
-        {children}
+    <SafeWindowBackdropContext.Provider value={setBackdropColor}>
+      <View
+        style={[
+          styles.frame,
+          {
+            backgroundColor: backdropColor ?? colors2024['neutral-bg-0'],
+          },
+        ]}>
+        {leftInset > 0 ? <View style={{ width: leftInset }} /> : null}
+        <View style={[styles.content, { width: availableWidth ?? undefined }]}>
+          {children}
+        </View>
+        {rightInset > 0 ? <View style={{ width: rightInset }} /> : null}
       </View>
-      {rightInset > 0 ? <View style={{ width: rightInset }} /> : null}
-    </View>
+    </SafeWindowBackdropContext.Provider>
   );
 }
 
