@@ -10,6 +10,19 @@ import { zCreate } from '@/core/utils/reexports';
 
 const isAndroid = Platform.OS === 'android';
 
+/**
+ * Offset applied above JS-owned headers on the iPhone Duo outer screen.
+ *
+ * This is NOT the status bar height: on the letterboxed outer window
+ * `StatusBarManager.getHeight()` reports 2pt and `safe-area-context` reports
+ * `top = 0`. The value is the visual alignment point of the native header's
+ * own title/back control on that device (measured `navigationHeaderHeight`
+ * 82pt, native title center ~48pt): a 52pt JS header row centred on it starts
+ * 22pt from the window top. Verified against Send/Settings at 48.5pt vs
+ * 47.9pt.
+ */
+const FOLDABLE_HEADER_TOP = 22;
+
 export const svsLayout = {
   insets: makeMutable<Metrics['insets']>({
     top: 0,
@@ -81,19 +94,13 @@ export function useSafeSizes() {
     navigationHeaderHeight > 0
       ? Math.max(baseOffHeader, navigationHeaderHeight + 12)
       : baseOffHeader;
-  // Custom in-screen headers do not get the native stack header's automatic
-  // status-bar inset. On the iPhone Duo outer screen safe-area-context reports
-  // `top = 0`, while the native header still reserves ~38pt above its 44pt bar.
-  // Reuse the measured native height when available, and fall back to the
-  // device-specific inset that the foldable frame was validated against.
-  const foldableStatusBarTop = 38;
-  const nativeHeaderTopInset =
-    typeof navigationHeaderHeight === 'number' && navigationHeaderHeight > 44
-      ? navigationHeaderHeight - 44
-      : foldableStatusBarTop;
-  const safeHeaderTop = usesSideStatusColumn
-    ? Math.max(top, nativeHeaderTopInset)
-    : top;
+  // Custom in-screen headers do not get a native stack header, so they have
+  // to be aligned to where the native bar would have put its own title. That
+  // point is calibrated per device (see `FOLDABLE_HEADER_TOP`), not derived
+  // from the native header height: the bar is 82pt tall on the Duo outer
+  // screen but its title sits ~48pt from the window top, while a 52pt JS row
+  // centred there starts at 22pt.
+  const safeHeaderTop = usesSideStatusColumn ? FOLDABLE_HEADER_TOP : top;
 
   return {
     safeTop: top,
@@ -122,7 +129,7 @@ export function useSafeSizes() {
  */
 export function useCustomHeaderTop() {
   const { top, right } = useSafeAreaInsets();
-  return top > 0 ? top : right > 0 ? 38 : 0;
+  return top > 0 ? top : right > 0 ? FOLDABLE_HEADER_TOP : 0;
 }
 
 /**
