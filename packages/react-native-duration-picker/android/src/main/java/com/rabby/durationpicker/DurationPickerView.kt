@@ -49,6 +49,8 @@ class DurationPickerView(private val reactContext: ThemedReactContext) : LinearL
     minutes.setLabelLocale(locale)
   }
 
+  fun setMinuteLabels(labels: List<String>?) = minutes.setCustomLabels(labels)
+
   fun setDarkTheme(dark: Boolean) {
     val textColor = if (dark) Color.WHITE else Color.BLACK
     hours.setLabelColor(textColor)

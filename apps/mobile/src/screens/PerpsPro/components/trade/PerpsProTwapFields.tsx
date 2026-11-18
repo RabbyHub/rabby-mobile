@@ -5,24 +5,43 @@ import { Text } from '@/components/Typography';
 import RcTooltipTail from '@/assets2024/icons/perps/PerpsProTpSlTooltipTail.svg';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
+import type { PerpsProColumnLayout } from '../../model/layout';
 import type { PerpsProTradeController } from '../../scene/usePerpsProTrade';
 import { PERPS_PRO_TWAP_DURATION_PRESETS } from '../../model/twapOrder';
 
-export const PerpsProTwapHint = ({ children }: { children: string }) => {
+export const PerpsProTwapHint = ({
+  children,
+  columnLayout,
+}: {
+  children: string;
+  columnLayout?: PerpsProColumnLayout;
+}) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   return (
     <View
       accessible
       accessibilityRole="alert"
       pointerEvents="none"
-      style={styles.hint}>
-      <RcTooltipTail
-        color={colors2024['neutral-black']}
-        height={8}
-        width={12}
-        style={styles.arrow}
-      />
-      <Text style={styles.hintText}>{children}</Text>
+      style={[
+        styles.hint,
+        {
+          left: columnLayout
+            ? -(columnLayout.orderBookWidth + columnLayout.gap)
+            : 0,
+        },
+      ]}>
+      <View style={styles.hintBody}>
+        <Text style={styles.hintText}>{children}</Text>
+        <View
+          style={[styles.arrowTrack, { maxWidth: columnLayout?.tradeWidth }]}>
+          <RcTooltipTail
+            color={colors2024['neutral-black']}
+            height={8}
+            width={12}
+            style={styles.arrow}
+          />
+        </View>
+      </View>
     </View>
   );
 };
@@ -46,7 +65,10 @@ export const PerpsProTwapFields = React.memo(
           hours: t(hours === 1 ? 'global.time.hour' : 'global.time.hours', {
             t: hours,
           }),
-          minutes: totalMinutes % 60,
+          minutes: t('page.perps.pro.twap.minuteValue', {
+            count: totalMinutes % 60,
+            t: totalMinutes % 60,
+          }),
         })
       : '';
     return (
@@ -151,8 +173,11 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     position: 'absolute',
     bottom: '100%',
     marginBottom: 6,
-    left: 0,
     right: 0,
+    alignItems: 'flex-end',
+  },
+  hintBody: {
+    maxWidth: '100%',
     backgroundColor: colors2024['neutral-black'],
     paddingHorizontal: 12,
     paddingVertical: 8,
@@ -166,10 +191,15 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     includeFontPadding: false,
     color: colors2024['neutral-InvertHighlight'],
   },
-  arrow: {
+  // Keep the tail over Amount even when the bubble extends over the order book.
+  arrowTrack: {
     position: 'absolute',
-    left: 17,
+    right: 0,
+    width: '100%',
     bottom: -5.5,
+  },
+  arrow: {
+    marginLeft: 17,
     transform: [{ rotate: '180deg' }],
   },
 }));

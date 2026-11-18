@@ -2575,7 +2575,10 @@
           "description": "Placer des ordres à intervalles personnalisés",
           "totalTime": "Durée totale",
           "durationFieldLabel": "Durée totale (hh:mm)",
-          "durationFieldValue": "{{hours}} : {{minutes}} min",
+          "durationFieldValue": "{{hours}} : {{minutes}}",
+          "minuteValue": "{{t}} min",
+          "minuteValue_one": "{{t}} min",
+          "confirmationDuration": "{{t}} min",
           "totalSize": "Quantité totale",
           "selectTime": "Choisir la durée totale",
           "reset": "Réinitialiser",
@@ -2596,8 +2599,8 @@
           "size": "Quantité",
           "fee": "Frais",
           "noTrades": "Aucune transaction pour le moment",
-          "endTitle": "Terminer l’ordre TWAP ?",
-          "endMessage": "Terminer la partie restante de l’ordre TWAP {{coin}} ? Les transactions déjà exécutées seront conservées.",
+          "endTitle": "Confirmer la fin de l’ordre TWAP",
+          "endMessage": "Après confirmation, votre ordre TWAP sera arrêté et ses ordres ouverts seront automatiquement annulés.",
           "ending": "Arrêt en cours…",
           "ended": "Ordre TWAP terminé.",
           "placed": "Ordre TWAP {{coin}} placé.",
@@ -2617,7 +2620,6 @@
           },
           "fills": {
             "loading": "Chargement des transactions…",
-            "partial": "Seules les transactions disponibles sont affichées. Touchez pour réessayer.",
             "error": "Impossible de charger les transactions. Touchez pour réessayer."
           },
           "errors": {

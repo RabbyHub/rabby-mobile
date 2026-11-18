@@ -1,7 +1,10 @@
 import { act, cleanupAsync, renderHook } from '@testing-library/react-native';
 import { InfoClient, WebSocketClient } from '@rabby-wallet/hyperliquid-sdk';
 import { apisPerps } from '@/core/apis/perps';
-import { usePerpsTwapSubscriptions } from './usePerpsTwapSubscriptions';
+import {
+  refreshPerpsTwaps,
+  usePerpsTwapSubscriptions,
+} from './usePerpsTwapSubscriptions';
 import { getPerpsTwapAccount, perpsTwapStore } from './usePerpsTwapStore';
 import { parsePerpsTwapHistory } from './twapReconciliation';
 import { loadPerpsTwapFills } from './twapRepository';
@@ -135,6 +138,118 @@ test('shares account subscriptions, rejects foreign and stale generation data, a
   expect(getPerpsTwapAccount(userB).records).toEqual({});
   first.rerender({ user: userB, generation: 3, enabled: false });
   expect(listeners.filter(item => item.live)).toHaveLength(0);
+});
+
+const terminalEvent = (twapId: number) => ({
+  twapId,
+  time: 102,
+  state: state(),
+  status: { status: 'finished' },
+});
+
+test('loads history despite rejected fills and a failed active subscription; retry is scoped to history', async () => {
+  const history = jest
+    .mocked(InfoClient.prototype.getUserTwapHistory)
+    .mockResolvedValue([terminalEvent(7)]);
+  const fills = jest
+    .mocked(InfoClient.prototype.getUserTwapSliceFills)
+    .mockRejectedValue(new Error('fills offline'));
+  jest
+    .mocked(WebSocketClient.prototype.subscribeToTwapStates)
+    .mockImplementationOnce(() => {
+      throw new Error('active offline');
+    });
+  renderHook(() => usePerpsTwapSubscriptions(userA, true, 1));
+  await act(async () => {});
+  const account = () => getPerpsTwapAccount(userA);
+  expect(account().sources).toEqual({
+    history: { ready: true, error: null },
+    fills: { ready: false, error: expect.stringContaining('fills offline') },
+    active: { ready: false, error: expect.stringContaining('active offline') },
+  });
+  expect(account().records['ETH:7'].status).toBe('finished');
+  history.mockResolvedValueOnce([{}] as never);
+  await act(async () => {
+    await Promise.all([
+      refreshPerpsTwaps(userA, 'history'),
+      refreshPerpsTwaps(userA, 'history'),
+    ]);
+  });
+  expect(history).toHaveBeenCalledTimes(2);
+  expect(fills).toHaveBeenCalledTimes(1);
+  expect(account().sources.history).toEqual({
+    ready: true,
+    error: expect.stringContaining('Invalid TWAP history event'),
+  });
+  expect(account().records['ETH:7'].status).toBe('finished');
+  act(() =>
+    listener('history').emit({ user: userA, isSnapshot: true, history: [] }),
+  );
+  expect(account().sources.history.error).toBeNull();
+});
+
+test('a valid empty WS history snapshot survives a late HTTP error; other channels cannot clear a history error', async () => {
+  let rejectHistory!: (error: Error) => void;
+  const history = jest
+    .mocked(InfoClient.prototype.getUserTwapHistory)
+    .mockImplementationOnce(
+      () =>
+        new Promise((_resolve, reject) => {
+          rejectHistory = reject;
+        }),
+    );
+  renderHook(() => usePerpsTwapSubscriptions(userA, true, 1));
+  const account = () => getPerpsTwapAccount(userA);
+  act(() => listener('history').emit({ user: userA, history: [] }));
+  expect(account().sources.history.ready).toBe(false);
+  act(() =>
+    listener('history').emit({ user: userA, isSnapshot: true, history: [] }),
+  );
+  await act(async () => rejectHistory(new Error('late history error')));
+  expect(account().sources.history).toEqual({ ready: true, error: null });
+  history.mockRejectedValueOnce(new Error('history offline'));
+  await act(async () => {
+    await refreshPerpsTwaps(userA, 'history');
+  });
+  act(() => listener('states').emit({ user: userA, states: [] }));
+  act(() =>
+    listener('fills').emit({
+      user: userA,
+      isSnapshot: true,
+      twapSliceFills: [],
+    }),
+  );
+  expect(account().sources.history).toEqual({
+    ready: true,
+    error: expect.stringContaining('history offline'),
+  });
+  await act(async () => {
+    await refreshPerpsTwaps(userA, 'history');
+  });
+  expect(account().sources.history).toEqual({ ready: true, error: null });
+});
+
+test('merges the full REST backfill after a smaller WS snapshot', async () => {
+  let resolveHistory!: (events: ReturnType<typeof terminalEvent>[]) => void;
+  jest.mocked(InfoClient.prototype.getUserTwapHistory).mockImplementationOnce(
+    () =>
+      new Promise(resolve => {
+        resolveHistory = resolve;
+      }),
+  );
+  renderHook(() => usePerpsTwapSubscriptions(userA, true, 1));
+  act(() =>
+    listener('history').emit({
+      user: userA,
+      isSnapshot: true,
+      history: [terminalEvent(8)],
+    }),
+  );
+  await act(async () => resolveHistory([terminalEvent(7)]));
+  expect(Object.keys(getPerpsTwapAccount(userA).records).sort()).toEqual([
+    'ETH:7',
+    'ETH:8',
+  ]);
 });
 
 test('keeps overlapping millisecond boundaries and proves terminal completeness from executed size', async () => {

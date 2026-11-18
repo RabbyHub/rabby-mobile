@@ -55,9 +55,7 @@ export const PerpsProEndTwapModal: React.FC<{
                 {t('page.perps.pro.twap.endTitle')}
               </Text>
               <Text style={styles.message}>
-                {t('page.perps.pro.twap.endMessage', {
-                  coin: confirmation?.coin ?? '',
-                })}
+                {t('page.perps.pro.twap.endMessage')}
               </Text>
             </View>
           </View>
@@ -144,7 +142,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 20,
-    fontWeight: '700',
+    fontWeight: '800',
     lineHeight: 24,
     textAlign: 'center',
     width: '100%',
@@ -153,8 +151,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 16,
+    fontWeight: '400',
     lineHeight: 20,
-    textAlign: 'left',
+    textAlign: 'center',
     width: '100%',
   },
   actions: {

@@ -164,10 +164,8 @@ export const PerpsProTradePanelOwner = React.memo(
     const [mainColumnHeight, setMainColumnHeight] = useState(
       PERPS_PRO_MAIN_COLUMN_HEIGHT,
     );
-    const { gap, orderBookWidth, tradeWidth } = useMemo(
-      () => getPerpsProColumnLayout(width),
-      [width],
-    );
+    const columnLayout = useMemo(() => getPerpsProColumnLayout(width), [width]);
+    const { gap, orderBookWidth, tradeWidth } = columnLayout;
     const orderBookColumnStyle = useMemo<ViewStyle>(
       () => ({ width: orderBookWidth }),
       [orderBookWidth],
@@ -243,6 +241,7 @@ export const PerpsProTradePanelOwner = React.memo(
           <View onLayout={updateMainColumnHeight} style={tradeColumnStyle}>
             <PerpsProTradeForm
               sceneActive={sceneActive}
+              columnLayout={columnLayout}
               addFundsMode={addFundsMode}
               configurationReady={tradeConfigurationReady}
               controller={trade}

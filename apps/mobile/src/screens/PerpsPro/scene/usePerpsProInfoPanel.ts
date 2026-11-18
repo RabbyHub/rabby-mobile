@@ -1,6 +1,6 @@
 import {
   usePerpsTwapRecords,
-  usePerpsTwapReadiness,
+  usePerpsTwapSourceState,
 } from '@/hooks/perps/twap/usePerpsTwapStore';
 import {
   usePerpsTwapSubscriptions,
@@ -99,11 +99,17 @@ export const usePerpsProInfoPanel = (
     getPerpsAccountRuntimeContext().generation,
   );
   const retryTwaps = useCallback(
-    () => (twapUser ? refreshPerpsTwaps(twapUser) : Promise.resolve()),
+    () =>
+      twapUser ? refreshPerpsTwaps(twapUser, 'active') : Promise.resolve(),
     [twapUser],
   );
   const twapRecords = usePerpsTwapRecords(twapUser);
-  const twapReadiness = usePerpsTwapReadiness(twapUser);
+  const activeTwaps = usePerpsTwapSourceState(twapUser, 'active');
+  const twapReadiness = activeTwaps.error
+    ? 'error'
+    : activeTwaps.ready
+    ? 'ready'
+    : 'loading';
   const pendingFundingCount = perpsStore(state =>
     getPerpsPendingFundingCount(state.localLoadingHistory),
   );

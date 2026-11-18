@@ -10,6 +10,7 @@ import codegenNativeCommands from 'react-native/Libraries/Utilities/codegenNativ
 
 export interface NativeProps extends ViewProps {
   durationMinutes: Int32;
+  minuteLabels?: ReadonlyArray<string>;
   androidLocale?: string;
   sessionId: Int32;
   dark?: WithDefault<boolean, false>;

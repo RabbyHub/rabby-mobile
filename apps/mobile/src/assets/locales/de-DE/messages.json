@@ -2852,7 +2852,10 @@
           "description": "Orders in benutzerdefinierten Intervallen platzieren",
           "totalTime": "Gesamtdauer",
           "durationFieldLabel": "Gesamtdauer (hh:mm)",
-          "durationFieldValue": "{{hours}} : {{minutes}} Min.",
+          "durationFieldValue": "{{hours}} : {{minutes}}",
+          "minuteValue": "{{t}} Min.",
+          "minuteValue_one": "{{t}} Min.",
+          "confirmationDuration": "{{t}} Min.",
           "totalSize": "Gesamtmenge",
           "selectTime": "Gesamtdauer wählen",
           "reset": "Zurücksetzen",
@@ -2873,8 +2876,8 @@
           "size": "Menge",
           "fee": "Gebühr",
           "noTrades": "Noch keine Trades",
-          "endTitle": "TWAP-Order beenden?",
-          "endMessage": "Die verbleibende {{coin}}-TWAP-Order beenden? Bereits ausgeführte Trades bleiben erhalten.",
+          "endTitle": "Beendigung der TWAP-Order bestätigen",
+          "endMessage": "Nach der Bestätigung wird die TWAP-Order gestoppt. Alle offenen Orders dieser TWAP-Order werden automatisch storniert.",
           "ending": "Wird beendet…",
           "ended": "TWAP-Order beendet.",
           "placed": "{{coin}}-TWAP-Order erteilt.",
@@ -2894,7 +2897,6 @@
           },
           "fills": {
             "loading": "Trades werden geladen…",
-            "partial": "Nur verfügbare Trades werden angezeigt. Zum Wiederholen tippen.",
             "error": "Trades konnten nicht geladen werden. Zum Wiederholen tippen."
           },
           "errors": {

@@ -12,6 +12,7 @@ static const CGFloat RowHeight = 40;
 - (instancetype)initWithUnit:(NSCalendarUnit)unit;
 - (NSInteger)snapToCenter;
 @property (nonatomic) NSInteger value;
+@property (nonatomic, copy) NSArray<NSString *> *labels;
 @end
 
 @implementation RabbyDurationWheel {
@@ -83,9 +84,16 @@ static const CGFloat RowHeight = 40;
 
 - (NSString *)textForValue:(NSInteger)value
 {
+  if (self.labels.count == (NSUInteger)(_maxValue + 1)) return self.labels[value];
   NSDateComponents *duration = [NSDateComponents new];
   [duration setValue:value forComponent:_unit];
   return [_formatter stringFromDateComponents:duration];
+}
+
+- (void)setLabels:(NSArray<NSString *> *)labels
+{
+  _labels = [labels copy];
+  [_table reloadData];
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
@@ -255,6 +263,14 @@ static const CGFloat RowHeight = 40;
 - (void)updateProps:(Props::Shared const &)props oldProps:(Props::Shared const &)oldProps
 {
   const auto &next = *std::static_pointer_cast<const RabbyDurationPickerProps>(props);
+  const auto &previous = *std::static_pointer_cast<const RabbyDurationPickerProps>(_props);
+  if (next.minuteLabels != previous.minuteLabels) {
+    NSMutableArray<NSString *> *labels = [NSMutableArray arrayWithCapacity:next.minuteLabels.size()];
+    for (const auto &label : next.minuteLabels) {
+      [labels addObject:[NSString stringWithUTF8String:label.c_str()]];
+    }
+    _minutes.labels = labels;
+  }
   // Open and Reset each start a session. Within it, durationMinutes echoes our
   // previews and may already be several rows behind the native wheels.
   if (next.sessionId != _sessionId) {

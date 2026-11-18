@@ -16,12 +16,19 @@ import AscendingLight from '@/assets2024/icons/perps/scale-ascending-light.svg';
 import AscendingDark from '@/assets2024/icons/perps/scale-ascending-dark.svg';
 import DescendingLight from '@/assets2024/icons/perps/scale-descending-light.svg';
 import DescendingDark from '@/assets2024/icons/perps/scale-descending-dark.svg';
+import AscendingIcon from '@/assets2024/icons/perps/PerpsProScaleAscending.svg';
+import DescendingIcon from '@/assets2024/icons/perps/PerpsProScaleDescending.svg';
 
 // Exported from the six light/dark chart nodes in the approved Figma design.
 const charts = {
   flat: [FlatLight, FlatDark],
   ascending: [AscendingLight, AscendingDark],
   descending: [DescendingLight, DescendingDark],
+};
+const headingIcons = {
+  flat: null,
+  ascending: AscendingIcon,
+  descending: DescendingIcon,
 };
 
 export const PerpsProScaleDistributionSheet = React.memo(
@@ -59,11 +66,22 @@ export const PerpsProScaleDistributionSheet = React.memo(
             {(['flat', 'ascending', 'descending'] as const).map(
               distribution => {
                 const Chart = charts[distribution][isLight ? 0 : 1];
+                const Icon = headingIcons[distribution];
                 return (
                   <View key={distribution} style={styles.section}>
-                    <Text style={styles.label}>
-                      {t(`page.perps.pro.scaleOrder.${distribution}`)}
-                    </Text>
+                    <View style={styles.heading}>
+                      {Icon && (
+                        <Icon
+                          accessible={false}
+                          width={14}
+                          height={14}
+                          color={colors2024['neutral-title-1']}
+                        />
+                      )}
+                      <Text style={styles.label}>
+                        {t(`page.perps.pro.scaleOrder.${distribution}`)}
+                      </Text>
+                    </View>
                     <Text style={styles.description}>
                       {t(
                         `page.perps.pro.scaleOrder.${distribution}Description`,
@@ -88,6 +106,7 @@ const getStyle = createGetStyles2024(
     ...getPerpsProInputDialogStyles(colors2024, safeAreaInsets.bottom, isLight),
     sections: { marginTop: 24, gap: 8 },
     section: { paddingHorizontal: 8, paddingVertical: 16, gap: 4 },
+    heading: { flexDirection: 'row', alignItems: 'center', gap: 4 },
     chart: { width: '100%', aspectRatio: 345 / 105.8 },
   }),
 );

@@ -78,7 +78,7 @@ export const usePerpsProCancelTwap = (
         accountRuntime: getPerpsAccountRuntimeContext(),
         runtime: getPerpsRuntimeSnapshot(),
         hasPermission: live.current && hasCurrentPerpPermission(),
-        activeReady: data.activeReady,
+        activeReady: data.sources.active.ready,
         order: data.records[frozen.key] ?? null,
       };
     };

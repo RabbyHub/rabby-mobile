@@ -68,7 +68,12 @@ export const PerpsProTwapOrderConfirmationSheet = React.memo(
           base ? facts.szDecimals : 2,
         )} ${base ? facts.displayBase : facts.quoteAsset}`,
       ],
-      [t('page.perps.pro.twap.totalTime'), `${command.durationMinutes} min`],
+      [
+        t('page.perps.pro.twap.totalTime'),
+        t('page.perps.pro.twap.confirmationDuration', {
+          t: command.durationMinutes,
+        }),
+      ],
       [
         t('page.perps.pro.trade.markPrice'),
         `${formatPerpsProDecimal(facts.markPrice, facts.pxDecimals)} ${

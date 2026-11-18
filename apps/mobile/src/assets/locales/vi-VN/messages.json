@@ -2683,7 +2683,10 @@
           "description": "Đặt lệnh theo khoảng thời gian tùy chỉnh",
           "totalTime": "Tổng thời gian",
           "durationFieldLabel": "Tổng thời gian (hh:mm)",
-          "durationFieldValue": "{{hours}} : {{minutes}} phút",
+          "durationFieldValue": "{{hours}} : {{minutes}}",
+          "minuteValue": "{{t}} phút",
+          "minuteValue_one": "{{t}} phút",
+          "confirmationDuration": "{{t}} phút",
           "totalSize": "Tổng khối lượng",
           "selectTime": "Chọn tổng thời gian",
           "reset": "Đặt lại",
@@ -2704,8 +2707,8 @@
           "size": "Khối lượng",
           "fee": "Phí",
           "noTrades": "Chưa có giao dịch",
-          "endTitle": "Kết thúc lệnh TWAP?",
-          "endMessage": "Kết thúc phần còn lại của lệnh TWAP {{coin}}? Các giao dịch đã khớp sẽ được giữ nguyên.",
+          "endTitle": "Xác nhận kết thúc lệnh TWAP",
+          "endMessage": "Sau khi bạn xác nhận, lệnh TWAP sẽ dừng và các lệnh đang mở của TWAP này sẽ tự động bị hủy.",
           "ending": "Đang kết thúc…",
           "ended": "Lệnh TWAP đã kết thúc.",
           "placed": "Đã đặt lệnh TWAP {{coin}}.",
@@ -2725,7 +2728,6 @@
           },
           "fills": {
             "loading": "Đang tải giao dịch…",
-            "partial": "Chỉ hiển thị các giao dịch có sẵn. Nhấn để thử lại.",
             "error": "Không thể tải giao dịch. Nhấn để thử lại."
           },
           "errors": {

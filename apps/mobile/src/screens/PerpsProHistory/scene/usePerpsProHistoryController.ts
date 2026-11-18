@@ -1,7 +1,7 @@
 import { useShallow } from 'zustand/react/shallow';
 import {
   usePerpsTwapRecords,
-  usePerpsTwapReadiness,
+  usePerpsTwapSourceState,
 } from '@/hooks/perps/twap/usePerpsTwapStore';
 import {
   usePerpsTwapSubscriptions,
@@ -178,7 +178,10 @@ export const usePerpsProHistoryController = (
     generation: number;
   } | null>(null);
   const twapRecords = usePerpsTwapRecords(accountAddress ?? undefined);
-  const twapReadiness = usePerpsTwapReadiness(accountAddress ?? undefined);
+  const twapHistory = usePerpsTwapSourceState(
+    accountAddress ?? undefined,
+    'history',
+  );
   const twapMarketKeys = perpsStore(
     useShallow(state => Object.keys(state.marketDataMap)),
   );
@@ -613,7 +616,7 @@ export const usePerpsProHistoryController = (
           };
           setTwapRefresh(token);
           try {
-            await refreshPerpsTwaps(user);
+            await refreshPerpsTwaps(user, 'history');
           } finally {
             setTwapRefresh(current => (current === token ? null : current));
           }
@@ -1002,13 +1005,12 @@ export const usePerpsProHistoryController = (
       ...historyState,
       twap: {
         rows: twapRows,
+        refreshError: twapHistory.error ?? undefined,
         status: !accountAddress
           ? 'empty'
-          : twapReadiness === 'ready'
-          ? twapRows.length
-            ? 'ready'
-            : 'empty'
-          : twapReadiness === 'error'
+          : twapHistory.ready || twapRows.length > 0
+          ? getPerpsProHistoryRowsStatus(twapRows)
+          : twapHistory.error || !sdkSupported
           ? 'error'
           : 'loading',
         hasEarlier: false,
@@ -1031,7 +1033,8 @@ export const usePerpsProHistoryController = (
       historyState,
       transactionProjection.rows,
       twapRows,
-      twapReadiness,
+      twapHistory,
+      sdkSupported,
       twapRefresh,
       accountGeneration,
       accountAddress,
