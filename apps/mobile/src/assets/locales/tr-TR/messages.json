@@ -2564,7 +2564,7 @@
           }
         },
         "twap": {
-          "description": "Bir emri zamana yayılan daha küçük işlemlere bölün.",
+          "description": "Belirlediğiniz aralıklarla emir verin",
           "totalTime": "Toplam süre",
           "durationFieldLabel": "Toplam süre (hh:mm)",
           "durationFieldValue": "{{hours}} : {{minutes}} dk",

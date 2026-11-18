@@ -2748,7 +2748,7 @@
           }
         },
         "twap": {
-          "description": "Dividir una orden en operaciones más pequeñas a lo largo del tiempo.",
+          "description": "Coloca órdenes a intervalos personalizados",
           "totalTime": "Tiempo total",
           "durationFieldLabel": "Tiempo total (hh:mm)",
           "durationFieldValue": "{{hours}} : {{minutes}} min",

@@ -2733,7 +2733,7 @@
           }
         },
         "twap": {
-          "description": "แบ่งคำสั่งเป็นรายการซื้อขายขนาดเล็กเพื่อดำเนินการตามช่วงเวลา",
+          "description": "ส่งคำสั่งตามช่วงเวลาที่กำหนดเอง",
           "totalTime": "เวลาทั้งหมด",
           "durationFieldLabel": "เวลาทั้งหมด (hh:mm)",
           "durationFieldValue": "{{hours}} : {{minutes}} นาที",

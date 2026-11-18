@@ -2564,7 +2564,7 @@
           }
         },
         "twap": {
-          "description": "주문을 여러 소규모 거래로 나누어 시간에 걸쳐 실행합니다.",
+          "description": "사용자가 지정한 간격으로 주문합니다",
           "totalTime": "총 시간",
           "durationFieldLabel": "총 시간 (hh:mm)",
           "durationFieldValue": "{{hours}} : {{minutes}}분",

@@ -2681,7 +2681,7 @@
           }
         },
         "twap": {
-          "description": "Разделить ордер на небольшие сделки, исполняемые в течение заданного времени.",
+          "description": "Размещайте ордера с заданным интервалом",
           "totalTime": "Общее время",
           "durationFieldLabel": "Общее время (hh:mm)",
           "durationFieldValue": "{{hours}} : {{minutes}} мин",

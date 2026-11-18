@@ -2850,7 +2850,7 @@
           }
         },
         "twap": {
-          "description": "Eine Order in kleinere Trades über einen Zeitraum aufteilen.",
+          "description": "Orders in benutzerdefinierten Intervallen platzieren",
           "totalTime": "Gesamtdauer",
           "durationFieldLabel": "Gesamtdauer (hh:mm)",
           "durationFieldValue": "{{hours}} : {{minutes}} Min.",

@@ -2651,7 +2651,7 @@
           }
         },
         "twap": {
-          "description": "Split an order into smaller trades over time.",
+          "description": "Place orders at custom intervals",
           "totalTime": "Total Time",
           "durationFieldLabel": "Total Time(hh:mm)",
           "durationFieldValue": "{{hours}} : {{minutes}}min",

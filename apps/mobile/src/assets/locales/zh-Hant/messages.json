@@ -2736,7 +2736,7 @@
           }
         },
         "twap": {
-          "description": "將訂單拆分為多筆交易，分時執行。",
+          "description": "按自訂時間間隔下單",
           "totalTime": "總時長",
           "durationFieldLabel": "總時長 (hh:mm)",
           "durationFieldValue": "{{hours}} : {{minutes}} 分鐘",

@@ -2850,7 +2850,7 @@
           }
         },
         "twap": {
-          "description": "Dividir uma ordem em transações menores ao longo do tempo.",
+          "description": "Coloque ordens a intervalos personalizados",
           "totalTime": "Tempo total",
           "durationFieldLabel": "Tempo total (hh:mm)",
           "durationFieldValue": "{{hours}} : {{minutes}} min",

@@ -2714,7 +2714,7 @@
           }
         },
         "twap": {
-          "description": "在一段时间内将订单拆分为多笔交易。",
+          "description": "按自定义时间间隔下单",
           "totalTime": "总时间",
           "durationFieldLabel": "总时间 (hh:mm)",
           "durationFieldValue": "{{hours}} : {{minutes}} 分钟",
