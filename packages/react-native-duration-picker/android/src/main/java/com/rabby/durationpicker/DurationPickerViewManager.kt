@@ -11,8 +11,13 @@ class DurationPickerViewManager : SimpleViewManager<DurationPickerView>(), Rabby
   override fun getDelegate(): ViewManagerDelegate<DurationPickerView> = delegate
   override fun getName() = "RabbyDurationPicker"
   override fun createViewInstance(context: ThemedReactContext) = DurationPickerView(context)
-  override fun setDurationMinutes(view: DurationPickerView, value: Int) = view.setMinutes(value)
-  override fun setSessionId(view: DurationPickerView, value: Int) = view.setSession(value)
+  override fun setDurationMinutes(view: DurationPickerView, value: Int) { view.durationMinutes = value }
+  override fun setSessionId(view: DurationPickerView, value: Int) { view.sessionId = value }
+  override fun setAndroidLocale(view: DurationPickerView, value: String?) = view.setLocale(value)
+  override fun onAfterUpdateTransaction(view: DurationPickerView) {
+    super.onAfterUpdateTransaction(view)
+    view.applySession()
+  }
   override fun setDark(view: DurationPickerView, value: Boolean) = view.setDarkTheme(value)
   override fun setEnabled(view: DurationPickerView, value: Boolean) = view.setPickerEnabled(value)
   override fun readCurrentValue(view: DurationPickerView, requestId: Int) = view.readCurrentValue(requestId)

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View } from 'react-native';
+import { Platform, View } from 'react-native';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { useTranslation } from 'react-i18next';
 import {
@@ -40,7 +40,7 @@ export const PerpsProTwapDurationSheet = React.memo(
     onConfirm: (value: string) => void;
   }) => {
     const { styles, colors2024, isLight } = useTheme2024({ getStyle });
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const modal = useRef<AppBottomSheetModal>(null);
     const picker = useRef<React.ElementRef<typeof DurationPicker>>(null);
     const session = useRef(0);
@@ -112,6 +112,9 @@ export const PerpsProTwapDurationSheet = React.memo(
             <DurationPicker
               ref={picker}
               durationMinutes={totalMinutes}
+              androidLocale={
+                Platform.OS === 'android' ? i18n.language : undefined
+              }
               sessionId={sessionId}
               dark={!isLight}
               style={styles.picker}
