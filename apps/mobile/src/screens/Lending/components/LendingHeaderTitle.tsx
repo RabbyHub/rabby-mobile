@@ -5,7 +5,7 @@ import { View } from 'react-native';
 
 import { Text } from '@/components/Typography';
 import { HeaderBackPressable } from '@/hooks/navigation';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useCustomHeaderTop } from '@/hooks/useAppLayout';
 import RcIconAAVE from '@/assets2024/icons/lending/IconAAVE.svg';
 import { LendingHistoryHeader } from './Header';
 import { HeaderAccountSwitcher } from '@/components/AccountSwitcher/HeaderAccountSwitcher';
@@ -14,10 +14,10 @@ const HEADER_HEIGHT = 58;
 
 const LendingHeaderContent = () => {
   const { styles } = useTheme2024({ getStyle });
-  const { top } = useSafeAreaInsets();
+  const headerTop = useCustomHeaderTop();
 
   return (
-    <View style={[styles.headerOuter, { marginTop: top }]}>
+    <View style={[styles.headerOuter, { marginTop: headerTop }]}>
       <View style={styles.headerInner}>
         <View style={styles.headerLeft}>
           <HeaderBackPressable />
