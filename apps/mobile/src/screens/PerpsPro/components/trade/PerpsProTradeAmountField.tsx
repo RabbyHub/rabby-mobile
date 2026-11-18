@@ -4,7 +4,13 @@ import { Text, type TextInput } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { useState } from 'react';
-import { Platform, Pressable, View, type TextInputProps } from 'react-native';
+import {
+  Platform,
+  Pressable,
+  StyleSheet,
+  View,
+  type TextInputProps,
+} from 'react-native';
 
 import { getPerpsProTradeControlMediumTextStyle } from '../common/perpsProVisual';
 import { PERPS_PRO_TRADE_AMOUNT_FIELD_HEIGHT } from '../../model/layout';
@@ -60,7 +66,6 @@ export const PerpsProTradeAmountField = React.memo(
         <View
           style={[
             styles.container,
-            invalid && styles.invalid,
             variant === 'compact' && styles.compactHeight,
           ]}
           testID="perps-pro-trade-amount-field">
@@ -137,6 +142,13 @@ export const PerpsProTradeAmountField = React.memo(
               />
             </Pressable>
           ) : null}
+          {invalid ? (
+            <View
+              pointerEvents="none"
+              style={styles.invalidOutline}
+              testID="perps-pro-amount-invalid-outline"
+            />
+          ) : null}
         </View>
       );
     },
@@ -146,7 +158,14 @@ export const PerpsProTradeAmountField = React.memo(
 PerpsProTradeAmountField.displayName = 'PerpsProTradeAmountField';
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
-  invalid: { borderWidth: 1, borderColor: colors2024['red-default'] },
+  // Keep the Android rounded clipping surface independent of validation borders.
+  invalidOutline: {
+    ...StyleSheet.absoluteFillObject,
+    borderWidth: 1,
+    borderRadius: 6,
+    borderCurve: 'continuous',
+    borderColor: colors2024['red-default'],
+  },
   compactHeight: { height: 34 },
   compactFloatingLabel: { top: 2 },
   compactPlaceholder: { top: 8 },
