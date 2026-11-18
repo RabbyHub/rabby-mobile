@@ -129,6 +129,7 @@
     "@rabby-wallet/rabby-sign-bvm": "0.1.1",
     "@rabby-wallet/rabby-swap": "0.0.95",
     "@rabby-wallet/react-native-bootsplash": "workspace:^",
+    "@rabby-wallet/react-native-duration-picker": "workspace:^",
     "@rabby-wallet/react-native-fs": "workspace:^",
     "@rabby-wallet/react-native-ios-context-menu": "workspace:^",
     "@rabby-wallet/react-native-keychain-9": "workspace:^",

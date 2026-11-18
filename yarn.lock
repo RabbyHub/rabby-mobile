@@ -9990,6 +9990,15 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@rabby-wallet/react-native-duration-picker@workspace:^, @rabby-wallet/react-native-duration-picker@workspace:packages/react-native-duration-picker":
+  version: 0.0.0-use.local
+  resolution: "@rabby-wallet/react-native-duration-picker@workspace:packages/react-native-duration-picker"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+  languageName: unknown
+  linkType: soft
+
 "@rabby-wallet/react-native-fs@workspace:^, @rabby-wallet/react-native-fs@workspace:packages/react-native-fs":
   version: 0.0.0-use.local
   resolution: "@rabby-wallet/react-native-fs@workspace:packages/react-native-fs"
@@ -37855,6 +37864,7 @@ __metadata:
     "@rabby-wallet/rabby-sign-bvm": "npm:0.1.1"
     "@rabby-wallet/rabby-swap": "npm:0.0.95"
     "@rabby-wallet/react-native-bootsplash": "workspace:^"
+    "@rabby-wallet/react-native-duration-picker": "workspace:^"
     "@rabby-wallet/react-native-fs": "workspace:^"
     "@rabby-wallet/react-native-ios-context-menu": "workspace:^"
     "@rabby-wallet/react-native-keychain-9": "workspace:^"

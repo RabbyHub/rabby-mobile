@@ -322,6 +322,34 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
+  - RabbyDurationPicker (1.0.0):
+    - boost
+    - DoubleConversion
+    - fast_float
+    - fmt
+    - glog
+    - hermes-engine
+    - RCT-Folly
+    - RCT-Folly/Fabric
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - SocketRocket
+    - Yoga
   - RabbyRNKeychainV9 (9.2.3-rabby.0):
     - boost
     - DoubleConversion
@@ -3874,6 +3902,7 @@ DEPENDENCIES:
   - "op-sqlite (from `../node_modules/@op-engineering/op-sqlite`)"
   - OpenSSL-Universal (= 3.6.2000)
   - QuickCrypto (from `../node_modules/react-native-quick-crypto`)
+  - "RabbyDurationPicker (from `../node_modules/@rabby-wallet/react-native-duration-picker`)"
   - "RabbyRNKeychainV9 (from `../node_modules/@rabby-wallet/react-native-keychain-9`)"
   - RCT-Folly (from `../node_modules/react-native/third-party-podspecs/RCT-Folly.podspec`)
   - RCTDeprecation (from `../node_modules/react-native/ReactApple/Libraries/RCTFoundation/RCTDeprecation`)
@@ -4047,6 +4076,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/@op-engineering/op-sqlite"
   QuickCrypto:
     :path: "../node_modules/react-native-quick-crypto"
+  RabbyDurationPicker:
+    :path: "../node_modules/@rabby-wallet/react-native-duration-picker"
   RabbyRNKeychainV9:
     :path: "../node_modules/@rabby-wallet/react-native-keychain-9"
   RCT-Folly:
@@ -4306,6 +4337,7 @@ SPEC CHECKSUMS:
   OpenSSL-Universal: ecee7b138fa75a74ecf00d7ffd248fb584739b9e
   PromisesObjC: 752c3227f599e3467650e47ea36f433eeb10c273
   QuickCrypto: db6675d64f74e1dcec817f302ac23856ff48666d
+  RabbyDurationPicker: 14742018f18e6583e53f58b56c99cf2f64ea4820
   RabbyRNKeychainV9: f7a29d384fd856da450f30f263b85059eba34c3b
   RCT-Folly: 59ec0ac1f2f39672a0c6e6cecdd39383b764646f
   RCTDeprecation: d4ef510f229cea15314176aee5e3ba10064a8496
