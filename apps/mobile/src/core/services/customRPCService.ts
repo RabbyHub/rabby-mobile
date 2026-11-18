@@ -358,10 +358,10 @@ export class CustomRPCService extends StoreServiceBase<
 
   setRPCEnable = (chain: CHAINS_ENUM, enable: boolean) => {
     this.mutateStore(draft => {
-      draft.customRPC[chain] = {
-        ...draft.customRPC[chain],
-        enable,
-      };
+      const rpc = draft.customRPC[chain];
+      if (rpc) {
+        rpc.enable = enable;
+      }
     });
   };
 

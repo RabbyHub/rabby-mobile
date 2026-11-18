@@ -30,6 +30,17 @@
     }
   },
   "page": {
+    "securePreferences": {
+      "damagedTitle": "Some security settings may be damaged",
+      "damagedDescription": "Reset the settings below to their defaults. Review them before your next transaction.",
+      "unavailableTitle": "Security settings are temporarily unavailable",
+      "unavailableDescription": "Rabby is using defaults for any settings it could not verify. Changes to the settings below will not be saved. Unlock your device and reopen Rabby to try again.",
+      "reset": "Reset settings",
+      "whitelist": "Transfer whitelist",
+      "contactBook": "Address book and notes",
+      "securityEngine": "Security engine rules and lists",
+      "rpc": "Custom RPC"
+    },
     "predict": {
       "dappSelect": {
         "title": "Select Predict Provider"
