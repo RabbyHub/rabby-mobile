@@ -105,37 +105,29 @@ const Indicator = ({
     right: 0,
   };
 
-  const stylez = useAnimatedStyle(() => {
-    const firstItemX = itemsLayout[0]?.x ?? 0;
-
-    const transform = [
-      {
-        translateX:
-          itemsLayout.length > 1
-            ? interpolate(
-                indexDecimal.value,
-                itemsLayout.map((_, i) => i),
-                itemsLayout.map(v => v.x),
-              )
-            : firstItemX,
-      },
-    ];
-
-    const width =
-      itemsLayout.length > 1
-        ? interpolate(
-            indexDecimal.value,
-            itemsLayout.map((_, i) => i),
-            itemsLayout.map(v => v.width),
-          )
-        : itemsLayout[0]?.width;
-
+  // Shuttle, not a bar crossing the gap: each slot clips its own plate. The
+  // left plate slides out to the right while the right plate slides in from the
+  // left, so the black fill is only ever visible inside a slot - the 12pt gap
+  // between them never shows the indicator travelling across it.
+  const slotWidth = itemsLayout[0]?.width ?? 0;
+  const snapPixels = (value: number) => {
+    'worklet';
+    return Math.round(value * STRIP_PIXEL) / STRIP_PIXEL;
+  };
+  const leftPlateStyle = useAnimatedStyle(() => {
+    const p = Math.min(Math.max(indexDecimal.value, 0), 1);
     return {
-      transform,
-      width,
+      transform: [{ translateX: snapPixels(p * slotWidth) }],
       opacity: withTiming(opacity.value),
     };
-  }, [indexDecimal, itemsLayout]);
+  }, [indexDecimal, slotWidth]);
+  const rightPlateStyle = useAnimatedStyle(() => {
+    const p = Math.min(Math.max(indexDecimal.value, 0), 1);
+    return {
+      transform: [{ translateX: snapPixels((p - 1) * slotWidth) }],
+      opacity: withTiming(opacity.value),
+    };
+  }, [indexDecimal, slotWidth]);
 
   React.useEffect(() => {
     if (fadeIn) {
@@ -145,7 +137,12 @@ const Indicator = ({
 
   return (
     <Animated.View style={[styles.indicatorContainer, animatedStyle]}>
-      <Animated.View style={[stylez, styles.indicator, style]} />
+      <View style={[styles.slotClip, styles.slotClipLeft]}>
+        <Animated.View style={[styles.slotPlate, leftPlateStyle]} />
+      </View>
+      <View style={[styles.slotClip, styles.slotClipRight]}>
+        <Animated.View style={[styles.slotPlate, rightPlateStyle]} />
+      </View>
       <Animated.View
         style={[rStyles.leftBackground /* , styles.leftBackground */]}
       />
@@ -242,6 +239,32 @@ const indicatorStyles = createGetStyles2024(
         borderRadius: 12,
         top: indicatorMarginTop + indicatorHitPaddingY,
         zIndex: 99,
+      },
+      slotClip: {
+        position: 'absolute',
+        top: indicatorMarginTop + indicatorHitPaddingY,
+        width: indicatorWidth,
+        height: indicatorHeight,
+        borderRadius: 12,
+        overflow: 'hidden',
+        zIndex: 99,
+      },
+      slotClipLeft: {
+        left: 20,
+      },
+      slotClipRight: {
+        right: 20,
+      },
+      slotPlate: {
+        position: 'absolute',
+        left: 0,
+        top: 0,
+        width: '100%',
+        height: '100%',
+        borderRadius: 12,
+        backgroundColor: isLight
+          ? 'rgba(0, 0, 0, 1)'
+          : colors2024['brand-default'],
       },
       indicatorContainer: {
         position: 'relative',

@@ -75,13 +75,14 @@ const PlateCustomLabel = ({
 }: CustomLabelProps) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
 
-  // The plate only travels *between asset tabs*. The overview boundary is the
-  // whole strip riding in, so the plate must stay fully covering its own label
-  // there - otherwise the label and its plate move at different speeds and the
-  // row looks like it is trembling.
+  // The plate travels between asset tabs, and also on the overview boundary:
+  // coming from the overview the first label's plate slides in from its own
+  // left edge (offset -1 -> 0 on progress 0 -> 1), exactly like the next label
+  // does on Token -> DeFi. Clamping the track at 1 here used to make the Token
+  // plate pop in fully formed.
   const plateOffset = (track: number) => {
     'worklet';
-    return clamp(clamp(track, 1, MAX_ASSET_INDEX) - index, -1, 1);
+    return clamp(clamp(track, 0, MAX_ASSET_INDEX) - index, -1, 1);
   };
 
   const moverStyle = useAnimatedStyle(() => {
