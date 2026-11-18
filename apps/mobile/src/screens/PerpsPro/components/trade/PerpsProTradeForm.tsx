@@ -24,6 +24,7 @@ import {
   sanitizePerpsProPriceInput,
   type PerpsProTradeTif,
 } from '../../model/trade';
+import { PERPS_PRO_TWAP_MIN_NOTIONAL } from '../../model/twapOrder';
 import { getPerpsProTradeDisplayReferencePrice } from '../../model/tradeProjection';
 import type { PerpsProTradeController } from '../../scene/usePerpsProTrade';
 import { formatPerpsProDecimal } from '../../utils/format';
@@ -156,7 +157,9 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
     }
     const minimum = resolvePerpsProMinimumOrderAmount({
       minimumQuoteAmount:
-        form.orderType === 'twap' ? 100 : PERPS_MINI_USD_VALUE,
+        form.orderType === 'twap'
+          ? PERPS_PRO_TWAP_MIN_NOTIONAL
+          : PERPS_MINI_USD_VALUE,
       price:
         getPerpsProTradeDisplayReferencePrice({
           form,
@@ -174,6 +177,10 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
       ? `${minimum.minimumBaseSize} ${market.displayBase}`
       : `${minimum.displayQuoteAmount} ${market.quoteAsset}`;
   }, [form, market]);
+  const showTwapMinimum =
+    form.orderType === 'twap' &&
+    (!!form.amount || controller.percentage > 0) &&
+    controller.getTwapValidation('buy').amountError === 'amountTooSmall';
   const quoteAsset = market?.quoteAsset ?? '-';
   const amountLabel = `${t('page.perps.pro.trade.amount')}(${
     controller.amountUnitLabel
@@ -206,6 +213,23 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
     },
     [controller, dismissKeyboardThen],
   );
+  const amountField =
+    form.orderType === 'scale' ? null : (
+      <PerpsProTradeAmountField
+        invalid={showTwapMinimum}
+        getKeyboardMinimum={getKeyboardMinimum}
+        label={amountLabel}
+        maxDecimals={controller.amountDecimals}
+        onBlur={controller.endAmountEntry}
+        onChangeText={controller.setAmount}
+        onFocus={controller.beginAmountEntry}
+        onPressIn={controller.beginAmountEntry}
+        onToggleUnit={controller.toggleAmountUnit}
+        ref={amountInputRef}
+        unit={controller.amountUnitLabel}
+        value={form.amount}
+      />
+    );
   return (
     <View
       accessibilityState={{ disabled: !configurationReady }}
@@ -341,37 +365,26 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
             />
           </>
         ) : null}
-        {form.orderType !== 'scale' ? (
+        {amountField ? (
           <>
-            <PerpsProTradeAmountField
-              invalid={
-                form.orderType === 'twap' &&
-                !!form.amount &&
-                controller.getTwapValidation('buy').amountError ===
-                  'amountTooSmall'
-              }
-              getKeyboardMinimum={getKeyboardMinimum}
-              label={amountLabel}
-              maxDecimals={controller.amountDecimals}
-              onBlur={controller.endAmountEntry}
-              onChangeText={controller.setAmount}
-              onFocus={controller.beginAmountEntry}
-              onPressIn={controller.beginAmountEntry}
-              onToggleUnit={controller.toggleAmountUnit}
-              ref={amountInputRef}
-              unit={controller.amountUnitLabel}
-              value={form.amount}
-            />
-            {form.orderType === 'twap' &&
-            (form.amount || controller.percentage > 0) &&
-            controller.getTwapValidation('buy').amountError ===
-              'amountTooSmall' ? (
-              <PerpsProTwapHint>
-                {t('page.perps.pro.twap.minimum', {
-                  amount: getKeyboardMinimum() ?? '100 USD',
-                })}
-              </PerpsProTwapHint>
-            ) : null}
+            {form.orderType === 'twap' ? (
+              <View
+                pointerEvents="box-none"
+                style={showTwapMinimum && styles.amountWithHint}>
+                {amountField}
+                {showTwapMinimum ? (
+                  <PerpsProTwapHint>
+                    {t('page.perps.pro.twap.minimum', {
+                      amount:
+                        getKeyboardMinimum() ??
+                        `${PERPS_PRO_TWAP_MIN_NOTIONAL} USD`,
+                    })}
+                  </PerpsProTwapHint>
+                ) : null}
+              </View>
+            ) : (
+              amountField
+            )}
             {controller.showAmountConversion && controller.resolvedAmount ? (
               <Text style={styles.convertedAmount}>
                 ≈{' '}
@@ -678,6 +691,7 @@ PerpsProTradeForm.displayName = 'PerpsProTradeForm';
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: { gap: 16, minHeight: 416 },
   inputGroup: { gap: 8 },
+  amountWithHint: { zIndex: 1 },
   doubleRow: { flexDirection: 'row', gap: 8 },
   flexItem: { flex: 1, minWidth: 0 },
   twapOptions: { gap: 8 },

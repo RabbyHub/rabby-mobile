@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View } from 'react-native';
+import { Platform, View } from 'react-native';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { useTranslation } from 'react-i18next';
 import {
@@ -14,14 +14,17 @@ import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/ut
 import {
   BOTTOM_BUTTON_DOUBLE_HEIGHT,
   BOTTOM_BUTTON_GAP,
+  BOTTOM_BUTTON_TOP_OFFSET,
+  getBottomButtonBottomOffset,
 } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { parsePerpsProTwapDuration } from '../../model/twapOrder';
 import { PerpsProDialogBackdrop } from '../common/PerpsProDialogBackdrop';
+import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
 import {
-  getPerpsProDialogStyles,
-  getPerpsProConfirmationFooterStyle,
+  getPerpsProInputDialogStyles,
+  resolvePerpsProDialogFieldBackground,
 } from '../common/perpsProDialogVisual';
 import { usePerpsProSheetNavigationRegistration } from '../common/perpsProSheetNavigationRegistry';
 
@@ -38,7 +41,7 @@ export const PerpsProTwapDurationSheet = React.memo(
     onConfirm: (value: string) => void;
   }) => {
     const { styles, colors2024, isLight } = useTheme2024({ getStyle });
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const modal = useRef<AppBottomSheetModal>(null);
     const picker = useRef<React.ElementRef<typeof DurationPicker>>(null);
     const session = useRef(0);
@@ -68,6 +71,40 @@ export const PerpsProTwapDurationSheet = React.memo(
       };
     }, [visible]);
     const error = parsePerpsProTwapDuration(draft).error;
+    const totalMinutes = Number(draft);
+    const hours = Math.floor(totalMinutes / 60);
+    const renderValue = (
+      amount: number,
+      unitKey: 'global.time.hours' | 'global.time.mins',
+    ) => {
+      const key =
+        unitKey === 'global.time.hours' && amount === 1
+          ? 'global.time.hour'
+          : unitKey;
+      // A figure space occupies the same width as one tabular digit.
+      const digits = String(amount).padStart(2, '\u2007');
+      return (
+        <View style={styles.value}>
+          {draft ? (
+            <View>
+              {/* Reserve the same centered width for both "hour" and "hours". */}
+              <Text
+                accessible={false}
+                accessibilityElementsHidden
+                importantForAccessibility="no-hide-descendants"
+                style={[styles.valueText, styles.measureText]}>
+                {t(unitKey, { t: '00' })}
+              </Text>
+              <Text style={[styles.valueText, styles.positionedText]}>
+                {t(key, { t: digits })}
+              </Text>
+            </View>
+          ) : (
+            <Text style={styles.valueText}>{t(unitKey, { t: '' }).trim()}</Text>
+          )}
+        </View>
+      );
+    };
     return (
       <AppBottomSheetModal
         ref={modal}
@@ -76,7 +113,7 @@ export const PerpsProTwapDurationSheet = React.memo(
         enableContentPanningGesture={false}
         {...makeBottomSheetProps({
           colors: colors2024,
-          linearGradientType: 'bg0',
+          linearGradientType: 'bg1',
         })}
         backdropComponent={PerpsProDialogBackdrop}
         backgroundStyle={styles.background}
@@ -88,14 +125,17 @@ export const PerpsProTwapDurationSheet = React.memo(
             <Text style={styles.title}>
               {t('page.perps.pro.twap.selectTime')}
             </Text>
-            <View style={styles.value}>
-              <Text style={styles.valueText}>
-                {draft ? `${draft} min` : t('page.perps.pro.twap.totalTime')}
-              </Text>
+            <View style={styles.values}>
+              {renderValue(hours, 'global.time.hours')}
+              <Text style={styles.valueText}>：</Text>
+              {renderValue(totalMinutes % 60, 'global.time.mins')}
             </View>
             <DurationPicker
               ref={picker}
-              durationMinutes={Number(draft || 0)}
+              durationMinutes={totalMinutes}
+              androidLocale={
+                Platform.OS === 'android' ? i18n.language : undefined
+              }
               sessionId={sessionId}
               dark={!isLight}
               style={styles.picker}
@@ -128,7 +168,8 @@ export const PerpsProTwapDurationSheet = React.memo(
             <View style={styles.footer}>
               <Button
                 title={t('page.perps.pro.twap.reset')}
-                type="ghost"
+                type="plain"
+                titleStyle={styles.actionTitle}
                 height={BOTTOM_BUTTON_DOUBLE_HEIGHT}
                 containerStyle={styles.action}
                 onPress={() => {
@@ -140,11 +181,11 @@ export const PerpsProTwapDurationSheet = React.memo(
               />
               <Button
                 title={t('global.confirm')}
-                type="primary"
+                type="hyperliquid"
                 height={BOTTOM_BUTTON_DOUBLE_HEIGHT}
                 containerStyle={styles.action}
-                buttonStyle={styles.button}
-                titleStyle={styles.buttonTitle}
+                buttonStyle={styles.confirmButton}
+                titleStyle={isLight ? styles.actionTitle : undefined}
                 loading={reading}
                 disabled={reading}
                 onPress={() => {
@@ -164,30 +205,74 @@ export const PerpsProTwapDurationSheet = React.memo(
 );
 PerpsProTwapDurationSheet.displayName = 'PerpsProTwapDurationSheet';
 const getStyle = createGetStyles2024(
-  ({ colors2024, isLight, safeAreaInsets }) => ({
-    ...getPerpsProDialogStyles(colors2024, safeAreaInsets.bottom, isLight),
-    container: { paddingHorizontal: 20, paddingTop: 8 },
-    value: {
-      height: 46,
-      borderRadius: 6,
-      backgroundColor: colors2024['neutral-bg-1'],
-      alignItems: 'center',
-      justifyContent: 'center',
-      marginTop: 24,
-    },
-    valueText: {
-      fontSize: 16,
-      lineHeight: 20,
-      fontWeight: '500',
-      color: colors2024['neutral-title-1'],
-    },
-    picker: { height: 216, width: '100%' },
-    error: { fontSize: 13, lineHeight: 16, color: colors2024['red-default'] },
-    footer: {
-      ...getPerpsProConfirmationFooterStyle(safeAreaInsets.bottom),
-      flexDirection: 'row',
-      gap: BOTTOM_BUTTON_GAP,
-    },
-    action: { flex: 1 },
-  }),
+  ({ colors2024, isLight, safeAreaInsets }) => {
+    const dialog = getPerpsProInputDialogStyles(
+      colors2024,
+      safeAreaInsets.bottom,
+      isLight,
+    );
+    return {
+      ...dialog,
+      container: { paddingTop: 8 },
+      values: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        paddingHorizontal: 12,
+        marginTop: 16,
+      },
+      value: {
+        flex: 1,
+        height: 46,
+        borderRadius: 6,
+        backgroundColor: resolvePerpsProDialogFieldBackground(
+          colors2024,
+          isLight,
+        ),
+        alignItems: 'center',
+        justifyContent: 'center',
+      },
+      valueText: {
+        ...PERPS_PRO_NUMBER_STYLE,
+        fontFamily: 'SF Pro Rounded',
+        fontSize: 14,
+        lineHeight: 18,
+        fontWeight: '500',
+        includeFontPadding: false,
+        color: colors2024['neutral-title-1'],
+      },
+      measureText: { opacity: 0 },
+      positionedText: { position: 'absolute', left: 0, top: 0 },
+      picker: {
+        marginTop: 16,
+        width: '100%',
+        aspectRatio: 650 / 228,
+        maxHeight: 216,
+      },
+      error: {
+        marginHorizontal: 12,
+        fontSize: 13,
+        lineHeight: 16,
+        color: colors2024['red-default'],
+      },
+      footer: {
+        marginTop: 22,
+        paddingTop: BOTTOM_BUTTON_TOP_OFFSET,
+        paddingBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom) + 2,
+        paddingLeft: 20,
+        paddingRight: 18,
+        flexDirection: 'row',
+        gap: BOTTOM_BUTTON_GAP,
+      },
+      action: { flex: 1 },
+      confirmButton: {
+        shadowColor: dialog.button.shadowColor,
+        shadowOffset: dialog.button.shadowOffset,
+        shadowOpacity: dialog.button.shadowOpacity,
+        shadowRadius: dialog.button.shadowRadius,
+        elevation: dialog.button.elevation,
+      },
+      actionTitle: { color: colors2024['neutral-body'] },
+    };
+  },
 );
