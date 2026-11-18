@@ -1,6 +1,7 @@
 import { FooterButtonScreenContainer } from '@/components2024/ScreenContainer/FooterButtonScreenContainer';
 import { toast } from '@/components2024/Toast';
 import type { Chain, CHAINS_ENUM } from '@/constant/chains';
+import { ScreenLayouts } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 import { findChainByID } from '@/utils/chain';
 import { navigationRef } from '@/utils/navigation';
@@ -125,6 +126,7 @@ function ReceiveScreen(): JSX.Element {
         )}
         <CustomTouchableOpacity
           as="RNGHTouchableOpacity"
+          style={styles.eyeButton}
           onPress={() => setShowName(e => !e)}>
           {showName ? (
             <RcIconEyeCC
@@ -146,6 +148,7 @@ function ReceiveScreen(): JSX.Element {
       styles.headerTitle,
       styles.walletIcon,
       styles.titleText,
+      styles.eyeButton,
       showName,
       account?.type,
       account?.address,
@@ -435,6 +438,17 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: 24,
     height: 24,
     borderRadius: 7,
+  },
+  // Inline-header button target: fill the header row vertically, comfortable
+  // width. The 16pt eye hugs the title text (left-aligned) and the extra width
+  // becomes a ~44x56 tap area on its right, so no negative-margin compensation
+  // is needed.
+  eyeButton: {
+    width: 44,
+    height: ScreenLayouts.headerAreaHeight,
+    // Left-align the glyph so it hugs the text; vertically centre it in the row.
+    alignItems: 'flex-start',
+    justifyContent: 'center',
   },
 }));
 
