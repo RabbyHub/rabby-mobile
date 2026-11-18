@@ -17,6 +17,7 @@ import { RootNames } from '@/constant/layout';
 import { useRegressionScenarioComponentAction } from '@/devtools/regressionScenarios/react';
 import { useTheme2024 } from '@/hooks/theme';
 import { useAppLanguage } from '@/hooks/lang';
+import { useAppForeground } from '@/hooks/useAppForeground';
 import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
@@ -25,7 +26,11 @@ import { fetchTop5TokensForAllAccountsOnce } from '@/components/AccountSwitcher/
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { clearLendingActionPopupState } from '@/screens/Lending/utils/actionPopup';
 import { createGetStyles2024 } from '@/utils/styles';
-import { StackActions, useFocusEffect } from '@react-navigation/native';
+import {
+  StackActions,
+  useFocusEffect,
+  useIsFocused,
+} from '@react-navigation/native';
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import type { ScrollView, ViewProps } from 'react-native';
 import {
@@ -58,7 +63,11 @@ import {
   refreshMemeHoldings,
   refreshMemeHoldingsIfStale,
 } from '@/screens/MemeCoin/data/memeHoldingsStore';
-import { apisHomeTabIndex, useRabbyAppNavigation } from '@/hooks/navigation';
+import {
+  apisHomeTabIndex,
+  HomeTabName,
+  useRabbyAppNavigation,
+} from '@/hooks/navigation';
 import { navigateToPerpsHome } from '@/hooks/perps/navigation/navigateToPreferredPerps';
 import addressBalanceStore, {
   balanceAccountsStore,
@@ -135,7 +144,10 @@ import {
   SCROLLABLE_STATUS,
   THRESHOLD_PERCENT,
 } from '../hooks/useHomeDrawerAnimate';
-import { useCurrentTabScrollY } from 'react-native-collapsible-tab-view';
+import {
+  useCurrentTabScrollY,
+  useFocusedTab,
+} from 'react-native-collapsible-tab-view';
 import type { ScrollHandlerProps } from '@/components/customized/react-native-collapsible-tab-view/hooks';
 import { triggerImpact } from '@/utils/common';
 import type { WorkletFunction } from 'react-native-reanimated/lib/typescript/commonTypes';
@@ -723,8 +735,17 @@ function HomeOverviewPostStartupEffects({
   triggerUpdate: HomeOverviewTriggerUpdate;
 }) {
   const isFirstTriggerRef = useRef(true);
+  const isScreenFocused = useIsFocused();
+  const focusedTab = useFocusedTab();
 
   useFetchCexInfo();
+
+  useAppForeground({
+    enabled: isScreenFocused && focusedTab === HomeTabName.overview,
+    onForeground: () => {
+      refreshOverviewBalances(triggerUpdate, false);
+    },
+  });
 
   useFocusEffect(
     useCallback(() => {
