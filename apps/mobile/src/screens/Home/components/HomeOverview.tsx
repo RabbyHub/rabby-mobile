@@ -674,7 +674,7 @@ function HomeOverviewCriticalStartupEffects({
     }
     hasTriggeredRef.current = true;
 
-    void triggerUpdate({ localOnly: true });
+    triggerUpdate({ localOnly: true });
   }, [triggerUpdate]);
 
   return null;
@@ -1055,7 +1055,7 @@ export const HomeOverview = React.memo(() => {
       refreshMemeHoldings(memeAddress);
     }
     const forceRefresh = true;
-    void currencyServiceApi.syncCurrencyList(forceRefresh).catch(error => {
+    currencyServiceApi.syncCurrencyList(forceRefresh).catch(error => {
       console.error('[HomeOverview] refresh currency list failed', error);
     });
 

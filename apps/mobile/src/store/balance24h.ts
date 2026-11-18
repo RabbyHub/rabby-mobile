@@ -977,7 +977,7 @@ class Scene24hBalanceStore extends BaseStore<Multi24hBalanceState> {
     }
     this.hasStartedLifecycle = true;
 
-    void bindKeyringEvent('removedAccount', async account => {
+    bindKeyringEvent('removedAccount', async account => {
       const removedAccount = account as Account;
       const lowerAddress = removedAccount.address.toLowerCase();
       const addresses = await keyringServiceApi.getAllAddresses();

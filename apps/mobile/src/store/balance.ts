@@ -727,17 +727,13 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
     diagnostic?.mark('app-chain-refresh-started', {
       fetchAddressCount: fetchAddresses.length,
     });
-    try {
-      await useAppChainStore
-        .getState()
-        .batchGetAppChains(fetchAddresses, force, diagnostic || undefined);
-    } catch (error) {
-      diagnostic?.fail({
-        phase: 'app-chain-refresh',
-      });
-      throw error;
+    const appChainsReady = useAppChainStore
+      .getState()
+      .batchGetAppChains(fetchAddresses, force, diagnostic || undefined)
+      .then(() => diagnostic?.mark('app-chain-refresh-settled'));
+    if (trace?.scene !== 'Home') {
+      await appChainsReady;
     }
-    diagnostic?.mark('app-chain-refresh-settled');
 
     const queuedAt = Date.now();
     const queueSizeAtStart = getTotalBalanceQueue.size;
@@ -765,7 +761,7 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
         });
 
         try {
-          const queuedBalance = await getTotalBalanceQueue.add(async () => {
+          const evmBalance = getTotalBalanceQueue.add(async () => {
             queueWaits.push(Date.now() - queuedAt);
             const requestStartedAt = Date.now();
             try {
@@ -781,6 +777,10 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
               requestDurations.push(Date.now() - requestStartedAt);
             }
           });
+          const [queuedBalance] = await Promise.all([
+            evmBalance,
+            appChainsReady,
+          ]);
           if (!queuedBalance) {
             throw new Error(
               'address balance remote task returned empty result',
@@ -827,6 +827,11 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
 
     const applyStartedAt = Date.now();
     results.forEach(result => {
+      if (
+        this.getMeta(result.address)?.activeRemoteRequestId !== result.requestId
+      ) {
+        return;
+      }
       if (!result.ok) {
         this.markError(result.address, 'remote', result.error, {
           requestId: result.requestId,
@@ -889,6 +894,11 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
           ),
         },
       );
+    });
+    // Propagate a batch failure after clearing the per-address loading states.
+    await appChainsReady.catch(error => {
+      diagnostic?.fail({ phase: 'app-chain-refresh' });
+      throw error;
     });
     diagnostic?.mark('remote-values-applied', {
       elapsedMs: Date.now() - applyStartedAt,
