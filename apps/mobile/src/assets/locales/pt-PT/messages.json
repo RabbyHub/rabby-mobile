@@ -2852,7 +2852,10 @@
           "description": "Coloque ordens a intervalos personalizados",
           "totalTime": "Tempo total",
           "durationFieldLabel": "Tempo total (hh:mm)",
-          "durationFieldValue": "{{hours}} : {{minutes}} min",
+          "durationFieldValue": "{{hours}} : {{minutes}}",
+          "minuteValue": "{{t}} min",
+          "minuteValue_one": "{{t}} min",
+          "confirmationDuration": "{{t}} min",
           "totalSize": "Quantidade total",
           "selectTime": "Selecionar tempo total",
           "reset": "Repor",
@@ -2873,8 +2876,8 @@
           "size": "Quantidade",
           "fee": "Taxa",
           "noTrades": "Ainda não há transações",
-          "endTitle": "Terminar a ordem TWAP?",
-          "endMessage": "Terminar a parte restante da ordem TWAP de {{coin}}? As transações já executadas serão mantidas.",
+          "endTitle": "Confirmar o fim da ordem TWAP",
+          "endMessage": "Após a confirmação, a sua ordem TWAP será interrompida e as ordens em aberto deste TWAP serão canceladas automaticamente.",
           "ending": "A terminar…",
           "ended": "Ordem TWAP terminada.",
           "placed": "Ordem TWAP de {{coin}} colocada.",
@@ -2894,7 +2897,6 @@
           },
           "fills": {
             "loading": "A carregar transações…",
-            "partial": "São apresentadas apenas as transações disponíveis. Toque para tentar novamente.",
             "error": "Não foi possível carregar as transações. Toque para tentar novamente."
           },
           "errors": {

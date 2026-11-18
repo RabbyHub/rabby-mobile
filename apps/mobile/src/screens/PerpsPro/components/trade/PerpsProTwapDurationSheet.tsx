@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Platform, View } from 'react-native';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { useTranslation } from 'react-i18next';
@@ -73,9 +73,16 @@ export const PerpsProTwapDurationSheet = React.memo(
     const error = parsePerpsProTwapDuration(draft).error;
     const totalMinutes = Number(draft);
     const hours = Math.floor(totalMinutes / 60);
+    const minuteLabels = useMemo(
+      () =>
+        Array.from({ length: 60 }, (_, count) =>
+          t('page.perps.pro.twap.minuteValue', { count, t: count }),
+        ),
+      [t],
+    );
     const renderValue = (
       amount: number,
-      unitKey: 'global.time.hours' | 'global.time.mins',
+      unitKey: 'global.time.hours' | 'page.perps.pro.twap.minuteValue',
     ) => {
       const key =
         unitKey === 'global.time.hours' && amount === 1
@@ -93,10 +100,10 @@ export const PerpsProTwapDurationSheet = React.memo(
                 accessibilityElementsHidden
                 importantForAccessibility="no-hide-descendants"
                 style={[styles.valueText, styles.measureText]}>
-                {t(unitKey, { t: '00' })}
+                {t(unitKey, { count: 2, t: '00' })}
               </Text>
               <Text style={[styles.valueText, styles.positionedText]}>
-                {t(key, { t: digits })}
+                {t(key, { count: amount, t: digits })}
               </Text>
             </View>
           ) : (
@@ -128,11 +135,15 @@ export const PerpsProTwapDurationSheet = React.memo(
             <View style={styles.values}>
               {renderValue(hours, 'global.time.hours')}
               <Text style={styles.valueText}>：</Text>
-              {renderValue(totalMinutes % 60, 'global.time.mins')}
+              {renderValue(
+                totalMinutes % 60,
+                'page.perps.pro.twap.minuteValue',
+              )}
             </View>
             <DurationPicker
               ref={picker}
               durationMinutes={totalMinutes}
+              minuteLabels={minuteLabels}
               androidLocale={
                 Platform.OS === 'android' ? i18n.language : undefined
               }

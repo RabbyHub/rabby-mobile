@@ -2738,7 +2738,10 @@
           "description": "按自訂時間間隔下單",
           "totalTime": "總時長",
           "durationFieldLabel": "總時長 (hh:mm)",
-          "durationFieldValue": "{{hours}} : {{minutes}} 分鐘",
+          "durationFieldValue": "{{hours}} : {{minutes}}",
+          "minuteValue": "{{t}} 分鐘",
+          "minuteValue_one": "{{t}} 分鐘",
+          "confirmationDuration": "{{t}} 分鐘",
           "totalSize": "總數量",
           "selectTime": "選擇總時長",
           "reset": "重設",
@@ -2759,8 +2762,8 @@
           "size": "數量",
           "fee": "手續費",
           "noTrades": "暫無成交",
-          "endTitle": "結束 TWAP 訂單？",
-          "endMessage": "結束剩餘的 {{coin}} TWAP 訂單？已成交的交易將保留。",
+          "endTitle": "確認結束 TWAP",
+          "endMessage": "確認後，TWAP 訂單將停止執行，該 TWAP 的所有未成交掛單將自動撤銷。",
           "ending": "正在結束…",
           "ended": "TWAP 訂單已結束。",
           "placed": "{{coin}} TWAP 訂單已提交。",
@@ -2780,7 +2783,6 @@
           },
           "fills": {
             "loading": "正在載入成交…",
-            "partial": "僅顯示可取得的成交，點擊重試。",
             "error": "無法載入成交，點擊重試。"
           },
           "errors": {

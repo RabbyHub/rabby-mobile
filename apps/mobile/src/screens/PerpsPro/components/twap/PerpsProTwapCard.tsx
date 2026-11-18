@@ -5,6 +5,7 @@ import { useShallow } from 'zustand/react/shallow';
 import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
 import { Text } from '@/components/Typography';
+import RcRight from '@/assets2024/icons/common/right-cc.svg';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { perpsStore } from '@/hooks/perps/usePerpsStore';
@@ -111,21 +112,22 @@ export const PerpsProTwapCard = React.memo(
     now,
     onEnd,
     onDetail,
-    detail = false,
+    variant = 'openOrder',
     active = true,
-    history = false,
   }: {
     order: PerpsTwapRecord;
     amountUnit: PerpsProTradeAmountUnit;
     now: number;
     onEnd?: (order: PerpsTwapRecord) => void;
     onDetail?: (order: PerpsTwapRecord) => void;
-    detail?: boolean;
+    variant?: 'openOrder' | 'runningDetail' | 'historyRow' | 'historyDetail';
     active?: boolean;
-    history?: boolean;
   }) => {
     const { styles, colors2024 } = useTheme2024({ getStyle });
     const { t } = useTranslation();
+    const historyRow = variant === 'historyRow';
+    const history = historyRow || variant === 'historyDetail';
+    const detail = variant === 'runningDetail' || variant === 'historyDetail';
     const market = usePerpsProTwapMarket(
       order.state.coin,
       amountUnit === 'quote' && order.endedAt === null,
@@ -146,7 +148,7 @@ export const PerpsProTwapCard = React.memo(
         ? colors2024['green-default']
         : summary.status === 'expired'
         ? colors2024['red-default']
-        : colors2024['neutral-secondary'];
+        : colors2024['neutral-foot'];
     const statusBackground =
       summary.status === 'filled' || summary.status === 'working'
         ? colors2024['green-light-1']
@@ -203,101 +205,144 @@ export const PerpsProTwapCard = React.memo(
         ),
       ],
     ];
-    return (
-      <View style={styles.card}>
-        <Pressable
-          disabled={!onDetail || detail}
-          onPress={() => onDetail?.(order)}
-          accessibilityRole={onDetail && !detail ? 'button' : undefined}>
-          <View style={styles.heading}>
-            <View style={styles.symbols}>
-              <Text style={[styles.side, { backgroundColor: sideColor }]}>
-                {order.state.side === 'B' ? 'B' : 'S'}
-              </Text>
-              <Text numberOfLines={1} style={styles.symbol}>
-                {market?.displayPair ?? order.state.coin}
-              </Text>
-              {market?.sourceTag ? (
-                <Text style={styles.source}>{market.sourceTag}</Text>
-              ) : null}
-            </View>
-            <View style={styles.status}>
+    const content = (
+      <>
+        <View style={styles.heading}>
+          <View style={styles.symbols}>
+            <Text style={[styles.side, { backgroundColor: sideColor }]}>
+              {order.state.side === 'B' ? 'B' : 'S'}
+            </Text>
+            <Text numberOfLines={1} style={styles.symbol}>
+              {market?.displayPair ?? order.state.coin}
+            </Text>
+            {market?.sourceTag ? (
+              <Text style={styles.source}>{market.sourceTag}</Text>
+            ) : null}
+          </View>
+          <View style={styles.status}>
+            {!historyRow && (
               <View style={styles.progressGroup}>
-                <Text style={styles.progressText}>
-                  {formatPerpsProDecimal(String(summary.percentage), 1)}%
+                <Text
+                  style={[
+                    styles.progressText,
+                    {
+                      color:
+                        colors2024[
+                          summary.percentage === 0
+                            ? 'neutral-secondary'
+                            : summary.percentage === 100
+                            ? 'neutral-body'
+                            : 'neutral-foot'
+                        ],
+                    },
+                  ]}>
+                  {Number(summary.percentage.toFixed(1))}%
                 </Text>
                 <View style={styles.progress}>
                   <View
                     style={[
                       styles.progressFilled,
                       {
-                        backgroundColor: sideColor,
                         width: `${summary.percentage}%`,
                       },
                     ]}
                   />
                 </View>
               </View>
-              {detail || !order.active || summary.status === 'waiting' ? (
-                <Text
-                  style={[
-                    styles.statusTag,
-                    { color: tone, backgroundColor: statusBackground },
-                  ]}>
-                  {t(`page.perps.pro.twap.status.${summary.status}`)}
-                </Text>
-              ) : null}
-            </View>
-          </View>
-          <View style={styles.tags}>
-            <Text
-              style={[
-                styles.tag,
-                order.active && {
-                  color: sideColor,
-                  backgroundColor: sideBackground,
-                },
-              ]}>
-              TWAP
-            </Text>
-            {order.state.randomize ? (
-              <Text style={styles.tag}>
-                {t('page.perps.pro.twap.randomized')}
+            )}
+            {detail || !order.active || summary.status === 'waiting' ? (
+              <Text
+                style={[
+                  styles.statusTag,
+                  { color: tone, backgroundColor: statusBackground },
+                ]}>
+                {t(`page.perps.pro.twap.status.${summary.status}`)}
               </Text>
             ) : null}
-            <Text style={styles.time}>
-              {dayjs(order.endedAt ?? order.state.timestamp).format(
-                'YYYY/MM/DD HH:mm:ss',
-              )}
-              {order.endedAt !== null
-                ? ` ${t('page.perps.pro.twap.endedLabel')}`
-                : ''}
-            </Text>
-          </View>
-          <View style={styles.grid}>
-            {rows.map(([label, value], index) =>
-              index === 2 && order.active ? (
-                <PerpsProTwapElapsed
-                  key={label}
-                  active={active}
-                  start={order.state.timestamp}
-                  label={label}
+            {historyRow && (
+              <View style={styles.detailArrow}>
+                <RcRight
+                  width={12}
+                  height={12}
+                  color={colors2024['neutral-body']}
+                  accessible={false}
                 />
-              ) : (
-                <PerpsProTwapValue
-                  key={label}
-                  label={label}
-                  value={value}
-                  right={index % 2 === 1}
-                />
-              ),
+              </View>
             )}
           </View>
-          {detail && order.description ? (
-            <Text style={styles.reason}>{order.description}</Text>
+        </View>
+        <View style={styles.tags}>
+          <Text
+            style={[
+              styles.tag,
+              order.active && {
+                color: sideColor,
+                backgroundColor: sideBackground,
+              },
+            ]}>
+            TWAP
+          </Text>
+          {order.state.randomize ? (
+            <Text style={styles.tag}>
+              {t('page.perps.pro.twap.randomized')}
+            </Text>
           ) : null}
+          <Text style={styles.time}>
+            {dayjs(order.endedAt ?? order.state.timestamp).format(
+              history ? 'YYYY-MM-DD HH:mm:ss' : 'YYYY/MM/DD HH:mm:ss',
+            )}
+            {order.endedAt !== null &&
+            (!historyRow || summary.status === 'filled')
+              ? ` ${t('page.perps.pro.twap.endedLabel')}`
+              : ''}
+          </Text>
+        </View>
+        <View style={styles.grid}>
+          {rows.map(([label, value], index) =>
+            index === 2 && order.active ? (
+              <PerpsProTwapElapsed
+                key={label}
+                active={active}
+                start={order.state.timestamp}
+                label={label}
+              />
+            ) : (
+              <PerpsProTwapValue
+                key={label}
+                label={label}
+                value={value}
+                right={index % 2 === 1}
+              />
+            ),
+          )}
+        </View>
+        {detail && order.description ? (
+          <Text style={styles.reason}>{order.description}</Text>
+        ) : null}
+      </>
+    );
+    if (historyRow) {
+      return (
+        <Pressable
+          style={[styles.card, styles.historyCard]}
+          accessibilityRole="button"
+          onPress={() => onDetail?.(order)}>
+          {content}
         </Pressable>
-        {order.active && !detail ? (
+      );
+    }
+    return (
+      <View style={styles.card}>
+        {detail ? (
+          content
+        ) : (
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => onDetail?.(order)}>
+            {content}
+          </Pressable>
+        )}
+        {order.active && variant === 'openOrder' ? (
           <View style={styles.actions}>
             <Pressable
               disabled={!onEnd}
@@ -350,6 +395,15 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     alignItems: 'center',
     gap: 8,
   },
+  historyCard: { marginBottom: 0 },
+  detailArrow: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: colors2024['neutral-bg-2'],
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   symbols: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -357,6 +411,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     flexShrink: 1,
   },
   symbol: {
+    fontFamily: 'SF Pro Rounded',
     fontSize: 16,
     lineHeight: 20,
     fontWeight: '700',
@@ -379,6 +434,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   status: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   statusTag: {
+    fontFamily: 'SF Pro Rounded',
     fontSize: 13,
     lineHeight: 16,
     fontWeight: '700',
@@ -393,15 +449,14 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   tag: {
     ...getPerpsProMetadataTagContainerStyle(colors2024),
     ...getPerpsProMetadataTagTextStyle(colors2024),
-    color: colors2024['neutral-secondary'],
     overflow: 'hidden',
   },
   progressText: {
     ...PERPS_PRO_NUMBER_STYLE,
+    fontFamily: 'SF Pro',
     fontSize: 10,
     lineHeight: 12,
     fontWeight: '500',
-    color: colors2024['neutral-secondary'],
   },
   progress: {
     height: 2,
@@ -409,9 +464,13 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     backgroundColor: colors2024['neutral-line'],
     overflow: 'hidden',
   },
-  progressFilled: { height: 2 },
+  progressFilled: {
+    height: 2,
+    backgroundColor: colors2024['neutral-secondary'],
+  },
   time: {
-    ...PERPS_PRO_NUMBER_STYLE,
+    fontFamily: 'SF Pro Rounded',
+    fontWeight: '400',
     fontSize: 12,
     lineHeight: 16,
     color: colors2024['neutral-secondary'],
@@ -419,6 +478,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   grid: { flexDirection: 'row', flexWrap: 'wrap', rowGap: 8, marginTop: 12 },
   cell: { width: '50%', gap: 6, minWidth: 0 },
   cellLabel: {
+    fontFamily: 'SF Pro Rounded',
     fontSize: 13,
     lineHeight: 16,
     fontWeight: '500',
@@ -426,6 +486,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   cellValue: {
     ...PERPS_PRO_NUMBER_STYLE,
+    fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     lineHeight: 18,
     fontWeight: '700',
@@ -441,12 +502,14 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     backgroundColor: colors2024['neutral-bg-5'],
   },
   actionText: {
+    fontFamily: 'SF Pro Rounded',
     fontSize: 13,
     lineHeight: 16,
     color: colors2024['neutral-title-1'],
     fontWeight: '700',
   },
   reason: {
+    fontFamily: 'SF Pro Rounded',
     fontSize: 13,
     lineHeight: 18,
     color: colors2024['red-default'],

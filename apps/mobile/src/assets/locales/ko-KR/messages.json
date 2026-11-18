@@ -2566,7 +2566,10 @@
           "description": "사용자가 지정한 간격으로 주문합니다",
           "totalTime": "총 시간",
           "durationFieldLabel": "총 시간 (hh:mm)",
-          "durationFieldValue": "{{hours}} : {{minutes}}분",
+          "durationFieldValue": "{{hours}} : {{minutes}}",
+          "minuteValue": "{{t}}분",
+          "minuteValue_one": "{{t}}분",
+          "confirmationDuration": "{{t}}분",
           "totalSize": "총 수량",
           "selectTime": "총 시간 선택",
           "reset": "초기화",
@@ -2587,8 +2590,8 @@
           "size": "수량",
           "fee": "수수료",
           "noTrades": "아직 체결 내역이 없습니다",
-          "endTitle": "TWAP 주문을 종료할까요?",
-          "endMessage": "남은 {{coin}} TWAP 주문을 종료할까요? 이미 체결된 거래는 유지됩니다.",
+          "endTitle": "TWAP 주문 종료 확인",
+          "endMessage": "확인하면 TWAP 주문이 중단되고 이 TWAP의 미체결 주문이 자동으로 취소됩니다.",
           "ending": "종료 중…",
           "ended": "TWAP 주문이 종료되었습니다.",
           "placed": "{{coin}} TWAP 주문이 제출되었습니다.",
@@ -2608,7 +2611,6 @@
           },
           "fills": {
             "loading": "체결 내역을 불러오는 중…",
-            "partial": "가져올 수 있는 체결 내역만 표시됩니다. 탭하여 다시 시도하세요.",
             "error": "체결 내역을 불러올 수 없습니다. 탭하여 다시 시도하세요."
           },
           "errors": {

@@ -2653,7 +2653,10 @@
           "description": "Place orders at custom intervals",
           "totalTime": "Total Time",
           "durationFieldLabel": "Total Time(hh:mm)",
-          "durationFieldValue": "{{hours}} : {{minutes}}min",
+          "durationFieldValue": "{{hours}} : {{minutes}}",
+          "minuteValue": "{{t}}mins",
+          "minuteValue_one": "{{t}}min",
+          "confirmationDuration": "{{t}} m",
           "totalSize": "Total Size",
           "selectTime": "Select Total Time",
           "reset": "Reset",
@@ -2674,8 +2677,8 @@
           "size": "Size",
           "fee": "Fee",
           "noTrades": "No trades yet",
-          "endTitle": "End TWAP Order?",
-          "endMessage": "End the remaining {{coin}} TWAP order? Trades already filled will remain.",
+          "endTitle": "TWAP End Confirmation",
+          "endMessage": "Your TWAP order will be stopped after confirmation, and open orders of this TWAP will automatically be cancelled.",
           "ending": "Ending…",
           "ended": "TWAP order ended.",
           "placed": "{{coin}} TWAP order placed.",
@@ -2692,7 +2695,6 @@
           },
           "fills": {
             "loading": "Loading trades…",
-            "partial": "Only available trades are shown. Tap to retry.",
             "error": "Unable to load trades. Tap to retry."
           },
           "errors": {

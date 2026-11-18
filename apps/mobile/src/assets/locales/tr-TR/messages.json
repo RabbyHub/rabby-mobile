@@ -2566,7 +2566,10 @@
           "description": "Belirlediğiniz aralıklarla emir verin",
           "totalTime": "Toplam süre",
           "durationFieldLabel": "Toplam süre (hh:mm)",
-          "durationFieldValue": "{{hours}} : {{minutes}} dk",
+          "durationFieldValue": "{{hours}} : {{minutes}}",
+          "minuteValue": "{{t}} dk",
+          "minuteValue_one": "{{t}} dk",
+          "confirmationDuration": "{{t}} dk",
           "totalSize": "Toplam miktar",
           "selectTime": "Toplam süreyi seç",
           "reset": "Sıfırla",
@@ -2587,8 +2590,8 @@
           "size": "Miktar",
           "fee": "Ücret",
           "noTrades": "Henüz işlem yok",
-          "endTitle": "TWAP emri sonlandırılsın mı?",
-          "endMessage": "Kalan {{coin}} TWAP emri sonlandırılsın mı? Gerçekleşmiş işlemler korunacaktır.",
+          "endTitle": "TWAP Emrini Sonlandırmayı Onayla",
+          "endMessage": "Onayladığınızda TWAP emriniz durdurulacak ve bu TWAP kapsamındaki açık emirler otomatik olarak iptal edilecektir.",
           "ending": "Sonlandırılıyor…",
           "ended": "TWAP emri sonlandırıldı.",
           "placed": "{{coin}} TWAP emri verildi.",
@@ -2608,7 +2611,6 @@
           },
           "fills": {
             "loading": "İşlemler yükleniyor…",
-            "partial": "Yalnızca erişilebilen işlemler gösteriliyor. Tekrar denemek için dokunun.",
             "error": "İşlemler yüklenemedi. Tekrar denemek için dokunun."
           },
           "errors": {

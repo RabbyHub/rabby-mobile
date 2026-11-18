@@ -2616,7 +2616,10 @@
           "description": "指定した間隔で注文を出す",
           "totalTime": "合計時間",
           "durationFieldLabel": "合計時間 (hh:mm)",
-          "durationFieldValue": "{{hours}} : {{minutes}} 分",
+          "durationFieldValue": "{{hours}} : {{minutes}}",
+          "minuteValue": "{{t}} 分",
+          "minuteValue_one": "{{t}} 分",
+          "confirmationDuration": "{{t}} 分",
           "totalSize": "合計数量",
           "selectTime": "合計時間を選択",
           "reset": "リセット",
@@ -2637,8 +2640,8 @@
           "size": "数量",
           "fee": "手数料",
           "noTrades": "約定はまだありません",
-          "endTitle": "TWAP 注文を終了しますか？",
-          "endMessage": "残りの {{coin}} TWAP 注文を終了しますか？約定済みの取引は保持されます。",
+          "endTitle": "TWAP 注文の終了確認",
+          "endMessage": "確定すると TWAP 注文の執行が停止し、この TWAP の未約定注文は自動的にキャンセルされます。",
           "ending": "終了中…",
           "ended": "TWAP 注文を終了しました。",
           "placed": "{{coin}} TWAP 注文を送信しました。",
@@ -2658,7 +2661,6 @@
           },
           "fills": {
             "loading": "約定を読み込み中…",
-            "partial": "取得できた約定のみ表示しています。タップして再試行してください。",
             "error": "約定を読み込めません。タップして再試行してください。"
           },
           "errors": {

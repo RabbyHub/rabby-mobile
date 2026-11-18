@@ -2,12 +2,15 @@ jest.mock('@/hooks/perps/twap/usePerpsTwapStore', () => {
   const records = {};
   return {
     usePerpsTwapRecords: () => records,
-    usePerpsTwapReadiness: () => 'ready',
+    usePerpsTwapSourceState: (_user: string, source: string) =>
+      source === 'history'
+        ? mockTwapHistory
+        : { ready: false, error: 'active offline' },
   };
 });
 jest.mock('@/hooks/perps/twap/usePerpsTwapSubscriptions', () => ({
   usePerpsTwapSubscriptions: () => {},
-  refreshPerpsTwaps: async () => {},
+  refreshPerpsTwaps: (...args: unknown[]) => mockRefreshTwaps(...args),
 }));
 import type {
   UserHistoricalOrders,
@@ -16,6 +19,8 @@ import type {
 import { act, renderHook, waitFor } from '@testing-library/react-native';
 import { AppState, InteractionManager } from 'react-native';
 
+const mockRefreshTwaps = jest.fn(async (..._args: unknown[]) => {});
+let mockTwapHistory: { ready: boolean; error: string | null };
 const mockFetchOrders = jest.fn();
 const mockFetchLatestTrades = jest.fn();
 const mockFetchOrderFills = jest.fn();
@@ -150,6 +155,7 @@ describe('usePerpsProHistoryController', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockHistoryListener = null;
+    mockTwapHistory = { ready: true, error: null };
     mockAccountGeneration = 1;
     mockPerpsState.currentPerpsAccount = {
       address: '0x1111111111111111111111111111111111111111',
@@ -196,6 +202,33 @@ describe('usePerpsProHistoryController', () => {
 
   afterEach(() => {
     jest.restoreAllMocks();
+  });
+
+  it('offers a full retry before the first TWAP history snapshot and preserves an empty snapshot on refresh failure', async () => {
+    mockTwapHistory = { ready: false, error: 'history offline' };
+    const hook = renderHook(() => usePerpsProHistoryController('twap'));
+    await waitFor(() =>
+      expect(hook.result.current.tabState.status).toBe('error'),
+    );
+    await act(async () => {
+      await hook.result.current.refresh();
+    });
+    expect(mockRefreshTwaps).toHaveBeenLastCalledWith(
+      mockPerpsState.currentPerpsAccount.address,
+      'history',
+    );
+
+    mockTwapHistory = { ready: true, error: 'history offline' };
+    hook.rerender();
+    expect(hook.result.current.tabState).toMatchObject({
+      status: 'empty',
+      rows: [],
+      refreshError: 'history offline',
+    });
+    mockTwapHistory = { ready: true, error: null };
+    hook.rerender();
+    expect(hook.result.current.tabState.status).toBe('empty');
+    expect(hook.result.current.tabState.refreshError).toBeUndefined();
   });
 
   it('preloads ordinary tabs alongside the shared TWAP source and distinguishes successful empty results', async () => {

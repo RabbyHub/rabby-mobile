@@ -661,10 +661,8 @@ export const PerpsProScene: React.FC<{
     () => setHideOtherOpenOrderSymbols(value => !value),
     [setHideOtherOpenOrderSymbols],
   );
-  const { gap, orderBookWidth, tradeWidth } = useMemo(
-    () => getPerpsProColumnLayout(width),
-    [width],
-  );
+  const columnLayout = useMemo(() => getPerpsProColumnLayout(width), [width]);
+  const { gap, orderBookWidth, tradeWidth } = columnLayout;
   const orderBookColumnStyle = useMemo<ViewStyle>(
     () => ({ width: orderBookWidth }),
     [orderBookWidth],
@@ -1044,6 +1042,7 @@ export const PerpsProScene: React.FC<{
             </View>
             <View onLayout={updateMainColumnHeight} style={tradeColumnStyle}>
               <PerpsProTradeForm
+                columnLayout={columnLayout}
                 addFundsMode={tradeAddFundsAction.mode}
                 configurationReady={scene.tradeConfigurationReady}
                 controller={trade}
@@ -1084,6 +1083,7 @@ export const PerpsProScene: React.FC<{
       </View>
     );
   }, [
+    columnLayout,
     columnsStyle,
     gap,
     isMarketLoading,
