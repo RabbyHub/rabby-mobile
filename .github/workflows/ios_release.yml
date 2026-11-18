@@ -62,6 +62,7 @@ jobs:
       - ${{ matrix.machine_loc }}
     env:
       RABBY_MOBILE_NM_USE_CACHE: 'true'
+      RABBY_MOBILE_POD_USE_CACHE: 'true'
       XCODE_VER: '27.1'
     steps:
       - name: Checkout git repo
@@ -306,6 +307,13 @@ jobs:
           RABBY_MOBILE_IOS_SIGNING_PREFLIGHT_ARCHIVE_SHA256: ${{ secrets.RABBY_MOBILE_IOS_SIGNING_PREFLIGHT_ARCHIVE_SHA256 }}
           INPUT_MOBILE_LOC: ${{ inputs.macos_machine_location }}
 
+      - name: Ensure ccache
+        env:
+          RABBY_MOBILE_BUILD_BUCKET: ${{ secrets.RABBY_MOBILE_BUILD_BUCKET }}
+        run: |
+          # Managed ccache: uses a local binary when present, otherwise installs
+          # the pinned bundle published under s3://<bucket>/_private/toolchains/ccache.
+          bash apps/mobile/scripts/ci/ensure-ccache.sh
       - name: Install dependencies && Build app
         if: ${{ github.event_name != 'workflow_dispatch' || (inputs.ASC_PREFLIGHT_ONLY != true && inputs.IOS_SIGNING_EXPORT_PREFLIGHT_ONLY != true) }}
         run: |

@@ -132,6 +132,14 @@ if [ ! -d "$generated_ios_dir" ] || [ -z "$(find "$generated_ios_dir" -name '*.h
     echo '[ios-simulator] pod install for codegen failed' >&2
     exit 1
   }
+# React Native's ccache wrappers exec `$CCACHE_BINARY`, which is only a build
+# setting on the Pod targets. Exporting it here makes the same wrapper work for
+# the app target too; otherwise it silently falls back to a plain clang and the
+# cache never sees a compile.
+if [ "${RABBY_MOBILE_POD_USE_CACHE:-}" = "true" ] && command -v ccache >/dev/null 2>&1; then
+  CCACHE_BINARY="$(command -v ccache)"
+  export CCACHE_BINARY
+  turbo_log "ccache wrapper binary: $CCACHE_BINARY"
 fi
 
 # Preserve ordinary 64-character variant directories, but namespace the hash
