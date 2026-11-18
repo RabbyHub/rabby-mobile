@@ -10,7 +10,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { perfEvents } from '@/core/utils/perf';
-import { isFoldableIosDevice } from '@/core/utils/foldableDevice';
+import {
+  FOLDABLE_WIDE_CENTERED_COLUMN_ENABLED,
+  FOLDABLE_WIDE_CONTENT_MAX_WIDTH,
+  isFoldableIosDevice,
+  isFoldableWidePosture,
+} from '@/core/utils/foldableDevice';
 import { getScreenContentBackgroundColor } from '@/constant/layout';
 import {
   SafeWindowBackdropContext,
@@ -104,12 +109,10 @@ function SafeWindowFrameImpl({ children }: { children?: React.ReactNode }) {
       : declaredBackground);
 
   const lastWrittenWidthRef = React.useRef<number | null>(null);
+  /** Content width of the centered column in the wide inner-screen posture. */
+  const [wideWidth, setWideWidth] = React.useState<number | null>(null);
 
   React.useEffect(() => {
-    if (!active) {
-      return;
-    }
-
     const applyWindow = (win: ScaledSize) => {
       const screen = Dimensions.get('screen');
       const isOwnValue =
@@ -120,14 +123,39 @@ function SafeWindowFrameImpl({ children }: { children?: React.ReactNode }) {
       // narrower than the screen, and `max(window, screen)` would over-shrink.
       const nativeWidth =
         isOwnValue && lastNativeWindow ? lastNativeWindow.width : win.width;
-      const targetWidth = Math.max(0, nativeWidth - leftInset - rightInset);
-      const nativeWindow = { ...win, width: nativeWidth };
-
+      const nativeHeight =
+        isOwnValue && lastNativeWindow ? lastNativeWindow.height : win.height;
+      const nativeWindow = { ...win, width: nativeWidth, height: nativeHeight };
       lastNativeWindow = nativeWindow;
+
+      const inWidePosture =
+        !active &&
+        FOLDABLE_WIDE_CENTERED_COLUMN_ENABLED &&
+        isFoldableWidePosture(nativeWindow);
+      const targetWidth = active
+        ? Math.max(0, nativeWidth - leftInset - rightInset)
+        : inWidePosture
+        ? Math.min(nativeWidth, FOLDABLE_WIDE_CONTENT_MAX_WIDTH)
+        : null;
+
+      if (targetWidth === null) {
+        setWideWidth(null);
+        if (lastAppliedWidth !== null) {
+          lastAppliedWidth = null;
+          lastWrittenWidthRef.current = null;
+          Dimensions.set({
+            window: nativeWindow,
+            screen,
+          });
+        }
+        return;
+      }
+
       lastAppliedWidth = targetWidth;
       lastWrittenWidthRef.current = targetWidth;
+      setWideWidth(active ? null : targetWidth);
       Dimensions.set({
-        window: { ...win, width: targetWidth },
+        window: { ...win, width: targetWidth, height: nativeHeight },
         screen,
       });
     };
@@ -146,6 +174,7 @@ function SafeWindowFrameImpl({ children }: { children?: React.ReactNode }) {
     return () => {
       subscription.remove();
       lastWrittenWidthRef.current = null;
+      lastAppliedWidth = null;
       if (lastNativeWindow) {
         Dimensions.set({
           window: lastNativeWindow,
@@ -154,6 +183,20 @@ function SafeWindowFrameImpl({ children }: { children?: React.ReactNode }) {
       }
     };
   }, [active, leftInset, rightInset]);
+
+  if (wideWidth !== null) {
+    return (
+      <View
+        style={[
+          styles.wideFrame,
+          { backgroundColor: colors2024['neutral-bg-1'] },
+        ]}>
+        <View style={[styles.wideContent, { width: wideWidth }]}>
+          {children}
+        </View>
+      </View>
+    );
+  }
 
   if (!active) {
     return <>{children}</>;
@@ -190,6 +233,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
   content: {
+    flex: 1,
+  },
+  wideFrame: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  wideContent: {
     flex: 1,
   },
 });
