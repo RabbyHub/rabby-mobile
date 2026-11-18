@@ -75,6 +75,7 @@ export const AddressItemInDetail = ({
                   width: 18,
                   height: 18,
                   borderRadius: 4,
+                  borderCurve: 'continuous',
                   marginRight: 4,
                 }}
               />
@@ -86,6 +87,7 @@ export const AddressItemInDetail = ({
                   width: 18,
                   height: 18,
                   borderRadius: 4,
+                  borderCurve: 'continuous',
                   marginRight: 4,
                 }}
               />

@@ -47,7 +47,7 @@ export function WebViewHeaderRight({
           address={finalSceneCurrentAccount?.address}
           width={24}
           height={24}
-          style={{ borderRadius: 6 }}
+          style={{ borderRadius: 6, borderCurve: 'continuous' }}
         />
       )}
     </TouchableView>

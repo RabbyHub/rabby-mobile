@@ -61,6 +61,7 @@ const getStyle = createGetStyles2024(() => ({
     width: DeviceUtils.getDeviceWidth() - 124,
     backgroundColor: 'white',
     borderRadius: 20,
+    borderCurve: 'continuous',
     alignItems: 'center',
     padding: 10,
   },

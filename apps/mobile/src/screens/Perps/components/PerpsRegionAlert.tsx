@@ -56,6 +56,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     padding: 8,
     backgroundColor: colors2024['orange-light-1'],
     borderRadius: 8,
+    borderCurve: 'continuous',
     justifyContent: 'center',
     marginHorizontal: PERPS_REGION_ALERT_HORIZONTAL_MARGIN,
   },

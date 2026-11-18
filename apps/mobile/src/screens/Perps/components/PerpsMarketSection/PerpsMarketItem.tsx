@@ -131,6 +131,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     width: 40,
     height: 40,
     borderRadius: 1000,
+    borderCurve: 'continuous',
     backgroundColor: 'white',
     flexShrink: 0,
   },
@@ -170,6 +171,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   positionContainer: {
     backgroundColor: 'rgba(80, 210, 193, 0.12)',
     borderRadius: 4,
+    borderCurve: 'continuous',
     paddingHorizontal: 4,
     paddingVertical: 1,
   },
@@ -197,6 +199,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   tag: {
     backgroundColor: colors2024['neutral-bg-5'],
     borderRadius: 4,
+    borderCurve: 'continuous',
     paddingHorizontal: 4,
     paddingVertical: 1,
   },

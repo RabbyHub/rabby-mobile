@@ -125,6 +125,7 @@ const styles = {
   },
   ratioBar: {
     borderRadius: 2,
+    borderCurve: 'continuous' as const,
   },
   row: {
     alignItems: 'center' as const,
@@ -135,5 +136,6 @@ const styles = {
   },
   value: {
     borderRadius: 4,
+    borderCurve: 'continuous' as const,
   },
 };

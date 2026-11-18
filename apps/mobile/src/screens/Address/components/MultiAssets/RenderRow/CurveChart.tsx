@@ -542,12 +542,14 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   skeletonNetWorth: {
     borderRadius: 8,
+    borderCurve: 'continuous',
     backgroundColor: isLight
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-bg-2'],
   },
   skeletonChange: {
     borderRadius: 8,
+    borderCurve: 'continuous',
     backgroundColor: isLight
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-bg-2'],
@@ -635,6 +637,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     padding: 8,
     paddingLeft: 11,
     borderRadius: 10,
+    borderCurve: 'continuous',
     backgroundColor: isLight
       ? colors2024['neutral-line']
       : colors2024['brand-default'],
@@ -663,6 +666,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   accountCountSkeleton: {
     marginLeft: 6,
     borderRadius: 4,
+    borderCurve: 'continuous',
   },
   percentChangeContainer: {
     // flexDirection: 'row',

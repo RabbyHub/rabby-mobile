@@ -525,6 +525,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     maxHeight: '100%',
     backgroundColor: colors2024['neutral-bg-1'],
     borderRadius: 24,
+    borderCurve: 'continuous',
     borderWidth: 1,
     borderColor: colors2024['neutral-line'],
   },
@@ -627,6 +628,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: 30,
     height: 30,
     borderRadius: 10,
+    borderCurve: 'continuous',
   },
   outerName: {
     fontSize: 17,
@@ -647,6 +649,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     alignSelf: 'stretch',
     borderColor: colors2024['neutral-line'],
     borderRadius: 12,
+    borderCurve: 'continuous',
     marginBottom: 12,
     backgroundColor: colors2024['neutral-bg-1'],
   },
@@ -677,6 +680,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: 46,
     height: 46,
     borderRadius: 12,
+    borderCurve: 'continuous',
   },
   walletNameContainer: {
     minWidth: 0,
@@ -777,6 +781,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   roundSkeleton: {
     borderRadius: 30,
+    borderCurve: 'continuous',
   },
   outerAccountContainer: {
     width: '90%',

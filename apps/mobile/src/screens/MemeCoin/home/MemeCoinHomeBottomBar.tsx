@@ -235,6 +235,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     width: BOTTOM_BUTTON_SINGLE_HEIGHT,
     height: BOTTOM_BUTTON_SINGLE_HEIGHT,
     borderRadius: 12,
+    borderCurve: 'continuous',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors2024['neutral-bg-2'],

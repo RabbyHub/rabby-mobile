@@ -642,6 +642,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
       ? colors2024['neutral-bg-2']
       : colors2024['neutral-bg-4'],
     borderRadius: 8,
+    borderCurve: 'continuous',
   },
   switchItemText: {
     fontSize: 12,
@@ -686,6 +687,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     fontFamily: 'SF Pro Rounded',
     backgroundColor: colors2024['green-light-1'],
     borderRadius: 6,
+    borderCurve: 'continuous',
     width: 32,
     lineHeight: 26,
     height: 26,
@@ -719,6 +721,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   chatBottomLine: {
     height: 4,
     borderRadius: 20,
+    borderCurve: 'continuous',
     flex: 1,
     backgroundColor: colors2024['green-default'],
   },
@@ -767,6 +770,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   switchTabItemActive: {
     borderRadius: 8,
+    borderCurve: 'continuous',
     backgroundColor: isLight
       ? colors2024['neutral-bg-2']
       : colors2024['neutral-bg-4'],
@@ -886,6 +890,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 8,
+    borderCurve: 'continuous',
     backgroundColor: isLight
       ? colors2024['neutral-bg-2']
       : colors2024['neutral-bg-4'],

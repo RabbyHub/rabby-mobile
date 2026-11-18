@@ -44,6 +44,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     paddingBottom: 8,
     backgroundColor: colors2024['neutral-bg-1'],
     borderRadius: 14,
+    borderCurve: 'continuous',
   },
   image: {
     width: 123,

@@ -25,6 +25,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   gradient: {
     padding: 12,
     borderRadius: 20,
+    borderCurve: 'continuous',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
@@ -39,6 +40,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     gap: 4,
     height: 46,
     borderRadius: 12,
+    borderCurve: 'continuous',
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: colors2024['neutral-bg-5'],
@@ -147,6 +149,7 @@ const BlurViewOnlyIOSWrapper = ({
       <View
         style={{
           borderRadius,
+          borderCurve: 'continuous',
           backgroundColor: isLight
             ? colors2024['neutral-bg-1']
             : colors2024['neutral-bg-2'],
@@ -157,7 +160,7 @@ const BlurViewOnlyIOSWrapper = ({
   }
   return (
     <BlurView
-      style={[{ borderRadius }, style]}
+      style={[{ borderRadius, borderCurve: 'continuous' }, style]}
       blurAmount={blurAmount}
       blurType={isLight ? 'light' : 'dark'}
       reducedTransparencyFallbackColor="white">

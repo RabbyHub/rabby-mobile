@@ -387,6 +387,7 @@ const getPanelStyle = createGetStyles2024(ctx => {
       height: 6,
       width: 50,
       borderRadius: 104,
+      borderCurve: 'continuous',
     },
   };
 });

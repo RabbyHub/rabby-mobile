@@ -158,6 +158,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     flex: 1,
     height: 48,
     borderRadius: 12,
+    borderCurve: 'continuous',
     backgroundColor: colors2024['brand-light-1'],
     display: 'flex',
     alignItems: 'center',

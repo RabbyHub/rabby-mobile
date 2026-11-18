@@ -849,6 +849,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       width: 50,
       height: 6,
       borderRadius: 3,
+      borderCurve: 'continuous',
     },
     backdrop: {
       flex: 1,

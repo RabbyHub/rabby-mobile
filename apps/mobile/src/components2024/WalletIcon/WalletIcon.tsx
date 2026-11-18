@@ -80,6 +80,7 @@ export const WalletIcon: React.FC<WalletIconProps> = ({
         style={StyleSheet.flatten([
           {
             borderRadius,
+            borderCurve: 'continuous',
             width,
             height,
           },
@@ -97,6 +98,7 @@ export const WalletIcon: React.FC<WalletIconProps> = ({
       style={StyleSheet.flatten([
         {
           borderRadius,
+          borderCurve: 'continuous',
           width,
           height,
           position: 'relative',
@@ -110,6 +112,7 @@ export const WalletIcon: React.FC<WalletIconProps> = ({
         style={StyleSheet.flatten([
           {
             borderRadius: styleBorderRadius || borderRadius,
+            borderCurve: 'continuous',
             width: styleWidth || width,
             height: styleHeight || height,
           },
@@ -127,6 +130,7 @@ export const WalletIcon: React.FC<WalletIconProps> = ({
             borderColor: 'white',
             backgroundColor: 'white',
             borderRadius: subWalletIconBorderRadius,
+            borderCurve: 'continuous',
             alignItems: 'center',
             justifyContent: 'center',
           }}>
@@ -136,6 +140,7 @@ export const WalletIcon: React.FC<WalletIconProps> = ({
               width: subWalletIconSize,
               height: subWalletIconSize,
               borderRadius: subWalletIconBorderRadius,
+              borderCurve: 'continuous',
             }}
           />
         </View>

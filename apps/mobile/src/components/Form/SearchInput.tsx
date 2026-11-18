@@ -11,6 +11,7 @@ const getInputStyles = createGetStyles(colors => {
   return {
     inputContainer: {
       borderRadius: 4,
+      borderCurve: 'continuous',
       borderWidth: 1,
       borderStyle: 'solid',
       borderColor: colors['neutral-line'],

@@ -154,6 +154,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   crossTag: {
     borderRadius: 4,
+    borderCurve: 'continuous',
     paddingHorizontal: 4,
     flexDirection: 'row',
     height: 18,
@@ -228,6 +229,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   distanceCard: {
     borderRadius: 6,
+    borderCurve: 'continuous',
     paddingTop: 10,
     paddingBottom: 10,
     flex: 1,
@@ -253,6 +255,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   priceList: {
     borderRadius: 16,
+    borderCurve: 'continuous',
     paddingTop: 12,
     paddingBottom: 16,
     gap: 12,

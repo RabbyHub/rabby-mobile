@@ -51,6 +51,7 @@ export function makeBottomSheetProps({
       {
         overflow: 'hidden',
         borderRadius: 32,
+        borderCurve: 'continuous',
       },
       inputProps?.style,
     ]),

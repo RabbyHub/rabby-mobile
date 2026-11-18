@@ -102,6 +102,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     justifyContent: 'space-between',
     gap: 8,
     borderRadius: 8,
+    borderCurve: 'continuous',
     backgroundColor: colors2024['orange-light-1'],
     paddingHorizontal: 8,
     height: 42,
@@ -133,6 +134,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 6,
+    borderCurve: 'continuous',
     backgroundColor: '#23C0B0',
   },
   switchBtnText: {

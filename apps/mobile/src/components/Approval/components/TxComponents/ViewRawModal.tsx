@@ -60,6 +60,7 @@ const getStyles = (colors: AppColorsVariants) =>
       overflow: 'hidden',
       backgroundColor: colors['neutral-card-1'],
       borderRadius: 8,
+      borderCurve: 'continuous',
     },
     tabContainerView: {
       paddingHorizontal: 12,
@@ -67,11 +68,13 @@ const getStyles = (colors: AppColorsVariants) =>
     tab: {
       backgroundColor: colors['neutral-line'],
       borderRadius: 6,
+      borderCurve: 'continuous',
       marginBottom: 12,
     },
     tabContainer: {
       margin: 2,
       borderRadius: 4,
+      borderCurve: 'continuous',
       color: colors['blue-default'],
     },
     tabContentText: {

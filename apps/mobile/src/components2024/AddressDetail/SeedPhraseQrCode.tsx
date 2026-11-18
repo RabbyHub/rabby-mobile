@@ -62,6 +62,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     paddingLeft: 34,
     backgroundColor: colors2024['red-light-1'],
     borderRadius: 8,
+    borderCurve: 'continuous',
   },
   alertText: {
     color: colors2024['red-default'],
@@ -80,6 +81,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     borderColor: colors2024['neutral-line'],
     padding: 10,
     borderRadius: 24,
+    borderCurve: 'continuous',
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 24,

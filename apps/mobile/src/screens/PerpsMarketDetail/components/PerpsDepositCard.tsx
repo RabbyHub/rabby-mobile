@@ -55,6 +55,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderRadius: 12,
+    borderCurve: 'continuous',
     justifyContent: 'space-between',
     backgroundColor: isLight
       ? colors2024['neutral-bg-1']
@@ -72,6 +73,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: 8,
+    borderCurve: 'continuous',
     backgroundColor: 'rgba(80, 210, 193, 0.12)',
   },
   btnText: {

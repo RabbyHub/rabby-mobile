@@ -460,6 +460,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     height: 36,
     width: 138,
     borderRadius: 100,
+    borderCurve: 'continuous',
   },
 
   skeleton2: {
@@ -467,11 +468,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     height: 18,
     width: 38,
     borderRadius: 100,
+    borderCurve: 'continuous',
   },
   outerThumb: {
     width: 14,
     height: 14,
     borderRadius: 14,
+    borderCurve: 'continuous',
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: colors2024['neutral-bg-1'],
@@ -480,6 +483,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: 10,
     height: 10,
     borderRadius: 10,
+    borderCurve: 'continuous',
     backgroundColor: colors2024['brand-default'],
   },
 

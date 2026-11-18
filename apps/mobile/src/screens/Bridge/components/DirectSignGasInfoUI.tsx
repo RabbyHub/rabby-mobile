@@ -355,11 +355,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: 131,
     height: 20,
     borderRadius: 100,
+    borderCurve: 'continuous',
   },
   infoCardSkeletonPill: {
     width: 60,
     height: 20,
     borderRadius: 12,
+    borderCurve: 'continuous',
   },
   arrowIcon: {
     transform: [{ rotate: '-90deg' }],
@@ -374,6 +376,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,
+    borderCurve: 'continuous',
     backgroundColor: colors2024['brand-light-1'],
     overflow: 'hidden',
   },

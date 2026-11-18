@@ -24,6 +24,7 @@ const getStyles = createGetStyles(colors => ({
     borderWidth: 1,
     borderColor: 'transparent',
     borderRadius: 8,
+    borderCurve: 'continuous',
     backgroundColor: colors['neutral-card-1'],
   },
   rootSelected: {

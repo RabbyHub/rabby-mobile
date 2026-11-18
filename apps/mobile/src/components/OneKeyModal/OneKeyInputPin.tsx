@@ -43,6 +43,7 @@ const getStyles = (colors: AppColorsVariants) =>
       paddingHorizontal: 16,
       borderWidth: 1,
       borderRadius: 8,
+      borderCurve: 'continuous',
       borderColor: colors['neutral-line'],
       marginBottom: 16,
       height: 52,
@@ -55,6 +56,7 @@ const getStyles = (colors: AppColorsVariants) =>
       width: 12,
       height: 12,
       borderRadius: 6,
+      borderCurve: 'continuous',
       backgroundColor: colors['neutral-title-1'],
     },
     keyboardView: {

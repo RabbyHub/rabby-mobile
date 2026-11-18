@@ -210,6 +210,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     backgroundColor: colors2024['brand-default'],
     height: 4,
     borderRadius: 100,
+    borderCurve: 'continuous',
   },
   netTabs: {
     marginBottom: 18,

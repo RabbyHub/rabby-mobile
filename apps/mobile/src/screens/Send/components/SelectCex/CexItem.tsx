@@ -33,8 +33,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     padding: 16,
     backgroundColor: colors2024['neutral-bg-1'],
     borderRadius: 20,
+    borderCurve: 'continuous',
   },
-  logo: { borderRadius: 12, width: 46, height: 46 },
+  logo: { borderRadius: 12, borderCurve: 'continuous', width: 46, height: 46 },
   name: {
     fontSize: 16,
     lineHeight: 20,

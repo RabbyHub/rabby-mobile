@@ -286,6 +286,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
       ? colors2024['neutral-bg-2']
       : colors2024['neutral-bg-5'],
     borderRadius: 12,
+    borderCurve: 'continuous',
     paddingLeft: 40,
     paddingRight: 12,
     paddingVertical: 12,
@@ -300,6 +301,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     height: 20,
     backgroundColor: colors2024['neutral-line'],
     borderRadius: 10,
+    borderCurve: 'continuous',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -347,6 +349,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     paddingHorizontal: 4,
     paddingVertical: 4,
     borderRadius: 4,
+    borderCurve: 'continuous',
   },
   badgeText: {
     fontFamily: 'SF Pro Rounded',

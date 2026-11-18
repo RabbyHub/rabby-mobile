@@ -278,6 +278,7 @@ export default BorrowItem;
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   container: {
     borderRadius: 16,
+    borderCurve: 'continuous',
     paddingVertical: 14,
     paddingHorizontal: 0,
     marginTop: 12,
@@ -325,6 +326,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     paddingHorizontal: 4,
     paddingVertical: 1,
     borderRadius: 4,
+    borderCurve: 'continuous',
     backgroundColor: colors2024['red-light-1'],
   },
   apyTagText: {
@@ -362,6 +364,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     flex: 1,
     height: 32,
     borderRadius: 8,
+    borderCurve: 'continuous',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors2024['neutral-bg-5'],
@@ -377,6 +380,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     flex: 1,
     height: 32,
     borderRadius: 8,
+    borderCurve: 'continuous',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors2024['neutral-line'],
@@ -397,6 +401,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     paddingHorizontal: 4,
     paddingVertical: 2,
     borderRadius: 4,
+    borderCurve: 'continuous',
     width: 'auto',
     backgroundColor: colors2024['red-light-1'],
   },

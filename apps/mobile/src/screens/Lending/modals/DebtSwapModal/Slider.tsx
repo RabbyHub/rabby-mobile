@@ -115,6 +115,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     width: 20,
     height: 20,
     borderRadius: 10,
+    borderCurve: 'continuous',
   },
   outerThumbWrapper: {
     position: 'relative',
@@ -123,6 +124,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     width: 20,
     height: 20,
     borderRadius: 10,
+    borderCurve: 'continuous',
     backgroundColor: colors2024['brand-default'],
     justifyContent: 'center',
     alignItems: 'center',
@@ -131,6 +133,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     width: 8,
     height: 8,
     borderRadius: 4,
+    borderCurve: 'continuous',
     backgroundColor: colors2024['neutral-bg-1'],
   },
 }));

@@ -528,6 +528,7 @@ const getStyle = createGetStyles2024(ctx => {
       paddingHorizontal: 12,
       borderRadius: 16,
       borderBottomRightRadius: 2,
+      borderCurve: 'continuous',
     },
     marketDataBarContent: {
       height: 48,
@@ -538,6 +539,7 @@ const getStyle = createGetStyles2024(ctx => {
       backgroundColor: colors2024['neutral-bg-1'],
       borderRadius: 16,
       borderBottomRightRadius: 2,
+      borderCurve: 'continuous',
     },
     upShadow: {
       ...Platform.select({
@@ -598,6 +600,7 @@ const getStyle = createGetStyles2024(ctx => {
       width: 14,
       height: 14,
       borderRadius: 999,
+      borderCurve: 'continuous',
       alignItems: 'center',
       justifyContent: 'center',
     },

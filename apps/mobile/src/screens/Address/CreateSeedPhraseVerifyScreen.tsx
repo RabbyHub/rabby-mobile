@@ -205,6 +205,7 @@ const getStyles = (colors: AppColorsVariants) =>
     gridItem: {
       backgroundColor: colors['neutral-card-1'],
       borderRadius: 8,
+      borderCurve: 'continuous',
 
       position: 'relative',
       display: 'flex',
@@ -244,6 +245,7 @@ const getStyles = (colors: AppColorsVariants) =>
     },
     dialog: {
       borderRadius: 16,
+      borderCurve: 'continuous',
       padding: 0,
       backgroundColor: colors['neutral-bg-1'],
       width: 353,

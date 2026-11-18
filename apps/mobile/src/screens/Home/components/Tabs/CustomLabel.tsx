@@ -172,6 +172,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     paddingLeft: 8,
     paddingRight: 8,
     borderRadius: 8,
+    borderCurve: 'continuous',
     overflow: 'hidden',
   },
   // Same box as the label, free to slide; clips both the plate and the text.

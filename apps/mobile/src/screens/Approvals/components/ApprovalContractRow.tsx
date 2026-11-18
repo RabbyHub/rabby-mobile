@@ -165,6 +165,7 @@ export const getCardStyles = createGetStyles2024(ctx => {
   return {
     container: {
       borderRadius: 16,
+      borderCurve: 'continuous',
       backgroundColor: isLight
         ? colors2024['neutral-bg-1']
         : colors2024['neutral-bg-2'],
@@ -223,6 +224,7 @@ export const getCardStyles = createGetStyles2024(ctx => {
       alignItems: 'center',
       justifyContent: 'center',
       borderRadius: 6,
+      borderCurve: 'continuous',
       paddingVertical: 7,
       paddingHorizontal: 12,
       textAlign: 'center',

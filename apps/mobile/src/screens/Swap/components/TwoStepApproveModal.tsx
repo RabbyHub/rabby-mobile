@@ -71,6 +71,7 @@ const getStyles = createGetStyles(colors => ({
     marginHorizontal: 20,
     paddingVertical: 20,
     borderRadius: 8,
+    borderCurve: 'continuous',
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden',

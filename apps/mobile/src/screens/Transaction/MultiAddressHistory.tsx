@@ -903,6 +903,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     paddingVertical: 16,
     // paddingVertical: 16,
     borderRadius: 16,
+    borderCurve: 'continuous',
     gap: 16,
   },
   menuItem: {
@@ -931,6 +932,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     marginBottom: 8,
     backgroundColor: colors2024['brand-light-1'],
     borderRadius: 6,
+    borderCurve: 'continuous',
     paddingHorizontal: 12,
     paddingVertical: 15,
     flexDirection: 'row',

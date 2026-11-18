@@ -369,10 +369,12 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
     backgroundColor: colors2024['neutral-bg-2'],
     borderColor: colors2024['neutral-info'],
     borderRadius: 8,
+    borderCurve: 'continuous',
   },
   primaryButton: {
     height: 36,
     borderRadius: 8,
+    borderCurve: 'continuous',
     backgroundColor: colors2024['neutral-bg-2'],
     borderColor: colors2024['brand-default'],
   },
@@ -400,6 +402,7 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
     backgroundColor: colors['neutral-card2'],
     padding: 12,
     borderRadius: 12,
+    borderCurve: 'continuous',
   },
   header: {
     flexDirection: 'row',

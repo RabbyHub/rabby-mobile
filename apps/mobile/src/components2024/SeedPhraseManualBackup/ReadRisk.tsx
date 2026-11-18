@@ -60,6 +60,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     justifyContent: 'space-between',
     paddingVertical: 16,
     borderRadius: 12,
+    borderCurve: 'continuous',
     flexDirection: 'row',
     display: 'flex',
   },

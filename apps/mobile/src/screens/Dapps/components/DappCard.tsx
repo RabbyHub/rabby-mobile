@@ -170,6 +170,7 @@ export const DappCardInner: React.FC<DappCardProps> = ({
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   dappCard: {
     borderRadius: 20,
+    borderCurve: 'continuous',
     backgroundColor: colors2024['neutral-bg-1'],
     borderWidth: 1,
     borderColor: colors2024['neutral-line'],
@@ -251,6 +252,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     backgroundColor: colors2024['neutral-bg-2'],
     padding: 8,
     borderRadius: 12,
+    borderCurve: 'continuous',
   },
   dappDescText: {
     fontSize: 14,
@@ -270,6 +272,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: 40,
     height: 40,
     borderRadius: 40,
+    borderCurve: 'continuous',
     borderWidth: 1.5,
     borderColor: colors2024['green-default'],
     position: 'absolute',
@@ -280,6 +283,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: 16,
     height: 16,
     borderRadius: 16,
+    borderCurve: 'continuous',
     position: 'absolute',
     right: 0,
     bottom: -2.5,
@@ -293,6 +297,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: 12,
     height: 12,
     borderRadius: 12,
+    borderCurve: 'continuous',
     opacity: 0.7,
   },
 }));
