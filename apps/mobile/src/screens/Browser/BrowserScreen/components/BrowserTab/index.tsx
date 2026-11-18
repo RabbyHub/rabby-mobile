@@ -24,6 +24,7 @@ import { APP_UA_PARIALS } from '@/constant';
 import { DESKTOP_MODE_UA, USER_AGENT } from '@/constant/browser';
 import { parsePossibleURL } from '@/constant/dappView';
 import { isNonPublicProductionEnv } from '@/constant';
+import { onBrowserEval } from '@/devtools/screenRegistry/browserEval';
 import { BackgroundBridgeBoundary } from '@/core/bridges/BackgroundBridgeBoundary';
 import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import { saveBrowserScreenshot } from '@/core/serviceApi/browser';
@@ -153,6 +154,16 @@ export const BrowserTab = ({
   } = useWebViewControl({ initialTabId: tabId });
   const [contentMode, setContentMode] =
     useState<WebViewProps['contentMode']>('mobile');
+
+  React.useEffect(() => {
+    if (!isNonPublicProductionEnv) {
+      return;
+    }
+    return onBrowserEval(code => {
+      webviewRef.current?.injectJavaScript(code);
+      console.log('[debug-dapp-eval] injected', code.slice(0, 120));
+    });
+  }, [webviewRef]);
 
   // const navigation = useRabbyAppNavigation();
   const { dapps, disconnectDapp, setDapp } = useDapps();

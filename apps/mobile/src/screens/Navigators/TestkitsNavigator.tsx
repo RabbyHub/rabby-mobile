@@ -1,5 +1,8 @@
+import { withScreenPropsInjection } from '@/devtools/screenRegistry/screenInjection';
 import 'react-native-gesture-handler';
 import { RootNames } from '@/constant/layout';
+import DevScreenInjectionProbe from '@/screens/Testkits/DevScreenInjectionProbe';
+import DevTabsHost from '@/screens/Testkits/DevTabsHost';
 import { useStackScreenConfig } from '@/hooks/navigation';
 import { useThemeColors } from '@/hooks/theme';
 import { createCustomNativeStackNavigator as createNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
@@ -60,31 +63,31 @@ export function TestkitsNavigator() {
       }}>
       <Stack.Screen
         name={RootNames.DevUIAnimatedTextAndView}
-        component={DevUIAnimatedTextAndView}
+        component={withScreenPropsInjection(DevUIAnimatedTextAndView)}
       />
       <Stack.Screen
         name={RootNames.DevUIAutoFitTitlePlayground}
-        component={DevUIAutoFitTitlePlayground}
+        component={withScreenPropsInjection(DevUIAutoFitTitlePlayground)}
       />
       <Stack.Screen
         name={RootNames.DevUIFontShowCase}
-        component={DevUIFontShowCase}
+        component={withScreenPropsInjection(DevUIFontShowCase)}
       />
       <Stack.Screen
         name={RootNames.DevUIFormShowCase}
-        component={DevUIFormShowCase}
+        component={withScreenPropsInjection(DevUIFormShowCase)}
       />
       <Stack.Screen
         name={RootNames.DevUIAccountShowCase}
-        component={DevUIAccountShowCase}
+        component={withScreenPropsInjection(DevUIAccountShowCase)}
       />
       <Stack.Screen
         name={RootNames.DevUIComponents2024ShowCase}
-        component={DevUIComponents2024ShowCase}
+        component={withScreenPropsInjection(DevUIComponents2024ShowCase)}
       />
       <Stack.Screen
         name={RootNames.DevUISafeSvgMedia}
-        component={DevUISafeSvgMedia}
+        component={withScreenPropsInjection(DevUISafeSvgMedia)}
         options={mergeScreenOptions2024([
           {
             headerShown: true,
@@ -95,25 +98,31 @@ export function TestkitsNavigator() {
       />
       <Stack.Screen
         name={RootNames.DevUIScreenContainerShowCase}
-        component={DevUIScreenContainerShowCase}
+        component={withScreenPropsInjection(DevUIScreenContainerShowCase)}
       />
-      <Stack.Screen name={RootNames.DevUIToast} component={DevUIToast} />
+      <Stack.Screen
+        name={RootNames.DevUIToast}
+        component={withScreenPropsInjection(DevUIToast)}
+      />
       <Stack.Screen
         name={RootNames.DevUINotifications}
-        component={DevUINotifications}
+        component={withScreenPropsInjection(DevUINotifications)}
       />
-      <Stack.Screen name={RootNames.DevUIDapps} component={DevUIDapps} />
+      <Stack.Screen
+        name={RootNames.DevUIDapps}
+        component={withScreenPropsInjection(DevUIDapps)}
+      />
       <Stack.Screen
         name={RootNames.DevUIBuiltInPages}
-        component={DevUIBuiltInPages}
+        component={withScreenPropsInjection(DevUIBuiltInPages)}
       />
       <Stack.Screen
         name={RootNames.DevUIPermissions}
-        component={DevUIPermissions}
+        component={withScreenPropsInjection(DevUIPermissions)}
       />
       <Stack.Screen
         name={RootNames.DevUIWalletConnect}
-        component={DevUIWalletConnect}
+        component={withScreenPropsInjection(DevUIWalletConnect)}
         options={mergeScreenOptions2024([
           {
             headerShown: true,
@@ -124,7 +133,7 @@ export function TestkitsNavigator() {
       />
       <Stack.Screen
         name={RootNames.DevCapabilityFile}
-        component={DevCapabilityFile}
+        component={withScreenPropsInjection(DevCapabilityFile)}
         options={mergeScreenOptions2024([
           {
             headerShown: true,
@@ -134,10 +143,13 @@ export function TestkitsNavigator() {
         ])}
       />
 
-      <Stack.Screen name={RootNames.DevDataSQLite} component={DevDataSQLite} />
+      <Stack.Screen
+        name={RootNames.DevDataSQLite}
+        component={withScreenPropsInjection(DevDataSQLite)}
+      />
       <Stack.Screen
         name={RootNames.DevWatchAddressFixtureImport}
-        component={DevWatchAddressFixtureImport}
+        component={withScreenPropsInjection(DevWatchAddressFixtureImport)}
         options={mergeScreenOptions2024([
           {
             headerShown: true,
@@ -148,7 +160,7 @@ export function TestkitsNavigator() {
       />
       <Stack.Screen
         name={RootNames.DevDataKeychain}
-        component={DevDataKeychain}
+        component={withScreenPropsInjection(DevDataKeychain)}
         options={mergeScreenOptions2024([
           {
             headerShown: true,
@@ -159,7 +171,7 @@ export function TestkitsNavigator() {
       />
       <Stack.Screen
         name={RootNames.DevDataKeyringVault}
-        component={DevDataKeyringVault}
+        component={withScreenPropsInjection(DevDataKeyringVault)}
         options={mergeScreenOptions2024([
           {
             headerShown: true,
@@ -170,7 +182,7 @@ export function TestkitsNavigator() {
       />
       <Stack.Screen
         name={RootNames.DevDataContactService}
-        component={DevDataContactService}
+        component={withScreenPropsInjection(DevDataContactService)}
         options={mergeScreenOptions2024([
           {
             headerShown: true,
@@ -181,7 +193,7 @@ export function TestkitsNavigator() {
       />
       <Stack.Screen
         name={RootNames.DevDataWhitelist}
-        component={DevDataWhitelist}
+        component={withScreenPropsInjection(DevDataWhitelist)}
         options={mergeScreenOptions2024([
           {
             headerShown: true,
@@ -193,15 +205,31 @@ export function TestkitsNavigator() {
 
       <Stack.Screen
         name={RootNames.DevSwitches}
-        component={DevSwitches}
+        component={withScreenPropsInjection(DevSwitches)}
         options={{
           headerShown: true,
           // presentation: 'modal',
         }}
       />
       <Stack.Screen
+        name={RootNames.DevScreenInjectionProbe}
+        component={withScreenPropsInjection(DevScreenInjectionProbe)}
+        options={{
+          headerShown: true,
+          title: 'Screen Injection Probe',
+        }}
+      />
+      <Stack.Screen
+        name={RootNames.DevTabsHost}
+        component={withScreenPropsInjection(DevTabsHost as any)}
+        options={{
+          headerShown: true,
+          title: 'Tabs Host',
+        }}
+      />
+      <Stack.Screen
         name={RootNames.DevPerf}
-        component={DevPerf}
+        component={withScreenPropsInjection(DevPerf)}
         options={{
           headerShown: true,
           // presentation: 'modal',
@@ -209,7 +237,7 @@ export function TestkitsNavigator() {
       />
       <Stack.Screen
         name={RootNames.DebugLogViewer}
-        component={DebugLogViewer}
+        component={withScreenPropsInjection(DebugLogViewer)}
         options={{
           headerShown: true,
           title: 'App Log Verification',
@@ -217,7 +245,7 @@ export function TestkitsNavigator() {
       />
       <Stack.Screen
         name={RootNames.StartupPerformanceLogViewer}
-        component={StartupPerformanceLogViewer}
+        component={withScreenPropsInjection(StartupPerformanceLogViewer)}
         options={{
           headerShown: true,
           title: 'Startup Performance Logs',
@@ -225,7 +253,7 @@ export function TestkitsNavigator() {
       />
       <Stack.Screen
         name={RootNames.InMemoryLogViewer}
-        component={InMemoryLogViewer}
+        component={withScreenPropsInjection(InMemoryLogViewer)}
         options={{
           headerShown: true,
           title: 'In-Memory Logs',
