@@ -2621,7 +2621,6 @@
           },
           "fills": {
             "loading": "Chargement des transactions…",
-            "partial": "Seules les transactions disponibles sont affichées. Touchez pour réessayer.",
             "error": "Impossible de charger les transactions. Touchez pour réessayer."
           },
           "errors": {

@@ -2729,7 +2729,6 @@
           },
           "fills": {
             "loading": "Đang tải giao dịch…",
-            "partial": "Chỉ hiển thị các giao dịch có sẵn. Nhấn để thử lại.",
             "error": "Không thể tải giao dịch. Nhấn để thử lại."
           },
           "errors": {

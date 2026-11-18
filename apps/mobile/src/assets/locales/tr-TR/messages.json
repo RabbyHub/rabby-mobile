@@ -2612,7 +2612,6 @@
           },
           "fills": {
             "loading": "İşlemler yükleniyor…",
-            "partial": "Yalnızca erişilebilen işlemler gösteriliyor. Tekrar denemek için dokunun.",
             "error": "İşlemler yüklenemedi. Tekrar denemek için dokunun."
           },
           "errors": {

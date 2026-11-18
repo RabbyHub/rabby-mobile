@@ -220,7 +220,7 @@ export const PerpsProTwapDetailSheet = React.memo(
               windowSize={5}
               contentContainerStyle={styles.list}
               ListFooterComponent={
-                load === 'complete' ? null : (
+                load === 'loading' || load === 'error' ? (
                   <Pressable
                     disabled={load === 'loading'}
                     onPress={() => setRetry(value => value + 1)}
@@ -229,7 +229,7 @@ export const PerpsProTwapDetailSheet = React.memo(
                       {t(`page.perps.pro.twap.fills.${load}`)}
                     </Text>
                   </Pressable>
-                )
+                ) : null
               }
               ListEmptyComponent={
                 load === 'complete' ? (

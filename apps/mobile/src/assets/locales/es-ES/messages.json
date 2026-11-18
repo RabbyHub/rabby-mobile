@@ -2796,7 +2796,6 @@
           },
           "fills": {
             "loading": "Cargando operaciones…",
-            "partial": "Solo se muestran las operaciones disponibles. Toca para reintentar.",
             "error": "No se pudieron cargar las operaciones. Toca para reintentar."
           },
           "errors": {

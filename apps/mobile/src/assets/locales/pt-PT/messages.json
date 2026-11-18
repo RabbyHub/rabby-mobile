@@ -2898,7 +2898,6 @@
           },
           "fills": {
             "loading": "A carregar transações…",
-            "partial": "São apresentadas apenas as transações disponíveis. Toque para tentar novamente.",
             "error": "Não foi possível carregar as transações. Toque para tentar novamente."
           },
           "errors": {

@@ -2612,7 +2612,6 @@
           },
           "fills": {
             "loading": "Memuat transaksi…",
-            "partial": "Hanya transaksi yang tersedia yang ditampilkan. Ketuk untuk mencoba lagi.",
             "error": "Gagal memuat transaksi. Ketuk untuk mencoba lagi."
           },
           "errors": {

@@ -7,8 +7,10 @@ import {
   waitFor,
 } from '@testing-library/react-native';
 import type { PerpsTwapRecord } from '@/hooks/perps/twap/types';
+import { loadPerpsTwapFills } from '@/hooks/perps/twap/twapRepository';
 import { PerpsProTwapHistoryRowView } from './PerpsProTwapHistoryRow';
 import { PerpsProTwapCard } from '@/screens/PerpsPro/components/twap/PerpsProTwapCard';
+import { PerpsProTwapDetailSheet } from '@/screens/PerpsPro/components/twap/PerpsProTwapDetailSheet';
 
 jest.mock('@/components/Typography', () => ({
   Text: require('react-native').Text,
@@ -132,6 +134,22 @@ it.each([
     expect(screen.getByTestId('history-arrow')).toBeTruthy();
   },
 );
+
+it('removes the retry footer when a retry returns partial trades', async () => {
+  jest
+    .mocked(loadPerpsTwapFills)
+    .mockRejectedValueOnce(new Error('offline'))
+    .mockResolvedValueOnce({ fills: [], complete: false });
+  render(<PerpsProTwapDetailSheet order={endedOrder} onClose={jest.fn()} />);
+
+  fireEvent.press(await screen.findByText('error'));
+  await waitFor(() =>
+    expect(
+      screen.UNSAFE_getByType(FlatList).props.ListFooterComponent,
+    ).toBeNull(),
+  );
+  expect(screen.queryByText('noTrades')).toBeNull();
+});
 
 it.each(['B', 'A'] as const)(
   'renders neutral progress for a running %s order',

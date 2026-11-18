@@ -2898,7 +2898,6 @@
           },
           "fills": {
             "loading": "Trades werden geladen…",
-            "partial": "Nur verfügbare Trades werden angezeigt. Zum Wiederholen tippen.",
             "error": "Trades konnten nicht geladen werden. Zum Wiederholen tippen."
           },
           "errors": {

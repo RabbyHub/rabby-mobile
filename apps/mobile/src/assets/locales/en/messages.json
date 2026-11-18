@@ -2696,7 +2696,6 @@
           },
           "fills": {
             "loading": "Loading trades…",
-            "partial": "Only available trades are shown. Tap to retry.",
             "error": "Unable to load trades. Tap to retry."
           },
           "errors": {
