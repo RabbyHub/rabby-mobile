@@ -23,11 +23,11 @@ type Disk = {
 };
 
 type Key = {
-  open(create: boolean): Promise<'ready' | 'missing' | 'created'>;
+  open(stage: boolean): Promise<'ready' | 'missing' | 'staged'>;
+  commit(): Promise<void>;
   mac(message: string): string;
 };
 
-type KeyStatus = 'ready' | 'missing';
 type IssueKind = 'damaged' | 'unavailable';
 export type SecurePreferenceIssue = {
   name: SecurePreferenceName;
@@ -65,7 +65,7 @@ export function createSecurePreferenceStorage(disk: Disk, key: Key) {
   const states = new Map<SecurePreferenceName, AdapterState>();
   const adapters = new Map<SecurePreferenceName, Promise<StorageAdapater>>();
   const listeners = new Set<() => void>();
-  let keyPromise: Promise<KeyStatus> | undefined;
+  let keyPromise: Promise<void> | undefined;
 
   function setIssue(state: AdapterState, issue?: IssueKind) {
     if (state.issue !== issue) {
@@ -139,43 +139,33 @@ export function createSecurePreferenceStorage(disk: Disk, key: Key) {
 
   function loadKey() {
     if (!keyPromise) {
-      keyPromise = (async (): Promise<KeyStatus> => {
+      keyPromise = (async () => {
         if ((await key.open(false)) === 'ready') {
-          return 'ready';
+          return;
         }
-        if (
-          securePreferenceNames.some(
-            name => disk.read(recordKey(name)) !== null,
-          )
-        ) {
-          return 'missing';
+        const enrollment = await key.open(true);
+        if (enrollment === 'ready') {
+          return;
+        }
+        if (enrollment !== 'staged') {
+          throw new Error('Secure preference key could not be staged');
         }
 
-        // Once the key is created, unsigned legacy values are never imported
-        // again, even if the app stops before all signed records are committed.
-        const legacy = securePreferenceNames.map(name => {
+        // The durable key commits the migration. Until then, overwrite any
+        // records from an interrupted attempt and keep the legacy values.
+        for (const name of securePreferenceNames) {
           const raw = disk.read(name);
           const value = raw === null ? {} : parseRecord(raw);
-          return {
-            name,
-            value: value && isValidPreference(name, value) ? value : undefined,
-          };
-        });
-        const enrollment = await key.open(true);
-        if (enrollment === 'missing') {
-          throw new Error('Secure preference key could not be created');
-        }
-        if (enrollment === 'created') {
-          for (const { name, value } of legacy) {
-            if (value) {
-              writeProtected(
-                name,
-                JSON.stringify(projectLegacyPreference(name, value)),
-              );
-            }
+          if (value && isValidPreference(name, value)) {
+            writeProtected(
+              name,
+              JSON.stringify(projectLegacyPreference(name, value)),
+            );
+          } else {
+            disk.remove(recordKey(name));
           }
         }
-        return 'ready';
+        await key.commit();
       })().catch(error => {
         keyPromise = undefined;
         throw error;
@@ -188,11 +178,8 @@ export function createSecurePreferenceStorage(disk: Disk, key: Key) {
     const state: AdapterState = {};
     states.set(name, state);
     try {
-      const result = await loadKey();
-      const verified =
-        result === 'ready'
-          ? readProtected(name, disk.read(recordKey(name)))
-          : undefined;
+      await loadKey();
+      const verified = readProtected(name, disk.read(recordKey(name)));
       if (verified) {
         state.snapshot = verified.snapshot;
         state.committedPayload = verified.payload;
@@ -300,34 +287,15 @@ export function createSecurePreferenceStorage(disk: Disk, key: Key) {
       };
     },
     async reset(names: readonly SecurePreferenceName[]) {
-      const damaged = names.filter(
-        name => states.get(name)?.issue === 'damaged',
-      );
-      if (damaged.length === 0) {
-        return;
-      }
-      try {
-        if ((await key.open(true)) === 'missing') {
-          throw new Error('Secure preference key unavailable');
+      for (const name of names) {
+        const state = states.get(name);
+        if (state?.issue !== 'damaged') {
+          continue;
         }
-        keyPromise = Promise.resolve('ready');
-        for (const name of damaged) {
-          const state = states.get(name);
-          if (state?.issue !== 'damaged') {
-            continue;
-          }
-          // Pending values were produced by a service initialized with defaults.
-          commit(name, state, state.pendingPayload ?? '{}');
-          if (!state.issue) {
-            cleanLegacy(name);
-          }
-        }
-      } catch {
-        for (const name of damaged) {
-          const state = states.get(name);
-          if (state?.issue === 'damaged') {
-            setIssue(state, 'unavailable');
-          }
+        // Pending values were produced by a service initialized with defaults.
+        commit(name, state, state.pendingPayload ?? '{}');
+        if (!state.issue) {
+          cleanLegacy(name);
         }
       }
     },

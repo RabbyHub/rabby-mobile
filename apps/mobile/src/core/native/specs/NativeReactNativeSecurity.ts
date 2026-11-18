@@ -5,7 +5,8 @@ import { ExtractMethods } from './types';
 export interface Spec extends TurboModule {
   blockScreen(): void;
   unblockScreen(): void;
-  openSecurePreferencesKey(create: boolean): Promise<string>;
+  openSecurePreferencesKey(stage: boolean): Promise<string>;
+  commitSecurePreferencesKey(storagePath: string): Promise<void>;
   computeSecurePreferenceHmac(message: string): string;
 }
 
