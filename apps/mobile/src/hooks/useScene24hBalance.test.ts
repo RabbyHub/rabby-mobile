@@ -1,3 +1,4 @@
+import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import type { AccountsBalanceState } from '../store/balance';
 
 const flushPendingTimers = async () => {
@@ -10,7 +11,7 @@ describe('store/balance24h scene', () => {
   const mockGetBalanceCacheAccounts = jest.fn();
   const mockGetTop10MyAccounts = jest.fn();
   const mockGetBalance24hCache = jest.fn();
-  const mockFetch24hBalance = jest.fn();
+  const mockGet24hTotalBalanceBatch = jest.fn();
   const mockSetBalance24hCache = jest.fn();
   const mockPerfEmit = jest.fn();
   let mockBalanceValueMap: Record<
@@ -44,13 +45,9 @@ describe('store/balance24h scene', () => {
         zCreate: create,
       };
     });
-    jest.doMock('p-queue', () => {
-      return jest.fn().mockImplementation(() => ({
-        add: (fn: () => Promise<unknown>) => fn(),
-        clear: jest.fn(),
-        onIdle: jest.fn(() => Promise.resolve()),
-      }));
-    });
+    jest.doMock('@/core/request', () => ({
+      openapi: { get24hTotalBalanceBatch: mockGet24hTotalBalanceBatch },
+    }));
     jest.doMock('@/hooks/useCurve', () => ({
       formatSmallUsdValue: jest.fn(() => '$123'),
     }));
@@ -99,7 +96,6 @@ describe('store/balance24h scene', () => {
     jest.doMock('@/utils/24hBalanceCache', () => ({
       getBalance24hCache: (...args: unknown[]) =>
         mockGetBalance24hCache(...args),
-      fetch24hBalance: (...args: unknown[]) => mockFetch24hBalance(...args),
       setBalance24hCache: (...args: unknown[]) =>
         mockSetBalance24hCache(...args),
     }));
@@ -119,13 +115,6 @@ describe('store/balance24h scene', () => {
       },
     });
     mockGetBalance24hCache.mockReturnValue(null);
-    mockFetch24hBalance.mockResolvedValue({
-      total_usd_value: 90,
-      data: {
-        total_usd_value: 90,
-      },
-      updateTime: 1,
-    });
 
     scene24hBalanceModule = require('../store/balance24h');
   });
@@ -136,9 +125,14 @@ describe('store/balance24h scene', () => {
   });
 
   it('prefers addresses from balanceAccounts during refresh', async () => {
+    mockGet24hTotalBalanceBatch.mockResolvedValueOnce([
+      { id: '0xabc', error_code: 0, total_usd_value: 90 },
+    ]);
     const staleBalanceAccounts: AccountsBalanceState['balance'] = {
       '0xabc': {
         address: '0xabc',
+        type: KEYRING_TYPE.SimpleKeyring,
+        brandName: 'Private Key',
         balance: 0,
         evmBalance: 0,
       },
@@ -150,7 +144,10 @@ describe('store/balance24h scene', () => {
     });
 
     expect(mockGetTop10MyAccounts).not.toHaveBeenCalled();
-    expect(mockFetch24hBalance).toHaveBeenCalledWith('0xabc');
+    expect(mockGet24hTotalBalanceBatch).toHaveBeenCalledWith(['0xabc']);
+    expect(
+      scene24hBalanceModule.balance24hStore.getAddress24hBalance('0xabc'),
+    ).toMatchObject({ total_usd_value: 90 });
     expect(mockComputeTotalBalance).toHaveBeenCalledWith(
       ['0xabc'],
       mockGetBalanceCacheAccounts(),
@@ -197,7 +194,9 @@ describe('store/balance24h scene', () => {
 
       return null;
     });
-    mockFetch24hBalance.mockRejectedValueOnce(new Error('network error'));
+    mockGet24hTotalBalanceBatch.mockRejectedValueOnce(
+      new Error('network error'),
+    );
 
     await scene24hBalanceModule.scene24hBalanceStore.refresh24hAssets({
       addresses: ['0xabc', '0xdef'],
@@ -205,6 +204,7 @@ describe('store/balance24h scene', () => {
     });
     await flushPendingTimers();
 
+    expect(mockGet24hTotalBalanceBatch).toHaveBeenCalledWith(['0xdef']);
     expect(mockPerfEmit).toHaveBeenCalledWith(
       'SCENE_24H_BALANCE_UPDATED',
       expect.objectContaining({
