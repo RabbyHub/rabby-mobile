@@ -121,14 +121,13 @@ turbo_prepare_cocoapods
 # it fails later with e.g.
 #   error: .../ios/build/generated/ios/NitroModulesSpec/NitroModulesSpec.h:
 #   No such file or directory (in target 'ReactCodegen')
-# Regenerate whenever the directory is missing or empty.
+# Regenerate whenever the directory is missing or empty. The reinstall helper
+# bypasses the Pods cache: dropping the architecture stamp is not enough, since
+# the restore path brings its own stamp back and reports a cache hit.
 generated_ios_dir="$project_dir/ios/build/generated/ios"
 if [ ! -d "$generated_ios_dir" ] || [ -z "$(find "$generated_ios_dir" -name '*.h' -maxdepth 3 2>/dev/null | head -1)" ]; then
   turbo_log 'ios codegen output missing; re-running pod install'
-  # Dropping the architecture stamp makes turbo_cocoapods_ready fail, so the
-  # normal preparation path performs a real `pod install` instead of skipping.
-  rm -f "$project_dir/ios/Pods/.rabby-react-native-architecture"
-  turbo_prepare_cocoapods || {
+  turbo_reinstall_cocoapods || {
     echo '[ios-simulator] pod install for codegen failed' >&2
     exit 1
   }
