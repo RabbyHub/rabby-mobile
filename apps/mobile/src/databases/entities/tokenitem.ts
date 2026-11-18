@@ -681,20 +681,26 @@ export class TokenItemEntity extends EntityAddressAssetBase {
     );
   }
 
-  static async isExpired(owner_addr: string) {
+  static async getOldestUpdatedAt(owner_addr: string): Promise<number> {
     await prepareAppDataSource();
 
     const repo = this.getRepository();
     const result = await repo
       .createQueryBuilder('tokenitem')
       .select('MIN(tokenitem._local_updated_at)', 'minUpdatedAt')
-      .where('tokenitem.owner_addr = :owner_addr', { owner_addr })
+      .where('tokenitem.owner_addr = :owner_addr', {
+        owner_addr: owner_addr.toLowerCase(),
+      })
       .getRawOne();
 
-    if (!result.minUpdatedAt) {
+    return result?.minUpdatedAt ? parseInt(result.minUpdatedAt, 10) : 0;
+  }
+
+  static async isExpired(owner_addr: string) {
+    const firstUpdateTime = await this.getOldestUpdatedAt(owner_addr);
+    if (!firstUpdateTime) {
       return true;
     }
-    const firstUpdateTime = parseInt(result.minUpdatedAt, 10);
     return Date.now() - firstUpdateTime > ASSET_EXPIRED_TIME;
   }
 

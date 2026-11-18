@@ -8,6 +8,7 @@ import {
   PortfolioItem,
 } from '@rabby-wallet/rabby-api/dist/types';
 import PQueue from 'p-queue';
+import { createHomeAssetBatchFetcher } from '@/core/apis/homeAssetBatch';
 import { appChainResourceStore } from './appchainResource';
 import { traceStartupDiagnostic } from '@/core/utils/startupDiagnostics';
 import { runAfterHomePostStartupReady } from '@/core/utils/homeStartupReady';
@@ -341,7 +342,7 @@ function persistAppChainsInBackground(
   appChains: AppChainItem[],
   detail: AppChainPersistDetail,
 ) {
-  void appChainResourceStore
+  appChainResourceStore
     .persistInBackgroundFor(
       ownerAddr.toLowerCase(),
       () => persistAppChains(ownerAddr, appChains),
@@ -492,7 +493,10 @@ export const useAppChainStore = zCreate<AppChainState>((set, get) => ({
       queuePendingAtStart,
     });
 
-    // 并发请求
+    const fetchAppChain = createHomeAssetBatchFetcher(
+      fetchList,
+      openapi.getAppChainListBatch,
+    );
     const results = await Promise.allSettled(
       fetchList.map(address =>
         getAppChainQueue.add<{
@@ -507,8 +511,10 @@ export const useAppChainStore = zCreate<AppChainState>((set, get) => ({
           });
 
           try {
-            const { apps } = await openapi.getAppChainList(address);
-            const appChains = apps ?? [];
+            const { apps: appChains } = await fetchAppChain(address);
+            if (!Array.isArray(appChains)) {
+              throw new Error(`Failed to fetch appchains for ${address}`);
+            }
             const value = appChains.map(toAppChainItem);
             appChainResourceStore.applyRemoteValueFor(
               address,

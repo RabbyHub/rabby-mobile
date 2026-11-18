@@ -418,6 +418,13 @@ const getDefaultCombinedCurveData = () =>
 
 class SceneCurve24hStore extends BaseStore<SceneCurveState> {
   private hasStartedLifecycle = false;
+  private homeCurveExpanded = false;
+
+  getHomeCurveExpanded = () => this.homeCurveExpanded;
+
+  setHomeCurveExpanded = (expanded: boolean) => {
+    this.homeCurveExpanded = expanded;
+  };
 
   private readonly debouncedCommitters: Record<CurveScene, () => void> = {
     Home: debounce(() => {
@@ -687,38 +694,34 @@ export async function initCurve24hStore() {
   await promise;
 }
 
-export const refreshDayCurve = makeSWRKeyAsyncFunc(
-  async ({
-    addresses,
-    force = false,
-    balanceAccounts,
-    reason,
-  }: {
-    addresses?: string[];
-    force?: boolean;
-    balanceAccounts?: Record<string, unknown>;
-    reason?: 'selection_changed' | 'balance_changed' | 'manual_refresh';
-  } = {}) => {
-    const finalAddresses =
-      addresses ||
-      (balanceAccounts ? Object.keys(balanceAccounts) : undefined) ||
-      balanceAccountsStore.getState().selectedAddresses ||
-      [];
+export const refreshDayCurve = async ({
+  addresses,
+  force = false,
+  balanceAccounts,
+  reason,
+}: {
+  addresses?: string[];
+  force?: boolean;
+  balanceAccounts?: Record<string, unknown>;
+  reason?: 'selection_changed' | 'balance_changed' | 'manual_refresh';
+} = {}) => {
+  // Gate new Home refreshes; an already-started refresh can still settle and cache.
+  if (!sceneCurve24hStore.getHomeCurveExpanded()) {
+    return;
+  }
 
-    return sceneCurve24hStore.refreshSceneDayCurve('Home', {
-      addresses: finalAddresses,
-      force,
-      reason,
-    });
-  },
-  ctx => {
-    const force = !!ctx.args[0]?.force;
-    const addresses = normalizeAddresses(ctx.args[0]?.addresses || []);
-    return `refreshDayCurve-${addresses.join(',')}-${
-      force ? 'force' : 'noforce'
-    }`;
-  },
-);
+  const finalAddresses =
+    addresses ||
+    (balanceAccounts ? Object.keys(balanceAccounts) : undefined) ||
+    balanceAccountsStore.getState().selectedAddresses ||
+    [];
+
+  return sceneCurve24hStore.refreshSceneDayCurve('Home', {
+    addresses: finalAddresses,
+    force,
+    reason,
+  });
+};
 
 export function hydrateCachedHomeDayCurve() {
   const cachedAddresses = balanceAccountsStore.getState().selectedAddresses;
