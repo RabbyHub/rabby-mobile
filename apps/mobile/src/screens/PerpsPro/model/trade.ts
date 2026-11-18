@@ -21,7 +21,10 @@ import {
 export type PerpsProTradeAmountUnit = 'base' | 'quote';
 export type PerpsProTradeAmountSource = 'manual' | 'slider';
 export type PerpsProSingleTradeOrderType = 'conditional' | 'limit' | 'market';
-export type PerpsProTradeOrderType = PerpsProSingleTradeOrderType | 'scale';
+export type PerpsProTradeOrderType =
+  | PerpsProSingleTradeOrderType
+  | 'scale'
+  | 'twap';
 export type PerpsProTradeTif = 'Alo' | 'Gtc' | 'Ioc';
 export type PerpsProTradeSide = 'buy' | 'sell';
 export type PerpsProConditionalExecution = 'limit' | 'market';
@@ -43,6 +46,8 @@ export interface PerpsProTradeFormState {
   scaleUpperPrice: string;
   scaleCount: string;
   scaleDistribution: PerpsProScaleDistribution;
+  twapDuration: string;
+  twapRandomize: boolean;
 }
 
 export interface PerpsProResolvedTradeAmount {
@@ -222,7 +227,7 @@ export const getPerpsProTradeExecutionPrice = ({
   form: PerpsProTradeFormState;
   marketPrice: string;
 }) => {
-  if (form.orderType === 'market') {
+  if (form.orderType === 'market' || form.orderType === 'twap') {
     return marketPrice;
   }
   if (form.orderType === 'scale') return null;
@@ -245,6 +250,8 @@ export const getPerpsProAmountInputDecimals = ({
 export const isPerpsProTradeCombinationSupported = (
   form: PerpsProTradeFormState,
 ) => {
+  if (form.orderType === 'twap')
+    return !form.attachedTpSl.enabled && !form.bboEnabled;
   if (form.orderType === 'scale') {
     return (
       !form.attachedTpSl.enabled &&
@@ -293,6 +300,8 @@ export const createPerpsProTradeFormState = ({
   triggerPrice: '',
   scaleLowerPrice: '',
   scaleUpperPrice: '',
-  scaleCount: '5',
+  scaleCount: '',
   scaleDistribution: 'flat',
+  twapDuration: '',
+  twapRandomize: false,
 });

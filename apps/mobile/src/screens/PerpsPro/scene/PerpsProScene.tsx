@@ -5,6 +5,14 @@ import {
   RootScenePagerGestureBlock,
   useCollapsibleSceneController,
 } from '@rabby-wallet/rn-collapsible-scene-view';
+
+import type { PerpsTwapRecord } from '@/hooks/perps/twap/types';
+import { PerpsProTwapCard } from '../components/twap/PerpsProTwapCard';
+import { PerpsProTwapDetailSheet } from '../components/twap/PerpsProTwapDetailSheet';
+import { PerpsProEndTwapModal } from '../components/twap/PerpsProEndTwapModal';
+import { usePerpsProCancelTwap } from './usePerpsProCancelTwap';
+import { PerpsProScaleOrderConfirmationSheet } from '../components/trade/PerpsProScaleOrderConfirmationSheet';
+import { Text } from '@/components/Typography';
 import type { PerpsQuoteAsset } from '@/constant/perps';
 import type { PerpsProInfoTab } from '@/core/services/perpsService';
 import type { Account } from '@/core/startupServices/preference';
@@ -36,6 +44,7 @@ import React, {
 } from 'react';
 import {
   AppState,
+  Pressable,
   useAnimatedValue,
   useWindowDimensions,
   View,
@@ -149,6 +158,8 @@ type PerpsProSceneRow =
   | { key: 'positions-controls'; type: 'positions-controls' }
   | { key: 'positions-empty'; type: 'positions-empty' }
   | { key: string; position: PerpsPositionViewModel; type: 'position' }
+  | { key: string; order: PerpsTwapRecord; type: 'twap' }
+  | { key: 'twap-state'; type: 'twap-state' }
   | { key: 'open-orders-empty'; type: 'open-orders-empty' }
   | { key: string; order: PerpsOpenOrderViewModel; type: 'open-order' };
 
@@ -297,6 +308,15 @@ export const PerpsProScene: React.FC<{
     amountUnit,
   );
   const cancelOrders = usePerpsProCancelOrders();
+  const cancelTwap = usePerpsProCancelTwap(
+    info.accountIdentity,
+    scene.executionActive && !isModeSwitching,
+  );
+  const [twapDetail, setTwapDetail] = useState<PerpsTwapRecord | null>(null);
+  useEffect(() => {
+    setTwapDetail(null);
+  }, [info.accountIdentity, scene.routeFocused]);
+
   const openOrderEdit = usePerpsProOpenOrderEdit(
     info.accountIdentity,
     amountUnit,
@@ -740,6 +760,7 @@ export const PerpsProScene: React.FC<{
     () => ({
       basic: contentStyle,
       conditional: contentStyle,
+      twap: contentStyle,
     }),
     [contentStyle],
   );
@@ -843,9 +864,26 @@ export const PerpsProScene: React.FC<{
       visibleConditionalOrders,
     ],
   );
+  const twapRows = useMemo(() => {
+    const rows: PerpsProSceneRow[] = info.twaps.map(order => ({
+      key: `twap:${info.accountIdentity}:${order.key}`,
+      order,
+      type: 'twap',
+    }));
+    if (info.twapReadiness !== 'ready') {
+      rows.push({ key: 'twap-state', type: 'twap-state' });
+    } else if (!rows.length) {
+      rows.push({ key: 'open-orders-empty', type: 'open-orders-empty' });
+    }
+    return rows;
+  }, [info.accountIdentity, info.twaps, info.twapReadiness]);
   const openOrderRowsByCategory = useMemo(
-    () => ({ basic: basicOrderRows, conditional: conditionalOrderRows }),
-    [basicOrderRows, conditionalOrderRows],
+    () => ({
+      basic: basicOrderRows,
+      conditional: conditionalOrderRows,
+      twap: twapRows,
+    }),
+    [basicOrderRows, conditionalOrderRows, twapRows],
   );
   const openOrderRows = openOrderRowsByCategory[info.openOrderCategory];
   const rowsByTab = useMemo(
@@ -946,9 +984,39 @@ export const PerpsProScene: React.FC<{
       toggleHideOtherPositionSymbols,
     ],
   );
+  const twapCardsActive =
+    sceneActive &&
+    scene.routeFocused &&
+    settledInfoTab === 'openOrders' &&
+    info.openOrderCategory === 'twap' &&
+    !twapDetail;
   const renderOpenOrderRow = useCallback<ListRenderItem<PerpsProSceneRow>>(
     ({ item }) => {
       switch (item.type) {
+        case 'twap':
+          return (
+            <PerpsProTwapCard
+              order={item.order}
+              amountUnit={amountUnit}
+              now={Date.now()}
+              active={twapCardsActive}
+              onDetail={setTwapDetail}
+              onEnd={cancelTwap.request}
+            />
+          );
+        case 'twap-state':
+          return (
+            <Pressable onPress={info.retryTwaps}>
+              <PerpsProEmptyState
+                testID="perps-pro-twap-state"
+                message={t(
+                  info.twapReadiness === 'error'
+                    ? 'page.perps.pro.twap.loadError'
+                    : 'page.perps.pro.common.loading',
+                )}
+              />
+            </Pressable>
+          );
         case 'open-orders-empty':
           return (
             <PerpsProEmptyState
@@ -984,6 +1052,10 @@ export const PerpsProScene: React.FC<{
     },
     [
       confirmCancelOrder,
+      cancelTwap.request,
+      twapCardsActive,
+      info.retryTwaps,
+      info.twapReadiness,
       isOrderPending,
       info.allPositionsByCoin,
       isOpenOrderEditUnavailable,
@@ -1008,12 +1080,18 @@ export const PerpsProScene: React.FC<{
   const linkedOrders = useMemo<PerpsProLinkedOrders<PerpsProSceneRow>>(
     () => ({
       controls: {
+        twapCount: info.twapCount,
+        onAddTwap: () => {
+          tradePanelRef.current?.selectTwap();
+          infoListRef.current?.scrollToOffset(0);
+        },
         basicCount: info.openOrderCounts.basic,
         category: info.openOrderCategory,
         conditionalCount: info.openOrderCounts.conditional,
         hideOtherSymbols: info.hideOtherOpenOrderSymbols,
         isCancelAllPending,
         onCancelAll: () =>
+          info.openOrderCategory !== 'twap' &&
           confirmCancelAll(
             info.openOrderCommandCandidates,
             info.openOrderCategory,
@@ -1022,15 +1100,14 @@ export const PerpsProScene: React.FC<{
       },
       onCategoryChange: info.setOpenOrderCategory,
       rowsByCategory: openOrderRowsByCategory,
-      presentationByCategory: info.openOrderCollectionPresentationByCategory,
       contentStyleByCategory: openOrderContentStyleByCategory,
     }),
     [
       confirmCancelAll,
       info.hideOtherOpenOrderSymbols,
       info.openOrderCategory,
-      info.openOrderCollectionPresentationByCategory,
       info.openOrderCommandCandidates,
+      info.twapCount,
       info.openOrderCounts.basic,
       info.openOrderCounts.conditional,
       info.setOpenOrderCategory,
@@ -1125,6 +1202,7 @@ export const PerpsProScene: React.FC<{
       <PerpsProTradePanelOwner
         sceneActive={sceneActive}
         ref={tradePanelRef}
+        routeFocused={scene.routeFocused}
         accountLeverageConfiguration={scene.accountLeverageConfiguration}
         activeAssetSubscriptionEnabled={scene.klineEnabled}
         addFundsMode={tradeAddFundsAction.mode}
@@ -1343,6 +1421,19 @@ export const PerpsProScene: React.FC<{
               onConfirm={transfer.confirm}
               pending={transfer.pending}
               visible={!!transfer.editor}
+            />
+            {twapDetail ? (
+              <PerpsProTwapDetailSheet
+                key={`${info.accountIdentity}:${twapDetail.key}`}
+                order={twapDetail}
+                onClose={() => setTwapDetail(null)}
+              />
+            ) : null}
+            <PerpsProEndTwapModal
+              confirmation={cancelTwap.command}
+              pending={cancelTwap.pending}
+              onCancel={cancelTwap.close}
+              onConfirm={cancelTwap.confirm}
             />
             <PerpsProCancelConfirmationModal
               confirmation={cancelOrders.confirmation}

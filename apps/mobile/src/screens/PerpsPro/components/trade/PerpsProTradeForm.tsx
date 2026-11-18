@@ -48,12 +48,16 @@ import {
   PerpsProTradeSummaryRow,
 } from './PerpsProTradePrimitives';
 
+import { PerpsProTwapFields, PerpsProTwapHint } from './PerpsProTwapFields';
+import { PerpsProTwapDurationSheet } from './PerpsProTwapDurationSheet';
+
 type Sheet =
   | 'bbo'
   | 'leverage'
   | 'margin'
   | 'orderType'
   | 'tif'
+  | 'duration'
   | 'distribution'
   | null;
 
@@ -106,6 +110,11 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
     [dismissKeyboardThen],
   );
   const closeSheet = useCallback(() => setSheet(null), []);
+  const patchForm = controller.patchForm;
+  const confirmTwapDuration = useCallback(
+    (twapDuration: string) => patchForm({ twapDuration }),
+    [patchForm],
+  );
   const confirmLeverage = controller.confirmLeverage;
   const confirmLeverageAndClose = useCallback(
     async (value: number) => {
@@ -142,16 +151,19 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
     [priceSzDecimals],
   );
   const getKeyboardMinimum = useCallback(() => {
-    if (form.reduceOnly || !market) {
+    if ((form.reduceOnly && form.orderType !== 'twap') || !market) {
       return null;
     }
     const minimum = resolvePerpsProMinimumOrderAmount({
-      minimumQuoteAmount: PERPS_MINI_USD_VALUE,
+      minimumQuoteAmount:
+        form.orderType === 'twap' ? 100 : PERPS_MINI_USD_VALUE,
       price:
         getPerpsProTradeDisplayReferencePrice({
           form,
           marketPrice:
-            market.marketData.midPx || market.marketData.markPx || '',
+            form.orderType === 'twap'
+              ? market.marketData.midPx || ''
+              : market.marketData.midPx || market.marketData.markPx || '',
         }) || '',
       szDecimals: market.marketData.szDecimals,
     });
@@ -239,6 +251,7 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
         />
         {form.orderType === 'scale' ? (
           <PerpsProScaleOrderFields
+            amountInputRef={amountInputRef}
             controller={controller}
             onDistributionHelp={() => openSheet('distribution')}
             onTif={() => openSheet('tif')}
@@ -331,6 +344,12 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
         {form.orderType !== 'scale' ? (
           <>
             <PerpsProTradeAmountField
+              invalid={
+                form.orderType === 'twap' &&
+                !!form.amount &&
+                controller.getTwapValidation('buy').amountError ===
+                  'amountTooSmall'
+              }
               getKeyboardMinimum={getKeyboardMinimum}
               label={amountLabel}
               maxDecimals={controller.amountDecimals}
@@ -343,6 +362,16 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
               unit={controller.amountUnitLabel}
               value={form.amount}
             />
+            {form.orderType === 'twap' &&
+            (form.amount || controller.percentage > 0) &&
+            controller.getTwapValidation('buy').amountError ===
+              'amountTooSmall' ? (
+              <PerpsProTwapHint>
+                {t('page.perps.pro.twap.minimum', {
+                  amount: getKeyboardMinimum() ?? '100 USD',
+                })}
+              </PerpsProTwapHint>
+            ) : null}
             {controller.showAmountConversion && controller.resolvedAmount ? (
               <Text style={styles.convertedAmount}>
                 ≈{' '}
@@ -365,12 +394,41 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
             />
           </>
         ) : null}
+        {form.orderType === 'twap' ? (
+          <PerpsProTwapFields
+            controller={controller}
+            onSelectTime={() => openSheet('duration')}
+          />
+        ) : null}
       </RootScenePagerGestureBlock>
       <View
         style={[
           styles.optionsGroup,
           form.orderType === 'scale' && styles.scaleOptions,
         ]}>
+        {form.orderType === 'twap' ? (
+          <View style={styles.twapOptions}>
+            <PerpsProTradeCheckbox
+              checked={form.twapRandomize}
+              label={t('page.perps.pro.twap.randomize')}
+              onPress={() =>
+                controller.patchForm({ twapRandomize: !form.twapRandomize })
+              }
+            />
+            <PerpsProTradeCheckbox
+              checked={form.reduceOnly}
+              disabled={
+                !configurationReady ||
+                controller.reduceOnlyAvailability.checkboxDisabled
+              }
+              explanationKey="reduceOnly"
+              label={t('page.perps.pro.trade.reduceOnly')}
+              onPress={() =>
+                controller.patchForm({ reduceOnly: !form.reduceOnly })
+              }
+            />
+          </View>
+        ) : null}
         <PerpsProTradeSummaryRow
           label={t('page.perps.pro.trade.available')}
           onPressValue={configurationReady ? onAddFunds : undefined}
@@ -401,7 +459,8 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
           valueTestID="perps-pro-trade-available-deposit"
         />
         {controller.attachedTpSlExecutionEnabled &&
-        form.orderType !== 'scale' ? (
+        form.orderType !== 'scale' &&
+        form.orderType !== 'twap' ? (
           <RootScenePagerGestureBlock testID="perps-pro-trade-tpsl-root-gesture-block">
             <PerpsProTpSlFields
               sceneActive={sceneActive}
@@ -423,39 +482,41 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
             />
           </RootScenePagerGestureBlock>
         ) : null}
-        <View style={styles.optionRow}>
-          <PerpsProTradeCheckbox
-            checked={form.reduceOnly}
-            disabled={
-              !configurationReady ||
-              controller.reduceOnlyAvailability.checkboxDisabled
-            }
-            explanationKey="reduceOnly"
-            label={t('page.perps.pro.trade.reduceOnly')}
-            onPress={() => {
-              const reduceOnly = !form.reduceOnly;
-              controller.patchForm({
-                attachedTpSl: reduceOnly
-                  ? { ...form.attachedTpSl, enabled: false }
-                  : form.attachedTpSl,
-                reduceOnly,
-              });
-            }}
-          />
-          {form.orderType === 'limit' ? (
-            <Pressable
-              disabled={!configurationReady}
-              onPress={() => openSheet('tif')}
-              style={styles.tif}
-              testID="perps-pro-trade-tif-trigger">
-              <Text style={styles.tifText}>{tifLabels[form.tif]}</Text>
-              <PerpsProSelectCaret
-                color={colors2024['neutral-secondary']}
-                testID="perps-pro-trade-tif-caret"
-              />
-            </Pressable>
-          ) : null}
-        </View>
+        {form.orderType !== 'twap' ? (
+          <View style={styles.optionRow}>
+            <PerpsProTradeCheckbox
+              checked={form.reduceOnly}
+              disabled={
+                !configurationReady ||
+                controller.reduceOnlyAvailability.checkboxDisabled
+              }
+              explanationKey="reduceOnly"
+              label={t('page.perps.pro.trade.reduceOnly')}
+              onPress={() => {
+                const reduceOnly = !form.reduceOnly;
+                controller.patchForm({
+                  attachedTpSl: reduceOnly
+                    ? { ...form.attachedTpSl, enabled: false }
+                    : form.attachedTpSl,
+                  reduceOnly,
+                });
+              }}
+            />
+            {form.orderType === 'limit' ? (
+              <Pressable
+                disabled={!configurationReady}
+                onPress={() => openSheet('tif')}
+                style={styles.tif}
+                testID="perps-pro-trade-tif-trigger">
+                <Text style={styles.tifText}>{tifLabels[form.tif]}</Text>
+                <PerpsProSelectCaret
+                  color={colors2024['neutral-secondary']}
+                  testID="perps-pro-trade-tif-caret"
+                />
+              </Pressable>
+            ) : null}
+          </View>
+        ) : null}
       </View>
       <View style={styles.orderGroups}>
         {(['buy', 'sell'] as const).map(side => {
@@ -517,7 +578,12 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
                 </View>
               ) : null}
               <PerpsProTradeButton
-                disabled={controller.pending || !configurationReady}
+                disabled={
+                  controller.pending ||
+                  !configurationReady ||
+                  (form.orderType === 'twap' &&
+                    !controller.getTwapValidation(side).valid)
+                }
                 label={
                   form.orderType === 'scale'
                     ? t(
@@ -551,6 +617,14 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
 
       {sceneActive ? (
         <>
+          {form.orderType === 'twap' ? (
+            <PerpsProTwapDurationSheet
+              visible={configurationReady && sheet === 'duration'}
+              value={form.twapDuration}
+              onClose={closeSheet}
+              onConfirm={confirmTwapDuration}
+            />
+          ) : null}
           <PerpsProOrderTypeSheet
             onClose={closeSheet}
             onSelect={controller.setOrderType}
@@ -606,6 +680,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   inputGroup: { gap: 8 },
   doubleRow: { flexDirection: 'row', gap: 8 },
   flexItem: { flex: 1, minWidth: 0 },
+  twapOptions: { gap: 8 },
   optionsGroup: { gap: 8 },
   scaleOptions: { flexDirection: 'column-reverse', gap: 4 },
   convertedAmount: {

@@ -100,11 +100,17 @@ const makeProps = (): PageProps => ({
   onCategoryChange: jest.fn(),
   identityKey: 'account-a',
   rowsByCategory: {
+    twap: [],
     basic: [{ key: 'basic-order' }],
     conditional: [{ key: 'conditional-order' }],
   },
-  presentationByCategory: { basic: 'populated', conditional: 'populated' },
+  presentationByCategory: {
+    basic: 'populated',
+    conditional: 'populated',
+    twap: 'authoritativeEmpty',
+  },
   contentStyleByCategory: {
+    twap: {},
     basic: [
       { minHeight: 900, paddingTop: 20, paddingBottom: 80 },
       { paddingHorizontal: 16 },
@@ -154,7 +160,7 @@ describe('PerpsProOpenOrdersPage composition (unit)', () => {
     expect(controlsProps()).toMatchObject(props.controls);
     expect(bodyProps()).toMatchObject({
       activeKey: 'basic',
-      keys: ['basic', 'conditional'],
+      keys: ['basic', 'conditional', 'twap'],
       activityEnabled: true,
       interactionEnabled: true,
       identityKey: 'account-a',
@@ -222,6 +228,7 @@ describe('PerpsProOpenOrdersPage composition (unit)', () => {
         presentationByCategory: {
           basic: 'authoritativeEmpty',
           conditional: 'authoritativeEmpty',
+          twap: 'authoritativeEmpty',
         },
       },
       {
@@ -264,6 +271,7 @@ describe('PerpsProOpenOrdersPage composition (unit)', () => {
     expect(bodyProps().rowStartOffset).toBe(1344);
     expect(bodyProps().minimumPageHeight).toBe(656);
     expect(bodyProps().pageStyleByKey).toEqual({
+      twap: { minHeight: 656 },
       basic: {
         minHeight: 656,
         paddingTop: 20,
@@ -340,6 +348,7 @@ describe('PerpsProOpenOrdersPage composition (unit)', () => {
         presentationByCategory={{
           basic: 'authoritativeEmpty',
           conditional: 'authoritativeEmpty',
+          twap: 'authoritativeEmpty',
         }}
       />,
     );
@@ -372,6 +381,7 @@ describe('PerpsProOpenOrdersPage composition (unit)', () => {
           presentationByCategory={{
             basic: presentation,
             conditional: presentation,
+            twap: presentation,
           }}
         />,
       );
@@ -424,6 +434,7 @@ describe('PerpsProOpenOrdersPage composition (unit)', () => {
         onCancelAll: jest.fn(),
       },
       rowsByCategory: {
+        twap: [],
         basic: [{ key: 'latest-basic' }],
         conditional: [{ key: 'latest-conditional' }],
       },
@@ -491,6 +502,7 @@ describe('PerpsProOpenOrdersPage composition (unit)', () => {
       presentationByCategory: {
         basic: 'authoritativeEmpty',
         conditional: 'authoritativeEmpty',
+        twap: 'authoritativeEmpty',
       },
     };
 

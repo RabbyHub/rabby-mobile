@@ -566,6 +566,7 @@ export const usePerpsProScene = (sceneActive = true) => {
     cancelPendingMarketSelection,
     currentMarket,
     executionActive: klineEnabled && tradeConfigurationReady,
+    routeFocused: isFocused,
     fundingHistoryEnabled,
     isResolvingMarket,
     klineEnabled,

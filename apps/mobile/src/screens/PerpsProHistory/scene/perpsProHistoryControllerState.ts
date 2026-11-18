@@ -25,6 +25,7 @@ export const PERPS_PRO_HISTORY_TABS: PerpsProHistoryTab[] = [
   'orders',
   'trade',
   'transaction',
+  'twap',
   'funding',
 ];
 
@@ -38,6 +39,7 @@ const createTabState = (): PerpsProHistoryTabState => ({
 
 export const createPerpsProHistoryState =
   (): PerpsProHistoryControllerState => ({
+    twap: createTabState(),
     funding: createTabState(),
     orders: createTabState(),
     trade: createTabState(),
@@ -57,6 +59,7 @@ export const getPerpsProHistoryOldestTime = (
 
 export const getPerpsProHistoryTabLimit = (tab: PerpsProHistoryTab) => {
   switch (tab) {
+    case 'twap':
     case 'orders':
       return PERPS_PRO_HISTORY_ORDERS_LIMIT;
     case 'trade':

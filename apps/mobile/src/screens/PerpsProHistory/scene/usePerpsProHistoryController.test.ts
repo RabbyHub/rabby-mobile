@@ -1,3 +1,14 @@
+jest.mock('@/hooks/perps/twap/usePerpsTwapStore', () => {
+  const records = {};
+  return {
+    usePerpsTwapRecords: () => records,
+    usePerpsTwapReadiness: () => 'ready',
+  };
+});
+jest.mock('@/hooks/perps/twap/usePerpsTwapSubscriptions', () => ({
+  usePerpsTwapSubscriptions: () => {},
+  refreshPerpsTwaps: async () => {},
+}));
 import type {
   UserHistoricalOrders,
   WsFill,
@@ -187,13 +198,13 @@ describe('usePerpsProHistoryController', () => {
     jest.restoreAllMocks();
   });
 
-  it('preloads all four tabs and distinguishes successful empty results', async () => {
+  it('preloads ordinary tabs alongside the shared TWAP source and distinguishes successful empty results', async () => {
     const hook = renderHook(() => usePerpsProHistoryController());
     await waitFor(() => expect(mockFetchOrders).toHaveBeenCalledTimes(1));
     await waitFor(() =>
       expect(
         Object.values(hook.result.current.state).map(state => state.status),
-      ).toEqual(['empty', 'empty', 'empty', 'empty']),
+      ).toEqual(['empty', 'empty', 'empty', 'empty', 'empty']),
     );
     expect(hook.result.current.activeTab).toBe('orders');
     expect(hook.result.current.tabState.hasEarlier).toBe(false);

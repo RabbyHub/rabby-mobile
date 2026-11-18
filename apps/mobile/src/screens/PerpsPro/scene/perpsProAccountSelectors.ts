@@ -139,6 +139,7 @@ export const createPerpsProAccountSelectors = () => {
   };
 
   return {
+    supportedMarkets: (state: PerpsState) => readInput(state).marketDataMap,
     control: (state: PerpsState) => {
       const nextInput = readInput(state);
       if (controlInput !== nextInput) {

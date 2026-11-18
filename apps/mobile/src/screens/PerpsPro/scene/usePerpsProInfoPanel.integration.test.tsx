@@ -9,7 +9,11 @@ import {
 } from '@testing-library/react-native';
 import { PixelRatio, Platform, StyleSheet } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { UserAbstractionResp } from '@rabby-wallet/hyperliquid-sdk';
+import {
+  UserAbstractionResp,
+  InfoClient,
+  WebSocketClient,
+} from '@rabby-wallet/hyperliquid-sdk';
 import type {
   AssetPosition,
   OpenOrder,
@@ -289,6 +293,22 @@ describe('Perps Pro account price publication integration', () => {
   });
   beforeEach(() => {
     jest.clearAllTimers();
+    // TWAP transport is outside this account-price publication contract.
+    jest
+      .spyOn(InfoClient.prototype, 'getUserTwapHistory')
+      .mockResolvedValue([]);
+    jest
+      .spyOn(InfoClient.prototype, 'getUserTwapSliceFills')
+      .mockResolvedValue([]);
+    for (const method of [
+      'subscribeToTwapStates',
+      'subscribeToUserTwapHistory',
+      'subscribeToUserTwapSliceFills',
+    ] as const) {
+      jest
+        .spyOn(WebSocketClient.prototype, method)
+        .mockReturnValue({ id: 'twap-fixture', unsubscribe: () => undefined });
+    }
     jest.spyOn(PixelRatio, 'get').mockReturnValue(3);
     delegated = '0';
     stakingError = null;

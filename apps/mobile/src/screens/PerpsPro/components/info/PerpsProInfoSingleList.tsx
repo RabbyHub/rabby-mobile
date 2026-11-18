@@ -22,27 +22,24 @@ import type {
   ViewStyle,
 } from 'react-native';
 import type { AnimatedRef, SharedValue } from 'react-native-reanimated';
-import type { PerpsProCollectionPresentation } from '../../model/infoPanelPresentation';
+import {
+  OPEN_ORDER_CATEGORIES,
+  isOpenOrderCategory,
+  type OpenOrderCategory as Category,
+} from '../../model/openOrderCategories';
 import { PerpsProOpenOrdersControls } from '../open-orders/PerpsProOpenOrdersControls';
 
-type Category = 'basic' | 'conditional';
 type ControlsProps = React.ComponentProps<typeof PerpsProOpenOrdersControls>;
 export type PerpsProLinkedOrders<Row extends { key: string }> = {
   controls: Omit<ControlsProps, 'onSetCategory'>;
   onCategoryChange: (category: Category) => void;
   rowsByCategory: Record<Category, readonly Row[]>;
-  presentationByCategory: Record<Category, PerpsProCollectionPresentation>;
   contentStyleByCategory: Record<Category, StyleProp<ViewStyle>>;
 };
 
-const SIMPLE_PAGES: readonly LinkedScenePage[] = [
-  { key: 'positions' },
-  { key: 'openOrders' },
-  { key: 'account' },
-];
 const GROUPED_PAGES: readonly LinkedScenePage[] = [
   { key: 'positions' },
-  { key: 'openOrders', children: [{ key: 'basic' }, { key: 'conditional' }] },
+  { key: 'openOrders', children: OPEN_ORDER_CATEGORIES.map(key => ({ key })) },
   { key: 'account' },
 ];
 const ignoreMeasure = () => {};
@@ -69,7 +66,7 @@ type Props<Row extends { key: string }> = {
   openOrders: PerpsProLinkedOrders<Row>;
   pagingMode?: LinkedScenePagingMode;
   /**
-   * Basic / Conditional are click-only siblings. Product decision
+   * Order categories are click-only siblings. Product decision
    * (2026-11-13): the sub-tab swipe is low-frequency and adds steps, so a drag
    * inside Orders routes to the adjacent main tab instead of the sibling page.
    * Parent tabs keep their gesture.
@@ -138,27 +135,19 @@ export const PerpsProInfoSingleList = <Row extends { key: string }>({
     }),
     [openOrders.controls.category],
   );
-  // Only authoritative emptiness of the whole collection removes the category
-  // UI. A zero-count category or a symbol filter never removes a physical leaf.
-  const grouped =
-    openOrders.presentationByCategory.basic !== 'authoritativeEmpty' ||
-    openOrders.presentationByCategory.conditional !== 'authoritativeEmpty';
   const activePath = useMemo(
     () => ({
       key: activeTab,
-      ...(activeTab === 'openOrders' && grouped
+      ...(activeTab === 'openOrders'
         ? { childKey: openOrders.controls.category }
         : {}),
     }),
-    [activeTab, grouped, openOrders.controls.category],
+    [activeTab, openOrders.controls.category],
   );
   const { onCategoryChange } = openOrders;
   const changePath = useCallback(
     (path: LinkedScenePath) => {
-      if (
-        path.key === 'openOrders' &&
-        (path.childKey === 'basic' || path.childKey === 'conditional')
-      ) {
+      if (path.key === 'openOrders' && isOpenOrderCategory(path.childKey)) {
         onCategoryChange(path.childKey);
       }
       onTabChange(path.key as PerpsProInfoTab);
@@ -168,8 +157,9 @@ export const PerpsProInfoSingleList = <Row extends { key: string }>({
   const renderLeaf = useCallback(
     (path: LinkedScenePath, context: LinkedScenePageContext) => {
       const tab = path.key as PerpsProInfoTab;
-      const category =
-        path.childKey === 'conditional' ? 'conditional' : 'basic';
+      const category = isOpenOrderCategory(path.childKey)
+        ? path.childKey
+        : 'basic';
       const isOrderChild = tab === 'openOrders' && path.childKey !== undefined;
       return (
         <LinkedPerpsRows
@@ -213,7 +203,7 @@ export const PerpsProInfoSingleList = <Row extends { key: string }>({
         <PerpsProOpenOrdersControls
           {...openOrders.controls}
           category={
-            context.childKey === 'conditional' ? 'conditional' : 'basic'
+            isOpenOrderCategory(context.childKey) ? context.childKey : 'basic'
           }
           onSetCategory={context.selectChild}
         />
@@ -224,7 +214,7 @@ export const PerpsProInfoSingleList = <Row extends { key: string }>({
   return (
     <LinkedScenePagerList
       listHeader={listHeader}
-      pages={grouped ? GROUPED_PAGES : SIMPLE_PAGES}
+      pages={GROUPED_PAGES}
       activePath={activePath}
       protectRootGesture
       pagingMode={pagingMode}

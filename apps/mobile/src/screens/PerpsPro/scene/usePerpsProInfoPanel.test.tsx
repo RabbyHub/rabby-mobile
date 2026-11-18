@@ -1,3 +1,7 @@
+jest.mock('@/hooks/perps/twap/usePerpsTwapSubscriptions', () => ({
+  usePerpsTwapSubscriptions: () => {},
+  refreshPerpsTwaps: async () => {},
+}));
 import { act, renderHook } from '@testing-library/react-native';
 
 const mockFetchMarketData = jest.fn();
@@ -70,6 +74,7 @@ jest.mock('@/hooks/perps/runtime/perpsRuntimeState', () => ({
 }));
 
 jest.mock('@/hooks/perps/usePerpsStore', () => ({
+  getPerpsAccountRuntimeContext: () => ({ generation: 1 }),
   fetchStakingSummaryHttp: jest.fn(async () => true),
   isPerpsUserAbstractionReadyForAccount: () => mockUserAbstractionReady,
   perpsStore: Object.assign(

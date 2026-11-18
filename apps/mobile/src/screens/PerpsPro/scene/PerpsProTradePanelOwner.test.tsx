@@ -186,6 +186,10 @@ jest.mock('../components/trade/PerpsProOrderConfirmationSheet', () => ({
   },
 }));
 
+jest.mock('../components/trade/PerpsProTwapOrderConfirmationSheet', () => ({
+  PerpsProTwapOrderConfirmationSheet: () => null,
+}));
+
 jest.mock('../components/trade/PerpsProScaleOrderConfirmationSheet', () => ({
   PerpsProScaleOrderConfirmationSheet: function ScaleConfirmation(
     props: object,
@@ -267,6 +271,7 @@ const createProps = (): React.ComponentProps<
   activeAssetSubscriptionEnabled: true,
   addFundsMode: 'deposit',
   executionActive: true,
+  routeFocused: true,
   isMarketLoading: false,
   leveragePending: false,
   market: market(),

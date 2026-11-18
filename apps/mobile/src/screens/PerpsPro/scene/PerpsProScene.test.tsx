@@ -1,3 +1,26 @@
+// These isolated scene tests replace child sheets and action controllers.
+jest.mock('../components/twap/PerpsProTwapCard', () => ({
+  PerpsProTwapCard: () => null,
+}));
+jest.mock('../components/twap/PerpsProTwapDetailSheet', () => ({
+  PerpsProTwapDetailSheet: () => null,
+}));
+jest.mock('../components/twap/PerpsProEndTwapModal', () => ({
+  PerpsProEndTwapModal: () => null,
+}));
+jest.mock('../components/trade/PerpsProTwapOrderConfirmationSheet', () => ({
+  PerpsProTwapOrderConfirmationSheet: () => null,
+}));
+const mockRequestCancelTwap = jest.fn();
+jest.mock('./usePerpsProCancelTwap', () => ({
+  usePerpsProCancelTwap: () => ({
+    command: null,
+    pending: false,
+    request: mockRequestCancelTwap,
+    close: jest.fn(),
+    confirm: jest.fn(),
+  }),
+}));
 import {
   act,
   fireEvent,
@@ -32,6 +55,7 @@ const mockMarketSelectorUnmount = jest.fn();
 const mockOrderBookRender = jest.fn();
 const mockOrderBookProps = jest.fn();
 const mockTradeFormProps = jest.fn();
+const mockSetOrderType = jest.fn();
 const mockTradeHookProps = jest.fn();
 const mockOrderConfirmationProps = jest.fn();
 const mockGetActiveAssetData = jest.fn();
@@ -682,6 +706,7 @@ jest.mock('./usePerpsProTrade', () => ({
       review: null,
       selectOrderBookPrice: (...args: unknown[]) =>
         mockSelectOrderBookPrice(...args),
+      setOrderType: mockSetOrderType,
       setPrice: jest.fn(),
       setSkipConfirmation: jest.fn(),
       skipConfirmation: false,
@@ -790,6 +815,7 @@ const createSceneState = (overrides: Record<string, unknown> = {}) => ({
   cancelPendingMarketSelection: jest.fn(),
   currentMarket: null,
   executionActive: false,
+  routeFocused: true,
   fundingHistoryEnabled: true,
   isResolvingMarket: false,
   klineEnabled: false,
@@ -871,6 +897,10 @@ const createInfoState = (overrides: Record<string, unknown> = {}) => {
     accountState: 'loading',
     activeInfoTab: 'account',
     allOpenOrdersCount: 0,
+    twaps: [],
+    twapReadiness: 'ready',
+    twapCount: 0,
+    retryTwaps: jest.fn(),
     allPositionsCount: 0,
     allPositionsByCoin: new Map(),
     currentAccount: null,
@@ -1406,7 +1436,7 @@ describe('PerpsProScene market loading states', () => {
       );
       view.rerender(<PerpsProScene {...props} />);
       settleInfoPage(activeInfoTab as InfoTab);
-      expect(screen.UNSAFE_getAllByType(FlatList)).toHaveLength(5);
+      expect(screen.UNSAFE_getAllByType(FlatList)).toHaveLength(6);
     }
     expect(mockBboSubscriptions).toHaveLength(1);
     expect(mockBboSubscriptions[0].unsubscribe).not.toHaveBeenCalled();
@@ -1475,7 +1505,7 @@ describe('PerpsProScene market loading states', () => {
       screen.UNSAFE_getByType(PerpsProInfoSingleList).props.renderItemByTab
         .positions,
     ).not.toBe(firstRenderer);
-    expect(screen.UNSAFE_getAllByType(FlatList)).toHaveLength(5);
+    expect(screen.UNSAFE_getAllByType(FlatList)).toHaveLength(6);
   });
 
   it.each(['positions', 'openOrders'] as const)(
@@ -1673,7 +1703,7 @@ describe('PerpsProScene market loading states', () => {
     );
 
     expect(screen.getByTestId('perps-pro-info-list')).toBeOnTheScreen();
-    expect(screen.UNSAFE_getAllByType(FlatList)).toHaveLength(5);
+    expect(screen.UNSAFE_getAllByType(FlatList)).toHaveLength(6);
     expect(screen.getByTestId('perps-pro-trade-section')).toBeTruthy();
     expect(screen.getByTestId('perps-pro-positions-controls')).toBeTruthy();
     expect(screen.queryByTestId('account-skeleton')).toBeNull();
@@ -2971,7 +3001,7 @@ describe('PerpsProScene market loading states', () => {
     // The native list now owns vertical scrolling on Android too; the scene no
     // longer synthesises it with per-frame scrollTo calls.
     expect(scroll.props.scrollEnabled).toBe(true);
-    expect(screen.UNSAFE_getAllByType(FlatList)).toHaveLength(5);
+    expect(screen.UNSAFE_getAllByType(FlatList)).toHaveLength(6);
     expect(getInfoTrack()).toBeOnTheScreen();
     expect(screen.UNSAFE_getAllByType(SceneList)).toHaveLength(1);
     expect(infoTabs.map(tab => getInfoList(tab).props.data)).toHaveLength(3);
@@ -3226,8 +3256,8 @@ describe('PerpsProScene market loading states', () => {
           screen.getByTestId('perps-pro-open-orders-empty-illustration'),
         ).toBeOnTheScreen();
         expect(
-          screen.queryByTestId('perps-pro-open-orders-controls'),
-        ).toBeNull();
+          screen.getByTestId('perps-pro-open-orders-controls'),
+        ).toBeOnTheScreen();
         expect(getInfoPage('openOrders').props.pointerEvents).toBe('auto');
         expect(getInfoList()).toBe(list);
         expect(getInfoTrack()).toBe(pager);
@@ -4152,7 +4182,8 @@ describe('PerpsProScene market loading states', () => {
       screen.getByTestId('perps-pro-open-orders-empty-illustration'),
     ).toBeTruthy();
     expect(screen.getByText('page.perps.pro.openOrders.empty')).toBeTruthy();
-    expect(screen.queryByTestId('perps-pro-open-orders-controls')).toBeNull();
+    // TWAP remains reachable from an empty Open Orders collection.
+    expect(screen.getByTestId('perps-pro-open-orders-controls')).toBeTruthy();
   });
 
   it.each(['ios', 'android'] as const)(
@@ -4179,13 +4210,17 @@ describe('PerpsProScene market loading states', () => {
         conditional,
         { ...conditional, key: 'conditional:ETH:4', coin: 'ETH', oid: 4 },
       ];
-      const byCategory = { basic: [basic], conditional: [conditional] };
+      const byCategory = {
+        basic: [basic],
+        conditional: [conditional],
+        twap: [],
+      };
       const committed = jest.fn();
       mockUsePerpsProScene.mockReturnValue(createSceneState());
       mockUsePerpsProInfoPanel.mockImplementation(function useInfo() {
-        const [category, setCategory] = React.useState<'basic' | 'conditional'>(
-          'basic',
-        );
+        const [category, setCategory] = React.useState<
+          'basic' | 'conditional' | 'twap'
+        >('basic');
         return createInfoState({
           activeInfoTab: 'openOrders',
           openOrderCategory: category,
@@ -4212,7 +4247,7 @@ describe('PerpsProScene market loading states', () => {
       const track = getInfoTrack();
       const basicList = getInfoList('openOrders');
       expect(screen.UNSAFE_getAllByType(SceneList)).toHaveLength(1);
-      expect(screen.UNSAFE_getAllByType(FlatList)).toHaveLength(5);
+      expect(screen.UNSAFE_getAllByType(FlatList)).toHaveLength(6);
       expect(
         screen.getAllByTestId('perps-pro-open-orders-controls'),
       ).toHaveLength(1);
@@ -4271,6 +4306,22 @@ describe('PerpsProScene market loading states', () => {
       expect(getInfoPage('openOrders', 'conditional').props.pointerEvents).toBe(
         'auto',
       );
+      fireEvent.press(screen.getByTestId('perps-pro-open-orders-tab-twap'));
+      finishPhysicalPage();
+      expect(committed).toHaveBeenLastCalledWith('twap');
+      expect(getInfoList('openOrders').props.testID).toBe(
+        'perps-pro-open-orders-rows-twap',
+      );
+      expect(
+        screen.getByText('page.perps.pro.openOrders.empty'),
+      ).toBeOnTheScreen();
+      fireEvent.press(
+        within(screen.getByTestId('perps-pro-open-orders-controls')).getByRole(
+          'button',
+        ),
+      );
+      expect(mockSetOrderType).toHaveBeenLastCalledWith('twap');
+      expect(mockConfirmCancelAll).toHaveBeenCalledTimes(1);
       expect(getInfoTrack()).toBe(track);
     },
   );

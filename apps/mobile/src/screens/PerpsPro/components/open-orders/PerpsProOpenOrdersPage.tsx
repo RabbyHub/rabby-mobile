@@ -16,8 +16,11 @@ import { RenderActivityBoundary } from '@/hooks/storeActivity/RenderActivityBoun
 import type { PerpsProCollectionPresentation } from '../../model/infoPanelPresentation';
 import { PerpsProOpenOrdersControls } from './PerpsProOpenOrdersControls';
 
-type Category = 'basic' | 'conditional';
-const CATEGORIES: readonly Category[] = ['basic', 'conditional'];
+import {
+  OPEN_ORDER_CATEGORIES as CATEGORIES,
+  isOpenOrderCategory,
+  type OpenOrderCategory as Category,
+} from '../../model/openOrderCategories';
 type ControlsProps = React.ComponentProps<typeof PerpsProOpenOrdersControls>;
 
 type Props<Row extends { key: string }> = {
@@ -33,7 +36,7 @@ type Props<Row extends { key: string }> = {
   scrollOffset: SharedValue<number>;
 };
 
-/** A single controls block above two retained row lists. There is no vertical
+/** A single controls block above the retained row lists. There is no vertical
  * list here: both child lists inherit the real outer SceneList cell/context.
  * Command hooks and sheet lifecycles remain owned by the Scene.
  */
@@ -56,6 +59,7 @@ export function PerpsProOpenOrdersPage<Row extends { key: string }>({
   );
   const gestureActive = useSharedValue(false);
   const showControls =
+    !!controls.onAddTwap ||
     presentationByCategory[controls.category] !== 'authoritativeEmpty';
   // Use the measured extent even while hidden controls retain their last
   // presentation. The native layout callback publishes removal as height zero.
@@ -70,6 +74,10 @@ export function PerpsProOpenOrdersPage<Row extends { key: string }>({
         ...StyleSheet.flatten(contentStyleByCategory.basic),
         minHeight: minimumPageHeight,
       },
+      twap: {
+        ...StyleSheet.flatten(contentStyleByCategory.twap),
+        minHeight: minimumPageHeight,
+      },
       conditional: {
         ...StyleSheet.flatten(contentStyleByCategory.conditional),
         minHeight: minimumPageHeight,
@@ -78,7 +86,7 @@ export function PerpsProOpenOrdersPage<Row extends { key: string }>({
     [contentStyleByCategory, minimumPageHeight],
   );
   const renderItemByKey = useMemo(
-    () => ({ basic: renderItem, conditional: renderItem }),
+    () => ({ basic: renderItem, conditional: renderItem, twap: renderItem }),
     [renderItem],
   );
   const requestCategory = useCallback(
@@ -87,7 +95,7 @@ export function PerpsProOpenOrdersPage<Row extends { key: string }>({
   );
   const commitCategory = useCallback(
     (key: string) => {
-      if (key === 'basic' || key === 'conditional') {
+      if (isOpenOrderCategory(key)) {
         onCategoryChange(key);
       }
     },

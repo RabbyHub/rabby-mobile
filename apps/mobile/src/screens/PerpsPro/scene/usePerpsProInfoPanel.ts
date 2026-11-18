@@ -1,4 +1,12 @@
 import {
+  usePerpsTwapRecords,
+  usePerpsTwapReadiness,
+} from '@/hooks/perps/twap/usePerpsTwapStore';
+import {
+  usePerpsTwapSubscriptions,
+  refreshPerpsTwaps,
+} from '@/hooks/perps/twap/usePerpsTwapSubscriptions';
+import {
   useCallback,
   useEffect,
   useLayoutEffect,
@@ -13,6 +21,7 @@ import { usePerpsRuntimeStatus } from '@/hooks/perps/runtime/usePerpsRuntimeStat
 import { getPerpsRuntimeIdentity } from '@/hooks/perps/runtime/perpsRuntimeState';
 import {
   fetchStakingSummaryHttp,
+  getPerpsAccountRuntimeContext,
   isPerpsUserAbstractionReadyForAccount,
   perpsStore,
   usePerpsStore,
@@ -47,6 +56,8 @@ export type PerpsProAccountPanelState =
   | 'error'
   | 'ready';
 
+const EMPTY_OPEN_ORDERS: PerpsOpenOrderViewModel[] = [];
+
 export const usePerpsProInfoPanel = (
   canonicalCoin: string,
   requestedInfoTab: PerpsProInfoTab | null = null,
@@ -59,8 +70,9 @@ export const usePerpsProInfoPanel = (
     useState(false);
   const [hideOtherOpenOrderSymbols, setHideOtherOpenOrderSymbols] =
     useState(false);
-  const [openOrderCategory, setOpenOrderCategory] =
-    useState<Exclude<PerpsOpenOrderCategory, 'unsupported'>>('basic');
+  const [openOrderCategory, setOpenOrderCategory] = useState<
+    Exclude<PerpsOpenOrderCategory, 'unsupported'> | 'twap'
+  >('basic');
 
   const facts = perpsStore(
     useShallow(state => ({
@@ -80,6 +92,18 @@ export const usePerpsProInfoPanel = (
       userAbstractionReady: isPerpsUserAbstractionReadyForAccount(state),
     })),
   );
+  const twapUser = facts.currentAccount?.address;
+  usePerpsTwapSubscriptions(
+    twapUser,
+    sceneActive && runtime.status === 'ready',
+    getPerpsAccountRuntimeContext().generation,
+  );
+  const retryTwaps = useCallback(
+    () => (twapUser ? refreshPerpsTwaps(twapUser) : Promise.resolve()),
+    [twapUser],
+  );
+  const twapRecords = usePerpsTwapRecords(twapUser);
+  const twapReadiness = usePerpsTwapReadiness(twapUser);
   const pendingFundingCount = perpsStore(state =>
     getPerpsPendingFundingCount(state.localLoadingHistory),
   );
@@ -89,6 +113,24 @@ export const usePerpsProInfoPanel = (
   const accountControl = perpsStore(useShallow(accountSelectors.control));
   const accountAssetKeys = perpsStore(useShallow(accountSelectors.assetKeys));
 
+  const marketDataMap = perpsStore(accountSelectors.supportedMarkets);
+  const allTwaps = useMemo(
+    () =>
+      Object.values(twapRecords)
+        .filter(order => order.active && !!marketDataMap[order.state.coin])
+        .sort(
+          (a, b) =>
+            b.state.timestamp - a.state.timestamp || b.twapId - a.twapId,
+        ),
+    [twapRecords, marketDataMap],
+  );
+  const twaps = useMemo(
+    () =>
+      hideOtherOpenOrderSymbols
+        ? allTwaps.filter(order => order.state.coin === canonicalCoin)
+        : allTwaps,
+    [allTwaps, canonicalCoin, hideOtherOpenOrderSymbols],
+  );
   const accountPagePrepared =
     preferences.activeInfoTab !== 'openOrders' ||
     requestedInfoTab === 'account';
@@ -240,7 +282,10 @@ export const usePerpsProInfoPanel = (
     }),
     [allOpenOrders, canonicalCoin, hideOtherOpenOrderSymbols],
   );
-  const openOrders = openOrdersByCategory[openOrderCategory];
+  const openOrders =
+    openOrderCategory === 'twap'
+      ? EMPTY_OPEN_ORDERS
+      : openOrdersByCategory[openOrderCategory];
   const hasAccount = !!facts.currentAccount;
   const openOrderCollectionPresentationByCategory = useMemo<
     Record<'basic' | 'conditional', PerpsProCollectionPresentation>
@@ -337,11 +382,24 @@ export const usePerpsProInfoPanel = (
       : 'no-account',
     accountState,
     activeInfoTab,
-    allOpenOrdersCount: openOrderCounts.basic + openOrderCounts.conditional,
+    allOpenOrdersCount:
+      openOrderCounts.basic + openOrderCounts.conditional + allTwaps.length,
+    twaps,
+    twapCount: allTwaps.length,
+    twapReadiness,
+    retryTwaps,
     allPositionsCount: allPositions.length,
     allPositionsByCoin,
     openOrderCollectionPresentation:
-      openOrderCollectionPresentationByCategory[openOrderCategory],
+      openOrderCategory === 'twap'
+        ? resolvePerpsProCollectionPresentation({
+            hasAccount,
+            runtimeReady: runtime.status === 'ready',
+            sourceReady: twapReadiness === 'ready',
+            totalCount: allTwaps.length,
+            visibleCount: twaps.length,
+          })
+        : openOrderCollectionPresentationByCategory[openOrderCategory],
     openOrderCollectionPresentationByCategory,
     positionCollectionPresentation: resolvePerpsProCollectionPresentation({
       hasAccount: !!facts.currentAccount,
