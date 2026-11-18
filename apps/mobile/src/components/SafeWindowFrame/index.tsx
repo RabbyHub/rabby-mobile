@@ -12,10 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme2024 } from '@/hooks/theme';
 import { perfEvents } from '@/core/utils/perf';
 import { getScreenContentBackgroundColor } from '@/constant/layout';
-import {
-  SafeWindowBackdropContext,
-  SystemColumnInsetContext,
-} from './backdrop';
+import { SafeWindowBackdropContext } from './backdrop';
 
 const isIOS = Platform.OS === 'ios';
 
@@ -129,6 +126,9 @@ function SafeWindowFrameImpl({ children }: { children?: React.ReactNode }) {
       ? colors2024['neutral-bg-0']
       : declaredBackground);
 
+  const [availableWidth, setAvailableWidth] = React.useState<number | null>(
+    null,
+  );
   const lastWrittenWidthRef = React.useRef<number | null>(null);
 
   React.useEffect(() => {
@@ -152,6 +152,7 @@ function SafeWindowFrameImpl({ children }: { children?: React.ReactNode }) {
       lastNativeWindow = nativeWindow;
       lastAppliedWidth = targetWidth;
       lastWrittenWidthRef.current = targetWidth;
+      setAvailableWidth(targetWidth);
       Dimensions.set({
         window: { ...win, width: targetWidth },
         screen,
@@ -186,20 +187,15 @@ function SafeWindowFrameImpl({ children }: { children?: React.ReactNode }) {
   }
 
   return (
-    <SystemColumnInsetContext.Provider value={rightInset}>
-      <SafeWindowBackdropContext.Provider value={setBackdropColor}>
-        <View style={[styles.frame, { backgroundColor: stripColor }]}>
-          {/*
-            The app tree keeps the full window width so a screen's background
-            layer (gradient, image, colour) runs under the system column. Only
-            the content is inset, and the screen containers do that through
-            `useSystemColumnInset`; `Dimensions` still publishes the reduced
-            width so numeric layouts stay inside the safe area.
-          */}
-          <View style={styles.content}>{children}</View>
+    <SafeWindowBackdropContext.Provider value={setBackdropColor}>
+      <View style={[styles.frame, { backgroundColor: stripColor }]}>
+        {leftInset > 0 ? <View style={{ width: leftInset }} /> : null}
+        <View style={[styles.content, { width: availableWidth ?? undefined }]}>
+          {children}
         </View>
-      </SafeWindowBackdropContext.Provider>
-    </SystemColumnInsetContext.Provider>
+        {rightInset > 0 ? <View style={{ width: rightInset }} /> : null}
+      </View>
+    </SafeWindowBackdropContext.Provider>
   );
 }
 

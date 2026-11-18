@@ -21,7 +21,6 @@ import {
   ReactNativeViewAsMap,
 } from '@/hooks/common/useReactNativeViews';
 import AuthButton, { IAuthButtonProps } from '../AuthButton';
-import { useSystemColumnInset } from '@/components/SafeWindowFrame/backdrop';
 
 const getStyle = createGetStyles2024(ctx =>
   StyleSheet.create({
@@ -124,7 +123,6 @@ export const FooterButtonScreenContainer = <
   >) => {
   const { safeOffHeader, androidOnlyBottomOffset } = useSafeSizes();
   const { styles } = useTheme2024({ getStyle });
-  const columnInset = useSystemColumnInset();
   const keyboardAvoiding = _as === 'KeyboardAvoidingView';
   const [keyboardVisible, setKeyboardVisible] = useState(false);
 
@@ -163,7 +161,6 @@ export const FooterButtonScreenContainer = <
       style={StyleSheet.flatten([
         styles.root,
         { height: winHeight, paddingTop: headerOffset },
-        columnInset > 0 && { paddingRight: columnInset },
         style,
       ])}>
       <View

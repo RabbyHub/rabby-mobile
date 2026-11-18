@@ -19,7 +19,6 @@ import {
   LinearGradientContainerProps,
 } from './LinearGradientContainer';
 import { LinearGradientProps } from 'react-native-linear-gradient';
-import { useSystemColumnInset } from '@/components/SafeWindowFrame/backdrop';
 
 export default function NormalScreenContainer2024<
   T extends ReactNativeViewAs = 'View',
@@ -54,10 +53,6 @@ export default function NormalScreenContainer2024<
 >) {
   const { safeOffHeader, safeTop } = useSafeSizes();
   const ViewComp = useMemo(() => getViewComponentByAs(as), [as]);
-  // The background above stays full-bleed; only the content keeps clear of the
-  // foldable system column. `0` on every other device, where the extra padding
-  // is not added at all.
-  const columnInset = useSystemColumnInset();
 
   return (
     <LinearGradientContainer type={type} {...linearProp}>
@@ -84,7 +79,6 @@ export default function NormalScreenContainer2024<
             height: '100%',
             backgroundColor: 'transparent',
           },
-          columnInset > 0 && { paddingRight: columnInset },
           overwriteStyle,
         ])}>
         {children}
