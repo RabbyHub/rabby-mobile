@@ -137,7 +137,7 @@ function SafeWindowFrameImpl({ children }: { children?: React.ReactNode }) {
 
   return (
     <View
-      style={[styles.frame, { backgroundColor: colors2024['neutral-bg-0'] }]}>
+      style={[styles.frame, { backgroundColor: colors2024['neutral-bg-1'] }]}>
       {leftInset > 0 ? <View style={{ width: leftInset }} /> : null}
       <View style={[styles.content, { width: availableWidth ?? undefined }]}>
         {children}

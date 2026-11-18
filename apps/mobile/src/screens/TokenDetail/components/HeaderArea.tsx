@@ -6,7 +6,6 @@ import React, {
   useState,
 } from 'react';
 import {
-  Dimensions,
   StyleProp,
   TextStyle,
   View,
@@ -14,6 +13,7 @@ import {
   type GestureResponderEvent,
   Pressable,
   StyleSheet,
+  useWindowDimensions,
 } from 'react-native';
 import { NavigationContext, useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -47,13 +47,14 @@ import { Button } from '@/components2024/Button';
 import { MODAL_GATE_IDS } from '@/utils/modalGate';
 import { BOTTOM_BUTTON_DOUBLE_HEIGHT } from '@/constant/layout';
 
-const SCREEN_WIDTH = Dimensions.get('window').width;
 // iOS reserves ~65pt for the native back item (44pt item + bar inset/spacing),
 // so the title row is sized to the remaining width and its content flows from
 // the left, right after the back button.
-const HEADER_ROW_WIDTH: ViewStyle['width'] = IS_IOS
-  ? SCREEN_WIDTH - 65
-  : '100%';
+// The width is resolved per render (not at module scope) so a foldable window
+// change - or the safe-area-driven width published by SafeWindowFrame - is
+// picked up without remounting the screen.
+const getHeaderRowWidth = (windowWidth: number): ViewStyle['width'] =>
+  IS_IOS ? Math.max(0, windowWidth - 65) : '100%';
 
 // Fixed width for the header-right slot so hiding the menu never re-flows the row.
 const RIGHT_SLOT_STYLE = {
@@ -95,6 +96,11 @@ export const TokenDetailHeaderArea: React.FC<Props> = ({
   embedded = false,
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+  const { width: windowWidth } = useWindowDimensions();
+  const headerRowStyle = useMemo<ViewStyle>(
+    () => ({ width: embedded ? '100%' : getHeaderRowWidth(windowWidth) }),
+    [embedded, windowWidth],
+  );
   const { refreshing } = useAssetsRefreshing();
   const { t } = useTranslation();
   const [copyConfirmVisible, setCopyConfirmVisible] = useState(false);
@@ -141,7 +147,7 @@ export const TokenDetailHeaderArea: React.FC<Props> = ({
   );
 
   return (
-    <View style={[styles.root, embedded && styles.rootEmbedded, rootStyle]}>
+    <View style={[styles.root, headerRowStyle, rootStyle]}>
       <View style={[styles.container, style]}>
         <View style={styles.token}>
           {inlineBack ? (
@@ -428,14 +434,10 @@ const getStyles = createGetStyles2024(({ isLight, colors2024 }) => ({
   },
   // The header title row fills the native title container. iOS lays the title
   // view out in the space left over by the bar items, so an explicitly sized
-  // row (screen minus the leading back-item slot) starts right after the back
-  // button and lets the content flow from the left.
-  root: {
-    width: HEADER_ROW_WIDTH,
-  },
-  rootEmbedded: {
-    width: '100%',
-  },
+  // row (window minus the leading back-item slot) starts right after the back
+  // button and lets the content flow from the left. The width itself is applied
+  // at render time so foldable window changes are honoured.
+  root: {},
   container: {
     width: '100%',
     display: 'flex',
