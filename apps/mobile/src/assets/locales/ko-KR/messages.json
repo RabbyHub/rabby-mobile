@@ -2574,7 +2574,7 @@
           "randomize": "무작위화",
           "randomized": "무작위화됨",
           "durationHint": "TWAP 주문 실행 시간은 5~1439분입니다.",
-          "minimum": "최소 주문 수량은 {{amount}}입니다.",
+          "minimum": "최소 총 수량은 {{amount}}입니다",
           "filled": "체결 수량",
           "duration": "경과 시간",
           "runtime": "실행 시간",

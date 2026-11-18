@@ -2691,7 +2691,7 @@
           "randomize": "Ngẫu nhiên hóa",
           "randomized": "Đã ngẫu nhiên hóa",
           "durationHint": "Thời gian chạy lệnh TWAP là 5–1439 phút.",
-          "minimum": "Khối lượng lệnh tối thiểu là {{amount}}.",
+          "minimum": "Tổng khối lượng tối thiểu là {{amount}}",
           "filled": "Đã khớp",
           "duration": "Đã chạy",
           "runtime": "Thời gian hoạt động",

@@ -204,6 +204,7 @@ jest.mock('./PerpsProTpSlModeSheet', () => ({
 }));
 
 import { createPerpsProTradeFormState } from '../../model/trade';
+import { validatePerpsProTwapDraft } from '../../model/twapOrder';
 import type { PerpsProTradeController } from '../../scene/usePerpsProTrade';
 import { PerpsProTradeForm } from './PerpsProTradeForm';
 import { PERPS_PRO_PRICE_FILL_ANIMATION } from './PerpsProTradePriceField';
@@ -307,6 +308,36 @@ describe('PerpsProTradeForm order matrix', () => {
     expect(screen.queryByTestId('twap-duration-sheet')).toBeNull();
     fireEvent.press(screen.getByRole('button', { name: 'durationFieldLabel' }));
     expect(screen.getByTestId('twap-duration-sheet')).toBeTruthy();
+  });
+
+  it('anchors the TWAP minimum above Amount when the slider crosses the floor', () => {
+    const trade = controller({ orderType: 'twap', amount: '10%' });
+    const formForSize = (baseSize: string) => (
+      <PerpsProTradeForm
+        controller={{
+          ...trade,
+          amountSource: 'slider',
+          getTwapValidation: () =>
+            validatePerpsProTwapDraft({
+              baseSize,
+              midPrice: '50000',
+              szDecimals: 5,
+              durationDraft: '30',
+            }),
+        }}
+        onAddFunds={jest.fn()}
+      />
+    );
+    const view = render(formForSize('0.001'));
+    const hint = screen.getByRole('alert');
+    expect(hint).toHaveStyle({
+      position: 'absolute',
+      bottom: '100%',
+      marginBottom: 6,
+    });
+    expect(hint.props.pointerEvents).toBe('none');
+    view.rerender(formForSize('0.002'));
+    expect(screen.queryByRole('alert')).toBeNull();
   });
 
   it.each([

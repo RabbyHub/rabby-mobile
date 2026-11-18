@@ -2624,7 +2624,7 @@
           "randomize": "ランダム化",
           "randomized": "ランダム化済み",
           "durationHint": "TWAP 注文の実行時間は 5～1439 分です。",
-          "minimum": "最小注文数量は {{amount}} です。",
+          "minimum": "最小合計数量は {{amount}} です",
           "filled": "約定済み",
           "duration": "経過時間",
           "runtime": "実行時間",

@@ -2746,7 +2746,7 @@
           "randomize": "隨機化",
           "randomized": "已隨機化",
           "durationHint": "TWAP 訂單運行時間為 5–1439 分鐘。",
-          "minimum": "最小下單數量為 {{amount}}。",
+          "minimum": "最小總數量為 {{amount}}",
           "filled": "已成交",
           "duration": "已持續",
           "runtime": "運行時長",

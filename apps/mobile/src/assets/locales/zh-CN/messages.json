@@ -2724,7 +2724,7 @@
           "randomize": "随机化",
           "randomized": "已随机化",
           "durationHint": "TWAP 运行时长为 5–1439 分钟。",
-          "minimum": "最小下单数量为 {{amount}}。",
+          "minimum": "最小总数量为 {{amount}}",
           "filled": "已成交",
           "duration": "持续时间",
           "runtime": "运行时间",

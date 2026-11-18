@@ -2,16 +2,26 @@ import React from 'react';
 import { Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Text } from '@/components/Typography';
+import RcTooltipTail from '@/assets2024/icons/perps/PerpsProTpSlTooltipTail.svg';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import type { PerpsProTradeController } from '../../scene/usePerpsProTrade';
 import { PERPS_PRO_TWAP_DURATION_PRESETS } from '../../model/twapOrder';
 
 export const PerpsProTwapHint = ({ children }: { children: string }) => {
-  const { styles } = useTheme2024({ getStyle });
+  const { styles, colors2024 } = useTheme2024({ getStyle });
   return (
-    <View accessibilityRole="alert" style={styles.hint}>
-      <View style={styles.arrow} />
+    <View
+      accessible
+      accessibilityRole="alert"
+      pointerEvents="none"
+      style={styles.hint}>
+      <RcTooltipTail
+        color={colors2024['neutral-black']}
+        height={8}
+        width={12}
+        style={styles.arrow}
+      />
       <Text style={styles.hintText}>{children}</Text>
     </View>
   );
@@ -138,28 +148,28 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   pressed: { opacity: 0.6 },
   hint: {
-    alignSelf: 'stretch',
-    backgroundColor: '#192945',
+    position: 'absolute',
+    bottom: '100%',
+    marginBottom: 6,
+    left: 0,
+    right: 0,
+    backgroundColor: colors2024['neutral-black'],
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 8,
-    position: 'relative',
   },
   hintText: {
+    fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     lineHeight: 18,
     fontWeight: '500',
-    color: '#FFFFFF',
+    includeFontPadding: false,
+    color: colors2024['neutral-InvertHighlight'],
   },
   arrow: {
     position: 'absolute',
-    top: -5,
-    left: '50%',
-    borderLeftWidth: 5,
-    borderRightWidth: 5,
-    borderBottomWidth: 5,
-    borderLeftColor: 'transparent',
-    borderRightColor: 'transparent',
-    borderBottomColor: '#192945',
+    left: 17,
+    bottom: -5.5,
+    transform: [{ rotate: '180deg' }],
   },
 }));

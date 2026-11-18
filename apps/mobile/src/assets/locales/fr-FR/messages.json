@@ -2583,7 +2583,7 @@
           "randomize": "Aléatoire",
           "randomized": "Aléatoire activé",
           "durationHint": "La durée de l’ordre TWAP est de 5 à 1439 minutes.",
-          "minimum": "La quantité minimale de l’ordre est {{amount}}.",
+          "minimum": "La quantité totale minimale est de {{amount}}",
           "filled": "Exécuté",
           "duration": "Temps écoulé",
           "runtime": "Durée d’exécution",

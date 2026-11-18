@@ -2574,7 +2574,7 @@
           "randomize": "Acak",
           "randomized": "Diacak",
           "durationHint": "Durasi order TWAP adalah 5–1439 menit.",
-          "minimum": "Jumlah minimum order adalah {{amount}}.",
+          "minimum": "Jumlah total minimum adalah {{amount}}",
           "filled": "Terisi",
           "duration": "Waktu berlalu",
           "runtime": "Waktu berjalan",

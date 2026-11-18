@@ -2574,7 +2574,7 @@
           "randomize": "Rastgeleleştir",
           "randomized": "Rastgeleleştirildi",
           "durationHint": "TWAP emrinin çalışma süresi 5–1439 dakikadır.",
-          "minimum": "Minimum emir miktarı {{amount}}.",
+          "minimum": "Minimum toplam miktar {{amount}}",
           "filled": "Gerçekleşen",
           "duration": "Geçen süre",
           "runtime": "Çalışma süresi",

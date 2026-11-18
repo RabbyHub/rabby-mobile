@@ -2661,7 +2661,7 @@
           "randomize": "Randomize",
           "randomized": "Randomized",
           "durationHint": "Run the TWAP order for 5–1439 minutes.",
-          "minimum": "Minimum order size is {{amount}}.",
+          "minimum": "Minimum Total Size is {{amount}}",
           "filled": "Filled",
           "duration": "Lasting",
           "runtime": "Operation Time",
