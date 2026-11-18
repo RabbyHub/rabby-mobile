@@ -83,6 +83,33 @@ For `apps/mobile/package.json`, the correct pattern is:
 "react-native-keychain": "patch:react-native-keychain@npm%3A9.2.3#../../.yarn/patches/react-native-keychain-npm-9.2.3-455dffb765.patch"
 ```
 
+## Merging Branches That Touch The Same Patch
+
+Two branches that both modify the same `.yarn/patches/*` file cannot be merged by
+resolving the patch as ordinary text. A line-based merge concatenates hunks that
+apply to the same place and produces a patch that still applies, so nothing fails
+until a native compile breaks in a way the CI log usually hides.
+
+This happened when `perf/home-chrome-shared-value-20261114` was merged into
+`tmp/20261119` (`a0a90d1bb`): `ios/RNCPagerView.m` ended up with two identical
+`scrollViewDidEndDragging:willDecelerate:` implementations, and every iOS archive
+then failed on `CompileC .../RNCPagerView.o` with no visible compiler diagnostic
+(fastlane/xcpretty drops that phase's output).
+
+When a merge reports a conflict in `.yarn/patches`:
+
+1. Take the whole patch file from one side; do not hand-merge hunks.
+2. Diff the other side's patch against it and re-add any change that is genuinely
+   missing (compare per-file hunk counts, not just the file text).
+3. Confirm the patched source has each new declaration/definition exactly once
+   (`rg -c "<symbol>" ...` on the applied package or on the patch file).
+4. Re-run `yarn install --mode=update-lockfile` and commit `yarn.lock` with the
+   patch. Editing a patch changes its resolution `hash=` and `checksum`; without
+   that update an immutable install refuses to apply the new patch and silently
+   keeps using the old, broken copy.
+5. Verify with a real build of the affected platform before merging into a
+   packaging branch.
+
 ## Rules
 
 - Do not regenerate a patch from a raw `git diff` between cache zips and `node_modules` unless Yarn's own patch flow is blocked.
