@@ -81,6 +81,10 @@ import {
   debugPagerOffsetSampling,
   type PagerOffsetMode,
 } from '@/screens/Home/debugPagerOffsetSampling';
+import {
+  debugHomeChromeBridge,
+  type HomeChromeBridgeMode,
+} from '@/screens/Home/debugHomeChromeBridge';
 import { apisSingleHome } from '@/screens/Home/hooks/singleHome';
 
 const nextAppLinkRef = {
@@ -116,6 +120,7 @@ type OnParseUrlAndProcessAction = (payload: {
     | 'debug-set-language'
     | 'debug-import-test-accounts'
     | 'toggle-pager-offset-sampling'
+    | 'toggle-home-chrome-bridge'
     | 'regression-scenario';
   target?: RabbyGoTarget;
   dappUrl?: string;
@@ -165,6 +170,8 @@ type OnParseUrlAndProcessAction = (payload: {
   };
   /** Non-production only: `undefined` toggles the native pager-offset sampler. */
   debugPagerOffsetSampling?: PagerOffsetMode;
+  /** Non-production only: `undefined` toggles the home chrome sample bridge. */
+  debugHomeChromeBridge?: HomeChromeBridgeMode;
   regressionScenarioCommand?: RegressionScenarioCommand | null;
   regressionScenarioError?: string;
 }) => void;
@@ -610,6 +617,34 @@ function parseNonProductionMaintenanceLink(appLink: string) {
     return {
       type: 'toggle-pager-offset-sampling',
       debugPagerOffsetSampling: mode,
+    } satisfies Parameters<OnParseUrlAndProcessAction>[0];
+  }
+
+  // Non-production only: A/B the home tab chrome between the #2395 sample
+  // bridge and the previous raw sample stream (QA 1414).
+  // `?_cmd=toggle-home-chrome-bridge` flips the effective behaviour;
+  // `&value=on|off|auto` pins a mode.
+  if (
+    rabbyGoCmd === 'toggle-home-chrome-bridge' ||
+    target === 'toggle-home-chrome-bridge'
+  ) {
+    const raw = (urlInfo.searchParams.get('value') || '').toLowerCase();
+    let mode: HomeChromeBridgeMode | undefined;
+    if (raw === 'on' || raw === 'bridge' || raw === '1' || raw === 'true') {
+      mode = 'on';
+    } else if (
+      raw === 'off' ||
+      raw === 'legacy' ||
+      raw === '0' ||
+      raw === 'false'
+    ) {
+      mode = 'off';
+    } else if (raw === 'auto') {
+      mode = 'auto';
+    }
+    return {
+      type: 'toggle-home-chrome-bridge',
+      debugHomeChromeBridge: mode,
     } satisfies Parameters<OnParseUrlAndProcessAction>[0];
   }
 
@@ -1269,6 +1304,22 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
           }
         }, 1500);
       }
+      break;
+    case 'toggle-home-chrome-bridge':
+      if (!isNonPublicProductionEnv) {
+        return;
+      }
+      if (payload.debugHomeChromeBridge) {
+        debugHomeChromeBridge.set(payload.debugHomeChromeBridge);
+      } else {
+        debugHomeChromeBridge.toggle();
+      }
+      console.log(
+        '[debug-home-chrome-bridge] mode:',
+        debugHomeChromeBridge.mode,
+        'legacy:',
+        debugHomeChromeBridge.legacy,
+      );
       break;
     case 'debug-create-address':
       if (!isNonPublicProductionEnv) {

@@ -60,6 +60,7 @@ import {
 import CustomLabel from './Tabs/CustomLabel';
 import { getHomeTabIndicatorWidth } from '../utils/homeTabIndicator';
 import { useDebugPagerOffsetSamplingMode } from '../debugPagerOffsetSampling';
+import { useLegacyHomeChromeBridge } from '../debugHomeChromeBridge';
 
 type ItemLayout = {
   width: number;
@@ -580,6 +581,9 @@ export const HomeCustomMaterialTabBar = ({}: Partial<
   // debug-switch driven; `off` keeps the interpolation fallback below, which is
   // still the shipped behaviour.
   const pagerOffsetMode = useDebugPagerOffsetSamplingMode();
+  // iOS falls back to the pre-#2395 raw sample stream by default; Android keeps
+  // the tuned bridge. Flip with `_cmd=toggle-home-chrome-bridge` on device.
+  const legacyBridge = useLegacyHomeChromeBridge();
   // 0 = off, 1 = pull, 2 = push
   const nativeMode = useSharedValue(0);
   // Whether the push setter is actually installed on this app session.
@@ -615,6 +619,9 @@ export const HomeCustomMaterialTabBar = ({}: Partial<
   }, [pagerOffsetMode, indexDecimal, nativeMode, pushBound]);
 
   useFrameCallback(info => {
+    if (legacyBridge) {
+      return;
+    }
     nowMs.value += info.timeSincePreviousFrame ?? 1000 / 60;
     if (nativeMode.value === 2) {
       // Native writes `indexDecimal`; just keep the fallback writer quiet.
@@ -651,11 +658,16 @@ export const HomeCustomMaterialTabBar = ({}: Partial<
         easing: Easing.linear,
       });
     }
-  }, true);
+  }, !legacyBridge);
 
   useAnimatedReaction(
     () => rawIndexDecimal.value,
     value => {
+      // Legacy raw stream: mirror the sample straight through, no extrapolation.
+      if (legacyBridge) {
+        indexDecimal.value = value;
+        return;
+      }
       const gapMs = Math.max(
         8,
         Math.min(120, nowMs.value - lastSampleMs.value),
@@ -680,7 +692,7 @@ export const HomeCustomMaterialTabBar = ({}: Partial<
         easing: Easing.linear,
       });
     },
-    [],
+    [legacyBridge],
   );
 
   // Keep the native sibling order stable while PagerView is settling. Changing
