@@ -2,7 +2,8 @@ import React from 'react';
 import { StyleSheet, View, type TextStyle } from 'react-native';
 import type { NativeStackHeaderProps } from '@react-navigation/native-stack';
 
-import { HeaderBackPressable } from '@/hooks/navigation';
+import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
+import { default as RcIconHeaderBack } from '@/assets/icons/header/back-cc.svg';
 import { useCustomHeaderTop } from '@/hooks/useAppLayout';
 import { useSystemColumnInset } from '@/components/SafeWindowFrame/backdrop';
 import { useTheme2024 } from '@/hooks/theme';
@@ -74,7 +75,16 @@ export function FoldableStackHeader(props: NativeStackHeaderProps) {
   const leftNode = options.headerLeft ? (
     options.headerLeft({ tintColor, canGoBack })
   ) : canGoBack ? (
-    <HeaderBackPressable tintColor={tintColor} />
+    <CustomTouchableOpacity
+      as="RNGHTouchableOpacity"
+      hitSlop={24}
+      onPress={() => {
+        if (navigation.canGoBack()) {
+          navigation.goBack();
+        }
+      }}>
+      <RcIconHeaderBack width={24} height={24} color={tintColor} />
+    </CustomTouchableOpacity>
   ) : null;
 
   const rightNode = options.headerRight
