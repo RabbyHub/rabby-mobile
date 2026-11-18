@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import {
   GestureResponderEvent,
+  PixelRatio,
   Pressable,
   StyleSheet,
   View,
@@ -118,11 +119,14 @@ function formOpacity(p: number, index: number) {
 
 function formSlideY(p: number, index: number) {
   'worklet';
-  // Zero whenever a form is settled, i.e. every element is back on its static
-  // line (the gear included). While the swap is in flight the form drifts a
-  // few dp: one vertical direction per swipe direction, so swiping right makes
-  // the incoming form come down from the top and the outgoing one leave
-  // downwards, and swiping left is the mirror image.
+  // Zero whenever a form is settled. While the swap is in flight the form
+  // drifts a few dp: one vertical direction per swipe direction, so swiping
+  // right makes the incoming form come down from the top and the outgoing one
+  // leave downwards, and swiping left is the mirror image.
+  //
+  // The overview form and the pinned history/clock anchor deliberately do not
+  // use this: they share one slot on the overview boundary and must trade
+  // places in-place, otherwise the gear and the clock slide past each other.
   const d = p - index;
   const away = 1 - formOpacity(p, index);
   return (d < 0 ? -1 : 1) * away * FORM_SLIDE;
@@ -259,7 +263,6 @@ export function TabsTopHeader(): JSX.Element {
     const opacity = formOpacity(p, 0);
     return {
       opacity,
-      transform: [{ translateY: formSlideY(p, 0) }],
       pointerEvents: opacity > 0.5 ? 'auto' : 'none',
     };
   });
@@ -287,12 +290,12 @@ export function TabsTopHeader(): JSX.Element {
   const anchorStyle = useAnimatedStyle(() => {
     const p = apisHomeTabIndex.svTabIndexDecimal.value;
     const opacity = 1 - formOpacity(p, 0);
-    // Only the overview boundary moves it: on every asset tab the anchor is
-    // already fully shown, so its offset is exactly 0 and it cannot drift.
-    const away = 1 - opacity;
+    // The gear and the clock trade places inside the same slot, so this is a
+    // straight foreground/background swap: both fade in place and neither
+    // travels. Any vertical offset here makes the handoff read as a jump, and
+    // it fights the token form sliding in from above.
     return {
       opacity,
-      transform: [{ translateY: (p < 1 ? -1 : 1) * away * FORM_SLIDE }],
       pointerEvents: opacity > 0.5 ? 'auto' : 'none',
     };
   });
@@ -548,7 +551,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   displayModeButton: {
     height: HeaderHeight,
     paddingHorizontal: 12,
-    paddingVertical: 6,
     borderRadius: 8,
     backgroundColor: colors2024['neutral-bg-5'],
     // justifyContent: 'center',
@@ -562,6 +564,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   displayModeText: {
     fontSize: 14,
     lineHeight: 18,
+    includeFontPadding: false,
+    textAlignVertical: 'center',
     color: colors2024['neutral-body'],
     fontWeight: '500',
     fontFamily: 'SF Pro Rounded',
@@ -572,6 +576,11 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: 20,
     height: 20,
     position: 'relative',
+    // `IconSetting.svg` is a 19x18 artwork letterboxed inside the 20dp box, so
+    // its ink sits ~0.2dp above the frame centre. Nudge it down by half a
+    // physical pixel so the gear and the symmetric 24x24 history glyph share a
+    // single optical centre while they cross-fade in the same slot.
+    transform: [{ translateY: 0.5 / PixelRatio.get() }],
   },
   feedbackEntry: {
     height: '100%',
