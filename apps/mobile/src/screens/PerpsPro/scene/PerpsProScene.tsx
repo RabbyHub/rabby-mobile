@@ -1221,6 +1221,18 @@ export const PerpsProScene: React.FC<{
                     />
                   </View>
                 </RootScenePagerGestureBlock>
+                {/*
+                 * Exclude the whole lower info area from the root Simple <-> Pro
+                 * pager. An invisible, pinned layer keeps the exclusion aligned
+                 * with the tab bar while leaving the chart/header above it free
+                 * for the root swipe. `pointerEvents="none"` keeps the list's
+                 * own touches untouched; the root pager only reads the rect.
+                 */}
+                <RootScenePagerGestureBlock
+                  pointerEvents="none"
+                  style={styles.infoContentGestureBlock}
+                  testID="perps-pro-info-content-gesture-block"
+                />
               </CollapsiblePinnedLayer>
             ) : null}
             {positionedOverlaysReady ? (
@@ -1536,6 +1548,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     position: 'absolute',
     right: 0,
     top: 0,
+  },
+  infoContentGestureBlock: {
+    height: 4000,
+    left: 0,
+    position: 'absolute',
+    right: 0,
+    top: PERPS_PRO_INFO_TABS_HEIGHT,
   },
   scrollContent: {
     backgroundColor: colors2024['neutral-bg-1'],
