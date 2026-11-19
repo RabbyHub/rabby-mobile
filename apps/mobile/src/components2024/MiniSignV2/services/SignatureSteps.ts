@@ -87,6 +87,7 @@ import {
   buildTempoTransaction,
   isTempoBatchSupportedAccountType,
   isTempoChain,
+  resolveTempoProtocolFallbackGasToken,
   shouldUseTempoTransaction,
   toTempoCallsTx,
 } from '@/utils/tempo';
@@ -570,8 +571,10 @@ export class SignatureSteps {
       }),
     ]);
 
-    const nativeTokenBalance = gasTokenBalanceInfo.rawBalance;
-    const gasToken = gasTokenBalanceInfo.token;
+    // Reassigned after gas estimation when the Tempo protocol fallback (OUSD)
+    // is the token the chain will actually charge.
+    let nativeTokenBalance = gasTokenBalanceInfo.rawBalance;
+    let gasToken = gasTokenBalanceInfo.token;
     const gasTokenDecimals = gasToken.decimals || 18;
     const checkTxValueInBalance = !isTempoChain(chain.serverId);
 
@@ -722,6 +725,27 @@ export class SignatureSteps {
 
     if (config?.onPreExecChange && txsCalc.length) {
       config?.onPreExecChange(txsCalc[txsCalc.length - 1].preExecResult);
+    }
+
+    if (isTempoChain(chain.serverId) && txsCalc.length) {
+      // One token has to cover the whole batch for the check below, so pick
+      // the fallback token against the summed max gas cost.
+      const chargedGasToken = await resolveTempoProtocolFallbackGasToken({
+        account,
+        address: account.address,
+        chainServerId: chain.serverId,
+        gasTokenBalance: gasTokenBalanceInfo,
+        txFeeToken: (txs[0] as TxWithTempoExtras<Tx>)?.feeToken,
+        maxGasCostRawAmount: txsCalc.reduce(
+          (sum, item) =>
+            sum.plus(new BigNumber(item.gasCost.maxGasCostRawAmount || 0)),
+          new BigNumber(0),
+        ),
+      });
+      if (chargedGasToken !== gasTokenBalanceInfo) {
+        nativeTokenBalance = chargedGasToken.rawBalance;
+        gasToken = chargedGasToken.token;
+      }
     }
 
     const gaslessTask = computeGasless({
