@@ -1,7 +1,6 @@
 describe('store/balance24h', () => {
   const mockGetBalance24hCache = jest.fn();
   const mockFetch24hBalance = jest.fn();
-  const mockGet24hTotalBalanceBatch = jest.fn();
   const mockSetBalance24hCache = jest.fn();
   const mockComputeTotalBalance = jest.fn();
   const mockGetBalanceCacheAccounts = jest.fn();
@@ -28,14 +27,10 @@ describe('store/balance24h', () => {
     jest.resetModules();
     jest.clearAllMocks();
     mockBalanceValueMap = {};
-    mockGet24hTotalBalanceBatch.mockReset();
-    mockGet24hTotalBalanceBatch.mockImplementation(
-      async (addresses: string[]) =>
-        addresses.map(id => ({ id, error_code: 0, total_usd_value: 1 })),
-    );
-    jest.doMock('@/core/request', () => ({
-      openapi: { get24hTotalBalanceBatch: mockGet24hTotalBalanceBatch },
-    }));
+    mockFetch24hBalance.mockReset().mockResolvedValue({
+      data: { total_usd_value: 1 },
+      updateTime: 1,
+    });
 
     jest.doMock('@/utils/24hBalanceCache', () => ({
       getBalance24hCache: mockGetBalance24hCache,
@@ -187,9 +182,9 @@ describe('store/balance24h', () => {
       reason: 'manual_refresh',
     });
 
-    expect(mockGet24hTotalBalanceBatch).toHaveBeenCalledWith([
-      '0xselected-a',
-      '0xselected-b',
+    expect(mockFetch24hBalance.mock.calls).toEqual([
+      ['0xselected-a'],
+      ['0xselected-b'],
     ]);
   });
 
@@ -208,7 +203,7 @@ describe('store/balance24h', () => {
     });
 
     expect(mockGetTop10MyAccounts).toHaveBeenCalledTimes(1);
-    expect(mockGet24hTotalBalanceBatch).toHaveBeenCalledWith(['0xlegacy']);
+    expect(mockFetch24hBalance).toHaveBeenCalledWith('0xlegacy');
   });
 
   it('does not fall back to Top-10 while an experimental selection is unresolved', async () => {
@@ -220,7 +215,6 @@ describe('store/balance24h', () => {
 
     expect(mockGetTop10MyAccounts).not.toHaveBeenCalled();
     expect(mockFetch24hBalance).not.toHaveBeenCalled();
-    expect(mockGet24hTotalBalanceBatch).not.toHaveBeenCalled();
   });
 
   it('uses the active balance selection when a scene refresh has no explicit addresses', async () => {
@@ -241,43 +235,24 @@ describe('store/balance24h', () => {
       },
     );
 
-    expect(mockGet24hTotalBalanceBatch).toHaveBeenCalledWith([
-      '0xselected-a',
-      '0xselected-b',
+    expect(mockFetch24hBalance.mock.calls).toEqual([
+      ['0xselected-a'],
+      ['0xselected-b'],
     ]);
   });
 
-  it.each([10, 12])(
-    'batches %i stale Home addresses in groups of at most ten',
-    async count => {
-      const addresses = Array.from(
-        { length: count },
-        (_, i) => `0xaddr${i.toString().padStart(2, '0')}`,
-      );
-      mockGetBalance24hCache.mockReturnValue(null);
+  it('requests and caches each distinct stale Home address separately', async () => {
+    mockGetBalance24hCache.mockReturnValue(null);
+    const scene = balance24hModule.scene24hBalanceStore;
+    await scene.refreshCombinedDataForScene('Home', {
+      addresses: ['0xA', '0xB', '0xa'],
+    });
+    await flushResourceFlowPersist();
 
-      await balance24hModule.scene24hBalanceStore.refreshCombinedDataForScene(
-        'Home',
-        {
-          addresses: [...addresses, addresses[0].toUpperCase()],
-        },
-      );
-      await flushResourceFlowPersist();
-
-      expect(
-        mockGet24hTotalBalanceBatch.mock.calls.map(([ids]) => ids),
-      ).toEqual(
-        count === 10
-          ? [addresses]
-          : [addresses.slice(0, 10), addresses.slice(10)],
-      );
-      expect(mockFetch24hBalance).not.toHaveBeenCalled();
-      expect(mockSetBalance24hCache).toHaveBeenCalledTimes(count);
-      expect(
-        balance24hModule.scene24hBalanceStore.getState().sceneLoading.Home,
-      ).toBe(false);
-    },
-  );
+    expect(mockFetch24hBalance.mock.calls).toEqual([['0xa'], ['0xb']]);
+    expect(mockSetBalance24hCache).toHaveBeenCalledTimes(2);
+    expect(scene.getState().sceneLoading.Home).toBe(false);
+  });
 
   it.each([false, true])(
     'keeps the existing fresh-cache scene behavior with force=%s',
@@ -294,19 +269,19 @@ describe('store/balance24h', () => {
           force,
         },
       );
-      expect(mockGet24hTotalBalanceBatch).not.toHaveBeenCalled();
+      expect(mockFetch24hBalance).not.toHaveBeenCalled();
       expect(mockSetBalance24hCache).not.toHaveBeenCalled();
     },
   );
 
-  it('shares the pending 24h batch across refresh reasons and still applies list changes', async () => {
+  it('shares the pending 24h request across refresh reasons and still applies list changes', async () => {
     mockGetBalance24hCache.mockReturnValue(null);
     let finish!: () => void;
-    mockGet24hTotalBalanceBatch.mockImplementationOnce(
+    mockFetch24hBalance.mockImplementationOnce(
       () =>
         new Promise(resolve => {
           finish = () =>
-            resolve([{ id: '0xa', error_code: 0, total_usd_value: 1 }]);
+            resolve({ data: { total_usd_value: 1 }, updateTime: 1 });
         }),
     );
     const scene = balance24hModule.scene24hBalanceStore;
@@ -321,10 +296,7 @@ describe('store/balance24h', () => {
     });
     finish();
     await Promise.all([first, same, changed]);
-    expect(mockGet24hTotalBalanceBatch.mock.calls).toEqual([
-      [['0xa']],
-      [['0xb']],
-    ]);
+    expect(mockFetch24hBalance.mock.calls).toEqual([['0xa'], ['0xb']]);
     expect(scene.getState().addresses.Home).toEqual(['0xb']);
   });
 
@@ -335,10 +307,9 @@ describe('store/balance24h', () => {
       updateTime: 123,
       isExpired: address !== '0xa',
     }));
-    mockGet24hTotalBalanceBatch.mockResolvedValue([
-      { id: '0xC', error_code: 0, total_usd_value: 0 },
-      { id: '0xB', error_code: 1 },
-    ]);
+    mockFetch24hBalance
+      .mockRejectedValueOnce(new Error('offline'))
+      .mockResolvedValueOnce({ data: { total_usd_value: 0 }, updateTime: 456 });
     try {
       await balance24hModule.scene24hBalanceStore.refreshCombinedDataForScene(
         'Home',
@@ -347,7 +318,7 @@ describe('store/balance24h', () => {
         },
       );
       await flushResourceFlowPersist();
-      expect(mockGet24hTotalBalanceBatch).toHaveBeenCalledWith(['0xb', '0xc']);
+      expect(mockFetch24hBalance.mock.calls).toEqual([['0xb'], ['0xc']]);
       expect(
         balance24hModule.balance24hStore.getAddress24hBalance('0xb'),
       ).toEqual({ total_usd_value: 20, updateTime: 123 });
@@ -368,14 +339,14 @@ describe('store/balance24h', () => {
     }
   });
 
-  it('retains stale values and finishes loading when the batch request fails', async () => {
+  it('retains stale values and finishes loading when all requests fail', async () => {
     const errorSpy = jest.spyOn(console, 'error').mockImplementation();
     mockGetBalance24hCache.mockReturnValue({
       data: { total_usd_value: 20 },
       updateTime: 123,
       isExpired: true,
     });
-    mockGet24hTotalBalanceBatch.mockRejectedValue(new Error('offline'));
+    mockFetch24hBalance.mockRejectedValue(new Error('offline'));
     try {
       await balance24hModule.scene24hBalanceStore.refreshCombinedDataForScene(
         'Home',

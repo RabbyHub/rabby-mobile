@@ -16,8 +16,6 @@ import { isHomeAssetSelectionExperimentEnabled } from '@/hooks/appSettings';
 import { formatSmallUsdValue } from './curveShared';
 import { formatUsdValue } from '@/utils/number';
 import { debounce, isEqual } from 'lodash';
-import { createHomeAssetBatchFetcher } from '@/core/apis/homeAssetBatch';
-import { openapi } from '@/core/request';
 import PQueue from 'p-queue';
 import { useShallow } from 'zustand/react/shallow';
 import { BaseStore } from './_base';
@@ -335,7 +333,6 @@ class Address24hBalanceStore extends ResourceBaseStore<Address24hBalanceValue> {
       trace?: Balance24hTraceContext,
       options?: {
         cacheAlreadyHydrated?: boolean;
-        fetch?: typeof fetch24hBalance;
       },
     ) => {
       const lowerAddress = this.normalizeAddress(address);
@@ -368,9 +365,7 @@ class Address24hBalanceStore extends ResourceBaseStore<Address24hBalanceValue> {
             trace,
           ),
         });
-        const nextData = await (options?.fetch || fetch24hBalance)(
-          lowerAddress,
-        );
+        const nextData = await fetch24hBalance(lowerAddress);
         const normalizedData = {
           ...nextData.data,
           updateTime: nextData.updateTime,
@@ -884,21 +879,7 @@ class Scene24hBalanceStore extends BaseStore<Multi24hBalanceState> {
           return this.waitQueueFinished(queue);
         }
         queue.clear();
-        const fetchBalance = createHomeAssetBatchFetcher(
-          staleAddresses,
-          openapi.get24hTotalBalanceBatch,
-        );
-        const fetchBatchBalance: typeof fetch24hBalance = async address => {
-          const { total_usd_value } = await fetchBalance(address);
-          if (typeof total_usd_value !== 'number') {
-            throw new Error(`Failed to fetch 24h balance for ${address}`);
-          }
-          return {
-            data: { total_usd_value },
-            updateTime: Date.now(),
-          };
-        };
-        nextCheckAddress.forEach(address => {
+        staleAddresses.forEach(address => {
           queue.add(async () => {
             this.setSceneAddrLoading(scene, address, true);
             try {
@@ -908,11 +889,10 @@ class Scene24hBalanceStore extends BaseStore<Multi24hBalanceState> {
                 {
                   scene,
                   requester: 'Scene24hBalanceStore.refreshCombinedDataForScene',
-                  endpoint: 'openapi.get24hTotalBalanceBatch',
+                  endpoint: 'openapi.get24hTotalBalance',
                 },
                 {
                   cacheAlreadyHydrated: true,
-                  fetch: fetchBatchBalance,
                 },
               );
             } catch (error) {
