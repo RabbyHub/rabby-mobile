@@ -13,6 +13,30 @@ describe('maintenanceCommandGate', () => {
     ).toEqual({ allowed: false, reason: 'session-disabled' });
   });
 
+  it('keeps debug-dapp-eval behind the armed session and the wallet lock', () => {
+    expect(
+      evaluateMaintenanceGate('debug-dapp-eval', {
+        sessionArmed: false,
+        walletUnlocked: true,
+        now,
+      }),
+    ).toEqual({ allowed: false, reason: 'session-disabled' });
+    expect(
+      evaluateMaintenanceGate('debug-dapp-eval', {
+        sessionArmed: true,
+        walletUnlocked: false,
+        now,
+      }),
+    ).toEqual({ allowed: false, reason: 'wallet-locked' });
+    expect(
+      evaluateMaintenanceGate('debug-dapp-eval', {
+        sessionArmed: true,
+        walletUnlocked: true,
+        now,
+      }),
+    ).toEqual({ allowed: true });
+  });
+
   it('rejects a mutating command while the wallet is locked', () => {
     expect(
       evaluateMaintenanceGate('debug-set-current-account', {

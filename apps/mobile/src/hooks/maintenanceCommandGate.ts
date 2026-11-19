@@ -12,6 +12,7 @@ export const SESSION_GATED_MAINTENANCE_COMMANDS = new Set([
   'debug-browser-tabs',
   'debug-biometrics',
   'debug-inject-approval',
+  'debug-dapp-eval',
   'debug-set-clipboard',
   'debug-import-private-key',
   'debug-create-address',
@@ -26,6 +27,7 @@ export const UNLOCKED_REQUIRED_MAINTENANCE_TYPES = new Set([
   'debug-browser-tabs',
   'debug-biometrics',
   'debug-inject-approval',
+  'debug-dapp-eval',
   'debug-set-clipboard',
   'debug-disconnect-dapp',
 ]);

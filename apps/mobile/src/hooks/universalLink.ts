@@ -120,6 +120,7 @@ type OnParseUrlAndProcessAction = (payload: {
     | 'debug-capture-requests'
     | 'debug-disconnect-dapp'
     | 'debug-set-current-account'
+    | 'debug-dapp-eval'
     | 'debug-browser-tabs'
     | 'debug-biometrics'
     | 'debug-set-clipboard'
@@ -196,6 +197,10 @@ type OnParseUrlAndProcessAction = (payload: {
   /** Non-production only: switch the app's current account by address. */
   debugSetCurrentAccount?: {
     address?: string;
+  };
+  /** Non-production only: inject JavaScript into the active dapp webview. */
+  debugDappEval?: {
+    code?: string;
   };
   /** Non-production only: list/activate/close dapp browser tabs. */
   debugBrowserTabs?: {
@@ -750,6 +755,17 @@ function parseNonProductionMaintenanceLink(appLink: string) {
       debugBrowserTabs: {
         action,
         match: urlInfo.searchParams.get('match') || undefined,
+      },
+    } satisfies Parameters<OnParseUrlAndProcessAction>[0];
+  }
+
+  // Non-production only: run JS in the active dapp webview.
+  // `?_cmd=debug-dapp-eval&code=<urlencoded js>`
+  if (rabbyGoCmd === 'debug-dapp-eval' || target === 'debug-dapp-eval') {
+    return {
+      type: 'debug-dapp-eval',
+      debugDappEval: {
+        code: urlInfo.searchParams.get('code') || undefined,
       },
     } satisfies Parameters<OnParseUrlAndProcessAction>[0];
   }
@@ -2024,6 +2040,20 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
           );
         } catch (error) {
           console.warn('[debug-browser-tabs] failed', error);
+        }
+      })();
+      break;
+    case 'debug-dapp-eval':
+      if (!isNonPublicProductionEnv) {
+        return;
+      }
+      void (async () => {
+        try {
+          const { runDebugDappEval } = await import('@/devtools/debugDappEval');
+          await runDebugDappEval(payload.debugDappEval?.code);
+          console.log('[debug-dapp-eval] dispatched');
+        } catch (error) {
+          console.warn('[debug-dapp-eval] failed', error);
         }
       })();
       break;
