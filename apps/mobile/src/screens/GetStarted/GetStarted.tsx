@@ -93,7 +93,11 @@ const HeroIllustration = ({ isLight }: { isLight: boolean }) => {
         disabled={!isNonPublicProductionEnv}>
         <Lottie
           source={isLight ? StartScreenAnimation : StartScreenAnimationDark}
-          style={[styles.heroBackground, { height: heroHeight }]}
+          // Fill whatever height the flex layout can give the hero. On short
+          // windows (Duo outer screen) the container shrinks below the natural
+          // aspect height; a fixed-height Lottie was clipped from the top and
+          // its coins overlapped the Rabby Wallet header.
+          style={[styles.heroBackground, { height: '100%' }]}
           loop={false}
           autoPlay
           onAnimationFinish={() => {
