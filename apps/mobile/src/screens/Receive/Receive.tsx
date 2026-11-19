@@ -128,6 +128,7 @@ function ReceiveScreen(): JSX.Element {
         <CustomTouchableOpacity
           as="RNGHTouchableOpacity"
           style={styles.eyeButton}
+          hitSlop={{ left: 14, right: 14 }}
           onPress={() => setShowName(e => !e)}>
           {showName ? (
             <RcIconEyeCC
@@ -451,13 +452,14 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
     // becomes a ~44x56 tap area on its right, so no negative-margin compensation
     // is needed.
     eyeButton: {
-      width: 44,
       // The native stack bar content is 44pt; using the 56pt custom-header
       // height here made the whole title row overflow and sit ~6pt lower than
       // the back control (QA 1423, iOS 26).
       height: 44,
-      // Left-align the glyph so it hugs the text; vertically centre it in the row.
-      alignItems: 'flex-start',
+      // Keep the layout width at the 16pt glyph so the centred title row is not
+      // pushed left (QA 1424); the extra ~44x44 tap area comes from hitSlop on
+      // the touchable instead of a wider layout box.
+      alignItems: 'center',
       justifyContent: 'center',
     },
   };
