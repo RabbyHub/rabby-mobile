@@ -6,12 +6,19 @@ import {
   isValidPreference,
   projectLegacyPreference,
   projectPreference,
-  securePreferenceNames,
   type PreferenceRecord,
-  type SecurePreferenceName,
 } from './schema';
+import { securePreferenceNames } from './types';
+import type {
+  SecurePreferenceIssue,
+  SecurePreferenceName,
+  SecurePreferenceReport,
+  SecurePreferenceStage,
+} from './types';
 
 const FORMAT_VERSION = 1;
+const DEFAULT_PAYLOAD = '{}';
+const INSTALLATION_STATE_KEY = 'secure-preference:installation';
 const RPC_SERVER_CACHE_KEY = 'rpc:server-cache';
 const recordKey = (name: SecurePreferenceName) => `secure-preference:${name}`;
 const hmacPattern = /^[0-9a-f]{64}$/;
@@ -28,18 +35,23 @@ type Key = {
   mac(message: string): string;
 };
 
-type IssueKind = 'damaged' | 'unavailable';
-export type SecurePreferenceIssue = {
-  name: SecurePreferenceName;
-  kind: IssueKind;
+type Options = {
+  canInitializeEmptyInstallation?: () => boolean;
+  onIssue?: (issue: SecurePreferenceReport) => void;
 };
 
 type AdapterState = {
   snapshot?: PreferenceRecord;
   committedPayload?: string;
   pendingPayload?: string;
-  issue?: IssueKind;
+  issue?: SecurePreferenceIssue['kind'];
 };
+
+class SecurePreferenceLoadError extends Error {
+  constructor(readonly stage: SecurePreferenceStage) {
+    super('Secure preference initialization failed');
+  }
+}
 
 function parseRecord(raw: string) {
   try {
@@ -61,16 +73,25 @@ function matchesMac(expected: string, actual: string) {
   return difference === 0;
 }
 
-export function createSecurePreferenceStorage(disk: Disk, key: Key) {
+export function createSecurePreferenceStorage(
+  disk: Disk,
+  key: Key,
+  { canInitializeEmptyInstallation, onIssue }: Options = {},
+) {
   const states = new Map<SecurePreferenceName, AdapterState>();
   const adapters = new Map<SecurePreferenceName, Promise<StorageAdapater>>();
-  const listeners = new Set<() => void>();
   let keyPromise: Promise<void> | undefined;
+  let installationRecorded = false;
 
-  function setIssue(state: AdapterState, issue?: IssueKind) {
-    if (state.issue !== issue) {
-      state.issue = issue;
-      listeners.forEach(listener => listener());
+  function setIssue(
+    name: SecurePreferenceName,
+    state: AdapterState,
+    kind: SecurePreferenceIssue['kind'],
+    stage: SecurePreferenceStage,
+  ) {
+    if (state.issue !== kind) {
+      state.issue = kind;
+      onIssue?.({ name, kind, stage });
     }
   }
 
@@ -118,6 +139,53 @@ export function createSecurePreferenceStorage(disk: Disk, key: Key) {
     );
   }
 
+  function recordInstallation() {
+    if (canInitializeEmptyInstallation && !installationRecorded) {
+      disk.write(INSTALLATION_STATE_KEY, 'initialized');
+      installationRecorded = true;
+    }
+  }
+
+  function initializeEmptyInstallation() {
+    if (!canInitializeEmptyInstallation) {
+      return;
+    }
+    const installation = disk.read(INSTALLATION_STATE_KEY);
+    installationRecorded = installation === 'initialized';
+    if (
+      (installation !== null && installation !== 'initializing') ||
+      !canInitializeEmptyInstallation()
+    ) {
+      return;
+    }
+
+    const missing: SecurePreferenceName[] = [];
+    for (const name of securePreferenceNames) {
+      if (disk.read(name) !== null) {
+        return;
+      }
+      const raw = disk.read(recordKey(name));
+      if (raw === null) {
+        missing.push(name);
+      } else if (
+        installation !== 'initializing' ||
+        readProtected(name, raw)?.payload !== DEFAULT_PAYLOAD
+      ) {
+        return;
+      }
+    }
+
+    // Keychain can survive an iOS reinstall. An interrupted initialization
+    // may already have written some authenticated defaults.
+    if (installation === null) {
+      disk.write(INSTALLATION_STATE_KEY, 'initializing');
+    }
+    for (const name of missing) {
+      writeProtected(name, DEFAULT_PAYLOAD);
+    }
+    recordInstallation();
+  }
+
   function cleanLegacy(name: SecurePreferenceName) {
     try {
       const raw = disk.read(name);
@@ -139,12 +207,17 @@ export function createSecurePreferenceStorage(disk: Disk, key: Key) {
 
   function loadKey() {
     if (!keyPromise) {
+      let stage: SecurePreferenceStage = 'key-open';
       keyPromise = (async () => {
         if ((await key.open(false)) === 'ready') {
+          stage = 'initialize-records';
+          initializeEmptyInstallation();
           return;
         }
         const enrollment = await key.open(true);
         if (enrollment === 'ready') {
+          stage = 'initialize-records';
+          initializeEmptyInstallation();
           return;
         }
         if (enrollment !== 'staged') {
@@ -153,6 +226,7 @@ export function createSecurePreferenceStorage(disk: Disk, key: Key) {
 
         // The durable key commits the migration. Until then, overwrite any
         // records from an interrupted attempt and keep the legacy values.
+        stage = 'initialize-records';
         for (const name of securePreferenceNames) {
           const raw = disk.read(name);
           const value = raw === null ? {} : parseRecord(raw);
@@ -165,10 +239,12 @@ export function createSecurePreferenceStorage(disk: Disk, key: Key) {
             disk.remove(recordKey(name));
           }
         }
+        recordInstallation();
+        stage = 'key-commit';
         await key.commit();
-      })().catch(error => {
+      })().catch(() => {
         keyPromise = undefined;
-        throw error;
+        throw new SecurePreferenceLoadError(stage);
       });
     }
     return keyPromise;
@@ -177,18 +253,32 @@ export function createSecurePreferenceStorage(disk: Disk, key: Key) {
   async function prepare(name: SecurePreferenceName) {
     const state: AdapterState = {};
     states.set(name, state);
+    let stage: SecurePreferenceStage = 'key-open';
     try {
       await loadKey();
-      const verified = readProtected(name, disk.read(recordKey(name)));
+      stage = 'record-read';
+      const raw = disk.read(recordKey(name));
+      stage = raw === null ? 'record-missing' : 'record-verify';
+      const verified = readProtected(name, raw);
       if (verified) {
         state.snapshot = verified.snapshot;
         state.committedPayload = verified.payload;
+        try {
+          recordInstallation();
+        } catch {
+          // Existing authenticated records still protect this installation.
+        }
         cleanLegacy(name);
       } else {
-        setIssue(state, 'damaged');
+        setIssue(name, state, 'damaged', stage);
       }
-    } catch {
-      setIssue(state, 'unavailable');
+    } catch (error) {
+      setIssue(
+        name,
+        state,
+        'unavailable',
+        error instanceof SecurePreferenceLoadError ? error.stage : stage,
+      );
     }
 
     // The default RPC cache is refreshed independently of user RPC settings.
@@ -256,9 +346,9 @@ export function createSecurePreferenceStorage(disk: Disk, key: Key) {
       state.committedPayload = payload;
       state.snapshot = undefined;
       state.pendingPayload = undefined;
-      setIssue(state, undefined);
+      state.issue = undefined;
     } catch {
-      setIssue(state, 'unavailable');
+      setIssue(name, state, 'unavailable', 'record-write');
     }
   }
 
@@ -280,12 +370,6 @@ export function createSecurePreferenceStorage(disk: Disk, key: Key) {
         state.issue ? [{ name, kind: state.issue }] : [],
       );
     },
-    subscribe(listener: () => void) {
-      listeners.add(listener);
-      return () => {
-        listeners.delete(listener);
-      };
-    },
     async reset(names: readonly SecurePreferenceName[]) {
       for (const name of names) {
         const state = states.get(name);
@@ -293,7 +377,7 @@ export function createSecurePreferenceStorage(disk: Disk, key: Key) {
           continue;
         }
         // Pending values were produced by a service initialized with defaults.
-        commit(name, state, state.pendingPayload ?? '{}');
+        commit(name, state, state.pendingPayload ?? DEFAULT_PAYLOAD);
         if (!state.issue) {
           cleanLegacy(name);
         }

@@ -1,9 +1,16 @@
 import * as Sentry from '@sentry/react-native';
 import type { ReactNativeOptions } from '@sentry/react-native';
+import { Platform } from 'react-native';
 
 import { APP_VERSIONS } from '@/constant';
 import { SENTRY_DEBUG, getSentryEnv } from '@/constant/env';
 import { getUserBehaviorTrackingOptOut } from '@/utils/trackingOptOut';
+import {
+  securePreferenceEventNames,
+  securePreferenceNames,
+  securePreferenceStages,
+  type SecurePreferenceReport,
+} from './storage/securePreferences/types';
 
 let sentryInitialized = false;
 let sentryClosing: Promise<void> | undefined;
@@ -25,8 +32,60 @@ function beforeSendSentryEvent(event: SentryEvent, hint?: SentryEventHint) {
   if (!shouldSendToSentry()) {
     return null;
   }
+  if (event.message?.startsWith('sec-setting-')) {
+    return minimizeSecurePreferenceEvent(event, hint);
+  }
 
   return shouldDropSentryEvent(event, hint) ? null : scrubSentryPayload(event);
+}
+
+function minimizeSecurePreferenceEvent(
+  event: SentryEvent,
+  hint?: SentryEventHint,
+): SentryEvent | null {
+  const { message, event_id, timestamp } = event;
+  const { setting, stage, os } = event.tags ?? {};
+  if (
+    !Object.values(securePreferenceEventNames).some(name => name === message) ||
+    !securePreferenceNames.some(name => name === setting) ||
+    !securePreferenceStages.some(name => name === stage) ||
+    (os !== 'ios' && os !== 'android')
+  ) {
+    return null;
+  }
+
+  // Scope attachments are sent separately from the event payload.
+  if (hint) {
+    hint.attachments = [];
+  }
+  return {
+    type: undefined,
+    event_id,
+    timestamp,
+    message,
+    level: 'warning',
+    release: APP_VERSIONS.forSentry,
+    environment: getSentryEnv(),
+    tags: { setting, stage, os },
+  };
+}
+
+export function reportSecurePreferenceIssue({
+  kind,
+  name,
+  stage,
+}: SecurePreferenceReport) {
+  if (!sentryInitialized || !shouldSendToSentry()) {
+    return;
+  }
+  const message = securePreferenceEventNames[kind];
+  Sentry.captureEvent({
+    message,
+    level: 'warning',
+    tags: { setting: name, stage, os: Platform.OS },
+    // Keep different settings and stages distinct in the SDK's local dedupe.
+    fingerprint: [message, name, stage],
+  });
 }
 
 function beforeSendSentryBreadcrumb(breadcrumb: SentryBreadcrumb) {

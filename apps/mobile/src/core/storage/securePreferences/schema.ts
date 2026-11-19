@@ -1,14 +1,7 @@
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { APP_STORE_NAMES } from '../storeConstant';
+import type { SecurePreferenceName } from './types';
 
-export const securePreferenceNames = [
-  APP_STORE_NAMES.whitelist,
-  APP_STORE_NAMES.contactBook,
-  APP_STORE_NAMES.securityEngine,
-  APP_STORE_NAMES.rpc,
-] as const;
-
-export type SecurePreferenceName = (typeof securePreferenceNames)[number];
 export type PreferenceRecord = Record<string, unknown>;
 
 export function asRecord(value: unknown): PreferenceRecord | undefined {

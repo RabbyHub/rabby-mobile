@@ -1,8 +1,18 @@
+import { Platform } from 'react-native';
 import NativeSecurity from '@/core/native/specs/NativeReactNativeSecurity';
 import { MMKV_ROOT_PATH } from '@/core/utils/appFS';
-import { MMKV_FILE_NAMES } from '../mmkvConstants';
-import { appMMKV } from '../mmkvInstances';
+import { APP_MMKV_KEYS, MMKV_FILE_NAMES } from '../mmkvConstants';
+import { appMMKV, keyringCheckpointMMKV, keyringMMKV } from '../mmkvInstances';
 import { createSecurePreferenceStorage } from './storage';
+
+function isWalletStorageEmpty() {
+  const key = APP_MMKV_KEYS.LEGACY_KEYRING_STATE;
+  return (
+    !appMMKV.contains(key) &&
+    !keyringMMKV.contains(key) &&
+    !keyringCheckpointMMKV.contains(key)
+  );
+}
 
 export const securePreferences = createSecurePreferenceStorage(
   {
@@ -30,5 +40,16 @@ export const securePreferences = createSecurePreferenceStorage(
       );
     },
     mac: message => NativeSecurity?.computeSecurePreferenceHmac(message) ?? '',
+  },
+  {
+    canInitializeEmptyInstallation:
+      Platform.OS === 'ios' ? isWalletStorageEmpty : undefined,
+    onIssue(issue) {
+      void import('@/core/sentry')
+        .then(({ reportSecurePreferenceIssue }) =>
+          reportSecurePreferenceIssue(issue),
+        )
+        .catch(() => undefined);
+    },
   },
 );
