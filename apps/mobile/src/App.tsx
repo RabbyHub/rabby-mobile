@@ -45,7 +45,6 @@ import { startLaunchPhase } from './startup/launchPlan';
 import { StartupRuntimePanelHost } from './screens/Settings/components/StartupRuntimePanelHost';
 import { NEED_DEVSETTINGBLOCKS } from './constant';
 import { AnimatedBootSplash } from './components/BootSplash/AnimatedBootSplash';
-import { SecurePreferenceNotice } from './components/SecurePreferenceNotice';
 import { RegressionScenarioHost } from '@/devtools/regressionScenarios/react';
 import SafeWindowFrame from '@/components/SafeWindowFrame';
 
@@ -135,12 +134,7 @@ const MainScreen = React.memo(({ rabbitCode }: AppProps) => {
       <RerenderDetector name="UnderAppProvider" />
       <BottomSheetModalProvider>
         <ScreenSceneAccountProvider>
-          {couldRender ? (
-            <>
-              <MemoziedAppNav />
-              <SecurePreferenceNotice />
-            </>
-          ) : null}
+          {couldRender ? <MemoziedAppNav /> : null}
         </ScreenSceneAccountProvider>
       </BottomSheetModalProvider>
     </AppProvider>
