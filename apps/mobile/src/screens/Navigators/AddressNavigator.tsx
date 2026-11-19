@@ -52,7 +52,6 @@ import { APP_TEST_PASSWORD } from '@/constant';
 import { withRegressionScenario } from '@/devtools/regressionScenarios/react';
 import { ImportMethodsHeader } from '../Address/ImportMethodsHeader';
 import { AutoFitCenterHeader } from '@/components/AutoFitCenterHeader';
-import { useAddWalletHeaderTitleStyles } from '@/screens/Address/addWalletHeaderTitleStyles';
 
 const AddressStack = createNativeStackNavigator<AddressNavigatorParamList>();
 const RegressionSyncExtensionPasswordScreen = withRegressionScenario(
@@ -95,8 +94,6 @@ export function AddressNavigator() {
   const { mergeScreenOptions, mergeScreenOptions2024 } = useStackScreenConfig();
   const { colors, colors2024, styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
-  const addWalletHeaderTitleStyles = useAddWalletHeaderTitleStyles();
-
   const { accounts } = useAccounts({
     disableAutoFetch: true,
   });
@@ -191,7 +188,7 @@ export function AddressNavigator() {
           header: () => (
             <AutoFitCenterHeader
               title={t('screens.addressStackTitle.ImportHardwareAddress')}
-              textStylesByLanguage={addWalletHeaderTitleStyles}
+              titleKey="screens.addressStackTitle.ImportHardwareAddress"
             />
           ),
         })}
@@ -228,7 +225,7 @@ export function AddressNavigator() {
           header: () => (
             <AutoFitCenterHeader
               title={t('screens.addressStackTitle.ImportWatchAddress2024')}
-              textStylesByLanguage={addWalletHeaderTitleStyles}
+              titleKey="screens.addressStackTitle.ImportWatchAddress2024"
             />
           ),
         })}
@@ -243,9 +240,7 @@ export function AddressNavigator() {
             // native title slot (QA 1352), so the row now owns the leading
             // slot and truncates the title inside the content width.
             header: () => (
-              <ImportMethodsHeader
-                textStylesByLanguage={addWalletHeaderTitleStyles}
-              />
+              <ImportMethodsHeader titleKey="screens.addressStackTitle.ImportMethods" />
             ),
             title: t('screens.addressStackTitle.ImportMethods'),
             headerTintColor: colors['neutral-title-1'],
@@ -268,7 +263,7 @@ export function AddressNavigator() {
           header: () => (
             <AutoFitCenterHeader
               title={t('screens.addressStackTitle.ImportSafeAddress2024')}
-              textStylesByLanguage={addWalletHeaderTitleStyles}
+              titleKey="screens.addressStackTitle.ImportSafeAddress2024"
             />
           ),
         })}

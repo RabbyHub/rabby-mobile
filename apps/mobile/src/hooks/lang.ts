@@ -155,6 +155,15 @@ export function useAppLanguage() {
   };
 }
 
+/**
+ * Synchronous snapshot of the app language. Use it from style factories or
+ * other non-reactive build paths; components should keep using
+ * `useAppLanguage()` (or `useTheme2024`, which passes it to style factories).
+ */
+export function getAppLanguage(): SupportedLang {
+  return filterSupportedLang(langStore.getState().lang);
+}
+
 function i18nChange(lang: SupportedLang) {
   return changeI18nLanguage(lang)
     .then(() => {

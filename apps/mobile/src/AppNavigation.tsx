@@ -61,7 +61,6 @@ import {
 import MoreImportMethods from '@/screens/Address/MoreImportMethods';
 import SelectAddMethod from '@/screens/Address/SelectAddMethod';
 import { AutoFitCenterHeader } from '@/components/AutoFitCenterHeader';
-import { useAddWalletHeaderTitleStyles } from '@/screens/Address/addWalletHeaderTitleStyles';
 import Backup from '@/screens/Address/Backup';
 import BiometricsStubModal from './components/AuthenticationModal/BiometricsStubModal';
 import { ScreenshotFeedbackHost } from './components/Screenshot/SubmitFeedback/GlobalHost';
@@ -442,7 +441,6 @@ export default function AppNavigation() {
   const { mergeScreenOptions, mergeScreenOptions2024 } = useStackScreenConfig();
   const { binaryTheme: colorScheme } = useAppTheme({ isAppTop: true });
   const { t } = useTranslation();
-  const addWalletHeaderTitleStyles = useAddWalletHeaderTitleStyles();
 
   const colors = useThemeColors();
 
@@ -687,7 +685,7 @@ export default function AppNavigation() {
                           title={t(
                             'page.newUserOnboarding.restoreWallet.title',
                           )}
-                          textStylesByLanguage={addWalletHeaderTitleStyles}
+                          titleKey="page.newUserOnboarding.restoreWallet.title"
                         />
                       ),
                     },
@@ -717,7 +715,7 @@ export default function AppNavigation() {
                           title={t(
                             'screens.addressStackTitle.MoreImportMethods',
                           )}
-                          textStylesByLanguage={addWalletHeaderTitleStyles}
+                          titleKey="screens.addressStackTitle.MoreImportMethods"
                         />
                       ),
                     },
@@ -738,7 +736,7 @@ export default function AppNavigation() {
                           title={t(
                             'page.nextComponent.addAddress.selectAddMethod',
                           )}
-                          textStylesByLanguage={addWalletHeaderTitleStyles}
+                          titleKey="page.nextComponent.addAddress.selectAddMethod"
                         />
                       ),
                     },

@@ -58,6 +58,12 @@ export type AutoFitHeaderTitleProps = {
    * baseline: base size, one line, tail ellipsis, and no measuring at all.
    */
   textStylesByLanguage?: Partial<Record<string, HeaderTitleLanguageStyle>>;
+  /**
+   * Pre-resolved policy for the active language. Takes precedence over
+   * `textStylesByLanguage`; use it when the caller already knows the live
+   * layout width (e.g. `resolveHeaderTitleLanguageStyle(...)`).
+   */
+  languageStyle?: HeaderTitleLanguageStyle;
   /** Forces the language key (tests/playground); defaults to the i18n one. */
   languageKey?: string;
 };
@@ -82,21 +88,24 @@ export const AutoFitHeaderTitle = ({
   align = 'center',
   onMeasure,
   textStylesByLanguage,
+  languageStyle,
   languageKey,
 }: AutoFitHeaderTitleProps) => {
   const { i18n } = useTranslation();
   const activeLanguage =
     languageKey || i18n?.resolvedLanguage || i18n?.language || '';
 
-  const languageStyle = React.useMemo(() => {
+  const mappedLanguageStyle = React.useMemo(() => {
     if (!textStylesByLanguage || !activeLanguage) {
       return undefined;
     }
     return textStylesByLanguage[activeLanguage];
   }, [textStylesByLanguage, activeLanguage]);
 
-  const isAdaptive = languageStyle === 'auto';
-  const fixedStyle = languageStyle !== 'auto' ? languageStyle : undefined;
+  const activeLanguageStyle = languageStyle ?? mappedLanguageStyle;
+  const isAdaptive = activeLanguageStyle === 'auto';
+  const fixedStyle =
+    activeLanguageStyle !== 'auto' ? activeLanguageStyle : undefined;
 
   // The map is an object prop, so nothing downstream may depend on its
   // identity: a scalar signature keeps re-computation and style churn tied to
