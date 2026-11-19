@@ -18,6 +18,7 @@ import React, {
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSystemColumnInset } from '@/components/SafeWindowFrame/backdrop';
 import { View, Pressable, ScrollView } from 'react-native';
 import { useWindowDimensions } from '@/core/dimensions';
 import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
@@ -103,9 +104,19 @@ function ReceiveScreen(): JSX.Element {
       !!offlineChainData.offlineChainInfo);
 
   const { width: windowWidth } = useWindowDimensions();
+  // The 65pt correction balances the native back bar item; the Duo outer
+  // screen uses the JS replica header, which already reserves that slot, so
+  // applying it there would push the address group left (QA 1428).
+  const columnInset = useSystemColumnInset();
+  const isReplicaHeader = columnInset.left > 0 || columnInset.right > 0;
   const headerTitle = useMemo(
     () => (
-      <View style={[styles.headerTitle, { width: windowWidth - 100 }]}>
+      <View
+        style={[
+          styles.headerTitle,
+          { width: windowWidth - 100 },
+          IS_IOS && !isReplicaHeader ? { paddingRight: 65 } : null,
+        ]}>
         {showName ? (
           <>
             <WalletIcon
@@ -157,6 +168,7 @@ function ReceiveScreen(): JSX.Element {
       account?.aliasName,
       colors2024,
       windowWidth,
+      isReplicaHeader,
     ],
   );
 
@@ -347,10 +359,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       alignItems: 'center',
       justifyContent: 'center',
       gap: 4,
-      // The width is set per-render from the live window (see headerTitle);
-      // keeping it out of the style factory avoids a stale snapshot.
-      // Same native-container correction as the Approvals header.
-      ...(IS_IOS ? { paddingRight: 65 } : {}),
+      // The width and the native back-item correction are applied per render
+      // (see headerTitle) so they can follow the foldable posture.
     },
     screen: {
       backgroundColor: colors2024['neutral-bg-0'],
