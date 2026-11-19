@@ -13,7 +13,10 @@ Bounded static text and simple stylesheets are converted to paths with the
 bundled Basic font. The profile rejects CSS at-rules and escapes, external
 resources, text paths, excessive text, and characters the bundled font cannot
 render instead of silently omitting them. It never scans device fonts or loads
-fonts supplied by an SVG or the network.
+fonts supplied by an SVG or the network. The one exception to rejecting
+at-rules is `@font-face`: since SVG-supplied fonts are never loaded, those
+rules are deleted before the profile check (a byte-deleting step only), so
+on-chain NFT artwork that embeds its own font renders with the bundled font.
 
 `assets/basic/Basic-Regular.ttf` is distributed under the SIL Open Font License
 1.1 in `assets/basic/OFL.txt`.

@@ -194,6 +194,123 @@ fn validate_embedded_png_href(value: &str) -> Result<u64, RabbySafeSvgError> {
     Ok(u64::from(width) * u64::from(height))
 }
 
+/// Removes every `@font-face { ... }` rule from a stylesheet.
+///
+/// Returns `None` when the stylesheet has no such rule, or when a rule is not
+/// a plain `@font-face` followed by one brace-balanced block, so the caller
+/// keeps the original bytes and the profile check rejects them as before.
+fn strip_font_face_rules(css: &str) -> Option<String> {
+    const AT_RULE: &str = "@font-face";
+    let mut output = String::with_capacity(css.len());
+    let mut rest = css;
+    let mut stripped = false;
+    while let Some(start) = rest
+        .as_bytes()
+        .windows(AT_RULE.len())
+        .position(|window| window.eq_ignore_ascii_case(AT_RULE.as_bytes()))
+    {
+        let after = &rest[start + AT_RULE.len()..];
+        let block = after.trim_start();
+        if !block.starts_with('{') {
+            return None;
+        }
+        let mut depth = 0usize;
+        let mut end = None;
+        for (index, character) in block.char_indices() {
+            match character {
+                '{' => depth += 1,
+                '}' => {
+                    depth -= 1;
+                    if depth == 0 {
+                        end = Some(index + 1);
+                        break;
+                    }
+                }
+                _ => {}
+            }
+        }
+        output.push_str(&rest[..start]);
+        rest = &block[end?..];
+        stripped = true;
+    }
+    if !stripped {
+        return None;
+    }
+    output.push_str(rest);
+    Some(output)
+}
+
+/// Drops `@font-face` rules from `<style>` elements so on-chain NFT artwork
+/// that embeds its own font (commonly as a `data:font/...` URL) renders with
+/// the bundled font instead of being rejected outright. Rabby never loads
+/// SVG-supplied fonts, so the rule could not take effect anyway.
+///
+/// This step only deletes bytes. The full static profile check still runs on
+/// its output, so anything else in the SVG is judged exactly as before. Any
+/// input this step cannot handle safely is returned unchanged.
+fn strip_svg_font_faces(svg: &[u8]) -> std::borrow::Cow<'_, [u8]> {
+    use std::borrow::Cow;
+
+    if svg.len() > MAX_INPUT_BYTES {
+        return Cow::Borrowed(svg);
+    }
+    let Ok(text) = std::str::from_utf8(svg) else {
+        return Cow::Borrowed(svg);
+    };
+    let options = roxmltree::ParsingOptions {
+        allow_dtd: false,
+        ..Default::default()
+    };
+    let Ok(document) = roxmltree::Document::parse_with_options(text, options) else {
+        return Cow::Borrowed(svg);
+    };
+
+    let mut edits: Vec<(std::ops::Range<usize>, String)> = Vec::new();
+    for style in document
+        .descendants()
+        .filter(|node| node.is_element() && node.tag_name().name() == "style")
+    {
+        for child in style.children().filter(|child| child.is_text()) {
+            let Some(content) = child.text() else {
+                continue;
+            };
+            // Only edit text whose source bytes match its parsed value, plain
+            // or in a single CDATA section. Entity-encoded stylesheets are
+            // left untouched for the profile check to judge.
+            let range = child.range();
+            let source = &text[range.clone()];
+            let content_start = if source == content {
+                range.start
+            } else if source
+                .strip_prefix("<![CDATA[")
+                .and_then(|inner| inner.strip_suffix("]]>"))
+                == Some(content)
+            {
+                range.start + "<![CDATA[".len()
+            } else {
+                continue;
+            };
+            if let Some(stripped) = strip_font_face_rules(content) {
+                edits.push((content_start..content_start + content.len(), stripped));
+            }
+        }
+    }
+    if edits.is_empty() {
+        return Cow::Borrowed(svg);
+    }
+
+    let mut output = String::with_capacity(text.len());
+    let mut cursor = 0usize;
+    edits.sort_by_key(|(range, _)| range.start);
+    for (range, replacement) in edits {
+        output.push_str(&text[cursor..range.start]);
+        output.push_str(&replacement);
+        cursor = range.end;
+    }
+    output.push_str(&text[cursor..]);
+    Cow::Owned(output.into_bytes())
+}
+
 fn validate_svg_profile(svg: &[u8]) -> Result<&str, RabbySafeSvgError> {
     if svg.len() > MAX_INPUT_BYTES {
         return Err(RabbySafeSvgError::InputTooLarge);
@@ -369,6 +486,8 @@ fn render_svg_to_png(
     max_edge: u32,
     max_pixels: u32,
 ) -> Result<RenderedPng, RabbySafeSvgError> {
+    let svg = strip_svg_font_faces(svg);
+    let svg = svg.as_ref();
     validate_svg_profile(svg)?;
     if !(MIN_MAX_EDGE..=MAX_MAX_EDGE).contains(&max_edge)
         || max_pixels == 0
@@ -647,6 +766,35 @@ mod tests {
             render_svg_to_png(svg.as_bytes(), 64, 100_000).unwrap_err(),
             RabbySafeSvgError::UnsupportedContent
         );
+    }
+
+    #[test]
+    fn renders_text_with_the_bundled_font_when_the_svg_embeds_its_own_font() {
+        for svg in [
+            br#"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 20"><style>@font-face { font-family: NftFont; src: url("data:font/otf;base64,T1RUTwAJAIAAAwAQ") format("opentype"); } .t { font-family: NftFont; fill: #000; }</style><text x="1" y="12" class="t">NFT</text></svg>"#.as_slice(),
+            br#"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 20"><style><![CDATA[@FONT-FACE{font-family:A;src:url(data:font/woff2;base64,d09GMgAB)} .t{fill:#000}]]></style><text x="1" y="12" class="t">NFT</text></svg>"#.as_slice(),
+        ] {
+            let rendered = render_svg_to_png(svg, 64, 100_000).unwrap();
+            let pixmap = tiny_skia::Pixmap::decode_png(&rendered.bytes).unwrap();
+            assert!(pixmap.pixels().iter().any(|pixel| pixel.alpha() > 0));
+        }
+    }
+
+    #[test]
+    fn still_rejects_unsafe_stylesheets_next_to_a_font_face_rule() {
+        for svg in [
+            br#"<svg xmlns="http://www.w3.org/2000/svg"><style>@font-face { font-family: A; src: url(data:font/otf;base64,AA) } @import "theme.css";</style><rect width="1" height="1"/></svg>"#.as_slice(),
+            br#"<svg xmlns="http://www.w3.org/2000/svg"><style>@font-face { font-family: A; src: url(data:font/otf;base64,AA) } rect { fill: url(https://example.com/a.svg); }</style><rect width="1" height="1"/></svg>"#.as_slice(),
+            br#"<svg xmlns="http://www.w3.org/2000/svg"><style>@font-face { font-family: A; src: url(data:font/otf;base64,AA)</style><rect width="1" height="1"/></svg>"#.as_slice(),
+            br#"<svg xmlns="http://www.w3.org/2000/svg"><style>@font-face;</style><rect width="1" height="1"/></svg>"#.as_slice(),
+            br#"<svg xmlns="http://www.w3.org/2000/svg"><style>&#64;font-face { src: url(data:font/otf;base64,AA) }</style><rect width="1" height="1"/></svg>"#.as_slice(),
+            br#"<svg xmlns="http://www.w3.org/2000/svg"><style>@font-face { src: url(data:font/otf;base64,AA) }</style><script>alert(1)</script></svg>"#.as_slice(),
+        ] {
+            assert_eq!(
+                render_svg_to_png(svg, 64, 100_000).unwrap_err(),
+                RabbySafeSvgError::UnsafeContent
+            );
+        }
     }
 
     #[test]
