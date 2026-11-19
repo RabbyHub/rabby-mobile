@@ -27,6 +27,7 @@ export class PerpsProScaleError extends Error {
       | 'duplicatePrice'
       | 'minimum'
       | 'maximum'
+      | 'invalidCapacity'
       | 'capacity'
       | 'reduceOnly',
   ) {
@@ -141,15 +142,45 @@ export type PerpsProScaleCapacity = {
   maxUsdValueSize?: string;
 };
 
+const getClosableSize = (position: BigNumber, side: PerpsProTradeSide) =>
+  (side === 'buy' ? position.lt(0) : position.gt(0))
+    ? position.abs()
+    : new BigNumber(0);
+
+const getAddedNotional = (plan: PerpsProScalePlan, closable: BigNumber) =>
+  BigNumber.maximum(new BigNumber(plan.totalSize).minus(closable), 0).times(
+    plan.averagePrice,
+  );
+
+export function estimatePerpsProScaleCost(
+  plan: PerpsProScalePlan,
+  side: PerpsProTradeSide,
+  reduceOnly: boolean,
+  positionSize: string | null,
+  leverage: number,
+) {
+  if (positionSize === null || !Number.isSafeInteger(leverage) || leverage <= 0)
+    return null;
+  const position = new BigNumber(positionSize);
+  if (!position.isFinite()) return null;
+  return reduceOnly
+    ? '0'
+    : getAddedNotional(plan, getClosableSize(position, side))
+        .div(leverage)
+        .toFixed();
+}
+
 /** Account/market facts are refreshed at confirmation; planned orders never move. */
 export const validatePerpsProScaleCapacity = ({
   plan,
   facts,
+  checkServerMax = true,
   reduceOnly,
   side,
 }: {
   plan: PerpsProScalePlan;
   facts: PerpsProScaleCapacity;
+  checkServerMax?: boolean;
   reduceOnly: boolean;
   side: PerpsProTradeSide;
 }): string => {
@@ -168,10 +199,8 @@ export const validatePerpsProScaleCapacity = ({
     !Number.isSafeInteger(facts.leverage) ||
     facts.leverage <= 0
   )
-    throw new PerpsProScaleError('capacity');
-  const closable = (side === 'buy' ? position.lt(0) : position.gt(0))
-    ? position.abs()
-    : new BigNumber(0);
+    throw new PerpsProScaleError('invalidCapacity');
+  const closable = getClosableSize(position, side);
   if (reduceOnly && (closable.isZero() || total.gt(closable)))
     throw new PerpsProScaleError('reduceOnly');
   const maximum = facts.maxUsdValueSize
@@ -179,9 +208,7 @@ export const validatePerpsProScaleCapacity = ({
     : null;
   if (maximum && new BigNumber(plan.notional).gt(maximum))
     throw new PerpsProScaleError('maximum');
-  const addedNotional = BigNumber.maximum(total.minus(closable), 0).times(
-    plan.averagePrice,
-  );
+  const addedNotional = getAddedNotional(plan, closable);
   const capacityNotional = plan.orders.reduce(
     (sum, leg) =>
       sum.plus(
@@ -194,7 +221,7 @@ export const validatePerpsProScaleCapacity = ({
     new BigNumber(0),
   );
   if (
-    capacityNotional.gt(serverMax.times(mark)) ||
+    (checkServerMax && capacityNotional.gt(serverMax.times(mark))) ||
     (!reduceOnly &&
       addedNotional.gt(available.times(facts.leverage).times('0.99')))
   )

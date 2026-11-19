@@ -1761,6 +1761,7 @@ export const PerpsProScene: React.FC<{
         skipConfirmation={trade.skipConfirmation}
       />
       <PerpsProScaleOrderConfirmationSheet
+        onDismissed={trade.onScaleReviewDismissed}
         command={trade.review?.type === 'scaleOrder' ? trade.review : null}
         onClose={trade.closeReview}
         onConfirm={trade.confirmReview}

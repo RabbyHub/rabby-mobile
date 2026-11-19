@@ -1,6 +1,15 @@
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { View, useWindowDimensions } from 'react-native';
-import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
+import {
+  BottomSheetFlatList,
+  type BottomSheetBackdropProps,
+} from '@gorhom/bottom-sheet';
 import BigNumber from 'bignumber.js';
 import { useTranslation } from 'react-i18next';
 import AutoLockView from '@/components/AutoLockView';
@@ -15,7 +24,7 @@ import {
 } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import type { PerpsProScaleOrderCommand } from '../../actions/scaleOrder';
+import type { PerpsProScaleOrderPreview } from '../../actions/scaleOrder';
 import { getPerpsProScaleBarWidth } from '../../model/scaleOrder';
 import {
   formatPerpsProDecimal,
@@ -35,37 +44,54 @@ import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
 
 export const PerpsProScaleOrderConfirmationSheet = React.memo(
   ({
-    command,
+    command: review,
     pending,
     onClose,
     onConfirm,
+    onDismissed,
   }: {
-    command: PerpsProScaleOrderCommand | null;
+    command: PerpsProScaleOrderPreview | null;
     pending: boolean;
     onClose: () => void;
+    onDismissed: (preview: PerpsProScaleOrderPreview) => void;
     onConfirm: () => void;
   }) => {
     const ref = useRef<AppBottomSheetModal>(null);
     const { t } = useTranslation();
     const { styles, colors2024 } = useTheme2024({ getStyle });
     const { height } = useWindowDimensions();
+    const [retained, setRetained] = useState(review);
+    const command = retained ?? review;
+    const closing = command !== review;
+    const renderBackdrop = useCallback(
+      (props: BottomSheetBackdropProps) => (
+        <PerpsProDialogBackdrop
+          {...props}
+          pressBehavior={pending || closing ? 'none' : 'close'}
+        />
+      ),
+      [pending, closing],
+    );
     usePerpsProSheetNavigationRegistration({
       active: !!command,
       dismiss: onClose,
-      dismissible: !pending,
+      dismissible: !pending && !closing,
     });
     useEffect(() => {
-      if (command) ref.current?.present();
-      else ref.current?.close();
-    }, [command]);
+      if (retained && retained !== review) {
+        ref.current?.dismiss();
+      } else if (review) {
+        if (!retained) setRetained(review);
+        else ref.current?.present();
+      }
+    }, [review, retained]);
     const rows = useMemo(() => {
       if (!command) return [];
       const max = BigNumber.max(
         ...command.plan.orders.map(leg => leg.size),
       ).toFixed();
-      return command.plan.orders.map((leg, index) => ({
+      return command.plan.orders.map(leg => ({
         ...leg,
-        cloid: command.cloids[index],
         width: getPerpsProScaleBarWidth(
           leg.size,
           max,
@@ -93,7 +119,9 @@ export const PerpsProScaleOrderConfirmationSheet = React.memo(
       ],
       [
         t('page.perps.pro.trade.cost'),
-        `${formatPerpsProDecimal(command.cost, 2)} ${facts.quoteAsset}`,
+        command.cost === null
+          ? '--'
+          : `${formatPerpsProDecimal(command.cost, 2)} ${facts.quoteAsset}`,
       ],
       [
         t('page.perps.pro.scaleOrder.averagePrice'),
@@ -106,8 +134,11 @@ export const PerpsProScaleOrderConfirmationSheet = React.memo(
     return (
       <AppBottomSheetModal
         ref={ref}
-        onDismiss={onClose}
-        enablePanDownToClose={!pending}
+        onDismiss={() => {
+          setRetained(null);
+          onDismissed(command);
+        }}
+        enablePanDownToClose={!pending && !closing}
         enableDynamicSizing={false}
         snapPoints={[
           Math.min(
@@ -128,7 +159,7 @@ export const PerpsProScaleOrderConfirmationSheet = React.memo(
           colors: colors2024,
           linearGradientType: 'bg0',
         })}
-        backdropComponent={PerpsProDialogBackdrop}
+        backdropComponent={renderBackdrop}
         backgroundStyle={styles.background}
         handleStyle={styles.handle}
         handleIndicatorStyle={styles.handleIndicator}
@@ -140,10 +171,12 @@ export const PerpsProScaleOrderConfirmationSheet = React.memo(
               {facts.sourceTag ? (
                 <Text style={styles.tag}>{facts.sourceTag}</Text>
               ) : null}
-              <Text style={styles.tag}>
-                {facts.marginMode === 'cross' ? 'Cross' : 'Isolated'}{' '}
-                {facts.leverage}x
-              </Text>
+              {command.cost !== null && (
+                <Text style={styles.tag}>
+                  {facts.marginMode === 'cross' ? 'Cross' : 'Isolated'}{' '}
+                  {facts.leverage}x
+                </Text>
+              )}
             </View>
           </View>
           <View style={styles.summary}>
@@ -171,7 +204,7 @@ export const PerpsProScaleOrderConfirmationSheet = React.memo(
             </View>
             <BottomSheetFlatList
               data={rows}
-              keyExtractor={item => item.cloid}
+              keyExtractor={item => item.price}
               initialNumToRender={12}
               windowSize={3}
               getItemLayout={(_, index) => ({
@@ -205,7 +238,7 @@ export const PerpsProScaleOrderConfirmationSheet = React.memo(
               type="primary"
               height={BOTTOM_BUTTON_SINGLE_HEIGHT}
               onPress={onConfirm}
-              disabled={pending}
+              disabled={pending || closing}
               loading={pending}
               buttonStyle={[styles.button, pending && styles.buttonDisabled]}
               titleStyle={styles.buttonTitle}

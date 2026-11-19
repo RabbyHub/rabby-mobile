@@ -7,6 +7,7 @@ import {
   waitFor,
 } from '@testing-library/react-native';
 import type { PerpsTwapRecord } from '@/hooks/perps/twap/types';
+import { usePerpsTwapFills } from '@/hooks/perps/twap/usePerpsTwapStore';
 import { loadPerpsTwapFills } from '@/hooks/perps/twap/twapRepository';
 import { PerpsProTwapHistoryRowView } from './PerpsProTwapHistoryRow';
 import { PerpsProTwapCard } from '@/screens/PerpsPro/components/twap/PerpsProTwapCard';
@@ -49,7 +50,7 @@ jest.mock('@/screens/PerpsPro/scene/usePerpsProTradePreferences', () => ({
 }));
 jest.mock('@/hooks/perps/twap/usePerpsTwapStore', () => ({
   usePerpsTwapRecord: () => null,
-  usePerpsTwapFills: () => [],
+  usePerpsTwapFills: jest.fn(() => []),
   addPerpsTwapFills: jest.fn(),
 }));
 jest.mock('@/hooks/perps/twap/twapRepository', () => ({
@@ -137,6 +138,30 @@ it.each([
   },
 );
 
+it('shows each fill time in the same local date and time format as the order', async () => {
+  jest.mocked(usePerpsTwapFills).mockReturnValue([
+    {
+      key: 'BTC:42:1',
+      coin: 'BTC',
+      twapId: 42,
+      tid: 1,
+      oid: 1,
+      side: 'B',
+      px: '100',
+      sz: '1',
+      fee: '0',
+      feeToken: 'USDC',
+      time: new Date(2026, 10, 19, 11, 7, 5).getTime(),
+    },
+  ]);
+  try {
+    render(<PerpsProTwapDetailSheet order={endedOrder} onClose={jest.fn()} />);
+    expect(await screen.findByText('2026-11-19 11:07:05')).toBeTruthy();
+  } finally {
+    jest.mocked(usePerpsTwapFills).mockReturnValue([]);
+  }
+});
+
 it('removes the retry footer when a retry returns partial trades', async () => {
   jest
     .mocked(loadPerpsTwapFills)
@@ -166,7 +191,12 @@ it.each([
       active: true,
       status: 'activated',
       endedAt: null,
-      state: { ...endedOrder.state, side, executedSz: '3.16' },
+      state: {
+        ...endedOrder.state,
+        side,
+        executedSz: '3.16',
+        timestamp: new Date(2026, 10, 19, 9, 8, 7).getTime(),
+      },
     };
     render(
       <PerpsProTwapCard
@@ -177,6 +207,7 @@ it.each([
         variant={variant}
       />,
     );
+    expect(screen.getByText('2026-11-19 09:08:07')).toBeTruthy();
     expect(screen.getByText('31.6%')).toBeTruthy();
     expect(!!screen.queryByText('working')).toBe(variant === 'runningDetail');
     expect(screen.queryByTestId('history-arrow')).toBeNull();

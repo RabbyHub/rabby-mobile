@@ -5,6 +5,7 @@ import {
 import { createPerpsProTradeFormState } from '../model/trade';
 import {
   buildPerpsProScaleOrderCommand,
+  buildPerpsProScaleOrderPreview,
   executePerpsProScaleOrder,
   type PerpsProScaleContext,
 } from './scaleOrder';
@@ -74,10 +75,10 @@ it('preserves the sell preview in one HIP-3 request and consumes a partially acc
         positionSize: '0',
       },
     };
-    const command = buildPerpsProScaleOrderCommand({
+    const preview = buildPerpsProScaleOrderPreview({
       ...context,
       marketKey: context.marketKey!,
-      capacity: context.capacity!,
+      positionSize: context.capacity!.positionSize,
       side: 'sell',
       form: {
         ...createPerpsProTradeFormState({ orderType: 'scale' }),
@@ -105,6 +106,11 @@ it('preserves the sell preview in one HIP-3 request and consumes a partially acc
         szDecimals: 2,
       },
     });
+    const command = buildPerpsProScaleOrderCommand(
+      preview,
+      context.accountRuntime,
+      context.runtime,
+    )!;
     const sdk = new ExchangeClient({
       masterAddress: '0xabc',
       externalSign: sign,

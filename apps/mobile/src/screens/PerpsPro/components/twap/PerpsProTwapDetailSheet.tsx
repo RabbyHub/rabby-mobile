@@ -3,7 +3,6 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, View, useWindowDimensions } from 'react-native';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import BigNumber from 'bignumber.js';
-import dayjs from 'dayjs';
 import { useTranslation } from 'react-i18next';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import AutoLockView from '@/components/AutoLockView';
@@ -20,7 +19,7 @@ import {
 } from '@/hooks/perps/twap/usePerpsTwapStore';
 import { loadPerpsTwapFills } from '@/hooks/perps/twap/twapRepository';
 import { usePerpsProTradeAmountUnit } from '../../scene/usePerpsProTradePreferences';
-import { formatPerpsProDecimal } from '../../utils/format';
+import { formatPerpsProDecimal, formatPerpsProTime } from '../../utils/format';
 import { getPerpsProDialogStyles } from '../common/perpsProDialogVisual';
 import { PerpsProDialogBackdrop } from '../common/PerpsProDialogBackdrop';
 import { usePerpsProSheetNavigationRegistration } from '../common/perpsProSheetNavigationRegistry';
@@ -103,8 +102,8 @@ export const PerpsProTwapDetailSheet = React.memo(
                   `page.perps.pro.trade.${item.side === 'B' ? 'buy' : 'sell'}`,
                 )}
               </Text>
-              <Text style={styles.fillTime}>
-                {dayjs(item.time).format('YYYY/MM/DD HH:mm:ss')}
+              <Text numberOfLines={1} style={styles.fillTime}>
+                {formatPerpsProTime(item.time)}
               </Text>
             </View>
             <View style={styles.fillValues}>
