@@ -5,6 +5,7 @@ import {
   AutoFitHeaderTitle,
   HeaderTitleLanguageStyle,
 } from '@/components/AutoFitHeaderTitle';
+import { resolveHeaderTitleLanguageStyle } from '@/components/headerTitleTypography';
 import { HeaderBackButton } from '@/hooks/navigation';
 import { useCustomHeaderTop } from '@/hooks/useAppLayout';
 import { useTheme2024 } from '@/hooks/theme';
@@ -17,12 +18,16 @@ import { createGetStyles2024 } from '@/utils/styles';
 // custom header row lands exactly where the native header + safeOffHeader pair
 // did and the content does not gain extra top padding.
 const HEADER_CONTENT_HEIGHT = ScreenLayouts.headerAreaHeight;
-// iOS mirrors the native bar item width; Android only needs the 24pt chevron,
-// and the extra 20pt per side is what kept English titles from fitting at the
-// base 20pt font (QA 1384 follow-up: Android shrank the title to 16pt).
-const HEADER_SIDE_SLOT_WIDTH = IS_IOS ? 44 : 24;
+// The trailing slot is empty and the back control renders a 24pt chevron at the
+// content edge, so 32pt is enough on iOS. The old 44pt (native bar item width)
+// was what forced the longest English titles to drop below the 20pt baseline
+// (QA 1409/1425). Keeping both slots symmetric preserves the centred title;
+// the back control keeps its 44pt tap target through its hitSlop.
+const HEADER_SIDE_SLOT_WIDTH = IS_IOS ? 32 : 24;
 // The cards below start at this inset, so the back control aligns with them.
 const HEADER_HORIZONTAL_INSET = 16;
+// Breathing room between the side slots and the title glyphs.
+const TITLE_AREA_HORIZONTAL_MARGIN = 8;
 
 /**
  * Centred JS header for the first screens of the add-wallet flow (QA 1352).
@@ -34,15 +39,34 @@ const HEADER_HORIZONTAL_INSET = 16;
  */
 export const AutoFitCenterHeader = ({
   title,
+  titleKey,
   textStylesByLanguage,
 }: {
   title: string;
+  /** i18n key of `title`; drives the English narrow-width typography ladder. */
+  titleKey?: string;
   /** Exact language tag -> typography override; decided by the screen. */
   textStylesByLanguage?: Partial<Record<string, HeaderTitleLanguageStyle>>;
 }) => {
-  const { styles, colors2024 } = useTheme2024({ getStyle });
+  const { styles, colors2024, windowWidth, language } = useTheme2024({
+    getStyle,
+  });
   const headerTop = useCustomHeaderTop();
   const columnInset = useSystemColumnInset();
+  // Live title slot: the row's paddings/slots/margins plus the foldable column
+  // inset. Kept in sync with `getStyle` so the ladder sees the real glyph width.
+  const availableWidth =
+    windowWidth -
+    columnInset.left -
+    columnInset.right -
+    2 * HEADER_HORIZONTAL_INSET -
+    2 * HEADER_SIDE_SLOT_WIDTH -
+    2 * TITLE_AREA_HORIZONTAL_MARGIN;
+  const languageStyle = resolveHeaderTitleLanguageStyle({
+    titleKey,
+    language,
+    availableWidth,
+  });
 
   return (
     <View style={[styles.outer, { paddingTop: headerTop }]}>
@@ -65,6 +89,7 @@ export const AutoFitCenterHeader = ({
             text={title}
             textStyle={styles.title}
             textStylesByLanguage={textStylesByLanguage}
+            languageStyle={languageStyle}
           />
         </View>
         {/* Equal trailing slot keeps the title centred on the screen. */}
@@ -107,7 +132,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     // The inner Text still centres its glyphs via textAlign.
     alignItems: 'stretch',
     justifyContent: 'center',
-    marginHorizontal: 8,
+    marginHorizontal: TITLE_AREA_HORIZONTAL_MARGIN,
   },
   rightSlot: {
     width: HEADER_SIDE_SLOT_WIDTH,
