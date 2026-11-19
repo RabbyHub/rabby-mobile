@@ -339,25 +339,24 @@ export const usePerpsProTrade = ({
       unresolved: number;
     }[]
   >([]);
-  const scaleDismissToast = useRef<{
-    preview: PerpsProScaleOrderPreview;
-    message: string;
-  } | null>(null);
+  const [scaleDismissNotices] = useState(
+    () => new WeakMap<PerpsProScaleOrderPreview, string>(),
+  );
   const onScaleReviewDismissed = useCallback(
     (preview: PerpsProScaleOrderPreview) => {
       setReview(value => (value === preview ? null : value));
-      const notice = scaleDismissToast.current;
-      if (notice?.preview === preview) {
-        scaleDismissToast.current = null;
-        if (
-          getPerpsAccountRuntimeContext().generation ===
-            preview.accountGeneration &&
-          currentMarketKeyRef.current === preview.marketKey
-        )
-          showToast(notice.message, 'error');
+      const message = scaleDismissNotices.get(preview);
+      scaleDismissNotices.delete(preview);
+      if (
+        message &&
+        getPerpsAccountRuntimeContext().generation ===
+          preview.accountGeneration &&
+        currentMarketKeyRef.current === preview.marketKey
+      ) {
+        showToast(message, 'error');
       }
     },
-    [],
+    [scaleDismissNotices],
   );
   const [skipConfirmation, setSkipConfirmation] = useState(false);
   const [amountSource, setAmountSource] =
@@ -2394,6 +2393,27 @@ export const usePerpsProTrade = ({
     scaleReceipts,
     t,
   ]);
+  const clearSubmittedStrategyDraft = useCallback(
+    (type: 'scale' | 'twap') => {
+      amountDraftRef.current = createPerpsProTradeAmountDraft();
+      amountSourceRef.current = 'manual';
+      percentageRef.current = 0;
+      setAmountSource('manual');
+      setPercentageState(0);
+      patchForm(
+        type === 'scale'
+          ? {
+              amount: '',
+              scaleLowerPrice: '',
+              scaleUpperPrice: '',
+              scaleCount: '',
+            }
+          : { amount: '', twapDuration: '' },
+      );
+    },
+    [patchForm],
+  );
+
   const getScaleContext = useCallback(
     (
       command: PerpsProScaleOrderCommand | PerpsProTwapOrderCommand,
@@ -2447,7 +2467,7 @@ export const usePerpsProTrade = ({
     async (preview: PerpsProScaleOrderPreview) => {
       if (pendingRef.current) return;
       const closeWithError = (message: string) => {
-        scaleDismissToast.current = { preview, message };
+        scaleDismissNotices.set(preview, message);
         setReview(value => (value === preview ? null : value));
       };
       const accountRuntime = getPerpsAccountRuntimeContext();
@@ -2498,7 +2518,8 @@ export const usePerpsProTrade = ({
             fresh.leverage.value === command.reviewFacts.leverage,
         });
         await ensurePerpsActionApproval(account);
-        if (!current()) return;
+        if (!current())
+          throw new Error(t('page.perps.pro.trade.contextChanged'));
         const desired = command.reviewFacts;
         const readiness = await resolveLeverageExecutionReadiness({
           address: command.account.address,
@@ -2528,7 +2549,8 @@ export const usePerpsProTrade = ({
             throw new Error(t('page.perps.pro.trade.contextChanged'));
           }
         }
-        if (!current()) return;
+        if (!current())
+          throw new Error(t('page.perps.pro.trade.contextChanged'));
         const refreshed =
           (await refreshActiveAssetData()) as WsActiveAssetData | null;
         if (
@@ -2558,8 +2580,20 @@ export const usePerpsProTrade = ({
         // Clear the consumed preview before any read requests; keep its original ownership.
         if (!scaleMountedRef.current) return;
         setReview(value => (value === preview ? null : value));
+        // Clearing this draft advances its revision. Reconcile against the new
+        // revision only when we cleared the submitting draft ourselves.
+        let receiptRevision = command.reviewFacts.formRevision;
+        if (result.kind !== 'allRejected' && current()) {
+          clearSubmittedStrategyDraft('scale');
+          receiptRevision = formRevisionRef.current;
+        }
         const reconciled = await reconcilePerpsProScaleOrders(command, result, {
-          isCurrent: current,
+          isCurrent: () =>
+            isPerpsProScaleContextCurrent(
+              command,
+              getScaleContext(command),
+              receiptRevision,
+            ),
           getOrderStatus: (cloid, address) =>
             sdk.info.getOrderStatus(cloid, address),
         });
@@ -2583,7 +2617,6 @@ export const usePerpsProTrade = ({
           ...items,
           { command, accepted, rejected, unresolved },
         ]);
-        if (current()) patchForm({ amount: '' });
       } catch (error) {
         if (!scaleMountedRef.current || isPerpsActionUserCancelled(error))
           return;
@@ -2606,12 +2639,13 @@ export const usePerpsProTrade = ({
         }
       } finally {
         pendingRef.current = false;
-        setPending(false);
+        if (scaleMountedRef.current) setPending(false);
       }
     },
     [
       getScaleContext,
-      patchForm,
+      clearSubmittedStrategyDraft,
+      scaleDismissNotices,
       refreshActiveAssetData,
       resolveLeverageExecutionReadiness,
       t,
@@ -2752,7 +2786,7 @@ export const usePerpsProTrade = ({
         if (result.kind === 'requestFailed') throw new Error(result.error);
         if (result.kind === 'running' || result.kind === 'unknownOutcome') {
           // The receipt branch already refreshes once. Never resend an ambiguous order.
-          if (current()) patchForm({ amount: '' });
+          if (current()) clearSubmittedStrategyDraft('twap');
         }
       } catch (error) {
         if (current() && !isPerpsActionUserCancelled(error)) {
@@ -2773,7 +2807,7 @@ export const usePerpsProTrade = ({
     },
     [
       getTwapContext,
-      patchForm,
+      clearSubmittedStrategyDraft,
       refreshActiveAssetData,
       resolveLeverageExecutionReadiness,
       t,
@@ -2803,11 +2837,7 @@ export const usePerpsProTrade = ({
     async (side: PerpsProTradeSide) => {
       try {
         const isScale = form.orderType === 'scale';
-        if (
-          isScale &&
-          (!routeFocused || pendingRef.current || scaleDismissToast.current)
-        )
-          return;
+        if (isScale && (!routeFocused || pendingRef.current)) return;
         if (!isScale && !tradeConfigurationReady) return;
         const reviewAccount = perpsStore.getState().currentPerpsAccount;
         if (

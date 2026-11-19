@@ -559,6 +559,147 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     expect(mockEnsureApproval).not.toHaveBeenCalled();
   });
 
+  it.each([
+    'fullAccepted',
+    'partialAccepted',
+    'unknownOutcome',
+    'allRejected',
+  ] as const)('applies the correct Scale draft policy for %s', async kind => {
+    const getOrderStatus = jest.fn(async () => ({ status: 'unknownOid' }));
+    const submit = jest.fn(async (params: MultiOrderWithOutcomeParams) => {
+      const requestLegs = params.orders.map((order, index) => ({
+        cloid: order.cloid,
+        index,
+      }));
+      return {
+        kind,
+        legs: requestLegs.map(leg => {
+          if (kind === 'unknownOutcome')
+            return { ...leg, kind: 'unresolved', reason: 'transportUnknown' };
+          if (
+            kind === 'allRejected' ||
+            (kind === 'partialAccepted' && leg.index)
+          )
+            return {
+              ...leg,
+              kind: 'rejected',
+              error: 'rejected',
+              scope: 'leg',
+            };
+          return {
+            ...leg,
+            kind: 'accepted',
+            acceptance: 'resting',
+            oid: leg.index + 1,
+          };
+        }),
+        evidence: { requestLegs, transportPhase: 'response' },
+      };
+    });
+    mockGetPerpsSdk.mockReturnValue({
+      exchange: { multiOrderWithOutcome: submit },
+      info: { getOrderStatus },
+    });
+    const hook = renderStrategyTrade();
+    enterScaleDraft(hook);
+    const original = hook.result.current.form;
+    await act(async () => hook.result.current.requestReview('buy'));
+    await act(async () => hook.result.current.confirmReview());
+    expect(submit).toHaveBeenCalledTimes(1);
+    expect(hook.result.current.review).toBeNull();
+    if (kind === 'unknownOutcome')
+      expect(getOrderStatus).toHaveBeenCalledTimes(5);
+    hook.rerender({ midPx: '120' });
+    expect(hook.result.current.form).toEqual(
+      kind === 'allRejected'
+        ? original
+        : {
+            ...original,
+            amount: '',
+            scaleCount: '',
+            scaleLowerPrice: '',
+            scaleUpperPrice: '',
+          },
+    );
+  });
+
+  it.each([
+    ['running', false],
+    ['unknownOutcome', true],
+    ['rejected', true],
+    ['userCancelled', false],
+  ] as const)(
+    'applies the TWAP draft policy for %s with slider=%s',
+    async (kind, slider) => {
+      const submit = jest.fn(async () => ({
+        kind,
+        evidence: { nonce: 1, transportPhase: 'response' },
+        twapId: 1,
+        error: 'rejected',
+      }));
+      mockGetPerpsSdk.mockReturnValue({
+        exchange: { placeTwapOrderWithOutcome: submit },
+      });
+      const hook = renderStrategyTrade();
+      act(() => hook.result.current.setOrderType('twap'));
+      act(() => {
+        hook.result.current.patchForm({
+          twapDuration: '90',
+          twapRandomize: true,
+        });
+        if (slider) hook.result.current.setPercentage(50);
+        else hook.result.current.setAmount('200');
+      });
+      const original = hook.result.current.form;
+      await act(async () => hook.result.current.requestReview('buy'));
+      expect(hook.result.current.review?.type).toBe('twapOrder');
+      await act(async () => hook.result.current.confirmReview());
+      expect(submit).toHaveBeenCalledTimes(1);
+      hook.rerender({ midPx: '110' });
+      const clear = kind === 'running' || kind === 'unknownOutcome';
+      expect(hook.result.current.form).toEqual(
+        clear ? { ...original, amount: '', twapDuration: '' } : original,
+      );
+      expect(hook.result.current.percentage).toBe(clear || !slider ? 0 : 50);
+      expect(hook.result.current.amountSource).toBe(
+        clear || !slider ? 'manual' : 'slider',
+      );
+    },
+  );
+
+  it('can reopen Scale when an old balance check finishes after its preview was dismissed', async () => {
+    let resolveBalance!: (value: typeof activeAssetData) => void;
+    const hook = renderStrategyTrade(
+      () =>
+        new Promise(resolve => {
+          resolveBalance = resolve;
+        }),
+    );
+    enterScaleDraft(hook);
+    await act(async () => hook.result.current.requestReview('buy'));
+    const preview = hook.result.current.review;
+    if (preview?.type !== 'scaleOrder')
+      throw new Error('Expected Scale preview');
+    let confirmation!: Promise<void>;
+    await act(async () => {
+      confirmation = hook.result.current.confirmReview();
+    });
+    mockPerpsState.currentPerpsAccount = null;
+    hook.rerender({ midPx: '100' });
+    act(() => hook.result.current.onScaleReviewDismissed(preview));
+    await act(async () => {
+      resolveBalance(activeAssetData);
+      await confirmation;
+    });
+    expect(mockEnsureApproval).not.toHaveBeenCalled();
+    expect(mockShowToast).not.toHaveBeenCalled();
+    await act(async () => hook.result.current.requestReview('buy'));
+    expect(hook.result.current.review).toMatchObject({
+      type: 'scaleOrder',
+      cost: null,
+    });
+  });
+
   it('retains a late Scale receipt for its original account without resubmitting', async () => {
     let resolveSubmission!: (outcome: MultiOrderOutcome) => void;
     const submit = jest.fn(

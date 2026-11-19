@@ -160,6 +160,7 @@ export type PerpsProScaleContext = {
 export const isPerpsProScaleContextCurrent = (
   command: PerpsProScaleOrderCommand,
   context: PerpsProScaleContext,
+  expectedRevision = command.reviewFacts.formRevision,
 ) =>
   context.active &&
   context.hasPermission &&
@@ -172,7 +173,7 @@ export const isPerpsProScaleContextCurrent = (
   context.marketKey === command.marketKey &&
   context.coin === command.coin &&
   context.dexId === command.dexId &&
-  context.formRevision === command.reviewFacts.formRevision;
+  context.formRevision === expectedRevision;
 
 // A submitted preview is consumed even if its response is lost. No automatic resubmission.
 const consumed = new WeakSet<PerpsProScalePlan>();
