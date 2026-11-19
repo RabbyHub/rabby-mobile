@@ -76,8 +76,6 @@ const getStyle = createGetStyles2024(ctx => ({
     paddingVertical: 8,
     paddingHorizontal: 11,
     display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
     gap: 8,
     flexDirection: 'row',
   },
