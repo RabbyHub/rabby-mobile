@@ -1,7 +1,6 @@
 import { FooterButtonScreenContainer } from '@/components2024/ScreenContainer/FooterButtonScreenContainer';
 import { toast } from '@/components2024/Toast';
 import type { Chain, CHAINS_ENUM } from '@/constant/chains';
-import { ScreenLayouts } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 import { findChainByID } from '@/utils/chain';
 import { navigationRef } from '@/utils/navigation';
@@ -127,6 +126,7 @@ function ReceiveScreen(): JSX.Element {
         <CustomTouchableOpacity
           as="RNGHTouchableOpacity"
           style={styles.eyeButton}
+          hitSlop={{ left: 14, right: 14 }}
           onPress={() => setShowName(e => !e)}>
           {showName ? (
             <RcIconEyeCC
@@ -444,10 +444,12 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   // becomes a ~44x56 tap area on its right, so no negative-margin compensation
   // is needed.
   eyeButton: {
-    width: 44,
-    height: ScreenLayouts.headerAreaHeight,
-    // Left-align the glyph so it hugs the text; vertically centre it in the row.
-    alignItems: 'flex-start',
+    // Keep the layout width at the 16pt glyph so the centred title row is not
+    // pushed left (QA 1424); the extra ~44x44 tap area comes from hitSlop on
+    // the touchable instead of a wider layout box. Height matches the native
+    // stack bar content (44pt) so the row does not overflow vertically (QA 1423).
+    height: 44,
+    alignItems: 'center',
     justifyContent: 'center',
   },
 }));
