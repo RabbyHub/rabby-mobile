@@ -1,6 +1,7 @@
 describe('store/balance24h', () => {
   const mockGetBalance24hCache = jest.fn();
   const mockFetch24hBalance = jest.fn();
+  const mockGet24hTotalBalanceBatch = jest.fn();
   const mockSetBalance24hCache = jest.fn();
   const mockComputeTotalBalance = jest.fn();
   const mockGetBalanceCacheAccounts = jest.fn();
@@ -27,6 +28,14 @@ describe('store/balance24h', () => {
     jest.resetModules();
     jest.clearAllMocks();
     mockBalanceValueMap = {};
+    mockGet24hTotalBalanceBatch.mockReset();
+    mockGet24hTotalBalanceBatch.mockImplementation(
+      async (addresses: string[]) =>
+        addresses.map(id => ({ id, error_code: 0, total_usd_value: 1 })),
+    );
+    jest.doMock('@/core/request', () => ({
+      openapi: { get24hTotalBalanceBatch: mockGet24hTotalBalanceBatch },
+    }));
 
     jest.doMock('@/utils/24hBalanceCache', () => ({
       getBalance24hCache: mockGetBalance24hCache,
@@ -40,11 +49,18 @@ describe('store/balance24h', () => {
       };
     });
     jest.doMock('p-queue', () => {
-      return jest.fn().mockImplementation(() => ({
-        add: (fn: () => Promise<unknown>) => fn(),
-        clear: jest.fn(),
-        onIdle: jest.fn(() => Promise.resolve()),
-      }));
+      return jest.fn().mockImplementation(() => {
+        const pending: Promise<unknown>[] = [];
+        return {
+          add: (fn: () => Promise<unknown>) => {
+            const promise = fn();
+            pending.push(promise);
+            return promise;
+          },
+          clear: jest.fn(),
+          onIdle: () => Promise.allSettled(pending),
+        };
+      });
     });
     jest.doMock('@/hooks/useCurve', () => ({
       formatSmallUsdValue: jest.fn(() => '$123'),
@@ -68,8 +84,8 @@ describe('store/balance24h', () => {
         mockGetTop10MyAccounts(...args),
     }));
     jest.doMock('@/hooks/appSettings', () => ({
-      isHomeAssetSelectionExperimentEnabled: (...args: unknown[]) =>
-        mockIsHomeAssetSelectionExperimentEnabled(...args),
+      isHomeAssetSelectionExperimentEnabled:
+        mockIsHomeAssetSelectionExperimentEnabled,
     }));
     jest.doMock('./balance', () => ({
       __esModule: true,
@@ -85,8 +101,8 @@ describe('store/balance24h', () => {
           balance: mockGetBalanceCacheAccounts(),
         })),
       },
-      getSelectedBalanceAddressesSnapshot: (...args: unknown[]) =>
-        mockGetSelectedBalanceAddressesSnapshot(...args),
+      getSelectedBalanceAddressesSnapshot:
+        mockGetSelectedBalanceAddressesSnapshot,
       accountsBalanceEvents: {
         on: jest.fn(),
       },
@@ -171,7 +187,7 @@ describe('store/balance24h', () => {
       reason: 'manual_refresh',
     });
 
-    expect(mockFetch24hBalance.mock.calls.map(([address]) => address)).toEqual([
+    expect(mockGet24hTotalBalanceBatch).toHaveBeenCalledWith([
       '0xselected-a',
       '0xselected-b',
     ]);
@@ -192,7 +208,7 @@ describe('store/balance24h', () => {
     });
 
     expect(mockGetTop10MyAccounts).toHaveBeenCalledTimes(1);
-    expect(mockFetch24hBalance).toHaveBeenCalledWith('0xlegacy');
+    expect(mockGet24hTotalBalanceBatch).toHaveBeenCalledWith(['0xlegacy']);
   });
 
   it('does not fall back to Top-10 while an experimental selection is unresolved', async () => {
@@ -204,6 +220,7 @@ describe('store/balance24h', () => {
 
     expect(mockGetTop10MyAccounts).not.toHaveBeenCalled();
     expect(mockFetch24hBalance).not.toHaveBeenCalled();
+    expect(mockGet24hTotalBalanceBatch).not.toHaveBeenCalled();
   });
 
   it('uses the active balance selection when a scene refresh has no explicit addresses', async () => {
@@ -224,10 +241,162 @@ describe('store/balance24h', () => {
       },
     );
 
-    expect(mockFetch24hBalance.mock.calls.map(([address]) => address)).toEqual([
+    expect(mockGet24hTotalBalanceBatch).toHaveBeenCalledWith([
       '0xselected-a',
       '0xselected-b',
     ]);
+  });
+
+  it.each([10, 12])(
+    'batches %i stale Home addresses in groups of at most ten',
+    async count => {
+      const addresses = Array.from(
+        { length: count },
+        (_, i) => `0xaddr${i.toString().padStart(2, '0')}`,
+      );
+      mockGetBalance24hCache.mockReturnValue(null);
+
+      await balance24hModule.scene24hBalanceStore.refreshCombinedDataForScene(
+        'Home',
+        {
+          addresses: [...addresses, addresses[0].toUpperCase()],
+        },
+      );
+      await flushResourceFlowPersist();
+
+      expect(
+        mockGet24hTotalBalanceBatch.mock.calls.map(([ids]) => ids),
+      ).toEqual(
+        count === 10
+          ? [addresses]
+          : [addresses.slice(0, 10), addresses.slice(10)],
+      );
+      expect(mockFetch24hBalance).not.toHaveBeenCalled();
+      expect(mockSetBalance24hCache).toHaveBeenCalledTimes(count);
+      expect(
+        balance24hModule.scene24hBalanceStore.getState().sceneLoading.Home,
+      ).toBe(false);
+    },
+  );
+
+  it.each([false, true])(
+    'keeps the existing fresh-cache scene behavior with force=%s',
+    async force => {
+      mockGetBalance24hCache.mockReturnValue({
+        data: { total_usd_value: 10 },
+        updateTime: 123,
+        isExpired: false,
+      });
+      await balance24hModule.scene24hBalanceStore.refreshCombinedDataForScene(
+        'Home',
+        {
+          addresses: ['0xA', '0xB'],
+          force,
+        },
+      );
+      expect(mockGet24hTotalBalanceBatch).not.toHaveBeenCalled();
+      expect(mockSetBalance24hCache).not.toHaveBeenCalled();
+    },
+  );
+
+  it('shares the pending 24h batch across refresh reasons and still applies list changes', async () => {
+    mockGetBalance24hCache.mockReturnValue(null);
+    let finish!: () => void;
+    mockGet24hTotalBalanceBatch.mockImplementationOnce(
+      () =>
+        new Promise(resolve => {
+          finish = () =>
+            resolve([{ id: '0xa', error_code: 0, total_usd_value: 1 }]);
+        }),
+    );
+    const scene = balance24hModule.scene24hBalanceStore;
+    const first = scene.refresh24hAssets({ addresses: ['0xa'], force: true });
+    const same = scene.refresh24hAssets({
+      addresses: ['0xA'],
+      reason: 'selection_changed',
+    });
+    const changed = scene.refresh24hAssets({
+      addresses: ['0xb'],
+      reason: 'balance_changed',
+    });
+    finish();
+    await Promise.all([first, same, changed]);
+    expect(mockGet24hTotalBalanceBatch.mock.calls).toEqual([
+      [['0xa']],
+      [['0xb']],
+    ]);
+    expect(scene.getState().addresses.Home).toEqual(['0xb']);
+  });
+
+  it('fetches only stale addresses and preserves a failed address while applying a zero balance', async () => {
+    const errorSpy = jest.spyOn(console, 'error').mockImplementation();
+    mockGetBalance24hCache.mockImplementation((address: string) => ({
+      data: { total_usd_value: 20 },
+      updateTime: 123,
+      isExpired: address !== '0xa',
+    }));
+    mockGet24hTotalBalanceBatch.mockResolvedValue([
+      { id: '0xC', error_code: 0, total_usd_value: 0 },
+      { id: '0xB', error_code: 1 },
+    ]);
+    try {
+      await balance24hModule.scene24hBalanceStore.refreshCombinedDataForScene(
+        'Home',
+        {
+          addresses: ['0xA', '0xB', '0xC'],
+        },
+      );
+      await flushResourceFlowPersist();
+      expect(mockGet24hTotalBalanceBatch).toHaveBeenCalledWith(['0xb', '0xc']);
+      expect(
+        balance24hModule.balance24hStore.getAddress24hBalance('0xb'),
+      ).toEqual({ total_usd_value: 20, updateTime: 123 });
+      expect(
+        balance24hModule.balance24hStore.getAddress24hBalance('0xc')
+          ?.total_usd_value,
+      ).toBe(0);
+      expect(mockSetBalance24hCache).toHaveBeenCalledTimes(1);
+      expect(mockSetBalance24hCache).toHaveBeenCalledWith(
+        '0xc',
+        expect.objectContaining({ data: { total_usd_value: 0 } }),
+      );
+      expect(
+        balance24hModule.scene24hBalanceStore.getState().sceneLoading.Home,
+      ).toBe(false);
+    } finally {
+      errorSpy.mockRestore();
+    }
+  });
+
+  it('retains stale values and finishes loading when the batch request fails', async () => {
+    const errorSpy = jest.spyOn(console, 'error').mockImplementation();
+    mockGetBalance24hCache.mockReturnValue({
+      data: { total_usd_value: 20 },
+      updateTime: 123,
+      isExpired: true,
+    });
+    mockGet24hTotalBalanceBatch.mockRejectedValue(new Error('offline'));
+    try {
+      await balance24hModule.scene24hBalanceStore.refreshCombinedDataForScene(
+        'Home',
+        {
+          addresses: ['0xA', '0xB'],
+        },
+      );
+      expect(mockSetBalance24hCache).not.toHaveBeenCalled();
+      expect(
+        balance24hModule.balance24hStore.getAddress24hBalance('0xa'),
+      ).toEqual({ total_usd_value: 20, updateTime: 123 });
+      expect(
+        balance24hModule.scene24hBalanceStore.getState().sceneLoading.Home,
+      ).toBe(false);
+      expect(
+        balance24hModule.balance24hStore.getAddress24hBalanceFlowState('0xa')
+          .isFetchingRemote,
+      ).toBe(false);
+    } finally {
+      errorSpy.mockRestore();
+    }
   });
 
   it('updates in-memory cache before scheduling persistence when fetching fresh data', async () => {
