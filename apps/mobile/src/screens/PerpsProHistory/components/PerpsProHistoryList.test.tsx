@@ -272,7 +272,7 @@ describe('PerpsProHistoryList', () => {
     },
   );
 
-  it('starts the first card at the Pager-owned 12px content gap', () => {
+  it('keeps the initial 12px card inset inside the scrolling content', () => {
     render(
       <PerpsProHistoryList
         amountUnit="base"
@@ -292,13 +292,7 @@ describe('PerpsProHistoryList', () => {
         screen.getByTestId('perps-pro-history-list-trade').props
           .contentContainerStyle,
       ),
-    ).toMatchObject({ paddingBottom: 24 });
-    expect(
-      StyleSheet.flatten(
-        screen.getByTestId('perps-pro-history-list-trade').props
-          .contentContainerStyle,
-      ).paddingTop,
-    ).toBeUndefined();
+    ).toMatchObject({ paddingTop: 12, paddingBottom: 24 });
   });
 
   it('loads earlier automatically at the end and keeps Retry explicit', () => {

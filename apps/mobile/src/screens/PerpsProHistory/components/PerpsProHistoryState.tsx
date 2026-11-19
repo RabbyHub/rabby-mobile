@@ -73,6 +73,7 @@ export const PerpsProHistoryError: React.FC<{
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   skeletonList: {
+    paddingTop: 12,
     flex: 1,
     gap: 8,
   },

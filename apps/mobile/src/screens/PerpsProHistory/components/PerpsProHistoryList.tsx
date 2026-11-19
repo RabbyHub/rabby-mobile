@@ -229,10 +229,12 @@ PerpsProHistoryList.displayName = 'PerpsProHistoryList';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   content: {
+    paddingTop: 12,
     paddingBottom: 24,
   },
   emptyContent: {
     flexGrow: 1,
+    paddingTop: 12,
     paddingBottom: 24,
   },
   footer: {
