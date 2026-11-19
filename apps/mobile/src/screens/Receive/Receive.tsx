@@ -1,7 +1,6 @@
 import { FooterButtonScreenContainer } from '@/components2024/ScreenContainer/FooterButtonScreenContainer';
 import { toast } from '@/components2024/Toast';
 import type { Chain, CHAINS_ENUM } from '@/constant/chains';
-import { ScreenLayouts } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 import { findChainByID } from '@/utils/chain';
 import { navigationRef } from '@/utils/navigation';
@@ -453,7 +452,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
     // is needed.
     eyeButton: {
       width: 44,
-      height: ScreenLayouts.headerAreaHeight,
+      // The native stack bar content is 44pt; using the 56pt custom-header
+      // height here made the whole title row overflow and sit ~6pt lower than
+      // the back control (QA 1423, iOS 26).
+      height: 44,
       // Left-align the glyph so it hugs the text; vertically centre it in the row.
       alignItems: 'flex-start',
       justifyContent: 'center',
