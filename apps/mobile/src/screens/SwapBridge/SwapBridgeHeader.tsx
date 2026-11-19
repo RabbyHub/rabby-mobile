@@ -129,12 +129,21 @@ export function SwapBridgeHeader({
             onTabPress={onTabPress}
           />
         </View>
-        {isScreenFocused && (
+        {/*
+         * Keep the shared account/history cluster mounted AND visible while
+         * another route (e.g. a history detail) is on top. Gating it on
+         * `isScreenFocused` made it appear only after the pop transition
+         * finished, which QA reports as the top-right cluster loading for ~1s
+         * (QA 1432). Only interaction is disabled for the unfocused route.
+         */}
+        <View
+          pointerEvents={isScreenFocused ? 'auto' : 'none'}
+          style={styles.headerRightHost}>
           <SwapBridgeHeaderRight
             activeTab={activeTab}
             isForMultipleAddress={route.name === RootNames.MultiSwapBridge}
           />
-        )}
+        </View>
       </View>
     </View>
   );
@@ -200,6 +209,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     minWidth: 0,
     justifyContent: 'flex-end',
     gap: 8,
+  },
+  // The wrapper replaces the old direct `flex: 1` row child, so it must keep
+  // that slot; otherwise the cluster loses its trailing anchor.
+  headerRightHost: {
+    flex: 1,
+    minWidth: 0,
+    flexDirection: 'row',
   },
   headerAccountSwitcher: {
     flexShrink: 1,
