@@ -340,7 +340,6 @@ export const HomeDappDrawer: React.FC<{
   });
 
   const safeAreaInsets = useSafeAreaInsets();
-
   // The panel reveal only tracks the drag while the drawer is opening. Once it
   // is on its way back it keeps its size and purely translates down, exactly
   // like the first floor does, so both layers leave the screen at the same
@@ -362,6 +361,10 @@ export const HomeDappDrawer: React.FC<{
     },
   );
 
+  // On the Duo outer screen `safeAreaInsets.top` is 0, but the expanded panel
+  // still has to clear the system column/status strip; `safeHeaderTop` carries
+  // the same foldable compensation used by the JS headers (QA 1431).
+  const { safeHeaderTop } = useSafeSizes();
   const panelScaleStyle = useAnimatedStyle(() => {
     return {
       transformOrigin: 'top',
@@ -370,7 +373,7 @@ export const HomeDappDrawer: React.FC<{
           scale: 0.75 + 0.25 * panelReveal.value,
         },
       ],
-      paddingTop: safeAreaInsets.top * panelReveal.value,
+      paddingTop: safeHeaderTop * panelReveal.value,
     };
   });
 

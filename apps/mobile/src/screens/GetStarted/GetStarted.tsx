@@ -20,6 +20,8 @@ import {
 } from '@/constant/layout';
 import { keyringServiceApi } from '@/core/serviceApi/keyring';
 import { useTheme2024 } from '@/hooks/theme';
+import { useSystemColumnInset } from '@/components/SafeWindowFrame/backdrop';
+import { useCustomHeaderTop } from '@/hooks/useAppLayout';
 import { navigateDeprecated } from '@/utils/navigation';
 import { Button } from '@/components2024/Button';
 import { useMemoizedFn } from 'ahooks';
@@ -92,7 +94,11 @@ const HeroIllustration = ({ isLight }: { isLight: boolean }) => {
         disabled={!isNonPublicProductionEnv}>
         <Lottie
           source={isLight ? StartScreenAnimation : StartScreenAnimationDark}
-          style={[styles.heroBackground, { height: heroHeight }]}
+          // Fill whatever height the flex layout can give the hero. On short
+          // windows (Duo outer screen) the container shrinks below the natural
+          // aspect height; a fixed-height Lottie was clipped from the top and
+          // its coins overlapped the Rabby Wallet header.
+          style={[styles.heroBackground, { height: '100%' }]}
           loop={false}
           autoPlay
           onAnimationFinish={() => {
@@ -106,6 +112,8 @@ const HeroIllustration = ({ isLight }: { isLight: boolean }) => {
 
 function NewUserGetStartedScreen() {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
+  const columnInset = useSystemColumnInset();
+  const headerTop = useCustomHeaderTop();
   const { t } = useTranslation();
   const navigation = useRabbyAppNavigation();
 
@@ -218,9 +226,23 @@ function NewUserGetStartedScreen() {
   }));
 
   return (
-    <View style={styles.screen}>
+    <View
+      style={[
+        styles.screen,
+        // The onboarding page has no shared screen container; inset it so the
+        // bottom actions stay inside the Duo content area.
+        { paddingLeft: columnInset.left, paddingRight: columnInset.right },
+      ]}>
       {/* Header with logo - positioned right next to status bar, horizontally centered */}
-      <View style={[styles.logoWrapper, { top: top + 6 }]}>
+      <View
+        style={[
+          styles.logoWrapper,
+          {
+            top: headerTop + 6,
+            left: columnInset.left,
+            right: columnInset.right,
+          },
+        ]}>
         <Animated.Image
           source={isLight ? logoLight : logoDark}
           style={[styles.logoImage, logoAnimatedStyle]}
