@@ -326,6 +326,28 @@ describe('store/balance', () => {
     }
   });
 
+  it.each(['SingleAddressHome', 'AddressCard', 'Database', 'Unknown'])(
+    'starts EVM before AppChain finishes for %s',
+    async scene => {
+      mockKeyringServiceGetAllAddresses.mockResolvedValue([]);
+      mockGetAppChainTotalUsdValue.mockReturnValue(0);
+      mockOpenapiGetTotalBalanceV2.mockResolvedValue({
+        total_usd_value: 75,
+        chain_list: [],
+      });
+      mockGetAppChains.mockImplementationOnce(async () => {
+        await flushResourceFlowPersist();
+        expect(mockOpenapiGetTotalBalanceV2).toHaveBeenCalledTimes(1);
+        expect(mockSyncBalance).not.toHaveBeenCalled();
+        mockGetAppChainTotalUsdValue.mockReturnValue(25);
+      });
+
+      const store = balanceModule.default;
+      await store.getTotalBalance('0xABCD', true, { scene });
+      expect(store.getAddressValue('0xabcd')?.totalBalance).toBe(100);
+    },
+  );
+
   it('updates memory before scheduling sqlite persistence on remote refresh', async () => {
     mockKeyringServiceGetAllAddresses.mockResolvedValue([
       {
