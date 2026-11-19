@@ -13,6 +13,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import type { PerpsProTwapOrderCommand } from '../../actions/twapOrder';
 import { formatPerpsProDecimal } from '../../utils/format';
+import { formatDurationMinutes } from '@/utils/formatDurationMinutes';
 import { PerpsProCheckboxIcon } from '../common/PerpsProCheckboxIcon';
 import { PerpsProDialogBackdrop } from '../common/PerpsProDialogBackdrop';
 import { usePerpsProSheetNavigationRegistration } from '../common/perpsProSheetNavigationRegistry';
@@ -70,9 +71,7 @@ export const PerpsProTwapOrderConfirmationSheet = React.memo(
       ],
       [
         t('page.perps.pro.twap.totalTime'),
-        t('page.perps.pro.twap.confirmationDuration', {
-          t: command.durationMinutes,
-        }),
+        formatDurationMinutes(command.durationMinutes, t),
       ],
       [
         t('page.perps.pro.trade.markPrice'),

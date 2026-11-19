@@ -3,7 +3,6 @@ import React, { useMemo, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { useShallow } from 'zustand/react/shallow';
 import { useTranslation } from 'react-i18next';
-import dayjs from 'dayjs';
 import { Text } from '@/components/Typography';
 import RcRight from '@/assets2024/icons/common/right-cc.svg';
 import { useTheme2024 } from '@/hooks/theme';
@@ -13,7 +12,7 @@ import type { PerpsTwapRecord } from '@/hooks/perps/twap/types';
 import { getPerpsTwapSummary } from '@/hooks/perps/twap/twapReconciliation';
 import type { PerpsProTradeAmountUnit } from '../../model/trade';
 import { buildPerpsProMarketDescriptor } from '../../model/market';
-import { formatPerpsProDecimal } from '../../utils/format';
+import { formatPerpsProDecimal, formatPerpsProTime } from '../../utils/format';
 import {
   getPerpsProMetadataTagContainerStyle,
   getPerpsProMetadataTagTextStyle,
@@ -287,10 +286,8 @@ export const PerpsProTwapCard = React.memo(
               {t('page.perps.pro.twap.randomized')}
             </Text>
           ) : null}
-          <Text style={styles.time}>
-            {dayjs(order.endedAt ?? order.state.timestamp).format(
-              history ? 'YYYY-MM-DD HH:mm:ss' : 'YYYY/MM/DD HH:mm:ss',
-            )}
+          <Text numberOfLines={1} style={styles.time}>
+            {formatPerpsProTime(order.endedAt ?? order.state.timestamp)}
             {order.endedAt !== null &&
             (!historyRow || summary.status === 'filled')
               ? ` ${t('page.perps.pro.twap.endedLabel')}`
@@ -445,7 +442,13 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   progressGroup: { alignItems: 'center', gap: 4 },
   rightText: { textAlign: 'right' },
-  tags: { flexDirection: 'row', gap: 4, marginTop: 4, flexWrap: 'wrap' },
+  tags: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 4,
+    marginTop: 4,
+    flexWrap: 'wrap',
+  },
   tag: {
     ...getPerpsProMetadataTagContainerStyle(colors2024),
     ...getPerpsProMetadataTagTextStyle(colors2024),
