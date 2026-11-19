@@ -36,7 +36,7 @@ export async function importAddress(index: number) {
   keyring.setAccountToUnlock(index);
   const res = (
     (await keyringServiceApi.addNewAccount(keyring as any))[0] as any
-  ).address;
+  )?.address;
 
   await preferenceServiceApi.initCurrentAccount();
 

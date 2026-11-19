@@ -925,16 +925,33 @@ export class KeyringService extends RNEventEmitter {
       return Promise.reject(error);
     }
 
+    // Hardware keyrings (OneKey/Trezor/Ledger/Keystone, ...) keep every imported
+    // account in one instance, possibly across devices. Only the accounts added
+    // by this call are returned / announced, never the keyring's full list.
+    const toAddressKey = (account: string | AccountItemWithBrandQueryResult) =>
+      normalizeAddress(
+        typeof account === 'string' ? account : account.address,
+      ).toLowerCase();
+
+    let existingAddressKeys = new Set<string>();
     let _accounts: string[] | AccountItemWithBrandQueryResult[] = [];
 
-    return selectedKeyring
-      .addAccounts(1)
+    return Promise.resolve(selectedKeyring.getAccounts())
+      .then(accountsBefore => {
+        existingAddressKeys = new Set((accountsBefore || []).map(toAddressKey));
+        return selectedKeyring.addAccounts(1);
+      })
       .then((): Promise<AccountItemWithBrandQueryResult[] | string[]> => {
         const func = (selectedKeyring as KeyringIntf).getAccountsWithBrand;
         if (func) return func.call(selectedKeyring);
         return selectedKeyring.getAccounts();
       })
-      .then(accounts => {
+      .then(keyringAccounts => {
+        const accounts = (
+          keyringAccounts as (string | AccountItemWithBrandQueryResult)[]
+        ).filter(
+          account => !existingAddressKeys.has(toAddressKey(account)),
+        ) as string[] | AccountItemWithBrandQueryResult[];
         const allAccounts = accounts.map(account => ({
           address: normalizeAddress(
             typeof account === 'string' ? account : account.address,

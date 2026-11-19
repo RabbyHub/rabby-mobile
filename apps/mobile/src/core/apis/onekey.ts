@@ -133,12 +133,12 @@ export async function importFirstAddress({
   retryCount = 1,
 }: {
   retryCount?: number;
-}): Promise<string | false> {
-  let address;
+}): Promise<string[] | false> {
+  let address: string[] | undefined;
 
   const task = async () => {
     try {
-      address = await importAddress(0);
+      address = (await importAddress(0)) as string[];
     } catch (e: any) {
       // only catch not `duplicate import` error
       if (!e.message?.includes('import is invalid')) {
@@ -159,7 +159,7 @@ export async function importFirstAddress({
     }
   }
 
-  return address;
+  return address?.length ? address : false;
 }
 
 export async function getCurrentAccounts() {

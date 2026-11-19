@@ -133,7 +133,7 @@ export function ImportHardwareAddressScreen(): JSX.Element {
         ? trezorImportedAddress?.some(e => isSameAddress(e, address?.[0] || ''))
         : false;
 
-    if (address && !isImportedAddress) {
+    if (address?.length && !isImportedAddress) {
       navigate(RootNames.StackAddress, {
         screen: RootNames.ImportSuccess2024,
         params: {

@@ -153,4 +153,28 @@ describe('core/apis/onekey', () => {
     expect(mockAddNewAccount).toHaveBeenCalledWith(mockKeyring);
     expect(mockInitCurrentAccount).toHaveBeenCalled();
   });
+
+  it('importFirstAddress returns only the newly added address', async () => {
+    const { importFirstAddress, mockAddNewAccount } = setupApiOneKeyModule();
+    const newAddress = '0x3333333333333333333333333333333333333333';
+    mockAddNewAccount.mockResolvedValueOnce([newAddress]);
+
+    await expect(importFirstAddress({})).resolves.toEqual([newAddress]);
+  });
+
+  it('importFirstAddress returns false when nothing new was added', async () => {
+    const { importFirstAddress, mockAddNewAccount } = setupApiOneKeyModule();
+    mockAddNewAccount.mockResolvedValueOnce([]);
+
+    await expect(importFirstAddress({})).resolves.toBe(false);
+  });
+
+  it('importFirstAddress returns false on a duplicate import', async () => {
+    const { importFirstAddress, mockAddNewAccount } = setupApiOneKeyModule();
+    mockAddNewAccount.mockRejectedValueOnce(
+      new Error("The address you're trying to import is invalid"),
+    );
+
+    await expect(importFirstAddress({})).resolves.toBe(false);
+  });
 });
