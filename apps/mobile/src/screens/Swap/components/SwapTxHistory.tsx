@@ -112,11 +112,18 @@ const ItemSeparator = () => {
 const HistoryList = ({
   onGotoDetail,
   recentShowTime,
+  txList,
+  loading,
+  loadMore,
+  noMore,
 }: {
   onGotoDetail: (txId: string, chain: string) => void;
   recentShowTime: number;
+  txList: ReturnType<typeof useSwapHistory>['txList'];
+  loading: ReturnType<typeof useSwapHistory>['loading'];
+  loadMore: ReturnType<typeof useSwapHistory>['loadMore'];
+  noMore: ReturnType<typeof useSwapHistory>['noMore'];
 }) => {
-  const { txList, loading, loadMore, noMore } = useSwapHistory();
   const { t } = useTranslation();
   const { styles, isLight } = useTheme2024({ getStyle });
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
@@ -255,6 +262,10 @@ export const SwapTxHistory = ({
   const bottomRef = useRef<BottomSheetModalMethods>(null);
   const snapPoints = useMemo(() => [ModalLayouts.defaultHeightPercentText], []);
   const { visible, setVisible } = useSwapTxHistoryVisible();
+  // Keep the history data in this always-mounted wrapper: the bottom sheet
+  // unmounts `HistoryList` on dismiss, so owning the query there re-fetched the
+  // whole list on every open (QA 1432). The sheet now renders from this cache.
+  const { txList, loading, loadMore, noMore } = useSwapHistory();
   const { colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
@@ -418,7 +429,14 @@ export const SwapTxHistory = ({
         colors: colors2024,
         linearGradientType: isDarkTheme ? 'bg1' : 'bg0',
       })}>
-      <HistoryList onGotoDetail={goToDetail} recentShowTime={recentShowTime} />
+      <HistoryList
+        onGotoDetail={goToDetail}
+        recentShowTime={recentShowTime}
+        txList={txList}
+        loading={loading}
+        loadMore={loadMore}
+        noMore={noMore}
+      />
     </AppBottomSheetModal>
   );
 };
