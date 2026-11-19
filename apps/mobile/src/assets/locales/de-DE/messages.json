@@ -1424,7 +1424,8 @@
       "onekey": {
         "notFound": {
           "title": "Gerät nicht gefunden",
-          "description": "Schalten Sie Bluetooth ein und entsperren Sie OneKey."
+          "description": "Schalten Sie Bluetooth ein und entsperren Sie OneKey.",
+          "retry": "Erneut suchen"
         },
         "ble": {
           "title": "Verbinden Sie OneKey",
@@ -1447,6 +1448,23 @@
           "title": "PIN eingeben",
           "onDevice": "Geben Sie den PIN-Code auf dem Gerät ein",
           "description": "Geben Sie den PIN-Code entsprechend dem Zahlenlayout auf dem Gerätescreen ein."
+        },
+        "error": {
+          "deviceNotFound": "OneKey nicht gefunden. Stellen Sie sicher, dass das Gerät entsperrt, Bluetooth eingeschaltet und das Gerät in der Nähe Ihres Telefons ist.",
+          "disconnected": "Die Verbindung zu OneKey wurde getrennt. Halten Sie das Gerät entsperrt und in der Nähe Ihres Telefons und versuchen Sie es erneut.",
+          "deviceBusy": "OneKey bearbeitet gerade eine andere Anfrage. Schließen Sie sie auf dem Gerät ab oder brechen Sie sie ab und versuchen Sie es erneut.",
+          "passphraseDisabled": "Die Passphrase ist auf dem Gerät deaktiviert. Aktivieren Sie sie oder importieren Sie diese Wallet erneut.",
+          "firmwareTooOld": "Die Firmware Ihres OneKey ist zu alt. Aktualisieren Sie sie mit der OneKey-App und versuchen Sie es erneut.",
+          "bluetoothOff": "Bluetooth ist ausgeschaltet. Schalten Sie Bluetooth ein und versuchen Sie es erneut.",
+          "bluetoothPermission": "Rabby hat keine Berechtigung, Bluetooth zu verwenden. Erlauben Sie Rabby in den Einstellungen den Zugriff auf Bluetooth (bzw. Standort unter Android 11 und älter) und versuchen Sie es erneut.",
+          "locationServicesDisabled": "Die Ortungsdienste sind deaktiviert. Aktivieren Sie sie, um nach Bluetooth-Geräten zu suchen.",
+          "bluetoothUnsupported": "Bluetooth wird auf diesem Telefon nicht unterstützt.",
+          "scanFailed": "Die Bluetooth-Suche ist fehlgeschlagen. Bitte versuchen Sie es erneut.",
+          "pairingFailed": "Die Bluetooth-Kopplung ist fehlgeschlagen. Bestätigen Sie die Kopplungsanfrage auf Ihrem Telefon und auf OneKey und versuchen Sie es erneut.",
+          "pairingInvalid": "Die Bluetooth-Kopplung ist nicht mehr gültig. Entfernen Sie OneKey in den Bluetooth-Einstellungen Ihres Telefons und koppeln Sie es erneut.",
+          "pinInvalid": "Falsche PIN. Bitte versuchen Sie es erneut.",
+          "cancelled": "Die Anfrage wurde abgebrochen.",
+          "openSettings": "Einstellungen öffnen"
         }
       },
       "keystone": {

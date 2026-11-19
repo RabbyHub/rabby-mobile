@@ -1511,7 +1511,25 @@
         },
         "notFound": {
           "description": "블루투스를 켜고 OneKey 잠금을 해제하세요.",
-          "title": "디바이스를 찾을 수 없습니다."
+          "title": "디바이스를 찾을 수 없습니다.",
+          "retry": "다시 검색"
+        },
+        "error": {
+          "deviceNotFound": "OneKey를 찾을 수 없습니다. 기기의 잠금이 해제되어 있고 Bluetooth가 켜져 있으며 휴대폰 가까이에 있는지 확인하세요.",
+          "disconnected": "OneKey 연결이 끊어졌습니다. 기기의 잠금을 해제한 상태로 휴대폰 가까이에 두고 다시 시도하세요.",
+          "deviceBusy": "OneKey가 다른 요청을 처리하고 있습니다. 기기에서 완료하거나 취소한 후 다시 시도하세요.",
+          "passphraseDisabled": "기기에서 암호 구문이 꺼져 있습니다. 암호 구문을 켜거나 이 지갑을 다시 가져오세요.",
+          "firmwareTooOld": "OneKey 펌웨어가 너무 오래되었습니다. OneKey 앱으로 업데이트한 후 다시 시도하세요.",
+          "bluetoothOff": "Bluetooth가 꺼져 있습니다. Bluetooth를 켠 후 다시 시도하세요.",
+          "bluetoothPermission": "Rabby에 Bluetooth 사용 권한이 없습니다. 설정에서 Rabby의 Bluetooth(Android 11 이하에서는 위치) 권한을 허용한 후 다시 시도하세요.",
+          "locationServicesDisabled": "위치 서비스가 꺼져 있습니다. Bluetooth 기기를 검색하려면 위치 서비스를 켜세요.",
+          "bluetoothUnsupported": "이 휴대폰은 Bluetooth를 지원하지 않습니다.",
+          "scanFailed": "Bluetooth 검색에 실패했습니다. 다시 시도하세요.",
+          "pairingFailed": "Bluetooth 페어링에 실패했습니다. 휴대폰과 OneKey에서 페어링 요청을 수락한 후 다시 시도하세요.",
+          "pairingInvalid": "Bluetooth 페어링 정보가 더 이상 유효하지 않습니다. 휴대폰의 Bluetooth 설정에서 OneKey 등록을 해제한 후 다시 페어링하세요.",
+          "pinInvalid": "PIN이 올바르지 않습니다. 다시 시도하세요.",
+          "cancelled": "요청이 취소되었습니다.",
+          "openSettings": "설정 열기"
         }
       },
       "hd": {
