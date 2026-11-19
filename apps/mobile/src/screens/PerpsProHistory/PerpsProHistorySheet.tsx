@@ -33,7 +33,7 @@ import type { PerpsProHistoryTab } from './types';
 
 const HISTORY_SHEET_MAX_HEIGHT = 748;
 const HISTORY_SHEET_TOP_GAP = 16;
-const HISTORY_TITLE_FONT_STYLE = getPerpsProFontStyle(Platform.OS, '900');
+const HISTORY_TITLE_FONT_STYLE = getPerpsProFontStyle(Platform.OS, '800');
 
 export const getPerpsProHistorySheetHeight = ({
   topInset,
