@@ -2,6 +2,7 @@ import RcBack from '@/assets2024/icons/perps/PerpsHeaderBack.svg';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, View, useWindowDimensions } from 'react-native';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import BigNumber from 'bignumber.js';
 import { useTranslation } from 'react-i18next';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
@@ -42,6 +43,7 @@ export const PerpsProTwapDetailSheet = React.memo(
     const { t } = useTranslation();
     const { colors2024, styles } = useTheme2024({ getStyle });
     const { height } = useWindowDimensions();
+    const insets = useSafeAreaInsets();
     const modal = useRef<AppBottomSheetModal>(null);
     const current = usePerpsTwapRecord(initial.state.user, initial.key);
     const order = current ?? initial;
@@ -82,7 +84,7 @@ export const PerpsProTwapDetailSheet = React.memo(
           ? item.sz
           : new BigNumber(item.sz).times(item.px).toFixed();
         return (
-          <View style={styles.fill}>
+          <View style={[styles.fill, history && styles.historyFill]}>
             <View style={styles.fillHeading}>
               <Text
                 style={[
@@ -151,17 +153,95 @@ export const PerpsProTwapDetailSheet = React.memo(
         styles,
         colors2024,
         t,
+        history,
       ],
     );
     const renderSeparator = useCallback(
-      () => <View style={styles.separator} />,
-      [styles.separator],
+      () => (
+        <View style={history && styles.historyTradesSection}>
+          <View style={styles.separator} />
+        </View>
+      ),
+      [history, styles],
+    );
+    const summary = (
+      <View style={styles.summary}>
+        <PerpsProTwapCard
+          order={order}
+          amountUnit={amountUnit}
+          now={now}
+          variant={history ? 'historyDetail' : 'runningDetail'}
+        />
+      </View>
+    );
+    const tradesTitle = (
+      <Text style={styles.trades}>
+        {t('page.perps.pro.twap.trades')} {fills.length}
+      </Text>
+    );
+    const fillStatus =
+      load === 'loading' || load === 'error' ? (
+        <Pressable
+          disabled={load === 'loading'}
+          onPress={() => setRetry(value => value + 1)}
+          style={styles.footer}>
+          <Text style={styles.footerText}>
+            {t(`page.perps.pro.twap.fills.${load}`)}
+          </Text>
+        </Pressable>
+      ) : null;
+    const tradesList = (
+      <BottomSheetFlatList
+        data={fills}
+        keyExtractor={item => item.key}
+        renderItem={renderFill}
+        ItemSeparatorComponent={renderSeparator}
+        initialNumToRender={8}
+        showsVerticalScrollIndicator={false}
+        windowSize={5}
+        contentContainerStyle={history ? styles.historyList : styles.list}
+        ListHeaderComponent={
+          history ? (
+            <>
+              {summary}
+              <View
+                style={[styles.historyTradesSection, styles.historyTradesTop]}>
+                {tradesTitle}
+              </View>
+            </>
+          ) : null
+        }
+        ListFooterComponent={
+          history ? (
+            <View
+              style={[styles.historyTradesSection, styles.historyTradesBottom]}>
+              {fillStatus}
+            </View>
+          ) : (
+            fillStatus
+          )
+        }
+        ListEmptyComponent={
+          load === 'complete' ? (
+            <View style={history && styles.historyTradesSection}>
+              <Text style={styles.footerText}>
+                {t('page.perps.pro.twap.noTrades')}
+              </Text>
+            </View>
+          ) : null
+        }
+      />
     );
     return (
       <AppBottomSheetModal
         ref={modal}
         onDismiss={onClose}
-        snapPoints={[Math.min(height * 0.85, 760)]}
+        // Use the same top-safe-area + 8pt limit as Pro's position TP/SL list.
+        snapPoints={[
+          history
+            ? Math.max(0, height - insets.top - 8)
+            : Math.min(height * 0.85, 760),
+        ]}
         enableDynamicSizing={false}
         {...makeBottomSheetProps({
           colors: colors2024,
@@ -197,48 +277,17 @@ export const PerpsProTwapDetailSheet = React.memo(
               )}
             </Text>
           </View>
-          <View style={styles.summary}>
-            <PerpsProTwapCard
-              order={order}
-              amountUnit={amountUnit}
-              now={now}
-              variant={history ? 'historyDetail' : 'runningDetail'}
-            />
-          </View>
-          <View style={styles.tradesPanel}>
-            <Text style={styles.trades}>
-              {t('page.perps.pro.twap.trades')} {fills.length}
-            </Text>
-            <BottomSheetFlatList
-              data={fills}
-              keyExtractor={item => item.key}
-              renderItem={renderFill}
-              ItemSeparatorComponent={renderSeparator}
-              initialNumToRender={8}
-              showsVerticalScrollIndicator={false}
-              windowSize={5}
-              contentContainerStyle={styles.list}
-              ListFooterComponent={
-                load === 'loading' || load === 'error' ? (
-                  <Pressable
-                    disabled={load === 'loading'}
-                    onPress={() => setRetry(value => value + 1)}
-                    style={styles.footer}>
-                    <Text style={styles.footerText}>
-                      {t(`page.perps.pro.twap.fills.${load}`)}
-                    </Text>
-                  </Pressable>
-                ) : null
-              }
-              ListEmptyComponent={
-                load === 'complete' ? (
-                  <Text style={styles.footerText}>
-                    {t('page.perps.pro.twap.noTrades')}
-                  </Text>
-                ) : null
-              }
-            />
-          </View>
+          {history ? (
+            tradesList
+          ) : (
+            <>
+              {summary}
+              <View style={styles.tradesPanel}>
+                {tradesTitle}
+                {tradesList}
+              </View>
+            </>
+          )}
         </AutoLockView>
       </AppBottomSheetModal>
     );
@@ -262,6 +311,23 @@ const getStyle = createGetStyles2024(
       marginBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
     },
     list: { paddingBottom: 8 },
+    historyList: {
+      paddingBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
+    },
+    historyTradesSection: {
+      marginHorizontal: 12,
+      backgroundColor: colors2024[isLight ? 'neutral-bg-1' : 'neutral-bg-2'],
+    },
+    historyTradesTop: { borderTopLeftRadius: 12, borderTopRightRadius: 12 },
+    historyTradesBottom: {
+      borderBottomLeftRadius: 12,
+      borderBottomRightRadius: 12,
+      paddingBottom: 8,
+    },
+    historyFill: {
+      paddingHorizontal: 12,
+      backgroundColor: colors2024[isLight ? 'neutral-bg-1' : 'neutral-bg-2'],
+    },
     trades: {
       fontFamily: 'SF Pro Rounded',
       fontSize: 16,
