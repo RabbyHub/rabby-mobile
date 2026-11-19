@@ -168,14 +168,6 @@ export const PerpsProHistoryList: React.FC<{
       ItemSeparatorComponent: PerpsProHistoryRowSeparator,
       keyExtractor: item => item.key,
       ListEmptyComponent: <PerpsProHistoryEmpty />,
-      ListHeaderComponent:
-        tab === 'twap' && state.refreshError ? (
-          <PerpsProHistoryError
-            inline
-            disabled={!active || state.refreshing}
-            onRetry={onRetry}
-          />
-        ) : null,
       ListFooterComponent: state.loadingEarlier ? (
         <View
           style={styles.loadingFooter}

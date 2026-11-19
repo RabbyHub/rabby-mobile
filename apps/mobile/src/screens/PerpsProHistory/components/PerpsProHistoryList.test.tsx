@@ -242,7 +242,7 @@ describe('PerpsProHistoryList', () => {
   });
 
   it.each(['ready', 'empty'] as const)(
-    'offers an inline TWAP retry alongside a cached %s snapshot',
+    'keeps a cached TWAP %s snapshot free of refresh-error UI',
     status => {
       const onRetry = jest.fn();
       render(
@@ -266,10 +266,9 @@ describe('PerpsProHistoryList', () => {
           screen.getByText('page.perps.pro.history.noHistory'),
         ).toBeTruthy();
       expect(
-        screen.getByText('page.perps.pro.history.refreshFailed'),
-      ).toBeTruthy();
-      fireEvent.press(screen.getByText('page.perps.pro.common.retry'));
-      expect(onRetry).toHaveBeenCalledTimes(1);
+        screen.queryByText('page.perps.pro.history.refreshFailed'),
+      ).toBeNull();
+      expect(screen.queryByText('page.perps.pro.common.retry')).toBeNull();
     },
   );
 

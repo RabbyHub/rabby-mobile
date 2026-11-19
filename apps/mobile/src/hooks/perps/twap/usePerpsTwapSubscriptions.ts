@@ -64,16 +64,25 @@ const acquire = (user: string, generation: number) => {
       if (!record) throw new Error('Invalid TWAP history event');
       return record;
     });
-    if (!snapshot && !history.length) return;
+    if (!snapshot && !history.length) return false;
+    // An activation delta has no completed history to display. It cannot
+    // recover a failed initial snapshot or supersede that request's error.
+    const recoversHistory =
+      snapshot || history.some(record => record.endedAt !== null);
     updatePerpsTwapAccount(user, current => {
       const records = mergePerpsTwapHistory(current.records, history);
       const next =
         records === current.records ? current : { ...current, records };
       // A delta can contribute rows, but only a snapshot establishes an empty history.
-      return snapshot || current.sources.history.ready
-        ? withPerpsTwapSourceState(next, 'history', true)
+      return recoversHistory
+        ? withPerpsTwapSourceState(
+            next,
+            'history',
+            snapshot || current.sources.history.ready,
+          )
         : next;
     });
+    return recoversHistory;
   };
   const acceptFills = (items: unknown, snapshot: boolean) => {
     if (!Array.isArray(items)) throw new Error('Invalid TWAP fills response');
@@ -104,7 +113,8 @@ const acquire = (user: string, generation: number) => {
       }
     })()
       .catch(error => {
-        // A newer valid snapshot can satisfy this source while HTTP is in flight.
+        // Newer valid WS data supersedes an older HTTP failure. A history delta
+        // can recover visible rows without establishing a complete snapshot.
         if (wsRevision[source] === startedRevision)
           report(source, 'REST', error);
       })
@@ -164,8 +174,8 @@ const acquire = (user: string, generation: number) => {
     history: () =>
       sdk.ws.subscribeToUserTwapHistory(
         onPayload('history', payload => {
-          acceptHistory(payload.history, payload.isSnapshot === true);
-          if (payload.isSnapshot) wsRevision.history++;
+          if (acceptHistory(payload.history, payload.isSnapshot === true))
+            wsRevision.history++;
         }),
         user,
       ),

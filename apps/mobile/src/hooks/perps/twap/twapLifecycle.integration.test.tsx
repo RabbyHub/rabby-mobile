@@ -252,6 +252,58 @@ test('merges the full REST backfill after a smaller WS snapshot', async () => {
   ]);
 });
 
+test('a valid history delta recovers rows without claiming a full snapshot or accepting an older HTTP error', async () => {
+  let rejectHistory!: (error: Error) => void;
+  jest.mocked(InfoClient.prototype.getUserTwapHistory).mockImplementationOnce(
+    () =>
+      new Promise((_resolve, reject) => {
+        rejectHistory = reject;
+      }),
+  );
+  renderHook(() => usePerpsTwapSubscriptions(userA, true, 1));
+  const account = () => getPerpsTwapAccount(userA);
+  act(() => listener('history').emit({ user: userA, history: [{}] }));
+  expect(account().sources.history.error).toBeTruthy();
+  act(() => listener('history').emit({ user: userA, history: [] }));
+  expect(account().sources.history.error).toBeTruthy();
+  act(() =>
+    listener('history').emit({ user: userA, history: [terminalEvent(7)] }),
+  );
+  await act(async () => rejectHistory(new Error('late history error')));
+  expect(account().sources.history).toEqual({ ready: false, error: null });
+  expect(account().records['ETH:7']).toBeDefined();
+  await act(async () => {
+    await refreshPerpsTwaps(userA, 'history');
+  });
+  expect(account().sources.history).toEqual({ ready: true, error: null });
+  expect(account().records['ETH:7']).toBeDefined();
+});
+
+test.each(['activated', 'waitingForTrigger'])(
+  'an %s delta cannot hide a failed initial history snapshot',
+  async status => {
+    let rejectHistory!: (error: Error) => void;
+    jest.mocked(InfoClient.prototype.getUserTwapHistory).mockImplementationOnce(
+      () =>
+        new Promise((_resolve, reject) => {
+          rejectHistory = reject;
+        }),
+    );
+    renderHook(() => usePerpsTwapSubscriptions(userA, true, 1));
+    act(() =>
+      listener('history').emit({
+        user: userA,
+        history: [{ ...terminalEvent(7), status: { status } }],
+      }),
+    );
+    await act(async () => rejectHistory(new Error('history offline')));
+    expect(getPerpsTwapAccount(userA).sources.history).toEqual({
+      ready: false,
+      error: expect.stringContaining('history offline'),
+    });
+  },
+);
+
 test('keeps overlapping millisecond boundaries and proves terminal completeness from executed size', async () => {
   const order = parsePerpsTwapHistory(
     {
