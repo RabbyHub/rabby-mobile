@@ -67,6 +67,7 @@ import { switchSceneCurrentAccount } from './accountsSwitcher';
 import {
   setCurrentKeychainVersion,
   setSensitiveSceneProtectionEnabled,
+  storeApiExpSettingData,
   type CurrentKeychainVersion,
 } from './appSettings';
 import { IS_IOS } from '@/core/native/utils';
@@ -118,7 +119,6 @@ type OnParseUrlAndProcessAction = (payload: {
     | 'debug-capture-requests'
     | 'debug-disconnect-dapp'
     | 'debug-set-current-account'
-    | 'debug-dapp-eval'
     | 'debug-browser-tabs'
     | 'debug-biometrics'
     | 'debug-set-clipboard'
@@ -195,10 +195,6 @@ type OnParseUrlAndProcessAction = (payload: {
   /** Non-production only: switch the app's current account by address. */
   debugSetCurrentAccount?: {
     address?: string;
-  };
-  /** Non-production only: inject JavaScript into the active dapp webview. */
-  debugDappEval?: {
-    code?: string;
   };
   /** Non-production only: list/activate/close dapp browser tabs. */
   debugBrowserTabs?: {
@@ -471,6 +467,34 @@ function parseDebugDbSyncPolicyParams(params: URLSearchParams) {
   };
 }
 
+/**
+ * Maintenance commands that mutate app state, approvals or biometric settings.
+ * They require the persisted Screen E2E session (armed locally from Testkits →
+ * Dev switches), never just a debug deep link.
+ */
+const SESSION_GATED_MAINTENANCE_COMMANDS = new Set([
+  'debug-set-current-account',
+  'debug-browser-tabs',
+  'debug-biometrics',
+  'debug-inject-approval',
+  'debug-set-clipboard',
+  'debug-import-private-key',
+  'debug-create-address',
+  'debug-disconnect-dapp',
+  'debug-capture-requests',
+  'debug-open-modal',
+]);
+
+/** Sensitive mutations that additionally require an unlocked wallet. */
+const UNLOCKED_REQUIRED_MAINTENANCE_TYPES = new Set([
+  'debug-set-current-account',
+  'debug-browser-tabs',
+  'debug-biometrics',
+  'debug-inject-approval',
+  'debug-set-clipboard',
+  'debug-disconnect-dapp',
+]);
+
 function parseNonProductionMaintenanceLink(appLink: string) {
   if (!isNonPublicProductionEnv) {
     return null;
@@ -483,6 +507,21 @@ function parseNonProductionMaintenanceLink(appLink: string) {
 
   const target = getRabbyGoTarget(urlInfo);
   const rabbyGoCmd = urlInfo.searchParams.get('_cmd');
+
+  // A debug link alone must never grant state / approval / biometric mutation
+  // authority. These commands only run while the persisted Screen E2E session
+  // is explicitly armed from Testkits → Dev switches on this device.
+  const maintenanceCommand = rabbyGoCmd || target || '';
+  if (
+    SESSION_GATED_MAINTENANCE_COMMANDS.has(maintenanceCommand) &&
+    !storeApiExpSettingData.getScreenE2EEnabled()
+  ) {
+    console.warn(
+      '[useUniversalLinkOnTop] maintenance command rejected: Screen E2E session is not armed:',
+      maintenanceCommand,
+    );
+    return null;
+  }
 
   if (
     rabbyGoCmd === 'clear-app-cache' ||
@@ -737,17 +776,6 @@ function parseNonProductionMaintenanceLink(appLink: string) {
     } satisfies Parameters<OnParseUrlAndProcessAction>[0];
   }
 
-  // Non-production only: run JS in the active dapp webview.
-  // `?_cmd=debug-dapp-eval&code=<urlencoded js>`
-  if (rabbyGoCmd === 'debug-dapp-eval' || target === 'debug-dapp-eval') {
-    return {
-      type: 'debug-dapp-eval',
-      debugDappEval: {
-        code: urlInfo.searchParams.get('code') || undefined,
-      },
-    } satisfies Parameters<OnParseUrlAndProcessAction>[0];
-  }
-
   // Non-production only: switch the app's current account by exact address or
   // by prefix/suffix match. `?_cmd=debug-set-current-account&address=0x5952..3ee7`
   if (
@@ -885,6 +913,20 @@ function parseNonProductionMaintenanceLink(appLink: string) {
     if (!rawScreen && !wantsList) {
       console.warn(
         '[useUniversalLinkOnTop] debug-open-screen requires ?screen=<id> (or ?list=1)',
+      );
+      return null;
+    }
+
+    // Plain navigation stays available, but injecting a store snapshot from a
+    // debug link must be armed locally (Screen E2E), same as the other state
+    // mutations above.
+    const injectsStore =
+      urlInfo.searchParams.has('store') ||
+      urlInfo.searchParams.has('storePin') ||
+      urlInfo.searchParams.has('storePinClear');
+    if (injectsStore && !storeApiExpSettingData.getScreenE2EEnabled()) {
+      console.warn(
+        '[useUniversalLinkOnTop] debug-open-screen store injection rejected: Screen E2E session is not armed',
       );
       return null;
     }
@@ -1229,6 +1271,18 @@ async function openRabbyGoTarget(target: RabbyGoTarget) {
 }
 
 const handleActions: OnParseUrlAndProcessAction = payload => {
+  if (
+    UNLOCKED_REQUIRED_MAINTENANCE_TYPES.has(payload.type) &&
+    !isKeyringUnlockedSnapshot() &&
+    !isUnlockSessionValid()
+  ) {
+    console.warn(
+      '[useUniversalLinkOnTop] maintenance command rejected while the wallet is locked:',
+      payload.type,
+    );
+    return;
+  }
+
   switch (payload.type) {
     case 'open-target': {
       const target = payload.target || 'home';
@@ -1991,26 +2045,6 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
           );
         } catch (error) {
           console.warn('[debug-browser-tabs] failed', error);
-        }
-      })();
-      break;
-    case 'debug-dapp-eval':
-      if (!isNonPublicProductionEnv) {
-        return;
-      }
-      void (async () => {
-        try {
-          const { emitBrowserEval } = await import(
-            '@/devtools/screenRegistry/browserEval'
-          );
-          const code = payload.debugDappEval?.code;
-          if (!code) {
-            throw new Error('missing code');
-          }
-          emitBrowserEval(code);
-          console.log('[debug-dapp-eval] dispatched');
-        } catch (error) {
-          console.warn('[debug-dapp-eval] failed', error);
         }
       })();
       break;
