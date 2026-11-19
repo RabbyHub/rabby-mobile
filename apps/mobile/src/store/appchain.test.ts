@@ -1,8 +1,7 @@
 import type { AppChainItem } from '@rabby-wallet/rabby-api/dist/types';
 
 describe('store/appchain batch refresh', () => {
-  const mockBatch = jest.fn();
-  const mockSingle = jest.fn();
+  const mockGetAppChainList = jest.fn();
   const mockIsExpired = jest.fn();
   const mockQueryByOwner = jest.fn();
   const mockPersist = jest.fn();
@@ -21,16 +20,13 @@ describe('store/appchain batch refresh', () => {
   beforeEach(() => {
     jest.resetModules();
     jest.clearAllMocks();
-    mockBatch.mockReset();
-    mockBatch.mockImplementation(async (addresses: string[]) =>
-      addresses.map(id => ({ id, error_code: 0, apps: [app], error_apps: [] })),
-    );
+    mockGetAppChainList.mockReset().mockResolvedValue({ apps: [app] });
     mockIsExpired.mockReset();
     mockIsExpired.mockResolvedValue(true);
     mockQueryByOwner.mockResolvedValue([app]);
     mockPersist.mockResolvedValue(undefined);
     jest.doMock('@/core/request', () => ({
-      openapi: { getAppChainListBatch: mockBatch, getAppChainList: mockSingle },
+      openapi: { getAppChainList: mockGetAppChainList },
     }));
     jest.doMock('@/core/utils/reexports', () => ({
       zCreate: require('zustand').create,
@@ -67,37 +63,22 @@ describe('store/appchain batch refresh', () => {
     store = require('./appchain').useAppChainStore;
   });
 
-  it.each([10, 12])(
-    'batches %i missing addresses with the API limit and keeps per-address persistence',
-    async count => {
-      const addresses = Array.from(
-        { length: count },
-        (_, i) => `0xaddr${i.toString().padStart(2, '0')}`,
-      );
-      await store
-        .getState()
-        .batchGetAppChains([...addresses, addresses[0].toUpperCase()]);
+  it('requests and persists each distinct address separately', async () => {
+    await store.getState().batchGetAppChains(['0xA', '0xB', '0xa']);
 
-      expect(mockBatch.mock.calls.map(([ids]) => ids)).toEqual(
-        count === 10
-          ? [addresses]
-          : [addresses.slice(0, 10), addresses.slice(10)],
-      );
-      expect(mockSingle).not.toHaveBeenCalled();
-      expect(mockPersist).toHaveBeenCalledTimes(count);
-      expect(Object.keys(store.getState().appChainMap)).toHaveLength(count);
-      expect(
-        Object.values(store.getState().isLoadingByAddress).every(
-          value => !value,
-        ),
-      ).toBe(true);
-    },
-  );
+    expect(mockGetAppChainList.mock.calls).toEqual([['0xa'], ['0xb']]);
+    expect(mockPersist).toHaveBeenCalledTimes(2);
+    expect(Object.keys(store.getState().appChainMap)).toHaveLength(2);
+    expect(store.getState().isLoadingByAddress).toEqual({
+      '0xa': false,
+      '0xb': false,
+    });
+  });
 
   it('does not request or rewrite fresh caches', async () => {
     mockIsExpired.mockResolvedValue(false);
     await store.getState().batchGetAppChains(['0xA', '0xB']);
-    expect(mockBatch).not.toHaveBeenCalled();
+    expect(mockGetAppChainList).not.toHaveBeenCalled();
     expect(mockPersist).not.toHaveBeenCalled();
     expect(store.getState().appChainMap['0xa']).toEqual([
       { ...app, netWorth: 0 },
@@ -108,7 +89,7 @@ describe('store/appchain batch refresh', () => {
     mockIsExpired.mockResolvedValue(false);
     await store.getState().batchGetAppChains(['0xA', '0xB'], true);
     expect(mockIsExpired).not.toHaveBeenCalled();
-    expect(mockBatch).toHaveBeenCalledWith(['0xa', '0xb']);
+    expect(mockGetAppChainList.mock.calls).toEqual([['0xa'], ['0xb']]);
     expect(mockPersist).toHaveBeenCalledTimes(2);
   });
 
@@ -118,13 +99,12 @@ describe('store/appchain batch refresh', () => {
     mockIsExpired.mockImplementation(
       async (address: string) => address !== '0xa',
     );
-    mockBatch.mockResolvedValue([
-      { id: '0xC', error_code: 0, apps: [], error_apps: [] },
-      { id: '0xB', error_code: 1 },
-    ]);
+    mockGetAppChainList
+      .mockRejectedValueOnce(new Error('offline'))
+      .mockResolvedValueOnce({ apps: [] });
     await store.getState().batchGetAppChains(['0xA', '0xB', '0xC']);
 
-    expect(mockBatch).toHaveBeenCalledWith(['0xb', '0xc']);
+    expect(mockGetAppChainList.mock.calls).toEqual([['0xb'], ['0xc']]);
     expect(store.getState().appChainMap['0xb']).toBe(oldValue);
     expect(store.getState().appChainMap['0xc']).toEqual([]);
     expect(mockPersist).toHaveBeenCalledTimes(1);
@@ -141,21 +121,14 @@ describe('store/appchain batch refresh', () => {
     });
   });
 
-  it.each(['request failure', 'missing result'])(
-    'preserves old data and clears loading on %s',
-    async failure => {
-      const oldValue = [{ ...app, netWorth: 99 }];
-      store.setState({ appChainMap: { '0xa': oldValue } });
-      if (failure === 'request failure') {
-        mockBatch.mockRejectedValue(new Error('offline'));
-      } else {
-        mockBatch.mockResolvedValue([]);
-      }
-      await store.getState().batchGetAppChains(['0xA']);
-      expect(store.getState().appChainMap['0xa']).toBe(oldValue);
-      expect(store.getState().isLoadingByAddress['0xa']).toBe(false);
-      expect(mockPersist).not.toHaveBeenCalled();
-      expect(mockRemoteError).toHaveBeenCalledTimes(1);
-    },
-  );
+  it('keeps stale data without writing when the request fails', async () => {
+    const oldValue = [{ ...app, netWorth: 99 }];
+    store.setState({ appChainMap: { '0xa': oldValue } });
+    mockGetAppChainList.mockRejectedValue(new Error('offline'));
+    await store.getState().batchGetAppChains(['0xA']);
+    expect(store.getState().appChainMap['0xa']).toBe(oldValue);
+    expect(store.getState().isLoadingByAddress['0xa']).toBe(false);
+    expect(mockPersist).not.toHaveBeenCalled();
+    expect(mockRemoteError).toHaveBeenCalledTimes(1);
+  });
 });
