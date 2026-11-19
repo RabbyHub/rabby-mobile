@@ -9,7 +9,7 @@ import {
 } from '@testing-library/react-native';
 import { StyleSheet } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { PerpsGestureSlider } from '@/components/perps/PerpsGestureSlider';
+import { GestureSlider } from '@/components/GestureSlider';
 import type { PerpsPositionViewModel } from '../../model/position';
 
 jest.mock('@ledgerhq/react-native-hw-transport-ble', () => ({}));
@@ -199,7 +199,7 @@ describe('margin target and real decimal buffer integration', () => {
     expectAmount('10.10');
     fireEvent.press(screen.getByTestId('perps-pro-manage-margin-max'));
     expectAmount('26.10');
-    const slider = screen.UNSAFE_getByType(PerpsGestureSlider);
+    const slider = screen.UNSAFE_getByType(GestureSlider);
     for (const [value, text] of [
       [12.09, '12.09'],
       [12.1, '12.10'],

@@ -146,8 +146,8 @@ jest.mock('@/utils/styles', () => ({
   createGetStyles2024: (getStyle: unknown) => getStyle,
 }));
 
-jest.mock('@/components/perps/PerpsGestureSlider', () => ({
-  PerpsGestureSlider: (props: object) => {
+jest.mock('@/components/GestureSlider', () => ({
+  GestureSlider: (props: object) => {
     const ReactModule = require('react');
     const { View } = require('react-native');
     return ReactModule.createElement(View, { ...props, testID: 'rne-slider' });

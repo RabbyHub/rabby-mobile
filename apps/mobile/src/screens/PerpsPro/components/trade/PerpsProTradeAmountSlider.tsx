@@ -2,7 +2,7 @@ import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
 // Figma cNPc4bz8P8QBjkPk2huEml / 86719:167816: 12px thumb, 2.35px stroke.
 import RcAmountSliderThumb from '@/assets2024/icons/perps/PerpsProTradeAmountSliderThumb.svg';
 import { Text } from '@/components/Typography';
-import { PerpsGestureSlider as Slider } from '@/components/perps/PerpsGestureSlider';
+import { GestureSlider as Slider } from '@/components/GestureSlider';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { useMemo, useState } from 'react';
