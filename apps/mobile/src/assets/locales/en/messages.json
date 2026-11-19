@@ -2622,8 +2622,8 @@
           "cancelContextChanged": "Account changed. Please try again."
         },
         "scaleOrder": {
-          "lowerPrice": "Lower Price",
-          "upperPrice": "Upper Price",
+          "lowerPrice": "Lower",
+          "upperPrice": "Upper",
           "size": "Size",
           "count": "Order Count (2–100)",
           "distribution": "Amount Distribution",
