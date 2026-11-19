@@ -135,6 +135,20 @@ function SwapBridgeScreenContent({
   // modals must have only one focused host.
   const isScreenFocused = useIsFocused();
   const pagerEnabled = useRootPagerEnabled(isScreenFocused);
+  // Prepare the neighbouring form outside the initial render, without
+  // activating it: the incoming page is already laid out when a drag starts.
+  const [prewarm, setPrewarm] = useState(false);
+  useEffect(() => {
+    if (!pagerEnabled || prewarm) {
+      return;
+    }
+    if (typeof requestIdleCallback !== 'function') {
+      setPrewarm(true);
+      return;
+    }
+    const idle = requestIdleCallback(() => setPrewarm(true));
+    return () => cancelIdleCallback(idle);
+  }, [pagerEnabled, prewarm]);
   const { styles } = useTheme2024({ getStyle });
   const regressionScenario = useRegressionScenario<'SwapBridge'>();
 
@@ -196,9 +210,11 @@ function SwapBridgeScreenContent({
   );
 
   const renderPage = useCallback<RootScenePagerProps['renderPage']>(
-    key => {
+    (key, context) => {
       const tab = key as SwapBridgeTab;
-      if (!mountedScenes[tab]) {
+      // Mount what the track is revealing or prewarming; retention after the
+      // swipe comes from the visited-scene state.
+      if (!mountedScenes[tab] && !context.visible && !prewarm) {
         return null;
       }
       return (
@@ -213,7 +229,7 @@ function SwapBridgeScreenContent({
         />
       );
     },
-    [activeTab, isForMultipleAddress, isScreenFocused, mountedScenes],
+    [activeTab, isForMultipleAddress, isScreenFocused, mountedScenes, prewarm],
   );
 
   return (
