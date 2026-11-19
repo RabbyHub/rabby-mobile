@@ -105,6 +105,8 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
     }
   }, [configurationReady]);
   const { form, market } = controller;
+  const canEditOrder =
+    configurationReady || (form.orderType === 'scale' && !!market);
   const priceSzDecimals = market?.marketData.szDecimals ?? 0;
   const priceInputMaxDecimals =
     getPerpsProPriceInputMaxDecimals(priceSzDecimals);
@@ -198,10 +200,7 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
     );
   return (
     <View
-      accessibilityState={{ disabled: !configurationReady }}
-      pointerEvents={
-        controller.pending || !configurationReady ? 'none' : 'auto'
-      }
+      pointerEvents={controller.pending ? 'none' : 'auto'}
       style={styles.container}
       testID="perps-pro-trade-form">
       <View style={styles.inputGroup}>
@@ -233,10 +232,16 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
           />
         </View>
         <PerpsProTradeSelect
-          disabled={!configurationReady}
+          disabled={!market}
           label={orderTypeLabel}
           onPress={() => openSheet('orderType')}
         />
+      </View>
+      <View
+        style={styles.inputGroup}
+        pointerEvents={canEditOrder ? 'auto' : 'none'}
+        accessibilityState={{ disabled: !canEditOrder }}
+        testID="perps-pro-trade-inputs">
         {form.orderType === 'scale' ? (
           <PerpsProScaleOrderFields
             amountInputRef={amountInputRef}
@@ -386,6 +391,7 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
         ) : null}
       </View>
       <View
+        pointerEvents={canEditOrder ? 'auto' : 'none'}
         style={[
           styles.optionsGroup,
           form.orderType === 'scale' && styles.scaleOptions,
@@ -559,7 +565,7 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
                 </View>
               ) : null}
               <PerpsProTradeButton
-                disabled={controller.pending || !configurationReady}
+                disabled={controller.pending || !canEditOrder}
                 label={
                   form.orderType === 'scale'
                     ? t(
@@ -601,10 +607,10 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
         onClose={() => setSheet(null)}
         onSelect={controller.setOrderType}
         selected={form.orderType}
-        visible={configurationReady && sheet === 'orderType'}
+        visible={!!market && sheet === 'orderType'}
       />
       <PerpsProScaleDistributionSheet
-        visible={configurationReady && sheet === 'distribution'}
+        visible={canEditOrder && sheet === 'distribution'}
         onClose={() => setSheet(null)}
       />
       <PerpsProMarginModeSheet
@@ -624,7 +630,7 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
         onClose={() => setSheet(null)}
         onSelect={controller.setTif}
         selected={form.tif}
-        visible={configurationReady && sheet === 'tif'}
+        visible={canEditOrder && sheet === 'tif'}
       />
       <PerpsProBboSheet
         onClose={() => setSheet(null)}
@@ -654,7 +660,7 @@ export const PerpsProTradeForm = React.memo(PerpsProTradeFormComponent);
 PerpsProTradeForm.displayName = 'PerpsProTradeForm';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
-  container: { gap: 16, minHeight: 416 },
+  container: { gap: 8, minHeight: 416 },
   inputGroup: { gap: 8 },
   // Changing stacking order mid-edit can detach the focused or touched native view.
   amountWithHint: { zIndex: 1 },
@@ -662,7 +668,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   doubleRow: { flexDirection: 'row', gap: 8 },
   flexItem: { flex: 1, minWidth: 0 },
   twapOptions: { gap: 8 },
-  optionsGroup: { gap: 8 },
+  optionsGroup: { gap: 8, marginTop: 8 },
   scaleOptions: { flexDirection: 'column-reverse', gap: 4 },
   convertedAmount: {
     ...PERPS_PRO_NUMBER_STYLE,
@@ -685,7 +691,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontSize: 12,
     lineHeight: 16,
   },
-  orderGroups: { gap: 16 },
+  orderGroups: { gap: 16, marginTop: 8 },
   orderGroup: { gap: 8 },
   orderSummary: { gap: 4 },
 }));

@@ -5,6 +5,7 @@ import type {
 import { createPerpsProTradeFormState } from '../model/trade';
 import {
   buildPerpsProScaleOrderCommand,
+  buildPerpsProScaleOrderPreview,
   executePerpsProScaleOrder,
   reconcilePerpsProScaleOrders,
   type PerpsProScaleContext,
@@ -41,12 +42,12 @@ const context: PerpsProScaleContext = {
 };
 const command = () => {
   let id = 0;
-  return buildPerpsProScaleOrderCommand({
+  const preview = buildPerpsProScaleOrderPreview({
     ...context,
     accountRuntime: context.accountRuntime,
     runtime: context.runtime,
     marketKey: context.marketKey!,
-    capacity: context.capacity!,
+    positionSize: context.capacity!.positionSize,
     form: {
       ...createPerpsProTradeFormState({ orderType: 'scale' }),
       amount: '1',
@@ -55,7 +56,6 @@ const command = () => {
       scaleUpperPrice: '1400',
     },
     side: 'sell',
-    createId: () => (++id).toString(16).padStart(32, '0'),
     reviewFacts: {
       amountUnit: 'base',
       displayBase: 'TEST',
@@ -74,6 +74,12 @@ const command = () => {
       szDecimals: 2,
     },
   });
+  return buildPerpsProScaleOrderCommand(
+    preview,
+    context.accountRuntime,
+    context.runtime,
+    () => (++id).toString(16).padStart(32, '0'),
+  )!;
 };
 const unknown = (batch: ReturnType<typeof command>): MultiOrderOutcome => ({
   kind: 'unknownOutcome',
@@ -153,17 +159,32 @@ describe('Scale command submission', () => {
       ...context,
       capacity: { ...context.capacity!, maxTradeSize: '0' },
     };
-    expect(
-      (
-        await executePerpsProScaleOrder(batch, {
-          getContext: () => live,
-          submit,
-        })
-      ).kind,
-    ).toBe('contextChanged');
+    await expect(
+      executePerpsProScaleOrder(batch, {
+        getContext: () => live,
+        submit,
+      }),
+    ).rejects.toThrow('capacity');
     live = context;
     await executePerpsProScaleOrder(batch, { getContext: () => live, submit });
     expect(submit).toHaveBeenCalledTimes(2);
+  });
+  it('preserves the balance error when funds disappear between signing and dispatch', async () => {
+    const batch = command();
+    let live = context;
+    await expect(
+      executePerpsProScaleOrder(batch, {
+        getContext: () => live,
+        submit: async (_params, options) => {
+          live = {
+            ...context,
+            capacity: { ...context.capacity!, availableQuote: '0' },
+          };
+          expect(await options!.isContextCurrent!()).toBe(false);
+          return { kind: 'contextChanged', phase: 'beforeDispatch' };
+        },
+      }),
+    ).rejects.toThrow('capacity');
   });
   it('bounds reconciliation to four requests using the original address and stops starting reads on scene loss', async () => {
     const batch = command();

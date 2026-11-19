@@ -17,6 +17,8 @@ import { createPerpsScaleCloid } from '@/utils/perpsScaleCloid';
 import type { PerpsProOrderReviewFacts } from '../model/orderReview';
 import {
   buildPerpsProScalePlan,
+  estimatePerpsProScaleCost,
+  PerpsProScaleError,
   validatePerpsProScaleCapacity,
   type PerpsProScaleCapacity,
   type PerpsProScalePlan,
@@ -27,12 +29,11 @@ import type {
   PerpsProTradeTif,
 } from '../model/trade';
 
-export type PerpsProScaleOrderCommand = Readonly<{
+export type PerpsProScaleOrderPreview = Readonly<{
   type: 'scaleOrder';
-  account: Readonly<Pick<Account, 'address' | 'type'>>;
   accountGeneration: number;
   runtimeGeneration: number;
-  runtimeIdentity: string;
+  runtimeIdentity: string | null;
   coin: string;
   dexId: string;
   marketKey: string;
@@ -40,12 +41,18 @@ export type PerpsProScaleOrderCommand = Readonly<{
   reduceOnly: boolean;
   tif: PerpsProTradeTif;
   plan: PerpsProScalePlan;
-  cloids: readonly Cloid[];
-  cost: string;
+  cost: string | null;
   reviewFacts: PerpsProOrderReviewFacts;
 }>;
 
-export const buildPerpsProScaleOrderCommand = ({
+export type PerpsProScaleOrderCommand = PerpsProScaleOrderPreview &
+  Readonly<{
+    account: Readonly<Pick<Account, 'address' | 'type'>>;
+    runtimeIdentity: string;
+    cloids: readonly Cloid[];
+  }>;
+
+export const buildPerpsProScaleOrderPreview = ({
   accountRuntime,
   runtime,
   coin,
@@ -54,8 +61,7 @@ export const buildPerpsProScaleOrderCommand = ({
   form,
   side,
   reviewFacts,
-  capacity,
-  createId = uuid,
+  positionSize,
 }: {
   accountRuntime: PerpsAccountRuntimeContext;
   runtime: PerpsRuntimeSnapshot;
@@ -65,15 +71,10 @@ export const buildPerpsProScaleOrderCommand = ({
   form: PerpsProTradeFormState;
   side: PerpsProTradeSide;
   reviewFacts: PerpsProOrderReviewFacts;
-  capacity: PerpsProScaleCapacity;
-  createId?: () => string;
-}): PerpsProScaleOrderCommand => {
+  positionSize: string | null;
+}): PerpsProScaleOrderPreview => {
   const account = accountRuntime.account;
   if (
-    !account ||
-    !accountRuntime.isInitialized ||
-    runtime.status !== 'ready' ||
-    runtime.identity !== getPerpsRuntimeIdentity(account) ||
     form.orderType !== 'scale' ||
     form.amountUnit !== 'base' ||
     form.attachedTpSl.enabled ||
@@ -89,21 +90,11 @@ export const buildPerpsProScaleOrderCommand = ({
     side,
     szDecimals: reviewFacts.szDecimals,
   });
-  const cost = validatePerpsProScaleCapacity({
-    plan,
-    facts: capacity,
-    reduceOnly: form.reduceOnly,
-    side,
-  });
-  const cloids = plan.orders.map(() => createPerpsScaleCloid(createId()));
-  if (new Set(cloids).size !== cloids.length)
-    throw new Error('Duplicate Scale order identifiers');
   return Object.freeze({
     type: 'scaleOrder',
-    account: Object.freeze({ address: account.address, type: account.type }),
     accountGeneration: accountRuntime.generation,
     runtimeGeneration: runtime.generation,
-    runtimeIdentity: runtime.identity,
+    runtimeIdentity: account ? getPerpsRuntimeIdentity(account) : null,
     coin,
     dexId,
     marketKey,
@@ -111,11 +102,48 @@ export const buildPerpsProScaleOrderCommand = ({
     reduceOnly: form.reduceOnly,
     tif: form.tif,
     plan,
-    cost,
-    cloids: Object.freeze(cloids),
+    cost: estimatePerpsProScaleCost(
+      plan,
+      side,
+      form.reduceOnly,
+      positionSize,
+      reviewFacts.leverage,
+    ),
     reviewFacts: Object.freeze({ ...reviewFacts }),
   });
 };
+
+/** Bind only the displayed plan to the original account, immediately before execution. */
+export function buildPerpsProScaleOrderCommand(
+  preview: PerpsProScaleOrderPreview,
+  accountRuntime: PerpsAccountRuntimeContext,
+  runtime: PerpsRuntimeSnapshot,
+  createId: () => string = uuid,
+): PerpsProScaleOrderCommand | null {
+  const account = accountRuntime.account;
+  if (
+    !account ||
+    !accountRuntime.isInitialized ||
+    runtime.status !== 'ready' ||
+    preview.accountGeneration !== accountRuntime.generation ||
+    preview.runtimeGeneration !== runtime.generation ||
+    preview.runtimeIdentity !== getPerpsRuntimeIdentity(account) ||
+    !runtime.identity ||
+    runtime.identity !== preview.runtimeIdentity
+  )
+    return null;
+  const cloids = preview.plan.orders.map(() =>
+    createPerpsScaleCloid(createId()),
+  );
+  if (new Set(cloids).size !== cloids.length)
+    throw new Error('Duplicate Scale order identifiers');
+  return Object.freeze({
+    ...preview,
+    account: Object.freeze({ address: account.address, type: account.type }),
+    runtimeIdentity: runtime.identity,
+    cloids: Object.freeze(cloids),
+  });
+}
 
 export type PerpsProScaleContext = {
   active: boolean;
@@ -147,7 +175,7 @@ export const isPerpsProScaleContextCurrent = (
   context.formRevision === command.reviewFacts.formRevision;
 
 // A submitted preview is consumed even if its response is lost. No automatic resubmission.
-const consumed = new WeakSet<PerpsProScaleOrderCommand>();
+const consumed = new WeakSet<PerpsProScalePlan>();
 export const executePerpsProScaleOrder = async (
   command: PerpsProScaleOrderCommand,
   dependencies: {
@@ -155,7 +183,8 @@ export const executePerpsProScaleOrder = async (
     submit: ExchangeClient['multiOrderWithOutcome'];
   },
 ): Promise<MultiOrderOutcome> => {
-  if (consumed.has(command)) return { kind: 'contextChanged', phase: 'entry' };
+  if (consumed.has(command.plan))
+    return { kind: 'contextChanged', phase: 'entry' };
   if (
     !Object.isFrozen(command) ||
     !Object.isFrozen(command.plan) ||
@@ -170,7 +199,9 @@ export const executePerpsProScaleOrder = async (
       phase: 'validation',
       error: 'Invalid Scale order snapshot',
     };
+  let capacityError: PerpsProScaleError | undefined;
   const guard = () => {
+    capacityError = undefined;
     const context = dependencies.getContext();
     if (!isPerpsProScaleContextCurrent(command, context) || !context.capacity)
       return false;
@@ -182,12 +213,16 @@ export const executePerpsProScaleOrder = async (
         side: command.side,
       });
       return true;
-    } catch {
+    } catch (error) {
+      if (error instanceof PerpsProScaleError) capacityError = error;
       return false;
     }
   };
-  if (!guard()) return { kind: 'contextChanged', phase: 'entry' };
-  consumed.add(command);
+  if (!guard()) {
+    if (capacityError) throw capacityError;
+    return { kind: 'contextChanged', phase: 'entry' };
+  }
+  consumed.add(command.plan);
   let result: MultiOrderOutcome;
   try {
     result = await dependencies.submit(
@@ -226,7 +261,8 @@ export const executePerpsProScaleOrder = async (
     result.kind === 'userCancelled' ||
     result.kind === 'contextChanged'
   )
-    consumed.delete(command);
+    consumed.delete(command.plan);
+  if (result.kind === 'contextChanged' && capacityError) throw capacityError;
   return result;
 };
 

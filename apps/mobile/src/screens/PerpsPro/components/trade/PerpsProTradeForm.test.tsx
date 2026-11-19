@@ -478,6 +478,26 @@ describe('PerpsProTradeForm order matrix', () => {
     },
   );
 
+  it('allows Scale inputs and preview while account configuration is preparing', () => {
+    const trade = controller({
+      orderType: 'scale',
+      amountUnit: 'base',
+      amount: '5',
+    });
+    render(
+      <PerpsProTradeForm
+        configurationReady={false}
+        controller={trade}
+        onAddFunds={jest.fn()}
+      />,
+    );
+    expect(
+      screen.getByTestId('perps-pro-trade-inputs').props.pointerEvents,
+    ).toBe('auto');
+    fireEvent.press(screen.getByTestId('perps-pro-trade-button-buy'));
+    expect(trade.requestReview).toHaveBeenCalledWith('buy');
+  });
+
   it('keeps the real form frame visible but fail-closed while configuration is preparing', () => {
     const trade = controller();
     render(
@@ -488,7 +508,7 @@ describe('PerpsProTradeForm order matrix', () => {
       />,
     );
 
-    expect(screen.getByTestId('perps-pro-trade-form').props).toMatchObject({
+    expect(screen.getByTestId('perps-pro-trade-inputs').props).toMatchObject({
       accessibilityState: { disabled: true },
       pointerEvents: 'none',
     });
