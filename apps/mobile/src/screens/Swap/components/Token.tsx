@@ -184,11 +184,8 @@ const SwapTokenItemInner = (props: SwapTokenItemProps) => {
         <Text style={styles.subTitle}>
           {isFrom ? t('page.swap.from') : t('page.swap.to')}
         </Text>
-        {/*
-          Keep the slider on screen for the whole pager transition; only the
-          native gesture detaches while the scene is inactive (Fabric recycling).
-        */}
-        {isFrom && (
+        {/* Unmount native gestures before Fabric recycles the hidden scene. */}
+        {isFrom && sceneActive && (
           <View style={styles.sliderContainer}>
             <View
               ref={sliderTrackRef}
@@ -198,7 +195,6 @@ const SwapTokenItemInner = (props: SwapTokenItemProps) => {
                 key={`${token?.id}-${token?.chain}`}
                 allowTouchTrack={!disabled}
                 disabled={disabled}
-                interactive={sceneActive}
                 style={styles.sliderInner}
                 value={slider ?? 0}
                 onSlidingStart={onSlidingStart}

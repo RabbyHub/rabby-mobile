@@ -212,11 +212,8 @@ const BridgeTokenInner = ({
           // excludeChains={excludeChains}
           // supportChains={supportedChains}
         />
-        {/*
-          Keep the slider on screen for the whole pager transition; only the
-          native gesture detaches while the scene is inactive (Fabric recycling).
-        */}
-        {isFromToken && !hiddenSlider && (
+        {/* Unmount native gestures before Fabric recycles the hidden scene. */}
+        {isFromToken && !hiddenSlider && sceneActive && (
           <View style={styles.sliderContainer}>
             <View
               ref={sliderTrackRef}
@@ -226,7 +223,6 @@ const BridgeTokenInner = ({
                 key={`${token?.id}-${token?.chain}`}
                 allowTouchTrack={!disabled}
                 disabled={disabled}
-                interactive={sceneActive}
                 style={styles.sliderInner}
                 value={slider ?? 0}
                 onSlidingStart={onSlidingStart}
