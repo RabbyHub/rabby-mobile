@@ -67,8 +67,10 @@ import { switchSceneCurrentAccount } from './accountsSwitcher';
 import {
   setCurrentKeychainVersion,
   setSensitiveSceneProtectionEnabled,
+  storeApiExpSettingData,
   type CurrentKeychainVersion,
 } from './appSettings';
+import { evaluateMaintenanceGate } from './maintenanceCommandGate';
 import { IS_IOS } from '@/core/native/utils';
 import { parseKeychainVersionDeepLinkValue } from '@/core/apis/keychainVersionShared';
 import RNHelpers from '@/core/native/RNHelpers';
@@ -508,6 +510,26 @@ function parseNonProductionMaintenanceLink(appLink: string) {
   const target = getRabbyGoTarget(urlInfo);
   const rabbyGoCmd = urlInfo.searchParams.get('_cmd');
 
+  // A debug link alone must never grant state / approval / biometric mutation
+  // authority. These commands only run while the persisted Screen E2E session
+  // is explicitly armed from Testkits → Dev switches on this device.
+  const maintenanceCommand = rabbyGoCmd || target || '';
+  const expiresAtRaw = urlInfo.searchParams.get('expiresAt');
+  const expiresAt = expiresAtRaw == null ? null : Number(expiresAtRaw);
+  const commandDecision = evaluateMaintenanceGate(maintenanceCommand, {
+    sessionArmed: storeApiExpSettingData.getScreenE2EEnabled(),
+    walletUnlocked: true,
+    expiresAt,
+  });
+  if (!commandDecision.allowed) {
+    console.warn(
+      '[useUniversalLinkOnTop] maintenance command rejected:',
+      maintenanceCommand,
+      commandDecision.reason,
+    );
+    return null;
+  }
+
   if (
     rabbyGoCmd === 'clear-app-cache' ||
     target === 'clear-app-cache' ||
@@ -915,6 +937,20 @@ function parseNonProductionMaintenanceLink(appLink: string) {
     if (!rawScreen && !wantsList) {
       console.warn(
         '[useUniversalLinkOnTop] debug-open-screen requires ?screen=<id> (or ?list=1)',
+      );
+      return null;
+    }
+
+    // Plain navigation stays available, but injecting a store snapshot from a
+    // debug link must be armed locally (Screen E2E), same as the other state
+    // mutations above.
+    const injectsStore =
+      urlInfo.searchParams.has('store') ||
+      urlInfo.searchParams.has('storePin') ||
+      urlInfo.searchParams.has('storePinClear');
+    if (injectsStore && !storeApiExpSettingData.getScreenE2EEnabled()) {
+      console.warn(
+        '[useUniversalLinkOnTop] debug-open-screen store injection rejected: Screen E2E session is not armed',
       );
       return null;
     }
@@ -1328,6 +1364,19 @@ async function openRabbyGoTarget(target: RabbyGoTarget) {
 }
 
 const handleActions: OnParseUrlAndProcessAction = payload => {
+  const dispatchDecision = evaluateMaintenanceGate(payload.type, {
+    sessionArmed: storeApiExpSettingData.getScreenE2EEnabled(),
+    walletUnlocked: isKeyringUnlockedSnapshot() || isUnlockSessionValid(),
+  });
+  if (!dispatchDecision.allowed) {
+    console.warn(
+      '[useUniversalLinkOnTop] maintenance command rejected at dispatch:',
+      payload.type,
+      dispatchDecision.reason,
+    );
+    return;
+  }
+
   switch (payload.type) {
     case 'open-target': {
       const target = payload.target || 'home';
@@ -2132,14 +2181,8 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
       }
       void (async () => {
         try {
-          const { emitBrowserEval } = await import(
-            '@/devtools/screenRegistry/browserEval'
-          );
-          const code = payload.debugDappEval?.code;
-          if (!code) {
-            throw new Error('missing code');
-          }
-          emitBrowserEval(code);
+          const { runDebugDappEval } = await import('@/devtools/debugDappEval');
+          await runDebugDappEval(payload.debugDappEval?.code);
           console.log('[debug-dapp-eval] dispatched');
         } catch (error) {
           console.warn('[debug-dapp-eval] failed', error);
