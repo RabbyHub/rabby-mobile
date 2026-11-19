@@ -3,6 +3,7 @@ import { View, ScrollView, Pressable } from 'react-native';
 
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
+import { useSystemColumnInset } from '@/components/SafeWindowFrame/backdrop';
 
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import { Card } from '@/components2024/Card';
@@ -43,6 +44,7 @@ type SelectAddMethodProps = NativeStackScreenProps<
 
 function SelectAddMethod(): JSX.Element {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+  const columnInset = useSystemColumnInset();
   const { shouldRedirectToSetPasswordBefore2024 } = useSetPasswordFirst();
   const { t } = useTranslation();
   const navigation = useNavigation<SelectAddMethodProps['navigation']>();
@@ -271,7 +273,15 @@ function SelectAddMethod(): JSX.Element {
       </ScrollView>
 
       {/* More options */}
-      <Pressable style={styles.moreOptionsWrapper} onPress={onPressMoreOptions}>
+      <Pressable
+        style={[
+          styles.moreOptionsWrapper,
+          // Absolute children ignore the parent's padding, so inset this row
+          // explicitly; the wrapper then centres inside the content width on
+          // the Duo outer screen (QA 1427).
+          { left: columnInset.left, right: columnInset.right },
+        ]}
+        onPress={onPressMoreOptions}>
         <Text style={styles.moreOptionsText}>
           {t('page.nextComponent.addAddress.moreOptions')}
         </Text>
@@ -348,7 +358,6 @@ const getStyles = createGetStyles2024(ctx => ({
     justifyContent: 'center',
     alignItems: 'center',
     gap: 4,
-    width: '100%',
     position: 'absolute',
     bottom: 67,
   },
