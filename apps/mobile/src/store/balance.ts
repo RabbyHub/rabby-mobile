@@ -981,8 +981,10 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
         });
       }
 
-      await useAppChainStore.getState().getAppChains(lowerAddress, force);
-      const appChainUsdValue = getAppChainUsdValue(lowerAddress);
+      const appChainBalancePromise = useAppChainStore
+        .getState()
+        .getAppChains(lowerAddress, force)
+        .then(() => getAppChainUsdValue(lowerAddress));
       requestId = this.startRemoteFetch(lowerAddress, {
         localTargets,
         detail: buildBalanceTraceDetail(
@@ -994,7 +996,7 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
           trace,
         ),
       });
-      const balance = await openapi.getTotalBalanceV2({
+      const evmBalancePromise = openapi.getTotalBalanceV2({
         address: lowerAddress,
         isCore,
         included_token_uuids: [],
@@ -1002,6 +1004,10 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
         excluded_protocol_ids: [],
         excluded_chain_ids: [],
       });
+      const [balance, appChainUsdValue] = await Promise.all([
+        evmBalancePromise,
+        appChainBalancePromise,
+      ]);
       const { formatBalance, value } = buildRemoteBalancePayload(
         balance,
         appChainUsdValue,
