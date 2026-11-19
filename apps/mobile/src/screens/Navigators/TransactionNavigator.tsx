@@ -10,6 +10,8 @@ import { createCustomNativeStackNavigator as createNativeStackNavigator } from '
 import { HeaderBackPressable, useStackScreenConfig } from '@/hooks/navigation';
 import { useCustomHeaderTop } from '@/hooks/useAppLayout';
 import { useSystemColumnInset } from '@/components/SafeWindowFrame/backdrop';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { isFoldableSideColumnPosture } from '@/core/utils/foldableDevice';
 import {
   RootNames,
   makeHeadersPresets,
@@ -118,6 +120,25 @@ function ConvertDustHeader({
           style={styles.convertDustHeaderAccountSwitcher}
         />
       </View>
+    </View>
+  );
+}
+
+function SingleAddressHistoryTitle({ children }: React.PropsWithChildren) {
+  const insets = useSafeAreaInsets();
+  const foldableOuter = isFoldableSideColumnPosture({
+    top: insets.top,
+    right: insets.right,
+  });
+
+  return (
+    <View
+      style={foldableOuter ? undefined : { transform: [{ translateX: -12 }] }}>
+      <ScreenHeaderAccountSwitcher
+        forScene="History"
+        titleText={children}
+        disableSwitch
+      />
     </View>
   );
 }
@@ -242,20 +263,16 @@ export default function TransactionNavigator() {
         )}
         options={{
           title: 'Transactions',
-          headerTitle: ctx => {
-            // The native back item is wider than the old JS header button, so
-            // UIKit lays this title container out ~12pt right of the screen
-            // centre (QA 1360). Pull the content back.
-            return (
-              <View style={{ transform: [{ translateX: -12 }] }}>
-                <ScreenHeaderAccountSwitcher
-                  forScene="History"
-                  titleText={ctx.children}
-                  disableSwitch
-                />
-              </View>
-            );
-          },
+          // The native back item is wider than the old JS header button, so
+          // UIKit lays this title container out ~12pt right of the screen
+          // centre (QA 1360). Pull the content back only on the native header;
+          // the Duo outer screen uses the shared JS replica header, where that
+          // correction would push the title left.
+          headerTitle: ctx => (
+            <SingleAddressHistoryTitle>
+              {ctx.children}
+            </SingleAddressHistoryTitle>
+          ),
           headerStyle: {
             backgroundColor: makeTxPageBackgroundColors({
               isLight,
