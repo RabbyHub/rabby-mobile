@@ -322,6 +322,10 @@ export const HomeDappDrawer: React.FC<{
   });
 
   const safeAreaInsets = useSafeAreaInsets();
+  // On the Duo outer screen `safeAreaInsets.top` is 0, but the expanded panel
+  // still has to clear the system column/status strip; `safeHeaderTop` carries
+  // the same foldable compensation used by the JS headers (QA 1431).
+  const { safeHeaderTop } = useSafeSizes();
   const panelScaleStyle = useAnimatedStyle(() => {
     return {
       transformOrigin: 'top',
@@ -338,7 +342,7 @@ export const HomeDappDrawer: React.FC<{
       paddingTop: interpolate(
         pullPercent.value,
         [-100, 0],
-        [safeAreaInsets.top, 0],
+        [safeHeaderTop, 0],
         Extrapolate.CLAMP,
       ),
     };
