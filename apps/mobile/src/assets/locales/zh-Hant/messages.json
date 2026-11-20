@@ -2436,6 +2436,9 @@
             "title": "TP/SL",
             "description": "提交基本市價 TP/SL 訂單。如需部分 TP/SL 等進階功能，請在已有持倉上設定 TP/SL。"
           },
+          "randomize": {
+            "description": "隨機化會使每筆子交易的數量在 ±20% 的範圍內變化，同時遵守最大交易數量及其他限制。"
+          },
           "reduceOnly": {
             "title": "只減倉",
             "description": "無論訂單數量多大，此訂單都不會建立新持倉。執行時會將訂單數量與現有持倉數量進行比較。"

@@ -12,6 +12,7 @@ static const CGFloat RowHeight = 40;
 - (instancetype)initWithUnit:(NSCalendarUnit)unit;
 - (NSInteger)snapToCenter;
 @property (nonatomic) NSInteger value;
+@property (nonatomic) NSInteger minimumValue;
 @property (nonatomic, copy) NSArray<NSString *> *labels;
 @end
 
@@ -96,9 +97,22 @@ static const CGFloat RowHeight = 40;
   [_table reloadData];
 }
 
+- (void)setMinimumValue:(NSInteger)value
+{
+  NSInteger minimum = MIN(_maxValue, MAX(0, value));
+  if (_minimumValue == minimum) return;
+  _positioning = YES;
+  _minimumValue = minimum;
+  [_table reloadData];
+  // Finish row remapping before positioning; UITableView otherwise preserves
+  // the previous visible row during its next layout and shifts the selection.
+  [_table layoutIfNeeded];
+  self.value = _value;
+}
+
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
-  return _maxValue + 1;
+  return _maxValue - _minimumValue + 1;
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
@@ -107,7 +121,7 @@ static const CGFloat RowHeight = 40;
   cell.backgroundColor = UIColor.clearColor;
   cell.selectionStyle = UITableViewCellSelectionStyleNone;
   UIListContentConfiguration *content = [UIListContentConfiguration cellConfiguration];
-  content.text = [self textForValue:indexPath.row];
+  content.text = [self textForValue:indexPath.row + _minimumValue];
   content.textProperties.font = [UIFont monospacedDigitSystemFontOfSize:20 weight:UIFontWeightRegular];
   content.textProperties.color = UIColor.labelColor;
   content.textProperties.alignment = UIListContentTextAlignmentCenter;
@@ -138,12 +152,12 @@ static const CGFloat RowHeight = 40;
 
 - (NSInteger)valueForOffset:(CGFloat)offset
 {
-  return MIN(_maxValue, MAX(0, lround((offset + _table.contentInset.top) / RowHeight)));
+  return MIN(_maxValue, MAX(_minimumValue, _minimumValue + lround((offset + _table.contentInset.top) / RowHeight)));
 }
 
 - (CGFloat)offsetForValue:(NSInteger)value
 {
-  return value * RowHeight - _table.contentInset.top;
+  return (value - _minimumValue) * RowHeight - _table.contentInset.top;
 }
 
 - (void)scrollViewDidScroll:(UIScrollView *)scrollView
@@ -183,7 +197,7 @@ static const CGFloat RowHeight = 40;
 - (void)setValue:(NSInteger)value
 {
   _positioning = YES;
-  _value = MIN(_maxValue, MAX(0, value));
+  _value = MIN(_maxValue, MAX(_minimumValue, value));
   // A reset or confirm can arrive with a finger down or during deceleration.
   if (@available(iOS 17.4, *)) {
     [_table stopScrollingAndZooming];
@@ -211,7 +225,7 @@ static const CGFloat RowHeight = 40;
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
-  [self selectValue:indexPath.row];
+  [self selectValue:indexPath.row + _minimumValue];
 }
 
 - (NSString *)accessibilityValue { return [self textForValue:_value]; }
@@ -226,6 +240,7 @@ static const CGFloat RowHeight = 40;
   RabbyDurationWheel *_hours;
   RabbyDurationWheel *_minutes;
   NSInteger _sessionId;
+  NSInteger _minimumDuration;
 }
 
 + (ComponentDescriptorProvider)componentDescriptorProvider
@@ -256,9 +271,15 @@ static const CGFloat RowHeight = 40;
 
 - (void)durationChanged
 {
+  [self updateMinuteMinimum];
   if (!_eventEmitter || _sessionId == NSNotFound) return;
   auto emitter = std::static_pointer_cast<const RabbyDurationPickerEventEmitter>(_eventEmitter);
   emitter->onDurationChange({ .minutes = (int)[self currentMinutes], .sessionId = (int)_sessionId });
+}
+
+- (void)updateMinuteMinimum
+{
+  _minutes.minimumValue = _hours.value == _minimumDuration / 60 ? _minimumDuration % 60 : 0;
 }
 
 - (void)updateProps:(Props::Shared const &)props oldProps:(Props::Shared const &)oldProps
@@ -274,9 +295,14 @@ static const CGFloat RowHeight = 40;
   }
   // Open and Reset each start a session. Within it, durationMinutes echoes our
   // previews and may already be several rows behind the native wheels.
-  if (next.sessionId != _sessionId) {
-    NSInteger duration = MIN(1439, MAX(0, next.durationMinutes));
+  NSInteger minimum = MIN(1439, MAX(0, next.minimumDurationMinutes));
+  if (next.sessionId != _sessionId || minimum != _minimumDuration) {
+    NSInteger requested = next.sessionId == _sessionId ? [self currentMinutes] : next.durationMinutes;
+    NSInteger duration = MIN(1439, MAX(minimum, requested));
+    _minimumDuration = minimum;
+    _hours.minimumValue = minimum / 60;
     _hours.value = duration / 60;
+    [self updateMinuteMinimum];
     _minutes.value = duration % 60;
     _sessionId = next.sessionId;
   }
@@ -294,6 +320,7 @@ static const CGFloat RowHeight = 40;
 {
   if (!_eventEmitter || _sessionId == NSNotFound) return;
   NSInteger hours = [_hours snapToCenter];
+  [self updateMinuteMinimum];
   NSInteger minutes = [_minutes snapToCenter];
   auto emitter = std::static_pointer_cast<const RabbyDurationPickerEventEmitter>(_eventEmitter);
   emitter->onValueRead({
@@ -306,6 +333,9 @@ static const CGFloat RowHeight = 40;
 - (void)prepareForRecycle
 {
   _sessionId = NSNotFound;
+  _minimumDuration = 0;
+  _hours.minimumValue = 0;
+  _minutes.minimumValue = 0;
   _hours.value = 0;
   _minutes.value = 0;
   [super prepareForRecycle];

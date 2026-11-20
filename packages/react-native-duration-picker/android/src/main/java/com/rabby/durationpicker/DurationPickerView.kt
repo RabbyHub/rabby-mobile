@@ -15,8 +15,10 @@ import java.util.Locale
 
 class DurationPickerView(private val reactContext: ThemedReactContext) : LinearLayout(reactContext) {
   var durationMinutes = 0
+  var minimumDurationMinutes = 0
   var sessionId = 0
   private var activeSession: Int? = null
+  private var appliedMinimum = 0
   private var pendingRead: Int? = null
   private val divider = Paint()
   private val hours = DurationWheel(reactContext, 23, MeasureUnit.HOUR, MeasureFormat.FormatWidth.WIDE)
@@ -27,20 +29,33 @@ class DurationPickerView(private val reactContext: ThemedReactContext) : LinearL
     orientation = HORIZONTAL
     for (wheel in listOf(hours, minutes)) {
       addView(wheel, LayoutParams(0, LayoutParams.MATCH_PARENT, 1f))
-      wheel.onSelectionChange = { emit("topDurationChange") }
     }
+    hours.onSelectionChange = {
+      updateMinuteMinimum()
+      emit("topDurationChange")
+    }
+    minutes.onSelectionChange = { emit("topDurationChange") }
     setDarkTheme(false)
   }
 
   // Fabric may deliver the two props in either order. Subsequent values in the
   // same session are JS echoes of previews and can lag behind a native fling.
   fun applySession() {
-    if (sessionId == activeSession) return
+    val minimum = minimumDurationMinutes.coerceIn(0, 1439)
+    if (sessionId == activeSession && minimum == appliedMinimum) return
+    val initial = (if (sessionId == activeSession) hours.selected * 60 + minutes.selected
+      else durationMinutes).coerceIn(minimum, 1439)
     pendingRead = null
     activeSession = sessionId
-    val initial = durationMinutes.coerceIn(0, 1439)
+    appliedMinimum = minimum
+    hours.setMinimum(minimum / 60)
     hours.select(initial / 60)
+    updateMinuteMinimum()
     minutes.select(initial % 60)
+  }
+
+  private fun updateMinuteMinimum() {
+    minutes.setMinimum(if (hours.selected == appliedMinimum / 60) appliedMinimum % 60 else 0)
   }
 
   fun setLocale(tag: String?) {

@@ -33,8 +33,9 @@ internal class DurationWheel(
     private set
   var onSelectionChange: () -> Unit = {}
   val isSettled: Boolean
-    get() = scrollState == SCROLL_STATE_IDLE && !rows.isSmoothScrolling
+    get() = !positioning && scrollState == SCROLL_STATE_IDLE && !rows.isSmoothScrolling
 
+  private var minimum = 0
   private var rowHeight = 1
   private var positioning = false
   private var labelColor = Color.BLACK
@@ -117,10 +118,20 @@ internal class DurationWheel(
 
   fun select(value: Int) {
     positioning = true
-    selected = value
-    contentDescription = labels[value]
+    selected = value.coerceIn(minimum, maximum)
+    contentDescription = labels[selected]
     stopScroll()
-    rows.scrollToPositionWithOffset(value, 0)
+    rows.scrollToPositionWithOffset(selected - minimum, 0)
+  }
+
+  fun setMinimum(value: Int) {
+    val next = value.coerceIn(0, maximum)
+    if (minimum == next) return
+    positioning = true
+    stopScroll()
+    minimum = next
+    adapter?.notifyDataSetChanged()
+    select(selected)
   }
 
   override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
@@ -154,15 +165,15 @@ internal class DurationWheel(
     if (positioning) return
     val row = snap.findSnapView(rows) ?: return
     val position = getChildAdapterPosition(row)
-    if (position != NO_POSITION && position != selected) {
-      selected = position
-      contentDescription = labels[position]
+    if (position != NO_POSITION && position + minimum != selected) {
+      selected = position + minimum
+      contentDescription = labels[selected]
       onSelectionChange()
     }
   }
 
   private fun choose(value: Int) {
-    if (!isEnabled || value !in 0..maximum || value == selected) return
+    if (!isEnabled || value !in minimum..maximum || value == selected) return
     select(value)
     onSelectionChange()
   }
@@ -180,9 +191,9 @@ internal class DurationWheel(
     super.onInitializeAccessibilityNodeInfo(info)
     info.className = "android.widget.SeekBar"
     info.rangeInfo = AccessibilityNodeInfo.RangeInfo.obtain(
-      AccessibilityNodeInfo.RangeInfo.RANGE_TYPE_INT, 0f, maximum.toFloat(), selected.toFloat())
+      AccessibilityNodeInfo.RangeInfo.RANGE_TYPE_INT, minimum.toFloat(), maximum.toFloat(), selected.toFloat())
     if (isEnabled && selected < maximum) info.addAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_FORWARD)
-    if (isEnabled && selected > 0) info.addAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_BACKWARD)
+    if (isEnabled && selected > minimum) info.addAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_BACKWARD)
   }
 
   override fun performAccessibilityAction(action: Int, arguments: Bundle?): Boolean {
@@ -191,7 +202,7 @@ internal class DurationWheel(
       AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD -> selected - 1
       else -> return super.performAccessibilityAction(action, arguments)
     }
-    if (!isEnabled || target !in 0..maximum) return false
+    if (!isEnabled || target !in minimum..maximum) return false
     choose(target)
     return true
   }
@@ -199,7 +210,7 @@ internal class DurationWheel(
   private class LabelHolder(val label: TextView) : ViewHolder(label)
 
   private inner class LabelAdapter : Adapter<LabelHolder>() {
-    override fun getItemCount() = labels.size
+    override fun getItemCount() = maximum - minimum + 1
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): LabelHolder {
       val label = TextView(context).apply {
@@ -210,7 +221,7 @@ internal class DurationWheel(
         layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, rowHeight)
       }
       val holder = LabelHolder(label)
-      label.setOnClickListener { if (label.alpha > 0) choose(holder.bindingAdapterPosition) }
+      label.setOnClickListener { if (label.alpha > 0) choose(holder.bindingAdapterPosition + minimum) }
       return holder
     }
 
@@ -219,7 +230,7 @@ internal class DurationWheel(
         layoutParams.height = rowHeight
         setTextSize(TypedValue.COMPLEX_UNIT_PX, rowHeight * 0.475f)
         setTextColor(labelColor)
-        text = labels[position]
+        text = labels[position + minimum]
       }
     }
   }

@@ -168,7 +168,12 @@ jest.mock('../common/PerpsProDottedUnderlineText', () => ({
 }));
 
 const mockDismissKeyboardThen = jest.fn((action: () => void) => action());
+const mockOpenFieldExplanation = jest.fn();
 const mockBboSheetProps = jest.fn();
+
+jest.mock('../common/PerpsProFieldExplanationContext', () => ({
+  usePerpsProFieldExplanation: () => mockOpenFieldExplanation,
+}));
 
 jest.mock('../common/usePerpsProDismissKeyboard', () => ({
   usePerpsProDismissKeyboard: () => mockDismissKeyboardThen,
@@ -506,6 +511,18 @@ describe('PerpsProTradeForm order matrix', () => {
       expect(trade.requestReview).not.toHaveBeenCalled();
     },
   );
+
+  it('opens Randomize help without toggling the TWAP option', () => {
+    const trade = controller({ orderType: 'twap', twapRandomize: true });
+    render(<PerpsProTradeForm controller={trade} onAddFunds={jest.fn()} />);
+    fireEvent.press(screen.getByText('randomize'));
+    expect(mockOpenFieldExplanation).toHaveBeenCalledWith('randomize');
+    expect(trade.patchForm).not.toHaveBeenCalled();
+
+    fireEvent.press(screen.getByRole('checkbox', { name: 'randomize' }));
+    expect(trade.patchForm).toHaveBeenCalledWith({ twapRandomize: false });
+    expect(mockOpenFieldExplanation).toHaveBeenCalledTimes(1);
+  });
 
   it('allows Scale inputs and preview while account configuration is preparing', () => {
     const trade = controller({

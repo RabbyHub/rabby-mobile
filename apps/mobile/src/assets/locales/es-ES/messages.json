@@ -2448,6 +2448,9 @@
             "title": "TP/SL",
             "description": "Crea órdenes TP/SL de mercado básicas. Para funciones avanzadas, como TP/SL parcial, configura el TP/SL en una posición abierta."
           },
+          "randomize": {
+            "description": "La aleatorización varía el tamaño de cada suborden hasta un ±20 %, respetando el tamaño máximo de la orden y los demás límites."
+          },
           "reduceOnly": {
             "title": "Solo reducir",
             "description": "Esta orden no abrirá una posición nueva, independientemente de su tamaño. En el momento de la ejecución, el tamaño de la orden se comparará con el de la posición existente."
