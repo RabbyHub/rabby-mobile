@@ -531,6 +531,7 @@ const getStyle = createGetStyles2024(
       width: '100%',
       marginTop: 12,
       borderRadius: 16,
+      borderCurve: 'continuous',
       backgroundColor: makeHistoryDetailColors({ isLight, colors2024 }).card,
       paddingTop: 12,
       paddingBottom: 4,
@@ -556,6 +557,7 @@ const getStyle = createGetStyles2024(
       backgroundColor: makeHistoryDetailColors({ isLight, colors2024 })
         .cardInner,
       borderRadius: 12,
+      borderCurve: 'continuous',
       justifyContent: 'space-between',
       alignItems: 'flex-start',
       marginHorizontal: 12,
@@ -592,6 +594,7 @@ const getStyle = createGetStyles2024(
     },
     scamContainer: {
       borderRadius: 6,
+      borderCurve: 'continuous',
       backgroundColor: colors2024['neutral-bg-5'],
       paddingHorizontal: 16,
       paddingVertical: 6,

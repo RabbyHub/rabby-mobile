@@ -297,6 +297,7 @@ const getStyles = function (colors: AppColorsVariants, topInset: number) {
     input: {
       backgroundColor: colors['neutral-card-1'],
       borderRadius: 8,
+      borderCurve: 'continuous',
       paddingHorizontal: 16,
       paddingVertical: 0,
       fontSize: 15,

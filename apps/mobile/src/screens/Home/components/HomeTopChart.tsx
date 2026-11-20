@@ -499,12 +499,14 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     marginLeft: 8,
     marginRight: 8,
     borderRadius: 8,
+    borderCurve: 'continuous',
     backgroundColor: isLight
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-bg-2'],
   },
   skeletonChange: {
     borderRadius: 8,
+    borderCurve: 'continuous',
     backgroundColor: isLight
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-bg-2'],

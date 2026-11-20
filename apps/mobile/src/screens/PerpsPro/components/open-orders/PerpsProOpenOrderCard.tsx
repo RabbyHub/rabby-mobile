@@ -373,6 +373,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   progressTrack: {
     backgroundColor: colors2024['neutral-line'],
     borderRadius: 1,
+    borderCurve: 'continuous',
     height: 2,
     overflow: 'hidden',
     width: 32,
@@ -389,6 +390,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     alignItems: 'center',
     backgroundColor: colors2024['neutral-bg-2'],
     borderRadius: 6,
+    borderCurve: 'continuous',
     height: 26,
     justifyContent: 'center',
     paddingHorizontal: 8,

@@ -80,8 +80,11 @@ import { useGetMiniSignTxExtraProps } from '@/hooks/useMiniApproval';
 import BalanceChange from '../TxComponents/BalanceChange';
 import type { GasAccountTopUpResult } from '@/screens/GasAccount/components/topUpContinuation';
 import { buildTopUpResumedTxs } from '@/screens/GasAccount/components/topUpContinuation';
-import type { GasTokenInfo } from '@/utils/tempo';
-import { isTempoChain } from '@/utils/tempo';
+import type { GasTokenBalanceInfo, GasTokenInfo } from '@/utils/tempo';
+import {
+  isTempoChain,
+  resolveTempoProtocolFallbackGasToken,
+} from '@/utils/tempo';
 
 let count = 1;
 let unCount = 0;
@@ -279,6 +282,9 @@ export const MiniSignTx = ({
   const [maxPriorityFee, setMaxPriorityFee] = useState(0);
   const [nativeTokenBalance, setNativeTokenBalance] = useState('0x0');
   const [gasToken, setGasToken] = useState<GasTokenInfo | undefined>(undefined);
+  // Fee token reported by getGasTokenBalance, before the Tempo protocol
+  // fallback (OUSD) is applied against the estimated gas cost.
+  const gasTokenBalanceInfoRef = useRef<GasTokenBalanceInfo | null>(null);
   const checkTxValueInBalance = useMemo(
     () => !isTempoChain(chain?.serverId),
     [chain?.serverId],
@@ -744,6 +750,7 @@ export const MiniSignTx = ({
         account,
       });
 
+      gasTokenBalanceInfoRef.current = balanceInfo;
       setNativeTokenBalance(balanceInfo.rawBalance);
       setGasToken(balanceInfo.token);
 
@@ -1065,6 +1072,27 @@ export const MiniSignTx = ({
           };
         }),
       );
+
+      const gasTokenBalanceInfo = gasTokenBalanceInfoRef.current;
+      if (isTempoChain(chain.serverId) && gasTokenBalanceInfo && res.length) {
+        // Without feeToken the chain charges OUSD when pathUSD cannot cover the
+        // max fee, so check the batch against the token it will actually use.
+        const chargedGasToken = await resolveTempoProtocolFallbackGasToken({
+          account,
+          address: currentAccount.address,
+          chainServerId: chain.serverId,
+          gasTokenBalance: gasTokenBalanceInfo,
+          txFeeToken: undefined,
+          maxGasCostRawAmount: res.reduce(
+            (sum, item) =>
+              sum.plus(new BigNumber(item.gasCost.maxGasCostRawAmount || 0)),
+            new BigNumber(0),
+          ),
+        });
+        // Always set: a re-simulation with a cheaper gas level may switch back.
+        setNativeTokenBalance(chargedGasToken.rawBalance);
+        setGasToken(chargedGasToken.token);
+      }
 
       setIsReady(true);
       setTxsResult(res);
@@ -1546,6 +1574,7 @@ const getSheetStyles = createGetStyles2024(({ colors2024 }) => ({
     backgroundColor: colors2024['neutral-bg-1'],
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
+    borderCurve: 'continuous',
   },
 
   gasSelectorWrapper: {
@@ -1565,5 +1594,6 @@ const getSheetStyles = createGetStyles2024(({ colors2024 }) => ({
     paddingTop: 12,
     paddingBottom: 0,
     borderRadius: 8,
+    borderCurve: 'continuous',
   },
 }));

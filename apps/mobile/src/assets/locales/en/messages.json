@@ -2322,7 +2322,10 @@
           "attachedTpSlUnresolved": "A previous TP/SL submission for this market is unresolved. Check Open Orders and Positions before trying again.",
           "orderFilled": "Order filled.",
           "orderPlaced": "Order placed.",
-          "orderFailed": "Order failed."
+          "orderFailed": "Order failed.",
+          "scale": "Scaled Order",
+          "scaleDescription": "Set a price range and place multiple limit sub-orders",
+          "twap": "TWAP"
         },
         "orderError": {
           "aloBuyWouldMatch": "Post-only price must be lower than the best ask to avoid immediately matching.",
@@ -2336,6 +2339,9 @@
           "tpSl": {
             "title": "TP/SL",
             "description": "Places basic market TP/SL orders. For advanced features such as partial TP/SL, set TP/SL on an open position."
+          },
+          "randomize": {
+            "description": "Randomize varies each sub-trade’s size by up to ±20%, while respecting the maximum trade size and other limits."
           },
           "reduceOnly": {
             "title": "Reduce Only",
@@ -2433,7 +2439,8 @@
             "orders": "Order History",
             "trade": "Trade History",
             "transaction": "Transaction History",
-            "funding": "Funding Fee"
+            "funding": "Funding Fee",
+            "twap": "TWAP History"
           },
           "empty": {
             "orders": "No orders history",
@@ -2615,6 +2622,101 @@
           "cancelPartial": "{{success}} orders canceled; {{failed}} failed",
           "cancelFailed": "Failed to cancel order",
           "cancelContextChanged": "Account changed. Please try again."
+        },
+        "scaleOrder": {
+          "lowerPrice": "Lower",
+          "upperPrice": "Upper",
+          "size": "Size",
+          "count": "Order Count (2–100)",
+          "distribution": "Amount Distribution",
+          "flat": "Flat",
+          "ascending": "Ascending",
+          "descending": "Descending",
+          "flatDescription": "Each order within the total amount receives the same size",
+          "ascendingDescription": "The order size systematically grows as the price escalates",
+          "descendingDescription": "The order size systematically grows as the price decreases",
+          "previewBuy": "Preview Buy",
+          "previewSell": "Preview Sell",
+          "totalSize": "Total Size",
+          "averagePrice": "Average Price",
+          "result": "{{accepted}} accepted, {{rejected}} rejected, {{unresolved}} pending confirmation",
+          "unknown": "Order outcome is pending confirmation. Check open orders and trade history before placing another order.",
+          "errors": {
+            "range": "Enter valid prices with the upper price above the lower price.",
+            "count": "Enter an integer between 2 and 100.",
+            "size": "Enter an order size greater than 0 that meets this market’s size precision requirements.",
+            "duplicatePrice": "Some order prices are identical after adjustment to the required price precision. Widen the price range or reduce the order count.",
+            "minimum": "After adjustment to the required size precision, each sub-order must be worth at least $10.",
+            "maximum": "The total order value exceeds the limit allowed for this market.",
+            "capacity": "Insufficient trading capacity for this batch.",
+            "reduceOnly": "The total order size exceeds the position size currently available to close."
+          }
+        },
+        "twap": {
+          "description": "Place orders at custom intervals",
+          "totalTime": "Total Time",
+          "durationFieldLabel": "Total Time(hh:mm)",
+          "durationFieldValue": "{{hours}} : {{minutes}}",
+          "minuteValue": "{{t}} mins",
+          "minuteValue_one": "{{t}} min",
+          "confirmationDuration": "{{t}} m",
+          "totalSize": "Total Size",
+          "selectTime": "Select Total Time",
+          "reset": "Reset",
+          "randomize": "Randomize",
+          "randomized": "Randomized",
+          "durationHint": "Run the TWAP order for 5–1439 minutes.",
+          "minimum": "Minimum Total Size is {{amount}}",
+          "filled": "Filled",
+          "duration": "Lasting",
+          "runtime": "Operation Time",
+          "averagePrice": "Avg. Price",
+          "end": "End",
+          "detail": "Detail",
+          "add": "Add",
+          "detailTitle": "TWAP Running Detail",
+          "historyDetailTitle": "TWAP History Detail",
+          "trades": "Trades",
+          "size": "Size",
+          "fee": "Fee",
+          "noTrades": "No trades yet",
+          "endTitle": "TWAP End Confirmation",
+          "endMessage": "Your TWAP order will be stopped after confirmation, and open orders of this TWAP will automatically be cancelled.",
+          "ending": "Ending…",
+          "ended": "TWAP order ended.",
+          "placed": "{{coin}} TWAP order placed.",
+          "unknownOutcome": "The {{coin}} TWAP result is pending confirmation. Check orders and history before placing another order.",
+          "unknown": "The TWAP result is pending confirmation. Check orders and history before trying again.",
+          "loadError": "Unable to load TWAP orders. Tap to retry.",
+          "status": {
+            "working": "Working",
+            "waiting": "Waiting",
+            "filled": "Filled",
+            "cancelled": "Cancelled",
+            "expired": "Expired",
+            "unknown": "Unknown"
+          },
+          "fills": {
+            "loading": "Loading trades…",
+            "error": "Unable to load trades. Tap to retry."
+          },
+          "errors": {
+            "amountRequired": "Enter an order amount.",
+            "amountTooSmall": "The TWAP order must be worth at least $100.",
+            "amountExceedsMaximum": "The order exceeds the available maximum.",
+            "invalidPrecision": "Enter an amount that matches this market’s size precision.",
+            "priceUnavailable": "The current price is unavailable. Please try again.",
+            "durationRequired": "Enter a total time.",
+            "durationInvalid": "Enter a whole number of minutes.",
+            "durationTooShort": "The minimum TWAP duration is 5 minutes.",
+            "durationTooLong": "The maximum TWAP duration is 1439 minutes.",
+            "capacity": "Insufficient trading capacity for this order.",
+            "reduceOnly": "The order exceeds the position size available to close.",
+            "contextChanged": "The account, order or market changed. Please review the order again."
+          },
+          "endedLabel": "Ended",
+          "skipConfirmation": "Don't display double confirmation for TWAP Order again.",
+          "averageFilledPrice": "Avg. Filled Price"
         }
       },
       "dappSelect": {

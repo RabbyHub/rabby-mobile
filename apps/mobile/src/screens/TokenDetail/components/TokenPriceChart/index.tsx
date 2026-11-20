@@ -401,6 +401,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-bg-4'],
     borderRadius: 120,
+    borderCurve: 'continuous',
   },
   priceTabWrapper: {
     flexShrink: 1,
@@ -408,6 +409,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     gap: 2,
     // width: 'auto',
     borderRadius: 120,
+    borderCurve: 'continuous',
     marginBottom: 8,
     flexDirection: 'row',
     backgroundColor: isLight

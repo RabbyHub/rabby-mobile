@@ -14,6 +14,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     gap: 10,
     borderWidth: StyleSheet.hairlineWidth,
     borderRadius: 6,
+    borderCurve: 'continuous',
     borderColor: colors2024['neutral-line'],
   },
   column: {
@@ -28,11 +29,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   skeleton3: {
     borderRadius: 2,
+    borderCurve: 'continuous',
     width: 132,
     height: 20,
   },
   skeleton4: {
     borderRadius: 2,
+    borderCurve: 'continuous',
     width: 90,
     height: 16,
   },

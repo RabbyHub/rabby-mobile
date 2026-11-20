@@ -90,6 +90,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: '100%',
     height: BOTTOM_BUTTON_SINGLE_HEIGHT,
     borderRadius: 16,
+    borderCurve: 'continuous',
   },
   primaryButtonText: {
     color: colors2024['neutral-InvertHighlight'],

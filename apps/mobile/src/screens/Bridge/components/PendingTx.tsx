@@ -51,6 +51,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
     flexDirection: 'row',
     borderRadius: 100,
+    borderCurve: 'continuous',
     alignItems: 'center',
     backgroundColor: colors2024['orange-light-1'],
     borderColor: colors2024['orange-light-2'],

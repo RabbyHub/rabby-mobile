@@ -43,6 +43,7 @@ export const BlockedAddressDialog = ({
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   dialog: {
     borderRadius: 20,
+    borderCurve: 'continuous',
     padding: 20,
     backgroundColor: colors2024['neutral-bg-1'],
     width: 353,
@@ -54,7 +55,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   dialogTitle: {
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
-    fontWeight: '900',
+    fontWeight: '800',
     fontSize: 20,
     lineHeight: 24,
     textAlign: 'center',

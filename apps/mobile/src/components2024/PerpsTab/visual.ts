@@ -25,6 +25,7 @@ export const getPerpsProTabIndicatorStyle = () =>
   ({
     backgroundColor: PERPS_PRO_TAB_TOKENS.indicatorColor,
     borderRadius: PERPS_PRO_TAB_TOKENS.indicatorHeight / 2,
+    borderCurve: 'continuous',
     bottom: PERPS_PRO_TAB_TOKENS.indicatorBottom,
     height: PERPS_PRO_TAB_TOKENS.indicatorHeight,
   } as const);

@@ -59,6 +59,7 @@ const getStyles = createGetStyles2024(ctx => ({
   block: {
     display: 'flex',
     borderRadius: 105,
+    borderCurve: 'continuous',
     flex: 1,
     height: 8,
     marginRight: 8,

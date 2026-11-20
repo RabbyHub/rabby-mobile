@@ -122,6 +122,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     borderWidth: 1,
     borderColor: colors2024['neutral-line'],
     borderRadius: 20,
+    borderCurve: 'continuous',
   },
   title: {
     fontSize: 18,
@@ -135,6 +136,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   body: {
     backgroundColor: colors2024['neutral-bg-2'],
     borderRadius: 16,
+    borderCurve: 'continuous',
     marginHorizontal: 20,
     marginTop: 20,
     padding: 12,

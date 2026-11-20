@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react-native';
+import { fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
 import { Platform, StyleSheet } from 'react-native';
 
@@ -69,6 +69,42 @@ describe('PerpsProTradeAmountField', () => {
       backgroundColor: 'neutral-bg-5',
     });
     expect(screen.getByTestId('amount-input').props.value).toBe('12.34');
+  });
+
+  it('keeps the clipped surface stable when slider values or manual focus clear the invalid border', () => {
+    const field = (value: string, invalid: boolean) => (
+      <PerpsProTradeAmountField
+        label="Amount(USDC)"
+        maxDecimals={2}
+        unit="USDC"
+        value={value}
+        invalid={invalid}
+      />
+    );
+    const view = render(field('1%', true));
+    const input = screen.getByTestId('amount-input');
+    const surface = screen.getByTestId('perps-pro-trade-amount-field');
+    const initialStyle = StyleSheet.flatten(surface.props.style);
+    expect(initialStyle.borderWidth).toBeUndefined();
+    const outline = screen.getByTestId('perps-pro-amount-invalid-outline');
+    expect(outline.props.pointerEvents).toBe('none');
+    expect(outline).toHaveStyle({ position: 'absolute', borderWidth: 1 });
+    for (const value of ['100%', '50%', '']) {
+      view.rerender(field(value, false));
+      expect(
+        screen.queryByTestId('perps-pro-amount-invalid-outline'),
+      ).toBeNull();
+      expect(StyleSheet.flatten(surface.props.style)).toEqual(initialStyle);
+      expect(screen.getByTestId('amount-input')).toBe(input);
+      expect(input.props.value).toBe(value);
+      expect(screen.getByText('USDC')).toBeTruthy();
+    }
+    expect(screen.getByTestId('perps-pro-amount-placeholder')).toBeTruthy();
+    fireEvent(input, 'focus');
+    expect(screen.getByTestId('perps-pro-amount-label')).toBeTruthy();
+    expect(
+      screen.getByTestId('perps-pro-trade-amount-unit-switch'),
+    ).toBeTruthy();
   });
 
   it('preserves the complete editing value while enabling tabular input glyphs', () => {

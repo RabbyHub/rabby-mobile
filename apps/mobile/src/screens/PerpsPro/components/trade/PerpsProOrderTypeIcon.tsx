@@ -3,6 +3,8 @@ import type { SvgProps } from 'react-native-svg';
 import LimitIcon from '@/assets2024/icons/perps/PerpsProOrderTypeLimit.svg';
 import MarketIcon from '@/assets2024/icons/perps/PerpsProOrderTypeMarket.svg';
 import ConditionalIcon from '@/assets2024/icons/perps/PerpsProOrderTypeConditional.svg';
+import TwapIcon from '@/assets2024/icons/perps/PerpsProOrderTypeTwap.svg';
+import ScaleIcon from '@/assets2024/icons/perps/PerpsProOrderTypeScale.svg';
 import type { PerpsProTradeOrderType } from '../../model/trade';
 
 const icons: Record<
@@ -12,6 +14,8 @@ const icons: Record<
   limit: LimitIcon,
   market: MarketIcon,
   conditional: ConditionalIcon,
+  scale: ScaleIcon,
+  twap: TwapIcon,
 };
 
 export const PerpsProOrderTypeIcon: React.FC<{

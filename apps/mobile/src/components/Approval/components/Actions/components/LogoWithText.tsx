@@ -55,6 +55,7 @@ const LogoWithText = ({
           style={{
             ...styles.logo,
             borderRadius: logoRadius,
+            borderCurve: 'continuous',
             width: logoSize,
             height: logoSize,
           }}
@@ -64,6 +65,7 @@ const LogoWithText = ({
           style={{
             ...styles.logo,
             borderRadius: logoRadius,
+            borderCurve: 'continuous',
             width: logoSize,
             height: logoSize,
           }}

@@ -29,6 +29,7 @@ export const getBottomSheetHandleStyles = (colors: AppColorsVariants) => {
       backgroundColor: colors['neutral-bg-1'],
       borderTopLeftRadius: 20,
       borderTopRightRadius: 20,
+      borderCurve: 'continuous',
     },
     handleIndicatorStyle: {
       backgroundColor: colors['neutral-line'],

@@ -87,6 +87,7 @@ const getStyles = createGetStyles(colors =>
       opacity: 0.95,
       zIndex: 1,
       borderRadius: 8,
+      borderCurve: 'continuous',
       justifyContent: 'center',
       alignItems: 'center',
       padding: 40,

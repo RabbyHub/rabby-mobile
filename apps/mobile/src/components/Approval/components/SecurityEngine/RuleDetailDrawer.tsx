@@ -22,6 +22,7 @@ const getThresholdWrapperStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
     thresholdWrapper: {
       borderRadius: 4,
+      borderCurve: 'continuous',
       padding: 18,
       display: 'flex',
       fontWeight: '500',
@@ -144,6 +145,7 @@ const getRuleDetailDrawerWrapperStyles = (colors: AppColorsVariants) =>
       padding: 20,
       borderTopLeftRadius: 20,
       borderTopRightRadius: 20,
+      borderCurve: 'continuous',
     },
     title: {
       color: colors['neutral-title-1'],

@@ -38,6 +38,7 @@ const getRuleDrawerWrapperStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
     container: {
       borderRadius: 8,
+      borderCurve: 'continuous',
       paddingHorizontal: 16,
       paddingVertical: 20,
       position: 'relative',
@@ -90,6 +91,7 @@ const getRuleDrawerWrapperStyles = (colors: AppColorsVariants) =>
       display: 'flex',
       marginTop: 8,
       borderRadius: 4,
+      borderCurve: 'continuous',
       padding: 18,
       flexDirection: 'row',
     },
@@ -129,6 +131,7 @@ const getRuleDrawerWrapperStyles = (colors: AppColorsVariants) =>
       padding: 13,
       fontWeight: '500',
       borderRadius: 6,
+      borderCurve: 'continuous',
     },
     buttonIgnoreText: {
       fontSize: 15,
@@ -264,6 +267,7 @@ const getStyles = (colors: AppColorsVariants) =>
     ruleFooter: {
       backgroundColor: colors['neutral-card-2'],
       borderRadius: 6,
+      borderCurve: 'continuous',
       overflow: 'hidden',
     },
     ruleFooterItem: {

@@ -116,6 +116,45 @@ const dependencies = (
 });
 
 describe('Perps modify open order action', () => {
+  it('modifies a Scale limit by oid while requiring its original cloid and remaining-order facts', async () => {
+    const cloid = '0x5ca1e001000000000000000000000001';
+    const batchLeg = buildPerpsModifyOpenOrderCommand({
+      account,
+      baseSize: '0.003',
+      coin: 'BTC',
+      dexId: '',
+      expectedLimitPrice: '50000',
+      expectedRemainingSize: '0.004',
+      limitPrice: '51000',
+      marketKey: 'hyperliquid::BTC',
+      oid: 7,
+      pxDecimals: 2,
+      reduceOnly: true,
+      side: 'sell',
+      szDecimals: 5,
+      tif: 'Alo',
+      cloid,
+    });
+    const deps = dependencies({
+      getOrderStatus: jest.fn(async () => ({
+        status: 'order',
+        order: {
+          order: { ...liveOrder, cloid },
+          status: 'open',
+          statusTimestamp: 1,
+        },
+      })),
+    });
+    expect((await executePerpsModifyOpenOrder(batchLeg, deps)).kind).toBe(
+      'updated',
+    );
+    expect(deps.modifyOrder).toHaveBeenCalledWith(
+      expect.objectContaining({ oid: 7, sz: '0.003', limitPx: '51000' }),
+    );
+    expect(
+      (await executePerpsModifyOpenOrder(batchLeg, dependencies())).kind,
+    ).toBe('staleContext');
+  });
   it('freezes a complete replacement with a protocol-valid price', () => {
     expect(command()).toMatchObject({
       expected: {

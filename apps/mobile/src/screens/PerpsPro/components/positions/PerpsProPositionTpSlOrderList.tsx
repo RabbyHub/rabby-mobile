@@ -420,12 +420,14 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   list: {
     padding: 16,
     borderRadius: 16,
+    borderCurve: 'continuous',
     backgroundColor: resolvePerpsProDialogCardBackground(colors2024, isLight),
   },
   addButton: {
     alignItems: 'center',
     backgroundColor: PERPS_PRO_DIALOG_TOKENS.selectedBackground,
     borderRadius: 6,
+    borderCurve: 'continuous',
     flexDirection: 'row',
     gap: 4,
     height: 26,
@@ -558,6 +560,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     backgroundColor:
       colors2024[isLight === false ? 'neutral-bg-5' : 'neutral-bg-2'],
     borderRadius: 6,
+    borderCurve: 'continuous',
     height: 32,
     justifyContent: 'center',
   },

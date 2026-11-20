@@ -28,6 +28,7 @@ const getStyles = (colors: AppColorsVariants, qrCodeWidth: number) =>
       backgroundColor: colors['red-light'],
       gap: 6,
       borderRadius: 8,
+      borderCurve: 'continuous',
       flexDirection: 'row',
     },
     alertText: {
@@ -38,6 +39,7 @@ const getStyles = (colors: AppColorsVariants, qrCodeWidth: number) =>
     qrCodeContainer: {
       backgroundColor: colors['neutral-bg1'],
       borderRadius: 12,
+      borderCurve: 'continuous',
       borderWidth: 1,
       borderColor: colors['neutral-line'],
       width: qrCodeWidth + 20,
@@ -55,6 +57,7 @@ const getStyles = (colors: AppColorsVariants, qrCodeWidth: number) =>
     privateKeyContainer: {
       backgroundColor: colors['neutral-card-1'],
       borderRadius: 8,
+      borderCurve: 'continuous',
       padding: 12,
       height: 100,
       width: '100%',

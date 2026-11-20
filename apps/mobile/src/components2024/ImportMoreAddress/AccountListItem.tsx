@@ -51,7 +51,7 @@ export const AccountListItem: React.FC<Props> = ({
           address={account.address}
           width={46}
           height={46}
-          style={{ borderRadius: 12 }}
+          style={{ borderRadius: 12, borderCurve: 'continuous' }}
         />
       }
       title={displayName}
@@ -72,6 +72,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     paddingVertical: 4,
     backgroundColor: colors2024['brand-light-1'],
     borderRadius: 4,
+    borderCurve: 'continuous',
   },
   badgeText: {
     color: colors2024['brand-default'],

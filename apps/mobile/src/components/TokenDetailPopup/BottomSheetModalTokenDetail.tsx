@@ -364,6 +364,7 @@ const getTokenDetailHeaderStyle = createGetStyles(colors => {
       paddingHorizontal: 8,
       backgroundColor: colors['neutral-card2'],
       borderRadius: 4,
+      borderCurve: 'continuous',
 
       flexDirection: 'row',
       alignItems: 'center',
@@ -1048,6 +1049,7 @@ const getStyles = createGetStyles(colors => {
     operationButton: {
       height: SIZES.opButtonHeight,
       borderRadius: 6,
+      borderCurve: 'continuous',
       width: '100%',
     },
     buttonTitle: {
@@ -1057,6 +1059,7 @@ const getStyles = createGetStyles(colors => {
     },
     disabledTooltipContent: {
       borderRadius: 2,
+      borderCurve: 'continuous',
     },
     disabledTooltipInner: {
       flexDirection: 'row',

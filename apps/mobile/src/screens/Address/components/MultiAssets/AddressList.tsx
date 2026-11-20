@@ -325,7 +325,7 @@ const getStyles = createGetStyles2024(ctx => ({
   title: {
     marginTop: 20,
     fontSize: 20,
-    fontWeight: '900',
+    fontWeight: '800',
     lineHeight: 24,
     textAlign: 'center',
     fontFamily: 'SF Pro Rounded',
@@ -349,6 +349,7 @@ const getStyles = createGetStyles2024(ctx => ({
     marginBottom: 22,
     padding: 16,
     borderRadius: 20,
+    borderCurve: 'continuous',
   },
   footerMain: {
     height: 46,
@@ -428,6 +429,7 @@ const getStyles = createGetStyles2024(ctx => ({
     borderWidth: 2,
     borderColor: ctx.colors2024['neutral-bg-1'],
     borderRadius: 10,
+    borderCurve: 'continuous',
   },
   horizontalLine: {
     // width: 100,

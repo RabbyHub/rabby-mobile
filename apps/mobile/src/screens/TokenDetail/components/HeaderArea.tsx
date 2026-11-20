@@ -426,6 +426,7 @@ const getStyles = createGetStyles2024(({ isLight, colors2024 }) => ({
     paddingVertical: 24,
     gap: 24,
     borderRadius: 20,
+    borderCurve: 'continuous',
     borderWidth: 1,
     borderColor: colors2024['neutral-line'],
     backgroundColor: colors2024['neutral-bg-1'],
@@ -489,7 +490,9 @@ const getStyles = createGetStyles2024(({ isLight, colors2024 }) => ({
     // centre (QA: header title sits low); pin the line box instead.
     lineHeight: 24,
     includeFontPadding: false,
-    fontWeight: '900',
+    // Keep the Rounded Heavy weight from the 1388 sweep while keeping the
+    // pinned line box from the header centring fix.
+    fontWeight: '800',
     flexWrap: 'nowrap',
   },
   chainLogo: {

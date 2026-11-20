@@ -639,6 +639,7 @@ const styles = StyleSheet.create({
   },
   section: {
     borderRadius: 8,
+    borderCurve: 'continuous',
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: '#D8DEE8',
     backgroundColor: '#FFFFFF',
@@ -653,6 +654,7 @@ const styles = StyleSheet.create({
   },
   card: {
     borderRadius: 8,
+    borderCurve: 'continuous',
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: '#E1E6EF',
     backgroundColor: '#F7F9FC',
@@ -680,6 +682,7 @@ const styles = StyleSheet.create({
   },
   smallButton: {
     borderRadius: 8,
+    borderCurve: 'continuous',
     height: 36,
   },
   smallButtonTitle: {
@@ -689,6 +692,7 @@ const styles = StyleSheet.create({
   uriInput: {
     minHeight: 92,
     borderRadius: 8,
+    borderCurve: 'continuous',
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: '#D8DEE8',
     backgroundColor: '#F7F9FC',
@@ -729,6 +733,7 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 40,
     borderRadius: 8,
+    borderCurve: 'continuous',
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: '#D8DEE8',
     backgroundColor: '#F7F9FC',
@@ -759,6 +764,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 8,
+    borderCurve: 'continuous',
     backgroundColor: '#EEF2F7',
   },
   dappName: {
@@ -784,6 +790,7 @@ const styles = StyleSheet.create({
   },
   logRow: {
     borderRadius: 8,
+    borderCurve: 'continuous',
     backgroundColor: '#F7F9FC',
     padding: 10,
     gap: 5,
@@ -805,6 +812,7 @@ const styles = StyleSheet.create({
     minWidth: 48,
     minHeight: 24,
     borderRadius: 6,
+    borderCurve: 'continuous',
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: '#C9D3E2',
     backgroundColor: '#FFFFFF',

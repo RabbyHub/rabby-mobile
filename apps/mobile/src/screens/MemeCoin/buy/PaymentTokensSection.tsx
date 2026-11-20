@@ -89,7 +89,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 16,
     lineHeight: 20,
-    fontWeight: '900',
+    fontWeight: '800',
     color: colors2024['neutral-title-1'],
   },
   link: {
@@ -106,6 +106,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     borderRadius: 14,
+    borderCurve: 'continuous',
     backgroundColor: colors2024['neutral-card-1'],
   },
   symbol: {

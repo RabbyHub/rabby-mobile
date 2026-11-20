@@ -266,6 +266,7 @@ const getStyles = function (colors: AppColorsVariants, topInset: number) {
     input: {
       backgroundColor: colors['neutral-card-1'],
       borderRadius: 8,
+      borderCurve: 'continuous',
       paddingHorizontal: 16,
       paddingVertical: 0,
       fontSize: 15,
@@ -279,6 +280,7 @@ const getStyles = function (colors: AppColorsVariants, topInset: number) {
     ensResultBox: {
       padding: 4,
       borderRadius: 6,
+      borderCurve: 'continuous',
       backgroundColor: colors['neutral-bg-1'],
       position: 'absolute',
       top: 24 + 64 + 6,
@@ -297,6 +299,7 @@ const getStyles = function (colors: AppColorsVariants, topInset: number) {
       alignItems: 'center',
       fontSize: 13,
       borderRadius: 4,
+      borderCurve: 'continuous',
       overflow: 'hidden',
     },
     ensText: {
@@ -309,6 +312,7 @@ const getStyles = function (colors: AppColorsVariants, topInset: number) {
       height: 36,
       backgroundColor: colors['neutral-card-1'],
       borderRadius: 6,
+      borderCurve: 'continuous',
       flexDirection: 'row',
       gap: 8,
       alignItems: 'center',

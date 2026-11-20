@@ -264,6 +264,7 @@ const getStyles = createGetStyles((colors, ctx) => {
     settingItem: {
       height: SIZES.ITEM_HEIGHT,
       borderRadius: 16,
+      borderCurve: 'continuous',
       paddingHorizontal: 16,
       backgroundColor: colors['neutral-bg-1'],
       flexDirection: 'row',

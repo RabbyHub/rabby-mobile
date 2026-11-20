@@ -208,7 +208,7 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 20,
     fontStyle: 'normal',
-    fontWeight: '900',
+    fontWeight: '800',
     color: colors2024['neutral-title-1'],
     marginBottom: 12,
     textAlign: 'center',
@@ -216,6 +216,7 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
 
   depositTag: {
     borderRadius: 4,
+    borderCurve: 'continuous',
     backgroundColor: 'rgba(80, 210, 193, 0.12)',
     paddingHorizontal: 4,
     paddingVertical: 1,
@@ -247,6 +248,7 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
     alignItems: 'center',
     flexDirection: 'row',
     borderRadius: 16,
+    borderCurve: 'continuous',
   },
 
   box: { flexDirection: 'row', alignItems: 'center' },

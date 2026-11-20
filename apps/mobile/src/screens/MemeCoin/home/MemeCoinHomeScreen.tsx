@@ -557,7 +557,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 16,
     lineHeight: 20,
-    fontWeight: '900',
+    fontWeight: '800',
     color: colors2024['neutral-title-1'],
   },
   sectionLabel: {
@@ -572,5 +572,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: '100%',
     marginBottom: 8,
     borderRadius: 14,
+    borderCurve: 'continuous',
   },
 }));

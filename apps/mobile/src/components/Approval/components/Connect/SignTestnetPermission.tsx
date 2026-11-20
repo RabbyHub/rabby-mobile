@@ -31,6 +31,7 @@ const getStyles = (colors: AppColorsVariants) =>
       paddingVertical: 11,
       borderTopLeftRadius: 20,
       borderTopRightRadius: 20,
+      borderCurve: 'continuous',
       flexDirection: 'row',
     },
     radioText: {
@@ -51,6 +52,7 @@ const getStyles = (colors: AppColorsVariants) =>
     radioGroupContainer: {
       backgroundColor: colors['neutral-card-2'],
       borderRadius: 8,
+      borderCurve: 'continuous',
       paddingHorizontal: 16,
       overflow: 'hidden',
     },

@@ -825,6 +825,7 @@ const getSheetStyles = createGetStyles2024(({ colors2024 }) => ({
     backgroundColor: colors2024['neutral-bg-1'],
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
+    borderCurve: 'continuous',
   },
 
   simulateChangeContainer: {
@@ -841,6 +842,7 @@ const getSheetStyles = createGetStyles2024(({ colors2024 }) => ({
     paddingTop: 12,
     paddingBottom: 0,
     borderRadius: 8,
+    borderCurve: 'continuous',
   },
   balanceChangeContainer: {
     backgroundColor: colors2024['neutral-bg-2'],

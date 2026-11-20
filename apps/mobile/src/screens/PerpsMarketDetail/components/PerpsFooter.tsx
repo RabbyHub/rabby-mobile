@@ -204,6 +204,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   skeleton: {
     backgroundColor: 'rgba(190,190,190,0.2)',
     borderRadius: 12,
+    borderCurve: 'continuous',
   },
   noPermissonBtn: {
     fontSize: 18,

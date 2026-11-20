@@ -543,6 +543,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     width: 33,
     height: 33,
     borderRadius: 4,
+    borderCurve: 'continuous',
   },
   doubleBox: {
     justifyContent: 'center',
@@ -552,6 +553,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
 
     backgroundColor: makeHistoryDetailColors({ isLight, colors2024 }).card,
     borderRadius: 16,
+    borderCurve: 'continuous',
     padding: 16,
   },
   swapTitle: {
@@ -567,6 +569,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-bg-2'],
     borderRadius: 200,
+    borderCurve: 'continuous',
     width: 45,
     height: 45,
     alignItems: 'center',
@@ -581,6 +584,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 16,
+    borderCurve: 'continuous',
     backgroundColor: !isLight
       ? colors2024['neutral-bg-2']
       : colors2024['neutral-bg-1'],
@@ -593,6 +597,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 16,
+    borderCurve: 'continuous',
     backgroundColor: !isLight
       ? colors2024['neutral-bg-2']
       : colors2024['neutral-bg-1'],
@@ -603,6 +608,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     width: '100%',
     backgroundColor: makeHistoryDetailColors({ isLight, colors2024 }).card,
     borderRadius: 16,
+    borderCurve: 'continuous',
   },
   singleBox: {
     justifyContent: 'space-between',
@@ -628,6 +634,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     justifyContent: 'center',
     alignContent: 'center',
     borderRadius: 16,
+    borderCurve: 'continuous',
     paddingHorizontal: 16,
     paddingVertical: 12,
     // flexDirection: 'row',
@@ -686,5 +693,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     borderWidth: 1,
     borderColor: makeHistoryDetailColors({ isLight, colors2024 }).card,
     borderRadius: 1000,
+    borderCurve: 'continuous',
   },
 }));

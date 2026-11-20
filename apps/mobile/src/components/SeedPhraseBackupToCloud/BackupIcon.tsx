@@ -43,6 +43,7 @@ const getStyles = (colors: AppColorsVariants) =>
       borderWidth: 2,
       borderColor: 'white',
       borderRadius: 100,
+      borderCurve: 'continuous',
       zIndex: 1,
     },
     cloudIcon: {

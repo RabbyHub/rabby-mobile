@@ -157,6 +157,7 @@ export const GnosisMessageQueueItem = ({
 const getStyles = createGetStyles(colors => ({
   queueItem: {
     borderRadius: 6,
+    borderCurve: 'continuous',
     paddingHorizontal: 12,
     paddingTop: 12,
     paddingBottom: 16,

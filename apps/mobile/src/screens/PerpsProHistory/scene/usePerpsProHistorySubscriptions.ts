@@ -79,7 +79,7 @@ export const usePerpsProHistorySubscriptions = ({
   updateTabState: UpdatePerpsProHistoryTabState;
 }) => {
   useEffect(() => {
-    if (!enabled || !accountAddress) {
+    if (!enabled || !accountAddress || activeTab === 'twap') {
       return;
     }
     const handleRawEvent = (event: PerpsProHistoryRawEvent) => {

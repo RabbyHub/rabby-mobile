@@ -315,6 +315,7 @@ const getStyle = createGetStyles2024(
     iconSwitchArrow: {
       backgroundColor: colors2024['neutral-bg-2'],
       borderRadius: 200,
+      borderCurve: 'continuous',
       width: 45,
       height: 45,
       alignItems: 'center',
@@ -369,6 +370,7 @@ const getStyle = createGetStyles2024(
       alignItems: 'center',
       justifyContent: 'center',
       borderRadius: 16,
+      borderCurve: 'continuous',
       backgroundColor: colors2024['neutral-bg-1'],
       flex: 1,
       height: 110,
@@ -379,6 +381,7 @@ const getStyle = createGetStyles2024(
       alignItems: 'center',
       justifyContent: 'center',
       borderRadius: 16,
+      borderCurve: 'continuous',
       backgroundColor: colors2024['neutral-bg-1'],
       flex: 1,
       height: 110,
@@ -387,6 +390,7 @@ const getStyle = createGetStyles2024(
       width: '100%',
       backgroundColor: makeHistoryDetailColors({ isLight, colors2024 }).card,
       borderRadius: 16,
+      borderCurve: 'continuous',
     },
     singleBox: {
       justifyContent: 'space-between',
@@ -443,6 +447,7 @@ const getStyle = createGetStyles2024(
       backgroundColor: makeHistoryDetailColors({ isLight, colors2024 })
         .cardInner,
       borderRadius: 12,
+      borderCurve: 'continuous',
       justifyContent: 'space-between',
       alignItems: 'flex-start',
       marginHorizontal: 12,

@@ -386,6 +386,7 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
   },
   assetIcon: {
     borderRadius: 40,
+    borderCurve: 'continuous',
   },
   chainLogo: {
     borderWidth: 1.5,
@@ -421,6 +422,7 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
       : colors2024['neutral-bg-3'],
     marginHorizontal: 12,
     borderRadius: 16,
+    borderCurve: 'continuous',
     paddingTop: 14,
     paddingBottom: 14,
   },
@@ -445,6 +447,7 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
   },
   protocolActionsItemWrapper: {
     borderRadius: 4,
+    borderCurve: 'continuous',
     paddingHorizontal: 4,
     backgroundColor: colors2024['brand-light-1'],
   },

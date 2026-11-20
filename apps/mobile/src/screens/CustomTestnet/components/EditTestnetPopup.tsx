@@ -261,7 +261,7 @@ const getStyles = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
   },
   modalTitle: {
     fontFamily: 'SF Pro Rounded',
-    fontWeight: '900',
+    fontWeight: '800',
     fontSize: 20,
     lineHeight: 24,
     color: colors2024['neutral-title-1'],
@@ -275,6 +275,7 @@ const getStyles = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
   quickAdd: {
     height: 56,
     borderRadius: 12,
+    borderCurve: 'continuous',
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,

@@ -25,6 +25,62 @@ jest.mock('@react-navigation/native', () => {
 jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({ top: 47, bottom: 34, left: 0, right: 0 }),
 }));
+// Component-contract stub: keep every page that has ever been requested mounted
+// (the real track retains them), but only the requested key is at rest. Drag
+// mechanics, back-gesture handoff and native hit testing stay device-only.
+jest.mock('@rabby-wallet/rn-collapsible-scene-view', () => {
+  const ReactModule = require('react');
+  const RNView = require('react-native').View;
+  const RootScenePager = ({
+    keys,
+    requestedKey,
+    renderPage,
+    testID,
+  }: {
+    keys: readonly string[];
+    requestedKey: string;
+    renderPage: (
+      key: string,
+      context: { selected: boolean; interactive: boolean; visible: boolean },
+    ) => React.ReactElement | null;
+    testID?: string;
+  }) => {
+    const seen = ReactModule.useRef<Set<string>>(new Set());
+    seen.current.add(requestedKey);
+    return ReactModule.createElement(
+      RNView,
+      { testID },
+      keys
+        .filter(key => seen.current.has(key))
+        .map(key =>
+          ReactModule.createElement(
+            RNView,
+            {
+              key,
+              style: key === requestedKey ? null : { display: 'none' },
+            },
+            renderPage(key, {
+              selected: key === requestedKey,
+              interactive: true,
+              visible: true,
+            }),
+          ),
+        ),
+    );
+  };
+  return {
+    __esModule: true,
+    RootScenePager,
+    RootScenePagerGestureBlock: ({ children }: { children: unknown }) =>
+      children,
+  };
+});
+jest.mock('@/hooks/useRootPagerEnabled', () => ({
+  useRootPagerEnabled: () => true,
+}));
+jest.mock('@/hooks/useRootScenePagerBackGesture', () => ({
+  useRootScenePagerBackGesture: () => undefined,
+}));
 jest.mock('@/hooks/theme', () => ({
   useTheme2024: ({ getStyle }: { getStyle: Function }) => ({
     styles: getStyle({

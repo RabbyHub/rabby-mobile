@@ -398,6 +398,7 @@ const getStyles = createGetStyles2024(colors => {
     input: {
       height: 48,
       borderRadius: 8,
+      borderCurve: 'continuous',
       paddingHorizontal: 12,
       color: colors['neutral-title-1'],
       backgroundColor: colors['neutral-bg-1'],
@@ -438,6 +439,7 @@ const getStyles = createGetStyles2024(colors => {
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: colors['neutral-line'],
       borderRadius: 8,
+      borderCurve: 'continuous',
       padding: 10,
       gap: 4,
     },

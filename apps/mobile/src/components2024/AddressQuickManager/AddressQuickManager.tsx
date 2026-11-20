@@ -250,6 +250,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   addressItem: {
     borderRadius: 20,
+    borderCurve: 'continuous',
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: colors2024['neutral-line'],
@@ -279,6 +280,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     backgroundColor: colors2024['neutral-bg-2'],
     padding: 5,
     borderRadius: 30,
+    borderCurve: 'continuous',
   },
   titleTextWrapper: {
     // flex: 1,
@@ -290,6 +292,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     marginBottom: 22,
     padding: 16,
     borderRadius: 20,
+    borderCurve: 'continuous',
   },
   footerMain: {
     height: 46,
@@ -308,7 +311,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   titleText: {
     color: colors2024['neutral-title-1'],
     fontSize: 20,
-    fontWeight: '900',
+    fontWeight: '800',
     fontFamily: 'SF Pro Rounded',
     textAlign: 'center',
     lineHeight: 24,

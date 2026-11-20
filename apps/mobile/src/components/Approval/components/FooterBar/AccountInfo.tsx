@@ -103,6 +103,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   wrapper: {
     backgroundColor: colors2024['neutral-bg-3'],
     borderRadius: 8,
+    borderCurve: 'continuous',
     paddingVertical: 8,
     paddingHorizontal: 16,
     flexDirection: 'row',

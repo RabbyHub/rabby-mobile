@@ -195,7 +195,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     color: colors2024['neutral-title-1'],
     fontSize: 20,
     lineHeight: 24,
-    fontWeight: '900',
+    fontWeight: '800',
     fontFamily: 'SF Pro Rounded',
     paddingTop: 12,
     marginBottom: 16,
@@ -243,6 +243,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     paddingHorizontal: 12,
     paddingVertical: 16,
     borderRadius: 12,
+    borderCurve: 'continuous',
   },
   tipIcon: {
     width: 14,
@@ -269,6 +270,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   loading: {
     backgroundColor: colors2024['neutral-line'],
     borderRadius: 8,
+    borderCurve: 'continuous',
     flex: 1,
   },
   checkbox: {

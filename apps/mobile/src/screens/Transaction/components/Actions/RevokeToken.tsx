@@ -157,6 +157,7 @@ const getStyle = createGetStyles2024(
       width: '100%',
       backgroundColor: makeHistoryDetailColors({ isLight, colors2024 }).card,
       borderRadius: 16,
+      borderCurve: 'continuous',
     },
     singleBox: {
       justifyContent: 'space-between',
@@ -186,6 +187,7 @@ const getStyle = createGetStyles2024(
       backgroundColor: makeHistoryDetailColors({ isLight, colors2024 })
         .cardInner,
       borderRadius: 12,
+      borderCurve: 'continuous',
       justifyContent: 'space-between',
       alignItems: 'flex-start',
       marginHorizontal: 12,

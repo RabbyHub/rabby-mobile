@@ -83,6 +83,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     width: '100%',
     height: DEFAULT_HEIGHT,
     borderRadius: 16,
+    borderCurve: 'continuous',
     backgroundColor: isLight
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-bg-2'],
@@ -104,7 +105,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 20,
     fontStyle: 'normal',
-    fontWeight: 900,
+    fontWeight: 800,
     lineHeight: 24,
   },
   contentArea: {

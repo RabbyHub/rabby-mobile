@@ -87,6 +87,7 @@ const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
   notice: {
     backgroundColor: colors2024['orange-light-1'],
     borderRadius: 8,
+    borderCurve: 'continuous',
     paddingHorizontal: 10,
     paddingVertical: 8,
     marginBottom: 12,
@@ -114,11 +115,12 @@ const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
       getBottomButtonBottomOffset(safeAreaInsets.bottom) + BOTTOM_BUTTON_GAP,
   },
   restoreContainer: { flex: 1 },
-  restoreButton: { borderRadius: 10 },
+  restoreButton: { borderRadius: 10, borderCurve: 'continuous' },
   more: {
     width: BOTTOM_BUTTON_SINGLE_HEIGHT,
     height: BOTTOM_BUTTON_SINGLE_HEIGHT,
     borderRadius: 12,
+    borderCurve: 'continuous',
     borderWidth: 1,
     borderColor: colors2024['neutral-line'],
     alignItems: 'center',

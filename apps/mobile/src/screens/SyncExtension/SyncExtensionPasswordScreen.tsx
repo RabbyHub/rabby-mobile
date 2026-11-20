@@ -436,6 +436,7 @@ const getStyles = createGetStyles2024(ctx => ({
     marginTop: 36,
     height: 62,
     borderRadius: 16,
+    borderCurve: 'continuous',
   },
   fieldName: {
     color: ctx.colors2024['neutral-info'],

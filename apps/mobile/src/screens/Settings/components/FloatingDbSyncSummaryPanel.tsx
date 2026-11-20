@@ -437,6 +437,7 @@ export function FloatingDbSyncSummaryPanel() {
       borderBottomLeftRadius: activeSide === SIDE_LEFT ? 10 : 0,
       borderTopRightRadius: activeSide === SIDE_RIGHT ? 10 : 0,
       borderBottomRightRadius: activeSide === SIDE_RIGHT ? 10 : 0,
+      borderCurve: 'continuous',
     };
   }, [collapsed]);
 
@@ -450,6 +451,7 @@ export function FloatingDbSyncSummaryPanel() {
       borderBottomLeftRadius: activeSide === SIDE_LEFT ? 0 : HANDLE_SIZE / 2,
       borderTopRightRadius: activeSide === SIDE_RIGHT ? 0 : HANDLE_SIZE / 2,
       borderBottomRightRadius: activeSide === SIDE_RIGHT ? 0 : HANDLE_SIZE / 2,
+      borderCurve: 'continuous',
     };
   });
   const handleStateAnimatedStyles = useAnimatedStyle(() => {
@@ -585,6 +587,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     overflow: 'hidden',
     borderRadius: 10,
+    borderCurve: 'continuous',
     paddingHorizontal: 12,
     paddingVertical: 10,
     backgroundColor: 'rgba(9, 14, 31, 0.68)',
@@ -597,6 +600,7 @@ const styles = StyleSheet.create({
     width: HANDLE_SIZE,
     height: HANDLE_SIZE,
     borderRadius: HANDLE_SIZE / 2,
+    borderCurve: 'continuous',
     backgroundColor: 'rgba(90, 98, 114, 0.9)',
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: 'rgba(255, 255, 255, 0.35)',
@@ -646,6 +650,7 @@ const styles = StyleSheet.create({
     minWidth: 86,
     flexGrow: 1,
     borderRadius: 6,
+    borderCurve: 'continuous',
     paddingHorizontal: 8,
     paddingVertical: 6,
     backgroundColor: 'rgba(255, 255, 255, 0.1)',

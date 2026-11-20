@@ -71,6 +71,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     width: 24,
     height: 24,
     borderRadius: 1000,
+    borderCurve: 'continuous',
   },
   positive: {
     color: colors2024['green-default'],

@@ -209,6 +209,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 12, // keep in sync with components2024/Button
+    borderCurve: 'continuous',
     paddingHorizontal: 0,
     width: '100%',
   },

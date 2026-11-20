@@ -58,6 +58,7 @@ const getStyles = createGetStyles2024(() => ({
     flexDirection: 'row',
     gap: 4,
     borderRadius: 100,
+    borderCurve: 'continuous',
     paddingHorizontal: 6,
     justifyContent: 'center',
     alignItems: 'center',
@@ -68,6 +69,7 @@ const getStyles = createGetStyles2024(() => ({
     width: 10,
     height: 10,
     borderRadius: 5,
+    borderCurve: 'continuous',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -75,6 +77,7 @@ const getStyles = createGetStyles2024(() => ({
     width: 4,
     height: 4,
     borderRadius: 2,
+    borderCurve: 'continuous',
   },
   distanceText: {
     fontFamily: 'SF Pro Rounded',

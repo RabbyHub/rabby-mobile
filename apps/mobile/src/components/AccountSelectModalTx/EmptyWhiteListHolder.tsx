@@ -67,7 +67,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     position: 'relative',
     color: colors2024['neutral-title-1'],
     fontSize: 18,
-    fontWeight: '900',
+    fontWeight: '800',
     fontFamily: 'SF Pro Rounded',
     lineHeight: 22,
   },
@@ -86,6 +86,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     borderColor: colors2024['brand-light-1'],
     borderRadius: 19,
+    borderCurve: 'continuous',
     gap: 12,
   },
   iconWrapper: {
@@ -115,12 +116,14 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     height: 7,
     backgroundColor: colors2024['brand-light-1'],
     borderRadius: 8,
+    borderCurve: 'continuous',
   },
   loadingSection2: {
     width: 58,
     height: 7,
     backgroundColor: colors2024['brand-light-2'],
     borderRadius: 8,
+    borderCurve: 'continuous',
   },
   footer: {
     flexDirection: 'row',
@@ -135,7 +138,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   footerBtnText: {
     fontFamily: 'SF Pro Rounded',
     color: colors2024['brand-default'],
-    fontWeight: '900',
+    fontWeight: '800',
     fontSize: 16,
     lineHeight: 24,
   },

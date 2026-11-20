@@ -93,6 +93,7 @@ function NewlyAddedAccountItem({
                 borderWidth: 1,
                 borderColor: colors2024['neutral-line'],
                 borderRadius: 12,
+                borderCurve: 'continuous',
                 paddingHorizontal: 8,
               },
             ]}>
@@ -908,6 +909,7 @@ const getStyles = createGetStyles2024(ctx => {
       width: '100%',
       minHeight: 36,
       borderRadius: 8,
+      borderCurve: 'continuous',
       backgroundColor: ctx.colors2024['neutral-bg-1'],
       paddingHorizontal: 12,
       paddingVertical: 8,
@@ -961,6 +963,7 @@ const getStyles = createGetStyles2024(ctx => {
       width: '100%',
       maxWidth: CONTENT_W,
       borderRadius: 8,
+      borderCurve: 'continuous',
       borderWidth: 1,
       borderColor: ctx.colors2024['neutral-line'],
       padding: 12,

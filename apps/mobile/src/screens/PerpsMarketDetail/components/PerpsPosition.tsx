@@ -564,6 +564,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       width: 4,
       height: 20,
       borderRadius: 100,
+      borderCurve: 'continuous',
       backgroundColor: '#50D2C1',
     },
     title: {
@@ -575,6 +576,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     },
     positionCard: {
       borderRadius: 16,
+      borderCurve: 'continuous',
       backgroundColor: isLight
         ? colors2024['neutral-bg-1']
         : colors2024['neutral-bg-2'],
@@ -644,6 +646,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     },
     tpSlCard: {
       borderRadius: 16,
+      borderCurve: 'continuous',
       backgroundColor: isLight
         ? colors2024['neutral-bg-1']
         : colors2024['neutral-bg-2'],
@@ -673,6 +676,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     },
     crossTag: {
       borderRadius: 4,
+      borderCurve: 'continuous',
       paddingHorizontal: 4,
       flexDirection: 'row',
       height: 18,
@@ -683,6 +687,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     },
     leverageTag: {
       borderRadius: 4,
+      borderCurve: 'continuous',
       paddingHorizontal: 4,
       justifyContent: 'center',
       alignItems: 'center',

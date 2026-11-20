@@ -43,6 +43,7 @@ export function Block({
       <View
         style={{
           borderRadius: 24,
+          borderCurve: 'continuous',
           marginTop: hasHeader ? 8 : 0,
           flexDirection: 'column',
           backgroundColor: isLight

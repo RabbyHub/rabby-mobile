@@ -11,6 +11,7 @@ const getStyles = createGetStyles2024(ctx => {
       width: 20,
       height: 20,
       borderRadius: 100,
+      borderCurve: 'continuous',
       justifyContent: 'center',
       alignItems: 'center',
     },
@@ -18,6 +19,7 @@ const getStyles = createGetStyles2024(ctx => {
       width: 10,
       height: 10,
       borderRadius: 100,
+      borderCurve: 'continuous',
       backgroundColor: ctx.colors2024['brand-default'],
     },
     container: {

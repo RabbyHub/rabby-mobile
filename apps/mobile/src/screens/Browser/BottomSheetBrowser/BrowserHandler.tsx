@@ -361,6 +361,7 @@ const getStyle = createGetStyles2024(
         alignItems: 'center',
         flexDirection: 'row',
         borderRadius: 19,
+        borderCurve: 'continuous',
         gap: 8,
 
         borderWidth: StyleSheet.hairlineWidth,

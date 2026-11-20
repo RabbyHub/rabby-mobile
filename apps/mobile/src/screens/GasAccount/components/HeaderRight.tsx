@@ -157,6 +157,7 @@ const getStyles = createGetStyles2024(({ colors, colors2024 }) => ({
     height: 'auto',
     marginLeft: 6,
     borderRadius: 12,
+    borderCurve: 'continuous',
     shadowOpacity: 0,
   },
   optionIcon: {

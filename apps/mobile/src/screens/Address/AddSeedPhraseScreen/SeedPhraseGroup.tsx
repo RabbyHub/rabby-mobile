@@ -63,6 +63,7 @@ const getStyle = createGetStyles(colors => {
   return {
     main: {
       borderRadius: 6,
+      borderCurve: 'continuous',
       backgroundColor: colors['neutral-card1'],
     },
     headline: {

@@ -24,6 +24,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
       : colors2024['neutral-bg-2'],
 
     borderRadius: 20,
+    borderCurve: 'continuous',
     borderWidth: 1,
     borderStyle: 'solid',
     borderColor: colors2024['neutral-line'],
@@ -89,6 +90,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     width: 26,
     height: 26,
     borderRadius: 30,
+    borderCurve: 'continuous',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -106,6 +108,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   walletIcon: {
     borderRadius: 12,
+    borderCurve: 'continuous',
   },
   claimBox: {
     paddingHorizontal: 20,
@@ -113,6 +116,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 8,
+    borderCurve: 'continuous',
     backgroundColor: colors2024['brand-light-1'],
   },
   claimText: {

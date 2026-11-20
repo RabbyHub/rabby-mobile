@@ -243,7 +243,7 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
   },
   listTitle: {
     fontSize: 20,
-    fontWeight: '900',
+    fontWeight: '800',
     textAlign: 'center',
     lineHeight: 24,
     fontFamily: 'SF Pro Rounded',
@@ -271,6 +271,7 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
     backgroundColor: colors2024['neutral-bg-2'],
     padding: 16,
     borderRadius: 20,
+    borderCurve: 'continuous',
   },
   footerMain: {
     height: 46,

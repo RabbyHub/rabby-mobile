@@ -946,6 +946,7 @@ const getStyles = createGetStyles2024(ctx => ({
   renderItemWrapper: {
     backgroundColor: ctx.colors2024['neutral-bg-1'],
     borderRadius: 14,
+    borderCurve: 'continuous',
     height: ASSETS_ITEM_HEIGHT_NEW,
     paddingLeft: 12,
     width: '100%',

@@ -226,6 +226,7 @@ export const getGasTokenBalance = async ({
         decimals: feeToken.decimals,
         logoUrl: feeToken.logoUrl,
       },
+      isTempoUserFeeTokenPreference: feeToken.isUserPreference,
     };
   }
 

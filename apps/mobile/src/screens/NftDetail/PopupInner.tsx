@@ -154,7 +154,7 @@ export const NFTDetailPopupInner = ({
             style={styles.images}
             mediaStyle={styles.images}
             playable={true}
-            poster={token.content}
+            poster={token.thumbnail_url}
           />
           {token.amount > 1 && (
             <View style={styles.nftCountContainer}>
@@ -232,6 +232,7 @@ const getStyle = createGetStyles(colors => ({
     width: '100%',
     height: '100%',
     borderRadius: 6,
+    borderCurve: 'continuous',
     resizeMode: 'cover',
   },
   nftCountContainer: {
@@ -244,6 +245,7 @@ const getStyle = createGetStyles(colors => ({
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: 4,
+    borderCurve: 'continuous',
   },
   nftCount: {
     color: colors['neutral-title2'],

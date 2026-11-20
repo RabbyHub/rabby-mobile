@@ -176,7 +176,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   titleText: {
     color: colors2024['neutral-title-1'],
     fontSize: 20,
-    fontWeight: '900',
+    fontWeight: '800',
     fontFamily: 'SF Pro Rounded',
     textAlign: 'center',
     lineHeight: 24,
@@ -224,6 +224,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   inputContainerStyle: {
     height: 46,
     borderRadius: 30,
+    borderCurve: 'continuous',
     paddingHorizontal: 20,
     borderBottomWidth: 0,
   },

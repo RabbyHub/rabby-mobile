@@ -27,6 +27,7 @@ describe('perpsProSemanticTagStyles', () => {
 
     expect(container).toEqual({
       backgroundColor: 'neutral-bg-5',
+      borderCurve: 'continuous',
       borderRadius: 4,
       paddingHorizontal: 4,
       paddingVertical: 1,
@@ -53,6 +54,7 @@ describe('perpsProSemanticTagStyles', () => {
 
       expect(container).toEqual({
         backgroundColor,
+        borderCurve: 'continuous',
         borderRadius: 4,
         paddingHorizontal: 4,
         paddingVertical: 1,
@@ -81,6 +83,7 @@ describe('perpsProSemanticTagStyles', () => {
       expect(container).toEqual({
         alignItems: 'center',
         backgroundColor,
+        borderCurve: 'continuous',
         borderRadius: 4,
         height: 16,
         justifyContent: 'center',

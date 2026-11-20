@@ -56,12 +56,14 @@ export const getPerpsProDialogStyles = (
     modal: {
       borderTopLeftRadius: 20,
       borderTopRightRadius: 20,
+      borderCurve: 'continuous',
       overflow: 'hidden',
     },
     background: {
       backgroundColor: colors['neutral-bg-0'],
       borderTopLeftRadius: 20,
       borderTopRightRadius: 20,
+      borderCurve: 'continuous',
     },
     handle: {
       backgroundColor: colors['neutral-bg-0'],
@@ -74,6 +76,7 @@ export const getPerpsProDialogStyles = (
       width: 50,
       height: 6,
       borderRadius: 3,
+      borderCurve: 'continuous',
     },
     sheet: {},
     content: {
@@ -91,6 +94,7 @@ export const getPerpsProDialogStyles = (
     options: { gap: 8, marginTop: 24 },
     option: {
       borderRadius: 12,
+      borderCurve: 'continuous',
       borderWidth: 1,
       padding: 15,
       backgroundColor: resolvePerpsProDialogCardBackground(colors, isLight),
@@ -138,6 +142,7 @@ export const getPerpsProDialogActionStyles = (_colors: AppColors2024Variants) =>
   ({
     button: {
       borderRadius: 12,
+      borderCurve: 'continuous',
       backgroundColor: PERPS_PRO_DIALOG_TOKENS.actionBackground,
       shadowColor: PERPS_PRO_DIALOG_TOKENS.actionShadow,
       shadowOffset: { width: 0, height: 8 },
