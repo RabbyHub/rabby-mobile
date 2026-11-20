@@ -622,6 +622,22 @@ export const HomeCustomMaterialTabBar = ({}: Partial<
     };
   }, [pagerOffsetStrategy, indexDecimal, nativeMode, pushBound]);
 
+  // Declared before the frame callback on purpose: a worklet captures the
+  // values it references when it is created, and `runOnJS(setFrameActive)`
+  // with a function defined further down hands the UI runtime `undefined`
+  // (native crash: `Cannot read property '__remoteFunction' of undefined`).
+  const frameCallbackRef = React.useRef<{
+    setActive: (active: boolean) => void;
+  } | null>(null);
+  const frameActiveRef = React.useRef(false);
+  const setFrameActive = React.useCallback((active: boolean) => {
+    if (frameActiveRef.current === active) {
+      return;
+    }
+    frameActiveRef.current = active;
+    frameCallbackRef.current?.setActive(active);
+  }, []);
+
   const frameCallback = useFrameCallback(info => {
     if (legacyBridge) {
       return;
@@ -668,17 +684,7 @@ export const HomeCustomMaterialTabBar = ({}: Partial<
 
   // The tuned bridge is a JS-mode callback: `autostart` only seeds the ref, so
   // switching the A/B mode has to go through `setActive` as well.
-  const frameActiveRef = React.useRef(false);
-  const setFrameActive = React.useCallback(
-    (active: boolean) => {
-      if (frameActiveRef.current === active) {
-        return;
-      }
-      frameActiveRef.current = active;
-      frameCallback.setActive(active);
-    },
-    [frameCallback],
-  );
+  frameCallbackRef.current = frameCallback;
   React.useEffect(() => {
     setFrameActive(!legacyBridge);
   }, [legacyBridge, setFrameActive]);
