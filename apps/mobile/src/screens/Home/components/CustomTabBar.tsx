@@ -232,11 +232,17 @@ const indicatorStyles = createGetStyles2024(
     },
   },
   ({ isLight, colors2024, windowWidth }) => {
-    // Use the reactive width the theme hook passes in: `svsLayout` is filled by
-    // a deferred startup task, so a snapshot read here can still hold the
-    // pre-letterbox native width on the Duo outer screen and overflow the
-    // 382pt content column by 42pt.
-    const winWidth = windowWidth ?? getDimensionsSnapshot('window').width;
+    // Keep the snapshot width as the base (this is what every other platform
+    // already used), and only prefer the reactive width when it is strictly
+    // narrower: that is the Duo outer screen, where `svsLayout` can still hold
+    // the pre-letterbox 466pt while the content column is 382pt.
+    const snapshotWidth = getDimensionsSnapshot('window').width;
+    const winWidth =
+      typeof windowWidth === 'number' &&
+      windowWidth > 0 &&
+      windowWidth < snapshotWidth
+        ? windowWidth
+        : snapshotWidth;
     const indicatorWidth = getHomeTabIndicatorWidth(winWidth);
     // The right segment covers the whole right bar: half of it was dead before,
     // so tapping the right half of the grey bar did nothing.
