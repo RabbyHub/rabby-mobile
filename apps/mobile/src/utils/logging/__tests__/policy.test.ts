@@ -7,6 +7,19 @@ import {
 } from '../policy';
 
 describe('logging policy', () => {
+  it.each(['development', 'regression', 'production'])(
+    'forces file logging and console capture on for diagnostic exports in %s',
+    runtimeEnv => {
+      const options = {
+        runtimeEnv,
+        localEnabled: false,
+        prodOnlineEnabled: false,
+        diagnosticExportEnabled: true,
+      };
+      expect(resolveAppFileLoggingEnabled(options)).toBe(true);
+      expect(resolveConsoleCaptureEnabled(options)).toBe(true);
+    },
+  );
   it('uses development-on and regression-off as the local defaults', () => {
     expect(getDefaultLocalAppFileLoggingEnabled('development')).toBe(true);
     expect(getDefaultLocalAppFileLoggingEnabled('regression')).toBe(false);
