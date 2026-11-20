@@ -5,8 +5,8 @@ import {
 } from '@rabby-wallet/react-native-fs';
 
 let captureEnabled = false;
-import { storeApiExpSettingData } from '@/hooks/appSettings';
-import { isUnlockSessionValid, isUnlocked } from '@/core/apis/lock';
+import type * as AppSettings from '@/hooks/appSettings';
+import type * as LockApi from '@/core/apis/lock';
 
 let allowAnyApproval = false;
 
@@ -20,10 +20,19 @@ export function setAllowAnyApproval(value: boolean) {
  * disarmed or the wallet is locked.
  */
 export function isAllowAnyApproval() {
+  if (!allowAnyApproval) {
+    return false;
+  }
+  // Load these on demand: their module graphs reach the toast/text components
+  // and the lock service, which plain controller tests must not have to mount
+  // just to import this module.
+  const { storeApiExpSettingData } =
+    require('@/hooks/appSettings') as typeof AppSettings;
+  const { isUnlocked, isUnlockSessionValid } =
+    require('@/core/apis/lock') as typeof LockApi;
   if (
-    allowAnyApproval &&
-    (!storeApiExpSettingData.getScreenE2EEnabled() ||
-      !(isUnlocked() || isUnlockSessionValid()))
+    !storeApiExpSettingData.getScreenE2EEnabled() ||
+    !(isUnlocked() || isUnlockSessionValid())
   ) {
     allowAnyApproval = false;
   }
