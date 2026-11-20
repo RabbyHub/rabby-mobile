@@ -66,19 +66,19 @@ describe('Perps Pro visual contract', () => {
     });
     expect(getPerpsProFontStyle('android', '400')).toEqual({
       fontFamily: 'SF-Pro-Rounded-Regular',
-      fontWeight: undefined,
+      fontWeight: 'normal',
     });
     expect(getPerpsProFontStyle('android', '500')).toEqual({
       fontFamily: 'SF-Pro-Rounded-Medium',
-      fontWeight: undefined,
+      fontWeight: 'normal',
     });
     expect(getPerpsProFontStyle('android', '600')).toEqual({
       fontFamily: 'SF-Pro-Rounded-Semibold',
-      fontWeight: undefined,
+      fontWeight: 'normal',
     });
     expect(getPerpsProFontStyle('android', '900')).toEqual({
       fontFamily: 'SF-Pro-Rounded-Black',
-      fontWeight: undefined,
+      fontWeight: 'normal',
     });
   });
 
@@ -91,7 +91,7 @@ describe('Perps Pro visual contract', () => {
     );
     expect(getPerpsProTradeControlMediumTextStyle('android')).toEqual({
       fontFamily: 'SF-Pro-Rounded-Medium',
-      fontWeight: undefined,
+      fontWeight: 'normal',
     });
     expect(getPerpsProTradeControlMediumTextStyle('ios')).toEqual({
       fontFamily: 'ui-rounded',
