@@ -280,7 +280,7 @@ export function TabsTopHeader(): JSX.Element {
     const opacity = formOpacity(p, 0);
     return {
       opacity,
-      pointerEvents: opacity > 0.5 ? 'box-none' : 'none',
+      pointerEvents: opacity > 0.5 ? 'auto' : 'none',
     };
   });
   const tokenFormStyle = useAnimatedStyle(() => {
@@ -289,7 +289,7 @@ export function TabsTopHeader(): JSX.Element {
     return {
       opacity,
       transform: [{ translateX: formSlideX(p, 1) }],
-      pointerEvents: opacity > 0.5 ? 'box-none' : 'none',
+      pointerEvents: opacity > 0.5 ? 'auto' : 'none',
     };
   });
   const assetsFormStyle = useAnimatedStyle(() => {
@@ -298,7 +298,7 @@ export function TabsTopHeader(): JSX.Element {
     return {
       opacity,
       transform: [{ translateX: formSlideX(p, 2) }],
-      pointerEvents: opacity > 0.5 ? 'box-none' : 'none',
+      pointerEvents: opacity > 0.5 ? 'auto' : 'none',
     };
   });
   // The history/clock is the same element in the token, defi and nft forms, so
@@ -313,7 +313,7 @@ export function TabsTopHeader(): JSX.Element {
     // it fights the token form sliding in from above.
     return {
       opacity,
-      pointerEvents: opacity > 0.5 ? 'box-none' : 'none',
+      pointerEvents: opacity > 0.5 ? 'auto' : 'none',
     };
   });
 
@@ -433,11 +433,7 @@ export function TabsTopHeader(): JSX.Element {
         {/* All three forms stay mounted and only animate opacity/translate, so
             the form turns with the drag instead of waiting for the settle
             commit. Pointer events follow whichever form is more than half
-            visible, so a faded-out form can never swallow a tap. The visible
-            form is `box-none`, not `auto`: each slot stretches across the
-            whole right-hand header row, so a filled slot would swallow every
-            tap between the title and the icons. Those taps must keep reaching
-            the Pressable below, which switches to the Token tab (QA 1396). */}
+            visible, so a faded-out form can never swallow a tap. */}
         <Animated.View style={[styles.rightAnchorSlot, anchorStyle]}>
           <MultiHeaderRightHistory />
         </Animated.View>

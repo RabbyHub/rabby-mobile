@@ -343,11 +343,6 @@ export const MultiAssetsContainer = React.memo(
     // rather than a transparent hand-off: RNGH cannot share a gesture with the
     // native pager without swallowing it (see
     // codex-rabby/plans/rabby-mobile-home-gesture-single-authority-20261115.md).
-    //
-    // The gate must never own the drag: activating it would cancel the asset
-    // list's native recognizer, which is exactly the scroll it is meant to
-    // protect. It only observes the first direction, locks the pager out on a
-    // vertical verdict, and fails immediately so the list keeps the gesture.
     const pagerScrollEnabledRef = React.useRef(true);
     const setPagerScrollEnabled = React.useCallback(
       (enabled: boolean) => {
@@ -366,7 +361,6 @@ export const MultiAssetsContainer = React.memo(
       },
       [containerRef],
     );
-    const pagerGateLocked = useSharedValue(false);
     const pagerGateGesture = React.useMemo(
       () =>
         Gesture.Pan()
@@ -402,23 +396,27 @@ export const MultiAssetsContainer = React.memo(
               touch.absoluteY,
             );
 
-            if (axis === HOME_GESTURE_AXIS.VERTICAL && !pagerGateLocked.value) {
-              // The list owns vertical drags. Lock the pager out without
-              // activating: activating would cancel the list's own recognizer.
-              pagerGateLocked.value = true;
-              runOnJS(setPagerScrollEnabled)(false);
+            if (axis === HOME_GESTURE_AXIS.HORIZONTAL) {
+              // The pager owns horizontal drags; step aside untouched.
+              stateManager.fail();
+              return;
             }
-            // Never take ownership: horizontal drags belong to the pager, and
-            // vertical ones have to keep reaching the list underneath.
-            stateManager.fail();
+            if (axis === HOME_GESTURE_AXIS.VERTICAL) {
+              // The list owns vertical drags: take the gesture and lock the
+              // pager out of it for the rest of this touch sequence.
+              stateManager.activate();
+            }
+          })
+          .onStart(() => {
+            'worklet';
+            runOnJS(setPagerScrollEnabled)(false);
           })
           .onFinalize(() => {
             'worklet';
-            pagerGateLocked.value = false;
             runOnJS(setPagerScrollEnabled)(true);
             endHomeGesture();
           }),
-      [indexDecimal, pagerGateLocked, setPagerScrollEnabled],
+      [indexDecimal, setPagerScrollEnabled],
     );
 
     React.useImperativeHandle(

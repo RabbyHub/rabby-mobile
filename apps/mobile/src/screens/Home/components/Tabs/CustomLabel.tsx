@@ -6,15 +6,7 @@ import Animated, { clamp, useAnimatedStyle } from 'react-native-reanimated';
 import { PixelRatio, StyleSheet, TextProps, View } from 'react-native';
 import { ThemeColors2024 } from '@rabby-wallet/base-utils';
 import { HOME_TOP_HEADER_SIZES } from '@/constant/home';
-import { AnimatedText, Text } from '@/components/Typography';
-
-/**
- * `plate` — the moving black chip used by the multi-address asset strip.
- * `fade` — the original per-label colour/background swap used by the
- * single-address tabs: those labels are packed tightly together, so a chip
- * sliding between them reads as overlapping rather than travelling.
- */
-export type CustomLabelVariant = 'plate' | 'fade';
+import { Text } from '@/components/Typography';
 
 interface CustomLabelProps {
   index: number;
@@ -27,7 +19,6 @@ interface CustomLabelProps {
   inactiveFontWeight?: string;
   activeFontSize?: number;
   inactiveFontSize?: number;
-  variant?: CustomLabelVariant;
   style?: TextProps['style'];
 }
 
@@ -67,7 +58,7 @@ const PLATE_TRAVEL = LABEL_WIDTH + 1;
  * Only `transform` is animated: no `color`, `backgroundColor`, width or text
  * prop is written from the worklet.
  */
-const PlateCustomLabel = ({
+const CustomLabel = ({
   index,
   indexDecimal,
   text,
@@ -75,14 +66,13 @@ const PlateCustomLabel = ({
 }: CustomLabelProps) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
 
-  // The plate travels between asset tabs, and also on the overview boundary:
-  // coming from the overview the first label's plate slides in from its own
-  // left edge (offset -1 -> 0 on progress 0 -> 1), exactly like the next label
-  // does on Token -> DeFi. Clamping the track at 1 here used to make the Token
-  // plate pop in fully formed.
+  // The plate only travels *between asset tabs*. The overview boundary is the
+  // whole strip riding in, so the plate must stay fully covering its own label
+  // there - otherwise the label and its plate move at different speeds and the
+  // row looks like it is trembling.
   const plateOffset = (track: number) => {
     'worklet';
-    return clamp(clamp(track, 0, MAX_ASSET_INDEX) - index, -1, 1);
+    return clamp(clamp(track, 1, MAX_ASSET_INDEX) - index, -1, 1);
   };
 
   const moverStyle = useAnimatedStyle(() => {
@@ -100,7 +90,6 @@ const PlateCustomLabel = ({
       <Animated.View style={[styles.mover, moverStyle]}>
         <View style={styles.plate} />
         <Animated.Text
-          allowFontScaling={false}
           style={[styles.label, styles.labelActive, style, pinnedTextStyle]}>
           {text}
         </Animated.Text>
@@ -108,56 +97,6 @@ const PlateCustomLabel = ({
     </Animated.View>
   );
 };
-
-/**
- * The pre-plate label: each label owns its own rounded background and swaps
- * colour at the midpoint of the swipe. Kept for the single-address tabs, whose
- * labels sit directly next to each other.
- */
-const FadeCustomLabel = ({
-  index,
-  indexDecimal,
-  text,
-  style,
-}: CustomLabelProps) => {
-  const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
-
-  const textStyle = useAnimatedStyle(() => {
-    return {
-      color:
-        Math.abs(index - indexDecimal.value) < 0.5
-          ? isLight
-            ? ThemeColors2024.dark['neutral-title-1']
-            : ThemeColors2024.light['neutral-title-1']
-          : colors2024['neutral-secondary'],
-    };
-  });
-  const wrapperStyle = useAnimatedStyle(() => {
-    return {
-      backgroundColor:
-        Math.abs(index - indexDecimal.value) < 0.5
-          ? isLight
-            ? ThemeColors2024.dark['neutral-bg-1']
-            : '#FFF'
-          : 'transparent',
-    };
-  });
-
-  return (
-    <Animated.View style={[styles.container, wrapperStyle]}>
-      <AnimatedText style={[styles.label, textStyle, style]}>
-        {text}
-      </AnimatedText>
-    </Animated.View>
-  );
-};
-
-const CustomLabel = ({ variant = 'plate', ...props }: CustomLabelProps) =>
-  variant === 'fade' ? (
-    <FadeCustomLabel {...props} />
-  ) : (
-    <PlateCustomLabel {...props} />
-  );
 
 export default CustomLabel;
 
@@ -216,6 +155,3 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
       : ThemeColors2024.light['neutral-title-1'],
   },
 }));
-
-PlateCustomLabel.displayName = 'PlateCustomLabel';
-FadeCustomLabel.displayName = 'FadeCustomLabel';

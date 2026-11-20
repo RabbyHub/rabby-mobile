@@ -199,14 +199,7 @@ export const AssetContainer = () => {
     (name: string) =>
       // eslint-disable-next-line react/no-unstable-nested-components
       ({ index, indexDecimal }) =>
-        (
-          <CustomLabel
-            index={index}
-            indexDecimal={indexDecimal}
-            text={name}
-            variant="fade"
-          />
-        ),
+        <CustomLabel index={index} indexDecimal={indexDecimal} text={name} />,
     [],
   );
   const customTestnetCount = useActivityStore(

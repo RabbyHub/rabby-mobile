@@ -17,7 +17,6 @@ import Animated, {
   Extrapolate,
   interpolate,
   runOnJS,
-  runOnUI,
   scrollTo,
   useAnimatedProps,
   useAnimatedReaction,
@@ -128,11 +127,8 @@ export const HomeDappDrawer: React.FC<{
     });
     // Start the first floor's trip back to the top together with the close
     // animation, on both platforms: the dismissal and the scroll-back read as
-    // one gesture instead of two consecutive ones. `handleScrollBack` is a
-    // worklet that drives the UI-thread scroll, so it has to be scheduled
-    // there: calling it from this JS touch handler would make the native
-    // `scrollTo` dispatch return immediately.
-    runOnUI(handleScrollBack)();
+    // one gesture instead of two consecutive ones.
+    handleScrollBack();
 
     triggerImpact();
   }, [scrollableStatus, handleScrollBack]);
