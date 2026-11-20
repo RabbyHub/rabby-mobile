@@ -486,6 +486,11 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
   >([]);
   const [tempoGasTokenLoading, setTempoGasTokenLoading] = useState(false);
   const [tempoCurrentFeeTokenId, setTempoCurrentFeeTokenId] = useState('');
+  // Kept with tempoCurrentFeeTokenId: a stored pathUSD preference looks the same
+  // as the no-preference default, and only the latter falls back to OUSD.
+  const tempoHasUserFeeTokenPreferenceRef = useRef<boolean | undefined>(
+    undefined,
+  );
   const [tempoPreferredFeeTokenId, setTempoPreferredFeeTokenId] = useState('');
   const security = useActionSecurity(
     preparedActions,
@@ -1741,6 +1746,7 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
           const {
             options,
             currentFeeTokenId,
+            hasUserFeeTokenPreference,
             preferredTokenId,
             selectedOption,
           } = await loadTempoFeeTokenOptionsState({
@@ -1754,6 +1760,7 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
             maxGasCostRawAmountIn18: calcTempoMaxGasCostRawAmountIn18([tx]),
           });
 
+          tempoHasUserFeeTokenPreferenceRef.current = hasUserFeeTokenPreference;
           setTempoCurrentFeeTokenId(currentFeeTokenId);
           setTempoPreferredFeeTokenId(preferredTokenId);
           setTempoGasTokenList(options);
@@ -1900,15 +1907,25 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
       tokenList: cachedTokenItems,
       txFeeToken: tx.feeToken as string | undefined,
       currentFeeTokenId: tempoCurrentFeeTokenId,
+      hasUserFeeTokenPreference: tempoCurrentFeeTokenId
+        ? tempoHasUserFeeTokenPreferenceRef.current
+        : undefined,
       maxGasCostRawAmount: gasExplainResponse.maxGasCostRawAmount,
       maxGasCostRawAmountDecimals: gasToken?.decimals || 18,
       maxGasCostRawAmountIn18,
     })
       .then(
-        ({ options, currentFeeTokenId, preferredTokenId, selectedOption }) => {
+        ({
+          options,
+          currentFeeTokenId,
+          hasUserFeeTokenPreference,
+          preferredTokenId,
+          selectedOption,
+        }) => {
           if (!mounted) {
             return;
           }
+          tempoHasUserFeeTokenPreferenceRef.current = hasUserFeeTokenPreference;
           setTempoCurrentFeeTokenId(currentFeeTokenId);
           setTempoPreferredFeeTokenId(preferredTokenId);
           setTempoGasTokenList(options);
