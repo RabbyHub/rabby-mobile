@@ -60,18 +60,22 @@ jobs:
             apps/*/node_modules
             packages/*/node_modules
             .yarn/install-state.gz
-          key: nm-${{ runner.os }}-${{ hashFiles('yarn.lock', '.yarnrc.yml', '.yarn/patches/**') }}
+            packages/*/dist
+            packages/*/*.tsbuildinfo
+          key: nm2-${{ runner.os }}-${{ hashFiles('yarn.lock', '.yarnrc.yml', '.yarn/patches/**') }}
           restore-keys: |
-            nm-${{ runner.os }}-
+            nm2-${{ runner.os }}-
 
+      # `--mode=skip-build` keeps the cached tree usable: postinstall would
+      # re-link and rebuild everything (`yarn build` + the mobile postinstall),
+      # which is what made a cache hit still take ~4 minutes. The build outputs
+      # come from the cache and are repaired by the explicit build below.
       - name: Install dependencies
-        run: yarn install --immutable
+        run: yarn install --immutable --mode=skip-build
 
-      # A node_modules cache hit turns `yarn install` into a no-op, so the root
-      # postinstall that compiles `packages/*/dist` does not run and every
-      # workspace import resolves to missing declarations. Rebuild explicitly;
-      # tsc incremental rebuild is a few seconds, the link step it replaces is
-      # minutes.
+      # Repair the workspace declarations in case the restored `packages/*/dist`
+      # is older than the checkout (lockfile-only changes do not invalidate it).
+      # The incremental tsc build takes seconds.
       - name: Build workspace packages
         run: yarn build
 
@@ -121,12 +125,18 @@ jobs:
             apps/*/node_modules
             packages/*/node_modules
             .yarn/install-state.gz
-          key: nm-${{ runner.os }}-${{ hashFiles('yarn.lock', '.yarnrc.yml', '.yarn/patches/**') }}
+            packages/*/dist
+            packages/*/*.tsbuildinfo
+          key: nm2-${{ runner.os }}-${{ hashFiles('yarn.lock', '.yarnrc.yml', '.yarn/patches/**') }}
           restore-keys: |
-            nm-${{ runner.os }}-
+            nm2-${{ runner.os }}-
 
+      # `--mode=skip-build` keeps the cached tree usable: postinstall would
+      # re-link and rebuild everything (`yarn build` + the mobile postinstall),
+      # which is what made a cache hit still take ~4 minutes. The build outputs
+      # come from the cache and are repaired by the explicit build below.
       - name: Install dependencies
-        run: yarn install --immutable
+        run: yarn install --immutable --mode=skip-build
 
       # A node_modules cache hit turns `yarn install` into a no-op, so the root
       # postinstall that compiles `packages/*/dist` does not run and every
@@ -176,12 +186,18 @@ jobs:
             apps/*/node_modules
             packages/*/node_modules
             .yarn/install-state.gz
-          key: nm-${{ runner.os }}-${{ hashFiles('yarn.lock', '.yarnrc.yml', '.yarn/patches/**') }}
+            packages/*/dist
+            packages/*/*.tsbuildinfo
+          key: nm2-${{ runner.os }}-${{ hashFiles('yarn.lock', '.yarnrc.yml', '.yarn/patches/**') }}
           restore-keys: |
-            nm-${{ runner.os }}-
+            nm2-${{ runner.os }}-
 
+      # `--mode=skip-build` keeps the cached tree usable: postinstall would
+      # re-link and rebuild everything (`yarn build` + the mobile postinstall),
+      # which is what made a cache hit still take ~4 minutes. The build outputs
+      # come from the cache and are repaired by the explicit build below.
       - name: Install dependencies
-        run: yarn install --immutable
+        run: yarn install --immutable --mode=skip-build
 
       # A node_modules cache hit turns `yarn install` into a no-op, so the root
       # postinstall that compiles `packages/*/dist` does not run and every
