@@ -20,11 +20,19 @@ This repository contains the following packages [^fn1]:
 - [`@rabby-wallet/object-multiplex`](packages/object-multiplex)
 - [`@rabby-wallet/persist-store`](packages/persist-store)
 - [`@rabby-wallet/post-message-stream`](packages/post-message-stream)
+- [`@rabby-wallet/react-native-bootsplash`](packages/react-native-bootsplash)
+- [`@rabby-wallet/react-native-fs`](packages/react-native-fs)
+- [`@rabby-wallet/react-native-ios-context-menu`](packages/react-native-ios-context-menu)
+- [`@rabby-wallet/react-native-keychain-9`](packages/react-native-keychain-9)
+- [`@rabby-wallet/react-native-menu`](packages/react-native-menu)
 - [`@rabby-wallet/rn-page-provider`](packages/rn-page-provider)
 - [`@rabby-wallet/rn-webview-bridge`](packages/rn-webview-bridge)
+- [`@rabby-wallet/rozenite-resource-flow-plugin`](packages/rozenite-resource-flow-plugin)
 - [`@rabby-wallet/service-address`](packages/service-address)
 - [`@rabby-wallet/service-keyring`](packages/service-keyring)
 - [`@rabby-wallet/universal-providers`](packages/providers)
+- [`@rabby-wallet/zeego`](packages/zeego)
+- [`automation-maestro`](apps/automation-maestro)
 - [`dev-console-cra`](apps/dev-console-cra)
 - [`mobile-local-pages`](apps/mobile-local-pages)
 - [`rabby-mobile`](apps/mobile)
@@ -39,6 +47,7 @@ Or, in graph form [^fn1]:
 %%{ init: { 'flowchart': { 'curve': 'bumpX' } } }%%
 graph LR;
 linkStyle default opacity:0.5
+  automation_maestro(["automation-maestro"]);
   dev_console_cra(["dev-console-cra"]);
   rabby_mobile(["rabby-mobile"]);
   mobile_local_pages(["mobile-local-pages"]);
@@ -55,10 +64,17 @@ linkStyle default opacity:0.5
   persist_store(["@rabby-wallet/persist-store"]);
   post_message_stream(["@rabby-wallet/post-message-stream"]);
   universal_providers(["@rabby-wallet/universal-providers"]);
+  react_native_bootsplash(["@rabby-wallet/react-native-bootsplash"]);
+  react_native_fs(["@rabby-wallet/react-native-fs"]);
+  react_native_ios_context_menu(["@rabby-wallet/react-native-ios-context-menu"]);
+  react_native_keychain_9(["@rabby-wallet/react-native-keychain-9"]);
+  react_native_menu(["@rabby-wallet/react-native-menu"]);
   rn_page_provider(["@rabby-wallet/rn-page-provider"]);
   rn_webview_bridge(["@rabby-wallet/rn-webview-bridge"]);
+  rozenite_resource_flow_plugin(["@rabby-wallet/rozenite-resource-flow-plugin"]);
   service_address(["@rabby-wallet/service-address"]);
   service_keyring(["@rabby-wallet/service-keyring"]);
+  zeego(["@rabby-wallet/zeego"]);
   dev_console_cra --> rn_webview_bridge;
   rabby_mobile --> biz_utils;
   rabby_mobile --> eth_keyring_gnosis;
@@ -67,22 +83,27 @@ linkStyle default opacity:0.5
   rabby_mobile --> eth_keyring_watch;
   rabby_mobile --> object_multiplex;
   rabby_mobile --> persist_store;
+  rabby_mobile --> react_native_bootsplash;
+  rabby_mobile --> react_native_fs;
+  rabby_mobile --> react_native_ios_context_menu;
+  rabby_mobile --> react_native_keychain_9;
+  rabby_mobile --> react_native_menu;
+  rabby_mobile --> rozenite_resource_flow_plugin;
   rabby_mobile --> service_address;
   rabby_mobile --> service_keyring;
+  rabby_mobile --> zeego;
   mobile_local_pages --> base_utils;
   biz_utils --> base_utils;
   eth_keyring_gnosis --> keyring_utils;
   eth_keyring_ledger --> base_utils;
   eth_keyring_ledger --> keyring_utils;
   eth_keyring_onekey --> base_utils;
-  eth_keyring_onekey --> keyring_utils;
-  eth_keyring_trezor --> base_utils;
-  eth_keyring_trezor --> keyring_utils;
   eth_keyring_watch --> keyring_utils;
   persist_store --> base_utils;
   universal_providers --> object_multiplex;
   rn_webview_bridge --> object_multiplex;
   rn_webview_bridge --> universal_providers;
+  rozenite_resource_flow_plugin --> base_utils;
   service_address --> base_utils;
   service_address --> persist_store;
   service_keyring --> base_utils;
