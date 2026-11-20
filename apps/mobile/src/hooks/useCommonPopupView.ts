@@ -41,6 +41,13 @@ export const useCommonPopupView = () => {
     setId(
       createGlobalBottomSheetModal({
         name: MODAL_NAMES[name],
+        ...(name === 'CANCEL_APPROVAL'
+          ? {
+              // Keep the approval sheet presented and put the cancel options
+              // on top of the provider's modal stack instead of minimizing it.
+              bottomSheetModalProps: { stackBehavior: 'push' as const },
+            }
+          : {}),
       }),
     );
   };

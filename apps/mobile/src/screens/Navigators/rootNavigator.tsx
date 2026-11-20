@@ -1,3 +1,4 @@
+import { withScreenPropsInjection } from '@/devtools/screenRegistry/screenInjection';
 import 'react-native-gesture-handler';
 
 import { useThemeColors } from '@/hooks/theme';
@@ -82,7 +83,7 @@ export function HomeScreenNavigator() {
         tabBar={TabBarComponent}>
         <HomeHiddenTabStack.Screen
           name={RootNames.Home}
-          component={RegressionMultiAddressHome}
+          component={withScreenPropsInjection(RegressionMultiAddressHome)}
           options={{
             headerShown: false,
             freezeOnBlur: false,
@@ -91,7 +92,7 @@ export function HomeScreenNavigator() {
 
         {/* <HomeHiddenTabStack.Screen
           name={RootNames.DappWebViewStubOnHome}
-          component={DappWebViewStubScreen}
+          component={withScreenPropsInjection(DappWebViewStubScreen)}
           options={{
             title: '',
             headerShadowVisible: false,

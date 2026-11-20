@@ -1,6 +1,6 @@
 import { createContext, useContext } from 'react';
 import type { PropsWithChildren } from 'react';
-import { Dimensions, ImageBackground } from 'react-native';
+import { ImageBackground } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -10,8 +10,6 @@ import { useBgSize } from '../hooks/useBgSize';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { useHomeFoldChart, useSingleHomeIsDecrease } from '../hooks/singleHome';
-
-const ScreenWidth = Dimensions.get('window').width;
 
 const HomeBackgroundOpacityContext = createContext<SharedValue<number> | null>(
   null,
@@ -146,8 +144,8 @@ const getStyles = createGetStyles2024(() => ({
   topWrapper: {
     position: 'absolute',
     top: 0,
+    left: 0,
     right: 0,
-    width: ScreenWidth,
     overflow: 'hidden',
     // backgroundColor: 'red',
   },
@@ -155,29 +153,29 @@ const getStyles = createGetStyles2024(() => ({
     position: 'absolute',
     top: 0,
     left: 0,
-    width: ScreenWidth,
+    right: 0,
   },
   centerWrapper: {
     position: 'absolute',
     top: 0,
     left: 0,
-    width: ScreenWidth,
+    right: 0,
     overflow: 'hidden',
   },
   centerBg: {
     position: 'absolute',
     left: 0,
-    width: ScreenWidth,
+    right: 0,
     zIndex: -100,
   },
   endBg: {
     position: 'absolute',
     left: 0,
-    width: ScreenWidth,
+    right: 0,
     zIndex: -100,
   },
   endBgImage: {
-    width: ScreenWidth,
+    width: '100%',
     height: '100%',
   },
 }));

@@ -1,13 +1,14 @@
-import { Dimensions, Platform } from 'react-native';
+import { Platform } from 'react-native';
+import { getDimensionsSnapshot } from '@/core/dimensions';
 import { hasNotch, getApiLevel } from 'react-native-device-info';
 
 export default class DeviceUtils {
   static getDeviceWidth() {
-    return Dimensions.get('window').width;
+    return getDimensionsSnapshot('window').width;
   }
 
   static getDeviceHeight() {
-    return Dimensions.get('window').height;
+    return getDimensionsSnapshot('window').height;
   }
 
   static isIOS() {

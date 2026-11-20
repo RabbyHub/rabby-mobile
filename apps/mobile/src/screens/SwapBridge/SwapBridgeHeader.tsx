@@ -9,6 +9,7 @@ import { Text } from '@/components/Typography';
 import { RootNames } from '@/constant/layout';
 import { HeaderBackPressable } from '@/hooks/navigation';
 import { useTheme2024 } from '@/hooks/theme';
+import { useSystemColumnInset } from '@/components/SafeWindowFrame/backdrop';
 import type { SwapBridgeTab } from '@/navigation-type';
 import { createGetStyles2024 } from '@/utils/styles';
 import { BridgeHeader } from '../Bridge/components/BridgeHeader';
@@ -95,7 +96,12 @@ export function SwapBridgeHeader({
   // should host shared account/history actions.
   const isScreenFocused = useIsFocused();
   const { styles } = useTheme2024({ getStyle });
-  const { top } = useSafeAreaInsets();
+  const { top, right } = useSafeAreaInsets();
+  const columnInset = useSystemColumnInset();
+  // The custom header must reproduce the native stack header's status-bar
+  // inset. On the Duo outer screen safe-area-context reports top=0 even though
+  // the native header still reserves ~38pt above its 44pt bar.
+  const headerTop = top > 0 ? top : right > 0 ? 38 : 0;
   const onTabPress = useCallback(
     (tab: SwapBridgeTab) => {
       if (tab !== activeTab) {
@@ -106,7 +112,15 @@ export function SwapBridgeHeader({
   );
 
   return (
-    <View style={[styles.headerOuter, { marginTop: top }]}>
+    <View
+      style={[
+        styles.headerOuter,
+        {
+          marginTop: headerTop,
+          paddingLeft: 12 + columnInset.left,
+          paddingRight: 16 + columnInset.right,
+        },
+      ]}>
       <View style={styles.headerInner}>
         <View style={styles.headerLeft}>
           <HeaderBackPressable style={styles.headerBackButton} />

@@ -59,6 +59,37 @@ jest.mock('react-native-safe-area-context', () => {
     SafeAreaProvider: ({ children }: { children: React.ReactNode }) => children,
   };
 });
+jest.mock('react-native-reanimated', () => {
+  const RN = require('react-native');
+  return {
+    __esModule: true,
+    default: { View: RN.View, Text: RN.Text, ScrollView: RN.ScrollView },
+    View: RN.View,
+    Text: RN.Text,
+    ScrollView: RN.ScrollView,
+    useSharedValue: (value: unknown) => ({ value }),
+    useAnimatedStyle: (factory: () => object) => factory(),
+    useAnimatedReaction: () => undefined,
+    useDerivedValue: (factory: () => unknown) => ({ value: factory() }),
+    useAnimatedScrollHandler: () => () => undefined,
+    useAnimatedRef: () => ({ current: null }),
+    useFrameCallback: () => undefined,
+    makeMutable: (value: unknown) => ({ value }),
+    useValue: (value: unknown) => ({ value }),
+    withTiming: (value: unknown) => value,
+    withSpring: (value: unknown) => value,
+    interpolate: () => 0,
+    Extrapolation: { CLAMP: 'clamp' },
+    runOnJS: (fn: unknown) => fn,
+    runOnUI: (fn: unknown) => fn,
+  };
+});
+jest.mock('@react-navigation/elements', () => ({
+  // ESM module from react-navigation; the contract test does not render a
+  // native header.
+  __esModule: true,
+  default: {},
+}));
 jest.mock('@/hooks/navigation', () => ({
   // The screen only needs the header back button; importing the real module
   // pulls the whole navigator/touchable/DB graph into this contract test.
