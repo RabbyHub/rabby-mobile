@@ -86,6 +86,7 @@ export const AddressBackupItem: React.FC<AddressInfoProps> = props => {
           label={t('page.addressDetail.backup-seed-phrase')}
           value={needsBackupReminder ? <BackupBadge /> : null}
           labelNumberOfLines={2}
+          labelBox
           valueGrow
           style={styles.seedPhraseItem}
           showArrow

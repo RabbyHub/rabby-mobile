@@ -1,178 +1,192 @@
 import React from 'react';
 import {
-  Platform,
   StyleProp,
   StyleSheet,
   TextProps,
   TextStyle,
+  View,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Text } from '@/components/Typography';
-import {
-  getFittingFontSize,
-  getMeasureTextStyle,
-} from './AutoShrinkAmountTextSizing';
 
 export type AutoFitTextProps = TextProps & {
   /**
-   * Multi-language copy key. Preferred over `text`: it lets the component
-   * decide whether the fixed English baseline or the adaptive path applies.
+   * Multi-language copy key. Preferred over `text` so the owning component can
+   * tell English (the fixed design baseline) from a translated locale.
    */
   i18nKey?: string;
   /** Pre-resolved copy (tests / non-i18n call sites). */
   text?: string;
   style?: StyleProp<TextStyle>;
-  /** Design font size. The text never grows above it. */
-  baseFontSize: number;
-  /** Smallest size the text may shrink to. */
-  minFontSize: number;
-  /** Android-only shrink step, in points (default 1). */
-  fontSizeStep?: number;
   /**
-   * Force the adaptive path even when the active language is English.
-   * Off by default: English must keep the fixed design metrics.
+   * Layout width of the copy at the design font size, in points.
+   *
+   * - `singleLineWidth`: the copy on one unclamped line.
+   * - `twoLineWidth`: the narrowest width at which the copy still fits in two
+   *   lines, derived from the measured word widths (equal to
+   *   `singleLineWidth` for one unbreakable word or when `numberOfLines` is 1).
+   *
+   * Measured from the platform's own layout (`onLayout`), which is the only
+   * width that matches what the copy really occupies: `onTextLayout` reports a
+   * line box rather than the glyph extent on iOS, and an absolutely positioned
+   * Text with no explicit host width gets clamped to its parent on Android.
    */
-  forceAutoFit?: boolean;
+  onMeasureTextWidth?: (measure: AutoFitTextMeasure) => void;
 };
 
+export type AutoFitTextMeasure = {
+  singleLineWidth: number;
+  twoLineWidth: number;
+};
+
+/** Wide enough for any badge copy on one line. */
+const MEASURE_HOST_WIDTH = 4000;
+
 /**
- * Pure Text that keeps a single line of copy inside the width it is given.
+ * Copy that exposes its own layout width.
  *
- * ## Language gate (deliberate)
- *
- * English is the production/design baseline: the screens are built, reviewed
- * and compared against the online build in English, so its typography must be
- * deterministic and must not depend on a measuring pass, device font metrics
- * or the width of the slot it happens to get. When the copy comes from a
- * multi-language key (`i18nKey`) and the active language is English, the
- * adaptive behaviour is therefore switched **off**: all styles stay fixed and
- * no measurement runs. Pass `forceAutoFit` only for a deliberate exception
- * (tests or a playground) — never for a production English screen.
- *
- * Other languages opt into auto-fit so their longer translations shrink to
- * fit instead of wrapping or being clipped.
- *
- * ## Cross-platform implementation
- *
- * - iOS: the native `adjustsFontSizeToFit` + `minimumFontScale` pair shrinks
- *   the text inside CoreText, so there is no JS measuring pass or reflow.
- * - Android: `adjustsFontSizeToFit` is ignored by the platform, so the same
- *   result is reproduced by measuring the unclamped text once
- *   (`onTextLayout`) and stepping the font size down until it fits.
- *
- * English renders at `baseFontSize` with the caller's style untouched; longer
- * translations shrink instead of wrapping or being clipped.
+ * English and translations render with the same caller style; the owning
+ * container decides how wide the text may become, so typography stays at the
+ * design size instead of shrinking.
  */
 export const AutoFitText = ({
   style,
   i18nKey,
   text,
-  baseFontSize,
-  minFontSize,
-  fontSizeStep = 1,
-  numberOfLines = 1,
-  forceAutoFit = false,
+  numberOfLines = 2,
+  onMeasureTextWidth,
   ...rest
 }: AutoFitTextProps) => {
-  const { t, i18n } = useTranslation();
-  const activeLanguage = i18n?.resolvedLanguage || i18n?.language || '';
-  const isEnglish = /^en(-|$)/i.test(activeLanguage);
+  const { t } = useTranslation();
   const copy = i18nKey ? t(i18nKey) : text ?? '';
-  const autoFit = forceAutoFit || !isEnglish;
 
   const flattenedStyle = React.useMemo(
     () => StyleSheet.flatten(style),
     [style],
   );
-  const measureTextStyle = React.useMemo(
-    () => getMeasureTextStyle(flattenedStyle),
+  const measureTextStyle = React.useMemo<TextStyle>(
+    () => ({
+      fontFamily: flattenedStyle?.fontFamily,
+      fontStyle: flattenedStyle?.fontStyle,
+      fontVariant: flattenedStyle?.fontVariant,
+      fontWeight: flattenedStyle?.fontWeight,
+      letterSpacing: flattenedStyle?.letterSpacing,
+      textTransform: flattenedStyle?.textTransform,
+      fontSize: flattenedStyle?.fontSize,
+      lineHeight: flattenedStyle?.lineHeight,
+    }),
     [flattenedStyle],
   );
-  const textForMeasure = React.useMemo(() => copy, [copy]);
 
-  const isIOS = Platform.OS === 'ios';
-  const [availableWidth, setAvailableWidth] = React.useState(0);
-  const [textWidthAtBaseFontSize, setTextWidthAtBaseFontSize] =
-    React.useState(0);
+  // One word per node so the two-line width can be computed exactly; copy
+  // without whitespace (zh/ja/th) has nothing to split and stays one line.
+  const measuredWords = React.useMemo(() => {
+    if (numberOfLines <= 1) {
+      return [];
+    }
+    const parts = copy.split(/\s+/).filter(Boolean);
+    return parts.length > 1 ? parts : [];
+  }, [copy, numberOfLines]);
 
-  const androidFontSize = React.useMemo(
-    () =>
-      autoFit
-        ? getFittingFontSize({
-            // A multi-line target has `numberOfLines` times the width to
-            // work with, so the measurement only forces a smaller font when
-            // even that many lines cannot hold the copy.
-            availableWidth: availableWidth * numberOfLines,
-            textWidthAtBaseFontSize,
-            baseFontSize,
-            minFontSize,
-            fontSizeStep,
-          })
-        : baseFontSize,
-    [
-      autoFit,
-      availableWidth,
-      baseFontSize,
-      fontSizeStep,
-      minFontSize,
-      numberOfLines,
-      textWidthAtBaseFontSize,
-    ],
+  const [singleLineWidth, setSingleLineWidth] = React.useState(0);
+  const [wordWidths, setWordWidths] = React.useState<Record<string, number>>(
+    {},
   );
 
-  // English: fixed design metrics, no measurement, no dynamic font size.
-  if (!autoFit) {
-    return (
-      <Text
-        {...rest}
-        numberOfLines={numberOfLines}
-        style={[style, { fontSize: baseFontSize }]}>
-        {copy}
-      </Text>
+  const twoLineWidth = React.useMemo(() => {
+    if (!singleLineWidth) {
+      return 0;
+    }
+    if (!measuredWords.length) {
+      return singleLineWidth;
+    }
+
+    const widths = measuredWords.map(
+      (_, index) => wordWidths[`${copy}|${index}`],
     );
-  }
+    if (widths.some(width => !width)) {
+      return 0;
+    }
+
+    // Every gap in a whitespace-separated line has the same width.
+    const gapCount = Math.max(1, measuredWords.length - 1);
+    const sumOfWords = widths.reduce((total, width) => total + width, 0);
+    const spaceWidth = Math.max(0, (singleLineWidth - sumOfWords) / gapCount);
+
+    let best = Number.POSITIVE_INFINITY;
+    for (let split = 1; split < measuredWords.length; split += 1) {
+      const left =
+        widths.slice(0, split).reduce((total, width) => total + width, 0) +
+        (split - 1) * spaceWidth;
+      const right =
+        widths.slice(split).reduce((total, width) => total + width, 0) +
+        (measuredWords.length - split - 1) * spaceWidth;
+      best = Math.min(best, Math.max(left, right));
+    }
+
+    return Number.isFinite(best) ? best : singleLineWidth;
+  }, [copy, measuredWords, singleLineWidth, wordWidths]);
+
+  React.useEffect(() => {
+    if (!onMeasureTextWidth || !singleLineWidth) {
+      return;
+    }
+    onMeasureTextWidth({
+      singleLineWidth,
+      twoLineWidth: twoLineWidth || singleLineWidth,
+    });
+  }, [onMeasureTextWidth, singleLineWidth, twoLineWidth]);
 
   return (
     <>
       <Text
         {...rest}
         numberOfLines={numberOfLines}
-        adjustsFontSizeToFit={isIOS}
-        minimumFontScale={Math.max(0.1, minFontSize / baseFontSize)}
-        onLayout={
-          isIOS
-            ? undefined
-            : event => setAvailableWidth(event.nativeEvent.layout.width)
-        }
-        // Android-only: keep the platform from applying its advanced line
-        // breaker while we are still measuring (it can fold a word to the next
-        // line before the width fits it).
-        textBreakStrategy={isIOS ? undefined : 'simple'}
-        style={[style, { fontSize: isIOS ? baseFontSize : androidFontSize }]}>
+        onTextLayout={undefined}
+        style={style}>
         {copy}
       </Text>
-      {isIOS ? null : (
+      {/* Off-flow measurement. The host owns a very wide box and lays its
+          children out as a row, so each child reports its intrinsic width
+          instead of stretching to the host. */}
+      <View style={styles.measureHost} pointerEvents="none">
         <Text
           numberOfLines={1}
-          onTextLayout={event =>
-            setTextWidthAtBaseFontSize(event.nativeEvent.lines[0]?.width || 0)
+          onLayout={event =>
+            setSingleLineWidth(event.nativeEvent.layout.width || 0)
           }
-          style={[
-            measureTextStyle,
-            styles.measure,
-            { fontSize: baseFontSize },
-          ]}>
-          {textForMeasure}
+          style={measureTextStyle}>
+          {copy}
         </Text>
-      )}
+        {measuredWords.map((word, index) => (
+          <Text
+            key={`measure-word-${index}`}
+            numberOfLines={1}
+            onLayout={event => {
+              const width = event.nativeEvent.layout.width || 0;
+              setWordWidths(prev =>
+                prev[`${copy}|${index}`] === width
+                  ? prev
+                  : { ...prev, [`${copy}|${index}`]: width },
+              );
+            }}
+            style={measureTextStyle}>
+            {word}
+          </Text>
+        ))}
+      </View>
     </>
   );
 };
 
 const styles = StyleSheet.create({
-  measure: {
+  measureHost: {
     position: 'absolute',
-    width: 10000,
+    left: 0,
+    top: 0,
+    width: MEASURE_HOST_WIDTH,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
     opacity: 0,
     zIndex: -1,
   },

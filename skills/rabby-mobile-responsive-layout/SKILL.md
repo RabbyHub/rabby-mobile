@@ -80,4 +80,34 @@ Android phones can be narrower than the narrowest iPhone: Galaxy S class is
    unless the product owner asks for shorter copy.
 5. **Verify at the tier boundaries.** Confirm the narrow variant on a 375pt
    device and the regular variant on a >=390pt device; a same-device check
-   cannot prove the gate works.
+  cannot prove the gate works.
+6. **A wrapped chip is squeezed on both platforms, not just on small screens.**
+   A row shrinks flex children in proportion to their *unclamped* content
+   width, so a chip that renders on two lines is still charged as if it were
+   one long line and gets squeezed until it ellipsizes (pt `Sem cópia de
+   segurança`, ru `Нет резервной копии`). Neither `flexShrink: 0` alone (the
+   chip then paints over the label — Android `Text` does not clip to its box)
+   nor an explicit measured `width` fixes it. Use the sizing contract in
+   rule 7.
+7. **A chip sized by its copy must be capped, not stretched, and the answer
+   has to come from a real layout.** "Use as much as it needs" means the chip
+   is `flexShrink: 0, flexGrow: 0` and gets a `maxWidth` cap — not an explicit
+   `width`, and never `flexGrow` (that leaves a long empty tail after short
+   copy: vi-VN `Chưa sao lưu`, zh-CN `未备份`).
+   - Cap = the copy's one-line width while that still leaves the row most of
+     its width (a ~40% share), otherwise the narrowest width that holds two
+     lines. Short copy then hugs its text exactly and long copy wraps instead
+     of ellipsizing.
+   - Measure with a hidden `Text` inside an absolutely positioned host whose
+     width is very large and whose `flexDirection` is `row`, and read
+     `onLayout` (not `onTextLayout`). On Android a positioned `Text` without a
+     host width is clamped to its parent (it measures the wrapped line); on
+     iOS `onTextLayout` reports a line box that is not the glyph extent. The
+     intrinsic `onLayout` width is the same number on both platforms.
+   - Per-word measurement (same host) gives the exact two-line width, so a
+     single unbreakable word (`tr-TR Yedeklenmedi`) is never squeezed into a
+     mid-word break.
+   - Android also lays a label's text out **without** subtracting the row
+     `gap`, so the label ends up a full gap too wide and touches the value
+     side. For label/value rows carry that gap as `paddingRight` on the label
+     (see `AddressDetail/Item.tsx`) instead of the row's `gap`.
