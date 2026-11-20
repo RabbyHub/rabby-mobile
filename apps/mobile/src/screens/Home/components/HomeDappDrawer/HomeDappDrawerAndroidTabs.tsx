@@ -17,6 +17,11 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
+import {
+  HOME_GESTURE_AXIS,
+  beginHomeGesture,
+  resolveHomeGestureAxis,
+} from '@/screens/Home/gesture/homeGestureAuthority';
 
 const clamp = (value: number, min: number, max: number) => {
   'worklet';
@@ -167,6 +172,7 @@ export function HomeDappDrawerAndroidTabs<T extends string>({
 
           touchStartX.value = touch.absoluteX;
           touchStartY.value = touch.absoluteY;
+          beginHomeGesture(touch.absoluteX, touch.absoluteY);
         })
         .onTouchesMove((event, stateManager) => {
           'worklet';
@@ -181,6 +187,16 @@ export function HomeDappDrawerAndroidTabs<T extends string>({
           const diffY = touch.absoluteY - touchStartY.value;
           const absX = Math.abs(diffX);
           const absY = Math.abs(diffY);
+
+          // Only horizontal drags belong to the tab strip; vertical ones go to
+          // the drawer / list.
+          if (
+            resolveHomeGestureAxis(touch.absoluteX, touch.absoluteY) ===
+            HOME_GESTURE_AXIS.VERTICAL
+          ) {
+            stateManager.fail();
+            return;
+          }
 
           if (
             absX > ANDROID_SWIPE_ACTIVE_OFFSET_X &&

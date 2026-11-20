@@ -331,12 +331,25 @@ platform :android do
     end
   end
 
+  # Native ABI profile per build kind. Regression/SignOnly packages only run on
+  # arm64 test devices, so they build arm64-v8a alone (~4x less CMake work); the
+  # store/release lanes keep every ABI. Override with
+  # RABBY_MOBILE_ANDROID_ARCHITECTURES (e.g. 'arm64-v8a,armeabi-v7a').
+  ALL_ANDROID_ARCHITECTURES = 'armeabi-v7a,arm64-v8a,x86,x86_64'.freeze
+  REGRESSION_ANDROID_ARCHITECTURES = 'arm64-v8a'.freeze
+
   private_lane :build_rabbymobile_app do |opts|
+    default_architectures = opts.fetch(:architectures, ALL_ANDROID_ARCHITECTURES)
+    architectures = ENV['RABBY_MOBILE_ANDROID_ARCHITECTURES'].to_s.strip
+    architectures = default_architectures if architectures.empty?
+    UI.message("Android native architectures: #{architectures}")
+
     gradle(tasks: opts[:tasks], project_dir: './android', properties: {
       "MYAPP_UPLOAD_STORE_FILE" => "app-upload-key.keystore",
       "MYAPP_UPLOAD_STORE_PASSWORD" => ENV['RABBY_MOBILE_ANDROID_STORE_PASSWORD'],
       "MYAPP_UPLOAD_KEY_ALIAS" => ENV['RABBY_MOBILE_ANDROID_KEY_ALIAS'],
-      "MYAPP_UPLOAD_KEY_PASSWORD" => ENV['RABBY_MOBILE_ANDROID_KEY_PASSWORD']
+      "MYAPP_UPLOAD_KEY_PASSWORD" => ENV['RABBY_MOBILE_ANDROID_KEY_PASSWORD'],
+      "reactNativeArchitectures" => architectures
     }.merge(opts.fetch(:properties, {})), system_properties: opts[:system_properties])
 
     android_version_code = android_get_version_code(gradle_file: "./android/app/build.gradle")
@@ -384,7 +397,7 @@ platform :android do
         UI.message("Not using Gradle cache for selfhost-reg build")
         gradle(task: 'clean', project_dir: './android')
       end
-      build_rabbymobile_app(tasks: ['assembleRegression'], system_properties: {
+      build_rabbymobile_app(tasks: ['assembleRegression'], architectures: REGRESSION_ANDROID_ARCHITECTURES, system_properties: {
         "org.gradle.configuration-cache"=>false,
         "org.gradle.caching"=>use_cache == 'true',
         "org.gradle.parallel"=>true,

@@ -27,6 +27,8 @@ jest.mock('react-native-reanimated', () => {
     useAnimatedStyle: (callback: () => object) => callback(),
     useSharedValue: (value: unknown) => ReactModule.useRef({ value }).current,
     makeMutable: (value: unknown) => ({ value }),
+    clamp: (value: number, lowerBound: number, upperBound: number) =>
+      Math.min(Math.max(value, lowerBound), upperBound),
     withTiming: (value: unknown) => value,
     useAnimatedReaction: () => undefined,
   };
@@ -231,7 +233,7 @@ describe('HomeCustomMaterialTabBar presentation contract', () => {
       view.rerender(<HomeCustomMaterialTabBar />);
 
       expect(getAssetsRowStyle().pointerEvents).toBe(
-        index < 1 ? 'none' : 'auto',
+        index > 0.99 ? 'auto' : 'none',
       );
     }
   });
