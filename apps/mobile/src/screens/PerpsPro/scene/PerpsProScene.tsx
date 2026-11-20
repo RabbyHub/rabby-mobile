@@ -64,6 +64,7 @@ import {
 } from '../components/chart/PerpsProKlineSheet';
 import { registerPerpsProKeyboardTradeScroll } from '../components/common/perpsProKeyboardSession';
 import { PerpsProEmptyState } from '../components/common/PerpsProEmptyState';
+import { PerpsProOverlayScrollBridge } from '../components/common/PerpsProOverlayScrollBridge';
 import { PerpsProFieldExplanationProvider } from '../components/common/PerpsProFieldExplanationProvider';
 import { triggerPerpsProLightHaptic } from '../components/common/triggerPerpsProLightHaptic';
 import {
@@ -1421,6 +1422,18 @@ export const PerpsProScene: React.FC<{
       {renderTrade()}
     </PerpsProTradeScrollBridge>
   );
+  const infoTabsContent = displayedInfoTab ? (
+    <PerpsProInfoTabs
+      activeTab={displayedInfoTab}
+      historyEnabled={historyEnabled && info.accountState !== 'noAccount'}
+      indicatorPosition={infoTabIndicatorPosition}
+      onChange={requestInfoTab}
+      onHistoryPress={openHistory}
+      openOrdersCount={info.allOpenOrdersCount}
+      pendingFundingCount={info.pendingFundingCount}
+      positionsCount={info.allPositionsCount}
+    />
+  ) : null;
   const SceneOverlayView =
     Platform.OS === 'android' ? Reanimated.View : Animated.View;
   const tradeOverlayMotionStyle =
@@ -1529,18 +1542,16 @@ export const PerpsProScene: React.FC<{
                 <SceneOverlayView
                   style={[styles.infoTabsOverlay, infoTabsOverlayMotionStyle]}
                   testID="perps-pro-info-tabs-overlay">
-                  <PerpsProInfoTabs
-                    activeTab={displayedInfoTab}
-                    historyEnabled={
-                      historyEnabled && info.accountState !== 'noAccount'
-                    }
-                    indicatorPosition={infoTabIndicatorPosition}
-                    onChange={requestInfoTab}
-                    onHistoryPress={openHistory}
-                    openOrdersCount={info.allOpenOrdersCount}
-                    pendingFundingCount={info.pendingFundingCount}
-                    positionsCount={info.allPositionsCount}
-                  />
+                  {Platform.OS === 'android' ? (
+                    infoTabsContent
+                  ) : (
+                    <PerpsProOverlayScrollBridge
+                      controller={infoScrollBridge}
+                      height={PERPS_PRO_INFO_TABS_HEIGHT}
+                      testID="perps-pro-info-tabs-scroll-bridge">
+                      {infoTabsContent}
+                    </PerpsProOverlayScrollBridge>
+                  )}
                 </SceneOverlayView>
               ) : null}
             </>
