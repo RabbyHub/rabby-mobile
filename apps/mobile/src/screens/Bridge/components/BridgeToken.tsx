@@ -23,7 +23,7 @@ import {
 import TokenSelect from '@/screens/Swap/components/TokenSelect';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
-import { GestureSlider as Slider } from '@/components/GestureSlider';
+import { PerpsGestureSlider as Slider } from '@/components/perps/PerpsGestureSlider';
 import LinearGradient from 'react-native-linear-gradient';
 import RcIconWalletCC from '@/assets2024/icons/swap/wallet-cc.svg';
 import type { Account } from '@/core/startupServices/preference';
