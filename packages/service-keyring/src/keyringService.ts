@@ -727,6 +727,26 @@ export class KeyringService extends RNEventEmitter {
    * @returns A Promise that resolves to the state.
    */
   async setLocked(): Promise<MemStoreState> {
+    // Stop in-flight OneKey unlock/signing before the instances are dropped.
+    // The version bump is synchronous; the BLE cancel is awaited with restore.
+    const oneKeyCleanUps: Promise<unknown>[] = [];
+    for (const keyring of this.keyrings) {
+      if (keyring?.type !== KEYRING_TYPE.OneKeyKeyring) {
+        continue;
+      }
+      try {
+        oneKeyCleanUps.push(
+          Promise.resolve(keyring.cancelPendingWork?.()).catch(error => {
+            log.error('OneKey cancel on lock failed', error);
+          }),
+          Promise.resolve(keyring.cleanUp?.()).catch(error => {
+            log.error('OneKey cleanUp on lock failed', error);
+          }),
+        );
+      } catch (error) {
+        log.error('OneKey cleanUp on lock failed', error);
+      }
+    }
     // set locked
     this.unlockSessionId += 1;
     this.#password = null;
@@ -734,7 +754,7 @@ export class KeyringService extends RNEventEmitter {
     this.memStore.updateState({ isUnlocked: false });
     // remove keyrings
     this.keyrings = [];
-    await this.restoreUnencryptedKeyrings();
+    await Promise.all([this.restoreUnencryptedKeyrings(), ...oneKeyCleanUps]);
     await this._updateMemStoreKeyrings();
     this.emit('lock');
     return this.fullUpdate();
@@ -1368,9 +1388,37 @@ export class KeyringService extends RNEventEmitter {
       return Promise.reject(e);
     }
   }
+
   //
   // SIGNING METHODS
   //
+  /**
+   * Persist account details after 113 recovery removed a stored passphrase.
+   *
+   * The write runs only while the wallet is still unlocked. Lock already
+   * dropped this keyring, so persisting then would save the restored vault.
+   *
+   * @param keyring - The keyring that just signed.
+   * @param signed - The signing promise.
+   * @returns The signing result. Typed as `any` so callers keep the same
+   * result type they had when the keyring method was returned directly.
+   */
+  private async withOneKeyPassphrasePersistence(
+    keyring: any,
+    signed: Promise<any>,
+  ): Promise<any> {
+    try {
+      return await signed;
+    } finally {
+      if (
+        keyring?.type === KEYRING_TYPE.OneKeyKeyring &&
+        keyring?.consumePassphraseStateCleared?.() &&
+        this.isUnlocked()
+      ) {
+        await this.persistAllKeyrings();
+      }
+    }
+  }
   /**
    * Sign Ethereum Transaction
    *
@@ -1384,7 +1432,10 @@ export class KeyringService extends RNEventEmitter {
    */
   signTransaction(keyring: any, ethTx: any, _fromAddress: string, opts = {}) {
     const fromAddress = normalizeAddress(_fromAddress);
-    return keyring.signTransaction(fromAddress, ethTx, opts);
+    return this.withOneKeyPassphrasePersistence(
+      keyring,
+      keyring.signTransaction(fromAddress, ethTx, opts),
+    );
   }
   signEip7702Authorization(
     keyring: any,
@@ -1422,7 +1473,10 @@ export class KeyringService extends RNEventEmitter {
   signMessage(msgParams: { from: string; data: any }, opts = {}) {
     const address = normalizeAddress(msgParams.from);
     return this.getKeyringForAccount(address).then(keyring => {
-      return keyring.signMessage(address, msgParams.data, opts);
+      return this.withOneKeyPassphrasePersistence(
+        keyring,
+        keyring.signMessage(address, msgParams.data, opts),
+      );
     });
   }
   /**
@@ -1444,7 +1498,10 @@ export class KeyringService extends RNEventEmitter {
     opts = {},
   ) {
     const address = normalizeAddress(msgParams.from);
-    return keyring.signPersonalMessage(address, msgParams.data, opts);
+    return this.withOneKeyPassphrasePersistence(
+      keyring,
+      keyring.signPersonalMessage(address, msgParams.data, opts),
+    );
   }
   /**
    * Sign Typed Data
@@ -1463,7 +1520,10 @@ export class KeyringService extends RNEventEmitter {
     opts = { version: 'V1' },
   ) {
     const address = normalizeAddress(msgParams.from);
-    return keyring.signTypedData(address, msgParams.data, opts);
+    return this.withOneKeyPassphrasePersistence(
+      keyring,
+      keyring.signTypedData(address, msgParams.data, opts),
+    );
   }
   /**
    *
