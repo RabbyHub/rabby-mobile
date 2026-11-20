@@ -94,7 +94,6 @@ export function AddressNavigator() {
   const { mergeScreenOptions, mergeScreenOptions2024 } = useStackScreenConfig();
   const { colors, colors2024, styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
-
   const { accounts } = useAccounts({
     disableAutoFetch: true,
   });
@@ -189,6 +188,7 @@ export function AddressNavigator() {
           header: () => (
             <AutoFitCenterHeader
               title={t('screens.addressStackTitle.ImportHardwareAddress')}
+              titleKey="screens.addressStackTitle.ImportHardwareAddress"
             />
           ),
         })}
@@ -225,6 +225,7 @@ export function AddressNavigator() {
           header: () => (
             <AutoFitCenterHeader
               title={t('screens.addressStackTitle.ImportWatchAddress2024')}
+              titleKey="screens.addressStackTitle.ImportWatchAddress2024"
             />
           ),
         })}
@@ -238,7 +239,9 @@ export function AddressNavigator() {
             // Fully custom header: a long translation used to overflow the
             // native title slot (QA 1352), so the row now owns the leading
             // slot and truncates the title inside the content width.
-            header: () => <ImportMethodsHeader />,
+            header: () => (
+              <ImportMethodsHeader titleKey="screens.addressStackTitle.ImportMethods" />
+            ),
             title: t('screens.addressStackTitle.ImportMethods'),
             headerTintColor: colors['neutral-title-1'],
             headerTitleStyle: styles.headerTitleText,
@@ -260,6 +263,7 @@ export function AddressNavigator() {
           header: () => (
             <AutoFitCenterHeader
               title={t('screens.addressStackTitle.ImportSafeAddress2024')}
+              titleKey="screens.addressStackTitle.ImportSafeAddress2024"
             />
           ),
         })}

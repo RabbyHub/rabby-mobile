@@ -15,6 +15,7 @@ import { makeTestIDProps } from '@/utils/makeTestIDProps';
 import { createGetStyles2024 } from '@/utils/styles';
 import AnimatedTickerText from '@/components/Animated/AnimatedTickerText';
 import { useSharedValue } from 'react-native-reanimated';
+import { GasLessAnimatedWrapper } from '@/components/Approval/components/FooterBar/GasLessComponents';
 
 const PILLS_OPTIONS = [
   {
@@ -107,6 +108,42 @@ function Section({
       <Text style={styles.sectionTitle}>{title}</Text>
       {children}
     </View>
+  );
+}
+
+function GasLessButtonShowCase() {
+  const { styles } = useTheme2024({ getStyle: getStyles });
+  const [gasLess, setGasLess] = useState(false);
+  // The wrapper's animation values never reset, so remount it for every replay.
+  const [runId, setRunId] = useState(0);
+
+  return (
+    <>
+      {/* Radius must stay the same before, during and after the animation. */}
+      <GasLessAnimatedWrapper
+        key={runId}
+        title="Confirm"
+        titleStyle={styles.gasLessButtonText}
+        buttonStyle={styles.gasLessButton}
+        gasLess={gasLess}
+        showOrigin={!gasLess}>
+        <Button
+          type="primary"
+          buttonStyle={styles.gasLessButton}
+          title="Confirm"
+        />
+      </GasLessAnimatedWrapper>
+      <Button
+        type="ghost"
+        title={gasLess ? 'Reset' : 'Trigger free gas animation'}
+        onPress={() => {
+          if (!gasLess) {
+            setRunId(id => id + 1);
+          }
+          setGasLess(v => !v);
+        }}
+      />
+    </>
   );
 }
 
@@ -342,6 +379,10 @@ function DevUIComponents2024ShowCase(): JSX.Element {
           <AnimatedTickerTextShowCase />
         </Section>
 
+        <Section title="GasLess Button">
+          <GasLessButtonShowCase />
+        </Section>
+
         <Section title="NextSearchBar">
           <NextSearchBar
             value={query}
@@ -448,6 +489,16 @@ const getStyles = createGetStyles2024(ctx =>
       fontWeight: '700',
       color: ctx.colors2024['neutral-title-1'],
       fontFamily: 'SF Pro Rounded',
+    },
+    gasLessButton: {
+      height: 56,
+    },
+    gasLessButtonText: {
+      fontSize: 18,
+      lineHeight: 22,
+      fontWeight: '700',
+      fontFamily: 'SF Pro Rounded',
+      color: ctx.colors2024['neutral-InvertHighlight'],
     },
     tickerGlyphGrid: {
       flexDirection: 'row',
