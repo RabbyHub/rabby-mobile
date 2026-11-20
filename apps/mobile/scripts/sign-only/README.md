@@ -1,8 +1,14 @@
 # Sign-only packages
 
 Build an unsigned package locally, upload it to the fe-opcode artifact
-broker, then let the `Sign Only Package` GitHub Actions workflow perform only
-the signing, CDN publish and optional Lark notification.
+broker, then let the **sign-only workflow in `RabbyHub/rabby-ci`**
+(`rabby-mobile-sign-only.yml`) perform only the signing, CDN publish and
+optional Lark notification.
+
+The signing workflow is not part of this repository any more: it lives in the
+private `rabby-ci` repo together with the other packaging lanes. This repo still
+owns the build/sign helper scripts, because the private workflow checks them out
+from here.
 
 ## Android
 
@@ -48,10 +54,9 @@ package is signed and published to the regression CDN but no Lark message is
 sent.
 
 The prepare response suggests `--ref 'develop'`, because that is where the
-workflow is registered. When the workflow copy you want to run only exists on
-another branch — for example the weekly `tmp/YYYYMMDD` release branch, which is
-where the mobile-local sign-only runner wiring lands first — pass the branch to
-`--workflow-ref`:
+`rabby-mobile` scripts are read from. The dispatch itself happens on the
+rabby-ci side, so the branch you pass selects the **mobile code/scripts**, not
+the workflow file:
 
 ```bash
 node scripts/sign-only/publish.mjs \
@@ -61,7 +66,8 @@ node scripts/sign-only/publish.mjs \
 ```
 
 The printed command and the `--json` payload's `workflow.ref` then point at
-that branch.
+that branch. (The GitHub form cannot prefill inputs, so prefer the prepared
+command over typing into the workflow page.)
 
 The workflow only downloads from the sign-only broker path for the same sign
 request, requires the SHA-256 passed to the workflow to match the downloaded
@@ -73,60 +79,15 @@ reviewed commits.
 The same flow is available from the `仅签名打包` page in the fe-opcode
 dashboard, including the Lark notification toggle.
 
-## One-shot: build -> cloud sign -> Lark
+## Requirements
 
-```bash
-yarn sign-only:full:android   # build + upload + trigger + wait
-yarn sign-only:full:ios       # macOS only; run `yarn ios:installpod` first
-yarn sign-only:full:all       # Android then iOS, sequential
-```
+`OPFE_SIGN_ONLY_TOKEN` (or `~/.config/opfe/sign-only-token`), plus an
+authenticated `gh` if you run the prepared command yourself.
 
-The script:
-
-1. builds the unsigned package with the same preparation as feature test;
-2. uploads it to fe-opcode and prepares the signing request;
-3. triggers the `Sign Only Package` workflow with `notify_lark=true` (default);
-4. waits for the cloud signing job and prints the signed CDN URL.
-
-The Lark message is sent by the cloud workflow **after signing**, never by the
-local script. Invoke the script directly when passing flags:
-
-```bash
-node apps/mobile/scripts/sign-only/one-shot.mjs --platform android --no-notify-lark
-```
-
-To dispatch a release branch's workflow copy instead of `develop`:
-
-```bash
-node apps/mobile/scripts/sign-only/one-shot.mjs --platform ios \
-  --workflow-ref tmp/20261112
-```
-
-`--workflow-ref` always uses `workflow_dispatch`, skips the temporary
-push-trigger branch, and keeps `--wait` polling on that branch.
-
-Pass any extra workflow input with a repeated `--workflow-input key=value`.
-For example, the Android job defaults to the Linux `mobile` runner; to re-sign
-the APK on the macOS `mobile-local` machine instead:
-
-```bash
-node apps/mobile/scripts/sign-only/one-shot.mjs --platform android \
-  --workflow-ref tmp/20261112 \
-  --workflow-input android_machine_location=mobile-local
-```
-
-`IOS` runs already default to `mobile-local` through `macos_machine_location`;
-the Android job keeps its Linux default unless `android_machine_location` is
-set to `mobile-local`. The macOS runner needs JDK 17 plus Android SDK
-`build-tools` (the workflow installs both), and uses `shasum` because macOS has
-no GNU `sha256sum`.
-
-Requirements: `OPFE_SIGN_ONLY_TOKEN` (or `~/.config/opfe/sign-only-token`) and
-an authenticated `gh` (`gh auth login`).
-
-`workflow_dispatch` only works once `sign_only_package.yml` is on the default
-branch. Until then the script bakes the inputs into a temporary `test/*`
-branch, triggers the workflow's push path and deletes the branch afterwards.
+The signing jobs pick their machines from the workflow defaults: iOS signs on
+the LAN Mac mini (`mobile-local`), Android on the Linux builder (`mobile`).
+Both fall back to the JDK 17 / Android SDK that is already installed if the
+downloads stall.
 
 ## Signing controls
 
@@ -165,10 +126,6 @@ node apps/mobile/scripts/sign-only/publish.mjs \
   --platform android \
   --file .sign-only/app-signonly-unsigned.apk \
   --prepare --proxy http://127.0.0.1:7890
-
-# or for the one-shot command
-node apps/mobile/scripts/sign-only/one-shot.mjs \
-  --platform android --proxy http://127.0.0.1:7890
 ```
 
 `OPFE_SIGN_ONLY_PROXY` works as the environment-variable equivalent. The proxy

@@ -60,36 +60,20 @@ PY
 }
 
 find_dispatched_run_url() {
-  local branch="$1"
-  local sha="$2"
-  local workflow="$3"
+  local workflow="$1"
 
+  # The workflow now runs in RabbyHub/rabby-ci on its own branch, so the newest
+  # dispatch of that workflow is the run this promotion just started.
   (
     cd "$REPO_ROOT"
     gh run list \
+      --repo "$WORKFLOW_REPO" \
       --workflow "$workflow" \
-      --branch "$branch" \
-      --limit 10 \
-      --json databaseId,event,headBranch,headSha,status,conclusion,url,createdAt
+      --event workflow_dispatch \
+      --limit 1 \
+      --json url,createdAt
   ) |
-    python3 - "$branch" "$sha" <<'PY'
-import json
-import sys
-
-branch = sys.argv[1]
-sha = sys.argv[2]
-runs = json.load(sys.stdin)
-
-for run in runs:
-    if run.get("event") != "workflow_dispatch":
-        continue
-    if run.get("headBranch") != branch:
-        continue
-    if run.get("headSha") != sha:
-        continue
-    print(run.get("url", ""))
-    break
-PY
+    python3 -c 'import json,sys; runs=json.load(sys.stdin); print(runs[0].get("url","") if runs else "")'
 }
 
 COMMITS=()
@@ -104,7 +88,9 @@ REALLY_UPLOAD=true
 SKIP_DISPATCH=false
 KEEP_WORKTREE=false
 DRY_RUN=false
-WORKFLOW_FILE=.github/workflows/feature_test.yml
+WORKFLOW_FILE=rabby-mobile-feature-test.yml
+WORKFLOW_REPO=RabbyHub/rabby-ci
+WORKFLOW_REF=main
 
 while [ "$#" -gt 0 ]; do
   case "$1" in
@@ -183,6 +169,9 @@ case "$MACHINE" in
   mobile|mobile-local) ;;
   *) die "--machine must be mobile or mobile-local, got: $MACHINE" ;;
 esac
+
+log "Note: --machine/--pod-cache/--nm-cache/--gradle-cache are accepted for compatibility."
+log "Note: rabby-ci owns the runner choice and cache flags now; those values are ignored."
 
 require_bool --pod-cache "$POD_CACHE"
 require_bool --nm-cache "$NM_CACHE"
@@ -285,20 +274,20 @@ PUSHED_SHA="$(git -C "$WORKTREE_DIR" rev-parse HEAD)"
 RUN_URL=
 
 if [ "$SKIP_DISPATCH" = false ]; then
-  log "Dispatching Feature Test workflow"
+  log "Dispatching the Rabby Mobile Feature Test workflow in ${WORKFLOW_REPO}"
   (
     cd "$REPO_ROOT"
     gh workflow run "$WORKFLOW_FILE" \
-      --ref "$TMP_BRANCH" \
-      -f macos_machine_location="$MACHINE" \
-      -f RABBY_MOBILE_POD_USE_CACHE="$POD_CACHE" \
-      -f RABBY_MOBILE_NM_USE_CACHE="$NM_CACHE" \
-      -f RABBY_MOBILE_GRADLE_USE_CACHE="$GRADLE_CACHE" \
-      -f REALLY_UPLOAD="$REALLY_UPLOAD" >/dev/null
+      --repo "$WORKFLOW_REPO" \
+      --ref "$WORKFLOW_REF" \
+      -f target=both \
+      -f ref="$TMP_BRANCH" \
+      -f REALLY_UPLOAD="$REALLY_UPLOAD" \
+      -f SKIP_NOTIFY_LARK=false >/dev/null
   )
 
   sleep 3
-  RUN_URL="$(find_dispatched_run_url "$TMP_BRANCH" "$PUSHED_SHA" "$WORKFLOW_FILE")"
+  RUN_URL="$(find_dispatched_run_url "$WORKFLOW_FILE")"
 fi
 
 printf 'tmp_branch=%s\n' "$TMP_BRANCH"
