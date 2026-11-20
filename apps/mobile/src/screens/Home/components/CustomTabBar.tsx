@@ -17,6 +17,7 @@ import Animated, {
   useFrameCallback,
   useAnimatedStyle,
   useSharedValue,
+  runOnJS,
   withTiming,
   interpolate,
   AnimatedStyle,
@@ -619,7 +620,7 @@ export const HomeCustomMaterialTabBar = ({}: Partial<
     };
   }, [pagerOffsetStrategy, indexDecimal, nativeMode, pushBound]);
 
-  useFrameCallback(info => {
+  const frameCallback = useFrameCallback(info => {
     if (legacyBridge) {
       return;
     }
@@ -658,8 +659,27 @@ export const HomeCustomMaterialTabBar = ({}: Partial<
         duration: 80,
         easing: Easing.linear,
       });
+      // Nothing left to correct: stop scheduling frames until the next sample.
+      runOnJS(setFrameActive)(false);
     }
-  }, !legacyBridge);
+  }, false);
+
+  // The tuned bridge is a JS-mode callback: `autostart` only seeds the ref, so
+  // switching the A/B mode has to go through `setActive` as well.
+  const frameActiveRef = React.useRef(false);
+  const setFrameActive = React.useCallback(
+    (active: boolean) => {
+      if (frameActiveRef.current === active) {
+        return;
+      }
+      frameActiveRef.current = active;
+      frameCallback.setActive(active);
+    },
+    [frameCallback],
+  );
+  React.useEffect(() => {
+    setFrameActive(!legacyBridge);
+  }, [legacyBridge, setFrameActive]);
 
   useAnimatedReaction(
     () => rawIndexDecimal.value,
@@ -675,6 +695,7 @@ export const HomeCustomMaterialTabBar = ({}: Partial<
       );
       lastSampleMs.value = nowMs.value;
       restSettled.value = 0;
+      runOnJS(setFrameActive)(true);
       const dv = value - lastRawValue.value;
       lastRawValue.value = value;
       velocity.value = velocity.value * 0.6 + (dv / gapMs) * 0.4;
@@ -693,7 +714,7 @@ export const HomeCustomMaterialTabBar = ({}: Partial<
         easing: Easing.linear,
       });
     },
-    [legacyBridge],
+    [legacyBridge, setFrameActive],
   );
 
   // Keep the native sibling order stable while PagerView is settling. Changing

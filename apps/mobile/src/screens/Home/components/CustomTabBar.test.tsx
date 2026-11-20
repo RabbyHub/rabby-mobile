@@ -39,7 +39,8 @@ jest.mock('react-native-reanimated', () => {
       react(prepare());
     },
     // Added when the tab bar started bridging the pager sample stream.
-    useFrameCallback: () => undefined,
+    useFrameCallback: () => ({ setActive: jest.fn() }),
+    runOnJS: (fn: unknown) => fn,
     Easing: { linear: (value: number) => value },
   };
 });

@@ -2,6 +2,7 @@ import { zCreate } from '@/core/utils/reexports';
 import { IS_ANDROID } from '@/core/native/utils';
 import {
   getOnlineConfig,
+  subscribeOnlineConfig,
   ONLINE_STRATEGY_PAGER_OFFSET,
   type PagerOffsetStrategy,
 } from '@/core/config/online';
@@ -44,6 +45,22 @@ const pagerOffsetStrategyStore = zCreate<{ mode: PagerOffsetStrategy }>(() => ({
   mode: resolveInitialPagerOffsetStrategy(),
 }));
 
+/**
+ * The online configuration resolves asynchronously after the module loads.
+ * Follow it so the first fetched strategy and later changes apply without an
+ * app restart; an explicit debug override still wins for this session.
+ */
+let debugOverride = false;
+subscribeOnlineConfig(() => {
+  if (debugOverride) {
+    return;
+  }
+  const next = resolveInitialPagerOffsetStrategy();
+  if (pagerOffsetStrategyStore.getState().mode !== next) {
+    pagerOffsetStrategyStore.setState({ mode: next });
+  }
+});
+
 type Applier = (mode: PagerOffsetStrategy) => void;
 let applier: Applier | null = null;
 
@@ -69,6 +86,7 @@ export const pagerOffsetStrategy = {
     return this.mode !== 'off';
   },
   set(mode: PagerOffsetStrategy) {
+    debugOverride = true;
     if (pagerOffsetStrategyStore.getState().mode === mode) {
       return;
     }
