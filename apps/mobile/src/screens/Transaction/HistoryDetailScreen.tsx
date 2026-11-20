@@ -10,6 +10,8 @@ import RcIconJumpCC from '@/assets2024/icons/history/IconJumpCC.svg';
 import { getBottomButtonBottomOffset } from '@/constant/layout';
 import { ScreenHeaderAccountTitle } from '@/components/AccountSwitcher/OnScreenHeader';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
+import { HeaderBackButton } from '@/hooks/navigation';
+import { useSafeSizes } from '@/hooks/useAppLayout';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { Text } from '@/components/Typography';
 import { toast } from '@/components2024/Toast';
@@ -38,6 +40,10 @@ import { isAddress } from 'viem';
 import { getTokenSymbol } from '@/utils/token';
 import { ProjectItemInDetail } from './components/ProjectItemInDetail';
 import { HistoryHeaderTitle } from './components/HistoryHeaderTitle';
+
+const HEADER_ROW_HEIGHT = 44;
+const HEADER_SIDE_SLOT_WIDTH = 32;
+const HEADER_HORIZONTAL_INSET = 16;
 
 function HistoryDetailScreen(): JSX.Element {
   const route =
@@ -172,28 +178,58 @@ function HistoryDetailScreen(): JSX.Element {
       : accounts.find(item => isSameAddress(item.address, data.address));
   }, [account, accounts, data.address]);
 
-  const getHeaderTitle = React.useCallback(() => {
-    // The native back item is wider than the old JS header button, so UIKit
-    // lays this title container out right of the screen centre (QA 1360).
-    return (
-      <View style={{ transform: [{ translateX: -12 }] }}>
-        <ScreenHeaderAccountTitle
-          account={currentAccount}
-          titleText={
-            <HistoryHeaderTitle>
-              {title || t('page.transactions.itemTitle.Default')}
-            </HistoryHeaderTitle>
-          }
-        />
+  const { safeTop: headerTop } = useSafeSizes();
+  // The title used to sit inside the native header's title slot, which UIKit
+  // lays out right of centre (QA 1360) and by a different amount per OS and
+  // per title width (QA 1440: the English "Sent" on the SE sat +13pt right
+  // while the Chinese one was centred). Render the whole row in JS instead:
+  // the slot is the same on both sides, so the title centres at any language.
+  const getHeader = React.useCallback(
+    () => (
+      <View
+        style={{
+          paddingTop: headerTop,
+          paddingLeft: HEADER_HORIZONTAL_INSET,
+          paddingRight: HEADER_HORIZONTAL_INSET,
+        }}>
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            minHeight: HEADER_ROW_HEIGHT,
+          }}>
+          <View style={{ width: HEADER_SIDE_SLOT_WIDTH }}>
+            <HeaderBackButton
+              style={{
+                width: '100%',
+                height: HEADER_ROW_HEIGHT,
+                alignItems: 'flex-start',
+                justifyContent: 'center',
+              }}
+            />
+          </View>
+          <View style={{ flex: 1, alignItems: 'center' }}>
+            <ScreenHeaderAccountTitle
+              account={currentAccount}
+              titleText={
+                <HistoryHeaderTitle>
+                  {title || t('page.transactions.itemTitle.Default')}
+                </HistoryHeaderTitle>
+              }
+            />
+          </View>
+          <View style={{ width: HEADER_SIDE_SLOT_WIDTH }} />
+        </View>
       </View>
-    );
-  }, [currentAccount, title, t]);
+    ),
+    [currentAccount, headerTop, title, t],
+  );
 
   React.useEffect(() => {
     setNavigationOptions({
-      headerTitle: getHeaderTitle,
+      header: getHeader,
     });
-  }, [setNavigationOptions, getHeaderTitle]);
+  }, [setNavigationOptions, getHeader]);
 
   const contractInfo = useMemo(() => {
     if (data.cate_id === 'send' || data.cate_id === 'receive') {
