@@ -69,7 +69,7 @@ jest.mock('@/utils/styles', () => ({
 }));
 
 it.each([
-  ['en', ['0mins', '1min', '2mins', '59mins'], '1 hour : 1min'],
+  ['en', ['0 mins', '1 min', '2 mins', '59 mins'], '1 hour : 1 min'],
   ['zh-CN', ['0 分钟', '1 分钟', '2 分钟', '59 分钟'], '1 小时 : 1 分钟'],
 ] as const)(
   'uses %s minute units in the wheel, preview and order field',
