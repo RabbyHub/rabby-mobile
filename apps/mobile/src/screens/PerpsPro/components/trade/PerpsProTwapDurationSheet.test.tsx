@@ -6,6 +6,11 @@ import { DurationPickerCommands } from '@rabby-wallet/react-native-duration-pick
 import type { PerpsProTradeController } from '../../scene/usePerpsProTrade';
 import { PerpsProTwapDurationSheet } from './PerpsProTwapDurationSheet';
 import { PerpsProTwapFields } from './PerpsProTwapFields';
+import { triggerPerpsProLightHaptic } from '../common/triggerPerpsProLightHaptic';
+
+jest.mock('../common/triggerPerpsProLightHaptic', () => ({
+  triggerPerpsProLightHaptic: jest.fn(),
+}));
 
 jest.mock('@rabby-wallet/react-native-duration-picker', () => ({
   DurationPicker: require('react').forwardRef(
@@ -126,3 +131,76 @@ it.each([
     expect(onConfirm).toHaveBeenCalledWith('62');
   },
 );
+
+it('gates and throttles user haptics across reset, confirm and visibility changes', async () => {
+  const i18n = createInstance();
+  await i18n.init({
+    lng: 'en',
+    resources: {
+      en: { translation: require('@/assets/locales/en/messages.json') },
+    },
+  });
+  const onConfirm = jest.fn();
+  const haptic = jest.mocked(triggerPerpsProLightHaptic);
+  haptic.mockClear();
+  const clock = jest.spyOn(Date, 'now').mockReturnValue(1000);
+  const content = (visible: boolean) => (
+    <I18nextProvider i18n={i18n}>
+      <PerpsProTwapDurationSheet
+        visible={visible}
+        value="61"
+        onClose={jest.fn()}
+        onConfirm={onConfirm}
+      />
+    </I18nextProvider>
+  );
+  try {
+    const view = render(content(true));
+    const wheel = screen.getByTestId('native-wheel');
+    const firstSession = wheel.props.sessionId;
+    const change = (minutes: number, sessionId = wheel.props.sessionId) =>
+      fireEvent(wheel, 'durationChange', {
+        nativeEvent: { minutes, sessionId },
+      });
+    expect(haptic).not.toHaveBeenCalled();
+    change(61);
+    change(62, firstSession - 1);
+    expect(haptic).not.toHaveBeenCalled();
+    change(62);
+    expect(haptic).toHaveBeenCalledTimes(1);
+    clock.mockReturnValue(1040);
+    change(63);
+    expect(haptic).toHaveBeenCalledTimes(1);
+    clock.mockReturnValue(1080);
+    change(64);
+    expect(haptic).toHaveBeenCalledTimes(2);
+
+    fireEvent.press(screen.getByText('Reset'));
+    change(65, firstSession);
+    expect(wheel.props.durationMinutes).toBe(0);
+    expect(haptic).toHaveBeenCalledTimes(2);
+    clock.mockReturnValue(1200);
+    change(0);
+    expect(haptic).toHaveBeenCalledTimes(2);
+    change(5);
+    expect(haptic).toHaveBeenCalledTimes(3);
+
+    fireEvent.press(screen.getByText('Confirm'));
+    clock.mockReturnValue(1400);
+    change(6);
+    const requestId = jest.mocked(DurationPickerCommands.readCurrentValue).mock
+      .lastCall?.[1];
+    fireEvent(wheel, 'valueRead', {
+      nativeEvent: { minutes: 7, sessionId: wheel.props.sessionId, requestId },
+    });
+    expect(onConfirm).toHaveBeenCalledWith('7');
+    expect(haptic).toHaveBeenCalledTimes(3);
+    view.rerender(content(false));
+    change(8);
+    view.rerender(content(true));
+    change(61);
+    expect(haptic).toHaveBeenCalledTimes(3);
+  } finally {
+    clock.mockRestore();
+  }
+});

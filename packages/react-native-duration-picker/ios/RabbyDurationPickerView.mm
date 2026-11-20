@@ -49,7 +49,7 @@ static const CGFloat RowHeight = 40;
     _table.scrollsToTop = NO;
     _table.bounces = NO;
     _table.showsVerticalScrollIndicator = NO;
-    _table.decelerationRate = UIScrollViewDecelerationRateFast;
+    _table.decelerationRate = UIScrollViewDecelerationRateNormal;
     _table.accessibilityElementsHidden = YES;
     [_table registerClass:UITableViewCell.class forCellReuseIdentifier:@"duration"];
     _table.dataSource = self;
@@ -119,7 +119,8 @@ static const CGFloat RowHeight = 40;
 - (void)styleCell:(UITableViewCell *)cell
 {
   CGFloat distance = fabs(CGRectGetMidY(cell.frame) - CGRectGetMidY(_table.bounds)) / RowHeight;
-  cell.contentView.alpha = 1 / (1 + 2 * distance * distance);
+  CGFloat unselectedFade = 1 - 0.2 * MIN(distance, 1);
+  cell.contentView.alpha = unselectedFade / (1 + 2 * distance * distance);
   cell.contentView.transform = CGAffineTransformMakeScale(1, MAX(0.45, 1 - distance * 0.14));
 }
 
