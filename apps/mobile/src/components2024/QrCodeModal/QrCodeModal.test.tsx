@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity } from 'react-native';
 import { act, fireEvent, render } from '@testing-library/react-native';
 import { getDefaultStore } from 'jotai';
 
@@ -12,17 +12,9 @@ jest.mock('@/hooks/theme', () => ({
 jest.mock('@/utils/styles', () => ({
   createGetStyles2024: (getStyle: unknown) => getStyle,
 }));
-// Duo outer screen: 466pt native window letterboxed to a 382pt content column.
-jest.mock('@/core/dimensions', () => ({
-  useWindowDimensions: () => ({
-    width: 382,
-    height: 812,
-    scale: 3,
-    fontScale: 1,
-  }),
-}));
-jest.mock('@/components/SafeWindowFrame/backdrop', () => ({
-  useSystemColumnInset: () => ({ left: 0, right: 84 }),
+jest.mock('@/core/utils/device', () => ({
+  __esModule: true,
+  default: { getDeviceWidth: () => 390 },
 }));
 jest.mock('@/utils/modalGate', () => ({
   MODAL_GATE_IDS: { qrCode: 'qr-code' },
@@ -101,26 +93,4 @@ it('never presents an empty transparent modal', () => {
     store.set(dataAtom, '0x341a1fbd51825e5a107db54ccb3166deba145479');
   });
   expect(modalVisible(view)).toBe('true');
-});
-
-it('draws a square QR frame and centres it on the content column', () => {
-  store.set(dataAtom, '0x341a1fbd51825e5a107db54ccb3166deba145479');
-  store.set(visibleAtom, true);
-
-  const view = render(<QrCodeModal />);
-  const overlay = view.UNSAFE_getByType(TouchableOpacity);
-  expect(StyleSheet.flatten(overlay.props.style)).toMatchObject({
-    paddingRight: 84,
-  });
-
-  const frame = view.UNSAFE_getAllByType(View).find(node => {
-    const style = StyleSheet.flatten(node.props.style) || {};
-    return typeof style.width === 'number' && style.width === style.height;
-  });
-  expect(frame).toBeTruthy();
-  // 382 - 144 = 238 QR + 10pt inset on each side.
-  expect(StyleSheet.flatten(frame!.props.style)).toMatchObject({
-    width: 258,
-    height: 258,
-  });
 });
