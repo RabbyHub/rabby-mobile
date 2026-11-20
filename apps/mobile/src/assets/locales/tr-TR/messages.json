@@ -2254,6 +2254,9 @@
             "title": "TP/SL",
             "description": "Temel piyasa TP/SL emirleri verir. Kısmi TP/SL gibi gelişmiş özellikler için açık bir pozisyonda TP/SL ayarlayın."
           },
+          "randomize": {
+            "description": "Rastgeleleştirme, maksimum işlem büyüklüğüne ve diğer sınırlara uyarak her alt işlemin büyüklüğünü en fazla ±%20 değiştirir."
+          },
           "reduceOnly": {
             "title": "Yalnızca Azalt",
             "description": "Bu emir, miktarı ne olursa olsun yeni bir pozisyon açmaz. Gerçekleşme sırasında emir miktarı mevcut pozisyonun miktarıyla karşılaştırılır."

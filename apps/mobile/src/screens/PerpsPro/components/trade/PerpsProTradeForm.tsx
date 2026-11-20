@@ -411,6 +411,7 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
           <View style={styles.twapOptions}>
             <PerpsProTradeCheckbox
               checked={form.twapRandomize}
+              explanationKey="randomize"
               label={t('page.perps.pro.twap.randomize')}
               onPress={() =>
                 controller.patchForm({ twapRandomize: !form.twapRandomize })

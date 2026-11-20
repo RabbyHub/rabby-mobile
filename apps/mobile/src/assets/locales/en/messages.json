@@ -2341,6 +2341,9 @@
             "title": "TP/SL",
             "description": "Places basic market TP/SL orders. For advanced features such as partial TP/SL, set TP/SL on an open position."
           },
+          "randomize": {
+            "description": "Randomize varies each sub-trade’s size by up to ±20%, while respecting the maximum trade size and other limits."
+          },
           "reduceOnly": {
             "title": "Reduce Only",
             "description": "This order will not open a new position, regardless of its size. At the time of execution, the order size will be compared with the size of the existing position."

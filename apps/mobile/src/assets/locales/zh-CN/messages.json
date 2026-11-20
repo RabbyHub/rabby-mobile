@@ -2404,6 +2404,9 @@
             "title": "TP/SL",
             "description": "提交基础市价 TP/SL 订单。如需部分 TP/SL 等高级功能，请在已有仓位上设置 TP/SL。"
           },
+          "randomize": {
+            "description": "随机化会使每笔子交易的数量在 ±20% 的范围内变化，同时遵守最大交易数量及其他限制。"
+          },
           "reduceOnly": {
             "title": "只减仓",
             "description": "无论订单数量多大，该订单都不会建立新仓位。执行时会将订单数量与现有仓位数量进行比较。"

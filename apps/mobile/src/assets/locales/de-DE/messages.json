@@ -2540,6 +2540,9 @@
             "title": "TP/SL",
             "description": "Platziert einfache Market-TP/SL-Orders. Für erweiterte Funktionen wie partielles TP/SL legen Sie TP/SL bei einer offenen Position fest."
           },
+          "randomize": {
+            "description": "Die Zufallsverteilung variiert die Größe jeder Teilorder um bis zu ±20 % und hält dabei die maximale Ordergröße sowie andere Limits ein."
+          },
           "reduceOnly": {
             "title": "Nur reduzieren",
             "description": "Diese Order eröffnet unabhängig von ihrer Größe keine neue Position. Bei der Ausführung wird die Ordergröße mit der Größe der bestehenden Position verglichen."

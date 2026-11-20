@@ -2254,6 +2254,9 @@
             "title": "TP/SL",
             "description": "Membuat order TP/SL pasar dasar. Untuk fitur lanjutan seperti TP/SL sebagian, atur TP/SL pada posisi terbuka."
           },
+          "randomize": {
+            "description": "Pengacakan memvariasikan ukuran setiap suborder hingga ±20%, dengan tetap mematuhi ukuran order maksimum dan batas lainnya."
+          },
           "reduceOnly": {
             "title": "Hanya Kurangi",
             "description": "Order ini tidak akan membuka posisi baru, berapa pun ukurannya. Saat eksekusi, ukuran order akan dibandingkan dengan ukuran posisi yang ada."

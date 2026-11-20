@@ -35,6 +35,10 @@ export const PERPS_PRO_FIELD_EXPLANATIONS = {
     descriptionKey: 'page.perps.pro.fieldExplanations.pnl.description',
     titleKey: 'page.perps.pro.fieldExplanations.pnl.title',
   },
+  randomize: {
+    descriptionKey: 'page.perps.pro.fieldExplanations.randomize.description',
+    titleKey: 'page.perps.pro.twap.randomize',
+  },
   reduceOnly: {
     descriptionKey: 'page.perps.pro.fieldExplanations.reduceOnly.description',
     titleKey: 'page.perps.pro.fieldExplanations.reduceOnly.title',

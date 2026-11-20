@@ -2371,6 +2371,9 @@
             "title": "TP/SL",
             "description": "Đặt các lệnh TP/SL thị trường cơ bản. Với tính năng nâng cao như TP/SL một phần, hãy đặt TP/SL trên vị thế đang mở."
           },
+          "randomize": {
+            "description": "Tính năng ngẫu nhiên hóa thay đổi quy mô của mỗi lệnh nhỏ trong phạm vi ±20%, đồng thời tuân thủ quy mô giao dịch tối đa và các giới hạn khác."
+          },
           "reduceOnly": {
             "title": "Chỉ giảm",
             "description": "Lệnh này sẽ không mở vị thế mới, bất kể khối lượng. Khi thực hiện, khối lượng lệnh sẽ được so sánh với khối lượng vị thế hiện có."
