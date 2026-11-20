@@ -152,7 +152,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   title: {
     fontFamily: 'SF Pro Rounded',
     fontSize: 20,
-    fontWeight: '900',
+    fontWeight: '800',
     lineHeight: 24,
     color: colors2024['neutral-title-1'],
     textAlign: 'center',

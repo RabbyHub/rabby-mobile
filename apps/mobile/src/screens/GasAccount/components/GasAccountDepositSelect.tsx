@@ -158,7 +158,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     fontSize: 20,
     lineHeight: 24,
     fontStyle: 'normal',
-    fontWeight: '900',
+    fontWeight: '800',
     color: colors2024['neutral-title-1'],
     marginBottom: 12,
     textAlign: 'center',

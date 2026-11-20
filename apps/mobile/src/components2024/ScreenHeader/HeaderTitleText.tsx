@@ -16,7 +16,7 @@ const getStyle = createGetStyles2024(ctx => {
   return {
     title: {
       color: ctx.colors2024['neutral-title-1'],
-      fontWeight: '900',
+      fontWeight: '800',
       fontFamily: 'SF Pro Rounded',
       fontSize: 20,
     },

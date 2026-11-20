@@ -324,7 +324,7 @@ const getPanelStyle = createGetStyles2024(ctx => {
     title: {
       fontFamily: 'SF Pro Rounded',
       fontSize: 20,
-      fontWeight: '900',
+      fontWeight: '800',
       lineHeight: 24,
       color: ctx.colors2024['neutral-title-1'],
       textAlign: 'center',

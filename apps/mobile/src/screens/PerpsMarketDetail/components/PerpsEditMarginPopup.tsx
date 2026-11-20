@@ -620,7 +620,7 @@ const getStyle = createGetStyles2024(ctx => {
             textAlignVertical: 'center',
           }
         : { lineHeight: 42 }),
-      fontWeight: '900',
+      fontWeight: '800',
       fontVariant: ['tabular-nums'],
       color: colors2024['neutral-title-1'],
       flex: 1,
@@ -637,7 +637,7 @@ const getStyle = createGetStyles2024(ctx => {
       fontFamily: 'SF Pro Rounded',
       fontSize: 20,
       lineHeight: 24,
-      fontWeight: '900',
+      fontWeight: '800',
       color: colors2024['neutral-title-1'],
       marginBottom: 6,
       textAlign: 'center',
@@ -988,7 +988,7 @@ const getStyle = createGetStyles2024(ctx => {
     marginLabel: {
       fontSize: 20,
       lineHeight: 24,
-      fontWeight: '900',
+      fontWeight: '800',
       // marginBottom: 4,
       color: '#50D2C1',
       fontFamily: 'SF Pro Rounded',
