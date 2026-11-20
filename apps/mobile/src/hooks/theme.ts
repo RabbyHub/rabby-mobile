@@ -2,12 +2,12 @@ import React, { useMemo } from 'react';
 import {
   ColorSchemeName,
   Appearance,
-  Dimensions,
   useColorScheme,
   useWindowDimensions,
   Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { getDimensionsSnapshot } from '@/core/dimensions';
 
 import {
   ThemeColors,
@@ -386,7 +386,8 @@ export function getTheme2024<
 >(opts?: { getStyle?: T; isLight?: boolean }) {
   const appThemeMode = getBinaryMode();
   const safeAreaInsets = svsLayout.insets.value;
-  const { width: windowWidth, height: windowHeight } = Dimensions.get('window');
+  const { width: windowWidth, height: windowHeight } =
+    getDimensionsSnapshot('window');
   const language = getAppLanguage();
   const { getStyle: makeStyles = DefaultMakeStyles2024 } = opts || {};
   const getStyles = makeStyles.getStyles || DefaultMakeStyles2024.getStyles;

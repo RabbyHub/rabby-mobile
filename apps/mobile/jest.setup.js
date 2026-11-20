@@ -185,3 +185,7 @@ jest.mock('@sentry/react-native', () => {
     Scope: jest.fn(),
   };
 });
+
+// ESM-only react-navigation module; tests that touch the navigator do not
+// render a native header and only need the module to resolve.
+jest.mock('@react-navigation/elements', () => ({ __esModule: true, default: {} }));
