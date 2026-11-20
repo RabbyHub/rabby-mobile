@@ -275,6 +275,7 @@ const getStyles = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
   quickAdd: {
     height: 56,
     borderRadius: 12,
+    borderCurve: 'continuous',
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,

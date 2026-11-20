@@ -118,6 +118,7 @@ const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
     alignSelf: 'center',
     height: BOTTOM_BUTTON_SINGLE_HEIGHT,
     borderRadius: 12,
+    borderCurve: 'continuous',
     marginTop: 4,
     shadowColor: '#7084ff',
     shadowOpacity: 0.1,

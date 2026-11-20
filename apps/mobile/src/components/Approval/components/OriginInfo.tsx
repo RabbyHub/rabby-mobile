@@ -29,6 +29,7 @@ const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
     width: 24,
     height: 24,
     borderRadius: 24,
+    borderCurve: 'continuous',
   },
   requestOrigin: {
     position: 'relative',
@@ -57,6 +58,7 @@ const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
     width: 14,
     height: 14,
     borderRadius: 14,
+    borderCurve: 'continuous',
   },
   originLogo: {
     position: 'relative',

@@ -86,6 +86,7 @@ const getStyles = createGetStyles2024(ctx => ({
     alignItems: 'center',
     backgroundColor: ctx.colors2024['neutral-bg-2'],
     borderRadius: 8,
+    borderCurve: 'continuous',
     padding: 6,
     height: 32,
     marginRight: 8,
@@ -95,6 +96,7 @@ const getStyles = createGetStyles2024(ctx => ({
     width: 18,
     height: 18,
     borderRadius: 9,
+    borderCurve: 'continuous',
     marginRight: 6,
   },
   chainName: {

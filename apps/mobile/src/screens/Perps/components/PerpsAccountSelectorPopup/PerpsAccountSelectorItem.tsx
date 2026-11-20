@@ -238,6 +238,7 @@ const getStyle = createGetStyles2024(ctx => {
       padding: 16,
       marginBottom: 12,
       borderRadius: 20,
+      borderCurve: 'continuous',
     },
     addressItemInner: {
       display: 'flex',
@@ -327,6 +328,7 @@ const getStyle = createGetStyles2024(ctx => {
       paddingVertical: 1,
       paddingHorizontal: 4,
       borderRadius: 4,
+      borderCurve: 'continuous',
       backgroundColor: colors2024['brand-light-1'],
     },
     tagText: {

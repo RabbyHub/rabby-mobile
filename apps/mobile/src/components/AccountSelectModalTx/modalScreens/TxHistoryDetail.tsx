@@ -208,6 +208,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: '100%',
     marginTop: 20,
     borderRadius: 16,
+    borderCurve: 'continuous',
     position: 'relative',
     paddingTop: 0,
     paddingBottom: 27,

@@ -230,12 +230,14 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   modal: {
     borderTopLeftRadius: PERPS_PRO_SHEET_CORNER_RADIUS,
     borderTopRightRadius: PERPS_PRO_SHEET_CORNER_RADIUS,
+    borderCurve: 'continuous',
     overflow: 'hidden',
   },
   background: {
     backgroundColor: colors2024['neutral-bg-0'],
     borderTopLeftRadius: PERPS_PRO_SHEET_CORNER_RADIUS,
     borderTopRightRadius: PERPS_PRO_SHEET_CORNER_RADIUS,
+    borderCurve: 'continuous',
   },
   handle: {
     backgroundColor: colors2024['neutral-bg-0'],
@@ -246,6 +248,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   handleIndicator: {
     backgroundColor: colors2024['neutral-sheet-handle'],
     borderRadius: 3,
+    borderCurve: 'continuous',
     height: 6,
     width: 50,
   },

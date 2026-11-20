@@ -719,6 +719,7 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => {
     },
     input: {
       borderRadius: 12,
+      borderCurve: 'continuous',
       minHeight: 56,
     },
     inputWithAddOn: {

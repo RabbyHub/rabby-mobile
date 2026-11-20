@@ -50,6 +50,7 @@ const getStyles = (colors: AppColorsVariants) =>
       width: 200,
       height: 200,
       borderRadius: 8,
+      borderCurve: 'continuous',
       padding: 15,
     },
     camera: {
@@ -60,6 +61,7 @@ const getStyles = (colors: AppColorsVariants) =>
     cameraWrap: {
       position: 'relative',
       borderRadius: 8,
+      borderCurve: 'continuous',
       backgroundColor: colors['neutral-black'],
       overflow: 'hidden',
       filter: 'blur(4px)',

@@ -32,6 +32,7 @@ const getStyles = (colors: AppColorsVariants) =>
       width: 18,
       height: 18,
       borderRadius: 2,
+      borderCurve: 'continuous',
       marginRight: 6,
     },
     name: {

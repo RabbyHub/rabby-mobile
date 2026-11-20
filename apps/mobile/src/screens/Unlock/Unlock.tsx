@@ -1225,6 +1225,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => {
 
     inputContainer: {
       borderRadius: 12,
+      borderCurve: 'continuous',
       height: 56,
       backgroundColor: colors2024['neutral-bg-2'],
       borderWidth: 0,

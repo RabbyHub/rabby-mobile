@@ -86,6 +86,7 @@ const getStyles = createGetStyles2024(ctx => {
     inputContainerStyle: {
       borderWidth: 1,
       borderRadius: 8,
+      borderCurve: 'continuous',
       borderColor: ctx.colors['neutral-line'],
       paddingHorizontal: 16,
     },

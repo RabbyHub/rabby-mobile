@@ -102,6 +102,7 @@ export const getStyle = createGetStyles2024(({ colors2024 }) => ({
   sheet: {
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,
+    borderCurve: 'continuous',
   },
   sheetHandle: {
     backgroundColor: colors2024['neutral-bg-1'],
@@ -110,6 +111,7 @@ export const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: 50,
     height: 6,
     borderRadius: 100,
+    borderCurve: 'continuous',
     backgroundColor: colors2024['neutral-line'],
   },
   presetSheet: {
@@ -142,6 +144,7 @@ export const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flex: 1,
     height: 40,
     borderRadius: 6,
+    borderCurve: 'continuous',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors2024['neutral-bg-5'],
@@ -171,6 +174,7 @@ export const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flex: 1,
     height: 48,
     borderRadius: 12,
+    borderCurve: 'continuous',
     alignItems: 'center',
     justifyContent: 'center',
   },

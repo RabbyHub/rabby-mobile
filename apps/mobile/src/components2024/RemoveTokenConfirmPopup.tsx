@@ -137,6 +137,7 @@ const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
     marginTop: 24,
     height: 64,
     borderRadius: 16,
+    borderCurve: 'continuous',
     borderWidth: 1,
     borderColor: colors2024['neutral-line'],
     backgroundColor: colors2024['neutral-bg-1'],
@@ -168,9 +169,14 @@ const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
     lineHeight: 24,
     paddingVertical: 0,
   },
-  cancelButton: { borderRadius: 12, backgroundColor: 'transparent' },
+  cancelButton: {
+    borderRadius: 12,
+    borderCurve: 'continuous',
+    backgroundColor: 'transparent',
+  },
   removeButton: {
     borderRadius: 12,
+    borderCurve: 'continuous',
     // Figma's r-red/default differs from the 2024 danger-button color.
     backgroundColor: '#E34935',
   },

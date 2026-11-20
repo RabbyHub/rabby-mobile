@@ -670,6 +670,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: '100%',
     maxWidth: 360,
     borderRadius: 12,
+    borderCurve: 'continuous',
     paddingHorizontal: 24,
     paddingVertical: 16,
     alignItems: 'center',

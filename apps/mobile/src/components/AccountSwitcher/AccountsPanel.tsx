@@ -628,6 +628,7 @@ const getPanelStyle = createGetStyles2024(ctx => {
       borderWidth: 2,
       borderColor: ctx.colors2024['neutral-bg-1'],
       borderRadius: 10,
+      borderCurve: 'continuous',
     },
     panel: {
       position: 'relative',
@@ -718,6 +719,7 @@ const getPanelStyle = createGetStyles2024(ctx => {
       height: 6,
       width: 50,
       borderRadius: 104,
+      borderCurve: 'continuous',
     },
     tokenHeader: {
       flexDirection: 'row',

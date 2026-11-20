@@ -33,6 +33,7 @@ const getStyle = createGetStyles2024(({ colors, colors2024, isLight }) => ({
     backgroundColor: colors2024['neutral-bg-5'],
 
     borderRadius: 8,
+    borderCurve: 'continuous',
     paddingTop: 12,
     paddingBottom: 8,
   },
@@ -74,6 +75,7 @@ const getStyle = createGetStyles2024(({ colors, colors2024, isLight }) => ({
     width: 24,
     height: 24,
     borderRadius: 2,
+    borderCurve: 'continuous',
   },
 }));
 

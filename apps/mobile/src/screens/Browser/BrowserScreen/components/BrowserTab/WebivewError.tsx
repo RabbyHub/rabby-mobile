@@ -108,6 +108,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   btn: {
     borderRadius: 6,
+    borderCurve: 'continuous',
     paddingVertical: 4,
     paddingHorizontal: 12,
     width: 'auto',
@@ -135,6 +136,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     gap: 4,
     padding: 12,
     borderRadius: 8,
+    borderCurve: 'continuous',
     backgroundColor: colors2024['neutral-bg-5'],
   },
   alertText: {

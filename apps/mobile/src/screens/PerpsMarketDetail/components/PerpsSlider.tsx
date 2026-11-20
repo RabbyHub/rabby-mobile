@@ -339,8 +339,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     top: 8,
     height: 4,
     borderRadius: 2,
+    borderCurve: 'continuous',
   },
-  closeProgress: { height: 4, borderRadius: 2 },
+  closeProgress: { height: 4, borderRadius: 2, borderCurve: 'continuous' },
   closePoint: { width: 8, height: 8 },
   closePointLayer: { position: 'absolute', left: 0, top: 0 },
   closeSlider: { height: 20, zIndex: 2 },
@@ -368,6 +369,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   sliderTrack: {
     height: 4,
     borderRadius: 2,
+    borderCurve: 'continuous',
   },
   sliderPercentage: {
     fontSize: 14,
@@ -389,6 +391,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: 14,
     height: 14,
     borderRadius: 14,
+    borderCurve: 'continuous',
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: colors2024['neutral-bg-1'],
@@ -400,6 +403,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: 10,
     height: 10,
     borderRadius: 10,
+    borderCurve: 'continuous',
     backgroundColor: '#50D2C1',
   },
 }));

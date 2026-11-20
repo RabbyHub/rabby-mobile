@@ -101,6 +101,7 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
     alignItems: 'center',
     flexDirection: 'row',
     borderRadius: 16,
+    borderCurve: 'continuous',
     gap: 8,
   },
   chainName: {

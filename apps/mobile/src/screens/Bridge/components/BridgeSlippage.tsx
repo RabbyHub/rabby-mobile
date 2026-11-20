@@ -427,6 +427,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: 131,
     height: 20,
     borderRadius: 100,
+    borderCurve: 'continuous',
   },
   value: {
     fontSize: 16,
@@ -465,6 +466,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     height: 40,
     width: 68,
     borderRadius: 6,
+    borderCurve: 'continuous',
   },
   itemActive: {
     backgroundColor: colors2024['brand-light-1'],

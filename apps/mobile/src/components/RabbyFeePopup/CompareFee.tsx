@@ -237,6 +237,7 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 45,
+    borderCurve: 'continuous',
     backgroundColor: colors['blue-default'],
   },
   title: {
@@ -268,6 +269,7 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
     paddingVertical: 15,
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,
+    borderCurve: 'continuous',
     borderWidth: 0.5,
     // borderBottomColor: colors2024['neutral-line'],
     borderColor: colors2024['neutral-line'],
@@ -293,6 +295,7 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
     borderTopRightRadius: 0,
     borderBottomLeftRadius: 32,
     borderBottomRightRadius: 32,
+    borderCurve: 'continuous',
     // borderRadius: 6,
   },
   listItem: {
@@ -342,6 +345,7 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
     width: 14,
     height: 14,
     borderRadius: 999999,
+    borderCurve: 'continuous',
   },
   dexFeeText: {
     flexShrink: 0,

@@ -222,6 +222,7 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
     padding: 10,
     backgroundColor: '#007bff',
     borderRadius: 5,
+    borderCurve: 'continuous',
     alignItems: 'center',
   },
   innerContainer: {
@@ -236,6 +237,7 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
   card: {
     // backgroundColor: colors['neutral-card-1'],
     borderRadius: 6,
+    borderCurve: 'continuous',
     padding: 12,
     paddingTop: 0,
     marginHorizontal: 10,
@@ -274,6 +276,7 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
     flexDirection: 'row',
     height: 52,
     borderRadius: 4,
+    borderCurve: 'continuous',
     borderWidth: 1,
     borderColor: colors['neutral-line'],
     paddingHorizontal: 12,

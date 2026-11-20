@@ -299,6 +299,7 @@ const getStyles = createGetStyles2024(ctx => ({
     alignItems: 'center',
     position: 'relative',
     borderRadius: 10,
+    borderCurve: 'continuous',
   },
   blueAction: {
     backgroundColor: ctx.colors2024['brand-default'],
@@ -331,6 +332,7 @@ const getStyles = createGetStyles2024(ctx => ({
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 12,
+    borderCurve: 'continuous',
     borderWidth: 1,
     borderColor: ctx.colors2024['neutral-line'],
   },

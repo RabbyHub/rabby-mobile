@@ -139,6 +139,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   textInput: {
     height: 52,
     borderRadius: 6,
+    borderCurve: 'continuous',
     color: colors2024['neutral-title-1'],
     fontWeight: '500',
     fontSize: 16,

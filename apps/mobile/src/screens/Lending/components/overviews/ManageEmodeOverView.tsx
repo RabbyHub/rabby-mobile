@@ -325,6 +325,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     borderWidth: 1,
     borderColor: colors2024['neutral-line'],
     borderRadius: 16,
+    borderCurve: 'continuous',
   },
   item: {
     width: '100%',
@@ -385,6 +386,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     paddingHorizontal: 4,
     paddingVertical: 1,
     borderRadius: 4,
+    borderCurve: 'continuous',
     overflow: 'hidden',
     alignSelf: 'flex-start',
   },
@@ -415,6 +417,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     backgroundColor: colors2024['neutral-bg-5'],
     paddingHorizontal: 12,
     borderRadius: 6,
+    borderCurve: 'continuous',
     paddingVertical: 8,
   },
   tableBody: {

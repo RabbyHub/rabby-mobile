@@ -269,6 +269,7 @@ const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
   },
   tagContainer: {
     borderRadius: 100,
+    borderCurve: 'continuous',
     backgroundColor: 'rgba(80, 210, 193, 0.12)',
     paddingVertical: 4,
     paddingLeft: 12,
@@ -322,6 +323,7 @@ const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
     width: '100%',
     backgroundColor: colors2024['neutral-bg-2'],
     borderRadius: 16,
+    borderCurve: 'continuous',
     paddingTop: 20,
     paddingBottom: 12,
     paddingHorizontal: 16,
@@ -348,6 +350,7 @@ const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
     flex: 1,
     height: 40,
     borderRadius: 6,
+    borderCurve: 'continuous',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors2024['neutral-bg-5'],

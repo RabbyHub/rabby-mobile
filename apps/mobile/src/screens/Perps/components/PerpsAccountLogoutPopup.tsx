@@ -123,6 +123,7 @@ const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
 
   currentAddressContainer: {
     borderRadius: 20,
+    borderCurve: 'continuous',
     flexDirection: 'row',
     width: '100%',
     alignItems: 'center',

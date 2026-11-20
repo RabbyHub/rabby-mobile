@@ -136,6 +136,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   gradient: {
     padding: 12,
     borderRadius: 20,
+    borderCurve: 'continuous',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
@@ -150,6 +151,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     gap: 4,
     height: 46,
     borderRadius: 12,
+    borderCurve: 'continuous',
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: colors2024['neutral-bg-5'],

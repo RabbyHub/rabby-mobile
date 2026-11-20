@@ -134,6 +134,7 @@ const getStyles = createGetStyles(colors => ({
     borderWidth: 1,
     borderColor: 'transparent',
     borderRadius: 6,
+    borderCurve: 'continuous',
     marginBottom: 8,
   },
   checked: {

@@ -134,6 +134,7 @@ export const SafeNonceOptionList = ({
 const getStyles = createGetStyles(colors => ({
   nonceSelectOptionList: {
     borderRadius: 6,
+    borderCurve: 'continuous',
     backgroundColor: colors['neutral-bg-3'],
     marginTop: 8,
   },
@@ -167,6 +168,7 @@ const getStyles = createGetStyles(colors => ({
     paddingVertical: 36,
     paddingHorizontal: 40,
     borderRadius: 6,
+    borderCurve: 'continuous',
     backgroundColor: colors['neutral-bg-3'],
     marginTop: 8,
     gap: 12,

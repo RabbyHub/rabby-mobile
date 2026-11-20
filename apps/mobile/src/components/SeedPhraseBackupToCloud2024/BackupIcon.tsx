@@ -41,6 +41,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     bottom: -5,
     right: -5,
     borderRadius: 100,
+    borderCurve: 'continuous',
     zIndex: 1,
   },
   cloudIcon: {

@@ -1928,6 +1928,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 8,
+    borderCurve: 'continuous',
     paddingBottom: 30,
   },
   label: {
@@ -1952,6 +1953,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 100,
+    borderCurve: 'continuous',
     backgroundColor: isLight
       ? 'rgba(0, 0, 0, 0.1)'
       : colors2024['neutral-line'],
@@ -1996,6 +1998,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   swapTokenCard: {
     borderRadius: 16,
+    borderCurve: 'continuous',
     backgroundColor: colors2024['neutral-bg-2'],
     overflow: 'hidden',
   },
@@ -2022,6 +2025,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     paddingTop: 4,
     paddingBottom: 16,
     borderRadius: 30,
+    borderCurve: 'continuous',
     justifyContent: 'space-between',
     backgroundColor: colors2024['neutral-bg-2'],
   },
@@ -2056,6 +2060,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     paddingBottom: 16,
     borderColor: colors2024['neutral-line'],
     borderRadius: 24,
+    borderCurve: 'continuous',
     marginTop: 24,
     backgroundColor: colors2024['neutral-bg-1'],
   },
@@ -2120,6 +2125,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     padding: 4,
     backgroundColor: colors2024['brand-light-1'],
     borderRadius: 8,
+    borderCurve: 'continuous',
   },
   maxButtonText: {
     color: colors2024['brand-default'],

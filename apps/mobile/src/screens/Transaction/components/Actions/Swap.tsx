@@ -394,6 +394,7 @@ const getStyle = createGetStyles2024(
         ? colors2024['neutral-bg-1']
         : colors2024['neutral-bg-2'],
       borderRadius: 200,
+      borderCurve: 'continuous',
       width: 45,
       height: 45,
       alignItems: 'center',
@@ -432,6 +433,7 @@ const getStyle = createGetStyles2024(
       alignItems: 'center',
       justifyContent: 'center',
       borderRadius: 16,
+      borderCurve: 'continuous',
       backgroundColor: !isLight
         ? colors2024['neutral-bg-2']
         : colors2024['neutral-bg-1'],
@@ -444,6 +446,7 @@ const getStyle = createGetStyles2024(
       alignItems: 'center',
       justifyContent: 'center',
       borderRadius: 16,
+      borderCurve: 'continuous',
       backgroundColor: !isLight
         ? colors2024['neutral-bg-2']
         : colors2024['neutral-bg-1'],
@@ -457,6 +460,7 @@ const getStyle = createGetStyles2024(
       justifyContent: 'space-between',
       alignContent: 'center',
       borderRadius: 16,
+      borderCurve: 'continuous',
       padding: 16,
       flexDirection: 'row',
     },
@@ -483,6 +487,7 @@ const getStyle = createGetStyles2024(
 
       backgroundColor: makeHistoryDetailColors({ isLight, colors2024 }).card,
       borderRadius: 16,
+      borderCurve: 'continuous',
       padding: 16,
     },
     swapTitle: {
@@ -523,6 +528,7 @@ const getStyle = createGetStyles2024(
       width: 33,
       height: 33,
       borderRadius: 4,
+      borderCurve: 'continuous',
     },
 
     buttonContainer: {
@@ -554,6 +560,7 @@ const getStyle = createGetStyles2024(
       borderWidth: 1,
       borderColor: makeHistoryDetailColors({ isLight, colors2024 }).card,
       borderRadius: 1000,
+      borderCurve: 'continuous',
     },
   }),
 );

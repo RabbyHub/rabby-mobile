@@ -784,6 +784,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     width: 84,
     height: 84,
     borderRadius: 42,
+    borderCurve: 'continuous',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors2024['neutral-card-2'],
@@ -828,6 +829,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   connectContent: {
     borderRadius: 16,
+    borderCurve: 'continuous',
     backgroundColor: isLight
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-bg-2'],
@@ -845,6 +847,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     width: 44,
     height: 44,
     borderRadius: 4,
+    borderCurve: 'continuous',
   },
   connectOrigin: {
     marginTop: 8,
@@ -864,6 +867,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     display: 'flex',
     alignItems: 'center',
     borderRadius: 6,
+    borderCurve: 'continuous',
     position: 'relative',
     flexDirection: 'row',
     marginTop: 12,

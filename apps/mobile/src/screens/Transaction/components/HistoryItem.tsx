@@ -209,6 +209,7 @@ export const HistoryItem = React.memo(
                     width: 14,
                     height: 14,
                     borderRadius: 4,
+                    borderCurve: 'continuous',
                     marginHorizontal: 4,
                   }}
                 />
@@ -410,6 +411,7 @@ export const HistoryItem = React.memo(
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   card: {
     borderRadius: 16,
+    borderCurve: 'continuous',
     paddingHorizontal: 12,
     paddingRight: 16,
     backgroundColor: isLight
@@ -479,6 +481,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   scamContainer: {
     borderRadius: 2,
+    borderCurve: 'continuous',
     height: 18,
     backgroundColor: colors2024['neutral-bg-5'],
     paddingHorizontal: 4,

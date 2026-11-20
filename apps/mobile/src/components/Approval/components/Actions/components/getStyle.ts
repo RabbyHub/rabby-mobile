@@ -32,6 +32,7 @@ export const getStyle = (colors: AppColorsVariants) =>
     viewMoreTable: {
       backgroundColor: colors['neutral-card1'],
       borderRadius: 8,
+      borderCurve: 'continuous',
       paddingHorizontal: 16,
     },
     row: {

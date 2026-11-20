@@ -104,6 +104,9 @@ describe('Perps Pro visual contract', () => {
       getPerpsProIsolatedTextStyle(Platform.OS),
     );
     expect(PERPS_PRO_ORDER_CONFIRMATION_FOOTER_TOP_OFFSET).toBe(24);
-    expect(PERPS_PRO_CONFIRM_BUTTON_STYLE).toEqual({ borderRadius: 8 });
+    expect(PERPS_PRO_CONFIRM_BUTTON_STYLE).toEqual({
+      borderCurve: 'continuous',
+      borderRadius: 8,
+    });
   });
 });

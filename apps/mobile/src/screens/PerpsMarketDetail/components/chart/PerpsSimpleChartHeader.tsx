@@ -225,6 +225,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   pricePlaceholder: { height: 36, justifyContent: 'center' },
   skeleton: {
     borderRadius: 4,
+    borderCurve: 'continuous',
     backgroundColor: colors2024['neutral-bg-2'],
     maxWidth: '100%',
   },

@@ -191,6 +191,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     marginTop: -12,
     marginBottom: -68,
     borderRadius: 16,
+    borderCurve: 'continuous',
   },
   modalNextButtonText: {
     fontFamily: 'SF Pro Rounded',
@@ -214,6 +215,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     padding: 4,
     paddingHorizontal: 6,
     borderRadius: 8,
+    borderCurve: 'continuous',
     overflow: 'hidden',
     backgroundColor: colors2024['brand-light-1'],
   },
@@ -222,6 +224,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: '100%',
     marginBottom: 12,
     borderRadius: 30,
+    borderCurve: 'continuous',
     display: 'flex',
     alignItems: 'flex-start',
     height: 88,

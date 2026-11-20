@@ -83,6 +83,7 @@ export const BatchRevokeScreen = () => {
             onPress: () => task.continue(),
             buttonStyle: {
               borderRadius: 16,
+              borderCurve: 'continuous',
               backgroundColor: colors2024['green-light-1'],
             },
             titleStyle: {
@@ -98,6 +99,7 @@ export const BatchRevokeScreen = () => {
             onPress: () => task.pause(),
             buttonStyle: {
               borderRadius: 16,
+              borderCurve: 'continuous',
               backgroundColor: colors2024['red-light-1'],
             },
             titleStyle: {
@@ -115,6 +117,7 @@ export const BatchRevokeScreen = () => {
             },
             buttonStyle: {
               borderRadius: 16,
+              borderCurve: 'continuous',
             },
           },
         } as FooterButtonContainer2024Props;
@@ -127,6 +130,7 @@ export const BatchRevokeScreen = () => {
             onPress: () => task.start(),
             buttonStyle: {
               borderRadius: 16,
+              borderCurve: 'continuous',
             },
           },
         } as FooterButtonContainer2024Props;
@@ -253,6 +257,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   root: {
     paddingVertical: 16,
     borderRadius: 12,
+    borderCurve: 'continuous',
     backgroundColor: colors2024['neutral-bg-1'],
     marginHorizontal: 16,
     marginBottom: 40,

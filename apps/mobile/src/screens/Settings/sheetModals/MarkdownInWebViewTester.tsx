@@ -397,6 +397,7 @@ const getStyles = createGetStyles(colors => ({
     paddingHorizontal: 12,
     paddingVertical: 10,
     borderRadius: 8,
+    borderCurve: 'continuous',
     backgroundColor: colors['neutral-card1'],
   },
   fixtureText: { color: colors['neutral-title1'], fontSize: 14 },

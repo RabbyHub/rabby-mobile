@@ -23,6 +23,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     height: 48,
     width: 173,
     borderRadius: 8,
+    borderCurve: 'continuous',
   },
   buttonTitleStyle: {
     color: colors2024['blue-default'],

@@ -338,6 +338,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-bg-2'],
     borderRadius: 20,
+    borderCurve: 'continuous',
     marginBottom: 12,
     padding: 20,
     shadowColor: colors2024['neutral-title-1'],
@@ -366,12 +367,14 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     width: 40,
     height: 40,
     borderRadius: 14,
+    borderCurve: 'continuous',
   },
   quickBadge: {
     backgroundColor: colors2024['brand-light-1'],
     paddingHorizontal: 6,
     paddingVertical: 4,
     borderRadius: 8,
+    borderCurve: 'continuous',
   },
   quickBadgeText: {
     fontSize: 12,
@@ -385,6 +388,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     paddingHorizontal: 6,
     paddingVertical: 4,
     borderRadius: 8,
+    borderCurve: 'continuous',
   },
   doneBadgeText: {
     fontSize: 12,

@@ -228,6 +228,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
   return {
     container: {
       borderRadius: 16,
+      borderCurve: 'continuous',
       backgroundColor: colors2024['neutral-bg-2'],
       height: 98,
       flexDirection: 'row',
@@ -286,6 +287,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       padding: 4,
       backgroundColor: colors2024['neutral-line'],
       borderRadius: 8,
+      borderCurve: 'continuous',
     },
     maxButtonText: {
       color: colors2024['neutral-title-1'],
@@ -301,12 +303,14 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       height: 36,
       width: 120,
       borderRadius: 100,
+      borderCurve: 'continuous',
     },
     tokenInfoContainer: {
       flexDirection: 'row',
       alignItems: 'center',
       gap: 4,
       borderRadius: 12,
+      borderCurve: 'continuous',
       backgroundColor: colors2024['neutral-line'],
       padding: 4,
       justifyContent: 'space-between',

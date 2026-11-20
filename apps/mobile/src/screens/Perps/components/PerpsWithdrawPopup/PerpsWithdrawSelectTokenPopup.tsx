@@ -117,6 +117,7 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
     flexDirection: 'row',
     justifyContent: 'space-between',
     borderRadius: 16,
+    borderCurve: 'continuous',
   },
   box: { flexDirection: 'row', alignItems: 'center' },
   balanceText: {

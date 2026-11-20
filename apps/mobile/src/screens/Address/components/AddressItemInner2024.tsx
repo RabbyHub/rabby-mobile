@@ -24,6 +24,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     justifyContent: 'space-between',
     borderWidth: 0,
     borderRadius: 16,
+    borderCurve: 'continuous',
     flex: 1,
     flexGrow: 1,
     height: 78,
@@ -85,6 +86,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     paddingVertical: 1,
     flexShrink: 0,
     borderRadius: 4,
+    borderCurve: 'continuous',
     backgroundColor: colors2024['brand-light-1'],
   },
   newMarkText: {
@@ -100,6 +102,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     paddingVertical: 1,
     flexShrink: 0,
     borderRadius: 4,
+    borderCurve: 'continuous',
     backgroundColor: colors2024['orange-light-1'],
   },
   backupBadgeText: {
@@ -131,11 +134,13 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     width: 26,
     height: 26,
     borderRadius: 30,
+    borderCurve: 'continuous',
   },
   inlineArrow: {
     width: 16,
     height: 16,
     borderRadius: 16,
+    borderCurve: 'continuous',
     flexShrink: 0,
   },
   cardPressing: {
@@ -146,6 +151,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   walletIcon: {
     borderRadius: 12,
+    borderCurve: 'continuous',
   },
 }));
 

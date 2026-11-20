@@ -190,6 +190,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   track: {
     backgroundColor: colors2024['neutral-line'],
     borderRadius: 999,
+    borderCurve: 'continuous',
     height: 4,
     left: 0,
     position: 'absolute',
@@ -205,6 +206,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     backgroundColor: colors2024['neutral-title-1'],
     borderTopLeftRadius: 2,
     borderBottomLeftRadius: 2,
+    borderCurve: 'continuous',
     height: 4,
     left: 0,
     position: 'absolute',

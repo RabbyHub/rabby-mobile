@@ -63,6 +63,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     paddingLeft: 34,
     backgroundColor: colors2024['red-light-1'],
     borderRadius: 8,
+    borderCurve: 'continuous',
   },
   blueText: {
     marginHorizontal: 4,
@@ -148,6 +149,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     justifyContent: 'space-between',
     paddingVertical: 16,
     borderRadius: 12,
+    borderCurve: 'continuous',
     flexDirection: 'row',
     display: 'flex',
   },
@@ -244,6 +246,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: '100%',
     height: '100%',
     borderRadius: 16,
+    borderCurve: 'continuous',
+    // On iOS 27 a blur view no longer rounds to its own `borderRadius`, so
+    // this wrapper carries the radius and clips the blur inside it.
+    overflow: 'hidden',
   },
   maskWraper: {
     display: 'flex',
@@ -252,6 +258,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: '100%',
     height: '100%',
     borderRadius: 16,
+    borderCurve: 'continuous',
     backgroundColor: 'rgba(0,0,0,0.6)',
   },
   copyBtnWrapper: {
@@ -269,6 +276,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     borderWidth: 1,
     borderColor: colors2024['brand-default'],
     borderRadius: 8,
+    borderCurve: 'continuous',
     gap: 10,
   },
   copyBtnIcon: {
@@ -346,12 +354,14 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     paddingHorizontal: 20,
     paddingLeft: 24,
     borderRadius: 12,
+    borderCurve: 'continuous',
   },
   secureDot: {
     position: 'absolute',
     width: 4,
     height: 4,
     borderRadius: 4,
+    borderCurve: 'continuous',
     backgroundColor: colors2024['neutral-title-1'],
     top: 24,
     left: 12,
@@ -377,6 +387,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     paddingHorizontal: 38,
     backgroundColor: colors2024['neutral-line'],
     borderRadius: 12,
+    borderCurve: 'continuous',
   },
   copyCancelText: {
     color: colors2024['neutral-title-1'],
@@ -660,26 +671,28 @@ export const SeedPhrase: React.FC<Props> = ({
             style={[styles.wordsMatrix]}
           />
           {isHidden && (
-            <BlurView
-              style={styles.mask}
-              blurType={appThemeMode ?? 'light'}
-              blurAmount={3}>
-              <TouchableWithoutFeedback
-                style={styles.maskWraper}
-                onPress={() => {
-                  setIsHidden(false);
-                }}>
-                <RcIconEye />
-                <Text style={styles.tapText}>
-                  {/* Tap to reveal your seed phrase */}
-                  {t('page.backupSeedPhrase.tapToReveal.line1')}
-                </Text>
-                <Text style={styles.tapDesc}>
-                  {/* Make sure no one is watching your screen. */}
-                  {t('page.backupSeedPhrase.tapToReveal.line2')}
-                </Text>
-              </TouchableWithoutFeedback>
-            </BlurView>
+            <View style={styles.mask}>
+              <BlurView
+                style={StyleSheet.absoluteFill}
+                blurType={appThemeMode ?? 'light'}
+                blurAmount={3}>
+                <TouchableWithoutFeedback
+                  style={styles.maskWraper}
+                  onPress={() => {
+                    setIsHidden(false);
+                  }}>
+                  <RcIconEye />
+                  <Text style={styles.tapText}>
+                    {/* Tap to reveal your seed phrase */}
+                    {t('page.backupSeedPhrase.tapToReveal.line1')}
+                  </Text>
+                  <Text style={styles.tapDesc}>
+                    {/* Make sure no one is watching your screen. */}
+                    {t('page.backupSeedPhrase.tapToReveal.line2')}
+                  </Text>
+                </TouchableWithoutFeedback>
+              </BlurView>
+            </View>
           )}
 
           {!isHidden && !currentSelecting ? (

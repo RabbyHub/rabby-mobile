@@ -69,6 +69,7 @@ export const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     gap: 4,
     padding: 8,
     borderRadius: 10,
+    borderCurve: 'continuous',
     borderWidth: 1,
     borderColor: colors2024['neutral-line'],
     backgroundColor: 'rgba(22, 82, 240, 0.06)',
@@ -77,6 +78,7 @@ export const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     width: 20,
     height: 20,
     borderRadius: 20,
+    borderCurve: 'continuous',
   },
   marketTextGroup: {
     flexDirection: 'row',
@@ -127,6 +129,7 @@ export const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     justifyContent: 'space-between',
     padding: 14,
     borderRadius: 15,
+    borderCurve: 'continuous',
     borderWidth: 1,
     borderColor: 'transparent',
     backgroundColor: isLight
@@ -147,6 +150,7 @@ export const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     width: 46,
     height: 46,
     borderRadius: 16,
+    borderCurve: 'continuous',
   },
   sheetItemTextGroup: {
     flexDirection: 'column',

@@ -217,6 +217,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     height: 42,
     width: 143,
     borderRadius: 6,
+    borderCurve: 'continuous',
   },
   searchButtonText: {
     fontSize: 18,

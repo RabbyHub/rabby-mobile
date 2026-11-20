@@ -175,6 +175,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
       ? colors2024['neutral-bg-0']
       : colors2024['neutral-bg-5'],
     borderRadius: 6,
+    borderCurve: 'continuous',
     flexDirection: 'row',
     gap: 4,
     height: PERPS_PRO_TRADE_AMOUNT_FIELD_HEIGHT,

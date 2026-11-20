@@ -35,6 +35,7 @@ const getStyles = createGetStyles2024(({ colors, colors2024, isLight }) => ({
   },
   table: {
     borderRadius: 6,
+    borderCurve: 'continuous',
     backgroundColor: colors2024['neutral-bg-5'],
     padding: 12,
     rowGap: 12,

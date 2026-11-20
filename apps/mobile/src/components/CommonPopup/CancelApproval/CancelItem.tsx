@@ -20,6 +20,7 @@ const getStyles = (colors: AppColorsVariants) =>
       justifyContent: 'space-between',
       backgroundColor: colors['neutral-card-2'],
       borderRadius: 6,
+      borderCurve: 'continuous',
     },
     text: {
       fontSize: 14,

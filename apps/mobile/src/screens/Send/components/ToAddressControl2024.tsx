@@ -266,14 +266,17 @@ export const ToAccountEntry = React.memo(function ToAccountEntry({
 const getToItemStyles = createGetStyles2024(({ colors2024 }) => ({
   shadowView: {
     borderRadius: 20,
+    borderCurve: 'continuous',
     // backgroundColor: colors2024['neutral-bg-1'],
   },
   emptyAddrShadowView: {
     borderWidth: 0,
     borderRadius: 16,
+    borderCurve: 'continuous',
   },
   emptyAddrCard: {
     borderRadius: 16,
+    borderCurve: 'continuous',
   },
   root: {
     // borderRadius: 20,
@@ -289,6 +292,7 @@ const getToItemStyles = createGetStyles2024(({ colors2024 }) => ({
     borderWidth: 0,
     // borderColor: colors2024['neutral-line'],
     borderRadius: 20,
+    borderCurve: 'continuous',
     flex: 1,
     flexGrow: 1,
     backgroundColor: colors2024['neutral-bg-1'],
@@ -319,6 +323,7 @@ const getToItemStyles = createGetStyles2024(({ colors2024 }) => ({
     height: 24,
     backgroundColor: colors2024['neutral-line'],
     borderRadius: 6,
+    borderCurve: 'continuous',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -414,18 +419,21 @@ const getToItemStyles = createGetStyles2024(({ colors2024 }) => ({
     height: 26,
     backgroundColor: colors2024['neutral-bg-2'],
     borderRadius: 26,
+    borderCurve: 'continuous',
     alignItems: 'center',
     justifyContent: 'center',
   },
   cardPressing: {
     backgroundColor: colors2024['brand-light-1'],
     borderRadius: 16,
+    borderCurve: 'continuous',
   },
   arrowPressing: {
     backgroundColor: colors2024['brand-light-1'],
   },
   walletIcon: {
     borderRadius: 12,
+    borderCurve: 'continuous',
   },
   modalNextButtonText: {
     fontFamily: 'SF Pro Rounded',

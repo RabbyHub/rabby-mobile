@@ -126,6 +126,7 @@ const getStyles = createGetStyles2024(ctx => ({
     backgroundColor: ctx.colors2024['neutral-bg-5'],
     padding: 6,
     borderRadius: 8,
+    borderCurve: 'continuous',
     gap: 6,
   },
   aliasBox: {

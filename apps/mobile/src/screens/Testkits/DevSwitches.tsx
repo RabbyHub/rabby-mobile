@@ -1770,6 +1770,7 @@ const getStyles = createGetStyles2024(ctx =>
     heroCard: {
       padding: 20,
       borderRadius: 24,
+      borderCurve: 'continuous',
       backgroundColor: ctx.colors2024['neutral-card-1'],
       borderWidth: 1,
       borderColor: ctx.colors2024['neutral-line'],
@@ -1799,6 +1800,7 @@ const getStyles = createGetStyles2024(ctx =>
       justifyContent: 'flex-start',
       padding: 18,
       borderRadius: 20,
+      borderCurve: 'continuous',
       backgroundColor: ctx.colors2024['neutral-card-1'],
       borderWidth: 1,
       borderColor: ctx.colors2024['neutral-line'],
@@ -1894,6 +1896,7 @@ const getStyles = createGetStyles2024(ctx =>
       width: '100%',
       maxWidth: 360,
       borderRadius: 20,
+      borderCurve: 'continuous',
       padding: 20,
       backgroundColor: ctx.colors2024['neutral-bg-1'],
     },

@@ -562,6 +562,7 @@ const getStyle = createGetStyles2024(
       height: 1002,
       width: 1002,
       borderRadius: 10000,
+      borderCurve: 'continuous',
       backgroundColor: colors2024['brand-light-1'],
       zIndex: 10,
       pointerEvents: 'none',
@@ -593,6 +594,7 @@ const getStyle = createGetStyles2024(
     gradient: {
       padding: 12,
       borderRadius: 20,
+      borderCurve: 'continuous',
       justifyContent: 'center',
       alignItems: 'center',
       borderWidth: 1,
@@ -607,6 +609,7 @@ const getStyle = createGetStyles2024(
       gap: 4,
       height: 46,
       borderRadius: 12,
+      borderCurve: 'continuous',
       justifyContent: 'center',
       alignItems: 'center',
       backgroundColor: colors2024['neutral-bg-5'],
@@ -722,6 +725,7 @@ const getStyle = createGetStyles2024(
       height: 42,
       width: 143,
       borderRadius: 6,
+      borderCurve: 'continuous',
     },
     searchButtonText: {
       fontSize: 18,

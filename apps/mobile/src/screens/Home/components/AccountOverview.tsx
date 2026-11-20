@@ -55,6 +55,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     width: 14,
     height: 14,
     borderRadius: 4,
+    borderCurve: 'continuous',
   },
   relative: {
     position: 'relative',

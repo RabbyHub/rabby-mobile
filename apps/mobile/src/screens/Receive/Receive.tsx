@@ -398,6 +398,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   modalContent: {
     borderRadius: 20,
+    borderCurve: 'continuous',
     backgroundColor: colors2024['neutral-bg-1'],
     boxShadow: '0 20 20 0 rgba(45, 48, 51, 0.16)',
     borderWidth: 1,
@@ -438,6 +439,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: 24,
     height: 24,
     borderRadius: 7,
+    borderCurve: 'continuous',
   },
   // Inline-header button target: fill the header row vertically, comfortable
   // width. The 16pt eye hugs the title text (left-aligned) and the extra width

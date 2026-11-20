@@ -121,6 +121,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   container: {
     position: 'relative',
     borderRadius: 16,
+    borderCurve: 'continuous',
     overflow: 'hidden',
     paddingVertical: 12,
     paddingHorizontal: 12,
@@ -143,6 +144,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     paddingHorizontal: 12,
     paddingVertical: 10,
     borderRadius: 8,
+    borderCurve: 'continuous',
     gap: 4,
     flex: 1,
   },

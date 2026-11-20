@@ -248,10 +248,12 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   sectionFirst: {
     borderTopLeftRadius: RADIUS_VALUE,
     borderTopRightRadius: RADIUS_VALUE,
+    borderCurve: 'continuous',
   },
   sectionLast: {
     borderBottomLeftRadius: RADIUS_VALUE,
     borderBottomRightRadius: RADIUS_VALUE,
+    borderCurve: 'continuous',
   },
   headerContainer: {
     flexDirection: 'row',
@@ -289,6 +291,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderRadius: 6,
+    borderCurve: 'continuous',
   },
   ltvZeroTipText: {
     fontSize: 14,

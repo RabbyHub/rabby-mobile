@@ -24,6 +24,7 @@ export const DappHistorySectionEmpty = () => {
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   empty: {
     borderRadius: 20,
+    borderCurve: 'continuous',
     backgroundColor: colors2024['neutral-bg-1'],
     borderStyle: 'solid',
     borderColor: colors2024['neutral-line'],
