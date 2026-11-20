@@ -19,6 +19,7 @@ export const SESSION_GATED_MAINTENANCE_COMMANDS = new Set([
   'debug-disconnect-dapp',
   'debug-capture-requests',
   'debug-open-modal',
+  'debug-open-history-local-detail',
 ]);
 
 /** Sensitive mutations that additionally require an unlocked wallet. */
@@ -30,6 +31,7 @@ export const UNLOCKED_REQUIRED_MAINTENANCE_TYPES = new Set([
   'debug-dapp-eval',
   'debug-set-clipboard',
   'debug-disconnect-dapp',
+  'debug-open-history-local-detail',
 ]);
 
 export type MaintenanceGateRejection =

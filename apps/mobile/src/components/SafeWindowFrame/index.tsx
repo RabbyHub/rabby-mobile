@@ -108,24 +108,33 @@ function SafeWindowFrameImpl({ children }: { children?: React.ReactNode }) {
       ? colors2024['neutral-bg-0']
       : declaredBackground);
 
-  const lastWrittenWidthRef = React.useRef<number | null>(null);
+  /** True while this frame is the one publishing `Dimensions.set`. */
+  const ownDimensionsWriteRef = React.useRef(false);
   /** Content width of the centered column in the wide inner-screen posture. */
   const [wideWidth, setWideWidth] = React.useState<number | null>(null);
 
   React.useEffect(() => {
+    /**
+     * Publish a synthetic window size. `Dimensions.set` emits its change event
+     * synchronously, so the listener below can recognise our own echo through a
+     * flag instead of guessing from the published width.
+     */
+    const writeDimensions = (next: Parameters<typeof Dimensions.set>[0]) => {
+      ownDimensionsWriteRef.current = true;
+      try {
+        Dimensions.set(next);
+      } finally {
+        ownDimensionsWriteRef.current = false;
+      }
+    };
+
     const applyWindow = (win: ScaledSize) => {
       const screen = Dimensions.get('screen');
-      const isOwnValue =
-        lastAppliedWidth !== null &&
-        Math.abs(win.width - lastAppliedWidth) < 0.5;
-      // Prefer the value we recorded from the platform. Never derive the
-      // native width from `screen`: on iPad/Duo split panes the window is
-      // narrower than the screen, and `max(window, screen)` would over-shrink.
-      const nativeWidth =
-        isOwnValue && lastNativeWindow ? lastNativeWindow.width : win.width;
-      const nativeHeight =
-        isOwnValue && lastNativeWindow ? lastNativeWindow.height : win.height;
-      const nativeWindow = { ...win, width: nativeWidth, height: nativeHeight };
+      // Every value that reaches here is a native update: our own writes are
+      // filtered by `ownDimensionsWriteRef` in the change listener.
+      const nativeWidth = win.width;
+      const nativeHeight = win.height;
+      const nativeWindow = { ...win };
       lastNativeWindow = nativeWindow;
 
       const inWidePosture =
@@ -142,8 +151,7 @@ function SafeWindowFrameImpl({ children }: { children?: React.ReactNode }) {
         setWideWidth(null);
         if (lastAppliedWidth !== null) {
           lastAppliedWidth = null;
-          lastWrittenWidthRef.current = null;
-          Dimensions.set({
+          writeDimensions({
             window: nativeWindow,
             screen,
           });
@@ -152,9 +160,8 @@ function SafeWindowFrameImpl({ children }: { children?: React.ReactNode }) {
       }
 
       lastAppliedWidth = targetWidth;
-      lastWrittenWidthRef.current = targetWidth;
       setWideWidth(active ? null : targetWidth);
-      Dimensions.set({
+      writeDimensions({
         window: { ...win, width: targetWidth, height: nativeHeight },
         screen,
       });
@@ -163,8 +170,7 @@ function SafeWindowFrameImpl({ children }: { children?: React.ReactNode }) {
     applyWindow(Dimensions.get('window'));
 
     const subscription = Dimensions.addEventListener('change', ({ window }) => {
-      const lastWritten = lastWrittenWidthRef.current;
-      if (lastWritten !== null && Math.abs(window.width - lastWritten) < 0.5) {
+      if (ownDimensionsWriteRef.current) {
         // Our own `Dimensions.set` echo; the platform has not changed.
         return;
       }
@@ -173,10 +179,9 @@ function SafeWindowFrameImpl({ children }: { children?: React.ReactNode }) {
 
     return () => {
       subscription.remove();
-      lastWrittenWidthRef.current = null;
       lastAppliedWidth = null;
       if (lastNativeWindow) {
-        Dimensions.set({
+        writeDimensions({
           window: lastNativeWindow,
           screen: Dimensions.get('screen'),
         });
@@ -184,27 +189,18 @@ function SafeWindowFrameImpl({ children }: { children?: React.ReactNode }) {
     };
   }, [active, leftInset, rightInset]);
 
-  if (wideWidth !== null) {
-    return (
-      <View
-        style={[
-          styles.wideFrame,
-          { backgroundColor: colors2024['neutral-bg-1'] },
-        ]}>
-        <View style={[styles.wideContent, { width: wideWidth }]}>
-          {children}
-        </View>
-      </View>
-    );
-  }
-
-  if (!active) {
-    return <>{children}</>;
-  }
+  // Always render the same wrapper tree: switching between a Fragment and the
+  // nested Views unmounted the whole app subtree (navigation stack, form state
+  // and modal hosts) every time a horizontal inset came or went. Inactive
+  // postures publish zero insets and no strip colour instead.
+  const isWide = wideWidth !== null;
 
   return (
     <SystemColumnInsetContext.Provider
-      value={{ left: leftInset, right: rightInset }}>
+      value={{
+        left: active ? leftInset : 0,
+        right: active ? rightInset : 0,
+      }}>
       <SafeWindowBackdropContext.Provider value={setBackdropColor}>
         {/*
           The app tree keeps the full window width so a screen's background
@@ -213,8 +209,22 @@ function SafeWindowFrameImpl({ children }: { children?: React.ReactNode }) {
           `useSystemColumnInset`; on this posture every stack header is a JS
           header, so the native bar geometry is never involved.
         */}
-        <View style={[styles.frame, { backgroundColor: stripColor }]}>
-          <View style={styles.content}>{children}</View>
+        <View
+          style={[
+            isWide ? styles.wideFrame : styles.frame,
+            isWide
+              ? { backgroundColor: colors2024['neutral-bg-1'] }
+              : active
+              ? { backgroundColor: stripColor }
+              : null,
+          ]}>
+          <View
+            style={[
+              isWide ? styles.wideContent : styles.content,
+              isWide ? { width: wideWidth } : null,
+            ]}>
+            {children}
+          </View>
         </View>
       </SafeWindowBackdropContext.Provider>
     </SystemColumnInsetContext.Provider>

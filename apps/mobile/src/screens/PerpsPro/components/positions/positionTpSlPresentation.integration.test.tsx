@@ -1,6 +1,7 @@
 import 'reflect-metadata';
 import React from 'react';
-import { Keyboard, UIManager } from 'react-native';
+// eslint-disable-next-line no-restricted-imports -- fixture writer for Dimensions.set
+import { Dimensions, Keyboard, UIManager } from 'react-native';
 import { getDimensionsSnapshot } from '@/core/dimensions';
 import {
   act,

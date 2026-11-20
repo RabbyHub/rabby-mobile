@@ -1721,6 +1721,27 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
           }
           let { pendings, completeds } =
             await transactionHistoryServiceApi.getList(address);
+          // The dispatch gate ran before these awaits; the session can be
+          // disarmed or the wallet locked while they are in flight, so the
+          // state-changing seed is checked again right before it runs.
+          const seedDecision = evaluateMaintenanceGate(
+            'debug-open-history-local-detail',
+            {
+              sessionArmed: storeApiExpSettingData.getScreenE2EEnabled(),
+              walletUnlocked:
+                isKeyringUnlockedSnapshot() || isUnlockSessionValid(),
+            },
+          );
+          if (
+            !seedDecision.allowed &&
+            payload.debugOpenHistoryLocalDetail?.seed
+          ) {
+            console.warn(
+              '[debug-open-history-local-detail] seed rejected after async:',
+              seedDecision.reason,
+            );
+            return;
+          }
           if (
             pendings.length === 0 &&
             completeds.length === 0 &&

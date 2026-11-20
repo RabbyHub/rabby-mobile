@@ -79,3 +79,26 @@ describe('maintenanceCommandGate', () => {
     ).toEqual({ allowed: true });
   });
 });
+
+test('gates the history-detail seed on an armed session and an unlocked wallet', () => {
+  expect(
+    evaluateMaintenanceGate('debug-open-history-local-detail', {
+      sessionArmed: false,
+      walletUnlocked: true,
+    }),
+  ).toEqual({ allowed: false, reason: 'session-disabled' });
+
+  expect(
+    evaluateMaintenanceGate('debug-open-history-local-detail', {
+      sessionArmed: true,
+      walletUnlocked: false,
+    }),
+  ).toEqual({ allowed: false, reason: 'wallet-locked' });
+
+  expect(
+    evaluateMaintenanceGate('debug-open-history-local-detail', {
+      sessionArmed: true,
+      walletUnlocked: true,
+    }),
+  ).toEqual({ allowed: true });
+});
