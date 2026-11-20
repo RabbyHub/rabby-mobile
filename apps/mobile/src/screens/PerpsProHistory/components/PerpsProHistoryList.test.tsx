@@ -242,7 +242,7 @@ describe('PerpsProHistoryList', () => {
   });
 
   it.each(['ready', 'empty'] as const)(
-    'offers an inline TWAP retry alongside a cached %s snapshot',
+    'keeps a cached TWAP %s snapshot free of refresh-error UI',
     status => {
       const onRetry = jest.fn();
       render(
@@ -266,14 +266,13 @@ describe('PerpsProHistoryList', () => {
           screen.getByText('page.perps.pro.history.noHistory'),
         ).toBeTruthy();
       expect(
-        screen.getByText('page.perps.pro.history.refreshFailed'),
-      ).toBeTruthy();
-      fireEvent.press(screen.getByText('page.perps.pro.common.retry'));
-      expect(onRetry).toHaveBeenCalledTimes(1);
+        screen.queryByText('page.perps.pro.history.refreshFailed'),
+      ).toBeNull();
+      expect(screen.queryByText('page.perps.pro.common.retry')).toBeNull();
     },
   );
 
-  it('starts the first card at the Pager-owned 12px content gap', () => {
+  it('keeps the initial 12px card inset inside the scrolling content', () => {
     render(
       <PerpsProHistoryList
         amountUnit="base"
@@ -293,13 +292,7 @@ describe('PerpsProHistoryList', () => {
         screen.getByTestId('perps-pro-history-list-trade').props
           .contentContainerStyle,
       ),
-    ).toMatchObject({ paddingBottom: 24 });
-    expect(
-      StyleSheet.flatten(
-        screen.getByTestId('perps-pro-history-list-trade').props
-          .contentContainerStyle,
-      ).paddingTop,
-    ).toBeUndefined();
+    ).toMatchObject({ paddingTop: 12, paddingBottom: 24 });
   });
 
   it('loads earlier automatically at the end and keeps Retry explicit', () => {

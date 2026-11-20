@@ -7,7 +7,7 @@ import React, {
 } from 'react';
 import { View, useWindowDimensions } from 'react-native';
 import {
-  BottomSheetFlatList,
+  BottomSheetScrollView,
   type BottomSheetBackdropProps,
 } from '@gorhom/bottom-sheet';
 import BigNumber from 'bignumber.js';
@@ -92,6 +92,11 @@ export const PerpsProScaleOrderConfirmationSheet = React.memo(
       ).toFixed();
       return command.plan.orders.map(leg => ({
         ...leg,
+        priceText: formatPerpsProVariableDecimal(leg.price),
+        sizeText: formatPerpsProDecimal(
+          leg.size,
+          command.reviewFacts.szDecimals,
+        ),
         width: getPerpsProScaleBarWidth(
           leg.size,
           max,
@@ -202,18 +207,11 @@ export const PerpsProScaleOrderConfirmationSheet = React.memo(
                 {t('page.perps.pro.trade.amount')} ({facts.displayBase})
               </Text>
             </View>
-            <BottomSheetFlatList
-              data={rows}
-              keyExtractor={item => item.price}
-              initialNumToRender={12}
-              windowSize={3}
-              getItemLayout={(_, index) => ({
-                length: 30,
-                offset: 30 * index,
-                index,
-              })}
-              renderItem={({ item }) => (
-                <View style={styles.row}>
+            {/* The frozen plan is capped at 100 rows. Keep every row mounted
+                so a native fling never outruns JS list-window rendering. */}
+            <BottomSheetScrollView style={styles.orderList}>
+              {rows.map(item => (
+                <View key={item.price} style={styles.row}>
                   <View
                     pointerEvents="none"
                     style={[
@@ -222,15 +220,11 @@ export const PerpsProScaleOrderConfirmationSheet = React.memo(
                       { width: `${item.width}%` },
                     ]}
                   />
-                  <Text style={styles.price}>
-                    {formatPerpsProVariableDecimal(item.price)}
-                  </Text>
-                  <Text style={styles.value}>
-                    {formatPerpsProDecimal(item.size, facts.szDecimals)}
-                  </Text>
+                  <Text style={styles.price}>{item.priceText}</Text>
+                  <Text style={styles.value}>{item.sizeText}</Text>
                 </View>
-              )}
-            />
+              ))}
+            </BottomSheetScrollView>
           </View>
           <View style={styles.footer}>
             <Button
@@ -278,6 +272,7 @@ const getStyle = createGetStyles2024(
       borderRadius: 12,
       overflow: 'hidden',
     },
+    orderList: { flex: 1 },
     row: {
       height: 30,
       flexDirection: 'row',

@@ -155,7 +155,12 @@ jest.mock('@/components/GestureSlider', () => ({
 }));
 
 jest.mock('react-i18next', () => ({
-  useTranslation: () => ({ t: (key: string) => key.split('.').pop() || key }),
+  useTranslation: () => ({
+    t: (key: string, values?: { amount?: string }) =>
+      values?.amount
+        ? `${key.split('.').pop()} ${values.amount}`
+        : key.split('.').pop() || key,
+  }),
 }));
 
 jest.mock('../common/PerpsProDottedUnderlineText', () => ({
@@ -400,6 +405,30 @@ describe('PerpsProTradeForm order matrix', () => {
     }
     expect(trade.endAmountEntry).not.toHaveBeenCalled();
   });
+
+  it.each([
+    ['quote', '100.20 USDC ≈ 0.00167 BTC'],
+    ['base', '0.00167 BTC'],
+  ] as const)(
+    'shows the TWAP minimum in %s units using the same tradable amount',
+    (amountUnit, expected) => {
+      const trade = controller({ orderType: 'twap', amountUnit, amount: '1' });
+      trade.market = {
+        ...trade.market!,
+        marketData: {
+          ...trade.market!.marketData,
+          midPx: '60000',
+          szDecimals: 5,
+        },
+      };
+      trade.getTwapValidation = () =>
+        ({ amountError: 'amountTooSmall' } as never);
+      render(<PerpsProTradeForm controller={trade} onAddFunds={jest.fn()} />);
+      expect(
+        within(screen.getByRole('alert')).getByText(`minimum ${expected}`),
+      ).toBeTruthy();
+    },
+  );
 
   it.each([
     { index: 0, label: 'size (BTC)', field: 'amount' as const, value: '0.12' },

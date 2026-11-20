@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { apisPerps } from '@/core/apis/perps';
+import { isUnlocked } from '@/core/apis/lock';
+import { ensureWalletUnlockedForAction } from '@/utils/walletUnlock';
 import { ensurePerpsActionApproval } from '@/hooks/perps/actions/perpsActionApproval';
 import { isPerpsActionUserCancelled } from '@/hooks/perps/actions/actionError';
 import { getPerpsRuntimeSnapshot } from '@/hooks/perps/runtime/perpsRuntimeState';
@@ -19,6 +21,7 @@ import { showToast } from '@/hooks/perps/showToast';
 import {
   buildPerpsProCancelTwapCommand,
   executePerpsProCancelTwap,
+  isPerpsProCancelTwapContextCurrent,
   type PerpsProCancelTwapCommand,
 } from '../actions/cancelTwap';
 import { isSamePerpsActionAccount } from '@/hooks/perps/actions/accountGuard';
@@ -33,6 +36,7 @@ export const usePerpsProCancelTwap = (
   );
   const [pending, setPending] = useState(false);
   const busy = useRef(false);
+  const preparationEpoch = useRef(0);
   const live = useRef(active);
   live.current = active;
   const mounted = useRef(true);
@@ -44,21 +48,63 @@ export const usePerpsProCancelTwap = (
     };
   }, []);
   useEffect(() => {
+    preparationEpoch.current++;
     setCommand(null);
   }, [accountIdentity, active]);
   const close = useCallback(() => {
     if (!busy.current) setCommand(null);
   }, []);
   const request = useCallback(
-    (order: PerpsTwapRecord) => {
+    async (order: PerpsTwapRecord) => {
       if (busy.current || !live.current) return;
       const prepared = buildPerpsProCancelTwapCommand(
         order,
         getPerpsAccountRuntimeContext(),
         getPerpsRuntimeSnapshot(),
       );
-      if (prepared) setCommand(prepared);
-      else showToast(t('page.perps.pro.twap.errors.contextChanged'), 'error');
+      if (!prepared) {
+        showToast(t('page.perps.pro.twap.errors.contextChanged'), 'error');
+        return;
+      }
+      const epoch = preparationEpoch.current;
+      const isCurrentScene = () =>
+        mounted.current && live.current && preparationEpoch.current === epoch;
+      busy.current = true;
+      try {
+        // Password UI belongs to the app host, below native Modals. Complete
+        // unlock before presenting this scene's End confirmation.
+        if (!(await ensureWalletUnlockedForAction()) || !isCurrentScene())
+          return;
+        const data = getPerpsTwapAccount(prepared.account.address);
+        const accountRuntime = getPerpsAccountRuntimeContext();
+        const runtime = getPerpsRuntimeSnapshot();
+        const latest = data.records[prepared.key] ?? null;
+        if (
+          isPerpsProCancelTwapContextCurrent(prepared, {
+            accountRuntime,
+            runtime,
+            activeReady: data.sources.active.ready,
+            order: latest,
+            // Approval is still performed on confirmation.
+            hasPermission: isUnlocked(),
+          }) &&
+          latest
+        ) {
+          setCommand(
+            buildPerpsProCancelTwapCommand(latest, accountRuntime, runtime),
+          );
+        } else {
+          showToast(t('page.perps.pro.twap.errors.contextChanged'), 'error');
+        }
+      } catch (error) {
+        if (isCurrentScene() && !isPerpsActionUserCancelled(error))
+          showToast(
+            error instanceof Error ? error.message : String(error),
+            'error',
+          );
+      } finally {
+        busy.current = false;
+      }
     },
     [t],
   );
@@ -77,12 +123,24 @@ export const usePerpsProCancelTwap = (
       return {
         accountRuntime: getPerpsAccountRuntimeContext(),
         runtime: getPerpsRuntimeSnapshot(),
-        hasPermission: live.current && hasCurrentPerpPermission(),
+        hasPermission:
+          live.current && isUnlocked() && hasCurrentPerpPermission(),
         activeReady: data.sources.active.ready,
         order: data.records[frozen.key] ?? null,
       };
     };
     try {
+      // A relock or changed order invalidates the confirmation; do not open
+      // another password prompt underneath it.
+      if (
+        !isPerpsProCancelTwapContextCurrent(frozen, {
+          ...getContext(),
+          hasPermission: live.current && isUnlocked(),
+        })
+      ) {
+        showToast(t('page.perps.pro.twap.errors.contextChanged'), 'error');
+        return;
+      }
       await ensurePerpsActionApproval(account, { builderFee: false });
       const exchange = apisPerps.getPerpsSDK().exchange;
       if (!exchange)

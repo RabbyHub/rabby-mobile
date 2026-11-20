@@ -1,5 +1,6 @@
 import { useShallow } from 'zustand/react/shallow';
 import {
+  getPerpsTwapAccount,
   usePerpsTwapRecords,
   usePerpsTwapSourceState,
 } from '@/hooks/perps/twap/usePerpsTwapStore';
@@ -611,9 +612,22 @@ export const usePerpsProHistoryController = (
             user,
             generation: guardRef.current.accountGeneration,
           };
+          const presentationEpoch = guardRef.current.presentationEpoch;
           setTwapRefresh(token);
           try {
             await refreshPerpsTwaps(user, 'history');
+            const guard = guardRef.current;
+            if (
+              presentation === 'manual' &&
+              guard.liveEnabled &&
+              guard.activeTab === tab &&
+              guard.presentationEpoch === presentationEpoch &&
+              guard.accountAddress === token.user &&
+              guard.accountGeneration === token.generation &&
+              getPerpsTwapAccount(user).sources.history.error
+            ) {
+              showToast(refreshFailedMessage, 'error');
+            }
           } finally {
             setTwapRefresh(current => (current === token ? null : current));
           }

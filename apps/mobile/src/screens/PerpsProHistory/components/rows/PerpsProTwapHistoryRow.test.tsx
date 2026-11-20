@@ -1,10 +1,13 @@
 import React from 'react';
-import { FlatList, View, StyleSheet } from 'react-native';
+import { FlatList, View, StyleSheet, Dimensions } from 'react-native';
 import {
   fireEvent,
+  fireEventAsync,
   render,
+  renderAsync,
   screen,
   waitFor,
+  within,
 } from '@testing-library/react-native';
 import type { PerpsTwapRecord } from '@/hooks/perps/twap/types';
 import { usePerpsTwapFills } from '@/hooks/perps/twap/usePerpsTwapStore';
@@ -12,11 +15,15 @@ import { loadPerpsTwapFills } from '@/hooks/perps/twap/twapRepository';
 import { PerpsProTwapHistoryRowView } from './PerpsProTwapHistoryRow';
 import { PerpsProTwapCard } from '@/screens/PerpsPro/components/twap/PerpsProTwapCard';
 import { PerpsProTwapDetailSheet } from '@/screens/PerpsPro/components/twap/PerpsProTwapDetailSheet';
+import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 
 jest.mock('@/components/Typography', () => ({
   Text: require('react-native').Text,
 }));
 jest.mock('@/components/AutoLockView', () => require('react-native').View);
+jest.mock('react-native-safe-area-context', () => ({
+  useSafeAreaInsets: () => ({ top: 44, bottom: 0, left: 0, right: 0 }),
+}));
 jest.mock('@/assets2024/icons/common/right-cc.svg', () => {
   const React = require('react');
   return () =>
@@ -129,9 +136,13 @@ it.each([
     await waitFor(() => expect(screen.getByText('noTrades')).toBeTruthy());
     expect(screen.getByText(percent)).toBeTruthy();
     expect(screen.getByText('historyDetailTitle')).toBeTruthy();
+    const list = screen.UNSAFE_getByType(FlatList);
+    expect(list.props.showsVerticalScrollIndicator).toBe(false);
+    // The order summary and trades share one scroll host in history detail.
+    expect(within(list).getByText(percent)).toBeTruthy();
     expect(
-      screen.UNSAFE_getByType(FlatList).props.showsVerticalScrollIndicator,
-    ).toBe(false);
+      screen.UNSAFE_getByType(AppBottomSheetModal).props.snapPoints,
+    ).toEqual([Dimensions.get('window').height - 44 - 8]);
     fireEvent.press(screen.getByRole('button', { name: 'back' }));
     expect(screen.queryByText(percent)).toBeNull();
     expect(screen.getByTestId('history-arrow')).toBeTruthy();
@@ -155,7 +166,9 @@ it('shows each fill time in the same local date and time format as the order', a
     },
   ]);
   try {
-    render(<PerpsProTwapDetailSheet order={endedOrder} onClose={jest.fn()} />);
+    await renderAsync(
+      <PerpsProTwapDetailSheet order={endedOrder} onClose={jest.fn()} />,
+    );
     expect(await screen.findByText('2026-11-19 11:07:05')).toBeTruthy();
   } finally {
     jest.mocked(usePerpsTwapFills).mockReturnValue([]);
@@ -167,9 +180,11 @@ it('removes the retry footer when a retry returns partial trades', async () => {
     .mocked(loadPerpsTwapFills)
     .mockRejectedValueOnce(new Error('offline'))
     .mockResolvedValueOnce({ fills: [], complete: false });
-  render(<PerpsProTwapDetailSheet order={endedOrder} onClose={jest.fn()} />);
+  await renderAsync(
+    <PerpsProTwapDetailSheet order={endedOrder} onClose={jest.fn()} />,
+  );
 
-  fireEvent.press(await screen.findByText('error'));
+  await fireEventAsync.press(await screen.findByText('error'));
   await waitFor(() =>
     expect(
       screen.UNSAFE_getByType(FlatList).props.ListFooterComponent,

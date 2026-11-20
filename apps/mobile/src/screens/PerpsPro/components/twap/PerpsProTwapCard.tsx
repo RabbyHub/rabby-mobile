@@ -22,6 +22,7 @@ import {
 import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
 import { resolvePerpsProFittedFontSize } from '../common/perpsProFitFontSize';
 import { PerpsProTextWidthProbe } from '../common/PerpsProTextWidthProbe';
+import { getPerpsProInfoCardStyle } from '../common/perpsProListVisual';
 
 export const usePerpsProTwapMarket = (coin: string, needsPrice: boolean) =>
   useActivityStore(
@@ -332,7 +333,8 @@ export const PerpsProTwapCard = React.memo(
       );
     }
     return (
-      <View style={styles.card}>
+      <View
+        style={[styles.card, variant === 'openOrder' && styles.openOrderCard]}>
         {detail ? (
           content
         ) : (
@@ -389,6 +391,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     marginHorizontal: 12,
     marginBottom: 12,
   },
+  openOrderCard: getPerpsProInfoCardStyle(colors2024, isLight),
   heading: {
     flexDirection: 'row',
     justifyContent: 'space-between',

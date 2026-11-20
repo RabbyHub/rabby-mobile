@@ -168,14 +168,6 @@ export const PerpsProHistoryList: React.FC<{
       ItemSeparatorComponent: PerpsProHistoryRowSeparator,
       keyExtractor: item => item.key,
       ListEmptyComponent: <PerpsProHistoryEmpty />,
-      ListHeaderComponent:
-        tab === 'twap' && state.refreshError ? (
-          <PerpsProHistoryError
-            inline
-            disabled={!active || state.refreshing}
-            onRetry={onRetry}
-          />
-        ) : null,
       ListFooterComponent: state.loadingEarlier ? (
         <View
           style={styles.loadingFooter}
@@ -237,10 +229,12 @@ PerpsProHistoryList.displayName = 'PerpsProHistoryList';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   content: {
+    paddingTop: 12,
     paddingBottom: 24,
   },
   emptyContent: {
     flexGrow: 1,
+    paddingTop: 12,
     paddingBottom: 24,
   },
   footer: {

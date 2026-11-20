@@ -1,6 +1,7 @@
 jest.mock('@/hooks/perps/twap/usePerpsTwapStore', () => {
   const records = {};
   return {
+    getPerpsTwapAccount: () => ({ sources: { history: mockTwapHistory } }),
     usePerpsTwapRecords: () => records,
     usePerpsTwapSourceState: (_user: string, source: string) =>
       source === 'history'
@@ -217,6 +218,10 @@ describe('usePerpsProHistoryController', () => {
       mockPerpsState.currentPerpsAccount.address,
       'history',
     );
+    expect(mockShowToast).toHaveBeenCalledWith(
+      'page.perps.pro.history.refreshFailed',
+      'error',
+    );
 
     mockTwapHistory = { ready: true, error: 'history offline' };
     hook.rerender();
@@ -230,6 +235,43 @@ describe('usePerpsProHistoryController', () => {
     expect(hook.result.current.tabState.status).toBe('empty');
     expect(hook.result.current.tabState.refreshError).toBeUndefined();
   });
+
+  it.each(['account', 'hidden', 'tab'] as const)(
+    'does not show a late TWAP refresh toast after changing %s',
+    async transition => {
+      mockTwapHistory = { ready: true, error: null };
+      const hook = renderHook(
+        ({ active }) => usePerpsProHistoryController('twap', active, true),
+        {
+          initialProps: { active: true },
+        },
+      );
+      let finish!: () => void;
+      mockRefreshTwaps.mockImplementationOnce(
+        () =>
+          new Promise(resolve => {
+            finish = resolve;
+          }),
+      );
+      let pending!: Promise<void>;
+      act(() => {
+        pending = hook.result.current.refresh();
+      });
+      if (transition === 'account') {
+        mockAccountGeneration++;
+        hook.rerender({ active: true });
+      }
+      if (transition === 'hidden') hook.rerender({ active: false });
+      if (transition === 'tab')
+        act(() => hook.result.current.setActiveTab('orders'));
+      await act(async () => {
+        mockTwapHistory = { ready: true, error: 'late failure' };
+        finish();
+        await pending;
+      });
+      expect(mockShowToast).not.toHaveBeenCalled();
+    },
+  );
 
   it('preloads ordinary tabs alongside the shared TWAP source and distinguishes successful empty results', async () => {
     const hook = renderHook(() => usePerpsProHistoryController());

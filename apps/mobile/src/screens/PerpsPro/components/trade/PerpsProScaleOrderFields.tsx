@@ -48,11 +48,11 @@ export const PerpsProScaleOrderFields = React.memo(
         {(['scaleLowerPrice', 'scaleUpperPrice'] as const).map(field => (
           <PerpsProTradePriceField
             key={field}
-            label={t(
+            label={`${t(
               `page.perps.pro.scaleOrder.${
                 field === 'scaleLowerPrice' ? 'lowerPrice' : 'upperPrice'
               }`,
-            )}
+            )} (${market?.quoteAsset ?? '-'})`}
             maxDecimals={getPerpsProPriceInputMaxDecimals(decimals)}
             normalizeValue={normalize}
             canonicalizeValueOnBlur={canonicalize}

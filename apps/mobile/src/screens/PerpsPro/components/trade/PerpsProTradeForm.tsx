@@ -119,32 +119,43 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
     (value: string) => sanitizePerpsProPriceInput(value, priceSzDecimals),
     [priceSzDecimals],
   );
-  const getKeyboardMinimum = useCallback(() => {
-    if ((form.reduceOnly && form.orderType !== 'twap') || !market) {
-      return null;
-    }
-    const minimum = resolvePerpsProMinimumOrderAmount({
-      minimumQuoteAmount:
-        form.orderType === 'twap'
-          ? PERPS_PRO_TWAP_MIN_NOTIONAL
-          : PERPS_MINI_USD_VALUE,
-      price:
-        getPerpsProTradeDisplayReferencePrice({
-          form,
-          marketPrice:
-            form.orderType === 'twap'
-              ? market.marketData.midPx || ''
-              : market.marketData.midPx || market.marketData.markPx || '',
-        }) || '',
-      szDecimals: market.marketData.szDecimals,
-    });
-    if (!minimum) {
-      return null;
-    }
-    return form.amountUnit === 'base'
-      ? `${minimum.minimumBaseSize} ${market.displayBase}`
-      : `${minimum.displayQuoteAmount} ${market.quoteAsset}`;
-  }, [form, market]);
+  const getMinimumAmount = useCallback(
+    (includeBaseConversion = false) => {
+      if ((form.reduceOnly && form.orderType !== 'twap') || !market) {
+        return null;
+      }
+      const minimum = resolvePerpsProMinimumOrderAmount({
+        minimumQuoteAmount:
+          form.orderType === 'twap'
+            ? PERPS_PRO_TWAP_MIN_NOTIONAL
+            : PERPS_MINI_USD_VALUE,
+        price:
+          getPerpsProTradeDisplayReferencePrice({
+            form,
+            marketPrice:
+              form.orderType === 'twap'
+                ? market.marketData.midPx || ''
+                : market.marketData.midPx || market.marketData.markPx || '',
+          }) || '',
+        szDecimals: market.marketData.szDecimals,
+      });
+      if (!minimum) {
+        return null;
+      }
+      return form.amountUnit === 'base'
+        ? `${minimum.minimumBaseSize} ${market.displayBase}`
+        : `${minimum.displayQuoteAmount} ${market.quoteAsset}${
+            includeBaseConversion
+              ? ` ≈ ${minimum.minimumBaseSize} ${market.displayBase}`
+              : ''
+          }`;
+    },
+    [form, market],
+  );
+  const getKeyboardMinimum = useCallback(
+    () => getMinimumAmount(),
+    [getMinimumAmount],
+  );
   const showTwapMinimum =
     form.orderType === 'twap' &&
     (!!form.amount || controller.percentage > 0) &&
@@ -347,7 +358,7 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
                   <PerpsProTwapHint columnLayout={columnLayout}>
                     {t('page.perps.pro.twap.minimum', {
                       amount:
-                        getKeyboardMinimum() ??
+                        getMinimumAmount(true) ??
                         `${PERPS_PRO_TWAP_MIN_NOTIONAL} USD`,
                     })}
                   </PerpsProTwapHint>

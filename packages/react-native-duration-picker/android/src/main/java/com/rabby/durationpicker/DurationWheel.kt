@@ -41,7 +41,10 @@ internal class DurationWheel(
   private var labelLocale = resources.configuration.locales[0]
   private var customLabels: List<String>? = null
   private var labels = formatLabels(labelLocale)
-  private val snap = LinearSnapHelper()
+  private val snap = object : LinearSnapHelper() {
+    // Preserve RecyclerView's velocity-driven fling; snap only after it settles.
+    override fun onFling(velocityX: Int, velocityY: Int) = false
+  }
   private val rows = object : LinearLayoutManager(context) {
     override fun calculateExtraLayoutSpace(state: State, extraLayoutSpace: IntArray) {
       // Rows outside the flat viewport can still be visible on the curved wheel.
@@ -144,7 +147,8 @@ internal class DurationWheel(
         row.translationX = towardCenter * 0.22f * depth / (1 + depth)
         row.translationY = ((sin(angle) * 2 - distance) * rowHeight).toFloat()
         row.scaleY = cos(angle).toFloat()
-        row.alpha = 1f / (1f + 2f * depth)
+        val unselectedFade = 1f - 0.2f * depth.coerceAtMost(1f)
+        row.alpha = unselectedFade / (1f + 2f * depth)
       }
     }
     if (positioning) return

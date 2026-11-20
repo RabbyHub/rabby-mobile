@@ -5,6 +5,7 @@ import {
 import { getPerpsProDialogActionStyles } from '../common/perpsProDialogVisual';
 import RcIconWarningCircleCC from '@/assets2024/icons/perps/PerpsProCloseAllWarning.svg';
 import { TrackedModal } from '@/components/Modal/TrackedModal';
+import { Button } from '@/components2024/Button';
 import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -71,21 +72,24 @@ export const PerpsProEndTwapModal: React.FC<{
               ]}>
               <Text style={styles.cancelText}>{t('global.cancel')}</Text>
             </Pressable>
-            <Pressable
-              accessibilityRole="button"
-              disabled={pending}
-              onPress={onConfirm}
-              style={({ pressed }) => [
+            <Button
+              buttonStyle={[
                 styles.button,
                 styles.actionLayout,
-                pressed && styles.pressed,
-              ]}>
-              <Text style={[styles.buttonTitle, styles.confirmText]}>
-                {pending
-                  ? t('page.perps.pro.twap.ending')
-                  : t('global.confirm')}
-              </Text>
-            </Pressable>
+                pending && styles.buttonDisabled,
+              ]}
+              containerStyle={styles.buttonContainer}
+              disabled={pending}
+              disabledTitleStyle={styles.buttonDisabledTitle}
+              height={CANCEL_ACTION_HEIGHT}
+              loading={pending}
+              loadingProps={{ color: styles.buttonDisabledTitle.color }}
+              onPress={onConfirm}
+              testID="perps-pro-end-twap-confirm"
+              title={t('global.confirm')}
+              titleStyle={[styles.buttonTitle, styles.confirmText]}
+              type="primary"
+            />
           </View>
         </View>
       </View>
@@ -171,6 +175,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   cancelButton: {
     backgroundColor: colors2024['neutral-bg-5'],
   },
+  buttonContainer: { flex: 1 },
   cancelText: {
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
