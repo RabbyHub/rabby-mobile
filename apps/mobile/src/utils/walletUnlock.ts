@@ -1,3 +1,4 @@
+import { Keyboard } from 'react-native';
 import * as apisKeychain from '@/core/apis/keychain';
 import * as apisLock from '@/core/apis/lock';
 import {
@@ -35,6 +36,28 @@ export { WalletUnlockCancelledError, isWalletUnlockCancelled };
 
 let nextUnlockRequestId = 1;
 let pendingWalletUnlock: PendingWalletUnlock | null = null;
+
+const KEYBOARD_HIDE_TIMEOUT_MS = 500;
+
+// A bottom sheet presented while another input still owns the keyboard never
+// receives its own keyboard show event, so it would stay under that keyboard.
+function dismissKeyboardBeforePasswordModal() {
+  if (!Keyboard.isVisible()) {
+    return Promise.resolve();
+  }
+
+  return new Promise<void>(resolve => {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const subscription = Keyboard.addListener('keyboardDidHide', () => done());
+    const done = () => {
+      clearTimeout(timer);
+      subscription.remove();
+      resolve();
+    };
+    timer = setTimeout(done, KEYBOARD_HIDE_TIMEOUT_MS);
+    Keyboard.dismiss();
+  });
+}
 
 export async function ensureWalletUnlockedForAction() {
   try {
@@ -212,6 +235,7 @@ export async function ensureWalletUnlocked() {
     const authModalModule =
       require('@/components/AuthenticationModal/AuthenticationModal2024') as AuthenticationModal2024Module;
     const { AuthenticationModal2024 } = authModalModule;
+    await dismissKeyboardBeforePasswordModal();
     markWalletUnlockDiagnosticStage(diagnosticsAttemptId, 'password_modal');
     const { hideModal } = await AuthenticationModal2024.show({
       title: 'Unlock Rabby Wallet',

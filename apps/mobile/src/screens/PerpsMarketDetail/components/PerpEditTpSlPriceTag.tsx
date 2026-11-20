@@ -86,6 +86,7 @@ function TpSlEditorModal({
   position,
   children,
   onCloseStart,
+  inputFocused,
   ...props
 }: React.PropsWithChildren<{
   position: boolean;
@@ -94,12 +95,14 @@ function TpSlEditorModal({
   onShow?: () => void;
   onDismiss?: () => void;
   onCloseStart?: () => void;
+  inputFocused: boolean;
 }>) {
   if (position) {
     return (
       <SimplePositionTpSlModal
         modalId={MODAL_GATE_IDS.perpsEditTpSlPrice}
         onCloseStart={onCloseStart}
+        inputFocused={inputFocused}
         {...props}>
         {children}
       </SimplePositionTpSlModal>
@@ -167,6 +170,7 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
   handleCancelAutoClose,
 }) => {
   const [modalVisible, setModalVisible] = React.useState(false);
+  const [inputFocused, setInputFocused] = React.useState(false);
   const pressInFlight = React.useRef(false);
   const mounted = React.useRef(true);
   useEffect(() => {
@@ -499,6 +503,7 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
       <TpSlEditorModal
         position={variant === 'position'}
         visible={modalVisible}
+        inputFocused={inputFocused}
         onShow={
           variant === 'position'
             ? () => {
@@ -626,6 +631,16 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
                       placeholder="$0"
                       value={displayedAutoClosePrice}
                       onChangeText={handlePriceChange}
+                      onFocus={
+                        constrainPosition
+                          ? () => setInputFocused(true)
+                          : undefined
+                      }
+                      onBlur={
+                        constrainPosition
+                          ? () => setInputFocused(false)
+                          : undefined
+                      }
                       ref={autoCloseInputRef}
                     />
                   </View>

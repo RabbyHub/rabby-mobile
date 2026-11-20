@@ -48,9 +48,9 @@ export const PerpsProHistoryEmpty = () => {
   );
 };
 
-export const PerpsProHistoryError: React.FC<{ onRetry: () => void }> = ({
-  onRetry,
-}) => {
+export const PerpsProHistoryError: React.FC<{
+  onRetry: () => void;
+}> = ({ onRetry }) => {
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   return (
@@ -73,6 +73,7 @@ export const PerpsProHistoryError: React.FC<{ onRetry: () => void }> = ({
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   skeletonList: {
+    paddingTop: 12,
     flex: 1,
     gap: 8,
   },

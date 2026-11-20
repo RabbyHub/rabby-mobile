@@ -4,7 +4,13 @@ import { Text, type TextInput } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { useState } from 'react';
-import { Platform, Pressable, View } from 'react-native';
+import {
+  Platform,
+  Pressable,
+  StyleSheet,
+  View,
+  type TextInputProps,
+} from 'react-native';
 
 import { getPerpsProTradeControlMediumTextStyle } from '../common/perpsProVisual';
 import { PERPS_PRO_TRADE_AMOUNT_FIELD_HEIGHT } from '../../model/layout';
@@ -17,7 +23,10 @@ const UNIT_AREA_MAX_WIDTH = 72;
 const UNIT_TEXT_MIN_WIDTH = 34;
 
 type PerpsProTradeAmountFieldProps = {
+  invalid?: boolean;
   getKeyboardMinimum?: () => string | null;
+  inputMode?: TextInputProps['inputMode'];
+  keyboardType?: TextInputProps['keyboardType'];
   label: string;
   maxDecimals: number;
   onChangeText?: (value: string) => void;
@@ -25,15 +34,19 @@ type PerpsProTradeAmountFieldProps = {
   onFocus?: () => void;
   onPressIn?: () => void;
   onToggleUnit?: () => void;
-  unit: string;
+  unit?: string;
   value?: string;
+  variant?: 'default' | 'compact';
 };
 
 export const PerpsProTradeAmountField = React.memo(
   React.forwardRef<TextInput, PerpsProTradeAmountFieldProps>(
     (props, forwardedRef) => {
       const {
+        invalid,
         getKeyboardMinimum,
+        inputMode,
+        keyboardType,
         label,
         maxDecimals,
         onBlur,
@@ -43,19 +56,29 @@ export const PerpsProTradeAmountField = React.memo(
         onToggleUnit,
         unit,
         value = '',
+        variant = 'default',
       } = props;
       const { colors2024, styles } = useTheme2024({ getStyle });
       const [focused, setFocused] = useState(false);
       const showFloatingLabel = focused || !!value;
 
       return (
-        <View style={styles.container} testID="perps-pro-trade-amount-field">
+        <View
+          style={[
+            styles.container,
+            variant === 'compact' && styles.compactHeight,
+          ]}
+          testID="perps-pro-trade-amount-field">
           <View style={styles.amountArea}>
             {showFloatingLabel ? (
               <Text
                 ellipsizeMode="tail"
                 numberOfLines={1}
-                style={styles.floatingLabel}
+                pointerEvents={variant === 'compact' ? 'none' : undefined}
+                style={[
+                  styles.floatingLabel,
+                  variant === 'compact' && styles.compactFloatingLabel,
+                ]}
                 testID="perps-pro-amount-label">
                 {label}
               </Text>
@@ -64,7 +87,10 @@ export const PerpsProTradeAmountField = React.memo(
                 ellipsizeMode="tail"
                 numberOfLines={1}
                 pointerEvents="none"
-                style={styles.centeredPlaceholder}
+                style={[
+                  styles.centeredPlaceholder,
+                  variant === 'compact' && styles.compactPlaceholder,
+                ]}
                 testID="perps-pro-amount-placeholder">
                 {label}
               </Text>
@@ -73,6 +99,8 @@ export const PerpsProTradeAmountField = React.memo(
               getKeyboardMinimum={getKeyboardMinimum}
               keyboardScrollTrade
               accessibilityLabel={label}
+              inputMode={inputMode}
+              keyboardType={keyboardType}
               maxFontSizeMultiplier={1.2}
               maxDecimals={maxDecimals}
               ref={forwardedRef}
@@ -86,29 +114,41 @@ export const PerpsProTradeAmountField = React.memo(
                 onFocus?.();
               }}
               onPressIn={onPressIn}
-              style={styles.input}
+              style={[
+                styles.input,
+                variant === 'compact' && styles.compactHeight,
+              ]}
               value={value}
             />
           </View>
-          <Pressable
-            accessibilityRole="button"
-            onPress={onToggleUnit}
-            style={styles.unitArea}
-            testID="perps-pro-trade-amount-unit">
-            <Text
-              ellipsizeMode="tail"
-              numberOfLines={1}
-              style={[styles.unit, unitFontStyle]}>
-              {unit}
-            </Text>
-            <RcIconAmountUnitSwitch
-              color={colors2024['neutral-secondary']}
-              height={10}
+          {unit !== undefined ? (
+            <Pressable
+              accessibilityRole="button"
+              onPress={onToggleUnit}
+              style={styles.unitArea}
+              testID="perps-pro-trade-amount-unit">
+              <Text
+                ellipsizeMode="tail"
+                numberOfLines={1}
+                style={[styles.unit, unitFontStyle]}>
+                {unit}
+              </Text>
+              <RcIconAmountUnitSwitch
+                color={colors2024['neutral-secondary']}
+                height={10}
+                pointerEvents="none"
+                testID="perps-pro-trade-amount-unit-switch"
+                width={10}
+              />
+            </Pressable>
+          ) : null}
+          {invalid ? (
+            <View
               pointerEvents="none"
-              testID="perps-pro-trade-amount-unit-switch"
-              width={10}
+              style={styles.invalidOutline}
+              testID="perps-pro-amount-invalid-outline"
             />
-          </Pressable>
+          ) : null}
         </View>
       );
     },
@@ -118,6 +158,17 @@ export const PerpsProTradeAmountField = React.memo(
 PerpsProTradeAmountField.displayName = 'PerpsProTradeAmountField';
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
+  // Keep the Android rounded clipping surface independent of validation borders.
+  invalidOutline: {
+    ...StyleSheet.absoluteFillObject,
+    borderWidth: 1,
+    borderRadius: 6,
+    borderCurve: 'continuous',
+    borderColor: colors2024['red-default'],
+  },
+  compactHeight: { height: 34 },
+  compactFloatingLabel: { top: 2 },
+  compactPlaceholder: { top: 8 },
   container: {
     alignItems: 'center',
     backgroundColor: isLight

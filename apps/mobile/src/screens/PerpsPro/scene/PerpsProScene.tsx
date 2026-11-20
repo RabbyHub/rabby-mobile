@@ -1,3 +1,10 @@
+import type { PerpsTwapRecord } from '@/hooks/perps/twap/types';
+import { PerpsProTwapCard } from '../components/twap/PerpsProTwapCard';
+import { PerpsProTwapDetailSheet } from '../components/twap/PerpsProTwapDetailSheet';
+import { PerpsProEndTwapModal } from '../components/twap/PerpsProEndTwapModal';
+import { usePerpsProCancelTwap } from './usePerpsProCancelTwap';
+import { PerpsProTwapOrderConfirmationSheet } from '../components/trade/PerpsProTwapOrderConfirmationSheet';
+import { PerpsProScaleOrderConfirmationSheet } from '../components/trade/PerpsProScaleOrderConfirmationSheet';
 import { Text } from '@/components/Typography';
 import type { PerpsQuoteAsset } from '@/constant/perps';
 import type { PerpsProInfoTab } from '@/core/services/perpsService';
@@ -57,6 +64,7 @@ import {
 } from '../components/chart/PerpsProKlineSheet';
 import { registerPerpsProKeyboardTradeScroll } from '../components/common/perpsProKeyboardSession';
 import { PerpsProEmptyState } from '../components/common/PerpsProEmptyState';
+import { PerpsProOverlayScrollBridge } from '../components/common/PerpsProOverlayScrollBridge';
 import { PerpsProFieldExplanationProvider } from '../components/common/PerpsProFieldExplanationProvider';
 import { triggerPerpsProLightHaptic } from '../components/common/triggerPerpsProLightHaptic';
 import {
@@ -165,6 +173,8 @@ type PerpsProSceneRow =
   | { key: 'positions-controls'; type: 'positions-controls' }
   | { key: 'positions-empty'; type: 'positions-empty' }
   | { key: string; position: PerpsPositionViewModel; type: 'position' }
+  | { key: string; order: PerpsTwapRecord; type: 'twap' }
+  | { key: 'twap-state'; type: 'twap-state' }
   | { key: 'open-orders-controls'; type: 'open-orders-controls' }
   | { key: 'open-orders-empty'; type: 'open-orders-empty' }
   | { key: string; order: PerpsOpenOrderViewModel; type: 'open-order' };
@@ -250,6 +260,7 @@ export const PerpsProScene: React.FC<{
     bboSessionKey: bboBook.sessionKey,
     bboStatus: bboBook.status,
     executionActive: scene.executionActive && !isModeSwitching,
+    routeFocused: scene.routeFocused,
     leveragePending: leverageUpdate.pending,
     market: scene.currentMarket,
     tradeConfigurationReady: scene.tradeConfigurationReady,
@@ -304,6 +315,15 @@ export const PerpsProScene: React.FC<{
     trade.amountUnit,
   );
   const cancelOrders = usePerpsProCancelOrders();
+  const cancelTwap = usePerpsProCancelTwap(
+    info.accountIdentity,
+    scene.executionActive && !isModeSwitching,
+  );
+  const [twapDetail, setTwapDetail] = useState<PerpsTwapRecord | null>(null);
+  useEffect(() => {
+    setTwapDetail(null);
+  }, [info.accountIdentity, scene.routeFocused]);
+
   const openOrderEdit = usePerpsProOpenOrderEdit(
     info.accountIdentity,
     trade.amountUnit,
@@ -642,10 +662,8 @@ export const PerpsProScene: React.FC<{
     () => setHideOtherOpenOrderSymbols(value => !value),
     [setHideOtherOpenOrderSymbols],
   );
-  const { gap, orderBookWidth, tradeWidth } = useMemo(
-    () => getPerpsProColumnLayout(width),
-    [width],
-  );
+  const columnLayout = useMemo(() => getPerpsProColumnLayout(width), [width]);
+  const { gap, orderBookWidth, tradeWidth } = columnLayout;
   const orderBookColumnStyle = useMemo<ViewStyle>(
     () => ({ width: orderBookWidth }),
     [orderBookWidth],
@@ -936,27 +954,32 @@ export const PerpsProScene: React.FC<{
           ]
         : [{ key: 'positions-controls', type: 'positions-controls' }];
 
-    const openOrderDataRows: PerpsProSceneRow[] = info.openOrders.map(
-      order => ({
-        key: `open-order:${info.accountIdentity}:${order.key}`,
-        order,
-        type: 'open-order',
-      }),
-    );
-    const openOrderRows: PerpsProSceneRow[] =
-      info.openOrderCollectionPresentation === 'authoritativeEmpty'
-        ? [{ key: 'open-orders-empty', type: 'open-orders-empty' }]
-        : info.openOrderCollectionPresentation === 'filteredEmpty'
-        ? [
-            { key: 'open-orders-controls', type: 'open-orders-controls' },
-            { key: 'open-orders-empty', type: 'open-orders-empty' },
-          ]
-        : info.openOrderCollectionPresentation === 'populated'
-        ? [
-            { key: 'open-orders-controls', type: 'open-orders-controls' },
-            ...openOrderDataRows,
-          ]
-        : [{ key: 'open-orders-controls', type: 'open-orders-controls' }];
+    const openOrderDataRows: PerpsProSceneRow[] =
+      info.openOrderCategory === 'twap'
+        ? info.twaps.map(order => ({
+            key: `twap:${info.accountIdentity}:${order.key}`,
+            order,
+            type: 'twap',
+          }))
+        : info.openOrders.map(order => ({
+            key: `open-order:${info.accountIdentity}:${order.key}`,
+            order,
+            type: 'open-order',
+          }));
+    const openOrderRows: PerpsProSceneRow[] = [
+      { key: 'open-orders-controls', type: 'open-orders-controls' },
+      ...openOrderDataRows,
+      ...(info.openOrderCategory === 'twap'
+        ? info.twapReadiness !== 'ready'
+          ? [{ key: 'twap-state', type: 'twap-state' } as const]
+          : !openOrderDataRows.length
+          ? [{ key: 'open-orders-empty', type: 'open-orders-empty' } as const]
+          : []
+        : info.openOrderCollectionPresentation === 'authoritativeEmpty' ||
+          info.openOrderCollectionPresentation === 'filteredEmpty'
+        ? [{ key: 'open-orders-empty', type: 'open-orders-empty' } as const]
+        : []),
+    ];
 
     return {
       account: accountRows,
@@ -968,6 +991,9 @@ export const PerpsProScene: React.FC<{
     info.accountIdentity,
     info.accountState,
     info.openOrderCollectionPresentation,
+    info.openOrderCategory,
+    info.twaps,
+    info.twapReadiness,
     info.openOrders,
     info.positionCollectionPresentation,
     info.positions,
@@ -1017,6 +1043,7 @@ export const PerpsProScene: React.FC<{
             </View>
             <View onLayout={updateMainColumnHeight} style={tradeColumnStyle}>
               <PerpsProTradeForm
+                columnLayout={columnLayout}
                 addFundsMode={tradeAddFundsAction.mode}
                 configurationReady={scene.tradeConfigurationReady}
                 controller={trade}
@@ -1057,6 +1084,7 @@ export const PerpsProScene: React.FC<{
       </View>
     );
   }, [
+    columnLayout,
     columnsStyle,
     gap,
     isMarketLoading,
@@ -1076,6 +1104,7 @@ export const PerpsProScene: React.FC<{
     updateTradeRowHeight,
   ]);
 
+  const setTradeOrderType = trade.setOrderType;
   const renderItem = useCallback<ListRenderItem<PerpsProSceneRow>>(
     ({ item }) => {
       switch (item.type) {
@@ -1125,15 +1154,57 @@ export const PerpsProScene: React.FC<{
               position={item.position}
             />
           );
+        case 'twap':
+          return (
+            <PerpsProTwapCard
+              order={item.order}
+              amountUnit={trade.amountUnit}
+              now={Date.now()}
+              active={
+                scene.routeFocused &&
+                (requestedInfoTab ?? info.activeInfoTab) === 'openOrders' &&
+                !twapDetail
+              }
+              onDetail={setTwapDetail}
+              onEnd={cancelTwap.request}
+            />
+          );
+        case 'twap-state':
+          return (
+            <Pressable onPress={info.retryTwaps}>
+              <PerpsProEmptyState
+                testID="perps-pro-twap-state"
+                message={t(
+                  info.twapReadiness === 'error'
+                    ? 'page.perps.pro.twap.loadError'
+                    : 'page.perps.pro.common.loading',
+                )}
+              />
+            </Pressable>
+          );
         case 'open-orders-controls':
           return (
             <PerpsProOpenOrdersControls
+              twapCount={info.twapCount}
+              onAddTwap={() => {
+                setTradeOrderType('twap');
+                runOnUI(() => {
+                  'worklet';
+                  interruptPerpsProInfoScrollBridge(infoScrollBridge);
+                  scrollPerpsProInfoBridgeTarget(
+                    infoScrollBridge,
+                    infoScrollBridge.activeIndex.value,
+                    0,
+                  );
+                })();
+              }}
               basicCount={info.openOrderCounts.basic}
               category={info.openOrderCategory}
               conditionalCount={info.openOrderCounts.conditional}
               hideOtherSymbols={info.hideOtherOpenOrderSymbols}
               isCancelAllPending={cancelOrders.isCancelAllPending}
               onCancelAll={() =>
+                info.openOrderCategory !== 'twap' &&
                 cancelOrders.confirmCancelAll(
                   info.openOrderCommandCandidates,
                   info.openOrderCategory,
@@ -1176,6 +1247,13 @@ export const PerpsProScene: React.FC<{
     },
     [
       cancelOrders,
+      cancelTwap.request,
+      twapDetail,
+      requestedInfoTab,
+      scene.routeFocused,
+      setTradeOrderType,
+      trade.amountUnit,
+      infoScrollBridge,
       closeAll.pending,
       closeAll.requestCloseAll,
       info,
@@ -1192,7 +1270,6 @@ export const PerpsProScene: React.FC<{
       t,
       toggleHideOtherOpenOrderSymbols,
       toggleHideOtherPositionSymbols,
-      trade.amountUnit,
       transfer.open,
     ],
   );
@@ -1345,6 +1422,18 @@ export const PerpsProScene: React.FC<{
       {renderTrade()}
     </PerpsProTradeScrollBridge>
   );
+  const infoTabsContent = displayedInfoTab ? (
+    <PerpsProInfoTabs
+      activeTab={displayedInfoTab}
+      historyEnabled={historyEnabled && info.accountState !== 'noAccount'}
+      indicatorPosition={infoTabIndicatorPosition}
+      onChange={requestInfoTab}
+      onHistoryPress={openHistory}
+      openOrdersCount={info.allOpenOrdersCount}
+      pendingFundingCount={info.pendingFundingCount}
+      positionsCount={info.allPositionsCount}
+    />
+  ) : null;
   const SceneOverlayView =
     Platform.OS === 'android' ? Reanimated.View : Animated.View;
   const tradeOverlayMotionStyle =
@@ -1453,18 +1542,16 @@ export const PerpsProScene: React.FC<{
                 <SceneOverlayView
                   style={[styles.infoTabsOverlay, infoTabsOverlayMotionStyle]}
                   testID="perps-pro-info-tabs-overlay">
-                  <PerpsProInfoTabs
-                    activeTab={displayedInfoTab}
-                    historyEnabled={
-                      historyEnabled && info.accountState !== 'noAccount'
-                    }
-                    indicatorPosition={infoTabIndicatorPosition}
-                    onChange={requestInfoTab}
-                    onHistoryPress={openHistory}
-                    openOrdersCount={info.allOpenOrdersCount}
-                    pendingFundingCount={info.pendingFundingCount}
-                    positionsCount={info.allPositionsCount}
-                  />
+                  {Platform.OS === 'android' ? (
+                    infoTabsContent
+                  ) : (
+                    <PerpsProOverlayScrollBridge
+                      controller={infoScrollBridge}
+                      height={PERPS_PRO_INFO_TABS_HEIGHT}
+                      testID="perps-pro-info-tabs-scroll-bridge">
+                      {infoTabsContent}
+                    </PerpsProOverlayScrollBridge>
+                  )}
                 </SceneOverlayView>
               ) : null}
             </>
@@ -1662,7 +1749,12 @@ export const PerpsProScene: React.FC<{
         />
       ) : null}
       <PerpsProOrderConfirmationSheet
-        command={trade.review}
+        command={
+          trade.review?.type === 'scaleOrder' ||
+          trade.review?.type === 'twapOrder'
+            ? null
+            : trade.review
+        }
         estimatedLiquidation={trade.estimatedLiquidation}
         market={trade.market}
         onClose={trade.closeReview}
@@ -1670,6 +1762,34 @@ export const PerpsProScene: React.FC<{
         onToggleSkip={() => trade.setSkipConfirmation(value => !value)}
         pending={trade.pending}
         skipConfirmation={trade.skipConfirmation}
+      />
+      <PerpsProTwapOrderConfirmationSheet
+        command={trade.review?.type === 'twapOrder' ? trade.review : null}
+        onClose={trade.closeReview}
+        onConfirm={trade.confirmReview}
+        onToggleSkip={() => trade.setSkipConfirmation(value => !value)}
+        pending={trade.pending}
+        skipConfirmation={trade.skipConfirmation}
+      />
+      <PerpsProScaleOrderConfirmationSheet
+        onDismissed={trade.onScaleReviewDismissed}
+        command={trade.review?.type === 'scaleOrder' ? trade.review : null}
+        onClose={trade.closeReview}
+        onConfirm={trade.confirmReview}
+        pending={trade.pending}
+      />
+      {twapDetail ? (
+        <PerpsProTwapDetailSheet
+          key={`${info.accountIdentity}:${twapDetail.key}`}
+          order={twapDetail}
+          onClose={() => setTwapDetail(null)}
+        />
+      ) : null}
+      <PerpsProEndTwapModal
+        confirmation={cancelTwap.command}
+        pending={cancelTwap.pending}
+        onCancel={cancelTwap.close}
+        onConfirm={cancelTwap.confirm}
       />
       <PerpsProSheetGlobalEdgeTarget />
     </PerpsProFieldExplanationProvider>

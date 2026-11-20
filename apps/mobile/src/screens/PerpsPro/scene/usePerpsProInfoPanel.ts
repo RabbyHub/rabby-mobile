@@ -1,4 +1,12 @@
 import {
+  usePerpsTwapRecords,
+  usePerpsTwapSourceState,
+} from '@/hooks/perps/twap/usePerpsTwapStore';
+import {
+  usePerpsTwapSubscriptions,
+  refreshPerpsTwaps,
+} from '@/hooks/perps/twap/usePerpsTwapSubscriptions';
+import {
   useCallback,
   useEffect,
   useLayoutEffect,
@@ -17,6 +25,7 @@ import { usePerpsRuntimeStatus } from '@/hooks/perps/runtime/usePerpsRuntimeStat
 import { getPerpsRuntimeIdentity } from '@/hooks/perps/runtime/perpsRuntimeState';
 import {
   fetchStakingSummaryHttp,
+  getPerpsAccountRuntimeContext,
   isPerpsUserAbstractionReadyForAccount,
   perpsStore,
   type PerpsState,
@@ -74,8 +83,9 @@ export const usePerpsProInfoPanel = (
     useState(false);
   const [hideOtherOpenOrderSymbols, setHideOtherOpenOrderSymbols] =
     useState(false);
-  const [openOrderCategory, setOpenOrderCategory] =
-    useState<Exclude<PerpsOpenOrderCategory, 'unsupported'>>('basic');
+  const [openOrderCategory, setOpenOrderCategory] = useState<
+    Exclude<PerpsOpenOrderCategory, 'unsupported'> | 'twap'
+  >('basic');
 
   const facts = perpsStore(
     useShallow(state => ({
@@ -96,6 +106,19 @@ export const usePerpsProInfoPanel = (
       userAbstractionReady: isPerpsUserAbstractionReadyForAccount(state),
     })),
   );
+  const twapUser = facts.currentAccount?.address;
+  usePerpsTwapSubscriptions(
+    twapUser,
+    sceneActive && runtime.status === 'ready',
+    getPerpsAccountRuntimeContext().generation,
+  );
+  const twapRecords = usePerpsTwapRecords(twapUser);
+  const activeTwaps = usePerpsTwapSourceState(twapUser, 'active');
+  const twapReadiness = activeTwaps.error
+    ? 'error'
+    : activeTwaps.ready
+    ? 'ready'
+    : 'loading';
   const pendingFundingCount = perpsStore(state =>
     getPerpsPendingFundingCount(state.localLoadingHistory),
   );
@@ -127,6 +150,23 @@ export const usePerpsProInfoPanel = (
     return result;
   }, [marketFactSignatures]);
 
+  const allTwaps = useMemo(
+    () =>
+      Object.values(twapRecords)
+        .filter(order => order.active && !!marketDataMap[order.state.coin])
+        .sort(
+          (a, b) =>
+            b.state.timestamp - a.state.timestamp || b.twapId - a.twapId,
+        ),
+    [twapRecords, marketDataMap],
+  );
+  const twaps = useMemo(
+    () =>
+      hideOtherOpenOrderSymbols
+        ? allTwaps.filter(order => order.state.coin === canonicalCoin)
+        : allTwaps,
+    [allTwaps, canonicalCoin, hideOtherOpenOrderSymbols],
+  );
   const accountPagePrepared =
     preferences.activeInfoTab !== 'openOrders' ||
     requestedInfoTab === 'account';
@@ -331,12 +371,14 @@ export const usePerpsProInfoPanel = (
   );
   const openOrders = useMemo(
     () =>
-      filterPerpsOpenOrders({
-        canonicalCoin,
-        category: openOrderCategory,
-        hideOtherSymbols: hideOtherOpenOrderSymbols,
-        orders: allOpenOrders,
-      }),
+      openOrderCategory === 'twap'
+        ? []
+        : filterPerpsOpenOrders({
+            canonicalCoin,
+            category: openOrderCategory,
+            hideOtherSymbols: hideOtherOpenOrderSymbols,
+            orders: allOpenOrders,
+          }),
     [
       allOpenOrders,
       canonicalCoin,
@@ -410,7 +452,13 @@ export const usePerpsProInfoPanel = (
       : 'no-account',
     accountState,
     activeInfoTab,
-    allOpenOrdersCount: openOrderCounts.basic + openOrderCounts.conditional,
+    allOpenOrdersCount:
+      openOrderCounts.basic + openOrderCounts.conditional + allTwaps.length,
+    twaps,
+    twapCount: allTwaps.length,
+    twapReadiness,
+    retryTwaps: () =>
+      twapUser ? refreshPerpsTwaps(twapUser, 'active') : Promise.resolve(),
     allPositionsCount: allPositions.length,
     allPositionsByCoin,
     openOrderCollectionPresentation: resolvePerpsProCollectionPresentation({

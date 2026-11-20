@@ -17,6 +17,18 @@ const englishTradeMessages = require('../../../assets/locales/en/messages.json')
   .page.perps.pro.trade;
 
 describe('Perps Pro trade model', () => {
+  it('starts a restored Scale order with empty inputs and base units', () => {
+    expect(
+      createPerpsProTradeFormState({ orderType: 'scale', amountUnit: 'quote' }),
+    ).toMatchObject({
+      amount: '',
+      amountUnit: 'base',
+      scaleCount: '',
+      scaleLowerPrice: '',
+      scaleUpperPrice: '',
+    });
+  });
+
   it('uses the approved insufficient-balance feedback copy', () => {
     expect(englishTradeMessages.insufficientBalance).toBe(
       'Insufficient balance',
