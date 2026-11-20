@@ -15,7 +15,6 @@ import {
   Pressable,
   View,
 } from 'react-native';
-import { getDimensionsSnapshot } from '@/core/dimensions';
 import { TokenDetailHeaderArea } from './components/HeaderArea';
 import { formatPrice } from '@/utils/number';
 import { GetRootScreenNavigationProps } from '@/navigation-type';
@@ -497,8 +496,8 @@ const getStyle = createGetStyles2024(ctx => {
     topWrapper: {
       position: 'absolute',
       top: 0,
+      left: 0,
       right: 0,
-      width: getDimensionsSnapshot('window').width,
       overflow: 'hidden',
     },
     balanceOverviewContainer: {
