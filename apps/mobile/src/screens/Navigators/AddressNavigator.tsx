@@ -311,13 +311,21 @@ export function AddressNavigator() {
         name={RootNames.CreateChooseBackup}
         component={CreateChooseBackup}
         options={e => {
+          // Native iOS headers shift a long title right when the back button
+          // sits next to it (QA 1439 on the SE: +20pt in English, centred in
+          // Chinese). The JS header keeps equal leading/trailing slots, so the
+          // title stays centred for every language.
+          const title = e.route.params?.isFirstCreate
+            ? t('screens.addressStackTitle.CreateChooseBackup')
+            : t('screens.addressStackTitle.ChooseBackup');
+          const titleKey = e.route.params?.isFirstCreate
+            ? 'screens.addressStackTitle.CreateChooseBackup'
+            : 'screens.addressStackTitle.ChooseBackup';
           return mergeScreenOptions({
-            headerTitle: e.route.params?.isFirstCreate
-              ? t('screens.addressStackTitle.CreateChooseBackup')
-              : t('screens.addressStackTitle.ChooseBackup'),
-            title: e.route.params?.isFirstCreate
-              ? t('screens.addressStackTitle.CreateChooseBackup')
-              : t('screens.addressStackTitle.ChooseBackup'),
+            title,
+            header: () => (
+              <AutoFitCenterHeader title={title} titleKey={titleKey} />
+            ),
             headerStyle: {
               backgroundColor: colors2024['neutral-bg-1'],
             },
