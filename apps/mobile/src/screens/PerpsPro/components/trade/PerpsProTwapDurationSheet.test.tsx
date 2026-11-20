@@ -77,7 +77,7 @@ it.each([
   ['en', ['0 mins', '1 min', '2 mins', '59 mins'], '1 hour : 1 min'],
   ['zh-CN', ['0 分钟', '1 分钟', '2 分钟', '59 分钟'], '1 小时 : 1 分钟'],
 ] as const)(
-  'uses %s minute units in the wheel, preview and order field',
+  'uses %s minute units and starts and resets at five minutes',
   async (language, expected, fieldLabel) => {
     const i18n = createInstance();
     await i18n.init({
@@ -98,7 +98,7 @@ it.each([
         <PerpsProTwapFields controller={controller} onSelectTime={jest.fn()} />
         <PerpsProTwapDurationSheet
           visible
-          value="61"
+          value=""
           onClose={jest.fn()}
           onConfirm={onConfirm}
         />
@@ -106,6 +106,9 @@ it.each([
     );
     expect(screen.getByText(fieldLabel)).toBeTruthy();
     const wheel = screen.getByTestId('native-wheel');
+    expect(wheel.props.minimumDurationMinutes).toBe(5);
+    expect(wheel.props.durationMinutes).toBe(5);
+    expect(onConfirm).not.toHaveBeenCalled();
     for (const [i, value] of [0, 1, 2, 59].entries()) {
       expect(wheel.props.minuteLabels[value]).toBe(expected[i]);
       fireEvent(wheel, 'durationChange', {
@@ -114,21 +117,24 @@ it.each([
       expect(screen.getByText(expected[i]!)).toBeTruthy();
     }
     fireEvent.press(screen.getByText(i18n.t('page.perps.pro.twap.reset')));
-    expect(wheel.props.durationMinutes).toBe(0);
+    expect(wheel.props.durationMinutes).toBe(5);
     expect(
       screen.getByText(
-        i18n.t('page.perps.pro.twap.minuteValue', { t: '' }).trim(),
+        i18n.t('page.perps.pro.twap.minuteValue', { count: 5, t: '\u20075' }),
       ),
     ).toBeTruthy();
+    expect(
+      screen.queryByText(i18n.t('page.perps.pro.twap.errors.durationTooShort')),
+    ).toBeNull();
     fireEvent.press(screen.getByText(i18n.t('global.confirm')));
     const requestId = jest.mocked(DurationPickerCommands.readCurrentValue).mock
       .lastCall?.[1];
     expect(requestId).toBeDefined();
     expect(onConfirm).not.toHaveBeenCalled();
     fireEvent(wheel, 'valueRead', {
-      nativeEvent: { minutes: 62, sessionId: wheel.props.sessionId, requestId },
+      nativeEvent: { minutes: 5, sessionId: wheel.props.sessionId, requestId },
     });
-    expect(onConfirm).toHaveBeenCalledWith('62');
+    expect(onConfirm).toHaveBeenCalledWith('5');
   },
 );
 
@@ -177,12 +183,12 @@ it('gates and throttles user haptics across reset, confirm and visibility change
 
     fireEvent.press(screen.getByText('Reset'));
     change(65, firstSession);
-    expect(wheel.props.durationMinutes).toBe(0);
+    expect(wheel.props.durationMinutes).toBe(5);
     expect(haptic).toHaveBeenCalledTimes(2);
     clock.mockReturnValue(1200);
-    change(0);
-    expect(haptic).toHaveBeenCalledTimes(2);
     change(5);
+    expect(haptic).toHaveBeenCalledTimes(2);
+    change(6);
     expect(haptic).toHaveBeenCalledTimes(3);
 
     fireEvent.press(screen.getByText('Confirm'));

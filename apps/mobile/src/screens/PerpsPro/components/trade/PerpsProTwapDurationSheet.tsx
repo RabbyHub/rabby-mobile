@@ -22,6 +22,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import {
   parsePerpsProTwapDuration,
   PERPS_PRO_TWAP_MAX_MINUTES,
+  PERPS_PRO_TWAP_MIN_MINUTES,
 } from '../../model/twapOrder';
 import { PerpsProDialogBackdrop } from '../common/PerpsProDialogBackdrop';
 import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
@@ -31,6 +32,11 @@ import {
 } from '../common/perpsProDialogVisual';
 import { usePerpsProSheetNavigationRegistration } from '../common/perpsProSheetNavigationRegistry';
 import { usePerpsProSliderHaptics } from '../common/usePerpsProSliderHaptics';
+
+const initialDuration = (value: string) =>
+  String(
+    parsePerpsProTwapDuration(value).minutes ?? PERPS_PRO_TWAP_MIN_MINUTES,
+  );
 
 export const PerpsProTwapDurationSheet = React.memo(
   ({
@@ -53,7 +59,7 @@ export const PerpsProTwapDurationSheet = React.memo(
     const pending = useRef<number | null>(null);
     const open = useRef(visible);
     open.current = visible;
-    const [draft, setDraft] = useState(value);
+    const [draft, setDraft] = useState(() => initialDuration(value));
     const [sessionId, setSessionId] = useState(0);
     const [reading, setReading] = useState(false);
     const totalMinutes = Number(draft);
@@ -62,7 +68,7 @@ export const PerpsProTwapDurationSheet = React.memo(
       onSlidingComplete: resetHaptics,
     } = usePerpsProSliderHaptics({
       disabled: !visible || reading,
-      minimumValue: 0,
+      minimumValue: PERPS_PRO_TWAP_MIN_MINUTES,
       maximumValue: PERPS_PRO_TWAP_MAX_MINUTES,
       value: totalMinutes,
     });
@@ -78,14 +84,13 @@ export const PerpsProTwapDurationSheet = React.memo(
       setReading(false);
       setSessionId(++session.current);
       if (visible) {
-        setDraft(initial.current);
+        setDraft(initialDuration(initial.current));
         modal.current?.present();
       } else modal.current?.close();
       return () => {
         pending.current = null;
       };
     }, [visible, resetHaptics]);
-    const error = parsePerpsProTwapDuration(draft).error;
     const hours = Math.floor(totalMinutes / 60);
     const minuteLabels = useMemo(
       () =>
@@ -157,6 +162,7 @@ export const PerpsProTwapDurationSheet = React.memo(
             <DurationPicker
               ref={picker}
               durationMinutes={totalMinutes}
+              minimumDurationMinutes={PERPS_PRO_TWAP_MIN_MINUTES}
               minuteLabels={minuteLabels}
               androidLocale={
                 Platform.OS === 'android' ? i18n.language : undefined
@@ -188,11 +194,6 @@ export const PerpsProTwapDurationSheet = React.memo(
                 }
               }}
             />
-            {draft && error ? (
-              <Text style={styles.error}>
-                {t(`page.perps.pro.twap.errors.${error}`)}
-              </Text>
-            ) : null}
             <View style={styles.footer}>
               <Button
                 title={t('page.perps.pro.twap.reset')}
@@ -205,7 +206,7 @@ export const PerpsProTwapDurationSheet = React.memo(
                   resetHaptics();
                   setReading(false);
                   setSessionId(++session.current);
-                  setDraft('');
+                  setDraft(String(PERPS_PRO_TWAP_MIN_MINUTES));
                 }}
               />
               <Button
@@ -277,12 +278,6 @@ const getStyle = createGetStyles2024(
         width: '100%',
         aspectRatio: 650 / 228,
         maxHeight: 216,
-      },
-      error: {
-        marginHorizontal: 12,
-        fontSize: 13,
-        lineHeight: 16,
-        color: colors2024['red-default'],
       },
       footer: {
         marginTop: 22,

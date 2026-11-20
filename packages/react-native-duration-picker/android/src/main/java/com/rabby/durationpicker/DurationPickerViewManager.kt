@@ -13,6 +13,7 @@ class DurationPickerViewManager : SimpleViewManager<DurationPickerView>(), Rabby
   override fun getName() = "RabbyDurationPicker"
   override fun createViewInstance(context: ThemedReactContext) = DurationPickerView(context)
   override fun setDurationMinutes(view: DurationPickerView, value: Int) { view.durationMinutes = value }
+  override fun setMinimumDurationMinutes(view: DurationPickerView, value: Int) { view.minimumDurationMinutes = value }
   override fun setMinuteLabels(view: DurationPickerView, value: ReadableArray?) {
     view.setMinuteLabels(value?.let { labels -> List(labels.size()) { labels.getString(it).orEmpty() } })
   }
