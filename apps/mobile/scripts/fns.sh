@@ -1848,21 +1848,31 @@ build_worker_if_not_exist() {
 
   # ./assets/ios/threads/worker.thread.jsbundle
   local ios_target=$project_dir/assets/ios/threads/worker.thread.jsbundle
-  if [ ! -f $ios_target ]; then
+  # ./android/app/src/main/assets/threads/worker.thread.bundle
+  local android_target=$project_dir/android/app/src/main/assets/threads/worker.thread.bundle
+
+  local ios_rc=0
+  local android_rc=0
+  local ios_pid=''
+  local android_pid=''
+
+  if [ ! -f "$ios_target" ]; then
     echo "[build_worker_if_not_exist] $ios_target not exist, building..."
-    yarn buildworker:prod:ios
+    yarn buildworker:prod:ios & ios_pid=$!
   else
     echo "[build_worker_if_not_exist] $ios_target exist, skipped."
   fi
 
-  # ./android/app/src/main/assets/threads/worker.thread.bundle
-  local android_target=$project_dir/android/app/src/main/assets/threads/worker.thread.bundle
-  if [ ! -f $android_target ]; then
+  if [ ! -f "$android_target" ]; then
     echo "[build_worker_if_not_exist] $android_target not exist, building..."
-    yarn buildworker:prod:android
+    yarn buildworker:prod:android & android_pid=$!
   else
     echo "[build_worker_if_not_exist] $android_target exist, skipped."
   fi
+
+  [ -n "$ios_pid" ] && { wait "$ios_pid" || ios_rc=$?; }
+  [ -n "$android_pid" ] && { wait "$android_pid" || android_rc=$?; }
+  [ "$ios_rc" -eq 0 ] && [ "$android_rc" -eq 0 ]
 }
 
 print_cmd_upload_changelog() {
@@ -1950,8 +1960,15 @@ if [ ! -z $func_to_exec ]; then
       build_worker_if_not_exist
       ;;
     "build_worker")
-      yarn buildworker:prod:ios
-      yarn buildworker:prod:android
+      # The two platform bundles are independent; run them concurrently so the
+      # prep phase costs one bundle instead of two back-to-back.
+      yarn buildworker:prod:ios & worker_ios_pid=$!
+      yarn buildworker:prod:android & worker_android_pid=$!
+      worker_ios_rc=0
+      worker_android_rc=0
+      wait $worker_ios_pid || worker_ios_rc=$?
+      wait $worker_android_pid || worker_android_rc=$?
+      [ "$worker_ios_rc" -eq 0 ] && [ "$worker_android_rc" -eq 0 ]
       ;;
     "run_upload_changelog")
       run_upload_changelog

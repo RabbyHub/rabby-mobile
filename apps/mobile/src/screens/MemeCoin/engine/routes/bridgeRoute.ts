@@ -16,7 +16,14 @@ import { ONE_HOUR_MS } from '@/screens/Bridge/constants';
 import type { SelectedBridgeQuote } from '@/screens/Bridge/types';
 import { getBridgeQuoteApproval } from '@/screens/Bridge/utils/bridgeApproval';
 import { resolveBridgeArrival } from '@/screens/Bridge/utils/bridgeArrival';
-import { getBestBridgeQuote } from '@/screens/Bridge/utils/bridgeQuote';
+import {
+  getBestBridgeQuote,
+  getBridgeToTokenRawAmount,
+} from '@/screens/Bridge/utils/bridgeQuote';
+import {
+  reportBridgeSdkError,
+  reportBridgeSdkException,
+} from '@/core/bridgeSdkReport';
 import { getRabbyFeeInfo } from '@/screens/Swap/hooks/fee';
 import {
   peekBridgeHistory,
@@ -84,9 +91,13 @@ export const createBridgeRoute = ({ account }: { account: Account }) => {
                 toTokenId: receiveToken.id,
                 slippage,
                 feeRate: Number(feeRate),
+                onError: reportBridgeSdkError,
               },
               openapi,
-            ),
+            ).catch(error => {
+              reportBridgeSdkException(error);
+              throw error;
+            }),
           ),
         ),
       );
@@ -132,11 +143,16 @@ export const createBridgeRoute = ({ account }: { account: Account }) => {
               fromTokenRawAmount: rawAmount,
               toChainId: receiveToken.chain,
               toTokenId: receiveToken.id,
+              toTokenRawAmount: getBridgeToTokenRawAmount(best),
               slippage,
               quoteKey: best.quote_key || {},
+              onError: reportBridgeSdkError,
             },
             openapi,
-          );
+          ).catch(error => {
+            reportBridgeSdkException(error);
+            throw error;
+          });
           return buildBridgeToken(
             {
               approveId: best.approve_contract_id,

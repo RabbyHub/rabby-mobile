@@ -1,5 +1,6 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
+import { RoundedFontStyles } from '@/core/utils/fonts';
 import { useMemo } from 'react';
 import { View, useWindowDimensions } from 'react-native';
 
@@ -221,8 +222,8 @@ const getStyle = createGetStyles2024(ctx => {
       marginTop: -4,
     },
     titleText: {
-      fontFamily: 'SF Pro Rounded',
-      fontWeight: '900',
+      // Resolved Heavy (800) to match the baseline header weight.
+      ...RoundedFontStyles.heavy,
       lineHeight: 24,
       fontSize: 20,
       // Fabric/Android keeps the platform font padding on the title, which

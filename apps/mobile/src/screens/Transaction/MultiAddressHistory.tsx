@@ -25,6 +25,7 @@ import {
   useInterval,
   useMemoizedFn,
   useRequest,
+  useUpdateEffect,
 } from 'ahooks';
 import PQueue from 'p-queue';
 import { last, orderBy, debounce } from 'lodash';
@@ -38,6 +39,7 @@ import { useGeneralTokenDetailSheetModal } from '@/components/TokenDetailPopup/h
 import type { TransactionGroup } from '@/core/services/transactionHistory';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
+import { HeaderBackButton } from '@/hooks/navigation';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { renderFoldableStackHeader } from '@/components/FoldableStackHeader';
 import { isFoldableSideColumnPosture } from '@/core/utils/foldableDevice';
@@ -104,7 +106,7 @@ function HistoryContent({
   const dbFetchLoadingRef = useRef<boolean>(false);
   const hasMoreMap = useRef<Record<string, boolean>>({});
   const [isShowAll, setIsShowAll] = useState(false);
-  const { styles } = useTheme2024({ getStyle });
+  const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const [dbData, setDbData] = useState<HistoryDisplayItem[]>([]);
   const {
     isSceneUsingAllAccounts,
@@ -481,7 +483,9 @@ function HistoryContent({
     },
   });
 
-  useEffect(() => {
+  // Account changes only: useInfiniteScroll already loads on mount, and the
+  // API path sets isReady before this would first run.
+  useUpdateEffect(() => {
     if (isReady.current) {
       if (!isNeedFetchFromApi) {
         setFirstFetchDone(false);
@@ -494,10 +498,14 @@ function HistoryContent({
       }
       historyListRef.current?.scrollToTop();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sceneCurrentAccountDepKey, isSceneUsingAllAccounts]);
 
   const batchFetchDataFromDbUpsert = useMemoizedFn(async () => {
+    // An API-backed list shows no DB rows, and reloading it here would resume
+    // from its paging cursor and replace the list with the next page.
+    if (isNeedFetchFromApi) {
+      return;
+    }
     dbLastCursorRef.current = null;
     reloadAsync();
   });
@@ -648,6 +656,47 @@ function HistoryContent({
     );
   }, [tokenItem, isForMultipleAddress, styles.titleText, styles.headerTitle]);
 
+  // Render the whole header row ourselves so the title is centred by layout.
+  // The native-stack title container starts after the native back item, which
+  // shifted the title right by an amount that depended on the screen width and
+  // the trailing control (QA 1384).
+  const getHeaderRow = useCallback(() => {
+    return (
+      <View
+        style={[
+          styles.headerRow,
+          { paddingTop: insets.top, height: HEADER_ROW_HEIGHT + insets.top },
+        ]}>
+        <View style={styles.headerSideSlot}>
+          <HeaderBackButton style={styles.headerBackTouch} />
+        </View>
+        <View style={styles.headerCenter}>
+          {isInTokenDetail && tokenItem ? (
+            getHeaderTitle()
+          ) : (
+            <ScreenHeaderAccountSwitcher
+              forScene={isForMultipleAddress ? 'MultiHistory' : 'History'}
+              titleText="Transactions"
+              // Only the single-address history has no switcher modal; the
+              // multi-address list must keep its caret and tap-to-switch
+              // behaviour (QA 1390).
+              disableSwitch={!isForMultipleAddress}
+            />
+          )}
+        </View>
+        <View style={styles.headerSideSlot}>{getHeaderRight()}</View>
+      </View>
+    );
+  }, [
+    insets.top,
+    styles,
+    getHeaderTitle,
+    getHeaderRight,
+    isInTokenDetail,
+    tokenItem,
+    isForMultipleAddress,
+  ]);
+
   React.useEffect(() => {
     if (isInTokenDetail && tokenItem) {
       setNavigationOptions({
@@ -665,11 +714,17 @@ function HistoryContent({
       });
     } else {
       setNavigationOptions({
-        headerRight: getHeaderRight,
+        header: getHeaderRow,
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [setNavigationOptions, getHeaderTitle, getHeaderRight, foldableOuter]);
+  }, [
+    setNavigationOptions,
+    getHeaderTitle,
+    getHeaderRight,
+    getHeaderRow,
+    foldableOuter,
+  ]);
 
   const ensureCurrentIsLoading = useMemo(() => {
     if (isNeedFetchFromApi) {
@@ -751,6 +806,10 @@ function HistoryContent({
           refreshLoading={isNeedFetchFromApi && loading}
           isForMultipleAddress={isForMultipleAddress}
           account={isSceneUsingAllAccounts ? null : finalSceneCurrentAccount}
+          stickyDateBackgroundColor={makeTxPageBackgroundColors({
+            isLight,
+            colors2024,
+          })}
           noMoreText={
             noMore
               ? isNeedFetchFromApi
@@ -816,9 +875,34 @@ const HistoryScreen = ({ isForMultipleAddress = true }) => {
   );
 };
 
+const HEADER_ROW_HEIGHT = 44;
+
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   container: {
     backgroundColor: makeTxPageBackgroundColors({ isLight, colors2024 }),
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    backgroundColor: makeTxPageBackgroundColors({ isLight, colors2024 }),
+  },
+  headerSideSlot: {
+    width: 44,
+    height: HEADER_ROW_HEIGHT,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerBackTouch: {
+    width: 44,
+    height: HEADER_ROW_HEIGHT,
+    alignItems: 'flex-start',
+    justifyContent: 'center',
+  },
+  headerCenter: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   menuContainer: {
     elevation: 5,
@@ -840,6 +924,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     paddingVertical: 16,
     // paddingVertical: 16,
     borderRadius: 16,
+    borderCurve: 'continuous',
     gap: 16,
   },
   menuItem: {
@@ -868,6 +953,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     marginBottom: 8,
     backgroundColor: colors2024['brand-light-1'],
     borderRadius: 6,
+    borderCurve: 'continuous',
     paddingHorizontal: 12,
     paddingVertical: 15,
     flexDirection: 'row',
@@ -893,7 +979,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     marginLeft: 4,
     fontFamily: 'SF Pro Rounded',
     fontSize: 20,
-    fontWeight: '900',
+    fontWeight: '800',
     lineHeight: 24,
     color: colors2024['neutral-title-1'],
   },

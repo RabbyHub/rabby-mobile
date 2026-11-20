@@ -18,6 +18,7 @@ import React, {
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSystemColumnInset } from '@/components/SafeWindowFrame/backdrop';
 import { View, Pressable, ScrollView } from 'react-native';
 import { useWindowDimensions } from '@/core/dimensions';
 import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
@@ -103,9 +104,19 @@ function ReceiveScreen(): JSX.Element {
       !!offlineChainData.offlineChainInfo);
 
   const { width: windowWidth } = useWindowDimensions();
+  // The 65pt correction balances the native back bar item; the Duo outer
+  // screen uses the JS replica header, which already reserves that slot, so
+  // applying it there would push the address group left (QA 1428).
+  const columnInset = useSystemColumnInset();
+  const isReplicaHeader = columnInset.left > 0 || columnInset.right > 0;
   const headerTitle = useMemo(
     () => (
-      <View style={[styles.headerTitle, { width: windowWidth - 100 }]}>
+      <View
+        style={[
+          styles.headerTitle,
+          { width: windowWidth - 100 },
+          IS_IOS && !isReplicaHeader ? { paddingRight: 65 } : null,
+        ]}>
         {showName ? (
           <>
             <WalletIcon
@@ -127,6 +138,8 @@ function ReceiveScreen(): JSX.Element {
         )}
         <CustomTouchableOpacity
           as="RNGHTouchableOpacity"
+          style={styles.eyeButton}
+          hitSlop={{ left: 14, right: 14 }}
           onPress={() => setShowName(e => !e)}>
           {showName ? (
             <RcIconEyeCC
@@ -148,12 +161,14 @@ function ReceiveScreen(): JSX.Element {
       styles.headerTitle,
       styles.walletIcon,
       styles.titleText,
+      styles.eyeButton,
       showName,
       account?.type,
       account?.address,
       account?.aliasName,
       colors2024,
       windowWidth,
+      isReplicaHeader,
     ],
   );
 
@@ -344,10 +359,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       alignItems: 'center',
       justifyContent: 'center',
       gap: 4,
-      // The width is set per-render from the live window (see headerTitle);
-      // keeping it out of the style factory avoids a stale snapshot.
-      // Same native-container correction as the Approvals header.
-      ...(IS_IOS ? { paddingRight: 65 } : {}),
+      // The width and the native back-item correction are applied per render
+      // (see headerTitle) so they can follow the foldable posture.
     },
     screen: {
       backgroundColor: colors2024['neutral-bg-0'],
@@ -401,6 +414,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
     },
     modalContent: {
       borderRadius: 20,
+      borderCurve: 'continuous',
       backgroundColor: colors2024['neutral-bg-1'],
       boxShadow: '0 20 20 0 rgba(45, 48, 51, 0.16)',
       borderWidth: 1,
@@ -441,6 +455,22 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       width: 24,
       height: 24,
       borderRadius: 7,
+      borderCurve: 'continuous',
+    },
+    // Inline-header button target: fill the header row vertically, comfortable
+    // width. The 16pt eye hugs the title text (left-aligned) and the extra width
+    // becomes a ~44x56 tap area on its right, so no negative-margin compensation
+    // is needed.
+    eyeButton: {
+      // The native stack bar content is 44pt; using the 56pt custom-header
+      // height here made the whole title row overflow and sit ~6pt lower than
+      // the back control (QA 1423, iOS 26).
+      height: 44,
+      // Keep the layout width at the 16pt glyph so the centred title row is not
+      // pushed left (QA 1424); the extra ~44x44 tap area comes from hitSlop on
+      // the touchable instead of a wider layout box.
+      alignItems: 'center',
+      justifyContent: 'center',
     },
   };
 });

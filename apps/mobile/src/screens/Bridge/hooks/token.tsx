@@ -41,6 +41,10 @@ import { getQuotePollingResumeDelay } from '@/utils/quotePolling';
 import { isTokenMarketClosed } from '@/utils/token';
 import { isGasAccountDepositFlowActive } from '@/screens/GasAccount/utils/depositFlowRuntime';
 import { getQuoteList as getBridgeQuoteList } from '@rabby-wallet/rabby-bridge';
+import {
+  reportBridgeSdkError,
+  reportBridgeSdkException,
+} from '@/core/bridgeSdkReport';
 import { convert18RawToTokenRaw, isTempoChain } from '@/utils/tempo';
 import type { SelectedBridgeQuote } from '../types';
 import { createBridgeInitializationController } from '../bridgeInitialization';
@@ -865,9 +869,13 @@ export const useBridge = (
                     .div(100)
                     .toString(10),
                   feeRate: Number(feeRate),
+                  onError: reportBridgeSdkError,
                 },
                 openapi,
-              ).catch(() => undefined);
+              ).catch(error => {
+                reportBridgeSdkException(error);
+                return undefined;
+              });
 
               if (data && currentFetchId === fetchIdRef.current) {
                 originData.push(...data);

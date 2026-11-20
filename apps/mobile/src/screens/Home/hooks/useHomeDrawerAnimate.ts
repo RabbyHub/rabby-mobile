@@ -39,6 +39,15 @@ export const homeDrawerAnimateMutable = {
   pullPercent: makeMutable(0),
   isExpanded: makeMutable(false),
   translateY: makeMutable(0),
+  /**
+   * How far the drawer panel is "revealed" (0 -> 0.75 scale, 1 -> full size).
+   *
+   * It follows `pullPercent` while the drawer is opening, but it is latched
+   * while closing so the panel keeps its size and only translates down. The
+   * first floor only translates, so shrinking the panel during the close made
+   * the two layers move at different apparent speeds.
+   */
+  panelReveal: makeMutable(0),
 
   scrollViewContentHeight: makeMutable(0),
   scrollViewLayoutHeight: makeMutable(0),

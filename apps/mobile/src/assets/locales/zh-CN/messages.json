@@ -1500,7 +1500,7 @@
       "connectWallet": "连接钱包"
     },
     "walletConnect": {
-      "screenTitle": "连接钱包",
+      "screenTitle": "扫码连接",
       "connectingToRabby": "正在连接到 Rabby",
       "pairingFailed": "WalletConnect 配对失败。",
       "proposalNotReceived": "WalletConnect 二维码可能已失效，请刷新后重试。",
@@ -2015,7 +2015,6 @@
       "dataAnalysis": "帮助改进 Rabby",
       "dataAnalysisDesc": "分享匿名使用数据以帮助改进 Rabby。收集的数据不会与您或您的账户关联。",
       "bugReportChat": "通过聊天分享反馈",
-      "features": "功能",
       "manageWallets": "管理钱包"
     },
     "settings": {

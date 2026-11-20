@@ -853,6 +853,7 @@ class Scene24hBalanceStore extends BaseStore<Multi24hBalanceState> {
         }
 
         this.setSceneLoading(scene, !!force);
+        const alreadyLoading = this.getState().sceneAddrLoading;
         const nextCheckAddress = new Set([...normalizedAddresses]);
 
         normalizedAddresses.forEach(address => {
@@ -869,8 +870,16 @@ class Scene24hBalanceStore extends BaseStore<Multi24hBalanceState> {
         beforeReturn();
 
         const queue = this.queues[scene];
+        const staleAddresses = Array.from(nextCheckAddress);
+        if (
+          !hasAddressSelectionChanged &&
+          staleAddresses.length &&
+          staleAddresses.every(address => alreadyLoading[`${scene}-${address}`])
+        ) {
+          return this.waitQueueFinished(queue);
+        }
         queue.clear();
-        Array.from(nextCheckAddress).forEach(address => {
+        staleAddresses.forEach(address => {
           queue.add(async () => {
             this.setSceneAddrLoading(scene, address, true);
             try {
@@ -957,7 +966,7 @@ class Scene24hBalanceStore extends BaseStore<Multi24hBalanceState> {
     }
     this.hasStartedLifecycle = true;
 
-    void bindKeyringEvent('removedAccount', async account => {
+    bindKeyringEvent('removedAccount', async account => {
       const removedAccount = account as Account;
       const lowerAddress = removedAccount.address.toLowerCase();
       const addresses = await keyringServiceApi.getAllAddresses();
