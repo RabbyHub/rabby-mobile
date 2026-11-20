@@ -15,7 +15,7 @@ import {
   formatUsdValue,
 } from '@/utils/number';
 import BigNumber from 'bignumber.js';
-import { PerpsGestureSlider as Slider } from '@/components/perps/PerpsGestureSlider';
+import { GestureSlider as Slider } from '@/components/GestureSlider';
 
 import type { TokenSelectInst } from './TokenSelect';
 import TokenSelect from './TokenSelect';
@@ -184,8 +184,11 @@ const SwapTokenItemInner = (props: SwapTokenItemProps) => {
         <Text style={styles.subTitle}>
           {isFrom ? t('page.swap.from') : t('page.swap.to')}
         </Text>
-        {/* Unmount native gestures before Fabric recycles the hidden scene. */}
-        {isFrom && sceneActive && (
+        {/*
+          Keep the slider on screen for the whole pager transition; only the
+          native gesture detaches while the scene is inactive (Fabric recycling).
+        */}
+        {isFrom && (
           <View style={styles.sliderContainer}>
             <View
               ref={sliderTrackRef}
@@ -195,6 +198,7 @@ const SwapTokenItemInner = (props: SwapTokenItemProps) => {
                 key={`${token?.id}-${token?.chain}`}
                 allowTouchTrack={!disabled}
                 disabled={disabled}
+                interactive={sceneActive}
                 style={styles.sliderInner}
                 value={slider ?? 0}
                 onSlidingStart={onSlidingStart}

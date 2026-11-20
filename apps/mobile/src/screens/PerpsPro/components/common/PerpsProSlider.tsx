@@ -3,7 +3,7 @@ import { resolvePerpsProDialogCardBackground } from './perpsProDialogVisual';
 import LeverageThumb from '@/assets2024/icons/perps/PerpsProLeverageThumb.svg';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { PerpsGestureSlider as Slider } from '@/components/perps/PerpsGestureSlider';
+import { GestureSlider as Slider } from '@/components/GestureSlider';
 import React, { useMemo } from 'react';
 import { View } from 'react-native';
 import Animated, {

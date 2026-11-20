@@ -1,0 +1,228 @@
+/** Pure UI-thread transport state; business acceptance remains the caller's job. */
+export type RootScenePagerMotion = {
+  phase: 'idle' | 'touch' | 'drag' | 'snap';
+  epoch: number;
+  selected: number;
+  target: number;
+  startPosition: number;
+  queued: number | null;
+};
+
+/**
+ * How a horizontal drag is shared with the platform back gesture.
+ *
+ * - `edge-handoff`: a rightward drag that starts inside the native back-gesture
+ *   edge belongs to the system. Every page keeps the same meaning: edge swipe =
+ *   go back, in-page swipe = change sub-screen.
+ * - `boundary-handoff`: the pager claims all horizontal drags except the two
+ *   boundaries: first page's rightward drag and last page's leftward drag.
+ *   Only the first sub-screen is treated like the native back gesture.
+ */
+export type RootScenePagerGestureMode = 'edge-handoff' | 'boundary-handoff';
+
+export type RootSceneDragClaim = 'pending' | 'claim' | 'release';
+
+/**
+ * Resolution of one manual-activation frame: `pending` keeps waiting for a
+ * clearer direction, `claim` lets the pager take the touch, `release` fails the
+ * pager gesture so the parent/native gesture can own it.
+ */
+export function resolveRootSceneDragClaim({
+  gestureMode,
+  dx,
+  dy,
+  startX,
+  selected,
+  count,
+  backGestureEdge,
+}: {
+  gestureMode: RootScenePagerGestureMode;
+  dx: number;
+  dy: number;
+  startX: number;
+  selected: number;
+  count: number;
+  backGestureEdge: number;
+}): RootSceneDragClaim {
+  'worklet';
+  const absX = Math.abs(dx);
+  const absY = Math.abs(dy);
+  if (absX < 8 && absY < 8) {
+    return 'pending';
+  }
+  if (absX < absY * 1.15) {
+    return 'release';
+  }
+  const rightward = dx > 0;
+  if (gestureMode === 'edge-handoff') {
+    if (rightward && backGestureEdge > 0 && startX <= backGestureEdge) {
+      return 'release';
+    }
+    return 'claim';
+  }
+  if (rightward && selected <= 0) {
+    return 'release';
+  }
+  if (!rightward && selected >= count - 1) {
+    return 'release';
+  }
+  return 'claim';
+}
+
+export function validateRootSceneKeys(keys: readonly string[]) {
+  if (!keys.length || keys.some(key => !key || typeof key !== 'string')) {
+    throw new Error('RootScenePager requires non-empty page keys');
+  }
+  if (new Set(keys).size !== keys.length) {
+    throw new Error('RootScenePager requires unique page keys');
+  }
+  return JSON.stringify(keys);
+}
+
+export function createRootSceneMotion(
+  selected: number,
+  epoch = 0,
+): RootScenePagerMotion {
+  'worklet';
+  return {
+    phase: 'idle',
+    epoch,
+    selected,
+    target: selected,
+    startPosition: selected,
+    queued: null,
+  };
+}
+
+export function requestRootSceneTarget(
+  state: RootScenePagerMotion,
+  target: number,
+): RootScenePagerMotion {
+  'worklet';
+  if (state.phase === 'touch' || state.phase === 'drag') {
+    return { ...state, queued: target };
+  }
+  return {
+    ...state,
+    phase: 'snap',
+    epoch: state.epoch + 1,
+    target,
+    queued: null,
+  };
+}
+
+export function beginRootSceneTouch(
+  state: RootScenePagerMotion,
+  position: number,
+): RootScenePagerMotion {
+  'worklet';
+  return {
+    ...state,
+    phase: 'touch',
+    epoch: state.epoch + 1,
+    startPosition: position,
+    queued: null,
+  };
+}
+
+export function getRootSceneDragPosition(
+  start: number,
+  translationX: number,
+  width: number,
+  count: number,
+) {
+  'worklet';
+  if (!(width > 0) || !Number.isFinite(translationX)) {
+    return start;
+  }
+  const exact = Math.abs(start - Math.round(start)) < 0.0001;
+  const min = Math.max(0, exact ? Math.round(start) - 1 : Math.floor(start));
+  const max = Math.min(
+    count - 1,
+    exact ? Math.round(start) + 1 : Math.ceil(start),
+  );
+  return Math.max(min, Math.min(max, start - translationX / width));
+}
+
+export function resolveRootSceneRelease(
+  start: number,
+  position: number,
+  translationX: number,
+  velocityX: number,
+  count: number,
+) {
+  'worklet';
+  const exact = Math.abs(start - Math.round(start)) < 0.0001;
+  const fling = Math.abs(translationX) >= 12 && Math.abs(velocityX) >= 600;
+  let target: number;
+  if (exact) {
+    target = Math.round(start);
+    if (fling) {
+      target += velocityX < 0 ? 1 : -1;
+    } else if (Math.abs(position - start) >= 0.25) {
+      target += position > start ? 1 : -1;
+    }
+  } else {
+    target = fling
+      ? velocityX < 0
+        ? Math.ceil(start)
+        : Math.floor(start)
+      : Math.round(position);
+  }
+  return Math.max(0, Math.min(count - 1, target));
+}
+
+export function finishRootSceneTouch(
+  state: RootScenePagerMotion,
+  target: number,
+): RootScenePagerMotion {
+  'worklet';
+  return {
+    ...state,
+    phase: 'snap',
+    epoch: state.epoch + 1,
+    target: state.queued ?? target,
+    queued: null,
+  };
+}
+
+export function completeRootSceneMotion(
+  state: RootScenePagerMotion,
+  epoch: number,
+): RootScenePagerMotion {
+  'worklet';
+  if (state.epoch !== epoch || state.phase !== 'snap') {
+    return state;
+  }
+  return createRootSceneMotion(state.target, epoch);
+}
+
+/**
+ * Whether a settled page has to be echoed to the parent.
+ *
+ * It differs from the last settled key during a normal page change, and it also
+ * differs from the outstanding requested key when an interrupted snap returns
+ * to the page it started from: the header already committed to the request, so
+ * the settle has to repair the route even though the pager never left home.
+ */
+export function shouldPublishRootSceneSettled(
+  previousSettled: string,
+  requested: string,
+  settled: string,
+): boolean {
+  'worklet';
+  return previousSettled !== settled || requested !== settled;
+}
+
+/** Includes every page crossed by a direct command; no frame-by-frame JS. */
+export function getRootSceneVisibleRange(
+  position: number,
+  target: number,
+  count: number,
+): readonly [number, number] {
+  'worklet';
+  return [
+    Math.max(0, Math.floor(Math.min(position, target))),
+    Math.min(count - 1, Math.ceil(Math.max(position, target))),
+  ];
+}
