@@ -1868,7 +1868,6 @@
       "dataAnalysis": "Rabby 개선에 참여하기",
       "dataAnalysisDesc": "익명 사용 데이터를 공유하여 Rabby 개선에 도움을 주세요. 수집된 데이터는 사용자 또는 사용자의 계정과 연결되지 않습니다.",
       "bugReportChat": "채팅으로 피드백 보내기",
-      "features": "기능",
       "manageWallets": "지갑 관리"
     },
     "settings": {
@@ -3421,7 +3420,7 @@
       "title": "소액 전환"
     },
     "walletConnect": {
-      "screenTitle": "지갑 연결",
+      "screenTitle": "스캔하여 연결",
       "connectingToRabby": "Rabby에 연결 중",
       "pairingFailed": "WalletConnect 페어링에 실패했습니다.",
       "proposalNotReceived": "WalletConnect QR 코드가 만료되었을 수 있습니다. 새로 고친 후 다시 시도하세요.",

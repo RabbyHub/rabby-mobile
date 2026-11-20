@@ -474,6 +474,12 @@ const getStyles = createGetStyles2024(({ isLight, colors2024 }) => ({
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 20,
+    // Android's default font padding pushes the glyphs below the avatar's
+    // centre (QA: header title sits low); pin the line box instead.
+    lineHeight: 24,
+    includeFontPadding: false,
+    // Keep the Rounded Heavy weight from the 1388 sweep while keeping the
+    // pinned line box from the header centring fix.
     fontWeight: '800',
     flexWrap: 'nowrap',
   },
@@ -517,6 +523,7 @@ const getStyles = createGetStyles2024(({ isLight, colors2024 }) => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 16,
     lineHeight: 20,
+    includeFontPadding: false,
     fontWeight: '700',
     flexWrap: 'nowrap',
   },

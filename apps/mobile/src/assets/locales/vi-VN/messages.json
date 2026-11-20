@@ -1732,7 +1732,6 @@
       "dataAnalysis": "Giúp cải thiện Rabby",
       "dataAnalysisDesc": "Chia sẻ dữ liệu sử dụng ẩn danh để giúp cải thiện Rabby. Dữ liệu thu thập không được liên kết với bạn hoặc tài khoản của bạn.",
       "bugReportChat": "Gửi phản hồi qua trò chuyện",
-      "features": "Tính năng",
       "manageWallets": "Quản lý ví"
     },
     "settings": {
@@ -3538,7 +3537,7 @@
       "title": "Chuyển đổi số dư nhỏ"
     },
     "walletConnect": {
-      "screenTitle": "Kết nối ví",
+      "screenTitle": "Quét để kết nối",
       "connectingToRabby": "Đang kết nối với Rabby",
       "pairingFailed": "Ghép nối WalletConnect thất bại.",
       "proposalNotReceived": "Mã QR WalletConnect có thể đã hết hạn. Vui lòng làm mới và thử lại.",
