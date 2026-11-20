@@ -189,7 +189,22 @@ prepare_ios_build_artifacts() {
 prepare_ios_native_deps() {
   prepare_ios_ruby_bundle || return $?
 
-  turbo_prepare_cocoapods
+  turbo_prepare_cocoapods || return $?
+
+  # React Native writes its codegen output into ios/build/generated/ios during
+  # `pod install`. That directory is gitignored and turbo_prepare_cocoapods
+  # returns early on a cache hit, so a fresh checkout (or one whose cached Pods
+  # layer lost it) fails later with e.g.
+  #   error: "RCTAppDependencyProvider.h" ... no such file or directory
+  # Regenerate whenever the directory is missing or has no headers.
+  local generated_ios_dir="$project_dir/ios/build/generated/ios"
+  if [ ! -d "$generated_ios_dir" ] ||
+    [ -z "$(find "$generated_ios_dir" -name '*.h' -maxdepth 3 2>/dev/null | head -1)" ]; then
+    echo '[deploy-ios-adhoc] ios codegen output missing; re-running pod install' >&2
+    # Bypass the Pods cache: dropping the architecture stamp is not enough,
+    # because the restore path brings its own stamp back and reports a hit.
+    turbo_reinstall_cocoapods || return $?
+  fi
 }
 
 # Sign-only local build: reuse the feature-test artifact preparation, then
