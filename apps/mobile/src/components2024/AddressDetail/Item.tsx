@@ -20,6 +20,10 @@ interface Props {
   children?: React.ReactNode;
   style?: StyleProp<ViewStyle>;
   labelStyle?: StyleProp<TextStyle>;
+  /** Cap the label at N lines with a tail ellipsis (long locales). */
+  labelNumberOfLines?: number;
+  /** Let the value side take the remaining width instead of hugging content. */
+  valueGrow?: boolean;
 }
 
 export const Item: React.FC<Props> = ({
@@ -30,6 +34,8 @@ export const Item: React.FC<Props> = ({
   showArrow,
   style,
   labelStyle,
+  labelNumberOfLines,
+  valueGrow,
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const Component = (
@@ -43,17 +49,28 @@ export const Item: React.FC<Props> = ({
       onPress={onPress}>
       {children || (
         <>
-          <Text style={StyleSheet.flatten([styles.labelText, labelStyle])}>
+          <Text
+            numberOfLines={labelNumberOfLines}
+            style={StyleSheet.flatten([styles.labelText, labelStyle])}>
             {label}
           </Text>
-          <View style={styles.valueView}>
+          <View
+            style={[styles.valueView, valueGrow ? styles.valueViewGrow : null]}>
             {value && typeof value === 'string' ? (
-              <Text style={styles.valueText}>{value}</Text>
+              <Text
+                style={styles.valueText}
+                numberOfLines={2}
+                ellipsizeMode="tail">
+                {value}
+              </Text>
             ) : (
               value
             )}
             {showArrow && (
               <ArrowSVG
+                // The arrow is layout, not content: keep it full-size and let
+                // the label/value side absorb the width instead.
+                style={styles.arrow}
                 color={colors2024['neutral-foot']}
                 width={16}
                 height={16}
@@ -83,6 +100,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
     gap: 6,
   },
+  valueViewGrow: {
+    flexGrow: 1,
+    justifyContent: 'flex-end',
+  },
   labelText: {
     fontSize: 16,
     fontWeight: '700',
@@ -100,5 +121,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 20,
     flexShrink: 1,
     textAlign: 'right',
+  },
+  arrow: {
+    flexShrink: 0,
   },
 }));
