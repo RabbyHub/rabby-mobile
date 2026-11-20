@@ -2029,7 +2029,6 @@
       "dataAnalysis": "協助改善 Rabby",
       "dataAnalysisDesc": "分享匿名使用資料以協助改善 Rabby。收集的資料不會與你或你的帳戶關聯。",
       "bugReportChat": "透過聊天分享回饋",
-      "features": "功能",
       "manageWallets": "管理錢包"
     },
     "settings": {
@@ -3593,7 +3592,7 @@
       "title": "兌換零散資產"
     },
     "walletConnect": {
-      "screenTitle": "連接錢包",
+      "screenTitle": "掃碼連接",
       "connectingToRabby": "正在連接到 Rabby",
       "pairingFailed": "WalletConnect 配對失敗。",
       "proposalNotReceived": "WalletConnect 二維碼可能已失效，請重新整理後再試一次。",

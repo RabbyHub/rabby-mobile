@@ -50,6 +50,7 @@ permissions:
 
 env:
   EXECUTION_ENVIRONMENT: ${{ inputs.execution_environment || 'mobile-local' }}
+  RABBY_MOBILE_POD_USE_CACHE: 'true'
 
 # Independent of Feature Test/release; never cancel their builds or delivery.
 concurrency:
@@ -186,6 +187,13 @@ jobs:
         env:
           BUILD_XCODE: ${{ inputs.build_xcode || '27.1' }}
         run: node scripts/ios-startup-smoke/toolchain.mjs "$BUILD_XCODE" --build | tee "$EVIDENCE_ROOT/build-platform.json"
+      - name: Ensure ccache
+        env:
+          RABBY_MOBILE_BUILD_BUCKET: ${{ secrets.RABBY_MOBILE_BUILD_BUCKET }}
+        run: |
+          # Managed ccache: uses a local binary when present, otherwise installs
+          # the pinned bundle published under s3://<bucket>/_private/toolchains/ccache.
+          bash apps/mobile/scripts/ci/ensure-ccache.sh
       - name: Build one unsigned Regression Simulator app
         id: native_build
         env:

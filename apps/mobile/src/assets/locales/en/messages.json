@@ -1444,7 +1444,7 @@
       "connectWallet": "Connect Wallet"
     },
     "walletConnect": {
-      "screenTitle": "Connect Wallet",
+      "screenTitle": "Scan to Connect",
       "connectingToRabby": "Connecting to Rabby",
       "pairingFailed": "WalletConnect pairing failed.",
       "proposalNotReceived": "WalletConnect QR code may have expired. Please refresh it and try again.",
@@ -1990,7 +1990,6 @@
       "dataAnalysis": "Help improve Rabby",
       "dataAnalysisDesc": "Share anonymous usage data to help improve Rabby. Collected data is not associated with you or your account.",
       "bugReportChat": "Share Feedback via Chat",
-      "features": "Features",
       "manageWallets": "Manage Wallets"
     },
     "settingModal": {

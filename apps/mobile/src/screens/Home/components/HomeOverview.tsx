@@ -83,6 +83,11 @@ import {
   ITEM_GRID_GAP,
   ITEM_LAYOUT_PADDING_HORIZONTAL,
 } from '@/constant/home';
+import {
+  HOME_GESTURE_AXIS,
+  beginHomeGesture,
+  resolveHomeGestureAxis,
+} from '@/screens/Home/gesture/homeGestureAuthority';
 import { perfEvents } from '@/core/utils/perf';
 import { beginAssetDataLoadDiagnostic } from '@/core/utils/assetDataLoadDiagnostics';
 import {
@@ -140,7 +145,6 @@ import { useCurrentTabScrollY } from 'react-native-collapsible-tab-view';
 import type { ScrollHandlerProps } from '@/components/customized/react-native-collapsible-tab-view/hooks';
 import { triggerImpact } from '@/utils/common';
 import type { WorkletFunction } from 'react-native-reanimated/lib/typescript/commonTypes';
-import { IS_ANDROID } from '@/core/native/utils';
 import {
   HOME_TOP_HEADER_SIZES,
   SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING,
@@ -397,15 +401,59 @@ const usePulldownRefreshGesture = <T extends ScrollView | RNGHScrollView>({
       .shouldCancelWhenOutside(false)
       .activeOffsetY([-homeGestureConfs.activeY, homeGestureConfs.activeY])
       .maxPointers(1)
+      // Share the Home-wide verdict: a horizontal drag belongs to the pager,
+      // never to the pull-to-refresh / drawer-pull pan.
+      .onTouchesDown(event => {
+        'worklet';
+        const touch = event.allTouches[0];
+        if (touch) {
+          beginHomeGesture(touch.absoluteX, touch.absoluteY);
+        }
+      })
+      .onTouchesMove((event, stateManager) => {
+        'worklet';
+        const touch = event.allTouches[0];
+        if (!touch) {
+          stateManager.fail();
+          return;
+        }
+        if (
+          resolveHomeGestureAxis(touch.absoluteX, touch.absoluteY) ===
+          HOME_GESTURE_AXIS.HORIZONTAL
+        ) {
+          stateManager.fail();
+        }
+      })
       .onStart(() => {
         startValues.value.startedAtBottom = getIsAtBottom(scrollY.value);
         startValues.value.startedAtTop = scrollY.value <= 5;
+        // Pin the first floor to its very end once, before the drawer starts
+        // moving, so the content that stays visible above the drawer is always
+        // the true end of the list. This used to be re-issued on every
+        // `onUpdate` frame (animated, Android only), which kept a native
+        // smooth scroll running on its own timeline next to the finger-driven
+        // translate: the list kept gliding while dragging back, then snapped
+        // in line once the finger stopped.
+        if (startValues.value.startedAtBottom) {
+          scrollToEnd(true, false);
+        }
       })
       .onUpdate(event => {
         panUp: {
           if (startValues.value.startedAtBottom && event.translationY < 0) {
             translateY.value = event.translationY;
             scrollableStatus.value = SCROLLABLE_STATUS.LOCKED;
+            // Keep the first floor frozen at its end while the drawer owns the
+            // drag. If the native scroll view manages to move the offset (an
+            // edge effect, a leftover fling, the few px before this pan
+            // activates), the content would slide under the drawer-anchored
+            // overlay while the finger keeps translating the drawer, so the
+            // two layers drift by a random amount. Snap back instantly and
+            // only when it actually drifted: no animation is started, nothing
+            // runs when the offset is already stable.
+            if (!getIsAtBottom(scrollY.value)) {
+              scrollToEnd(true, false);
+            }
           } else {
             translateY.value = 0;
             scrollableStatus.value = SCROLLABLE_STATUS.UNLOCKED;
@@ -416,9 +464,6 @@ const usePulldownRefreshGesture = <T extends ScrollView | RNGHScrollView>({
             hasOverThreshold() &&
             event.translationY < 0
           ) {
-            if (IS_ANDROID) {
-              scrollToEnd(true, true);
-            }
             !startValues.value.hasImpactOnPandown && runOnJS(triggerImpact)();
             startValues.value.hasImpactOnPandown = true;
           }
@@ -971,9 +1016,9 @@ export const HomeOverview = React.memo(() => {
           icon: RcIconPerps,
         },
         {
-          key: MultiHomeFeatTitle.MemeCoin,
-          title: t('page.home.services.meme'),
-          icon: RcIconMemeCoinCC,
+          key: MultiHomeFeatTitle.Lending,
+          title: t('page.home.services.lending'),
+          icon: RcIconLending,
         },
         {
           key: MultiHomeFeatTitle.GasAccount,
@@ -1014,9 +1059,9 @@ export const HomeOverview = React.memo(() => {
           icon: RcIconConvertDustCC,
         },
         {
-          key: MultiHomeFeatTitle.Lending,
-          title: t('page.home.services.lending'),
-          icon: RcIconLending,
+          key: MultiHomeFeatTitle.MemeCoin,
+          title: t('page.home.services.meme'),
+          icon: RcIconMemeCoinCC,
         },
       ].filter(Boolean) as {
         key: MultiHomeFeatTitle;
