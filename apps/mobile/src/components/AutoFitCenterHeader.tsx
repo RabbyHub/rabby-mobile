@@ -39,9 +39,16 @@ const TITLE_AREA_HORIZONTAL_MARGIN = 8;
 export const AutoFitCenterHeader = ({
   title,
   titleKey,
+  titleNode,
   textStylesByLanguage,
 }: {
   title: string;
+  /**
+   * Optional rich title content (e.g. the history header's title + account
+   * row). When present it replaces the auto-fit `Text`, so callers keep the
+   * shared centred row instead of re-implementing the slots.
+   */
+  titleNode?: React.ReactNode;
   /** i18n key of `title`; drives the English narrow-width typography ladder. */
   titleKey?: string;
   /** Exact language tag -> typography override; decided by the screen. */
@@ -74,12 +81,14 @@ export const AutoFitCenterHeader = ({
           />
         </View>
         <View style={styles.titleArea}>
-          <AutoFitHeaderTitle
-            text={title}
-            textStyle={styles.title}
-            textStylesByLanguage={textStylesByLanguage}
-            languageStyle={languageStyle}
-          />
+          {titleNode ?? (
+            <AutoFitHeaderTitle
+              text={title}
+              textStyle={styles.title}
+              textStylesByLanguage={textStylesByLanguage}
+              languageStyle={languageStyle}
+            />
+          )}
         </View>
         {/* Equal trailing slot keeps the title centred on the screen. */}
         <View style={styles.rightSlot} />
