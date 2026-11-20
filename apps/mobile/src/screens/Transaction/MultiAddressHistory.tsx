@@ -25,6 +25,7 @@ import {
   useInterval,
   useMemoizedFn,
   useRequest,
+  useUpdateEffect,
 } from 'ahooks';
 import PQueue from 'p-queue';
 import { last, orderBy, debounce } from 'lodash';
@@ -101,7 +102,7 @@ function HistoryContent({
   const dbFetchLoadingRef = useRef<boolean>(false);
   const hasMoreMap = useRef<Record<string, boolean>>({});
   const [isShowAll, setIsShowAll] = useState(false);
-  const { styles } = useTheme2024({ getStyle });
+  const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const [dbData, setDbData] = useState<HistoryDisplayItem[]>([]);
   const {
     isSceneUsingAllAccounts,
@@ -478,7 +479,9 @@ function HistoryContent({
     },
   });
 
-  useEffect(() => {
+  // Account changes only: useInfiniteScroll already loads on mount, and the
+  // API path sets isReady before this would first run.
+  useUpdateEffect(() => {
     if (isReady.current) {
       if (!isNeedFetchFromApi) {
         setFirstFetchDone(false);
@@ -491,10 +494,14 @@ function HistoryContent({
       }
       historyListRef.current?.scrollToTop();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sceneCurrentAccountDepKey, isSceneUsingAllAccounts]);
 
   const batchFetchDataFromDbUpsert = useMemoizedFn(async () => {
+    // An API-backed list shows no DB rows, and reloading it here would resume
+    // from its paging cursor and replace the list with the next page.
+    if (isNeedFetchFromApi) {
+      return;
+    }
     dbLastCursorRef.current = null;
     reloadAsync();
   });
@@ -734,6 +741,10 @@ function HistoryContent({
           refreshLoading={isNeedFetchFromApi && loading}
           isForMultipleAddress={isForMultipleAddress}
           account={isSceneUsingAllAccounts ? null : finalSceneCurrentAccount}
+          stickyDateBackgroundColor={makeTxPageBackgroundColors({
+            isLight,
+            colors2024,
+          })}
           noMoreText={
             noMore
               ? isNeedFetchFromApi
