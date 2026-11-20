@@ -1,5 +1,4 @@
 import {
-  LayoutChangeEvent,
   PixelRatio,
   useWindowDimensions,
   View,
@@ -208,6 +207,7 @@ const indicatorStyles = createGetStyles2024(
           width: indicatorWidth,
           height: indicatorHeight,
           borderRadius: 12,
+          borderCurve: 'continuous',
           backgroundColor: colors2024['neutral-line'],
           zIndex: 98,
         };
@@ -224,6 +224,7 @@ const indicatorStyles = createGetStyles2024(
           width: indicatorWidth,
           height: indicatorHeight,
           borderRadius: 12,
+          borderCurve: 'continuous',
           backgroundColor: colors2024['neutral-line'],
           zIndex: 98,
         };
@@ -247,6 +248,7 @@ const indicatorStyles = createGetStyles2024(
         borderRadius: 12,
         top: indicatorMarginTop + indicatorHitPaddingY,
         zIndex: 99,
+        borderCurve: 'continuous',
       },
       slotClip: {
         position: 'absolute',
@@ -494,38 +496,16 @@ function AssetsTabBar({
 }) {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const { width: winWidth } = useWindowDimensions();
-  /**
-   * Width of the strip's own container.
-   *
-   * The container is anchored with `left: 0`/`right: 0`, so it spans the whole
-   * window. On the foldable outer screen `Dimensions` publishes the reduced
-   * content width (window minus the system column), so using `winWidth` as the
-   * ride-in distance left the leading slice of the row parked inside the
-   * system column at rest. Measure the real width instead and let the strip
-   * ride fully off-screen.
-   */
-  const stripWidthSV = useSharedValue(0);
-  const handleStripLayout = useCallback(
-    (event: LayoutChangeEvent) => {
-      const nextWidth = event.nativeEvent.layout.width;
-      if (nextWidth > 0 && Math.abs(nextWidth - stripWidthSV.value) > 0.5) {
-        stripWidthSV.value = nextWidth;
-      }
-    },
-    [stripWidthSV],
-  );
-
   // The strip belongs to the assets pages: it rides in from the right at the
   // same rate as the pages, so the tab row and the list below look like one
   // sheet instead of the labels fading in over the overview.
   const stylez = useAnimatedStyle(() => {
     const progress = clamp(indexDecimal.value, 0, 1);
-    const stripWidth = stripWidthSV.value > 0 ? stripWidthSV.value : winWidth;
     return {
       transform: [
         {
           translateX:
-            Math.round((1 - progress) * stripWidth * STRIP_PIXEL) / STRIP_PIXEL,
+            Math.round((1 - progress) * winWidth * STRIP_PIXEL) / STRIP_PIXEL,
         },
       ],
       // Fallback version: the row still rides in 1:1 with the pager, and the
@@ -549,7 +529,6 @@ function AssetsTabBar({
   return (
     <Animated.View
       // pointerEvents={focusedTab === HomeTabName.overview ? 'none' : 'auto'}
-      onLayout={handleStripLayout}
       style={[styles.portfolioContainer, stylez, tabbarContainerStyle]}>
       {/* <CustomLabel.Slider indexDecimal={indexDecimal} /> */}
       {AssetsTabLabels.map(({ index, label }) => {
