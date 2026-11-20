@@ -1,6 +1,11 @@
 import React, { useMemo } from 'react';
-import { Platform, View, StatusBar, TouchableOpacity } from 'react-native';
-import { getDimensionsSnapshot } from '@/core/dimensions';
+import {
+  Platform,
+  View,
+  Dimensions,
+  StatusBar,
+  TouchableOpacity,
+} from 'react-native';
 import { useTheme2024, useThemeColors, useThemeStyles } from '@/hooks/theme';
 import { Button } from '@/components2024/Button';
 import { useTranslation } from 'react-i18next';
@@ -43,7 +48,7 @@ export function getScrollableSectionHeight(options?: {
   const { bottomAreaHeight = A.bottomAreaHeight } = options || {};
 
   return (
-    getDimensionsSnapshot('window').height -
+    Dimensions.get('window').height -
     (StatusBar.currentHeight || 0) -
     A.tabbarHeight -
     bottomAreaHeight -

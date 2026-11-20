@@ -23,7 +23,6 @@ let mockThemeColor = '#123456';
 // Ticker assertions cover the caller's memoized prop boundary, not native
 // Reanimated updates or render/commit performance.
 jest.mock('react-native-reanimated', () => ({
-  makeMutable: (value: unknown) => ({ value }),
   __esModule: true,
   default: { View: require('react-native').View },
   Extrapolate: { CLAMP: 'clamp' },

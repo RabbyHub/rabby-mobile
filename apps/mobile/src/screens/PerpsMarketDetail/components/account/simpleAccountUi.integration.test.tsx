@@ -14,6 +14,7 @@ import {
 import {
   Animated,
   BackHandler,
+  Dimensions,
   Keyboard,
   Platform,
   StyleSheet,
@@ -21,7 +22,6 @@ import {
   View,
   type KeyboardEvent,
 } from 'react-native';
-import { getDimensionsSnapshot } from '@/core/dimensions';
 import {
   BottomSheetModalProvider,
   useBottomSheetModalInternal,
@@ -1118,14 +1118,14 @@ it('corrects the iOS keyboard frame without moving the backdrop or the exiting c
         <View />
       </SimplePositionTpSlModal>,
     );
-  const screenHeight = getDimensionsSnapshot('window').height;
+  const screenHeight = Dimensions.get('window').height;
   const frame = (screenY: number): KeyboardEvent => ({
     duration: 0,
     easing: 'keyboard',
     endCoordinates: {
       screenX: 0,
       screenY,
-      width: getDimensionsSnapshot('window').width,
+      width: Dimensions.get('window').width,
       height: screenHeight - screenY,
     },
   });

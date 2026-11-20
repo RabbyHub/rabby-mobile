@@ -2,6 +2,7 @@ import { AppColorsVariants } from '@/constant/theme';
 import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
+  Dimensions,
   Keyboard,
   KeyboardAvoidingView,
   ScrollView,
@@ -10,7 +11,6 @@ import {
   View,
   ViewStyle,
 } from 'react-native';
-import { getDimensionsSnapshot } from '@/core/dimensions';
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { Button, ButtonProps } from '../Button';
 import { FooterButtonGroup } from '../FooterButtonGroup';
@@ -21,7 +21,6 @@ import {
   ReactNativeViewAsMap,
 } from '@/hooks/common/useReactNativeViews';
 import AuthButton, { IAuthButtonProps } from '../AuthButton';
-import { useSystemColumnInset } from '@/components/SafeWindowFrame/backdrop';
 
 const getStyle = createGetStyles2024(ctx =>
   StyleSheet.create({
@@ -123,15 +122,12 @@ export const FooterButtonScreenContainer = <
     ReactNativeViewAsMap[T]
   >) => {
   const { safeOffHeader, androidOnlyBottomOffset } = useSafeSizes();
-  const columnInset = useSystemColumnInset();
   const { styles } = useTheme2024({ getStyle });
   const keyboardAvoiding = _as === 'KeyboardAvoidingView';
   const [keyboardVisible, setKeyboardVisible] = useState(false);
 
   useEffect(() => {
-    if (!keyboardAvoiding) {
-      return;
-    }
+    if (!keyboardAvoiding) return;
 
     const showSubscription = Keyboard.addListener('keyboardDidShow', () => {
       setKeyboardVisible(true);
@@ -148,7 +144,7 @@ export const FooterButtonScreenContainer = <
 
   const { winHeight, bottomOffset, headerOffset } = useMemo(() => {
     return {
-      winHeight: getDimensionsSnapshot('screen').height,
+      winHeight: Dimensions.get('screen').height,
       bottomOffset: androidOnlyBottomOffset + footerBottomOffset,
       headerOffset: noHeader ? 0 : safeOffHeader,
     };
@@ -171,8 +167,6 @@ export const FooterButtonScreenContainer = <
         style={[
           styles.main,
           keyboardVisible && styles.keyboardAvoidingMain,
-          columnInset.left > 0 && { paddingLeft: columnInset.left },
-          columnInset.right > 0 && { paddingRight: columnInset.right },
           {
             maxHeight:
               winHeight - headerOffset - (footerContainerHeight + bottomOffset),
@@ -186,10 +180,6 @@ export const FooterButtonScreenContainer = <
           styles.footerContainer,
           keyboardVisible && styles.keyboardAvoidingFooter,
           footerContainerStyle,
-          {
-            paddingLeft: 20 + columnInset.left,
-            paddingRight: 20 + columnInset.right,
-          },
           keyboardVisible
             ? { height: footerContainerHeight, marginBottom: bottomOffset }
             : { bottom: bottomOffset, height: footerContainerHeight },

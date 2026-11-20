@@ -1,12 +1,12 @@
 import {
   Alert,
+  Dimensions,
   FlatList,
   Platform,
   ScrollView,
   TouchableOpacity,
   View,
 } from 'react-native';
-import { getDimensionsSnapshot } from '@/core/dimensions';
 import { useMemo, useState } from 'react';
 
 import { useTheme2024 } from '@/hooks/theme';
@@ -138,14 +138,10 @@ function DevORMEntities() {
       <View
         style={[styles.propertyDesc, { marginVertical: 12, flexWrap: 'wrap' }]}>
         {Object.entries(ALL_ORM_ENTITIES).map(([entityName, entityCls]) => {
-          if ('stmSql' in entityCls === false) {
-            return null;
-          }
+          if ('stmSql' in entityCls === false) return null;
 
           const stmSql = (entityCls as any).stmSql;
-          if (!stmSql) {
-            return null;
-          }
+          if (!stmSql) return null;
 
           return (
             <View
@@ -751,9 +747,7 @@ function DevDataAccount() {
           height={48}
           containerStyle={[styles.rowWrapper, { marginTop: 12 }]}
           onPress={() => {
-            if (!currentAccount) {
-              return;
-            }
+            if (!currentAccount) return;
 
             accountEvents.emit('ACCOUNT_ADDED', {
               accounts: [currentAccount],
@@ -823,7 +817,7 @@ function DevDataSQLite() {
 }
 
 const getStyles = createGetStyles2024(ctx => {
-  const CONTENT_W = getDimensionsSnapshot('screen').width - 24;
+  const CONTENT_W = Dimensions.get('screen').width - 24;
   return {
     screen: {
       backgroundColor: 'black',

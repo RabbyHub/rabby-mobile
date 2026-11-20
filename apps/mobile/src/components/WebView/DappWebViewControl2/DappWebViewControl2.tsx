@@ -6,8 +6,14 @@ import React, {
   useState,
 } from 'react';
 import type { Ref } from 'react';
-import { StyleSheet, View, StyleProp, ViewStyle, Platform } from 'react-native';
-import { getDimensionsSnapshot } from '@/core/dimensions';
+import {
+  StyleSheet,
+  View,
+  Dimensions,
+  StyleProp,
+  ViewStyle,
+  Platform,
+} from 'react-native';
 import WebView from 'react-native-webview';
 
 import { stringUtils, urlUtils } from '@rabby-wallet/base-utils';
@@ -156,7 +162,7 @@ const DappWebViewControl2 = ({
   headerNode,
   navControlContent,
   webviewProps,
-  webviewContainerMaxHeight = getDimensionsSnapshot('screen').height,
+  webviewContainerMaxHeight = Dimensions.get('screen').height,
   webviewNode,
   style,
 }: DappWebViewControlProps & { ref?: Ref<DappWebViewControl2Type> }) => {
@@ -445,7 +451,7 @@ const getStyles = createGetStyles2024(ctx =>
       justifyContent: 'space-between',
       alignItems: 'center',
       width: '100%',
-      maxWidth: getDimensionsSnapshot('window').width,
+      maxWidth: Dimensions.get('window').width,
       height: ScreenLayouts2.dappWebViewControlHeaderHeight,
       paddingHorizontal: 20,
       paddingVertical: 0,
@@ -502,7 +508,7 @@ const getStyles = createGetStyles2024(ctx =>
       flex: 1,
       height: '100%',
       // maxHeight:
-      //   getDimensionsSnapshot('window').height -
+      //   Dimensions.get('window').height -
       //   ScreenLayouts2.dappWebViewControlHeaderHeight -
       //   ScreenLayouts2.dappWebViewControlNavHeight,
       width: '100%',

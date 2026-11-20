@@ -14,8 +14,8 @@ import {
   Easing as RNEasing,
   TouchableOpacity,
   StyleSheet,
+  Dimensions,
 } from 'react-native';
-import { getDimensionsSnapshot } from '@/core/dimensions';
 import { atom, useAtom } from 'jotai';
 
 import LottieView from 'lottie-react-native';
@@ -221,7 +221,7 @@ const showAndPlayAnimationOnJs = () => {
 };
 
 function getAnimationLayoutDefaultWidth() {
-  return getDimensionsSnapshot('window').width - 16 * 2;
+  return Dimensions.get('window').width - 16 * 2;
 }
 
 export type HomeGuidanceMultipleTabs = {
@@ -269,9 +269,7 @@ export const HomeGuidanceMultipleTabs = ({
         onFinished,
       } = options || {};
       if (play) {
-        if (__resetValueFirst__) {
-          gestureAnimValue.setValue(0);
-        }
+        if (__resetValueFirst__) gestureAnimValue.setValue(0);
 
         const anim = RNAnimated.timing(gestureAnimValue, {
           toValue: 1,
@@ -311,9 +309,7 @@ export const HomeGuidanceMultipleTabs = ({
       return svSecondaryIndicatorAbsLayout.value;
     },
     (secondaryIndicatorAbsLayout, previousIndicatorWrapperLayout) => {
-      if (!secondaryIndicatorAbsLayout) {
-        return;
-      }
+      if (!secondaryIndicatorAbsLayout) return;
 
       const pageY = secondaryIndicatorAbsLayout
         ? secondaryIndicatorAbsLayout.pageY
@@ -332,9 +328,7 @@ export const HomeGuidanceMultipleTabs = ({
     svSecondaryIndicatorAbsLayout,
   );
   const beforeContentNode = useMemo(() => {
-    if (!secondaryIndicatorAbsLayout) {
-      return null;
-    }
+    if (!secondaryIndicatorAbsLayout) return null;
 
     if (typeof prop_beforeContentNode === 'function') {
       return prop_beforeContentNode({
@@ -377,12 +371,8 @@ export const HomeGuidanceMultipleTabs = ({
     content: useAnimatedStyle(reanimatedStyles.content),
   };
 
-  if (!secondaryIndicatorAbsLayout) {
-    return null;
-  }
-  if (IS_IOS && !debouncedVisible) {
-    return null;
-  }
+  if (!secondaryIndicatorAbsLayout) return null;
+  if (IS_IOS && !debouncedVisible) return null;
 
   return (
     // <GestureDetector gesture={panRightToLeftGesture} />
@@ -569,7 +559,7 @@ function DefaultBeforeNode({
               height: secondaryIndicatorAbsLayout.height,
               width: Math.max(
                 secondaryIndicatorAbsLayout.width ?? 0,
-                getHomeTabIndicatorWidth(getDimensionsSnapshot('window').width),
+                getHomeTabIndicatorWidth(Dimensions.get('window').width),
               ),
               borderRadius: 12,
               borderCurve: 'continuous',

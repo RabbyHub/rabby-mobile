@@ -1,4 +1,3 @@
-import { withScreenPropsInjection } from '@/devtools/screenRegistry/screenInjection';
 import { RoundedFontStyles } from '@/core/utils/fonts';
 import 'react-native-gesture-handler';
 import { makeHeadersPresets, RootNames } from '@/constant/layout';
@@ -35,7 +34,7 @@ export default function HomeNonTabNavigator() {
       initialRouteName={RootNames.Search}>
       <HomeNonTabStack.Screen
         name={RootNames.Search}
-        component={withScreenPropsInjection(SearchScreen)}
+        component={SearchScreen}
         options={{
           title: 'Search',
           headerTitleStyle: {
@@ -50,7 +49,7 @@ export default function HomeNonTabNavigator() {
       />
       <HomeNonTabStack.Screen
         name={RootNames.Market}
-        component={withScreenPropsInjection(MarketScreen)}
+        component={MarketScreen}
         options={mergeScreenOptions({
           title: t('page.home.services.market'),
           ...headerPresets.withBgCard1_2024,
@@ -67,7 +66,7 @@ export default function HomeNonTabNavigator() {
       />
       <HomeNonTabStack.Screen
         name={RootNames.Watchlist}
-        component={withScreenPropsInjection(WatchlistScreen)}
+        component={WatchlistScreen}
         options={mergeScreenOptions({
           title: t('page.home.services.watchlist'),
           ...headerPresets.withBgCard1_2024,
@@ -86,7 +85,7 @@ export default function HomeNonTabNavigator() {
       />
       <HomeNonTabStack.Screen
         name={RootNames.Meme}
-        component={withScreenPropsInjection(MemeScreen)}
+        component={MemeScreen}
         options={mergeScreenOptions({
           title: t('page.home.services.meme'),
           ...headerPresets.withBgCard1_2024,

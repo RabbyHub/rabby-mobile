@@ -16,9 +16,9 @@ import {
   TouchableOpacity,
   StyleSheet,
   Platform,
+  Dimensions,
   Alert,
 } from 'react-native';
-import { getDimensionsSnapshot } from '@/core/dimensions';
 import type {
   BottomSheetBackdropProps,
   BottomSheetFlatListMethods,
@@ -357,6 +357,10 @@ export interface TokenSelectorProps<
 }
 
 const isAndroid = Platform.OS === 'android';
+
+const screenHeight = Dimensions.get('window').height;
+const modalHeight = screenHeight - 120;
+const snapPoints = [modalHeight];
 
 export function useTokenSelectorModalVisible(options?: {
   onVisibleChanged?: (visible: boolean) => void;
@@ -1355,7 +1359,7 @@ const TokenSelectorSheetModalContent = ({
   return (
     <AppBottomSheetModal
       ref={tokenSelectorModalRef}
-      snapPoints={[getDimensionsSnapshot('window').height - 120]}
+      snapPoints={snapPoints}
       enableContentPanningGesture
       enableDismissOnClose={false}
       onDismiss={() => {

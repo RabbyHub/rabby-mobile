@@ -1,11 +1,11 @@
 import {
+  Dimensions,
   PixelRatio,
   useWindowDimensions,
   View,
   Pressable,
   ViewStyle,
 } from 'react-native';
-import { getDimensionsSnapshot } from '@/core/dimensions';
 import { MaterialTabBar } from 'react-native-collapsible-tab-view';
 
 import React, { useCallback, useEffect, useRef } from 'react';
@@ -207,7 +207,6 @@ const indicatorStyles = createGetStyles2024(
           width: indicatorWidth,
           height: indicatorHeight,
           borderRadius: 12,
-          borderCurve: 'continuous',
           backgroundColor: colors2024['neutral-line'],
           zIndex: 98,
         };
@@ -224,7 +223,6 @@ const indicatorStyles = createGetStyles2024(
           width: indicatorWidth,
           height: indicatorHeight,
           borderRadius: 12,
-          borderCurve: 'continuous',
           backgroundColor: colors2024['neutral-line'],
           zIndex: 98,
         };
@@ -232,7 +230,7 @@ const indicatorStyles = createGetStyles2024(
     },
   },
   ({ isLight, colors2024 }) => {
-    const winWidth = getDimensionsSnapshot('window').width;
+    const winWidth = Dimensions.get('window').width;
     const indicatorWidth = getHomeTabIndicatorWidth(winWidth);
     // The right segment covers the whole right bar: half of it was dead before,
     // so tapping the right half of the grey bar did nothing.
@@ -248,7 +246,6 @@ const indicatorStyles = createGetStyles2024(
         borderRadius: 12,
         top: indicatorMarginTop + indicatorHitPaddingY,
         zIndex: 99,
-        borderCurve: 'continuous',
       },
       slotClip: {
         position: 'absolute',
@@ -496,6 +493,7 @@ function AssetsTabBar({
 }) {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const { width: winWidth } = useWindowDimensions();
+
   // The strip belongs to the assets pages: it rides in from the right at the
   // same rate as the pages, so the tab row and the list below look like one
   // sheet instead of the labels fading in over the overview.

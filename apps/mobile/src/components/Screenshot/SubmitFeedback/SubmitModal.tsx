@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
+  Dimensions,
   GestureResponderEvent,
   Image,
   Keyboard,
@@ -7,7 +8,6 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { getDimensionsSnapshot } from '@/core/dimensions';
 import { useTranslation } from 'react-i18next';
 
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
@@ -304,7 +304,7 @@ const SIZES = {
 //   return (imageWrapperW - editIconWrapperW) / 2;
 // }
 const getModalStyle = createGetStyles2024(({ isLight, colors2024 }) => {
-  const winLayout = getDimensionsSnapshot('window');
+  const winLayout = Dimensions.get('window');
   const modalWidth = winLayout.width - SIZES.MODAL_MASK_H_PADDING * 2;
 
   return {

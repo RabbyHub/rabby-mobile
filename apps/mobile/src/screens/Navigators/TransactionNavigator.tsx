@@ -1,17 +1,13 @@
-import { withScreenPropsInjection } from '@/devtools/screenRegistry/screenInjection';
 import { RoundedFontStyles } from '@/core/utils/fonts';
 import 'react-native-gesture-handler';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { IS_IOS } from '@/core/native/utils';
 
 import { createCustomNativeStackNavigator as createNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
 
 import { HeaderBackPressable, useStackScreenConfig } from '@/hooks/navigation';
-import { useCustomHeaderTop } from '@/hooks/useAppLayout';
-import { useSystemColumnInset } from '@/components/SafeWindowFrame/backdrop';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { isFoldableSideColumnPosture } from '@/core/utils/foldableDevice';
 import {
   RootNames,
   makeHeadersPresets,
@@ -94,19 +90,10 @@ function ConvertDustHeader({
   disableSwitch?: boolean;
 }) {
   const { styles } = useTheme2024({ getStyle: getConvertDustHeaderStyle });
-  const headerTop = useCustomHeaderTop();
-  const columnInset = useSystemColumnInset();
+  const { top } = useSafeAreaInsets();
 
   return (
-    <View
-      style={[
-        styles.convertDustHeaderOuter,
-        {
-          marginTop: headerTop,
-          paddingLeft: 12 + columnInset.left,
-          paddingRight: 20 + columnInset.right,
-        },
-      ]}>
+    <View style={[styles.convertDustHeaderOuter, { marginTop: top }]}>
       <View style={styles.convertDustHeaderInner}>
         <View style={styles.convertDustHeaderLeft}>
           <HeaderBackPressable style={styles.convertDustHeaderBackButton} />
@@ -120,25 +107,6 @@ function ConvertDustHeader({
           style={styles.convertDustHeaderAccountSwitcher}
         />
       </View>
-    </View>
-  );
-}
-
-function SingleAddressHistoryTitle({ children }: React.PropsWithChildren) {
-  const insets = useSafeAreaInsets();
-  const foldableOuter = isFoldableSideColumnPosture({
-    top: insets.top,
-    right: insets.right,
-  });
-
-  return (
-    <View
-      style={foldableOuter ? undefined : { transform: [{ translateX: -12 }] }}>
-      <ScreenHeaderAccountSwitcher
-        forScene="History"
-        titleText={children}
-        disableSwitch
-      />
     </View>
   );
 }
@@ -167,7 +135,7 @@ export default function TransactionNavigator() {
       })}>
       <TransactionStack.Screen
         name={RootNames.Send}
-        component={withScreenPropsInjection(RegressionSendScreen)}
+        component={RegressionSendScreen}
         options={mergeScreenOptions({
           title: 'Send',
           headerTitleStyle: {
@@ -179,7 +147,7 @@ export default function TransactionNavigator() {
       />
       <TransactionStack.Screen
         name={RootNames.MultiSend}
-        component={withScreenPropsInjection(RegressionMultiSendScreen)}
+        component={RegressionMultiSendScreen}
         options={mergeScreenOptions({
           title: 'Send',
           headerTitleStyle: {
@@ -191,7 +159,7 @@ export default function TransactionNavigator() {
       />
       <TransactionStack.Screen
         name={RootNames.SendNFT}
-        component={withScreenPropsInjection(SendNFTScreen)}
+        component={SendNFTScreen}
         options={mergeScreenOptions({
           title: 'Send',
           unstable_headerRightItems: IS_IOS
@@ -206,7 +174,7 @@ export default function TransactionNavigator() {
       />
       <TransactionStack.Screen
         name={RootNames.Receive}
-        component={withScreenPropsInjection(RegressionReceiveScreen)}
+        component={RegressionReceiveScreen}
         options={mergeScreenOptions({
           title: 'Receive',
           headerTitleStyle: {
@@ -218,7 +186,7 @@ export default function TransactionNavigator() {
       />
       <TransactionStack.Screen
         name={RootNames.MultiAddressHistory}
-        component={withScreenPropsInjection(MultiAddressHistory)}
+        component={MultiAddressHistory}
         options={{
           title: 'Transactions',
           headerTitle: ctx => {
@@ -239,7 +207,7 @@ export default function TransactionNavigator() {
       />
       <TransactionStack.Screen
         name={RootNames.LendingHistory}
-        component={withScreenPropsInjection(LendingHistory)}
+        component={LendingHistory}
         options={{
           title: 'Lending History',
           headerTintColor: colors['neutral-title-1'],
@@ -258,21 +226,23 @@ export default function TransactionNavigator() {
       />
       <TransactionStack.Screen
         name={RootNames.History}
-        component={withScreenPropsInjection(
-          MultiAddressHistory.ForSingleAddress,
-        )}
+        component={MultiAddressHistory.ForSingleAddress}
         options={{
           title: 'Transactions',
-          // The native back item is wider than the old JS header button, so
-          // UIKit lays this title container out ~12pt right of the screen
-          // centre (QA 1360). Pull the content back only on the native header;
-          // the Duo outer screen uses the shared JS replica header, where that
-          // correction would push the title left.
-          headerTitle: ctx => (
-            <SingleAddressHistoryTitle>
-              {ctx.children}
-            </SingleAddressHistoryTitle>
-          ),
+          headerTitle: ctx => {
+            // The native back item is wider than the old JS header button, so
+            // UIKit lays this title container out ~12pt right of the screen
+            // centre (QA 1360). Pull the content back.
+            return (
+              <View style={{ transform: [{ translateX: -12 }] }}>
+                <ScreenHeaderAccountSwitcher
+                  forScene="History"
+                  titleText={ctx.children}
+                  disableSwitch
+                />
+              </View>
+            );
+          },
           headerStyle: {
             backgroundColor: makeTxPageBackgroundColors({
               isLight,
@@ -283,7 +253,7 @@ export default function TransactionNavigator() {
       />
       <TransactionStack.Screen
         name={RootNames.HistoryDetail}
-        component={withScreenPropsInjection(HistoryDetailScreen)}
+        component={HistoryDetailScreen}
         options={mergeScreenOptions({
           title: '',
           headerTintColor: colors['neutral-title-1'],
@@ -301,7 +271,7 @@ export default function TransactionNavigator() {
       />
       <TransactionStack.Screen
         name={RootNames.BridgeDetail}
-        component={withScreenPropsInjection(BridgeDetailScreen)}
+        component={BridgeDetailScreen}
         options={mergeScreenOptions({
           title: '',
           headerTintColor: colors['neutral-title-1'],
@@ -314,7 +284,7 @@ export default function TransactionNavigator() {
       />
       <TransactionStack.Screen
         name={RootNames.HistoryLocalDetail}
-        component={withScreenPropsInjection(HistoryLocalDetailScreen)}
+        component={HistoryLocalDetailScreen}
         options={mergeScreenOptions({
           title: '',
           headerTintColor: colors['neutral-title-1'],
@@ -332,7 +302,7 @@ export default function TransactionNavigator() {
       />
       <TransactionStack.Screen
         name={RootNames.GnosisTransactionQueue}
-        component={withScreenPropsInjection(GnosisQueueScreen)}
+        component={GnosisQueueScreen}
         options={mergeScreenOptions({
           title: 'Queue',
           ...headerPresets.withBgCard2,
@@ -342,7 +312,7 @@ export default function TransactionNavigator() {
       {/* SwapBridgeScreen */}
       <TransactionStack.Screen
         name={RootNames.SwapBridge}
-        component={withScreenPropsInjection(RegressionSwapBridgeScreen)}
+        component={RegressionSwapBridgeScreen}
         options={mergeScreenOptions2024([
           {
             title: '',
@@ -353,7 +323,7 @@ export default function TransactionNavigator() {
 
       <TransactionStack.Screen
         name={RootNames.MultiSwapBridge}
-        component={withScreenPropsInjection(RegressionMultiSwapBridgeScreen)}
+        component={RegressionMultiSwapBridgeScreen}
         options={mergeScreenOptions2024([
           {
             title: '',
@@ -364,7 +334,7 @@ export default function TransactionNavigator() {
 
       <TransactionStack.Screen
         name={RootNames.Approvals}
-        component={withScreenPropsInjection(ApprovalsScreen)}
+        component={ApprovalsScreen}
         options={({ route }) =>
           mergeScreenOptions({
             title: t('page.approvals.title'),
@@ -386,7 +356,7 @@ export default function TransactionNavigator() {
 
       <TransactionStack.Screen
         name={RootNames.BatchRevoke}
-        component={withScreenPropsInjection(BatchRevokeScreen)}
+        component={BatchRevokeScreen}
         options={mergeScreenOptions({
           title: t('page.batchRevoke.title'),
           ...headerPresets.withBgCard2_2024,
@@ -396,7 +366,7 @@ export default function TransactionNavigator() {
 
       <TransactionStack.Screen
         name={RootNames.ConvertDust}
-        component={withScreenPropsInjection(ConvertDustScreen)}
+        component={ConvertDustScreen}
         options={({ route }) =>
           mergeScreenOptions2024([
             {
@@ -414,7 +384,7 @@ export default function TransactionNavigator() {
 
       <TransactionStack.Screen
         name={RootNames.MemeCoin}
-        component={withScreenPropsInjection(MemeCoinHomeScreen)}
+        component={MemeCoinHomeScreen}
         options={mergeScreenOptions2024([
           {
             title: t('page.home.services.meme'),
@@ -425,7 +395,7 @@ export default function TransactionNavigator() {
 
       <TransactionStack.Screen
         name={RootNames.MemeCoinBuy}
-        component={withScreenPropsInjection(MemeCoinBuyScreen)}
+        component={MemeCoinBuyScreen}
         options={mergeScreenOptions2024([
           {
             title: t('page.home.services.meme'),
@@ -436,7 +406,7 @@ export default function TransactionNavigator() {
 
       <TransactionStack.Screen
         name={RootNames.MemeCoinExecute}
-        component={withScreenPropsInjection(MemeCoinExecuteScreen)}
+        component={MemeCoinExecuteScreen}
         options={mergeScreenOptions2024([
           {
             title: t('page.home.services.meme'),
@@ -447,7 +417,7 @@ export default function TransactionNavigator() {
 
       <TransactionStack.Screen
         name={RootNames.GasAccount}
-        component={withScreenPropsInjection(GasAccountScreen)}
+        component={GasAccountScreen}
         options={mergeScreenOptions({
           title: 'Gas Deposit',
           ...headerPresets.withBgCard2_2024,
@@ -465,7 +435,7 @@ export default function TransactionNavigator() {
 
       <TransactionStack.Screen
         name={RootNames.Perps}
-        component={withScreenPropsInjection(PerpsOriginScreen)}
+        component={PerpsOriginScreen}
         options={mergeScreenOptions({
           headerShown: false,
           title: t('page.home.services.perps'),
@@ -484,7 +454,7 @@ export default function TransactionNavigator() {
 
       <TransactionStack.Screen
         name={RootNames.PerpsMarketDetail}
-        component={withScreenPropsInjection(PerpsMarketDetailScreen)}
+        component={PerpsMarketDetailScreen}
         options={({ route }) =>
           mergeScreenOptions({
             title: '',
@@ -504,7 +474,7 @@ export default function TransactionNavigator() {
 
       <TransactionStack.Screen
         name={RootNames.PerpsHistory}
-        component={withScreenPropsInjection(PerpsHistoryScreen)}
+        component={PerpsHistoryScreen}
         options={mergeScreenOptions({
           title: t('page.perpsHistory.title'),
           // ...headerPresets.withBgCard1_2024,
@@ -521,7 +491,7 @@ export default function TransactionNavigator() {
       />
       <TransactionStack.Screen
         name={RootNames.PerpsProHistory}
-        component={withScreenPropsInjection(PerpsProHistoryScreen)}
+        component={PerpsProHistoryScreen}
         options={mergeScreenOptions({
           title: t('page.perps.pro.history.title'),
           header: () => (
@@ -532,7 +502,7 @@ export default function TransactionNavigator() {
 
       <TransactionStack.Screen
         name={RootNames.PerpsSearch}
-        component={withScreenPropsInjection(PerpsSearchScreen)}
+        component={PerpsSearchScreen}
         options={mergeScreenOptions({
           headerShown: false,
           headerStyle: {
@@ -543,7 +513,7 @@ export default function TransactionNavigator() {
 
       <TransactionStack.Screen
         name={RootNames.Lending}
-        component={withScreenPropsInjection(LendingScreen)}
+        component={LendingScreen}
         options={mergeScreenOptions({
           title: '',
           ...headerPresets.withBgCard1_2024,
@@ -561,7 +531,7 @@ export default function TransactionNavigator() {
       />
       <TransactionStack.Screen
         name={RootNames.Prediction}
-        component={withScreenPropsInjection(PredictionComponent)}
+        component={PredictionComponent}
         options={mergeScreenOptions({
           headerStyle: {
             backgroundColor: colors2024['neutral-bg-1'],

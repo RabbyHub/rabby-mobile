@@ -23,7 +23,6 @@ import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { useTheme2024 } from '@/hooks/theme';
 import { useHandleBackPressClosable } from '@/hooks/useAppGesture';
 import { useSafeSizes } from '@/hooks/useAppLayout';
-import { useSystemColumnInset } from '@/components/SafeWindowFrame/backdrop';
 import type { Account } from '@/types/account';
 import { isAccountSupportDirectSign } from '@/utils/account';
 import { formatUsdValue } from '@/utils/number';
@@ -88,7 +87,6 @@ export const MemeCoinHomeScreen = () => {
   const { t } = useTranslation();
   const { styles } = useTheme2024({ getStyle });
   const { safeOffHeader } = useSafeSizes();
-  const columnInset = useSystemColumnInset();
   const keyboardVisible = useKeyboardVisible();
   const { finalSceneCurrentAccount: account } = useSceneAccountInfo({
     forScene: 'MakeTransactionAbout',
@@ -468,14 +466,7 @@ export const MemeCoinHomeScreen = () => {
 
   return (
     <KeyboardAvoidingView
-      style={[
-        styles.screen,
-        {
-          paddingTop: safeOffHeader,
-          paddingLeft: columnInset.left,
-          paddingRight: columnInset.right,
-        },
-      ]}
+      style={[styles.screen, { paddingTop: safeOffHeader }]}
       behavior={IS_IOS || keyboardVisible ? 'padding' : undefined}>
       <GestureDetector gesture={swipeBackToMarket}>
         <View style={styles.listArea}>

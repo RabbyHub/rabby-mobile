@@ -1,13 +1,13 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   Alert,
+  Dimensions,
   FlatList,
   ScrollView,
   StyleSheet,
   TouchableOpacity,
   View,
 } from 'react-native';
-import { getDimensionsSnapshot } from '@/core/dimensions';
 
 import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import { useNavigation } from '@react-navigation/native';
@@ -539,6 +539,7 @@ function DevUINotifications(): JSX.Element {
   );
 }
 
+const CONTENT_W = Dimensions.get('screen').width - 24;
 const getStyles = createGetStyles2024(ctx =>
   StyleSheet.create({
     screen: {
@@ -580,7 +581,7 @@ const getStyles = createGetStyles2024(ctx =>
     propertyDesc: {
       flexDirection: 'row',
       width: '100%',
-      maxWidth: getDimensionsSnapshot('screen').width - 24,
+      maxWidth: CONTENT_W,
       flexWrap: 'wrap',
       alignItems: 'flex-start',
       justifyContent: 'flex-start',

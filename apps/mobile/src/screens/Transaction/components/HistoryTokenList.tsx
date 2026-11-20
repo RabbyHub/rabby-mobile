@@ -29,8 +29,7 @@ import { ellipsisOverflowedText } from '@/utils/text';
 import { HistoryItemCateType } from './type';
 import type { Account } from '@/core/startupServices/preference';
 import { isArray } from 'lodash';
-import { getDimensionsSnapshot } from '@/core/dimensions';
-
+import { Dimensions } from 'react-native';
 import { Text } from '@/components/Typography';
 import { ChainIconFastImage } from '@/components/Chain/ChainIconImage';
 
@@ -520,7 +519,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   singleColomnBox: {
     // flex: 1,
-    width: getDimensionsSnapshot('window').width - 160,
+    width: Dimensions.get('window').width - 160,
     flexDirection: 'column',
     gap: 2,
     // alignItems: 'center',

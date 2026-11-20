@@ -8,7 +8,13 @@ import { useScanner } from '../Scanner/ScannerScreen';
 import PasteButton from '@/components2024/PasteButton';
 import { NextInput } from '@/components2024/Form/Input';
 import { createGetStyles2024 } from '@/utils/styles';
-import { Keyboard, Pressable, TouchableOpacity, View } from 'react-native';
+import {
+  Dimensions,
+  Keyboard,
+  Pressable,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { validateAndCleanPrivateKey } from '@/core/apis/privateKey';
 import { apiPrivateKey, apiMnemonic } from '@/core/apis';
 import { validateAndCleanMnemonic } from '@/core/apis/mnemonic';
@@ -32,11 +38,11 @@ import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 import { zCreate } from '@/core/utils/reexports';
 import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 import { HeaderBackButton } from '@/hooks/navigation';
-import { useCustomHeaderTop } from '@/hooks/useAppLayout';
-import { useSystemColumnInset } from '@/components/SafeWindowFrame/backdrop';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 /** Toast position at the top of screen */
 const TOAST_POSITION_TOP = 30;
+const SCREEN_WIDTH = Dimensions.get('window').width;
 
 // Android needs touch-start dismissal without Pressable claiming the swipe.
 const Container = IS_ANDROID ? View : Pressable;
@@ -474,34 +480,22 @@ export const ImportSecret = ({ route }: ScreenProps) => {
  */
 export const ImportSecretHeader = () => {
   const { styles } = useTheme2024({ getStyle: getStyles });
-  const headerTop = useCustomHeaderTop();
-  const columnInset = useSystemColumnInset();
+  const insets = useSafeAreaInsets();
   return (
-    <View style={[styles.headerOuter, { paddingTop: headerTop }]}>
-      <ImportSecretHeaderToggle columnInset={columnInset} />
+    <View style={[styles.headerOuter, { paddingTop: insets.top }]}>
+      <ImportSecretHeaderToggle />
     </View>
   );
 };
 
-const ImportSecretHeaderToggle = ({
-  columnInset,
-}: {
-  columnInset: { left: number; right: number };
-}) => {
+const ImportSecretHeaderToggle = () => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
   const activeTab = useImportSecretTab();
   const setActiveTab = setImportSecretTab;
 
   return (
-    <View
-      style={[
-        styles.headerRow,
-        {
-          paddingLeft: 16 + columnInset.left,
-          paddingRight: 16 + columnInset.right,
-        },
-      ]}>
+    <View style={styles.headerRow}>
       <HeaderBackButton
         style={styles.headerBack}
         tintColor={colors2024['neutral-title-1']}

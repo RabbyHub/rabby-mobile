@@ -33,8 +33,12 @@ import {
 } from '@react-navigation/native';
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import type { ScrollView, ViewProps } from 'react-native';
-import { StyleSheet, useWindowDimensions, View } from 'react-native';
-import { svsLayout } from '@/hooks/useAppLayout';
+import {
+  Dimensions,
+  StyleSheet,
+  useWindowDimensions,
+  View,
+} from 'react-native';
 
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
@@ -253,12 +257,10 @@ function getIsAtBottom(scrollY: number) {
   return restScrollOffset <= OFFSETS.atBottomThreshold;
 }
 
+const scrHeight = Dimensions.get('screen').height;
 function hasOverThreshold() {
   'worklet';
-  return (
-    translateY.value <
-    getPullThreshold(svsLayout.screenLayout.value.height) * -1
-  );
+  return translateY.value < getPullThreshold(scrHeight) * -1;
 }
 
 const tabsScrollHandlers = {
@@ -276,16 +278,12 @@ const swipeUpViewHandlers = {
   }) as ViewProps['onLayout'] & object,
 };
 
-function getHomeGestureConfs() {
-  return {
-    activeY: Math.min(
-      8,
-      Math.round(
-        Math.floor(getPullThreshold(svsLayout.screenLayout.value.height) * 0.1),
-      ),
-    ),
-  };
-}
+const homeGestureConfs = {
+  activeY: Math.min(
+    8,
+    Math.round(Math.floor(getPullThreshold(scrHeight) * 0.1)),
+  ),
+};
 
 const usePulldownRefreshGesture = <T extends ScrollView | RNGHScrollView>({
   onJsPulldownRefresh: prop_onJsPulldownRefresh,
@@ -349,8 +347,7 @@ const usePulldownRefreshGesture = <T extends ScrollView | RNGHScrollView>({
   useAnimatedReaction(
     () => translateY.value,
     translateYValue => {
-      pullPercent.value =
-        (translateYValue / svsLayout.screenLayout.value.height) * 100;
+      pullPercent.value = (translateYValue / scrHeight) * 100;
       const percentValue = pullPercent.value;
       if (percentValue === -100) {
         isExpanded.value = true;
@@ -413,10 +410,7 @@ const usePulldownRefreshGesture = <T extends ScrollView | RNGHScrollView>({
   const panGestureRef = useRef(
     Gesture.Pan()
       .shouldCancelWhenOutside(false)
-      .activeOffsetY([
-        -getHomeGestureConfs().activeY,
-        getHomeGestureConfs().activeY,
-      ])
+      .activeOffsetY([-homeGestureConfs.activeY, homeGestureConfs.activeY])
       .maxPointers(1)
       // Share the Home-wide verdict: a horizontal drag belongs to the pager,
       // never to the pull-to-refresh / drawer-pull pan.
@@ -506,13 +500,9 @@ const usePulldownRefreshGesture = <T extends ScrollView | RNGHScrollView>({
           const hasImpactOnPandown = startValues.value.hasImpactOnPandown;
 
           if (startValues.value.startedAtBottom && hasOverThreshold()) {
-            translateY.value = withTiming(
-              -svsLayout.screenLayout.value.height,
-              undefined,
-              () => {
-                scrollableStatus.value = SCROLLABLE_STATUS.UNLOCKED;
-              },
-            );
+            translateY.value = withTiming(-scrHeight, undefined, () => {
+              scrollableStatus.value = SCROLLABLE_STATUS.UNLOCKED;
+            });
             !hasImpactOnPandown && runOnJS(triggerImpact)();
           } else {
             translateY.value = withTiming(0, undefined, () => {

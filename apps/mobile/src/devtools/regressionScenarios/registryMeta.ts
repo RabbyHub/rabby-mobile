@@ -128,14 +128,14 @@ export const REGRESSION_SCENARIO_METADATA = Object.freeze<
   'dapp-browser': {
     id: 'dapp-browser',
     kind: 'focused',
-    screens: ['DappWebViewStubOnHome'],
+    screens: ['BrowserScreen'],
     requiresFixture: false,
     description: 'Open a configured Dapp URL in the in-app browser.',
   },
   'dapp-connect': {
     id: 'dapp-connect',
     kind: 'focused',
-    screens: ['DappWebViewStubOnHome'],
+    screens: ['BrowserScreen'],
     requiresFixture: false,
     description:
       'Open a configured Dapp URL and verify connected Dapp permission state.',
@@ -143,7 +143,7 @@ export const REGRESSION_SCENARIO_METADATA = Object.freeze<
   'dapp-switch-chain': {
     id: 'dapp-switch-chain',
     kind: 'focused',
-    screens: ['DappWebViewStubOnHome'],
+    screens: ['BrowserScreen'],
     requiresFixture: false,
     description:
       'Send a deterministic Dapp wallet_switchEthereumChain request and verify the connected Dapp chain changes.',
@@ -151,7 +151,7 @@ export const REGRESSION_SCENARIO_METADATA = Object.freeze<
   'dapp-disconnect': {
     id: 'dapp-disconnect',
     kind: 'focused',
-    screens: ['DappWebViewStubOnHome'],
+    screens: ['BrowserScreen'],
     requiresFixture: false,
     description:
       'Connect a deterministic Dapp, revoke eth_accounts permission through provider flow, and verify it is disconnected.',
@@ -159,7 +159,7 @@ export const REGRESSION_SCENARIO_METADATA = Object.freeze<
   'dapp-sign-tx': {
     id: 'dapp-sign-tx',
     kind: 'focused',
-    screens: ['DappWebViewStubOnHome'],
+    screens: ['BrowserScreen'],
     requiresFixture: false,
     description:
       'Send a deterministic Dapp eth_sendTransaction request and verify SignTx approval opens without broadcasting.',
@@ -167,7 +167,7 @@ export const REGRESSION_SCENARIO_METADATA = Object.freeze<
   'dapp-sign-text': {
     id: 'dapp-sign-text',
     kind: 'focused',
-    screens: ['DappWebViewStubOnHome'],
+    screens: ['BrowserScreen'],
     requiresFixture: false,
     description:
       'Send a deterministic Dapp personal_sign request and verify SignText approval opens without signing.',
@@ -175,7 +175,7 @@ export const REGRESSION_SCENARIO_METADATA = Object.freeze<
   'dapp-sign-typed-data': {
     id: 'dapp-sign-typed-data',
     kind: 'focused',
-    screens: ['DappWebViewStubOnHome'],
+    screens: ['BrowserScreen'],
     requiresFixture: false,
     description:
       'Send a deterministic Dapp eth_signTypedData_v4 request and verify SignTypedData approval opens without signing.',
@@ -183,7 +183,7 @@ export const REGRESSION_SCENARIO_METADATA = Object.freeze<
   'dapp-cancel-signing': {
     id: 'dapp-cancel-signing',
     kind: 'focused',
-    screens: ['DappWebViewStubOnHome'],
+    screens: ['BrowserScreen'],
     requiresFixture: false,
     description:
       'Open a deterministic Dapp signing approval, cancel it, and verify the approval queue is cleared.',

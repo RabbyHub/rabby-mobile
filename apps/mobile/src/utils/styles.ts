@@ -1,7 +1,7 @@
 import { AppColorsVariants, AppColors2024Variants } from '@/constant/theme';
 import { FontNames, getRoundedFontStyle } from '@/core/utils/fonts';
-import { getDimensionsSnapshot } from '@/core/dimensions';
 import {
+  Dimensions,
   ImageStyle,
   ScaledSize,
   StyleSheet,
@@ -128,7 +128,7 @@ export function createGetStyles2024(...args: any[]) {
   const getStyles = (ctx: CreateStyles2024Options) => {
     // Keep direct callers working: fill the layout snapshot while leaving an
     // explicitly supplied value untouched.
-    const { width, height } = getDimensionsSnapshot('window');
+    const { width, height } = Dimensions.get('window');
     const withLayout: CreateStyles2024Options = {
       ...ctx,
       windowWidth: ctx.windowWidth ?? width,

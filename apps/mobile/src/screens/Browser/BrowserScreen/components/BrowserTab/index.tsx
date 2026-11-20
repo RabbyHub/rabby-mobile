@@ -10,8 +10,7 @@ import React, {
 } from 'react';
 import type { Ref } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
-import { Linking, Platform, StyleSheet, View } from 'react-native';
-import { getDimensionsSnapshot } from '@/core/dimensions';
+import { Dimensions, Linking, Platform, StyleSheet, View } from 'react-native';
 import type { WebViewProps } from 'react-native-webview';
 import WebView from 'react-native-webview';
 
@@ -25,7 +24,6 @@ import { APP_UA_PARIALS } from '@/constant';
 import { DESKTOP_MODE_UA, USER_AGENT } from '@/constant/browser';
 import { parsePossibleURL } from '@/constant/dappView';
 import { isNonPublicProductionEnv } from '@/constant';
-import { onBrowserEval } from '@/devtools/screenRegistry/browserEval';
 import { BackgroundBridgeBoundary } from '@/core/bridges/BackgroundBridgeBoundary';
 import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import { saveBrowserScreenshot } from '@/core/serviceApi/browser';
@@ -107,7 +105,7 @@ export const BrowserTab = ({
   embedHtml,
   url,
   webviewProps,
-  webviewContainerMaxHeight = getDimensionsSnapshot('screen').height,
+  webviewContainerMaxHeight = Dimensions.get('screen').height,
   style,
   tabsCount,
   onUpdateTab,
@@ -155,16 +153,6 @@ export const BrowserTab = ({
   } = useWebViewControl({ initialTabId: tabId });
   const [contentMode, setContentMode] =
     useState<WebViewProps['contentMode']>('mobile');
-
-  React.useEffect(() => {
-    if (!isNonPublicProductionEnv) {
-      return;
-    }
-    return onBrowserEval(code => {
-      webviewRef.current?.injectJavaScript(code);
-      console.log('[debug-dapp-eval] injected', code.slice(0, 120));
-    });
-  }, [webviewRef]);
 
   // const navigation = useRabbyAppNavigation();
   const { dapps, disconnectDapp, setDapp } = useDapps();
@@ -230,7 +218,7 @@ export const BrowserTab = ({
       }
 
       const change = () => {
-        const screenWidth = getDimensionsSnapshot('screen').width;
+        const screenWidth = Dimensions.get('screen').width;
         const pageWidth = Math.max(screenWidth, 1440); // Ensure at least 1440px width
         const initScale = coerceInteger(screenWidth / pageWidth, 1);
 
@@ -359,9 +347,7 @@ export const BrowserTab = ({
   });
 
   const handleOpenInBrowser = useMemoizedFn(() => {
-    if (!canOpenExternalUrl()) {
-      return;
-    }
+    if (!canOpenExternalUrl()) return;
     Linking.openURL(webviewState.resolvedUrl);
   });
 
@@ -762,9 +748,7 @@ export const BrowserTab = ({
                           // }
                         }}
                         onFileDownload={e => {
-                          if (!canOpenExternalUrl()) {
-                            return;
-                          }
+                          if (!canOpenExternalUrl()) return;
                           Linking.openURL(e.nativeEvent.downloadUrl);
                         }}
                         onShouldStartLoadWithRequest={nativeEvent => {
@@ -1075,7 +1059,7 @@ const getStyles = createGetStyles2024(ctx =>
       justifyContent: 'space-between',
       alignItems: 'center',
       width: '100%',
-      maxWidth: getDimensionsSnapshot('window').width,
+      maxWidth: Dimensions.get('window').width,
       height: ScreenLayouts2.dappWebViewControlHeaderHeight,
       paddingHorizontal: 20,
       paddingVertical: 0,
@@ -1133,7 +1117,7 @@ const getStyles = createGetStyles2024(ctx =>
       flex: 1,
       height: '100%',
       // maxHeight:
-      //   getDimensionsSnapshot('window').height -
+      //   Dimensions.get('window').height -
       //   ScreenLayouts2.dappWebViewControlHeaderHeight -
       //   ScreenLayouts2.TabbedDappWebViewControlNavHeight,
       width: '100%',

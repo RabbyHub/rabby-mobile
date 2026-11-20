@@ -40,8 +40,7 @@ import { AddressQuickManager } from '../AddressQuickManager/AddressQuickManager'
 import { AddressDetail } from '../AddressDetail/AddressDetail';
 import { ImportMoreAddress } from '../ImportMoreAddress/ImportMoreAddress';
 import { NoLongerSupports } from '../NoLongerSupports/NoLongerSupports';
-import { StyleSheet } from 'react-native';
-import { getDimensionsSnapshot } from '@/core/dimensions';
+import { Dimensions, StyleSheet } from 'react-native';
 import { CollectionNFTs } from '../CollectionNFTs';
 import { AddWhitelistSelectMethod } from '@/components/AddWhitelistSelectMethod';
 import ConfirmAddress from '@/screens/Send/components/ConfirmAddress';
@@ -79,17 +78,11 @@ import {
   WalletConnectPairingLoading,
 } from '@/components2024/WalletConnect/WalletConnectSheets';
 
-// Static modal registry: these snap-point heights are baked into a module-level
-// map, so they cannot read the window per render without turning the whole map
-// into a factory. Only the window *height* is used here, and the letterboxed
-// foldable width does not change it, so the import-time snapshot stays correct.
-/* eslint-disable no-module-scope-dimensions */
-export const MODAL_MAX_HEIGHT = getDimensionsSnapshot('window').height - 104;
+export const MODAL_MAX_HEIGHT = Dimensions.get('window').height - 104;
 const RECEIVE_ADDRESS_LIST_MODAL_HEIGHT = Math.max(
-  getDimensionsSnapshot('window').height - 200,
+  Dimensions.get('window').height - 200,
   453,
 );
-/* eslint-enable no-module-scope-dimensions */
 
 function getDefaultViewTypePropsPreset(
   input?: Partial<GlobalBottomSheetModalProps>,

@@ -1,4 +1,3 @@
-import { withScreenPropsInjection } from '@/devtools/screenRegistry/screenInjection';
 import 'react-native-gesture-handler';
 import { RootNames } from '@/constant/layout';
 import { useThemeColors } from '@/hooks/theme';
@@ -33,7 +32,7 @@ export function DappsNavigator() {
       initialRouteName={RootNames.Dapps}>
       <DappsStack.Screen
         name={RootNames.Dapps}
-        component={withScreenPropsInjection(DappsScreen)}
+        component={DappsScreen}
         options={{
           title: IS_IOS ? 'Explore' : 'Dapps',
           headerTitleStyle: {
@@ -46,7 +45,7 @@ export function DappsNavigator() {
       />
       <DappsStack.Screen
         name={RootNames.FavoriteDapps}
-        component={withScreenPropsInjection(FavoriteDappsScreen)}
+        component={FavoriteDappsScreen}
         options={mergeScreenOptions({
           headerTintColor: colors['neutral-title-1'],
           headerTitleStyle: {
