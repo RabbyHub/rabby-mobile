@@ -26,7 +26,6 @@ import {
 } from 'react-native';
 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useSystemColumnInset } from '@/components/SafeWindowFrame/backdrop';
 import { useAccounts } from '@/hooks/account';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import type { RootStackParamsList } from '@/navigation-type';
@@ -81,7 +80,6 @@ function isHardwareWallet(type: string) {
 export const ImportSuccessScreen2024 = () => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { top, bottom } = useSafeAreaInsets();
-  const columnInset = useSystemColumnInset();
   const { accounts, fetchAccounts } = useAccounts({ disableAutoFetch: true });
   const navigation = useNavigation<ImportSuccessScreenProps['navigation']>();
   const modalRef =
@@ -350,13 +348,7 @@ export const ImportSuccessScreen2024 = () => {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      style={[
-        styles.keyboardAvoidingView,
-        {
-          paddingLeft: columnInset.left,
-          paddingRight: columnInset.right,
-        },
-      ]}>
+      style={styles.keyboardAvoidingView}>
       <View style={[styles.container, { paddingTop: top }]}>
         <WalletSuccessCard
           style={{ flex: 1 }}

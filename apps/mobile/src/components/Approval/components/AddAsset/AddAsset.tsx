@@ -51,8 +51,7 @@ import React, {
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
-import { getDimensionsSnapshot } from '@/core/dimensions';
+import { ActivityIndicator, Dimensions, StyleSheet, View } from 'react-native';
 import { Text } from '@/components/Typography';
 import type { ProviderRequestContext } from '@/core/controllers/type';
 
@@ -701,7 +700,7 @@ const getStyles = createGetStyles(colors => {
 
     footer: {
       width: '100%',
-      maxWidth: getDimensionsSnapshot('window').width,
+      maxWidth: Dimensions.get('window').width,
       display: 'flex',
       flexDirection: 'row',
       gap: 16,
@@ -742,7 +741,7 @@ const getStyles = createGetStyles(colors => {
     },
     tokenNotFoundFooter: {
       width: '100%',
-      maxWidth: getDimensionsSnapshot('window').width,
+      maxWidth: Dimensions.get('window').width,
       display: 'flex',
       flexDirection: 'row',
       gap: 16,

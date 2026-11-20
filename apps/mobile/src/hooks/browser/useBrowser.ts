@@ -282,10 +282,6 @@ export const useBrowserActiveTabState = () => {
   ] as const;
 };
 
-export function getBrowserTabsSnapshot() {
-  return tabsStore.getState();
-}
-
 export const browserApis = {
   setPartialBrowserState: (payload: Partial<BrowserStateType>) => {
     return setBrowserState(prev => ({

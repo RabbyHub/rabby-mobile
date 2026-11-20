@@ -11,8 +11,7 @@ import { formatPerpsCoin } from '@/utils/perps';
 import { Text } from '@/components/Typography';
 import { HeaderBackPressable } from '@/hooks/navigation';
 import { PerpsHeaderRight } from './PerpsHeaderRight';
-import { useCustomHeaderTop } from '@/hooks/useAppLayout';
-import { useSystemColumnInset } from '@/components/SafeWindowFrame/backdrop';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
   EMPTY_ACCOUNT_QUOTE,
@@ -48,8 +47,7 @@ export const PerpsHeaderTitle = React.memo(
   ) {
     const { styles, colors2024, isLight } = useTheme2024({ getStyle });
 
-    const headerTop = useCustomHeaderTop();
-    const columnInset = useSystemColumnInset();
+    const { top } = useSafeAreaInsets();
     const IconCom = isLight ? RcCaretDownCircleCC : RcCaretDownCircleDarkCC;
 
     const [snapshot, setSnapshot] = useState<AccountHeaderSnapshot>(
@@ -69,15 +67,7 @@ export const PerpsHeaderTitle = React.memo(
     const { compact, quote } = snapshot;
 
     return (
-      <View
-        style={[
-          styles.headerOuter,
-          {
-            marginTop: headerTop,
-            paddingLeft: 12 + columnInset.left,
-            paddingRight: 16 + columnInset.right,
-          },
-        ]}>
+      <View style={[styles.headerOuter, { marginTop: top }]}>
         <View style={styles.headerInner}>
           <View style={styles.headerLeft}>
             <HeaderBackPressable tintColor={colors2024['neutral-title-1']} />

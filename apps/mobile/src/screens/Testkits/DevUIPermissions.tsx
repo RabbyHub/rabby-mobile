@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   Alert,
+  Dimensions,
   Permission,
   PermissionsAndroid,
   Platform,
@@ -8,7 +9,6 @@ import {
   StyleSheet,
   View,
 } from 'react-native';
-import { getDimensionsSnapshot } from '@/core/dimensions';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -134,7 +134,7 @@ function DevUIPermissions() {
             onPress={async () => {
               PerAndroid.goToSystemSettingsFor();
             }}
-            title={"Go Package's settings"}
+            title={`Go Package's settings`}
             titleStyle={{ fontSize: 18, fontWeight: '500' }}
           />
         </View>
@@ -143,6 +143,7 @@ function DevUIPermissions() {
   );
 }
 
+const CONTENT_W = Dimensions.get('screen').width - 24;
 const getStyles = createGetStyles2024(ctx =>
   StyleSheet.create({
     screen: {
@@ -184,7 +185,7 @@ const getStyles = createGetStyles2024(ctx =>
     propertyItem: {
       flexDirection: 'row',
       alignItems: 'center',
-      maxWidth: getDimensionsSnapshot('screen').width - 24,
+      maxWidth: CONTENT_W,
       justifyContent: 'flex-start',
       width: '100%',
       flexWrap: 'wrap',

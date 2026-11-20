@@ -48,6 +48,7 @@ export function HeaderRightHistoryButton({
           style={{
             marginRight: rightSpace,
             position: 'relative',
+            paddingVertical: 4,
           }}>
           <HomePendingBadge number={pendingTxCount} />
         </View>
@@ -56,6 +57,7 @@ export function HeaderRightHistoryButton({
           style={{
             marginRight: rightSpace,
             position: 'relative',
+            paddingVertical: 4,
           }}>
           <RcIconHistory
             color={colors2024['neutral-title-1']}

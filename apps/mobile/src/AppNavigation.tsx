@@ -1,4 +1,3 @@
-import { withScreenPropsInjection } from '@/devtools/screenRegistry/screenInjection';
 import { RoundedFontStyles } from '@/core/utils/fonts';
 import { createCustomNativeStackNavigator as createNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
 import {
@@ -50,7 +49,6 @@ import {
   TokenDetailScreen,
   TokenMarketInfoScreen,
 } from '@/perfs/loadables/screens';
-import { NftDetailHeader } from '@/screens/NftDetail/NftDetailHeader';
 import UnlockScreen from '@/screens/Unlock/Unlock';
 import { TokenDetailHeader } from '@/screens/TokenDetail/components/HeaderArea';
 import SetupWallet from '@/screens/Address/SetupWallet';
@@ -113,10 +111,7 @@ import { startReadableAccountBootstrapWarmups } from './setup-app-before-render'
 import { useHomePostStartupReady } from './core/utils/homeStartupReady';
 import { FeedbackHistoryHost } from './components/Screenshot/FeedbackHistory/GlobalHost';
 import { setServiceRuntimeDiagnosticsContextProvider } from './core/serviceApi/serviceRuntimeDiagnostics';
-import {
-  withRegressionScenario,
-  withScreenErrorBoundary,
-} from '@/devtools/regressionScenarios/react';
+import { withRegressionScenario } from '@/devtools/regressionScenarios/react';
 import { createAutoUnlockPresentationPolicy } from '@/utils/autoUnlockPresentationPolicy';
 import { browserPerpsNavigation } from '@/hooks/browser/browserPerpsNavigation';
 
@@ -555,364 +550,352 @@ export default function AppNavigation() {
                 slot="navigation-pre"
                 enabled={shouldRenderPostUnlockGlobals}
               />
-              <RootNavigatorSlot>
-                <RootStack.Navigator
-                  screenOptions={{
+              <RootStack.Navigator
+                screenOptions={{
+                  ...RootAnimOptions,
+                  headerShown: false,
+                  navigationBarColor: 'transparent',
+                  freezeOnBlur: false,
+                }}
+                screenListeners={({ route }) => ({
+                  transitionStart: event => {
+                    autoUnlockPresentationPolicy.onTransitionStart({
+                      isUnlockRoute: route.name === RootNames.Unlock,
+                      closing: event.data.closing,
+                    });
+                  },
+                  transitionEnd: event => {
+                    autoUnlockPresentationPolicy.onTransitionEnd({
+                      isUnlockRoute: route.name === RootNames.Unlock,
+                      closing: event.data.closing,
+                    });
+                  },
+                })}
+                initialRouteName={initialRouteName}>
+                <RootStack.Screen
+                  name={RootNames.StackGetStarted}
+                  component={GetStartedNavigator}
+                />
+                <RootStack.Screen
+                  name={RootNames.StackRoot}
+                  component={HomeScreenNavigator}
+                  options={{
                     ...RootAnimOptions,
-                    headerShown: false,
-                    navigationBarColor: 'transparent',
+                    // Home keeps animated pagers mounted across nested add-wallet
+                    // routes. Fabric freezing detaches their animated views, so
+                    // returning from a second pushed screen can leave Home blank.
                     freezeOnBlur: false,
                   }}
-                  screenListeners={({ route }) => ({
-                    transitionStart: event => {
-                      autoUnlockPresentationPolicy.onTransitionStart({
-                        isUnlockRoute: route.name === RootNames.Unlock,
-                        closing: event.data.closing,
-                      });
+                />
+                <RootStack.Screen
+                  name={RootNames.StackHomeNonTab}
+                  component={HomeNonTabNavigator}
+                  options={RootAnimOptions}
+                />
+                <RootStack.Screen
+                  name={RootNames.SingleAddressStack}
+                  component={SingleAddressNavigator}
+                />
+                <RootStack.Screen
+                  name={RootNames.Unlock}
+                  component={RegressionUnlockScreen}
+                  options={mergeScreenOptions({
+                    title: '',
+                    // another valid composition
+                    // animationTypeForReplace: isSlideFromGetStarted ? 'push' : 'pop',
+                    // animation: isSlideFromGetStarted ? 'fade_from_bottom' : 'slide_from_left',
+                    // animationTypeForReplace: 'push',
+                    animation: 'fade_from_bottom',
+                    headerTitle: '',
+                    headerBackVisible: false,
+                    headerShadowVisible: false,
+                    // headerShown: true,
+                    headerTransparent: true,
+                    headerStyle: {
+                      // backgroundColor: colors['neutral-bg1'],
                     },
+                  })}
+                />
+                <RootStack.Screen
+                  name={RootNames.NotFound}
+                  component={NotFoundScreen}
+                  options={mergeScreenOptions({
+                    title: 'Rabby Wallet',
+                    headerShadowVisible: false,
+                    headerShown: true,
+                    headerTransparent: false,
+                    headerStyle: {
+                      backgroundColor: colors['neutral-bg1'],
+                    },
+                  })}
+                />
+                <RootStack.Screen
+                  name={RootNames.StackTestkits}
+                  component={TestkitsNavigator}
+                />
+                <RootStack.Screen
+                  name={RootNames.AccountTransaction}
+                  component={AccountNavigator}
+                />
+                <RootStack.Screen
+                  name={RootNames.StackTransaction}
+                  component={TransactionNavigator}
+                  listeners={({ route, navigation }) => ({
                     transitionEnd: event => {
-                      autoUnlockPresentationPolicy.onTransitionEnd({
-                        isUnlockRoute: route.name === RootNames.Unlock,
+                      browserPerpsNavigation.onTransitionEnd({
+                        requestId: route.params?.browserPerpsNavigationId,
                         closing: event.data.closing,
+                        isFocused: navigation.isFocused(),
                       });
                     },
                   })}
-                  initialRouteName={initialRouteName}>
+                />
+                <RootStack.Screen
+                  name={RootNames.StackSettings}
+                  component={SettingNavigator}
+                />
+                <RootStack.Screen
+                  name={RootNames.StackAddress}
+                  component={AddressNavigator}
+                />
+                <RootStack.Screen
+                  name={RootNames.SetupWallet}
+                  component={SetupWallet}
+                  options={{ headerShown: false }}
+                />
+                <RootStack.Screen
+                  name={RootNames.SelectImportMethod}
+                  component={SelectImportMethod}
+                  options={mergeScreenOptions2024([
+                    {
+                      headerShown: true,
+                      headerTitle: t('screens.addressStackTitle.ImportMethods'),
+                    },
+                  ])}
+                />
+                <RootStack.Screen
+                  name={RootNames.ImportRabbyWallet}
+                  component={ImportRabbyWallet}
+                  options={mergeScreenOptions2024([
+                    {
+                      headerShown: true,
+                      // Same native-title overflow as SelectAddMethod (QA 1352).
+                      header: () => (
+                        <AutoFitCenterHeader
+                          title={t(
+                            'page.newUserOnboarding.restoreWallet.title',
+                          )}
+                          titleKey="page.newUserOnboarding.restoreWallet.title"
+                        />
+                      ),
+                    },
+                  ])}
+                />
+                <RootStack.Screen
+                  name={RootNames.ImportSecret}
+                  component={ImportSecret}
+                  options={mergeScreenOptions2024([
+                    {
+                      headerShown: true,
+                      // Fully custom header: fixed leading/trailing slots keep
+                      // the segmented toggle centred on every device (QA 1344).
+                      header: () => <ImportSecretHeader />,
+                    },
+                  ])}
+                />
+                <RootStack.Screen
+                  name={RootNames.MoreImportMethods}
+                  component={MoreImportMethods}
+                  options={mergeScreenOptions2024([
+                    {
+                      headerShown: true,
+                      // Same native-title overflow as SelectAddMethod (QA 1352).
+                      header: () => (
+                        <AutoFitCenterHeader
+                          title={t(
+                            'screens.addressStackTitle.MoreImportMethods',
+                          )}
+                          titleKey="screens.addressStackTitle.MoreImportMethods"
+                        />
+                      ),
+                    },
+                  ])}
+                />
+                <RootStack.Screen
+                  name={RootNames.SelectAddMethod}
+                  component={SelectAddMethod}
+                  options={mergeScreenOptions2024([
+                    {
+                      headerShown: true,
+                      // Production keeps this title left-aligned next to the
+                      // back control; the native header centred the long pt-BR
+                      // translation and pushed it past the trailing edge
+                      // (QA 1352).
+                      header: () => (
+                        <AutoFitCenterHeader
+                          title={t(
+                            'page.nextComponent.addAddress.selectAddMethod',
+                          )}
+                          titleKey="page.nextComponent.addAddress.selectAddMethod"
+                        />
+                      ),
+                    },
+                  ])}
+                />
+                <RootStack.Screen
+                  name={RootNames.Backup}
+                  component={Backup}
+                  options={mergeScreenOptions2024([
+                    {
+                      headerShown: true,
+                      headerTitle: t('screens.addressStackTitle.ChooseBackup'),
+                    },
+                  ])}
+                />
+                <RootStack.Screen
+                  name={RootNames.StackDapps}
+                  component={DappsNavigator}
+                />
+                <RootStack.Group
+                  screenOptions={
+                    {
+                      // freezeOnBlur: true,
+                    }
+                  }>
                   <RootStack.Screen
-                    name={RootNames.StackGetStarted}
-                    component={withScreenPropsInjection(GetStartedNavigator)}
+                    name={RootNames.NftDetail}
+                    component={NFTDetailScreen}
+                    options={mergeScreenOptions({
+                      headerShown: true,
+                      // QA 1343: the detail rows draw their own back button.
+                      // Hide the native one from the first frame so the push
+                      // transition cannot show it (and a shifted title) first.
+                      headerTitleAlign: 'left',
+                      headerBackVisible: false,
+                      headerLeft: () => null,
+                      unstable_headerLeftItems: () => [],
+                      headerTitle: '',
+                      headerStyle: {
+                        // backgroundColor: colors['neutral-bg-2'],
+                        backgroundColor: 'transparent',
+                      },
+                    })}
                   />
                   <RootStack.Screen
-                    name={RootNames.StackRoot}
-                    component={withScreenPropsInjection(HomeScreenNavigator)}
-                    options={{
-                      ...RootAnimOptions,
-                      // Home keeps animated pagers mounted across nested add-wallet
-                      // routes. Fabric freezing detaches their animated views, so
-                      // returning from a second pushed screen can leave Home blank.
-                      freezeOnBlur: false,
+                    name={RootNames.TokenDetail}
+                    component={TokenDetailScreen}
+                    options={({ route }) =>
+                      mergeScreenOptions({
+                        headerShown: true,
+                        headerTitleAlign: 'left',
+                        // QA 1343: the title row renders its own back button,
+                        // so the native item must not exist even for the first
+                        // frame of the push transition.
+                        headerBackVisible: false,
+                        headerLeft: () => null,
+                        unstable_headerLeftItems: () => [],
+                        // Build the row from route params so token detail and
+                        // token market detail render the same header from the
+                        // first frame, with no layout shift between them.
+                        // Custom header: fixed leading/middle/trailing slots
+                        // owned by us, so the row does not depend on the
+                        // native title-slot origin (QA 1343).
+                        header: () => (
+                          <TokenDetailHeader
+                            token={
+                              (route.params as { token?: any } | undefined)
+                                ?.token
+                            }
+                            isCustomTestnetToken={
+                              (
+                                route.params as {
+                                  isCustomTestnetToken?: boolean;
+                                }
+                              )?.isCustomTestnetToken
+                            }
+                          />
+                        ),
+                        headerStyle: {
+                          // backgroundColor: colors['neutral-bg-2'],
+                          backgroundColor: 'transparent',
+                        },
+                      })
+                    }
+                    getId={({ params }) => {
+                      const idStr = [
+                        params.token.id,
+                        params.isSwapToTokenDetail ? 'swapTo' : 'normal',
+                        params.tokenSelectType,
+                      ]
+                        .filter(Boolean)
+                        .join('-');
+                      return idStr || undefined;
                     }}
                   />
                   <RootStack.Screen
-                    name={RootNames.StackHomeNonTab}
-                    component={withScreenPropsInjection(HomeNonTabNavigator)}
-                    options={RootAnimOptions}
+                    name={RootNames.TokenMarketInfo}
+                    component={TokenMarketInfoScreen}
+                    options={({ route }) =>
+                      mergeScreenOptions({
+                        headerShown: true,
+                        headerTitleAlign: 'left',
+                        headerBackVisible: false,
+                        headerLeft: () => null,
+                        unstable_headerLeftItems: () => [],
+                        // Custom header: fixed leading/middle/trailing slots
+                        // owned by us, so the row does not depend on the
+                        // native title-slot origin (QA 1343).
+                        header: () => (
+                          <TokenDetailHeader
+                            token={
+                              (route.params as { token?: any } | undefined)
+                                ?.token
+                            }
+                            isCustomTestnetToken={
+                              (
+                                route.params as {
+                                  isCustomTestnetToken?: boolean;
+                                }
+                              )?.isCustomTestnetToken
+                            }
+                          />
+                        ),
+                        headerStyle: {
+                          // backgroundColor: colors['neutral-bg-2'],
+                          backgroundColor: 'transparent',
+                        },
+                      })
+                    }
+                    getId={({ params }) => {
+                      const idStr = [
+                        params.token.id,
+                        params.isSwapToTokenDetail ? 'swapTo' : 'normal',
+                        params.tokenSelectType,
+                      ]
+                        .filter(Boolean)
+                        .join('-');
+                      return idStr || undefined;
+                    }}
                   />
                   <RootStack.Screen
-                    name={RootNames.SingleAddressStack}
-                    component={withScreenPropsInjection(SingleAddressNavigator)}
-                  />
-                  <RootStack.Screen
-                    name={RootNames.Unlock}
-                    component={withScreenPropsInjection(RegressionUnlockScreen)}
+                    name={RootNames.Scanner}
+                    component={ScannerScreen}
                     options={mergeScreenOptions({
-                      title: '',
-                      // another valid composition
-                      // animationTypeForReplace: isSlideFromGetStarted ? 'push' : 'pop',
-                      // animation: isSlideFromGetStarted ? 'fade_from_bottom' : 'slide_from_left',
-                      // animationTypeForReplace: 'push',
-                      animation: 'fade_from_bottom',
-                      headerTitle: '',
-                      headerBackVisible: false,
-                      headerShadowVisible: false,
-                      // headerShown: true,
-                      headerTransparent: true,
-                      headerStyle: {
-                        // backgroundColor: colors['neutral-bg1'],
-                      },
-                    })}
-                  />
-                  <RootStack.Screen
-                    name={RootNames.NotFound}
-                    component={withScreenPropsInjection(NotFoundScreen)}
-                    options={mergeScreenOptions({
-                      title: 'Rabby Wallet',
+                      title: 'Scan',
                       headerShadowVisible: false,
                       headerShown: true,
-                      headerTransparent: false,
                       headerStyle: {
-                        backgroundColor: colors['neutral-bg1'],
+                        backgroundColor: colors['neutral-black'],
+                      },
+                      headerTintColor: colors['neutral-title-2'],
+                      headerTitleStyle: {
+                        color: colors['neutral-title-2'],
+                        ...RoundedFontStyles.heavy,
                       },
                     })}
                   />
-                  <RootStack.Screen
-                    name={RootNames.StackTestkits}
-                    component={withScreenPropsInjection(TestkitsNavigator)}
-                  />
-                  <RootStack.Screen
-                    name={RootNames.AccountTransaction}
-                    component={withScreenPropsInjection(AccountNavigator)}
-                  />
-                  <RootStack.Screen
-                    name={RootNames.StackTransaction}
-                    component={withScreenPropsInjection(TransactionNavigator)}
-                    listeners={({ route, navigation }) => ({
-                      transitionEnd: event => {
-                        browserPerpsNavigation.onTransitionEnd({
-                          requestId: route.params?.browserPerpsNavigationId,
-                          closing: event.data.closing,
-                          isFocused: navigation.isFocused(),
-                        });
-                      },
-                    })}
-                  />
-                  <RootStack.Screen
-                    name={RootNames.StackSettings}
-                    component={withScreenPropsInjection(SettingNavigator)}
-                  />
-                  <RootStack.Screen
-                    name={RootNames.StackAddress}
-                    component={withScreenPropsInjection(AddressNavigator)}
-                  />
-                  <RootStack.Screen
-                    name={RootNames.SetupWallet}
-                    component={withScreenPropsInjection(SetupWallet)}
-                    options={{ headerShown: false }}
-                  />
-                  <RootStack.Screen
-                    name={RootNames.SelectImportMethod}
-                    component={withScreenPropsInjection(SelectImportMethod)}
-                    options={mergeScreenOptions2024([
-                      {
-                        headerShown: true,
-                        headerTitle: t(
-                          'screens.addressStackTitle.ImportMethods',
-                        ),
-                      },
-                    ])}
-                  />
-                  <RootStack.Screen
-                    name={RootNames.ImportRabbyWallet}
-                    component={withScreenPropsInjection(ImportRabbyWallet)}
-                    options={mergeScreenOptions2024([
-                      {
-                        headerShown: true,
-                        // Same native-title overflow as SelectAddMethod (QA 1352).
-                        header: () => (
-                          <AutoFitCenterHeader
-                            title={t(
-                              'page.newUserOnboarding.restoreWallet.title',
-                            )}
-                            titleKey="page.newUserOnboarding.restoreWallet.title"
-                          />
-                        ),
-                      },
-                    ])}
-                  />
-                  <RootStack.Screen
-                    name={RootNames.ImportSecret}
-                    component={withScreenPropsInjection(ImportSecret)}
-                    options={mergeScreenOptions2024([
-                      {
-                        headerShown: true,
-                        // Fully custom header: fixed leading/trailing slots keep
-                        // the segmented toggle centred on every device (QA 1344).
-                        header: () => <ImportSecretHeader />,
-                      },
-                    ])}
-                  />
-                  <RootStack.Screen
-                    name={RootNames.MoreImportMethods}
-                    component={withScreenPropsInjection(MoreImportMethods)}
-                    options={mergeScreenOptions2024([
-                      {
-                        headerShown: true,
-                        // Same native-title overflow as SelectAddMethod (QA 1352).
-                        header: () => (
-                          <AutoFitCenterHeader
-                            title={t(
-                              'screens.addressStackTitle.MoreImportMethods',
-                            )}
-                            titleKey="screens.addressStackTitle.MoreImportMethods"
-                          />
-                        ),
-                      },
-                    ])}
-                  />
-                  <RootStack.Screen
-                    name={RootNames.SelectAddMethod}
-                    component={withScreenPropsInjection(SelectAddMethod)}
-                    options={mergeScreenOptions2024([
-                      {
-                        headerShown: true,
-                        // Production keeps this title left-aligned next to the
-                        // back control; the native header centred the long pt-BR
-                        // translation and pushed it past the trailing edge
-                        // (QA 1352).
-                        header: () => (
-                          <AutoFitCenterHeader
-                            title={t(
-                              'page.nextComponent.addAddress.selectAddMethod',
-                            )}
-                            titleKey="page.nextComponent.addAddress.selectAddMethod"
-                          />
-                        ),
-                      },
-                    ])}
-                  />
-                  <RootStack.Screen
-                    name={RootNames.Backup}
-                    component={withScreenPropsInjection(Backup)}
-                    options={mergeScreenOptions2024([
-                      {
-                        headerShown: true,
-                        headerTitle: t(
-                          'screens.addressStackTitle.ChooseBackup',
-                        ),
-                      },
-                    ])}
-                  />
-                  <RootStack.Screen
-                    name={RootNames.StackDapps}
-                    component={withScreenPropsInjection(DappsNavigator)}
-                  />
-                  <RootStack.Group
-                    screenOptions={
-                      {
-                        // freezeOnBlur: true,
-                      }
-                    }>
-                    <RootStack.Screen
-                      name={RootNames.NftDetail}
-                      component={withScreenPropsInjection(NFTDetailScreen)}
-                      options={({ route }) =>
-                        mergeScreenOptions({
-                          headerShown: true,
-                          // QA 1343: the row draws its own back button, so the
-                          // native item must not exist even for the first frame
-                          // of the push transition.
-                          headerBackVisible: false,
-                          headerLeft: () => null,
-                          unstable_headerLeftItems: () => [],
-                          header: () => (
-                            <NftDetailHeader
-                              token={route.params?.token as any}
-                            />
-                          ),
-                          headerStyle: {
-                            backgroundColor: 'transparent',
-                          },
-                        })
-                      }
-                    />
-                    <RootStack.Screen
-                      name={RootNames.TokenDetail}
-                      component={withScreenPropsInjection(TokenDetailScreen)}
-                      options={({ route }) =>
-                        mergeScreenOptions({
-                          headerShown: true,
-                          headerTitleAlign: 'left',
-                          // QA 1343: the title row renders its own back button,
-                          // so the native item must not exist even for the first
-                          // frame of the push transition.
-                          headerBackVisible: false,
-                          headerLeft: () => null,
-                          unstable_headerLeftItems: () => [],
-                          // Build the row from route params so token detail and
-                          // token market detail render the same header from the
-                          // first frame, with no layout shift between them.
-                          // Custom header: fixed leading/middle/trailing slots
-                          // owned by us, so the row does not depend on the
-                          // native title-slot origin (QA 1343).
-                          header: () => (
-                            <TokenDetailHeader
-                              token={
-                                (route.params as { token?: any } | undefined)
-                                  ?.token
-                              }
-                              isCustomTestnetToken={
-                                (
-                                  route.params as {
-                                    isCustomTestnetToken?: boolean;
-                                  }
-                                )?.isCustomTestnetToken
-                              }
-                            />
-                          ),
-                          headerStyle: {
-                            // backgroundColor: colors['neutral-bg-2'],
-                            backgroundColor: 'transparent',
-                          },
-                        })
-                      }
-                      getId={({ params }) => {
-                        const idStr = [
-                          params.token.id,
-                          params.isSwapToTokenDetail ? 'swapTo' : 'normal',
-                          params.tokenSelectType,
-                        ]
-                          .filter(Boolean)
-                          .join('-');
-                        return idStr || undefined;
-                      }}
-                    />
-                    <RootStack.Screen
-                      name={RootNames.TokenMarketInfo}
-                      component={withScreenPropsInjection(
-                        TokenMarketInfoScreen,
-                      )}
-                      options={({ route }) =>
-                        mergeScreenOptions({
-                          headerShown: true,
-                          headerTitleAlign: 'left',
-                          headerBackVisible: false,
-                          headerLeft: () => null,
-                          unstable_headerLeftItems: () => [],
-                          // Custom header: fixed leading/middle/trailing slots
-                          // owned by us, so the row does not depend on the
-                          // native title-slot origin (QA 1343).
-                          header: () => (
-                            <TokenDetailHeader
-                              token={
-                                (route.params as { token?: any } | undefined)
-                                  ?.token
-                              }
-                              isCustomTestnetToken={
-                                (
-                                  route.params as {
-                                    isCustomTestnetToken?: boolean;
-                                  }
-                                )?.isCustomTestnetToken
-                              }
-                            />
-                          ),
-                          headerStyle: {
-                            // backgroundColor: colors['neutral-bg-2'],
-                            backgroundColor: 'transparent',
-                          },
-                        })
-                      }
-                      getId={({ params }) => {
-                        const idStr = [
-                          params.token.id,
-                          params.isSwapToTokenDetail ? 'swapTo' : 'normal',
-                          params.tokenSelectType,
-                        ]
-                          .filter(Boolean)
-                          .join('-');
-                        return idStr || undefined;
-                      }}
-                    />
-                    <RootStack.Screen
-                      name={RootNames.Scanner}
-                      component={withScreenPropsInjection(ScannerScreen)}
-                      options={mergeScreenOptions({
-                        title: 'Scan',
-                        headerShadowVisible: false,
-                        headerShown: true,
-                        headerStyle: {
-                          backgroundColor: colors['neutral-black'],
-                        },
-                        headerTintColor: colors['neutral-title-2'],
-                        headerTitleStyle: {
-                          color: colors['neutral-title-2'],
-                          ...RoundedFontStyles.heavy,
-                        },
-                      })}
-                    />
-                  </RootStack.Group>
-                </RootStack.Navigator>
-              </RootNavigatorSlot>
+                </RootStack.Group>
+              </RootStack.Navigator>
               <AppNavigationDeferredGlobals
                 slot="navigation-post"
                 enabled={shouldRenderDeferredGlobals}
@@ -947,17 +930,6 @@ const appNavigationStyles = StyleSheet.create({
   },
 });
 
-// Non-production only: keeps a single failing screen from unmounting the whole
-// navigation tree (and the universal-link hook with it). Production is the
-// identity function, so this adds no wrapper at all.
-const ScreenRenderBoundary = withScreenErrorBoundary(
-  ({ children }: { children?: React.ReactNode }) => <>{children}</>,
-);
-const RootNavigatorSlot =
-  ScreenRenderBoundary as unknown as React.ComponentType<{
-    children?: React.ReactNode;
-  }>;
-
 function AccountNavigator() {
   const { mergeScreenOptions } = useStackScreenConfig();
   const colors = useThemeColors();
@@ -977,7 +949,7 @@ function AccountNavigator() {
       })}>
       <AccountStack.Screen
         name={RootNames.MyBundle}
-        component={withScreenPropsInjection(MyBundleScreen)}
+        component={MyBundleScreen}
         options={{
           title: 'My Bundle',
         }}

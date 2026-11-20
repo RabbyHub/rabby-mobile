@@ -1,7 +1,6 @@
 import { createGetStyles2024, makeDevOnlyStyle } from '@/utils/styles';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { View } from 'react-native';
-import { useWindowDimensions } from '@/core/dimensions';
+import { Dimensions, View } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { QRCodeScanner } from '@/components/QRCodeScanner/QRCodeScanner';
 import { colord } from 'colord';
@@ -19,14 +18,11 @@ import RNHelpers from '@/core/native/RNHelpers';
 import { touchedFeedback } from '@/utils/touch';
 import { resolveGalleryQrCodePayloads } from './scanQrcodeResult';
 
-const CAMERA_SIDE_ALLOWANCE = 70;
+const CAMERA_WIDTH = Dimensions.get('window').width - 70;
 // Bound decode memory; QR codes in screenshots and photos stay readable.
 const GALLERY_IMAGE_MAX_SIZE = 2048;
 
 export const ScreenPanelScanner = () => {
-  // Render-time read so the scanner follows a fold/rotation.
-  const { width: windowWidth } = useWindowDimensions();
-  const cameraWidth = Math.max(0, windowWidth - CAMERA_SIDE_ALLOWANCE);
   const { nextScanFor, fnNavTo } = useAccountSelectModalCtx();
   const { styles } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
@@ -136,12 +132,9 @@ export const ScreenPanelScanner = () => {
     <View style={styles.main}>
       <View style={styles.wrapper}>
         <QRCodeScanner
-          containerStyle={[
-            styles.containerStyle,
-            { width: cameraWidth, height: cameraWidth },
-          ]}
+          containerStyle={styles.containerStyle}
           onCodeScanned={handleCodeScanned}
-          size={cameraWidth}
+          size={CAMERA_WIDTH}
           active={!isPickingImage}
           permissionTipStyle={styles.permissionTip}
         />
@@ -175,13 +168,15 @@ const getStyles = createGetStyles2024(ctx => ({
     height: '100%',
   },
   containerStyle: {
+    width: CAMERA_WIDTH,
+    height: CAMERA_WIDTH,
     borderColor: colord(ctx.colors2024['neutral-line']).alpha(0.5).toHex(),
   },
   permissionTip: {
     color: ctx.colors2024['neutral-body'],
   },
   galleryButtonContainer: {
-    width: '100%',
+    width: CAMERA_WIDTH,
     marginTop: 60,
   },
 }));

@@ -1,4 +1,3 @@
-import { withScreenPropsInjection } from '@/devtools/screenRegistry/screenInjection';
 import 'react-native-gesture-handler';
 import { RootNames } from '@/constant/layout';
 import { createCustomNativeStackNavigator as createNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
@@ -13,10 +12,7 @@ export function GetStartedNavigator() {
         headerShown: false,
       }}
       initialRouteName={RootNames.GetStarted}>
-      <Stack.Screen
-        name={RootNames.GetStarted}
-        component={withScreenPropsInjection(GetStartedScreen)}
-      />
+      <Stack.Screen name={RootNames.GetStarted} component={GetStartedScreen} />
     </Stack.Navigator>
   );
 }

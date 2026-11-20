@@ -5,8 +5,7 @@ import { PERPS_PRO_FONT_FAMILY } from '@/screens/PerpsPro/components/common/perp
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
 import { View } from 'react-native';
-import { useCustomHeaderTop } from '@/hooks/useAppLayout';
-import { useSystemColumnInset } from '@/components/SafeWindowFrame/backdrop';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export const PERPS_PRO_HISTORY_HEADER_CONTENT_HEIGHT = 56;
 
@@ -15,31 +14,20 @@ export const PerpsProHistoryHeader: React.FC<{ title: string }> = ({
   title,
 }) => {
   const { styles } = useTheme2024({ getStyle });
-  const headerTop = useCustomHeaderTop();
-  const columnInset = useSystemColumnInset();
+  const { top } = useSafeAreaInsets();
 
   return (
     <View
       style={[
         styles.outer,
         {
-          height: headerTop + PERPS_PRO_HISTORY_HEADER_CONTENT_HEIGHT,
-          paddingTop: headerTop,
+          height: top + PERPS_PRO_HISTORY_HEADER_CONTENT_HEIGHT,
+          paddingTop: top,
         },
       ]}>
       <View style={styles.content}>
-        <HeaderBackPressable
-          style={[styles.backButton, { left: 16 + columnInset.left }]}
-        />
-        <View
-          pointerEvents="none"
-          style={[
-            styles.titleLayer,
-            {
-              left: 56 + columnInset.left,
-              right: 56 + columnInset.right,
-            },
-          ]}>
+        <HeaderBackPressable style={styles.backButton} />
+        <View pointerEvents="none" style={styles.titleLayer}>
           <Text numberOfLines={1} style={styles.title}>
             {title}
           </Text>

@@ -11,8 +11,6 @@ import { View } from 'react-native';
 import { removeGlobalBottomSheetModal } from '../GlobalBottomSheetModal';
 import { ApprovalComponent } from './components';
 import { useOpenedActiveDappState } from '@/screens/Dapps/hooks/useDappView';
-import { isNonPublicProductionEnv } from '@/constant';
-import { isAllowAnyApproval } from '@/devtools/screenRegistry/requestCapture';
 import {
   isInternalSession,
   shouldAllowApprovePopupByOrigin,
@@ -107,9 +105,7 @@ const ApprovalContent = () => {
     params?.session?.$mobileCtx?.isFromWalletConnect;
 
   const fromOrigin = origin || params?.origin;
-  const allowAnyApproval = isNonPublicProductionEnv && isAllowAnyApproval();
   const shouldDisallow =
-    !allowAnyApproval &&
     !isInternalSession(fromOrigin) &&
     !shouldAllowApprovePopupByTabId({
       fromTabId,

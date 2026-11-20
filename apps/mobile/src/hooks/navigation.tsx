@@ -1,11 +1,12 @@
 import React, { useCallback, useEffect, useMemo } from 'react';
-import { Alert, AppState, Platform } from 'react-native';
+import { Alert, AppState, Platform, StyleSheet } from 'react-native';
 import { debounce, get, merge } from 'lodash';
+
 import type {
+  NativeStackHeaderLeftProps,
   NativeStackNavigationOptions,
   NativeStackScreenProps,
 } from '@react-navigation/native-stack';
-
 import { apisTheme, useGetBinaryMode } from '../hooks/theme';
 import {
   getReadyNavigationInstance,
@@ -14,19 +15,6 @@ import {
   naviReplace,
 } from '@/utils/navigation';
 import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
-import {
-  HeaderBackPressable,
-  headerBackStyles,
-  navBack,
-} from '@/components/NavigationHeaderBack';
-export {
-  HeaderBackButton,
-  HeaderBackPressable,
-  navBack,
-} from '@/components/NavigationHeaderBack';
-import { renderFoldableStackHeader } from '@/components/FoldableStackHeader';
-import { isFoldableSideColumnPosture } from '@/core/utils/foldableDevice';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { default as RcIconHeaderBack } from '@/assets/icons/header/back-cc.svg';
 import type { AppRootName } from '@/constant/layout';
@@ -122,6 +110,103 @@ export function useCurrentRouteName() {
   };
 }
 
+const hitSlop = {
+  top: 10,
+  bottom: 10,
+  left: 10,
+  right: 10,
+};
+
+export function navBack() {
+  const navigation = navigationRef.current;
+  if (navigation?.canGoBack()) {
+    navigation.goBack();
+  } else {
+    navigationRef.resetRoot({
+      index: 0,
+      routes: [{ name: RootNames.Home }],
+    });
+  }
+}
+
+/**
+ * Header back control with no baked-in layout compensation.
+ *
+ * Renders a plain 24x24 icon box, so whoever renders the header row owns every
+ * inset explicitly. Screens that draw their own header (`header: () => ...`)
+ * must use this instead of the deprecated `HeaderBackPressable`, otherwise the
+ * compensation margin below silently shrinks the leading slot and pulls centred
+ * sibling content off the screen centre (QA 1344).
+ *
+ * Where the compensation came from: `HeaderBackPressable` was written for
+ * controls hosted by a native header element, where iOS 26 +
+ * react-native-screens stop applying the system bar-item inset (#1283). It
+ * compensates from the inside (`marginLeft: -16` + `paddingLeft: 16`), which is
+ * only correct while the host supplies that same 16pt leading inset. In a JS
+ * header the negative margin has no such inset to cancel: the slot collapses
+ * from 24pt to 8pt and everything after it shifts.
+ *
+ * If this control is ever dropped into a host that does (or does not) provide a
+ * bar-item inset, compensate at the call site - pass `style` (a
+ * `marginLeft`/`paddingLeft`) or wrap it in a sized slot - and never re-add the
+ * inset inside the component itself.
+ */
+export function HeaderBackButton({
+  tintColor,
+  style,
+  hitSlop: hitSlopProp,
+  ...touchableProps
+}: Pick<NativeStackHeaderLeftProps, 'tintColor'> &
+  RNViewProps & { hitSlop?: typeof hitSlop }) {
+  const themeMode = useGetBinaryMode();
+  const { colors2024 } = apisTheme.getColors2024(themeMode);
+  return (
+    <CustomTouchableOpacity
+      // Native-stack header controls need native gesture arbitration on Fabric.
+      as="RNGHTouchableOpacity"
+      {...touchableProps}
+      style={[styles.headerBackButtonStyle, style]}
+      hitSlop={hitSlopProp ?? hitSlop}
+      onPress={navBack}>
+      <RcIconHeaderBack
+        width={24}
+        height={24}
+        color={tintColor || colors2024['neutral-body']}
+      />
+    </CustomTouchableOpacity>
+  );
+}
+
+/**
+ * @deprecated Bakes a native-bar-item inset compensation into the control
+ * (`marginLeft: -16` + `paddingLeft: 16`). Kept only for controls hosted by a
+ * native header element (Android `headerLeft`). Any screen that renders its own
+ * header row must use `HeaderBackButton` and apply its own container/padding.
+ */
+export function HeaderBackPressable({
+  tintColor,
+  style,
+  ...touchableProps
+}: Pick<NativeStackHeaderLeftProps, 'tintColor'> & RNViewProps) {
+  const themeMode = useGetBinaryMode();
+  const { colors2024 } = apisTheme.getColors2024(themeMode);
+  return (
+    <CustomTouchableOpacity
+      // Native-stack header controls need native gesture arbitration on Fabric.
+      as="RNGHTouchableOpacity"
+      {...touchableProps}
+      style={[styles.backButtonStyle, style]}
+      hitSlop={hitSlop}
+      onPress={navBack}>
+      <RcIconHeaderBack
+        width={24}
+        height={24}
+        color={tintColor || colors2024['neutral-body']}
+      />
+    </CustomTouchableOpacity>
+  );
+}
+
 type ScreenOptions = Omit<NativeStackNavigationOptions, 'headerTitleStyle'> & {
   headerTitleStyle: NativeStackNavigationOptions['headerTitleStyle'] & object;
 };
@@ -133,17 +218,6 @@ const IOS_LIQUID_GLASS_HEADER_OPTIONS = {
 
 export const useStackScreenConfig = () => {
   const appThemeMode = useGetBinaryMode();
-  const insets = useSafeAreaInsets();
-  /**
-   * On the Duo outer screen the app tree is full width so backgrounds run
-   * under the system column. react-native-screens cannot place a UIKit bar
-   * item on that wider view, so every stack header becomes the JS replica.
-   * Other devices/postures keep the native header untouched.
-   */
-  const foldableOuter = isFoldableSideColumnPosture({
-    top: insets.top,
-    right: insets.right,
-  });
 
   /** @deprecated for new screen use mergeScreenOptions2024 instead */
   const mergeScreenOptions = useCallback(
@@ -158,10 +232,7 @@ export const useStackScreenConfig = () => {
         ...headerPresets.onlyTitle,
         // Native bar button item: UIKit owns the layout (correct on every
         // device) and hidesSharedBackground keeps the iOS 26 glass capsule off.
-        // The Duo outer posture needs the JS replica instead.
-        unstable_headerLeftItems:
-          IS_IOS && !foldableOuter ? renderNativeBackItems : undefined,
-        ...(foldableOuter ? { header: renderFoldableStackHeader } : {}),
+        unstable_headerLeftItems: IS_IOS ? renderNativeBackItems : undefined,
         headerTitleStyle: {
           ...(headerPresets.onlyTitle.headerTitleStyle as object),
           color: colors['neutral-title-1'],
@@ -178,7 +249,7 @@ export const useStackScreenConfig = () => {
               headerLeft: ({ tintColor }: { tintColor?: string }) => (
                 <CustomTouchableOpacity
                   as="RNGHTouchableOpacity"
-                  style={headerBackStyles.backButtonStyle}
+                  style={styles.backButtonStyle}
                   hitSlop={24}
                   onPress={navBack}>
                   <RcIconHeaderBack
@@ -203,7 +274,7 @@ export const useStackScreenConfig = () => {
 
       return result;
     },
-    [appThemeMode, foldableOuter],
+    [appThemeMode],
   );
 
   const mergeScreenOptions2024 = useCallback(
@@ -216,9 +287,7 @@ export const useStackScreenConfig = () => {
         animationDuration: 200,
         ...IOS_LIQUID_GLASS_HEADER_OPTIONS,
         ...headerPresets.onlyTitle,
-        unstable_headerLeftItems:
-          IS_IOS && !foldableOuter ? renderNativeBackItems : undefined,
-        ...(foldableOuter ? { header: renderFoldableStackHeader } : {}),
+        unstable_headerLeftItems: IS_IOS ? renderNativeBackItems : undefined,
         headerTitleStyle: {
           ...(headerPresets.onlyTitle.headerTitleStyle as object),
           color: colors2024['neutral-title-1'],
@@ -249,7 +318,7 @@ export const useStackScreenConfig = () => {
 
       return result;
     },
-    [appThemeMode, foldableOuter],
+    [appThemeMode],
   );
 
   return { mergeScreenOptions, mergeScreenOptions2024 };
@@ -343,6 +412,24 @@ const renderNativeBackItems: NonNullable<
   ];
 };
 
+const styles = StyleSheet.create({
+  // Plain icon box for JS-rendered custom headers; the caller aligns it.
+  headerBackButtonStyle: {
+    width: 24,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  backButtonStyle: {
+    // width: 56,
+    // height: 56,
+    alignItems: 'center',
+    flexDirection: 'row',
+    marginLeft: -16,
+    paddingLeft: 16,
+  },
+});
+
 export function useRabbyAppNavigation<
   K extends NativeStackScreenProps<RootStackParamsList>['navigation'],
 >() {
@@ -407,31 +494,14 @@ export const apisHomeTabIndex = {
   isHomeAtFirstTab() {
     return tabIndexSvs.svIndexDecimal.value === 0;
   },
-  /**
-   * Command a tab change. The pager owns the visible index: `svIndexDecimal`
-   * must only be written by the pager's own UI-thread index callback, because a
-   * JS write that lands one frame late is exactly what makes the highlight
-   * flash back to the previous tab right after a settle.
-   */
-  setTabIndex(val: number, _processJump = false) {
+  setTabIndex(val: number, processJump = false) {
     'worklet';
-    tabIndexSvs.current = val;
-    runOnJS(() => {
-      if (tabIndexStore.getState().tabIndex !== val) {
-        tabIndexStore.setState({ tabIndex: val });
-      }
-    })();
-    homeTabScrollerRef.current?.setIndex(val);
-  },
-  /**
-   * Report a page the pager already settled on. This must never command the
-   * pager: calling `setIndex` from the pager's own commit callback re-enters the
-   * gesture and can overwrite an in-flight settle.
-   */
-  publishSettledIndex(val: number) {
-    tabIndexSvs.current = val;
-    if (tabIndexStore.getState().tabIndex !== val) {
-      tabIndexStore.setState({ tabIndex: val });
+    if (processJump) {
+      homeTabScrollerRef.current?.setIndex(val);
+    } else {
+      tabIndexSvs.svIndexDecimal.value = val;
+      tabIndexSvs.current = val;
+      runOnJS(() => tabIndexStore.setState({ tabIndex: val }))();
     }
   },
 };

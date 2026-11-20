@@ -344,9 +344,8 @@ const getStyle = createGetStyles2024(
         paddingTop: topGap,
         paddingBottom: 7,
         justifyContent: 'flex-end',
-        // The sheet container is already inset to the content width on the
-        // iPhone Duo outer screen, so only the regular edge gap is needed.
-        paddingRight: 10,
+        // clear a side camera/status-bar column, e.g. on iPhone Duo
+        paddingRight: 10 + safeAreaInsets.right,
         height: HANDLE_HEIGHT + topGap,
       },
       handleComponentWithEntry: {

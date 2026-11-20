@@ -1,7 +1,7 @@
 import React from 'react';
 import { act, render } from '@testing-library/react-native';
 import { AutoShrinkAmountTextInput } from '@/components/AutoShrinkAmountTextInput';
-import { GestureSlider } from '@/components/GestureSlider';
+import { PerpsGestureSlider } from '@/components/perps/PerpsGestureSlider';
 import { SliderBubblePortal } from '../Swap/components/Slider';
 import { SwapTokenItem } from '../Swap/components/Token';
 import BridgeToken from '../Bridge/components/BridgeToken';
@@ -10,8 +10,10 @@ let mockSliderMounts = 0;
 let mockSliderUnmounts = 0;
 
 // Component contract only: native view recycling still needs iOS verification.
-jest.mock('@/components/GestureSlider', () => ({
-  GestureSlider: (props: React.ComponentProps<typeof GestureSlider>) => {
+jest.mock('@/components/perps/PerpsGestureSlider', () => ({
+  PerpsGestureSlider: (
+    props: React.ComponentProps<typeof PerpsGestureSlider>,
+  ) => {
     const ReactModule = require('react');
     const current = ReactModule.useRef(props);
     current.current = props;
@@ -19,15 +21,10 @@ jest.mock('@/components/GestureSlider', () => ({
       mockSliderMounts += 1;
       return () => {
         mockSliderUnmounts += 1;
+        // The real slider completes an interrupted drag during unmount.
+        current.current.onSlidingComplete?.(current.current.value);
       };
     }, []);
-    ReactModule.useLayoutEffect(() => {
-      if (!props.interactive) {
-        // The real slider releases an interrupted drag when its native surface
-        // detaches as the scene deactivates.
-        current.current.onSlidingComplete?.(current.current.value);
-      }
-    }, [props.interactive]);
     return null;
   },
 }));
@@ -75,7 +72,7 @@ beforeEach(() => {
 });
 
 it.each(['swap', 'bridge'] as const)(
-  '%s keeps its slider on screen and only releases the drag on deactivation',
+  '%s releases its slider on deactivation and restores the controlled value',
   scene => {
     const onChangeSlider = jest.fn();
     const onScrollEnabledChange = jest.fn();
@@ -108,7 +105,7 @@ it.each(['swap', 'bridge'] as const)(
 
     for (let cycle = 0; cycle < 2; cycle++) {
       act(() => {
-        ui.UNSAFE_getByType(GestureSlider).props.onSlidingStart(37);
+        ui.UNSAFE_getByType(PerpsGestureSlider).props.onSlidingStart(37);
       });
       expect(ui.UNSAFE_getByType(SliderBubblePortal).props.visible).toBe(true);
       if (scene === 'bridge') {
@@ -116,21 +113,17 @@ it.each(['swap', 'bridge'] as const)(
       }
 
       ui.rerender(element(false));
-      // The track stays visible for the whole pager transition; only the
-      // native gesture surface detaches while the scene is inactive.
-      expect(ui.UNSAFE_getByType(GestureSlider).props.interactive).toBe(false);
-      expect(ui.UNSAFE_getByType(SliderBubblePortal).props.visible).toBe(false);
-      expect(mockSliderUnmounts).toBe(0);
-      expect(mockSliderMounts).toBe(1);
+      expect(ui.UNSAFE_queryByType(PerpsGestureSlider)).toBeNull();
+      expect(ui.UNSAFE_queryByType(SliderBubblePortal)).toBeNull();
+      expect(mockSliderUnmounts).toBe(cycle + 1);
       expect(onChangeSlider).toHaveBeenLastCalledWith(37, true);
       if (scene === 'bridge') {
         expect(onScrollEnabledChange).toHaveBeenLastCalledWith(true);
       }
 
       ui.rerender(element(true));
-      expect(mockSliderMounts).toBe(1);
-      expect(ui.UNSAFE_getByType(GestureSlider).props.interactive).toBe(true);
-      expect(ui.UNSAFE_getByType(GestureSlider).props.value).toBe(37);
+      expect(mockSliderMounts).toBe(cycle + 2);
+      expect(ui.UNSAFE_getByType(PerpsGestureSlider).props.value).toBe(37);
       expect(ui.UNSAFE_getByType(SliderBubblePortal).props.visible).toBe(false);
       expect(ui.UNSAFE_getByType(AutoShrinkAmountTextInput)).toBe(input);
       expect(input.props.value).toBe('1.23');

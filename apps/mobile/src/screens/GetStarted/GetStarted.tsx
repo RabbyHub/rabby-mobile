@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { View, TouchableOpacity } from 'react-native';
-import { getDimensionsSnapshot, useWindowDimensions } from '@/core/dimensions';
+import { View, Dimensions, TouchableOpacity } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -20,8 +19,6 @@ import {
 } from '@/constant/layout';
 import { keyringServiceApi } from '@/core/serviceApi/keyring';
 import { useTheme2024 } from '@/hooks/theme';
-import { useSystemColumnInset } from '@/components/SafeWindowFrame/backdrop';
-import { useCustomHeaderTop } from '@/hooks/useAppLayout';
 import { navigateDeprecated } from '@/utils/navigation';
 import { Button } from '@/components2024/Button';
 import { useMemoizedFn } from 'ahooks';
@@ -47,6 +44,8 @@ import { promptLocalStorageArchiveShare } from '@/utils/promptLocalStorageArchiv
 import StartScreenAnimation from '@/assets2024/animations/start-screen-animation.min.json';
 import StartScreenAnimationDark from '@/assets2024/animations/start-screen-animation-dark.min.json';
 
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+
 // Logo images
 import logoLight from '@/assets/images/get-started/logo-light.png';
 import logoDark from '@/assets/images/get-started/logo-dark.png';
@@ -62,7 +61,6 @@ const HeroIllustration = ({ isLight }: { isLight: boolean }) => {
   const animationCompletedRef = useRef(false);
   const rapidTapRef = useRef({ count: 0, lastTappedAt: 0 });
 
-  const { width: SCREEN_WIDTH } = useWindowDimensions();
   const heroHeight = Math.ceil(SCREEN_WIDTH * HERO_ASPECT_RATIO);
 
   const handleAnimationTap = useCallback(() => {
@@ -94,11 +92,7 @@ const HeroIllustration = ({ isLight }: { isLight: boolean }) => {
         disabled={!isNonPublicProductionEnv}>
         <Lottie
           source={isLight ? StartScreenAnimation : StartScreenAnimationDark}
-          // Fill whatever height the flex layout can give the hero. On short
-          // windows (Duo outer screen) the container shrinks below the natural
-          // aspect height; a fixed-height Lottie was clipped from the top and
-          // its coins overlapped the Rabby Wallet header.
-          style={[styles.heroBackground, { height: '100%' }]}
+          style={[styles.heroBackground, { height: heroHeight }]}
           loop={false}
           autoPlay
           onAnimationFinish={() => {
@@ -112,8 +106,6 @@ const HeroIllustration = ({ isLight }: { isLight: boolean }) => {
 
 function NewUserGetStartedScreen() {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
-  const columnInset = useSystemColumnInset();
-  const headerTop = useCustomHeaderTop();
   const { t } = useTranslation();
   const navigation = useRabbyAppNavigation();
 
@@ -226,23 +218,9 @@ function NewUserGetStartedScreen() {
   }));
 
   return (
-    <View
-      style={[
-        styles.screen,
-        // The onboarding page has no shared screen container; inset it so the
-        // bottom actions stay inside the Duo content area.
-        { paddingLeft: columnInset.left, paddingRight: columnInset.right },
-      ]}>
+    <View style={styles.screen}>
       {/* Header with logo - positioned right next to status bar, horizontally centered */}
-      <View
-        style={[
-          styles.logoWrapper,
-          {
-            top: headerTop + 6,
-            left: columnInset.left,
-            right: columnInset.right,
-          },
-        ]}>
+      <View style={[styles.logoWrapper, { top: top + 6 }]}>
         <Animated.Image
           source={isLight ? logoLight : logoDark}
           style={[styles.logoImage, logoAnimatedStyle]}
@@ -374,7 +352,7 @@ const getStyle = createGetStyles2024(ctx => ({
     flex: 1,
   },
   heroContainer: {
-    width: getDimensionsSnapshot('window').width,
+    width: SCREEN_WIDTH,
     flexShrink: 1,
     justifyContent: 'flex-end',
     overflow: 'hidden',
@@ -382,7 +360,7 @@ const getStyle = createGetStyles2024(ctx => ({
   },
   heroBackground: {
     marginLeft: -12,
-    width: getDimensionsSnapshot('window').width + 24,
+    width: SCREEN_WIDTH + 24,
   },
   textContent: {
     alignItems: 'center',

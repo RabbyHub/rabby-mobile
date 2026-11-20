@@ -5,14 +5,6 @@ import { act, fireEvent, render } from '@testing-library/react-native';
 import type { GasLevel, Tx } from '@rabby-wallet/rabby-api/dist/types';
 import type { Account } from '@/core/startupServices/preference';
 
-jest.mock('@/core/dimensions', () => {
-  const size = { width: 390, height: 844, scale: 3, fontScale: 1 };
-  return {
-    getDimensionsSnapshot: () => size,
-    useWindowDimensions: () => size,
-    subscribeDimensionsChange: () => () => undefined,
-  };
-});
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));

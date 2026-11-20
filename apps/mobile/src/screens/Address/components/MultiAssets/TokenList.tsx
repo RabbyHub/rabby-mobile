@@ -10,10 +10,10 @@ import { useTranslation } from 'react-i18next';
 import {
   type SectionListRenderItem,
   View,
+  Dimensions,
   ViewStyle,
   TextStyle,
 } from 'react-native';
-import { getDimensionsSnapshot } from '@/core/dimensions';
 import { useCurrentTabScrollY } from 'react-native-collapsible-tab-view';
 import { useShallow } from 'zustand/shallow';
 
@@ -661,7 +661,7 @@ export const TokenList = () => {
         return;
       }
 
-      const maxHeight = getDimensionsSnapshot('window').height - 160;
+      const maxHeight = Dimensions.get('window').height - 160;
       const listHeight = groupItems.length * (ASSETS_ITEM_HEIGHT_NEW + 8) + 28;
       const snapPoint = Math.min(maxHeight, listHeight + 100);
       const modalId = createGlobalBottomSheetModal2024({

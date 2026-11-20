@@ -10,6 +10,7 @@ import React, { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Animated,
+  Dimensions,
   ImageBackground,
   Platform,
   Pressable,
@@ -54,6 +55,7 @@ import {
 export type { RelatedDeFiType, TokenFromAddressItem } from './types';
 
 const isAndroid = Platform.OS === 'android';
+const ScreenWidth = Dimensions.get('window').width;
 
 const TokenDetailContent = () => {
   const route =
@@ -496,8 +498,8 @@ const getStyle = createGetStyles2024(ctx => {
     topWrapper: {
       position: 'absolute',
       top: 0,
-      left: 0,
       right: 0,
+      width: ScreenWidth,
       overflow: 'hidden',
     },
     balanceOverviewContainer: {

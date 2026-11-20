@@ -10,7 +10,7 @@ import {
   State,
   type GestureTouchEvent,
 } from 'react-native-gesture-handler';
-import { GestureSlider, gestureSliderValueAt } from './index';
+import { PerpsGestureSlider, perpsSliderValueAt } from './PerpsGestureSlider';
 
 let mockQueueJS = false;
 let mockJSQueue: Array<() => void> = [];
@@ -49,7 +49,7 @@ beforeEach(() => {
   mockJSQueue = [];
 });
 
-type SliderProps = React.ComponentProps<typeof GestureSlider>;
+type SliderProps = React.ComponentProps<typeof PerpsGestureSlider>;
 const stateEvent = {
   handlerTag: 0,
   state: State.ACTIVE,
@@ -83,7 +83,7 @@ const mountSlider = (overrides: Partial<SliderProps> = {}) => {
   };
   const element = () => (
     <GestureHandlerRootView>
-      <GestureSlider {...props} />
+      <PerpsGestureSlider {...props} />
     </GestureHandlerRootView>
   );
   const ui = render(element());
@@ -288,7 +288,7 @@ it('uses updated callbacks without recreating an active gesture', () => {
 });
 
 it('retains minimum-relative rounding and clamps at both endpoints', () => {
-  expect(gestureSliderValueAt(-20, 200, 10.13, 20.135, 0.01)).toBe(10.13);
-  expect(gestureSliderValueAt(250, 200, 10.13, 20.135, 0.01)).toBe(20.135);
-  expect(gestureSliderValueAt(30, 200, 0, 100, 1)).toBe(15);
+  expect(perpsSliderValueAt(-20, 200, 10.13, 20.135, 0.01)).toBe(10.13);
+  expect(perpsSliderValueAt(250, 200, 10.13, 20.135, 0.01)).toBe(20.135);
+  expect(perpsSliderValueAt(30, 200, 0, 100, 1)).toBe(15);
 });

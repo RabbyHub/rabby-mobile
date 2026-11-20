@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, View } from 'react-native';
-import { getDimensionsSnapshot } from '@/core/dimensions';
+import { Alert, Dimensions, ScrollView, StyleSheet, View } from 'react-native';
 
 import { useAppTheme, useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -214,6 +213,7 @@ function DevUIBuiltInPages() {
   );
 }
 
+const CONTENT_W = Dimensions.get('screen').width - 24;
 const getStyles = createGetStyles2024(ctx =>
   StyleSheet.create({
     screen: {
@@ -258,7 +258,7 @@ const getStyles = createGetStyles2024(ctx =>
     widgetItem: {
       flexDirection: 'row',
       alignItems: 'center',
-      maxWidth: getDimensionsSnapshot('screen').width - 24,
+      maxWidth: CONTENT_W,
       justifyContent: 'flex-start',
       width: '100%',
       flexWrap: 'wrap',

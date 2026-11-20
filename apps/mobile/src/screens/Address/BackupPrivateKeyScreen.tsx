@@ -1,8 +1,7 @@
 import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
-import { useWindowDimensions } from '@/core/dimensions';
+import { Dimensions, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { FooterButtonScreenContainer } from '@/components/ScreenContainer/FooterButtonScreenContainer';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -17,9 +16,9 @@ import i18next from 'i18next';
 import { Text } from '@/components/Typography';
 import * as SecretVault from '@/core/utils/secretVault';
 
-const QR_CODE_SIDE_ALLOWANCE = 130;
+const QR_CODE_WIDTH = Dimensions.get('window').width - 130;
 
-const getStyles = (colors: AppColorsVariants, qrCodeWidth: number) =>
+const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
     alert: {
       padding: 12,
@@ -42,8 +41,8 @@ const getStyles = (colors: AppColorsVariants, qrCodeWidth: number) =>
       borderCurve: 'continuous',
       borderWidth: 1,
       borderColor: colors['neutral-line'],
-      width: qrCodeWidth + 20,
-      height: qrCodeWidth + 20,
+      width: QR_CODE_WIDTH + 20,
+      height: QR_CODE_WIDTH + 20,
       alignItems: 'center',
       justifyContent: 'center',
       position: 'relative',
@@ -84,12 +83,7 @@ const FAKE_QRCODE_INPUT =
     .join('');
 export const BackupPrivateKeyScreen = () => {
   const colors = useThemeColors();
-  const { width: windowWidth } = useWindowDimensions();
-  const qrCodeWidth = Math.max(0, windowWidth - QR_CODE_SIDE_ALLOWANCE);
-  const styles = React.useMemo(
-    () => getStyles(colors, qrCodeWidth),
-    [colors, qrCodeWidth],
-  );
+  const styles = React.useMemo(() => getStyles(colors), [colors]);
   const { t } = useTranslation();
   const nav = useNavigation();
   const route =
@@ -150,7 +144,7 @@ export const BackupPrivateKeyScreen = () => {
             flexDirection="column"
             text={t('page.backupPrivateKey.clickToShowQr')}
           />
-          {!!qrcodeData && <QRCode size={qrCodeWidth} value={qrcodeData} />}
+          {!!qrcodeData && <QRCode size={QR_CODE_WIDTH} value={qrcodeData} />}
         </View>
         <View style={styles.privateKeyContainer}>
           <MaskContainer
