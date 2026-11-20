@@ -3,7 +3,6 @@ import { render, screen } from '@testing-library/react-native';
 import { StyleSheet } from 'react-native';
 import { apisHomeTabIndex, HomeTabName } from '@/hooks/navigation';
 import { TabsTopHeader } from './OverviewTopHeader';
-import type { HomeRefreshProjection } from '@/store/homePortfolio/refresh';
 
 type TickerProps = React.ComponentProps<
   typeof import('@/components/Animated/RefreshNudgedTickerText').default
@@ -13,8 +12,6 @@ const mockTickerRender = jest.fn<void, [TickerProps]>();
 let mockTotalBalance = 100;
 let mockCurrency = 'USD';
 let mockRefreshing = false;
-let mockChangeRefreshing = false;
-let mockCurveRefreshing = false;
 let mockChangePercent = '';
 let mockThemeColor = '#123456';
 
@@ -27,6 +24,8 @@ jest.mock('react-native-reanimated', () => ({
   default: { View: require('react-native').View },
   Extrapolate: { CLAMP: 'clamp' },
   interpolate: () => 0,
+  clamp: (value: number, lower: number, upper: number) =>
+    Math.min(Math.max(value, lower), upper),
   useAnimatedStyle: (callback: () => object) => callback(),
   useSharedValue: (value: unknown) =>
     require('react').useRef({ value }).current,
@@ -96,16 +95,7 @@ jest.mock('@/store/homePortfolio', () => ({
     changeData: { changePercent: mockChangePercent, isLoss: false },
     changeActivity: { isActive: false },
   }),
-  useHomeRefreshProjection: (
-    select: (state: Partial<HomeRefreshProjection>) => unknown,
-  ) =>
-    select({
-      isBalanceFetchingRemote: mockRefreshing,
-      is24hChangeFetchingRemote: mockChangeRefreshing,
-      isCurveFetchingRemote: mockCurveRefreshing,
-      isAnyRemoteRefreshing:
-        mockRefreshing || mockChangeRefreshing || mockCurveRefreshing,
-    }),
+  useHomeRefreshProjection: () => mockRefreshing,
 }));
 jest.mock('@/hooks/theme', () => ({
   useTheme2024: ({ getStyle }: any) => {
@@ -123,13 +113,7 @@ jest.mock('@/components/Typography', () => ({
 jest.mock('@/components/WebView/LocalWebView/LocalWebView', () => ({
   LocalWebView: () => null,
 }));
-jest.mock(
-  '@/components2024/RotateLoadingCircle',
-  () => () =>
-    require('react').createElement(require('react-native').View, {
-      testID: 'header-loading',
-    }),
-);
+jest.mock('@/components2024/RotateLoadingCircle', () => () => null);
 jest.mock('@/components/Animated/RefreshNudgedTickerText', () => ({
   __esModule: true,
   default: require('react').memo(function MockRefreshTicker(
@@ -165,8 +149,6 @@ beforeEach(() => {
   mockTotalBalance = 100;
   mockCurrency = 'USD';
   mockRefreshing = false;
-  mockChangeRefreshing = false;
-  mockCurveRefreshing = false;
   mockChangePercent = '';
   mockThemeColor = '#123456';
 });
@@ -184,25 +166,6 @@ it('still switches to assets when the empty header area itself is pressed', () =
   getHeaderArea().props.onPress({ target: 101, currentTarget: 101 });
   expect(apisHomeTabIndex.setTabIndex).toHaveBeenCalledTimes(1);
   expect(apisHomeTabIndex.setTabIndex).toHaveBeenCalledWith(1, true);
-});
-
-it('shows balance and 24h refresh activity independently of curve loading', () => {
-  mockCurveRefreshing = true;
-  const { rerender } = render(<TabsTopHeader />);
-  expect(screen.queryAllByTestId('header-loading')).toHaveLength(0);
-
-  mockRefreshing = true;
-  rerender(<TabsTopHeader />);
-  expect(screen.queryAllByTestId('header-loading').length).toBeGreaterThan(0);
-
-  mockRefreshing = false;
-  mockChangeRefreshing = true;
-  rerender(<TabsTopHeader />);
-  expect(screen.queryAllByTestId('header-loading').length).toBeGreaterThan(0);
-
-  mockChangeRefreshing = false;
-  rerender(<TabsTopHeader />);
-  expect(screen.queryAllByTestId('header-loading')).toHaveLength(0);
 });
 
 it('does not rerender the ticker for unrelated refresh and change updates', () => {

@@ -8,6 +8,13 @@ import {
   View,
 } from 'react-native';
 import PagerView from 'react-native-pager-view';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import {
+  HOME_GESTURE_AXIS,
+  beginHomeGesture,
+  endHomeGesture,
+  resolveHomeGestureAxis,
+} from '@/screens/Home/gesture/homeGestureAuthority';
 import Animated, {
   runOnJS,
   runOnUI,
@@ -48,6 +55,15 @@ import {
   TabName,
 } from 'react-native-collapsible-tab-view/src/types';
 import { WorkletFunction } from 'react-native-reanimated/lib/typescript/commonTypes';
+
+/**
+ * `react-native-pager-view` ships `setScrollEnabledImperatively` in JS, but the
+ * Fabric iOS component only implements it from our yarn patch (the Paper
+ * manager always had it). Dispatching it into a native build without the patch
+ * aborts the app with an unrecognized selector, so builds without the patch
+ * must set this to false.
+ */
+const PAGER_VIEW_IMPERATIVE_SCROLL_SUPPORTED = true;
 
 const AnimatedPagerView = Animated.createAnimatedComponent(PagerView);
 
@@ -326,6 +342,107 @@ export const MultiAssetsContainer = React.memo(
       },
     });
 
+    // One arbiter for the asset pages: the first direction of a drag decides
+    // who owns it. A vertical drag takes the pager out of the race (its native
+    // scrolling is switched off for the rest of the gesture) so the list can
+    // scroll without the pages sliding; a horizontal drag lets the pager keep
+    // the gesture untouched.
+    //
+    // The pager itself has no arbitration API we can join, so this is a gate
+    // rather than a transparent hand-off: RNGH cannot share a gesture with the
+    // native pager without swallowing it (see
+    // codex-rabby/plans/rabby-mobile-home-gesture-single-authority-20261115.md).
+    //
+    // The gate must never own the drag: activating it would cancel the asset
+    // list's native recognizer, which is exactly the scroll it is meant to
+    // protect. It only observes the first direction, locks the pager out on a
+    // vertical verdict, and fails immediately so the list keeps the gesture.
+    // `react-native-pager-view` exposes `setScrollEnabledImperatively` in JS,
+    // but the Fabric iOS component only implements it from our yarn patch (the
+    // Paper manager always had it). Dispatching it into a native build without
+    // the patch aborts the app with an unrecognized selector, so every
+    // imperative call goes through this switch.
+    const canSetPagerScrollEnabledImperatively =
+      PAGER_VIEW_IMPERATIVE_SCROLL_SUPPORTED;
+
+    const pagerScrollEnabledRef = React.useRef(true);
+    const setPagerScrollEnabled = React.useCallback(
+      (enabled: boolean) => {
+        if (pagerScrollEnabledRef.current === enabled) {
+          return;
+        }
+        pagerScrollEnabledRef.current = enabled;
+        if (!canSetPagerScrollEnabledImperatively) {
+          return;
+        }
+        containerRef.current?.setScrollEnabled?.(enabled);
+      },
+      [canSetPagerScrollEnabledImperatively, containerRef],
+    );
+    React.useEffect(
+      () => () => {
+        // Never leave the pager disabled if the screen goes away mid-gesture.
+        if (canSetPagerScrollEnabledImperatively) {
+          containerRef.current?.setScrollEnabled?.(true);
+        }
+      },
+      [canSetPagerScrollEnabledImperatively, containerRef],
+    );
+    const pagerGateLocked = useSharedValue(false);
+    const pagerGateGesture = React.useMemo(
+      () =>
+        Gesture.Pan()
+          .manualActivation(true)
+          .maxPointers(1)
+          .onTouchesDown(event => {
+            'worklet';
+            const touch = event.allTouches[0];
+            if (!touch) {
+              return;
+            }
+            beginHomeGesture(touch.absoluteX, touch.absoluteY);
+          })
+          .onTouchesMove((event, stateManager) => {
+            'worklet';
+            const touch = event.allTouches[0];
+            if (!touch) {
+              stateManager.fail();
+              return;
+            }
+
+            // The overview page hosts the dapp drawer, and every vertical drag
+            // inside that drawer has to reach the drawer's own lists. The gate
+            // exists to protect the asset pages' lists from the pager, so it
+            // must stay out of anything below the first page boundary.
+            if (indexDecimal.value < 0.5) {
+              stateManager.fail();
+              return;
+            }
+
+            const axis = resolveHomeGestureAxis(
+              touch.absoluteX,
+              touch.absoluteY,
+            );
+
+            if (axis === HOME_GESTURE_AXIS.VERTICAL && !pagerGateLocked.value) {
+              // The list owns vertical drags. Lock the pager out without
+              // activating: activating would cancel the list's own recognizer.
+              pagerGateLocked.value = true;
+              runOnJS(setPagerScrollEnabled)(false);
+            }
+            // Never take ownership: horizontal drags belong to the pager, and
+            // vertical ones have to keep reaching the list underneath.
+            stateManager.fail();
+          })
+          .onFinalize(() => {
+            'worklet';
+            pagerGateLocked.value = false;
+            runOnJS(setPagerScrollEnabled)(true);
+            endHomeGesture();
+          }),
+      [indexDecimal, pagerGateLocked, setPagerScrollEnabled],
+    );
+
     React.useImperativeHandle(
       ref,
       () => ({
@@ -422,30 +539,32 @@ export const MultiAssetsContainer = React.memo(
             </View>
           </Animated.View>
 
-          <AnimatedPagerView
-            ref={containerRef}
-            onPageScroll={pageScrollHandler}
-            initialPage={index.value}
-            {...pagerProps}
-            style={[pagerProps?.style, StyleSheet.absoluteFill]}>
-            {data.map((tabName, i) => {
-              return (
-                <View key={i}>
-                  <TabNameContext.Provider value={tabName}>
-                    <Lazy
-                      startMounted={lazy ? undefined : true}
-                      cancelLazyFadeIn={!lazy ? true : !!cancelLazyFadeIn}>
-                      {
-                        React.Children.toArray(children)[
-                          i
-                        ] as React.ReactElement<any>
-                      }
-                    </Lazy>
-                  </TabNameContext.Provider>
-                </View>
-              );
-            })}
-          </AnimatedPagerView>
+          <GestureDetector gesture={pagerGateGesture}>
+            <AnimatedPagerView
+              ref={containerRef}
+              onPageScroll={pageScrollHandler}
+              initialPage={index.value}
+              {...pagerProps}
+              style={[pagerProps?.style, StyleSheet.absoluteFill]}>
+              {data.map((tabName, i) => {
+                return (
+                  <View key={i}>
+                    <TabNameContext.Provider value={tabName}>
+                      <Lazy
+                        startMounted={lazy ? undefined : true}
+                        cancelLazyFadeIn={!lazy ? true : !!cancelLazyFadeIn}>
+                        {
+                          React.Children.toArray(children)[
+                            i
+                          ] as React.ReactElement<any>
+                        }
+                      </Lazy>
+                    </TabNameContext.Provider>
+                  </View>
+                );
+              })}
+            </AnimatedPagerView>
+          </GestureDetector>
         </Animated.View>
       </Context.Provider>
     );
